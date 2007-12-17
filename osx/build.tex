@@ -16,7 +16,7 @@
 \setlength{\parindent}{0pt}
 
 \begin{center}
-  {\large \textbf{Building a gretl disk image for OS X}}\\[6pt]
+  {\Large \textbf{Building a gretl disk image for OS X}}\\[6pt]
 Allin Cottrell, December 2007
 \end{center}
 
@@ -93,16 +93,33 @@ The required packages will presumably include gtk+2, gtk+2-dev and
 fftw3; recode may also be required; gnuplot is not required since
 we'll be building that ourselves.  Libxml2 will hopefully be supplied
 by OS X, and dlcompat doesn't seem to be needed any longer. It may be
-helpful to install wget via Fink for build purposes.
+helpful to install wget via Fink for build purposes.  I have also
+installed mpfr via Fink: this is not strictly required for gretl, but
+if it's present it enhances the functionality of the multiple
+precision plugin.
 
 Since we're building gnuplot, the libraries to be installed via Fink
 also include those needed by gnuplot (more on this below).
 
 \section{Building gnuplot}
 
+First, why do we bother building gnuplot?  Well, briefly, gnuplot is
+rather integral to gretl, and it's preferable to have a gnuplot
+version that is as functional as possible.  We want good PNG support,
+provided via libgd.  Unfortunately the standard libgd installation on
+Fink has a problem with finding TrueType fonts; we can work around
+this if we build libgd ourselves.  In addition, OS X is highly
+PDF-oriented, so it's nice to be able to provide PDF graph support,
+which I don't think is in a stock Fink gnuplot build.  Finally, the
+gnuplot source referenced below is patched so as to provide accurate
+bounding box information for PNG files; this improves the quality of
+mouse-over interation with graphs under gretl.
+
 Grab the patched source for gnuplot 4.2.2,
 \url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-4.2.2-ac.tar.gz}.
-Untar and configure.  FIXME: complete this section.
+Untar and configure.  
+
+FIXME: complete this section.
 
 
 \section{Configuring and building gretl}
@@ -163,7 +180,9 @@ files that are really necessary.  This includes all shared libraries
 that are not provided by OS X itself; it also includes some additional
 run-time files required by GTK+.
 
-FIXME: complete this section.
+\textit{Libraries}: To be written.
+
+\textit{Other files}: To be written.
 
 \textit{Testing}: To check that the \texttt{Gretl.app} is
 self-contained, you need to run gretl with Fink disabled.  To help
