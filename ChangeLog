@@ -22,6 +22,15 @@ version 1.7.1, in progress
   the end of a formula
 - OS X: replace fftw library with an i386 build
 - Toolbar: use GTK stock icons where possible
+- Gnuplot commands editor: fix behavior of save button
+- Make plot commands editor available via graph editing
+  dialog
+- Time series plot, more than one series: add option to show
+  separate small plots
+- Output from script execution: reuse existing output window
+  if it's left open
+- Add set variable "fcp" to use Fiorentini, Calzolari and
+  Panattoni GARCH code
 
 11/27/2007 version 1.7.0
 - Add heckit estimator

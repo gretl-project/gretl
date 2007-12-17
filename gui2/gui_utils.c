@@ -81,6 +81,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 static void view_window_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void auto_save_script (windata_t *vwin);
+static void auto_save_plot (windata_t *vwin);
 static void add_model_dataset_items (windata_t *vwin);
 static void add_model_tex_items (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
@@ -558,6 +559,8 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
     case STACK_DESTROY:	
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] != NULL) {
+		fprintf(stderr, "winstack: destroying widget at %p\n", 
+			(void *) wstack[i]);
 		gtk_widget_destroy(wstack[i]);
 	    }
 	}
@@ -1619,6 +1622,11 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 }
 #endif
 
+static void save_plot_commands_callback (GtkWidget *w, gpointer p)
+{
+    auto_save_plot((windata_t *) p);
+}
+
 /* when copying from windows where a choice of copy format
    is appropriate */
 
@@ -2148,18 +2156,45 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
     }
 }
 
+static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
+{
+    GtkTextBuffer *buf;
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    gtk_text_buffer_set_text(buf, "", -1);
+    view_buffer_insert_text(vwin, prn);
+    gretl_print_destroy(prn);
+
+    cursor_to_top(vwin);
+    gtk_window_present(GTK_WINDOW(vwin->dialog));
+
+    return vwin;
+}
+
+static gboolean nullify_script_out (GtkWidget *w, windata_t **pvwin)
+{
+    *pvwin = NULL;
+    return FALSE;
+}
+
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role, 
 			gpointer data) 
 {
+    static windata_t *script_out;
     windata_t *vwin;
+    int record = (role != SCRIPT_OUT);
+
+    if (role == SCRIPT_OUT && script_out != NULL) {
+	return reuse_script_out(script_out, prn);
+    }
 
     if (title != NULL) {
-	vwin = common_viewer_new(role, title, data, 1);
+	vwin = common_viewer_new(role, title, data, record);
     } else {
 	gchar *tmp = make_viewer_title(role, NULL);
 
-	vwin = common_viewer_new(role, tmp, data, 1);
+	vwin = common_viewer_new(role, tmp, data, record);
 	g_free(tmp);
     }
 
@@ -2209,6 +2244,13 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
 
+    /* register destruction of script output viewer */
+    if (role == SCRIPT_OUT) {
+	g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+			 G_CALLBACK(nullify_script_out), &script_out);
+	script_out = vwin;
+    }
+
     /* insert and then free the text buffer */
     view_buffer_insert_text(vwin, prn);
     gretl_print_destroy(prn);
@@ -2222,9 +2264,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     if (role == EDIT_FUNC_CODE) {
 	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
 	attach_content_changed_signal(vwin);
-	g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
+	g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
-    }
+    } 
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
@@ -2306,8 +2348,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	textview_insert_file(vwin, filename);
     }
 
-    /* grab the "changed" signal when editing a script */
-    if (role == EDIT_SCRIPT) {
+    /* grab the "changed" signal when editing a script or graph */
+    if (role == EDIT_SCRIPT || role == GR_PLOT) {
 	attach_content_changed_signal(vwin);
     }
 
@@ -2320,8 +2362,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     }
 
     /* alert for unsaved changes on exit */
-    if (role == EDIT_SCRIPT) {
-	g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
+    if (role == EDIT_SCRIPT || role == GR_PLOT) {
+	g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
     }
 
@@ -2405,7 +2447,7 @@ void view_window_set_editable (windata_t *vwin)
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), TRUE);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), TRUE);
     g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
-    g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
+    g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
     vwin->role = EDIT_SCRIPT;
     add_edit_items_to_viewbar(vwin);
@@ -2428,6 +2470,8 @@ static gint query_save_text (GtkWidget *w, GdkEvent *event,
 		buf_edit_save(NULL, vwin);
 	    } else if (vwin->role == EDIT_SCRIPT) {
 		auto_save_script(vwin);
+	    } else if (vwin->role == GR_PLOT) {
+		auto_save_plot(vwin);
 	    }
 	}
     }
@@ -2468,7 +2512,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     attach_content_changed_signal(vwin);
 
     /* alert for unsaved changes on exit */
-    g_signal_connect(G_OBJECT(vwin->dialog), "delete_event",
+    g_signal_connect(G_OBJECT(vwin->dialog), "delete-event",
 		     G_CALLBACK(query_save_text), vwin);
 
     /* clean up when dialog is destroyed */
@@ -2551,7 +2595,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     /* don't allow deletion of model window when a model
        test dialog is active */
-    g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
+    g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
 		     G_CALLBACK(check_delete_model_window), 
 		     vwin);
 
@@ -2566,6 +2610,41 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     cursor_to_top(vwin);
 
     return 0;
+}
+
+static void auto_save_plot (windata_t *vwin)
+{
+    FILE *fp;
+    gchar *buf;
+# ifdef ENABLE_NLS
+    gchar *trbuf;
+# endif
+
+    buf = textview_get_text(vwin->w);
+    if (buf == NULL) return;
+
+    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
+	g_free(buf);
+	file_write_errbox(vwin->fname);
+	return;
+    }
+
+# ifdef ENABLE_NLS
+    trbuf = gp_locale_from_utf8(buf);
+    if (trbuf != NULL) {
+	fputs(trbuf, fp);
+	g_free(trbuf);
+    } else {
+	fputs(buf, fp);
+    }
+# else
+    fputs(buf, fp);
+# endif
+
+    g_free(buf); 
+    fclose(fp);
+
+    mark_content_saved(vwin);
 }
 
 static void auto_save_script (windata_t *vwin)

@@ -851,9 +851,11 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     int xc, n = v->neqns;
     int i, err;
 
+#if JDEBUG
     fprintf(stderr, "VECM_estimate_full: %s\n", 
 	    (flags & ESTIMATE_ALPHA)? "including alpha in estimation" :
 	    "netting out the EC terms");
+#endif
 
     if (!(flags & ESTIMATE_ALPHA) && v->jinfo->Alpha == NULL) {
 	/* alpha must be pre-computed */

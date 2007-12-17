@@ -29,7 +29,7 @@
 #include "libset.h"
 #include "jprivate.h"
 
-#define JDEBUG 2
+#define JDEBUG 0
 
 typedef struct gradhelper_ gradhelper;
 typedef struct Jwrap_ Jwrap;
@@ -1595,26 +1595,26 @@ static int check_for_scaling (Jwrap *J,
 		if (sc[k] == 0) {
 		    /* beta column k is not yet scaled */
 		    list_push(J->normcol, rcol);
-		    fprintf(stderr, "added scaling for beta col %d\n", k);
 		} else {
 		    /* negative rcol entry indicates a "follower" */
 		    list_push(J->normcol, -rcol);
-		    fprintf(stderr, "added scaling-follower for beta col %d\n", k);
 		}
 		sc[k] += 1;
 	    }
 	}
     }
 
+#if JDEBUG
+    printlist(J->normrow, "norm rows");
+    printlist(J->normcol, "norm cols");
+    for (i=0; i<J->normrow[0]; i++) {
+	fprintf(stderr, "normval[%d] = %g\n", i, J->normval[i]);
+    }
+#endif
+
     if (J->normrow[0] == 0) {
 	/* no (practicable) scalings found */
 	norm_destroy(J);
-    } else {
-	printlist(J->normrow, "norm rows");
-	printlist(J->normcol, "norm cols");
-	for (i=0; i<J->normrow[0]; i++) {
-	    fprintf(stderr, "normval[%d] = %g\n", i, J->normval[i]);
-	}
     }
 
     free(sc);
@@ -1641,7 +1641,9 @@ maybe_remove_col_scaling (Jwrap *J,
     int i, j, k, rr, pos;
     int err = 0;
 
+#if JDEBUG
     fprintf(stderr, "maybe_remove_col_scaling...\n");
+#endif
 
     if (R == NULL || q == NULL || gretl_is_zero_matrix(q)) {
 	return 0;
@@ -1701,8 +1703,10 @@ maybe_remove_col_scaling (Jwrap *J,
 	} 
     }
 
+#if JDEBUG
     gretl_matrix_print(Rr, "Rr");
     gretl_matrix_print(qr, "qr");
+#endif
 
     err = reset_H(J, Rr, qr);
 

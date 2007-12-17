@@ -56,8 +56,6 @@
 # include "gretlwin32.h"
 #endif
 
-static void auto_save_gp (windata_t *vwin);
-
 #include "../pixmaps/model.xpm"
 #include "../pixmaps/boxplot.xpm"
 #include "../pixmaps/gnuplot.xpm"
@@ -3045,76 +3043,65 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     return obj;
 } 
 
-static void auto_save_gp (windata_t *vwin)
+static char *dump_current_plot (windata_t *vwin)
 {
     FILE *fp;
-    gchar *buf;
+    char *tmpfile = NULL;
+    int gotpause = 0;
+    char bufline[1024];
+    char *buf;
 # ifdef ENABLE_NLS
     gchar *trbuf;
 # endif
 
     buf = textview_get_text(vwin->w);
-    if (buf == NULL) return;
-
-    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	g_free(buf);
-	file_write_errbox(vwin->fname);
-	return;
-    }
-
-# ifdef ENABLE_NLS
-    trbuf = gp_locale_from_utf8(buf);
-    if (trbuf != NULL) {
-	fputs(trbuf, fp);
-	g_free(trbuf);
-    } else {
-	fputs(buf, fp);
-    }
-# else
-    fputs(buf, fp);
-# endif
-
-    g_free(buf); 
-    fclose(fp);
-}
-
-#ifdef G_OS_WIN32
-
-static char *add_pause_to_plotfile (const char *fname)
-{
-    FILE *fin, *fout;
-    char fline[MAXLEN];
-    char *tmpfile = NULL;
-    int gotpause = 0;
-
-    fin = gretl_fopen(fname, "r");
-    if (fin == NULL) return NULL;
+    if (buf == NULL) return NULL;
 
     tmpfile = g_strdup_printf("%showtmp.gp", paths.userdir);
 
-    fout = gretl_fopen(tmpfile, "w");
-    if (fout == NULL) {
-	fclose(fin);
+    fp = gretl_fopen(tmpfile, "w");
+    if (fp == NULL) {
 	g_free(tmpfile);
+	g_free(buf);
+	file_write_errbox(tmpfile);
 	return NULL;
     }
 
-    while (fgets(fline, MAXLEN - 1, fin)) {
-	fputs(fline, fout);
-	if (strstr(fline, "pause -1")) {
+    bufgets_init(buf);
+
+    while (bufgets(bufline, sizeof bufline, buf)) {
+# ifdef ENABLE_NLS
+	trbuf = gp_locale_from_utf8(bufline);
+	if (trbuf != NULL) {
+	    fputs(trbuf, fp);
+	    g_free(trbuf);
+	} else {
+	    fputs(bufline, fp);
+	}
+# else
+	fputs(bufline, fp);
+# endif
+	fputc('\n', fp);
+	if (strstr(bufline, "pause -1")) {
 	    gotpause = 1;
 	}
     }
 
-    if (!gotpause) {
-	fputs("pause -1\n", fout);
-    }
+    bufgets_finalize(buf);
+    g_free(buf);
 
-    fclose(fin);
-    fclose(fout);
+#ifdef G_OS_WIN32
+    if (!gotpause) {
+	fputs("pause -1\n", fp);
+    }
+#endif
+
+    fclose(fp);
 
     return tmpfile;
 }
+
+#ifdef G_OS_WIN32
 
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
@@ -3122,9 +3109,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     gchar *tmpfile;
     int err = 0;
 
-    auto_save_gp(vwin);
-
-    tmpfile = add_pause_to_plotfile(vwin->fname);
+    tmpfile = dump_current_plot(vwin);
 
     if (tmpfile != NULL) {
 	gchar *buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
@@ -3150,17 +3135,21 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
+    gchar *tmpfile;
     GError *error = NULL;
     gchar *argv[4];
     GPid pid = 0;
     gint fd = -1;
     gboolean run;
 
-    auto_save_gp(vwin);
+    tmpfile = dump_current_plot(vwin);
+    if (tmpfile == NULL) {
+	return;
+    }
 
     argv[0] = g_strdup(paths.gnuplot);
     argv[1] = g_strdup("-persist");
-    argv[2] = g_strdup(vwin->fname);
+    argv[2] = g_strdup(tmpfile);
     argv[3] = NULL;
 
     run = g_spawn_async_with_pipes(NULL, argv, NULL, 
@@ -3205,14 +3194,12 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     g_free(argv[0]);
     g_free(argv[1]);
     g_free(argv[2]);
+
+    remove(tmpfile);
+    g_free(tmpfile);
 }
 
 #endif /* ? G_OS_WIN32 */
-
-void save_plot_commands_callback (GtkWidget *w, gpointer p)
-{
-    auto_save_gp((windata_t *) p);
-}
 
 static void open_gui_graph (gui_obj *obj)
 {

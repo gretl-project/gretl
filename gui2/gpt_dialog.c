@@ -752,6 +752,12 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     }
 }
 
+static void gp_commands_window (GtkWidget *w, GPT_SPEC *spec)
+{
+    remove_png_term_from_plotfile_by_name(spec->fname);
+    view_file(spec->fname, 1, 0, 78, 400, GR_PLOT);
+}
+
 /* PNG anti-aliasing switch */
 
 static void set_aa_status (GtkWidget *w, int *ok)
@@ -1013,6 +1019,28 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 		add_color_selector(i, tbl, &rows, notebook);
 	    }
 	}
+    }
+
+    if (1) {
+	GtkWidget *hsep = gtk_hseparator_new();
+	GtkWidget *hbox, *button;
+
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
+				  rows - 1, rows);  
+	gtk_widget_show(hsep);
+
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	hbox = gtk_hbox_new(FALSE, 2);
+	button = gtk_button_new_with_label(_("Edit plot commands"));
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(gp_commands_window), 
+			 spec);
+	gtk_table_attach(GTK_TABLE(tbl), hbox, 0, 2, rows - 1, rows,
+			 GTK_FILL, 0, 0, 5);
+	gtk_widget_show(button);
+	gtk_widget_show(hbox);
     }
 }
 

@@ -104,8 +104,6 @@ int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuild);
 
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 
-void save_plot_commands_callback (GtkWidget *w, gpointer p);
-
 void disable_graph_page (void);
 
 void display_session_graph_by_data (void *p);

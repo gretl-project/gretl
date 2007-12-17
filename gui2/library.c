@@ -4873,7 +4873,7 @@ int do_scatters (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
-    int err; 
+    int err = 0;
 
     if (buf == NULL) return 1;
 
@@ -4883,20 +4883,15 @@ int do_scatters (selector *sr)
 	gretl_command_sprintf("scatters %s", buf);
     }
 
-    if (check_and_record_command()) {
-	return 1;
+    err = check_and_record_command();
+
+    if (!err) {
+	err = multi_scatters(libcmd.list, (const double **) Z, datainfo, 
+			     opt);
+	gui_graph_handler(err);
     }
 
-    err = multi_scatters(libcmd.list, (const double **) Z, datainfo, 
-			 opt);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph();
-    }
-
-    return 0;
+    return err;
 }
 
 void do_box_graph (GtkWidget *w, dialog_t *dlg)
@@ -5144,7 +5139,7 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
 {
     gretlopt opt = OPT_G;
     char *liststr;
-    int err;
+    int cancel = 0;
 
     liststr = main_window_selection_as_string();
     if (liststr == NULL || *liststr == 0) {
@@ -5152,24 +5147,56 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
     }
 
     if (a == GR_XY) {
-	err = maybe_reorder_list(liststr);
-	if (err) return;
+	cancel = maybe_reorder_list(liststr);
     } else if (a == GR_PLOT) {
-	opt |= (OPT_T | OPT_O);
+	int k = mdata_selection_count();
+
+	if (k > 1) {
+	    const char *opts[] = {
+		N_("on a single graph"),
+		N_("in separate small graphs")
+	    };
+	    int ret;
+
+	    ret = radio_dialog(_("gretl: define graph"), _("Plot the series"), 
+			       opts, 2, 0, 0);
+	    if (ret < 0) {
+		cancel = 1;
+	    } else if (ret == 0) {
+		opt |= (OPT_T | OPT_O);
+	    } else if (ret == 1) {
+		opt |= OPT_L;
+	    }
+	} else {
+	    opt |= (OPT_T | OPT_O);
+	}
     }
 
-    gretl_command_sprintf("gnuplot%s%s", liststr, 
-			  (a == GR_PLOT)? " --time-series" : "");
+    if (!cancel) {
+	int err;
+
+	if (opt & OPT_L) {
+	    gretl_command_sprintf("scatters %s --with-lines", liststr);
+	} else {
+	    gretl_command_sprintf("gnuplot%s%s", liststr, 
+				  (a == GR_PLOT)? " --time-series" : "");
+	}
+
+	err = check_and_record_command();
+
+	if (!err) {
+	    if (opt & OPT_L) {
+		err = multi_scatters(libcmd.list, (const double **) Z, 
+				     datainfo, opt);
+	    } else {		
+		err = gnuplot(libcmd.list, NULL, (const double **) Z, 
+			      datainfo, opt);
+	    } 
+	    gui_graph_handler(err);
+	}
+    }
+
     free(liststr);
-
-    if (check_and_record_command()) {
-	return;
-    }
-
-    err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, opt);
-
-    gui_graph_handler(err);
 }
 
 static int all_missing (int v)
@@ -5257,7 +5284,7 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
 
 /* Execute a script from the buffer in a viewer window.  This may be a
    regular script, or part of one, or it may be the "command log" from
-   a GUI session.  */
+   a GUI session. */
 
 static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 {
@@ -5339,7 +5366,7 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
     }
 
-    /* re-establish command echo (??) */
+    /* re-establish command echo (?) */
     set_gretl_echo(1);
 }
 
@@ -5347,7 +5374,7 @@ void do_run_script (GtkWidget *w, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     gchar *buf;
-    int sel;
+    int sel = 0;
 
     /* were we passed a single line for execution? */
     buf = g_object_get_data(G_OBJECT(w), "script-line");
