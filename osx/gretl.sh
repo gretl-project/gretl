@@ -21,8 +21,8 @@ export "GDK_PIXBUF_MODULE_FILE=$TOP/etc/gtk-2.0/gdk-pixbuf.loaders"
 export "PANGO_RC_FILE=$TOP/etc/pangorc"
 export "GTK_IM_MODULE_FILE=$TOP/etc/gtk-2.0/gtk.immodules"
 export "DYLD_LIBRARY_PATH=$TOP/lib"
-export "XDG_DATA_DIRS=$TOP/share"
-export "XDG_DATA_HOME=$TOP/share"
+# export "XDG_DATA_DIRS=$TOP/share"
+# export "XDG_DATA_HOME=$TOP/share"
 
 # location of gnuplot help file
 export "GNUHELP=$TOP/share/gnuplot/4.2/gnuplot.gih"
