@@ -23,8 +23,6 @@ version 1.7.1, in progress
 - OS X: replace fftw library with an i386 build
 - Toolbar: use GTK stock icons where possible
 - Gnuplot commands editor: fix behavior of save button
-- Make plot commands editor available via graph editing
-  dialog
 - Time series plot, more than one series: add option to show
   separate small plots
 - Output from script execution: reuse existing output window

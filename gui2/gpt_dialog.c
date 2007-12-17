@@ -752,11 +752,13 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     }
 }
 
+#if 0
 static void gp_commands_window (GtkWidget *w, GPT_SPEC *spec)
 {
     remove_png_term_from_plotfile_by_name(spec->fname);
     view_file(spec->fname, 1, 0, 78, 400, GR_PLOT);
 }
+#endif
 
 /* PNG anti-aliasing switch */
 
@@ -1021,6 +1023,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	}
     }
 
+#if 0 /* this is not thought out properly */
     if (1) {
 	GtkWidget *hsep = gtk_hseparator_new();
 	GtkWidget *hbox, *button;
@@ -1042,6 +1045,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(button);
 	gtk_widget_show(hbox);
     }
+#endif
 }
 
 static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec) 

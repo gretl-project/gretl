@@ -712,7 +712,8 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
     }
 
     if ((vwin->role == EDIT_SCRIPT || vwin->role == EDIT_HEADER ||
-	 vwin->role == EDIT_NOTES) && CONTENT_IS_CHANGED(vwin)) {
+	 vwin->role == EDIT_NOTES || vwin->role == GR_PLOT) && 
+	CONTENT_IS_CHANGED(vwin)) {
 	resp = query_save_text(NULL, NULL, vwin);
     }
 
