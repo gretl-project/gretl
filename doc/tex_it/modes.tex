@@ -35,20 +35,20 @@ figura~\ref{fig-scriptwin}).
 
 La barra degli strumenti in cima alla finestra comandi offre le
 seguenti funzioni (da sinistra a destra): (1) Salva il file; (2) Salva
-il file con un nome specifico; (3) Stampa il file (solo in Windows o
-nel desktop gnome); (4) Esegui i comandi nel file; (5) Copia il testo
+il file con un nome specifico; (3) Stampa il file (questo comando non è
+disponibile su tutte le piattaforme); (4) Esegui i comandi nel file; (5) Copia il testo
 selezionato; (6) Incolla il testo selezionato; (7) Cerca e sostituisci
 testo; (8) Annulla l'ultimo comando Incolla o Sostituisci; (9) Aiuto
 (spostando il cursore sulla parola di un comando e premendo il punto
 di domanda si ottiene aiuto su quel comando); (10) Chiudi la finestra.
 
-Quando si esegue lo script, i risultati dei comandi compariranno in
-un'unica finestra, dove possono essere modificati, salvati, o copiati negli
-appunti. È possibile eseguire uno script facendo clic sull'icone ``Esegui'' o
-premendo Ctrl-r. Per conoscere meglio le possibilità fornite dagli script, è possibile
-usare il comando del menù ``Aiuto, Guida comandi'', oppure eseguire la
-versione a riga di comando del programma \app{gretlcli} ed eseguire il comando
-``help'', oppure ancora consultare la \GCR.  
+Quando si esegue lo script, facendo clic sull'icona ``Esegui'' o premendo
+Ctrl-r, i risultati dei comandi compariranno in un'unica finestra, dove possono
+essere modificati, salvati, o copiati negli appunti.  Per conoscere meglio le
+possibilità fornite dagli script, è possibile usare il comando del menù ``Aiuto,
+Guida comandi'', oppure eseguire la versione a riga di comando del programma
+\app{gretlcli} ed eseguire il comando ``help'', oppure ancora consultare la
+\GCR.  
  
 Se si esegue lo script dopo averne selezionato una parte,
 \app{gretl} eseguirà solo quella parte. In più, se si vuole eseguire solo la
@@ -60,7 +60,13 @@ Visto che \app{gretl} permette di tenere aperte molte finestre di script nello
 stesso momento, è possibile mantenere i propri script ordinati in piccoli file
 separati.}.
 
-In aggiunta, il pacchetto \app{gretl} contiene più di 70 script ``di
+Facendo clic col tasto destro del mouse nella finestra di modifica dello script
+si apre un menù pop-up, che permette di eseguire la riga su cui si trova il
+cursore, oppure una regione dello script selezionata in precedenza. Se lo script
+è modificabile, questo menù offre anche la possibilità di aggiungere o rimuovere
+i marcatori di commento dall'inizio della riga, o delle righe.
+
+Il pacchetto \app{gretl} contiene più di 70 script ``di
 esempio'': la maggior parte di essi è relativa a Ramanathan (2002),
 ma essi possono essere utili anche per studiare le possibilità di
 scripting offerte da \app{gretl}, oltre ad alcuni aspetti della
