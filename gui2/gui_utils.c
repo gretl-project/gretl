@@ -2293,7 +2293,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 			 G_CALLBACK(script_key_handler), vwin);
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(edit_script_help), vwin);
-	if (role == EDIT_SCRIPT) {
+	if (role == EDIT_SCRIPT || role == VIEW_SCRIPT) {
 	    g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
 			     G_CALLBACK(script_popup_handler), 
 			     vwin);

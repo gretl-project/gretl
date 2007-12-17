@@ -65,6 +65,8 @@ void do_menu_op (gpointer data, guint action, GtkWidget *w);
 
 void do_run_script (GtkWidget *w, gpointer data);
 
+void run_script_fragment (windata_t *vwin, gchar *buf);
+
 void gui_errmsg (const int errcode);
 
 void register_graph (void);

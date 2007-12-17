@@ -5259,28 +5259,17 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
    regular script, or part of one, or it may be the "command log" from
    a GUI session.  */
 
-void do_run_script (GtkWidget *w, gpointer p)
+static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 {
-    windata_t *vwin = (windata_t *) p;
     GdkDisplay *disp;
     GdkCursor *cursor;
     GdkWindow *wcurr = NULL;
     GdkWindow *wtxt;
     gpointer vp = NULL;
-    gchar *buf;
     gint x, y;
     PRN *prn;
-    int shown = 0, sel = 0;
+    int shown = 0;
     int code, err;
-
-    /* were we passed a single line for execution? */
-    buf = g_object_get_data(G_OBJECT(w), "script-line");
-
-    if (buf != NULL) {
-	sel = 1;
-    } else {
-	buf = textview_get_selection_or_all(vwin->w, &sel);
-    }
 
     if (buf == NULL || *buf == '\0') {
 	warnbox("No commands to execute");
@@ -5352,6 +5341,29 @@ void do_run_script (GtkWidget *w, gpointer p)
 
     /* re-establish command echo (??) */
     set_gretl_echo(1);
+}
+
+void do_run_script (GtkWidget *w, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    gchar *buf;
+    int sel;
+
+    /* were we passed a single line for execution? */
+    buf = g_object_get_data(G_OBJECT(w), "script-line");
+
+    if (buf != NULL) {
+	sel = 1;
+    } else {
+	buf = textview_get_selection_or_all(vwin->w, &sel);
+    }
+
+    real_do_run_script(vwin, buf, sel);
+}
+
+void run_script_fragment (windata_t *vwin, gchar *buf)
+{
+    real_do_run_script(vwin, buf, 1);
 }
 
 void do_open_script (void)

@@ -1166,7 +1166,15 @@ static void comment_or_uncomment_text (GtkWidget *w, gpointer p)
     }
 }
 
-GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
+static void exec_script_text (GtkWidget *w, gpointer p)
+{
+    struct textcomm *tc = (struct textcomm *) p;
+
+    run_script_fragment(tc->vwin, tc->chunk);
+    tc->chunk = NULL; /* will be freed already */
+}
+
+static GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
 {
     const char *items[] = {
 	N_("Comment line"),
@@ -1174,10 +1182,9 @@ GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
 	N_("Comment region"),
 	N_("Uncomment region"),
     };
-    GtkWidget *pmenu = gtk_menu_new();
+    GtkWidget *pmenu = NULL;
     GtkWidget *item;
     struct textcomm *tc;
-    int i;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), NULL);
 
@@ -1186,13 +1193,16 @@ GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
 	return NULL;
     }
 
+    *ptc = tc;
     tc->vwin = vwin;
     tc->buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 
     if (gtk_text_buffer_get_selection_bounds(tc->buf, &tc->start, &tc->end)) {
 	tc->selected = 1;
 	gtk_text_iter_set_line_offset(&tc->start, 0);
-	gtk_text_iter_forward_to_line_end(&tc->end);
+	if (!gtk_text_iter_ends_line(&tc->end)) {
+	    gtk_text_iter_forward_to_line_end(&tc->end);
+	}
 	tc->chunk = gtk_text_buffer_get_text(tc->buf, &tc->start, &tc->end, FALSE);
     } else {
 	tc->selected = 0;
@@ -1207,25 +1217,44 @@ GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
 
     tc->commented = text_is_commented(tc->chunk);
 
-    if (tc->commented < 0) {
-	/* mixed, commented and uncommented */
-	g_free(tc->chunk);
-	free(tc);
-	return NULL;
+    if (tc->commented <= 0 || (vwin->role == EDIT_SCRIPT && tc->commented >= 0)) {
+	pmenu = gtk_menu_new();
     }
 
-    *ptc = tc;
+    if (tc->commented <= 0) {
+	/* we have some uncommented material: allow exec option */
+	if (tc->selected) {
+	    item = gtk_menu_item_new_with_label(_("Execute region"));
+	} else {
+	    item = gtk_menu_item_new_with_label(_("Execute line"));
+	}
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(exec_script_text),
+			 *ptc);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+    }
 
-    i = (tc->selected && !tc->commented)? 2 : 
-	(tc->selected && tc->commented)? 3 :
-	(!tc->selected && !tc->commented)? 0 : 1;
+    if (vwin->role == EDIT_SCRIPT && tc->commented >= 0) {
+	/* material is either all commented or all uncommented:
+	   allow comment/uncomment option */
+	int i = (tc->selected && !tc->commented)? 2 : 
+	    (tc->selected && tc->commented)? 3 :
+	    (!tc->selected && !tc->commented)? 0 : 1;
 
-    item = gtk_menu_item_new_with_label(_(items[i]));
-    g_signal_connect(G_OBJECT(item), "activate",
-		     G_CALLBACK(comment_or_uncomment_text),
-		     *ptc);
-    gtk_widget_show(item);
-    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+	item = gtk_menu_item_new_with_label(_(items[i]));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(comment_or_uncomment_text),
+			 *ptc);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+    }
+
+    if (pmenu == NULL) {
+	g_free(tc->chunk);
+	free(tc);
+	*ptc = NULL;
+    }
 
     return pmenu;
 }
