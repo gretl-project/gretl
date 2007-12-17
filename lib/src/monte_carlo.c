@@ -377,6 +377,8 @@ int ok_in_loop (int c)
 	c == CORR ||
 	c == CRITERIA || 
 	c == DIFF || 
+	c == FCAST ||
+	c == FCASTERR ||
 	c == HURST ||	
 	c == KPSS ||
         c == LABELS ||
@@ -401,7 +403,7 @@ int ok_in_loop (int c)
 	c == SUMMARY ||
 	c == VARLIST ||
 	c == VARTEST ||
-	c == XTAB ) {
+	c == XTAB) {
 	return 1;
     }
 
