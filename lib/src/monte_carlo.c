@@ -377,11 +377,11 @@ int ok_in_loop (int c)
 	c == GNUPLOT ||
 	c == HURST ||
 	c == INCLUDE ||
+	c == LEVERAGE ||
 	c == MODELTAB ||
 	c == NULLDATA ||
 	c == OPEN ||
 	c == QLRTEST ||
-	c == RESET ||
 	c == RMPLOT ||
 	c == RUN ||
 	c == SCATTERS ||

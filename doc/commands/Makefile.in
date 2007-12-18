@@ -133,6 +133,7 @@ textables: tables
 	./tables --internals > ../tex/tabinternals.tex
 	./tables --functions > ../tex/tabfunctions.tex
 	./tables --loopcmds > ../tex/tabloopcmds.tex
+	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex
 	touch $@
 
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
