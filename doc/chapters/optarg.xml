@@ -25,12 +25,10 @@
 
     <para>
       &mdash; Starts the program with the specified datafile in its
-      workspace. The data file may be in native
-      <application>gretl</application> format, CSV format, or BOX1
-      format (see the &GUG;).  The program
-      will try to detect the format of the file and treat it
-      appropriately. See also <xref linkend="path-search"/> below for
-      path-searching behavior.
+	workspace. The data file may be in any of several formats (see the
+	&GUG;); the program will try to detect the format of the file and
+	treat it appropriately. See also <xref linkend="path-search"/>
+	below for path-searching behavior.
     </para>
 
     <para>
@@ -62,12 +60,13 @@
     <para>
       <command>gretl --run</command>
       <replaceable>scriptfile</replaceable> (or <command>gretl
-	-r</command> <replaceable>scriptfile</replaceable>)</para>
+	-r</command> <replaceable>scriptfile</replaceable>)
+      </para>
 
     <para>&mdash; Start the program and open a window displaying the
-      specified script file, ready to run.  See <xref
-	linkend="path-search"/> below for path-searching
-      behavior.</para>
+	specified script file, ready to run.  See <xref
+	linkend="path-search"/> below for path-searching behavior.
+      </para>
 
     <para>
       <command>gretl --db</command>
@@ -155,22 +154,12 @@
       <application>gretl</application> use the period
       regardless.</para>
 
-    <para>Finally, there are some binary choices: Under the
-      <quote>Open/Save path</quote> tab you can set where
-      <application>gretl</application> looks by default when you go to
-      open or save a file &mdash; either the
-      <application>gretl</application> user directory or the current
-      working directory.  Under the <quote>Data files</quote> tab you
-      can set the default filename suffix for data files.  The
-      standard suffix is <literal>.gdt</literal> but if you wish you
-      can set this to <literal>.dat</literal>, which was standard in
-      earlier versions of the program.  If you set the default to
-      <literal>.dat</literal> then data files will be saved in the
-      <quote>traditional</quote> format (see the &GUG;). Also under
-      the <quote>Data files</quote> tab you can select the action for
-      the little folder icon on the toolbar: whether it should open a
-      listing of the data files associated with Ramanathan's textbook,
-      or those associated with Wooldridge's text.</para>
+    <para>Under the <quote>Open/Save path</quote> tab you can set where
+	<application>gretl</application> looks by default when you go to
+	open or save a file &mdash; either the
+	<application>gretl</application> user directory or the current
+	working directory.
+      </para>
 
     <para>Under the <quote>General</quote> tab you may select the
       algorithm used by <application>gretl</application> for
@@ -356,9 +345,9 @@
 	found (using the standard Windows program
 	<application>regedit.exe</application>) under
 	<literal>Software\gretl</literal> in
-	<literal>HKEY_CLASSES_ROOT</literal> (the main
-	<application>gretl</application> directory and the command to
-	invoke <application>gnuplot</application>) and
+	<literal>HKEY_LOCAL_MACHINE</literal> (the main
+	<application>gretl</application> directory and the paths to
+	  various auxiliary programs) and
 	<literal>HKEY_CURRENT_USER</literal> (all other configurable
 	variables).</para>
 

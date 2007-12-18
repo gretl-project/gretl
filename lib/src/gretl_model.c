@@ -3732,33 +3732,33 @@ int is_model_cmd (const char *s)
 	return 0;
     }
 
-    if (!strcmp(s, "ols")  ||
-	!strcmp(s, "mpols")  ||
-	!strcmp(s, "corc") ||
-	!strcmp(s, "hilu") ||
-	!strcmp(s, "wls")  ||
-	!strcmp(s, "pwe")  ||
-	!strcmp(s, "hccm") ||
-	!strcmp(s, "heckit")  ||
-	!strcmp(s, "hsk")  ||
-	!strcmp(s, "add")  ||
-	!strcmp(s, "lad")  ||
-	!strcmp(s, "omit") ||
-	!strcmp(s, "tsls") ||
-	!strcmp(s, "logit")  ||
-	!strcmp(s, "probit") ||
-	!strcmp(s, "tobit") ||
-	!strcmp(s, "poisson") ||
-	!strcmp(s, "panel") ||
-	!strcmp(s, "pooled") ||
-	!strcmp(s, "garch") ||
-	!strcmp(s, "logistic") ||
-	!strcmp(s, "endnls") ||
-	!strcmp(s, "arma") ||
-	!strcmp(s, "arima") ||
+    if (!strcmp(s, "add")  ||
+	!strcmp(s, "ar") ||
 	!strcmp(s, "arbond") ||
 	!strcmp(s, "arch") ||
-	!strcmp(s, "ar")) {
+	!strcmp(s, "arima") ||
+	!strcmp(s, "arma") ||
+	!strcmp(s, "corc") ||
+	!strcmp(s, "endnls") ||
+	!strcmp(s, "garch") ||
+	!strcmp(s, "hccm") ||
+	!strcmp(s, "heckit")  ||
+	!strcmp(s, "hilu") ||
+	!strcmp(s, "hsk")  ||
+	!strcmp(s, "lad")  ||
+	!strcmp(s, "logistic") ||
+	!strcmp(s, "logit")  ||
+	!strcmp(s, "mpols")  ||
+	!strcmp(s, "ols") ||   
+	!strcmp(s, "omit") ||
+	!strcmp(s, "panel") ||
+	!strcmp(s, "poisson") ||
+	!strcmp(s, "pooled") ||
+	!strcmp(s, "probit") ||
+	!strcmp(s, "pwe")  ||
+	!strcmp(s, "tobit") ||
+	!strcmp(s, "tsls") ||
+	!strcmp(s, "wls")) {
 	ret = 1;
     }
 

@@ -169,12 +169,32 @@ int print_loop_commands (void)
     return err;
 }
 
+int print_non_loop_commands (void)
+{
+    char **S = NULL;
+    int i, n = 0;
+    int err = 0;
+
+    for (i=0; i<NC && !err; i++) {
+	if (!ok_in_loop(i) && !(HIDDEN_COMMAND(i))) {
+	    err = push_string_on_array(&S, gretl_command_word(i), n++);
+	}
+    }
+
+    if (!err) {
+	sort_and_print_tabular(S, n, 8);
+    }
+
+    return err;
+}
+
 enum {
     NOTHING,
     CONSTANTS,
     INTERNALS,
     FUNCTIONS,
-    LOOPCMDS
+    LOOPCMDS,
+    NONLOOPCMDS,
 };    
 
 int ok_opt (const char *str)
@@ -184,6 +204,7 @@ int ok_opt (const char *str)
 	"--internals",
 	"--functions",
 	"--loopcmds",
+	"--nonloopcmds",
 	NULL
     };
     int i;
@@ -225,6 +246,8 @@ int main (int argc, char **argv)
 	print_func_words();
     } else if (opt == LOOPCMDS) {
 	print_loop_commands();
+    } else if (opt == NONLOOPCMDS) {
+	print_non_loop_commands();
     } else {
 	/* impossible */
 	usage(argv[0]);

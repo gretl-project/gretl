@@ -3595,7 +3595,7 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 			      PRN *prn, gretlopt opt)
 {
-    if (pmod->errcode == 0) {
+    if (pmod->errcode == 0 && !gretl_looping()) {
 	printmodel(pmod, pdinfo, opt, prn);
     }
 
@@ -3983,14 +3983,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case GRAPH:
-	fprintf(stderr, "Calling ascii_graph\n");
-	ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
-		    cmd->opt, prn);
+	err = ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
+			  cmd->opt, prn);
 	break;
 
     case PLOT:
-	ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
-		    (cmd->opt | OPT_T), prn);
+	err = ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
+			  (cmd->opt | OPT_T), prn);
 	break;
 
     case RMPLOT:

@@ -163,18 +163,12 @@ struct LOOPSET_ {
 
 #define is_list_loop(l) (l->listname[0] != '\0')
 
-static void gretl_loop_init (LOOPSET *loop);
+static void controller_init (controller *clr);
 static int gretl_loop_prepare (LOOPSET *loop);
 static void loop_model_free (LOOP_MODEL *lmod);
 static void loop_print_free (LOOP_PRINT *lprn);
 static void loop_store_free (LOOPSET *loop);
 static void controller_free (controller *clr);
-static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
-			      const DATAINFO *pdinfo, PRN *prn);
-static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *lmod, 
-			      int c, int n, PRN *prn);
-static void print_loop_prn (LOOP_PRINT *lprn, int n,
-			    const DATAINFO *pdinfo, PRN *prn);
 static int loop_store_save (LOOPSET *loop, PRN *prn);
 static void set_active_loop (LOOPSET *loop);
 
@@ -336,11 +330,30 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
     }
 }
 
-#define OK_LOOP_MODEL(c) (c == ARMA || c == CORC || c == GARCH || \
-                          c == HCCM || c == HILU || c == HSK || \
-                          c == LAD || c == OLS || c == TSLS || \
-                          c == PWE || c == WLS || c == MPOLS || \
-                          c == TOBIT)
+#define plain_model_ci(c) (c == AR || \
+			   c == ARBOND || \
+			   c == ARCH || \
+			   c == ARMA || \
+			   c == CORC || \
+			   c == GARCH || \
+			   c == HCCM ||	 \
+			   c == HECKIT || \
+			   c == HILU || \
+                           c == HSK || \
+                           c == LAD || \
+                           c == LOGISTIC || \
+                           c == LOGIT || \
+                           c == MPOLS || \
+                           c == OLS ||  \
+                           c == PANEL || \
+                           c == POISSON || \
+                           c == PROBIT || \
+                           c == PWE || \
+                           c == TOBIT || \
+                           c == TSLS || \
+                           c == VAR || \
+                           c == VECM || \
+                           c == WLS)
 
 /**
  * ok_in_loop:
@@ -352,88 +365,35 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 
 int ok_in_loop (int c)
 {
-    if (c == APPEND ||
-        c == GENR ||
-	c == LOOP ||
-	c == STORE ||
-	c == PRINT ||
-	c == PRINTF ||
-        c == SPRINTF ||
-	c == PVALUE ||
-	c == SMPL ||
-	c == IF ||
-	c == ELSE ||
-	c == ENDIF ||
-	c == BREAK ||
-	c == FUNCERR ||
-	c == ENDLOOP) { 
-	return 1;
+    if (c == BXPLOT ||
+	c == CORRGM ||
+	c == CUSUM ||
+	c == DATA ||
+	c == DATAMOD ||
+	c == DELEET ||
+	c == EQNPRINT ||
+	c == FIT ||
+	c == FUNC ||
+	c == GNUPLOT ||
+	c == HURST ||
+	c == INCLUDE ||
+	c == MODELTAB ||
+	c == NULLDATA ||
+	c == OPEN ||
+	c == QLRTEST ||
+	c == RESET ||
+	c == RMPLOT ||
+	c == RUN ||
+	c == SCATTERS ||
+	c == SETMISS ||
+	c == SETOBS ||
+	c == TABPRINT ||
+	c == VIF ||
+	c == XCORRGM) {
+	return 0;
     }
 
-    /* "simple_commands" */
-    if (c == ADF || 
-	c == COINT || 
-	c == COINT2 || 
-	c == CORR ||
-	c == CRITERIA || 
-	c == DIFF || 
-	c == FCAST ||
-	c == FCASTERR ||
-	c == HURST ||	
-	c == KPSS ||
-        c == LABELS ||
-	c == LAGS || 
-	c == LDIFF || 
-	c == LOGS ||
-	c == MEANTEST || 
-	c == MULTIPLY || 
-	c == OUTFILE ||
-	c == PCA ||
-	c == PERGM ||
-	c == REMEMBER ||
-        c == RENAME || 
-	c == RHODIFF ||
-	c == RUNS || 
-        c == SET ||
-	c == SETINFO ||
-	c == SHELL || 
-	c == SPEARMAN || 
-        c == STRING ||
-	c == SQUARE || 
-	c == SUMMARY ||
-	c == VARLIST ||
-	c == VARTEST ||
-	c == XTAB) {
-	return 1;
-    }
-
-    /* frequencies --- no graph allowed */
-    if (c == FREQ) {
-	return 1;
-    }
-
-    /* modeling commands */
-    if (OK_LOOP_MODEL(c)) {
-	return 1;
-    }
-
-    /* vector models */
-    if (c == VAR || c == VECM) {
-	return 1;
-    }
-    
-    /* nonlinear models */
-    if (c == NLS || c == MLE || c == GMM || c == END) {
-	return 1;
-    }
-
-    /* some model tests */
-    if (c == ADD || c == OMIT || c == TESTUHAT || 
-	c == RESTRICT) {
-	return 1;
-    }
-
-    return 0;
+    return 1;
 }
 
 static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
@@ -459,6 +419,52 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     loop->n_children += 1;
 
     return 0;
+}
+
+static void gretl_loop_init (LOOPSET *loop)
+{
+#if LOOP_DEBUG
+    fprintf(stderr, "gretl_loop_init: initing loop at %p\n", (void *) loop);
+#endif
+
+    loop->flags = 0;
+    loop->level = 0;
+
+    loop->itermax = 0;
+    loop->iter = 0;
+    loop->err = 0;
+    loop->ichar = 0;
+    loop->ival = 0;
+    loop->brk = 0;
+    *loop->listname = '\0';
+
+    controller_init(&loop->init);
+    controller_init(&loop->test);
+    controller_init(&loop->delta);
+    controller_init(&loop->final);
+
+    loop->n_cmds = 0;
+    loop->n_models = 0;
+    loop->n_loop_models = 0;
+    loop->n_prints = 0;
+
+    loop->lines = NULL;
+    loop->ci = NULL;
+
+    loop->eachstrs = NULL;
+
+    loop->models = NULL;
+    loop->lmodels = NULL;
+    loop->prns = NULL;
+
+    loop->storefile[0] = '\0';
+    loop->storeopt = OPT_NONE;
+    loop->sZ = NULL;
+    loop->sdinfo = NULL;
+
+    loop->parent = NULL;
+    loop->children = NULL;
+    loop->n_children = 0;
 }
 
 static LOOPSET *gretl_loop_new (LOOPSET *parent)
@@ -1381,52 +1387,6 @@ static void controller_free (controller *clr)
     }
 }
 
-static void gretl_loop_init (LOOPSET *loop)
-{
-#if LOOP_DEBUG
-    fprintf(stderr, "gretl_loop_init: initing loop at %p\n", (void *) loop);
-#endif
-
-    loop->flags = 0;
-    loop->level = 0;
-
-    loop->itermax = 0;
-    loop->iter = 0;
-    loop->err = 0;
-    loop->ichar = 0;
-    loop->ival = 0;
-    loop->brk = 0;
-    *loop->listname = '\0';
-
-    controller_init(&loop->init);
-    controller_init(&loop->test);
-    controller_init(&loop->delta);
-    controller_init(&loop->final);
-
-    loop->n_cmds = 0;
-    loop->n_models = 0;
-    loop->n_loop_models = 0;
-    loop->n_prints = 0;
-
-    loop->lines = NULL;
-    loop->ci = NULL;
-
-    loop->eachstrs = NULL;
-
-    loop->models = NULL;
-    loop->lmodels = NULL;
-    loop->prns = NULL;
-
-    loop->storefile[0] = '\0';
-    loop->storeopt = OPT_NONE;
-    loop->sZ = NULL;
-    loop->sdinfo = NULL;
-
-    loop->parent = NULL;
-    loop->children = NULL;
-    loop->n_children = 0;
-}
-
 static int gretl_loop_prepare (LOOPSET *loop)
 {
 #ifdef ENABLE_GMP
@@ -1860,65 +1820,6 @@ static void loop_print_update (LOOPSET *loop, int i,
 #endif
 }
 
-/**
- * print_loop_results:
- * @loop: pointer to loop struct.
- * @pdinfo: data information struct.
- * @prn: gretl printing struct.
- *
- * Print out the results after completion of the loop @loop.
- */
-
-static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
-				PRN *prn)
-{
-    char linecpy[MAXLINE];
-    int iters = loop->iter;
-    int i, j, k;
-
-    if (loop->type != COUNT_LOOP && !(loop_is_quiet(loop))) {
-	pprintf(prn, _("\nNumber of iterations: %d\n\n"), iters);
-    }
-
-    j = 0;
-    k = 0;
-
-    for (i=0; i<loop->n_cmds; i++) {
-#if LOOP_DEBUG
-	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
-		i+1, i, loop->lines[i]);
-#endif
-	if (!loop_is_progressive(loop) && loop->ci[i] == OLS) {
-	    gretlopt opt;
-
-	    strcpy(linecpy, loop->lines[i]);
-	    opt = get_gretl_options(linecpy, NULL);
-	    
-	    if (opt & OPT_P) {
-		/* deferred printing of model was requested */
-		MODEL *pmod = loop->models[j++];
-
-		set_model_id(pmod);
-		printmodel(pmod, pdinfo, opt, prn);
-	    }	    
-	}
-
-	if (loop_is_progressive(loop)) {
-	    if (OK_LOOP_MODEL(loop->ci[i])) {
-		print_loop_model(&loop->lmodels[j], iters, pdinfo, prn);
-		loop_model_zero(&loop->lmodels[j]);
-		j++;
-	    } else if (loop->ci[i] == PRINT) {
-		print_loop_prn(&loop->prns[k], iters, pdinfo, prn);
-		loop_print_zero(&loop->prns[k]);
-		k++;
-	    } else if (loop->ci[i] == STORE) {
-		loop_store_save(loop, prn);
-	    }
-	}
-    }
-}
-
 static void loop_model_free (LOOP_MODEL *lmod)
 {
 #if LOOP_DEBUG
@@ -2123,42 +2024,11 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
     return err;
 }
 
-static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
-			      const DATAINFO *pdinfo, PRN *prn)
-{
-    char startdate[OBSLEN], enddate[OBSLEN];
-    int i;
-
-    ntodate(startdate, lmod->model0->t1, pdinfo);
-    ntodate(enddate, lmod->model0->t2, pdinfo);
-
-    pputc(prn, '\n');
-    pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(lmod->model0, prn)), lmod->model0->nobs, 
-	    startdate, enddate);
-    print_model_vcv_info(lmod->model0, prn);
-    pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
-    pprintf(prn, _("Dependent variable: %s\n\n"), 
-	    pdinfo->varname[lmod->model0->list[1]]);
-
-    pputs(prn, _("                     mean of      std. dev. of     mean of"
-		 "     std. dev. of\n"
-		 "                    estimated      estimated"
-		 "      estimated      estimated\n"
-		 "      Variable     coefficients   coefficients   std. errors"
-		 "    std. errors\n\n"));
-
-    for (i=0; i<lmod->model0->ncoeff; i++) {
-	print_loop_coeff(pdinfo, lmod, i, loopnum, prn);
-    }
-
-    pputc(prn, '\n');
-}
-
 static void print_loop_coeff (const DATAINFO *pdinfo, 
 			      const LOOP_MODEL *lmod, 
 			      int c, int n, PRN *prn)
 {
+    char pname[VNAMELEN];
 #ifdef ENABLE_GMP
     mpf_t c1, c2, m, sd1, sd2;
     unsigned long ln = n;
@@ -2199,8 +2069,8 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	}
     }
 
-    pprintf(prn, "%*s", VNAMELEN - 1, 
-	    pdinfo->varname[lmod->model0->list[c+2]]);
+    gretl_model_get_param_name(lmod->model0, pdinfo, c, pname);
+    pprintf(prn, "%*s", VNAMELEN - 1, pname);
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
 	    mpf_get_d(c2), mpf_get_d(sd2));
 
@@ -2228,11 +2098,43 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	sd2 = (sd2 <= 0.0)? 0 : sqrt((double) sd2);
     }
 
-    pprintf(prn, "%*s", VNAMELEN - 1, 
-	   pdinfo->varname[lmod->model0->list[c+2]]);
+    gretl_model_get_param_name(lmod->model0, pdinfo, c, pname);
+    pprintf(prn, "%*s", VNAMELEN - 1, pname);
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
 	    (double) m2, (double) sd2);
 #endif
+}
+
+static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
+			      const DATAINFO *pdinfo, PRN *prn)
+{
+    char startdate[OBSLEN], enddate[OBSLEN];
+    int i;
+
+    ntodate(startdate, lmod->model0->t1, pdinfo);
+    ntodate(enddate, lmod->model0->t2, pdinfo);
+
+    pputc(prn, '\n');
+    pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
+	    _(estimator_string(lmod->model0, prn)), lmod->model0->nobs, 
+	    startdate, enddate);
+    print_model_vcv_info(lmod->model0, prn);
+    pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
+    pprintf(prn, _("Dependent variable: %s\n\n"), 
+	    gretl_model_get_depvar_name(lmod->model0, pdinfo));
+
+    pputs(prn, _("                     mean of      std. dev. of     mean of"
+		 "     std. dev. of\n"
+		 "                    estimated      estimated"
+		 "      estimated      estimated\n"
+		 "      Variable     coefficients   coefficients   std. errors"
+		 "    std. errors\n\n"));
+
+    for (i=0; i<lmod->model0->ncoeff; i++) {
+	print_loop_coeff(pdinfo, lmod, i, loopnum, prn);
+    }
+
+    pputc(prn, '\n');
 }
 
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
@@ -2291,6 +2193,65 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
     }
 #endif
     pputc(prn, '\n');
+}
+
+/**
+ * print_loop_results:
+ * @loop: pointer to loop struct.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print out the results after completion of the loop @loop.
+ */
+
+static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
+				PRN *prn)
+{
+    char linecpy[MAXLINE];
+    int iters = loop->iter;
+    int i, j, k;
+
+    if (loop->type != COUNT_LOOP && !(loop_is_quiet(loop))) {
+	pprintf(prn, _("\nNumber of iterations: %d\n\n"), iters);
+    }
+
+    j = 0;
+    k = 0;
+
+    for (i=0; i<loop->n_cmds; i++) {
+#if LOOP_DEBUG
+	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
+		i+1, i, loop->lines[i]);
+#endif
+	if (!loop_is_progressive(loop) && loop->ci[i] == OLS) {
+	    gretlopt opt;
+
+	    strcpy(linecpy, loop->lines[i]);
+	    opt = get_gretl_options(linecpy, NULL);
+	    
+	    if (opt & OPT_P) {
+		/* deferred printing of model was requested */
+		MODEL *pmod = loop->models[j++];
+
+		set_model_id(pmod);
+		printmodel(pmod, pdinfo, opt, prn);
+	    }	    
+	}
+
+	if (loop_is_progressive(loop)) {
+	    if (plain_model_ci(loop->ci[i])) {
+		print_loop_model(&loop->lmodels[j], iters, pdinfo, prn);
+		loop_model_zero(&loop->lmodels[j]);
+		j++;
+	    } else if (loop->ci[i] == PRINT) {
+		print_loop_prn(&loop->prns[k], iters, pdinfo, prn);
+		loop_print_zero(&loop->prns[k]);
+		k++;
+	    } else if (loop->ci[i] == STORE) {
+		loop_store_save(loop, prn);
+	    }
+	}
+    }
 }
 
 static int loop_store_save (LOOPSET *loop, PRN *prn)
@@ -2641,11 +2602,15 @@ static int next_command (char *targ, LOOPSET *loop, int *j)
     return ret;
 }
 
+#define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
+			       c == NLS ||  \
+			       c == MLE ||  \
+			       c == GMM)
+
 int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo) 
 {
     LOOPSET *loop = currloop;
     DATAINFO *pdinfo = *ppdinfo;
-    MODEL **models = s->models;
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
@@ -2722,9 +2687,11 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		}
 	    }
 
-	    switch (cmd->ci) {
+	    /* now branch based on the command index: some commands
+	       require special treatment
+	    */
 
-	    case LOOP:
+	    if (cmd->ci == LOOP) {
 		if (childnum < loop->n_children) {
 		    currloop = loop->children[childnum++];
 		    err = gretl_loop_exec(s, pZ, ppdinfo);
@@ -2733,34 +2700,14 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		    fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
 		    err = 1;
 		}
-		break;
-
-	    case BREAK:
+	    } else if (cmd->ci == BREAK) {
 		loop->brk = 1;
-		break;
-
-	    case ENDLOOP:
-		break;
-
-	    case FREQ:
-		/* note: no graphs in loops */
+	    } else if (cmd->ci == ENDLOOP) {
+		; /* implicit break */
+	    } else if (cmd->ci == FREQ) {
 		err = freqdist(cmd->list[1], (const double **) *pZ, pdinfo, 0, 
 			       cmd->opt, prn);
-		break;
-
-	    case ARMA:
-	    case CORC:
-	    case GARCH:
-	    case HCCM:
-	    case HILU:
-	    case HSK:
-	    case LAD:
-	    case MPOLS:
-	    case OLS:
-	    case TOBIT:
-	    case TSLS:
-	    case PWE:
-	    case WLS:
+	    } else if (plain_model_ci(cmd->ci)) {
 		/* if this is the first time round, allocate space
 		   for each loop model */
 		if (loop->iter == 0) {
@@ -2769,133 +2716,67 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		    } else if (cmd->opt & OPT_P) {
 			err = add_model_record(loop);
 		    }
-		    if (err) {
-			break;
-		    }
 		} 
-
-		/* estimate the model called for, using models[0] */
-		clear_model(models[0]);
-
-		if (cmd->ci == OLS || cmd->ci == WLS || cmd->ci == HCCM) {
-		    *models[0] = lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
-		} else if (cmd->ci == LAD) {
-		    *models[0] = lad(cmd->list, pZ, pdinfo);
-		} else if (cmd->ci == MPOLS) {
-		    *models[0] = mp_ols(cmd->list, (const double **) *pZ, pdinfo);
-		} else if (cmd->ci == HSK) {
-		    *models[0] = hsk_func(cmd->list, pZ, pdinfo);
-		} else if (cmd->ci == ARMA) {
-		    *models[0] = arma(cmd->list, cmd->param,
-				      (const double **) *pZ, pdinfo, 
-				      cmd->opt, prn);
-		} else if (cmd->ci == TOBIT) {
-		    *models[0] = tobit_model(cmd->list, pZ, pdinfo,
-					     (cmd->opt & OPT_V)? prn : NULL);
-		} else if (cmd->ci == TSLS) {
-		    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);
-		} else if (cmd->ci == GARCH) {
-		    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
-		} else if (cmd->ci == CORC || cmd->ci == HILU || cmd->ci == PWE) {
-		    double rho = estimate_rho(cmd->list, pZ, pdinfo, cmd->ci,
-					      &err, cmd->opt, prn);
-		    if (err) {
-			break;
-		    }
-		    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
+		/* estimate the model called for */
+		if (!err) {
+		    err = gretl_cmd_exec(s, pZ, ppdinfo);
+		    pdinfo = *ppdinfo;
 		}
+		if (!err) {
+		    if (loop_is_progressive(loop)) {
+			int m = lmodnum++;
 
-		if ((err = models[0]->errcode)) {
-		    break;
-		} 
-
-		if (loop_is_progressive(loop)) {
-		    int m = lmodnum++;
-
-		    if (loop->iter == 0) {
-			err = loop_model_init(&loop->lmodels[m], models[0]);
-			if (err) {
-			    gretl_errmsg_set(_("Failed to initialize model for loop\n"));
-			    break;
+			if (loop->iter == 0) {
+			    err = loop_model_init(&loop->lmodels[m], s->models[0]);
+			    if (err) {
+				gretl_errmsg_set(_("Failed to initialize model for loop\n"));
+			    }
 			}
-		    }
-		    loop_model_update(loop, m, models[0]);
-		    set_as_last_model(models[0], GRETL_OBJ_EQN);
-		} else if (cmd->opt & OPT_P) {
-		    /* deferred printing of model results */
-		    int m = modnum++;
-
-		    swap_models(models[0], loop->models[m]);
-		    loop->models[m]->ID = j;
-		    set_as_last_model(loop->models[m], GRETL_OBJ_EQN);
-		    model_count_minus();
-		} else {
-		    models[0]->ID = ++mod_id;
-		    printmodel(models[0], pdinfo, cmd->opt, prn);
-		    set_as_last_model(models[0], GRETL_OBJ_EQN);
-		}
-		break;
-
-	    case ADD:
-	    case OMIT:
-	    case GMM:
-	    case MLE:
-	    case NLS:
-		if (loop_is_progressive(loop)) {
-		    err = 1;
-		} else {
-		    goto cmd_exec;
-		}
-		break;
-
-	    case PRINT:
-		if (cmd->param[0] != '\0') {
-		    goto cmd_exec;
-		} else if (loop_is_progressive(loop)) {
-		    int p = printnum++;
-
-		    if (loop->iter == 0) {
-			err = loop_print_add(loop, cmd->list);
-			if (err) {
-			    break;
+			if (!err) {
+			    loop_model_update(loop, m, s->models[0]);
+			    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 			}
-		    }
-		    loop_print_update(loop, p, cmd->list, (const double **) *pZ, 
-				      pdinfo);
-		} else {
-		    err = printdata(cmd->list, cmd->extra,
-				    (const double **) *pZ, pdinfo, 
-				    cmd->opt, prn);
-		}
-		break;
+		    } else if (cmd->opt & OPT_F) {
+			/* deferred printing of model results */
+			int m = modnum++;
 
-	    case STORE:
-		if (loop_is_progressive(loop)) {
-		    if (loop->iter == 0) {
-			err = loop_store_init(loop, cmd->param, cmd->list, 
-					      pdinfo, cmd->opt);
-			if (err) {
-			    break;
-			}
+			swap_models(s->models[0], loop->models[m]);
+			loop->models[m]->ID = j;
+			set_as_last_model(loop->models[m], GRETL_OBJ_EQN);
+			model_count_minus();
+		    } else {
+			s->models[0]->ID = ++mod_id; /* ?? */
+			printmodel(s->models[0], pdinfo, cmd->opt, prn);
+			set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 		    }
+		}
+	    } else if (cmd->ci == PRINT && *cmd->param == '\0' &&
+		       loop_is_progressive(loop)) {
+		if (loop->iter == 0) {
+		    err = loop_print_add(loop, cmd->list);
+		}
+		if (!err) {
+		    loop_print_update(loop, printnum++, cmd->list, 
+				      (const double **) *pZ, pdinfo);
+		}
+	    } else if (loop_is_progressive(loop) && cmd->ci == STORE) {
+		if (loop->iter == 0) {
+		    err = loop_store_init(loop, cmd->param, cmd->list, 
+					  pdinfo, cmd->opt);
+		}
+		if (!err) {
 		    err = loop_store_update(cmd->list, loop, (const double **) *pZ, 
 					    pdinfo);
-		} else {
-		    goto cmd_exec;
 		}
-		break;
-
-	    default: 
-	    cmd_exec:
+	    } else if (loop_is_progressive(loop) && not_ok_in_progloop(cmd->ci)) {
+		err = 1;
+	    } else {
 		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
 		    cmd->opt |= OPT_Q;
 		}
 		err = gretl_cmd_exec(s, pZ, ppdinfo);
 		pdinfo = *ppdinfo;
-		break;
-
-	    } /* end switch on specific command number */
-
+	    }
 	} /* end execution of commands within loop */
 
 	if (err && !libset_get_bool(HALT_ON_ERR)) {
@@ -2931,9 +2812,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	void *ptr = get_last_model(&type);
 	int i;
 
-	if (type == GRETL_OBJ_EQN && models[0] != ptr) {
-	    swap_models(models[0], loop->models[loop->n_models - 1]);
-	    set_as_last_model(models[0], GRETL_OBJ_EQN);
+	if (type == GRETL_OBJ_EQN && s->models[0] != ptr) {
+	    swap_models(s->models[0], loop->models[loop->n_models - 1]);
+	    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 	}
 	for (i=0; i<loop->n_models; i++) {
 	    gretl_model_free(loop->models[i]);
