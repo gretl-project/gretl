@@ -7192,6 +7192,13 @@
 	    <lit>--long</lit> option (see <cmdref targ="print"/>).
 	  </para>
 	</li>
+	<li>	  
+	  <para><lit>loop_maxiter</lit>: one positive integer value.
+	  Sets the maximum number of iterations that a
+	  <lit>while</lit> loop is allowed before halting (see <cmdref
+	  targ="loop"/>).
+	  </para>
+	</li>
 	<li>
 	  <para><lit>max_verbose</lit>: <lit>on</lit> or
 	  <lit>off</lit> (the default). Toggles verbose output for the

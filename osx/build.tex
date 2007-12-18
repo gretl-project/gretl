@@ -57,10 +57,10 @@ The method is as follows:
 \item Configure and build gretl; install gretl into the right place
   inside \texttt{Gretl.app}; delete some extraneous files and add some
   extras.
-\item Tar up various run-time files from your Fink installation and
-  dump them into the appropriate place in \texttt{Gretl.app} (hence
-  removing the dependency on Fink at run time).  This is the trickiest
-  part.
+\item Copy various run-time files from your Fink installation into the
+  appropriate place in \texttt{Gretl.app} (hence removing the
+  dependency on Fink at run time).  Some configuration files have to
+  be modified slightly for this putpose.  This is the trickiest part.
 \item Grab the latest gretl documentation and dump it into place.
 \item Create a compressed disk image containing \texttt{Gretl.app}.
 \end{enumerate}
@@ -72,7 +72,7 @@ The following sections expand on each of the steps.
 
 \section{The Gretl.app skeleton}
 
-I'm making a gzipped tar file available.  This is mostly an empty
+I'm making a gzipped tar file available.  This is largely an empty
 directory tree, but it includes some ``generic'' files that shouldn't
 depend on the particular OS X build platform (though see the final
 section below).  This should be unzipped in some suitable location; on
@@ -89,14 +89,14 @@ you don't need to, and probably don't want to, install the
 corresponding Fink package.  A case in point is libxml2, which is
 supplied on recent OS X (but was not supplied in earlier variants).
 
-The required packages will presumably include gtk+2, gtk+2-dev and
-gmp3 and fftw3; recode may also be required; gnuplot is not required
-since we'll be building that ourselves.  Libxml2 will hopefully be
-supplied by OS X, and dlcompat doesn't seem to be needed any
-longer. It may be helpful to install wget via Fink for build purposes.
-I have also installed mpfr via Fink: this is not strictly required for
-gretl, but if it's present it enhances the functionality of the
-multiple precision plugin.
+The required packages will presumably include gtk+2, gtk+2-dev, gmp3
+and fftw3; recode may also be required; gnuplot is not required since
+we'll be building that ourselves.  Libxml2 will hopefully be supplied
+by OS X; dlcompat was required at one time, but doesn't seem to be
+needed any longer. It may be helpful to install wget via Fink for
+build purposes.  I have also installed mpfr via Fink: this is not
+strictly required for gretl, but if it's present it enhances the
+functionality of the multiple precision plugin.
 
 Since we're building gnuplot, the libraries to be installed via Fink
 also include those needed by gnuplot (see the following section).
@@ -148,7 +148,8 @@ Grab the patched source for gnuplot 4.2.2,
 Untar and configure with
 
 \begin{code}
-./configure --prefix=/Users/allin/dist/Gretl_Folder && \
+TOPDIR=/Users/allin/dist
+./configure --prefix=$TOPDIR/Gretl.app && \
 echo "#define PNG_COMMENTS 1" >> config.h 
 \end{code}
 
@@ -161,12 +162,13 @@ source.  You should use this, or a variant of it, to configure gretl.
 Here's what it looks like:
 
 \begin{code}
+TOPDIR=/Users/allin/dist
 export CFLAGS="-O2 -I/sw/include"
 export LDFLAGS=-L/sw/lib
 export CPPFLAGS=$CFLAGS
 export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/X11R6/lib/pkgconfig:/sw/lib/pkgconfig"
-export PATH=/Users/allin/dist/Gretl.app/Contents/Resources/bin:$PATH
-./configure --prefix=/Users/allin/dist/Gretl.app/Contents/Resources \
+export PATH=$TOPDIR/Gretl.app/Contents/Resources/bin:$PATH
+./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources \
   --disable-rpath --enable-build-doc
 \end{code}
 
@@ -220,7 +222,7 @@ source.  This finds dependencies that live in \texttt{/sw/lib} using
 into place. Here's \texttt{libs.sh}:
 
 \begin{code}
-TOPDIR="/Users/allin/dist"
+TOPDIR=/Users/allin/dist
 PKGDIR="$TOPDIR/Gretl.app/Contents/Resources"
 
 cd $PKGDIR

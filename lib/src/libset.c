@@ -72,6 +72,7 @@ struct set_vars_ {
     int horizon;                /* for VAR impulse responses */ 
     int bootrep;                /* bootstrap replications */
     double nls_toler;           /* NLS convergence criterion */
+    int loop_maxiter;           /* max no. of iterations in non-for loops */
     char delim;                 /* delimiter for CSV data export */
     int longdigits;             /* digits for printing data in long form */
     int vecm_norm;              /* VECM beta normalization */
@@ -120,6 +121,7 @@ struct set_vars_ {
                        !strcmp(s, HC_VERSION) || \
 		       !strcmp(s, HORIZON) || \
 		       !strcmp(s, LONGDIGITS) || \
+		       !strcmp(s, LOOP_MAXITER) || \
 		       !strcmp(s, VECM_NORM))
 
 /* global state */
@@ -271,6 +273,7 @@ static void state_vars_copy (set_vars *sv)
     sv->hp_lambda = state->hp_lambda;
     sv->horizon = state->horizon;
     sv->bootrep = state->bootrep;
+    sv->loop_maxiter = state->loop_maxiter;
     sv->nls_toler = state->nls_toler;
     sv->delim = state->delim; 
     sv->longdigits = state->longdigits; 
@@ -302,6 +305,7 @@ static void state_vars_init (set_vars *sv)
     sv->horizon = UNSET_INT;
     sv->bootrep = 1000;
     sv->nls_toler = NADBL;
+    sv->loop_maxiter = 250;
     sv->delim = UNSET_INT;
     sv->longdigits = 10;
     sv->vecm_norm = NORM_PHILLIPS;
@@ -1040,6 +1044,7 @@ static int display_settings (PRN *prn)
     libset_print_bool(FORCE_DECP, prn);
     libset_print_bool(HALT_ON_ERR, prn);
     libset_print_int(LONGDIGITS, prn);
+    libset_print_int(LOOP_MAXITER, prn);
     libset_print_bool(MAX_VERBOSE, prn);
     libset_print_bool(MESSAGES, prn);
     libset_print_bool(SHELL_OK, prn);
@@ -1370,6 +1375,8 @@ int libset_get_int (const char *s)
 	return state->horizon;
     } else if (!strcmp(s, LONGDIGITS)) {
 	return state->longdigits;
+    } else if (!strcmp(s, LOOP_MAXITER)) {
+	return state->loop_maxiter;
     } else if (!strcmp(s, VECM_NORM)) {
 	return state->vecm_norm;
     } else {
@@ -1410,6 +1417,9 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 5;
 	*max = 21;
 	*var = &state->longdigits;
+    } else if (!strcmp(s, LOOP_MAXITER)) {
+	*min = 1;
+	*var = &state->loop_maxiter;
     } else if (!strcmp(s, VECM_NORM)) {
 	*min = 0;
 	*max = NORM_MAX;

@@ -1289,22 +1289,7 @@ start_new_loop (char *s, LOOPSET *inloop,
     return loop;
 }
 
-#define DEFAULT_MAX_ITER 250
 #define MAX_FOR_TIMES  100000
-
-static int get_max_iters (void)
-{
-    static int ml = 0;
-
-    if (ml == 0) {
-	char *mlstr = getenv("GRETL_MAX_ITER");
-
-	if (mlstr != NULL && sscanf(mlstr, "%d", &ml)) ;
-	else ml = DEFAULT_MAX_ITER;
-    }
-
-    return ml;
-}
 
 static int loop_count_too_high (LOOPSET *loop)
 {
@@ -1317,9 +1302,9 @@ static int loop_count_too_high (LOOPSET *loop)
 		    MAX_FOR_TIMES);
 	    loop->err = 1;
 	}
-    } else {  
+    } else {
 	if (max_iters == 0) {
-	    max_iters = get_max_iters();
+	    max_iters = libset_get_int(LOOP_MAXITER);
 	}
 
 	if (nt >= max_iters) {

@@ -65,6 +65,7 @@ typedef enum {
 #define HP_LAMBDA    "hp_lambda"
 #define USE_LBFGS    "lbfgs"
 #define LONGDIGITS   "longdigits"
+#define LOOP_MAXITER "loop_maxiter"
 #define MAX_VERBOSE  "max_verbose"
 #define NLS_TOLER    "nls_toler"
 #define PCSE         "pcse"
