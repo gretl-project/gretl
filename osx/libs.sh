@@ -12,6 +12,8 @@ for f in `cat liblist` ; do
   cp $f ./lib
 done
 
+exit 0
+
 # The following is only a vague approximation to what needs
 # to be done: these actions will grab a lot of files that are
 # not really needed; and various configuration files need to be
