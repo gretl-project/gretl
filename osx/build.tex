@@ -89,7 +89,7 @@ you don't need to, and probably don't want to, install the
 corresponding Fink package.  A case in point is libxml2, which is
 supplied on recent OS X (but was not supplied in earlier variants).
 
-The required packages will presumably include gtk+2, gtk+2-dev, gmp3
+The required packages will presumably include gtk+2, gtk+2-dev, gmp
 and fftw3; recode may also be required; gnuplot is not required since
 we'll be building that ourselves.  Libxml2 will hopefully be supplied
 by OS X; dlcompat was required at one time, but doesn't seem to be
@@ -149,7 +149,7 @@ Untar and configure with
 
 \begin{code}
 TOPDIR=/Users/allin/dist
-./configure --prefix=$TOPDIR/Gretl.app --with-readline=builtin && \
+./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources --with-readline=builtin && \
 echo "#define PNG_COMMENTS 1" >> config.h 
 \end{code}
 
