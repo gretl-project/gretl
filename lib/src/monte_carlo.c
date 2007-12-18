@@ -351,8 +351,6 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
                            c == PWE || \
                            c == TOBIT || \
                            c == TSLS || \
-                           c == VAR || \
-                           c == VECM || \
                            c == WLS)
 
 /**
