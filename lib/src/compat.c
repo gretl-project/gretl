@@ -683,8 +683,8 @@ int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 	j = list[i];
 
 	*pdinfo->varname[vr] = 0;
-	strncat(pdinfo->varname[vr], pdinfo->varname[j], VNAMELEN-2);
-	strcat(pdinfo->varname[vr], "#");
+	strncat(pdinfo->varname[vr], pdinfo->varname[j], VNAMELEN-3);
+	strcat(pdinfo->varname[vr], "_r");
 
 	sprintf(VARLABEL(pdinfo, vr), _("= rho-differenced %s"),
 		pdinfo->varname[j]);
