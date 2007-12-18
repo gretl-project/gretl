@@ -39,10 +39,15 @@ Here are the basic prerequisites:
 \item Apple's X11 and the Xcode development package.  If these are
   not already installed, they should be found on the OS X installation
   DVDs.
-\item A basic installation of Fink.
+\item A basic installation of Fink, including \texttt{pkg-config} and
+  \texttt{wget}.
 \item Source code for gretl and gnuplot.
 \item A skeleton for \texttt{Gretl.app} plus some auxiliary scripts.
 \end{itemize}
+
+The Fink executables directory (by default \texttt{/sw/bin}) should be
+in your path, probably ahead of any other directories, for the build
+process.
 
 The method is as follows:
 
@@ -89,14 +94,13 @@ you don't need to, and probably don't want to, install the
 corresponding Fink package.  A case in point is libxml2, which is
 supplied on recent OS X (but was not supplied in earlier variants).
 
-The required packages will presumably include gtk+2, gtk+2-dev, gmp
-and fftw3; recode may also be required; gnuplot is not required since
+The required packages will include gtk+2, gtk+2-dev, gmp, fftw3 and
+readline5; recode may also be required; gnuplot is not required since
 we'll be building that ourselves.  Libxml2 will hopefully be supplied
 by OS X; dlcompat was required at one time, but doesn't seem to be
-needed any longer. It may be helpful to install wget via Fink for
-build purposes.  I have also installed mpfr via Fink: this is not
-strictly required for gretl, but if it's present it enhances the
-functionality of the multiple precision plugin.
+needed any longer.  I installed mpfr via Fink: this is not strictly
+required for gretl, but if it's present it enhances the functionality
+of the multiple precision plugin.
 
 Since we're building gnuplot, the libraries to be installed via Fink
 also include those needed by gnuplot (see the following section).
@@ -149,7 +153,9 @@ Untar and configure with
 
 \begin{code}
 TOPDIR=/Users/allin/dist
-./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources --with-readline=builtin && \
+export CFLAGS="-O2 -I/sw/include"
+export LDFLAGS="-L/sw/lib -L/usr/X11R6/lib"
+./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources && \
 echo "#define PNG_COMMENTS 1" >> config.h 
 \end{code}
 
@@ -338,7 +344,6 @@ hash -r
 # enable Fink
 sudo mv /hidden.sw /sw
 hash -r
-
 \end{code}
 
 The \texttt{hash -r} command is required to ensure that common
@@ -353,9 +358,7 @@ working, try launching gretl via the \texttt{Gretl.app} icon.
 \section{Documentation files}
 
 The canonical PDF documentation for gretl is available from
-\url{ricardo.ecn.wfu.edu}.  You should do something like the following
-(wget can be installed via Fink; you could use curl instead if you
-prefer):
+\url{ricardo.ecn.wfu.edu}:
 
 \begin{code}
 TOPDIR=/Users/allin/dist
