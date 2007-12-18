@@ -14,8 +14,8 @@ sudo newfs_hfs -v gretl $MYDEV
 hdiutil eject $MYDEV
 hdid tmp.dmg
 cd $TOPDIR && \
-cp -a Gretl.app /Volumes/gretl && \
-cp -a README.pdf /Volumes/gretl
+/sw/bin/cp -a Gretl.app /Volumes/gretl && \
+/sw/bin/cp -a README.pdf /Volumes/gretl
 cd $HERE
 hdiutil eject $MYDEV
 hdiutil convert -format UDZO tmp.dmg -o gretl.dmg && rm tmp.dmg

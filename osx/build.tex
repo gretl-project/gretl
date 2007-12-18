@@ -90,18 +90,19 @@ corresponding Fink package.  A case in point is libxml2, which is
 supplied on recent OS X (but was not supplied in earlier variants).
 
 The required packages will presumably include gtk+2, gtk+2-dev and
-fftw3; recode may also be required; gnuplot is not required since
-we'll be building that ourselves.  Libxml2 will hopefully be supplied
-by OS X, and dlcompat doesn't seem to be needed any longer. It may be
-helpful to install wget via Fink for build purposes.  I have also
-installed mpfr via Fink: this is not strictly required for gretl, but
-if it's present it enhances the functionality of the multiple
-precision plugin.
+gmp3 and fftw3; recode may also be required; gnuplot is not required
+since we'll be building that ourselves.  Libxml2 will hopefully be
+supplied by OS X, and dlcompat doesn't seem to be needed any
+longer. It may be helpful to install wget via Fink for build purposes.
+I have also installed mpfr via Fink: this is not strictly required for
+gretl, but if it's present it enhances the functionality of the
+multiple precision plugin.
 
 Since we're building gnuplot, the libraries to be installed via Fink
-also include those needed by gnuplot (more on this below).
+also include those needed by gnuplot (see the following section).
 
 \section{Building gnuplot}
+\label{sec:gpbuild}
 
 First, why do we bother building gnuplot?  Well, briefly, gnuplot is
 rather integral to gretl, and it's preferable to have a gnuplot
@@ -115,12 +116,43 @@ gnuplot source referenced below is patched so as to provide accurate
 bounding box information for PNG files; this improves the quality of
 mouse-over interaction with graphs under gretl.
 
+\textit{Fink stuff}: To support the gnuplot build, install libpng3,
+libpng-shlibs, pdflib, and pdflib-shlibs.  Although we'll build libgd
+separately, it may be handy to install gd2 and gd2-shlibs via Fink,
+for build-time convenience.
+
+\textit{libgd}: Grab patched source from
+
+\url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/libgd-2.0.35.tar.gz}
+
+Untar and configure with
+
+\begin{code}
+export CFLAGS="-O2 -I/sw/include"
+export CPPFLAGS=$CFLAGS
+export LDFLAGS="-L/usr/X11R6/lib"
+./configure --prefix=/Users/allin/misc --disable-rpath \
+--disable-static --without-jpeg 
+\end{code}
+
+%$
+Note that I'm installing to a temporary location outside of Gretl.app.
+When we're ready, we'll just grab the appropriate dylib file from the
+lib directory in that temporary tree (here
+\texttt{/Users/allin/misc}).
+
+Then \texttt{make} and \texttt{make install}.
+
 Grab the patched source for gnuplot 4.2.2,
 \url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-4.2.2-ac.tar.gz}.
-Untar and configure.  
+Untar and configure with
 
-FIXME: complete this section.
+\begin{code}
+./configure --prefix=/Users/allin/dist/Gretl_Folder && \
+echo "#define PNG_COMMENTS 1" >> config.h 
+\end{code}
 
+Again, \texttt{make} and \texttt{make install}.
 
 \section{Configuring and building gretl}
 
@@ -162,6 +194,7 @@ rm -rf $PREFIX/share/aclocal
 rm -rf $PREFIX/share/info
 rm -rf $PREFIX/info
 rm -rf $PREFIX/lib/pkgconfig
+rm -f $PREFIX/lib/*.la
 rm -f $PREFIX/lib/gretl-gtk2/*.la
 rm -rf $PREFIX/share/emacs
 
@@ -180,13 +213,120 @@ files that are really necessary.  This includes all shared libraries
 that are not provided by OS X itself; it also includes some additional
 run-time files required by GTK+.
 
-\textit{Libraries}: To be written.
+\textit{Libraries}: You can do most of the work on the libraries by
+running \texttt{libs.sh} from the osx subdirectory of the gretl
+source.  This finds dependencies that live in \texttt{/sw/lib} using
+\texttt{otool -L} (think ldd on Linux) and copies the files
+into place. Here's \texttt{libs.sh}:
 
-\textit{Other files}: To be written.
+\begin{code}
+TOPDIR="/Users/allin/dist"
+PKGDIR="$TOPDIR/Gretl.app/Contents/Resources"
 
-\textit{Testing}: To check that the \texttt{Gretl.app} is
-self-contained, you need to run gretl with Fink disabled.  To help
-with this I have two little scripts, as follows:
+cd $PKGDIR
+
+otool -L ./bin/gretl_x11 | awk '{ print $1 }' | grep /sw/lib > liblist
+otool -L ./bin/gnuplot | awk '{ print $1 }' | grep /sw/lib >> liblist
+ 
+for f in `cat liblist` ; do
+  cp $f ./lib
+done
+\end{code}
+
+%$
+But having done this, we need to add a few things:
+\texttt{libpangoft2-1.0.0.dylib} (not picked up, maybe an indirect
+dependency); \texttt{libgd.2.dylib} from the custom build of gd2 (see
+section~\ref{sec:gpbuild}), \texttt{libmpfr.1.dylib} from Fink to
+support the gretl plugin.  On the other hand, if
+\texttt{libiconv.2.dylib} has been picked up from the Fink
+installation it can be deleted since it's provided by OS X.
+
+\textit{Other files}: 
+
+Besides the basic dylibs, we need to borrow from Fink some module
+files that live under \texttt{lib}, and configuration files under
+\texttt{etc} (the installation for both sets of files will be relative
+to \url{Gretl.app/Contents/Resources}).  I'll illustrate with my
+current setup; filenames may differ slightly if the GTK version
+differs.
+
+Under \texttt{lib}:
+
+\begin{code}
+lib/gtk-2.0/2.4.0/immodules/
+lib/gtk-2.0/2.4.0/loaders/libpixbufloader-png.so
+lib/gtk-2.0/2.4.0/loaders/libpixbufloader-xpm.so
+lib/pango/1.4.0/modules/pango-basic-fc.so  
+lib/pango/1.4.0/modules/pango-basic-x.so
+\end{code}
+
+The \texttt{immodules} directory is empty; we don't need any input
+modules.  The directory may be redundant, I'm not sure.  The GTK
+\texttt{loaders} directory and the pango \texttt{modules} directory
+contain a small subset of the full content of those directories under
+Fink; this is all we need to support gretl. 
+
+Second, config files under \texttt{etc}:
+
+\begin{code}
+etc/gtk-2.0/gtk.immodules
+etc/gtk-2.0/gdk-pixbuf.loaders
+etc/pangorc
+etc/pango/pango.modules
+etc/pango/pangox.aliases
+\end{code}
+
+The first of these is an empty file; the second is an edited
+version of the corresponding Fink file.  We need to use relative
+paths to the loaders, as in
+
+\begin{code}
+# GdkPixbuf Image Loader Modules file
+"../lib/gtk-2.0/2.4.0/loaders/libpixbufloader-png.so"
+"png" 1 "gtk20" "The PNG image format"
+"image/png" ""
+"png" ""
+"\211PNG\r\n\032\n" "" 100
+
+"../lib/gtk-2.0/2.4.0/loaders/libpixbufloader-xpm.so"
+"xpm" 0 "gtk20" "The XPM image format"
+"image/x-xpixmap" ""
+"xpm" ""
+"/* XPM */" "" 100
+\end{code}
+
+(Only the paths to the \texttt{.so} files need to be changed.)
+
+The third file, \texttt{etc/pangorc}, tells pango where to find the
+other files:
+
+\begin{code}
+[Pango]
+ModuleFiles=../etc/pango/pango.modules
+ModulesPath=../lib/pango/1.4.0/modules
+[PangoX]
+Aliasfiles=../etc/pango/pangox.aliases
+\end{code}
+
+The content of \texttt{pango.modules} is again edited
+to use relative paths:
+
+\begin{code}
+# Pango Modules file
+#
+../lib/pango/1.4.0/modules/pango-basic-fc.so Basic...
+../lib/pango/1.4.0/modules/pango-basic-x.so Basic...
+\end{code}
+
+As for \texttt{pangox.aliases}, I'm not sure it's needed, but anyway I
+think it can be copied straight.
+
+\textit{Testing}: Once you've got all this stuff in place (remember,
+you only need to do it once!) you have to check that that
+\texttt{Gretl.app} is really self-contained.  This means running gretl
+with Fink disabled.  To help with this I use two little scripts, as
+follows:
 
 \begin{code}
 # disable Fink
@@ -202,6 +342,11 @@ hash -r
 The \texttt{hash -r} command is required to ensure that common
 utilities such as \texttt{cp}, which are present in both \texttt{/bin}
 and \texttt{/sw/bin}, are found after the switch.
+
+I recommend starting the test by running \texttt{./gretl} in the
+\texttt{bin} directory under \url{Gretl.app/Contents/Resources}: then
+if there's stuff missing you'll hear about it on stderr.  Once that's
+working, try launching gretl via the \texttt{Gretl.app} icon.
 
 \section{Documentation files}
 
@@ -221,12 +366,18 @@ wget http://ricardo.ecn.wfu.edu/pub/gretl/manual/PDF/gretl-ref.pdf
 cp gretl-ref.pdf $DOCDIR
 \end{code}
 
+%$
+That is, you grab the current PDF files and drop them into the right
+place under \texttt{Gretl.app}.
+
 \section{Creation of dmg}
 
-Below is a shell script to create the final compressed .dmg file.
-There's a copy in the gretl source package, in the osx subdirectory
-(called \texttt{dmg.sh}).  Obviously, you'll need to edit the line
-that defines \texttt{TOPDIR}; hopefully the rest should be portable.
+Once everything's in place, we create the final compressed .dmg file.
+This is actually quite straightforward; below is a shell script to do
+the job.  There's a copy in the gretl source package, in the osx
+subdirectory (called \texttt{dmg.sh}).  Obviously, you'll need to edit
+the line that defines \texttt{TOPDIR}; hopefully the rest should be
+portable.
 
 This script should be run from some ``neutral'' location outside of
 the distribution tree; you don't want to get a recursive thing going,
@@ -248,8 +399,8 @@ sudo newfs_hfs -v gretl $MYDEV
 hdiutil eject $MYDEV
 hdid tmp.dmg
 cd $TOPDIR && \
-cp -a Gretl.app /Volumes/gretl && \
-cp -a README.pdf /Volumes/gretl
+/sw/bin/cp -a Gretl.app /Volumes/gretl && \
+/sw/bin/cp -a README.pdf /Volumes/gretl
 cd $HERE
 hdiutil eject $MYDEV
 hdiutil convert -format UDZO tmp.dmg -o gretl.dmg && rm tmp.dmg
@@ -276,10 +427,31 @@ them.
 
 An account of how to do this (for gimp, but \textit{mutatis mutandis}
 for gretl) is given at the gimp.app URL above.  I can't add much to
-what's said there as I have no expertise in Xcode and I worked by trial
-and error.  The basic idea is that you have to build ScriptExec as an
+what's said there as I have no expertise in Xcode and I worked by
+trial and error, but here are a few hints.
+
+The basic idea is that you have to build ScriptExec as an
 Xcode project, then copy the generated bits and pieces into place
 under \texttt{Gretl.app}.
+
+The built executable,
+
+\begin{code}
+ScriptExec/build/Default/ScriptExec.app/Contents/MacOS/ScriptExec
+\end{code}
+
+should be copied as
+
+\begin{code}
+Gretl.app/Contents/MacOS/Gretl
+\end{code}
+
+A copy of my build of this program can be found in the osx subdir of
+the gretl code, named \texttt{Gretl.intel}.
+
+A copy of my gretlized version of the ScriptExec source is at
+
+\url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/ScriptExec.tar.gz}
 
 \end{document}
 
