@@ -49,8 +49,7 @@ static void drawline (int n, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void 
-prntdate (int nt, int n, const DATAINFO *pdinfo, PRN *prn)
+static void prntdate (int nt, int n, const DATAINFO *pdinfo, PRN *prn)
 {
     if (n != pdinfo->t2 - pdinfo->t1 + 1) {
 	pprintf(prn, "%5d  ", nt);
@@ -116,10 +115,9 @@ static int z_to_xyz (int v1, int v2, int v3,
 
 /* graph one or two y variables against a given x variable */
 
-void graphyzx (const int *list, const double *y1, const double *y2, 
-	       const double *x, int n, const char *yname, 
-	       const char *xname, const DATAINFO *pdinfo, 
-	       gretlopt opt, PRN *prn)
+static int graphyzx (const double *y1, const double *y2, const double *x, 
+		     int n, const char *yname, const char *y2name,
+		     const char *xname, gretlopt opt, PRN *prn)
 {
     int ix, iy1, iy2, lx, ly, xzero, yzero;
     int nrows, nr2, nc2, ls, lw, t1, t2;
@@ -130,13 +128,8 @@ void graphyzx (const int *list, const double *y1, const double *y2,
     char word[32];
     int i, j;
 
-    if (pdinfo != NULL) {
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
-    } else {
-	t1 = 0;
-	t2 = (n < 0)? -n - 1 : n - 1;
-    }
+    t1 = 0;
+    t2 = n - 1;
 
     if (y2 != NULL) {
 	double y1min, y1max;
@@ -148,6 +141,10 @@ void graphyzx (const int *list, const double *y1, const double *y2,
 	ymax = (y1max > y2max)? y1max : y2max;
     } else {
 	gretl_minmax(t1, t2, y1, &ymin, &ymax);
+    }
+
+    if (na(ymin) || na(ymax)) {
+	return E_MISSDATA;
     }
 
     yrange = ymax - ymin;
@@ -164,6 +161,11 @@ void graphyzx (const int *list, const double *y1, const double *y2,
     nc2 = ncols / 2;
 
     gretl_minmax(t1, t2, x, &xmin, &xmax);
+
+    if (na(xmin) || na(xmax)) {
+	return E_MISSDATA;
+    }    
+
     xrange = xmax - xmin;
 
     /* Initialize picture matrix */
@@ -189,8 +191,8 @@ void graphyzx (const int *list, const double *y1, const double *y2,
 	}
     }
 
-    /*  replace blanks in PICTURE with o's that correspond to the
-	scaled values of the specified variables */
+    /* replace blanks in PICTURE with o's that correspond to the
+       scaled values of the specified variables */
 
     if (y2 != NULL) {
 	for (i=0; i<n; i++) {
@@ -214,13 +216,12 @@ void graphyzx (const int *list, const double *y1, const double *y2,
 
     /* print out the 2-dimensional picture matrix */
 
-    if (y2 == NULL) {
+    if (y2name == NULL) {
 	pprintf(prn, "%14s\n", yname);
-    } else if (list != NULL) {
+    } else {
 	pprintf(prn, _("%7co stands for %s and x stands for %s (+ means they "
 		"are equal)\n\n%9s, %s\n"), ' ', 
-		yname, pdinfo->varname[list[2]], yname, 
-		pdinfo->varname[list[2]]);
+		yname, y2name, yname, y2name);
     }
 
     for (i=nrows; i>=0; i--) {
@@ -269,22 +270,36 @@ void graphyzx (const int *list, const double *y1, const double *y2,
 	bufspace(79 - lw, prn);
     }
     pprintf(prn, "%s\n\n", word);
+
+    return 0;
 }
 
 /**
- * ascii_plot:
- * @list: contains ID numbers of variables to plot.
- * @Z: data matrix.
- * @pdinfo: data information struct.
- * @opt: if includes OPT_O, forces two variables to be plotted on the same
- * scale (otherwise they will be scaled to fit).
+ * graphyx:
+ * @y: y-axis data.
+ * @x: x-axis data.
+ * @n: number of observations.
+ * @yname: y-axis label.
+ * @xname: x-axis label.
  * @prn: gretl printing struct.
  *
- * Plot (using ascii graphics) either one or two variables, as given
- * in @list.
+ * Generates a simple ascii scatter-plot of @y against @x and 
+ * prints the plot to @prn.
  *
  * Returns: 0 on successful completion, error code on error.
  */
+
+int graphyx (const double *y, const double *x, int n,
+	     const char *yname, const char *xname, 
+	     PRN *prn)
+{
+    return graphyzx(y, NULL, x, n, yname, NULL, xname, 
+		    OPT_NONE, prn);
+}
+
+/* OPT_O: force the two variables to be plotted on the same; 
+   otherwise they are scaled to fit
+*/
 
 static int ascii_plot (const int *list, const double **Z, 
 		       const DATAINFO *pdinfo, gretlopt opt, 
@@ -311,7 +326,7 @@ static int ascii_plot (const int *list, const double **Z,
 
     pputc(prn, '\n');
 
-    nc2 = ncols/2;
+    nc2 = ncols / 2;
     vy = list[1];
     strcpy(s1, pdinfo->varname[vy]);
 
@@ -436,7 +451,7 @@ static int ascii_plot (const int *list, const double **Z,
     /*  First x and y values are scaled, then we check to see which scaled
 	value is smaller: print that one first, then print the larger
 	scaled value. If the scaled values are equal then print a "+" ,
-	otherwise prints an "x" for the first variable and an "o" for the
+	otherwise print an "x" for the first variable and an "o" for the
 	second variable.
     */
 
@@ -470,7 +485,7 @@ static int ascii_plot (const int *list, const double **Z,
 
 	prntdate(t, n, pdinfo, prn);
 
-	if (opt & OPT_S) {
+	if (opt & OPT_O) {
 	    ix = (floatneq(xyrange, 0.0))? ((xx-xymin)/xyrange) * ncols : nc2;
 	    iy = (floatneq(xyrange, 0.0))? ((yy-xymin)/xyrange) * ncols : nc2;
 	} else {
@@ -533,10 +548,11 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn)
 {
     int T = pdinfo->t2 - pdinfo->t1 + 1;
-    int m, vx, vy1;
+    int vx, vy1, vy2 = -1;
     double *x = NULL;
     double *y1 = NULL;
     double *y2 = NULL;
+    int err = 0;
 
     if (opt & OPT_T) {
 	return ascii_plot(list, Z, pdinfo, opt, prn);
@@ -566,21 +582,21 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     vy1 = list[1];
 
-    /* Put values from z matrix into x and y arrays */
+    /* Put values from Z array into x and y arrays */
     if (list[0] == 2) {
 	vx = list[2];
-	m = z_to_xy(vx, vy1, x, y1, Z, pdinfo);
+	T = z_to_xy(vx, vy1, x, y1, Z, pdinfo);
     } else {
-	int vy2 = list[2];
-
+	vy2 = list[2];
 	vx = list[3];
-	m = z_to_xyz(vx, vy1, vy2, x, y1, y2, Z, pdinfo);
+	T = z_to_xyz(vx, vy1, vy2, x, y1, y2, Z, pdinfo);
     }
 
     pputc(prn, '\n');
 
-    graphyzx(list, y1, y2, x, m, pdinfo->varname[vy1], 
-	     pdinfo->varname[vx], pdinfo, opt, prn);
+    err = graphyzx(y1, y2, x, T, pdinfo->varname[vy1], 
+		   (vy2 < 0)? NULL : pdinfo->varname[vy2], 
+		   pdinfo->varname[vx], opt, prn);
 
     pputc(prn, '\n');
 
@@ -588,7 +604,7 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(y1); 
     free(y2);
 
-    return 0;
+    return err;
 }
 
 #undef RHODEBUG

@@ -2341,8 +2341,7 @@ static int corrgm_ascii_plot (const char *vname,
     }
 
     pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-    graphyzx(NULL, acf, NULL, xk, acf_m, vname, 
-	     _("lag"), NULL, 0, prn);
+    graphyx(acf, xk, acf_m, vname, _("lag"), prn);
 
     free(xk);
 
@@ -2580,8 +2579,7 @@ static int xcorrgm_ascii_plot (double *xcf, int xcf_m, PRN *prn)
     }
 
     pprintf(prn, "\n\n%s\n\n", _("Cross-correlogram"));
-    graphyzx(NULL, xcf, NULL, xk, 2 * xcf_m + 1, "", _("lag"), NULL, 
-	     0, prn);
+    graphyx(xcf, xk, 2 * xcf_m + 1, "", _("lag"), prn); 
 
     free(xk);
 

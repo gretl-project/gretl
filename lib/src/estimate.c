@@ -1949,7 +1949,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (!quiet) {
 	    pprintf(prn, _("\n\nESS is minimum for rho = %g\n\n"), rho);
 	    if (ascii) {
-		graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
+		graphyx(ssr, rh, nn, "ESS", "RHO", prn); 
 		pputs(prn, "\n");
 	    } else {
 		hilu_plot(ssr, rh, nn);

@@ -3983,6 +3983,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case GRAPH:
+	fprintf(stderr, "Calling ascii_graph\n");
 	ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
 		    cmd->opt, prn);
 	break;

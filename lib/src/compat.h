@@ -20,10 +20,9 @@
 #ifndef COMPAT_H
 #define COMPAT_H
 
-void graphyzx (const int *list, const double *y1, const double *y2, 
-	       const double *x, int n, const char *yname, 
-	       const char *xname, const DATAINFO *pdinfo, 
-	       gretlopt oflag, PRN *prn);
+int graphyx (const double *y, const double *x, int n,
+	     const char *yname, const char *xname, 
+	     PRN *prn);
 
 int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
