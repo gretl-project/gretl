@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.6.6\n"
+"Project-Id-Version: gretl 1.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-12-17 16:40-0500\n"
-"PO-Revision-Date: 2007-12-16 21:16+0100\n"
+"PO-Revision-Date: 2007-12-18 21:57+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -11322,17 +11322,15 @@ msgstr "Variabile asse X"
 
 #: gui2/library.c:5156
 msgid "on a single graph"
-msgstr ""
+msgstr "su un solo grafico"
 
 #: gui2/library.c:5157
-#, fuzzy
 msgid "in separate small graphs"
-msgstr "Genera grafico"
+msgstr "su grafici separati"
 
 #: gui2/library.c:5161
-#, fuzzy
 msgid "Plot the series"
-msgstr "serie storiche"
+msgstr "Disegna le serie"
 
 #: gui2/library.c:5473
 #, c-format
@@ -12076,7 +12074,7 @@ msgstr "Usa X-12-ARIMA"
 
 #: gui2/selector.c:3296
 msgid "Use Fiorentini et al algorithm"
-msgstr ""
+msgstr "Usa l'algoritmo di Fiorentini et al"
 
 #: gui2/selector.c:3325
 msgid "Show lagged variables"
@@ -13030,14 +13028,12 @@ msgid "Uncomment region"
 msgstr "Rimuovi commento da regione"
 
 #: gui2/textbuf.c:1227
-#, fuzzy
 msgid "Execute region"
-msgstr "Esegui"
+msgstr "Esegui regione"
 
 #: gui2/textbuf.c:1229
-#, fuzzy
 msgid "Execute line"
-msgstr "Esegui"
+msgstr "Esegui riga"
 
 #: gui2/textutil.c:64
 msgid "gretl: replace"
