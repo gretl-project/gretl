@@ -6,11 +6,14 @@ PKGDIR="$TOPDIR/Gretl.app/Contents/Resources"
 cd $PKGDIR
 
 otool -L ./bin/gretl_x11 | awk '{ print $1 }' | grep /sw/lib > liblist
+otool -L ./bin/gretlcli | awk '{ print $1 }' | grep /sw/lib >> liblist
 otool -L ./bin/gnuplot | awk '{ print $1 }' | grep /sw/lib >> liblist
  
-for f in `cat liblist` ; do
+for f in `cat liblist | uniq` ; do
   cp $f ./lib
 done
+
+rm liblist
 
 exit 0
 
