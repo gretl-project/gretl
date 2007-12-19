@@ -163,7 +163,9 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/Users/allin/misc/lib/pkgconfig"
 \end{code}
 
 Now grab the patched source for gnuplot 4.2.2,
-\url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-4.2.2-ac.tar.gz}.
+
+\url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-4.2.2-ac.tar.gz}
+
 Untar and configure with
 
 \begin{code}
@@ -190,7 +192,7 @@ export CPPFLAGS=$CFLAGS
 export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/X11R6/lib/pkgconfig:/sw/lib/pkgconfig"
 export PATH=$TOPDIR/Gretl.app/Contents/Resources/bin:$PATH
 ./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources \
-  --disable-rpath --enable-build-doc  --without-gnome
+  --disable-rpath --enable-build-doc --without-gnome
 \end{code}
 
 The ``\texttt{export PATH}'' line is designed to ensure that the
