@@ -140,7 +140,6 @@ enum {
 	      INFNORM,
   /* 110 */   RCOND,
 	      RANK, 
-	      VARNUM,
 	      OBSNUM,
 	      ISSERIES,
 	      ISLIST,	 
@@ -148,8 +147,8 @@ enum {
 	      ISNULL,
 	      LISTLEN,
 	      PVAL,
-  /* 120 */   CDF,
-	      INVCDF,
+	      CDF,
+  /* 120 */   INVCDF,
 	      CRIT,  
 	      RANDGEN,
 	      RPOISSON,
@@ -158,8 +157,8 @@ enum {
 	      NULLSPC,
 	      MEXP,
 	      MINC,
-  /* 130 */   MAXC,
-	      MINR,
+	      MAXC,
+  /* 130 */   MINR,
 	      MAXR,
 	      IMINC, 
 	      IMAXC,
@@ -168,8 +167,8 @@ enum {
 	      FFT,
 	      FFTI,
 	      UPPER,
-  /* 140 */   LOWER,
-	      MREAD,
+	      LOWER,
+  /* 140 */   MREAD,
 	      FUNC_MAX,	  /* separator: end of single-arg functions */
 	      COR,
 	      COV,
@@ -178,8 +177,8 @@ enum {
 	      RNORMAL,
 	      FRACDIF,
 	      ZEROS,
-  /* 150 */   ONES,
-	      SEQ,
+	      ONES,
+  /* 150 */   SEQ,
 	      MUNIF,
 	      MNORM,
 	      QFORM,
@@ -188,8 +187,8 @@ enum {
 	      EIGSYM,	 
 	      EIGGEN,
 	      FDJAC,
-  /* 160 */   BFGSMAX,
-	      LRVAR,
+	      BFGSMAX,
+  /* 160 */   LRVAR,
 	      PRINCOMP,
 	      QUANTILE,
 	      CMULT,	  /* complex multiplication */
@@ -198,38 +197,38 @@ enum {
 	      MWRITE,
 	      MOVAVG,
 	      F2_MAX,	  /* separator: end of two-arg functions */
-  /* 170 */   MSHAPE,
-	      SVD,
+	      MSHAPE,
+  /* 170 */   SVD,
 	      MOLS,
-              FN_MAX,	  /* separator: end of n-arg functions */
+	      FN_MAX,	  /* separator: end of n-arg functions */
 	      COM,	  /* comma */
 	      DOT,	  /* period */
 	      SEMI,	  /* semi-colon */
 	      COL,	  /* colon */
 	      CON,	  /* named constant */
 	      DUM,	  /* dummy variable */
-  /* 180 */   UVAR,	  /* user variable (scalar or series) */
-              UMAT,	  /* user-defined matrix */
+	      UVAR,	  /* user variable (scalar or series) */
+  /* 180 */   UMAT,	  /* user-defined matrix */
 	      UOBJ,	  /* user-defined object (e.g. model) */
-              NUM,	  /* scalar, evaluated */
+	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      IVEC,	  /* vector of integers, evaluated */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
 	      MSL,	  /* matrix plus subspec */
 	      DMSL,	  /* "dollar" matrix plus subspec */
-  /* 190 */   DMSTR,	  /* "dollar" matrix plus old-style string subspec */
-	      MSL2,	  /* unevaluated matrix subspec */
+	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
+  /* 190 */   MSL2,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
-              SUBSL,	  /* row or column component of MSPEC */
+	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
 	      LAG,	  
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      OVAR,	  /* object variable: variable "under" an object */
 	      LOOPIDX,	  /* loop index variable */
-  /* 200 */   LIST,	  /* reference to named list */
-	      STR,	  /* string */
+	      LIST,	  /* reference to named list */
+  /* 200 */   STR,	  /* string */
 	      EROOT,	  /* dummy root for (...) expression */
 	      UFUN,	  /* user-defined function */
 	      FARGS,	  /* set of n function arguments */
@@ -238,8 +237,8 @@ enum {
 	      INC,   
 	      DEC,
 	      QUERY,
-  /* 210 */   EOT,        /* end of transmission */
-              UNK 
+	      EOT,	    /* end of transmission */
+  /* 210 */   UNK 
 };
 
 enum {
@@ -259,9 +258,8 @@ enum {
 #define func_symb(s) (s > OP_MAX && s < FUNC_MAX)
 #define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
 #define funcn_symb(s) (s > F2_MAX && s < FN_MAX)
-#define string_arg_func(s) (s == VARNUM || s == ISSERIES || s == ISNULL || \
-                            s == ISLIST || s == LISTLEN || s == ISSTRING || \
-                            s == OBSNUM)
+#define string_arg_func(s) (s == ISSERIES || s == ISNULL || s == ISLIST || \
+                            s == LISTLEN || s == ISSTRING || s == OBSNUM)
 
 #define string0_func(s) (s == PVAL || s == CDF || s == INVCDF || \
                          s == CRIT || s == RANDGEN)

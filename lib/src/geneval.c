@@ -2087,12 +2087,11 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	ret->v.xval = NADBL;
-	if (f == VARNUM || f == ISSERIES) {
+	if (f == ISSERIES) {
 	    int v = varindex(p->dinfo, s);
 
 	    if (v < p->dinfo->v) {
-		ret->v.xval = (f == VARNUM)? v : 
-		    var_is_series(p->dinfo, v);
+		ret->v.xval = var_is_series(p->dinfo, v);
 	    }
 	} else if (f == ISLIST || f == LISTLEN) {
 	    int *list = get_list_by_name(s);
@@ -4299,7 +4298,6 @@ static NODE *eval (NODE *t, parser *p)
     case LOOPIDX:
 	ret = loop_index_node(t, p);
 	break;
-    case VARNUM:
     case OBSNUM:
     case ISSERIES:
     case ISLIST:

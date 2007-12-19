@@ -225,7 +225,6 @@ struct str_table funcs[] = {
     { MEXP,     "mexp" },
     { FDJAC,    "fdjac" },
     { BFGSMAX,  "BFGSmax" },
-    { VARNUM,   "varnum" },
     { OBSNUM,   "obsnum" },
     { ISSERIES, "isseries" },
     { ISLIST,   "islist" },
