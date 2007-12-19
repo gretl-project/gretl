@@ -39,8 +39,8 @@ Here are the basic prerequisites:
 \item Apple's X11 and the Xcode development package.  If these are
   not already installed, they should be found on the OS X installation
   DVDs.
-\item A basic installation of Fink, including \texttt{pkg-config} and
-  \texttt{wget}.
+\item A basic installation of Fink, including the tools
+  \texttt{pkg-config} and \texttt{wget}.
 \item Source code for gretl and gnuplot.
 \item A skeleton for \texttt{Gretl.app} plus some auxiliary scripts.
 \end{itemize}
@@ -92,18 +92,31 @@ The exact line-up of these packages depends somewhat on the specific
 OS X variant.  If a given package is available via OS X itself, then
 you don't need to, and probably don't want to, install the
 corresponding Fink package.  A case in point is libxml2, which is
-supplied on recent OS X (but was not supplied in earlier variants).
+supplied on recent OS X (but was not supplied in earlier variants);
+libpng may also be supplied by OS X.
 
-The required packages will include gtk+2, gtk+2-dev, gmp, fftw3 and
-readline5; recode may also be required; gnuplot is not required since
-we'll be building that ourselves.  Libxml2 will hopefully be supplied
-by OS X; dlcompat was required at one time, but doesn't seem to be
-needed any longer.  I installed mpfr via Fink: this is not strictly
-required for gretl, but if it's present it enhances the functionality
-of the multiple precision plugin.
+The required packages will (likely) include
 
-Since we're building gnuplot, the libraries to be installed via Fink
-also include those needed by gnuplot (see the following section).
+\begin{center}
+{\small
+\begin{tabular}{llll}
+\texttt{gtk+2} & \texttt{gtk+2-dev} & \texttt{gmp} & 
+\texttt{gmp-shlibs} \\
+\texttt{fftw3} & \texttt{readline5} & \texttt{readline5-shlibs} 
+& \texttt{libpng3} \\
+ \texttt{libpng-shlibs} & \texttt{pdflib} & \texttt{pdflib-shlibs}
+\end{tabular}
+}
+\end{center}
+
+You don't need to install gnuplot under Fink since we'll be building
+that ourselves.  Libxml2 will hopefully be supplied by OS X; dlcompat
+was required at one time, but doesn't seem to be needed any longer.  I
+installed mpfr via Fink: this is not strictly required for gretl, but
+if it's present it enhances the functionality of the multiple
+precision plugin: as of this writing the packages seem to be
+\texttt{libmpfr1} and \texttt{libmpfr1-shlibs}.
+
 
 \section{Building gnuplot}
 \label{sec:gpbuild}
@@ -120,11 +133,6 @@ gnuplot source referenced below is patched so as to provide accurate
 bounding box information for PNG files; this improves the quality of
 mouse-over interaction with graphs under gretl.
 
-\textit{Fink stuff}: To support the gnuplot build, install libpng3,
-libpng-shlibs, pdflib, and pdflib-shlibs.  Although we'll build libgd
-separately, it may be handy to install gd2 and gd2-shlibs via Fink,
-for build-time convenience.
-
 \textit{libgd}: Grab patched source from
 
 \url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/libgd-2.0.35.tar.gz}
@@ -132,22 +140,29 @@ for build-time convenience.
 Untar and configure with
 
 \begin{code}
+PREFIX=/Users/allin/misc
 export CFLAGS="-O2 -I/sw/include"
 export CPPFLAGS=$CFLAGS
 export LDFLAGS="-L/usr/X11R6/lib"
-./configure --prefix=/Users/allin/misc --disable-rpath \
+./configure --prefix=$PREFIX --disable-rpath \
 --disable-static --without-jpeg 
 \end{code}
 
 %$
+Then \texttt{make} and \texttt{make install}.
+
 Note that I'm installing to a temporary location outside of Gretl.app.
 When we're ready, we'll just grab the appropriate dylib file from the
 lib directory in that temporary tree (here
-\texttt{/Users/allin/misc}).
+\texttt{/Users/allin/misc}).  Note: if you don't have \texttt{gd2}
+installed via Fink, you'll have to ensure that pkg-config can find the
+libgd you just installed, before building gnuplot.  Use something like
 
-Then \texttt{make} and \texttt{make install}.
+\begin{code}
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/Users/allin/misc/lib/pkgconfig"
+\end{code}
 
-Grab the patched source for gnuplot 4.2.2,
+Now grab the patched source for gnuplot 4.2.2,
 \url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-4.2.2-ac.tar.gz}.
 Untar and configure with
 
@@ -175,7 +190,7 @@ export CPPFLAGS=$CFLAGS
 export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/X11R6/lib/pkgconfig:/sw/lib/pkgconfig"
 export PATH=$TOPDIR/Gretl.app/Contents/Resources/bin:$PATH
 ./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources \
-  --disable-rpath --enable-build-doc
+  --disable-rpath --enable-build-doc  --without-gnome
 \end{code}
 
 The ``\texttt{export PATH}'' line is designed to ensure that the
@@ -234,19 +249,22 @@ PKGDIR="$TOPDIR/Gretl.app/Contents/Resources"
 cd $PKGDIR
 
 otool -L ./bin/gretl_x11 | awk '{ print $1 }' | grep /sw/lib > liblist
+otool -L ./bin/gretlcli | awk '{ print $1 }' | grep /sw/lib >> liblist
 otool -L ./bin/gnuplot | awk '{ print $1 }' | grep /sw/lib >> liblist
  
-for f in `cat liblist` ; do
+for f in `cat liblist | uniq` ; do
   cp $f ./lib
 done
+
+rm liblist
 \end{code}
 
 %$
-But having done this, we need to add a few things:
+But having done this, we (may) need to add a few things:
 \texttt{libpangoft2-1.0.0.dylib} (not picked up, maybe an indirect
 dependency); \texttt{libgd.2.dylib} from the custom build of gd2 (see
-section~\ref{sec:gpbuild}), \texttt{libmpfr.1.dylib} from Fink to
-support the gretl plugin.  On the other hand, if
+section~\ref{sec:gpbuild}), \texttt{libmpfr.1.dylib} from Fink (if
+available) to support the gretl plugin.  On the other hand, if
 \texttt{libiconv.2.dylib} has been picked up from the Fink
 installation it can be deleted since it's provided by OS X.
 
@@ -270,7 +288,7 @@ lib/pango/1.4.0/modules/pango-basic-x.so
 \end{code}
 
 The \texttt{immodules} directory is empty; we don't need any input
-modules.  The directory may be redundant, I'm not sure.  The GTK
+modules.  (The directory may be redundant, I'm not sure.)  The GTK
 \texttt{loaders} directory and the pango \texttt{modules} directory
 contain a small subset of the full content of those directories under
 Fink; this is all we need to support gretl. 
@@ -307,7 +325,7 @@ paths to the loaders, as in
 (Only the paths to the \texttt{.so} files need to be changed.)
 
 The third file, \texttt{etc/pangorc}, tells pango where to find the
-other files:
+other files.  Its content should be as follows:
 
 \begin{code}
 [Pango]
@@ -331,7 +349,7 @@ As for \texttt{pangox.aliases}, I'm not sure it's needed, but anyway I
 think it can be copied straight.
 
 \textit{Testing}: Once you've got all this stuff in place (remember,
-you only need to do it once!) you have to check that that
+you only need to do it once!) you have to check that
 \texttt{Gretl.app} is really self-contained.  This means running gretl
 with Fink disabled.  To help with this I use two little scripts, as
 follows:
