@@ -330,28 +330,28 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
     }
 }
 
-#define plain_model_ci(c) (c == AR || \
-			   c == ARBOND || \
-			   c == ARCH || \
-			   c == ARMA || \
-			   c == CORC || \
-			   c == GARCH || \
-			   c == HCCM ||	 \
-			   c == HECKIT || \
-			   c == HILU || \
-                           c == HSK || \
-                           c == LAD || \
-                           c == LOGISTIC || \
-                           c == LOGIT || \
-                           c == MPOLS || \
-                           c == OLS ||  \
-                           c == PANEL || \
-                           c == POISSON || \
-                           c == PROBIT || \
-                           c == PWE || \
-                           c == TOBIT || \
-                           c == TSLS || \
-                           c == WLS)
+#define plain_model_ci(c) (c == AR ||		\
+			   c == ARBOND ||	\
+			   c == ARCH ||		\
+			   c == ARMA ||		\
+			   c == CORC ||		\
+			   c == GARCH ||	\
+			   c == HCCM ||		\
+			   c == HECKIT ||	\
+			   c == HILU ||		\
+			   c == HSK ||		\
+			   c == LAD ||		\
+			   c == LOGISTIC ||	\
+			   c == LOGIT ||	\
+			   c == MPOLS ||	\
+			   c == OLS ||		\
+			   c == PANEL ||	\
+			   c == POISSON ||	\
+			   c == PROBIT ||	\
+			   c == PWE ||		\
+			   c == TOBIT ||	\
+			   c == TSLS ||		\
+			   c == WLS)
 
 /**
  * ok_in_loop:
@@ -2600,6 +2600,14 @@ static int next_command (char *targ, LOOPSET *loop, int *j)
     return ret;
 }
 
+static int block_model (CMD *cmd)
+{
+    return cmd->ci == END && 
+	(!strcmp(cmd->param, "mle") || 
+	 !strcmp(cmd->param, "nls") ||
+	 !strcmp(cmd->param, "gmm"));
+}
+
 #define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
 			       c == NLS ||  \
 			       c == MLE ||  \
@@ -2774,6 +2782,12 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		}
 		err = gretl_cmd_exec(s, pZ, ppdinfo);
 		pdinfo = *ppdinfo;
+		if (!err && block_model(cmd)) {
+		    /* NLS, etc. */
+		    s->models[0]->ID = ++mod_id;
+		    printmodel(s->models[0], pdinfo, cmd->opt, prn);
+		    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
+		}
 	    }
 	} /* end execution of commands within loop */
 
