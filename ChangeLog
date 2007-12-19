@@ -31,6 +31,7 @@ version 1.7.1, in progress
   Panattoni GARCH code
 - Add set variable for max iterations in a "while" loop	
 - Fix bug: missing data handled incorrectly in ascii graphs	
+- Removed obsolete genr function varnum()
 
 11/27/2007 version 1.7.0
 - Add heckit estimator
