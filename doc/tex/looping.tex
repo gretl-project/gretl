@@ -40,9 +40,9 @@ suppresses the usual printout of the number of iterations performed,
 which may be desirable when loops are nested.
 
 The \verb+--progressive+ option to \cmd{loop} modifies the behavior of
-the commands \cmd{ols}, \cmd{print} and \cmd{store} in a manner that
-may be useful with Monte Carlo analyses (see Section
-\ref{loop-progressive}).
+the commands \cmd{print} and \cmd{store}, and certain estimation
+commands, in a manner that may be useful with Monte Carlo analyses
+(see Section \ref{loop-progressive}).
     
 The following sections explain the various forms of the loop control
 expression and provide some examples of use of loops.  
@@ -86,10 +86,14 @@ example,
 loop while essdiff > .00001
 \end{code}
 
-Execution of the commands within the loop will continue so long as the
-specified condition evaluates as true. If the right-hand term of the
-inequality is a variable, it is evaluated at the top of the loop at
-each iteration.
+Execution of the commands within the loop will continue so long as (a)
+the specified condition evaluates as true and (b) the number of
+iterations does not exceed the value of the internal variable
+\verb|loop_maxiter|.  By default this equals 250, but you can specify
+a different value via the \cmd{set} command (see the \GCR).
+
+If the right-hand term of the inequality is a variable, it is
+evaluated at the top of the loop at each iteration.
 
 \subsection{Index loop}
 \label{loop-index}
@@ -133,7 +137,7 @@ end loop
 In this case, we evaluate the conditional mean and standard deviation
 of the variable \texttt{Y} for each value of \texttt{Z8}.
 
-\subsection{For each loop}
+\subsection{Foreach loop}
 \label{loop-each}
 
 The fourth form of loop control also uses the internal variable
@@ -163,6 +167,16 @@ states we could do:
 genr time
 loop foreach i AL..WY
    ols $i const time
+endloop
+\end{code}
+
+This loop variant can also be used for looping across the elements in
+a \textit{named list} (see chapter~\ref{chap-persist}).  For example:
+
+\begin{code}
+list ylist = y1 y2 y3
+loop foreach i ylist
+   ols $i const x1 x2
 endloop
 \end{code}
 
@@ -214,12 +228,19 @@ expression:
 \section{Progressive mode}
 \label{loop-progressive}
 
-If the \verb+--progressive+ option is given for a command loop, the
-effects of the commands \cmd{ols}, \cmd{print} and \cmd{store} are
-modified as follows.
+If the \verb+--progressive+ option is given for a command loop,
+special behavior is invoked for certain commands, namely, \cmd{print},
+\cmd{store} and simple estimation commands.  By ``simple'' here we
+mean commands which (a) estimate a single equation (as opposed to a
+system of equations) and (b) do so by means of a single command
+statement (as opposed to a block of statements, as with \cmd{nls} and
+\cmd{mle}).  The paradigm is \cmd{ols}; other possibilities include
+\cmd{tsls}, \cmd{wls}, \cmd{logit} and so on.
 
-\cmd{ols}: The results from each individual iteration of the
-regression are not printed.  Instead, after the loop is completed you
+The special behavior is as follows.
+
+Estimators: The results from each individual iteration of the
+estimator are not printed.  Instead, after the loop is completed you
 get a printout of (a) the mean value of each estimated coefficient
 across all the repetitions, (b) the standard deviation of those
 coefficient estimates, (c) the mean value of the estimated standard
