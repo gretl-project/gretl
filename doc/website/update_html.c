@@ -36,6 +36,13 @@ struct lang_strings_t {
     char shortdate[16];
 };
 
+typedef struct _gretl_version gretl_version;
+struct _gretl_version {
+    int major;
+    int minor;
+    int rev;
+};
+
 struct lang_strings_t lang_strings[NLANGS];
 
 void lang_strings_init (void)
@@ -465,11 +472,106 @@ int process_templates (char *verstr)
     return err;
 }
 
+int version_history (char *fname, gretl_version *versions)
+{
+    int ret, M, m, r, n = 0;
+    FILE *clog;
+    char line[MYLEN];
+    int ye,mo,da;
+
+    clog = fopen(fname, "r");
+
+    while (fgets(line, MYLEN, clog)) {
+	ret = sscanf(line, "%d/%d/%d version %d.%d.%d\n", 
+		     &da, &mo, &ye, &M, &m, &r);
+	if (ret == 6) {
+	    versions[n].major = M;
+	    versions[n].minor = m;
+	    versions[n].rev = r;
+	    n++;
+	}
+    }
+
+    fclose(clog);
+
+    return n;
+}
+
+void bug_print_line (char *s, FILE *fp)
+{
+    int n, bugnum;
+
+    while (*s) {
+	n = strspn(s, "0123456789");
+	if (n == 7) {
+	    sscanf(s, "%d", &bugnum);
+	    fprintf(fp, "<a href=\"http://sourceforge.net/tracker/index.php?"
+		    "func=detail&aid=%d&group_id=36234&atid=416803\">%d</a>", 
+		    bugnum, bugnum);
+	    s += 7;
+	} else {
+	    fputc(*s, fp);
+	    s++;
+	}
+    }
+}
+
+void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
+{
+    int ret, M, m, r, i, n;
+    FILE *clog;
+    FILE *clogh;
+    char line[MYLEN];
+    int ye, mo, da;
+
+    clogh = fopen(targ, "a");
+    clog = fopen(src, "r");
+
+    fputs("<a name=\"top\">", clogh);
+
+    n = 0;
+    for (i=0; i<nv; i++) {
+	M = gv[i].major;
+	m = gv[i].minor;
+	r = gv[i].rev;
+
+	fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
+	fprintf(clogh, "%s%d.%d.%d</a> ", (n)? " " : "Version ", 
+		M, m, r);
+
+	if (i == nv - 1 || gv[i+1].minor < m) {
+	    fputc('\n', clogh);
+	    n = 0;
+	} else {
+	    n++;
+	}
+    }
+
+    fputc('\n', clogh);
+
+    while (fgets(line, MYLEN, clog)) {
+	ret = sscanf(line, "%d/%d/%d version %d.%d.%d\n", 
+		     &da, &mo, &ye, &M, &m, &r);
+	if (ret == 6) {
+	    fprintf(clogh, "<a name=\"v%d-%d-%d\">", M, m, r); 
+	    fprintf(clogh, " %d/%d/%d Version %d.%d.%d</a>", 
+		    da, mo, ye, M, m, r);
+	    fputs(" [<a href=\"#top\">Back to top</a>]\n", clogh);
+	} else {
+	    bug_print_line(line, clogh);
+	}
+    }
+
+    fclose(clog);
+    fclose(clogh);
+}
+
 int make_html_changelog (void)
 {
+    gretl_version gv[1000];
     char targ[MYLEN];
     char src[MYLEN];
-    int err = 0;
+    int nv, err = 0;
 
     sprintf(targ, "%s/ChangeLog.html", WEBDIR);
     
@@ -478,8 +580,15 @@ int make_html_changelog (void)
     if (err) return err;
 
     sprintf(src, "%s/ChangeLog", SRCDIR);
+
+    nv = version_history(src, gv);
+
+#if 0
     err = copyfile(src, targ, 1);
     if (err) return err;
+#endif
+
+    write_changelog(src, targ, gv, nv);
 
     sprintf(src, "%s/template/changelog.end", WEBSRC);
     err = copyfile(src, targ, 1);
