@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+  <title>gretl para OS X</title>
+  <link rel="STYLESHEET" type="text/css" href="css-gretl.html">
+</head>
+<body>
+
+<p>[<a href="./gretl_portugues.html">página principal</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>para Mac OS X</h2>
+</center>
+<h2>Imagem de disco pré-compilada</h2>
+<p>O processo mais simples de instalar o gretl para OS X, se funcionar
+no seu caso, é obter a imagem de disco, <a
+ href="http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.dmg">gretl-VERSION.dmg</a>
+(cerca de 9MB). Fazer o download da imagem para o ambiente de trabalho,
+fazer duplo-click para a abrir, e arrastar a pasta Gretl_Folder, que se
+encontra no interior, para uma localização adequada (por exemplo, a
+pasta Programas).<br>
+</p>
+<p>Este procedimento foi testado no OS X v10.2.4. Deverá funcionar no
+OS X 10.3
+"Panther", mas pode ocorrer um problema com as fontes. A imagem de
+disco está ligeiramente documentada no ficheiro
+<a href="http://gretl.sourceforge.net/README.pdf">README.pdf</a>, que
+contém sugestões sobre o que fazer se as fontes não aparecerem
+correctamente. Se gretl não funcionar correctamente no Panther, é
+possível obter informação sobre a execução do programa fazendo: abrir
+uma janela de terminal X11; alterar a directoria para a pasta onde se
+instalou o pacote (ex.
+<kbd>cd pasta_do_gretl</kbd>), mudar para a directoria <kbd>bin</kbd>
+e executar o comando</p>
+<pre>./gretl.sh<br></pre>
+<p>Isto deverá fornecer alguma informação sobre o que se está a passar.</p>
+<p>Repare que este pacote de software depende do sistema X11 da Apple
+(sistema X Window adaptado para o Mac pela Apple).</p>
+<h2>Método alternativo: compilar usando Fink</h2>
+<p>Se a imagem pré-compilada não funciona, ou se se pretende um maior
+controle da sua compilação, é possível compilar a partir do código
+fonte. Para isto é necessário -- juntamente com o sistema X11 da Apple
+e uma certa familiaridade com os métodos do Unix -- o sistema Fink,
+disponível a partir de: <a href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p>
+<p>Para além da instalação base de Fink, para compilar e executar o
+gretl, tem que se garantir que os seguintes pacotes Fink estão
+presentes e correctos (alguns deles podem já estar instalados e
+actualizados, que o Fink&nbsp; informará se for o caso). Adiante de
+cada pacote, está o comando (a ser introduzido na linha de comandos num
+terminal xterm na aplicação Mac, Terminal) para instalar:</p>
+<table cellspacing="8">
+  <tbody>
+    <tr>
+      <td>
+      <p class="in-cell">system-xfree86</p>
+      </td>
+      <td><kbd>fink install system-xfree86</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p class="in-cell">gtk+2</p>
+      </td>
+      <td><kbd>fink install gtk+2</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p class="in-cell">gtk+2-dev</p>
+      </td>
+      <td><kbd>fink install gtk+2-dev</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p class="in-cell">libxml2</p>
+      </td>
+      <td><kbd>fink install libxml2</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p class="in-cell">dlcompat</p>
+      </td>
+      <td><kbd>fink install dlcompat</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p class="in-cell">dlcompat-dev</p>
+      </td>
+      <td><kbd>fink install dlcompat-dev</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p class="in-cell">gnuplot</p>
+      </td>
+      <td><kbd>fink install gnuplot</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p class="in-cell">recode</p>
+      </td>
+      <td><kbd>fink install recode</kbd></td>
+    </tr>
+  </tbody>
+</table>
+<p>Em particular, tem que se garantir que gnuplot esteja actualizado (o
+número da versão deve ser igual ou superior a 3.8i.0-2, para que possa
+funcionar com o gretl).</p>
+<h2>Variáveis de ambiente</h2>
+<p>Para compilar o gretl usando Fink, tem que se garantir que o <i>ambiente</i>
+esteja devidamente preparado, antes de se executar o script de
+configuração do gretl. Isto significa, ter que definir algumas
+variáveis de ambiente; o modo exacto como isto é feito, depende se a
+sua shell é tcsh
+ou bash (tcsh era a shell pré-definida no OS X antes de Panther,
+mas penso que no Panther passou a ser a bash). É possível executar os
+comandos seguintes um a um, ou (melhor) colocá-los no ficheiro de
+inicialização da sua shell, <kbd>.tcshrc</kbd> ou <kbd>.bashrc</kbd>,
+na própria directoria home.</p>
+<p>versão tcsh:</p>
+<pre>setenv CFLAGS -I/sw/include<br>setenv LDFLAGS -L/sw/lib<br>setenv CXXFLAGS $CFLAGS<br>setenv CPPFLAGS $CXXFLAGS<br>setenv ACLOCAL_FLAGS "-I/sw/share/aclocal"<br>setenv PKG_CONFIG_PATH "/sw/lib/pkgconfig"<br></pre>
+<p>versão bash:</p>
+<pre>export CFLAGS=-I/sw/include<br>export LDFLAGS=-L/sw/lib<br>export CXXFLAGS=$CFLAGS<br>export CPPFLAGS=$CXXFLAGS<br>export ACLOCAL_FLAGS="-I/sw/share/aclocal"<br>export PKG_CONFIG_PATH="/sw/lib/pkgconfig"<br></pre>
+<p>É também necessário fazer "source" o ficheiro <kbd>init.sh</kbd>
+fornecido com o Fink:</p>
+<pre>source /sw/bin/init.sh<br></pre>
+<p>Poderá ter interesse ler <a
+ href="http://fink.sourceforge.net/faq/usage-general.php">fink FAQ</a>.</p>
+<h2>Configurar e compilar</h2>
+<p>Uma vez que se tenha as versões correctas de OS X, X11 da Apple,
+Fink, os pacotes Fink exigidos, e o ambiente correctamente configurado,
+instalar o gretl deve correr sem complicações. Espero vir a preparar um
+pacote Fink para&nbsp; o gretl, num futuro próximo, mas por agora você
+tem que o instalar a partir do código-fonte. Eis como o fazer:</p>
+<ol>
+  <li>
+    <p class="" in-list="">Fazer download do pacote de código-fonte:<br>
+    <kbd>curl -O
+http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2</kbd> </p>
+  </li>
+  <li>
+    <p class="" in-list="">Descomprimir o código-fonte:<br>
+    <kbd>tar xvfj gretl-VERSION.tar.bz2</kbd> </p>
+  </li>
+  <li>
+    <p class="" in-list="">Mudar para a directoria do código-fonte do
+gretl:<br>
+    <kbd>cd gretl-VERSION</kbd></p>
+  </li>
+  <li>
+    <p class="" in-list="">Configurar o pacote de código:<br>
+    <kbd>./configure --prefix=/sw --disable-png-comments</kbd></p>
+  </li>
+  <li>
+    <p class="" in-list="">Executar <kbd>make</kbd> para compilar o
+gretl. Isto deve demorar algum tempo.</p>
+  </li>
+  <li>
+    <p class="" in-list="">Executar <kbd>sudo make install</kbd> para
+instalar o gretl.</p>
+  </li>
+</ol>
+<p>Se puder ser útil, aqui estão todos os comandos num script da shell:</p>
+
+<pre>
+#!/bin/sh
+# inicializa fink. 
+/sw/bin/init.sh
+# prepara o ambiente de compilação
+export CFLAGS="-O2 -I/sw/include"
+export LDFLAGS=-L/sw/lib
+export CXXFLAGS=$CFLAGS
+export CPPFLAGS=$CXXFLAGS
+export ACLOCAL_FLAGS="-I/sw/share/aclocal"
+export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
+# faz download do código-fonte do gretl
+curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2
+# extrai os ficheiros do pacote de código
+tar xvfj gretl-VERSION.tar.bz2
+# muda para a directoria do código-fonte do gretl
+cd gretl-VERSION
+# configura a compilação
+./configure --prefix=/sw --disable-png-comments
+# compila o programamake
+# instala gretl (precisa da palavra passe do root)
+sudo make install
+</pre>
+
+<p>Deve ser possível agora executar o gretl escrevendo "gretl" na linha
+de comandos numa janela xterm (aberta depois de ter iniciado o X11 da
+Apple).</p>
+</body>
+</html>

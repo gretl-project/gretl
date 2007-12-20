@@ -536,13 +536,14 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	r = gv[i].rev;
 
 	fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
-	fprintf(clogh, "%s%d.%d.%d</a> ", (n)? " " : "Version ", 
+	fprintf(clogh, "%s%d.%d.%d</a> ", (n)? "" : "Version ", 
 		M, m, r);
 
 	if (i == nv - 1 || gv[i+1].minor < m) {
 	    fputc('\n', clogh);
 	    n = 0;
 	} else {
+	    fputc(' ', clogh);
 	    n++;
 	}
     }
