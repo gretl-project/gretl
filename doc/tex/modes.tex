@@ -95,6 +95,31 @@ Here are two suggestions.
   ``preparatory'' script first.
 \end{itemize}
 
+\subsection{Scripts and data files}
+
+One common way of doing econometric research with \app{gretl} is as
+follows: compose a script; execute the script; inspect the output;
+modify the script; run it again --- with the last three steps repeated
+as many times as necessary.  In this context, note that when you open
+a data file this clears out most of \app{gretl}'s internal state.
+It's therefore probably a good idea to have your script start with an
+\texttt{open} command: the data file will be re-opened each time, and
+you can be confident you're getting ``fresh'' results.
+
+One further point should be noted.  When you go to open a new data
+file via the graphical interface, you are always prompted: opening a
+new data file will lose any unsaved work, do you really want to do
+this?  When you execute a script that opens a data file, however, you
+are \textit{not} prompted.  The assumption is that in this case you're
+not going to lose any work, because the work is embodied in the script
+itself (and it would be annoying to be prompted at each iteration of
+the work cycle described above).   
+
+This means you should be careful if you've done work using the
+graphical interface and then decide to run a script: the current data
+file will be replaced without any questions asked, and it's your
+responsibility to save any changes to your data first.
+
 
 \section{Saving script objects}
 \label{sect-script-objects}
