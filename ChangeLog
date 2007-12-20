@@ -7,8 +7,8 @@ version 1.7.1, in progress
   with replacement (not documented yet)
 - Add functions for matrix I/O from/to text files	
 - Fix garch bug when p!=q
-- Fix bugs: [ 1848487, 1847908, 1850842, 1848039, 1840179, 
-	1842439, 1841098, 1843664, 1835707, 1841107, 1841774 ]
+- Fix bugs: 1848487, 1847908, 1850842, 1848039, 1840179, 
+	1842439, 1841098, 1843664, 1835707, 1841107, 1841774
 - Fix bugs in saving/re-opening restricted VECM models as part
   of a gretl session
 - Fix bug in CUSUM/CUSUMSQ plots for time series data frequency
@@ -17,7 +17,8 @@ version 1.7.1, in progress
 - Reinstate user-level choice of "Windows-look" emulation
 - Reinstate user choice of menu font on Windows
 - Script editor: add right-click popup with menu items to
-  comment/uncomment selected block of commands
+  comment/uncomment selected block of commands, and to execute
+  a line or region 
 - genr: fix for case where closing parenthesis is missing at 
   the end of a formula
 - OS X: replace fftw library with an i386 build
@@ -32,6 +33,11 @@ version 1.7.1, in progress
 - Add set variable for max iterations in a "while" loop	
 - Fix bug: missing data handled incorrectly in ascii graphs	
 - Removed obsolete genr function varnum()
+- Renaming session objects: move to popup menu
+- Saving text from output windows: give choice of saving to
+  file, or as session icon
+- Commands allowable in loops: enable all but a fairly small
+  subset
 
 11/27/2007 version 1.7.0
 - Add heckit estimator
