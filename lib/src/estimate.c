@@ -2585,20 +2585,14 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     err = ptmod.errcode;
 
     if (!err) {
-	double pval;
-
-	x = fabs(ptmod.coeff[1]) / ptmod.sderr[1];
-	pval = 2.0 * (1 - normal_cdf(x));
-
-	if (!(opt & OPT_Q)) {
-	    ptmod.aux = AUX_HET_1;
-	    printmodel(&ptmod, pdinfo, OPT_NONE, prn);
-	}
-
-	clear_model(&ptmod);
+	double z = fabs(ptmod.coeff[1]) / ptmod.sderr[1];
+	double pval = 2.0 * (1 - normal_cdf(z));
 
 	if (opt & OPT_Q) {
-	    print_HET_1(x, pval, prn);
+	    print_HET_1(z, pval, prn);
+	} else {
+	    ptmod.aux = AUX_HET_1;
+	    printmodel(&ptmod, pdinfo, OPT_NONE, prn);
 	}
 
 	if (opt & OPT_S) {
@@ -2606,7 +2600,7 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_Z);
-		model_test_set_value(test, x);
+		model_test_set_value(test, z);
 		model_test_set_pvalue(test, pval);
 		maybe_add_test_to_model(pmod, test);
 	    }	  
@@ -2614,6 +2608,8 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 
 	record_test_result(x, pval, _("HET_1"));
     }
+
+    clear_model(&ptmod);
 
     dataset_drop_last_variables(2, pZ, pdinfo); 
 
@@ -2719,19 +2715,15 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	double TR2, pval;
-
-	white.aux = AUX_WHITE;
-
-	if (!(opt & OPT_Q)) {
-	    printmodel(&white, pdinfo, OPT_NONE, prn);
-	}
-
-	TR2 = white.rsq * white.nobs;
-	pval = chisq_cdf_comp(TR2, white.ncoeff - 1);
+	double TR2 = white.rsq * white.nobs;
+	int df = white.ncoeff - 1;
+	double pval = chisq_cdf_comp(TR2, df);
 
 	if (opt & OPT_Q) {
-	    print_whites_test(TR2, white.ncoeff - 1, pval, prn);
+	    print_whites_test(TR2, df, pval, prn);
+	} else {
+	    white.aux = AUX_WHITE;
+	    printmodel(&white, pdinfo, OPT_NONE, prn);
 	}
 
 	if (opt & OPT_S) {
@@ -2739,7 +2731,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_TR2);
-		model_test_set_dfn(test, white.ncoeff - 1);
+		model_test_set_dfn(test, df);
 		model_test_set_value(test, TR2);
 		model_test_set_pvalue(test, pval);
 		maybe_add_test_to_model(pmod, test);
