@@ -489,6 +489,7 @@ void file_save_callback (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
+	/* FIXME: option to save to session as text? */
 	u = SAVE_OUTPUT;
     } else {
 	switch (vwin->role) {
