@@ -51,6 +51,8 @@ const char *get_session_dirname (void);
 
 int real_add_text_to_session (PRN *prn, const char *tname);
 
+void save_output_as_text_icon (windata_t *vwin);
+
 int add_graph_to_session (char *fname, char *fullname);
 
 void add_boxplot_to_session (const char *boxtmp);

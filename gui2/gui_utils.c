@@ -757,25 +757,10 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    do_run_script(w, vwin);
 	    return TRUE;
 	} else if (key->keyval == GDK_Return) {
-	    GtkTextBuffer *buf;
-	    GtkTextIter i1, i2;
-	    gchar *str;
-	    gint lno;
-	
-	    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-	    gtk_text_buffer_get_iter_at_mark(buf, 
-					     &i1, 
-					     gtk_text_buffer_get_insert(buf));
-	    
-	    i2 = i1;
-	    lno = gtk_text_iter_get_line(&i1);
-	    gtk_text_iter_set_line(&i1, lno);
-	    gtk_text_iter_forward_to_line_end(&i2);
-	    str = gtk_text_buffer_get_text(buf, &i1, &i2, FALSE);
+	    gchar *str = textview_get_current_line(w);
+
 	    if (str != NULL && !string_is_blank(str)) {
-		g_object_set_data(G_OBJECT(w), "script-line", str);
-		do_run_script(w, vwin);
-		g_object_steal_data(G_OBJECT(w), "script-line");
+		run_script_fragment(vwin, str);
 	    } else if (str != NULL) {
 		g_free(str);
 	    }

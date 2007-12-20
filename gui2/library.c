@@ -5376,15 +5376,7 @@ void do_run_script (GtkWidget *w, gpointer p)
     gchar *buf;
     int sel = 0;
 
-    /* were we passed a single line for execution? */
-    buf = g_object_get_data(G_OBJECT(w), "script-line");
-
-    if (buf != NULL) {
-	sel = 1;
-    } else {
-	buf = textview_get_selection_or_all(vwin->w, &sel);
-    }
-
+    buf = textview_get_selection_or_all(vwin->w, &sel);
     real_do_run_script(vwin, buf, sel);
 }
 

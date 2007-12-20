@@ -489,8 +489,22 @@ void file_save_callback (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
-	/* FIXME: option to save to session as text? */
-	u = SAVE_OUTPUT;
+	const char *opts[] = {
+	    N_("Save to file"),
+	    N_("Save to session as icon")
+	};
+	int resp;
+
+	resp = radio_dialog(_("gretl: save text"), _("Save text"), 
+			    opts, 2, 0, 0);
+	if (resp < 0) {
+	    return;
+	} else if (resp == 1) {
+	    save_output_as_text_icon(vwin);
+	    return;
+	} else {
+	    u = SAVE_OUTPUT;
+	}
     } else {
 	switch (vwin->role) {
 	case EDIT_SCRIPT:

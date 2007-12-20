@@ -1070,6 +1070,22 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
+gchar *textview_get_current_line (GtkWidget *view)
+{
+    GtkTextBuffer *buf;
+    GtkTextIter start, end;
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_get_iter_at_mark(buf, &start, 
+				     gtk_text_buffer_get_insert(buf));
+    gtk_text_iter_set_line_offset(&start, 0);
+    gtk_text_buffer_get_iter_at_mark(buf, &end, 
+				     gtk_text_buffer_get_insert(buf));
+    gtk_text_iter_forward_to_line_end(&end);
+
+    return gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+}
+
 /* Determine whether or not a chunk of text is commented,
    in the form of each line beginning with '#' (with possible
    leading white space).  If some lines are commented and

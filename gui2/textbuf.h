@@ -38,6 +38,8 @@ gchar *textview_get_text (GtkWidget *view);
 gchar *textview_get_selection_or_all (GtkWidget *view,
 				      int *sel);
 
+gchar *textview_get_current_line (GtkWidget *view);
+
 int textview_set_text (GtkWidget *view, const gchar *text);
 
 int textview_set_cursor_at_line (GtkWidget *view, int line);

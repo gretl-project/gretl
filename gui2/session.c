@@ -70,7 +70,7 @@
 
 #define SESSION_DEBUG 0
 
-#define SHOWNAMELEN 12
+#define SHOWNAMELEN 15
 #define ICONVIEW_MIN_COLS 4
 
 typedef struct SESSION_ SESSION;
@@ -157,6 +157,7 @@ static char *global_items[] = {
 static char *model_items[] = {
     N_("Display"),
     N_("Add to model table"),
+    N_("Rename"),
     N_("Delete")
 };
 
@@ -174,14 +175,16 @@ static char *graph_page_items[] = {
     N_("Help")
 };
 
-static char *var_items[] = {
+static char *generic_items[] = {
     N_("Display"),
+    N_("Rename"),
     N_("Delete")
 };
 
 static char *graph_items[] = {
     N_("Display"),
     N_("Edit plot commands"),
+    N_("Rename"),
     N_("Delete")
 };
 
@@ -201,6 +204,7 @@ static char *matrix_items[] = {
     N_("View"),
     N_("Edit"),
     N_("Properties"),
+    N_("Rename"),
     N_("Delete")
 };
 
@@ -215,7 +219,7 @@ static GtkWidget *icon_table;
 static GtkWidget *global_popup;
 static GtkWidget *model_popup;
 static GtkWidget *model_table_popup;
-static GtkWidget *var_popup;
+static GtkWidget *generic_popup;
 static GtkWidget *graph_popup;
 static GtkWidget *graph_page_popup;
 static GtkWidget *boxplot_popup;
@@ -224,14 +228,14 @@ static GtkWidget *info_popup;
 static GtkWidget *matrix_popup;
 static GtkWidget *save_item;
 
-static GList *icon_list;
+static GList *iconlist;
 static gui_obj *active_object;
 static gint iconview_width;
 static gint iconview_cols;
 static gint in_icon;
 
 /* private functions */
-static gui_obj *gui_object_new (gchar *name, int sort);
+static gui_obj *gui_object_new (gchar *name, int sort, gpointer data);
 static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_build_popups (void);
 static void global_popup_activated (GtkWidget *widget, gpointer data);
@@ -246,7 +250,7 @@ static gboolean session_view_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static int real_delete_model_from_session (SESSION_MODEL *model);
-static void rename_session_object (gui_obj *obj, const char *newname);
+static void make_short_label_string (char *targ, const char *src);
 
 static int session_graph_count;
 static int session_bplot_count;
@@ -543,13 +547,105 @@ int real_add_text_to_session (PRN *prn, const char *tname)
     
     mark_session_changed();
 
-    if (icon_list != NULL && !replace) {
+    if (iconlist != NULL && !replace) {
 	session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
     }
 
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
 }
 
+static int ends_with_number (const char *s, int *k)
+{
+    int ret = 0;
+
+    s = strrchr(s, '(');
+
+    if (s != NULL) {
+	int n = strspn(s + 1, "0123456789");
+	
+	if (n > 0 && *(s + n + 1) == ')' && *(s + n + 2) == '\0') {
+	    sscanf(s + 1, "%d", k);
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+static void ensure_unique_text_name (char *tname)
+{
+    char tmp[MAXSAVENAME];
+    const char *p, *oldname;
+    int i, n, id, idmax = 0;
+
+    for (i=0; i<session.ntexts; i++) {
+	id = 0;
+	oldname = session.texts[i]->name;
+	if (!strcmp(tname, oldname)) {
+	    id = 1;
+	} else if (ends_with_number(oldname, &id)) {
+	    p = strrchr(oldname, '(');
+	    *tmp = '\0';
+	    strncat(tmp, oldname, p - oldname);
+	    if (strcmp(tmp, tname)) {
+		id = 0;
+	    }
+	}
+	if (id > idmax) {
+	    idmax = id;
+	}	
+    }
+
+    if (idmax > 0) {
+	char num[8];
+
+	sprintf(num, "(%d)", ++idmax);
+	n = MAXSAVENAME - strlen(num) - 1;
+	*tmp = '\0';
+	strncat(tmp, tname, n);
+	strcat(tmp, num);
+	strcpy(tname, tmp);
+    }
+}
+
+void save_output_as_text_icon (windata_t *vwin)
+{
+    const gchar *title = NULL;
+    char tname[MAXSAVENAME];
+    gchar *buf;
+    int err;
+
+    buf = textview_get_text(vwin->w);
+    if (buf == NULL) {
+	errbox("Couldn't retrieve buffer");
+	return;
+    }
+
+    if (vwin->dialog != NULL) {
+	title = gtk_window_get_title(GTK_WINDOW(vwin->dialog));
+    }
+
+    if (title != NULL && !strncmp(title, "gretl: ", 7)) {
+	int n = strlen(title + 7);
+
+	if (n > MAXSAVENAME - 1) {
+	    n = MAXSAVENAME - 1;
+	}
+	*tname = '\0';
+	strncat(tname, title + 7, n);
+    } else {
+	strcpy(tname, "text");
+    }
+
+    ensure_unique_text_name(tname);
+    err = session_append_text(tname, buf);
+
+    if (!err && iconlist != NULL) {
+	SESSION_TEXT * text = get_session_text_by_name(tname);
+
+	session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
+    }
+}
 
 static int real_add_model_to_session (void *ptr, const char *name,
 				      GretlObjType type)
@@ -566,7 +662,7 @@ static int real_add_model_to_session (void *ptr, const char *name,
 	return 1;
     } 
 
-    if (icon_list != NULL) {
+    if (iconlist != NULL) {
 	session_add_icon(mod, type, ICON_ADD_SINGLE);
     }
 
@@ -593,7 +689,7 @@ real_add_graph_to_session (const char *fname, const char *grname,
 
     mark_session_changed();
 
-    if (icon_list != NULL && !replace) {
+    if (iconlist != NULL && !replace) {
 	session_add_icon(graph, type, ICON_ADD_SINGLE);
     }
 
@@ -1816,7 +1912,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 
 static gui_obj *get_gui_obj_by_data (void *finddata)
 {
-    GList *mylist = icon_list;
+    GList *mylist = iconlist;
     gui_obj *obj = NULL;
 
     while (mylist != NULL) {
@@ -1865,23 +1961,90 @@ static void rename_session_graph (SESSION_GRAPH *graph, const char *newname)
     }
 }
 
-static void rename_session_object (gui_obj *obj, const char *newname)
+static int rename_session_object (gui_obj *obj, const char *newname)
 {
+    int err = 0;
+
     if (obj->sort == GRETL_OBJ_EQN || obj->sort == GRETL_OBJ_SYS || 
 	obj->sort == GRETL_OBJ_VAR) { 
-	SESSION_MODEL *sm = obj->data;
+	SESSION_MODEL *sm;
 
-	gretl_object_rename(sm->ptr, sm->type, newname);
-	sm->name[0] = '\0';
-	strncat(sm->name, newname, MAXSAVENAME - 1);
-    } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) { 
-	rename_session_graph(obj->data, newname);
+	sm = get_session_model_by_name(newname);
+	if (sm != NULL) {
+	    err = 1;
+	} else {
+	    sm = obj->data;
+	    gretl_object_rename(sm->ptr, sm->type, newname);
+	    sm->name[0] = '\0';
+	    strncat(sm->name, newname, MAXSAVENAME - 1);
+	}
+    } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+	SESSION_GRAPH *sg;
+
+	sg = get_session_graph_by_name(newname);
+	if (sg != NULL) {
+	    err = 1;
+	} else {
+	    sg = obj->data;
+	    rename_session_graph(sg, newname);
+	}
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
 	user_matrix_set_name(obj->data, newname);
+    } else if (obj->sort == GRETL_OBJ_TEXT) {
+	SESSION_TEXT *st;
+
+	st = get_session_text_by_name(newname);
+	if (st != NULL) {
+	    err = 1;
+	} else {
+	    st = obj->data;
+	    *st->name = '\0';
+	    strncat(st->name, newname, MAXSAVENAME - 1);
+	}
     }
 
-    free(obj->name);
-    obj->name = g_strdup(newname);
+    if (err) {
+	errbox(_("'%s': there is already an object of this name"), newname);
+    } else {
+	free(obj->name);
+	obj->name = g_strdup(newname);
+    }
+
+    return err;
+}
+
+static void rename_object_callback (GtkWidget *widget, dialog_t *dlg) 
+{
+    gui_obj *obj = (gui_obj *) edit_dialog_get_data(dlg);
+    const gchar *newname;
+    int err = 0;
+
+    newname = edit_dialog_get_text(dlg);
+
+    if (newname != NULL && *newname != '\0' &&
+	strcmp(newname, obj->name)) {
+	gchar str[SHOWNAMELEN + 1];
+
+	err = rename_session_object(obj, newname);
+	if (!err) {
+	    make_short_label_string(str, obj->name);
+	    gtk_label_set_text(GTK_LABEL(obj->label), str);
+	    mark_session_changed();
+	}
+    }
+
+    if (!err) {
+	close_dialog(dlg);
+    }
+}
+
+static void rename_object_dialog (gui_obj *obj) 
+{
+    edit_dialog (_("gretl: rename object"), 
+		 _("Enter new name\n"
+		   "(max. 31 characters)"),
+		 obj->name, rename_object_callback, obj, 
+		 0, VARCLICK_NONE, NULL);
 }
 
 void delete_text_from_session (void *p)
@@ -1914,7 +2077,7 @@ void display_saved_text (void *p)
 
 static void session_view_init (void)
 {
-    icon_list = NULL;
+    iconlist = NULL;
     icon_table = NULL;
     iconview_width = 0;
     iconview_cols = ICONVIEW_MIN_COLS;
@@ -1939,28 +2102,30 @@ static void session_view_free (GtkWidget *w, gpointer data)
 {
     iconview = NULL;
 
-    g_list_foreach(icon_list, (GFunc) gui_obj_destroy, NULL);
+    g_list_foreach(iconlist, (GFunc) gui_obj_destroy, NULL);
 
-    g_list_free(icon_list);
-    icon_list = NULL;
+    g_list_free(iconlist);
+    iconlist = NULL;
 }
 
 static void session_delete_icon (gui_obj *obj)
 {
     if (obj == NULL) return;
 
-    if (obj->icon && GTK_IS_WIDGET(obj->icon))
+    if (obj->icon != NULL && GTK_IS_WIDGET(obj->icon)) {
 	gtk_container_remove(GTK_CONTAINER(icon_table), obj->icon);
-    if (obj->label && GTK_IS_WIDGET(obj->label))
+    }
+    if (obj->label != NULL && GTK_IS_WIDGET(obj->label)) {
 	gtk_container_remove(GTK_CONTAINER(icon_table), obj->label);
+    }
 
-    icon_list = g_list_first(icon_list);
-    icon_list = g_list_remove(icon_list, obj);
+    iconlist = g_list_first(iconlist);
+    iconlist = g_list_remove(iconlist, obj);
 
     gui_obj_destroy(obj, NULL);
 
-    if (icon_list == NULL) {
-	fprintf(stderr, "Bad: icon_list has gone NULL\n");
+    if (iconlist == NULL) {
+	fprintf(stderr, "Bad: iconlist has gone NULL\n");
     }
 }
 
@@ -2016,12 +2181,12 @@ static void pack_single_icon (gui_obj *obj)
     int row, col;
     gui_obj *last;
 
-    icon_list = g_list_last(icon_list);
-    last = icon_list->data;
+    iconlist = g_list_last(iconlist);
+    last = iconlist->data;
     row = last->row;
     col = last->col;  
 
-    icon_list = g_list_append(icon_list, obj);
+    iconlist = g_list_append(iconlist, obj);
 
     col++;
     if (col > 0 && (col % iconview_cols == 0)) {
@@ -2035,7 +2200,7 @@ static void pack_single_icon (gui_obj *obj)
 
 static void batch_pack_icons (void)
 {
-    GList *mylist = g_list_first(icon_list);
+    GList *mylist = g_list_first(iconlist);
     gui_obj *obj;
     int row = 0, col = 0;
 
@@ -2133,28 +2298,16 @@ static void undisplay_icon (gui_obj *obj, gpointer p)
 
 static void rearrange_icons (void) 
 {
-    g_list_foreach(icon_list, (GFunc) undisplay_icon, NULL);
-
+    iconlist = g_list_first(iconlist);
+    g_list_foreach(iconlist, (GFunc) undisplay_icon, NULL);
     batch_pack_icons();
 }
 
 static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key, 
 				gpointer p)
 {
-    /* 'q' quits, but not if we're editing a label */
-
+    /* 'q' quits iconview */
     if (key->keyval == GDK_q) { 
-	GList *mylist = icon_list;
-	gui_obj *obj = NULL;
-
-	while (mylist != NULL) {
-	    obj = (gui_obj *) mylist->data;
-	    if (gtk_editable_get_editable(GTK_EDITABLE(obj->label))) {
-		return FALSE;
-	    }
-	    mylist = mylist->next;
-	}
-
         gtk_widget_destroy(w);
     }
 
@@ -2180,7 +2333,7 @@ static void object_popup_show (gui_obj *obj, GdkEventButton *event)
     case GRETL_OBJ_VAR: 
     case GRETL_OBJ_SYS:
     case GRETL_OBJ_TEXT:
-	w = var_popup; 
+	w = generic_popup; 
 	break;
     case GRETL_OBJ_GRAPH: 
 	w = graph_popup; 
@@ -2353,6 +2506,8 @@ static void matrix_popup_activated (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Properties"))) {
 	m = user_matrix_get_matrix(u);
 	view_matrix_properties(m, name);
+    } else if (!strcmp(item, _("Rename"))) {
+	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {
 	maybe_delete_session_object(obj);
     }
@@ -2405,6 +2560,8 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    view_file(fullname, 1, 0, 78, 400, 
 		      (obj->sort == GRETL_OBJ_GRAPH)? GR_PLOT : GR_BOX);
 	}
+    } else if (!strcmp(item, _("Rename"))) {
+	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {
 	maybe_delete_session_object(obj);
     } else if (!strcmp(item, _("Add to model table"))) {
@@ -2602,21 +2759,12 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	return NULL;
     }
 
-    obj = gui_object_new(name, sort);
+    obj = gui_object_new(name, sort, data);
 
     /* full-length object name as tooltip */
     if (strlen(name) > SHOWNAMELEN) {
 	gretl_tooltips_add(GTK_WIDGET(obj->icon), name);
 	icon_named = 1;
-    }
-
-    /* attach specific data items */
-    if (sort == GRETL_OBJ_EQN || sort == GRETL_OBJ_VAR || sort == GRETL_OBJ_SYS) {
-	obj->data = mod;
-    } else if (sort == GRETL_OBJ_GRAPH || sort == GRETL_OBJ_PLOT) {
-	obj->data = graph;
-    } else if (sort == GRETL_OBJ_MATRIX) {
-	obj->data = um;
     }
 
     /* set up for drag and drop */
@@ -2645,14 +2793,14 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	}
     }
 
-    if      (sort == GRETL_OBJ_TEXT)   obj->data = text;
-    else if (sort == GRETL_OBJ_DSET)   obj->data = paths.datfile;
-    else if (sort == GRETL_OBJ_MODTAB) obj->data = NULL;
+    if (sort == GRETL_OBJ_DSET) {
+	obj->data = paths.datfile;
+    }
 
     if (mode == ICON_ADD_SINGLE) {
 	pack_single_icon(obj);
     } else if (mode == ICON_ADD_BATCH) {
-	icon_list = g_list_append(icon_list, obj);
+	iconlist = g_list_append(iconlist, obj);
     }
 
     return obj;
@@ -2708,11 +2856,11 @@ static void session_build_popups (void)
 	}
     }
 
-    if (var_popup == NULL) {
-	var_popup = gtk_menu_new();
-	for (i=0; i<sizeof var_items / sizeof var_items[0]; i++) {
-	    create_popup_item(var_popup, 
-			      _(var_items[i]), 
+    if (generic_popup == NULL) {
+	generic_popup = gtk_menu_new();
+	for (i=0; i<sizeof generic_items / sizeof generic_items[0]; i++) {
+	    create_popup_item(generic_popup, 
+			      _(generic_items[i]), 
 			      object_popup_activated);
 	}
     }
@@ -2861,89 +3009,6 @@ void view_session (void)
     gtk_widget_grab_focus(icon_table);
 }
 
-/* apparatus for renaming session objects */
-
-static void size_name_entry (GtkWidget *w, const char *name)
-{
-    PangoLayout *layout;
-    PangoRectangle rect;
-    PangoFontDescription *pfd;
-    int width;
-#ifdef USE_GNOME
-    GtkSettings *settings;
-    gchar *fontname;
-
-    settings = gtk_settings_get_default();
-    g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
-#endif    
-
-    layout = gtk_entry_get_layout(GTK_ENTRY(w));
-
-#ifdef USE_GNOME
-    pfd = pango_font_description_from_string(fontname);
-    g_free(fontname);
-#else
-    pfd = pango_font_description_from_string(get_app_fontname());
-#endif
-
-    pango_layout_set_font_description(layout, pfd);
-    pango_font_description_free(pfd);
-
-    pango_layout_get_pixel_extents(layout, NULL, &rect);
-    width = rect.width;
-    width = (width < 10)? width + 3 : 1.1 * width;
-
-    gtk_widget_set_size_request(w, width, -1); 
-}
-
-static gboolean object_name_return (GtkWidget *w,
-				    GdkEventKey *key,
-				    gui_obj *obj)
-{
-    if (!gtk_editable_get_editable(GTK_EDITABLE(obj->label))) {
-	return FALSE;
-    }
-
-    if (key->keyval == GDK_Return) {
-	const gchar *newname = gtk_entry_get_text(GTK_ENTRY(obj->label));
-
-	gtk_editable_set_position(GTK_EDITABLE(obj->label), 0);
-	gtk_entry_set_has_frame(GTK_ENTRY(obj->label), FALSE);
-	gtk_editable_set_editable(GTK_EDITABLE(obj->label), FALSE);
-	
-	if (newname != NULL && *newname != '\0' &&
-	    strcmp(newname, obj->name)) {
-	    rename_session_object(obj, newname);
-	}
-
-	size_name_entry(obj->label, newname);
-	gtk_widget_grab_focus(icon_table);
-
-	return TRUE;
-    } 
-
-    return FALSE;
-}
-
-static gboolean start_rename_object (GtkWidget *w,
-				     GdkEventButton *event,
-				     gui_obj *obj)
-{
-    if (gtk_editable_get_editable(GTK_EDITABLE(obj->label))) {
-	return FALSE;
-    }
-
-    gtk_widget_set_size_request(obj->label, -1, -1);
-    gtk_entry_set_width_chars(GTK_ENTRY(obj->label), SHOWNAMELEN);
-    gtk_entry_set_has_frame(GTK_ENTRY(obj->label), TRUE); 
-    gtk_editable_set_editable(GTK_EDITABLE(obj->label), TRUE);
-    gtk_editable_select_region(GTK_EDITABLE(obj->label), 0, -1);
-    gtk_editable_set_position(GTK_EDITABLE(obj->label), -1);
-    gtk_widget_grab_focus(obj->label);
-    
-    return TRUE;
-}
-
 static void make_short_label_string (char *targ, const char *src)
 {
     if (strlen(src) > SHOWNAMELEN) {
@@ -2957,6 +3022,7 @@ static void make_short_label_string (char *targ, const char *src)
 
 static void create_gobj_icon (gui_obj *obj, const char **xpm)
 {
+    gchar str[SHOWNAMELEN + 1];
     GdkPixbuf *pbuf;
     GtkWidget *image;
 
@@ -2975,25 +3041,8 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
 	session_drag_setup(obj);
     }
 
-    if (obj->sort == GRETL_OBJ_EQN || obj->sort == GRETL_OBJ_GRAPH ||
-	obj->sort == GRETL_OBJ_VAR || obj->sort == GRETL_OBJ_PLOT || 
-	obj->sort == GRETL_OBJ_SYS || obj->sort == GRETL_OBJ_MATRIX) { 
-	obj->label = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(obj->label), obj->name);
-	gtk_editable_set_editable(GTK_EDITABLE(obj->label), FALSE);
-	gtk_entry_set_has_frame(GTK_ENTRY(obj->label), FALSE);
-	gtk_entry_set_max_length(GTK_ENTRY(obj->label), MAXSAVENAME);
-	size_name_entry(obj->label, obj->name);
-	g_signal_connect(G_OBJECT(obj->label), "button-press-event",
-			 G_CALLBACK(start_rename_object), obj);
-	g_signal_connect(G_OBJECT(obj->label), "key-press-event",
-			 G_CALLBACK(object_name_return), obj);
-    } else {
-	gchar str[SHOWNAMELEN + 1];
-
-	make_short_label_string(str, obj->name);
-	obj->label = gtk_label_new(str);
-    }
+    make_short_label_string(str, obj->name);
+    obj->label = gtk_label_new(str);
 
     g_object_ref(obj->icon);
     g_object_ref(obj->label);
@@ -3006,7 +3055,7 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
 		     G_CALLBACK(icon_left), obj);
 }
 
-static gui_obj *gui_object_new (gchar *name, int sort)
+static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
 {
     gui_obj *obj;
     char **xpm = NULL;
@@ -3014,7 +3063,7 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     obj = mymalloc(sizeof *obj);
     obj->name = name; 
     obj->sort = sort;
-    obj->data = NULL;
+    obj->data = data;
 
 #if SESSION_DEBUG
     fprintf(stderr, "Allocated obj at %p (%s)\n", (void *) obj, obj->name);
