@@ -4,7 +4,7 @@
 #include <time.h>
 #include <locale.h>
 
-#define JACK 1
+#define JACK 0
 
 #if JACK
 #define WEBDIR "/home/jack/src/gretl/doc/website"
