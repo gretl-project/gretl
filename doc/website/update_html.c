@@ -4,9 +4,17 @@
 #include <time.h>
 #include <locale.h>
 
+#define JACK 1
+
+#if JACK
+#define WEBDIR "/home/jack/src/gretl/doc/website"
+#define SRCDIR "/home/jack/src/gretl/"
+#define WEBSRC "/home/jack/src/gretl/doc/website"
+#else
 #define WEBDIR "/home/cottrell/stats/esl/website"
 #define SRCDIR "/home/cottrell/src"
 #define WEBSRC "/home/cottrell/src/doc/website"
+#endif
 
 #define MYLEN 96
 #define HTMLLEN 1024
@@ -527,7 +535,13 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     clogh = fopen(targ, "a");
     clog = fopen(src, "r");
 
-    fputs("<a name=\"top\">", clogh);
+    fputs("<table>\n", clogh);
+    fputs("<colgroup span=\"2\">\n", clogh);
+    fputs("<col width=\"150\"></col>\n", clogh);
+    fputs("</colgroup>\n", clogh);
+
+    fputs("<a name=\"top\">\n", clogh);
+    fputs("<tr>\n<td valign=\"top\">\n<pre>", clogh);
 
     n = 0;
     for (i=0; i<nv; i++) {
@@ -536,17 +550,10 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	r = gv[i].rev;
 
 	fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
-	fprintf(clogh, "%s%d.%d.%d</a> ", (n)? "" : "Version ", 
+	fprintf(clogh, "%s%d.%d.%d</a>\n", (n)? "" : "Version ", 
 		M, m, r);
-
-	if (i == nv - 1 || gv[i+1].minor < m) {
-	    fputc('\n', clogh);
-	    n = 0;
-	} else {
-	    fputc(' ', clogh);
-	    n++;
-	}
     }
+    fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>", clogh);
 
     fputc('\n', clogh);
 
@@ -563,7 +570,9 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	}
     }
 
-    fclose(clog);
+     fputs("</pre>\n</td>\n</tr>\n", clogh);
+
+   fclose(clog);
     fclose(clogh);
 }
 
@@ -575,7 +584,7 @@ int make_html_changelog (void)
     int nv, err = 0;
 
     sprintf(targ, "%s/ChangeLog.html", WEBDIR);
-    
+
     sprintf(src, "%s/template/changelog.top", WEBSRC);
     err = copyfile(src, targ, 0);
     if (err) return err;

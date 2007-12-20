@@ -17,6 +17,7 @@ rm -rf $PREFIX/lib/pkgconfig
 rm -r $PREFIX/lib/*.la
 rm -f $PREFIX/lib/gretl-gtk2/*.la
 rm -rf $PREFIX/share/emacs
+rm -rf $PREFIX/share/texmf-local
 
 install -m 644 osx/README.pdf $TOPDIR
 install -m 755 osx/gretl.sh $PREFIX/bin/gretl
