@@ -166,7 +166,8 @@ enum test_stats {
     GRETL_STAT_RESET,
     GRETL_STAT_LR,
     GRETL_STAT_WALD_CHISQ,
-    GRETL_STAT_SUP_WALD
+    GRETL_STAT_SUP_WALD,
+    GRETL_STAT_Z
 };
 
 enum gretl_opt_flags {

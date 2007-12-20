@@ -2442,13 +2442,21 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
     return err;
 }
 
+static void print_HET_1 (double z, double pval, PRN *prn)
+{
+    pprintf(prn, "\n%s\n", _("Pesaran-Taylor test for heteroskedasticity"));
+    pprintf(prn, "\n%s: HET_1 = %f,\n", _("Test statistic"), z);
+    pprintf(prn, "%s = 2 * P(z > %f) = %.3g\n\n", 
+	    _("with p-value"), z, pval);
+}
+
 static void print_whites_test (double TR2, int df, double pval, PRN *prn)
 {
     pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
     pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), TR2);
     pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
 	    _("with p-value"), _("Chi-square"), 
-	    df, TR2, chisq_cdf_comp(TR2, df)); 
+	    df, TR2, pval); 
 }
 
 /* For White's test, see if we have enough degrees of freedom
@@ -2482,6 +2490,144 @@ static int get_whites_aux (const MODEL *pmod, const double **Z)
     return aux;
 }
 
+#define PT_DEBUG 0
+
+/**
+ * tsls_hetero_test:
+ * @pmod: pointer to model.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if flags include %OPT_S, save results to model; %OPT_Q
+ * means don't print the auxiliary regression.
+ * @prn: gretl printing struct.
+ *
+ * Runs Pesaran and Taylor's (1999) HET_1 test for heteroskedasticity
+ * on the given tsls model. The statistic is just a t-statistic, so
+ * under the null it is distributed as a standard normal.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+static int tsls_hetero_test (MODEL *pmod, double ***pZ, 
+			     DATAINFO *pdinfo, gretlopt opt, 
+			     PRN *prn)
+{
+    int pos, v = pmod->list[1], newv = pdinfo->v;
+    int *auxlist = NULL, *testlist = NULL;
+    int i, h, t;
+    int savet1 = pdinfo->t1;
+    int savet2 = pdinfo->t2;
+    MODEL ptmod;
+    double x;
+    int err = 0;
+
+    pos = gretl_list_separator_position(pmod->list);
+    h = pmod->list[0] - pos;
+
+#if PT_DEBUG
+    pprintf(prn, "v = %d, h = %d\n", v, h);
+#endif
+
+    auxlist = gretl_list_new(h + 1);
+    testlist = gretl_list_new(3);
+
+    if (auxlist == NULL || testlist == NULL) {
+	free(auxlist);
+	free(testlist);
+	return E_ALLOC;
+    }
+
+    auxlist[1] = v;
+    for (i=2; i<=auxlist[0]; i++) {
+	auxlist[i] = pmod->list[i + pos - 1];
+    }	
+
+    testlist[1] = newv;
+    testlist[2] = 0;
+    testlist[3] = newv + 1;
+
+#if PT_DEBUG
+    printlist(auxlist, "auxlist");
+    printlist(testlist, "testlist");
+#endif
+
+    ptmod = lsq(auxlist, pZ, pdinfo, OLS, OPT_A);
+    err = ptmod.errcode;
+    if (err) {
+	goto bailout;
+    }
+
+#if PT_DEBUG
+    printmodel(&ptmod, pdinfo, OPT_S, prn);
+#endif
+
+    err = dataset_add_series(2, pZ, pdinfo);
+    if (err) {
+	clear_model(&ptmod);
+	goto bailout;
+    }
+
+    strcpy(pdinfo->varname[newv+1], "yhat^2");
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	x = pmod->uhat[t];
+	(*pZ)[newv][t] = x*x;
+	x = ptmod.yhat[t];
+	(*pZ)[newv+1][t] = x*x;
+    }
+
+    clear_model(&ptmod);
+
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t2;
+
+    ptmod = lsq(testlist, pZ, pdinfo, OLS, OPT_A);
+    err = ptmod.errcode;
+
+    if (!err) {
+	double pval;
+
+	x = fabs(ptmod.coeff[1]) / ptmod.sderr[1];
+	pval = 2.0 * (1 - normal_cdf(x));
+
+	if (!(opt & OPT_Q)) {
+	    ptmod.aux = AUX_HET_1;
+	    printmodel(&ptmod, pdinfo, OPT_NONE, prn);
+	}
+
+	clear_model(&ptmod);
+
+	if (opt & OPT_Q) {
+	    print_HET_1(x, pval, prn);
+	}
+
+	if (opt & OPT_S) {
+	    ModelTest *test = model_test_new(GRETL_TEST_HET_1);
+
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_Z);
+		model_test_set_value(test, x);
+		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
+	    }	  
+	}
+
+	record_test_result(x, pval, _("HET_1"));
+    }
+
+    dataset_drop_last_variables(2, pZ, pdinfo); 
+
+ bailout:
+
+    free(auxlist);
+    free(testlist);
+
+    pdinfo->t1 = savet1;
+    pdinfo->t2 = savet2;
+
+    return err;
+}
+
 /**
  * whites_test:
  * @pmod: pointer to model.
@@ -2505,6 +2651,10 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     double zz;
     MODEL white;
     int err = 0;
+
+    if (pmod->ci == TSLS) {
+	return tsls_hetero_test(pmod, pZ, pdinfo, opt, prn);
+    }
 
     if (pmod->list == NULL || gretl_list_has_separator(pmod->list)) {
 	return E_NOTIMP;

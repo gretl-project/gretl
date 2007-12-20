@@ -1773,121 +1773,6 @@ int autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
-/**
- * pt_tsls_het_test:
- * @pmod: pointer to model.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save results to model; %OPT_Q
- * means don't print the auxiliary regression.
- * @prn: gretl printing struct.
- *
- * Runs Pesaran and Taylor's (1999) HET_1 test for heteroskedasticity
- * on the given tsls model. The statistic is just a t-statistic, so
- * under the null it is distributed as a standard normal.
- * 
- * Returns: 0 on successful completion, error code on error.
- */
-
-#define PT_DEBUG 0
-
-static int tsls_hetero_test (MODEL *pmod, double ***pZ, 
-			     DATAINFO *pdinfo, gretlopt opt, 
-			     PRN *prn)
-{
-    int ret = 0;
-    int pos, v = pmod->list[1], newv = pdinfo->v;
-    int *auxlist = NULL, *testlist = NULL;
-    int i, h, t, t1a, t2a, t1b, t2b;
-    MODEL aux;
-    double x, pval;
-
-    pos = gretl_list_separator_position(pmod->list);
-    h = pmod->list[0] - pos;
-
-#if PT_DEBUG
-    pprintf(prn, "v = %d, h = %d\n", v, h);
-#endif
-
-    auxlist = gretl_list_new(h + 1);
-    testlist = gretl_list_new(3);
-
-    if (auxlist == NULL || testlist == NULL) {
-	free(auxlist);
-	free(testlist);
-	return E_ALLOC;
-    }
-
-    auxlist[1] = v;
-    for (i=2; i<=auxlist[0]; i++) {
-	auxlist[i] = pmod->list[i + pos - 1];
-    }	
-
-    testlist[1] = newv;
-    testlist[2] = 0;
-    testlist[3] = newv+1;
-
-#if PT_DEBUG
-    printlist(auxlist, "auxlist");
-    printlist(testlist, "testlist");
-#endif
-
-    aux = lsq(auxlist, pZ, pdinfo, OLS, OPT_A);
-#if PT_DEBUG
-    printmodel(&aux, pdinfo, OPT_S, prn);
-#endif
-
-    t1a = pmod->t1;
-    t2a = pmod->t2;
-    t1b = pdinfo->t1;
-    t2b = pdinfo->t2;
-
-    if (dataset_add_series(2, pZ, pdinfo)) {
-	free(auxlist);
-	free(testlist);
-	return E_ALLOC;
-    } 
-
-    for (t=t1a; t<=t2a; t++) {
-	x = pmod->uhat[t];
-	(*pZ)[newv][t] = x*x;
-	x = aux.yhat[t];
-	(*pZ)[newv+1][t] = x*x;
-    }
-
-    clear_model(&aux);
-
-    pdinfo->t1 = t1a;
-    pdinfo->t2 = t2a;
-
-    aux = lsq(testlist, pZ, pdinfo, OLS, OPT_A);
-#if PT_DEBUG
-    printmodel(&aux, pdinfo, OPT_S, prn);
-#endif
-
-    x = fabs(aux.coeff[1]) / aux.sderr[1];
-    pval = 2.0 * (1 - normal_cdf(x));
-
-    clear_model(&aux);
-
-    pdinfo->t1 = t1b;
-    pdinfo->t2 = t2b;
-
-    pprintf(prn, "\n%s\n", _("Pesaran-Taylor test for heteroskedasticity"));
-    pputc(prn, '\n');
-
-    pprintf(prn, "%s: HET_1 = %f", _("Test statistic"), x);
-    pprintf(prn, ", %s = %.3g\n", _("with p-value"), pval);
-    pputc(prn, '\n');
-
-    free(auxlist);
-    free(testlist);
-
-    dataset_drop_last_variables(2, pZ, pdinfo); 
-
-    return ret;
-}
-
 /* compose list of variables to be added for Chow test and add
    them to the data set */
 
@@ -2831,11 +2716,7 @@ int lmtest_driver (const char *param,
     /* heteroskedasticity (White) */
     if (!err && (opt & OPT_W)) {
 	if (type == GRETL_OBJ_EQN) {
-	    if (((MODEL *) ptr)->ci == TSLS) {
-		err = tsls_hetero_test(ptr, pZ, pdinfo, testopt, prn);
-	    } else {
-		err = whites_test(ptr, pZ, pdinfo, testopt, prn);
-	    }
+	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}

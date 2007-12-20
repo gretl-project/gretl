@@ -2587,6 +2587,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_PANEL_TIMEDUM,
       N_("Wald test for joint significance of time dummies"),
       NULL },
+    { GRETL_TEST_HET_1,
+      N_("Pesaran-Taylor test for heteroskedasticity"),
+      N_("heteroskedasticity not present") },
     { GRETL_TEST_MAX, NULL, NULL }
 };   
 
@@ -2756,6 +2759,13 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	    sprintf(str, "%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
 	}
 	break;
+    case GRETL_STAT_Z:
+	if (tex) {
+	    sprintf(str, "$z$ = %g", test->value); 
+	} else {
+	    sprintf(str, "z = %g", test->value);
+	}
+	break;
     default:
 	*str = 0;
     }
@@ -2804,12 +2814,15 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_NORMAL_CHISQ:
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
+    case GRETL_STAT_Z:
 	sprintf(str, "%g", test->pvalue);
 	break;
     default:
 	*str = 0;
     }
 }
+
+#define asy_test(t) (t == GRETL_STAT_WALD_CHISQ || t == GRETL_STAT_Z)
 
 void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn)
 {
@@ -2826,8 +2839,8 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 
     gretl_test_print_h_0(test, heading, prn);
 
-    tstr = (test->teststat == GRETL_STAT_WALD_CHISQ)?
-	N_("Asymptotic test statistic") : N_("Test statistic");
+    tstr = asy_test(test->teststat)? N_("Asymptotic test statistic") : 
+	N_("Test statistic");
 
     get_test_stat_string(test, buf, prn);
 

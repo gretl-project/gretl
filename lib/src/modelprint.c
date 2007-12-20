@@ -25,7 +25,7 @@
 #include "texprint.h"
 
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || \
-                       a == AUX_AR || a == AUX_VAR)
+                       a == AUX_AR || a == AUX_VAR || a == AUX_HET_1)
 
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
@@ -335,7 +335,8 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
     const double *crit = pmod->criterion;
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
-	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR) {
+	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR ||
+	pmod->aux == AUX_HET_1) {
 	return;
     }
 
@@ -826,6 +827,8 @@ static const char *aux_string (int aux, PRN *prn)
 		 "(log terms)");
     } else if (aux == AUX_WHITE) {
 	return N_("White's test for heteroskedasticity");
+    } else if (aux == AUX_HET_1) {
+	return N_("Pesaran-Taylor test for heteroskedasticity");
     } else if (aux == AUX_CHOW) {
 	return N_("Augmented regression for Chow test");
     } else if (aux == AUX_COINT) {
@@ -1479,6 +1482,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_SQ:
     case AUX_LOG:
     case AUX_WHITE:
+    case AUX_HET_1:	
     case AUX_CHOW:
     case AUX_COINT:
     case AUX_ADF:
@@ -1645,7 +1649,7 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}$" : "uhat");
-    } else if (pmod->aux == AUX_WHITE) {
+    } else if (pmod->aux == AUX_WHITE || pmod->aux == AUX_HET_1) {
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}^2$" : "uhat^2");
@@ -2040,27 +2044,44 @@ static void rho_differenced_stats_message (PRN *prn)
 
 static void print_whites_results (const MODEL *pmod, PRN *prn)
 {
+    double X = pmod->rsq * pmod->nobs;
+    int df = pmod->ncoeff - 1;
+    double pv = chisq_cdf_comp(X, df);
+
     if (plain_format(prn)) {
-	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), 
-		pmod->rsq * pmod->nobs);
+	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), X);
 	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
-		_("with p-value"), _("Chi-square"), 
-		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
-		chisq_cdf_comp(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+		_("with p-value"), _("Chi-square"), df, X, pv);
     } else if (rtf_format(prn)) { /* FIXME */
 	pprintf(prn, "\\par \\ql\n%s: TR{\\super 2} = %f,\n", I_("Test statistic"), 
-		pmod->rsq * pmod->nobs);
+		X);
 	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
-		I_("with p-value"), I_("Chi-square"), 
-		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
-		chisq_cdf_comp(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+		I_("with p-value"), I_("Chi-square"), df, X, pv);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\n%s: $TR^2$ = %f,\n", I_("Test statistic"), 
-		pmod->rsq * pmod->nobs);
+	pprintf(prn, "\n%s: $TR^2$ = %f,\n", I_("Test statistic"), X);
 	pprintf(prn, "%s = $P$($\\chi^2(%d)$ > %f) = %f\n\n",
-		I_("with p-value"), 
-		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
-		chisq_cdf_comp(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+		I_("with p-value"), df, X, pv);
+    }
+}
+
+static void print_HET_1_results (const MODEL *pmod, PRN *prn)
+{
+    double z = fabs(pmod->coeff[1]) / pmod->sderr[1];
+    double pv = 2.0 * (1 - normal_cdf(z));
+
+    if (plain_format(prn)) {
+	pprintf(prn, "\n%s: HET_1 = |%f| / %f = %f,\n", _("Test statistic"), 
+		pmod->coeff[1], pmod->sderr[1], z);
+	pprintf(prn, "%s = 2 * P(z > %f) = %.3g\n\n", 
+		_("with p-value"), z, pv);
+    } else if (rtf_format(prn)) { /* FIXME */
+	pprintf(prn, "\\par \\ql\n%s: HET_1 = %f,\n", I_("Test statistic"), z);
+	pprintf(prn, "%s = 2 * P(z > %f) = %.3g\n\n", 
+		I_("with p-value"), z, pv);
+    } else if (tex_format(prn)) {
+	pprintf(prn, "\n%s: \verb|HET_1| = %f,\n", I_("Test statistic"), z);
+	pprintf(prn, "%s = $2 \times P$($z$ > %f) = %f\n\n",
+		I_("with p-value"), z, pv);
     }
 }
 
@@ -2299,6 +2320,12 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (opt & OPT_S) {
 	/* --simple-print */
+	goto close_format;
+    }
+
+    if (pmod->aux == AUX_HET_1) {
+	rsqline(pmod, prn);
+	print_HET_1_results(pmod, prn);
 	goto close_format;
     }
 
