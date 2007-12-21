@@ -1312,6 +1312,30 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
     return Q;
 }
 
+static int revise_SVD_V (gretl_matrix **pV, int r, int c)
+{
+    gretl_matrix *V;
+    double x;
+    int i, j;
+
+    V = gretl_matrix_alloc(r, c);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<r; i++) {
+	for (j=0; j<c; j++) {
+	    x = gretl_matrix_get((*pV), i, j);
+	    gretl_matrix_set(V, i, j, x);
+	}
+    }
+
+    gretl_matrix_free(*pV);
+    *pV = V;
+
+    return 0;
+}
+
 gretl_matrix *user_matrix_SVD (const gretl_matrix *m, 
 			       const char *uname, 
 			       const char *vname, 
@@ -1322,6 +1346,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     gretl_matrix *V = NULL;
     gretl_matrix **pU = NULL;
     gretl_matrix **pV = NULL;
+    int tall, minrc;
     int wantU = 0;
     int wantV = 0;
 
@@ -1330,11 +1355,8 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	return NULL;
     }
 
-    int nr = m->rows;
-    int nc = m->cols;
-    int tall =  nr - nc;
-    tall = (tall > 0) ? 1 : (tall < 0 ? -1 : 0);
-    int minrc =  tall ? nc : nr;
+    tall = m->rows - m->cols;
+    minrc = (m->rows > m->cols)? m->cols : m->rows;
 
     if (uname != NULL && strcmp(uname, "null")) {
 	if (get_matrix_by_name(uname) == NULL) {
@@ -1359,19 +1381,21 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     }
 
     if (!*err) {
-	if (tall==1) {
-	    *err = gretl_matrix_realloc(*pU, nr, minrc);
-	} else if (tall==-1) {
-	    *err = gretl_matrix_realloc(*pV, minrc, nc);
-	}
-    }
-    
-    if (!*err) {
 	if (wantU) {
-	    user_matrix_replace_matrix_by_name(uname, U);
+	    if (tall > 0) {
+		*err = gretl_matrix_realloc(U, m->rows, minrc);
+	    }
+	    if (!*err) {
+		user_matrix_replace_matrix_by_name(uname, U);
+	    }
 	}
 	if (wantV) {
-	    user_matrix_replace_matrix_by_name(vname, V);
+	    if (tall < 0) {
+		*err = revise_SVD_V(&V, minrc, m->cols);
+	    } 
+	    if (!*err) {
+		user_matrix_replace_matrix_by_name(vname, V);
+	    }
 	}
     }
 
