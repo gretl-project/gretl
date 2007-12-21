@@ -1330,6 +1330,12 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	return NULL;
     }
 
+    int nr = m->rows;
+    int nc = m->cols;
+    int tall =  nr - nc;
+    tall = (tall > 0) ? 1 : (tall < 0 ? -1 : 0);
+    int minrc =  tall ? nc : nr;
+
     if (uname != NULL && strcmp(uname, "null")) {
 	if (get_matrix_by_name(uname) == NULL) {
 	    *err = E_UNKVAR;
@@ -1352,6 +1358,14 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	*err = gretl_matrix_SVD(m, pU, &S, pV);
     }
 
+    if (!*err) {
+	if (tall==1) {
+	    *err = gretl_matrix_realloc(*pU, nr, minrc);
+	} else if (tall==-1) {
+	    *err = gretl_matrix_realloc(*pV, minrc, nc);
+	}
+    }
+    
     if (!*err) {
 	if (wantU) {
 	    user_matrix_replace_matrix_by_name(uname, U);
