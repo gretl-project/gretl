@@ -1312,6 +1312,9 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
     return Q;
 }
 
+#define SVD_RESIZE 1
+
+#if SVD_RESIZE
 static int revise_SVD_V (gretl_matrix **pV, int r, int c)
 {
     gretl_matrix *V;
@@ -1335,6 +1338,7 @@ static int revise_SVD_V (gretl_matrix **pV, int r, int c)
 
     return 0;
 }
+#endif
 
 gretl_matrix *user_matrix_SVD (const gretl_matrix *m, 
 			       const char *uname, 
@@ -1372,6 +1376,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	*err = gretl_matrix_SVD(m, pU, &S, pV);
     }
 
+#if SVD_RESIZE
     if (!*err && (U != NULL || V != NULL)) {
 	int tall = m->rows - m->cols;
 	int minrc = (m->rows > m->cols)? m->cols : m->rows;
@@ -1393,6 +1398,16 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	    }
 	}
     }
+#else
+    if (!*err) {
+	if (U != NULL) {
+	    user_matrix_replace_matrix_by_name(uname, U);
+	}
+	if (V != NULL) {
+	    user_matrix_replace_matrix_by_name(vname, V);
+	}
+    }
+#endif
 
     return S;
 }
