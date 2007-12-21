@@ -516,7 +516,7 @@ void bug_print_line (char *s, FILE *fp)
 	    fprintf(fp, "<a href=\"http://sourceforge.net/tracker/index.php?"
 		    "func=detail&aid=%d&group_id=36234&atid=416803\">%d</a>", 
 		    bugnum, bugnum);
-	    s += 7;
+	    s += n;
 	} else {
 	    fputc(*s, fp);
 	    s++;
@@ -526,7 +526,7 @@ void bug_print_line (char *s, FILE *fp)
 
 void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 {
-    int ret, M, m, r, i, n;
+    int ret, M, m, r, i;
     FILE *clog;
     FILE *clogh;
     char line[MYLEN];
@@ -543,19 +543,16 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     fputs("<a name=\"top\">\n", clogh);
     fputs("<tr>\n<td valign=\"top\">\n<pre>", clogh);
 
-    n = 0;
     for (i=0; i<nv; i++) {
 	M = gv[i].major;
 	m = gv[i].minor;
 	r = gv[i].rev;
 
 	fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
-	fprintf(clogh, "%s%d.%d.%d</a>\n", (n)? "" : "Version ", 
-		M, m, r);
+	fprintf(clogh, "Version %d.%d.%d</a>\n", M, m, r);
     }
-    fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>", clogh);
 
-    fputc('\n', clogh);
+    fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>\n", clogh);
 
     while (fgets(line, MYLEN, clog)) {
 	ret = sscanf(line, "%d/%d/%d version %d.%d.%d\n", 
@@ -570,9 +567,9 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	}
     }
 
-     fputs("</pre>\n</td>\n</tr>\n", clogh);
+    fputs("</pre>\n</td>\n</tr>\n", clogh);
 
-   fclose(clog);
+    fclose(clog);
     fclose(clogh);
 }
 
@@ -592,11 +589,6 @@ int make_html_changelog (void)
     sprintf(src, "%s/ChangeLog", SRCDIR);
 
     nv = version_history(src, gv);
-
-#if 0
-    err = copyfile(src, targ, 1);
-    if (err) return err;
-#endif
 
     write_changelog(src, targ, gv, nv);
 
