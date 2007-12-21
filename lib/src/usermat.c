@@ -1346,23 +1346,16 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     gretl_matrix *V = NULL;
     gretl_matrix **pU = NULL;
     gretl_matrix **pV = NULL;
-    int tall, minrc;
-    int wantU = 0;
-    int wantV = 0;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    tall = m->rows - m->cols;
-    minrc = (m->rows > m->cols)? m->cols : m->rows;
-
     if (uname != NULL && strcmp(uname, "null")) {
 	if (get_matrix_by_name(uname) == NULL) {
 	    *err = E_UNKVAR;
 	} else {
-	    wantU = 1;
 	    pU = &U;
 	}
     }
@@ -1371,7 +1364,6 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	if (get_matrix_by_name(vname) == NULL) {
 	    *err = E_UNKVAR;
 	} else {
-	    wantV = 1;
 	    pV = &V;
 	}
     }
@@ -1381,7 +1373,10 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     }
 
     if (!*err) {
-	if (wantU) {
+	int tall = m->rows - m->cols;
+	int minrc = (m->rows > m->cols)? m->cols : m->rows;
+
+	if (U != NULL) {
 	    if (tall > 0) {
 		*err = gretl_matrix_realloc(U, m->rows, minrc);
 	    }
@@ -1389,7 +1384,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 		user_matrix_replace_matrix_by_name(uname, U);
 	    }
 	}
-	if (wantV) {
+	if (V != NULL) {
 	    if (tall < 0) {
 		*err = revise_SVD_V(&V, minrc, m->cols);
 	    } 
