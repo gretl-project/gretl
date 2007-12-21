@@ -1372,7 +1372,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	*err = gretl_matrix_SVD(m, pU, &S, pV);
     }
 
-    if (!*err) {
+    if (!*err && (U != NULL || V != NULL)) {
 	int tall = m->rows - m->cols;
 	int minrc = (m->rows > m->cols)? m->cols : m->rows;
 
