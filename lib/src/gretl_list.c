@@ -179,7 +179,7 @@ static int real_remember_list (const int *list, const char *name,
 	orig->list = gretl_list_copy(list);
 	if (orig->list == NULL) {
 	    err = E_ALLOC;
-	} else if (gretl_messages_on()) {
+	} else if (gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, _("Replaced list '%s'\n"), name);
 	}
     } else {

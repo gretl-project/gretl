@@ -1755,6 +1755,11 @@ void libset_cleanup (void)
    but are not user-settable
 */
 
+enum {
+    LOOPING = 1,
+    LOOPING_QUIETLY
+};
+
 static int gretl_text_pause;
 static int loop_on;
 static int batch_mode;
@@ -1765,9 +1770,9 @@ int gretl_get_text_pause (void)
     return gretl_text_pause;
 }
 
-void set_loop_on (void)
+void set_loop_on (int quiet)
 {
-    loop_on = 1;
+    loop_on = (quiet)? LOOPING_QUIETLY : LOOPING;
     gretl_text_pause = 0;
 }
 
@@ -1782,6 +1787,11 @@ void set_loop_off (void)
 int gretl_looping (void)
 {
     return loop_on;
+}
+
+int gretl_looping_quietly (void)
+{
+    return (loop_on == LOOPING_QUIETLY);
 }
 
 void gretl_set_batch_mode (int b)
