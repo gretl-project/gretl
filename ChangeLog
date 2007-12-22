@@ -38,6 +38,8 @@ version 1.7.1, in progress
   file, or as session icon
 - Commands allowable in loops: enable all but a fairly small
   subset
+- Shell command: when invoked in gui console, send output to
+  gui console
 
 11/27/2007 version 1.7.0
 - Add heckit estimator

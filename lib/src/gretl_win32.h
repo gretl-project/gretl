@@ -47,6 +47,8 @@ int winfork (char *cmdline, const char *dir, int wshow,
 
 int gretl_spawn (char *cmdline);
 
+int gretl_shell (const char *arg, PRN *prn);
+
 char *desktop_path (void);
 
 char *appdata_path (void);

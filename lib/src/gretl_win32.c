@@ -384,7 +384,7 @@ static int run_cmd_wait (char *cmd)
     return 0;
 }
 
-int gretl_shell (const char *arg)
+int gretl_shell (const char *arg, PRN *prn)
 {
     UINT winret;
     int async = 0;

@@ -98,8 +98,6 @@ int cli_help (const char *cmdword, const char *helpfile,
 int parseopt (const char **argv, int argc, char *fname, 
 	      int *force_lang);
 
-int gretl_shell (const char *arg);
-
 void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       unsigned char flags, PRN *prn);
 

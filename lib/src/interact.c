@@ -2821,7 +2821,9 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 
 #ifndef WIN32
 
-int gretl_shell (const char *arg)
+#if 0
+
+static int gretl_shell (const char *arg, PRN *prn)
 {
     const char *theshell, *namep;
     char *wdir;
@@ -2904,6 +2906,62 @@ int gretl_shell (const char *arg)
 
     return 0;
 }
+
+#else
+
+static int gretl_shell (const char *arg, PRN *prn)
+{
+    gchar *sout = NULL;
+    gchar *serr = NULL;
+    GError *err = NULL;
+    char *wdir;
+    int status, async = 0;
+    gboolean ok;
+
+    if (!libset_get_bool(SHELL_OK)) {
+	strcpy(gretl_errmsg, _("The shell command is not activated."));
+	return 1;
+    }
+
+    wdir = get_shelldir();
+    if (wdir != NULL && chdir(wdir)) {
+	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
+	return E_FOPEN;
+    }
+
+    if (!strncmp(arg, "launch ", 7)) {
+	async = 1;
+	arg += 7;
+    } else {
+	arg++;
+    }
+
+    arg += strspn(arg, " \t");
+
+    if (async) {
+	ok = g_spawn_command_line_async(arg, &err);
+    } else {
+	ok = g_spawn_command_line_sync(arg, &sout, &serr, 
+				       &status, &err);
+    }
+
+    if (err != NULL) {
+	pprintf(prn, "%s\n", err->message);
+	g_error_free(err);
+    }
+    if (sout != NULL) {
+	pputs(prn, sout);
+	g_free(sout);
+    }
+    if (serr != NULL) {
+	pputs(prn, serr);
+	g_free(serr);
+    }
+
+    return 0;
+}
+
+#endif
 
 #endif /* ! WIN32 */
 
@@ -4184,7 +4242,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case SHELL:
-	err = gretl_shell(line);
+	err = gretl_shell(line, prn);
 	break;
 
     case OLS:
