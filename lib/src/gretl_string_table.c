@@ -680,6 +680,8 @@ static char *gretl_backtick (const char **pline, int *err)
 	return NULL;
     }
 
+    fprintf(stderr, "arg = '%s'\n", arg);
+
     *pline = s;
     *err = shell_grab(arg, &val);
 

@@ -2821,7 +2821,12 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 
 #ifndef WIN32
 
-#if 0
+/* non-Windows shell variants: the glib one is nice for
+   grabbing stdout, but it doesn't work on complex
+   commands with pipes or redirection.
+*/
+
+#if 1
 
 static int gretl_shell (const char *arg, PRN *prn)
 {
