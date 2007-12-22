@@ -610,6 +610,84 @@ static char *retrieve_string_var (const char **pline,
     return ret;
 }
 
+static int shell_grab (const char *arg, char **sout)
+{
+    gchar *serr = NULL;
+    GError *gerr = NULL;
+    char *wdir;
+    int status, err = 0;
+ 
+    if (!libset_get_bool(SHELL_OK)) {
+	strcpy(gretl_errmsg, _("The shell command is not activated."));
+	return 1;
+    }
+
+    wdir = get_shelldir();
+    if (wdir != NULL && chdir(wdir)) {
+	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
+	return E_FOPEN;
+    }
+
+    arg += strspn(arg, " \t");
+
+    g_spawn_command_line_sync(arg, sout, &serr, 
+			      &status, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+	err = 1;
+    }
+
+    if (serr != NULL) {
+	g_free(serr);
+    }
+
+    if (sout != NULL && *sout != NULL) {
+	/* trim trailing newline */
+	int n = strlen(*sout);
+
+	if ((*sout)[n-1] == '\n') {
+	    (*sout)[n-1] = '\0';
+	}
+    }
+
+    return err;
+}
+
+static char *gretl_backtick (const char **pline, int *err)
+{
+    const char *s = *pline + 2;
+    char *arg = NULL;
+    char *val = NULL;
+    int n = 0, pcount = 1;
+
+    while (*s && pcount) {
+	if (*s == '(') pcount++;
+	else if (*s == ')') pcount--;
+	s++;
+	n++;
+    }
+
+    if (pcount || n < 2) {
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    arg = gretl_strndup(*pline + 2, n - 1);
+    if (arg == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    *pline = s;
+    *err = shell_grab(arg, &val);
+
+    free(arg);
+    
+    return val;
+}
+
 static char *gretl_getenv (const char **pline, int *err)
 {
     const char *s = strchr(*pline, '"') + 1;
@@ -688,6 +766,10 @@ static char *get_string_element (const char **pline, int *err)
     if (!strncmp(line, "argname(", 8)) {
 	return retrieve_arg_name(pline, err);
     }
+
+    if (!strncmp(line, "$(", 2)) {
+	return gretl_backtick(pline, err);
+    }    
 
     if (*line != '"') {
 	*err = E_PARSE;
