@@ -939,18 +939,20 @@ matrix B = func(A, &C, &D)
 \end{code}
 %
 The function \texttt{svd} computes all or part of the singular value
-decomposition of the real $m \times n$ matrix $A$.  The decomposition
-is
+decomposition of the real $m \times n$ matrix $A$. Let $k =
+\mbox{min}(m, n)$.  The decomposition is
 \[
 A = U \Sigma V'
 \]
-where $\Sigma$ is an $m \times n$ matrix which is zero except for its
-$k = \mbox{min}(m, n)$ diagonal elements, $U$ is an $m \times m$
-orthogonal matrix, and $V$ is an $n \times n$ orthogonal matrix.  The
+where $U$ is an $m \times k$ orthogonal matrix, $\Sigma$ is an $k
+\times k$ diagonal matrix, and $V$ is an $k \times n$ orthogonal
+matrix.\footnote{This is not the only definition of the SVD: some
+  writers define $U$ as $m \times m$, $\Sigma$ as $m \times n$ (with
+  $k$ non-zero diagonal elements) and $V$ as $n \times n$.} The
 diagonal elements of $\Sigma$ are the singular values of $A$; they are
 real and non-negative, and are returned in descending order.  The
-first $\mbox{min}(m, n)$ columns of $U$ and $V$ are the left and right
-singular vectors of $A$.
+first $k$ columns of $U$ and $V$ are the left and right singular
+vectors of $A$.
 
 The \texttt{svd} function returns the singular values, in a vector of
 length $k$.  The left and/or right singular vectors may be obtained by
@@ -967,7 +969,15 @@ In the first case both sets of singular vectors are obtained, in the
 second case only the singular values are obtained; and in the third,
 the right singular vectors are obtained but $U$ is not computed.
 \emph{Please note}: when the third argument is non-null, it is
-actually $V'$ that is provided.
+actually $V'$ that is provided.  To reconstitute the original matrix
+from its SVD, one can do:
+%
+\begin{code}
+matrix s = svd(A, &U, &V)
+matrix B = (U.*s)*V
+\end{code}
+%
+
 
 Finally, the syntax for \texttt{mols} is
 %
