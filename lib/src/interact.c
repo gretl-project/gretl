@@ -2826,7 +2826,7 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
    commands with pipes or redirection.
 */
 
-#if 1
+#if 0
 
 static int gretl_shell (const char *arg, PRN *prn)
 {
@@ -2888,6 +2888,9 @@ static int gretl_shell (const char *arg, PRN *prn)
 	    shellnam[0] = '+';
 	}
 
+	fprintf(stderr, "theshell='%s', shellnam='%s', arg='%s'\n",
+		theshell, shellnam, arg);
+
 	if (arg) {
 	    execl(theshell, shellnam, "-c", arg, NULL);
 	} else {
@@ -2921,7 +2924,6 @@ static int gretl_shell (const char *arg, PRN *prn)
     GError *err = NULL;
     char *wdir;
     int status, async = 0;
-    gboolean ok;
 
     if (!libset_get_bool(SHELL_OK)) {
 	strcpy(gretl_errmsg, _("The shell command is not activated."));
@@ -2944,10 +2946,44 @@ static int gretl_shell (const char *arg, PRN *prn)
     arg += strspn(arg, " \t");
 
     if (async) {
-	ok = g_spawn_command_line_async(arg, &err);
+	g_spawn_command_line_async(arg, &err);
     } else {
-	ok = g_spawn_command_line_sync(arg, &sout, &serr, 
-				       &status, &err);
+	gchar *argv[5];
+	const char *theshell = getenv("SHELL");
+	const char *namep;
+	char shellnam[40];
+
+	if (theshell == NULL) {
+#ifdef HAVE_PATHS_H
+	    theshell =_PATH_BSHELL;
+#else
+	    theshell = "/bin/sh"; 
+#endif
+	}
+
+	namep = strrchr(theshell, '/');
+	if (namep == NULL) {
+	    namep = theshell;
+	}
+
+	strcpy(shellnam, "-");
+	strcat(shellnam, ++namep);
+	if (strcmp(namep, "sh") != 0) {
+	    shellnam[0] = '+';
+	}
+
+	argv[0] = g_strdup(theshell);
+	argv[1] = shellnam;
+	argv[2] = g_strdup("-c");
+	argv[3] = g_strdup(arg);
+	argv[4] = NULL;
+
+	g_spawn_sync(wdir, argv, NULL, 0, NULL, NULL,
+		     &sout, &serr, &status, &err); 
+
+	g_free(argv[0]);
+	g_free(argv[2]);
+	g_free(argv[3]);
     }
 
     if (err != NULL) {
