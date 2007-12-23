@@ -7084,6 +7084,12 @@
 	    <lit>--long</lit> (si veda <cmdref targ="print"/>).
 	  </para>
 	</li>
+        <li>
+          <para><lit>loop_maxiter</lit>: un valore intero positivo.
+          Imposta il numero massimo di iterazioni consentite prima che un loop
+          di tipo <lit>while</lit> si fermi (si veda <cmdref targ="loop"/>).
+         </para>
+        </li>
 	<li>
 	  <para><lit>max_verbose</lit>: <lit>on</lit> o
 	  <lit>off</lit> (valore predefinito). Attiva l'output aggiuntivo per la
