@@ -2821,102 +2821,6 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 
 #ifndef WIN32
 
-/* non-Windows shell variants: the glib one is nice for
-   grabbing stdout, but it doesn't work on complex
-   commands with pipes or redirection.
-*/
-
-#if 0
-
-static int gretl_shell (const char *arg, PRN *prn)
-{
-    const char *theshell, *namep;
-    char *wdir;
-    char shellnam[40];
-    void (*old1) (int);
-    void (*old2) (int);
-    int pid, async = 0;
-
-    if (!libset_get_bool(SHELL_OK)) {
-	strcpy(gretl_errmsg, _("The shell command is not activated."));
-	return 1;
-    }
-
-    wdir = get_shelldir();
-    if (wdir != NULL && chdir(wdir)) {
-	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
-	return E_FOPEN;
-    }
-
-    if (!strncmp(arg, "launch ", 7)) {
-	async = 1;
-	arg += 7;
-    } else {
-	arg++;
-    }
-
-    arg += strspn(arg, " \t");
-
-    old1 = signal(SIGINT, SIG_IGN);
-    old2 = signal(SIGQUIT, SIG_IGN);
-
-    if ((pid = fork()) == 0) {
-	for (pid = 3; pid < 20; pid++) {
-	    close(pid);
-	}
-
-	signal(SIGINT, SIG_DFL);
-	signal(SIGQUIT, SIG_DFL);
-
-	theshell = getenv("SHELL");
-	if (theshell == NULL) {
-#ifdef HAVE_PATHS_H
-	    theshell =_PATH_BSHELL;
-#else
-	    theshell = "/bin/sh"; 
-#endif
-	}
-
-	namep = strrchr(theshell, '/');
-	if (namep == NULL) {
-	    namep = theshell;
-	}
-
-	strcpy(shellnam, "-");
-	strcat(shellnam, ++namep);
-	if (strcmp(namep, "sh") != 0) {
-	    shellnam[0] = '+';
-	}
-
-	fprintf(stderr, "theshell='%s', shellnam='%s', arg='%s'\n",
-		theshell, shellnam, arg);
-
-	if (arg) {
-	    execl(theshell, shellnam, "-c", arg, NULL);
-	} else {
-	    execl(theshell, shellnam, NULL);
-	}
-
-	perror(theshell);
-	return 1;
-    }
-
-    if (pid > 0 && !async) {
-	while (wait(NULL) != pid);
-    }
-
-    signal(SIGINT, old1);
-    signal(SIGQUIT, old2);
-
-    if (pid == -1) {
-	perror(_("Try again later"));
-    }
-
-    return 0;
-}
-
-#else
-
 static int gretl_shell (const char *arg, PRN *prn)
 {
     gchar *sout = NULL;
@@ -2924,6 +2828,10 @@ static int gretl_shell (const char *arg, PRN *prn)
     GError *err = NULL;
     char *wdir;
     int status, async = 0;
+    
+    if (arg == NULL || *arg == '\0') {
+	return 0;
+    }
 
     if (!libset_get_bool(SHELL_OK)) {
 	strcpy(gretl_errmsg, _("The shell command is not activated."));
@@ -2939,7 +2847,7 @@ static int gretl_shell (const char *arg, PRN *prn)
     if (!strncmp(arg, "launch ", 7)) {
 	async = 1;
 	arg += 7;
-    } else {
+    } else if (*arg == '!') {
 	arg++;
     }
 
@@ -3001,8 +2909,6 @@ static int gretl_shell (const char *arg, PRN *prn)
 
     return 0;
 }
-
-#endif
 
 #endif /* ! WIN32 */
 

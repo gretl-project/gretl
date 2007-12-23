@@ -610,6 +610,10 @@ static char *retrieve_string_var (const char **pline,
     return ret;
 }
 
+#ifdef WIN32
+
+/* FIXME */
+
 static int shell_grab (const char *arg, char **sout)
 {
     gchar *serr = NULL;
@@ -654,6 +658,91 @@ static int shell_grab (const char *arg, char **sout)
 
     return err;
 }
+
+#else
+
+static int shell_grab (const char *arg, char **sout)
+{
+    gchar *serr = NULL;
+    GError *gerr = NULL;
+    gchar *argv[5];
+    const char *theshell, *namep;
+    char shellnam[40];
+    char *wdir;
+    int status, err = 0;
+    
+    if (arg == NULL || *arg == '\0') {
+	return E_PARSE;
+    }
+
+    if (!libset_get_bool(SHELL_OK)) {
+	strcpy(gretl_errmsg, _("The shell command is not activated."));
+	return 1;
+    }
+
+    wdir = get_shelldir();
+    if (wdir == NULL || *wdir == '\0') {
+	wdir = NULL;
+    }
+
+    arg += strspn(arg, " \t");
+    theshell = getenv("SHELL"); 
+
+    if (theshell == NULL) {
+# ifdef HAVE_PATHS_H
+	theshell =_PATH_BSHELL;
+# else
+	theshell = "/bin/sh"; 
+# endif
+    }
+
+    namep = strrchr(theshell, '/');
+    if (namep == NULL) {
+	namep = theshell;
+    }
+
+    strcpy(shellnam, "-");
+    strcat(shellnam, ++namep);
+    if (strcmp(namep, "sh") != 0) {
+	shellnam[0] = '+';
+    }
+
+    argv[0] = g_strdup(theshell);
+    argv[1] = shellnam;
+    argv[2] = g_strdup("-c");
+    argv[3] = g_strdup(arg);
+    argv[4] = NULL;
+
+    g_spawn_sync(wdir, argv, NULL, 0, NULL, NULL,
+		 sout, &serr, &status, &gerr); 
+
+    g_free(argv[0]);
+    g_free(argv[2]);
+    g_free(argv[3]);
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+	err = 1;
+    }
+
+    if (serr != NULL) {
+	g_free(serr);
+    }
+
+    if (sout != NULL && *sout != NULL) {
+	/* trim trailing newline */
+	int n = strlen(*sout);
+
+	if ((*sout)[n-1] == '\n') {
+	    (*sout)[n-1] = '\0';
+	}
+    }
+
+    return err;
+}
+
+#endif
 
 static char *gretl_backtick (const char **pline, int *err)
 {
