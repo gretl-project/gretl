@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-12-20 14:04-0500\n"
-"PO-Revision-Date: 2007-12-18 21:57+0100\n"
+"PO-Revision-Date: 2007-12-23 14:35+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1894,7 +1894,7 @@ msgstr "Test di White per l'eteroschedasticità"
 
 #: lib/src/estimate.c:2609
 msgid "HET_1"
-msgstr ""
+msgstr "HET_1"
 
 #: lib/src/estimate.c:2741
 msgid "White's"
@@ -7116,19 +7116,16 @@ msgid "Type a command:"
 msgstr "Scrivere un comando:"
 
 #: gui2/callbacks.c:493
-#, fuzzy
 msgid "Save to file"
-msgstr "Salva al file..."
+msgstr "Salva al file"
 
 #: gui2/callbacks.c:498
-#, fuzzy
 msgid "gretl: save text"
-msgstr "gretl: salva matrice"
+msgstr "gretl: salva testo"
 
 #: gui2/callbacks.c:498
-#, fuzzy
 msgid "Save text"
-msgstr "Salva i dati"
+msgstr "Salva testo"
 
 #: gui2/callbacks.c:520
 msgid "Sorry, not yet implemented"
@@ -12392,9 +12389,8 @@ msgstr "Aggiungi alla tabella modelli"
 
 #: gui2/session.c:160 gui2/session.c:180 gui2/session.c:187 gui2/session.c:207
 #: gui2/session.c:2509 gui2/session.c:2563
-#, fuzzy
 msgid "Rename"
-msgstr "Nome"
+msgstr "Rinomina"
 
 #: gui2/session.c:166 gui2/session.c:174 gui2/session.c:2573
 msgid "Clear"
@@ -12471,23 +12467,21 @@ msgid "Please close this object's window first"
 msgstr "Occorre prima chiudere la finestra di questo oggetto"
 
 #: gui2/session.c:2007
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': there is already an object of this name"
-msgstr "'%s': c'è già una variabile con questo nome"
+msgstr "'%s': c'è già un oggetto con questo nome"
 
 #: gui2/session.c:2043
-#, fuzzy
 msgid "gretl: rename object"
-msgstr "gretl: nome variabile"
+msgstr "gretl: rinomina oggetto"
 
 #: gui2/session.c:2044
-#, fuzzy
 msgid ""
 "Enter new name\n"
 "(max. 31 characters)"
 msgstr ""
-"Inserire un nome per la nuova variabile\n"
-"(max. 15 caratteri)"
+"Inserire il nuovo nome\n"
+"(max. 31 caratteri)"
 
 #: gui2/session.c:2729
 msgid "Data set"
