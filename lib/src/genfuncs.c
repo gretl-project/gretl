@@ -321,7 +321,7 @@ int diff_series (const double *x, double *y, int f,
  * @pdinfo: data set information.
  *
  * Calculates in @y the forward orthogonal deviations of the input 
- * series @x.  That is, y[t+1] is the scaled difference between x[t]
+ * series @x.  That is, y[t] is the scaled difference between x[t]
  * and the mean of the subsequent observations on x.
  *
  * Returns: 0 on success, non-zero error code on failure.
@@ -355,7 +355,7 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
 
 	if (n > 0) {
 	    xbar /= n;
-	    y[t+1] = sqrt(n / (n + 1.0)) * (x[t] - xbar);
+	    y[t] = sqrt(n / (n + 1.0)) * (x[t] - xbar);
 	}
     }
 
