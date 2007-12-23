@@ -25,11 +25,10 @@
 
     <para>
       &mdash; Avvia il programma caricando nello spazio di lavoro il file di
-      dati indicato. Il file può essere nel formato interno di
-      <application>gretl</application>, in formato CSV, o BOX1 (si veda la
-      &GUG;). Il programma cercherà di riconoscere
-      il formato del file e di trattarlo in modo appropriato. Si veda anche la
-      <xref linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
+      dati indicato. Il file può essere in uno dei vari formati supportati
+      (si veda la &GUG;): il programma cercherà di riconoscere il formato del
+      file e di trattarlo in modo appropriato. Si veda anche la <xref
+      linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
     </para>
 
     <para>
@@ -61,48 +60,57 @@
     <para>
       <command>gretl --run</command>
       <replaceable>file</replaceable> (o <command>gretl
-	-r</command> <replaceable>file</replaceable>)</para>
+	-r</command> <replaceable>file</replaceable>)
+    </para>
 
-    <para>&mdash; Avvia il programma e apre una finestra che mostra il file di
+    <para>
+      &mdash; Avvia il programma e apre una finestra che mostra il file di
 	comandi indicato, pronto per essere eseguito. Si veda la <xref
 	  linkend="path-search"/> per quanto riguarda la ricerca dei
-	percorsi.</para>
+	percorsi.
+    </para>
 
     <para>
       <command>gretl --db</command>
       <replaceable>database</replaceable> (o <command>gretl
-	-d</command> <replaceable>database</replaceable>)</para>
+	-d</command> <replaceable>database</replaceable>)
+    </para>
 
-    <para>&mdash; Avvia il programma e apre una finestra che mostra il database
-	indicato. Se i file del database (il file <filename>.bin</filename> e il
-	relativo file <filename>.idx</filename>, si veda la &GUG;) non sono
-	nella directory predefinita dei database, occorre specificare il
-	percorso completo dei file.
+    <para>
+      &mdash; Avvia il programma e apre una finestra che mostra il database
+      indicato. Se i file del database (il file <filename>.bin</filename> e il
+      relativo file <filename>.idx</filename>, si veda la &GUG;) non sono nella
+      directory predefinita dei database, occorre specificare il percorso
+      completo dei file.
     </para>
 
     <para>
       <command>gretl --dump</command> (o <command>gretl -c</command>)
     </para>
 
-    <para>&mdash; Scrive le informazioni di configurazione del programma in un
-	file di testo (il nome del file è mostrato nello standard output). Può
-	essere utile nella risoluzione di problemi di funzionamento.
+    <para>
+      &mdash; Scrive le informazioni di configurazione del programma in un file
+      di testo (il nome del file è mostrato nello standard output). Può essere
+      utile nella risoluzione di problemi di funzionamento.
     </para>
 
     <para>
       <command>gretlw32 --debug</command> (o <command>gretlw32 -g</command>)
     </para>
 
-    <para>&mdash; (solo MS Windows) Apre una finestra di terminale per mostrare
+    <para>
+      &mdash; (solo MS Windows) Apre una finestra di terminale per mostrare
       eventuali messaggi inviati allo <quote>standard output</quote> o allo
       <quote>standard error</quote>. Questi messaggi, che di solito non sono
       visibili in Windows, possono essere utili per risolvere problemi di
       funzionamento.
     </para>
 
-    <para>Varie funzionalità di <application>gretl</application> sono configurabili
+    <para>
+      Varie funzionalità di <application>gretl</application> sono configurabili
       nel menù <guimenuitem>File, Preferenze</guimenuitem>
-      menu.</para>  
+      menu.
+    </para>  
 
     <itemizedlist>
 	<listitem><para>La directory base per i file condivisi di
@@ -141,7 +149,8 @@
 	  </para></listitem>
     </itemizedlist>
 
-    <para>Ci sono anche alcune caselle di testo: selezionando la casella
+    <para>
+      Ci sono anche alcune caselle di testo: selezionando la casella
       <quote>esperto</quote>, vengono disabilitati alcuni messaggi di
       avvertimento che altrimenti verrebbero mostrati; selezionando la casella
       <quote>Avvisa in caso di aggiornamenti di gretl</quote>,
@@ -152,27 +161,19 @@
       (<quote><literal>.</literal></quote>) come separatore delle cifre
       decimali, de-selezionando <quote>Usa le impostazioni locali
       per il punto decimale</quote>, <application>gretl</application> userà
-      comunque il carattere punto.</para>
+      comunque il carattere punto.
+    </para>
 
-    <para>Infine, ci sono due scelte binarie: nella sezione
-      <quote>Percorso per Apri/Salva</quote> è possibile impostare
-      il percorso usato in modo predefinito da
-      <application>gretl</application> quando si chiede di aprire o
-      salvare un file: o la directory <application>gretl</application>
-      dell'utente o la directory di lavoro attuale. Nella sezione
-      <quote>File di dati</quote>, è possibile impostare l'estensione
-      predefinita da aggiungere ai nomi dei file di dati. L'estensione
-      standard è <literal>.gdt</literal>, ma è possibile impostarla a
-      <literal>.dat</literal>, che era lo standard nelle versioni precedenti
-      del programma. Se si imposta l'estensione predefinita a
-      <literal>.dat</literal>, i file di dati saranno salvati nel formato
-      <quote>tradizionale</quote>. Inoltre, nella sezione <quote>File di dati</quote>
-      è possibile scegliere l'azione da associare alla piccola icona a forma
-      di cartella presente sulla barra degli strumenti: se deve mostrare
-      un elenco dei file di dati associati al libro di Ramanathan, o di quelli
-      associati al libro di Wooldridge.</para>
-
-    <para>Nella sezione <quote>Generali</quote> è possibile scegliere l'algoritmo
+    <para>
+      Nella sezione <quote>Percorso per Apri/Salva</quote> è possibile impostare
+      il percorso usato in modo predefinito da <application>gretl</application>
+      quando si chiede di aprire o salvare un file: o la directory
+      <application>gretl</application> dell'utente o la directory di lavoro
+      attuale.
+    </para>
+    
+    <para>
+      Nella sezione <quote>Generali</quote> è possibile scegliere l'algoritmo
       usato da <application>gretl</application> per calcolare le stime dei
       minimi quadrati. La scelta predefinita è la decomposizione di Cholesky,
       che è veloce, relativamente economica in termini di requisiti di memoria,
@@ -189,13 +190,14 @@
 	</footnote>.
     </para>
 
-    <para>Le impostazioni scelte in questo modo sono salvate in modo diverso
+    <para>
+      Le impostazioni scelte in questo modo sono salvate in modo diverso
       a seconda del sistema. In MS Windows sono scritte nel registro di Windows.
       Nel desktop di <application>gnome</application> sono scritte nel file
       <filename>.gnome/gretl</filename> nella home directory dell'utente.
       Altrimenti vengono scritte in un file chiamato
       <filename>.gretlrc</filename> nella home directory dell'utente.
-      </para>
+    </para>
 
   </sect1>
 
@@ -358,11 +360,10 @@
 	  il programma standard di Windows
 	  <application>regedit.exe</application>) sotto
 	  <literal>Software\gretl</literal> in
-	  <literal>HKEY_CLASSES_ROOT</literal> (la directory principale di
-	  <application>gretl</application> e il comando per invocare
-	  <application>gnuplot</application>) e in
-	  <literal>HKEY_CURRENT_USER</literal> (tutte le altre variabili
-	  configurabili).
+	  <literal>HKEY_LOCAL_MACHINE</literal> (la directory principale di
+	  <application>gretl</application> e i percorsi per i vari programmi
+          ausiliari) e in <literal>HKEY_CURRENT_USER</literal> (tutte le altre
+          variabili configurabili).
 	</para>
 
     </sect2>
