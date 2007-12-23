@@ -1580,8 +1580,7 @@ static int ok_matrix_dim (double xr, double xc, int f)
     if (f == SEQ) {
 	/* negative parameters are OK */
 	return (fabs(xr) < imax && 
-		fabs(xc) < imax &&
-		xr != xc);
+		fabs(xc) < imax);
     }
 
     xm = xr * xc;
