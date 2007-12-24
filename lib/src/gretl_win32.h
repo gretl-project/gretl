@@ -55,8 +55,6 @@ char *appdata_path (void);
 
 char *mydocs_path (void);
 
-int gretl_shell (const char *arg);
-
 int win32_write_access (char *path);
 
 int win32_rename (const char *oldpath, const char *newpath);
