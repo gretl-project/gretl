@@ -342,12 +342,82 @@ char *mydocs_path (void)
     return win_special_path(CSIDL_PERSONAL);
 }
 
-static int run_cmd_wait (char *cmd)
+static int run_cmd_wait_new (char *arg, PRN *prn)
+{
+    CHAR cmdexe[MAX_PATH + 10];
+    gchar *argv[5];
+    gchar *sout = NULL;
+    gchar *serr = NULL;
+    GError *err = NULL;
+    char *wdir;
+    int status;
+    
+    if (arg == NULL || *arg == '\0') {
+	return 0;
+    }
+
+    if (!libset_get_bool(SHELL_OK)) {
+	strcpy(gretl_errmsg, _("The shell command is not activated."));
+	return 1;
+    }
+
+    wdir = get_shelldir();
+    if (wdir != NULL && chdir(wdir)) {
+	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
+	return E_FOPEN;
+    }
+
+    if (*arg == '!') {
+	arg++;
+    }
+
+    arg += strspn(arg, " \t");
+
+    GetSystemDirectory(cmdexe, MAX_PATH);
+    lstrcat(cmdexe, "\\cmd.exe");
+
+    argv[0] = cmdexe;
+    argv[1] = g_strdup("cmd.exe");
+    if (getenv("SHELLDEBUG")) {
+	argv[2] = g_strdup("/k");
+    } else {
+	argv[2] = g_strdup("/c");
+    }
+    argv[3] = arg;
+    argv[4] = NULL;
+
+    g_spawn_sync(wdir, argv, NULL, 0, NULL, NULL,
+		 &sout, &serr, &status, &err); 
+
+    g_free(argv[1]);
+    g_free(argv[2]);
+
+    if (err != NULL) {
+	pprintf(prn, "%s\n", err->message);
+	g_error_free(err);
+    }
+    if (sout != NULL) {
+	pputs(prn, sout);
+	g_free(sout);
+    }
+    if (serr != NULL) {
+	pputs(prn, serr);
+	g_free(serr);
+    }
+
+    return 0;
+}
+
+static int run_cmd_wait (char *cmd, PRN *prn)
 {
     CHAR cmdline[MAX_PATH * 2];
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     int child;
+
+    if (getenv("GRETL_SHELL_NEW")) {
+	return run_cmd_wait_new(cmd, prn);
+    }
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);
@@ -390,6 +460,10 @@ int gretl_shell (const char *arg, PRN *prn)
     int async = 0;
     int err = 0;
 
+    if (arg == NULL || *arg == '\0') {
+	return 0;
+    }
+
     if (!libset_get_bool(SHELL_OK)) {
 	strcpy(gretl_errmsg, _("The shell command is not activated."));
 	return 1;
@@ -398,7 +472,7 @@ int gretl_shell (const char *arg, PRN *prn)
     if (!strncmp(arg, "launch ", 7)) {
 	async = 1;
 	arg += 7;
-    } else {
+    } else if (*arg == '!') {
 	arg++;
     }
 
@@ -415,7 +489,7 @@ int gretl_shell (const char *arg, PRN *prn)
 	if (myarg == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = run_cmd_wait(myarg);
+	    err = run_cmd_wait(myarg, prn);
 	    free(myarg);
 	}
     } 

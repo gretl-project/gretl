@@ -163,6 +163,8 @@ struct LOOPSET_ {
 
 #define is_list_loop(l) (l->listname[0] != '\0')
 
+#define model_print_deferred(o) (o & OPT_F)
+
 static void controller_init (controller *clr);
 static int gretl_loop_prepare (LOOPSET *loop);
 static void loop_model_free (LOOP_MODEL *lmod);
@@ -2227,8 +2229,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	    strcpy(linecpy, loop->lines[i]);
 	    opt = get_gretl_options(linecpy, NULL);
 	    
-	    if (opt & OPT_P) {
-		/* deferred printing of model was requested */
+	    if (model_print_deferred(opt)) {
 		MODEL *pmod = loop->models[j++];
 
 		set_model_id(pmod);
@@ -2719,7 +2720,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		if (loop->iter == 0) {
 		    if (loop_is_progressive(loop)) {
 			err = add_loop_model(loop);
-		    } else if (cmd->opt & OPT_P) {
+		    } else if (model_print_deferred(cmd->opt)) {
 			err = add_model_record(loop);
 		    }
 		} 
@@ -2742,10 +2743,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 			    loop_model_update(loop, m, s->models[0]);
 			    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 			}
-		    } else if (cmd->opt & OPT_F) {
-			/* deferred printing of model results */
+		    } else if (model_print_deferred(cmd->opt)) {
 			int m = modnum++;
-
+			
 			swap_models(s->models[0], loop->models[m]);
 			loop->models[m]->ID = j;
 			set_as_last_model(loop->models[m], GRETL_OBJ_EQN);
