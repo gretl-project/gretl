@@ -20,15 +20,15 @@ Sono disponibili cinque tipi di espressione di controllo, come si vede nella
 sezione~\ref{loop-control}.
 
 Non tutti i comandi di \app{gretl} sono disponibili all'interno di un loop: i
-comandi accettabili in questo contesto sono mostrati nella
-Tabella~\ref{tab:loopcmds}.
+comandi che non sono accettabili in questo contesto sono mostrati nella
+Tabella~\ref{tab:nonloopcmds}.
 
 \begin{table}[htbp]
-\caption{Comandi utilizzabili in un loop}
-\label{tab:loopcmds}
+\caption{Comandi non utilizzabili in un loop}
+\label{tab:nonloopcmds}
 \begin{center}
 %% The following is generated automatically
-\input ../tex/tabloopcmds.tex
+\input ../tex/tabnonloopcmds.tex
 \end{center}
 \end{table}
 
@@ -40,8 +40,8 @@ specificare l'opzione \verb+--verbose+ del comando \cmd{loop}. L'opzione
 cosa desiderabile quando i loop sono annidati.
 
 L'opzione \verb+--progressive+ del comando \cmd{loop} modifica il comportamento
-dei comandi \cmd{ols}, \cmd{print} e \cmd{store} rendendoli più comodi
-per l'uso in analisi di tipo Monte Carlo (si veda la
+dei comandi \cmd{print}, \cmd{store} e di alcuni comandi di stima, rendendoli
+più comodi per l'uso in analisi di tipo Monte Carlo (si veda la
 sezione~\ref{loop-progressive}).
 
 Le sezioni che seguono descrivono le varie forme di espressioni di
@@ -85,10 +85,14 @@ predefinita. Ad esempio:
 loop while differ > .00001
 \end{code}
 %
-L'esecuzione del ciclo di comandi continuerà fintanto che la
-condizione specificata rimane vera. Se il termine a destra della
-disuguaglianza è una variabile, essa viene valutata all'inizio di ogni
-nuova iterazione del ciclo.
+L'esecuzione del ciclo di comandi continuerà fintanto che: a) la condizione
+specificata rimane vera, e b) il numero di iterazioni non eccede il valore
+contenuto nella variabile interna \verb|loop_maxiter|; il valore predefinito
+è pari a 250, ma è possibile specificare un valore diverso usando il comando
+\cmd{set} (si veda la \GCR).
+
+Se il termine a destra della disuguaglianza è una variabile, essa viene valutata
+all'inizio di ogni nuova iterazione del ciclo.
 
 \subsection{Loop con indice}
 \label{loop-index}
@@ -135,7 +139,7 @@ end loop
 In questo caso valutiamo la media condizionale e lo scarto quadratico medio della
 variabile \texttt{Y} per ciascun valore della variabile \texttt{Z8}.
 
-\subsection{Loop di tipo for each}
+\subsection{Loop di tipo foreach}
 \label{loop-each}
 
 Anche il terzo tipo di controllo usa la variabile interna \verb+i+,
@@ -168,6 +172,16 @@ loop foreach i AL..WY
 endloop
 \end{code}
 
+Questo tipo di loop può essere usato anche per costruire cicli sugli elementi di
+una \textit{lista definita dall'utente} (si veda il capitolo~\ref{chap-persist}).
+Ad esempio:
+
+\begin{code}
+list ylist = y1 y2 y3
+loop foreach i ylist
+   ols $i const x1 x2
+endloop
+\end{code}
 
 \subsection{Loop di tipo for}
 \label{loop-for}
@@ -218,11 +232,17 @@ di controllo:
 \section{La modalità progressiva}
 \label{loop-progressive}
 
-Usando l'opzione \verb+--progressive+ nel comando loop, l'effetto dei
-comandi \cmd{ols}, \cmd{print} e \cmd{store} è modificato nel modo
-seguente.
+Usando l'opzione \verb+--progressive+ nel comando loop, viene abilitata
+una modalità speciale in alcuni comandi, ossia in \cmd{print}, \cmd{store}
+e nei comandi di stima ``semplice'', ossia i comandi che: (a) stimano una sola
+equazione (non un sistema di equazioni), e (b) utilizzano una sola dichiarazione
+(al contrario di comandi che usano blocchi di dichiarazioni, come \cmd{nls} e
+\cmd{mle}). L'esempio classico è il comando \cmd{ols}; altri esempi sono
+\cmd{tsls}, \cmd{wls}, \cmd{logit} e così via.
 
-\cmd{ols}: i risultati di ogni iterazione della regressione non
+La modalità speciale ha questi effetti:
+
+Comandi di stima: i risultati di ogni iterazione della stima non
 vengono mostrati. Al contrario, una volta terminato il loop si ottiene
 un elenco dei seguenti valori: (a) il valore medio di ognuno dei
 coefficienti stimati, calcolato su tutte le iterazioni; (b) lo
