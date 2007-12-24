@@ -922,15 +922,18 @@ matrix B = func(A, &C, &D)
 %
 
 La funzione \texttt{svd} calcola la decomposizione in valori singolari (totale o
-parziale) della matrice reale $A$ $m \times n$. La decomposizione è
+parziale) della matrice reale $A$ $m \times n$. Sia $k = \mbox{min}(m, n)$.
+La decomposizione è
 \[
 A = U \Sigma V'
 \]
-dove $\Sigma$ è una matrice $m \times n$ che contiene zeri tranne che per i suoi
-$k = \mbox{min}(m, n)$ diagonali, $U$ è una matrice ortogonale $m \times m$ e
-$V$ è una matrice ortogonale $n \times n$. Gli elementi diagonali di
-$\Sigma$ sono i valori singolari di $A$, sono reali e non negativi, e sono
-prodotti in ordine decrescente. Le prime $\mbox{min}(m, n)$ colonne di $U$ e
+dove $U$ è una matrice ortogonale $m \times k$, $\Sigma$ è una matrice
+diagonale $k \times k$ e $V$ è una matrice ortogonale $k \times
+n$\footnote{Questa non è la sola definizione della SVD: alcuni definiscono $U$
+come $m \times m$, $\Sigma$ come $m \times n$ (con $k$ elementi della diagonale
+diversi da zero) e $V$ come $n \times n$.}.
+Gli elementi diagonali di $\Sigma$ sono i valori singolari di $A$, sono reali e
+non negativi, e sono prodotti in ordine decrescente. Le prime $k$ colonne di $U$ e
 $V$ sono i vettori singolari destro e sinistro di $A$.
 
 La funzione \texttt{svd} produce i valori singolari in un vettore di ordine $k$.
@@ -947,7 +950,14 @@ Nel primo caso si otterranno entrambi gli insiemi di vettori singolari; nel
 secondo caso si otterranno solo i valori singolari, nel terzo si ottengono i
 vettori singolari destri ma non viene calcolata $U$.
 \emph{Nota bene}: quando il terzo argomento è non nullo, in realtà viene
-prodotto $V'$.
+prodotto $V'$. Per ricostruire la matrice originale a partire dalla sua SVD,
+basta eseguire:
+%
+\begin{code}
+matrix s = svd(A, &U, &V)
+matrix B = (U.*s)*V
+\end{code}
+%
  
 Infine, la sintassi per \texttt{mols} è
 %
