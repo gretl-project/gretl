@@ -101,6 +101,30 @@ dei due approcci. Ecco alcuni suggerimenti:
   eseguire di nuovo lo script ``preparatorio''.
 \end{itemize}
 
+\subsection{Script e file di dati}
+
+Un modo comune di condurre la ricerca econometrica con \app{gretl} è il
+seguente: comporre uno script, eseguirlo, ispezionare i risultati, modificare lo
+script, eseguirlo di nuovo, ripetendo gli ultimi tre passi per quanto è
+necessario. In questo contesto, si noti che quando viene aperto un file di dati
+la maggior parte delle informazioni di stato interne a \app{gretl} vengono
+cancellate.  È quindi una buona idea cominciare il proprio script con un comando
+\texttt{open}: in questo modo il file di dati verrà riaperto ogni volta, e si
+sarà sicuri di ottenere risultati ``freschi'', non condizionati dalle esecuzioni
+precedenti.
+
+Occorre notare un punto ulteriore: quando si apre un nuovo file di dati usando
+l'interfaccia grafica si viene avvertiti del fatto che aprire un nuovo file
+comporta la perdita del lavoro non salvato fino a quel momento. Quando invece si
+esegue uno script che apre un file di dati \textit{non} si viene avvertiti. Questo
+comportamento assume che non ci sia alcun rischio di perdere lavoro fatto, visto
+che il lavoro è incorporato nello script stesso (e sarebbe scomodo ricevere un
+avvertimento ad ogni iterazione del ciclo di lavoro descritto sopra).
+
+Ciò significa che occorre fare attenzione se si è eseguito del lavoro usando
+l'interfaccia grafica e si vuole poi eseguire uno script: il file di dati in uso
+può venir sostituito senza alcun avviso, ed è responsabilità dell'utente
+salvare i propri dati prima di eseguire lo script.
 
 \section{Salvare oggetti da uno script}
 \label{sect-script-objects}
