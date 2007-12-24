@@ -342,6 +342,8 @@ char *mydocs_path (void)
     return win_special_path(CSIDL_PERSONAL);
 }
 
+#if 0 /* doesn't work (yet): gives "no such file or directory" */
+
 static int run_cmd_wait_new (char *arg, PRN *prn)
 {
     CHAR cmdexe[MAX_PATH + 10];
@@ -352,45 +354,26 @@ static int run_cmd_wait_new (char *arg, PRN *prn)
     char *wdir;
     int status;
     
-    if (arg == NULL || *arg == '\0') {
-	return 0;
-    }
-
-    if (!libset_get_bool(SHELL_OK)) {
-	strcpy(gretl_errmsg, _("The shell command is not activated."));
-	return 1;
-    }
-
     wdir = get_shelldir();
     if (wdir != NULL && chdir(wdir)) {
 	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
 	return E_FOPEN;
     }
 
-    if (*arg == '!') {
-	arg++;
-    }
-
-    arg += strspn(arg, " \t");
-
     GetSystemDirectory(cmdexe, MAX_PATH);
     lstrcat(cmdexe, "\\cmd.exe");
 
     argv[0] = cmdexe;
-    argv[1] = g_strdup("cmd.exe");
     if (getenv("SHELLDEBUG")) {
-	argv[2] = g_strdup("/k");
+	argv[1] = g_strdup("/k");
     } else {
-	argv[2] = g_strdup("/c");
+	argv[1] = g_strdup("/c");
     }
-    argv[3] = arg;
-    argv[4] = NULL;
+    argv[2] = arg;
+    argv[3] = NULL;
 
     g_spawn_sync(wdir, argv, NULL, 0, NULL, NULL,
 		 &sout, &serr, &status, &err); 
-
-    g_free(argv[1]);
-    g_free(argv[2]);
 
     if (err != NULL) {
 	pprintf(prn, "%s\n", err->message);
@@ -405,8 +388,12 @@ static int run_cmd_wait_new (char *arg, PRN *prn)
 	g_free(serr);
     }
 
+    g_free(argv[1]);
+
     return 0;
 }
+
+#endif
 
 static int run_cmd_wait (char *cmd, PRN *prn)
 {
@@ -415,9 +402,11 @@ static int run_cmd_wait (char *cmd, PRN *prn)
     PROCESS_INFORMATION pi;
     int child;
 
+#if 0
     if (getenv("GRETL_SHELL_NEW")) {
 	return run_cmd_wait_new(cmd, prn);
     }
+#endif
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);
