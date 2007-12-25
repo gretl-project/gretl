@@ -6741,7 +6741,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case QUIT:
 	if (s->flags == CONSOLE_EXEC) {
-	   pprintf(prn, _("Please use the Close button to exit\n")); 
+	    pprintf(prn, _("Please use the Close button to exit\n")); 
 	} else {
 	    pprintf(prn, _("Script done\n"));
 	} 
