@@ -40,6 +40,7 @@
   subset
 - Shell command: when invoked in gui console, send output to
   gui console
+- Fix handling of "quit" when it's blocked by "if"
 
 11/27/2007 version 1.7.0
 - Add heckit estimator

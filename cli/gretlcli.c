@@ -567,7 +567,7 @@ int main (int argc, char *argv[])
     set_errfatal(ERRFATAL_AUTO);
 
     /* main command loop */
-    while (strcmp(cmd.word, "quit") && fb != NULL && !xout) {
+    while (cmd.ci != QUIT && fb != NULL && !xout) {
 	char linecopy[MAXLINE];
 	int overflow;
 
@@ -758,6 +758,8 @@ static gretlopt plot_opt (gretlopt opt, int batch)
     }
     return opt;
 }
+
+#define ENDRUN (NC + 1)
 
 static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
@@ -968,7 +970,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    if (fb == NULL) {
 		pputs(prn, _("Done\n"));
 	    } else {
-		strcpy(cmd->word, "endrun"); /* overwrite "quit" */
+		cmd->ci = ENDRUN;
 	    }
 	    break;
 	}

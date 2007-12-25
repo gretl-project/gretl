@@ -252,15 +252,6 @@ static void console_exec (void)
 
     top_n_tail(cbuf);
 
-    if (strcmp(cbuf, "quit") == 0 || 
-	strcmp(cbuf, "q") == 0 ||
-	strcmp(cbuf, "exit") == 0) {
-	gtk_widget_destroy(console_view->parent->parent->parent);
-	g_free(cbuf);
-	cbuf = NULL;
-	return;
-    }
-
     if (console_prn == NULL && bufopen(&console_prn)) {
 	g_free(cbuf);
 	cbuf = NULL;
@@ -324,6 +315,19 @@ static void console_exec (void)
     } else {
 	gretl_print_reset_buffer(console_prn);
     }
+#endif
+
+    if (cstate.cmd->ci == QUIT) {
+	gtk_widget_destroy(gtk_widget_get_toplevel(console_view));
+	g_free(cbuf);
+	cbuf = NULL;
+	return;
+    }
+
+#ifdef G_OS_WIN32
+    if (cstate.cmd->ci == SHELL) {
+	gtk_window_present(GTK_WINDOW(gtk_widget_get_toplevel(console_view)));
+    }    
 #endif
 
     coding = gretl_compiling_loop() || gretl_compiling_function();

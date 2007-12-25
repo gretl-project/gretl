@@ -3189,7 +3189,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     int recording = (flags & CMD_RECORDING);
     int len, llen = 0;
 
-    if (line == NULL || prn == NULL) {
+    if (line == NULL || prn == NULL || cmd->ci > NC) {
 	return;
     }
 
