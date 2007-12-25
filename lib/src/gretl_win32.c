@@ -342,17 +342,57 @@ char *mydocs_path (void)
     return win_special_path(CSIDL_PERSONAL);
 }
 
-#if 0 /* doesn't work (yet): gives "no such file or directory" */
-
-static int run_cmd_wait_new (char *arg, PRN *prn)
+static char *compose_command_line (const char *arg)
 {
-    CHAR cmdexe[MAX_PATH + 10];
-    gchar *argv[5];
-    gchar *sout = NULL;
-    gchar *serr = NULL;
-    GError *err = NULL;
-    char *wdir;
-    int status;
+    CHAR cmddir[MAX_PATH];
+    char *cmdline = NULL;
+    
+    GetSystemDirectory(cmddir, sizeof cmddir);
+
+    if (getenv("SHELLDEBUG")) {
+	cmdline = g_strdup_printf("%s\\cmd.exe /k %s", cmddir, arg);
+    } else {
+	cmdline = g_strdup_printf("%s\\cmd.exe /c %s", cmddir, arg);
+    }
+
+    return cmdline;
+}
+
+#if 1
+
+#define BUFSIZE 4096 
+ 
+static int read_from_pipe (HANDLE hwrite, HANDLE hread, PRN *prn) 
+{ 
+    DWORD dwread;
+    CHAR buf[BUFSIZE];
+    int ok;
+
+    /* close the write end of the pipe */
+    ok = CloseHandle(hwrite);
+    
+    if (!ok) {
+	fputs("Closing handle failed\n", stderr); 
+    } else {
+	/* read output from the child process */
+	for (;;) { 
+	    memset(buf, '\0', BUFSIZE);
+	    if (!ReadFile(hread, buf, BUFSIZE, &dwread, 
+			  NULL) || dwread == 0) break;
+	    pputs(prn, buf);
+	} 
+    }
+
+    return ok;
+} 
+
+static int 
+run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread) 
+{ 
+    PROCESS_INFORMATION pinfo; 
+    STARTUPINFO sinfo;
+    char *wdir, *cmdline = NULL;
+    int ok;
     
     wdir = get_shelldir();
     if (wdir != NULL && chdir(wdir)) {
@@ -360,51 +400,84 @@ static int run_cmd_wait_new (char *arg, PRN *prn)
 	return E_FOPEN;
     }
 
-    GetSystemDirectory(cmdexe, MAX_PATH);
-    lstrcat(cmdexe, "\\cmd.exe");
-
-    argv[0] = cmdexe;
-    if (getenv("SHELLDEBUG")) {
-	argv[1] = g_strdup("/k");
+    cmdline = compose_command_line(arg);
+ 
+    ZeroMemory(&pinfo, sizeof(PROCESS_INFORMATION));
+ 
+    ZeroMemory(&sinfo, sizeof sinfo);
+    sinfo.cb = sizeof sinfo;
+    sinfo.hStdError = hwrite;
+    sinfo.hStdOutput = hwrite;
+    sinfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    sinfo.dwFlags |= (STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW);
+    sinfo.wShowWindow = SW_SHOWMINIMIZED;
+ 
+    ok = CreateProcess(NULL, 
+		       cmdline,
+		       NULL,          // process security attributes 
+		       NULL,          // primary thread security attributes 
+		       TRUE,          // handles are inherited 
+		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+		       NULL,          // use parent's environment 
+		       wdir,          
+		       &sinfo,
+		       &pinfo);
+   
+    if (!ok) {
+	win_show_last_error();
     } else {
-	argv[1] = g_strdup("/c");
-    }
-    argv[2] = arg;
-    argv[3] = NULL;
-
-    g_spawn_sync(wdir, argv, NULL, 0, NULL, NULL,
-		 &sout, &serr, &status, &err); 
-
-    if (err != NULL) {
-	pprintf(prn, "%s\n", err->message);
-	g_error_free(err);
-    }
-    if (sout != NULL) {
-	pputs(prn, sout);
-	g_free(sout);
-    }
-    if (serr != NULL) {
-	pputs(prn, serr);
-	g_free(serr);
+	/* WaitForSingleObject(pinfo.hProcess, INFINITE); */
+	CloseHandle(pinfo.hProcess);
+	CloseHandle(pinfo.hThread);
     }
 
-    g_free(argv[1]);
+    g_free(cmdline);
 
-    return 0;
+    return ok;
 }
+
+int run_cmd_new (const char *arg, PRN *prn) 
+{ 
+    HANDLE hread, hwrite;
+    SECURITY_ATTRIBUTES sa; 
+    int ok; 
+ 
+    /* Set the bInheritHandle flag so pipe handles are inherited */
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES); 
+    sa.bInheritHandle = TRUE; 
+    sa.lpSecurityDescriptor = NULL; 
+
+    /* Create a pipe for the child process's STDOUT */ 
+    ok = CreatePipe(&hread, &hwrite, &sa, 0);
+
+    if (!ok) {
+	win_show_last_error();
+    } else {
+	/* Ensure that the read handle to the child process's pipe for 
+	   STDOUT is not inherited */
+	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
+	ok = run_child_with_pipe(arg, hwrite, hread);
+	if (ok) {
+	    /* Read from child's output pipe */
+	    read_from_pipe(hwrite, hread, prn); 
+	}
+    }
+ 
+    return 0; 
+} 
 
 #endif
 
-static int run_cmd_wait (char *cmd, PRN *prn)
+static int run_cmd_wait (const char *cmd, PRN *prn)
 {
-    CHAR cmdline[MAX_PATH * 2];
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
-    int child;
+    char *cmdline = NULL;
+    int ok, err = 0;
 
-#if 0
+#if 1
     if (getenv("GRETL_SHELL_NEW")) {
-	return run_cmd_wait_new(cmd, prn);
+	return run_cmd_new(cmd, prn);
     }
 #endif
 
@@ -415,32 +488,26 @@ static int run_cmd_wait (char *cmd, PRN *prn)
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_SHOWMINIMIZED;
 
-    GetSystemDirectory(cmdline, MAX_PATH);
-    lstrcat(cmdline, "\\cmd.exe ");
-    if (getenv("SHELLDEBUG")) {
-	lstrcat(cmdline, "/k ");
-    } else {
-	lstrcat(cmdline, "/c ");
-    }
-    lstrcat(cmdline, cmd);
+    cmdline = compose_command_line(cmd);
 
-    child = CreateProcess(NULL, cmdline, 
-			  NULL, NULL, FALSE,
-			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-			  NULL, get_shelldir(),
-			  &si, &pi);
+    ok = CreateProcess(NULL, cmdline, 
+		       NULL, NULL, FALSE,
+		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+		       NULL, get_shelldir(),
+		       &si, &pi);
 
-    if (!child) {
+    if (!ok) {
 	win_show_last_error();
-	return 1;
+	err = 1;
+    } else {
+	WaitForSingleObject(pi.hProcess, INFINITE);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
     }
 
-    WaitForSingleObject(pi.hProcess, INFINITE);
+    g_free(cmdline);
 
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
-    return 0;
+    return err;
 }
 
 int gretl_shell (const char *arg, PRN *prn)
@@ -473,14 +540,7 @@ int gretl_shell (const char *arg, PRN *prn)
 	    err = 1;
 	}
     } else {
-	char *myarg = gretl_strdup(arg);
-
-	if (myarg == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = run_cmd_wait(myarg, prn);
-	    free(myarg);
-	}
+	err = run_cmd_wait(arg, prn);
     } 
 
     return err;
