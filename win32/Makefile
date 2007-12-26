@@ -182,6 +182,7 @@ LIBSRC = adf_kpss.c \
 	plotspec.c \
 	plugins.c \
 	printout.c \
+	printscan.c \
 	pvalues.c \
 	qr_estimate.c \
 	random.c \

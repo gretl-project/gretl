@@ -48,6 +48,8 @@ int substitute_named_strings (char *line);
 
 int string_is_defined (const char *sname);
 
+int is_user_string (const char *sname);
+
 void saved_strings_cleanup (void);
 
 int destroy_saved_strings_at_level (int d);

@@ -918,6 +918,26 @@ int string_is_defined (const char *sname)
     return (str != NULL && str->s != NULL && str->s[0]);
 }
 
+int is_user_string (const char *sname)
+{
+    int i, d;
+
+    if (*sname == '@' && *(sname + 1) != '@') {
+	sname++;
+    }
+
+    d = gretl_function_depth();
+
+    for (i=0; i<n_saved_strings; i++) {
+	if (saved_strings[i].level == d &&
+	    !strcmp(sname, saved_strings[i].name)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* for use in "sprintf" command */
 
 int save_named_string (const char *name, const char *s, PRN *prn)
@@ -1150,6 +1170,11 @@ int substitute_named_strings (char *line)
 	/* when defining a string, let @foo be handled as a variable */
 	return 0;
     }
+
+    if (!strncmp(line, "sscanf", 6)) {
+	/* when scanning, let @foo be handled as a variable */
+	return 0;
+    }    
 
     if (!strncmp(line, "printf", 6) || !strncmp(line, "sprintf", 7)) {
 	pf = 1;

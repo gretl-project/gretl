@@ -1,3 +1,8 @@
+version 1.7.2, in progress
+- list-creation: add "dataset" option to use all currently
+  available data series
+- Fix bug in recording result of TSLS heteroskedasticity test
+
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"
 - Add movavg function to genr (not documented yet)

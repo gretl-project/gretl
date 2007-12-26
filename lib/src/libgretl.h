@@ -422,6 +422,7 @@ struct MODEL_ {
 #include "strutils.h"
 #include "describe.h"
 #include "printout.h"
+#include "printscan.h"
 #include "modelprint.h"
 #include "graphing.h"
 #include "random.h"

@@ -2606,7 +2606,7 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 	    }	  
 	}
 
-	record_test_result(x, pval, _("HET_1"));
+	record_test_result(z, pval, _("HET_1"));
     }
 
     clear_model(&ptmod);

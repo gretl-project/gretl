@@ -99,11 +99,6 @@ void print_centered (const char *s, int width, PRN *prn);
 
 void gretl_printxn (double x, int n, PRN *prn);
 
-int do_printf (const char *line, double ***pZ, 
-	       DATAINFO *pdinfo, PRN *prn);
-
-int generate_obs_markers (const char *s, double ***pZ, DATAINFO *pdinfo);
-
 int in_usa (void);
 
 char *bufgets (char *s, size_t size, const char *buf);

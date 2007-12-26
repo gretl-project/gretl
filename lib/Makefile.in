@@ -117,6 +117,7 @@ PUBLIC_HDRS = \
 	plotspec.h \
 	plugins.h \
 	printout.h \
+	printscan.h \
 	pvalues.h \
 	qr_estimate.h \
 	random.h \
@@ -184,6 +185,7 @@ SRCS = adf_kpss.c \
 	plotspec.c \
 	plugins.c \
 	printout.c \
+	printscan.c \
 	pvalues.c \
 	qr_estimate.c \
 	random.c \

@@ -54,6 +54,7 @@ lib/src/options.c
 lib/src/plotspec.c
 lib/src/plugins.c
 lib/src/printout.c
+lib/src/printscan.c
 lib/src/pvalues.c
 lib/src/qr_estimate.c
 lib/src/random.c
@@ -131,6 +132,7 @@ plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/heckit.c
 plugin/import_common.c
+plugin/infomat.c
 plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c

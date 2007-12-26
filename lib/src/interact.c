@@ -324,6 +324,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == SETOBS || \
 	               c == SHELL || \
                        c == SPRINTF || \
+		       c == SSCANF || \
                        c == STRING || \
                        c == SYSTEM || \
                        c == TABPRINT || \
@@ -1360,6 +1361,33 @@ static int wildcard_expand (const char *s, int *lpos,
     return ok;
 }
 
+static int get_whole_dataset (const char *s, int *lpos,
+			      const DATAINFO *pdinfo, CMD *cmd)
+{
+    int ok = 0;
+
+    if (!strcmp(s, "dataset")) {
+	int nv = 0;
+	int *dlist = full_var_list(pdinfo, &nv);
+
+	if (dlist != NULL) {
+	    int k, llen = *lpos;
+
+	    if (expand_command_list(cmd, nv)) {
+		return 0;
+	    }
+	    for (k=1; k<=nv; k++) {
+		cmd->list[llen++] = dlist[k];
+	    }
+	    free(dlist);
+	    *lpos = llen;
+	    ok = 1;
+	}
+    }
+
+    return ok;
+}
+
 static int matrix_name_ok (const char *s, CMD *cmd)
 {
     int ok = 0;
@@ -2036,7 +2064,11 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	ok = 1;
     } else if (cmd->ci == PRINT && matrix_name_ok(s, cmd)) {
 	ok = 1;
-    } else if (cmd->ci == REMEMBER && ok_list_matrix(s, &k, pdinfo, cmd)) {
+    } else if (cmd->ci == REMEMBER && 
+	       ok_list_matrix(s, &k, pdinfo, cmd)) {
+	ok = 1;
+    } else if (cmd->ci == REMEMBER && 
+	       get_whole_dataset(s, &k, pdinfo, cmd)) {
 	ok = 1;
     }
 
@@ -4056,6 +4088,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     case PRINTF:
     case SPRINTF:
 	err = do_printf(line, pZ, pdinfo, prn);
+	break;
+
+    case SSCANF:
+	err = do_sscanf(line, pZ, pdinfo, prn);
 	break;
 
     case STRING:
