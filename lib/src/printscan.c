@@ -1006,6 +1006,7 @@ split_scanf_line (const char *s, const char **src, char **format, char **args)
 	s += 7;
     } 
 
+    /* string variable as source */
     s += strspn(s, " ");
     if (*s != '@') {
 	return E_PARSE;
@@ -1040,6 +1041,7 @@ split_scanf_line (const char *s, const char **src, char **format, char **args)
 	s += strspn(s, " ");
     }
 
+    /* get format string */
     if (*s != '"' || *(s+1) == '\0') {
 	return E_PARSE;
     }
