@@ -833,6 +833,32 @@ static char *retrieve_arg_name (const char **pline, int *err)
     return ret;
 }
 
+static char *retrieve_file_content (const char **pline, int *err)
+{
+    char fmt[32];
+    char fname[FILENAME_MAX];
+    char *ret = NULL;
+
+    sprintf(fmt, "file_content(%%%d[^)])", FILENAME_MAX - 1);
+
+    if (sscanf(*pline, fmt, fname) == 1) {
+	GError *gerr = NULL;
+	gsize len = 0;
+
+	*pline = strchr(*pline, ')') + 1;
+	g_file_get_contents(fname, &ret, &len, &gerr);
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	    *err = E_FOPEN;
+	}
+    } else {
+	*err = E_PARSE;
+    }
+
+    return ret;
+}
+
 static char *get_string_element (const char **pline, int *err)
 {
     const char *line = *pline;
@@ -857,6 +883,10 @@ static char *get_string_element (const char **pline, int *err)
     if (!strncmp(line, "argname(", 8)) {
 	return retrieve_arg_name(pline, err);
     }
+
+    if (!strncmp(line, "file_content(", 13)) {
+	return retrieve_file_content(pline, err);
+    }    
 
     if (!strncmp(line, "$(", 2)) {
 	return gretl_backtick(pline, err);
