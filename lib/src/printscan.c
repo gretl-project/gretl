@@ -760,7 +760,7 @@ get_scanf_format_chunk (const char *s, int *fc, int *len,
     }
 
 #if PSDEBUG
-    fprintf(stderr, "get_printf_format_chunk: got '%s'\n", chunk);
+    fprintf(stderr, "get_scanf_format_chunk: got '%s'\n", chunk);
 #endif
 
     return chunk;
@@ -772,6 +772,8 @@ scan_string (const char *targ, const char **psrc, int width,
 {
     int n, err = 0;
 
+    *psrc += strspn(*psrc, " \t\n");
+
     if (bscan->chrs != NULL) {
 	if (bscan->reverse) {
 	    n = strcspn(*psrc, bscan->chrs);
@@ -779,7 +781,6 @@ scan_string (const char *targ, const char **psrc, int width,
 	    n = strspn(*psrc, bscan->chrs);
 	}
     } else {	    
-	*psrc += strspn(*psrc, " \t\n");
 	n = strcspn(*psrc, " \t\n");
     }
 
