@@ -26,6 +26,8 @@ int do_printf (const char *line, double ***pZ,
 int do_sscanf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, PRN *prn);
 
+int n_scanned_items (void);
+
 int generate_obs_markers (const char *s, double ***pZ, 
 			  DATAINFO *pdinfo);
 

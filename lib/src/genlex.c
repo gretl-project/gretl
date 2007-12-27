@@ -77,6 +77,7 @@ struct str_table dvars[] = {
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
     { R_STOPWATCH, "$stopwatch" },
+    { R_NSCAN,     "$nscan" },
     { 0,           NULL },
 };
 

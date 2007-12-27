@@ -1174,7 +1174,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	    ppaths->dbhost[0] = '\0';
 	}
 
-	shelldir_init();
+	shelldir_init(NULL);
 	ppaths->currdir[0] = '\0';
 	*gretl_paths.plotfile = '\0';
 	strcpy(ppaths->pngfont, "verdana 8");
@@ -1216,6 +1216,10 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
     ensure_slash(ppaths->userdir);
     set_gretl_libpath(ppaths->gretldir);
     copy_paths_to_internal(ppaths);
+
+    if (!(opt & OPT_D)) {
+	shelldir_init(ppaths->userdir);
+    }
 
     return err;
 }
@@ -1272,7 +1276,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->gnuplot, "gnuplot");
 	strcpy(ppaths->pngfont, "Vera 9");
 	ppaths->currdir[0] = '\0';	
-	shelldir_init();
+	shelldir_init(NULL);
 
 	/* try to set a default userdir */
 	home = getenv("HOME");
@@ -1338,6 +1342,12 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 #endif
 
     copy_paths_to_internal(ppaths);
+
+#ifdef OSX_BUILD
+    if (!(opt & OPT_D)) {
+	shelldir_init(ppaths->userdir);
+    }
+#endif
 
     return err;
 }

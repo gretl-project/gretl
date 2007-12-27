@@ -113,6 +113,8 @@ int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 
 int ready_for_command (const char *line);
 
+int gretl_shell_grab (const char *arg, char **sout);
+
 #endif /* INTERACT_H */
 
 

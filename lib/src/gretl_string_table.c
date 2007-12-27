@@ -610,66 +610,9 @@ static char *retrieve_string_var (const char **pline,
     return ret;
 }
 
-#ifdef WIN32
-
-/* FIXME */
-
 static int shell_grab (const char *arg, char **sout)
 {
-    gchar *serr = NULL;
-    GError *gerr = NULL;
-    char *wdir;
-    int status, err = 0;
- 
-    if (!libset_get_bool(SHELL_OK)) {
-	strcpy(gretl_errmsg, _("The shell command is not activated."));
-	return 1;
-    }
-
-    wdir = get_shelldir();
-    if (wdir != NULL && chdir(wdir)) {
-	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
-	return E_FOPEN;
-    }
-
-    arg += strspn(arg, " \t");
-
-    g_spawn_command_line_sync(arg, sout, &serr, 
-			      &status, &gerr);
-
-    if (gerr != NULL) {
-	gretl_errmsg_set(gerr->message);
-	g_error_free(gerr);
-	err = 1;
-    }
-
-    if (serr != NULL) {
-	g_free(serr);
-    }
-
-    if (sout != NULL && *sout != NULL) {
-	/* trim trailing newline */
-	int n = strlen(*sout);
-
-	if ((*sout)[n-1] == '\n') {
-	    (*sout)[n-1] = '\0';
-	}
-    }
-
-    return err;
-}
-
-#else
-
-static int shell_grab (const char *arg, char **sout)
-{
-    gchar *serr = NULL;
-    GError *gerr = NULL;
-    gchar *argv[5];
-    const char *theshell, *namep;
-    char shellnam[40];
-    char *wdir;
-    int status, err = 0;
+    int err = 0;
     
     if (arg == NULL || *arg == '\0') {
 	return E_PARSE;
@@ -680,55 +623,8 @@ static int shell_grab (const char *arg, char **sout)
 	return 1;
     }
 
-    wdir = get_shelldir();
-    if (wdir == NULL || *wdir == '\0') {
-	wdir = NULL;
-    }
-
     arg += strspn(arg, " \t");
-    theshell = getenv("SHELL"); 
-
-    if (theshell == NULL) {
-# ifdef HAVE_PATHS_H
-	theshell =_PATH_BSHELL;
-# else
-	theshell = "/bin/sh"; 
-# endif
-    }
-
-    namep = strrchr(theshell, '/');
-    if (namep == NULL) {
-	namep = theshell;
-    }
-
-    strcpy(shellnam, "-");
-    strcat(shellnam, ++namep);
-    if (strcmp(namep, "sh") != 0) {
-	shellnam[0] = '+';
-    }
-
-    argv[0] = g_strdup(theshell);
-    argv[1] = shellnam;
-    argv[2] = g_strdup("-c");
-    argv[3] = g_strdup(arg);
-    argv[4] = NULL;
-
-    g_spawn_sync(wdir, argv, NULL, 0, NULL, NULL,
-		 sout, &serr, &status, &gerr); 
-
-    g_free(argv[0]);
-    g_free(argv[2]);
-    g_free(argv[3]);
-
-    if (gerr != NULL) {
-	gretl_errmsg_set(gerr->message);
-	g_error_free(gerr);
-	err = 1;
-    }
-
-    if (serr != NULL) {
-	g_free(serr);
-    }
+    gretl_shell_grab(arg, sout);
 
     if (sout != NULL && *sout != NULL) {
 	/* trim trailing newline */
@@ -741,8 +637,6 @@ static int shell_grab (const char *arg, char **sout)
 
     return err;
 }
-
-#endif
 
 static char *gretl_backtick (const char **pline, int *err)
 {
@@ -769,8 +663,6 @@ static char *gretl_backtick (const char **pline, int *err)
 	return NULL;
     }
 
-    fprintf(stderr, "arg = '%s'\n", arg);
-
     *pline = s;
     *err = shell_grab(arg, &val);
 
@@ -781,7 +673,7 @@ static char *gretl_backtick (const char **pline, int *err)
 
 static char *gretl_getenv (const char **pline, int *err)
 {
-    const char *s = strchr(*pline, '"') + 1;
+    const char *s = *pline;
     char *p = strchr(s, '"');
     char *key = NULL;
     char *test = NULL;
@@ -823,7 +715,7 @@ static char *retrieve_arg_name (const char **pline, int *err)
     char argvar[VNAMELEN];
     char *ret = NULL;
 
-    if (sscanf(*pline, "argname(%15[^)])", argvar) == 1) {
+    if (sscanf(*pline, "%15[^)])", argvar) == 1) {
 	*pline = strchr(*pline, ')') + 1;
 	ret = gretl_func_get_arg_name(argvar);
     } else {
@@ -835,15 +727,25 @@ static char *retrieve_arg_name (const char **pline, int *err)
 
 static char *retrieve_file_content (const char **pline, int *err)
 {
-    char fmt[32];
-    char fname[FILENAME_MAX];
+    char fmt[16], fname[FILENAME_MAX];
     char *ret = NULL;
 
-    sprintf(fmt, "file_content(%%%d[^)])", FILENAME_MAX - 1);
+    if (**pline == '"') {
+	*pline += 1;
+    }
+
+    sprintf(fmt, "%%%d[^)])", FILENAME_MAX - 1);
 
     if (sscanf(*pline, fmt, fname) == 1) {
+	int n = strlen(fname);
 	GError *gerr = NULL;
 	gsize len = 0;
+
+	if (fname[n-1] == '"') {
+	    fname[n-1] = '\0';
+	}
+
+	addpath(fname, NULL, 0);
 
 	*pline = strchr(*pline, ')') + 1;
 	g_file_get_contents(fname, &ret, &len, &gerr);
@@ -871,20 +773,28 @@ static char *get_string_element (const char **pline, int *err)
     line += strspn(line, " \t");
     *pline = line;
 
+    if (!strncmp(line, "null", 4) && string_is_blank(line + 4)) {
+	*pline += 4;
+	return gretl_strdup("");
+    }
+
     if (*line == '@') {
 	/* should be saved string variable */
 	return retrieve_string_var(pline, line + 1, err);
     }
 
     if (!strncmp(line, "getenv(\"", 8)) {
+	*pline += 8;
 	return gretl_getenv(pline, err);
     }
 
     if (!strncmp(line, "argname(", 8)) {
+	*pline += 8;
 	return retrieve_arg_name(pline, err);
     }
 
-    if (!strncmp(line, "file_content(", 13)) {
+    if (!strncmp(line, "readfile(", 9)) {
+	*pline += 9;
 	return retrieve_file_content(pline, err);
     }    
 

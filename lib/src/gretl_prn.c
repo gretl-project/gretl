@@ -312,6 +312,30 @@ const char *gretl_print_get_buffer (PRN *prn)
 }
 
 /**
+ * gretl_print_steal_buffer:
+ * @prn: printing struct.
+ * 
+ * Obtain a pointer to the buffer associated with @prn,
+ * if any.  The pointer on @prn itself is set to %NULL 
+ * and the caller takes responsibility for freeing the 
+ * buffer.
+ *
+ * Returns: the buffer, or %NULL on failure.
+ */
+
+char *gretl_print_steal_buffer (PRN *prn)
+{
+    char *buf = NULL;
+
+    if (prn != NULL) {
+	buf = prn->buf;
+	prn->buf = NULL;
+    }
+
+    return buf;
+}
+
+/**
  * gretl_print_read_tempfile:
  * @prn: printing struct.
  * 

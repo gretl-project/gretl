@@ -38,6 +38,7 @@
 #include <glib.h>
 
 /* equipment for the "shell" command */
+#if 0
 #ifndef WIN32
 # include <sys/wait.h>
 # include <signal.h>
@@ -47,6 +48,11 @@
 #  include <paths.h>
 # endif
 #endif
+#endif
+
+# ifdef HAVE_PATHS_H
+#  include <paths.h>
+# endif
 
 #define CMD_DEBUG 0
 #define ARMA_DBG 0
@@ -2853,13 +2859,112 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 
 #ifndef WIN32
 
-static int gretl_shell (const char *arg, PRN *prn)
+static int gretl_shell_async (const char *arg, PRN *prn)
+{
+    GError *gerr = NULL;
+    int err = 0;
+
+    g_spawn_command_line_async(arg, &gerr);
+
+    if (gerr != NULL) {
+	pprintf(prn, "%s\n", gerr->message);
+	g_error_free(gerr);
+	err = 1;
+    }    
+
+    return err;
+}
+
+static int gretl_shell_sync (const char *arg, gchar **psout,
+			     PRN *prn)
 {
     gchar *sout = NULL;
     gchar *serr = NULL;
-    GError *err = NULL;
-    char *wdir;
-    int status, async = 0;
+    GError *gerr = NULL;
+    int status;
+    gchar *argv[5];
+    const char *theshell = getenv("SHELL");
+    const char *namep;
+    char shellnam[40];
+    int err = 0;
+
+    if (theshell == NULL) {
+#ifdef HAVE_PATHS_H
+	theshell =_PATH_BSHELL;
+#else
+	theshell = "/bin/sh"; 
+#endif
+    }
+
+    namep = strrchr(theshell, '/');
+    if (namep == NULL) {
+	namep = theshell;
+    }
+
+    strcpy(shellnam, "-");
+    strcat(shellnam, ++namep);
+    if (strcmp(namep, "sh") != 0) {
+	shellnam[0] = '+';
+    }
+
+    argv[0] = g_strdup(theshell);
+    argv[1] = shellnam;
+    argv[2] = g_strdup("-c");
+    argv[3] = g_strdup(arg);
+    argv[4] = NULL;
+
+    g_spawn_sync(get_shelldir(), argv, NULL, 0, NULL, NULL,
+		 &sout, &serr, &status, &gerr); 
+
+    g_free(argv[0]);
+    g_free(argv[2]);
+    g_free(argv[3]);
+
+    if (gerr != NULL) {
+	if (prn != NULL) {
+	    pprintf(prn, "%s\n", gerr->message);
+	} else {
+	    gretl_errmsg_set(gerr->message);
+	}
+	g_error_free(gerr);
+	err = 1;
+    }
+
+    if (psout != NULL) {
+	*psout = sout;
+    } else if (sout != NULL) {
+	pputs(prn, sout);
+	g_free(sout);
+    }
+
+    if (serr != NULL) {
+	pputs(prn, serr);
+	g_free(serr);
+    }
+
+    return err;
+}
+
+/**
+ * gretl_shell_grab:
+ * @arg: command line to be executed.
+ * @sout: location to receive output from command.
+ *
+ * Calls the shell to execute @arg syncronously and captures the
+ * standard output, if any, in @sout.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int gretl_shell_grab (const char *arg, char **sout)
+{
+    return gretl_shell_sync(arg, sout, NULL);
+}
+
+static int gretl_shell (const char *arg, PRN *prn)
+{
+    int async = 0;
+    int err = 0;
     
     if (arg == NULL || *arg == '\0') {
 	return 0;
@@ -2868,12 +2973,6 @@ static int gretl_shell (const char *arg, PRN *prn)
     if (!libset_get_bool(SHELL_OK)) {
 	strcpy(gretl_errmsg, _("The shell command is not activated."));
 	return 1;
-    }
-
-    wdir = get_shelldir();
-    if (wdir != NULL && chdir(wdir)) {
-	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
-	return E_FOPEN;
     }
 
     if (!strncmp(arg, "launch ", 7)) {
@@ -2886,60 +2985,12 @@ static int gretl_shell (const char *arg, PRN *prn)
     arg += strspn(arg, " \t");
 
     if (async) {
-	g_spawn_command_line_async(arg, &err);
+	err = gretl_shell_async(arg, prn);
     } else {
-	gchar *argv[5];
-	const char *theshell = getenv("SHELL");
-	const char *namep;
-	char shellnam[40];
-
-	if (theshell == NULL) {
-#ifdef HAVE_PATHS_H
-	    theshell =_PATH_BSHELL;
-#else
-	    theshell = "/bin/sh"; 
-#endif
-	}
-
-	namep = strrchr(theshell, '/');
-	if (namep == NULL) {
-	    namep = theshell;
-	}
-
-	strcpy(shellnam, "-");
-	strcat(shellnam, ++namep);
-	if (strcmp(namep, "sh") != 0) {
-	    shellnam[0] = '+';
-	}
-
-	argv[0] = g_strdup(theshell);
-	argv[1] = shellnam;
-	argv[2] = g_strdup("-c");
-	argv[3] = g_strdup(arg);
-	argv[4] = NULL;
-
-	g_spawn_sync(wdir, argv, NULL, 0, NULL, NULL,
-		     &sout, &serr, &status, &err); 
-
-	g_free(argv[0]);
-	g_free(argv[2]);
-	g_free(argv[3]);
+	err = gretl_shell_sync(arg, NULL, prn);
     }
 
-    if (err != NULL) {
-	pprintf(prn, "%s\n", err->message);
-	g_error_free(err);
-    }
-    if (sout != NULL) {
-	pputs(prn, sout);
-	g_free(sout);
-    }
-    if (serr != NULL) {
-	pputs(prn, serr);
-	g_free(serr);
-    }
-
-    return 0;
+    return err;
 }
 
 #endif /* ! WIN32 */

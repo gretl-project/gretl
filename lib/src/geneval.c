@@ -3593,6 +3593,8 @@ static double dvar_get_value (int i, parser *p)
 	return get_last_lnl(p->lh.label);
     case R_STOPWATCH:
 	return gretl_stopwatch();
+    case R_NSCAN:
+	return n_scanned_items();
     default:
 	return NADBL;
     }

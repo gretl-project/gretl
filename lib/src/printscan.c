@@ -20,6 +20,7 @@
 /* support for C-like (s)printf and sscanf */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 
@@ -485,6 +486,11 @@ static int split_printf_line (const char *s, char *targ, int *sp,
 	    strncat(targ, s, n);
 	    s += n;
 	}
+	/* allow comma after target */
+	s += strspn(s, " ");
+	if (*s == ',') {
+	    s++;
+	}
     }
 
     s += strspn(s, " ");
@@ -767,8 +773,8 @@ get_scanf_format_chunk (const char *s, int *fc, int *len,
 }
 
 static int 
-scan_string (const char *targ, const char **psrc, int width, 
-	     struct bracket_scan *bscan)
+scan_string (const char *targ, char **psrc, int width, 
+	     struct bracket_scan *bscan, int *ns)
 {
     int n, err = 0;
 
@@ -792,7 +798,7 @@ scan_string (const char *targ, const char **psrc, int width,
 	if (!is_user_string(targ)) {
 	    sprintf(gretl_errmsg, _("%s: not a string variable"), targ);
 	    err = E_UNKVAR;
-	} else {
+	} else if (n > 0) {
 	    char *conv = gretl_strndup(*psrc, n);
 
 	    if (conv == NULL) {
@@ -802,6 +808,9 @@ scan_string (const char *targ, const char **psrc, int width,
 		free(conv);
 		*psrc += n;
 	    }
+	    if (!err) {
+		*ns += 1;
+	    }
 	}
     } else {
 	*psrc += n;
@@ -810,8 +819,9 @@ scan_string (const char *targ, const char **psrc, int width,
     return err;
 }
 
-static int scan_scalar (const char *targ, const char **psrc,
-			int fc, double **Z, DATAINFO *pdinfo)
+static int scan_scalar (const char *targ, char **psrc,
+			int fc, int width, double **Z, 
+			DATAINFO *pdinfo, int *ns)
 {
     char *endp = NULL;
     int v = 0;
@@ -827,49 +837,58 @@ static int scan_scalar (const char *targ, const char **psrc,
     }
 
     errno = 0;
-	
+
     if (fc == 'd') {
 	k = strtol(*psrc, &endp, 10);
     } else {
 	x = strtod(*psrc, &endp);
     }
 
-    if (errno == ERANGE) {
-	sprintf(gretl_errmsg, _("'%s' -- number out of range!"), *psrc);
-	err = E_DATA;
-    } else if (endp == *psrc) {
-	sprintf(gretl_errmsg, _("'%s' -- no numeric conversion performed!"), *psrc);
-	err = E_PARSE;
-    } else {
-	if (v > 0) {
-	    Z[v][0] = (fc == 'd')? k : x;
+    if (width != WIDTH_UNSPEC) {
+	int eaten = endp - *psrc;
+
+	if (eaten > width) {
+	    char *tmp = gretl_strndup(*psrc, width);
+
+	    if (tmp == NULL) {
+		return E_ALLOC;
+	    }
+	    if (fc == 'd') {
+		k = strtol(tmp, &endp, 10);
+	    } else {
+		x = strtod(tmp, &endp);
+	    }
+	    endp = *psrc + width;
+	    free(tmp);
 	}
-	*psrc = endp;
     }
+
+    if (v > 0 && !errno && endp != *psrc) {
+	Z[v][0] = (fc == 'd')? k : x;
+	*ns += 1;
+    }
+
+    *psrc = endp;
 
     return err;
 }
 
-static int scan_matrix (const char *targ, const char **psrc)
+static int scan_matrix (const char *targ, char **psrc, int rows, int *ns)
 {
-    const char *src = *psrc;
+    char *src = *psrc;
     char *endp = NULL;
     gretl_matrix *m = NULL;
     double x;
-    int cmax = 0, cmin = 999999;
-    int r = 0, c = 0;
+    int r = 0, c = 0, c0 = 0;
     int i, j, err = 0;
 
     errno = 0;
 
-    while (*src && !err) {
+    while (*src) {
 	strtod(src, &endp);
-	if (endp == src) {
+	if (endp == src || errno == ERANGE) {
 	    break;
-	} else if (errno == ERANGE) {
-	    err = E_DATA;
-	    break;
-	}
+	} 
 	c++;
 	src = endp;
 	src += strspn(src, " \t");
@@ -877,18 +896,18 @@ static int scan_matrix (const char *targ, const char **psrc)
 	    src++;
 	}
 	if (*src == '\n' || *src == '\r' || *src == '\0') {
+	    if (r == 0) {
+		c0 = c;
+	    } else if (c != c0) {
+		break;
+	    }
 	    r++;
-	    if (c > cmax) cmax = c;
-	    if (c < cmin) cmin = c;
+	    if (r == rows) {
+		break;
+	    }
 	    c = 0;
 	}
     }
-
-    if (!err && (r == 0 || cmax == 0 || cmin != cmax)) {
-	err = E_DATA;
-    }
-
-    if (err) return err;
 
     if (targ == NULL) {
 	*psrc = src;
@@ -899,25 +918,28 @@ static int scan_matrix (const char *targ, const char **psrc)
 	return E_UNKVAR;
     }
 
-    m = gretl_matrix_alloc(r, cmax);
-    if (m == NULL) {
-	return E_ALLOC;
-    }
+    if (r > 0 && c0 > 0) {
+	m = gretl_matrix_alloc(r, c0);
+	if (m == NULL) {
+	    return E_ALLOC;
+	}	
 
-    src = *psrc;
-
-    for (i=0; i<r; i++) {
-	for (j=0; j<cmax; j++) {
-	    x = strtod(src, &endp);
-	    gretl_matrix_set(m, i, j, x);
-	    src = endp;
-	    src += strspn(src, " \t\n\r");
+	src = *psrc;
+	for (i=0; i<r; i++) {
+	    for (j=0; j<c0; j++) {
+		x = strtod(src, &endp);
+		gretl_matrix_set(m, i, j, x);
+		src = endp;
+		src += strspn(src, " \t\n\r");
+	    }
 	}
-    }
-
-    err = user_matrix_replace_matrix_by_name(targ, m);
-    if (err) {
-	gretl_matrix_free(m);
+ 
+	err = user_matrix_replace_matrix_by_name(targ, m);
+	if (err) {
+	    gretl_matrix_free(m);
+	} else {
+	    *ns += 1;
+	}
     }
 
     *psrc = src;
@@ -925,9 +947,9 @@ static int scan_matrix (const char *targ, const char **psrc)
     return err;
 }
 
-static int scan_arg (const char **psrc, char **pfmt, char **pargs, 
+static int scan_arg (char **psrc, char **pfmt, char **pargs, 
 		     double **Z, DATAINFO *pdinfo,
-		     PRN *prn)
+		     PRN *prn, int *ns)
 {
     char *fmt = NULL;
     char *arg = NULL;
@@ -975,11 +997,11 @@ static int scan_arg (const char **psrc, char **pfmt, char **pargs,
     /* do the actual scanning */
 
     if (!err && fc == 's') {
-	err = scan_string(targ, psrc, wid, &bscan);
+	err = scan_string(targ, psrc, wid, &bscan, ns);
     } else if (!err && fc == 'm') {
-	err = scan_matrix(targ, psrc);
+	err = scan_matrix(targ, psrc, wid, ns);
     } else if (!err) {
-	err = scan_scalar(targ, psrc, fc, Z, pdinfo);
+	err = scan_scalar(targ, psrc, fc, wid, Z, pdinfo, ns);
     }
 
     free(fmt);
@@ -990,42 +1012,65 @@ static int scan_arg (const char **psrc, char **pfmt, char **pargs,
     return err;
 }
 
+static int get_literal_length (const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (*s == '"' && *(s-1) != '\\') {
+	    break;
+	}
+	n++;
+	s++;
+    }
+
+    return n;
+}
+
 /* split line into source string, format and arguments: for now
    we only accept named string variables as sources 
 */
 
 static int 
-split_scanf_line (const char *s, const char **src, char **format, char **args)
+split_scanf_line (const char *s, char **src, char **format, 
+		  char **args, int *literal)
 {
     const char *p;
     char *srcname;
     int gotcom = 0;
-    int n;
+    int n = 0;
 
     if (!strncmp(s, "sscanf ", 7)) {
 	s += 7;
     } 
 
-    /* string variable as source */
+    /* string literal or string variable as source */
     s += strspn(s, " ");
-    if (*s != '@') {
-	return E_PARSE;
-    }
-
-    s++;
-    n = gretl_varchar_spn(s);
-    if (n == 0) {
-	return E_PARSE;
-    }
+    if (*s == '@') {
+	s++;
+	n = gretl_varchar_spn(s);
+	if (n == 0) {
+	    return E_PARSE;
+	}
+    } else if (*s == '"') {
+	*literal = 1;
+	s++;
+	n = get_literal_length(s);
+    } 
 
     srcname = gretl_strndup(s, n);
     if (srcname == NULL) {
 	return E_ALLOC;
     } else {
-	*src = get_named_string(srcname);
-	free(srcname);
-	if (*src == NULL) {
-	    return E_UNKVAR;
+	if (*literal) {
+	    *src = srcname;
+	    s++;
+	} else {
+	    *src = get_named_string(srcname);
+	    free(srcname);
+	    if (*src == NULL) {
+		return E_UNKVAR;
+	    }
 	}
 	s += n;
 	if (*s == ',') {
@@ -1088,6 +1133,13 @@ split_scanf_line (const char *s, const char **src, char **format, char **args)
     return 0;
 }
 
+static int nscan;
+
+int n_scanned_items (void)
+{
+    return nscan;
+}
+
 /**
  * do_sscanf:
  * @line: command line.
@@ -1104,15 +1156,17 @@ split_scanf_line (const char *s, const char **src, char **format, char **args)
 int do_sscanf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, PRN *prn)
 {
-    const char *r, *src = NULL;
-    char *p, *q;
+    char *r, *p, *q;
+    char *src = NULL;
     char *format = NULL;
     char *args = NULL;
+    int literal = 0;
     int err = 0;
 
+    nscan = 0;
     gretl_error_clear();
 
-    err = split_scanf_line(line, &src, &format, &args);
+    err = split_scanf_line(line, &src, &format, &args, &literal);
     if (err) {
 	return err;
     }
@@ -1135,20 +1189,23 @@ int do_sscanf (const char *line, double ***pZ,
 	    r++;
 	    p++;
 	} else if (*p == '%') {
-	    err = scan_arg(&r, &p, &q, *pZ, pdinfo, prn);
+	    err = scan_arg(&r, &p, &q, *pZ, pdinfo, prn, &nscan);
 	} else {
-	    sprintf(gretl_errmsg, _("Unmatched element in format: '%s'"), p);
-	    err = E_DATA;
+	    break;
 	}
     }
 
-    if (!err && *p && !*r) {
-	sprintf(gretl_errmsg, _("Unmatched element in format: '%s'"), p);
-	err = E_DATA;
+    if (literal) {
+	free(src);
     }
 
     free(format);
     free(args);
+
+    if (!err && gretl_messages_on()) {
+	pprintf(prn, "Number of items successfully scanned = %d\n", 
+		nscan);
+    }
 
     return err;
 }

@@ -24,6 +24,11 @@ list reglist = income price
 list empty_list = null
 \end{code}
 
+A special form is available: if you use the keyword \texttt{dataset}
+in place of an actual list on the right-hand side, this constructs a
+list containing all the data series in the current dataset (except
+the pre-defined \texttt{const}).
+
 The name of the list must start with a letter, and must be composed
 entirely of letters, numbers or the underscore character.  The maximum
 length of the name is 15 characters; list names cannot contain
@@ -225,8 +230,9 @@ represented as a sequence of sub-strings if need be, as in
 string bits = "first " "and" " second"
 \end{code}
 %
-See below for further variants of the string command, including use of
-\texttt{getenv}.  
+You can use the keyword \texttt{null} in place of a literal string or
+strings to create an empty string variable.  See below for further
+variants of the string command, including use of \texttt{getenv}.
 
 The \texttt{sprintf} command is more flexible.  It works exactly as
 \app{gretl}'s \texttt{printf} command except that the ``format''
@@ -357,6 +363,16 @@ actually contains something''.
 At present the \texttt{getenv} function can only be used on the
 right-hand side of a \texttt{string} assignment, as in the above
 illustrations.
+
+\subsection{Capturing strings via the shell}
+
+If shell commands are enabled in \app{gretl}, you can capture the
+output from such commands using the syntax 
+
+\texttt{string} \textsl{stringname} = \texttt{\$(}\textsl{shellcommand}\texttt{)}
+
+That is, you encose a shell command in parentheses, preceded by
+a dollar sign.
     
 %%% Local Variables: 
 %%% mode: latex

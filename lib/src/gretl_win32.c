@@ -358,15 +358,21 @@ static char *compose_command_line (const char *arg)
     return cmdline;
 }
 
-#if 1
-
 #define BUFSIZE 4096 
  
-static int read_from_pipe (HANDLE hwrite, HANDLE hread, PRN *prn) 
+static int read_from_pipe (HANDLE hwrite, HANDLE hread, 
+			   char **sout, PRN *inprn) 
 { 
     DWORD dwread;
     CHAR buf[BUFSIZE];
+    PRN *prn;
     int ok;
+
+    if (sout != NULL) {
+	prn = gretl_print_new(GRETL_PRINT_BUFFER);
+    } else {
+	prn = inprn;
+    }
 
     /* close the write end of the pipe */
     ok = CloseHandle(hwrite);
@@ -375,12 +381,19 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread, PRN *prn)
 	fputs("Closing handle failed\n", stderr); 
     } else {
 	/* read output from the child process */
-	for (;;) { 
+	while (1) { 
 	    memset(buf, '\0', BUFSIZE);
-	    if (!ReadFile(hread, buf, BUFSIZE, &dwread, 
-			  NULL) || dwread == 0) break;
+	    if (!ReadFile(hread, buf, BUFSIZE, &dwread, NULL) || 
+		dwread == 0) {
+		break;
+	    }
 	    pputs(prn, buf);
 	} 
+    }
+
+    if (sout != NULL) {
+	*sout = gretl_print_steal_buffer(prn);
+	gretl_print_destroy(prn);
     }
 
     return ok;
@@ -391,15 +404,9 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
 { 
     PROCESS_INFORMATION pinfo; 
     STARTUPINFO sinfo;
-    char *wdir, *cmdline = NULL;
+    char *cmdline = NULL;
     int ok;
     
-    wdir = get_shelldir();
-    if (wdir != NULL && chdir(wdir)) {
-	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
-	return E_FOPEN;
-    }
-
     cmdline = compose_command_line(arg);
  
     ZeroMemory(&pinfo, sizeof(PROCESS_INFORMATION));
@@ -419,7 +426,7 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
 		       TRUE,          // handles are inherited 
 		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
 		       NULL,          // use parent's environment 
-		       wdir,          
+		       get_shelldir(),          
 		       &sinfo,
 		       &pinfo);
    
@@ -436,7 +443,7 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
     return ok;
 }
 
-int run_cmd_new (const char *arg, PRN *prn) 
+static int run_cmd_new (const char *arg, char **sout, PRN *prn) 
 { 
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sa; 
@@ -459,14 +466,12 @@ int run_cmd_new (const char *arg, PRN *prn)
 	ok = run_child_with_pipe(arg, hwrite, hread);
 	if (ok) {
 	    /* Read from child's output pipe */
-	    read_from_pipe(hwrite, hread, prn); 
+	    read_from_pipe(hwrite, hread, sout, prn); 
 	}
     }
  
     return 0; 
 } 
-
-#endif
 
 static int run_cmd_wait (const char *cmd, PRN *prn)
 {
@@ -475,11 +480,9 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     char *cmdline = NULL;
     int ok, err = 0;
 
-#if 1
     if (getenv("GRETL_SHELL_NEW")) {
-	return run_cmd_new(cmd, prn);
+	return run_cmd_new(cmd, NULL, prn);
     }
-#endif
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);
@@ -508,6 +511,11 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     g_free(cmdline);
 
     return err;
+}
+
+int gretl_shell_grab (const char *arg, char **sout)
+{
+    return run_cmd_new(arg, sout, NULL);
 }
 
 int gretl_shell (const char *arg, PRN *prn)

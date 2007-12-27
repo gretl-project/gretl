@@ -3,6 +3,7 @@ version 1.7.2, in progress
   available data series
 - Fix bug in recording result of TSLS heteroskedasticity test
 - Add sscanf command (a subset of C sscanf functionality)
+- Add shell capture for strings via $(shellcommand)
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

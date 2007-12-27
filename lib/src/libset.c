@@ -879,15 +879,27 @@ static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-void shelldir_init (void)
+void shelldir_init (const char *s)
 {
-    char *test = getcwd(state->shelldir, MAXLEN);
+    if (s != NULL) {
+	int n;
 
-    if (test == NULL) {
 	*state->shelldir = '\0';
+	strncat(state->shelldir, s, MAXLEN - 1);
+	n = strlen(state->shelldir);
+	if (n > 0 && (state->shelldir[n-1] == '\\' ||
+		      state->shelldir[n-1] == '/')) {
+	    state->shelldir[n-1] = '\0';
+	}	
     } else {
-	gretl_insert_builtin_string("shelldir", state->shelldir);
+	char *test = getcwd(state->shelldir, MAXLEN);
+
+	if (test == NULL) {
+	    *state->shelldir = '\0';
+	} 
     }
+
+    gretl_insert_builtin_string("shelldir", state->shelldir);
 }
 
 static int set_shelldir (const char *s)

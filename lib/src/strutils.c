@@ -386,7 +386,7 @@ char *gretl_strndup (const char *src, size_t n)
 {
     char *targ = NULL;
 
-    if (src != NULL && n > 0) {
+    if (src != NULL) {
 	size_t len = strlen(src);
 
 	if (len > n) {

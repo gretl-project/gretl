@@ -60,6 +60,8 @@ int gretl_print_reset_buffer (PRN *prn);
 
 const char *gretl_print_get_buffer (PRN *prn);
 
+char *gretl_print_steal_buffer (PRN *prn);
+
 FILE *gretl_print_read_tempfile (PRN *prn);
 
 int gretl_print_stop_tempfile_read (PRN *prn, FILE *fp);

@@ -7975,6 +7975,106 @@
 
   </command>
 
+  <command name="sscanf" section="Programming" 
+    label="Scanning a string" context="cli">
+
+    <usage>
+      <arguments>
+	<argument>source</argument>
+	<argpunct>, </argpunct>
+        <argument>format</argument>
+	<argpunct>, </argpunct>
+        <argument>args</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Scans the string <repl>source</repl> under the control of
+	<repl>format</repl>, assigning zero or more values to the
+	given <repl>args</repl>. This is a simplifed version of the
+	<lit>sscanf</lit> function in the C programming language.
+      </para>
+      <para>
+	<repl>source</repl> may be either a literal string, enclosed in
+	double quotes, or the name of a predefined string variable
+	(starting with <lit>@</lit>).  <repl>format</repl> is defined
+	similarly to the format string in <cmdref targ="printf"/> (more on
+	this below). <repl>args</repl> should be a comma-separated list
+	containing the names of pre-defined variables: these are the
+	targets of conversion from <repl>source</repl>.  (For those
+	used to C: one can prefix the names of numerical variables
+	with <lit>&amp;</lit> but this is not required.)
+      </para>
+      <para>
+	Literal	text in <repl>format</repl> is matched against
+	<repl>source</repl>.  Conversion specifiers start with
+	<lit>%</lit>, and recognized conversions include <lit>%f</lit>,
+	<lit>%g</lit> or <lit>%lf</lit> for floating-point numbers;
+	<lit>%d</lit> for integers; <lit>%s</lit> for strings; and
+	<lit>%m</lit> for matrices.  You may insert a positive integer
+	after the percent sign: this sets the maximum number of characters
+	to read for the given conversion (or the maximum number of rows in
+	the case of matrix conversion). Alternatively, you can insert a
+	literal <lit>*</lit> after the percent to suppress the conversion
+	(thereby skipping any characters that would otherwise have been
+	converted for the given type).  For example, <lit>%3d</lit>
+	converts the next 3 characters in <repl>source</repl> to an
+	integer, if possible; <lit>%*g</lit> skips as many characters in
+	<repl>source</repl> as could be converted to a single
+	floating-point number.
+      </para>
+      <para>
+	Matrix conversion works thus: the scanner reads a line of input
+	and counts the (space- or tab-separated) number of numeric fields.
+	This defines the number of columns in the matrix.  By default,
+	reading then proceeds for as many lines (rows) as contain the same
+	number of numeric columns, but the maximum number of rows to read
+	can be limited as described above.
+      </para>
+      <para>
+	In addition to <lit>%s</lit> conversion for strings, a simplified
+	version of the C format
+	<lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit> 
+	is available.  In this format <repl>N</repl> is the maximum number
+	of characters to read and <repl>chars</repl> is a set of
+	acceptable characters, enclosed in square brackets: reading stops
+	if <repl>N</repl> is reached or if a character not in
+	<repl>chars</repl> is encountered. The function of
+	<repl>chars</repl> can be reversed by giving a circumflex,
+	<lit>^</lit>, as the first character; in that case reading stops
+	if a character in the given set is found.  (Unlike C, the hyphen
+	does not play a special role in the <repl>chars</repl> set.)
+      </para>
+      <para>
+	If the source string does not (fully) match the format, the number
+	of conversions may fall short of the number of arguments given.
+	This is not in itself an error so far a gretl is concerned.
+	However, you may wish to check the number of conversions
+	performed; this is given by the built-in scalar variable
+	<lit>$nscan</lit>, whose value is overwritten every time sscanf is
+	called.  The number of conversions is also printed, in iteractive
+	use.
+      </para>
+      <para>
+	Some examples follow:
+      </para>
+      <code>
+	scalar x
+	scalar y
+	sscanf "123456", "%3d%3d", x, y
+
+	sprintf S "1 2 3 4\n5 6 7 8"
+	print "@S"
+	matrix m
+	sscanf @S, "%m", m
+	print m</code>
+
+    </description>
+
+  </command>
+
+
   <command name="store" section="Dataset" label="Save data">
 
     <usage>
@@ -8098,15 +8198,31 @@
     <description>
       <para>
 	Saves a string named <repl>stringvar</repl>.  The
-	<repl>expression</repl> can take the following forms: a literal
-	string, enclosed in double quotes; a series of such strings,
-	separated by spaces (these strings will be concatenated); or
-	a call to the <lit>getenv</lit> function to retrieve a string
-	from the program's environment.
+	<repl>expression</repl> can take the following forms: the keyword
+	<lit>null</lit> to create an empty string; a literal string,
+	enclosed in double quotes; a series of such strings, separated by
+	spaces (these strings will be concatenated); a call to the
+	<lit>getenv</lit> function to retrieve a string from the program's
+	environment; a call to the <lit>argname</lit> function; or
+	a call to capture the output from a shell command.
       </para>
       <para>
-	After defining a string variable in this way, the variable can be
-	printed using its name preceded by <lit>@</lit>, as in
+	The <lit>argname</lit> function is designed for use in
+	scripts containing user-defined functions: it takes as its
+	single argument the name of a variable inside a function, and
+	it returns the name by which that variable was known in the
+	script that called the function.
+      </para>
+      <para>
+	To capture output from a shell command, the form
+	<lit>$(</lit><repl>shellcommand</repl><lit>)</lit> is used.  That
+	is, a valid shell command is enclosed in parentheses and preceded
+	by a dollar sign.  This facility works only if shell commands are
+	enabled in gretl.
+      </para>
+      <para>
+	After defining a string variable, the variable can be printed
+	using its name preceded by <lit>@</lit>, as in
       </para>
       <code>
 	print "mystr = @mystr"

@@ -33,6 +33,7 @@ typedef enum {
     R_TEST_PVAL,  /* p-value from last explicit test performed */
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_STOPWATCH,  /* stopwatch */ 
+    R_NSCAN,      /* number of items scanned via sscanf */
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
     R_MAX
