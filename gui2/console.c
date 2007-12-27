@@ -38,6 +38,20 @@ static ExecState cstate;
 static char **cmd_history;
 static int hl, hlmax, hlines;
 
+#ifdef G_OS_WIN32
+
+#include "gdk/gdkwin32.h"
+
+static void win32_raise_console (void)
+{
+    GtkWidget *top = gtk_widget_get_toplevel(console_view);
+    HWND h = GDK_WINDOW_HWND(top->window);
+
+    SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+}
+
+#endif
+
 static int gretl_console_init (void)
 {
     char *hstr;
@@ -324,12 +338,6 @@ static void console_exec (void)
 	return;
     }
 
-#ifdef G_OS_WIN32
-    if (cstate.cmd->ci == SHELL) {
-	gtk_window_present(GTK_WINDOW(gtk_widget_get_toplevel(console_view)));
-    }    
-#endif
-
     coding = gretl_compiling_loop() || gretl_compiling_function();
 
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
@@ -349,6 +357,12 @@ static void console_exec (void)
     if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
     }
+
+#ifdef G_OS_WIN32
+    if (cstate.cmd->ci == SHELL || cstate.cmd->ci == STRING) {
+	win32_raise_console();
+    }    
+#endif
 }
 
 void show_gretl_console (void)

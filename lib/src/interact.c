@@ -37,22 +37,12 @@
 
 #include <glib.h>
 
-/* equipment for the "shell" command */
-#if 0
+/* for the "shell" command */
 #ifndef WIN32
-# include <sys/wait.h>
-# include <signal.h>
-# include <errno.h>
-# include <unistd.h>
 # ifdef HAVE_PATHS_H
 #  include <paths.h>
 # endif
 #endif
-#endif
-
-# ifdef HAVE_PATHS_H
-#  include <paths.h>
-# endif
 
 #define CMD_DEBUG 0
 #define ARMA_DBG 0

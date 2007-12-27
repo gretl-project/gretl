@@ -424,7 +424,11 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
 		       NULL,          // process security attributes 
 		       NULL,          // primary thread security attributes 
 		       TRUE,          // handles are inherited 
+#if 1
 		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+#else
+		       CREATE_NO_WINDOW,
+#endif
 		       NULL,          // use parent's environment 
 		       get_shelldir(),          
 		       &sinfo,
@@ -480,7 +484,8 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     char *cmdline = NULL;
     int ok, err = 0;
 
-    if (getenv("GRETL_SHELL_NEW")) {
+    /* FIXME needs checking! */
+    if (1 || getenv("GRETL_SHELL_NEW")) {
 	return run_cmd_new(cmd, NULL, prn);
     }
 
