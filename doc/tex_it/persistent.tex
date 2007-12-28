@@ -22,6 +22,11 @@ list reglist = income price
 list empty_list = null
 \end{code}
 
+È disponibile una forma speciale: se si usa la parola chiave \texttt{dataset}
+al posto di una lista vera e propria di variabili, verrà costruita una lista che
+contiene tutte le serie di dati del dataset in uso (tranne che per la costante
+predefinita \texttt{const}).
+
 Il nome della lista deve iniziare con una lettera e deve essere composto
 interamente da lettere, numeri o il carattere trattino basso (non da spazi). La
 lunghezza massima del nome è di 15 caratteri. Quando si aggiungono variabili a
@@ -221,8 +226,9 @@ sotto-stringhe, come in questo esempio:
 string pezzi = "Primo " "e" " secondo"
 \end{code}
 %
-Si veda oltre per altre varianti del comando string, tra cui l'uso di
-\texttt{getenv}.
+È anche possibile usare la parola chiave \texttt{null} al posto di una stringa
+per creare una variabile che contiene una stringa nulla. Si veda oltre per altre
+varianti del comando string, tra cui l'uso di \texttt{getenv}.
 
 Il comando \texttt{sprintf} è più flessibile. Funziona esattamente come
 \texttt{printf} di \app{gretl}, tranne per il fatto che la stringa ``di formato'' deve
@@ -348,6 +354,16 @@ effettivamente qualcosa''.
 
 Al momento la funzione \texttt{getenv} può essere usata solo nella parte destra
 di un'istruzione \texttt{string}, come negli esempi visti sopra.
+
+\subsection{Lettura delle stringhe usando la shell}
+
+Se in \app{gretl} sono stati abilitati i comandi shell, è possibile catturare i
+risultati dei comandi usando la sintassi
+
+\texttt{string} \textsl{nome-stringa} = \texttt{\$(}\textsl{comando-shell}\texttt{)}
+
+Ossia, si include il comando shell tra parentesi precedute dal carattere
+dollaro.
 
 %%% Local Variables: 
 %%% mode: latex
