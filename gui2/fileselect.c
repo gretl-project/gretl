@@ -361,15 +361,20 @@ static void filesel_open_script (const char *fname)
 
 static void filesel_open_session (const char *fname)
 {
+    strcpy(tryfile, fname);
+
     if (is_session_file(fname)) {
-	strcpy(tryfile, fname);
 	verify_open_session();
     } else {
-	int pub;
+	windata_t *vwin;
 
-	strcpy(tryfile, fname);
-	pub = !strncmp(tryfile, paths.scriptdir, strlen(paths.scriptdir));
-	if (view_file(tryfile, 1, 0, 78, 370, (pub)? VIEW_SCRIPT : EDIT_SCRIPT)) {
+	if (has_system_prefix(tryfile, &paths, SCRIPT_SEARCH)) {
+	    vwin = view_file(tryfile, 0, 0, 78, 370, VIEW_SCRIPT);
+	} else {
+	    vwin = view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT);
+	}
+
+	if (vwin != NULL) {
 	    strcpy(scriptfile, tryfile);
 	}
     }

@@ -35,14 +35,6 @@
 
 #include <glib.h>
 
-enum {
-    CURRENT_DIR,
-    DATA_SEARCH,
-    SCRIPT_SEARCH,
-    FUNCS_SEARCH,
-    USER_SEARCH
-};
-
 static void ensure_slash (char *str);
 
 static int add_suffix (char *fname, const char *sfx)
@@ -636,6 +628,8 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     }
 
     if (ppaths != NULL) {
+	char trydir[MAXLEN];
+
 	/* try looking where script was found */
 	if (*ppaths->currdir != '\0') {
 	    if ((fname = search_dir(fname, ppaths->currdir, CURRENT_DIR))) {
@@ -647,22 +641,21 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	strcpy(fname, orig);
 
 	if (script) {
-	    /* for a script, try system script dir (and subdirs) */
-	    if ((fname = search_dir(fname, ppaths->scriptdir, SCRIPT_SEARCH))) { 
+	    sprintf(trydir, "%sscripts", ppaths->gretldir);
+	    if ((fname = search_dir(fname, trydir, SCRIPT_SEARCH))) { 
 		return fname;
 	    } else {
-		char fndir[MAXLEN];
-
 		fname = tmp;
 		strcpy(fname, orig);
-		sprintf(fndir, "%sfunctions", ppaths->gretldir);
-		if ((fname = search_dir(fname, fndir, FUNCS_SEARCH))) { 
+		sprintf(trydir, "%sfunctions", ppaths->gretldir);
+		if ((fname = search_dir(fname, trydir, FUNCS_SEARCH))) { 
 		    return fname;
 		}
 	    }
 	} else {
-	    /* for a data file, try system data dir (and subdirs) */
-	    if ((fname = search_dir(fname, ppaths->datadir, DATA_SEARCH))) { 
+	    /* data file */
+	    sprintf(trydir, "%sdata", ppaths->gretldir);
+	    if ((fname = search_dir(fname, trydir, DATA_SEARCH))) { 
 		return fname;
 	    }
 	} 
@@ -809,6 +802,27 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     }
 
     return 0;
+}
+
+int has_system_prefix (const char *fname, const PATHS *ppaths, 
+		       int locus)
+{
+    int n = strlen(ppaths->gretldir);
+    int ret = 0;
+
+    if (strlen(fname) < n) return 0;
+    
+    if (!strncmp(fname, ppaths->gretldir, n)) {
+	if (locus == DATA_SEARCH &&
+	    !strncmp(fname + n, "data", 4)) {
+	    ret = 1;
+	} else if (locus == SCRIPT_SEARCH &&
+		   !strncmp(fname + n, "scripts", 7)) { 
+	    ret = 1;
+	}
+    }
+
+    return ret;
 }
 
 enum paths_status_flags {
@@ -1139,8 +1153,6 @@ void show_paths (const PATHS *ppaths)
     printf(_("gretl: using these basic search paths:\n"));
     printf("gretldir: %s\n", ppaths->gretldir);
     printf("userdir: %s\n", ppaths->userdir);
-    printf("datadir: %s\n", ppaths->datadir);
-    printf("scriptdir: %s\n", ppaths->scriptdir);
     printf("gnuplot: %s\n", ppaths->gnuplot);
 }
 
@@ -1188,9 +1200,6 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	err = set_tramo_x12a_dirs(ppaths, err);
 #endif
     }
-
-    sprintf(ppaths->datadir, "%sdata\\", ppaths->gretldir);
-    sprintf(ppaths->scriptdir, "%sscripts\\", ppaths->gretldir);
 
     if (opt & OPT_X) {
 	/* gui program */
@@ -1304,9 +1313,6 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	}
 	err = validate_userdir(ppaths->userdir);
     }
-
-    sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);
-    sprintf(ppaths->scriptdir, "%sscripts/", ppaths->gretldir);
 
     if (opt & OPT_X) {
 	gretl_set_gui_mode(1);

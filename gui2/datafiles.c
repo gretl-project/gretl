@@ -111,19 +111,13 @@ static char *full_path (char *s1, const char *s2)
     return fpath;
 }
 
-static char *unslash (const char *s)
+static void unslash (char *s)
 {
-    char *dest = g_strdup(s);
+    size_t n = strlen(s);
 
-    if (dest != NULL) {
-	size_t n = strlen(dest);
-
-	if (dest[n-1] == '\\' || dest[n-1] == '/') {
-	    dest[n-1] = '\0';
-	}
+    if (s[n-1] == '\\' || s[n-1] == '/') {
+	s[n-1] = '\0';
     }
-
-    return dest;
 }
 
 static int recognized_collection (file_collection *coll)
@@ -431,13 +425,24 @@ static int dont_go_there (const char *s)
     return ret;
 }
 
-static int seek_file_collections (const char *topdir)
+static int seek_file_collections (int location)
 {
+    char *tmp = NULL;
     DIR *dir, *try;  
     struct dirent *dirent;
     char *subdir;
     int err = 0;
-    char *tmp = unslash(topdir);
+
+    if (location == DATA_SEARCH) {
+	tmp = g_strdup_printf("%sdata", paths.gretldir);
+    } else if (location == SCRIPT_SEARCH) {
+	tmp = g_strdup_printf("%sscripts", paths.gretldir);
+    } else if (location == USER_SEARCH) {
+	tmp = g_strdup(paths.userdir);
+	unslash(tmp);
+    } else {
+	return 1;
+    }
 
     dir = opendir(tmp);
     if (dir == NULL) {
@@ -445,7 +450,7 @@ static int seek_file_collections (const char *topdir)
     }
 
 #if COLL_DEBUG
-    fprintf(stderr, "seeking file collections in '%s'\n", topdir);
+    fprintf(stderr, "seeking file collections in '%s'\n", tmp);
 #endif
 
     while (!err && (dirent = readdir(dir))) {
@@ -470,7 +475,6 @@ static int seek_file_collections (const char *topdir)
     }
 
     closedir(dir);
-
     free(tmp);
 
     return err;
@@ -516,12 +520,12 @@ static int build_file_collections (void)
     static int err;
 
     if (!built) {
-	err = seek_file_collections(paths.datadir);
+	err = seek_file_collections(DATA_SEARCH);
 	if (!err) {
-	    err = seek_file_collections(paths.scriptdir);
+	    err = seek_file_collections(SCRIPT_SEARCH);
 	}
 	if (!err) {
-	    err = seek_file_collections(paths.userdir);
+	    err = seek_file_collections(USER_SEARCH);
 	}
 	if (!err) {
 	    sort_data_stack();

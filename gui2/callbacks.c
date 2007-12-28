@@ -567,7 +567,8 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 {
     void *handle;
     int (*run_nist_tests)(const char *, const char *, int);
-    gchar *fname;
+    gchar *datadir = NULL;
+    gchar *fname = NULL;
     
     run_nist_tests = gui_get_plugin_function("run_nist_tests", 
 					     &handle);
@@ -575,13 +576,16 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 	return;
     }
 
+    datadir = g_strdup_printf("%sdata%s", paths.gretldir, SLASHSTR);
     fname = g_strdup_printf("%snist.out", paths.userdir);
 
-    (*run_nist_tests)(paths.datadir, fname, (int) v);
+    (*run_nist_tests)(datadir, fname, (int) v);
 
     close_plugin(handle);
 
     view_file(fname, 0, 1, 78, 400, VIEW_CODEBOOK);
+
+    g_free(datadir);
     g_free(fname);
 }
 

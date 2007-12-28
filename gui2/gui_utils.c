@@ -981,7 +981,7 @@ void register_data (char *fname, const char *user_fname,
 	data_status |= GUI_DATA;
 	mark_dataset_as_modified();
     } else if (!(data_status & IMPORT_DATA)) {
-	if (strstr(paths.datfile, paths.datadir) != NULL) {
+	if (has_system_prefix(paths.datfile, &paths, DATA_SEARCH)) {
 	    data_status |= BOOK_DATA;
 	    data_status &= ~USER_DATA;
 	} else {

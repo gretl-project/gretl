@@ -5387,7 +5387,6 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
 
 void do_open_script (void)
 {
-    int n = strlen(paths.scriptdir);
     FILE *fp;
 
     fp = fopen(tryfile, "r");
@@ -5401,14 +5400,13 @@ void do_open_script (void)
     }
 	
     strcpy(scriptfile, tryfile);
-
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
-    if (strncmp(scriptfile, paths.scriptdir, n)) { 
-	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
-    } else {
+    if (has_system_prefix(scriptfile, &paths, SCRIPT_SEARCH)) {
 	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
-    }
+    } else {
+	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
+    } 
 }
 
 void do_new_script (gpointer p, guint u, GtkWidget *w) 

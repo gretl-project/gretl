@@ -20,6 +20,14 @@
 #ifndef GRETL_PATHS_H
 #define GRETL_PATHS_H
 
+typedef enum {
+    CURRENT_DIR,
+    DATA_SEARCH,
+    SCRIPT_SEARCH,
+    FUNCS_SEARCH,
+    USER_SEARCH
+} SearchLocation;
+
 void set_string_table_written (void);
 
 int gretl_string_table_written (void);
@@ -46,6 +54,9 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 gretlopt opt);
 
 int gretl_path_is_absolute (const char *fname);
+
+int has_system_prefix (const char *fname, const PATHS *ppaths,
+		       int locus);
 
 void show_paths (const PATHS *ppaths);
 
