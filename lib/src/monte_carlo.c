@@ -2266,7 +2266,7 @@ static int loop_store_save (LOOPSET *loop, PRN *prn)
 
     /* organize filename */
     if (loop->storefile[0] == '\0') {
-	sprintf(fname, "%sloopdata.gdt", gretl_user_dir());	
+	sprintf(fname, "%sloopdata.gdt", gretl_work_dir());	
     } else {
 	strcpy(fname, loop->storefile);
     }

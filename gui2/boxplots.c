@@ -1269,7 +1269,7 @@ static FILE *get_custom_file (void)
     fp = fopen(".boxplotrc", "r");
 
     if (fp == NULL) {
-	sprintf(boxrc, "%s.boxplotrc", paths.userdir);
+	sprintf(boxrc, "%s.boxplotrc", paths.workdir);
 	fp = gretl_fopen(boxrc, "r");
     }
 
@@ -1278,7 +1278,7 @@ static FILE *get_custom_file (void)
     }
 
     if (fp == NULL) {
-	sprintf(boxrc, "%splotconfig.txt", paths.userdir);
+	sprintf(boxrc, "%splotconfig.txt", paths.workdir);
 	fp = gretl_fopen(boxrc, "r");
     }    
 
@@ -1360,7 +1360,7 @@ static int dump_boxplot (PLOTGROUP *grp)
     int i;
     BOXPLOT *plt;
 
-    build_path(boxplottmp, paths.userdir, "boxdump.tmp", NULL);
+    build_path(boxplottmp, paths.dotdir, "boxdump.tmp", NULL);
 
     fp = gretl_fopen(boxplottmp, "w");
     if (fp == NULL) {

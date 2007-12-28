@@ -1524,9 +1524,9 @@ static int get_writable_path (char *path, const char *fname)
 
     if (!sysdoc_writable && userdoc_writable < 0) {
 	userdoc_writable = 0;
-	sprintf(path, "%sdoc", paths.userdir);
+	sprintf(path, "%sdoc", paths.dotdir);
 	if (gretl_mkdir(path) == 0) {
-	    sprintf(path, "%sdoc%c%s", paths.userdir, SLASH, fname);
+	    sprintf(path, "%sdoc%c%s", paths.dotdir, SLASH, fname);
 	    fp = gretl_fopen(path, "w");
 	    if (fp != NULL) {
 		userdoc_writable = 1;
@@ -1576,7 +1576,7 @@ static int find_or_download_pdf (int uguide, int i, char *fullpath)
     }
 
     /* or maybe in user dir? */
-    sprintf(fullpath, "%sdoc%c%s", paths.userdir, SLASH, fname);
+    sprintf(fullpath, "%sdoc%c%s", paths.dotdir, SLASH, fname);
     fp = gretl_fopen(fullpath, "r");
     if (fp != NULL) {
 	fclose(fp);

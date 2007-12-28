@@ -951,4 +951,15 @@ int win32_open_file (const char *fname)
     return err;
 }
 
+void win32_raise_window (GtkWidget *w)
+{
+    GtkWidget *top = gtk_widget_get_toplevel(w);
+
+    if (top != NULL && top->window != NULL) {
+	HWND h = GDK_WINDOW_HWND(top->window);
+
+	SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, 
+		     SWP_NOMOVE | SWP_NOSIZE);
+    }
+}
 

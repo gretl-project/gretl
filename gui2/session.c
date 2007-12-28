@@ -711,7 +711,7 @@ static int session_dir_ok (void)
 	errno = 0;
 
 	sprintf(session.dirname, ".gretl-%d", (int) p); /* added dot! */
-	if (chdir(paths.userdir)) {
+	if (chdir(paths.dotdir)) {
 	    perror("moving to user directory");
 	    ret = 0;
 	} else if (gretl_mkdir(session.dirname)) {
@@ -746,7 +746,7 @@ int add_graph_to_session (char *fname, char *fullname)
 	return 1;
     }
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
 
     sprintf(shortname, "graph.%d", session_graph_count + 1);
     session_file_make_path(fullname, shortname);
@@ -781,7 +781,7 @@ void add_boxplot_to_session (const char *boxtmp)
 	return;
     }
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
 
     sprintf(fname, "plot.%d", session_bplot_count + 1);
     session_file_make_path(grpath, fname);
@@ -807,7 +807,7 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 	return ADD_OBJECT_FAIL;
     }
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
 
     strcpy(name, gname);
     space_to_score(name);
@@ -959,7 +959,7 @@ static int unzip_session_file (const char *fname)
     }
     fclose(fp);
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
 
     gretl_unzip_file = gui_get_plugin_function("gretl_unzip_file", 
 					       &handle);
@@ -1046,7 +1046,7 @@ void do_open_session (void)
     strcpy(sessionfile, tryfile);
     fprintf(stderr, I_("\nReading session file %s\n"), sessionfile);
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
     status = unzip_session_file(sessionfile);
 
     if (status == SAVEFILE_ERROR) {
@@ -1169,14 +1169,14 @@ void verify_clear_data (void)
 static void remove_session_dir (void)
 {
 #ifdef G_OS_WIN32
-    char *fullpath = g_strdup_printf("%s%s", paths.userdir,
+    char *fullpath = g_strdup_printf("%s%s", paths.dotdir,
 				     session.dirname);
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
     win32_delete_dir(fullpath);
     g_free(fullpath);
 #else
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
     gretl_deltree(session.dirname);
 #endif
 }
@@ -1510,7 +1510,7 @@ int save_session (char *fname)
     }
 
     /* paths below are relative to this */
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
 
     if (strcmp(dirname, session.dirname)) {
 	/* rename session directory */
@@ -1826,7 +1826,7 @@ static void remove_session_graph_file (const char *gfname)
 {
     char fname[MAXLEN];
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
     session_file_make_path(fname, gfname);
     remove(fname);
 }
@@ -2554,7 +2554,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
 	    char fullname[MAXLEN];
 
-	    chdir(paths.userdir);
+	    chdir(paths.dotdir);
 	    session_file_make_path(fullname, graph->fname);
 	    remove_png_term_from_plotfile_by_name(fullname);
 	    view_file(fullname, 1, 0, 78, 400, 
@@ -3106,7 +3106,7 @@ static char *dump_current_plot (windata_t *vwin)
     buf = textview_get_text(vwin->w);
     if (buf == NULL) return NULL;
 
-    tmpfile = g_strdup_printf("%showtmp.gp", paths.userdir);
+    tmpfile = g_strdup_printf("%showtmp.gp", paths.dotdir);
 
     fp = gretl_fopen(tmpfile, "w");
     if (fp == NULL) {

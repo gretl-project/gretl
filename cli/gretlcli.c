@@ -102,20 +102,32 @@ static void usage(void)
 
 #ifndef WIN32
 
-int make_userdir (void) 
+int make_user_dirs (void) 
 {
-    const char *userdir = gretl_user_dir();
+    const char *targ;
     DIR *dir = NULL;
     int err = 0;
-    
-    if ((dir = opendir(userdir)) == NULL) {
-	err = mkdir(userdir, 0755);
+
+    targ = gretl_work_dir();
+
+    if ((dir = opendir(targ)) == NULL) {
+	err = mkdir(targ, 0755);
 	if (err) {
 	    fprintf(stderr, _("Couldn't create user directory %s\n"), 
-		    userdir);
-	} else {
-	    fprintf(stderr, _("Created user directory %s\n"), userdir);
-	}
+		    targ);
+	} 
+    } else {
+	closedir(dir);
+    }
+
+    targ = gretl_dot_dir();
+
+    if ((dir = opendir(targ)) == NULL) {
+	if (mkdir(targ, 0755)) {
+	    fprintf(stderr, _("Couldn't create user directory %s\n"), 
+		    targ);
+	    err++;
+	} 
     } else {
 	closedir(dir);
     }
@@ -442,11 +454,11 @@ int main (int argc, char *argv[])
     cli_read_registry(argv[0], &paths);
     gretl_set_paths(&paths, OPT_NONE); /* not defaults; use registry info */
 #else
-    make_userdir();
+    make_user_dirs();
 #endif /* WIN32 */
 
     if (!batch) {
-	strcpy(cmdfile, gretl_user_dir());
+	strcpy(cmdfile, gretl_work_dir());
 	strcat(cmdfile, "session.inp");
 	cmdprn = gretl_print_new_with_filename(cmdfile);
 	if (cmdprn == NULL) {
@@ -987,7 +999,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	if (*outfile != 0 && *outfile != '\n' && *outfile != '\r' 
 	    && strcmp(outfile, "q")) {
-	    const char *udir = gretl_user_dir();
+	    const char *udir = gretl_work_dir();
 
 	    printf(_("writing session output to %s%s\n"), udir, outfile);
 #ifdef WIN32

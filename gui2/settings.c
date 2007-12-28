@@ -168,7 +168,7 @@ typedef struct {
 RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
       MACHSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
-    { "userdir", N_("User's gretl directory"), NULL, paths.userdir, 
+    { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
       USERSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "expert", N_("Expert mode (no warnings)"), NULL, &expert, 
       BOOLSET, 0, TAB_MAIN, NULL },
@@ -361,7 +361,7 @@ static void record_shell_opt (void)
 {
     char shellstamp[FILENAME_MAX];
 
-    sprintf(shellstamp, "%s.gretl_shell_stamp", paths.userdir);
+    sprintf(shellstamp, "%s.gretl_shell_stamp", paths.dotdir);
 
     if (shellok) {
 	FILE *fp = fopen(shellstamp, "w");
@@ -449,7 +449,7 @@ static void get_functions_dir (char *dirname)
     
     if (ok) return;
 
-    sprintf(dirname, "%sfunctions", paths.userdir);
+    sprintf(dirname, "%sfunctions", paths.workdir);
     err = gretl_mkdir(dirname);
     if (!err) {
 	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
@@ -508,11 +508,11 @@ void get_default_dir (char *s, int action)
 	    char *test = getcwd(s, MAXLEN);
 
 	    if (test == NULL || (*sdir != '\0' && strstr(s, sdir))) {
-		strcpy(s, paths.userdir);
+		strcpy(s, paths.workdir);
 	    }
 	} 
     } else {
-	strcpy(s, paths.userdir);   
+	strcpy(s, paths.workdir);   
     }
 
     slash_terminate(s);
@@ -1732,8 +1732,10 @@ void read_rc (void)
     char *strvar;
     int i;
 
-    if (get_network_settings() && *paths.userdir != '\0') {
-	int err = set_gretl_user_dir(paths.userdir, &paths);
+    /* FIXME was paths.userdir below */
+
+    if (get_network_settings() && *paths.workdir != '\0') {
+	int err = set_gretl_work_dir(paths.workdir, &paths);
 
 	if (err) {
 	    gui_errmsg(err);
@@ -2261,13 +2263,15 @@ void graph_color_selector (GtkWidget *w, gpointer p)
 
 #ifndef G_OS_WIN32
 
-static void real_set_userdir (GtkWidget *widget, dialog_t *dlg)
+/* FIXME! */
+
+static void real_set_workdir (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *dirname;
     int err;
 
     dirname = edit_dialog_get_text(dlg);
-    err = set_gretl_user_dir(dirname, &paths);
+    err = set_gretl_work_dir(dirname, &paths);
 
     if (err) {
 	gui_errmsg(err);
@@ -2284,9 +2288,9 @@ void first_time_set_user_dir (void)
 {
     DIR *test;
 
-    /* see if the already-specified userdir exists */
-    if (*paths.userdir != '\0') {
-	test = opendir(paths.userdir);
+    /* see if an already-specified workdir exists */
+    if (*paths.workdir != '\0') {
+	test = opendir(paths.workdir);
 	if (test != NULL) {
 	    closedir(test);
 	    return;
@@ -2297,8 +2301,8 @@ void first_time_set_user_dir (void)
     edit_dialog (_("gretl: working directory"), 
                  _("You seem to be using gretl for the first time.\n"
 		   "Please enter a directory for gretl user files."),
-                 paths.userdir, 
-                 real_set_userdir, NULL, 
+                 paths.workdir, 
+                 real_set_workdir, NULL, 
                  CREATE_USERDIR, VARCLICK_NONE,
 		 NULL);
 }
@@ -2313,7 +2317,7 @@ void dump_rc (void)
     char val[6];
     int i;
 
-    sprintf(dumper, "%sconfig-dump.txt", paths.userdir);
+    sprintf(dumper, "%sconfig-dump.txt", paths.workdir);
 
     fp = gretl_fopen(dumper, "w");
     if (fp == NULL) {

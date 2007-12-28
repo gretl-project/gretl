@@ -624,7 +624,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
     GdkPixbuf *pbuf = NULL;
 
-    sprintf(temp, "%sgpttmp", paths.userdir);
+    sprintf(temp, "%sgpttmp", paths.dotdir);
 
     ftmp = gretl_tempfile_open(temp);
     if (ftmp == NULL) {
@@ -640,7 +640,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
     fprintf(ftmp, "set term pbm mono\n"
 	    "set output '%s%s'\n", 
-	    paths.userdir, GRETL_PBM_TMP);
+	    paths.dotdir, GRETL_PBM_TMP);
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (strncmp(fline, "set term", 8) && 
@@ -661,7 +661,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
     remove(temp);
 
-    build_path(temp, paths.userdir, GRETL_PBM_TMP, NULL);
+    build_path(temp, paths.dotdir, GRETL_PBM_TMP, NULL);
     pbuf = gdk_pixbuf_new_from_file(temp, NULL);
     remove(temp);
 
@@ -847,7 +847,7 @@ static int make_png_file (const char *fname,
     FILE *fsrc, *ftmp;
     char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
 
-    sprintf(temp, "%sgpttmp", paths.userdir);
+    sprintf(temp, "%sgpttmp", paths.dotdir);
 
     ftmp = gretl_tempfile_open(temp);
     if (ftmp == NULL) {
@@ -861,7 +861,7 @@ static int make_png_file (const char *fname,
 	return 1;
     }
 
-    build_path(pngname, paths.userdir, GRETL_PNG_TMP, NULL);
+    build_path(pngname, paths.dotdir, GRETL_PNG_TMP, NULL);
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (!strncmp(fline, "set output", 10)) {

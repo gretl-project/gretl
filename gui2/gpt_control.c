@@ -308,7 +308,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     int lv = 0;
 #endif
 
-    sprintf(temp, "%sgpttmp", paths.userdir);
+    sprintf(temp, "%sgpttmp", paths.dotdir);
     ftmp = gretl_tempfile_open(temp);
     if (ftmp == NULL) {
 	return 1;
@@ -352,7 +352,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	    fprintf(ftmp, "%s\n", pline);
 	}	    
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
-		paths.userdir);
+		paths.dotdir);
     }
 
     /* now for the body of the plot file */
@@ -443,7 +443,7 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
     }
 
     fprintf(*fpp, "%s\n", get_gretl_png_term_line(spec->code, spec->flags));
-    fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
+    fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.dotdir);
 
     return 0;
 }
@@ -710,7 +710,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
     char pdfname[FILENAME_MAX];
     static char term[9];
 
-    build_path(pdfname, paths.userdir, GRETL_PDF_TMP, NULL);
+    build_path(pdfname, paths.dotdir, GRETL_PDF_TMP, NULL);
 
     if (*term == '\0') {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
@@ -2117,9 +2117,9 @@ static void audio_render_plot (png_plot *plot)
     }
 
 # ifdef G_OS_WIN32
-    (*midi_play_graph) (plot->spec->fname, paths.userdir, NULL);
+    (*midi_play_graph) (plot->spec->fname, paths.dotdir, NULL);
 # else
-    (*midi_play_graph) (plot->spec->fname, paths.userdir, midiplayer);
+    (*midi_play_graph) (plot->spec->fname, paths.dotdir, midiplayer);
 # endif
 
     close_plugin(handle);
@@ -2531,7 +2531,7 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	    return 1;
 	}
 
-	build_path(zoomname, paths.userdir, "zoomplot.gp", NULL);
+	build_path(zoomname, paths.dotdir, "zoomplot.gp", NULL);
 	fpout = gretl_fopen(zoomname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
@@ -2714,7 +2714,7 @@ static int render_pngfile (png_plot *plot, int view)
     char pngname[MAXLEN];
     GError *error = NULL;
 
-    build_path(pngname, paths.userdir, "gretltmp.png", NULL);
+    build_path(pngname, paths.dotdir, "gretltmp.png", NULL);
 
     pbuf = gdk_pixbuf_new_from_file(pngname, &error);
     if (pbuf == NULL) {
@@ -2865,8 +2865,8 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	return 1;
     }
 
-    build_path(dumbgp, paths.userdir, "dumbplot.gp", NULL);
-    build_path(dumbtxt, paths.userdir, "gptdumb.txt", NULL);
+    build_path(dumbgp, paths.dotdir, "dumbplot.gp", NULL);
+    build_path(dumbtxt, paths.dotdir, "gptdumb.txt", NULL);
     fpout = gretl_fopen(dumbgp, "w");
     if (fpout == NULL) {
 	fclose(fpin);
@@ -3368,7 +3368,7 @@ void display_session_graph_png (const char *fname)
     if (g_path_is_absolute(fname)) {
 	strcpy(fullname, fname);
     } else {
-	sprintf(fullname, "%s%s", paths.userdir, fname);
+	sprintf(fullname, "%s%s", paths.dotdir, fname);
     }
 
     if (add_png_term_to_plotfile(fullname)) {
@@ -3519,7 +3519,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     volatile int ret = GRETL_PNG_OK;
 
 #if 1
-    build_path(pngname, paths.userdir, "gretltmp.png", ".bounds"); 
+    build_path(pngname, paths.dotdir, "gretltmp.png", ".bounds"); 
     fp = fopen(pngname, "r");
     if (fp != NULL) {
 	ret = new_get_png_bounds_info(bounds, fp);
@@ -3529,7 +3529,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     }
 #endif
 
-    build_path(pngname, paths.userdir, "gretltmp.png", NULL); 
+    build_path(pngname, paths.dotdir, "gretltmp.png", NULL); 
 
     fp = gretl_fopen(pngname, "rb");
     if (fp == NULL) {

@@ -353,7 +353,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 		       EDIT_FUNC_CODE, GINT_TO_POINTER(q));
 
     if (vwin != NULL) {
-	build_path(vwin->fname, paths.userdir, "pkgedit", NULL);
+	build_path(vwin->fname, paths.dotdir, "pkgedit", NULL);
 	gretl_tempname(vwin->fname);
 	g_object_set_data(G_OBJECT(vwin->w), "iface", 
 			  GINT_TO_POINTER(finfo->iface));

@@ -179,7 +179,7 @@ static int real_update_query (int queryopt)
 	*hometest = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
-	    build_path(hometest, paths.userdir, "gretl.stamp", NULL);
+	    build_path(hometest, paths.dotdir, "gretl.stamp", NULL);
 	    if (!stat(hometest, &fbuf)) {
 		filedate = get_time_from_stamp_file(hometest);
 	    }

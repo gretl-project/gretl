@@ -71,4 +71,6 @@ int browser_open (const char *url);
 
 int win32_open_file (const char *fname);
 
+void win32_raise_window (GtkWidget *w);
+
 #endif /* GRETLWIN32_H */

@@ -438,7 +438,7 @@ static int seek_file_collections (int location)
     } else if (location == SCRIPT_SEARCH) {
 	tmp = g_strdup_printf("%sscripts", paths.gretldir);
     } else if (location == USER_SEARCH) {
-	tmp = g_strdup(paths.userdir);
+	tmp = g_strdup(paths.workdir);
 	unslash(tmp);
     } else {
 	return 1;
@@ -1296,7 +1296,7 @@ gint populate_func_list (windata_t *vwin, int *wid)
     }
 
     /* pick up any function files in the user's personal dir */
-    build_path(fndir, paths.userdir, "functions", NULL);
+    build_path(fndir, paths.workdir, "functions", NULL);
     dir = opendir(fndir);
     if (dir != NULL) {
 	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,

@@ -756,7 +756,7 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
 {
     int err = 0;
 
-    build_path(target, paths.userdir, "dltmp", NULL);
+    build_path(target, paths.dotdir, "dltmp", NULL);
     err = gretl_tempname(target);
     if (err) {
 	return err;

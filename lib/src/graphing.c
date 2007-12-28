@@ -765,7 +765,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
 void print_plot_bounding_box_request (FILE *fp)
 {
-    fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_user_dir());
+    fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_dot_dir());
     fputs("print \"pixel_bounds: \", TERM_XMIN, TERM_XMAX, "
 	  "TERM_YMIN, TERM_YMAX\n", fp);
     fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
@@ -993,12 +993,12 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
     }
 
     if (gui) {
-	sprintf(plotfile, "%sgpttmp.XXXXXX", gretl_user_dir());
+	sprintf(plotfile, "%sgpttmp.XXXXXX", gretl_dot_dir());
 	if (mktemp(plotfile) == NULL) {
 	    return E_FOPEN;
 	}
     } else {
-	sprintf(plotfile, "%sgpttmp.plt", gretl_user_dir());
+	sprintf(plotfile, "%sgpttmp.plt", gretl_dot_dir());
     }
 
     set_gretl_plotfile(plotfile);
@@ -1011,7 +1011,7 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
 
     if (gui) {
 	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype, flags));
-	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
+	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_dot_dir());
     }
 
     write_plot_type_string(ptype, *fpp);
@@ -1280,7 +1280,7 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 	char fname[FILENAME_MAX];
 
 	if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
-	    sprintf(fname, "%sgpttmp%02d.plt", gretl_user_dir(), 
+	    sprintf(fname, "%sgpttmp%02d.plt", gretl_work_dir(), 
 		    ++gretl_plot_count);
 	    set_gretl_plotfile(fname);
 	} 
@@ -2459,7 +2459,7 @@ static int get_3d_output_file (FILE **fpp)
     char fname[MAXLEN];
     int err = 0;
 
-    sprintf(fname, "%sgpttmp.plt", gretl_user_dir());
+    sprintf(fname, "%sgpttmp.plt", gretl_dot_dir());
     *fpp = gretl_fopen(fname, "w");
 
     if (*fpp == NULL) {

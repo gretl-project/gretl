@@ -1828,14 +1828,14 @@ static int db_delete_series (const char *line, const int *list,
 	return err;
     }
 
-    strcpy(tmp1, gretl_user_dir());
+    strcpy(tmp1, gretl_dot_dir());
     strcat(tmp1, "tmpidx");
     f1 = tempfile_open(tmp1, &err);
     if (err) {
 	goto bailout;
     }
 
-    strcpy(tmp2, gretl_user_dir());
+    strcpy(tmp2, gretl_dot_dir());
     strcat(tmp2, "tmpbin");
     f2 = tempfile_open(tmp2, &err);
     if (err) {

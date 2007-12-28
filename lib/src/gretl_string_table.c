@@ -236,7 +236,7 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     if (st == NULL) return E_DATA;
 
     strcpy(stname, "string_table.txt");
-    gretl_path_prepend(stname, gretl_user_dir());
+    gretl_path_prepend(stname, gretl_work_dir());
 
     fp = gretl_fopen(stname, "w");
     if (fp == NULL) {
@@ -297,6 +297,7 @@ static saved_string *saved_strings;
 static saved_string built_ins[] = {
     { "gretldir", 0, NULL },
     { "userdir",  0, NULL },
+    { "workdir",  0, NULL },
     { "gnuplot",  0, NULL },
     { "x12a",     0, NULL },
     { "x12adir",  0, NULL },

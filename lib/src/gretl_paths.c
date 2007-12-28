@@ -664,7 +664,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     /* or try looking in user's dir (and subdirs) */
     fname = tmp;
     strcpy(fname, orig);
-    if ((fname = search_dir(fname, gretl_user_dir(), USER_SEARCH))) { 
+    if ((fname = search_dir(fname, gretl_work_dir(), USER_SEARCH))) { 
 	return fname;
     }
 
@@ -830,7 +830,8 @@ enum paths_status_flags {
 };
 
 struct INTERNAL_PATHS {
-    char userdir[MAXLEN];
+    char dotdir[MAXLEN];
+    char workdir[MAXLEN];
     char gnuplot[MAXLEN];
     char plotfile[MAXLEN];
     char libpath[MAXLEN];
@@ -883,7 +884,7 @@ static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
 	return baddir;
     }
 
-    strcpy(dirname, ppaths->userdir);
+    strcpy(dirname, ppaths->dotdir);
     n = strlen(dirname);
 
     if (n > 0 && (dirname[n-1] == '\\' || dirname[n-1] == '/')) {
@@ -891,7 +892,7 @@ static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
     }
 
 # ifdef HAVE_X12A
-    build_path(ppaths->x12adir, ppaths->userdir, "x12arima", NULL);
+    build_path(ppaths->x12adir, ppaths->dotdir, "x12arima", NULL);
     err = gretl_mkdir(ppaths->x12adir);
     if (err) {
 	*ppaths->x12adir = '\0';
@@ -899,7 +900,7 @@ static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
 # endif
 
 # ifdef HAVE_TRAMO
-    build_path(ppaths->tramodir, ppaths->userdir, "tramo", NULL);
+    build_path(ppaths->tramodir, ppaths->dotdir, "tramo", NULL);
     if (gretl_mkdir(ppaths->tramodir)) {
 	*ppaths->tramodir = '\0';
 	return E_FOPEN;
@@ -933,7 +934,8 @@ static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
 
 static void copy_paths_to_internal (PATHS *paths)
 {
-    strcpy(gretl_paths.userdir,  paths->userdir);
+    strcpy(gretl_paths.dotdir,   paths->dotdir);
+    strcpy(gretl_paths.workdir,  paths->workdir);
     strcpy(gretl_paths.gnuplot,  paths->gnuplot);
     strcpy(gretl_paths.x12a,     paths->x12a);
     strcpy(gretl_paths.x12adir,  paths->x12adir);
@@ -941,13 +943,14 @@ static void copy_paths_to_internal (PATHS *paths)
     strcpy(gretl_paths.tramodir, paths->tramodir);
     strcpy(gretl_paths.pngfont,  paths->pngfont);
 
-    gretl_insert_builtin_string("gretldir",  paths->gretldir);
-    gretl_insert_builtin_string("userdir",   paths->userdir);
-    gretl_insert_builtin_string("gnuplot",   paths->gnuplot);
-    gretl_insert_builtin_string("x12a",      paths->x12a);
-    gretl_insert_builtin_string("x12adir",   paths->x12adir);
-    gretl_insert_builtin_string("tramo",     paths->tramo);
-    gretl_insert_builtin_string("tramodir",  paths->tramodir);
+    gretl_insert_builtin_string("gretldir", paths->gretldir);
+    gretl_insert_builtin_string("dotdir",   paths->dotdir);
+    gretl_insert_builtin_string("workdir",  paths->workdir);
+    gretl_insert_builtin_string("gnuplot",  paths->gnuplot);
+    gretl_insert_builtin_string("x12a",     paths->x12a);
+    gretl_insert_builtin_string("x12adir",  paths->x12adir);
+    gretl_insert_builtin_string("tramo",    paths->tramo);
+    gretl_insert_builtin_string("tramodir", paths->tramodir);
 
     if (*paths->tramo) {
 	char s[MAXLEN];
@@ -987,37 +990,61 @@ const char *gretl_lib_path (void)
     return gretl_paths.libpath;
 }
 
-const char *gretl_user_dir (void)
+const char *gretl_dot_dir (void)
 {
-    return gretl_paths.userdir;
+    return gretl_paths.dotdir;
+}
+
+const char *gretl_work_dir (void)
+{
+    return gretl_paths.workdir;
 }
 
 #ifdef WIN32
 
-static void correct_blank_userdir (PATHS *paths)
+static void correct_blank_dotdir (PATHS *paths)
 {
-    char *home = appdata_path();
+    char *base = appdata_path();
 
-    if (home != NULL) {
-	sprintf(paths->userdir, "%s\\gretl\\", home);
-	free(home);
+    if (base != NULL) {
+	sprintf(paths->dotdir, "%s\\gretl\\", base);
+	free(base);
+    } 
+}
+
+static void correct_blank_workdir (PATHS *paths)
+{
+    char *base = mydocs_path();
+
+    if (base != NULL) {
+	sprintf(paths->workdir, "%s\\gretl\\", base);
+	free(base);
     } 
 }
 
 #else
 
-static void correct_blank_userdir (PATHS *paths)
+static void correct_blank_dotdir (char *path)
 {
     char *home = getenv("HOME");
 
     if (home != NULL) {
-	sprintf(paths->userdir, "%s/gretl/", home);
+	sprintf(path, "%s/.gretl/", home);
+    } 
+}
+
+static void correct_blank_workdir (char *path)
+{
+    char *home = getenv("HOME");
+
+    if (home != NULL) {
+	sprintf(path, "%s/gretl/", home);
     } 
 }
 
 #endif
 
-static int validate_userdir (const char *dirname)
+static int validate_writedir (const char *dirname)
 {
     int err = 0;
 
@@ -1055,26 +1082,45 @@ static int validate_userdir (const char *dirname)
     return err;
 }
 
-int set_gretl_user_dir (const char *path, PATHS *ppaths)
+int set_gretl_work_dir (const char *path, PATHS *ppaths)
 {
-    int err = validate_userdir(path);
+    int err = validate_writedir(path);
 
     if (err) {
 	return err;
     }
 
-    if (path != ppaths->userdir) {
-	strcpy(ppaths->userdir, path);
+    if (path != ppaths->workdir) {
+	strcpy(ppaths->workdir, path);
     }
 
-    ensure_slash(ppaths->userdir);
+    ensure_slash(ppaths->workdir);
+    strcpy(gretl_paths.workdir, ppaths->workdir);
+    gretl_insert_builtin_string("workdir", ppaths->workdir);
+
+    return 0;
+}
+
+int set_gretl_dot_dir (const char *path, PATHS *ppaths)
+{
+    int err = validate_writedir(path);
+
+    if (err) {
+	return err;
+    }
+
+    if (path != ppaths->dotdir) {
+	strcpy(ppaths->dotdir, path);
+    }
+
+    ensure_slash(ppaths->dotdir);
     set_tramo_x12a_dirs(ppaths, 0);
 
-    strcpy(gretl_paths.userdir, ppaths->userdir);
+    strcpy(gretl_paths.dotdir, ppaths->dotdir);
     strcpy(gretl_paths.x12adir, ppaths->x12adir);
     strcpy(gretl_paths.tramodir, ppaths->tramodir);
 
-    gretl_insert_builtin_string("userdir", ppaths->userdir);
+    gretl_insert_builtin_string("dotdir",   ppaths->dotdir);
     gretl_insert_builtin_string("x12adir",  ppaths->x12adir);
     gretl_insert_builtin_string("tramodir", ppaths->tramodir);
 
@@ -1152,7 +1198,7 @@ void show_paths (const PATHS *ppaths)
 {
     printf(_("gretl: using these basic search paths:\n"));
     printf("gretldir: %s\n", ppaths->gretldir);
-    printf("userdir: %s\n", ppaths->userdir);
+    printf("workdir: %s\n", ppaths->workdir);
     printf("gnuplot: %s\n", ppaths->gnuplot);
 }
 
@@ -1192,12 +1238,20 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
 	ensure_slash(ppaths->gretldir);
-	if (*ppaths->userdir == '\0') {
-	    correct_blank_userdir(ppaths);
+	if (*ppaths->dotdir == '\0') {
+	    correct_blank_dotdir(ppaths);
 	}
-	err = validate_userdir(ppaths->userdir);
+	err = validate_writedir(ppaths->dotdir);
+	if (*ppaths->workdir == '\0') {
+	    correct_blank_workdir(ppaths);
+	}
+	if (strcmp(ppaths->dotdir, ppaths->workdir)) { 
+	    err += validate_writedir(ppaths->workdir);
+	}
 #if defined(HAVE_X12A) || defined(HAVE_TRAMO)
-	err = set_tramo_x12a_dirs(ppaths, err);
+	if (!err) {
+	    err = set_tramo_x12a_dirs(ppaths, err);
+	}
 #endif
     }
 
@@ -1222,12 +1276,13 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	    "\\language-specs", ppaths->gretldir);
     putenv(envstr);
 
-    ensure_slash(ppaths->userdir);
+    ensure_slash(ppaths->dotdir);
+    ensure_slash(ppaths->workdir);
     set_gretl_libpath(ppaths->gretldir);
     copy_paths_to_internal(ppaths);
 
     if (!(opt & OPT_D)) {
-	shelldir_init(ppaths->userdir);
+	shelldir_init(ppaths->workdir);
     }
 
     return err;
@@ -1290,10 +1345,13 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	/* try to set a default userdir */
 	home = getenv("HOME");
 	if (home != NULL) {
-	    strcpy(ppaths->userdir, home);
-	    strcat(ppaths->userdir, "/gretl/");
+	    strcpy(ppaths->dotdir, home);
+	    strcat(ppaths->dotdir, "/.gretl/");
+	    strcpy(ppaths->workdir, home);
+	    strcat(ppaths->workdir, "/gretl/");
 	} else {
-	    *ppaths->userdir = '\0';
+	    *ppaths->dotdir = '\0';
+	    *ppaths->workdir = '\0';
 	}
 
 #ifdef HAVE_X12A 	 
@@ -1306,12 +1364,18 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
 	*gretl_paths.plotfile = '\0';
     } else {
-	/* check validity of gretldir, userdir */
+	/* check validity of main directories */
 	check_gretldir(ppaths);
-	if (*ppaths->userdir == '\0') {
-	    correct_blank_userdir(ppaths);
+	if (*ppaths->dotdir == '\0') {
+	    correct_blank_dotdir(ppaths->dotdir);
 	}
-	err = validate_userdir(ppaths->userdir);
+	if (*ppaths->workdir == '\0') {
+	    correct_blank_workdir(ppaths->workdir);
+	}
+	err = validate_writedir(ppaths->dotdir);
+	if (strcmp(ppaths->dotdir, ppaths->workdir)) {
+	    err += validate_writedir(ppaths->workdir);
+	}
     }
 
     if (opt & OPT_X) {
@@ -1338,7 +1402,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	putenv(envstr);
     }
 
-    ensure_slash(ppaths->userdir);
+    ensure_slash(ppaths->dotdir);
     set_gretl_libpath(ppaths->gretldir);
 
 #if defined(HAVE_X12A) || defined(HAVE_TRAMO)
@@ -1351,7 +1415,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
 #ifdef OSX_BUILD
     if (!(opt & OPT_D)) {
-	shelldir_init(ppaths->userdir);
+	shelldir_init(ppaths->workdir);
     }
 #endif
 
@@ -1361,7 +1425,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 #endif /* win32 versus unix */
 
 /* for writing a file, name given by user: if the path is not
-   absolute, switch to the gretl user dir (for a plain filename and
+   absolute, switch to the gretl work dir (for a plain filename and
    use_cwd not set) or to the current "shelldir" (for a filename
    beginning with '.', or if use_cwd is set).
 */
@@ -1376,7 +1440,7 @@ void gretl_maybe_switch_dir (const char *fname)
 		chdir(sdir);
 	    }
 	} else {
-	    chdir(gretl_paths.userdir);
+	    chdir(gretl_paths.workdir);
 	}
     }
 }

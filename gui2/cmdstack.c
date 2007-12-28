@@ -513,7 +513,7 @@ void view_command_log (void)
 	return;
     }
 
-    strcpy(logfile, paths.userdir);
+    strcpy(logfile, paths.dotdir);
     strcat(logfile, "session.inp");
 
     if (dump_command_stack(logfile, 0)) {

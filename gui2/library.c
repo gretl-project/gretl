@@ -252,7 +252,7 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
     int err = 0;
 
-    strcpy(fullname, paths.userdir);
+    strcpy(fullname, paths.dotdir);
     strcat(fullname, fname);
 
     *pprn = gretl_print_new_with_filename(fullname);
@@ -5414,7 +5414,7 @@ void do_new_script (gpointer p, guint u, GtkWidget *w)
     char temp[MAXLEN];
     FILE *fp;
 
-    sprintf(temp, "%sscript_tmp", paths.userdir);
+    sprintf(temp, "%sscript_tmp", paths.dotdir);
     fp = gretl_tempfile_open(temp);
     if (fp == NULL) {
 	return;
@@ -5438,7 +5438,7 @@ void maybe_display_string_table (void)
 	} 
 
 	s_table_waiting = 0;
-	build_path(stname, paths.userdir, "string_table.txt", NULL);
+	build_path(stname, paths.workdir, "string_table.txt", NULL);
 	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
     }
 }
@@ -5907,7 +5907,7 @@ static int spawn_latex (char *texsrc)
 
     signal(SIGCHLD, SIG_DFL);
 
-    ok = g_spawn_sync (paths.userdir, /* working dir */
+    ok = g_spawn_sync (paths.dotdir, /* working dir */
 		       argv,
 		       NULL,    /* envp */
 		       G_SPAWN_SEARCH_PATH,
@@ -5959,7 +5959,7 @@ int latex_compile (char *texshort)
     }
 
     sprintf(tmp, "\"%s\" \\batchmode \\input %s", latex_path, texshort);
-    if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+    if (winfork(tmp, paths.dotdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return LATEX_EXEC_FAILED;
     }
 #else
@@ -6049,7 +6049,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     if (fname != NULL) {
 	strcpy(texfile, fname);
     } else {
-	sprintf(texfile, "%swindow.tex", paths.userdir);
+	sprintf(texfile, "%swindow.tex", paths.dotdir);
     } 
 
     fprn = gretl_print_new_with_filename(texfile);

@@ -83,7 +83,7 @@ static int prn_add_tempfile (PRN *prn)
     char fname[MAXLEN];
     int fd;
 
-    sprintf(fname, "%sprntmp.XXXXXX", gretl_user_dir());
+    sprintf(fname, "%sprntmp.XXXXXX", gretl_dot_dir());
 
 #ifdef WIN32
     fd = g_mkstemp(fname);

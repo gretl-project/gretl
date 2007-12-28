@@ -4023,7 +4023,7 @@ void startR (const char *Rcommand)
 	return;
     }
 
-    build_path(Rprofile, paths.userdir, "gretl.Rprofile", NULL);
+    build_path(Rprofile, paths.dotdir, "gretl.Rprofile", NULL);
     fp = fopen(Rprofile, "w");
     if (fp == NULL) {
 	file_write_errbox(Rprofile);
@@ -4037,7 +4037,7 @@ void startR (const char *Rcommand)
 	return;
     } 	
 
-    build_path(Rdata, paths.userdir, "Rdata.tmp", NULL);
+    build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
 
     sprintf(Rline, "store \"%s\" -r", Rdata);
     list = command_list_from_string(Rline);
@@ -4061,7 +4061,7 @@ void startR (const char *Rcommand)
 	char Rtmp[MAXLEN];
 	FILE *fq;
 
-	build_path(Rtmp, paths.userdir, "Rtmp", NULL);
+	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
 	fq = fopen(Rtmp, "w");
 	if (fq != NULL) {
 	    fputs("# load data from gretl\n", fq);

@@ -494,7 +494,7 @@ static int write_session_xml (const char *datname)
     int tabmodels;
     int i, err = 0;
 
-    chdir(paths.userdir);
+    chdir(paths.dotdir);
 
     sprintf(fname, "%s%csession.xml", session.dirname, SLASH);
     fp = gretl_fopen(fname, "w");

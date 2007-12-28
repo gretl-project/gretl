@@ -867,7 +867,7 @@ static PRN *make_tex_prn (int ID, char *texfile,
     PRN *prn;
 
     if (*texfile == '\0') {
-	sprintf(texfile, "%s%s_%d.tex", gretl_user_dir(),
+	sprintf(texfile, "%s%s_%d.tex", gretl_work_dir(),
 		(eqn)? "equation" : "model", ID);
     } else {
 	gretl_maybe_switch_dir(texfile);
@@ -916,7 +916,7 @@ void set_gretl_tex_preamble (void)
     const char *localtex = get_gretltex_local();
 
     /* first choice: localized preamble file */
-    sprintf(tex_preamble_file, "%s%s", gretl_user_dir(), localtex);
+    sprintf(tex_preamble_file, "%s%s", gretl_work_dir(), localtex);
     fp = gretl_fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';
@@ -927,7 +927,7 @@ void set_gretl_tex_preamble (void)
 #endif
 
     /* preamble file on disk */
-    sprintf(tex_preamble_file, "%s%s", gretl_user_dir(), gretltex);
+    sprintf(tex_preamble_file, "%s%s", gretl_work_dir(), gretltex);
     fp = gretl_fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';

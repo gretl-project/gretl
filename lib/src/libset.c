@@ -1475,7 +1475,7 @@ static int read_cli_shell_status (void)
     FILE *fp;
     int ok = 0;
 
-    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_user_dir());
+    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_dot_dir());
     fp = fopen(shellstamp, "r");
     if (fp != NULL) {
 	ok = 1;

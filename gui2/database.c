@@ -1842,7 +1842,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (op == TMP_INSTALL) {
-	    build_path(target, paths.userdir, "dltmp", NULL);
+	    build_path(target, paths.dotdir, "dltmp", NULL);
 	    err = gretl_tempname(target);
 	} else {
 	    get_default_dir(fndir, SAVE_FUNCTIONS);
@@ -1864,7 +1864,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
     if (fp == NULL) {
 	if (errno == EACCES && vwin->role != REMOTE_FUNC_FILES) { 
 	    /* write to user dir instead? */
-	    build_path(target, paths.userdir, objname, ".ggz");
+	    build_path(target, paths.workdir, objname, ".ggz");
 	} else {
 	    file_write_errbox(target);
 	    free(target);
@@ -2091,9 +2091,9 @@ static void get_local_object_status (char *fname, int role, char *status,
 #else
 	    /* try user dir too, if not on Windows */
 	    if (role == REMOTE_DB) {
-		build_path(fullname, paths.userdir, fname, NULL);
+		build_path(fullname, paths.workdir, fname, NULL);
 	    } else {
-		build_path(fndir, paths.userdir, "functions", NULL);
+		build_path(fndir, paths.workdir, "functions", NULL);
 		build_path(fullname, fndir, fname, NULL);
 	    }
 	    if ((err = stat(fullname, &fbuf)) == -1) {
@@ -2470,7 +2470,7 @@ gint populate_dbfilelist (windata_t *vwin)
     closedir(dir);
 
     /* pick up any databases in the user's personal dir */
-    dbdir = paths.userdir;
+    dbdir = paths.workdir;
 #ifdef G_OS_WIN32 
     dir = win32_opendir(dbdir);
 #else
