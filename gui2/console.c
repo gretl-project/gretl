@@ -23,6 +23,10 @@
 #include "console.h"
 #include "menustate.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
+
 #include "libset.h"
 #include "monte_carlo.h"
 #include "gretl_func.h"

@@ -5385,11 +5385,22 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
     real_do_run_script(vwin, buf, 1);
 }
 
+void set_currdir_from_filename (const char *fname)
+{
+    int spos = slashpos(scriptfile);
+
+    if (spos) {
+	paths.currdir[0] = 0;
+	strncat(paths.currdir, scriptfile, spos + 1);
+    }
+}
+
 void do_open_script (void)
 {
     FILE *fp;
 
     fp = fopen(tryfile, "r");
+
     if (fp == NULL) {
 	file_read_errbox(tryfile);
 	delete_from_filelist(FILE_LIST_SESSION, tryfile);
@@ -5401,6 +5412,7 @@ void do_open_script (void)
 	
     strcpy(scriptfile, tryfile);
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+    set_currdir_from_filename(scriptfile);
 
     if (has_system_prefix(scriptfile, &paths, SCRIPT_SEARCH)) {
 	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);

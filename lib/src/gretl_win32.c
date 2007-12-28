@@ -147,20 +147,36 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     char valstr[MAXLEN];
     char dbproxy[21];
     int use_proxy = 0;
+    char *tmp;
     int drive = callname[0];
 
     ppaths->gretldir[0] = '\0';
-
     read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", ppaths->gretldir);
     if (ppaths->gretldir[0] == '\0') {
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl\\", drive);
     }
 
-    ppaths->userdir[0] = '\0';
-    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", ppaths->userdir);
-    if (ppaths->userdir[0] == '\0') {
-	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user\\", drive);
+    ppaths->workdir[0] = '\0';
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", ppaths->workdir);
+    if (ppaths->workdir[0] == '\0') {
+	tmp = mydocs_path();
+
+	if (tmp != NULL) {
+	    sprintf(ppaths->workdir, "%s\\gretl\\", tmp);
+	    free(tmp);
+	} else {
+	    sprintf(ppaths->workdir, "%c:\\userdata\\gretl\\user\\", drive);
+	}
     }
+
+    ppaths->dotdir[0] = '\0';
+    tmp = appdata_path();
+    if (tmp != NULL) {
+	sprintf(ppaths->dotdir, "%s\\gretl\\", tmp);
+	free(tmp);
+    } else {
+	sprintf(ppaths->dotdir, "%c:\\userdata\\gretl\\user\\", drive);
+    }    
 
     ppaths->gnuplot[0] = '\0';
     read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, HKEY_CLASSES_ROOT,

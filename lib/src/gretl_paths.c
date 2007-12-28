@@ -35,6 +35,22 @@
 
 #include <glib.h>
 
+struct INTERNAL_PATHS {
+    char dotdir[MAXLEN];
+    char workdir[MAXLEN];
+    char gnuplot[MAXLEN];
+    char plotfile[MAXLEN];
+    char libpath[MAXLEN];
+    char x12a[MAXLEN];
+    char x12adir[MAXLEN];
+    char tramo[MAXLEN];
+    char tramodir[MAXLEN];
+    char pngfont[128];
+    unsigned char status;
+};
+
+static struct INTERNAL_PATHS gretl_paths;
+
 static void ensure_slash (char *str);
 
 static int add_suffix (char *fname, const char *sfx)
@@ -829,22 +845,6 @@ enum paths_status_flags {
     STRING_TABLE_WRITTEN = 1 << 0
 };
 
-struct INTERNAL_PATHS {
-    char dotdir[MAXLEN];
-    char workdir[MAXLEN];
-    char gnuplot[MAXLEN];
-    char plotfile[MAXLEN];
-    char libpath[MAXLEN];
-    char x12a[MAXLEN];
-    char x12adir[MAXLEN];
-    char tramo[MAXLEN];
-    char tramodir[MAXLEN];
-    char pngfont[128];
-    unsigned char status;
-};
-
-static struct INTERNAL_PATHS gretl_paths;
-
 static void set_gretl_libpath (const char *path)
 {
 #ifdef WIN32
@@ -1189,7 +1189,9 @@ int gretl_string_table_written (void)
 
 static void ensure_slash (char *str)
 {
-    if (str[strlen(str) - 1] != SLASH) {
+    int n = strlen(str);
+
+    if (n > 0 && str[n-1] != SLASH) {
 	strcat(str, SLASHSTR);
     }
 }
@@ -1234,7 +1236,9 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 
 	shelldir_init(NULL);
 	ppaths->currdir[0] = '\0';
-	*gretl_paths.plotfile = '\0';
+	ppaths->dotdir[0] = '\0';
+	ppaths->workdir[0] = '\0';
+	gretl_paths.plotfile[0] = '\0';
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
 	ensure_slash(ppaths->gretldir);

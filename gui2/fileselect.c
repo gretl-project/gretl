@@ -344,18 +344,12 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 
 static void filesel_open_script (const char *fname)
 {
-    int spos;
-
     strcpy(tryfile, fname);
 
     if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
 	strcpy(scriptfile, tryfile);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	spos = slashpos(scriptfile);
-	if (spos) {
-	    paths.currdir[0] = 0;
-	    strncat(paths.currdir, scriptfile, spos + 1);
-	}
+	set_currdir_from_filename(scriptfile);
     }
 }
 

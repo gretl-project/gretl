@@ -42,8 +42,8 @@ print "DirExistsWarning=no\n";
 print "\n[InstallDelete]\n";
 print "Type: files; Name: \"{app}\\*.dll\"\n";
 
-print "\n[Dirs]\n";
-print "Name: {code:GetDataDir}; Flags: uninsneveruninstall\n";
+# print "\n[Dirs]\n";
+# print "Name: {code:GetDataDir}; Flags: uninsneveruninstall\n";
 
 print "\n[Files]\n";
 
@@ -57,7 +57,7 @@ while ($line = <STDIN>) {
     chomp($line);
     @pathbits = split(/\\/, $line);
     print "Source: \"$line\"; "; 
-    if ($line =~ /README/) {
+    if (0 && $line =~ /README/) {
         print "Destdir: \"{code:GetDataDir}";
     } else {
 	print "Destdir: \"{app}";
@@ -88,8 +88,8 @@ print "Root: HKLM; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
 # specific entries
 print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n";
-print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"userdir\"; ValueData: \"{code:GetDataDir}\"\n";
+# print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+# print "\"userdir\"; ValueData: \"{code:GetDataDir}\"\n";
 print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gnuplot\"; ValueData: \"{app}\\wgnuplot.exe\"\n";
 print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
@@ -171,6 +171,8 @@ print "ValueName: \"\"; ValueData: \"{app}\\gretlw32.exe,2\"\n";
 print "Root: HKCR; Subkey: \"GretlScriptFile\\shell\\open\\command\"; ";
 print "ValueType: string; ValueName: \"\"; ValueData: ";
 print "\"\"\"{app}\\gretlw32.exe\"\" -r \"\"%1\"\"\"\n";
+
+exit 0;
 
 print "\n[Code]\n";
 print "var\n";

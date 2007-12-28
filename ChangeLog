@@ -4,6 +4,8 @@ version 1.7.2, in progress
 - Fix bug in recording result of TSLS heteroskedasticity test
 - Add sscanf command (a subset of C sscanf functionality)
 - Add shell capture for strings via $(shellcommand)
+- Paths stuff: add non-configurable "dotdir" to hold per-user
+  automatically-created files
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"
