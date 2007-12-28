@@ -42,9 +42,6 @@ print "DirExistsWarning=no\n";
 print "\n[InstallDelete]\n";
 print "Type: files; Name: \"{app}\\*.dll\"\n";
 
-# print "\n[Dirs]\n";
-# print "Name: {code:GetDataDir}; Flags: uninsneveruninstall\n";
-
 print "\n[Files]\n";
 
 while ($line = <STDIN>) {
@@ -57,13 +54,9 @@ while ($line = <STDIN>) {
     chomp($line);
     @pathbits = split(/\\/, $line);
     print "Source: \"$line\"; "; 
-    if (0 && $line =~ /README/) {
-        print "Destdir: \"{code:GetDataDir}";
-    } else {
-	print "Destdir: \"{app}";
-	for ($i = 1; $i < @pathbits - 1; $i++) {
-	    print "\\$pathbits[$i]";
-	}
+    print "Destdir: \"{app}";
+    for ($i = 1; $i < @pathbits - 1; $i++) {
+        print "\\$pathbits[$i]";
     }
     print "\"\n";
 }
@@ -172,46 +165,4 @@ print "Root: HKCR; Subkey: \"GretlScriptFile\\shell\\open\\command\"; ";
 print "ValueType: string; ValueName: \"\"; ValueData: ";
 print "\"\"\"{app}\\gretlw32.exe\"\" -r \"\"%1\"\"\"\n";
 
-exit 0;
-
-print "\n[Code]\n";
-print "var\n";
-print "  DataDirPage: TInputDirWizardPage;\n";
-print "\n";
-print "procedure InitializeWizard;\n";
-print "begin\n";
-print "  { Create the pages }\n";
-print "   DataDirPage := CreateInputDirPage(wpSelectDir,\n";
-print "                  'Select Personal Data Directory', \n";
-print "                  'Where should personal data files be kept?',\n";
-print "                  'Select the folder for storing personal data files, then click Next.',\n";
-print "                   False, '');\n";
-print "  DataDirPage.Add('');\n";
-print "  DataDirPage.Values[0] := GetPreviousData('DataDir', '');\n";
-print "  if DataDirPage.Values[0] = '' then\n";
-print "     DataDirPage.Values[0] := ExpandConstant('{userappdata}\\gretl');\n";
-print "end;\n";
-print "\n";
-print "procedure RegisterPreviousData(PreviousDataKey: Integer);\n";
-print "begin\n";
-print "  { Store the settings so we can restore them next time }\n";
-print "  SetPreviousData(PreviousDataKey, 'DataDir', DataDirPage.Values[0]);\n";
-print "end;\n";
-print "\n";
-print "function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo,\n";
-print "  MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;\n";
-print "var\n";
-print "  S: String;\n";
-print "begin\n";
-print "  { Fill the 'Ready Memo' with the normal settings and the custom settings }\n";
-print "  S := '';\n";
-print "  S := S + MemoDirInfo + NewLine;\n";
-print "  S := S + Space + DataDirPage.Values[0] + ' (personal data files)' + NewLine;\n";
-print "  Result := S;\n";
-print "end;\n\n";
-print "function GetDataDir(Param: String): String;\n";
-print "begin\n";
-print "  { Return the selected DataDir }\n";
-print "  Result := DataDirPage.Values[0];\n";
-print "end;\n";
 

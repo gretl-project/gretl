@@ -150,9 +150,6 @@ add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file ${TOPDIR}/build/doc/tex/gretl-guide.pdf gretl/doc/gretl-guide.pdf
 add_file ${TOPDIR}/build/doc/tex/gretl-ref.pdf gretl/doc/gretl-ref.pdf
 
-# user readme file
-add_file $HOME_WIN32/readme.user gretl/user/README.txt
-
 # data files
 for f in ${TOPDIR}/share/data/* ; do
     add_file $f gretl/data/`basename $f`
