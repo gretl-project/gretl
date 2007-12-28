@@ -7876,6 +7876,105 @@
 
   </command>
 
+  <command name="sscanf" section="Programming" 
+    label="Scansione di una stringa" context="cli">
+
+    <usage>
+      <arguments>
+	<argument>stringa</argument>
+	<argpunct>, </argpunct>
+        <argument>formato</argument>
+	<argpunct>, </argpunct>
+        <argument>argomenti</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Analizza una <repl>stringa</repl> seguendo il <repl>formato</repl>
+        indicato, assegnando zero o più valori agli <repl>argomenti</repl>
+        indicati. È una versione semplificata della funzione
+	<lit>sscanf</lit> del linguaggio di programmazione C.
+      </para>
+      <para>
+        La <repl>stringa</repl> può essere una stringa vera e propria, racchiusa
+        tra virgolette doppie, o il nome di una variabile stringa predefinita
+        (che comincia col carattere <lit>@</lit>). Il <repl>formato</repl> è
+        definito in modo simile alla stringa di formato del comando <cmdref
+        targ="printf"/> (si veda oltre). Gli <repl>argomenti</repl> sono una
+        lista separata da virgole che contiene i nomi di variabili predefinite
+        che verranno assegnate a seconda dei valori letti dalla
+        <repl>stringa</repl>. Per chi conosce il C: è possibile prefissare con
+        <lit>&amp;</lit> i nomi delle variabili numeriche, ma non è richiesto.
+      </para>
+      <para>
+	Le regole specificate nel <repl>formato</repl> vengono usate per
+        analizzare la <repl>stringa</repl>. Le specifiche iniziano con un
+        carattere <lit>%</lit>, e comprendono
+        <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> per i numeri in virgola
+        mobile; <lit>%d</lit> per gli interi; <lit>%s</lit> per le stringhe, e
+	<lit>%m</lit> per le matrici. È possibile inserire un numero intero
+        positivo dopo il carattere percento, per impostare il numero massimo di
+        caratteri da leggere per ogni tipo di specifica (o il massimo numero di
+        righe nel caso di conversione in matrici). In alternativa è possibile
+        inserire un carattere <lit>*</lit> dopo il percento per sopprimere la
+        conversione di un certo numero di caratteri della stringa. Ad esempio,
+	<lit>%3d</lit> converte i 3 caratteri successivi della <repl>stringa</repl>
+        in un numero intero, se possibile; <lit>%*g</lit> salta tutti i caratteri
+        nella <repl>stringa</repl> che potrebbero essere convertiti in un numero
+        a virgola mobile.
+      </para>
+      <para>
+	La conversione in matrici funziona nel modo seguente: viene letta ogni
+        riga dell'input e vengono contati i campi numerici (separati da spazi o
+        tab). In questo modo viene definito il numero di colonne della matrice.
+        Vengono quindi lette tutte le righe seguenti che contengono lo stesso
+        numero di colonne numeriche; è anche possibile limitare il numero
+        massimo di righe da leggere.
+      </para>
+      <para>
+        Oltre alla conversione <lit>%s</lit> per le stringhe, è disponibile
+        anche una versione semplificata del formato C
+        <lit>%</lit><repl>N</repl><lit>[</lit><repl>caratteri</repl><lit>]</lit>.
+        In questo formato, <repl>N</repl> è il numero massimo di caratteri da
+        leggere, e <repl>caratteri</repl> è un insieme di caratteri accettabili,
+        racchiusi tra parentesi quadre; la lettura si ferma se si raggiunge il
+        limite di <repl>N</repl> o se si incontra un carattere non compreso
+        nell'insieme ammissibile. La funzione dell'insieme
+	<repl>caratteri</repl> può essere invertita specificando un accento
+        circonflesso <lit>^</lit> come primo carattere dell'insieme; in questo
+        caso, la lettura si ferma se si incontra un carattere dell'insieme
+        specificato. Al contrario del C, il carattere trattino non ha alcuna
+        funzione speciale in questo contesto.
+      </para>
+      <para>
+	Se la stringa non corrisponde esattamente al formato specificato, il
+        numero di conversioni effettuate può risultare diverso dal numero di
+        argomenti indicati. Per gretl questo non è necessariamente un errore,
+        tuttavia può essere utile voler controllare questa corrispondenza; è
+        possibile farlo usando la variabile scalare interna
+	<lit>$nscan</lit>, il cui valore viene sovrascritto ogni volta che si
+        usa sscanf. In caso di uso interattivo viene mostrato anche il numero di
+        conversioni effettuate.
+      </para>
+      <para>
+	Ecco alcuni esempi:
+      </para>
+      <code>
+	scalar x
+	scalar y
+	sscanf "123456", "%3d%3d", x, y
+
+	sprintf S "1 2 3 4\n5 6 7 8"
+	print "@S"
+	matrix m
+	sscanf @S, "%m", m
+	print m</code>
+
+    </description>
+
+  </command>
+
   <command name="store" section="Dataset"
     label="Salvataggio dei dati">
 
@@ -8002,11 +8101,27 @@
     <description>
       <para>
 	Salva una stringa chiamata <repl>var-stringa</repl>.
-	L'<repl>espressione</repl> può avere le forme seguenti: una stringa
+	L'<repl>espressione</repl> può avere le forme seguenti: la parola chiave
+        <repl>null</repl> per creare una stringa vuota; una stringa
         letterale, racchiusa tra virgolette doppie; una serie di stringhe di
         questo tipo, separate da spazi (le stringhe verranno concatenate);
-        oppure una chiamata alla funzione <lit>getenv</lit> per recuperare
-        una stringa dall'ambiente del programma.
+        una chiamata alla funzione <lit>getenv</lit> per recuperare
+        una stringa dall'ambiente del programma; una chiamata alla funzione 
+        <lit>argname</lit>; oppure una chiamata per catturare l'output di un
+        comando shell.
+      </para>
+      <para>
+	La funzione <lit>argname</lit> è pensata per essere usata negli script
+        che contengono funzioni definite dall'utente: richiede come singolo
+        argomento il nome di una variabile all'interno di una funzione, e
+        produce il nome che quella variabile ha nello script che ha chiamato la
+        funzione.
+      </para>
+      <para>
+	Per catturare l'output di un comando shell, si può usare la forma
+	<lit>$(</lit><repl>comando-shell</repl><lit>)</lit>, ossia il comando
+        è racchiuso tra parentesi precedute dal carattere dollaro. Questa
+        funzione è attiva solo se in gretl sono stati abilitati i comandi shell.
       </para>
       <para>
 	Dopo aver definito una variabile stringa in questo modo, è possibile
