@@ -8053,7 +8053,7 @@
 	However, you may wish to check the number of conversions
 	performed; this is given by the built-in scalar variable
 	<lit>$nscan</lit>, whose value is overwritten every time sscanf is
-	called.  The number of conversions is also printed, in iteractive
+	called.  The number of conversions is also printed, in interactive
 	use.
       </para>
       <para>
