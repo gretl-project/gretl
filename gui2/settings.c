@@ -471,7 +471,7 @@ static void get_functions_dir (char *dirname)
 
 static char startdir[MAXLEN];
 
-void set_program_startdir (const char *callname)
+void set_program_startdir (void)
 {
     char *test = getcwd(startdir, MAXLEN);
 
@@ -481,7 +481,6 @@ void set_program_startdir (const char *callname)
 
 #if 0
     fprintf(stderr, "Starting in '%s'\n", startdir);
-    fprintf(stderr, "Called as '%s'\n", callname);
 #endif
 }
 
