@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-12-20 14:04-0500\n"
-"PO-Revision-Date: 2007-12-27 11:00+0100\n"
+"PO-Revision-Date: 2007-12-29 13:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -7033,7 +7033,7 @@ msgstr "gretl: zapisz okno wyników"
 
 #: gui2/callbacks.c:498
 msgid "Save text"
-msgstr "Zapisz tekst"
+msgstr "Zapisz okno wyników"
 
 #: gui2/callbacks.c:520
 msgid "Sorry, not yet implemented"
@@ -12360,7 +12360,7 @@ msgid ""
 "Enter new name\n"
 "(max. 31 characters)"
 msgstr ""
-"Wprowad¼ now¹ nazwê\n"
+"Wprowad¼ now± nazwê\n"
 "(maksymalnie 31 znaków)"
 
 #: gui2/session.c:2729
