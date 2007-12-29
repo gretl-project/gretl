@@ -679,6 +679,51 @@ static char *fname_from_fullname (char *fullname)
     return fname;
 }
 
+static int real_send_file (char *fullname, LPMAPISENDMAIL send_mail)
+{
+    char *fname = fname_from_fullname(fullname);
+    gchar *note = NULL;
+    gchar *tmp = NULL;
+    MapiFileDesc mfd;
+    MapiMessage msg;
+    ULONG sd;
+    int err = 0;
+
+    memset(&mfd, 0, sizeof mfd);
+    memset(&msg, 0, sizeof msg);
+
+    mfd.lpszPathName = fullname;
+    mfd.lpszFileName = fname;
+    mfd.nPosition = 1; /* ? */
+
+    if (strstr(fname, ".gdt") != NULL) {
+	tmp = g_strdup_printf(_("Please find the gretl data file %s attached."), 
+			      fname);
+	msg.lpszSubject  = "dataset";
+    } else {
+	tmp = g_strdup_printf(_("Please find the gretl script %s attached."), 
+			      fname);
+	msg.lpszSubject  = "script";
+    }
+
+    note = g_strdup_printf("%s\n", tmp);
+    g_free(tmp);
+
+    msg.lpszNoteText = note;
+    msg.nFileCount = 1;
+    msg.lpFiles = &mfd;
+
+    sd = send_mail(0L, 0, &msg, MAPI_DIALOG, 0L);
+
+    if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
+	err = 1;
+    }
+
+    g_free(note);
+
+    return err;
+}
+
 int send_file (char *fullname)
 {
     HINSTANCE mapilib = NULL;
@@ -695,48 +740,13 @@ int send_file (char *fullname)
 	} 
     }
 
-    if (err) {
-	errbox("Couldn't access Windows MAPI system");
-    } else {
-	char *fname = fname_from_fullname(fullname);
-	gchar *note = NULL;
-	gchar *tmp = NULL;
-	MapiFileDesc mfd;
-	MapiMessage msg;
-	ULONG sd;
-
-	memset(&mfd, 0, sizeof mfd);
-	memset(&msg, 0, sizeof msg);
-
-	mfd.lpszPathName = fullname;
-	mfd.lpszFileName = fname;
-	mfd.nPosition = 1; /* ? */
-
-	if (strstr(fname, ".gdt") != NULL) {
-	    tmp = g_strdup_printf(_("Please find the gretl data file %s attached."), 
-				  fname);
-	    msg.lpszSubject  = "dataset";
-	} else {
-	    tmp = g_strdup_printf(_("Please find the gretl script %s attached."), 
-				  fname);
-	    msg.lpszSubject  = "script";
-	}
-
-	note = g_strdup_printf("%s\n", tmp);
-	g_free(tmp);
-
-	msg.lpszNoteText = note;
-	msg.nFileCount = 1;
-	msg.lpFiles = &mfd;
-
-	sd = send_mail(0L, 0, &msg, MAPI_DIALOG, 0L);
-
-	if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
-	    errbox("MAPI error sending message");
-	}
-
-	g_free(note);
+    if (!err) {
+	err = real_send_file(fullname, send_mail);
     }
+
+    if (err) {
+	win_show_last_error();
+    } 
 
     if (mapilib != NULL) {
 	FreeLibrary(mapilib);
@@ -795,7 +805,6 @@ static int emf_to_clip (char *emfname)
     }  	
 
     CloseClipboard();
-
     DeleteEnhMetaFile(hemf);
 
     return 0;

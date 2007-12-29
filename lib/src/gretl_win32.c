@@ -425,9 +425,9 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
     
     cmdline = compose_command_line(arg);
  
-    ZeroMemory(&pinfo, sizeof(PROCESS_INFORMATION));
- 
+    ZeroMemory(&pinfo, sizeof pinfo);
     ZeroMemory(&sinfo, sizeof sinfo);
+
     sinfo.cb = sizeof sinfo;
     sinfo.hStdError = hwrite;
     sinfo.hStdOutput = hwrite;
@@ -440,11 +440,7 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
 		       NULL,          // process security attributes 
 		       NULL,          // primary thread security attributes 
 		       TRUE,          // handles are inherited 
-#if 1
-		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-#else
 		       CREATE_NO_WINDOW,
-#endif
 		       NULL,          // use parent's environment 
 		       get_shelldir(),          
 		       &sinfo,
@@ -453,7 +449,6 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
     if (!ok) {
 	win_show_last_error();
     } else {
-	/* WaitForSingleObject(pinfo.hProcess, INFINITE); */
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
     }
@@ -463,29 +458,29 @@ run_child_with_pipe (const char *arg, HANDLE hwrite, HANDLE hread)
     return ok;
 }
 
-static int run_cmd_new (const char *arg, char **sout, PRN *prn) 
+static int run_cmd_with_pipes (const char *arg, char **sout, PRN *prn) 
 { 
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sa; 
     int ok; 
  
-    /* Set the bInheritHandle flag so pipe handles are inherited */
+    /* set the bInheritHandle flag so pipe handles are inherited */
     sa.nLength = sizeof(SECURITY_ATTRIBUTES); 
     sa.bInheritHandle = TRUE; 
     sa.lpSecurityDescriptor = NULL; 
 
-    /* Create a pipe for the child process's STDOUT */ 
+    /* create pipe for the child process's STDOUT */ 
     ok = CreatePipe(&hread, &hwrite, &sa, 0);
 
     if (!ok) {
 	win_show_last_error();
     } else {
-	/* Ensure that the read handle to the child process's pipe for 
+	/* ensure that the read handle to the child process's pipe for 
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
 	ok = run_child_with_pipe(arg, hwrite, hread);
 	if (ok) {
-	    /* Read from child's output pipe */
+	    /* read from child's output pipe */
 	    read_from_pipe(hwrite, hread, sout, prn); 
 	}
     }
@@ -499,11 +494,6 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     PROCESS_INFORMATION pi;
     char *cmdline = NULL;
     int ok, err = 0;
-
-    /* FIXME needs checking! */
-    if (1 || getenv("GRETL_SHELL_NEW")) {
-	return run_cmd_new(cmd, NULL, prn);
-    }
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);
@@ -536,7 +526,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
 
 int gretl_shell_grab (const char *arg, char **sout)
 {
-    return run_cmd_new(arg, sout, NULL);
+    return run_cmd_with_pipes(arg, sout, NULL);
 }
 
 int gretl_shell (const char *arg, PRN *prn)
@@ -568,6 +558,8 @@ int gretl_shell (const char *arg, PRN *prn)
 	if (winret <= 31) {
 	    err = 1;
 	}
+    } else if (getenv("GRETL_SHELL_NEW")) {
+	err = run_cmd_with_pipes(arg, NULL, prn);
     } else {
 	err = run_cmd_wait(arg, prn);
     } 

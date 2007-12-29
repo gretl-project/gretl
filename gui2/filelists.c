@@ -24,15 +24,19 @@
 # include "gretlwin32.h"
 #endif
 
+#define NFILELISTS 4
+
 /* lists of recently opened files */
 static char datalist[MAXRECENT][MAXSTR];
 static char sessionlist[MAXRECENT][MAXSTR];
 static char scriptlist[MAXRECENT][MAXSTR];
+static char wdirlist[MAXRECENT][MAXSTR];
 
 /* and pointers to same */
 static char *datap[MAXRECENT];
 static char *sessionp[MAXRECENT];
 static char *scriptp[MAXRECENT];
+static char *wdirp[MAXRECENT];
 
 static void real_add_files_to_menus (int ftype);
 
@@ -45,6 +49,7 @@ void initialize_file_lists (void)
 	datalist[i][0] = 0;
 	sessionlist[i][0] = 0;
 	scriptlist[i][0] = 0;
+	wdirlist[i][0] = 0;
     }
 }
 
@@ -56,6 +61,7 @@ void init_fileptrs (void)
 	datap[i] = datalist[i];
 	sessionp[i] = sessionlist[i];
 	scriptp[i] = scriptlist[i];
+	wdirp[i] = wdirlist[i];
     }
 }
 
@@ -67,6 +73,8 @@ static char **get_file_list (int filetype)
 	return sessionp;
     } else if (filetype == FILE_LIST_SCRIPT) {
 	return scriptp;
+    } else if (filetype == FILE_LIST_WDIR) {
+	return wdirp;
     } else {
 	return NULL;
     }
@@ -75,7 +83,8 @@ static char **get_file_list (int filetype)
 static const char *file_sections[] = {
     "recent_data_files",
     "recent_session_files",
-    "recent_script_files"
+    "recent_script_files",
+    "recent_working_dirs"
 };
 
 #if defined(USE_GNOME)
@@ -115,6 +124,7 @@ void save_file_lists (GConfClient *client)
     printfilelist(FILE_LIST_DATA, client);
     printfilelist(FILE_LIST_SESSION, client);
     printfilelist(FILE_LIST_SCRIPT, client);
+    printfilelist(FILE_LIST_WDIR, client);
 }
 
 void read_file_lists (GConfClient *client)
@@ -125,7 +135,7 @@ void read_file_lists (GConfClient *client)
 
     initialize_file_lists();
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<NFILELISTS; i++) {
 	sprintf(key, "/apps/gretl/%s", file_sections[i]);
 	flist = gconf_client_get_list(client, key,
 				      GCONF_VALUE_STRING, NULL);
@@ -166,6 +176,7 @@ void save_file_lists (void)
     printfilelist(FILE_LIST_DATA);
     printfilelist(FILE_LIST_SESSION);
     printfilelist(FILE_LIST_SCRIPT);
+    printfilelist(FILE_LIST_WDIR);
 }
 
 void read_file_lists (void)
@@ -175,7 +186,7 @@ void read_file_lists (void)
 
     initialize_file_lists();
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<NFILELISTS; i++) {
 	for (j=0; j<MAXRECENT; j++) {
 	    sprintf(rpath, "%s\\%d", file_sections[i], j);
 	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
@@ -211,18 +222,19 @@ void save_file_lists (FILE *fp)
     printfilelist(FILE_LIST_DATA, fp);
     printfilelist(FILE_LIST_SESSION, fp);
     printfilelist(FILE_LIST_SCRIPT, fp);
+    printfilelist(FILE_LIST_WDIR, fp);
 }    
 
 void read_file_lists (FILE *fp, char *prev)
 {
     char line[MAXLEN];
-    int i, len, n[3] = {0};
+    int i, len, n[NFILELISTS] = {0};
 
     initialize_file_lists();
     strcpy(line, prev);
 
     while (1) {
-	for (i=0; i<3; i++) {
+	for (i=0; i<NFILELISTS; i++) {
 	    len = strlen(file_sections[i]);
 	    if (!strncmp(line, file_sections[i], len)) {
 		chopstr(line);
@@ -282,7 +294,8 @@ static void clear_files_list (int filetype, char **filep)
     const gchar *fpath[] = {
 	N_("/File/Open data"), 
 	N_("/File/Session files"),
-	N_("/File/Script files")
+	N_("/File/Script files"),
+	N_("/File/Working directory")
     };
     int i;
 
@@ -404,7 +417,9 @@ void write_filename_to_list (int filetype, int i, char *fname)
 	strcpy(sessionlist[i], fname);
     } else if (filetype == FILE_LIST_SCRIPT) {
 	strcpy(scriptlist[i], fname);
-    } 
+    } else if (filetype == FILE_LIST_WDIR) {
+	strcpy(wdirlist[i], fname);
+    }
 }
 
 void delete_from_filelist (int filetype, const char *fname)
@@ -453,8 +468,8 @@ void delete_from_filelist (int filetype, const char *fname)
     /* need to save to file at this point? */
 }
 
-static void set_data_from_filelist (gpointer data, guint i, 
-				    GtkWidget *widget)
+static void 
+set_data_from_filelist (gpointer p, guint i, GtkWidget *w)
 {
     strcpy(tryfile, datap[i]);
     if (strstr(tryfile, ".csv")) {
@@ -463,39 +478,47 @@ static void set_data_from_filelist (gpointer data, guint i,
     verify_open_data(NULL, 0);
 }
 
-static void set_session_from_filelist (gpointer data, guint i, 
-				       GtkWidget *widget)
+static void 
+set_session_from_filelist (gpointer p, guint i, GtkWidget *w)
 {
     strcpy(tryfile, sessionp[i]);
     verify_open_session();
 }
 
-static void set_script_from_filelist (gpointer data, guint i, 
-				      GtkWidget *widget)
+static void 
+set_script_from_filelist (gpointer p, guint i, GtkWidget *w)
 {
     strcpy(tryfile, scriptp[i]);
     do_open_script();
+}
+
+static void 
+set_wdir_from_filelist (gpointer p, guint i, GtkWidget *w)
+{
+    gui_set_working_dir(wdirp[i]);
 }
 
 static void real_add_files_to_menus (int ftype)
 {
     char **filep, tmp[MAXSTR];
     void (*callfunc)() = NULL;
-    GtkItemFactoryEntry fileitem;
+    GtkItemFactoryEntry item;
     const gchar *msep[] = {
 	"/File/Open data/sep",
 	"/File/Session files/sep",
-	"/File/Script files/sep"
+	"/File/Script files/sep",
+	"/File/Working directory/sep",
     };
     const gchar *mpath[] = {
 	N_("/File/Open data"),
 	N_("/File/Session files"),
-	N_("/File/Script files")
+	N_("/File/Script files"),
+	N_("/File/Working directory")
     };
-    int jmin = 0, jmax = 3;
+    int jmin = 0, jmax = NFILELISTS;
     int i, j;
 
-    if (ftype < 3) {
+    if (ftype < NFILELISTS) {
 	jmin = ftype;
 	jmax = jmin + 1;
     }
@@ -505,34 +528,41 @@ static void real_add_files_to_menus (int ftype)
 
 	filep = NULL;
 
-	if (j == 0) {
+	if (j == FILE_LIST_DATA) {
 	    filep = datap;
 	    callfunc = set_data_from_filelist;
-	} else if (j == 1) {
+	} else if (j == FILE_LIST_SESSION) {
 	    filep = sessionp;
 	    callfunc = set_session_from_filelist;
-	} else if (j == 2) {
+	} else if (j == FILE_LIST_SCRIPT) {
 	    filep = scriptp;
 	    callfunc = set_script_from_filelist;
-	} 
+	} else if (j == FILE_LIST_WDIR) {
+	    filep = wdirp;
+	    callfunc = set_wdir_from_filelist;
+	}
 
 	/* See if there are any files to add */
 
 	if (filep == NULL || *filep[0] == '\0') {
-	    continue;
+	    if (filep != NULL && j == FILE_LIST_WDIR) {
+		strcpy(filep[0], paths.workdir);
+	    } else {
+		continue;
+	    }
 	}
 
 	/* is a separator already in place? */
 
 	w = gtk_item_factory_get_widget(mdata->ifac, msep[j]);
 	if (w == NULL) {
-	    fileitem.path = g_strdup(msep[j]);
-	    fileitem.accelerator = NULL;
-	    fileitem.callback = NULL;
-	    fileitem.callback_action = 0;
-	    fileitem.item_type = "<Separator>";
-	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
-	    g_free(fileitem.path);
+	    item.path = g_strdup(msep[j]);
+	    item.accelerator = NULL;
+	    item.callback = NULL;
+	    item.callback_action = 0;
+	    item.item_type = "<Separator>";
+	    gtk_item_factory_create_item(mdata->ifac, &item, NULL, 1);
+	    g_free(item.path);
 	}
 
 	/* put the files under the menu separator: ensure valid UTF-8
@@ -546,14 +576,14 @@ static void real_add_files_to_menus (int ftype)
 	    if (fname == NULL) {
 		break;
 	    } else {
-		fileitem.accelerator = NULL;
-		fileitem.callback_action = i; 
-		fileitem.item_type = NULL;
-		fileitem.path = g_strdup_printf("%s/%d. %s", mpath[j],
-						i+1, endbit(tmp, fname, 1));
-		fileitem.callback = callfunc; 
-		gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
-		g_free(fileitem.path);
+		item.accelerator = NULL;
+		item.callback_action = i; 
+		item.item_type = NULL;
+		item.path = g_strdup_printf("%s/%d. %s", mpath[j],
+					    i+1, endbit(tmp, fname, 1));
+		item.callback = callfunc; 
+		gtk_item_factory_create_item(mdata->ifac, &item, NULL, 1);
+		g_free(item.path);
 		w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
 		if (w != NULL) {
 		    gretl_tooltips_add(w, fname);
@@ -566,7 +596,7 @@ static void real_add_files_to_menus (int ftype)
 
 void add_files_to_menus (void)
 {
-    real_add_files_to_menus(3);
+    real_add_files_to_menus(NFILELISTS);
 }
 
 

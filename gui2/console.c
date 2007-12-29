@@ -42,6 +42,10 @@ static ExecState cstate;
 static char **cmd_history;
 static int hl, hlmax, hlines;
 
+static gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d);
+static gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
+				   gpointer p);
+
 static int gretl_console_init (void)
 {
     char *hstr;
@@ -239,11 +243,12 @@ static int console_vars_changed (const char *line, int oldv, int err)
     return ret;
 }
 
+/* callback from Enter key in gretl console */
+
 static void console_exec (void)
 {
     GtkTextBuffer *buf;
     GtkTextIter start, end;
-    static int redirected;
     int oldv = datainfo->v;
     char execline[MAXLINE];
     int coding = 0;
@@ -282,18 +287,18 @@ static void console_exec (void)
 	err = gretl_loop_exec(&cstate, &Z, &datainfo);
     }
 
-    redirected = printing_is_redirected(console_prn);
-
     gtk_text_buffer_get_end_iter(buf, &start);
     gtk_text_buffer_insert(buf, &start, "\n", 1);
 
-#ifdef ENABLE_NLS
-    if (!redirected) {
-	const char *cbuf = gretl_print_get_buffer(console_prn);
+    if (printing_is_redirected(console_prn)) {
+	gretl_print_reset_buffer(console_prn);
+    } else {
+	/* put results into console window */
+	const char *getbuf = gretl_print_get_buffer(console_prn);
 
-        /* put results into console window */
-	if (!g_utf8_validate(cbuf, -1, NULL)) {
-	    gchar *trbuf = my_locale_to_utf8(cbuf);
+#ifdef ENABLE_NLS
+	if (!g_utf8_validate(getbuf, -1, NULL)) {
+	    gchar *trbuf = my_locale_to_utf8(getbuf);
 
 	    fprintf(stderr, "console text did not validate as utf8\n");
 	    if (trbuf != NULL) {
@@ -301,30 +306,17 @@ static void console_exec (void)
 		g_free(trbuf);
 	    }
 	} else {
-	    gtk_text_buffer_insert(buf, &start, cbuf, strlen(cbuf));
+	    gtk_text_buffer_insert(buf, &start, getbuf, strlen(getbuf));
 	}
-	gretl_print_destroy(console_prn);
-	console_prn = NULL;
-    } else {
-	gretl_print_reset_buffer(console_prn);
-    }
 #else
-    if (!redirected) {
-	const char *cbuf = gretl_print_get_buffer(console_prn);
-
-        /* put results into console window */
-	gtk_text_buffer_insert(buf, &start, cbuf, strlen(cbuf));
+	gtk_text_buffer_insert(buf, &start, getbuf, strlen(getbuf));
+#endif
 	gretl_print_destroy(console_prn);
 	console_prn = NULL;
-    } else {
-	gretl_print_reset_buffer(console_prn);
     }
-#endif
 
     if (cstate.cmd->ci == QUIT) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(console_view));
-	g_free(cbuf);
-	cbuf = NULL;
 	return;
     }
 
@@ -347,12 +339,6 @@ static void console_exec (void)
     if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
     }
-
-#ifdef G_OS_WIN32
-    if (cstate.cmd->ci == SHELL || cstate.cmd->ci == STRING) {
-	win32_raise_window(console_view);
-    }    
-#endif
 }
 
 void show_gretl_console (void)
@@ -385,9 +371,12 @@ void show_gretl_console (void)
     vwin = view_file(fname, 1, 1, 78, 400, CONSOLE);
     console_view = vwin->w;
 
+    g_signal_connect(G_OBJECT(console_view), "button_release_event",
+		     G_CALLBACK(console_mouse_handler), NULL);
+    g_signal_connect(G_OBJECT(console_view), "key_press_event",
+		     G_CALLBACK(console_key_handler), NULL);
     g_signal_connect(G_OBJECT(console_view), "destroy",
-		     G_CALLBACK(gretl_console_free),
-		     NULL);
+		     G_CALLBACK(gretl_console_free), NULL);
     g_signal_connect(G_OBJECT(console_view), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
 		     &console_view);
@@ -446,12 +435,12 @@ const char *console_varname_complete (const char *s)
     return NULL;
 }  
 
-gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
+static gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 {
     gint last_line, curr_line, line_pos;
-    GdkModifierType mods;
     GtkTextBuffer *buf;
     GtkTextIter iter;
+    gint ret = FALSE;
 
  start_again:
 
@@ -477,9 +466,9 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	goto start_again;
     }
 
-    /* make return key execute the command, unless backslash-
-       continuation is happening */
     if (key->keyval == GDK_Return) {
+	/* the Return key executes the command, unless backslash-
+	   continuation is happening */
 	GtkTextIter start, end;	
 	gchar *bit;
 	int cont = 0;
@@ -501,14 +490,16 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	    console_scroll_to_end(buf, &end);
 	} else {
 	    console_exec();
+#ifdef G_OS_WIN32
+	    gdk_window_show(console_view->parent->window);
+	    gdk_window_raise(console_view->parent->window);
+	    gtk_widget_grab_focus(console_view);
+#endif
 	}
 
 	key->keyval = GDK_End;
-	return FALSE;
-    }
-
-    /* up and down arrows: command history */
-    if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
+    } else if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
+	/* up/down arrows: navigate the command history */
 	char *histline;
 
 	histline = pop_history_line(key->keyval);
@@ -525,22 +516,9 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	    }
 	}
 	
-	return TRUE;
-    }
-
-    /* Ctrl-A: go to start of typing area */
-    gdk_window_get_pointer(console_view->window, NULL, NULL, &mods);
-    if (mods & GDK_CONTROL_MASK && 
-	gdk_keyval_to_upper(key->keyval) == GDK_A) {
-	GtkTextIter where = iter;
-
-	gtk_text_iter_set_line_index(&where, 2);	
-	gtk_text_buffer_place_cursor(buf, &where);
-	return TRUE;
-    }
-
-    /* tab completion for gretl commands, variable names */
-    if (key->keyval == GDK_Tab) {
+	ret = TRUE;
+    } else if (key->keyval == GDK_Tab) {
+	/* tab completion for gretl commands, variable names */
 	const char *complete = NULL;
 	GtkTextIter start, end;	
 	gchar *bit = NULL;
@@ -569,10 +547,24 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	    }
 	}
 	g_free(bit);
-	return TRUE;
+	ret = TRUE;
+    } else {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(console_view->window, NULL, NULL, &mods);
+
+	if (mods & GDK_CONTROL_MASK && 
+	    gdk_keyval_to_upper(key->keyval) == GDK_A) {
+	    /* Ctrl-A: go to start of typing area */
+	    GtkTextIter where = iter;
+
+	    gtk_text_iter_set_line_index(&where, 2);	
+	    gtk_text_buffer_place_cursor(buf, &where);
+	    ret = TRUE;
+	}
     }
 
-    return FALSE;
+    return ret;
 }
 
 static gint on_last_line (void)
@@ -587,8 +579,8 @@ static gint on_last_line (void)
 	    gtk_text_buffer_get_line_count(buf) - 1);
 }
 
-gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
-			    gpointer p)
+static gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
+				   gpointer p)
 {
     int lline = on_last_line();
 

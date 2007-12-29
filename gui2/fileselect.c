@@ -526,9 +526,9 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
     } else if (action == SET_PROG || action == SET_DIR) {
-	char *strvar = (char *) data;
+	char *setvar = (char *) data;
 
-	filesel_set_path_callback(fname, strvar);
+	set_path_callback(setvar, fname);
     } else {
 	windata_t *vwin = (windata_t *) data;
 
@@ -702,7 +702,7 @@ static int select_dirname (char *fname, char *trmsg)
     bi.pidlRoot = NULL; /* FIXME? */
     bi.pszDisplayName = dirname;
     bi.lpszTitle = trmsg;
-    bi.ulFlags = 0;
+    bi.ulFlags = BIF_USENEWUI;
     bi.lpfn = NULL;
     bi.lParam = 0;
     bi.iImage = 0;   

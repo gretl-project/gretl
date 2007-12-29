@@ -207,6 +207,7 @@ enum file_lists {
     FILE_LIST_DATA,
     FILE_LIST_SESSION,
     FILE_LIST_SCRIPT,
+    FILE_LIST_WDIR,
 };
 
 enum varclick_actions {

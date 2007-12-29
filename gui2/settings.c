@@ -121,14 +121,13 @@ enum {
     TAB_MAIN,
     TAB_DBS,
     TAB_PROGS,
-    TAB_SAVE,
     TAB_VCV,
     TAB_MAN
 };
 
 typedef enum {
     ROOTSET  = 1 << 0,
-    USERSET  = 1 << 1,
+    USERSET  = 1 << 1, 
     BOOLSET  = 1 << 2,
     INTSET   = 1 << 3,
     LISTSET  = 1 << 4,
@@ -169,7 +168,7 @@ RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
       MACHSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
-      USERSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
+      INVISET, MAXLEN, TAB_MAIN, NULL },
     { "expert", N_("Expert mode (no warnings)"), NULL, &expert, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
@@ -193,6 +192,8 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
@@ -232,9 +233,6 @@ RCVAR rc_vars[] = {
       USERSET, 21, TAB_DBS, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
       BOOLSET, 1, TAB_DBS, NULL },
-    { "usecwd", N_("Use current working directory as default"), 
-      N_("Use gretl user directory as default"), &usecwd, 
-      BOOLSET, 0, TAB_SAVE, NULL },
     { "useqr", N_("Use QR decomposition"), N_("Use Cholesky decomposition"), &useqr, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
@@ -798,7 +796,6 @@ int options_dialog (int page)
     make_prefs_tab(notebook, TAB_MAIN);
     make_prefs_tab(notebook, TAB_DBS);
     make_prefs_tab(notebook, TAB_PROGS);
-    make_prefs_tab(notebook, TAB_SAVE);
     make_prefs_tab(notebook, TAB_VCV);
     make_prefs_tab(notebook, TAB_MAN);
 
@@ -851,18 +848,24 @@ static void flip_sensitive (GtkWidget *w, gpointer data)
     gtk_widget_set_sensitive(entry, GTK_TOGGLE_BUTTON(w)->active);
 }
 
-void filesel_set_path_callback (const char *setting, char *strvar)
+void set_path_callback (char *setvar, char *setting)
 {
-    int i = 0;
+    if (setvar == paths.workdir) {
+	gui_set_working_dir(setting);
+    } else {
+	int i = 0;
 
-    while (rc_vars[i].key != NULL) {
-	if (rc_vars[i].var == (void *) strvar) {
-	    /* FIXME: utf-8 issues here?? */
-	    gtk_entry_set_text(GTK_ENTRY(rc_vars[i].widget), 
-			       setting);
-	    break;
+	while (rc_vars[i].key != NULL) {
+	    if (rc_vars[i].var == (void *) setvar) {
+		/* FIXME: utf-8 issues here? */
+		if (rc_vars[i].widget != NULL) {
+		    gtk_entry_set_text(GTK_ENTRY(rc_vars[i].widget), 
+				       setting);
+		}
+		break;
+	    }
+	    i++;
 	}
-	i++;
     }
 }
 
@@ -1003,8 +1006,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	w = gtk_label_new(_("Databases"));
     } else if (tab == TAB_PROGS) {
 	w = gtk_label_new(_("Programs"));
-    } else if (tab == TAB_SAVE) {
-	w = gtk_label_new(_("File Open/Save"));
     } else if (tab == TAB_VCV) {
 	w = gtk_label_new(_("HCCME"));
     } else if (tab == TAB_MAN) {
@@ -1731,8 +1732,6 @@ void read_rc (void)
     char *strvar;
     int i;
 
-    /* FIXME was paths.userdir below */
-
     if (get_network_settings() && *paths.workdir != '\0') {
 	int err = set_gretl_work_dir(paths.workdir, &paths);
 
@@ -2262,8 +2261,6 @@ void graph_color_selector (GtkWidget *w, gpointer p)
 
 #ifndef G_OS_WIN32
 
-/* FIXME! */
-
 static void real_set_workdir (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *dirname;
@@ -2296,7 +2293,7 @@ void first_time_set_user_dir (void)
 	}
     }
 	
-    /* user dir is not specified, or doesn't exist */
+    /* work dir is not specified, or doesn't exist */
     edit_dialog (_("gretl: working directory"), 
                  _("You seem to be using gretl for the first time.\n"
 		   "Please enter a directory for gretl user files."),
@@ -2352,5 +2349,17 @@ void dump_rc (void)
     printf("Config info written to %s\n", dumper);
 
     fclose(fp);
+}
+
+void gui_set_working_dir (char *dirname)
+{
+    int err = set_gretl_work_dir(dirname, &paths);
+
+    if (err) {
+	gui_errmsg(err);
+	delete_from_filelist(FILE_LIST_WDIR, dirname);
+    } else {
+	mkfilelist(FILE_LIST_WDIR, dirname);
+    }
 }
 

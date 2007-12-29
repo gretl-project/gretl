@@ -160,11 +160,18 @@ static void manual_update_query (gpointer p, guint u, GtkWidget *w)
     update_query();
 }
 
-extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
+extern void find_var (gpointer p, guint u, GtkWidget *w); /* helpfiles.c */
 
 static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
 {
     varinfo_dialog(mdata->active_var, 1);
+}
+
+static void wdir_select_callback (gpointer p, guint u, GtkWidget *w)
+{
+    const char *s = N_("gretl working directory");
+
+    file_selector(_(s), SET_DIR, FSEL_DATA_MISC, paths.workdir);
 }
 
 #ifdef ENABLE_MAILER
@@ -270,6 +277,12 @@ GtkItemFactoryEntry data_items[] = {
       REMOTE_FUNC_FILES, "<StockItem>", GTK_STOCK_NETWORK },
     { N_("/File/Function files/_New package"), "", file_save, 
       SAVE_FUNCTIONS, "<StockItem>", GTK_STOCK_NEW },
+
+    /* File, working dir */
+    { N_("/File/_Working directory"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/Working directory/_Select..."), "", wdir_select_callback, 0, 
+      "<StockItem>", GTK_STOCK_OPEN },
+
     { "/File/sep5", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },
 

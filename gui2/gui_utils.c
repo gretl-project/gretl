@@ -2308,14 +2308,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     text_table_setup(vwin->vbox, vwin->w);
 
-    /* special case: the gretl console */
-    if (role == CONSOLE) {
-	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
-			 G_CALLBACK(console_mouse_handler), NULL);
-	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
-			 G_CALLBACK(console_key_handler), NULL);
-    } 
-
     if (doing_script) {
 	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
 			 G_CALLBACK(script_key_handler), vwin);

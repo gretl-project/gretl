@@ -43,7 +43,9 @@ void color_patch_button_reset (GtkWidget *button, int cnum);
 
 void get_default_dir (char *s, int action);
 
-void filesel_set_path_callback (const char *setting, char *strvar);
+void gui_set_working_dir (char *dirname);
+
+void set_path_callback (char *setvar, char *setting);
 
 void set_datapage (const char *str);
 
