@@ -255,9 +255,11 @@ void read_file_lists (FILE *fp, char *prev)
 
 static char *endbit (char *dest, const char *src, int addscore)
 {
-    /* take last part of src filename */
-    if (strrchr(src, SLASH)) {
-	strcpy(dest, strrchr(src, SLASH) + 1);
+    const char *p = strrchr(src, SLASH);
+
+    if (p != NULL) {
+	/* take last part of src filename */
+	strcpy(dest, p + 1);
     } else {
 	strcpy(dest, src);
     }
