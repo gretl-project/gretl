@@ -571,6 +571,15 @@ static void real_add_files_to_menus (int ftype)
 	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
 	    gchar *fname;
 
+	    if (j == FILE_LIST_WDIR) {
+		int n = strlen(filep[i]);
+
+		if (filep[i][n-1] == '/' ||
+		    filep[i][n-1] == '\\') {
+		    filep[i][n-1] = '\0';
+		}
+	    }		
+
 	    fname = my_filename_to_utf8(filep[i]);
 
 	    if (fname == NULL) {
