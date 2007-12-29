@@ -8049,12 +8049,12 @@
       <para>
 	If the source string does not (fully) match the format, the number
 	of conversions may fall short of the number of arguments given.
-	This is not in itself an error so far a gretl is concerned.
+	This is not in itself an error so far as gretl is concerned.
 	However, you may wish to check the number of conversions
 	performed; this is given by the built-in scalar variable
-	<lit>$nscan</lit>, whose value is overwritten every time sscanf is
-	called.  The number of conversions is also printed, in interactive
-	use.
+	<lit>$nscan</lit>, whose value is refreshed every time
+	<lit>sscanf</lit> is called.  The number of conversions is also
+	printed, in interactive use.
       </para>
       <para>
 	Some examples follow:
