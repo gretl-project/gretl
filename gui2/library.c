@@ -1280,7 +1280,7 @@ int out_of_sample_info (int add_ok, int *t2)
 		*t2 += n;
 	    }
 	} 
-    } else if (!expert) {
+    } else {
 	infobox(_("There are no observations available for forecasting\n"
 		  "out of sample.  If you wish, you can add observations\n"
 		  "(Data menu, Edit data), or you can shorten the sample\n"

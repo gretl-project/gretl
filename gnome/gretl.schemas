@@ -125,18 +125,6 @@
     </schema>
     
     <schema>
-      <key>/schemas/apps/gretl/editor</key>
-      <applyto>/apps/gretl/editor</applyto>
-      <owner>gretl</owner>
-      <type>string</type>
-      <default>emacs</default>
-      <locale name="C">
-        <short>Preferred editor</short>
-        <long>The editor to be invoked from the gretl toolbar</long>
-      </locale>
-    </schema>
-
-    <schema>
       <key>/schemas/apps/gretl/calculator</key>
       <applyto>/apps/gretl/calculator</applyto>
       <owner>gretl</owner>
@@ -173,18 +161,6 @@
     </schema>
 
     <!-- Section: boolean switches -->
-
-    <schema>
-      <key>/schemas/apps/gretl/expert</key>
-      <applyto>/apps/gretl/expert</applyto>
-      <owner>gretl</owner>
-      <type>bool</type>
-      <default>FALSE</default>
-      <locale name="C">
-        <short>Expert mode</short>
-        <long>Fewer warnings are issued when this is set TRUE</long>
-      </locale>
-    </schema>
 
     <schema>
       <key>/schemas/apps/gretl/updater</key>
@@ -233,18 +209,6 @@
         <short>Use current working directory as default</short>
         <long>The alternative is to use the gretl "userdir" as default
               for file opening and saving</long>
-      </locale>
-    </schema>
-
-    <schema>
-      <key>/schemas/apps/gretl/olddat</key>
-      <applyto>/apps/gretl/olddat</applyto>
-      <owner>gretl</owner>
-      <type>bool</type>
-      <default>FALSE</default>
-      <locale name="C">
-        <short>Use ".dat" as default datafile suffix</short>
-        <long>May be useful if working with old gretl datafiles</long>
       </locale>
     </schema>
 
@@ -322,7 +286,19 @@
         <short>Recent script files</short>
         <long>List of script files visited recently</long>
       </locale>
-    </schema>
+    </schema>   
+    
+     <schema>
+      <key>/schemas/apps/gretl/recent_working_dirs</key>
+      <applyto>/apps/gretl/recent_working_files</applyto>
+      <owner>gretl</owner>
+      <type>list</type>
+      <list_type>string</list_type>
+      <locale name="C">
+        <short>Recent working directories</short>
+        <long>List of working directories used recently</long>
+      </locale>
+    </schema>   
 
     <!-- Section: misc -->
 

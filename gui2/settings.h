@@ -7,7 +7,7 @@ void read_rc (void);
 void gretl_config_init (void);
 #endif
 
-void set_program_startdir (void);
+void set_gretl_startdir (void);
 
 int using_hc_by_default (void);
 
@@ -45,6 +45,10 @@ void get_default_dir (char *s, int action);
 
 void gui_set_working_dir (char *dirname);
 
+void set_working_dir_from_startup (void);
+
+void finalize_working_dir_menu (void);
+
 void set_path_callback (char *setvar, char *setting);
 
 void set_datapage (const char *str);
@@ -54,10 +58,6 @@ void set_scriptpage (const char *str);
 const char *get_datapage (void);
 
 const char *get_scriptpage (void);
-
-#ifndef G_OS_WIN32
-void first_time_set_user_dir (void);
-#endif
 
 int check_for_prog (const char *prog);
 

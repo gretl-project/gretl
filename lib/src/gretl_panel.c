@@ -3565,7 +3565,7 @@ static int compose_panel_indices (DATAINFO *pdinfo, int T,
 }
 
 static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
-			       int uv, int tv)
+			       int uv, int tv, int *ustrs)
 {
     int n = pdinfo->n;
     char **S = NULL;
@@ -3611,11 +3611,21 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
     }
 
     if (S != NULL) {
+	*ustrs = 1;
 	for (t=0; t<n; t++) {
 	    strcpy(S[t], pdinfo->S[t]);
+	    if (S[t][0] == '\0') {
+		*ustrs = 0;
+	    }
 	}
 	for (t=0; t<n; t++) {
 	    strcpy(pdinfo->S[t], S[s.points[t].obsnum]);
+	}
+	for (t=1; t<n && *ustrs; t++) {
+	    if (Z[uv][t] == Z[uv][t-1] &&
+		strcmp(pdinfo->S[t], pdinfo->S[t-1])) {
+		*ustrs = 0;
+	    }
 	}
 	free_strings_array(S, n);
     }	
@@ -3675,9 +3685,10 @@ static int normalize_uid_tid (const double *tid, int T,
 static int pad_panel_dataset (const double *uid, int uv, int nunits,
 			      const double *tid, int tv, int nperiods, 
 			      double **Z, DATAINFO *pdinfo,
-			      char *mask)
+			      int ustrs, char *mask)
 {
     double **bigZ = NULL;
+    char **S = NULL;
     int *nuid = NULL;
     int *ntid = NULL;
     int n_scalars = 0;
@@ -3704,6 +3715,10 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	pdinfo->v += n_scalars;
     }
 
+    if (!err && pdinfo->S != NULL && ustrs) {
+	S = strings_array_new_with_length(pdinfo->n, OBSLEN);
+    }
+
     if (err) {
 	pdinfo->n = n_orig;
 	pdinfo->t2 = t2_orig;
@@ -3719,6 +3734,9 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 		if (var_is_series(pdinfo, i)) {
 		    bigZ[j++][s] = Z[i][t];
 		}
+	    }
+	    if (S != NULL) {
+		strcpy(S[s], pdinfo->S[t]);
 	    }
 	    if (mask != NULL && s > tref) {
 		/* recording the padding in "mask" */
@@ -3767,6 +3785,32 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 
     free(nuid);
     free(ntid);
+
+    if (pdinfo->S != NULL) {
+	/* expand the obs (unit) marker strings appropriately */
+	if (S == NULL) {
+	    dataset_destroy_obs_markers(pdinfo);
+	} else {
+	    char si[OBSLEN];
+
+	    for (i=0; i<nunits; i++) {
+		t = i * nperiods;
+		for (j=0; j<nperiods; j++) {
+		    if (S[t][0] != '\0') {
+			strcpy(si, S[t]);
+			break;
+		    }
+		    t++;
+		}
+		t = i * nperiods;
+		for (j=0; j<nperiods; j++) {
+		    strcpy(S[t++], si);
+		}
+	    }
+	    free_strings_array(pdinfo->S, n_orig);
+	    pdinfo->S = S;
+	}
+    }
 
     return err;
 }
@@ -3858,6 +3902,7 @@ int set_panel_structure_from_vars (int uv, int tv,
     int fulln = 0;
     int nunits = 0;
     int nperiods = 0;
+    int ustrs = 0;
     int err = 0;
 
     /* FIXME sub-sampled dataset (needs to be disallowed?) */
@@ -3903,7 +3948,7 @@ int set_panel_structure_from_vars (int uv, int tv,
 #endif
 
     /* sort full dataset by unit and period */
-    err = panel_data_sort_by(Z, pdinfo, uv, tv);
+    err = panel_data_sort_by(Z, pdinfo, uv, tv, &ustrs);
 
 #if PDEBUG
     print_unit_var(uv, Z, n, 1);
@@ -3916,7 +3961,8 @@ int set_panel_structure_from_vars (int uv, int tv,
 	rearrange_id_array(tid, nperiods, n);
 	err = pad_panel_dataset(uid, uv, nunits, 
 				tid, tv, nperiods, 
-				Z, pdinfo, mask);
+				Z, pdinfo, ustrs, 
+				mask);
     }
 
     if (!err) {

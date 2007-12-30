@@ -512,6 +512,7 @@ void gretl_win32_init (const char *progname)
 
     wimp_init();
     read_rc(); /* get config info from registry */
+    set_gretl_startdir();
     set_gd_fontpath();
     hush_warnings();
     ws_startup(); 
@@ -624,42 +625,6 @@ int win_buf_to_clipboard (const char *buf)
     CloseClipboard();
 
     return 0;
-}
-
-int fnamecmp_win32 (const char *f1, const char *f2)
-{
-    GError *err = NULL;
-    gchar *u1 = NULL, *u2 = NULL;
-    gchar *c1 = NULL, *c2 = NULL;
-    gsize bytes;
-    int ret = 0;
-
-    u1 = g_locale_to_utf8(f1, -1, NULL, &bytes, &err);
-    if (err != NULL) {
-	errbox(err->message);
-	g_error_free(err);
-	return 0;
-    }
-
-    u2 = g_locale_to_utf8(f2, -1, NULL, &bytes, &err);
-    if (err != NULL) {
-	errbox(err->message);
-	g_error_free(err);
-	g_free(u1);
-	return 0;
-    }
-
-    c1 = g_utf8_casefold(u1, -1);
-    c2 = g_utf8_casefold(u2, -1);
-
-    ret = strcmp(c1, c2);
-
-    g_free(u1);
-    g_free(u2);
-    g_free(c1);
-    g_free(c2);
-
-    return ret;
 }
 
 static char *fname_from_fullname (char *fullname)

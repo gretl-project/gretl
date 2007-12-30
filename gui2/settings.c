@@ -169,8 +169,6 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
       INVISET, MAXLEN, TAB_MAIN, NULL },
-    { "expert", N_("Expert mode (no warnings)"), NULL, &expert, 
-      BOOLSET, 0, TAB_MAIN, NULL },
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
@@ -447,7 +445,7 @@ static void get_functions_dir (char *dirname)
     
     if (ok) return;
 
-    sprintf(dirname, "%sfunctions", paths.workdir);
+    sprintf(dirname, "%sfunctions", paths.dotdir); /* ?? */
     err = gretl_mkdir(dirname);
     if (!err) {
 	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
@@ -469,17 +467,38 @@ static void get_functions_dir (char *dirname)
 
 static char startdir[MAXLEN];
 
-void set_program_startdir (void)
+void set_gretl_startdir (void)
 {
-    char *test = getcwd(startdir, MAXLEN);
+    char *test = getenv("GRETL_STARTDIR");
 
-    if (test == NULL) {
+    if (test != NULL) {
 	*startdir = '\0';
+	strncat(startdir, test, MAXLEN - 1);
+    } else {
+	test = getcwd(startdir, MAXLEN);
+	if (test == NULL) {
+	    *startdir = '\0';
+	}
     }
 
 #if 0
-    fprintf(stderr, "Starting in '%s'\n", startdir);
+    fprintf(stderr, "startdir = '%s'\n", startdir);
 #endif
+
+    if (usecwd && *startdir != '\0') {
+	int err = set_gretl_work_dir(startdir, &paths);
+
+	if (err) {
+	    fprintf(stderr, "%s\n", gretl_errmsg_get());
+	} else {
+	    fprintf(stderr, "working dir = '%s'\n", paths.workdir);
+	}
+    }
+}
+
+const char *get_gretl_startdir (void)
+{
+    return startdir;
 }
 
 void get_default_dir (char *s, int action)
@@ -488,28 +507,10 @@ void get_default_dir (char *s, int action)
 
     if (action == SAVE_FUNCTIONS) {
 	get_functions_dir(s);
-	if (*s != '\0') {
-	    slash_terminate(s);
-	    return;
-	}
     } else if (action == OPEN_RATS_DB) {
 	strcpy(s, paths.ratsbase);
-	return;
-    }
-
-    if (usecwd && action != SAVE_DBDATA) {
-	if (*startdir != '\0') {
-	    strcpy(s, startdir);
-	} else {
-	    const char *sdir = get_session_dirname();
-	    char *test = getcwd(s, MAXLEN);
-
-	    if (test == NULL || (*sdir != '\0' && strstr(s, sdir))) {
-		strcpy(s, paths.workdir);
-	    }
-	} 
     } else {
-	strcpy(s, paths.workdir);   
+	strcpy(s, paths.workdir);
     }
 
     slash_terminate(s);
@@ -752,11 +753,9 @@ void gretl_config_init (void)
 #endif
 
     read_rc();
+    set_gretl_startdir();
     set_gd_fontpath();
-
-    if (!expert) {
-	root_check();
-    }
+    root_check();
 }
 
 #endif /* *nix versus Windows */
@@ -2259,52 +2258,6 @@ void graph_color_selector (GtkWidget *w, gpointer p)
 
 /* end graph color selection apparatus */
 
-#ifndef G_OS_WIN32
-
-static void real_set_workdir (GtkWidget *widget, dialog_t *dlg)
-{
-    const gchar *dirname;
-    int err;
-
-    dirname = edit_dialog_get_text(dlg);
-    err = set_gretl_work_dir(dirname, &paths);
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    } else {
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-	set_tramo_x12a_status();
-#endif
-	close_dialog(dlg);
-    }
-}
-
-void first_time_set_user_dir (void)
-{
-    DIR *test;
-
-    /* see if an already-specified workdir exists */
-    if (*paths.workdir != '\0') {
-	test = opendir(paths.workdir);
-	if (test != NULL) {
-	    closedir(test);
-	    return;
-	}
-    }
-	
-    /* work dir is not specified, or doesn't exist */
-    edit_dialog (_("gretl: working directory"), 
-                 _("You seem to be using gretl for the first time.\n"
-		   "Please enter a directory for gretl user files."),
-                 paths.workdir, 
-                 real_set_workdir, NULL, 
-                 CREATE_USERDIR, VARCLICK_NONE,
-		 NULL);
-}
-
-#endif /* G_OS_WIN32 */
-
 void dump_rc (void) 
 {
     char dumper[MAXLEN];
@@ -2360,6 +2313,39 @@ void gui_set_working_dir (char *dirname)
 	delete_from_filelist(FILE_LIST_WDIR, dirname);
     } else {
 	mkfilelist(FILE_LIST_WDIR, dirname);
+	finalize_working_dir_menu();
     }
 }
 
+void set_working_dir_from_startup (void)
+{
+    if (*startdir) {
+	gui_set_working_dir(startdir);
+    } else {
+	errbox("Can't determine startup directory");
+    }
+}
+
+void finalize_working_dir_menu (void)
+{
+    const char *p0 = "/File/Working directory";
+    const char *p1 = "/File/Working directory/Use startup directory";
+    GtkWidget *w;
+
+    w = gtk_item_factory_get_widget(mdata->ifac, p0);
+    if (w != NULL) {
+	gchar *tmp = g_strdup_printf("Currently %s", paths.workdir);
+
+	gretl_tooltips_add(w, tmp);
+	g_free(tmp);
+    } 
+
+    w = gtk_item_factory_get_widget(mdata->ifac, p1);
+    if (w != NULL) {
+	if (*startdir == '\0') {
+	    gtk_widget_set_sensitive(w, FALSE);
+	} else {
+	    gretl_tooltips_add(w, startdir);
+	}
+    }
+}

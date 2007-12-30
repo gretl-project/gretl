@@ -89,7 +89,6 @@ extern char sessionfile[MAXLEN];
 extern char tryfile[MAXLEN];
 
 /* global option-related vars */
-extern int expert;
 extern int updater;
 extern int winsize;
 extern int main_x;

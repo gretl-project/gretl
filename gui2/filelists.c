@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "filelists.h"
+#include "libset.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -264,22 +265,17 @@ static char *endbit (char *dest, const char *src, int addscore)
 	strcpy(dest, src);
     }
 
-    if (addscore != 0) {
-	/* then either double (1) or delete (-1) any underscores */
+    if (addscore) {
+	/* double any underscores in dest */
 	char mod[MAXSTR];
-	size_t i, j, n;
+	int n = strlen(dest);
+	int i, j = 0;
 
-	n = strlen(dest);
-	j = 0;
 	for (i=0; i<=n; i++) {
-	    if (dest[i] != '_')
-		mod[j++] = dest[i];
-	    else {
-		if (addscore == 1) {
-		    mod[j++] = '_';
-		    mod[j++] = dest[i];
-		} 
-	    }
+	    if (dest[i] == '_') {
+		mod[j++] = '_';
+	    } 
+	    mod[j++] = dest[i];
 	}
 	strcpy(dest, mod);
     }
@@ -341,6 +337,86 @@ static void add_files_to_menu (int ftype)
     real_add_files_to_menus(ftype);
 }
 
+#ifdef G_OS_WIN32
+
+/* make comparison case-insensitive */
+
+int fnamecmp (const char *f1, const char *f2)
+{
+    GError *err = NULL;
+    gchar *u1 = NULL, *u2 = NULL;
+    gchar *c1 = NULL, *c2 = NULL;
+    gsize bytes;
+    int n, ret = 0;
+
+    u1 = g_locale_to_utf8(f1, -1, NULL, &bytes, &err);
+    if (err != NULL) {
+	errbox(err->message);
+	g_error_free(err);
+	return 0;
+    }
+
+    u2 = g_locale_to_utf8(f2, -1, NULL, &bytes, &err);
+    if (err != NULL) {
+	errbox(err->message);
+	g_error_free(err);
+	g_free(u1);
+	return 0;
+    }
+
+    c1 = g_utf8_casefold(u1, -1);
+    c2 = g_utf8_casefold(u2, -1);
+
+    n = strlen(c1);
+    if (c1[n-1] == SLASH) {
+	c1[n-1] = '\0';
+    }
+
+    n = strlen(c2);
+    if (c2[n-1] == SLASH) {
+	c2[n-1] = '\0';
+    }
+
+    ret = strcmp(c1, c2);
+
+    g_free(u1);
+    g_free(u2);
+    g_free(c1);
+    g_free(c2);
+
+    return ret;
+}
+
+#else
+
+int fnamecmp (const char *f1, const char *f2)
+{
+    gchar *c1 = NULL, *c2 = NULL;
+    int n, ret = 0;
+
+    c1 = g_strdup(f1);
+    c2 = g_strdup(f2);
+
+    n = strlen(c1);
+    if (c1[n-1] == SLASH) {
+	c1[n-1] = '\0';
+    }
+
+    n = strlen(c2);
+    if (c2[n-1] == SLASH) {
+	c2[n-1] = '\0';
+    }
+
+    ret = strcmp(c1, c2);
+
+    g_free(c1);
+    g_free(c2);
+
+    return ret;
+}
+
+#endif
+
 void mkfilelist (int filetype, char *fname)
 {
     char *tmp[MAXRECENT-1];
@@ -355,22 +431,15 @@ void mkfilelist (int filetype, char *fname)
     }
 
     /* see if this file is already on the list */
-#ifdef G_OS_WIN32
     for (i=0; i<MAXRECENT; i++) {
-	/* ignore case */
-        if (fnamecmp_win32(filep[i], fname) == 0) {
+        if (!fnamecmp(filep[i], fname)) {
             match = i;
             break;
         }
     }
-#else
-    for (i=0; i<MAXRECENT; i++) {
-        if (strcmp(filep[i], fname) == 0) {
-            match = i;
-            break;
-        }
-    }
-#endif
+
+    fprintf(stderr, "fname='%s', match=%d\n",
+	    fname, match);
 
     if (match == 0) {
 	/* file is on top: no change in list */
@@ -436,21 +505,12 @@ void delete_from_filelist (int filetype, const char *fname)
     }
 
     /* save pointers to current order */
-#ifdef G_OS_WIN32
     for (i=0; i<MAXRECENT; i++) {
 	tmp[i] = filep[i];
-        if (fnamecmp_win32(filep[i], fname) == 0) {
-            match = i;
-        }
-    }
-#else
-    for (i=0; i<MAXRECENT; i++) {
-	tmp[i] = filep[i];
-	if (!strcmp(filep[i], fname)) {
+	if (!fnamecmp(filep[i], fname)) {
 	    match = i;
 	}
     }
-#endif
 
     if (match == -1) {
 	return;
@@ -609,6 +669,3 @@ void add_files_to_menus (void)
 {
     real_add_files_to_menus(NFILELISTS);
 }
-
-
-

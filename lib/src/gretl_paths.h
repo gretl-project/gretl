@@ -68,8 +68,6 @@ const char *gretl_dot_dir (void);
 
 const char *gretl_work_dir (void);
 
-int set_gretl_user_dir (const char *path, PATHS *ppaths);
-
 int set_gretl_work_dir (const char *path, PATHS *ppaths);
 
 void gretl_maybe_switch_dir (const char *fname);

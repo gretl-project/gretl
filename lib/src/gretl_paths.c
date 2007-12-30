@@ -1101,32 +1101,6 @@ int set_gretl_work_dir (const char *path, PATHS *ppaths)
     return 0;
 }
 
-int set_gretl_dot_dir (const char *path, PATHS *ppaths)
-{
-    int err = validate_writedir(path);
-
-    if (err) {
-	return err;
-    }
-
-    if (path != ppaths->dotdir) {
-	strcpy(ppaths->dotdir, path);
-    }
-
-    ensure_slash(ppaths->dotdir);
-    set_tramo_x12a_dirs(ppaths, 0);
-
-    strcpy(gretl_paths.dotdir, ppaths->dotdir);
-    strcpy(gretl_paths.x12adir, ppaths->x12adir);
-    strcpy(gretl_paths.tramodir, ppaths->tramodir);
-
-    gretl_insert_builtin_string("dotdir",   ppaths->dotdir);
-    gretl_insert_builtin_string("x12adir",  ppaths->x12adir);
-    gretl_insert_builtin_string("tramodir", ppaths->tramodir);
-
-    return 0;
-}
-
 const char *gretl_gnuplot_path (void)
 {
     return gretl_paths.gnuplot;

@@ -1154,13 +1154,11 @@ void verify_clear_data (void)
 	return;
     }
 
-    if (!expert) {
-        if (yes_no_dialog ("gretl",                      
-			   _("Clearing the data set will end\n"
-			     "your current session.  Continue?"), 
-			   0) != GRETL_YES) {
-            return;
-	}
+    if (yes_no_dialog ("gretl",                      
+		       _("Clearing the data set will end\n"
+			 "your current session.  Continue?"), 
+		       0) != GRETL_YES) {
+	return;
     }
 
     close_session(NULL, &Z, &datainfo);

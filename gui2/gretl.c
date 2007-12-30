@@ -116,7 +116,6 @@ int data_status, orig_vars;
 float gui_scale;
 
 /* defaults for some options */
-int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
 int winsize = FALSE;
@@ -167,11 +166,15 @@ static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
     varinfo_dialog(mdata->active_var, 1);
 }
 
-static void wdir_select_callback (gpointer p, guint u, GtkWidget *w)
+static void wdir_select_callback (gpointer p, guint startup, GtkWidget *w)
 {
-    const char *s = N_("gretl working directory");
+    if (startup) {
+	set_working_dir_from_startup();
+    } else {
+	const char *s = N_("gretl working directory");
 
-    file_selector(_(s), SET_DIR, FSEL_DATA_MISC, paths.workdir);
+	file_selector(_(s), SET_DIR, FSEL_DATA_MISC, paths.workdir);
+    }
 }
 
 #ifdef ENABLE_MAILER
@@ -282,6 +285,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/_Working directory"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/Working directory/_Select..."), "", wdir_select_callback, 0, 
       "<StockItem>", GTK_STOCK_OPEN },
+    { N_("/File/Working directory/Use startup directory"), "", 
+      wdir_select_callback, 1, NULL, GNULL },
 
     { "/File/sep5", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },
@@ -779,7 +784,6 @@ int main (int argc, char *argv[])
 
     libgretl_init();
     gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
-    set_program_startdir();
 
 #ifdef G_OS_WIN32
     gretl_win32_init(argv[0]);
@@ -961,12 +965,8 @@ int main (int argc, char *argv[])
 	set_sample_label(datainfo);
     }
 
-#ifndef G_OS_WIN32
-    /* Let a first-time user set the working dir */
-    first_time_set_user_dir(); 
-#endif
-
     add_files_to_menus();
+    finalize_working_dir_menu();
 
     session_menu_state(FALSE);
     restore_sample_state(FALSE);

@@ -1138,8 +1138,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
    - called from dialog: user has said Yes to opening data file,
      although a data file is already open (or user wants to append
      data)
-   - reached without dialog, in expert mode or when no datafile
-     is open yet
+   - reached without dialog, when no datafile is open yet
 */
 
 void do_open_data (GtkWidget *w, gpointer data, int code)
@@ -1235,7 +1234,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 }
 
 /* give user choice of not opening selected datafile, if there's
-   already a datafile open and we're not in "expert" mode */
+   already a datafile open */
 
 void verify_open_data (gpointer userdata, int code)
 {
@@ -1243,7 +1242,7 @@ void verify_open_data (gpointer userdata, int code)
 	return;
     }
 
-    if (data_status && !expert) {
+    if (data_status) {
 	int resp = 
 	    yes_no_dialog (_("gretl: open data"), 
 			   _("Opening a new data file will automatically\n"
@@ -1257,7 +1256,7 @@ void verify_open_data (gpointer userdata, int code)
 }
 
 /* give user choice of not opening session file, if there's already a
-   datafile open and we're not in "expert" mode */
+   datafile open */
 
 void verify_open_session (void)
 {
@@ -1267,7 +1266,7 @@ void verify_open_session (void)
 	return;
     }
 
-    if (data_status && !expert) {
+    if (data_status) {
 	int resp = 
 	    yes_no_dialog (_("gretl: open session"), 
 			   _("Opening a new session file will automatically\n"

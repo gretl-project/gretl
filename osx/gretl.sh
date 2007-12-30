@@ -4,6 +4,9 @@
 #   sudo fc-cache
 # before running this program
 
+# record prior dir
+STARTDIR=`pwd`
+export "GRETL_STARTDIR=$STARTDIR"
 
 CWD="`(cd \"\`dirname \\\"$0\\\"\`\"; echo $PWD)`"
 TOP="`dirname \"$CWD\"`"
