@@ -3489,14 +3489,15 @@ series_has_negative_vals (const double *x)
     return 0;
 }
 
-void do_freqplot (gpointer p, guint dist, GtkWidget *w)
+void do_freqplot (gpointer p, guint u, GtkWidget *w)
 {
     FreqDist *freq;
-    gretlopt opt = (dist == D_GAMMA)? OPT_O : 
-	(dist == D_NORMAL)? OPT_Z : OPT_NONE;
+    gretlopt opt = OPT_NONE;
+    int dist = D_NONE;
     int v = mdata_active_var();
     double fmin = NADBL;
     double fwid = NADBL;
+    int discrete = 0;
     int nbins = 0;
     int err = 0;
 
@@ -3509,14 +3510,24 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 	nbins = 3;
     } else if (var_is_discrete(datainfo, v) ||
 	       gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[v])) {
-	; /* don't show dialog */
-    } else {
+	discrete = 1;
+    }
+
+    if (nbins == 0) {
 	double xmax, xmin;
 	char *bintxt;
 	int n;
 
-	err = freq_setup(v, (const double **) Z, datainfo,
+	if (discrete) {
+	    n = gretl_minmax(datainfo->t1, datainfo->t2, Z[v], &xmin, &xmax);
+	    if (n == 0) {
+		err = E_MISSDATA;
+	    }
+	} else {
+	    err = freq_setup(v, (const double **) Z, datainfo,
 			 &n, &xmax, &xmin, &nbins, &fwid);
+	}
+
 	if (err) {
 	    gui_errmsg(err);
 	    return;
@@ -3527,16 +3538,28 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 				 datainfo->varname[v],
 				 n, xmin, xmax);
 
-	if (n % 2 == 0) n--;
-
-	err = freq_dialog("gretl: frequency plot setup", bintxt, &nbins,
-			  n, &fmin, &fwid, xmin, xmax);
+	if (discrete) {
+	    /* minimal dialog */
+	    err = freq_dialog("gretl: frequency plot setup", bintxt, NULL,
+			      0, NULL, NULL, xmin, xmax, &dist);
+	} else {
+	    /* full dialog */
+	    if (n % 2 == 0) n--;
+	    err = freq_dialog("gretl: frequency plot setup", bintxt, &nbins,
+			      n, &fmin, &fwid, xmin, xmax, &dist);
+	}
 
 	g_free(bintxt);
 
 	if (err < 0) {
 	    /* canceled */
 	    return;
+	}
+
+	if (dist == D_NORMAL) {
+	    opt = OPT_Z;
+	} else if (dist == D_GAMMA) {
+	    opt = OPT_O;
 	}
     }
 
@@ -3557,7 +3580,7 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 	return;
     }
 
-    if (dist == D_GAMMA && series_has_negative_vals(Z[v])) {
+    if (opt == OPT_O && series_has_negative_vals(Z[v])) {
 	errbox(_("Data contain negative values: gamma distribution not "
 		 "appropriate"));
     } else {

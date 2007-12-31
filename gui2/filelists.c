@@ -385,7 +385,7 @@ int fnamecmp (const char *f1, const char *f2)
 int fnamecmp (const char *f1, const char *f2)
 {
     gchar *c1 = NULL, *c2 = NULL;
-    int n, ret = 0;
+    int ret = 0;
 
     c1 = g_strdup(f1);
     c2 = g_strdup(f2);

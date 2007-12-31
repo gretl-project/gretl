@@ -187,7 +187,7 @@ int record_varlabel_change (int v);
 
 void do_resid_freq (gpointer p, guint action, GtkWidget *w);
 
-void do_freqplot (gpointer p, guint gamma, GtkWidget *w);
+void do_freqplot (gpointer p, guint u, GtkWidget *w);
 
 void do_corrgm (gpointer p, guint u, GtkWidget *w);
 

@@ -114,7 +114,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,
-		 double xmin, double xmax);
+		 double xmin, double xmax, int *dist);
 
 void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 		       gretlopt *popt, int *cancelled);

@@ -2046,9 +2046,9 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 		/* pretty much guessing at y coordinate here */
 		sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
 				  " %-6.3g", data_y);
-			}
-		strcat(label, label_y);
 	    }
+	    strcat(label, label_y);
+	}
 
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
@@ -3266,7 +3266,7 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
                            | GDK_POINTER_MOTION_MASK
                            | GDK_POINTER_MOTION_HINT_MASK);
 
-    GTK_WIDGET_SET_FLAGS (plot->canvas, GTK_CAN_FOCUS);
+    GTK_WIDGET_SET_FLAGS(plot->canvas, GTK_CAN_FOCUS);
 
     g_signal_connect(G_OBJECT(plot->canvas), "button_press_event", 
 		     G_CALLBACK(plot_button_press), plot);

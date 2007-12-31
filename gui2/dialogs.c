@@ -3325,6 +3325,17 @@ static gboolean freq_info_set (GtkWidget *w, struct freqdist_info *f)
     return FALSE;
 }
 
+static void freq_set_dist (GtkWidget *w, int *dist)
+{
+    int fopt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "fopt"));
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	if (fopt == 0) *dist = D_NONE;
+	else if (fopt == 1) *dist = D_NORMAL;
+	else if (fopt == 2) *dist = D_GAMMA;
+    }
+}
+
 static void freq_info_control (GtkWidget *w, struct freqdist_info *f)
 {
     int snum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "snum"));
@@ -3348,12 +3359,17 @@ static void revise_finfo (GtkWidget *w, struct freqdist_info *f)
 
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,
-		 double xmin, double xmax)
+		 double xmin, double xmax, int *dist)
 {
     const char *strs[] = {
 	N_("Number of bins:"),
 	N_("Minimum value, left bin:"),
 	N_("Bin width:")
+    };
+    const char *opts[] = {
+	N_("Simple"),
+	N_("Against Normal"),
+	N_("Against Gamma")
     };
     struct freqdist_info finfo;
     GtkWidget *dialog, *rad;
@@ -3362,7 +3378,7 @@ int freq_dialog (const char *title, const char *blurb,
     GSList *group = NULL;
     double f0min, f0max, f0step;
     double wmin, wmax, wstep;
-    int i, ret = 0;
+    int i, imax, ret = 0;
 
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 
@@ -3377,6 +3393,10 @@ int freq_dialog (const char *title, const char *blurb,
     gtk_widget_show(tmp);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
 		       tmp, TRUE, TRUE, 5);
+
+    if (nbins == NULL) {
+	goto dist_only;
+    }
 
     tbl = gtk_table_new(3, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -3433,20 +3453,46 @@ int freq_dialog (const char *title, const char *blurb,
     gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), tbl);
     gtk_widget_show_all(tbl);
 
+    vbox_add_hsep(GTK_DIALOG(dialog)->vbox);
+    group = NULL;
+
+ dist_only:
+
+    /* if var has negative values, don't show Gamma dist option */
+    imax = (xmin < 0)? 2 : 3;
+
+    for (i=0; i<imax; i++) {
+	GtkWidget *hbox;
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	rad = gtk_radio_button_new_with_label(group, _(opts[i]));
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rad));
+	g_object_set_data(G_OBJECT(rad), "fopt", GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(rad), "clicked",
+			 G_CALLBACK(freq_set_dist), dist);
+	gtk_container_add(GTK_CONTAINER(hbox), rad);
+	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), hbox);
+	gtk_widget_show_all(hbox);
+    }
+
     /* Cancel button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     /* "OK" button */
     okb = ok_button(GTK_DIALOG(dialog)->action_area);
-    g_signal_connect(G_OBJECT(okb), "clicked", G_CALLBACK(revise_finfo), 
-		     &finfo);
+    if (nbins != NULL) {
+	g_signal_connect(G_OBJECT(okb), "clicked", G_CALLBACK(revise_finfo), 
+			 &finfo);
+    }
     g_signal_connect(G_OBJECT(okb), "clicked", G_CALLBACK(delete_widget), 
 		     dialog);
     gtk_widget_grab_default(okb);
     gtk_widget_show(okb);
 
     /* Help button */
-    context_help_button(GTK_DIALOG(dialog)->action_area, FREQ);
+    if (nbins != NULL) {
+	context_help_button(GTK_DIALOG(dialog)->action_area, FREQ);
+    }
 
     gtk_widget_show(dialog);
 

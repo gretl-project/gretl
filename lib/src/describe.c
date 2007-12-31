@@ -81,19 +81,20 @@ static int good_obs (const double *x, int n, double *x0)
  * @t1: starting observation.
  * @t2: ending observation.
  * @x: data series.
- * @min: pointer to receive minimum value.
- * @max: pointer to receive maximum value.
+ * @min: location to receive minimum value.
+ * @max: location to receive maximum value.
  *
  * Puts the minimum and maximum values of the series @x,
  * from obs @t1 to obs @t2, into the variables @min and @max.
  *
- * Returns: 0 on success, 1 on failure.
+ * Returns: the number of valid observations in the given
+ * data range.
  */
 
 int gretl_minmax (int t1, int t2, const double *x, 
 		  double *min, double *max)
 {
-    int t;
+    int t, n = 0;
 
     while (na(x[t1]) && t1 <= t2) {
 	t1++;
@@ -101,7 +102,7 @@ int gretl_minmax (int t1, int t2, const double *x,
 
     if (t1 > t2) {
         *min = *max = NADBL;
-        return 1;
+        return 0;
     }
 
     *min = *max = x[t1];
@@ -110,10 +111,11 @@ int gretl_minmax (int t1, int t2, const double *x,
 	if (!(na(x[t]))) {
 	    if (x[t] > *max) *max = x[t];
 	    if (x[t] < *min) *min = x[t];
+	    n++;
 	}
     }
 
-    return 0;
+    return n;
 }
 
 /**

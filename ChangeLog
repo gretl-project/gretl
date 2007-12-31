@@ -7,6 +7,7 @@ version 1.7.2, in progress
 - Paths stuff: add non-configurable "dotdir" to hold per-user
   automatically-created files
 - Fix bug 1861010
+- Rationalize frequency plot dialog
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"
