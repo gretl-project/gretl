@@ -551,6 +551,22 @@ static int dotpath (const char *fname)
     return 0;
 }
 
+static char *fname_strstr (char *fname, char *dname)
+{
+#ifdef WIN32
+    char lfname[MAXLEN], ldname[MAXLEN];
+
+    *lfname = *ldname = '\0';
+    strncat(lfname, fname, MAXLEN - 1);
+    strncat(ldname, dname, MAXLEN - 1);
+    lower(lfname);
+    lower(ldname);
+    return strstr(lfname, ldname);
+#else
+    return strstr(fname, dname);
+#endif
+}
+
 /* note: for our purposes we count filenames beginning with "./" or
    "../" as absolute 
 */
@@ -560,22 +576,27 @@ int gretl_path_is_absolute (const char *fname)
     return g_path_is_absolute(fname) || dotpath(fname);
 }
 
+static void real_make_path_absolute (char *targ, const char *src,
+				     const char *dirname)
+{
+    int offset = 0;
+
+    strcpy(targ, dirname);
+    trim_slash(targ);
+    strcat(targ, SLASHSTR);
+    if (*src == '.' && src[1] == SLASH && strlen(src) > 2) {
+	offset = 2;
+    }
+    strcat(targ, src + offset);
+}
+
 static void make_path_absolute (char *fname, const char *orig)
 {
     char thisdir[MAXLEN];
-    int offset = 0;
 
-    if (getcwd(thisdir, MAXLEN-1) != NULL) {
-#ifdef WIN32		
-	lower(thisdir); /* hmmm */
-#endif
-	if (strstr(fname, thisdir) == NULL) {
-	    strcpy(fname, thisdir);
-	    strcat(fname, SLASHSTR);
-	    if (*orig == '.' && orig[1] == SLASH && strlen(orig) > 2) {
-		offset = 2;
-	    }
-	    strcat(fname, orig + offset);
+    if (getcwd(thisdir, MAXLEN - 1) != NULL) {
+	if (fname_strstr(fname, thisdir) == NULL) {
+	    real_make_path_absolute(fname, orig, thisdir);
 	}
     }
 }
@@ -592,7 +613,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
     int ret = 0;
 
     if (sdir != NULL && *sdir != '\0') {
-	sprintf(fname, "%s%c%s", sdir, SLASH, orig);
+	real_make_path_absolute(fname, orig, sdir);
 	test = gretl_fopen(fname, "r");
 	if (test != NULL) {
 	    fclose(test);
@@ -628,7 +649,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 
     if (dotpath(fname) && shelldir_open_dotfile(fname, orig)) {
 	return fname;
-    }
+    }  
 
     /* try opening filename as given */
     test = gretl_fopen(fname, "r");
@@ -1175,6 +1196,7 @@ void show_paths (const PATHS *ppaths)
     printf(_("gretl: using these basic search paths:\n"));
     printf("gretldir: %s\n", ppaths->gretldir);
     printf("workdir: %s\n", ppaths->workdir);
+    printf("dotdir: %s\n", ppaths->dotdir);
     printf("gnuplot: %s\n", ppaths->gnuplot);
 }
 
@@ -1403,9 +1425,9 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 #endif /* win32 versus unix */
 
 /* for writing a file, name given by user: if the path is not
-   absolute, switch to the gretl workdir (for a plain filename and
-   USE_CWD not set), or to the current "shelldir" (for a filename
-   beginning with '.', or if USE_CWD is set).
+   absolute, switch to the gretl "workdir" (for a plain filename and
+   STATE_USE_CWD not set), or to the current "shelldir" (for a filename
+   beginning with '.', or if STATE_USE_CWD is set).
 */
 
 void gretl_maybe_switch_dir (const char *fname)
@@ -1414,7 +1436,7 @@ void gretl_maybe_switch_dir (const char *fname)
 	if (dotpath(fname) || libset_get_bool(USE_CWD)) {
 	    char *sdir = get_shelldir();
 
-	    if (sdir != NULL) {
+	    if (sdir != NULL && *sdir != '\0') {
 		chdir(sdir);
 	    }
 	} else {

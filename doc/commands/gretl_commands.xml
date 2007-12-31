@@ -4472,13 +4472,15 @@
 
     <description context="cli">
       <para>
-	Must immediately follow an <cmd>ols</cmd> command. Depending on
-	the option given, this command carries one of the following:
+	Must immediately follow an estimation command. Depending on
+	the option given, this command carries out one of the following:
 	Lagrange Multiplier test for nonlinearity (logs or squares);
 	White's test for heteroskedasticity; the LMF test for serial
-	correlation (see Kiviet, 1986); and a test for ARCH
+	correlation (see Kiviet, 1986); or a test for ARCH
 	(Autoregressive Conditional Heteroskedasticity, see also the
-	<cmd>arch</cmd> command).
+	<cmd>arch</cmd> command).  Most of the options are only
+	available for models estimated via OLS, but see below for
+	details regarding two-stage least squares.
       </para>
       <para>
 	The optional <lit>order</lit> argument is relevant only in case
@@ -4500,16 +4502,14 @@
 	be retrieved using the accessors <lit>$test</lit> and
 	<lit>$pvalue</lit> respectively.
       </para>
-
       <para>
-	When a model has been estimated by two-stage least squares
-	(see <cmdref targ="tsls"/>), the LM principle breaks down and
-	gretl offers some equivalents: in these cases, the
-	<flag>--autocorr</flag> option computes Godfrey's (Review of
-	Economics and Statistics, 1994) test for autocorrelation,
-	while the <flag>--white</flag> option yields Pesaran and
-	Taylor's (Oxford Bulletin of Economics and Statistics, 1999)
-	HET1 heteroskedasticity test.
+	When a model has been estimated by two-stage least squares (see
+	<cmdref targ="tsls"/>), the LM principle breaks down and gretl
+	offers some equivalents: the <flag>--autocorr</flag> option
+	computes Godfrey's test for autocorrelation (Review of Economics
+	and Statistics, 1994) while the <flag>--white</flag> option yields
+	Pesaran and Taylor's HET1 heteroskedasticity test (Oxford Bulletin
+	of Economics and Statistics, 1999).
       </para>
     </description>
 

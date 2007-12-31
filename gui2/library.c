@@ -2887,11 +2887,8 @@ static int real_do_model (int action)
     }
 
     if (err) {
-	if (action == ARMA && (libcmd.opt & OPT_V) && !(libcmd.opt & OPT_X)) {
+	if (action == GARCH && (libcmd.opt & OPT_V)) {
 	    /* non-convergence info? */
-	    view_buffer(prn, 78, 400, _("gretl: ARMA"), PRINT, NULL);
-	} else if (action == GARCH && (libcmd.opt & OPT_V)) {
-	    /* ditto */
 	    view_buffer(prn, 78, 400, _("gretl: GARCH"), PRINT, NULL);
 	} else {
 	    gretl_print_destroy(prn);
