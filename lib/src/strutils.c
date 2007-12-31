@@ -1781,6 +1781,27 @@ const char *path_last_element (const char *path)
     return p;
 }
 
+/**
+ * trim_slash:
+ * @s: string to work on.
+ *
+ * If @s ends with either a forward slash or a backslash, 
+ * remove this character.
+ *
+ * Returns: the (possibly) modified string.
+ */
+
+char *trim_slash (char *s)
+{
+    int n = strlen(s);
+
+    if (s[n-1] == '/' || s[n-1] == '\\') {
+	s[n-1] = '\0';
+    }
+
+    return s;
+}
+
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
 {
     GPatternSpec *pspec;

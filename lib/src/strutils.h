@@ -148,6 +148,8 @@ char *build_path (char *targ, const char *dirname, const char *fname,
 
 const char *path_last_element (const char *path);
 
+char *trim_slash (char *s);
+
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);
 
 #endif /* STRUTILS_H */

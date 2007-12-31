@@ -286,7 +286,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Working directory/_Select..."), "", wdir_select_callback, 0, 
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Working directory/Use startup directory"), "", 
-      wdir_select_callback, 1, NULL, GNULL },
+      wdir_select_callback, 1, "<StockItem>", GRETL_STOCK_CONSOLE },
 
     { "/File/sep5", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },

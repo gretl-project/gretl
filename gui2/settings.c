@@ -957,21 +957,18 @@ get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse)
     int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
-	if (rc_vars[i].tab != page) {
-	    continue;
+	if (rc_vars[i].tab == page) {
+	    if (rc_vars[i].flags & BROWSER) {
+		*n_browse += 1;
+	    }
+	    if (rc_vars[i].flags & BOOLSET) {
+		*n_bool += 1;
+	    } else if (rc_vars[i].flags & RADIOSET) {
+		*n_bool += 1;
+	    } else if (!(rc_vars[i].flags & INVISET)) {
+		*n_str += 1;
+	    }
 	}
-
-	if (rc_vars[i].flags & BROWSER) {
-	    *n_browse += 1;
-	}
-
-	if (rc_vars[i].flags & BOOLSET) {
-	    *n_bool += 1;
-	} else if (rc_vars[i].flags & RADIOSET) {
-	    *n_bool += 1;
-	} else if (!(rc_vars[i].flags & INVISET)) {
-	    *n_str += 1;
-	} 
     }
 }
 
@@ -1056,8 +1053,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), FALSE);
 	    }
 
-	    /* special case: warning */
-	    if (!strcmp(rc->key, "lcnumeric") || !strcmp(rc->key, "wimp")) {
+	    /* special case: deferred processing */
+	    if (!strcmp(rc->key, "lcnumeric") ||
+		!strcmp(rc->key, "usecwd") ||
+		!strcmp(rc->key, "wimp")) {
 		g_signal_connect(G_OBJECT(rc->widget), "toggled",
 				 G_CALLBACK(takes_effect_on_restart), 
 				 NULL);
@@ -1220,8 +1219,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_entry_set_text(GTK_ENTRY(rc->widget), strvar);
 	    gtk_widget_show(rc->widget);
 
-	    /* path browse button */
 	    if (rc->flags & BROWSER) {
+		/* add path browse button */
 		w = make_path_browse_button(rc);
 		gtk_table_attach_defaults(GTK_TABLE(s_table), 
 					  w, 2, 3, s_len-1, s_len);
@@ -1426,7 +1425,6 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     /* register these for session using libset apparatus */
     libset_set_bool(USE_QR, useqr);
-    libset_set_bool(USE_CWD, usecwd);
     libset_set_bool(SHELL_OK, shellok);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
@@ -1502,10 +1500,10 @@ static int common_read_rc_setup (void)
     int err = 0;
 
     libset_set_bool(USE_QR, useqr);
-    libset_set_bool(USE_CWD, usecwd);
     libset_set_bool(SHELL_OK, shellok);
+    libset_set_bool(USE_CWD, usecwd);
     set_gp_colors();
-    
+
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_garch_robust_vcv(hc_garch);
@@ -2336,6 +2334,7 @@ void finalize_working_dir_menu (void)
     if (w != NULL) {
 	gchar *tmp = g_strdup_printf("Currently %s", paths.workdir);
 
+	trim_slash(tmp);
 	gretl_tooltips_add(w, tmp);
 	g_free(tmp);
     } 

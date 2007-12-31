@@ -111,15 +111,6 @@ static char *full_path (char *s1, const char *s2)
     return fpath;
 }
 
-static void unslash (char *s)
-{
-    size_t n = strlen(s);
-
-    if (s[n-1] == '\\' || s[n-1] == '/') {
-	s[n-1] = '\0';
-    }
-}
-
 static int recognized_collection (file_collection *coll)
 {
     const file_collection recognized_data[] = {
@@ -439,7 +430,7 @@ static int seek_file_collections (int location)
 	tmp = g_strdup_printf("%sscripts", paths.gretldir);
     } else if (location == USER_SEARCH) {
 	tmp = g_strdup(paths.workdir);
-	unslash(tmp);
+	trim_slash(tmp);
     } else {
 	return 1;
     }

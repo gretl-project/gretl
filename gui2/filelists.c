@@ -347,7 +347,7 @@ int fnamecmp (const char *f1, const char *f2)
     gchar *u1 = NULL, *u2 = NULL;
     gchar *c1 = NULL, *c2 = NULL;
     gsize bytes;
-    int n, ret = 0;
+    int ret = 0;
 
     u1 = g_locale_to_utf8(f1, -1, NULL, &bytes, &err);
     if (err != NULL) {
@@ -367,15 +367,8 @@ int fnamecmp (const char *f1, const char *f2)
     c1 = g_utf8_casefold(u1, -1);
     c2 = g_utf8_casefold(u2, -1);
 
-    n = strlen(c1);
-    if (c1[n-1] == SLASH) {
-	c1[n-1] = '\0';
-    }
-
-    n = strlen(c2);
-    if (c2[n-1] == SLASH) {
-	c2[n-1] = '\0';
-    }
+    trim_slash(c1);
+    trim_slash(c2);
 
     ret = strcmp(c1, c2);
 
@@ -397,15 +390,8 @@ int fnamecmp (const char *f1, const char *f2)
     c1 = g_strdup(f1);
     c2 = g_strdup(f2);
 
-    n = strlen(c1);
-    if (c1[n-1] == SLASH) {
-	c1[n-1] = '\0';
-    }
-
-    n = strlen(c2);
-    if (c2[n-1] == SLASH) {
-	c2[n-1] = '\0';
-    }
+    trim_slash(c1);
+    trim_slash(c2);
 
     ret = strcmp(c1, c2);
 
@@ -437,9 +423,6 @@ void mkfilelist (int filetype, char *fname)
             break;
         }
     }
-
-    fprintf(stderr, "fname='%s', match=%d\n",
-	    fname, match);
 
     if (match == 0) {
 	/* file is on top: no change in list */
@@ -634,12 +617,7 @@ static void real_add_files_to_menus (int ftype)
 	    gchar *fname;
 
 	    if (j == FILE_LIST_WDIR) {
-		int n = strlen(filep[i]);
-
-		if (filep[i][n-1] == '/' ||
-		    filep[i][n-1] == '\\') {
-		    filep[i][n-1] = '\0';
-		}
+		trim_slash(filep[i]);
 	    }		
 
 	    fname = my_filename_to_utf8(filep[i]);

@@ -1403,9 +1403,9 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 #endif /* win32 versus unix */
 
 /* for writing a file, name given by user: if the path is not
-   absolute, switch to the gretl work dir (for a plain filename and
-   use_cwd not set) or to the current "shelldir" (for a filename
-   beginning with '.', or if use_cwd is set).
+   absolute, switch to the gretl workdir (for a plain filename and
+   USE_CWD not set), or to the current "shelldir" (for a filename
+   beginning with '.', or if USE_CWD is set).
 */
 
 void gretl_maybe_switch_dir (const char *fname)
