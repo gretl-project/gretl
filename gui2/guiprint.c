@@ -2066,7 +2066,10 @@ int csv_to_clipboard (void)
     int *list = NULL;
     int err = 0;
 
-    delimiter_dialog(&opt);
+    if (delimiter_dialog(&opt)) {
+	return 0;
+    }
+
     data_save_selection_wrapper(COPY_CSV, GINT_TO_POINTER(opt));
 
     if (storelist != NULL && *storelist != 0) {
@@ -2088,7 +2091,9 @@ int csv_selected_to_clipboard (void)
     int err = 0;
 
     if (list != NULL) {
-	delimiter_dialog(NULL);
+	if (delimiter_dialog(NULL)) {
+	    return 0;
+	}
 	err = real_csv_to_clipboard(list);
 	free(list);
     }

@@ -163,7 +163,9 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 	break;
     case OPEN_CSV:
     case APPEND_CSV:
-	delimiter_dialog(NULL);
+	if (delimiter_dialog(NULL)) {
+	    return;
+	}
 	file_selector(_("Open CSV file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_OCTAVE:
@@ -239,7 +241,9 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	data_save_selection_wrapper(file_code, NULL);
 	break;
     case EXPORT_CSV:
-	delimiter_dialog(&opt);
+	if (delimiter_dialog(&opt)) {
+	    return;
+	}
 	p = GINT_TO_POINTER(opt);
     case EXPORT_R:
     case EXPORT_OCTAVE:

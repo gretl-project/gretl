@@ -518,7 +518,9 @@ set_data_from_filelist (gpointer p, guint i, GtkWidget *w)
 {
     strcpy(tryfile, datap[i]);
     if (strstr(tryfile, ".csv")) {
-	delimiter_dialog(NULL);
+	if (delimiter_dialog(NULL)) {
+	    return;
+	}
     }
     verify_open_data(NULL, 0);
 }

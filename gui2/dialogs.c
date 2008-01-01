@@ -250,15 +250,22 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     free(p);
 }
 
-void delimiter_dialog (gretlopt *optp)
+int delimiter_dialog (gretlopt *optp)
 {
     GtkWidget *dialog, *tmp, *button, *hbox;
     GtkWidget *myvbox;
     GSList *group;
     csv_stuff *csvp = NULL;
+    int ret = 0;
+
+    if (maybe_raise_dialog()) {
+	return -1;
+    }
 
     csvp = mymalloc(sizeof *csvp);
-    if (csvp == NULL) return;
+    if (csvp == NULL) {
+	return - 1;
+    }
 
     csvp->delim = datainfo->delim;
     csvp->decpoint = '.';
@@ -387,6 +394,9 @@ void delimiter_dialog (gretlopt *optp)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
+    /* "Cancel" button */
+    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
     /* Create the "OK" button */
     tmp = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked",
@@ -397,6 +407,8 @@ void delimiter_dialog (gretlopt *optp)
     gtk_widget_show(tmp);
 
     gtk_widget_show(dialog);
+
+    return ret;
 }
 
 /* selection of format in which to copy material to clipboard,
@@ -588,6 +600,10 @@ void copy_format_dialog (windata_t *vwin, int action)
     GSList *group = NULL;
     struct format_info *finfo;
     int pref;
+
+    if (maybe_raise_dialog()) {
+	return;
+    }
 
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) return;
@@ -790,6 +806,11 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     struct replic_set rs;
     int htest = (pp == NULL);
     int i;
+
+    if (maybe_raise_dialog()) {
+	*cancelled = 1;
+	return;
+    }
 
     dialog = gretl_dialog_new(_("gretl: bootstrap analysis"), vwin->dialog, 
 			      GRETL_DLG_BLOCK);
@@ -1213,7 +1234,11 @@ void varinfo_dialog (int varnum, int full)
     GtkWidget *tmp, *hbox;
     struct varinfo_settings *vset;
     unsigned char flags;
-    int series = var_is_series(datainfo, varnum);
+    int series;
+
+    if (maybe_raise_dialog()) {
+	return;
+    }
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
@@ -1224,6 +1249,7 @@ void varinfo_dialog (int varnum, int full)
 	flags = GRETL_DLG_MODAL | GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
     }
 
+    series = var_is_series(datainfo, varnum);
     vset->varnum = varnum;
     vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
 
@@ -1455,6 +1481,10 @@ void database_description_dialog (const char *binname)
     GtkWidget *tempwid, *hbox;
     gchar *fname, *descrip;
 
+    if (maybe_raise_dialog()) {
+	return;
+    }
+
     descrip = get_db_description(binname);
     if (descrip == NULL) {
 	return;
@@ -1521,10 +1551,14 @@ static void set_rand_seed (GtkWidget *w, guint32 *s)
 
 void rand_seed_dialog (void)
 {
-    guint32 dseed = gretl_rand_get_seed();
+    guint32 dseed;
     GtkWidget *dlg;
     GtkWidget *tmp, *hbox;
     GtkObject *adj;
+
+    if (maybe_raise_dialog()) {
+	return;
+    }
 
     dlg = gretl_dialog_new(_("gretl: seed for random numbers"), NULL,
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
@@ -1534,6 +1568,7 @@ void rand_seed_dialog (void)
     tmp = gtk_label_new(_("Seed for generator:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
+    dseed = gretl_rand_get_seed();
     adj = gtk_adjustment_new((gdouble) dseed, 1, (gdouble) UINT_MAX, 
 			     1, 1000, 0);
     g_signal_connect(G_OBJECT(adj), "value-changed",
@@ -1773,7 +1808,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
 	rset->opt = OPT_NONE;
     }
 
-    rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+    rset->dlg = gretl_dialog_new(title, NULL, 0);
     rset->combo = NULL;
     rset->adj1 = rset->adj2 = NULL;
     rset->startspin = rset->endspin = NULL;
@@ -2947,6 +2982,10 @@ int real_radio_dialog (const char *title, const char *label,
     GSList *group = NULL;
     int i, ret = -1;
 
+    if (maybe_raise_dialog()) {
+	return ret;
+    }
+
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 
     if (label != NULL) {
@@ -3184,6 +3223,10 @@ int checks_dialog (const char *title, const char *blurb,
     GtkWidget *spin = NULL;
     int i, ret = 0;
 
+    if (maybe_raise_dialog()) {
+	return -1;
+    }
+
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 
     /* create upper label if wanted */
@@ -3379,6 +3422,10 @@ int freq_dialog (const char *title, const char *blurb,
     double f0min, f0max, f0step;
     double wmin, wmax, wstep;
     int i, imax, ret = 0;
+
+    if (maybe_raise_dialog()) {
+	return -1;
+    }
 
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 

@@ -224,7 +224,7 @@ int maybe_raise_dialog (void)
     int ret = 0;
 
     if (current_dialog != NULL) {
-	gdk_window_raise(current_dialog->window);
+	gtk_window_present(GTK_WINDOW(current_dialog));
 	ret = 1;
     }
 
@@ -250,6 +250,13 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags)
 {
     GtkWidget *d = gtk_dialog_new();
+
+#if 0
+    if (current_dialog != NULL) {
+	gtk_window_present(GTK_WINDOW(current_dialog));
+	return NULL;
+    }
+#endif
 
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(d), title);

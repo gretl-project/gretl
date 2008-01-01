@@ -55,7 +55,7 @@ void menu_exit_check (void);
 
 double gui_double_from_string (const char *str, int *err);
 
-void delimiter_dialog (gretlopt *optp);
+int delimiter_dialog (gretlopt *optp);
 
 void varinfo_dialog (int varnum, int full);
 
