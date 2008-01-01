@@ -598,12 +598,25 @@ static gint console_paste_handler (GtkWidget *w, GdkEventButton *event,
 {
     GdkModifierType mods;
 
-    /* FIXME: "on_last_line" is not really the right function here */
+    /* middle-mouse paste: last line only */
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-    if ((mods & GDK_BUTTON2_MASK) && !on_last_line()) {
-	/* middle-mouse paste: last line only */
-	return TRUE;
+
+    if ((mods & GDK_BUTTON2_MASK)) {
+	GtkTextBuffer *buf;
+	GtkTextIter iter;
+	gint bx, by;
+
+	gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(w),
+					      GTK_TEXT_WINDOW_WIDGET,
+					      event->x, event->y, 
+					      &bx, &by);
+	gtk_text_view_get_line_at_y(GTK_TEXT_VIEW(w), &iter, by, NULL);
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+	if (gtk_text_iter_get_line(&iter) != 
+	    gtk_text_buffer_get_line_count(buf) - 1) {
+	    return TRUE;
+	}
     }
 
     return FALSE;
