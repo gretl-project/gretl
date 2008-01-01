@@ -45,6 +45,8 @@ static int hl, hlmax, hlines;
 static gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d);
 static gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 				   gpointer p);
+static gint console_paste_handler (GtkWidget *w, GdkEventButton *event,
+				   gpointer p);
 
 static int gretl_console_init (void)
 {
@@ -371,6 +373,8 @@ void show_gretl_console (void)
     vwin = view_file(fname, 1, 1, 78, 400, CONSOLE);
     console_view = vwin->w;
 
+    g_signal_connect(G_OBJECT(console_view), "button_press_event",
+		     G_CALLBACK(console_paste_handler), NULL);
     g_signal_connect(G_OBJECT(console_view), "button_release_event",
 		     G_CALLBACK(console_mouse_handler), NULL);
     g_signal_connect(G_OBJECT(console_view), "key_press_event",
@@ -589,4 +593,18 @@ static gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
     return FALSE;
 }
 
+static gint console_paste_handler (GtkWidget *w, GdkEventButton *event,
+				   gpointer p)
+{
+    GdkModifierType mods;
 
+    /* FIXME: "on_last_line" is not really the right function here */
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    if ((mods & GDK_BUTTON2_MASK) && !on_last_line()) {
+	/* middle-mouse paste: last line only */
+	return TRUE;
+    }
+
+    return FALSE;
+}
