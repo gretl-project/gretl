@@ -84,29 +84,41 @@ GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
 
 static void set_canceled (GtkWidget *w, int *c)
 {
-    if (c != NULL) *c = 1;
+    if (c != NULL) {
+	*c = 1;
+    }
+}
+
+static void maybe_set_canceled (GtkDialog *d, int resp, int *c)
+{
+    if (resp == GTK_RESPONSE_DELETE_EVENT) {
+	*c = 1;
+    }
 }
 
 GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
 				 int *canceled)
 {
-    GtkWidget *w;
+    GtkWidget *button;
 
-    w = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+    button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
     if (canceled != NULL) {
-	g_signal_connect(G_OBJECT(w), "clicked", 
+	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(set_canceled), 
 			 canceled);
+	g_signal_connect(GTK_DIALOG(targ), "response", 
+			 G_CALLBACK(maybe_set_canceled), 
+			 canceled);
     }
-    g_signal_connect(G_OBJECT(w), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     targ);
 	
-    gtk_widget_show(w);
+    gtk_widget_show(button);
 
-    return w;
+    return button;
 }
 
 static void opt_invalid (GtkWidget *w, int *opt)

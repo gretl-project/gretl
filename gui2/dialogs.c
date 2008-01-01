@@ -791,7 +791,7 @@ static GList *make_replics_list (void)
 }
 
 void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
-		       gretlopt *popt, int *cancelled)
+		       gretlopt *popt, int *canceled)
 {
     MODEL *pmod = vwin->data;
     GtkWidget *dialog, *hbox;
@@ -808,7 +808,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     int i;
 
     if (maybe_raise_dialog()) {
-	*cancelled = 1;
+	*canceled = 1;
 	return;
     }
 
@@ -962,7 +962,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
     /* "Cancel" button */
     cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, 
-			 cancelled);
+			 canceled);
 
     /* "OK" button */
     button = ok_button(GTK_DIALOG(dialog)->action_area);
