@@ -244,6 +244,14 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, "<StockItem>", GTK_STOCK_CLEAR },
     { "/File/sep1", NULL, NULL, 0, "<Separator>", GNULL },
 
+    /* File, working dir */
+    { N_("/File/_Working directory"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/Working directory/_Select..."), "", wdir_select_callback, 0, 
+      "<StockItem>", GTK_STOCK_OPEN },
+    { N_("/File/Working directory/_Use startup directory"), "", 
+      wdir_select_callback, 1, NULL, GNULL },
+    { "/File/sep2", NULL, NULL, 0, "<Separator>", GNULL },
+
     /* File, script files */
     { N_("/File/_Script files"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/Script files/_User file..."), "", open_script, OPEN_SCRIPT, 
@@ -281,14 +289,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Function files/_New package"), "", file_save, 
       SAVE_FUNCTIONS, "<StockItem>", GTK_STOCK_NEW },
 
-    /* File, working dir */
-    { N_("/File/_Working directory"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Working directory/_Select..."), "", wdir_select_callback, 0, 
-      "<StockItem>", GTK_STOCK_OPEN },
-    { N_("/File/Working directory/_Use startup directory"), "", 
-      wdir_select_callback, 1, NULL, GNULL },
-
-    { "/File/sep5", NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },
 
     /* Tools menu */

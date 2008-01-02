@@ -1808,7 +1808,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
 	rset->opt = OPT_NONE;
     }
 
-    rset->dlg = gretl_dialog_new(title, NULL, 0);
+    rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
     rset->combo = NULL;
     rset->adj1 = rset->adj2 = NULL;
     rset->startspin = rset->endspin = NULL;
@@ -2204,10 +2204,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     G_CALLBACK(set_obs_from_dialog), rset);
     gtk_widget_grab_default(tmp);
 
+    /* Create a "Help" button */
+    context_help_button(GTK_DIALOG(rset->dlg)->action_area, FCASTERR);
+
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
 
-    gretl_set_window_modal(rset->dlg);
+    /* gretl_set_window_modal(rset->dlg); */
     gtk_widget_show_all(rset->dlg);
 
     return ret;
