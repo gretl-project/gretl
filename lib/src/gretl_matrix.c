@@ -3237,7 +3237,7 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 }
 
 enum {
-    CONF_NONE,
+    CONF_NONE = 0,
     CONF_ELEMENTS,
     CONF_A_COLVEC,
     CONF_B_COLVEC,
@@ -3422,7 +3422,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_B_ROWVEC:
-	for (j=0; j<nc; i++) {
+	for (j=0; j<nc; j++) {
 	    y = gretl_vector_get(b, j);
 	    for (i=0; i<nr; i++) {
 		x = gretl_matrix_get(a, i, j);
