@@ -351,7 +351,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	}
 
 	if (ret == NULL) {
-	    p->err = E_ALLOC;
+	    p->err = (t == 0)? E_DATA : E_ALLOC;
 	} else if (add_aux_node(p, ret)) {
 	    free_tree(ret, "On error");
 	    ret = NULL;
@@ -412,6 +412,11 @@ static NODE *aux_mdef_node (parser *p, int n)
 static NODE *aux_list_node (parser *p)
 {
     return get_aux_node(p, LIST, 0, 0);
+}
+
+static NODE *aux_any_node (parser *p)
+{
+    return get_aux_node(p, 0, 0, 0);
 }
 
 static void eval_warning (parser *p, int op)
@@ -1775,15 +1780,23 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 	}
 
 	if (a != NULL) {
-	    ret = aux_matrix_node(p);
-	    if (ret == NULL) {
+	    if (gretl_matrix_is_scalar(a)) {
+		ret = aux_scalar_node(p);
+		if (ret != NULL) {
+		    ret->v.xval = a->val[0];
+		} 
 		gretl_matrix_free(a);
 	    } else {
-		ret->v.m = a;
+		ret = aux_matrix_node(p);
+		if (ret == NULL) {
+		    gretl_matrix_free(a);
+		} else {
+		    ret->v.m = a;
+		}
 	    }
 	}
     } else {
-	ret = aux_matrix_node(p);
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -3856,7 +3869,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = t;
 	break;
     case FARGS:
-	/* will be evlauated in context */
+	/* will be evaluated in context */
 	ret = t;
 	break;
     case B_ADD:
@@ -5772,7 +5785,7 @@ static void autoreg_error (parser *p, int t)
 	    t, p->dinfo->t1);
 
     if (p->ret != NULL && p->ret->t != VEC) {
-	fprintf(stderr, " ret type != VEC, p->err = %d\n", p->err);
+	fprintf(stderr, " ret type != VEC (=%d), p->err = %d\n", p->ret->t, p->err);
     } else if (p->ret == NULL) {
 	fprintf(stderr, " ret = NULL, p->err = %d\n", p->err);
     }

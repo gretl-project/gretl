@@ -89,6 +89,13 @@ static int fname_is_utf8 (const unsigned char *s)
 
 static int fopen_use_utf8;
 
+/**
+ * set_fopen_use_utf8:
+ *
+ * Sets gretl's internal state so as to ensure that filenames
+ * are given in UTF-8 when passed to the C library's fopen().
+ */
+
 void set_fopen_use_utf8 (void)
 {
     fopen_use_utf8 = 1;
@@ -98,6 +105,19 @@ void set_fopen_use_utf8 (void)
    is UTF-8 encoded, but we should be using locale encoding
    with the stdio functions.
 */
+
+/**
+ * gretl_fopen:
+ * @fname: name of file to be opened.
+ * @mode: mode in which to open the file.
+ *
+ * A wrapper for the C library's fopen(): provides a guard
+ * against the situation where a filename is UTF-8 encoded, 
+ * but on the current platform we should be using local
+ * encoding for the stdio functions.
+ *
+ * Returns: file pointer, or %NULL on failure.
+ */
 
 FILE *gretl_fopen (const char *fname, const char *mode)
 {
@@ -134,6 +154,19 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
     return fp;
 }
+
+/**
+ * gretl_gzopen:
+ * @fname: name of gzipped file to be opened.
+ * @mode: mode in which to open the file.
+ *
+ * A wrapper for zlib's gzopen(): provides a guard
+ * against the situation where a filename is UTF-8 encoded, 
+ * but on the current platform we should be using local
+ * encoding for the stdio functions.
+ *
+ * Returns: pointer to gzip stream, or %NULL on failure.
+ */
 
 gzFile gretl_gzopen (const char *fname, const char *mode)
 {
@@ -191,6 +224,17 @@ int gretl_mkdir (const char *path)
 
 #else
 
+/**
+ * gretl_mkdir:
+ * @path: name of directory to be created.
+ *
+ * Calls the underlying library function to create the
+ * specified directory with mode 0755.  If the directory in
+ * question already exists, this does not count as an error.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int gretl_mkdir (const char *path)
 {
     int err = 0;
@@ -225,6 +269,17 @@ static int gretl_isdir (const char *path)
 /* recursive deletion of directory tree: must be located
    in the directory above the one to be deleted at the
    outset */
+
+/**
+ * gretl_deltree:
+ * @path: name of directory to be deleted.
+ *
+ * Carries out recursive deletion of the specified directory.
+ * Note: the current working directory should be set to one
+ * level above @path when this function is called. FIXME.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int gretl_deltree (const char *path)
 {
@@ -266,7 +321,13 @@ int gretl_deltree (const char *path)
 
 #endif
 
-/* like access(), returns 0 on success */
+/**
+ * gretl_write_access:
+ * @fname: name of file to test.
+ *
+ * Returns: 0 on success (meaning that the current user has
+ * write access to @fname), non-zero on failure.
+ */
 
 int gretl_write_access (char *fname)
 {
@@ -285,6 +346,14 @@ int gretl_write_access (char *fname)
     return err;
 }
 
+/**
+ * gretl_is_xml_file:
+ * @fname: name of file to test.
+ *
+ * Returns: 1 if @fname appears to be a (possibly gzipped) XML file,
+ * otherwise 0.
+ */
+
 int gretl_is_xml_file (const char *fname)
 {
     gzFile fz;
@@ -302,6 +371,20 @@ int gretl_is_xml_file (const char *fname)
 
     return ret;
 } 
+
+/**
+ * gretl_path_prepend:
+ * @file: target filename.
+ * @path: path to prepend.
+ *
+ * Creates a path string by prepending @path, plus an appropriate
+ * separator if needed, to @file.  The result is written back into
+ * @file: this variable is assumed to have storage for at least
+ * #MAXLEN characters.
+ *
+ * Returns: 0 on success, or 1 if the final path string would
+ * exceed #MAXLEN characters (including nul-termination).
+ */
 
 int gretl_path_prepend (char *file, const char *path)
 {
