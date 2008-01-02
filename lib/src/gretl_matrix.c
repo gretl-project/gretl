@@ -3236,6 +3236,82 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
     return ret;
 }
 
+enum {
+    CONF_NONE,
+    CONF_ELEMENTS,
+    CONF_A_COLVEC,
+    CONF_B_COLVEC,
+    CONF_A_ROWVEC,
+    CONF_B_ROWVEC,
+    CONF_A_SCALAR,
+    CONF_B_SCALAR
+};
+
+/**
+ * dot_op_conf:
+ * @ra: rows of A
+ * @ca: columns of A
+ * @rb: rows of B
+ * @cb: columns of B
+ * @r: pointer to rows of result
+ * @c: pointer to columns of result
+ * 
+ * Used to establish the dimensions of the result of a "dot" operation.
+ *
+ * Returns: a numeric code identifying the convention to be used;
+ * %CONF_NONE indicates non-conformability.
+ */
+
+static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
+{
+    int confr = (ra == rb);
+    int confc = (ca == cb);
+    int rowva = (ra == 1);
+    int colva = (ca == 1);
+    int rowvb = (rb == 1);
+    int colvb = (cb == 1);
+    int ret = CONF_NONE;
+
+    if (confr && confc) {
+	/* element-by-element operation */
+	ret = CONF_ELEMENTS;
+	*r = ra;
+	*c = ca;
+    } else if (confr && colva) {
+	/* rows match; A is a column vector */
+	ret = CONF_A_COLVEC;
+	*r = ra;
+	*c = (colva)? cb : ca;
+    } else if (confr && colvb) {
+	/* rows match; B is a column vector */
+	ret = CONF_B_COLVEC;
+	*r = ra;
+	*c = (colva)? cb : ca;
+    } else if (confc && rowva) {
+	/* columns match; A is a row vector */
+	ret = CONF_A_ROWVEC;
+	*r = (rowva)? rb : ra;
+	*c = ca;
+    } else if (confc && rowvb) {
+	/* columns match; B is a row vector */
+	ret = CONF_B_ROWVEC;
+	*r = (rowva)? rb : ra;
+	*c = ca;
+    } else if (rowva && colva) {
+	/* A is a scalar in disguise */
+	ret = CONF_A_SCALAR;
+	*r = rb;
+	*c = cb;
+    } else if (rowvb && colvb) {
+	/* B is a scalar in disguise */
+	ret = CONF_B_SCALAR;
+	*r = ra;
+	*c = ca;
+    }
+
+    return ret;
+}
+
 static double x_op_y (double x, double y, int op)
 {
     switch (op) {
@@ -3277,9 +3353,10 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 				   int op, int *err)
 {
     gretl_matrix *c = NULL;
-    double x, ax, bx;
-    int m, n, p, q;
-    int i, j, k, nv;
+    double x, y;
+    int m, n, p, q, nr, nc;
+    int i, j, nv;
+    int conftype;
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	*err = E_DATA;
@@ -3291,16 +3368,15 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     p = b->rows;
     q = b->cols;    
 
-    if ((m == p && n == q) || (p == 1 && n == q) || (q == 1 && m == p)) {
-	c = gretl_matrix_alloc(m, n);
-    } else if ((m == 1 && n == q) || (n == 1 && m == p)) {
-	c = gretl_matrix_alloc(p, q);
-    } else {
+    conftype = dot_op_conf(m, n, p, q, &nr, &nc);
+
+    if (conftype == CONF_NONE) {
 	fputs("gretl_matrix_dot_op: matrices not conformable\n", stderr);
 	*err = E_NONCONF;
 	return NULL;
-    }
+    }	
 
+    c = gretl_matrix_alloc(nr, nc);
     if (c == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -3308,32 +3384,74 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
     errno = 0;
 
-    if (m == p && n == q) {
+    switch (conftype) {
+    case CONF_ELEMENTS:
 	nv = m * n;
 	for (i=0; i<nv; i++) {
 	    c->val[i] = x_op_y(a->val[i], b->val[i], op);
 	}
-    } else if ((m == 1 && n == q) || (n == 1 && m == p)) {
-	for (i=0; i<c->rows; i++) {
-	    for (j=0; j<c->cols; j++) {
-		k = (m == 1)? j : i;
-		ax = a->val[k];
-		bx = gretl_matrix_get(b, i, j);
-		x = x_op_y(ax, bx, op);
+	break;
+    case CONF_A_COLVEC:
+	for (i=0; i<nr; i++) {
+	    x = gretl_vector_get(a, i);
+	    for (j=0; j<nc; j++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_B_COLVEC:
+	for (i=0; i<nr; i++) {
+	    y = gretl_vector_get(b, i);
+	    for (j=0; j<nc; j++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
 		gretl_matrix_set(c, i, j, x);
 	    }
 	}
-    } else if ((p == 1 && n == q) || (q == 1 && m == p)) {
-	for (i=0; i<c->rows; i++) {
-	    for (j=0; j<c->cols; j++) {
-		k = (p == 1)? j : i;
-		ax = gretl_matrix_get(a, i, j);
-		bx = b->val[k];
-		x = x_op_y(ax, bx, op);
+	break;
+    case CONF_A_ROWVEC:
+	for (j=0; j<nc; j++) {
+	    x = gretl_vector_get(a, j);
+	    for (i=0; i<nr; i++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_B_ROWVEC:
+	for (j=0; j<nc; i++) {
+	    y = gretl_vector_get(b, j);
+	    for (i=0; i<nr; i++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
 		gretl_matrix_set(c, i, j, x);
 	    }
 	}
-    } 
+	break;
+    case CONF_A_SCALAR:
+	x = a->val[0];
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		y = gretl_matrix_get(b, i, j);
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_B_SCALAR:
+	y = b->val[0];
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		x = gretl_matrix_get(a, i, j);
+		x = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, x);
+	    }
+	}
+	break;
+    }
 
     if (errno) {
 	gretl_matrix_free(c);

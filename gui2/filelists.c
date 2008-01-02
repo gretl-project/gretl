@@ -309,29 +309,6 @@ static void clear_files_list (int filetype, char **filep)
     }
 }
 
-static char *cut_multiple_slashes (char *fname)
-{
-    char *s = fname;
-
-#ifdef G_OS_WIN32
-    /* may be ok for a filename to start with a double backslash */
-    s++;
-#endif
-
-    while (*s) {
-	if (*s == SLASH) {
-	    if (*(s+1) == SLASH) {
-		memmove(s, s + 1, strlen(s + 1) + 1);
-	    } else if (*(s+1) == '.' && *(s+2) == SLASH) {
-		memmove(s, s + 2, strlen(s + 2) + 1);
-	    }
-	}
-	s++;
-    }
-
-    return fname;
-}
-
 static void add_files_to_menu (int ftype)
 {
     real_add_files_to_menus(ftype);
@@ -409,7 +386,7 @@ void mkfilelist (int filetype, char *fname)
     char **filep;
     int i, match = -1;
 
-    cut_multiple_slashes(fname);
+    gretl_normalize_path(fname);
 
     filep = get_file_list(filetype);
     if (filep == NULL) {

@@ -1444,3 +1444,71 @@ void gretl_maybe_switch_dir (const char *fname)
 	}
     }
 }
+
+/* remove '.' and '..' from @path */
+
+int gretl_normalize_path (char *path)
+{
+    char tmp[FILENAME_MAX];
+    char *pcpy, *pbit, *s = path;
+    char **S, **P = NULL;
+    int i, n = 0;
+    int err = 0;
+
+    pcpy = gretl_strdup(path);
+    if (pcpy == NULL) {
+	return E_ALLOC;
+    }
+
+    *tmp = '\0';
+    s = pcpy;
+
+#ifdef WIN32
+    /* may be ok for a filename to start with a double backslash */
+    if (!strncmp(path, "\\\\", 2)) {
+	strcpy(tmp, SLASHSTR);
+	s++;
+    }
+#endif
+
+    while ((pbit = strtok(s, SLASHSTR)) != NULL && !err) {
+	if (strcmp(pbit, ".")) {
+	    S = realloc(P, (n+1) * sizeof *P);
+	    if (S == NULL) {
+		err = E_ALLOC;
+	    } else {
+		P = S;
+		P[n++] = pbit;
+	    }
+	}
+	s = NULL;
+    }
+
+    if (!err) {
+	int j;
+
+	for (i=n-1; i>0; i--) {
+	    if (P[i] != NULL && !strcmp(P[i], "..")) {
+		for (j=i-1; j>0; j--) {
+		    if (P[j] != NULL && strcmp(P[j], "..")) {
+			P[j] = NULL;
+			break;
+		    }
+		}
+	    }
+	}
+	for (i=0; i<n; i++) {
+	    if (P[i] != NULL && strcmp(P[i], "..")) {
+		strcat(tmp, SLASHSTR);
+		strcat(tmp, P[i]);
+	    }
+	}
+	strcpy(path, tmp);
+	free(P);
+    }
+
+    free(pcpy);
+    
+    return err;
+}
+
