@@ -1506,6 +1506,7 @@ static int common_read_rc_setup (void)
 
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
+    set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
     err = gretl_set_paths(&paths, set_paths_opt);

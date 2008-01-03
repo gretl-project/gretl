@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_string_table.h"
+#include "gretl_www.h"
 
 #include <unistd.h>
 
@@ -101,11 +102,6 @@ void set_fopen_use_utf8 (void)
     fopen_use_utf8 = 1;
 }
 
-/* Below: try to guard against a situation where a filename
-   is UTF-8 encoded, but we should be using locale encoding
-   with the stdio functions.
-*/
-
 /**
  * gretl_fopen:
  * @fname: name of file to be opened.
@@ -113,7 +109,7 @@ void set_fopen_use_utf8 (void)
  *
  * A wrapper for the C library's fopen(): provides a guard
  * against the situation where a filename is UTF-8 encoded, 
- * but on the current platform we should be using local
+ * but on the current platform we should be using locale
  * encoding for the stdio functions.
  *
  * Returns: file pointer, or %NULL on failure.
@@ -1602,3 +1598,117 @@ int gretl_normalize_path (char *path)
     return err;
 }
 
+#ifndef WIN32
+
+static void rc_set_gp_colors (const char *gpcolors)
+{
+    char cstr[N_GP_COLORS][8];
+    int i, nc;
+
+    *cstr[0] = *cstr[1] = *cstr[2] = *cstr[3] = '\0';
+
+    nc = sscanf(gpcolors, "%7s %7s %7s %7s", 
+		cstr[0], cstr[1], cstr[2], cstr[3]);
+
+    for (i=0; i<nc; i++) {
+	set_graph_palette_from_string(i, cstr[i]);
+    }
+}
+
+static int rc_bool (const char *s)
+{
+    if (!strcmp(s, "true") || !strcmp(s, "1")) {
+	return 1;
+    } else {
+	return 0;
+    }	
+}
+
+int cli_read_rc (PATHS *paths) 
+{
+    FILE *fp;
+    char rcfile[FILENAME_MAX];
+    char line[MAXLEN], key[32], val[MAXLEN];
+    char dbproxy[21] = {0};
+    char *home;
+    int use_proxy = 0;
+    int err = 0;
+
+    home = getenv("HOME");
+    if (home == NULL) {
+	return 1;
+    }
+
+    sprintf(rcfile, "%s/.gretl2rc", home);
+    fp = gretl_fopen(rcfile, "r");
+    if (fp == NULL) {
+	return 1;
+    }
+
+    while (fgets(line, MAXLEN, fp) != NULL) {
+	if (*line == '#') {
+	    continue;
+	}
+	if (!strncmp(line, "recent", 6)) {
+	    break;
+	}
+	if (sscanf(line, "%s", key) == 1) {
+	    strcpy(val, line + strlen(key) + 3); 
+	    chopstr(val); 
+	    if (!strcmp(key, "gretldir")) {
+		*paths->gretldir = '\0';
+		strncat(paths->gretldir, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "userdir")) {
+		*paths->workdir = '\0';
+		strncat(paths->gretldir, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "lcnumeric")) {
+		;
+	    } else if (!strcmp(key, "shellok")) {
+		libset_set_bool(SHELL_OK, rc_bool(val));
+	    } else if (!strcmp(key, "usecwd")) {
+		libset_set_bool(USE_CWD, rc_bool(val));
+	    } else if (!strcmp(key, "gnuplot")) {
+		*paths->gnuplot = '\0';
+		strncat(paths->gnuplot, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "binbase")) {
+		*paths->binbase = '\0';
+		strncat(paths->binbase, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "ratsbase")) {
+		*paths->ratsbase = '\0';
+		strncat(paths->ratsbase, val, MAXLEN - 1);
+	    } else if (!strcmp(key, "dbhost")) {
+		*paths->dbhost = '\0';
+		strncat(paths->dbhost, val, 32 - 1);
+	    } else if (!strcmp(key, "dbproxy")) {
+		strncat(dbproxy, val, 21 - 1);
+	    } else if (!strcmp(key, "useproxy")) {
+		use_proxy = rc_bool(val);
+	    } else if (!strcmp(key, "useqr")) {
+		libset_set_bool(USE_QR, rc_bool(val));
+	    } else if (!strcmp(key, "Png_font")) {
+		;
+	    } else if (!strcmp(key, "Gp_colors")) {
+		rc_set_gp_colors(val);
+	    } else if (!strcmp(key, "HC_by_default")) {
+		;
+	    } else if (!strcmp(key, "HC_xsect")) {
+		set_xsect_hccme(val);
+	    } else if (!strcmp(key, "HC_tseri")) {
+		set_tseries_hccme(val);
+	    } else if (!strcmp(key, "HC_panel")) {
+		set_panel_hccme(val);
+	    } else if (!strcmp(key, "HC_garch")) {
+		set_garch_robust_vcv(val);
+	    }
+	}
+    }
+
+    fclose(fp);
+
+    err = gretl_set_paths(paths, OPT_NONE);
+    gretl_www_init(paths->dbhost, dbproxy, use_proxy);
+
+    return err;
+}
+
+#endif

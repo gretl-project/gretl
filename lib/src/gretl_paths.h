@@ -90,4 +90,10 @@ const char *gretl_png_font (void);
 
 void set_gretl_png_font (const char *s, PATHS *ppaths);
 
+#ifndef WIN32
+
+int cli_read_rc (PATHS *paths);
+
+#endif
+
 #endif /* GRETL_PATHS_H */
