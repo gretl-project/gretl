@@ -257,6 +257,110 @@ gretl_rand_normal_full (double *a, int t1, int t2,
 }
 
 /**
+ * gretl_rand_gamma:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @shape: shape parameter.
+ * @scale: scale parameter.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the specified gamma distribution.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_rand_gamma (double *a, int t1, int t2, 
+		      double shape, double scale) 
+{
+    double *U = NULL;
+    double e = 2.718281828459045235;
+    double delta, dinv = 0, d1 = 0;
+    double u, v, x, y, u0 = 0;
+    int k, i, t;
+
+    if (shape <= 0 || scale <= 0) {
+	return E_DATA;
+    }
+
+    k = shape;
+    if (k > 0) {
+	U = malloc(k * sizeof *U);
+	if (U == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    delta = shape - k;
+
+    if (delta > 0) {
+	d1 = delta - 1;
+	dinv = 1 / delta;
+	u0 = e / (e + delta);
+    }
+
+    /* 
+       Case of shape < 1 from Kundu and Gupta, "A convenient way of
+       generating gamma random variables using generalized exponential
+       distribution", Computational Statistics and Data Analysis, 51
+       (2007).  Case of shape >= 1 taken from the Wikipedia entry on
+       the gamma distribution.
+    */
+
+    for (t=t1; t<=t2; t++) {
+	a[t] = 0.0;
+	if (shape < 1) {
+	    double ex2;
+
+	    while (1) {
+		u = gretl_one_uniform();
+		v = gretl_one_uniform();
+		x = -2 * log(1 - pow(u, dinv));
+		ex2 = exp(-x/2);
+		u0 = pow(x, d1) * ex2;
+		u0 /= pow(2.0, d1) * pow((1-ex2), d1);
+		if (v <= u0) {
+		    a[t] = x;
+		    break;
+		}
+	    }
+	} else {
+	    for (i=0; i<k; i++) {
+		U[i] = gretl_one_uniform();
+		while (U[i] == 0.0) {
+		    U[i] = gretl_one_uniform();
+		}
+	    }
+	    if (delta > 0) {
+		while (1) {
+		    u = gretl_one_uniform();
+		    v = gretl_one_uniform();
+		    if (u <= u0) {
+			x = pow(u, dinv);
+			y = v * pow(x, d1);
+		    } else {
+			x = 1 - log(u);
+			y = v * exp(-x);
+		    }
+		    if (y <= pow(x, d1) * exp(-x)) {
+			a[t] = x;
+			break;
+		    }
+		}
+	    } 
+	    for (i=0; i<k; i++) {
+		a[t] -= log(U[i]);
+	    }
+	}
+	a[t] *= scale;	
+    }
+
+    free(U);
+	
+    return 0;
+}
+
+/**
  * gretl_rand_chisq:
  * @a: target array.
  * @t1: start of the fill range.
@@ -265,30 +369,14 @@ gretl_rand_normal_full (double *a, int t1, int t2,
  *
  * Fill the selected range of array @a with pseudo-random drawings
  * from the Chi-Squared distribution with @v degrees of freedom, 
- * using the Mersenne Twister for uniform input and the Box-Muller 
- * method for converting to the normal distribution.
+ * using the gamma r.v. generator.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
 int gretl_rand_chisq (double *a, int t1, int t2, int v) 
 {
-    double z;
-    int i, t;
-
-    if (v < 1) {
-	return E_INVARG;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	a[t] = 0.0;
-	for (i=0; i<v; i++) {
-	    z = gretl_one_snormal();
-	    a[t] += z * z;
-	}
-    }
-
-    return 0;
+    return gretl_rand_gamma(a, t1, t2, 0.5*v, 2);
 }
 
 /**
@@ -417,110 +505,6 @@ int gretl_rand_binomial (double *a, int t1, int t2, int n, double p)
 
     free(b);
 
-    return 0;
-}
-
-/**
- * gretl_rand_gamma:
- * @a: target array.
- * @t1: start of the fill range.
- * @t2: end of the fill range.
- * @shape: shape parameter.
- * @scale: scale parameter.
- *
- * Fill the selected range of array @a with pseudo-random drawings
- * from the specified gamma distribution.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int gretl_rand_gamma (double *a, int t1, int t2, 
-		      double shape, double scale) 
-{
-    double *U = NULL;
-    double e = 2.718281828459045235;
-    double delta, dinv = 0, d1 = 0;
-    double u, v, x, y, u0 = 0;
-    int k, i, t;
-
-    if (shape <= 0 || scale <= 0) {
-	return E_DATA;
-    }
-
-    k = shape;
-    if (k > 0) {
-	U = malloc(k * sizeof *U);
-	if (U == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    delta = shape - k;
-
-    if (delta > 0) {
-	d1 = delta - 1;
-	dinv = 1 / delta;
-	u0 = e / (e + delta);
-    }
-
-    /* 
-       Case of shape < 1 from Kundu and Gupta, "A convenient way of
-       generating gamma random variables using generalized exponential
-       distribution", Computational Statistics and Data Analysis, 51
-       (2007).  Case of shape >= 1 taken from the Wikipedia entry on
-       the gamma distribution.
-    */
-
-    for (t=t1; t<=t2; t++) {
-	a[t] = 0.0;
-	if (shape < 1) {
-	    double ex2;
-
-	    while (1) {
-		u = gretl_one_uniform();
-		v = gretl_one_uniform();
-		x = -2 * log(1 - pow(u, dinv));
-		ex2 = exp(-x/2);
-		u0 = pow(x, d1) * ex2;
-		u0 /= pow(2.0, d1) * pow((1-ex2), d1);
-		if (v <= u0) {
-		    a[t] = x;
-		    break;
-		}
-	    }
-	} else {
-	    for (i=0; i<k; i++) {
-		U[i] = gretl_one_uniform();
-		while (U[i] == 0.0) {
-		    U[i] = gretl_one_uniform();
-		}
-	    }
-	    if (delta > 0) {
-		while (1) {
-		    u = gretl_one_uniform();
-		    v = gretl_one_uniform();
-		    if (u <= u0) {
-			x = pow(u, dinv);
-			y = v * pow(x, d1);
-		    } else {
-			x = 1 - log(u);
-			y = v * exp(-x);
-		    }
-		    if (y <= pow(x, d1) * exp(-x)) {
-			a[t] = x;
-			break;
-		    }
-		}
-	    } 
-	    for (i=0; i<k; i++) {
-		a[t] -= log(U[i]);
-	    }
-	}
-	a[t] *= scale;	
-    }
-
-    free(U);
-	
     return 0;
 }
 
