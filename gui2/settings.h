@@ -15,6 +15,8 @@ int get_manpref (void);
 
 void write_rc (void);
 
+void write_rc_at_exit (void);
+
 void dump_rc (void);
 
 void force_english_help (void);

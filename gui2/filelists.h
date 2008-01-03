@@ -17,6 +17,8 @@ void add_files_to_menus (void);
 
 void trim_homedir (char *fname);
 
+void rc_save_file_lists (FILE *fp);
+
 #if defined(USE_GNOME)
 
 # include <gconf/gconf-client.h>
@@ -31,7 +33,6 @@ void read_file_lists (void);
 
 #else
 
-void save_file_lists (FILE *fp);
 void read_file_lists (FILE *fp, char *prev);
 
 #endif

@@ -218,7 +218,7 @@ static void printfilelist (int filetype, FILE *fp)
     }
 }
 
-void save_file_lists (FILE *fp)
+void rc_save_file_lists (FILE *fp)
 {
     printfilelist(FILE_LIST_DATA, fp);
     printfilelist(FILE_LIST_SESSION, fp);

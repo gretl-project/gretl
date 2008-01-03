@@ -1660,7 +1660,7 @@ int cli_read_rc (PATHS *paths)
 		strncat(paths->gretldir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "userdir")) {
 		*paths->workdir = '\0';
-		strncat(paths->gretldir, val, MAXLEN - 1);
+		strncat(paths->workdir, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "lcnumeric")) {
 		;
 	    } else if (!strcmp(key, "shellok")) {

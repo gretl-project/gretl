@@ -151,7 +151,7 @@ gboolean exit_check (void)
 	}
     } 
 
-    write_rc();
+    write_rc_at_exit();
     all_done = 1;
 
     return FALSE;

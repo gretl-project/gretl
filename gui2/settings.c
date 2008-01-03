@@ -51,7 +51,7 @@
 # include "gtkfontselhack.h"
 #endif
 
-#if !defined(G_OS_WIN32) && !defined(USE_GNOME)
+#if !defined(G_OS_WIN32)
 char rcfile[MAXLEN];
 #endif
 
@@ -748,10 +748,7 @@ static void root_check (void)
 
 void gretl_config_init (void)
 {
-#ifndef USE_GCONF
     sprintf(rcfile, "%s/.gretl2rc", getenv("HOME"));
-#endif
-
     read_rc();
     set_gretl_startdir();
     set_gd_fontpath();
@@ -1434,6 +1431,60 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
 }
 
+static void boolvar_to_str (void *b, char *s)
+{
+    if (*(int *) b) {
+	strcpy(s, "true");
+    } else {
+	strcpy(s, "false");
+    }
+}
+
+#ifndef G_OS_WIN32
+
+static int write_plain_text_rc (int full) 
+{
+    FILE *rc;
+    char val[6];
+    char *strvar;
+    int i;
+
+    rc = gretl_fopen(rcfile, "w");
+    if (rc == NULL) {
+	file_write_errbox(rcfile);
+	return E_FOPEN;
+    }
+
+    if (full) {
+	fprintf(rc, "# gretl config file (note: not used by gnome version)\n");
+    } else {
+	fprintf(rc, "# gretlcli config file\n");
+    }
+
+    for (i=0; rc_vars[i].var != NULL; i++) {
+	fprintf(rc, "# %s\n", rc_vars[i].description);
+	if (rc_vars[i].flags & BOOLSET) {
+	    boolvar_to_str(rc_vars[i].var, val);
+	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
+	} else if (rc_vars[i].flags & INTSET) {
+	    fprintf(rc, "%s = %d\n", rc_vars[i].key, *(int *) rc_vars[i].var);
+	} else {
+	    strvar = (char *) rc_vars[i].var;
+	    fprintf(rc, "%s = %s\n", rc_vars[i].key, strvar);
+	}
+    }
+
+    if (full) {
+	rc_save_file_lists(rc);
+    }
+
+    fclose(rc);
+
+    return 0;
+}
+
+#endif /* !G_OS_WIN32 */
+
 #ifndef USE_GCONF
 
 static void str_to_boolvar (char *s, void *b)
@@ -1461,15 +1512,6 @@ static void str_to_int (char *s, void *b)
 }
 
 #endif
-
-static void boolvar_to_str (void *b, char *s)
-{
-    if (*(int *) b) {
-	strcpy(s, "true");
-    } else {
-	strcpy(s, "false");
-    }
-}
 
 static int dir_exists (const char *dname, FILE *fp)
 {
@@ -1792,38 +1834,15 @@ void read_rc (void)
 
 #else /* end of gconf and win32 versions, now plain GTK */
 
-void write_rc (void) 
+void write_rc (void)
 {
-    FILE *rc;
-    char val[6];
-    char *strvar;
-    int i;
+    int err;
 
-    rc = fopen(rcfile, "w");
-    if (rc == NULL) {
-	file_write_errbox(rcfile);
-	return;
+    err = write_plain_text_rc(1);
+    if (!err) {
+	gretl_set_paths(&paths, set_paths_opt);
+	record_shell_opt();
     }
-
-    fprintf(rc, "# gretl config file (note: not used by gnome version)\n");
-
-    for (i=0; rc_vars[i].var != NULL; i++) {
-	fprintf(rc, "# %s\n", rc_vars[i].description);
-	if (rc_vars[i].flags & BOOLSET) {
-	    boolvar_to_str(rc_vars[i].var, val);
-	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
-	} else if (rc_vars[i].flags & INTSET) {
-	    fprintf(rc, "%s = %d\n", rc_vars[i].key, *(int *) rc_vars[i].var);
-	} else {
-	    strvar = (char *) rc_vars[i].var;
-	    fprintf(rc, "%s = %s\n", rc_vars[i].key, strvar);
-	}
-    }
-
-    save_file_lists(rc);
-    fclose(rc);
-    gretl_set_paths(&paths, set_paths_opt);
-    record_shell_opt();
 }
 
 static void read_rc (void) 
@@ -2354,4 +2373,13 @@ void finalize_working_dir_menu (void)
 	    gretl_tooltips_add(w, tmp);
 	}
     }
+}
+
+void write_rc_at_exit (void)
+{
+    write_rc();
+
+#ifdef USE_GCONF
+    write_plain_text_rc(0);
+#endif
 }
