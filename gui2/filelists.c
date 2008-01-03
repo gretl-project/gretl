@@ -298,6 +298,9 @@ static void clear_files_list (int filetype, char **filep)
     int i;
 
     for (i=0; i<MAXRECENT; i++) {
+	if (filep[i][0] == '\0') {
+	    continue;
+	}
 	endbit(tmpname, filep[i], 0);
 	fname = my_filename_to_utf8(tmpname);
 	sprintf(itempath, "%s/%d. %s", fpath[filetype], i+1, fname);
@@ -318,43 +321,56 @@ static void add_files_to_menu (int ftype)
 
 /* make comparison case-insensitive */
 
-int fnamecmp (const char *f1, const char *f2)
+static int fnamencmp (const char *f1, const char *f2, int n)
 {
     GError *err = NULL;
     gchar *u1 = NULL, *u2 = NULL;
-    gchar *c1 = NULL, *c2 = NULL;
     gsize bytes;
     int ret = 0;
 
-    u1 = g_locale_to_utf8(f1, -1, NULL, &bytes, &err);
+    if (g_utf8_validate(f1, -1, NULL)) {
+	u1 = g_strdup(f1);
+    } else {
+	u1 = g_locale_to_utf8(f1, -1, NULL, &bytes, &err);
+    }
+
+    if (err == NULL) {
+	if (g_utf8_validate(f2, -1, NULL)) {
+	    u2 = g_strdup(f2);
+	} else {
+	    u2 = g_locale_to_utf8(f2, -1, NULL, &bytes, &err);
+	}
+    }
+
     if (err != NULL) {
 	errbox(err->message);
 	g_error_free(err);
-	return 0;
+    } else {
+	gchar *c1 = g_utf8_casefold(u1, -1);
+	gchar *c2 = g_utf8_casefold(u2, -1);
+
+	trim_slash(c1);
+	trim_slash(c2);
+
+	if (n > 0) {
+	    ret = strncmp(c1, c2, n);
+	} else {
+	    ret = strcmp(c1, c2);
+	}
+
+	g_free(c1);
+	g_free(c2);
     }
-
-    u2 = g_locale_to_utf8(f2, -1, NULL, &bytes, &err);
-    if (err != NULL) {
-	errbox(err->message);
-	g_error_free(err);
-	g_free(u1);
-	return 0;
-    }
-
-    c1 = g_utf8_casefold(u1, -1);
-    c2 = g_utf8_casefold(u2, -1);
-
-    trim_slash(c1);
-    trim_slash(c2);
-
-    ret = strcmp(c1, c2);
 
     g_free(u1);
     g_free(u2);
-    g_free(c1);
-    g_free(c2);
 
     return ret;
+}
+
+int fnamecmp (const char *f1, const char *f2)
+{
+    return fnamencmp(f1, f2, -1);
 }
 
 #else
@@ -531,7 +547,7 @@ void trim_homedir (char *fname)
     if (home != NULL) {
 	int n = strlen(home);
 
-	if (!strncmp(fname, home, n)) {
+	if (!fnamencmp(fname, home, n)) {
 	    char *p = strrchr(home, '\\');
 	    
 	    if (p != NULL) {
