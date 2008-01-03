@@ -1807,7 +1807,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
     } else {
 	rset->opt = OPT_NONE;
     }
-
+    
     rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
     rset->combo = NULL;
     rset->adj1 = rset->adj2 = NULL;

@@ -2328,15 +2328,19 @@ void finalize_working_dir_menu (void)
 {
     const char *p0 = "/File/Working directory";
     const char *p1 = "/File/Working directory/Use startup directory";
+    char tmp[FILENAME_MAX];
     GtkWidget *w;
 
     w = gtk_item_factory_get_widget(mdata->ifac, p0);
     if (w != NULL) {
-	gchar *tmp = g_strdup_printf("Currently %s", paths.workdir);
+	gchar *tip;
 
+	strcpy(tmp, paths.workdir);
 	trim_slash(tmp);
-	gretl_tooltips_add(w, tmp);
-	g_free(tmp);
+	trim_homedir(tmp);
+	tip = g_strdup_printf(_("Currently %s"), tmp);
+	gretl_tooltips_add(w, tip);
+	g_free(tip);
     } 
 
     w = gtk_item_factory_get_widget(mdata->ifac, p1);
@@ -2344,7 +2348,9 @@ void finalize_working_dir_menu (void)
 	if (*startdir == '\0') {
 	    gtk_widget_set_sensitive(w, FALSE);
 	} else {
-	    gretl_tooltips_add(w, startdir);
+	    strcpy(tmp, startdir);
+	    trim_homedir(tmp);
+	    gretl_tooltips_add(w, tmp);
 	}
     }
 }

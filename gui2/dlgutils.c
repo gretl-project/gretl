@@ -26,6 +26,35 @@
 
 #include "system.h"
 
+GtkWidget *windata_get_toplevel (windata_t *vwin)
+{
+    GtkWidget *top = NULL;
+
+    if (vwin->w != NULL) {
+	top = gtk_widget_get_toplevel(vwin->w);
+    } else if (vwin->dialog != NULL) {
+	top = gtk_widget_get_toplevel(vwin->dialog);
+    }
+
+    return top;
+}
+
+void set_window_busy (windata_t *vwin)
+{
+    vwin->flags |= VWIN_BUSY;
+    if (vwin->mbar != NULL) {
+	gtk_widget_set_sensitive(vwin->mbar, FALSE);
+    }
+}
+
+void unset_window_busy (windata_t *vwin)
+{
+    vwin->flags &= ~VWIN_BUSY;
+    if (vwin->mbar != NULL) {
+	gtk_widget_set_sensitive(vwin->mbar, TRUE);
+    }
+}
+
 dialog_opts *dialog_opts_new (int n, int type, 
 			      gretlopt *optp,
 			      const gretlopt *vals,
@@ -261,13 +290,6 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags)
 {
     GtkWidget *d = gtk_dialog_new();
-
-#if 0
-    if (current_dialog != NULL) {
-	gtk_window_present(GTK_WINDOW(current_dialog));
-	return NULL;
-    }
-#endif
 
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(d), title);
@@ -1001,6 +1023,15 @@ static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
     gtk_widget_destroy(d->dialog);
 }
 
+static gboolean cancel_vwin_edit (GtkWidget *w, gpointer p)
+{
+    if (open_edit_dialog != NULL) {
+	gtk_widget_destroy(open_edit_dialog);
+    }
+
+    return FALSE;
+}
+
 static int ols_model_window (windata_t *vwin)
 {
     if (vwin->role == VIEW_MODEL) {
@@ -1031,7 +1062,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     int clear = 0;
 
     if (open_edit_dialog != NULL && cmdcode != MINIBUF) {
-	gdk_window_raise(open_edit_dialog->window);
+	gtk_window_present(GTK_WINDOW(open_edit_dialog));
 	return;
     }
 
@@ -1147,7 +1178,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     }    
 
     /* "Cancel" button? */
-    if (cmdcode != CREATE_USERDIR) {
+    if (cmdcode != CREATE_USERDIR && canceled != NULL) {
 	cancel_delete_button(button_box, d->dialog, canceled);
     }
 
@@ -1159,7 +1190,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     } else {
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(edit_dialog_ok), d);
-    }	
+    }
+	
     gtk_widget_grab_default(w);
     gtk_widget_show(w);    
 
@@ -1168,6 +1200,17 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     if (hlpcode > 0) {
 	context_help_button(button_box, hlpcode);
 	modal = 0;
+    }
+
+    /* schedule destruction */
+    if (cmdcode == MODEL_GENR || cmdcode == RESTRICT) {
+	GtkWidget *w = windata_get_toplevel(okptr);
+
+	if (w != NULL) {
+	    g_signal_connect(G_OBJECT(w), "destroy",
+			     G_CALLBACK(cancel_vwin_edit), 
+			     NULL);
+	}
     }
 
     gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);

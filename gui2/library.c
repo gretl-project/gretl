@@ -1344,11 +1344,14 @@ void do_forecast (gpointer p, guint u, GtkWidget *w)
     } else {
 	pre_n = 0;
     }
-    
+
+    set_window_busy(vwin);
     resp = forecast_dialog(t1min, t2, &t1,
 			   0, t2, &t2,
 			   0, premax, &pre_n,
 			   dyn_ok, pmod);
+    unset_window_busy(vwin);
+
     if (resp < 0) {
 	return;
     }
@@ -1422,7 +1425,9 @@ void do_bootstrap (gpointer p, guint u, GtkWidget *w)
     PRN *prn;
     int err;
 
+    set_window_busy(vwin);
     bootstrap_dialog(vwin, &k, &B, &opt, &cancelled);
+    unset_window_busy(vwin);
 
     if (cancelled || bufopen(&prn)) {
 	return;

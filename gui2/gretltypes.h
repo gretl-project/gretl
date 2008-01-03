@@ -88,8 +88,6 @@ struct dialog_opts_ {
 };
 
 #define window_is_busy(w)    (w->flags & VWIN_BUSY)
-#define set_window_busy(w)   (w->flags |= VWIN_BUSY)
-#define unset_window_busy(w) (w->flags &= ~VWIN_BUSY)
 
 #define window_help_is_active(w)    (w->flags & VWIN_HELP_ACTIVE)
 #define set_window_help_active(w)   (w->flags |= VWIN_HELP_ACTIVE)

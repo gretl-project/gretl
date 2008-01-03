@@ -309,8 +309,8 @@ void SYS_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
 
 void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data; 
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) data; 
+    MODEL *pmod = vwin->data;
 
     add_model_stat(pmod, which);
 }
@@ -330,12 +330,13 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
 
 void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
+    int cancel = 0;
 
     edit_dialog(_("gretl: add var"), 
 		_("Enter formula for new variable:"),
-		"", do_model_genr, mydata, 
-		MODEL_GENR, VARCLICK_INSERT_NAME, NULL);   
+		"", do_model_genr, vwin, 
+		MODEL_GENR, VARCLICK_INSERT_NAME, &cancel);   
 }
 
 void selector_callback (gpointer data, guint action, GtkWidget *widget)

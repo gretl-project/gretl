@@ -522,6 +522,44 @@ set_wdir_from_filelist (gpointer p, guint i, GtkWidget *w)
     gui_set_working_dir(wdirp[i]);
 }
 
+void trim_homedir (char *fname)
+{
+    char *home = NULL;
+
+#ifdef G_OS_WIN32
+    home = mydocs_path();
+    if (home != NULL) {
+	int n = strlen(home);
+
+	if (!strncmp(fname, home, n)) {
+	    char *p = strrchr(home, '\\');
+	    
+	    if (p != NULL) {
+		char tmp[FILENAME_MAX];
+
+		n = p - home + 1;
+		strcpy(tmp, fname + n);
+		strcpy(fname, tmp);
+	    }
+	}
+	free(home);
+    }    
+#else
+    home = getenv("HOME");
+    if (home != NULL) {
+	int n = strlen(home);
+
+	if (!strncmp(fname, home, n)) {
+	    char tmp[FILENAME_MAX];
+
+	    strcpy(tmp, "~");
+	    strcat(tmp, fname + n);
+	    strcpy(fname, tmp);
+	}
+    }
+#endif
+}
+
 static void real_add_files_to_menus (int ftype)
 {
     char **filep, tmp[MAXSTR];
@@ -614,6 +652,7 @@ static void real_add_files_to_menus (int ftype)
 		g_free(item.path);
 		w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
 		if (w != NULL) {
+		    trim_homedir(fname);
 		    gretl_tooltips_add(w, fname);
 		} 
 		g_free(fname);

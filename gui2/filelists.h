@@ -15,6 +15,8 @@ void delete_from_filelist (int filetype, const char *fname);
 
 void add_files_to_menus (void);
 
+void trim_homedir (char *fname);
+
 #if defined(USE_GNOME)
 
 # include <gconf/gconf-client.h>

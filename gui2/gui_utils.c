@@ -177,7 +177,9 @@ static void close_model (gpointer data, guint close, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
 
-    if (!window_is_busy(vwin)) {
+    if (window_is_busy(vwin)) {
+	maybe_raise_dialog();
+    } else {
 	gtk_widget_destroy(vwin->dialog);
     }
 }
@@ -708,6 +710,7 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
     gint resp = 0;
 
     if (window_is_busy(vwin)) {
+	maybe_raise_dialog();
 	return;
     }
 
@@ -2511,6 +2514,7 @@ check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
     gint ret = FALSE;
 
     if (window_is_busy(vwin)) {
+	maybe_raise_dialog();
 	ret = TRUE;
     }
 
