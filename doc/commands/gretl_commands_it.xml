@@ -4415,13 +4415,15 @@
 
     <description context="cli">
       <para>
-	Deve seguire immediatamente un comando <cmd>ols</cmd>. A seconda
+	Deve seguire immediatamente un comando di stima. A seconda
         dell'opzione usata, il comando esegue uno dei test seguenti:
         test dei moltiplicatori di Lagrange per la non-linearità (logaritmi o
         quadrati), test di White per l'eteroschedasticità, test LMF per la
-        correlazione seriale (si veda Kiviet, 1986) e test per il modello ARCH
+        correlazione seriale (si veda Kiviet, 1986) o test per il modello ARCH
         (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
-   	<cmd>arch</cmd>).
+   	<cmd>arch</cmd>). La maggior parte delle opzioni sono disponibili solo
+        per modelli stimati con OLS, ma si veda oltre per alcuni dettagli
+        riguardanti la stima con i minimi quadrati a due stadi.
       </para>
       <para>
 	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
@@ -7953,9 +7955,9 @@
         argomenti indicati. Per gretl questo non è necessariamente un errore,
         tuttavia può essere utile voler controllare questa corrispondenza; è
         possibile farlo usando la variabile scalare interna
-	<lit>$nscan</lit>, il cui valore viene sovrascritto ogni volta che si
-        usa sscanf. In caso di uso interattivo viene mostrato anche il numero di
-        conversioni effettuate.
+	<lit>$nscan</lit>, il cui valore viene aggiornato ogni volta che si
+        usa <lit>sscanf</lit>. In caso di uso interattivo viene mostrato anche
+        il numero di conversioni effettuate.
       </para>
       <para>
 	Ecco alcuni esempi:
