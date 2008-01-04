@@ -790,7 +790,7 @@ double bvnorm_cdf (double a, double b, double rho)
 
 double gamma_cdf (double s1, double s2, double x, int control)
 {
-    double shape, scale, p;
+    double scale, shape, p;
 
     if (control == 1) {
 	shape = s1; 
@@ -800,7 +800,7 @@ double gamma_cdf (double s1, double s2, double x, int control)
 	shape = s1 / scale; 
     }
 
-    /* cephes expects 1/scale, shape, I think >8-} */
+    /* cephes expects inverse-scale, shape, I think >8-} */
 
     p = gdtr(1.0 / scale, shape, x);
     if (get_cephes_errno()) {
@@ -1072,6 +1072,11 @@ double gretl_get_cdf (char st, double *p)
 double gretl_get_cdf_inverse (char st, double *p)
 {
     double x = NADBL;
+
+    if (st == 'P') {
+	fprintf(stderr, "gretl_get_cdf_inverse: Poisson: p[0]=%g, p[1]=%g\n",
+		p[0], p[1]);
+    }
 
     if (st == 'z') {
 	x = normal_cdf_inverse(p[0]);
