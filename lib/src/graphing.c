@@ -835,6 +835,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     /* plot font setup */
     if (gpttf) {
 	grfont = gretl_png_font();
+	fprintf(stderr, "grfont = '%s'\n", grfont);
 	if (*grfont == 0) {
 	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
 	}

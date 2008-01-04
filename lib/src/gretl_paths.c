@@ -1661,8 +1661,6 @@ int cli_read_rc (PATHS *paths)
 	    } else if (!strcmp(key, "userdir")) {
 		*paths->workdir = '\0';
 		strncat(paths->workdir, val, MAXLEN - 1);
-	    } else if (!strcmp(key, "lcnumeric")) {
-		;
 	    } else if (!strcmp(key, "shellok")) {
 		libset_set_bool(SHELL_OK, rc_bool(val));
 	    } else if (!strcmp(key, "usecwd")) {
@@ -1683,23 +1681,17 @@ int cli_read_rc (PATHS *paths)
 		strncat(dbproxy, val, 21 - 1);
 	    } else if (!strcmp(key, "useproxy")) {
 		use_proxy = rc_bool(val);
+	    } else if (!strcmp(key, "x12a")) {
+		*paths->x12a = '\0';
+		strncat(paths->x12a, val, FILENAME_MAX - 1);
 	    } else if (!strcmp(key, "useqr")) {
 		libset_set_bool(USE_QR, rc_bool(val));
 	    } else if (!strcmp(key, "Png_font")) {
-		;
+		/* doesn't do anything right now */
+		set_gretl_png_font(val, paths);
 	    } else if (!strcmp(key, "Gp_colors")) {
 		rc_set_gp_colors(val);
-	    } else if (!strcmp(key, "HC_by_default")) {
-		;
-	    } else if (!strcmp(key, "HC_xsect")) {
-		set_xsect_hccme(val);
-	    } else if (!strcmp(key, "HC_tseri")) {
-		set_tseries_hccme(val);
-	    } else if (!strcmp(key, "HC_panel")) {
-		set_panel_hccme(val);
-	    } else if (!strcmp(key, "HC_garch")) {
-		set_garch_robust_vcv(val);
-	    }
+	    } 
 	}
     }
 
