@@ -207,7 +207,6 @@ static const char *get_ext (int action, gpointer data)
 
 static int check_maybe_add_ext (char *fname, int action, gpointer data)
 {
-    FILE *fp;
     const char *ext = NULL;
 
     if (fname == NULL) {
@@ -218,13 +217,6 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
     if (isdir(fname)) {
 	return (action != SET_DIR);
     }
-
-    /* don't mess with the name of a previously existing file */
-    fp = gretl_fopen(fname, "r");
-    if (fp != NULL && fgetc(fp) != EOF) {
-	fclose(fp);
-	return 0;
-    }    
 
     /* don't mess with a filename that already has an extension */
     if (dotpos(fname) != strlen(fname)) {
