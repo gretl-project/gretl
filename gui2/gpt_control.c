@@ -617,6 +617,8 @@ static int filter_plot_file (const char *inname,
 	ttype = GP_TERM_PDF;
     }
 
+    /* FIXME postscript and Polish ! */
+
 #ifdef ENABLE_NLS
     pprint_gnuplot_encoding(term, prn);
 #endif
@@ -657,7 +659,7 @@ static int filter_plot_file (const char *inname,
 	    pputs(prn, pline);
 	}
 
-#if 0
+#if 1
 	if (!gretl_is_ascii(pline)) {
 	    fprintf(stderr, "non-ascii line: '%s'\n", pline);
 	    if (g_utf8_validate(pline, -1, NULL)) {
@@ -695,6 +697,8 @@ void save_graph_to_file (gpointer data, const char *fname)
     cmds = get_full_term_string(spec, term);
 
     if (cmds) {
+	/* FIXME: should at least partially filter the file
+	   in this case */
 	if (copyfile(spec->fname, fname)) { 
 	    errbox(_("Failed to copy graph file"));
 	}
@@ -714,6 +718,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 
     if (*term == '\0') {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	    fprintf(stderr, "gnuplot: using pdfcairo driver\n");
 	    strcpy(term, "pdfcairo");
 	} else {
 	    strcpy(term, "pdf");

@@ -1019,19 +1019,29 @@ int pprint_as_latin (PRN *prn, const char *s, int emf)
 char *utf8_to_latin (const char *s)
 {
     gsize read, wrote;
+    GError *err = NULL;
+    char *ret = NULL;
 
     if (iso_latin_version() == 2) {
 # ifdef WIN32
-	return g_convert(s, -1, "CP1250", "UTF-8",
-			 &read, &wrote, NULL);
+	ret = g_convert(s, -1, "CP1250", "UTF-8",
+			&read, &wrote, &err);
 # else
-	return g_convert(s, -1, "ISO-8859-2", "UTF-8",
-			 &read, &wrote, NULL);
+	ret = g_convert(s, -1, "ISO-8859-2", "UTF-8",
+			&read, &wrote, &err);
 # endif
     } else {
-	return g_convert(s, -1, "ISO-8859-1", "UTF-8",
-			 &read, &wrote, NULL);
+	ret = g_convert(s, -1, "ISO-8859-1", "UTF-8",
+			&read, &wrote, &err);
     }
+
+    if (err != NULL) {
+	fputs("utf8_to_latin:\n", stderr);
+	fprintf(stderr, "%s\n", err->message);
+	g_error_free(err);
+    }
+
+    return ret;
 }
 
 /* allow TAB, CR, LF, FF */

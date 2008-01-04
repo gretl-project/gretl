@@ -111,9 +111,9 @@ int maybe_recode_file (const char *fname)
 gchar *my_filename_from_utf8 (char *fname)
 {
     const gchar *cset;
-    gchar *trfname = NULL;
     GError *err = NULL;
     gsize bytes;
+    gchar *tmp = NULL;
 
     if (seven_bit_string((unsigned char *) fname)) {
 	return fname;
@@ -124,16 +124,16 @@ gchar *my_filename_from_utf8 (char *fname)
 	return fname;
     }
 
-    trfname = g_filename_from_utf8(fname, -1, NULL, &bytes, &err);
+    tmp = g_filename_from_utf8(fname, -1, NULL, &bytes, &err);
 
-    if (err != NULL) {
+    if (err) {
 	errbox(err->message);
 	g_error_free(err);
     } else {
-	strcpy(fname, trfname);
+	strcpy(fname, tmp);
     }
 
-    g_free(trfname);
+    g_free(tmp);
 
     return fname;
 }
@@ -141,9 +141,9 @@ gchar *my_filename_from_utf8 (char *fname)
 gchar *my_locale_from_utf8 (const gchar *src)
 {
     const gchar *cset;
-    gchar *trstr;
     gsize bytes;
     GError *err = NULL;
+    gchar *ret = NULL;
 
     if (g_get_charset(&cset)) {
 	/* g_get_charset returns TRUE if the returned 
@@ -151,30 +151,26 @@ gchar *my_locale_from_utf8 (const gchar *src)
 	return g_strdup(src);
     }
 
-    trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
+    ret = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
 
-    if (err != NULL) {
-	if (cset != NULL) {
-	    errbox("g_locale_from_utf8 failed for charset '%s'", cset);
-	} else {
-	    errbox("g_locale_from_utf8 failed; so did g_get_charset");
-	}
+    if (err) {
+	errbox(err->message);
 	g_error_free(err);
     }
 
-    return trstr;
+    return ret;
 }
 
 /* returns new copy of fname, converted if need be */
 
 gchar *my_filename_to_utf8 (const char *fname)
 {
-    gchar *trfname = NULL;
     GError *err = NULL;
     gsize bytes;
+    gchar *ret = NULL;
 
     if (g_utf8_validate(fname, -1, NULL)) {
-	trfname = g_strdup(fname);
+	ret = g_strdup(fname);
     } else {
 	/* On Windows, with GTK >= 2.6, the GLib filename
 	   encoding is UTF-8; however, filenames coming from
@@ -182,51 +178,44 @@ gchar *my_filename_to_utf8 (const char *fname)
 	   locale charset 
 	*/
 #if defined(G_OS_WIN32) && GTK_MINOR_VERSION >= 6
-	trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
+	ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
 #else
-	trfname = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
+	ret = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
 #endif
     }
 
-    if (err != NULL) {
+    if (err) {
 	errbox(err->message);
 	g_error_free(err);
     } 
 
-    return trfname;
+    return ret;
 }
 
 static gchar *real_my_locale_to_utf8 (const gchar *src,
 				      int starting)
 {
     static int errcount;
-    gchar *trstr;
     gsize bytes;
     GError *err = NULL;
+    gchar *ret;
 
     if (starting) {
 	errcount = 0;
-	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+	ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
     } else if (errcount == 0) {
-	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+	ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
     } else {
-	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
+	ret = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
     }
 
-    if (err != NULL) {
-	const gchar *cset = NULL;
-
-	g_get_charset(&cset);
-	if (cset != NULL) {
-	    errbox("g_locale_to_utf8 failed for charset '%s'", cset);
-	} else {
-	    errbox("g_locale_to_utf8 failed; so did g_get_charset");
-	}
+    if (err) {
+	errbox(err->message);
 	g_error_free(err);
 	errcount++;
     }
 
-    return trstr;
+    return ret;
 }
 
 static const char *gp_cset (void)
@@ -247,10 +236,9 @@ static gchar *real_gp_locale_to_utf8 (const gchar *src,
 {
     static int errcount;
     static const char *cset;
-    gchar *trstr;
-    gsize read;
-    gsize wrote;
+    gsize read, wrote;
     GError *err = NULL;
+    gchar *ret;
 
     if (cset == NULL) {
 	cset = gp_cset();
@@ -258,23 +246,23 @@ static gchar *real_gp_locale_to_utf8 (const gchar *src,
 
     if (starting) {
 	errcount = 0;
-	trstr = g_convert(src, -1, "UTF-8", cset,
-			  &read, &wrote, &err);
+	ret = g_convert(src, -1, "UTF-8", cset,
+			&read, &wrote, &err);
     } else if (errcount == 0) {
-	trstr = g_convert(src, -1, "UTF-8", cset,
-			  &read, &wrote, &err);
+	ret = g_convert(src, -1, "UTF-8", cset,
+			&read, &wrote, &err);
     } else {
-	trstr = g_convert(src, -1, "UTF-8", cset,
-			  &read, &wrote, NULL);
+	ret = g_convert(src, -1, "UTF-8", cset,
+			&read, &wrote, NULL);
     }
 
-    if (err != NULL) {
-	errbox("g_convert (character set conversion) failed");
+    if (err) {
+	errbox(err->message);
 	g_error_free(err);
 	errcount++;
     }
 
-    return trstr;
+    return ret;
 }
 
 gchar *my_locale_to_utf8 (const gchar *src)
@@ -300,9 +288,9 @@ gchar *gp_locale_to_utf8_next (const gchar *src)
 gchar *gp_locale_from_utf8 (const gchar *src)
 {
     static const char *cset;
-    gchar *trstr;
-    gsize read;
-    gsize wrote;
+    gsize read, wrote;
+    GError *err = NULL;
+    gchar *ret;
 
     if (gretl_is_ascii(src)) {
 	return NULL;
@@ -317,31 +305,54 @@ gchar *gp_locale_from_utf8 (const gchar *src)
 	    cset);
 #endif
 
-    trstr = g_convert(src, -1, cset, "UTF-8",
-		      &read, &wrote, NULL);
+    ret = g_convert(src, -1, cset, "UTF-8",
+		    &read, &wrote, &err);
 
-    return trstr;
+    if (err) {
+	errbox(err->message);
+	g_error_free(err);
+    }
+
+    return ret;
 }
 
 gchar *latin1_to_utf8 (const gchar *src)
 {
     gsize read, wrote;
+    GError *err = NULL;
+    gchar *ret;
 
-    return g_convert(src, -1, "UTF-8", "ISO-8859-1",
-		     &read, &wrote, NULL);
+    ret = g_convert(src, -1, "UTF-8", "ISO-8859-1",
+		    &read, &wrote, &err);
+
+    if (err) {
+	errbox(err->message);
+	g_error_free(err);
+    }
+
+    return ret;
 }
 
 gchar *latin2_to_utf8 (const gchar *src)
 {
     gsize read, wrote;
+    GError *err = NULL;
+    gchar *ret;
 
 # ifdef G_OS_WIN32
-    return g_convert(src, -1, "UTF-8", "CP1250",
-		     &read, &wrote, NULL);
+    ret = g_convert(src, -1, "UTF-8", "CP1250",
+		    &read, &wrote, &err);
 # else
-    return g_convert(src, -1, "UTF-8", "ISO-8859-2",
-		     &read, &wrote, NULL);
+    ret = g_convert(src, -1, "UTF-8", "ISO-8859-2",
+		    &read, &wrote, &err);
 # endif
+
+    if (err) {
+	errbox(err->message);
+	g_error_free(err);
+    }
+
+    return ret;
 }
 
 int html_encoded (const char *s)

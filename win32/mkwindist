@@ -2,7 +2,8 @@
 
 # Shell script to make gretl win32 distribution
 
-GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp422w32.zip
+# GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp422w32.zip
+GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp43cvsw32.zip
 HOME_WIN32=/home/cottrell/stats/esl/win32
 CROSSDIR=/opt/cross-tools/mingw32
 
@@ -79,7 +80,6 @@ mkdir -p windist/gretl/data/nist
 mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/scripts/misc
 mkdir -p windist/gretl/db
-mkdir -p windist/gretl/user
 mkdir -p windist/gretl/doc
 mkdir -p windist/gretl/helpfigs
 mkdir -p windist/gretl/plugins
@@ -108,14 +108,17 @@ done
 # GTK directories and runtime files
 process_gtk
 
-# auxiliary dlls (if using cairo, can drop libpdf.dll)
+# auxiliary dlls
 for f in \
     libgmp-3.dll libxml2.dll readline5.dll history5.dll zlib1.dll \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
-    iconv.dll intl.dll libfftw3-3.dll libpdf.dll
+    iconv.dll intl.dll libfftw3-3.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
+
+# Uncomment if not using cairo in gnuplot
+# add_file $HOME_WIN32/misc-dll/libpdf.dll gretl/$f
 
 # extra DLLs (FIXME: remove these as soon as possible!)
 for f in jpeg62.dll libtiff3.dll

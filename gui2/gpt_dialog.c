@@ -61,8 +61,6 @@ static GtkWidget *y2_check;
 static GtkWidget *ttfcombo;
 static GtkWidget *ttfspin;
 
-GtkWidget *filesavebutton;
-
 #define MAX_AXES 3
 
 struct gpt_range_t axis_range[MAX_AXES];
@@ -118,7 +116,7 @@ static void flip_manual_range (GtkWidget *widget, gpointer data)
 }
 
 /* Take text from a gtkentry and write to gnuplot spec string.  The
-   entries will be in utf-8, and may have to be converted to the
+   text will be in utf-8, and may have to be converted to the
    locale for use with gnuplot.
 */
 
@@ -126,12 +124,13 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 {
     const gchar *wstr;
 #ifdef ENABLE_NLS
-    gchar *trstr = NULL;
     int pngterm = gnuplot_png_terminal();    
 #endif
 
     *targ = '\0';
+
     g_return_if_fail(GTK_IS_ENTRY(w));
+
     wstr = gtk_entry_get_text(GTK_ENTRY(w));
     if (wstr == NULL || *wstr == '\0') {
 	return;
@@ -139,12 +138,13 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 
 #ifdef ENABLE_NLS
     if (pngterm < GP_PNG_CAIRO) {
-	trstr = gp_locale_from_utf8(wstr);
-    }
-    if (trstr != NULL) {
-	strncat(targ, trstr, n-1);
-	g_free(trstr);
-	return;
+	gchar *trstr = gp_locale_from_utf8(wstr);
+
+	if (trstr != NULL) {
+	    strncat(targ, trstr, n-1);
+	    g_free(trstr);
+	    return;
+	}
     }
 #endif
 
@@ -358,20 +358,11 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 {
     const gchar *yaxis;
     int supress_y2 = 0;
-    int i, k, fsave = 0;
-    int err = 0;
+    int i, k, err = 0;
 
     /* entry_to_gp_string translates from utf-8 to the locale, if
        using NLS */
 
-    if (widget == filesavebutton) {
-	entry_to_gp_string(GTK_COMBO(termcombo)->entry, spec->termtype, 
-			   sizeof spec->termtype);
-	if (strcmp(spec->termtype, "screen")) {
-	    fsave = 1;
-	}
-    }
-   
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].widget != NULL) {
 	    entry_to_gp_string(gpt_titles[i].widget, spec->titles[i], 
@@ -499,16 +490,10 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     if (!err) {
-	if (fsave) { 
-	    /* saving to file */
-	    file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-			  FSEL_DATA_MISC, spec);
-	} else { 
-	    png_plot *plot = (png_plot *) spec->ptr;
+	png_plot *plot = (png_plot *) spec->ptr;
 
-	    set_plot_has_y2_axis(plot, spec->flags & GPT_Y2AXIS);
-	    redisplay_edited_plot(plot);
-	}
+	set_plot_has_y2_axis(plot, spec->flags & GPT_Y2AXIS);
+	redisplay_edited_plot(plot);
 	mark_session_changed();
     }
 }
@@ -1016,9 +1001,27 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 }
 
+static void gpt_save_as_callback (GtkWidget *button, GPT_SPEC *spec) 
+{
+    GtkWidget *w = GTK_COMBO(termcombo)->entry;
+    const gchar *str;
+
+    str = gtk_entry_get_text(GTK_ENTRY(w));
+    if (str == NULL || *str == '\0') {
+	return;
+    }
+
+    *spec->termtype = '\0';
+    strncat(spec->termtype, str, sizeof spec->termtype - 1);
+
+    file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
+		  FSEL_DATA_MISC, spec);
+}
+
 static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *label, *vbox, *tbl;
+    GtkWidget *button;
     int i, tbl_len;
     GList *termlist = NULL;
     gchar *termtypes[] = {
@@ -1069,16 +1072,16 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     g_list_free(termlist); 
 
     /* button to generate output to file */
-    filesavebutton = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-    GTK_WIDGET_SET_FLAGS(filesavebutton, GTK_CAN_DEFAULT);
+    button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     tbl_len++;
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      filesavebutton, 1, 2, tbl_len-1, tbl_len);
-    g_signal_connect (G_OBJECT(filesavebutton), "clicked", 
-		      G_CALLBACK(apply_gpt_changes), 
+			      button, 1, 2, tbl_len-1, tbl_len);
+    g_signal_connect (G_OBJECT(button), "clicked", 
+		      G_CALLBACK(gpt_save_as_callback), 
 		      spec);
-    gtk_widget_grab_default(filesavebutton);
-    gtk_widget_show(filesavebutton);  
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);  
 }
 
 static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)

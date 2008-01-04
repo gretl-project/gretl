@@ -349,7 +349,7 @@ static int factorized_vars (gnuplot_info *gi, const double **Z)
 
 #ifdef WIN32
 
-#define WIN32_USE_CAIRO 0 /* close, but not just yet */
+#define WIN32_USE_CAIRO 1
 
 int gnuplot_has_ttf (int reset)
 {
@@ -475,7 +475,7 @@ int gnuplot_pdf_terminal (void)
 /* We should enable pngcairo as the default as soon as possible -- but
    for the present this poses a problem with regard to guessing the
    pixel bounds in the PNG file.  So we'll accept pngcairo only if
-   we find a (hacked) version that supports the TERM_XMIN printable
+   we find a version that supports the TERM_XMIN printable
    variable.
 */
 
