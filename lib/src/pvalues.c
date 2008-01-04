@@ -783,6 +783,11 @@ double bvnorm_cdf (double a, double b, double rho)
     return ret;
 }
 
+/* Control 1 : s1, s2 = shape, scale
+           2 : s1, s2 = mean, variance
+   Returns NADBL on error.
+*/
+
 double gamma_cdf (double s1, double s2, double x, int control)
 {
     double shape, scale, p;
@@ -793,9 +798,11 @@ double gamma_cdf (double s1, double s2, double x, int control)
     } else {
 	scale = s2 / s1; 
 	shape = s1 / scale; 
-    }	
+    }
 
-    p = gdtr(s2, s1, x);
+    /* cephes expects 1/scale, shape, I think >8-} */
+
+    p = gdtr(1.0 / scale, shape, x);
     if (get_cephes_errno()) {
 	p = NADBL;
     }

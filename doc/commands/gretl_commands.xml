@@ -6435,7 +6435,7 @@
 	<example>pvalue t 25 3.0</example>
 	<example>pvalue X 3 5.6</example>
 	<example>pvalue F 4 58 fval</example>
-	<example>pvalue G xbar varx x</example>
+	<example>pvalue G shape scale x</example>
 	<example>pvalue B bprob 10 6</example>
 	<example>pvalue P lambda x</example>
       </examples>
