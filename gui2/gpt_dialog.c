@@ -110,47 +110,45 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
 
 static void flip_manual_range (GtkWidget *widget, gpointer data)
 {
-    gint axis = GPOINTER_TO_INT(data);
+    gint i = GPOINTER_TO_INT(data);
+    gboolean s = GTK_TOGGLE_BUTTON(axis_range[i].isauto)->active;
 
-    if (GTK_TOGGLE_BUTTON (axis_range[axis].isauto)->active) {
-	gtk_widget_set_sensitive(GTK_WIDGET(axis_range[axis].min), FALSE);
-	gtk_widget_set_sensitive(GTK_WIDGET(axis_range[axis].max), FALSE);
-    } else {
-	gtk_widget_set_sensitive(GTK_WIDGET(axis_range[axis].min), TRUE);
-	gtk_widget_set_sensitive(GTK_WIDGET(axis_range[axis].max), TRUE);
-    }
+    gtk_widget_set_sensitive(GTK_WIDGET(axis_range[i].min), !s);
+    gtk_widget_set_sensitive(GTK_WIDGET(axis_range[i].max), !s);
 }
 
-/* Take text from a gtkentry and write to gnuplot spec string.
-   Under gtk2, the entries will be in utf-8, and have to be converted
-   to the locale for use with gnuplot.
+/* Take text from a gtkentry and write to gnuplot spec string.  The
+   entries will be in utf-8, and may have to be converted to the
+   locale for use with gnuplot.
 */
 
 static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 {
     const gchar *wstr;
-    
-    *targ = '\0';
+#ifdef ENABLE_NLS
+    gchar *trstr = NULL;
+    int pngterm = gnuplot_png_terminal();    
+#endif
 
+    *targ = '\0';
     g_return_if_fail(GTK_IS_ENTRY(w));
     wstr = gtk_entry_get_text(GTK_ENTRY(w));
+    if (wstr == NULL || *wstr == '\0') {
+	return;
+    }
 
 #ifdef ENABLE_NLS
-    if (wstr != NULL && *wstr != '\0') {
-	gchar *trstr = gp_locale_from_utf8(wstr);
-
-	if (trstr != NULL) {
-	    strncat(targ, trstr, n-1);
-	    g_free(trstr);
-	} else {
-	    strncat(targ, wstr, n-1);
-	}
+    if (pngterm < GP_PNG_CAIRO) {
+	trstr = gp_locale_from_utf8(wstr);
     }
-#else
-    if (wstr != NULL && *wstr != '\0') {
-	strncat(targ, wstr, n-1);
+    if (trstr != NULL) {
+	strncat(targ, trstr, n-1);
+	g_free(trstr);
+	return;
     }
 #endif
+
+    strncat(targ, wstr, n-1);
 }
 
 static FitType fit_type_from_string (const char *s)
@@ -253,32 +251,36 @@ static double entry_to_gp_double (GtkWidget *w)
     if (w != NULL && GTK_IS_ENTRY(w)) {
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
 
-	if (s != NULL && *s != '\0') {
 #ifdef ENABLE_NLS
+	if (s != NULL && *s != '\0') {
 	    gchar *tmp = g_strdup(s);
 
 	    charsub(tmp, ',', '.');
-	    gretl_push_c_numeric_locale();
-#else
-	    const gchar *tmp = s;
-#endif
+	    gretl_push_c_numeric_locale();	    
 	    if (check_atof(tmp)) {
 		errbox(gretl_errmsg_get());
 	    } else {
 		ret = atof(tmp);
 	    }
-#ifdef ENABLE_NLS
 	    gretl_pop_c_numeric_locale();
 	    g_free(tmp);
-#endif
 	}
+#else
+	if (s != NULL && *s != '\0') {
+	    if (check_atof(s)) {
+		errbox(gretl_errmsg_get());
+	    } else {
+		ret = atof(s);
+	    }
+	}
+#endif
     }
 
     return ret;
 }
 
 /* Take text from a gnuplot spec string and put it into a gtkentry.
-   We have to ensure that the text is put into utf-8.
+   We have to ensure that the text is in utf-8.
 */
 
 static void gp_string_to_entry (GtkWidget *w, const char *str)
@@ -286,14 +288,13 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 #ifdef ENABLE_NLS
     int lv = iso_latin_version();
     int pngterm = gnuplot_png_terminal();
-#endif
     gchar *trstr = NULL;
+#endif
 
     if (*str == '\0') {
 	gtk_entry_set_text(GTK_ENTRY(w), str);
 	return;
     }
-
 
 #ifdef ENABLE_NLS
     if (lv == 2 && pngterm < GP_PNG_CAIRO) {
@@ -306,14 +307,13 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
     } else {
 	trstr = g_strdup(str);
     }
-#else
-    trstr = g_strdup(str);
-#endif
-
     if (trstr != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(w), trstr);
 	g_free(trstr);
-    }    
+    }  
+#else
+    gtk_entry_set_text(GTK_ENTRY(w), str);
+#endif
 }
 
 static int
@@ -752,14 +752,6 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     }
 }
 
-#if 0
-static void gp_commands_window (GtkWidget *w, GPT_SPEC *spec)
-{
-    remove_png_term_from_plotfile_by_name(spec->fname);
-    view_file(spec->fname, 1, 0, 78, 400, GR_PLOT);
-}
-#endif
-
 /* PNG anti-aliasing switch */
 
 static void set_aa_status (GtkWidget *w, int *ok)
@@ -942,7 +934,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(aa_check);
     }	
 
-    /* set TT font (if gnuplot uses libgd and freetype) */
+    /* set TT font, if gnuplot uses freetype */
     if (gnuplot_has_ttf(0)) {
 	GtkWidget *ebox, *hsep;
 	GList *fontnames = NULL;
@@ -1022,30 +1014,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    }
 	}
     }
-
-#if 0 /* this is not thought out properly */
-    if (1) {
-	GtkWidget *hsep = gtk_hseparator_new();
-	GtkWidget *hbox, *button;
-
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
-				  rows - 1, rows);  
-	gtk_widget_show(hsep);
-
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	hbox = gtk_hbox_new(FALSE, 2);
-	button = gtk_button_new_with_label(_("Edit plot commands"));
-	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
-	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(gp_commands_window), 
-			 spec);
-	gtk_table_attach(GTK_TABLE(tbl), hbox, 0, 2, rows - 1, rows,
-			 GTK_FILL, 0, 0, 5);
-	gtk_widget_show(button);
-	gtk_widget_show(hbox);
-    }
-#endif
 }
 
 static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec) 

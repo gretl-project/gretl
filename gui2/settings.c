@@ -2179,8 +2179,8 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
 
     rgb.r = (unsigned char) (scale_round(gcolor.red));
-    rgb.g = (unsigned char) (scale_round(gcolor.red));
-    rgb.b = (unsigned char) (scale_round(gcolor.red));
+    rgb.g = (unsigned char) (scale_round(gcolor.green));
+    rgb.b = (unsigned char) (scale_round(gcolor.blue));
 
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
 

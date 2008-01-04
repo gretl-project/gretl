@@ -312,6 +312,11 @@ gchar *gp_locale_from_utf8 (const gchar *src)
 	cset = gp_cset();
     }
 
+#if 0
+    fprintf(stderr, "gp_locale_from_utf8: src is not ascii, cset = '%s'\n",
+	    cset);
+#endif
+
     trstr = g_convert(src, -1, cset, "UTF-8",
 		      &read, &wrote, NULL);
 

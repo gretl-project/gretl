@@ -10,6 +10,7 @@ version 1.7.2, in progress
 - Rationalize frequency plot dialog
 - Add Help item to forecast dialog
 - Fixes for matrix "dot operations"
+- Fix breakage in graph color selector
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"
