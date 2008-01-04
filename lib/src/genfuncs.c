@@ -428,8 +428,13 @@ int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
 
     if (s < pdinfo->t2) {
 	y[s] = (na(x[s]))? 0.0 : x[s];
-	for (t=s+1; t<=pdinfo->t2; t++) {
-	    y[t] = y[t-1] + (na(x[t])? 0.0 : x[t]);
+	t = s+1;
+	while (!na(x[t])) {
+	    y[t] = y[t-1] + x[t];
+	    t++;
+	}
+	for (s=t; s<=pdinfo->t2; s++) {
+	    y[s] = NADBL;
 	}
     }
 

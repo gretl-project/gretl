@@ -1061,7 +1061,7 @@ double gretl_get_cdf (char st, double *p)
     } else if (st == 'B') {
 	x = binomial_cdf((int) p[2], (int) p[1], p[0]);
     } else if (st == 'D') {
-	x = bvnorm_cdf(p[0], p[1], p[2]);
+	x = bvnorm_cdf(p[1], p[2], p[0]);
     } else if (st == 'P') {
 	x = poisson_cdf(p[0], (int) p[1]);
     }

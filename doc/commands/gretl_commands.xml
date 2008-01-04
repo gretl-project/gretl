@@ -2769,14 +2769,15 @@
 
       <para>
         The <func>cdf</func> function takes the same arguments as
-	<func>pvalue</func>, but it returns the complementary value, that
-	is, the integral of the relevant density function from its lower
-	limit (either minus infinity or zero) to the specified value.  For
-	the bivariate normal distribution, three arguments must be given:
-	<emphasis>x</emphasis>, <emphasis>y</emphasis> and the correlation
-	coefficient <emphasis>rho</emphasis>, in this order.  For
-	additional discussion of these functions see <guideref
-	targ="chap-genr"/>.
+	<func>pvalue</func>, but it returns the complementary value,
+	that is, the integral of the relevant density function from
+	its lower limit (either minus infinity or zero) to the
+	specified value.  For the bivariate normal distribution, three
+	arguments must be given: the correlation
+	coefficient <emphasis>rho</emphasis>, <emphasis>x</emphasis>
+	and <emphasis>y</emphasis>, in this order.  For additional
+	discussion of these functions see
+	<guideref targ="chap-genr"/>.
       </para>
 
       <para>
