@@ -450,12 +450,12 @@ int main (int argc, char *argv[])
     } 
 
     gretl_set_paths(&paths, OPT_D); /* defaults, not gui */
+
 #ifdef WIN32
     cli_read_registry(argv[0], &paths);
-    gretl_set_paths(&paths, OPT_NONE); /* not defaults; use registry info */
 #else
     cli_read_rc(&paths);
-    make_user_dirs();
+    make_user_dirs(); /* ?? */
 #endif /* WIN32 */
 
     if (!batch) {

@@ -47,7 +47,6 @@ have_mpfr="no"
 have_lapack="no"
 have_fftw3="no"
 seek_inet_addr="no"
-png_comments="yes"
 highlight="yes"
 have_tramo="yes"
 have_x12a="yes"
@@ -79,15 +78,6 @@ then
   build_gui=yes
 else
   build_gui=no
-fi])
-
-AC_ARG_ENABLE(png-comments,
-[  --enable-png-comments   Enable reading of PNG comment data [[default=auto]]],
-[if test "$enableval" = "yes"
-then
-  png_comments=yes
-else
-  png_comments=no
 fi])
 
 AC_ARG_ENABLE(build-doc,
@@ -479,44 +469,6 @@ AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTKSOURCEVIEW_CFLAGS)
 AC_SUBST(GTKSOURCEVIEW_LIBS)
-
-dnl
-dnl Check for libpng (first with pkg-config, then fallback)
-dnl
-if test $build_gui = "no" ; then
-   png_comments = "no"
-fi
-
-if test $png_comments = "yes" ; then
-    PKG_CHECK_MODULES(PNG, libpng12,
-        png_failed="no",
-	png_failed="yes"
-   )
-fi
-if test $png_comments = "yes" && test $png_failed = "yes" ; then
-    PKG_CHECK_MODULES(PNG, libpng,
-        png_failed="no",
-	png_failed="yes"
-   )
-fi
-if test $png_comments = "yes" && test $png_failed = "yes" ; then
-   AC_CHECK_LIB(png, png_init_io,png_failed="no",png_failed="yes",-lz)
-   PNG_CFLAGS=
-   PNG_LIBS="-lz -lpng"
-   AC_SUBST(PNG_CFLAGS)
-   AC_SUBST(PNG_LIBS)
-fi
-
-if test $png_comments = "yes" ; then
-  if test $png_failed = "yes" ; then
-     echo "*** gretl wants but did not find libpng."
-     echo "*** You can turn off this dependency by configuring with the option"
-     echo "*** --disable-png-comments"
-     exit
-  else
-    AC_DEFINE(PNG_COMMENTS)
-  fi
-fi
 
 dnl
 dnl Check for gdk-pixbuf support

@@ -1760,12 +1760,6 @@ int cli_read_rc (PATHS *paths)
 	    } else if (!strcmp(key, "x12a")) {
 		*paths->x12a = '\0';
 		strncat(paths->x12a, val, FILENAME_MAX - 1);
-	    } else if (!strcmp(key, "useqr")) {
-		/* do we want his? */
-		libset_set_bool(USE_QR, rc_bool(val));
-	    } else if (!strcmp(key, "Png_font")) {
-		/* doesn't do anything right now */
-		set_gretl_png_font(val, paths);
 	    } else if (!strcmp(key, "Gp_colors")) {
 		rc_set_gp_colors(val);
 	    } 

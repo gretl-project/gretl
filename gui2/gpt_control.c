@@ -39,10 +39,6 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
 
-#ifdef PNG_COMMENTS
-# include <png.h>
-#endif
-
 enum {
     PLOT_SAVED          = 1 << 0,
     PLOT_HAS_CONTROLLER = 1 << 1,
@@ -3494,12 +3490,6 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
     return ret;
 }
 
-#ifdef PNG_COMMENTS
-
-static int png_hack_get_bounds_info (png_bounds *bounds);
-
-#endif
-
 static int get_png_bounds_info (png_bounds *bounds)
 {
     char bbname[MAXLEN];
@@ -3512,11 +3502,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     fp = gretl_fopen(bbname, "r");
 
     if (fp == NULL) {
-#ifdef PNG_COMMENTS
-	return png_hack_get_bounds_info(bounds);
-#else
 	return GRETL_PNG_NO_COMMENTS;
-#endif
     }
 
     if (fgets(line, sizeof line, fp) == NULL) {
@@ -3549,104 +3535,4 @@ static int get_png_bounds_info (png_bounds *bounds)
     return ret;
 }
 
-#ifdef PNG_COMMENTS
-
-/* backward compatibility: try to read coordinate info out of the
-   PNG file itself, as opposed to the new mode of reading from
-   an auxiliary file written by gnuplot >= 4.3 
-*/
-
-#define PNG_CHECK_BYTES 4
-
-static int png_hack_get_bounds_info (png_bounds *bounds)
-{
-    FILE *fp;
-    unsigned char header[PNG_CHECK_BYTES];
-    char pngname[MAXLEN];
-    png_structp png_ptr;
-    png_infop info_ptr;
-    png_text *text_ptr = NULL;
-    int i, num_text;
-    volatile int ret = GRETL_PNG_OK;
-
-    build_path(pngname, paths.dotdir, "gretltmp.png", NULL); 
-
-    fp = gretl_fopen(pngname, "rb");
-    if (fp == NULL) {
-	return GRETL_PNG_NO_OPEN;
-    }
-
-    fread(header, 1, PNG_CHECK_BYTES, fp);
-
-    if (png_sig_cmp(header, 0, PNG_CHECK_BYTES)) {
-	fclose(fp);
-	errbox("Bad PNG header: Got bytes %x %x %x %x", 
-	       header[0],header[1],header[2],header[3]);
-	return GRETL_PNG_NOT_PNG;
-    }
-
-    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 
-				     NULL, NULL, NULL);
-    if (png_ptr == NULL) {
-	fclose(fp);
-	return GRETL_PNG_NO_OPEN;
-    }
-
-    info_ptr = png_create_info_struct(png_ptr);
-    if (info_ptr == NULL) {
-        png_destroy_read_struct(&png_ptr, (png_infopp) NULL, 
-				(png_infopp) NULL);
-	fclose(fp);
-        return GRETL_PNG_NO_OPEN;
-    }
-
-    if (setjmp(png_ptr->jmpbuf)) {
-        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-        fclose(fp);
-        return GRETL_PNG_NO_OPEN;
-    }
-
-    png_init_io(png_ptr, fp);
-
-    png_set_sig_bytes(png_ptr, PNG_CHECK_BYTES);
-    png_read_info(png_ptr, info_ptr);
-
-    num_text = png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
-
-    if (num_text > 1) {
-	int plot_ret = -1, data_ret = -1;
-
-	for (i=1; i<num_text; i++) {
-	    if (!strcmp(text_ptr[i].key, "plot bounds")) {
-		plot_ret = get_png_plot_bounds(text_ptr[i].text, bounds);
-	    }
-	    if (!strcmp(text_ptr[i].key, "data bounds")) {
-		data_ret = get_png_data_bounds(text_ptr[i].text, bounds);
-	    }
-	}
-	if (plot_ret == GRETL_PNG_NO_COORDS && data_ret == GRETL_PNG_NO_COORDS) {
-	    /* comments were present and correct, but all zero */
-	    ret = GRETL_PNG_NO_COORDS;
-	}
-	else if (plot_ret != GRETL_PNG_OK || data_ret != GRETL_PNG_OK) {
-	    /* one or both set of coordinates bad or missing */
-	    if (plot_ret >= 0 || data_ret >= 0) {
-		ret = GRETL_PNG_BAD_COMMENTS;
-	    } else {
-		ret = GRETL_PNG_NO_COMMENTS;
-	    }
-	}
-    } else {
-	/* no coordinates comments present */
-	ret = GRETL_PNG_NO_COMMENTS;
-    }
-
-    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-
-    fclose(fp);
-    
-    return ret;
-}
-
-#endif /* PNG_COMMENTS */
 
