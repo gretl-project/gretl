@@ -60,7 +60,7 @@ int print_as_html (const char *s, FILE *fp);
 
 int print_as_locale (const char *s, FILE *fp);
 
-int pprint_as_latin (PRN *prn, const char *s, int emf);
+int fprint_as_latin (FILE *fp, const char *s, int emf);
 
 char *utf8_to_latin (const char *s);
 

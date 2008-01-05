@@ -777,30 +777,34 @@ static int emf_to_clip (char *emfname)
 
 void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 {
-    FILE *fq;
-    PRN *prn;
-    char plottmp[MAXLEN], plotline[MAXLEN];
+    FILE *fp, *fq;
+    char plotline[MAXLEN];
     gchar *plotcmd = NULL;
     gchar *emfname = NULL;
+    gchar *plttmp = NULL;
     int err;
 
     /* create temporary file to hold the special gnuplot commands */
-    if (user_fopen("gptout.tmp", plottmp, &prn)) {
+    plttmp = g_strdup_printf("%sgptout.tmp", paths.dotdir);
+    fp = gretl_fopen(plttmp, "w");
+    if (fp == NULL) {
+	file_write_errbox(plttmp);
+	g_free(plttmp);
 	return;
     }
 
     /* open the gnuplot source file for the graph */
     fq = gretl_fopen(spec->fname, "r");
     if (fq == NULL) {
-	errbox(_("Couldn't access graph info"));
-	gretl_print_destroy(prn);
+	file_read_errbox(spec->fname);
+	fclose(fp);
 	return;
     }
 
     /* generate gnuplot source file to make emf */
-    pprintf(prn, "%s\n", get_gretl_emf_term_line(spec->code, color));
+    fprintf(fp, "%s\n", get_gretl_emf_term_line(spec->code, color));
     emfname = g_strdup_printf("%sgpttmp.emf", paths.dotdir);
-    pprintf(prn, "set output '%s'\n", emfname);
+    fprintf(fp, "set output '%s'\n", emfname);
 
     while (fgets(plotline, MAXLEN-1, fq)) {
 	if (!strncmp(plotline, "set term", 8) ||
@@ -808,31 +812,28 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 	    continue;
 	}
 	if (!color && strstr(plotline, "set style fill solid")) {
-	    pputs(prn, "set style fill solid 0.3\n");
+	    fputs("set style fill solid 0.3\n", fp);
 	} else if (html_encoded(plotline)) {
-	    pprint_as_latin(prn, plotline, 1);
+	    fprint_as_latin(fp, plotline, 1);
 	} else {
-	    pputs(prn, plotline);
+	    fputs(plotline, fp);
 	}
     }
 
-    gretl_print_destroy(prn);
+    fclose(fp);
     fclose(fq);
 
     /* get gnuplot to create the emf file */
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-			      plottmp);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, plttmp);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
     g_free(plotcmd);
-    remove(plottmp);
+    remove(plttmp);
+    g_free(plttmp);
     
     if (err) {
         errbox(_("Gnuplot error creating graph"));
     } else if (dest == WIN32_TO_CLIPBOARD) {
 	err = emf_to_clip(emfname);
-	if (!err) {
-	    infobox(_("To paste, use Edit/Paste special.../Enhanced metafile"));
-	}
     } else if (dest == WIN32_TO_PRINTER) {
 	err = winprint_graph(emfname);
     }

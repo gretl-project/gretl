@@ -659,19 +659,6 @@ double normal_cdf_inverse (double x)
 }
 
 /**
- * normal_pdf:
- * @x: double-precision value.
- * 
- * Returns: the value of the standard normal PDF evaluated
- * at @x.
- */
-
-double normal_pdf (double x)
-{
-    return (1 / sqrt(M_2PI)) * exp(-0.5 * x * x);
-}
-
-/**
  * normal_critval:
  * @a: right-tail probability.
  *
@@ -695,6 +682,19 @@ double normal_critval (double a)
     } 
 
     return z;
+}
+
+/**
+ * normal_pdf:
+ * @x: double-precision value.
+ * 
+ * Returns: the value of the standard normal PDF evaluated
+ * at @x.
+ */
+
+double normal_pdf (double x)
+{
+    return (1 / sqrt(M_2PI)) * exp(-0.5 * x * x);
 }
 
 /**
@@ -881,30 +881,6 @@ static double poisson_cdf_comp (double lambda, int k)
     return x;
 }
 
-/**
- * poisson_cdf_inverse:
- * @k: test value.
- * @p: cumulative probability.
- *
- * Returns: the Poisson parameter such that the integral
- * from 0 to @k of the Poisson density is equal to the
- * given probability @p.
- */
-
-static double poisson_cdf_inverse (int k, double p)
-{
-    double x = NADBL;
-
-    if (k >= 0 && p >= 0 && p <= 1) {
-	x = pdtri(k, p);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
-    }
-
-    return x;
-}
-
 static double poisson_pmf (double lambda, int k)
 {
     double den, l0, p;
@@ -962,6 +938,30 @@ static double poisson_critval (double a, double mu)
     }  
 
     return (double) k;
+}
+
+/**
+ * poisson_cdf_inverse:
+ * @k: test value.
+ * @p: cumulative probability.
+ *
+ * Returns: the Poisson parameter such that the integral
+ * from 0 to @k of the Poisson density is equal to the
+ * given probability @p.
+ */
+
+static double poisson_cdf_inverse (int k, double p)
+{
+    double x = NADBL;
+
+    if (k >= 0 && p >= 0 && p <= 1) {
+	x = pdtri(k, p);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
 }
 
 /* order in x: [params], alpha, critval */
@@ -1023,6 +1023,27 @@ static void dparm_set (const double *p)
     }
 }
 
+double gretl_get_cdf_inverse (char st, double *p)
+{
+    double x = NADBL;
+
+    if (st == 'z') {
+	x = normal_cdf_inverse(p[0]);
+    } else if (st == 't') {
+	x = student_cdf_inverse(p[1], p[0]);
+    } else if (st == 'X') {
+	x = chisq_cdf_inverse(p[1], (int) p[0]);
+    } else if (st == 'F') {
+	x = snedecor_cdf_inverse(p[2], (int) p[0], (int) p[1]);
+    } else if (st == 'B') {
+	x = binomial_cdf_inverse((int) p[2], (int) p[1], p[0]);
+    } else if (st == 'P') {
+	x = poisson_cdf_inverse((int) p[0], p[1]);
+    }
+
+    return x;
+}
+
 double gretl_get_critval (char st, double *p)
 {
     double x = NADBL;
@@ -1064,32 +1085,6 @@ double gretl_get_cdf (char st, double *p)
 	x = bvnorm_cdf(p[1], p[2], p[0]);
     } else if (st == 'P') {
 	x = poisson_cdf(p[0], (int) p[1]);
-    }
-
-    return x;
-}
-
-double gretl_get_cdf_inverse (char st, double *p)
-{
-    double x = NADBL;
-
-    if (st == 'P') {
-	fprintf(stderr, "gretl_get_cdf_inverse: Poisson: p[0]=%g, p[1]=%g\n",
-		p[0], p[1]);
-    }
-
-    if (st == 'z') {
-	x = normal_cdf_inverse(p[0]);
-    } else if (st == 't') {
-	x = student_cdf_inverse(p[1], p[0]);
-    } else if (st == 'X') {
-	x = chisq_cdf_inverse(p[1], (int) p[0]);
-    } else if (st == 'F') {
-	x = snedecor_cdf_inverse(p[2], (int) p[0], (int) p[1]);
-    } else if (st == 'B') {
-	x = binomial_cdf_inverse((int) p[2], (int) p[1], p[0]);
-    } else if (st == 'P') {
-	x = poisson_cdf_inverse((int) p[0], p[1]);
     }
 
     return x;

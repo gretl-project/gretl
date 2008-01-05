@@ -53,6 +53,7 @@ struct INTERNAL_PATHS {
 static struct INTERNAL_PATHS gretl_paths;
 
 static void ensure_slash (char *str);
+static char *get_default_workdir (PATHS *paths);
 
 static int add_suffix (char *fname, const char *sfx)
 {
@@ -722,6 +723,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 {
     char orig[MAXLEN];
     char *tmp = fname;
+    char *dwork = NULL;
     FILE *test;
 
     strcpy(orig, fname);
@@ -782,6 +784,22 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     strcpy(fname, orig);
     if ((fname = search_dir(fname, gretl_work_dir(), USER_SEARCH))) { 
 	return fname;
+    }
+
+    /* try looking in default workdir? */
+    dwork = get_default_workdir(ppaths);
+    if (dwork != NULL) {
+	int ok = 0;
+
+	fname = tmp;
+	strcpy(fname, orig);
+	if ((fname = search_dir(fname, dwork, USER_SEARCH))) { 
+	    ok = 1;
+	}
+	free(dwork);
+	if (ok) {
+	    return fname;
+	}
     }
 
 #ifdef WIN32
@@ -1112,6 +1130,38 @@ static void correct_blank_dotdir (PATHS *paths)
     } 
 }
 
+/* if the default workdir is a valid directory, and
+   not equal to the current workdir, return the path
+   to it
+*/
+
+static char *get_default_workdir (PATHS *paths)
+{
+    char *base = mydocs_path();
+    char *ret = NULL;
+    int ok = 0;
+
+    if (base != NULL) {
+	ret = g_strdup_printf("%s\\gretl\\", base);
+	if (strcmp(ret, paths->workdir)) {
+	    DIR *dir = win32_opendir(ret);
+
+	    if (dir != NULL) {
+		closedir(dir);
+		ok = 1;
+	    }
+	}
+	free(base);
+    }
+
+    if (ret && !ok) {
+	free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 static void correct_blank_workdir (PATHS *paths)
 {
     char *base = mydocs_path();
@@ -1131,6 +1181,32 @@ static void correct_blank_dotdir (char *path)
     if (home != NULL) {
 	sprintf(path, "%s/.gretl/", home);
     } 
+}
+
+static char *get_default_workdir (PATHS *paths)
+{
+    char *home = getenv("HOME");
+    char *ret = NULL;
+    int ok = 0;
+
+    if (home != NULL) {
+	ret = g_strdup_printf("%s/gretl/", home);
+	if (strcmp(ret, paths->workdir)) {
+	    DIR *dir = opendir(ret);
+
+	    if (dir != NULL) {
+		closedir(dir);
+		ok = 1;
+	    }
+	}
+    }
+
+    if (ret && !ok) {
+	free(ret);
+	ret = NULL;
+    }
+
+    return ret;
 }
 
 static void correct_blank_workdir (char *path)

@@ -5435,11 +5435,15 @@ static int gen_check_return_type (parser *p)
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
+#if 0
 	if (scalar_matrix(r)) {
 	    p->targ = NUM;
 	} else {
 	    p->targ = r->t;
 	}
+#else
+	p->targ = r->t;
+#endif
     }
 
     return p->err;

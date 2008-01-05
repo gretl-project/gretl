@@ -991,24 +991,24 @@ int print_as_locale (const char *s, FILE *fp)
     return nwrote;
 }
 
-int pprint_as_latin (PRN *prn, const char *s, int emf)
+int fprint_as_latin (FILE *fp, const char *s, int emf)
 {
     int u, nwrote = 0;
 
     while (*s) {
 	if (sscanf(s, "&#%d;", &u)) {
 # ifdef WIN32
-	    pputc(prn, ucs_to_cp(u));
+	    fputc(ucs_to_cp(u), fp);
 # else
 	    if (emf) {
-		pputc(prn, ucs_to_cp(u));
+		fputc(ucs_to_cp(u), fp);
 	    } else {
-		pputc(prn, ucs_to_l2(u));
+		fputc(ucs_to_l2(u), fp);
 	    }
 # endif
 	    s = strchr(s, ';') + 1;
 	} else {
-	    pputc(prn, *s++);
+	    fputc(*s++, fp);
 	}
 	nwrote++;
     }

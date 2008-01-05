@@ -137,8 +137,6 @@ static void create_selection_gc (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
 static void graph_display_pdf (GPT_SPEC *spec);
 
-#ifdef PNG_COMMENTS
-
 enum {
     GRETL_PNG_OK,
     GRETL_PNG_NO_OPEN,
@@ -162,8 +160,6 @@ struct png_bounds_t {
 };
 
 static int get_png_bounds_info (png_bounds *bounds);
-
-#endif /* PNG_COMMENTS */
 
 #define PLOTSPEC_DETAILS_IN_MEMORY(s)  (s->data != NULL)
 
@@ -473,17 +469,18 @@ int gp_term_code (gpointer p)
 	return GP_TERM_NONE;
 }
 
-static int get_full_term_string (const GPT_SPEC *spec, char *termstr)
-{
-    int cmds = 0;
+#define PDF_CAIRO_STRING "pdfcairo font \"sans,5\""
 
+static void 
+get_full_term_string (const GPT_SPEC *spec, char *termstr, int *cmds)
+{
     if (!strcmp(spec->termtype, "postscript color")) {
 	strcpy(termstr, "postscript eps color"); 
     } else if (!strcmp(spec->termtype, "postscript")) {
 	strcpy(termstr, "postscript eps"); 
     } else if (!strcmp(spec->termtype, "PDF")) {
-	if (gnuplot_png_terminal() == GP_PNG_CAIRO) {
-	    strcpy(termstr, "pdfcairo");
+	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	    strcpy(termstr, PDF_CAIRO_STRING);
 	} else {
 	    strcpy(termstr, "pdf");
 	}
@@ -502,18 +499,16 @@ static int get_full_term_string (const GPT_SPEC *spec, char *termstr)
 
 	strcpy(termstr, emf_str + 9);
     } else if (!strcmp(spec->termtype, "plot commands")) { 
-	cmds = 1;
+	*cmds = 1;
     } else {
 	strcpy(termstr, spec->termtype);
     }
-
-    return cmds;
 }
 
 #ifndef ENABLE_NLS /* bodge */
-static void pprint_as_latin (PRN *prn, const char *s, int emf)
+static void fprint_as_latin (FILE *fp, const char *s, int emf)
 {
-    pputs(prn, s);
+    fputs(s, fp);
 }
 
 static int html_encoded (const char *s)
@@ -542,68 +537,85 @@ static char *get_insert_point (char *s)
 */
 
 static void 
-print_line_with_color (PRN *prn, char *s, int lnum, int *contd)
+maybe_recolor_line (char *s, int lnum, int *contd)
 {
     const gretlRGB *color = get_graph_color(lnum - 1);
-    char cstr[8];
-    char *p;
 
     if (strstr(s, ", \\") == NULL) {
 	*contd = 0;
     }
 
-    if (color == NULL) {
-	pputs(prn, s);
-	return;
-    }
+    if (color != NULL) {
+	char cstr[8];
 
-    print_rgb_hash(cstr, color);
+	print_rgb_hash(cstr, color);
 
 #if GPDEBUG
-    fprintf(stderr, "lnum=%d, cstr='%s', rgb=%d\n", lnum, cstr, rgb);
-    fprintf(stderr, "s='%s'\n", s);
+	fprintf(stderr, "lnum=%d, cstr='%s', rgb=%d\n", lnum, cstr, rgb);
+	fprintf(stderr, "s='%s'\n", s);
 #endif
     
-    if (lnum == 2 && strcmp(cstr, "#00ff00") &&
-	strstr(s, " lt ") == NULL) {
-	p = get_insert_point(s);
-	*p = '\0';
-	strcpy(p, " lt 3");
-    } else {
-	pputs(prn, s);
-	return;
-    }
+	if (lnum == 2 && strcmp(cstr, "#00ff00") && 
+	    strstr(s, " lt ") == NULL) {
+	    char *p = get_insert_point(s);
 
-    if (*contd) {
-	pprintf(prn, "%s , \\\n", s);
+	    *p = '\0';
+	    strcpy(p, " lt 3");
+	    if (*contd) {
+		strcat(s, " , \\\n");
+	    } else {
+		strcat(s, "\n");
+	    }
+	} 
+    } 
+}
+
+#ifdef ENABLE_NLS
+
+/* for postscript output, e.g. in Latin-2 */
+
+static void maybe_recode_gp_line (char *s, int latin, FILE *fp)
+{
+    if (latin && !gretl_is_ascii(s) &&
+	g_utf8_validate(s, -1, NULL)) {
+	char *tmp = utf8_to_latin(s);
+
+	if (tmp != NULL) {
+	    fputs(tmp, fp);
+	    free(tmp);
+	}
     } else {
-	pprintf(prn, "%s\n", s);
+	fputs(s, fp);
     }
 }
+
+#endif
 
 #define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
 
 static int filter_plot_file (const char *inname, 
-			     const char *term,
-			     const char *fname)
+			     const char *pltname,
+			     const char *outtarg,
+			     const char *term)
 {
+    FILE *fpin = NULL;
+    FILE *fpout = NULL;
     char pline[MAXLEN];
-    char plottmp[MAXLEN];
-    gchar *plotcmd = NULL;
-    FILE *fp = NULL;
-    PRN *prn = NULL;
     int ttype = 0, mono = 0;
     int lnum = -1, recolor = 0;
-    int contd = 1, err = 0;
+    int latin = 0, contd = 1;
+    int err = 0;
 
-    if (user_fopen("gptout.tmp", plottmp, &prn)) {
+    fpin = gretl_fopen(inname, "r");
+    if (fpin == NULL) {
+	file_read_errbox(inname);
 	return 1;
     }
 
-    fp = gretl_fopen(inname, "r");
-    if (fp == NULL) {
-	file_read_errbox(inname);
-	gretl_print_destroy(prn);
+    fpout = gretl_fopen(pltname, "w");
+    if (fpout == NULL) {
+	fclose(fpin);
+	file_write_errbox(pltname);
 	return 1;
     }
 
@@ -613,17 +625,24 @@ static int filter_plot_file (const char *inname,
 	ttype = GP_TERM_PNG;
     } else if (!strncmp(term, "post", 4)) {
 	ttype = GP_TERM_EPS;
+#ifdef ENABLE_NLS
+	latin = iso_latin_version();
+#endif
     } else if (!strncmp(term, "pdf", 3)) {
 	ttype = GP_TERM_PDF;
     }
 
-    /* FIXME postscript and Polish ! */
-
+    if (outtarg != NULL && *outtarg != '\0') {
 #ifdef ENABLE_NLS
-    pprint_gnuplot_encoding(term, prn);
+	if (latin) {
+	    fprintf(fpout, "set encoding iso_8859_%d\n", latin);
+	} else {
+	    fprint_gnuplot_encoding(term, fpout);
+	}
 #endif
-    pprintf(prn, "set term %s\n", term);
-    pprintf(prn, "set output '%s'\n", fname);
+	fprintf(fpout, "set term %s\n", term);
+	fprintf(fpout, "set output '%s'\n", outtarg);
+    }
 
     if (strstr(term, " mono") || 
 	(strstr(term, "postscr") && !strstr(term, "color"))) {
@@ -635,10 +654,24 @@ static int filter_plot_file (const char *inname,
 	recolor = 1;
     }
 
-    while (fgets(pline, sizeof pline, fp)) {
+    while (fgets(pline, sizeof pline, fpin)) {
+	if (set_print_line(pline)) {
+	    break;
+	}
+
 	if (!strncmp(pline, "set term", 8) ||
+	    !strncmp(pline, "set encoding", 12) ||
 	    !strncmp(pline, "set output", 10)) {
 	    continue;
+	}
+
+	if (mono) {
+	    if (is_color_line(pline)) {
+		continue;
+	    } else if (strstr(pline, "set style fill solid")) {
+		fputs("set style fill solid 0.3\n", fpout);
+		continue;
+	    }
 	}
 
 	if (!strncmp(pline, "plot ", 5)) {
@@ -647,43 +680,23 @@ static int filter_plot_file (const char *inname,
 	    lnum++;
 	}
 
-	if (mono && strstr(pline, "set style fill solid")) {
-	    pputs(prn, "set style fill solid 0.3\n");
-	} else if (mono && is_color_line(pline)) {
-	    ; /* skip */
-	} else if (ttype != GP_TERM_PNG && html_encoded(pline)) {
-	    pprint_as_latin(prn, pline, ttype == GP_TERM_EMF);
-	} else if (recolor && lnum > 0 && contd) {
-	    print_line_with_color(prn, pline, lnum, &contd);
-	} else if (!set_print_line(pline)) {
-	    pputs(prn, pline);
+	if (recolor && lnum > 0 && contd) {
+	    maybe_recolor_line(pline, lnum, &contd);
 	}
 
-#if 1
-	if (!gretl_is_ascii(pline)) {
-	    fprintf(stderr, "non-ascii line: '%s'\n", pline);
-	    if (g_utf8_validate(pline, -1, NULL)) {
-		fprintf(stderr, " valid UTF-8\n");
-	    } else {
-		fprintf(stderr, " not valid UTF-8\n");
-	    }
-	}
+	if (ttype != GP_TERM_PNG && html_encoded(pline)) {
+	    fprint_as_latin(fpout, pline, ttype == GP_TERM_EMF);
+	} else {
+#ifdef ENABLE_NLS
+	    maybe_recode_gp_line(pline, latin, fpout);
+#else
+	    fputs(pline, fpout);
 #endif
+	}
     }
 
-    gretl_print_destroy(prn);
-    fclose(fp);
-
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-			      plottmp);
-    err = gretl_spawn(plotcmd);
-
-    remove(plottmp);
-    g_free(plotcmd);
-
-    if (err) {
-	gui_errmsg(err);
-    } 
+    fclose(fpin);
+    fclose(fpout);
 
     return err;
 }
@@ -692,18 +705,33 @@ void save_graph_to_file (gpointer data, const char *fname)
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
     char term[MAXLEN];
-    int cmds;
+    char pltname[MAXLEN];
+    int cmds = 0;
+    int err = 0;
 
-    cmds = get_full_term_string(spec, term);
+    get_full_term_string(spec, term, &cmds);
 
     if (cmds) {
-	/* FIXME: should at least partially filter the file
-	   in this case */
-	if (copyfile(spec->fname, fname)) { 
-	    errbox(_("Failed to copy graph file"));
-	}
+	/* saving plot commands to file */
+	strcpy(pltname, fname);
+	err = filter_plot_file(spec->fname, pltname, NULL, term);
     } else {
-	filter_plot_file(spec->fname, term, fname);
+	/* saving some form of gnuplot output */
+	build_path(pltname, paths.dotdir, "gptout.tmp", NULL);
+	err = filter_plot_file(spec->fname, pltname, fname, term);
+    }
+
+    if (!err && !cmds) {
+	gchar *plotcmd;
+
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+				  pltname);
+	err = gretl_spawn(plotcmd);
+	remove(pltname);
+	g_free(plotcmd);
+	if (err) {
+	    gui_errmsg(err);
+	} 
     }
 }
 
@@ -712,23 +740,37 @@ void save_graph_to_file (gpointer data, const char *fname)
 static void graph_display_pdf (GPT_SPEC *spec)
 {
     char pdfname[FILENAME_MAX];
+    char plttmp[FILENAME_MAX];
     static char term[9];
-
-    build_path(pdfname, paths.dotdir, GRETL_PDF_TMP, NULL);
+    gchar *plotcmd;
+    int err = 0;
 
     if (*term == '\0') {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
 	    fprintf(stderr, "gnuplot: using pdfcairo driver\n");
-	    strcpy(term, "pdfcairo");
+	    strcpy(term, PDF_CAIRO_STRING);
 	} else {
 	    strcpy(term, "pdf");
 	}
     }
 
-    if (filter_plot_file(spec->fname, term, pdfname)) {
-	errbox("Error creating graph file");
+    build_path(plttmp, paths.dotdir, "gptout.tmp", NULL);
+    build_path(pdfname, paths.dotdir, GRETL_PDF_TMP, NULL);
+
+    err = filter_plot_file(spec->fname, plttmp, pdfname, term);
+    if (err) {
 	return;
     }
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, plttmp);
+    err = gretl_spawn(plotcmd);
+    remove(plttmp);
+    g_free(plotcmd);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    } 
 
 #if defined(G_OS_WIN32)
     win32_open_file(pdfname);
@@ -1050,7 +1092,9 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
     char value[MAXLEN] = {0};
 
     if (strstr(s, "encoding") != NULL) {
+#if 0
 	fprintf(stderr, "Got encoding: '%s'\n", s);
+#endif
 	return 0;
     }
 
@@ -2258,7 +2302,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save as PDF..."))) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    strcpy(plot->spec->termtype, "pdfcairo");
+	    strcpy(plot->spec->termtype, PDF_CAIRO_STRING);
 	} else {
 	    strcpy(plot->spec->termtype, "pdf");
 	}
@@ -3009,10 +3053,8 @@ static int get_plot_ranges (png_plot *plot)
     FILE *fp;
     char line[MAXLEN];
     int got_x = 0;
-#ifdef PNG_COMMENTS
     int got_y = 0;
     png_bounds b;
-#endif
     int err = 0;
 
 #if GPDEBUG
@@ -3049,9 +3091,8 @@ static int get_plot_ranges (png_plot *plot)
 
     fclose(fp);
 
-#ifdef PNG_COMMENTS
-    /* now try getting accurate coordinate info from PNG file
-       or auxiliary file
+    /* now try getting accurate coordinate info from 
+       auxiliary file (or maybe PNG file)
     */
     if (get_png_bounds_info(&b) == GRETL_PNG_OK) {
 	plot->status |= PLOT_PNG_COORDS;
@@ -3076,11 +3117,9 @@ static int get_plot_ranges (png_plot *plot)
     } else {
 	fprintf(stderr, "get_png_bounds_info(): failed\n");
     }
-#endif /* PNG_COMMENTS */
 
-    /* If got_x = 0 at this point, we didn't get an x-range out of the
-       gnuplot source file OR the PNG file, so we might as well give
-       up.
+    /* If got_x = 0 at this point, we didn't get an x-range out of 
+       gnuplot, so we might as well give up.
     */
 
     if (got_x) {
@@ -3091,7 +3130,7 @@ static int get_plot_ranges (png_plot *plot)
     }    
 
     /* get the "dumb" y coordinates only if we haven't got
-       more accurate ones from the PNG file */
+       more accurate ones already */
     if (!plot_has_png_coords(plot)) { 
 	err = get_dumb_plot_yrange(plot);
     }
@@ -3391,13 +3430,6 @@ void display_session_graph_png (const char *fname)
     }
 }
 
-/* apparatus for getting coordinate info out of PNG files created using
-   Allin Cottrell's modified version of gnuplot, which writes such info
-   into the PNG comment fields
-*/
-
-#ifdef PNG_COMMENTS
-
 static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 {
     int ret = GRETL_PNG_OK;
@@ -3407,10 +3439,6 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 
     if (sscanf(str, "pixel_bounds: %d %d %d %d",
 	       &bounds->xleft, &bounds->xright,
-	       &bounds->ybot, &bounds->ytop) == 4) {
-	ret = GRETL_PNG_OK;
-    } else if (sscanf(str, "xleft=%d xright=%d ybot=%d ytop=%d", 
-	       &bounds->xleft, &bounds->xright,
 	       &bounds->ybot, &bounds->ytop) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
     } 
@@ -3419,13 +3447,6 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 	bounds->xright == 0 && bounds->ybot == 0 && 
 	bounds->ytop == 0) {
 	ret = GRETL_PNG_NO_COORDS;
-    }
-
-    if (bounds->xright > 1024) {
-	bounds->xleft /= 20;
-	bounds->xright /= 20;
-	bounds->ybot /= 20;
-	bounds->ytop /= 20;
     }
 
 #if POINTS_DEBUG
@@ -3453,10 +3474,6 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 
     if (sscanf(str, "data_bounds: %lf %lf %lf %lf",
 	       &bounds->xmin, &bounds->xmax,
-	       &bounds->ymin, &bounds->ymax) == 4) {
-	ret = GRETL_PNG_OK;
-    } else if (sscanf(str, "xmin=%lf xmax=%lf ymin=%lf ymax=%lf", 
-	       &bounds->xmin, &bounds->xmax,
 	       &bounds->ymin, &bounds->ymax) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
     } 
@@ -3477,11 +3494,30 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
     return ret;
 }
 
-static int new_get_png_bounds_info (png_bounds *bounds, FILE *fp)
+#ifdef PNG_COMMENTS
+
+static int png_hack_get_bounds_info (png_bounds *bounds);
+
+#endif
+
+static int get_png_bounds_info (png_bounds *bounds)
 {
+    char bbname[MAXLEN];
+    FILE *fp;
     char line[128];
     int plot_ret = -1, data_ret = -1;
     int ret = GRETL_PNG_OK;
+
+    build_path(bbname, paths.dotdir, "gretltmp.png", ".bounds"); 
+    fp = gretl_fopen(bbname, "r");
+
+    if (fp == NULL) {
+#ifdef PNG_COMMENTS
+	return png_hack_get_bounds_info(bounds);
+#else
+	return GRETL_PNG_NO_COMMENTS;
+#endif
+    }
 
     if (fgets(line, sizeof line, fp) == NULL) {
 	plot_ret = GRETL_PNG_NO_COMMENTS;
@@ -3507,12 +3543,22 @@ static int new_get_png_bounds_info (png_bounds *bounds, FILE *fp)
 	}
     }
 
+    fclose(fp);
+    remove(bbname);
+
     return ret;
 }
 
+#ifdef PNG_COMMENTS
+
+/* backward compatibility: try to read coordinate info out of the
+   PNG file itself, as opposed to the new mode of reading from
+   an auxiliary file written by gnuplot >= 4.3 
+*/
+
 #define PNG_CHECK_BYTES 4
 
-static int get_png_bounds_info (png_bounds *bounds)
+static int png_hack_get_bounds_info (png_bounds *bounds)
 {
     FILE *fp;
     unsigned char header[PNG_CHECK_BYTES];
@@ -3522,17 +3568,6 @@ static int get_png_bounds_info (png_bounds *bounds)
     png_text *text_ptr = NULL;
     int i, num_text;
     volatile int ret = GRETL_PNG_OK;
-
-#if 1
-    build_path(pngname, paths.dotdir, "gretltmp.png", ".bounds"); 
-    fp = fopen(pngname, "r");
-    if (fp != NULL) {
-	ret = new_get_png_bounds_info(bounds, fp);
-	fclose(fp);
-	remove(pngname);
-	return ret;
-    }
-#endif
 
     build_path(pngname, paths.dotdir, "gretltmp.png", NULL); 
 
