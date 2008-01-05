@@ -1761,6 +1761,7 @@ int cli_read_rc (PATHS *paths)
 		*paths->x12a = '\0';
 		strncat(paths->x12a, val, FILENAME_MAX - 1);
 	    } else if (!strcmp(key, "useqr")) {
+		/* do we want his? */
 		libset_set_bool(USE_QR, rc_bool(val));
 	    } else if (!strcmp(key, "Png_font")) {
 		/* doesn't do anything right now */
