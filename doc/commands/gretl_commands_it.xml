@@ -2733,15 +2733,15 @@
       </para>
       
       <para>
-        Anche la funzione <func>cdf</func> accetta gli stessi argomenti di
+        La funzione <func>cdf</func> accetta gli stessi argomenti di
 	<func>pvalue</func>, ma produce il valore complementare, ossia,
         l'integrale della relativa funzione di densità valutato dal suo limite
         inferiore (meno infinito o zero) al valore specificato. Per la
         distribuzione normale bivariata, occorre indicare tre argomenti:
-	<emphasis>x</emphasis>, <emphasis>y</emphasis> e il coefficiente di
-        correlazione <emphasis>rho</emphasis>, in questo ordine. Per ulteriori
-        informazioni su queste funzioni, si veda la
- 	<guideref targ="chap-genr"/>.
+        il coefficiente di correlazione <emphasis>rho</emphasis>,
+        <emphasis>x</emphasis> e <emphasis>y</emphasis>, in questo ordine.
+        Per ulteriori informazioni su queste funzioni, si veda la <guideref
+        targ="chap-genr"/>.
       </para>
 
       <para>
@@ -6339,7 +6339,7 @@
 	<example>pvalue t 25 3.0</example>
 	<example>pvalue X 3 5.6</example>
 	<example>pvalue F 4 58 fval</example>
-	<example>pvalue G xbar varx x</example>
+	<example>pvalue G forma scala x</example>
         <example>pvalue B bprob 10 6</example>
 	<example>pvalue P lambda x</example>
       </examples>
