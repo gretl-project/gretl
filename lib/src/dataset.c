@@ -2574,7 +2574,7 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
 
 #ifdef ENABLE_NLS
     if (*s != '\0') {
-	char *trs = utf8_to_latin(s);
+	char *trs = utf8_to_latin(s); /* FIXME? */
 
 	if (trs != NULL) {
 	    strncat(targ, trs, MAXDISP - 1);

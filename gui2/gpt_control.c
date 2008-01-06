@@ -494,7 +494,8 @@ get_full_term_string (const GPT_SPEC *spec, char *termstr, int *cmds)
 	    get_gretl_emf_term_line(spec->code, 1);
 
 	strcpy(termstr, emf_str + 9);
-    } else if (!strcmp(spec->termtype, "plot commands")) { 
+    } else if (!strcmp(spec->termtype, "plot commands")) {
+	strcpy(termstr, spec->termtype);
 	*cmds = 1;
     } else {
 	strcpy(termstr, spec->termtype);
@@ -568,13 +569,18 @@ maybe_recolor_line (char *s, int lnum, int *contd)
 
 #ifdef ENABLE_NLS
 
-/* for postscript output, e.g. in Latin-2 */
+/* for postscript output, e.g. in Latin-2, or EMF output in CP125X */
 
-static void maybe_recode_gp_line (char *s, int latin, FILE *fp)
+static void maybe_recode_gp_line (char *s, int latin, int ttype, FILE *fp)
 {
-    if (latin && !gretl_is_ascii(s) &&
-	g_utf8_validate(s, -1, NULL)) {
-	char *tmp = utf8_to_latin(s);
+    if (latin && !gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
+	char *tmp;
+	
+	if (ttype == GP_TERM_EMF) {
+	    tmp = utf8_to_cp(s);
+	} else {
+	    tmp = utf8_to_latin(s);
+	}
 
 	if (tmp != NULL) {
 	    fputs(tmp, fp);
@@ -585,9 +591,33 @@ static void maybe_recode_gp_line (char *s, int latin, FILE *fp)
     }
 }
 
+static int non_ascii_gp_file (FILE *fp, char *pline, int n)
+{
+    int ret = 0;
+
+    while (fgets(pline, n, fp)) {
+	if (set_print_line(pline)) {
+	    break;
+	}
+	if (!gretl_is_ascii(pline)) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    rewind(fp);
+
+    return ret;
+}
+
 #endif
 
 #define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
+
+#define is_utf8_term(t) (t == GP_TERM_PNG || \
+			 t == GP_TERM_PDF || \
+			 t == GP_TERM_SVG || \
+			 t == GP_TERM_PLT)
 
 static int filter_plot_file (const char *inname, 
 			     const char *pltname,
@@ -621,24 +651,31 @@ static int filter_plot_file (const char *inname,
 	ttype = GP_TERM_PNG;
     } else if (!strncmp(term, "post", 4)) {
 	ttype = GP_TERM_EPS;
-#ifdef ENABLE_NLS
-	latin = iso_latin_version();
-#endif
     } else if (!strncmp(term, "pdf", 3)) {
 	ttype = GP_TERM_PDF;
+    } else if (strstr(term, "commands")) {
+	ttype = GP_TERM_PLT;
     }
 
-    if (outtarg != NULL && *outtarg != '\0') {
 #ifdef ENABLE_NLS
-	if (latin) {
+    if (non_ascii_gp_file(fpin, pline, MAXLEN)) {
+	if (!is_utf8_term(ttype)) {
+	    latin = iso_latin_version();
+	}
+	if (latin == 2 && ttype == GP_TERM_EMF) {
+	    fputs("set encoding cp1250\n", fpout);
+	} else if (latin) {
 	    fprintf(fpout, "set encoding iso_8859_%d\n", latin);
 	} else {
 	    fprint_gnuplot_encoding(term, fpout);
 	}
+    }
 #endif
+
+    if (outtarg != NULL && *outtarg != '\0') {
 	fprintf(fpout, "set term %s\n", term);
 	fprintf(fpout, "set output '%s'\n", outtarg);
-    }
+    }	
 
     if (strstr(term, " mono") || 
 	(strstr(term, "postscr") && !strstr(term, "color"))) {
@@ -684,7 +721,7 @@ static int filter_plot_file (const char *inname,
 	    fprint_as_latin(fpout, pline, ttype == GP_TERM_EMF);
 	} else {
 #ifdef ENABLE_NLS
-	    maybe_recode_gp_line(pline, latin, fpout);
+	    maybe_recode_gp_line(pline, latin, ttype, fpout);
 #else
 	    fputs(pline, fpout);
 #endif

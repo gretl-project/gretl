@@ -1044,6 +1044,29 @@ char *utf8_to_latin (const char *s)
     return ret;
 }
 
+char *utf8_to_cp (const char *s)
+{
+    gsize read, wrote;
+    GError *err = NULL;
+    char *ret = NULL;
+
+    if (iso_latin_version() == 2) {
+	ret = g_convert(s, -1, "CP1250", "UTF-8",
+			&read, &wrote, &err);
+    } else {
+	ret = g_convert(s, -1, "ISO-8859-1", "UTF-8",
+			&read, &wrote, &err);
+    }
+
+    if (err != NULL) {
+	fputs("utf8_to_cp:\n", stderr);
+	fprintf(stderr, "%s\n", err->message);
+	g_error_free(err);
+    }
+
+    return ret;
+}
+
 /* allow TAB, CR, LF, FF */
 
 #define ascii_ctrl(a) (a==9 || a==10 || a==12 || a==13)

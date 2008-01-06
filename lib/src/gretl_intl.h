@@ -64,6 +64,8 @@ int fprint_as_latin (FILE *fp, const char *s, int emf);
 
 char *utf8_to_latin (const char *s);
 
+char *utf8_to_cp (const char *s);
+
 int gretl_is_ascii (const char *buf);
 
 int get_utf_width (const char *str, int width);
