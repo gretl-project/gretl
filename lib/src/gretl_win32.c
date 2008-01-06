@@ -225,7 +225,7 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	libset_set_bool(SHELL_OK, 0);
     }
 
-    gretl_set_paths(paths, OPT_NONE);
+    gretl_set_paths(ppaths, OPT_NONE);
     gretl_www_init(ppaths->dbhost, dbproxy, use_proxy);
 }
 

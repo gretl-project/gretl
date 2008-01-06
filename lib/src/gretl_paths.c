@@ -1359,7 +1359,7 @@ void show_paths (const PATHS *ppaths)
 
 int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 {
-    char envstr[MAXLEN];
+    static char envstr[MAXLEN];
     int err = 0;
 
     if (opt & OPT_D) {
@@ -1550,7 +1550,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
     }
 
     if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {
-	char envstr[MAXLEN];
+	static char envstr[MAXLEN];
 
 	sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sgtksourceview",
 		ppaths->gretldir);

@@ -609,18 +609,95 @@ static NODE *make_series_mask (NODE *n, parser *p)
     return ret;
 }
 
+static double scalar_pdist (int t, char d, double *parm,
+			    parser *p)
+{
+    double x = NADBL;
+
+    if (t == PVAL) {
+	x = gretl_get_pvalue(d, parm);
+    } else if (t == CDF) {
+	x = gretl_get_cdf(d, parm);
+    } else if (t == INVCDF) {
+	x = gretl_get_cdf_inverse(d, parm);
+    } else if (t == CRIT) {
+	x = gretl_get_critval(d, parm);
+    } else {
+	p->err = 1;
+    }
+
+    return x;
+}
+
+static double *series_pdist (int t, char d, double *parm,
+			     double *pvec, int i, 
+			     parser *p)
+{
+    double *xvec;
+    int s;
+
+    xvec = malloc(p->dinfo->n * sizeof *xvec);
+    if (xvec == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
+    for (s=0; s<p->dinfo->n; s++) {
+	if (s < p->dinfo->t1 || s > p->dinfo->t2 || pvec[s] == NADBL) {
+	    xvec[s] = NADBL;
+	} else {
+	    parm[i] = pvec[s];
+	    xvec[s] = scalar_pdist(t, d, parm, p);
+	}
+    }
+
+    return xvec;
+}
+
+static gretl_matrix *matrix_pdist (int t, char d, double *parm,
+				   gretl_matrix *pmat, int i, 
+				   parser *p)
+{
+    gretl_matrix *m;
+    double x;
+    int j, n;
+
+    m = gretl_matrix_alloc(pmat->rows, pmat->cols);
+    if (m == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
+    n = pmat->rows * pmat->cols;
+
+    for (j=0; j<n; j++) {
+	parm[i] = pmat->val[j];
+	x = scalar_pdist(t, d, parm, p);
+	if (na(x)) {
+	    p->err = E_MISSDATA;
+	    gretl_matrix_free(m);
+	    m = NULL;
+	    break;
+	} else {
+	    m->val[j] = x;
+	}
+    }
+
+    return m;
+}
+
 /* return a node containing the evaluated result of a
    probability distriution function */
 
 static NODE *eval_pdist (NODE *n, parser *p)
 {
-    NODE *ret;
+    NODE *ret = NULL;
 
-    ret = (n->t == RANDGEN)? aux_vec_node(p, 0) : aux_scalar_node(p);
-
-    if (ret != NULL && starting(p)) {
+    if (starting(p)) {
 	NODE *e, *s, *r = n->v.b1.b;
-	int i, argc, m = r->v.bn.n_nodes;
+	int i, last, argc, m = r->v.bn.n_nodes;
+	double *pvec = NULL;
+	gretl_matrix *pmat = NULL;
 	double parm[3];
 	char *d, code[2];
 
@@ -647,14 +724,28 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    goto disterr;
 	}
 
+	last = argc - 1;
+
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
 	    if (s->t == NUM) {
 		parm[i] = s->v.xval;
+	    } else if (i == last && n->t != RANDGEN && s->t == VEC) {
+		pvec = s->v.xvec;
+	    } else if (i == last && n->t != RANDGEN && s->t == MAT) {
+		pmat = s->v.m;
 	    } else {
 		e = eval(s, p);
 		if (e->t == NUM) {
 		    parm[i] = e->v.xval;
+		    free_tree(s, "Pdist");
+		    r->v.bn.n[i+1] = NULL;
+		} else if (i == last && n->t != RANDGEN && e->t == VEC) {
+		    pvec = e->v.xvec;
+		    free_tree(s, "Pdist");
+		    r->v.bn.n[i+1] = NULL;
+		} else if (i == last && n->t != RANDGEN && e->t == MAT) {
+		    pmat = e->v.m;
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else {
@@ -664,27 +755,31 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    }
 	}
 
-	switch (n->t) {
-	case PVAL:
-	    ret->v.xval = gretl_get_pvalue(d[0], parm);
-	    break;
-	case CDF:
-	    ret->v.xval = gretl_get_cdf(d[0], parm);
-	    break;
-	case INVCDF:
-	    ret->v.xval = gretl_get_cdf_inverse(d[0], parm);
-	    break;
-	case CRIT:
-	    ret->v.xval = gretl_get_critval(d[0], parm);
-	    break;
-	case RANDGEN:
+	if (n->t == RANDGEN || pvec != NULL) {
+	    ret = aux_vec_node(p, 0);
+	} else if (pmat != NULL) {
+	    ret = aux_matrix_node(p);
+	} else {
+	    ret = aux_scalar_node(p);
+	}
+
+	if (ret == NULL) {
+	    goto disterr;
+	}
+
+	if (n->t == RANDGEN) {
 	    ret->v.xvec = gretl_get_random_series(d[0], parm, p->dinfo,
 						  &p->err);
-	    break;
-	default: 
-	    p->err = 1;
-	    break;
+	} else if (pvec != NULL) {
+	    ret->v.xvec = series_pdist(n->t, d[0], parm, pvec, last, p);
+	} else if (pmat != NULL) {
+	    ret->v.m = matrix_pdist(n->t, d[0], parm, pmat, last, p);
+	} else {
+	    ret->v.xval = scalar_pdist(n->t, d[0], parm, p);
 	}
+
+    } else {
+	ret = aux_any_node(p);
     }
 
   disterr:  

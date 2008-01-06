@@ -480,6 +480,7 @@ static int set_network_cfg_filename (const char *prog)
     return 0;
 }
 
+#if 0
 static int set_gd_fontpath (void)
 {
     char fpath[MAX_PATH];
@@ -505,6 +506,7 @@ static int set_gd_fontpath (void)
 
     return 0;        
 }
+#endif
 
 void gretl_win32_init (const char *progname)
 {
@@ -513,7 +515,9 @@ void gretl_win32_init (const char *progname)
     wimp_init();
     read_rc(); /* get config info from registry */
     set_gretl_startdir();
+#if 0
     set_gd_fontpath();
+#endif
     hush_warnings();
     ws_startup(); 
 }
