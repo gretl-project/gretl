@@ -14,7 +14,7 @@ rm -rf $PREFIX/share/aclocal
 rm -rf $PREFIX/share/info
 rm -rf $PREFIX/info
 rm -rf $PREFIX/lib/pkgconfig
-rm -r $PREFIX/lib/*.la
+rm -f $PREFIX/lib/*.la
 rm -f $PREFIX/lib/gretl-gtk2/*.la
 rm -rf $PREFIX/share/emacs
 rm -rf $PREFIX/share/texmf-local
