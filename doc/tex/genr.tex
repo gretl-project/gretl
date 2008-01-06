@@ -86,7 +86,7 @@ genr Y = fracdiff(X,0.5)
 \end{code}
 
 \subsection{The Hodrick--Prescott filter}
-\label{hodrick-prescott}
+\label{sec:hodrick-prescott}
 
 This filter is accessed using the \verb+hpfilt()+ function, which
 takes one argument, the name of the variable to be processed.
@@ -131,7 +131,7 @@ is reasonable for quarterly data.  The default value in \app{gretl} is
 
 
 \subsection{The Baxter and King filter}
-\label{baxter-king}
+\label{sec:baxter-king}
 
 This filter is accessed using the \verb+bkfilt()+ function, which
 again takes the name of the variable to be processed as its single
@@ -305,7 +305,7 @@ Chapter~\ref{datafiles}.
 
 
 \section{Resampling and bootstrapping}
-\label{genr-resample}
+\label{sec:genr-resample}
 
 Another specialized function is the resampling, with replacement, of a
 series.  Given an original data series \varname{x}, the command
@@ -362,10 +362,11 @@ loop replics --quiet
 endloop      
 printf "proportion of cases with |t| > 2.5 = %g\n", tcount / replics
 \end{scode}
+%$
 \end{script}
 
 \section{Cumulative densities and p-values}
-\label{genr-cdf}
+\label{sec:genr-cdf}
 
 The two functions \cmd{cdf} and \cmd{pvalue} provide complementary
 means of examining values from several probability distributions: the
@@ -433,7 +434,7 @@ while values very close to 1 cannot.
 
 
 \section{Handling missing values}
-\label{genr-missing}
+\label{sec:genr-missing}
 
 Four special functions are available for the handling of missing
 values.  The boolean function \verb+missing()+ takes the name of a
@@ -474,7 +475,7 @@ multiplication by zero: zero times a missing value produces zero
     
 
 \section{Retrieving internal variables}
-\label{genr-internal}
+\label{sec:genr-internal}
 
 The \verb+genr+ command provides a means of retrieving various values
 calculated by the program in the course of estimating models or
@@ -557,10 +558,10 @@ Generated scalar pv (ID 13) = 0.363844
 ? label pv    
   pv=Dickey-Fuller pvalue (scalar)
 \end{code}
+%$
 
-
-\section{Numerical maximization}
-\label{genr-numerical}
+\section{Numerical procedures}
+\label{sec:genr-numerical}
 
 Two special functions are available to aid in the construction of
 special-purpose estimators, namely \texttt{BFGSmax} (the BFGS
@@ -568,6 +569,7 @@ maximizer, discussed in Chapter~\ref{chap:mle}) and \texttt{fdjac},
 which produces a forward-difference approximation to the Jacobian.
 
 \subsection{The BFGS maximizer}
+\label{sec:BFGSmax}
 
 The \texttt{BFGSmax} function takes two arguments: a vector holding the
 initial values of a set of parameters, and a string specifying a call
@@ -595,26 +597,6 @@ function ObjFunc (matrix *theta, matrix *X)
 end function
 \end{code}
 
-The operation of the BFGS maximizer can be adjusted using the
-\texttt{set} variables \verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
-Chapter~\ref{chap:mle}).  In addition you can provoke verbose output
-from the maximizer by assigning a positive value to
-\verb|max_verbose|, again via the \texttt{set} command.
-
-The Rosenbrock function is often used as a test problem for
-optimization algorithms. It is also known as ``Rosenbrock's Valley''
-or ``Rosenbrock's Banana Function'', on account of the fact that its
-contour lines are banana-shaped. It is defined by:
-%
-\[
-    f(x,y) = (1 - x)^2 + 100(y - x^2)^2
-\]
-%
-The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
-0$.  Example~\ref{rosenbrock} shows a \app{gretl} script that
-discovers the minimum using \texttt{BFGSmax} (giving a verbose account
-of progress).  
-
 \begin{script}[htbp]
   \caption{Finding the minimum of the Rosenbrock function}
   \label{rosenbrock}
@@ -637,13 +619,33 @@ print theta
 \end{scode}
 \end{script}
 
-\subsection{Computing the Jacobian}
+The operation of the BFGS maximizer can be adjusted using the
+\texttt{set} variables \verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
+Chapter~\ref{chap:mle}).  In addition you can provoke verbose output
+from the maximizer by assigning a positive value to
+\verb|max_verbose|, again via the \texttt{set} command.
 
-To construct a covariance matrix for estimates produced via
-\verb+BFGS_max+, you may wish to calculate a numerical approximation
-to the relevant Jacobian.
+The Rosenbrock function is often used as a test problem for
+optimization algorithms. It is also known as ``Rosenbrock's Valley''
+or ``Rosenbrock's Banana Function'', on account of the fact that its
+contour lines are banana-shaped. It is defined by:
+%
+\[
+    f(x,y) = (1 - x)^2 + 100(y - x^2)^2
+\]
+%
+The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
+0$.  Example~\ref{rosenbrock} shows a \app{gretl} script that
+discovers the minimum using \texttt{BFGSmax} (giving a verbose account
+of progress).  
 
-The \texttt{fdjac} function again takes two arguments: an $n \times 1$
+\subsection{Computing a Jacobian}
+\label{sec:fdjac}
+
+\app{Gretl} offers the possibility of differentiating numerically a
+user-defined function via the \texttt{fdjac} function. 
+
+This function again takes two arguments: an $n \times 1$
 matrix holding initial parameter values and a string specifying a call
 to a function that calculates and returns an $m \times 1$ matrix ($n
 \leq m$), given the current parameter values and any other relevant
@@ -662,6 +664,86 @@ function SumOC (matrix *theta, matrix *X)
   return matrix V
 end function
 \end{code}
+
+This may come in handy in several cases: for example, if you use
+\texttt{BFGSmax} to estimate a model, you may wish to calculate a
+numerical approximation to the relevant Jacobian to construct a
+covariance matrix for your estimates.
+
+Another example is the delta method: if you have a consistent
+estimator of a vector of parameters $\hat{\theta}$, and a consistent
+estimate of its covariance matrix $\Sigma$, you may need do compute
+estimates for a nonlinear continuous transformation $\psi =
+g(\theta)$. In this case, a standard result in asymptotic theory is
+that
+\[
+\left\{
+    \begin{array}{c}
+      \hat{\theta} \convp \theta \\ 
+      \sqrt{n} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
+    \end{array}
+\right\}
+    \Longrightarrow
+\left\{
+    \begin{array}{c}
+      \hat{\psi} = g(\hat{\theta}) \convp \psi = g(\theta) \\ 
+      \sqrt{n} \left( \hat{\psi} - \psi \right) \convd N(0, J
+      \Sigma J')
+    \end{array}
+\right\}
+\]
+where $J$ is the Jacobian $\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
+
+\begin{script}[htbp]
+  \caption{Delta Method}
+  \label{delta-method}
+\begin{scode}
+function MPC(matrix *param, matrix *Y)
+  beta = param[2]
+  gamma = param[3]
+  y = Y[1]
+    matrix ret = beta*gamma*y^(gamma-1)
+  return matrix ret
+end function
+
+# William Greene, Econometric Analysis, 5e, Chapter 9
+set echo off
+set messages off
+open greene5_1.gdt
+
+# Use OLS to initialize the parameters
+ols realcons 0 realdpi --quiet
+genr a = $coeff(0)
+genr b = $coeff(realdpi)
+genr g = 1.0
+
+# Run NLS with analytical derivatives
+nls realcons = a + b * (realdpi^g)
+ deriv a = 1
+ deriv b = realdpi^g
+ deriv g = b * realdpi^g * log(realdpi)
+end nls
+
+matrix Y = realdpi[2000:4]
+matrix theta = $coeff
+matrix V = $vcv
+
+mpc = MPC(&theta, &Y)
+matrix Jac = fdjac(theta, "MPC(&theta, &Y)")
+Sigma = qform(Jac, V)
+
+printf "\nmpc = %g, std.err = %g\n", mpc, sqrt(Sigma)
+scalar teststat = (mpc-1)/sqrt(Sigma)
+printf "\nTest for MPC = 1: %g (p-value = %g)\n", \
+	teststat, pvalue(n,abs(teststat))
+\end{scode}
+\end{script}
+
+Script \ref{delta-method} exemplifies such a case: the example is
+taken from Greene (2003), section 9.3.1. The slight differences
+between the results reported in the original source and what
+\app{gretl} returns are due to the fact that the Jacobian is computed
+numerically, rather than analytically as in the book.
 
 \section{The discrete Fourier transform}
 \label{sec:genr-fft}
