@@ -784,9 +784,13 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     const char *term;
     int err = 0;
 
-    term = get_gretl_emf_term_line(spec->code, color);
     build_path(plttmp, paths.dotdir, "gptout.tmp", NULL);
     build_path(emfname, paths.dotdir, "gpttmp.emf", NULL);
+
+    term = get_gretl_emf_term_line(spec->code, color);
+    if (!strncmp(term, "set term ", 9)) {
+	term += 9;
+    }
 
     err = filter_plot_file(spec->fname, plttmp, emfname, term);
     if (err) {
