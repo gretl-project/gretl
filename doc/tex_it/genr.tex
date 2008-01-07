@@ -86,7 +86,7 @@ genr Y = fracdiff(X,0.5)
 \end{code}
     
 \subsection{Il filtro di Hodrick--Prescott}
-\label{hodrick-prescott}
+\label{sec:hodrick-prescott}
 
 Questo filtro è utilizzabile tramite la funzione \verb+hpfilt()+, che accetta un
 argomento: il nome della variabile da processare.
@@ -129,7 +129,7 @@ dati trimestrali).  Il valore può essere modificato con il comando \cmd{set} sul
 parametro \cmd{hp\_lambda}.  Ad esempio, \cmd{set hp\_lambda 1200}.
 
 \subsection{Il filtro di Baxter e King}
-\label{baxter-king}
+\label{sec:baxter-king}
 
 Questo filtro è utilizzabile tramite la funzione \verb+bkfilt()+; anche questa
 accetta come unico argomento il nome della variabile da processare.
@@ -307,7 +307,7 @@ l'analisi panel. Queste funzionalità sono spiegate nel Capitolo~\ref{datafiles}.
 
 
 \section{Ricampionamento e bootstrapping}
-\label{genr-resample}
+\label{sec:genr-resample}
 
 Un'altra funzione particolare è il ricampionamento, con reimmissione,
 di una serie. Data una serie di dati originale \varname{x}, il comando
@@ -364,11 +364,12 @@ loop replics --quiet
 endloop      
 printf "Proporzione dei casi con |t| > 2.5 = %g\n", tcount / replics
 \end{scode}
+%$
 \end{script}
    
 
 \section{Densità cumulate e p-value}
-\label{genr-cdf}
+\label{sec:genr-cdf}
 
 Le due funzioni \cmd{cdf} e \cmd{pvalue} forniscono strumenti complementari per
 esaminare i valori di varie distribuzioni di probabilità: la normale standard,
@@ -433,7 +434,7 @@ zero possono essere rappresentati con ``double'', mentre valori molto vicini a 1
 possono non esserlo.
 
 \section{Gestione dei valori mancanti}
-\label{genr-missing}
+\label{sec:genr-missing}
 
 Sono disponibili quattro funzioni speciali per gestire i valori
 mancanti.  La funzione booleana \verb+missing()+ richiede come unico
@@ -478,7 +479,7 @@ prescindere dal valore dell'altro fattore).
     
 
 \section{Recupero di variabili interne}
-\label{genr-internal}
+\label{sec:genr-internal}
 
 Il comando \verb+genr+ fornisce un modo per recuperare vari valori
 calcolati dal programma nel corso della stima dei modelli o della
@@ -563,9 +564,10 @@ Generato lo scalare pv (ID 13) = 0.363844
 ? label pv    
   pv=Dickey-Fuller pvalue (scalar)
 \end{code}
+%$
 
-\section{Massimizzazione numerica}
-\label{genr-numerical}
+\section{Procedure numeriche}
+\label{sec:genr-numerical}
 
 Esistono due funzioni particolarmente utili per costruire stimatori speciali,
 ossia \texttt{BFGSmax} (il massimizzatore BFGS, discusso nel Capitolo~\ref{chap:mle})
@@ -573,6 +575,7 @@ e \texttt{fdjac}, che produce un'approssimazione del Jacobiano calcolata col
 metodo della differenza finita in avanti.
 
 \subsection{Il massimizzatore BFGS}
+\label{sec:BFGSmax}
 
 La funzione \texttt{BFGSmax} accetta due argomenti: un vettore che contiene i
 valori iniziali di un insieme di parametri, e una stringa che specifica una
@@ -600,26 +603,6 @@ function Funzione (matrix *theta, matrix *X)
 end function
 \end{code}
 
-Il funzionamento del massimizzatore BFGS può essere regolato usando il comando
-\texttt{set} sulle variabili \verb+bfgs_maxiter+ e \verb+bfgs_toler+ (si veda
-il Capitolo~\ref{chap:mle}). Inoltre, è possibile vedere i dettagli della
-massimizzazione assegnando un valore positivo alla variabile
-\verb|max_verbose|, sempre con il comando \texttt{set}.
-
-Spesso, per testare gli algoritmi di ottimizzazione si usa la funzione di
-Rosenbrock, chiamata anche ``valle di Rosenbrock'' o la ``funzione a banana di
-Rosenbrock'', visto che le linee di contorno sono a forma di banana. Questa è
-definita come:
-%
-\[
-    f(x,y) = (1 - x)^2 + 100(y - x^2)^2
-\]
-%
-La funzione ha un minimo globale in $(x,y) = (1,1)$ dove vale $f(x,y) = 0$.
-L'Esempio~\ref{rosenbrock} mostra uno script di \app{gretl} che cerca il minimo
-usando la funzione \texttt{BFGSmax} (mostrando i dettagli sul progresso del
-calcolo).
-
 \begin{script}[htbp]
   \caption{Ricerca del minimo della funzione di Rosenbrock}
   \label{rosenbrock}
@@ -642,13 +625,33 @@ print theta
 \end{scode}
 \end{script}
 
-\subsection{Calcolo del Jacobiano}
+Il funzionamento del massimizzatore BFGS può essere regolato usando il comando
+\texttt{set} sulle variabili \verb+bfgs_maxiter+ e \verb+bfgs_toler+ (si veda
+il Capitolo~\ref{chap:mle}). Inoltre, è possibile vedere i dettagli della
+massimizzazione assegnando un valore positivo alla variabile
+\verb|max_verbose|, sempre con il comando \texttt{set}.
 
-Per costruire una matrice di covarianza per le stime prodotte con
-\verb+BFGS_max+, può essere utile calcolare un'approssimazione numerica del
-Jacobiano rilevante.
+Spesso, per testare gli algoritmi di ottimizzazione si usa la funzione di
+Rosenbrock, chiamata anche ``valle di Rosenbrock'' o la ``funzione a banana di
+Rosenbrock'', visto che le linee di contorno sono a forma di banana. Questa è
+definita come:
+%
+\[
+    f(x,y) = (1 - x)^2 + 100(y - x^2)^2
+\]
+%
+La funzione ha un minimo globale in $(x,y) = (1,1)$ dove vale $f(x,y) = 0$.
+L'Esempio~\ref{rosenbrock} mostra uno script di \app{gretl} che cerca il minimo
+usando la funzione \texttt{BFGSmax} (mostrando i dettagli sul progresso del
+calcolo).
 
-La funzione \texttt{fdjac} accetta due argomenti: una matrice $n \times 1$
+\subsection{Calcolo di un Jacobiano}
+\label{sec:fdjac}
+
+\app{Gretl} offre la possibilità di differenziare numericamente una funzione
+definita dall'utente, usando la funzione \texttt{fdjac}.
+
+Questa funzione accetta due argomenti: una matrice $n \times 1$
 che contiene i valori iniziali dei parametri e una stringa che specifica una
 chiamata a una funzione che calcola e produce una matrice $m \times 1$ (con $n
 \leq m$), dati i valori attuali dei parametri e gli altri dati rilevanti.
@@ -667,6 +670,84 @@ function Somma (matrix *theta, matrix *X)
   return matrix V
 end function
 \end{code}
+
+Questo può rivelarsi utile in vari casi: ad esempio, se si usa
+\texttt{BFGSmax} per stimare un modello, si potrebbe voler calcolare
+un'approssimazione numerica al Jacobiano rilevante per costruire una matrice di
+covarianza per le stime.
+
+Un altro esempio è rappresentato dal metodo delta: se si ha uno stimatore
+consistente di un vettore di parametri $\hat{\theta}$ e una stima consistente
+della sua matrice di covarianza $\Sigma$, potrebbe essere necessario calcolare
+stime di una trasformazione nonlineare continua $\psi = g(\theta)$. In questo caso,
+un risultato standard della teoria asintotica è il seguente:
+\[
+\left\{
+    \begin{array}{c}
+      \hat{\theta} \convp \theta \\ 
+      \sqrt{n} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
+    \end{array}
+\right\}
+    \Longrightarrow
+\left\{
+    \begin{array}{c}
+      \hat{\psi} = g(\hat{\theta}) \convp \psi = g(\theta) \\ 
+      \sqrt{n} \left( \hat{\psi} - \psi \right) \convd N(0, J
+      \Sigma J')
+    \end{array}
+\right\}
+\]
+dove $J$ è il Jacobiano $\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
+
+\begin{script}[htbp]
+  \caption{Metodo delta}
+  \label{delta-method}
+\begin{scode}
+function MPC(matrix *param, matrix *Y)
+  beta = param[2]
+  gamma = param[3]
+  y = Y[1]
+    matrix ret = beta*gamma*y^(gamma-1)
+  return matrix ret
+end function
+
+# William Greene, Econometric Analysis, 5e, Chapter 9
+set echo off
+set messages off
+open greene5_1.gdt
+
+# Usa OLS per inizializzare i parametri
+ols realcons 0 realdpi --quiet
+genr a = $coeff(0)
+genr b = $coeff(realdpi)
+genr g = 1.0
+
+# Esegui NLS con derivate analitiche
+nls realcons = a + b * (realdpi^g)
+ deriv a = 1
+ deriv b = realdpi^g
+ deriv g = b * realdpi^g * log(realdpi)
+end nls
+
+matrix Y = realdpi[2000:4]
+matrix theta = $coeff
+matrix V = $vcv
+
+mpc = MPC(&theta, &Y)
+matrix Jac = fdjac(theta, "MPC(&theta, &Y)")
+Sigma = qform(Jac, V)
+
+printf "\nmpc = %g, std.err = %g\n", mpc, sqrt(Sigma)
+scalar teststat = (mpc-1)/sqrt(Sigma)
+printf "\nTest per MPC = 1: %g (p-value = %g)\n", \
+	teststat, pvalue(n,abs(teststat))
+\end{scode}
+\end{script}
+
+Lo script \ref{delta-method} esemplifica questo caso: è tratto da Greene (2003),
+sezione 9.3.1. Le leggere differenze tra i risultati riportati nel testo
+originale e quelli prodotti da \app{gretl} sono dovuti al fatto che il Jacobiano
+è calcolato numericamente, invece che analiticamente come nel testo.
 
 \section{La trasformata discreta di Fourier}
 \label{sec:genr-fft}
