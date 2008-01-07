@@ -63,7 +63,7 @@ int win_buf_to_clipboard (const char *buf);
 
 int send_file (char *fullname);
 
-void win32_process_graph (GPT_SPEC *spec, int color, int dest);
+int emf_to_clipboard (char *emfname);
 
 int browser_open (const char *url);
 

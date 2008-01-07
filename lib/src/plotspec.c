@@ -195,32 +195,6 @@ static char *escape_quotes (const char *s)
     }
 }
 
-static void 
-gp_string (FILE *fp, const char *fmt, const char *s, int png)
-{
-    int done = 0;
-
-#ifdef ENABLE_NLS  
-    static int pngterm = -1;
-
-    if (png && iso_latin_version() == 2) {
-	if (pngterm < 0) {
-	    pngterm = gnuplot_png_terminal();
-	}
-	if (pngterm != GP_PNG_CAIRO) {
-	    char htmlstr[128];
-
-	    sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
-	    fprintf(fp, fmt, htmlstr);
-	}
-    } 
-#endif
-
-    if (!done) {
-	fprintf(fp, fmt, s);
-    }
-}
-
 const char *gp_justification_string (int j)
 {
     if (j == GP_JUST_LEFT) {
@@ -235,12 +209,12 @@ const char *gp_justification_string (int j)
 }
 
 static void 
-print_plot_labelspec (const GPT_LABEL *lbl, int png, FILE *fp)
+print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
 {
     char *label = escape_quotes(lbl->text);
 
-    gp_string(fp, "set label \"%s\" ", (label != NULL)? 
-	      label : lbl->text, png);
+    fprintf(fp, "set label \"%s\" ", (label != NULL)? 
+	    label : lbl->text);
 
     gretl_push_c_numeric_locale();
 
@@ -426,24 +400,24 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     if (!string_is_blank(spec->titles[0])) {
-	gp_string(fp, "set title \"%s\"\n", spec->titles[0], png);
+	fprintf(fp, "set title \"%s\"\n", spec->titles[0]);
     }
 
     if (!string_is_blank(spec->titles[1])) {
-	gp_string(fp, "set xlabel \"%s\"\n", spec->titles[1], png);
+	fprintf(fp, "set xlabel \"%s\"\n", spec->titles[1]);
     }
 
     if (!string_is_blank(spec->titles[2])) {
-	gp_string(fp, "set ylabel \"%s\"\n", spec->titles[2], png);
+	fprintf(fp, "set ylabel \"%s\"\n", spec->titles[2]);
     }
 
     if ((spec->flags & GPT_Y2AXIS) && !string_is_blank(spec->titles[3])) {
-	gp_string(fp, "set y2label \"%s\"\n", spec->titles[3], png);
+	fprintf(fp, "set y2label \"%s\"\n", spec->titles[3]);
     }
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	if (!string_is_blank(spec->labels[i].text)) {
-	    print_plot_labelspec(&(spec->labels[i]), png, fp);
+	    print_plot_labelspec(&(spec->labels[i]), fp);
 	}
     }
 
@@ -559,7 +533,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
 	}
 
-	gp_string(fp, "title \"%s", spec->lines[i].title, png);
+	fprintf(fp, "title \"%s", spec->lines[i].title);
 
 	if (any_y2) {
 	    if (spec->lines[i].yaxis == 1) {
@@ -640,7 +614,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     gretl_pop_c_numeric_locale();
 
-    if (png && gnuplot_png_terminal() == GP_PNG_CAIRO) {
+    if (png && gnuplot_has_bbox()) {
 	print_plot_bounding_box_request(fp);
     }
 

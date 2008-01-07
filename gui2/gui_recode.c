@@ -355,18 +355,6 @@ gchar *latin2_to_utf8 (const gchar *src)
     return ret;
 }
 
-int html_encoded (const char *s)
-{
-    while (*s) {
-	if (*s == '&' && *(s+1) == '#' && isdigit(*(s+2))) {
-	    return 1;
-	}
-	s++;
-    }
-
-    return 0;
-}
-
 #endif /* ENABLE_NLS */
 
 

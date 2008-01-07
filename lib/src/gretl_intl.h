@@ -50,17 +50,7 @@ void fprint_gnuplot_encoding (const char *termstr, FILE *fp);
 
 int iso_latin_version (void);
 
-char *sprint_l2_to_html (char *targ, const char *s, size_t len);
-
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
-
-char *sprint_html_to_l2 (char *targ, const char *s);
-
-int print_as_html (const char *s, FILE *fp);
-
-int print_as_locale (const char *s, FILE *fp);
-
-int fprint_as_latin (FILE *fp, const char *s, int emf);
 
 char *utf8_to_latin (const char *s);
 

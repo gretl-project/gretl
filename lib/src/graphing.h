@@ -222,6 +222,8 @@ int gnuplot_has_style_fill (void);
 
 int gnuplot_has_latin5 (void);
 
+int gnuplot_has_bbox (void);
+
 void set_graph_palette (int i, gretlRGB color);
 
 void set_graph_palette_from_string (int i, const char *cstr);

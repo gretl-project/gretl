@@ -67,6 +67,7 @@ struct gnuplot_info_ {
 };
 
 #define MAX_LETTERBOX_LINES 8
+#define PREFER_CAIRO 1
 
 #define use_impulses(g) ((g)->flags & GPT_IMPULSES)
 #define ts_plot(g) ((g)->flags & GPT_TS)
@@ -349,8 +350,6 @@ static int factorized_vars (gnuplot_info *gi, const double **Z)
 
 #ifdef WIN32
 
-#define WIN32_USE_CAIRO 1
-
 int gnuplot_has_ttf (int reset)
 {
     /* we know the gnuplot supplied with gretl for win32
@@ -360,7 +359,7 @@ int gnuplot_has_ttf (int reset)
 
 int gnuplot_pdf_terminal (void)
 {
-#if WIN32_USE_CAIRO
+#if PREFER_CAIRO
     return GP_PDF_CAIRO;
 #else
     return GP_PDF_PDFLIB;
@@ -369,7 +368,7 @@ int gnuplot_pdf_terminal (void)
 
 int gnuplot_png_terminal (void)
 {
-#if WIN32_USE_CAIRO
+#if PREFER_CAIRO
     return GP_PNG_CAIRO;
 #else
     return GP_PNG_GD2;
@@ -403,6 +402,12 @@ int gnuplot_has_latin5 (void)
 int gnuplot_has_rgb (void)
 {
     /* ... and that it supports rgb line-color specs */
+    return 1;
+}
+
+int gnuplot_has_bbox (void)
+{
+    /* ... and that it supports bounding box info */
     return 1;
 }
 
@@ -455,7 +460,11 @@ int gnuplot_pdf_terminal (void)
     static int ret = -1;
 
     if (ret == -1) {
+#if PREFER_CAIRO
 	int err = gnuplot_test_command("set term pdfcairo");
+#else
+	int err = 1;
+#endif
 
 	if (!err) {
 	    ret = GP_PDF_CAIRO;
@@ -484,9 +493,11 @@ int gnuplot_png_terminal (void)
     static int ret = -1;
 
     if (ret == -1) {
-	int err = gnuplot_test_command("set term pngcairo ; "
-				       "set output '/dev/null' ; "
-				       "plot x ; print TERM_XMIN");
+#if PREFER_CAIRO
+	int err = gnuplot_test_command("set term pngcairo");
+#else
+	int err = 1;
+#endif
 
 	if (!err) {
 	    fprintf(stderr, "gnuplot: using pngcairo driver\n");
@@ -507,6 +518,19 @@ int gnuplot_png_terminal (void)
     }
 
     return ret;
+}
+
+int gnuplot_has_bbox (void)
+{
+    static int err = -1;
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term png ; "
+				   "set output '/dev/null' ; "
+				   "plot x ; print TERM_XMIN");
+    }
+
+    return !err;    
 }
 
 int gnuplot_has_style_fill (void)
@@ -1052,64 +1076,6 @@ int gnuplot_init (PlotType ptype, FILE **fpp)
     return real_gnuplot_init(ptype, 0, fpp);
 }
 
-#ifdef ENABLE_NLS
-
-#undef RECODE_DBG
-
-static int html_recode_gnuplot_file (const char *fname)
-{
-    FILE *fp, *fq;
-    const char *font;
-    char oldline[512], newline[1024];
-    char rname[FILENAME_MAX];
-    int ttf = 0;
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	return 1;
-    }
-
-    strcpy(rname, fname);
-    strcat(rname, "l2");
-
-    fq = gretl_fopen(rname, "w");
-    if (fq == NULL) {
-	fclose(fp);
-	return 1;
-    }
-
-    font = gretl_png_font();
-    if (font != NULL && *font != '\0') {
-	ttf = 1;
-    }
-
-    while (fgets(oldline, sizeof oldline, fp)) {
-	if (isdigit((unsigned char) oldline[0])) {
-	    fputs(oldline, fq);
-	} else if (ttf) {
-	    sprint_l2_to_html(newline, oldline, sizeof newline);
-	    fputs(newline, fq);
-#if RECODE_DBG
-	    fprintf(stderr, "recode (sprint_l2_to_html):\n"
-		    " original: '%s'\n modified: '%s'\n",
-		    oldline, newline);
-#endif
-	} else {
-	    fputs(oldline, fq);
-	}
-    }
-
-    fclose(fp);
-    fclose(fq);
-	    
-    remove(fname);
-    rename(rname, fname);
-
-    return 0;
-}
-
-#endif
-
 /**
  * gnuplot_make_graph:
  *
@@ -1123,18 +1089,7 @@ int gnuplot_make_graph (void)
     char plotcmd[MAXLEN];
     int err = 0;
 
-#ifdef ENABLE_NLS  
-    if (iso_latin_version() == 2 && gnuplot_png_terminal() != GP_PNG_CAIRO && 
-	gnuplot_has_ttf(0)) {
-# if GP_DEBUG
-	fprintf(stderr, "gnuplot_make_graph: calling recode_gnuplot_file()\n");
-# endif
-	html_recode_gnuplot_file(gretl_plotfile());
-    } 
-#endif
-
-    if (gretl_in_gui_mode() && gnuplot_png_terminal() == GP_PNG_CAIRO) {
-	/* FIXME? */
+    if (gretl_in_gui_mode() && gnuplot_has_bbox()) {
 	do_plot_bounding_box();
     }
 

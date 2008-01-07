@@ -727,16 +727,9 @@ int send_file (char *fullname)
 /* copy plot to clipboard by generating an EMF file (enhanced
    metafile), reading it into a buffer, and putting it on the
    clipboard.
-
-   Weirdness: when an emf is put on the clipboard as below, Word 2000
-   behaves thus: a straight "Paste" puts in a version of the graph
-   with squashed up numbers on the axes and no legend text; but a
-   "Paste special" (where one accepts the default of pasting it as an
-   enhanced metafile) puts in an accurate version with correct text.
-   Go figure.  (This is on win98)
 */
 
-static int emf_to_clip (char *emfname)
+int emf_to_clipboard (char *emfname)
 {
     HWND mainw;
     HENHMETAFILE hemf, hemfclip;
@@ -777,73 +770,6 @@ static int emf_to_clip (char *emfname)
     DeleteEnhMetaFile(hemf);
 
     return 0;
-}
-
-void win32_process_graph (GPT_SPEC *spec, int color, int dest)
-{
-    FILE *fp, *fq;
-    char plotline[MAXLEN];
-    gchar *plotcmd = NULL;
-    gchar *emfname = NULL;
-    gchar *plttmp = NULL;
-    int err;
-
-    /* create temporary file to hold the special gnuplot commands */
-    plttmp = g_strdup_printf("%sgptout.tmp", paths.dotdir);
-    fp = gretl_fopen(plttmp, "w");
-    if (fp == NULL) {
-	file_write_errbox(plttmp);
-	g_free(plttmp);
-	return;
-    }
-
-    /* open the gnuplot source file for the graph */
-    fq = gretl_fopen(spec->fname, "r");
-    if (fq == NULL) {
-	file_read_errbox(spec->fname);
-	fclose(fp);
-	return;
-    }
-
-    /* generate gnuplot source file to make emf */
-    fprintf(fp, "%s\n", get_gretl_emf_term_line(spec->code, color));
-    emfname = g_strdup_printf("%sgpttmp.emf", paths.dotdir);
-    fprintf(fp, "set output '%s'\n", emfname);
-
-    while (fgets(plotline, MAXLEN-1, fq)) {
-	if (!strncmp(plotline, "set term", 8) ||
-	    !strncmp(plotline, "set output", 10)) {
-	    continue;
-	}
-	if (!color && strstr(plotline, "set style fill solid")) {
-	    fputs("set style fill solid 0.3\n", fp);
-	} else if (html_encoded(plotline)) {
-	    fprint_as_latin(fp, plotline, 1);
-	} else {
-	    fputs(plotline, fp);
-	}
-    }
-
-    fclose(fp);
-    fclose(fq);
-
-    /* get gnuplot to create the emf file */
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, plttmp);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-    g_free(plotcmd);
-    remove(plttmp);
-    g_free(plttmp);
-    
-    if (err) {
-        errbox(_("Gnuplot error creating graph"));
-    } else if (dest == WIN32_TO_CLIPBOARD) {
-	err = emf_to_clip(emfname);
-    } else if (dest == WIN32_TO_PRINTER) {
-	err = winprint_graph(emfname);
-    }
-
-    remove(emfname);
-    g_free(emfname);
 }
 
 static long GetRegKey (HKEY key, char *subkey, char *retdata)

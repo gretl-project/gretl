@@ -610,9 +610,16 @@ static NODE *make_series_mask (NODE *n, parser *p)
 }
 
 static double scalar_pdist (int t, char d, double *parm,
-			    parser *p)
+			    int np, parser *p)
 {
     double x = NADBL;
+    int i;
+
+    for (i=0; i<np; i++) {
+	if (na(parm[i])) {
+	    return NADBL;
+	}
+    }
 
     if (t == PVAL) {
 	x = gretl_get_pvalue(d, parm);
@@ -630,8 +637,8 @@ static double scalar_pdist (int t, char d, double *parm,
 }
 
 static double *series_pdist (int t, char d, double *parm,
-			     double *pvec, int i, 
-			     parser *p)
+			     double *pvec, double *bvec,
+			     int np, parser *p)
 {
     double *xvec;
     int s;
@@ -646,8 +653,13 @@ static double *series_pdist (int t, char d, double *parm,
 	if (s < p->dinfo->t1 || s > p->dinfo->t2 || pvec[s] == NADBL) {
 	    xvec[s] = NADBL;
 	} else {
-	    parm[i] = pvec[s];
-	    xvec[s] = scalar_pdist(t, d, parm, p);
+	    if (pvec != NULL) {
+		parm[np-1] = pvec[s];
+	    }
+	    if (bvec != NULL) {
+		parm[np-2] = bvec[s];
+	    }
+	    xvec[s] = scalar_pdist(t, d, parm, np, p);
 	}
     }
 
@@ -655,31 +667,48 @@ static double *series_pdist (int t, char d, double *parm,
 }
 
 static gretl_matrix *matrix_pdist (int t, char d, double *parm,
-				   gretl_matrix *pmat, int i, 
-				   parser *p)
+				   gretl_matrix *pmat, 
+				   gretl_matrix *bmat,
+				   int np, parser *p)
 {
     gretl_matrix *m;
+    gretl_matrix *a;
     double x;
-    int j, n;
+    int i, n;
 
-    m = gretl_matrix_alloc(pmat->rows, pmat->cols);
+    if (pmat != NULL && bmat != NULL) {
+	if (pmat->rows != bmat->rows ||
+	    pmat->cols != bmat->cols) {
+	    p->err = E_NONCONF;
+	    return NULL;
+	}
+    }
+
+    a = (pmat != NULL)? pmat : bmat;
+
+    m = gretl_matrix_alloc(a->rows, a->cols);
     if (m == NULL) {
 	p->err = E_ALLOC;
 	return NULL;
     }
 
-    n = pmat->rows * pmat->cols;
+    n = a->rows * a->cols;
 
-    for (j=0; j<n; j++) {
-	parm[i] = pmat->val[j];
-	x = scalar_pdist(t, d, parm, p);
+    for (i=0; i<n; i++) {
+	if (pmat != NULL) {
+	    parm[np-1] = pmat->val[i];
+	}
+	if (bmat != NULL) {
+	    parm[np-2] = bmat->val[i];
+	}
+	x = scalar_pdist(t, d, parm, np, p);
 	if (na(x)) {
 	    p->err = E_MISSDATA;
 	    gretl_matrix_free(m);
 	    m = NULL;
 	    break;
 	} else {
-	    m->val[j] = x;
+	    m->val[i] = x;
 	}
     }
 
@@ -695,11 +724,12 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
     if (starting(p)) {
 	NODE *e, *s, *r = n->v.b1.b;
-	int i, last, argc, m = r->v.bn.n_nodes;
-	double *pvec = NULL;
-	gretl_matrix *pmat = NULL;
+	int i, k, argc, m = r->v.bn.n_nodes;
+	int rgen = (n->t == RANDGEN);
+	double *pvec = NULL, *bvec = NULL;
+	gretl_matrix *pmat = NULL, *bmat = NULL;
 	double parm[3];
-	char *d, code[2];
+	char d, *dist, code[2];
 
 	if (m < 2 || m > 4) {
 	    p->err = E_INVARG;
@@ -708,44 +738,57 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	s = r->v.bn.n[0];
 	if (s->t == STR) {
-	    d = s->v.str;
+	    dist = s->v.str;
 	} else if (s->t == NUM && s->v.xval > 0 && s->v.xval < 10) {
 	    sprintf(code, "%d", (int) s->v.xval);
-	    d = code;
+	    dist = code;
 	} else {
 	    p->err = E_INVARG;
 	    goto disterr;
 	}
 
-	argc = dist_argc(d, n->t);
+	argc = dist_argc(dist, n->t);
 
 	if (argc != m - 1) {
 	    p->err = E_INVARG;
 	    goto disterr;
 	}
 
-	last = argc - 1;
+	d = dist[0];
+	k = argc - 1;
 
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
 	    if (s->t == NUM) {
 		parm[i] = s->v.xval;
-	    } else if (i == last && n->t != RANDGEN && s->t == VEC) {
+	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
 		pvec = s->v.xvec;
-	    } else if (i == last && n->t != RANDGEN && s->t == MAT) {
+	    } else if (i == k && !rgen && s->t == MAT && bvec == NULL) {
 		pmat = s->v.m;
+	    } else if (i == k-1 && d == 'D' && s->t == VEC) {
+		bvec = s->v.xvec;
+	    } else if (i == k-1 && d == 'D' && s->t == MAT) {
+		bmat = s->v.m;
 	    } else {
 		e = eval(s, p);
 		if (e->t == NUM) {
 		    parm[i] = e->v.xval;
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
-		} else if (i == last && n->t != RANDGEN && e->t == VEC) {
+		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
 		    pvec = e->v.xvec;
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
-		} else if (i == last && n->t != RANDGEN && e->t == MAT) {
+		} else if (i == k && !rgen && e->t == MAT && bvec == NULL) {
 		    pmat = e->v.m;
+		    free_tree(s, "Pdist");
+		    r->v.bn.n[i+1] = NULL;
+		} else if (i == k-1 && d == 'D' && e->t == VEC) {
+		    bvec = e->v.xvec;
+		    free_tree(s, "Pdist");
+		    r->v.bn.n[i+1] = NULL;
+		} else if (i == k-1 && d == 'D' && e->t == MAT) {
+		    bmat = e->v.m;
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else {
@@ -755,9 +798,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    }
 	}
 
-	if (n->t == RANDGEN || pvec != NULL) {
+	if (rgen || pvec != NULL || bvec != NULL) {
 	    ret = aux_vec_node(p, 0);
-	} else if (pmat != NULL) {
+	} else if (pmat != NULL || bmat != NULL) {
 	    ret = aux_matrix_node(p);
 	} else {
 	    ret = aux_scalar_node(p);
@@ -767,15 +810,15 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    goto disterr;
 	}
 
-	if (n->t == RANDGEN) {
-	    ret->v.xvec = gretl_get_random_series(d[0], parm, p->dinfo,
+	if (rgen) {
+	    ret->v.xvec = gretl_get_random_series(d, parm, p->dinfo,
 						  &p->err);
-	} else if (pvec != NULL) {
-	    ret->v.xvec = series_pdist(n->t, d[0], parm, pvec, last, p);
-	} else if (pmat != NULL) {
-	    ret->v.m = matrix_pdist(n->t, d[0], parm, pmat, last, p);
+	} else if (pvec != NULL || bvec != NULL) {
+	    ret->v.xvec = series_pdist(n->t, d, parm, pvec, bvec, argc, p);
+	} else if (pmat != NULL || bmat != NULL) {
+	    ret->v.m = matrix_pdist(n->t, d, parm, pmat, bmat, argc, p);
 	} else {
-	    ret->v.xval = scalar_pdist(n->t, d[0], parm, p);
+	    ret->v.xval = scalar_pdist(n->t, d, parm, argc, p);
 	}
 
     } else {

@@ -254,7 +254,6 @@ typedef struct equation_system_ equation_system;
 struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
-    char gp_display_name[MAXDISP];
     int flags;
     char compact_method;
     char stack_level;

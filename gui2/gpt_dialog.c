@@ -115,40 +115,20 @@ static void flip_manual_range (GtkWidget *widget, gpointer data)
     gtk_widget_set_sensitive(GTK_WIDGET(axis_range[i].max), !s);
 }
 
-/* Take text from a gtkentry and write to gnuplot spec string.  The
-   text will be in utf-8, and may have to be converted to the
-   locale for use with gnuplot.
-*/
+/* Take text from a gtkentry and write to gnuplot spec string */
 
 static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 {
-    const gchar *wstr;
-#ifdef ENABLE_NLS
-    int pngterm = gnuplot_png_terminal();    
-#endif
+    const gchar *str;
 
     *targ = '\0';
 
     g_return_if_fail(GTK_IS_ENTRY(w));
 
-    wstr = gtk_entry_get_text(GTK_ENTRY(w));
-    if (wstr == NULL || *wstr == '\0') {
-	return;
+    str = gtk_entry_get_text(GTK_ENTRY(w));
+    if (str != NULL || *str != '\0') {
+	strncat(targ, str, n-1);
     }
-
-#ifdef ENABLE_NLS
-    if (pngterm < GP_PNG_CAIRO) {
-	gchar *trstr = gp_locale_from_utf8(wstr);
-
-	if (trstr != NULL) {
-	    strncat(targ, trstr, n-1);
-	    g_free(trstr);
-	    return;
-	}
-    }
-#endif
-
-    strncat(targ, wstr, n-1);
 }
 
 static FitType fit_type_from_string (const char *s)
@@ -280,37 +260,33 @@ static double entry_to_gp_double (GtkWidget *w)
 }
 
 /* Take text from a gnuplot spec string and put it into a gtkentry.
-   We have to ensure that the text is in utf-8.
+   We have to ensure that the text is in utf-8 (though this is
+   probably redundant).
 */
 
 static void gp_string_to_entry (GtkWidget *w, const char *str)
 {
-#ifdef ENABLE_NLS
-    int lv = iso_latin_version();
-    int pngterm = gnuplot_png_terminal();
-    gchar *trstr = NULL;
-#endif
-
     if (*str == '\0') {
 	gtk_entry_set_text(GTK_ENTRY(w), str);
 	return;
     }
 
 #ifdef ENABLE_NLS
-    if (lv == 2 && pngterm < GP_PNG_CAIRO) {
-	char lstr[MAXTITLE];
-	
-	sprint_html_to_l2(lstr, str);
-	trstr = latin2_to_utf8(lstr);
-    } else if (!g_utf8_validate(str, -1, NULL)) {
-	trstr = latin1_to_utf8(str);
+    if (!g_utf8_validate(str, -1, NULL)) {
+	gchar *trstr;
+
+	if (iso_latin_version() == 2) {
+	    trstr = latin2_to_utf8(str);
+	} else {
+	    trstr = latin1_to_utf8(str);
+	}
+	if (trstr != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(w), trstr);
+	    g_free(trstr);
+	}
     } else {
-	trstr = g_strdup(str);
+	gtk_entry_set_text(GTK_ENTRY(w), str);
     }
-    if (trstr != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(w), trstr);
-	g_free(trstr);
-    }  
 #else
     gtk_entry_set_text(GTK_ENTRY(w), str);
 #endif

@@ -477,7 +477,6 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 {
     vinfo->label[0] = '\0';
     vinfo->display_name[0] = '\0';
-    vinfo->gp_display_name[0] = '\0';
     vinfo->flags = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->stack_level = 0;
@@ -502,7 +501,6 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
 
     strcpy(targ->label, src->label);
     strcpy(targ->display_name, src->display_name);
-    strcpy(targ->gp_display_name, src->gp_display_name);
     targ->flags = src->flags;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
@@ -2569,22 +2567,6 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
     *targ = 0;
     strncat(targ, s, MAXDISP - 1);
 
-    targ = pdinfo->varinfo[i]->gp_display_name;
-    *targ = 0;
-
-#ifdef ENABLE_NLS
-    if (*s != '\0') {
-	char *trs = utf8_to_latin(s); /* FIXME? */
-
-	if (trs != NULL) {
-	    strncat(targ, trs, MAXDISP - 1);
-	    free(trs);
-	}
-    }
-#else
-    strncat(targ, s, MAXDISP - 1);
-#endif
-
     return 0;
 }
 
@@ -2593,7 +2575,7 @@ const char *var_get_graph_name (const DATAINFO *pdinfo, int i)
     const char *ret = pdinfo->varname[i];
 
     if (pdinfo->varinfo != NULL && pdinfo->varinfo[i] != NULL) {
-	ret = pdinfo->varinfo[i]->gp_display_name;
+	ret = pdinfo->varinfo[i]->display_name;
 	if (ret[0] == '\0') {
 	    ret = pdinfo->varname[i];
 	}

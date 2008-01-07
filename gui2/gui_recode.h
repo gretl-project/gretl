@@ -25,6 +25,4 @@ gchar *latin1_to_utf8 (const gchar *src);
 
 gchar *latin2_to_utf8 (const gchar *src);
 
-int html_encoded (const char *s);
-
 #endif /* GUI_RECODE_H */

@@ -132,6 +132,9 @@ static int zoom_unzoom_png (png_plot *plot, int view);
 static void create_selection_gc (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
 static void graph_display_pdf (GPT_SPEC *spec);
+#ifdef G_OS_WIN32
+static void win32_process_graph (GPT_SPEC *spec, int color, int dest);
+#endif
 
 enum {
     GRETL_PNG_OK,
@@ -219,37 +222,6 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
     }
 }
 
-/* do or undo conversion between latin-2 and HTML representation,
-   if needed; otherwise pass the line through straight */
-
-static void line_to_file (const char *s, FILE *fp, int lv)
-{
-    int done = 0;
-
-#ifdef ENABLE_NLS
-    static int pngterm = -1;
-
-    if (lv == -2 || lv == 2) {
-	if (pngterm < 0) {
-	    pngterm = gnuplot_png_terminal();
-	}
-	if (pngterm != GP_PNG_CAIRO) {
-	    if (lv == -2) {
-		print_as_html(s, fp);
-		done = 1;
-	    } else if (lv == 2) {
-		print_as_locale(s, fp);
-		done = 1;
-	    }
-	}
-    } 
-#endif
-
-    if (!done) {
-	fputs(s, fp);
-    }
-}
-
 static FILE *open_gp_file (const char *fname, const char *mode)
 {
     FILE *fp = gretl_fopen(fname, mode);
@@ -294,11 +266,6 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     char temp[MAXLEN], fline[MAXLEN];
     char restore_line[MAXLEN] = {0};
     GptFlags flags = 0;
-#ifdef ENABLE_NLS
-    int lv = iso_latin_version();
-#else
-    int lv = 0;
-#endif
 
     sprintf(temp, "%sgpttmp", paths.dotdir);
     ftmp = gretl_tempfile_open(temp);
@@ -357,10 +324,10 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		got_set_print = 1;
 		fputs(fline, ftmp);
 	    } else if (!commented_term_line(fline) && !set_output_line(fline)) {
-		line_to_file(fline, ftmp, -lv);
+		fputs(fline, ftmp);
 	    }
 	}
-	if (gnuplot_png_terminal() == GP_PNG_CAIRO && !got_set_print) {
+	if (gnuplot_has_bbox() && !got_set_print) {
 	    print_plot_bounding_box_request(ftmp);
 	}
     } else {
@@ -389,7 +356,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		printit = 0;
 	    }
 	    if (printit) {
-		line_to_file(fline, ftmp, lv);
+		fputs(fline, ftmp);
 	    }
 	}
     }
@@ -502,18 +469,6 @@ get_full_term_string (const GPT_SPEC *spec, char *termstr, int *cmds)
     }
 }
 
-#ifndef ENABLE_NLS /* bodge */
-static void fprint_as_latin (FILE *fp, const char *s, int emf)
-{
-    fputs(s, fp);
-}
-
-static int html_encoded (const char *s)
-{
-    return 0;
-}
-#endif
-
 static char *get_insert_point (char *s)
 {
     char *p = strstr(s, ", \\");
@@ -610,14 +565,23 @@ static int non_ascii_gp_file (FILE *fp, char *pline, int n)
     return ret;
 }
 
+static int term_uses_utf8 (int ttype)
+{
+    if (ttype == GP_TERM_PNG || 
+	ttype == GP_TERM_SVG ||
+	ttype == GP_TERM_PLT) {
+	return 1;
+    } else if (ttype == GP_TERM_PDF && 
+	       gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 #endif
 
 #define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
-
-#define is_utf8_term(t) (t == GP_TERM_PNG || \
-			 t == GP_TERM_PDF || \
-			 t == GP_TERM_SVG || \
-			 t == GP_TERM_PLT)
 
 static int filter_plot_file (const char *inname, 
 			     const char *pltname,
@@ -659,7 +623,7 @@ static int filter_plot_file (const char *inname,
 
 #ifdef ENABLE_NLS
     if (non_ascii_gp_file(fpin, pline, MAXLEN)) {
-	if (!is_utf8_term(ttype)) {
+	if (!term_uses_utf8(ttype)) {
 	    latin = iso_latin_version();
 	}
 	if (latin == 2 && ttype == GP_TERM_EMF) {
@@ -717,15 +681,11 @@ static int filter_plot_file (const char *inname,
 	    maybe_recolor_line(pline, lnum, &contd);
 	}
 
-	if (ttype != GP_TERM_PNG && html_encoded(pline)) {
-	    fprint_as_latin(fpout, pline, ttype == GP_TERM_EMF);
-	} else {
 #ifdef ENABLE_NLS
-	    maybe_recode_gp_line(pline, latin, ttype, fpout);
+	maybe_recode_gp_line(pline, latin, ttype, fpout);
 #else
-	    fputs(pline, fpout);
+	fputs(pline, fpout);
 #endif
-	}
     }
 
     fclose(fpin);
@@ -774,7 +734,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 {
     char pdfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
-    static char term[9];
+    static char term[32];
     gchar *plotcmd;
     int err = 0;
 
@@ -813,6 +773,43 @@ static void graph_display_pdf (GPT_SPEC *spec)
     gretl_fork(viewpdf, pdfname);
 #endif
 }
+
+#ifdef G_OS_WIN32
+
+static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
+{
+    char emfname[FILENAME_MAX];
+    char plttmp[FILENAME_MAX];
+    gchar *plotcmd;
+    const char *term;
+    int err = 0;
+
+    term = get_gretl_emf_term_line(spec->code, color);
+    build_path(plttmp, paths.dotdir, "gptout.tmp", NULL);
+    build_path(emfname, paths.dotdir, "gpttmp.emf", NULL);
+
+    err = filter_plot_file(spec->fname, plttmp, emfname, term);
+    if (err) {
+	return;
+    }
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, plttmp);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+    g_free(plotcmd);
+    remove(plttmp);
+    
+    if (err) {
+        errbox(_("Gnuplot error creating graph"));
+    } else if (dest == WIN32_TO_CLIPBOARD) {
+	err = emf_to_clipboard(emfname);
+    } else if (dest == WIN32_TO_PRINTER) {
+	err = winprint_graph(emfname);
+    }
+
+    remove(emfname);
+}
+
+#endif
 
 /* chop trailing comma, if present; return 1 if comma chopped,
    zero otherwise */
