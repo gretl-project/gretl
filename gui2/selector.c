@@ -56,6 +56,7 @@ struct _selector {
     GtkWidget *rvars2;
     GtkWidget *default_check;
     GtkWidget *add_button;
+    GtkWidget *remove_button;
     GtkWidget *lags_button;
     GtkWidget *extra[N_EXTRA];
     GtkWidget *radios[N_RADIOS];
@@ -1422,6 +1423,10 @@ static gint varlist_row_count (selector *sr, int locus, int *realrows)
 
     w = (locus == SR_RVARS1)? sr->rvars1 : sr->rvars2;
 
+    if (w == NULL || !GTK_WIDGET_IS_SENSITIVE(w)) {
+	return 0;
+    }
+
     if (realrows != NULL) {
 	lcontext = sr_get_lag_context(sr, locus);
 	*realrows = 0;
@@ -1968,7 +1973,16 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->code == AR) {
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
-    } 
+    } else if (sr->code == OMIT) {
+	if (sr->extra[0] != NULL && GTK_WIDGET_IS_SENSITIVE(sr->extra[0])) {
+	    double val;
+
+	    val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
+	    if (val != 0.10) {
+		set_optval_double(OMIT, OPT_A, val);
+	    }
+	}
+    }
 }
 
 static void vec_get_spinner_data (selector *sr, int *order)
@@ -2846,6 +2860,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     sr->rvars2 = NULL;
     sr->default_check = NULL;
     sr->add_button = NULL;
+    sr->remove_button = NULL;
     sr->lags_button = NULL;
 
     for (i=0; i<N_EXTRA; i++) {
@@ -3283,7 +3298,7 @@ static void build_selector_switches (selector *sr)
     } else if (sr->code == XTAB) {
 	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
-    }	
+    } 
 
 #ifdef HAVE_X12A    
     if (sr->code == ARMA) {
@@ -3410,9 +3425,51 @@ static void build_scatters_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void auto_omit_callback (GtkWidget *w, selector *sr)
+{
+    gboolean s = GTK_TOGGLE_BUTTON(w)->active;
+
+    gtk_widget_set_sensitive(sr->extra[0], s);
+    gtk_widget_set_sensitive(sr->lvars, !s);
+    gtk_widget_set_sensitive(sr->rvars1, !s);
+    gtk_widget_set_sensitive(sr->add_button, !s);
+    gtk_widget_set_sensitive(sr->remove_button, !s);
+}
+
+static void pack_switch_with_extra (GtkWidget *b, selector *sr,
+				    gboolean checked, gretlopt opt, 
+				    int child, GtkWidget *extra)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    gint offset = (child)? 15 : 0;
+    gint i = opt;
+
+    g_object_set_data(G_OBJECT(b), "opt", GINT_TO_POINTER(i));
+
+    g_signal_connect(G_OBJECT(b), "toggled", 
+		     G_CALLBACK(option_callback), sr);
+    if (checked) {
+	sr->opts |= opt;
+    } else {
+	sr->opts &= ~opt;
+    }
+
+    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
+    gtk_widget_show(b);
+
+    gtk_box_pack_start(GTK_BOX(hbox), extra, TRUE, TRUE, offset);
+    gtk_widget_show(extra);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
+}
+
 static void build_omit_test_radios (selector *sr)
 {
-    GtkWidget *b1, *b2;
+    GtkWidget *b1, *b2, *b3;
+    GtkObject *adj;
     GSList *group;
 
     vbox_add_hsep(sr->vbox);
@@ -3424,8 +3481,20 @@ static void build_omit_test_radios (selector *sr)
     b2 = gtk_radio_button_new_with_label(group, _("Wald test, based on covariance matrix"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_W, 0);
 
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
+    b3 = gtk_radio_button_new_with_label(group, _("Sequential elimination of variables\n"
+						  "using two-sided p-value:"));
+    g_signal_connect(G_OBJECT(b3), "toggled",
+		     G_CALLBACK(auto_omit_callback), sr);
+
+    adj = gtk_adjustment_new(0.10, 0.01, 0.99, 0.01, 0.1, 1);
+    sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+    pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0]);
+    gtk_widget_set_sensitive(sr->extra[0], FALSE);
+
     sr->radios[0] = b1;
     sr->radios[1] = b2;
+    sr->radios[2] = b3;
 }
 
 static void build_panel_radios (selector *sr)
@@ -4253,7 +4322,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     GtkListStore *store;
     GtkTreeIter iter;
     GtkWidget *left_vbox, *button_vbox, *right_vbox, *tmp;
-    GtkWidget *top_hbox, *big_hbox, *remove_button;
+    GtkWidget *top_hbox, *big_hbox;
     selector *sr;
     int nleft = 0;
     int i;
@@ -4346,8 +4415,8 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 			  G_CALLBACK(add_all_to_rvars1_callback), sr);
     }
     
-    remove_button = gtk_button_new_with_label(_("<- Remove"));
-    gtk_box_pack_start(GTK_BOX(button_vbox), remove_button, TRUE, FALSE, 0);
+    sr->remove_button = gtk_button_new_with_label(_("<- Remove"));
+    gtk_box_pack_start(GTK_BOX(button_vbox), sr->remove_button, TRUE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(big_hbox), button_vbox, TRUE, TRUE, 0);
     gtk_widget_show_all(button_vbox);
@@ -4362,7 +4431,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     gtk_widget_show(right_vbox);
 
     /* connect removal from right signal */
-    g_signal_connect(G_OBJECT(remove_button), "clicked", 
+    g_signal_connect(G_OBJECT(sr->remove_button), "clicked", 
 		     G_CALLBACK(remove_from_right_callback), 
 		     sr->rvars1);
 

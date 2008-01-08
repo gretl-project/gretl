@@ -2074,6 +2074,10 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 	return E_DATA;
     }
 
+    if (exact_fit_check(pmod, prn)) {
+	return 0;
+    }
+
     if (genr_fit_resid(pmod, pZ, pdinfo, GENR_RESID, 1)) {
 	return E_ALLOC;
     }

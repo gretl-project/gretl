@@ -619,7 +619,9 @@ char *gretl_fix_exponent (char *s)
     int n;
 
     if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
-	memmove(p+1, p+2, strlen(p+1));
+	if (*(p + 3)) {
+	    memmove(p+1, p+2, strlen(p+1));
+	}
     }
 
     n = strlen(s);
@@ -785,9 +787,9 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-static void outxx (const double xx, int ci, int wid, PRN *prn)
+static void outxx (double x, int ci, int wid, PRN *prn)
 {
-    if (isnan(xx) || na(xx)) { 
+    if (isnan(x) || na(x)) { 
 	if (ci == CORR) {
 	    pprintf(prn, "%*s", UTF_WIDTH(_("NA"), wid), 
 		    _("NA"));
@@ -795,14 +797,16 @@ static void outxx (const double xx, int ci, int wid, PRN *prn)
 	    bufspace(wid, prn);
 	}
     } else if (ci == CORR) {
-	pprintf(prn, " %*.4f", wid - 1, xx);
+	pprintf(prn, " %*.4f", wid - 1, x);
     } else {
 	char numstr[18];
 
-	if (xx > -0.001 && xx < 0.001) {
-	    sprintf(numstr, "%.5e", xx);
+	if (x == -0) x = 0.0;
+
+	if (x > -0.001 && x < 0.001) {
+	    sprintf(numstr, "%.5e", x);
 	} else {
-	    sprintf(numstr, "%g", xx);
+	    sprintf(numstr, "%g", x);
 	}
 	gretl_fix_exponent(numstr);
 	pprintf(prn, "%*s", wid, numstr);
@@ -1962,6 +1966,8 @@ int print_data_sorted (const int *list, const int *obsvec,
     return 0;
 }
 
+#define SIGMA_MIN 1.0e-18
+
 int
 text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 {
@@ -2005,7 +2011,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 		MSE += et * et;
 		AE += fabs(et);
 		effn++;
-	    } else {
+	    } else if (fr->sigma > SIGMA_MIN) {
 		ast = (fabs(et) > 2.5 * fr->sigma);
 		if (ast) {
 		    anyast = 1;

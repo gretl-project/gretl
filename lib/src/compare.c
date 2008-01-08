@@ -915,6 +915,10 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	return E_NOTIMP;
     }
 
+    if (exact_fit_check(orig, prn)) {
+	return 0;
+    }
+
     /* check for changes in original list members */
     err = list_members_replaced(orig->list, pdinfo, orig->ID);
     if (err) {
@@ -1025,10 +1029,9 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 */
 
 static int auto_drop_var (const MODEL *pmod, int *list,
-			  DATAINFO *pdinfo, int d0, 
-			  PRN *prn, int *err)
+			  DATAINFO *pdinfo, double alpha_max,
+			  int d0, PRN *prn, int *err)
 {
-    double alpha_max = .10; /* FIXME make this configurable? */
     double tstat, pv = 0.0, tmin = 4.0;
     int i, k = -1;
     int ret = 0;
@@ -1088,6 +1091,7 @@ static int auto_omit (MODEL *orig, MODEL *new,
 		      gretlopt est_opt, gretlopt opt,
 		      PRN *prn)
 {
+    double amax;
     int *tmplist = NULL;
     int err = 0;
 
@@ -1096,7 +1100,12 @@ static int auto_omit (MODEL *orig, MODEL *new,
 	return E_ALLOC;
     }
 
-    if (!auto_drop_var(orig, tmplist, pdinfo, 1, prn, &err)) {
+    amax = get_optval_double(OMIT, OPT_A);
+    if (na(amax)) {
+	amax = 0.10;
+    }
+
+    if (!auto_drop_var(orig, tmplist, pdinfo, amax, 1, prn, &err)) {
 	free(tmplist);
 	return (err)? err : E_NOOMIT;
     }    
@@ -1108,7 +1117,7 @@ static int auto_omit (MODEL *orig, MODEL *new,
 	    err = new->errcode;
 	} else {
 	    list_copy_values(tmplist, new->list);
-	    if (auto_drop_var(new, tmplist, pdinfo, 0, prn, &err)) {
+	    if (auto_drop_var(new, tmplist, pdinfo, amax, 0, prn, &err)) {
 		model_count_minus();
 		clear_model(new);
 	    } else {
@@ -1169,6 +1178,11 @@ static int omit_options_inconsistent (gretlopt opt)
 	    /* can't use Wald method on original VCV */
 	    return 1;
 	}
+    }
+
+    if ((opt & OPT_A) || (opt & OPT_W)) {
+	/* auto and Wald options incompatible */
+	return 1;
     }
 
     return 0;
@@ -1338,7 +1352,13 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     double RF;
     int err = 0;
 
-    if (pmod->ci != OLS) return E_OLSONLY;
+    if (pmod->ci != OLS) {
+	return E_OLSONLY;
+    }
+
+    if (exact_fit_check(pmod, prn)) {
+	return 0;
+    }
 
     gretl_model_init(&aux);
 
@@ -1995,6 +2015,10 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	return E_OLSONLY;
     }
 
+    if (exact_fit_check(pmod, prn)) {
+	return 0;
+    }
+
     /* temporarily impose the sample that was in force when the
        original model was estimated */
     impose_model_smpl(pmod, pdinfo);
@@ -2312,6 +2336,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pmod->ci != OLS) {
 	return E_OLSONLY;
+    }
+
+    if (exact_fit_check(pmod, prn)) {
+	return 0;
     }
 
     if (has_missing_obs(pmod)) {
@@ -2685,6 +2713,10 @@ int lmtest_driver (const char *param,
     ptr = get_last_model(&type);  
     if (ptr == NULL) {
 	return E_DATA;
+    }
+
+    if (type == GRETL_OBJ_EQN && exact_fit_check(ptr, prn)) {
+	return 0;
     }
 
     if (opt & (OPT_A | OPT_H)) {

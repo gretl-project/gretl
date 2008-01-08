@@ -1096,11 +1096,10 @@ static int gui_get_response (office_sheet *sheet, int *err)
 
 static int prune_missing_vars (office_sheet *sheet)
 {
-    int i, t, allmiss, ndel = 0;
-    int err = 0;
+    int allmiss = 1, ndel = 0;
+    int i, t, err = 0;
 
-    for (i=sheet->dinfo->v-1; i > 0; i--) {
-	allmiss = 1;
+    for (i=sheet->dinfo->v-1; i>0 && allmiss; i--) {
 	for (t=0; t<sheet->dinfo->n; t++) {
 	    if (!na(sheet->Z[i][t])) {
 		allmiss = 0;
@@ -1108,7 +1107,6 @@ static int prune_missing_vars (office_sheet *sheet)
 	    }
 	}
 	if (allmiss) ndel++;
-	else break;
     }
 
     if (ndel > 0) {

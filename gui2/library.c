@@ -416,6 +416,16 @@ int *command_list_from_string (char *s)
     return list;    
 }
 
+static int gui_exact_fit_check (MODEL *pmod)
+{
+    if (pmod->rsq == 1.0) {
+	infobox(_("The model exhibits an exact linear fit"));
+	return 1;
+    }
+
+    return 0;
+}
+
 /* Model estimated via console or script: unlike a gui model, which is
    kept in memory so long as its window is open, these models are
    immediately discarded.  So if we want to be able to refer back to
@@ -1492,38 +1502,38 @@ int do_add_omit (selector *sr)
 {
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
+    int ci = selector_code(sr);
+    gretlopt opt = OPT_S | selector_get_opts(sr);
+    int auto_omit = (ci == OMIT && (opt & OPT_A));
     PRN *prn;
     char title[48];
-    char *optstr = "";
-    gretlopt opt = OPT_S;
     MODEL *orig, *pmod = NULL;
     gint err;
 
-    if (buf == NULL) {
+    if (buf == NULL && !auto_omit) {
 	return 1;
     }
-
-    opt |= selector_get_opts(sr);
 
     orig = vwin->data;
 
     if (orig->ci == TSLS) {
 	/* this is a bit of a fudge */
-	optstr = "--both";
 	opt |= OPT_B;
     }
 
-    if (selector_code(sr) == ADD) {
-        gretl_command_sprintf("addto %d %s%s", orig->ID, buf, optstr);
+    if (ci == ADD) {
+        gretl_command_sprintf("addto %d %s%s", orig->ID, buf, print_flags(opt, ci));
+    } else if (auto_omit) {
+	gretl_command_sprintf("omitfrom %d %s", orig->ID, print_flags(opt, ci));
     } else {
-        gretl_command_sprintf("omitfrom %d %s%s", orig->ID, buf, optstr);
+        gretl_command_sprintf("omitfrom %d %s%s", orig->ID, buf, print_flags(opt, ci));
     }
 
     if (check_lib_command() || bufopen(&prn)) {
 	return 1;
     }
 
-    if (selector_code(sr) == OMIT && (opt & OPT_W)) {
+    if (ci == OMIT && (opt & OPT_W)) {
 	/* pmod is not needed */
 	;
     } else {
@@ -1535,7 +1545,7 @@ int do_add_omit (selector *sr)
 	}
     }
 
-    if (selector_code(sr) == ADD) { 
+    if (ci == ADD) { 
         err = add_test(libcmd.list, orig, pmod, &Z, datainfo, opt, prn);
     } else {
         err = omit_test(libcmd.list, orig, pmod, &Z, datainfo, opt, prn);
@@ -1700,6 +1710,10 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
     char title[64];
     int err = 0;
 
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }    
+
     if (bufopen(&prn)) return;
 
     strcpy(title, _("gretl: LM test "));
@@ -1835,6 +1849,10 @@ void do_leverage (gpointer p, guint u, GtkWidget *w)
     PRN *prn;
     gretl_matrix *m;
     int err = 0;
+
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }
 
     model_leverage = gui_get_plugin_function("model_leverage", 
 					     &handle);
@@ -1992,6 +2010,10 @@ void do_chow_cusum (gpointer p, guint action, GtkWidget *w)
 	return;
     }
 
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }
+
     if (action == CHOW) {
 	char brkstr[OBSLEN];
 	int resp, brk = (pmod->t2 - pmod->t1) / 2;
@@ -2062,6 +2084,10 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
     PRN *prn;
     int err = 0;
 
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }
+
     if (bufopen(&prn)) return;
 
     err = reset_test(pmod, &Z, datainfo, OPT_S, prn);
@@ -2084,6 +2110,10 @@ void do_autocorr (gpointer p, guint u, GtkWidget *w)
     PRN *prn;
     char title[64];
     int order, err = 0;
+
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }
 
     order = default_lag_order(datainfo);
 
@@ -2127,6 +2157,10 @@ void do_arch (gpointer p, guint u, GtkWidget *w)
     MODEL *pmod = vwin->data;
     PRN *prn;
     int order, err = 0;
+
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }    
 
     order = default_lag_order(datainfo);
 
@@ -3430,6 +3464,10 @@ void do_resid_freq (gpointer p, guint action, GtkWidget *w)
     double ***rZ;
     DATAINFO *rinfo;
     int err = 0;
+
+    if (gui_exact_fit_check(pmod)) {
+	return;
+    }
 
     if (bufopen(&prn)) return;
     

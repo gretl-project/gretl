@@ -2111,6 +2111,10 @@ gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
 	return E_NOTIMP;
     }
 
+    if (exact_fit_check(pmod, prn)) {
+	return 0;
+    }
+
     r = restriction_set_new(pmod, GRETL_OBJ_EQN, OPT_Q | OPT_C);
     if (r == NULL) {
 	return 1;

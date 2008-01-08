@@ -4845,3 +4845,15 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
     return x;
 }
 
+int exact_fit_check (const MODEL *pmod, PRN *prn)
+{
+    if (pmod->rsq == 1.0) {
+	pputs(prn, _("The model exhibits an exact linear fit"));
+	pputc(prn, '\n');
+	return 1;
+    }
+
+    return 0;
+}
+	
+

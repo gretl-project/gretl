@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include <errno.h>
 
 /* model commands plus ADD and OMIT */
 #define vcv_opt_ok(c) (c == ADD || \
@@ -68,9 +69,6 @@ struct gretl_option gretl_opts[] = {
     { ADD,      OPT_I, "silent" },
     { ADD,      OPT_Q, "quiet" },
     { ADD,      OPT_T, "inst" },
-    { ADDTO,    OPT_B, "both" },
-    { ADDTO,    OPT_Q, "quiet" },
-    { ADDTO,    OPT_T, "inst" },
     { ADF,      OPT_N, "nc" }, 
     { ADF,      OPT_C, "c" }, 
     { ADF,      OPT_D, "seasonals" },
@@ -185,18 +183,13 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_R, "robust" },
     { OLS,      OPT_Q, "quiet" },
     { OLS,      OPT_S, "simple-print" },
-    { OMIT,     OPT_A, "automatic" },
+    { OMIT,     OPT_A, "auto" },
     { OMIT,     OPT_B, "both" },
     { OMIT,     OPT_I, "silent" },
     { OMIT,     OPT_P, "bootstrap" },
     { OMIT,     OPT_Q, "quiet" },
     { OMIT,     OPT_T, "inst" },
     { OMIT,     OPT_W, "wald" },
-    { OMITFROM, OPT_B, "both" },
-    { OMITFROM, OPT_P, "bootstrap" },
-    { OMITFROM, OPT_Q, "quiet" },
-    { OMITFROM, OPT_T, "inst" },
-    { OMITFROM, OPT_W, "wald" },
     { OPEN,     OPT_C, "coded" },
     { OPEN,     OPT_B, "box1" },
     { OPEN,     OPT_O, "octave" },
@@ -560,18 +553,100 @@ static int valid_long_opt (int ci, const char *lopt)
 
     return opt;
 }
+
+static int locale_numeric_string (const char *s)
+{
+    char *test;
+    int ret = 1;
+
+    if (!strcmp(s, "inf") || !strcmp(s, "nan")) {
+	return 0;
+    }
+
+    errno = 0;
+
+    strtod(s, &test);
+    if (*test != '\0' || errno == ERANGE) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+/* The following apparatus is rather funky, and will probably have to
+   be completely redone at some point.  For now, it allows passing a
+   numerical value (two-sided p-value) in connection with the --auto
+   option to the omit command.  We may want to make this mechanism
+   available in connection with other option flags for other commands:
+   in that case a redesign will be needed.  AC, 2008-01-08.
+*/
+
+static int optval_ci;
+static gretlopt optval_opt;
+static double optval_double = NADBL;
+static char optval_str[32];
+
+double get_optval_double (int ci, gretlopt opt)
+{
+    double x = NADBL;
+
+    if (ci == optval_ci && optval_opt == opt) {
+	x = optval_double;
+    }
+
+    optval_double = NADBL;
+
+    return x;
+}
+
+void set_optval_double (int ci, gretlopt opt, double x)
+{
+    optval_ci = ci;
+    optval_opt = opt;
+    optval_double = x;
+    sprintf(optval_str, "%g", x);
+}
+
+static void unset_optval_double (void)
+{
+    optval_ci = 0;
+    optval_opt = OPT_NONE;
+    optval_double = NADBL;
+    *optval_str = '\0';
+}
+
+static int valid_optval (int ci, gretlopt opt, const char *val)
+{
+    double x;
+
+    if (ci == OMIT && opt == OPT_A) {
+	if (locale_numeric_string(val)) {
+	    x = atof(val);
+	    if (x > 0.0 && x < 1.0) {
+		set_optval_double(ci, opt, x);
+		return 1;
+	    } else {
+		unset_optval_double();
+	    }
+	}
+    }
+
+    return 0;
+}
   
 static gretlopt get_long_opts (char *line, int ci, int *err)
 {
     char *s = line;
     char longopt[32];
+    char optval[32];
     gretlopt match, ret = 0L;
 
     while ((s = strstr(s, "--")) != NULL) {
 	match = 0;
 	*longopt = '\0';
 	if (maybe_opt_start(line, s)) {
-	    sscanf(s + 2, "%31s", longopt);
+	    sscanf(s + 2, "%31[^ =]", longopt);
+	    /* sscanf(s + 2, "%31s", longopt); */
 	    match = valid_long_opt(ci, longopt);
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
@@ -587,6 +662,11 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 
 	if (match > 0) {
 	    gretl_delete(s, 0, 2 + strlen(longopt));
+	    if (*s == '=' && sscanf(s + 1, "%31[^ =]", optval) == 1) {
+		if (valid_optval(ci, match, optval)) {
+		    gretl_delete(s, 0, 1 + strlen(optval));
+		}
+	    }
 	} else {
 	    s += 2;
 	}
@@ -672,6 +752,13 @@ gretlopt get_gretl_options (char *line, int *err)
 	return oflags;
     }
 
+    /* some commands are basically aliases */
+    if (ci == OMITFROM) {
+	ci = OMIT;
+    } else if (ci == ADDTO) {
+	ci = ADD;
+    }
+
     /* smpl: in some contexts options don't make sense */
     if (ci == SMPL && strchr(line, ';')) {
 	return oflags;
@@ -715,7 +802,7 @@ gretlopt get_gretl_options (char *line, int *err)
 
 const char *print_flags (gretlopt oflags, int ci)
 {
-    static char flagstr[256];
+    static char flagstr[512];
     char fbit[32];
     int i;
 
@@ -730,6 +817,12 @@ const char *print_flags (gretlopt oflags, int ci)
 	return flagstr;
     }
 
+    if (ci == OMITFROM) {
+	ci = OMIT;
+    } else if (ci == ADDTO) {
+	ci = ADD;
+    }
+
     /* special: -o (--vcv) can be used with several model
        commands */
     if ((oflags & OPT_O) && vcv_opt_ok(ci)) {
@@ -741,6 +834,12 @@ const char *print_flags (gretlopt oflags, int ci)
 	if (ci == gretl_opts[i].ci && (oflags & gretl_opts[i].o)) {
 	    sprintf(fbit, " --%s", gretl_opts[i].longopt);
 	    strcat(flagstr, fbit);
+	    if (*optval_str != '\0' && gretl_opts[i].o == optval_opt 
+		&& ci == optval_ci) {
+		sprintf(fbit, "=%s", optval_str);
+		strcat(flagstr, fbit);
+		*optval_str = '\0';
+	    }
 	}
     }
 

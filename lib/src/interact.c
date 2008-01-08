@@ -2301,7 +2301,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == OMIT && string_is_blank(line + 4)) {
 	cmd_set_nolist(cmd);
 	return cmd->err;
-    }
+    } 
 
     /* dataset-modifying commands */
     if (cmd->ci == DATAMOD) {
@@ -2419,6 +2419,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		linelen = strlen(line);
 	    }
 	} 
+    }
+
+    if (cmd->ci == OMITFROM && nf == 0) {
+	cmd_set_nolist(cmd);
+	return cmd->err;
     }
 
     if (cmd->ci == REMEMBER) {

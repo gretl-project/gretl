@@ -3413,9 +3413,9 @@ int freq_dialog (const char *title, const char *blurb,
 	N_("Bin width:")
     };
     const char *opts[] = {
-	N_("Simple"),
-	N_("Against Normal"),
-	N_("Against Gamma")
+	N_("Show data only"),
+	N_("Show normal distribution"),
+	N_("Show gamma distribution")
     };
     struct freqdist_info finfo;
     GtkWidget *dialog, *rad;

@@ -5602,6 +5602,10 @@
 	  <effect>don't print anything</effect>
 	</option>
 	<option>
+	  <flag>--auto</flag>
+	  <effect>sequential elimination, see below</effect>
+	</option>
+	<option>
 	  <flag>--inst</flag>
 	  <effect>omit as instrument, TSLS only</effect>
 	</option>
@@ -5619,22 +5623,41 @@
     <description>
       <para context="gui">
 	This command re-estimates the given model after omitting the
-	specified variables.  Besides the usual model output, it gives a
-	test statistic for the joint significance of the omitted
-	variables. When the original model was estimated by OLS, this test
+	specified variables, or after sequentially omitting insignificant
+	variables if the relevant box is checked.  Besides the usual model
+	output, it prints a test for the joint significance of the omitted
+	variables. The null hypothesis is that the true coefficients on
+	all the omitted variables equal zero.
+      </para>
+      <para context="gui">
+	When the original model was estimated by OLS, the default test
 	statistic is an <mathvar>F</mathvar>-value, based on the sums of
-	squared residuals for the restricted and unrestricted models,
-	otherwise it is an asymptotic Wald chi-square value based on the
-	covariance matrix of the original model.  The null hypothesis
-	is that the true coefficients on all the omitted variables
-	equal zero.
+	squared residuals for the restricted and unrestricted models. For
+	estimators other than OLS, or if the Wald option is selected, the
+	statistic is an asymptotic Wald chi-square value based on the
+	covariance matrix of the original model.
+      </para>
+      <para context="gui">
+	Sequential elimination works as follows: at each step the
+	variable with the highest p-value is omitted, until all remaining
+	variables have a p-value no greater than some cutoff.  The default
+	cutoff is 10 percent (two-sided); this can be adjusted via the
+	spin button.
       </para>
       <para context="cli">
-	This command must follow an estimation command.  It calculates
-	a test statistic for the joint significance of the variables
-	in <repl>varlist</repl>, which should be a subset of the
-	independent variables in the model previously estimated.
+	This command must follow an estimation command.  It calculates a
+	test for the joint significance of the variables in
+	<repl>varlist</repl>, which should be a subset of the independent
+	variables in the model previously estimated. Alternatively, if the
+	<lit>--auto</lit> flag is given, sequential elimination is
+	performed: at each step the variable with the highest p-value is
+	omitted, until all remaining variables have a p-value no greater
+	than some cutoff.  The default cutoff is 10 percent (two-sided);
+	this can be adjusted by appending <quote><lit>=</lit></quote> and
+	a value between 0 and 1 (with no spaces), as in
       </para>
+      <code context="cli">
+	omit --auto=0.05</code>
       <para context="cli">
 	If the original model was estimated by OLS, the test statistic is
 	by default an <mathvar>F</mathvar>-value.  This is based on the
@@ -5645,7 +5668,7 @@
 	original model.  (It is the <mathvar>F</mathvar>-form of a Wald
 	test).
       </para>
-      <para>
+      <para context="cli">
 	For estimators other than OLS, or if the <lit>--wald</lit> option
 	is given, the statistic is an asymptotic Wald chi-square value
 	based on the covariance matrix of the original model.
@@ -5658,15 +5681,15 @@
 	doing further tests such as <cmd>add</cmd> or
 	<cmd>omit</cmd>).  
       </para>
-      <para>
-	If the <lit>--wald</lit> option is selected, the restricted
-	model is not estimated (and so the current model is not
-	replaced). The <lit>--quiet</lit> option suppresses the
-	printout of the restricted model (if applicable): only the
-	result of the test is printed.  If the restricted model is
-	both estimated and printed, the <lit>--vcv</lit> option has the
-	effect of printing the covariance matrix for the coefficients
-	in the restricted model, otherwise this option is ignored.
+      <para context="cli">
+	If the Wald option is selected, the restricted model is not
+	estimated (and so the current model is not replaced). The
+	<lit>--quiet</lit> option suppresses the printout of the
+	restricted model (if applicable): only the result of the test is
+	printed.  If the restricted model is both estimated and printed,
+	the <lit>--vcv</lit> option has the effect of printing the
+	covariance matrix for the coefficients in the restricted model,
+	otherwise this option is ignored.
       </para>
       <para context="cli">
 	If the <lit>--silent</lit> option is given, nothing is printed;

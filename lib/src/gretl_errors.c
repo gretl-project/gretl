@@ -205,3 +205,4 @@ void gretl_error_clear (void)
     error_printed = 0;
 }
 
+

@@ -306,6 +306,8 @@ int mle_criteria (MODEL *pmod, int addk);
 
 double coeff_pval (int ci, double x, int df);
 
+int exact_fit_check (const MODEL *pmod, PRN *prn);
+
 int gretl_model_allocate_params (MODEL *pmod, int k);
 
 int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
