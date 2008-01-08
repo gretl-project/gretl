@@ -1092,16 +1092,53 @@ static int gui_get_response (office_sheet *sheet, int *err)
     return book.selected;
 }
 
+/* check for spurious empty columns at the right of the sheet */
+
+static int prune_missing_vars (office_sheet *sheet)
+{
+    int i, t, allmiss, ndel = 0;
+    int err = 0;
+
+    for (i=sheet->dinfo->v-1; i > 0; i--) {
+	allmiss = 1;
+	for (t=0; t<sheet->dinfo->n; t++) {
+	    if (!na(sheet->Z[i][t])) {
+		allmiss = 0;
+		break;
+	    }
+	}
+	if (allmiss) ndel++;
+	else break;
+    }
+
+    if (ndel > 0) {
+	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
+	err = dataset_drop_last_variables(ndel, &sheet->Z, sheet->dinfo);
+    }
+
+    return err;
+}
+
 static int finalize_import (double ***pZ, DATAINFO **ppdinfo,
 			    office_sheet *sheet, PRN *prn)
 {
-    PRN *tprn = gretl_print_new(GRETL_PRINT_STDERR);
+    PRN *tprn;
+    int err;
 
-    ts_check(sheet, tprn);
-    gretl_print_destroy(tprn);
+    err = prune_missing_vars(sheet);
 
-    return merge_or_replace_data(pZ, ppdinfo, &sheet->Z, 
-				 &sheet->dinfo, prn);   
+    if (!err) {
+	tprn = gretl_print_new(GRETL_PRINT_STDERR);
+	ts_check(sheet, tprn);
+	gretl_print_destroy(tprn);
+    }
+
+    if (!err) {
+	err = merge_or_replace_data(pZ, ppdinfo, &sheet->Z, 
+				    &sheet->dinfo, prn);
+    }  
+
+    return err;
 }
 
 static char *get_absolute_path (const char *fname)
