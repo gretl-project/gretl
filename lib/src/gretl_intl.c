@@ -217,12 +217,24 @@ void set_gretl_charset (const char *s)
 		gretl_cset_maj = gretl_cset_min = 0;
 	    }
 	} 
-# ifdef WIN32
+#ifdef WIN32
 	if (p == NULL) {
 	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
 	}
-# endif
+#endif
     }
+
+#ifdef WIN32
+    fprintf(stderr, "cpage = %d\n", gretl_cpage);
+    if (gretl_cpage != 1250) {
+	char *e = getenv("GRETL_CPAGE");
+
+	if (e != NULL && !strcmp(e, "1250")) {
+	    gretl_cpage = 1250;
+	    fprintf(stderr, "revised cpage to 1250\n");
+	}
+    }
+#endif
 }
 
 static const char *get_gretl_charset (void)
@@ -698,9 +710,9 @@ char *utf8_to_cp (const char *s)
     return ret;
 }
 
-/* allow TAB, CR, LF, FF */
+/* allow TAB, CR, LF, FF, CTRL-Z */
 
-#define ascii_ctrl(a) (a==9 || a==10 || a==12 || a==13)
+#define ascii_ctrl(a) (a==9 || a==10 || a==12 || a==13 || a == 26)
 
 int gretl_is_ascii (const char *buf)
 {
