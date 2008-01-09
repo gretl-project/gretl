@@ -29,10 +29,9 @@
 
 #define GP_DEBUG 0
 
-#ifdef _WIN32
+#ifdef WIN32
 # include <windows.h>
 #else
-# define USE_GSPAWN
 # include <glib.h>
 # include <signal.h>
 # if HAVE_SYS_WAIT_H
@@ -45,7 +44,6 @@
 #  define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 # endif
 #endif /* ! _WIN32 */
-
 
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
@@ -110,9 +108,9 @@ static void graph_list_adjust_sample (int *list,
 				      const double **Z);
 static void clear_gpinfo (gnuplot_info *gi);
     
-#ifdef USE_GSPAWN
+#ifndef WIN32
 
-# define SPAWN_DEBUG 0  /* define != 0 for debugging statements */
+#define SPAWN_DEBUG 0  /* define != 0 for debugging statements */
 
 /**
  * gnuplot_test_command:
@@ -200,25 +198,7 @@ int gnuplot_test_command (const char *cmd)
     return ret;
 }
 
-#elif !defined(_WIN32)
-
-#include <signal.h>
-
-int gnuplot_test_command (const char *cmd)
-{
-    char fullcmd[512];
-    int err;
-
-    signal(SIGCHLD, SIG_DFL);
-
-    sprintf(fullcmd, "echo \"%s\" | %s 2>/dev/null", cmd,
-	    (*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
-    err =  system(fullcmd);
-
-    return err;
-}
-
-#endif /* ! USE_GSPAWN, ! WIN32 */
+#endif /* !WIN32 */
 
 static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 {

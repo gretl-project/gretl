@@ -803,7 +803,7 @@ static void outxx (double x, int ci, int wid, PRN *prn)
 
 	if (x == -0) x = 0.0;
 
-	if (x > -0.001 && x < 0.001) {
+	if (x != 0 && x > -0.001 && x < 0.001) {
 	    sprintf(numstr, "%.5e", x);
 	} else {
 	    sprintf(numstr, "%g", x);

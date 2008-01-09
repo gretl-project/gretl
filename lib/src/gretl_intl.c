@@ -170,7 +170,6 @@ static int gretl_cpage;
 # endif
 static int using_utf8;
 
-
 /* Use g_get_charset() to determine the current local character set,
    and record this information.  If we get an "ISO-XXXX-Y" locale,
    record the numerical elements as gretl_cset_maj and gretl_cset_min

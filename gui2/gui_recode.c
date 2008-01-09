@@ -300,10 +300,8 @@ gchar *gp_locale_from_utf8 (const gchar *src)
 	cset = gp_cset();
     }
 
-#if 0
-    fprintf(stderr, "gp_locale_from_utf8: src is not ascii, cset = '%s'\n",
-	    cset);
-#endif
+    /* FIXME this is wrong on a system where the
+       default gnuplot terminal uses UTF-8 */
 
     ret = g_convert(src, -1, cset, "UTF-8",
 		    &read, &wrote, &err);
