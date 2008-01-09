@@ -1180,7 +1180,7 @@ static int omit_options_inconsistent (gretlopt opt)
 	}
     }
 
-    if ((opt & OPT_A) || (opt & OPT_W)) {
+    if ((opt & OPT_A) && (opt & OPT_W)) {
 	/* auto and Wald options incompatible */
 	return 1;
     }

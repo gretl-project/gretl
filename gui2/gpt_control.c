@@ -488,16 +488,12 @@ static char *get_insert_point (char *s)
    namely switch line type 2 for 3
 */
 
-static void 
-maybe_recolor_line (char *s, int lnum, int *contd)
+static void maybe_recolor_line (char *s, int lnum)
 {
     const gretlRGB *color = get_graph_color(lnum - 1);
 
-    if (strstr(s, ", \\") == NULL) {
-	*contd = 0;
-    }
-
     if (color != NULL) {
+	int contd = strstr(s, ", \\") != NULL;
 	char cstr[8];
 
 	print_rgb_hash(cstr, color);
@@ -513,7 +509,7 @@ maybe_recolor_line (char *s, int lnum, int *contd)
 
 	    *p = '\0';
 	    strcpy(p, " lt 3");
-	    if (*contd) {
+	    if (contd) {
 		strcat(s, " , \\\n");
 	    } else {
 		strcat(s, "\n");
@@ -522,12 +518,27 @@ maybe_recolor_line (char *s, int lnum, int *contd)
     } 
 }
 
-#ifdef ENABLE_NLS
+static void dataline_check (const char *s, int *d)
+{
+    if (!strncmp(s, "plot \\", 6)) {
+	*d = 0;
+	return;
+    }
+    
+    if (!strncmp(s, "plot ", 5)) {
+	*d = 0;
+    }
+
+    if (*d == 0 && strstr(s, ", \\") == NULL) {
+	*d = 1;
+    }
+}
 
 /* for postscript output, e.g. in Latin-2, or EMF output in CP125X */
 
 static void maybe_recode_gp_line (char *s, int latin, int ttype, FILE *fp)
 {
+#ifdef ENABLE_NLS    
     if (latin && !gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
 	char *tmp;
 	
@@ -544,13 +555,19 @@ static void maybe_recode_gp_line (char *s, int latin, int ttype, FILE *fp)
     } else {
 	fputs(s, fp);
     }
+#else
+    fputs(s, fp);
+#endif
 }
+
+#ifdef ENABLE_NLS
 
 static int non_ascii_gp_file (FILE *fp, char *pline, int n)
 {
+    int dataline = -1;
     int ret = 0;
 
-    while (fgets(pline, n, fp)) {
+    while (fgets(pline, n, fp) && dataline <= 0) {
 	if (set_print_line(pline)) {
 	    break;
 	}
@@ -558,6 +575,7 @@ static int non_ascii_gp_file (FILE *fp, char *pline, int n)
 	    ret = 1;
 	    break;
 	}
+	dataline_check(pline, &dataline);
     }
 
     rewind(fp);
@@ -593,7 +611,7 @@ static int filter_plot_file (const char *inname,
     char pline[MAXLEN];
     int ttype = 0, mono = 0;
     int lnum = -1, recolor = 0;
-    int latin = 0, contd = 1;
+    int latin = 0, dataline = -1;
     int err = 0;
 
     fpin = gretl_fopen(inname, "r");
@@ -671,21 +689,24 @@ static int filter_plot_file (const char *inname,
 	    }
 	}
 
-	if (!strncmp(pline, "plot ", 5)) {
-	    lnum = 0;
-	} else if (lnum >= 0) {
-	    lnum++;
+	if (recolor) {
+	    if (!strncmp(pline, "plot ", 5)) {
+		lnum = 0;
+	    } else if (lnum >= 0) {
+		lnum++;
+	    }
+	    if (lnum > 0 && dataline <= 0) {
+		maybe_recolor_line(pline, lnum);
+	    }
 	}
 
-	if (recolor && lnum > 0 && contd) {
-	    maybe_recolor_line(pline, lnum, &contd);
+	if (dataline > 0) {
+	    fputs(pline, fpout);
+	} else {
+	    maybe_recode_gp_line(pline, latin, ttype, fpout);
 	}
 
-#ifdef ENABLE_NLS
-	maybe_recode_gp_line(pline, latin, ttype, fpout);
-#else
-	fputs(pline, fpout);
-#endif
+	dataline_check(pline, &dataline);
     }
 
     fclose(fpin);

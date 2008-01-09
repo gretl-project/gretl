@@ -710,9 +710,10 @@ char *utf8_to_cp (const char *s)
     return ret;
 }
 
-/* allow TAB, CR, LF, FF, CTRL-Z */
+/* allow TAB, CR, LF, CTRL-Z */
 
-#define ascii_ctrl(a) (a==9 || a==10 || a==12 || a==13 || a == 26)
+#define ascii_ctrl(a) (a=='\t' || a=='\n' || \
+                       a=='\r' || a==CTRLZ)
 
 int gretl_is_ascii (const char *buf)
 {
