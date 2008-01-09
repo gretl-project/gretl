@@ -554,25 +554,6 @@ static int valid_long_opt (int ci, const char *lopt)
     return opt;
 }
 
-static int locale_numeric_string (const char *s)
-{
-    char *test;
-    int ret = 1;
-
-    if (!strcmp(s, "inf") || !strcmp(s, "nan")) {
-	return 0;
-    }
-
-    errno = 0;
-
-    strtod(s, &test);
-    if (*test != '\0' || errno == ERANGE) {
-	ret = 0;
-    }
-
-    return ret;
-}
-
 /* The following apparatus is rather funky, and will probably have to
    be completely redone at some point.  For now, it allows passing a
    numerical value (two-sided p-value) in connection with the --auto
@@ -620,8 +601,8 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
     double x;
 
     if (ci == OMIT && opt == OPT_A) {
-	if (locale_numeric_string(val)) {
-	    x = atof(val);
+	if (numeric_string(val)) {
+	    x = dot_atof(val);
 	    if (x > 0.0 && x < 1.0) {
 		set_optval_double(ci, opt, x);
 		return 1;
