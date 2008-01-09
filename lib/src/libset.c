@@ -1259,8 +1259,10 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
 	    if (!err) {
 		gretl_rand_set_seed((unsigned int) k);
-		pprintf(prn, 
-			_("Pseudo-random number generator seeded with %d\n"), k);
+		if (gretl_messages_on() && !gretl_looping_quietly()) {
+		    pprintf(prn, 
+			    _("Pseudo-random number generator seeded with %d\n"), k);
+		}
 		state->seed = k;
 	    }
 	} else if (!strcmp(setobj, HORIZON)) {
