@@ -132,7 +132,6 @@ plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/heckit.c
 plugin/import_common.c
-plugin/infomat.c
 plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
