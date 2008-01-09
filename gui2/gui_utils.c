@@ -2593,37 +2593,89 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     return 0;
 }
 
-static void auto_save_plot (windata_t *vwin)
+int dump_plot_buffer (const char *buf, const char *fname,
+		      int addpause)
 {
     FILE *fp;
-    gchar *buf;
-# ifdef ENABLE_NLS
+    int gotpause = 0;
+    int recode = 0;
+    char bufline[1024];
+#ifdef ENABLE_NLS
     gchar *trbuf;
-# endif
+#endif
+
+    fp = gretl_fopen(fname, "w");
+    if (fp == NULL) {
+	file_write_errbox(fname);
+	return E_FOPEN;
+    }
+
+#if !defined(G_OS_WIN32) && defined(ENABLE_NLS)
+    if (gnuplot_test_command("set term wxt")) {
+	/* guessing that we need to recode UTF-8 */
+	bufgets_init(buf);
+	while (bufgets(bufline, sizeof bufline, buf)) {
+	    /* check for a "set term" line? */
+	    if (!gretl_is_ascii(bufline)) {
+		recode = 1;
+		break;
+	    }
+	}
+	bufgets_finalize(buf);
+    }
+#endif
+
+    /* perhaps better to put up a dialog box for the encoding,
+       if not all ascii? */
+
+    bufgets_init(buf);
+
+    while (bufgets(bufline, sizeof bufline, buf)) {
+	int done = 0;
+
+#ifdef ENABLE_NLS
+	if (recode) {
+	    trbuf = gp_locale_from_utf8(bufline);
+	    if (trbuf != NULL) {
+		fputs(trbuf, fp);
+		g_free(trbuf);
+		done = 1;
+	    }
+	}
+#endif
+	if (!done) {
+	    fputs(bufline, fp);
+	}
+	fputc('\n', fp);
+	if (strstr(bufline, "pause -1")) {
+	    gotpause = 1;
+	}
+    }
+
+    bufgets_finalize(buf);
+
+#ifdef G_OS_WIN32
+    if (addpause && !gotpause) {
+	fputs("pause -1\n", fp);
+    }
+#endif
+
+    fclose(fp);
+
+    return 0;
+}
+
+static void auto_save_plot (windata_t *vwin)
+{
+    gchar *buf;
 
     buf = textview_get_text(vwin->w);
-    if (buf == NULL) return;
-
-    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	g_free(buf);
-	file_write_errbox(vwin->fname);
+    if (buf == NULL) {
 	return;
     }
 
-# ifdef ENABLE_NLS
-    trbuf = gp_locale_from_utf8(buf);
-    if (trbuf != NULL) {
-	fputs(trbuf, fp);
-	g_free(trbuf);
-    } else {
-	fputs(buf, fp);
-    }
-# else
-    fputs(buf, fp);
-# endif
-
-    g_free(buf); 
-    fclose(fp);
+    dump_plot_buffer(buf, vwin->fname, 1);
+    g_free(buf);
 
     mark_content_saved(vwin);
 }

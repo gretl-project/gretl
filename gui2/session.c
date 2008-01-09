@@ -3090,109 +3090,34 @@ static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
     return obj;
 } 
 
-static char *dump_current_plot (windata_t *vwin)
-{
-    FILE *fp;
-    char *tmpfile = NULL;
-    int gotpause = 0;
-    char bufline[1024];
-    char *buf;
-# ifdef ENABLE_NLS
-    gchar *trbuf;
-# endif
-
-    buf = textview_get_text(vwin->w);
-    if (buf == NULL) return NULL;
-
-    tmpfile = g_strdup_printf("%showtmp.gp", paths.dotdir);
-
-    fp = gretl_fopen(tmpfile, "w");
-    if (fp == NULL) {
-	g_free(tmpfile);
-	g_free(buf);
-	file_write_errbox(tmpfile);
-	return NULL;
-    }
-
-    bufgets_init(buf);
-
-    while (bufgets(bufline, sizeof bufline, buf)) {
-# ifdef ENABLE_NLS
-	trbuf = gp_locale_from_utf8(bufline);
-	if (trbuf != NULL) {
-	    fputs(trbuf, fp);
-	    g_free(trbuf);
-	} else {
-	    fputs(bufline, fp);
-	}
-# else
-	fputs(bufline, fp);
-# endif
-	fputc('\n', fp);
-	if (strstr(bufline, "pause -1")) {
-	    gotpause = 1;
-	}
-    }
-
-    bufgets_finalize(buf);
-    g_free(buf);
-
-#ifdef G_OS_WIN32
-    if (!gotpause) {
-	fputs("pause -1\n", fp);
-    }
-#endif
-
-    fclose(fp);
-
-    return tmpfile;
-}
-
 #ifdef G_OS_WIN32
 
-void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+static void real_send_to_gp (const char *tmpfile)
 {
-    windata_t *vwin = (windata_t *) data;
-    gchar *tmpfile;
-    int err = 0;
+    gchar *cmd;
+    int err;
 
-    tmpfile = dump_current_plot(vwin);
-
-    if (tmpfile != NULL) {
-	gchar *buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
-
-	err = (WinExec(buf, SW_SHOWNORMAL) < 32);
-	remove(tmpfile); /* is this OK? */
-	g_free(tmpfile);
-	g_free(buf);
-    } else {
-	err = 1;
-    }
+    cmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
+    err = (WinExec(cmd, SW_SHOWNORMAL) < 32);
+    g_free(cmd);
 
     if (err) {
-	gui_errmsg(err);
+	win_show_last_error();
     }
 }
 
-#else /* !G_OS_WIN32 */
+#else
 
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+static void real_send_to_gp (const char *tmpfile)
 {
-    windata_t *vwin = (windata_t *) data;
-    gchar *tmpfile;
     GError *error = NULL;
     gchar *argv[4];
     GPid pid = 0;
     gint fd = -1;
     gboolean run;
-
-    tmpfile = dump_current_plot(vwin);
-    if (tmpfile == NULL) {
-	return;
-    }
 
     argv[0] = g_strdup(paths.gnuplot);
     argv[1] = g_strdup("-persist");
@@ -3241,12 +3166,33 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     g_free(argv[0]);
     g_free(argv[1]);
     g_free(argv[2]);
+}
+
+#endif
+
+void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) data;
+    gchar *tmpfile;
+    char *buf;
+    int err = 0;
+
+    buf = textview_get_text(vwin->w);
+    if (buf == NULL) {
+	return;
+    }
+
+    tmpfile = g_strdup_printf("%showtmp.gp", paths.dotdir);
+    err = dump_plot_buffer(buf, tmpfile, 0);
+    g_free(buf);
+
+    if (!err) {
+	real_send_to_gp(tmpfile);
+    }   
 
     remove(tmpfile);
     g_free(tmpfile);
 }
-
-#endif /* ? G_OS_WIN32 */
 
 static void open_gui_graph (gui_obj *obj)
 {
