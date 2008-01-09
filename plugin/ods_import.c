@@ -60,10 +60,10 @@ enum {
 
 #define XOFF_UNDEF 999999
 
-typedef struct office_table_ office_table;
-typedef struct office_sheet_ office_sheet;
+typedef struct ods_table_ ods_table;
+typedef struct ods_sheet_ ods_sheet;
 
-struct office_table_ {
+struct ods_table_ {
     char *name;
     xmlNodePtr node;
     int rows;        /* total rows defined */
@@ -73,11 +73,11 @@ struct office_table_ {
     int empty;       /* has any content (0) or not (1) */
 };
 
-struct office_sheet_ {
+struct ods_sheet_ {
     int flags;             
     xmlDocPtr doc;         /* document pointer */
     int n_tables;          /* number of tables */
-    office_table **tables; /* pointers to table info */
+    ods_table **tables;    /* pointers to table info */
     int seltab;            /* number of selected table */
     int xoffset;           /* col offset chosen by user */
     int yoffset;           /* row offset chosen by user */
@@ -85,9 +85,9 @@ struct office_sheet_ {
     DATAINFO *dinfo;       /* dataset info */
 };
 
-static office_table *office_table_new (xmlNodePtr node, int *err)
+static ods_table *ods_table_new (xmlNodePtr node, int *err)
 {
-    office_table *tab = NULL;
+    ods_table *tab = NULL;
     char *name;
 
     name = (char *) xmlGetProp(node, (XUC) "name");
@@ -114,10 +114,10 @@ static office_table *office_table_new (xmlNodePtr node, int *err)
 }
 
 static int 
-office_sheet_add_table (office_sheet *sheet, office_table *tab)
+ods_sheet_add_table (ods_sheet *sheet, ods_table *tab)
 {
     int n = sheet->n_tables;
-    office_table **tabs = NULL;
+    ods_table **tabs = NULL;
 
     tabs = realloc(sheet->tables, (n+1) * sizeof *sheet->tables);
     if (tabs == NULL) {
@@ -131,9 +131,9 @@ office_sheet_add_table (office_sheet *sheet, office_table *tab)
     return 0;
 }
 
-static office_sheet *office_sheet_new (xmlDocPtr doc, int *err)
+static ods_sheet *ods_sheet_new (xmlDocPtr doc, int *err)
 {
-    office_sheet *sheet;
+    ods_sheet *sheet;
 
     sheet = malloc(sizeof *sheet);
 
@@ -154,19 +154,19 @@ static office_sheet *office_sheet_new (xmlDocPtr doc, int *err)
     return sheet;
 }
 
-static void office_table_free (office_table *tab)
+static void ods_table_free (ods_table *tab)
 {
     free(tab->name);
     free(tab);
 }
 
-static void office_sheet_free (office_sheet *sheet)
+static void ods_sheet_free (ods_sheet *sheet)
 {
     if (sheet != NULL) {
 	int i;
 
 	for (i=0; i<sheet->n_tables; i++) {
-	    office_table_free(sheet->tables[i]);
+	    ods_table_free(sheet->tables[i]);
 	}
 	free(sheet->tables);
 
@@ -181,7 +181,7 @@ static void office_sheet_free (office_sheet *sheet)
     }
 }
 
-static void office_table_print (office_table *tab)
+static void ods_table_print (ods_table *tab)
 {
     fprintf(stderr, "Table \"%s\": ", tab->name);
 
@@ -194,7 +194,7 @@ static void office_table_print (office_table *tab)
     }
 }
 
-static void office_sheet_print (office_sheet *sheet)
+static void ods_sheet_print (ods_sheet *sheet)
 {
     if (sheet != NULL) {
 	int i;
@@ -202,12 +202,12 @@ static void office_sheet_print (office_sheet *sheet)
 	fprintf(stderr, "Sheet: %d tables\n", sheet->n_tables);
 
 	for (i=0; i<sheet->n_tables; i++) {
-	    office_table_print(sheet->tables[i]);
+	    ods_table_print(sheet->tables[i]);
 	}
     }
 }
 
-static int office_sheet_prune (office_sheet *sheet, PRN *prn)
+static int ods_sheet_prune (ods_sheet *sheet, PRN *prn)
 {
     int err = 0;
 
@@ -218,7 +218,7 @@ static int office_sheet_prune (office_sheet *sheet, PRN *prn)
 
 	for (i=0; i<sheet->n_tables; i++) {
 	    if (sheet->tables[i]->empty) {
-		office_table_free(sheet->tables[i]);
+		ods_table_free(sheet->tables[i]);
 		sheet->n_tables -= 1;
 		for (j=i; j<sheet->n_tables; j++) {
 		    sheet->tables[j] = sheet->tables[j+1];
@@ -349,7 +349,7 @@ static int ods_cell_has_content (xmlNodePtr node)
     return (get_ods_value_type(node) != ODS_NONE);
 }
 
-static int row_height (xmlNodePtr p)
+static int ods_row_height (xmlNodePtr p)
 {
     char *s;
     int h = 1;
@@ -365,7 +365,7 @@ static int row_height (xmlNodePtr p)
     return h;
 }
 
-static int cell_width (xmlNodePtr p)
+static int ods_cell_width (xmlNodePtr p)
 {
     char *s;
     int w = 1;
@@ -399,22 +399,25 @@ static const char *ods_name (int t)
     return "blank";
 }
 
-static int ods_error (office_sheet *sheet,
+static int ods_error (ods_sheet *sheet,
 		      int i, int j, int etype, int vtype,
 		      PRN *prn)
 {
-    int si = i + sheet->xoffset + 1;
-    int sj = j + sheet->yoffset + 1;
+    int si = i + sheet->yoffset + 1;
+    int sj = j + sheet->xoffset + 1;
 
     pprintf(prn, _("Sheet row %d, column %d"), si, sj);
 
     if ((sheet->flags & BOOK_AUTO_VARNAMES) || i == 0) {
 	pputs(prn, ":\n");
     } else {
-	int v = i + 1;
+	int v = (sheet->flags & BOOK_OBS_LABELS)? j : j + 1;
 
-	if (sheet->flags & BOOK_OBS_LABELS) v--;
-	pprintf(prn, " (\"%s\"):\n", sheet->dinfo->varname[v]);
+	if (v > 0 && v < sheet->dinfo->v) {
+	    pprintf(prn, " (\"%s\"):\n", sheet->dinfo->varname[v]);
+	} else {
+	    pputs(prn, ":\n");
+	}
     } 
 
     pprintf(prn, _("expected %s but found %s"),
@@ -424,7 +427,7 @@ static int ods_error (office_sheet *sheet,
 }
 
 static int real_read_cell (xmlNodePtr cur, 
-			   office_sheet *sheet, 
+			   ods_sheet *sheet, 
 			   int iread, int *preadcol,
 			   PRN *prn)
 {
@@ -445,7 +448,7 @@ static int real_read_cell (xmlNodePtr cur,
     }
 
     vtype = get_ods_value_type(cur);
-    nr = cell_width(cur);
+    nr = ods_cell_width(cur);
 
     *preadcol += nr;
 
@@ -560,8 +563,8 @@ static int real_read_cell (xmlNodePtr cur,
 }
 
 static int read_data_row (xmlNodePtr cur, 
-			  office_table *tab,
-			  office_sheet *sheet, 
+			  ods_table *tab,
+			  ods_sheet *sheet, 
 			  int readrow,
 			  PRN *prn)
 {
@@ -577,7 +580,7 @@ static int read_data_row (xmlNodePtr cur,
 				     readrow, &readcol, 
 				     prn);
 	    }
-	    tabcol += cell_width(cur);
+	    tabcol += ods_cell_width(cur);
 	}
 	cur = cur->next;
     }
@@ -585,8 +588,8 @@ static int read_data_row (xmlNodePtr cur,
     return err;
 }
 
-static int sheet_allocate_data (office_sheet *sheet,
-				office_table *tab)
+static int sheet_allocate_data (ods_sheet *sheet,
+				ods_table *tab)
 {
     int n = tab->rows - sheet->yoffset - 1;
     int v = tab->cols - sheet->xoffset + 1;
@@ -627,7 +630,7 @@ static int sheet_allocate_data (office_sheet *sheet,
 */
 
 static int 
-analyse_top_left (office_sheet *sheet, office_table *tab)
+analyse_top_left (ods_sheet *sheet, ods_table *tab)
 {
     xmlNodePtr colp, rowp = tab->node->xmlChildrenNode;
     xmlNodePtr p00 = NULL, p01 = NULL, p10 = NULL;
@@ -641,7 +644,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 
     while (!err && rowp != NULL && !done) {
 	if (!xmlStrcmp(rowp->name, (XUC) "table-row")) {
-	    nr = row_height(rowp);
+	    nr = ods_row_height(rowp);
 	    if (tabrow == sheet->yoffset) {
 		colp = rowp->xmlChildrenNode;
 		tabcol = 0;
@@ -652,7 +655,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 			} else if (tabcol == sheet->xoffset + 1) {
 			    p01 = colp;
 			}
-			tabcol += cell_width(colp);
+			tabcol += ods_cell_width(colp);
 		    }
 		    colp = colp->next;
 		}
@@ -664,7 +667,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 			if (tabcol == sheet->xoffset) {
 			    p10 = colp;
 			}
-			tabcol += cell_width(colp);
+			tabcol += ods_cell_width(colp);
 		    }
 		    colp = colp->next;
 		}
@@ -729,7 +732,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
     return err;
 }
 
-static int repeat_data_row (office_sheet *sheet, int iread,
+static int repeat_data_row (ods_sheet *sheet, int iread,
 			    PRN *prn)
 {
     int vnames = (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1;
@@ -751,9 +754,9 @@ static int repeat_data_row (office_sheet *sheet, int iread,
     return 0;
 }
 
-static int read_table_content (office_sheet *sheet, PRN *prn)
+static int read_table_content (ods_sheet *sheet, PRN *prn)
 {
-    office_table *tab;
+    ods_table *tab;
     xmlNodePtr cur;
     int i, nr, tabrow = 0, readrow = 0;
     int err = 0;
@@ -780,7 +783,7 @@ static int read_table_content (office_sheet *sheet, PRN *prn)
 
     while (cur != NULL && !err && readrow < tab->rows) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
-	    nr = row_height(cur);
+	    nr = ods_row_height(cur);
 	    if (tabrow >= sheet->yoffset) {
 		err = read_data_row(cur, tab, sheet, readrow++, prn);
 		for (i=1; i<nr && !err; i++) {
@@ -802,21 +805,24 @@ static int read_table_content (office_sheet *sheet, PRN *prn)
 }
 
 static int 
-get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
+get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
 {
-    office_table *tab = NULL;
+    ods_table *tab = NULL;
     xmlNodePtr rowp;
     int hascont, nr, nc, row_empty;
-    int cols, xoffset;
+    int cols, xoffset, xtrail;
     int rows, rchk;
     int err = 0;
+#if ODEBUG
+    int i = 0;
+#endif
 
-    tab = office_table_new(cur, &err);
+    tab = ods_table_new(cur, &err);
     if (tab == NULL) {
 	return err;
     }
 
-    err = office_sheet_add_table(sheet, tab);
+    err = ods_sheet_add_table(sheet, tab);
     if (err) {
 	return err;
     }
@@ -827,29 +833,38 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
-	    nr = row_height(cur);
-	    cols = xoffset = 0;
+	    nr = ods_row_height(cur);
+	    cols = xoffset = xtrail = 0;
 	    row_empty = 1;
 	    rowp = cur->xmlChildrenNode;
 	    while (rowp != NULL && !err) {
 		if (!xmlStrcmp(rowp->name, (XUC) "table-cell")) {
 		    hascont = ods_cell_has_content(rowp);
-		    nc = cell_width(rowp);
+		    nc = ods_cell_width(rowp);
 		    if (hascont) {
 			row_empty = 0;
 			tab->empty = 0;
+			xtrail = 0;
 		    } else if (row_empty) {
 			xoffset += nc;
 		    } 
 		    if (rowp->next == NULL) {
-			/* last cell in row */
+			/* last cell(s) in row: ignore if blank */
 			cols += (hascont)? nc : 0;
 		    } else {
 			cols += nc;
+			if (!hascont) {
+			    xtrail += nc;
+			}
 		    }
 		}
 		rowp = rowp->next;
 	    }
+#if ODEBUG
+	    fprintf(stderr, "row %d: cols = %d, trailing empty cols = %d\n", 
+		    ++i, cols, xtrail);
+#endif
+	    cols -= xtrail;
 	    if (!err) {
 		rows += nr;
 		if (!row_empty) {
@@ -874,9 +889,9 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
     return err;
 }
 
-static office_sheet *read_content (PRN *prn, int *err) 
+static ods_sheet *read_content (PRN *prn, int *err) 
 {
-    office_sheet *sheet = NULL;
+    ods_sheet *sheet = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     xmlNodePtr c1, c2;
@@ -893,7 +908,7 @@ static office_sheet *read_content (PRN *prn, int *err)
 	return NULL;
     }
 
-    sheet = office_sheet_new(doc, err);
+    sheet = ods_sheet_new(doc, err);
     if (sheet == NULL) {
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
@@ -983,7 +998,7 @@ static int gretl_make_tempdir (char *dname)
 
 #endif
 
-static int ts_check (office_sheet *sheet, PRN *prn)
+static int ts_check (ods_sheet *sheet, PRN *prn)
 {
     int mpd = -1;
 
@@ -1013,14 +1028,14 @@ static int ts_check (office_sheet *sheet, PRN *prn)
 
 static int ods_min_offset (wbook *book, int k)
 {
-    office_sheet *sheet = book->data;
+    ods_sheet *sheet = book->data;
     int i = -1, ret = 1;
 
     if (sheet != NULL) {
 	i = book->selected;
 
 	if (i >= 0 && i < sheet->n_tables) {
-	    office_table *tab = sheet->tables[i];
+	    ods_table *tab = sheet->tables[i];
 
 	    if (k == COL_OFFSET) {
 		ret = tab->xoffset + 1;
@@ -1033,7 +1048,7 @@ static int ods_min_offset (wbook *book, int k)
     return ret;
 }
 
-static int ods_book_init (wbook *book, office_sheet *sheet)
+static int ods_book_init (wbook *book, ods_sheet *sheet)
 {
     int i, err = 0;
 
@@ -1059,7 +1074,7 @@ static int ods_book_init (wbook *book, office_sheet *sheet)
     return err;
 }
 
-static int gui_get_response (office_sheet *sheet, int *err)
+static int ods_sheet_dialog (ods_sheet *sheet, int *err)
 {
     wbook book;   
 
@@ -1094,7 +1109,7 @@ static int gui_get_response (office_sheet *sheet, int *err)
 
 /* check for spurious empty columns at the right of the sheet */
 
-static int prune_missing_vars (office_sheet *sheet)
+static int ods_prune_columns (ods_sheet *sheet)
 {
     int allmiss = 1, ndel = 0;
     int i, t, err = 0;
@@ -1117,13 +1132,13 @@ static int prune_missing_vars (office_sheet *sheet)
     return err;
 }
 
-static int finalize_import (double ***pZ, DATAINFO **ppdinfo,
-			    office_sheet *sheet, PRN *prn)
+static int finalize_ods_import (double ***pZ, DATAINFO **ppdinfo,
+				ods_sheet *sheet, PRN *prn)
 {
     PRN *tprn;
     int err;
 
-    err = prune_missing_vars(sheet);
+    err = ods_prune_columns(sheet);
 
     if (!err) {
 	tprn = gretl_print_new(GRETL_PRINT_STDERR);
@@ -1156,7 +1171,7 @@ static int read_ods_file (const char *fname,
 			  double ***pZ, DATAINFO **ppdinfo,
 			  int gui, PRN *prn)
 {
-    office_sheet *sheet = NULL;
+    ods_sheet *sheet = NULL;
     int (*gretl_unzip_file)(const char *, GError **);
     const char *udir = gretl_dot_dir();
     char *abspath = NULL;
@@ -1232,19 +1247,19 @@ static int read_ods_file (const char *fname,
 
     remove_temp_dir(dname);
 
-    office_sheet_print(sheet);
+    ods_sheet_print(sheet);
 
     if (!err) {
-	err = office_sheet_prune(sheet, prn);
+	err = ods_sheet_prune(sheet, prn);
     }
 
     if (!err) {
 	if (gui) {
-	    int resp = gui_get_response(sheet, &err);
+	    int resp = ods_sheet_dialog(sheet, &err);
 
 	    if (resp < 0) {
 		/* canceled */
-		office_sheet_free(sheet);
+		ods_sheet_free(sheet);
 		return -1;
 	    } 
 	} else {
@@ -1259,10 +1274,10 @@ static int read_ods_file (const char *fname,
     }
 
     if (!err) {
-	err = finalize_import(pZ, ppdinfo, sheet, prn); 
+	err = finalize_ods_import(pZ, ppdinfo, sheet, prn); 
     }
 
-    office_sheet_free(sheet);
+    ods_sheet_free(sheet);
 
     return err;
 }

@@ -490,16 +490,16 @@ void wsheet_menu_select_row (GtkTreeSelection *selection, wbook *book)
 	book->selected = idx[0];
 
 	offmin = book_get_min_offset(book, COL_OFFSET);
-	offcurr = gtk_spin_button_get_value_as_int
-	    (GTK_SPIN_BUTTON(book->colspin));
+	offcurr = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(book->colspin));
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(book->colspin), offmin, 256);
 	if (offcurr != offmin) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(book->colspin),
 				      offmin);
 	}
 
 	offmin = book_get_min_offset(book, ROW_OFFSET);
-	offcurr = gtk_spin_button_get_value_as_int
-	    (GTK_SPIN_BUTTON(book->rowspin));
+	offcurr = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(book->rowspin));
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(book->rowspin), offmin, 256);
 	if (offcurr != offmin) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(book->rowspin),
 				      offmin);
@@ -571,7 +571,7 @@ void add_sheets_list (GtkWidget *vbox, wbook *book)
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-    gtk_tree_selection_set_mode (select, GTK_SELECTION_SINGLE);
+    gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
     g_signal_connect(G_OBJECT(select), "changed",
 		     G_CALLBACK(wsheet_menu_select_row),
 		     book);
