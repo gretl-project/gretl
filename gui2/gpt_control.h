@@ -50,4 +50,7 @@ int gp_term_code (gpointer p);
 
 void save_graph_to_file (gpointer p, const char *fname);
 
+void filter_gnuplot_file (int ttype, int latin, int mono, int recolor, 
+			  FILE *fpin, FILE *fpout);
+
 #endif /* GPT_CONTROL_H */

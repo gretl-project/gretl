@@ -44,10 +44,6 @@ char *maybe_iso_gettext (const char *msgid);
 
 void set_gretl_charset (const char *s);
 
-void pprint_gnuplot_encoding (const char *termstr, PRN *prn);
-
-void fprint_gnuplot_encoding (const char *termstr, FILE *fp);
-
 int iso_latin_version (void);
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);

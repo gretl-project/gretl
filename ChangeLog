@@ -11,6 +11,11 @@ version 1.7.2, in progress
 - Add Help item to forecast dialog
 - Fixes for matrix "dot operations"
 - Fix breakage in graph color selector
+- Fixes for ODS spreadsheet importer
+- Document the --auto option for the "omit" command, and add
+  a GUI handle for it
+- MS Windows and OS X packages: update to gnuplot 4.3 (CVS)
+- Models having an exact fit: block various invalid tests
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

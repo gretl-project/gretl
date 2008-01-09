@@ -222,7 +222,13 @@ int gnuplot_has_style_fill (void);
 
 int gnuplot_has_latin5 (void);
 
+int gnuplot_has_cp1250 (void);
+
+int gnuplot_has_cp1254 (void);
+
 int gnuplot_has_bbox (void);
+
+int gnuplot_has_utf8 (void);
 
 void set_graph_palette (int i, gretlRGB color);
 

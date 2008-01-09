@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "graph_page.h"
 #include "session.h"
+#include "gpt_control.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -31,16 +32,11 @@
 
 #define GRAPHS_MAX 8
 
-enum {
-    PS_OUTPUT,
-    PDF_OUTPUT
-} output_types;
-
 typedef struct _graphpage graphpage;
 
 struct _graphpage {
-    int output;
-    int color;
+    int term;
+    int mono;
     int ngraphs;
     char **fnames;
 };
@@ -102,7 +98,7 @@ static void gpage_errmsg (char *msg, int gui)
 
 static void graph_page_init (void)
 {
-    gpage.color = 0;
+    gpage.mono = 0;
     gpage.ngraphs = 0;
     gpage.fnames = NULL;
 }
@@ -113,7 +109,7 @@ static void doctop (FILE *fp)
 
     fprintf(fp, "\\documentclass%s{article}\n", (letter)? "" : "[a4paper]");
     fprintf(fp, "\\usepackage[%s]{graphicx}\n", 
-	    (gpage.output == PS_OUTPUT)? "dvips" : "pdftex");
+	    (gpage.term == GP_TERM_EPS)? "dvips" : "pdftex");
 }
 
 /* A4 is 210mm * 297mm */
@@ -322,14 +318,16 @@ static int gnuplot_compile (const char *fname)
 
 static int gp_make_outfile (const char *gfname, int i, double scale)
 {
-    char line[128];
+    int latin = 0;
+    int pdfterm = 0;
+    int recolor = 0;
     char *fname;
     FILE *fp, *fq;
     int err = 0;
 
     fp = gretl_fopen(gfname, "r");
     if (fp == NULL) {
-	fprintf(stderr, "Couldn't read from %s\n", gfname);
+	file_read_errbox(gfname);
 	return E_FOPEN;
     }
 
@@ -337,15 +335,32 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     fq = gretl_fopen(fname, "w");
     if (fq == NULL) {
-	fprintf(stderr, "Couldn't write to %s\n", fname);
+	file_write_errbox(fname);
 	fclose(fp);
 	return E_FOPEN;
     }
 
+    if (gpage.term == GP_TERM_PDF) {
+	pdfterm = gnuplot_pdf_terminal();
+    } 
+
+#ifdef ENABLE_NLS
+    if (gpage.term == GP_TERM_EPS || pdfterm != GP_PDF_CAIRO) {
+	latin = iso_latin_version();
+	fprintf(fq, "set encoding iso_8859_%d\n", latin);
+    }
+#endif
+
     gretl_push_c_numeric_locale();
     
-    if (gpage.output == PDF_OUTPUT) {
-	fprintf(fq, "set term pdf%s", (gpage.color)? " color" : " monochrome dashed");
+    if (gpage.term == GP_TERM_PDF) {
+	if (pdfterm == GP_PDF_CAIRO) {
+	    /* FIXME font size? */
+	    fprintf(fq, "set term pdfcairo font \"sans,5\"%s", 
+		    (gpage.mono)? " monochrome dashed" : " ");
+	} else {
+	    fprintf(fq, "set term pdf%s", (gpage.mono)? " monochrome dashed" : " color");
+	}
 	if (scale != 1.0) {
 	    fprintf(fq, " size %g,%g\n", scale * 5.0, scale * 3.0);
 	} else {
@@ -353,10 +368,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	}	
 	fname = gpage_fname(".pdf", i);
     } else {
-#ifdef ENABLE_NLS
-	fprint_gnuplot_encoding("postscript", fq);
-#endif
-	fprintf(fq, "set term postscript eps%s\n", (gpage.color)? " color" : " monochrome");
+	fprintf(fq, "set term postscript eps%s\n", (gpage.mono)? " monochrome" : " color");
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
 	}
@@ -367,12 +379,11 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     fprintf(fq, "set output '%s'\n", fname);
 
-    while (fgets(line, sizeof line, fp)) {
-	if (!strncmp(line, "set out", 7)) continue;
-	if (!strncmp(line, "set term", 8)) continue;
-	if (!strncmp(line, "set size", 8)) continue;
-	fputs(line, fq);
+    if (!gpage.mono && !gnuplot_has_rgb()) {
+	recolor = 1;
     }
+
+    filter_gnuplot_file(gpage.term, latin, gpage.mono, recolor, fp, fq);
 
     fclose(fp);
     fclose(fq);
@@ -482,11 +493,12 @@ static int latex_compile_graph_page (void)
     int err;
 
     /* ensure we don't get stale output */
-    if (gpage.output == PS_OUTPUT) {
+    if (gpage.term == GP_TERM_EPS) {
 	fname = gpage_fname(".ps", 0);
     } else {
 	fname = gpage_fname(".pdf", 0);
     }
+
     remove(fname);
 
     err = latex_compile(gpage_tex_base);
@@ -497,7 +509,7 @@ static int latex_compile_graph_page (void)
 	view_file(fname, 0, 1, 78, 350, VIEW_FILE);
     }
 
-    if (gpage.output == PS_OUTPUT && !err) {
+    if (gpage.term == GP_TERM_EPS && !err) {
 	err = dvips_compile(gpage_base);
     }    
 
@@ -535,7 +547,7 @@ static int real_display_gpage (void)
     char *fname;
     int err = 0;
 
-    if (gpage.output == PDF_OUTPUT) {
+    if (gpage.term == GP_TERM_PDF) {
 	fname = gpage_fname(".pdf", 0);
     } else {
 	fname = gpage_fname(".ps", 0);
@@ -546,7 +558,7 @@ static int real_display_gpage (void)
 #elif defined(OSX_BUILD)
     err = osx_open_file(fname);
 #else
-    viewer = (gpage.output == PDF_OUTPUT)? viewpdf : viewps;
+    viewer = (gpage.term == GP_TERM_PDF)? viewpdf : viewps;
     err = gretl_fork(viewer, fname);
 #endif
 
@@ -559,7 +571,7 @@ static void gpage_cleanup (void)
     int i;
 
     for (i=0; i<gpage.ngraphs; i++) {
-	if (gpage.output == PDF_OUTPUT) {
+	if (gpage.term == GP_TERM_PDF) {
 	    fname = gpage_fname(".pdf", i + 1);
 	} else {
 	    fname = gpage_fname(".ps", i + 1);
@@ -576,8 +588,6 @@ static void gpage_cleanup (void)
     fname = gpage_fname(".aux", 0);
     remove(fname);
 }
-
-/* FIXME color/mono selection */
 
 int display_graph_page (void)
 {
@@ -600,7 +610,7 @@ int display_graph_page (void)
 	return 0;
     }
 
-    gpage.color = (resp == 0);
+    gpage.mono = (resp == 1);
 
     chdir(sdir);
 
@@ -608,14 +618,14 @@ int display_graph_page (void)
 
     if (!strncmp(latex, "pdf", 3)) {
 	if (gnuplot_pdf_terminal()) {
-	    gpage.output = PDF_OUTPUT;
+	    gpage.term = GP_TERM_PDF;
 	} else {
 	    latex_orig = g_strdup(latex);
 	    strcpy(latex, latex_orig + 3);
-	    gpage.output = PS_OUTPUT;
+	    gpage.term = GP_TERM_EPS;
 	}
     } else {
-	gpage.output = PS_OUTPUT;
+	gpage.term = GP_TERM_EPS;
     }
 
     /* write the LaTeX driver file */
@@ -679,14 +689,14 @@ int save_graph_page (const char *fname)
 
     if (!strncmp(latex, "pdf", 3)) {
 	if (gnuplot_pdf_terminal()) {
-	    gpage.output = PDF_OUTPUT;
+	    gpage.term = GP_TERM_PDF;
 	} else {
 	    latex_orig = g_strdup(latex);
 	    strcpy(latex, latex_orig + 3);
-	    gpage.output = PS_OUTPUT;
+	    gpage.term = GP_TERM_EPS;
 	}
     } else {
-	gpage.output = PS_OUTPUT;
+	gpage.term = GP_TERM_EPS;
     }
 
     /* write the LaTeX driver file */

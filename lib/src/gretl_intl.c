@@ -225,13 +225,13 @@ void set_gretl_charset (const char *s)
     }
 
 #ifdef WIN32
-    fprintf(stderr, "cpage = %d\n", gretl_cpage);
+    fprintf(stderr, "codepage = %d\n", gretl_cpage);
     if (gretl_cpage != 1250) {
 	char *e = getenv("GRETL_CPAGE");
 
 	if (e != NULL && !strcmp(e, "1250")) {
 	    gretl_cpage = 1250;
-	    fprintf(stderr, "revised cpage to 1250\n");
+	    fprintf(stderr, "revised codepage to 1250\n");
 	}
     }
 #endif
@@ -256,60 +256,6 @@ static const char *get_gretl_charset (void)
     return NULL;
 }
 
-static const char *gnuplot_encoding_string (void)
-{
-    static char gp_enc[12] = {0};
-
-    if (gretl_cset_maj != 8859) {
-	return NULL;
-    }
-
-    if (*gp_enc != '\0') {
-	return gp_enc;
-    }
-
-    if (gretl_cset_min == 1 || 
-	gretl_cset_min == 2 ||
-	gretl_cset_min == 15) {
-	sprintf(gp_enc, "iso_8859_%d", gretl_cset_min);
-	return gp_enc;
-    } else if (gretl_cset_min == 9) {
-	static int l5 = -1;
-
-	if (l5 < 0) {
-	    l5 = gnuplot_has_latin5();
-	}
-	if (l5) {
-	    strcpy(gp_enc, "iso_8859_9");
-	    return gp_enc;
-	}
-    }
-
-    return NULL;
-}
-
-void pprint_gnuplot_encoding (const char *termstr, PRN *prn)
-{
-    if (strstr(termstr, "postscript")) {
-	const char *enc = gnuplot_encoding_string();
-
-	if (enc != NULL) {
-	    pprintf(prn, "set encoding %s\n", enc);
-	}
-    }
-}
-
-void fprint_gnuplot_encoding (const char *termstr, FILE *fp)
-{
-    if (strstr(termstr, "postscript")) {
-	const char *enc = gnuplot_encoding_string();
-
-	if (enc != NULL) {
-	    fprintf(fp, "set encoding %s\n", enc);
-	}
-    }
-}
-
 int iso_latin_version (void)
 {
     char *lang = NULL;
@@ -327,6 +273,8 @@ int iso_latin_version (void)
 	return 1;
     } else if (gretl_cpage == 1250) {
 	return 2;
+    } else if (gretl_cpage == 1254) {
+	return 9;
     }
 # endif
 
@@ -659,61 +607,96 @@ char *sprint_l2_to_ascii (char *targ, const char *s, size_t len)
     return targ;
 }
 
+enum {
+    ENC_ISO_LATIN,
+    ENC_CODEPAGE
+};
+
+/* Construct a codeset string to pass to g_convert, to convert UTF-8
+   encoded strings for gnuplot formats that can't handle UTF-8.  At
+   this point we don't check if gnuplot can deal with the target
+   codeset via its "set encoding" command, we're just trying to get
+   the text localized: the graph may work even without an explicit
+   "set encoding".
+*/
+
+static char *get_gp_encoding_set (char *s, int targ)
+{
+    int latin = iso_latin_version();
+
+    if (targ == ENC_ISO_LATIN) {
+	strcpy(s, "ISO-8859-");
+	if (latin == 2) {
+	    strcat(s, "2");
+	} else if (latin == 9) {
+	    strcat(s, "9");
+	} else if (latin == 15) {
+	    strcat(s, "15");
+	} else {
+	    /* default is ISO-8859-1 */
+	    strcat(s, "1");
+	}
+    } else {
+	strcpy(s, "CP125");
+	if (latin == 2) {
+	    strcat(s, "0");
+	} else if (latin == 9) {
+	    strcat(s, "4");
+	} else {
+	    /* default is CP1252 */
+	    strcat(s, "2");
+	} 
+    }
+
+    return s;
+}
+
+/* convert from UTF-8 to ISO latin, for, e.g., EPS graphs */
+
 char *utf8_to_latin (const char *s)
 {
+    char to_set[12];
     gsize read, wrote;
     GError *err = NULL;
     char *ret = NULL;
 
-    if (iso_latin_version() == 2) {
-# ifdef WIN32
-	ret = g_convert(s, -1, "CP1250", "UTF-8",
-			&read, &wrote, &err);
-# else
-	ret = g_convert(s, -1, "ISO-8859-2", "UTF-8",
-			&read, &wrote, &err);
-# endif
-    } else {
-	ret = g_convert(s, -1, "ISO-8859-1", "UTF-8",
-			&read, &wrote, &err);
-    }
+    get_gp_encoding_set(to_set, ENC_ISO_LATIN);
+
+    ret = g_convert(s, -1, to_set, "UTF-8",
+		    &read, &wrote, &err);
 
     if (err != NULL) {
-	fputs("utf8_to_latin:\n", stderr);
-	fprintf(stderr, "%s\n", err->message);
+	gretl_errmsg_set(err->message);
 	g_error_free(err);
     }
 
     return ret;
 }
+
+/* convert from UTF-8 to Windows codepage, for EMF graphs */
 
 char *utf8_to_cp (const char *s)
 {
+    char to_set[8];
     gsize read, wrote;
     GError *err = NULL;
     char *ret = NULL;
 
-    if (iso_latin_version() == 2) {
-	ret = g_convert(s, -1, "CP1250", "UTF-8",
-			&read, &wrote, &err);
-    } else {
-	ret = g_convert(s, -1, "ISO-8859-1", "UTF-8",
-			&read, &wrote, &err);
-    }
+    get_gp_encoding_set(to_set, ENC_CODEPAGE);
+
+    ret = g_convert(s, -1, to_set, "UTF-8",
+		    &read, &wrote, &err);
 
     if (err != NULL) {
-	fputs("utf8_to_cp:\n", stderr);
-	fprintf(stderr, "%s\n", err->message);
+	gretl_errmsg_set(err->message);
 	g_error_free(err);
     }
 
     return ret;
 }
 
-/* allow TAB, CR, LF, CTRL-Z */
-
-#define ascii_ctrl(a) (a=='\t' || a=='\n' || \
-                       a=='\r' || a==CTRLZ)
+#define ascii_ctrl(a) (a == '\t' || a == '\n' || \
+                       a == '\r' || a == CTRLZ)
 
 int gretl_is_ascii (const char *buf)
 {
@@ -721,7 +704,7 @@ int gretl_is_ascii (const char *buf)
 
     while (*buf) {
 	a = *buf;
-	if ((a < 32 && !(ascii_ctrl(a))) || a > 126) {
+	if (a > 126 || (a < 32 && !(ascii_ctrl(a)))) {
 	    return 0;
 	}
 	buf++;

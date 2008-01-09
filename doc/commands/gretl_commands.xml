@@ -3481,32 +3481,37 @@
 	If you know something about gnuplot and wish to get finer
 	control over the appearance of a graph than is available via
 	the graphical controller (<quote>Edit</quote> option), you
-	have two further options:</para>
+	have two further options:
+      </para>
 
       <ilist>
-	<li><para>Once the graph is saved as a session icon, you can
-	    right-click on its icon for a further pop-up menu.  One of
-	    the options here is <quote>Edit plot commands</quote>,
-	    which opens an editing window with the actual gnuplot
-	    commands displayed. You can edit these commands and either
-	    save them for future processing or send them to gnuplot
-	    (with the <quote>File/Send to gnuplot</quote> menu item in
-	    the plot commands editing window).</para>
+	<li>
+	  <para>
+	    Once the graph is saved as a session icon, you can
+	    right-click on its icon for a further pop-up menu.  One of the
+	    options here is <quote>Edit plot commands</quote>, which opens
+	    an editing window with the actual gnuplot commands displayed.
+	    You can edit these commands and either save them for future
+	    processing or send them to gnuplot (with the execute toolbar
+	    icon in the plot commands editing window).
+	  </para>
 	</li>
-	<li><para>Another way to save the plot commands (or to save
+	<li>
+	  <para>
+	    Another way to save the plot commands (or to save
 	    the displayed plot in formats other than EPS or PNG) is to
 	    use <quote>Edit</quote> item on a graph's pop-up menu to
 	    invoke the graphical controller, then click on the
 	    <quote>Output to file</quote> tab in the controller.  You
 	    are then presented with a drop-down menu of formats in
-	    which to save the graph.</para>
+	    which to save the graph.
+	  </para>
 	</li>
       </ilist>
 
       <para>
-	To find out more about gnuplot, see
-	http://ricardo.ecn.wfu.edu/gnuplot.html or
-	http://www.gnuplot.info</para>
+	To find out more about gnuplot, see http://www.gnuplot.info
+      </para>
 
     </description>
 
@@ -3517,25 +3522,31 @@
 
     <description>
 
-      <para>The session <quote>graph page</quote> will work only if
-	you have the &latex; typesetting system installed, and are able
-	to generate and view postscript output.</para>
+      <para>
+	The session <quote>graph page</quote> will work only if you have
+	the &latex; typesetting system installed, and are able to generate
+	and view PDF or PostScript output.
+      </para>
 
-      <para>In the session icon window, you can drag up to eight
-	graphs onto the graph page icon.  When you double-click on the
-	graph page (or right-click and select <quote>Display</quote>),
-	a page containing the selected graphs will be composed and
-	opened in your postscript viewer.   From there you should be
-	able to print the page.</para>
+      <para>
+	In the session icon window, you can drag up to eight graphs onto
+	the graph page icon.  When you double-click on the graph page (or
+	right-click and select <quote>Display</quote>), a page containing
+	the selected graphs will be composed and opened in a suitable
+	viewer.  From there you should be able to print the page.
+      </para>
 
-      <para>To clear the graph page, right-click on its icon and
-	select <quote>Clear</quote>.</para> 
+      <para>
+	To clear the graph page, right-click on its icon and select
+	<quote>Clear</quote>.
+      </para> 
 
-      <para>On systems other than MS Windows, you may have to adjust
-	the setting for the program used to view postscript.  Find
+      <para>
+	On systems other than MS Windows, you may have to adjust the
+	setting for the program used to view PDF or PostScript files. Find
 	that under the <quote>Programs</quote> tab in the gretl
-	Preferences dialog box (under the File menu in the main
-	window).</para>
+	Preferences dialog box (under the Tools menu in the main window).
+      </para>
 
     </description>
 

@@ -395,8 +395,20 @@ const char *gnuplot_label_front_string (void)
 
 int gnuplot_has_latin5 (void)
 {
-    /* ... and that it supports ISO8859-9 */
+    /* ... and that it supports ISO-8859-9 */
     return 1;
+}
+
+int gnuplot_has_cp1250 (void)
+{
+    /* ... and that it supports CP1250 */
+    return 1;
+}
+
+int gnuplot_has_cp1254 (void)
+{
+    /* ... and that it doesn't support CP1254 */
+    return 0;
 }
 
 int gnuplot_has_rgb (void)
@@ -408,6 +420,12 @@ int gnuplot_has_rgb (void)
 int gnuplot_has_bbox (void)
 {
     /* ... and that it supports bounding box info */
+    return 1;
+}
+
+int gnuplot_has_utf8 (void)
+{
+    /* ... and that it supports "set encoding utf8" */
     return 1;
 }
 
@@ -452,6 +470,31 @@ int gnuplot_has_latin5 (void)
 	err = gnuplot_test_command("set encoding iso_8859_9");
     }
 
+    return !err;
+}
+
+int gnuplot_has_cp1250 (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set encoding cp1250");
+    }
+
+    return !err;
+}
+
+int gnuplot_has_cp1254 (void)
+{
+#if 1
+    int err = 1;
+#else /* not yet */
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set encoding cp1254");
+    }
+#endif
     return !err;
 }
 
@@ -528,6 +571,17 @@ int gnuplot_has_bbox (void)
 	err = gnuplot_test_command("set term png ; "
 				   "set output '/dev/null' ; "
 				   "plot x ; print TERM_XMIN");
+    }
+
+    return !err;    
+}
+
+int gnuplot_has_utf8 (void)
+{
+    static int err = -1;
+
+    if (err == -1) {
+	err = gnuplot_test_command("set encoding utf8");
     }
 
     return !err;    
@@ -2174,7 +2228,7 @@ int gnuplot (const int *plotlist, const char *literal,
 		    (use_impulses(&gi))? "w impulses" : 
 		    (gi.flags & GPT_TS)? "w lines" : "w points",
 		    lwstr,
-		    (i == list[0] - 1)? "\n" : " , \\\n");
+		    (i == list[0] - 1)? "\n" : ", \\\n");
 	}
     } else if (gi.flags & GPT_DUMMY) { 
 	strcpy(s1, (gi.flags & GPT_RESIDS)? G_("residual") : 
@@ -2790,14 +2844,14 @@ int plot_freq (FreqDist *freq, DistCode dist)
     } else if (dist == D_NORMAL) {
 	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
-	fprintf(fp, "'-' using 1:2 title \"%s\" %s , \\\n"
+	fprintf(fp, "'-' using 1:2 title \"%s\" %s, \\\n"
 		"1.0/(sqrt(2.0*pi)*sigma)*exp(-.5*((x-mu)/sigma)**2) "
 		"title \"%s\" w lines\n",
 		freq->varname, withstr, label);
     } else if (dist == D_GAMMA) {
 	print_freq_dist_label(label, dist, alpha, beta);
 	fputs("plot \\\n", fp);
-	fprintf(fp, "'-' using 1:2 title '%s' %s ,\\\n"
+	fprintf(fp, "'-' using 1:2 title '%s' %s, \\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
 		"title \"%s\" w lines\n",
 		freq->varname, withstr, label); 
@@ -2954,7 +3008,7 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
     }
 
     fprintf(fp, "set key left top\n"
-	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
+	    "plot \\\n'-' using 1:2 title '%s' w lines, \\\n"
 	    "'-' using 1:2 title '%s' w lines lt 2, \\\n" 
 	    "'-' using 1:2 notitle w lines lt 2\n", 
 	    G_("residual"), G_("+- sqrt(h(t))"));
@@ -3194,7 +3248,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     fprintf(fp, "set title '%s'\n", title);
 
     if (confint) {
-	fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines,\\\n", 
+	fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines, \\\n", 
 		G_("point estimate"));
 	fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n",
 		G_("0.025 and 0.975 quantiles"));
@@ -3292,7 +3346,7 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	    fprintf(fp, "set title '%s'\n", title);
 
 	    if (confint) {
-		fputs("plot \\\n'-' using 1:2 notitle w lines,\\\n", fp); 
+		fputs("plot \\\n'-' using 1:2 notitle w lines, \\\n", fp); 
 		fputs("'-' using 1:2:3:4 notitle w errorbars\n", fp);
 	    } else {
 		fputs("plot \\\n'-' using 1:2 w lines\n", fp);
@@ -3365,7 +3419,7 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo)
 	if (i == nvars - 1) {
 	    fputc('\n', fp);
 	} else {
-	    fputs(",\\\n", fp); 
+	    fputs(", \\\n", fp); 
 	}
     }
 
@@ -3522,7 +3576,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     fputs("unset ytics\n", fp);
     fputs("set size square\n", fp);
     fputs("set polar\n", fp);
-    fputs("plot 1 w lines , \\\n"
+    fputs("plot 1 w lines, \\\n"
 	  "'-' w points pt 7\n", fp);
 
     gretl_push_c_numeric_locale();

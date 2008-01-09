@@ -469,10 +469,34 @@ get_full_term_string (const GPT_SPEC *spec, char *termstr, int *cmds)
     }
 }
 
-static char *get_insert_point (char *s)
+static char *gp_contd_string (char *s)
 {
     char *p = strstr(s, ", \\");
+    int n = 0;
 
+    if (p != NULL) {
+	n = 3;
+    } else {
+	p = strstr(s, ",\\");
+	if (p != NULL) {
+	    n = 2;
+	}
+    }
+
+    if (p != NULL) {
+	/* ensure we've really got '\' at end of line */
+	char c = *(p+n);
+
+	if (c != '\0' && c != '\n' && c != '\r') {
+	    p = NULL;
+	}
+    }
+
+    return p;
+}
+
+static char *get_insert_point (char *s, char *p)
+{
     if (p == NULL) {
 	p = s + strlen(s) - 1;
     }
@@ -493,7 +517,7 @@ static void maybe_recolor_line (char *s, int lnum)
     const gretlRGB *color = get_graph_color(lnum - 1);
 
     if (color != NULL) {
-	int contd = strstr(s, ", \\") != NULL;
+	char *contd = gp_contd_string(s);
 	char cstr[8];
 
 	print_rgb_hash(cstr, color);
@@ -503,14 +527,13 @@ static void maybe_recolor_line (char *s, int lnum)
 	fprintf(stderr, "s='%s'\n", s);
 #endif
     
-	if (lnum == 2 && strcmp(cstr, "#00ff00") && 
-	    strstr(s, " lt ") == NULL) {
-	    char *p = get_insert_point(s);
+	if (lnum == 2 && strcmp(cstr, "#00ff00") && !strstr(s, " lt ")) {
+	    char *p = get_insert_point(s, contd);
 
 	    *p = '\0';
 	    strcpy(p, " lt 3");
-	    if (contd) {
-		strcat(s, " , \\\n");
+	    if (contd != NULL) {
+		strcat(s, ", \\\n");
 	    } else {
 		strcat(s, "\n");
 	    }
@@ -518,28 +541,28 @@ static void maybe_recolor_line (char *s, int lnum)
     } 
 }
 
-static void dataline_check (const char *s, int *d)
+static void dataline_check (char *s, int *d)
 {
     if (!strncmp(s, "plot \\", 6)) {
 	*d = 0;
-	return;
-    }
-    
-    if (!strncmp(s, "plot ", 5)) {
-	*d = 0;
-    }
-
-    if (*d == 0 && strstr(s, ", \\") == NULL) {
-	*d = 1;
+    } else {
+	if (!strncmp(s, "plot ", 5)) {
+	    *d = 0;
+	}
+	if (*d == 0 && !gp_contd_string(s)) {
+	    *d = 1;
+	}
     }
 }
 
 /* for postscript output, e.g. in Latin-2, or EMF output in CP125X */
 
-static void maybe_recode_gp_line (char *s, int latin, int ttype, FILE *fp)
+static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
 {
+    int err = 0;
+
 #ifdef ENABLE_NLS    
-    if (latin && !gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
+    if (!gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
 	char *tmp;
 	
 	if (ttype == GP_TERM_EMF) {
@@ -548,7 +571,9 @@ static void maybe_recode_gp_line (char *s, int latin, int ttype, FILE *fp)
 	    tmp = utf8_to_latin(s);
 	}
 
-	if (tmp != NULL) {
+	if (tmp == NULL) {
+	    err = 1;
+	} else {
 	    fputs(tmp, fp);
 	    free(tmp);
 	}
@@ -558,18 +583,27 @@ static void maybe_recode_gp_line (char *s, int latin, int ttype, FILE *fp)
 #else
     fputs(s, fp);
 #endif
+
+    return err;
 }
 
 #ifdef ENABLE_NLS
 
-static int non_ascii_gp_file (FILE *fp, char *pline, int n)
+/* check for non-ASCII strings in plot file: these may
+   require special treatment */
+
+static int non_ascii_gp_file (FILE *fp)
 {
+    char pline[512];
     int dataline = -1;
     int ret = 0;
 
-    while (fgets(pline, n, fp) && dataline <= 0) {
+    while (fgets(pline, sizeof pline, fp) && dataline <= 0) {
 	if (set_print_line(pline)) {
 	    break;
+	}
+	if (*pline == '#') {
+	    continue;
 	}
 	if (!gretl_is_ascii(pline)) {
 	    ret = 1;
@@ -601,17 +635,94 @@ static int term_uses_utf8 (int ttype)
 
 #define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
 
-static int filter_plot_file (const char *inname, 
+void filter_gnuplot_file (int ttype, int latin, int mono, int recolor, 
+			  FILE *fpin, FILE *fpout)
+{
+    char pline[512];
+    int dataline = -1;
+    int lnum = -1;
+    int err = 0;
+
+    while (fgets(pline, sizeof pline, fpin)) {
+	if (set_print_line(pline)) {
+	    break;
+	}
+
+	if (!strncmp(pline, "set term", 8) ||
+	    !strncmp(pline, "set enco", 8) ||
+	    !strncmp(pline, "set outp", 8)) {
+	    continue;
+	}
+
+	if (mono) {
+	    if (is_color_line(pline)) {
+		continue;
+	    } else if (strstr(pline, "set style fill solid")) {
+		fputs("set style fill solid 0.3\n", fpout);
+		continue;
+	    }
+	}
+
+	if (recolor) {
+	    if (!strncmp(pline, "plot ", 5)) {
+		lnum = 0;
+	    } else if (lnum >= 0) {
+		lnum++;
+	    }
+	    if (lnum > 0 && dataline <= 0) {
+		maybe_recolor_line(pline, lnum);
+	    }
+	}
+
+	if (latin && dataline <= 0 && *pline != '#') {
+	    err += maybe_recode_gp_line(pline, ttype, fpout);
+	    if (err == 1) {
+		gui_errmsg(err);
+	    }
+	} else {
+	    fputs(pline, fpout);
+	} 
+
+	dataline_check(pline, &dataline);
+    }
+}
+
+/* for non-UTF-8 plot formats: print a "set encoding" string
+   only if gnuplot won't choke on it.
+*/
+
+static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
+{
+    if (ttype == GP_TERM_EMF) {
+	if (latin == 2 && gnuplot_has_cp1250()) {
+	    fputs("set encoding cp1250\n", fp);
+	} else if (latin == 9 && gnuplot_has_cp1254()) {
+	    fputs("set encoding cp1254\n", fp);
+	}
+    } else {
+	if (latin != 1 && latin != 2 && latin != 15 && latin != 9) {
+	    /* unsupported by gnuplot */
+	    latin = 0;
+	}
+	if (latin == 9 && !gnuplot_has_latin5()) {
+	    /* Turkish not supported */
+	    latin = 0;
+	}
+	if (latin) {
+	    fprintf(fp, "set encoding iso_8859_%d\n", latin);
+	}
+    }
+} 
+
+static int revise_plot_file (const char *inname, 
 			     const char *pltname,
 			     const char *outtarg,
 			     const char *term)
 {
     FILE *fpin = NULL;
     FILE *fpout = NULL;
-    char pline[MAXLEN];
-    int ttype = 0, mono = 0;
-    int lnum = -1, recolor = 0;
-    int latin = 0, dataline = -1;
+    int ttype = 0, latin = 0;
+    int mono = 0, recolor = 0;
     int err = 0;
 
     fpin = gretl_fopen(inname, "r");
@@ -640,16 +751,13 @@ static int filter_plot_file (const char *inname,
     }
 
 #ifdef ENABLE_NLS
-    if (non_ascii_gp_file(fpin, pline, MAXLEN)) {
+    if (non_ascii_gp_file(fpin)) {
+	/* plot contains UTF-8 strings */
 	if (!term_uses_utf8(ttype)) {
 	    latin = iso_latin_version();
-	}
-	if (latin == 2 && ttype == GP_TERM_EMF) {
-	    fputs("set encoding cp1250\n", fpout);
-	} else if (latin) {
-	    fprintf(fpout, "set encoding iso_8859_%d\n", latin);
-	} else {
-	    fprint_gnuplot_encoding(term, fpout);
+	    maybe_print_gp_encoding(ttype, latin, fpout);
+	} else if (gnuplot_has_utf8()) {
+	    fputs("set encoding utf8\n", fpout);
 	}
     }
 #endif
@@ -669,45 +777,7 @@ static int filter_plot_file (const char *inname,
 	recolor = 1;
     }
 
-    while (fgets(pline, sizeof pline, fpin)) {
-	if (set_print_line(pline)) {
-	    break;
-	}
-
-	if (!strncmp(pline, "set term", 8) ||
-	    !strncmp(pline, "set encoding", 12) ||
-	    !strncmp(pline, "set output", 10)) {
-	    continue;
-	}
-
-	if (mono) {
-	    if (is_color_line(pline)) {
-		continue;
-	    } else if (strstr(pline, "set style fill solid")) {
-		fputs("set style fill solid 0.3\n", fpout);
-		continue;
-	    }
-	}
-
-	if (recolor) {
-	    if (!strncmp(pline, "plot ", 5)) {
-		lnum = 0;
-	    } else if (lnum >= 0) {
-		lnum++;
-	    }
-	    if (lnum > 0 && dataline <= 0) {
-		maybe_recolor_line(pline, lnum);
-	    }
-	}
-
-	if (dataline > 0) {
-	    fputs(pline, fpout);
-	} else {
-	    maybe_recode_gp_line(pline, latin, ttype, fpout);
-	}
-
-	dataline_check(pline, &dataline);
-    }
+    filter_gnuplot_file(ttype, latin, mono, recolor, fpin, fpout);
 
     fclose(fpin);
     fclose(fpout);
@@ -728,11 +798,11 @@ void save_graph_to_file (gpointer data, const char *fname)
     if (cmds) {
 	/* saving plot commands to file */
 	strcpy(pltname, fname);
-	err = filter_plot_file(spec->fname, pltname, NULL, term);
+	err = revise_plot_file(spec->fname, pltname, NULL, term);
     } else {
 	/* saving some form of gnuplot output */
 	build_path(pltname, paths.dotdir, "gptout.tmp", NULL);
-	err = filter_plot_file(spec->fname, pltname, fname, term);
+	err = revise_plot_file(spec->fname, pltname, fname, term);
     }
 
     if (!err && !cmds) {
@@ -771,7 +841,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
     build_path(plttmp, paths.dotdir, "gptout.tmp", NULL);
     build_path(pdfname, paths.dotdir, GRETL_PDF_TMP, NULL);
 
-    err = filter_plot_file(spec->fname, plttmp, pdfname, term);
+    err = revise_plot_file(spec->fname, plttmp, pdfname, term);
     if (err) {
 	return;
     }
@@ -813,7 +883,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 	term += 9;
     }
 
-    err = filter_plot_file(spec->fname, plttmp, emfname, term);
+    err = revise_plot_file(spec->fname, plttmp, emfname, term);
     if (err) {
 	return;
     }
