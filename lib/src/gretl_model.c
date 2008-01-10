@@ -3061,13 +3061,13 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	    int *vals = (int *) item->ptr;
 
 	    for (j=0; j<nelem; j++) {
-		fprintf(fp, "%d ", vals[i]);
+		fprintf(fp, "%d ", vals[j]);
 	    }
 	} else if (item->type == GRETL_TYPE_DOUBLE_ARRAY) {
 	    double *vals = (double *) item->ptr;
 
 	    for (j=0; j<nelem; j++) {
-		fprintf(fp, "%.15g ", vals[i]);
+		fprintf(fp, "%.15g ", vals[j]);
 	    }	    
 	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
 	    cmplx *vals = (cmplx *) item->ptr;
