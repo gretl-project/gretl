@@ -504,6 +504,17 @@ int gnuplot_pdf_terminal (void)
     return ret;
 }
 
+static int gnuplot_has_x11 (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term x11");
+    }
+
+    return !err;
+}
+
 /* We should enable pngcairo as the default as soon as possible -- but
    for the present this poses a problem with regard to guessing the
    pixel bounds in the PNG file.  So we'll accept pngcairo only if
@@ -2539,6 +2550,13 @@ int gnuplot_3d (int *list, const char *literal,
 
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
+
+#ifndef WIN32
+    if (gnuplot_has_x11()) {
+	/* wxt is too slow/jerky? */
+	fputs("set term x11\n", fq);
+    }
+#endif
 
     gretl_push_c_numeric_locale();
 
