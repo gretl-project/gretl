@@ -1028,7 +1028,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 static int 
 print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 {
-    int i, j, pos = 0;
+    int i, gotsep = 0;
     int ccount = 0;
     int ninst = 0;
     char vname[16];
@@ -1045,38 +1045,28 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 
     for (i=2; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
-	    pos = i;
+	    gotsep = 1;
 	    continue;
 	}
-	if (pos && list[i] > 0) {
-	    int dup = 0;
-
-	    for (j=2; j<pos; j++) {
-		if (list[i] == list[j]) {
-		    dup = 1;
-		    break;
-		}
+	if (gotsep && list[i] > 0) {
+	    if (tex) {
+		tex_escape(vname, pdinfo->varname[list[i]]);
+	    } else {
+		strcpy(vname, pdinfo->varname[list[i]]);
 	    }
-	    if (!dup) {
+	    pprintf(prn, "%s ", vname);
+	    ccount += strlen(vname) + 1;
+	    if (ccount >= 64) {
 		if (tex) {
-		    tex_escape(vname, pdinfo->varname[list[i]]);
+		    pputs(prn, "\\\\\n");
+		} else if (rtf_format(prn)) {
+		    pputs(prn, "\\par\n");
 		} else {
-		    strcpy(vname, pdinfo->varname[list[i]]);
+		    pputs(prn, "\n  "); 
 		}
-		pprintf(prn, "%s ", vname);
-		ccount += strlen(vname) + 1;
-		if (ccount >= 64) {
-		    if (tex) {
-			pputs(prn, "\\\\\n");
-		    } else if (rtf_format(prn)) {
-			pputs(prn, "\\par\n");
-		    } else {
-			pputs(prn, "\n  "); 
-		    }
-		    ccount = 0;
-		}
-		ninst++;
+		ccount = 0;
 	    }
+	    ninst++;
 	}
     }
 
