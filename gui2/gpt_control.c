@@ -688,7 +688,7 @@ void filter_gnuplot_file (int ttype, int latin, int mono, int recolor,
 }
 
 /* for non-UTF-8 plot formats: print a "set encoding" string
-   only if gnuplot won't choke on it.
+   if appropriate, but only if gnuplot won't choke on it.
 */
 
 static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
@@ -865,7 +865,84 @@ static void graph_display_pdf (GPT_SPEC *spec)
 #endif
 }
 
+/* dump_plot_buffer: this is used when we're taking the material from
+   an editor window containing gnuplot commands, and either (a)
+   sending it to gnuplot for execution, or (b) saving it to "user
+   file".  There's a question over what we should do with non-ascii
+   strings in the plot file.  These will be in UTF-8 in the GTK editor
+   window.  It seems that the best thing is to determine the character
+   set for the current locale (using g_get_charset) and if it is not
+   UTF-8, recode to the locale.  This won't be right in all cases, but
+   I'm not sure how we could do better.
+
+   It might perhaps be worth offering a dialog box with a choice of
+   encodings, but the user would have to be quite knowledgeable
+   to make sense of this.  AC, 2008-01-10.
+*/
+
+int dump_plot_buffer (const char *buf, const char *fname,
+		      int addpause)
+{
+    FILE *fp;
+    int gotpause = 0;
+    int done, recode = 0;
+    char bufline[512];
+#ifdef ENABLE_NLS
+    const gchar *cset;
+    gchar *trbuf;
+#endif
+
+    fp = gretl_fopen(fname, "w");
+    if (fp == NULL) {
+	file_write_errbox(fname);
+	return E_FOPEN;
+    }
+
+#ifdef ENABLE_NLS
+    recode = !g_get_charset(&cset);
+#endif
+
+    bufgets_init(buf);
+
+    while (bufgets(bufline, sizeof bufline, buf)) {
+	done = 0;
+#ifdef ENABLE_NLS
+	if (recode) {
+	    trbuf = gp_locale_from_utf8(bufline);
+	    if (trbuf != NULL) {
+		fputs(trbuf, fp);
+		g_free(trbuf);
+		done = 1;
+	    }
+	}
+#endif
+	if (!done) {
+	    fputs(bufline, fp);
+	}
+	fputc('\n', fp);
+	if (addpause && strstr(bufline, "pause -1")) {
+	    gotpause = 1;
+	}
+    }
+
+    bufgets_finalize(buf);
+
 #ifdef G_OS_WIN32
+    /* sending directly to gnuplot on MS Windows */
+    if (addpause && !gotpause) {
+	fputs("pause -1\n", fp);
+    }
+#endif
+
+    fclose(fp);
+
+    return 0;
+}
+
+#ifdef G_OS_WIN32
+
+/* common code for sending an EMF file to the clipboard,
+   or printing an EMF, on MS Windows */
 
 static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 {

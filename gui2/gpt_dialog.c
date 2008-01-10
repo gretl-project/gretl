@@ -259,38 +259,8 @@ static double entry_to_gp_double (GtkWidget *w)
     return ret;
 }
 
-/* Take text from a gnuplot spec string and put it into a gtkentry.
-   We have to ensure that the text is in utf-8 (though this is
-   probably redundant).
-*/
-
-static void gp_string_to_entry (GtkWidget *w, const char *str)
-{
-    if (*str == '\0') {
-	gtk_entry_set_text(GTK_ENTRY(w), str);
-	return;
-    }
-
-#ifdef ENABLE_NLS
-    if (!g_utf8_validate(str, -1, NULL)) {
-	gchar *trstr;
-
-	if (iso_latin_version() == 2) {
-	    trstr = latin2_to_utf8(str);
-	} else {
-	    trstr = latin1_to_utf8(str);
-	}
-	if (trstr != NULL) {
-	    gtk_entry_set_text(GTK_ENTRY(w), trstr);
-	    g_free(trstr);
-	}
-    } else {
-	gtk_entry_set_text(GTK_ENTRY(w), str);
-    }
-#else
-    gtk_entry_set_text(GTK_ENTRY(w), str);
-#endif
-}
+#define gp_string_to_entry(w,s) do { \
+	gtk_entry_set_text(GTK_ENTRY(w),s); } while (0)
 
 static int
 get_label_pos_from_entry (GtkWidget *w, double *pos)
@@ -722,6 +692,44 @@ static void set_aa_status (GtkWidget *w, int *ok)
     gnuplot_png_set_use_aa(*ok);
 }
 
+static GtkWidget *gp_dialog_table (int rows, int cols, 
+				   GtkWidget *vbox)
+{
+    GtkWidget *tbl;
+
+    tbl = gtk_table_new(rows, cols, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+
+    return tbl;
+}
+
+static GtkWidget *gp_dialog_vbox (void)
+{
+    GtkWidget *vbox;
+
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+
+    return vbox;
+}
+
+static GtkWidget *gp_page_vbox (GtkWidget *notebook, char *str)
+{
+    GtkWidget *vbox;
+    GtkWidget *label;
+
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_widget_show(vbox);
+    label = gtk_label_new(str);
+    gtk_widget_show(label);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label); 
+
+    return vbox;
+}
+
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     static int aa_ok = 1;
@@ -743,18 +751,9 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	keypos_list = g_list_append(keypos_list, keypos[i]);
     }
    
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_widget_show(vbox);
-    
-    label = gtk_label_new(_("Main"));
-    gtk_widget_show(label);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
+    vbox = gp_page_vbox(notebook, _("Main"));
 
-    tbl = gtk_table_new(rows, TAB_MAIN_COLS, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    tbl = gp_dialog_table(rows, TAB_MAIN_COLS, vbox);
     gtk_widget_show(tbl);
    
     for (i=0; i<NTITLES; i++) {
@@ -1019,19 +1018,10 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
 	termlist = g_list_append(termlist, termtypes[i]);
     }
    
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_widget_show(vbox);
-    
-    label = gtk_label_new (_("Output to file"));
-    gtk_widget_show(label);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
+    vbox = gp_page_vbox(notebook, _("Output to file"));
 
     tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    tbl = gp_dialog_table(tbl_len, 2, vbox);
     gtk_widget_show(tbl);
    
     tbl_len++;
@@ -1101,8 +1091,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	yaxis_loc = g_list_append(yaxis_loc, "right");
     }
 
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    vbox = gp_dialog_vbox();
     gtk_widget_show(vbox);
 
     label = gtk_label_new(_("Lines"));
@@ -1124,11 +1113,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     }  
 
     tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 3, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-
-    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    tbl = gp_dialog_table(tbl_len, 3, vbox);
     gtk_widget_show(tbl);
    
     tbl_num = tbl_col = 0;
@@ -1282,20 +1267,10 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
     char label_text[32];
     png_plot *plot = (png_plot *) spec->ptr;
 
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_widget_show(vbox);
-
-    label = gtk_label_new(_("Labels"));
-
-    gtk_widget_show(label);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
-
+    vbox = gp_page_vbox(notebook, _("Labels"));
+ 
     tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 3, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    tbl = gp_dialog_table(tbl_len, 3, vbox);
     gtk_widget_show(tbl);
    
     tbl_num = tbl_col = 0;
@@ -1403,30 +1378,23 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 {
     GtkWidget *vbox, *manual, *tbl;
     GtkWidget *label = NULL;
+    char *labelstr = NULL;
     int i, tbl_len;
    
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_widget_show(vbox);
-
     if (axis == 0) {
-	label = gtk_label_new(_("X-axis"));
+	labelstr = _("X-axis");
     } else if (axis == 1) {
-	label = gtk_label_new(_("Y-axis"));
+	labelstr = _("Y-axis");
     } else if (axis == 2) {
-	label = gtk_label_new(_("Y2-axis"));
+	labelstr = _("Y2-axis");
     } else {
 	return;
     }
 
-    gtk_widget_show(label);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
+    vbox = gp_page_vbox(notebook, labelstr);
 
     tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    tbl = gp_dialog_table(tbl_len, 2, vbox);
     gtk_widget_show(tbl);
    
     for (i=0; i<NTITLES; i++) {

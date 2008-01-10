@@ -50,62 +50,9 @@ static int seven_bit_file (const char *fname)
 
     fclose(fp);
 
+    fprintf(stderr, "seven_bit_file: returning %d\n", ascii);
+
     return ascii;
-}
-
-int maybe_recode_file (const char *fname)
-{
-    const gchar *charset;
-
-    if (g_get_charset(&charset)) {
-	/* locale uses UTF-8 */
-	return 0;
-    }
-
-    if (seven_bit_file(fname)) {
-	return 0;
-    } else {
-	FILE *fin, *fout;
-	char trname[MAXLEN];
-	char line[128];
-	gchar *trbuf;
-	int err = 0;
-
-	fin = gretl_fopen(fname, "r");
-	if (fin == NULL) {
-	    return 1;
-	}
-
-	sprintf(trname, "%s.tr", fname);
-
-	fout = gretl_fopen(trname, "w");
-	if (fout == NULL) {
-	    fclose(fin);
-	    return 1;
-	}	
-
-	while (fgets(line, sizeof line, fin) && !err) {
-	    trbuf = my_locale_from_utf8(line);
-	    if (trbuf != NULL) {
-		fputs(trbuf, fout);
-		g_free(trbuf);
-	    } else {
-		err = 1;
-	    }
-	}
-
-	fclose(fin);
-	fclose(fout);
-
-	if (!err) {
-	    err = copyfile(trname, fname);
-	    remove(trname);
-	}
-
-	return err;
-    }
-
-    return 0;
 }
 
 gchar *my_filename_from_utf8 (char *fname)
@@ -192,6 +139,11 @@ gchar *my_filename_to_utf8 (const char *fname)
     return ret;
 }
 
+/* Used when, e.g. loading a script into a GTK window: the
+   script might be in a locale encoding other than UTF-8
+   (if it was created in a third-party editor).
+*/
+
 static gchar *real_my_locale_to_utf8 (const gchar *src,
 				      int starting)
 {
@@ -218,52 +170,9 @@ static gchar *real_my_locale_to_utf8 (const gchar *src,
     return ret;
 }
 
-static const char *gp_cset (void)
-{
-    if (iso_latin_version() == 2) {
-#ifdef G_OS_WIN32
-	return "CP1250";
-#else
-	return "ISO-8859-2";
-#endif
-    } else {
-	return "ISO-8859-1";
-    } 
-}
-
-static gchar *real_gp_locale_to_utf8 (const gchar *src,
-				      int starting)
-{
-    static int errcount;
-    static const char *cset;
-    gsize read, wrote;
-    GError *err = NULL;
-    gchar *ret;
-
-    if (cset == NULL) {
-	cset = gp_cset();
-    }
-
-    if (starting) {
-	errcount = 0;
-	ret = g_convert(src, -1, "UTF-8", cset,
-			&read, &wrote, &err);
-    } else if (errcount == 0) {
-	ret = g_convert(src, -1, "UTF-8", cset,
-			&read, &wrote, &err);
-    } else {
-	ret = g_convert(src, -1, "UTF-8", cset,
-			&read, &wrote, NULL);
-    }
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-	errcount++;
-    }
-
-    return ret;
-}
+/* wrappers to avoid repeated error messages where one
+   will make the point
+*/
 
 gchar *my_locale_to_utf8 (const gchar *src)
 {
@@ -275,15 +184,108 @@ gchar *my_locale_to_utf8_next (const gchar *src)
     return real_my_locale_to_utf8(src, 0);
 }
 
-gchar *gp_locale_to_utf8 (const gchar *src)
+/* We're not totally sure what charset we're supposed to be converting
+   from, but we'll make a guess!
+*/
+
+static gchar *gp_locale_to_utf8 (const gchar *src, int starting)
 {
-    return real_gp_locale_to_utf8(src, 1);
+    static int errcount;
+    static const char *from;
+    gsize read, wrote;
+    GError *err = NULL;
+    gchar *ret;
+
+    if (from == NULL) {
+	if (iso_latin_version() == 2) {
+#ifdef G_OS_WIN32
+	    from = "CP1250";
+#else
+	    from = "ISO-8859-2";
+#endif
+	} else {
+	    from = "ISO-8859-1";
+	}
+    } 
+
+    if (starting) {
+	errcount = 0;
+	ret = g_convert(src, -1, "UTF-8", from,
+			&read, &wrote, &err);
+    } else if (errcount == 0) {
+	ret = g_convert(src, -1, "UTF-8", from,
+			&read, &wrote, &err);
+    } else {
+	ret = g_convert(src, -1, "UTF-8", from,
+			&read, &wrote, NULL);
+    }
+
+    if (err != NULL) {
+	errbox(err->message);
+	g_error_free(err);
+	errcount++;
+    }
+
+    return ret;
 }
 
-gchar *gp_locale_to_utf8_next (const gchar *src)
+/* Backward compatibility for gnuplot command files as saved in
+   sessions: if the file is non-ascii and non-UTF-8, convert to UTF-8,
+   since we have now (2008-01) standardized on UTF-8 as the encoding
+   for all gnuplot files that are "internal" to gretl.
+*/
+
+int maybe_recode_gp_file_to_utf8 (const char *fname)
 {
-    return real_gp_locale_to_utf8(src, 0);
+    int err = 0;
+    
+    if (!seven_bit_file(fname)) {
+	FILE *fin, *fout;
+	gchar *trbuf, *trname = NULL;
+	char line[512];
+	int start = 1;
+
+	fin = gretl_fopen(fname, "r");
+	if (fin == NULL) {
+	    return 1;
+	}
+
+	trname = g_strdup_printf("%s.tr", fname);
+
+	fout = gretl_fopen(trname, "w");
+	if (fout == NULL) {
+	    fclose(fin);
+	    g_free(trname);
+	    return 1;
+	}	
+
+	while (fgets(line, sizeof line, fin)) {
+	    trbuf = gp_locale_to_utf8(line, start);
+	    if (trbuf != NULL) {
+		fputs(trbuf, fout);
+		g_free(trbuf);
+	    } 
+	    start = 0;
+	}
+
+	fclose(fin);
+	fclose(fout);
+
+	if (!err) {
+	    err = copyfile(trname, fname);
+	}
+
+	remove(trname);
+	g_free(trname);
+    }
+
+    return err;
 }
+
+/* gp_locale_from_utf8: used when taking gnuplot commands
+   from a GTK editor window and sending them to gnuplot
+   or saving to "user file", on non-UTF-8 platforms.
+*/
 
 gchar *gp_locale_from_utf8 (const gchar *src)
 {
@@ -295,46 +297,9 @@ gchar *gp_locale_from_utf8 (const gchar *src)
 	return NULL;
     }
 
+    /* let glib figure out what the target locale is */
+
     ret = g_locale_from_utf8(src, -1, &read, &wrote, &err);
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-    }
-
-    return ret;
-}
-
-gchar *latin1_to_utf8 (const gchar *src)
-{
-    gsize read, wrote;
-    GError *err = NULL;
-    gchar *ret;
-
-    ret = g_convert(src, -1, "UTF-8", "ISO-8859-1",
-		    &read, &wrote, &err);
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-    }
-
-    return ret;
-}
-
-gchar *latin2_to_utf8 (const gchar *src)
-{
-    gsize read, wrote;
-    GError *err = NULL;
-    gchar *ret;
-
-# ifdef G_OS_WIN32
-    ret = g_convert(src, -1, "UTF-8", "CP1250",
-		    &read, &wrote, &err);
-# else
-    ret = g_convert(src, -1, "UTF-8", "ISO-8859-2",
-		    &read, &wrote, &err);
-# endif
 
     if (err) {
 	errbox(err->message);

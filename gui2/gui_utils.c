@@ -44,6 +44,7 @@
 #include "dlgutils.h"
 #include "ssheet.h"
 #include "datafiles.h"
+#include "gpt_control.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -2589,62 +2590,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_widget_show_all(vwin->dialog);
 
     cursor_to_top(vwin);
-
-    return 0;
-}
-
-int dump_plot_buffer (const char *buf, const char *fname,
-		      int addpause)
-{
-    FILE *fp;
-    int gotpause = 0;
-    int done, recode;
-    char bufline[512];
-#ifdef ENABLE_NLS
-    const gchar *cset;
-    gchar *trbuf;
-#endif
-
-    fp = gretl_fopen(fname, "w");
-    if (fp == NULL) {
-	file_write_errbox(fname);
-	return E_FOPEN;
-    }
-
-    recode = !g_get_charset(&cset);
-
-    bufgets_init(buf);
-
-    while (bufgets(bufline, sizeof bufline, buf)) {
-	done = 0;
-#ifdef ENABLE_NLS
-	if (recode) {
-	    trbuf = gp_locale_from_utf8(bufline);
-	    if (trbuf != NULL) {
-		fputs(trbuf, fp);
-		g_free(trbuf);
-		done = 1;
-	    }
-	}
-#endif
-	if (!done) {
-	    fputs(bufline, fp);
-	}
-	fputc('\n', fp);
-	if (addpause && strstr(bufline, "pause -1")) {
-	    gotpause = 1;
-	}
-    }
-
-    bufgets_finalize(buf);
-
-#ifdef G_OS_WIN32
-    if (addpause && !gotpause) {
-	fputs("pause -1\n", fp);
-    }
-#endif
-
-    fclose(fp);
 
     return 0;
 }

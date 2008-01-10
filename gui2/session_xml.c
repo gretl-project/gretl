@@ -13,11 +13,13 @@ static int check_graph_file (const char *fname)
 
     session_file_make_path(fullname, fname);
     fp = gretl_fopen(fullname, "r");
+
     if (fp == NULL) {
 	file_read_errbox(fname);
 	err = 1;
     } else {
 	fclose(fp);
+	err = maybe_recode_gp_file_to_utf8(fullname);
     }
 
     return err;

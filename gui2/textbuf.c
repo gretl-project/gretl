@@ -212,10 +212,21 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
     }
 }
 
+static void strip_CRLF (char *s)
+{
+    int n = strlen(s);
+
+    if (n >= 2 && s[n-2] == '\r') {
+	s[n-2] = '\n';
+	s[n-1] = '\0';
+    }
+}
+
 static int source_buffer_load_file (GtkSourceBuffer *sbuf, 
 				    int role, FILE *fp)
 {
-    char readbuf[MAXSTR], *chunk = NULL;
+    char readbuf[MAXSTR];
+    gchar *chunk = NULL;
     GtkTextIter iter;
 #ifdef ENABLE_NLS
     int i = 0;
@@ -229,23 +240,13 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
     memset(readbuf, 0, sizeof readbuf);
 
     while (fgets(readbuf, sizeof readbuf, fp)) {
-	int len;
-
 #ifdef ENABLE_NLS
 	if (!g_utf8_validate(readbuf, -1, NULL)) {
 	    if (i == 0) {
-		if (role == GR_PLOT) {
-		    chunk = gp_locale_to_utf8(readbuf);
-		} else {
-		    chunk = my_locale_to_utf8(readbuf);
-		}
+		chunk = my_locale_to_utf8(readbuf);
 		i++;
 	    } else {
-		if (role == GR_PLOT) {
-		    chunk = gp_locale_to_utf8_next(readbuf);
-		} else {
-		    chunk = my_locale_to_utf8_next(readbuf);
-		}
+		chunk = my_locale_to_utf8_next(readbuf);
 	    }
 	    if (chunk == NULL) {
 		continue;
@@ -257,12 +258,7 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
 	chunk = readbuf;
 #endif /* ENABLE_NLS */
 
-	len = strlen(chunk);
-	if (len >= 2 && chunk[len - 2] == '\r') {
-	    chunk[len - 2] = '\n';
-	    chunk[len - 1] = '\0';
-	}
-
+	strip_CRLF(chunk);
 	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, chunk, -1);
 	memset(readbuf, 0, sizeof readbuf);
 	if (chunk != readbuf) {
