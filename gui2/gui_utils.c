@@ -2598,9 +2598,10 @@ int dump_plot_buffer (const char *buf, const char *fname,
 {
     FILE *fp;
     int gotpause = 0;
-    int recode = 0;
-    char bufline[1024];
+    int done, recode;
+    char bufline[512];
 #ifdef ENABLE_NLS
+    const gchar *cset;
     gchar *trbuf;
 #endif
 
@@ -2610,29 +2611,12 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	return E_FOPEN;
     }
 
-#if !defined(G_OS_WIN32) && defined(ENABLE_NLS)
-    if (gnuplot_test_command("set term wxt")) {
-	/* guessing that we need to recode UTF-8 */
-	bufgets_init(buf);
-	while (bufgets(bufline, sizeof bufline, buf)) {
-	    /* check for a "set term" line? */
-	    if (!gretl_is_ascii(bufline)) {
-		recode = 1;
-		break;
-	    }
-	}
-	bufgets_finalize(buf);
-    }
-#endif
-
-    /* perhaps better to put up a dialog box for the encoding,
-       if not all ascii? */
+    recode = !g_get_charset(&cset);
 
     bufgets_init(buf);
 
     while (bufgets(bufline, sizeof bufline, buf)) {
-	int done = 0;
-
+	done = 0;
 #ifdef ENABLE_NLS
 	if (recode) {
 	    trbuf = gp_locale_from_utf8(bufline);
@@ -2647,7 +2631,7 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	    fputs(bufline, fp);
 	}
 	fputc('\n', fp);
-	if (strstr(bufline, "pause -1")) {
+	if (addpause && strstr(bufline, "pause -1")) {
 	    gotpause = 1;
 	}
     }

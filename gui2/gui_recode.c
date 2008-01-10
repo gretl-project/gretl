@@ -287,7 +287,6 @@ gchar *gp_locale_to_utf8_next (const gchar *src)
 
 gchar *gp_locale_from_utf8 (const gchar *src)
 {
-    static const char *cset;
     gsize read, wrote;
     GError *err = NULL;
     gchar *ret;
@@ -296,15 +295,7 @@ gchar *gp_locale_from_utf8 (const gchar *src)
 	return NULL;
     }
 
-    if (cset == NULL) {
-	cset = gp_cset();
-    }
-
-    /* FIXME this is wrong on a system where the
-       default gnuplot terminal uses UTF-8 */
-
-    ret = g_convert(src, -1, cset, "UTF-8",
-		    &read, &wrote, &err);
+    ret = g_locale_from_utf8(src, -1, &read, &wrote, &err);
 
     if (err) {
 	errbox(err->message);
