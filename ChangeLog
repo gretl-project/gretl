@@ -6,7 +6,7 @@ version 1.7.2, in progress
 - Add shell capture for strings via $(shellcommand)
 - Paths stuff: add non-configurable "dotdir" to hold per-user
   automatically-created files
-- Fix bug 1861010
+- Fix bugs 1861010, 1868859
 - Rationalize frequency plot dialog
 - Add Help item to forecast dialog
 - Fixes for matrix "dot operations"
