@@ -1260,19 +1260,28 @@ static int validate_writedir (const char *dirname)
 
 int set_gretl_work_dir (const char *path, PATHS *ppaths)
 {
-    int err = validate_writedir(path);
+    DIR *test;
 
-    if (err) {
-	return err;
-    }
+    errno = 0;
+
+#ifdef WIN32
+    test = win32_opendir(path);
+#else
+    test = opendir(path);
+#endif
+    if (test == NULL) {
+	gretl_errmsg_set_from_errno();
+	return E_FOPEN;
+    } 
+
+    closedir(test);
 
     if (path != ppaths->workdir) {
 	strcpy(ppaths->workdir, path);
+	ensure_slash(ppaths->workdir);
+	strcpy(gretl_paths.workdir, ppaths->workdir);
+	gretl_insert_builtin_string("workdir", ppaths->workdir);
     }
-
-    ensure_slash(ppaths->workdir);
-    strcpy(gretl_paths.workdir, ppaths->workdir);
-    gretl_insert_builtin_string("workdir", ppaths->workdir);
 
     return 0;
 }

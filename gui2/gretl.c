@@ -23,6 +23,7 @@
 #include "version.h"
 #include "gretl_func.h"
 #include "gretl_xml.h"
+#include "libset.h"
 
 #include "treeutils.h"
 #include "ssheet.h"
@@ -729,6 +730,17 @@ static void record_filearg (char *targ, const char *src)
 }
 #endif
 
+static int gui_workdir_callback (const char *s)
+{
+    int err = set_gretl_work_dir(s, &paths);
+
+    if (!err) {
+	finalize_working_dir_menu();
+    }
+
+    return err;
+}
+
 static int have_data (void)
 {
     return datainfo != NULL && datainfo->v > 0;
@@ -786,6 +798,8 @@ int main (int argc, char *argv[])
 #else 
     gretl_config_init();
 #endif
+
+    set_workdir_callback(gui_workdir_callback);
 
     if (argc > 1) {
 	int force_lang = 0;

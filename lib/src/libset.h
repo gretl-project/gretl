@@ -148,5 +148,7 @@ void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);
 int iter_print_func_installed (void);
 
+void set_workdir_callback (int (*callback)());
+
 #endif /* LIBSET_H */
 

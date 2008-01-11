@@ -100,57 +100,25 @@ static void usage(void)
     exit(EXIT_SUCCESS);
 }
 
-#ifndef WIN32
-
-int make_user_dirs (void) 
+static int cli_workdir_callback (const char *s)
 {
-    const char *targ;
-    DIR *dir = NULL;
-    int err = 0;
-
-    targ = gretl_work_dir();
-
-    if ((dir = opendir(targ)) == NULL) {
-	err = mkdir(targ, 0755);
-	if (err) {
-	    fprintf(stderr, _("Couldn't create user directory %s\n"), 
-		    targ);
-	} 
-    } else {
-	closedir(dir);
-    }
-
-    targ = gretl_dot_dir();
-
-    if ((dir = opendir(targ)) == NULL) {
-	if (mkdir(targ, 0755)) {
-	    fprintf(stderr, _("Couldn't create user directory %s\n"), 
-		    targ);
-	    err++;
-	} 
-    } else {
-	closedir(dir);
-    }
-
-    return err;
+    return set_gretl_work_dir(s, &paths);
 }
 
-#endif /* WIN32 */
-
-void gretl_abort (char *line)
+static void gretl_abort (char *line)
 {
     fprintf(stderr, _("\ngretlcli: error executing script: halting\n"));
     fprintf(stderr, "> %s\n", line);
     exit(EXIT_FAILURE);
 }
 
-void noalloc (const char *str)
+static void noalloc (const char *str)
 {
     fprintf(stderr, _("Couldn't allocate memory for %s\n"), str);
     exit(EXIT_FAILURE);
 }
 
-void file_get_line (char *line, CMD *cmd)
+static void file_get_line (char *line, CMD *cmd)
 {
     clear(line, MAXLINE);
     fgets(line, MAXLINE - 1, fb);
@@ -174,7 +142,7 @@ void file_get_line (char *line, CMD *cmd)
 
 #ifdef ENABLE_NLS
 
-void nls_init (void)
+static void nls_init (void)
 {
 # ifdef WIN32
     char gretldir[MAXLEN], LOCALEDIR[MAXLEN];
@@ -455,8 +423,9 @@ int main (int argc, char *argv[])
     cli_read_registry(argv[0], &paths);
 #else
     cli_read_rc(&paths);
-    make_user_dirs(); /* ?? */
 #endif /* WIN32 */
+
+    set_workdir_callback(cli_workdir_callback);
 
     if (!batch) {
 	strcpy(cmdfile, gretl_work_dir());

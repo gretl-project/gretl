@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "usermat.h"
 #include "gretl_string_table.h"
+#include "gretl_func.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -933,6 +934,43 @@ static int set_shelldir (const char *s)
     return err;
 }
 
+static int (*workdir_callback)();
+
+void set_workdir_callback (int (*callback)())
+{
+    workdir_callback = callback;
+}
+
+static int set_workdir (const char *s)
+{
+    if (gretl_function_depth() > 0) {
+	gretl_errmsg_set("set workdir: cannot be done inside a function");
+	return 1;
+    }
+
+    if (workdir_callback == NULL) {
+	return E_DATA;
+    }
+
+    /* skip past "set workdir" and space */
+    s += 11;
+    s += strspn(s, " ");
+
+    if (*s != '\0') {
+	char workdir[MAXLEN];
+	int n = 0;
+
+	if (*s == '"') {
+	    n = sscanf(s+1, "%511[^\"]", workdir);
+	} else {
+	    n = sscanf(s, "%511s", workdir);
+	}
+	return (*workdir_callback)(workdir);
+    } else {
+	return E_DATA;
+    }
+}
+
 static int parse_set_plotfile (const char *s)
 {
     char *fname;
@@ -1211,6 +1249,8 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    return set_shelldir(line);
 	} else if (!strcmp(setobj, "codevars")) {
 	    return set_codevars(line);
+	} else if (!strcmp(setobj, "workdir")) {
+	    return set_workdir(line);
 	}
     }
 
