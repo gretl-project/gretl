@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-08 20:07-0500\n"
-"PO-Revision-Date: 2007-12-23 14:35+0100\n"
+"PO-Revision-Date: 2008-01-11 13:31+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2751,7 +2751,7 @@ msgstr "Impossibile recuperare la varianza dell'errore"
 
 #: lib/src/gretl_model.c:4851 gui2/library.c:422
 msgid "The model exhibits an exact linear fit"
-msgstr ""
+msgstr "Il modello produce un adattamento lineare perfetto"
 
 #: lib/src/gretl_panel.c:687
 msgid ""
@@ -5394,12 +5394,12 @@ msgstr "Gradienti:  "
 
 #: lib/src/printscan.c:648
 msgid "sscanf: numerical target must be scalar"
-msgstr ""
+msgstr "sscanf: l'argomento numerico deve essere scalare"
 
 #: lib/src/printscan.c:799
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not a string variable"
-msgstr "una variabile dummy per grafici"
+msgstr "%s: non è una variabile stringa"
 
 #: lib/src/pvalues.c:976 gui2/calculator.c:1118
 msgid "Standard normal distribution"
@@ -7952,19 +7952,16 @@ msgid "Bin width:"
 msgstr "Ampiezza dell'intervallo:"
 
 #: gui2/dialogs.c:3416
-#, fuzzy
 msgid "Show data only"
-msgstr "Mostra dettagli"
+msgstr "Mostra solo i dati"
 
 #: gui2/dialogs.c:3417
-#, fuzzy
 msgid "Show normal distribution"
-msgstr "Distribuzione normale standard"
+msgstr "Mostra la distribuzione normale"
 
 #: gui2/dialogs.c:3418
-#, fuzzy
 msgid "Show gamma distribution"
-msgstr "Mostra il grafico della distribuzione campionaria"
+msgstr "Mostra la distribuzione gamma"
 
 #: gui2/dialogs.c:3684
 msgid "Structure of dataset"
@@ -8264,9 +8261,8 @@ msgid "/File/Script files"
 msgstr "/File/_Comandi"
 
 #: gui2/filelists.c:296 gui2/filelists.c:594
-#, fuzzy
 msgid "/File/Working directory"
-msgstr "gretl: directory di lavoro"
+msgstr "/File/Directory di lavoro"
 
 #: gui2/fileselect.c:175
 msgid ""
@@ -9011,9 +9007,8 @@ msgid "dump gretl configuration to file"
 msgstr "scrive su un file la configurazione di gretl"
 
 #: gui2/gretl.c:174
-#, fuzzy
 msgid "gretl working directory"
-msgstr "gretl: directory di lavoro"
+msgstr "directory di lavoro di gretl"
 
 #: gui2/gretl.c:194
 msgid "/File/Open data/_User file..."
@@ -9161,18 +9156,16 @@ msgid "/File/C_lear data set"
 msgstr "/File/A_bbandona dataset"
 
 #: gui2/gretl.c:248
-#, fuzzy
 msgid "/File/_Working directory"
-msgstr "gretl: directory di lavoro"
+msgstr "/File/_Directory di lavoro"
 
 #: gui2/gretl.c:249
-#, fuzzy
 msgid "/File/Working directory/_Select..."
-msgstr "Directory di lavoro creata con successo"
+msgstr "/File/Directory di lavoro/_Seleziona..."
 
 #: gui2/gretl.c:251
 msgid "/File/Working directory/_Use startup directory"
-msgstr ""
+msgstr "/File/Directory di lavoro/_Usa la directory di avvio"
 
 #: gui2/gretl.c:256
 msgid "/File/_Script files"
@@ -12142,11 +12135,12 @@ msgid "Wald test, based on covariance matrix"
 msgstr "Test di Wald, basato sulla matrice di covarianza"
 
 #: gui2/selector.c:3485
-#, fuzzy
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
-msgstr "Eliminazione sequenziale usando alfa (a due code) = %.2f"
+msgstr ""
+"Eliminazione sequenziale delle variabili\n"
+"usando p-value a due code:"
 
 #: gui2/selector.c:3510
 msgid "Fixed effects"
@@ -12661,9 +12655,8 @@ msgid "Allow shell commands"
 msgstr "Abilita comandi shell"
 
 #: gui2/settings.c:195
-#, fuzzy
 msgid "Set working directory from shell"
-msgstr "gretl: directory di lavoro"
+msgstr "Imposta la directory di lavoro dalla shell"
 
 #: gui2/settings.c:197
 msgid "Command to launch gnuplot"
@@ -12842,9 +12835,9 @@ msgid "gretl: graph color selection"
 msgstr "gretl: scelta dei colori del grafico"
 
 #: gui2/settings.c:2365
-#, fuzzy, c-format
+#, c-format
 msgid "Currently %s"
-msgstr "Campione attuale"
+msgstr "Attualmente %s"
 
 #  Menu della finestra spreadsheet
 #: gui2/ssheet.c:120
