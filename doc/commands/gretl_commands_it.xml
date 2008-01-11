@@ -3390,17 +3390,20 @@
 
     <description>
 
-      <para>Gretl richiama un programma separato, gnuplot, per generare
+      <para>
+        Gretl richiama un programma separato, gnuplot, per generare
 	i grafici. Gnuplot è un programma di grafica molto completo, con
         una miriade di opzioni; gretl fornisce l'accesso, attraverso
         un'interfaccia grafica, a una parte di queste opzioni, cercando
         di scegliere dei valori, ma è possibile anche controllare
         l'aspetto di un grafico in tutti i suoi dettagli, se si vuole.
-	</para>
+      </para>
 
-      <para>Mentre un grafico viene visualizzato, facendo clic sulla
-      finestra del grafico si aprirà un menù pop-up con le seguenti
-      opzioni:</para>
+      <para>
+        Mentre un grafico viene visualizzato, facendo clic sulla
+        finestra del grafico si aprirà un menù pop-up con le seguenti
+        opzioni:
+      </para>
 
       <ilist>
 	<li><para>Salva come postscript: salva il grafico in formato encapsulated
@@ -3433,32 +3436,38 @@
 	Se si conosce gnuplot e si desidera un controllo sull'aspetto
         del grafico più preciso di quello fornito dalla finestra di
         modifica del grafico (opzione <quote>Modifica</quote>), ci sono
-        due possibilità:</para>
+        due possibilità:
+      </para>
 
       <ilist>
-	<li><para>Una volta salvato il grafico come icona di sessione,
-        facendo clic col tasto destro sull'icona si apre un altro menù
-        pop-up. Una delle opzioni disponibili è <quote>Comandi per
-        modificare il grafico</quote>, che apre una finestra di modifica
-        con i comandi di gnuplot. È possibile modificare questi comandi
-        e salvarli per il futuro, oppure inviarli direttamente a
-        gnuplot (con il comando <quote>File/Invia a gnuplot</quote> del
-        menù della finestra di modifica dei comandi).</para>
-	</li>
-	<li><para>Un altro modo per salvare i comandi del grafico (o per
-        salvare il grafico in formati diversi da EPS o PNG) è quello di
-        usare il comando <quote>Modifica</quote> nel menù pop-up del
-        grafico per aprire la finestra di modifica del grafico, quindi
-        fare clic su <quote>File</quote>: verrà visualizzato un menù a
-        discesa con i formati in cui è possibile salvare il grafico.
-	</para>
+	<li>
+          <para>
+            Una volta salvato il grafico come icona di sessione,
+            facendo clic col tasto destro sull'icona si apre un altro menù
+            pop-up. Una delle opzioni disponibili è <quote>Comandi per
+            modificare il grafico</quote>, che apre una finestra di modifica
+            con i comandi di gnuplot. È possibile modificare questi comandi
+            e salvarli per il futuro, oppure inviarli direttamente a
+            gnuplot (con il comando <quote>File/Invia a gnuplot</quote> del
+            menù della finestra di modifica dei comandi).
+          </para>
+        </li>
+        <li>
+          <para>
+            Un altro modo per salvare i comandi del grafico (o per
+            salvare il grafico in formati diversi da EPS o PNG) è quello di
+            usare il comando <quote>Modifica</quote> nel menù pop-up del
+            grafico per aprire la finestra di modifica del grafico, quindi
+            fare clic su <quote>File</quote>: verrà visualizzato un menù a
+            discesa con i formati in cui è possibile salvare il grafico.
+          </para>
 	</li>
       </ilist>
 
       <para>
 	Per saperne di più su gnuplot, si veda
-	http://ricardo.ecn.wfu.edu/gnuplot.html oppure
-	http://www.gnuplot.info</para>
+	http://www.gnuplot.info
+      </para>
 
     </description>
 
@@ -3469,12 +3478,14 @@
 
     <description>
 
-      <para>La <quote>pagina dei grafici</quote> funzionerà solo se
+      <para>
+        La <quote>pagina dei grafici</quote> funzionerà solo se
         si è installato il sistema di composizione &latex; e si è
         in grado di generare e visualizzare file in formato postscript.
-	</para>
+      </para>
 
-      <para>Nella finestra della sessione, è possibile trascinare fino
+      <para>
+        Nella finestra della sessione, è possibile trascinare fino
 	a otto grafici sull'icona della pagina dei grafici. Facendo doppio
 	clic sull'icona della pagina dei grafici (o facendo clic col tasto
         destro e selezionando <quote>Mostra</quote>), la pagina contenente
@@ -3482,14 +3493,17 @@
         visualizzatore di file postscript, da cui sarà possibile stamparla.
       </para>
 
-      <para>Per pulire la pagina dei grafici, fare clic col tasto destro
-        sull'icona e selezionare <quote>Pulisci</quote>.</para> 
+      <para>
+        Per pulire la pagina dei grafici, fare clic col tasto destro
+        sull'icona e selezionare <quote>Pulisci</quote>.
+      </para> 
 
-      <para>Su sistemi diversi da MS Windows, può essere necessario modificare
+      <para>
+        Su sistemi diversi da MS Windows, può essere necessario modificare
         l'impostazione del programma per visualizzare il postscript, che si
         trova nella sezione <quote>Programmi</quote> della finestra di dialogo
-        delle Preferenze di gretl (nel menù File della finestra principale).
-        </para>
+        delle Preferenze di gretl (nel menù Strumenti della finestra principale).
+      </para>
 
     </description>
 
@@ -3499,22 +3513,26 @@
     label="Grafici tridimensionali">
 
     <description>
-      <para>Questa funzionalità migliora se è stata installata una
+      <para>
+        Questa funzionalità migliora se è stata installata una
         versione di gnuplot pari o superiore alla 3.8, che consente
         di manipolare il grafico 3D con il mouse (ruotandolo ed
-        allungando o riducendo gli assi).</para>
+        allungando o riducendo gli assi).
+      </para>
 
-      <para>Nella composizione di un grafico 3D, si noti che l'asse Z
+      <para>
+        Nella composizione di un grafico 3D, si noti che l'asse Z
         sarà l'asse verticale, quindi se si ha una variabile dipendente
         che si pensa possa essere influenzata da due variabili indipendenti,
         è meglio mettere la variabile dipendente sull'asse Z e le altre
         due variabili sugli assi X e Y.
-	</para>  
+      </para>  
 
-      <para>A differenza di molti altri grafici di gretl, i grafici 3D
+      <para>
+        A differenza di molti altri grafici di gretl, i grafici 3D
         sono controllati da gnuplot invece che da gretl, quindi il menù
         di modifica dei grafici in questo caso non è disponibile.
-	</para>
+      </para>
 
     </description>
   </command>
@@ -3641,7 +3659,8 @@
         panel (si veda anche <cmd>setobs</cmd>). Testa il semplice modello
         <quote>pooled</quote> (con tutte le osservazioni mescolate
         indistintamente) contro le principali alternative: il modello a effetti
-        fissi e quello a effetti casuali.</para>
+        fissi e quello a effetti casuali.
+      </para>
 
       <para>
         Il modello a effetti fissi permette all'intercetta della regressione di
@@ -3653,7 +3672,8 @@
         eseguita solo se il numero delle unità cross section nel dataset è
         maggiore del numero dei parametri da stimare). La statistica LM di
         Breusch&ndash;Pagan testa l'ipotesi nulla che il modello pooled OLS sia
-        adeguato contro l'alternativo modello a effetti casuali.</para>
+        adeguato contro l'alternativo modello a effetti casuali.
+      </para>
 
       <para>
 	Può accadere che il modello pooled OLS sia rifiutato nei confronti
@@ -5533,6 +5553,10 @@
  	  <effect>non mostra nulla</effect>
  	</option>
         <option>
+         <flag>--auto</flag>
+         <effect>eliminazione sequenziale, si veda oltre</effect>
+       </option>
+        <option>
           <flag>--inst</flag>
           <effect>omette come strumento, solo per TSLS</effect>
         </option>
@@ -5550,23 +5574,42 @@
     <description>
       <para context="gui">
 	Questo comando stima di nuovo il modello dato, dopo aver omesso
-	le variabili specificate. Oltre ai consueti risultati della stima
-        del modello, viene fornita una statistica test per la significatività
-        congiunta delle variabili omesse.  Se il modello originale è stato
-        stimato con OLS, la statistica test è un valore <mathvar>F</mathvar>,
-        basato sulle somme dei quadrati dei residui del modello vincolato e di
-        quello originale, a meno che quest'ultimo sia stato stimato usando
-        errori standard robusti.  In questo caso, il valore <mathvar>F</mathvar>
-        viene calcolato delle stime robuste della matrice di covarianza del
-        modello originale. L'ipotesi nulla è che i coefficienti di tutte le
-        variabili omesse siano pari a zero.
+	le variabili specificate o dopo aver omesso sequenzialmente le variabili
+        non significative, se è stata selezionata l'apposita casella.
+        Oltre ai consueti risultati della stima del modello, viene fornita una
+        statistica test per la significatività congiunta delle variabili omesse:
+        l'ipotesi nulla è che i coefficienti di tutte le variabili omesse siano
+        pari a zero.
+      </para>
+      <para context="gui">
+        Se il modello originale è stato stimato con OLS, la statistica test è un
+        valore <mathvar>F</mathvar>, basato sulle somme dei quadrati dei residui
+        del modello vincolato e di quello originale. Per stimatori diversi da OLS,
+        o se si usa l'opzione Wald, la statistica è un valore chi-quadro di Wald
+        asintotico basato sulla matrice di covarianza del modello originale.
+      </para>
+      <para context="gui">
+        L'eliminazione sequenziale funziona nel modo seguente: ad ogni passo
+        viene omessa la variabile con il p-value più alto, fino a che tutte le
+        variabili restanti hanno un p-value inferiore a una certa soglia. La
+        soglia predefinita è del 10 per cento (con due code), che può essere
+        modificata usando l'apposito pulsante.
       </para>
       <para context="cli">
-	Questo comando deve seguire un comando di stima e calcola una
-        statistica test per la significatività congiunta delle variabili
-        nella <repl>lista-variabili</repl>, che deve essere un sottoinsieme
-        delle variabili indipendenti del modello stimato in precedenza.
+        Questo comando deve seguire un comando di stima e calcola un test per la
+        significatività congiunta delle variabili nella
+        <repl>lista-variabili</repl>, che deve essere un sottoinsieme delle
+        variabili indipendenti del modello stimato in precedenza. In
+        alternativa, se si usa l'opzione <lit>--auto</lit> viene attivata la
+        procedura di eliminazione sequenziale: ad ogni passo
+        viene omessa la variabile con il p-value più alto, fino a che tutte le
+        variabili restanti hanno un p-value inferiore a una certa soglia. La
+        soglia predefinita è del 10 per cento (con due code), che può essere
+        modificata aggiungendo <quote><lit>=</lit></quote> e un valore tra 0 e 1
+        (senza spazi), come nell'esempio seguente:
       </para>
+      <code context="cli">
+       omit --auto=0.05</code>
       <para context="cli">
 	Se il modello originale è stato stimato con OLS, la statistica test è
         un valore <mathvar>F</mathvar>, basato sulle somme dei quadrati dei
@@ -5576,7 +5619,7 @@
         stime robuste della matrice di covarianza del modello originale (è la
         versione <mathvar>F</mathvar> di un test di Wald).
       </para>
-      <para>
+      <para context="cli">
 	Per gli stimatori diversi da OLS, o se si usa l'opzione <lit>--wald</lit>,
         la statistica usata è un valore chi-quadro asintotico di Wald, basato
         sulla matrice di covarianza del modello originale.
@@ -5589,7 +5632,7 @@
         test ulteriori, come <cmd>add</cmd> o <cmd>omit</cmd>).  
       </para>
       <para>
-	Usando l'opzione <lit>--wald</lit>, il modello vincolato
+	Usando l'opzione Wald, il modello vincolato
         non viene stimato (quindi il modello attuale non viene rimpiazzato).
         L'opzione <lit>--quiet</lit> sopprime la stampa dei risultati del
         modello vincolato (se esso viene stimato): viene mostrato solo il
