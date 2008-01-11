@@ -874,6 +874,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 	}
 	s = line;
 	while (isspace(*s)) s++;
+	tailstrip(s);
 	err = strings_array_add(&fun->lines, &fun->n_lines, s);
     }
 

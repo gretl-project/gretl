@@ -290,7 +290,6 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
 
     while (bufgets(line, sizeof line, buf)) {
 	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, line, -1);
-	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, "\n", 1);
     }
 
     bufgets_finalize(buf);
@@ -599,9 +598,6 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	} else {
 	    gtk_text_buffer_insert(tbuf, &iter, readbuf, -1);
 	}
-
-	/* bufgets strips newlines */
-	gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
 
 	thiscolor = nextcolor;
     }
@@ -1082,6 +1078,33 @@ gchar *textview_get_current_line (GtkWidget *view)
     return gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 }
 
+/* Determine whether or not any of the lines in a chunk of text
+   are indented.
+*/
+
+static int text_is_indented (const gchar *s)
+{
+    int leading = 1;
+
+    if (s == NULL) {
+	return 0;
+    }
+
+    while (*s) {
+	if (*s == '\n') {
+	    leading = 1;
+	} else if (*s != ' ') {
+	    leading = 0;
+	}
+	if (leading && *s == ' ') {
+	    return 1;
+	}
+	s++;
+    }
+
+    return 0;
+}
+
 /* Determine whether or not a chunk of text is commented,
    in the form of each line beginning with '#' (with possible
    leading white space).  If some lines are commented and
@@ -1154,12 +1177,10 @@ static void comment_or_uncomment_text (GtkWidget *w, gpointer p)
 		    s++;
 		    if (*s == ' ') s++;
 		    gtk_text_buffer_insert(tc->buf, &tc->start, s, -1);
-		    gtk_text_buffer_insert(tc->buf, &tc->start, "\n", -1);
 		}
 	    } else {
 		gtk_text_buffer_insert(tc->buf, &tc->start, "# ", -1);
 		gtk_text_buffer_insert(tc->buf, &tc->start, line, -1);
-		gtk_text_buffer_insert(tc->buf, &tc->start, "\n", -1);
 	    }
 	}
 	bufgets_finalize(tc->chunk);
@@ -1175,6 +1196,61 @@ static void comment_or_uncomment_text (GtkWidget *w, gpointer p)
 	    gtk_text_buffer_insert(tc->buf, &tc->start, "# ", -1);
 	    gtk_text_buffer_insert(tc->buf, &tc->start, tc->chunk, -1);
 	}
+    }
+}
+
+static void indent_text (GtkWidget *w, gpointer p)
+{
+    struct textcomm *tc = (struct textcomm *) p;
+
+    gtk_text_buffer_delete(tc->buf, &tc->start, &tc->end);
+
+    if (tc->selected) {
+	char line[1024];
+
+	bufgets_init(tc->chunk);
+	while (bufgets(line, sizeof line, tc->chunk)) {
+	    gtk_text_buffer_insert(tc->buf, &tc->start, "    ", -1);
+	    gtk_text_buffer_insert(tc->buf, &tc->start, line, -1);
+	}
+	bufgets_finalize(tc->chunk);
+    } else {
+	gtk_text_buffer_insert(tc->buf, &tc->start, "    ", -1);
+	gtk_text_buffer_insert(tc->buf, &tc->start, tc->chunk, -1);
+    }
+}
+
+static char *unindent_line (char *s)
+{
+    int i = 0;
+
+    while (*s == ' ' && i < 4) {
+	s++;
+	i++;
+    }
+
+    return s;
+}
+
+static void unindent_text (GtkWidget *w, gpointer p)
+{
+    struct textcomm *tc = (struct textcomm *) p;
+    char *ins;
+
+    gtk_text_buffer_delete(tc->buf, &tc->start, &tc->end);
+
+    if (tc->selected) {
+	char line[1024];
+
+	bufgets_init(tc->chunk);
+	while (bufgets(line, sizeof line, tc->chunk)) {
+	    ins = unindent_line(line);
+	    gtk_text_buffer_insert(tc->buf, &tc->start, ins, -1);
+	}
+	bufgets_finalize(tc->chunk);
+    } else {
+	ins = unindent_line(tc->chunk);
+	gtk_text_buffer_insert(tc->buf, &tc->start, ins, -1);
     }
 }
 
@@ -1210,9 +1286,12 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
     tc->buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 
     if (gtk_text_buffer_get_selection_bounds(tc->buf, &tc->start, &tc->end)) {
+	int endpos;
+
 	tc->selected = 1;
 	gtk_text_iter_set_line_offset(&tc->start, 0);
-	if (!gtk_text_iter_ends_line(&tc->end)) {
+	endpos = gtk_text_iter_get_line_offset(&tc->end);
+	if (endpos > 0 && !gtk_text_iter_ends_line(&tc->end)) {
 	    gtk_text_iter_forward_to_line_end(&tc->end);
 	}
 	tc->chunk = gtk_text_buffer_get_text(tc->buf, &tc->start, &tc->end, FALSE);
@@ -1229,7 +1308,7 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
 
     tc->commented = text_is_commented(tc->chunk);
 
-    if (tc->commented <= 0 || (vwin->role == EDIT_SCRIPT && tc->commented >= 0)) {
+    if (tc->commented <= 0 || vwin->role == EDIT_SCRIPT) {
 	pmenu = gtk_menu_new();
     }
 
@@ -1261,6 +1340,27 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
+
+    if (vwin->role == EDIT_SCRIPT) {
+	item = gtk_menu_item_new_with_label((tc->selected)? 
+					    _("Indent region") : 
+					    _("Indent line"));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(indent_text),
+			 *ptc);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+	if (text_is_indented(tc->chunk)) {
+	    item = gtk_menu_item_new_with_label((tc->selected)? 
+						_("Unindent region") : 
+						_("Unindent line"));
+	    g_signal_connect(G_OBJECT(item), "activate",
+			     G_CALLBACK(unindent_text),
+			     *ptc);
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+	}
+    }	
 
     if (pmenu == NULL) {
 	g_free(tc->chunk);
@@ -1543,6 +1643,8 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     if (buf == NULL) {
 	return;
     }
+
+    tailstrip(line);
 
     if (gui_help(hwin->role)) {
 	/* topic heading: descriptive string */

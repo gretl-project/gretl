@@ -919,7 +919,6 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	if (!done) {
 	    fputs(bufline, fp);
 	}
-	fputc('\n', fp);
 	if (addpause && strstr(bufline, "pause -1")) {
 	    gotpause = 1;
 	}

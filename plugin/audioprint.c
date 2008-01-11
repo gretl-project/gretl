@@ -204,6 +204,7 @@ static int speak_buffer (const char *buf, int (*should_stop)())
 	    flite_text_to_speech("OK, stopping", v, "play");
 	    break;
 	}
+	tailstrip(line);
 	flite_text_to_speech(line, v, "play");
     }
 
@@ -273,6 +274,7 @@ static int speak_buffer (const char *buf, int (*should_stop)())
 	    ISpVoice_Speak(v, L"OK, stopping", 0, NULL);
 	    break;
 	}
+	tailstrip(line);
 	w = wide_string(line);
 	ISpVoice_Speak(v, w, 0, NULL);
 	free(w);

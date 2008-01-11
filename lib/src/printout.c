@@ -2440,11 +2440,11 @@ char *bufgets (char *s, size_t size, const char *buf)
        whichever comes first */
     for (i=0; ; i++) {
 	s[i] = p[i];
-	if (p[i] == 0) {
+	if (p[i] == '\0') {
 	    break;
 	}
 	if (p[i] == '\r') {
-	    s[i] = 0;
+	    s[i] = '\0';
 	    if (p[i+1] == '\n') {
 		status = GOT_CRLF;
 	    } else {
@@ -2453,7 +2453,7 @@ char *bufgets (char *s, size_t size, const char *buf)
 	    break;
 	}
 	if (p[i] == '\n') {
-	    s[i] = 0;
+	    s[i] = '\0';
 	    status = GOT_LF;
 	    break;
 	}
@@ -2472,6 +2472,13 @@ char *bufgets (char *s, size_t size, const char *buf)
     } else if (status == GOT_CRLF) {
 	p += 2;
     }
+
+#if 1
+    /* replace newline? */
+    if (status && i < size - 1) {
+	strcat(s, "\n");
+    }
+#endif
 
     rbuf_set_point(buf, p);
 

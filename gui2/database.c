@@ -999,21 +999,6 @@ static int check_serinfo (char *str, char *sername, int *nobs)
     return err;
 }
 
-static char *end_trim (char *s)
-{
-    size_t i, n = strlen(s);
-
-    for (i=n-1; i>0; i--) {
-	if (s[i] == ' ' || s[i] == '\n' || s[i] == '\r') {
-	    s[i] = '\0';
-	} else {
-	    break;
-	}
-    }
-
-    return s;
-}
-
 static char *start_trim (char *s)
 {
     while (*s == ' ') s++;
@@ -1080,7 +1065,7 @@ static int add_local_db_series_list (windata_t *vwin)
 
 	err = utf8_correct(line1);
 
-	end_trim(line1);
+	tailstrip(line1);
 	charsub(line1, '\t', ' ');
 
 	if (sscanf(line1, "%15s", sername) != 1) {
@@ -1095,7 +1080,7 @@ static int add_local_db_series_list (windata_t *vwin)
 	    break;
 	}
 
-	end_trim(line2);
+	tailstrip(line2);
 	row[2] = line2;
 
 	if (!err) {
@@ -1140,7 +1125,7 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
 	    continue;
 	}
 
-	end_trim(line1);
+	tailstrip(line1);
 	charsub(line1, '\t', ' ');
 
 	err = utf8_correct(line1);
@@ -1157,7 +1142,8 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
 	    break;
 	}
 
-	row[2] = line2;
+	row[2] = tailstrip(line2);
+
 	if (!err) {
 	    err = check_serinfo(line2, sername, &nobs);
 	}
@@ -2315,6 +2301,7 @@ gint populate_remote_db_list (windata_t *vwin)
 	row[2] = status;
 
 	if (bufgets(line, sizeof line, getbuf)) {
+	    tailstrip(line);
 	    utf8_correct(line);
 	    row[1] = line + 2;
 	    ndb = get_ndbs(i);
@@ -2402,11 +2389,13 @@ gint populate_remote_func_list (windata_t *vwin)
 	basename = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
+	    tailstrip(line);
 	    utf8_correct(line);
 	    descrip = gretl_strdup(line + 2);
 	} 
 
 	if (bufgets(line, sizeof line, getbuf)) {
+	    tailstrip(line);
 	    version = line + 2;
 	} 
 
