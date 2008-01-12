@@ -5628,6 +5628,8 @@
       <examples>
         <example>omit 5 7 9</example>
         <example>omit seasonals --quiet</example>
+        <example>omit --auto</example>
+        <example>omit --auto=0.05</example>
       </examples>
     </usage>
 
@@ -5665,10 +5667,9 @@
 	omitted, until all remaining variables have a p-value no greater
 	than some cutoff.  The default cutoff is 10 percent (two-sided);
 	this can be adjusted by appending <quote><lit>=</lit></quote> and
-	a value between 0 and 1 (with no spaces), as in
+	a value between 0 and 1 (with no spaces), as in the fourth example
+	above.
       </para>
-      <code context="cli">
-	omit --auto=0.05</code>
       <para context="cli">
 	If the original model was estimated by OLS, the test statistic is
 	by default an <mathvar>F</mathvar>-value.  This is based on the
