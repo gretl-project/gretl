@@ -75,6 +75,11 @@ static void free_tree (NODE *t, const char *msg)
 	return;
     }
 
+#if EDEBUG
+    fprintf(stderr, "%-8s: starting with t at %p (type %03d)\n", msg, 
+	    (void *) t, t->t);
+#endif
+
     /* free recursively */
     if (bnsym(t->t)) {
 	int i;
