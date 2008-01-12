@@ -973,7 +973,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATAINFO *pdinfo)
 
 /* Identify the named list, if any, but do not yet fill out the
    variable-name strings: these will be set when the loop is
-   actually run, since the list may hae changed in the meantime.
+   actually run, since the list may have changed in the meantime.
 */
 
 static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
@@ -2800,6 +2800,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	if (indexed_loop(loop)) {
 	    loop->ival += 1;
+	} else if (is_list_loop(loop)) {
+	    /* added 2008-01-11, AC */
+	    loop_list_refresh(loop, pdinfo);
 	}
 
     } /* end iterations of loop */
