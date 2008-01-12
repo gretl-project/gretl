@@ -73,6 +73,8 @@ gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event,
 gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
 
+gboolean 
+script_tab_handler (windata_t *vwin, GdkModifierType mods);
 
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable);

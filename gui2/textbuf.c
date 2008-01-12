@@ -1145,7 +1145,7 @@ static int text_is_commented (const gchar *s)
     return comm;
 }
 
-struct textcomm {
+struct textbit {
     windata_t *vwin;
     GtkTextBuffer *buf;
     GtkTextIter start;
@@ -1161,70 +1161,51 @@ struct textcomm {
 
 static void comment_or_uncomment_text (GtkWidget *w, gpointer p)
 {
-    struct textcomm *tc = (struct textcomm *) p;
+    struct textbit *tb = (struct textbit *) p;
     gchar *s;
 
-    gtk_text_buffer_delete(tc->buf, &tc->start, &tc->end);
+    gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
 
-    if (tc->selected) {
+    if (tb->selected) {
 	char line[1024];
 
-	bufgets_init(tc->chunk);
-	while (bufgets(line, sizeof line, tc->chunk)) {
-	    if (tc->commented) {
+	bufgets_init(tb->chunk);
+	while (bufgets(line, sizeof line, tb->chunk)) {
+	    if (tb->commented) {
 		s = strchr(line, '#');
 		if (s != NULL) {
 		    s++;
 		    if (*s == ' ') s++;
-		    gtk_text_buffer_insert(tc->buf, &tc->start, s, -1);
+		    gtk_text_buffer_insert(tb->buf, &tb->start, s, -1);
 		}
 	    } else {
-		gtk_text_buffer_insert(tc->buf, &tc->start, "# ", -1);
-		gtk_text_buffer_insert(tc->buf, &tc->start, line, -1);
+		gtk_text_buffer_insert(tb->buf, &tb->start, "# ", -1);
+		gtk_text_buffer_insert(tb->buf, &tb->start, line, -1);
 	    }
 	}
-	bufgets_finalize(tc->chunk);
+	bufgets_finalize(tb->chunk);
     } else {
-	if (tc->commented) {
-	    s = strchr(tc->chunk, '#');
+	if (tb->commented) {
+	    s = strchr(tb->chunk, '#');
 	    if (s != NULL) {
 		s++;
 		if (*s == ' ') s++;
-		gtk_text_buffer_insert(tc->buf, &tc->start, s, -1);
+		gtk_text_buffer_insert(tb->buf, &tb->start, s, -1);
 	    }
 	} else {
-	    gtk_text_buffer_insert(tc->buf, &tc->start, "# ", -1);
-	    gtk_text_buffer_insert(tc->buf, &tc->start, tc->chunk, -1);
+	    gtk_text_buffer_insert(tb->buf, &tb->start, "# ", -1);
+	    gtk_text_buffer_insert(tb->buf, &tb->start, tb->chunk, -1);
 	}
     }
 }
 
-static void indent_text (GtkWidget *w, gpointer p)
-{
-    struct textcomm *tc = (struct textcomm *) p;
-
-    gtk_text_buffer_delete(tc->buf, &tc->start, &tc->end);
-
-    if (tc->selected) {
-	char line[1024];
-
-	bufgets_init(tc->chunk);
-	while (bufgets(line, sizeof line, tc->chunk)) {
-	    gtk_text_buffer_insert(tc->buf, &tc->start, "    ", -1);
-	    gtk_text_buffer_insert(tc->buf, &tc->start, line, -1);
-	}
-	bufgets_finalize(tc->chunk);
-    } else {
-	gtk_text_buffer_insert(tc->buf, &tc->start, "    ", -1);
-	gtk_text_buffer_insert(tc->buf, &tc->start, tc->chunk, -1);
-    }
-}
+#define SCRIPT_TAB_CHARS 3
 
 static char *unindent_line (char *s)
 {
     int i = 0;
 
-    while (*s == ' ' && i < 4) {
+    while (*s == ' ' && i < SCRIPT_TAB_CHARS) {
 	s++;
 	i++;
     }
@@ -1232,37 +1213,134 @@ static char *unindent_line (char *s)
     return s;
 }
 
-static void unindent_text (GtkWidget *w, gpointer p)
+static void indent_text (GtkWidget *w, gpointer p)
 {
-    struct textcomm *tc = (struct textcomm *) p;
-    char *ins;
+    struct textbit *tb = (struct textbit *) p;
+    int i;
 
-    gtk_text_buffer_delete(tc->buf, &tc->start, &tc->end);
+    gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
 
-    if (tc->selected) {
+    if (tb->selected) {
 	char line[1024];
 
-	bufgets_init(tc->chunk);
-	while (bufgets(line, sizeof line, tc->chunk)) {
-	    ins = unindent_line(line);
-	    gtk_text_buffer_insert(tc->buf, &tc->start, ins, -1);
+	bufgets_init(tb->chunk);
+	while (bufgets(line, sizeof line, tb->chunk)) {
+	    for (i=0; i<SCRIPT_TAB_CHARS; i++) {
+		gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
+	    }
+	    gtk_text_buffer_insert(tb->buf, &tb->start, line, -1);
 	}
-	bufgets_finalize(tc->chunk);
+	bufgets_finalize(tb->chunk);
     } else {
-	ins = unindent_line(tc->chunk);
-	gtk_text_buffer_insert(tc->buf, &tc->start, ins, -1);
+	for (i=0; i<SCRIPT_TAB_CHARS; i++) {
+	    gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
+	}
+	gtk_text_buffer_insert(tb->buf, &tb->start, tb->chunk, -1);
+    }
+}
+
+static void unindent_text (GtkWidget *w, gpointer p)
+{
+    struct textbit *tb = (struct textbit *) p;
+    char *ins;
+
+    gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
+
+    if (tb->selected) {
+	char line[1024];
+
+	bufgets_init(tb->chunk);
+	while (bufgets(line, sizeof line, tb->chunk)) {
+	    ins = unindent_line(line);
+	    gtk_text_buffer_insert(tb->buf, &tb->start, ins, -1);
+	}
+	bufgets_finalize(tb->chunk);
+    } else {
+	ins = unindent_line(tb->chunk);
+	gtk_text_buffer_insert(tb->buf, &tb->start, ins, -1);
     }
 }
 
 static void exec_script_text (GtkWidget *w, gpointer p)
 {
-    struct textcomm *tc = (struct textcomm *) p;
+    struct textbit *tb = (struct textbit *) p;
 
-    run_script_fragment(tc->vwin, tc->chunk);
-    tc->chunk = NULL; /* will be freed already */
+    run_script_fragment(tb->vwin, tb->chunk);
+    tb->chunk = NULL; /* will be freed already */
 }
 
-static GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
+enum {
+    AUTO_SELECT_NONE,
+    AUTO_SELECT_LINE
+};
+
+static struct textbit *vwin_get_textbit (windata_t *vwin,
+					 int mode)
+{
+    struct textbit *tb;
+
+    tb = malloc(sizeof *tb);
+    if (tb == NULL) {
+	return NULL;
+    }
+
+    tb->vwin = vwin;
+    tb->buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tb->selected = 0;
+    tb->commented = 0;
+    tb->chunk = NULL;
+
+    if (gtk_text_buffer_get_selection_bounds(tb->buf, &tb->start, &tb->end)) {
+	int endpos;
+
+	tb->selected = 1;
+	gtk_text_iter_set_line_offset(&tb->start, 0);
+	endpos = gtk_text_iter_get_line_offset(&tb->end);
+	if (endpos > 0 && !gtk_text_iter_ends_line(&tb->end)) {
+	    gtk_text_iter_forward_to_line_end(&tb->end);
+	}
+	tb->chunk = gtk_text_buffer_get_text(tb->buf, &tb->start, &tb->end, FALSE);
+    } else if (mode == AUTO_SELECT_LINE) {
+	gtk_text_buffer_get_iter_at_mark(tb->buf, &tb->start, 
+					 gtk_text_buffer_get_insert(tb->buf));
+	gtk_text_iter_set_line_offset(&tb->start, 0);
+	gtk_text_buffer_get_iter_at_mark(tb->buf, &tb->end, 
+					 gtk_text_buffer_get_insert(tb->buf));
+	gtk_text_iter_forward_to_line_end(&tb->end);
+	tb->chunk = gtk_text_buffer_get_text(tb->buf, &tb->start, &tb->end, FALSE);
+    } 
+
+    return tb;
+}
+
+gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
+{
+    struct textbit *tb;
+    gboolean ret = FALSE;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), FALSE);
+
+    tb = vwin_get_textbit(vwin, AUTO_SELECT_NONE);
+    if (tb == NULL) {
+	return FALSE;
+    }
+
+    if (tb->selected) {
+	if (mods & GDK_SHIFT_MASK) {
+	    unindent_text(NULL, tb);
+	} else {
+	    indent_text(NULL, tb);
+	}
+	ret = TRUE;
+    }
+
+    g_free(tb->chunk);
+    free(tb);
+
+    return ret;
+}
+
+static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
 {
     const char *items[] = {
 	N_("Comment line"),
@@ -1272,106 +1350,82 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
     };
     GtkWidget *pmenu = NULL;
     GtkWidget *item;
-    struct textcomm *tc;
+    struct textbit *tb;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), NULL);
 
-    tc = malloc(sizeof *tc);
-    if (tc == NULL) {
+    tb = vwin_get_textbit(vwin, AUTO_SELECT_LINE);
+    if (tb == NULL) {
 	return NULL;
     }
 
-    *ptc = tc;
-    tc->vwin = vwin;
-    tc->buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    *ptb = tb;
+    tb->commented = text_is_commented(tb->chunk);
 
-    if (gtk_text_buffer_get_selection_bounds(tc->buf, &tc->start, &tc->end)) {
-	int endpos;
-
-	tc->selected = 1;
-	gtk_text_iter_set_line_offset(&tc->start, 0);
-	endpos = gtk_text_iter_get_line_offset(&tc->end);
-	if (endpos > 0 && !gtk_text_iter_ends_line(&tc->end)) {
-	    gtk_text_iter_forward_to_line_end(&tc->end);
-	}
-	tc->chunk = gtk_text_buffer_get_text(tc->buf, &tc->start, &tc->end, FALSE);
-    } else {
-	tc->selected = 0;
-	gtk_text_buffer_get_iter_at_mark(tc->buf, &tc->start, 
-					 gtk_text_buffer_get_insert(tc->buf));
-	gtk_text_iter_set_line_offset(&tc->start, 0);
-	gtk_text_buffer_get_iter_at_mark(tc->buf, &tc->end, 
-					 gtk_text_buffer_get_insert(tc->buf));
-	gtk_text_iter_forward_to_line_end(&tc->end);
-	tc->chunk = gtk_text_buffer_get_text(tc->buf, &tc->start, &tc->end, FALSE);
-    }
-
-    tc->commented = text_is_commented(tc->chunk);
-
-    if (tc->commented <= 0 || vwin->role == EDIT_SCRIPT) {
+    if (tb->commented <= 0 || vwin->role == EDIT_SCRIPT) {
 	pmenu = gtk_menu_new();
     }
 
-    if (tc->commented <= 0) {
+    if (tb->commented <= 0) {
 	/* we have some uncommented material: allow exec option */
-	if (tc->selected) {
+	if (tb->selected) {
 	    item = gtk_menu_item_new_with_label(_("Execute region"));
 	} else {
 	    item = gtk_menu_item_new_with_label(_("Execute line"));
 	}
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(exec_script_text),
-			 *ptc);
+			 *ptb);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
-    if (vwin->role == EDIT_SCRIPT && tc->commented >= 0) {
+    if (vwin->role == EDIT_SCRIPT && tb->commented >= 0) {
 	/* material is either all commented or all uncommented:
 	   allow comment/uncomment option */
-	int i = (tc->selected && !tc->commented)? 2 : 
-	    (tc->selected && tc->commented)? 3 :
-	    (!tc->selected && !tc->commented)? 0 : 1;
+	int i = (tb->selected && !tb->commented)? 2 : 
+	    (tb->selected && tb->commented)? 3 :
+	    (!tb->selected && !tb->commented)? 0 : 1;
 
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(comment_or_uncomment_text),
-			 *ptc);
+			 *ptb);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
     if (vwin->role == EDIT_SCRIPT) {
-	item = gtk_menu_item_new_with_label((tc->selected)? 
+	item = gtk_menu_item_new_with_label((tb->selected)? 
 					    _("Indent region") : 
 					    _("Indent line"));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(indent_text),
-			 *ptc);
+			 *ptb);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-	if (text_is_indented(tc->chunk)) {
-	    item = gtk_menu_item_new_with_label((tc->selected)? 
+	if (text_is_indented(tb->chunk)) {
+	    item = gtk_menu_item_new_with_label((tb->selected)? 
 						_("Unindent region") : 
 						_("Unindent line"));
 	    g_signal_connect(G_OBJECT(item), "activate",
 			     G_CALLBACK(unindent_text),
-			     *ptc);
+			     *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 	}
     }	
 
     if (pmenu == NULL) {
-	g_free(tc->chunk);
-	free(tc);
-	*ptc = NULL;
+	g_free(tb->chunk);
+	free(tb);
+	*ptb = NULL;
     }
 
     return pmenu;
 }
 
-static gboolean destroy_textcomm (GtkWidget **pw, struct textcomm *tc)
+static gboolean destroy_textbit (GtkWidget **pw, struct textbit *tc)
 {
     tc->vwin->popup = NULL;
     g_free(tc->chunk);
@@ -1388,7 +1442,7 @@ script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 
     if (mods & GDK_BUTTON3_MASK) {
 	windata_t *vwin = (windata_t *) p;
-	struct textcomm *tc = NULL;
+	struct textbit *tc = NULL;
 
 	if (vwin->popup) {
 	    gtk_widget_destroy(vwin->popup);
@@ -1401,7 +1455,7 @@ script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 	    gtk_menu_popup(GTK_MENU(vwin->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	    g_signal_connect(G_OBJECT(vwin->popup), "destroy",
-			     G_CALLBACK(destroy_textcomm), 
+			     G_CALLBACK(destroy_textbit), 
 			     tc);
 	}
 

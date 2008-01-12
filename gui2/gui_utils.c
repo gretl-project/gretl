@@ -792,6 +792,10 @@ static void win_ctrl_c (windata_t *vwin)
 
 #endif
 
+#define tabkey(k) (k == GDK_Tab || \
+		   k == GDK_ISO_Left_Tab || \
+		   k == GDK_KP_Tab)
+
 static gboolean
 catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -802,6 +806,8 @@ catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_F1 && vwin->role == EDIT_SCRIPT) { 
 	set_window_help_active(vwin);
 	edit_script_help(NULL, NULL, vwin);
+    } else if (tabkey(key->keyval) && vwin->role == EDIT_SCRIPT) {
+	return script_tab_handler(vwin, mods);
     } else if (mods & GDK_CONTROL_MASK) {
 	if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
 	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
