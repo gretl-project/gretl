@@ -5568,6 +5568,8 @@
       <examples>
         <example>omit 5 7 9</example>
         <example>omit seasonals --quiet</example>
+        <example>omit --auto</example>
+        <example>omit --auto=0.05</example>
       </examples>
     </usage>
 
@@ -5606,10 +5608,8 @@
         variabili restanti hanno un p-value inferiore a una certa soglia. La
         soglia predefinita è del 10 per cento (con due code), che può essere
         modificata aggiungendo <quote><lit>=</lit></quote> e un valore tra 0 e 1
-        (senza spazi), come nell'esempio seguente:
+        (senza spazi), come nel quarto esempio mostrato sopra.
       </para>
-      <code context="cli">
-       omit --auto=0.05</code>
       <para context="cli">
 	Se il modello originale è stato stimato con OLS, la statistica test è
         un valore <mathvar>F</mathvar>, basato sulle somme dei quadrati dei
