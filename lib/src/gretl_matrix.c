@@ -2255,7 +2255,9 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 
     dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
-    if (info != 0) {
+    if (info > 0) {
+	return logdet ? NADBL : 0;
+    } else if (info < 0) {
 	fprintf(stderr, "gretl_LU_determinant: dgetrf gave info = %d\n", 
 		(int) info);
 	free(ipiv);
