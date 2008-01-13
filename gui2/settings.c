@@ -1541,6 +1541,41 @@ static int dir_exists (const char *dname, FILE *fp)
     return ok;
 }
 
+#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+
+static void maybe_fix_viewpdf (void)
+{
+    gchar *prog = NULL;
+    const gchar *viewers[] = {
+	"xpdf",
+	"acroread",
+	"evince",
+	"kpdf",
+	"gpdf",
+	NULL
+    };
+    int i;
+
+    prog = g_find_program_in_path(viewpdf);
+
+    if (prog != NULL) {
+	g_free(prog);
+    } else {
+	for (i=0; viewers[i] != NULL; i++) {
+	    if (strcmp(viewers[i], viewpdf)) {
+		prog = g_find_program_in_path(viewers[i]);
+		if (prog != NULL) {
+		    strcpy(viewpdf, viewers[i]);
+		    g_free(prog);
+		    break;
+		}
+	    }
+	}
+    }
+}
+
+#endif
+
 static int common_read_rc_setup (void)
 {
     int err = 0;
@@ -1559,6 +1594,10 @@ static int common_read_rc_setup (void)
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
     set_tex_use_pdf(latex);
+
+#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+    maybe_fix_viewpdf();
+#endif
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_status();
@@ -2350,21 +2389,26 @@ void set_working_dir_from_startup (void)
 
 void finalize_working_dir_menu (void)
 {
-    const char *p0 = "/File/Working directory";
+    const char *p0 = "/File/Working directory/Select...";
     const char *p1 = "/File/Working directory/Use startup directory";
     char tmp[FILENAME_MAX];
     GtkWidget *w;
+
+    *tmp = '\0';
 
     w = gtk_item_factory_get_widget(mdata->ifac, p0);
     if (w != NULL) {
 	gchar *tip;
 
-	strcpy(tmp, paths.workdir);
+	*tmp = '\0';
+	strncat(tmp, paths.workdir, FILENAME_MAX - 1);
 	trim_slash(tmp);
 	trim_homedir(tmp);
-	tip = g_strdup_printf(_("Currently %s"), tmp);
-	gretl_tooltips_add(w, tip);
-	g_free(tip);
+	if (*tmp != '\0') {
+	    tip = g_strdup_printf(_("Currently %s"), tmp);
+	    gretl_tooltips_add(w, tip);
+	    g_free(tip);
+	}
     } 
 
     w = gtk_item_factory_get_widget(mdata->ifac, p1);
@@ -2372,9 +2416,13 @@ void finalize_working_dir_menu (void)
 	if (*startdir == '\0') {
 	    gtk_widget_set_sensitive(w, FALSE);
 	} else {
-	    strcpy(tmp, startdir);
+	    *tmp = '\0';
+	    strncat(tmp, startdir, FILENAME_MAX - 1);
+	    trim_slash(tmp);
 	    trim_homedir(tmp);
-	    gretl_tooltips_add(w, tmp);
+	    if (*tmp != '\0') {
+		gretl_tooltips_add(w, tmp);
+	    }
 	}
     }
 }

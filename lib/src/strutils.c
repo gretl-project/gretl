@@ -1795,7 +1795,7 @@ char *trim_slash (char *s)
 {
     int n = strlen(s);
 
-    if (s[n-1] == '/' || s[n-1] == '\\') {
+    if (n > 0 && (s[n-1] == '/' || s[n-1] == '\\')) {
 	s[n-1] = '\0';
     }
 

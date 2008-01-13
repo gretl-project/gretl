@@ -323,8 +323,8 @@ static void add_files_to_menu (int ftype)
 
 static int fnamencmp (const char *f1, const char *f2, int n)
 {
-    GError *err = NULL;
     gchar *u1 = NULL, *u2 = NULL;
+    GError *err = NULL;
     gsize bytes;
     int ret = 0;
 
@@ -546,8 +546,9 @@ void trim_homedir (char *fname)
     home = mydocs_path();
     if (home != NULL) {
 	int n = strlen(home);
+	int m = strlen(fname);
 
-	if (!fnamencmp(fname, home, n)) {
+	if (m > n && !fnamencmp(fname, home, n)) {
 	    char *p = strrchr(home, '\\');
 	    
 	    if (p != NULL) {
@@ -564,8 +565,9 @@ void trim_homedir (char *fname)
     home = getenv("HOME");
     if (home != NULL) {
 	int n = strlen(home);
+	int m = strlen(fname);
 
-	if (!strncmp(fname, home, n)) {
+	if (m > n && !strncmp(fname, home, n)) {
 	    char tmp[FILENAME_MAX];
 
 	    strcpy(tmp, "~");
