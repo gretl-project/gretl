@@ -27,6 +27,8 @@
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
 
+#define tabspaces 4
+
 enum {
     PLAIN_TEXT,
     BLUE_TEXT,
@@ -356,6 +358,25 @@ void sourceview_insert_buffer (windata_t *vwin, const char *buf)
     real_sourceview_insert(vwin, NULL, buf);
 }
 
+static void set_source_tabs (GtkWidget *w, int cw)
+{
+    static PangoTabArray *ta;
+
+    if (ta == NULL) {
+	int tabw = tabspaces * cw;
+	gint i, loc = tabw;
+
+	ta = pango_tab_array_new(10, TRUE);
+	for (i=0; i<10; i++) {
+	    pango_tab_array_set_tab(ta, i, PANGO_TAB_LEFT, loc);
+	    loc += tabw;
+	}
+    }
+
+    gtk_text_view_set_tabs(GTK_TEXT_VIEW(w), ta);
+}
+
+
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
 {
@@ -364,6 +385,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     GtkSourceTagStyle *tagstyle;
     GdkColormap *cmap;
     GdkColor blue;
+    int cw;
 
     /* set up paren-matching in blue */
 
@@ -397,8 +419,11 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     gtk_widget_modify_font(GTK_WIDGET(vwin->w), fixed_font);
 
-    hsize *= get_char_width(vwin->w);
+    cw = get_char_width(vwin->w);
+    hsize *= cw;
     hsize += 48;
+
+    set_source_tabs(vwin->w, cw);
 
     gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
@@ -1079,7 +1104,7 @@ gchar *textview_get_current_line (GtkWidget *view)
 }
 
 /* Determine whether or not any of the lines in a chunk of text
-   are indented.
+   are indented, via spaces or tabs.
 */
 
 static int text_is_indented (const gchar *s)
@@ -1093,10 +1118,10 @@ static int text_is_indented (const gchar *s)
     while (*s) {
 	if (*s == '\n') {
 	    leading = 1;
-	} else if (*s != ' ') {
+	} else if (*s != ' ' && *s != '\t') {
 	    leading = 0;
 	}
-	if (leading && *s == ' ') {
+	if (leading && (*s == ' ' || *s == '\t')) {
 	    return 1;
 	}
 	s++;
@@ -1199,24 +1224,44 @@ static void comment_or_uncomment_text (GtkWidget *w, gpointer p)
     }
 }
 
-#define SCRIPT_TAB_CHARS 3
+enum {
+    TAB_NEXT,
+    TAB_PREV
+};
 
-static char *unindent_line (char *s)
+static int spaces_to_tab_stop (const char *s, int step)
 {
-    int i = 0;
+    int ret, n = 0;
 
-    while (*s == ' ' && i < SCRIPT_TAB_CHARS) {
+    while (*s) {
+	if (*s == ' ') {
+	    n++;
+	} else if (*s == '\t') {
+	    n += tabspaces;
+	} else {
+	    break;
+	}
 	s++;
-	i++;
     }
 
-    return s;
+    if (step == TAB_NEXT) {
+	ret = tabspaces - (n % tabspaces);
+    } else {
+	if (n % tabspaces == 0) {
+	    ret = n - tabspaces;
+	    if (ret < 0) ret = 0;
+	} else {
+	    ret = (n / tabspaces) * tabspaces;
+	} 
+    }
+
+    return ret;
 }
 
 static void indent_text (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
-    int i;
+    int i, n;
 
     gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
 
@@ -1225,14 +1270,16 @@ static void indent_text (GtkWidget *w, gpointer p)
 
 	bufgets_init(tb->chunk);
 	while (bufgets(line, sizeof line, tb->chunk)) {
-	    for (i=0; i<SCRIPT_TAB_CHARS; i++) {
+	    n = spaces_to_tab_stop(line, TAB_NEXT);
+	    for (i=0; i<n; i++) {
 		gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
 	    }
 	    gtk_text_buffer_insert(tb->buf, &tb->start, line, -1);
 	}
 	bufgets_finalize(tb->chunk);
     } else {
-	for (i=0; i<SCRIPT_TAB_CHARS; i++) {
+	n = spaces_to_tab_stop(tb->chunk, TAB_NEXT);
+	for (i=0; i<n; i++) {
 	    gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
 	}
 	gtk_text_buffer_insert(tb->buf, &tb->start, tb->chunk, -1);
@@ -1243,6 +1290,7 @@ static void unindent_text (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
     char *ins;
+    int i, n;
 
     gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
 
@@ -1251,12 +1299,20 @@ static void unindent_text (GtkWidget *w, gpointer p)
 
 	bufgets_init(tb->chunk);
 	while (bufgets(line, sizeof line, tb->chunk)) {
-	    ins = unindent_line(line);
+	    n = spaces_to_tab_stop(line, TAB_PREV);
+	    ins = line + strspn(line, " \t");
+	    for (i=0; i<n; i++) {
+		gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
+	    }
 	    gtk_text_buffer_insert(tb->buf, &tb->start, ins, -1);
 	}
 	bufgets_finalize(tb->chunk);
     } else {
-	ins = unindent_line(tb->chunk);
+	n = spaces_to_tab_stop(tb->chunk, TAB_PREV);
+	ins = tb->chunk + strspn(tb->chunk, " \t");
+	for (i=0; i<n; i++) {
+	    gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
+	}
 	gtk_text_buffer_insert(tb->buf, &tb->start, ins, -1);
     }
 }
