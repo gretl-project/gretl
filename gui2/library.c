@@ -6447,6 +6447,10 @@ static int execute_script (const char *runfile, const char *buf,
 	pputc(prn, '\n');
     }
 
+    if (exec_err) {
+	gretl_exec_state_uncomment(&state);
+    }
+
     return exec_err;
 }
 
@@ -6636,6 +6640,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 #endif
 
     if (err) {
+	gretl_exec_state_uncomment(s);
         errmsg(err, prn);
         return 1;
     }

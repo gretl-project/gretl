@@ -2236,7 +2236,9 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
     }
 
     if (a->rows == 1) {
-	if (a->val[0] > 0) {
+	if (!logdet) {
+	    return a->val[0];
+	} else if (a->val[0] > 0) {
 	    return log(a->val[0]);
 	} else {
 #if 0

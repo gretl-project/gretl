@@ -5010,6 +5010,12 @@ void gretl_exec_state_clear (ExecState *s)
     s->funcerr = 0;
 }
 
+void gretl_exec_state_uncomment (ExecState *s)
+{
+    s->in_comment = 0;
+    s->cmd->flags &= ~CMD_IGNORE;
+}
+
 /* if-then stuff - conditional execution */
 
 static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)

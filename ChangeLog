@@ -6,7 +6,7 @@ version 1.7.2, in progress
 - Add shell capture for strings via $(shellcommand)
 - Paths stuff: add non-configurable "dotdir" to hold per-user
   automatically-created files
-- Fix bugs 1861010, 1868859
+- Fix bugs 1861010, 1868859, 1869271, 1870459, 1870973
 - Rationalize frequency plot dialog
 - Add Help item to forecast dialog
 - Fixes for matrix "dot operations"
@@ -15,7 +15,10 @@ version 1.7.2, in progress
 - Document the --auto option for the "omit" command, and add
   a GUI handle for it
 - MS Windows and OS X packages: update to gnuplot 4.3 (CVS)
+- Graphing internals: use UTF-8 for internationalized strings
 - Models having an exact fit: block various invalid tests
+- det() function: fix for singular matrices
+- GUI script editor enhancements
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

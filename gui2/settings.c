@@ -248,6 +248,8 @@ RCVAR rc_vars[] = {
       INVISET, 32, TAB_NONE, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, TAB_NONE, NULL },
+    { "tabwidth", "spaces per tab", NULL, &tabwidth, 
+      INVISET | INTSET | GUISET, 0, TAB_NONE, NULL },
     { "main_width", "main window width", NULL, &mainwin_width, 
       INVISET | INTSET | GUISET, 0, TAB_NONE, NULL },
     { "main_height", "main window height", NULL, &mainwin_height, 

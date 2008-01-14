@@ -794,6 +794,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     if (err) {
+	gretl_exec_state_uncomment(s);
 	errmsg(err, prn);
 	return err;
     }
@@ -1053,6 +1054,10 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
 	echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
+    }
+
+    if (err) {
+	gretl_exec_state_uncomment(s);
     }
 
     return err;

@@ -28,8 +28,6 @@
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
 
-#define tabspaces 4
-
 enum {
     PLAIN_TEXT,
     BLUE_TEXT,
@@ -364,7 +362,7 @@ static void set_source_tabs (GtkWidget *w, int cw)
     static PangoTabArray *ta;
 
     if (ta == NULL) {
-	int tabw = tabspaces * cw;
+	int tabw = tabwidth * cw;
 	gint i, loc = tabw;
 
 	ta = pango_tab_array_new(10, TRUE);
@@ -1131,10 +1129,12 @@ static int text_is_indented (const gchar *s)
     return 0;
 }
 
-/* Determine whether or not a chunk of text is commented,
-   in the form of each line beginning with '#' (with possible
-   leading white space).  If some lines are commented and
-   others are not, return -1.
+/* Determine whether or not a chunk of text is commented, in the form
+   of each line beginning with '#' (with possible leading white
+   space).  If some lines are commented and others are not, return -1,
+   which blocks the comment/ uncomment menu items.  Also return -1 if
+   the region contains C-style comments, since comments can't be
+   mixed or nested.
 */
 
 static int text_is_commented (const gchar *s)
@@ -1147,6 +1147,10 @@ static int text_is_commented (const gchar *s)
     }
 
     while (*s) {
+	if ((*s == '/' && *(s+1) == '*') ||
+	    (*s == '*' && *(s+1) == '/')) {
+	    return -1;
+	}
 	if (!gotc) {
 	    if (*s == '#') {
 		comm++;
@@ -1159,7 +1163,7 @@ static int text_is_commented (const gchar *s)
 	    if (*(s+1)) {
 		lines++;
 	    }
-	}
+	} 
 	s++;
     }
 
@@ -1238,7 +1242,7 @@ static int spaces_to_tab_stop (const char *s, int step)
 	if (*s == ' ') {
 	    n++;
 	} else if (*s == '\t') {
-	    n += tabspaces;
+	    n += tabwidth;
 	} else {
 	    break;
 	}
@@ -1246,13 +1250,13 @@ static int spaces_to_tab_stop (const char *s, int step)
     }
 
     if (step == TAB_NEXT) {
-	ret = tabspaces - (n % tabspaces);
+	ret = tabwidth - (n % tabwidth);
     } else {
-	if (n % tabspaces == 0) {
-	    ret = n - tabspaces;
+	if (n % tabwidth == 0) {
+	    ret = n - tabwidth;
 	    if (ret < 0) ret = 0;
 	} else {
-	    ret = (n / tabspaces) * tabspaces;
+	    ret = (n / tabwidth) * tabwidth;
 	} 
     }
 
@@ -1318,7 +1322,24 @@ static void unindent_text (GtkWidget *w, gpointer p)
     }
 }
 
-static void indent_buffer (GtkWidget *w, windata_t *vwin)
+static void tab_width_dialog (GtkWidget *w, gpointer p)
+{
+    const char *title = _("gretl: configure tabs");
+    const char *spintxt = _("Spaces per tab");
+    int tsp = tabwidth;
+    int resp;
+
+    resp = spin_dialog(title, NULL, &tsp, spintxt, 2, 8, 0);
+
+    if (resp < 0) {
+	/* canceled */
+	;
+    } else {
+	tabwidth = tsp;
+    }
+}
+
+static void auto_indent_buffer (GtkWidget *w, windata_t *vwin)
 {
     int this_indent = 0;
     int next_indent = 0;
@@ -1338,14 +1359,17 @@ static void indent_buffer (GtkWidget *w, windata_t *vwin)
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf)) {
+	int nsp;
+
 	if (string_is_blank(line)) {
 	    gtk_text_buffer_insert(tbuf, &iter, line, -1);
 	    continue;
 	}
 	ins = line + strspn(line, " \t");
 	adjust_indent(ins, &this_indent, &next_indent);
-	for (i=0; i<this_indent; i++) {
-	    gtk_text_buffer_insert(tbuf, &iter, "    ", -1);
+	nsp = this_indent * tabwidth;
+	for (i=0; i<nsp; i++) {
+	    gtk_text_buffer_insert(tbuf, &iter, " ", -1);
 	}
 	gtk_text_buffer_insert(tbuf, &iter, ins, -1);
     }
@@ -1511,11 +1535,17 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
 
 	item = gtk_menu_item_new_with_label(_("Auto-indent script"));
 	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(indent_buffer),
+			 G_CALLBACK(auto_indent_buffer),
 			 vwin);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-	
+
+	item = gtk_menu_item_new_with_label(_("Configure tabs..."));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(tab_width_dialog),
+			 NULL);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }	
 
     if (pmenu == NULL) {
@@ -1887,3 +1917,4 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w)
     gtk_widget_show(w);
     gtk_widget_show(sw);
 }
+
