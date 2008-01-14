@@ -155,4 +155,8 @@ void fn_args_free (fnargs *args);
 
 int push_fn_arg (fnargs *args, int type, void *p);
 
+void adjust_indent (const char *line, int *this_indent,
+		    int *next_indent);
+
+
 #endif /* GRETL_FUNC_H */

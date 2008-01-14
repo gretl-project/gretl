@@ -1105,8 +1105,8 @@ static int wordmatch (const char *line, const char *s)
 	    (line[n] == '\0' || isspace(line[n])));
 }
 
-static void adjust_indent (const char *line, int *this_indent,
-			   int *next_indent)
+void adjust_indent (const char *line, int *this_indent,
+		    int *next_indent)
 {
     int ti = *next_indent;
     int ni = *next_indent;
@@ -1121,7 +1121,12 @@ static void adjust_indent (const char *line, int *this_indent,
 	ni++;
     } else if (wordmatch(line, "gmm")) {
 	ni++;
+    } else if (wordmatch(line, "function")) {
+	ni++;
+    } else if (wordmatch(line, "restrict")) {
+	ni++;
     } else if (wordmatch(line, "end") ||
+	       wordmatch(line, "endif") ||
 	       wordmatch(line, "endloop")) {
 	ti--;
 	ni--;

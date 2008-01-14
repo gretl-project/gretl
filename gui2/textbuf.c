@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "textbuf.h"
+#include "gretl_func.h"
 
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguage.h>
@@ -1317,6 +1318,42 @@ static void unindent_text (GtkWidget *w, gpointer p)
     }
 }
 
+static void indent_buffer (GtkWidget *w, windata_t *vwin)
+{
+    int this_indent = 0;
+    int next_indent = 0;
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+    char line[1024];
+    gchar *buf;
+    const char *ins;
+    int i;
+
+    buf = textview_get_text(vwin->w);
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    gtk_text_buffer_set_text(tbuf, "", -1); 
+    gtk_text_buffer_get_start_iter(tbuf, &iter);
+    
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	if (string_is_blank(line)) {
+	    gtk_text_buffer_insert(tbuf, &iter, line, -1);
+	    continue;
+	}
+	ins = line + strspn(line, " \t");
+	adjust_indent(ins, &this_indent, &next_indent);
+	for (i=0; i<this_indent; i++) {
+	    gtk_text_buffer_insert(tbuf, &iter, "    ", -1);
+	}
+	gtk_text_buffer_insert(tbuf, &iter, ins, -1);
+    }
+
+    bufgets_finalize(buf); 
+    g_free(buf);
+}
+
 static void exec_script_text (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
@@ -1460,6 +1497,7 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
 			 *ptb);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+
 	if (text_is_indented(tb->chunk)) {
 	    item = gtk_menu_item_new_with_label((tb->selected)? 
 						_("Unindent region") : 
@@ -1470,6 +1508,14 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 	}
+
+	item = gtk_menu_item_new_with_label(_("Auto-indent script"));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(indent_buffer),
+			 vwin);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+	
     }	
 
     if (pmenu == NULL) {
