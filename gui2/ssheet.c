@@ -2046,7 +2046,7 @@ static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 
 	if (resp == GRETL_YES) {
 	    get_data_from_sheet(NULL, sheet);
-	} else if (resp == GRETL_CANCEL || resp == -1) {
+	} else if (resp == GRETL_CANCEL) {
 	    return FALSE;
 	}
     } 

@@ -22,10 +22,11 @@
 
 #include <stdarg.h>
 
+#define GRETL_CANCEL (-1)
+
 enum {
     GRETL_YES,
     GRETL_NO,
-    GRETL_CANCEL,
     HELP_BUTTON
 } buttons;
 

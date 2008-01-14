@@ -770,6 +770,8 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    }
 	    return TRUE;
 	}
+    } else if (key->keyval == GDK_Return) {
+	script_electric_enter(vwin);
     }
 
     return FALSE;
@@ -817,10 +819,9 @@ catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    }
 	} else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
 	    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
-		gint resp;
-
-		resp = query_save_text(NULL, NULL, vwin);
-		if (!resp) gtk_widget_destroy(vwin->dialog);
+		if (query_save_text(NULL, NULL, vwin) == FALSE) {
+		    gtk_widget_destroy(vwin->dialog);
+		}
 	    } else { 
 		gtk_widget_destroy(w);
 	    }
@@ -831,7 +832,7 @@ catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    return TRUE;
 	}
 #endif
-    }
+    } 
 
     return FALSE;
 }
@@ -2445,8 +2446,7 @@ static gint query_save_text (GtkWidget *w, GdkEvent *event,
 			     windata_t *vwin)
 {
     if (CONTENT_IS_CHANGED(vwin)) {
-	int resp = yes_no_dialog("gretl", 
-				 _("Save changes?"), 1);
+	int resp = yes_no_dialog("gretl", _("Save changes?"), 1);
 
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;

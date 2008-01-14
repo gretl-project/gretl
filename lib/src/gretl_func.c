@@ -1097,41 +1097,39 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     return err;
 }
 
-static int wordmatch (const char *line, const char *s)
+static int wordmatch (const char *s, const char *test)
 {
-    int n = strlen(s);
+    int n = strlen(test);
     
-    return (strncmp(line, s, n) == 0 && 
-	    (line[n] == '\0' || isspace(line[n])));
+    return (!strncmp(s, test, n) && (s[n] == '\0' || isspace(s[n])));
 }
 
-void adjust_indent (const char *line, int *this_indent,
-		    int *next_indent)
+void adjust_indent (const char *s, int *this_indent, int *next_indent)
 {
     int ti = *next_indent;
     int ni = *next_indent;
 
-    if (wordmatch(line, "loop")) {
+    if (wordmatch(s, "loop")) {
 	ni++;
-    } else if (wordmatch(line, "if")) {
+    } else if (wordmatch(s, "if")) {
 	ni++;
-    } else if (wordmatch(line, "nls")) {
+    } else if (wordmatch(s, "nls")) {
 	ni++;
-    } else if (wordmatch(line, "mle")) {
+    } else if (wordmatch(s, "mle")) {
 	ni++;
-    } else if (wordmatch(line, "gmm")) {
+    } else if (wordmatch(s, "gmm")) {
 	ni++;
-    } else if (wordmatch(line, "function")) {
+    } else if (wordmatch(s, "function")) {
 	ni++;
-    } else if (wordmatch(line, "restrict")) {
+    } else if (wordmatch(s, "restrict")) {
 	ni++;
-    } else if (wordmatch(line, "end") ||
-	       wordmatch(line, "endif") ||
-	       wordmatch(line, "endloop")) {
+    } else if (wordmatch(s, "end") ||
+	       wordmatch(s, "endif") ||
+	       wordmatch(s, "endloop")) {
 	ti--;
 	ni--;
-    } else if (wordmatch(line, "else") ||
-	       wordmatch(line, "elif")) {
+    } else if (wordmatch(s, "else") ||
+	       wordmatch(s, "elif")) {
 	ni = ti;
 	ti--;
     } 

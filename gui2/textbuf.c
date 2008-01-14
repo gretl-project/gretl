@@ -375,7 +375,6 @@ static void set_source_tabs (GtkWidget *w, int cw)
     gtk_text_view_set_tabs(GTK_TEXT_VIEW(w), ta);
 }
 
-
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
 {
@@ -1132,7 +1131,7 @@ static int text_is_indented (const gchar *s)
 /* Determine whether or not a chunk of text is commented, in the form
    of each line beginning with '#' (with possible leading white
    space).  If some lines are commented and others are not, return -1,
-   which blocks the comment/ uncomment menu items.  Also return -1 if
+   which blocks the comment/uncomment menu items.  Also return -1 if
    the region contains C-style comments, since comments can't be
    mixed or nested.
 */
@@ -1149,6 +1148,7 @@ static int text_is_commented (const gchar *s)
     while (*s) {
 	if ((*s == '/' && *(s+1) == '*') ||
 	    (*s == '*' && *(s+1) == '/')) {
+	    /* found C-style comment */
 	    return -1;
 	}
 	if (!gotc) {
@@ -1185,8 +1185,8 @@ struct textbit {
     int selected;
 };
 
-/* either insert or remove '#' comment markers at the
-   start of the line(s) of a chunk of text 
+/* either insert or remove '#' comment markers at the start of the
+   line(s) of a chunk of text
 */
 
 static void comment_or_uncomment_text (GtkWidget *w, gpointer p)
@@ -1234,7 +1234,7 @@ enum {
     TAB_PREV
 };
 
-static int spaces_to_tab_stop (const char *s, int step)
+static int spaces_to_tab_stop (const char *s, int targ)
 {
     int ret, n = 0;
 
@@ -1249,7 +1249,7 @@ static int spaces_to_tab_stop (const char *s, int step)
 	s++;
     }
 
-    if (step == TAB_NEXT) {
+    if (targ == TAB_NEXT) {
 	ret = tabwidth - (n % tabwidth);
     } else {
 	if (n % tabwidth == 0) {
@@ -1331,10 +1331,7 @@ static void tab_width_dialog (GtkWidget *w, gpointer p)
 
     resp = spin_dialog(title, NULL, &tsp, spintxt, 2, 8, 0);
 
-    if (resp < 0) {
-	/* canceled */
-	;
-    } else {
+    if (resp != GRETL_CANCEL) {
 	tabwidth = tsp;
     }
 }
@@ -1391,8 +1388,7 @@ enum {
     AUTO_SELECT_LINE
 };
 
-static struct textbit *vwin_get_textbit (windata_t *vwin,
-					 int mode)
+static struct textbit *vwin_get_textbit (windata_t *vwin, int mode)
 {
     struct textbit *tb;
 
@@ -1430,12 +1426,255 @@ static struct textbit *vwin_get_textbit (windata_t *vwin,
     return tb;
 }
 
+static int count_leading_spaces (const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (*s == ' ') {
+	    n++;
+	} else if (*s == '\t') {
+	    n += tabwidth;
+	} else {
+	    break;
+	}
+	s++;
+    }
+
+    return n;
+}
+
+/* Given what's presumed to be a start-of-line iter, find how many
+   leading spaces are on the line, counting tabs as multiple spaces.
+*/
+
+static int leading_spaces_at_iter (GtkTextBuffer *tbuf, GtkTextIter *start)
+{
+    GtkTextIter end = *start;
+    gchar *s;
+    int n = 0;
+
+    gtk_text_iter_forward_to_line_end(&end);
+    s = gtk_text_buffer_get_text(tbuf, start, &end, FALSE);
+    if (s != NULL) {
+	n = count_leading_spaces(s);
+	g_free(s);
+    }
+
+    return n;
+}
+
+static char *textbuf_get_next_word (char *word, int maxlen, GtkTextBuffer *tbuf, 
+				    GtkTextIter iter)
+{
+    GtkTextIter start = iter;
+    GtkTextIter end = start;
+
+    *word = '\0';
+
+    if (gtk_text_iter_forward_word_end(&end)) {
+	gchar *tmp = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+
+	if (tmp != NULL) {
+	    int n = strspn(tmp, " \t\n\r");
+
+	    strncat(word, tmp + n, maxlen - 1);
+	    g_free(tmp);
+	}
+    } 
+
+    return word;
+}
+
+static int incremental_leading_spaces (const char *prevword,
+				       const char *thisword)
+{
+    int this_indent = 0;
+    int next_indent = 0;
+
+    if (*prevword != '\0') {
+	int prev_indent = 0;
+
+	adjust_indent(prevword, &this_indent, &next_indent);
+	prev_indent = this_indent;
+	if (*thisword != '\0') {
+	    adjust_indent(thisword, &this_indent, &next_indent);
+	    this_indent -= prev_indent;
+	} else {
+	    this_indent = next_indent - this_indent;
+	}
+    }
+
+    return this_indent * tabwidth;
+}
+
+static char *get_previous_line_start_word (char *word, int maxlen,
+					   GtkTextBuffer *tbuf,
+					   GtkTextIter iter,
+					   int *leadspace)
+{
+    GtkTextIter prev = iter;
+
+    *word = '\0';
+
+    while (gtk_text_iter_backward_line(&prev)) {
+	textbuf_get_next_word(word, maxlen, tbuf, prev);
+	if (*word != '\0') {
+	    if (leadspace != NULL) {
+		*leadspace = leading_spaces_at_iter(tbuf, &prev);
+	    }
+	    break;
+	}
+    }
+
+    return word;
+}
+
+/* Is the insertion point at the start of a line, or in a white-space
+   field to the left of any non-space characters?  If so, we'll trying
+   inserting a "smart" soft tab in response to the Tab key.
+*/
+
+static int maybe_insert_smart_tab (windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextMark *mark;
+    GtkTextIter start, end;
+    gchar *chunk = NULL;
+    int pos = 0, ret = 0;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
+	return 0;
+    }
+
+    mark = gtk_text_buffer_get_insert(tbuf);
+    gtk_text_buffer_get_iter_at_mark(tbuf, &end, mark);
+    pos = gtk_text_iter_get_line_offset(&end);
+
+    if (pos == 0) {
+	ret = 1;
+    } else {
+	start = end;
+	gtk_text_iter_set_line_offset(&start, 0);
+	chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+	ret = strspn(chunk, " \t") == strlen(chunk);
+    }
+
+    if (ret) {
+	GtkTextIter prev = start;
+	char *s, thisword[12];
+	char prevword[12];
+	int i, nsp = 0;
+
+	*prevword = *thisword = '\0';
+
+	s = textview_get_current_line(vwin->w);
+	if (s != NULL) {
+	    sscanf(s, "%11s", thisword);
+	    g_free(s);
+	} 
+
+	get_previous_line_start_word(prevword, sizeof prevword, tbuf, prev,
+				     &nsp);
+	nsp += incremental_leading_spaces(prevword, thisword);
+
+	if (pos > 0) {
+	    gtk_text_buffer_delete(tbuf, &start, &end);
+	}
+	for (i=0; i<nsp; i++) {
+	    gtk_text_buffer_insert(tbuf, &start, " ", -1);
+	}	
+	if (pos > 0) {
+	    s = chunk + strspn(chunk, " \t");
+	    gtk_text_buffer_insert(tbuf, &start, s, -1);
+	}
+    }
+
+    if (chunk != NULL) {
+	g_free(chunk);
+    }
+
+    return ret;
+}
+
+#define TABDEBUG 0
+
+
+/* On "Enter" in script editing, try to compute the correct indent
+   level for the current line, and make an adjustment if it's not
+   already in place
+*/
+
+void script_electric_enter (windata_t *vwin)
+{
+    char *s = textview_get_current_line(vwin->w);
+
+    if (s != NULL) {
+	GtkTextBuffer *tbuf;
+	GtkTextMark *mark;
+	GtkTextIter start, end;
+	char thisword[12];
+	char prevword[12];
+	int diff, nsp, targsp = 0;
+
+	*thisword = *prevword = '\0';
+
+	sscanf(s, "%11s", thisword);
+	nsp = count_leading_spaces(s);
+	g_free(s);
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	mark = gtk_text_buffer_get_insert(tbuf);
+	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
+	gtk_text_iter_set_line_offset(&start, 0);
+
+	get_previous_line_start_word(prevword, sizeof prevword, tbuf, start,
+				     &targsp);
+
+#if TABDEBUG
+	fprintf(stderr, "thisword='%s', leading space = %d\n",
+		thisword, nsp);
+	fprintf(stderr, "prevword='%s', leading space = %d\n",
+		prevword, targsp);
+#endif
+
+	targsp += incremental_leading_spaces(prevword, thisword);
+	diff = nsp - targsp;
+#if TABDEBUG
+	fprintf(stderr, "after increment, targsp = %d, diff = %d\n", targsp, diff);
+#endif
+
+	if (diff > 0) {
+	    end = start;
+	    gtk_text_iter_forward_chars(&end, diff);
+	    gtk_text_buffer_delete(tbuf, &start, &end);
+	} else if (diff < 0) {
+	    int i;
+
+	    diff = -diff;
+	    for (i=0; i<diff; i++) {
+		gtk_text_buffer_insert(tbuf, &start, " ", -1);
+	    }
+	}
+    }
+}
+
+/* handler for the user pressing the Tab key when editing a script */
+
 gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
 {
     struct textbit *tb;
     gboolean ret = FALSE;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), FALSE);
+
+    if (!(mods & GDK_SHIFT_MASK)) {
+	if (maybe_insert_smart_tab(vwin)) {
+	    return TRUE;
+	}
+    }
 
     tb = vwin_get_textbit(vwin, AUTO_SELECT_NONE);
     if (tb == NULL) {

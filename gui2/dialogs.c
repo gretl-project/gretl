@@ -132,7 +132,7 @@ gboolean exit_check (void)
 	if (resp == GRETL_YES) {
 	    save_session_callback(NULL, code, NULL);
 	    return TRUE; /* bodge */
-	} else if (resp == GRETL_CANCEL || resp == -1) {
+	} else if (resp == GRETL_CANCEL) {
 	    /* resp -1 = wm close */
 	    return TRUE;
 	}
@@ -146,7 +146,7 @@ gboolean exit_check (void)
 	if (resp == GRETL_YES) {
 	    save_data_callback();
 	    return TRUE; 
-	} else if (resp == GRETL_CANCEL || resp == -1) {
+	} else if (resp == GRETL_CANCEL) {
 	    return TRUE;
 	}
     } 

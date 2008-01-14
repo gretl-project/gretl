@@ -5601,8 +5601,7 @@ int maybe_restore_full_data (int action)
 
 	if (resp == GRETL_YES) {
 	    gui_restore_sample(&Z, &datainfo);
-	} else if (resp == GRETL_CANCEL || resp < 0 || 
-		   action == COMPACT || action == EXPAND) {
+	} else if (resp == GRETL_CANCEL || action == COMPACT || action == EXPAND) {
 	    return 1;
 	}
     } 
