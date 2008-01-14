@@ -370,7 +370,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     /* lower limit */
     w = gtk_label_new(_("Lower frequency bound:"));
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 0, 1);
-    s1 = gtk_spin_button_new_with_range(1, 32, 1);
+    s1 = gtk_spin_button_new_with_range(1, 64, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s1), finfo->bkl);
     g_signal_connect(G_OBJECT(s1), "value-changed",
 		     G_CALLBACK(spinner_set_int), &finfo->bkl);
@@ -379,7 +379,7 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     /* upper limit */
     w = gtk_label_new(_("Upper frequency bound:"));
     gtk_table_attach_defaults(GTK_TABLE(tab), w, 0, 1, 1, 2);
-    s2 = gtk_spin_button_new_with_range(4, 64, 1);
+    s2 = gtk_spin_button_new_with_range(2, 128, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s2), finfo->bku);
     g_signal_connect(G_OBJECT(s2), "value-changed",
 		     G_CALLBACK(spinner_set_int), &finfo->bku);
@@ -499,7 +499,7 @@ static int filter_dialog (filter_info *finfo)
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("lambda (higher values -> smoother trend):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	w = gtk_spin_button_new_with_range(50.0, 2.0 * finfo->lambda, 1);
+	w = gtk_spin_button_new_with_range(1.0, 999999, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->lambda);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(spinner_set_double), &finfo->lambda);
