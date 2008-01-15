@@ -12,18 +12,8 @@ ifeq ($(gnome_prefix),NA)
   gnome_prefix = $(prefix)
 endif
 
-GCONFTOOL = @GCONFTOOL@
-GCONF_SCHEMA_CONFIG_SOURCE = @GCONF_SCHEMA_CONFIG_SOURCE@
-GCONF_SCHEMA_FILE_DIR = @GCONF_SCHEMA_FILE_DIR@
-
 ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
-endif
-
-ifeq ($(have_gnome),2.0)
-  omfdir = ../gui2/omf-install
-  install_schemas = install-gconf-keys install-gconf-schema-file
-  schemadir = $(GCONF_SCHEMA_FILE_DIR)
 endif
 
 desktopdir = $(gnome_prefix)/share/applications
@@ -31,7 +21,7 @@ mimedir = $(gnome_prefix)/share/mime-info
 gpixmaps = $(gnome_prefix)/share/pixmaps
 schemadir = $(gnome_prefix)/etc/gconf/schemas
 
-install: install-images install-misc $(install_schemas)
+install: install-images install-misc
 
 install-images:
 	$(tooldir)/mkinstalldirs $(gpixmaps)
@@ -46,12 +36,5 @@ install-misc:
 	$(INSTALL_DATA) $(topsrc)/gnome/gretl.mime $(mimedir)
 	$(INSTALL_DATA) gretl.keys $(mimedir)
 
-install-gconf-keys:
-	GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) \
-	$(GCONFTOOL) --makefile-install-rule $(topsrc)/gnome/gretl.schemas
-
-install-gconf-schema-file: $(topsrc)/gnome/gretl.schemas	
-	$(tooldir)/mkinstalldirs $(schemadir)
-	$(INSTALL_DATA) $(topsrc)/gnome/gretl.schemas $(schemadir)
 
 

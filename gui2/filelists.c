@@ -88,70 +88,7 @@ static const char *file_sections[] = {
     "recent_working_dirs"
 };
 
-#if defined(USE_GNOME)
-
-static void printfilelist (int filetype, GConfClient *client)
-{
-    GSList *flist = NULL;
-    GError *err = NULL;
-    gchar *key;
-    char **filep;
-    int i;
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    for (i=0; i<MAXRECENT; i++) {
-	flist = g_slist_append(flist, filep[i]);
-    }
-
-    key = g_strdup_printf("/apps/gretl/%s", file_sections[filetype]);
-
-    gconf_client_set_list(client, key, GCONF_VALUE_STRING, 
-			  flist, &err);
-    if (err != NULL) {
-	fprintf(stderr, "Error saving filenames: %s\n", err->message);
-	g_error_free (err);
-    }
-
-    g_free(key);
-    g_slist_free(flist);
-}
-
-void save_file_lists (GConfClient *client)
-{
-    printfilelist(FILE_LIST_DATA, client);
-    printfilelist(FILE_LIST_SESSION, client);
-    printfilelist(FILE_LIST_SCRIPT, client);
-    printfilelist(FILE_LIST_WDIR, client);
-}
-
-void read_file_lists (GConfClient *client)
-{
-    GSList *flist = NULL;
-    char key[MAXSTR];
-    int i, j;
-
-    initialize_file_lists();
-
-    for (i=0; i<NFILELISTS; i++) {
-	sprintf(key, "/apps/gretl/%s", file_sections[i]);
-	flist = gconf_client_get_list(client, key,
-				      GCONF_VALUE_STRING, NULL);
-	if (flist != NULL) {
-	    for (j=0; j<MAXRECENT; j++) {
-		write_filename_to_list(i, j, flist->data);
-		flist = flist->next;
-	    }
-	    g_slist_free(flist);
-	    flist = NULL;
-	}
-    }
-}
-
-#elif defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 
 static void printfilelist (int filetype)
 {

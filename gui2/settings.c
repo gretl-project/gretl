@@ -36,11 +36,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#ifdef USE_GNOME
-# define USE_GCONF
-# include <gconf/gconf-client.h>
-#endif
-
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
@@ -1445,7 +1440,7 @@ static void boolvar_to_str (void *b, char *s)
 
 #ifndef G_OS_WIN32
 
-static int write_plain_text_rc (int full) 
+static int write_plain_text_rc (void) 
 {
     FILE *rc;
     char val[6];
@@ -1458,16 +1453,9 @@ static int write_plain_text_rc (int full)
 	return E_FOPEN;
     }
 
-    if (full) {
-	fprintf(rc, "# gretl config file (note: not used by gnome version)\n");
-    } else {
-	fprintf(rc, "# gretlcli config file\n");
-    }
+    fprintf(rc, "# gretl config file\n");
 
     for (i=0; rc_vars[i].var != NULL; i++) {
-	if (!full && rc_vars[i].flags & GUISET) {
-	    continue;
-	}
 	fprintf(rc, "# %s\n", rc_vars[i].description);
 	if (rc_vars[i].flags & BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, val);
@@ -1480,9 +1468,7 @@ static int write_plain_text_rc (int full)
 	}
     }
 
-    if (full) {
-	rc_save_file_lists(rc);
-    }
+    rc_save_file_lists(rc);
 
     fclose(rc);
 
@@ -1490,8 +1476,6 @@ static int write_plain_text_rc (int full)
 }
 
 #endif /* !G_OS_WIN32 */
-
-#ifndef USE_GCONF
 
 static void str_to_boolvar (char *s, void *b)
 {
@@ -1516,8 +1500,6 @@ static void str_to_int (char *s, void *b)
 	*ivar = 0;
     }
 }
-
-#endif
 
 static int dir_exists (const char *dname, FILE *fp)
 {
@@ -1592,7 +1574,7 @@ static int common_read_rc_setup (void)
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
-    if (tabwidth == 0) {
+    if (0 && tabwidth == 0) {
 	tabwidth = 4;
     }
 
@@ -1616,98 +1598,7 @@ static int common_read_rc_setup (void)
     return err;
 }
 
-/* next section: variant versions of write_rc and read_rc, depending
-   on both gconf presence and platform
-*/
-
-#ifdef USE_GCONF 
-
-void write_rc (void) 
-{
-    GConfClient *client;   
-    char key[MAXSTR];
-    gboolean bval;
-    int ival;
-    char *strvar;
-    int i;
-
-    client = gconf_client_get_default();
-
-    for (i=0; rc_vars[i].key != NULL; i++) {
-	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
-	if (rc_vars[i].flags & BOOLSET) {
-	    bval = *(gboolean *) rc_vars[i].var;
-	    gconf_client_set_bool(client, key, bval, NULL);
-	} else if (rc_vars[i].flags & INTSET) {
-	    ival = *(int *) rc_vars[i].var;
-	    gconf_client_set_int(client, key, ival, NULL);
-	} else {
-	    strvar = (char *) rc_vars[i].var;
-	    gconf_client_set_string(client, key, strvar, NULL);
-	}
-    }
-
-    save_file_lists(client);
-    g_object_unref(G_OBJECT(client));
-    gretl_set_paths(&paths, set_paths_opt);
-    record_shell_opt();
-}
-
-static void read_rc (void) 
-{
-    GConfClient *client;
-    GError *error = NULL;
-    gboolean bval;
-    int ival;
-    gchar *strval;
-    char key[MAXSTR];
-    int i;
-
-    client = gconf_client_get_default();
-
-    for (i=0; rc_vars[i].key != NULL; i++) {
-	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
-	if (rc_vars[i].flags & BOOLSET) {
-	    bval = gconf_client_get_bool(client, key, &error);
-	    if (error) {
-		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
-		g_clear_error(&error);
-	    } else {
-		*(int *) rc_vars[i].var = (int) bval;
-	    }
-	} else if (rc_vars[i].flags & INTSET) {
-	    ival = gconf_client_get_int(client, key, &error);
-	    if (error) {
-		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
-		g_clear_error(&error);
-	    } else {
-		*(int *) rc_vars[i].var = ival;
-	    }	    
-	} else {
-	    strval = gconf_client_get_string(client, key, &error);
-	    if (error) {
-		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
-		g_clear_error(&error);
-	    } else if (strval != NULL) {
-		if (*strval != '\0') {
-		    char *strvar = (char *) rc_vars[i].var;
-
-		    *strvar = '\0';
-		    strncat(strvar, strval, rc_vars[i].len - 1);
-		}
-		g_free(strval);
-	    }
-	}
-    }
-
-    read_file_lists(client);
-    g_object_unref(G_OBJECT(client));
-    common_read_rc_setup();
-}
-
-/* end of gconf version, now win32 */
-
-#elif defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 
 void write_rc (void) 
 {
@@ -1749,12 +1640,6 @@ void write_rc (void)
 				 strval);
 	}
     }
-
-#if 0
-    if (err) {
-	win_show_last_error();
-    }
-#endif
 
     save_file_lists();
     gretl_set_paths(&paths, set_paths_opt);
@@ -1881,13 +1766,13 @@ void read_rc (void)
     set_app_font(NULL);
 }
 
-#else /* end of gconf and win32 versions, now plain GTK */
+#else /* end of win32 version, now plain GTK */
 
 void write_rc (void)
 {
     int err;
 
-    err = write_plain_text_rc(1);
+    err = write_plain_text_rc();
     if (!err) {
 	gretl_set_paths(&paths, set_paths_opt);
 	record_shell_opt();
@@ -1944,7 +1829,7 @@ static void read_rc (void)
     common_read_rc_setup();
 }
 
-#endif /* end of "plain gtk" versions of read_rc, write_rc */
+#endif /* end of non-Windows versions of read_rc, write_rc */
 
 /* font selection: non-Windows, gtk-2.0 version first */
 
@@ -2436,8 +2321,4 @@ void finalize_working_dir_menu (void)
 void write_rc_at_exit (void)
 {
     write_rc();
-
-#ifdef USE_GCONF
-    write_plain_text_rc(0);
-#endif
 }

@@ -19,14 +19,7 @@ void trim_homedir (char *fname);
 
 void rc_save_file_lists (FILE *fp);
 
-#if defined(USE_GNOME)
-
-# include <gconf/gconf-client.h>
-
-void save_file_lists (GConfClient *client);
-void read_file_lists (GConfClient *client);
-
-#elif defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 
 void save_file_lists (void);
 void read_file_lists (void);
