@@ -27,76 +27,10 @@
 # include "build.h"
 #endif
 
-const gchar *copyright = "Copyright (C) 2000-2007 Allin Cottrell and "
+const gchar *copyright = "Copyright (C) 2000-2008 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
+const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
 const gchar *website = "http://gretl.sourceforge.net/";
-
-#ifdef USE_GNOME
-
-const gchar *
-gretl_gnome_blurb = N_("An econometrics program for the gnome desktop "
-		       "issued under the GNU General Public License.  "
-		       "http://gretl.sourceforge.net/");
-
-void about_dialog (gpointer data)
-{
-    static GtkWidget *about = NULL;
-    gchar *pixfile;
-    GdkPixbuf* pbuf = NULL;
-	
-    gchar *authors[] = {
-	"Allin Cottrell <cottrell@wfu.edu>",
-	"Riccardo \"Jack\" Lucchetti <r.lucchetti@univpm.it>",
-	NULL
-    };
-    gchar *documenters[] = {
-	"Allin Cottrell <cottrell@wfu.edu>",
-	"Riccardo \"Jack\" Lucchetti <r.lucchetti@univpm.it>",
-	NULL
-    };
-    gchar *translator_credits = _("translator_credits");
-
-    if (about != NULL) {
-	gdk_window_show(about->window);
-	gdk_window_raise(about->window);
-	return;
-    }
-
-    pixfile = gnome_program_locate_file(NULL,
-					GNOME_FILE_DOMAIN_PIXMAP,
-					"gretl-logo.xpm",
-					TRUE,
-					NULL);
-
-    if (pixfile != NULL) {
-	pbuf = gdk_pixbuf_new_from_file(pixfile, NULL);
-    } else {
-	fprintf(stderr, "Couldn't find gretl-logo.xpm\n");
-    }
-
-    about = gnome_about_new("gretl", GRETL_VERSION,
-			    copyright,
-			    _(gretl_gnome_blurb),
-			    (const char **) authors,
-			    (const char **) documenters,
-			    strcmp(translator_credits, "translator_credits") != 0 ?
-			    (const char *) translator_credits : NULL,
-			    pbuf);
-
-    gtk_window_set_transient_for(GTK_WINDOW(about), GTK_WINDOW(mdata->w));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(about), TRUE);
-
-    if (pbuf != NULL) {
-	g_object_unref(pbuf);
-    }
-	
-    g_signal_connect(G_OBJECT(about), "destroy",
-		     G_CALLBACK(gtk_widget_destroyed), &about);
-	
-    gtk_widget_show(about);
-}
-
-#else /* plain GTK version of About dialog follows */
 
 gchar *no_gpl_text (void)
 {
@@ -142,13 +76,13 @@ static void about_table_setup (GtkWidget *vbox, GtkWidget *view)
 
 void about_dialog (gpointer data) 
 {
-    GtkWidget *notebook, *box, *label, *tempwid;
+    GtkWidget *notebook, *box, *label, *w;
     GtkWidget *view, *dialog;
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
-    char *tempstr, buf[MAXSTR];
+    gchar *buf;
     const gchar *tr_credit = "";
-    FILE *fd;
+    FILE *fp;
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl")); 
@@ -168,30 +102,45 @@ void about_dialog (gpointer data)
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
-    if ((tempwid = open_logo("gretl-logo.xpm"))) {
-	gtk_box_pack_start(GTK_BOX(box), tempwid, FALSE, FALSE, 30);
-	gtk_widget_show(tempwid);
+    if ((w = open_logo("gretl-logo.xpm"))) {
+	gtk_box_pack_start(GTK_BOX(box), w, FALSE, FALSE, 30);
+	gtk_widget_show(w);
     }
 
-# ifdef ENABLE_NLS
+#ifdef ENABLE_NLS
     if (strcmp(_("translator_credits"), "translator_credits")) {
 	tr_credit = _("translator_credits");
     }
-# endif    
-    
-    tempstr = g_strdup_printf("gretl, version %s\n"
-# ifdef G_OS_WIN32
-			      BUILD_DATE
-# endif
-			      "%s\n%s\n%s",
-			      GRETL_VERSION, copyright, 
-			      website, tr_credit);
-    tempwid = gtk_label_new(tempstr);
-    g_free(tempstr);
+#endif  
 
-    gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
-    gtk_box_pack_start(GTK_BOX(box), tempwid, FALSE, FALSE, 0);
-    gtk_widget_show(tempwid);
+    buf = 
+	g_markup_printf_escaped("<span weight=\"bold\" size=\"xx-large\">"
+				"gretl %s</span>\n"
+#ifdef G_OS_WIN32
+				BUILD_DATE
+#endif
+				"%s\n%s\n",
+				GRETL_VERSION, _(bonmot), website);
+    w = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(w), buf);
+    g_free(buf);
+
+    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+    gtk_box_pack_start(GTK_BOX(box), w, FALSE, FALSE, 0);
+    gtk_widget_show(w);
+
+
+    buf = 
+	g_markup_printf_escaped("<span size=\"small\">%s</span>\n"
+				"<span size=\"small\">%s</span>",
+				copyright, tr_credit);
+    w = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(w), buf);
+    g_free(buf);
+
+    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+    gtk_box_pack_start(GTK_BOX(box), w, FALSE, FALSE, 0);
+    gtk_widget_show(w);
 
     gtk_widget_show(box);
 
@@ -216,41 +165,40 @@ void about_dialog (gpointer data)
     gtk_widget_show(label);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, label);
 
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    w = gtk_button_new_from_stock(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       tempwid, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		       w, FALSE, FALSE, 0);
+    g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    gtk_widget_grab_default(w);
+    gtk_widget_show(w);
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
-    tempstr = g_strdup_printf("%s/COPYING", paths.gretldir);
-    if ((fd = gretl_fopen(tempstr, "r")) == NULL) {
+    buf = g_strdup_printf("%s/COPYING", paths.gretldir);
+
+    if ((fp = gretl_fopen(buf, "r")) == NULL) {
 	gchar *msg = no_gpl_text();
 
 	gtk_text_buffer_insert(tbuf, &iter, msg, -1);
-	gtk_widget_show(dialog);
-	g_free(tempstr);
 	g_free(msg);
-	return;
-    }
-    g_free(tempstr);
-   
-    memset(buf, 0, sizeof(buf));
-    while(fread(buf, 1, sizeof(buf) - 1, fd)) {
-	gtk_text_buffer_insert(tbuf, &iter, buf, strlen(buf));
-	memset(buf, 0, sizeof(buf));
-    }
-    fclose(fd);
+    } else {
+	char chunk[MAXSTR];
 
+	memset(chunk, 0, sizeof chunk);
+	while(fread(chunk, 1, sizeof chunk - 1, fp)) {
+	    gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
+	    memset(chunk, 0, sizeof chunk);
+	}
+	fclose(fp);
+    }
+
+    g_free(buf);
+   
     gtk_widget_show(notebook);
-    gtk_widget_set_size_request(dialog, 520, 420);
+    gtk_widget_set_size_request(dialog, 520, -1);
     gtk_widget_show(dialog);
 }
-         
-#endif /* end of gnome/plain gtk variants */
