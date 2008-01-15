@@ -1486,6 +1486,8 @@ static char *textbuf_get_next_word (char *word, int maxlen, GtkTextBuffer *tbuf,
     return word;
 }
 
+#define TABDEBUG 0
+
 static int incremental_leading_spaces (const char *prevword,
 				       const char *thisword)
 {
@@ -1496,10 +1498,20 @@ static int incremental_leading_spaces (const char *prevword,
 	int prev_indent = 0;
 
 	adjust_indent(prevword, &this_indent, &next_indent);
+#if TABDEBUG
+	fprintf(stderr, "adjust_indent 1: this=%d, next=%d\n",
+		this_indent, next_indent);
+#endif
 	prev_indent = this_indent;
 	if (*thisword != '\0') {
 	    adjust_indent(thisword, &this_indent, &next_indent);
+#if TABDEBUG
+	    fprintf(stderr, "adjust_indent 2: this=%d\n", this_indent);
+#endif
 	    this_indent -= prev_indent;
+#if TABDEBUG
+	    fprintf(stderr, "adjust_indent 2: this=%d\n", this_indent);
+#endif
 	} else {
 	    this_indent = next_indent - this_indent;
 	}
@@ -1599,9 +1611,6 @@ static int maybe_insert_smart_tab (windata_t *vwin)
     return ret;
 }
 
-#define TABDEBUG 0
-
-
 /* On "Enter" in script editing, try to compute the correct indent
    level for the current line, and make an adjustment if it's not
    already in place
@@ -1611,19 +1620,29 @@ void script_electric_enter (windata_t *vwin)
 {
     char *s = textview_get_current_line(vwin->w);
 
-    if (s != NULL) {
+    if (s == NULL) {
+	return;
+    } else if (*s == '\0') {
+	g_free(s);
+	return;
+    } else {
 	GtkTextBuffer *tbuf;
 	GtkTextMark *mark;
 	GtkTextIter start, end;
 	char thisword[12];
 	char prevword[12];
-	int diff, nsp, targsp = 0;
+	int diff, nsp, incr;
+	int targsp = 0;
 
 	*thisword = *prevword = '\0';
 
 	sscanf(s, "%11s", thisword);
 	nsp = count_leading_spaces(s);
 	g_free(s);
+
+	if (*thisword == '\0') {
+	    return;
+	}
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	mark = gtk_text_buffer_get_insert(tbuf);
@@ -1640,10 +1659,13 @@ void script_electric_enter (windata_t *vwin)
 		prevword, targsp);
 #endif
 
-	targsp += incremental_leading_spaces(prevword, thisword);
+	incr = incremental_leading_spaces(prevword, thisword);
+	targsp += incr;
 	diff = nsp - targsp;
+
 #if TABDEBUG
-	fprintf(stderr, "after increment, targsp = %d, diff = %d\n", targsp, diff);
+	fprintf(stderr, "incr = %d: after increment targsp = %d, diff = %d\n", 
+		incr, targsp, diff);
 #endif
 
 	if (diff > 0) {

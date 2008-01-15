@@ -1592,6 +1592,10 @@ static int common_read_rc_setup (void)
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
+    if (tabwidth == 0) {
+	tabwidth = 4;
+    }
+
     err = gretl_set_paths(&paths, set_paths_opt);
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
