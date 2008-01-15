@@ -17,9 +17,6 @@
  * 
  */
 
-
-/* The "about" dialogs for the several gretl GUI variants. */
-
 #include "gretl.h"
 #include "version.h"
 
