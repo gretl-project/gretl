@@ -25,6 +25,9 @@
                       r == CLI_HELP_EN || \
                       r == GUI_HELP_EN)
 
+extern int tabwidth;
+extern int smarttab;
+
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
 
 void cursor_to_top (windata_t *vwin);
@@ -70,19 +73,13 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
 gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event, 
 			     gpointer p);
 
-gboolean 
-script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
-
-gboolean 
-script_tab_handler (windata_t *vwin, GdkModifierType mods);
-
-void script_electric_enter (windata_t *vwin);
-
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable);
 
 void sourceview_insert_file (windata_t *vwin, const char *fname);
 
 void sourceview_insert_buffer (windata_t *vwin, const char *buf);
+
+void script_tabs_dialog (GtkWidget *w, gpointer p);
 
 #endif /* TEXTBUF_H */

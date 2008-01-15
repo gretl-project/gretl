@@ -1,6 +1,6 @@
 <equation-set latexopt="12pt" density="96x96" usepackage="mathptmx">
 <texequation fileref="adf1">
-\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]
+\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]
 </texequation>
 <texequation fileref="arlags">
 \[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} + e_t\]

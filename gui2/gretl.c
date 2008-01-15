@@ -124,7 +124,6 @@ int main_x = -1;
 int main_y = -1;
 int mainwin_width = 520;
 int mainwin_height = 420;
-int tabwidth = 4;
 
 #if defined(G_OS_WIN32)
 char Rcommand[MAXSTR] = "RGui.exe";

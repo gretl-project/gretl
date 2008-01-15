@@ -36,6 +36,15 @@ enum {
 
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
 
+/* globals accessed in settings.c */
+int tabwidth = 4;
+int smarttab = 1;
+
+static gboolean script_electric_enter (windata_t *vwin);
+static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
+static gboolean 
+script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
+
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
@@ -377,6 +386,56 @@ static void set_source_tabs (GtkWidget *w, int cw)
     gtk_text_view_set_tabs(GTK_TEXT_VIEW(w), ta);
 }
 
+#define tabkey(k) (k == GDK_Tab || \
+		   k == GDK_ISO_Left_Tab || \
+		   k == GDK_KP_Tab)
+
+/* Special keystrokes in script window: Ctrl-Return sends the current
+   line for execution; Ctrl-R sends the whole script for execution
+   (i.e. is the keyboard equivalent of the "execute" icon).
+*/
+
+static gint 
+script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    GdkModifierType mods;
+    gboolean ret = FALSE;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+
+    if (mods & GDK_CONTROL_MASK) {
+	if (key->keyval == GDK_r)  {
+	    do_run_script(w, vwin);
+	    ret = TRUE;
+	} else if (key->keyval == GDK_Return) {
+	    gchar *str = textview_get_current_line(w);
+
+	    if (str != NULL && !string_is_blank(str)) {
+		run_script_fragment(vwin, str);
+	    } else if (str != NULL) {
+		g_free(str);
+	    }
+	    ret = TRUE;
+	}
+    } else {
+	if (key->keyval == GDK_F1) {
+	    set_window_help_active(vwin);
+	    edit_script_help(NULL, NULL, vwin);
+	} else if (vwin->role == EDIT_SCRIPT) {    
+	    if (key->keyval == GDK_Return) {
+		ret = script_electric_enter(vwin);
+	    } else if (tabkey(key->keyval)) {
+		ret = script_tab_handler(vwin, mods);
+	    }
+	}
+    } 
+
+    return ret;
+}
+
+#define gretl_script_role(r) (r == EDIT_SCRIPT || \
+			      r == VIEW_SCRIPT)
+
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
 {
@@ -428,6 +487,16 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
+
+    if (gretl_script_role(vwin->role)) {
+	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
+			 G_CALLBACK(script_key_handler), vwin);
+	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
+			 G_CALLBACK(script_popup_handler), 
+			 vwin);
+	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
+			 G_CALLBACK(edit_script_help), vwin);
+    }
 
     g_object_unref(cmap);
 }
@@ -1215,17 +1284,70 @@ static int spaces_to_tab_stop (const char *s, int targ)
     return ret;
 }
 
-static void indent_text (GtkWidget *w, gpointer p)
+static void normalize_indent (GtkTextBuffer *tbuf, 
+			      const gchar *buf,
+			      GtkTextIter *start,
+			      GtkTextIter *end)
+{
+    int this_indent = 0;
+    int next_indent = 0;
+    char line[1024];
+    const char *ins;
+    int i, nsp;
+
+    if (buf == NULL) {
+	return;
+    }    
+
+    gtk_text_buffer_delete(tbuf, start, end);
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	if (string_is_blank(line)) {
+	    gtk_text_buffer_insert(tbuf, start, line, -1);
+	    continue;
+	}
+	ins = line + strspn(line, " \t");
+	adjust_indent(ins, &this_indent, &next_indent);
+	nsp = this_indent * tabwidth;
+	for (i=0; i<nsp; i++) {
+	    gtk_text_buffer_insert(tbuf, start, " ", -1);
+	}
+	gtk_text_buffer_insert(tbuf, start, ins, -1);
+    }
+
+    bufgets_finalize(buf); 
+}
+
+static void auto_indent_script (GtkWidget *w, windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+    gchar *buf;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    gtk_text_buffer_get_end_iter(tbuf, &end);
+    buf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+    normalize_indent(tbuf, buf, &start, &end);
+    g_free(buf);
+}
+
+static void indent_region (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
-    int i, n;
 
-    gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
-
-    if (tb->selected) {
+    if (smarttab) {
+	normalize_indent(tb->buf, tb->chunk, &tb->start, &tb->end);
+    } else {
 	char line[1024];
+	int i, n;
+
+	gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
 
 	bufgets_init(tb->chunk);
+
 	while (bufgets(line, sizeof line, tb->chunk)) {
 	    n = spaces_to_tab_stop(line, TAB_NEXT);
 	    for (i=0; i<n; i++) {
@@ -1233,98 +1355,51 @@ static void indent_text (GtkWidget *w, gpointer p)
 	    }
 	    gtk_text_buffer_insert(tb->buf, &tb->start, line, -1);
 	}
+
 	bufgets_finalize(tb->chunk);
-    } else {
-	n = spaces_to_tab_stop(tb->chunk, TAB_NEXT);
-	for (i=0; i<n; i++) {
-	    gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
-	}
-	gtk_text_buffer_insert(tb->buf, &tb->start, tb->chunk, -1);
     }
 }
 
-static void unindent_text (GtkWidget *w, gpointer p)
+static void unindent_region (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
+    char line[1024];
     char *ins;
     int i, n;
 
     gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
 
-    if (tb->selected) {
-	char line[1024];
+    bufgets_init(tb->chunk);
 
-	bufgets_init(tb->chunk);
-	while (bufgets(line, sizeof line, tb->chunk)) {
-	    n = spaces_to_tab_stop(line, TAB_PREV);
-	    ins = line + strspn(line, " \t");
-	    for (i=0; i<n; i++) {
-		gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
-	    }
-	    gtk_text_buffer_insert(tb->buf, &tb->start, ins, -1);
-	}
-	bufgets_finalize(tb->chunk);
-    } else {
-	n = spaces_to_tab_stop(tb->chunk, TAB_PREV);
-	ins = tb->chunk + strspn(tb->chunk, " \t");
+    while (bufgets(line, sizeof line, tb->chunk)) {
+	n = spaces_to_tab_stop(line, TAB_PREV);
+	ins = line + strspn(line, " \t");
 	for (i=0; i<n; i++) {
 	    gtk_text_buffer_insert(tb->buf, &tb->start, " ", -1);
 	}
 	gtk_text_buffer_insert(tb->buf, &tb->start, ins, -1);
     }
+
+    bufgets_finalize(tb->chunk);
 }
 
-static void tab_width_dialog (GtkWidget *w, gpointer p)
+void script_tabs_dialog (GtkWidget *w, gpointer p)
 {
     const char *title = _("gretl: configure tabs");
     const char *spintxt = _("Spaces per tab");
+    const char *opt = _("Use \"smart\" tabs");
     int tsp = tabwidth;
+    int smt = smarttab;
     int resp;
 
-    resp = spin_dialog(title, NULL, &tsp, spintxt, 2, 8, 0);
+    resp = checks_dialog(title, NULL, &opt, 1, &smt,
+			 0, NULL, /* no radio buttons */
+			 &tsp, spintxt, 2, 8, 0);
 
     if (resp != GRETL_CANCEL) {
 	tabwidth = tsp;
+	smarttab = smt;
     }
-}
-
-static void auto_indent_buffer (GtkWidget *w, windata_t *vwin)
-{
-    int this_indent = 0;
-    int next_indent = 0;
-    GtkTextBuffer *tbuf;
-    GtkTextIter iter;
-    char line[1024];
-    gchar *buf;
-    const char *ins;
-    int i;
-
-    buf = textview_get_text(vwin->w);
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-
-    gtk_text_buffer_set_text(tbuf, "", -1); 
-    gtk_text_buffer_get_start_iter(tbuf, &iter);
-    
-    bufgets_init(buf);
-
-    while (bufgets(line, sizeof line, buf)) {
-	int nsp;
-
-	if (string_is_blank(line)) {
-	    gtk_text_buffer_insert(tbuf, &iter, line, -1);
-	    continue;
-	}
-	ins = line + strspn(line, " \t");
-	adjust_indent(ins, &this_indent, &next_indent);
-	nsp = this_indent * tabwidth;
-	for (i=0; i<nsp; i++) {
-	    gtk_text_buffer_insert(tbuf, &iter, " ", -1);
-	}
-	gtk_text_buffer_insert(tbuf, &iter, ins, -1);
-    }
-
-    bufgets_finalize(buf); 
-    g_free(buf);
 }
 
 static void exec_script_text (GtkWidget *w, gpointer p)
@@ -1342,7 +1417,19 @@ enum {
 
 static struct textbit *vwin_get_textbit (windata_t *vwin, int mode)
 {
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+    int selected = 0;
     struct textbit *tb;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
+	selected = 1;
+    }
+
+    if (!selected && mode != AUTO_SELECT_LINE) {
+	return NULL;
+    }
 
     tb = malloc(sizeof *tb);
     if (tb == NULL) {
@@ -1350,22 +1437,23 @@ static struct textbit *vwin_get_textbit (windata_t *vwin, int mode)
     }
 
     tb->vwin = vwin;
-    tb->buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-    tb->selected = 0;
+    tb->buf = tbuf;
+    tb->start = start;
+    tb->end = end;
+    tb->selected = selected;
     tb->commented = 0;
     tb->chunk = NULL;
 
-    if (gtk_text_buffer_get_selection_bounds(tb->buf, &tb->start, &tb->end)) {
+    if (selected) {
 	int endpos;
 
-	tb->selected = 1;
 	gtk_text_iter_set_line_offset(&tb->start, 0);
 	endpos = gtk_text_iter_get_line_offset(&tb->end);
 	if (endpos > 0 && !gtk_text_iter_ends_line(&tb->end)) {
 	    gtk_text_iter_forward_to_line_end(&tb->end);
 	}
 	tb->chunk = gtk_text_buffer_get_text(tb->buf, &tb->start, &tb->end, FALSE);
-    } else if (mode == AUTO_SELECT_LINE) {
+    } else {
 	gtk_text_buffer_get_iter_at_mark(tb->buf, &tb->start, 
 					 gtk_text_buffer_get_insert(tb->buf));
 	gtk_text_iter_set_line_offset(&tb->start, 0);
@@ -1568,15 +1656,21 @@ static int maybe_insert_smart_tab (windata_t *vwin)
    already in place
 */
 
-void script_electric_enter (windata_t *vwin)
+static gboolean script_electric_enter (windata_t *vwin)
 {
-    char *s = textview_get_current_line(vwin->w);
+    char *s;
+
+    if (!smarttab) {
+	return FALSE;
+    }
+
+    s = textview_get_current_line(vwin->w);
 
     if (s == NULL) {
-	return;
+	return FALSE;
     } else if (*s == '\0') {
 	g_free(s);
-	return;
+	return FALSE;
     } else {
 	GtkTextBuffer *tbuf;
 	GtkTextMark *mark;
@@ -1593,7 +1687,7 @@ void script_electric_enter (windata_t *vwin)
 	g_free(s);
 
 	if (*thisword == '\0') {
-	    return;
+	    return FALSE;
 	}
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
@@ -1633,22 +1727,26 @@ void script_electric_enter (windata_t *vwin)
 	    }
 	}
     }
+
+    return FALSE;
 }
 
 /* handler for the user pressing the Tab key when editing a script */
 
-gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
+static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
 {
     struct textbit *tb;
     gboolean ret = FALSE;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), FALSE);
 
-    if (!(mods & GDK_SHIFT_MASK)) {
+    if (smarttab && !(mods & GDK_SHIFT_MASK)) {
 	if (maybe_insert_smart_tab(vwin)) {
 	    return TRUE;
 	}
     }
+
+    /* do we really want the rest of this? */
 
     tb = vwin_get_textbit(vwin, AUTO_SELECT_NONE);
     if (tb == NULL) {
@@ -1657,9 +1755,9 @@ gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
 
     if (tb->selected) {
 	if (mods & GDK_SHIFT_MASK) {
-	    unindent_text(NULL, tb);
+	    unindent_region(NULL, tb);
 	} else {
-	    indent_text(NULL, tb);
+	    indent_region(NULL, tb);
 	}
 	ret = TRUE;
     }
@@ -1726,21 +1824,21 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
     }
 
     if (vwin->role == EDIT_SCRIPT) {
-	item = gtk_menu_item_new_with_label((tb->selected)? 
-					    _("Indent region") : 
-					    _("Indent line"));
-	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(indent_text),
-			 *ptb);
-	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-
-	if (text_is_indented(tb->chunk)) {
-	    item = gtk_menu_item_new_with_label((tb->selected)? 
-						_("Unindent region") : 
-						_("Unindent line"));
+	if (tb->selected) {
+	    item = gtk_menu_item_new_with_label(smarttab? 
+						_("Auto-indent region") :
+						_("Indent region"));
 	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(unindent_text),
+			     G_CALLBACK(indent_region),
+			     *ptb);
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+	}
+
+	if (!smarttab && tb->selected && text_is_indented(tb->chunk)) {
+	    item = gtk_menu_item_new_with_label(_("Unindent region"));
+	    g_signal_connect(G_OBJECT(item), "activate",
+			     G_CALLBACK(unindent_region),
 			     *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
@@ -1748,14 +1846,14 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
 
 	item = gtk_menu_item_new_with_label(_("Auto-indent script"));
 	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(auto_indent_buffer),
+			 G_CALLBACK(auto_indent_script),
 			 vwin);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 
 	item = gtk_menu_item_new_with_label(_("Configure tabs..."));
 	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(tab_width_dialog),
+			 G_CALLBACK(script_tabs_dialog),
 			 NULL);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
@@ -1778,7 +1876,7 @@ static gboolean destroy_textbit (GtkWidget **pw, struct textbit *tc)
     return FALSE;
 }
 
-gboolean 
+static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     GdkModifierType mods;

@@ -27,6 +27,7 @@
 #include "fileselect.h"
 #include "menustate.h"
 #include "session.h"
+#include "textbuf.h"
 
 #include "libset.h"
 #include "version.h"
@@ -130,8 +131,7 @@ typedef enum {
     INVISET  = 1 << 6,
     FIXSET   = 1 << 7,  /* setting fixed by admin (Windows network use) */
     MACHSET  = 1 << 8,  /* "local machine" setting */
-    BROWSER  = 1 << 9,  /* wants "Browse" button */
-    GUISET   = 1 << 10  /* relevant to GUI only */
+    BROWSER  = 1 << 9   /* wants "Browse" button */
 } rcflags;
 
 typedef struct {
@@ -166,12 +166,12 @@ RCVAR rc_vars[] = {
     { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
       INVISET, MAXLEN, TAB_MAIN, NULL },
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
-      BOOLSET | GUISET, 0, TAB_MAIN, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
     { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
-      BOOLSET | GUISET, 0, TAB_MAIN, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
 #ifndef G_OS_WIN32
     { "winsize", N_("Remember main window size"), NULL, &winsize, 
-      BOOLSET | GUISET, 0, TAB_MAIN, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
 #endif
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
@@ -179,11 +179,11 @@ RCVAR rc_vars[] = {
 #endif
 #ifdef G_OS_WIN32 	 
     { "wimp", N_("Emulate Windows look"), NULL, &use_wimp, 	 
-      BOOLSET | GUISET, 0, TAB_MAIN, NULL }, 	 
+      BOOLSET, 0, TAB_MAIN, NULL }, 	 
 #endif
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 
-      MACHSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
       BOOLSET, 0, TAB_MAIN, NULL },
@@ -192,23 +192,23 @@ RCVAR rc_vars[] = {
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
-      MACHSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
-      MACHSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
-      MACHSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "viewps", N_("Command to view postscript files"), NULL, viewps, 
-      MACHSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf, 
-      MACHSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
     { "midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
-      USERSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "calculator", N_("Calculator"), NULL, calculator, 
-      USERSET | BROWSER | GUISET, MAXSTR, TAB_PROGS, NULL },
+      USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
     { "x12a", N_("path to x12arima"), NULL, paths.x12a, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
@@ -230,29 +230,31 @@ RCVAR rc_vars[] = {
     { "useqr", N_("Use QR decomposition"), N_("Use Cholesky decomposition"), &useqr, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
-      USERSET | GUISET, MAXLEN, TAB_NONE, NULL },
+      USERSET, MAXLEN, TAB_NONE, NULL },
 #if !defined(USE_GNOME)
     { "App_font", N_("Menu font"), NULL, appfontname, 
-      USERSET | GUISET, MAXLEN, TAB_NONE, NULL },
+      USERSET, MAXLEN, TAB_NONE, NULL },
 #endif
     { "DataPage", "Default data page", NULL, datapage, 
-      INVISET | GUISET, sizeof datapage, TAB_NONE, NULL },
+      INVISET, sizeof datapage, TAB_NONE, NULL },
     { "ScriptPage", "Default script page", NULL, scriptpage, 
-      INVISET | GUISET, sizeof scriptpage, TAB_NONE, NULL },    
+      INVISET, sizeof scriptpage, TAB_NONE, NULL },    
     { "Png_font", N_("PNG graph font"), NULL, paths.pngfont, 
       INVISET, 32, TAB_NONE, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, TAB_NONE, NULL },
     { "tabwidth", "spaces per tab", NULL, &tabwidth, 
-      INVISET | INTSET | GUISET, 0, TAB_NONE, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
+    { "smarttab", "\"Smart\" Tab and Enter", NULL, &smarttab, 
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "main_width", "main window width", NULL, &mainwin_width, 
-      INVISET | INTSET | GUISET, 0, TAB_NONE, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_height", "main window height", NULL, &mainwin_height, 
-      INVISET | INTSET | GUISET, 0, TAB_NONE, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_x", "main window x position", NULL, &main_x, 
-      INVISET | INTSET | GUISET, 0, TAB_NONE, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_y", "main window y position", NULL, &main_y, 
-      INVISET | INTSET | GUISET, 0, TAB_NONE, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
       &hc_by_default, BOOLSET, 0, TAB_VCV, NULL },
     { "HC_xsect", N_("For cross-sectional data"), NULL, hc_xsect, 
@@ -264,7 +266,7 @@ RCVAR rc_vars[] = {
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
       LISTSET, 5, TAB_VCV, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref, 
-      RADIOSET | INTSET | GUISET, 0, TAB_MAN, NULL },
+      RADIOSET | INTSET, 0, TAB_MAN, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
@@ -2323,7 +2325,3 @@ void finalize_working_dir_menu (void)
     }
 }
 
-void write_rc_at_exit (void)
-{
-    write_rc();
-}

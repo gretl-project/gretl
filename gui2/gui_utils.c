@@ -112,7 +112,8 @@ enum {
     SORT_ITEM,
     SORT_BY_ITEM,
     FORMAT_ITEM,
-    INDEX_ITEM
+    INDEX_ITEM,
+    EDIT_SCRIPT_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -744,99 +745,6 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
     return FALSE;
 }
 
-/* Special keystrokes in script window: Ctrl-Return sends the current
-   line for execution; Ctrl-R sends the whole script for execution
-   (i.e. is the keyboard equivalent of the "execute" icon).
-*/
-
-static gint 
-script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
-{
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-
-    if (mods & GDK_CONTROL_MASK) {
-	if (key->keyval == GDK_r)  {
-	    do_run_script(w, vwin);
-	    return TRUE;
-	} else if (key->keyval == GDK_Return) {
-	    gchar *str = textview_get_current_line(w);
-
-	    if (str != NULL && !string_is_blank(str)) {
-		run_script_fragment(vwin, str);
-	    } else if (str != NULL) {
-		g_free(str);
-	    }
-	    return TRUE;
-	}
-    } else if (key->keyval == GDK_Return) {
-	script_electric_enter(vwin);
-    }
-
-    return FALSE;
-}
-
-#ifdef G_OS_WIN32
-
-static void win_ctrl_c (windata_t *vwin)
-{
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-
-    if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
-	window_copy(vwin, GRETL_FORMAT_SELECTION, NULL);
-    } else if (MULTI_FORMAT_ENABLED(vwin->role)) {
-	window_copy(vwin, GRETL_FORMAT_RTF, NULL);
-    } else {
-	window_copy(vwin, GRETL_FORMAT_TXT, NULL);
-    }
-}
-
-#endif
-
-#define tabkey(k) (k == GDK_Tab || \
-		   k == GDK_ISO_Left_Tab || \
-		   k == GDK_KP_Tab)
-
-static gboolean
-catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
-{
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-
-    if (key->keyval == GDK_F1 && vwin->role == EDIT_SCRIPT) { 
-	set_window_help_active(vwin);
-	edit_script_help(NULL, NULL, vwin);
-    } else if (tabkey(key->keyval) && vwin->role == EDIT_SCRIPT) {
-	return script_tab_handler(vwin, mods);
-    } else if (mods & GDK_CONTROL_MASK) {
-	if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
-	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
-		buf_edit_save(NULL, vwin);
-	    } else {
-		view_window_save(NULL, vwin);
-	    }
-	} else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
-	    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
-		if (query_save_text(NULL, NULL, vwin) == FALSE) {
-		    gtk_widget_destroy(vwin->dialog);
-		}
-	    } else { 
-		gtk_widget_destroy(w);
-	    }
-	}
-#ifdef G_OS_WIN32 
-	else if (key->keyval == GDK_c) {
-	    win_ctrl_c(vwin);
-	    return TRUE;
-	}
-#endif
-    } 
-
-    return FALSE;
-}
-
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
 
 static int set_or_get_audio_stop (int set, int val)
@@ -891,10 +799,65 @@ void audio_render_window (windata_t *vwin, int key)
 
 #endif
 
+static gboolean Ctrl_C (windata_t *vwin)
+{
+#ifdef G_OS_WIN32 
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
+	window_copy(vwin, GRETL_FORMAT_SELECTION, NULL);
+    } else if (MULTI_FORMAT_ENABLED(vwin->role)) {
+	window_copy(vwin, GRETL_FORMAT_RTF, NULL);
+    } else {
+	window_copy(vwin, GRETL_FORMAT_TXT, NULL);
+    }
+    return TRUE;
+#else
+    return FALSE;
+#endif
+}
+
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
-    if (gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {
-	return catch_edit_key(w, key, vwin);
+    GdkModifierType mods;
+    int editing;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    editing = gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w));
+
+    if (mods & GDK_CONTROL_MASK) {
+	if (key->keyval == GDK_f) {
+	    /* Ctrl-S: find */
+	    text_find_callback(NULL, vwin);
+	    return TRUE;
+	} else if (key->keyval == GDK_c) {
+	    /* Ctrl-C: copy */
+	    return Ctrl_C(vwin);
+	} else if (editing) {
+	    if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
+		/* Ctrl-S: save */
+		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
+		    buf_edit_save(NULL, vwin);
+		} else {
+		    view_window_save(NULL, vwin);
+		}
+	    } else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
+		/* Ctrl-Q: quit */
+		if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
+		    if (query_save_text(NULL, NULL, vwin) == FALSE) {
+			gtk_widget_destroy(vwin->dialog);
+		    }
+		} else { 
+		    gtk_widget_destroy(w);
+		}
+	    } 
+	} 
+    }
+
+    if (editing) {
+	/* we respond to plain keystrokes below: this won't do if we're
+	   editing text */
+	return FALSE;
     }
 
     if (key->keyval == GDK_q) { 
@@ -902,9 +865,6 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     } else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
 	model_add_as_icon_and_close(vwin, GRETL_OBJ_EQN, NULL);
     } else if (key->keyval == GDK_w) {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
 	if (mods & GDK_CONTROL_MASK) {
 	    gtk_widget_destroy(w);
 	    return TRUE;
@@ -917,28 +877,6 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	stop_talking();
     }
 #endif
-#ifdef G_OS_WIN32
-    else if (key->keyval == GDK_c) {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
-	if (mods & GDK_CONTROL_MASK) {
-	    win_ctrl_c(vwin);
-	    return TRUE;
-	}	
-    }
-#endif
-
-    /* Ctrl-F for find */
-    if (key->keyval == GDK_f) {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
-	if (mods & GDK_CONTROL_MASK) {
-	    text_find_callback(NULL, vwin);
-	    return TRUE;
-	}
-    }
 
     return FALSE;
 }
@@ -1792,7 +1730,8 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
-    { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_BY_ITEM },    
+    { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_BY_ITEM },
+    { N_("Configure..."), GTK_STOCK_PREFERENCES, script_tabs_dialog, EDIT_SCRIPT_ITEM },
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Scripts index"), GTK_STOCK_INDEX, script_index, INDEX_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
@@ -1926,6 +1865,11 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
+	if (vwin->role != EDIT_SCRIPT && 
+	    viewbar_items[i].flag == EDIT_SCRIPT_ITEM) {
+	    continue;
+	}
+
 	if (vwin->role != VIEW_SCRIPT && 
 	    viewbar_items[i].flag == INDEX_ITEM) {
 	    continue;
@@ -1992,7 +1936,8 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
 
     for (i=0; viewbar_items[i].str != NULL; i++) {
 	if (viewbar_items[i].flag == SAVE_ITEM ||
-	    viewbar_items[i].flag == EDIT_ITEM) {
+	    viewbar_items[i].flag == EDIT_ITEM ||
+	    viewbar_items[i].flag == EDIT_SCRIPT_ITEM) {
 	    GtkWidget *w;
 
 	    button = gtk_image_new();
@@ -2117,7 +2062,6 @@ static windata_t *common_viewer_new (int role, const char *title,
 static void viewer_box_config (windata_t *vwin)
 {
     vwin->vbox = gtk_vbox_new(FALSE, 1);
-
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
 
@@ -2132,23 +2076,16 @@ static void viewer_box_config (windata_t *vwin)
 
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
-    const char *buf;
+    if (prn != NULL) {
+	const char *buf = gretl_print_get_buffer(prn);
 
-    if (prn == NULL) {
-	return;
-    }
-
-    buf = gretl_print_get_buffer(prn);
-
-    if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
-	sourceview_insert_buffer(vwin, buf);
-	return;
-    }
-
-    if (vwin->role == SCRIPT_OUT) {
-	textview_set_text_colorized(vwin->w, buf);
-    } else {
-	textview_set_text(vwin->w, buf);
+	if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
+	    sourceview_insert_buffer(vwin, buf);
+	} else if (vwin->role == SCRIPT_OUT) {
+	    textview_set_text_colorized(vwin->w, buf);
+	} else {
+	    textview_set_text(vwin->w, buf);
+	}
     }
 }
 
@@ -2276,15 +2213,16 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
                                      r == VIEW_LOG || \
                                      r == GR_PLOT)
 
+#define doing_script(r) (r == EDIT_SCRIPT || \
+			 r == VIEW_SCRIPT || \
+			 r == VIEW_LOG)
+
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
 {
     windata_t *vwin;
     FILE *fp;
     gchar *title = NULL;
-    int doing_script = (role == EDIT_SCRIPT ||
-			role == VIEW_SCRIPT ||
-			role == VIEW_LOG);
 
     /* first check that we can open the specified file */
     fp = gretl_fopen(filename, "r");
@@ -2298,7 +2236,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     /* then start building the file viewer */
     title = make_viewer_title(role, filename);
     vwin = common_viewer_new(role, (title != NULL)? title : filename, 
-			     NULL, !doing_script && role != CONSOLE);
+			     NULL, !doing_script(role) && role != CONSOLE);
     g_free(title);
 
     if (vwin == NULL) {
@@ -2318,18 +2256,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     text_table_setup(vwin->vbox, vwin->w);
 
-    if (doing_script) {
-	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
-			 G_CALLBACK(script_key_handler), vwin);
-	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
-			 G_CALLBACK(edit_script_help), vwin);
-	if (role == EDIT_SCRIPT || role == VIEW_SCRIPT) {
-	    g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
-			     G_CALLBACK(script_popup_handler), 
-			     vwin);
-	}
-    } 
-
     if (view_file_use_sourceview(role)) {
 	sourceview_insert_file(vwin, filename);
     } else {
@@ -2341,7 +2267,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	attach_content_changed_signal(vwin);
     }
 
-    /* catch some keystrokes */
+    /* catch some special keystrokes */
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
