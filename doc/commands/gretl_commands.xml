@@ -176,8 +176,8 @@
 	coefficient on lagged <mathvar>y</mathvar> equals 1 minus the
 	root in question.  For example, the model with a constant may
 	be written as <equation status="display"
-	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
-	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
+	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
+	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
 	  graphic="adf1"/></para>
 
       <para context="cli">
