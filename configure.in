@@ -489,7 +489,7 @@ dnl Check for gnome, if we haven't been told not to
 dnl
 if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
    if test "${have_gtkprint}" = "no" ; then
-     PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.2 libgnomeprintui-2.2 gconf-2.0,
+     PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.2 libgnomeprintui-2.2,
        AC_DEFINE(USE_GNOME)
        have_gnome="2.0"
        if test "${gnome_prefix}" = "NA" ; then
@@ -499,7 +499,7 @@ if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
        have_gnome="no"
      )
    else
-     PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 gconf-2.0,
+     PKG_CHECK_MODULES(GNOME, libgnomeui-2.0,
        AC_DEFINE(USE_GNOME)
        have_gnome="2.0"
        if test "${gnome_prefix}" = "NA" ; then
@@ -511,12 +511,6 @@ if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
    fi
    if test "$have_gnome" = "2.0" ; then
       PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
-	 AC_PATH_PROG(GCONFTOOL, gconftool-2, no)
-	 if test x"$GCONFTOOL" = xno; then
-            AC_MSG_ERROR([gconftool-2 executable not found in your path])
-         else
-	    AM_GCONF_SOURCE_2
-         fi
     fi 
     AC_SUBST(have_gnome)
     AC_SUBST(gnome_prefix)
@@ -583,7 +577,6 @@ gui2/Makefile
 gui2/debug
 gui2/gtkextra-lite/Makefile
 gui2/gtksourceview/Makefile
-gui2/omf-install/Makefile
 gnome/Makefile
 gnome/gretl.keys 
 cli/Makefile 

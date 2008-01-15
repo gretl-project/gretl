@@ -226,7 +226,7 @@ static void strip_CRLF (char *s)
 static int source_buffer_load_file (GtkSourceBuffer *sbuf, 
 				    int role, FILE *fp)
 {
-    char readbuf[MAXSTR];
+    char fline[MAXSTR];
     gchar *chunk = NULL;
     GtkTextIter iter;
 #ifdef ENABLE_NLS
@@ -238,31 +238,33 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
     gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", 0);
     gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
 
-    memset(readbuf, 0, sizeof readbuf);
+    memset(fline, 0, sizeof fline);
 
-    while (fgets(readbuf, sizeof readbuf, fp)) {
+    while (fgets(fline, sizeof fline, fp)) {
 #ifdef ENABLE_NLS
-	if (!g_utf8_validate(readbuf, -1, NULL)) {
+	if (!g_utf8_validate(fline, -1, NULL)) {
 	    if (i == 0) {
-		chunk = my_locale_to_utf8(readbuf);
+		chunk = my_locale_to_utf8(fline);
 		i++;
 	    } else {
-		chunk = my_locale_to_utf8_next(readbuf);
+		chunk = my_locale_to_utf8_next(fline);
 	    }
 	    if (chunk == NULL) {
 		continue;
 	    }
 	} else {
-	    chunk = readbuf;
+	    chunk = fline;
 	}
 #else
-	chunk = readbuf;
+	chunk = fline;
 #endif /* ENABLE_NLS */
 
 	strip_CRLF(chunk);
+
 	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, chunk, -1);
-	memset(readbuf, 0, sizeof readbuf);
-	if (chunk != readbuf) {
+	memset(fline, 0, sizeof fline);
+
+	if (chunk != fline) {
 	    g_free(chunk);
 	    chunk = NULL;
 	}
@@ -430,76 +432,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     g_object_unref(cmap);
 }
 
-#ifdef ENABLE_NLS
-
-static gchar *my_utf_string (char *t)
-{
-    static gchar *s = NULL;
-    GError *error = NULL;
-    gsize r_bytes, w_bytes;
-    unsigned char *c;
-    const char *fc;
-    const char *smb;
-    gchar *from_codeset = NULL;
-    
-    if (t == NULL || *t == '\0') return t;
-
-    if (g_utf8_validate(t, -1, NULL)) return t;   
-    
-    /* so we got a non-UTF-8 */
-
-    smb = getenv("SMB_CODESET");
-    if (smb != NULL && *smb != '\0') {
-	from_codeset = g_strdup(smb);
-    } else {
-    	g_get_charset(&fc);
-    	if (fc) {
-	    from_codeset = g_strdup(fc);
-    	} else {
-	    from_codeset = g_strdup("ISO-8859-1");
-	}
-    }
-    
-    if (!strcmp(from_codeset, "ISO-")) {
-	g_free(from_codeset);
-	from_codeset = g_strdup("ISO-8859-1");
-    }  
-  
-    if (s) g_free(s);
-
-    for (c = (unsigned char *) t; *c != 0; c++) {
-	if (*c < 32 && *c != '\n') {
-	    *c = ' ';
-	}
-    }
-
-    s = g_convert(t, strlen(t), "UTF-8", from_codeset, &r_bytes, &w_bytes,
-		  &error);
-
-    g_free(from_codeset);
-
-    if (s == NULL) {
-	s = g_strdup(t);
-	for (c = (unsigned char *) s; *c != 0; c++) {
-	    if (*c > 128) {
-		*c = '?';
-	    }
-	}
-    }
-
-    if (error) {
-        printf("DBG: %s. Codeset for system is: %s\n",
-	       error->message, from_codeset);
-        printf("DBG: You should set the environment variable "
-	       "SMB_CODESET to ISO-8859-1\n");
-	g_error_free(error);
-    }
-
-    return s;
-}
-
-#endif /* ENABLE_NLS */
-
 static GtkTextTagTable *gretl_tags_new (void)
 {
     GtkTextTagTable *table;
@@ -644,25 +576,41 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     GtkTextBuffer *tbuf;
     GtkTextIter iter;    
     int thiscolor, nextcolor;
-    char readbuf[MAXSTR], *chunk;
+    char fline[MAXSTR], *chunk;
+    int i = 0;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(vwin->w));
 
     fp = gretl_fopen(fname, "r");
-    if (fp == NULL) return;
+    if (fp == NULL) {
+	file_read_errbox(fname);
+	return;
+    }
 
     thiscolor = nextcolor = PLAIN_TEXT;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
-    memset(readbuf, 0, sizeof readbuf);
+    memset(fline, 0, sizeof fline);
 
-    while (fgets(readbuf, sizeof readbuf, fp)) {
+    while (fgets(fline, sizeof fline, fp)) {
 #ifdef ENABLE_NLS
-	chunk = my_utf_string(readbuf);
+	if (!g_utf8_validate(fline, -1, NULL)) {
+	    if (i == 0) {
+		chunk = my_locale_to_utf8(fline);
+		i++;
+	    } else {
+		chunk = my_locale_to_utf8_next(fline);
+	    }
+	    if (chunk == NULL) {
+		continue;
+	    }
+	} else {
+	    chunk = fline;
+	}
 #else
-	chunk = readbuf;
+	chunk = fline;
 #endif
 
 	nextcolor = PLAIN_TEXT;
@@ -693,8 +641,12 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 	    break;
 	}
 
+	if (chunk != fname) {
+	    g_free(chunk);
+	}
+
 	thiscolor = nextcolor;
-	memset(readbuf, 0, sizeof readbuf);
+	memset(fline, 0, sizeof fline);
     }
 
     fclose(fp);
