@@ -1330,8 +1330,6 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 	*word = '\0';
 	get_cmdword(ins, word);
 	adjust_indent(word, &this_indent, &next_indent);
-	fprintf(stderr, "word = '%s', this=%d, next=%d\n", 
-		word, this_indent, next_indent);
 	nsp = this_indent * tabwidth;
 	for (i=0; i<nsp; i++) {
 	    gtk_text_buffer_insert(tbuf, start, " ", -1);
@@ -1731,6 +1729,11 @@ static gboolean script_electric_enter (windata_t *vwin)
 
 	incr = incremental_leading_spaces(prevword, thisword);
 	targsp += incr;
+	if (targsp < 0) {
+	    /* indentation messed up? */
+	    targsp = 0;
+	}
+
 	diff = nsp - targsp;
 
 #if TABDEBUG
