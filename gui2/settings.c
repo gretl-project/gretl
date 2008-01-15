@@ -108,7 +108,7 @@ extern int use_wimp;
 #endif
 
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
-char midiplayer[MAXSTR];
+char midiplayer[MAXSTR] = "timidity -ig";
 #endif
 
 enum {
@@ -1477,7 +1477,7 @@ static int write_plain_text_rc (void)
 
 #endif /* !G_OS_WIN32 */
 
-static void str_to_boolvar (char *s, void *b)
+static void str_to_boolvar (const char *s, void *b)
 {
     int *bvar = (int *) b;
 
@@ -1490,7 +1490,7 @@ static void str_to_boolvar (char *s, void *b)
     }	
 }
 
-static void str_to_int (char *s, void *b)
+static void str_to_int (const char *s, void *b)
 {
     int *ivar = (int *) b;
 
@@ -1775,12 +1775,32 @@ void write_rc (void)
     }
 }
 
+static void find_and_write_var (const char *key, const char *val)
+{
+    char *strvar;
+    int j;
+
+    for (j=0; rc_vars[j].key != NULL; j++) {
+	if (!strcmp(key, rc_vars[j].key)) {
+	    if (rc_vars[j].flags & BOOLSET) {
+		str_to_boolvar(val, rc_vars[j].var);
+	    } else if (rc_vars[j].flags & INTSET) {
+		str_to_int(val, rc_vars[j].var);
+	    } else {
+		strvar = (char *) rc_vars[j].var;
+		*strvar = '\0';
+		strncat(strvar, val, rc_vars[j].len - 1);
+	    }
+	    break;
+	}
+    }
+}
+
 static void read_rc (void) 
 {
     FILE *fp;
     char line[MAXLEN], key[32], linevar[MAXLEN];
-    char *strvar;
-    int i, j;
+    int i;
 
     fp = fopen(rcfile, "r");
     if (fp == NULL) {
@@ -1802,19 +1822,8 @@ static void read_rc (void)
 	if (sscanf(line, "%s", key) == 1) {
 	    strcpy(linevar, line + strlen(key) + 3); 
 	    chopstr(linevar); 
-	    for (j=0; rc_vars[j].key != NULL; j++) {
-		if (!strcmp(key, rc_vars[j].key)) {
-		    if (rc_vars[j].flags & BOOLSET) {
-			str_to_boolvar(linevar, rc_vars[j].var);
-		    } else if (rc_vars[j].flags & INTSET) {
-			str_to_int(linevar, rc_vars[j].var);
-		    } else {
-			strvar = (char *) rc_vars[j].var;
-			*strvar = '\0';
-			strncat(strvar, linevar, rc_vars[j].len - 1);
-		    }
-		    break;
-		}
+	    if (*linevar) {
+		find_and_write_var(key, linevar);
 	    }
 	}
 	i++;
