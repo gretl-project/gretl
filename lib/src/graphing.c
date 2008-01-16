@@ -561,7 +561,7 @@ int gnuplot_has_bbox (void)
     if (err == -1) {
 	err = gnuplot_test_command("set term png ; "
 				   "set output '/dev/null' ; "
-				   "plot x ; print TERM_XMIN");
+				   "plot x ; print GPVAL_TERM_XMIN");
     }
 
     return !err;    
@@ -835,8 +835,8 @@ void write_plot_line_styles (int ptype, FILE *fp)
 void print_plot_bounding_box_request (FILE *fp)
 {
     fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_dot_dir());
-    fputs("print \"pixel_bounds: \", TERM_XMIN, TERM_XMAX, "
-	  "TERM_YMIN, TERM_YMAX\n", fp);
+    fputs("print \"pixel_bounds: \", GPVAL_TERM_XMIN, GPVAL_TERM_XMAX, "
+	  "GPVAL_TERM_YMIN, GPVAL_TERM_YMAX\n", fp);
     fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
 	  "GPVAL_Y_MIN, GPVAL_Y_MAX\n", fp);
 }
