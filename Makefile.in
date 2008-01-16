@@ -44,6 +44,7 @@ $(SUBDIRS):
 
 clean:
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
+	rm -f build.h
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(libdir) $(includedir) $(bindir)
@@ -65,6 +66,9 @@ tags:
 	$(topsrc)/$(GUIDIR)/*.[ch] $(topsrc)/plugin/*.[ch] \
 	$(topsrc)/cephes/*.c
 
+buildstamp:
+	$(topsrc)/builddate.pl
+
 dist: 
 	$(tooldir)/makedist
 
@@ -79,7 +83,7 @@ check:
 
 # dependency for parallel builds
 cli: lib
-$(GUIDIR): lib
+$(GUIDIR): lib buildstamp
 plugin: lib
 tests: lib
 

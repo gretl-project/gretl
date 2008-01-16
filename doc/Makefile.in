@@ -33,4 +33,4 @@ clean:
 install: 
 	make -C tex install
 	make -C tex_it install
-	make -C tex_es clean
+	make -C tex_es install

@@ -19,11 +19,7 @@
 
 #include "gretl.h"
 #include "version.h"
-#ifdef G_OS_WIN32
-# include "build.h"
-#else
-# include "gui2/build.h"
-#endif
+#include "build.h"
 
 const gchar *copyright = "Copyright (C) 2000-2008 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
