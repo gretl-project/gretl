@@ -21,6 +21,10 @@
 #include "version.h"
 #include "build.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
+
 const gchar *copyright = "Copyright (C) 2000-2008 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
