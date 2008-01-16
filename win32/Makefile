@@ -452,7 +452,7 @@ dirs:
 	mkdir -p plugins 
 
 buildstamp:
-	./builddate.pl
+	$(topsrc)/builddate.pl
 
 clean:
 	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*

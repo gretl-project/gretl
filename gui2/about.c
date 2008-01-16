@@ -19,9 +19,10 @@
 
 #include "gretl.h"
 #include "version.h"
-
-#ifdef G_OS_WIN32 
+#ifdef G_OS_WIN32
 # include "build.h"
+#else
+# include "gui2/build.h"
 #endif
 
 const gchar *copyright = "Copyright (C) 2000-2008 Allin Cottrell and "
@@ -113,9 +114,7 @@ void about_dialog (gpointer data)
     buf = 
 	g_markup_printf_escaped("<span weight=\"bold\" size=\"xx-large\">"
 				"gretl %s</span>\n"
-#ifdef G_OS_WIN32
 				BUILD_DATE
-#endif
 				"%s\n%s\n",
 				GRETL_VERSION, _(bonmot), website);
     w = gtk_label_new(NULL);

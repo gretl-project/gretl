@@ -4,7 +4,7 @@ my $update = 1;
 my $test, $line;
 my @fields;
 
-my $datestr =`date +%m/%d/%Y`;
+my $datestr =`date +%Y-%m-%d`;
 chomp ($datestr);
 
 if (open (BUILD_H, "< build.h")) {
