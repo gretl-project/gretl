@@ -105,24 +105,36 @@ static int filter_comments (char *s, CMD *cmd)
 {
     char tmp[MAXLINE];
     char *p = s;
+    int quoted = 0;
+    int ignore = (cmd->flags & CMD_IGNORE);
     int j = 0, filt = 0;
 
     if (strlen(s) >= MAXLINE) {
 	return 0;
     }
 
-    /* check first for C-style comments */
-
     while (*p) {
-	if (*p == '/' && *(p+1) == '*') {
-	    cmd->flags |= CMD_IGNORE;
-	    p += 2;
-	} else if (*p == '*' && *(p+1) == '/') {
-	    cmd->flags &= ~CMD_IGNORE;
-	    p += 2;
-	    p += strspn(p, " ");
+	if (!ignore && *p == '"') {
+	    quoted = !quoted;
 	}
-	if (!(cmd->flags & CMD_IGNORE) && *p != '\r') {
+	if (!quoted && !ignore && *p == '#') {
+	    break;
+	}
+	if (!quoted) {
+	    if (*p == '/' && *(p+1) == '*') {
+		ignore = 1;
+		p += 2;
+	    } else if (*p == '*' && *(p+1) == '/') {
+		if (!ignore) {
+		    cmd->err = E_PARSE;
+		    return 0;
+		}
+		ignore = 0;
+		p += 2;
+		p += strspn(p, " ");
+	    }
+	}
+	if (!ignore && *p != '\r') {
 	    tmp[j++] = *p;
 	}
 	if (*p) {
@@ -135,14 +147,20 @@ static int filter_comments (char *s, CMD *cmd)
 
     if (*s == '\0') {
 	filt = 1;
-    } else if (!(cmd->flags & CMD_IGNORE)) {
-	/* '#' or C++ style comments */
+    } else if (!ignore) {
+	/* '#' comments */
 	filt = strip_inline_comments(s);
     }
 
     if (filt) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_COMMENT;
+    }
+
+    if (ignore) {
+	cmd->flags |= CMD_IGNORE;
+    } else {
+	cmd->flags &= ~CMD_IGNORE;
     }
 
     return filt;
@@ -2168,6 +2186,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* trap lines that are nothing but comments */
     if (filter_comments(line, cmd)) {
 	return 0;
+    }
+
+    /* catch errors associated with comment syntax */
+    if (cmd->err) {
+	return cmd->err;
     }
 
     /* extract any options */
