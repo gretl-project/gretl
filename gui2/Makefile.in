@@ -100,7 +100,7 @@ LIBTOOL = ../libtool
 PROG  = gretl_x11
 
 vpath %.c $(topsrc)/gui2
-vpath %.h $(topsrc)/gui2 ./gui2
+vpath %.h $(topsrc)/gui2
 
 SRCS = about.c \
 	boxplots.c \
@@ -154,7 +154,7 @@ GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): buildstamp .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE) $(MY_SOURCEVIEW_LIB)
+$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE) $(MY_SOURCEVIEW_LIB)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
@@ -205,7 +205,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(bindir) 
 	$(tooldir)/mkinstalldirs $(gretldir)
 
-buildstamp:
+../gui2/build.h:
 	$(topsrc)/builddate.pl
 
 clean:
