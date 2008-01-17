@@ -645,12 +645,12 @@ of progress).
 \app{Gretl} offers the possibility of differentiating numerically a
 user-defined function via the \texttt{fdjac} function. 
 
-This function again takes two arguments: an $n \times 1$
-matrix holding initial parameter values and a string specifying a call
-to a function that calculates and returns an $m \times 1$ matrix ($n
-\leq m$), given the current parameter values and any other relevant
-data.  On successful completion it returns an $m \times n$ matrix
-holding the Jacobian.  For example,
+This function again takes two arguments: an $n \times 1$ matrix
+holding initial parameter values and a string specifying a call to a
+function that calculates and returns an $m \times 1$ matrix, given the
+current parameter values and any other relevant data.  On successful
+completion it returns an $m \times n$ matrix holding the Jacobian.
+For example,
 %
 \begin{code}
 matrix Jac = fdjac(theta, "SumOC(&theta, &X)")
@@ -680,19 +680,20 @@ that
 \left\{
     \begin{array}{c}
       \hat{\theta} \convp \theta \\ 
-      \sqrt{n} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
+      \sqrt{T} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
     \end{array}
 \right\}
     \Longrightarrow
 \left\{
     \begin{array}{c}
       \hat{\psi} = g(\hat{\theta}) \convp \psi = g(\theta) \\ 
-      \sqrt{n} \left( \hat{\psi} - \psi \right) \convd N(0, J
+      \sqrt{T} \left( \hat{\psi} - \psi \right) \convd N(0, J
       \Sigma J')
     \end{array}
 \right\}
 \]
-where $J$ is the Jacobian $\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
+where $T$ is the sample size and $J$ is the Jacobian
+$\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
 
 \begin{script}[htbp]
   \caption{Delta Method}
