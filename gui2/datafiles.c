@@ -973,9 +973,19 @@ static void show_server_dbs (GtkWidget *w, gpointer p)
     display_files(NULL, REMOTE_DB, NULL);
 }
 
+static void show_local_dbs (GtkWidget *w, gpointer p)
+{
+    display_files(NULL, NATIVE_DB, NULL);
+}
+
 static void show_server_funcs (GtkWidget *w, gpointer p)
 {
     display_files(NULL, REMOTE_FUNC_FILES, NULL);
+}
+
+static void show_local_funcs (GtkWidget *w, gpointer p)
+{
+    display_files(NULL, FUNC_FILES, NULL);
 }
 
 enum {
@@ -987,6 +997,7 @@ enum {
     BTN_EXEC,
     BTN_DEL,
     BTN_WWW,
+    BTN_HOME,
     BTN_NEW,
     BTN_FIND,
     BTN_OPEN,
@@ -1009,6 +1020,7 @@ static struct files_item files_items[] = {
     { N_("Execute"),        BTN_EXEC,  GTK_STOCK_EXECUTE },
     { N_("Delete"),         BTN_DEL,   GTK_STOCK_DELETE },
     { N_("Look on server"), BTN_WWW,   GTK_STOCK_NETWORK },
+    { N_("Local machine"),  BTN_HOME,  GTK_STOCK_HOME },
     { N_("New"),            BTN_NEW,   GTK_STOCK_NEW },
     { N_("Find"),           BTN_FIND,  GTK_STOCK_FIND },
     { N_("Close"),          BTN_CLOSE, GTK_STOCK_CLOSE },
@@ -1056,7 +1068,9 @@ static void make_filesbar (windata_t *vwin)
 		toolfunc = install_file_from_server;
 	    } else if (files_items[i].action == BTN_EXEC) {
 		toolfunc = browser_call_func;
-	    } 
+	    } else if (files_items[i].action == BTN_HOME) {
+		toolfunc = show_local_funcs;
+	    }
 	} else if (vwin->role == NATIVE_DB) {
 	    if (files_items[i].action == BTN_INDX) {
 		toolfunc = open_db_index;
@@ -1068,6 +1082,8 @@ static void make_filesbar (windata_t *vwin)
 		toolfunc = open_remote_db_index;
 	    } else if (files_items[i].action == BTN_INST) {
 		toolfunc = install_file_from_server;
+	    } else if (files_items[i].action == BTN_HOME) {
+		toolfunc = show_local_dbs;
 	    }
 	} else if (vwin->role == TEXTBOOK_DATA) {
 	    if (files_items[i].action == BTN_OPEN) {
@@ -1097,11 +1113,25 @@ static void make_filesbar (windata_t *vwin)
     gtk_widget_show(hbox);
 }
 
+static gchar *files_title (int code)
+{
+    const gchar *hname;
+
+#if GTK_MINOR_VERSION >= 8
+    hname = g_get_host_name();
+#else
+    hname = "local machine";
+#endif
+
+    return g_strdup_printf(_("gretl: databases on %s"), hname);
+}
+
 void display_files (gpointer p, guint code, GtkWidget *w)
 {
     GtkWidget *filebox;
     windata_t *vwin;
     struct fpkg_response fresp;
+    gchar *title = NULL;
     int err = 0;
 
     if (browser_busy(code)) {
@@ -1125,22 +1155,24 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 
     set_browser_status(vwin, BROWSER_BUSY);
 
+    if (code == FUNC_FILES || code == NATIVE_DB) {
+	title = files_title(code);
+    }
+
     switch (code) {
     case PS_FILES:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: practice files"));
 	break;
     case FUNC_FILES:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), 
-			     _("gretl: function packages"));
+	gtk_window_set_title(GTK_WINDOW(vwin->w), title);
 	break;
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: data files"));
 	break;
     case NATIVE_DB:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), 
-			     _("gretl: database files"));
+	gtk_window_set_title(GTK_WINDOW(vwin->w), title);
 	break;
     case REMOTE_DB:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
@@ -1151,6 +1183,10 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: function packages on server"));
 	break;
+    }
+
+    if (title != NULL) {
+	g_free(title);
     }
 
     /* set up grids */

@@ -41,8 +41,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget);
 
 void model_genr_callback (gpointer data, guint u, GtkWidget *widget);
 
-void gp_send_callback (GtkWidget *w, gpointer data);
-
 void file_save_callback (GtkWidget *w, gpointer data);
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);

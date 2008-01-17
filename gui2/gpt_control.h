@@ -53,6 +53,8 @@ void save_graph_to_file (gpointer p, const char *fname);
 void filter_gnuplot_file (int ttype, int latin, int mono, int recolor, 
 			  FILE *fpin, FILE *fpout);
 
+void gp_send_callback (GtkWidget *w, gpointer data);
+
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause);
 

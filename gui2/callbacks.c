@@ -483,11 +483,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 		action, varclick, NULL);   
 }
 
-void gp_send_callback (GtkWidget *w, gpointer data)
-{
-    gp_to_gnuplot(data, 0, w);
-}
-
 void file_save_callback (GtkWidget *w, gpointer data)
 {
     guint u = 0;

@@ -6495,6 +6495,7 @@ static int open_append (ExecState *s, double ***pZ,
     if (data_status & HAVE_DATA) {
 	if (!dbdata && cmd->ci != APPEND) {
 	    if (data_status & MODIFIED_DATA) {
+		/* Requested by Sven: is it a good idea? */
 		int resp = 
 		    yes_no_dialog (_("gretl: open data"), 
 				   _("Opening a new data file will automatically\n"
