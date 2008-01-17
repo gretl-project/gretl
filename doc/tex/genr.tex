@@ -672,7 +672,7 @@ covariance matrix for your estimates.
 
 Another example is the delta method: if you have a consistent
 estimator of a vector of parameters $\hat{\theta}$, and a consistent
-estimate of its covariance matrix $\Sigma$, you may need do compute
+estimate of its covariance matrix $\Sigma$, you may need to compute
 estimates for a nonlinear continuous transformation $\psi =
 g(\theta)$. In this case, a standard result in asymptotic theory is
 that
@@ -703,7 +703,7 @@ function MPC(matrix *param, matrix *Y)
   beta = param[2]
   gamma = param[3]
   y = Y[1]
-    matrix ret = beta*gamma*y^(gamma-1)
+  matrix ret = beta*gamma*y^(gamma-1)
   return matrix ret
 end function
 
@@ -720,9 +720,9 @@ genr g = 1.0
 
 # Run NLS with analytical derivatives
 nls realcons = a + b * (realdpi^g)
- deriv a = 1
- deriv b = realdpi^g
- deriv g = b * realdpi^g * log(realdpi)
+  deriv a = 1
+  deriv b = realdpi^g
+  deriv g = b * realdpi^g * log(realdpi)
 end nls
 
 matrix Y = realdpi[2000:4]
