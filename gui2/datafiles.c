@@ -92,9 +92,17 @@ struct fpkg_response {
 
 #define REMOTE_ACTION(c) (c == REMOTE_DB || c == REMOTE_FUNC_FILES)
 
-static void fpkg_response_init (struct fpkg_response *f)
+static void fpkg_response_init (struct fpkg_response *f,
+				GtkWidget *w)
 {
-    f->col1_width = f->try_server = 0;
+    f->col1_width = 0;
+
+    if (w != NULL) {
+	/* called from main menu */
+	f->try_server = 0;
+    } else {
+	f->try_server = -1;
+    }
 }
 
 static char *full_path (char *s1, const char *s2)
@@ -1115,15 +1123,30 @@ static void make_filesbar (windata_t *vwin)
 
 static gchar *files_title (int code)
 {
-    const gchar *hname;
+    static char hname[48];
+    gchar *ret = NULL;
 
+    if (*hname == '\0') {
 #if GTK_MINOR_VERSION >= 8
-    hname = g_get_host_name();
-#else
-    hname = "local machine";
-#endif
+	const gchar *s = g_get_host_name();
 
-    return g_strdup_printf(_("gretl: databases on %s"), hname);
+	if (s != NULL && strlen(s) < 48) {
+	    strcpy(hname, s);
+	} else {
+	    strcpy(hname, _("local machine"));
+	}
+#else
+	strcpy(hname, _("local machine"));
+#endif
+    }
+
+    if (code == NATIVE_DB) {
+	ret = g_strdup_printf(_("gretl: databases on %s"), hname);
+    } else {
+	ret = g_strdup_printf(_("gretl: function packages on %s"), hname);
+    }
+
+    return ret;
 }
 
 void display_files (gpointer p, guint code, GtkWidget *w)
@@ -1144,7 +1167,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     }
 
     windata_init(vwin);
-    fpkg_response_init(&fresp);
+    fpkg_response_init(&fresp, w);
 
     vwin->role = code;
     vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1260,7 +1283,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	gtk_widget_grab_focus(vwin->listbox);
     }
 
-    if (err && code == FUNC_FILES && fresp.try_server) {
+    if (err && code == FUNC_FILES && fresp.try_server == 1) {
 	display_files(p, REMOTE_FUNC_FILES, w);
     }
 }
@@ -1341,8 +1364,6 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     int maxlen = 0;
     int nfn = 0;
 
-    fresp->col1_width = fresp->try_server = 0;
-
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
@@ -1371,17 +1392,21 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
 				    &maxlen);
 	closedir(dir);
-    }    
+    } 
 
     if (nfn == 0) {
-	int resp;
+	if (fresp->try_server == 0) {
+	    int resp;
 
-	resp = yes_no_dialog(_("gretl: function packages"),
-			     _("No gretl function packages were found on this computer.\n"
-			       "Do you want to take a look on the gretl server?"),
-			     0);
-	if (resp == GRETL_YES) {
-	    fresp->try_server = 1;
+	    resp = yes_no_dialog(_("gretl: function packages"),
+				 _("No gretl function packages were found on this computer.\n"
+				   "Do you want to take a look on the gretl server?"),
+				 0);
+	    if (resp == GRETL_YES) {
+		fresp->try_server = 1;
+	    }
+	} else {
+	    warnbox(_("No gretl function packages were found on this computer."));
 	}
 	return 1;
     } 
