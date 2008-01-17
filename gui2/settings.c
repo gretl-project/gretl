@@ -112,15 +112,6 @@ extern int use_wimp;
 char midiplayer[MAXSTR] = "timidity -ig";
 #endif
 
-enum {
-    TAB_NONE = 0,
-    TAB_MAIN,
-    TAB_DBS,
-    TAB_PROGS,
-    TAB_VCV,
-    TAB_MAN
-};
-
 typedef enum {
     ROOTSET  = 1 << 0,
     USERSET  = 1 << 1, 
@@ -757,12 +748,29 @@ void gretl_config_init (void)
 
 #endif /* *nix versus Windows */
 
+static void highlight_options_entry (const char *vname)
+{
+    GtkWidget *w;
+    int i;
+
+    for (i=0; rc_vars[i].key != NULL; i++) {
+	if (!strcmp(vname, rc_vars[i].key)) {
+	    w = rc_vars[i].widget;
+	    if (w != NULL && GTK_IS_ENTRY(w)) {
+		gtk_editable_select_region(GTK_EDITABLE(w), 0, -1);
+		gtk_widget_grab_focus(w);
+	    }
+	    break;
+	}
+    }
+}
+
 static void option_dialog_canceled (GtkWidget *w, int *c)
 {
     *c = 1;
 }
 
-int options_dialog (int page) 
+int options_dialog (int page, const char *varname) 
 {
     static GtkWidget *dialog;
 
@@ -823,18 +831,17 @@ int options_dialog (int page)
 		     dialog);
     gtk_widget_show(button);
 
-    if (page > 0) {
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page);
+    if (page > 1 && page < TAB_MAX) {
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page - 1);
+    }
+
+    if (varname != NULL) {
+	highlight_options_entry(varname);
     }
 
     gtk_widget_show(dialog);
 
     return canceled;
-}
-
-void options_dialog_callback (gpointer p, guint u, GtkWidget *w)
-{
-    options_dialog(u);
 }
 
 static void flip_sensitive (GtkWidget *w, gpointer data)

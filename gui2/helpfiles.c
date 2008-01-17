@@ -1621,6 +1621,6 @@ void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 #elif defined(OSX_BUILD)
     osx_open_file(fname);
 #else
-    gretl_fork(viewpdf, fname);
+    gretl_fork("viewpdf", fname);
 #endif
 }

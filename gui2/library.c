@@ -5495,6 +5495,10 @@ void do_new_script (gpointer p, guint u, GtkWidget *w)
 	return;
     }
 
+    if (u == FUNC) {
+	fputs("function \n\nend function\n", fp);
+    }
+
     fclose(fp);
     strcpy(scriptfile, temp); /* ?? */
     view_file(scriptfile, 1, 1, 78, 370, EDIT_SCRIPT);
@@ -6185,9 +6189,9 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 #else
 	if (!strncmp(latex, "pdf", 3)) {
 	    sprintf(tmp, "%s.pdf", texbase);
-	    gretl_fork(viewpdf, tmp);
+	    gretl_fork("viewpdf", tmp);
 	} else {
-	    gretl_fork(viewdvi, texbase);
+	    gretl_fork("viewdvi", texbase);
 	}
 #endif
     }

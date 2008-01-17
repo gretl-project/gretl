@@ -1152,9 +1152,7 @@ static int text_is_indented (const gchar *s)
 /* Determine whether or not a chunk of text is commented, in the form
    of each line beginning with '#' (with possible leading white
    space).  If some lines are commented and others are not, return -1,
-   which blocks the comment/uncomment menu items.  Also return -1 if
-   the region contains C-style comments, since comments can't be
-   mixed or nested.
+   which blocks the comment/uncomment menu items.
 */
 
 static int text_is_commented (const gchar *s)
@@ -1167,11 +1165,6 @@ static int text_is_commented (const gchar *s)
     }
 
     while (*s) {
-	if ((*s == '/' && *(s+1) == '*') ||
-	    (*s == '*' && *(s+1) == '/')) {
-	    /* found C-style comment */
-	    return -1;
-	}
 	if (!gotc) {
 	    if (*s == '#') {
 		comm++;

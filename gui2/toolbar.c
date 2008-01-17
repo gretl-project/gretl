@@ -37,20 +37,13 @@ static void show_calc (void)
 #ifdef G_OS_WIN32
     create_child_process(calculator);
 #else
-    gretl_fork(calculator, NULL);
+    gretl_fork("calculator", NULL);
 #endif 
 }
 
 static void open_textbook_data (void)
 {
     display_files(NULL, TEXTBOOK_DATA, NULL);
-}
-
-static void gretl_website (void)
-{
-    if (browser_open("http://gretl.sourceforge.net/")) {
-	errbox("Failed to open URL");
-    }
 }
 
 void toolbar_users_guide (void)
@@ -101,6 +94,11 @@ static void new_script_callback (void)
     do_new_script(NULL, 0, NULL);
 }
 
+static void show_funcs_callback (void)
+{
+    display_files(NULL, FUNC_FILES, NULL);
+}
+
 /* end toolbar icon callbacks */
 
 struct toolbar_item {
@@ -118,7 +116,7 @@ static struct toolbar_item toolbar_items[] = {
 #endif
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, show_gretl_console },
     { N_("session icon view"), GRETL_STOCK_ICONS, go_session },
-    { N_("gretl website"), GRETL_STOCK_WWW, gretl_website },
+    { N_("function packages"), GRETL_STOCK_FUNC, show_funcs_callback },
     { N_("user's guide"), GRETL_STOCK_PDF, toolbar_users_guide },
     { N_("command reference"), GTK_STOCK_HELP, toolbar_command_reference },
     { N_("X-Y graph"), GRETL_STOCK_SCATTER, xy_graph },

@@ -2436,6 +2436,8 @@ gint populate_dbfilelist (windata_t *vwin)
     int tries = 0;
     int ndb = 0;
 
+    errno = 0;
+
     while (dir == NULL) {
 #ifdef G_OS_WIN32 
 	dir = win32_opendir(dbdir);
@@ -2444,7 +2446,7 @@ gint populate_dbfilelist (windata_t *vwin)
 #endif
 	if (dir == NULL) {
 	    errbox(_("Can't open folder %s"), dbdir);
-	    if (++tries == 2 || options_dialog(1)) {
+	    if (++tries == 2 || options_dialog(TAB_DBS, "binbase")) {
 		/* canceled */
 		return 1;
 	    }

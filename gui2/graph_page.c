@@ -542,7 +542,7 @@ static int make_gp_output (void)
 static int real_display_gpage (void)
 {
 #ifndef G_OS_WIN32
-    char *viewer;
+    const char *viewer;
 #endif
     char *fname;
     int err = 0;
@@ -558,7 +558,7 @@ static int real_display_gpage (void)
 #elif defined(OSX_BUILD)
     err = osx_open_file(fname);
 #else
-    viewer = (gpage.term == GP_TERM_PDF)? viewpdf : viewps;
+    viewer = (gpage.term == GP_TERM_PDF)? "viewpdf" : "viewps";
     err = gretl_fork(viewer, fname);
 #endif
 

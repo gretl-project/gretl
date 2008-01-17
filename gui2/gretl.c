@@ -38,6 +38,7 @@
 #include "fileselect.h"
 #include "filters.h"
 #include "calculator.h"
+#include "fnsave.h"
 
 #include <dirent.h>
 
@@ -126,23 +127,23 @@ int mainwin_width = 520;
 int mainwin_height = 420;
 
 #if defined(G_OS_WIN32)
-char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
+char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OSX_BUILD)
 char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
 char Rcommand[MAXSTR] = "xterm -e R";
 #else
+char Browser[MAXSTR] = "mozilla";
 char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "latex";
 char viewdvi[MAXSTR] = "xdvi";
-char viewps[MAXSTR] = "gv";
 char viewpdf[MAXSTR] = "acroread";
+char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
-char Browser[MAXSTR] = "mozilla";
 #endif
 
 static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w) 
@@ -165,6 +166,20 @@ extern void find_var (gpointer p, guint u, GtkWidget *w); /* helpfiles.c */
 static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
 {
     varinfo_dialog(mdata->active_var, 1);
+}
+
+static void options_dialog_callback (gpointer p, guint u, GtkWidget *w)
+{
+    options_dialog(0, NULL);
+}
+
+static void new_function_pkg_callback (gpointer p, guint u, GtkWidget *w)
+{
+    if (no_user_functions_check()) {
+	return;
+    } else {
+	file_save(p, SAVE_FUNCTIONS, w);
+    }
 }
 
 static void wdir_select_callback (gpointer p, guint startup, GtkWidget *w)
@@ -287,8 +302,8 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Function files/On _server..."), "", display_files, 
       REMOTE_FUNC_FILES, "<StockItem>", GTK_STOCK_NETWORK },
-    { N_("/File/Function files/_New package"), "", file_save, 
-      SAVE_FUNCTIONS, "<StockItem>", GTK_STOCK_NEW },
+    { N_("/File/Function files/_New package"), "", new_function_pkg_callback, 0,
+      "<StockItem>", GTK_STOCK_NEW },
 
     { "/File/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },
@@ -1634,10 +1649,37 @@ static void startRcallback (gpointer p, guint opt, GtkWidget *w)
 
 #ifndef G_OS_WIN32
 
-int gretl_fork (const char *prog, const char *arg)
+int gretl_fork (const char *progvar, const char *arg)
 {
+    const char *prog = NULL;
     gchar *argv[3];
+    GError *err = NULL;
     gboolean run;
+
+#ifdef OSX_BUILD
+    if (!strcmp(progvar, "calculator")) {
+	prog = calculator;
+    } else if (!strcmp(progvar, "viewdvi")) {
+	prog = viewdvi;
+    } 
+#else
+    if (!strcmp(progvar, "Browser")) {
+	prog = Browser;
+    } else if (!strcmp(progvar, "calculator")) {
+	prog = calculator;
+    } else if (!strcmp(progvar, "viewdvi")) {
+	prog = viewdvi;
+    } else if (!strcmp(progvar, "viewpdf")) {
+	prog = viewpdf;
+    } else if (!strcmp(progvar, "viewps")) {
+	prog = viewps;
+    }    
+#endif
+
+    if (prog == NULL) {
+	errbox("Internal error: variable %s is undefined", progvar);
+	return 1;
+    }
     
     argv[0] = g_strdup(prog);
     if (arg != NULL) {
@@ -1648,10 +1690,15 @@ int gretl_fork (const char *prog, const char *arg)
     }
     
     run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
-			NULL, NULL, NULL, NULL);
+			NULL, NULL, NULL, &err);
 
-    if (!run) {
-	errbox("%s: %s", _("Command failed"), prog);
+    if (err != NULL) {
+	errbox(err->message);
+	if (err->domain == G_SPAWN_ERROR &&
+	    err->code == G_SPAWN_ERROR_NOENT) {
+	    options_dialog(TAB_PROGS, progvar);
+	}
+	g_error_free(err);
     }
 
     g_free(argv[0]);

@@ -19,9 +19,7 @@ void dump_rc (void);
 
 void force_english_help (void);
 
-int options_dialog (int page);
-
-void options_dialog_callback (gpointer p, guint u, GtkWidget *w);
+int options_dialog (int page, const char *varname);
 
 void font_selector (gpointer data, guint which, GtkWidget *widget);
 

@@ -3113,7 +3113,7 @@ static void build_arma_spinners (selector *sr)
 
 static void hc_config (GtkWidget *w, gpointer p)
 {
-    options_dialog(4);
+    options_dialog(TAB_VCV, NULL);
 }
 
 static void pack_switch (GtkWidget *b, selector *sr,
@@ -4589,10 +4589,7 @@ static int data_save_selection_callback (selector *sr)
 void data_save_selection_wrapper (int file_code, gpointer p)
 {
     if (file_code == SAVE_FUNCTIONS) {
-	if (n_free_functions() == 0) {
-	    errbox(_("No user-defined functions are currently available\n"
-		     "for packaging.\n\nPlease load or define some "
-		     "functions first."));
+	if (no_user_functions_check()) {
 	    return;
 	}
 	selection_dialog(_("Save functions"), 

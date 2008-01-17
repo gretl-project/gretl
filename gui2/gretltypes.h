@@ -27,11 +27,11 @@
 #define GRETL_STOCK_PDF     "gretl-pdf"
 #define GRETL_STOCK_BOOK    "gretl-book"
 #define GRETL_STOCK_CALC    "gretl-calc"
-#define GRETL_STOCK_WWW     "gretl-www"
 #define GRETL_STOCK_ICONS   "gretl-icons"
 #define GRETL_STOCK_MODEL   "gretl-model"
 #define GRETL_STOCK_CONSOLE "gretl-console"
 #define GRETL_STOCK_SCATTER "gretl-scatter"
+#define GRETL_STOCK_FUNC    "gretl-func"
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # define NO_INFO_ICON 1

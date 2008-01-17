@@ -71,7 +71,7 @@
 #include "../pixmaps/mini.session.xpm"
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
-#include "../pixmaps/mini.browser.xpm"
+#include "../pixmaps/mini.func.xpm"
 
 char *storelist = NULL;
 
@@ -1495,9 +1495,9 @@ void gretl_stock_icons_init (void)
 	mini_calc_xpm,
 	mini_sh_xpm,
 	mini_session_xpm,
-	mini_browser_xpm,
 	mini_plot_xpm,
-	mini_model_xpm
+	mini_model_xpm,
+	mini_func_xpm
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -1516,9 +1516,9 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_CALC,
 	GRETL_STOCK_CONSOLE,
 	GRETL_STOCK_ICONS,
-	GRETL_STOCK_WWW,
 	GRETL_STOCK_SCATTER,
-	GRETL_STOCK_MODEL
+	GRETL_STOCK_MODEL,
+	GRETL_STOCK_FUNC
     };
     int n = sizeof stocks / sizeof stocks[0];
 
@@ -3899,13 +3899,15 @@ int browser_open (const char *url)
 # elif defined(OSX_BUILD)
     osx_open_url(url);
 # else
+    gchar *urlcmd;
     int err;
-    char ns_cmd[256];
+    
+    urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
+    err = gretl_spawn(urlcmd);
+    g_free(urlcmd);
 
-    sprintf(ns_cmd, "%s -remote \"openURLNewWindow(%s)\"", Browser, url);
-    err = gretl_spawn(ns_cmd);
     if (err) {
-	gretl_fork(Browser, url);
+	gretl_fork("Browser", url);
     }
 # endif /* !GNOME, !OSX */
 

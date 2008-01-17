@@ -861,7 +861,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 #elif defined(OSX_BUILD)
     osx_open_file(pdfname);
 #else
-    gretl_fork(viewpdf, pdfname);
+    gretl_fork("viewpdf", pdfname);
 #endif
 }
 

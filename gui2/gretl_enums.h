@@ -168,6 +168,16 @@ enum browser_codes {
     MAINWIN
 };
 
+enum pref_tabs {
+    TAB_NONE = 0,
+    TAB_MAIN,
+    TAB_DBS,
+    TAB_PROGS,
+    TAB_VCV,
+    TAB_MAN,
+    TAB_MAX
+};
+
 enum stat_codes {
     ESS = 1,
     R2,

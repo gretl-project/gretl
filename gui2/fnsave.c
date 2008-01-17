@@ -1126,3 +1126,23 @@ void edit_function_package (const char *fname, int *loaderr)
 
     finfo_dialog(finfo);
 }
+
+int no_user_functions_check (void)
+{
+    int err = 0;
+
+    if (n_free_functions() == 0) {
+	int resp;
+
+	err = 1;
+	resp = yes_no_dialog(_("gretl: function packages"),
+			     _("No functions are available for packaging at present.\n"
+			       "Do you want to write a function now?"),
+			     0);
+	if (resp == GRETL_YES) {
+	    do_new_script(NULL, FUNC, NULL);
+	}
+    } 
+
+    return err;
+}

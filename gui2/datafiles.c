@@ -85,7 +85,17 @@ enum {
     COLL_PS
 };
 
+struct fpkg_response {
+    int col1_width;
+    int try_server;
+};
+
 #define REMOTE_ACTION(c) (c == REMOTE_DB || c == REMOTE_FUNC_FILES)
+
+static void fpkg_response_init (struct fpkg_response *f)
+{
+    f->col1_width = f->try_server = 0;
+}
 
 static char *full_path (char *s1, const char *s2)
 {
@@ -958,6 +968,16 @@ static void build_funcfiles_popup (windata_t *vwin)
     }
 }
 
+static void show_server_dbs (GtkWidget *w, gpointer p)
+{
+    display_files(NULL, REMOTE_DB, NULL);
+}
+
+static void show_server_funcs (GtkWidget *w, gpointer p)
+{
+    display_files(NULL, REMOTE_FUNC_FILES, NULL);
+}
+
 enum {
     BTN_EDIT = 1,
     BTN_INFO,
@@ -966,6 +986,7 @@ enum {
     BTN_INST,
     BTN_EXEC,
     BTN_DEL,
+    BTN_WWW,
     BTN_NEW,
     BTN_FIND,
     BTN_OPEN,
@@ -979,17 +1000,18 @@ struct files_item {
 };
 
 static struct files_item files_items[] = {
-    { N_("Open"),      BTN_OPEN,  GTK_STOCK_OK },
-    { N_("Edit"),      BTN_EDIT,  GTK_STOCK_EDIT },
-    { N_("Info"),      BTN_INFO,  GTK_STOCK_INFO },
-    { N_("View code"), BTN_CODE,  GTK_STOCK_PROPERTIES },
-    { N_("Index"),     BTN_INDX,  GTK_STOCK_INDEX },
-    { N_("Install"),   BTN_INST,  GTK_STOCK_SAVE },
-    { N_("Execute"),   BTN_EXEC,  GTK_STOCK_EXECUTE },
-    { N_("Delete"),    BTN_DEL,   GTK_STOCK_DELETE },
-    { N_("New"),       BTN_NEW,   GTK_STOCK_NEW },
-    { N_("Find"),      BTN_FIND,  GTK_STOCK_FIND },
-    { N_("Close"),     BTN_CLOSE, GTK_STOCK_CLOSE },
+    { N_("Open"),           BTN_OPEN,  GTK_STOCK_OK },
+    { N_("Edit"),           BTN_EDIT,  GTK_STOCK_EDIT },
+    { N_("Info"),           BTN_INFO,  GTK_STOCK_INFO },
+    { N_("View code"),      BTN_CODE,  GTK_STOCK_PROPERTIES },
+    { N_("List series"),    BTN_INDX,  GTK_STOCK_INDEX },
+    { N_("Install"),        BTN_INST,  GTK_STOCK_SAVE },
+    { N_("Execute"),        BTN_EXEC,  GTK_STOCK_EXECUTE },
+    { N_("Delete"),         BTN_DEL,   GTK_STOCK_DELETE },
+    { N_("Look on server"), BTN_WWW,   GTK_STOCK_NETWORK },
+    { N_("New"),            BTN_NEW,   GTK_STOCK_NEW },
+    { N_("Find"),           BTN_FIND,  GTK_STOCK_FIND },
+    { N_("Close"),          BTN_CLOSE, GTK_STOCK_CLOSE },
     { NULL, 0, NULL }
 };
 
@@ -1024,7 +1046,9 @@ static void make_filesbar (windata_t *vwin)
 		toolfunc = browser_del_func;
 	    } else if (files_items[i].action == BTN_NEW) {
 		toolfunc = new_package_callback;
-	    } 
+	    } else if (files_items[i].action == BTN_WWW) {
+		toolfunc = show_server_funcs;
+	    }
 	} else if (vwin->role == REMOTE_FUNC_FILES) {
 	    if (files_items[i].action == BTN_INFO) {
 		toolfunc = file_info_from_server;
@@ -1036,6 +1060,8 @@ static void make_filesbar (windata_t *vwin)
 	} else if (vwin->role == NATIVE_DB) {
 	    if (files_items[i].action == BTN_INDX) {
 		toolfunc = open_db_index;
+	    } else if (files_items[i].action == BTN_WWW) {
+		toolfunc = show_server_dbs;
 	    }
 	} else if (vwin->role == REMOTE_DB) {
 	    if (files_items[i].action == BTN_INDX) {
@@ -1075,7 +1101,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 {
     GtkWidget *filebox;
     windata_t *vwin;
-    int col1w = 0;
+    struct fpkg_response fresp;
     int err = 0;
 
     if (browser_busy(code)) {
@@ -1088,6 +1114,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     }
 
     windata_init(vwin);
+    fpkg_response_init(&fresp);
 
     vwin->role = code;
     vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1177,8 +1204,8 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     if (code == TEXTBOOK_DATA || code == PS_FILES) {
 	err = populate_notebook_filelists(vwin, filebox, code);
     } else if (code == FUNC_FILES) {
-	err = populate_filelist(vwin, &col1w);
-	if (col1w > 15) {
+	err = populate_filelist(vwin, &fresp);
+	if (fresp.col1_width > 15) {
 	    /* widen the file box if need be */
 	    gint w, h;
 
@@ -1195,6 +1222,10 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     } else {
 	gtk_widget_show_all(vwin->w); 
 	gtk_widget_grab_focus(vwin->listbox);
+    }
+
+    if (err && code == FUNC_FILES && fresp.try_server) {
+	display_files(p, REMOTE_FUNC_FILES, w);
     }
 }
 
@@ -1265,7 +1296,7 @@ read_fn_files_in_dir (int role, DIR *dir, const char *fndir,
     return nfn;
 }
 
-gint populate_func_list (windata_t *vwin, int *wid)
+gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 {
     GtkListStore *store;
     GtkTreeIter iter;
@@ -1273,6 +1304,8 @@ gint populate_func_list (windata_t *vwin, int *wid)
     DIR *dir;
     int maxlen = 0;
     int nfn = 0;
+
+    fresp->col1_width = fresp->try_server = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
@@ -1286,7 +1319,7 @@ gint populate_func_list (windata_t *vwin, int *wid)
 	closedir(dir);
     }
 
-    /* pick up any function files in the user's personal dir */
+    /* plus any function files in the user's working dir */
     build_path(fndir, paths.workdir, "functions", NULL);
     dir = opendir(fndir);
     if (dir != NULL) {
@@ -1295,15 +1328,27 @@ gint populate_func_list (windata_t *vwin, int *wid)
 	closedir(dir);
     }
 
+    /* plus any function files in the user's personal data dir */
+    build_path(fndir, paths.dotdir, "functions", NULL);
+    dir = opendir(fndir);
+    if (dir != NULL) {
+	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+				    &maxlen);
+	closedir(dir);
+    }    
+
     if (nfn == 0) {
-	errbox(_("No function files found"));
-	/* FIXME don't leak list store? */
+	int resp;
+
+	resp = yes_no_dialog(_("gretl: function packages"),
+			     _("No gretl function packages were found on this computer.\n"
+			       "Do you want to take a look on the gretl server?"),
+			     0);
+	if (resp == GRETL_YES) {
+	    fresp->try_server = 1;
+	}
 	return 1;
     } 
-
-    if (wid != NULL) {
-	*wid = maxlen;
-    }
 
     return 0;
 }
