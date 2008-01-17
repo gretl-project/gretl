@@ -70,6 +70,7 @@ make_transform_varname (char *vname, const char *orig, int ci,
 {
     *vname = '\0';
 
+
     if (ci == DIFF) {
 	strcpy(vname, "d_");
 	strncat(vname, orig, len - 2);
@@ -108,6 +109,12 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	strcpy(vname, "i_");
 	strncat(vname, orig, len - 2);
     }
+
+#if TRDEBUG
+    fprintf(stderr, "make_transform_varname:\n"
+	    "orig='%s', ci=%d, len=%d, vname='%s'\n", 
+	    orig, ci, len, vname);
+#endif
 
     return 0;
 }
@@ -533,9 +540,8 @@ static int get_transform (int ci, int v, int aux, double x,
     } else {
 	make_transform_label(label, pdinfo->varname[v], ci, aux);
     }
-    
-    for (len=startlen; len<=VNAMELEN; len++) {
 
+    for (len=startlen; len<=VNAMELEN; len++) {
 	if (len == VNAMELEN) {
 	    /* last resort: hack the name */
 	    make_varname_unique(vname, 0, pdinfo);
@@ -688,8 +694,14 @@ static int
 get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
 {
     int width = VNAMELEN - 3 - trim;
+    const char *vni, *vnj;
     int len, maxlen = 0;
+    int conflict = 0;
     int i, j;
+
+    if (list[0] == 1) {
+	return VNAMELEN - 1;
+    }
 
     for (i=1; i<=list[0]; i++) {
 	len = strlen(pdinfo->varname[list[i]]);
@@ -704,19 +716,14 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
     }
 
     for (len=width; len<=maxlen; len++) {
-	int conflict = 0;
-
-	for (i=1; i<=list[0]; i++) {
-	    for (j=i+1; j<=list[0]; j++) {
-		if (!strncmp(pdinfo->varname[list[i]],
-			     pdinfo->varname[list[j]],
-			     len)) {
+	conflict = 0;
+	for (i=1; i<=list[0] && !conflict; i++) {
+	    vni = pdinfo->varname[list[i]];
+	    for (j=i+1; j<=list[0] && !conflict; j++) {
+		vnj = pdinfo->varname[list[j]];
+		if (!strncmp(vni, vnj, len)) {
 		    conflict = 1;
-		    break;
 		}
-	    }
-	    if (conflict) {
-		break;
 	    }
 	}
 	if (!conflict) {

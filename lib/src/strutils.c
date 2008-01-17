@@ -1632,9 +1632,9 @@ void unescape_url (char *url)
 
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
 {
-    int i, j, conflict;
-    size_t n = strlen(vname);
     const char *add = "abcdefghijklmnopqrstuvwxyz";
+    size_t n = strlen(vname);
+    int i, j, conflict;
 
     if (n > 7) {
 	n = 7;
@@ -1642,17 +1642,17 @@ char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo)
 
     for (j=0; j<26; j++) {
 	conflict = 0;
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<pdinfo->v && !conflict; i++) {
 	    if (i != v && !strcmp(vname, pdinfo->varname[i])) {
 		conflict = 1;
-		break;
 	    }
 	}
-	if (!conflict) {
+	if (conflict) {
+	    vname[n] = add[j];
+	    vname[n+1] = '\0';
+	} else {
 	    break;
 	}
-	vname[n] = add[j];
-	vname[n+1] = '\0';
     }
 
     return vname;

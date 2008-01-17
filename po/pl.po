@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-12-20 14:04-0500\n"
-"PO-Revision-Date: 2008-01-16 01:00+0100\n"
+"PO-Revision-Date: 2008-01-16 11:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1602,7 +1602,7 @@ msgstr "t(%d) = %g, przy dwustronym obszarze krytycznym p = %.4f\n"
 #: lib/src/describe.c:3917 lib/src/describe.c:3955 gui2/guiprint.c:1282
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "5%% warto¶æ krytyczna (dwustronny obszar krytyczny) = %.4f dla n = %d"
+msgstr "Warto¶æ krytyczna (przy dwustronnym 5%% obszarze krytycznym) = %.4f dla n = %d"
 
 #: lib/src/describe.c:3946
 msgid "Correlation Coefficients"
@@ -8054,7 +8054,7 @@ msgstr ""
 
 #: gui2/dialogs.c:5054
 msgid "t-ratio"
-msgstr "wsp. t"
+msgstr "t-Student"
 
 #: gui2/dialogs.c:5070
 msgid "gretl: TeX tabular format"
@@ -13602,7 +13602,7 @@ msgid ""
 msgstr ""
 "\n"
 "Bardziej rozbudowane tablice DW znajdziesz na stronie\n"
-"http://www.kufel.torun.pl/tablice_DW.xls"
+"http://www.kufel.torun.pl/dw.xls"
 
 #: plugin/stats_tables.c:193
 #, no-c-format
