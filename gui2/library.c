@@ -4247,6 +4247,7 @@ void add_logs_etc (gpointer p, guint action, GtkWidget *w)
 	errbox(_("Error adding variables"));
     } else {
 	populate_varlist();
+	mark_dataset_as_modified();
     }
 }
 
@@ -5057,62 +5058,20 @@ int do_graph_from_selector (selector *sr)
 #include <signal.h>
 #include <errno.h>
 
-static int executable_exists (const char *fname)
-{
-    struct stat sbuf;
-    int ok = 0;
-
-    if (stat(fname, &sbuf) == 0) {
-	if (sbuf.st_mode & S_IXOTH) {
-	    ok = 1;
-	} else if (getuid() == sbuf.st_uid &&
-		   (sbuf.st_mode & S_IXUSR)) {
-	    ok = 1;
-	} else if (getgid() == sbuf.st_gid &&
-		   (sbuf.st_mode & S_IXGRP)) {
-	    ok = 1;
-	}
-    }
-
-    return ok;
-}
-
-static int mywhich (const char *prog)
-{
-    char test[FILENAME_MAX];
-    char *path, *p;
-    gchar *mypath;
-    int i, ret = 0;
-
-    path = getenv("PATH");
-    if (path == NULL) return 0;
-
-    mypath = g_strdup(path);
-    if (mypath == NULL) return 0;
-
-    for (i=0; ; i++) {
-	p = strtok((i)? NULL : mypath, ":");
-	if (p == NULL) break;
-	sprintf(test, "%s/%s", p, prog);
-	if (executable_exists(test)) {
-	    ret = 1;
-	    break;
-	}
-    }
-
-    g_free(mypath);
-
-    return ret;
-}
-
 static int get_terminal (char *s)
 {
-    if (mywhich("xterm")) {
+    gchar *test;
+
+    test = g_find_program_in_path("xterm");
+    if (test != NULL) {
+	g_free(test);
 	strcpy(s, "xterm");
 	return 0;
     }
 
-    if (mywhich("rxvt")) {
+    test = g_find_program_in_path("rxvt");
+    if (test != NULL) {
+	g_free(test);
 	strcpy(s, "rxvt");
 	return 0;
     }
@@ -6535,6 +6494,17 @@ static int open_append (ExecState *s, double ***pZ,
 
     if (data_status & HAVE_DATA) {
 	if (!dbdata && cmd->ci != APPEND) {
+	    if (data_status & MODIFIED_DATA) {
+		int resp = 
+		    yes_no_dialog (_("gretl: open data"), 
+				   _("Opening a new data file will automatically\n"
+				     "close the current one.  Any unsaved work\n"
+				     "will be lost.  Proceed to open data file?"), 0);
+
+		if (resp != GRETL_YES) {
+		    return 1;
+		}
+	    } 
 	    close_session(s, pZ, ppdinfo);
 	    pdinfo = *ppdinfo;
 	}
