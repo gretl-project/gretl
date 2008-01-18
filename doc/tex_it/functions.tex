@@ -172,6 +172,21 @@ list xlist = 2 3 4
 series resids = get_uhat(price, xlist)
 \end{code}
 
+\section{Cancellazione di una funzione}
+\label{func-del}
+
+Se si vuole cancellare dalla memoria una funzione definita in precedenza, è
+possibile usare le parole chiave \texttt{delete} o \texttt{clear}, come in
+
+\begin{code}
+function myfunc delete
+function get_uhat clear
+\end{code}
+
+Si noti che ridefinendo una funzione, la vecchia funzione viene automaticamente
+sovrascritta, quindi raramente è necessario cancellare una funzione in modo
+esplicito.
+
 \section{Programmazione delle funzioni}
 \label{func-details}
  

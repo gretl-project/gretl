@@ -653,8 +653,8 @@ definita dall'utente, usando la funzione \texttt{fdjac}.
 
 Questa funzione accetta due argomenti: una matrice $n \times 1$
 che contiene i valori iniziali dei parametri e una stringa che specifica una
-chiamata a una funzione che calcola e produce una matrice $m \times 1$ (con $n
-\leq m$), dati i valori attuali dei parametri e gli altri dati rilevanti.
+chiamata a una funzione che calcola e produce una matrice $m \times 1$,
+dati i valori attuali dei parametri e gli altri dati rilevanti.
 In caso di successo, viene prodotta una matrice $m \times n$ che contiene il
 Jacobiano. Ad esempio,
 %
@@ -685,19 +685,20 @@ un risultato standard della teoria asintotica è il seguente:
 \left\{
     \begin{array}{c}
       \hat{\theta} \convp \theta \\ 
-      \sqrt{n} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
+      \sqrt{T} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
     \end{array}
 \right\}
     \Longrightarrow
 \left\{
     \begin{array}{c}
       \hat{\psi} = g(\hat{\theta}) \convp \psi = g(\theta) \\ 
-      \sqrt{n} \left( \hat{\psi} - \psi \right) \convd N(0, J
+      \sqrt{T} \left( \hat{\psi} - \psi \right) \convd N(0, J
       \Sigma J')
     \end{array}
 \right\}
 \]
-dove $J$ è il Jacobiano $\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
+dove $T$ è l'ampiezza del campione, mentre $J$ è il Jacobiano
+$\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
 
 \begin{script}[htbp]
   \caption{Metodo delta}
@@ -707,7 +708,7 @@ function MPC(matrix *param, matrix *Y)
   beta = param[2]
   gamma = param[3]
   y = Y[1]
-    matrix ret = beta*gamma*y^(gamma-1)
+  matrix ret = beta*gamma*y^(gamma-1)
   return matrix ret
 end function
 
@@ -724,9 +725,9 @@ genr g = 1.0
 
 # Esegui NLS con derivate analitiche
 nls realcons = a + b * (realdpi^g)
- deriv a = 1
- deriv b = realdpi^g
- deriv g = b * realdpi^g * log(realdpi)
+  deriv a = 1
+  deriv b = realdpi^g
+  deriv g = b * realdpi^g * log(realdpi)
 end nls
 
 matrix Y = realdpi[2000:4]
