@@ -209,8 +209,11 @@ enum data_status_flags {
 
 enum drag_types {
     GRETL_FILENAME,
-    GRETL_POINTER,
-    GRETL_MODEL_POINTER
+    GRETL_DBSERIES_PTR,
+    GRETL_MODEL_PTR,
+    GRETL_REMOTE_DB_PTR,
+    GRETL_REMOTE_FNPKG_PTR,
+    GRETL_GRAPH_FILE
 };
 
 enum file_lists {

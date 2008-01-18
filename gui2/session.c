@@ -143,11 +143,6 @@ enum {
     SAVEFILE_ERROR
 } savefile_returns;
 
-static GtkTargetEntry session_drag_targets[] = {
-    { "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER },
-    { "text/uri-list", 0, GRETL_FILENAME }
-};
-
 static char *global_items[] = {
     N_("Save session"),
     N_("Arrange icons"),
@@ -2621,13 +2616,13 @@ session_data_received (GtkWidget *widget,
 		       guint time,
 		       gpointer p)
 {
-    if (info == GRETL_MODEL_POINTER && data != NULL) {
+    if (info == GRETL_MODEL_PTR && data != NULL) {
 	MODEL **ppmod = (MODEL **) data->data;
 
 	if (ppmod != NULL) {
 	    add_to_model_table(*ppmod, MODEL_ADD_BY_DRAG, NULL);
 	}
-    } else if (info == GRETL_FILENAME && data != NULL) {
+    } else if (info == GRETL_GRAPH_FILE && data != NULL) {
 	gchar *fname = (gchar *) data->data;
 
 	if (fname != NULL) {
@@ -2642,9 +2637,9 @@ static void session_drag_setup (gui_obj *obj)
     GtkTargetEntry *targ;
     
     if (obj->sort == GRETL_OBJ_MODTAB) {
-	targ = &session_drag_targets[0];
+	targ = &gretl_drag_targets[GRETL_MODEL_PTR];
     } else {
-	targ = &session_drag_targets[1];
+	targ = &gretl_drag_targets[GRETL_GRAPH_FILE];
     }
 
     gtk_drag_dest_set (w,
@@ -2669,7 +2664,7 @@ static void drag_graph (GtkWidget *w, GdkDragContext *context,
 static void graph_drag_connect (GtkWidget *w, SESSION_GRAPH *graph)
 {
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
-                        &session_drag_targets[1],
+                        &gretl_drag_targets[GRETL_GRAPH_FILE],
                         1, GDK_ACTION_COPY);
     g_signal_connect(G_OBJECT(w), "drag_data_get",
                      G_CALLBACK(drag_graph), graph);
@@ -2687,7 +2682,7 @@ static void drag_model (GtkWidget *w, GdkDragContext *context,
 static void model_drag_connect (GtkWidget *w, SESSION_MODEL *mod)
 {
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
-                        &session_drag_targets[0],
+                        &gretl_drag_targets[GRETL_MODEL_PTR],
                         1, GDK_ACTION_COPY);
     g_signal_connect(G_OBJECT(w), "drag_data_get",
                      G_CALLBACK(drag_model), mod);

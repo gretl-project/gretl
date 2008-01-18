@@ -6,7 +6,8 @@ version 1.7.2, in progress
 - Add shell capture for strings via $(shellcommand)
 - Paths stuff: add non-configurable "dotdir" to hold per-user
   automatically-created files
-- Fix bugs 1861010, 1868859, 1869271, 1870459, 1870973
+- Fix bugs 1861010, 1868859, 1869271, 1870459, 1870973,
+  1871110, 1871135, 1873625, 1874601
 - Rationalize frequency plot dialog
 - Add Help item to forecast dialog
 - Fixes for matrix "dot operations"
@@ -19,6 +20,8 @@ version 1.7.2, in progress
 - Models having an exact fit: block various invalid tests
 - det() function: fix for singular matrices
 - GUI script editor enhancements
+- Allow drag of database from databases-on-server window
+  to local native databases window
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

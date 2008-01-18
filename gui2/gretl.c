@@ -68,8 +68,12 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w);
 static void mdata_select_all (void);
 
 GtkTargetEntry gretl_drag_targets[] = {
-    { "text/uri-list", 0, GRETL_FILENAME },
-    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER }    
+    { "text/uri-list",  0, GRETL_FILENAME },
+    { "db_series_ptr",  GTK_TARGET_SAME_APP, GRETL_DBSERIES_PTR },
+    { "model_ptr",      GTK_TARGET_SAME_APP, GRETL_MODEL_PTR },
+    { "remote_db_ptr",  GTK_TARGET_SAME_APP, GRETL_REMOTE_DB_PTR },
+    { "remote_pkg_ptr", GTK_TARGET_SAME_APP, GRETL_REMOTE_FNPKG_PTR },
+    { "graph_file",     GTK_TARGET_SAME_APP, GRETL_GRAPH_FILE }
 };
 
 static void  
@@ -1739,10 +1743,16 @@ mdata_handle_drag  (GtkWidget *widget,
     char tmp[MAXLEN];
     int pos, skip = 5;
 
+    fprintf(stderr, "mdata_handle_drag: info = %d\n", info);
+
     /* handle drag of pointer from database window */
-    if (info == GRETL_POINTER && data != NULL && 
+    if (info == GRETL_DBSERIES_PTR && data != NULL && 
 	data->type == GDK_SELECTION_TYPE_INTEGER) {
 	import_db_series(*(void **) data->data);
+	return;
+    }
+
+    if (info != GRETL_FILENAME) {
 	return;
     }
 

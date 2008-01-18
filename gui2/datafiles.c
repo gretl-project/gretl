@@ -914,6 +914,24 @@ static int browser_busy (guint code)
     return ret;
 }
 
+windata_t *get_local_viewer (int remote_role)
+{
+    windata_t *vwin = NULL;
+    GtkWidget *w = NULL;
+
+    if (remote_role == REMOTE_DB) {
+	w = get_browser(NATIVE_DB);
+    } else if (remote_role == REMOTE_FUNC_FILES) {
+	w = get_browser(FUNC_FILES);
+    }
+
+    if (w != NULL) {
+	vwin = g_object_get_data(G_OBJECT(w), "vwin");
+    }
+
+    return vwin;
+}
+
 static void new_package_callback (GtkWidget *w , gpointer p)
 {
     file_save(NULL, SAVE_FUNCTIONS, NULL);
@@ -1149,6 +1167,39 @@ static gchar *files_title (int code)
     return ret;
 }
 
+static void  
+db_window_handle_drag  (GtkWidget *widget,
+			GdkDragContext *context,
+			gint x,
+			gint y,
+			GtkSelectionData *data,
+			guint info,
+			guint time,
+			gpointer p)
+{
+    /* handle drag of pointer from remote database window */
+    if (info == GRETL_REMOTE_DB_PTR && data != NULL && 
+	data->type == GDK_SELECTION_TYPE_INTEGER) {
+	install_file_from_server(NULL, *(void **) data->data);
+    }
+}
+
+static void set_up_db_drag_target (windata_t *vwin)
+{
+    gtk_drag_dest_set (vwin->listbox,
+                       GTK_DEST_DEFAULT_ALL,
+                       &gretl_drag_targets[GRETL_REMOTE_DB_PTR], 1,
+                       GDK_ACTION_COPY);
+
+    g_signal_connect(G_OBJECT(vwin->listbox), "drag_data_received",
+		     G_CALLBACK(db_window_handle_drag),
+		     NULL);
+}
+
+/* make a browser window to display a set of files: textbook
+   data files, practice scripts, databases...  
+*/
+
 void display_files (gpointer p, guint code, GtkWidget *w)
 {
     GtkWidget *filebox;
@@ -1158,6 +1209,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     int err = 0;
 
     if (browser_busy(code)) {
+	/* an appropriate window is already open */
 	return;
     }
 
@@ -1221,6 +1273,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     make_filesbar(vwin);
 
     if (code == TEXTBOOK_DATA || code == PS_FILES) {
+	/* we'll need more than one tab */
 	filebox = files_notebook(vwin, code);
     } else {
 	filebox = files_window(vwin);
@@ -1233,9 +1286,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     if (code == TEXTBOOK_DATA) { 
 	file_collection *coll;
 
-	/* create popup menu */
 	build_datafiles_popup(vwin);
-
 	while ((coll = pop_data_collection())) {
 	    g_signal_connect(G_OBJECT(coll->page), "button_press_event",
 			     G_CALLBACK(popup_menu_handler), 
@@ -1281,9 +1332,13 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     } else {
 	gtk_widget_show_all(vwin->w); 
 	gtk_widget_grab_focus(vwin->listbox);
+	if (code == NATIVE_DB) {
+	    set_up_db_drag_target(vwin);
+	}
     }
 
     if (err && code == FUNC_FILES && fresp.try_server == 1) {
+	/* no function packages on local machine */
 	display_files(p, REMOTE_FUNC_FILES, w);
     }
 }
@@ -1365,6 +1420,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     int nfn = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     /* pick up any function files in system dir */

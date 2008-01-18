@@ -44,4 +44,6 @@ windata_t *gui_show_function_info (const char *fname, int role);
 
 void maybe_update_func_files_window (int code);
 
+windata_t *get_local_viewer (int remote_role);
+
 #endif /* DATAFILES_H */

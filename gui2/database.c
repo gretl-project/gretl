@@ -978,21 +978,23 @@ void open_bn7_window (char *fname)
 
 static int check_serinfo (char *str, char *sername, int *nobs)
 {
-    char pdc;
     char stobs[OBSLEN], endobs[OBSLEN];
+    char pdc = 0;
     int err = 0;
 
-    if (!isalpha((unsigned char) sername[0]) || 
+    *stobs = *endobs = '\0';
+    *nobs = 0;
+
+    if (!isalpha((unsigned char) *sername) || 
 	sscanf(str, "%c %10s - %10s %*s = %d", 
 	       &pdc, stobs, endobs, nobs) != 4 || 
-	!isdigit((unsigned char) stobs[0]) || 
-	!isdigit((unsigned char) endobs[0]) ||
+	!isdigit((unsigned char) *stobs) || 
+	!isdigit((unsigned char) *endobs) ||
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
 	 pdc != 'D' && pdc != 'B')) {
-	gchar *msg = g_strdup_printf(_("Database parse error at variable '%s'"), 
-				     sername);
-	errbox(msg);
-	g_free(msg);
+	errbox(_("Database parse error at variable '%s'"), sername);
+	fprintf(stderr, "%s: stobs='%s', endobs='%s', pdc='%c', nobs = %d\n",
+		sername, stobs, endobs, pdc, *nobs);
 	err = 1;
     }
 
@@ -1006,24 +1008,29 @@ static char *start_trim (char *s)
     return s;
 }
 
-static void db_drag_series (GtkWidget *w, GdkDragContext *context,
-			    GtkSelectionData *sel, guint info, guint t,
-			    windata_t *vwin)
+static void do_db_drag (GtkWidget *w, GdkDragContext *context,
+			GtkSelectionData *sel, guint info, guint t,
+			windata_t *vwin)
 {
     gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
 			   (const guchar *) &vwin, sizeof vwin);
 }
 
-static void db_drag_connect (windata_t *vwin)
+static void db_drag_connect (windata_t *vwin, int i)
 {
     gtk_drag_source_set(vwin->listbox, GDK_BUTTON1_MASK,
-			&gretl_drag_targets[GRETL_POINTER],
+			&gretl_drag_targets[i],
 			1, GDK_ACTION_COPY);
 
     g_signal_connect(G_OBJECT(vwin->listbox), "drag_data_get",
-		     G_CALLBACK(db_drag_series),
+		     G_CALLBACK(do_db_drag),
 		     vwin);
 }
+
+#define db_drag_series_connect(v) db_drag_connect(v, GRETL_DBSERIES_PTR)
+#define db_drag_db_connect(v) db_drag_connect(v, GRETL_REMOTE_DB_PTR)
+
+#define DB_LINELEN 512
 
 static int add_local_db_series_list (windata_t *vwin)
 {
@@ -1031,16 +1038,12 @@ static int add_local_db_series_list (windata_t *vwin)
     GtkTreeIter iter; 
     gchar *row[3];
     char sername[VNAMELEN];
-    char line1[256], line2[72], dbidx[MAXLEN];
+    char line1[DB_LINELEN], line2[128];
+    char dbidx[MAXLEN];
     FILE *fp;
     size_t n;
     int offset = 0;
     int err = 0;
-
-#if 0
-    fprintf(stderr, "make_series_list: vwin->fname = '%s', vwin->data = %p\n",
-	    vwin->fname, vwin->data);
-#endif
 
     strcpy(dbidx, vwin->fname);
     strcat(dbidx, ".idx");
@@ -1057,10 +1060,17 @@ static int add_local_db_series_list (windata_t *vwin)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     while (fgets(line1, sizeof line1, fp) != NULL && !err) {
-	int nobs = 0;
+	int len, nobs = 0;
 
 	if (*line1 == '#') {
 	    continue;
+	}
+
+	len = strlen(line1);
+	if (line1[len-1] != '\n') {
+	    errbox("Database index line is too long: max is %d characters",
+		   DB_LINELEN - 1);
+	    break;
 	}
 
 	err = utf8_correct(line1);
@@ -1096,7 +1106,7 @@ static int add_local_db_series_list (windata_t *vwin)
     }
 
     fclose(fp);
-    db_drag_connect(vwin);
+    db_drag_series_connect(vwin);
 
     return 0;
 }
@@ -1157,7 +1167,7 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
     }
 
     bufgets_finalize(buf);
-    db_drag_connect(vwin);
+    db_drag_series_connect(vwin);
 
     return 0;
 }
@@ -1274,7 +1284,7 @@ static int add_rats_db_series_list (windata_t *vwin)
 
     insert_and_free_dbwrapper(dw, vwin->listbox);
     vwin->active_var = 0;
-    db_drag_connect(vwin);
+    db_drag_series_connect(vwin);
 
     return 0;
 }
@@ -1306,7 +1316,7 @@ static int add_pcgive_db_series_list (windata_t *vwin)
 
     insert_and_free_dbwrapper(dw, vwin->listbox);
     vwin->active_var = 0;
-    db_drag_connect(vwin);
+    db_drag_series_connect(vwin);
 
     return 0;
 }
@@ -1788,17 +1798,84 @@ static int ggz_extract (char *ggzname)
     return err;
 }
 
+static void offer_db_open (char *target)
+{
+    int resp = yes_no_dialog ("gretl",                      
+			      _("Database installed.\n"
+				"Open it now?"), 0);
+
+    if (resp == GRETL_YES) { 
+	char dbpath[MAXLEN];
+	    
+	strcpy(dbpath, target);
+	strcpy(strrchr(dbpath, '.'), ".bin");
+	open_named_db_index(dbpath);
+    }
+}
+
 enum {
     REAL_INSTALL,
     TMP_INSTALL
 };
 
+static char *get_writable_target (int code, int op, char *objname)
+{
+    FILE *fp;
+    char *targ;
+    int err = 0;
+
+    targ = mymalloc(MAXLEN);
+    if (targ == NULL) {
+	return NULL;
+    }
+
+    if (code == REMOTE_DB) {
+	build_path(targ, paths.binbase, objname, ".ggz");
+    } else {
+	if (op == TMP_INSTALL) {
+	    build_path(targ, paths.dotdir, "dltmp", NULL);
+	    err = gretl_tempname(targ);
+	} else {
+	    char fndir[MAXLEN];
+
+	    get_default_dir(fndir, SAVE_FUNCTIONS);
+	    build_path(targ, fndir, objname, ".gfn");
+	}
+    } 
+
+    if (err) {
+	free(targ);
+	targ = NULL;
+    } else {
+	errno = 0;
+	fp = gretl_fopen(targ, "w");
+
+	if (fp == NULL) {
+	    if (errno == EACCES && code != REMOTE_FUNC_FILES) { 
+		/* write to user dir instead? */
+		build_path(targ, paths.workdir, objname, ".ggz");
+	    } else {
+		file_write_errbox(targ);
+		free(targ);
+		targ = NULL;
+	    }
+	} else {
+	    fclose(fp);
+	}
+    }
+
+    return targ;
+}
+
+/* note : 'vwin' here is the source viewer window displaying the
+   remote file (database or function package) that is being installed
+   oto the local machine.
+*/
+
 static int real_install_file_from_server (windata_t *vwin, int op)
 {
-    gchar *objname;
-    char fndir[MAXLEN];
+    gchar *objname = NULL;
     char *target;
-    FILE *fp;
     int err = 0;
 
     if (vwin->role == REMOTE_DB) {
@@ -1807,57 +1884,25 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	GtkTreeIter iter;
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
-	if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
-	    return 1;
-	}
-
-	gtk_tree_model_get(model, &iter, 0, &objname, -1);
-	if (objname == NULL || *objname == '\0') {
-	    g_free(objname);
-	    return 1;
+	if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	    gtk_tree_model_get(model, &iter, 0, &objname, -1);
 	}
     } else {
+	/* remote function packages */
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			     vwin->active_var, 0, &objname);
+	
     }
-    
-    target = mymalloc(MAXLEN);
-    if (target == NULL) {
+
+    if (objname == NULL || *objname == '\0') {
+	free(objname);
 	return 1;
-    }
+    }    
 
-    if (vwin->role == REMOTE_FUNC_FILES) {
-	if (op == TMP_INSTALL) {
-	    build_path(target, paths.dotdir, "dltmp", NULL);
-	    err = gretl_tempname(target);
-	} else {
-	    get_default_dir(fndir, SAVE_FUNCTIONS);
-	    build_path(target, fndir, objname, ".gfn");
-	}
-    } else {
-	build_path(target, paths.binbase, objname, ".ggz");
-    }
-
-    if (err) {
-	return err;
-    }
-
-    /* try test write to target file */
-
-    errno = 0;
-    fp = gretl_fopen(target, "w");
-
-    if (fp == NULL) {
-	if (errno == EACCES && vwin->role != REMOTE_FUNC_FILES) { 
-	    /* write to user dir instead? */
-	    build_path(target, paths.workdir, objname, ".ggz");
-	} else {
-	    file_write_errbox(target);
-	    free(target);
-	    return 1;
-	}
-    } else {
-	fclose(fp);
+    target = get_writable_target(vwin->role, op, objname);
+    if (target == NULL) {
+	free(objname);
+	return 1;
     }
 
     if (vwin->role == REMOTE_FUNC_FILES) {
@@ -1872,44 +1917,37 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 
     if (err) {
 	show_network_error(NULL);
-	free(objname);
-	free(target);
-	return err;
-    } 
-
-    if (vwin->role == REMOTE_FUNC_FILES) {
-	if (op == REAL_INSTALL) {
-	    infobox(_("Function package installed"));
-	    populate_filelist(vwin, NULL);
-	} else {
-	    gui_show_function_info(target, VIEW_FUNC_INFO);
-	}
     } else {
-	err = ggz_extract(target);
-	if (err) {
-	    if (err != E_FOPEN) {
-		errbox(_("Error unzipping compressed data"));
+	windata_t *local = get_local_viewer(vwin->role);
+
+	if (vwin->role == REMOTE_FUNC_FILES) {
+	    if (op == REAL_INSTALL) {
+		if (local != NULL) {
+		    populate_filelist(local, NULL);
+		} else {
+		    infobox(_("Function package installed"));
+		}
+	    } else {
+		gui_show_function_info(target, VIEW_FUNC_INFO);
 	    }
 	} else {
-	    int resp = yes_no_dialog ("gretl",                      
-				      _("Database installed.\n"
-					"Open it now?"), 0);
-
-	    if (resp == GRETL_YES) { 
-		char dbpath[MAXLEN];
-	    
-		strcpy(dbpath, target);
-		strcpy(strrchr(dbpath, '.'), ".bin");
-		open_named_db_index(dbpath);
+	    err = ggz_extract(target);
+	    if (err) {
+		if (err != E_FOPEN) {
+		    errbox(_("Error unzipping compressed data"));
+		}
+	    } else if (local != NULL) {
+		populate_filelist(local, NULL);
+	    } else {
+		offer_db_open(target);
 	    }
-	    populate_filelist(vwin, NULL);
 	}
     }
 
     free(objname);
     free(target);
 
-    return 0;
+    return err;
 }
 
 void install_file_from_server (GtkWidget *w, gpointer data)
@@ -2342,6 +2380,10 @@ gint populate_remote_db_list (windata_t *vwin)
     free(getbuf);
     free_src_info();
 
+    if (!err) {
+	db_drag_db_connect(vwin);
+    }
+
     return err;
 }
 
@@ -2427,16 +2469,10 @@ gint populate_remote_func_list (windata_t *vwin)
     return err;
 }
 
-gint populate_dbfilelist (windata_t *vwin)
+static DIR *open_gretl_db_dir (char *dbdir)
 {
-    GtkListStore *store;
-    GtkTreeIter iter;
-    gchar *dbdir = paths.binbase;
     DIR *dir = NULL;
     int tries = 0;
-    int ndb = 0;
-
-    errno = 0;
 
     while (dir == NULL) {
 #ifdef G_OS_WIN32 
@@ -2448,17 +2484,33 @@ gint populate_dbfilelist (windata_t *vwin)
 	    errbox(_("Can't open folder %s"), dbdir);
 	    if (++tries == 2 || options_dialog(TAB_DBS, "binbase")) {
 		/* canceled */
-		return 1;
+		return NULL;
 	    }
 	}
     }
 
+    return dir;
+}
+
+gint populate_dbfilelist (windata_t *vwin)
+{
+    GtkListStore *store;
+    GtkTreeIter iter;
+    char *dbdir;
+    DIR *dir = NULL;
+    int ndb = 0;
+
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    ndb = read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
-
-    closedir(dir);
+    /* pick up any databases in the shared gretl dir */
+    dbdir = paths.binbase;
+    dir = open_gretl_db_dir(dbdir);
+    if (dir != NULL) {
+	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
+	closedir(dir);
+    }
 
     /* pick up any databases in the user's personal dir */
     dbdir = paths.workdir;
@@ -2467,7 +2519,6 @@ gint populate_dbfilelist (windata_t *vwin)
 #else
     dir = opendir(dbdir);
 #endif
-
     if (dir != NULL) {
 	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
 	closedir(dir);
