@@ -21,7 +21,8 @@ version 1.7.2, in progress
 - det() function: fix for singular matrices
 - GUI script editor enhancements
 - Allow drag of database from databases-on-server window
-  to local native databases window
+  to local native databases window; also function packages
+  from server to local function package window
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

@@ -1184,16 +1184,45 @@ db_window_handle_drag  (GtkWidget *widget,
     }
 }
 
-static void set_up_db_drag_target (windata_t *vwin)
+static void  
+pkg_window_handle_drag  (GtkWidget *widget,
+			GdkDragContext *context,
+			gint x,
+			gint y,
+			GtkSelectionData *data,
+			guint info,
+			guint time,
+			gpointer p)
 {
-    gtk_drag_dest_set (vwin->listbox,
-                       GTK_DEST_DEFAULT_ALL,
-                       &gretl_drag_targets[GRETL_REMOTE_DB_PTR], 1,
-                       GDK_ACTION_COPY);
+    /* handle drag of pointer from remote function package window */
+    if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL && 
+	data->type == GDK_SELECTION_TYPE_INTEGER) {
+	install_file_from_server(NULL, *(void **) data->data);
+    }
+}
+
+static void set_up_viewer_drag_target (windata_t *vwin)
+{
+    GCallback callback;
+    int i;
+
+    if (vwin->role == NATIVE_DB) {
+	i = GRETL_REMOTE_DB_PTR;
+	callback = G_CALLBACK(db_window_handle_drag);
+    } else if (vwin->role == FUNC_FILES) {
+	i = GRETL_REMOTE_FNPKG_PTR;
+	callback = G_CALLBACK(pkg_window_handle_drag);
+    } else {
+	return;
+    }
+
+    gtk_drag_dest_set(vwin->listbox,
+		      GTK_DEST_DEFAULT_ALL,
+		      &gretl_drag_targets[i], 1,
+		      GDK_ACTION_COPY);
 
     g_signal_connect(G_OBJECT(vwin->listbox), "drag_data_received",
-		     G_CALLBACK(db_window_handle_drag),
-		     NULL);
+		     callback, NULL);
 }
 
 /* make a browser window to display a set of files: textbook
@@ -1332,8 +1361,8 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     } else {
 	gtk_widget_show_all(vwin->w); 
 	gtk_widget_grab_focus(vwin->listbox);
-	if (code == NATIVE_DB) {
-	    set_up_db_drag_target(vwin);
+	if (code == NATIVE_DB || code == FUNC_FILES) {
+	    set_up_viewer_drag_target(vwin);
 	}
     }
 

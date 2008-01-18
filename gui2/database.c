@@ -1029,6 +1029,7 @@ static void db_drag_connect (windata_t *vwin, int i)
 
 #define db_drag_series_connect(v) db_drag_connect(v, GRETL_DBSERIES_PTR)
 #define db_drag_db_connect(v) db_drag_connect(v, GRETL_REMOTE_DB_PTR)
+#define funcpkg_drag_connect(v) db_drag_connect(v, GRETL_REMOTE_FNPKG_PTR)
 
 #define DB_LINELEN 512
 
@@ -1875,7 +1876,7 @@ static char *get_writable_target (int code, int op, char *objname)
 static int real_install_file_from_server (windata_t *vwin, int op)
 {
     gchar *objname = NULL;
-    char *target;
+    char *target = NULL;
     int err = 0;
 
     if (vwin->role == REMOTE_DB) {
@@ -2464,6 +2465,10 @@ gint populate_remote_func_list (windata_t *vwin)
     if (n == 0) {
 	warnbox(_("No function packages found"));
 	err = 1;
+    }
+
+    if (!err) {
+	funcpkg_drag_connect(vwin);
     }
 
     return err;

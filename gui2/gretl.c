@@ -1743,8 +1743,6 @@ mdata_handle_drag  (GtkWidget *widget,
     char tmp[MAXLEN];
     int pos, skip = 5;
 
-    fprintf(stderr, "mdata_handle_drag: info = %d\n", info);
-
     /* handle drag of pointer from database window */
     if (info == GRETL_DBSERIES_PTR && data != NULL && 
 	data->type == GDK_SELECTION_TYPE_INTEGER) {
