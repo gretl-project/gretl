@@ -66,21 +66,20 @@ static int set_if_state (int code);
 static int get_if_state (int code);
 
 #define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
-#define cxx_comment(p)    (*p == '/' && *(p+1) == '/')
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
 #define ends_comment(p)   (*p == '*' && *(p+1) == '/')
 
 static int strip_inline_comments (char *s)
 {
-    char *p = s;
     int ret = 0;
 
-    if (*p == '#' || cxx_comment(p)) {
+    if (*s == '#') {
 	/* the entire line is a comment */
 	ret = 1;
-    } else if (strstr(p, "#") || strstr(p, "//")) {
+    } else if (strstr(s, "#")) {
 	int quoted = 0;
 	int braced = 0;
+	char *p = s;
 
 	while (*p) {
 	    if (bare_quote(p, s)) {
@@ -93,7 +92,7 @@ static int strip_inline_comments (char *s)
 		}
 	    }
 	    if (!quoted && !braced) {
-		if (*p == '#' || cxx_comment(p)) {
+		if (*p == '#') {
 		    *p = '\0';
 		    break;
 		}
@@ -157,9 +156,8 @@ static int filter_comments (char *s, CMD *cmd)
     } else if (!ignore) {
 	/* '#' comments */
 	filt = strip_inline_comments(s);
+	tailstrip(s);
     }
-
-    tailstrip(s);
 
     if (filt) {
 	cmd_set_nolist(cmd);
