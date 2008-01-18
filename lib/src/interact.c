@@ -65,33 +65,40 @@ static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err);
 static int set_if_state (int code);
 static int get_if_state (int code);
 
+#define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
+#define cxx_comment(p)    (*p == '/' && *(p+1) == '/')
+#define starts_comment(p) (*p == '/' && *(p+1) == '*')
+#define ends_comment(p)   (*p == '*' && *(p+1) == '/')
+
 static int strip_inline_comments (char *s)
 {
+    char *p = s;
     int ret = 0;
 
-    if (*s == '#' || (*s == '/' && *(s+1) == '/')) {
+    if (*p == '#' || cxx_comment(p)) {
+	/* the entire line is a comment */
 	ret = 1;
-    } else if (strstr(s, "#") || strstr(s, "//")) {
+    } else if (strstr(p, "#") || strstr(p, "//")) {
 	int quoted = 0;
 	int braced = 0;
 
-	while (*s) {
-	    if (*s == '"') {
+	while (*p) {
+	    if (bare_quote(p, s)) {
 		quoted = !quoted;
 	    } else if (!quoted) {
-		if (*s == '{') {
+		if (*p == '{') {
 		    braced++;
-		} else if (*s == '}') {
+		} else if (*p == '}') {
 		    braced--;
 		}
 	    }
 	    if (!quoted && !braced) {
-		if ((*s == '#') || (*s == '/' && *(s+1) == '/')) {
-		    *s = '\0';
+		if (*p == '#' || cxx_comment(p)) {
+		    *p = '\0';
 		    break;
 		}
 	    }
-	    s++;
+	    p++;
 	}
     }
 
@@ -114,17 +121,17 @@ static int filter_comments (char *s, CMD *cmd)
     }
 
     while (*p) {
-	if (!ignore && *p == '"') {
-	    quoted = !quoted;
-	}
 	if (!quoted && !ignore && *p == '#') {
 	    break;
 	}
+	if (!ignore && bare_quote(p, s)) {
+	    quoted = !quoted;
+	}
 	if (!quoted) {
-	    if (*p == '/' && *(p+1) == '*') {
+	    if (starts_comment(p)) {
 		ignore = 1;
 		p += 2;
-	    } else if (*p == '*' && *(p+1) == '/') {
+	    } else if (ends_comment(p)) {
 		if (!ignore) {
 		    cmd->err = E_PARSE;
 		    return 0;
@@ -151,6 +158,8 @@ static int filter_comments (char *s, CMD *cmd)
 	/* '#' comments */
 	filt = strip_inline_comments(s);
     }
+
+    tailstrip(s);
 
     if (filt) {
 	cmd_set_nolist(cmd);
