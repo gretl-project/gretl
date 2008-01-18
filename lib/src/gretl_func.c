@@ -2380,7 +2380,7 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
     return err;
 }
 
-static int maybe_delete_function (const char *fname)
+static int maybe_delete_function (const char *fname, PRN *prn)
 {
     ufunc *fun = get_user_function_by_name(fname);
     int err = 0;
@@ -2395,6 +2395,9 @@ static int maybe_delete_function (const char *fname)
 	err = 1;
     } else {
 	delete_ufunc_from_list(fun);
+	if (gretl_messages_on()) {
+	    pprintf(prn, _("Deleted function '%s'\n"), fname);
+	}
     } 
 
     return err;
@@ -2673,7 +2676,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     if (nf == 2) {
 	if (!strcmp(extra, "clear") || !strcmp(extra, "delete")) {
-	    return maybe_delete_function(fname);
+	    return maybe_delete_function(fname, prn);
 	}
     } 
 

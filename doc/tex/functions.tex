@@ -175,6 +175,22 @@ list xlist = 2 3 4
 series resid = get_uhat(price, xlist)
 \end{code}
 
+\section{Deleting a function}
+\label{func-del}
+
+If you have defined a function and subsequently wish to clear it out
+of memory, you can do so using the keywords \texttt{delete} or
+\texttt{clear}, as in
+
+\begin{code}
+function myfunc delete
+function get_uhat clear
+\end{code}
+
+Note, however, that if \texttt{myfunc} is already a defined function,
+providing a new definition automatically overwrites the previous one,
+so it should rarely be necessary to delete functions explicitly.
+
 \section{Function programming details}
 \label{func-details}
 
