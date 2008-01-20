@@ -186,17 +186,6 @@ static void new_function_pkg_callback (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-static void wdir_select_callback (gpointer p, guint startup, GtkWidget *w)
-{
-    if (startup) {
-	set_working_dir_from_startup();
-    } else {
-	const char *s = N_("gretl working directory");
-
-	file_selector(_(s), SET_DIR, FSEL_DATA_MISC, paths.workdir);
-    }
-}
-
 #ifdef ENABLE_MAILER
 static void email_data (gpointer p, guint u, GtkWidget *w)
 {
@@ -265,11 +254,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/sep1", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, working dir */
-    { N_("/File/_Working directory"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Working directory/_Select..."), "", wdir_select_callback, 0, 
-      "<StockItem>", GTK_STOCK_OPEN },
-    { N_("/File/Working directory/_Use startup directory"), "", 
-      wdir_select_callback, 1, NULL, GNULL },
+    { N_("/File/_Working directory..."), NULL, working_dir_dialog, 0, NULL, GNULL },
     { "/File/sep2", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, script files */
@@ -749,17 +734,6 @@ static void record_filearg (char *targ, const char *src)
 }
 #endif
 
-static int gui_workdir_callback (const char *s)
-{
-    int err = set_gretl_work_dir(s, &paths);
-
-    if (!err) {
-	finalize_working_dir_menu();
-    }
-
-    return err;
-}
-
 static int have_data (void)
 {
     return datainfo != NULL && datainfo->v > 0;
@@ -818,7 +792,7 @@ int main (int argc, char *argv[])
     gretl_config_init();
 #endif
 
-    set_workdir_callback(gui_workdir_callback);
+    set_workdir_callback(gui_set_working_dir);
 
     if (argc > 1) {
 	int force_lang = 0;
@@ -995,7 +969,6 @@ int main (int argc, char *argv[])
     }
 
     add_files_to_menus();
-    finalize_working_dir_menu();
 
     session_menu_state(FALSE);
     restore_sample_state(FALSE);

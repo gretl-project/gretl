@@ -19,6 +19,8 @@ void trim_homedir (char *fname);
 
 void rc_save_file_lists (FILE *fp);
 
+GList *get_working_dir_list (void);
+
 #ifdef G_OS_WIN32
 
 void save_file_lists (void);

@@ -220,7 +220,7 @@ static char *endbit (char *dest, const char *src, int addscore)
     return dest;
 }
 
-static void clear_files_list (int filetype, char **filep)
+static void clear_files_list (int ftype, char **filep)
 {
     GtkWidget *w;
     char tmpname[MAXSTR];
@@ -230,9 +230,13 @@ static void clear_files_list (int filetype, char **filep)
 	N_("/File/Open data"), 
 	N_("/File/Session files"),
 	N_("/File/Script files"),
-	N_("/File/Working directory")
     };
     int i;
+
+    if (ftype == FILE_LIST_WDIR) {
+	/* not displayed like the others */
+	return;
+    }
 
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i][0] == '\0') {
@@ -240,7 +244,7 @@ static void clear_files_list (int filetype, char **filep)
 	}
 	endbit(tmpname, filep[i], 0);
 	fname = my_filename_to_utf8(tmpname);
-	sprintf(itempath, "%s/%d. %s", fpath[filetype], i+1, fname);
+	sprintf(itempath, "%s/%d. %s", fpath[ftype], i+1, fname);
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) {
 	    gtk_item_factory_delete_item(mdata->ifac, itempath);
@@ -251,7 +255,9 @@ static void clear_files_list (int filetype, char **filep)
 
 static void add_files_to_menu (int ftype)
 {
-    real_add_files_to_menus(ftype);
+    if (ftype != FILE_LIST_WDIR) {
+	real_add_files_to_menus(ftype);
+    }
 }
 
 #ifdef G_OS_WIN32
@@ -469,12 +475,6 @@ set_script_from_filelist (gpointer p, guint i, GtkWidget *w)
     do_open_script();
 }
 
-static void 
-set_wdir_from_filelist (gpointer p, guint i, GtkWidget *w)
-{
-    gui_set_working_dir(wdirp[i]);
-}
-
 void trim_homedir (char *fname)
 {
     char *home = NULL;
@@ -524,18 +524,16 @@ static void real_add_files_to_menus (int ftype)
 	"/File/Open data/sep",
 	"/File/Session files/sep",
 	"/File/Script files/sep",
-	"/File/Working directory/sep",
     };
     const gchar *mpath[] = {
 	N_("/File/Open data"),
 	N_("/File/Session files"),
 	N_("/File/Script files"),
-	N_("/File/Working directory")
     };
-    int jmin = 0, jmax = NFILELISTS;
+    int jmin = 0, jmax = NFILELISTS-1;
     int i, j;
 
-    if (ftype < NFILELISTS) {
+    if (ftype < NFILELISTS - 1) {
 	jmin = ftype;
 	jmax = jmin + 1;
     }
@@ -554,19 +552,12 @@ static void real_add_files_to_menus (int ftype)
 	} else if (j == FILE_LIST_SCRIPT) {
 	    filep = scriptp;
 	    callfunc = set_script_from_filelist;
-	} else if (j == FILE_LIST_WDIR) {
-	    filep = wdirp;
-	    callfunc = set_wdir_from_filelist;
-	}
+	} 
 
 	/* See if there are any files to add */
 
 	if (filep == NULL || *filep[0] == '\0') {
-	    if (filep != NULL && j == FILE_LIST_WDIR) {
-		strcpy(filep[0], paths.workdir);
-	    } else {
-		continue;
-	    }
+	    continue;
 	}
 
 	/* is a separator already in place? */
@@ -587,10 +578,6 @@ static void real_add_files_to_menus (int ftype)
 
 	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
 	    gchar *fname;
-
-	    if (j == FILE_LIST_WDIR) {
-		trim_slash(filep[i]);
-	    }		
 
 	    fname = my_filename_to_utf8(filep[i]);
 
@@ -619,4 +606,18 @@ static void real_add_files_to_menus (int ftype)
 void add_files_to_menus (void)
 {
     real_add_files_to_menus(NFILELISTS);
+}
+
+GList *get_working_dir_list (void)
+{
+    GList *list = NULL;
+    gchar *fname;
+    int i;
+
+    for (i=0; i<MAXRECENT && wdirp[i][0]; i++) {
+	fname = my_filename_to_utf8(wdirp[i]);
+	list = g_list_append(list, fname);
+    }
+
+    return list;
 }

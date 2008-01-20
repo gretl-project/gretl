@@ -149,6 +149,7 @@ enum file_ops {
     SAVE_BOOT_DATA,
     SET_PROG,
     SET_DIR,
+    SET_WDIR,
     FILE_OP_MAX
 };
 

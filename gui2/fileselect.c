@@ -75,6 +75,8 @@
                        i == OPEN_DATA || \
                        i == APPEND_DATA)
 
+#define SET_DIR_ACTION(i) (i == SET_DIR || i == SET_WDIR)
+
 struct extmap {
     int action;
     char *ext;
@@ -215,7 +217,7 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
 
     /* don't mess if the fname is really a dir */
     if (isdir(fname)) {
-	return (action != SET_DIR);
+	return !SET_DIR_ACTION(action);
     }
 
     /* don't mess with a filename that already has an extension */
@@ -518,9 +520,9 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
     } else if (action == SET_PROG || action == SET_DIR) {
-	char *setvar = (char *) data;
-
-	set_path_callback(setvar, fname);
+	set_path_callback(data, fname);
+    } else if (action == SET_WDIR) {
+	set_working_dir_callback(data, fname);
     } else {
 	windata_t *vwin = (windata_t *) data;
 
@@ -756,7 +758,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	trmsg = g_strdup(msg);
     }
 
-    if (action == SET_DIR) {
+    if (SET_DIR_ACTION(action)) {
 	retval = select_dirname(fname, trmsg);
     } else {
 	/* initialize file dialog info struct */
@@ -840,7 +842,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 
     set_startdir(startdir, action);
 
-    if (action == SET_DIR) {
+    if (SET_DIR_ACTION(action)) {
 	fa = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
 	okstr = GTK_STOCK_OK;
     } else if (action == SET_PROG) {

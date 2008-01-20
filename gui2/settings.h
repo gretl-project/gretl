@@ -41,11 +41,11 @@ void color_patch_button_reset (GtkWidget *button, int cnum);
 
 void get_default_dir (char *s, int action);
 
-void gui_set_working_dir (char *dirname);
+int gui_set_working_dir (char *dirname);
 
-void set_working_dir_from_startup (void);
+void set_working_dir_callback (GtkWidget *w, char *path);
 
-void finalize_working_dir_menu (void);
+void working_dir_dialog (void);
 
 void set_path_callback (char *setvar, char *setting);
 

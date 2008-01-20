@@ -94,6 +94,10 @@ char gpcolors[32];
 static char datapage[24];
 static char scriptpage[24];
 
+#if 0 /* not ready */
+static char userdflt[MAXLEN];
+#endif
+
 static int hc_by_default;
 static char hc_xsect[5] = "HC1";
 static char hc_tseri[5] = "HAC";
@@ -773,14 +777,13 @@ static void option_dialog_canceled (GtkWidget *w, int *c)
 int options_dialog (int page, const char *varname) 
 {
     static GtkWidget *dialog;
-
     GtkWidget *notebook;
     GtkWidget *button;
     GtkWidget *hbox;
     int canceled = 0;
 
     if (dialog != NULL) {
-	gdk_window_raise(dialog->window);
+	gtk_window_present(GTK_WINDOW(dialog));
 	return 0;
     }
 
@@ -853,22 +856,18 @@ static void flip_sensitive (GtkWidget *w, gpointer data)
 
 void set_path_callback (char *setvar, char *setting)
 {
-    if (setvar == paths.workdir) {
-	gui_set_working_dir(setting);
-    } else {
-	int i = 0;
+    int i = 0;
 
-	while (rc_vars[i].key != NULL) {
-	    if (rc_vars[i].var == (void *) setvar) {
-		/* FIXME: utf-8 issues here? */
-		if (rc_vars[i].widget != NULL) {
-		    gtk_entry_set_text(GTK_ENTRY(rc_vars[i].widget), 
-				       setting);
-		}
-		break;
+    while (rc_vars[i].key != NULL) {
+	if (rc_vars[i].var == (void *) setvar) {
+	    /* FIXME: utf-8 issues here? */
+	    if (rc_vars[i].widget != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(rc_vars[i].widget), 
+				   setting);
 	    }
-	    i++;
+	    break;
 	}
+	i++;
     }
 }
 
@@ -2270,7 +2269,7 @@ void dump_rc (void)
     fclose(fp);
 }
 
-void gui_set_working_dir (char *dirname)
+int gui_set_working_dir (char *dirname)
 {
     int err = set_gretl_work_dir(dirname, &paths);
 
@@ -2279,56 +2278,238 @@ void gui_set_working_dir (char *dirname)
 	delete_from_filelist(FILE_LIST_WDIR, dirname);
     } else {
 	mkfilelist(FILE_LIST_WDIR, dirname);
-	finalize_working_dir_menu();
     }
+
+    return err;
 }
 
-void set_working_dir_from_startup (void)
+struct wdir_setter {
+    GtkWidget *wdir_entry;
+    GtkWidget *bkup_entry;
+    GtkWidget *bkup_button;
+    GtkWidget *r1, *r2, *r3;
+};
+
+#if 0
+
+static void wdir_radio_callback (GtkWidget *w, struct wdir_setter *wset)
 {
-    if (*startdir) {
-	gui_set_working_dir(startdir);
+    gboolean s = GTK_TOGGLE_BUTTON(w)->active;
+
+    if (w != wset->r2) s = !s;
+
+    gtk_widget_set_sensitive(wset->bkup_entry, s);
+    gtk_widget_set_sensitive(wset->bkup_button, s);
+}
+
+#endif
+
+/* callback from the file selector */
+
+void set_working_dir_callback (GtkWidget *w, char *path)
+{
+    GtkWidget *entry = GTK_COMBO(w)->entry;
+
+    gtk_entry_set_text(GTK_ENTRY(entry), path);
+}
+
+static void wdir_browse_callback (GtkWidget *w, struct wdir_setter *wset)
+{
+    GtkWidget *entry;
+    const char *s;
+
+    if (w == wset->bkup_button) {
+	entry = wset->bkup_entry;
+	s = N_("gretl start-up directory");
     } else {
-	errbox("Can't determine startup directory");
-    }
+	entry = wset->wdir_entry;
+	s = N_("gretl working directory");
+    }	
+
+    file_selector(_(s), SET_WDIR, FSEL_DATA_MISC, entry);
 }
 
-void finalize_working_dir_menu (void)
+static void free_fname (gchar *s, gpointer p)
 {
-    const char *p0 = "/File/Working directory/Select...";
-    const char *p1 = "/File/Working directory/Use startup directory";
-    char tmp[FILENAME_MAX];
-    GtkWidget *w;
-
-    *tmp = '\0';
-
-    w = gtk_item_factory_get_widget(mdata->ifac, p0);
-    if (w != NULL) {
-	gchar *tip;
-
-	*tmp = '\0';
-	strncat(tmp, paths.workdir, FILENAME_MAX - 1);
-	trim_slash(tmp);
-	trim_homedir(tmp);
-	if (*tmp != '\0') {
-	    tip = g_strdup_printf(_("Currently %s"), tmp);
-	    gretl_tooltips_add(w, tip);
-	    g_free(tip);
-	}
-    } 
-
-    w = gtk_item_factory_get_widget(mdata->ifac, p1);
-    if (w != NULL) {
-	if (*startdir == '\0') {
-	    gtk_widget_set_sensitive(w, FALSE);
-	} else {
-	    *tmp = '\0';
-	    strncat(tmp, startdir, FILENAME_MAX - 1);
-	    trim_slash(tmp);
-	    trim_homedir(tmp);
-	    if (*tmp != '\0') {
-		gretl_tooltips_add(w, tmp);
-	    }
-	}
-    }
+    g_free(s);
 }
 
+static void 
+add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset) 
+{
+    GtkWidget *hbox, *vbox, *w = NULL;
+    GSList *group = NULL;
+    GList *list = NULL;
+    char tmp[MAXLEN];
+
+    wset->r2 = NULL;
+    wset->bkup_entry = NULL;
+    wset->bkup_button = NULL;
+
+    vbox = GTK_DIALOG(dialog)->vbox;
+    list = get_working_dir_list();
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("Working directory:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5); 
+
+    strcpy(tmp, paths.workdir); 
+    trim_slash(tmp);
+ 
+    /* combo + browse button for current working dir */
+    w = gtk_combo_new();
+    gtk_container_add(GTK_CONTAINER(hbox), w);
+    gtk_combo_set_popdown_strings(GTK_COMBO(w), list);
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), tmp);
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(w)->entry), 32);
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(w)->entry), 
+			      TRUE);
+    wset->wdir_entry = w;
+    w = gtk_button_new_with_label(_("Browse..."));
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(wdir_browse_callback), wset);
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5); 
+
+    vbox_add_hsep(vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("On start-up, gretl should use -"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
+
+    /* radio 1 for "next time" */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_radio_button_new_with_label(group, 
+					_("the directory selected above"));
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
+#if 0
+    g_signal_connect(G_OBJECT(w), "toggled",
+		     G_CALLBACK(wdir_radio_callback), wset);
+#endif
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    wset->r1 = w;
+
+#if 0
+    /* radio 2 for "next time" */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_radio_button_new_with_label(group, _("this directory:"));
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
+    g_signal_connect(G_OBJECT(w), "toggled",
+		     G_CALLBACK(wdir_radio_callback), wset);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
+    wset->r2 = w;
+    /* combo + browse button for "backup" working dir */
+    w = gtk_combo_new();
+    gtk_container_add(GTK_CONTAINER(hbox), w);
+    gtk_combo_set_popdown_strings(GTK_COMBO(w), list);
+    /* FIXME below */
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), paths.workdir);
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(w)->entry), 32);
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(w)->entry), 
+			      TRUE);
+    wset->bkup_entry = w;
+    w = gtk_button_new_with_label(_("Browse..."));
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(wdir_browse_callback), wset);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
+    wset->bkup_button = w;
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+#endif
+
+    /* radio 3 for "next time" */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_radio_button_new_with_label(group, _("the current directory "
+						 "as determined via the shell"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), usecwd);
+#if 0
+    g_signal_connect(G_OBJECT(w), "toggled",
+		     G_CALLBACK(wdir_radio_callback), wset);
+#endif
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    wset->r3 = w;
+
+    g_list_foreach(list, (GFunc) free_fname, NULL);
+    g_list_free(list);
+}
+
+static void 
+apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
+{ 
+    GtkWidget *entry;
+    char tmp[MAXLEN];
+    const char *str;
+    int err;
+
+    entry = GTK_COMBO(wset->wdir_entry)->entry;
+    str = gtk_entry_get_text(GTK_ENTRY(entry));
+    *tmp = '\0';
+    strncat(tmp, str, MAXLEN - 2);
+
+    err = set_gretl_work_dir(tmp, &paths);
+    if (err) {
+	gui_errmsg(err);
+	delete_from_filelist(FILE_LIST_WDIR, tmp);
+    } else {
+	mkfilelist(FILE_LIST_WDIR, tmp);
+    }
+
+    usecwd = GTK_TOGGLE_BUTTON(wset->r3)->active;
+
+#if 0    
+    if (GTK_TOGGLE_BUTTON(wset->r2)->active) {
+	int n;
+
+	entry = GTK_COMBO(wset->bkup_entry)->entry;
+	str = gtk_entry_get_text(GTK_ENTRY(entry));
+	*userdflt = '\0';
+	strncat(userdflt, str, MAXLEN - 2);
+	n = strlen(userdflt);
+	if (n > 0 && userdflt[n-1] != SLASH) {
+	    strcat(userdflt, SLASHSTR);
+	}
+    }
+#endif
+}
+
+void working_dir_dialog (void) 
+{
+    static GtkWidget *dialog;
+    struct wdir_setter wset;
+    GtkWidget *button;
+    GtkWidget *hbox;
+
+    if (dialog != NULL) {
+	gtk_window_present(GTK_WINDOW(dialog));
+	return;
+    }
+
+    dialog = gretl_dialog_new(_("gretl: working directory"), 
+			      mdata->w, GRETL_DLG_BLOCK);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
+    g_signal_connect(G_OBJECT(dialog), "destroy", 
+		     G_CALLBACK(gtk_widget_destroyed), 
+		     &dialog);
+
+    add_wdir_content(dialog, &wset);
+
+    hbox = GTK_DIALOG(dialog)->action_area;
+
+    /* Cancel button */
+    button = cancel_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+
+    /* OK button */
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(apply_wdir_changes), &wset);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+
+    gtk_widget_show_all(dialog);
+}
