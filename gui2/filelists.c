@@ -475,12 +475,12 @@ set_script_from_filelist (gpointer p, guint i, GtkWidget *w)
     do_open_script();
 }
 
+#ifdef G_OS_WIN32
+
 void trim_homedir (char *fname)
 {
-    char *home = NULL;
+    char *home = mydocs_path();
 
-#ifdef G_OS_WIN32
-    home = mydocs_path();
     if (home != NULL) {
 	int n = strlen(home);
 	int m = strlen(fname);
@@ -498,22 +498,9 @@ void trim_homedir (char *fname)
 	}
 	free(home);
     }    
-#else
-    home = getenv("HOME");
-    if (home != NULL) {
-	int n = strlen(home);
-	int m = strlen(fname);
-
-	if (m > n && !strncmp(fname, home, n)) {
-	    char tmp[FILENAME_MAX];
-
-	    strcpy(tmp, "~");
-	    strcat(tmp, fname + n);
-	    strcpy(fname, tmp);
-	}
-    }
-#endif
 }
+
+#endif
 
 static void real_add_files_to_menus (int ftype)
 {
@@ -594,7 +581,9 @@ static void real_add_files_to_menus (int ftype)
 		g_free(item.path);
 		w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
 		if (w != NULL) {
+#ifdef G_OS_WIN32
 		    trim_homedir(fname);
+#endif
 		    gretl_tooltips_add(w, fname);
 		} 
 		g_free(fname);

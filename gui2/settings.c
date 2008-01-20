@@ -141,7 +141,7 @@ typedef struct {
                           INTSET integer (user)
 			  LISTSET user string, from fixed menu
                           RADIOSET user int, from fixed menu
-			  INVISET "invisible" (user) string 
+			  INVISET not visible in Prefs dialog
 		       */
     int len;           /* storage size for string variable (also see Note) */
     short tab;         /* which tab (if any) does the item fall under? */
@@ -183,7 +183,7 @@ RCVAR rc_vars[] = {
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
-      BOOLSET, 0, TAB_MAIN, NULL },
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
