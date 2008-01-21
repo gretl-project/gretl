@@ -52,7 +52,6 @@ struct INTERNAL_PATHS {
 
 static struct INTERNAL_PATHS gretl_paths;
 
-static void ensure_slash (char *str);
 static char *get_default_workdir (PATHS *paths);
 
 static int add_suffix (char *fname, const char *sfx)
@@ -1344,15 +1343,6 @@ int gretl_string_table_written (void)
     gretl_paths.status &= ~STRING_TABLE_WRITTEN;
 
     return ret;
-}
-
-static void ensure_slash (char *str)
-{
-    int n = strlen(str);
-
-    if (n > 0 && str[n-1] != SLASH) {
-	strcat(str, SLASHSTR);
-    }
 }
 
 void show_paths (const PATHS *ppaths)

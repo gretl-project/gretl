@@ -94,8 +94,11 @@ char gpcolors[32];
 static char datapage[24];
 static char scriptpage[24];
 
-#if 0 /* not ready */
-static char userdflt[MAXLEN];
+#define USE_USERHOME 0
+
+#if USE_USERHOME
+static char userhome[MAXLEN];
+static int usehome;
 #endif
 
 static int hc_by_default;
@@ -160,6 +163,12 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.workdir, 
       INVISET, MAXLEN, TAB_MAIN, NULL },
+#if USE_USERHOME
+    { "userhome", N_("User's default gretl dir"), NULL, userhome, 
+      INVISET, MAXLEN, TAB_NONE, NULL },
+    { "usehome", N_("Start in default gretl dir"), NULL, &usehome, 
+      INVISET | BOOLSET, 0, TAB_NONE, NULL },
+#endif
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
@@ -1582,6 +1591,12 @@ static int common_read_rc_setup (void)
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
+#if USE_USERHOME
+    if (usehome && *userhome != '\0') {
+	strcpy(paths.workdir, userhome);
+    }
+#endif
+
     err = gretl_set_paths(&paths, set_paths_opt);
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
@@ -2283,23 +2298,66 @@ int gui_set_working_dir (char *dirname)
     return err;
 }
 
+#if USE_USERHOME
+
+static char *get_default_userhome (void)
+{
+    char *base = NULL;
+    char *ret = NULL;
+    int ok = 0;
+
+#if G_OS_WIN32
+    base = mydocs_path();
+#else
+    base = getenv("HOME");
+#endif
+
+    if (base != NULL) {
+	DIR *dir;
+
+#if G_OS_WIN32
+	ret = g_strdup_printf("%s\\gretl", base);
+	dir = win32_opendir(ret);
+	free(base);
+#else
+	ret = g_strdup_printf("%s/gretl", base);
+	dir = opendir(ret);
+#endif
+	if (dir != NULL) {
+	    closedir(dir);
+	    ok = 1;
+	}
+    }
+
+    if (ret && !ok) {
+	free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
+#endif
+
 struct wdir_setter {
     GtkWidget *wdir_entry;
-    GtkWidget *bkup_entry;
-    GtkWidget *bkup_button;
+    GtkWidget *home_entry;
+    GtkWidget *home_button;
     GtkWidget *r1, *r2, *r3;
 };
 
-#if 0
+#if USE_USERHOME
 
 static void wdir_radio_callback (GtkWidget *w, struct wdir_setter *wset)
 {
     gboolean s = GTK_TOGGLE_BUTTON(w)->active;
 
-    if (w != wset->r2) s = !s;
-
-    gtk_widget_set_sensitive(wset->bkup_entry, s);
-    gtk_widget_set_sensitive(wset->bkup_button, s);
+    if (wset->home_entry != NULL) {
+	gtk_widget_set_sensitive(wset->home_entry, s);
+    }
+    if (wset->home_button != NULL) {
+	gtk_widget_set_sensitive(wset->home_button, s);
+    }
 }
 
 #endif
@@ -2308,7 +2366,14 @@ static void wdir_radio_callback (GtkWidget *w, struct wdir_setter *wset)
 
 void set_working_dir_callback (GtkWidget *w, char *path)
 {
-    GtkWidget *entry = GTK_COMBO(w)->entry;
+    GtkWidget *entry;
+
+    if (g_object_get_data(G_OBJECT(w), "userhome")) {
+	entry = w;
+    } else {
+	/* working dir combo */
+	entry = GTK_COMBO(w)->entry;
+    }
 
     gtk_entry_set_text(GTK_ENTRY(entry), path);
 }
@@ -2318,8 +2383,8 @@ static void wdir_browse_callback (GtkWidget *w, struct wdir_setter *wset)
     GtkWidget *entry;
     const char *s;
 
-    if (w == wset->bkup_button) {
-	entry = wset->bkup_entry;
+    if (w == wset->home_button) {
+	entry = wset->home_entry;
 	s = N_("gretl start-up directory");
     } else {
 	entry = wset->wdir_entry;
@@ -2343,8 +2408,8 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     char tmp[MAXLEN];
 
     wset->r2 = NULL;
-    wset->bkup_entry = NULL;
-    wset->bkup_button = NULL;
+    wset->home_entry = NULL;
+    wset->home_button = NULL;
 
     vbox = GTK_DIALOG(dialog)->vbox;
     list = get_working_dir_list();
@@ -2383,39 +2448,46 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     w = gtk_radio_button_new_with_label(group, 
 					_("the directory selected above"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
-#if 0
-    g_signal_connect(G_OBJECT(w), "toggled",
-		     G_CALLBACK(wdir_radio_callback), wset);
-#endif
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     wset->r1 = w;
 
-#if 0
+#if USE_USERHOME
     /* radio 2 for "next time" */
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_radio_button_new_with_label(group, _("this directory:"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
     g_signal_connect(G_OBJECT(w), "toggled",
 		     G_CALLBACK(wdir_radio_callback), wset);
-    gtk_container_add(GTK_CONTAINER(hbox), w);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), usehome);
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     wset->r2 = w;
-    /* combo + browse button for "backup" working dir */
-    w = gtk_combo_new();
-    gtk_container_add(GTK_CONTAINER(hbox), w);
-    gtk_combo_set_popdown_strings(GTK_COMBO(w), list);
-    /* FIXME below */
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), paths.workdir);
-    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(w)->entry), 32);
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(w)->entry), 
-			      TRUE);
-    wset->bkup_entry = w;
+
+    /* entry + browse button for "home" working dir */
+    w = gtk_entry_new();
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    if (*userhome != '\0') {
+	gtk_entry_set_text(GTK_ENTRY(w), userhome);
+    } else {
+	char *tmp = get_default_userhome();
+
+	if (tmp != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(w), tmp);
+	    g_free(tmp);
+	}
+    }
+    gtk_entry_set_width_chars(GTK_ENTRY(w), 32);
+    gtk_editable_set_editable(GTK_EDITABLE(w), TRUE);
+    g_object_set_data(G_OBJECT(w), "userhome", GINT_TO_POINTER(1));
+    wset->home_entry = w;
     w = gtk_button_new_with_label(_("Browse..."));
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(wdir_browse_callback), wset);
-    gtk_container_add(GTK_CONTAINER(hbox), w);
-    wset->bkup_button = w;
+    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
+    wset->home_button = w;
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    gtk_widget_set_sensitive(wset->home_entry, usehome);
+    gtk_widget_set_sensitive(wset->home_button, usehome);
 #endif
 
     /* radio 3 for "next time" */
@@ -2423,10 +2495,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     w = gtk_radio_button_new_with_label(group, _("the current directory "
 						 "as determined via the shell"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), usecwd);
-#if 0
-    g_signal_connect(G_OBJECT(w), "toggled",
-		     G_CALLBACK(wdir_radio_callback), wset);
-#endif
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     wset->r3 = w;
@@ -2457,19 +2525,16 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     }
 
     usecwd = GTK_TOGGLE_BUTTON(wset->r3)->active;
+    
+#if USE_USERHOME   
+    usehome = GTK_TOGGLE_BUTTON(wset->r2)->active;
 
-#if 0    
     if (GTK_TOGGLE_BUTTON(wset->r2)->active) {
-	int n;
-
-	entry = GTK_COMBO(wset->bkup_entry)->entry;
+	entry = wset->home_entry;
 	str = gtk_entry_get_text(GTK_ENTRY(entry));
-	*userdflt = '\0';
-	strncat(userdflt, str, MAXLEN - 2);
-	n = strlen(userdflt);
-	if (n > 0 && userdflt[n-1] != SLASH) {
-	    strcat(userdflt, SLASHSTR);
-	}
+	*userhome = '\0';
+	strncat(userhome, str, MAXLEN - 2);
+	ensure_slash(userhome);
     }
 #endif
 }
