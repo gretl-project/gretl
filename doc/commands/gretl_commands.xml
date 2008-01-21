@@ -1083,7 +1083,8 @@
 	interpretation of the results shown for the test, for the
 	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
 	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
-	number of cointegrating relations.</para>
+	number of cointegrating relations.
+      </para>
       <code>
                  Rank     Trace test         Lmax test
                           H0     H1          H0     H1
@@ -1091,7 +1092,8 @@
                   0      c = 0  c = 3       c = 0  c = 1
                   1      c = 1  c = 3       c = 1  c = 2
                   2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------</code>
+                 ---------------------------------------
+      </code>
 
       <para>
 	See also the <cmdref targ="vecm"/> command.
@@ -1434,7 +1436,8 @@
 	open macrodat.rat
 	setobs 4 1959:1
 	smpl ; 1999:4
-	data GDP_JP GDP_UK</code>
+	data GDP_JP GDP_UK
+      </code>
       <para>
 	The commands above open a database named
 	<filename>macrodat.rat</filename>, establish a quarterly data set
@@ -1702,7 +1705,8 @@
       </para>
       <code>
 	d_x = x(t) - x(t-1)
-	d_y = y(t) - y(t-1)</code>
+	d_y = y(t) - y(t-1)
+      </code>
     </description>
 
     <gui-access>
@@ -3031,7 +3035,8 @@
       <code>
 	    genr d1 = (x=1)
 	    genr d2 = (x=2)
-	    genr d3 = (x=3)</code>
+	    genr d3 = (x=3)
+      </code>
 
       <table id="tab-genr" title="Examples of use of genr command"
 	lhead="Formula" rhead="Comment" lwidth="100pt" rwidth="300pt" 
@@ -4271,7 +4276,8 @@
 	x_1 = x(t-1)
 	x_2 = x(t-2)
 	x_3 = x(t-3)
-	x_4 = x(t-4)</code>
+	x_4 = x(t-4)
+      </code>
       <para>
 	The number of lags created can be controlled by the optional
 	first parameter.
@@ -4345,7 +4351,8 @@
       </para>
       <code>
 	ld_x = log(x) - log(x(-1))
-	ld_y = log(y) - log(y(-1))</code>
+	ld_y = log(y) - log(y(-1))
+      </code>
     </description>
 
     <gui-access>
@@ -4999,7 +5006,8 @@
 	lines:</para>
       <code>
 	loglik = X*log(p) + (1-X)*log(1-p)
-	deriv p = X/p - (1-X)/(1-p)</code>
+	deriv p = X/p - (1-X)/(1-p)
+      </code>
 
       <para>
 	The first line specifies the log-likelihood function, and the
@@ -5013,7 +5021,8 @@
 	preface the above lines with something like the following:
       </para>
       <code>
-	genr p = 0.5</code>
+	genr p = 0.5
+      </code>
 
       <para>
 	By default, standard errors are based on the Outer Product of the
@@ -5055,7 +5064,8 @@
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
 	  deriv p = X/p - (1-X)/(1-p)
-	end mle</code>
+	end mle
+      </code>
 
       <para>
 	The first line above specifies the log-likelihood function. It
@@ -5074,7 +5084,8 @@
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
 	  params p
-	end mle</code>
+	end mle
+      </code>
       <para>
 	in which case numerical derivatives would be used.
       </para>
@@ -5282,7 +5293,8 @@
 	commands is then:</para>
       <code>
 	genr invpop = 1/pop
-	multiply invpop pc income</code>
+	multiply invpop pc income
+      </code>
 
       <para>which will create <lit>incomepc</lit> as the product of
 	<lit>income</lit> and <lit>invpop</lit>, and
@@ -5355,7 +5367,8 @@
 	C = alpha + beta * Y^gamma
 	deriv alpha = 1
 	deriv beta = Y^gamma
-	deriv gamma = beta * Y^gamma * log(Y)</code>
+	deriv gamma = beta * Y^gamma * log(Y)
+      </code>
 
       <para>The first line specifies the regression
 	function, and the next three lines supply the derivatives of
@@ -5369,7 +5382,8 @@
       <code>
 	genr alpha = 1
 	genr beta = 1
-	genr gamma = 1</code>
+	genr gamma = 1
+      </code>
 
       <para>For further details on NLS estimation please see 
 	<guideref targ="chap-nls"/>.</para>
@@ -5413,7 +5427,8 @@
 	7    deriv a = 1
 	8    deriv b = Y^g
 	9    deriv g = b * Y^g * log(Y)
-	10  end nls --vcv</code>
+	10  end nls --vcv
+      </code>
 
       <para>
 	It is often convenient to initialize the parameters by
@@ -6306,7 +6321,8 @@
       </para>
       <code>
 	genr filt = missing(x)
-	print x ; filt --byobs</code>
+	print x ; filt --byobs
+      </code>
 
     </description>
 
@@ -6354,7 +6370,8 @@
 	ols 1 0 2 3
 	genr b = $coeff(2)
 	genr se_b = $stderr(2)
-	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b</code>
+	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
+      </code>
 
       <para>
 	The next lines illustrate the use of the varname and date
@@ -6364,7 +6381,8 @@
       </para>
       <code>
 	printf "The name of variable %d is %s\n", i, varname(i)
-	printf "The date of observation %d is %s\n", j, date(j)</code>
+	printf "The date of observation %d is %s\n", j, date(j)
+      </code>
 
       <para>
 	The maximum length of a format string is 127 characters.  The
@@ -6699,7 +6717,8 @@
 	 b[1] = 0
 	 b[2] - b[3] = 0
 	 b[4] + 2*b[5] = 1
-	end restrict</code>
+	end restrict
+      </code>
 
       <para>And here is an example of a set of restrictions to be
 	applied to a named system.  (If the name of the system does
@@ -6710,7 +6729,8 @@
 	 b[1,1] = 0
 	 b[1,2] - b[2,2] = 0
 	 b[3,4] + 2*b[3,5] = 1
-	end restrict</code>
+	end restrict
+      </code>
 
       <para>
 	In the single-equation case the restrictions are evaluated via
@@ -6761,7 +6781,8 @@
       <code>
 	b[1] = 0
 	b[2] - b[3] = 0
-	b[4] + 2*b[5] = 1</code>
+	b[4] + 2*b[5] = 1
+      </code>
 
     </description>
 
@@ -6794,7 +6815,8 @@
       <code>
 	b[1,1] = 0
 	b[1,2] - b[2,2] = 0
-	b[3,4] + 2*b[3,5] = 1</code>
+	b[3,4] + 2*b[3,5] = 1
+      </code>
 
     </description>
 
@@ -6846,7 +6868,8 @@
       </para>
       <code>
 	b[1] + b[2] = 0
-	b[1] + b[3] = 0</code>
+	b[1] + b[3] = 0
+      </code>
 
       <para>
 	See also <guideref targ="chap:vecm"/>.
@@ -6990,7 +7013,8 @@
       </para>
       <code>
 	genr signx1 = x1 - median(x1)
-	runs signx1</code>
+	runs signx1
+      </code>
       <para>
 	If the <lit>--difference</lit> option is given, the variable is
 	differenced prior to the analysis, hence the runs are interpreted
@@ -7934,7 +7958,8 @@
 
       <code>
 	genr altx = -x
-	spearman altx y</code>
+	spearman altx y
+      </code>
     </description>
 
     <gui-access>
@@ -8104,7 +8129,8 @@
 	print "@S"
 	matrix m
 	sscanf @S, "%m", m
-	print m</code>
+	print m
+      </code>
 
     </description>
 

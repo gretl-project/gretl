@@ -1086,7 +1086,8 @@
                   0      c = 0  c = 3       c = 0  c = 1
                   1      c = 1  c = 3       c = 1  c = 2
                   2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------</code>
+                 ---------------------------------------
+      </code>
  
       <para>
 	Si veda anche il comando <cmdref targ="vecm"/>.
@@ -1427,7 +1428,8 @@
 	open macrodat.rat
 	setobs 4 1959:1
 	smpl ; 1999:4
-	data GDP_JP GDP_UK</code>
+	data GDP_JP GDP_UK
+      </code>
 
       <para>Questi comandi aprono un database chiamato
 	<filename>macrodat.rat</filename>, impostano un dataset trimestrale
@@ -2986,7 +2988,8 @@
       <code>
 	    genr d1 = (x=1)
 	    genr d2 = (x=2)
-	    genr d3 = (x=3)</code>
+	    genr d3 = (x=3)
+      </code>
 
       <table id="tab-genr" title="Esempi di utilizzo del comando genr"
 	lhead="Formula" rhead="Commento"
@@ -4222,7 +4225,8 @@
        x_1 = x(t-1)
        x_2 = x(t-2)
        x_3 = x(t-3)
-       x_4 = x(t-4)</code>
+       x_4 = x(t-4)
+      </code>
       <para>
         Il numero dei ritardi creati può essere indicato come primo parametro
         opzionale.
@@ -4298,7 +4302,8 @@
       </para>
       <code>
 	ld_x = log(x) - log(x(-1))
-	ld_y = log(y) - log(y(-1))</code>
+	ld_y = log(y) - log(y(-1))
+      </code>
     </description>
 
     <gui-access>
@@ -4946,7 +4951,8 @@
 
       <code>
 	loglik = X*log(p) + (1-X)*log(1-p)
-	deriv p = X/p - (1-X)/(1-p)</code>
+	deriv p = X/p - (1-X)/(1-p)
+      </code>
 
       <para>
 	La prima riga specifica la funzione di log-verosimiglianza, mentre
@@ -4961,7 +4967,8 @@
       </para>
 
       <code>
-	genr p = 0.5</code>
+	genr p = 0.5
+      </code>
 
       <para>
 	Per impostazione predefinita, gli errori standard sono basati sul
@@ -5003,7 +5010,8 @@
       <code>
        mle loglik = X*log(p) + (1-X)*log(1-p)
        deriv p = X/p - (1-X)/(1-p)
-       end mle</code>
+       end mle
+      </code>
 
       <para>
         La prima riga specifica la funzione di log-verosimiglianza: inizia con
@@ -5020,7 +5028,8 @@
       <code>
        mle loglik = X*log(p) + (1-X)*log(1-p)
        params p
-       end mle</code>
+       end mle
+      </code>
       <para>
        e in questo caso la derivata verrebbe calcolata numericamente.
       </para>
@@ -5226,7 +5235,8 @@
       
       <code>
 	genr invpop = 1/pop
-	multiply invpop pc income</code>
+	multiply invpop pc income
+      </code>
 
       <para>che creeranno <lit>incomepc</lit> come prodotto di
 	<lit>income</lit> e <lit>invpop</lit>, e
@@ -5315,7 +5325,8 @@
       <code>
 	genr alpha = 1
 	genr beta = 1
-	genr gamma = 1</code>
+	genr gamma = 1
+      </code>
 
       <para>Per ulteriori dettagli sulla stima NLS si veda la
 	<guideref targ="chap-nls"/>.</para>
@@ -5359,7 +5370,8 @@
 	7   deriv a = 1
 	8   deriv b = Y^g
 	9   deriv g = b * Y^g * log(Y)
-	10  end nls --vcv</code>
+	10  end nls --vcv
+      </code>
 
       <para>
 	Spesso è comodo inizializzare i parametri con riferimento a un
@@ -6221,7 +6233,8 @@
       </para>
       <code>
 	genr filt = missing(x)
-	print x ; filt --byobs</code>
+	print x ; filt --byobs
+      </code>
 
     </description>
 
@@ -6267,7 +6280,8 @@
 	ols 1 0 2 3
 	genr b = $coeff(2)
 	genr se_b = $stderr(2)
-	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b</code>
+	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
+      </code>
 
       <para>
  	Le prossime righe mostrano l'uso delle funzioni varname e date, che
@@ -6277,7 +6291,8 @@
  
        <code>
  	printf "Il nome della variabile %d è %s\n", i, varname(i)
- 	printf "La data dell'osservazione %d è %s\n", j, date(j)</code>
+ 	printf "La data dell'osservazione %d è %s\n", j, date(j)
+      </code>
  
        <para>
 	La lunghezza massima di una stringa di formato è di 127
@@ -6604,7 +6619,8 @@
 	 b[1] = 0
 	 b[2] - b[3] = 0
 	 b[4] + 2*b[5] = 1
-	end restrict</code>
+	end restrict
+      </code>
 
       <para>Ed ecco un esempio di un insieme di vincoli da applicare a un
       sistema (se il nome del sistema non contiene spazi, è possibile
@@ -6616,7 +6632,8 @@
 	 b[1,1] = 0
 	 b[1,2] - b[2,2] = 0
 	 b[3,4] + 2*b[3,5] = 1
-	end restrict</code>
+	end restrict
+      </code>
 
       <para>
         Nel caso dell'equazione singola, i vincoli sono valutati attraverso un
@@ -6666,7 +6683,8 @@
       <code>
 	b[1] = 0
 	b[2] - b[3] = 0
-	b[4] + 2*b[5] = 1</code>
+	b[4] + 2*b[5] = 1
+      </code>
 
     </description>
 
@@ -6700,7 +6718,8 @@
       <code>
 	b[1,1] = 0
 	b[1,2] - b[2,2] = 0
-	b[3,4] + 2*b[3,5] = 1</code>
+	b[3,4] + 2*b[3,5] = 1
+      </code>
 
     </description>
 
@@ -6750,7 +6769,8 @@
 
       <code>
 	b[1] + b[2] = 0
-	b[1] + b[3] = 0</code>
+	b[1] + b[3] = 0
+      </code>
 
       <para>
 	Si veda anche la <guideref targ="chap:vecm"/>.
@@ -6892,7 +6912,8 @@
       </para>
       <code>
 	genr signx1 = x1 - median(x1)
-	runs signx1</code>
+	runs signx1
+      </code>
       <para>
        Se si usa l'opzione <lit>--difference</lit>, la variabile viene differenziata
        prima dell'analisi, quindi le successioni sono interpretabili come
@@ -7844,7 +7865,8 @@
 
       <code>
 	genr altx = -x
-	spearman altx y</code>
+	spearman altx y
+      </code>
     </description>
 
     <gui-access>
@@ -8014,7 +8036,8 @@
 	print "@S"
 	matrix m
 	sscanf @S, "%m", m
-	print m</code>
+	print m
+      </code>
 
     </description>
 
