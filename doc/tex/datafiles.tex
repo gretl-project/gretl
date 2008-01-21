@@ -690,8 +690,10 @@ When a user selects one of the items:
 \item The program then searches for valid file collections (not
   necessarily known in advance) in these places: the ``system'' data
   directory, the system script directory, the user directory, and all
-  first-level subdirectories of these.  (For reference, typical values
-  for these directories are shown in Table~\ref{tab-colls}.)
+  first-level subdirectories of these.  For reference, typical values
+  for these directories are shown in Table~\ref{tab-colls}.  (Note that
+  \texttt{PERSONAL} is a placeholder that is expanded by Windows,
+  corresponding to ``My Documents'' on English-language systems.)
 \end{itemize}
 
 \begin{table}[htbp]
@@ -701,13 +703,13 @@ When a user selects one of the items:
         \multicolumn{1}{c}{\textit{MS Windows}} \\
         system data dir & 
         {\small \verb+/usr/share/gretl/data+} &
-        {\small \verb+c:\userdata\gretl\data+} \\
+        {\small \verb+c:\Program Files\gretl\data+} \\
         system script dir & 
         {\small \verb+/usr/share/gretl/scripts+} &
-        {\small \verb+c:\userdata\gretl\scripts+} \\
+        {\small \verb+c:\Program Files\gretl\scripts+} \\
         user dir & 
-        {\small \verb+/home/me/gretl+} &
-        {\small \verb+c:\userdata\gretl\user+}\\
+        {\small \verb+$HOME/gretl+} &
+        {\small \verb+PERSONAL\gretl+}\\
   \end{tabular}
  \end{center}
  \caption{Typical locations for file collections}
@@ -729,7 +731,7 @@ If you are adding your own collection, data catalogs should be named
 \verb+descriptions+ and script catalogs should be be named
 \verb+ps_descriptions+.  In each case the catalog should be placed
 (along with the associated data or script files) in its own specific
-sub-directory (e.g.\ \verb+/usr/share/gretl/data/mydata+ or
+sub-directory (e.g.\ \url{/usr/share/gretl/data/mydata} or
 \verb+c:\userdata\gretl\data\mydata+).
 
 The syntax of the (plain text) description files is straightforward.
