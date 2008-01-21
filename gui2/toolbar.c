@@ -94,9 +94,9 @@ static void new_script_callback (void)
     do_new_script(NULL, 0, NULL);
 }
 
-static void show_funcs_callback (void)
+static void show_funcs_callback (GtkWidget *w, gpointer p)
 {
-    display_files(NULL, FUNC_FILES, NULL);
+    display_files(NULL, FUNC_FILES, w);
 }
 
 /* end toolbar icon callbacks */

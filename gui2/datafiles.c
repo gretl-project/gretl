@@ -92,8 +92,8 @@ struct fpkg_response {
 
 #define REMOTE_ACTION(c) (c == REMOTE_DB || c == REMOTE_FUNC_FILES)
 
-static void fpkg_response_init (struct fpkg_response *f,
-				GtkWidget *w)
+static void 
+fpkg_response_init (struct fpkg_response *f, GtkWidget *w)
 {
     f->col1_width = 0;
 
