@@ -122,6 +122,7 @@ static struct gui_help_item gui_help_items[] = {
     { BOOTSTRAP,      "bootstrap" },
     { TRANSPOS,       "transpos" },
     { DATASORT,       "datasort" },
+    { WORKDIR,        "working-dir" },
     { -1,          NULL },
 };
 

@@ -189,7 +189,14 @@
 <xsl:template match="programlisting">
   <xsl:text>&#10;\begin{code}</xsl:text>  
   <xsl:apply-templates/>
-  <xsl:text>\end{code}&#10;</xsl:text> 
+  <xsl:choose>
+    <xsl:when test="substring(., string-length(.)-6, 1) = '&#10;'">
+      <xsl:text>\end{code}&#10;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&#10;\end{code}&#10;</xsl:text> 
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="literal|filename|varname">

@@ -94,6 +94,7 @@ enum extra_cmds {
     BOOTSTRAP,
     TRANSPOS,
     DATASORT,
+    WORKDIR,
     GUI_CMD_MAX
 };
 

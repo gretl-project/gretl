@@ -2439,7 +2439,7 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     vbox_add_hsep(vbox);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new(_("On start-up, gretl should use -"));
+    w = gtk_label_new(_("On start-up, gretl should use:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
 
@@ -2575,6 +2575,8 @@ void working_dir_dialog (void)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
+
+    context_help_button(hbox, WORKDIR);
 
     gtk_widget_show_all(dialog);
 }

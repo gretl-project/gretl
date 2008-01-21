@@ -386,7 +386,8 @@
 <xsl:template match="code">
   <xsl:if test="not(@context) or @context=$hlp">
     <programlisting>
-      <xsl:apply-templates/></programlisting>
+      <xsl:apply-templates/>
+    </programlisting>
    </xsl:if>   
 </xsl:template>
 

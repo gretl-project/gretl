@@ -9191,6 +9191,47 @@
 
   </command>
 
+  <command name="working-dir" section="Utilities" label="Working directory"
+    context="gui">
+
+    <description>
+      <para>
+	The <quote>working directory</quote> is where gretl looks
+	by default when reading or writing data files or scripts
+	via the file Open and Save dialogs.
+      </para>
+      <para>
+	In addition the working directory is the default location for
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    reading files via the script commands <lit>append</lit>,
+	    <lit>open</lit>, <lit>run</lit> and <lit>include</lit>; and
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    writing files via the commands <lit>eqnprint</lit>,
+	    <lit>tabprint</lit>, <lit>gnuplot</lit>, <lit>outfile</lit>
+	    and <lit>store</lit>.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	The option of having gretl use the current directory (as
+	determined via the shell) at start-up may be useful to people who
+	are in the habit of launching gretl from a command prompt rather
+	than a menu or icon.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Working directory</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="xcorrgm" section="Statistics" label="Cross-correlogram">
 
     <usage>
