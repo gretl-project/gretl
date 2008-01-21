@@ -2727,11 +2727,19 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
-    case GRETL_STAT_SUP_WALD:	
 	if (tex) {
 	    sprintf(str, "$F(%d, %d)$ = %g", test->dfn, test->dfd, test->value);
 	} else {
 	    sprintf(str, "F(%d, %d) = %g", test->dfn, test->dfd, test->value);
+	}
+	break;
+    case GRETL_STAT_SUP_WALD:
+	if (tex) {
+	    sprintf(str, "max.\ $F(%d, %d)$ = %g at %s", test->dfn, test->dfd, 
+		    test->value, test->param);
+	} else {
+	    sprintf(str, "max F(%d, %d) = %g at %s", test->dfn, test->dfd, 
+		    test->value, test->param);
 	}
 	break;
     case GRETL_STAT_LMF:

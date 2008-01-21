@@ -1856,6 +1856,7 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 }
 
 static int QLR_graph (const double *Ft, int t1, int t2, 
+		      int tmax, const char *datestr,
 		      const DATAINFO *pdinfo)
 {
     const double *x = gretl_plotx(pdinfo);
@@ -1865,6 +1866,9 @@ static int QLR_graph (const double *Ft, int t1, int t2,
     if (gnuplot_init(PLOT_REGULAR, &fp)) {
 	return E_FOPEN;
     }
+
+    fprintf(fp, "set label \"max F = %g at %s\" at graph .03, graph .97%s\n",
+	    Ft[tmax-t1], datestr, gnuplot_label_front_string());
 
     gretl_push_c_numeric_locale();
 
@@ -1883,7 +1887,7 @@ static int QLR_graph (const double *Ft, int t1, int t2,
     return gnuplot_make_graph();
 }
 
-static void save_QLR_test (MODEL *pmod, char *datestr,
+static void save_QLR_test (MODEL *pmod, const char *datestr,
 			   double Fmax, double crit, double alpha,
 			   int dfn, int dfd)
 {
@@ -1902,17 +1906,14 @@ static void save_QLR_test (MODEL *pmod, char *datestr,
 
 static void QLR_print_result (MODEL *pmod,
 			      double Fmax, int tmax, int dfn, int dfd,
-			      const DATAINFO *pdinfo, gretlopt opt,
+			      const char *datestr, gretlopt opt,
 			      PRN *prn)
 {
-    char datestr[OBSLEN];
     double crit = 0.0;
     int a = 0, approx = 0;
     int i, j;
 
-    ntodate(datestr, tmax, pdinfo);
-
-    pputs(prn, _("Quandt likelihood ratio test for structural break at an "
+     pputs(prn, _("Quandt likelihood ratio test for structural break at an "
 	  "unknown point,\nwith 15 percent trimming"));
     pputs(prn, ":\n\n");
     pprintf(prn, _("The maximum F(%d, %d) = %g occurs "
@@ -2085,10 +2086,13 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	}
 
 	if (!err) {
-	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, pdinfo, opt, prn);
+	    char datestr[OBSLEN];
+
+	    ntodate(datestr, tmax, pdinfo);
+	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, datestr, opt, prn);
 	    record_test_result(Fmax, NADBL, "QLR");
 	    if (Ft != NULL) {
-		QLR_graph(Ft, split, smax, pdinfo);
+		QLR_graph(Ft, split, smax, tmax, datestr, pdinfo);
 	    }
 	}
 
