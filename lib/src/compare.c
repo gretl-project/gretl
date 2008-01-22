@@ -1855,9 +1855,35 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return chowlist;
 }
 
+static double QLR_get_critval (double Fmax, int dfn, int *a, int *approx)
+{
+    double crit = 0.0;
+    int i, j = dfn - 1;
+
+    *approx = 0;
+
+    if (j >= QLR_QMAX) {
+	j = QLR_QMAX - 1;
+	*approx = 1;
+    } 
+
+    for (i=2; i>=0; i--) {
+	if (Fmax > QLR_critvals[j][i]) {
+	    *a = (i == 2)? 1 : (i == 1)? 5 : 10;
+	    crit = QLR_critvals[j][i];
+	    break;
+	}
+    }
+
+    if (crit == 0.0) {
+	crit = QLR_critvals[j][0];
+    }
+
+    return crit;
+}
+
 static int QLR_graph (const double *Ft, int t1, int t2, 
-		      int tmax, const char *datestr,
-		      const DATAINFO *pdinfo)
+		      int tmax, int dfn, const DATAINFO *pdinfo)
 {
     const double *x = gretl_plotx(pdinfo);
     FILE *fp = NULL;
@@ -1867,8 +1893,7 @@ static int QLR_graph (const double *Ft, int t1, int t2,
 	return E_FOPEN;
     }
 
-    fprintf(fp, "set label \"max F = %g at %s\" at graph .03, graph .97%s\n",
-	    Ft[tmax-t1], datestr, gnuplot_label_front_string());
+    fputs("set key top left\n", fp);
 
     gretl_push_c_numeric_locale();
 
@@ -1906,38 +1931,23 @@ static void save_QLR_test (MODEL *pmod, const char *datestr,
 
 static void QLR_print_result (MODEL *pmod,
 			      double Fmax, int tmax, int dfn, int dfd,
-			      const char *datestr, gretlopt opt,
+			      const DATAINFO *pdinfo, gretlopt opt,
 			      PRN *prn)
 {
+    char datestr[OBSLEN];
     double crit = 0.0;
     int a = 0, approx = 0;
-    int i, j;
 
-     pputs(prn, _("Quandt likelihood ratio test for structural break at an "
-	  "unknown point,\nwith 15 percent trimming"));
+    ntodate(datestr, tmax, pdinfo);
+
+    pputs(prn, _("Quandt likelihood ratio test for structural break at an "
+		 "unknown point,\nwith 15 percent trimming"));
     pputs(prn, ":\n\n");
     pprintf(prn, _("The maximum F(%d, %d) = %g occurs "
-	    "at observation %s"), dfn, dfd, Fmax, datestr);
+		   "at observation %s"), dfn, dfd, Fmax, datestr);
     pputc(prn, '\n');
 
-    j = dfn - 1;
-
-    if (j >= QLR_QMAX) {
-	j = QLR_QMAX - 1;
-	approx = 1;
-    } 
-
-    for (i=2; i>=0; i--) {
-	if (Fmax > QLR_critvals[j][i]) {
-	    a = (i == 2)? 1 : (i == 1)? 5 : 10;
-	    crit = QLR_critvals[j][i];
-	    break;
-	}
-    }
-
-    if (crit == 0.0) {
-	crit = QLR_critvals[j][0];
-    }
+    crit = QLR_get_critval(Fmax, dfn, &a, &approx);
 
     if (a > 0) {
 	pprintf(prn, _("Significant at the %d percent level "), a);
@@ -2086,13 +2096,10 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	}
 
 	if (!err) {
-	    char datestr[OBSLEN];
-
-	    ntodate(datestr, tmax, pdinfo);
-	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, datestr, opt, prn);
+	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, pdinfo, opt, prn);
 	    record_test_result(Fmax, NADBL, "QLR");
 	    if (Ft != NULL) {
-		QLR_graph(Ft, split, smax, tmax, datestr, pdinfo);
+		QLR_graph(Ft, split, smax, tmax, dfn, pdinfo);
 	    }
 	}
 

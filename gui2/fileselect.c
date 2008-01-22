@@ -712,7 +712,8 @@ static int select_dirname (char *fname, char *trmsg)
     return ret;
 }
 
-void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
+static void win32_file_selector (const char *msg, int action, FselDataSrc src, 
+				 gpointer data) 
 {
     OPENFILENAME of;
     int retval;
@@ -831,9 +832,9 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
     return filter;
 }
 
-void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
+static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
+			       gpointer data, GtkWidget *parent) 
 {
-    GtkWindow *parent = GTK_WINDOW(mdata->w);
     GtkWidget *filesel;
     char startdir[MAXLEN];
     GtkFileFilter *filter;
@@ -860,6 +861,10 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
     /* FIXME: parent window below should not always be mdata->w,
        in particular when action == SAVE_GNUPLOT
     */
+
+    if (parent == NULL) {
+	parent = mdata->w;
+    }
 
     filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(parent), fa,
 					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -939,3 +944,22 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 }
 
 #endif /* end of non-MS Windows code */
+
+void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
+{
+#ifdef G_OS_WIN32
+    win32_file_selector(msg, action, src, data);
+#else
+    gtk_file_selector(msg, action, src, data, NULL);
+#endif
+}
+
+void file_selector_with_parent (const char *msg, int action, FselDataSrc src, 
+				gpointer data, GtkWidget *w)
+{
+#ifdef G_OS_WIN32
+    win32_file_selector(msg, action, src, data);
+#else
+    gtk_file_selector(msg, action, src, data, w);
+#endif
+}
