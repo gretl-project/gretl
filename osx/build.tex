@@ -17,7 +17,7 @@
 
 \begin{center}
   {\Large \textbf{Building a gretl disk image for OS X}}\\[6pt]
-Allin Cottrell, December 2007
+Allin Cottrell, 22 January 2008
 \end{center}
 
 \section{Objective}
@@ -169,9 +169,9 @@ libgd you just installed, before building gnuplot.  Use something like
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/Users/allin/misc/lib/pkgconfig"
 \end{code}
 
-Now grab the patched source for gnuplot 4.2.2,
+Now grab the patched source for CVS gnuplot,
 
-\url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-4.2.2-ac.tar.gz}
+\url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-20080105.tar.gz}
 
 Untar and configure with
 
@@ -179,8 +179,7 @@ Untar and configure with
 TOPDIR=/Users/allin/dist
 export CFLAGS="-O2 -I/sw/include"
 export LDFLAGS="-L/sw/lib -L/usr/X11R6/lib"
-./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources && \
-echo "#define PNG_COMMENTS 1" >> config.h 
+./configure --prefix=$TOPDIR/Gretl.app/Contents/Resources
 \end{code}
 
 Again, \texttt{make} and \texttt{make install}.
@@ -232,7 +231,13 @@ rm -rf $PREFIX/share/emacs
 
 install -m 644 osx/README.pdf $TOPDIR
 install -m 755 osx/gretl.sh $PREFIX/bin/gretl
+# uncomment for a PPC build:
+# install -m 755 osx/Gretl.ppc $TOPDIR/Gretl.app/Contents/MacOS/Gretl
 \end{code}
+
+If you're making a PPC build of gretl then you need to remove the
+hash-mark comment symbol from the last line above.
+
 
 \section{Copying Fink run-time files}
 
@@ -478,8 +483,9 @@ should be copied as
 Gretl.app/Contents/MacOS/Gretl
 \end{code}
 
-A copy of my build of this program can be found in the osx subdir of
-the gretl code, named \texttt{Gretl.intel}.
+Two builds of this program can be found in the osx subdir of the gretl
+code, namely \texttt{Gretl.ppc} (for the PPC architecture) and
+\texttt{Gretl.intel}.
 
 A copy of my gretlized version of the ScriptExec source is at
 
