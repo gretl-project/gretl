@@ -5269,7 +5269,15 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
     NODE *r = p->ret;
     gretl_matrix *m = NULL;
 
-    if (r->t == VEC) {
+    if (r->t == NUM) {
+	/* result was a scalar, not a matrix */
+	m = gretl_matrix_alloc(1, 1);
+	if (m == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    m->val[0] = r->v.xval;
+	}	
+    } else if (r->t == VEC) {
 	/* result was a series, not a matrix */
 	int i, n = p->dinfo->t2 - p->dinfo->t1 + 1;
 
@@ -5358,29 +5366,24 @@ static gretl_matrix *copy_old_matrix (parser *p)
     return m;
 }
 
-static int vec_dim_ok (parser *p)
+static int LHS_matrix_reusable (parser *p)
 {
-    int T = p->dinfo->t2 - p->dinfo->t1 + 1;
     gretl_matrix *m = p->lh.m0;
+    int ok = 0;
 
-    if (m->rows == T && m->cols == 1) {
-	return 1;
-    } else {
-	return 0;
+    if (p->ret->t == NUM) {
+	ok = (m->rows == 1 && m->cols == 1);
+    } else if (p->ret->t == VEC) {
+	int T = p->dinfo->t2 - p->dinfo->t1 + 1;
+
+	ok = (m->rows == T && m->cols == 1);
+    } else if (p->ret->t == MAT) {
+	gretl_matrix *rm = p->ret->v.m;
+
+	ok = (m->rows == rm->rows && m->cols == rm->cols);
     }
-}
 
-static int same_dim (parser *p)
-{
-    gretl_matrix *rm = p->ret->v.m;
-    gretl_matrix *m0 = p->lh.m0;
-
-    if (gretl_matrix_rows(m0) == gretl_matrix_rows(rm) &&
-	gretl_matrix_cols(m0) == gretl_matrix_cols(rm)) {
-	return 1;
-    } else {
-	return 0;
-    }
+    return ok;
 }
 
 /* generating a matrix: there's a pre-existing LHS matrix */
@@ -5388,21 +5391,11 @@ static int same_dim (parser *p)
 static void assign_to_matrix (parser *p)
 {
     gretl_matrix *m;
-    int reuse;
 
-    /* can we reuse the existing LHS gretl_matrix? */
-    reuse = (p->ret->t == NUM || 
-	     (p->ret->t == MAT && same_dim(p)) ||
-	     (p->ret->t == VEC && vec_dim_ok(p)));
-
-    if (reuse) {
+    if (LHS_matrix_reusable(p)) {
 	m = p->lh.m0;
 	if (p->ret->t == NUM) {
-	    int i, n = m->rows * m->cols;
-
-	    for (i=0; i<n; i++) {
-		m->val[i] = p->ret->v.xval;
-	    }
+	    m->val[0] = p->ret->v.xval;
 	} else if (p->ret->t == VEC) {
 	    int i, s = p->dinfo->t1;
 
