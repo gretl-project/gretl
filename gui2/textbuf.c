@@ -1295,6 +1295,38 @@ static void get_cmdword (const char *s, char *word)
 #endif
 }
 
+#define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
+#define starts_comment(p) (*p == '/' && *(p+1) == '*')
+#define ends_comment(p)   (*p == '*' && *(p+1) == '/')
+
+static void check_for_comment (const char *s, int *ignore)
+{
+    const char *p = s;
+    int quoted = 0;
+
+    while (*p) {
+	if (!quoted && !*ignore && *p == '#') {
+	    break;
+	}
+	if (!*ignore && bare_quote(p, s)) {
+	    quoted = !quoted;
+	}
+	if (!quoted) {
+	    if (starts_comment(p)) {
+		*ignore = 1;
+		p += 2;
+	    } else if (ends_comment(p)) {
+		*ignore = 0;
+		p += 2;
+		p += strspn(p, " ");
+	    }
+	}
+	if (*p) {
+	    p++;
+	}
+    }
+}
+
 static void normalize_indent (GtkTextBuffer *tbuf, 
 			      const gchar *buf,
 			      GtkTextIter *start,
@@ -1304,6 +1336,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     int next_indent = 0;
     char word[9], line[1024];
     const char *ins;
+    int ignore = 0;
     int i, nsp;
 
     if (buf == NULL) {
@@ -1316,6 +1349,12 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 
     while (bufgets(line, sizeof line, buf)) {
 	if (string_is_blank(line)) {
+	    gtk_text_buffer_insert(tbuf, start, line, -1);
+	    continue;
+	}
+	check_for_comment(line, &ignore);
+	if (ignore) {
+	    /* in multiline comment */
 	    gtk_text_buffer_insert(tbuf, start, line, -1);
 	    continue;
 	}
