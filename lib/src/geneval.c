@@ -5393,6 +5393,7 @@ static void assign_to_matrix (parser *p)
     gretl_matrix *m;
 
     if (LHS_matrix_reusable(p)) {
+	/* result is conformable with original matrix */
 	m = p->lh.m0;
 	if (p->ret->t == NUM) {
 	    m->val[0] = p->ret->v.xval;
