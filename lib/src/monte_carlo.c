@@ -2579,6 +2579,42 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
     return err;
 }
 
+/* Try to determine if a "list" command within a loop modifies the
+   list that is controlling the loop: if so, we'll have to arrange to
+   have the list of variable names refreshed at the top of the loop.
+*/
+
+static int modifies_loop_list (const LOOPSET *loop, const char *s)
+{
+    int ret = 0;
+
+    if (!strncmp(s, "list", 4)) {
+	char lname[VNAMELEN];
+
+	s += 4;
+	s += strspn(s, " ");
+	*lname = '\0';
+	sscanf(s, "%15[^ +-=]", lname);
+	ret = !strcmp(lname, loop->listname);
+    }
+
+    return ret;
+}
+
+static int maybe_refresh_list (CMD *cmd, const LOOPSET *loop,
+			       const char *line)
+{
+    int ret = 0;
+
+    if (cmd->ci == REMEMBER && (cmd->opt & OPT_L)) {
+	ret = modifies_loop_list(loop, cmd->extra);
+    } else if (cmd->ci == GENR) {
+	ret = modifies_loop_list(loop, line);
+    }
+
+    return ret;
+}
+
 /* get the next command for a loop by pulling a line off the
    stack of loop commands.
 */
@@ -2647,6 +2683,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	int lmodnum = 0;
 	int printnum = 0;
 	int childnum = 0;
+	int lrefresh = 0;
 	int j;
 
 #if LOOP_DEBUG
@@ -2684,6 +2721,10 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		continue;
 	    } else if (err) {
 		break;
+	    }
+
+	    if (is_list_loop(loop) && maybe_refresh_list(cmd, loop, line)) {
+		lrefresh = 1;
 	    }
 
 	    if (gretl_echo_on() && indexed_loop(loop)) {
@@ -2800,7 +2841,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	if (indexed_loop(loop)) {
 	    loop->ival += 1;
-	} else if (is_list_loop(loop)) {
+	} else if (lrefresh) {
 	    /* added 2008-01-11, AC */
 	    loop_list_refresh(loop, pdinfo);
 	}

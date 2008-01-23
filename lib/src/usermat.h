@@ -95,29 +95,15 @@ int destroy_user_matrices_at_level (int level);
 
 int destroy_private_matrices (void);
 
-double user_matrix_get_determinant (const gretl_matrix *m, int *err);
+double user_matrix_get_determinant (gretl_matrix *m, int f, int *err);
 
-double user_matrix_get_log_determinant (const gretl_matrix *m, int *err);
-
-gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m, int *err);
-
-gretl_matrix *user_matrix_get_invpd (const gretl_matrix *m, int *err);
-
-gretl_matrix *user_matrix_moore_penrose (const gretl_matrix *m, int *err);
-
-gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m, int *err);
-
-gretl_matrix *user_matrix_column_demean (const gretl_matrix *m, int *err);
+gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f, int *err);
 
 gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err);
 
 gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
 
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err);
-
-gretl_matrix *user_matrix_upper (const gretl_matrix *m, int *err);
-
-gretl_matrix *user_matrix_lower (const gretl_matrix *m, int *err);
 
 gretl_matrix *
 user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, 

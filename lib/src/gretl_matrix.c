@@ -6924,6 +6924,8 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
     err = gretl_matrix_SVD(A, &U, &S, &Vt);
 
     if (!err) {
+	int nsv = (m < n)? m : n;
+
 	SUt = gretl_zero_matrix_new(n, m);
 	if (SUt == NULL) {
 	    err = E_ALLOC;
@@ -6931,7 +6933,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 	}
 
 	/* invert singular values and multiply into U' */
-	for (i=0; i<n; i++) {
+	for (i=0; i<nsv; i++) {
 	    if (S->val[i] > SVD_SMIN) {
 		for (j=0; j<m; j++) {
 		    x = gretl_matrix_get(U, j, i);

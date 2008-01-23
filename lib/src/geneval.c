@@ -1484,10 +1484,8 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = m->cols;
 	    break;
 	case DET:
-	    ret->v.xval = user_matrix_get_determinant(m, &p->err);
-	    break;
 	case LDET:
-	    ret->v.xval = user_matrix_get_log_determinant(m, &p->err);
+	    ret->v.xval = user_matrix_get_determinant(m, f, &p->err);
 	    break;
 	case TRACE:
 	    ret->v.xval = gretl_matrix_trace(m, &p->err);
@@ -1540,7 +1538,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 
 static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 {
-    const gretl_matrix *m = n->v.m;
+    gretl_matrix *m = n->v.m;
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
@@ -1576,19 +1574,13 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
 	    break;
 	case CDEMEAN:
-	    ret->v.m = user_matrix_column_demean(m, &p->err);
-	    break;
 	case CHOL:
-	    ret->v.m = user_matrix_cholesky_decomp(m, &p->err);
-	    break;
 	case INV:
-	    ret->v.m = user_matrix_get_inverse(m, &p->err);
-	    break;
 	case INVPD:
-	    ret->v.m = user_matrix_get_invpd(m, &p->err);
-	    break;
 	case GINV:
-	    ret->v.m = user_matrix_moore_penrose(m, &p->err);
+	case UPPER:
+	case LOWER:
+	    ret->v.m = user_matrix_matrix_func(m, f, &p->err);
 	    break;
 	case DIAG:
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
@@ -1617,12 +1609,6 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case FFTI:
 	    ret->v.m = gretl_matrix_ffti(m, &p->err);
 	    break;
-	case UPPER:
-	    ret->v.m = user_matrix_upper(m, &p->err);
-	    break;
-	case LOWER:
-	    ret->v.m = user_matrix_lower(m, &p->err);
-	    break;
 	case MINC:
 	case MAXC:
 	case MINR:
@@ -1637,6 +1623,11 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	default:
 	    break;
 	}
+
+	if (ret->v.m == n->v.m) {
+	    /* input matrix was recycled: avoid double-freeing */
+	    n->v.m = NULL;
+	}	
 
     finalize:
 

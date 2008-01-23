@@ -24,6 +24,7 @@
 #include "libset.h"
 #include "usermat.h"
 #include "gretl_xml.h"
+#include "genparse.h"
 
 #define MDEBUG 0
 #define LEVEL_AUTO -1
@@ -964,20 +965,27 @@ int user_matrix_destroy_by_name (const char *name, PRN *prn)
     return err;
 }
 
-static double 
-real_user_matrix_get_determinant (const gretl_matrix *m, int log, int *err)
+double 
+user_matrix_get_determinant (gretl_matrix *m, int f, int *err)
 {
+    gretl_matrix *tmp = NULL;
     double d = NADBL;
 
-    if (!gretl_is_null_matrix(m)) {
-	gretl_matrix *tmp = gretl_matrix_copy(m);
+    if (gretl_is_null_matrix(m)) {
+	return d;
+    } else if (!matrix_is_user_matrix(m)) {
+	tmp = m;
+    } else {
+	tmp = gretl_matrix_copy(m);
+    }
 
-	if (tmp != NULL) {
-	    if (log) {
-		d = gretl_matrix_log_determinant(tmp, err);
-	    } else {
-		d = gretl_matrix_determinant(tmp, err);
-	    }
+    if (tmp != NULL) {
+	if (f == LDET) {
+	    d = gretl_matrix_log_determinant(tmp, err);
+	} else {
+	    d = gretl_matrix_determinant(tmp, err);
+	}
+	if (tmp != m) {
 	    gretl_matrix_free(tmp);
 	}
     }
@@ -985,64 +993,47 @@ real_user_matrix_get_determinant (const gretl_matrix *m, int log, int *err)
     return d;
 }
 
-double user_matrix_get_determinant (const gretl_matrix *m, int *err)
-{
-    return real_user_matrix_get_determinant(m, 0, err);
-}
-
-double user_matrix_get_log_determinant (const gretl_matrix *m, int *err)
-{
-    return real_user_matrix_get_determinant(m, 1, err);
-}
-
-enum {
-    INVERSE_REGULAR,
-    INVERSE_PD,
-    INVERSE_MOORE
-};
-
-static gretl_matrix *
-real_user_matrix_get_inverse (const gretl_matrix *m, int i, int *err)
+gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f, 
+				       int *err)
 {
     gretl_matrix *R = NULL;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
+    } else if (!matrix_is_user_matrix(m)) {
+	R = m;
     } else {
 	R = gretl_matrix_copy(m);
 	if (R == NULL) {
 	    *err = E_ALLOC;
+	}
+    }
+
+    if (R != NULL) {
+	if (f == CDEMEAN) {
+	    gretl_matrix_demean_by_column(R);
+	} else if (f == CHOL) {
+	    *err = gretl_matrix_cholesky_decomp(R);
+	} else if (f == INVPD) {
+	    *err = gretl_invpd(R);
+	} else if (f == GINV) {
+	    *err = gretl_matrix_moore_penrose(R);
+	} else if (f == INV) {
+	    *err = gretl_invert_matrix(R);
+	} else if (f == UPPER) {
+	    *err = gretl_matrix_zero_upper(R);
+	} else if (f == LOWER) {
+	    *err = gretl_matrix_zero_lower(R);
 	} else {
-	    if (i == INVERSE_PD) {
-		*err = gretl_invpd(R);
-	    } else if (i == INVERSE_MOORE) {
-		*err = gretl_matrix_moore_penrose(R);
-	    } else {
-		*err = gretl_invert_matrix(R);
-	    } 
-	    if (*err) {
-		gretl_matrix_free(R);
-		R = NULL;
-	    }
-	} 
+	    *err = E_DATA;
+	}
+	if (*err && R != m) {
+	    gretl_matrix_free(R);
+	    R = NULL;
+	}
     } 
    
     return R;
-}
-
-gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m, int *err)
-{
-    return real_user_matrix_get_inverse(m, INVERSE_REGULAR, err);
-}
-
-gretl_matrix *user_matrix_get_invpd (const gretl_matrix *m, int *err)
-{
-    return real_user_matrix_get_inverse(m, INVERSE_PD, err);
-}
-
-gretl_matrix *user_matrix_moore_penrose (const gretl_matrix *m, int *err)
-{
-    return real_user_matrix_get_inverse(m, INVERSE_MOORE, err);
 }
 
 static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
@@ -1134,47 +1125,6 @@ int matrix_XTX_in_place (gretl_matrix *m)
     return err;
 }
 
-gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m,
-					   int *err)
-{
-    gretl_matrix *R = NULL;
-
-    if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
-    } else {
-	R = gretl_matrix_copy(m);
-	if (R == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    *err = gretl_matrix_cholesky_decomp(R);
-	    if (*err) {
-		gretl_matrix_free(R);
-		R = NULL;
-	    }
-	} 
-    }
-
-    return R;
-}
-
-gretl_matrix *user_matrix_column_demean (const gretl_matrix *m, int *err)
-{
-    gretl_matrix *R = NULL;
-
-    if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
-    } else {
-	R = gretl_matrix_copy(m);
-	if (R == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    gretl_matrix_demean_by_column(R);
-	} 
-    }
-
-    return R;
-}
-
 gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err)
 {
     gretl_matrix *R = NULL;
@@ -1241,22 +1191,6 @@ gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
 	*err = E_ALLOC;
     }
 
-    return R;
-}
-
-gretl_matrix *user_matrix_upper (const gretl_matrix *m, int *err)
-{
-    gretl_matrix *R = gretl_matrix_copy(m);
-
-    *err = gretl_matrix_zero_lower(R);
-    return R;
-}
-
-gretl_matrix *user_matrix_lower (const gretl_matrix *m, int *err)
-{
-    gretl_matrix *R = gretl_matrix_copy(m);
-
-    *err = gretl_matrix_zero_upper(R);
     return R;
 }
 
