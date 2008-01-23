@@ -173,8 +173,8 @@
         della variabile ritardata <mathvar>y</mathvar> è pari a 1 meno
         la radice. Ad esempio, il modello con una costante può essere
         scritto come <equation status="display"
-	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
-	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
+        tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
+        ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
 	graphic="adf1"/></para>
 
       <para context="cli">
@@ -9074,6 +9074,47 @@
 
     <gui-access>
       <menu-path>/Modello/Altri modelli lineari/WLS - Minimi quadrati ponderati</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="working-dir" section="Utilities" label="Directory di lavoro"
+    context="gui">
+
+    <description>
+      <para>
+       La <quote>directory di lavoro</quote> è quella usata da gretl in modo
+       predefinito nelle operazioni di letura o scrittura di file di dati o
+       comandi, usando i comandi Apri e Salva.
+      </para>
+      <para>
+       Inoltre, la directory di lavoro è usata anche per:
+      </para>
+      <ilist>
+       <li>
+         <para>
+           leggere i file attraverso i comandi testuali <lit>append</lit>,
+           <lit>open</lit>, <lit>run</lit> e <lit>include</lit>;
+         </para>
+       </li>
+       <li>
+         <para>
+           scrivere i file attraverso i comandi <lit>eqnprint</lit>,
+           <lit>tabprint</lit>, <lit>gnuplot</lit>, <lit>outfile</lit>
+           e <lit>store</lit>.
+         </para>
+       </li>
+      </ilist>
+      <para>
+       Se si è abituati ad avviare gretl da un terminale testuale invece che da
+       un menù o icona, può essere utile l'opzione che permette di usare la
+       directory corrente (determinata dalla shell) al momento dell'avvio del
+       programma.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Directory di lavoro</menu-path>
     </gui-access>
 
   </command>
