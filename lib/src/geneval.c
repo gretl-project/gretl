@@ -1382,11 +1382,22 @@ static NODE *matrix_lag (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-/* both operands are known to be matrices */
+static gretl_matrix *make_scalar_matrix (double x)
+{
+    gretl_matrix *m = gretl_matrix_alloc(1, 1);
+
+    if (m != NULL) {
+	m->val[0] = x;
+    }
+    return m;
+}
+
+/* both operands are known to be matrices or scalars */
 
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
+    gretl_matrix *ml, *mr;
 
     if (op == B_POW) {
 	p->err = E_TYPES;
@@ -1398,9 +1409,24 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 	    (void *) l, (void *) r, (void *) ret);
 #endif
 
-    if (ret != NULL && starting(p)) {
-	ret->v.m = real_matrix_calc(l->v.m, r->v.m, op, &p->err);
+    if (l->t == NUM) {
+	ml = make_scalar_matrix(l->v.xval);
+    } else {
+	ml = l->v.m;
     }
+
+    if (r->t == NUM) {
+	mr = make_scalar_matrix(r->v.xval);
+    } else {
+	mr = r->v.m;
+    }
+
+    if (ret != NULL && starting(p)) {
+	ret->v.m = real_matrix_calc(ml, mr, op, &p->err);
+    }
+
+    if (l->t == NUM) gretl_matrix_free(ml);
+    if (r->t == NUM) gretl_matrix_free(mr);
 
     return ret;
 }
@@ -1471,7 +1497,7 @@ static void matrix_error (parser *p)
 
 static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 {
-    const gretl_matrix *m = n->v.m;
+    gretl_matrix *m = n->v.m;
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
@@ -4073,8 +4099,9 @@ static NODE *eval (NODE *t, parser *p)
     case QFORM:
     case CMULT:
     case CDIV:
-	/* matrix-only binary operators */
-	if (l->t == MAT && r->t == MAT) {
+	/* matrix-only binary operators (but promote scalars) */
+	if ((l->t == MAT || l->t == NUM) && 
+	    (r->t == MAT || r->t == NUM)) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
