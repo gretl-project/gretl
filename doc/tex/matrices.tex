@@ -410,16 +410,17 @@ context it is reserved for the Kronecker product.)
 \texttt{ffti}      \\
 \texttt{infnorm}   &
 \texttt{inv}       &
+\texttt{invpd}     &
 \texttt{ginv}      &
 \texttt{ldet}      &
-\texttt{mexp}      &
-\texttt{nullspace} \\
+\texttt{mexp}      \\
+\texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{qform}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
-\texttt{rcond}     &
-\texttt{svd}       \\
+\texttt{rcond}     \\
+\texttt{svd}       &
 \texttt{tr}        &
 \texttt{cmult}     &
 \texttt{cdiv}      
@@ -557,15 +558,16 @@ matrix are:
 \texttt{cholesky} & Cholesky decomposition & &
 \texttt{mexp}     & matrix exponential \\
 \texttt{inv}      & inverse & &
-\texttt{ginv}     & generalized inverse \\
-\texttt{diag}     & extract principal diagonal  & &
-\texttt{transp}   & transpose \\
-\texttt{cdemean}  & subtract column means & &
-\texttt{vec}      & elements as column vector \\
-\texttt{vech}     & vectorize lower triangle & &
-\texttt{unvech}   & undo \texttt{vech} \\
-\texttt{mlag}     & matrix lag or lead & &
-\texttt{nullspace} & right nullspace \\
+\texttt{invpd}    & inverse of p.d. matrix \\
+\texttt{ginv}     & generalized inverse & &
+\texttt{diag}     & extract principal diagonal \\
+\texttt{transp}   & transpose && 
+\texttt{cdemean}  & subtract column means \\
+\texttt{vec}      & elements as column vector & &
+\texttt{vech}     & vectorize lower triangle \\
+\texttt{unvech}   & undo \texttt{vech} & &
+\texttt{mlag}     & matrix lag or lead \\
+\texttt{nullspace} & right nullspace & & 
 \texttt{princomp} & principal components \\
 \texttt{maxc}     & column maxima (values) & &
 \texttt{maxr}     & row maxima (values) \\
@@ -659,6 +661,11 @@ to generate leads instead of lags.
 The \texttt{nullspace} function yields $X$, the right null space of a
 matrix $A$ (it is assumed that A has full row rank): $X$ satisfies $A
 \cdot X = 0$.
+
+The \texttt{invpd} function returns the inverse of a symmetric,
+positive definite matrix.  Use with caution: this is faster than the
+standard \texttt{inv} function, but \app{gretl} does not check for
+symmetry; it takes you at your word.
 
 The \texttt{ginv} function gives the generalized inverse or
 pseudoinverse (also sometimes called the Moore--Penrose inverse) of a
@@ -1356,7 +1363,7 @@ replicate gretl's built-in OLS functionality.
 open data4-1
 matrix X = { const, sqft }
 matrix y = { price }
-matrix b = inv(X'X) * X'y
+matrix b = invpd(X'X) * X'y
 printf "estimated coefficient vector\n"
 b
 matrix u = y - X*b
@@ -1405,50 +1412,51 @@ ols price const sqft --vcv
 \texttt{infnorm}   & 
 \texttt{int}       & 
 \texttt{inv}       & 
-\texttt{ldet}      & 
-\texttt{lngamma}   \\
+\texttt{invpd}     & 
+\texttt{ldet}      \\
+\texttt{lngamma}   &
 \texttt{log}       & 
 \texttt{mcorr}     & 
 \texttt{mcov}      & 
 \texttt{maxc}      &   
-\texttt{maxr}      & 
-\texttt{meanc}     \\
+\texttt{maxr}      \\ 
+\texttt{meanc}     &
 \texttt{meanr}     & 
 \texttt{mexp}      & 
 \texttt{minc}      &  
 \texttt{minr}      & 
-\texttt{mlag}      & 
-\texttt{mnormal}   \\
+\texttt{mlag}      \\ 
+\texttt{mnormal}   &
 \texttt{mols}      & 
 \texttt{mread}     & 
 \texttt{mshape}    & 
 \texttt{muniform}  & 
-\texttt{mwrite}    & 
-\texttt{mxtab}     \\
+\texttt{mwrite}    \\ 
+\texttt{mxtab}     &
 \texttt{nullspace} & 
 \texttt{onenorm}   & 
 \texttt{ones}      & 
 \texttt{princomp}  & 
-\texttt{qform}     & 
-\texttt{qnorm}     \\
+\texttt{qform}     \\ 
+\texttt{qnorm}     &
 \texttt{qrdecomp}  & 
 \texttt{rank}      & 
 \texttt{rcond}     & 
 \texttt{rows}      & 
-\texttt{seq}       & 
-\texttt{sin}       \\
+\texttt{seq}       \\ 
+\texttt{sin}       &
 \texttt{sort}      & 
 \texttt{sqrt}      & 
 \texttt{sumc}      & 
 \texttt{sumr}      & 
-\texttt{svd}       & 
-\texttt{tan}       \\
+\texttt{svd}       \\ 
+\texttt{tan}       &
 \texttt{tr}        & 
 \texttt{transp}    & 
 \texttt{unvech}    & 
 \texttt{values}    & 
-\texttt{vec}       & 
-\texttt{vech}      \\
+\texttt{vec}       \\ 
+\texttt{vech}      &
 \texttt{zeros}    
 \end{tabular}      
 \caption{Alphabetical listing of matrix functions}

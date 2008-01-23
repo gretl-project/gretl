@@ -4928,6 +4928,63 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 }
 
 /**
+ * gretl_invpd:
+ * @a: matrix to invert.
+ * 
+ * Computes the inverse of a symmetric positive definite matrix
+ * using Cholesky factorization.  On exit @a is overwritten with 
+ * the inverse. Uses the lapack functions %dpotrf and %dpotri.
+ * Little checking is done, for speed: we assume the caller
+ * knows what he's doing.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invpd (gretl_matrix *a)
+{
+    integer n, info;
+    char uplo = 'L';
+    int err = 0;
+
+    if (a->cols != a->rows) {
+	fputs("gretl_invert_symmetric_matrix: input is not square\n",
+	      stderr);
+	return E_NONCONF;
+    }
+
+    n = a->cols;
+
+    if (n == 1) {
+	a->val[0] = 1.0 / a->val[0];
+	return 0;
+    }
+
+    dpotrf_(&uplo, &n, a->val, &n, &info);   
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	if (info > 0) {
+	    fputs(" matrix is not positive definite\n", stderr);
+	}
+	err = E_SINGULAR;
+    } 
+
+    if (!err) {
+	dpotri_(&uplo, &n, a->val, &n, &info);
+	if (info != 0) {
+	    err = E_SINGULAR;
+	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		    " dpotri failed with info = %d\n", (int) info);
+	} else {
+	    gretl_symmetric_matrix_expand(a, uplo);
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_inverse_from_cholesky_decomp:
  * @targ: matrix to hold inverse.
  * @src: Cholesky-decomposed matrix.

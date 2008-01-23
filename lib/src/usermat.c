@@ -995,8 +995,14 @@ double user_matrix_get_log_determinant (const gretl_matrix *m, int *err)
     return real_user_matrix_get_determinant(m, 1, err);
 }
 
+enum {
+    INVERSE_REGULAR,
+    INVERSE_PD,
+    INVERSE_MOORE
+};
+
 static gretl_matrix *
-real_user_matrix_get_inverse (const gretl_matrix *m, int moore, int *err)
+real_user_matrix_get_inverse (const gretl_matrix *m, int i, int *err)
 {
     gretl_matrix *R = NULL;
 
@@ -1007,7 +1013,9 @@ real_user_matrix_get_inverse (const gretl_matrix *m, int moore, int *err)
 	if (R == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    if (moore) {
+	    if (i == INVERSE_PD) {
+		*err = gretl_invpd(R);
+	    } else if (i == INVERSE_MOORE) {
 		*err = gretl_matrix_moore_penrose(R);
 	    } else {
 		*err = gretl_invert_matrix(R);
@@ -1024,12 +1032,17 @@ real_user_matrix_get_inverse (const gretl_matrix *m, int moore, int *err)
 
 gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m, int *err)
 {
-    return real_user_matrix_get_inverse(m, 0, err);
+    return real_user_matrix_get_inverse(m, INVERSE_REGULAR, err);
+}
+
+gretl_matrix *user_matrix_get_invpd (const gretl_matrix *m, int *err)
+{
+    return real_user_matrix_get_inverse(m, INVERSE_PD, err);
 }
 
 gretl_matrix *user_matrix_moore_penrose (const gretl_matrix *m, int *err)
 {
-    return real_user_matrix_get_inverse(m, 1, err);
+    return real_user_matrix_get_inverse(m, INVERSE_MOORE, err);
 }
 
 static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)

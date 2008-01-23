@@ -125,10 +125,11 @@ enum {
 	      CDEMEAN,
 	      CHOL,
 	      INV,
+	      INVPD,
 	      GINV,
 	      DIAG,
-	      TRANSP,
-  /* 100 */   TVEC,
+  /* 100 */   TRANSP,
+              TVEC,
 	      VECH,	
 	      UNVECH,
 	      ROWS,
@@ -137,8 +138,8 @@ enum {
 	      LDET,
 	      TRACE,
 	      NORM1,
-	      INFNORM,
-  /* 110 */   RCOND,
+  /* 110 */   INFNORM,
+              RCOND,
 	      RANK, 
 	      OBSNUM,
 	      ISSERIES,
@@ -147,8 +148,8 @@ enum {
 	      ISNULL,
 	      LISTLEN,
 	      PVAL,
-	      CDF,
-  /* 120 */   INVCDF,
+  /* 120 */   CDF,
+              INVCDF,
 	      CRIT,  
 	      RANDGEN,
 	      RPOISSON,
@@ -157,8 +158,8 @@ enum {
 	      NULLSPC,
 	      MEXP,
 	      MINC,
-	      MAXC,
-  /* 130 */   MINR,
+  /* 130 */   MAXC,
+              MINR,
 	      MAXR,
 	      IMINC, 
 	      IMAXC,
@@ -167,8 +168,8 @@ enum {
 	      FFT,
 	      FFTI,
 	      UPPER,
-	      LOWER,
-  /* 140 */   MREAD,
+  /* 140 */   LOWER,
+              MREAD,
 	      FUNC_MAX,	  /* separator: end of single-arg functions */
 	      COR,
 	      COV,
@@ -177,8 +178,8 @@ enum {
 	      RNORMAL,
 	      FRACDIF,
 	      ZEROS,
-	      ONES,
-  /* 150 */   SEQ,
+  /* 150 */   ONES,
+              SEQ,
 	      MUNIF,
 	      MNORM,
 	      QFORM,
@@ -187,8 +188,8 @@ enum {
 	      EIGSYM,	 
 	      EIGGEN,
 	      FDJAC,
-	      BFGSMAX,
-  /* 160 */   LRVAR,
+  /* 160 */   BFGSMAX,
+              LRVAR,
 	      PRINCOMP,
 	      QUANTILE,
 	      CMULT,	  /* complex multiplication */
@@ -197,8 +198,8 @@ enum {
 	      MWRITE,
 	      MOVAVG,
 	      F2_MAX,	  /* separator: end of two-arg functions */
-	      MSHAPE,
-  /* 170 */   SVD,
+  /* 170 */   MSHAPE,
+              SVD,
 	      MOLS,
 	      FN_MAX,	  /* separator: end of n-arg functions */
 	      COM,	  /* comma */
@@ -207,8 +208,8 @@ enum {
 	      COL,	  /* colon */
 	      CON,	  /* named constant */
 	      DUM,	  /* dummy variable */
-	      UVAR,	  /* user variable (scalar or series) */
-  /* 180 */   UMAT,	  /* user-defined matrix */
+  /* 180 */   UVAR,	  /* user variable (scalar or series) */
+              UMAT,	  /* user-defined matrix */
 	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
@@ -217,8 +218,8 @@ enum {
 	      OBS,	  /* observation from a series */
 	      MSL,	  /* matrix plus subspec */
 	      DMSL,	  /* "dollar" matrix plus subspec */
-	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
-  /* 190 */   MSL2,	  /* unevaluated matrix subspec */
+  /* 190 */   DMSTR,	  /* "dollar" matrix plus old-style string subspec */
+              MSL2,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
@@ -227,8 +228,8 @@ enum {
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      OVAR,	  /* object variable: variable "under" an object */
 	      LOOPIDX,	  /* loop index variable */
-	      LIST,	  /* reference to named list */
-  /* 200 */   STR,	  /* string */
+  /* 200 */   LIST,	  /* reference to named list */
+              STR,	  /* string */
 	      EROOT,	  /* dummy root for (...) expression */
 	      UFUN,	  /* user-defined function */
 	      FARGS,	  /* set of n function arguments */
@@ -237,8 +238,8 @@ enum {
 	      INC,   
 	      DEC,
 	      QUERY,
-	      EOT,	    /* end of transmission */
-  /* 210 */   UNK 
+  /* 210 */   EOT,	    /* end of transmission */
+              UNK 
 };
 
 enum {
