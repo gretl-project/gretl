@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-22 11:02-0500\n"
-"PO-Revision-Date: 2008-01-11 13:31+0100\n"
+"PO-Revision-Date: 2008-01-23 11:48+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2538,9 +2538,9 @@ msgid "No description available"
 msgstr "Nessuna descrizione disponibile"
 
 #: lib/src/gretl_func.c:2399
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted function '%s'\n"
-msgstr "Funzioni ausiliarie"
+msgstr "Cancellata la funzione '%s'\n"
 
 #: lib/src/gretl_func.c:2886
 msgid "You can't change the name of a function here"
@@ -2725,9 +2725,9 @@ msgid "Wald test for joint significance of time dummies"
 msgstr "Test di Wald per la significatività congiunta delle dummy temporali"
 
 #: lib/src/gretl_model.c:2741
-#, fuzzy, c-format
+#, c-format
 msgid "max F(%d, %d) = %g at observation %s"
-msgstr "Il massimo di F(%d, %d) = %g corrisponde all'osservazione %s"
+msgstr "max F(%d, %d) = %g all'osservazione %s"
 
 #: lib/src/gretl_model.c:2877 lib/src/gretl_model.c:2880
 #: lib/src/gretl_model.c:2883
@@ -6239,7 +6239,7 @@ msgstr "%s aperto con successo\n"
 
 #: gui2/about.c:30
 msgid "\"By econometricians, for econometricians.\""
-msgstr ""
+msgstr "\"Da econometrici, per econometrici.\""
 
 #: gui2/about.c:88
 msgid "About gretl"
@@ -6253,9 +6253,8 @@ msgstr ""
 "e Stefano Fachin per gli utili suggerimenti."
 
 #: gui2/about.c:163
-#, fuzzy
 msgid "License"
-msgstr "Linee"
+msgstr "Licenza"
 
 #: gui2/boxplots.c:137 gui2/boxplots.c:148 gui2/boxplots.c:170
 #: gui2/boxplots.c:173 gui2/boxplots.c:190
@@ -7426,17 +7425,16 @@ msgid "Install"
 msgstr "Installa"
 
 #: gui2/datafiles.c:1044
-#, fuzzy
 msgid "List series"
-msgstr "serie storiche"
+msgstr "Elenca serie"
 
 #: gui2/datafiles.c:1048
 msgid "Look on server"
-msgstr ""
+msgstr "Cerca sul server"
 
 #: gui2/datafiles.c:1049
 msgid "Local machine"
-msgstr ""
+msgstr "Sistema locale"
 
 #: gui2/datafiles.c:1051
 msgid "Find"
@@ -7444,17 +7442,17 @@ msgstr "Trova"
 
 #: gui2/datafiles.c:1154 gui2/datafiles.c:1157
 msgid "local machine"
-msgstr ""
+msgstr "sistema locale"
 
 #: gui2/datafiles.c:1162
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: databases on %s"
-msgstr "gretl: database sul server"
+msgstr "gretl: database su %s"
 
 #: gui2/datafiles.c:1164
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: function packages on %s"
-msgstr "gretl: pacchetti di funzioni sul server"
+msgstr "gretl: pacchetti di funzioni su %s"
 
 #: gui2/datafiles.c:1269
 msgid "gretl: practice files"
@@ -7481,11 +7479,12 @@ msgid ""
 "No gretl function packages were found on this computer.\n"
 "Do you want to take a look on the gretl server?"
 msgstr ""
+"Non sono stati trovati pacchetti di funzioni sul computer.\n"
+"Si desidera cercare sul server di gretl?"
 
 #: gui2/datafiles.c:1494
-#, fuzzy
 msgid "No gretl function packages were found on this computer."
-msgstr "gretl: pacchetti di funzioni sul server"
+msgstr "Non sono stati trovati pacchetti di funzioni sul computer."
 
 #: gui2/datafiles.c:1573
 msgid "File"
@@ -8708,14 +8707,12 @@ msgstr ""
 "dell'interfaccia pubblica del pacchetto"
 
 #: gui2/fnsave.c:1139
-#, fuzzy
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
 msgstr ""
-"Non è disponibile alcuna funzione utente.\n"
-"\n"
-"Occorre caricare o definire qualche funzione."
+"Al momento non sono disponibili funzioni per creare un pacchetto.\n"
+"Si desidera scrivere una funzione ora?"
 
 #: gui2/gpt_control.c:222
 msgid " Click to set label position"
@@ -9175,9 +9172,8 @@ msgid "/File/C_lear data set"
 msgstr "/File/A_bbandona dataset"
 
 #: gui2/gretl.c:257
-#, fuzzy
 msgid "/File/_Working directory..."
-msgstr "/File/_Directory di lavoro"
+msgstr "/File/_Directory di lavoro..."
 
 #: gui2/gretl.c:261
 msgid "/File/_Script files"
@@ -10441,9 +10437,8 @@ msgid "Sort by..."
 msgstr "Ordina per..."
 
 #: gui2/gui_utils.c:1734
-#, fuzzy
 msgid "Configure..."
-msgstr "Configura"
+msgstr "Configura..."
 
 #: gui2/gui_utils.c:1735
 msgid "Send To..."
@@ -12849,28 +12844,24 @@ msgid "gretl working directory"
 msgstr "directory di lavoro di gretl"
 
 #: gui2/settings.c:2323
-#, fuzzy
 msgid "Working directory:"
-msgstr "/File/Directory di lavoro"
+msgstr "Directory di lavoro:"
 
 #: gui2/settings.c:2347
 msgid "On start-up, gretl should use:"
-msgstr ""
+msgstr "All'avvio, gretl deve usare:"
 
 #: gui2/settings.c:2354
-#, fuzzy
 msgid "the directory selected above"
-msgstr "La directory utente non è impostata"
+msgstr "la directory selezionata sopra"
 
 #: gui2/settings.c:2362
-#, fuzzy
 msgid "the current directory as determined via the shell"
-msgstr "Usa la directory di lavoro attuale come predefinita"
+msgstr "la directory di lavoro attuale come definita dalla shell"
 
 #: gui2/settings.c:2409
-#, fuzzy
 msgid "gretl: working directory"
-msgstr "directory di lavoro di gretl"
+msgstr "gretl: directory di lavoro"
 
 #  Menu della finestra spreadsheet
 #: gui2/ssheet.c:120
@@ -13086,17 +13077,16 @@ msgid "Back"
 msgstr "Indietro"
 
 #: gui2/textbuf.c:1401
-#, fuzzy
 msgid "gretl: configure tabs"
-msgstr "gretl: apri database"
+msgstr "gretl: configura tabulazione"
 
 #: gui2/textbuf.c:1402
 msgid "Spaces per tab"
-msgstr ""
+msgstr "Spazi per tab"
 
 #: gui2/textbuf.c:1403
 msgid "Use \"smart\" tabs"
-msgstr ""
+msgstr "Usa tabulazione automatica"
 
 #: gui2/textbuf.c:1794
 msgid "Comment line"
@@ -13123,29 +13113,24 @@ msgid "Execute line"
 msgstr "Esegui riga"
 
 #: gui2/textbuf.c:1849
-#, fuzzy
 msgid "Auto-indent region"
-msgstr "Commenta regione"
+msgstr "Indenta automaticamente regione"
 
 #: gui2/textbuf.c:1850
-#, fuzzy
 msgid "Indent region"
-msgstr "Rimuovi commento da regione"
+msgstr "Indenta regione"
 
 #: gui2/textbuf.c:1859
-#, fuzzy
 msgid "Unindent region"
-msgstr "Rimuovi commento da regione"
+msgstr "Rimuovi indentazione da regione"
 
 #: gui2/textbuf.c:1867
-#, fuzzy
 msgid "Auto-indent script"
-msgstr "Nuovo file comandi"
+msgstr "Indenta automaticamente lo script"
 
 #: gui2/textbuf.c:1874
-#, fuzzy
 msgid "Configure tabs..."
-msgstr "Configura"
+msgstr "Configura tabulazione..."
 
 #: gui2/textutil.c:64
 msgid "gretl: replace"
@@ -13188,9 +13173,8 @@ msgid "session icon view"
 msgstr "Finestra icone"
 
 #: gui2/toolbar.c:119
-#, fuzzy
 msgid "function packages"
-msgstr "Funzioni per il pacchetto"
+msgstr "pacchetti di funzioni"
 
 #: gui2/toolbar.c:120
 msgid "user's guide"
