@@ -406,16 +406,17 @@ di Kronecker.
 \texttt{ffti}      \\
 \texttt{infnorm}   &
 \texttt{inv}       &
+\texttt{invpd}     &
 \texttt{ginv}      &
 \texttt{ldet}      &
-\texttt{mexp}      &
-\texttt{nullspace} \\
+\texttt{mexp}      \\
+\texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{qform}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
-\texttt{rcond}     &
-\texttt{svd}       \\
+\texttt{rcond}     \\
+\texttt{svd}       &
 \texttt{tr}        &
 \texttt{cmult}     &
 \texttt{cdiv}
@@ -550,15 +551,16 @@ matrice sono:
 \texttt{cholesky}  & scomposizione di Cholesky & &
 \texttt{mexp}      & esponenziale matriciale \\
 \texttt{inv}       & inversa & &
-\texttt{ginv}      & inversa generalizzata \\
-\texttt{diag}      & diagonale principale & &
-\texttt{transp}    & trasposta \\
-\texttt{cdemean}   & sottrazione della media delle colonne & &
-\texttt{vec}       & elementi come vettore colonna \\
-\texttt{vech}      & elementi del triangolo inferiore come vettore colonna & &
-\texttt{unvech}    & annulla l'operazione \texttt{vech} \\
-\texttt{mlag}      & ritardo o anticipo per le matrici & &
-\texttt{nullspace} & spazio nullo destro \\
+\texttt{invpd}     & inversa di una matrice definita positiva \\
+\texttt{ginv}      & inversa generalizzata & &
+\texttt{diag}      & diagonale principale \\
+\texttt{transp}    & trasposta & &
+\texttt{cdemean}   & sottrazione della media delle colonne \\
+\texttt{vec}       & elementi come vettore colonna & &
+\texttt{vech}      & elementi del triangolo inferiore come vettore colonna \\
+\texttt{unvech}    & annulla l'operazione \texttt{vech} & &
+\texttt{mlag}      & ritardo o anticipo per le matrici \\
+\texttt{nullspace} & spazio nullo destro & &
 \texttt{princomp}  & componenti principali \\
 \texttt{maxc}      & massimi delle colonne (valori) & &
 \texttt{maxr}      & massimi delle righe (valori) \\
@@ -650,6 +652,11 @@ in questo caso invece di ritardi verranno generati anticipi delle variabili.
 La funzione \texttt{nullspace} produce $X$, lo spazio nullo destro di una
 matrice $A$ (che si assume avere rango pieno): $X$ soddisfa la condizione
 $A \cdot X = 0$.
+
+La funzione \texttt{invpd} produce l'inversa di una matrice simmetrica e
+definita positiva. Da usare con cautela: è più veloce della funzione standard
+\texttt{inv}, ma \app{gretl} non controlla se la matrice è simmetrica; occorre
+esserne sicuri.
 
 La funzione \texttt{ginv} produce l'inversa generalizzata, o pseudoinversa
 (chiamata anche inversa di Moore--Penrose) di una matrice rettangolare $A$.
@@ -1326,7 +1333,7 @@ la funzionalità OLS di gretl.
 open data4-1
 matrix X = { const, sqft }
 matrix y = { price }
-matrix b = inv(X'X) * X'y
+matrix b = invpd(X'X) * X'y
 printf "vettore dei coefficienti stimati\n"
 b
 matrix u = y - X*b
@@ -1375,50 +1382,51 @@ ols price const sqft --vcv
 \texttt{infnorm}   & 
 \texttt{int}       & 
 \texttt{inv}       & 
-\texttt{ldet}      & 
-\texttt{lngamma}   \\
+\texttt{invpd}     & 
+\texttt{ldet}      \\
+\texttt{lngamma}   & 
 \texttt{log}       & 
 \texttt{mcorr}     & 
 \texttt{mcov}      & 
 \texttt{maxc}      &   
-\texttt{maxr}      & 
-\texttt{meanc}     \\
+\texttt{maxr}      \\
+\texttt{meanc}     & 
 \texttt{meanr}     & 
 \texttt{mexp}      & 
 \texttt{minc}      &  
 \texttt{minr}      & 
-\texttt{mlag}      &
-\texttt{mnormal}   \\
+\texttt{mlag}      \\
+\texttt{mnormal}   & 
 \texttt{mols}      & 
 \texttt{mread}     & 
 \texttt{mshape}    & 
 \texttt{muniform}  &
-\texttt{mwrite}    & 
-\texttt{mxtab}     \\
+\texttt{mwrite}    \\
+\texttt{mxtab}     & 
 \texttt{nullspace} & 
 \texttt{onenorm}   &
 \texttt{ones}      & 
 \texttt{princomp}  & 
-\texttt{qform}     & 
-\texttt{qnorm}     \\ 
+\texttt{qform}     \\
+\texttt{qnorm}     &  
 \texttt{qrdecomp}  & 
 \texttt{rank}      &
 \texttt{rcond}     & 
 \texttt{rows}      & 
-\texttt{seq}       & 
-\texttt{sin}       \\ 
+\texttt{seq}       \\
+\texttt{sin}       &  
 \texttt{sort}      & 
 \texttt{sqrt}      &
 \texttt{sumc}      & 
 \texttt{sumr}      & 
-\texttt{svd}       & 
-\texttt{tan}       \\ 
+\texttt{svd}       \\
+\texttt{tan}       &  
 \texttt{tr}        & 
 \texttt{transp}    &
 \texttt{unvech}    & 
 \texttt{values}    & 
-\texttt{vec}       & 
-\texttt{vech}      \\
+\texttt{vec}       \\
+\texttt{vech}      & 
 \texttt{zeros}    
 \end{tabular}      
 \caption{Elenco alfabetico delle funzioni matriciali}

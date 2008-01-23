@@ -685,7 +685,9 @@ Quando un utente seleziona uno dei comandi visti sopra:
   sistema'' dei file di dati, la directory di sistema dei file di
   comandi, la directory utente e tutte le loro sotto-directory di
   primo livello. Valori tipici per i nomi di queste directory sono
-  mostrati nella tabella~\ref{tab-colls}.
+  mostrati nella tabella~\ref{tab-colls}. Si noti che 
+  \texttt{PERSONAL} è una parola chiave che viene espansa da Windows,
+  ad esempio in ``My Documents'' se sul sistema è impostata la lingua inglese.
 \end{itemize}
 
 \begin{table}[htbp]
@@ -695,13 +697,13 @@ Quando un utente seleziona uno dei comandi visti sopra:
         \multicolumn{1}{c}{\textit{MS Windows}} \\
         Directory di sistema per i dati & 
         {\small \verb+/usr/share/gretl/data+} &
-        {\small \verb+c:\userdata\gretl\data+} \\
+        {\small \verb+c:\Program Files\gretl\data+} \\
         Directory di sistema per i comandi & 
         {\small \verb+/usr/share/gretl/scripts+} &
-        {\small \verb+c:\userdata\gretl\scripts+} \\
+        {\small \verb+c:\Program Files\gretl\scripts+} \\
         Directory utente &
-        {\small \verb+/home/me/gretl+} &
-        {\small \verb+c:\userdata\gretl\user+}\\
+        {\small \verb+$HOME/gretl+} &
+        {\small \verb+PERSONAL\gretl+}\\
       \end{tabular}
     \end{center}
     \caption{Posizioni tipiche delle raccolte di file}
@@ -723,7 +725,7 @@ sottodirectory \verb+misc+ della directory dei comandi.
 Se si intende aggiungere una propria raccolta, occorrerà creare dei
 file di catalogo, chiamati \verb+descriptions+ per i file di dati, e
 \verb+ps_descriptions+ per i file di comandi, nelle rispettive
-directory (ad es.  \verb+/usr/share/gretl/data/mydata+ o
+directory (ad es.  \url{/usr/share/gretl/data/mydata} o
 \verb+c:\userdata\gretl\data\mydata+).
 
 La sintassi dei file di catalogo (che sono file di testo) è
