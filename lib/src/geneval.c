@@ -1861,15 +1861,6 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 	goto bailout;
     }
 
-    if (mspec->type[0] == SEL_ALL &&
-	(mspec->type[1] == SEL_ALL ||
-	 mspec->type[1] == SEL_NULL)) {
-	/* empty subspec */
-	fprintf(stderr, "build_mspec: empty subspec\n");
-	*err = E_DATA;
-	goto bailout;
-    }
-
  bailout:
     
     if (*err) {
@@ -1887,15 +1878,7 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_mspec_node(p);
 
     if (ret != NULL && starting(p)) {
-	matrix_subspec *mspec;
-
-	mspec = build_mspec(l, r, &p->err);
-	if (p->err) {
-	    free(ret);
-	    ret = NULL;
-	} else {
-	    ret->v.mspec = mspec;
-	}
+	ret->v.mspec = build_mspec(l, r, &p->err);
     }
 
     return ret;
