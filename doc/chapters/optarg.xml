@@ -107,7 +107,7 @@
     <sect1 id="guiprefs"><title>Preferences dialog</title>
 
       <para>Various things in <application>gretl</application> are
-	configurable under the <quote>File, Preferences</quote> menu.
+	configurable under the <quote>Tools, Preferences</quote> menu.
 	Separate menu items are devoted to the choice of the monospaced
 	font to be used in <application>gretl</application> screen output,
 	and, on some platforms, the font used for menus and other
@@ -164,7 +164,7 @@
 	<GUIMenuItem>Programs</GUIMenuItem> tab: You can specify the names
 	or paths to various third-party programs that may called by
 	<application>gretl</application> under certain conditions. Note
-	that the item <quote>Command to copile &tex; files</quote> can be
+	that the item <quote>Command to compile &tex; files</quote> can be
 	set to either latex or pdflatex; if latex is selected, &tex;
 	output will be previewed in DVI format; if pdflatex is selected,
 	the preview will be in PDF format.
@@ -346,7 +346,7 @@
 	  registry. A suitable set of registry entries is created when
 	  <application>gretl</application> is first installed, and the
 	  settings can be changed under <application>gretl</application>'s
-	  <quote>File, Preferences</quote> menu. In case anyone needs to
+	  <quote>Tools, Preferences</quote> menu. In case anyone needs to
 	  make manual adjustments to this information, the entries can be
 	  found (using the standard Windows program
 	  <application>regedit.exe</application>) under
