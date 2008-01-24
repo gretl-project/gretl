@@ -242,27 +242,69 @@ int remember_list (const int *list, const char *name, PRN *prn)
     return real_remember_list(list, name, 0, prn);
 }
 
+static int destroy_saved_list (saved_list *sl)
+{
+    saved_list **lstack;
+    int found = 0;
+    int i, j, err = 0;
+
+    for (i=0; i<n_lists; i++) {
+	if (list_stack[i] == NULL) {
+	    break;
+	}
+	if (list_stack[i] == sl) {
+	    free_saved_list(sl);
+	    for (j=i; j<n_lists - 1; j++) {
+		list_stack[j] = list_stack[j+1];
+	    }
+	    list_stack[n_lists - 1] = NULL;
+	    found = 1;
+	    break;
+	} 
+    }
+
+    if (!found) {
+	err = E_DATA;
+    } else {
+	n_lists--;
+	lstack = realloc(list_stack, n_lists * sizeof *list_stack);
+	if (lstack == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    list_stack = lstack;
+	} 
+    }   
+
+    return err;
+}
+
 /**
  * rename_saved_list:
  * @orig: the original name of the list.
  * @new: the new name to be given.
  *
- * Overwrites the name of a saved list.
+ * Renames a saved list from @orig to @new.  If there is
+ * already a list called @new, it is destroyed.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
 int rename_saved_list (const char *orig, const char *new)
 {
-    saved_list *sl;
+    saved_list *sl0, *sl1;
     int err = 0;
 
-    sl = get_saved_list_by_name(orig);
-    if (sl == NULL) {
+    sl0 = get_saved_list_by_name(orig);
+    if (sl0 == NULL) {
 	err = 1;
     } else {
-	*sl->name = '\0';
-	strncat(sl->name, new, LNAMELEN - 1);
+	/* is there already a list called @new? */
+	sl1 = get_saved_list_by_name(new);
+	if (sl1 != NULL) {
+	    err = destroy_saved_list(sl1);
+	}
+	*sl0->name = '\0';
+	strncat(sl0->name, new, LNAMELEN - 1);
     } 
 
     return err;

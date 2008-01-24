@@ -3206,7 +3206,7 @@ static int unlocalize_list (const char *lname, DATAINFO *pdinfo)
     int i, vi, err = 0;
 
 #if UDEBUG
-    fprintf(stderr, "unlocalize_list: %s, d = %d\n", lname, d);
+    fprintf(stderr, "unlocalize_list: '%s', function depth = %d\n", lname, d);
     printlist(list, lname);
 #endif	    
 
@@ -3236,6 +3236,9 @@ get_list_return (const char *lname, DATAINFO *pdinfo, int *err)
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
+#if UDEBUG
+	fprintf(stderr, "get_list_return: calling unlocalize_list\n");
+#endif
 	*err = unlocalize_list(lname, pdinfo);
 	if (!*err) {
 	    *err = named_list_lower_level(lname);
@@ -3267,6 +3270,11 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
     struct fnarg *arg;
     fn_param *fp;
     int i, err = 0;
+
+#if UDEBUG
+    fprintf(stderr, "function_assign_returns: retname = '%s', rtype = %d\n", 
+	    u->retname, rtype);
+#endif
 
     if (*perr == 0) {
 	/* direct return value */
@@ -3313,6 +3321,10 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 		user_matrix_set_name(u, arg->upname);
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
+#if UDEBUG
+	    fprintf(stderr, "function_assign_returns: calling unlocalize_list on '%s'\n",
+		    fp->name);
+#endif	    
 	    unlocalize_list(fp->name, pdinfo);
 	}
     }
