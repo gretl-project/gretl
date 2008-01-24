@@ -108,8 +108,10 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 	return NULL;
     }
 
-    /* GLS adjustment wanted? */
+    /* FIXME check NA status */
+
     if (opt & OPT_G) {
+	/* GLS adjustment wanted */
 	int t, v = pdinfo->v;
 
 	err = dataset_add_series(1, pZ, pdinfo);
