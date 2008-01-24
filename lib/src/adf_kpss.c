@@ -483,6 +483,11 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (flags & ADF_EG_RESIDS) {
 	    itv = engle_granger_itv(eg_opt);
+	} else if (opt & OPT_G) {
+	    /* DF-GLS */
+	    if (i == UR_NO_CONST) {
+		itv = UR_CONST; /* wrong?? */
+	    }
 	}
 
 	pv = df_pvalue_from_plugin(DFt, 

@@ -78,6 +78,7 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_Q, "quiet" },
     { ADF,      OPT_F, "difference" },
     { ADF,      OPT_E, "test-down" },
+    { ADF,      OPT_G, "gls" },
     { ARBOND,   OPT_A, "asymptotic" },
     { ARBOND,   OPT_D, "time-dummies" },
     { ARBOND,   OPT_T, "two-step" },
