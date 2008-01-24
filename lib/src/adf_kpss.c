@@ -17,7 +17,7 @@
  * 
  */
 
-#define ADF_DEBUG 0
+#define ADF_DEBUG 1
 #define KPSS_DEBUG 0
 
 #include "libgretl.h" 
@@ -28,9 +28,71 @@ enum {
     ADF_EG_RESIDS = 1 << 1
 } adf_flags;
 
+/* replace y with demeaned or detrended y */
+
+static int GLS_demean_detrend (double *y, int T, int test)
+{
+    gretl_matrix *ya = NULL;
+    gretl_matrix *Za = NULL;
+    gretl_matrix *b = NULL;
+    double c;
+    int t, zcols;
+    int err = 0;
+
+    zcols = (test == UR_TREND)? 2 : 1;
+
+    ya = gretl_column_vector_alloc(T);
+    Za = gretl_matrix_alloc(T, zcols);
+    b = gretl_column_vector_alloc(zcols);
+
+    if (ya == NULL || Za == NULL || b == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    c = (test == UR_CONST)? (1.0 - 7.0/T) : (1.0 - 13.5/T);
+
+    ya->val[0] = y[0];
+    for (t=1; t<T; t++) {
+	ya->val[t] = y[t] - y[t-1] * c;
+    }
+
+    gretl_matrix_set(Za, 0, 0, 1);
+    if (zcols == 2) {
+	gretl_matrix_set(Za, t, 1, 1);
+    }
+
+    for (t=1; t<T; t++) {
+	gretl_matrix_set(Za, t, 0, 1 - c);
+	if (zcols == 2) {
+	    gretl_matrix_set(Za, t, 1, t+1 - t*c);
+	}
+    }
+
+    err = gretl_matrix_ols(ya, Za, b, NULL, NULL, NULL);
+
+    if (!err) {
+	for (t=0; t<T; t++) {
+	    y[t] -= b->val[0];
+	    if (zcols == 2) {
+		y[t] -= b->val[1] * (t+1);
+	    }
+	}
+    }    
+
+ bailout:
+
+    gretl_matrix_free(ya);
+    gretl_matrix_free(Za);
+    gretl_matrix_free(b);
+    
+    return err;
+}
+
 static int *
 adf_prepare_vars (int order, int varno, int nseas, int *d0,
-		  double ***pZ, DATAINFO *pdinfo)
+		  double ***pZ, DATAINFO *pdinfo,
+		  gretlopt opt)
 {
     int nl = 5 + nseas;
     int i, j, orig_t1 = pdinfo->t1;
@@ -44,6 +106,25 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
     list = gretl_list_new(nl + order);
     if (list == NULL) {
 	return NULL;
+    }
+
+    /* GLS adjustment wanted? */
+    if (opt & OPT_G) {
+	int t, v = pdinfo->v;
+
+	err = dataset_add_series(1, pZ, pdinfo);
+	if (!err) {
+	    for (t=0; t<=pdinfo->t2; t++) {
+		(*pZ)[v][t] = (*pZ)[varno][t];
+	    }
+	    err = GLS_demean_detrend((*pZ)[v], pdinfo->t2 + 1, UR_CONST); /* FIXME */
+	}
+	if (err) {
+	    free(list);
+	    return NULL;
+	}
+	strcpy(pdinfo->varname[v], "yd");
+	varno = v;
     }
 
     /* temporararily reset sample */
@@ -104,7 +185,8 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 static void 
 print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL *dfmod,
 		   int dfnum, const char *vname, int *blurb_done,
-		   unsigned char flags, int i, int niv, int nseas, PRN *prn)
+		   unsigned char flags, int i, int niv, int nseas, 
+		   gretlopt opt, PRN *prn)
 {
     const char *models[] = {
 	"(1 - L)y = (a-1)*y(-1) + e",
@@ -131,6 +213,10 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
     char pvstr[48];
 
     if (prn == NULL) return;
+
+    if (!(opt & OPT_G)) {
+	i--;
+    }
 
     if (na(pv)) {
 	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
@@ -167,6 +253,9 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
 
     if (!(flags & ADF_EG_RESIDS)) {
 	pprintf(prn, "   %s ", _(teststrs[i]));
+	if (opt & OPT_G) {
+	    pputs(prn, "(GLS) ");
+	}
 	if (nseas > 0 && i > 0) {
 	    pputs(prn, _("plus seasonal dummies"));
 	}
@@ -337,7 +426,6 @@ static int real_adf_test (int varno, int order, int niv,
 			  PRN *prn)
 {
     MODEL dfmod;
-
     gretlopt eg_opt = OPT_NONE;
     int orig_nvars = pdinfo->v;
     int blurb_done = 0;
@@ -392,7 +480,7 @@ static int real_adf_test (int varno, int order, int niv,
 	nseas = pdinfo->pd - 1;
     }
 
-    list = adf_prepare_vars(order, varno, nseas, &d0, pZ, pdinfo);
+    list = adf_prepare_vars(order, varno, nseas, &d0, pZ, pdinfo, opt);
     if (list == NULL) {
 	return E_ALLOC;
     }
@@ -425,6 +513,14 @@ static int real_adf_test (int varno, int order, int niv,
 	    /* re-establish max order before testing down */
 	    order = order_max;
 	    copy_list_values(list, biglist);
+	}
+
+	if (opt & OPT_G) {
+	    fprintf(stderr, "DF-GLS, skipping const, trend\n");
+	    list[0] = 2 + order;
+	    dfnum--;
+	    itv--;
+	    goto skipdet;
 	}
 
 	list[0] = 1 + order + i;
@@ -461,6 +557,8 @@ static int real_adf_test (int varno, int order, int niv,
 	    }	    
 	} 
 
+    skipdet:
+
 	if (auto_order) {
 	    order = auto_adjust_order(list, order_max, pZ, pdinfo, prn);
 	    if (order < 0) {
@@ -469,6 +567,8 @@ static int real_adf_test (int varno, int order, int niv,
 		goto bailout;
 	    }
 	}
+
+	printlist(list, "final ADF regression list");
 
 	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 	if (dfmod.errcode) {
@@ -483,12 +583,7 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (flags & ADF_EG_RESIDS) {
 	    itv = engle_granger_itv(eg_opt);
-	} else if (opt & OPT_G) {
-	    /* DF-GLS */
-	    if (i == UR_NO_CONST) {
-		itv = UR_CONST; /* wrong?? */
-	    }
-	}
+	} 
 
 	pv = df_pvalue_from_plugin(DFt, 
 				   /* use asymptotic p-value for augmented case */
@@ -497,8 +592,8 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (!(opt & OPT_Q)) {
 	    print_adf_results(order, auto_order, DFt, pv, &dfmod, dfnum, 
-			      pdinfo->varname[varno], &blurb_done, flags, 
-			      itv - 1, niv, nseas, prn);
+			      pdinfo->varname[varno], &blurb_done, flags,
+			      itv, niv, nseas, opt, prn);
 	}
 
 	if (opt & OPT_V) {

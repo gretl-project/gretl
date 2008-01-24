@@ -1564,10 +1564,10 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 
 static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 {
-    gretl_matrix *m = n->v.m;
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+	gretl_matrix *m = n->v.m;
 	int a, b, c;
 
 	if (gretl_is_null_matrix(m) && !nullmat_ok(f)) {
@@ -1667,7 +1667,6 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 
 static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
 {
-    const char *s = n->v.str;
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
@@ -1675,7 +1674,7 @@ static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
 
 	switch (f) {
 	case MREAD:
-	    ret->v.m = gretl_matrix_read_from_text(s, &p->err);
+	    ret->v.m = gretl_matrix_read_from_text(n->v.str, &p->err);
 	    break;
 	default:
 	    break;
@@ -1692,10 +1691,10 @@ static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
 static NODE *
 matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 {
-    const gretl_matrix *m = n->v.m;
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+	const gretl_matrix *m = n->v.m;
 	const char *rname;
 
 	if (gretl_is_null_matrix(m)) {
@@ -2196,10 +2195,11 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    const double *x = l->v.xvec;
-    const double *y = r->v.xvec;
 
     if (ret != NULL && starting(p)) {
+	const double *x = l->v.xvec;
+	const double *y = r->v.xvec;
+
 	switch (f) {
 	case COR:
 	    ret->v.xval = gretl_corr(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
@@ -2241,9 +2241,10 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 static NODE *object_status (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    const char *s = n->v.str;
 
     if (ret != NULL && starting(p)) {
+	const char *s = n->v.str;
+
 	ret->v.xval = NADBL;
 	if (f == ISSERIES) {
 	    int v = varindex(p->dinfo, s);
@@ -2736,10 +2737,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *apply_matrix_func (NODE *n, int f, parser *p)
 {
-    const gretl_matrix *m = n->v.m;
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+	const gretl_matrix *m = n->v.m;
 	int i, n = m->rows * m->cols;
 	double x;
 
@@ -3786,17 +3787,21 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
-    if (dvar_scalar(t->v.idnum)) {
-	ret = aux_scalar_node(p);
-	if (ret != NULL && starting(p)) {
-	    ret->v.xval = dvar_get_value(t->v.idnum, p);
+    if (starting(p)) {
+	if (dvar_scalar(t->v.idnum)) {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL && starting(p)) {
+		ret->v.xval = dvar_get_value(t->v.idnum, p);
+	    }
+	} else if (dvar_series(t->v.idnum)) {
+	    ret = aux_vec_node(p, 0);
+	    if (ret != NULL && starting(p)) {
+		ret->v.xvec = dvar_get_series(t->v.idnum, p);
+	    }
 	}
-    } else if (dvar_series(t->v.idnum)) {
-	ret = aux_vec_node(p, 0);
-	if (ret != NULL && starting(p)) {
-	    ret->v.xvec = dvar_get_series(t->v.idnum, p);
-	}
-    } 
+    } else {
+	ret = aux_any_node(p);
+    }
 
     return ret;
 }
@@ -3858,42 +3863,46 @@ static GretlType object_var_type (int idx, const char *oname)
 
 static NODE *object_var_node (NODE *t, parser *p)
 {
-    NODE *r = (t->t == MVAR || t->t == DMSL)? t : t->v.b2.r;
-    const char *oname = (t->t == MVAR || t->t == DMSL)?
-	NULL : t->v.b2.l->v.str;
-    int mslice = r->t == DMSL;
-    GretlType vtype;
     NODE *ret = NULL;
 
-    vtype = object_var_type(r->v.idnum, oname);
+    if (starting(p)) {
+	NODE *r = (t->t == MVAR || t->t == DMSL)? t : t->v.b2.r;
+	const char *oname = (t->t == MVAR || t->t == DMSL)?
+	    NULL : t->v.b2.l->v.str;
+	int mslice = r->t == DMSL;
+	GretlType vtype;
+
+	vtype = object_var_type(r->v.idnum, oname);
 
 #if EDEBUG
-    fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n", 
-	    t->t, getsymb(t->t, NULL), r->t, getsymb(r->t, NULL));
-    fprintf(stderr, "vtype = %d, mslice = %d\n", vtype, mslice);
+	fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n", 
+		t->t, getsymb(t->t, NULL), r->t, getsymb(r->t, NULL));
+	fprintf(stderr, "vtype = %d, mslice = %d\n", vtype, mslice);
 #endif
 
-    if (vtype == GRETL_TYPE_DOUBLE) {
-	ret = aux_scalar_node(p);
-    } else if (vtype == GRETL_TYPE_SERIES) {
-	ret = aux_vec_node(p, 0);
-    } else {
-	ret = aux_matrix_node(p);
-    }
-
-    if (starting(p)) {
 	if (vtype == GRETL_TYPE_DOUBLE) {
-	    ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, &p->err);
+	    ret = aux_scalar_node(p);
 	} else if (vtype == GRETL_TYPE_SERIES) {
-	    ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
-						  &p->err);
-	} else if (mslice) {
-	    /* the right-hand subnode needs more work */
-	    ret->v.m = object_var_get_submatrix(oname, r, p);
-	} else if (vtype == GRETL_TYPE_MATRIX) {
-	    ret->v.m = saved_object_get_matrix(oname, r->v.idnum, &p->err);
-	} 
-    } 
+	    ret = aux_vec_node(p, 0);
+	} else {
+	    ret = aux_matrix_node(p);
+	}
+	if (ret != NULL) {
+	    if (vtype == GRETL_TYPE_DOUBLE) {
+		ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, &p->err);
+	    } else if (vtype == GRETL_TYPE_SERIES) {
+		ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
+						      &p->err);
+	    } else if (mslice) {
+		/* the right-hand subnode needs more work */
+		ret->v.m = object_var_get_submatrix(oname, r, p);
+	    } else if (vtype == GRETL_TYPE_MATRIX) {
+		ret->v.m = saved_object_get_matrix(oname, r->v.idnum, &p->err);
+	    } 
+	}
+    } else {
+	ret = aux_any_node(p);
+    }
     
     return ret;
 }
