@@ -267,12 +267,17 @@ static int destroy_saved_list (saved_list *sl)
 	err = E_DATA;
     } else {
 	n_lists--;
-	lstack = realloc(list_stack, n_lists * sizeof *list_stack);
-	if (lstack == NULL) {
-	    err = E_ALLOC;
+	if (n_lists == 0) {
+	    free(list_stack);
+	    list_stack = NULL;
 	} else {
-	    list_stack = lstack;
-	} 
+	    lstack = realloc(list_stack, n_lists * sizeof *list_stack);
+	    if (lstack == NULL) {
+		err = E_ALLOC;
+	    } else {
+		list_stack = lstack;
+	    } 
+	}
     }   
 
     return err;
