@@ -17,7 +17,7 @@
  * 
  */
 
-#define ADF_DEBUG 1
+#define ADF_DEBUG 0
 #define KPSS_DEBUG 0
 
 #include "libgretl.h" 
@@ -59,7 +59,7 @@ static int GLS_demean_detrend (double *y, int T, int test)
 
     gretl_matrix_set(Za, 0, 0, 1);
     if (zcols == 2) {
-	gretl_matrix_set(Za, t, 1, 1);
+	gretl_matrix_set(Za, 0, 1, 1);
     }
 
     for (t=1; t<T; t++) {
@@ -108,10 +108,9 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 	return NULL;
     }
 
-    /* FIXME check NA status */
-
     if (opt & OPT_G) {
 	/* GLS adjustment wanted */
+	int test = (opt & OPT_T)? UR_TREND : UR_CONST;
 	int t, v = pdinfo->v;
 
 	err = dataset_add_series(1, pZ, pdinfo);
@@ -119,7 +118,7 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 	    for (t=0; t<=pdinfo->t2; t++) {
 		(*pZ)[v][t] = (*pZ)[varno][t];
 	    }
-	    err = GLS_demean_detrend((*pZ)[v], pdinfo->t2 + 1, UR_CONST); /* FIXME */
+	    err = GLS_demean_detrend((*pZ)[v], pdinfo->t2 + 1, test);
 	}
 	if (err) {
 	    free(list);
@@ -184,6 +183,27 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
     return list;
 }
 
+static double *df_gls_ct_cval (int T)
+{
+    static double df_gls_ct_cvals[4][3] = {
+	{ -3.46, -3.58, -3.77 }, 
+	{ -3.03, -3.19, -3.48 },
+	{ -2.89, -2.89, -2.93 }, 
+	{ -2.57, -2.64, -2.74 }
+    };
+    int r = 3;
+
+    if (T < 50){
+	r = 0;
+    } else if (T < 100){
+	r = 1;
+    } else if (T <= 200){
+	r = 2;
+    } 
+
+    return df_gls_ct_cvals[r];
+}
+
 static void 
 print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL *dfmod,
 		   int dfnum, const char *vname, int *blurb_done,
@@ -211,14 +231,13 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
     const char *urcstrs[] = {
 	"nc", "c", "ct", "ctt"
     };
-
     char pvstr[48];
+    char taustr[16];
 
     if (prn == NULL) return;
 
-    if (!(opt & OPT_G)) {
-	i--;
-    }
+    /* convert test-type to 0-base */
+    i--;
 
     if (na(pv)) {
 	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
@@ -276,12 +295,27 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
 	}
     }
 
+    if (opt & OPT_G) {
+	strcpy(taustr, "tau");
+    } else {
+	sprintf(taustr, "tau_%s(%d)", urcstrs[i], niv);
+    }
+
     pprintf(prn, "   %s: %g\n"
-	    "   %s: tau_%s(%d) = %g\n"
-	    "   %s\n",
+	    "   %s: %s = %g\n",
 	    _("estimated value of (a - 1)"), dfmod->coeff[dfnum],
-	    _("test statistic"), urcstrs[i], niv, DFt,
-	    pvstr);	
+	    _("test statistic"), taustr, DFt);
+
+    if ((opt & OPT_G) && i+1 == UR_TREND) {
+	const double *c = df_gls_ct_cval(dfmod->nobs);
+
+	pprintf(prn, "\n   %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
+	pprintf(prn, "%g%%     %g%%      %g%%\n", 10.0, 5.0, 1.0);
+	pprintf(prn, "   %s: %.2f   %.2f   %.2f\n", 
+		_("Critical values"), c[0], c[1], c[2]);
+    } else {
+	pprintf(prn, "   %s\n", pvstr);
+    } 
 }
 
 static int auto_adjust_order (int *list, int order_max,
@@ -341,7 +375,8 @@ static void copy_list_values (int *targ, const int *src)
     }
 }
 
-static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
+static double df_pvalue_from_plugin (double tau, int n, int niv, int itv,
+				     gretlopt opt)
 {
     char datapath[FILENAME_MAX];
     void *handle;
@@ -363,6 +398,10 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
 #ifdef WIN32
     append_dir(datapath, "plugins");
 #endif
+
+    if ((opt & OPT_G) && itv == UR_CONST) {
+	itv = UR_NO_CONST;
+    }
 
     pval = (*mackinnon_pvalue)(tau, n, niv, itv, datapath);
 
@@ -482,6 +521,15 @@ static int real_adf_test (int varno, int order, int niv,
 	nseas = pdinfo->pd - 1;
     }
 
+    if (test_opt_not_set(opt)) {
+	/* default model(s) */
+	if (opt & OPT_G) {
+	    opt |= OPT_C;
+	} else {
+	    opt |= (OPT_C | OPT_T | OPT_R);
+	}
+    }
+
     list = adf_prepare_vars(order, varno, nseas, &d0, pZ, pdinfo, opt);
     if (list == NULL) {
 	return E_ALLOC;
@@ -498,11 +546,6 @@ static int real_adf_test (int varno, int order, int niv,
 
     gretl_model_init(&dfmod);
 
-    if (test_opt_not_set(opt)) {
-	/* do the full default set of models */
-	opt |= (OPT_C | OPT_T | OPT_R);
-    }
-
     for (i=UR_NO_CONST; i<UR_MAX; i++) {
 	int j, k, dfnum = (i > UR_NO_CONST);
 	int itv = i;
@@ -518,10 +561,9 @@ static int real_adf_test (int varno, int order, int niv,
 	}
 
 	if (opt & OPT_G) {
-	    fprintf(stderr, "DF-GLS, skipping const, trend\n");
+	    /* DF-GLS: skip const, trend */
 	    list[0] = 2 + order;
 	    dfnum--;
-	    itv--;
 	    goto skipdet;
 	}
 
@@ -570,7 +612,9 @@ static int real_adf_test (int varno, int order, int niv,
 	    }
 	}
 
+#if ADF_DEBUG
 	printlist(list, "final ADF regression list");
+#endif
 
 	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 	if (dfmod.errcode) {
@@ -587,10 +631,15 @@ static int real_adf_test (int varno, int order, int niv,
 	    itv = engle_granger_itv(eg_opt);
 	} 
 
-	pv = df_pvalue_from_plugin(DFt, 
-				   /* use asymptotic p-value for augmented case */
-				   (order > 0)? 0 : dfmod.nobs, 
-				   niv, itv);
+	if ((opt & OPT_G) && itv == UR_TREND) {
+	    /* DF-GLS with trend: MacKinnon p-values won't work */
+	    pv = NADBL;
+	} else {
+	    pv = df_pvalue_from_plugin(DFt, 
+				       /* use asymp. p-value in augmented case */
+				       (order > 0)? 0 : dfmod.nobs, 
+				       niv, itv, opt);
+	}
 
 	if (!(opt & OPT_Q)) {
 	    print_adf_results(order, auto_order, DFt, pv, &dfmod, dfnum, 
@@ -650,11 +699,36 @@ static int real_adf_test (int varno, int order, int niv,
 int adf_test (int order, const int *list, double ***pZ,
 	      DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    int i, err = 0;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int v, vlist[2] = {1,0};
+    int i, err;
+
+    /* GLS irrelevant if no const or trend */
+    if ((opt & OPT_G) && (opt & OPT_N)) {
+	opt &= ~OPT_G;
+    }
+
+    /* GLS option won't work with quadratic trend or seasonals */
+    err = incompatible_options(opt, OPT_R | OPT_G);
+    if (!err) {
+	err = incompatible_options(opt, OPT_D | OPT_G);
+    }
+    if (!err && (opt & OPT_G)) {
+	/* under GLS, have to choose between const and trend */
+	err = incompatible_options(opt, OPT_C | OPT_T);
+    }
 
     for (i=1; i<=list[0] && !err; i++) {
-	err = real_adf_test(list[i], order, 1, pZ, pdinfo, opt, 
-			    0, prn);
+	v = list[i];
+	vlist[1] = v;
+	err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
+	if (!err) {
+	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
+				0, prn);
+	}
+	pdinfo->t1 = t1;
+	pdinfo->t2 = t2;
     }
 
     return err;
