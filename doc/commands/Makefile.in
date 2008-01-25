@@ -44,9 +44,6 @@ HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/gretlhlp.xsl \
 	$(CMDSDIR)/equations.xsl \
 
-GENXSL = $(CMDSDIR)/genrhlp.xsl \
-	$(CMDSDIR)/genrtxt.xsl
-
 XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
   $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_it.xml
 
@@ -128,7 +125,7 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
 	touch $@
 
-$(GENSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(GENXSL) $(XMLSTRS) 
+$(GENSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) 
 	./xsltrans --genr --markup $(CMDSDIR)/genr_funcs.xml && \
 	./reflow < genrcli.txt > $(SHAREDIR)/genrcli.hlp
 	if test -f genrgui.txt ; then \

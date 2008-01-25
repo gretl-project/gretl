@@ -34,9 +34,9 @@
   </function>
 
   <function name="$coeff" output="scalar" altout="matrix">
-    <arguments>
-      <argument optional="true" type="coeffname">s</argument>
-    </arguments>
+    <fnargs>
+      <fnarg optional="true" type="coeffname">s</fnarg>
+    </fnargs>
     <description>
       <para>
 	The <lit>$coeff</lit> accessor can be used in two ways: with no
@@ -136,7 +136,7 @@
     </description>
   </function>
 
-<function name="$jvbeta" output="matrix">
+  <function name="$jvbeta" output="matrix">
     <description>
       <para>
 	Must follow the estimation of a VECM, and returns the estimated
@@ -250,9 +250,9 @@
   </function>
 
   <function name="$rho" output="scalar">
-    <arguments>
-      <argument optional="true" type="scalar">n</argument>
-    </arguments>
+    <fnargs>
+      <fnarg optional="true" type="scalar">n</fnarg>
+    </fnargs>
     <description>
       <para>
 	Without arguments, returns the first-order autoregressive
@@ -283,9 +283,9 @@
   </function>
 
   <function name="$stderr" output="scalar" altout="matrix">
-    <arguments>
-      <argument optional="true" type="coeffname">s</argument>
-    </arguments>
+    <fnargs>
+      <fnarg optional="true" type="coeffname">s</fnarg>
+    </fnargs>
     <description>
       <para>
 	The <lit>$stderr</lit> accessor can be used in two ways: with no
@@ -377,10 +377,10 @@
   </function>
 
   <function name="$vcv" output="scalar" altout="matrix">
-    <arguments>
-      <argument optional="true" type="coeffname">s1</argument>
-      <argument optional="true" type="coeffname">s2</argument>
-    </arguments>
+    <fnargs>
+      <fnarg optional="true" type="coeffname">s1</fnarg>
+      <fnarg optional="true" type="coeffname">s2</fnarg>
+    </fnargs>
     <description>
       <para>
 	The <lit>$stderr</lit> accessor can be used in two ways: with no
@@ -408,9 +408,9 @@
   </function>
 
   <function name="abs" output="asinput">
-    <arguments>
-      <argument type="anyfloat">x</argument>
-    </arguments>
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
     <description>
       <para>
 	Absolute value of <mathvar>x</mathvar>.
@@ -419,9 +419,9 @@
   </function>
 
   <function name="atan" output="asinput">
-    <arguments>
-      <argument type="anyfloat">x</argument>
-    </arguments>
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
     <description>
       <para>
 	Arctangent.
@@ -430,9 +430,9 @@
   </function>
 
   <function name="bkfilt" output="series">
-    <arguments>
-      <argument type="series">y</argument>
-    </arguments>
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
     <description>
       <para>
 	Extracts the cyclical component of series <mathvar>y</mathvar> via
@@ -443,9 +443,9 @@
   </function>
 
   <function name="cdemean" output="matrix">
-    <arguments>
-      <argument type="matrix">X</argument>
-    </arguments>
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
     <description>
       <para>
 	Centers the columns of matrix <mathvar>X</mathvar> around their

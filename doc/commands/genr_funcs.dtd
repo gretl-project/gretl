@@ -23,7 +23,7 @@
 <!-- The description is the only element that is absolutely
      required of a function -->
 
-<!ELEMENT function (arguments?, description+)>
+<!ELEMENT function (fnargs?, description+)>
 
 <!ATTLIST function
    name    CDATA #REQUIRED
@@ -31,17 +31,17 @@
    altout  (none | scalar | series | matrix | list) "none"
 >
 
-<!ELEMENT usage (altforms?, arguments?, options?, examples?)>
+<!ELEMENT usage (altforms?, fnargs?, options?, examples?)>
 
-<!ELEMENT arguments    (argument)+>
+<!ELEMENT fnargs       (fnarg)+>
 <!ELEMENT examples     (example*, demos?)>
 <!ELEMENT demos        (demo)+>
 <!ELEMENT altforms     (altform)+>
 <!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
-<!ELEMENT argument (#PCDATA)>
-<!ATTLIST argument 
+<!ELEMENT fnarg (#PCDATA)>
+<!ATTLIST fnarg 
     type      (scalar | series | matrix | anyfloat | list | coeffname) "series"
     optional  (true | false) "false"
     alternate (true | false) "false"

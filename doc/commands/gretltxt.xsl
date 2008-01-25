@@ -242,6 +242,63 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="funclist">
+  <xsl:apply-templates/> 
+</xsl:template>
+
+<xsl:template match="function">
+  <xsl:if test="position() > 1">
+    <xsl:call-template name="nl"/>
+  </xsl:if>
+  <xsl:text># </xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>&#10;</xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'output'"/>
+  </xsl:call-template>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="@output"/>
+  </xsl:call-template>
+  <xsl:text>&#10;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:call-template name="dnl"/>
+</xsl:template>
+
+<xsl:template match="fnargs">
+  <xsl:choose>
+    <xsl:when test="count(fnarg) > 1">
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'args'"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'arg'"/>
+      </xsl:call-template>
+    </xsl:otherwise> 
+  </xsl:choose>
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="fnarg">
+  <xsl:if test="position() > 1">
+    <xsl:text>            </xsl:text>
+  </xsl:if>  
+  <xsl:apply-templates/>
+  <xsl:text> (</xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="@type"/>
+  </xsl:call-template>
+  <xsl:if test="(@optional)">
+    <xsl:text>, </xsl:text>
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'optional'"/>
+    </xsl:call-template>
+  </xsl:if> 
+  <xsl:text>)</xsl:text>
+  <xsl:text>&#10;</xsl:text>
+</xsl:template>
+
 <xsl:template match="cmd">
   <xsl:text>"</xsl:text>
   <xsl:apply-templates/>

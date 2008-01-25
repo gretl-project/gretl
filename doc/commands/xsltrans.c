@@ -133,7 +133,7 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 
     /* genr functions help (experimental) */
     if (opt & OPT_GENR) {
-	full_fname("genrtxt.xsl", docdir, styname);
+	full_fname("gretltxt.xsl", docdir, styname);
 	style = xsltParseStylesheetFile((const xmlChar *) styname);
 	if (style == NULL) {
 	    err = 1;
@@ -143,7 +143,7 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 	    xsltFreeStylesheet(style);
 	}
 
-	full_fname("genrhlp.xsl", docdir, styname);
+	full_fname("gretlhlp.xsl", docdir, styname);
 	style = xsltParseStylesheetFile((const xmlChar *) styname);
 	if (style == NULL) {
 	    err = 1;
