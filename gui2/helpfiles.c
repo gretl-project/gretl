@@ -123,6 +123,7 @@ static struct gui_help_item gui_help_items[] = {
     { TRANSPOS,       "transpos" },
     { DATASORT,       "datasort" },
     { WORKDIR,        "working-dir" },
+    { DFGLS,          "dfgls" },
     { -1,          NULL },
 };
 

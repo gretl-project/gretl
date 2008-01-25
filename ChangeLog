@@ -23,6 +23,8 @@ version 1.7.2, in progress
 - Allow drag of database from databases-on-server window
   to local native databases window; also function packages
   from server to local function package window
+- Add basic support for the DF-GLS test via a new --gls 
+  option to the adf command
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

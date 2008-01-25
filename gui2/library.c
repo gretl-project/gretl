@@ -892,6 +892,11 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	N_("use level of variable"),
 	N_("use first difference of variable")
     };
+    const char *dfgls_opts[] = {
+	N_("include a trend"),
+	N_("use level of variable"),
+	N_("use first difference of variable")
+    };
     const char *kpss_opts[] = {
 	N_("include a trend"),
 	N_("show regression results"),
@@ -900,38 +905,49 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
     };
 
     const char *adf_title = N_("gretl: ADF test");
+    const char *dfgls_title = N_("gretl: ADF-GLS test");
     const char *kpss_title = N_("gretl: KPSS test");
     const char *adf_spintext = N_("Lag order for ADF test:");
     const char *kpss_spintext = N_("Lag order for KPSS test:");
     const char *title, *spintext, **opts;
 
     /* save the user's settings, per session */
-    static int adf_active[] = { 0, 1, 1, 1, 0, 0, 0 };
-    static int kpss_active[] = { 1, 0 };
+    static int adf_active[] = { 0, 1, 1, 0, 0, 0, 0 };
+    static int dfgls_active[] = { 0 };
+    static int kpss_active[] = { 0, 0 };
     static int order = 1;
 
     int difference = 0;
     int v = mdata_active_var();
-    int okT, omax, err;
+    int *active = NULL;
+    int okT, omax, nchecks;
+    int err;
 
     if (order < 0) {
 	order = -order;
     }
 
+    okT = ok_obs_in_series(v);
+    omax = okT / 2;
+
     if (action == ADF) {
 	title = adf_title;
 	spintext = adf_spintext;
 	opts = adf_opts;
-
-	okT = ok_obs_in_series(v);
-	omax = okT / 2;
+	nchecks = 7;
+	active = adf_active;
+    } else if (action == DFGLS) {
+	title = dfgls_title;
+	spintext = adf_spintext;
+	opts = dfgls_opts;
+	nchecks = 1;
+	active = dfgls_active;
     } else {
 	title = kpss_title;
 	spintext = kpss_spintext;
 	opts = kpss_opts;
-
-	okT = ok_obs_in_series(v);	
-	omax = okT / 2;
+	nchecks = 2;
+	active = kpss_active;
 	order = 4.0 * pow(okT / 100.0, 0.25);
     }
 
@@ -943,9 +959,7 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	adf_active[4] = -1;
     }
 
-    err = checks_dialog(_(title), NULL, opts,
-			(action == ADF)? 7 : 2,
-			(action == ADF)? adf_active : kpss_active,
+    err = checks_dialog(_(title), NULL, opts, nchecks, active,
 			2, &difference,
 			&order, _(spintext),
 			0, omax, action);
@@ -954,28 +968,31 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
     }
 
     if (action == ADF) {
-	if (adf_active[0] == 0 &&
-	    adf_active[1] == 0 &&
-	    adf_active[2] == 0 &&
-	    adf_active[3] == 0) {
+	if (active[0] == 0 &&
+	    active[1] == 0 &&
+	    active[2] == 0 &&
+	    active[3] == 0) {
 	    return;
 	}
     }
 
-    gretl_command_sprintf("%s %d %s", (action == ADF)? "adf" : "kpss", order, 
+    gretl_command_sprintf("%s %d %s", (action == KPSS)? "kpss" : "adf", order, 
 			  selected_varname());
 
     if (action == ADF) {
-	if (adf_active[0]) gretl_command_strcat(" --nc");
-	if (adf_active[1]) gretl_command_strcat(" --c");
-	if (adf_active[2]) gretl_command_strcat(" --ct");
-	if (adf_active[3]) gretl_command_strcat(" --ctt");
-	if (adf_active[4] > 0) gretl_command_strcat(" --seasonals");
-	if (adf_active[5]) gretl_command_strcat(" --verbose");
-	if (adf_active[6]) gretl_command_strcat(" --test-down");
+	if (active[0]) gretl_command_strcat(" --nc");
+	if (active[1]) gretl_command_strcat(" --c");
+	if (active[2]) gretl_command_strcat(" --ct");
+	if (active[3]) gretl_command_strcat(" --ctt");
+	if (active[4] > 0) gretl_command_strcat(" --seasonals");
+	if (active[5]) gretl_command_strcat(" --verbose");
+	if (active[6]) gretl_command_strcat(" --test-down");
+    } else if (action == DFGLS) {
+	if (active[0]) gretl_command_strcat(" --ct --gls");
+	else gretl_command_strcat(" --c --gls");
     } else {
-	if (kpss_active[0]) gretl_command_strcat(" --trend");
-	if (kpss_active[1]) gretl_command_strcat(" --verbose");
+	if (active[0]) gretl_command_strcat(" --trend");
+	if (active[1]) gretl_command_strcat(" --verbose");
     } 
 
     if (difference) {
@@ -986,7 +1003,7 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	return;
     }
 
-    if (action == ADF) {
+    if (action == ADF || action == DFGLS) {
 	err = adf_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
     } else {
 	err = kpss_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);

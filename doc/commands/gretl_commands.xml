@@ -116,6 +116,10 @@
 	  <effect>include seasonal dummy variables</effect>
 	</option>
 	<option>
+	  <flag>--gls</flag>
+	  <effect>de-mean or de-trend using GLS</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>print regression results</effect>
 	</option>
@@ -162,11 +166,11 @@
 	the transformed variable.)
       </para>
 
-      <para>By default, three variants of the test are shown: one
-	based on a regression containing a constant, one using a
-	constant and linear trend, and one using a constant and a
-	quadratic trend.  You can control the variants that are
-	presented by specifying one or more of the option flags.
+      <para context="cli">
+	By default, two variants of the test are shown: one based on a
+	regression containing a constant and one using a constant and
+	linear trend.  You can control the variants that are presented by
+	specifying one or more of the option flags.
       </para>
 
       <para>In all cases the dependent variable is the first
@@ -219,9 +223,26 @@
 	has an asymptotic two-sided <emphasis>p</emphasis>-value,
 	against the normal distribution, of 0.10 or less.</para> 
 
+      <para context="cli">
+	The <lit>--gls</lit> option can be used in conjunction with one
+	or other of the flags <lit>--c</lit> and <lit>--ct</lit> (the model
+	with constant, or model with constant and trend).  The effect of
+	this option is that the de-meaning or de-trending of the variable
+	to be tested is done using the GLS procedure suggested by Elliott,
+	Rothenberg and Stock (1996), which gives a test of greater
+	power than the standard Dickey&ndash;Fuller approach.  This option
+	is not compatible with <lit>--nc</lit>, <lit>--ctt</lit> or
+	<lit>--seasonals</lit>.
+      </para>
+
       <para><emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
 	tests are based on MacKinnon (1996).  The relevant code is
-	included by kind permission of the author.</para>
+	included by kind permission of the author.  In the case of the
+	test with linear trend using GLS these
+	<emphasis>P</emphasis>-values are not applicable; critical values
+	from Table 1 in Elliott, Rothenberg and Stock (1996) are shown
+	instead.
+      </para>
 
     </description>
 
@@ -1662,6 +1683,32 @@
     </description>
 
   </command>  
+
+  <command name="dfgls" section="Tests" context="gui"
+    label="The ADF-GLS test">
+
+    <description>
+      <para>
+	The ADF-GLS test is a variant of the Dickey&ndash;Fuller
+	test for a unit root, for the case where the variable
+	to be tested is assumed to have a non-zero mean or to
+	exhibit a linear trend.  The difference is that 
+	the de-meaning or de-trending of the variable is done
+	using the GLS procedure suggested by Elliott, Rothenberg
+	and Stock (1996).  This gives a test of greater power than
+	the standard Dickey&ndash;Fuller approach.
+      </para>
+      <para>
+	See also the <cmdref targ="adf"/> command and the <lit>--gls</lit>
+	option.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/ADF-GLS test</menu-path>
+    </gui-access>
+
+  </command>
 
   <command name="dialog" section="Estimation" context="gui"
     label="Model dialog box">

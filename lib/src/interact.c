@@ -3665,6 +3665,7 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 	    } else {
 		pprintf(prn, _("Now appending output to '%s'\n"), fname);
 	    }
+	    
 	}
 
 	print_start_redirection(prn, fp);

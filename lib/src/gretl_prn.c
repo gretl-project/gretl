@@ -689,6 +689,23 @@ int pputc (PRN *prn, int c)
     return 1;
 }
 
+#if 0
+/**
+ * pflush:
+ * @prn: gretl printing struct.
+ * 
+ * Returns: the number of bytes printed, or -1 on memory allocation
+ * failure.
+ */
+
+void pflush (PRN *prn)
+{
+    if (prn != NULL && prn->fp != NULL) {
+	fflush(prn->fp);
+    }
+}
+#endif
+
 /**
  * gretl_prn_newline:
  * @prn: gretl printing struct.

@@ -461,6 +461,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/Sample _periodogram"), NULL, do_pergm, 0, NULL, GNULL }, 
     { N_("/Variable/Spectrum/_Bartlett lag window"), NULL, do_pergm, 1, NULL, GNULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, unit_root_test, ADF, NULL, GNULL },
+    { N_("/Variable/ADF-GLS test"), NULL, unit_root_test, DFGLS, NULL, GNULL },
     { N_("/Variable/_KPSS test"), NULL, unit_root_test, KPSS, NULL, GNULL },
     { N_("/Variable/_Filter"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Variable/Filter/_Simple moving average"), NULL, filter_callback, 

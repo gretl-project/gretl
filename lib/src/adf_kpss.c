@@ -633,7 +633,10 @@ static int real_adf_test (int varno, int order, int niv,
 	    itv = engle_granger_itv(eg_opt);
 	} 
 
-	if ((opt & OPT_G) && itv == UR_TREND) {
+	if (getenv("DFGLS_NO_PVALUE")) {
+	    /* to speed up monte carlo stuff */
+	    pv = NADBL;
+	} else if ((opt & OPT_G) && itv == UR_TREND) {
 	    /* DF-GLS with trend: MacKinnon p-values won't work */
 	    pv = NADBL;
 	} else {

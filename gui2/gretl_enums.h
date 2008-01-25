@@ -95,6 +95,7 @@ enum extra_cmds {
     TRANSPOS,
     DATASORT,
     WORKDIR,
+    DFGLS,
     GUI_CMD_MAX
 };
 
