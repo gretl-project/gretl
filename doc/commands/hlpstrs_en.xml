@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="US-ASCII" ?>
 <localization language="en">
 
- <gentext          key="args" text="Arguments:  "/>
- <gentext           key="arg" text="Argument:   "/>
- <gentext      key="altforms" text="Variants:   "/>
- <gentext          key="opts" text="Options:    "/>
- <gentext           key="opt" text="Option:     "/>
- <gentext      key="examples" text="Examples:   "/>
- <gentext       key="example" text="Example:    "/>
- <gentext     key="guidebook" text="the Gretl User's Guide"/>
- <gentext      key="menupath" text="Menu path:    "/>
- <gentext   key="otheraccess" text="Other access: "/>
+ <gentext key="args"          text="Arguments:  "/>
+ <gentext key="arg"           text="Argument:   "/>
+ <gentext key="altforms"      text="Variants:   "/>
+ <gentext key="opts"          text="Options:    "/>
+ <gentext key="opt"           text="Option:     "/>
+ <gentext key="examples"      text="Examples:   "/>
+ <gentext key="example"       text="Example:    "/>
+ <gentext key="output"        text="Output:     "/>
+ <gentext key="guidebook"     text="the Gretl User's Guide"/>
+ <gentext key="menupath"      text="Menu path:    "/>
+ <gentext key="otheraccess"   text="Other access: "/>
  <gentext key="scriptcommand" text="Script command: "/>
- <gentext key="or" text=" or "/>
- <gentext key="Seealso" text="See also "/>
+ <gentext key="or"            text=" or "/>
+ <gentext key="Seealso"       text="See also "/>
+ <gentext key="anyfloat"      text="scalar, series or matrix"/>
+ <gentext key="asinput"       text="same type as input"/>
+ <gentext key="scalar"        text="scalar"/>
+ <gentext key="series"        text="series"/>
+ <gentext key="matrix"        text="matrix"/>
+ <gentext key="list"          text="list"/>
+ <gentext key="coeffname"     text="name of coefficient"/>
+ <gentext key="optional"      text="optional"/>
 
 </localization>

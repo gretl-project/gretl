@@ -1,0 +1,457 @@
+<?xml version="1.0"?>
+<!DOCTYPE funclist SYSTEM "genr_funcs.dtd">
+
+<funclist language="english">
+
+<?PSGML NOFILL code altforms altform menu-path equation other-access?>
+
+  <function name="$ahat" output="series">
+    <description>
+      <para>
+	Must follow the estimation of a fixed-effect panel data model.
+	Returns the estimates of individual fixed effects (per-unit
+	intercepts).
+      </para>
+    </description>
+  </function>
+
+  <function name="$aic" output="scalar">
+    <description>
+      <para>
+	Returns the Akaike Information Criterion for the last estimated
+	model. 
+      </para>
+    </description>
+  </function>
+
+  <function name="$bic" output="scalar">
+    <description>
+      <para>
+	Returns Schwarz's Bayesian Information Criterion for the last
+	estimated model.
+      </para>
+    </description>
+  </function>
+
+  <function name="$coeff" output="scalar" altout="matrix">
+    <arguments>
+      <argument optional="true" type="coeffname">s</argument>
+    </arguments>
+    <description>
+      <para>
+	The <lit>$coeff</lit> accessor can be used in two ways: with no
+	arguments, it returns a column vector containing the estimated
+	coefficients for the last model. With the optional argument, it
+	returns a scalar, which is the estimated parameter named
+	<mathvar>s</mathvar> (see also <fncref targ="$stderr"/> and <fncref
+	    targ="$vcv"/>).
+      </para>
+      <para>
+	Example:
+      </para>
+      <code>
+	open bjg
+	arima 0 1 1 ; 0 1 1 ; lg
+	b = $coeff
+	macoef = $coeff(theta_1)
+      </code>
+      <para>
+	If the <quote>model</quote> in question is actually a system (a
+	VAR or VECM, or system of simultaneous equations),
+	<lit>$coeff</lit> with no parameters returns the matrix of
+	coefficients, one column per equation.
+      </para>
+    </description>
+  </function>
+
+  <function name="$compan" output="matrix">
+    <description>
+      <para>
+	Must follow the estimation of a VAR or a VECM; returns the
+	companion matrix.
+      </para>
+    </description>
+  </function>
+
+  <function name="$df" output="scalar">
+    <description>
+      <para>
+	Returns the degrees of freedom of the last estimated model.
+      </para>
+    </description>
+  </function>
+
+  <function name="$ess" output="scalar">
+    <description>
+      <para>
+	Returns the error sum of squares of the last estimated model.
+      </para>
+    </description>
+  </function>
+
+  <function name="$gmmcrit" output="scalar">
+    <description>
+      <para>
+	Must follow a <lit>gmm</lit> block. Returns the value of the
+	objective function at its minimum.
+      </para>
+    </description>
+  </function>
+
+  <function name="$h" output="series">
+    <description>
+      <para>
+	Must follow a <lit>garch</lit> command. Returns the estimated
+	conditional variance.
+      </para>
+    </description>
+  </function>
+
+  <function name="$hqc" output="scalar">
+    <description>
+      <para>
+	Returns the Hannan-Quinn Information Criterion for the last
+	estimated model.
+      </para>
+    </description>
+  </function>
+
+  <function name="$jalpha" output="matrix">
+    <description>
+      <para>
+	Must follow the estimation of a VECM, and returns the loadings
+	matrix. It has as many rows as variables in the VECM and as many
+	columns as the cointegration rank.
+      </para>
+    </description>
+  </function>
+
+  <function name="$jbeta" output="matrix">
+    <description>
+      <para>
+	Must follow the estimation of a VECM, and returns the
+	cointegration matrix. It has as many rows as variables in the VECM
+	and as many columns as the cointegration rank.
+      </para>
+    </description>
+  </function>
+
+<function name="$jvbeta" output="matrix">
+    <description>
+      <para>
+	Must follow the estimation of a VECM, and returns the estimated
+	covariance matrix for the elements of the cointegration vectors.
+      </para>
+      <para>
+	In the case of unrestricted estimation, it has a number of rows
+	equal to the unrestricted elements of the cointegration space
+	after the Phillips normalization. If, however, a restricted system
+	is estimated via the <lit>restrict</lit> command with the
+	<lit>--full</lit> option, a singular matrix with <equation
+	  status="inline" ascii="" graphic="" tex="$n \cdot
+	  r$"/> rows will be returned (<mathvar>n</mathvar> being the
+	number of variables and <mathvar>r</mathvar> the cointegration
+	rank).
+      </para>
+      <para>
+	Example: the code
+      </para>
+      <code>
+	open denmark.gdt
+	vecm 2 1 LRM LRY IBO IDE --rc --seasonals -q
+	s0 = $jvbeta
+
+	restrict --full
+	  b[1,1] = 1
+	  b[1,2] = -1
+	  b[1,3] + b[1,4] = 0
+	end restrict
+	s1 = $jvbeta
+
+	print s0
+	print s1
+      </code>
+      <para>
+	produces the following output.
+      </para>
+      <code>
+	s0 (4 x 4)
+
+	0.019751     0.029816  -0.00044837     -0.12227 
+	0.029816      0.31005     -0.45823     -0.18526 
+	-0.00044837     -0.45823       1.2169    -0.035437 
+	-0.12227     -0.18526    -0.035437      0.76062 
+
+	s1 (5 x 5)
+
+	0.0000       0.0000       0.0000       0.0000       0.0000 
+	0.0000       0.0000       0.0000       0.0000       0.0000 
+	0.0000       0.0000      0.27398     -0.27398    -0.019059 
+	0.0000       0.0000     -0.27398      0.27398     0.019059 
+	0.0000       0.0000    -0.019059     0.019059    0.0014180 
+      </code>
+    </description>
+  </function>
+
+  <function name="$lnl" output="scalar">
+    <description>
+      <para>
+	Returns the log-likelihood for the last estimated model (where
+	applicable).
+      </para>
+    </description>
+  </function>
+
+
+  <function name="$ncoeff" output="scalar">
+    <description>
+      <para>
+	Total number of coefficients estimated in the last model.
+      </para>
+    </description>
+  </function>
+
+
+  <function name="$nobs" output="scalar">
+    <description>
+      <para>
+	Returns the number of observations in the currently selected
+	sample.
+      </para>
+    </description>
+  </function>
+
+  <function name="$nvars" output="scalar">
+    <description>
+      <para>
+	Returns the number of variables in the dataset (including the
+	constant).
+      </para>
+    </description>
+  </function>
+
+  <function name="$pd" output="scalar">
+    <description>
+      <para>
+	Returns the frequency or periodicity of the data (e.g. 4 for
+	quarterly data).
+      </para>
+    </description>
+  </function>
+
+  <function name="$pvalue" output="scalar">
+    <description>
+      <para>
+	Returns the p-value of the test statistic that was generated by
+	the last explicit hypothesis-testing command, if any (e.g.
+	<lit>chow</lit>). (See also <fncref targ="$test"/>.)
+      </para>
+    </description>
+  </function>
+
+  <function name="$rho" output="scalar">
+    <arguments>
+      <argument optional="true" type="scalar">n</argument>
+    </arguments>
+    <description>
+      <para>
+	Without arguments, returns the first-order autoregressive
+	coefficient for the residuals of the last model. After estimating
+	a model via the <lit>ar</lit> command, the syntax
+	<lit>$rho(n)</lit> returns the corresponding estimate of <equation
+	  status="inline" ascii="" graphic="" tex="$\rho(n)$"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="$rsq" output="scalar">
+    <description>
+      <para>
+	Returns the unadjusted <equation status="inline" ascii=""
+	graphic="" tex="$R^2$"/>
+	from the last estimated model.
+      </para>
+    </description>
+  </function>
+
+  <function name="$sigma" output="scalar">
+    <description>
+      <para>
+	Returns the standard error of residuals of the last model.
+      </para>
+    </description>
+  </function>
+
+  <function name="$stderr" output="scalar" altout="matrix">
+    <arguments>
+      <argument optional="true" type="coeffname">s</argument>
+    </arguments>
+    <description>
+      <para>
+	The <lit>$stderr</lit> accessor can be used in two ways: with no
+	arguments, it returns a column vector containing the estimated
+	coefficients for the last model. With the optional argument, it
+	returns a scalar, which is the estimated parameter named
+	<mathvar>s</mathvar> (see also <fncref targ="$coeff"/> and <fncref
+	  targ="$vcv"/>).
+      </para>
+    </description>
+  </function>
+
+
+<function name="$stopwatch" output="scalar">
+    <description>
+      <para>
+	Must follow a <lit>set stopwatch</lit> command, which activates
+	the measurement of CPU time, which stops the first time the
+	accessor <lit>$stopwatch</lit> is used, either in assigning it to
+	a variable or simply by printing it. The accessor
+	<lit>$stopwatch</lit> will yield the seconds of CPU time that have
+	elapsed between the <lit>set stopwatch</lit> statement and its
+	invocation.
+      </para>
+    </description>
+</function>
+
+  <function name="$T" output="scalar">
+    <description>
+      <para>
+	Number of observations used in estimating the last model.
+      </para>
+    </description>
+  </function>
+
+
+  <function name="$t1" output="scalar">
+    <description>
+      <para>
+	First observation of the currently selected sample.
+      </para>
+    </description>
+  </function>
+
+  <function name="$t2" output="scalar">
+    <description>
+      <para>
+	Last observation of the currently selected sample.
+      </para>
+    </description>
+  </function>
+
+  <function name="$test" output="scalar">
+    <description>
+      <para>
+	Returns the value of the test statistic that was generated by the
+	last explicit hypothesis-testing command, if any (e.g.
+	<lit>chow</lit>). (See also <fncref targ="$pvalue"/>.)
+      </para>
+    </description>
+  </function>
+
+  <function name="$trsq" output="scalar">
+    <description>
+      <para>
+	<equation status="inline" ascii="" graphic="" 
+	  tex="$T\cdot R^2$"/> (sample size times
+	R-squared) in the last model.
+      </para>
+    </description>
+  </function>
+
+  <function name="$uhat" output="series">
+    <description>
+      <para>
+	Returns the residuals from the last model. This may have different
+	meanings for different estimators. For example, after an ARMA
+	estimation <lit>$uhat</lit> will contain the one-step-ahead
+	forecast error; after a probit model, it will contain the
+	generalized residuals.
+      </para>
+      <para>
+	If the <quote>model</quote> in question is actually a system (a
+	VAR or VECM, or system of simultaneous equations),
+	<lit>$uhat</lit> with no parameters retrieves the matrix of
+	residuals, one column per equation.
+      </para>
+    </description>
+  </function>
+
+  <function name="$vcv" output="scalar" altout="matrix">
+    <arguments>
+      <argument optional="true" type="coeffname">s1</argument>
+      <argument optional="true" type="coeffname">s2</argument>
+    </arguments>
+    <description>
+      <para>
+	The <lit>$stderr</lit> accessor can be used in two ways: with no
+	arguments, it returns a square matrix containing the estimated
+	covariance matrix for the coefficients of the last model. With the
+	optional arguments, it returns a scalar, which is the estimated
+	covariance between the parameters named <equation status="inline"
+	  ascii="" graphic="" tex="$s_1$ and $s_2$"/> (see also 
+	<fncref targ="$coeff"/> and <fncref targ="$stderr"/>).
+      </para>
+      <para>
+	If the <quote>model</quote> in question is actually a system (a
+	VAR or VECM, or system of simultaneous equations), <lit>$vcv</lit>
+	with no parameters returns the cross-equation covariance matrix.
+      </para>
+    </description>
+  </function>
+
+  <function name="$yhat" output="series">
+    <description>
+      <para>
+	Returns the fitted values from the last regression.
+      </para>
+    </description>
+  </function>
+
+  <function name="abs" output="asinput">
+    <arguments>
+      <argument type="anyfloat">x</argument>
+    </arguments>
+    <description>
+      <para>
+	Absolute value of <mathvar>x</mathvar>.
+      </para>
+    </description>
+  </function>
+
+  <function name="atan" output="asinput">
+    <arguments>
+      <argument type="anyfloat">x</argument>
+    </arguments>
+    <description>
+      <para>
+	Arctangent.
+      </para>
+    </description>
+  </function>
+
+  <function name="bkfilt" output="series">
+    <arguments>
+      <argument type="series">y</argument>
+    </arguments>
+    <description>
+      <para>
+	Extracts the cyclical component of series <mathvar>y</mathvar> via
+	the Baxter&ndash;King bandpass filter, a two-sided symmetric
+	filter. See XXX for details; see also <fncref targ="hpfilt"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="cdemean" output="matrix">
+    <arguments>
+      <argument type="matrix">X</argument>
+    </arguments>
+    <description>
+      <para>
+	Centers the columns of matrix <mathvar>X</mathvar> around their
+	means.
+      </para>
+    </description>
+  </function>
+
+</funclist>

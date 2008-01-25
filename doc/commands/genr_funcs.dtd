@@ -1,0 +1,138 @@
+<!--
+  DTD for gretl genr functions. Allin Cottrell 2008
+ -->
+
+<!ENTITY ndash  "&#8211;">
+<!ENTITY lgr    "&#0955;">
+<!ENTITY mu     "&#0956;">
+<!ENTITY sigma  "&#0963;">
+<!ENTITY rgr    "&#0961;">
+<!ENTITY hellip "&#8230;">
+<!ENTITY mdash  "&#8212;">
+<!ENTITY latex  "LaTeX">
+<!ENTITY minus  "&#8211;">
+<!ENTITY par    "">
+<!ENTITY eg     "e.g.">
+<!ENTITY ie     "i.e.">
+
+<!ELEMENT funclist (function)+>
+<!ATTLIST funclist
+   language    CDATA #REQUIRED
+>
+
+<!-- The description is the only element that is absolutely
+     required of a function -->
+
+<!ELEMENT function (arguments?, description+)>
+
+<!ATTLIST function
+   name    CDATA #REQUIRED
+   output  (scalar | series | matrix | list | asinput) "series"
+   altout  (none | scalar | series | matrix | list) "none"
+>
+
+<!ELEMENT usage (altforms?, arguments?, options?, examples?)>
+
+<!ELEMENT arguments    (argument)+>
+<!ELEMENT examples     (example*, demos?)>
+<!ELEMENT demos        (demo)+>
+<!ELEMENT altforms     (altform)+>
+<!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
+<!ELEMENT gui-access   (menu-path, other-access?)>
+
+<!ELEMENT argument (#PCDATA)>
+<!ATTLIST argument 
+    type      (scalar | series | matrix | anyfloat | list | coeffname) "series"
+    optional  (true | false) "false"
+    alternate (true | false) "false"
+>
+
+<!ELEMENT altform (#PCDATA | repl | lit)*>
+
+<!ELEMENT example  (#PCDATA)>
+<!ELEMENT demo     (#PCDATA)>
+<!ELEMENT flag     (#PCDATA)>
+<!ELEMENT effect   (#PCDATA)>
+
+<!ELEMENT menu-path    (#PCDATA)>
+<!ELEMENT other-access (#PCDATA)>
+
+<!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
+                lit | emphasis | book | quote | filename |
+                func | guideref | cmdref| fncref | tabref | 
+                footnote | cmd)*>
+
+<!ELEMENT pre (#PCDATA | repl | lit)*>
+<!ELEMENT code (#PCDATA)>
+
+<!ELEMENT ilist (li)+>
+<!ELEMENT nlist (li)+>
+
+<!ELEMENT li (para | code | table)*>
+
+<!ELEMENT equation EMPTY>
+<!ATTLIST equation
+   status (inline | display) "inline"
+   tex     CDATA #REQUIRED
+   ascii   CDATA #REQUIRED
+   graphic CDATA #REQUIRED
+>
+
+<!ELEMENT guideref EMPTY>
+<!ATTLIST guideref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT cmdref EMPTY>
+<!ATTLIST cmdref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT fncref EMPTY>
+<!ATTLIST fncref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT tabref EMPTY>
+<!ATTLIST tabref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT footnote (para)+>
+
+<!ELEMENT table (row)+>
+<!ELEMENT row (cell)+>
+<!ELEMENT cell (#PCDATA | lit | repl | emphasis | 
+                func | mathvar | equation | book | quote)*>
+<!ATTLIST table
+   lwidth   CDATA #IMPLIED
+   rwidth   CDATA #IMPLIED
+   id       CDATA #IMPLIED
+   title    CDATA #IMPLIED
+   lhead    CDATA #IMPLIED
+   rhead    CDATA #IMPLIED
+   style (plain | lpara | rpara | allpara) "plain"
+   context  (cli | gui | both) "both"
+>
+
+<!ELEMENT repl     (#PCDATA)>
+<!ELEMENT program  (#PCDATA)>
+<!ELEMENT lit      (#PCDATA)>
+<!ELEMENT emphasis (#PCDATA)>
+<!ELEMENT book     (#PCDATA)>
+<!ELEMENT quote    (#PCDATA | lit)*>
+<!ELEMENT filename (#PCDATA)>
+<!ELEMENT func     (#PCDATA)>
+<!ELEMENT cmd      (#PCDATA)>
+<!ELEMENT mathvar  (#PCDATA | sub | super)*>
+<!ELEMENT sub      (#PCDATA)>
+<!ELEMENT super    (#PCDATA)>
+
+<!ATTLIST repl
+   quote (true | false) "false"
+>
+
+
+
+
+

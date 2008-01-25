@@ -459,6 +459,21 @@ const char *mvarname (int t)
     return "unknown";
 }
 
+int genr_function_word (const char *s)
+{
+    int ret = 0;
+
+    ret = real_function_lookup(s, NO_ALIAS);
+    if (!ret) {
+	ret = dvar_lookup(s);
+    }
+    if (!ret) {
+	ret = mvar_lookup(s);
+    }
+
+    return ret;
+}
+
 static void undefined_symbol_error (const char *s, parser *p)
 {
     parser_print_input(p);

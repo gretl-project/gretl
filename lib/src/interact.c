@@ -2688,6 +2688,7 @@ int cli_help (const char *cmdword, const char *helpfile,
 	      int locale, PRN *prn)
 {
     static int recode = -1;
+    char genrhelp[FILENAME_MAX];
     FILE *fp;
     char word[9];
     char line[128];
@@ -2718,7 +2719,17 @@ int cli_help (const char *cmdword, const char *helpfile,
     ok = gretl_command_number(cmdword) > 0;
 
     if (!ok) {
-	if (gretl_is_public_user_function(cmdword)) {
+	if (genr_function_word(cmdword)) {
+	    char *p;
+
+	    /* FIXME this is just temporary */
+	    strcpy(genrhelp, helpfile);
+	    p = strstr(genrhelp, "gretlcli.hlp");
+	    if (p != NULL) {
+		strcpy(p, "genrcli.hlp");
+		helpfile = genrhelp;
+	    }
+	} else if (gretl_is_public_user_function(cmdword)) {
 	    return user_function_help(cmdword, prn);
 	} else {
 	    pprintf(prn, _("\"%s\" is not a gretl command.\n"), cmdword);

@@ -42,7 +42,10 @@ CMDSRC = $(CMDSDIR)/gretl_commands.xml \
 MANXSL = $(CMDSDIR)/gretlman.xsl
 HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/gretlhlp.xsl \
-	$(CMDSDIR)/equations.xsl
+	$(CMDSDIR)/equations.xsl \
+
+GENXSL = $(CMDSDIR)/genrhlp.xsl \
+	$(CMDSDIR)/genrtxt.xsl
 
 XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
   $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_it.xml
@@ -52,6 +55,7 @@ EQNXSL = $(CMDSDIR)/equations.xsl
 
 HLPSTAMP = $(SHAREDIR)/hlp.stamp
 FIGSTAMP = $(SHAREDIR)/fig.stamp
+GENSTAMP = $(SHAREDIR)/gen.stamp
 OUTPUT_DIR = $(SHAREDIR)
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
@@ -124,6 +128,13 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
 	touch $@
 
+$(GENSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(GENXSL) $(XMLSTRS) 
+	./xsltrans --genr --markup $(CMDSDIR)/genr_funcs.xml && \
+	./reflow < genrcli.txt > $(SHAREDIR)/genrcli.hlp
+	if test -f genrgui.txt ; then \
+	  ./reflow --markup < genrgui.txt > $(SHAREDIR)/genrgui.hlp ; \
+	fi
+
 .PHONY: test
 
 # generate some tables for manual automatically, to ensure
@@ -181,7 +192,7 @@ docbook_es: xsltrans $(CMDSDIR)/gretl_commands_es.xml $(MANXSL) $(XMLSTRS)
 	cat cmdlist.xml >> $(CHAPDIR_ES)/cmdlist.xml && \
 	rm cmdlist.xml && rm tmp.xml
 
-help-all: $(HLPSTAMP) $(FIGSTAMP)
+help-all: $(HLPSTAMP) $(FIGSTAMP) $(GENSTAMP)
 
 # Validate the commands "master" XML files against libgretl
 check: validate 
@@ -190,7 +201,7 @@ check: validate
 	-./validate $(CMDSDIR)/gretl_commands_it.xml
 
 docclean:
-	 rm -f skeleton.xml cmdlist.* guilist.txt clilist.txt
+	 rm -f skeleton.xml cmdlist.* guilist.txt clilist.txt genrcli.txt genrgui.txt
 
 clean: docclean
 	rm -f xsltrans skeleton reflow validate tables topiclist *.o

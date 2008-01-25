@@ -113,6 +113,8 @@ int gretl_reserved_word (const char *str);
 
 int genr_special_word (const char *s);
 
+int genr_function_word (const char *s);
+
 /* following functions used in nls.c */
 
 int genr_is_print (const GENERATOR *p);

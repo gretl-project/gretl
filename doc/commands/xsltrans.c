@@ -51,10 +51,10 @@ enum {
 
 enum {
     OPT_XREFS  = 1 << 0,
-    OPT_MARKUP = 1 << 1
+    OPT_MARKUP = 1 << 1,
+    OPT_GENR   = 1 << 2,
 };
 
-#define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
 static void full_fname (const char *fname, const char *dir,
@@ -131,6 +131,30 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 
     xmlIndentTreeOutput = 1;
 
+    /* genr functions help (experimental) */
+    if (opt & OPT_GENR) {
+	full_fname("genrtxt.xsl", docdir, styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
+	    build_params(xsl_params, OUTPUT_CLI_HLP, 0, lang);
+	    err = apply_xslt(doc, style, xsl_params, "genrcli.txt");
+	    xsltFreeStylesheet(style);
+	}
+
+	full_fname("genrhlp.xsl", docdir, styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
+	    build_params(xsl_params, OUTPUT_CMD_HLP, 0, lang);
+	    err = apply_xslt(doc, style, xsl_params, "genrgui.txt");
+	    xsltFreeStylesheet(style);
+	}
+	return err;
+    }	
+
     /* DocBook XML output */
     if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK) {
 	full_fname("gretlman.xsl", docdir, styname);
@@ -171,7 +195,7 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 	if (style == NULL) {
 	    err = 1;
 	} else {
-	    /* script help, gui version (gtk2 only) */
+	    /* script help, gui version */
 	    build_params(xsl_params, OUTPUT_CMD_HLP, opt, lang);
 	    err = apply_xslt(doc, style, xsl_params, "cmdlist.txt");
 
@@ -202,6 +226,7 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
 int parse_commands_data (const char *fname, int output, 
 			 int flags, const char *docdir) 
 {
+    const char *rootnode = "commandlist";
     xmlDocPtr doc;
     xmlNodePtr cur;
     char *tmp = NULL;
@@ -226,8 +251,12 @@ int parse_commands_data (const char *fname, int output,
 	goto bailout;
     }
 
-    if (xmlStrcmp(cur->name, (UTF) ROOTNODE)) {
-	fprintf(stderr, "File of the wrong type, root node not %s\n", ROOTNODE);
+    if (flags & OPT_GENR) {
+	rootnode = "funclist";
+    }
+
+    if (xmlStrcmp(cur->name, (UTF) rootnode)) {
+	fprintf(stderr, "File of the wrong type, root node not %s\n", rootnode);
 	err = 1;
 	goto bailout;
     }
@@ -293,6 +322,8 @@ int main (int argc, char **argv)
 	    opt |= OPT_XREFS;
 	} else if (!strcmp(argv[i], "--markup")) {
 	    opt |= OPT_MARKUP;
+	} else if (!strcmp(argv[i], "--genr")) {
+	    opt |= OPT_GENR;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
 	} else {
