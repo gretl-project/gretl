@@ -134,6 +134,7 @@ $(GENSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(GENXSL) $(XMLSTRS)
 	if test -f genrgui.txt ; then \
 	  ./reflow --markup < genrgui.txt > $(SHAREDIR)/genrgui.hlp ; \
 	fi
+	touch $@
 
 .PHONY: test
 
