@@ -185,30 +185,32 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 
 static double *df_gls_ct_cval (int T)
 {
-    static double df_gls_ct_cvals[4][3] = {
-	{ -3.46, -3.58, -3.77 }, 
-	{ -3.03, -3.19, -3.48 },
-	{ -2.89, -2.89, -2.93 }, 
-	{ -2.57, -2.64, -2.74 }
+    /* Elliott, Rothenberg and Stock (1996), Table 1 */
+    static double df_gls_ct_cvals[4][4] = {
+	/* 10%     5%    2.5%    1% */
+	{ -2.89, -3.19, -3.46, -3.77 }, /* T = 50  */
+	{ -2.74, -3.03, -3.29, -3.58 }, /* T = 100 */
+	{ -2.64, -2.93, -3.18, -3.46 }, /* T = 200 */
+	{ -2.57, -2.89, -3.15, -3.48 }  /* \infty  */
     };
-    int r = 3;
+    int i = 3;
 
-    if (T < 50){
-	r = 0;
-    } else if (T < 100){
-	r = 1;
+    if (T <= 50){
+	i = 0;
+    } else if (T <= 100){
+	i = 1;
     } else if (T <= 200){
-	r = 2;
+	i = 2;
     } 
 
-    return df_gls_ct_cvals[r];
+    return df_gls_ct_cvals[i];
 }
 
 static void 
-print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL *dfmod,
-		   int dfnum, const char *vname, int *blurb_done,
-		   unsigned char flags, int i, int niv, int nseas, 
-		   gretlopt opt, PRN *prn)
+print_adf_results (int order, int auto_order, double DFt, double pv, 
+		   const MODEL *dfmod, int dfnum, const char *vname, 
+		   int *blurb_done, unsigned char flags, int i, 
+		   int niv, int nseas, gretlopt opt, PRN *prn)
 {
     const char *models[] = {
 	"(1 - L)y = (a-1)*y(-1) + e",
@@ -310,9 +312,9 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
 	const double *c = df_gls_ct_cval(dfmod->nobs);
 
 	pprintf(prn, "\n   %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
-	pprintf(prn, "%g%%     %g%%      %g%%\n", 10.0, 5.0, 1.0);
-	pprintf(prn, "   %s: %.2f   %.2f   %.2f\n", 
-		_("Critical values"), c[0], c[1], c[2]);
+	pprintf(prn, "%g%%     %g%%     %g%%     %g%%\n", 10.0, 5.0, 2.5, 1.0);
+	pprintf(prn, "   %s: %.2f   %.2f   %.2f   %.2f\n", 
+		_("Critical values"), c[0], c[1], c[2], c[3]);
     } else {
 	pprintf(prn, "   %s\n", pvstr);
     } 
@@ -704,18 +706,14 @@ int adf_test (int order, const int *list, double ***pZ,
     int v, vlist[2] = {1,0};
     int i, err;
 
-    /* GLS irrelevant if no const or trend */
-    if ((opt & OPT_G) && (opt & OPT_N)) {
-	opt &= ~OPT_G;
-    }
-
-    /* GLS option won't work with quadratic trend or seasonals */
-    err = incompatible_options(opt, OPT_R | OPT_G);
+    /* GLS incompatible with no const, quadratic trend or seasonals */
+    err = incompatible_options(opt, OPT_N | OPT_R | OPT_G);
     if (!err) {
 	err = incompatible_options(opt, OPT_D | OPT_G);
     }
+
     if (!err && (opt & OPT_G)) {
-	/* under GLS, have to choose between const and trend */
+	/* under GLS, have to choose between cases */
 	err = incompatible_options(opt, OPT_C | OPT_T);
     }
 
