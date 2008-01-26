@@ -43,7 +43,7 @@
 <!ELEMENT fnarg (#PCDATA)>
 <!ATTLIST fnarg 
     type      (scalar | series | matrix | anyfloat | series-or-vec | 
-               list | coeffname) "series"
+               list | coeffname | string) "series"
     optional  (true | false) "false"
     alternate (true | false) "false"
 >

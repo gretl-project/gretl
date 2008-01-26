@@ -663,12 +663,587 @@
     </fnargs>
     <description>
       <para>
-	Sorts <argname>x</argname> in ascending order, skipping
+	Sorts <argname>x</argname> in descending order, skipping
 	observations with missing values when <argname>x</argname> is a
 	series. See also <fncref targ="sort"/> and 
 	<fncref targ="values"/>.
       </para>
     </description>
   </function>
+
+  <function name="eigengen" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+      <fnarg type="matrix">&amp;U or null</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes the eigenvalues, and optionally the right eigenvectors,
+	of the <mathvar>n</mathvar> by <mathvar>n</mathvar> matrix
+	<argname>A</argname>.  If all the eigenvalues are real, an
+	<mathvar>n</mathvar> by 1 matrix is returned; otherwise, the
+	result is an <mathvar>n</mathvar> by 2 matrix, the first column
+	holding the real components and the second column the imaginary
+	components.
+      </para>
+      <para>
+	The second argument must be either the name of an existing matrix
+	preceded by <lit>&amp;</lit> (to indicate the
+	<quote>address</quote> of the matrix in question), in which case
+	an auxiliary result is written to that matrix, or the keyword
+	<lit>null</lit>, in which case the auxiliary result is not
+	produced.
+      </para>
+      <para>
+	If a non-null second argument is given, the specified matrix
+	will be over-written with the auxiliary result.  (It is not
+	required that the existing matrix be of the right dimensions to
+	receive the result.) It will be organized as follows:
+      </para>
+      <ilist>
+	<li>
+	  <para>If the <mathvar>i</mathvar>-th eigenvalue is real, the
+	    <mathvar>i</mathvar>-th column of <mathvar>U</mathvar> will
+	    contain the corresponding eigenvector;
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    If the <mathvar>i</mathvar>-th eigenvalue is complex, the
+	    <mathvar>i</mathvar>-th column of <argname>U</argname> will
+	    contain the real part of the corresponding eigenvector and the
+	    next column the imaginary part. The eigenvector for the
+	    conjugate eigenvalue is the conjugate of the eigenvector.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	In other words, the eigenvectors are stored in the same order as
+	the eigenvalues, but the real eigenvectors occupy one column,
+	whereas complex eigenvectors take two (the real part comes first);
+	the total number of columns is still <mathvar>n</mathvar>, because
+	the conjugate eigenvector is skipped.
+      </para>
+      <para>
+	  See also <fncref targ="eigensym"/>,
+	<fncref targ="qrdecomp"/> and <fncref targ="svd"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="exp" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Exponential. Note: in case of matrices, the function acts element
+	by element. For the matrix exponential function, see <fncref
+	  targ="mexp"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="fft" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Discrete real Fourier transform. If the input matrix
+	<argname>X</argname> has <mathvar>n</mathvar> columns, the output
+	has 2<mathvar>n</mathvar> columns, where the real parts are stored
+	in the odd columns and the complex parts in the even ones.
+      </para>
+      <para>
+	Should it be necessary to compute the Fourier transform on several
+	vectors with the same number of elements, it is numerically more
+	efficient to group them into a matrix rather than invoking
+	<lit>fft</lit> for each vector separately.  See also <fncref
+	  targ="ffti"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ffti" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Inverse discrete real Fourier transform. It is assumed that
+	<argname>X</argname> contains <mathvar>n</mathvar> complex column
+	vectors, with the real part in the odd columns and the imaginary
+	part in the even ones, so the total number of columns should be
+	2<mathvar>n</mathvar>. A matrix with <mathvar>n</mathvar> columns
+	is returned.
+      </para>
+      <para>
+	Should it be necessary to compute the inverse Fourier transform on
+	several vectors with the same number of elements, it is
+	numerically more efficient to group them into a matrix rather than
+	invoking <lit>ffti</lit> for each vector separately.  See also
+	<fncref targ="fft"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="firstobs" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	First non-missing observation for the variable
+	<argname>y</argname>. Note that if some form of subsampling is in
+	effect, the value returned may be smaller than the dollar variable
+	<fncref targ="$t1"/>. See also <fncref targ="lastobs"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="floor" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">y</fnarg>
+    </fnargs>    
+    <description>
+      <para>
+	Floor function: returns the greatest integer less than or equal to
+	<argname>x</argname>. Note: <fncref targ="int"/> and <fncref
+	  targ="floor"/> differ in their effect for negative arguments:
+	\texttt{int(-3.5)} gives -3, while \texttt{floor(-3.5)} gives -4.
+	See also and <fncref targ="int"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="fracdiff" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+      <fnarg type="scalar">d</fnarg>
+    </fnargs>    
+    <description>
+      <para>
+	Returns the fractional difference of order <argname>d</argname>
+	for the series <mathvar>y</mathvar>.
+	<equation status="display" ascii="" graphic=""
+	  tex="\[
+	  \Delta^d y_t = y_t - \sum_{i=1}^{\infty} \psi_i y_{t-i}
+	  \]" />
+	where
+	<equation status="display" ascii="" graphic=""
+	  tex="\[\psi_i = \frac{\Gamma(i-d)}{\Gamma(-d) \Gamma(i+1)}\]"
+	  />
+      </para>
+      <para> 
+	Note that in theory fractional differentiation is an
+	infinitely long filter. In practice, presample values of 
+	<mathvar>y<sub>t</sub></mathvar> are assumed to be zero.
+      </para>
+    </description>
+  </function>
+
+  <function name="gammafunc" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+     </fnargs>    
+    <description>
+      <para>
+	Returns the gamma function of <argname>x</argname>. 
+      </para>
+    </description>
+  </function>
+
+  <function name="gini" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+     </fnargs>    
+    <description>
+      <para>
+	Returns Gini's inequality index for the series
+	<argname>y</argname>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ginv" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+     </fnargs>    
+    <description>
+      <para>
+	Returns <equation status="inline" ascii="A+" graphic="" 
+	  tex="$A^+$"/>, the Moore-Penrose inverse of
+	<argname>A</argname>, which has the properties
+	<equation status="display" ascii="" graphic=""
+	  tex="\begin{eqnarray*}
+	  A A^+ A &amp; = &amp; A \\
+	  A^+ A A^+ &amp; = &amp; A^+ 
+	  \end{eqnarray*}"
+	  />
+      </para>
+      <para>
+	The result <equation status="inline" ascii="A+" graphic=""
+	  tex="$A^+$"/> is computed via the singular value decomposition.
+	See also <fncref targ="inv"/> and <fncref targ="svd"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="hpfilt" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the cycle from the Hodrick&ndash;Prescott filter applied
+	to series <argname>y</argname>.  See FIXME for details. See also
+	<fncref targ="bkfilt"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="I" output="matrix">
+    <fnargs>
+      <fnarg type="scalar">n</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns an identity matrix with <argname>n</argname> rows and
+	columns.
+      </para>
+    </description>
+  </function>
+
+  <function name="imaxc" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns a vector containing the row indices of the maxima of the
+	columns of <argname>X</argname>. See also <fncref targ="imaxr"/>, 
+	<fncref targ="iminc"/> and <fncref targ="maxc"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="imaxr" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>    
+    <description>
+      <para>
+	Returns a vector containing the column indices of the maxima of
+	the rows of <argname>X</argname>. See also <fncref targ="imaxc"/>,
+	<fncref targ="iminr"/> and <fncref targ="maxr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="iminc" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>    
+    <description>
+      <para>
+	Returns the row indices of the minima of the columns of
+	<mathvar>X</mathvar>. See also <fncref targ="imaxc"/>, <fncref
+	  targ="iminr"/> and <fncref
+	  targ="minc"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="iminr" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>    
+    <description>
+      <para>
+	Returns the column indices of the maxima of the rows of
+	<mathvar>X</mathvar>. See also <fncref targ="imaxr"/>, 
+	<fncref targ="iminc"/> and <fncref targ="minr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="infnorm" output="scalar">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>    
+    <description>
+      <para>
+	Returns the <equation status="inline" 
+	  ascii="infinity-norm" graphic="" tex="$\infty$-norm"/> of the
+	<mathvar>r</mathvar> by <mathvar>c</mathvar> matrix
+	<argname>X</argname>: 
+	<equation status="display" ascii="" graphic=""
+	  tex="\[
+	  || X ||_{\infty} = \max_i \sum_{j=1}^c |X_{ij}|"
+	  />
+      </para>
+      <para>
+	See also <fncref targ="onenorm"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="int" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>  
+    <description>
+      <para>
+	Truncates the fractional part of <argname>x</argname>. Note:
+	<lit>int</lit> and <fncref targ="floor"/> differ in their effect
+	for negative arguments: <lit>int(-3.5)</lit> gives &minus;3, while
+	<lit>floor(-3.5)</lit> gives &minus;4. See also 
+      <fncref targ="ceil"/>.
+    </para>
+    </description>
+  </function>
+
+  <function name="inv" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+    </fnargs>  
+    <description>
+      <para>
+	Returns the inverse of <argname>A</argname>. If
+	<argname>A</argname> is singular or not square, an error message
+	is produced and nothing is returned. Note that gretl checks
+	automatically the structure of <argname>A</argname> and uses the
+	most efficient numerical procedure to perform the inversion.
+      </para>
+      <para>
+	The matrix types gretl checks for are:
+      </para>
+      <ilist>
+	<li><para>Identity</para>
+	</li>
+	<li><para>Diagonal</para>
+	</li>
+	<li><para>Symmetric and positive definite</para>
+	</li>
+	<li><para>Symmetric but not positive definite</para>
+	</li>
+	<li><para>Triangular</para>
+	</li>
+      </ilist>
+      <para>
+	See also <fncref targ="ginv"/>.
+      </para>
+    </description>
+  </function>
+
+  <!-- invcdf -->
+
+  <function name="islist" output="scalar">
+    <fnargs>
+      <fnarg type="string">s</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns 1 if <argname>s</argname> is the identifier for a
+	currently defined list. Mainly used for checking arguments passed
+	to functions.  See also <fncref targ="isnull"/>, <fncref
+	  targ="isseries"/> and <fncref targ="isstring"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="isnull" output="scalar">
+    <fnargs>
+      <fnarg type="string">s</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns 0 if <argname>s</argname> is the identifier for a
+	currently defined object, be it a scalar, a series, a matrix or a
+	list. Mainly used for checking arguments passed to functions.  See
+	also <fncref targ="islist"/>, <fncref targ="isnull"/> 
+	and <fncref targ="isseries"/>.
+      </para>
+    </description>
+  </function>  
+
+  <function name="isseries" output="scalar">
+    <fnargs>
+      <fnarg type="string">s</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns 1 if <argname>s</argname> is the identifier for a
+	currently defined series. Mainly used for checking arguments
+	passed to functions.  See also <fncref targ="islist"/>, <fncref
+	  targ="isnull"/>, and <fncref targ="isseries"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="isstring" output="scalar">
+    <fnargs>
+      <fnarg type="string">s</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns 1 if <mathvar>s</mathvar> is the identifier for a
+	currently defined series. Mainly used for checking arguments
+	passed to functions.  See also <fncref targ="isseries"/>, <fncref
+	  targ="islist"/> and <fncref targ="isnull"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="lastobs" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Last non-missing observation for the variable
+	<argname>y</argname>. Note that if some form of subsampling is in
+	  effect, the value returned may be larger than the dollar
+	  variable <fncref targ="$t2"/>.  See also
+	<fncref targ="firstobs"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ldet" output="scalar">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the natural log of the determinant of
+	<mathvar>A</mathvar>, computed via the LU factorization. See also
+	<fncref targ="det"/> and <fncref targ="rcond"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ldiff" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes log differences; starting values are set to <lit>NA</lit>.
+      </para>
+    </description>
+  </function>
+
+  <function name="log" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Natural logarithm; produces <lit>NA</lit> for non-positive values.
+	Note: <lit>ln</lit> is an acceptable alias for <lit>log</lit>.
+      </para>
+    </description>
+  </function>
+
+  <function name="lngamma" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Log of the gamma function of <argname>x</argname>.
+      </para>
+    </description>
+  </function>
+
+  <function name="log10" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Base-10 logarithm; produces <lit>NA</lit> for non-positive values.
+      </para>
+    </description>
+  </function>
+
+  <function name="log2" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Base-2 logarithm; produces <lit>NA</lit> for non-positive values.
+      </para>
+    </description>
+  </function>
+
+  <function name="lower" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns an <mathvar>n</mathvar> by <mathvar>n</mathvar > 
+	lower triangular matrix <mathvar>B</mathvar> for
+	which
+	<equation status="inline" ascii="XXX" graphic="" 
+	  tex="$B_{ij} = A_{ij}$ if $i \ge j$"/>, and 0 otherwise. 
+	See also <fncref targ="upper"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="lrvar" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+      <fnarg type="scalar">k</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the long-run variance of <argname>y</argname>, calculated
+	using a Bartlett kernel with window size <argname>k</argname>. In
+	formulae:
+	<equation status="display" ascii="" graphic=""
+	  tex="\[
+	  \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k} 
+	  \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - 
+	  \bar{Y}) \right]" />
+	with
+	<equation status="display" ascii="" graphic=""
+	  tex="\[
+	  w_i = 1 - \frac{|i|}{k + 1}" />
+      </para>
+    </description>
+  </function>
+
+  <function name="makemask" output="matrix">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Produces a column vector containing the observation numbers
+	corresponding to the non-zero entries in the series
+	<argname>y</argname>. This function is typically useful for
+	filtering out rows of a matrix built from data series.
+      </para>
+    </description>
+  </function>
+
+  <function name="max" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Maximum of the non-missing observations in series
+	<argname>y</argname>.
+      </para>
+    </description>
+  </function>
+
 
 </funclist>
