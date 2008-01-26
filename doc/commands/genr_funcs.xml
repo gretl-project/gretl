@@ -148,7 +148,7 @@
 	after the Phillips normalization. If, however, a restricted system
 	is estimated via the <lit>restrict</lit> command with the
 	<lit>--full</lit> option, a singular matrix with <equation
-	  status="inline" ascii="" graphic="" tex="$n \cdot
+	  status="inline" ascii="n*r" graphic="" tex="$n \cdot
 	  r$"/> rows will be returned (<mathvar>n</mathvar> being the
 	number of variables and <mathvar>r</mathvar> the cointegration
 	rank).
@@ -259,7 +259,7 @@
 	coefficient for the residuals of the last model. After estimating
 	a model via the <lit>ar</lit> command, the syntax
 	<lit>$rho(n)</lit> returns the corresponding estimate of <equation
-	  status="inline" ascii="" graphic="" tex="$\rho(n)$"/>.
+	  status="inline" ascii="rho(n)" graphic="" tex="$\rho(n)$"/>.
       </para>
     </description>
   </function>
@@ -267,7 +267,7 @@
   <function name="$rsq" output="scalar">
     <description>
       <para>
-	Returns the unadjusted <equation status="inline" ascii=""
+	Returns the unadjusted <equation status="inline" ascii="R^2"
 	graphic="" tex="$R^2$"/>
 	from the last estimated model.
       </para>
@@ -351,7 +351,7 @@
   <function name="$trsq" output="scalar">
     <description>
       <para>
-	<equation status="inline" ascii="" graphic="" 
+	<equation status="inline" ascii="T*R^2" graphic="" 
 	  tex="$T\cdot R^2$"/> (sample size times
 	R-squared) in the last model.
       </para>
@@ -387,9 +387,9 @@
 	arguments, it returns a square matrix containing the estimated
 	covariance matrix for the coefficients of the last model. With the
 	optional arguments, it returns a scalar, which is the estimated
-	covariance between the parameters named <equation status="inline"
-	  ascii="" graphic="" tex="$s_1$ and $s_2$"/> (see also 
-	<fncref targ="$coeff"/> and <fncref targ="$stderr"/>).
+	covariance between the parameters named <argname>s1</argname> and
+	<argname>s2</argname>.  See also <fncref targ="$coeff"/> and 
+	<fncref targ="$stderr"/>).
       </para>
       <para>
 	If the <quote>model</quote> in question is actually a system (a
@@ -466,10 +466,9 @@
 	Complex division. The two arguments must have the same number of
 	rows, <mathvar>n</mathvar>, and either one or two columns.  The
 	first column contains the real part and the second (if present)
-	the imaginary part.  The return value is an 
-	<equation status="inline" ascii="" graphic="" tex="$n \times 2$"/> 
-	  matrix, or, if the result has no imaginary part, an
-	  <mathvar>n</mathvar>-vector. See also <fncref targ="cmult"/>.
+	the imaginary part.  The return value is an <mathvar>n</mathvar>
+	by 2 matrix or, if the result has no imaginary part, an
+	<mathvar>n</mathvar>-vector. See also <fncref targ="cmult"/>.
       </para>
     </description>
   </function>
@@ -495,11 +494,11 @@
       <para>
 	Peforms a Cholesky decomposition of the matrix
 	<mathvar>A</mathvar>, which is assumed to be symmetric and
-	positive semi-definite. The result is a lower-triangular matrix
+	positive definite. The result is a lower-triangular matrix
 	<mathvar>K</mathvar> which satisfies <equation status="inline"
-	  ascii="" graphic="" tex="$ A = KK'$"/>. The function
-	  will silently fail if <mathvar>A</mathvar> is not symmetric
-	  and/or positive semi-definite.
+	  ascii="A = KK'" graphic="" tex="$A = KK'$"/>. The function will
+	fail if <mathvar>A</mathvar> is not symmetric and/or not positive
+	definite.
       </para>
     </description>
   </function>
@@ -514,11 +513,10 @@
 	Complex multiplication. The two arguments must have the same
 	number of rows, <mathvar>n</mathvar>, and either one or two
 	columns.  The first column contains the real part and the second
-	(if present) the imaginary part.  The return value is an <equation
-	  status="inline" ascii="" graphic="" tex="$n \times 2$"/>
-	  matrix, or, if the result
-	  has no imaginary part, an <mathvar>n</mathvar>-vector. See also
-	  <fncref targ="cdiv"/>.
+	(if present) the imaginary part.  The return value is an 
+	<mathvar>n</mathvar> by 2 matrix, or, if the result has no
+	imaginary part, an <mathvar>n</mathvar>-vector. See also
+	<fncref targ="cdiv"/>.
       </para>
     </description>
   </function>

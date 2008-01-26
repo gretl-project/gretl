@@ -34,10 +34,13 @@ CHAPDIR_ES = $(topsrc)/doc/chapters_es
 SHAREDIR = $(topsrc)/share
 
 CMDDTD = $(CMDSDIR)/gretl_commands.dtd
+GENDTD = $(CMDSDIR)/genr_funcs.dtd
 
 CMDSRC = $(CMDSDIR)/gretl_commands.xml \
 	$(CMDSDIR)/gretl_commands_es.xml \
 	$(CMDSDIR)/gretl_commands_it.xml
+	
+GENSRC = $(CMDSDIR)/genr_funcs.xml	
 
 MANXSL = $(CMDSDIR)/gretlman.xsl
 HLPXSL = $(CMDSDIR)/gretltxt.xsl \
@@ -125,7 +128,7 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
 	touch $@
 
-$(GENSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) 
+$(GENSTAMP): xsltrans reflow $(GENSRC) $(GENDTD) $(HLPXSL) $(XMLSTRS) 
 	./xsltrans --genr --markup $(CMDSDIR)/genr_funcs.xml && \
 	./reflow < genrcli.txt > $(SHAREDIR)/genrcli.hlp
 	if test -f genrgui.txt ; then \
