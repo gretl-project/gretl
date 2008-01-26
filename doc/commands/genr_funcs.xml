@@ -298,8 +298,7 @@
     </description>
   </function>
 
-
-<function name="$stopwatch" output="scalar">
+  <function name="$stopwatch" output="scalar">
     <description>
       <para>
 	Must follow a <lit>set stopwatch</lit> command, which activates
@@ -311,7 +310,7 @@
 	invocation.
       </para>
     </description>
-</function>
+  </function>
 
   <function name="$T" output="scalar">
     <description>
@@ -320,7 +319,6 @@
       </para>
     </description>
   </function>
-
 
   <function name="$t1" output="scalar">
     <description>
@@ -437,7 +435,7 @@
       <para>
 	Extracts the cyclical component of series <mathvar>y</mathvar> via
 	the Baxter&ndash;King bandpass filter, a two-sided symmetric
-	filter. See XXX for details; see also <fncref targ="hpfilt"/>.
+	filter. See FIXME for details; see also <fncref targ="hpfilt"/>.
       </para>
     </description>
   </function>
@@ -1189,7 +1187,7 @@
 	Returns an <mathvar>n</mathvar> by <mathvar>n</mathvar > 
 	lower triangular matrix <mathvar>B</mathvar> for
 	which
-	<equation status="inline" ascii="XXX" graphic="" 
+	<equation status="inline" ascii="FIXME" graphic="" 
 	  tex="$B_{ij} = A_{ij}$ if $i \ge j$"/>, and 0 otherwise. 
 	See also <fncref targ="upper"/>.
       </para>
@@ -1206,7 +1204,7 @@
 	Returns the long-run variance of <argname>y</argname>, calculated
 	using a Bartlett kernel with window size <argname>k</argname>. In
 	formulae:
-	<equation status="display" ascii="" graphic=""
+	<equation status="display" ascii="FIXME" graphic=""
 	  tex="\[
 	  \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k} 
 	  \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - 

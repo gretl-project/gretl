@@ -21,6 +21,9 @@
  <gentext key="scalar"        text="scalar"/>
  <gentext key="series"        text="series"/>
  <gentext key="matrix"        text="matrix"/>
+ <gentext key="smatrix"       text="square matrix"/>
+ <gentext key="cvec"          text="column vector"/>
+ <gentext key="rvec"          text="row vector"/>
  <gentext key="list"          text="list"/>
  <gentext key="string"        text="string"/>
  <gentext key="coeffname"     text="name of coefficient"/>
