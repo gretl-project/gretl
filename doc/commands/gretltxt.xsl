@@ -420,6 +420,21 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template match="fncref">
+  <xsl:choose>
+    <xsl:when test="$xrefs='true'">
+      <xsl:text>&lt;@ref="</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>"&gt;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>"</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>"</xsl:text>      
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template match="guideref">
   <xsl:if test="$xrefs='true'">
     <xsl:text>&lt;@pdf="</xsl:text>

@@ -42,7 +42,8 @@
 
 <!ELEMENT fnarg (#PCDATA)>
 <!ATTLIST fnarg 
-    type      (scalar | series | matrix | anyfloat | list | coeffname) "series"
+    type      (scalar | series | matrix | anyfloat | series-or-vec | 
+               list | coeffname) "series"
     optional  (true | false) "false"
     alternate (true | false) "false"
 >
@@ -60,7 +61,7 @@
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref| fncref | tabref | 
-                footnote | cmd)*>
+                footnote | argname | cmd)*>
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>
 <!ELEMENT code (#PCDATA)>
@@ -116,6 +117,7 @@
 >
 
 <!ELEMENT repl     (#PCDATA)>
+<!ELEMENT argname  (#PCDATA)>
 <!ELEMENT program  (#PCDATA)>
 <!ELEMENT lit      (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>

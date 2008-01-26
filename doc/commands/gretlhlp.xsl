@@ -439,6 +439,12 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="fncref">
+  <xsl:text>&lt;@ref="</xsl:text>
+  <xsl:value-of select="@targ"/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="guideref">
   <xsl:text>&lt;@pdf="</xsl:text>
   <xsl:call-template name="gettext-nospace">

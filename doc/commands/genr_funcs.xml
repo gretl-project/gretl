@@ -454,4 +454,223 @@
     </description>
   </function>
 
+  <!-- cdf -->
+
+  <function name="cdiv" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="matrix">Y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Complex division. The two arguments must have the same number of
+	rows, <mathvar>n</mathvar>, and either one or two columns.  The
+	first column contains the real part and the second (if present)
+	the imaginary part.  The return value is an 
+	<equation status="inline" ascii="" graphic="" tex="$n \times 2$"/> 
+	  matrix, or, if the result has no imaginary part, an
+	  <mathvar>n</mathvar>-vector. See also <fncref targ="cmult"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ceil" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Ceiling function: returns the smallest integer greater than or
+	equal to <mathvar>x</mathvar>. See also <fncref targ="floor"/> and
+	<fncref targ="int"/>.
+      </para>
+    </description>
+  </function>  
+
+  <function name="cholesky" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Peforms a Cholesky decomposition of the matrix
+	<mathvar>A</mathvar>, which is assumed to be symmetric and
+	positive semi-definite. The result is a lower-triangular matrix
+	<mathvar>K</mathvar> which satisfies <equation status="inline"
+	  ascii="" graphic="" tex="$ A = KK'$"/>. The function
+	  will silently fail if <mathvar>A</mathvar> is not symmetric
+	  and/or positive semi-definite.
+      </para>
+    </description>
+  </function>
+
+  <function name="cmult" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="matrix">Y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Complex multiplication. The two arguments must have the same
+	number of rows, <mathvar>n</mathvar>, and either one or two
+	columns.  The first column contains the real part and the second
+	(if present) the imaginary part.  The return value is an <equation
+	  status="inline" ascii="" graphic="" tex="$n \times 2$"/>
+	  matrix, or, if the result
+	  has no imaginary part, an <mathvar>n</mathvar>-vector. See also
+	  <fncref targ="cdiv"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="cnorm" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the cumulative distribution function for a standard
+	normal. See also <fncref targ="dnorm"/> and <fncref targ="qnorm"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="cols" output="scalar">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Number of columns of <mathvar>X</mathvar>. See also <fncref
+	  targ="mshape"/>, <fncref targ="rows"/>,
+	<fncref targ="unvech"/>, <fncref targ="vec"/> and 
+	<fncref targ="vech"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="corr" output="scalar">
+    <fnargs>
+      <fnarg type="series">y1</fnarg>
+      <fnarg type="series">y2</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes the correlation coefficient between <argname>y1</argname>
+	and <argname>y2</argname>. See also <fncref targ="cov"/>, <fncref
+	  targ="mcov"/> and <fncref targ="mcorr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="cos" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Cosine.
+      </para>
+    </description>
+  </function>
+
+  <function name="cov" output="scalar">
+    <fnargs>
+      <fnarg type="series">y1</fnarg>
+      <fnarg type="series">y2</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes the covariance between <argname>y1</argname> and
+	<argname>y2</argname>. See also <fncref targ="corr"/>, 
+	<fncref targ="mcov"/> and <fncref targ="mcorr"/>.
+      </para>
+    </description>
+  </function>
+
+  <!-- critical -->
+
+  <function name="cum" output="series">
+    <fnargs>
+      <fnarg type="series">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Cumulates <argname>x</argname>. That is, produces a series $S_t =
+	\sum_{s=m}^t x_s$. The starting point <mathvar>m</mathvar> is the
+	first non-missing observation of the currently selected sample. If
+	any missing values are encountered in <mathvar>x</mathvar>,
+	subsequent values of <mathvar>y</mathvar> will be set to missing.
+	See also <fncref targ="diff"/>.
+      </para>
+    </description>
+  </function>
+
+
+  <function name="det" output="scalar">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the determinant of <argname>A</argname>, computed via the
+	LU factorization. See also <fncref targ="ldet"/> and <fncref
+	  targ="rcond"/>.
+      </para>
+    </description>
+  </function>  
+
+  <function name="diag" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the principal diagonal of <argname>X</argname> in a column
+	vector. Note: if <argname>X</argname> is an <mathvar>m</mathvar>
+	by <mathvar>n</mathvar> marix, the number of elements of the
+	output vector is min(<mathvar>m</mathvar>, <mathvar>n</mathvar>).
+	See also <fncref targ="tr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="diff" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes first differences; starting values are set to
+	<lit>NA</lit>.
+      </para>
+    </description>
+  </function>
+
+  <function name="dnorm" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the density function for a standard normal. See also
+	<fncref targ="cnorm"/> and <fncref targ="qnorm"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="dsort" output="asinput">
+    <fnargs>
+      <fnarg type="series-or-vec">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Sorts <argname>x</argname> in ascending order, skipping
+	observations with missing values when <argname>x</argname> is a
+	series. See also <fncref targ="sort"/> and 
+	<fncref targ="values"/>.
+      </para>
+    </description>
+  </function>
+
 </funclist>
