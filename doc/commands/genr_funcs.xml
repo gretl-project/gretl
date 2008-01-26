@@ -136,7 +136,7 @@
     </description>
   </function>
 
-  <function name="$jvbeta" output="matrix">
+  <function name="$jvbeta" output="smatrix">
     <description>
       <para>
 	Must follow the estimation of a VECM, and returns the estimated
@@ -452,7 +452,16 @@
     </description>
   </function>
 
-  <!-- cdf -->
+  <function name="cdf" output="FIXME">
+    <fnargs>
+      <fnarg type="FIXME">FIXME</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	FIXME
+      </para>
+    </description>
+  </function>
 
   <function name="cdiv" output="matrix">
     <fnargs>
@@ -484,9 +493,9 @@
     </description>
   </function>  
 
-  <function name="cholesky" output="matrix">
+  <function name="cholesky" output="smatrix">
     <fnargs>
-      <fnarg type="matrix">A</fnarg>
+      <fnarg type="smatrix">A</fnarg>
     </fnargs>
     <description>
       <para>
@@ -605,7 +614,7 @@
 
   <function name="det" output="scalar">
     <fnargs>
-      <fnarg type="matrix">A</fnarg>
+      <fnarg type="smatrix">A</fnarg>
     </fnargs>
     <description>
       <para>
@@ -671,7 +680,7 @@
 
   <function name="eigengen" output="matrix">
     <fnargs>
-      <fnarg type="matrix">A</fnarg>
+      <fnarg type="smatrix">A</fnarg>
       <fnarg type="matrix">&amp;U or null</fnarg>
     </fnargs>
     <description>
@@ -725,6 +734,35 @@
       <para>
 	  See also <fncref targ="eigensym"/>,
 	<fncref targ="qrdecomp"/> and <fncref targ="svd"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="eigensym" output="cvec">
+    <fnargs>
+      <fnarg type="smatrix">A</fnarg>
+      <fnarg type="matrix">&amp;U or null</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes the eigenvalues, and optionally the right eigenvectors,
+	of the <mathvar>n</mathvar> by <mathvar>n</mathvar> symmetrix
+	matrix <argname>A</argname>; the second argument must be either
+	the name of an existing matrix preceded by <lit>&amp;</lit> (to
+	indicate the <quote>address</quote> of the matrix in question), in
+	which case an auxiliary result is written to that matrix, or the
+	keyword <lit>null</lit>, in which case the auxiliary result is not
+	produced.
+      </para>
+      <para>
+	If the second argument is not <lit>null</lit>, the specified
+	matrix will be over-written with the auxiliary result.  (It is not
+	required that the existing matrix be of the right dimensions to
+	receive the result.)
+      </para>
+      <para>
+	See also <fncref targ="eigengen"/>, <fncref targ="qrdecomp"/> and
+	<fncref targ="svd"/>.
       </para>
     </description>
   </function>
@@ -901,7 +939,7 @@
     </description>
   </function>
 
-  <function name="I" output="matrix">
+  <function name="I" output="smatrix">
     <fnargs>
       <fnarg type="scalar">n</fnarg>
     </fnargs>
@@ -913,7 +951,7 @@
     </description>
   </function>
 
-  <function name="imaxc" output="matrix">
+  <function name="imaxc" output="rvec">
     <fnargs>
       <fnarg type="matrix">X</fnarg>
     </fnargs>
@@ -926,7 +964,7 @@
     </description>
   </function>
 
-  <function name="imaxr" output="matrix">
+  <function name="imaxr" output="cvec">
     <fnargs>
       <fnarg type="matrix">X</fnarg>
     </fnargs>    
@@ -939,7 +977,7 @@
     </description>
   </function>
 
-  <function name="iminc" output="matrix">
+  <function name="iminc" output="rvec">
     <fnargs>
       <fnarg type="matrix">X</fnarg>
     </fnargs>    
@@ -953,7 +991,7 @@
     </description>
   </function>
 
-  <function name="iminr" output="matrix">
+  <function name="iminr" output="cvec">
     <fnargs>
       <fnarg type="matrix">X</fnarg>
     </fnargs>    
@@ -1004,7 +1042,7 @@
 
   <function name="inv" output="matrix">
     <fnargs>
-      <fnarg type="matrix">A</fnarg>
+      <fnarg type="smatrix">A</fnarg>
     </fnargs>  
     <description>
       <para>
@@ -1111,7 +1149,7 @@
 
   <function name="ldet" output="scalar">
     <fnargs>
-      <fnarg type="matrix">A</fnarg>
+      <fnarg type="smatrix">A</fnarg>
     </fnargs>
     <description>
       <para>
@@ -1178,7 +1216,7 @@
     </description>
   </function>
 
-  <function name="lower" output="matrix">
+  <function name="lower" output="smatrix">
     <fnargs>
       <fnarg type="matrix">A</fnarg>
     </fnargs>
@@ -1217,7 +1255,7 @@
     </description>
   </function>
 
-  <function name="makemask" output="matrix">
+  <function name="makemask" output="cvec">
     <fnargs>
       <fnarg type="series">y</fnarg>
     </fnargs>
@@ -1243,5 +1281,814 @@
     </description>
   </function>
 
+  <function name="maxc" output="rvec">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the maxima of the columns of <argname>X</argname>. See
+	also <fncref targ="imaxc"/>, <fncref targ="maxr"/> and 
+	<fncref targ="minc"/>.
+      </para>
+    </description>
+  </function>
 
+  <function name="maxr" output="cvec">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the maxima of the rows of <argname>X</argname>. See also
+	<fncref targ="imaxr"/>, <fncref targ="maxc"/> and 
+	<fncref targ="minr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mcorr" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes a correlation matrix treating each column of
+	<argname>X</argname> as a variable. See also <fncref
+	  targ="corr"/>, <fncref targ="cov"/> and
+	<fncref targ="mcov"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mcov" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes a covariance matrix treating each column of
+	<argname>X</argname> as a variable. See also <fncref
+	  targ="corr"/>, <fncref targ="cov"/> and
+	<fncref targ="mcorr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mean" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Sample mean of the non-missing observations in series
+	<argname>y</argname>.
+      </para>
+    </description>
+  </function>
+
+  <function name="meanc" output="rvec">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the means of the columns of <argname>X</argname>. See also
+	<fncref targ="meanr"/>, <fncref targ="sumc"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="meanr" output="cvec">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the means of the rows of <argname>X</argname>. See also
+	<fncref targ="meanc"/>, <fncref targ="sumr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="median" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Median of the non-missing observations in series
+	<argname>y</argname>. See also <fncref targ="quantile"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mexp" output="smatrix">
+    <fnargs>
+      <fnarg type="smatrix">A</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Matrix exponential,
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[
+	  e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!} = 
+	  \frac{I}{0!} + \frac{A}{1!}
+	  + \frac{A^2}{2!} + \frac{A^3}{3!} + \cdots"
+	  /> (This series is sure to converge.) The algorithm used is
+	11.3.1 from Golub and Van Loan, <book>Matrix Computations</book>,
+	3rd ed.
+      </para>
+    </description>
+  </function>
+
+  <function name="min" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Minimum of the non-missing observations in series
+	<argname>y</argname>.
+      </para>
+    </description>
+  </function>
+
+  <function name="minc" output="rvec">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the minima of the columns of <argname>X</argname>. See
+	also <fncref targ="iminc"/>, <fncref targ="maxc"/> and 
+	<fncref targ="minr"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="minr" output="cvec">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the minima of the rows of <argname>X</argname>. See 
+	also <fncref targ="iminr"/>, <fncref targ="maxr"/> and 
+	<fncref targ="minc"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="missing" output="asinput">
+    <fnargs>
+      <fnarg type="scalar-or-series">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns a binary variable holding 1 if <argname>x</argname> is
+	<lit>NA</lit>. If <argname>x</argname> is a series, the comparison
+	is done element by element. See also <fncref targ="misszero"/>, 
+	<fncref targ="ok"/> and <fncref targ="zeromiss"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="misszero" output="asinput">
+    <fnargs>
+      <fnarg type="scalar-or-series">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is a
+	series, the conversion is done element by element. See also
+	<fncref targ="missing"/>, <fncref targ="ok"/> and
+	<fncref targ="zeromiss"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mlag" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="scalar">p</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Shifts up or down the elements of <argname>X</argname>. If
+	<argname>p</argname> &gt; 0 the returned matrix
+	<mathvar>Y</mathvar> has as its typical element
+ 	<equation status="inline" ascii="FIXME" graphic="" 
+	  tex="$Y_{i,j} = X_{i-p,j}$
+	  for $i \ge p$"/>, and zero otherwise. In other words, the
+	columns of <argname>X</argname> are shifted down by
+	<argname>p</argname> rows and the first <argname>p</argname> rows
+	are filled with zeros. If <argname>p</argname> is a negative
+	number, <argname>X</argname> is shifted up and the last rows are
+	filled with zeros.
+      </para>
+    </description>
+  </function>
+
+  <function name="mnormal" output="matrix">
+    <fnargs>
+      <fnarg type="scalar">r</fnarg>
+      <fnarg type="scalar">c</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns a matrix with <argname>r</argname> rows and
+	<argname>c</argname> columns, filled with standard normal
+	pseudo-random variates. See also <fncref targ="normal"/> and
+	<fncref targ="muniform"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mols" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">Y</fnarg>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="matrix">&amp;U or null</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the OLS estimates obtained by regressing the
+	<mathvar>T</mathvar> by <mathvar>n</mathvar> matrix
+	<argname>Y</argname> on the <mathvar>T</mathvar> by
+	<mathvar>k</mathvar> matrix <argname>X</argname> The Cholesky
+	decomposition is used. If the third argument is not
+	<lit>null</lit>, the matrix <argname>U</argname> will contain the
+	residuals.
+      </para>
+    </description>
+  </function>
+
+  <function name="mread" output="matrix">
+    <fnargs>
+      <fnarg type="string">s</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Reads a matrix from a text file. The string <argname>s</argname>
+	must contain the name of the (plain text) file from which the
+	matrix is to be read. The file in question must conform to the
+	following rules:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    The columns must be separated by spaces or tab characters.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The decimal separator must be the dot character,
+	    <quote><lit>.</lit></quote>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The first line in the file must contain two integers,
+	    separated by a space or a tab, indicating the number of rows
+	    and columns, respectively.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Should an error occur (such as the file being badly formatted or
+	inaccessible), an empty matrix is returned.
+      </para>
+      <para>
+	See also <fncref targ="mwrite"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mshape" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="scalar">r</fnarg>
+      <fnarg type="scalar">c</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	This function rearranges the elements of <argname>X</argname> into
+	a matrix with <argname>r</argname> rows and <argname>c</argname>
+	columns.  Elements are read from <argname>X</argname> and written
+	to the target in column-major order.  If <argname>X</argname>
+	contains fewer than 
+	<equation status="inline" ascii="k = r*c" graphic=""
+	  tex="$k=r \cdot c$"/> elements, the elements are repeated
+	cyclically; otherwise, if <argname>X</argname> has more elements,
+	only the first <mathvar>k</mathvar> are used.
+      </para>
+      <para>
+	See also
+	<fncref targ="cols"/>, <fncref targ="rows"/>, 
+	<fncref targ="unvech"/>, <fncref targ="vec"/> and 
+	<fncref targ="vech"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="muniform" output="matrix">
+    <fnargs>
+      <fnarg type="scalar">r</fnarg>
+      <fnarg type="scalar">c</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns a matrix with <argname>r</argname> rows and
+	<argname>c</argname> columns, filled with uniform (0,1)
+	pseudo-random variates. Note: the preferred method for generating
+	a scalar uniform r.v. is recasting the output of
+	<lit>muniform</lit> to a scalar, as in 
+      </para>
+      <code>
+	scalar x = muniform(1,1)
+      </code>
+      <para>
+      See also <fncref targ="mnormal"/> and <fncref targ="uniform"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mwrite" output="scalar">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="string">s</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Writes the matrix <argname>X</argname> to a plain text file named
+	<argname>s</argname>. The file will contain on the first line two
+	integers, separated by a tab character, with the number of rows
+	and columns; on the next lines, the matrix elements in scientific
+	notation, separated by tabs (one line per row).
+      </para>
+      <para>
+	If file <argname>s</argname> already exists, it will be
+	overwritten. The return value is 0 on successful completion; if an
+	error occurs, such as the file being unwritable, the return value
+	will be non-zero.
+      </para>
+      <para>
+	Matrices stored via the <lit>mwrite</lit> command can be easily read
+	by other programs; see FIXME for details.
+      </para>
+      <para>
+	See also <fncref targ="mread"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="mxtab" output="matrix">
+    <fnargs>
+      <fnarg type="series-or-vec">x</fnarg>
+      <fnarg type="series-or-vec">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns a matrix holding the cross tabulation of the values
+	contained in <argname>x</argname> (by row) and
+	<argname>y</argname> (by column). The two arguments should be of
+	the same type (both series or both column vectors), and because of
+	the typical usage of this function, are assumed to contain integer
+	values only.
+      </para>
+      <para>
+	See also <fncref targ="values"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="nelem" output="scalar">
+    <fnargs>
+      <fnarg type="list">L</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the number of items in list <argname>L</argname>.
+      </para>
+    </description>
+  </function>
+
+  <function name="nobs" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the number of non-missing observations for the variable
+	<argname>y</argname> in the currently selected sample.
+      </para>
+    </description>
+  </function>
+
+  <function name="normal" output="series">
+    <fnargs>
+      <fnarg type="scalar">&mu;</fnarg>
+      <fnarg type="scalar">&sigma;</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Generates a series of Gaussian pseudo-random variates with mean
+	&mu; and standard deviation &sigma;. If no arguments are supplied,
+	standard normal variates <mathvar>N(0,1)</mathvar> are produced.
+      </para>
+      <para>
+	See also <fncref targ="randgen"/>, <fncref targ="normal"/>, 
+	<fncref targ="poisson"/>, <fncref targ="mnormal"/> and
+	<fncref targ="muniform"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="nullspace" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">A</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes the right nullspace of <argname>A</argname>, via the
+	singular value decomposition: the result is a matrix
+	<mathvar>B</mathvar> such that <mathvar>AB = [0]</mathvar>, except
+	when <argname>A</argname> has full column rank, in which case an
+	empty matrix is returned. Otherwise, if <argname>A</argname> is
+	<mathvar>m</mathvar> by <mathvar>n</mathvar>, <mathvar>B</mathvar>
+	will be <mathvar>n</mathvar> by <mathvar>(n-r)</mathvar>, where
+	<mathvar>r</mathvar> is the rank of <argname>A</argname>.
+	FIXME notation?
+      </para>
+      <para>
+	See also <fncref targ="rank"/> and <fncref targ="svd"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="obs" output="series">
+    <description>
+      <para>
+	Returns a series of consecutive integers, setting 1 at the start
+	of the dataset. Note that the result is invariant to subsampling.
+	This function is especially useful with time-series datasets.
+	Note: you can write <lit>t</lit> instead of <lit>obs</lit> with
+	the same effect.
+      </para>
+      <para>
+	See also <fncref targ="obsnum"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="obsnum" output="scalar">
+    <fnargs>
+      <fnarg type="string">s</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns an integer corresponding to the observation specified by
+	the string <mathvar>s</mathvar>. Note that the result is invariant
+	to subsampling. This function is especially useful with
+	time-series datasets.  For example, the following code
+      </para>
+      <code>
+	open denmark 
+	k = obsnum(1980:1)
+      </code>
+      <para>
+	yields <lit>k = 25</lit>, indicating that the observation for the
+	first quarter of 1980 is the 25th observation in the
+	<lit>denmark</lit> dataset.
+      </para>
+      <para>
+	See also <fncref targ="obs"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ok" output="asinput">
+    <fnargs>
+      <!-- list, scalar or series -->
+      <fnarg type="scalar-or-series">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns a binary variable holding 1 if <mathvar>x</mathvar> is not
+	<lit>NA</lit>. If <mathvar>x</mathvar> is a series, the comparison
+	is done element by element. If <mathvar>x</mathvar> is a list of
+	series, the output is a series with 0 at the observations for
+	which at least one series in the list is missing, and 1 otherwise.
+	FIXME list argument.
+      </para>
+      <para>
+	See also <fncref targ="missing"/>, <fncref targ="misszero"/> and
+	<fncref targ="zeromiss"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="onenorm" output="scalar">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the 1-norm of the <mathvar>r</mathvar> by
+	<mathvar>c</mathvar> matrix <argname>X</argname>: 
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[|| X ||_1 = \max_j \sum_{i=1}^r |X_{ij}|"
+	  />
+      </para>
+      <para>
+	See also <fncref targ="infnorm"/> and <fncref targ="rcond"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ones" output="matrix">
+    <fnargs>
+      <fnarg type="scalar">r</fnarg>
+      <fnarg type="scalar">c</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Outputs a matrix with <mathvar>r</mathvar> rows and
+	<mathvar>c</mathvar> columns, filled with ones.
+      </para>
+      <para>
+	See also <fncref targ="seq"/> and <fncref targ="zeros"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="orthdev" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Only applicable if the currently open dataset has a panel
+	structure. Computes the forward orthogonal deviations for variable
+	<argname>y</argname>, that is
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[
+	  \tilde{y}_{i,t} = \sqrt{ \frac{T_i - t + 1}{T_i - t}} 
+	  \left( y_{i,t} - \frac{1}{T_i - t - 1}
+	  \sum_{s=t+1}^{T_i} y_{i,s} \right)" />
+	This transformation is sometimes used instead of differencing to
+	remove individual effects from panel data. 
+      </para>
+      <para>
+	See also <fncref targ="diff"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="pmean" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Only applicable if the currently open dataset has a panel
+	structure. Computes the per-unit mean for variable
+	<argname>y</argname>, that is
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[
+	  \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}"
+	  />
+	  <equation status="inline" ascii="T_i" graphic="" tex="$T_i$"/> is
+	  the number of valid observations for unit <mathvar>i</mathvar>.
+	  Missing values are skipped.
+      </para>
+      <para>
+	See also <fncref targ="psd"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="poisson" output="series">
+    <fnargs>
+      <fnarg type="scalar-or-series">&mu;</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Generates a series of Poisson pseudo-random variates. If &mu; is a
+	scalar, all the elements are drawn from the same distribution 
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[ P(x_t = a) = e^{-\mu} \frac{\mu^{a}}{a!} \]"
+	  />
+	Otherwise, if &mu; is a series, the above becomes
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[ P(x_t = a) = e^{-\mu_t} \frac{\mu_t^{a}}{a!} \]"
+	  />
+      </para>
+      <para>
+	See also <fncref targ="randgen"/>, <fncref targ="normal"/>, 
+	<fncref targ="uniform"/>, <fncref targ="mnormal"/> and 
+	<fncref targ="muniform"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="princomp" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="scalar">p</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Let the matrix <argname>X</argname> be <mathvar>T</mathvar> by
+	<mathvar>k</mathvar>, containing <mathvar>T</mathvar> observations
+	on <mathvar>k</mathvar> variables.  The argument
+	<argname>p</argname> must be a positive integer less than or equal
+	to <mathvar>k</mathvar>. This function returns a
+	<mathvar>T</mathvar> by <mathvar>p</mathvar> matrix,
+	<mathvar>P</mathvar>, holding the first <mathvar>p</mathvar>
+	principal components of <argname>X</argname>.
+      </para>
+      <para>
+	The elements of <mathvar>P</mathvar> are computed as
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \]"
+	  />
+	where 
+	<equation status="inline" ascii="FIXME" graphic="" tex="$Z_{ti}$"/> 
+	is the standardized value of variable <mathvar>i</mathvar> at
+	observation <mathvar>t</mathvar>, 
+	<equation status="inline" ascii="FIXME" graphic="" 
+	  tex="$Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$"/>, and
+	<equation status="inline" ascii="v^(j)" graphic="" tex="$v^{(j)}$"/> 
+	is the <mathvar>j</mathvar>th eigenvector of the correlation 
+	matrix of the
+	<equation status="inline" ascii="X_i" graphic="" tex="$X_i$"/>s, 
+	with the eigenvectors ordered by decreasing value of the
+	corresponding eigenvalues.
+      </para>	
+      <para>
+	See also <fncref targ="eigensym"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="psd" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Only applicable if the currently open dataset has a panel
+	structure. Computes the per-unit sample standard deviation for
+	variable <mathvar>y</mathvar>, that is
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[
+	  \sigma_i = \sqrt{ \frac{1}{T_i - 1} \sum_{t=1}^{T_i} (y_{i,t} -
+	  \bar{y}_i)^2 } \]"
+	  /> The above formula holds for 
+	<equation status="inline" ascii="T_i &gt; 2"
+	  graphic="" tex="$T_i \ge 2$"/>, where 
+	<equation status="inline" ascii="T_i" graphic=""
+	  tex="$T_i$"/> is the number of valid observations for unit
+	<mathvar>i</mathvar>; if 
+	<equation status="inline" ascii="T_i = 0" 
+	  graphic="" tex="$T_i = 0$"/>, <lit>NA</lit> is returned; if 
+	<equation status="inline" ascii="T_i = 1" graphic="" 
+	  tex="$T_i = 1$"/>, 0 is returned. Note: this function makes it
+	possible to check whether a given variable (say, <lit>X</lit>) is
+	time-invariant via the condition <lit>max(psd(X)) = 0</lit>.
+      </para>
+      <para>
+	See also <fncref targ="pmean"/>.
+      </para>
+    </description>
+  </function>
+
+  <!-- pvalue -->
+
+  <function name="qform" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">x</fnarg>
+      <fnarg type="symmat">A</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes the quadratic form 
+	<equation status="inline" ascii="Y = xAx'"
+	  graphic="" tex="$Y = x A x'$"/>. Using this function instead of
+	ordinary matrix multiplication guarantees more speed and better
+	accuracy. If <argname>x</argname> and <argname>A</argname> are not
+	conformable, or <argname>A</argname> is not symmetric, an error is
+	returned.
+      </para>
+    </description>
+  </function>
+
+  <function name="qnorm" output="asinput">
+    <fnargs>
+      <fnarg type="anyfloat">x</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the quantiles for a standard normal. If
+	<argname>x</argname> is not between 0 and 1, <lit>NA</lit> is
+	returned. See also <fncref targ="cnorm"/> and
+	<fncref targ="dnorm"/>.
+      </para>
+    </description>
+  </function>  
+
+  <function name="qrdecomp" output="matrix">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+      <fnarg type="matrix">&amp;R or null</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Computes the QR decomposition of an <mathvar>m</mathvar> by
+	<mathvar>n</mathvar> matrix <argname>X</argname>, that is
+	<mathvar>X = QR</mathvar> where <mathvar>Q</mathvar> is an
+	<mathvar>m</mathvar> by <mathvar>n</mathvar> orthogonal matrix and
+	<mathvar>R</mathvar> is an <mathvar>n</mathvar> by
+	<mathvar>n</mathvar> upper triangular matrix. The matrix
+	<mathvar>Q</mathvar> is returned directly, while
+	<mathvar>R</mathvar> can be retrieved via the 
+	optional second argument.
+      </para>
+      <para>
+	See also <fncref targ="eigengen"/>, <fncref targ="eigensym"/> 
+	and <fncref targ="svd"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="quantile" output="scalar">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+      <!-- scalar between 0 and 1 -->
+      <fnarg type="scalar">p</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the <argname>p</argname>-quantile for the series
+	<argname>y</argname>. For example, when <mathvar>p =
+	  0.5</mathvar>, the median is returned. The exact algorithm
+	employed is the following: let <mathvar>n</mathvar> be the number
+	of non-missing values in <argname>y</argname> and
+	let <mathvar>k</mathvar> be the integer part of
+	<equation status="inline"
+	  ascii="n*p" graphic="" tex="$n \cdot p$"/>. 
+	Then the return value <mathvar>q</mathvar> is defined as:
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\]"
+	  />
+	  where 
+	<equation status="inline" ascii="" graphic="" 
+	  tex="$y_{[i]}$" />
+	  is the <mathvar>i</mathvar>-th element of 
+	<mathvar>y<sub>i</sub></mathvar>
+	sorted from smallest to largest.
+      </para>
+    </description>
+  </function>
+
+  <function name="rank" output="scalar">
+    <fnargs>
+      <fnarg type="matrix">X</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns the rank of <argname>X</argname>, numerically computed via
+	the singular value decomposition. See also <fncref targ="svd"/>.
+      </para>
+    </description>
+  </function>
+
+  <function name="ranking" output="series">
+    <fnargs>
+      <fnarg type="series">y</fnarg>
+    </fnargs>
+    <description>
+      <para>
+	Returns a series with the ranks of <mathvar>y</mathvar>. These are
+	defined as
+	<equation status="display" ascii="FIXME" graphic=""
+	  tex="\[
+	  \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} 
+	  \left[ \mathbb{I}(y_j &lt; y_i) +
+	  0.5 \cdot \mathbb{I}(y_j = y_i) \right]\]" /> that is: the rank
+	for observation <mathvar>i</mathvar> is the number of elements in
+	the series that are less than <mathvar>y<sub>i</sub></mathvar>
+	plus one half the number of elements in the series that are equal
+	to <mathvar>y<sub>i</sub></mathvar>. (Intuitively, you may think
+	of chess points, where victory gives you one point and a draw
+	gives you half a point.) One is added so the lowest rank is 1
+	instead of 0.
+      </para>
+      <para>
+	See also <fncref targ="sort"/> and <fncref targ="sortby"/>.
+      </para>
+    </description>
+  </function>
 </funclist>
