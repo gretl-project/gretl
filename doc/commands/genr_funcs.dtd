@@ -43,9 +43,9 @@
 
 <!ELEMENT fnarg (#PCDATA)>
 <!ATTLIST fnarg 
-    type      (scalar | series | matrix | smatrix | symmat | 
+    type      (scalar | series | vector | matrix | smatrix | symmat | 
                anyfloat | scalar-or-series | series-or-vec | 
-               list | coeffname | string) "series"
+               list | coeffname | string | char | seebelow) "series"
     optional  (true | false) "false"
     alternate (true | false) "false"
 >

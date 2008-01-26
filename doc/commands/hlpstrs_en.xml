@@ -21,6 +21,7 @@
  <gentext key="asinput"       text="same type as input"/>
  <gentext key="scalar"        text="scalar"/>
  <gentext key="series"        text="series"/>
+ <gentext key="vector"        text="vector"/>
  <gentext key="matrix"        text="matrix"/>
  <gentext key="smatrix"       text="square matrix"/>
  <gentext key="symmat"        text="symmetric matrix"/>
@@ -28,7 +29,10 @@
  <gentext key="rvec"          text="row vector"/>
  <gentext key="list"          text="list"/>
  <gentext key="string"        text="string"/>
+ <gentext key="char"          text="character"/>
  <gentext key="coeffname"     text="name of coefficient"/>
  <gentext key="optional"      text="optional"/>
+ <gentext key="seebelow"      text="see below"/>
+
 
 </localization>

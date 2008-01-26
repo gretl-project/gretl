@@ -152,6 +152,16 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 	    err = apply_xslt(doc, style, xsl_params, "genrgui.txt");
 	    xsltFreeStylesheet(style);
 	}
+
+	full_fname("genrtex.xsl", docdir, styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
+	    build_params(xsl_params, OUTPUT_CMD_HLP, 0, lang);
+	    err = apply_xslt(doc, style, xsl_params, "genrtex.txt");
+	    xsltFreeStylesheet(style);
+	}
 	return err;
     }	
 
