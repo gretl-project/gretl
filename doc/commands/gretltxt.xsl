@@ -299,6 +299,7 @@
         <xsl:text>null</xsl:text>
       </xsl:when>
       <xsl:otherwise>
+        <xsl:text>, </xsl:text>
         <xsl:call-template name="gettext">
           <xsl:with-param name="key" select="'optional'"/>
         </xsl:call-template>

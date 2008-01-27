@@ -913,7 +913,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case HELP:
-	cli_help(cmd->param, paths.helpfile, 1, prn);
+	cli_help(cmd->param, &paths, prn);
 	break;
 
     case OPEN:

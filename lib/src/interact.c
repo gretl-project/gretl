@@ -2668,27 +2668,58 @@ static int recode_print_line (const char *s, PRN *prn)
     return 0;
 }
 
+/* list the topics available in the functions help file */
+
+static int func_help_topics (const char *helpfile, PRN *prn)
+{
+    char line[128], word[12];
+    FILE *fp;
+    int j = 1;
+
+    if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
+	printf(_("Unable to access the file %s.\n"), helpfile);
+	return E_FOPEN;
+    } 
+
+    while (fgets(line, sizeof line, fp) != NULL) {
+	if (*line == '#') {
+	    sscanf(line + 2, "%10s", word);
+	    pprintf(prn, "%-10s", word);
+	    if (j % 7 == 0) {
+		pputc(prn, '\n');
+	    } else {
+		pputc(prn, ' ');
+	    }
+	    j++;
+	}
+    } 
+
+    pputs(prn, _("\n\nFor help on a specific function, type: help funname"));
+    pputs(prn, _(" (e.g. help qrdecomp)\n"));
+
+    fclose(fp);
+    
+    return 0;
+}
+
 /**
  * cli_help:
  * @cmdword: the command on which help is wanted.
- * @helpfile: path to the gretl help file.
- * @locale: if non-zero, check to see if we need to recode into
- * the local character set.
+ * @paths: pointer to gretl paths structure.
  * @prn: pointer to gretl printing struct.
  *
- * Searches in @helpfile for help on @cmdword and, if help is found,
- * prints it to @prn.  If @cmdword is %NULL, lists the valid
- * commands.
+ * Searches in the gretl helpfile for help on @cmdword and, 
+ * if help is found, prints it to @prn.  If @cmdword is %NULL, 
+ * lists the valid commands.
  *
  * Returns: 0 on success, 1 if the helpfile was not found or the
  * requested topic was not found.
  */
 
-int cli_help (const char *cmdword, const char *helpfile, 
-	      int locale, PRN *prn)
+int cli_help (const char *cmdword, PATHS *paths, PRN *prn)
 {
     static int recode = -1;
-    char genrhelp[FILENAME_MAX];
+    char helpfile[FILENAME_MAX];
     FILE *fp;
     char word[9];
     char line[128];
@@ -2716,19 +2747,18 @@ int cli_help (const char *cmdword, const char *helpfile,
 	return 0;
     }
 
+    if (!strcmp(cmdword, "functions")) {
+	sprintf(helpfile, "%sgenrcli.hlp", paths->gretldir);
+	return func_help_topics(helpfile, prn);
+    }
+
     ok = gretl_command_number(cmdword) > 0;
 
-    if (!ok) {
+    if (ok) {
+	strcpy(helpfile, paths->cli_helpfile);
+    } else {
 	if (genr_function_word(cmdword)) {
-	    char *p;
-
-	    /* FIXME this is just temporary */
-	    strcpy(genrhelp, helpfile);
-	    p = strstr(genrhelp, "gretlcli.hlp");
-	    if (p != NULL) {
-		strcpy(p, "genrcli.hlp");
-		helpfile = genrhelp;
-	    }
+	    sprintf(helpfile, "%sgenrcli.hlp", paths->gretldir);
 	} else if (gretl_is_public_user_function(cmdword)) {
 	    return user_function_help(cmdword, prn);
 	} else {
@@ -2742,7 +2772,7 @@ int cli_help (const char *cmdword, const char *helpfile,
 	return 1;
     } 
 
-    if (locale && recode < 0) {
+    if (!gretl_in_gui_mode() && recode < 0) {
 	recode = maybe_need_recode();
     }
 

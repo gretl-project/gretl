@@ -45,11 +45,12 @@
   <xsl:value-of select="$src"/>  
 </xsl:template>
 
-<xsl:template name="stripdollar">
+<xsl:template name="escdollar">
   <xsl:param name="src"/>
   <xsl:choose>
     <xsl:when test="substring($src, 1, 1) = '$'">
-      <xsl:value-of select="substring($src, 2)"/>
+      <xsl:text>\</xsl:text>
+      <xsl:value-of select="$src"/>
     </xsl:when>
     <xsl:otherwise>
       <xsl:value-of select="$src"/>
@@ -70,7 +71,7 @@
       <xsl:value-of select="@targ"/>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:call-template name="stripdollar">
+      <xsl:call-template name="escdollar">
         <xsl:with-param name="src" select="@name"/>
       </xsl:call-template>
     </xsl:otherwise>
@@ -139,6 +140,7 @@
         <xsl:text>\texttt{null}</xsl:text>
       </xsl:when>
       <xsl:otherwise>
+        <xsl:text>, </xsl:text>
         <xsl:call-template name="gettext">
           <xsl:with-param name="key" select="'optional'"/>
         </xsl:call-template>
@@ -268,14 +270,21 @@
 
 <xsl:template match="fncref">
   <xsl:text>\hyperlink{func-</xsl:text>
-  <xsl:call-template name="stripdollar">
+  <xsl:call-template name="escdollar">
     <xsl:with-param name="src" select="@targ"/>
   </xsl:call-template>
   <xsl:text>}</xsl:text>
   <xsl:text>{</xsl:text>
-  <xsl:call-template name="stripdollar">
-    <xsl:with-param name="src" select="@targ"/>
-  </xsl:call-template>
+  <xsl:choose>
+    <xsl:when test="@label">
+      <xsl:value-of select="@label"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:call-template name="escdollar">
+        <xsl:with-param name="src" select="@targ"/>
+      </xsl:call-template>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:text>}</xsl:text>
 </xsl:template>
 

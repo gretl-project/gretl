@@ -316,20 +316,21 @@
   <xsl:apply-templates/>
   <xsl:text>"&gt; </xsl:text>
   <xsl:text> (</xsl:text>
-  <xsl:call-template name="gettext">
+  <xsl:call-template name="gettext-nospace">
     <xsl:with-param name="key" select="@type"/>
   </xsl:call-template>
   <xsl:if test="(@optional)">
     <xsl:choose>
       <xsl:when test="@type='matrixref'">
-        <xsl:text>,</xsl:text>
-        <xsl:call-template name="gettext">
+        <xsl:text>, </xsl:text>
+        <xsl:call-template name="gettext-nospace">
           <xsl:with-param name="key" select="'or'"/>
         </xsl:call-template>
         <xsl:text>&lt;@lit="null"&gt;</xsl:text>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="gettext">
+        <xsl:text>, </xsl:text>
+        <xsl:call-template name="gettext-nospace">
           <xsl:with-param name="key" select="'optional'"/>
         </xsl:call-template>
       </xsl:otherwise>
