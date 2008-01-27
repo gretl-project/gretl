@@ -1,0 +1,259 @@
+\chapter{Opzioni, argomenti e percorsi}
+\label{optarg}
+
+\section{Avvio di gretl}
+\label{optarg1}
+
+
+\cmd{gretl} (in MS Windows, \cmd{gretlw32.exe})\footnote{In Linux
+  viene installato uno script ``wrapper'' chiamato \texttt{gretl}.
+  Questo script controlla se sia impostata la variabile di ambiente
+  \texttt{DISPLAY} e in caso positivo lancia la versione grafica del
+  programma, altrimenti lancia la versione a riga di comando,
+  \texttt{gretlcli}.}
+
+--- Apre il programma e aspetta l'input dall'utente.
+      
+\cmd{gretl} \textsl{filedati}
+      
+--- Avvia il programma caricando nello spazio di lavoro il file di
+dati indicato. Il file può essere in uno dei vari formati supportati
+(si veda la \emph{Guida ai comandi di gretl}): il programma cercherà
+di riconoscere il formato del file e di trattarlo in modo
+appropriato. Si veda anche la Sezione \ref{path-search} per quanto
+riguarda la ricerca dei percorsi.
+      
+\cmd{gretl --help} (o \cmd{gretl -h})
+      
+--- Mostra un breve riepilogo delle modalità di uso ed esce.
+      
+\cmd{gretl --version} (o \cmd{gretl -v})
+      
+--- Mostra le informazioni sulla versione del programma ed esce.
+      
+\cmd{gretl --english} (o \cmd{gretl -e})
+      
+--- Forza l'utilizzo della versione inglese invece di quella italiana.
+      
+\cmd{gretl --run} \textsl{file} (o \cmd{gretl -r} \textsl{file})
+      
+--- Avvia il programma e apre una finestra che mostra il file di
+comandi indicato, pronto per essere eseguito. Si veda la Sezione
+\ref{path-search} per quanto riguarda la ricerca dei percorsi.
+      
+\cmd{gretl --db} \textsl{database} (o \cmd{gretl -d}
+\textsl{database})
+      
+--- Avvia il programma e apre una finestra che mostra il database
+indicato. Se i file del database (il file \texttt{.bin} e il relativo
+file \texttt{.idx}, si veda la \emph{Guida ai comandi di gretl}) non
+sono nella directory predefinita dei database, occorre specificare il
+percorso completo dei file.
+      
+\cmd{gretl --dump} (o \cmd{gretl -c})
+      
+--- Scrive le informazioni di configurazione del programma in un file
+di testo (il nome del file è mostrato nello standard output). Può
+essere utile nella risoluzione di problemi di funzionamento.
+      
+\cmd{gretlw32 --debug} (o \cmd{gretlw32 -g})
+      
+--- (solo MS Windows) Apre una finestra di terminale per mostrare
+eventuali messaggi inviati allo ``standard output'' o allo ``standard
+error''. Questi messaggi, che di solito non sono visibili in Windows,
+possono essere utili per risolvere problemi di funzionamento.
+      
+\section{Menù preferenze}
+\label{guiprefs}
+
+Varie funzionalità di \app{gretl} sono configurabili nel menù
+\textsf{Strumenti, Preferenze} menu.
+      
+Il menù contiene opzioni per la scelta del carattere a larghezza fissa
+da usare nelle schermate di \app{gretl}, e, su alcune piattaforme, il
+carattere usato per i menù e per gli altri messaggi.  Le altre opzioni
+sono organizzate in cinque pagine, nel modo seguente.
+      
+Pagina \textbf{Generali}: qui è possibile configurare la directory
+base per i file condivisi di \app{gretl}.  Inoltre, ci sono alcune
+caselle di testo: selezionando ``Avvisa in caso di aggiornamenti di
+gretl'', \app{gretl} cercherà di connettersi al server dei database
+appena avviato; de-selezionando ``Mostra la barra degli strumenti di
+gretl'', la barra degli strumenti sarà disabilitata.  Se
+l'impostazione locale del proprio sistema non usa il punto
+(``\texttt{.}'') come separatore delle cifre decimali, de-selezionando
+``Usa le impostazioni locali per il punto decimale'', \app{gretl}
+userà comunque il carattere punto. Selezionando ``Abilita comandi
+shell'' sarà possibile invocare comandi della shell all'interno degli
+script e nel terminale di \app{gretl} (questa funzionalità è
+disabilitata in modalità predefinita per motivi di sicurezza).
+      
+Inoltre, in ``Generali'' è possibile scegliere l'algoritmo usato da
+\app{gretl} per calcolare le stime dei minimi quadrati. La scelta
+predefinita è la decomposizione di Cholesky, che è veloce,
+relativamente economica in termini di requisiti di memoria, e accurata
+per la maggior parte delle applicazioni. L'alternativa è la
+decomposizione QR, che è computazionalmente più impegnativa e richiede
+una maggiore quantità di memoria, ma è più accurata.  È poco probabile
+dover avere bisogno dell'accuratezza ulteriore fornita dalla
+decomposizione QR, a meno che non si abbia a che fare con dati molto
+mal-condizionati e si sia interessati a valori dei coefficienti e
+degli errori standard precisi per più di 7 cifre
+decimali\footnote{L'uso della decomposizione QR è attivabile anche
+  impostando la variabile di ambiente \verb@GRETL_USE_QR@ a un
+  qualsiasi valore non nullo.}.
+
+Pagina \textbf{Database}: è possibile selezionare la directory in cui
+iniziare a cercare i database in formato interno di \app{gretl} e
+quella per i database in formato RATS 4; il nome host del server dei
+database di \app{gretl} a cui connettersi, e l'indirizzo IP e il
+numero di porta del proxy HTTP da usare per contattare il server dei
+database, se necessario (se si è dietro a un firewall).
+      
+Pagina \textbf{Programmi}: è possibile specificare i nomi o i percorsi
+per alcuni programmi esterni che possono essere chiamati da
+\app{gretl} in alcuni casi. Si noti che la voce ``Comando per
+compilare file {\TeX}'' può essere impostata come latex o pdflatex: se
+si sceglie latex, le anteprime dei documenti {\TeX} saranno in formato
+DVI; se si sceglie pdflatex, le anteprime saranno in formato PDF.
+      
+Pagina \textbf{HCCME}: contiene le preferenze riguardanti la stima
+robusta della matrice di covarianza. Si veda la \emph{Guida ai comandi
+  di gretl} per i dettagli.
+      
+Pagina \textbf{Manuali}: è possibile scegliere la lingua preferita per
+la documentazione completa di \app{gretl} in formato PDF (al momento
+sono supportati solo inglese e italiano). Se si usa la documentazione
+inglese è possibile scegliere anche il formato della pagina, US letter
+o A4.
+      
+Le impostazioni scelte usando il menù preferenze sono conservate da
+una sessione di gretl all'altra. Su MS Windows vengono salvate nel
+registro di Windows, mentre su altre piattaforme sono salvate in un
+file di testo chiamato \texttt{.gretlrc} nella directory principale
+dell'utente.
+
+
+\section{Avvio di gretlcli}
+\label{optarg2}
+
+\cmd{gretlcli}
+
+--- Apre il programma e attende l'input dall'utente.
+      
+\cmd{gretlcli} \textsl{filedati}
+
+--- Avvia il programma caricando nello spazio di lavoro il file di
+dati indicato. Il file può essere in uno qualsiasi dei formati
+supportati da \app{gretl} (si veda la \emph{Guida ai comandi di gretl}
+per i dettagli). Il programma cercherà di riconoscere il formato del
+file e di trattarlo in modo appropriato. Si veda anche la Sezione
+\ref{path-search} per quanto riguarda la ricerca dei percorsi.
+
+\cmd{gretlcli --help} (o \cmd{gretlcli -h})
+
+--- Mostra un breve riepilogo delle modalità di uso ed esce.
+      
+\cmd{gretlcli --version} (o \cmd{gretlcli -v})
+
+--- Mostra informazioni sulla versione del programma ed esce.
+      
+\cmd{gretlcli --english} (o \cmd{gretlcli -e})
+
+--- Forza l'utilizzo della versione inglese invece di quella italiana.
+      
+\cmd{gretlcli --run} \textsl{file} (o \cmd{gretlcli -r} \textsl{file})
+
+--- Esegue i comandi contenuti nel \textsl{file} e aspetta ulteriore
+input dalla riga di comando.  Si veda la Sezione \ref{path-search} per
+quanto riguarda la ricerca dei percorsi.
+
+\cmd{gretlcli --batch} \textsl{file} (o \cmd{gretlcli -b}
+\textsl{file})
+
+--- Esegue i comandi contenuti nel \textsl{file} ed esce; tipicamente
+questa opzione viene usata redirigendo i risultati del comando a un
+file.  Si veda la Sezione \ref{path-search} per quanto riguarda la
+ricerca dei percorsi.
+
+Se si usano le opzioni \cmd{--run} e \cmd{--batch}, il file richiamato
+deve indicare un file di dati da aprire. Ciò può essere fatto usando
+il comando \cmd{open} nel file.
+
+
+\section{Ricerca dei percorsi}
+\label{path-search}
+
+Quando si indica il nome di un file di dati o di comandi a \app{gretl}
+o \app{gretlcli} sulla riga di comando, il file viene cercato nel modo
+seguente:
+      
+\begin{enumerate}
+\item ``Esattamente come viene specificato''.  Ossia, nella directory
+  di lavoro attuale, o, se viene indicato un percorso completo, nella
+  posizione indicata.
+\item Nella directory gretl dell'utente (si veda la Tabella
+  \ref{tab-path} per i valori predefiniti). Si noti che la la parola
+  chiave \texttt{PERSONAL} viene interpretata da Windows a seconda
+  dell'utente e della lingua del sistema: ad esempio su un sistema in
+  lingua inglese, verrà interpretata come la directory ``My
+  Documents''.
+\item In qualsiasi directory immediatamente contenuta nella directory
+  gretl dell'utente.
+\item Nel caso di un file di dati, la ricerca continua nella directory
+  principale dei dati di \app{gretl}.  Nel caso di un file di comandi,
+  la ricerca continua nella directory principale dei file di
+  comandi. Si veda la Tabella \ref{tab-path} per i valori predefiniti.
+  \texttt{PREFIX} indica la directory base scelta al momento
+  dell'installazione di \app{gretl}.
+\item Nel caso dei file di dati, la ricerca continua in tutte le
+  directory immediatamente contenute nella directory principale dei
+  dati.
+\end{enumerate}
+
+\begin{table}[htbp]
+  \caption{Impostazioni predefinite dei percorsi}
+  \label{tab-path}
+  \begin{center}
+    \begin{tabular}{lll}
+      \textit{ } & \textit{Linux} & \textit{MS Windows} \\ [4pt]
+      Directory gretl dell'utente & \texttt{\$HOME/gretl} & 
+      \verb@PERSONAL\gretl@ \\
+      Directory di sistema dei dati & \texttt{PREFISSO/share/gretl/data} & 
+      \verb@PREFIX\gretl\data@ \\
+      Directory di sistema dei file di comandi & 
+      \texttt{PREFIX/share/gretl/scripts} & \verb@PREFIX\gretl\scripts@ \\
+    \end{tabular}
+  \end{center}
+\end{table}
+
+Non è quindi necessario specificare il percorso completo per un file
+di dati o di comandi, a meno che non si voglia fare a meno del
+meccanismo di ricerca automatico (ciò è valido anche per
+\app{gretlcli} quando si indica un nome di file come argomento per il
+comando \cmd{open} o il comando \cmd{run})
+
+Quando un file di comandi contiene l'istruzione di aprire un file di
+dati, l'ordine di ricerca per il file è quello descritto sopra, con
+l'eccezione che il file viene cercato anche nella directory che
+contiene lo script, immediatamente dopo aver tentato di cercare il
+file di dati ``esattamente come viene specificato''.
+      
+
+\subsection{MS Windows}
+\label{MS-behave}
+
+In MS Windows le informazioni di configurazione per \app{gretl} e
+\app{gretlcli} sono scritte nel registro di Windows. Quando
+\app{gretl} è installato per la prima volta, viene creata
+un'appropriata serie di voci di registro; successivamente le
+impostazioni possono essere modificate attraverso il menù
+\textsf{Strumenti, Preferenze} di \app{gretl}. Se occorre eseguire
+delle modifiche manuali dei valori, le voci di registro possono essere
+trovate (usando il programma standard di Windows \app{regedit.exe})
+sotto \verb@Software\gretl@ in \verb@HKEY_LOCAL_MACHINE@ (la directory
+principale di \app{gretl} e i percorsi per i vari programmi ausiliari)
+e in \verb@HKEY_CURRENT_USER@ (tutte le altre variabili
+configurabili).
+          
+

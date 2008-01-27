@@ -33,13 +33,14 @@ TEXSRC = cli.tex \
 	functions.tex \
 	gretltex.tex \
 	cheatsheet.tex \
-	reftables.tex
+	reftables.tex \
+	funcref.tex \
+	optarg.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
 
 XMLFILES = $(docsrc)/chapters/cmdlist.xml \
 	$(docsrc)/chapters/cmdref.xml \
-	$(docsrc)/chapters/optarg.xml \
 	$(docsrc)/chapters/cmdtopics.xml \
 	$(docsrc)/shell.xml
 
@@ -51,7 +52,7 @@ $(GUIDE): gretl-guide.tex links textables
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref.tex refbody.tex reftables.tex textables links
+$(REF): gretl-ref.tex refbody.tex reftables.tex textables functex links
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -91,7 +92,7 @@ $(docsrc)/chapters/cmdlist.xml: $(docsrc)/commands/gretl_commands.xml $(MANXSLT)
 $(docsrc)/chapters/cmdtopics.xml: $(docsrc)/commands/gretl_commands.xml $(MANXSLT)
 	make -C ../commands topiclist_en
 
-.PHONY : links textables alt onepass refpass install clean
+.PHONY : links textables functex alt onepass refpass install clean
 
 links:
 	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
@@ -101,6 +102,9 @@ links:
 
 textables:
 	make -C ../commands textables
+
+functex:
+	make -C ../commands functex
 
 alt: gretl-guide-a4.pdf gretl-ref-a4.pdf
 

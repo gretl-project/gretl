@@ -33,7 +33,16 @@
 <xsl:strip-space elements="title"/>
 <xsl:preserve-space elements="*"/>
 
+<xsl:template match="funcref">
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="funclist">
+  <xsl:text>\section{</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>}&#10;\label{sec:</xsl:text>
+  <xsl:value-of select="@ref"/>
+  <xsl:text>}&#10;&#10;</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
 

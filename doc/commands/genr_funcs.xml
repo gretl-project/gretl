@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
-<!DOCTYPE funclist SYSTEM "genr_funcs.dtd">
+<!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
-<funclist language="english">
+<funcref language="english">
 
 <?PSGML NOFILL code altforms altform menu-path equation other-access?>
+
+<funclist name="Accessors" ref="accessors">
 
   <function name="$ahat" output="series">
     <description>
@@ -404,6 +406,10 @@
       </para>
     </description>
   </function>
+
+  </funclist>
+
+  <funclist name="Functions proper" ref="functions">
 
   <function name="abs" output="asinput">
     <fnargs>
@@ -2614,3 +2620,4 @@
   </function>
 
 </funclist>
+</funcref>

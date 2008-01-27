@@ -260,7 +260,7 @@ int parse_commands_data (const char *fname, int output,
     }
 
     if (flags & OPT_GENR) {
-	rootnode = "funclist";
+	rootnode = "funcref";
     }
 
     if (xmlStrcmp(cur->name, (UTF) rootnode)) {

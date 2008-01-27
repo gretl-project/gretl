@@ -31,13 +31,14 @@ TEXSRC = cli.tex \
 	functions.tex \
 	gretltex.tex \
 	cheatsheet.tex \
-	reftables.tex
+	reftables.tex \
+	funcref.tex \
+	optarg.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
 
 XMLFILES = $(docsrc)/chapters_it/cmdlist.xml \
 	$(docsrc)/chapters_it/cmdref.xml \
-	$(docsrc)/chapters_it/optarg.xml \
 	$(docsrc)/chapters_it/cmdtopics.xml \
 	$(docsrc)/shell_it.xml
 

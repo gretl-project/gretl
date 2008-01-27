@@ -15,9 +15,15 @@
 <!ENTITY eg     "e.g.">
 <!ENTITY ie     "i.e.">
 
+<!ELEMENT funcref (funclist)+>
+<!ATTLIST funcref
+   language    CDATA #REQUIRED
+>
+
 <!ELEMENT funclist (function)+>
 <!ATTLIST funclist
-   language    CDATA #REQUIRED
+   name    CDATA #REQUIRED
+   ref     CDATA #REQUIRED
 >
 
 <!-- The description is the only element that is absolutely

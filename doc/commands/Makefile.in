@@ -138,13 +138,6 @@ $(GENSTAMP): xsltrans reflow $(GENSRC) $(GENDTD) $(HLPXSL) $(XMLSTRS)
 	fi
 	touch $@
 
-$(GENTEX): xsltrans reflow $(GENSRC) $(GENDTD) $(GENXSL) $(XMLSTRS)
-	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
-	cat $(CMDSDIR)/genr_funcs.xml | grep -v DOCTYPE | \
-	grep -v 'xml version' >> tmp.xml && \
-	./xsltrans --genr --tex tmp.xml --docdir=$(CMDSDIR) && \
-	./reflow < genrtex.txt > $@
-
 .PHONY: test
 
 # generate some tables for manual automatically, to ensure
@@ -155,6 +148,14 @@ textables: tables
 	./tables --functions > ../tex/tabfunctions.tex
 	./tables --loopcmds > ../tex/tabloopcmds.tex
 	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex
+	touch $@
+
+functex: xsltrans reflow $(GENSRC) $(GENDTD) $(GENXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/genr_funcs.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --genr --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < genrtex.txt > ../tex/genr_funcs.tex
 	touch $@
 
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
@@ -209,6 +210,7 @@ check: validate
 	-./validate $(CMDSDIR)/gretl_commands.xml
 	-./validate $(CMDSDIR)/gretl_commands_es.xml
 	-./validate $(CMDSDIR)/gretl_commands_it.xml
+	-./validate $(CMDSDIR)/gretl_funcs.xml
 
 docclean:
 	 rm -f skeleton.xml cmdlist.* guilist.txt clilist.txt genrcli.txt genrgui.txt

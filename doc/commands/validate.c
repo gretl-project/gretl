@@ -6,6 +6,7 @@
 */
 
 #include "libgretl.h"
+#include "genparse.h"
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -15,10 +16,14 @@
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
 
-#define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
 char reffile[FILENAME_MAX];
+
+enum {
+    GRETL_COMMANDS,
+    GRETL_FUNCTIONS
+};
 
 typedef struct _cmdlist cmdlist;
 typedef struct _command command;
@@ -30,6 +35,7 @@ struct _command {
 };
 
 struct _cmdlist {
+    int type;
     int ncmds;
     command **cmds;
 };
@@ -142,13 +148,24 @@ process_command (xmlDocPtr doc, xmlNodePtr node, cmdlist *clist)
 	return 1;
     }
 
-    tmp = (char *) xmlGetProp(node, (UTF) "context");
-    if (tmp == NULL || strcmp(tmp, "cli")) {
-	check_for_label(node);
-    }
-    if (tmp != NULL && !strcmp(tmp, "gui")) {
-	free(tmp);
-	return 0;
+    if (clist->type == GRETL_COMMANDS) {
+	int gui_only = 0;
+
+	tmp = (char *) xmlGetProp(node, (UTF) "context");
+	if (tmp != NULL) {
+	    if (strcmp(tmp, "cli")) {
+		check_for_label(node);
+	    } 
+	    if (!strcmp(tmp, "gui")) {
+		gui_only = 1;
+	    }
+	    free(tmp);
+	} else {
+	    check_for_label(node);
+	}
+	if (gui_only) {
+	    return 0;
+	}
     }
 
     tmp = (char *) xmlGetProp(node, (UTF) "name");
@@ -183,8 +200,25 @@ process_command (xmlDocPtr doc, xmlNodePtr node, cmdlist *clist)
     return err;
 }
 
+static int 
+process_funclist (xmlDocPtr doc, xmlNodePtr node, cmdlist *clist)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    int err = 0;
+
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (UTF) "function")) {
+	    err = process_command(doc, cur, clist);
+	}
+	cur = cur->next;
+    }
+
+    return err;
+}
+
 static int parse_ref_file (cmdlist *clist)
 {
+    const char *rootnode;
     xmlDocPtr doc;
     xmlNodePtr cur;
     int err = 0;
@@ -207,21 +241,37 @@ static int parse_ref_file (cmdlist *clist)
 	goto bailout;
     }
 
-    if (xmlStrcmp(cur->name, (UTF) ROOTNODE)) {
+    if (clist->type == GRETL_FUNCTIONS) {
+	rootnode = "funcref";
+    } else {
+	rootnode = "commandlist";
+    }
+
+    if (xmlStrcmp(cur->name, (UTF) rootnode)) {
 	fprintf(stderr, "File of the wrong type, root node not %s\n", 
-		ROOTNODE);
+		rootnode);
 	err = 1;
 	goto bailout;
     }
 
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (UTF) "command")) {
-	    err = process_command(doc, cur, clist);
+
+    if (clist->type == GRETL_FUNCTIONS) {
+	while (cur != NULL && !err) {
+	    if (!xmlStrcmp(cur->name, (UTF) "funclist")) {
+		err = process_funclist(doc, cur, clist);
+	    }
+	    cur = cur->next;
+	}	
+    } else {
+	while (cur != NULL && !err) {
+	    if (!xmlStrcmp(cur->name, (UTF) "command")) {
+		err = process_command(doc, cur, clist);
+	    }
+	    cur = cur->next;
 	}
-	cur = cur->next;
-    }    
+    }  
 
  bailout:
 
@@ -232,8 +282,9 @@ static int parse_ref_file (cmdlist *clist)
 
 }
 
-static void cmdlist_init (cmdlist *clist)
+static void cmdlist_init (cmdlist *clist, int type)
 {
+    clist->type = type;
     clist->ncmds = 0;
     clist->cmds = NULL;
 }
@@ -313,7 +364,7 @@ static int check_options_for_cmd (command *cmd)
     return 0;
 }
 
-static int gretl_cmd_in_ref (const char *cmdword, const cmdlist *clist)
+static int word_in_ref (const char *cmdword, const cmdlist *clist)
 {
     int i;
 
@@ -324,6 +375,63 @@ static int gretl_cmd_in_ref (const char *cmdword, const cmdlist *clist)
     }
 
     return 0;
+}
+
+static int check_functions (const char *fname, cmdlist *clist)
+{
+    const char *funword;
+    int missing = 0, extra = 0;
+    int i, n, err = 0;
+    
+    n = data_var_count();
+    for (i=0; i<n; i++) {
+	funword = data_var_name(i);
+	if (!word_in_ref(funword, clist)) {
+	    printf("* gretl accessor '%s' is not in the reference\n", 
+		   funword);
+	    missing++;
+	}
+    }
+	
+    n = model_var_count();
+    for (i=0; i<n; i++) {
+	funword = model_var_name(i);
+	if (!word_in_ref(funword, clist)) {
+	    printf("* gretl accessor '%s' is not in the reference\n", 
+		   funword);
+	    missing++;
+	}
+    }
+
+    n = gen_func_count();
+    for (i=0; i<n; i++) {
+	funword = gen_func_name(i);
+	if (!word_in_ref(funword, clist)) {
+	    printf("* gretl function '%s' is not in the reference\n", 
+		   funword);
+	    missing++;
+	}
+    }
+
+    /* reverse check */
+    for (i=0; i<clist->ncmds; i++) {
+	if (!genr_function_word(clist->cmds[i]->name)) {
+	    printf("* ref function '%s' is not in libgretl\n", 
+		   (clist->cmds[i])->name);
+	    extra++;
+	}
+    }
+
+    if (missing > 0 || extra > 0) {
+	err = 1;
+    }
+
+    printf("%s:\n functions missing from reference: %d\n", 
+	   fname, missing);
+    printf("%s:\n extra functions in ref but not in library: %d\n\n", 
+	   fname, extra);
+
+    return err;
 }
 
 static int check_commands (const char *fname, cmdlist *clist)
@@ -342,7 +450,7 @@ static int check_commands (const char *fname, cmdlist *clist)
 	cmdword = gretl_command_word(i);
 
 	/* check against XML reference list */
-	if (!gretl_cmd_in_ref(cmdword, clist)) {
+	if (!word_in_ref(cmdword, clist)) {
 	    printf("* libgretl command '%s' is not in the reference\n", 
 		   cmdword);
 	    missing++;
@@ -400,17 +508,28 @@ void free_cmdlist (cmdlist *clist)
 int main (int argc, char **argv)
 {
     cmdlist clist;
+    int type = GRETL_COMMANDS;
     int err;
 
-    if (argc != 2) {
+    if (argc < 2) {
 	fprintf(stderr, "Please supply one argument: the name of a "
 		"file to verify\n");
 	exit(EXIT_FAILURE);
     }
 
-    strcpy(reffile, argv[1]);
+    if (argc == 3) {
+	if (!strcmp(argv[1], "--genr")) {
+	    type = GRETL_FUNCTIONS;
+	    strcpy(reffile, argv[2]);
+	} else if (!strcmp(argv[2], "--genr")) {
+	    type = GRETL_FUNCTIONS;
+	    strcpy(reffile, argv[1]);
+	}
+    } else {
+	strcpy(reffile, argv[1]);
+    }
 
-    cmdlist_init(&clist);
+    cmdlist_init(&clist, type);
 
     err = parse_ref_file(&clist);
     if (err) {
@@ -418,9 +537,15 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    printf("\nFound %d commands in '%s'\n", clist.ncmds, reffile);
+    printf("\nFound %d %s in '%s'\n", clist.ncmds, 
+	   (type == GRETL_FUNCTIONS)? "functions" : "commands",
+	   reffile);
 
-    err = check_commands(reffile, &clist);
+    if (type == GRETL_FUNCTIONS) {
+	err = check_functions(reffile, &clist);
+    } else {
+	err = check_commands(reffile, &clist);
+    }
 
 #if 0
     free_cmdlist(&clist);
