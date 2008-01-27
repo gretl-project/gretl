@@ -527,6 +527,7 @@ GtkItemFactoryEntry data_items[] = {
       GRETL_STOCK_BOOK },
     { N_("/Help/Command reference/_PDF"), NULL, display_pdf_help, 0, "<StockItem>", 
       GRETL_STOCK_PDF },
+    { N_("/Help/Function reference"), NULL, genr_funcs_ref, 0, NULL, GNULL },
     { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, "<StockItem>", 
       GRETL_STOCK_PDF },
     { "/Help/sep1", NULL, NULL, 0, "<Separator>", GNULL },

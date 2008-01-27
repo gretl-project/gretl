@@ -56,6 +56,7 @@ enum extra_cmds {
     GUI_HELP,
     CLI_HELP_EN,
     GUI_HELP_EN,
+    FUNCS_HELP,
     MODELTABLE,
     GRAPHPAGE,
     CREATE_USERDIR,

@@ -1984,6 +1984,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 
     switch (role) {
     case GUI_HELP: 
+    case FUNCS_HELP:
 	title = g_strdup(_("gretl: help")); break;
     case CLI_HELP:
 	title = g_strdup(_("gretl: command syntax")); break;
@@ -2310,7 +2311,16 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     windata_t *vwin;
     gchar *fbuf = NULL;
     gchar *title = NULL;
+    GError *gerr = NULL;
     int hsize = 80, vsize = 400;
+
+    /* grab content of the appropriate help file into a buffer */
+    g_file_get_contents(filename, &fbuf, NULL, &gerr);
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+	return NULL;
+    }
 
     title = make_viewer_title(role, NULL);
     vwin = common_viewer_new(role, title, NULL, 0);
@@ -2319,19 +2329,19 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     if (vwin == NULL) return NULL;
 
     strcpy(vwin->fname, filename);
+    vwin->data = fbuf;
 
     viewer_box_config(vwin);
     set_up_viewer_menu(vwin->dialog, vwin, menu_items);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
+    if (role == FUNCS_HELP) {
+	vsize = 500;
+    }
+
     create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->w);
-
-    /* grab content of the appropriate help file into a buffer
-       and stick it onto vwin as data */
-    g_file_get_contents(filename, &fbuf, NULL, NULL);
-    vwin->data = fbuf;
 
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
@@ -2350,6 +2360,9 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
+
+    /* make the helpfile variant discernible via vwin->w */
+    g_object_set_data(G_OBJECT(vwin->w), "role", GINT_TO_POINTER(vwin->role));
 
     gtk_widget_grab_focus(vwin->w);
 

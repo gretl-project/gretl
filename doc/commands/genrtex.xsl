@@ -274,7 +274,7 @@
 </xsl:template>
 
 <xsl:template match="equation">
-  <xsl:value-of select="@tex"/>
+  <xsl:value-of select="normalize-space(@tex)"/>
 </xsl:template>
 
 <xsl:template match="fncref">

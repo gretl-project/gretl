@@ -37,6 +37,12 @@
 
 #define HDEBUG 0
 
+enum {
+    HELP_CLI =   1 << 0,
+    HELP_EN  =   1 << 1,
+    HELP_FUNCS = 1 << 2
+};
+
 static int translated_helpfile = -1;
 static char *en_gui_helpfile;
 static char *en_cli_helpfile;
@@ -55,8 +61,8 @@ struct help_head_t {
 static help_head **cli_heads, **gui_heads;
 static help_head **en_cli_heads, **en_gui_heads;
 
-static windata_t *helpwin (int cli, int en);
-static void real_do_help (int hcode, int pos, int cli, int en);
+static windata_t *make_helpwin (int flags);
+static void real_do_help (int hcode, int pos, int flags);
 static void en_text_cmdref (gpointer p, guint u, GtkWidget *w);
 
 /* searching stuff */
@@ -678,28 +684,28 @@ static void do_gui_help (gpointer p, guint pos, GtkWidget *w)
 {
     int hcode = GPOINTER_TO_INT(p);
 
-    real_do_help(hcode, pos, 0, 0);
+    real_do_help(hcode, pos, 0);
 }
 
 static void do_en_gui_help (gpointer p, guint pos, GtkWidget *w) 
 {
     int hcode = GPOINTER_TO_INT(p);
 
-    real_do_help(hcode, pos, 0, 1);
+    real_do_help(hcode, pos, HELP_EN);
 }
 
 static void do_cli_help (gpointer p, guint pos, GtkWidget *w) 
 {
     int hcode = GPOINTER_TO_INT(p);
 
-    real_do_help(hcode, pos, 1, 0);
+    real_do_help(hcode, pos, HELP_CLI);
 }
 
 static void do_en_cli_help (gpointer p, guint pos, GtkWidget *w) 
 {
     int hcode = GPOINTER_TO_INT(p);
 
-    real_do_help(hcode, pos, 1, 1);
+    real_do_help(hcode, pos, HELP_CLI | HELP_EN);
 }
 
 static char *get_gui_help_string (int pos)
@@ -782,8 +788,10 @@ static void en_help_callback (gpointer p, int cli, GtkWidget *w)
 {
     windata_t *hwin = (windata_t *) p;
     int pos, hc = hwin->active_var;
+    int flags = HELP_EN;
 
     if (cli) {
+	flags |= HELP_CLI;
 	pos = cli_pos_from_cmd(hc, 1);
 	if (pos < 0) {
 	    pos = 0;
@@ -792,7 +800,7 @@ static void en_help_callback (gpointer p, int cli, GtkWidget *w)
 	pos = gui_pos_from_cmd(hc, 1);
     }
 
-    real_do_help(hc, pos, cli, 1);
+    real_do_help(hc, pos, flags);
 }
 
 static void add_en_help_item (windata_t *hwin, int cli)
@@ -815,36 +823,43 @@ static void add_en_help_item (windata_t *hwin, int cli)
     g_free(item.path);
 }
 
-static void add_help_topics (windata_t *hwin, int cli, int en)
+static void add_help_topics (windata_t *hwin, int flags)
 {
     GtkItemFactoryEntry hitem;
     const gchar *mpath = N_("/_Topics");
-    help_head **hds;
+    help_head **hds = NULL;
+    int en = (flags & HELP_EN);
+    int cli = (flags & HELP_CLI);
+    int funcs = (flags & HELP_FUNCS);
     int i, j;
 
     if (en) {
-	hds = (cli)? en_cli_heads : en_gui_heads;
+	hds = (cli)? en_cli_heads : (funcs)? NULL : en_gui_heads;
     } else {
-	hds = (cli)? cli_heads : gui_heads;
-    }
-
-    /* Are there any topics to add? */
-    if (hds == NULL) {
-	return;
+	hds = (cli)? cli_heads : (funcs)? NULL : gui_heads;
     }
 
     hitem.accelerator = NULL;
 
-    if (cli) {
-	/* Add general index as "topic" */
+    if (cli || funcs) {
+	/* Add general index as (first) "topic" */
 	hitem.callback_action = 0; 
 	hitem.item_type = NULL;
 	hitem.path = g_strdup_printf("%s/%s", mpath, (en)? "Index" : _("Index"));
-	hitem.callback = (en)? en_text_cmdref : plain_text_cmdref;
+	if (funcs) {
+	    hitem.callback = genr_funcs_ref;
+	} else {
+	    hitem.callback = (en)? en_text_cmdref : plain_text_cmdref;
+	}
 	gtk_item_factory_create_item(hwin->ifac, &hitem, 
 				     GINT_TO_POINTER(0), 
 				     1);
 	g_free(hitem.path);
+    }
+
+    /* Are there any actual topics to add? */
+    if (hds == NULL) {
+	return;
     }
 
     /* put the topics under the menu heading */
@@ -931,13 +946,32 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
     }
 }
 
-static windata_t *helpwin (int cli, int en) 
+/* FIXME localization */
+
+static char *funcs_helpfile (void)
+{
+    static char fname[MAXLEN];
+
+    if (*fname == '\0') {
+	sprintf(fname, "%sgenrgui.hlp", paths.gretldir);
+    }
+
+    return fname;
+}
+
+static windata_t *make_helpwin (int flags) 
 {
     windata_t *vwin = NULL;
     char *helpfile = NULL;
+    int en = (flags & HELP_EN);
+    int cli = (flags & HELP_CLI);
+    int funcs = (flags & HELP_FUNCS);
     int role;
 
-    if (cli) {
+    if (funcs) {
+	helpfile = funcs_helpfile();
+	role = FUNCS_HELP;
+    } else if (cli) {
 	helpfile = (en)? en_cli_helpfile : paths.cmd_helpfile;
 	role = (en)? CLI_HELP_EN : CLI_HELP;
     } else {
@@ -945,15 +979,16 @@ static windata_t *helpwin (int cli, int en)
 	role = (en)? GUI_HELP_EN : GUI_HELP;
     }
 
-    if (helpfile == NULL) return NULL;
+    if (helpfile != NULL) {
+	vwin = view_help_file(helpfile, role, help_menu_items);
+    }
 
-    vwin = view_help_file(helpfile, role, help_menu_items);
-
-    add_help_topics(vwin, cli, en);
-
-    if (translated_helpfile && !en) {
-	add_en_help_item(vwin, cli);
-    }    
+    if (vwin != NULL) {
+	add_help_topics(vwin, flags);
+	if (!funcs && translated_helpfile && !en) {
+	    add_en_help_item(vwin, cli);
+	} 
+    }   
 
     return vwin;
 }
@@ -961,21 +996,21 @@ static windata_t *helpwin (int cli, int en)
 void context_help (GtkWidget *widget, gpointer data)
 {
     int pos, hcode = GPOINTER_TO_INT(data);
-    int en = 0;
+    int flags = 0;
 
     pos = gui_pos_from_cmd(hcode, 0);
 
     if (pos < 0 && translated_helpfile) {
-	en = 1;
-	pos = gui_pos_from_cmd(hcode, en);
+	flags = HELP_EN;
+	pos = gui_pos_from_cmd(hcode, 1);
     }
 
 #if HDEBUG
     fprintf(stderr, "context_help: hcode=%d, pos=%d, en=%d\n", 
-	    hcode, pos, en);
+	    hcode, pos, (flags & HELP_EN)? 1 : 0);
 #endif
 
-    real_do_help(hcode, pos, 0, en);
+    real_do_help(hcode, pos, flags);
 }
 
 static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
@@ -984,14 +1019,18 @@ static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
     return FALSE;
 }
 
-static void real_do_help (int hcode, int pos, int cli, int en)
+static void real_do_help (int hcode, int pos, int flags)
 {
     static windata_t *gui_hwin;
     static windata_t *cli_hwin;
     static windata_t *en_gui_hwin;
     static windata_t *en_cli_hwin;
+    static windata_t *funcs_hwin;
 
     windata_t *hwin;
+    int cli = (flags & HELP_CLI);
+    int en = (flags & HELP_EN);
+    int funcs = (flags & HELP_FUNCS);
 
     if (pos < 0) {
 	dummy_call();
@@ -1005,16 +1044,17 @@ static void real_do_help (int hcode, int pos, int cli, int en)
     fprintf(stderr, "cli_hwin = %p\n", (void *) cli_hwin);
     fprintf(stderr, "en_gui_hwin = %p\n", (void *) en_gui_hwin);
     fprintf(stderr, "en_cli_hwin = %p\n", (void *) en_cli_hwin);
+    fprintf(stderr, "funcs_hwin = %p\n", (void *) funcs_hwin);
 #endif
 
     if (en) {
 	hwin = (cli)? en_cli_hwin : en_gui_hwin;
     } else {
-	hwin = (cli)? cli_hwin : gui_hwin;
+	hwin = (cli)? cli_hwin : (funcs)? funcs_hwin : gui_hwin;
     }
 
     if (hwin == NULL) {
-	hwin = helpwin(cli, en);
+	hwin = make_helpwin(flags);
 	if (hwin != NULL) {
 	    windata_t **phwin;
 
@@ -1027,7 +1067,10 @@ static void real_do_help (int hcode, int pos, int cli, int en)
 		    phwin = &en_gui_hwin;
 		}
 	    } else {
-		if (cli) {
+		if (funcs) {
+		    funcs_hwin = hwin;
+		    phwin = &funcs_hwin;
+		} else if (cli) {
 		    cli_hwin = hwin;
 		    phwin = &cli_hwin;
 		} else {
@@ -1039,8 +1082,7 @@ static void real_do_help (int hcode, int pos, int cli, int en)
 			     G_CALLBACK(nullify_hwin), phwin);
 	}
     } else {
-	gdk_window_show(hwin->w->parent->window);
-	gdk_window_raise(hwin->w->parent->window);
+	gtk_window_present(GTK_WINDOW(gtk_widget_get_toplevel(hwin->w)));
     }
 
 #if HDEBUG
@@ -1049,19 +1091,21 @@ static void real_do_help (int hcode, int pos, int cli, int en)
 	    (void *) hwin, hcode, pos, en);
 #endif
 
-    set_help_topic_buffer(hwin, hcode, pos, en);
+    if (hwin != NULL) {
+	set_help_topic_buffer(hwin, hcode, pos, en);
+    }
 }
 
 /* called from main menu in gretl.c; also used as callback from
-   command ref index in textbuf.c (gtk2 version only)
+   command ref index in textbuf.c
 */
 
 void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
 {
     /* pos = 0 gives index of commands */
     int pos = 0;
+    int flags = HELP_CLI;
     int en = 0;
-    int cli = 1;
 
     if (w == NULL && p != NULL) {
 	en = GPOINTER_TO_INT(p);
@@ -1077,16 +1121,29 @@ void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
 	if (pos < 0 && !en && translated_helpfile == 1) {
 	    /* no translated entry: fall back on English */
 	    en = 1;
-	    pos = cli_pos_from_cmd(cmdnum, en);
+	    pos = cli_pos_from_cmd(cmdnum, 1);
 	}
     }
 
-    real_do_help(cmdnum, pos, cli, en);
+    if (en) {
+	flags |= HELP_EN;
+    }
+
+    real_do_help(cmdnum, pos, flags);
 } 
+
+/* called from main menu in gretl.c; also used as callback from
+   command ref index in textbuf.c
+*/
+
+void genr_funcs_ref (gpointer p, guint fnum, GtkWidget *w)
+{
+    real_do_help(fnum, fnum, HELP_FUNCS);    
+}
 
 static void en_text_cmdref (gpointer p, guint u, GtkWidget *w)
 {
-    real_do_help(0, 0, 1, 1);
+    real_do_help(0, 0, HELP_CLI | HELP_EN);
 } 
 
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
@@ -1099,6 +1156,7 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	gchar *text = NULL;
 	int pos = -1;
 	int hcode = 0;
+	int flags = HELP_CLI;
 	int en = 0;
 	GtkTextBuffer *buf;
 	GtkTextIter iter;
@@ -1156,7 +1214,11 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	unset_window_help_active(vwin);
 	text_set_cursor(vwin->w, 0);
 
-	real_do_help(hcode, pos, 1, en);
+	if (en) {
+	    flags |= HELP_EN;
+	}
+
+	real_do_help(hcode, pos, flags);
     }
 
     return FALSE;

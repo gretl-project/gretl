@@ -284,7 +284,13 @@
   </xsl:if>
   <xsl:text># </xsl:text>
   <xsl:value-of select="@name"/>
-  <xsl:text> </xsl:text>
+  <xsl:text>&#10;</xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'output'"/>
+  </xsl:call-template>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="@output"/>
+  </xsl:call-template>
   <xsl:text>&#10;</xsl:text>
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>
@@ -298,7 +304,7 @@
   <xsl:text>&#xa;</xsl:text>
   <xsl:choose>
     <xsl:when test="count(fnarg) > 1">
-      <xsl:call-template name="gettext">
+      <xsl:call-template name="gettext-nospace">
         <xsl:with-param name="key" select="'args'"/>
       </xsl:call-template>
     </xsl:when>
@@ -314,7 +320,7 @@
 
 <xsl:template match="fnarg">
   <xsl:if test="position() > 1">
-    <xsl:text>            </xsl:text>
+    <xsl:text>&#x9;&#x9;</xsl:text>
   </xsl:if> 
   <xsl:text>&lt;@var="</xsl:text>
   <xsl:apply-templates/>
@@ -327,7 +333,7 @@
     <xsl:choose>
       <xsl:when test="@type='matrixref'">
         <xsl:text>, </xsl:text>
-        <xsl:call-template name="gettext-nospace">
+        <xsl:call-template name="gettext">
           <xsl:with-param name="key" select="'or'"/>
         </xsl:call-template>
         <xsl:text>&lt;@lit="null"&gt;</xsl:text>

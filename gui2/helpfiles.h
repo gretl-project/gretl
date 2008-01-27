@@ -26,6 +26,8 @@ void context_help (GtkWidget *widget, gpointer data);
 
 void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w);
 
+void genr_funcs_ref (gpointer p, guint fnum, GtkWidget *w);
+
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		       windata_t *vwin);
 

@@ -294,7 +294,7 @@
 	arguments, it returns a column vector containing the estimated
 	coefficients for the last model. With the optional argument, it
 	returns a scalar, which is the estimated parameter named
-	<mathvar>s</mathvar> (see also <fncref targ="$coeff"/> and <fncref
+	<argname>s</argname> (see also <fncref targ="$coeff"/> and <fncref
 	  targ="$vcv"/>).
       </para>
     </description>
@@ -439,7 +439,7 @@
     </fnargs>
     <description>
       <para>
-	Extracts the cyclical component of series <mathvar>y</mathvar> via
+	Extracts the cyclical component of series <argname>y</argname> via
 	the Baxter&ndash;King bandpass filter, a two-sided symmetric
 	filter. See FIXME for details; see also <fncref targ="hpfilt"/>.
       </para>
@@ -452,7 +452,7 @@
     </fnargs>
     <description>
       <para>
-	Centers the columns of matrix <mathvar>X</mathvar> around their
+	Centers the columns of matrix <argname>X</argname> around their
 	means.
       </para>
     </description>
@@ -507,7 +507,7 @@
     <description>
       <para>
 	Ceiling function: returns the smallest integer greater than or
-	equal to <mathvar>x</mathvar>. See also <fncref targ="floor"/> and
+	equal to <argname>x</argname>. See also <fncref targ="floor"/> and
 	<fncref targ="int"/>.
       </para>
     </description>
@@ -520,11 +520,11 @@
     <description>
       <para>
 	Peforms a Cholesky decomposition of the matrix
-	<mathvar>A</mathvar>, which is assumed to be symmetric and
+	<argname>A</argname>, which is assumed to be symmetric and
 	positive definite. The result is a lower-triangular matrix
 	<mathvar>K</mathvar> which satisfies <equation status="inline"
 	  ascii="A = KK'" graphic="" tex="$A = KK'$"/>. The function will
-	fail if <mathvar>A</mathvar> is not symmetric or not positive
+	fail if <argname>A</argname> is not symmetric or not positive
 	definite.
       </para>
     </description>
@@ -566,7 +566,7 @@
     </fnargs>
     <description>
       <para>
-	Number of columns of <mathvar>X</mathvar>. See also <fncref
+	Number of columns of <argname>X</argname>. See also <fncref
 	  targ="mshape"/>, <fncref targ="rows"/>,
 	<fncref targ="unvech"/>, <fncref targ="vec"/> and 
 	<fncref targ="vech"/>.
@@ -887,10 +887,11 @@
     <description>
       <para>
 	Floor function: returns the greatest integer less than or equal to
-	<argname>x</argname>. Note: <fncref targ="int"/> and <fncref
+	  <argname>x</argname>. Note: <fncref targ="int"/> and <fncref
 	  targ="floor"/> differ in their effect for negative arguments:
-	\texttt{int(-3.5)} gives -3, while \texttt{floor(-3.5)} gives -4.
-	See also and <fncref targ="int"/>.
+	  <lit>int(-3.5)</lit> gives &minus;3, while
+	  <lit>floor(-3.5)</lit> gives &minus;4. See also and <fncref
+	    targ="int"/>.
       </para>
     </description>
   </function>
@@ -1919,12 +1920,12 @@
       <para>
 	Only applicable if the currently open dataset has a panel
 	structure. Computes the per-unit mean for variable
-	<argname>y</argname>, that is
+	<argname>y</argname>; that is,
 	<equation status="display" ascii="FIXME" graphic=""
 	  tex="\[
 	  \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\]"
 	  />
-	  <equation status="inline" ascii="T_i" graphic="" tex="$T_i$"/> is
+	  where <equation status="inline" ascii="T_i" graphic="" tex="$T_i$"/> is
 	  the number of valid observations for unit <mathvar>i</mathvar>.
 	  Missing values are skipped.
       </para>
@@ -2159,19 +2160,20 @@
     <description>
       <para>
 	Returns a series with the ranks of <mathvar>y</mathvar>. These are
-	defined as
+	  defined as
 	<equation status="display" ascii="FIXME" graphic=""
 	  tex="\[
 	  \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} 
-	  \left[ \mathbb{I}(y_j &lt; y_i) +
-	  0.5 \cdot \mathbb{I}(y_j = y_i) \right]\]" /> that is: the rank
-	for observation <mathvar>i</mathvar> is the number of elements in
-	the series that are less than <mathvar>y<sub>i</sub></mathvar>
-	plus one half the number of elements in the series that are equal
-	to <mathvar>y<sub>i</sub></mathvar>. (Intuitively, you may think
-	of chess points, where victory gives you one point and a draw
-	gives you half a point.) One is added so the lowest rank is 1
-	instead of 0.
+	  \left[ I(y_j &lt; y_i) +
+	  0.5 \cdot I(y_j = y_i) \right]\]" /> where <mathvar>I</mathvar>
+	  denotes the indicator function.  That is, the rank for
+	  observation <mathvar>i</mathvar> is the number of elements in
+	  the series that are less than <mathvar>y<sub>i</sub></mathvar>
+	  plus one half the number of elements in the series that are
+	  equal to <mathvar>y<sub>i</sub></mathvar>. (Intuitively, you may
+	  think of chess points, where victory gives you one point and a
+	  draw gives you half a point.) One is added so the lowest rank is
+	  1 instead of 0.
       </para>
       <para>
 	See also <fncref targ="sort"/> and <fncref targ="sortby"/>.

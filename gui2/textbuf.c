@@ -44,6 +44,7 @@ static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
+static int fnum_from_word (const char *s);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -783,6 +784,11 @@ static void link_open_script (GtkTextTag *tag)
     view_file(fullname, 0, 0, 78, 370, VIEW_SCRIPT);
 }
 
+static int object_get_int (gpointer p, const char *key)
+{
+    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), key));
+}
+
 static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 {
     GSList *tags = NULL, *tagp = NULL;
@@ -791,7 +797,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 
     for (tagp = tags; tagp != NULL; tagp = tagp->next) {
 	GtkTextTag *tag = tagp->data;
-	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(tag), "page"));
+	gint page = object_get_int(tag, "page");
 
 	if (page != 0) {
 	    if (page == GUIDE_PAGE) {
@@ -799,7 +805,13 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	    } else if (page == SCRIPT_PAGE) {
 		link_open_script(tag);
 	    } else {
-		plain_text_cmdref(p, page, NULL);
+		int role = object_get_int(tview, "role");
+
+		if (role == FUNCS_HELP) {
+		    genr_funcs_ref(p, page, NULL);
+		} else {
+		    plain_text_cmdref(p, page, NULL);
+		}
 	    }
 	    break;
 	}
@@ -1019,6 +1031,47 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 		gtk_text_buffer_insert(tbuf, &iter, " ", -1);
 	    }
 	}
+    }
+
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+
+    maybe_connect_help_signals(hwin, en);
+    maybe_set_help_tabs(hwin);
+}
+
+static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
+{
+    const char *header = N_("Gretl Function Reference");
+    const gchar *s;
+    GtkTextIter iter;
+    char funword[12];
+    int i, n, k;
+
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+					     (en)? header : _(header), -1,
+					     "title", NULL);
+    gtk_text_buffer_insert(tbuf, &iter, "\n\n\n", -1);
+
+
+    s = (const gchar *) hwin->data;
+    i = 1;
+
+    while (*s) {
+	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
+	    if (sscanf(s + 2, "%10s", funword)) {
+		insert_link(tbuf, &iter, funword, i++, NULL);
+		if (i % 7 == 0) {
+		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+		} else {
+		    n = 12 - strlen(funword);
+		    for (k=0; k<n; k++) {
+			gtk_text_buffer_insert(tbuf, &iter, " ", -1);
+		    }
+		}		
+	    }
+	}
+	s++;
     }
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
@@ -2084,14 +2137,13 @@ static int get_code_skip (const char *s)
 
 static void
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
-			 const char *s)
+			 const char *s, int role)
 {
     static char targ[128];
-    const char *p;
-    int ins;
-
     const char *indent = NULL;
     const char *code = NULL;
+    const char *p;
+    int ins;
 
     while ((p = strstr(s, "<"))) {
 	int skip = 0;
@@ -2110,7 +2162,14 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    /* "atomic" markup */
 	    ins = get_instruction_and_string(p + 1, targ);
 	    if (ins == INSERT_REF) {
-		insert_link(tbuf, iter, targ, gretl_command_number(targ), indent);
+		int itarg;
+		
+		if (role == FUNCS_HELP) {
+		    itarg = fnum_from_word(targ);
+		} else {
+		    itarg = gretl_command_number(targ);
+		}
+		insert_link(tbuf, iter, targ, itarg, indent);
 	    } else if (ins == INSERT_PDFLINK) {
 		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
 	    } else if (ins == INSERT_INPLINK) {
@@ -2164,6 +2223,85 @@ static char *grab_topic_buffer (const char *s)
     return buf;
 }
 
+/* apparatus for mapping between (a) index position of function int
+   hep file, (b) offset into help file and (c) the name of the
+   function
+*/
+
+typedef struct func_finder_ func_finder;
+
+struct func_finder_ {
+    int pos;
+    char word[12];
+};
+
+static func_finder *ff;
+static int nfuncs;
+
+static int make_funcs_mapping (windata_t *hwin)
+{
+    int err = 0;
+
+    if (ff == NULL) {
+	const char *s = (const char *) hwin->data;
+	char word[12];
+	int i = 0, pos = 0;
+
+	while (*s) {
+	    if (*s == '\n' && *(s+1) == '#') {
+		nfuncs++;
+	    }
+	    s++;
+	}
+
+	ff = mymalloc(nfuncs * sizeof *ff);
+
+	if (ff != NULL) {
+	    s = (const char *) hwin->data;
+	    while (*s) {
+		if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
+		    if (sscanf(s+2, "%10s", word)) {
+			ff[i].pos = pos + 1;
+			strcpy(ff[i].word, word);
+			i++;
+		    }
+		}
+		s++;
+		pos++;
+	    }
+	} else {
+	    err = 1;
+	    nfuncs = 0;
+	}
+    }
+
+    return err;
+}
+
+static int fnum_from_word (const char *s)
+{
+    int i;
+
+    for (i=0; i<nfuncs; i++) {
+	if (!strcmp(ff[i].word, s)) {
+	    return i+1;
+	}
+    }
+
+    return 0;
+}
+
+static int pos_from_fnum (windata_t *hwin, int fnum)
+{
+    int pos = 0;
+
+    if (fnum < nfuncs) {
+	pos = ff[fnum-1].pos;
+    } 
+
+    return pos;
+}
+
 /* pull the appropriate chunk of help text out of the buffer attached
    to the help viewer and display it */
 
@@ -2177,18 +2315,35 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 
     textb = gretl_text_buf_new();
 
+    if (hwin->role == FUNCS_HELP) {
+	if (make_funcs_mapping(hwin)) {
+	    return;
+	}
+    }
+
     if (pos == 0) {
-	/* cli help with no topic selected */
-	cmdref_title_page(hwin, textb, en);
+	/* no topic selected */
+	if (hwin->role == FUNCS_HELP) {
+	    funcref_title_page(hwin, textb, en);
+	} else {
+	    cmdref_title_page(hwin, textb, en);
+	}
 	cursor_to_top(hwin);
 	hwin->active_var = 0;
 	return;
     }
 
+    /* OK, pos is non-zero */
+
     maybe_connect_help_signals(hwin, en);
     maybe_set_help_tabs(hwin);
     
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
+
+    if (hwin->role == FUNCS_HELP) {
+	/* offset is not pre-computed */
+	pos = pos_from_fnum(hwin, pos);
+    }
 
     hbuf = (gchar *) hwin->data + pos;
 
@@ -2227,7 +2382,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 	return;
     }
 
-    insert_text_with_markup(textb, &iter, buf);
+    insert_text_with_markup(textb, &iter, buf, hwin->role);
     free(buf);
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), textb);
