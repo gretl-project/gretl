@@ -39,8 +39,10 @@ GENDTD = $(CMDSDIR)/genr_funcs.dtd
 CMDSRC = $(CMDSDIR)/gretl_commands.xml \
 	$(CMDSDIR)/gretl_commands_es.xml \
 	$(CMDSDIR)/gretl_commands_it.xml
-	
-GENSRC = $(CMDSDIR)/genr_funcs.xml	
+
+GENSRC = $(CMDSDIR)/genr_funcs.xml
+GENXSL = $(CMDSDIR)/genrtex.xsl
+GENTEX = ../tex/genr_funcs.tex	
 
 MANXSL = $(CMDSDIR)/gretlman.xsl
 HLPXSL = $(CMDSDIR)/gretltxt.xsl \
@@ -135,6 +137,13 @@ $(GENSTAMP): xsltrans reflow $(GENSRC) $(GENDTD) $(HLPXSL) $(XMLSTRS)
 	  ./reflow --markup < genrgui.txt > $(SHAREDIR)/genrgui.hlp ; \
 	fi
 	touch $@
+
+$(GENTEX): xsltrans reflow $(GENSRC) $(GENDTD) $(GENXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/genr_funcs.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --genr --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < genrtex.txt > $@
 
 .PHONY: test
 

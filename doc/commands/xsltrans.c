@@ -53,6 +53,7 @@ enum {
     OPT_XREFS  = 1 << 0,
     OPT_MARKUP = 1 << 1,
     OPT_GENR   = 1 << 2,
+    OPT_TEX    = 1 << 3
 };
 
 #define UTF const xmlChar *
@@ -71,12 +72,6 @@ static void build_params (char const **params, int output,
 			  int opt, const char *lang)
 {
     int i = 0;
-
-    if (output == OUTPUT_CMD_HLP && !opt) {
-	/* gtk-1.2 help: no-op */
-	params[i] = NULL;
-	return;
-    }
 
     if (strcmp(lang, "en")) {
 	params[i++] = "lang";
@@ -131,7 +126,21 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 
     xmlIndentTreeOutput = 1;
 
-    /* genr functions help (experimental) */
+    /* TeX output for functions reference */
+    if ((opt & OPT_GENR) && (opt & OPT_TEX)) {
+	full_fname("genrtex.xsl", docdir, styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
+	    build_params(xsl_params, OUTPUT_CMD_HLP, OPT_XREFS, lang);
+	    err = apply_xslt(doc, style, xsl_params, "genrtex.txt");
+	    xsltFreeStylesheet(style);
+	}
+	return err;
+    }
+
+    /* plain and marked-up text output, functions reference */
     if (opt & OPT_GENR) {
 	full_fname("gretltxt.xsl", docdir, styname);
 	style = xsltParseStylesheetFile((const xmlChar *) styname);
@@ -148,21 +157,10 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 	if (style == NULL) {
 	    err = 1;
 	} else {
-	    build_params(xsl_params, OUTPUT_CMD_HLP, 0, lang);
+	    build_params(xsl_params, OUTPUT_CMD_HLP, opt, lang);
 	    err = apply_xslt(doc, style, xsl_params, "genrgui.txt");
 	    xsltFreeStylesheet(style);
 	}
-
-	full_fname("genrtex.xsl", docdir, styname);
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_CMD_HLP, 0, lang);
-	    err = apply_xslt(doc, style, xsl_params, "genrtex.txt");
-	    xsltFreeStylesheet(style);
-	}
-	return err;
     }	
 
     /* DocBook XML output */
@@ -334,6 +332,8 @@ int main (int argc, char **argv)
 	    opt |= OPT_MARKUP;
 	} else if (!strcmp(argv[i], "--genr")) {
 	    opt |= OPT_GENR;
+	} else if (!strcmp(argv[i], "--tex")) {
+	    opt |= OPT_TEX;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
 	} else {

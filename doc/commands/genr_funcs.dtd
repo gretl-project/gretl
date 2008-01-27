@@ -27,6 +27,7 @@
 
 <!ATTLIST function
    name    CDATA #REQUIRED
+   targ    CDATA #IMPLIED
    output  (scalar | series | matrix | smatrix |
             rvec | cvec | list | asinput) "series"
    altout  (none | scalar | series | matrix | list) "none"
@@ -44,7 +45,7 @@
 <!ELEMENT fnarg (#PCDATA)>
 <!ATTLIST fnarg 
     type      (scalar | series | vector | matrix | smatrix | symmat | 
-               anyfloat | scalar-or-series | series-or-vec | 
+               matrixref | anyfloat | scalar-or-series | series-or-vec | 
                list | coeffname | string | char | seebelow) "series"
     optional  (true | false) "false"
     alternate (true | false) "false"
