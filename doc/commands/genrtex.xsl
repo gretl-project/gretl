@@ -3,6 +3,7 @@
 
 <xsl:param name="hlp">tex</xsl:param>
 <xsl:param name="xrefs">true</xsl:param>
+<xsl:param name="useGUG">true</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="iso-8859-1"/>
@@ -181,22 +182,26 @@
 </xsl:template>
 
 <xsl:template match="para">
-  <xsl:if test="@role='preformatted'">
-    <xsl:text>\begin{raggedright}</xsl:text>
-  </xsl:if>
-  <xsl:apply-templates/>
-  <xsl:if test="@role='preformatted'">
-    <xsl:text>\end{raggedright}</xsl:text>
-  </xsl:if>
-  <xsl:if test="not(ancestor::entry)">
-    <xsl:text>&#10;&#10;</xsl:text>
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:if test="@role='preformatted'">
+      <xsl:text>\begin{raggedright}</xsl:text>
+    </xsl:if>
+    <xsl:apply-templates/>
+    <xsl:if test="@role='preformatted'">
+      <xsl:text>\end{raggedright}</xsl:text>
+    </xsl:if>
+    <xsl:if test="not(ancestor::entry)">
+      <xsl:text>&#10;&#10;</xsl:text>
+    </xsl:if>
   </xsl:if>
 </xsl:template>
 
 <xsl:template match="ilist">
-  <xsl:text>&#10;\begin{itemize}&#10;</xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text>\end{itemize}&#10;&#10;</xsl:text>
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:text>&#10;\begin{itemize}&#10;</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:text>\end{itemize}&#10;&#10;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="olist">
@@ -303,6 +308,17 @@
     </xsl:otherwise>
   </xsl:choose>
   <xsl:text>}</xsl:text>
+</xsl:template>
+
+<xsl:template match="guideref">
+  <xsl:choose>
+    <xsl:when test="$useGUG='true'">
+      <xsl:text>\GUG{}</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xref linkend="{@targ}"/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template name="dnl">

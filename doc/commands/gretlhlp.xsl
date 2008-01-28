@@ -434,7 +434,7 @@
 </xsl:template>
 
 <xsl:template match="para">
-  <xsl:if test="not(@context) or @context=$hlp">
+  <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
   <xsl:choose>
     <xsl:when test="parent::li and ancestor::ilist">
       <xsl:text>&#xa;[ILISTPAR]</xsl:text>
@@ -472,7 +472,7 @@
 </xsl:template>
 
 <xsl:template match="ilist">
-  <xsl:if test="not(@context) or @context=$hlp">
+  <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
     <xsl:apply-templates/>
   </xsl:if>
 </xsl:template>

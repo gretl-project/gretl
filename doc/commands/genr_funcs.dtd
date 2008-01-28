@@ -48,7 +48,7 @@
 <!ATTLIST fnarg 
     type      (scalar | series | vector | matrix | smatrix | symmat | 
                matrixref | anyfloat | scalar-or-series | series-or-vec | 
-               list | coeffname | string | char | seebelow) "series"
+               list | coeffname | string | char | sslist | seebelow) "series"
     optional  (true | false) "false"
     alternate (true | false) "false"
 >
@@ -62,12 +62,19 @@
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
                 footnote | argname | cmd)*>
+<!ATTLIST para
+  context (tex | notex | both) "both"
+> 
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>
 <!ELEMENT code (#PCDATA)>
 
 <!ELEMENT ilist (li)+>
 <!ELEMENT nlist (li)+>
+
+<!ATTLIST ilist
+  context (tex | notex | both) "both"
+> 
 
 <!ELEMENT li (para | code | table)*>
 
