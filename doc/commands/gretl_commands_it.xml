@@ -112,6 +112,10 @@
 	  <flag>--seasonals</flag>
 	  <effect>include variabili dummy stagionali</effect>
         </option>
+        <option>
+         <flag>--gls</flag>
+         <effect>rimuove la media o il trend usando GLS</effect>
+        </option>
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i risultati della regressione</effect>
@@ -159,11 +163,11 @@
         variabili.
       </para>
 
-      <para>Per impostazione predefinita, vengono mostrate tre varianti del
+      <para context="cli">
+        Per impostazione predefinita, vengono mostrate due varianti del
         test: una basata su una regressione che contiene solo una costante,
-        una che include la costante e un trend lineare, una che usa la
-        costante e un trend quadratico. È possibile controllare le tre
-        varianti specificando una o più opzioni.
+        e una che include la costante e un trend lineare. È possibile
+        controllare le varianti specificando una o più opzioni.
       </para>
       
       <para>In tutti i casi, la variabile dipendente è la differenza prima
@@ -211,14 +215,30 @@
 	</li>
       </nlist>
 
-      <para>Durante il punto 2 spiegato sopra, <quote>significativo</quote>
-      significa che la statistica <mathvar>t</mathvar> per l'ultimo ritardo
-      abbia un <emphasis>p</emphasis>-value asintotico a due code per la
-      distribuzione normale pari a 0.10 o inferiore.</para> 
-
-      <para>I <emphasis>p-</emphasis>value per questo test sono basati su
+      <para>
+        Durante il punto 2 spiegato sopra, <quote>significativo</quote>
+        significa che la statistica <mathvar>t</mathvar> per l'ultimo ritardo
+        abbia un <emphasis>p</emphasis>-value asintotico a due code per la
+        distribuzione normale pari a 0.10 o inferiore.
+      </para> 
+      <para context="cli">
+        L'opzione <lit>--gls</lit> può essere usata insieme a una delle altre due
+        opzioni <lit>--c</lit> e <lit>--ct</lit> (il modello con costante o quello
+        con costante e trend). L'effetto di questa opzione è di rimuovere la
+        media o il trend della variabile da testare, usando la procedura GLS
+        suggerita da Elliott, Rothenberg e Stock (1996), che fornisce un test di
+        potenza maggiore rispetto a quell'approccio standard di
+        Dickey&ndash;Fuller approach. Questa opzione non è compatibile con le
+        opzioni <lit>--nc</lit>, <lit>--ctt</lit> o <lit>--seasonals</lit>.
+      </para>
+      <para>
+        I <emphasis>p-</emphasis>value per questo test sono basati su
 	MacKinnon (1996). Il codice rilevante è incluso per gentile concessione
-        dell'autore.</para>
+        dell'autore. Nel caso del test con trend lineare usando la procedura GLS
+        questi <emphasis>P</emphasis>-value non sono utilizzabili; vengono usati
+        i valori critici contenuti nella Tabella 1 di Elliott, Rothenberg e Stock
+        (1996).
+      </para>
     </description>
 
     <gui-access>
@@ -1656,7 +1676,30 @@
 
   </command>  
 
-  
+  <command name="dfgls" section="Tests" context="gui"
+    label="Il test ADF-GLS">
+
+    <description>
+      <para>
+       Il test ADF-GLS è una variante del test Dickey&ndash;Fuller per radici
+       unitarie, per il caso in cui la variabile da testare ha media diversa da
+       zero o esibisce un trend lineare. La differenza consiste nel fatto che la
+       rimozione della media o del trend è eseguita secondo la procedura
+       suggerita da Elliott, Rothenberg e Stock (1996). Questa produce un test
+       di potenza maggiore rispetto a quello dell'approccio standard di
+       Dickey&ndash;Fuller.
+      </para>
+      <para>
+       Si veda anche l'opzione <lit>--gls</lit> del comando <cmdref
+       targ="adf"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/ADF-GLS test</menu-path>
+    </gui-access>
+
+  </command>
 
   <command name="dialog" section="Estimation" context="gui"
     label="Finestra di dialogo Modello">
