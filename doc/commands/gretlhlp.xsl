@@ -300,7 +300,9 @@
       <xsl:with-param name="key" select="@altout"/>
     </xsl:call-template>
   </xsl:if>
-  <!-- <xsl:text>&#10;</xsl:text> -->
+  <xsl:if test="not(@fnargs)">
+    <xsl:text>&#10;</xsl:text>
+  </xsl:if>
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>
 </xsl:template>
@@ -310,7 +312,6 @@
 </xsl:template>
 
 <xsl:template match="fnargs">
-  <xsl:text>&#xa;</xsl:text>
   <xsl:choose>
     <xsl:when test="count(fnarg) > 1">
       <xsl:call-template name="gettext-nospace">
@@ -415,9 +416,18 @@
   <xsl:if test="(@status='display')">
     <xsl:text>[/PARA]&#xa;&#xa;&#xa;  </xsl:text>
   </xsl:if>
-  <xsl:text>&lt;@fig="</xsl:text>
-  <xsl:value-of select="@graphic"/>
-  <xsl:text>"&gt;</xsl:text>
+  <xsl:choose>
+    <xsl:when test="@graphic">
+      <xsl:text>&lt;@fig="</xsl:text>
+      <xsl:value-of select="@graphic"/>
+      <xsl:text>"&gt;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&lt;@itl="</xsl:text>
+      <xsl:value-of select="@ascii"/>
+      <xsl:text>"&gt;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:if test="(@status='display')">
     <xsl:text>&#xa;&#xa;&#xa;[PARA]</xsl:text>
   </xsl:if>

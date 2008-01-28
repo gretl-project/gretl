@@ -1059,7 +1059,7 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
 	    if (sscanf(s + 2, "%10s", funword)) {
-		insert_link(tbuf, &iter, funword, i++, NULL);
+		insert_link(tbuf, &iter, funword, i, NULL);
 		if (i % 7 == 0) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 		} else {
@@ -1067,7 +1067,8 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 		    for (k=0; k<n; k++) {
 			gtk_text_buffer_insert(tbuf, &iter, " ", -1);
 		    }
-		}		
+		}
+		i++;
 	    }
 	}
 	s++;

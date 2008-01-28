@@ -150,7 +150,7 @@
 	after the Phillips normalization. If, however, a restricted system
 	is estimated via the <lit>restrict</lit> command with the
 	<lit>--full</lit> option, a singular matrix with <equation
-	  status="inline" ascii="n*r" graphic="" tex="$n \cdot
+	  status="inline" ascii="n*r" tex="$n \cdot
 	  r$"/> rows will be returned (<mathvar>n</mathvar> being the
 	number of variables and <mathvar>r</mathvar> the cointegration
 	rank).
@@ -261,7 +261,7 @@
 	coefficient for the residuals of the last model. After estimating
 	a model via the <lit>ar</lit> command, the syntax
 	<lit>$rho(n)</lit> returns the corresponding estimate of <equation
-	  status="inline" ascii="rho(n)" graphic="" tex="$\rho(n)$"/>.
+	  status="inline" ascii="rho(n)"  tex="$\rho(n)$"/>.
       </para>
     </description>
   </function>
@@ -270,7 +270,7 @@
     <description>
       <para>
 	Returns the unadjusted <equation status="inline" ascii="R^2"
-	graphic="" tex="$R^2$"/>
+	 tex="$R^2$"/>
 	from the last estimated model.
       </para>
     </description>
@@ -351,7 +351,7 @@
   <function name="$trsq" output="scalar">
     <description>
       <para>
-	<equation status="inline" ascii="T*R^2" graphic="" 
+	<equation status="inline" ascii="T*R^2"  
 	  tex="$T\cdot R^2$"/> (sample size times
 	R-squared) in the last model.
       </para>
@@ -467,7 +467,7 @@
     <description>
       <para>
 	Cumulative distribution function calculator. Returns 
-	<equation status="inline" ascii="P(X &lt; x)" graphic="" 
+	<equation status="inline" ascii="P(X &lt; x)"  
 	  tex="$P(X \le x)$"/>, where the distribution
 	<mathvar>X</mathvar> is determined by the character
 	<argname>c</argname>. Between the arguments <argname>c</argname>
@@ -523,7 +523,7 @@
 	<argname>A</argname>, which is assumed to be symmetric and
 	positive definite. The result is a lower-triangular matrix
 	<mathvar>K</mathvar> which satisfies <equation status="inline"
-	  ascii="A = KK'" graphic="" tex="$A = KK'$"/>. The function will
+	  ascii="A = KK'"  tex="$A = KK'$"/>. The function will
 	fail if <argname>A</argname> is not symmetric or not positive
 	definite.
       </para>
@@ -622,7 +622,7 @@
     <description>
       <para>
 	Critical value calculator. Returns <mathvar>x</mathvar> such that
-	<equation status="inline" ascii="P(X &gt; x) = p" graphic="" 
+	<equation status="inline" ascii="P(X &gt; x) = p"  
 	  tex="$p = P(X &gt; x)$"/>, where the distribution
 	<mathvar>X</mathvar> is determined by the character
 	<argname>c</argname>. Between the arguments <argname>c</argname>
@@ -905,12 +905,12 @@
       <para>
 	Returns the fractional difference of order <argname>d</argname>
 	for the series <mathvar>y</mathvar>.
-	<equation status="display" ascii="" graphic=""
+	<equation status="display" ascii="" 
 	  tex="\[
 	  \Delta^d y_t = y_t - \sum_{i=1}^{\infty} \psi_i y_{t-i}
 	  \]" />
 	where
-	<equation status="display" ascii="" graphic=""
+	<equation status="display" ascii="" 
 	  tex="\[\psi_i = \frac{\Gamma(i-d)}{\Gamma(-d) \Gamma(i+1)}\]"
 	  />
       </para>
@@ -951,10 +951,10 @@
      </fnargs>    
     <description>
       <para>
-	Returns <equation status="inline" ascii="A+" graphic="" 
+	Returns <equation status="inline" ascii="A+"  
 	  tex="$A^+$"/>, the Moore-Penrose inverse of
 	<argname>A</argname>, which has the properties
-	<equation status="display" ascii="" graphic=""
+	<equation status="display" ascii="" 
 	  tex="\begin{eqnarray*}
 	  A A^+ A &amp; = &amp; A \\
 	  A^+ A A^+ &amp; = &amp; A^+ 
@@ -962,7 +962,7 @@
 	  />
       </para>
       <para>
-	The result <equation status="inline" ascii="A+" graphic=""
+	The result <equation status="inline" ascii="A+" 
 	  tex="$A^+$"/> is computed via the singular value decomposition.
 	See also <fncref targ="inv"/> and <fncref targ="svd"/>.
       </para>
@@ -1054,10 +1054,10 @@
     <description>
       <para>
 	Returns the <equation status="inline" 
-	  ascii="infinity-norm" graphic="" tex="$\infty$-norm"/> of the
+	  ascii="infinity-norm"  tex="$\infty$-norm"/> of the
 	<mathvar>r</mathvar> by <mathvar>c</mathvar> matrix
 	<argname>X</argname>: 
-	<equation status="display" ascii="" graphic=""
+	<equation status="display" ascii="" 
 	  tex="\[|| X ||_{\infty} = \max_i \sum_{j=1}^c |X_{ij}|\]"
 	  />
       </para>
@@ -1125,7 +1125,7 @@
       <para>
 	Inverse cumulative distribution function calculator. Returns
 	<mathvar>x</mathvar> such that
-	<equation status="inline" ascii="P(X &lt; x) = p" graphic="" 
+	<equation status="inline" ascii="P(X &lt; x) = p"  
 	  tex="$P(X \le x) = p$"/>, where the distribution
 	<mathvar>X</mathvar> is determined by the character
 	<argname>c</argname>; Between the arguments <argname>c</argname>
@@ -1291,7 +1291,7 @@
 	Returns an <mathvar>n</mathvar> by <mathvar>n</mathvar > 
 	lower triangular matrix <mathvar>B</mathvar> for
 	which
-	<equation status="inline" ascii="FIXME" graphic="" 
+	<equation status="inline" ascii="FIXME"  
 	  tex="$B_{ij} = A_{ij}$ if $i \ge j$"/>, and 0 otherwise. 
 	See also <fncref targ="upper"/>.
       </para>
@@ -1308,13 +1308,13 @@
 	Returns the long-run variance of <argname>y</argname>, calculated
 	using a Bartlett kernel with window size <argname>k</argname>. In
 	formulae:
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[
 	  \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k} 
 	  \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - 
 	  \bar{Y}) \right]\]" />
 	with
-	<equation status="display" ascii="" graphic=""
+	<equation status="display" ascii="" 
 	  tex="\[
 	  w_i = 1 - \frac{|i|}{k + 1}\]" />
       </para>
@@ -1456,7 +1456,7 @@
     <description>
       <para>
 	Matrix exponential,
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[
 	  e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!} = 
 	  \frac{I}{0!} + \frac{A}{1!}
@@ -1544,7 +1544,7 @@
 	Shifts up or down the elements of <argname>X</argname>. If
 	<argname>p</argname> &gt; 0 the returned matrix
 	<mathvar>Y</mathvar> has as its typical element
- 	<equation status="inline" ascii="FIXME" graphic="" 
+ 	<equation status="inline" ascii="FIXME"  
 	  tex="$Y_{i,j} = X_{i-p,j}$
 	  for $i \ge p$"/>, and zero otherwise. In other words, the
 	columns of <argname>X</argname> are shifted down by
@@ -1644,7 +1644,7 @@
 	columns.  Elements are read from <argname>X</argname> and written
 	to the target in column-major order.  If <argname>X</argname>
 	contains fewer than 
-	<equation status="inline" ascii="k = r*c" graphic=""
+	<equation status="inline" ascii="k = r*c" 
 	  tex="$k=r \cdot c$"/> elements, the elements are repeated
 	cyclically; otherwise, if <argname>X</argname> has more elements,
 	only the first <mathvar>k</mathvar> are used.
@@ -1863,7 +1863,7 @@
       <para>
 	Returns the 1-norm of the <mathvar>r</mathvar> by
 	<mathvar>c</mathvar> matrix <argname>X</argname>: 
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[|| X ||_1 = \max_j \sum_{i=1}^r |X_{ij}|\]"
 	  />
       </para>
@@ -1898,7 +1898,7 @@
 	Only applicable if the currently open dataset has a panel
 	structure. Computes the forward orthogonal deviations for variable
 	<argname>y</argname>, that is
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[
 	  \tilde{y}_{i,t} = \sqrt{ \frac{T_i - t + 1}{T_i - t}} 
 	  \left( y_{i,t} - \frac{1}{T_i - t - 1}
@@ -1921,11 +1921,11 @@
 	Only applicable if the currently open dataset has a panel
 	structure. Computes the per-unit mean for variable
 	<argname>y</argname>; that is,
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[
 	  \bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{i,t}\]"
 	  />
-	  where <equation status="inline" ascii="T_i" graphic="" tex="$T_i$"/> is
+	  where <equation status="inline" ascii="T_i"  tex="$T_i$"/> is
 	  the number of valid observations for unit <mathvar>i</mathvar>.
 	  Missing values are skipped.
       </para>
@@ -1943,11 +1943,11 @@
       <para>
 	Generates a series of Poisson pseudo-random variates. If &mu; is a
 	scalar, all the elements are drawn from the same distribution 
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[ P(x_t = a) = e^{-\mu} \frac{\mu^{a}}{a!} \]"
 	  />
 	Otherwise, if &mu; is a series, the above becomes
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[ P(x_t = a) = e^{-\mu_t} \frac{\mu_t^{a}}{a!} \]"
 	  />
       </para>
@@ -1977,19 +1977,19 @@
       </para>
       <para>
 	The elements of <mathvar>P</mathvar> are computed as
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[ P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i \]"
 	  />
 	where 
-	<equation status="inline" ascii="FIXME" graphic="" tex="$Z_{ti}$"/> 
+	<equation status="inline" ascii="FIXME"  tex="$Z_{ti}$"/> 
 	is the standardized value of variable <mathvar>i</mathvar> at
 	observation <mathvar>t</mathvar>, 
-	<equation status="inline" ascii="FIXME" graphic="" 
+	<equation status="inline" ascii="FIXME"  
 	  tex="$Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$"/>, and
-	<equation status="inline" ascii="v^(j)" graphic="" tex="$v^{(j)}$"/> 
+	<equation status="inline" ascii="v^(j)"  tex="$v^{(j)}$"/> 
 	is the <mathvar>j</mathvar>th eigenvector of the correlation 
 	matrix of the
-	<equation status="inline" ascii="X_i" graphic="" tex="$X_i$"/>s, 
+	<equation status="inline" ascii="X_i"  tex="$X_i$"/>s, 
 	with the eigenvectors ordered by decreasing value of the
 	corresponding eigenvalues.
       </para>	
@@ -2008,19 +2008,19 @@
 	Only applicable if the currently open dataset has a panel
 	structure. Computes the per-unit sample standard deviation for
 	variable <mathvar>y</mathvar>, that is
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[
 	  \sigma_i = \sqrt{ \frac{1}{T_i - 1} \sum_{t=1}^{T_i} (y_{i,t} -
 	  \bar{y}_i)^2 } \]"
 	  /> The above formula holds for 
 	<equation status="inline" ascii="T_i &gt; 2"
-	  graphic="" tex="$T_i \ge 2$"/>, where 
-	<equation status="inline" ascii="T_i" graphic=""
+	   tex="$T_i \ge 2$"/>, where 
+	<equation status="inline" ascii="T_i" 
 	  tex="$T_i$"/> is the number of valid observations for unit
 	<mathvar>i</mathvar>; if 
 	<equation status="inline" ascii="T_i = 0" 
-	  graphic="" tex="$T_i = 0$"/>, <lit>NA</lit> is returned; if 
-	<equation status="inline" ascii="T_i = 1" graphic="" 
+	   tex="$T_i = 0$"/>, <lit>NA</lit> is returned; if 
+	<equation status="inline" ascii="T_i = 1"  
 	  tex="$T_i = 1$"/>, 0 is returned. Note: this function makes it
 	possible to check whether a given variable (say, <lit>X</lit>) is
 	time-invariant via the condition <lit>max(psd(X)) = 0</lit>.
@@ -2040,7 +2040,7 @@
     <description>
       <para>
 	Pvalue calculator. Returns <equation status="inline" 
-	  ascii="P(X > x)" graphic="" tex="$P(X > x)$"/>, where the distribution
+	  ascii="P(X > x)"  tex="$P(X > x)$"/>, where the distribution
 	<mathvar>X</mathvar> is determined by the character
 	<argname>c</argname>. Between the arguments <argname>c</argname>
 	and <argname>x</argname>, zero or more additional arguments are
@@ -2064,7 +2064,7 @@
       <para>
 	Computes the quadratic form 
 	<equation status="inline" ascii="Y = xAx'"
-	  graphic="" tex="$Y = x A x'$"/>. Using this function instead of
+	   tex="$Y = x A x'$"/>. Using this function instead of
 	ordinary matrix multiplication guarantees more speed and better
 	accuracy. If <argname>x</argname> and <argname>A</argname> are not
 	conformable, or <argname>A</argname> is not symmetric, an error is
@@ -2126,13 +2126,13 @@
 	of non-missing values in <argname>y</argname> and
 	let <mathvar>k</mathvar> be the integer part of
 	<equation status="inline"
-	  ascii="n*p" graphic="" tex="$n \cdot p$"/>. 
+	  ascii="n*p"  tex="$n \cdot p$"/>. 
 	Then the return value <mathvar>q</mathvar> is defined as:
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\]"
 	  />
 	  where 
-	<equation status="inline" ascii="" graphic="" 
+	<equation status="inline" ascii=""  
 	  tex="$y_{[i]}$" />
 	  is the <mathvar>i</mathvar>-th element of 
 	<mathvar>y<sub>i</sub></mathvar>
@@ -2161,7 +2161,7 @@
       <para>
 	Returns a series with the ranks of <mathvar>y</mathvar>. These are
 	  defined as
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[
 	  \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} 
 	  \left[ I(y_j &lt; y_i) +
@@ -2214,10 +2214,10 @@
 	Returns the reciprocal condition number for <argname>A</argname>
 	  (which should be symmetric and positive definite) with respect
 	  to the 1-norm. If <mathvar>A</mathvar> is invertible,
-	<equation status="display" ascii="FIXME" graphic=""
+	<equation status="display" ascii="FIXME" 
 	  tex="\[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\]" /> and the
 	  function returns <equation status="inline" ascii="1/k(A)"
-	    graphic=""
+	    
 	  tex="$\kappa(A)^{-1}$"/>. If <mathvar>A</mathvar> is singular, 0
 	  is returned. In many circumstances, this is a better measure of
 	  the sensitivity of <argname>A</argname> to numerical operations
@@ -2276,7 +2276,7 @@
     <description>
       <para>
 	Computes seasonal differences: <equation status="inline" 
-	  ascii="y(t) - y(t-k)" graphic="" tex="$y_t - y_{t-k}$"/>, where
+	  ascii="y(t) - y(t-k)"  tex="$y_t - y_{t-k}$"/>, where
 	<mathvar>k</mathvar> is the periodicity of the current dataset
 	(see also <fncref targ="$pd"/>). Starting values are set to <lit>NA</lit>.
       </para>
@@ -2450,7 +2450,7 @@
       <para>
 	Returns the trace of the square matrix <argname>A</argname>,
 	namely <equation status="inline" ascii="the sum of its
-	  diagonal elements" graphic="" tex="$\sum_i A_{ii}$"/>.
+	  diagonal elements"  tex="$\sum_i A_{ii}$"/>.
 	See also <fncref targ="diag"/>.
       </para>
     </description>
@@ -2478,9 +2478,9 @@
       <para>
 	Generates a series of uniform pseudo-random variates in the
 	interval
-	<equation status="inline" ascii="(a, b)" graphic="" tex="$(a,b)$"/>,
+	<equation status="inline" ascii="(a, b)"  tex="$(a,b)$"/>,
 	or, if no arguments are supplied, in the interval
-	<equation status="inline" ascii="(0, 1)" graphic="" tex="$(0,1)$"/>.
+	<equation status="inline" ascii="(0, 1)"  tex="$(0,1)$"/>.
 	The algorithm used is the Mersenne Twister by Matsumoto
 	and Nishimura (1998).
       </para>
@@ -2504,7 +2504,7 @@
 	elements of <mathvar>v</mathvar>. The number of elements in 
 	<mathvar>v</mathvar> must be a triangular integer &mdash; &ie;, a number 
 	<mathvar>k</mathvar> such that an integer <mathvar>n</mathvar> exists 
-	with the property <equation status="inline" ascii="k = n(n+1)/2" graphic=""
+	with the property <equation status="inline" ascii="k = n(n+1)/2" 
 	tex="$k = n(n+1)/2$"/>. 
 	This is the inverse of the function <fncref targ="vech"/>. 
       </para>
@@ -2522,7 +2522,7 @@
       <para>
 	Returns an <mathvar>n</mathvar> by <mathvar>n</mathvar> lower
 	triangular matrix <mathvar>B</mathvar> for which
-	<equation status="inline" ascii="FIXME" graphic="" 
+	<equation status="inline" ascii="FIXME"  
 	  tex="$B_{ij} = A_{ij}$ if $i \le j$"/>, and 0 otherwise. 
       </para>
       <para>

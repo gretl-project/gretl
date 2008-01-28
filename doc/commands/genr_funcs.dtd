@@ -76,7 +76,7 @@
    status (inline | display) "inline"
    tex     CDATA #REQUIRED
    ascii   CDATA #REQUIRED
-   graphic CDATA #REQUIRED
+   graphic CDATA #IMPLIED
 >
 
 <!ELEMENT guideref EMPTY>
