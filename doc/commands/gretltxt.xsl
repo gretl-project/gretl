@@ -247,6 +247,9 @@
 </xsl:template>
 
 <xsl:template match="funclist">
+  <xsl:text>## </xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>&#10;</xsl:text>
   <xsl:apply-templates/> 
 </xsl:template>
 

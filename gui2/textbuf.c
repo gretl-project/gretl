@@ -518,7 +518,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("title");
     g_object_set(tag, "justification", GTK_JUSTIFY_CENTER,
-		 "pixels_above_lines", 20,
+		 "pixels_above_lines", 15,
 		 "family", "sans",
 		 "size", 15 * PANGO_SCALE, NULL);
     gtk_text_tag_table_add(table, tag);
@@ -1008,7 +1008,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     (en)? header : _(header), -1,
 					     "title", NULL);
-    gtk_text_buffer_insert(tbuf, &iter, "\n\n\n", -1);
+    gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 
     j = 1;
 
@@ -1044,27 +1044,38 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     const gchar *s;
     GtkTextIter iter;
     char funword[12];
-    int i, n, k;
+    int llen;
+    int i, j, n;
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     (en)? header : _(header), -1,
 					     "title", NULL);
-    gtk_text_buffer_insert(tbuf, &iter, "\n\n\n", -1);
-
+    gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 
     s = (const gchar *) hwin->data;
     i = 1;
+    llen = 0;
 
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
-	    if (sscanf(s + 2, "%10s", funword)) {
-		insert_link(tbuf, &iter, funword, i, NULL);
-		if (i % 7 == 0) {
+	    if (*(s+2) == '#') {
+		if (i > 1) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+		    if (llen < 7) {
+			gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+			llen = 0;
+		    }
+		}
+		s += 2;
+	    } else if (sscanf(s + 2, "%10s", funword)) {
+		insert_link(tbuf, &iter, funword, i, NULL);
+		if (++llen == 7) {
+		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+		    llen = 0;
 		} else {
 		    n = 12 - strlen(funword);
-		    for (k=0; k<n; k++) {
+		    for (j=0; j<n; j++) {
 			gtk_text_buffer_insert(tbuf, &iter, " ", -1);
 		    }
 		}

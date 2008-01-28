@@ -2674,15 +2674,26 @@ static int func_help_topics (const char *helpfile, PRN *prn)
 {
     char line[128], word[12];
     FILE *fp;
-    int j = 1;
+    int j, k;
 
     if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
 	printf(_("Unable to access the file %s.\n"), helpfile);
 	return E_FOPEN;
     } 
 
+    j = 1;
+    k = 0;
     while (fgets(line, sizeof line, fp) != NULL) {
-	if (*line == '#') {
+	if (!strncmp(line, "## ", 3)) {
+	    /* sub-heading */
+	    tailstrip(line);
+	    if (k++ > 0) {
+		pputc(prn, '\n');
+	    }
+	    pprintf(prn, "\n%s:\n", line + 3);
+	    j = 1;
+	} else if (*line == '#') {
+	    /* actual entry */
 	    sscanf(line + 2, "%10s", word);
 	    pprintf(prn, "%-10s", word);
 	    if (j % 7 == 0) {
@@ -2743,6 +2754,7 @@ int cli_help (const char *cmdword, PATHS *paths, PRN *prn)
 
 	pputs(prn, _("\n\nFor help on a specific command, type: help cmdname"));
 	pputs(prn, _(" (e.g. help smpl)\n"));
+	pputs(prn, _("You can also do 'help functions' for a list of functions\n"));
 
 	return 0;
     }

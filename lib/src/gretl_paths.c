@@ -1424,6 +1424,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	}
     } else { 
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
+	strcpy(ppaths->cli_helpfile, ppaths->helpfile);
     }
 
     sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sshare\\gtksourceview-1.0"
@@ -1546,6 +1547,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	}
     } else {
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
+	strcpy(ppaths->cli_helpfile, ppaths->helpfile);
     }
 
     if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {

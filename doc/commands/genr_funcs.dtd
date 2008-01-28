@@ -61,7 +61,7 @@
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
-                footnote | argname | cmd)*>
+                footnote | argname | sub | super | cmd)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
 > 

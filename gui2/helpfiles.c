@@ -714,7 +714,7 @@ static int make_func_help_mapping (void)
 
 	s = buf;
 	while (*s) {
-	    if (*s == '\n' && *(s+1) == '#') {
+	    if (*s == '\n' && *(s+1) == '#' && *(s+2) != '#') {
 		n_help_funcs++;
 	    }
 	    s++;
@@ -725,7 +725,8 @@ static int make_func_help_mapping (void)
 	if (ffinder != NULL) {
 	    s = buf;
 	    while (*s) {
-		if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
+		if (*s == '\n' && *(s+1) == '#' && 
+		    *(s+2) != '#' && *(s+2) != '\0') {
 		    if (sscanf(s+2, "%10s", word)) {
 			ffinder[i].pos = pos + 1;
 			strcpy(ffinder[i].word, word);

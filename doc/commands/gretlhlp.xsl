@@ -275,6 +275,10 @@
 </xsl:template>
 
 <xsl:template match="funclist">
+  <xsl:text>&#10;</xsl:text>
+  <xsl:text>## </xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>&#10;&#10;</xsl:text>
   <xsl:apply-templates/> 
 </xsl:template>
 
@@ -495,7 +499,14 @@
 
 <xsl:template match="fncref">
   <xsl:text>&lt;@ref="</xsl:text>
-  <xsl:value-of select="@targ"/>
+  <xsl:choose>
+    <xsl:when test="@label">
+      <xsl:value-of select="substring(@label, 2)"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="@targ"/>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 

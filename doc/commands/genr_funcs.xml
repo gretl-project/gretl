@@ -1369,8 +1369,7 @@
 	<para>
 	  Returns the natural log of the determinant of
 	  <mathvar>A</mathvar>, computed via the LU factorization. See
-	  also
-	  <fncref targ="det"/> and <fncref targ="rcond"/>.
+	  also <fncref targ="det"/> and <fncref targ="rcond"/>.
 	</para>
       </description>
     </function>
@@ -2391,7 +2390,7 @@
 
     <function name="rcond" output="scalar">
       <fnargs>
-	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="symmat">A</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2401,6 +2400,11 @@
 	  this is a better measure of the sensitivity of
 	  <argname>A</argname> to numerical operations such as inversion
 	  than the determinant.
+	</para>
+	<para context="notex">
+	  The value is computed as the reciprocal of the product,
+	  1-norm of <argname>A</argname> times 1-norm of
+	  <argname>A</argname>-inverse.
 	</para>
 	<para context="tex">
 	  Given that <mathvar>A</mathvar> is non-singular, we may
