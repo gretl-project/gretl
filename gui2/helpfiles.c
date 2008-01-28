@@ -1312,6 +1312,24 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
 
+	    /* dollar accessors! */
+	    if (text != NULL) {
+		GtkTextIter dstart = w_start;
+		gchar *dtest = NULL;
+
+		if (gtk_text_iter_backward_char(&dstart)) {
+		    dtest = gtk_text_buffer_get_text(buf, &dstart, 
+						     &w_start, FALSE);
+		    if (*dtest == '$') {
+			gchar *s = g_strdup_printf("$%s", text);
+			
+			g_free(text);
+			text = s;
+		    }
+		    g_free(dtest);
+		}
+	    }
+
 	    /* "coint2" command! */
 	    if (text != NULL && !strcmp(text, "coint") && 
 		gtk_text_iter_forward_char(&w_end)) {
