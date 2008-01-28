@@ -2212,14 +2212,16 @@
     <description>
       <para>
 	Returns the reciprocal condition number for <argname>A</argname>
-	with respect to the 1-norm. If <mathvar>A</mathvar> is invertible,
+	  (which should be symmetric and positive definite) with respect
+	  to the 1-norm. If <mathvar>A</mathvar> is invertible,
 	<equation status="display" ascii="FIXME" graphic=""
-	  tex="\[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\]" /> and the function
-	returns <equation status="inline" ascii="1/k(A)" graphic=""
-	  tex="$\kappa(A)^{-1}$"/>. If <mathvar>A</mathvar> is singular, 0 is
-	returned. In many circumstances, this is a better measure of the
-	sensitivity of <argname>A</argname> to numerical operations such
-	as inversion than the determinant.
+	  tex="\[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\]" /> and the
+	  function returns <equation status="inline" ascii="1/k(A)"
+	    graphic=""
+	  tex="$\kappa(A)^{-1}$"/>. If <mathvar>A</mathvar> is singular, 0
+	  is returned. In many circumstances, this is a better measure of
+	  the sensitivity of <argname>A</argname> to numerical operations
+	  such as inversion than the determinant.
       </para>
       <para>
 	See also <fncref targ="det"/>, <fncref targ="ldet"/> and
