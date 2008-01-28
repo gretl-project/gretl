@@ -288,10 +288,19 @@
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'output'"/>
   </xsl:call-template>
+  <xsl:text>&#x9;</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="@output"/>
   </xsl:call-template>
-  <xsl:text>&#10;</xsl:text>
+  <xsl:if test="@altout">
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'or'"/>
+    </xsl:call-template>
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="@altout"/>
+    </xsl:call-template>
+  </xsl:if>
+  <!-- <xsl:text>&#10;</xsl:text> -->
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>
 </xsl:template>
@@ -351,6 +360,12 @@
 </xsl:template>
 
 <xsl:template match="repl">
+  <xsl:text>&lt;@var="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
+<xsl:template match="argname">
   <xsl:text>&lt;@var="</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>"&gt;</xsl:text>

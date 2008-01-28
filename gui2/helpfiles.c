@@ -130,7 +130,7 @@ static struct gui_help_item gui_help_items[] = {
     { DATASORT,       "datasort" },
     { WORKDIR,        "working-dir" },
     { DFGLS,          "dfgls" },
-    { -1,          NULL },
+    { -1,             NULL },
 };
 
 /* state the topic headings from the help files so they 
@@ -680,6 +680,107 @@ void helpfile_init (void)
     }
 }
 
+/* apparatus for genr functions help */
+
+typedef struct func_finder_ func_finder;
+
+struct func_finder_ {
+    int pos;
+    char word[12];
+};
+
+static func_finder *ffinder;
+static int n_help_funcs;
+
+static int make_func_help_mapping (void)
+{
+    int err = 0;
+
+    if (ffinder == NULL) {
+	gchar *fname = NULL;
+	gchar *s, *buf = NULL;
+	GError *gerr = NULL;
+	char word[12];
+	int i = 0, pos = 0;
+
+	fname = g_strdup_printf("%sgenrgui.hlp", paths.gretldir);
+
+	g_file_get_contents(fname, &buf, NULL, &gerr);
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	    return 1;
+	}
+
+	s = buf;
+	while (*s) {
+	    if (*s == '\n' && *(s+1) == '#') {
+		n_help_funcs++;
+	    }
+	    s++;
+	}
+
+	ffinder = mymalloc(n_help_funcs * sizeof *ffinder);
+
+	if (ffinder != NULL) {
+	    s = buf;
+	    while (*s) {
+		if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
+		    if (sscanf(s+2, "%10s", word)) {
+			ffinder[i].pos = pos + 1;
+			strcpy(ffinder[i].word, word);
+			i++;
+		    }
+		}
+		s++;
+		pos++;
+	    }
+	} else {
+	    err = 1;
+	    n_help_funcs = 0;
+	}
+
+	g_free(buf);
+	g_free(fname);
+    }
+
+    return err;
+}
+
+int function_help_index_from_word (const char *s)
+{
+    int i;
+
+    if (n_help_funcs == 0) {
+	make_func_help_mapping();
+    }
+
+    for (i=0; i<n_help_funcs; i++) {
+	if (!strcmp(ffinder[i].word, s)) {
+	    return i+1;
+	}
+    }
+
+    return 0;
+}
+
+int help_pos_from_function_index (int fnum)
+{
+    int pos = 0;
+
+    if (n_help_funcs == 0) {
+	make_func_help_mapping();
+    }
+
+    if (fnum < n_help_funcs) {
+	pos = ffinder[fnum-1].pos;
+    } 
+
+    return pos;
+}
+
+/* end apparatus for genr functions help */
+
 static void do_gui_help (gpointer p, guint pos, GtkWidget *w) 
 {
     int hcode = GPOINTER_TO_INT(p);
@@ -1146,6 +1247,36 @@ static void en_text_cmdref (gpointer p, guint u, GtkWidget *w)
     real_do_help(0, 0, HELP_CLI | HELP_EN);
 } 
 
+static int help_pos_from_string (const char *s, int *en, 
+				 int *hcode, int *flags)
+{
+    char word[12];
+    int pos;
+
+    *word = '\0';
+    strncat(word, s, 11);
+
+    *hcode = gretl_command_number(word);
+    pos = cli_pos_from_cmd(*hcode, *en);
+
+    if (pos < 0 && translated_helpfile) {
+	pos = cli_pos_from_cmd(*hcode, 1);
+	if (pos >= 0) {
+	    *en = 1;
+	}
+    }
+
+    if (pos < 0) {
+	/* try function instead of command */
+	pos = function_help_index_from_word(word);
+	if (pos > 0) {
+	    *flags |= HELP_FUNCS;
+	}
+    }
+
+    return pos;
+}
+
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		       windata_t *vwin)
 {
@@ -1198,27 +1329,21 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	} 
 
 	if (text != NULL && *text != '\0') {
-	    char word[9];
-
-	    *word = '\0';
-	    strncat(word, text, 8);
-	    hcode = gretl_command_number(word);
-	    pos = cli_pos_from_cmd(hcode, en);
-	    if (pos < 0 && translated_helpfile) {
-		en = 1;
-		pos = cli_pos_from_cmd(hcode, en);
-	    }
+	    pos = help_pos_from_string(text, &en, &hcode, &flags);
 	} 
 
 	g_free(text);
 	unset_window_help_active(vwin);
 	text_set_cursor(vwin->w, 0);
 
-	if (en) {
-	    flags |= HELP_EN;
+	if (pos <= 0) {
+	    warnbox("Sorry, help not found");
+	} else {
+	    if (en) {
+		flags |= HELP_EN;
+	    }
+	    real_do_help(hcode, pos, flags);
 	}
-
-	real_do_help(hcode, pos, flags);
     }
 
     return FALSE;

@@ -263,6 +263,14 @@
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="@output"/>
   </xsl:call-template>
+  <xsl:if test="@altout">
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'or'"/>
+    </xsl:call-template>
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="@altout"/>
+    </xsl:call-template>
+  </xsl:if>
   <xsl:text>&#10;</xsl:text>
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>

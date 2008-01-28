@@ -2346,7 +2346,8 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
-    if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN) {
+    if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN ||
+	vwin->role == FUNCS_HELP) {
 	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
 			 G_CALLBACK(help_popup_handler), 
 			 vwin);

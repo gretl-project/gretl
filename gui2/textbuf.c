@@ -44,7 +44,6 @@ static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
-static int fnum_from_word (const char *s);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -1096,7 +1095,11 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
 						 "backpage"));
     }
 
-    plain_text_cmdref(enp, page, NULL);
+    if (hwin->role == FUNCS_HELP) {
+	genr_funcs_ref(NULL, page, NULL);
+    } else {
+	plain_text_cmdref(enp, page, NULL);
+    }
 
     return FALSE;
 }
@@ -2165,7 +2168,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		int itarg;
 		
 		if (role == FUNCS_HELP) {
-		    itarg = fnum_from_word(targ);
+		    itarg = function_help_index_from_word(targ);
 		} else {
 		    itarg = gretl_command_number(targ);
 		}
@@ -2223,85 +2226,6 @@ static char *grab_topic_buffer (const char *s)
     return buf;
 }
 
-/* apparatus for mapping between (a) index position of function int
-   hep file, (b) offset into help file and (c) the name of the
-   function
-*/
-
-typedef struct func_finder_ func_finder;
-
-struct func_finder_ {
-    int pos;
-    char word[12];
-};
-
-static func_finder *ff;
-static int nfuncs;
-
-static int make_funcs_mapping (windata_t *hwin)
-{
-    int err = 0;
-
-    if (ff == NULL) {
-	const char *s = (const char *) hwin->data;
-	char word[12];
-	int i = 0, pos = 0;
-
-	while (*s) {
-	    if (*s == '\n' && *(s+1) == '#') {
-		nfuncs++;
-	    }
-	    s++;
-	}
-
-	ff = mymalloc(nfuncs * sizeof *ff);
-
-	if (ff != NULL) {
-	    s = (const char *) hwin->data;
-	    while (*s) {
-		if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
-		    if (sscanf(s+2, "%10s", word)) {
-			ff[i].pos = pos + 1;
-			strcpy(ff[i].word, word);
-			i++;
-		    }
-		}
-		s++;
-		pos++;
-	    }
-	} else {
-	    err = 1;
-	    nfuncs = 0;
-	}
-    }
-
-    return err;
-}
-
-static int fnum_from_word (const char *s)
-{
-    int i;
-
-    for (i=0; i<nfuncs; i++) {
-	if (!strcmp(ff[i].word, s)) {
-	    return i+1;
-	}
-    }
-
-    return 0;
-}
-
-static int pos_from_fnum (windata_t *hwin, int fnum)
-{
-    int pos = 0;
-
-    if (fnum < nfuncs) {
-	pos = ff[fnum-1].pos;
-    } 
-
-    return pos;
-}
-
 /* pull the appropriate chunk of help text out of the buffer attached
    to the help viewer and display it */
 
@@ -2314,12 +2238,6 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     char *buf;
 
     textb = gretl_text_buf_new();
-
-    if (hwin->role == FUNCS_HELP) {
-	if (make_funcs_mapping(hwin)) {
-	    return;
-	}
-    }
 
     if (pos == 0) {
 	/* no topic selected */
@@ -2341,8 +2259,8 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
 
     if (hwin->role == FUNCS_HELP) {
-	/* offset is not pre-computed */
-	pos = pos_from_fnum(hwin, pos);
+	/* offset is not pre-computed in "pos" */
+	pos = help_pos_from_function_index(pos);
     }
 
     hbuf = (gchar *) hwin->data + pos;
@@ -2367,15 +2285,19 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 	free(p);
     } else {
 	/* topic heading: plain command word */
-	char hword[9];
+	char hword[12];
 
-	sscanf(line + 2, "%8s", hword);
+	sscanf(line + 2, "%11s", hword);
 	gtk_text_buffer_insert_with_tags_by_name(textb, &iter,
 						 hword, -1,
 						 "redtext", NULL);
     }
 
-    gtk_text_buffer_insert(textb, &iter, "\n", 1);
+    if (hwin->role == FUNCS_HELP) {
+	gtk_text_buffer_insert(textb, &iter, "\n\n", 2);
+    } else {
+	gtk_text_buffer_insert(textb, &iter, "\n", 1);
+    }
 
     buf = grab_topic_buffer(hbuf + strlen(line) + 1);
     if (buf == NULL) {
