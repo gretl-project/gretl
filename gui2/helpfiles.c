@@ -1355,7 +1355,7 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	text_set_cursor(vwin->w, 0);
 
 	if (pos <= 0) {
-	    warnbox("Sorry, help not found");
+	    warnbox(_("Sorry, help not found"));
 	} else {
 	    if (en) {
 		flags |= HELP_EN;
