@@ -2284,11 +2284,6 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
 
-    if (hwin->role == FUNCS_HELP) {
-	/* offset is not pre-computed in "pos" */
-	pos = help_pos_from_function_index(pos);
-    }
-
     hbuf = (gchar *) hwin->data + pos;
 
     bufgets_init(hbuf);

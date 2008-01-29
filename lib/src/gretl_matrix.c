@@ -40,6 +40,8 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
 #define SVD_SMIN 1.0e-9
 
+static int add_scalar_to_matrix (gretl_matrix *targ, double x);
+
 /* Central accounting for error in matrix allocation */
 
 static int gretl_matrix_err;
@@ -788,6 +790,63 @@ double gretl_vector_variance (const gretl_vector *v)
     }
 
     return s2 / den;
+}
+
+/**
+ * gretl_matrix_resample:
+ * @m: input matrix.
+ * @r: number of rows in output.
+ * @err: location to receive error code.
+ *
+ * Returns: a new matrix consisting of a random re-sampling
+ * (with replacement) of the rows of @m, or %NULL on
+ * failure.
+ */
+
+gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, int r,
+				     int *err)
+{
+    gretl_matrix *R = NULL;
+    double x, *z = NULL;
+    int i, j, k, r0;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (r <= 0) {
+	r = m->rows;
+    }
+
+    R = gretl_matrix_alloc(r, m->cols);
+    z = malloc(r * sizeof *z);
+
+    if (R == NULL || z == NULL) {
+	gretl_matrix_free(R);
+	free(z);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    r0 = m->rows;
+
+    /* generate uniform random series */
+    gretl_rand_uniform(z, 0, r-1);
+
+    /* sample from source matrix based on row indices */
+    for (i=0; i<r; i++) {
+	k = (int) (r0 * z[i]);
+	if (k > r0-1) k = r0 - 1;
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, k, j);
+	    gretl_matrix_set(R, i, j, x);
+	}
+    }
+
+    free(z);
+
+    return R;
 }
 
 static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)

@@ -17,6 +17,7 @@
  <gentext key="Seealso"       text="See also "/>
  <gentext key="anyfloat"      text="scalar, series or matrix"/>
  <gentext key="series-or-vec" text="series or vector"/>
+ <gentext key="series-or-mat" text="series or matrix"/>
  <gentext key="scalar-or-series" text="scalar or series"/>
  <gentext key="asinput"       text="same type as input"/>
  <gentext key="scalar"        text="scalar"/>

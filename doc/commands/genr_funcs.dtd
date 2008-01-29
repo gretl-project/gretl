@@ -48,9 +48,9 @@
 <!ATTLIST fnarg 
     type      (scalar | series | vector | matrix | smatrix | symmat | 
                matrixref | anyfloat | scalar-or-series | series-or-vec | 
-               list | coeffname | string | char | sslist | seebelow) "series"
+               series-or-mat | list | coeffname | string | char | sslist | 
+               seebelow) "series"
     optional  (true | false) "false"
-    alternate (true | false) "false"
 >
 
 <!ELEMENT example  (#PCDATA)>
@@ -58,10 +58,10 @@
 <!ELEMENT menu-path    (#PCDATA)>
 <!ELEMENT other-access (#PCDATA)>
 
-<!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
+<!ELEMENT para (#PCDATA | repl | program | math | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
-                footnote | argname | sub | super | cmd)*>
+                footnote | argname | sub | super | seelist | cmd)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
 > 
@@ -96,6 +96,8 @@
    targ    CDATA #REQUIRED
 >
 
+<!ELEMENT seelist (fncref)+>
+
 <!ELEMENT fncref EMPTY>
 <!ATTLIST fncref
    targ    CDATA #REQUIRED
@@ -112,7 +114,7 @@
 <!ELEMENT table (row)+>
 <!ELEMENT row (cell)+>
 <!ELEMENT cell (#PCDATA | lit | repl | emphasis | 
-                func | mathvar | equation | book | quote)*>
+                func | math | equation | book | quote)*>
 <!ATTLIST table
    lwidth   CDATA #IMPLIED
    rwidth   CDATA #IMPLIED
@@ -134,7 +136,7 @@
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>
-<!ELEMENT mathvar  (#PCDATA | sub | super)*>
+<!ELEMENT math     (#PCDATA)>
 <!ELEMENT sub      (#PCDATA)>
 <!ELEMENT super    (#PCDATA)>
 

@@ -1599,6 +1599,9 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case MCORR:
 	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
 	    break;
+	case RESAMPLE:
+	    ret->v.m = gretl_matrix_resample(m, 0, &p->err);
+	    break;
 	case CDEMEAN:
 	case CHOL:
 	case INV:
@@ -4221,7 +4224,6 @@ static NODE *eval (NODE *t, parser *p)
     case HPFILT:
     case BKFILT:
     case FRACDIF:
-    case RESAMPLE:
     case PMEAN:
     case PSD:
     case RANKING:
@@ -4231,6 +4233,16 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	} 
+	break;
+    case RESAMPLE:
+	/* series or matrix argument */
+	if (l->t == VEC) {
+	    ret = series_series_func(l, r, t->t, p);
+	} else if (l->t == MAT) {
+	    ret = matrix_to_matrix_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, VEC, l, p);
+	}
 	break;
     case SORT:
     case DSORT:

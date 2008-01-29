@@ -339,12 +339,17 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="mathvar">
+<xsl:template match="math|mathvar">
   <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="super">
   <xsl:text>^</xsl:text>
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="sub">
+  <xsl:text>_</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -459,6 +464,9 @@
       <xsl:text>"</xsl:text>      
     </xsl:otherwise>
   </xsl:choose>
+  <xsl:if test="parent::seelist and following-sibling::*">
+    <xsl:text>, </xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="guideref">
@@ -527,6 +535,14 @@
 
 <xsl:template name="dnl">
   <xsl:text>&#10;&#10;</xsl:text>  
+</xsl:template>
+
+<xsl:template match="seelist">
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'Seealso'"/>
+  </xsl:call-template>
+  <xsl:apply-templates/>
+  <xsl:text>.</xsl:text>
 </xsl:template>
 
 </xsl:stylesheet>

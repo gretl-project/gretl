@@ -2655,7 +2655,7 @@ static int recode_print_line (const char *s, PRN *prn)
     trs = g_locale_from_utf8(s, -1, NULL, &bytes, &err);  
 
     if (err != NULL) {
-	pputs(prn, "Recoding error!\n");
+	pprintf(prn, "%s\n", err->message);
 	g_error_free(err);
     } else {
 	pputs(prn, trs);
@@ -2760,7 +2760,7 @@ int cli_help (const char *cmdword, PATHS *paths, PRN *prn)
     }
 
     if (!strcmp(cmdword, "functions")) {
-	sprintf(helpfile, "%sgenrcli.hlp", paths->gretldir);
+	sprintf(helpfile, "%s%s", paths->gretldir, _("genrcli.hlp"));
 	return func_help_topics(helpfile, prn);
     }
 

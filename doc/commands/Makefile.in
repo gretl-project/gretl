@@ -136,6 +136,11 @@ $(GENSTAMP): xsltrans reflow $(GENSRC) $(GENDTD) $(HLPXSL) $(XMLSTRS)
 	if test -f genrgui.txt ; then \
 	  ./reflow --markup < genrgui.txt > $(SHAREDIR)/genrgui.hlp ; \
 	fi
+	./xsltrans --genr --markup $(CMDSDIR)/genr_funcs_it.xml && \
+	./reflow < genrcli.txt > $(SHAREDIR)/genrcli.hlp.it
+	if test -f genrgui.txt ; then \
+	  ./reflow --markup < genrgui.txt > $(SHAREDIR)/genrgui.hlp.it ; \
+	fi
 	touch $@
 
 .PHONY: test
@@ -156,6 +161,11 @@ functex: xsltrans reflow $(GENSRC) $(GENDTD) $(GENXSL) $(XMLSTRS)
 	grep -v 'xml version' >> tmp.xml && \
 	./xsltrans --genr --tex tmp.xml --docdir=$(CMDSDIR) && \
 	./reflow < genrtex.txt > ../tex/genr_funcs.tex
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/genr_funcs_it.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --genr --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < genrtex.txt > ../tex_it/genr_funcs.tex
 	touch $@
 
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml

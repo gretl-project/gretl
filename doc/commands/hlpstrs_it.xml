@@ -8,15 +8,17 @@
  <gentext key="opt"           text="Opzione:    "/>
  <gentext key="examples"      text="Esempi:     "/>
  <gentext key="example"       text="Esempio:    "/>
+ <gentext key="output"        text="Uscita:     "/>
  <gentext key="guidebook"     text="guida all'uso di gretl"/>
  <gentext key="menupath"      text="Accesso dal menù:    "/>
  <gentext key="otheraccess"   text="Accesso alternativo: "/>
  <gentext key="scriptcommand" text="Comando script: "/>
  <gentext key="or"            text=" o "/>
- <gentext key="Seealso"       text="Vd. anche"/>
+ <gentext key="Seealso"       text="Vd. anche "/>
  <!-- the text entries below need translation -->
  <gentext key="anyfloat"      text="scalar, series or matrix"/>
  <gentext key="series-or-vec" text="series or vector"/>
+ <gentext key="series-or-mat" text="series or matrix"/>
  <gentext key="scalar-or-series" text="scalar or series"/>
  <gentext key="asinput"       text="same type as input"/>
  <gentext key="scalar"        text="scalar"/>

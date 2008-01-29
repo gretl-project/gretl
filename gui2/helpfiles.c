@@ -692,6 +692,9 @@ struct func_finder_ {
 static func_finder *ffinder;
 static int n_help_funcs;
 
+/* read the functions helpfile and build a mapping from
+   function name to offset in file */
+
 static int make_func_help_mapping (void)
 {
     int err = 0;
@@ -703,7 +706,7 @@ static int make_func_help_mapping (void)
 	char word[12];
 	int i = 0, pos = 0;
 
-	fname = g_strdup_printf("%sgenrgui.hlp", paths.gretldir);
+	fname = g_strdup_printf("%s%s", paths.gretldir, _("genrgui.hlp"));
 
 	g_file_get_contents(fname, &buf, NULL, &gerr);
 	if (gerr != NULL) {
@@ -750,7 +753,7 @@ static int make_func_help_mapping (void)
 
 int function_help_index_from_word (const char *s)
 {
-    int i;
+    int i, idx = 0;
 
     if (n_help_funcs == 0) {
 	make_func_help_mapping();
@@ -758,14 +761,32 @@ int function_help_index_from_word (const char *s)
 
     for (i=0; i<n_help_funcs; i++) {
 	if (!strcmp(ffinder[i].word, s)) {
-	    return i+1;
+	    idx = i+1;
+	    break;
 	}
     }
 
-    return 0;
+    return idx;
 }
 
-int help_pos_from_function_index (int fnum)
+static int function_help_pos_from_word (const char *s)
+{
+    int i, pos = 0;
+
+    if (n_help_funcs == 0) {
+	make_func_help_mapping();
+    }
+
+    for (i=0; i<n_help_funcs; i++) {
+	if (!strcmp(ffinder[i].word, s)) {
+	    pos = ffinder[i].pos;
+	}
+    }
+
+    return pos;
+}
+
+static int help_pos_from_function_index (int fnum)
 {
     int pos = 0;
 
@@ -773,7 +794,7 @@ int help_pos_from_function_index (int fnum)
 	make_func_help_mapping();
     }
 
-    if (fnum < n_help_funcs) {
+    if (fnum > 0 && fnum < n_help_funcs) {
 	pos = ffinder[fnum-1].pos;
     } 
 
@@ -1048,14 +1069,12 @@ static void add_help_topics (windata_t *hwin, int flags)
     }
 }
 
-/* FIXME localization */
-
 static char *funcs_helpfile (void)
 {
     static char fname[MAXLEN];
 
     if (*fname == '\0') {
-	sprintf(fname, "%sgenrgui.hlp", paths.gretldir);
+	sprintf(fname, "%s%s", paths.gretldir, _("genrgui.hlp"));
     }
 
     return fname;
@@ -1140,8 +1159,8 @@ static void real_do_help (int hcode, int pos, int flags)
     }
 
 #if HDEBUG
-    fprintf(stderr, "real_do_help: hcode=%d, pos=%d, cli=%d, en=%d\n",
-	    hcode, pos, cli, en);
+    fprintf(stderr, "real_do_help: hcode=%d, pos=%d, cli=%d, en=%d, funcs=%d\n",
+	    hcode, pos, cli, en, funcs);
     fprintf(stderr, "gui_hwin = %p\n", (void *) gui_hwin);
     fprintf(stderr, "cli_hwin = %p\n", (void *) cli_hwin);
     fprintf(stderr, "en_gui_hwin = %p\n", (void *) en_gui_hwin);
@@ -1152,7 +1171,7 @@ static void real_do_help (int hcode, int pos, int flags)
     if (en) {
 	hwin = (cli)? en_cli_hwin : en_gui_hwin;
     } else {
-	hwin = (cli)? cli_hwin : (funcs)? funcs_hwin : gui_hwin;
+	hwin = (funcs)? funcs_hwin : (cli)? cli_hwin : gui_hwin;
     }
 
     if (hwin == NULL) {
@@ -1240,7 +1259,9 @@ void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
 
 void genr_funcs_ref (gpointer p, guint fnum, GtkWidget *w)
 {
-    real_do_help(fnum, fnum, HELP_FUNCS);    
+    int pos = help_pos_from_function_index(fnum);
+
+    real_do_help(fnum, pos, HELP_FUNCS);    
 }
 
 static void en_text_cmdref (gpointer p, guint u, GtkWidget *w)
@@ -1269,7 +1290,7 @@ static int help_pos_from_string (const char *s, int *en,
 
     if (pos < 0) {
 	/* try function instead of command */
-	pos = function_help_index_from_word(word);
+	pos = function_help_pos_from_word(word);
 	if (pos > 0) {
 	    *flags |= HELP_FUNCS;
 	}

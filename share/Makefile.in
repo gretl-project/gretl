@@ -27,6 +27,9 @@ IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
 EN_CLI_GENHLP = $(sharesrc)/genrcli.hlp
 EN_GUI_GENHLP = $(sharesrc)/genrgui.hlp
 
+IT_CLI_GENHLP = $(sharesrc)/genrcli.hlp.it
+IT_GUI_GENHLP = $(sharesrc)/genrgui.hlp.it
+
 AUTO_HELPFILES = \
 	$(EN_GUI_HLP) \
 	$(EN_CMD_HLP) \
@@ -38,7 +41,9 @@ AUTO_HELPFILES = \
 	$(IT_CMD_HLP) \
 	$(IT_CLI_HLP) \
 	$(EN_CLI_GENHELP) \
-	$(EN_GUI_GENHELP) 
+	$(EN_GUI_GENHELP) \
+	$(IT_CLI_GENHELP) \
+	$(IT_GUI_GENHELP)
 
 ifeq ($(build_docs),yes)
   query_make_help = help
@@ -101,6 +106,8 @@ install_help: $(AUTO_HELPFILES)
 	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
 	$(INSTALL_DATA) $(EN_CLI_GENHLP) $(gretldir)/genrcli.hlp
 	$(INSTALL_DATA) $(EN_GUI_GENHLP) $(gretldir)/genrgui.hlp
+	$(INSTALL_DATA) $(IT_CLI_GENHLP) $(gretldir)/genrcli.hlp.it
+	$(INSTALL_DATA) $(IT_GUI_GENHLP) $(gretldir)/genrgui.hlp.it
 	for f in $(sharesrc)/texfigs/*.png ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/helpfigs ; done
 	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \

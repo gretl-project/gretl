@@ -213,6 +213,9 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
 gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 
+gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, int r,
+				     int *err);
+
 double gretl_vector_mean (const gretl_vector *v);
 
 double gretl_vector_variance (const gretl_vector *v);
