@@ -38,7 +38,7 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="funclist">
+<xsl:template match="funclist|commandlist">
   <xsl:text>\section{</xsl:text>
   <xsl:value-of select="@name"/>
   <xsl:text>}&#10;\label{sec:</xsl:text>
@@ -112,6 +112,159 @@
   <xsl:call-template name="dnl"/>
 </xsl:template>
 
+<xsl:template match="command">
+  <xsl:if test="@context != 'gui'">
+    <xsl:text>&#10;</xsl:text>
+    <xsl:text>\subsection{</xsl:text>
+    <xsl:call-template name="funcname">
+      <xsl:with-param name="src" select="@name"/>
+    </xsl:call-template>
+    <xsl:text>}&#10;</xsl:text>
+    <xsl:text>\hypertarget{cmd-</xsl:text>
+    <xsl:value-of select="@name"/>
+    <xsl:text>}{}</xsl:text>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:call-template name="dnl"/>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="usage">
+  <xsl:text>&#10;&#10;</xsl:text>
+  <xsl:text>\begin{tabular}{ll}&#10;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>\end{tabular}&#10;&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="arguments">
+  <xsl:choose>
+    <xsl:when test="count(argument) > 1">
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'args'"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'arg'"/>
+      </xsl:call-template>
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:text> &amp; </xsl:text>
+  <xsl:apply-templates/>
+ <xsl:text>\\&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="argument">
+  <xsl:if test="(@optional)">
+    <xsl:text>\texttt{[ }</xsl:text>
+  </xsl:if>
+  <xsl:if test="(@separated)">
+    <xsl:text>\texttt{; }</xsl:text>
+  </xsl:if>
+  <xsl:if test="(@alternate)">
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'or'"/>
+    </xsl:call-template>
+  </xsl:if>
+  <xsl:if test="@flag">
+    <xsl:text>\texttt{</xsl:text>
+    <xsl:value-of select="@flag"/>
+    <xsl:text>}</xsl:text>
+  </xsl:if> 
+  <xsl:text>\textsl{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>} </xsl:text>
+  <xsl:if test="(@optional)">
+    <xsl:text>\texttt{ ]}</xsl:text>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="option">
+  <xsl:if test="position() = 1">
+    <xsl:choose>
+      <xsl:when test="count(../option) > 1">
+        <xsl:call-template name="gettext">
+          <xsl:with-param name="key" select="'opts'"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="gettext">
+          <xsl:with-param name="key" select="'opt'"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:if>
+  <xsl:text> &amp; </xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="example">
+  <xsl:if test="position() = 1">
+    <xsl:choose>
+      <xsl:when test="count(../option) > 1">
+        <xsl:call-template name="gettext">
+          <xsl:with-param name="key" select="'examples'"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="gettext">
+          <xsl:with-param name="key" select="'example'"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:if>
+  <xsl:text> &amp; \texttt{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>} \\ &#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="flag|argpunct">
+  <xsl:text>\texttt{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
+<xsl:template match="effect">
+  <xsl:text> (</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>) \\</xsl:text>
+</xsl:template>
+
+<xsl:template match="demos">
+  <xsl:if test="position() = 1">
+    <xsl:choose>
+      <xsl:when test="count(../example) > 1">
+        <xsl:call-template name="gettext">
+          <xsl:with-param name="key" select="'examples'"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="gettext">
+          <xsl:with-param name="key" select="'example'"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:if>
+  <xsl:if test="count(../example) > 1">
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'Seealso'"/>
+    </xsl:call-template>
+  </xsl:if>
+  <xsl:text> &amp; </xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="demo">
+  <xsl:if test="position() > 1">
+    <xsl:text>, </xsl:text>
+  </xsl:if>
+  <xsl:text>\texttt{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
 <xsl:template match="fnargs">
   <xsl:choose>
     <xsl:when test="count(fnarg) > 1">
@@ -182,7 +335,7 @@
 </xsl:template>
 
 <xsl:template match="para">
-  <xsl:if test="not(@context) or @context=$hlp">
+  <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
     <xsl:if test="@role='preformatted'">
       <xsl:text>\begin{raggedright}</xsl:text>
     </xsl:if>
@@ -334,6 +487,17 @@
   </xsl:call-template>
   <xsl:apply-templates/>
   <xsl:text>.</xsl:text>
+</xsl:template>
+
+<xsl:template match="menu-path">
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'menupath'"/>
+  </xsl:call-template>
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="description">
+  <xsl:apply-templates/>
 </xsl:template>
 
 </xsl:stylesheet>

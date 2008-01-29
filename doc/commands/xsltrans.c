@@ -166,13 +166,22 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
     /* DocBook XML output */
     if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK) {
 	full_fname("gretlman.xsl", docdir, styname);
-
 	style = xsltParseStylesheetFile((const xmlChar *) styname);
 	if (style == NULL) {
 	    err = 1;
 	} else {
 	    build_params(xsl_params, OUTPUT_DOCBOOK, 0, lang);
 	    err = apply_xslt(doc, style, xsl_params, "cmdlist.xml");
+	    xsltFreeStylesheet(style);
+	}
+
+	full_fname("genrtex.xsl", docdir, styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
+	    build_params(xsl_params, OUTPUT_CMD_HLP, OPT_XREFS, lang);
+	    err = apply_xslt(doc, style, xsl_params, "textest.tex");
 	    xsltFreeStylesheet(style);
 	}
     }

@@ -2588,6 +2588,11 @@
 
     <description>
       <para>
+	In the appropriate context, <lit>series</lit>, <lit>scalar</lit>
+	and <lit>matrix</lit> are synonyms for this command.
+      </para>
+
+      <para>
 	Creates new variables, usually through transformations of existing
 	variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
 	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref
@@ -2600,19 +2605,20 @@
       </para>
 
       <para>
-	This command may yield either a series or a scalar result.  For example,
-	the formula <lit>x2 = x * 2</lit> naturally yields a series if the
-	variable <lit>x</lit> is a series and a scalar if <lit>x</lit> is a
-	scalar.  The formulae <lit>x = 0</lit> and <lit>mx = mean(x)</lit>
-	naturally return scalars. Under some circumstances you may want to have
-	a scalar result expanded into a series or vector.  You can do this by
-	using <lit>series</lit> as an <quote>alias</quote> for the
-	<lit>genr</lit> command.  For example, <lit>series x = 0</lit> produces
-	a series all of whose values are set to 0.  You can also use
-	<lit>scalar</lit> as an alias for <lit>genr</lit>.  It is not possible
-	to coerce a vector result into a scalar, but use of this keyword 
-	indicates that the result <emphasis>should be</emphasis> a scalar: if it
-	is not, an error occurs.
+	A <lit>genr</lit> command may yield either a series or a scalar
+	result.  For example, the formula <lit>x2 = x * 2</lit> naturally
+	yields a series if the variable <lit>x</lit> is a series and a
+	scalar if <lit>x</lit> is a scalar.  The formulae <lit>x = 0</lit>
+	and <lit>mx = mean(x)</lit> naturally return scalars. Under some
+	circumstances you may want to have a scalar result expanded into a
+	series or vector.  You can do this by using <lit>series</lit> as
+	an <quote>alias</quote> for the <lit>genr</lit> command.  For
+	example, <lit>series x = 0</lit> produces a series all of whose
+	values are set to 0.  You can also use <lit>scalar</lit> as an
+	alias for <lit>genr</lit>.  It is not possible to coerce a vector
+	result into a scalar, but use of this keyword indicates that the
+	result <emphasis>should be</emphasis> a scalar: if it is not, an
+	error occurs.
       </para>
 
       <para>
@@ -2640,102 +2646,71 @@
 	returns 1 if <lit>x</lit> &gt; 10, 0 otherwise.
       </para>
 
-      <para>Built-in constants are <lit>pi</lit> and <lit>NA</lit>.  The latter
+      <para>
+	Built-in constants are <lit>pi</lit> and <lit>NA</lit>.  The latter
 	is the missing value code: you can initialize a variable to the missing
 	value with <lit>scalar x = NA</lit>.
       </para>
 
-      <para>Supported <emphasis>functions</emphasis> fall into these
+      <para>
+	The <emphasis>functions</emphasis> supported by <lit>genr</lit>
+	are documented in alphabetical order in the XX.  Here we
+	give a thematic account of what's available.
+	Supported <emphasis>functions</emphasis> fall into these
 	groups:
-      </para>
+     </para>
 
       <ilist>
 	<li>
-	  <para>Standard mathematical functions: <func>abs</func>,
-	    <func>exp</func>, <func>int</func> (integer part),
-	    <func>ln</func> (natural logarithm: <func>log</func> is a
-	    synonym), <func>log10</func> (log to the base 10),
-	    <func>log2</func> (log to the base 2), <func>sqrt</func>
-	    (square root), <func>ceil</func> (ceiling: round up to nearest
-	    integer), <func>floor</func> (round down to the nearest
-	    integer).  All of these take a single argument, which may be
-	    either a series or a scalar.  Note: <func>int</func> and
-	    <func>floor</func> differ in their effect for negative
-	    arguments: <lit>int(-3.5)</lit> gives &minus;3, while
-	    <lit>floor(-3.5)</lit> gives &minus;4.  
+	  <para>Standard mathematical functions such as <fncref
+	      targ="abs"/>, <fncref targ="exp"/>, <fncref targ="sqrt"/>
+	    and so on.
 	  </para>
 	</li>
-
 	<li>
-	  <para>Trigonometric functions: <func>cos</func>,
-	    <func>sin</func>, <func>tan</func> and <func>atan</func> (arc
-	    tangent). These functions also take a single series or scalar
-	    argument.
+	  <para>Trigonometric functions such as <fncref targ="cos"/>
+	    and <fncref targ="sin"/>.
 	  </para>
 	</li>
-
 	<li>
 	  <para>
-	    Standard statistical functions taking a single argument and yielding
-	    a scalar result: <func>max</func> (maximum value in a series),
-	    <func>min</func> (minimum value in series), <func>mean</func>
-	    (arithmetic mean), <func>median</func>, <func>var</func> (variance),
-	    <func>sd</func> (standard deviation), <func>sst</func> (sum of
-	    squared deviations from the mean), <func>sum</func>,
-	    <func>gini</func> (Gini coefficient).
+	    Standard statistical functions: <fncref targ="max"/>,
+	    <fncref targ="mean"/>, <fncref targ="median"/>, etc., plus
+	    some less common ones such as <fncref targ="gini"/> (Gini
+	    coefficient). 
 	  </para>
 	</li>
 
 	<li>
 	  <para>
 	    Statistical functions taking one series as argument and
-	    yielding a series or vector result: <func>sort</func> (sort a
-	    series in ascending order of magnitude), <func>dsort</func>
-	    (sort in descending order), <func>cum</func> (cumulate, or
-	    running sum).  For panel data only, the functions
-	    <func>pmean</func> and <func>psd</func> take a single series
-	    as argument and return series containing, respectively, the
-	    means and standard deviations of the variable for each of the
-	    cross-sectional units.  See <guideref targ="chap-genr"/> for
-	    details.
+	    yielding a series or vector result, for example
+	    <fncref targ="sort"/>, <fncref targ="cum"/> (cumulate).
 	  </para>
 	</li>
 
 	<li>
 	  <para>
-	    Statistical functions taking two series as arguments:
-	    <func>cov</func> (covariance), <func>corr</func> (correlation
-	    coefficient).  These functions return a scalar result.  The
-	    function <func>sortby</func> returns a series, namely the values
-	    of the second argument sorted by increasing value of the
-	    first argument.
+	    Bivariate statistical functions: <fncref targ="cov"/>,
+	    <fncref targ="corr"/>, <fncref targ="sortby"/>.
 	  </para>
 	</li>
 	
-	<li><para>Special statistical functions: <func>pvalue</func>,
-	    <func>cdf</func> and <func>critical</func> (see below),
-	    <func>cnorm</func> (standard normal CDF), <func>dnorm</func>
-	    (standard normal PDF), <func>qnorm</func> (standard normal
-	    quantiles, or inverse of standard normal PDF),
-	    <func>resample</func> (resample a series with replacement, for
-	    bootstrap purposes), <func>hpfilt</func>
-	    (Hodrick&ndash;Prescott filter: this function returns the
-	    <quote>cycle</quote> component of the series),
-	    <func>bkfilt</func> (Baxter&ndash;King bandpass filter).
-	    </para> </li>
-
+	<li>
+	  <para>Statistical distribution functions: 
+	    <fncref targ="cdf"/>, <fncref targ="critical"/>,
+	    <fncref targ="invcdf"/>, <fncref targ="pval"/>, etc.
+	    </para> 
+	</li>
 	<li>
 	  <para>
-	    Time-series functions: <func>diff</func> (first difference),
-	    <func>ldiff</func> (log-difference, or first difference of natural
-	    logs), <func>sdiff</func> (seasonal difference),
-	    <func>fracdiff</func> (fractional difference).  To generate lags of
-	    a variable <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>, where
-	    <lit>N</lit> represents the desired lag length; to generate leads,
-	    use <cmd>x(+N)</cmd>.
+	    Time-series functions, for examle <fncref targ="diff"/> and
+	    <fncref targ="ldiff"/>. Note: to generate lags of a variable
+	    <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>, where
+	    <lit>N</lit> represents the desired lag length; to generate
+	    leads, use <cmd>x(+N)</cmd>.
 	  </para>
 	</li>
-
 	<li>
 	  <para>
 	    Dataset functions yielding a series: <func>misszero</func> (replaces
@@ -2746,7 +2721,6 @@
 	    (the opposite of <func>missing</func>).
 	  </para>
 	</li>
-
 	<li>
 	  <para>
 	    Dataset functions yielding a scalar: <func>nobs</func> (gives the
@@ -2757,7 +2731,6 @@
 	    series).
 	  </para>
 	</li>
-
 	<li><para>
 	    Pseudo-random numbers: <func>uniform</func>,
 	    <func>normal</func>, <func>poisson</func> and also the
