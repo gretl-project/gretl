@@ -140,7 +140,7 @@ struct str_table funcs[] = {
     { T2,       "lastobs" },
     { RUNIFORM, "uniform" }, 
     { RNORMAL,  "normal" }, 
-    { RPOISSON, "poisson" },
+    { RPOISSON, "genpois" },
     { CUM,      "cum" }, 
     { MISSING,  "missing" },
     { OK,       "ok" },        /* opposite of missing */
@@ -160,7 +160,7 @@ struct str_table funcs[] = {
     { CNORM,    "cnorm" },
     { DNORM,    "dnorm" },
     { QNORM,    "qnorm" },
-    { GAMMA,    "gammafunc" },
+    { GAMMA,    "gammafun" },
     { LNGAMMA,  "lngamma" },
     { RESAMPLE, "resample" },
     { PMEAN,    "pmean" },     /* panel mean */
@@ -235,7 +235,7 @@ struct str_table funcs[] = {
     { LISTLEN,  "nelem" },
     { CDF,      "cdf" },
     { INVCDF,   "invcdf" },
-    { PVAL,     "pvalue" },
+    { PVAL,     "pval" },
     { CRIT,     "critical" },
     { RANDGEN,  "randgen" },
     { MAKEMASK, "makemask" },
@@ -249,7 +249,10 @@ struct str_table funcs[] = {
 };
 
 struct str_table func_alias[] = {
+    { GAMMA,    "gammafunc" },
     { GAMMA,    "gamma" },
+    { RPOISSON, "poisson" },
+    { PVAL,     "value" },
     { 0,        NULL }
 };
 

@@ -543,7 +543,7 @@
 	  \end{center}
 	</para>
 	<para>
-	See also <fncref targ="pvalue"/> and <fncref targ="invcdf"/>.
+	See also <fncref targ="pval"/> and <fncref targ="invcdf"/>.
 	</para>
       </description>
     </function>
@@ -735,7 +735,7 @@
 	  \end{center}
 	</para>
 	<para>
-	  See also <fncref targ="invcdf"/> and <fncref targ="pvalue"/>.
+	  See also <fncref targ="invcdf"/> and <fncref targ="pval"/>.
 	</para>
       </description>
     </function>  
@@ -1026,13 +1026,39 @@
       </description>
     </function>
 
-    <function name="gammafunc" output="asinput">
+    <function name="gammafun" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>    
       <description>
 	<para>
 	  Returns the gamma function of <argname>x</argname>. 
+	</para>
+      </description>
+    </function>
+
+    <function name="genpois" output="series">
+      <fnargs>
+	<fnarg type="scalar-or-series">&mu;</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Generates a series of Poisson pseudo-random variates. If &mu; is
+	  a scalar, all the elements are drawn from the same distribution;
+	  if &mu; is a series, the appropriate value
+	  &mu;<sub>t</sub> is used at each observation.
+	</para>
+	<para context="tex">
+	  Generates a series of Poisson pseudo-random variates. If &mu; is
+	  a scalar, all the elements are drawn from the same distribution 
+	  \[ P(x_t = a) = e^{-\mu} \frac{\mu^{a}}{a!} \]
+	  Otherwise, if &mu; is a series, the above becomes
+	  \[ P(x_t = a) = e^{-\mu_t} \frac{\mu_t^{a}}{a!} \]
+	</para>
+	<para>
+	  See also <fncref targ="randgen"/>, <fncref targ="normal"/>, 
+	  <fncref targ="uniform"/>, <fncref targ="mnormal"/> and 
+	  <fncref targ="muniform"/>.
 	</para>
       </description>
     </function>
@@ -1931,7 +1957,7 @@
 	</para>
 	<para>
 	See also <fncref targ="randgen"/>, <fncref targ="normal"/>, 
-	<fncref targ="poisson"/>, <fncref targ="mnormal"/> and
+	<fncref targ="genpois"/>, <fncref targ="mnormal"/> and
 	<fncref targ="muniform"/>.
 	</para>
       </description>
@@ -2115,32 +2141,6 @@
       </description>
     </function>
 
-    <function name="poisson" output="series">
-      <fnargs>
-	<fnarg type="scalar-or-series">&mu;</fnarg>
-      </fnargs>
-      <description>
-	<para context="notex">
-	  Generates a series of Poisson pseudo-random variates. If &mu; is
-	  a scalar, all the elements are drawn from the same distribution;
-	  if &mu; is a series, the appropriate value
-	  &mu;<sub>t</sub> is used at each observation.
-	</para>
-	<para context="tex">
-	  Generates a series of Poisson pseudo-random variates. If &mu; is
-	  a scalar, all the elements are drawn from the same distribution 
-	  \[ P(x_t = a) = e^{-\mu} \frac{\mu^{a}}{a!} \]
-	  Otherwise, if &mu; is a series, the above becomes
-	  \[ P(x_t = a) = e^{-\mu_t} \frac{\mu_t^{a}}{a!} \]
-	</para>
-	<para>
-	  See also <fncref targ="randgen"/>, <fncref targ="normal"/>, 
-	  <fncref targ="uniform"/>, <fncref targ="mnormal"/> and 
-	  <fncref targ="muniform"/>.
-	</para>
-      </description>
-    </function>
-
     <function name="princomp" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2219,7 +2219,7 @@
       </description>
     </function>
 
-    <function name="pvalue" output="scalar">
+    <function name="pval" output="scalar">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
@@ -2383,7 +2383,7 @@
 	</para>
 	<para>
 	See also <fncref targ="normal"/>, <fncref targ="uniform"/> and 
-	<fncref targ="poisson"/>.
+	<fncref targ="genpois"/>.
 	</para>
       </description>
     </function>
@@ -2694,7 +2694,7 @@
 	</para>
 	<para>
 	  See also <fncref targ="randgen"/>, <fncref targ="normal"/>, 
-	  <fncref targ="poisson"/>, <fncref targ="mnormal"/> and 
+	  <fncref targ="genpois"/>, <fncref targ="mnormal"/> and 
 	  <fncref targ="muniform"/>.
 	</para>
       </description>

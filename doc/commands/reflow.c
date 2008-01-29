@@ -540,6 +540,12 @@ int main (int argc, char **argv)
 	utf_ok = 1;
     }
 
+    /* utf_ok: this may be a problem: in principle we should be OK
+       putting, e.g., greek characters into text to be displayed in a
+       GTK window using pango, but whether or not this actually works
+       will depend on the font that ends up being used.
+     */
+
     while (fgets(line, sizeof line, stdin)) {
 	if (strstr(line, "[PARA]")) {
 	    process_para(line, buf, PARA, markup);
