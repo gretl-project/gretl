@@ -1021,7 +1021,7 @@
 	</para>
 	<para> Note that in theory fractional differentiation is an
 	  infinitely long filter. In practice, presample values of
-	  <mathvar>y<sub>t</sub></mathvar> are assumed to be zero.
+	  <mathvar>y</mathvar><sub>t</sub> are assumed to be zero.
 	</para>
       </description>
     </function>
@@ -1926,7 +1926,7 @@
 	<para>
 	  Generates a series of Gaussian pseudo-random variates with mean
 	  &mu; and standard deviation &sigma;. If no arguments are
-	  supplied, standard normal variates <mathvar>N(0,1)</mathvar> are
+	  supplied, standard normal variates <mathvar>N</mathvar>(0,1) are
 	  produced.
 	</para>
 	<para>
@@ -2124,7 +2124,7 @@
 	  Generates a series of Poisson pseudo-random variates. If &mu; is
 	  a scalar, all the elements are drawn from the same distribution;
 	  if &mu; is a series, the appropriate value
-	  &mu;<mathvar><sub>t</sub></mathvar> is used at each observation.
+	  &mu;<sub>t</sub> is used at each observation.
 	</para>
 	<para context="tex">
 	  Generates a series of Poisson pseudo-random variates. If &mu; is
@@ -2160,13 +2160,13 @@
 	<para context="notex">
 	  The elements of <mathvar>P</mathvar> are computed as the sum
 	  from <mathvar>i</mathvar> to <mathvar>k</mathvar> of
-	  <mathvar>Z<sub>ti</sub></mathvar> times
-	  <mathvar>v<sub>ji</sub></mathvar>, where
-	  <mathvar>Z<sub>ti</sub></mathvar> is the standardized value of
+	  <mathvar>Z</mathvar><sub>ti</sub> times
+	  <mathvar>v</mathvar><sub>ji</sub>, where
+	  <mathvar>Z</mathvar><sub>ti</sub> is the standardized value of
 	  variable <mathvar>i</mathvar> at observation
-	  <mathvar>t</mathvar> and <mathvar>v<sub>ji</sub></mathvar> is
+	  <mathvar>t</mathvar> and <mathvar>v</mathvar><sub>ji</sub> is
 	  the <mathvar>j</mathvar>th eigenvector of the correlation matrix
-	  of the <mathvar>X<sub>i</sub></mathvar>s, with the eigenvectors
+	  of the <mathvar>X</mathvar><sub>i</sub>s, with the eigenvectors
 	  ordered by decreasing value of the corresponding eigenvalues.
 	</para>
 	<para context="tex">
@@ -2344,9 +2344,9 @@
 	  Returns a series with the ranks of <mathvar>y</mathvar>. The
 	  rank for observation <mathvar>i</mathvar> is the number of
 	  elements in the series that are less than
-	  <mathvar>y<sub>i</sub></mathvar> plus one half the number of
+	  <mathvar>y</mathvar><sub>i</sub> plus one half the number of
 	  elements in the series that are equal to
-	  <mathvar>y<sub>i</sub></mathvar>. (Intuitively, you may think of
+	  <mathvar>y</mathvar><sub>i</sub>. (Intuitively, you may think of
 	  chess points, where victory gives you one point and a draw gives
 	  you half a point.) One is added so the lowest rank is 1 instead
 	  of 0.
@@ -2426,9 +2426,9 @@
       <description>
 	<para>
 	  Resamples from <argname>x</argname> with replacement. Each value
-	  of the returned series, <mathvar>y<sub>t</sub></mathvar>, is
+	  of the returned series, <mathvar>y</mathvar><sub>t</sub>, is
 	  drawn from among all the values of
-	  <mathvar>x<sub>t</sub></mathvar> with equal probability.
+	  <mathvar>x</mathvar><sub>t</sub> with equal probability.
 	</para>
       </description>
     </function>

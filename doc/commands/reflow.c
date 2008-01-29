@@ -31,6 +31,8 @@ struct table_row {
     char *cells[2];
 };
 
+static int utf_ok;
+
 static void utf_replace (unsigned char *s)
 {
     while (*s) {
@@ -90,8 +92,10 @@ static void compress_spaces (char *s)
 
     if (s == NULL || *s == 0) return;
 
-    /* replace endashes (and other entities?) */
-    utf_replace((unsigned char *) s);
+    if (!utf_ok) {
+	/* replace endashes (and other entities?) */
+	utf_replace((unsigned char *) s);
+    }
 
     p = s;
     while (*s) {
@@ -533,6 +537,7 @@ int main (int argc, char **argv)
 
     if (argc == 2 && !strcmp(argv[1], "--markup")) {
 	markup = 1;
+	utf_ok = 1;
     }
 
     while (fgets(line, sizeof line, stdin)) {
@@ -561,10 +566,12 @@ int main (int argc, char **argv)
 		    putchar('\n');
 		}
 	    } else {
-		utf_replace((unsigned char *) line);
+		if (!utf_ok) {
+		    utf_replace((unsigned char *) line);
+		}
 		fputs(line, stdout);
 		blank = 0;
-	    }
+	    } 
 	}	
     }
 

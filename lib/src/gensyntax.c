@@ -541,7 +541,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    t->v.b2.l->v.b2.r = expr(p);
 	}
 	if (p->sym == RBR) {
-	    /* co comma, no second arg string: may be OK */
+	    /* no comma, no second arg string: may be OK */
 	    t->v.b2.r = newempty(ABSENT);
 	    lex(p);
 	    set_matrix_slice_off();

@@ -404,6 +404,12 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="sub">
+  <xsl:text>&lt;@sub="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="book">
   <xsl:text>&lt;@itl="</xsl:text>
   <xsl:apply-templates/>

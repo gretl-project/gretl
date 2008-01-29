@@ -1854,7 +1854,6 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
     } else if (l->t == EMPTY) {
 	mspec->type[0] = SEL_ALL;
     } else {
-	fprintf(stderr, "build_mspec: l->t (%d) is bad\n", l->t);
 	*err = E_TYPES;
 	goto bailout;
     }
@@ -1869,13 +1868,12 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 	mspec->type[1] = SEL_RANGE;
 	mspec->sel[1].range[0] = r->v.ivec[0];
 	mspec->sel[1].range[1] = r->v.ivec[1];
-    } else if (l->t == MAT) {
+    } else if (r->t == MAT) {
 	mspec->type[1] = SEL_MATRIX;
 	mspec->sel[1].m = r->v.m;
     } else if (r->t == EMPTY) {
 	mspec->type[1] = SEL_ALL;
     } else {
-	fprintf(stderr, "build_mspec: r->t (%d) is bad\n", r->t);
 	*err = E_TYPES;
 	goto bailout;
     }

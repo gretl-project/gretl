@@ -547,6 +547,13 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 "size", 8 * PANGO_SCALE,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("subscript");
+    g_object_set(tag, "style", PANGO_STYLE_NORMAL,
+		 "rise", -3 * PANGO_SCALE,
+		 "size", 8 * PANGO_SCALE,
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
 		 
     tag = gtk_text_tag_new("literal");
     g_object_set(tag, "family", "monospace", NULL);
@@ -2043,6 +2050,7 @@ enum {
     INSERT_LIT,
     INSERT_ITAL,
     INSERT_SUP,
+    INSERT_SUB,
     INSERT_TEXT,
     INSERT_PDFLINK,
     INSERT_INPLINK
@@ -2083,6 +2091,9 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
     case INSERT_SUP:
 	ftag = "superscript";
 	break;
+    case INSERT_SUB:
+	ftag = "subscript";
+	break;
     default:
 	break;
     }
@@ -2110,6 +2121,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_LIT;
     } else if (!strncmp(p, "sup", 3)) {
 	ins = INSERT_SUP;
+    } else if (!strncmp(p, "sub", 3)) {
+	ins = INSERT_SUB;
     } else if (!strncmp(p, "pdf", 3)) {
 	ins = INSERT_PDFLINK;
     } else if (!strncmp(p, "inp", 3)) {
