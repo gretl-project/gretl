@@ -549,7 +549,8 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("subscript");
-    g_object_set(tag, "style", PANGO_STYLE_NORMAL,
+    g_object_set(tag, "family", "sans",
+		 "style", PANGO_STYLE_ITALIC,
 		 "rise", -3 * PANGO_SCALE,
 		 "size", 8 * PANGO_SCALE,
 		 NULL);

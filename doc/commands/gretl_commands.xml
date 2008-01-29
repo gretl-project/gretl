@@ -1311,7 +1311,7 @@
 	  tex="$\hat{\rho}(u_t, u_{t-s})$" 
 	  ascii="rho(u(t), u(t-s))" 
 	  graphic="autocorr"/> where
-	<mathvar>u<sub>t</sub></mathvar> is the <mathvar>t</mathvar>th
+	<mathvar>u</mathvar><sub>t</sub> is the <mathvar>t</mathvar>th
 	observation of the variable <mathvar>u</mathvar> and
 	<mathvar>s</mathvar> is the number of lags.
       </para>
@@ -1801,12 +1801,12 @@
 	This test is based on the fact that if two samples,
 	<mathvar>x</mathvar> and <mathvar>y</mathvar>, are drawn randomly
 	from the same distribution, the probability that
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar>, for each observation
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub>, for each observation
 	<mathvar>i</mathvar>, should equal 0.5.  The test statistic is
 	<mathvar>w</mathvar>, the number of observations for which
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar>. Under the null hypothesis this
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub>. Under the null hypothesis this
 	follows the Binomial distribution with parameters
 	(<mathvar>n</mathvar>, 0.5), where <mathvar>n</mathvar> is the
 	number of observations.
@@ -1829,11 +1829,11 @@
 	as, for example, the values of a variable for a sample of
 	individuals before and after some treatment.  The test proceeds by
 	finding the differences between the paired observations,
-	<mathvar>x<sub>i</sub></mathvar> &minus;
-	<mathvar>y<sub>i</sub></mathvar>, ranking these differences by
+	<mathvar>x</mathvar><sub>i</sub> &minus;
+	<mathvar>y</mathvar><sub>i</sub>, ranking these differences by
 	absolute value, then assigning to each pair a signed rank, the
 	sign agreeing with the sign of the difference.  One then
-	calculates <mathvar>W<sub>+</sub></mathvar>, the sum of the
+	calculates <mathvar>W</mathvar><sub>+</sub>, the sum of the
 	positive signed ranks.  As with the rank-sum test, this statistic
 	has a well-defined distribution under the null that the median
 	difference is zero, which converges to the Normal for samples
@@ -3689,12 +3689,12 @@
 	Sign test: This test is based on the fact that if two samples,
 	<mathvar>x</mathvar> and <mathvar>y</mathvar>, are drawn randomly
 	from the same distribution, the probability that
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar>, for each observation
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub>, for each observation
 	<mathvar>i</mathvar>, should equal 0.5.  The test statistic is
 	<mathvar>w</mathvar>, the number of observations for which
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar>. Under the null hypothesis this
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub>. Under the null hypothesis this
 	follows the Binomial distribution with parameters
 	(<mathvar>n</mathvar>, 0.5), where <mathvar>n</mathvar> is the
 	number of observations.
@@ -3716,11 +3716,11 @@
 	This is designed for matched data pairs such as, for example, the
 	values of a variable for a sample of individuals before and after
 	some treatment.  The test proceeds by finding the differences
-	between the paired observations, <mathvar>x<sub>i</sub></mathvar>
-	&minus; <mathvar>y<sub>i</sub></mathvar>, ranking these
+	between the paired observations, <mathvar>x</mathvar><sub>i</sub>
+	&minus; <mathvar>y</mathvar><sub>i</sub>, ranking these
 	differences by absolute value, then assigning to each pair a
 	signed rank, the sign agreeing with the sign of the difference.
-	One then calculates <mathvar>W<sub>+</sub></mathvar>, the sum of
+	One then calculates <mathvar>W</mathvar><sub>+</sub>, the sum of
 	the positive signed ranks.  As with the rank-sum test, this
 	statistic has a well-defined distribution under the null that the
 	median difference is zero, which converges to the Normal for
@@ -9149,7 +9149,7 @@
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
 	  ascii="1/(1 - Rj^2)"
-	  graphic="vif"/> where <mathvar>R<sub>j</sub></mathvar> is
+	  graphic="vif"/> where <mathvar>R</mathvar><sub>j</sub> is
 	the coefficient of multiple correlation between regressor
 	<mathvar>j</mathvar> and the other regressors. The factor has
 	a minimum value of 1.0 when the variable in question is

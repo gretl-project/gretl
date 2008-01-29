@@ -1303,7 +1303,7 @@
 	<equation status="inline" 
 	  tex="$\hat{\rho}(u_t, u_{t-s})$"
 	  ascii="rho(u(t), u(t-s))"
-	  graphic="autocorr"/> dove <mathvar>u<sub>t</sub></mathvar>
+	  graphic="autocorr"/> dove <mathvar>u</mathvar><sub>t</sub>
 	è la <mathvar>t</mathvar>-esima osservazione della variabile
 	<mathvar>u</mathvar> e <mathvar>s</mathvar> è il numero dei
 	ritardi.
@@ -1789,12 +1789,12 @@
         che si basa sul fatto che per due campioni
 	<mathvar>x</mathvar> e <mathvar>y</mathvar> estratti casualmente dalla
         stessa distribuzione, la probabilità che valga
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar> per ogni osservazione
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub> per ogni osservazione
 	<mathvar>i</mathvar> dovrebbe valere 0.5. La statistica test è
 	<mathvar>w</mathvar>, ossia il numero di osservazioni per cui vale
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar>. Sotto l'ipotesi nulla, questa
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub>. Sotto l'ipotesi nulla, questa
         grandezza si distribuisce come una binomiale con parametri
 	(<mathvar>n</mathvar>, 0.5), dove <mathvar>n</mathvar> è il numero di
         osservazioni.
@@ -1818,11 +1818,11 @@
         campioni", come possono essere ad esempio i valori di una variabile in
         un gruppo di individui prima e dopo un certo trattamento. Il test
         procede calcolando le differenze tra le coppie di osservazioni
-	<mathvar>x<sub>i</sub></mathvar> &minus;
-	<mathvar>y<sub>i</sub></mathvar>, ordinando queste differenze per valore
+	<mathvar>x</mathvar><sub>i</sub> &minus;
+	<mathvar>y</mathvar><sub>i</sub>, ordinando queste differenze per valore
         assoluto e assegnando ad ogni coppia un valore di rango con segno, in
         cui il segno rispecchia il segno della differenza. Quindi viene
-        calcolato <mathvar>W<sub>+</sub></mathvar>, la somma di tutti i ranghi
+        calcolato <mathvar>W</mathvar><sub>+</sub>, la somma di tutti i ranghi
         con segno positivo. Come avviene per il test rank-sum, questa
         statistica ha una distribuzione precisa nell'ipotesi nulla che la
         differenza mediana sia zero, distribuzione che converte alla normale nel
@@ -3646,12 +3646,12 @@
        Test del segno: si basa sul fatto che per due campioni
 	<mathvar>x</mathvar> e <mathvar>y</mathvar> estratti casualmente dalla
         stessa distribuzione, la probabilità che valga
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar> per ogni osservazione
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub> per ogni osservazione
 	<mathvar>i</mathvar> dovrebbe valere 0.5. La statistica test è
 	<mathvar>w</mathvar>, ossia il numero di osservazioni per cui vale
-	<mathvar>x<sub>i</sub></mathvar> &gt;
-	<mathvar>y<sub>i</sub></mathvar>. Sotto l'ipotesi nulla, questa
+	<mathvar>x</mathvar><sub>i</sub> &gt;
+	<mathvar>y</mathvar><sub>i</sub>. Sotto l'ipotesi nulla, questa
         grandezza si distribuisce come una binomiale con parametri
 	(<mathvar>n</mathvar>, 0.5), dove <mathvar>n</mathvar> è il numero di
         osservazioni.
@@ -3673,11 +3673,11 @@
        campioni", come possono essere ad esempio i valori di una variabile in un
        gruppo di individui prima e dopo un certo trattamento. Il test procede
        calcolando le differenze tra le coppie di osservazioni
-       <mathvar>x<sub>i</sub></mathvar> &minus;
-       <mathvar>y<sub>i</sub></mathvar>, ordinando queste differenze per valore
+       <mathvar>x</mathvar><sub>i</sub> &minus;
+       <mathvar>y</mathvar><sub>i</sub>, ordinando queste differenze per valore
        assoluto e assegnando ad ogni coppia un valore di rango con segno, in cui
        il segno rispecchia il segno della differenza. Quindi viene calcolato
-       <mathvar>W<sub>+</sub></mathvar>, la somma di tutti i ranghi con segno
+       <mathvar>W</mathvar><sub>+</sub>, la somma di tutti i ranghi con segno
        positivo. Come avviene per il test rank-sum, questa statistica ha una
        distribuzione precisa nell'ipotesi nulla che la differenza mediana sia
        zero, distribuzione che converte alla normale nel caso di campioni
@@ -9039,7 +9039,7 @@
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
 	  ascii="1/(1 - Rj^2)"
-	  graphic="vif"/> dove <mathvar>R<sub>j</sub></mathvar> è il
+	  graphic="vif"/> dove <mathvar>R</mathvar><sub>j</sub> è il
 	coefficiente di correlazione multipla tra il regressore
 	<mathvar>j</mathvar> e gli altri regressori. Il fattore ha un valore
         minimo di 1.0 quando la variabile in questione è ortogonale alle altre

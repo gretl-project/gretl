@@ -77,7 +77,8 @@
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
-                func | guideref | cmdref| tabref | footnote | cmd)*>
+                func | guideref | cmdref| tabref | sub | super |
+                footnote | cmd)*>
 <!ATTLIST para
    context (cli | gui | both) "both"
 >
