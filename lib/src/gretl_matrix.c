@@ -3307,7 +3307,8 @@ enum {
     CONF_A_ROWVEC,
     CONF_B_ROWVEC,
     CONF_A_SCALAR,
-    CONF_B_SCALAR
+    CONF_B_SCALAR,
+    CONF_AC_BR
 };
 
 /**
@@ -3370,6 +3371,11 @@ static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
 	ret = CONF_B_SCALAR;
 	*r = ra;
 	*c = ca;
+    } else if (colva && rowvb) {
+	/* A is a column and B is a row */
+	ret = CONF_AC_BR;
+	*r = ra;
+	*c = cb;
     }
 
     return ret;
@@ -3511,6 +3517,16 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 		x = gretl_matrix_get(a, i, j);
 		x = x_op_y(x, y, op);
 		gretl_matrix_set(c, i, j, x);
+	    }
+	}
+	break;
+    case CONF_AC_BR:
+	for (i=0; i<nr; i++) {
+	    x = a->val[i];
+	    for (j=0; j<nc; j++) {
+		y = b->val[j];
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
 	    }
 	}
 	break;
@@ -8683,13 +8699,11 @@ gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
 
     if (rowsel) {
 	if ((ra != rs) || (cs>1) ) {
-	    printf("ra = %d, rs = %d, cs = %d\n", ra, rs, cs);
 	    *err = E_NONCONF;
 	    return NULL;
 	}
     } else {
 	if ((ca != cs) || (rs>1) ) {
-	    printf("ca = %d, cs = %d, rs = %d\n", ca, cs, rs);
 	    *err = E_NONCONF;
 	    return NULL;
 	}
