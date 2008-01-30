@@ -34,6 +34,7 @@ TEXSRC = cli.tex \
 	gretltex.tex \
 	cheatsheet.tex \
 	reftables.tex \
+	cmdref.tex \
 	funcref.tex \
 	optarg.tex
 
