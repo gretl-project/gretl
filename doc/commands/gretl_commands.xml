@@ -5366,9 +5366,11 @@
 	preceded by the keyword <lit>params</lit>.
       </para>
 
-      <para>Example: Suppose we have a data set with
-	variables C and Y (&eg; greene11_3.gdt) and we wish to
-	estimate a nonlinear consumption function of the form
+      <para>
+	Example: Suppose we have a data set with variables
+	<mathvar>C</mathvar> and <mathvar>Y</mathvar> (&eg;
+	<lit>greene11_3.gdt</lit>) and we wish to estimate a nonlinear
+	consumption function of the form
 	<equation status="display"
 	  tex="\[C = \alpha + \beta Y^{\gamma}\]"
 	  ascii="C = alpha + beta * Y^gamma"

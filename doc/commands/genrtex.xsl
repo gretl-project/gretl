@@ -38,7 +38,11 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="funclist|commandlist">
+<xsl:template match="commandlist">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="funclist">
   <xsl:text>\section{</xsl:text>
   <xsl:value-of select="@name"/>
   <xsl:text>}&#10;\label{sec:</xsl:text>
@@ -113,7 +117,7 @@
 </xsl:template>
 
 <xsl:template match="command">
-  <xsl:if test="@context != 'gui'">
+  <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
     <xsl:text>&#10;</xsl:text>
     <xsl:text>\subsection{</xsl:text>
     <xsl:call-template name="funcname">
@@ -172,7 +176,7 @@
     <xsl:text>}</xsl:text>
   </xsl:if> 
   <xsl:text>\textsl{</xsl:text>
-  <xsl:apply-templates/>
+  <xsl:value-of select="translate(., '_', '-')"/>
   <xsl:text>} </xsl:text>
   <xsl:if test="(@optional)">
     <xsl:text>\texttt{ ]}</xsl:text>
@@ -200,9 +204,22 @@
 </xsl:template>
 
 <xsl:template match="example">
+  <xsl:variable name="escape">
+    <xsl:choose>
+      <xsl:when test="contains(.,'_') or contains(.,'\') or 
+                      contains(.,'$') or contains(.,'^') or
+                      contains(.,'%') or contains(.,'&amp;') or
+                      contains(.,'#') or contains(.,'{')">
+        <xsl:text>yes</xsl:text>
+      </xsl:when>    
+      <xsl:otherwise>
+        <xsl:text>no</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>    
+  </xsl:variable>
   <xsl:if test="position() = 1">
     <xsl:choose>
-      <xsl:when test="count(../option) > 1">
+      <xsl:when test="count(../example) > 1">
         <xsl:call-template name="gettext">
           <xsl:with-param name="key" select="'examples'"/>
         </xsl:call-template>
@@ -214,9 +231,25 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:if>
-  <xsl:text> &amp; \texttt{</xsl:text>
+  <xsl:text> &amp; </xsl:text>
+  <xsl:choose>
+    <xsl:when test="$escape='yes'">
+      <xsl:text>\verb@</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>\texttt{</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>  
   <xsl:apply-templates/>
-  <xsl:text>} \\ &#10;</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$escape='yes'">
+      <xsl:text>@</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>}</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>  
+  <xsl:text> \\ &#10;</xsl:text>
 </xsl:template>
 
 <xsl:template match="flag|argpunct">
@@ -246,23 +279,50 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:if>
+  <xsl:text> &amp; </xsl:text>
   <xsl:if test="count(../example) > 1">
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'Seealso'"/>
     </xsl:call-template>
   </xsl:if>
-  <xsl:text> &amp; </xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template match="demo">
+  <xsl:variable name="escape">
+    <xsl:choose>
+      <xsl:when test="contains(.,'_') or contains(.,'\') or 
+                      contains(.,'$') or contains(.,'^') or
+                      contains(.,'%') or contains(.,'&amp;') or
+                      contains(.,'#') or contains(.,'{')">
+        <xsl:text>yes</xsl:text>
+      </xsl:when>    
+      <xsl:otherwise>
+        <xsl:text>no</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>    
+  </xsl:variable>
   <xsl:if test="position() > 1">
     <xsl:text>, </xsl:text>
   </xsl:if>
-  <xsl:text>\texttt{</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$escape='yes'">
+      <xsl:text>\verb@</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>\texttt{</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>  
   <xsl:apply-templates/>
-  <xsl:text>}</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$escape='yes'">
+      <xsl:text>@</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>}</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose> 
 </xsl:template>
 
 <xsl:template match="fnargs">
@@ -322,7 +382,7 @@
   <xsl:text>\\&#10;</xsl:text>
 </xsl:template>
 
-<xsl:template match="book">
+<xsl:template match="book|emphasis">
   <xsl:text>\emph{</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>}</xsl:text>
@@ -350,17 +410,19 @@
 </xsl:template>
 
 <xsl:template match="ilist">
-  <xsl:if test="not(@context) or @context=$hlp">
+  <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
     <xsl:text>&#10;\begin{itemize}&#10;</xsl:text>
     <xsl:apply-templates/>
     <xsl:text>\end{itemize}&#10;&#10;</xsl:text>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="olist">
-  <xsl:text>&#10;\begin{enumerate}&#10;</xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text>\end{enumerate}&#10;&#10;</xsl:text>
+<xsl:template match="olist|nlist">
+  <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
+    <xsl:text>&#10;\begin{enumerate}&#10;</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:text>\end{enumerate}&#10;&#10;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="li">
@@ -369,7 +431,8 @@
   <xsl:text>&#10;</xsl:text>
 </xsl:template>
 
-<xsl:template match="math">
+<xsl:template match="math|mathvar">
+  <!-- FIXME -->
   <xsl:text>$</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>$</xsl:text>
@@ -406,7 +469,18 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="lit">
+<xsl:template match="altform">
+  <xsl:if test="position() = 1">
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'altforms'"/>
+    </xsl:call-template>
+  </xsl:if>
+  <xsl:text> &amp; </xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>\\&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="lit|filename|varname">
   <xsl:variable name="escape">
     <xsl:choose>
       <xsl:when test="contains(.,'_') or contains(.,'\') or 
@@ -466,6 +540,14 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="cmdref">
+  <xsl:text>\hyperlink{cmd-</xsl:text>
+  <xsl:value-of select="@targ"/>
+  <xsl:text>}{</xsl:text>
+  <xsl:value-of select="@targ"/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
 <xsl:template match="guideref">
   <xsl:choose>
     <xsl:when test="$useGUG='true'">
@@ -494,10 +576,23 @@
     <xsl:with-param name="key" select="'menupath'"/>
   </xsl:call-template>
   <xsl:apply-templates/>
+  <!-- FIXME -->
+  <xsl:text>&#10;&#10;</xsl:text>  
+</xsl:template>
+
+<xsl:template match="other-access">
+  <xsl:text>&#10;</xsl:text> 
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'otheraccess'"/>
+  </xsl:call-template>
+  <xsl:apply-templates/>
+  <xsl:text>&#10;</xsl:text>  
 </xsl:template>
 
 <xsl:template match="description">
-  <xsl:apply-templates/>
+  <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
+    <xsl:apply-templates/>
+  </xsl:if>
 </xsl:template>
 
 </xsl:stylesheet>

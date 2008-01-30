@@ -421,6 +421,7 @@ static int print_topic_lists (sectlist *s)
     int i, j;
     int err = 0;
 
+#if 0
     for (i=0; i<TAB_MAX; i++) {
 	sect = get_section_by_id(s, i);
 	if (sect == NULL) {
@@ -446,6 +447,31 @@ static int print_topic_lists (sectlist *s)
 	puts(" </itemizedlist>");
 	puts(" </sect2>");
     }
+#else
+    for (i=0; i<TAB_MAX; i++) {
+	sect = get_section_by_id(s, i);
+	if (sect == NULL) {
+	    fprintf(stderr, "Section with ID %d is missing!\n", i);
+	    err = 1;
+	    continue;
+	}
+	printf("\\subsection{%s}\n"
+	       "\\label{sect-%s}\n\n", _(sect->name),
+	       section_id_label(i));
+	puts("\\begin{itemize}");
+	for (j=0; j<sect->ncmds; j++) {
+	    label = sect->cmds[j]->label;
+	    printf("\\item \\cmd{\\hyperlink{cmd-%s}{%s}}",
+		   sect->cmds[j]->name, sect->cmds[j]->name);
+	    if (*label) {
+		printf(" : %s\n", label);
+	    } else {
+		putchar('\n');
+	    }
+	}
+	puts("\\end{itemize}\n");
+    }
+#endif
 
     return err;
 }
