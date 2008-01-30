@@ -1395,6 +1395,7 @@ static gretl_matrix *make_scalar_matrix (double x)
     if (m != NULL) {
 	m->val[0] = x;
     }
+
     return m;
 }
 
@@ -4103,7 +4104,8 @@ static NODE *eval (NODE *t, parser *p)
 	} else if ((l->t == MAT && r->t == VEC) ||
 		   (l->t == VEC && r->t == MAT)) {
 	    ret = matrix_series_calc(l, r, t->t, p);
-	} else if (l->t == MAT && r->t == NUM) {
+	} else if ((l->t == MAT && r->t == NUM) ||
+		   (l->t == NUM && r->t == MAT)) {
 	    ret = matrix_scalar_calc(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
