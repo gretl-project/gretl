@@ -48,6 +48,7 @@ typedef enum {
     DIFFTEST,
     DISCRETE,
     DUMMIFY,
+    ELIF,
     ELSE,
     END,
     ENDIF,

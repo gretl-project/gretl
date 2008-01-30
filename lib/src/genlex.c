@@ -254,7 +254,7 @@ struct str_table func_alias[] = {
     { GAMMA,    "gammafunc" },
     { GAMMA,    "gamma" },
     { RPOISSON, "poisson" },
-    { PVAL,     "value" },
+    { PVAL,     "pvalue" },
     { 0,        NULL }
 };
 
