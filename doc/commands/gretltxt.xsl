@@ -5,7 +5,6 @@
   <!-- Stylesheet for CLI plain text "online" help -->
 
 <xsl:param name="hlp">cli</xsl:param>
-<xsl:param name="xrefs">false</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="utf-8"/>
@@ -413,7 +412,7 @@
 </xsl:template>
 
 <xsl:template match="code">
-  <xsl:if test="not(@context) or @context=$hlp">
+  <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
     <xsl:call-template name="dnl"/>
     <xsl:apply-templates/>
     <xsl:call-template name="dnl"/>
@@ -437,48 +436,24 @@
 </xsl:template>
 
 <xsl:template match="cmdref">
-  <xsl:choose>
-    <xsl:when test="$xrefs='true'">
-      <xsl:text>&lt;@ref="</xsl:text>
-      <xsl:value-of select="@targ"/>
-      <xsl:text>"&gt;</xsl:text>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:text>"</xsl:text>
-      <xsl:value-of select="@targ"/>
-      <xsl:text>"</xsl:text>      
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:text>"</xsl:text>
+  <xsl:value-of select="@targ"/>
+  <xsl:text>"</xsl:text>      
 </xsl:template>
 
 <xsl:template match="fncref">
-  <xsl:choose>
-    <xsl:when test="$xrefs='true'">
-      <xsl:text>&lt;@ref="</xsl:text>
-      <xsl:value-of select="@targ"/>
-      <xsl:text>"&gt;</xsl:text>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:text>"</xsl:text>
-      <xsl:value-of select="@targ"/>
-      <xsl:text>"</xsl:text>      
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:text>"</xsl:text>
+  <xsl:value-of select="@targ"/>
+  <xsl:text>"</xsl:text>      
   <xsl:if test="parent::seelist and following-sibling::*">
     <xsl:text>, </xsl:text>
   </xsl:if>
 </xsl:template>
 
 <xsl:template match="guideref">
-  <xsl:if test="$xrefs='true'">
-    <xsl:text>&lt;@pdf="</xsl:text>
-  </xsl:if>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'guidebook'"/>
   </xsl:call-template>
-  <xsl:if test="$xrefs='true'">
-    <xsl:text>&gt;"</xsl:text>
-  </xsl:if>
 </xsl:template>
 
 <xsl:template match="menu-path">

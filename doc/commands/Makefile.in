@@ -28,26 +28,21 @@ vpath %.xsl = $(CMDSDIR)
 LIBTOOL = ../../libtool
 
 CMDSDIR = $(topsrc)/doc/commands
-CHAPDIR = $(topsrc)/doc/chapters
-CHAPDIR_IT = $(topsrc)/doc/chapters_it
-CHAPDIR_ES = $(topsrc)/doc/chapters_es
 SHAREDIR = $(topsrc)/share
 
 CMDDTD = $(CMDSDIR)/gretl_commands.dtd
-GENDTD = $(CMDSDIR)/genr_funcs.dtd
-
 CMDSRC = $(CMDSDIR)/gretl_commands.xml \
 	$(CMDSDIR)/gretl_commands_es.xml \
 	$(CMDSDIR)/gretl_commands_it.xml
 
-GENSRC = $(CMDSDIR)/genr_funcs.xml
-GENXSL = $(CMDSDIR)/genrtex.xsl
-GENTEX = ../tex/genr_funcs.tex	
+FNCDTD = $(CMDSDIR)/genr_funcs.dtd
+FNCSRC = $(CMDSDIR)/genr_funcs.xml
 
-MANXSL = $(CMDSDIR)/gretlman.xsl
 HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/gretlhlp.xsl \
-	$(CMDSDIR)/equations.xsl \
+	$(CMDSDIR)/equations.xsl 
+
+TEXXSL = $(CMDSDIR)/gretltex.xsl
 
 XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
   $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_it.xml
@@ -110,37 +105,35 @@ $(FIGSTAMP): $(EQNLIST)
 
 # Generate "online" help files
 $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) 
-	./xsltrans --hlp --markup $(CMDSDIR)/gretl_commands.xml && \
-	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
-	if test -f cmdlist.txt ; then \
-	  ./reflow --markup < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp ; \
-	fi
-	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp
-	./xsltrans --hlp --markup $(CMDSDIR)/gretl_commands_es.xml && \
-	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
-	if test -f cmdlist.txt ; then \
-	  ./reflow --markup < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es ; \
-	fi 
-	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.es
-	./xsltrans --hlp --markup $(CMDSDIR)/gretl_commands_it.xml && \
-	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
-	if test -f cmdlist.txt ; then \
-	  ./reflow --markup < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it ; \
-	fi
-	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
+	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp
+	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp
+	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp
+	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.it
+	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.it
+	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.it
+	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_es.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.es
+	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_es.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.es
+	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_es.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.es
 	touch $@
 
 $(GENSTAMP): xsltrans reflow $(GENSRC) $(GENDTD) $(HLPXSL) $(XMLSTRS) 
-	./xsltrans --genr --markup $(CMDSDIR)/genr_funcs.xml && \
-	./reflow < genrcli.txt > $(SHAREDIR)/genrcli.hlp
-	if test -f genrgui.txt ; then \
-	  ./reflow --markup < genrgui.txt > $(SHAREDIR)/genrgui.hlp ; \
-	fi
-	./xsltrans --genr --markup $(CMDSDIR)/genr_funcs_it.xml && \
-	./reflow < genrcli.txt > $(SHAREDIR)/genrcli.hlp.it
-	if test -f genrgui.txt ; then \
-	  ./reflow --markup < genrgui.txt > $(SHAREDIR)/genrgui.hlp.it ; \
-	fi
+	./xsltrans --funcs --plain $(CMDSDIR)/genr_funcs.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/genrcli.hlp
+	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp
+	./xsltrans --funcs --plain $(CMDSDIR)/genr_funcs_it.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/genrcli.hlp.it
+	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs_it.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp.it
 	touch $@
 
 .PHONY: test
@@ -155,77 +148,66 @@ textables: tables
 	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex
 	touch $@
 
-functex: xsltrans reflow $(GENSRC) $(GENDTD) $(GENXSL) $(XMLSTRS)
+functex: xsltrans reflow $(FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
 	cat $(CMDSDIR)/genr_funcs.xml | grep -v DOCTYPE | \
 	grep -v 'xml version' >> tmp.xml && \
-	./xsltrans --genr --tex tmp.xml --docdir=$(CMDSDIR) && \
-	./reflow < genrtex.txt > ../tex/genr_funcs.tex
+	./xsltrans --funcs --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < tmp.txt > ../tex/funcbody.tex
+	touch $@
+
+functex_it: xsltrans reflow $(FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
 	cat $(CMDSDIR)/genr_funcs_it.xml | grep -v DOCTYPE | \
 	grep -v 'xml version' >> tmp.xml && \
-	./xsltrans --genr --tex tmp.xml --docdir=$(CMDSDIR) && \
-	./reflow < genrtex.txt > ../tex_it/genr_funcs.tex
+	./xsltrans --funcs --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < tmp.txt > ../tex_it/funcbody.tex
+	touch $@
+
+cmdtex: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/gretl_commands.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --cmds --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < tmp.txt > ../tex/refbody.tex && \
+	rm tmp.xml
+	touch $@
+
+cmdtex_it: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/gretl_commands_it.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --cmds --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < tmp.txt > ../tex_it/refbody.tex && \
+	rm tmp.xml
 	touch $@
 
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
-	./topiclist $(CMDSDIR)/gretl_commands.xml \
-	> $(CHAPDIR)/cmdtopics.xml
+	./topiclist $(CMDSDIR)/gretl_commands.xml > ../tex/cmdtopics.tex && \
+	touch $@
 
 topiclist_it: topiclist $(CMDSDIR)/gretl_commands_it.xml
-	LANG=it_IT ./topiclist $(CMDSDIR)/gretl_commands_it.xml \
-	> $(CHAPDIR_IT)/cmdtopics.xml
-
-topiclist_es: topiclist $(CMDSDIR)/gretl_commands_es.xml
-	LANG=es_ES ./topiclist $(CMDSDIR)/gretl_commands_es.xml \
-	> $(CHAPDIR_ES)/cmdtopics.xml
+	LANG=it_IT ./topiclist $(CMDSDIR)/gretl_commands_it.xml > ../tex_it/cmdtopics.tex && \
+	touch $@ 
 
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)
 test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 	xmllint --valid --noout $< && ./xsltrans --all skeleton.xml $(CMDSDIR)
 
-# Generate docbook XML for the command-reference section of the 
-# full manual, cmdlist.xml
-docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(MANXSL) $(XMLSTRS)
-	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
-	cat $(CMDSDIR)/gretl_commands.xml | grep -v DOCTYPE | \
-	grep -v 'xml version' >> tmp.xml && \
-	./xsltrans --docbook tmp.xml --docdir=$(CMDSDIR) && \
-	cp cmdlist.xml $(CHAPDIR)/cmdlist.xml && \
-	rm cmdlist.xml && rm tmp.xml
-
-docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
-	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
-	cat $(CMDSDIR)/gretl_commands_it.xml | grep -v DOCTYPE | \
-	grep -v 'xml version' >> tmp.xml && \
-	./xsltrans --docbook tmp.xml --docdir=$(CMDSDIR) && \
-	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>" > $(CHAPDIR_IT)/cmdlist.xml && \
-	cat cmdlist.xml >> $(CHAPDIR_IT)/cmdlist.xml && \
-	rm cmdlist.xml && rm tmp.xml
-
-docbook_es: xsltrans $(CMDSDIR)/gretl_commands_es.xml $(MANXSL) $(XMLSTRS)
-	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
-	cat $(CMDSDIR)/gretl_commands_es.xml | grep -v DOCTYPE | \
-	grep -v 'xml version' >> tmp.xml && \
-	./xsltrans --docbook tmp.xml --docdir=$(CMDSDIR) && \
-	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>" > $(CHAPDIR_ES)/cmdlist.xml && \
-	cat cmdlist.xml >> $(CHAPDIR_ES)/cmdlist.xml && \
-	rm cmdlist.xml && rm tmp.xml
-
 help-all: $(HLPSTAMP) $(FIGSTAMP) $(GENSTAMP)
 
 # Validate the commands "master" XML files against libgretl
 check: validate 
 	-./validate $(CMDSDIR)/gretl_commands.xml
-	-./validate $(CMDSDIR)/gretl_commands_es.xml
 	-./validate $(CMDSDIR)/gretl_commands_it.xml
 	-./validate $(CMDSDIR)/gretl_funcs.xml
+	-./validate $(CMDSDIR)/gretl_funcs_it.xml
 
 docclean:
-	 rm -f skeleton.xml cmdlist.* guilist.txt clilist.txt genrcli.txt genrgui.txt
+	 rm -f *.txt *.xml
 
 clean: docclean
 	rm -f xsltrans skeleton reflow validate tables topiclist *.o
-	rm -f textables topiclist_*
+	rm -f textables cmdtex* functex* topiclist_*
 	rm -rf .libs

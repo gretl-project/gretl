@@ -1093,13 +1093,13 @@
         partenza per la procedura di stima di massima verosimiglianza di
         Johansen.
       </para>
-      <para>
+      <para context="notex">
 	La tabella seguente fornisce un esempio di interpretazione dei
 	risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
         l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
-        il numero delle relazioni di cointegrazione.</para>
-
-      <code>
+        il numero delle relazioni di cointegrazione.
+      </para>
+      <code context="notex">
                  Rango    Test traccia       Test Lmax
                           H0     H1          H0     H1
                  ---------------------------------------
@@ -1108,6 +1108,27 @@
                   2      c = 2  c = 3       c = 2  c = 3
                  ---------------------------------------
       </code>
+
+      <para context="tex">
+	La tabella seguente fornisce un esempio di interpretazione dei
+	risultati del test nel caso di 3 variabili. $H_0$ denota
+        l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
+        il numero delle relazioni di cointegrazione.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Test traccia} &amp;
+	   \multicolumn{2}{c}{Test $\lambda$-max} \\
+	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} &amp; 
+	       \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
+	\end{tabular}
+	\end{center}
+      </para>      
  
       <para>
 	Si veda anche il comando <cmdref targ="vecm"/>.
@@ -1566,11 +1587,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi osservazioni</menu-path>
-      <menu-path>/Dati/Compatta dati</menu-path>
-      <menu-path>/Dati/Espandi dati</menu-path>
-      <menu-path>/Dati/Trasponi</menu-path>
-      <menu-path>/Dati/Ordina dati</menu-path>
+      <menu-path>/Dati</menu-path>
     </gui-access>
 
   </command>
@@ -3374,7 +3391,7 @@
 	<lit>suppress</lit> non viene mostrata alcuna linea.
         Se si usa l'opzione <lit>linear</lit>, la linea OLS viene mostrata a
         prescindere dalla sua significatività. Le altre opzioni
-        (<lit>inverse</lit>, <lit>quadratic</lit> e <fit>loess</fit>) mostrano
+        (<lit>inverse</lit>, <lit>quadratic</lit> e <lit>loess</lit>) mostrano
         rispettivamente un fit inverso (la regressione di <mathvar>y</mathvar>
         su 1/<mathvar>x</mathvar>), un fit quadratico o un fit loess (chiamato
         a volte anche <quote>lowess</quote>, una regressione robusta con pesi locali).

@@ -36,30 +36,25 @@
 #include <libxml/parser.h>
 
 #include <libxslt/xslt.h>
-#include <libxslt/xsltInternals.h>
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
 
 enum {
-    OUTPUT_ALL,
-    OUTPUT_DOCBOOK,
-    OUTPUT_HLP,
-    OUTPUT_CLI_HLP,
-    OUTPUT_CMD_HLP,
-    OUTPUT_GUI_HLP
+    CONTENT_CMDS,
+    CONTENT_FUNCS,
+    CONTENT_GUI
 };
 
 enum {
-    OPT_XREFS  = 1 << 0,
-    OPT_MARKUP = 1 << 1,
-    OPT_GENR   = 1 << 2,
-    OPT_TEX    = 1 << 3
+    FORMAT_PLAIN,
+    FORMAT_PANGO,
+    FORMAT_TEX
 };
 
 #define UTF const xmlChar *
 
-static void full_fname (const char *fname, const char *dir,
-			char *targ)
+static void 
+get_full_styname (char *targ, const char *dir, const char *fname)
 {
     if (dir == NULL || *dir == '\0') {
 	strcpy(targ, fname);
@@ -68,8 +63,8 @@ static void full_fname (const char *fname, const char *dir,
     }
 }
 
-static void build_params (char const **params, int output, 
-			  int opt, const char *lang)
+static void build_params (char const **params, int content, 
+			  int format, const char *lang)
 {
     int i = 0;
 
@@ -78,21 +73,21 @@ static void build_params (char const **params, int output,
 	params[i++] = lang;
     }    
     
-    if (output == OUTPUT_GUI_HLP) {
+    if (content == CONTENT_GUI) {
 	params[i++] = "hlp";
 	params[i++] = "\"gui\"";
     } 
 
-    if (opt == OPT_XREFS) {
-	params[i++] = "xrefs";
-	params[i++] = "\"true\"";
-    }
+    if (content == CONTENT_FUNCS && format == FORMAT_PANGO) {
+	params[i++] = "topic";
+	params[i++] = "\"funcs\"";
+    }     
 
     params[i] = NULL;
 }
 
-int apply_xslt (xmlDocPtr doc, xsltStylesheetPtr style, char const **params,
-		const char *outname)
+int real_apply_xslt (xmlDocPtr doc, xsltStylesheetPtr style, char const **params,
+		     const char *outname)
 {
     xmlDocPtr result;
     FILE *fp;
@@ -116,8 +111,8 @@ int apply_xslt (xmlDocPtr doc, xsltStylesheetPtr style, char const **params,
     return err;
 }
 
-int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang, 
-		    const char *docdir)
+int apply_xslt (xmlDocPtr doc, int content, int format, 
+		const char *lang, const char *docdir)
 {
     xsltStylesheetPtr style;
     char styname[FILENAME_MAX];
@@ -126,102 +121,21 @@ int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang,
 
     xmlIndentTreeOutput = 1;
 
-    /* TeX output for functions reference */
-    if ((opt & OPT_GENR) && (opt & OPT_TEX)) {
-	full_fname("genrtex.xsl", docdir, styname);
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_CMD_HLP, OPT_XREFS, lang);
-	    err = apply_xslt(doc, style, xsl_params, "genrtex.txt");
-	    xsltFreeStylesheet(style);
-	}
-	return err;
+    if (format == FORMAT_PANGO) {
+	get_full_styname(styname, docdir, "gretlhlp.xsl");
+    } else if (format == FORMAT_TEX) {
+	get_full_styname(styname, docdir, "gretltex.xsl");
+    } else {
+	get_full_styname(styname, docdir, "gretltxt.xsl");
     }
 
-    /* plain and marked-up text output, functions reference */
-    if (opt & OPT_GENR) {
-	full_fname("gretltxt.xsl", docdir, styname);
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_CLI_HLP, 0, lang);
-	    err = apply_xslt(doc, style, xsl_params, "genrcli.txt");
-	    xsltFreeStylesheet(style);
-	}
-
-	full_fname("gretlhlp.xsl", docdir, styname);
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_CMD_HLP, opt, lang);
-	    err = apply_xslt(doc, style, xsl_params, "genrgui.txt");
-	    xsltFreeStylesheet(style);
-	}
-    }	
-
-    /* DocBook XML output */
-    if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK) {
-	full_fname("gretlman.xsl", docdir, styname);
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_DOCBOOK, 0, lang);
-	    err = apply_xslt(doc, style, xsl_params, "cmdlist.xml");
-	    xsltFreeStylesheet(style);
-	}
-
-	full_fname("genrtex.xsl", docdir, styname);
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_CMD_HLP, OPT_XREFS, lang);
-	    err = apply_xslt(doc, style, xsl_params, "textest.tex");
-	    xsltFreeStylesheet(style);
-	}
-    }
-
-    /* output for plain command-line help file */
-    if (output == OUTPUT_ALL || output == OUTPUT_HLP) {
-	full_fname("gretltxt.xsl", docdir, styname);
-
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_CLI_HLP, 0, lang);
-	    err = apply_xslt(doc, style, xsl_params, "clilist.txt");
-	    xsltFreeStylesheet(style);
-	}
-    }
-
-    /* output for other "online" help files */
-    if (output == OUTPUT_ALL || output == OUTPUT_HLP) {
-	if (opt & OPT_MARKUP) {
-	    full_fname("gretlhlp.xsl", docdir, styname);
-	} else {
-	    full_fname("gretltxt.xsl", docdir, styname);
-	}
-
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    /* script help, gui version */
-	    build_params(xsl_params, OUTPUT_CMD_HLP, opt, lang);
-	    err = apply_xslt(doc, style, xsl_params, "cmdlist.txt");
-
-	    /* gui help */
-	    build_params(xsl_params, OUTPUT_GUI_HLP, opt, lang);
-	    err = apply_xslt(doc, style, xsl_params, "guilist.txt");
-
-	    xsltFreeStylesheet(style);
-	}
+    style = xsltParseStylesheetFile((const xmlChar *) styname);
+    if (style == NULL) {
+	err = 1;
+    } else {
+	build_params(xsl_params, content, format, lang);
+	err = real_apply_xslt(doc, style, xsl_params, "tmp.txt");
+	xsltFreeStylesheet(style);
     }
 
     return err;
@@ -240,8 +154,8 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
     return lang;
 }
 
-int parse_commands_data (const char *fname, int output, 
-			 int flags, const char *docdir) 
+int parse_commands_data (const char *fname, int content, 
+			 int format, const char *docdir) 
 {
     const char *rootnode = "commandlist";
     xmlDocPtr doc;
@@ -268,7 +182,7 @@ int parse_commands_data (const char *fname, int output,
 	goto bailout;
     }
 
-    if (flags & OPT_GENR) {
+    if (content == CONTENT_FUNCS) {
 	rootnode = "funcref";
     }
 
@@ -284,7 +198,7 @@ int parse_commands_data (const char *fname, int output,
 	free(tmp);
     }
 
-    apply_xslt_all(doc, output, flags, lang, docdir);
+    apply_xslt(doc, content, format, lang, docdir);
 
  bailout:
 
@@ -318,8 +232,8 @@ int main (int argc, char **argv)
 {
     const char *fname = NULL;
     char docdir[FILENAME_MAX];
-    int output = OUTPUT_ALL;
-    int opt = 0;
+    int content = 0;
+    int format = 0;
     int i, err;
 
     if (argc < 2) {
@@ -329,20 +243,18 @@ int main (int argc, char **argv)
     *docdir = '\0';
 
     for (i=1; i<argc; i++) {
-	if (!strcmp(argv[i], "--docbook")) {
-	    output = OUTPUT_DOCBOOK;
-	} else if (!strcmp(argv[i], "--hlp")) {
-	    output = OUTPUT_HLP;
-	} else if (!strcmp(argv[i], "--all")) {
-	    output = OUTPUT_ALL;
-	} else if (!strcmp(argv[i], "--xrefs")) {
-	    opt |= OPT_XREFS;
-	} else if (!strcmp(argv[i], "--markup")) {
-	    opt |= OPT_MARKUP;
-	} else if (!strcmp(argv[i], "--genr")) {
-	    opt |= OPT_GENR;
+	if (!strcmp(argv[i], "--plain")) {
+	    format = FORMAT_PLAIN;
+	} else if (!strcmp(argv[i], "--pango")) {
+	    format = FORMAT_PANGO;
 	} else if (!strcmp(argv[i], "--tex")) {
-	    opt |= OPT_TEX;
+	    format = FORMAT_TEX;
+	} else if (!strcmp(argv[i], "--cmds")) {
+	    content = CONTENT_CMDS;
+	} else if (!strcmp(argv[i], "--funcs")) {
+	    content = CONTENT_FUNCS;
+	} else if (!strcmp(argv[i], "--gui")) {
+	    content = CONTENT_GUI;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
 	} else {
@@ -361,7 +273,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "%s: input file '%s', docdir '%s'\n", 
 	    argv[0], fname, docdir);
 
-    err = parse_commands_data(fname, output, opt, docdir);
+    err = parse_commands_data(fname, content, format, docdir);
 
     return err;
 }

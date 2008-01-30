@@ -2,7 +2,6 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="hlp">tex</xsl:param>
-<xsl:param name="xrefs">true</xsl:param>
 <xsl:param name="useGUG">true</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
@@ -29,6 +28,21 @@
       </xsl:message>
     </xsl:otherwise>
   </xsl:choose>  
+</xsl:template>
+
+<xsl:template name="needs-verb">
+  <xsl:param name="src"/>
+  <xsl:choose>
+    <xsl:when test="contains($src,'_') or contains($src,'\') or 
+                    contains($src,'$') or contains($src,'^') or
+                    contains($src,'%') or contains($src,'&amp;') or
+                    contains($src,'#') or contains($src,'{')">
+      <xsl:text>yes</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>no</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>    
 </xsl:template>
 
 <xsl:strip-space elements="title"/>
@@ -158,12 +172,19 @@
  <xsl:text>\\&#xa;</xsl:text>
 </xsl:template>
 
+<xsl:template match="argblock">
+  <xsl:if test="(@optional)">\texttt{[} </xsl:if>
+  <xsl:if test="(@separated)">\texttt{;} </xsl:if>
+  <xsl:apply-templates/>
+  <xsl:if test="(@optional)">\texttt{]} </xsl:if>
+</xsl:template>
+
 <xsl:template match="argument">
   <xsl:if test="(@optional)">
-    <xsl:text>\texttt{[ }</xsl:text>
+    <xsl:text>\texttt{[} </xsl:text>
   </xsl:if>
   <xsl:if test="(@separated)">
-    <xsl:text>\texttt{; }</xsl:text>
+    <xsl:text>\texttt{;} </xsl:text>
   </xsl:if>
   <xsl:if test="(@alternate)">
     <xsl:call-template name="gettext">
@@ -179,7 +200,7 @@
   <xsl:value-of select="translate(., '_', '-')"/>
   <xsl:text>} </xsl:text>
   <xsl:if test="(@optional)">
-    <xsl:text>\texttt{ ]}</xsl:text>
+    <xsl:text>\texttt{]} </xsl:text>
   </xsl:if>
 </xsl:template>
 
@@ -205,17 +226,9 @@
 
 <xsl:template match="example">
   <xsl:variable name="escape">
-    <xsl:choose>
-      <xsl:when test="contains(.,'_') or contains(.,'\') or 
-                      contains(.,'$') or contains(.,'^') or
-                      contains(.,'%') or contains(.,'&amp;') or
-                      contains(.,'#') or contains(.,'{')">
-        <xsl:text>yes</xsl:text>
-      </xsl:when>    
-      <xsl:otherwise>
-        <xsl:text>no</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>    
+    <xsl:call-template name="needs-verb">
+      <xsl:with-param name="src" select="."/>
+    </xsl:call-template>
   </xsl:variable>
   <xsl:if test="position() = 1">
     <xsl:choose>
@@ -291,17 +304,9 @@
 
 <xsl:template match="demo">
   <xsl:variable name="escape">
-    <xsl:choose>
-      <xsl:when test="contains(.,'_') or contains(.,'\') or 
-                      contains(.,'$') or contains(.,'^') or
-                      contains(.,'%') or contains(.,'&amp;') or
-                      contains(.,'#') or contains(.,'{')">
-        <xsl:text>yes</xsl:text>
-      </xsl:when>    
-      <xsl:otherwise>
-        <xsl:text>no</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>    
+    <xsl:call-template name="needs-verb">
+      <xsl:with-param name="src" select="."/>
+    </xsl:call-template>
   </xsl:variable>
   <xsl:if test="position() > 1">
     <xsl:text>, </xsl:text>
@@ -396,13 +401,18 @@
 
 <xsl:template match="para">
   <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
-    <xsl:if test="@role='preformatted'">
-      <xsl:text>\begin{raggedright}</xsl:text>
-    </xsl:if>
     <xsl:apply-templates/>
-    <xsl:if test="@role='preformatted'">
-      <xsl:text>\end{raggedright}</xsl:text>
+    <xsl:if test="not(ancestor::entry)">
+      <xsl:text>&#10;&#10;</xsl:text>
     </xsl:if>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="pre">
+  <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
+    <xsl:text>\begin{raggedright}</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:text>\end{raggedright}</xsl:text>
     <xsl:if test="not(ancestor::entry)">
       <xsl:text>&#10;&#10;</xsl:text>
     </xsl:if>
@@ -432,10 +442,9 @@
 </xsl:template>
 
 <xsl:template match="math|mathvar">
-  <!-- FIXME -->
-  <xsl:text>$</xsl:text>
+  <xsl:text>\ensuremath{</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>$</xsl:text>
+  <xsl:text>}</xsl:text>
 </xsl:template>
 
 <xsl:template match="argname">
@@ -457,16 +466,18 @@
 </xsl:template>
 
 <xsl:template match="code">
-  <xsl:text>&#10;\begin{code}</xsl:text>  
-  <xsl:apply-templates/>
-  <xsl:choose>
-    <xsl:when test="substring(., string-length(.)-6, 1) = '&#10;'">
-      <xsl:text>\end{code}&#10;</xsl:text>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:text>&#10;\end{code}&#10;</xsl:text> 
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:if test="not(@context = 'notex')">
+    <xsl:text>&#10;\begin{code}</xsl:text>  
+    <xsl:apply-templates/>
+    <xsl:choose>
+      <xsl:when test="substring(., string-length(.)-6, 1) = '&#10;'">
+        <xsl:text>\end{code}&#10;</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>&#10;\end{code}&#10;</xsl:text> 
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="altform">
@@ -482,17 +493,9 @@
 
 <xsl:template match="lit|filename|varname">
   <xsl:variable name="escape">
-    <xsl:choose>
-      <xsl:when test="contains(.,'_') or contains(.,'\') or 
-                      contains(.,'$') or contains(.,'^') or
-                      contains(.,'%') or contains(.,'&amp;') or
-                      contains(.,'#') or contains(.,'{')">
-        <xsl:text>yes</xsl:text>
-      </xsl:when>    
-      <xsl:otherwise>
-        <xsl:text>no</xsl:text>
-      </xsl:otherwise>
-    </xsl:choose>    
+    <xsl:call-template name="needs-verb">
+      <xsl:with-param name="src" select="."/>
+    </xsl:call-template>
   </xsl:variable>
   <xsl:choose>
     <xsl:when test="$escape='yes'">
@@ -511,6 +514,12 @@
       <xsl:text>}</xsl:text>
     </xsl:otherwise>
   </xsl:choose>
+</xsl:template>
+
+<xsl:template match="repl">
+  <xsl:text>\textsl{</xsl:text>
+  <xsl:value-of select="translate(., '_', '-')"/>
+  <xsl:text>}</xsl:text>
 </xsl:template>
 
 <xsl:template match="equation">
@@ -576,7 +585,6 @@
     <xsl:with-param name="key" select="'menupath'"/>
   </xsl:call-template>
   <xsl:apply-templates/>
-  <!-- FIXME -->
   <xsl:text>&#10;&#10;</xsl:text>  
 </xsl:template>
 
@@ -593,6 +601,63 @@
   <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
     <xsl:apply-templates/>
   </xsl:if>
+</xsl:template>
+
+<xsl:template match="cell">
+  <xsl:apply-templates/>
+  <xsl:if test="following-sibling::*">
+    <xsl:text> &amp; </xsl:text>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="row">
+  <xsl:apply-templates/>
+  <xsl:if test="following-sibling::*">
+    <xsl:text>\\&#10;</xsl:text>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="table">
+  <xsl:choose>
+    <xsl:when test="@title">
+      <xsl:text>\begin{table}[htbp]&#10;</xsl:text> 
+      <xsl:text>\caption{</xsl:text>
+      <xsl:value-of select="@title"/>
+      <xsl:text>}&#10;\centering&#10;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>\begin{center}&#10;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:text>{\small&#10;\begin{tabular}{l</xsl:text>
+  <xsl:choose>
+    <xsl:when test="@style='rpara'">
+      <xsl:text>p{</xsl:text>
+      <xsl:value-of select="@rwidth"/>
+      <xsl:text>}}&#10;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>l}&#10;</xsl:text> 
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:if test="@lhead">
+    <xsl:text>\textit{</xsl:text>
+    <xsl:value-of select="@lhead"/>
+    <xsl:text>} &amp; </xsl:text>
+    <xsl:text>\textit{</xsl:text>
+    <xsl:value-of select="@rhead"/>
+    <xsl:text>} \\[4pt]&#10;</xsl:text>
+  </xsl:if>
+  <xsl:apply-templates/>
+  <xsl:text>\end{tabular}&#10;}&#10;</xsl:text> 
+  <xsl:choose>
+    <xsl:when test="@title">
+      <xsl:text>\end{table}&#10;</xsl:text> 
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>\end{center}&#10;</xsl:text> 
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet>

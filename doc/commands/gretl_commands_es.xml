@@ -701,7 +701,7 @@
 	<equation status="inline" 
 	  tex="$\rho(u_t, u_{t-s})$"
 	  ascii="rho(u(t), u(t-s))"
-	  graphic="autocorr"/> donde <mathvar>u<sub>t</sub></mathvar>
+	  graphic="autocorr"/> donde <mathvar>u</mathvar><sub>t</sub>
 	es la <mathvar>t</mathvar>-ésima observación de la variable
 	<mathvar>u</mathvar> y <mathvar>s</mathvar> es el número de 
 	retardos.
@@ -4932,7 +4932,7 @@
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
 	  ascii="1/(1 - Rj^2"
-	  graphic="vif"/> donde <mathvar>R<sub>j</sub></mathvar> es
+	  graphic="vif"/> donde <mathvar>R</mathvar><sub>j</sub> es
 	el coeficiente de correlación múltiple entre el regresor
 	<mathvar>j</mathvar> y los demás regresores. El factor tiene un 
 	valor mínimo de 1,0 cuando la variable en cuestión es

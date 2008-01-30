@@ -1099,14 +1099,14 @@
 	point of the Johansen maximum likelihood estimation procedure.
       </para>
 
-      <para>
+      <para context="notex">
 	The following table is offered as a guide to the
 	interpretation of the results shown for the test, for the
 	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
 	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
 	number of cointegrating relations.
       </para>
-      <code>
+      <code context="notex">
                  Rank     Trace test         Lmax test
                           H0     H1          H0     H1
                  ---------------------------------------
@@ -1115,6 +1115,27 @@
                   2      c = 2  c = 3       c = 2  c = 3
                  ---------------------------------------
       </code>
+      <para context="tex">
+	The following table is offered as a guide to the
+	interpretation of the results shown for the test, for the
+	3-variable case.  $H_0$ denotes the null hypothesis,
+	$H_1$ the alternative hypothesis, and $c$ the
+	number of cointegrating relations.	
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Trace test} &amp;
+	   \multicolumn{2}{c}{$\lambda$-max test} \\
+	Rank &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} &amp; 
+	       \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
+	\end{tabular}
+	\end{center}
+      </para>
 
       <para>
 	See also the <cmdref targ="vecm"/> command.
@@ -1572,11 +1593,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Add observations</menu-path>
-      <menu-path>/Data/Compact data</menu-path>
-      <menu-path>/Data/Expand data</menu-path>
-      <menu-path>/Data/Transpose</menu-path>
-      <menu-path>/Data/Sort data</menu-path>
+      <menu-path>/Data</menu-path>
     </gui-access>
 
   </command>
@@ -1940,6 +1957,13 @@
 
   </command>
 
+  <command name="elif" section="Programming" label="Flow control" context="cli">
+
+    <description><para>See <cmdref targ="if"/>.</para>
+    </description>
+
+  </command>
+
   <command name="else" section="Programming" context="cli">
 
     <description><para>See <cmdref targ="if"/>.</para>
@@ -1959,7 +1983,7 @@
 
   </command>
 
-  <command name="endif" section="Programming" context="cli">
+  <command name="endif" section="Programming" label="Flow control" context="cli">
 
     <description><para>See <cmdref targ="if"/>.</para>
     </description>
@@ -3111,7 +3135,7 @@
 	</row>
 	<row>
 	  <cell><lit>y = sum(x)</lit></cell>
-	  <cell>sum <lit>x</lit> values excluding missing &minus;999
+	  <cell>sum <lit>x</lit> values excluding missing <lit>NA</lit>
 	    entries</cell>
 	</row>
 	<row>
@@ -3401,7 +3425,7 @@
 	If the <lit>linear</lit> option is given, the OLS line is
 	shown regardless of whether or not it is significant.  The other
 	options&mdash;<lit>inverse</lit>, <lit>quadratic</lit> and
-	<fit>loess</fit>&mdash;produce respectively an inverse fit
+	<lit>loess</lit>&mdash;produce respectively an inverse fit
 	(regression of <mathvar>y</mathvar> on 1/<mathvar>x</mathvar>), a
 	quadratic fit, or a loess fit.  Loess (also sometimes called
 	<quote>lowess</quote>) is a robust locally weighted regression.  
@@ -4058,23 +4082,45 @@
 
   </command>
 
-  <command name="if" section="Programming" context="cli">
+  <command name="if" section="Programming" label="Flow control" context="cli">
 
     <description>
-      <para>Flow control for command execution.  The syntax is:</para>
+      <para>Flow control for command execution.  Three sorts of
+	construction are supported, as follows.
+      </para>
+      <pre>
+	<lit># simple form</lit>&par;
+	<lit>if</lit> <repl>condition</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands</repl>&par;
+	<lit>endif</lit>
+      </pre>
 
       <pre>
+	<lit># two branches</lit>&par;
 	<lit>if</lit> <repl>condition</repl>&par;
-	<lit>  </lit> <repl>commands1</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands1</repl>&par;
 	<lit>else</lit>&par;
-	<lit>  </lit> <repl>commands2</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands2</repl>&par;
 	<lit>endif</lit>
-      </pre>	
+      </pre>
 
-      <para><repl quote="true">condition</repl> must be a Boolean expression, for
-	the syntax of which see <cmdref targ="genr"/>.  The
-	<cmd>else</cmd> block is optional; <lit>if</lit> &hellip;
-	<lit>endif</lit> blocks may be nested.</para>
+      <pre>
+	<lit># three or more branches</lit>&par;
+	<lit>if</lit> <repl>condition1</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands1</repl>&par;
+	<lit>elif</lit> <repl>condition2</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands2</repl>&par;
+	<lit>else</lit>&par;
+	<lit> </lit><lit> </lit> <repl>commands3</repl>&par;
+	<lit>endif</lit>
+      </pre>
+
+      <para>
+	<repl quote="true">condition</repl> must be a Boolean expression, for
+	the syntax of which see <cmdref targ="genr"/>.  More than one
+	<cmd>elif</cmd> block may be included.  In addition, <lit>if</lit>
+	&hellip; <lit>endif</lit> blocks may be nested.
+      </para>
     </description>
 
   </command>
@@ -8265,7 +8311,7 @@
 
   </command>
 
-  <command name="string" section="Utilities" context="cli">
+  <command name="string" section="Utilities" label="Define a string" context="cli">
     
     <usage>
       <arguments>

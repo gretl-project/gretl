@@ -414,6 +414,8 @@ static const char *section_id_label (int ID)
     return NULL;
 }
 
+/* print out the thematic lists as TeX tables */
+
 static int print_topic_lists (sectlist *s)
 {
     const section *sect;
@@ -421,33 +423,6 @@ static int print_topic_lists (sectlist *s)
     int i, j;
     int err = 0;
 
-#if 0
-    for (i=0; i<TAB_MAX; i++) {
-	sect = get_section_by_id(s, i);
-	if (sect == NULL) {
-	    fprintf(stderr, "Section with ID %d is missing!\n", i);
-	    err = 1;
-	    continue;
-	}
-	printf("<sect2 id=\"sect-%s\"><title>%s</title>\n", 
-	       section_id_label(i), _(sect->name));
-	puts(" <itemizedlist>");
-	for (j=0; j<sect->ncmds; j++) {
-	    label = sect->cmds[j]->label;
-	    puts(" <listitem>");
-	    printf("  <para><command><xref linkend=\"cmd-%s\"/></command>", 
-		   sect->cmds[j]->name);
-	    if (*label) {
-		printf("&nbsp;:&nbsp;&nbsp;%s</para>\n", label);
-	    } else {
-		puts("</para>");
-	    }
-	    puts(" </listitem>");
-	}
-	puts(" </itemizedlist>");
-	puts(" </sect2>");
-    }
-#else
     for (i=0; i<TAB_MAX; i++) {
 	sect = get_section_by_id(s, i);
 	if (sect == NULL) {
@@ -458,20 +433,20 @@ static int print_topic_lists (sectlist *s)
 	printf("\\subsection{%s}\n"
 	       "\\label{sect-%s}\n\n", _(sect->name),
 	       section_id_label(i));
-	puts("\\begin{itemize}");
+	puts("{\\small\n\\begin{longtable}{lp{2in}lp{2in}}");
 	for (j=0; j<sect->ncmds; j++) {
 	    label = sect->cmds[j]->label;
-	    printf("\\item \\cmd{\\hyperlink{cmd-%s}{%s}}",
-		   sect->cmds[j]->name, sect->cmds[j]->name);
-	    if (*label) {
-		printf(" : %s\n", label);
+	    printf("\\cmd{\\hyperlink{cmd-%s}{%s}} & %s ",
+		   sect->cmds[j]->name, sect->cmds[j]->name,
+		   label);
+	    if ((j+1) % 2 == 0) {
+		puts("\\\\\n");
 	    } else {
-		putchar('\n');
+		puts("& ");
 	    }
 	}
-	puts("\\end{itemize}\n");
+	puts("\\end{longtable}\n}\n");
     }
-#endif
 
     return err;
 }

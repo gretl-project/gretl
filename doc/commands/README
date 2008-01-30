@@ -17,41 +17,40 @@ gretl_commands.dtd.  This could provide a basis for a translation.  It
 is designed as a purely content-oriented "database" for the gretl
 command reference.
 
-The DTD itself is basically done.  It could do maybe do with some
-fine-tuning in places.
-
 xsltrans.c makes a program called "xsltrans", which parses an XML
 command listing such as skeleton.xml and uses XSL to transform the
-information.  The program is very short and uses libxml and  libxsl to
-do most of the work. This program outputs:
+information.  The program is small and uses libxml and  libxsl to
+do most of the work.  Depending on how it is invoked (see the
+Makefile), xsltrans outputs:
 
-* a command reference section in DocBook XML, cmdlist.xml,
-  which is designed for inclusion in the full manual; and
+* command reference and functions reference files in TeX, which
+  are designed for inclusion in the full PDF manual; 
 
-* gretlcli.hlp, the "online" scripts commands help file.
+* gretlcli.hlp, a plain text scripts commands help file for use
+  with the command-line client program, gretlcli; 
 
-* gretl.hlp, the "online" GUI help file.
+* gretlcmd.hlp, a version of the above using markup, for display
+  int the GUI program; and
 
-The progam uses the two XSL stylesheets, gretlman.xsl and
-gretltxt.xsl.  The text stylesheet leaves a certain amount of work
+* gretlgui.hlp, the GUI-specific "online" help file 
+
+xsltrans uses the three XSL stylesheets, gretltxt.xsl, gretlhlp.xsl
+and gretltex.xsl.  The text stylesheet leaves a certain amount of work
 undone, and it is supplemented by a C post-processor (see reflow.c,
 which is used to make the "reflow" program.)  
 
-You will probably have to edit the Makefile before doing anything
-else.  Once that's ready, try:
+You may have to edit the Makefile before doing anything else.  
+Once that's ready, try:
 
 make test
 
 and take a look at the output: skeleton.xml.
 
-You may also try
-
-make docbook
-make hlp
-
-which both process gretl_commands.xml.  This file is based on
-skeleton.xml, but I have filled all of the fields with the content from
-the existing manual and helpfiles. 
+Most of the "make" targets in here are activated by doing "make"
+in other directories.  To make the help files (plain text and with
+markup), do "make help" in the toplevel "share" directory.  To
+make the PDF User's Guide and Reference, do "make" in doc/tex
+(or doc/tex_it).
 
 -----------
 
@@ -62,4 +61,4 @@ reference database, and vice versa.  It also checks (imperfectly) for
 disagreement between the options recognized as valid by libgretl and
 those appearing in the reference.
 
-Allin Cottrell, February 2004
+Allin Cottrell, January 2008

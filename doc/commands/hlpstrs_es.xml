@@ -1,18 +1,40 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <localization language="es">
 
- <gentext          key="args" text="Argumentos: "/>
- <gentext           key="arg" text="Argumento:  "/>
- <gentext      key="altforms" text="Variantes:  "/>
- <gentext          key="opts" text="Opciones:   "/>
- <gentext           key="opt" text="Opción:     "/>
- <gentext      key="examples" text="Ejemplos:   "/>
- <gentext       key="example" text="Ejemplo:    "/>
- <gentext     key="guidebook" text="el manual de gretl"/>
- <gentext      key="menupath" text="Menú gráfico: "/>
- <gentext   key="otheraccess" text="Otro acceso:  "/>
+ <gentext key="args"          text="Argumentos: "/>
+ <gentext key="arg"           text="Argumento:  "/>
+ <gentext key="altforms"      text="Variantes:  "/>
+ <gentext key="opts"          text="Opciones:   "/>
+ <gentext key="opt"           text="Opción:     "/>
+ <gentext key="examples"      text="Ejemplos:   "/>
+ <gentext key="example"       text="Ejemplo:    "/>
+ <gentext key="output"        text="Output:     "/>
+ <gentext key="guidebook"     text="el manual de gretl"/>
+ <gentext key="menupath"      text="Menú gráfico: "/>
+ <gentext key="otheraccess"   text="Otro acceso:  "/>
  <gentext key="scriptcommand" text="Instrucción de guión: "/>
- <gentext key="or" text=" o "/>
- <gentext key="Seealso" text="Ver También"/>
+ <gentext key="or"            text=" o "/>
+ <gentext key="Seealso"       text="Ver También "/>
+ <gentext key="anyfloat"      text="scalar, series or matrix"/>
+ <gentext key="series-or-vec" text="series or vector"/>
+ <gentext key="series-or-mat" text="series or matrix"/>
+ <gentext key="scalar-or-series" text="scalar or series"/>
+ <gentext key="asinput"       text="same type as input"/>
+ <gentext key="scalar"        text="scalar"/>
+ <gentext key="series"        text="series"/>
+ <gentext key="vector"        text="vector"/>
+ <gentext key="matrix"        text="matrix"/>
+ <gentext key="smatrix"       text="square matrix"/>
+ <gentext key="symmat"        text="symmetric matrix"/>
+ <gentext key="matrixref"     text="reference to matrix"/>
+ <gentext key="cvec"          text="column vector"/>
+ <gentext key="rvec"          text="row vector"/>
+ <gentext key="list"          text="list"/>
+ <gentext key="string"        text="string"/>
+ <gentext key="char"          text="character"/>
+ <gentext key="coeffname"     text="name of coefficient"/>
+ <gentext key="sslist"        text="scalar, series or list"/>
+ <gentext key="optional"      text="optional"/>
+ <gentext key="seebelow"      text="see below"/>
  
 </localization>

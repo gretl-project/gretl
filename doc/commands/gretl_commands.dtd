@@ -41,7 +41,7 @@
 
 <!ELEMENT usage (altforms?, arguments?, options?, examples?)>
 
-<!ELEMENT arguments    (argument | argblock)+>
+<!ELEMENT arguments    (argument | argblock | argpunct)+>
 <!ELEMENT argblock     (argument | argpunct)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example*, demos?)>
@@ -77,10 +77,10 @@
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
-                func | guideref | cmdref| tabref | sub | super |
-                footnote | cmd)*>
+                func | guideref | cmdref| fncref | tabref | 
+                sub | super | flag | footnote | cmd)*>
 <!ATTLIST para
-   context (cli | gui | both) "both"
+   context (cli | gui | tex | both) "both"
 >
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>
@@ -120,6 +120,11 @@
 
 <!ELEMENT cmdref EMPTY>
 <!ATTLIST cmdref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT fncref EMPTY>
+<!ATTLIST fncref
    targ    CDATA #REQUIRED
 >
 

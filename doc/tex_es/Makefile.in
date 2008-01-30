@@ -18,32 +18,32 @@ TEXSRC = cli.tex \
 	matrices.tex \
 	introduction.tex \
 	datafiles.tex \
+	robust_vcv.tex \
 	panel.tex \
 	genr.tex \
 	biblio.tex \
 	mle.tex \
+	gmm.tex \
+	probit.tex \
 	nls.tex \
 	timeseries.tex \
+	vecm.tex \
 	functions.tex \
-	reftables.tex
+	gretltex.tex \
+	cheatsheet.tex \
+	reftables.tex \
+	cmdref.tex \
+	funcref.tex \
+	optarg.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
-
-XMLFILES = $(docsrc)/chapters_es/cmdlist.xml \
-	$(docsrc)/chapters_es/cmdref.xml \
-	$(docsrc)/chapters_es/optarg.xml \
-	$(docsrc)/chapters_es/cmdtopics.xml \
-	$(docsrc)/shell_es.xml
-
-TEXXSLT = $(docsrc)/gretltex.xsl
-MANXSLT = $(docsrc)/commands/gretlman.xsl
 
 $(GUIDE): gretl-guide-es.tex links textables
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-es.tex refbody.tex reftables.tex textables links
+$(REF): gretl-ref-es.tex links cmdtex functex topiclist
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -54,19 +54,7 @@ gretl-guide-es.tex:
 gretl-ref-es.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_es/$@ . ; fi
 
-refbody.tex: $(XMLFILES) $(TEXXSLT) 
-	xsltproc -o refbody.tex $(TEXXSLT) $(docsrc)/shell_es.xml
-
-$(docsrc)/chapters_es/cmdlist.xml: $(docsrc)/commands/gretl_commands_es.xml $(MANXSLT)
-	make -C ../commands docbook_es
-
-$(docsrc)/chapters_es/cmdtopics.xml: $(docsrc)/commands/gretl_commands_es.xml $(MANXSLT)
-	make -C ../commands topiclist_es
-
-.PHONY : textables links onepass refpass install clean
-
-textables:
-	make -C ../commands textables
+.PHONY : links cmdtex functex textables onepass refpass topiclist install clean
 
 links:
 	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
@@ -74,19 +62,32 @@ links:
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_es/$$f . ; fi ; done
 
+cmdtex:
+	make -C ../commands cmdtex_es
+
+topiclist:
+	make -C ../commands topiclist_es
+
+textables:
+	make -C ../commands textables
+
+functex:
+	make -C ../commands functex_es
+
 onepass: gretl-guide-es.tex links textables
 	pdflatex gretl-guide-es
 
-refpass: gretl-ref-es.tex refbody.tex links textables
+refpass: gretl-ref-es.tex links cmdtex functex topiclist
 	pdflatex gretl-ref-es
 
 install: $(GUIDE) $(REF)
 	cp $(GUIDE) $(REF) $(WEBDIR)
 
 clean:
-	rm -f *.aux *.log *.out *.toc *.tpt *.pdf *~
-	rm -f refbody.tex
-	rm -f ../commands/textables ../commands/topiclist_es
+	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
+	rm -f refbody.tex funcbody.tex cmdtopics.tex
+	rm -f ../commands/textables ../commands/topiclist_es 
+	rm -f ../commands/cmdtex_es ../commands/functex_es
 
 distclean: clean
 	rm -rf CVS

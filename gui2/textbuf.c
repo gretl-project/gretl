@@ -781,6 +781,24 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, ltag, NULL);
 }
 
+static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter, 
+			  const char *text, gint page, 
+			  const char *indent)
+{
+    GtkTextTag *ltag;
+
+    if (indent != NULL) {
+	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
+					  "left_margin", 30, NULL);
+    } else {
+	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", NULL);
+    }
+
+    g_object_set_data(G_OBJECT(ltag), "page", GINT_TO_POINTER(page));
+    g_object_set_data(G_OBJECT(ltag), "xref", GINT_TO_POINTER(1));
+    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, ltag, NULL);
+}
+
 static void link_open_script (GtkTextTag *tag)
 {
     const char *fname = g_object_get_data(G_OBJECT(tag), "fname");
@@ -805,6 +823,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
     for (tagp = tags; tagp != NULL; tagp = tagp->next) {
 	GtkTextTag *tag = tagp->data;
 	gint page = object_get_int(tag, "page");
+	gint xref = object_get_int(tag, "xref");
 
 	if (page != 0) {
 	    if (page == GUIDE_PAGE) {
@@ -814,7 +833,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	    } else {
 		int role = object_get_int(tview, "role");
 
-		if (role == FUNCS_HELP) {
+		if ((role == FUNCS_HELP && !xref) || xref) {
 		    genr_funcs_ref(p, page, NULL);
 		} else {
 		    plain_text_cmdref(p, page, NULL);
@@ -2046,6 +2065,7 @@ script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 enum {
     INSERT_NONE,
     INSERT_REF,
+    INSERT_XREF,
     INSERT_FIG,
     INSERT_REPL,
     INSERT_LIT,
@@ -2112,6 +2132,8 @@ static int get_instruction_and_string (const char *p, char *str)
 
     if (!strncmp(p, "ref", 3)) {
 	ins = INSERT_REF;
+    } else if (!strncmp(p, "xrf", 3)) {
+	ins = INSERT_XREF;
     } else if (!strncmp(p, "fig", 3)) {
 	ins = INSERT_FIG;
     } else if (!strncmp(p, "itl", 3)) {
@@ -2172,7 +2194,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
     const char *indent = NULL;
     const char *code = NULL;
     const char *p;
-    int ins;
+    int itarg, ins;
 
     while ((p = strstr(s, "<"))) {
 	int skip = 0;
@@ -2191,14 +2213,19 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    /* "atomic" markup */
 	    ins = get_instruction_and_string(p + 1, targ);
 	    if (ins == INSERT_REF) {
-		int itarg;
-		
 		if (role == FUNCS_HELP) {
 		    itarg = function_help_index_from_word(targ);
 		} else {
 		    itarg = gretl_command_number(targ);
 		}
 		insert_link(tbuf, iter, targ, itarg, indent);
+	    } else if (ins == INSERT_XREF) {
+		if (role == FUNCS_HELP) {
+		    itarg = gretl_command_number(targ);
+		} else {
+		    itarg = function_help_index_from_word(targ);
+		}
+		insert_xlink(tbuf, iter, targ, itarg, indent);
 	    } else if (ins == INSERT_PDFLINK) {
 		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
 	    } else if (ins == INSERT_INPLINK) {

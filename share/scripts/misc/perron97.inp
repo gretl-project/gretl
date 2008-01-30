@@ -54,12 +54,12 @@ loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
 
       # test significance of the last lag
       genr tstat = $coeff(dyt_$k) / $stderr(dyt_$k)
-      genr pval = 2 * pvalue(z, tstat)
+      genr pv = 2 * pval(z, tstat)
 
       # printf "last lag (%d): t=%g, asy.
-      # p-value = %g\n", \ k, tstat, pval
+      # p-value = %g\n", \ k, tstat, pv
 
-      if (pval < testsig)
+      if (pv < testsig)
          genr kstar = k
          break
       endif

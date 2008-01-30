@@ -5,6 +5,7 @@
   <!-- Stylesheet for formatted GUI "online" help -->
 
 <xsl:param name="hlp">cli</xsl:param>
+<xsl:param name="topic">cmds</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="utf-8"/>
@@ -464,7 +465,7 @@
 </xsl:template>
 
 <xsl:template match="code">
-  <xsl:if test="not(@context) or @context=$hlp">
+  <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
     <xsl:text>[CODE]</xsl:text>
     <xsl:apply-templates/>
     <xsl:text>[/CODE]&#xa;</xsl:text>
@@ -492,13 +493,27 @@
 </xsl:template>
 
 <xsl:template match="cmdref">
-  <xsl:text>&lt;@ref="</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$topic = 'funcs'">
+      <xsl:text>&lt;@xrf="</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&lt;@ref="</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:value-of select="@targ"/>
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="fncref">
-  <xsl:text>&lt;@ref="</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$topic = 'funcs'">
+      <xsl:text>&lt;@ref="</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&lt;@xrf="</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:choose>
     <xsl:when test="@label">
       <xsl:value-of select="substring(@label, 2)"/>

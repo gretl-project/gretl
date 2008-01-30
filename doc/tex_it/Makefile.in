@@ -32,25 +32,18 @@ TEXSRC = cli.tex \
 	gretltex.tex \
 	cheatsheet.tex \
 	reftables.tex \
+	cmdref.tex \
 	funcref.tex \
 	optarg.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
-
-XMLFILES = $(docsrc)/chapters_it/cmdlist.xml \
-	$(docsrc)/chapters_it/cmdref.xml \
-	$(docsrc)/chapters_it/cmdtopics.xml \
-	$(docsrc)/shell_it.xml
-
-TEXXSLT = $(docsrc)/gretltex.xsl
-MANXSLT = $(docsrc)/commands/gretlman.xsl
 
 $(GUIDE): gretl-guide-it.tex links textables
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-it.tex refbody.tex reftables.tex textables links
+$(REF): gretl-ref-it.tex links cmdtex functex topiclist
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -61,19 +54,7 @@ gretl-guide-it.tex:
 gretl-ref-it.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_it/$@ . ; fi
 
-refbody.tex: $(XMLFILES) $(TEXXSLT) 
-	xsltproc -o refbody.tex $(TEXXSLT) $(docsrc)/shell_it.xml
-
-$(docsrc)/chapters_it/cmdlist.xml: $(docsrc)/commands/gretl_commands_it.xml $(MANXSLT)
-	make -C ../commands docbook_it
-
-$(docsrc)/chapters_it/cmdtopics.xml: $(docsrc)/commands/gretl_commands_it.xml $(MANXSLT)
-	make -C ../commands topiclist_it
-
-.PHONY : textables links onepass refpass install clean
-
-textables:
-	make -C ../commands textables
+.PHONY : links cmdtex functex textables onepass refpass topiclist install clean
 
 links:
 	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
@@ -81,19 +62,32 @@ links:
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_it/$$f . ; fi ; done
 
+cmdtex:
+	make -C ../commands cmdtex_it
+
+topiclist:
+	make -C ../commands topiclist_it
+
+textables:
+	make -C ../commands textables
+
+functex:
+	make -C ../commands functex_it
+
 onepass: gretl-guide-it.tex links textables
 	pdflatex gretl-guide-it
 
-refpass: gretl-ref-it.tex refbody.tex links textables
+refpass: gretl-ref-it.tex links cmdtex functex topiclist
 	pdflatex gretl-ref-it
 
 install: $(GUIDE) $(REF)
 	cp $(GUIDE) $(REF) $(WEBDIR)
 
 clean:
-	rm -f *.aux *.log *.out *.toc *.tpt *.pdf *~
-	rm -f refbody.tex
-	rm -f ../commands/textables ../commands/topiclist_it
+	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
+	rm -f refbody.tex funcbody.tex cmdtopics.tex
+	rm -f ../commands/textables ../commands/topiclist_it 
+	rm -f ../commands/cmdtex_it ../commands/functex_it
 
 distclean: clean
 	rm -rf CVS
