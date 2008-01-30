@@ -585,6 +585,10 @@ gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
 				  const gretl_matrix *y,
 				  int *err);
 
+gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A, 
+				    const gretl_matrix *sel, 
+				    int rowsel, int *err);
+
 void lapack_mem_free (void);
 
 #endif /* GRETL_MATRIX_H */

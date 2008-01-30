@@ -245,6 +245,8 @@ struct str_table funcs[] = {
     { MOLS,     "mols" },
     { MREAD,    "mread" },
     { MWRITE,   "mwrite" },
+    { MRSEL,    "selifr" },
+    { MCSEL,    "selifc" },
     { 0,        NULL }
 };
 

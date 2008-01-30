@@ -197,49 +197,51 @@ enum {
 	      MXTAB,
 	      MWRITE,
 	      MOVAVG,
+	      MRSEL,
+  /* 170 */   MCSEL,
 	      F2_MAX,	  /* separator: end of two-arg functions */
-  /* 170 */   MSHAPE,
-              SVD,
+	      MSHAPE,
+	      SVD,
 	      MOLS,
 	      FN_MAX,	  /* separator: end of n-arg functions */
 	      COM,	  /* comma */
 	      DOT,	  /* period */
 	      SEMI,	  /* semi-colon */
 	      COL,	  /* colon */
-	      CON,	  /* named constant */
+  /* 180 */   CON,	  /* named constant */
 	      DUM,	  /* dummy variable */
-  /* 180 */   UVAR,	  /* user variable (scalar or series) */
-              UMAT,	  /* user-defined matrix */
+	      UVAR,	  /* user variable (scalar or series) */
+	      UMAT,	  /* user-defined matrix */
 	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      IVEC,	  /* vector of integers, evaluated */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
-	      MSL,	  /* matrix plus subspec */
+  /* 190 */   MSL,	  /* matrix plus subspec */
 	      DMSL,	  /* "dollar" matrix plus subspec */
-  /* 190 */   DMSTR,	  /* "dollar" matrix plus old-style string subspec */
-              MSL2,	  /* unevaluated matrix subspec */
+	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
+	      MSL2,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
 	      LAG,	  
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
-	      OVAR,	  /* object variable: variable "under" an object */
+  /* 200 */   OVAR,	  /* object variable: variable "under" an object */
 	      LOOPIDX,	  /* loop index variable */
-  /* 200 */   LIST,	  /* reference to named list */
-              STR,	  /* string */
+	      LIST,	  /* reference to named list */
+	      STR,	  /* string */
 	      EROOT,	  /* dummy root for (...) expression */
 	      UFUN,	  /* user-defined function */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,
 	      ABSENT,
 	      INC,   
-	      DEC,
+  /* 210 */   DEC,
 	      QUERY,
-  /* 210 */   EOT,	    /* end of transmission */
-              UNK 
+EOT,	    /* end of transmission */
+UNK 
 };
 
 enum {

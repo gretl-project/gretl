@@ -8648,3 +8648,110 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 
     return tab;
 }
+
+/**
+ * gretl_matrix_bool_sel:
+ * @A: matrix
+ * @sel: vector
+ * @B: pointer to a matrix
+ * @rowsel: row/column select
+ * @err: error code
+ *
+ * Returns a matrix which contains the rows of A corresponding to
+ * non-zero values in the vector sel; if rowsel==0, the same happens
+ * with columns.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A, 
+				    const gretl_matrix *sel, 
+				    int rowsel, int *err)
+{
+
+    if (gretl_is_null_matrix(A)) {
+	*err = 0;
+	return gretl_null_matrix_new();
+    }
+
+    gretl_matrix *ret = NULL;
+    *err = 0;
+    int ra = A->rows, ca = A->cols;
+    int rs = sel->rows, cs = sel->cols;
+
+    /* check dimensions */
+
+    if (rowsel) {
+	if ((ra != rs) || (cs>1) ) {
+	    printf("ra = %d, rs = %d, cs = %d\n", ra, rs, cs);
+	    *err = E_NONCONF;
+	    return NULL;
+	}
+    } else {
+	if ((ca != cs) || (rs>1) ) {
+	    printf("ca = %d, cs = %d, rs = %d\n", ca, cs, rs);
+	    *err = E_NONCONF;
+	    return NULL;
+	}
+    }
+
+    int i, j, n, nonzero = 0;
+    double x;
+
+    /* count nonzeros */
+
+    n = rowsel ? rs : cs ;
+    for (i=0; i<n; i++) {
+	x = gretl_vector_get(sel, i);
+	j = (x!=0);
+	nonzero += j;
+    }
+
+    /* check for extreme cases */
+
+    if (nonzero==n) {
+	return gretl_matrix_copy(A);
+    } else if (nonzero==0) {
+	return gretl_null_matrix_new();
+    } 
+
+    /* copy selected row/columns */
+	
+    int k = 0, zero;
+    if (rowsel) {
+	ret = gretl_matrix_alloc(nonzero, ca);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+	for (i=0; i<ra; i++) {
+	    zero = (0 == gretl_vector_get(sel, i));
+	    if (!zero) {
+		for (j=0; j<ca; j++) {
+		    x = gretl_matrix_get(A, i, j);
+		    gretl_matrix_set(ret, k, j, x);
+		}
+		k++;
+	    }
+	}
+    } else {
+	ret = gretl_matrix_alloc(ra, nonzero);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+	for (i=0; i<ra; i++) {
+	    k = 0;
+	    for (j=0; j<ca; j++) {
+		zero = (0 == gretl_vector_get(sel, j));
+		if (!zero) {
+		    x = gretl_matrix_get(A, i, j);
+		    gretl_matrix_set(ret, i, k++, x);
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+

@@ -1116,6 +1116,12 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case CDIV:
 	C = gretl_matrix_complex_divide(A, B, err);
 	break;
+    case MRSEL:
+	C = gretl_matrix_bool_sel(A, B, 1, err);
+	break;
+    case MCSEL:
+	C = gretl_matrix_bool_sel(A, B, 0, err);
+	break;
     default:
 	*err = E_TYPES;
 	break;
@@ -4109,6 +4115,8 @@ static NODE *eval (NODE *t, parser *p)
     case QFORM:
     case CMULT:
     case CDIV:
+    case MRSEL:
+    case MCSEL:
 	/* matrix-only binary operators (but promote scalars) */
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {
