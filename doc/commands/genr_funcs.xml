@@ -788,27 +788,32 @@
       </description>
     </function>  
 
-    <function name="cum" output="series">
+    <function name="cum" output="asinput">
       <fnargs>
-	<fnarg type="series">x</fnarg>
+	<fnarg type="series-or-mat">x</fnarg>
       </fnargs>
       <description>
 	<para context="notex">
-	  Cumulates <argname>x</argname>, producing a series
-	  <math>y</math> each of whose elements is the sum of the values
-	  of <argname>x</argname> to date.  The starting point of the
-	  summation is the first non-missing observation in the currently
-	  selected sample.
+	  Cumulates <argname>x</argname>. When <argname>x</argname> is
+	  a series, produces a series <math>y</math> each of whose
+	  elements is the sum of the values of <argname>x</argname> to
+	  date.  The starting point of the summation is the first
+	  non-missing observation in the currently selected
+	  sample. When <argname>x</argname> is a matrix, its elements
+	  are cumulated by columns.
 	</para>
 	<para context="tex">
-	  Cumulates <argname>x</argname>. That is, produces a series 
-	  $y_t = \sum_{s=m}^t x_s$. The starting point of the summation,
+	  Cumulates <argname>x</argname>. When <math>x</math> is a
+	  series, produces a series $y_t = \sum_{s=m}^t x_s$. The
+	  starting point of the summation,
 	  <math>m</math>, is the first non-missing observation of the
-	  currently selected sample.
+	  currently selected sample.  If any missing values are
+	  encountered in <math>x</math>, subsequent values
+	  of <math>y</math> will be set to missing.
 	</para>
 	<para>
-	  If any missing values are encountered in <math>x</math>,
-	  subsequent values of <math>y</math> will be set to missing. 
+	  When <argname>x</argname> is a matrix, its elements
+	  are cumulated by columns.
 	  <seelist>
 	    <fncref targ="diff"/>
 	  </seelist>
@@ -849,14 +854,15 @@
       </description>
     </function>
 
-    <function name="diff" output="series">
+    <function name="diff" output="asinput">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-mat">y</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Computes first differences; starting values are set to
-	  <lit>NA</lit>.
+	  <lit>NA</lit> if <argname>y</argname> is a series, to 0
+	  if <argname>y</argname> is a matrix.
 	</para>
       </description>
     </function>

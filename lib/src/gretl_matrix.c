@@ -6419,6 +6419,88 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
 }
 
 /**
+ * gretl_matrix_cumcol:
+ * @m: source matrix.
+ * @err: error code.
+ * 
+ * Returns a matrix of the same dimensions as @m, containing 
+ * the cumulated columns of @m.
+ */
+
+gretl_matrix *gretl_matrix_cumcol (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *a;
+    double x;
+    int t, i;
+    *err = 0;
+
+    if (gretl_is_null_matrix(m)) {
+	return NULL;
+    }
+
+    a = gretl_matrix_alloc(m->rows, m->cols);
+    if (a == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<m->cols; i++) {
+	x = 0;
+	for (t=0; t<m->rows; t++) {
+	    x += gretl_matrix_get(m, t, i);
+	    gretl_matrix_set(a, t, i, x);
+	}
+    }
+
+    return a;
+}
+
+/**
+ * gretl_matrix_diffcol:
+ * @m: source matrix.
+ * @missval: value to represent missing observations.
+ * @err: error code.
+ * 
+ * Returns a matrix of the same dimensions as @m, containing 
+ * @missval in the first row and the difference between consecutive 
+ * rows of @m afterwards.
+ */
+
+gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m, 
+				    double missval, int *err)
+{
+    gretl_matrix *a;
+    double x, xlag;
+    int t, i;
+    *err = 0;
+
+    if (gretl_is_null_matrix(m)) {
+	return NULL;
+    }
+
+    a = gretl_matrix_alloc(m->rows, m->cols);
+    if (a == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<m->cols; i++) {
+	gretl_matrix_set(a, 0, i, missval);
+    }
+
+    for (i=0; i<m->cols; i++) {
+	xlag = gretl_matrix_get(m, 0, i);
+	for (t=1; t<m->rows; t++) {
+	    x = gretl_matrix_get(m, t, i);
+	    gretl_matrix_set(a, t, i, x-xlag);
+	    xlag = x;
+	}
+    }
+
+    return a;
+}
+
+/**
  * gretl_matrix_lag:
  * @m: source matrix.
  * @k: lag order (> 0 for lags, < 0 for leads).

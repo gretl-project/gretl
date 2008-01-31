@@ -454,6 +454,11 @@ int
 gretl_matrix_inplace_colcat (gretl_matrix *a, const gretl_matrix *b,
 			     const char *mask);
 
+gretl_matrix *gretl_matrix_cumcol (const gretl_matrix *m, int *err);
+
+gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m, 
+				    double missval, int *err);
+
 gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, int k, 
 				double missval);
 

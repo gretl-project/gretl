@@ -1626,6 +1626,12 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case MCORR:
 	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
 	    break;
+	case CUM:
+	    ret->v.m = gretl_matrix_cumcol(m, &p->err);
+	    break;
+	case DIF:
+	    ret->v.m = gretl_matrix_diffcol(m, 0, &p->err);
+	    break;
 	case RESAMPLE:
 	    ret->v.m = gretl_matrix_resample(m, 0, &p->err);
 	    break;
@@ -4245,11 +4251,9 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix sub-slice, x:y */
 	ret = process_subslice(l, r, p);
 	break;
-    case DIF:
     case LDIF:
     case SDIF:
     case ODEV:
-    case CUM:
     case HPFILT:
     case BKFILT:
     case FRACDIF:
@@ -4263,6 +4267,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;
+    case CUM:
+    case DIF:
     case RESAMPLE:
 	/* series or matrix argument */
 	if (l->t == VEC) {
