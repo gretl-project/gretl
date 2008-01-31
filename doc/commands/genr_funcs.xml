@@ -110,6 +110,17 @@
       </description>
     </function>
 
+    <function name="$hausman" output="rvec">
+      <description>
+	<para>
+	  Must follow a <lit>tsls</lit> command. Returns a <by r="1"
+	  c="3"/> vector, containing the value of the Hausman test
+	  statistic, the corresponding degrees of freedom and p-value,
+	  in this order.
+	</para>
+      </description>
+    </function>
+
     <function name="$hqc" output="scalar">
       <description>
 	<para>
@@ -158,10 +169,19 @@
 	  Example: the code
 	</para>
 	<code>
-	  open bjg 
-	  arima 0 1 1 ; 0 1 1 ; lg 
-	  b = $coeff 
-	  macoef = $coeff(theta_1)
+	  open denmark.gdt
+	  vecm 2 1 LRM LRY IBO IDE --rc --seasonals -q
+	  s0 = $jvbeta
+
+	  restrict --full
+	  b[1,1] = 1
+	  b[1,2] = -1
+	  b[1,3] + b[1,4] = 0
+	  end restrict
+	  s1 = $jvbeta
+
+	  print s0
+	  print s1
 	</code>
 	<para>
 	  produces the following output.
@@ -263,6 +283,17 @@
 	<para>
 	  Returns the unadjusted <math>R</math><super>2</super> from the
 	  last estimated model.
+	</para>
+      </description>
+    </function>
+
+    <function name="$sargan" output="rvec">
+      <description>
+	<para>
+	  Must follow a <lit>tsls</lit> command. Returns a <by r="1"
+	  c="3"/> vector, containing the value of the Sargan
+	  over-identification test statistic, the corresponding
+	  degrees of freedom and p-value, in this order.
 	</para>
       </description>
     </function>
