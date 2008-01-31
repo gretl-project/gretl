@@ -1214,8 +1214,8 @@ matrix_pow_check (int t, double x, const gretl_matrix *m, parser *p)
     return p->err;
 }
 
-/* one of the operands is a matrix, the other a scalar, giving
-   a matrix result
+/* one of the operands is a matrix, the other a scalar, giving a
+   matrix result unless we're looking at a comparison operator.
 */
 
 static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
@@ -1229,6 +1229,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (starting(p)) {
 	const gretl_matrix *m = NULL;
+	int comp = (op == B_EQ || op == B_GT || op == B_LT);
 	double y, x = 0.0;
 	int i, n = 0;
 
@@ -1253,7 +1254,12 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    return NULL;
 	}
 
-	ret = aux_matrix_node(p);
+	if (comp) {
+	    ret = aux_scalar_node(p);
+	} else {
+	    ret = aux_matrix_node(p);
+	}
+
 	if (ret == NULL) { 
 	    return NULL;
 	}
@@ -1263,33 +1269,43 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    return ret;
 	}
 
-	if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
-	    free_tree(ret, "On error");
-	    return NULL;
-	}
-
-	if      (op == DOTMULT) op = B_MUL;
-	else if (op == DOTDIV)  op = B_DIV;
-	else if (op == DOTPOW)  op = B_POW;
-	else if (op == DOTADD)  op = B_ADD;
-	else if (op == DOTSUB)  op = B_SUB;
-	else if (op == DOTEQ)   op = B_EQ;
-	else if (op == DOTGT)   op = B_GT;
-	else if (op == DOTLT)   op = B_LT;
-
-	if (l->t == NUM) {
-	    for (i=0; i<n; i++) {
-		y = xy_calc(x, m->val[i], op, p);
-		ret->v.m->val[i] = y;
+	if (comp) {
+	    ret->v.xval = 1;
+	    if (l->t == NUM) {
+		for (i=0; i<n; i++) {
+		    if (xy_calc(x, m->val[i], op, p) == 0) {
+			ret->v.xval = 0;
+			break;
+		    }
+		}
+	    } else {
+		for (i=0; i<n; i++) {
+		    if (xy_calc(m->val[i], x, op, p) == 0) {
+			ret->v.xval = 0;
+			break;
+		    }
+		}		
 	    }
 	} else {
-	    for (i=0; i<n; i++) {
-		y = xy_calc(m->val[i], x, op, p);
-		ret->v.m->val[i] = y;
-	    }	
+	    if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
+		free_tree(ret, "On error");
+		return NULL;
+	    }
+
+	    if (l->t == NUM) {
+		for (i=0; i<n; i++) {
+		    y = xy_calc(x, m->val[i], op, p);
+		    ret->v.m->val[i] = y;
+		}
+	    } else {
+		for (i=0; i<n; i++) {
+		    y = xy_calc(m->val[i], x, op, p);
+		    ret->v.m->val[i] = y;
+		}	
+	    }
 	} 
     } else {
-	ret = aux_matrix_node(p);
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -4099,14 +4115,13 @@ static NODE *eval (NODE *t, parser *p)
     case DOTGT:
     case DOTLT:
 	/* matrix-matrix or matrix-scalar binary operators */
-	if (l->t == MAT && r->t == MAT) {
+	if ((l->t == MAT && r->t == MAT) ||
+	    (l->t == MAT && r->t == NUM) ||
+	    (l->t == NUM && r->t == MAT)) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);
 	} else if ((l->t == MAT && r->t == VEC) ||
 		   (l->t == VEC && r->t == MAT)) {
 	    ret = matrix_series_calc(l, r, t->t, p);
-	} else if ((l->t == MAT && r->t == NUM) ||
-		   (l->t == NUM && r->t == MAT)) {
-	    ret = matrix_scalar_calc(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
 	}
