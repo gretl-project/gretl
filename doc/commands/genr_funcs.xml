@@ -2754,6 +2754,22 @@
       </description>
     </function>
 
+    <function name="round" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Rounds to the nearest integer.  Note that, for example, 3.5 
+	  rounds to 4 and &minus;3.5 rounds to &minus;4.
+	  <seelist>
+	    <fncref targ="ceil"/>
+	    <fncref targ="floor"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="rows" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
