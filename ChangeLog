@@ -25,6 +25,7 @@ version 1.7.2, in progress
   from server to local function package window
 - Add basic support for the DF-GLS test via a new --gls 
   option to the adf command
+- Add selifc and selifr matrix functions
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

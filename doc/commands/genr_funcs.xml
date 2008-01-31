@@ -2769,6 +2769,46 @@
       </description>
     </function>
 
+    <function name="selifc" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="rvec">b</fnarg>
+      </fnargs>   
+      <description>
+	<para>
+	  Selects from <argname>A</argname> only the columns for which
+	  the corresponding element of <argname>b</argname> is
+	  non-zero. <argname>b</argname> must be a row vector with
+	  the same number of columns as <argname>A</argname>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="selifr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="selifr" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="cvec">b</fnarg>
+      </fnargs>   
+      <description>
+	<para>
+	  Selects from <argname>A</argname> only the rows for which
+	  the corresponding element of <argname>b</argname> is
+	  non-zero. <argname>b</argname> must be a column vector with
+	  the same number of rows as <argname>A</argname>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="selifc"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="seq" output="rvec">
       <fnargs>
 	<fnarg type="scalar">a</fnarg>
