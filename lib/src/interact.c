@@ -3984,7 +3984,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     case CORRGM:
 	order = atoi(cmd->param);
 	err = corrgram(cmd->list[1], order, 0, (const double **) *pZ, pdinfo, 
-		       prn, OPT_A);
+		       prn, cmd->opt | OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}
@@ -3993,7 +3993,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     case XCORRGM:
 	order = atoi(cmd->param);
 	err = xcorrgram(cmd->list, order, (const double **) *pZ, pdinfo, 
-			prn, OPT_A);
+			prn, cmd->opt | OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}

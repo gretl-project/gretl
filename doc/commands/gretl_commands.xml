@@ -2692,7 +2692,8 @@
 	</refnote>
       </para>
 
-      <para>Besides the operators and functions noted above there are
+      <para>
+	Besides the operators and functions noted above there are
 	some special uses of <cmd>genr</cmd>:
       </para>
 

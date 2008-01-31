@@ -2364,9 +2364,9 @@ static int corrgm_ascii_plot (const char *vname,
  * @Z: data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @opt: if includes %OPT_A, use ASCII graphics; if includes
- * %OPT_R, variable in question is a model residual generated
- * "on the fly".
+ * @opt: if includes %OPT_Q, no plot, else if includes %OPT_A, 
+ * use ASCII graphics; if includes %OPT_R, variable in question 
+ * is a model residual generated "on the fly".
  *
  * Computes the autocorrelation function and plots the correlogram for
  * the variable specified by @varno.
@@ -2441,7 +2441,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	acf[k-1] = gretl_acf(k, t1, t2, Z[varno]);
     }
 
-    if (opt & OPT_A) { 
+    if ((opt & OPT_A) && !(opt & OPT_Q)) { 
 	/* use ASCII graphics, not gnuplot */
 	corrgm_ascii_plot(vname, acf, acf_m, prn);
     } 
@@ -2502,8 +2502,9 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	}
 	pputc(prn, '\n');
     }
+    pputc(prn, '\n');
 
-    if (!(opt & OPT_A)) {
+    if (!(opt & OPT_A) && !(opt & OPT_Q)) {
 	err = corrgram_graph(vname, acf, acf_m, 
 			     (pacf_err)? NULL : pacf, 
 			     pacf_m, pm, opt);
@@ -2599,7 +2600,8 @@ static int xcorrgm_ascii_plot (double *xcf, int xcf_m, PRN *prn)
  * @Z: data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @opt: if includes %OPT_A, use ASCII graphics.
+ * @opt: if includes %OPT_Q, no graphics, else if includes 
+ * %OPT_A, use ASCII graphics.
  *
  * Computes the cross-cocorrelation function and plots the 
  * cross-correlogram for the specified variables.
@@ -2674,7 +2676,7 @@ int xcorrgram (const int *list, int order, const double **Z,
 	}
     }
 
-    if (opt & OPT_A) { 
+    if ((opt & OPT_A) && !(opt & OPT_Q)) { 
 	/* use ASCII graphics, not gnuplot */
 	xcorrgm_ascii_plot(xcf, xcf_m, prn);
     } 
@@ -2704,8 +2706,9 @@ int xcorrgram (const int *list, int order, const double **Z,
 	} 
 	pputc(prn, '\n');
     }
+    pputc(prn, '\n');
 
-    if (!(opt & OPT_A)) {
+    if (!(opt & OPT_A) && !(opt & OPT_Q)) {
 	err = xcorrgm_graph(xname, yname, xcf, xcf_m, pm, allpos);
     }
 

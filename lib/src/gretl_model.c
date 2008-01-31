@@ -4667,6 +4667,34 @@ static gretl_matrix *model_get_rhovec (const MODEL *pmod, int *err)
     return r;
 }
 
+static gretl_matrix *model_get_special_test (const MODEL *pmod, 
+					     int type, int *err)
+{
+    gretl_matrix *r = NULL;
+    int i, found = 0;
+
+    for (i=0; i<pmod->ntests; i++) {
+	found = (pmod->tests[i].type == type);
+	if (found) {
+	    r = gretl_vector_alloc(3);
+	    if (r == NULL) {
+		*err = E_ALLOC;
+		return NULL;
+	    }
+	    r->val[0] = pmod->tests[i].value;
+	    r->val[1] = pmod->tests[i].dfn;
+	    r->val[2] = pmod->tests[i].pvalue;
+	    break;
+	}
+    }
+	
+    if (!found) {
+	*err = E_BADSTAT;
+    }
+	
+    return r;
+}
+
 /**
  * gretl_model_get_matrix:
  * @pmod: pointer to target model.
@@ -4723,6 +4751,10 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
     case M_RHO:
 	M = model_get_rhovec(pmod, err);
 	break;
+    case M_HAUSMAN:
+    case M_SARGAN:	
+	M = model_get_special_test(pmod, idx, err);
+	break;	
     default:
 	fprintf(stderr, "gretl_model_get_matrix: got to default\n");
 	*err = E_BADSTAT;
