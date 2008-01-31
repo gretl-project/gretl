@@ -249,7 +249,9 @@
 </xsl:template>
 
 <xsl:template match="examples">
-  <xsl:call-template name="nl"/>
+  <xsl:if test="ancestor::command">
+    <xsl:call-template name="nl"/>
+  </xsl:if>
   <xsl:choose>
     <xsl:when test="count(example) > 1">
       <xsl:call-template name="gettext">
@@ -263,6 +265,9 @@
     </xsl:otherwise> 
   </xsl:choose>
   <xsl:apply-templates/>
+  <xsl:if test="ancestor::function">
+    <xsl:call-template name="nl"/>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="effect">
@@ -464,6 +469,20 @@
  </xsl:if>
 </xsl:template>
 
+<xsl:template match="gfr">
+  <xsl:text>&lt;@gfr="</xsl:text>
+  <xsl:call-template name="gettext-nospace">
+    <xsl:with-param name="key" select="'funcchap'"/>
+  </xsl:call-template>  
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
+<xsl:template match="refnote">
+  <xsl:if test="@xref='true'">
+    <xsl:apply-templates/>
+  </xsl:if>
+</xsl:template>
+
 <xsl:template match="code">
   <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
     <xsl:text>[CODE]</xsl:text>
@@ -572,6 +591,30 @@
   </xsl:call-template>
   <xsl:apply-templates/>
   <xsl:text>.</xsl:text>
+</xsl:template>
+
+<xsl:template match="by">
+  <xsl:choose>
+    <xsl:when test="contains(@r,'1') or contains(@r,'2')">
+      <xsl:value-of select="@r"/>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>&lt;@itl="</xsl:text> 
+      <xsl:value-of select="@r"/> 
+      <xsl:text>"&gt;</xsl:text> 
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:text>&#215;</xsl:text> 
+  <xsl:choose>
+    <xsl:when test="contains(@r,'1') or contains(@r,'2')">
+      <xsl:value-of select="@c"/>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>&lt;@itl="</xsl:text> 
+      <xsl:value-of select="@c"/> 
+      <xsl:text>"&gt;</xsl:text> 
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet>

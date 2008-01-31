@@ -10,32 +10,35 @@
  <gentext key="example"       text="Esempio:    "/>
  <gentext key="output"        text="Uscita:     "/>
  <gentext key="guidebook"     text="guida all'uso di gretl"/>
+ <gentext key="funcchap"      text="guida ai funzioni di gretl"/>
  <gentext key="menupath"      text="Accesso dal menù:    "/>
  <gentext key="otheraccess"   text="Accesso alternativo: "/>
  <gentext key="scriptcommand" text="Comando script: "/>
  <gentext key="or"            text=" o "/>
  <gentext key="Seealso"       text="Vd. anche "/>
  <!-- the text entries below need translation -->
- <gentext key="anyfloat"      text="scalar, series or matrix"/>
- <gentext key="series-or-vec" text="series or vector"/>
- <gentext key="series-or-mat" text="series or matrix"/>
- <gentext key="scalar-or-series" text="scalar or series"/>
- <gentext key="asinput"       text="same type as input"/>
- <gentext key="scalar"        text="scalar"/>
- <gentext key="series"        text="series"/>
- <gentext key="vector"        text="vector"/>
- <gentext key="matrix"        text="matrix"/>
- <gentext key="smatrix"       text="square matrix"/>
- <gentext key="symmat"        text="symmetric matrix"/>
- <gentext key="matrixref"     text="reference to matrix"/>
- <gentext key="cvec"          text="column vector"/>
- <gentext key="rvec"          text="row vector"/>
- <gentext key="list"          text="list"/>
- <gentext key="string"        text="string"/>
- <gentext key="char"          text="character"/>
- <gentext key="coeffname"     text="name of coefficient"/>
- <gentext key="sslist"        text="scalar, series or list"/>
- <gentext key="optional"      text="optional"/>
- <gentext key="seebelow"      text="see below"/>
+ <gentext key="anyfloat"      text="scalare, serie or matrice"/>
+ <gentext key="series-or-vec" text="serie o vettore"/>
+ <gentext key="series-or-mat" text="serie o matrice"/>
+ <gentext key="scalar-or-series" text="scalare o serie"/>
+ <gentext key="asinput"       text="stesso tipo di input"/>
+ <gentext key="scalar"        text="scalare"/>
+ <gentext key="pscalar"       text="scalare tra 0 e 1"/>
+ <gentext key="series"        text="serie"/>
+ <gentext key="vector"        text="vettore"/>
+ <gentext key="matrix"        text="matrice"/>
+ <gentext key="smatrix"       text="matrice quadrata"/>
+ <gentext key="symmat"        text="matrice simmetrica"/>
+ <gentext key="matrixref"     text="indirizzo di matrice"/>
+ <gentext key="cvec"          text="vettore colonna"/>
+ <gentext key="rvec"          text="vettore riga"/>
+ <gentext key="list"          text="lista"/>
+ <gentext key="string"        text="stringa"/>
+ <gentext key="char"          text="carattere"/>
+ <gentext key="coeffname"     text="nome del coefficiente"/>
+ <gentext key="sslist"        text="scalare, serie o lista"/>
+ <gentext key="optional"      text="opzionale"/>
+ <gentext key="seebelow"      text="Vd. sotto"/>
+ <gentext key="chapter"       text="il capitolo"/>
  
 </localization>

@@ -78,9 +78,14 @@
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref| fncref | tabref | 
-                sub | super | flag | footnote | cmd)*>
+                sub | super | flag | footnote | refnote | cmd)*>
 <!ATTLIST para
-   context (cli | gui | tex | both) "both"
+   context (cli | gui | tex | notex | all) "all"
+>
+
+<!ELEMENT refnote (#PCDATA | gfr | book | quote)*>
+<!ATTLIST refnote
+   xref (true | false) "false"
 >
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>
@@ -90,7 +95,7 @@
 
 <!ELEMENT code (#PCDATA)>
 <!ATTLIST code
-   context (cli | gui | both) "both"
+   context (cli | gui | tex | notex| all) "all"
 >
 
 <!ELEMENT ilist (li)+>
@@ -130,6 +135,11 @@
 
 <!ELEMENT tabref EMPTY>
 <!ATTLIST tabref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT gfr EMPTY>
+<!ATTLIST gfr
    targ    CDATA #REQUIRED
 >
 

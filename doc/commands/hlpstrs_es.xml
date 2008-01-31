@@ -36,5 +36,7 @@
  <gentext key="sslist"        text="scalar, series or list"/>
  <gentext key="optional"      text="optional"/>
  <gentext key="seebelow"      text="see below"/>
+ <gentext key="chapter"       text="Chapter"/>
+
  
 </localization>

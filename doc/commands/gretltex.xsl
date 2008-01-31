@@ -2,7 +2,6 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="hlp">tex</xsl:param>
-<xsl:param name="useGUG">true</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="iso-8859-1"/>
@@ -123,7 +122,7 @@
     </xsl:call-template>
   </xsl:if>
   <xsl:text>\\&#10;</xsl:text>
-  <xsl:if test="not(fnargs)">
+  <xsl:if test="not(fnargs) and not(examples)">
     <xsl:text>\end{tabular}&#10;</xsl:text>
   </xsl:if>
   <xsl:apply-templates/>
@@ -262,7 +261,14 @@
       <xsl:text>}</xsl:text>
     </xsl:otherwise>
   </xsl:choose>  
-  <xsl:text> \\ &#10;</xsl:text>
+  <xsl:choose>
+    <xsl:when test="ancestor::function and not(following-sibling::*)">
+      <xsl:text>&#10;\end{tabular}&#10;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text> \\ &#10;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="flag|argpunct">
@@ -344,7 +350,9 @@
     </xsl:otherwise> 
   </xsl:choose>
   <xsl:apply-templates/>
-  <xsl:text>\end{tabular}&#10;</xsl:text>
+  <xsl:if test="not(../examples)">
+    <xsl:text>\end{tabular}&#10;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="fnarg">
@@ -405,6 +413,21 @@
     <xsl:if test="not(ancestor::entry)">
       <xsl:text>&#10;&#10;</xsl:text>
     </xsl:if>
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="gfr">
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'chapter'"/>
+  </xsl:call-template>
+  <xsl:text>~\ref{</xsl:text>
+  <xsl:value-of select="@targ"/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
+<xsl:template match="refnote">
+  <xsl:if test="@xref='true'">
+    <xsl:apply-templates/>
   </xsl:if>
 </xsl:template>
 
@@ -558,14 +581,7 @@
 </xsl:template>
 
 <xsl:template match="guideref">
-  <xsl:choose>
-    <xsl:when test="$useGUG='true'">
-      <xsl:text>\GUG{}</xsl:text>
-    </xsl:when>
-    <xsl:otherwise>
-      <xref linkend="{@targ}"/>
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:text>\GUG{}</xsl:text>
 </xsl:template>
 
 <xsl:template name="dnl">
@@ -658,6 +674,14 @@
       <xsl:text>\end{center}&#10;</xsl:text> 
     </xsl:otherwise>
   </xsl:choose>
+</xsl:template>
+
+<xsl:template match="by">
+  <xsl:text>\ensuremath{</xsl:text> 
+  <xsl:value-of select="@r"/>
+  <xsl:text>\times </xsl:text> 
+  <xsl:value-of select="@c"/>
+  <xsl:text>}</xsl:text> 
 </xsl:template>
 
 </xsl:stylesheet>

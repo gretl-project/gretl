@@ -10,6 +10,7 @@
  <gentext key="example"       text="Example:    "/>
  <gentext key="output"        text="Output:     "/>
  <gentext key="guidebook"     text="the Gretl User's Guide"/>
+ <gentext key="funcchap"      text="the Gretl function reference"/>
  <gentext key="menupath"      text="Menu path:    "/>
  <gentext key="otheraccess"   text="Other access: "/>
  <gentext key="scriptcommand" text="Script command: "/>
@@ -21,6 +22,7 @@
  <gentext key="scalar-or-series" text="scalar or series"/>
  <gentext key="asinput"       text="same type as input"/>
  <gentext key="scalar"        text="scalar"/>
+ <gentext key="pscalar"       text="scalar between 0 and 1"/>
  <gentext key="series"        text="series"/>
  <gentext key="vector"        text="vector"/>
  <gentext key="matrix"        text="matrix"/>
@@ -36,5 +38,6 @@
  <gentext key="sslist"        text="scalar, series or list"/>
  <gentext key="optional"      text="optional"/>
  <gentext key="seebelow"      text="see below"/>
+ <gentext key="chapter"       text="Chapter"/> 
 
 </localization>

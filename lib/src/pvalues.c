@@ -1156,8 +1156,8 @@ double *gretl_get_random_series (char st, const double *p,
 
 	*err = gretl_rand_gamma(x, pdinfo->t1, pdinfo->t2, shape, scale);
     } else if (st == 'B') {
-	int n = p[0];
-	double pr = p[1];
+	double pr = p[0];
+	int n = p[1];
 
 	*err = gretl_rand_binomial(x, pdinfo->t1, pdinfo->t2, n, pr);
     } else if (st == 'P') {

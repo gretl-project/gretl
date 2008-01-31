@@ -29,7 +29,7 @@
 <!-- The description is the only element that is absolutely
      required of a function -->
 
-<!ELEMENT function (fnargs?, description+)>
+<!ELEMENT function (fnargs?, examples?, description+)>
 
 <!ATTLIST function
    name    CDATA #REQUIRED
@@ -46,10 +46,10 @@
 
 <!ELEMENT fnarg (#PCDATA)>
 <!ATTLIST fnarg 
-    type      (scalar | series | vector | matrix | smatrix | symmat | 
+    type      (scalar | series | vector | rvec | cvec | matrix | smatrix | symmat | 
                matrixref | anyfloat | scalar-or-series | series-or-vec | 
                series-or-mat | list | coeffname | string | char | sslist | 
-               seebelow) "series"
+               pscalar | seebelow) "series"
     optional  (true | false) "false"
 >
 
@@ -61,7 +61,8 @@
 <!ELEMENT para (#PCDATA | repl | program | math | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
-                footnote | argname | sub | super | seelist | cmd)*>
+                footnote | argname | sub | super | seelist | 
+                by | cmd)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
 > 
@@ -107,6 +108,12 @@
 <!ELEMENT tabref EMPTY>
 <!ATTLIST tabref
    targ    CDATA #REQUIRED
+>
+
+<!ELEMENT by EMPTY>
+<!ATTLIST by
+   r    CDATA #REQUIRED
+   c    CDATA #REQUIRED
 >
 
 <!ELEMENT footnote (para)+>

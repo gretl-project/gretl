@@ -125,7 +125,7 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.es
 	touch $@
 
-$(GENSTAMP): xsltrans reflow $(GENSRC) $(GENDTD) $(HLPXSL) $(XMLSTRS) 
+$(GENSTAMP): xsltrans reflow $(FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) 
 	./xsltrans --funcs --plain $(CMDSDIR)/genr_funcs.xml && \
 	./reflow < tmp.txt > $(SHAREDIR)/genrcli.hlp
 	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs.xml && \

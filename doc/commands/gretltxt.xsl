@@ -205,7 +205,9 @@
 </xsl:template>
 
 <xsl:template match="examples">
-  <xsl:call-template name="nl"/>
+  <xsl:if test="ancestor::command">
+    <xsl:call-template name="nl"/>
+  </xsl:if>
   <xsl:choose>
     <xsl:when test="count(example) > 1">
       <xsl:call-template name="gettext">
@@ -219,6 +221,9 @@
     </xsl:otherwise> 
   </xsl:choose>
   <xsl:apply-templates/>
+  <xsl:if test="ancestor::function">
+    <xsl:call-template name="nl"/>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="flag">
@@ -403,6 +408,12 @@
  </xsl:if>
 </xsl:template>
 
+<xsl:template match="refnote">
+  <xsl:if test="@xref='false'">
+    <xsl:apply-templates/>
+  </xsl:if>
+</xsl:template>
+
 <xsl:template match="pre">
   <xsl:if test="not(@context) or @context=$hlp">
       <xsl:text>&#xa;[PRE]</xsl:text>
@@ -518,6 +529,12 @@
   </xsl:call-template>
   <xsl:apply-templates/>
   <xsl:text>.</xsl:text>
+</xsl:template>
+
+<xsl:template match="by">
+  <xsl:value-of select="@r"/>
+  <xsl:text> x </xsl:text>
+  <xsl:value-of select="@c"/>
 </xsl:template>
 
 </xsl:stylesheet>

@@ -27,6 +27,7 @@
 
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
+#define GFR_PAGE    997
 
 enum {
     PLAIN_TEXT,
@@ -787,7 +788,11 @@ static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 {
     GtkTextTag *ltag;
 
-    if (indent != NULL) {
+    if (page == GFR_PAGE) {
+	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
+					  "family", "sans", NULL);
+	page = 0;
+    } else if (indent != NULL) {
 	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
 					  "left_margin", 30, NULL);
     } else {
@@ -825,7 +830,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	gint page = object_get_int(tag, "page");
 	gint xref = object_get_int(tag, "xref");
 
-	if (page != 0) {
+	if (page != 0 || xref != 0) {
 	    if (page == GUIDE_PAGE) {
 		display_pdf_help(NULL, 1, NULL);
 	    } else if (page == SCRIPT_PAGE) {
@@ -927,9 +932,10 @@ set_cursor_if_appropriate (GtkTextView *tview, gint x, gint y)
 
     for (tagp = tags; tagp != NULL; tagp = tagp->next) {
 	GtkTextTag *tag = tagp->data;
-	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(tag), "page"));
+	gint page = object_get_int(tag, "page");
+	gint xref = object_get_int(tag, "xref");
 
-	if (page != 0) { 
+	if (page != 0 || xref != 0) { 
 	    hovering = TRUE;
 	    break;
         }
@@ -2074,7 +2080,8 @@ enum {
     INSERT_SUB,
     INSERT_TEXT,
     INSERT_PDFLINK,
-    INSERT_INPLINK
+    INSERT_INPLINK,
+    INSERT_GFRLINK
 };
 
 static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
@@ -2150,6 +2157,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_PDFLINK;
     } else if (!strncmp(p, "inp", 3)) {
 	ins = INSERT_INPLINK;
+    } else if (!strncmp(p, "gfr", 3)) {
+	ins = INSERT_GFRLINK;
     }
 
     if (ins != INSERT_NONE) {
@@ -2158,7 +2167,7 @@ static int get_instruction_and_string (const char *p, char *str)
 	p += 5;
 	while (*p) {
 	    if (*p == '"' && *(p+1) == '>') {
-		str[i] = 0;
+		str[i] = '\0';
 		break;
 	    } else {
 		str[i++] = *p++;
@@ -2230,6 +2239,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
 	    } else if (ins == INSERT_INPLINK) {
 		insert_link(tbuf, iter, targ, SCRIPT_PAGE, indent);
+	    } else if (ins == INSERT_GFRLINK) {
+		insert_xlink(tbuf, iter, targ, GFR_PAGE, indent);
 	    } else if (ins == INSERT_FIG) {
 		insert_help_figure(tbuf, iter, targ);
 	    } else if (ins != INSERT_NONE) {
