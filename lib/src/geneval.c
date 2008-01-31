@@ -1214,6 +1214,11 @@ matrix_pow_check (int t, double x, const gretl_matrix *m, parser *p)
     return p->err;
 }
 
+#define comp_op(o) (o == B_EQ  || o == B_NEQ || \
+                    o == B_LT  || o == B_GT || \
+                    o == B_LTE || o == B_GTE)
+
+
 /* one of the operands is a matrix, the other a scalar, giving a
    matrix result unless we're looking at a comparison operator.
 */
@@ -1229,7 +1234,8 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (starting(p)) {
 	const gretl_matrix *m = NULL;
-	int comp = (op == B_EQ || op == B_GT || op == B_LT);
+	int comp = (op == B_EQ || op == B_NEQ || 
+		    op == B_LT || op );
 	double y, x = 0.0;
 	int i, n = 0;
 
