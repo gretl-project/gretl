@@ -1,105 +1,121 @@
-# Replicate the analysis of Perron, "Further evidence on
-# breaking trend functions in macroeconomic variables" (Journal
-# of Econometrics, 1997, pp. 355-385), Table 3.
+function perron_test (series y, int maxlag, scalar testsig, int verbose)
+
+   # generate trend, first lag, first difference
+   genr time
+   genr y_1 = y(-1)
+   genr dyt = diff(y)
+
+   # starting year for the series (the first non-missing obs)
+   genr startyr = firstobs(y)
+    
+   genr t_a_min = 1.0E20
+   genr Tbstar = 0
+   genr Tbk = 0
+
+   # loop across possible breakpoints
+
+   genr Tbmin = startyr + maxlag + 2;
+   genr Tbmax = max(time) - 3;
+
+   loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
+
+      if (verbose > 1)
+         printf "Trying break in %s:\n", date(Tb)
+      endif
+
+      genr DU = (time > Tb)
+      genr DT = (time = (Tb + 1))
+      genr kstar = 0
+
+      # Try trimming the list of lags
+      loop for (k=maxlag; k>0; k-=1) --quiet
+         ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
+
+         # test significance of the last lag
+         genr tstat = $coeff(dyt_$k) / $stderr(dyt_$k)
+         genr pv = 2 * pval(z, abs(tstat))
+
+         if (verbose > 2)
+            printf "\tlast lag (%2d): t = %8.4f, asy. p-value = %6.4f\n", \ 
+            k, tstat, pv
+         endif
+
+         if (pv < testsig)
+            genr kstar = k
+            break
+         endif
+      endloop
+
+      # Re-run the regression with zero lags if need be
+      if kstar = 0
+         ols y 0 DU time DT y_1 --quiet
+      endif
+   
+      genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
+      if (verbose > 1)
+         printf "\tt_alpha = %8g (k=%d)\n\n", t_alpha, kstar
+      endif
+   
+      if t_alpha < t_a_min
+         genr t_a_min = t_alpha
+         genr Tbstar = Tb
+         genr Tbk = kstar
+      endif
+   
+   endloop
+
+   genr DU = (time > Tbstar)
+   genr DT = (time = (Tbstar + 1))
+   # print -o time yr DU DT
+
+   printf "\n*** min(t_alpha) = %g in %s (k=%d) ***\n", \
+   t_a_min, date(Tbstar), Tbk
+
+   # print the regression ("Model 1") with the selected break year
+
+   if (verbose > 0)
+      if Tbk > 0
+         ols y 0 DU time DT y_1 dyt(-1 to -Tbk)
+      else
+         ols y 0 DU time DT y_1
+      endif
+   else
+      if Tbk > 0
+         ols y 0 DU time DT y_1 dyt(-1 to -Tbk) --quiet
+      else
+         ols y 0 DU time DT y_1 --quiet
+      endif
+   endif
+
+   # just checking
+   genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
+   printf "check: t_alpha = %g\n", t_alpha
+
+   return scalar t_alpha
+    
+end function
+
+# -------------------------------------------------------------------
+
+/*
+ Replicate the analysis of Perron, "Further evidence on
+ breaking trend functions in macroeconomic variables" (Journal
+ of Econometrics, 1997, pp. 355-385), Table 3.
+*/
 
 # Open Nelson-Plosser data (supplied with gretl)
 open np.gdt
 
-# Select the variable to test (here, real GNP)
+# Select the variable to test (here, the natural of of real GNP)
 genr y = log(rgnp)
 
 # Maximum lag to try for the first difference of y
-genr maxlag = 10
+scalar maxlag = 10
 
 # Max significance level for retaining the last lag
-genr testsig = 0.10
+scalar testsig = 0.10
 
-# generate trend, first lag, first difference
-genr time
-genr yr = time + 1860 - 1
-genr y_1 = y(-1)
-genr dyt = y - y_1
+# Verbosity level (1 = not much)
+scalar verbosity = 1
 
-# reduce verbosity below
-set echo off
-
-# generate lagged differences
-loop for j=1..maxlag --quiet
-   genr dyt_$j = dyt(-$j)
-endloop 
-
-# starting year for the series (the first non-missing obs)
-genr startyr = min(zeromiss(yr * ok(y)))
-
-genr t_a_min = 10000
-genr Tbstar = 0
-genr Tbk = 0
-
-# loop across possible breakpoints
-
-genr Tbmin = startyr + maxlag + 2;
-genr Tbmax = 1970 - 3;
-
-loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
-
-   printf "\n*** Trying break in %d\n", Tb
-
-   genr DU = (yr > Tb)
-   genr DT = (yr = (Tb + 1))
-   genr kstar = 0
-
-   # Try trimming the list of lags
-   loop for (k=maxlag; k>0; k-=1) --quiet
-      ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
-
-      # test significance of the last lag
-      genr tstat = $coeff(dyt_$k) / $stderr(dyt_$k)
-      genr pv = 2 * pval(z, tstat)
-
-      # printf "last lag (%d): t=%g, asy.
-      # p-value = %g\n", \ k, tstat, pv
-
-      if (pv < testsig)
-         genr kstar = k
-         break
-      endif
-   endloop
-
-   # Re-run the regression with zero lags if need be
-   if kstar = 0
-      ols y 0 DU time DT y_1 --quiet
-   endif
-   
-   genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
-   printf "%d: t_alpha = %8g (k=%d)\n", Tb, t_alpha, kstar
-   
-   if t_alpha < t_a_min
-      genr t_a_min = t_alpha
-      genr Tbstar = Tb
-      genr Tbk = kstar
-   endif
-   
-endloop
-
-genr DU = (yr > Tbstar)
-genr DT = (yr = (Tbstar + 1))
-# print -o time yr DU DT
-
-printf "\n\n*** min(t_alpha) = %g in %d (k=%d) ***\n", t_a_min, Tbstar, Tbk
-
-# print the regression ("Model 1") with the selected break year
-
-if Tbk > 0
-   ols y 0 DU time DT y_1 dyt(-1 to -Tbk)
-else
-   ols y 0 DU time DT y_1 
-endif
-
-# just checking
-genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
-printf "check: t_alpha = %g\n", t_alpha
-
-
-  
-
- 
+perron_test(y, maxlag, testsig, verbosity)
