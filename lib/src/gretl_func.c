@@ -2438,6 +2438,9 @@ static int read_deflt_min_max (char *s, fn_param *param,
 	    } else if (sscanf(p, "[%lf::%lf]", &x, &y) == 2) {
 		param->min = x;
 		param->deflt = y;
+	    } else if (sscanf(p, "[%lf:%lf:]", &x, &y) == 2) {
+		param->min = x;
+		param->max = y;
 	    } else if (sscanf(p, "[:%lf:%lf]", &x, &y) == 2) {
 		param->max = x;
 		param->deflt = y;
