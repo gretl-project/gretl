@@ -451,10 +451,10 @@ static int dlg_text_set_gmm_skel (dialog_t *d)
 {
     const char *skel = 
 	"# initializations go here\n\n\n"
-	"gmm\n\n"
-	"orthog\n"
-	"weights\n"
-	"params\n"
+	"gmm\n"
+	"  orthog\n"
+	"  weights\n"
+	"  params\n"
 	"end gmm\n";
 
     if (d->code == GMM && edit_save_buf == NULL) {
@@ -501,7 +501,7 @@ const gchar *edit_dialog_get_text (dialog_t *dlg)
     buf = gtk_entry_get_text(GTK_ENTRY(dlg->edit));
 
     if (buf == NULL || *buf == '\0') {
-	if (dlg->code != CORRGM && dlg->code != CREATE_DATASET) {
+	if (dlg->code != CORRGM) {
 	    gtk_widget_destroy(dlg->dialog);
 	}
 	return NULL;
@@ -994,8 +994,7 @@ static int edit_dialog_help_code (int ci, void *p)
 
     if (ci == SYSTEM && p != NULL) {
 	hc = 0;
-    } else if (ci == PRINT || ci == CREATE_USERDIR || 
-	       ci == CREATE_DATASET || ci == MINIBUF) {
+    } else if (ci == PRINT || ci == CREATE_DATASET || ci == MINIBUF) {
 	hc = 0;
     } else if (ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) p;
@@ -1178,7 +1177,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     }    
 
     /* "Cancel" button? */
-    if (cmdcode != CREATE_USERDIR && canceled != NULL) {
+    if (canceled != NULL) {
 	cancel_delete_button(button_box, d->dialog, canceled);
     }
 

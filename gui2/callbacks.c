@@ -407,6 +407,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     const char *defstr = NULL;
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
+    int cancel = 0;
 
     switch (action) {
     case SMPLBOOL:
@@ -480,7 +481,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     }
 
     edit_dialog(_(title), _(query), defstr, okfunc, data, 
-		action, varclick, NULL);   
+		action, varclick, &cancel);   
 }
 
 void file_save_callback (GtkWidget *w, gpointer data)

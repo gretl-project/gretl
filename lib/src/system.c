@@ -782,11 +782,12 @@ static int estimate_with_test (equation_system *sys,
 
     /* grab the data from unrestricted estimation */
 
+    b = sys->b;
+    sys->b = NULL;
+
     if (stest == SYS_TEST_LR) {
 	llu = sys->ll;
     } else if (stest == SYS_TEST_F) {
-	b = sys->b;
-	sys->b = NULL;
 	vcv = sys->vcv;
 	sys->vcv = NULL;
     }
@@ -801,8 +802,8 @@ static int estimate_with_test (equation_system *sys,
 	    system_print_LR_test(sys, llu, prn);
 	} else if (stest == SYS_TEST_F) {
 	    system_print_F_test(sys, b, vcv, prn);
-	    err = shrink_b_and_vcv(b, sys);
 	}
+	err = shrink_b_and_vcv(b, sys);
     }
 
  bailout:

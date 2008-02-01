@@ -665,9 +665,6 @@ static void quartiles (double *x, const int n, BOXPLOT *box)
     box->lq = p[0];
     box->median = p[1];
     box->uq = p[2];
-
-    fprintf(stderr, "quartiles -> gretl_array_quantiles: %g %g %g\n",
-	    p[0], p[1], p[2]);
 }
 
 #else

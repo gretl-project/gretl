@@ -59,7 +59,6 @@ enum extra_cmds {
     FUNCS_HELP,
     MODELTABLE,
     GRAPHPAGE,
-    CREATE_USERDIR,
     LMTEST_LOGS,
     LMTEST_SQUARES,
     LMTEST_WHITE,
