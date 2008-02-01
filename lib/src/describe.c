@@ -450,7 +450,7 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 }
 
 /**
- * gretl_array_quantile:
+ * gretl_array_quantiles:
  * @a: data array (this gets re-ordered).
  * @n: length of array.
  * @p: array of probabilities (over-written by quantiles).
@@ -467,12 +467,19 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
 {
     double N, xmin, xmax = NADBL;
     int nl, nh, i;
+    int err = 0;
 
     if (n <= 0 || k <= 0) {
 	return E_DATA;
     }
 
     for (i=0; i<k; i++) {
+	if (p[i] <= 0.0 || p[i] >= 1.0) {
+	    p[i] = NADBL;
+	    err = 1;
+	    continue;
+	}
+
 	N = (n + 1) * p[i] - 1;
 	nl = floor(N);
 	nh = ceil(N);
@@ -490,7 +497,7 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
 	}
     }
 
-    return 0;
+    return err;
 }
 
 double gretl_array_quantile (double *a, int n, double p)

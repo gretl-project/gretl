@@ -652,16 +652,36 @@ make_area (PLOTGROUP *grp)
     return grp->window;
 }
 
+#define NEWQUANT 1
+
+#if NEWQUANT
+
+static void quartiles (double *x, const int n, BOXPLOT *box)
+{
+    double p[3] = {0.25, 0.5, 0.75};
+
+    gretl_array_quantiles(x, n, p, 3);
+
+    box->lq = p[0];
+    box->median = p[1];
+    box->uq = p[2];
+
+    fprintf(stderr, "quartiles -> gretl_array_quantiles: %g %g %g\n",
+	    p[0], p[1], p[2]);
+}
+
+#else
+
 static double 
 quartiles (const double *x, const int n, BOXPLOT *box)
 {
     int n2 = n / 2;
-    double ret;
+    double xx;
 
-    ret = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
+    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
 
     if (box != NULL) {
-	box->median = ret;
+	box->median = xx;
 	if (n % 2) {
 	    box->lq = quartiles(x, n2 + 1, NULL);
 	    box->uq = quartiles(x + n2, n2 + 1, NULL);
@@ -671,8 +691,10 @@ quartiles (const double *x, const int n, BOXPLOT *box)
 	}
     }
 
-    return ret;
+    return xx;
 }
+
+#endif
 
 static int 
 add_outliers (const double *x, const int n, BOXPLOT *box)
@@ -682,15 +704,18 @@ add_outliers (const double *x, const int n, BOXPLOT *box)
     
     box->outliers = NULL;
 
-    for (i=0; i<n; i++) 
-	if (x[i] < (box->lq - iqr) || x[i] > (box->uq + iqr)) 
+    for (i=0; i<n; i++) {
+	if (x[i] < (box->lq - iqr) || x[i] > (box->uq + iqr)) {
 	    nout++;
+	}
+    }
  
     if (nout > 0) {
 	int nlo = 0, nhi = 0;
 
 	box->outliers = malloc(sizeof *box->outliers);
 	if (box->outliers == NULL) return 1;
+
 	box->outliers->n = nout;
 	box->outliers->vals = malloc (nout * sizeof(double));
 	if (box->outliers->vals == NULL) {
@@ -698,6 +723,7 @@ add_outliers (const double *x, const int n, BOXPLOT *box)
 	    box->outliers = NULL;
 	    return 1;
 	}
+
 	nout = 0;
 	for (i=0; i<n; i++) {
 	    if (x[i] < (box->lq - iqr)) {
@@ -709,14 +735,16 @@ add_outliers (const double *x, const int n, BOXPLOT *box)
 		nhi++;
 	    }
 	}
+
 	box->outliers->rmin = (nlo)? x[nlo] : box->min;
 	box->outliers->rmax = (nhi)? x[n-nhi-1] : box->max;
     }
+
     return 0;
 }
 
 #define ITERS 560
-#define CONFIDENCE 90
+#define CONFIDENCE 0.90
 
 /* obtain bootstrap estimate of 90% confidence interval
    for the sample median of data series x; return low and
@@ -728,6 +756,7 @@ median_interval (double *x, int n, double *low, double *high)
     double *medians, *samp;
     double p[2];
     int i, j, t;
+    int err;
 
     medians = malloc(ITERS * sizeof *medians);
     if (medians == NULL) return 1;
@@ -748,10 +777,10 @@ median_interval (double *x, int n, double *low, double *high)
 	medians[i] = gretl_array_quantile(samp, n, 0.5);
     }
 
-    p[0] = 100.0 - CONFIDENCE / 2.0;
-    p[1] = 0.5 + CONFIDENCE / 2.0;
+    p[0] = (1.0 - CONFIDENCE) / 2.0;
+    p[1] = 1.0 - p[0];
 
-    gretl_array_quantiles(medians, ITERS, p, 2);
+    err = gretl_array_quantiles(medians, ITERS, p, 2);
 
     *low = p[0];
     *high = p[1];
@@ -759,7 +788,7 @@ median_interval (double *x, int n, double *low, double *high)
     free(samp);
     free(medians);
 
-    return 0;
+    return err;
 }
 
 int ps_print_plots (const char *fname, int flag, gpointer data) 
@@ -955,6 +984,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     }
 
     plotgrp->saved = 0;
+    plotgrp->show_outliers = 0;
 
     plotgrp->nplots = list[0];
     plotgrp->plots = mymalloc(plotgrp->nplots * sizeof *plotgrp->plots);
@@ -994,7 +1024,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	    /* notched boxplots wanted */
 	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
 				&plotgrp->plots[i].conf[1])) {
-		errbox (_("Couldn't obtain confidence interval"));
+		errbox(_("Couldn't obtain confidence interval"));
 		plotgrp->plots[i].conf[0] = 
 		    plotgrp->plots[i].conf[1] = NADBL;
 	    }
@@ -1015,7 +1045,6 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     plotgrp->width = width;
     plotgrp->numbers = NULL;
 
-    plotgrp->show_outliers = 0;
     read_boxrc(plotgrp);
 
     if (plotgrp->show_outliers) {
