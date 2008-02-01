@@ -2791,11 +2791,16 @@
       </fnargs>
       <description>
 	<para>
-	  Rounds to the nearest integer.  Note that, for example, 3.5 
-	  rounds to 4 and &minus;3.5 rounds to &minus;4.
+	  Rounds to the nearest integer. Note that when <math>x</math>
+	  lies halfway between two integers, rounding is done "away
+	  from zero", so for example 2.5 rounds to 3, but 
+	  <lit>round(-3.5)</lit> gives &minus;4. This is a common
+	  convention in spreadsheet programs, but other software may
+	  yield different results.
 	  <seelist>
 	    <fncref targ="ceil"/>
 	    <fncref targ="floor"/>
+	    <fncref targ="int"/>
 	  </seelist>
 	</para>
       </description>
