@@ -4039,7 +4039,7 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
     double *a = NULL;
     int i, j;
 
-    if (gretl_is_null_matrix(m) || p < 0 || p > 1) {
+    if (gretl_is_null_matrix(m) || p <= 0 || p >= 1) {
 	*err = E_DATA;
 	return NULL;
     }

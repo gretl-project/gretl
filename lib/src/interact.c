@@ -231,10 +231,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 
     cmd->ci = 0;
 
-    if (!strcmp(line, "q")) {
-	strcpy(s, "quit");
-	cmd->ci = QUIT;
-    } if (!strcmp(line, "exit")) {
+    if (!strcmp(line, "exit")) {
 	strcpy(s, "quit");
 	cmd->ci = QUIT;
 	cmd->opt = OPT_X;
