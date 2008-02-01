@@ -8,7 +8,7 @@
  <gentext key="opt"           text="Opzione:    "/>
  <gentext key="examples"      text="Esempi:     "/>
  <gentext key="example"       text="Esempio:    "/>
- <gentext key="output"        text="Uscita:     "/>
+ <gentext key="output"        text="Risultato:  "/>
  <gentext key="guidebook"     text="la guida all'uso di gretl"/>
  <gentext key="funcchap"      text="la guida alle funzioni di gretl"/>
  <gentext key="menupath"      text="Accesso dal menù:    "/>
@@ -20,7 +20,7 @@
  <gentext key="series-or-vec" text="serie o vettore"/>
  <gentext key="series-or-mat" text="serie o matrice"/>
  <gentext key="scalar-or-series" text="scalare o serie"/>
- <gentext key="asinput"       text="stesso tipo di input"/>
+ <gentext key="asinput"       text="stesso tipo dell'argomento"/>
  <gentext key="scalar"        text="scalare"/>
  <gentext key="pscalar"       text="scalare tra 0 e 1"/>
  <gentext key="series"        text="serie"/>
