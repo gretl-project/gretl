@@ -9,15 +9,14 @@
  <gentext key="examples"      text="Esempi:     "/>
  <gentext key="example"       text="Esempio:    "/>
  <gentext key="output"        text="Uscita:     "/>
- <gentext key="guidebook"     text="guida all'uso di gretl"/>
- <gentext key="funcchap"      text="guida ai funzioni di gretl"/>
+ <gentext key="guidebook"     text="la guida all'uso di gretl"/>
+ <gentext key="funcchap"      text="la guida alle funzioni di gretl"/>
  <gentext key="menupath"      text="Accesso dal menù:    "/>
  <gentext key="otheraccess"   text="Accesso alternativo: "/>
  <gentext key="scriptcommand" text="Comando script: "/>
  <gentext key="or"            text=" o "/>
- <gentext key="Seealso"       text="Vd. anche "/>
- <!-- the text entries below need translation -->
- <gentext key="anyfloat"      text="scalare, serie or matrice"/>
+ <gentext key="Seealso"       text="Vedi anche "/>
+ <gentext key="anyfloat"      text="scalare, serie o matrice"/>
  <gentext key="series-or-vec" text="serie o vettore"/>
  <gentext key="series-or-mat" text="serie o matrice"/>
  <gentext key="scalar-or-series" text="scalare o serie"/>
@@ -29,7 +28,7 @@
  <gentext key="matrix"        text="matrice"/>
  <gentext key="smatrix"       text="matrice quadrata"/>
  <gentext key="symmat"        text="matrice simmetrica"/>
- <gentext key="matrixref"     text="indirizzo di matrice"/>
+ <gentext key="matrixref"     text="riferimento a matrice"/>
  <gentext key="cvec"          text="vettore colonna"/>
  <gentext key="rvec"          text="vettore riga"/>
  <gentext key="list"          text="lista"/>
@@ -38,7 +37,7 @@
  <gentext key="coeffname"     text="nome del coefficiente"/>
  <gentext key="sslist"        text="scalare, serie o lista"/>
  <gentext key="optional"      text="opzionale"/>
- <gentext key="seebelow"      text="Vd. sotto"/>
+ <gentext key="seebelow"      text="vedi sotto"/>
  <gentext key="chapter"       text="il capitolo"/>
  
 </localization>
