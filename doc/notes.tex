@@ -19,7 +19,7 @@
 This note describes the structure of the \textsf{gretl} manual and
 gives information that may be useful to translators.
 
-The gretl manual is divided into two main components, the
+The \textsf{gretl} manual is divided into two main components, the
 \textit{Gretl Command Reference} and the \textit{Gretl User's Guide}.
 Translators may decide to work on one or both of these components.
 
@@ -32,10 +32,10 @@ provides various technical appendices.
 
 Both the \textit{Command Reference} and the \textit{User's Guide} are
 produced in PDF format.  In addition, the source material for the
-\textit{Command Reference} is used to create the plain text files that
-compose the ``online'' help available within \textsf{gretl}.  The
-source files for the \textit{Command Reference} are in XML format and
-the source files for the \textit{User's Guide} are in \LaTeX.
+\textit{Command Reference} is used to create the ``online'' help that
+is available within \textsf{gretl}.  The source files for the
+\textit{Command Reference} are (mostly) in XML format and the source
+files for the \textit{User's Guide} are in \LaTeX.
 
 \section{Getting the manual files}
 \label{getit}
@@ -69,18 +69,23 @@ translated versions of these files, using Italian as an example.
 \begin{table}[htbp]
 \begin{center}
 \begin{tabular}{ll}
-\url{chapters/cmdref.xml} & \url{chapters_it/cmdref.xml} \\
-\url{chapters/optarg.xml} & \url{chapters_it/optarg.xml} \\
-\url{commands/gretl_commands.xml} & \url{commands/gretl_commands_it.xml}
+\url{tex/gretl-ref.tex}  & \url{tex_it/gretl-ref-it.tex} \\
+\url{tex/cmdref.tex}     & \url{tex_it/cmdref.tex} \\
+\url{tex/funcref.tex}    & \url{tex_it/funcref.tex} \\
+\url{tex/optarg.xml}     & \url{tex_it/optarg.tex} \\[4pt]
+\url{commands/gretl_commands.xml} & \url{commands/gretl_commands_it.xml} \\
+\url{commands/genr_funcs.xml} & \url{commands/genr_funcs_it.xml}
 \end{tabular}
 \end{center}
 \caption{Command reference source files}
 \label{cmd-files}
 \end{table}
 
-The first two files (in the \texttt{chapters} directory) are in
-DocBook XML format; the third file is in a custom XML format
-for ease of conversion to plain text and \TeX.
+The two files in the \texttt{commands} directory are in XML format;
+all the others are in \TeX.  Translators do not need to have knowledge
+of either of these formats, just the common sense not to try to
+translate terms that are (fairly obviously) part of the mark-up
+apparatus.
 
 \subsection{User's guide files}
 
@@ -93,9 +98,8 @@ left and the Italian equivalent on the right.
 \begin{tabular}{ll}
 \multicolumn{1}{c}{\textit{English}} & 
 \multicolumn{1}{c}{\textit{Italian}} \\[6pt]
-\multicolumn{2}{l}{``driver'' files} \\
-\url{tex/gretl-guide.tex} & \url{tex_it/gretl-guide-es.tex} \\
-\url{tex/gretl-ref.tex} & \url{tex_it/gretl-ref-es.tex} \\[6pt]
+\multicolumn{2}{l}{``driver'' file} \\
+\url{tex/gretl-guide.tex} & \url{tex_it/gretl-guide-it.tex} \\[6pt]
 \multicolumn{2}{l}{chapter files} \\
 \url{tex/appendices.tex} & \url{tex_it/appendices.tex} \\
 \url{tex/cheatsheet.tex} & \url{tex_it/cheatsheet.tex} \\
@@ -160,33 +164,31 @@ generated automatically.  I point this out here to try to avoid
 misunderstanding: I don't want anyone to spend time translating a
 file that will be automatically over-written whenever the manual is
 built!  The main files in this category are
-%
-\url{chapters_xx/cmdlist.xml}
-\url{chapters_xx/cmdtopics.xml}
-%
-and
-%
-\url{tex_xx/refbody.tex},
-%
+
+\begin{center}
+\begin{tabular}{l}
+\url{tex_xx/refbody.tex}\\
+\url{tex_xx/cmdtopics.tex}\\
+\url{tex_xx/funcbody.tex}\\
+\end{tabular}
+\end{center}
+
+\noindent
 where \texttt{xx} is a placeholder for a two-letter language code
 such as \texttt{es} or \texttt{it}.  
 
-The first of these, \url{chapters_xx/cmdlist.xml}, is a file in
-DocBook XML format that is generated automatically via XSL
-transformation, using the file \url{commands/gretl_commands_xx.xml} as
-a basis.  
+These files are generated via XSL transformations, using the files
+\url{commands/gretl_commands_xx.xml} and
+\url{commands/genr_funcs_xx.xml}, as well as the \textsf{gretl} C
+sources, as a basis.
 
-The second is a further derivative of
-\url{commands/gretl_commands_xx.xml}, this time converted into \TeX\ 
-for the purpose of building the \textit{Gretl Command Reference} in
-PDF.
 
 \section{Handling of script/code fragments}
 
 At various points in the manuals there are snippets or fragments of
 \textsf{gretl} script, enclosed in some sort of verbatim environment.
 One point to note about these snippets is that they should be given an
-overall indent of zero on the \TeX\ source files; that is, they should
+overall indent of zero in the \TeX\ source files; that is, they should
 be placed against the left margin (though it's OK to give some of the
 material a \textit{relative} indent---for example, code within
 \texttt{loop} and \texttt{end loop}).  The overall indent of such
@@ -232,27 +234,15 @@ fonts.
 
 As for the \textit{Command Reference}, this is a little more
 complicated since some XSL transformations of the sources are needed.
-You'll probably need to build the program \textsf{xsltrans} in the
-\texttt{commands} sub-directory, from C source, and you'll also need
-to have the program \textsf{xsltproc} (supplied with the
-\textsf{libxml2} distribution) in your path.
-
-To build \textsf{xsltrans}, starting from the top level of the
-\textsf{gretl} documentation tree, do
-
+You'll probably need to have a checkout of the \textsf{gretl} CVS
+sources, configured using the flag \verb|--enable-build-doc|.  In that
+case you can go into your \texttt{tex\_xx} directory (e.g.\
+\texttt{tex\_it}) and do:
+%
 \begin{verbatim}
-cd commands
-make -f cmdref.mk xsltrans
+make gretl-ref-xx.pdf
 \end{verbatim}
-
-Then go into your \texttt{tex\_xx} directory (e.g.\ \texttt{tex\_it})
-and do:
-
-\begin{verbatim}
-make refbody.tex
-make gretl-ref-it.pdf
-\end{verbatim}
-
+%
 Please let me know if you have problems building the PDF.
 
 \section{Reference builds of the manual files}
