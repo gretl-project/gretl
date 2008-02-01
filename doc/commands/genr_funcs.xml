@@ -1573,8 +1573,8 @@
 	  a list. Mainly used for checking arguments passed to functions.
 	  <seelist>
 	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
 	    <fncref targ="isseries"/>
+	    <fncref targ="isstring"/>
 	  </seelist>
 	</para>
       </description>
@@ -1592,7 +1592,7 @@
 	  <seelist> 
 	    <fncref targ="islist"/>
 	    <fncref targ="isnull"/>
-	    <fncref targ="isseries"/>
+	    <fncref targ="isstring"/>
 	  </seelist>
 	</para>
       </description>
@@ -1608,9 +1608,9 @@
 	  defined series. Mainly used for checking arguments passed to
 	  functions.  
 	  <seelist> 
-	    <fncref targ="isseries"/>
 	    <fncref targ="islist"/>
 	    <fncref targ="isnull"/>
+	    <fncref targ="isseries"/>
 	  </seelist>
 	</para>
       </description>
@@ -2631,25 +2631,28 @@
       </description>
     </function>
 
-    <function name="quantile" output="scalar">
+    <function name="quantile" output="scalar" altout="rvec">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="pscalar">p</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the <argname>p</argname>-quantile for the series
-	  <argname>y</argname>. For example, when <math>p</math> = 0.5,
-	  the median is returned. 
+	  Given a series argument, returns the
+	  <argname>p</argname>-quantile for the series. For example, when
+	  <math>p</math> = 0.5, the median is returned. Given a
+	  matrix argument, returns a row vector containing the 
+	  <argname>p</argname>-quantiles for the columns of 
+	  <argname>y</argname>; that is, each column is treated
+	  as a series.
 	</para>
 	<para context="tex">
-	  The exact algorithm employed is the following: let $n$ be the
-	  number of non-missing values in <argname>y</argname> and let $k$
-	  be the integer part of $n \cdot p$. Then the return value $q$ is
-	  defined as: 
+	  For a series of length $n$, the $p$-quantile, $q$, is defined
+	  as:
 	  \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\] 
-	  where $y_{[i]}$ is the $i$-th element of
-	  <math>y</math> sorted from smallest to largest.
+	  where $k$ is the integer part of $n \cdot p$ and 
+	  $y_{[i]}$ is the $i$-th element of the series when
+	  sorted from smallest to largest.
 	</para>
       </description>
     </function>
