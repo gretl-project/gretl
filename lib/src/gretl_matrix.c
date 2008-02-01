@@ -4026,7 +4026,7 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
  * gretl_matrix_quantiles:
  * @m: matrix on which to operate.
  * @p: probability.
- * @err: location to receive erro code.
+ * @err: location to receive error code.
  * 
  * Returns: a row vector containing the @p quantiles
  * of the columns of @m, or %NULL on failure.

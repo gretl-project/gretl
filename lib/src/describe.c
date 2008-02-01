@@ -502,6 +502,17 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
     return err;
 }
 
+/**
+ * gretl_array_quantile:
+ * @a: array on which to operate.
+ * @n: number of elements in @a.
+ * @p: probability.
+ *
+ * Returns: the @p quantile of the first @n elements in @a,
+ * which is re-ordered in the process, or #NADBL on
+ * failure.
+ */
+
 double gretl_array_quantile (double *a, int n, double p)
 {
     gretl_array_quantiles(a, n, &p, 1);
