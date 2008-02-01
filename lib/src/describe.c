@@ -312,59 +312,120 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
     return xbar + sum / n;
 }
 
-/**
- * gretl_quantile:
- * @t1: starting observation.
- * @t2: ending observation.
- * @x: data series.
- * @p: required quantile.
- *
- * Returns: the p-quantile value of the series @x from obs
- * @t1 to obs @t2, skipping any missing values, or #NADBL 
- * on failure.
- */
+static double find_hoare(double *a, int N, int k){
 
-double gretl_quantile (int t1, int t2, const double *x, double p)
+/* 
+ * for a given array a[0]..a[N-1] find kth (in C sense) smallest element,
+ * i.e., find the element which would be a[k] if array was sorted;
+ * shamelessly copied and pasted, with minor adaptations, from 
+ * http://www.astro.northwestern.edu/~ato/um/programming/sorting.html
+*/
+
+    int i, j, l, r;
+    double w, x;
+
+    l=0; r=N-1;
+    while(l<r){
+	x=a[k]; i=l; j=r;
+	while(j>=i){
+	    while(a[i]<x) i++;
+	    while(x<a[j]) j--;
+	    if(i<=j){
+		w = a[i]; a[i++]=a[j]; a[j--]=w;
+	    }
+	}
+	if(j<k) l=i;
+	if(k<i) r=j;
+    }
+
+    return a[k];
+}
+
+double gretl_quantile(int t1, int t2, const double *x, double p)
 {
-    int m = t2 - t1 + 1;
-    double *sx, cpd, q;
-    int t, n, cpi;
-    double ret = NADBL;
-    
-    /* sanity check */
-    q = (p > 1)? 1 : (p < 0)? 0 : p;
-
-    sx = malloc(m * sizeof *sx);
-    if (sx == NULL) {
+    if ((p <= 0) || (p >= 1)) {
+	/* sanity check */
 	return NADBL;
     }
 
-    n = 0;
-    for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) {
-	    sx[n++] = x[t];
+    /* 
+       make a copy of x into a, skipping missing obs;
+       n will hold the number of non-missing observations;
+       while we're at it, compute min & max;
+    */
+
+    double *a;
+    a = malloc((t2 - t1 + 1) * sizeof *a);
+    if (a == NULL) {
+	return NADBL;
+    }
+
+    double minx =  1.0e100;
+    double maxx = -1.0e100;
+    int i, n = 0;
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    a[n++] = x[i];
+	    if (x[i]<minx) {
+		minx = x[i];
+	    }
+	    if (x[i]>maxx) {
+		maxx = x[i];
+	    }
 	}
     }
 
-    if (n > 0) {
-	cpd = q * (n - 1);
-	cpi = (int) floor(cpd);
-	cpd -= cpi;
-
-	qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
-
-	ret = sx[cpi];
-	if (cpd > 0) {
-	    ret += cpd * (sx[cpi+1] - sx[cpi]);
-	    /* 
-	       The above formula makes sense, but so does
-	       ret += 0.5 * (sx[cpi+1] - sx[cpi]);
-	       which one is best?
-	    */
-	}
+    /*  is our sample big enough? */
+    if (n == 0) {
+	return NADBL;
     }
 
-    free(sx);
+    double N = (n+1)*p-1;
+    int nl = floor(N), nh = ceil(N);
+
+    if ((nh == 0) || (nh == n)) {
+	/* 
+	   too few usable observations for such an extreme 
+	   quantile 
+	*/
+	return NADBL;
+    }
+
+    int exact = ( nl == nh );
+    double ret, tmp; 
+    /*
+    printf("\tp = %12.10f, n = %d, N = %12.10f, nl = %d, nh = %d\n", 
+	   p, n, N, nl, nh);
+    */
+    if (exact) {
+	ret = find_hoare(a, n, nl);
+    } else {
+	double high, low, frac = N - nl;
+	if (p<0.5) {
+	    high = find_hoare(a, n, nh);
+	    tmp = minx;
+	    for (i=0; i<nh; i++) {
+		if (a[i]>tmp) {
+		    tmp = a[i];
+		}
+	    }
+	    low = tmp;
+	} else {
+	    low = find_hoare(a, n, nl);
+	    tmp = maxx;
+	    for (i=nh; i<n; i++) {
+		if (a[i]<tmp) {
+		    tmp = a[i];
+		}
+	    }
+	    high = tmp;
+	}
+
+	/*
+	printf("\tlow = %g, high = %g, frac = %g\n", low, high, frac);
+	*/
+	ret = low + frac * (high - low);
+    }
 
     return ret;
 }
