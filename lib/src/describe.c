@@ -313,17 +313,19 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 }
 
 /* 
-   For an array a[0]..a[N-1] find kth (in C sense) smallest element,
-   i.e., find the element which would be a[k] if the array were
-   sorted.  Shamelessly copied and pasted, with minor adaptations,
-   from http://www.astro.northwestern.edu/~ato/um/programming/sorting.html
+   For an array a with n elements, find the element which would be a[k]
+   if the array were sorted from smallest to largest (without the need
+   to do a full sort).  The algorithm is due to C. A. R. Hoare; the C
+   implementation is shamelessly copied, with minor adaptations, from
+   http://www.astro.northwestern.edu/~ato/um/programming/sorting.html
+   (Atakan G\"urkan).
 */
 
-static double find_hoare (double *a, int N, int k)
+static double find_hoare (double *a, int n, int k)
 {
     double w, x;
     int l = 0;
-    int r = N - 1;
+    int r = n - 1;
     int i, j;
 
     while (l < r) {
