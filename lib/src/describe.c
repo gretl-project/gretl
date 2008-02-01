@@ -346,14 +346,45 @@ static double find_hoare (double *a, int N, int k)
     return a[k];
 }
 
+static double find_hoare_inexact (double *a, double p,
+				  double xmin, double xmax,
+				  double frac, int n, 
+				  int nl, int nh)
+{
+    double tmp, high, low;
+    int i;
+
+    if (p < 0.5) {
+	high = find_hoare(a, n, nh);
+	tmp = xmin;
+	for (i=0; i<nh; i++) {
+	    if (a[i] > tmp) {
+		tmp = a[i];
+	    }
+	}
+	low = tmp;
+    } else {
+	low = find_hoare(a, n, nl);
+	tmp = xmax;
+	for (i=nh; i<n; i++) {
+	    if (a[i] < tmp) {
+		tmp = a[i];
+	    }
+	}
+	high = tmp;
+    }
+
+    return low + frac * (high - low);
+}
+
 /**
  * gretl_quantile:
  * @t1: starting observation.
  * @t2: ending observation.
- * @x: data array.
+ * @x: data series.
  * @p: probability.
  *
- * Returns: the @p quantile of the array @x from obs
+ * Returns: the @p quantile of the series @x from obs
  * @t1 to obs @t2, skipping any missing values, or #NADBL 
  * on failure.
  */
@@ -362,9 +393,9 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 {
     double *a = NULL;
     double xmin, xmax;
-    double N, ret, tmp;
-    int nl, nh, exact;
-    int i, n = 0;
+    double N, ret;
+    int nl, nh;
+    int t, n = 0;
 
     if (p <= 0 || p >= 1) {
 	/* sanity check */
@@ -382,9 +413,9 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
     }
 
     n = 0;
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    a[n++] = x[i];
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    a[n++] = x[t];
 	}
     }
 
@@ -400,46 +431,72 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 	return NADBL;
     }
 
-    exact = (nl == nh);
-
 #if 0
     fprintf(stderr, "\tp = %12.10f, n = %d, N = %12.10f, nl = %d, nh = %d\n", 
 	    p, n, N, nl, nh);
 #endif
     
-    if (exact) {
+    if (nl == nh) {
+	/* "exact" */
 	ret = find_hoare(a, n, nl);
     } else {
-	double high, low, frac = N - nl;
-
-	if (p < 0.5) {
-	    high = find_hoare(a, n, nh);
-	    tmp = xmin;
-	    for (i=0; i<nh; i++) {
-		if (a[i] > tmp) {
-		    tmp = a[i];
-		}
-	    }
-	    low = tmp;
-	} else {
-	    low = find_hoare(a, n, nl);
-	    tmp = xmax;
-	    for (i=nh; i<n; i++) {
-		if (a[i] < tmp) {
-		    tmp = a[i];
-		}
-	    }
-	    high = tmp;
-	}
-#if 0
-	fprintf(stderr, "\tlow = %g, high = %g, frac = %g\n", low, high, frac);
-#endif
-	ret = low + frac * (high - low);
+	ret = find_hoare_inexact(a, p, xmin, xmax, N - nl, 
+				 n, nl, nh);
     }
     
     free(a);
 
     return ret;
+}
+
+/**
+ * gretl_array_quantile:
+ * @a: data array (this gets re-ordered).
+ * @n: length of array.
+ * @p: array of probabilities (over-written by quantiles).
+ * @k: number of probabilities.
+ *
+ * Computes @k quantiles (given by the elements of @p) for the 
+ * first n elements of the array @a, which is re-ordered in
+ * the process.  On successful exit, @p contains the quantiles.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_array_quantiles (double *a, int n, double *p, int k)
+{
+    double N, xmin, xmax = NADBL;
+    int nl, nh, i;
+
+    if (n <= 0 || k <= 0) {
+	return E_DATA;
+    }
+
+    for (i=0; i<k; i++) {
+	N = (n + 1) * p[i] - 1;
+	nl = floor(N);
+	nh = ceil(N);
+
+	if (nh == 0 || nh == n) {
+	    p[i] = NADBL;
+	} else if (nl == nh) {
+	    p[i] = find_hoare(a, n, nl);
+	} else {
+	    if (na(xmax)) {
+		gretl_minmax(0, n-1, a, &xmin, &xmax);
+	    }
+	    p[i] = find_hoare_inexact(a, p[i], xmin, xmax, N - nl, 
+				      n, nl, nh);
+	}
+    }
+
+    return 0;
+}
+
+double gretl_array_quantile (double *a, int n, double p)
+{
+    gretl_array_quantiles(a, n, &p, 1);
+    return p;
 }
 
 /**

@@ -90,6 +90,10 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 
 double gretl_quantile (int t1, int t2, const double *x, double p);
 
+int gretl_array_quantiles (double *a, int n, double *p, int k);
+
+double gretl_array_quantile (double *a, int n, double p);
+
 double gretl_median (int t1, int t2, const double *x);
 
 double gretl_sst (int t1, int t2, const double *x);

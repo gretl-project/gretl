@@ -652,29 +652,16 @@ make_area (PLOTGROUP *grp)
     return grp->window;
 }
 
-static double median (double *x, const int n)
-{
-    int n2;
-    double xx;
-
-    qsort(x, n, sizeof *x, gretl_compare_doubles);
-
-    n2 = n/2;
-    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
-    return xx;
-}
-
 static double 
 quartiles (const double *x, const int n, BOXPLOT *box)
 {
-    int n2;
-    double xx;
+    int n2 = n / 2;
+    double ret;
 
-    n2 = n/2;
-    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
+    ret = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
 
     if (box != NULL) {
-	box->median = xx;
+	box->median = ret;
 	if (n % 2) {
 	    box->lq = quartiles(x, n2 + 1, NULL);
 	    box->uq = quartiles(x + n2, n2 + 1, NULL);
@@ -683,7 +670,8 @@ quartiles (const double *x, const int n, BOXPLOT *box)
 	    box->uq = quartiles(x + n2, n2, NULL);
 	}
     }
-    return xx;
+
+    return ret;
 }
 
 static int 
@@ -730,19 +718,21 @@ add_outliers (const double *x, const int n, BOXPLOT *box)
 #define ITERS 560
 #define CONFIDENCE 90
 
+/* obtain bootstrap estimate of 90% confidence interval
+   for the sample median of data series x; return low and
+   high values in 'low' and 'high' */
+
 static int 
 median_interval (double *x, int n, double *low, double *high)
-     /* obtain bootstrap estimate of 90% confidence interval
-	for the sample median of data series x; return low and
-	high values in 'low' and 'high' */
 {
     double *medians, *samp;
+    double p[2];
     int i, j, t;
 
-    medians = malloc (ITERS * sizeof *medians);
+    medians = malloc(ITERS * sizeof *medians);
     if (medians == NULL) return 1;
 
-    samp = malloc (n * sizeof *samp);
+    samp = malloc(n * sizeof *samp);
     if (samp == NULL) {
 	free(medians);
 	return 1;
@@ -755,16 +745,16 @@ median_interval (double *x, int n, double *low, double *high)
 	    samp[j] = x[t];
 	}
 	/* find the median of the sample */
-	medians[i] = median(samp, n);
+	medians[i] = gretl_array_quantile(samp, n, 0.5);
     }
 
-    /* sort the sample medians */
-    qsort(medians, ITERS, sizeof *medians, gretl_compare_doubles);
-    
-    /* return the right values */
-    j = 100 / ((100 - CONFIDENCE) / 2);
-    *low = medians[ITERS / j];
-    *high = medians[ITERS - ITERS/j];
+    p[0] = 100.0 - CONFIDENCE / 2.0;
+    p[1] = 0.5 + CONFIDENCE / 2.0;
+
+    gretl_array_quantiles(medians, ITERS, p, 2);
+
+    *low = p[0];
+    *high = p[1];
 
     free(samp);
     free(medians);
