@@ -312,120 +312,132 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
     return xbar + sum / n;
 }
 
-static double find_hoare(double *a, int N, int k){
-
 /* 
- * for a given array a[0]..a[N-1] find kth (in C sense) smallest element,
- * i.e., find the element which would be a[k] if array was sorted;
- * shamelessly copied and pasted, with minor adaptations, from 
- * http://www.astro.northwestern.edu/~ato/um/programming/sorting.html
+   For an array a[0]..a[N-1] find kth (in C sense) smallest element,
+   i.e., find the element which would be a[k] if the array were
+   sorted.  Shamelessly copied and pasted, with minor adaptations,
+   from http://www.astro.northwestern.edu/~ato/um/programming/sorting.html
 */
 
-    int i, j, l, r;
+static double find_hoare (double *a, int N, int k)
+{
     double w, x;
+    int l = 0;
+    int r = N - 1;
+    int i, j;
 
-    l=0; r=N-1;
-    while(l<r){
-	x=a[k]; i=l; j=r;
-	while(j>=i){
-	    while(a[i]<x) i++;
-	    while(x<a[j]) j--;
-	    if(i<=j){
-		w = a[i]; a[i++]=a[j]; a[j--]=w;
+    while (l < r) {
+	x = a[k]; 
+	i = l; 
+	j = r;
+	while (j >= i) {
+	    while (a[i] < x) i++;
+	    while (x < a[j]) j--;
+	    if (i <= j) {
+		w = a[i]; 
+		a[i++] = a[j]; 
+		a[j--] = w;
 	    }
 	}
-	if(j<k) l=i;
-	if(k<i) r=j;
+	if (j < k) l = i;
+	if (k < i) r = j;
     }
 
     return a[k];
 }
 
-double gretl_quantile(int t1, int t2, const double *x, double p)
+/**
+ * gretl_quantile:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data array.
+ * @p: probability.
+ *
+ * Returns: the @p quantile of the array @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_quantile (int t1, int t2, const double *x, double p)
 {
-    if ((p <= 0) || (p >= 1)) {
+    double *a = NULL;
+    double xmin, xmax;
+    double N, ret, tmp;
+    int nl, nh, exact;
+    int i, n = 0;
+
+    if (p <= 0 || p >= 1) {
 	/* sanity check */
 	return NADBL;
     }
 
-    /* 
-       make a copy of x into a, skipping missing obs;
-       n will hold the number of non-missing observations;
-       while we're at it, compute min & max;
-    */
-
-    double *a;
-    a = malloc((t2 - t1 + 1) * sizeof *a);
-    if (a == NULL) {
-	return NADBL;
-    }
-
-    double minx =  1.0e100;
-    double maxx = -1.0e100;
-    int i, n = 0;
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    a[n++] = x[i];
-	    if (x[i]<minx) {
-		minx = x[i];
-	    }
-	    if (x[i]>maxx) {
-		maxx = x[i];
-	    }
-	}
-    }
-
-    /*  is our sample big enough? */
+    n = gretl_minmax(t1, t2, x, &xmin, &xmax);
     if (n == 0) {
 	return NADBL;
     }
 
-    double N = (n+1)*p-1;
-    int nl = floor(N), nh = ceil(N);
-
-    if ((nh == 0) || (nh == n)) {
-	/* 
-	   too few usable observations for such an extreme 
-	   quantile 
-	*/
+    a = malloc(n * sizeof *a);
+    if (a == NULL) {
 	return NADBL;
     }
 
-    int exact = ( nl == nh );
-    double ret, tmp; 
-    /*
-    printf("\tp = %12.10f, n = %d, N = %12.10f, nl = %d, nh = %d\n", 
-	   p, n, N, nl, nh);
-    */
+    n = 0;
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    a[n++] = x[i];
+	}
+    }
+
+    N = (n + 1) * p - 1;
+    nl = floor(N);
+    nh = ceil(N);
+
+    if (nh == 0 || nh == n) {
+	/* too few usable observations for such an extreme 
+	   quantile 
+	*/
+	free(a);
+	return NADBL;
+    }
+
+    exact = (nl == nh);
+
+#if 0
+    fprintf(stderr, "\tp = %12.10f, n = %d, N = %12.10f, nl = %d, nh = %d\n", 
+	    p, n, N, nl, nh);
+#endif
+    
     if (exact) {
 	ret = find_hoare(a, n, nl);
     } else {
 	double high, low, frac = N - nl;
-	if (p<0.5) {
+
+	if (p < 0.5) {
 	    high = find_hoare(a, n, nh);
-	    tmp = minx;
+	    tmp = xmin;
 	    for (i=0; i<nh; i++) {
-		if (a[i]>tmp) {
+		if (a[i] > tmp) {
 		    tmp = a[i];
 		}
 	    }
 	    low = tmp;
 	} else {
 	    low = find_hoare(a, n, nl);
-	    tmp = maxx;
+	    tmp = xmax;
 	    for (i=nh; i<n; i++) {
-		if (a[i]<tmp) {
+		if (a[i] < tmp) {
 		    tmp = a[i];
 		}
 	    }
 	    high = tmp;
 	}
-
-	/*
-	printf("\tlow = %g, high = %g, frac = %g\n", low, high, frac);
-	*/
+#if 0
+	fprintf(stderr, "\tlow = %g, high = %g, frac = %g\n", low, high, frac);
+#endif
 	ret = low + frac * (high - low);
     }
+    
+    free(a);
 
     return ret;
 }
