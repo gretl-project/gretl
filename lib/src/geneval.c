@@ -2463,17 +2463,28 @@ series_scalar_func (NODE *n, int f, parser *p)
 static NODE *
 series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
+    if (starting(p)) {
 	gretl_matrix *tmp = NULL;
 
 	if (l->t == MAT) {
-	    cast_to_series(l, f, &tmp, p);
-	    if (p->err) {
-		return NULL;
+	    if (f == QUANTILE) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL) {
+		    ret->v.m = gretl_matrix_quantiles(l->v.m, r->v.xval,
+						      &p->err);
+		}
+		return ret;
+	    } else {
+		cast_to_series(l, f, &tmp, p);
+		if (p->err) {
+		    return NULL;
+		}
 	    }
 	}
+
+	ret = aux_scalar_node(p);
 
 	switch (f) {
 	case LRVAR:
@@ -2491,6 +2502,8 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	if (l->t == MAT) {
 	    l->v.m = tmp;
 	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -4320,8 +4333,8 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;	
     case LRVAR:
-    case QUANTILE:
-	/* functions taking series and scalar arg, returning scalar */
+    case QUANTILE:	
+	/* takes series and scalar arg, returns scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    if (r->t == NUM) {
 		ret = series_scalar_scalar_func(l, r, t->t, p);
@@ -4331,7 +4344,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	}
-	break;	
+	break;
     case RUNIFORM:
     case RNORMAL:
 	/* functions taking zero or two scalars as args */

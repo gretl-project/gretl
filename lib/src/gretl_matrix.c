@@ -4023,6 +4023,62 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_quantiles:
+ * @m: matrix on which to operate.
+ * @p: probability.
+ * @err: location to receive erro code.
+ * 
+ * Returns: a row vector containing the @p quantiles
+ * of the columns of @m, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
+				      double p, int *err)
+{
+    gretl_matrix *q;
+    double *a = NULL;
+    int i, j;
+
+    if (gretl_is_null_matrix(m) || p < 0 || p > 1) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    q = gretl_matrix_alloc(1, m->cols);
+    if (q == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    a = malloc(m->rows * sizeof *a);
+    if (a == NULL) {
+	*err = E_ALLOC;
+	gretl_matrix_free(q);
+	return NULL;
+    }
+
+    for (j=0; j<m->cols; j++) {
+	for (i=0; i<m->rows; i++) {
+	    a[i] = gretl_matrix_get(m, i, j);
+	}
+	q->val[j] = gretl_array_quantile(a, m->rows, p);
+	if (na(q->val[j])) {
+	    *err = E_DATA;
+	    break;
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(q);
+	q = NULL;
+    }
+
+    free(a);
+
+    return q;
+}
+
+/**
  * gretl_matrix_multiply:
  * @a: left-hand matrix.
  * @b: right-hand matrix.
