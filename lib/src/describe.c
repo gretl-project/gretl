@@ -455,35 +455,7 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 
 double gretl_median (int t1, int t2, const double *x)
 {
-    int m = t2 - t1 + 1;
-    double *sx, med;
-    int t, n, n2p;
-
-    sx = malloc(m * sizeof *sx);
-
-    if (sx == NULL) {
-	return NADBL;
-    }
-
-    n = 0;
-    for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) {
-	    sx[n++] = x[t];
-	}
-    }
-
-    if (n == 0) {
-	return NADBL;
-    }
-
-    qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
-
-    n2p = (m = n / 2) + 1;
-    med = (n % 2)? sx[n2p - 1] : 0.5 * (sx[m - 1] + sx[n2p - 1]);
-
-    free(sx);
-
-    return med;
+    return gretl_quantile(t1, t2, x, 0.5);
 }
 
 /**
