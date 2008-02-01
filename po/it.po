@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-29 12:58-0500\n"
-"PO-Revision-Date: 2008-01-29 12:58-0500\n"
+"PO-Revision-Date: 2008-02-01 14:55+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -3468,7 +3468,6 @@ msgid "Unable to access the file %s.\n"
 msgstr "Impossibile accedere al file %s.\n"
 
 #: lib/src/interact.c:2708
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -3476,12 +3475,11 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Per avere aiuto su un comando specifico: help nomecomando"
+"Per avere aiuto su una funzione specifica: help nomefunzione"
 
 #: lib/src/interact.c:2709
-#, fuzzy
 msgid " (e.g. help qrdecomp)\n"
-msgstr " (es. help smpl)\n"
+msgstr " (es. help qrdecomp)\n"
 
 #: lib/src/interact.c:2740
 msgid ""
@@ -3506,11 +3504,8 @@ msgid " (e.g. help smpl)\n"
 msgstr " (es. help smpl)\n"
 
 #: lib/src/interact.c:2757
-#, fuzzy
 msgid "You can also do 'help functions' for a list of functions\n"
-msgstr ""
-"Terminale di gretl: scrivere 'help' per la lista dei comandi\n"
-"? "
+msgstr "È possibile anche eseguire 'help functions' per la lista delle funzioni\n"
 
 #: lib/src/interact.c:2763
 msgid "genrcli.hlp"
@@ -9664,9 +9659,8 @@ msgid "/Variable/_Augmented Dickey-Fuller test"
 msgstr "/Variabile/Test Dickey-Fuller _aumentato"
 
 #: gui2/gretl.c:464
-#, fuzzy
 msgid "/Variable/ADF-GLS test"
-msgstr "/Variabile/Test _KPSS"
+msgstr "/Variabile/Test ADF-_GLS"
 
 #: gui2/gretl.c:465
 msgid "/Variable/_KPSS test"
@@ -9827,9 +9821,8 @@ msgid "/Help/Command reference/_PDF"
 msgstr "/Aiuto/Guida _comandi/Versione _PDF"
 
 #: gui2/gretl.c:530
-#, fuzzy
 msgid "/Help/Function reference"
-msgstr "/Aiuto/Guida _comandi"
+msgstr "/Aiuto/Guida funzioni"
 
 #: gui2/gretl.c:531
 msgid "/Help/_User's guide"
@@ -10904,9 +10897,8 @@ msgid "Index"
 msgstr "Indice"
 
 #: gui2/helpfiles.c:1380
-#, fuzzy
 msgid "Sorry, help not found"
-msgstr "Host non trovato"
+msgstr "Nessun aiuto disponibile"
 
 #: gui2/helpfiles.c:1495 gui2/helpfiles.c:1610
 msgid "Search wrapped"
@@ -11011,9 +11003,8 @@ msgid "gretl: ADF test"
 msgstr "gretl: test ADF"
 
 #: gui2/library.c:908
-#, fuzzy
 msgid "gretl: ADF-GLS test"
-msgstr "gretl: test ADF"
+msgstr "gretl: test ADF-GLS"
 
 #: gui2/library.c:909
 msgid "gretl: KPSS test"
@@ -13124,9 +13115,8 @@ msgid "Gretl Command Reference"
 msgstr "Guida ai comandi di gretl"
 
 #: gui2/textbuf.c:1051
-#, fuzzy
 msgid "Gretl Function Reference"
-msgstr "Guida ai comandi di gretl"
+msgstr "Guida alle funzioni di gretl"
 
 #: gui2/textbuf.c:1131
 msgid "Back"
