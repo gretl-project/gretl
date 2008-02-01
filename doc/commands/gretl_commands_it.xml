@@ -1944,8 +1944,15 @@
     </description>
 
   </command>
+ 
+  <command name="elif" section="Programming" label="Strutture di controllo" context="cli">
 
-  <command name="else" section="Programming" context="cli">
+    <description><para>Si veda <cmdref targ="if"/>.</para>
+    </description>
+
+  </command>
+
+  <command name="else" section="Programming" label="Strutture di controllo" context="cli">
 
     <description><para>Si veda <cmdref targ="if"/>.</para>
     </description>
@@ -1964,7 +1971,7 @@
 
   </command>
 
-  <command name="endif" section="Programming" context="cli">
+  <command name="endif" section="Programming" label="Strutture di controllo" context="cli">
 
     <description><para>Si veda <cmdref targ="if"/>.</para>
     </description>
@@ -2579,6 +2586,10 @@
 
     <description>
       <para>
+	In contesti appropriati, <lit>series</lit>, <lit>scalar</lit>
+	e <lit>matrix</lit> sono sinonimi per questo comando.
+      </para>
+      <para>
 	Crea nuove variabili, di solito per mezzo di trasformazioni
         di variabili esistenti. Si veda anche <cmdref targ="diff"/>,
         <cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref targ="ldiff"/>,
@@ -2592,7 +2603,7 @@
       </para>
 
       <para>
-	Questo comando può produrre come risultato una serie o uno scalare. Ad
+	Il comando <lit>genr</lit> può produrre come risultato una serie o uno scalare. Ad
         esempio, la formula <lit>x2 = x * 2</lit> produce una serie se la variabile
 	<lit>x</lit> è una serie e uno scalare se <lit>x</lit> è uno scalare.
         Le formule <lit>x = 0</lit> e <lit>mx = mean(x)</lit> producono degli
@@ -2632,231 +2643,30 @@
 	ad esempio <lit>(x > 10)</lit> produce 1 se <lit>x</lit>
 	&gt; 10, 0 altrimenti.</para>
  
-       <para>Le costanti predefinite sono <lit>pi</lit> e <lit>NA</lit>. L'ultima
-       rappresenta il codice per i valori mancanti: è possibile inizializzare
-       una variabile con valori mancanti usando <lit>scalar x = NA</lit>.
-       </para>
-
-      <para>Le <emphasis>funzioni</emphasis> supportate appartengono
-        ai gruppi seguenti:
-      </para>
-
-      <ilist>
-	<li>
-          <para>Funzioni matematiche standard: <func>abs</func>,
-	    <func>exp</func>, <func>int</func> (parte intera),
-	    <func>ln</func> (logaritmo naturale: <func>log</func> è un
-            sinonimo), <func>log10</func> (logaritmo in base 10),
-            <func>log2</func> (logaritmo in base 2), <func>sqrt</func>
-            (radice quadrata), <func>ceil</func> (ceiling: arrotonda per
-            eccesso all'intero superiore), <func>floor</func> (arrotonda per
-            difetto all'intero inferiore).  Tutte queste funzioni accettano un
-            singolo argomento, che può essere una serie o uno scalare. Nota:
-            <func>int</func> e <func>floor</func> si comportano in modo diverso
-            con argomenti negativi: <lit>int(-3.5)</lit> produce &minus;3,
-            mentre <lit>floor(-3.5)</lit> produce &minus;4.
-	  </para>
-	</li>
-	<li>
-	  <para>Funzioni trigonometriche: <func>cos</func>,
-	    <func>sin</func>, <func>tan</func> e <func>atan</func>
-            (arcotangente). Anche queste funzioni accettano un singolo argomento, scalare o serie.
- 	  </para>
- 	</li>
-	<li><para>Funzioni statistiche standard, che possono accettare un solo
-            argomento e producono un risultato scalare: <func>max</func> (valore
-            massimo in una serie), <func>min</func> (minimo),
-	    <func>mean</func> (media aritmetica), <func>median</func> (mediana),
-	    <func>var</func> (varianza) <func>sd</func> (scarto quadratico
-            medio), <func>sst</func> (somma dei quadrati degli scarti dalla media),
-            <func>sum</func> (somma), <func>gini</func> (coefficiente di
-            Gini).</para>
-        </li>
-        <li>
-          <para>Funzioni statistiche che accettano una serie con argomento e
-          producono una serie o un vettore: <func>sort</func> (ordina una serie
-          in ordine ascendente di grandezza), <func>dsort</func> (ordina una serie
-          in ordine discendente di grandezza), <func>cum</func> (somma cumulata).
-          Solo per i  modelli panel, le funzioni <func>pmean</func> e <func>psd</func>
-          accettano un'unica serie come argomento, e producono rispettivamente
-          le medie e gli scarti quadratici medi della variabile per ognuna dele
-          unità cross-section. Si veda la <guideref targ="chap-genr"/> per i
-          dettagli.
-          </para>
-        </li>
-	<li>
-          <para>Funzioni statistiche che accettano due serie come argomenti:
-          <func>cov</func> (covarianza), <func>corr</func> (coefficiente di
-          correlazione). Queste funzioni producono un risultato scalare. La
-          funzione <func>sortby</func> produce una serie, ossia i valori del
-          secondo argomento ordinati secondo i valori crescenti del primo
-          argomento.
-          </para>
-        </li>
-        <li>
-          <para>Funzioni statistiche speciali: <func>pvalue</func>,
-            <func>cdf</func> e <func>critical</func> (si veda oltre),
-            <func>cnorm</func> (funzione di ripartizione normale standard),
-            <func>dnorm</func> (funzione di densità normale standard),
-            <func>qnorm</func> (quantili della normale standard, o inversa della
-            funzione di densità normale standard), <func>resample</func>
-            (ricampiona una serie con rimpiazzo, utile per il bootstrap),
-            <func>hpfilt</func> (componente di <quote>ciclo</quote> della
-            serie), <func>bkfilt</func> (filtro passa-banda di
-            Baxter&ndash;King).
-          </para>
-	</li>
-	<li><para>Funzioni per serie storiche: <func>diff</func>
-            (differenza prima), <func>ldiff</func> (log-differenza,
-            ossia la differenza prima dei logaritmi naturali),
-            <func>sdiff</func> (differenza stagionale),
-            <func>fracdiff</func> (differenza frazionale).
-	    Per generare ritardi della variabile <lit>x</lit>, si può usare
-            la sintassi <cmd>x(-N)</cmd>, dove <lit>N</lit> rappresenta
-            la lunghezza del ritardo desiderato; per generare anticipi
-	    si usi <cmd>x(+N)</cmd>.</para>
-	</li>
-        <li><para>Funzioni dataset, che producono una serie:
-          <func>misszero</func> (sostituisce con zero il codice delle
-          osservazioni mancanti in una serie); <func>zeromiss</func>
-          (l'operazione inversa di <func>misszero</func>); 
-          <func>missing</func> (per ogni osservazione, vale 1 se l'argomento ha
-          un valore mancante, 0 altrimenti); <func>ok</func> (l'opposto di
-          <func>missing</func>).</para>
-	</li>
-        <li><para>Funzioni dataset, che producono uno scalare:
-          <func>nobs</func> (riporta il numero di osservazioni valide in una
-          serie), <func>firstobs</func> (riporta il numero della prima osservazione
-          non mancante in una serie) <func>lastobs</func> (numero dell'ultima osservazione
-          non mancante in una serie).
- 	  </para>
- 	</li>
-        
-	<li><para>
-            Numeri pseudo-casuali: <func>uniform</func>, <func>normal</func>,
-            <func>poisson</func> e la funzione generica <func>randgen</func>
-            (si veda oltre). Le prime due funzioni non accettano argomenti e
-            vanno scritte con parentesi vuote: <lit>uniform()</lit>,
-            <lit>normal()</lit>. Esse creano serie pseudo-casuali estraendo i
-            valori dalle distribuzioni uniforme (0&ndash;1) e normale standard.
-            La funzione <func>poisson</func> accetta un singolo argomento: la
-            media, che può essere sia uno scalare che una serie.
-            Le serie dalla distribuzione uniforme, che sono usate come base per
-            calcolare le distribuzioni più complesse, sono generate usando il
-            Mersenne Twister
-                <footnote>
-                  <para>
-                  Si veda Matsumoto e Nishimura (1998).  L'implementazione è
-                  fornita da <program>glib-2.0</program>
-                  </para>
-                </footnote>;
-            per le serie dalla distribuzione normale, viene usato il
-            metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.
-            Si veda anche il comando <cmdref targ="set"/>, opzione
-            <lit>seed</lit>.
-	  </para>
-	</li>
-      </ilist> 
-
       <para>
-        Con le eccezioni di cui si è detto, tutte le funzioni viste sopra
-        accettano come unico argomento il nome di una variabile o un'espressione
-        che si risolve in una variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
-      </para>
-       <para>
-	Le funzioni <func>pvalue</func>, <func>critical</func>,
-        <func>cdf</func> e <func>randgen</func> richiedono, come primo
-        argomento, un codice formato da un carattere, che indica la
-        distribuzione di riferimento:
-      </para>
-      
-      <ilist>
-	<li><para><cmd>z</cmd> o <cmd>N</cmd>: Normale;</para></li>
-	<li><para><cmd>t</cmd>: <emphasis>t</emphasis> di Student;</para></li>
-	<li><para><cmd>X</cmd>: chi-quadro;</para></li>
-	<li><para><cmd>F</cmd>: Snedecor;</para></li>
-	<li>
-	  <para>
-	    <cmd>G</cmd>: Gamma (<cmd>pvalue</cmd>, <cmd>cdf</cmd> e
-	    <cmd>randgen</cmd>);
-	  </para>
-	</li>
-        <li><para><cmd>B</cmd>: Binomiale;</para></li>
-	<li><para><cmd>P</cmd>: Poisson;</para></li>
-	<li><para><cmd>D</cmd>: Normale bivariata (solo per <cmd>cdf</cmd>).</para></li>
-      </ilist>
-      
-      <para>
-	La funzione <func>pvalue</func> richiede gli stessi argomenti del
-	comando <cmdref targ="pvalue"/>, ma in questo caso occorre separare
-	gli argomenti con delle virgole. Questa funzione produce un p-value
-        destro a una coda, ossia l'integrale della funzione di densità dal
-        valore specificato a più infinito.
-      </para>
-      
-      <para>
-        La funzione <func>cdf</func> accetta gli stessi argomenti di
-	<func>pvalue</func>, ma produce il valore complementare, ossia,
-        l'integrale della relativa funzione di densità valutato dal suo limite
-        inferiore (meno infinito o zero) al valore specificato. Per la
-        distribuzione normale bivariata, occorre indicare tre argomenti:
-        il coefficiente di correlazione <emphasis>rho</emphasis>,
-        <emphasis>x</emphasis> e <emphasis>y</emphasis>, in questo ordine.
-        Per ulteriori informazioni su queste funzioni, si veda la <guideref
-        targ="chap-genr"/>.
+        Le costanti predefinite sono <lit>pi</lit> e <lit>NA</lit>. L'ultima
+        rappresenta il codice per i valori mancanti: è possibile inizializzare
+        una variabile con valori mancanti usando <lit>scalar x = NA</lit>.
       </para>
 
       <para>
-	La funzione <func>critical</func> produce il valore critico per una
-        certa distribuzione di probabilità, data la proporzione sulla coda di
-        destra, preceduta da eventuali parametri aggiuntivi richiesti.
-        Se il primo argomento è <cmd>t</cmd> o <cmd>X</cmd>, occorre specificare
-        un secondo argomento per i gradi di libertà.
-        Per la distribuzione <emphasis>F</emphasis>, occorre indicare i gradi di
-        libertà del numeratore e quelli del denominatore, rispettivamente come
-        secondo e terzo argomento.
+ 	Il comando <lit>genr</lit> supporta un'ampia gamma di funzioni
+        matematiche e statistiche, da quelle più comuni a quelle di uso
+        specifico in econometria. Inoltre offre l'accesso a numerose variabili
+        interne che vengono definite nel corso della stima di regressioni,
+        dell'esecuzione di test, e così via.
+	<refnote xref="false"> 
+	  Per un elenco delle funzioni e degli accessori, eseguire:
+	  <quote>help functions</quote>. 
+	</refnote> 
+	<refnote xref="true">
+	  Per un elenco delle funzioni e degli accessori, si veda:
+	  <gfr targ="chap:funcref"/>. 
+	</refnote>
       </para>
       
       <para>
-	La funzione <func>randgen</func> produce una serie che contiene
-        estrazioni pseudo-casuali dalla distribuzione specificata. I parametri
-        accettati sono gli stessi delle funzioni <func>pvalue</func> e
-        <func>cdf</func>, tranne che per la distribuzione normale (parametro
-        <cmd>z</cmd> o <cmd>N</cmd>) occorre indicare la media e lo scarto
-        quadratico medio.
-      </para>
-
-      <para>
-        Ecco alcuni esempi di uso delle funzioni viste finora (gli spazi tra gli
-        argomenti sono opzionali):
-      </para>
-      <code>
-	genr p1 = pvalue(z, 2.2)
-	genr p2 = pvalue(X, 3, 5.67)
-	genr p3 = cdf(D, -1, 1, 0.25)
-	genr c1 = critical(t, 20, 0.025)
-	genr c2 = critical(F, 4, 48, 0.05)
-	genr rf = randgen(F, 4, 48)
-	genr rb = randgen(B, 100, 0.5)
-      </code>
-
-      <para>
-	Le funzioni relative alla densità normale standard funzionano nel modo
-        seguente, dato un argomento <mathvar>x</mathvar>: <func>cnorm</func> restituisce
-        l'area al di sotto della funzione di densità normale standard, integrata
-        da meno infinito a <mathvar>x</mathvar>; <func>dnorm</func> restituisce
-        la densità normale standard valutata in <mathvar>x</mathvar>, mentre
-        <func>qnorm</func> restituisce il valore <mathvar>z</mathvar> tale che
-        l'area al di sotto della funzione di densità normale standard, integrata
-        da meno infinito a <mathvar>z</mathvar> valga <mathvar>x</mathvar>.
-      </para>
-      
-      <para>
-        La funzione <func>fracdiff</func> richiede due argomenti: il nome della
-        serie e una frazione nell'intervallo da &minus;1 a 1.
-      </para>
-      
-      <para>Oltre agli operatori e alle funzioni mostrati, ci sono alcuni
+        Oltre agli operatori e alle funzioni mostrati, ci sono alcuni
         usi speciali del comando <cmd>genr</cmd>:
       </para>
 
@@ -2880,99 +2690,6 @@
 	</li>
       </ilist>
 
-      <para>Alcune variabili interne che vengono generate durante
-	il calcolo di una regressione possono essere recuperate usando
-	<cmd>genr</cmd>, nel modo seguente:</para>
-
-      <ilist>
-	<li>
-	  <para>
-	   <lit>$ess</lit>: somma dei quadrati degli errori
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$rsq</lit>: <emphasis>R</emphasis>-quadro
-	  </para>
-	</li>	
-	<li>
-	  <para>
-	   <lit>$T</lit>: numero delle osservazioni usate
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$df</lit>: gradi di libertà
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$ncoeff</lit>: numero dei coefficienti stimati
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>$trsq</lit>: <emphasis>TR</emphasis>-quadro (ampiezza del
-	    campione moltiplicata per <emphasis>R</emphasis>-quadro)
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$sigma</lit>: errore standard dei residui
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$aic</lit>: criterio di informazione di Akaike
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$bic</lit>: criterio di informazione bayesiana di Schwarz
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$hqc</lit>: criterio di Hannan&ndash;Quinn
-	  </para>
-	</li>
-	<li>
-	  <para>
-	   <lit>$lnl</lit>: log-verosimiglianza (dove è applicabile)
-	  </para>
-	</li>
-        <li>
-          <para>
-          <lit>$gmmcrit</lit>: criterio GMM (solo per modelli GMM)
-          </para>
-        </li>
-	<li>
-	  <para>
-	    <lit>$coeff</lit>(<repl>variabile</repl>): coefficiente stimato per
-	    la <repl>variabile</repl>
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>$stderr</lit>(<repl>variabile</repl>): errore standard stimato
-	    per la <repl>variabile</repl>
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>$rho</lit>(<repl>i</repl>): coefficiente di autoregressione
-	    dei residui di ordine <repl>i</repl>-esimo
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>$vcv</lit>(<repl>x1</repl>,<repl>x2</repl>): covarianza
-	    stimata tra i coefficienti delle variabili <repl>x1</repl> e
-	    <repl>x2</repl> 
-	  </para>
-	</li>
-      </ilist> 
-
       <para>
 	<emphasis>Nota</emphasis>: nella versione a riga di comando del programma,
         i comandi <cmd>genr</cmd> che estraggono dati relativi al modello
@@ -2983,32 +2700,11 @@
         della finestra principale. Usando la versione grafica, però, è
         possibile anche estrarre i dati da qualunque modello mostrato in una
         finestra (anche se non è il modello più recente) usando il menù
-        <quote>Analisi</quote> nella finestra del modello.</para>
-
-      <para>Le serie interne <lit>uhat</lit> e <lit>yhat</lit>
-	contengono rispettivamente i residui e i valori stimati dell'ultima
-        regressione. Per i modelli GARCH, la varianza condizionale è memorizzata
-        nella variabile interna <lit>$h</lit>.
+        <quote>Analisi</quote> nella finestra del modello.
       </para>
 
       <para>
-	Sono disponibili tre variabili dataset <quote>interne</quote>:
-	<lit>$nobs</lit>, che contiene il numero di osservazioni nell'intervallo
-        del campione attuale (che non è necessariamente uguale al valore di
-	<lit>$T</lit>, il numero delle osservazioni usate per stimare l'ultimo
-        modello), <lit>$nvars</lit>, che contiene il numero di variabili nel
-        dataset (inclusa la costante), e <lit>$pd</lit>, che contiene la
-        frequenza o la periodicità dei dati (ad esempio 4 per dati
-        trimestrali).</para>
-
-      <para>Due scalari speciali interni, <lit>$test</lit> e
-       <lit>$pvalue</lit>, contengono rispettivamente il valore e il
-       p-value della statistica test che è stata generata dall'ultimo
-       comando di test eseguito esplicitamente (ad es. <lit>chow</lit>).
-       Si veda la <guideref targ="chap-genr"/> per i dettagli.
-      </para>
-
-      <para>La variabile <lit>t</lit> serve da indice per le osservazioni.
+        La variabile <lit>t</lit> serve da indice per le osservazioni.
 	Ad esempio, <lit>genr dum = (t=15)</lit> crea una variabile dummy
 	che vale 1 per l'osservazione 15 e 0 altrove. La variabile
         <lit>obs</lit> è simile ma più flessibile: è possibile usarla per
@@ -3020,7 +2716,8 @@
         osservazioni.
       </para>
 
-      <para>È possibile estrarre dei valori scalari da una serie usando
+      <para>
+        È possibile estrarre dei valori scalari da una serie usando
         una formula <lit>genr</lit> con la sintassi
 	<repl>nome-variabile</repl><lit>[</lit><repl>osservazione</repl><lit>]</lit>.
 	Il valore di <repl>osservazione</repl> può essere specificato con
@@ -3030,12 +2727,13 @@
 	<lit>ibm[1970/01/23]</lit>.
       </para>
 
-      <para>È possibile modificare una singola osservazione in una serie
-         usando <lit>genr</lit>. Per farlo, occorre aggiungere un numero
-         di osservazione o una data valida tra parentesi quadre al nome
-	 della variabile nel lato sinistro della formula. Ad esempio:
+      <para>
+        È possibile modificare una singola osservazione in una serie
+        usando <lit>genr</lit>. Per farlo, occorre aggiungere un numero
+        di osservazione o una data valida tra parentesi quadre al nome
+	della variabile nel lato sinistro della formula. Ad esempio:
 	<lit>genr x[3] = 30</lit> o <lit>genr x[1950:04] =
-	  303.7</lit>.
+	303.7</lit>.
       </para>
 
       <para>
@@ -3105,7 +2803,7 @@
 	</row>
 	<row>
 	  <cell><lit>y = sum(x)</lit></cell>
-	  <cell>somma i valori di <lit>x</lit> escludendo i valori mancanti &minus;999</cell>
+	  <cell>somma i valori di <lit>x</lit> escludendo i valori mancanti <lit>NA</lit></cell>
 	</row>
 	<row>
 	  <cell><lit>y = cum(x)</lit></cell>
@@ -4056,23 +3754,49 @@
   </command>
 
 
-  <command name="if" section="Programming" context="cli">
+  <command name="if" section="Programming" label="Strutture di controllo" context="cli">
 
     <description>
-      <para>Controllo di flusso per l'esecuzione dei comandi. La sintassi è:</para>
+      <para>
+        Struttura di controllo per l'esecuzione dei comandi. Sono supportate le
+        tre forme seguenti:
+      </para>
 
       <pre>
+	<lit># Forma semplice</lit>&par;
 	<lit>if</lit> <repl>condizione</repl>&par;
-	<lit>  </lit> <repl>comandi1</repl>&par;
-	<lit>else</lit>&par;
-	<lit>  </lit> <repl>comandi2</repl>&par;
+	<lit> </lit><lit> </lit> <repl>comandi</repl>&par;
 	<lit>endif</lit>
-      </pre>      
+      </pre>
+      
+      <pre>
+	<lit># A due rami</lit>&par;
+	<lit>if</lit> <repl>condizione</repl>&par;
+	<lit> </lit><lit> </lit> <repl>comandi-1</repl>&par;
+	<lit>else</lit>&par;
+	<lit> </lit><lit> </lit> <repl>comandi-2</repl>&par;
+	<lit>endif</lit>
+      </pre>
 
-      <para>La <repl quote="true">condizione</repl> deve essere un'espressione
-      Booleana, per la cui sintassi si veda <cmdref targ="genr"/>.
-      Il blocco <cmd>else</cmd> è opzionale; i blocchi <lit>if</lit> &hellip;
-	<lit>endif</lit> possono essere nidificati.</para>
+      <pre>
+	<lit># A tre o più rami</lit>&par;
+	<lit>if</lit> <repl>condizione-1</repl>&par;
+	<lit> </lit><lit> </lit> <repl>comandi-1</repl>&par;
+	<lit>elif</lit> <repl>condizione-2</repl>&par;
+	<lit> </lit><lit> </lit> <repl>comandi-2</repl>&par;
+ 	<lit>else</lit>&par;
+	<lit> </lit><lit> </lit> <repl>comandi-3</repl>&par;
+ 	<lit>endif</lit>
+      </pre>
+ 
+      <para>
+        La <repl quote="true">condizione</repl> deve essere un'espressione
+        Booleana, per la cui sintassi si veda <cmdref targ="genr"/>.
+        Può essere incluso più di un blocco <cmd>elif</cmd>.
+        Inoltre, i blocchi <lit>if</lit> &hellip;
+	<lit>endif</lit> possono essere nidificati.
+      </para>
+
     </description>
 
   </command>
@@ -5348,9 +5072,11 @@
         preceduta dalla parola chiave <lit>params</lit>.
       </para>
 
-      <para>Esempio: si supponga di avere un dataset con le variabili
-	C e Y (ad es. greene11_3.gdt) e di voler stimare una funzione di
-        consumo non-lineare del tipo:
+      <para>
+        Esempio: si supponga di avere un dataset con le variabili
+        <mathvar>C</mathvar> e <mathvar>Y</mathvar> (ad es.
+        <lit>greene11_3.gdt</lit>) e di voler stimare una funzione di consumo
+        non-lineare del tipo:
 	<equation status="display"
 	  tex="\[C = \alpha + \beta Y^{\gamma}\]"
 	  ascii="C = alfa + beta * Y^gamma"
@@ -8212,7 +7938,7 @@
 
   </command>
 
-  <command name="string" section="Utilities" context="cli">
+  <command name="string" section="Utilities" label="Definisce una stringa" context="cli">
     
     <usage>
       <arguments>
