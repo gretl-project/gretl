@@ -6488,6 +6488,7 @@ gretl_matrix *gretl_matrix_cumcol (const gretl_matrix *m, int *err)
     gretl_matrix *a;
     double x;
     int t, i;
+
     *err = 0;
 
     if (gretl_is_null_matrix(m)) {
@@ -6528,6 +6529,7 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
     gretl_matrix *a;
     double x, xlag;
     int t, i;
+
     *err = 0;
 
     if (gretl_is_null_matrix(m)) {
@@ -6548,7 +6550,7 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
 	xlag = gretl_matrix_get(m, 0, i);
 	for (t=1; t<m->rows; t++) {
 	    x = gretl_matrix_get(m, t, i);
-	    gretl_matrix_set(a, t, i, x-xlag);
+	    gretl_matrix_set(a, t, i, x - xlag);
 	    xlag = x;
 	}
     }
@@ -8806,79 +8808,82 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 /**
  * gretl_matrix_bool_sel:
  * @A: matrix
- * @sel: vector
- * @B: pointer to a matrix
- * @rowsel: row/column select
- * @err: error code
+ * @sel: selection vector
+ * @rowsel: row/column mode selector.
+ * @err: location to receive error code
  *
- * Returns a matrix which contains the rows of A corresponding to
- * non-zero values in the vector sel; if rowsel==0, the same happens
- * with columns.
+ * If @rowsel = 1, constructs a matrix which contains the rows 
+ * of A corresponding to non-zero values in the vector @sel; 
+ * if @rowsel = 0, does the same thing but column-wise.
  *
  * Returns: the generated matrix, or %NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A, 
-				    const gretl_matrix *sel, 
-				    int rowsel, int *err)
+gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A, 
+				     const gretl_matrix *sel, 
+				     int rowsel, int *err)
 {
+    gretl_matrix *ret = NULL;
+    int ra, ca, rs, cs;
+    int nonzero = 0; 
+    int i, j, k, n;
+    double x;
+
+    *err = 0;
 
     if (gretl_is_null_matrix(A)) {
-	*err = 0;
 	return gretl_null_matrix_new();
     }
 
-    gretl_matrix *ret = NULL;
-    *err = 0;
-    int ra = A->rows, ca = A->cols;
-    int rs = sel->rows, cs = sel->cols;
+    ra = A->rows;
+    ca = A->cols;
+    rs = sel->rows;
+    cs = sel->cols;
 
     /* check dimensions */
 
     if (rowsel) {
-	if ((ra != rs) || (cs>1) ) {
+	if ((ra != rs) || (cs > 1)) {
 	    *err = E_NONCONF;
 	    return NULL;
 	}
     } else {
-	if ((ca != cs) || (rs>1) ) {
+	if ((ca != cs) || (rs > 1)) {
 	    *err = E_NONCONF;
 	    return NULL;
 	}
     }
 
-    int i, j, n, nonzero = 0;
-    double x;
-
     /* count nonzeros */
 
-    n = rowsel ? rs : cs ;
+    n = (rowsel)? rs : cs ;
     for (i=0; i<n; i++) {
 	x = gretl_vector_get(sel, i);
-	j = (x!=0);
+	j = (x != 0);
 	nonzero += j;
     }
 
     /* check for extreme cases */
 
-    if (nonzero==n) {
-	return gretl_matrix_copy(A);
-    } else if (nonzero==0) {
-	return gretl_null_matrix_new();
+    if (nonzero == n) {
+	ret = gretl_matrix_copy(A);
+	goto bailout;
+    } else if (nonzero == 0) {
+	ret = gretl_null_matrix_new();
+	goto bailout;
     } 
 
     /* copy selected row/columns */
 	
-    int k = 0, zero;
+    k = 0;
+
     if (rowsel) {
 	ret = gretl_matrix_alloc(nonzero, ca);
 	if (ret == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
+	    goto bailout;
 	}
 	for (i=0; i<ra; i++) {
-	    zero = (0 == gretl_vector_get(sel, i));
-	    if (!zero) {
+	    if (0 != gretl_vector_get(sel, i)) {
 		for (j=0; j<ca; j++) {
 		    x = gretl_matrix_get(A, i, j);
 		    gretl_matrix_set(ret, k, j, x);
@@ -8889,14 +8894,12 @@ gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
     } else {
 	ret = gretl_matrix_alloc(ra, nonzero);
 	if (ret == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
+	    goto bailout;
 	}
 	for (i=0; i<ra; i++) {
 	    k = 0;
 	    for (j=0; j<ca; j++) {
-		zero = (0 == gretl_vector_get(sel, j));
-		if (!zero) {
+		if (0 != gretl_vector_get(sel, j)) {
 		    x = gretl_matrix_get(A, i, j);
 		    gretl_matrix_set(ret, i, k++, x);
 		}
@@ -8904,6 +8907,11 @@ gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
 	}
     }
 
+ bailout:
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
     return ret;
 }
-
