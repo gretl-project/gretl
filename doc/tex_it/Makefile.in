@@ -59,7 +59,7 @@ gretl-ref-it.tex:
 .PHONY : links cmdtex functex textables onepass refpass topiclist install clean
 
 links:
-	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s $(docsrc)/figures_it ./figures
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_it/$$f . ; fi ; done

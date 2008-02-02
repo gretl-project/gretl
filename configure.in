@@ -33,6 +33,7 @@ dnl Variables controlling the gretl build
 dnl
 build_gui="yes"
 build_docs="no"
+use_lucida="no"
 build_po="no"
 have_pkgconfig="no"
 have_readline="no"
@@ -57,6 +58,7 @@ use_gtksourceview="no"
 have_xslt="no"
 MAKE="make"
 XML_LIBS=
+FONTREQ=
 
 AC_CHECK_HEADERS(libintl.h,
 	try_nls="yes",
@@ -89,8 +91,21 @@ else
   build_docs=no
 fi])
 
+AC_ARG_WITH(lucida,
+[  --with-lucida           Use Lucida fonts for manual [[CVS only]]],
+[ case "$withval" in
+  yes)
+        FONTREQ="\\RequirePackage[[T1]]{fontenc,lucidabr}"
+	use_lucida=yes
+        ;;
+  *)
+        ;;
+  esac ],
+)
+AC_SUBST(FONTREQ)
+
 AC_ARG_WITH(gmake,
-[  --with-gmake         Use GNU make explicitly [[default=no]]],
+[  --with-gmake            Use GNU make explicitly [[default=no]]],
 [ case "$withval" in
   yes)
         MAKE="gmake"
@@ -558,7 +573,7 @@ AC_SUBST(XML_LIBS)
 AC_SUBST(XSLT_CFLAGS)
 AC_SUBST(XSLT_LIBS)
 AC_SUBST(GDK_PIXBUF_CFLAGS)
-AC_SUBST(GDK_PIXBUF_LIBS) 
+AC_SUBST(GDK_PIXBUF_LIBS)
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
@@ -594,6 +609,7 @@ redhat/gretl.spec
 if test "${build_docs}" = "yes" ; then
   AC_OUTPUT([
     doc/Makefile
+    doc/gretl.sty
     doc/commands/Makefile
     doc/tex/Makefile
     doc/tex_it/Makefile
@@ -656,6 +672,7 @@ Configuration:
   Use GTK printing apparatus:             ${have_gtkprint}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}
+  Use Lucida fonts:                       ${use_lucida}
   Build message catalogs:                 ${build_po}
   Gnome installation prefix:              ${gnome_prefix}
   X-12-ARIMA support:                     ${have_x12a}

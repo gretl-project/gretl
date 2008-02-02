@@ -64,20 +64,12 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template name="funcname">
-  <xsl:param name="src"/>
-  <xsl:if test="substring($src, 1, 1) = '$'">
-    <xsl:text>\</xsl:text>
-  </xsl:if>
-  <xsl:value-of select="$src"/>  
-</xsl:template>
-
-<xsl:template name="escdollar">
+<xsl:template name="stripdollar">
   <xsl:param name="src"/>
   <xsl:choose>
     <xsl:when test="substring($src, 1, 1) = '$'">
-      <xsl:text>\</xsl:text>
-      <xsl:value-of select="$src"/>
+      <xsl:text>dol</xsl:text>
+      <xsl:value-of select="substring($src, 2)"/>
     </xsl:when>
     <xsl:otherwise>
       <xsl:value-of select="$src"/>
@@ -85,10 +77,18 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template name="escdollar">
+  <xsl:param name="src"/>
+  <xsl:if test="substring($src, 1, 1) = '$'">
+    <xsl:text>\</xsl:text>
+  </xsl:if> 
+  <xsl:value-of select="$src"/>
+</xsl:template>
+
 <xsl:template match="function">
   <xsl:text>&#10;</xsl:text>
   <xsl:text>\subsection{</xsl:text>
-  <xsl:call-template name="funcname">
+  <xsl:call-template name="escdollar">
     <xsl:with-param name="src" select="@name"/>
   </xsl:call-template>
   <xsl:text>}&#10;</xsl:text>
@@ -98,7 +98,7 @@
       <xsl:value-of select="@targ"/>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:call-template name="escdollar">
+      <xsl:call-template name="stripdollar">
         <xsl:with-param name="src" select="@name"/>
       </xsl:call-template>
     </xsl:otherwise>
@@ -133,7 +133,7 @@
   <xsl:if test="not(@context) or @context=$hlp or @context='cli'">
     <xsl:text>&#10;</xsl:text>
     <xsl:text>\subsection{</xsl:text>
-    <xsl:call-template name="funcname">
+    <xsl:call-template name="escdollar">
       <xsl:with-param name="src" select="@name"/>
     </xsl:call-template>
     <xsl:text>}&#10;</xsl:text>
@@ -551,7 +551,7 @@
 
 <xsl:template match="fncref">
   <xsl:text>\hyperlink{func-</xsl:text>
-  <xsl:call-template name="escdollar">
+  <xsl:call-template name="stripdollar">
     <xsl:with-param name="src" select="@targ"/>
   </xsl:call-template>
   <xsl:text>}</xsl:text>

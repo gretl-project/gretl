@@ -2,6 +2,7 @@
 %% To be used when generating the Gretl manuals
 %% from LaTeX source.
 
+@FONTREQ@
 \ProvidesPackage{gretl}
 
 \newcommand{\scriptname}{Example}

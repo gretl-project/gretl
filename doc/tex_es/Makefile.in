@@ -45,7 +45,7 @@ gretl-ref-es.tex:
 .PHONY : links cmdtex textables onepass refpass topiclist install clean
 
 links:
-	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s $(docsrc)/figures_es ./figures
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_es/$$f . ; fi ; done
@@ -60,10 +60,10 @@ textables:
 	make -C ../commands textables
 
 onepass: gretl-guide-es.tex links textables
-	pdflatex gretl-guide-it
+	pdflatex gretl-guide-es
 
 refpass: gretl-ref-es.tex links cmdtex topiclist
-	pdflatex gretl-ref-it
+	pdflatex gretl-ref-es
 
 install: $(GUIDE) $(REF)
 	cp $(GUIDE) $(REF) $(WEBDIR)

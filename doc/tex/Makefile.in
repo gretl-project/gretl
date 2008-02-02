@@ -79,7 +79,7 @@ gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex
 .PHONY : links cmdtex functex textables alt onepass refpass topiclist install clean
 
 links:
-	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s $(docsrc)/figures ./figures
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
