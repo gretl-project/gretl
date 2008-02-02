@@ -1404,7 +1404,7 @@
 	<para context="tex">
 	  Returns the $\infty$-norm of the $r\times c$ matrix
 	  <argname>X</argname>, namely, 
-	    \[|| X ||_{\infty} = \max_i \sum_{j=1}^c |X_{ij}|\]
+	    \[\| X \|_{\infty} = \max_i \sum_{j=1}^c |X_{ij}|\]
 	</para>
 	<para>
 	  <seelist>
@@ -2373,7 +2373,7 @@
 	<para context="tex">
 	  Returns the 1-norm of the $r \times c$ matrix
 	  <argname>X</argname>: 
-	  \[|| X ||_1 = \max_j \sum_{i=1}^r |X_{ij}| \]
+	  \[\| X \|_1 = \max_j \sum_{i=1}^r |X_{ij}| \]
 	</para>
 	<para>
 	  <seelist>
