@@ -145,7 +145,9 @@
 	<para>
 	  Must follow the estimation of a VECM, and returns the
 	  cointegration matrix. It has as many rows as variables in the
-	  VECM and as many columns as the cointegration rank.
+	  VECM plus the number of exogenous variables that are restricted
+          to the cointegration space,
+          and as many columns as the cointegration rank.
 	</para>
       </description>
     </function>
@@ -161,9 +163,11 @@
 	  equal to the unrestricted elements of the cointegration space
 	  after the Phillips normalization. If, however, a restricted
 	  system is estimated via the <lit>restrict</lit> command with the
-	  <lit>--full</lit> option, a singular matrix with <math>nr</math>
+	  <lit>--full</lit> option, a singular matrix with <math>(n+m)r</math>
 	  rows will be returned (<math>n</math> being the number of
-	  variables and <math>r</math> the cointegration rank).
+	  endogenous variables, <math>m</math> the number of exogenous
+          variables that are restricted to the cointegration space,
+          and <math>r</math> the cointegration rank).
 	</para>
 	<para>
 	  Example: the code
