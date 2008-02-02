@@ -2123,7 +2123,7 @@ use_gtksourceview="no"
 have_xslt="no"
 MAKE="make"
 XML_LIBS=
-FONTREQ=
+FONTREQ="\\RequirePackage{ae}"
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'

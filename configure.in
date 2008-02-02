@@ -58,7 +58,7 @@ use_gtksourceview="no"
 have_xslt="no"
 MAKE="make"
 XML_LIBS=
-FONTREQ=
+FONTREQ="\\RequirePackage{ae}"
 
 AC_CHECK_HEADERS(libintl.h,
 	try_nls="yes",
