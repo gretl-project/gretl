@@ -8807,10 +8807,10 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 
 /**
  * gretl_matrix_bool_sel:
- * @A: matrix
- * @sel: selection vector
+ * @A: matrix.
+ * @sel: selection vector.
  * @rowsel: row/column mode selector.
- * @err: location to receive error code
+ * @err: location to receive error code.
  *
  * If @rowsel = 1, constructs a matrix which contains the rows 
  * of A corresponding to non-zero values in the vector @sel; 
@@ -8858,9 +8858,9 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 
     n = (rowsel)? rs : cs ;
     for (i=0; i<n; i++) {
-	x = gretl_vector_get(sel, i);
-	j = (x != 0);
-	nonzero += j;
+	if (0 != gretl_vector_get(sel, i)) {
+	    nonzero++;
+	}
     }
 
     /* check for extreme cases */
@@ -8875,13 +8875,12 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 
     /* copy selected row/columns */
 	
-    k = 0;
-
     if (rowsel) {
 	ret = gretl_matrix_alloc(nonzero, ca);
 	if (ret == NULL) {
 	    goto bailout;
 	}
+	k = 0;
 	for (i=0; i<ra; i++) {
 	    if (0 != gretl_vector_get(sel, i)) {
 		for (j=0; j<ca; j++) {
