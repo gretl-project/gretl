@@ -4,46 +4,34 @@ docsrc = $(topsrc)/doc
 GUIDE = gretl-guide-es.pdf
 REF = gretl-ref-es.pdf
 
-TEXSRC = cli.tex \
-	criteria.tex \
-	graphs.tex \
-	modes.tex \
-	persistent.tex \
-	sampling.tex \
-	trouble.tex \
-	looping.tex \
-	starting.tex \
-	discrete.tex \
-	appendices.tex \
-	matrices.tex \
-	introduction.tex \
-	datafiles.tex \
-	robust_vcv.tex \
-	panel.tex \
-	genr.tex \
+TEXSRC = appendices.tex \
 	biblio.tex \
-	mle.tex \
-	gmm.tex \
-	probit.tex \
-	nls.tex \
-	timeseries.tex \
-	vecm.tex \
-	functions.tex \
-	gretltex.tex \
-	cheatsheet.tex \
+	cli.tex \
+	datafiles.tex \
+	genr.tex \
+	graphs.tex \
+	gretl-guide-es.tex \
+	gretl-ref-es.tex \
+	introduction.tex \
+	looping.tex \
+	modes.tex \
+	native.tex \
+	panel.tex \
 	reftables.tex \
-	cmdref.tex \
-	funcref.tex \
-	optarg.tex
+	starting.tex \
+	trouble.tex \
+	vecm.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
+
+all: $(GUIDE) $(REF)
 
 $(GUIDE): gretl-guide-es.tex links textables
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-es.tex links cmdtex functex topiclist
+$(REF): gretl-ref-es.tex links cmdtex topiclist
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -54,7 +42,7 @@ gretl-guide-es.tex:
 gretl-ref-es.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_es/$@ . ; fi
 
-.PHONY : links cmdtex functex textables onepass refpass topiclist install clean
+.PHONY : links cmdtex textables onepass refpass topiclist install clean
 
 links:
 	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
@@ -71,14 +59,11 @@ topiclist:
 textables:
 	make -C ../commands textables
 
-functex:
-	make -C ../commands functex_es
-
 onepass: gretl-guide-es.tex links textables
-	pdflatex gretl-guide-es
+	pdflatex gretl-guide-it
 
-refpass: gretl-ref-es.tex links cmdtex functex topiclist
-	pdflatex gretl-ref-es
+refpass: gretl-ref-es.tex links cmdtex topiclist
+	pdflatex gretl-ref-it
 
 install: $(GUIDE) $(REF)
 	cp $(GUIDE) $(REF) $(WEBDIR)
@@ -87,7 +72,7 @@ clean:
 	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
 	rm -f ../commands/textables ../commands/topiclist_es 
-	rm -f ../commands/cmdtex_es ../commands/functex_es
+	rm -f ../commands/cmdtex_es 
 
 distclean: clean
 	rm -rf CVS

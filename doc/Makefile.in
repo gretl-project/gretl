@@ -1,24 +1,6 @@
-topsrc = @top_srcdir@
-datarootdir = @datarootdir@
+SUBDIRS = tex tex_it tex_es
 
-# location of various things
-
-WEBDIR = /home/cottrell/stats/esl/website
-CHAPDIR = $(topsrc)/doc/chapters
-CHAPDIR_IT = $(topsrc)/doc/chapters_it
-CMDSDIR = $(topsrc)/doc/commands
-
-REF_CHAPTERS = $(CHAPDIR)/cmdref.xml $(CHAPDIR)optarg.xml
-CMDLIST = chapters/cmdlist.xml
-CMDREF = $(CMDSDIR)/gretl_commands.xml
-
-REF_CHAPTERS_IT = $(CHAPDIR_IT)/cmdref.xml $(CHAPDIR_IT)/optarg.xml
-CMDLIST_IT = chapters_it/cmdlist.xml
-CMDREF_IT = $(CMDSDIR)/gretl_commands.xml
-
-SUBDIRS = tex tex_it
-
-.PHONY : subdirs $(SUBDIRS) texfigs clean install 
+.PHONY : subdirs $(SUBDIRS) clean install 
 
 subdirs: $(SUBDIRS)
 

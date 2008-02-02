@@ -181,6 +181,15 @@ cmdtex_it: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	./reflow < tmp.txt > ../tex_it/refbody.tex && \
 	rm tmp.xml
 	touch $@
+	
+cmdtex_es: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/gretl_commands_es.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --cmds --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < tmp.txt > ../tex_es/refbody.tex && \
+	rm tmp.xml
+	touch $@
 
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
 	./topiclist $(CMDSDIR)/gretl_commands.xml > ../tex/cmdtopics.tex && \
@@ -188,6 +197,10 @@ topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
 
 topiclist_it: topiclist $(CMDSDIR)/gretl_commands_it.xml
 	LANG=it_IT ./topiclist $(CMDSDIR)/gretl_commands_it.xml > ../tex_it/cmdtopics.tex && \
+	touch $@ 
+	
+topiclist_es: topiclist $(CMDSDIR)/gretl_commands_es.xml
+	LANG=es_ES ./topiclist $(CMDSDIR)/gretl_commands_es.xml > ../tex_es/cmdtopics.tex && \
 	touch $@ 
 
 # test validity of skeleton.xml, and ability of xsltrans

@@ -3871,7 +3871,9 @@
 	<lit>r1</lit> y <lit>r2</lit> de <repl>listarho</repl>, se
 	crea
       </para>
-      <code>v1# = v1 - r1*v1(-1) - r2*v1(-2)</code> 
+      <code>
+	v1# = v1 - r1*v1(-1) - r2*v1(-2)
+      </code> 
       <para>
 	Las entradas de <repl>listarho</repl> pueden darse como valores
 	numéricos o como nombres de variables definidas previamente.
