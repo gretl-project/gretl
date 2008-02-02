@@ -1,16 +1,16 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="ISO-8859-1" ?>
 <!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
 <funcref language="italian">
 
-  <funclist name="Accessors" ref="accessors">
+  <funclist name="Accessori" ref="accessors">
 
     <function name="$ahat" output="series">
       <description>
 	<para>
-	  Must follow the estimation of a fixed-effect panel data model.
-	  Returns the estimates of individual fixed effects (per-unit
-	  intercepts).
+          Deve seguire la stima di un modello panel a effetti fissi. Produce le
+          stime degli effetti fissi individuali (intercette delle singole
+          unità).
 	</para>
       </description>
     </function>
@@ -18,8 +18,8 @@
     <function name="$aic" output="scalar">
       <description>
 	<para>
-	  Returns the Akaike Information Criterion for the last estimated
-	  model. 
+	  Produce il criterio di informazione di Akaike per l'ultimo modello
+          stimato.
 	</para>
       </description>
     </function>
@@ -27,8 +27,8 @@
     <function name="$bic" output="scalar">
       <description>
 	<para>
-	  Returns Schwarz's Bayesian Information Criterion for the last
-	  estimated model.
+	  Produce il criterio di informazione bayesiana di Schwarz per l'ultimo
+          modello stimato.
 	</para>
       </description>
     </function>
@@ -39,10 +39,10 @@
       </fnargs>
       <description>
 	<para>
-	The <lit>$coeff</lit> accessor can be used in two ways: with no
-	  arguments, it returns a column vector containing the estimated
-	  coefficients for the last model. With the optional argument, it
-	  returns a scalar, which is the estimated parameter named
+	  L'accessorio <lit>$coeff</lit> può essere usato in due modi: senza argomenti
+	  produce un vettore colonna che contiene i coefficienti dell'ultimo
+          modello stimato. Con l'argomento opzionale, produce uno scalare che
+          corrisponde alla stima del coefficiente chiamato
 	  <argname>s</argname>.
 	  <seelist>
 	    <fncref targ="$stderr"/>
@@ -50,7 +50,7 @@
 	  </seelist>
 	</para>
 	<para>
-	  Example:
+	  Esempio:
 	</para>
 	<code>
 	  open bjg
@@ -59,10 +59,10 @@
 	  macoef = $coeff(theta_1)
 	</code>
 	<para>
-	  If the <quote>model</quote> in question is actually a system (a
-	  VAR or VECM, or system of simultaneous equations),
-	  <lit>$coeff</lit> with no parameters returns the matrix of
-	  coefficients, one column per equation.
+	  Se il <quote>modello</quote> in questione è effettivamente un sistema
+          (un VAR o un VECM, o un sistema di equazioni simultanee),
+	  <lit>$coeff</lit> senza parametri produce la matrice dei coefficienti,
+          una colonna per equazione.
 	</para>
       </description>
     </function>
@@ -70,8 +70,8 @@
     <function name="$compan" output="matrix">
       <description>
 	<para>
-	  Must follow the estimation of a VAR or a VECM; returns the
-	  companion matrix.
+	  Deve seguire la stima di un VAR o un VECM; produce la matrice
+          relativa.
 	</para>
       </description>
     </function>
@@ -79,7 +79,7 @@
     <function name="$df" output="scalar">
       <description>
 	<para>
-	  Returns the degrees of freedom of the last estimated model.
+	  Produce i gradi di libertà dell'ultimo modello stimato.
 	</para>
       </description>
     </function>
@@ -87,7 +87,8 @@
     <function name="$ess" output="scalar">
       <description>
 	<para>
-	  Returns the error sum of squares of the last estimated model.
+	  Produce la somma dei quadrati degli errori dell'ultimo modello
+          stimato.
 	</para>
       </description>
     </function>
@@ -95,8 +96,8 @@
     <function name="$gmmcrit" output="scalar">
       <description>
 	<para>
-	  Must follow a <lit>gmm</lit> block. Returns the value of the
-	  objective function at its minimum.
+	  Deve seguire un blocco <lit>gmm</lit>. Produce il valore della
+          funzione obiettivo al suo minimo.
 	</para>
       </description>
     </function>
@@ -104,8 +105,17 @@
     <function name="$h" output="series">
       <description>
 	<para>
-	  Must follow a <lit>garch</lit> command. Returns the estimated
-	  conditional variance.
+	  Deve seguire un comando <lit>garch</lit>. Produce la varianza condizionale stimata.
+	</para>
+      </description>
+    </function>
+
+    <function name="$hausman" output="rvec">
+      <description>
+	<para>
+	  Deve seguire un comando <lit>tsls</lit>. Produce un vettore <by r="1"
+	  c="3"/> contenente nell'ordine: il valore della statistica del test di Hausman,
+          i corrispondenti gradi di libertà e p-value.
 	</para>
       </description>
     </function>
@@ -113,8 +123,8 @@
     <function name="$hqc" output="scalar">
       <description>
 	<para>
-	  Returns the Hannan-Quinn Information Criterion for the last
-	  estimated model.
+	  Produce il criterio di informazione di Hannan-Quinn per l'ultimo
+          modello stimato.
 	</para>
       </description>
     </function>
@@ -122,9 +132,9 @@
     <function name="$jalpha" output="matrix">
       <description>
 	<para>
-	  Must follow the estimation of a VECM, and returns the loadings
-	  matrix. It has as many rows as variables in the VECM and as many
-	  columns as the cointegration rank.
+	  Deve seguire la stima di un VECM, e produce la matrice dei pesi, che
+          contiene tante righe quante sono le variabili del VECM e tante colonne
+          quanto è il rango di cointegrazione.
 	</para>
       </description>
     </function>
@@ -132,9 +142,9 @@
     <function name="$jbeta" output="matrix">
       <description>
 	<para>
-	  Must follow the estimation of a VECM, and returns the
-	  cointegration matrix. It has as many rows as variables in the
-	  VECM and as many columns as the cointegration rank.
+	  Deve seguire la stima di un VECM, e produce la matrice di
+          cointegrazione, che contiene tante righe quante sono le variabili del
+          VECM e tante colonne quanto è il rango di cointegrazione.
 	</para>
       </description>
     </function>
@@ -142,29 +152,38 @@
     <function name="$jvbeta" output="smatrix">
       <description>
 	<para>
-	  Must follow the estimation of a VECM, and returns the estimated
-	  covariance matrix for the elements of the cointegration vectors.
+	  Deve seguire la stima di un VECM, e produce la matrice di covarianza
+          stimata per gli elementi dei vettori di cointegrazione.
 	</para>
 	<para>
-	  In the case of unrestricted estimation, it has a number of rows
-	  equal to the unrestricted elements of the cointegration space
-	  after the Phillips normalization. If, however, a restricted
-	  system is estimated via the <lit>restrict</lit> command with the
-	  <lit>--full</lit> option, a singular matrix with <math>nr</math>
-	  rows will be returned (<math>n</math> being the number of
-	  variables and <math>r</math> the cointegration rank).
+	  Nel caso di stima non vincolata, ha un numero di righe pari al numero
+          di elementi non vincolati nello spazio di cointegrazione dopo la
+          normalizzazione di Phillips. Se però si stima un sistema vincolato con
+          il comando <lit>restrict</lit> e l'opzione <lit>--full</lit>, verrà
+          prodotta una matrice singolare con <math>nr</math> righe (<math>n</math>
+          è il numero delle variabili e <math>r</math> è il rango di
+          cointegrazione).
 	</para>
 	<para>
-	  Example: the code
+	  Esempio: il codice
 	</para>
 	<code>
-	  open bjg 
-	  arima 0 1 1 ; 0 1 1 ; lg 
-	  b = $coeff 
-	  macoef = $coeff(theta_1)
+	  open denmark.gdt
+	  vecm 2 1 LRM LRY IBO IDE --rc --seasonals -q
+	  s0 = $jvbeta
+
+	  restrict --full
+	  b[1,1] = 1
+	  b[1,2] = -1
+	  b[1,3] + b[1,4] = 0
+	  end restrict
+	  s1 = $jvbeta
+
+	  print s0
+	  print s1
 	</code>
 	<para>
-	  produces the following output.
+	  produce il risultato seguente.
 	</para>
 	<code>
 	  s0 (4 x 4)
@@ -188,8 +207,8 @@
     <function name="$lnl" output="scalar">
       <description>
 	<para>
-	  Returns the log-likelihood for the last estimated model (where
-	  applicable).
+	  Produce la log-verosimiglianza dell'ultimo modello stimato (dove
+          possibile).
 	</para>
       </description>
     </function>
@@ -197,7 +216,7 @@
     <function name="$ncoeff" output="scalar">
       <description>
 	<para>
-	  Total number of coefficients estimated in the last model.
+	  Produce il numero totale dei coefficienti stimati nell'ultimo modello.
 	</para>
       </description>
     </function>
@@ -205,8 +224,7 @@
     <function name="$nobs" targ="dnobs" output="scalar">
       <description>
 	<para>
-	  Returns the number of observations in the currently selected
-	  sample.
+	  Produce il numero delle osservazioni nel campione selezionato.
 	</para>
       </description>
     </function>
@@ -214,8 +232,7 @@
     <function name="$nvars" output="scalar">
       <description>
 	<para>
-	  Returns the number of variables in the dataset (including the
-	  constant).
+	  Produce il numero delle variabili nel dataset (inclusa la costante).
 	</para>
       </description>
     </function>
@@ -223,8 +240,8 @@
     <function name="$pd" output="scalar">
       <description>
 	<para>
-	  Returns the frequency or periodicity of the data (e.g. 4 for
-	  quarterly data).
+	  Produce la frequenza o la periodicità dei dati (es. 4 per dati
+          trimestrali).
 	</para>
       </description>
     </function>
@@ -232,9 +249,9 @@
     <function name="$pvalue" targ="dpvalue" output="scalar">
       <description>
 	<para>
-	  Returns the p-value of the test statistic that was generated by
-	  the last explicit hypothesis-testing command, if any (e.g.
-	  <lit>chow</lit>).
+	  Produce il p-value della statistica test generata dall'ultimo comando
+          esplicito di test di ipotesi (es.  <lit>chow</lit>).  Si veda <guideref
+          targ="sec:genr-internal"/> per i dettagli.
 	  <seelist>
 	    <fncref targ="$test"/>
 	  </seelist>
@@ -248,10 +265,10 @@
       </fnargs>
       <description>
 	<para>
-	  Without arguments, returns the first-order autoregressive
-	  coefficient for the residuals of the last model. After
-	  estimating a model via the <lit>ar</lit> command, the syntax
-	  <lit>$rho(n)</lit> returns the corresponding estimate of
+	  Senza argomenti, produce il coefficiente autoregressivo del
+          prim'ordine per i residui dell'ultimo modello. Dopo aver stimato un
+          modello con il comando <lit>ar</lit>, la sintassi
+	  <lit>$rho(n)</lit> produce la corrispondente stima di
 	  &rgr;(<math>n</math>).
 	</para>
       </description>
@@ -260,8 +277,19 @@
     <function name="$rsq" output="scalar">
       <description>
 	<para>
-	  Returns the unadjusted <math>R</math><super>2</super> from the
-	  last estimated model.
+	  Produce l'<math>R</math><super>2</super> non corretto dell'ultimo
+          modello stimato.
+	</para>
+      </description>
+    </function>
+
+    <function name="$sargan" output="rvec">
+      <description>
+	<para>
+	  Deve seguire un comando <lit>tsls</lit>. Produce un vettore <by r="1"
+	  c="3"/> che contiene nell'ordine: il valore della statistica del test
+          di Sargan per la sovraidentificazione, i corrispondenti gradi di
+          libertà e il p-value.
 	</para>
       </description>
     </function>
@@ -339,7 +367,8 @@
 	<para>
 	  Returns the value of the test statistic that was generated by
 	  the last explicit hypothesis-testing command, if any (&eg;
-	  <lit>chow</lit>). 
+	  <lit>chow</lit>). See <guideref targ="sec:genr-internal"/> 
+	  for details.
 	  <seelist>
 	    <fncref label="\$pvalue" targ="dpvalue"/>
 	  </seelist>
@@ -435,6 +464,35 @@
       </description>
     </function>
 
+    <function name="BFGSmax" output="scalar">
+      <fnargs>
+	<fnarg type="vector">b</fnarg>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Numerical maximization via the method of Broyden, Fletcher, Goldfarb
+	  and Shanno.  The vector <argname>b</argname> should hold the initial
+	  values of a set of parameters, and the string <argname>s</argname>
+	  should specify a call to a function that calculates the (scalar)
+	  criterion to be maximized, given the current parameter values and
+	  any other relevant data. If the object is in fact minimization, this
+	  function should return the negative of the criterion.  On successful
+	  completion, <lit>BFGSmax</lit> returns the maximized value of the
+	  criterion, and <argname>b</argname> holds the parameter values which
+	  produce the maximum.  
+	</para>
+	<para>
+	  For more details and examples see the chapter
+	  on special functions in <lit>genr</lit> in 
+	  <guideref targ="sec:genr-numerical"/>.
+	  <seelist>
+	    <fncref targ="fdjac"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="bkfilt" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -469,6 +527,11 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
+      <examples>
+	<example>p1 = cdf(N, -2.5)</example>
+	<example>p2 = cdf(X, 3, 5.67)</example>
+	<example>p3 = cdf(D, 0.25, -1, 1)</example>
+      </examples>
       <description>
 	<para>
 	  Cumulative distribution function calculator. Returns 
@@ -512,7 +575,7 @@
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b or B): Binomial probability; number of trials
+	      Binomial (b or B): probability; number of trials
 	    </para>
 	  </li>	  
 	  <li>
@@ -730,6 +793,10 @@
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">p</fnarg>
       </fnargs>
+      <examples>
+	<example>c1 = critical(t, 20, 0.025)</example>
+	<example>c2 = critical(F, 4, 48, 0.05)</example>
+      </examples>
       <description>
 	<para>
 	  Critical value calculator. Returns <math>x</math> such that
@@ -761,6 +828,11 @@
 	      Snedecor's F (f or F): df (num.); df (den.)
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      Binomial (b or B): probability; trials
+	    </para>
+	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center} 
@@ -775,6 +847,8 @@
 	  degrees of freedom &amp; -- \\
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; 
 	  df (num.) &amp; df (den.) \\ 
+	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
+	  $p$ &amp; $n$ \\ 
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -1011,6 +1085,28 @@
       </description>
     </function>
 
+    <function name="fdjac" output="matrix">
+      <fnargs>
+	<fnarg type="cvec">b</fnarg>
+	<fnarg type="string">s</fnarg>
+      </fnargs> 
+      <description>
+	<para>
+	  Calculates the (forward-difference approximation to the) Jacobian
+	  associated with the vector <argname>b</argname> and the
+	  transformation function defined by the function call in the string
+	  <argname>s</argname>. For more details and examples see the chapter
+	  on special functions in <lit>genr</lit> in 
+	  <guideref targ="sec:genr-numerical"/>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="BFGSmax"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="fft" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -1023,7 +1119,7 @@
 	  odd columns and the complex parts in the even ones.
 	</para>
 	<para>
-	Should it be necessary to compute the Fourier transform on several
+	  Should it be necessary to compute the Fourier transform on several
 	  vectors with the same number of elements, it is numerically more
 	  efficient to group them into a matrix rather than invoking
 	  <lit>fft</lit> for each vector separately.  
@@ -1395,6 +1491,11 @@
 	      Snedecor's F (f or F): df (num.); df (den.)
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      Binomial (b or B): probability; trials
+	    </para>
+	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center} 
@@ -1409,6 +1510,8 @@
 	  degrees of freedom &amp; -- \\
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; 
 	  df (num.) &amp; df (den.) \\ 
+	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
+	  $p$ &amp; $n$ \\
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -1466,8 +1569,8 @@
 	  a list. Mainly used for checking arguments passed to functions.
 	  <seelist>
 	    <fncref targ="islist"/>
-	    <fncref targ="isnull"/>
 	    <fncref targ="isseries"/>
+	    <fncref targ="isstring"/>
 	  </seelist>
 	</para>
       </description>
@@ -1485,7 +1588,7 @@
 	  <seelist> 
 	    <fncref targ="islist"/>
 	    <fncref targ="isnull"/>
-	    <fncref targ="isseries"/>
+	    <fncref targ="isstring"/>
 	  </seelist>
 	</para>
       </description>
@@ -1501,9 +1604,9 @@
 	  defined series. Mainly used for checking arguments passed to
 	  functions.  
 	  <seelist> 
-	    <fncref targ="isseries"/>
 	    <fncref targ="islist"/>
 	    <fncref targ="isnull"/>
+	    <fncref targ="isseries"/>
 	  </seelist>
 	</para>
       </description>
@@ -2437,7 +2540,12 @@
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>    
+      </fnargs> 
+      <examples>
+	<example>p1 = pvalue(z, 2.2)</example>
+	<example>p2 = pvalue(X, 3, 5.67)</example>
+	<example>p2 = pvalue(F, 3, 30, 5.67)</example>
+      </examples>
       <description>
 	<para>
 	  <math>P</math>-value calculator. Returns 
@@ -2519,25 +2627,28 @@
       </description>
     </function>
 
-    <function name="quantile" output="scalar">
+    <function name="quantile" output="scalar" altout="rvec">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="pscalar">p</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the <argname>p</argname>-quantile for the series
-	  <argname>y</argname>. For example, when <math>p</math> = 0.5,
-	  the median is returned. 
+	  Given a series argument, returns the
+	  <argname>p</argname>-quantile for the series. For example, when
+	  <math>p</math> = 0.5, the median is returned. Given a
+	  matrix argument, returns a row vector containing the 
+	  <argname>p</argname>-quantiles for the columns of 
+	  <argname>y</argname>; that is, each column is treated
+	  as a series.
 	</para>
 	<para context="tex">
-	  The exact algorithm employed is the following: let $n$ be the
-	  number of non-missing values in <argname>y</argname> and let $k$
-	  be the integer part of $n \cdot p$. Then the return value $q$ is
-	  defined as: 
+	  For a series of length $n$, the $p$-quantile, $q$, is defined
+	  as:
 	  \[q = y_{[k]} + (n \cdot p - k) (y_{[k+1]} - y_{[k]})\] 
-	  where $y_{[i]}$ is the $i$-th element of
-	  <math>y</math> sorted from smallest to largest.
+	  where $k$ is the integer part of $n \cdot p$ and 
+	  $y_{[i]}$ is the $i$-th element of the series when
+	  sorted from smallest to largest.
 	</para>
       </description>
     </function>
@@ -2593,6 +2704,12 @@
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
       </fnargs>
+      <examples>
+	<example>series x = randgen(u, 0, 100)</example>
+	<example>series t14 = randgen(t, 14)</example>
+	<example>series y = randgen(B, 0.6, 30)</example>
+	<example>series g = randgen(G, 1, 1)</example>
+      </examples>
       <description>
 	<para>
 	  All-purpose random number generator. The parameter
@@ -2634,7 +2751,7 @@
 	  </li>	  
 	  <li>
 	    <para>
-	      Binomial (b or B): Binomial probability; number of trials
+	      Binomial (b or B): probability; number of trials
 	    </para>
 	  </li>	  
 	  <li>
@@ -2653,20 +2770,11 @@
 	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; --\\
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.)\\
 	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale \\
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $n$ &amp; $p$ \\
+	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$ \\
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; --
 	  \end{tabular}
 	  \end{center}
 	</para>
-	<para>
-	  Examples:
-	</para>
-	<code>
-	  series x = randgen(u, 0, 100)
-	  series t14 = randgen(t, 14)
-	  series y = randgen(B, 0.6, 30)
-	  series g = randgen(G, 1, 1)
-	</code>
 	<para>
 	  <seelist>
 	    <fncref targ="normal"/>
@@ -2723,6 +2831,27 @@
 	  a matrix argument is given, each row of the returned matrix
 	  is drawn from the rows of <argname>x</argname> with equal
 	  probability.
+	</para>
+      </description>
+    </function>
+
+    <function name="round" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Rounds to the nearest integer. Note that when <math>x</math>
+	  lies halfway between two integers, rounding is done "away
+	  from zero", so for example 2.5 rounds to 3, but 
+	  <lit>round(-3.5)</lit> gives &minus;4. This is a common
+	  convention in spreadsheet programs, but other software may
+	  yield different results.
+	  <seelist>
+	    <fncref targ="ceil"/>
+	    <fncref targ="floor"/>
+	    <fncref targ="int"/>
+	  </seelist>
 	</para>
       </description>
     </function>
