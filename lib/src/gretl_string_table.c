@@ -406,21 +406,45 @@ char *get_named_string (const char *name)
     return NULL;
 }
 
-static int append_to_saved_string (const char *name, char **s)
+static int append_to_newstr (char **newstr, char *s, int offset)
 {
-    saved_string *str;
     char *tmp;
     int n;
 
-    str = get_saved_string_by_name(name, NULL);
-    if (str == NULL) {
-	return E_UNKVAR;
+    if (*newstr != NULL) {
+	n = strlen(*newstr) + strlen(s) + 1;
+    } else {
+	n = strlen(s) + 1;
     }
 
-    if (str->s != NULL) {
-	n = strlen(str->s) + strlen(*s) + 1;
+    tmp = malloc(n - offset);
+
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    if (*newstr != NULL) {
+	strcpy(tmp, *newstr);
+	free(*newstr);
     } else {
-	n = strlen(*s) + 1;
+	*tmp = '\0';
+    }
+
+    strcat(tmp, s + offset);
+    *newstr = tmp;
+
+    return 0;
+}
+
+static int append_to_saved_string (saved_string *str, char *s)
+{
+    char *tmp;
+    int n;
+
+    if (str->s != NULL) {
+	n = strlen(str->s) + strlen(s) + 1;
+    } else {
+	n = strlen(s) + 1;
     }
 
     tmp = malloc(n);
@@ -436,9 +460,7 @@ static int append_to_saved_string (const char *name, char **s)
 	*tmp = '\0';
     }
 
-    strcat(tmp, *s);
-    free(*s);
-    *s = NULL;
+    strcat(tmp, s);
     str->s = tmp;
     
     return 0;
@@ -625,7 +647,16 @@ static int shell_grab (const char *arg, char **sout)
     }
 
     arg += strspn(arg, " \t");
-    gretl_shell_grab(arg, sout);
+
+    if (strchr(arg, '@')) {
+	char tmp[MAXLEN];
+
+	strcpy(tmp, arg);
+	substitute_named_strings(tmp);
+	gretl_shell_grab(tmp, sout);
+    } else {
+	gretl_shell_grab(arg, sout);
+    }
 
     if (sout != NULL && *sout != NULL) {
 	/* trim trailing newline */
@@ -711,6 +742,106 @@ static char *gretl_getenv (const char **pline, int *err)
     return val;
 }
 
+static char *strim (char *s)
+{
+    int n;
+
+    tailstrip(s);
+    n = strlen(s);
+    if (n > 0 && s[n-1] == '"') {
+	s[n-1] = '\0';
+    }
+
+    return s;
+}
+
+static char *gretl_strstr (const char **pline, int *err)
+{
+    char *haystack = NULL, *needle = NULL;
+    const char *s, *p = *pline;
+    char *tmp, *ret = NULL;
+    int n;
+
+    p += strspn(p, " \t\r\n");
+    s = p;
+
+    if (*p == '"') {
+	s++;
+	p++;
+	p = strchr(p, '"');
+	if (p != NULL) {
+	    p = strchr(p, ',');
+	}
+    } else {
+	p = strchr(p, ',');
+    }
+
+    if (p == NULL) {
+	*err = E_PARSE;
+    } else {
+	n = p - s;
+	haystack = gretl_strndup(s, n);
+	p++;
+	p += strspn(p, " \t\r\n");
+	s = p;
+	if (*p == '"') {
+	    p++;
+	    s++;
+	    p = strchr(p, '"');
+	    if (p != NULL) {
+		p = strrchr(p, ')');
+	    }
+	} else {
+	    p = strrchr(p, ')');
+	}
+	if (p == NULL) {
+	    *err = E_PARSE;
+	} else {
+	    n = p - s;
+	    needle = gretl_strndup(s, n);
+	}
+    }
+
+    if (haystack != NULL && needle != NULL) {
+
+	strim(haystack);
+	if (*haystack == '@') {
+	    tmp = get_named_string(haystack + 1);
+	    if (tmp != NULL) {
+		free(haystack);
+		haystack = gretl_strdup(tmp);
+	    } 
+	}
+
+	strim(needle);
+	if (*needle == '@') {
+	    tmp = get_named_string(needle + 1);
+	    if (tmp != NULL) {
+		free(needle);
+		needle = gretl_strdup(tmp);
+	    }
+	}
+    } 
+
+    if (haystack != NULL && needle != NULL) {
+	tmp = strstr(haystack, needle);
+	if (tmp != NULL) {
+	    ret = gretl_strdup(tmp);
+	} else {
+	    ret = gretl_strdup("");
+	}
+    }	
+
+    if (!*err && p != NULL) {
+	*pline = ++p;
+    }
+
+    free(haystack);
+    free(needle);
+	
+    return ret;
+}
+
 static char *retrieve_arg_name (const char **pline, int *err)
 {
     char argvar[VNAMELEN];
@@ -736,8 +867,19 @@ static char *retrieve_file_content (const char **pline, int *err)
     }
 
     sprintf(fmt, "%%%d[^)])", FILENAME_MAX - 1);
+    *fname = '\0';
 
-    if (sscanf(*pline, fmt, fname) == 1) {
+    if (strchr(*pline, '@')) {
+	char tmp[MAXLINE];
+
+	strcpy(tmp, *pline);
+	substitute_named_strings(tmp);
+	sscanf(tmp, fmt, fname);
+    } else {
+	sscanf(*pline, fmt, fname);
+    }
+
+    if (*fname != '\0') {
 	int n = strlen(fname);
 	GError *gerr = NULL;
 	gsize len = 0;
@@ -797,6 +939,11 @@ static char *get_string_element (const char **pline, int *err)
     if (!strncmp(line, "readfile(", 9)) {
 	*pline += 9;
 	return retrieve_file_content(pline, err);
+    }  
+
+    if (!strncmp(line, "strstr(", 7)) {
+	*pline += 7;
+	return gretl_strstr(pline, err);
     }    
 
     if (!strncmp(line, "$(", 2)) {
@@ -924,6 +1071,35 @@ int save_named_string (const char *name, const char *s, PRN *prn)
     return 0;
 }
 
+/* allow a string element to be of the form "str + n", to take
+   an offset into str (provided the offset is not greater
+   than the length of str)
+*/
+
+static int get_plus_mod (char *s1, const char **pline, int *plus)
+{
+    const char *s = *pline;
+    int err = 0;
+
+    s += strspn(s, " \t\r\n");
+    if (*s == '+') {
+	s++;
+	s += strspn(s, " \t\r\n");
+	if (isdigit(*s)) {
+	    char *end = NULL;
+
+	    *plus = (int) strtol(s, &end, 10);
+	    if (*plus < 0 || *plus > strlen(s1)) {
+		err = E_DATA;
+	    } else {
+		*pline = end;
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* respond to commands of the forms:
 
      string <name> = "<s1>" "<s2>" ... "<sn>"
@@ -933,7 +1109,7 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 int process_string_command (const char *line, PRN *prn)
 {
     saved_string *str;
-    char *s1 = NULL;
+    char *newstr = NULL;
     char targ[VNAMELEN];
     int builtin = 0;
     int n, add = 0;
@@ -992,22 +1168,34 @@ int process_string_command (const char *line, PRN *prn)
 		return E_ALLOC;
 	    }
 	}
-    } else if (!add) {
-	free(str->s);
-	str->s = NULL;
-    }
+    } 
 
     /* add strings(s) to target */
     while (!err && *line != '\0') {
+	char *s1 = NULL;
+	int plus = 0;
+
 	s1 = get_string_element(&line, &err);
 	if (!err) {
-	    err = append_to_saved_string(targ, &s1);
+	    err = get_plus_mod(s1, &line, &plus);
+	    if (!err) {
+		err = append_to_newstr(&newstr, s1, plus);
+	    }
+	    free(s1);
 	}
     }
 
-    if (err) {
-	free(s1);
-    } else if (gretl_messages_on()) {
+    if (!err) {
+	if (add) {
+	    err = append_to_saved_string(str, newstr);
+	    free(newstr);
+	} else {
+	    free(str->s);
+	    str->s = newstr;
+	}
+    }
+
+    if (!err && gretl_messages_on()) {
 	if (str->s[0] == '\0') {
 	    pprintf(prn, "Saved empty string as '%s'\n", targ);
 	} else {

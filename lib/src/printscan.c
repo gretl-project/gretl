@@ -1183,9 +1183,17 @@ int do_sscanf (const char *line, double ***pZ,
     q = args;
 
     while (*r && *p && !err) {
-	while (isspace(*r)) r++;
-	while (isspace(*p)) p++;
-	if (*r == *p) {
+	if (isspace(*p)) {
+	    while (isspace(*r)) r++;
+	    while (isspace(*p)) p++;
+	}
+	if (*r == '\t' && *p == '\\' && *(p+1) == 't') {
+	    r++;
+	    p += 2;
+	} else if (*r == '\n' && *p == '\\' && *(p+1) == 'n') {
+	    r++;
+	    p += 2;
+	} else if (*r == *p) {
 	    r++;
 	    p++;
 	} else if (*p == '%') {
