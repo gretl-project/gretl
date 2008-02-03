@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-29 12:58-0500\n"
-"PO-Revision-Date: 2008-02-03 13:13+0100\n"
+"PO-Revision-Date: 2008-02-03 17:40+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -472,9 +472,8 @@ msgstr "avec p. critique"
 #: lib/src/compare.c:1442
 #: lib/src/modelprint.c:1497
 #: lib/src/modelprint.c:1499
-#, fuzzy
 msgid "Godfrey (1994) test for"
-msgstr "Test de Breush-Godfrey pour"
+msgstr "Test de Godfrey (1994) pour"
 
 #: lib/src/compare.c:1444
 #: lib/src/modelprint.c:1503
@@ -1335,9 +1334,8 @@ msgid "Dataset extended by %d observations"
 msgstr "Jeu de données augmenté de %d observations"
 
 #: lib/src/dataset.c:2806
-#, fuzzy
 msgid "The data set is currently sub-sampled"
-msgstr "Le jeu de données est actuellement sous-échantillonné.\n"
+msgstr "Le jeu de données est actuellement sous-échantillonné"
 
 #: lib/src/dbread.c:349
 #: lib/src/dbread.c:590
@@ -1345,9 +1343,8 @@ msgid "Couldn't open database index file"
 msgstr "Ne peut ouvrire le fichier index de la base de données"
 
 #: lib/src/dbread.c:369
-#, fuzzy
 msgid "Couldn't open database binary file"
-msgstr "Ne peut ouvrire le fichier index de la base de données"
+msgstr "Ne peut ouvrir le fichier binaire de base de données"
 
 #: lib/src/dbread.c:429
 #: lib/src/dbread.c:439
@@ -2147,9 +2144,8 @@ msgstr ""
 #: lib/src/estimate.c:2447
 #: lib/src/gretl_model.c:2591
 #: lib/src/modelprint.c:831
-#, fuzzy
 msgid "Pesaran-Taylor test for heteroskedasticity"
-msgstr "Test de White pour l'hétéroscédasticité"
+msgstr "Test de Pesaran-Taylor pour l'hétéroscédasticité"
 
 #: lib/src/estimate.c:2455
 #: lib/src/gretl_model.c:2570
@@ -2838,18 +2834,17 @@ msgid "The restrictions do not identify the parameters"
 msgstr "Les restrictions ne permettent pas l'identification des paramètres"
 
 #: lib/src/gretl_errors.c:69
-#, fuzzy
 msgid "External command failed"
-msgstr "échec de la commande de dispersion\n"
+msgstr "échec de la commande extérieure"
 
 #: lib/src/gretl_func.c:2300
 msgid "No description available"
 msgstr "Pas de description disponible"
 
 #: lib/src/gretl_func.c:2399
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted function '%s'\n"
-msgstr "Helper functions"
+msgstr "Fonction '%s' supprimée\n"
 
 #: lib/src/gretl_func.c:2886
 msgid "You can't change the name of a function here"
@@ -3318,9 +3313,8 @@ msgstr ""
 " les restrictions peuvent être inconsistentes ou redondantes\n"
 
 #: lib/src/gretl_restrict.c:764
-#, fuzzy
 msgid "Please give a coefficient number"
-msgstr "SVP veuillez fournir un nom au jeu de données courant"
+msgstr "SVP veuillez fournir un nombre de coefficients"
 
 #: lib/src/gretl_restrict.c:771
 #, fuzzy, c-format
@@ -3549,9 +3543,9 @@ msgid "p-value for %s test"
 msgstr "p. critique pour le %s test"
 
 #: lib/src/gretl_utils.c:1585
-#, fuzzy, c-format
+#, c-format
 msgid "log-likelihood for %s test"
-msgstr "Log de vraisemblance pour %s"
+msgstr "Log de vraisemblance du test %s"
 
 #: lib/src/gretl_win32.c:49
 #, c-format
@@ -3838,9 +3832,8 @@ msgstr ""
 "Pour de l'aide concernant une commande spécifique, taper : help nom_de_commande"
 
 #: lib/src/interact.c:2709
-#, fuzzy
 msgid " (e.g. help qrdecomp)\n"
-msgstr " (i.e. help smpl)\n"
+msgstr " (e.g. help qrdecomp)\n"
 
 #: lib/src/interact.c:2740
 msgid ""
@@ -3937,9 +3930,9 @@ msgstr "Aucune information disponible sur les données.\n"
 #: lib/src/interact.c:3837
 #: lib/src/interact.c:5164
 #: gui2/library.c:6425
-#, fuzzy, c-format
+#, c-format
 msgid "Unmatched \"%s\""
-msgstr "Unmatched '%c'\n"
+msgstr "Unmatched \"%s\""
 
 #: lib/src/interact.c:3989
 #: lib/src/interact.c:3998
@@ -4123,9 +4116,8 @@ msgid "Robust estimation"
 msgstr "Estimation robuste"
 
 #: lib/src/libset.c:1138
-#, fuzzy
 msgid "Filtering"
-msgstr "Filtre"
+msgstr "Filtrage"
 
 #: lib/src/libset.c:1152
 #: gui2/dialogs.c:4039
@@ -5425,9 +5417,9 @@ msgid "Analytical derivatives cannot be used with GMM"
 msgstr "Les dérivées analytiques ne peuvent être utilisées avec les GMM"
 
 #: lib/src/nls.c:2371
-#, fuzzy, c-format
+#, c-format
 msgid "command '%s' not valid in this context"
-msgstr "Le symbole '%s' n'est pas valide dans ce contexte \n"
+msgstr "la commande '%s' n'est pas valide dans ce contexte"
 
 #: lib/src/nls.c:2589
 msgid "No regression function has been specified"
@@ -5561,9 +5553,9 @@ msgid "Under the null hypothesis of randomness, R follows N(%g, %g)\n"
 msgstr "Sous l'hypothèse nulle de distribution aléatoire, R suit N(%f, %f)\n"
 
 #: lib/src/nonparam.c:741
-#, fuzzy, c-format
+#, c-format
 msgid "z-score = %g, with two-tailed p-value %g\n"
-msgstr "z = %f, avec une p. critique bilatérale %f\n"
+msgstr "z-score = %g, avec une p. critique bilatérale %g\n"
 
 #: lib/src/nonparam.c:775
 #, c-format
@@ -5963,12 +5955,12 @@ msgstr "Gradiant :"
 
 #: lib/src/printscan.c:648
 msgid "sscanf: numerical target must be scalar"
-msgstr ""
+msgstr "sscanf : la cible numérique doit être un scalaire"
 
 #: lib/src/printscan.c:799
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not a string variable"
-msgstr "une variable de traçé"
+msgstr "%s : pas une variable de texte"
 
 #: lib/src/pvalues.c:976
 #: gui2/calculator.c:1118
@@ -6005,9 +5997,9 @@ msgid "Critical value = %g"
 msgstr "Valeur critique = %g"
 
 #: lib/src/pvalues.c:1178
-#, fuzzy, c-format
+#, c-format
 msgid "area to the right of %g: NA\n"
-msgstr "aire à la droite de %g = %g\n"
+msgstr "aire à la droite de %g : NA\n"
 
 #: lib/src/pvalues.c:1185
 #, c-format
@@ -6278,9 +6270,8 @@ msgstr "Nom de variable indéfini « %s »"
 
 #: lib/src/system.c:1743
 #: plugin/fiml.c:92
-#, fuzzy
 msgid "No list of endogenous variables was given"
-msgstr "Ajouter la liste des variables endogènes"
+msgstr "La liste de variables endogènes n'a pas été donnée"
 
 #: lib/src/system.c:2236
 msgid ""
@@ -6545,11 +6536,9 @@ msgstr "Restrictions sur alpha"
 
 #: lib/src/varprint.c:855
 #: lib/src/varprint.c:859
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g) = %g"
-msgstr ""
-"avec p. critique = prob(Khi-deux(%d) > %g) = %g\n"
-"\n"
+msgstr "P(Chi deux(%d) > %g) = %g"
 
 #: lib/src/varprint.c:879
 #: lib/src/varprint.c:881
@@ -6558,26 +6547,26 @@ msgid "Relative to prior restriction"
 msgstr "ajouter à la restriction courante"
 
 #: lib/src/varprint.c:893
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood $(l_u) = %.8g$"
-msgstr "Log de vraisemblance non restreinte"
+msgstr "Log de vraisemblance non restreinte $(l_u) = %.8g$"
 
 #: lib/src/varprint.c:895
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood $(l_r) = %.8g$"
-msgstr "Log de vraisemblance restreinte"
+msgstr "Log de vraisemblance restreinte $(l_r) = %.8g$"
 
 #: lib/src/varprint.c:897
 #: lib/src/varprint.c:901
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g"
-msgstr "Log de vraisemblance non restreinte"
+msgstr "Log de vraisemblance non restreinte (lu) = %.8g"
 
 #: lib/src/varprint.c:899
 #: lib/src/varprint.c:903
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood (lr) = %.8g"
-msgstr "Log de vraisemblance restreinte"
+msgstr "Vraisemblance restreinte (lr) = %.8g"
 
 #: lib/src/varprint.c:922
 msgid "Cointegration rank"
@@ -6586,9 +6575,8 @@ msgstr "Rang de cointégration"
 #: lib/src/varprint.c:953
 #: lib/src/varprint.c:957
 #: lib/src/varprint.c:961
-#, fuzzy
 msgid "Portmanteau test"
-msgstr "Test de Johansen"
+msgstr "Test porte-manteau"
 
 #: lib/src/varprint.c:1008
 #: lib/src/varprint.c:1010
@@ -7131,9 +7119,8 @@ msgid "gretl: p-value"
 msgstr "gretl: valeur de P"
 
 #: gui2/calculator.c:1287
-#, fuzzy
 msgid "You must give a name for the variable"
-msgstr "Vous devez sélectionner une variable facteur"
+msgstr "Vous devez donner un nom à la variable"
 
 #: gui2/calculator.c:1294
 msgid "Range is non-positive!"
@@ -7637,9 +7624,8 @@ msgid "Open JMulTi file"
 msgstr "Ouvrir le fichier JMulTi"
 
 #: gui2/callbacks.c:197
-#, fuzzy
 msgid "Open ODS file"
-msgstr "Ouvrir le fichier BOX"
+msgstr "Ouvrir le fichier ODS"
 
 #: gui2/callbacks.c:200
 msgid "gretl: add markers"
@@ -7824,19 +7810,16 @@ msgid "Type a command:"
 msgstr "Tapez une commande :"
 
 #: gui2/callbacks.c:493
-#, fuzzy
 msgid "Save to file"
-msgstr "Sauvegarde dans le fichier..."
+msgstr "Sauvegarde dans le fichier"
 
 #: gui2/callbacks.c:498
-#, fuzzy
 msgid "gretl: save text"
-msgstr "gretl : sauvegarder la matrice"
+msgstr "gretl : sauvegarder le texte"
 
 #: gui2/callbacks.c:498
-#, fuzzy
 msgid "Save text"
-msgstr "Sauvegarder les données"
+msgstr "Sauvegarder le texte"
 
 #: gui2/callbacks.c:520
 msgid "Sorry, not yet implemented"
@@ -7930,9 +7913,8 @@ msgstr ""
 " "
 
 #: gui2/database.c:258
-#, fuzzy
 msgid "Sorry, can't handle this frequency conversion"
-msgstr "Désolé, ne peut traiter cette conversion pour le moment !"
+msgstr "Désolé, ne peut traiter cette conversion de fréquence"
 
 #: gui2/database.c:305
 msgid ""
@@ -7943,9 +7925,8 @@ msgstr ""
 "D'accord pour l'écraser ?"
 
 #: gui2/database.c:477
-#, fuzzy
 msgid "Really delete the selected series?"
-msgstr "Détruire les %d dernières observations ?"
+msgstr "Supprimer les séries sélectionnées ?"
 
 #: gui2/database.c:635
 msgid "Warning: series has missing observations"
@@ -8028,9 +8009,8 @@ msgid "/_Series/_Import"
 msgstr "/_Série/_Importer"
 
 #: gui2/database.c:738
-#, fuzzy
 msgid "/_Series/_Delete"
-msgstr "/Session/_Supprimer"
+msgstr "/_Séries/_Supprimer"
 
 #: gui2/database.c:739
 #: gui2/helpfiles.c:79
@@ -8193,9 +8173,8 @@ msgid "Install"
 msgstr "Installer"
 
 #: gui2/datafiles.c:1044
-#, fuzzy
 msgid "List series"
-msgstr "série temporelle"
+msgstr "Liste des séries"
 
 #: gui2/datafiles.c:1048
 msgid "Look on server"
@@ -8215,9 +8194,9 @@ msgid "local machine"
 msgstr "poste local"
 
 #: gui2/datafiles.c:1162
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: databases on %s"
-msgstr "gretl: bases de données sur le serveur"
+msgstr "gretl: bases de données sur %s"
 
 #: gui2/datafiles.c:1164
 #, fuzzy, c-format
@@ -8250,6 +8229,8 @@ msgid ""
 "No gretl function packages were found on this computer.\n"
 "Do you want to take a look on the gretl server?"
 msgstr ""
+"Aucun paquetage de fonction gretl n'a été trouvé sur cet ordinateur. \n"
+"Noulez-vous regarder sur le serveur gretl ?"
 
 #: gui2/datafiles.c:1494
 #, fuzzy
@@ -8846,15 +8827,15 @@ msgstr "Aucun changement n'a été fait"
 
 #: gui2/dialogs.c:3964
 msgid "Daily (5 days)"
-msgstr ""
+msgstr "Quotidien (5 jours)"
 
 #: gui2/dialogs.c:3965
 msgid "Daily (6 days)"
-msgstr ""
+msgstr "Quotidien (6 jours)"
 
 #: gui2/dialogs.c:3966
 msgid "Daily (7 days)"
-msgstr ""
+msgstr "Quotidien (7 jours)"
 
 #: gui2/dialogs.c:3967
 #: gui2/dialogs.c:4117
@@ -8963,9 +8944,8 @@ msgid "Time index variable:"
 msgstr "Variable d'identification temporelle"
 
 #: gui2/dialogs.c:4614
-#, fuzzy
 msgid "purge missing observations"
-msgstr "Observations manquantes"
+msgstr "retirer les observations manquantes"
 
 #: gui2/dialogs.c:4659
 msgid "The data set contains no suitable index variables"
@@ -10275,9 +10255,8 @@ msgid "/Data/_Transpose data..."
 msgstr "/Données/_Transposer les données..."
 
 #: gui2/gretl.c:356
-#, fuzzy
 msgid "/Data/_Sort data..."
-msgstr "/Données/_Compacter les données..."
+msgstr "/Données/_Trier les données..."
 
 #: gui2/gretl.c:358
 msgid "/Data/_Refresh window"
@@ -10396,9 +10375,8 @@ msgid "/Add/_Time trend"
 msgstr "/Ajouter/Tendance _temporelle"
 
 #: gui2/gretl.c:413
-#, fuzzy
 msgid "/Add/_Random variable..."
-msgstr "/Ajouter/Va_riable aléatoire"
+msgstr "/Ajouter/Va_riable aléatoire..."
 
 #: gui2/gretl.c:417
 msgid "/Add/_Periodic dummies"
@@ -10522,9 +10500,8 @@ msgid "/Variable/_Augmented Dickey-Fuller test"
 msgstr "/Variable/Test de Dickey-Fuller _augmenté "
 
 #: gui2/gretl.c:464
-#, fuzzy
 msgid "/Variable/ADF-GLS test"
-msgstr "/Variable/Test _KPSS"
+msgstr "/Variable/Test ADF-GLS"
 
 #: gui2/gretl.c:465
 msgid "/Variable/_KPSS test"
@@ -10627,9 +10604,8 @@ msgid "/Model/Nonlinear models/To_bit..."
 msgstr "/Modèle/Modèles non-linéaires/To_bit..."
 
 #: gui2/gretl.c:509
-#, fuzzy
 msgid "/Model/Nonlinear models/_Heckit..."
-msgstr "/Modèle/Modèles non-linéaires/_Logit..."
+msgstr "/Modèle/Modèles non-linéaires/_Heckit..."
 
 #: gui2/gretl.c:510
 msgid "/Model/Nonlinear models/Poi_sson..."
@@ -11325,9 +11301,9 @@ msgid "Enter a name"
 msgstr "Entrer un nom"
 
 #: gui2/gui_utils.c:1676
-#, fuzzy, c-format
+#, c-format
 msgid "Saved matrix as %s"
-msgstr "Données sauvées sous %s"
+msgstr "Matrice sauvées sous %s"
 
 #: gui2/gui_utils.c:1686
 msgid "Nothing to send"
@@ -11857,9 +11833,8 @@ msgid "Failed to download file"
 msgstr "Échec de téléchargement du fichier"
 
 #: gui2/library.c:129
-#, fuzzy
 msgid "gretl: iteration info"
-msgstr "gretl : éditer les infos des données"
+msgstr "gretl : infos d'itérations"
 
 #: gui2/library.c:166
 #: gui2/library.c:4665
@@ -13167,9 +13142,8 @@ msgid "Show slopes at mean"
 msgstr "Montrer les pentes à la moyenne"
 
 #: gui2/selector.c:3405
-#, fuzzy
 msgid "Show p-values"
-msgstr "avec p. critique"
+msgstr "Montrer p. critique"
 
 #: gui2/selector.c:3417
 msgid "Use points"
@@ -13211,9 +13185,8 @@ msgid "2-step estimation"
 msgstr "Estimation en deux étapes"
 
 #: gui2/selector.c:3542
-#, fuzzy
 msgid "Maximum likelihood estimation"
-msgstr "Maximum de vraisemblance"
+msgstr "Estimation pa maximum de vraisemblance"
 
 #: gui2/selector.c:3558
 #, fuzzy
@@ -13565,13 +13538,12 @@ msgid "gretl: rename object"
 msgstr "gretl : renommer l'objet"
 
 #: gui2/session.c:2037
-#, fuzzy
 msgid ""
 "Enter new name\n"
 "(max. 31 characters)"
 msgstr ""
-"Entrer le nom de la nouvelle variable\n"
-"(max 15 caractères)"
+"Entrer le nouveau nom\n"
+"(max 31 caractères)"
 
 #: gui2/session.c:2722
 msgid "Data set"
@@ -13729,9 +13701,8 @@ msgid "Allow shell commands"
 msgstr "Permettre les commandes"
 
 #: gui2/settings.c:181
-#, fuzzy
 msgid "Set working directory from shell"
-msgstr "gretl : répertoire de travail"
+msgstr "Définir le répertoire de travail depuis la console"
 
 #: gui2/settings.c:183
 msgid "Command to launch gnuplot"
@@ -13930,12 +13901,10 @@ msgid "the directory selected above"
 msgstr "Le dossier utilisateur n'est pas défini"
 
 #: gui2/settings.c:2362
-#, fuzzy
 msgid "the current directory as determined via the shell"
-msgstr "Utiliser le répertoire courant de travail comme défaut"
+msgstr "le répertoire courant comme déterminé par la console"
 
 #: gui2/settings.c:2409
-#, fuzzy
 msgid "gretl: working directory"
 msgstr "gretl : répertoire de travail"
 
@@ -14158,9 +14127,8 @@ msgid "Back"
 msgstr "Arrière"
 
 #: gui2/textbuf.c:1516
-#, fuzzy
 msgid "gretl: configure tabs"
-msgstr "gretl : ouvrir la base de données"
+msgstr "gretl : configurer les tabulations"
 
 #: gui2/textbuf.c:1517
 msgid "Spaces per tab"
@@ -14179,14 +14147,12 @@ msgid "Uncomment line"
 msgstr "Décommenter la ligne"
 
 #: gui2/textbuf.c:1911
-#, fuzzy
 msgid "Comment region"
-msgstr "Cointégration"
+msgstr "Commenter la région"
 
 #: gui2/textbuf.c:1912
-#, fuzzy
 msgid "Uncomment region"
-msgstr "Décompression"
+msgstr "Décomenter la région"
 
 #: gui2/textbuf.c:1935
 msgid "Execute region"
@@ -14197,23 +14163,20 @@ msgid "Execute line"
 msgstr "Exécuter la ligne"
 
 #: gui2/textbuf.c:1964
-#, fuzzy
 msgid "Auto-indent region"
-msgstr "Cointégration"
+msgstr "Indenter automatiquement la région"
 
 #: gui2/textbuf.c:1965
 msgid "Indent region"
 msgstr "Indenter la région"
 
 #: gui2/textbuf.c:1974
-#, fuzzy
 msgid "Unindent region"
-msgstr "Décompression"
+msgstr "Supprimer l'indentation pour la région"
 
 #: gui2/textbuf.c:1982
-#, fuzzy
 msgid "Auto-indent script"
-msgstr "nouveau script"
+msgstr "Indentation automatique du script"
 
 #: gui2/textbuf.c:1989
 msgid "Configure tabs..."
