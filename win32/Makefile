@@ -251,7 +251,7 @@ EXTRAOBJ = $(EXTRASRC:.c=.o)
 
 PROBSRC = bdtr.c btdtr.c chdtr.c expx2.c fdtr.c gamma.c gdtr.c \
 	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
-	stdtr.c unity.c polevl.c const.c
+	stdtr.c unity.c polevl.c polrt.c const.c
 PROBOBJ = $(PROBSRC:.c=.o)
 
 MINSRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
@@ -398,7 +398,7 @@ plugins/arbond.dll: arbond.o dllinit.o
 
 plugins/arma.dll: arma.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS) -lprob
 
 plugins/arma_x12.dll: arma_x12.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

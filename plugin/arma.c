@@ -22,13 +22,12 @@
    to Allin Cottrell; thanks also to Stephen Moshier for cephes.
 */
 
-#include "../cephes/polrt.c"
-
 #include "libgretl.h"
 #include "bhhh_max.h"
 #include "libset.h"
 #include "kalman.h"
 #include "matrix_extra.h"
+#include "../cephes/libprob.h"
 
 #define ARMA_DEBUG 0
 #define AINIT_DEBUG 0

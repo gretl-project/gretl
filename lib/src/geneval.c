@@ -1671,6 +1671,9 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case FFTI:
 	    ret->v.m = gretl_matrix_ffti(m, &p->err);
 	    break;
+	case POLROOTS:
+	    ret->v.m = gretl_matrix_polroots(m, &p->err);
+	    break;
 	case MINC:
 	case MAXC:
 	case MINR:
@@ -4433,6 +4436,7 @@ static NODE *eval (NODE *t, parser *p)
     case IMAXR: 
     case FFT:
     case FFTI:
+    case POLROOTS:
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);

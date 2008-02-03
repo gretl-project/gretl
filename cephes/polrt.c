@@ -72,7 +72,7 @@ int polrt (double *xcof, double *cof, int m, cmplx *root)
     q = &xcof[0];
     p = &cof[n];
     for (j=0; j<=nsav; j++)
-	*p-- = *q++; /*	cof[n-j] = xcof[j];*/
+	*p-- = *q++; /*	cof[n-j] = xcof[j]; */
     xsav.r = 0.0;
     xsav.i = 0.0;
 

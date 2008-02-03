@@ -250,6 +250,7 @@ struct str_table funcs[] = {
     { MWRITE,   "mwrite" },
     { MRSEL,    "selifr" },
     { MCSEL,    "selifc" },
+    { POLROOTS, "polroots" },
     { 0,        NULL }
 };
 

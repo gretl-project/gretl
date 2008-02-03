@@ -203,7 +203,7 @@ SRCS = adf_kpss.c \
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
-	   mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c polevl.c \
+	   mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c polevl.c polrt.c \
 	   stdtr.c unity.c 
 
 MINPACK_SRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder.c lmder1.c \

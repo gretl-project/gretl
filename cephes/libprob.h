@@ -131,6 +131,11 @@ double cephes_lgamma (double x); /* alias for cephes' lgam() */
 */
 int get_cephes_sgngam (void);
 
+/*
+  Evaluate roots of polynomial
+*/
+int polrt (double *xcof, double *cof, int m, cmplx *root);
+
 /* Accessor for cephes error code */
 int get_cephes_errno (void);
 

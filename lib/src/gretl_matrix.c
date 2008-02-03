@@ -27,6 +27,7 @@
 
 #include "f2c.h"
 #include "clapack_double.h"
+#include "../../cephes/libprob.h"
 
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
@@ -1123,6 +1124,93 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
     }
 
     return N;
+}
+
+/**
+ * gretl_matrix_polroots:
+ * @a: p-vector of coefficients.
+ * @err: location to receive error code.
+ *
+ * Calculates the roots of the polynomial with coefficients
+ * given by @a.  If any of the roots are complex, the returned
+ * row vector will have 2*p elements, where p is the order of the
+ * polynomial: the ordering of elements is (real part of root 1,
+ * imaginary part of root 1, ..., real part of root p, imaginary
+ * part of root p).  If all the roots are real, a p-vector is 
+ * returned.
+ *
+ * Returns: newly allocated row vector, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
+				     int *err)
+{
+    gretl_matrix *r = NULL;
+    double *xcof = NULL, *cof = NULL;
+    cmplx *roots = NULL;
+    int i, m, polerr;
+
+    m = gretl_vector_get_length(a);
+
+    if (m == 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    r = gretl_matrix_alloc(1, 2 * m);
+    xcof = malloc((m + 1) * sizeof *xcof);
+    cof = malloc((m + 1) * sizeof *cof);
+    roots = malloc(m * sizeof *roots);
+
+    if (r == NULL || xcof == NULL || cof == NULL || roots == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    xcof[0] = 1.0;
+    for (i=0; i<m; i++) {
+	xcof[i+1] = -a->val[i];
+    }
+
+    polerr = polrt(xcof, cof, m, roots);
+
+    if (polerr) {
+	*err = E_DATA;
+    } else {
+	int allreal = 1;
+	int k = 0;
+
+	for (i=0; i<m; i++) {
+	    if (roots[i].i != 0) {
+		allreal = 0;
+		break;
+	    }
+	}
+
+	if (allreal) {
+	    gretl_matrix_reuse(r, 1, m);
+	}
+
+	for (i=0; i<m; i++) {
+	    r->val[k++] = roots[i].r;
+	    if (!allreal) {
+		r->val[k++] = roots[i].i;
+	    }
+	}
+    }
+
+ bailout:
+
+    free(xcof);
+    free(cof);
+    free(roots);
+
+    if (*err) {
+	gretl_matrix_free(r);
+	r = NULL;
+    }
+
+    return r;
 }
 
 /**

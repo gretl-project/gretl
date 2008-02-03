@@ -171,14 +171,15 @@ enum {
   /* 140 */   UPPER,
               LOWER,
               MREAD,
+	      POLROOTS,
               FUNC_MAX,	  /* separator: end of single-arg functions */
               COR,
               COV,
               SORTBY,
               RUNIFORM,
               RNORMAL,
-              FRACDIF,
-  /* 150 */   ZEROS,
+  /* 150 */   FRACDIF,
+	      ZEROS,
               ONES,
               SEQ,
               MUNIF,
@@ -187,8 +188,8 @@ enum {
               MLAG,
               QR,
               EIGSYM,	 
-              EIGGEN,
-  /* 160 */   FDJAC,
+  /* 160 */   EIGGEN,
+	      FDJAC,
               BFGSMAX,
               LRVAR,
               PRINCOMP,
@@ -197,8 +198,8 @@ enum {
               CDIV,	  /* complex division */
               MXTAB,
               MWRITE,
-              MOVAVG,
-  /* 170 */   MRSEL,
+  /* 170 */   MOVAVG,
+	      MRSEL,
               MCSEL,
               F2_MAX,	  /* separator: end of two-arg functions */
               MSHAPE,
@@ -207,8 +208,8 @@ enum {
               FN_MAX,	  /* separator: end of n-arg functions */
               COM,	  /* comma */
               DOT,	  /* period */
-              SEMI,	  /* semi-colon */
-  /* 180 */   COL,	  /* colon */
+  /* 180 */   SEMI,	  /* semi-colon */
+	      COL,	  /* colon */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
               UVAR,	  /* user variable (scalar or series) */
@@ -217,8 +218,8 @@ enum {
               NUM,	  /* scalar, evaluated */
               VEC,	  /* series, evaluated */
               IVEC,	  /* vector of integers, evaluated */
-              MAT,	  /* matrix, evaluated */
-  /* 190 */   OBS,	  /* observation from a series */
+  /* 190 */   MAT,	  /* matrix, evaluated */
+	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
               DMSL,	  /* "dollar" matrix plus subspec */
               DMSTR,	  /* "dollar" matrix plus old-style string subspec */
@@ -227,8 +228,8 @@ enum {
               SUBSL,	  /* row or column component of MSPEC */
               MDEF,	  /* explicit matrix definition {...} */
               LAG,	  
-              DVAR,	  /* $ dataset variable (scalar or series) */
-  /* 200 */   MVAR,	  /* $ model var (scalar, series, or matrix) */
+  /* 200 */   DVAR,	  /* $ dataset variable (scalar or series) */
+	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
               LOOPIDX,	  /* loop index variable */
               LIST,	  /* reference to named list */
@@ -237,12 +238,12 @@ enum {
               UFUN,	  /* user-defined function */
               FARGS,	  /* set of n function arguments */
               EMPTY,
-              ABSENT,
-  /* 210 */   INC,   
+  /* 210 */   ABSENT,
+	      INC,   
               DEC,
 	      QUERY,
-EOT,	    /* end of transmission */
-UNK 
+	      EOT,	    /* end of transmission */
+	      UNK 
 };
 
 enum {
