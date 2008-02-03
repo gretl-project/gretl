@@ -36,7 +36,7 @@
    targ    CDATA #IMPLIED
    output  (scalar | series | matrix | smatrix |
             rvec | cvec | list | asinput) "series"
-   altout  (none | scalar | series | matrix | list) "none"
+   altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
 <!ELEMENT fnargs       (fnarg)+>

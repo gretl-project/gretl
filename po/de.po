@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-29 12:58-0500\n"
-"PO-Revision-Date: 2008-02-02 22:30+0100\n"
+"PO-Revision-Date: 2008-02-02 18:36-0500\n"
 "Last-Translator:  <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -3483,8 +3483,7 @@ msgstr "(z.B. help smpl)\n"
 
 #: lib/src/interact.c:2757
 msgid "You can also do 'help functions' for a list of functions\n"
-msgstr ""
-"Sie können auch 'help functions' eingeben für eine Funktionsliste"
+msgstr "Sie können auch 'help functions' eingeben für eine Funktionsliste\n"
 
 #: lib/src/interact.c:2763
 msgid "genrcli.hlp"

@@ -8858,7 +8858,7 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 
     n = (rowsel)? rs : cs ;
     for (i=0; i<n; i++) {
-	if (0 != gretl_vector_get(sel, i)) {
+	if (gretl_vector_get(sel, i) != 0) {
 	    nonzero++;
 	}
     }
@@ -8882,7 +8882,7 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 	}
 	k = 0;
 	for (i=0; i<ra; i++) {
-	    if (0 != gretl_vector_get(sel, i)) {
+	    if (gretl_vector_get(sel, i) != 0) {
 		for (j=0; j<ca; j++) {
 		    x = gretl_matrix_get(A, i, j);
 		    gretl_matrix_set(ret, k, j, x);
@@ -8898,7 +8898,7 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 	for (i=0; i<ra; i++) {
 	    k = 0;
 	    for (j=0; j<ca; j++) {
-		if (0 != gretl_vector_get(sel, j)) {
+		if (gretl_vector_get(sel, j) != 0) {
 		    x = gretl_matrix_get(A, i, j);
 		    gretl_matrix_set(ret, i, k++, x);
 		}

@@ -24,11 +24,11 @@ exec_prefix = @exec_prefix@
 datadir = @datadir@
 localedir = $(datadir)/locale
 gettextsrcdir = $(datadir)/gettext/po
+tooldir = $(top_srcdir)/tools
 
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
-MKINSTALLDIRS = @MKINSTALLDIRS@
-mkinstalldirs = $(MKINSTALLDIRS)
+mkinstalldirs = $(tooldir)/mkinstalldirs
 
 GMSGFMT = @GMSGFMT@
 MSGFMT = @MSGFMT@
