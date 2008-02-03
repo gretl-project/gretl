@@ -1150,6 +1150,8 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
     cmplx *roots = NULL;
     int i, m, polerr;
 
+    *err = 0;
+
     m = gretl_vector_get_length(a);
 
     if (m == 0) {
