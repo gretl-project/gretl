@@ -1040,7 +1040,7 @@ int save_named_string (const char *name, const char *s, PRN *prn)
     str = get_saved_string_by_name(name, &builtin);
     
     if (str != NULL && builtin) {
-	pprintf(prn, "You cannot overwrite '%s'\n", name);
+	pprintf(prn, _("You cannot overwrite '%s'\n"), name);
 	return E_DATA;
     }
 
@@ -1062,9 +1062,9 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 
     if (gretl_messages_on()) {
 	if (str->s[0] == '\0') {
-	    pprintf(prn, "Saved empty string as '%s'\n", name);
+	    pprintf(prn, _("Saved empty string as '%s'\n"), name);
 	} else {
-	    pprintf(prn, "Saved string as '%s'\n", name);
+	    pprintf(prn, _("Saved string as '%s'\n"), name);
 	}
     }
 
@@ -1155,7 +1155,7 @@ int process_string_command (const char *line, PRN *prn)
     str = get_saved_string_by_name(targ, &builtin);
 
     if (str != NULL && builtin) {
-	pprintf(prn, "You cannot overwrite '%s'\n", targ);
+	pprintf(prn, _("You cannot overwrite '%s'\n"), targ);
 	return E_DATA;
     }	
 
@@ -1197,9 +1197,9 @@ int process_string_command (const char *line, PRN *prn)
 
     if (!err && gretl_messages_on()) {
 	if (str->s[0] == '\0') {
-	    pprintf(prn, "Saved empty string as '%s'\n", targ);
+	    pprintf(prn, _("Saved empty string as '%s'\n"), targ);
 	} else {
-	    pprintf(prn, "Saved string as '%s'\n", targ);
+	    pprintf(prn, _("Saved string as '%s'\n"), targ);
 	}
     }
 

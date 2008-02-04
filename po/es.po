@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-29 12:58-0500\n"
+"POT-Creation-Date: 2008-02-04 07:56-0500\n"
 "PO-Revision-Date: 2008-01-25 17:24+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -126,7 +126,7 @@ msgstr "Coef. de autocorrelación de primer orden de e"
 msgid "estimated value of (a - 1)"
 msgstr "valor estimado de (a - 1)"
 
-#: lib/src/adf_kpss.c:309 lib/src/describe.c:2763 lib/src/describe.c:2990
+#: lib/src/adf_kpss.c:309 lib/src/describe.c:2888 lib/src/describe.c:3115
 #: gui2/calculator.c:559
 msgid "test statistic"
 msgstr "Estadístico de contraste"
@@ -170,7 +170,7 @@ msgstr "Parámetro de truncamiento de los retardos = %d\n"
 
 #: lib/src/adf_kpss.c:847 lib/src/compare.c:317 lib/src/compare.c:344
 #: lib/src/compare.c:753 lib/src/compare.c:1412 lib/src/compare.c:1603
-#: lib/src/compare.c:1754 lib/src/describe.c:4166 lib/src/estimate.c:2448
+#: lib/src/compare.c:1754 lib/src/describe.c:4291 lib/src/estimate.c:2448
 #: lib/src/estimate.c:2456 lib/src/estimate.c:3152 lib/src/gretl_intl.c:104
 #: lib/src/gretl_model.c:2851 lib/src/gretl_panel.c:3294
 #: lib/src/gretl_restrict.c:1770 lib/src/gretl_restrict.c:1777
@@ -280,8 +280,8 @@ msgstr "Estadístico de contraste asintótico"
 #: lib/src/modelprint.c:473 lib/src/modelprint.c:483 lib/src/modelprint.c:2044
 #: lib/src/modelprint.c:2049 lib/src/modelprint.c:3298
 #: lib/src/modelprint.c:3332 lib/src/printout.c:244 lib/src/pvalues.c:1238
-#: lib/src/system.c:689 lib/src/system.c:2230 lib/src/system.c:2243
-#: lib/src/system.c:2265 lib/src/system.c:2274 lib/src/varprint.c:1215
+#: lib/src/system.c:689 lib/src/system.c:2231 lib/src/system.c:2244
+#: lib/src/system.c:2266 lib/src/system.c:2275 lib/src/varprint.c:1215
 #: lib/src/varprint.c:1224 lib/src/vartest.c:637
 msgid "Chi-square"
 msgstr "Chi-cuadrado"
@@ -366,8 +366,8 @@ msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Quitando %-16s (valor p %.3f)\n"
 
 #: lib/src/compare.c:1413 lib/src/compare.c:1604 lib/src/compare.c:1755
-#: lib/src/compare.c:1759 lib/src/compare.c:1763 lib/src/describe.c:2764
-#: lib/src/describe.c:2991 lib/src/estimate.c:2450 lib/src/estimate.c:2458
+#: lib/src/compare.c:1759 lib/src/compare.c:1763 lib/src/describe.c:2889
+#: lib/src/describe.c:3116 lib/src/estimate.c:2450 lib/src/estimate.c:2458
 #: lib/src/estimate.c:3154 lib/src/gretl_model.c:2867
 #: lib/src/gretl_model.c:2869 lib/src/gretl_model.c:2871
 #: lib/src/gretl_panel.c:1240 lib/src/gretl_panel.c:3295
@@ -376,8 +376,8 @@ msgstr " Quitando %-16s (valor p %.3f)\n"
 #: lib/src/modelprint.c:2053 lib/src/modelprint.c:2066
 #: lib/src/modelprint.c:2070 lib/src/modelprint.c:2074 lib/src/printout.c:245
 #: lib/src/printout.c:251 lib/src/system.c:662 lib/src/system.c:690
-#: lib/src/system.c:2231 lib/src/system.c:2244 lib/src/system.c:2266
-#: lib/src/system.c:2275
+#: lib/src/system.c:2232 lib/src/system.c:2245 lib/src/system.c:2267
+#: lib/src/system.c:2276
 msgid "with p-value"
 msgstr "con valor p "
 
@@ -1252,7 +1252,7 @@ msgid "Series imported OK"
 msgstr "Series importadas correctamente"
 
 #: lib/src/dbread.c:1778 lib/src/gretl_func.c:1420 lib/src/gretl_utils.c:1466
-#: lib/src/interact.c:3815 gui2/dialogs.c:3648 plugin/tramo-x12a.c:413
+#: lib/src/interact.c:3812 gui2/dialogs.c:3648 plugin/tramo-x12a.c:413
 #, c-format
 msgid "Couldn't open %s"
 msgstr "No se pudo abrir %s"
@@ -1300,145 +1300,145 @@ msgid "Of the variables to be saved, %d were already present in the database."
 msgstr ""
 "De las variables que iban a ser guardadas, %d estaban ya en la base de datos."
 
-#: lib/src/describe.c:1298 lib/src/describe.c:1402
+#: lib/src/describe.c:1420 lib/src/describe.c:1524
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr ""
 "Datos insuficientes para construir la distribución de frecuencias para la "
 "variable %s"
 
-#: lib/src/describe.c:1306 lib/src/describe.c:2407 lib/src/describe.c:2650
-#: lib/src/describe.c:2653
+#: lib/src/describe.c:1428 lib/src/describe.c:2529 lib/src/describe.c:2774
+#: lib/src/describe.c:2777
 #, c-format
 msgid "%s is a constant"
 msgstr "%s es una constante"
 
-#: lib/src/describe.c:1661 cli/gretlcli.c:636 cli/gretlcli.c:909
+#: lib/src/describe.c:1783 cli/gretlcli.c:636 cli/gretlcli.c:909
 #: gui2/library.c:6757
 msgid "gnuplot command failed\n"
 msgstr "orden gnuplot fallida\n"
 
-#: lib/src/describe.c:2282 lib/src/describe.c:2350 lib/src/describe.c:2541
-#: lib/src/describe.c:2588
+#: lib/src/describe.c:2404 lib/src/describe.c:2472 lib/src/describe.c:2664
+#: lib/src/describe.c:2711
 msgid "lag"
 msgstr "retardo"
 
-#: lib/src/describe.c:2290
+#: lib/src/describe.c:2412
 msgid "Residual ACF"
 msgstr "FAC de los residuos"
 
-#: lib/src/describe.c:2292
+#: lib/src/describe.c:2414
 msgid "ACF for"
 msgstr "FAC de"
 
-#: lib/src/describe.c:2308
+#: lib/src/describe.c:2430
 msgid "Residual PACF"
 msgstr "FACP de los residuos"
 
-#: lib/src/describe.c:2310
+#: lib/src/describe.c:2432
 msgid "PACF for"
 msgstr "FACP de"
 
-#: lib/src/describe.c:2349 gui2/menustate.c:331 gui2/menustate.c:374
+#: lib/src/describe.c:2471 gui2/menustate.c:331 gui2/menustate.c:374
 msgid "Correlogram"
 msgstr "Correlograma"
 
-#: lib/src/describe.c:2397 lib/src/describe.c:2637
+#: lib/src/describe.c:2519 lib/src/describe.c:2761
 msgid "Missing values within sample -- can't do correlogram"
 msgstr ""
 "Valores perdidos dentro de la muestra -- no se puede hacer el correlograma"
 
-#: lib/src/describe.c:2402 lib/src/describe.c:2642
+#: lib/src/describe.c:2524 lib/src/describe.c:2766
 msgid "Insufficient observations for correlogram"
 msgstr "Observaciones insuficientes para el correlograma"
 
-#: lib/src/describe.c:2450
+#: lib/src/describe.c:2572
 msgid "Residual autocorrelation function"
 msgstr "Función de autocorrelación de los residuos"
 
-#: lib/src/describe.c:2453
+#: lib/src/describe.c:2575
 #, c-format
 msgid "Autocorrelation function for %s"
 msgstr "Función de autocorrelación para %s"
 
-#: lib/src/describe.c:2467
+#: lib/src/describe.c:2589
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr "RETARDO    FAC          FACP         Estad-Q. [valor p]"
 
-#: lib/src/describe.c:2547
+#: lib/src/describe.c:2670
 #, c-format
 msgid "Correlations of %s and lagged %s"
 msgstr "Correlaciones entre %s y %s retardada"
 
-#: lib/src/describe.c:2587 gui2/menustate.c:417 gui2/menustate.c:441
+#: lib/src/describe.c:2710 gui2/menustate.c:417 gui2/menustate.c:441
 msgid "Cross-correlogram"
 msgstr "Correlograma cruzado"
 
-#: lib/src/describe.c:2688
+#: lib/src/describe.c:2812
 #, c-format
 msgid "Cross-correlation function for %s and %s"
 msgstr "Función de correlación cruzada para %s y %s"
 
-#: lib/src/describe.c:2691
+#: lib/src/describe.c:2815
 msgid "  LAG      XCF"
 msgstr "  RETARDO  FCC"
 
-#: lib/src/describe.c:2761
+#: lib/src/describe.c:2886
 msgid "GPH test for fractional integration"
 msgstr "Contraste GPH de integración fraccional"
 
-#: lib/src/describe.c:2762 lib/src/describe.c:2989
+#: lib/src/describe.c:2887 lib/src/describe.c:3114
 msgid "Estimated degree of integration"
 msgstr "Orden de integración estimado"
 
-#: lib/src/describe.c:2988
+#: lib/src/describe.c:3113
 msgid "Local Whittle Estimator"
 msgstr "Estimador local de Whittle"
 
-#: lib/src/describe.c:3017
+#: lib/src/describe.c:3142
 msgid "quarters"
 msgstr "trimestres"
 
-#: lib/src/describe.c:3019
+#: lib/src/describe.c:3144
 msgid "months"
 msgstr "meses"
 
-#: lib/src/describe.c:3021
+#: lib/src/describe.c:3146
 msgid "years"
 msgstr "años"
 
-#: lib/src/describe.c:3023 lib/src/graphing.c:3244 lib/src/graphing.c:3322
+#: lib/src/describe.c:3148 lib/src/graphing.c:3244 lib/src/graphing.c:3322
 #: lib/src/gretl_utils.c:821
 msgid "periods"
 msgstr "periodos"
 
-#: lib/src/describe.c:3036
+#: lib/src/describe.c:3161
 msgid "scaled frequency"
 msgstr "frecuencia escalada"
 
-#: lib/src/describe.c:3043
+#: lib/src/describe.c:3168
 msgid "Residual spectrum"
 msgstr "Espectro de los residuos"
 
-#: lib/src/describe.c:3045
+#: lib/src/describe.c:3170
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Espectro de %s"
 
-#: lib/src/describe.c:3051
+#: lib/src/describe.c:3176
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Ventana de Bartlett, anchura %d"
 
-#: lib/src/describe.c:3057 gui2/library.c:3916
+#: lib/src/describe.c:3182 gui2/library.c:3916
 msgid "log scale"
 msgstr "Escala logarítmica"
 
-#: lib/src/describe.c:3085
+#: lib/src/describe.c:3210
 msgid "Residual periodogram"
 msgstr "Periodograma de los residuos"
 
-#: lib/src/describe.c:3087
+#: lib/src/describe.c:3212
 #, c-format
 msgid ""
 "\n"
@@ -1447,38 +1447,38 @@ msgstr ""
 "\n"
 "Periodograma de %s\n"
 
-#: lib/src/describe.c:3090 lib/src/describe.c:4080 lib/src/describe.c:4082
-#: lib/src/describe.c:4160 lib/src/describe.c:4162 lib/src/describe.c:4569
+#: lib/src/describe.c:3215 lib/src/describe.c:4205 lib/src/describe.c:4207
+#: lib/src/describe.c:4285 lib/src/describe.c:4287 lib/src/describe.c:4694
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr "Número de observaciones = %d\n"
 
-#: lib/src/describe.c:3092
+#: lib/src/describe.c:3217
 #, c-format
 msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr "Utilizando ventana de retardos de Bartlett, tamaño %d\n"
 
-#: lib/src/describe.c:3139
+#: lib/src/describe.c:3264
 msgid "Missing values within sample -- can't do periodogram"
 msgstr ""
 "Valores perdidos dentro de la muestra -- no se puede hacer el periodograma"
 
-#: lib/src/describe.c:3145
+#: lib/src/describe.c:3270
 msgid "Insufficient observations for periodogram"
 msgstr "Observaciones insuficientes para el periodograma"
 
-#: lib/src/describe.c:3150 lib/src/graphing.c:2712
+#: lib/src/describe.c:3275 lib/src/graphing.c:2712
 #, c-format
 msgid "'%s' is a constant"
 msgstr "'%s' es una constante"
 
-#: lib/src/describe.c:3222
+#: lib/src/describe.c:3347
 msgid "Fractional integration test failed"
 msgstr "Falló el contraste de integración fraccional"
 
-#: lib/src/describe.c:3228
+#: lib/src/describe.c:3353
 msgid ""
 " omega  scaled frequency  periods  log spectral density\n"
 "\n"
@@ -1486,7 +1486,7 @@ msgstr ""
 " omega  frecuencia escalada  periodos  log. densidad espectral\n"
 "\n"
 
-#: lib/src/describe.c:3230
+#: lib/src/describe.c:3355
 msgid ""
 " omega  scaled frequency  periods  spectral density\n"
 "\n"
@@ -1494,78 +1494,78 @@ msgstr ""
 " omega  frecuencia escalada  periodos  densidad espectral\n"
 "\n"
 
-#: lib/src/describe.c:3259 lib/src/describe.c:3260 lib/src/printout.c:794
+#: lib/src/describe.c:3384 lib/src/describe.c:3385 lib/src/printout.c:794
 #: lib/src/printout.c:795
 msgid "NA"
 msgstr "NA"
 
-#: lib/src/describe.c:3301 lib/src/describe.c:3951
+#: lib/src/describe.c:3426 lib/src/describe.c:4076
 #, c-format
 msgid "%s, using the observations %s - %s"
 msgstr "%s, usando las observaciones %s - %s"
 
-#: lib/src/describe.c:3305 lib/src/describe.c:3956 gui2/guiprint.c:1054
+#: lib/src/describe.c:3430 lib/src/describe.c:4081 gui2/guiprint.c:1054
 #: gui2/guiprint.c:1148 gui2/guiprint.c:1280 gui2/guiprint.c:1373
 msgid "(missing values were skipped)"
 msgstr "(se ignoraron los valores perdidos)"
 
-#: lib/src/describe.c:3317 gui2/guiprint.c:1067 gui2/guiprint.c:1160
+#: lib/src/describe.c:3442 gui2/guiprint.c:1067 gui2/guiprint.c:1160
 msgid "Mean"
 msgstr "Media"
 
-#: lib/src/describe.c:3318 gui2/guiprint.c:1067 gui2/guiprint.c:1160
+#: lib/src/describe.c:3443 gui2/guiprint.c:1067 gui2/guiprint.c:1160
 msgid "Median"
 msgstr "Mediana"
 
-#: lib/src/describe.c:3319 gui2/guiprint.c:1067 gui2/guiprint.c:1160
+#: lib/src/describe.c:3444 gui2/guiprint.c:1067 gui2/guiprint.c:1160
 msgid "Minimum"
 msgstr "Mínimo"
 
-#: lib/src/describe.c:3320 gui2/guiprint.c:1067 gui2/guiprint.c:1160
+#: lib/src/describe.c:3445 gui2/guiprint.c:1067 gui2/guiprint.c:1160
 msgid "Maximum"
 msgstr "Máximo"
 
-#: lib/src/describe.c:3321
+#: lib/src/describe.c:3446
 msgid "Standard deviation"
 msgstr "Desviación típica"
 
-#: lib/src/describe.c:3322 gui2/guiprint.c:1089 gui2/guiprint.c:1187
+#: lib/src/describe.c:3447 gui2/guiprint.c:1089 gui2/guiprint.c:1187
 msgid "C.V."
 msgstr "C.V."
 
-#: lib/src/describe.c:3323 gui2/guiprint.c:1089 gui2/guiprint.c:1187
+#: lib/src/describe.c:3448 gui2/guiprint.c:1089 gui2/guiprint.c:1187
 msgid "Skewness"
 msgstr "Asimetría"
 
-#: lib/src/describe.c:3324 gui2/guiprint.c:1089
+#: lib/src/describe.c:3449 gui2/guiprint.c:1089
 msgid "Ex. kurtosis"
 msgstr "Exc. de curtosis"
 
-#: lib/src/describe.c:3326
+#: lib/src/describe.c:3451
 msgid "Within s.d."
 msgstr "D.T. Intra"
 
-#: lib/src/describe.c:3327
+#: lib/src/describe.c:3452
 msgid "Between s.d."
 msgstr "D.T. entre"
 
-#: lib/src/describe.c:3333 lib/src/describe.c:3420
+#: lib/src/describe.c:3458 lib/src/describe.c:3545
 msgid "Summary Statistics"
 msgstr "Estadísticos principales"
 
-#: lib/src/describe.c:3334
+#: lib/src/describe.c:3459
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "para la variable '%s' (%d observaciones válidas)"
 
-#: lib/src/describe.c:3422 lib/src/describe.c:3447 lib/src/modelprint.c:1884
+#: lib/src/describe.c:3547 lib/src/describe.c:3572 lib/src/modelprint.c:1884
 #: gui2/calculator.c:2210 gui2/guiprint.c:1058 gui2/guiprint.c:1081
 #: gui2/guiprint.c:1153 gui2/guiprint.c:1180 gui2/guiprint.c:1899
 #: gui2/guiprint.c:1948 gui2/selector.c:4934 plugin/pca.c:193
 msgid "Variable"
 msgstr "Variable"
 
-#: lib/src/describe.c:3423
+#: lib/src/describe.c:3548
 msgid ""
 "      MEAN           MEDIAN           MIN             MAX\n"
 "\n"
@@ -1573,7 +1573,7 @@ msgstr ""
 "      MEDIA          MEDIANA          MIN             MAX\n"
 "\n"
 
-#: lib/src/describe.c:3448
+#: lib/src/describe.c:3573
 msgid ""
 "      S.D.            C.V.            SKEW          EXCSKURT\n"
 "\n"
@@ -1581,12 +1581,12 @@ msgstr ""
 "      D.T.            C.V.         ASIMETRÍA    EXC.CURTOSIS\n"
 "\n"
 
-#: lib/src/describe.c:3576
+#: lib/src/describe.c:3701
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "Quitando %s: el rango muestral no contiene observaciones válidas\n"
 
-#: lib/src/describe.c:3911 lib/src/estimate.c:2930 lib/src/estimate.c:2931
+#: lib/src/describe.c:4036 lib/src/estimate.c:2930 lib/src/estimate.c:2931
 #: lib/src/modelprint.c:659 lib/src/modelprint.c:667 lib/src/modelprint.c:680
 #: lib/src/modelprint.c:689 lib/src/modelprint.c:2605
 #: lib/src/modelprint.c:2612 lib/src/modelprint.c:2628
@@ -1605,7 +1605,7 @@ msgstr "Quitando %s: el rango muestral no contiene observaciones válidas\n"
 msgid "undefined"
 msgstr "indefinido"
 
-#: lib/src/describe.c:3918 lib/src/nonparam.c:269 lib/src/nonparam.c:275
+#: lib/src/describe.c:4043 lib/src/nonparam.c:269 lib/src/nonparam.c:275
 #: lib/src/nonparam.c:515
 msgid ""
 "Under the null hypothesis of no correlation:\n"
@@ -1614,29 +1614,29 @@ msgstr ""
 "Bajo la hipótesis nula de no correlación:\n"
 " "
 
-#: lib/src/describe.c:3919 lib/src/nonparam.c:276
+#: lib/src/describe.c:4044 lib/src/nonparam.c:276
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr "t(%d) = %g, con valor p a dos colas %.4f\n"
 
-#: lib/src/describe.c:3923 lib/src/describe.c:3961 gui2/guiprint.c:1282
+#: lib/src/describe.c:4048 lib/src/describe.c:4086 gui2/guiprint.c:1282
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "valor crítico al 5%% (a dos colas) = %.4f para n = %d"
 
-#: lib/src/describe.c:3952
+#: lib/src/describe.c:4077
 msgid "Correlation Coefficients"
 msgstr "Coeficientes de correlación"
 
-#: lib/src/describe.c:4044 lib/src/describe.c:4130
+#: lib/src/describe.c:4169 lib/src/describe.c:4255
 msgid "Sample range has no valid observations."
 msgstr "El rango muestral no tiene observaciones válidas."
 
-#: lib/src/describe.c:4050 lib/src/describe.c:4136
+#: lib/src/describe.c:4175 lib/src/describe.c:4261
 msgid "Sample range has only one observation."
 msgstr "El rango muestral sólo tiene una observación."
 
-#: lib/src/describe.c:4077
+#: lib/src/describe.c:4202
 #, c-format
 msgid ""
 "\n"
@@ -1647,34 +1647,34 @@ msgstr ""
 "Contraste de igualdad de medias (suponiendo varianzas %s)\n"
 "\n"
 
-#: lib/src/describe.c:4078
+#: lib/src/describe.c:4203
 msgid "unequal"
 msgstr "distintas"
 
-#: lib/src/describe.c:4078
+#: lib/src/describe.c:4203
 msgid "equal"
 msgstr "iguales"
 
-#: lib/src/describe.c:4083
+#: lib/src/describe.c:4208
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
 msgstr "   Diferencia entre las medias muestrales = %g - %g = %g\n"
 
-#: lib/src/describe.c:4085
+#: lib/src/describe.c:4210
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "   Hipótesis nula: Las dos medias poblacionales son iguales.\n"
 
-#: lib/src/describe.c:4086
+#: lib/src/describe.c:4211
 #, c-format
 msgid "   Estimated standard error = %g\n"
 msgstr "   Desviación típica estimada = %g\n"
 
-#: lib/src/describe.c:4087
+#: lib/src/describe.c:4212
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
 msgstr "   Estadístico de contraste: t(%d) = %g\n"
 
-#: lib/src/describe.c:4088 lib/src/describe.c:4167
+#: lib/src/describe.c:4213 lib/src/describe.c:4292
 #, c-format
 msgid ""
 "   p-value (two-tailed) = %g\n"
@@ -1683,7 +1683,7 @@ msgstr ""
 "   valor p (a dos colas) = %g\n"
 "\n"
 
-#: lib/src/describe.c:4090 lib/src/describe.c:4169
+#: lib/src/describe.c:4215 lib/src/describe.c:4294
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
@@ -1691,11 +1691,11 @@ msgstr ""
 "   La diferencia no es estadísticamente significativa.\n"
 "\n"
 
-#: lib/src/describe.c:4092
+#: lib/src/describe.c:4217
 msgid "difference of means"
 msgstr "diferencia de medias"
 
-#: lib/src/describe.c:4158
+#: lib/src/describe.c:4283
 msgid ""
 "\n"
 "Equality of variances test\n"
@@ -1705,69 +1705,69 @@ msgstr ""
 "Contraste de igualdad de varianzas\n"
 "\n"
 
-#: lib/src/describe.c:4163
+#: lib/src/describe.c:4288
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Cociente entre varianzas muestrales = %g\n"
 
-#: lib/src/describe.c:4164 lib/src/gretl_model.c:2698
+#: lib/src/describe.c:4289 lib/src/gretl_model.c:2698
 #: lib/src/gretl_model.c:2701 lib/src/gretl_model.c:2704
 #: lib/src/nonparam.c:865 lib/src/nonparam.c:997 lib/src/varprint.c:1205
 #: lib/src/varprint.c:1212 lib/src/varprint.c:1221
 msgid "Null hypothesis"
 msgstr "Hipótesis nula"
 
-#: lib/src/describe.c:4165
+#: lib/src/describe.c:4290
 msgid "The two population variances are equal"
 msgstr "Las dos varianzas poblacionales son iguales"
 
-#: lib/src/describe.c:4171
+#: lib/src/describe.c:4296
 msgid "difference of variances"
 msgstr "diferencia de varianzas"
 
-#: lib/src/describe.c:4257 gui2/library.c:475 gui2/library.c:666
+#: lib/src/describe.c:4382 gui2/library.c:475 gui2/library.c:666
 #, c-format
 msgid "Mahalanobis distances"
 msgstr "Distancias de Mahalanobis"
 
-#: lib/src/describe.c:4300
+#: lib/src/describe.c:4425
 msgid "Covariance matrix"
 msgstr "Matriz de covarianzas"
 
-#: lib/src/describe.c:4306
+#: lib/src/describe.c:4431
 msgid "Inverse of covariance matrix"
 msgstr "Inversa de la matriz de covarianzas"
 
-#: lib/src/describe.c:4322
+#: lib/src/describe.c:4447
 msgid "Mahalanobis distances from the centroid"
 msgstr "Distancias de Mahalanobis desde el centroide"
 
-#: lib/src/describe.c:4323
+#: lib/src/describe.c:4448
 msgid "using the variables:"
 msgstr "usando las variables:"
 
-#: lib/src/describe.c:4365
+#: lib/src/describe.c:4490
 #, c-format
 msgid "Distances saved as '%s'"
 msgstr "Las distancias se han guardado como '%s'"
 
-#: lib/src/describe.c:4433
+#: lib/src/describe.c:4558
 msgid "illegal negative value"
 msgstr "valor negativo ilegal"
 
-#: lib/src/describe.c:4513
+#: lib/src/describe.c:4638
 msgid "Lorenz curve"
 msgstr "Curva de Lorenz"
 
-#: lib/src/describe.c:4572 plugin/excel_import.c:1458
+#: lib/src/describe.c:4697 plugin/excel_import.c:1458
 msgid "Warning: there were missing values\n"
 msgstr "Atención: había observaciones perdidas\n"
 
-#: lib/src/describe.c:4577
+#: lib/src/describe.c:4702
 msgid "Sample Gini coefficient"
 msgstr "Coeficiente muestral de Gini"
 
-#: lib/src/describe.c:4578
+#: lib/src/describe.c:4703
 msgid "Estimate of population value"
 msgstr "Estimación del valor poblacional"
 
@@ -1945,7 +1945,7 @@ msgstr "Argumento no válido para sqrt()"
 msgid "invalid argument for exp()"
 msgstr "Argumento no válido para exp()"
 
-#: lib/src/geneval.c:2974 lib/src/geneval.c:3134
+#: lib/src/geneval.c:3032 lib/src/geneval.c:3192
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -1954,17 +1954,17 @@ msgstr ""
 "El número de argumentos (%d) no casa con el número de \n"
 " parámetros para la función %s (%d)"
 
-#: lib/src/geneval.c:3924
+#: lib/src/geneval.c:3982
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': Argumento no válido para %s()\n"
 
-#: lib/src/geneval.c:3961
+#: lib/src/geneval.c:4019
 #, c-format
 msgid "Wrong type argument for %s: should be %s"
 msgstr "Tipo de argumento incorrecto para %s: debería ser %s"
 
-#: lib/src/geneval.c:4990 lib/src/genlex.c:522 lib/src/genlex.c:579
+#: lib/src/geneval.c:5061 lib/src/genlex.c:528 lib/src/genlex.c:585
 #: lib/src/gensyntax.c:246
 #, c-format
 msgid "Unmatched '%c'\n"
@@ -2048,35 +2048,35 @@ msgstr "varianza estimada desde el modelo %d"
 msgid "per-unit constants from model %d"
 msgstr "constantes del modelo %d por unidad"
 
-#: lib/src/genlex.c:483
+#: lib/src/genlex.c:489
 #, c-format
 msgid "The symbol '%s' is undefined\n"
 msgstr "El símbolo '%s' no está definido\n"
 
-#: lib/src/genlex.c:490
+#: lib/src/genlex.c:496
 #, c-format
 msgid "'%s': no argument was given\n"
 msgstr "'%s': no se ha proporcionado argumento\n"
 
-#: lib/src/genlex.c:498
+#: lib/src/genlex.c:504
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "El símbolo '%c' no es válido en este contexto\n"
 
-#: lib/src/genlex.c:500
+#: lib/src/genlex.c:506
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "El símbolo '%s' no es válido en este contexto\n"
 
-#: lib/src/genlex.c:518
+#: lib/src/genlex.c:524
 msgid "Empty string\n"
 msgstr "Cadena de caracteres vacía\n"
 
-#: lib/src/genlex.c:576
+#: lib/src/genlex.c:582
 msgid "Empty observation []\n"
 msgstr "Observación vacía []\n"
 
-#: lib/src/genlex.c:1135
+#: lib/src/genlex.c:1141
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Carácter no válido '%c'\n"
@@ -2179,7 +2179,7 @@ msgid "String is too long (%d versus %d max)\n"
 msgstr "La cadena de caracteres  es demasiado larga (%d contra %d máximo)\n"
 
 #: lib/src/gmm.c:103 lib/src/gretl_panel.c:3844 lib/src/gretl_panel.c:3856
-#: lib/src/interact.c:3603 lib/src/nls.c:491 lib/src/nls.c:2482
+#: lib/src/interact.c:3600 lib/src/nls.c:491 lib/src/nls.c:2482
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr "variable '%s' desconocida"
@@ -2221,7 +2221,7 @@ msgstr "Condiciones de ortogonalidad - estadísticos descriptivos"
 msgid "OC"
 msgstr "OC"
 
-#: lib/src/gmm.c:1424 gui2/boxplots.c:915 gui2/calculator.c:1858
+#: lib/src/gmm.c:1424 gui2/boxplots.c:931 gui2/calculator.c:1858
 #: gui2/calculator.c:1882 gui2/calculator.c:2482 plugin/range-mean.c:68
 #: plugin/range-mean.c:157
 msgid "mean"
@@ -2390,7 +2390,7 @@ msgid "Sum of squared residuals negative!"
 msgstr "¡Suma de cuadrados residual negativa!"
 
 #: lib/src/gretl_errors.c:35 lib/src/modelspec.c:279 lib/src/objstack.c:1202
-#: lib/src/system.c:947
+#: lib/src/system.c:948
 msgid "Sorry, command not available for this estimator"
 msgstr "Lo siento, orden no disponible para este estimador"
 
@@ -2535,20 +2535,20 @@ msgstr "No hay disponible una descripción"
 msgid "Deleted function '%s'\n"
 msgstr "Funciones de ayuda"
 
-#: lib/src/gretl_func.c:2886
+#: lib/src/gretl_func.c:2889
 msgid "You can't change the name of a function here"
 msgstr "Aquí no es posible cambiar el nombre de una función"
 
-#: lib/src/gretl_func.c:2893 lib/src/gretl_func.c:2899
+#: lib/src/gretl_func.c:2896 lib/src/gretl_func.c:2902
 msgid "Error compiling function"
 msgstr "Error al leer compilar una función"
 
-#: lib/src/gretl_func.c:3448
+#: lib/src/gretl_func.c:3451
 #, c-format
 msgid "Error message from %s:\n"
 msgstr "Mensaje de error de %s:\n"
 
-#: lib/src/gretl_func.c:3780
+#: lib/src/gretl_func.c:3783
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" no está definida.\n"
@@ -2751,7 +2751,7 @@ msgstr "No se pueden recuperar los interceptos"
 msgid "Can't retrieve error variance"
 msgstr "No se puede recuperar la varianza del error"
 
-#: lib/src/gretl_model.c:4859 gui2/library.c:422
+#: lib/src/gretl_model.c:4897 gui2/library.c:422
 msgid "The model exhibits an exact linear fit"
 msgstr ""
 
@@ -3116,12 +3116,27 @@ msgstr ""
 "Tabla de códigos de cadenas escrito en\n"
 " %s\n"
 
-#: lib/src/gretl_string_table.c:623 lib/src/gretl_win32.c:549
-#: lib/src/interact.c:3052
+#: lib/src/gretl_string_table.c:645 lib/src/gretl_win32.c:549
+#: lib/src/interact.c:3049
 msgid "The shell command is not activated."
 msgstr "La instrucción 'shell' no está activada"
 
-#: lib/src/gretl_string_table.c:1091 lib/src/interact.c:3791
+#: lib/src/gretl_string_table.c:1043 lib/src/gretl_string_table.c:1158
+#, c-format
+msgid "You cannot overwrite '%s'\n"
+msgstr ""
+
+#: lib/src/gretl_string_table.c:1065 lib/src/gretl_string_table.c:1200
+#, fuzzy, c-format
+msgid "Saved empty string as '%s'\n"
+msgstr "Matriz guardada como %s"
+
+#: lib/src/gretl_string_table.c:1067 lib/src/gretl_string_table.c:1202
+#, fuzzy, c-format
+msgid "Saved string as '%s'\n"
+msgstr "Matriz guardada como %s"
+
+#: lib/src/gretl_string_table.c:1279 lib/src/interact.c:3788
 #: cli/gretlcli.c:285 gui2/library.c:6374
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
@@ -3395,80 +3410,80 @@ msgstr "No se encuentra la información de variables"
 msgid "No observations were found"
 msgstr "No se encontraron observaciones"
 
-#: lib/src/interact.c:1013 lib/src/interact.c:1828
+#: lib/src/interact.c:1010 lib/src/interact.c:1825
 msgid "Memory allocation failed for command list"
 msgstr "Falló la asignación de memoria para la lista de instrucciones"
 
-#: lib/src/interact.c:1155
+#: lib/src/interact.c:1152
 #, c-format
 msgid "generation of lag variable failed"
 msgstr "falló la generación de la variable retardada"
 
-#: lib/src/interact.c:1440
+#: lib/src/interact.c:1437
 msgid "requires a variable number and a new name"
 msgstr "requiere un número de variable y un nombre nuevo"
 
-#: lib/src/interact.c:1448
+#: lib/src/interact.c:1445
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "La variable número %d está fuera de los límites"
 
-#: lib/src/interact.c:1462
+#: lib/src/interact.c:1459
 #, c-format
 msgid "'%s': there is already a variable of this name"
 msgstr "'%s': ya hay una variable con este nombre"
 
-#: lib/src/interact.c:1696
+#: lib/src/interact.c:1693
 #, c-format
 msgid "command 'end %s' not recognized"
 msgstr "no se reconoce la instrucción 'end %s'"
 
-#: lib/src/interact.c:1701
+#: lib/src/interact.c:1698
 msgid "end: nothing to end"
 msgstr "end: nada que terminar"
 
-#: lib/src/interact.c:1758
+#: lib/src/interact.c:1755
 #, c-format
 msgid "%s: required parameter is missing"
 msgstr "%s: falta un parámetro obligatorio"
 
-#: lib/src/interact.c:1999
+#: lib/src/interact.c:1996
 #, c-format
 msgid "%d is not a valid variable number"
 msgstr "%d no es un número de variable válido"
 
-#: lib/src/interact.c:2099
+#: lib/src/interact.c:2096
 #, c-format
 msgid "'%s' is not the name of a variable"
 msgstr "'%s' no es el nombre de una variable"
 
-#: lib/src/interact.c:2261 lib/src/interact.c:4893 cli/cli_object.c:59
+#: lib/src/interact.c:2258 lib/src/interact.c:4890 cli/cli_object.c:59
 #: gui2/objectsave.c:68
 #, c-format
 msgid "command '%s' not recognized"
 msgstr "instrucción '%s' no reconocida"
 
-#: lib/src/interact.c:2550
+#: lib/src/interact.c:2547
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "el campo '%s' no es válido en la instrucción"
 
-#: lib/src/interact.c:2560 gui2/library.c:1942
+#: lib/src/interact.c:2557 gui2/library.c:1942
 #, c-format
 msgid "variable %s is a scalar"
 msgstr "la variable %s es un escalar"
 
-#: lib/src/interact.c:2613
+#: lib/src/interact.c:2610
 #, c-format
 msgid "var number %d duplicated in the command list."
 msgstr "la variable núm. %d está duplicada en la lista de instrucciones."
 
-#: lib/src/interact.c:2680 lib/src/interact.c:2783
+#: lib/src/interact.c:2677 lib/src/interact.c:2780
 #, c-format
 msgid "Unable to access the file %s.\n"
 msgstr "No se puede acceder al fichero %s.\n"
 
-#: lib/src/interact.c:2708
+#: lib/src/interact.c:2705
 #, fuzzy
 msgid ""
 "\n"
@@ -3479,12 +3494,12 @@ msgstr ""
 "\n"
 "Para ayuda sobre una instrucción específica, teclee: help nombreinstr"
 
-#: lib/src/interact.c:2709
+#: lib/src/interact.c:2706
 #, fuzzy
 msgid " (e.g. help qrdecomp)\n"
 msgstr " (p.ej. help smpl)\n"
 
-#: lib/src/interact.c:2740
+#: lib/src/interact.c:2737
 msgid ""
 "\n"
 "Valid gretl commands are:\n"
@@ -3492,7 +3507,7 @@ msgstr ""
 "\n"
 "Las instrucciones válidas de gretl son:\n"
 
-#: lib/src/interact.c:2755
+#: lib/src/interact.c:2752
 msgid ""
 "\n"
 "\n"
@@ -3502,215 +3517,215 @@ msgstr ""
 "\n"
 "Para ayuda sobre una instrucción específica, teclee: help nombreinstr"
 
-#: lib/src/interact.c:2756
+#: lib/src/interact.c:2753
 msgid " (e.g. help smpl)\n"
 msgstr " (p.ej. help smpl)\n"
 
-#: lib/src/interact.c:2757
+#: lib/src/interact.c:2754
 #, fuzzy
 msgid "You can also do 'help functions' for a list of functions\n"
 msgstr ""
 "consola gretl: teclee 'help' para obtener una lista de instrucciones\n"
 "? "
 
-#: lib/src/interact.c:2763
+#: lib/src/interact.c:2760
 #, fuzzy
 msgid "genrcli.hlp"
 msgstr "gretlcli.hlp.es"
 
-#: lib/src/interact.c:2777
+#: lib/src/interact.c:2774
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
 msgstr "\"%s\" no es una instrucción de gretl.\n"
 
-#: lib/src/interact.c:2815
+#: lib/src/interact.c:2812
 #, c-format
 msgid "%s: sorry, no help available.\n"
 msgstr "%s: lo siento, no hay ayuda disponible.\n"
 
-#: lib/src/interact.c:2844
+#: lib/src/interact.c:2841
 msgid "ess: negative value is out of bounds.\n"
 msgstr "scr: un valor negativo está fuera de los límites\n"
 
-#: lib/src/interact.c:2858
+#: lib/src/interact.c:2855
 msgid "T: negative value is out of bounds.\n"
 msgstr "T: un valor negativo está fuera de los límites\n"
 
-#: lib/src/interact.c:2872
+#: lib/src/interact.c:2869
 msgid "k: negative value is out of bounds.\n"
 msgstr "k: un valor negativo está fuera de los límites\n"
 
-#: lib/src/interact.c:3636
+#: lib/src/interact.c:3633
 msgid "Listing labels for variables:\n"
 msgstr "Listando etiquetas de las variables:\n"
 
-#: lib/src/interact.c:3681
+#: lib/src/interact.c:3678
 msgid "Output is not currently diverted to file\n"
 msgstr "Los resultados no están siendo enviados al fichero\n"
 
-#: lib/src/interact.c:3686
+#: lib/src/interact.c:3683
 #, c-format
 msgid "Closed output file '%s'\n"
 msgstr "Se ha cerrado el archivo de resultados '%s'\n"
 
-#: lib/src/interact.c:3694
+#: lib/src/interact.c:3691
 #, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr "Los resultados ya está siendo enviados a '%s'\n"
 
-#: lib/src/interact.c:3711
+#: lib/src/interact.c:3708
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "No se pudo abrir %s para escritura\n"
 
-#: lib/src/interact.c:3717
+#: lib/src/interact.c:3714
 #, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "Escribiendo los resultados en '%s'\n"
 
-#: lib/src/interact.c:3719
+#: lib/src/interact.c:3716
 #, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "Añadiendo los resultados en '%s'\n"
 
-#: lib/src/interact.c:3758
+#: lib/src/interact.c:3755
 msgid "No data information is available.\n"
 msgstr "No hay información disponible sobre los datos.\n"
 
-#: lib/src/interact.c:3837 lib/src/interact.c:5164 gui2/library.c:6425
+#: lib/src/interact.c:3834 lib/src/interact.c:5161 gui2/library.c:6425
 #, c-format
 msgid "Unmatched \"%s\""
 msgstr "\"%s\" no emparejado"
 
-#: lib/src/interact.c:3989 lib/src/interact.c:3998
+#: lib/src/interact.c:3986 lib/src/interact.c:3995
 msgid "Failed to generate correlogram\n"
 msgstr "Fallo al generar el correlograma\n"
 
-#: lib/src/interact.c:4007
+#: lib/src/interact.c:4004
 msgid "Failed to generate periodogram\n"
 msgstr "Fallo al generar el periodograma\n"
 
-#: lib/src/interact.c:4013
+#: lib/src/interact.c:4010
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "No se puede finalizar un bucle aquí, no se ha iniciado ninguno\n"
 
-#: lib/src/interact.c:4027
+#: lib/src/interact.c:4024
 msgid "Retrieved fitted values as \"autofit\"\n"
 msgstr "Se han recuperado los valores estimados como \"autofit\"\n"
 
-#: lib/src/interact.c:4076
+#: lib/src/interact.c:4073
 msgid "Error in computing model selection criteria.\n"
 msgstr "Error al calcular los criterios de selección de modelos.\n"
 
-#: lib/src/interact.c:4101
+#: lib/src/interact.c:4098
 msgid "Error adding log differences of variables.\n"
 msgstr "Error al añadir diferencias de logaritmos de las variables.\n"
 
-#: lib/src/interact.c:4103
+#: lib/src/interact.c:4100
 msgid "Error adding first differences of variables.\n"
 msgstr "Error al añadir las primeras diferencias de las variables.\n"
 
-#: lib/src/interact.c:4121
+#: lib/src/interact.c:4118
 msgid "Error adding lags of variables.\n"
 msgstr "Error al añadir retardos de las variables.\n"
 
-#: lib/src/interact.c:4130
+#: lib/src/interact.c:4127
 msgid "Error adding logs of variables.\n"
 msgstr "Error al añadir logaritmos de las variables.\n"
 
-#: lib/src/interact.c:4139
+#: lib/src/interact.c:4136
 msgid "Failed to generate squares\n"
 msgstr "Fallo al generar los cuadrados\n"
 
-#: lib/src/interact.c:4165
+#: lib/src/interact.c:4162
 msgid "This command requires one variable.\n"
 msgstr "Esta instrucción necesita una variables\n"
 
-#: lib/src/interact.c:4245
+#: lib/src/interact.c:4242
 msgid "generation of summary stats failed\n"
 msgstr "falló la generación de los estadísticos principales\n"
 
-#: lib/src/interact.c:4300
+#: lib/src/interact.c:4297
 #, c-format
 msgid "setting data frequency = %d\n"
 msgstr "haciendo frecuencia de datos = %d\n"
 
-#: lib/src/interact.c:4325
+#: lib/src/interact.c:4322
 #, c-format
 msgid "store: using filename %s.gz\n"
 msgstr "store: usando nombre de fichero %s.gz\n"
 
-#: lib/src/interact.c:4327 lib/src/monte_carlo.c:2280
+#: lib/src/interact.c:4324 lib/src/monte_carlo.c:2280
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "store: usando nombre de fichero %s\n"
 
-#: lib/src/interact.c:4331
+#: lib/src/interact.c:4328
 msgid "store: no filename given\n"
 msgstr "store: no se ha proporcionado nombre de fichero\n"
 
-#: lib/src/interact.c:4336 lib/src/monte_carlo.c:2288
+#: lib/src/interact.c:4333 lib/src/monte_carlo.c:2288
 msgid "write of data file failed\n"
 msgstr "falló la escritura del fichero de datos\n"
 
-#: lib/src/interact.c:4341 lib/src/monte_carlo.c:2286
+#: lib/src/interact.c:4338 lib/src/monte_carlo.c:2286
 msgid "Data written OK.\n"
 msgstr "Los datos se han escrito correctamente.\n"
 
-#: lib/src/interact.c:4344
+#: lib/src/interact.c:4341
 msgid "Warning: case markers not saved in binary datafile\n"
 msgstr ""
 "ATENCIÓN: marcadores de caja no guardados en fichero de datos binario\n"
 
-#: lib/src/interact.c:4408
+#: lib/src/interact.c:4405
 msgid "This estimator requires panel data"
 msgstr "Este estimador sólo está disponible para datos de panel"
 
-#: lib/src/interact.c:4507
+#: lib/src/interact.c:4504
 #, c-format
 msgid "Failed to reconstruct model %d\n"
 msgstr "Fallo al reconstruir el modelo %d\n"
 
-#: lib/src/interact.c:4574
+#: lib/src/interact.c:4571
 msgid "Couldn't format model\n"
 msgstr "No se pudo formatear el modelo\n"
 
-#: lib/src/interact.c:4583
+#: lib/src/interact.c:4580
 msgid "Couldn't open tex file for writing\n"
 msgstr "No se pudo abrir fichero de texto para escritura\n"
 
-#: lib/src/interact.c:4585
+#: lib/src/interact.c:4582
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Modelo impreso en %s\n"
 
-#: lib/src/interact.c:4683 cli/gretlcli.c:994
+#: lib/src/interact.c:4680 cli/gretlcli.c:994
 msgid "Command is malformed\n"
 msgstr "La instrucción está mal formada\n"
 
-#: lib/src/interact.c:4689 cli/gretlcli.c:1000 gui2/library.c:6825
+#: lib/src/interact.c:4686 cli/gretlcli.c:1000 gui2/library.c:6825
 #, c-format
 msgid "Error reading %s\n"
 msgstr "Error al leer %s\n"
 
-#: lib/src/interact.c:4694 cli/gretlcli.c:1007 gui2/library.c:6830
+#: lib/src/interact.c:4691 cli/gretlcli.c:1007 gui2/library.c:6830
 msgid "Infinite loop detected in script\n"
 msgstr "Se ha detectado un bucle infinito en el guión\n"
 
-#: lib/src/interact.c:4706
+#: lib/src/interact.c:4703
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Lo siento, la instrucción %s no está aún implementado en libgretl\n"
 
-#: lib/src/interact.c:4763 gui2/library.c:6663
+#: lib/src/interact.c:4760 gui2/library.c:6663
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Lo siento, esta orden no está disponible en modo bucle\n"
 
-#: lib/src/interact.c:5131
+#: lib/src/interact.c:5128
 msgid "error evaluating 'if'"
 msgstr "error al evaluar 'if'"
 
-#: lib/src/interact.c:5133
+#: lib/src/interact.c:5130
 msgid "indeterminate condition for 'if'"
 msgstr "condición indeterminada para 'if'"
 
@@ -3902,7 +3917,7 @@ msgstr "BIC"
 msgid "HQC"
 msgstr "HQC"
 
-#: lib/src/modelprint.c:397 lib/src/system.c:2227
+#: lib/src/modelprint.c:397 lib/src/system.c:2228
 msgid "LR over-identification test"
 msgstr "Contraste de sobreidentificación LR"
 
@@ -4565,7 +4580,7 @@ msgstr "Estadísticos basados en los datos rho-diferenciados"
 #: lib/src/modelprint.c:2095 lib/src/modelprint.c:2105
 #: lib/src/modelprint.c:2111 lib/src/modelprint.c:3294
 #: lib/src/modelprint.c:3328 lib/src/modelprint.c:3363 lib/src/printout.c:2245
-#: lib/src/system.c:2323 lib/src/texprint.c:850 lib/src/varprint.c:1061
+#: lib/src/system.c:2324 lib/src/texprint.c:850 lib/src/varprint.c:1061
 #: lib/src/varprint.c:1070
 msgid "Log-likelihood"
 msgstr "Log-verosimilitud"
@@ -4576,7 +4591,7 @@ msgid "Log-likelihood for %s"
 msgstr "Log-verosimilitud para %s"
 
 #: lib/src/modelprint.c:2183 lib/src/nls.c:2126 lib/src/nls.c:2223
-#: lib/src/system.c:2320
+#: lib/src/system.c:2321
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr "Se alcanzó la convergencia después de %d iteraciones\n"
@@ -5136,7 +5151,7 @@ msgstr "Sistema"
 msgid "%s saved\n"
 msgstr "%s guardado\n"
 
-#: lib/src/options.c:838
+#: lib/src/options.c:840
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Atención: fuera de un bucle la opción %s es ignorada"
@@ -5691,64 +5706,64 @@ msgstr "Contraste F de las restricciones especificadas"
 msgid "LR test for the specified restrictions"
 msgstr "Contraste LR de las restricciones especificadas"
 
-#: lib/src/system.c:687 lib/src/system.c:2228
+#: lib/src/system.c:687 lib/src/system.c:2229
 msgid "Restricted log-likelihood"
 msgstr "Log-verosimilitud restringida"
 
-#: lib/src/system.c:688 lib/src/system.c:2229
+#: lib/src/system.c:688 lib/src/system.c:2230
 msgid "Unrestricted log-likelihood"
 msgstr "Log-verosimilitud no restringida"
 
-#: lib/src/system.c:1051
+#: lib/src/system.c:1052
 #, c-format
 msgid "'%s': unrecognized name"
 msgstr "'%s': nombre no reconocido"
 
-#: lib/src/system.c:1209
+#: lib/src/system.c:1210
 #, c-format
 msgid "SUR residual, equation %d"
 msgstr "Residuo SUR, ecuación %d"
 
-#: lib/src/system.c:1211
+#: lib/src/system.c:1212
 #, c-format
 msgid "3SLS residual, equation %d"
 msgstr "Residuo MC3E, ecuación %d"
 
-#: lib/src/system.c:1213
+#: lib/src/system.c:1214
 #, c-format
 msgid "system residual, equation %d"
 msgstr "residuos del sistema, ecuación %d"
 
-#: lib/src/system.c:1218
+#: lib/src/system.c:1219
 #, c-format
 msgid "SUR fitted value, equation %d"
 msgstr "Valores estimados en el modelo SUR, ecuación %d"
 
-#: lib/src/system.c:1220
+#: lib/src/system.c:1221
 #, c-format
 msgid "3SLS fitted value, equation %d"
 msgstr "Valor estimado mediante MC3E, ecuación %d"
 
-#: lib/src/system.c:1222
+#: lib/src/system.c:1223
 #, c-format
 msgid "system fitted value, equation %d"
 msgstr "valores estimados en el sistema, ecuación %d"
 
-#: lib/src/system.c:1264
+#: lib/src/system.c:1265
 #, c-format
 msgid "iterated %s"
 msgstr "%s iterado"
 
-#: lib/src/system.c:1648
+#: lib/src/system.c:1649
 #, c-format
 msgid "Undefined variable '%s'."
 msgstr "Variable '%s' no definida."
 
-#: lib/src/system.c:1743 plugin/fiml.c:92
+#: lib/src/system.c:1744 plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
 msgstr "No se ha proporcionado una lista de variables endógenas"
 
-#: lib/src/system.c:2236
+#: lib/src/system.c:2237
 msgid ""
 "Warning: the Hansen-Sargan over-identification test failed.\n"
 "This probably indicates that the estimation problem is ill-conditioned.\n"
@@ -5758,23 +5773,23 @@ msgstr ""
 "Esto indica probablemente que el problema de estimación está mal "
 "condicionado.\n"
 
-#: lib/src/system.c:2242
+#: lib/src/system.c:2243
 msgid "Hansen-Sargan over-identification test"
 msgstr "Contraste de sobreidentificación de Hansen-Sargan"
 
-#: lib/src/system.c:2264
+#: lib/src/system.c:2265
 msgid "LR test for diagonal covariance matrix"
 msgstr "Contraste LR de diagonalidad de la matriz de covarianzas"
 
-#: lib/src/system.c:2273
+#: lib/src/system.c:2274
 msgid "Breusch-Pagan test for diagonal covariance matrix"
 msgstr "Contraste de Breusch-Pagan de diagonalidad de la matriz de covarianzas"
 
-#: lib/src/system.c:2311 lib/src/system.c:2315
+#: lib/src/system.c:2312 lib/src/system.c:2316
 msgid "Equation system"
 msgstr "Sistema de ecuaciones"
 
-#: lib/src/system.c:2312 gui2/dlgutils.c:945
+#: lib/src/system.c:2313 gui2/dlgutils.c:945
 msgid "Estimator"
 msgstr "Estimador"
 
@@ -6309,11 +6324,11 @@ msgstr "Líneas"
 msgid "Save boxplot file"
 msgstr "Guardar fichero boxplot"
 
-#: gui2/boxplots.c:161 gui2/boxplots.c:205 gui2/boxplots.c:912
+#: gui2/boxplots.c:161 gui2/boxplots.c:205 gui2/boxplots.c:928
 msgid "Numerical summary"
 msgstr "Resumen numérico"
 
-#: gui2/boxplots.c:163 gui2/boxplots.c:206 gui2/callbacks.c:494
+#: gui2/boxplots.c:163 gui2/boxplots.c:206 gui2/callbacks.c:495
 #: gui2/gpt_control.c:2626 gui2/gpt_control.c:2721
 msgid "Save to session as icon"
 msgstr "Guardar a sesión como icono"
@@ -6348,66 +6363,66 @@ msgstr "Copiar al portapapeles"
 msgid "Save as XPM..."
 msgstr "Guardar como XPM..."
 
-#: gui2/boxplots.c:618 gui2/callbacks.c:437
+#: gui2/boxplots.c:618 gui2/callbacks.c:438
 msgid "gretl: boxplots"
 msgstr "gretl: gráficos de caja (boxplots)"
 
-#: gui2/boxplots.c:916 gui2/boxplots.c:919 gui2/boxplots.c:931
+#: gui2/boxplots.c:932 gui2/boxplots.c:935 gui2/boxplots.c:947
 msgid "median"
 msgstr "mediana"
 
-#: gui2/boxplots.c:927
+#: gui2/boxplots.c:943
 msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr ""
 "Resumen numérico con intervalos de confianza para la mediana\n"
 " obtenidos mediante bootstrap"
 
-#: gui2/boxplots.c:933
+#: gui2/boxplots.c:949
 #, no-c-format
 msgid "(90% interval)"
 msgstr "(intervalo 90% i)"
 
-#: gui2/boxplots.c:941
+#: gui2/boxplots.c:957
 msgid "gretl: boxplot data"
 msgstr "gretl: datos del gráfico de caja (boxplot)"
 
-#: gui2/boxplots.c:980
+#: gui2/boxplots.c:997
 #, c-format
 msgid "Dropping %s: insufficient observations"
 msgstr "Quitando %s: pocas observaciones"
 
-#: gui2/boxplots.c:1007
+#: gui2/boxplots.c:1024
 msgid "Couldn't obtain confidence interval"
 msgstr "No se pudo obtener intervalo de confianza"
 
-#: gui2/boxplots.c:1077 gui2/boxplots.c:1199
+#: gui2/boxplots.c:1093 gui2/boxplots.c:1215
 msgid "Failed to set clipboard data"
 msgstr "Fallo al asignar datos al portapapeles"
 
-#: gui2/boxplots.c:1203
+#: gui2/boxplots.c:1219
 msgid "Failed to close Clipboard"
 msgstr "Fallo al cerrar el portapapeles"
 
-#: gui2/boxplots.c:1633
+#: gui2/boxplots.c:1649
 msgid "boxplot file is corrupt"
 msgstr "el fichero boxplot está corrupto"
 
-#: gui2/boxplots.c:1758
+#: gui2/boxplots.c:1774
 #, c-format
 msgid "got invalid variable number %d"
 msgstr "se obtuvo un número de variable %d no válido"
 
-#: gui2/boxplots.c:1765
+#: gui2/boxplots.c:1781
 #, c-format
 msgid "got invalid varname '%s'"
 msgstr "se obtuvo un nombre de variable no válido '%s'"
 
-#: gui2/boxplots.c:1769
+#: gui2/boxplots.c:1785
 #, c-format
 msgid "got invalid field '%s'"
 msgstr "se obtuvo un campo '%s' no válido"
 
-#: gui2/boxplots.c:1791
+#: gui2/boxplots.c:1807
 #, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
@@ -7039,7 +7054,7 @@ msgstr "gretl: editar información de datos"
 msgid "gretl: specify model"
 msgstr "gretl: especificar modelo"
 
-#: gui2/callbacks.c:336 gui2/callbacks.c:419
+#: gui2/callbacks.c:336 gui2/callbacks.c:420
 msgid "gretl: add var"
 msgstr "gretl: añadir variable"
 
@@ -7077,15 +7092,15 @@ msgstr "gretl: contrastes del modelo"
 msgid "rank correlation"
 msgstr "correlación por rangos"
 
-#: gui2/callbacks.c:413
+#: gui2/callbacks.c:414
 msgid "gretl: restrict sample"
 msgstr "gretl: restringir muestra"
 
-#: gui2/callbacks.c:414
+#: gui2/callbacks.c:415
 msgid "Enter boolean condition for selecting cases:"
 msgstr "Introduzca condición booleana para seleccionar casos:"
 
-#: gui2/callbacks.c:420
+#: gui2/callbacks.c:421
 msgid ""
 "Enter formula for new variable\n"
 "(or just a name, to enter data manually)"
@@ -7093,96 +7108,96 @@ msgstr ""
 "Introduzca la fórmula para la nueva variable\n"
 "(o sólo el nombre, si va a introducir los datos manualmente)"
 
-#: gui2/callbacks.c:426 gui2/callbacks.c:431
+#: gui2/callbacks.c:427 gui2/callbacks.c:432
 msgid "gretl: missing code"
 msgstr "gretl: código perdido"
 
-#: gui2/callbacks.c:427 gui2/callbacks.c:432
+#: gui2/callbacks.c:428 gui2/callbacks.c:433
 msgid "Enter value to be read as \"missing\":"
 msgstr "Introduzca valor para ser leído como \"perdido\":"
 
-#: gui2/callbacks.c:438
+#: gui2/callbacks.c:439
 msgid "Specify variables to plot:"
 msgstr "Indique las variables a representar gráficamente:"
 
-#: gui2/callbacks.c:444
+#: gui2/callbacks.c:445
 msgid "gretl: GMM"
 msgstr "gretl: GMM"
 
-#: gui2/callbacks.c:445
+#: gui2/callbacks.c:446
 msgid "GMM: Specify function and orthogonality conditions:"
 msgstr "GMM: Especifique la función y las condiciones de ortogonalidad:"
 
-#: gui2/callbacks.c:450
+#: gui2/callbacks.c:451
 msgid "gretl: maximum likelihood"
 msgstr "gretl: máxima verosimilitud"
 
-#: gui2/callbacks.c:451
+#: gui2/callbacks.c:452
 msgid "MLE: Specify function, and derivatives if possible:"
 msgstr "MLE: Especifique la función y, si es posible, las derivadas:"
 
-#: gui2/callbacks.c:456
+#: gui2/callbacks.c:457
 msgid "gretl: nonlinear least squares"
 msgstr "gretl: mínimos cuadrados no lineales"
 
-#: gui2/callbacks.c:457
+#: gui2/callbacks.c:458
 msgid "NLS: Specify function, and derivatives if possible:"
 msgstr ""
 "MC. no lineales: especifique la función y, si es posible, las derivadas:"
 
-#: gui2/callbacks.c:462 gui2/library.c:2561
+#: gui2/callbacks.c:463 gui2/library.c:2561
 msgid "gretl: simultaneous equations system"
 msgstr "gretl: sistema de ecuaciones simultáneas"
 
-#: gui2/callbacks.c:463
+#: gui2/callbacks.c:464
 msgid "Specify simultaneous equations:"
 msgstr "Especificar ecuaciones simultáneas:"
 
-#: gui2/callbacks.c:468
+#: gui2/callbacks.c:469
 msgid "gretl: linear restrictions"
 msgstr "gretl: restricciones lineales"
 
-#: gui2/callbacks.c:469
+#: gui2/callbacks.c:470
 msgid "Specify restrictions:"
 msgstr "Especificar restricciones:"
 
-#: gui2/callbacks.c:473
+#: gui2/callbacks.c:474
 msgid "gretl: command entry"
 msgstr "gretl: entrada de instrucción"
 
-#: gui2/callbacks.c:474
+#: gui2/callbacks.c:475
 msgid "Type a command:"
 msgstr "Escriba una instrucción:"
 
-#: gui2/callbacks.c:493
+#: gui2/callbacks.c:494
 msgid "Save to file"
 msgstr "Guardar a un fichero"
 
-#: gui2/callbacks.c:498
+#: gui2/callbacks.c:499
 msgid "gretl: save text"
 msgstr "gretl: guardar texto"
 
-#: gui2/callbacks.c:498
+#: gui2/callbacks.c:499
 msgid "Save text"
 msgstr "Guardar texto"
 
-#: gui2/callbacks.c:520
+#: gui2/callbacks.c:521
 msgid "Sorry, not yet implemented"
 msgstr "Lo siento, no implementado aún"
 
-#: gui2/callbacks.c:536
+#: gui2/callbacks.c:537
 msgid "gretl: create data set"
 msgstr "gretl: crear conjunto de datos"
 
-#: gui2/callbacks.c:537
+#: gui2/callbacks.c:538
 msgid "Number of observations:"
 msgstr "Número de observaciones:"
 
-#: gui2/callbacks.c:546
+#: gui2/callbacks.c:547
 msgid "Failed to create empty data set"
 msgstr "Fallo al crear conjunto de datos vacío"
 
-#: gui2/callbacks.c:561 gui2/library.c:1088
+#: gui2/callbacks.c:562 gui2/library.c:1088
 msgid "cross-correlogram"
 msgstr "correlograma cruzado"
 
@@ -8310,7 +8325,7 @@ msgstr "Estimación en dos etapas"
 msgid "Iterated estimation"
 msgstr "Estimación iterativa"
 
-#: gui2/dlgutils.c:1092
+#: gui2/dlgutils.c:1091
 msgid "(Please refer to Help for guidance)"
 msgstr "(Por favor, consulte la Ayuda para más información)"
 
@@ -10919,7 +10934,7 @@ msgstr "gretlcli.hlp.es"
 msgid "Show English help"
 msgstr "Mostrar la ayuda en Inglés"
 
-#: gui2/helpfiles.c:971 gui2/textbuf.c:1130
+#: gui2/helpfiles.c:971 gui2/textbuf.c:1155
 msgid "Index"
 msgstr "Índice"
 
@@ -13130,81 +13145,81 @@ msgstr "No se pudo abrir '%s'"
 msgid "You can't do this while editing the dataset"
 msgstr "Vd. no puede hacer esto mientras edita el conjunto de datos"
 
-#: gui2/textbuf.c:196 gui2/textbuf.c:204
+#: gui2/textbuf.c:197 gui2/textbuf.c:205
 msgid "No undo information available"
 msgstr "No hay disponible información de 'deshacer'"
 
-#: gui2/textbuf.c:1011
+#: gui2/textbuf.c:1036
 msgid "Gretl Command Reference"
 msgstr "Guía de Instrucciones de Gretl"
 
-#: gui2/textbuf.c:1051
+#: gui2/textbuf.c:1076
 #, fuzzy
 msgid "Gretl Function Reference"
 msgstr "Guía de Instrucciones de Gretl"
 
-#: gui2/textbuf.c:1131
+#: gui2/textbuf.c:1156
 msgid "Back"
 msgstr "Volver"
 
-#: gui2/textbuf.c:1516
+#: gui2/textbuf.c:1541
 #, fuzzy
 msgid "gretl: configure tabs"
 msgstr "gretl: abrir base de datos"
 
-#: gui2/textbuf.c:1517
+#: gui2/textbuf.c:1542
 msgid "Spaces per tab"
 msgstr ""
 
-#: gui2/textbuf.c:1518
+#: gui2/textbuf.c:1543
 msgid "Use \"smart\" tabs"
 msgstr ""
 
-#: gui2/textbuf.c:1909
+#: gui2/textbuf.c:1934
 msgid "Comment line"
 msgstr "Marcar como línea de comentarios"
 
-#: gui2/textbuf.c:1910
+#: gui2/textbuf.c:1935
 msgid "Uncomment line"
 msgstr "Desmarcar como línea de comentarios"
 
-#: gui2/textbuf.c:1911
+#: gui2/textbuf.c:1936
 msgid "Comment region"
 msgstr "Marcar como párrafo de comentarios"
 
-#: gui2/textbuf.c:1912
+#: gui2/textbuf.c:1937
 msgid "Uncomment region"
 msgstr "Desmarcar como párrafo de comentarios"
 
-#: gui2/textbuf.c:1935
+#: gui2/textbuf.c:1960
 msgid "Execute region"
 msgstr "Ejecutar párrafo"
 
-#: gui2/textbuf.c:1937
+#: gui2/textbuf.c:1962
 msgid "Execute line"
 msgstr "Ejecutar línea"
 
-#: gui2/textbuf.c:1964
+#: gui2/textbuf.c:1989
 #, fuzzy
 msgid "Auto-indent region"
 msgstr "Marcar como párrafo de comentarios"
 
-#: gui2/textbuf.c:1965
+#: gui2/textbuf.c:1990
 #, fuzzy
 msgid "Indent region"
 msgstr "Desmarcar como párrafo de comentarios"
 
-#: gui2/textbuf.c:1974
+#: gui2/textbuf.c:1999
 #, fuzzy
 msgid "Unindent region"
 msgstr "Desmarcar como párrafo de comentarios"
 
-#: gui2/textbuf.c:1982
+#: gui2/textbuf.c:2007
 #, fuzzy
 msgid "Auto-indent script"
 msgstr "guión nuevo"
 
-#: gui2/textbuf.c:1989
+#: gui2/textbuf.c:2014
 #, fuzzy
 msgid "Configure tabs..."
 msgstr "Configurar"
