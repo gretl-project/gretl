@@ -5429,7 +5429,7 @@ void set_currdir_from_filename (const char *fname)
     int spos = slashpos(scriptfile);
 
     if (spos) {
-	paths.currdir[0] = 0;
+	*paths.currdir = '\0';
 	strncat(paths.currdir, scriptfile, spos + 1);
     }
 }

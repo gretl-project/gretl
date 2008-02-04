@@ -385,18 +385,17 @@ int gretl_is_xml_file (const char *fname)
 int gretl_path_prepend (char *file, const char *path)
 {
     char temp[MAXLEN];
-    int n, pathlen = strlen(file) + strlen(path) + 1;
+    int n = strlen(file) + strlen(path) + 1;
 
-    if (pathlen > MAXLEN) {
+    if (n > MAXLEN) {
 	return 1;
     }
 
     strcpy(temp, path);
     n = strlen(temp);
 
-    if (temp[n - 1] != SLASH && n < MAXLEN - 1) {
-	temp[n] = SLASH;
-	temp[n + 1] = '\0';
+    if (temp[n-1] != SLASH && n < MAXLEN - 1) {
+	strcat(temp, SLASHSTR);
     }
 
     strcat(temp, file);
@@ -920,18 +919,16 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     fullname = addpath(fname, ppaths, script);
 
     if (ppaths != NULL && fullname != NULL && script) {
-	int n, spos = slashpos(fname);
+	int spos = slashpos(fname);
 
 	if (spos) {
-	    strncpy(ppaths->currdir, fname, (size_t) spos);
-	    n = strlen(ppaths->currdir);
-	    ppaths->currdir[n] = SLASH;
-	    ppaths->currdir[n+1] = '\0';
+	    *ppaths->currdir = '\0';
+	    strncat(ppaths->currdir, fname, spos + 1);
 	} else {
 	    ppaths->currdir[0] = '.';
 	    ppaths->currdir[1] = SLASH;
 	    ppaths->currdir[2] = '\0';
-	}	    
+	}
     }
 
     return 0;

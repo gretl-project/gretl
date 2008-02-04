@@ -567,8 +567,6 @@ static void noalloc (const char *str)
 
 static void get_runfile (char *fname)
 {
-    int i;
-
     *tryfile = '\0';
 
 #ifdef G_OS_WIN32
@@ -582,12 +580,7 @@ static void get_runfile (char *fname)
 	exit(EXIT_FAILURE);
     } else {
 	fprintf(stderr, I_("%s found\n"), tryfile);
-	i = slashpos(tryfile);
-	if (i) {
-	    paths.currdir[0] = '\0';
-	    strncat(paths.currdir, tryfile, i);
-	}
-	strcat(paths.currdir, SLASHSTR);
+	set_currdir_from_filename(tryfile);
     }
 }
 
