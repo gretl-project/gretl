@@ -26,6 +26,13 @@ version 1.7.2, in progress
 - Add basic support for the DF-GLS test via a new --gls 
   option to the adf command
 - Add selifc and selifr matrix functions
+- Generalize several functions to accept matrix as well as
+  series argument, e.g. quantile, diff, cum, resample
+- Add new accessors for TSLS test results: $hausman and
+  $sargan
+- Many small improvements to the GUI
+- Add systematic documentation for the functions available
+  in the genr command   
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"
