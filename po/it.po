@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.7.0\n"
+"Project-Id-Version: gretl 1.7.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-04 07:56-0500\n"
-"PO-Revision-Date: 2008-02-01 14:55+0100\n"
+"PO-Revision-Date: 2008-02-04 18:47+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -3126,17 +3126,17 @@ msgstr "Il comando della shell non è attivato."
 #: lib/src/gretl_string_table.c:1043 lib/src/gretl_string_table.c:1158
 #, c-format
 msgid "You cannot overwrite '%s'\n"
-msgstr ""
+msgstr "Impossibile sovrascrivere '%s'\n"
 
 #: lib/src/gretl_string_table.c:1065 lib/src/gretl_string_table.c:1200
-#, fuzzy, c-format
+#, c-format
 msgid "Saved empty string as '%s'\n"
-msgstr "Matrice salvata con il nome %s"
+msgstr "Salvata stringa vuota '%s'\n"
 
 #: lib/src/gretl_string_table.c:1067 lib/src/gretl_string_table.c:1202
-#, fuzzy, c-format
+#, c-format
 msgid "Saved string as '%s'\n"
-msgstr "Matrice salvata con il nome %s"
+msgstr "Salvata stringa '%s'\n"
 
 #: lib/src/gretl_string_table.c:1279 lib/src/interact.c:3788
 #: cli/gretlcli.c:285 gui2/library.c:6374
