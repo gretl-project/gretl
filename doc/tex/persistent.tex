@@ -211,28 +211,41 @@ For some purposes it may be useful to save a string (that is, a
 sequence of characters) as a named variable that can be reused.
 Versions of \app{gretl} higher than 1.6.0 offer this facility, but
 some of the refinements noted below are available only in \app{gretl}
-1.6.3 and higher.
+1.7.2 and higher.
 
 To \textit{define} a string variable, you can use either of two
 commands, \texttt{string} or \texttt{sprintf}.  The \texttt{string}
-command is simpler: you just type, for example,
+command is simpler: you can type, for example,
 %
 \begin{code}
-string foo = "some stuff I want to save"
+string s1 = "some stuff I want to save"
+string s2 = getenv("HOME")
+string s3 = @foostr + 10
 \end{code}
 %
 The first field after \texttt{string} is the name under which the
-string should be saved, then comes an equals sign, then comes the
-string to be saved, enclosed in double quotes.  The latter can be
-represented as a sequence of sub-strings if need be, as in
-%
-\begin{code}
-string bits = "first " "and" " second"
-\end{code}
-%
-You can use the keyword \texttt{null} in place of a literal string or
-strings to create an empty string variable.  See below for further
-variants of the string command, including use of \texttt{getenv}.
+string should be saved, then comes an equals sign, then comes a
+specification of the string to be saved. This can be the keyword
+\texttt{null}, to produce an empty string, or may take any of the 
+following forms:
+
+\begin{itemize}
+\item a string literal (enclosed in double quotes); or
+\item the name of an existing string variable, with \verb|@|
+  prepended; or
+\item a function that returns a string (see below); or
+\item any of the above followed by \texttt{+} and an integer offset;
+  or
+\item any of the above, followed by a space, followed by another
+  such field.
+\end{itemize}
+
+The role of the integer offset is to use a substring of the preceding
+element, starting at the given character offset.  An error is flagged
+is the offset is greater than the length of the string in question.
+
+If more than one such component is present, the resulting string
+is the concatenation of the elements.
 
 The \texttt{sprintf} command is more flexible.  It works exactly as
 \app{gretl}'s \texttt{printf} command except that the ``format''
@@ -320,7 +333,7 @@ are as shown in Table~\ref{tab-strings}.
 \centering
 \begin{tabular}{ll}
   \verb|@gretldir| & the \app{gretl} installation directory \\
-  \verb|@userdir| & user's \app{gretl} directory \\
+  \verb|@workdir| & user's current \app{gretl} working directory \\
   \verb|@gnuplot| & path to, or name of, the \app{gnuplot} executable \\
   \verb|@tramo|& path to, or name of, the \app{tramo} executable \\
   \verb|@x12a| & path to, or name of, the \app{x-12-arima} executable \\
@@ -373,6 +386,42 @@ output from such commands using the syntax
 
 That is, you enclose a shell command in parentheses, preceded by
 a dollar sign.
+
+\subsection{Reading from a file into a string}
+
+You can read the content of a file into a string variable using
+the syntax
+
+\texttt{string} \textsl{stringname} = \texttt{readfile(}\textsl{filename}\texttt{)}
+
+The \textsl{filename} field may include components that are
+string variables.  For example
+
+\verb|string foo = readfile(@x12adir/QNC.rts)|
+
+\subsection{The \texttt{strstr} function}
+
+Invocation of this function takes the form
+
+\texttt{string} \textsl{stringname} = 
+\texttt{strstr(}\textsl{s1}\texttt{,} \textsl{s2}\texttt{)}
+
+The effect is to search \textsl{s1} for the first occurrence of
+\textsl{s2}.  If no such occurrence is found, an empty string is
+returned; otherwise the portion of \textsl{s1} starting with
+\textsl{s2} is returned.  For example:
+%
+\begin{code}
+? string hw = "hello world"
+Saved string as 'hw'
+? string w = strstr(@hw, "o")
+Saved string as 'w'
+? print "@w"
+o world
+\end{code}
+%
+
+
     
 %%% Local Variables: 
 %%% mode: latex
