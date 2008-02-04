@@ -207,28 +207,40 @@ In alcuni casi può essere utile salvare una stringa (ossia una sequenza di
 caratteri) sotto forma di variabile che possa essere riutilizzata.
 \app{Gretl} offre questa funzionalità a partire dalla versione 1.6.0, ma alcune
 delle caratteristiche mostrate di seguito sono disponibili solo a partire dalla
-versione 1.6.3.
+versione 1.7.2.
 
 Per \textit{definire} una variabile stringa è possibile usare uno dei comandi
 seguenti: \texttt{string} o \texttt{sprintf}.  Il comando \texttt{string}
 è il più semplice: basta scrivere, ad esempio
 %
 \begin{code}
-string pippo = "Qualcosa da ricordare"
+string s1 = "Qualcosa da ricordare"
+string s2 = getenv("HOME")
+string s3 = @pippo + 10
 \end{code}
 %
 Il primo campo dopo \texttt{string} è il nome della variabile che verrà creata,
-quindi segue il segno di uguale, infine la stringa da salvare, racchiusa tra
-virgolette doppie. Quest'ultima può anche essere indicata come sequenza di
-sotto-stringhe, come in questo esempio:
-%
-\begin{code}
-string pezzi = "Primo " "e" " secondo"
-\end{code}
-%
-È anche possibile usare la parola chiave \texttt{null} al posto di una stringa
-per creare una variabile che contiene una stringa nulla. Si veda oltre per altre
-varianti del comando string, tra cui l'uso di \texttt{getenv}.
+quindi segue il segno di uguale, infine una specificazione della stringa da salvare.
+Quest'ultima può essere la parola chiave \texttt{null}, per produrre una stringa
+nulla, oppure può assumere una delle forme seguenti:
+
+\begin{itemize}
+\item una stringa letterale (racchiusa tra virgolette doppie)
+\item il nome di una variabile stringa esistente, prefissata con \verb|@|
+\item una funzione che produce una stringa (si veda oltre)
+\item una delle forme viste finora, seguita da \texttt{+} e un valore intero che
+  indica una posizione
+\item una delle forme viste finora, seguita da uno spazio, seguito da un altro
+  campo simile
+\end{itemize}
+
+Il ruolo del valore intero di posizione permette di usare una sotto-stringa
+dell'elemento precedente, a partire dal carattere specificato. Se il valore
+del parametro di posizione è maggiore della lunghezza della stringa in
+questione, viene prodotto un messaggio di errore.
+
+Nel caso in cui vengano usate due specificazioni separate da spazio, la stringa
+risultante è la concatenazione dei due elementi.
 
 Il comando \texttt{sprintf} è più flessibile. Funziona esattamente come
 \texttt{printf} di \app{gretl}, tranne per il fatto che la stringa ``di formato'' deve
@@ -312,7 +324,7 @@ Tabella~\ref{tab-strings}.
 \centering
 \begin{tabular}{ll}
   \verb|@gretldir| & La directory di installazione di \app{gretl} \\
-  \verb|@userdir| & La directory utente di \app{gretl} \\
+  \verb|@workdir| & La directory di lavoro di \app{gretl} per l'utente \\
   \verb|@gnuplot| & Percorso, o nome, dell'eseguibile \app{gnuplot} \\
   \verb|@tramo| & Percorso, o nome, dell'eseguibile \app{tramo} \\
   \verb|@x12a| & Percorso, o nome, dell'eseguibile \app{x-12-arima} \\
@@ -364,6 +376,40 @@ risultati dei comandi usando la sintassi
 
 Ossia, si include il comando shell tra parentesi precedute dal carattere
 dollaro.
+
+\subsection{Lettura delle stringhe da file}
+
+È possibile leggere il contenuto di un file e scriverlo all'interno di una
+variabile stringa usando la sintassi
+
+\texttt{string} \textsl{nome-stringa} = \texttt{readfile(}\textsl{nome-file}\texttt{)}
+
+Il campo \textsl{nome-file} può includere variabili stringa. Ad esempio
+
+\verb|string qnc = readfile(@x12adir/QNC.rts)|
+
+\subsection{La funzione \texttt{strstr}}
+
+Questa funzione viene usata nel modo seguente
+
+\texttt{string} \textsl{nome-stringa} = 
+\texttt{strstr(}\textsl{s1}\texttt{,} \textsl{s2}\texttt{)}
+
+L'effetto è quello di cercare all'interno di \textsl{s1} la prima occorrenza di
+\textsl{s2}.  Se non viene trovato alcun risultato, viene prodotta una stringa
+vuota, altrimenti viene prodotta la porzione di \textsl{s1} che inizia per
+\textsl{s2}. Ad esempio:
+%
+\begin{code}
+? string hw = "hello world"
+Saved string as 'hw'
+? string w = strstr(@hw, "o")
+Saved string as 'w'
+? print "@w"
+o world
+\end{code}
+%
+
 
 %%% Local Variables: 
 %%% mode: latex
