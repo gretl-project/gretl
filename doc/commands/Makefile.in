@@ -192,7 +192,7 @@ cmdtex_es: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	touch $@
 
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
-	./topiclist $(CMDSDIR)/gretl_commands.xml > ../tex/cmdtopics.tex && \
+	LANG=en_US ./topiclist $(CMDSDIR)/gretl_commands.xml > ../tex/cmdtopics.tex && \
 	touch $@
 
 topiclist_it: topiclist $(CMDSDIR)/gretl_commands_it.xml

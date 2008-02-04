@@ -40,6 +40,8 @@ TEXSRC = cli.tex \
 
 WEBDIR = /home/cottrell/stats/esl/website
 
+all: $(GUIDE) $(REF) $(ALTGUIDE) $(ALTREF)
+
 $(GUIDE): gretl-guide.tex links textables
 	pdflatex $<
 	pdflatex $<
