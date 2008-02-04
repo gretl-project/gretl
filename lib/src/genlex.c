@@ -119,6 +119,8 @@ struct str_table funcs[] = {
     { SIN,      "sin" },
     { COS,      "cos" },
     { TAN,      "tan" },
+    { ASIN,     "asin" },
+    { ACOS,     "acos" },
     { ATAN,     "atan" },
     { LOG,      "log" },
     { LOG,      "ln" },

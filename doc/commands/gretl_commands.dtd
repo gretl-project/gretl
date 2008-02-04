@@ -78,7 +78,7 @@
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref| fncref | tabref | 
-                sub | super | flag | footnote | refnote | cmd)*>
+                sub | sup | flag | footnote | refnote | cmd)*>
 <!ATTLIST para
    context (cli | gui | tex | notex | all) "all"
 >
@@ -169,9 +169,9 @@
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>
-<!ELEMENT mathvar  (#PCDATA | sub | super)*>
+<!ELEMENT mathvar  (#PCDATA | sub | sup)*>
 <!ELEMENT sub      (#PCDATA)>
-<!ELEMENT super    (#PCDATA)>
+<!ELEMENT sup     (#PCDATA)>
 
 <!ATTLIST repl
    quote (true | false) "false"

@@ -1128,18 +1128,18 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
 
 /**
  * gretl_matrix_polroots:
- * @a: p-vector of coefficients.
+ * @a: vector of coefficients.
  * @err: location to receive error code.
  *
  * Calculates the roots of the polynomial with coefficients
- * given by @a.  If any of the roots are complex, the returned
- * row vector will have 2*p elements, where p is the order of the
- * polynomial: the ordering of elements is (real part of root 1,
- * imaginary part of root 1, ..., real part of root p, imaginary
- * part of root p).  If all the roots are real, a p-vector is 
- * returned.
+ * given by @a.  If the degree of the polynomial is p, then
+ * @a should contain p + 1 coefficients in ascending order,
+ * i.e. starting with the constant and ending with the
+ * coefficient on x^p.
  *
- * Returns: newly allocated row vector, or %NULL on failure.
+ * Returns: a p-vector if all the roots are real, otherwise a
+ * p x 2 matrix with the real parts in the first column and
+ * the imaginary parts in the second.  Or %NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
@@ -1148,41 +1148,40 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
     gretl_matrix *r = NULL;
     double *xcof = NULL, *cof = NULL;
     cmplx *roots = NULL;
-    int i, m, polerr;
+    int i, m, order, polerr;
 
     *err = 0;
 
     m = gretl_vector_get_length(a);
 
-    if (m == 0) {
+    if (m < 2) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    r = gretl_matrix_alloc(1, 2 * m);
-    xcof = malloc((m + 1) * sizeof *xcof);
-    cof = malloc((m + 1) * sizeof *cof);
-    roots = malloc(m * sizeof *roots);
+    order = m - 1;
 
-    if (r == NULL || xcof == NULL || cof == NULL || roots == NULL) {
+    xcof = malloc(m * sizeof *xcof);
+    cof = malloc(m * sizeof *cof);
+    roots = malloc(order * sizeof *roots);
+
+    if (xcof == NULL || cof == NULL || roots == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    xcof[0] = 1.0;
     for (i=0; i<m; i++) {
-	xcof[i+1] = -a->val[i];
+	xcof[i] = a->val[i];
     }
 
-    polerr = polrt(xcof, cof, m, roots);
+    polerr = polrt(xcof, cof, order, roots);
 
     if (polerr) {
 	*err = E_DATA;
     } else {
 	int allreal = 1;
-	int k = 0;
 
-	for (i=0; i<m; i++) {
+	for (i=0; i<order; i++) {
 	    if (roots[i].i != 0) {
 		allreal = 0;
 		break;
@@ -1190,13 +1189,20 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
 	}
 
 	if (allreal) {
-	    gretl_matrix_reuse(r, 1, m);
+	    r = gretl_matrix_alloc(order, 1);
+	} else {
+	    r = gretl_matrix_alloc(order, 2);
 	}
 
-	for (i=0; i<m; i++) {
-	    r->val[k++] = roots[i].r;
+	if (r == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+
+	for (i=0; i<order; i++) {
+	    gretl_matrix_set(r, i, 0, roots[i].r);
 	    if (!allreal) {
-		r->val[k++] = roots[i].i;
+		gretl_matrix_set(r, i, 1, roots[i].i);
 	    }
 	}
     }
@@ -1206,11 +1212,6 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
     free(xcof);
     free(cof);
     free(roots);
-
-    if (*err) {
-	gretl_matrix_free(r);
-	r = NULL;
-    }
 
     return r;
 }

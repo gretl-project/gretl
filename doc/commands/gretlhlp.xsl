@@ -398,7 +398,7 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
-<xsl:template match="super">
+<xsl:template match="sup">
   <xsl:text>&lt;@sup="</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>"&gt;</xsl:text>

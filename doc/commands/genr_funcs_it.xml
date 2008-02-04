@@ -277,7 +277,7 @@
     <function name="$rsq" output="scalar">
       <description>
 	<para>
-	  Produce l'<math>R</math><super>2</super> non corretto dell'ultimo
+	  Produce l'<math>R</math><sup>2</sup> non corretto dell'ultimo
           modello stimato.
 	</para>
       </description>
@@ -379,7 +379,7 @@
     <function name="$trsq" output="scalar">
       <description>
 	<para>
-	  Returns <math>TR</math><super>2</super> (sample size times
+	  Returns <math>TR</math><sup>2</sup> (sample size times
 	  R-squared) from the last model.
 	</para>
       </description>
@@ -1271,7 +1271,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns <math>A</math><super>+</super>, the Moore&ndash;Penrose 
+	  Returns <math>A</math><sup>+</sup>, the Moore&ndash;Penrose 
 	  or generalized inverse of <argname>A</argname>, computed
 	  via the singular value decomposition.
 	</para>

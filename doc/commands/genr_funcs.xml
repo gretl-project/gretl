@@ -285,7 +285,7 @@
     <function name="$rsq" output="scalar">
       <description>
 	<para>
-	  Returns the unadjusted <math>R</math><super>2</super> from the
+	  Returns the unadjusted <math>R</math><sup>2</sup> from the
 	  last estimated model.
 	</para>
       </description>
@@ -387,7 +387,7 @@
     <function name="$trsq" output="scalar">
       <description>
 	<para>
-	  Returns <math>TR</math><super>2</super> (sample size times
+	  Returns <math>TR</math><sup>2</sup> (sample size times
 	  R-squared) from the last model.
 	</para>
       </description>
@@ -461,13 +461,40 @@
       </description>
     </function>
 
+    <function name="acos" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The arc cosine of <argname>x</argname>, that is, the value whose
+	  cosine is <argname>x</argname>.  The result is in radians; the input
+	  should be in the range &minus;1 to 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="asin" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The arc sine of <argname>x</argname>, that is, the value whose sine
+	  is <argname>x</argname>.  The result is in radians; the input should
+	  be in the range &minus;1 to 1.
+	</para>
+      </description>
+    </function>
+
     <function name="atan" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Arctangent.
+	  The arc tangent of <argname>x</argname>, that is, the value whose
+	  tangent is <argname>x</argname>.  The result is in radians.
 	</para>
       </description>
     </function>
@@ -1279,7 +1306,7 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns <math>A</math><super>+</super>, the Moore&ndash;Penrose 
+	  Returns <math>A</math><sup>+</sup>, the Moore&ndash;Penrose 
 	  or generalized inverse of <argname>A</argname>, computed
 	  via the singular value decomposition.
 	</para>
@@ -2460,6 +2487,27 @@
 	  <seelist> 
 	    <fncref targ="psd"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="polroots" output="matrix">
+      <fnargs>
+	<fnarg type="vector">a</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Finds the roots of a polynomial.  If the polynomial is of degree
+	  <math>p</math>, the vector <argname>a</argname> should contain
+	  <math>p</math> + 1 coefficients in ascending order, &ie; starting
+	  with the constant and ending with the coefficient on
+	  <math>x</math><sup>p</sup>.
+	</para>
+	<para>
+	  If all the roots are real they are returned in a column vector of
+	  length <math>p</math>, otherwise a <by r="p" c="2"/> matrix
+	  is returned, the real parts in the first column and the imaginary
+	  parts in the second.
 	</para>
       </description>
     </function>

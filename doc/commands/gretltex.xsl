@@ -476,7 +476,7 @@
   <xsl:text>}</xsl:text>
 </xsl:template>
 
-<xsl:template match="super">
+<xsl:template match="sup">
   <xsl:text>\ensuremath{^{</xsl:text>  
   <xsl:apply-templates/>
   <xsl:text>}}</xsl:text> 

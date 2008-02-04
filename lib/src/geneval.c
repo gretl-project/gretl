@@ -2050,6 +2050,10 @@ static double real_apply_func (double x, int f, parser *p)
 	return cos(x);
     case TAN:
 	return tan(x);
+    case ASIN:
+	return asin(x);
+    case ACOS:
+	return acos(x);
     case ATAN:
 	return atan(x);
     case CNORM:
@@ -4192,6 +4196,8 @@ static NODE *eval (NODE *t, parser *p)
     case SIN:
     case COS:
     case TAN:
+    case ASIN:
+    case ACOS:
     case ATAN:
     case LOG:
     case LOG10:

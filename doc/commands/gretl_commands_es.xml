@@ -2084,7 +2084,7 @@
 	<equation status="inline"
 	  tex="$1/\sqrt{e^{y^*}}$"
 	  ascii="1/sqrt(exp(y*))"
-	  graphic="hsk"/>, donde <mathvar>y<super>*</super></mathvar>
+	  graphic="hsk"/>, donde <mathvar>y<sup>*</sup></mathvar>
 	denota los valores ajustados mediante la regresión auxiliar.
 	</para>
     </description>
@@ -2454,9 +2454,9 @@
 
       <para context="cli">La variable dependiente debe ser estrictamente positiva.
         Si es una fracción decimal, entre 0 y 1, por defecto se usa
-	un valor <mathvar>y<super>*</super></mathvar> (el máximo asintótico
+	un valor <mathvar>y</mathvar><sup>*</sup> (el máximo asintótico
 	de la variable dependiente) of 1. Si la variable dependiente es un porcentaje,
-	entre 0 y 100, por defecto <mathvar>y<super>*</super></mathvar> es 100.  
+	entre 0 y 100, por defecto <mathvar>y</mathvar><sup>*</sup> es 100.  
 	Si Vd. desea establecer otro valor máximo utilice el parámetro opcional
 	<lit>ymax=</lit><repl>valor</repl> después de la lista de regresores.  
 	El valor proporcionado debe ser mayor que todos los valores observados de 

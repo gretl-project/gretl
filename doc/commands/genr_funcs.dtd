@@ -61,7 +61,7 @@
 <!ELEMENT para (#PCDATA | repl | program | math | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
-                footnote | argname | sub | super | seelist | 
+                footnote | argname | sub | sup | seelist | 
                 by | cmd)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
@@ -145,7 +145,7 @@
 <!ELEMENT cmd      (#PCDATA)>
 <!ELEMENT math     (#PCDATA)>
 <!ELEMENT sub      (#PCDATA)>
-<!ELEMENT super    (#PCDATA)>
+<!ELEMENT sup      (#PCDATA)>
 
 <!ATTLIST repl
    quote (true | false) "false"

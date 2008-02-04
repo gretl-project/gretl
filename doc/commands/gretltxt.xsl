@@ -347,7 +347,7 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="super">
+<xsl:template match="sup">
   <xsl:text>^</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
