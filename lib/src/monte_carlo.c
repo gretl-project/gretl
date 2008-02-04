@@ -735,7 +735,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
        range right now */
 
     if (!err && loop->init.vnum == 0 && 
-	loop->final.vnum == 0 && nend <= nstart) {
+	loop->final.vnum == 0 && nend < nstart) {
 	strcpy(gretl_errmsg, _("Ending value for loop index must be greater "
 			       "than starting value."));
 	err = E_DATA;
