@@ -318,9 +318,9 @@
       <description>
 	<para>
 	  The <lit>$stderr</lit> accessor can be used in two ways: with no
-	  arguments, it returns a column vector containing the estimated
-	  coefficients for the last model. With the optional argument, it
-	  returns a scalar, namely the estimate of the parameter called
+          arguments, it returns a column vector containing the standard error of
+          the coefficients for the last model.  With the optional argument, it
+          returns a scalar, namely the standard error of the parameter called
 	  <argname>s</argname>.  
 	  <seelist>
 	    <fncref targ="$coeff"/> 
