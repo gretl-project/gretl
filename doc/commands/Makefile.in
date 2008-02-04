@@ -9,6 +9,8 @@ XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 XSLT_CFLAGS = @XSLT_CFLAGS@
 XSLT_LIBS = @XSLT_LIBS@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_LIBS = @GLIB_LIBS@
 
 prefix = @prefix@
 datadir = @datadir@
@@ -72,7 +74,7 @@ validate: validate.o
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
 
 topiclist: topiclist.o
-	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(GLIB_LIBS)
 
 tables: tables.o
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
@@ -84,7 +86,7 @@ validate.o: validate.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
 topiclist.o: topiclist.c $(topsrc)/lib/src/libgretl.h
-	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GRETLINC) -c $<
+	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GRETLINC) -c $<
 
 tables.o: tables.c $(topsrc)/lib/src/genmain.c \
 	$(topsrc)/lib/src/monte_carlo.c

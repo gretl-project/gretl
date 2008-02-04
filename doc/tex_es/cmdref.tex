@@ -1,0 +1,57 @@
+\chapter{Instrucciones de gretl}
+\label{cmdref}
+
+\section{Notación}
+\label{cmd-intro}
+
+Las instrucciones definidas en esta sección pueden ejecutarse en el
+programa cliente de línea de instrucciones. También pueden incluirse
+en un archivo o ``lote de instrucciones'' (script) y así ejecutarse en
+el GUI, o teclearse mediante el modo consola de este último. En la
+mayoría de los casos la sintaxis que se menciona es también aplicable
+para rellenar una línea en el correspondiente cuadro de diálogo del
+GUI (véase también la ayuda \emph{en línea} de \app{gretl}), excepto
+que \emph{no} es preciso teclear la palabra inicial de la instrucción
+--- está implícita por el contexto. Una diferencia adicional es que no
+se puede insertar la marca \cmd{-o} para las instrucciones de
+regresión en los cuadros de diálogo del GUI: hay una opción de menú
+para mostrar la matriz formada por las varianzas y covarianzas de los
+coeficientes (que es el efecto de \cmd{-o} en las instrucciones de las
+regresiones).
+
+A lo largo de este capítulo se utilizan las siguientes convenciones:
+
+
+\begin{itemize}
+\item La fuente \texttt{typewriter} se utiliza en lo que tecleamos
+  directamente, y también para los nombres internos de las variables.
+
+\item Los términos en \textsl{cursiva} son marcadores de ubicación: es
+  posible sustituirlos por algo más específico, por ejemplo, se puede
+  escribir \texttt{renta} en lugar del genérico \textsl{varx}.
+
+\item \texttt{[ -o ]} significa que la marca \cmd{-o} es opcional:
+  puede ser añadida o no (pero en todo caso sin los paréntesis).
+
+\item La frase ``instrucción de estimación'' puede significar
+  cualquiera de las siguientes \cmd{ols}, \cmd{hilu}, \cmd{corc},
+  \cmd{ar}, \cmd{arch}, \cmd{hsk}, \cmd{tsls}, \cmd{wls}, \cmd{hccm},
+  \cmd{add} y \cmd{omit}.
+
+\end{itemize}
+
+
+\section{Instrucciones}
+\label{cmd-cmd}
+
+%% auto-generated from XML base, gretl_commands_es.xml
+\input{refbody}
+
+\section{Instrucciones arreglaron por tema}
+\label{cmd-topics}
+
+%% auto-generated from gretl sources
+\input{cmdtopics}
+
+
+

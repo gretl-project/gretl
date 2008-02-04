@@ -14,6 +14,8 @@
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
 
+#include <glib.h>
+
 #define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
@@ -21,6 +23,8 @@
 
 #define SECTLEN 64
 #define LBLLEN 128
+
+int maybe_recode;
 
 /* the order in which the topics should appear */
 enum {
@@ -123,6 +127,8 @@ static section *section_new (const char *name)
 
 static command *command_new (const char *name, const char *label)
 {
+    gsize read, wrote;
+    gchar *trbuf;
     command *cmd;
 
     cmd = malloc(sizeof *cmd);
@@ -131,7 +137,16 @@ static command *command_new (const char *name, const char *label)
 	strncat(cmd->name, name, 8);
 	*cmd->label = 0;
 	if (label != NULL) {
-	    strncat(cmd->label, label, LBLLEN - 1);
+	    if (maybe_recode && g_utf8_validate(label, -1, NULL)) {
+		trbuf = g_convert(label, -1, "ISO-8859-1", "UTF-8", 
+				  &read, &wrote, NULL);
+		if (trbuf != NULL) {
+		    strncat(cmd->label, trbuf, LBLLEN - 1);
+		    g_free(trbuf);
+		}
+	    } else {
+		strncat(cmd->label, label, LBLLEN - 1);
+	    }
 	}
     }
 
@@ -458,11 +473,13 @@ void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
+    /* note: for TeX output */
+    bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
 }
 
 int main (int argc, char **argv)
 {
+    char *lang;
     sectlist slist;
     int err;
 
@@ -470,6 +487,11 @@ int main (int argc, char **argv)
 	fprintf(stderr, "Please supply one argument: the name of a "
 		"file to process\n");
 	exit(EXIT_FAILURE);
+    }
+
+    lang = getenv("LANG");
+    if (lang != NULL && strncmp(lang, "en", 2)) {
+	maybe_recode = 1;
     }
 
     nls_init();

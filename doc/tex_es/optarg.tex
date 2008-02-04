@@ -1,0 +1,256 @@
+\chapter{Opciones, argumentos y directorios}
+\label{c-optarg}
+
+\section{gretl}
+\label{optarg1}
+
+\cmd{\app{gretl}} (en MS Windows, \cmd{gretlw32.exe})\footnote{En
+  Linux, se instala un ``lote de instrucciones de envoltura
+  (wrapper)'' llamado \texttt{gretl}. Este lote de instrucciones
+  comprueba si la variable de entorno \texttt{DISPLAY} está activada;
+  si lo está, lanza el programa GUI, \verb@gretl_x11@, y si no, lanza
+  el programa de línea de instrucciones, \texttt{gretlcli}.}
+    
+--- Abre el programa y espera las instruccionest del usuario.
+
+\cmd{gretl} \textsl{archivo-de-datos}
+
+--- Abre el programa con el archivo de datos indicado en su ventana de
+trabajo. El archivo de datos puede estar en formato propio de
+\app{gretl}, formato CSV, o formato BOX1 (véase el \emph{Gretl User's
+  Guide}). El programa intenta detectar el formato del archivo y
+procede en consecuencia. Véase también Sección \ref{path-search} abajo
+para el comportamiento de búsqueda de directorios.
+
+\cmd{gretl --help} (o \cmd{gretl -h})
+
+--- Muestra un breve resumen del historial de la sesión y sale al
+sistema operativo.
+
+\cmd{gretl --version} (o \cmd{gretl -v})
+
+--- Muestra la identificación de la versión del programa y sale al
+sistema operativo.
+
+\cmd{gretl --run} \textsl{archivo-de-instrucciones} (o \cmd{gretl -r}
+\textsl{archivo-de-instrucciones})
+
+--- Abre el programa con una ventana mostrando el archivo de
+instrucciones indicado, listo para su ejecución. Véase Sección
+\ref{path-search} abajo para las características de búsqueda de
+directorios.
+
+\cmd{gretl --db} \textsl{base-de-datos} (o \cmd{gretl -d}
+\textsl{base-de-datos})
+
+--- Abre el programa con una ventana en la que se muestra la base de
+datos especificada. Si los archivos de la base de datos (el archivo
+\texttt{.bin} y su acompañante \texttt{.idx} --- véase el \emph{Gretl
+  User's Guide}) no están en el directorio de bases de datos por
+defecto del sistema, es preciso especificar la ubicación completa.
+
+Podemos configurar varios detalles de \app{gretl} con el menú
+``Archivo, Preferencias''.
+
+
+\begin{itemize}
+\item El directorio base para los archivos compartidos de \app{gretl}.
+
+\item El directorio base del usuario para archivos relacionados con
+  \app{gretl}.
+
+\item La instrucción para lanzar \app{gnuplot}.
+
+\item La instrucción para lanzar GNU R.
+
+\item La instrucción para visualizar archivos TeX DVI.
+
+\item El directorio en donde empezar a buscar las bases de datos
+  nativas de \app{gretl}.
+
+\item El directorio en donde empezar a buscar las bases de datos de
+  RATS 4.
+
+\item El número IP del servidor de bases de datos de \app{gretl}.
+
+\item El número IP y número de puerto del servidor proxy HTTP a
+  utilizar para contactar con el servidor de bases de datos, en caso
+  de que sea aplicable (si tenemos un cortafuegos).
+
+\item Los programas de calculadora y edición a lanzar desde la barra
+  de herramientas.
+
+\item La fuente monoespacio a utilizar en los resultados de
+  \app{gretl} en la pantalla.
+
+\item La fuente a utilizar en los menús y otros mensajes. (Nota: esta
+  opción no está presente cuando \app{gretl} está compilado para el
+  escritorio \app{gnome}, ya que en este caso la elección de fuentes
+  se controla directamente desde \app{gnome}.)
+
+\end{itemize}
+
+También hay algunas casillas para señalar. Señalando la casilla ``modo
+experto'' se suprimen algunos mensajes de aviso, que se muestran en
+caso contrario. Marcar la casilla ``Informar sobre las actualizaciones
+de \app{gretl}'' hace que \app{gretl} intente conectar con el servidor
+de actualizaciones al empezar el programa. Desmarcar ``Mostrar barra
+de herramientas de \app{gretl}'' desactiva el icono del mismo. Si el
+idioma del sistema no es el Inglés, y el carácter de punto decimal no
+es el punto ``\texttt{.}'', desactivar la casilla ``Utilizar
+configuración local para el punto decimal'' hará que \app{gretl}
+utilice el punto a pesar de todo.
+
+Finalmente, hay algunas elecciones alternativas: en la pestaña
+``Abrir/Guardar camino'' puede establecerse el directorio por defecto
+donde \app{gretl} tiene que buscar al abrir o guardar un archivo -
+bien el directorio de usuario de \app{gretl} o bien el directorio de
+trabajo actual.  En la pestaña ``Ficheros de datos'' puede
+establecerse el sufijo a utilizar por defecto para los nombres de
+archivos de datos. El sufijo normal es \texttt{.gdt} pero, si se
+desea, se puede poner \texttt{.dat}, que era la norma en las versiones
+anteriores del programa. Si se pone \texttt{.dat} por defecto,
+entonces los archivos de datos serán guardados en el formato
+``tradicional'' (véase el \emph{Gretl User's Guide}).  También es
+posible seleccionar la acción a asociar con el icono de carpeta en la
+barra de herramientas en esta misma pestaña de ``Ficheros de datos'':
+se puede elegir entre abrir el listado de los archivos de datos
+asociados con el libro de texto de Ramanathan, o con el libro de
+Wooldridge.
+
+Las opciones establecidas de esta manera se gestionan de modo
+diferente dependiendo del contexto. En MS Windows se guardan en el
+registro de Windows. En el escritorio de \app{gnome} se guardan en
+\texttt{.gnome/gretl} en el directorio personal del usuario. En otros
+casos, se guardan en un archivo llamado \texttt{.gretlrc} en el
+directorio del usuario.
+    
+
+\section{gretlcli}
+\label{optarg2}
+
+\cmd{gretlcli}
+
+--- Abre el programa y espera a que el usuario introduzca órdenes.
+
+\cmd{gretlcli} \textsl{archivo-de-datos}
+
+--- Abre el programa con un archivo de datos específico en su espacio
+de trabajo. El archivo de datos puede estar en formato nativo de
+\app{gretl}, formato CSV, o formato BOX1 (véase el \emph{Gretl User's
+  Guide}). El programa intentará detectar el formato del archivo y
+procederá en consecuencia. Véase también Sección \ref{path-search}
+abajo, para más detalles sobre las características de búsqueda de
+directorios.
+
+\cmd{gretlcli --help} (o \cmd{gretlcli -h})
+
+--- Muestra un breve resumen de uso (lista de instrucciones).
+
+\cmd{gretlcli --version} (o \cmd{gretlcli -v})
+
+--- Muestra la identificación de la versión del programa.
+
+\cmd{gretlcli --pvalue} (o \cmd{gretlcli -p})
+
+--- Abre el programa de modo que podemos especificar de manera
+interactiva el valor p para varios estadísticos habituales.
+
+\cmd{gretlcli --run} \textsl{archivo-de-guión} (o \cmd{gretlcli -r}
+\textsl{archivo-de-guión})
+
+--- Ejecuta las instrucciones que hay en \textsl{archivo-de-guión} y
+después pasa el control a la línea de instrucciones. Véase Sección
+\ref{path-search} para más detalles sobre las características de
+búsqueda de directorios.
+
+\cmd{gretlcli --batch} \textsl{archivo-de-guión} (o \cmd{gretlcli -b}
+\textsl{archivo-de-guión})
+
+--- Ejecuta las instrucciones que hay en \textsl{archivo-de-guión} y
+después sale del programa.  Cuando utilice esta opción,
+Vd. probablemente deseará redirigir la salida del programa a un
+archivo. Véase Sección \ref{path-search} para más detalles sobre las
+características de búsqueda de directorios.
+
+Al usar las opciones \cmd{--run} y \cmd{--batch}, el guión de
+instrucciones en cuestión tiene que abrir un archivo de datos. Es
+posible hacer esto mediante la instrucción \cmd{open} dentro del lote.
+
+
+
+\section{Directorios}
+\label{path-search}
+
+Cuando se indica el nombre de un archivo de datos o de un archivo de
+lote de instrucciones a \app{gretl} o a \app{gretlcli} en la línea de
+instrucciones, se busca el archivo de la siguiente manera:
+
+\begin{enumerate}
+
+\item ``Como tal''. Es decir, en el directorio de trabajo actual o, si
+  se especifica la dirección completa, en el sitio especificado.
+
+\item En el directorio del usuario de \app{gretl} (véase la Tabla
+  \ref{tab-path} para valores dados por defecto).
+
+\item En cualquier subdirectorio por debajo del directorio de usuario
+  de \app{gretl}.
+
+\item En el caso de archivos de datos, la búsqueda continúa con el
+  directorio principal de \app{gretl}. En el caso de un lote de
+  instrucciones, la búsqueda continúa en el directorio de lotes de
+  instrucciones del sistema.  Véase la Tabla \ref{tab-path} para los
+  valores dados por defecto.  (\texttt{PREFIX} denota el directorio
+  base elegido en el momento en que fue instalado \app{gretl}.)
+
+\item En el caso de archivos de datos, la búsqueda procede entonces
+  hacia todos los subdirectorios por debajo del directorio principal
+  de datos.
+
+\end{enumerate}
+
+
+\begin{table}[htbp]
+  \caption{Directorios por defecto}
+  \label{tab-path}
+  \begin{center}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{120pt}
+        >{\raggedright\arraybackslash}p{160pt}
+        >{\raggedright\arraybackslash}p{160pt} }
+      \textit{ } & \textit{Linux} & \textit{MS Windows} \\ [4pt]
+      Directorio del usuario & \verb|$HOME/gretl| & \verb@PREFIX\gretl\user@ \\
+      Directorio de datos del sistema & \texttt{PREFIX/share/gretl/data} & \verb@PREFIX\gretl\data@ \\
+      Directorio de lotes de instrucciones del sistema & \texttt{PREFIX/share/gretl/scripts} & \verb@PREFIX\gretl\scripts@ \\
+    \end{tabular}
+  \end{center}
+\end{table}
+
+Por lo tanto no es necesario especificar el directorio completo de los
+archivos de datos o de instrucciones a menos que se quiera prescindir
+del mecanismo de búsqueda automática. (Esto también es válido para
+\app{gretlcli} cuando se indica un nombre de archivo como argumento en
+las instrucciones \cmd{open} o \cmd{run}.)
+
+Cuando un lote de instrucciones contiene una instrucción para abrir un
+archivo de datos, el orden de búsqueda del archivo de datos es como se
+ha descrito arriba, con la excepción de que también se busca en el
+directorio donde está el lote, inmediatamente después de intentar
+encontrar el archivo de datos ``como tal''.
+
+
+\subsection{MS Windows}
+\label{MS-behave}
+
+
+En MS Windows, la información sobre la configuración de \app{gretl} y
+\app{gretlcli} se guarda en el registro de Windows. Cuando \app{gretl}
+se instala por primera vez, se crea un conjunto de entradas de
+registro que pueden cambiarse mediante el menú ``Archivo,
+Preferencias''. En el caso de que haya que llevar a cabo algunos
+ajustes de forma manual a esta información, las entradas se encuentran
+(utilizando el programa estándar de Windows, \app{regedit.exe}) dentro
+de \verb@Software\gretl@ en \verb@HKEY_LOCAL_MACHINE@ (el directorio
+principal de \app{gretl} y la instrucción para invocar \app{gnuplot})
+y \verb@HKEY_CURRENT_USER@ (las demás variables configurables).
+      
