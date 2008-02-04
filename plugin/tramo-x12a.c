@@ -118,10 +118,6 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 	fprintf(stderr, "spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
-    } else if (serr && *serr) {
-	gretl_errmsg_set(serr);
-	fprintf(stderr, "stderr: '%s'\n", serr);
-	ret = 1;
     } else if (status != 0) {
 	if (sout && *sout) {
 	    gretl_errmsg_set(sout);
@@ -131,6 +127,8 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 	    fprintf(stderr, "spawn: status = %d\n", status);
 	}
 	ret = 1;
+    } else if (serr && *serr) {
+	fprintf(stderr, "stderr: '%s'\n", serr);
     }
 
     if (serr != NULL) g_free(serr);

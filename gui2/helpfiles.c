@@ -794,7 +794,7 @@ static int help_pos_from_function_index (int fnum)
 	make_func_help_mapping();
     }
 
-    if (fnum > 0 && fnum < n_help_funcs) {
+    if (fnum > 0 && fnum <= n_help_funcs) {
 	pos = ffinder[fnum-1].pos;
     } 
 

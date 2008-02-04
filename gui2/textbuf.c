@@ -761,47 +761,73 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *text, gint page, 
 			 const char *indent)
 {
-    GtkTextTag *ltag;
+    GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
+    GtkTextTag *tag;
+    gchar tagname[32];
 
     if (page == GUIDE_PAGE) {
-	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
-					  "family", "sans", NULL);
+	strcpy(tagname, "tag:guide");
     } else if (page == SCRIPT_PAGE) {
-	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
-					  "family", "monospace", NULL);
-	g_object_set_data_full(G_OBJECT(ltag), "fname", g_strdup(text), 
-			       g_free);
-    } else if (indent != NULL) {
-	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
-					  "left_margin", 30, NULL);
+	strcpy(tagname, text);
     } else {
-	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", NULL);
+	sprintf(tagname, "tag:p%d", page);
     }
 
-    g_object_set_data(G_OBJECT(ltag), "page", GINT_TO_POINTER(page));
-    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, ltag, NULL);
+    tag = gtk_text_tag_table_lookup(tab, tagname);
+
+    if (tag == NULL) {
+	if (page == GUIDE_PAGE) {
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+					     "family", "sans", NULL);
+	} else if (page == SCRIPT_PAGE) {
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+					     "family", "monospace", NULL);
+	    g_object_set_data_full(G_OBJECT(tag), "fname", g_strdup(text), 
+				   g_free);
+	} else if (indent != NULL) {
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+					     "left_margin", 30, NULL);
+	} else {
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
+	}
+	g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
+    } 
+
+    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
 }
 
 static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter, 
 			  const char *text, gint page, 
 			  const char *indent)
 {
-    GtkTextTag *ltag;
+    GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
+    GtkTextTag *tag;
+    gchar tagname[32];
 
     if (page == GFR_PAGE) {
-	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
-					  "family", "sans", NULL);
+	strcpy(tagname, "tag:gfr");
 	page = 0;
-    } else if (indent != NULL) {
-	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
-					  "left_margin", 30, NULL);
     } else {
-	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", NULL);
+	sprintf(tagname, "xtag:p%d", page);
     }
 
-    g_object_set_data(G_OBJECT(ltag), "page", GINT_TO_POINTER(page));
-    g_object_set_data(G_OBJECT(ltag), "xref", GINT_TO_POINTER(1));
-    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, ltag, NULL);
+    tag = gtk_text_tag_table_lookup(tab, tagname);
+
+    if (tag == NULL) {
+	if (page == GFR_PAGE) {
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+					     "family", "sans", NULL);
+	} else if (indent != NULL) {
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+					     "left_margin", 30, NULL);
+	} else {
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
+	}
+	g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
+	g_object_set_data(G_OBJECT(tag), "xref", GINT_TO_POINTER(1));
+    } 
+
+    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
 }
 
 static void link_open_script (GtkTextTag *tag)
@@ -1093,6 +1119,7 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
 	    if (*(s+2) == '#') {
+		/* category divider */
 		if (i > 1) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 		    if (llen < 7) {
@@ -1102,6 +1129,7 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 		}
 		s += 2;
 	    } else if (sscanf(s + 2, "%10s", funword)) {
+		/* function name */
 		insert_link(tbuf, &iter, funword, i, NULL);
 		if (++llen == 7) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
