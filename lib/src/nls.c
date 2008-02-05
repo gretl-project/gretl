@@ -3743,8 +3743,10 @@ static void umax_init (umax *u)
 
 static void umax_clear (umax *u)
 {
-    /* drop any "$" variables created */
-    dataset_drop_listed_variables(NULL, u->Z, u->dinfo, NULL);
+    if (u->dinfo != NULL) {
+	/* drop any "$" variables created */
+	dataset_drop_listed_variables(NULL, u->Z, u->dinfo, NULL);
+    }
     destroy_genr(u->g);
 }
 
