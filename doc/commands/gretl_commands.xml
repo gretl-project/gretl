@@ -526,6 +526,10 @@
 	  <effect>print covariance matrix</effect>
         </option>
         <option>
+	  <flag>--hessian</flag>
+	  <effect>base covariance matrix on the Hessian</effect>
+        </option>
+        <option>
 	  <flag>--nc</flag>
 	  <effect>do not include a constant</effect>
         </option>
@@ -622,6 +626,13 @@
 	of using it instead of native code.)  For details regarding these
 	options, please see <guideref
 	targ="arma-estimation"/>.
+      </para>
+
+      <para context="cli">
+	When the native ARMA code is used, estimated standard errors are based
+	on the Outer Product of the Gradient by default, but if the
+	<lit>--hessian</lit> option is given they are instead based on the
+	negative inverse of the Hessian (which is approximated numerically).
       </para>
 
       <para>The AIC value given in connection with ARIMA models is
