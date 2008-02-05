@@ -36,7 +36,8 @@ The second sort of comment is patterned after the C programming language:
 
 Comments of this sort can extend over several lines.  Using this mode
 it is easy to add lengthy explanatory text, or to get \app{gretl} to
-ignore substantial blocks of commands.
+ignore substantial blocks of commands.  As in C, comments of this
+type cannot be nested.
 
 How does these two comment modes interact?  You can think of
 \app{gretl} as starting at the top of a script and trying to decide at
@@ -80,7 +81,22 @@ Assuming we were not in ignore mode before the line shown above, it is
 just a single-line comment: the \texttt{/*} is masked, and does not
 open a multi-line comment.
 
-As in C, multi-line comments cannot be nested.
+You can append a comment to a command:
+%
+\begin{code}
+ols 1 0 2 3 # estimate the baseline model
+\end{code}
+%
+Example of ``commenting out'':
+%
+\begin{code}
+/*
+# let's skip this for now
+ols 1 0 2 3 4
+omit 3 4
+*/
+\end{code}
+%
 
 
 
