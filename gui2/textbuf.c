@@ -1685,33 +1685,6 @@ static int leading_spaces_at_iter (GtkTextBuffer *tbuf, GtkTextIter *start)
     return n;
 }
 
-static char *get_command_word_on_line (char *word, 
-				       GtkTextBuffer *tbuf, 
-				       GtkTextIter iter)
-{
-    GtkTextIter start = iter;
-    GtkTextIter end = start;
-
-    *word = '\0';
-
-    if (gtk_text_iter_forward_to_line_end(&end)) {
-	gchar *s, *tmp = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-
-	if (tmp != NULL) {
-	    if (*tmp != '\n') {
-		/* don't move onto next line */
-		s = tmp + strspn(tmp, " \t\n\r");
-		if (sscanf(s, "%*s <- %8s", word) != 1) {
-		    sscanf(s, "%8s", word);
-		}
-	    }
-	    g_free(tmp);
-	}
-    } 
-
-    return word;
-}
-
 #define TABDEBUG 0
 
 static int incremental_leading_spaces (const char *prevword,
@@ -1724,18 +1697,18 @@ static int incremental_leading_spaces (const char *prevword,
 	int prev_indent = 0;
 
 	adjust_indent(prevword, &this_indent, &next_indent);
-#if TABDEBUG
+#if TABDEBUG > 1
 	fprintf(stderr, "adjust_indent 1: this=%d, next=%d\n",
 		this_indent, next_indent);
 #endif
 	prev_indent = this_indent;
 	if (*thisword != '\0') {
 	    adjust_indent(thisword, &this_indent, &next_indent);
-#if TABDEBUG
+#if TABDEBUG > 1
 	    fprintf(stderr, "adjust_indent 2: this=%d\n", this_indent);
 #endif
 	    this_indent -= prev_indent;
-#if TABDEBUG
+#if TABDEBUG > 1
 	    fprintf(stderr, "adjust_indent 2: this=%d\n", this_indent);
 #endif
 	} else {
@@ -1746,24 +1719,93 @@ static int incremental_leading_spaces (const char *prevword,
     return this_indent * tabwidth;
 }
 
-/* get "command word", max 8 characters */
+static int line_continues (const gchar *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>=0; i--) {
+	if (s[i] != ' ' && s[i] != '\t') {
+	    return (s[i] == '\\');
+	}
+    } 
+
+    return 0;
+}
+
+static int get_word_and_cont (const char *s, char *word, int *contd)
+{
+    /* don't move onto next line */
+    if (*s != '\n' && *s != '\r') {
+	if (contd != NULL) {
+	    *contd = line_continues(s);
+	}
+	s += strspn(s, " \t");
+	if (sscanf(s, "%*s <- %8s", word) != 1) {
+	    sscanf(s, "%8s", word);
+	}
+    }
+
+    return *word != '\0';
+}
+
+static int line_continues_previous (GtkTextBuffer *tbuf,
+				    GtkTextIter iter)
+{
+    GtkTextIter end, prev = iter;
+    gchar *s;
+    int ret = 0;
+
+    if (gtk_text_iter_backward_line(&prev)) {
+	end = prev;
+	if (gtk_text_iter_forward_to_line_end(&end)) {
+	    s = gtk_text_buffer_get_text(tbuf, &prev, &end, FALSE);
+	    if (s != NULL) {
+		if (*s != '\n' && *s != '\r') {
+		    ret = line_continues(s);
+		}
+		g_free(s);
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* get "command word", max 8 characters: work backwards up script
+   to find this
+ */
 
 static char *get_previous_line_start_word (char *word, 
 					   GtkTextBuffer *tbuf,
 					   GtkTextIter iter,
-					   int *leadspace)
+					   int *leadspace,
+					   int *contd)
 {
-    GtkTextIter prev = iter;
+    GtkTextIter end, prev = iter;
+    int *pcont = contd;
+    gchar *s;
 
     *word = '\0';
 
-    while (gtk_text_iter_backward_line(&prev)) {
-	get_command_word_on_line(word, tbuf, prev);
-	if (*word != '\0') {
-	    if (leadspace != NULL) {
-		*leadspace = leading_spaces_at_iter(tbuf, &prev);
+    while (*word == '\0' && gtk_text_iter_backward_line(&prev)) {
+	end = prev;
+	if (gtk_text_iter_forward_to_line_end(&end)) {
+	    s = gtk_text_buffer_get_text(tbuf, &prev, &end, FALSE);
+	    if (s != NULL) {
+		if (get_word_and_cont(s, word, pcont)) {
+		    pcont = NULL;
+		}
+		g_free(s);
 	    }
-	    break;
+	}
+
+	if (line_continues_previous(tbuf, prev)) {
+	    /* back up one line further */
+	    *word = '\0';
+	}
+
+	if (*word != '\0' && leadspace != NULL) {
+	    *leadspace = leading_spaces_at_iter(tbuf, &prev);
 	}
     }
 
@@ -1806,7 +1848,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	GtkTextIter prev = start;
 	char *s, thisword[9];
 	char prevword[9];
-	int i, nsp = 0;
+	int i, nsp = 0, contd = 0;
 
 	*prevword = *thisword = '\0';
 
@@ -1816,8 +1858,13 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	    g_free(s);
 	} 
 
-	get_previous_line_start_word(prevword, tbuf, prev, &nsp);
-	nsp += incremental_leading_spaces(prevword, thisword);
+	get_previous_line_start_word(prevword, tbuf, prev, &nsp, &contd);
+
+	if (contd) {
+	    nsp += 2;
+	} else {
+	    nsp += incremental_leading_spaces(prevword, thisword);
+	}
 
 	if (pos > 0) {
 	    gtk_text_buffer_delete(tbuf, &start, &end);
@@ -1865,7 +1912,7 @@ static gboolean script_electric_enter (windata_t *vwin)
 	char thisword[9];
 	char prevword[9];
 	int diff, nsp, incr;
-	int targsp = 0;
+	int targsp = 0, contd = 0;
 
 	*thisword = *prevword = '\0';
 
@@ -1882,16 +1929,27 @@ static gboolean script_electric_enter (windata_t *vwin)
 	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
 	gtk_text_iter_set_line_offset(&start, 0);
 
-	get_previous_line_start_word(prevword, tbuf, start, &targsp);
+	get_previous_line_start_word(prevword, tbuf, start, &targsp, &contd);
 
 #if TABDEBUG
-	fprintf(stderr, "thisword='%s', leading space = %d\n",
-		thisword, nsp);
-	fprintf(stderr, "prevword='%s', leading space = %d\n",
-		prevword, targsp);
+	if (contd) {
+	    fprintf(stderr, "prevword='%s', leading space = %d\n",
+		    prevword, targsp);
+	    fprintf(stderr, "got line continuation\n");
+	} else {
+	    fprintf(stderr, "thisword='%s', leading space = %d\n",
+		    thisword, nsp);
+	    fprintf(stderr, "prevword='%s', leading space = %d\n",
+		    prevword, targsp);
+	}
 #endif
 
-	incr = incremental_leading_spaces(prevword, thisword);
+	if (contd) {
+	    incr = 2;
+	} else {
+	    incr = incremental_leading_spaces(prevword, thisword);
+	}
+
 	targsp += incr;
 	if (targsp < 0) {
 	    /* indentation messed up? */
