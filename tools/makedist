@@ -1,7 +1,6 @@
 #!/bin/sh
 
 parent=/home/cottrell/stats/esl
-WWW='allin@gretl.sourceforge.net:~/www/'
 
 version=$(cat ${parent}/gretl/lib/src/version.h | grep GRETL_VERSION[^_] | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
