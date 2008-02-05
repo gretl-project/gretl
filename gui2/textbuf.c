@@ -1685,9 +1685,9 @@ static int leading_spaces_at_iter (GtkTextBuffer *tbuf, GtkTextIter *start)
     return n;
 }
 
-static char *textbuf_get_next_command_word (char *word, 
-					    GtkTextBuffer *tbuf, 
-					    GtkTextIter iter)
+static char *get_command_word_on_line (char *word, 
+				       GtkTextBuffer *tbuf, 
+				       GtkTextIter iter)
 {
     GtkTextIter start = iter;
     GtkTextIter end = start;
@@ -1698,9 +1698,12 @@ static char *textbuf_get_next_command_word (char *word,
 	gchar *s, *tmp = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 
 	if (tmp != NULL) {
-	    s = tmp + strspn(tmp, " \t\n\r");
-	    if (sscanf(s, "%*s <- %8s", word) != 1) {
-		sscanf(s, "%8s", word);
+	    if (*tmp != '\n') {
+		/* don't move onto next line */
+		s = tmp + strspn(tmp, " \t\n\r");
+		if (sscanf(s, "%*s <- %8s", word) != 1) {
+		    sscanf(s, "%8s", word);
+		}
 	    }
 	    g_free(tmp);
 	}
@@ -1755,7 +1758,7 @@ static char *get_previous_line_start_word (char *word,
     *word = '\0';
 
     while (gtk_text_iter_backward_line(&prev)) {
-	textbuf_get_next_command_word(word, tbuf, prev);
+	get_command_word_on_line(word, tbuf, prev);
 	if (*word != '\0') {
 	    if (leadspace != NULL) {
 		*leadspace = leading_spaces_at_iter(tbuf, &prev);
