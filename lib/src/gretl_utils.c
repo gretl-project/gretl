@@ -1512,20 +1512,23 @@ void libgretl_init (void)
     set_gretl_tex_preamble(); 
 }
 
-void libgretl_session_cleanup (void)
+void libgretl_session_cleanup (int mode)
 {
     gretl_saved_objects_cleanup();
     gretl_transforms_cleanup();
     gretl_lists_cleanup();
-    destroy_user_matrices();
     gretl_plotx(NULL);
+
+    if (mode != SESSION_PRESERVE_MATRICES) {
+	destroy_user_matrices();
+    }
 }
 
 void libgretl_cleanup (void)
 {
     const char *p;
 
-    libgretl_session_cleanup();
+    libgretl_session_cleanup(SESSION_CLEAR_FULL);
 
     gretl_rand_free();
     gretl_functions_cleanup();

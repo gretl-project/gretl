@@ -2626,6 +2626,8 @@ int dataset_op_from_string (const char *s)
 	op = DS_DSORTBY;
     } else if (!strcmp(s, "resample")) {
 	op = DS_RESAMPLE;
+    } else if (!strcmp(s, "clear")) {
+	op = DS_CLEAR;
     }
 
     return op;
@@ -2801,6 +2803,11 @@ int modify_dataset (int op, const int *list, const char *s,
 		    PRN *prn)
 {
     int k = 0, err = 0;
+
+    if (op == DS_CLEAR) {
+	/* must be handled by calling program */
+	return E_NOTIMP;
+    }
 
     if (complex_subsampled()) {
 	strcpy(gretl_errmsg, _("The data set is currently sub-sampled"));

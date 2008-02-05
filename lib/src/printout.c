@@ -544,7 +544,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
 void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 {
-    if (!gretl_messages_on()) {
+    if (!gretl_messages_on() || pdinfo->v == 0) {
 	return;
     }
 

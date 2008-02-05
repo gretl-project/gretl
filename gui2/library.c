@@ -6866,6 +6866,14 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
   	}
   	break;
 
+    case DATAMOD:
+	if (cmd->aux == DS_CLEAR) {
+	    close_session(s, pZ, ppdinfo);
+	    pdinfo = *ppdinfo;
+	    break;
+	}
+	/* else fall through */
+
     default:
 	err = gretl_cmd_exec(s, pZ, ppdinfo);
 	pdinfo = *ppdinfo;

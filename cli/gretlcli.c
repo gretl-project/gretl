@@ -188,8 +188,8 @@ static void force_language (int f)
 
 #endif /* ENABLE_NLS */
 
-static int clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
-		       MODEL **models)
+static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
+			   MODEL **models)
 {
     DATAINFO *pdinfo;
     int err = 0;
@@ -212,7 +212,7 @@ static int clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
     clear_model(models[1]);
 
     free_modelspec();
-    libgretl_session_cleanup();
+    libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
     reset_model_count();
     gretl_cmd_destroy_context(cmd);
 
@@ -648,7 +648,7 @@ static void cli_exec_callback (ExecState *s, double ***pZ,
 	maybe_stack_var(s->var, s->cmd);
     } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
 	maybe_stack_var(s->var, s->cmd);
-    }
+    } 
 }
 
 static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
@@ -692,7 +692,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 
     if (data_status) {
 	if (!dbdata && cmd->ci != APPEND) {
-	    clear_data(cmd, pZ, ppdinfo, models);
+	    cli_clear_data(cmd, pZ, ppdinfo, models);
 	    pdinfo = *ppdinfo;
 	}
     } 
@@ -933,7 +933,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (data_status) {
-	    clear_data(cmd, pZ, ppdinfo, models);
+	    cli_clear_data(cmd, pZ, ppdinfo, models);
 	    pdinfo = *ppdinfo;
 	}	
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
@@ -1025,6 +1025,15 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    runit++;
 	}
 	break;
+
+    case DATAMOD:
+	if (cmd->aux == DS_CLEAR) {
+	    err = cli_clear_data(cmd, pZ, ppdinfo, models);
+	    pdinfo = *ppdinfo;
+	    pputs(prn, _("Dataset cleared\n"));
+	    break;
+	}
+	/* else fall through */
 
     default:
 	err = gretl_cmd_exec(s, pZ, ppdinfo);

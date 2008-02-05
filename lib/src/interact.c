@@ -4080,12 +4080,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DATAMOD:
 	err = modify_dataset(cmd->aux, cmd->list, cmd->param, pZ, 
-			     pdinfo, prn);
+				 pdinfo, prn);
 	if (!err) { 
 	    print_smpl(pdinfo, get_full_length_n(), prn);
 	    if (s->callback != NULL) {
 		s->callback(s, pZ, pdinfo);
 	    }
+	} else if (err == E_NOTIMP) {
+	    pputs(prn, _("This command is not available\n"));
 	}
 	break;
 

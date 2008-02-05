@@ -1363,7 +1363,7 @@ void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     edit_dialog_special_get_text(NULL);
 
     if (realclean) {
-	libgretl_session_cleanup();
+	libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
     }
 
     session_graph_count = 0;

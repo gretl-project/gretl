@@ -194,7 +194,6 @@ static int console_sample_handler (const DATAINFO *pdinfo, int code)
 {
     static int pd, t1, t2, ts;
     static double sd0;
-
     int ret = 0;
 
     if (code == SAMPLE_RECORD) {
@@ -203,7 +202,7 @@ static int console_sample_handler (const DATAINFO *pdinfo, int code)
 	t2 = pdinfo->t2;
 	ts = pdinfo->structure;
 	sd0 = pdinfo->sd0;
-    } else if (code == SAMPLE_CHECK) {
+    } else if (code == SAMPLE_CHECK && pdinfo->v > 0) {
 	if (pdinfo->pd != pd ||
 	    pdinfo->t1 != t1 ||
 	    pdinfo->t2 != t2 ||
@@ -230,7 +229,7 @@ static int console_vars_changed (const char *line, int oldv, int err)
 {
     int ret = 0;
 
-    if (datainfo->v != oldv) {
+    if (datainfo->v > 0 && datainfo->v != oldv) {
 	ret = 1;
     } else if (!err) {
 	if (!strncmp(line, "rename", 6) ||
