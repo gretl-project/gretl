@@ -23,7 +23,8 @@
 #define KDEBUG 0
 
 enum {
-    KALMAN_ARMA_LL = 1 << 0
+    KALMAN_ARMA_LL = 1 << 0, /* is the filter being used for ARMA estimation ? */
+    KALMAN_AVG_LL  = 1 << 1  /* store total likelihood or average? */
 };
 
 struct kalman_ {
@@ -634,9 +635,17 @@ void kalman_set_nonshift (kalman *K, int n)
     K->nonshift = n;
 }
 
-void kalman_use_ARMA_ll (kalman *K)
+void kalman_use_ARMA_ll (kalman *K, int total)
 {
     K->flags |= KALMAN_ARMA_LL;
+    if (!total) {
+	K->flags |= KALMAN_AVG_LL;
+    }
+}
+
+int is_kalman_ll_average (kalman *K)
+{
+    return (K->flags & KALMAN_AVG_LL);
 }
 
 /* Read from the appropriate row of x (T x k) and multiply by A' to
@@ -859,10 +868,14 @@ int kalman_forecast (kalman *K)
     } 
 
     if (arma_ll(K) && !na(K->loglik)) {
+	if (is_kalman_ll_average(K)) {
+	    K->loglik = -0.5 * 
+		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumVt/K->T);
+	} else {
 	double k = -(K->T / 2.0) * LN_2_PI;
-
 	K->loglik = k - (K->T / 2.0) * (1.0 + log(K->SSRw / K->T))
 	    - 0.5 * K->sumVt;
+	}
 	if (isnan(K->loglik) || isinf(K->loglik)) {
 	    K->loglik = NADBL;
 	} 

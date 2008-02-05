@@ -1044,6 +1044,19 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
     pmod->lnL = kalman_get_loglik(K);
 
+    /* rescale stuff if we are using average loglikelihood */
+
+    if ( is_kalman_ll_average(K) ) {
+	pmod->lnL *= T;
+
+	if (vcv != NULL) {
+	    int k2 = k*(k+1)/2;
+	    for (i=0; i<k2; i++) {
+		vcv[i] /= T;
+	    }
+	}
+    }
+
 #if ARMA_DEBUG
     fprintf(stderr, "kalman_arma_finish: doing VCV, method %s\n",
 	    (vcv != NULL)? "Hessian" : "OPG");
@@ -1372,7 +1385,9 @@ static int kalman_arma (const int *alist, double *coeff,
 	} else {
 	    kalman_set_nonshift(K, r);
 	}
-	kalman_use_ARMA_ll(K);
+
+	kalman_use_ARMA_ll(K, 0);
+
 	err = BFGS_max(b, ainfo->nc, maxit, reltol, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
 		       NULL, K, opt, prn);
@@ -1385,16 +1400,19 @@ static int kalman_arma (const int *alist, double *coeff,
 	pmod->errcode = err;
     } else {
 	double *hess = NULL;
-
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
-	kalman_do_ma_check = 0;
-	hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
-	kalman_do_ma_check = 1;
-	if (err) {
-	    /* fall back to OPG */
-	    err = 0;
+
+	if (opt & OPT_H) { 
+	    kalman_do_ma_check = 0;
+	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
+	    kalman_do_ma_check = 1;
+	    if (err) {
+		/* fall back to OPG */
+		err = 0;
+	    }
 	}
+
 	kalman_arma_finish(pmod, alist, ainfo, Z, pdinfo, 
 			   K, b, hess, ainfo->nc, T);
     } 
