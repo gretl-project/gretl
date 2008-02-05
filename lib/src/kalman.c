@@ -870,11 +870,12 @@ int kalman_forecast (kalman *K)
     if (arma_ll(K) && !na(K->loglik)) {
 	if (is_kalman_ll_average(K)) {
 	    K->loglik = -0.5 * 
-		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumVt/K->T);
+		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumVt / K->T);
 	} else {
-	double k = -(K->T / 2.0) * LN_2_PI;
-	K->loglik = k - (K->T / 2.0) * (1.0 + log(K->SSRw / K->T))
-	    - 0.5 * K->sumVt;
+	    double k = -(K->T / 2.0) * LN_2_PI;
+
+	    K->loglik = k - (K->T / 2.0) * (1.0 + log(K->SSRw / K->T))
+		- 0.5 * K->sumVt;
 	}
 	if (isnan(K->loglik) || isinf(K->loglik)) {
 	    K->loglik = NADBL;

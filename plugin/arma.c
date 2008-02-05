@@ -1046,11 +1046,11 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
     /* rescale stuff if we are using average loglikelihood */
 
-    if ( is_kalman_ll_average(K) ) {
+    if (is_kalman_ll_average(K)) {
 	pmod->lnL *= T;
-
 	if (vcv != NULL) {
-	    int k2 = k*(k+1)/2;
+	    int k2 = k * (k + 1) / 2;
+
 	    for (i=0; i<k2; i++) {
 		vcv[i] /= T;
 	    }
@@ -1400,6 +1400,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	pmod->errcode = err;
     } else {
 	double *hess = NULL;
+
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
 
