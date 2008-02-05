@@ -212,7 +212,13 @@ static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
     clear_model(models[1]);
 
     free_modelspec();
-    libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
+
+    if (cmd->opt & OPT_P) {
+	libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
+    } else {
+	libgretl_session_cleanup(SESSION_CLEAR_FULL);
+    }
+
     reset_model_count();
     gretl_cmd_destroy_context(cmd);
 
@@ -670,8 +676,6 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 
     if (cmd->opt & OPT_W) {
 	k = GRETL_NATIVE_DB_WWW;
-     } else if (cmd->opt & OPT_O) {
-	k = GRETL_CSV_DATA;
     } else {
 	k = detect_filetype(datfile, &paths, prn);
     }

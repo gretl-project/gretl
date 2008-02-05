@@ -2805,7 +2805,7 @@ int modify_dataset (int op, const int *list, const char *s,
     int k = 0, err = 0;
 
     if (op == DS_CLEAR) {
-	/* must be handled by calling program */
+	/* for now, must be handled by the calling program */
 	return E_NOTIMP;
     }
 

@@ -86,7 +86,8 @@ void gui_clear_dataset (void);
 
 void verify_clear_data (void);
 
-void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
+void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
+		    gretlopt opt);
 
 void free_session (void);
 

@@ -6477,8 +6477,8 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
-static int open_append (ExecState *s, double ***pZ,
-			DATAINFO **ppdinfo, PRN *prn)
+static int gui_open_append (ExecState *s, double ***pZ,
+			    DATAINFO **ppdinfo, PRN *prn)
 {
     DATAINFO *pdinfo = *ppdinfo;
     char *line = s->line;
@@ -6500,8 +6500,6 @@ static int open_append (ExecState *s, double ***pZ,
 
     if (cmd->opt & OPT_W) {
 	k = GRETL_NATIVE_DB_WWW;
-    } else if (cmd->opt & OPT_O) {
-	k = GRETL_CSV_DATA;
     } else {
 	k = detect_filetype(datfile, &paths, prn);
     }
@@ -6523,7 +6521,7 @@ static int open_append (ExecState *s, double ***pZ,
 		    return 1;
 		}
 	    } 
-	    close_session(s, pZ, ppdinfo);
+	    close_session(s, pZ, ppdinfo, cmd->opt);
 	    pdinfo = *ppdinfo;
 	}
     }
@@ -6772,7 +6770,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case OPEN:
     case APPEND:
-	err = open_append(s, pZ, ppdinfo, prn);
+	err = gui_open_append(s, pZ, ppdinfo, prn);
 	pdinfo = *ppdinfo;
 	break;
 
@@ -6797,7 +6795,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (data_status & HAVE_DATA) {
-	    close_session(s, pZ, ppdinfo);
+	    close_session(s, pZ, ppdinfo, cmd->opt);
 	    pdinfo = *ppdinfo;
 	}
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
@@ -6868,7 +6866,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DATAMOD:
 	if (cmd->aux == DS_CLEAR) {
-	    close_session(s, pZ, ppdinfo);
+	    close_session(s, pZ, ppdinfo, cmd->opt);
 	    pdinfo = *ppdinfo;
 	    break;
 	}
