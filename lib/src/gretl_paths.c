@@ -1705,6 +1705,7 @@ int cli_read_rc (PATHS *paths)
     char line[MAXLEN], key[32], val[MAXLEN];
     char dbproxy[21] = {0};
     char *home;
+    int usecwd = 0;
     int use_proxy = 0;
     int err = 0;
 
@@ -1738,7 +1739,8 @@ int cli_read_rc (PATHS *paths)
 	    } else if (!strcmp(key, "shellok")) {
 		libset_set_bool(SHELL_OK, rc_bool(val));
 	    } else if (!strcmp(key, "usecwd")) {
-		libset_set_bool(USE_CWD, rc_bool(val));
+		usecwd = rc_bool(val);
+		libset_set_bool(USE_CWD, usecwd);
 	    } else if (!strcmp(key, "gnuplot")) {
 		*paths->gnuplot = '\0';
 		strncat(paths->gnuplot, val, MAXLEN - 1);
@@ -1765,6 +1767,16 @@ int cli_read_rc (PATHS *paths)
     }
 
     fclose(fp);
+
+    if (usecwd) {
+	char *s, cwd[MAXLEN];
+
+	s = getcwd(cwd, MAXLEN);
+	if (s != NULL) {
+	    *paths->workdir = '\0';
+	    strncat(paths->workdir, s, MAXLEN - 1);
+	}
+    }
 
     err = gretl_set_paths(paths, OPT_NONE);
     gretl_www_init(paths->dbhost, dbproxy, use_proxy);
