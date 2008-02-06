@@ -115,10 +115,17 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 
 	err = dataset_add_series(1, pZ, pdinfo);
 	if (!err) {
+	    int T = pdinfo->t2 + 1;
+	    int offset = 0;
+
 	    for (t=0; t<=pdinfo->t2; t++) {
 		(*pZ)[v][t] = (*pZ)[varno][t];
+		if (na((*pZ)[v][t])) {
+		    offset++;
+		    T--;
+		}
 	    }
-	    err = GLS_demean_detrend((*pZ)[v], pdinfo->t2 + 1, test);
+	    err = GLS_demean_detrend((*pZ)[v] + offset, T, test);
 	}
 	if (err) {
 	    free(list);
@@ -244,8 +251,10 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
     if (na(pv)) {
 	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
     } else {
+	int asy = (order > 0 || (opt & OPT_G));
+
 	sprintf(pvstr, "%s %.4g", 
-		(order > 0)? _("asymptotic p-value") : _("p-value"), 
+		(asy)? _("asymptotic p-value") : _("p-value"), 
 		pv);
     } 
 
@@ -640,9 +649,13 @@ static int real_adf_test (int varno, int order, int niv,
 	    /* DF-GLS with trend: MacKinnon p-values won't work */
 	    pv = NADBL;
 	} else {
-	    pv = df_pvalue_from_plugin(DFt, 
-				       /* use asymp. p-value in augmented case */
-				       (order > 0)? 0 : dfmod.nobs, 
+	    /* Use asymp. p-value in augmented case; also the
+	       finite-sample MacKinnon p-values are not correct
+	       in the GLS case.
+	    */
+	    int asymp = (order > 0 || (opt & OPT_G));
+
+	    pv = df_pvalue_from_plugin(DFt, (asymp)? 0 : dfmod.nobs, 
 				       niv, itv, opt);
 	}
 
