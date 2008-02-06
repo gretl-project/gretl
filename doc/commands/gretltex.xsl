@@ -35,7 +35,8 @@
     <xsl:when test="contains($src,'_') or contains($src,'\') or 
                     contains($src,'$') or contains($src,'^') or
                     contains($src,'%') or contains($src,'&amp;') or
-                    contains($src,'#') or contains($src,'{')">
+                    contains($src,'#') or contains($src,'{') or
+                    contains($src, '--')">
       <xsl:text>yes</xsl:text>
     </xsl:when>    
     <xsl:otherwise>
@@ -271,7 +272,13 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="flag|argpunct">
+<xsl:template match="flag">
+  <xsl:text>\verb|</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>|</xsl:text>
+</xsl:template>
+
+<xsl:template match="argpunct">
   <xsl:text>\texttt{</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>}</xsl:text>
