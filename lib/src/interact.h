@@ -104,7 +104,7 @@ void echo_function_call (const char *line, unsigned char flags, PRN *prn);
 
 void safe_print_line (const char *line, int *plen, PRN *prn);
 
-int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
+int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 
 int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,

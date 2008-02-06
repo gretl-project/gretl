@@ -1036,7 +1036,7 @@ void do_open_session (void)
     }
 
     /* close existing session, if any, and initialize */
-    close_session(NULL, &Z, &datainfo, OPT_NONE);
+    close_session(NULL, &Z, datainfo, OPT_NONE);
 
     strcpy(sessionfile, tryfile);
     fprintf(stderr, I_("\nReading session file %s\n"), sessionfile);
@@ -1076,7 +1076,7 @@ void do_open_session (void)
     }
 
     session_file_make_path(paths.datfile, sinfo.datafile);
-    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, OPT_P, 
+    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, OPT_P, 
 			 NULL);
     if (err) {
 	/* FIXME more explicit error message */
@@ -1096,7 +1096,7 @@ void do_open_session (void)
     err = maybe_read_lists_file(fname);
 
     if (sinfo.mask != NULL) {
-	err = restrict_sample_from_mask(sinfo.mask, sinfo.mode, &Z, &datainfo,
+	err = restrict_sample_from_mask(sinfo.mask, sinfo.mode, &Z, datainfo,
 					NULL);
     }
 
@@ -1156,7 +1156,7 @@ void verify_clear_data (void)
 	return;
     }
 
-    close_session(NULL, &Z, &datainfo, OPT_NONE); /* FIXME opt */
+    close_session(NULL, &Z, datainfo, OPT_NONE); /* FIXME opt */
 }
 
 static void remove_session_dir (void)
@@ -1305,9 +1305,9 @@ void gui_clear_dataset (void)
 }
 
 static void 
-session_clear_data (double ***pZ, DATAINFO **ppdinfo, int realclean)
+session_clear_data (double ***pZ, DATAINFO *pdinfo, int realclean)
 {
-    gui_restore_sample(pZ, ppdinfo);
+    gui_restore_sample(pZ, pdinfo);
     gui_clear_dataset();
 
     /* clear protected models */
@@ -1325,7 +1325,7 @@ session_clear_data (double ***pZ, DATAINFO **ppdinfo, int realclean)
     lib_cmd_destroy_context();
 }
 
-void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
+void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 		    gretlopt opt)
 {
     int realclean = 1;
@@ -1339,7 +1339,7 @@ void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 #if SESSION_DEBUG
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
-    session_clear_data(pZ, ppdinfo, realclean); 
+    session_clear_data(pZ, pdinfo, realclean); 
 
     if (realclean) {
 	free_session();

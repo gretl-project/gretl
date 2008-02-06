@@ -281,7 +281,7 @@ void save_latex (PRN *prn, const char *fname);
 
 void do_save_text (char *fname, MODEL *pmod);
 
-int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
+int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 
 int check_and_record_command (void);
 

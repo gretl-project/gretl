@@ -1451,7 +1451,7 @@ static void csv_parsing_header (const char *fname, PRN *prn)
 /**
  * import_csv:
  * @pZ: pointer to data set.
- * @ppdinfo: pointer to data information struct.
+ * @pdinfo: pointer to data information struct.
  * @fname: name of CSV file.
  * @opt: use %OPT_C to force interpretation of data colums containing
  * strings as coded values and not errors.
@@ -1463,7 +1463,7 @@ static void csv_parsing_header (const char *fname, PRN *prn)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_csv (double ***pZ, DATAINFO **ppdinfo, 
+int import_csv (double ***pZ, DATAINFO *pdinfo, 
 		const char *fname, gretlopt opt, PRN *prn)
 {
     csvdata *c = NULL;
@@ -1493,7 +1493,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	goto csv_bailout;
     }
 
-    c = csvdata_new(*pZ, *ppdinfo, opt);
+    c = csvdata_new(*pZ, pdinfo, opt);
     if (c == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
@@ -1575,7 +1575,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	goto csv_bailout;
     }
 
-    if (*ppdinfo != NULL && (*ppdinfo)->decpoint != ',') {
+    if (pdinfo != NULL && pdinfo->decpoint != ',') {
 	gretl_push_c_numeric_locale();
 	popit = 1;
     }
@@ -1649,10 +1649,10 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	pputs(prn, M_("warning: some variable names were duplicated\n"));
     }
 
-    err = merge_or_replace_data(pZ, ppdinfo, &c->Z, &c->dinfo, prn);
+    err = merge_or_replace_data(pZ, pdinfo, &c->Z, &c->dinfo, prn);
 
     if (!err && newdata && c->descrip != NULL) {
-	(*ppdinfo)->descrip = c->descrip;
+	pdinfo->descrip = c->descrip;
 	c->descrip = NULL;
     }
 

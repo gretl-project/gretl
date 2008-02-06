@@ -35,8 +35,4 @@ int import_obs_label (const char *s);
 int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, 
 			    char *skipstr, PRN *prn);
 
-int import_csv (double ***pZ, DATAINFO **ppdinfo, 
-		const char *fname, gretlopt opt, 
-		PRN *prn);
-
 #endif /* CSVDATA_H */

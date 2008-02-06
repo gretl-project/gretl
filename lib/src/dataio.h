@@ -109,11 +109,11 @@ int gretl_is_pkzip_file (const char *fname);
 
 void gz_switch_ext (char *targ, char *src, char *ext);
 
-int merge_or_replace_data (double ***pZ0, DATAINFO **ppdinfo0,
+int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
 			   double ***pZ1, DATAINFO **ppdinfo1,
 			   PRN *prn);
 
-int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, 
+int gretl_get_data (double ***pZ, DATAINFO *pdinfo, 
 		    char *datfile, PATHS *ppaths, 
 		    PRN *prn);
 
@@ -121,13 +121,14 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 		   int data_status, int length,
 		   PRN *prn);
 
-int import_csv (double ***pZ, DATAINFO **ppdinfo, 
-                const char *fname, gretlopt opt, PRN *prn);
+int import_csv (double ***pZ, DATAINFO *pdinfo, 
+		const char *fname, gretlopt opt, 
+		PRN *prn);
 
-int import_octave (double ***pZ, DATAINFO **ppdinfo, 
+int import_octave (double ***pZ, DATAINFO *pdinfo, 
 		   const char *fname, PRN *prn);
 
-int import_other (double ***pZ, DATAINFO **ppdinfo, 
+int import_other (double ***pZ, DATAINFO *pdinfo, 
 		  int ftype, const char *fname, PRN *prn);
 
 int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);

@@ -2048,7 +2048,7 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
 /**
  * gretl_read_gdt:
  * @pZ: pointer to data set.
- * @ppdinfo: pointer to data information struct.
+ * @pdinfo: pointer to data information struct.
  * @fname: name of file to try.
  * @ppaths: path information struct.
  * @opt: use %OPT_P to display gui progress bar.
@@ -2061,7 +2061,7 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
+int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
 		    PATHS *ppaths, gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo;
@@ -2195,7 +2195,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 
     data_read_message(fname, tmpdinfo, prn);
 
-    err = merge_or_replace_data(pZ, ppdinfo, &tmpZ, &tmpdinfo, prn);
+    err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, prn);
 
     if (!err && newdata && ppaths != NULL && fname != ppaths->datfile) {
 	strcpy(ppaths->datfile, fname);
@@ -2211,15 +2211,15 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
     /* pre-process stacked cross-sectional panels: put into canonical
        stacked time series form
     */
-    if (!err && (*ppdinfo)->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(*pZ, *ppdinfo);
+    if (!err && pdinfo->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(*pZ, pdinfo);
     }
 
-    if (!err && (*ppdinfo)->structure == STACKED_TIME_SERIES) {
-	if ((*ppdinfo)->paninfo == NULL) {
-	    err = dataset_add_default_panel_indices(*ppdinfo);
+    if (!err && pdinfo->structure == STACKED_TIME_SERIES) {
+	if (pdinfo->paninfo == NULL) {
+	    err = dataset_add_default_panel_indices(pdinfo);
 	} else {
-	    err = dataset_finalize_panel_indices(*ppdinfo);
+	    err = dataset_finalize_panel_indices(pdinfo);
 	}
     }
 

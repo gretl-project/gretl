@@ -75,7 +75,7 @@ int data_status;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
-static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
+static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, double ***pZ,
@@ -188,16 +188,14 @@ static void force_language (int f)
 
 #endif /* ENABLE_NLS */
 
-static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
+static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 			   MODEL **models)
 {
-    DATAINFO *pdinfo;
     int err = 0;
 
     *paths.datfile = 0;
 
-    err = restore_full_sample(pZ, ppdinfo, NULL); 
-    pdinfo = *ppdinfo;
+    err = restore_full_sample(pZ, pdinfo, NULL); 
 
     if (pZ != NULL && *pZ != NULL) {
 	free_Z(*pZ, pdinfo); 
@@ -459,24 +457,24 @@ int main (int argc, char *argv[])
 	    exit(EXIT_FAILURE);
 	    break;
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, 
+	    err = gretl_get_data(&Z, datainfo, paths.datfile, &paths, 
 				 prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, 
+	    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, 
 				 OPT_NONE, prn);
 	    break;
 	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, &datainfo, paths.datfile, OPT_NONE, prn);
+	    err = import_csv(&Z, datainfo, paths.datfile, OPT_NONE, prn);
 	    break;
 	case GRETL_OCTAVE:
-	    err = import_octave(&Z, &datainfo, paths.datfile, prn);
+	    err = import_octave(&Z, datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_GNUMERIC:
 	case GRETL_EXCEL:
 	case GRETL_WF1:
 	case GRETL_DTA:
-	    err = import_other(&Z, &datainfo, ftype, paths.datfile, prn);
+	    err = import_other(&Z, datainfo, ftype, paths.datfile, prn);
 	    break;
 	case GRETL_SCRIPT:
 	    runit = 1;
@@ -548,7 +546,7 @@ int main (int argc, char *argv[])
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
 	sprintf(line, "run %s", runfile);
-	exec_line(&state, &Z, &datainfo);
+	exec_line(&state, &Z, datainfo);
     }
 
     /* should we stop immediately on error, in batch mode? */
@@ -564,7 +562,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (gretl_execute_loop()) { 
-	    if (gretl_loop_exec(&state, &Z, &datainfo)) {
+	    if (gretl_loop_exec(&state, &Z, datainfo)) {
 		return 1;
 	    }
 	    set_errfatal(ERRFATAL_AUTO);
@@ -581,7 +579,7 @@ int main (int argc, char *argv[])
 	    break;
 	} else {
 	    strcpy(linecopy, line);
-	    err = exec_line(&state, &Z, &datainfo);
+	    err = exec_line(&state, &Z, datainfo);
 	}
     } /* end of get commands loop */
 
@@ -658,10 +656,9 @@ static void cli_exec_callback (ExecState *s, double ***pZ,
 }
 
 static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
-			    DATAINFO **ppdinfo, MODEL **models,
+			    DATAINFO *pdinfo, MODEL **models,
 			    PRN *prn)
 {
-    DATAINFO *pdinfo = *ppdinfo;
     char datfile[MAXLEN] = {0};
     char response[3];
     int k, dbdata = 0;
@@ -696,28 +693,25 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 
     if (data_status) {
 	if (!dbdata && cmd->ci != APPEND) {
-	    cli_clear_data(cmd, pZ, ppdinfo, models);
-	    pdinfo = *ppdinfo;
+	    cli_clear_data(cmd, pZ, pdinfo, models);
 	}
     } 
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
+	err = import_csv(pZ, pdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
-	err = import_octave(pZ, ppdinfo, datfile, prn);
+	err = import_octave(pZ, pdinfo, datfile, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, ppdinfo, k, datfile, prn);
+	err = import_other(pZ, pdinfo, k, datfile, prn);
     } else if (k == GRETL_XML_DATA) {
-	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
+	err = gretl_read_gdt(pZ, pdinfo, datfile, &paths, 
 			     OPT_NONE, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
-	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
+	err = gretl_get_data(pZ, pdinfo, datfile, &paths, 
 			     prn);
     }
-
-    pdinfo = *ppdinfo;
 
     if (err) {
 	errmsg(err, prn);
@@ -747,9 +741,8 @@ static gretlopt plot_opt (gretlopt opt, int batch)
 
 #define ENDRUN (NC + 1)
 
-static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
+static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
-    DATAINFO *pdinfo = *ppdinfo;
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
@@ -922,8 +915,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case OPEN:
     case APPEND:
-	err = cli_open_append(cmd, line, pZ, ppdinfo, models, prn);
-	pdinfo = *ppdinfo;
+	err = cli_open_append(cmd, line, pZ, pdinfo, models, prn);
 	break;
 
     case NULLDATA:
@@ -937,8 +929,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (data_status) {
-	    cli_clear_data(cmd, pZ, ppdinfo, models);
-	    pdinfo = *ppdinfo;
+	    cli_clear_data(cmd, pZ, pdinfo, models);
 	}	
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
@@ -1032,16 +1023,14 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DATAMOD:
 	if (cmd->aux == DS_CLEAR) {
-	    err = cli_clear_data(cmd, pZ, ppdinfo, models);
-	    pdinfo = *ppdinfo;
+	    err = cli_clear_data(cmd, pZ, pdinfo, models);
 	    pputs(prn, _("Dataset cleared\n"));
 	    break;
 	}
 	/* else fall through */
 
     default:
-	err = gretl_cmd_exec(s, pZ, ppdinfo);
-	pdinfo = *ppdinfo;
+	err = gretl_cmd_exec(s, pZ, pdinfo);
 	break;
     }
 

@@ -893,17 +893,17 @@ int main (int argc, char *argv[])
 
 	switch (ftype) {
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, prn);
+	    err = gretl_get_data(&Z, datainfo, paths.datfile, &paths, prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, OPT_NONE, 
+	    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, OPT_NONE, 
 				 prn);
 	    break;
 	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, &datainfo, paths.datfile, OPT_NONE, prn);
+	    err = import_csv(&Z, datainfo, paths.datfile, OPT_NONE, prn);
 	    break;
 	case GRETL_OCTAVE:
-	    err = import_octave(&Z, &datainfo, paths.datfile, prn);
+	    err = import_octave(&Z, datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_EXCEL:
 	case GRETL_GNUMERIC:
@@ -1589,11 +1589,11 @@ static void set_up_main_menu (void)
     mdata->mbar = gtk_item_factory_get_widget(mdata->ifac, "<main>");
 }
 
-int gui_restore_sample (double ***pZ, DATAINFO **ppdinfo)
+int gui_restore_sample (double ***pZ, DATAINFO *pdinfo)
 {
     int err;
 
-    err = restore_full_sample(pZ, ppdinfo, NULL);
+    err = restore_full_sample(pZ, pdinfo, NULL);
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -1605,7 +1605,7 @@ int gui_restore_sample (double ***pZ, DATAINFO **ppdinfo)
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 {
-    int err = gui_restore_sample(&Z, &datainfo); 
+    int err = gui_restore_sample(&Z, datainfo); 
 
     if (verbose && !err) {
 	set_sample_label(datainfo);    

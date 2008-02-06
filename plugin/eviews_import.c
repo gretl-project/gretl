@@ -275,7 +275,7 @@ static int check_file_type (FILE *fp)
     return err;
 }
 
-int wf1_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
+int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn)
 {
     FILE *fp;
@@ -333,7 +333,7 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
-	err = merge_or_replace_data(pZ, ppdinfo, &newZ, &newinfo, prn);
+	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, prn);
     }
 
     fclose(fp);

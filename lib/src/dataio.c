@@ -1780,7 +1780,7 @@ static void try_gdt (char *fname)
 /**
  * gretl_get_data:
  * @pZ: pointer to data set.
- * @ppdinfo: pointer to data information struct.
+ * @pdinfo: pointer to data information struct.
  * @datfile: name of file to try.
  * @ppaths: path information struct.
  * @ocode: %DATA_NONE, %DATA_CLEAR or %DATA_APPEND.
@@ -1792,8 +1792,8 @@ static void try_gdt (char *fname)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppaths, 
-		    PRN *prn) 
+int gretl_get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, 
+		    PATHS *ppaths, PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
     double **tmpZ = NULL;
@@ -1848,7 +1848,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 
     /* catch XML files that have strayed in here? */
     if (gdtsuff && gretl_is_xml_file(datfile)) {
-	return gretl_read_gdt(pZ, ppdinfo, datfile, ppaths, 
+	return gretl_read_gdt(pZ, pdinfo, datfile, ppaths, 
 			      OPT_NONE, prn);
     }
 
@@ -1869,7 +1869,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
-	return import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
+	return import_csv(pZ, pdinfo, datfile, OPT_NONE, prn);
     } else if (err) {
 	return err;
     } else { 
@@ -1949,7 +1949,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     err = readlbl(lblfile, tmpdinfo);
     if (err) goto bailout;
 
-    err = merge_or_replace_data(pZ, ppdinfo, &tmpZ, &tmpdinfo, prn);
+    err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, prn);
 
     if (!err && newdata && ppaths != NULL && datfile != ppaths->datfile) {
 	strcpy(ppaths->datfile, datfile);
@@ -2283,9 +2283,9 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 /**
  * merge_or_replace_data:
  * @pZ0: pointer to original data set.
- * @ppdinfo0: pointer to original data information struct.
+ * @pdinfo0: original dataset information struct.
  * @pZ1: new data set.
- * @ppdinfo1: pointer data information associated with @pZ1.
+ * @ppdinfo1: pointer to dataset information associated with @pZ1.
  * @prn: print struct to accept messages.
  *
  * Given a newly-created dataset, pointed to by @pZ1 and
@@ -2298,19 +2298,19 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int merge_or_replace_data (double ***pZ0, DATAINFO **ppdinfo0,
+int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
 			   double ***pZ1, DATAINFO **ppdinfo1,
 			   PRN *prn)
 {
     int err = 0;
 
     if (*pZ0 != NULL) {
-	err = merge_data(pZ0, *ppdinfo0, *pZ1, *ppdinfo1, prn);
+	err = merge_data(pZ0, pdinfo0, *pZ1, *ppdinfo1, prn);
 	destroy_dataset(*pZ1, *ppdinfo1);
     } else {
-	free(*ppdinfo0);
+	*pdinfo0 = **ppdinfo1;
+	free(*ppdinfo1);
 	*pZ0 = *pZ1;
-	*ppdinfo0 = *ppdinfo1;
     }
 
     *pZ1 = NULL;
@@ -2478,7 +2478,7 @@ static int get_max_line_length (FILE *fp, PRN *prn)
 /**
  * import_octave:
  * @pZ: pointer to data set.
- * @ppdinfo: pointer to data information struct.
+ * @pdinfo: pointer to data information struct.
  * @fname: name of GNU octave ascii data file.
  * @prn: gretl printing struct (can be NULL).
  * 
@@ -2489,22 +2489,18 @@ static int get_max_line_length (FILE *fp, PRN *prn)
  *
  */
 
-int import_octave (double ***pZ, DATAINFO **ppdinfo, 
+int import_octave (double ***pZ, DATAINFO *pdinfo, 
 		   const char *fname, PRN *prn)
 {
     DATAINFO *octinfo = NULL;
     double **octZ = NULL;
-    
     FILE *fp = NULL;
     char *line = NULL;
-
     char tmp[8], name[32];
     int nrows = 0, ncols = 0, nblocks = 0;
     int brows = 0, bcols = 0, oldbcols = 0;
     int maxlen, got_type = 0, got_name = 0;
-    int err = 0;
-
-    int i, t;
+    int i, t, err = 0;
 
 #ifdef ENABLE_NLS
     if (prn != NULL) {
@@ -2514,6 +2510,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
+	err = E_FOPEN;
 	goto oct_bailout;
     }   
 
@@ -2521,11 +2518,13 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     maxlen = get_max_line_length(fp, prn);
     if (maxlen <= 0) {
+	err = E_DATA;
 	goto oct_bailout;
     }
  
     line = malloc(maxlen);
     if (line == NULL) {
+	err = E_ALLOC;
 	goto oct_bailout;
     }
 
@@ -2588,6 +2587,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     if (err || nrows == 0 || ncols == 0) {
 	pputs(prn, M_("Invalid data file\n"));
+	err = E_DATA;
 	goto oct_bailout;
     } 
 
@@ -2595,8 +2595,8 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     octinfo = datainfo_new();
     if (octinfo == NULL) {
-	fclose(fp);
 	pputs(prn, M_("Out of memory\n"));
+	err = E_ALLOC;
 	goto oct_bailout;
     }
 
@@ -2605,6 +2605,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     if (start_new_Z(&octZ, octinfo, 0)) {
 	pputs(prn, M_("Out of memory\n"));
+	err = E_ALLOC;
 	goto oct_bailout;
     }  
 
@@ -2664,28 +2665,11 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     if (err) {
 	pputs(prn, M_("Invalid data file\n"));
+	err = E_DATA;
 	goto oct_bailout;
     } 
-    
-    if (*pZ == NULL) {
-	/* no dataset currently in place */
-	*pZ = octZ;
-	if (*ppdinfo != NULL) {
-	    free(*ppdinfo);
-	}
-	*ppdinfo = octinfo;
-    } else if (merge_data(pZ, *ppdinfo, octZ, octinfo, prn)) {
-	goto oct_bailout;
-    }
 
-    fclose(fp); 
-    free(line);
-
-#ifdef ENABLE_NLS
-    console_off();
-#endif
-
-    return 0;
+    err = merge_or_replace_data(pZ, pdinfo, &octZ, &octinfo, prn);
 
  oct_bailout:
 
@@ -2705,13 +2689,13 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
     console_off();
 #endif
 
-    return 1;
+    return err;
 }
 
 /**
  * import_other:
  * @pZ: pointer to data set.
- * @ppdinfo: pointer to data information struct.
+ * @pdinfo: pointer to data information struct.
  * @ftype: type of data file.
  * @fname: name of file.
  * @prn: gretl printing struct.
@@ -2721,12 +2705,12 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_other (double ***pZ, DATAINFO **ppdinfo, 
+int import_other (double ***pZ, DATAINFO *pdinfo, 
 		  int ftype, const char *fname, PRN *prn)
 {
     void *handle;
     FILE *fp;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO **, PRN *);
+    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
     int err = 0;
 
 #ifdef ENABLE_NLS
@@ -2763,7 +2747,7 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
     if (sheet_get_data == NULL) {
         err = 1;
     } else {
-	err = (*sheet_get_data)(fname, pZ, ppdinfo, prn);
+	err = (*sheet_get_data)(fname, pZ, pdinfo, prn);
 	close_plugin(handle);
     }
 

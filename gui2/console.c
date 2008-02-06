@@ -282,10 +282,10 @@ static void console_exec (void)
     cstate.prn = console_prn;
 
     /* actually execute the command line */
-    err = gui_exec_line(&cstate, &Z, &datainfo);
+    err = gui_exec_line(&cstate, &Z, datainfo);
 
     while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(&cstate, &Z, &datainfo);
+	err = gretl_loop_exec(&cstate, &Z, datainfo);
     }
 
     gtk_text_buffer_get_end_iter(buf, &start);

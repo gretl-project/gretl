@@ -1015,7 +1015,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     gretl_exec_state_init(&state, SCRIPT_EXEC, fnline, get_lib_cmd(),
 			  models, prn);
 
-    err = gui_exec_line(&state, &Z, &datainfo);
+    err = gui_exec_line(&state, &Z, datainfo);
     view_buffer(prn, 80, 400, fnname, SCRIPT_OUT, NULL);
 
     if (datainfo->v > orig_v) {

@@ -1340,7 +1340,7 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
 }
 
 static int 
-real_excel_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
+real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		     int gui, PRN *prn)
 {
     wbook xbook;
@@ -1513,7 +1513,7 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 	}
     }
 
-    err = merge_or_replace_data(pZ, ppdinfo, &newZ, &newinfo, prn);
+    err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, prn);
 
  getout:
     
@@ -1536,16 +1536,16 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
     return err;
 }  
 
-int excel_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
+int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    PRN *prn)
 {
-    return real_excel_get_data(fname, pZ, ppdinfo, 1, prn);
+    return real_excel_get_data(fname, pZ, pdinfo, 1, prn);
 }
 
-int cli_get_xls (const char *fname, double ***pZ, DATAINFO **ppdinfo,
+int cli_get_xls (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		 PRN *prn)
 {
-    return real_excel_get_data(fname, pZ, ppdinfo, 0, prn);
+    return real_excel_get_data(fname, pZ, pdinfo, 0, prn);
 }
 
 

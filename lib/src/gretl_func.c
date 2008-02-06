@@ -3570,6 +3570,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 PRN *prn)
 {
     ExecState state;
+    char *submask = NULL;
+    int submode = 0;
     MODEL **models = NULL;
     char line[MAXLINE];
     CMD cmd;
@@ -3623,7 +3625,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      models, prn);
 	if (pdinfo->submode) {
-	    state.subinfo = pdinfo;
+	    fprintf(stderr, "on function startup, sub-sampled, "
+		    "mask at %p\n", (void*) pdinfo->submask);
+	    submask = copy_datainfo_submask(pdinfo);
+	    submode = pdinfo->submode;
+	    /* state.subinfo = pdinfo; */
 	}
 	state.callback = func_exec_callback;
     }
@@ -3637,7 +3643,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     for (i=0; i<u->n_lines && !err; i++) {
 	strcpy(line, u->lines[i]);
-	err = maybe_exec_line(&state, pZ, &pdinfo);
+	err = maybe_exec_line(&state, pZ, pdinfo);
 	if (state.funcerr) {
 #if UDEBUG
 	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", 
@@ -3650,7 +3656,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #if UDEBUG
 	    fprintf(stderr, "gretl_function_exec: calling gretl_loop_exec\n");
 #endif
-	    err = gretl_loop_exec(&state, pZ, &pdinfo);
+	    err = gretl_loop_exec(&state, pZ, pdinfo);
 	    if (state.funcerr) {
 		pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
 		set_funcerr_message(u, state.cmd->param);
@@ -3668,17 +3674,25 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     /* restore the sample that was in place on entry */
 
     if (complex_subsampled()) {
-	if (state.subinfo == NULL) {
-	    /* we weren't sub-sampled on entry: easy */
-	    restore_full_sample(pZ, &pdinfo, NULL);
-	} else if (state.subinfo != pdinfo) {
-	    /* we're differently sub-sampled: complex */
-	    restore_full_sample(pZ, &pdinfo, &state);
-	} 
+	int reset = 0;
+
+	if (submask != NULL && pdinfo->submask != NULL && 
+	    submask_cmp(submask, pdinfo->submask)) {
+	    /* need to restore original subsample */
+	    reset = 1;
+	}
+
+	restore_full_sample(pZ, pdinfo, NULL);
+
+	if (reset) {
+	    restrict_sample_from_mask(submask, submode, 
+				      pZ, pdinfo, &state);
+	}
     } 
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
+    free(submask);
 
     function_assign_returns(u, args, rtype, *pZ, pdinfo,
 			    ret, descrip, prn, &err);

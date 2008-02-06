@@ -50,13 +50,13 @@ int submask_cmp (const char *m1, const char *m2);
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 int restrict_sample (const char *line, const int *list,  
-		     double ***pZ, DATAINFO **ppdinfo,
+		     double ***pZ, DATAINFO *pdinfo,
 		     ExecState *state, gretlopt opt, 
 		     PRN *prn);
 
 int 
 restrict_sample_from_mask (char *mask, int mode, 
-			   double ***pZ, DATAINFO **ppdinfo,
+			   double ***pZ, DATAINFO *pdinfo,
 			   ExecState *state);
 
 int complex_subsampled (void);
@@ -65,7 +65,7 @@ int get_full_length_n (void);
 
 int set_sample (const char *line, const double **Z, DATAINFO *pdinfo);
 
-int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
+int restore_full_sample (double ***pZ, DATAINFO *pdinfo,
 			 ExecState *state); 
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);

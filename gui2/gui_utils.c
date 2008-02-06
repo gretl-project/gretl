@@ -982,7 +982,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
     PRN *errprn;
     const char *errbuf;
     FILE *fp;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO **, PRN *);
+    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
     int err = 0;
     
     fp = gretl_fopen(fname, "r");
@@ -1025,7 +1025,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	return 1;
     }
 
-    err = (*sheet_get_data)(fname, &Z, &datainfo, errprn);
+    err = (*sheet_get_data)(fname, &Z, datainfo, errprn);
     close_plugin(handle);
 
     if (err == -1) {
@@ -1134,7 +1134,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     /* destroy the current data set, etc., unless we're explicitly appending */
     if (!append) {
-	close_session(NULL, &Z, &datainfo, OPT_NONE); /* FIXME opt */
+	close_session(NULL, &Z, datainfo, OPT_NONE); /* FIXME opt */
     }
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||
@@ -1153,10 +1153,10 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
 
 	if (datatype == GRETL_XML_DATA) {
-	    err = gretl_read_gdt(&Z, &datainfo, tryfile, &paths, 
+	    err = gretl_read_gdt(&Z, datainfo, tryfile, &paths, 
 				 OPT_P, errprn);
 	} else {
-	    err = gretl_get_data(&Z, &datainfo, tryfile, &paths, 
+	    err = gretl_get_data(&Z, datainfo, tryfile, &paths, 
 				 errprn);
 	}
 

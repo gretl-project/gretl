@@ -2640,10 +2640,9 @@ static int block_model (CMD *cmd)
 			       c == MLE ||  \
 			       c == GMM)
 
-int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo) 
+int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo) 
 {
     LOOPSET *loop = currloop;
-    DATAINFO *pdinfo = *ppdinfo;
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
@@ -2687,7 +2686,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	j = 0;
 	while (!err && next_command(line, loop, &j)) {
 
-	    pdinfo = *ppdinfo;
 	    set_active_loop(loop);
 
 #if LOOP_DEBUG
@@ -2732,8 +2730,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    if (cmd->ci == LOOP) {
 		if (childnum < loop->n_children) {
 		    currloop = loop->children[childnum++];
-		    err = gretl_loop_exec(s, pZ, ppdinfo);
-		    pdinfo = *ppdinfo;
+		    err = gretl_loop_exec(s, pZ, pdinfo);
 		} else {
 		    fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
 		    err = 1;
@@ -2757,8 +2754,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		} 
 		/* estimate the model called for */
 		if (!err) {
-		    err = gretl_cmd_exec(s, pZ, ppdinfo);
-		    pdinfo = *ppdinfo;
+		    err = gretl_cmd_exec(s, pZ, pdinfo);
 		}
 		if (!err) {
 		    if (loop_is_progressive(loop)) {
@@ -2811,8 +2807,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
 		    cmd->opt |= OPT_Q;
 		}
-		err = gretl_cmd_exec(s, pZ, ppdinfo);
-		pdinfo = *ppdinfo;
+		err = gretl_cmd_exec(s, pZ, pdinfo);
 		if (!err && block_model(cmd)) {
 		    /* NLS, etc. */
 		    s->models[0]->ID = ++mod_id;

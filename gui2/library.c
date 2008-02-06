@@ -1175,10 +1175,10 @@ int bool_subsample (gretlopt opt)
     }
 
     if (opt & OPT_M) {
-	err = restrict_sample(NULL, NULL, &Z, &datainfo, NULL, 
+	err = restrict_sample(NULL, NULL, &Z, datainfo, NULL, 
 			      opt, prn);
     } else {
-	err = restrict_sample(cmdline, NULL, &Z, &datainfo, NULL, 
+	err = restrict_sample(cmdline, NULL, &Z, datainfo, NULL, 
 			      opt, prn);
     }
 
@@ -3225,7 +3225,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     gretl_exec_state_init(&state, CONSOLE_EXEC, cmdline, &libcmd, 
 			  models, NULL);
 
-    err = gui_exec_line(&state, &Z, &datainfo);
+    err = gui_exec_line(&state, &Z, datainfo);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -5508,10 +5508,10 @@ void do_open_csv_octave (char *fname, int code, int append)
     if (bufopen(&prn)) return;
 
     if (code == OPEN_OCTAVE) {
-	err = import_octave(&Z, &datainfo, fname, prn);
+	err = import_octave(&Z, datainfo, fname, prn);
 	strcpy(dtype, "Octave");
     } else {
-	err = import_csv(&Z, &datainfo, fname, OPT_NONE, prn); 
+	err = import_csv(&Z, datainfo, fname, OPT_NONE, prn); 
 	strcpy(dtype, "CSV");
     }
 
@@ -5580,7 +5580,7 @@ int maybe_restore_full_data (int action)
 	}
 
 	if (resp == GRETL_YES) {
-	    gui_restore_sample(&Z, &datainfo);
+	    gui_restore_sample(&Z, datainfo);
 	} else if (resp == GRETL_CANCEL || action == COMPACT || action == EXPAND) {
 	    return 1;
 	}
@@ -6339,7 +6339,7 @@ static int execute_script (const char *runfile, const char *buf,
 
     while (libcmd.ci != QUIT) {
 	if (gretl_execute_loop()) { 
-	    exec_err = gretl_loop_exec(&state, &Z, &datainfo);
+	    exec_err = gretl_loop_exec(&state, &Z, datainfo);
 	    if (exec_err) {
 		goto endwhile;
 	    }
@@ -6394,7 +6394,7 @@ static int execute_script (const char *runfile, const char *buf,
 		    strcpy(state.runfile, runfile);
 		}
 		state.flags = exec_code;
-		exec_err = gui_exec_line(&state, &Z, &datainfo);
+		exec_err = gui_exec_line(&state, &Z, datainfo);
 	    }
 
 	    if (exec_err) {
@@ -6478,9 +6478,8 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 }
 
 static int gui_open_append (ExecState *s, double ***pZ,
-			    DATAINFO **ppdinfo, PRN *prn)
+			    DATAINFO *pdinfo, PRN *prn)
 {
-    DATAINFO *pdinfo = *ppdinfo;
     char *line = s->line;
     CMD *cmd = s->cmd;
     char datfile[MAXLEN] = {0};
@@ -6521,28 +6520,25 @@ static int gui_open_append (ExecState *s, double ***pZ,
 		    return 1;
 		}
 	    } 
-	    close_session(s, pZ, ppdinfo, cmd->opt);
-	    pdinfo = *ppdinfo;
+	    close_session(s, pZ, pdinfo, cmd->opt);
 	}
     }
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
+	err = import_csv(pZ, pdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
-	err = import_octave(pZ, ppdinfo, datfile, prn);
+	err = import_octave(pZ, pdinfo, datfile, prn);
     } else if (k == GRETL_XML_DATA) {
-	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
+	err = gretl_read_gdt(pZ, pdinfo, datfile, &paths, 
 			     OPT_P, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, ppdinfo, k, datfile, prn);
+	err = import_other(pZ, pdinfo, k, datfile, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
-	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
+	err = gretl_get_data(pZ, pdinfo, datfile, &paths, 
 			     prn);
     }
-
-    pdinfo = *ppdinfo;
 
     if (err) {
 	gui_errmsg(err);
@@ -6573,9 +6569,8 @@ static int gui_open_append (ExecState *s, double ***pZ,
     return err;
 }
 
-int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
+int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
-    DATAINFO *pdinfo = *ppdinfo;
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
@@ -6770,8 +6765,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case OPEN:
     case APPEND:
-	err = gui_open_append(s, pZ, ppdinfo, prn);
-	pdinfo = *ppdinfo;
+	err = gui_open_append(s, pZ, pdinfo, prn);
 	break;
 
     case MODELTAB:
@@ -6795,8 +6789,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (data_status & HAVE_DATA) {
-	    close_session(s, pZ, ppdinfo, cmd->opt);
-	    pdinfo = *ppdinfo;
+	    close_session(s, pZ, pdinfo, cmd->opt);
 	}
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
@@ -6847,12 +6840,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case SMPL:
  	if (cmd->opt == OPT_F) {
- 	    gui_restore_sample(pZ, ppdinfo);
- 	    pdinfo = *ppdinfo;
+ 	    gui_restore_sample(pZ, pdinfo);
  	} else if (cmd->opt) {
- 	    err = restrict_sample(line, cmd->list, pZ, ppdinfo,
+ 	    err = restrict_sample(line, cmd->list, pZ, pdinfo,
  				  NULL, cmd->opt, prn);
- 	    pdinfo = *ppdinfo;
  	} else {
  	    err = set_sample(line, (const double **) *pZ, pdinfo);
  	}
@@ -6866,15 +6857,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DATAMOD:
 	if (cmd->aux == DS_CLEAR) {
-	    close_session(s, pZ, ppdinfo, cmd->opt);
-	    pdinfo = *ppdinfo;
+	    close_session(s, pZ, pdinfo, cmd->opt);
 	    break;
 	}
 	/* else fall through */
 
     default:
-	err = gretl_cmd_exec(s, pZ, ppdinfo);
-	pdinfo = *ppdinfo;
+	err = gretl_cmd_exec(s, pZ, pdinfo);
 	break;
     } /* end of command switch */
 

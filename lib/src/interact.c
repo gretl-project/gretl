@@ -3800,7 +3800,7 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
 }
 
 static int run_script (const char *fname, ExecState *s, 
-		       double ***pZ, DATAINFO **ppdinfo,
+		       double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn)
 {
     FILE *fp;
@@ -3822,7 +3822,7 @@ static int run_script (const char *fname, ExecState *s,
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
 	err = get_line_continuation(s->line, fp, prn);
 	if (!err) {
-	    err = maybe_exec_line(s, pZ, ppdinfo);
+	    err = maybe_exec_line(s, pZ, pdinfo);
 	}
     }
 
@@ -3842,7 +3842,7 @@ static int run_script (const char *fname, ExecState *s,
 }
 
 static int append_data (const char *line, double ***pZ,
-			DATAINFO **ppdinfo, PRN *prn)
+			DATAINFO *pdinfo, PRN *prn)
 {
     char fname[MAXLEN] = {0};
     int k, err = 0;
@@ -3856,16 +3856,16 @@ static int append_data (const char *line, double ***pZ,
     k = detect_filetype(fname, NULL, prn);
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, ppdinfo, fname, OPT_NONE, prn);
+	err = import_csv(pZ, pdinfo, fname, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
-	err = import_octave(pZ, ppdinfo, fname, prn);
+	err = import_octave(pZ, pdinfo, fname, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, ppdinfo, k, fname, prn);
+	err = import_other(pZ, pdinfo, k, fname, prn);
     } else if (k == GRETL_XML_DATA) {
-	err = gretl_read_gdt(pZ, ppdinfo, fname, NULL, 
+	err = gretl_read_gdt(pZ, pdinfo, fname, NULL, 
 			     OPT_NONE, prn);
     } else {
-	err = gretl_get_data(pZ, ppdinfo, fname, NULL, prn);
+	err = gretl_get_data(pZ, pdinfo, fname, NULL, prn);
     }
 
     return err;
@@ -3897,11 +3897,10 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
+int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     CMD *cmd = s->cmd;
     char *line = s->line;
-    DATAINFO *pdinfo = *ppdinfo;
     MODEL **models = s->models;
     PRN *prn = s->prn;
     VMatrix *corrmat;
@@ -3940,8 +3939,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     switch (cmd->ci) {
 
     case APPEND:
-	err = append_data(line, pZ, ppdinfo, prn);
-	pdinfo = *ppdinfo;
+	err = append_data(line, pZ, pdinfo, prn);
 	break;
 
     case ADF:
@@ -4303,12 +4301,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case SMPL:
 	if (cmd->opt == OPT_F) {
-	    err = restore_full_sample(pZ, ppdinfo, s);
-	    pdinfo = *ppdinfo;
+	    err = restore_full_sample(pZ, pdinfo, s);
 	} else if (cmd->opt) {
-	    err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
+	    err = restrict_sample(line, cmd->list, pZ, pdinfo, 
 				  s, cmd->opt, prn);
-	    pdinfo = *ppdinfo;
 	} else { 
 	    err = set_sample(line, (const double **) *pZ, pdinfo);
 	}
@@ -4694,7 +4690,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    err = 1;
 	    break;
 	}
-	err = run_script(runfile, s, pZ, ppdinfo, prn);
+	err = run_script(runfile, s, pZ, pdinfo, prn);
 	break;
 
     case FUNCERR:
@@ -4730,9 +4726,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 /* called by functions, and by scripts executed from within
    functions */
 
-int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
+int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
-    DATAINFO *pdinfo = *ppdinfo;
     int err = 0;
 
     if (string_is_blank(s->line)) {
@@ -4773,8 +4768,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     if (s->cmd->ci == FUNCERR) {
 	s->funcerr = err = 1;
     } else {
-	err = gretl_cmd_exec(s, pZ, ppdinfo);
-	pdinfo = *ppdinfo;
+	err = gretl_cmd_exec(s, pZ, pdinfo);
     }
 
     /* FIXME: problem with "set_as_last_model" below */

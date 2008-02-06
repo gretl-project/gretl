@@ -648,7 +648,7 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     return err;
 }
 
-int dta_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
+int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn)
 {
     int namelen = 0;
@@ -718,7 +718,7 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 	    gretl_string_table_destroy(st);
 	}
 
-	err = merge_or_replace_data(pZ, ppdinfo, &newZ, &newinfo, prn);
+	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, prn);
     }
 
     fclose(fp);
