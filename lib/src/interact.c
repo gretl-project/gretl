@@ -4919,43 +4919,55 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
    a data file?
 */
 
+#define startup_ci(c) (c == OPEN || \
+		       c == RUN || \
+		       c == INCLUDE || \
+		       c == NULLDATA || \
+		       c == GENR || \
+		       c == PVALUE || \
+		       c == PRINT || \
+		       c == PRINTF || \
+		       c == STRING || \
+		       c == HELP || \
+		       c == SET || \
+		       c == FUNC || \
+		       c == QUIT || \
+		       c == IF || \
+		       c == ELIF || \
+		       c == ELSE || \
+		       c == ENDIF)
+
 int ready_for_command (const char *line)
 {
     const char *ok_cmds[] = {
-	"open", 
-	"run", 
-	"include",
-	"nulldata", 
 	"import", 
-	"pvalue",
-	"print",
-	"printf",
-	"string",
 	"eval",
 	"!",
 	"launch",
-	"man", 
-	"help", 
-	"set", 
-	"critical", 
-	"seed", 
-	"function",
-	"noecho",
-	"exit",
+	"matrix",
 	NULL 
     };
     int i, ok = 0;
 
     if (string_is_blank(line) || gretl_compiling_function()) {
 	ok = 1;
-    } else if (*line == 'q' || *line == '#') {
+    } else if (*line == '#') {
 	ok = 1;
     } else if (*line == '/' && *(line+1) == '*') {
 	ok = 1;
     } else {
-	for (i=0; ok_cmds[i] != NULL && !ok; i++) {
-	    if (strncmp(line, ok_cmds[i], strlen(ok_cmds[i])) == 0) {
-		ok = 1;
+	char word[9];
+	int ci;
+
+	sscanf(line, "%8s", word);
+	ci = gretl_command_number(word);
+	if (ci == 0 || startup_ci(ci)) {
+	    ok = 1;
+	} else {
+	    for (i=0; ok_cmds[i] != NULL && !ok; i++) {
+		if (strncmp(line, ok_cmds[i], strlen(ok_cmds[i])) == 0) {
+		    ok = 1;
+		}
 	    }
 	}
     }
