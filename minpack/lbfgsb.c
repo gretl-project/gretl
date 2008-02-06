@@ -8,7 +8,12 @@
 #include <string.h>
 #include <time.h>
 
-#include "f2c.h"
+#ifndef min
+# define min(a,b) ((a) <= (b) ? (a) : (b))
+#endif
+#ifndef max
+# define max(a,b) ((a) >= (b) ? (a) : (b))
+#endif
 
 static int c1 = 1;
 static int c11 = 11;
@@ -55,7 +60,7 @@ static int dcopy_(int *n, double *dx, int *incx,
 	iy += *incy;
     }
     return 0;
-L20:
+ L20:
     m = *n % 7;
     if (m == 0) {
 	goto L40;
@@ -67,7 +72,7 @@ L20:
     if (*n < 7) {
 	return 0;
     }
-L40:
+ L40:
     mp1 = m + 1;
     i1 = *n;
     for (i = mp1; i <= i1; i += 7) {
@@ -122,7 +127,7 @@ static double ddot_(int *n, double *dx, int *incx, double *dy,
     }
     ret_val = dtemp;
     return ret_val;
-L20:
+ L20:
     m = *n % 5;
     if (m == 0) {
 	goto L40;
@@ -134,15 +139,15 @@ L20:
     if (*n < 5) {
 	goto L60;
     }
-L40:
+ L40:
     mp1 = m + 1;
     i1 = *n;
     for (i = mp1; i <= i1; i += 5) {
 	dtemp = dtemp + dx[i] * dy[i] + dx[i + 1] * dy[i + 1] + dx[
-		i + 2] * dy[i + 2] + dx[i + 3] * dy[i + 3] + dx[i + 
-		4] * dy[i + 4];
+								   i + 2] * dy[i + 2] + dx[i + 3] * dy[i + 3] + dx[i + 
+														   4] * dy[i + 4];
     }
-L60:
+ L60:
     ret_val = dtemp;
     return ret_val;
 } /* ddot_ */
@@ -185,7 +190,7 @@ static int daxpy_(int *n, double *da, double *dx,
 	iy += *incy;
     }
     return 0;
-L20:
+ L20:
     m = *n % 4;
     if (m == 0) {
 	goto L40;
@@ -197,7 +202,7 @@ L20:
     if (*n < 4) {
 	return 0;
     }
-L40:
+ L40:
     mp1 = m + 1;
     i1 = *n;
     for (i = mp1; i <= i1; i += 4) {
@@ -234,7 +239,7 @@ static int dscal_(int *n, double *da, double *dx, int *incx)
 	dx[i] = *da * dx[i];
     }
     return 0;
-L20:
+ L20:
     m = *n % 5;
     if (m == 0) {
 	goto L40;
@@ -246,7 +251,7 @@ L20:
     if (*n < 5) {
 	return 0;
     }
-L40:
+ L40:
     mp1 = m + 1;
     i2 = *n;
     for (i = mp1; i <= i2; i += 5) {
@@ -291,12 +296,12 @@ static int dtrsl_(double *t, int *ldt, int *n,
 	case__ += 2;
     }
     switch (case__) {
-	case 1:  goto L20;
-	case 2:  goto L50;
-	case 3:  goto L80;
-	case 4:  goto L110;
+    case 1:  goto L20;
+    case 2:  goto L50;
+    case 3:  goto L80;
+    case 4:  goto L110;
     }
-L20:
+ L20:
     b[1] /= t[t_dim1 + 1];
     if (*n < 2) {
 	goto L40;
@@ -308,9 +313,9 @@ L20:
 	daxpy_(&i2, &temp, &t[j + (j - 1) * t_dim1], &c1, &b[j], &c1);
 	b[j] /= t[j + j * t_dim1];
     }
-L40:
+ L40:
     goto L140;
-L50:
+ L50:
     b[*n] /= t[*n + *n * t_dim1];
     if (*n < 2) {
 	goto L70;
@@ -322,9 +327,9 @@ L50:
 	daxpy_(&j, &temp, &t[(j + 1) * t_dim1 + 1], &c1, &b[1], &c1);
 	b[j] /= t[j + j * t_dim1];
     }
-L70:
+ L70:
     goto L140;
-L80:
+ L80:
     b[*n] /= t[*n + *n * t_dim1];
     if (*n < 2) {
 	goto L100;
@@ -336,9 +341,9 @@ L80:
 	b[j] -= ddot_(&i2, &t[j + 1 + j * t_dim1], &c1, &b[j + 1], &c1);
 	b[j] /= t[j + j * t_dim1];
     }
-L100:
+ L100:
     goto L140;
-L110:
+ L110:
     b[1] /= t[t_dim1 + 1];
     if (*n < 2) {
 	goto L130;
@@ -349,9 +354,9 @@ L110:
 	b[j] -= ddot_(&i2, &t[j * t_dim1 + 1], &c1, &b[1], &c1);
 	b[j] /= t[j + j * t_dim1];
     }
-L130:
-L140:
-L150:
+ L130:
+ L140:
+ L150:
     return 0;
 } /* dtrsl_ */
 
@@ -383,12 +388,12 @@ static int dpofa_(double *a, int *lda, int *n, int *info)
 	for (k = 1; k <= i2; ++k) {
 	    i3 = k - 1;
 	    t = a[k + j * a_dim1] - ddot_(&i3, &a[k * a_dim1 + 1], &c1, &
-		    a[j * a_dim1 + 1], &c1);
+					  a[j * a_dim1 + 1], &c1);
 	    t /= a[k + k * a_dim1];
 	    a[k + j * a_dim1] = t;
 	    s += t * t;
 	}
-L20:
+    L20:
 	s = a[j + j * a_dim1] - s;
 	if (s <= 0.) {
 	    goto L40;
@@ -396,7 +401,7 @@ L20:
 	a[j + j * a_dim1] = sqrt(s);
     }
     *info = 0;
-L40:
+ L40:
     return 0;
 } /* dpofa_ */
 
@@ -419,21 +424,21 @@ static int active_(int *n, double *l, double *u,
 
     /* Function Body */
     nbdd = 0;
-    *prjctd = FALSE_;
-    *cnstnd = FALSE_;
-    *boxed = TRUE_;
+    *prjctd = 0;
+    *cnstnd = 0;
+    *boxed = 1;
     i1 = *n;
     for (i = 1; i <= i1; ++i) {
 	if (nbd[i] > 0) {
 	    if (nbd[i] <= 2 && x[i] <= l[i]) {
 		if (x[i] < l[i]) {
-		    *prjctd = TRUE_;
+		    *prjctd = 1;
 		    x[i] = l[i];
 		}
 		++nbdd;
 	    } else if (nbd[i] >= 2 && x[i] >= u[i]) {
 		if (x[i] > u[i]) {
-		    *prjctd = TRUE_;
+		    *prjctd = 1;
 		    x[i] = u[i];
 		}
 		++nbdd;
@@ -443,12 +448,12 @@ static int active_(int *n, double *l, double *u,
     i1 = *n;
     for (i = 1; i <= i1; ++i) {
 	if (nbd[i] != 2) {
-	    *boxed = FALSE_;
+	    *boxed = 0;
 	}
 	if (nbd[i] == 0) {
 	    iwhere[i] = -1;
 	} else {
-	    *cnstnd = TRUE_;
+	    *cnstnd = 1;
 	    if (nbd[i] == 2 && u[i] - l[i] <= 0.) {
 		iwhere[i] = 3;
 	    } else {
@@ -516,7 +521,7 @@ static int bmv_(int *m, double *sy, double *wt, int *col,
 	i2 = *col;
 	for (k = i + 1; k <= i2; ++k) {
 	    sum += sy[k + i * sy_dim1] * p[*col + k] / sy[i + i * 
-		    sy_dim1];
+							  sy_dim1];
 	}
 	p[i] += sum;
     }
@@ -524,14 +529,14 @@ static int bmv_(int *m, double *sy, double *wt, int *col,
 } /* bmv_ */
 
 static int cmprlb_(int *n, int *m, double *x, 
-	double *g, double *ws, double *wy, double *sy, 
-	double *wt, double *z, double *r, double *wa, 
-	int *index, double *theta, int *col, int *head, 
-	int *nfree, int *cnstnd, int *info)
+		   double *g, double *ws, double *wy, double *sy, 
+		   double *wt, double *z, double *r, double *wa, 
+		   int *index, double *theta, int *col, int *head, 
+		   int *nfree, int *cnstnd, int *info)
 {
     /* System generated locals */
     int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
-	    wt_dim1, wt_offset, i1, i2;
+	wt_dim1, wt_offset, i1, i2;
 
     /* Local variables */
     int i, j, k;
@@ -571,7 +576,7 @@ static int cmprlb_(int *n, int *m, double *x,
 	    r[i] = -(*theta) * (z[k] - x[k]) - g[k];
 	}
 	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &wa[(*m << 1) + 1], &wa[
-		1], info);
+									     1], info);
 	if (*info != 0) {
 	    *info = -8;
 	    return 0;
@@ -585,7 +590,7 @@ static int cmprlb_(int *n, int *m, double *x,
 	    for (i = 1; i <= i2; ++i) {
 		k = index[i];
 		r[i] = r[i] + wy[k + pointr * wy_dim1] * a1 + ws[k + 
-			pointr * ws_dim1] * a2;
+								 pointr * ws_dim1] * a2;
 	    }
 	    pointr = pointr % *m + 1;
 	}
@@ -594,8 +599,8 @@ static int cmprlb_(int *n, int *m, double *x,
 } /* cmprlb_ */
 
 static int errclb_(int *n, int *m, double *factr, 
-	double *l, double *u, int *nbd, char *task, int *info,
-	 int *k)
+		   double *l, double *u, int *nbd, char *task, int *info,
+		   int *k)
 {
     /* System generated locals */
     int i1;
@@ -637,14 +642,14 @@ static int errclb_(int *n, int *m, double *factr,
 } /* errclb_ */
 
 static int formk_(int *n, int *nsub, int *ind, int *
-	nenter, int *ileave, int *indx2, int *iupdat, int *
-	updatd, double *wn, double *wn1, int *m, double *ws, 
-	double *wy, double *sy, double *theta, int *col, 
-	int *head, int *info)
+		  nenter, int *ileave, int *indx2, int *iupdat, int *
+		  updatd, double *wn, double *wn1, int *m, double *ws, 
+		  double *wy, double *sy, double *theta, int *col, 
+		  int *head, int *info)
 {
     /* System generated locals */
     int wn_dim1, wn_offset, wn1_dim1, wn1_offset, ws_dim1, ws_offset, 
-	    wy_dim1, wy_offset, sy_dim1, sy_offset, i1, i2, i3;
+	wy_dim1, wy_offset, sy_dim1, sy_offset, i1, i2, i3;
 
     /* Local variables */
     int i, k, k1, m2, is, js, iy, jy, is1, js1, col2, dend, pend;
@@ -679,13 +684,13 @@ static int formk_(int *n, int *nsub, int *ind, int *
 		js = *m + jy;
 		i2 = *m - jy;
 		dcopy_(&i2, &wn1[jy + 1 + (jy + 1) * wn1_dim1], &c1, &wn1[
-			jy + jy * wn1_dim1], &c1);
+									  jy + jy * wn1_dim1], &c1);
 		i2 = *m - jy;
 		dcopy_(&i2, &wn1[js + 1 + (js + 1) * wn1_dim1], &c1, &wn1[
-			js + js * wn1_dim1], &c1);
+									  js + js * wn1_dim1], &c1);
 		i2 = *m - 1;
 		dcopy_(&i2, &wn1[*m + 2 + (jy + 1) * wn1_dim1], &c1, &wn1[
-			*m + 1 + jy * wn1_dim1], &c1);
+									  *m + 1 + jy * wn1_dim1], &c1);
 	    }
 	}
 	pbegin = 1;
@@ -793,10 +798,10 @@ static int formk_(int *n, int *nsub, int *ind, int *
 	    }
 	    if (is <= jy + *m) {
 		wn1[is + jy * wn1_dim1] = wn1[is + jy * wn1_dim1] + temp1 - 
-			temp3;
+		    temp3;
 	    } else {
 		wn1[is + jy * wn1_dim1] = wn1[is + jy * wn1_dim1] - temp1 + 
-			temp3;
+		    temp3;
 	    }
 	    jpntr = jpntr % *m + 1;
 	}
@@ -839,7 +844,7 @@ static int formk_(int *n, int *nsub, int *ind, int *
 	i2 = col2;
 	for (js = is; js <= i2; ++js) {
 	    wn[is + js * wn_dim1] += ddot_(col, &wn[is * wn_dim1 + 1], &c1, 
-		    &wn[js * wn_dim1 + 1], &c1);
+					   &wn[js * wn_dim1 + 1], &c1);
 	}
     }
     dpofa_(&wn[*col + 1 + (*col + 1) * wn_dim1], &m2, col, info);
@@ -851,11 +856,11 @@ static int formk_(int *n, int *nsub, int *ind, int *
 } /* formk_ */
 
 static int formt_(int *m, double *wt, double *sy, 
-	double *ss, int *col, double *theta, int *info)
+		  double *ss, int *col, double *theta, int *info)
 {
     /* System generated locals */
     int wt_dim1, wt_offset, sy_dim1, sy_offset, ss_dim1, ss_offset, i1, 
-	    i2, i3;
+	i2, i3;
 
     /* Local variables */
     int i, j, k, k1;
@@ -886,7 +891,7 @@ static int formt_(int *m, double *wt, double *sy,
 	    i3 = k1;
 	    for (k = 1; k <= i3; ++k) {
 		ddum += sy[i + k * sy_dim1] * sy[j + k * sy_dim1] / sy[k + 
-			k * sy_dim1];
+								       k * sy_dim1];
 	    }
 	    wt[i + j * wt_dim1] = ddum + *theta * ss[i + j * ss_dim1];
 	}
@@ -899,9 +904,9 @@ static int formt_(int *m, double *wt, double *sy,
 } /* formt_ */
 
 static int freev_(int *n, int *nfree, int *index, 
-	int *nenter, int *ileave, int *indx2, int *iwhere, 
-	int *wrk, int *updatd, int *cnstnd, 
-	int *iter)
+		  int *nenter, int *ileave, int *indx2, int *iwhere, 
+		  int *wrk, int *updatd, int *cnstnd, 
+		  int *iter)
 {
     /* System generated locals */
     int i1;
@@ -952,7 +957,7 @@ static int freev_(int *n, int *nfree, int *index,
 } /* freev_ */
 
 static int hpsolb_(int *n, double *t, int *iorder, 
-	int *iheap)
+		   int *iheap)
 {
     /* System generated locals */
     int i1;
@@ -973,7 +978,7 @@ static int hpsolb_(int *n, double *t, int *iorder,
 	    ddum = t[k];
 	    indxin = iorder[k];
 	    i = k;
-L10:
+	L10:
 	    if (i > 1) {
 		j = i / 2;
 		if (ddum < t[j]) {
@@ -993,7 +998,7 @@ L10:
 	indxou = iorder[1];
 	ddum = t[*n];
 	indxin = iorder[*n];
-L30:
+    L30:
 	j = i + i;
 	if (j <= *n - 1) {
 	    if (t[j + 1] < t[j]) {
@@ -1016,14 +1021,14 @@ L30:
 
 
 static int matupd_(int *n, int *m, double *ws, 
-	double *wy, double *sy, double *ss, double *d, 
-	double *r, int *itail, int *iupdat, int *col, 
-	int *head, double *theta, double *rr, double *dr, 
-	double *stp, double *dtd)
+		   double *wy, double *sy, double *ss, double *d, 
+		   double *r, int *itail, int *iupdat, int *col, 
+		   int *head, double *theta, double *rr, double *dr, 
+		   double *stp, double *dtd)
 {
     /* System generated locals */
     int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
-	    ss_dim1, ss_offset, i1, i2;
+	ss_dim1, ss_offset, i1, i2;
 
     /* Local variables */
     int j;
@@ -1060,19 +1065,19 @@ static int matupd_(int *n, int *m, double *ws,
 	i1 = *col - 1;
 	for (j = 1; j <= i1; ++j) {
 	    dcopy_(&j, &ss[(j + 1) * ss_dim1 + 2], &c1, &ss[j * ss_dim1 + 1]
-		    , &c1);
+		   , &c1);
 	    i2 = *col - j;
 	    dcopy_(&i2, &sy[j + 1 + (j + 1) * sy_dim1], &c1, &sy[j + j * 
-		    sy_dim1], &c1);
+								 sy_dim1], &c1);
 	}
     }
     pointr = *head;
     i1 = *col - 1;
     for (j = 1; j <= i1; ++j) {
 	sy[*col + j * sy_dim1] = ddot_(n, &d[1], &c1, &wy[pointr * 
-		wy_dim1 + 1], &c1);
+							  wy_dim1 + 1], &c1);
 	ss[j + *col * ss_dim1] = ddot_(n, &ws[pointr * ws_dim1 + 1], &c1, &
-		d[1], &c1);
+				       d[1], &c1);
 	pointr = pointr % *m + 1;
     }
     if (*stp == 1.) {
@@ -1085,7 +1090,7 @@ static int matupd_(int *n, int *m, double *ws,
 } /* matupd_ */
 
 static int projgr_(int *n, double *l, double *u, 
-	int *nbd, double *x, double *g, double *sbgnrm)
+		   int *nbd, double *x, double *g, double *sbgnrm)
 {
     /* System generated locals */
     int i1;
@@ -1127,14 +1132,14 @@ static int projgr_(int *n, double *l, double *u,
 } /* projgr_ */
 
 static int subsm_(int *n, int *m, int *nsub, int *
-	ind, double *l, double *u, int *nbd, double *x, 
-	double *d, double *ws, double *wy, double *theta, 
-	int *col, int *head, int *iword, double *wv, 
-	double *wn, int *info)
+		  ind, double *l, double *u, int *nbd, double *x, 
+		  double *d, double *ws, double *wy, double *theta, 
+		  int *col, int *head, int *iword, double *wv, 
+		  double *wn, int *info)
 {
     /* System generated locals */
     int ws_dim1, ws_offset, wy_dim1, wy_offset, wn_dim1, wn_offset, i1, 
-	    i2;
+	i2;
 
     /* Local variables */
     static int ibd;
@@ -1203,7 +1208,7 @@ static int subsm_(int *n, int *m, int *nsub, int *
 	for (i = 1; i <= i2; ++i) {
 	    k = ind[i];
 	    d[i] = d[i] + wy[k + pointr * wy_dim1] * wv[jy] / *theta 
-		    + ws[k + pointr * ws_dim1] * wv[js];
+		+ ws[k + pointr * ws_dim1] * wv[js];
 	}
 	pointr = pointr % *m + 1;
     }
@@ -1264,9 +1269,9 @@ static int subsm_(int *n, int *m, int *nsub, int *
 } /* subsm_ */
 
 static int dcstep_(double *stx, double *fx, double *dx, 
-	double *sty, double *fy, double *dy, double *stp, 
-	double *fp, double *dp, int *brackt, double *stpmin, 
-	double *stpmax)
+		   double *sty, double *fy, double *dy, double *stp, 
+		   double *fp, double *dp, int *brackt, double *stpmin, 
+		   double *stpmax)
 {
     /* System generated locals */
     double d1, d2, d3;
@@ -1278,7 +1283,7 @@ static int dcstep_(double *stx, double *fx, double *dx,
     if (*fp > *fx) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
 	d1 = abs(theta), d2 = abs(*dx), d1 = max(d1,d2), d2 = abs(
-		*dp);
+								  *dp);
 	s = max(d1,d2);
 	d1 = theta / s;
 	gamma = s * sqrt(d1 * d1 - *dx / s * (*dp / s));
@@ -1290,18 +1295,18 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	r = p / q;
 	stpc = *stx + r * (*stp - *stx);
 	stpq = *stx + *dx / ((*fx - *fp) / (*stp - *stx) + *dx) / 2. * (*stp 
-		- *stx);
+									- *stx);
 	if ((d1 = stpc - *stx, abs(d1)) < (d2 = stpq - *stx, abs(d2)))
-		 {
-	    stpf = stpc;
-	} else {
+	    {
+		stpf = stpc;
+	    } else {
 	    stpf = stpc + (stpq - stpc) / 2.;
 	}
-	*brackt = TRUE_;
+	*brackt = 1;
     } else if (sgnd < 0.) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
 	d1 = abs(theta), d2 = abs(*dx), d1 = max(d1,d2), d2 = abs(
-		*dp);
+								  *dp);
 	s = max(d1,d2);
 	d1 = theta / s;
 	gamma = s * sqrt(d1 * d1 - *dx / s * (*dp / s));
@@ -1314,16 +1319,16 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	stpc = *stp + r * (*stx - *stp);
 	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
 	if ((d1 = stpc - *stp, abs(d1)) > (d2 = stpq - *stp, abs(d2)))
-		 {
-	    stpf = stpc;
-	} else {
+	    {
+		stpf = stpc;
+	    } else {
 	    stpf = stpq;
 	}
-	*brackt = TRUE_;
+	*brackt = 1;
     } else if (abs(*dp) < abs(*dx)) {
 	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
 	d1 = abs(theta), d2 = abs(*dx), d1 = max(d1,d2), d2 = abs(
-		*dp);
+								  *dp);
 	s = max(d1,d2);
 	d3 = theta / s;
 	d1 = 0., d2 = d3 * d3 - *dx / s * (*dp / s);
@@ -1344,7 +1349,7 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
 	if (*brackt) {
 	    if ((d1 = stpc - *stp, abs(d1)) < (d2 = stpq - *stp, abs(
-		    d2))) {
+								     d2))) {
 		stpf = stpc;
 	    } else {
 		stpf = stpq;
@@ -1358,7 +1363,7 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	    }
 	} else {
 	    if ((d1 = stpc - *stp, abs(d1)) > (d2 = stpq - *stp, abs(
-		    d2))) {
+								     d2))) {
 		stpf = stpc;
 	    } else {
 		stpf = stpq;
@@ -1370,7 +1375,7 @@ static int dcstep_(double *stx, double *fx, double *dx,
 	if (*brackt) {
 	    theta = (*fp - *fy) * 3. / (*sty - *stp) + *dy + *dp;
 	    d1 = abs(theta), d2 = abs(*dy), d1 = max(d1,d2), d2 = 
-		    abs(*dp);
+		abs(*dp);
 	    s = max(d1,d2);
 	    d1 = theta / s;
 	    gamma = s * sqrt(d1 * d1 - *dy / s * (*dp / s));
@@ -1407,9 +1412,9 @@ static int dcstep_(double *stx, double *fx, double *dx,
 } /* dcstep_ */
 
 static int dcsrch_(double *f, double *g, double *stp, 
-	double *ftol, double *gtol, double *xtol, double *
-	stpmin, double *stpmax, char *task, int *isave, double *
-	dsave)
+		   double *ftol, double *gtol, double *xtol, double *
+		   stpmin, double *stpmax, char *task, int *isave, double *
+		   dsave)
 {
     /* System generated locals */
     double d1;
@@ -1453,7 +1458,7 @@ static int dcsrch_(double *f, double *g, double *stp,
 	if (strncmp(task, "ERROR", 5) == 0) {
 	    return 0;
 	}
-	brackt = FALSE_;
+	brackt = 0;
 	stage = 1;
 	finit = *f;
 	ginit = *g;
@@ -1472,9 +1477,9 @@ static int dcsrch_(double *f, double *g, double *stp,
 	goto L1000;
     } else {
 	if (isave[1] == 1) {
-	    brackt = TRUE_;
+	    brackt = 1;
 	} else {
-	    brackt = FALSE_;
+	    brackt = 0;
 	}
 	stage = isave[2];
 	ginit = dsave[1];
@@ -1547,11 +1552,11 @@ static int dcsrch_(double *f, double *g, double *stp,
     *stp = max(*stp,*stpmin);
     *stp = min(*stp,*stpmax);
     if (brackt && (*stp <= stmin || *stp >= stmax) || brackt && stmax - stmin 
-	    <= *xtol * stmax) {
+	<= *xtol * stmax) {
 	*stp = stx;
     }
     strcpy(task, "FG");
-L1000:
+ L1000:
     if (brackt) {
 	isave[1] = 1;
     } else {
@@ -1575,13 +1580,13 @@ L1000:
 } /* dcsrch_ */
 
 static int lnsrlb_(int *n, double *l, double *u, 
-	int *nbd, double *x, double *f, double *fold, 
-	double *gd, double *gdold, double *g, double *d, 
-	double *r, double *t, double *z, double *stp, 
-	double *dnorm, double *dtd, double *xstep, double *
-	stpmx, int *iter, int *ifun, int *iback, int *nfgv, 
-	int *info, char *task, int *boxed, int *cnstnd, char *
-	csave, int *isave, double *dsave)
+		   int *nbd, double *x, double *f, double *fold, 
+		   double *gd, double *gdold, double *g, double *d, 
+		   double *r, double *t, double *z, double *stp, 
+		   double *dnorm, double *dtd, double *xstep, double *
+		   stpmx, int *iter, int *ifun, int *iback, int *nfgv, 
+		   int *info, char *task, int *boxed, int *cnstnd, char *
+		   csave, int *isave, double *dsave)
 {
     /* System generated locals */
     int i1;
@@ -1650,7 +1655,7 @@ static int lnsrlb_(int *n, double *l, double *u,
     *ifun = 0;
     *iback = 0;
     strcpy(csave, "START");
-L556:
+ L556:
     *gd = ddot_(n, &g[1], &c1, &d[1], &c1);
     if (*ifun == 0) {
 	*gdold = *gd;
@@ -1712,14 +1717,14 @@ static double dpmeps_(void)
 
     a = one;
     b = one;
-L10:
+ L10:
     a += a;
     temp = a + one;
     temp1 = temp - a;
     if (temp1 - one == zero) {
 	goto L10;
     }
-L20:
+ L20:
     b += b;
     temp = a + b;
     itemp = (int) (temp - a);
@@ -1730,7 +1735,7 @@ L20:
     beta = (double) ibeta;
     it = 0;
     b = one;
-L30:
+ L30:
     ++it;
     b *= beta;
     temp = b + one;
@@ -1755,16 +1760,16 @@ L30:
     i1 = negep;
     for (i = 1; i <= i1; ++i) {
 	a *= betain;
-/* L40: */
+	/* L40: */
     }
-L50:
+ L50:
     temp = one + a;
     if (temp - one != zero) {
 	goto L60;
     }
     a *= beta;
     goto L50;
-L60:
+ L60:
     ret_val = a;
     if (ibeta == 2 || irnd == 0) {
 	goto L70;
@@ -1774,22 +1779,22 @@ L60:
     if (temp - one != zero) {
 	ret_val = a;
     }
-L70:
+ L70:
     return ret_val;
 } /* dpmeps_ */
 
 static int cauchy_(int *n, double *x, double *l, 
-	double *u, int *nbd, double *g, int *iorder, int *
-	iwhere, double *t, double *d, double *xcp, int *m, 
-	double *wy, double *ws, double *sy, double *wt, 
-	double *theta, int *col, int *head, double *p, 
-	double *c, double *wbp, double *v, int *nint, 
-	double *sg, double *yg, double *sbgnrm, 
-	int *info, double *epsmch)
+		   double *u, int *nbd, double *g, int *iorder, int *
+		   iwhere, double *t, double *d, double *xcp, int *m, 
+		   double *wy, double *ws, double *sy, double *wt, 
+		   double *theta, int *col, int *head, double *p, 
+		   double *c, double *wbp, double *v, int *nint, 
+		   double *sg, double *yg, double *sbgnrm, 
+		   int *info, double *epsmch)
 {
     /* System generated locals */
     int wy_dim1, wy_offset, ws_dim1, ws_offset, sy_dim1, sy_offset, 
-	    wt_dim1, wt_offset, i1, i2;
+	wt_dim1, wt_offset, i1, i2;
     double d1;
 
     /* Local variables */
@@ -1848,7 +1853,7 @@ static int cauchy_(int *n, double *x, double *l,
 	dcopy_(n, &x[1], &c1, &xcp[1], &c1);
 	return 0;
     }
-    bnded = TRUE_;
+    bnded = 1;
     nfree = *n + 1;
     nbreak = 0;
     ibkmin = 0;
@@ -1918,7 +1923,7 @@ static int cauchy_(int *n, double *x, double *l,
 		--nfree;
 		iorder[nfree] = i;
 		if (abs(neggi) > 0.) {
-		    bnded = FALSE_;
+		    bnded = 0;
 		}
 	    }
 	}
@@ -1952,7 +1957,7 @@ static int cauchy_(int *n, double *x, double *l,
     nleft = nbreak;
     iter = 1;
     tj = 0.;
-L777:
+ L777:
     tj0 = tj;
     if (iter == 1) {
 	tj = bkmin;
@@ -2029,13 +2034,13 @@ L777:
     } else {
 	dtm = -f1 / f2;
     }
-L888:
+ L888:
     if (dtm <= 0.) {
 	dtm = 0.;
     }
     tsum += dtm;
     daxpy_(n, &tsum, &d[1], &c1, &xcp[1], &c1);
-L999:
+ L999:
     if (*col > 0) {
 	daxpy_(&col2, &dtm, &p[1], &c1, &c[1], &c1);
     }
@@ -2043,19 +2048,19 @@ L999:
 } /* cauchy_ */
 
 static int mainlb_(int *n, int *m, double *x, 
-	double *l, double *u, int *nbd, double *f, double 
-	*g, double *factr, double *pgtol, double *ws, double *
-	wy, double *sy, double *ss, double *yy, double *wt, 
-	double *wn, double *snd, double *z, double *r, 
-	double *d, double *t, double *wa, double *sg, 
-	double *sgo, double *yg, double *ygo, int *index, 
-	int *iwhere, int *indx2, char *task, char *
-	csave, int *lsave, int *isave, double *dsave)
+		   double *l, double *u, int *nbd, double *f, double 
+		   *g, double *factr, double *pgtol, double *ws, double *
+		   wy, double *sy, double *ss, double *yy, double *wt, 
+		   double *wn, double *snd, double *z, double *r, 
+		   double *d, double *t, double *wa, double *sg, 
+		   double *sgo, double *yg, double *ygo, int *index, 
+		   int *iwhere, int *indx2, char *task, char *
+		   csave, int *lsave, int *isave, double *dsave)
 {
     /* System generated locals */
     int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
-	    ss_dim1, ss_offset, yy_dim1, yy_offset, wt_dim1, wt_offset, 
-	    wn_dim1, wn_offset, snd_dim1, snd_offset, i1;
+	ss_dim1, ss_offset, yy_dim1, yy_offset, wt_dim1, wt_offset, 
+	wn_dim1, wn_offset, snd_dim1, snd_offset, i1;
     double d1, d2;
 
     /* Local variables */
@@ -2149,7 +2154,7 @@ static int mainlb_(int *n, int *m, double *x,
 	head = 1;
 	theta = 1.;
 	iupdat = 0;
-	updatd = FALSE_;
+	updatd = 0;
 	iter = 0;
 	nfgv = 0;
 	nint = 0;
@@ -2225,14 +2230,14 @@ static int mainlb_(int *n, int *m, double *x,
     }
     strcpy(task, "FG_START");
     goto L1000;
-L111:
+ L111:
     nfgv = 1;
     projgr_(n, &l[1], &u[1], &nbd[1], &x[1], &g[1], &sbgnrm);
     if (sbgnrm <= *pgtol) {
 	strcpy(task, "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL");
 	goto L999;
     }
-L222:
+ L222:
     iword = -1;
     if (! cnstnd && col > 0) {
 	dcopy_(n, &x[1], &c1, &z[1], &c1);
@@ -2242,9 +2247,9 @@ L222:
     }
     timer_(&cpu1);
     cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1], &t[
-	    1], &d[1], &z[1], m, &wy[wy_offset], &ws[ws_offset], &sy[
-	    sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1], &wa[(*m 
-	    << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nint, &sg[1], &
+									      1], &d[1], &z[1], m, &wy[wy_offset], &ws[ws_offset], &sy[
+																       sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1], &wa[(*m 
+																								     << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nint, &sg[1], &
 	    yg[1], &sbgnrm, &info, &epsmch);
     if (info != 0) {
 	info = 0;
@@ -2252,7 +2257,7 @@ L222:
 	head = 1;
 	theta = 1.;
 	iupdat = 0;
-	updatd = FALSE_;
+	updatd = 0;
 	timer_(&cpu2);
 	cachyt = cachyt + cpu2 - cpu1;
 	goto L222;
@@ -2261,17 +2266,17 @@ L222:
     cachyt = cachyt + cpu2 - cpu1;
     nintol += nint;
     freev_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iwhere[1], &
-	    wrk, &updatd, &cnstnd, &iter);
+	   wrk, &updatd, &cnstnd, &iter);
     nact = *n - nfree;
-L333:
+ L333:
     if (nfree == 0 || col == 0) {
 	goto L555;
     }
     timer_(&cpu1);
     if (wrk) {
 	formk_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iupdat, &
-		updatd, &wn[wn_offset], &snd[snd_offset], m, &ws[ws_offset], &
-		wy[wy_offset], &sy[sy_offset], &theta, &col, &head, &info);
+	       updatd, &wn[wn_offset], &snd[snd_offset], m, &ws[ws_offset], &
+	       wy[wy_offset], &sy[sy_offset], &theta, &col, &head, &info);
     }
     if (info != 0) {
 	info = 0;
@@ -2279,7 +2284,7 @@ L333:
 	head = 1;
 	theta = 1.;
 	iupdat = 0;
-	updatd = FALSE_;
+	updatd = 0;
 	timer_(&cpu2);
 	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
@@ -2291,29 +2296,29 @@ L333:
 	goto L444;
     }
     subsm_(n, m, &nfree, &index[1], &l[1], &u[1], &nbd[1], &z[1], &r[1], &
-	    ws[ws_offset], &wy[wy_offset], &theta, &col, &head, &iword, &wa[1]
-	    , &wn[wn_offset], &info);
-L444:
+	   ws[ws_offset], &wy[wy_offset], &theta, &col, &head, &iword, &wa[1]
+	   , &wn[wn_offset], &info);
+ L444:
     if (info != 0) {
 	info = 0;
 	col = 0;
 	head = 1;
 	theta = 1.;
 	iupdat = 0;
-	updatd = FALSE_;
+	updatd = 0;
 	timer_(&cpu2);
 	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
     }
     timer_(&cpu2);
     sbtime = sbtime + cpu2 - cpu1;
-L555:
+ L555:
     i1 = *n;
     for (i = 1; i <= i1; ++i) {
 	d[i] = z[i] - x[i];
     }
     timer_(&cpu1);
-L666:
+ L666:
     lnsrlb_(n, &l[1], &u[1], &nbd[1], &x[1], f, &fold, &gd, &gdold, &g[1], &
 	    d[1], &r[1], &t[1], &z[1], &stp, &dnorm, &dtd, &xstep, &
 	    stpmx, &iter, &ifun, &iback, &nfgv, &info, task, &boxed, &cnstnd, 
@@ -2341,7 +2346,7 @@ L666:
 	    head = 1;
 	    theta = 1.;
 	    iupdat = 0;
-	    updatd = FALSE_;
+	    updatd = 0;
 	    strcpy(task, "RESTART_FROM_LNSRCH");
 	    timer_(&cpu2);
 	    lnscht = lnscht + cpu2 - cpu1;
@@ -2356,7 +2361,7 @@ L666:
 	projgr_(n, &l[1], &u[1], &nbd[1], &x[1], &g[1], &sbgnrm);
 	goto L1000;
     }
-L777:
+ L777:
     if (sbgnrm <= *pgtol) {
 	strcpy(task, "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL");
 	goto L999;
@@ -2385,31 +2390,31 @@ L777:
     }
     if (dr <= epsmch * ddum) {
 	++nskip;
-	updatd = FALSE_;
+	updatd = 0;
 	goto L888;
     }
-    updatd = TRUE_;
+    updatd = 1;
     ++iupdat;
     matupd_(n, m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset], &ss[
-	    ss_offset], &d[1], &r[1], &itail, &iupdat, &col, &head, &
+								      ss_offset], &d[1], &r[1], &itail, &iupdat, &col, &head, &
 	    theta, &rr, &dr, &stp, &dtd);
     formt_(m, &wt[wt_offset], &sy[sy_offset], &ss[ss_offset], &col, &theta, &
-	    info);
+	   info);
     if (info != 0) {
 	info = 0;
 	col = 0;
 	head = 1;
 	theta = 1.;
 	iupdat = 0;
-	updatd = FALSE_;
+	updatd = 0;
 	goto L222;
     }
-L888:
+ L888:
     goto L222;
-L999:
+ L999:
     timer_(&time2);
     time = time2 - time1;
-L1000:
+ L1000:
     lsave[1] = prjctd;
     lsave[2] = cnstnd;
     lsave[3] = boxed;
@@ -2462,7 +2467,7 @@ int setulb_(int *n, int *m, double *x,
 
     /* Local variables */
     static int l1, l2, l3, ld, lr, lt, lz, lwa, lsg, lyg, lwn, lss, lws, 
-	    lwt, lsy, lwy, lyy, lsnd, lsgo, lygo;
+	lwt, lsy, lwy, lyy, lsnd, lsgo, lygo;
 
     /* Parameter adjustments */
     --iwa;
@@ -2522,10 +2527,10 @@ int setulb_(int *n, int *m, double *x,
     lyg = isave[19];
     lygo = isave[20];
     mainlb_(n, m, &x[1], &l[1], &u[1], &nbd[1], f, &g[1], factr, pgtol, &wa[
-	    lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lyy], &wa[lwt], &wa[lwn], 
+									    lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lyy], &wa[lwt], &wa[lwn], 
 	    &wa[lsnd], &wa[lz], &wa[lr], &wa[ld], &wa[lt], &wa[lwa], &wa[lsg],
-	     &wa[lsgo], &wa[lyg], &wa[lygo], &iwa[1], &iwa[*n + 1], &iwa[(*n 
-	    << 1) + 1], task, csave, &lsave[1], &isave[22], &dsave[1]
-	     );
+	    &wa[lsgo], &wa[lyg], &wa[lygo], &iwa[1], &iwa[*n + 1], &iwa[(*n 
+									 << 1) + 1], task, csave, &lsave[1], &isave[22], &dsave[1]
+	    );
     return 0;
 } /* setulb_ */

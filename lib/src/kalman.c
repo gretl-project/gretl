@@ -405,6 +405,28 @@ matrix_diff (const gretl_matrix *a, const gretl_matrix *b)
 /* below: if postmult is non-zero, we're post-multiplying by the
    transpose of F */
 
+#if 0
+
+/* no-brainer, just let the compiler handle things */
+
+static inline int multiply_by_F (kalman *K, const gretl_matrix *A, 
+				 gretl_matrix *B, int postmult)
+{
+    if (postmult) {
+	gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+				  K->F, GRETL_MOD_TRANSPOSE,
+				  B, GRETL_MOD_NONE);
+    } else {
+	gretl_matrix_multiply(K->F, A, B);
+    }
+
+    return 0;
+}
+
+#else
+
+/* carefully optimized */
+
 static int multiply_by_F (kalman *K, const gretl_matrix *A, 
 			  gretl_matrix *B, int postmult)
 {
@@ -501,6 +523,8 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 
     return ret;
 }
+
+#endif
 
 /* Simplified version of the function below, for ARMA:
    in this case we have H = (r x 1) and S = (r x 1),

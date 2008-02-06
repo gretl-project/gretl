@@ -3272,37 +3272,6 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
     }	
 }
 
-/**
- * BFGS_max:
- * @b: array of adjustable coefficients.
- * @n: number elements in array @b.
- * @maxit: the maximum number of iterations to allow.
- * @reltol: relative tolerance for terminating iteration.
- * @fncount: location to receive count of function evaluations.
- * @grcount: location to receive count of gradient evaluations.
- * @cfunc: pointer to function used to calculate maximand.
- * @crittype: code for type of the maximand/minimand: should
- * be %C_LOGLIK, %C_GMM or %C_OTHER.  Used only in printing
- * iteration info.
- * @gradfunc: pointer to function used to calculate the 
- * gradient, or %NULL for default numerical calculation.
- * @data: pointer that will be passed as the last
- * parameter to the callback functions @cfunc and @gradfunc.
- * @opt: may contain %OPT_V for verbose operation.
- * @prn: printing struct (or %NULL).  Only used if @opt
- * includes %OPT_V.
- *
- * Obtains the set of values for @b which jointly maximize the
- * criterion value as calculated by @cfunc.  Uses the BFGS
- * variable-metric method.  Based on Pascal code in J. C. Nash,
- * "Compact Numerical Methods for Computers," 2nd edition, converted
- * by p2c then re-crafted by B. D. Ripley for gnu R.  Revised for 
- * gretl by Allin Cottrell.
- * 
- * Returns: 0 on successful completion, non-zero error code
- * on error.
- */
-
 int BFGS_orig (double *b, int n, int maxit, double reltol,
 	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
