@@ -6520,8 +6520,11 @@ static int gui_open_append (ExecState *s, double ***pZ,
 		    return 1;
 		}
 	    } 
-	    close_session(s, pZ, pdinfo, cmd->opt);
 	}
+    }
+
+    if (!dbdata && cmd->ci != APPEND) {
+	close_session(s, pZ, pdinfo, cmd->opt);
     }
 
     if (k == GRETL_CSV_DATA) {
@@ -6788,9 +6791,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    break;
 	}
-	if (data_status & HAVE_DATA) {
-	    close_session(s, pZ, pdinfo, cmd->opt);
-	}
+	close_session(s, pZ, pdinfo, cmd->opt);
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
 	    pprintf(prn, _("Failed to create empty data set\n"));

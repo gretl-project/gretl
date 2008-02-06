@@ -55,9 +55,7 @@ int restrict_sample (const char *line, const int *list,
 		     PRN *prn);
 
 int 
-restrict_sample_from_mask (char *mask, int mode, 
-			   double ***pZ, DATAINFO *pdinfo,
-			   ExecState *state);
+restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo);
 
 int complex_subsampled (void);
 
@@ -65,8 +63,7 @@ int get_full_length_n (void);
 
 int set_sample (const char *line, const double **Z, DATAINFO *pdinfo);
 
-int restore_full_sample (double ***pZ, DATAINFO *pdinfo,
-			 ExecState *state); 
+int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state);
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 

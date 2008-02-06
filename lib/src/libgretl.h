@@ -288,7 +288,6 @@ struct DATAINFO_ {
     char markers;       /* NO_MARKERS (0), REGULAR MARKERS or DAILY_DATE_STRINGS */
     char delim;         /* default delimiter for "CSV" files */
     char decpoint;      /* character used to represent decimal point */
-    char submode;       /* mode of sub-sampling in force, if any */
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     char *submask;      /* subsampling mask */

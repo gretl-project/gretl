@@ -5625,26 +5625,6 @@ static int matrix_missvals (const gretl_matrix *m)
     return 0;
 }
 
-static void convert_scalar_return_to_matrix (parser *p)
-{
-    gretl_matrix *m;
-
-    if (na(p->ret->v.xval)) {
-	p->err = E_DATA;
-	return;
-    }
-
-    m = gretl_matrix_alloc(1, 1);
-
-    if (m == NULL) {
-	p->err = E_ALLOC;
-    } else {
-	m->val[0] = p->ret->v.xval;
-	p->ret->t = MAT;
-	p->ret->v.m = m;
-    }
-}
-
 #define scalar_matrix(n) (n->t == MAT && n->v.m->rows == 1 && \
 			  n->v.m->cols == 1)
 
@@ -5660,16 +5640,9 @@ static int gen_check_return_type (parser *p)
 	return (p->err = E_DATA);
     }
 
-    if (p->dinfo->n == 0 && r->t != MAT) {
-	if (r->t == NUM) {
-	    convert_scalar_return_to_matrix(p);
-	    if (p->err) {
-		return p->err;
-	    }
-	} else {
-	    gretl_errmsg_set(_("No dataset is in place"));
-	    return (p->err = E_DATA);
-	}
+    if (p->dinfo->n == 0 && r->t != MAT && r->t != NUM) {
+	gretl_errmsg_set(_("No dataset is in place"));
+	return (p->err = E_DATA);
     }
 
     if (!ok_return_type(r->t)) {

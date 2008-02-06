@@ -195,9 +195,8 @@ static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 
     *paths.datfile = 0;
 
-    err = restore_full_sample(pZ, pdinfo, NULL); 
-
     if (pZ != NULL && *pZ != NULL) {
+	err = restore_full_sample(pZ, pdinfo, NULL); 
 	free_Z(*pZ, pdinfo); 
 	*pZ = NULL;
     }
@@ -691,10 +690,8 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 	}
     }
 
-    if (data_status) {
-	if (!dbdata && cmd->ci != APPEND) {
-	    cli_clear_data(cmd, pZ, pdinfo, models);
-	}
+    if (!dbdata && cmd->ci != APPEND) {
+	cli_clear_data(cmd, pZ, pdinfo, models);
     } 
 
     if (k == GRETL_CSV_DATA) {
@@ -928,9 +925,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    break;
 	}
-	if (data_status) {
-	    cli_clear_data(cmd, pZ, pdinfo, models);
-	}	
+	cli_clear_data(cmd, pZ, pdinfo, models);
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
 	    pputs(prn, _("Failed to create empty data set\n"));

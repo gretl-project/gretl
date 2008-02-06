@@ -160,9 +160,11 @@ $(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE) $(MY_SOURCEVIEW_LIB)
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<
 
-mklang: mklang.c
+mklang: mklang.o
+	$(LIBTOOL) --mode=link $(CC) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
+
+mklang.o: mklang.c
 	$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
-	$(LIBTOOL) --mode=link $(CC) -o $@ mklang.o ../lib/libgretl-1.0.la $(XML_LIBS)
 
 gretl.lang: mklang
 	./mklang > $@

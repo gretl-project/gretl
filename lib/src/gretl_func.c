@@ -3562,6 +3562,7 @@ static void fn_state_init (CMD *cmd, ExecState *state)
 
     state->cmd = NULL;
     state->models = NULL;
+    state->submask = NULL;
 }
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
@@ -3570,8 +3571,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 PRN *prn)
 {
     ExecState state;
-    char *submask = NULL;
-    int submode = 0;
     MODEL **models = NULL;
     char line[MAXLINE];
     CMD cmd;
@@ -3624,12 +3623,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	*line = '\0';
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      models, prn);
-	if (pdinfo->submode) {
-	    fprintf(stderr, "on function startup, sub-sampled, "
-		    "mask at %p\n", (void*) pdinfo->submask);
-	    submask = copy_datainfo_submask(pdinfo);
-	    submode = pdinfo->submode;
-	    /* state.subinfo = pdinfo; */
+	if (pdinfo->submask != NULL) {
+	    state.submask = copy_datainfo_submask(pdinfo);
 	}
 	state.callback = func_exec_callback;
     }
@@ -3674,25 +3669,18 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     /* restore the sample that was in place on entry */
 
     if (complex_subsampled()) {
-	int reset = 0;
-
-	if (submask != NULL && pdinfo->submask != NULL && 
-	    submask_cmp(submask, pdinfo->submask)) {
-	    /* need to restore original subsample */
-	    reset = 1;
-	}
-
-	restore_full_sample(pZ, pdinfo, NULL);
-
-	if (reset) {
-	    restrict_sample_from_mask(submask, submode, 
-				      pZ, pdinfo, &state);
-	}
-    } 
+	if (state.submask == NULL) {
+	    /* we were not sub-sampled on entry */
+	    restore_full_sample(pZ, pdinfo, NULL);
+	} else if (submask_cmp(state.submask, pdinfo->submask)) {
+	    /* we were sub-sampled differently on entry */
+	    restore_full_sample(pZ, pdinfo, NULL);
+	    restrict_sample_from_mask(state.submask, pZ, pdinfo);
+	} 
+    }
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
-    free(submask);
 
     function_assign_returns(u, args, rtype, *pZ, pdinfo,
 			    ret, descrip, prn, &err);

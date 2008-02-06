@@ -126,12 +126,11 @@ static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
 				  struct sample_info *sinfo)
 {
     char *mask;
-    int mode, err;
+    int err;
 
-    err = gretl_xml_get_submask(node, doc, &mask, &mode);
+    err = gretl_xml_get_submask(node, doc, &mask);
     if (!err) {
 	sinfo->mask = mask;
-	sinfo->mode = mode;
     }
 
     return err;

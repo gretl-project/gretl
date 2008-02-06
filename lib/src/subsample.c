@@ -35,26 +35,12 @@
   dataset around so that it can be restored later.  The pointers fullZ
   and fullinfo are used to record the addresses of the full data
   matrix and DATAINFO struct respectively.
-
-  Another issue arises: if the user replaces or clears a dataset while
-  it is subsampled, we want to free the associated full dataset also.
-  The "peerinfo" pointer is used to facilitate this.  On subsampling,
-  when fullZ and fullinfo are assigned to, peerinfo is pointed at the
-  associated subsampled DATAINFO struct.  Then, on freeing the
-  subsampled dataset, we check whether its DATAINFO address matches
-  peerinfo: if so, we free up fullZ and fullinfo.
-
 */
 
 static double **fullZ;
 static DATAINFO *fullinfo;
-static const DATAINFO *peerinfo;
 
 #define SUBMASK_SENTINEL 127
-
-static int 
-restore_sample_from_subinfo (double ***pZ, DATAINFO *pdinfo,
-			     ExecState *state);
 
 /* accessors for full dataset, when sub-sampled */
 
@@ -153,7 +139,7 @@ int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
     if (complex_subsampled()) {
 	int i, n = get_submask_length(pdinfo->submask);
 
-	fprintf(fp, "<submask length=\"%d\" mode=\"%d\">", n, pdinfo->submode);
+	fprintf(fp, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
 	    fprintf(fp, "%d ", (int) pdinfo->submask[i]);
 	}
@@ -190,40 +176,34 @@ static char *make_submask (int n)
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo)
 {
-    if (pdinfo == peerinfo) {
-	if (fullZ != NULL) {
-	    free_Z(fullZ, fullinfo);
-	    fullZ = NULL;
-	}
-	if (fullinfo != NULL) {
-	    clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
-	    free(fullinfo);
-	    fullinfo = NULL;
-	}
-	peerinfo = NULL;
+    if (fullZ != NULL) {
+	free_Z(fullZ, fullinfo);
+	fullZ = NULL;
+    }
+
+    if (fullinfo != NULL) {
+	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
+	free(fullinfo);
+	fullinfo = NULL;
     }
 }
 
 /* we do this on "restore full sample" */
 
 static void 
-relink_to_full_dataset (double ***pZ, DATAINFO *pdinfo, int nullit)
+relink_to_full_dataset (double ***pZ, DATAINFO *pdinfo)
 {
     *pZ = fullZ;
     *pdinfo = *fullinfo;
-    pdinfo->submode = 0;
 
 #if SUBDEBUG
     fprintf(stderr, "relink_to_full_dataset: fullZ = %p, fullinfo = %p\n",
 	    (void *) fullZ, (void *) fullinfo);
 #endif
 
-    if (nullit) {
-	fullZ = NULL;
-	free(fullinfo);
-	fullinfo = NULL;
-	peerinfo = NULL;
-    }
+    fullZ = NULL;
+    free(fullinfo);
+    fullinfo = NULL;
 }
 
 /* sync malloced elements of the fullinfo struct that might
@@ -424,35 +404,6 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
     return currmask;
 }
 
-static void destroy_subsampled_datainfo (DATAINFO *pdinfo)
-{
-#if SUBDEBUG
-    fprintf(stderr, "destroy_subsampled_datainfo: clearing at %p\n", 
-	    (void *) pdinfo);
-#endif
-    clear_datainfo(pdinfo, CLEAR_SUBSAMPLE);
-}
-
-/* marker for the case where restore_full_sample is called as
-   a preliminary for imposing a restriction */
-
-static int restricting;
-
-static void flag_restricting_on (void)
-{
-    restricting = 1;
-}
-
-static void flag_restricting_off (void)
-{
-    restricting = 0;
-}
-
-static int doing_restrict (void)
-{
-    return restricting;
-}
-
 /* restore_full_sample: 
  * @pZ: pointer to data array.  
  * @pdinfo: pointer to dataset information.
@@ -462,12 +413,13 @@ static int doing_restrict (void)
  * Restore the full data range, undoing any sub-sampling that was
  * previously performed (either by shifting the endpoints of the
  * sample range or by selecting cases on some criterion or other).
+ * However, if @state is not %NULL, and if it contains a submask,
+ * the "full" range is relative to that mask.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int restore_full_sample (double ***pZ, DATAINFO *pdinfo,
-			 ExecState *state)
+int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 {
     int err = 0;
 
@@ -485,10 +437,8 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo,
     }
 
 #if SUBDEBUG
-    fprintf(stderr, "\nrestore_full_sample: pZ=%p, pdinfo=%p\n",
-	    (void *) pZ, (void *) pdinfo);
-    fprintf(stderr, " *pZ=%p, state=%p\n",
-	    (void *) *pZ, (void *) state);
+    fprintf(stderr, "\nrestore_full_sample: pZ=%p, *pZ=%p, pdinfo=%p\n",
+	    (void *) pZ, (void *) *pZ, (void *) pdinfo);
 #endif
 
     /* beyond this point we are doing a non-trivial restoration
@@ -526,25 +476,22 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* destroy sub-sampled data array */
+#if SUBDEBUG
+    fprintf(stderr, "restore_full_sample: freeing Z at %p\n", (void *) *pZ);
+#endif
     free_Z(*pZ, pdinfo);
 
-    if (state != NULL && state->subinfo != NULL) {
-	if (doing_restrict()) {
-	    /* preliminary to sub-sampling inside a function */
-	    if (pdinfo != state->subinfo) {
-		destroy_subsampled_datainfo(pdinfo);
-	    }
-	    relink_to_full_dataset(pZ, pdinfo, 0);
-	} else {
-	    /* inside a function, where the dataset was sub-sampled
-	       on entry to the function: restoring the "full sample" in
-	       effect means restoring the outer sub-sample.
-	    */
-	    err = restore_sample_from_subinfo(pZ, pdinfo, state);
-	} 
-    } else {
-	destroy_subsampled_datainfo(pdinfo);
-	relink_to_full_dataset(pZ, pdinfo, 1);
+#if SUBDEBUG
+    fprintf(stderr, "restore_full_sample: clearing pdinfo at %p\n", 
+	    (void *) pdinfo);
+#endif
+    clear_datainfo(pdinfo, CLEAR_SUBSAMPLE);
+
+    relink_to_full_dataset(pZ, pdinfo);
+
+    if (!err && state != NULL && state->submask != NULL) {
+	/* "full" really means, relative to the original state */
+	err = restrict_sample_from_mask(state->submask, pZ, pdinfo);
     }
 
     return err;
@@ -776,8 +723,7 @@ static int make_random_mask (const char *oldmask, const char *line,
     return err;
 }
 
-static int backup_full_dataset (double **Z, DATAINFO *pdinfo,
-				const DATAINFO *newinfo)
+static int backup_full_dataset (double **Z, DATAINFO *pdinfo)
 {
     fullZ = Z;
 
@@ -791,10 +737,6 @@ static int backup_full_dataset (double **Z, DATAINFO *pdinfo,
     if (pdinfo != NULL) {
 	*fullinfo = *pdinfo;
     } 
-
-    if (newinfo != NULL) {
-	peerinfo = newinfo;
-    }
 
 #if SUBDEBUG
     fprintf(stderr, "backup_full_dataset: fullZ = %p, fullinfo = %p\n",
@@ -1058,9 +1000,7 @@ make_restriction_mask (int mode, const char *line, const int *list,
    a saved session */
 
 int 
-restrict_sample_from_mask (char *mask, int mode, 
-			   double ***pZ, DATAINFO *pdinfo,
-			   ExecState *state)
+restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
 {
     double **subZ = NULL;
     DATAINFO *subinfo;
@@ -1140,13 +1080,8 @@ restrict_sample_from_mask (char *mask, int mode,
     copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
 			   pdinfo, mask);
 
-    if (state != NULL && state->subinfo != NULL) {
-	err = backup_full_dataset(*pZ, pdinfo, NULL);
-    } else {
-	err = backup_full_dataset(*pZ, pdinfo, pdinfo);
-    }
+    err = backup_full_dataset(*pZ, pdinfo);
 
-    subinfo->submode = mode;
     subinfo->submask = copy_subsample_mask(mask);
 
     /* switch pointers */
@@ -1214,15 +1149,15 @@ int restrict_sample (const char *line, const int *list,
 	    return E_ALLOC;
 	}
 	free_oldmask = 1;
-    } else if (state != NULL && state->subinfo != NULL) {
-	/* subsampling within a function */
-	oldmask = state->subinfo->submask;
+    } else if (state != NULL && state->submask != NULL) {
+	/* subsampling within a function, with incoming
+	   restriction recorded in state
+	*/
+	oldmask = state->submask;
     }
 
     /* restore the full data range, for housekeeping purposes */
-    flag_restricting_on();
-    err = restore_full_sample(pZ, pdinfo, state);
-    flag_restricting_off();
+    err = restore_full_sample(pZ, pdinfo, NULL);
     if (err) {
 	return err;
     }
@@ -1246,85 +1181,17 @@ int restrict_sample (const char *line, const int *list,
 	    pdinfo->t1 = t1;
 	    pdinfo->t2 = t2;
 	} else {
-	    err = restrict_sample_from_mask(mask, mode, pZ, pdinfo,
-					    state);
+	    err = restrict_sample_from_mask(mask, pZ, pdinfo);
 	}
     }
 
     free(mask);
+
     if (free_oldmask) {
 	free(oldmask);
     }
 
     return err;
-}
-
-/* For use when exiting a function: re-establish the sub-sample that
-   was in force on entry, which is recorded in subinfo */
-
-static int 
-restore_sample_from_subinfo (double ***pZ, DATAINFO *pdinfo,
-			     ExecState *state)
-{
-    double **subZ = NULL;
-    DATAINFO *subinfo = state->subinfo;
-    char *mask = subinfo->submask;
-    int i, s, t;
-
-#if SUBDEBUG
-    fprintf(stderr, "restore_sample_from_subinfo:\n"
-	    " subinfo=%p, n=%d, v=%d\n"
-	    " pdinfo=%p, n=%d, v=%d\n",
-	    (void *) subinfo, subinfo->n, subinfo->v,
-	    (void *) pdinfo, pdinfo->n, pdinfo->v);
-#endif
-
-    /* allow for added variables */
-    subinfo->v = pdinfo->v;
-
-    /* set up the sub-sampled Z */
-    if (allocate_Z(&subZ, subinfo)) {
-	return E_ALLOC;
-    }
-
-    /* re-link varnames, etc. */
-    subinfo->varname = pdinfo->varname;
-    subinfo->varinfo = pdinfo->varinfo;
-    subinfo->descrip = pdinfo->descrip;
-
-    /* copy data values */
-    for (i=1; i<fullinfo->v; i++) {
-	if (var_is_series(fullinfo, i)) {
-	    s = 0;
-	    for (t=0; t<fullinfo->n; t++) {
-		if (mask == NULL) {
-		    subZ[i][s++] = fullZ[i][t];
-		} else if (mask[t] == 1) {
-		    subZ[i][s++] = fullZ[i][t];
-		} else if (mask[t] == 'p') {
-		    /* panel padding */
-		    subZ[i][s++] = NADBL;
-		}
-	    }
-	} else {
-	    subZ[i][0] = fullZ[i][0];
-	}
-    }
-
-    if (pdinfo != subinfo) {
-	destroy_subsampled_datainfo(pdinfo);
-    }
-
-    /* switch pointers */
-    *pZ = subZ;
-    *pdinfo = *subinfo;
-
-#if SUBDEBUG
-    fprintf(stderr, " set *pZ = %p, pdinfo = %p\n", (void *) subZ, 
-	    (void *) pdinfo);
-#endif
-
-    return 0;    
 }
 
 enum {

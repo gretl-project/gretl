@@ -4926,6 +4926,8 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 		       c == SET || \
 		       c == FUNC || \
 		       c == QUIT || \
+		       c == LOOP || \
+		       c == ENDLOOP || \
 		       c == IF || \
 		       c == ELIF || \
 		       c == ELSE || \
@@ -4939,6 +4941,7 @@ int ready_for_command (const char *line)
 	"!",
 	"launch",
 	"matrix",
+	"scalar",
 	NULL 
     };
     int i, ok = 0;
@@ -4959,7 +4962,7 @@ int ready_for_command (const char *line)
 	    ok = 1;
 	} else {
 	    for (i=0; ok_cmds[i] != NULL && !ok; i++) {
-		if (strncmp(line, ok_cmds[i], strlen(ok_cmds[i])) == 0) {
+		if (!strncmp(line, ok_cmds[i], strlen(ok_cmds[i]))) {
 		    ok = 1;
 		}
 	    }
@@ -5088,7 +5091,7 @@ void gretl_exec_state_init (ExecState *s,
     s->in_comment = 0;
     s->funcerr = 0;
 
-    s->subinfo = NULL;
+    s->submask = NULL;
     s->callback = NULL;
 }
 
@@ -5096,6 +5099,7 @@ void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
+    free(s->submask);
     s->funcerr = 0;
 }
 

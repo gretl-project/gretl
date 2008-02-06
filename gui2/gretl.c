@@ -1591,13 +1591,15 @@ static void set_up_main_menu (void)
 
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo)
 {
-    int err;
+    int err = 0;
 
-    err = restore_full_sample(pZ, pdinfo, NULL);
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	restore_sample_state(FALSE);
+    if (pZ != NULL && *pZ != NULL) {
+	err = restore_full_sample(pZ, pdinfo, NULL);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    restore_sample_state(FALSE);
+	}
     }
 
     return err;

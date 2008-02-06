@@ -128,8 +128,6 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	pdinfo->submask = NULL;
     }
 
-    pdinfo->submode = 0;
-
     if (pdinfo->paninfo != NULL) {
 	dataset_destroy_panel_info(pdinfo);
     }    
@@ -597,7 +595,6 @@ DATAINFO *datainfo_new (void)
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->submask = NULL;
-    dinfo->submode = 0;
 
     dinfo->data = NULL;
 
@@ -729,7 +726,6 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->data = NULL;
     pdinfo->paninfo = NULL;
     pdinfo->submask = NULL;
-    pdinfo->submode = 0;
     
     return 0;
 }
@@ -1339,6 +1335,16 @@ int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo)
     int v = pdinfo->v;
     int i, err = 0;
 
+    if (v == 0) {
+	pdinfo->n = pdinfo->v = 1;
+	err = start_new_Z(pZ, pdinfo, 0);
+	if (err) {
+	    pdinfo->n = pdinfo->v = 0;
+	    return err;
+	}
+	v = 1;
+    }
+
     newZ = realloc(*pZ, (v + n) * sizeof *newZ);  
 
     if (newZ == NULL) {
@@ -1409,11 +1415,6 @@ int dataset_add_scalar_as (double x, const char *newname,
 			   double ***pZ, DATAINFO *pdinfo)
 {
     int v, err = 0;
-
-    if (pdinfo->varinfo == NULL) {
-	strcpy(gretl_errmsg, _("Please open a data file first"));
-	return 1;
-    }
 
     err = dataset_add_scalar(pZ, pdinfo);
 

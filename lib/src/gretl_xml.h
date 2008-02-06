@@ -98,8 +98,7 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
 				    int *err);
 
-int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc,
-			   char **pmask, int *pmode);
+int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 
 #endif /* !GRETLCLI */
 

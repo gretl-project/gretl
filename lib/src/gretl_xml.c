@@ -1051,25 +1051,22 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @pmask: location to receive allocated mask.
- * @pmode: location to receive sub-sampling mode (or %NULL).
  * 
  * Returns: 0 on success, non-zero on failure.
  */
 
-int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc,
-			   char **pmask, int *pmode)
+int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 {
     char *mask = NULL;
-    int i, len, mode = 0;
+    int i, len;
     int err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "length", &len)) {
 	return 1;
     }
 
-    gretl_xml_get_prop_as_int(node, "mode", &mode);
-
     mask = calloc(len, 1);
+
     if (mask == NULL) {
 	err = 1;
     } else {
@@ -1094,9 +1091,6 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc,
 
     if (!err) {
 	*pmask = mask;
-	if (pmode != NULL) {
-	    *pmode = mode;
-	}
     }
 
     return err;

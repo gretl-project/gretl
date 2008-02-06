@@ -3384,7 +3384,7 @@ static int model_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
     char *mask;
     int err;
 
-    err = gretl_xml_get_submask(node, doc, &mask, NULL);
+    err = gretl_xml_get_submask(node, doc, &mask);
     if (!err) {
 	pmod->submask = mask;
     }

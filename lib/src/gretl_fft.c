@@ -26,19 +26,19 @@ static int fft_allocate (double **px, gretl_matrix **pm,
 {
     *pm = gretl_matrix_alloc(r, c);
     if (*pm == NULL) {
-	free(*px);
 	return E_ALLOC;
     }
 
     *px = fftw_malloc(r * sizeof **px);
     if (*px == NULL) {
+	gretl_matrix_free(*pm);
 	return E_ALLOC;
     }
 
-    *pc = fftw_malloc((r/2 + 1) * sizeof **pc);
+    *pc = fftw_malloc((r/2 + 1 + r % 2) * sizeof **pc);
     if (*pc == NULL) {
-	free(*px);
 	gretl_matrix_free(*pm);
+	free(*px);
 	return E_ALLOC;
     }
 

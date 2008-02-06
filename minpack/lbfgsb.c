@@ -15,6 +15,10 @@
 # define max(a,b) ((a) >= (b) ? (a) : (b))
 #endif
 
+#ifndef abs
+# define abs(x) ((x) >= 0 ? (x) : -(x))
+#endif
+
 static int c1 = 1;
 static int c11 = 11;
 static double c_b173 = .001;
