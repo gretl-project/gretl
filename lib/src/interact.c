@@ -877,48 +877,58 @@ static void grab_arbond_diag (char *s, CMD *cmd)
 
 #define LAG_DEBUG 0
 
+static int lag_from_lstr (const char *s, 
+			  const double **Z,
+			  const DATAINFO *pdinfo,
+			  int *err)
+{
+    int lsign, lag = 0;
+
+    *err = 0;
+
+    if (isalpha(*s)) {
+	lsign = -1;
+    } else if (*s == '-') {
+	lsign = 1;
+	s++;
+    } else if (*s == '+') {
+	lsign = -1;
+	s++;
+    } else {
+	*err = 1;
+    }
+
+    if (!*err) {
+	if (isdigit(*s)) {
+	    lag = atoi(s);
+	} else {
+	    int v = varindex(pdinfo, s);
+
+	    if (v < pdinfo->v) {
+		lag = Z[v][0];
+	    } else {
+		*err = 1;
+	    }
+	}
+    }
+
+    if (!*err) {
+	lag = lsign * lag;
+    }
+
+    return lag;
+}
+
 static int get_contiguous_lags (LAGVAR *lv,
 				const char *l1str, const char *l2str,
 				const double **Z, const DATAINFO *pdinfo)
 {
-    const char *p;
-    int i, v, lag, lsign;
     int err = 0;
 
-    for (i=0; i<2 && !err; i++) {
-	p = (i == 0)? l1str : l2str;
+    lv->lmin = lag_from_lstr(l1str, Z, pdinfo, &err);
 
-	if (*p == '0') {
-	    lsign = 1;
-	} else if (*p == '-') {
-	    lsign = 1;
-	    p++;
-	} else if (*p == '+') {
-	    lsign = -1;
-	    p++;
-	} else {
-	    err = 1;
-	    break;
-	}
-
-	if (isdigit(*p)) {
-	    lag = atoi(p);
-	} else {
-	    v = varindex(pdinfo, p);
-	    if (v < pdinfo->v) {
-		lag = Z[v][0];
-	    } else {
-		err = 1;
-	    }
-	}
-
-	if (!err) {
-	    if (i == 0) {
-		lv->lmin = lsign * lag;
-	    } else {
-		lv->lmax = lsign * lag;
-	    }
-	}
+    if (!err) {
+	lv->lmax = lag_from_lstr(l2str, Z, pdinfo, &err);
     }
 
     return err;
@@ -928,7 +938,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 			 const double **Z, const DATAINFO *pdinfo)
 {
     char l1str[16], l2str[16];
-    int lag, i, err = 1;
+    int i, err = 1;
 
     lv->v = 0;
     *lv->vname = 0;
@@ -956,9 +966,9 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	    }
 	    err = 0;
 	}
-    } else if (sscanf(s, "%15[^(](%d)", lv->vname, &lag) == 2) {
-	lv->lmin = lv->lmax = -lag;
-	err = 0;
+    } else {
+	sscanf(s, "%15[^(](%15[^ )]", lv->vname, l1str);
+	lv->lmin = lv->lmax = lag_from_lstr(l1str, Z, pdinfo, &err);
     }
 
 #if LAG_DEBUG
