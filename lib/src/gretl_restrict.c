@@ -243,13 +243,14 @@ get_R_sys_column (const gretl_restriction *rset, int i, int j)
 {
     const rrow *r = rset->rows[i];
     equation_system *sys = rset->obj;
-    const int *list;
     int col = r->bnum[j];
-    int k;
+    int k, n;
 
     for (k=0; k<r->eq[j]; k++) {
-	list = system_get_list(sys, k);
-	col += list[0] - 1;
+	n = system_get_list_length(sys, k);
+	if (n > 0) {
+	    col += n - 1;
+	}
     }
 
     return col;
@@ -470,8 +471,8 @@ static int rset_alloc_matrices (gretl_restriction *rset, int nc)
     rset->q = gretl_zero_matrix_new(rset->k, 1);
 
 #if RDEBUG
-    fprintf(stderr, "rset_alloc_matrices: on output R=%p, q=%p\n",
-	    (void *) rset->R, (void *) rset->q);
+    fprintf(stderr, "rset_alloc_matrices: on output R=%p (%dx%d), q=%p (%dx%d)\n",
+	    (void *) rset->R, rset->k, nc, (void *) rset->q, rset->k, 1);
 #endif
 
     if (rset->R == NULL || rset->q == NULL) {

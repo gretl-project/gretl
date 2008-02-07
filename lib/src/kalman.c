@@ -667,9 +667,19 @@ void kalman_use_ARMA_ll (kalman *K, int total)
     }
 }
 
+/* Below: added by Jack, February 2008 to make BFGS work better in a
+   range of cases.  But it seems to break estimation of pure AR
+   models, so temporarily hidden by Allin.  Can be enabled via the
+   environment variable KALMAN_AVG_ML.
+*/
+
 int is_kalman_ll_average (kalman *K)
 {
-    return (K->flags & KALMAN_AVG_LL);
+    if (getenv("KALMAN_AVG_LL") != NULL) {
+	return (K->flags & KALMAN_AVG_LL);
+    } else {
+	return 0;
+    }
 }
 
 /* Read from the appropriate row of x (T x k) and multiply by A' to

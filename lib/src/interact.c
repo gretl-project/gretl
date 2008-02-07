@@ -826,6 +826,7 @@ static int arma_maybe_rewrite (char *s, CMD *cmd)
 
 #if ARMA_DBG
     fprintf(stderr, "new s = '%s'\n", s);
+    fprintf(stderr, "cmd->param = '%s'\n", cmd->param);
 #endif
 
     free_strings_array(S, n);
@@ -886,7 +887,10 @@ static int lag_from_lstr (const char *s,
 
     *err = 0;
 
-    if (isalpha(*s)) {
+    if (!strcmp(s, "0")) {
+	/* lag zero = contemp. value */
+	lsign = 1;
+    } else if (isalpha(*s)) {
 	lsign = -1;
     } else if (*s == '-') {
 	lsign = 1;

@@ -397,27 +397,25 @@ static void sur_rearrange_lists (equation_system *sys,
 int equation_system_append (equation_system *sys, 
 			    const int *list)
 {
-    int i, neq;
+    int neq;
 
     if (sys == NULL) {
 	strcpy(gretl_errmsg, _(nosystem));
-	return 1;
+	return E_DATA;
     }
 
     neq = sys->n_equations;
 
     sys->lists = realloc(sys->lists, (neq + 1) * sizeof *sys->lists);
-    if (sys->lists == NULL) return E_ALLOC;
+    if (sys->lists == NULL) {
+	return E_ALLOC;
+    }
 
-    sys->lists[neq] = gretl_list_new(list[0]);
+    sys->lists[neq] = gretl_list_copy(list);
 
     if (sys->lists[neq] == NULL) {
 	equation_system_destroy(sys);
 	return E_ALLOC;
-    }
-
-    for (i=0; i<=list[0]; i++) {
-	sys->lists[neq][i] = list[i];
     }
 
     sys->n_equations += 1;
@@ -1071,6 +1069,8 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     return equation_system_estimate(sys, pZ, pdinfo, opt, prn);
 }
 
+/* effective list length, allowance made for TSLS-style lists */
+
 static int get_real_list_length (const int *list)
 {
     int i, len = list[0];
@@ -1083,6 +1083,18 @@ static int get_real_list_length (const int *list)
     }
 
     return len;
+}
+
+/* below: used in formulating restriction matrices for
+   an equation system */
+
+int system_get_list_length (const equation_system *sys, int i)
+{
+    if (i >= 0 && i < sys->n_equations) {
+	return get_real_list_length(sys->lists[i]);
+    } else {
+	return 0;
+    }
 }
 
 int system_max_indep_vars (const equation_system *sys)
@@ -1731,6 +1743,48 @@ static int sys_in_list (const int *list, int k)
     return 0;
 }
 
+/* Handle the case where we were not given an explicit list 
+   of endogenous variables, but rather the individual equations
+   were given in TSLS style: "y X ; Z".  This is supported
+   for the TSLS and 3SLS methods.
+*/
+
+static int make_tsls_style_elist (equation_system *sys)
+{
+    const int *slist;
+    int *elist = NULL;
+    int *Y = NULL;
+    int *Z = NULL;
+    int i, j, k;
+    int err = 0;
+
+    for (i=0; i<sys->n_equations && !err; i++) {
+	slist = sys->lists[i];
+	err = gretl_list_split_on_separator(slist, &Y, &Z);
+	if (!err) {
+	    for (j=1; j<=Y[0]; j++) {
+		k = Y[j];
+		if (!in_gretl_list(Z, k) && !in_gretl_list(elist, k)) {
+		    gretl_list_append_term(&elist, k);
+		    if (elist == NULL) {
+			err = E_ALLOC;
+		    }
+		}
+	    }
+	    free(Y);
+	    free(Z);
+	}
+    }
+
+    if (!err) {
+	sys->endog_vars = elist;
+    } else {
+	free(elist);
+    }
+
+    return err;
+}
+
 #define system_needs_endog_list(s) (s->method != SYS_METHOD_SUR && \
 				    s->method != SYS_METHOD_OLS && \
 				    s->method != SYS_METHOD_WLS)
@@ -1739,6 +1793,12 @@ static int make_instrument_list (equation_system *sys)
 {
     int *ilist, *elist = sys->endog_vars;
     int i, j, k, nexo, maxnexo = 0;
+
+    if (system_needs_endog_list(sys) && elist == NULL) {
+	/* first pass: handle 3SLS? */
+	make_tsls_style_elist(sys);
+	elist = sys->endog_vars;
+    }
 
     if (system_needs_endog_list(sys) && elist == NULL) {
 	gretl_errmsg_set(_("No list of endogenous variables was given"));

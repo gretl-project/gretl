@@ -1064,8 +1064,10 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
     if (vcv != NULL) {
 	arma_hessian_vcv(pmod, vcv, k);
+	gretl_model_set_int(pmod, "ml_vcv", VCV_HESSIAN);
     } else {
 	arma_OPG_vcv(pmod, K, b, s2, k, T);
+	gretl_model_set_int(pmod, "ml_vcv", VCV_OP);
     }
 
     write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
@@ -1404,7 +1406,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
 
-	if (opt & OPT_H) { 
+	if (getenv("ARMA_USE_HESSIAN") != NULL || (opt & OPT_H)) { 
 	    kalman_do_ma_check = 0;
 	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
 	    kalman_do_ma_check = 1;

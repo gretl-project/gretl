@@ -117,6 +117,8 @@ int system_adjust_t1t2 (equation_system *sys,
 
 int *system_get_list (const equation_system *sys, int i);
 
+int system_get_list_length (const equation_system *sys, int i);
+
 int *compose_tsls_list (equation_system *sys, int i);
 
 int system_get_depvar (const equation_system *sys, int i);

@@ -182,17 +182,7 @@ static gretl_matrix *get_arma_pq_vec (struct arma_info *ainfo,
 {
     gretl_matrix *m = NULL;
     const char *test = (t == AR_MASK)? "p=" : "q=";
-    char *pqcpy = strdup(ainfo->pqspec);
-
-    char *s, *tok = strtok(pqcpy, ",");
-
-    while (tok != NULL) {
-	s = strstr(tok, test);
-	if (s != NULL) {
-	    break;
-	}
-	tok = strtok(NULL, ",");
-    }
+    const char *s = strstr(ainfo->pqspec, test);
 
     *tmp = 0;
 
@@ -201,7 +191,15 @@ static gretl_matrix *get_arma_pq_vec (struct arma_info *ainfo,
 	if (*s == '{') {
 	    m = matrix_from_spec(s + 1, tmp, err);
 	} else {
-	    m = get_matrix_by_name(s);
+	    char *p, mname[VNAMELEN];
+
+	    *mname = '\0';
+	    strncat(mname, s, VNAMELEN - 1);
+	    p = strchr(mname, ',');
+	    if (p != NULL) {
+		*p = '\0';
+	    }
+	    m = get_matrix_by_name(mname);
 	    if (m == NULL) {
 		*err = E_UNKVAR;
 	    }
@@ -219,7 +217,7 @@ arma_make_masks (struct arma_info *ainfo, int *list)
 
     if (ainfo->p > 0) {
 	ainfo->np = ainfo->p;
-	if (strlen(ainfo->pqspec)) {
+	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
 	    m = get_arma_pq_vec(ainfo, AR_MASK, &tmp, &err);
 	    if (m != NULL) {
 		ainfo->pmask = mask_from_vec(m, ainfo, AR_MASK, &err);
@@ -232,7 +230,7 @@ arma_make_masks (struct arma_info *ainfo, int *list)
 
     if (ainfo->q > 0 && !err) {
 	ainfo->nq = ainfo->q;
-	if (strlen(ainfo->pqspec)) {
+	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
 	    m = get_arma_pq_vec(ainfo, MA_MASK, &tmp, &err);
 	    if (m != NULL) {
 		ainfo->qmask = mask_from_vec(m, ainfo, MA_MASK, &err);

@@ -952,10 +952,11 @@ int in_gretl_list (const int *list, int k)
 {
     int i, ret = 0;
 
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == k) {
-	    ret = i;
-	    break;
+    if (list != NULL) {
+	for (i=1; i<=list[0] && !ret; i++) {
+	    if (list[i] == k) {
+		ret = i;
+	    }
 	}
     }
 
@@ -1754,7 +1755,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 		break;
 	    }
 	}
-    } else if (ci == TSLS || ci == HECKIT) {
+    } else if (ci == TSLS || ci == HECKIT || ci == EQUATION) {
 	multi = 1;
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
