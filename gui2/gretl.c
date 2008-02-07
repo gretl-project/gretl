@@ -1003,7 +1003,12 @@ int main (int argc, char *argv[])
 
 #ifdef G_OS_WIN32
     if (debug) {
+	char *loc;
+
 	gretl_win32_debug();
+	loc = setlocale(LC_ALL, "");
+	fprintf(stderr, "setlocale gives %s\n", 
+		(loc != NULL)? loc : "NULL");
     }
 #endif
 
