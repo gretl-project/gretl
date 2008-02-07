@@ -1007,7 +1007,7 @@ int main (int argc, char *argv[])
 
 	gretl_win32_debug();
 	loc = setlocale(LC_ALL, "");
-	fprintf(stderr, "setlocale gives %s\n", 
+	fprintf(stderr, "setlocale gives '%s'\n", 
 		(loc != NULL)? loc : "NULL");
     }
 #endif
