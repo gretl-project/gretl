@@ -882,7 +882,7 @@ static int lag_from_lstr (const char *s,
 			  const DATAINFO *pdinfo,
 			  int *err)
 {
-    int lsign, lag = 0;
+    int lsign = 1, lag = 0;
 
     *err = 0;
 
