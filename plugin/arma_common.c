@@ -182,7 +182,17 @@ static gretl_matrix *get_arma_pq_vec (struct arma_info *ainfo,
 {
     gretl_matrix *m = NULL;
     const char *test = (t == AR_MASK)? "p=" : "q=";
-    const char *s = strstr(ainfo->pqspec, test);
+    char *pqcpy = strdup(ainfo->pqspec);
+
+    char *s, *tok = strtok(pqcpy, ",");
+
+    while (tok != NULL) {
+	s = strstr(tok, test);
+	if (s != NULL) {
+	    break;
+	}
+	tok = strtok(NULL, ",");
+    }
 
     *tmp = 0;
 
