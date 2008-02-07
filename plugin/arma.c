@@ -1994,8 +1994,10 @@ static void arma_init_transcribe_coeffs (struct arma_info *ainfo,
    nonlinearity due to either (a) the presence of both a seasonal and
    a non-seasonal AR component or (b) the presence of exogenous
    variables in the context of a non-zero AR order, where estimation
-   will be via exact ML.  In this initialization any MA coefficients
-   are simply set to near-zero.
+   will be via exact ML.  
+
+   In this initialization any MA coefficients are simply set to
+   near-zero.
 */
 
 static int ar_arma_init (const int *list, double *coeff, 
@@ -2723,7 +2725,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	goto bailout;
     }
 
-    /* second pass: try Hannan-Rissanen? */
+    /* second pass: try Hannan-Rissanen if suitable */
     if (!init_done && prefer_hr_init(&ainfo)) {
 	err = hr_init_check(pdinfo, &ainfo);
 	if (!err) {
