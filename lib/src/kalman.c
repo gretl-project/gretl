@@ -668,14 +668,12 @@ void kalman_use_ARMA_ll (kalman *K, int total)
 }
 
 /* Below: added by Jack, February 2008 to make BFGS work better in a
-   range of cases.  But it seems to break estimation of pure AR
-   models, so temporarily hidden by Allin.  Can be enabled via the
-   environment variable KALMAN_AVG_ML.
+   range of cases.  Seems to help with vary large samples.
 */
 
 int is_kalman_ll_average (kalman *K)
 {
-    if (getenv("KALMAN_AVG_LL") != NULL) {
+    if (K->T > 3072) {
 	return (K->flags & KALMAN_AVG_LL);
     } else {
 	return 0;
