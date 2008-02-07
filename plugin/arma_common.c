@@ -219,7 +219,7 @@ arma_make_masks (struct arma_info *ainfo, int *list)
 
     if (ainfo->p > 0) {
 	ainfo->np = ainfo->p;
-	if (ainfo->pqspec != NULL) {
+	if (strlen(ainfo->pqspec)) {
 	    m = get_arma_pq_vec(ainfo, AR_MASK, &tmp, &err);
 	    if (m != NULL) {
 		ainfo->pmask = mask_from_vec(m, ainfo, AR_MASK, &err);
@@ -232,7 +232,7 @@ arma_make_masks (struct arma_info *ainfo, int *list)
 
     if (ainfo->q > 0 && !err) {
 	ainfo->nq = ainfo->q;
-	if (ainfo->pqspec != NULL) {
+	if (strlen(ainfo->pqspec)) {
 	    m = get_arma_pq_vec(ainfo, MA_MASK, &tmp, &err);
 	    if (m != NULL) {
 		ainfo->qmask = mask_from_vec(m, ainfo, MA_MASK, &err);
