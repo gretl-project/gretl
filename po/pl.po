@@ -1,14 +1,14 @@
-# Polish translation for gretl-1.7.1
+# Polish translation for gretl-1.7.2.pre1
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006, 2007
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
 # 
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.7.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-04 07:56-0500\n"
-"PO-Revision-Date: 2008-01-16 11:00+0100\n"
+"PO-Revision-Date: 2008-02-07 21:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1266,7 +1266,7 @@ msgid ""
 "with the working data set"
 msgstr ""
 "%s: zakres obserwacji nie pokrywa siê\n"
-"z bie¿±cym zakresem czasowym bazy"
+"z bie¿±cym zakresem danych w gretlu"
 
 #: lib/src/dbread.c:2008
 #, c-format
@@ -2533,9 +2533,9 @@ msgid "No description available"
 msgstr "Niedostêpny opis"
 
 #: lib/src/gretl_func.c:2399
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted function '%s'\n"
-msgstr "Pomoc dla funkcji"
+msgstr "Usuniêto funkcjê '%s'\n"
 
 #: lib/src/gretl_func.c:2889
 msgid "You can't change the name of a function here"
@@ -2717,7 +2717,7 @@ msgid "Wald test for joint significance of time dummies"
 msgstr "Test Walda na ³±czn± istotno¶æ zmiennych 0-1 jednostek czasu"
 
 #: lib/src/gretl_model.c:2741
-#, fuzzy, c-format
+#, c-format
 msgid "max F(%d, %d) = %g at observation %s"
 msgstr "Maksymalne F(%d, %d) = %g wyst±pi³o dla obserwacji %s"
 
@@ -2754,7 +2754,7 @@ msgstr "Nie mo¿liwe odzyskanie wariancji b³êdu modelu"
 
 #: lib/src/gretl_model.c:4897 gui2/library.c:422
 msgid "The model exhibits an exact linear fit"
-msgstr ""
+msgstr "The model exhibits an exact linear fit"
 
 #: lib/src/gretl_panel.c:687
 msgid ""
@@ -2777,8 +2777,7 @@ msgid ""
 msgstr ""
 "                          Oszacowane ustalone efekty\n"
 "  uwzglêdniaj±ce zró¿nicowanie wyrazu wolnego wed³ug jednostek w przekroju,\n"
-"(wspó³czynniki, b³êdy stand. w nawiasach, warto¶æ p w nawiasach "
-"kwadratowych).\n"
+"(wspó³czynniki, b³êdy stand. w nawiasach, warto¶æ p w nawiasach kwadratowych).\n"
 
 #: lib/src/gretl_panel.c:1231
 #, c-format
@@ -3118,17 +3117,17 @@ msgstr "Polecenia shell command s± niedostêpne"
 #: lib/src/gretl_string_table.c:1043 lib/src/gretl_string_table.c:1158
 #, c-format
 msgid "You cannot overwrite '%s'\n"
-msgstr ""
+msgstr "Niemo¿liwe nadpisanie '%s'\n"
 
 #: lib/src/gretl_string_table.c:1065 lib/src/gretl_string_table.c:1200
-#, fuzzy, c-format
+#, c-format
 msgid "Saved empty string as '%s'\n"
-msgstr "Macierz zapisano jako %s"
+msgstr "Pusty ³añcuch zapisano jako %s\n"
 
 #: lib/src/gretl_string_table.c:1067 lib/src/gretl_string_table.c:1202
-#, fuzzy, c-format
+#, c-format
 msgid "Saved string as '%s'\n"
-msgstr "Macierz zapisano jako %s"
+msgstr "£añcuch zapisano jako %s\n"
 
 #: lib/src/gretl_string_table.c:1279 lib/src/interact.c:3788
 #: cli/gretlcli.c:285 gui2/library.c:6374
@@ -3473,7 +3472,6 @@ msgid "Unable to access the file %s.\n"
 msgstr "Niemo¿liwy dostêp do pliku %s.\n"
 
 #: lib/src/interact.c:2705
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -3481,12 +3479,11 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Pomoc uzyskasz po napisaniu: help polecenie"
+"Pomoc dla funkcji uzyskasz po napisaniu: help funkcja"
 
 #: lib/src/interact.c:2706
-#, fuzzy
 msgid " (e.g. help qrdecomp)\n"
-msgstr " (np. help smpl)\n"
+msgstr " (np. help qrdecomp)\n"
 
 #: lib/src/interact.c:2737
 msgid ""
@@ -3504,23 +3501,19 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Pomoc uzyskasz po napisaniu: help polecenie"
+"Pomoc dla poleceñ uzyskasz po napisaniu: help polecenie"
 
 #: lib/src/interact.c:2753
 msgid " (e.g. help smpl)\n"
 msgstr " (np. help smpl)\n"
 
 #: lib/src/interact.c:2754
-#, fuzzy
 msgid "You can also do 'help functions' for a list of functions\n"
-msgstr ""
-"konsola gretl: napisz 'help' a uzyskasz listê poleceñ\n"
-"? "
+msgstr "Listê funkcji uzyskasz po napisaniu 'help functions'.\n"
 
 #: lib/src/interact.c:2760
-#, fuzzy
 msgid "genrcli.hlp"
-msgstr "gretlcli.hlp"
+msgstr "genrcli.hlp"
 
 #: lib/src/interact.c:2774
 #, c-format
@@ -3596,8 +3589,7 @@ msgstr "B³±d w generowaniu periodogramu\n"
 
 #: lib/src/interact.c:4010
 msgid "You can't end a loop here, you haven't started one\n"
-msgstr ""
-"Niemo¿liwe zamkniêcie pêtli, poniewa¿ jeszcze nie zosta³a ona otwarta\n"
+msgstr "Niemo¿liwe zamkniêcie pêtli, poniewa¿ jeszcze nie zosta³a ona otwarta\n"
 
 #: lib/src/interact.c:4024
 msgid "Retrieved fitted values as \"autofit\"\n"
@@ -4455,8 +4447,7 @@ msgstr "      Zmienna             Wspó³czynnik          B³±d standardowy\n"
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
 msgstr ""
-"      Zmienna      Wspó³czynnik     B³±d stand.   Statystyka t  Efekt "
-"krañcowy\n"
+"      Zmienna      Wspó³czynnik     B³±d stand.     Stat t  Efekt krañcowy\n"
 
 #: lib/src/modelprint.c:1853
 msgid "(at mean)"
@@ -5185,8 +5176,7 @@ msgstr ""
 #: lib/src/printout.c:242
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
-"Test Jarque'a-Bera. Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad "
-"normalny"
+"Test Jarque'a-Bera. Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny"
 
 #: lib/src/printout.c:249
 msgid "Test for null hypothesis of gamma distribution"
@@ -5361,9 +5351,7 @@ msgstr "Nazwa zmiennej: %s\n"
 
 #: lib/src/printout.c:2036
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
-msgstr ""
-"Obja¶nienie: * oznacza resztê przekraczajac± 2.5 raza b³±d standardowy "
-"reszt\n"
+msgstr "Obja¶nienie: * oznacza resztê przekraczajac± 2.5 raza b³±d standardowy reszt\n"
 
 #: lib/src/printout.c:2042
 msgid "Mean Squared Error"
@@ -5432,12 +5420,12 @@ msgstr "Gradienty:  "
 
 #: lib/src/printscan.c:648
 msgid "sscanf: numerical target must be scalar"
-msgstr ""
+msgstr "sscanf: numeryczny obiekt musi byæ skalarem"
 
 #: lib/src/printscan.c:799
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not a string variable"
-msgstr "'%s' nie jest zmienn± zero-jedynkow±"
+msgstr "%s: nie jest nazw± zmiennej"
 
 #: lib/src/pvalues.c:976 gui2/calculator.c:1118
 msgid "Standard normal distribution"
@@ -6265,7 +6253,7 @@ msgstr "Plik %s poprawnie otwarty\n"
 
 #: gui2/about.c:30
 msgid "\"By econometricians, for econometricians.\""
-msgstr ""
+msgstr "\"Ekonometrycy dla ekonometryków.\""
 
 #: gui2/about.c:88
 msgid "About gretl"
@@ -6278,9 +6266,8 @@ msgstr ""
 "e-mail: tadeusz.kufel@uni.torun.pl; http://www.kufel.torun.pl"
 
 #: gui2/about.c:163
-#, fuzzy
 msgid "License"
-msgstr "Linie"
+msgstr "Licencja"
 
 #: gui2/boxplots.c:137 gui2/boxplots.c:148 gui2/boxplots.c:170
 #: gui2/boxplots.c:173 gui2/boxplots.c:190
@@ -6336,9 +6323,7 @@ msgstr "mediana"
 
 #: gui2/boxplots.c:943
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Wyniki numeryczne przedzia³u ufno¶ci dla mediany (estymacja metod± "
-"bootstrapow±)"
+msgstr "Wyniki numeryczne przedzia³u ufno¶ci dla mediany (estymacja metod± bootstrapow±)"
 
 #: gui2/boxplots.c:949
 #, no-c-format
@@ -7221,12 +7206,12 @@ msgid ""
 "repeating each value %d times.  In general, this is\n"
 "not a valid thing to do."
 msgstr ""
-"Czy na pewno chcesz dodaæ seriê o ni¿szej czêstotliwo¶ci\n"
-"do bazy o wy¿szej czêstotliwo¶ci?\n"
+"Czy na pewno chcesz dodaæ seriê o ni¿szej \n"
+"czêstotliwo¶ci do bazy o wy¿szej czêstotliwo¶ci?\n"
 "\n"
-"If you say 'yes' I will expand the source data by\n"
-"repeating each value %d times.  In general, this is\n"
-"not a valid thing to do."
+"Je¶li wybierzesz 'TAK', to warto¶æ ¼ród³owa \n"
+"zostanie powtórzona %d razy. Ogólnie, takie \n"
+"dzia³anie nie musi byæ poprawne."
 
 #: gui2/database.c:258
 msgid "Sorry, can't handle this frequency conversion"
@@ -7439,24 +7424,23 @@ msgstr "Wykonaj"
 
 #: gui2/datafiles.c:980 gui2/datafiles.c:1050
 msgid "New"
-msgstr "Nowy"
+msgstr "Nowy plik"
 
 #: gui2/datafiles.c:987 gui2/datafiles.c:1045
 msgid "Install"
 msgstr "Zainstaluj"
 
 #: gui2/datafiles.c:1044
-#, fuzzy
 msgid "List series"
-msgstr "szeregi czasowe"
+msgstr "Lista zmiennych"
 
 #: gui2/datafiles.c:1048
 msgid "Look on server"
-msgstr ""
+msgstr "Pakiety funkcji na serwerze"
 
 #: gui2/datafiles.c:1049
 msgid "Local machine"
-msgstr ""
+msgstr "Lokalny komputer"
 
 #: gui2/datafiles.c:1051
 msgid "Find"
@@ -7464,17 +7448,17 @@ msgstr "Znajd¼"
 
 #: gui2/datafiles.c:1154 gui2/datafiles.c:1157
 msgid "local machine"
-msgstr ""
+msgstr "lokalny komputer"
 
 #: gui2/datafiles.c:1162
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: databases on %s"
-msgstr "gretl: serwer baz danych"
+msgstr "gretl: bazy danych na %s"
 
 #: gui2/datafiles.c:1164
-#, fuzzy, c-format
+#, c-format
 msgid "gretl: function packages on %s"
-msgstr "gretl: Pakiet funkcji na serwerze"
+msgstr "gretl: Pakiet funkcji na %s"
 
 #: gui2/datafiles.c:1269
 msgid "gretl: practice files"
@@ -7501,11 +7485,12 @@ msgid ""
 "No gretl function packages were found on this computer.\n"
 "Do you want to take a look on the gretl server?"
 msgstr ""
+"Nie znaleziono pakietu funkcji gretla na tym komputerze.\n"
+"Czy chcesz zainstalowaæ pakiet funkcji z serwera Gretla?"
 
 #: gui2/datafiles.c:1494
-#, fuzzy
 msgid "No gretl function packages were found on this computer."
-msgstr "gretl: Pakiet funkcji na serwerze"
+msgstr "Nie znaleziono pakietu funkcji gretla na tym komputerze."
 
 #: gui2/datafiles.c:1573
 msgid "File"
@@ -7514,7 +7499,7 @@ msgstr "Pliki"
 #: gui2/datafiles.c:1574 gui2/datafiles.c:1593 gui2/datafiles.c:1599
 #: gui2/session.c:2734
 msgid "Summary"
-msgstr "Miary opisowe"
+msgstr "Skrócony opis"
 
 #: gui2/datafiles.c:1577
 msgid "Script"
@@ -7986,22 +7971,19 @@ msgstr "Minimalna warto¶æ, dolna granica:"
 
 #: gui2/dialogs.c:3413
 msgid "Bin width:"
-msgstr "szeroko¶æ przedzia³u:"
+msgstr "Szeroko¶æ przedzia³u:"
 
 #: gui2/dialogs.c:3416
-#, fuzzy
 msgid "Show data only"
-msgstr "Pe³ne wyniki"
+msgstr "Poka¿ tylko dane"
 
 #: gui2/dialogs.c:3417
-#, fuzzy
 msgid "Show normal distribution"
-msgstr "Standaryzowany rozk³ad normalny"
+msgstr "Poka¿ dane i rozk³ad normalny"
 
 #: gui2/dialogs.c:3418
-#, fuzzy
 msgid "Show gamma distribution"
-msgstr "Poka¿ wykres rozk³adu z próby"
+msgstr "Poka¿ dane i rozk³ad gamma"
 
 #: gui2/dialogs.c:3684
 msgid "Structure of dataset"
@@ -8729,15 +8711,12 @@ msgstr ""
 "the package's public interface"
 
 #: gui2/fnsave.c:1139
-#, fuzzy
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
 msgstr ""
-"Nie dostêpne s± funkcje pakietu lub funkcje\n"
-"zdefiniowane przez u¿ytkowanika.\n"
-"\n"
-"Proszê otworzyæ pakiet funkcji lub zdefiniuj w³asne."
+"Nie dostêpne s± funkcje pakietu.\n"
+"Czy chcesz zapisaæ je teraz?"
 
 #: gui2/gpt_control.c:222
 msgid " Click to set label position"
@@ -9196,9 +9175,8 @@ msgid "/File/C_lear data set"
 msgstr "/Plik/Wy_czy¶æ zbiór danych"
 
 #: gui2/gretl.c:257
-#, fuzzy
 msgid "/File/_Working directory..."
-msgstr "gretl: katalog roboczy"
+msgstr "/Plik/_Katalog roboczy gretla..."
 
 #: gui2/gretl.c:261
 msgid "/File/_Script files"
@@ -9661,9 +9639,8 @@ msgid "/Variable/_Augmented Dickey-Fuller test"
 msgstr "/Zmienna/Test A_DF..."
 
 #: gui2/gretl.c:464
-#, fuzzy
 msgid "/Variable/ADF-GLS test"
-msgstr "/Zmienna/Test _KPSS..."
+msgstr "/Zmienna/Test ADF-_GLS..."
 
 #: gui2/gretl.c:465
 msgid "/Variable/_KPSS test"
@@ -9727,8 +9704,7 @@ msgstr "/Model/Inne _liniowe modele"
 
 #: gui2/gretl.c:493
 msgid "/Model/Other linear models/_Weighted Least Squares..."
-msgstr ""
-"/Model/Inne _liniowe modele/_Wa¿ona metoda najmniejszych kwadratów (UMNK)..."
+msgstr "/Model/Inne _liniowe modele/_Wa¿ona metoda najmniejszych kwadratów (UMNK)..."
 
 #: gui2/gretl.c:495
 msgid "/Model/Other linear models/H_eteroskedasticity corrected..."
@@ -9736,9 +9712,7 @@ msgstr "/Model/Inne _liniowe modele/Korekta H_eteroskedastyczno¶ci (UMNK)..."
 
 #: gui2/gretl.c:497
 msgid "/Model/Other linear models/_Two-Stage Least Squares..."
-msgstr ""
-"/Model/Inne _liniowe modele/_Podwójna metoda najmniejszych kwadratów "
-"(2MNK)..."
+msgstr "/Model/Inne _liniowe modele/_Podwójna metoda najmniejszych kwadratów (2MNK)..."
 
 #: gui2/gretl.c:500
 msgid "/Model/Other linear models/High _precision OLS..."
@@ -9750,7 +9724,7 @@ msgstr "/Model/Modele _szeregów czasowych"
 
 #: gui2/gretl.c:504
 msgid "/Model/_Panel"
-msgstr "/_Model/Modele _panelowe"
+msgstr "/Model/Modele _panelowe"
 
 #: gui2/gretl.c:505
 msgid "/Model/_Nonlinear models"
@@ -9782,8 +9756,7 @@ msgstr "/Model/_Nieliniowe modele/Model Lo_gistyczny..."
 
 #: gui2/gretl.c:512
 msgid "/Model/Nonlinear models/_Nonlinear Least Squares..."
-msgstr ""
-"/Model/_Nieliniowe modele/_Nieliniowa metoda najmniejszych kwadratów..."
+msgstr "/Model/_Nieliniowe modele/_Nieliniowa metoda najmniejszych kwadratów..."
 
 #: gui2/gretl.c:514
 msgid "/Model/_Robust estimation"
@@ -9791,8 +9764,7 @@ msgstr "Model/_Odporne estymatory"
 
 #: gui2/gretl.c:515
 msgid "/Model/Robust estimation/Least _Absolute Deviation..."
-msgstr ""
-"/Model/_Odporne estymatory/Metoda najmniejszych warto¶ci _bezwzglêdnych..."
+msgstr "/Model/_Odporne estymatory/Metoda najmniejszych warto¶ci _bezwzglêdnych..."
 
 #: gui2/gretl.c:517
 msgid "/Model/Robust estimation/_Rank correlation..."
@@ -9827,9 +9799,8 @@ msgid "/Help/Command reference/_PDF"
 msgstr "/Pomoc/_Opis poleceñ gretla/plik PDF"
 
 #: gui2/gretl.c:530
-#, fuzzy
 msgid "/Help/Function reference"
-msgstr "/Pomoc/_Opis poleceñ gretla"
+msgstr "/Pomoc/_Opis funkcji gretla"
 
 #: gui2/gretl.c:531
 msgid "/Help/_User's guide"
@@ -10102,8 +10073,7 @@ msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
 msgstr ""
-"\\textit{Note}: * oznacza reszty przekraczaj±ce 2.5 razy b³±d standardowy "
-"reszt\n"
+"\\textit{Note}: * oznacza reszty przekraczaj±ce 2.5 razy b³±d standardowy reszt\n"
 "\n"
 
 #: gui2/guiprint.c:1616
@@ -10474,9 +10444,8 @@ msgid "Sort by..."
 msgstr "Sortuj wed³ug..."
 
 #: gui2/gui_utils.c:1734
-#, fuzzy
 msgid "Configure..."
-msgstr "konfiguracja"
+msgstr "Konfiguracja..."
 
 #: gui2/gui_utils.c:1735
 msgid "Send To..."
@@ -10892,9 +10861,8 @@ msgid "help file %s is not up to date\n"
 msgstr "plik pomocy %s nie do aktualizacji\n"
 
 #: gui2/helpfiles.c:709 gui2/helpfiles.c:1077
-#, fuzzy
 msgid "genrgui.hlp"
-msgstr "gretlcli.hlp"
+msgstr "genrgui.hlp"
 
 #: gui2/helpfiles.c:944
 msgid "Show English help"
@@ -10905,9 +10873,8 @@ msgid "Index"
 msgstr "Indeks"
 
 #: gui2/helpfiles.c:1380
-#, fuzzy
 msgid "Sorry, help not found"
-msgstr "Nie znaleziono serwera"
+msgstr "Sorry, pomoc dla funkcji nie istnieje"
 
 #: gui2/helpfiles.c:1495 gui2/helpfiles.c:1610
 msgid "Search wrapped"
@@ -11012,9 +10979,8 @@ msgid "gretl: ADF test"
 msgstr "gretl: test ADF"
 
 #: gui2/library.c:908
-#, fuzzy
 msgid "gretl: ADF-GLS test"
-msgstr "gretl: test ADF"
+msgstr "gretl: test ADF-GLS"
 
 #: gui2/library.c:909
 msgid "gretl: KPSS test"
@@ -11573,18 +11539,15 @@ msgstr "/Model/Modele szeregów czasowych/model _GARCH..."
 
 #: gui2/menustate.c:135
 msgid "/Model/Time series/_Vector Autoregression..."
-msgstr ""
-"/Model/Modele szeregów czasowych/model _wektorowej autoregresji (VAR)..."
+msgstr "/Model/Modele szeregów czasowych/model _wektorowej autoregresji (VAR)..."
 
 #: gui2/menustate.c:136
 msgid "/Model/Time series/VAR _lag selection..."
-msgstr ""
-"/Model/Modele szeregów czasowych/wybór rzêdu opó¼nienia dla modelu VAR..."
+msgstr "/Model/Modele szeregów czasowych/wybór rzêdu opó¼nienia dla modelu VAR..."
 
 #: gui2/menustate.c:137
 msgid "/Model/Time series/V_ECM..."
-msgstr ""
-"/Model/Modele szeregów czasowych/wektorowy model _korekty b³êdem (VECM)..."
+msgstr "/Model/Modele szeregów czasowych/wektorowy model _korekty b³êdem (VECM)..."
 
 #: gui2/menustate.c:138
 msgid "/Model/Time series/_Cointegration test"
@@ -11592,8 +11555,7 @@ msgstr "/Model/Modele szeregów czasowych/testy kointegracji"
 
 #: gui2/menustate.c:139
 msgid "/Model/Time series/Cointegration test/_Engle-Granger..."
-msgstr ""
-"/Model/Modele szeregów czasowych/testy kointegracji/test Engle'a-Grangera..."
+msgstr "/Model/Modele szeregów czasowych/testy kointegracji/test Engle'a-Grangera..."
 
 #: gui2/menustate.c:141
 msgid "/Model/Time series/Cointegration test/_Johansen..."
@@ -12190,20 +12152,19 @@ msgstr "Wykorzystaj linie"
 
 #: gui2/selector.c:3477
 msgid "Estimate reduced model"
-msgstr "Oszacowany zredukowany model"
+msgstr "Estymuje zredukowany model i test Walda"
 
 #: gui2/selector.c:3481
 msgid "Wald test, based on covariance matrix"
 msgstr "Test Walda, bazuj±cy na macierzy kowariancji"
 
 #: gui2/selector.c:3485
-#, fuzzy
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
 msgstr ""
-"Sekwencyjna eliminacja nieistotnych zmiennych przy dwustronnym obszarze "
-"krytycznym, alfa = %.2f"
+"Sekwencyjna eliminacja nieistotnych zmiennych \n"
+"przy dwustronnym obszarze krytycznym, alfa ="
 
 #: gui2/selector.c:3510
 msgid "Fixed effects"
@@ -12707,9 +12668,8 @@ msgid "Allow shell commands"
 msgstr "Dopuszcza polecenia pow³oki shell"
 
 #: gui2/settings.c:181
-#, fuzzy
 msgid "Set working directory from shell"
-msgstr "gretl: katalog roboczy"
+msgstr "Katalog roboczy zgodny z pow³ok± shell"
 
 #: gui2/settings.c:183
 msgid "Command to launch gnuplot"
@@ -12888,28 +12848,24 @@ msgid "gretl: graph color selection"
 msgstr "gretl: Wybór kolorów dla wykresu"
 
 #: gui2/settings.c:2300
-#, fuzzy
 msgid "gretl working directory"
 msgstr "gretl: katalog roboczy"
 
 #: gui2/settings.c:2323
-#, fuzzy
 msgid "Working directory:"
-msgstr "gretl: katalog roboczy"
+msgstr "Katalog roboczy:"
 
 #: gui2/settings.c:2347
 msgid "On start-up, gretl should use:"
-msgstr ""
+msgstr "Startowy katalog roboczy:"
 
 #: gui2/settings.c:2354
-#, fuzzy
 msgid "the directory selected above"
-msgstr "Wykorzystywany folder nie jest dostêpny"
+msgstr "wykorzystaj katalog okre¶lony powy¿ej"
 
 #: gui2/settings.c:2362
-#, fuzzy
 msgid "the current directory as determined via the shell"
-msgstr "Wykorzystaj bie¿±cy folder jako domy¶lny"
+msgstr "wykorzystaj bie¿±cy folder pow³oki shell"
 
 #: gui2/settings.c:2409
 msgid "gretl: working directory"
@@ -13123,26 +13079,24 @@ msgid "Gretl Command Reference"
 msgstr "Opis poleceñ gretla"
 
 #: gui2/textbuf.c:1076
-#, fuzzy
 msgid "Gretl Function Reference"
-msgstr "Opis poleceñ gretla"
+msgstr "Opis funkcji gretla"
 
 #: gui2/textbuf.c:1156
 msgid "Back"
 msgstr "Wstecz"
 
 #: gui2/textbuf.c:1541
-#, fuzzy
 msgid "gretl: configure tabs"
-msgstr "gretl: otwórz plik bazy danych"
+msgstr "gretl: konfiguracje tabeli"
 
 #: gui2/textbuf.c:1542
 msgid "Spaces per tab"
-msgstr ""
+msgstr "Spaces per tab"
 
 #: gui2/textbuf.c:1543
 msgid "Use \"smart\" tabs"
-msgstr ""
+msgstr "Use \"smart\" tabs"
 
 #: gui2/textbuf.c:1934
 msgid "Comment line"
@@ -13169,29 +13123,24 @@ msgid "Execute line"
 msgstr "Execute line"
 
 #: gui2/textbuf.c:1989
-#, fuzzy
 msgid "Auto-indent region"
-msgstr "Comment region"
+msgstr "Auto-indent region"
 
 #: gui2/textbuf.c:1990
-#, fuzzy
 msgid "Indent region"
-msgstr "Uncomment region"
+msgstr "Indent region"
 
 #: gui2/textbuf.c:1999
-#, fuzzy
 msgid "Unindent region"
-msgstr "Uncomment region"
+msgstr "Unindent region"
 
 #: gui2/textbuf.c:2007
-#, fuzzy
 msgid "Auto-indent script"
-msgstr "okno skryptu"
+msgstr "Auto-indent script"
 
 #: gui2/textbuf.c:2014
-#, fuzzy
 msgid "Configure tabs..."
-msgstr "konfiguracja"
+msgstr "konfiguracja tabeli..."
 
 #: gui2/textutil.c:64
 msgid "gretl: replace"
@@ -13234,9 +13183,8 @@ msgid "session icon view"
 msgstr "okno ikon sesji"
 
 #: gui2/toolbar.c:119
-#, fuzzy
 msgid "function packages"
-msgstr "funkcje w pakiecie"
+msgstr "pakiet funkcji"
 
 #: gui2/toolbar.c:120
 msgid "user's guide"
@@ -14050,16 +13998,14 @@ msgstr "Minimalna mo¿liwa warto¶æ = 1.0"
 #: plugin/vif.c:256
 msgid "Values > 10.0 may indicate a collinearity problem"
 msgstr ""
-"Warto¶ci > 10.0 mog± wskazywaæ na problem wspó³liniowo¶ci - rozdêcia "
-"wariancji"
+"Warto¶ci > 10.0 mog± wskazywaæ na problem wspó³liniowo¶ci-rozdêcia wariancji"
 
 #: plugin/vif.c:268
 msgid ""
 "VIF(j) = 1/(1 - R(j)^2), where R(j) is the multiple correlation coefficient\n"
 "between variable j and the other independent variables"
 msgstr ""
-"VIF(j) = 1/(1 - R(j)^2), gdzie R(j) jest wspó³czynnikiem korelacji "
-"wielorakiej\n"
+"VIF(j) = 1/(1 - R(j)^2), gdzie R(j) jest wspó³czynnikiem korelacji wielorakiej\n"
 "pomiêdzy zmienn± 'j' a pozosta³ymi zmiennymi niezale¿nymi modelu."
 
 #: plugin/workbook.c:543
@@ -14068,95 +14014,8 @@ msgstr "Ochrona has³em arkusza nie jest obs³ugiwana."
 
 #: plugin/workbook.c:635
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"To nie jest plik 'OLE' -- prawdopodobnie zbyt stara wersja pliku dla gretla\n"
+msgstr "To nie jest plik 'OLE' -- prawdopodobnie zbyt stara wersja pliku dla gretla\n"
 
 #: plugin/workbook.c:637
 msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany b³±d czytania pliku\n"
-
-#, fuzzy
-#~ msgid "User's default gretl dir"
-#~ msgstr "Katalog u¿ytkownika"
-
-#, fuzzy
-#~ msgid "gretl start-up directory"
-#~ msgstr "Folder bazy danych gretla"
-
-#, fuzzy
-#~ msgid "this directory:"
-#~ msgstr "Folder bazy danych RATS"
-
-#~ msgid "Try again later"
-#~ msgstr "Spróbuj jeszcze raz pó¼niej"
-
-#~ msgid "Couldn't create user directory %s\n"
-#~ msgstr "Nie mo¿liwe utworzenie katalogu u¿ytkownika %s\n"
-
-#~ msgid "Created user directory %s\n"
-#~ msgstr "Utworzono katalog u¿ytkownika %s\n"
-
-#~ msgid ""
-#~ "An econometrics program for the gnome desktop issued under the GNU "
-#~ "General Public License.  http://gretl.sourceforge.net/"
-#~ msgstr ""
-#~ "An econometrics program for the gnome desktop issued under the GNU "
-#~ "General Public License.  http://gretl.sourceforge.net/, http://www.kufel."
-#~ "torun.pl/"
-
-#~ msgid ""
-#~ "Cannot find the license agreement file COPYING. Please make sure it's in %"
-#~ "s"
-#~ msgstr ""
-#~ "Nie znaleziono pliku licencji COPYING. Sprawd¼ czy znajduje siê w %s"
-
-#~ msgid "About"
-#~ msgstr "O programie"
-
-#~ msgid "License Agreement"
-#~ msgstr "Licencja"
-
-#~ msgid "gretl: database files"
-#~ msgstr "gretl: pliki baz danych"
-
-#~ msgid "No function files found"
-#~ msgstr "Nie znaleziono pliku z funkcjami"
-
-#~ msgid "/Variable/Frequency plot/_Simple"
-#~ msgstr "/Zmienna/Wykres czêsto¶ci/_prosty"
-
-#~ msgid "/Variable/Frequency plot/Against _Normal"
-#~ msgstr "/Zmienna/Wykres czêsto¶ci/w stosunku do _Normalnego"
-
-#~ msgid "/Variable/Frequency plot/Against _Gamma"
-#~ msgstr "/Zmienna/Wykres czêsto¶ci/w stosunku do _Gamma"
-
-#~ msgid "To paste, use Edit/Paste special.../Enhanced metafile"
-#~ msgstr ""
-#~ "Wklej wykres wykorzystuj±c polecenie: Edycja/Wklej specjalnie/Rysunek "
-#~ "(EMF)"
-
-#~ msgid "gretl: ARMA"
-#~ msgstr "gretl: model ARMA"
-
-#~ msgid "Please use the Close button to exit\n"
-#~ msgstr "Proszê wykorzystaæ przycisk Zamknij do wyj¶cia\n"
-
-#~ msgid "Expert mode (no warnings)"
-#~ msgstr "Tryb ekspercki (bez ostrze¿eñ)"
-
-#~ msgid "Use gretl user directory as default"
-#~ msgstr "Wykorzystaj folder user gretla jako domy¶lny"
-
-#~ msgid "File Open/Save"
-#~ msgstr "Plik Otwórz/Zapisz"
-
-#~ msgid ""
-#~ "You seem to be using gretl for the first time.\n"
-#~ "Please enter a directory for gretl user files."
-#~ msgstr ""
-#~ "Prawdopodobnie pierwszy raz wykorzystujesz gretla.\n"
-#~ "Proszê okre¶liæ domy¶lny folder plików u¿ytkownika w gretlu."
-
-#~ msgid "gretl website"
-#~ msgstr "gretl.sourceforge.net"
