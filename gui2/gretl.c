@@ -754,7 +754,6 @@ int main (int argc, char *argv[])
 #endif  
 
 #ifdef G_OS_WIN32
-    putenv("PANGO_WIN32_NO_UNISCRIBE=a");
 # if GTK_MINOR_VERSION < 6
     putenv("G_FILENAME_ENCODING=@locale");
 # endif

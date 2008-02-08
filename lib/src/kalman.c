@@ -22,11 +22,6 @@
 
 #define KDEBUG 0
 
-enum {
-    KALMAN_ARMA_LL = 1 << 0, /* is the filter being used for ARMA estimation ? */
-    KALMAN_AVG_LL  = 1 << 1  /* store total likelihood or average? */
-};
-
 struct kalman_ {
     int flags;  /* for recording any options */
 
@@ -659,26 +654,17 @@ void kalman_set_nonshift (kalman *K, int n)
     K->nonshift = n;
 }
 
-void kalman_use_ARMA_ll (kalman *K, int total)
+void kalman_set_options (kalman *K, int opts)
 {
-    K->flags |= KALMAN_ARMA_LL;
-    if (!total) {
-	K->flags |= KALMAN_AVG_LL;
-    }
+    K->flags |= opts;
 }
 
-/* Below: added by Jack, February 2008 to make BFGS work better in a
-   range of cases.  Seems to help with vary large samples.
-*/
-
-int is_kalman_ll_average (kalman *K)
+int kalman_get_options (kalman *K)
 {
-    if (K->T > 3072) {
-	return (K->flags & KALMAN_AVG_LL);
-    } else {
-	return 0;
-    }
+    return K->flags;
 }
+
+#define kalman_ll_average(K) (K->flags & KALMAN_AVG_LL)
 
 /* Read from the appropriate row of x (T x k) and multiply by A' to
    form A'x_t.  Note this complication: if there's a constant as well
@@ -900,7 +886,7 @@ int kalman_forecast (kalman *K)
     } 
 
     if (arma_ll(K) && !na(K->loglik)) {
-	if (is_kalman_ll_average(K)) {
+	if (kalman_ll_average(K)) {
 	    K->loglik = -0.5 * 
 		(LN_2_PI + 1 + log(K->SSRw / K->T) + K->sumVt / K->T);
 	} else {

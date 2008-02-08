@@ -20,6 +20,11 @@
 #ifndef KALMAN_H_
 #define KALMAN_H_
 
+enum {
+    KALMAN_ARMA_LL = 1 << 0, /* is the filter being used for ARMA estimation ? */
+    KALMAN_AVG_LL  = 1 << 1  /* store total likelihood or average? */
+};
+
 typedef struct kalman_ kalman;
 
 kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
@@ -45,8 +50,8 @@ int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);
 
 void kalman_set_nonshift (kalman *K, int n);
 
-void kalman_use_ARMA_ll (kalman *K, int total);
+void kalman_set_options (kalman *K, int opts);
 
-int is_kalman_ll_average (kalman *K);
+int kalman_get_options (kalman *K);
 
 #endif /* KALMAN_H_ */

@@ -1024,7 +1024,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 			       int k, int T)
 {
     double s2;
-    int i;
+    int kopt, i;
 
     pmod->t1 = ainfo->t1;
     pmod->t2 = ainfo->t2;
@@ -1043,10 +1043,11 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     pmod->sigma = sqrt(s2);
 
     pmod->lnL = kalman_get_loglik(K);
+    kopt = kalman_get_options(K);
 
     /* rescale stuff if we are using average loglikelihood */
 
-    if (is_kalman_ll_average(K)) {
+    if (kopt & KALMAN_AVG_LL) {
 	pmod->lnL *= T;
 	if (vcv != NULL) {
 	    int k2 = k * (k + 1) / 2;
@@ -1388,7 +1389,11 @@ static int kalman_arma (const int *alist, double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 
-	kalman_use_ARMA_ll(K, 0);
+	if (T > 3072 || getenv("KALMAN_AVG_LL") != NULL) {
+	    kalman_set_options(K, KALMAN_ARMA_LL | KALMAN_AVG_LL);
+	} else {
+	    kalman_set_options(K, KALMAN_ARMA_LL);
+	}
 
 	err = BFGS_max(b, ainfo->nc, maxit, reltol, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
