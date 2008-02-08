@@ -291,7 +291,8 @@ static NODE *base (parser *p, NODE *up)
 	t = newdbl(p->xval);
 	lex(p);
 	break;
-    case UVAR: 
+    case USCLR: 
+    case USERIES:
     case UMAT:
     case UOBJ:
     case CON: 
@@ -710,7 +711,7 @@ static NODE *powterm (parser *p)
     } else if (p->sym == LAG || p->sym == OBS) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, UVAR); 
+	    t->v.b2.l = newref(p, USERIES); 
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}

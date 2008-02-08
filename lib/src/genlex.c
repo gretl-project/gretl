@@ -652,7 +652,11 @@ static void look_up_word (const char *s, parser *p)
 	    } else {
 		p->idnum = varindex(p->dinfo, s);
 		if (p->idnum < p->dinfo->v) {
-		    p->sym = UVAR;
+		    if (var_is_scalar(p->dinfo, p->idnum)) {
+			p->sym = USCLR;
+		    } else {
+			p->sym = USERIES;
+		    }
 		} else if (get_matrix_by_name(s)) {
 		    p->sym = UMAT;
 		    p->idstr = gretl_strdup(s);
@@ -695,7 +699,7 @@ static void word_check_next_char (const char *s, parser *p)
 
     if (p->ch == '(') {
 	/* series (lag) or function */
-	if (p->sym == UVAR && var_is_series(p->dinfo, p->idnum)) {
+	if (p->sym == USERIES) {
 	    if (p->idnum == p->lh.v) {
 		p->flags |= P_AUTOREG;
 	    }
@@ -714,7 +718,7 @@ static void word_check_next_char (const char *s, parser *p)
 	} else if (p->sym == MVAR && could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
-	} else if (p->sym == UVAR && var_is_series(p->dinfo, p->idnum)) {
+	} else if (p->sym == USERIES) {
 	    /* observation from series */
 	    p->sym = OBS;
 	} else {
@@ -1192,7 +1196,7 @@ const char *getsymb (int t, const parser *p)
     if (p != NULL) {
 	if (t == NUM) {
 	    return fromdbl(p->xval); 
-	} else if (t == UVAR) {
+	} else if (t == USCLR || t == USERIES) {
 	    return p->dinfo->varname[p->idnum];
 	} else if (t == UMAT || t == UOBJ ||
 		   t == LOOPIDX) {

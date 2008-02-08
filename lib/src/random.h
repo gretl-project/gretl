@@ -42,7 +42,7 @@ int gretl_rand_F (double *a, int t1, int t2, int v1, int v2);
 
 int gretl_rand_binomial (double *a, int t1, int t2, int n, double p);
 
-void gretl_rand_poisson (double *a, int t1, int t2, double *m,
+void gretl_rand_poisson (double *a, int t1, int t2, const double *m,
 			 int vec);
 
 int gretl_rand_gamma (double *a, int t1, int t2,  

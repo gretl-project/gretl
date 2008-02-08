@@ -216,9 +216,10 @@ enum {
 	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
-              UVAR,	  /* user variable (scalar or series) */
-              UMAT,	  /* user-defined matrix */
-  /* 190 */   UOBJ,	  /* user-defined object (e.g. model) */
+              USCLR,	  /* user variable, scalar */
+              USERIES,	  /* user variable, series */
+  /* 190 */   UMAT,	  /* user-defined matrix */
+	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
               IVEC,	  /* vector of integers, evaluated */
@@ -227,8 +228,8 @@ enum {
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
               DMSL,	  /* "dollar" matrix plus subspec */
-              DMSTR,	  /* "dollar" matrix plus old-style string subspec */
-  /* 200 */   MSL2,	  /* unevaluated matrix subspec */
+  /* 200 */   DMSTR,	  /* "dollar" matrix plus old-style string subspec */
+	      MSL2,	  /* unevaluated matrix subspec */
               MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
@@ -237,8 +238,8 @@ enum {
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
               OVAR,	  /* object variable: variable "under" an object */
               LOOPIDX,	  /* loop index variable */
-              LIST,	  /* reference to named list */
-  /* 210 */   STR,	  /* string */
+  /* 210 */   LIST,	  /* reference to named list */
+	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,
 	      ABSENT,
@@ -247,8 +248,8 @@ enum {
               UFUN,	  /* user-defined function */
 	      INC,   
               DEC,
-	      QUERY,
-  /* 220 */   EOT,	    /* end of transmission */
+  /* 220 */   QUERY,
+	      EOT,	  /* end of transmission */
 	      UNK 
 };
 
@@ -347,7 +348,8 @@ union val {
 enum {
     AUX_NODE    = 1 << 0,
     TMP_NODE    = 1 << 1,
-    TRANSP_NODE = 1 << 2
+    TRANSP_NODE = 1 << 2,
+    UVEC_NODE   = 1 << 3
 };
 
 struct node {

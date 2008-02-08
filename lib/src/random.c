@@ -510,7 +510,7 @@ int gretl_rand_binomial (double *a, int t1, int t2, int n, double p)
 
 /* Poisson rv with mean m */
 
-static double genpois (double m)
+static double genpois (const double m)
 {
     double x;
 
@@ -545,7 +545,7 @@ static double genpois (double m)
  * of length greater than or equal to @t2 + 1.  
  */
 
-void gretl_rand_poisson (double *a, int t1, int t2, double *m,
+void gretl_rand_poisson (double *a, int t1, int t2, const double *m,
 			 int vec) 
 {
     int t;

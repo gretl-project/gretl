@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-04 07:56-0500\n"
-"PO-Revision-Date: 2008-02-07 21:00+0100\n"
+"PO-Revision-Date: 2008-02-08 19:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -441,7 +441,7 @@ msgstr ""
 #: lib/src/compare.c:1946
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
-msgstr "Maksymalne F(%d, %d) = %g wyst±pi³o dla obserwacji %s"
+msgstr "Maksymalne F(%d, %d) = %g dla obserwacji %s"
 
 #: lib/src/compare.c:1953
 #, c-format
