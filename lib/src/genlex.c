@@ -1127,6 +1127,10 @@ void lex (parser *p)
 		parser_ungetc(p);
 	    }
         default: 
+	    if (bare_data_type(p->sym)) {
+		p->sym = LCAT;
+		return;
+	    }
 	    if (isdigit(p->ch) || (p->ch == '.' && isdigit(*p->point))) {
 		p->xval = getdbl(p);
 		p->sym = NUM;
@@ -1280,6 +1284,7 @@ const char *getsymb (int t, const parser *p)
     case MCCAT: 
 	return "~";
     case MRCAT: 
+    case LCAT:
 	return "|";
     case COM: 
 	return ",";

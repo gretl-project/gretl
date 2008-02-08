@@ -98,6 +98,12 @@ const char *get_list_name_by_index (int idx);
 
 int *get_list_by_name (const char *name);
 
+int append_to_list_by_name (const char *targ, const int *add);
+
+int subtract_from_list_by_name (const char *targ, const int *sub);
+
+int replace_list_by_name (const char *targ, const int *new);
+
 int remember_list (const int *list, const char *name, PRN *prn);
 
 int copy_named_list_as (const char *orig, const char *new);

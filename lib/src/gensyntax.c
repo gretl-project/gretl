@@ -671,8 +671,8 @@ static NODE *powterm (parser *p)
     }
 
 #if SDEBUG
-    fprintf(stderr, "powterm: p->sym = %d, p->ch = %c\n",
-	    p->sym, p->ch? p->ch : '0');
+    fprintf(stderr, "powterm: p->sym = %d, p->ch = '%c' (%d)\n",
+	    p->sym, p->ch? p->ch : '0', p->ch);
 #endif
 
     if (p->sym == RUNIFORM || p->sym == RNORMAL) {
@@ -897,7 +897,8 @@ static NODE *expr4 (parser *p)
 
     while (!p->err && (p->sym == B_ADD || p->sym == B_SUB || 
 		       p->sym == DOTADD || p->sym == DOTSUB ||
-		       p->sym == MCCAT || p->sym == MRCAT)) {
+		       p->sym == MCCAT || p->sym == MRCAT ||
+		       p->sym == LCAT)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

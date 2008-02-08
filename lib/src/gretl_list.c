@@ -35,8 +35,16 @@ struct saved_list_ {
     int level;
 };
 
+enum {
+    LIST_OMIT_TIGHT,
+    LIST_OMIT_SLOPPY
+};
+
 static saved_list **list_stack;
 static int n_lists;
+
+static int *real_gretl_list_omit (const int *orig, const int *omit, 
+				  int minpos, int mode, int *err);
 
 static saved_list *saved_list_new (const int *list, const char *name)
 {
@@ -156,6 +164,105 @@ int *get_list_by_name (const char *name)
     }
 
     return ret;
+}
+
+/**
+ * append_to_list_by_name:
+ * @targ: the name of the target list.
+ * @add: list to add.
+ *
+ * If @targ is the name of a saved list, append the list
+ * @add to it.
+ *
+ * Returns: 0 on success, non-zero code on failure.
+ */
+
+int append_to_list_by_name (const char *targ, const int *add)
+{
+    saved_list *sl = get_saved_list_by_name(targ);
+    int err = 0;
+
+    if (sl == NULL) {
+	err = E_UNKVAR;
+    } else {
+	int *tmp = gretl_list_copy(sl->list);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_list_add_list(&tmp, add);
+	    if (!err) {
+		free(sl->list);
+		sl->list = tmp;
+	    }
+	}
+    } 
+
+    return err;
+}
+
+/**
+ * subtract_from_list_by_name:
+ * @targ: the name of the target list.
+ * @sub: sub-list to remove.
+ *
+ * If @targ is the name of a saved list, remove from @targ
+ * any elements of @sub that it contains.
+ *
+ * Returns: 0 on success, non-zero code on failure.
+ */
+
+int subtract_from_list_by_name (const char *targ, const int *sub)
+{
+    saved_list *sl = get_saved_list_by_name(targ);
+    int err = 0;
+
+    if (sl == NULL) {
+	err = E_UNKVAR;
+    } else {
+	int *tmp = real_gretl_list_omit(sl->list, sub, 1, 
+					LIST_OMIT_SLOPPY,
+					&err);
+
+	if (!err) {
+	    free(sl->list);
+	    sl->list = tmp;
+	}
+    } 
+
+    return err;
+}
+
+/**
+ * replace_list_by_name:
+ * @targ: the name of the target list.
+ * @new: replacement list
+ *
+ * If @targ is the name of a saved list, replace the
+ * list of that name with @new.
+ *
+ * Returns: 0 on success, non-zero code on failure.
+ */
+
+int replace_list_by_name (const char *targ, const int *new)
+{
+    saved_list *sl = get_saved_list_by_name(targ);
+    int err = 0;
+
+    if (sl == NULL) {
+	err = E_UNKVAR;
+    } else {
+	int *tmp = gretl_list_copy(new);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    free(sl->list);
+	    sl->list = tmp;
+	}	    
+    }
+
+    return err;
 }
 
 static int real_remember_list (const int *list, const char *name, 
@@ -1211,26 +1318,12 @@ static int list_count (const int *list)
     return k;
 }
 
-/**
- * gretl_list_omit:
- * @orig: an array of integers, the first element of which holds
- * a count of the number of elements following.
- * @omit: list of variables to drop.
- * @minpos: minimum position to check.  This should be 2 for a regular
- * regression list, to skip the dependent var in position 1; but in
- * other contexts it may be 1 to start from the first element of @orig.
- * @err: pointer to receive error code.
- *
- * Creates a list containing the elements of @orig that are not
- * present in @omit.
- *
- * Returns: new list on success, %NULL on error.
- */
-
-int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
+static int *real_gretl_list_omit (const int *orig, const int *omit, 
+				  int minpos, int mode, int *err)
 {
     const int nomit = omit[0];
     const int norig = list_count(orig);
+    int real_nomit = nomit;
     int *smal = NULL;
     int i, j, k;
 
@@ -1241,10 +1334,14 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 	int pos = in_gretl_list(orig, omit[i]);
 
 	if (pos < minpos) {
-	    sprintf(gretl_errmsg, _("Variable %d was not in the original list"),
-		    omit[i]);
-	    *err = 1;
-	    return NULL;
+	    if (mode == LIST_OMIT_TIGHT) {
+		sprintf(gretl_errmsg, _("Variable %d was not in the original list"),
+			omit[i]);
+		*err = 1;
+		return NULL;
+	    } else {
+		real_nomit--;
+	    }
 	}
     }
 
@@ -1256,7 +1353,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 	}
     }
 
-    if (nomit == norig) {
+    if (real_nomit == norig) {
 	/* omitting all */
 	smal = gretl_null_list();
 	if (smal == NULL) {
@@ -1265,7 +1362,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 	return smal;
     }
 
-    smal = gretl_list_new(norig - nomit);
+    smal = gretl_list_new(norig - real_nomit);
     if (smal == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1292,6 +1389,27 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
     }
 
     return smal;
+}
+
+/**
+ * gretl_list_omit:
+ * @orig: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @omit: list of variables to drop.
+ * @minpos: minimum position to check.  This should be 2 for a regular
+ * regression list, to skip the dependent var in position 1; but in
+ * other contexts it may be 1 to start from the first element of @orig.
+ * @err: pointer to receive error code.
+ *
+ * Creates a list containing the elements of @orig that are not
+ * present in @omit.
+ *
+ * Returns: new list on success, %NULL on error.
+ */
+
+int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
+{
+    return real_gretl_list_omit(orig, omit, minpos, LIST_OMIT_TIGHT, err);
 }
 
 /**
@@ -1407,7 +1525,7 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist,
  * Adds @src onto the end of @targ.  The length of @targ becomes the
  * sum of the lengths of the two original lists.
  *
- * Returns: 0 on success, %E_ALLOC on failure.
+ * Returns: 0 on success, non-zero on failure.
  */
 
 int gretl_list_add_list (int **targ, const int *src)
@@ -1417,7 +1535,17 @@ int gretl_list_add_list (int **targ, const int *src)
     int n2 = src[0];
     int i, err = 0;
 
+    if (targ == NULL || *targ == NULL) {
+	return E_DATA;
+    }
+
+    if (src == NULL || *src == 0) {
+	/* no-op */
+	return 0;
+    }
+
     big = realloc(*targ, (n1 + n2 + 1) * sizeof *big);
+
     if (big == NULL) {
 	err = E_ALLOC;
     } else {

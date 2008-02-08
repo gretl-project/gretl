@@ -40,6 +40,9 @@
 		       f == LDET || f == DIAG || f == TRANSP || \
 		       f == TVEC || f == VECH || f == UNVECH)
 
+#define ok_lcat_type(t) (t == LIST || t == UVAR || t == NUM || \
+			 t == LVEC)
+
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
@@ -107,7 +110,7 @@ static void free_tree (NODE *t, const char *msg)
     if (is_tmp_node(t)) {
 	if (t->t == VEC) {
 	    free(t->v.xvec);
-	} else if (t->t == IVEC) {
+	} else if (t->t == IVEC || t->t == LVEC) {
 	    free(t->v.ivec);
 	} else if (t->t == MAT) {
 	    gretl_matrix_free(t->v.m);
@@ -215,7 +218,7 @@ static NODE *newvec (int n, int tmp)
 
 /* new node to hold array of ints */
 
-static NODE *newivec (int n)
+static NODE *newivec (int n, int type)
 {  
     NODE *b = malloc(sizeof *b);
 
@@ -224,7 +227,7 @@ static NODE *newivec (int n)
 #endif
 
     if (b != NULL) {
-	b->t = IVEC;
+	b->t = type;
 	b->flags = TMP_NODE;
 	if (n > 0) {
 	    b->v.ivec = malloc(n * sizeof(int));
@@ -344,7 +347,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	} else if (t == VEC) {
 	    ret = newvec(n, tmp);
 	} else if (t == IVEC) {
-	    ret = newivec(n);
+	    ret = newivec(n, IVEC);
+	} else if (t == LVEC) {
+	    ret = newivec(n, LVEC);
 	} else if (t == MAT) {
 	    ret = newmat(tmp);
 	} else if (t == MSPEC) {
@@ -396,6 +401,16 @@ static NODE *aux_ivec_node (parser *p, int n)
 	return NULL;
     } else {
 	return get_aux_node(p, IVEC, n, 1);
+    }
+}
+
+static NODE *aux_lvec_node (parser *p, int n)
+{
+    if (p->dinfo->n == 0) {
+	gretl_errmsg_set(_("No dataset is in place"));
+	return NULL;
+    } else {
+	return get_aux_node(p, LVEC, n, 1);
     }
 }
 
@@ -786,6 +801,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		bmat = s->v.m;
 	    } else {
 		e = eval(s, p);
+		if (p->err) {
+		    goto disterr;
+		}
 		if (e->t == NUM) {
 		    parm[i] = e->v.xval;
 		    free_tree(s, "Pdist");
@@ -2142,6 +2160,59 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static int *node_get_list (NODE *n, parser *p)
+{
+    int *list = NULL;
+
+    if (n->t == LVEC || n->t == LIST) {
+	int *src = (n->t == LVEC)? n->v.ivec : get_list_by_name(n->v.str);
+
+	if (src == NULL) {
+	    p->err = E_DATA;
+	} else {
+	    list = gretl_list_copy(src);
+	}
+    } else if (n->t == UVAR || n->t == NUM) {
+	int v = (n->t == UVAR)? n->v.idnum : n->v.xval;
+
+	if (v < 0 || v >= p->dinfo->v) {
+	    p->err = E_UNKVAR;
+	} else if (var_is_scalar(p->dinfo, v)) {
+	    p->err = E_TYPES;
+	} else {
+	    list = gretl_list_new(1);
+	    if (list == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		list[1] = v;
+	    }
+	}
+    }
+
+    return list;
+}
+
+static NODE *eval_lcat (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_lvec_node(p, 0);
+
+    if (ret != NULL && starting(p)) {
+	int *llist, *rlist = NULL;
+
+	llist = node_get_list(l, p);
+	if (llist != NULL) {
+	    rlist = node_get_list(r, p);
+	}
+	if (rlist != NULL) {
+	    p->err = gretl_list_add_list(&llist, rlist);
+	}
+	ret->v.ivec = llist;
+	free(rlist);
+    }
+
+    return ret;
+}
+
 /* check for missing obs in a list of variables */
 
 static NODE *list_ok_func (NODE *n, parser *p)
@@ -3491,6 +3562,9 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 	    nn->v.bn.n[i] = n;
 	} else {
 	    n = eval(n, p);
+	    if (p->err) {
+		break;
+	    }
 	    if (ok_matdef_sym(n->t)) {
 		if (nn == t) {
 		    free_tree(t->v.bn.n[i], "MatDef");
@@ -4090,6 +4164,7 @@ static NODE *eval (NODE *t, parser *p)
     case ABSENT:
     case U_ADDR:
     case LIST:
+    case LVEC:
 	/* terminal symbol: pass on through */
 	ret = t;
 	break;
@@ -4528,7 +4603,12 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case UVAR: 
 	/* user-defined variable */
-	ret = uvar_node(t, p);
+	if (p->lh.t == LIST) {
+	    /* treat as terminal */
+	    ret = t;
+	} else {
+	    ret = uvar_node(t, p);
+	}
 	break;
     case UMAT:
 	/* user-defined matrix */
@@ -4589,6 +4669,16 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case QUERY:
 	ret = eval_query(t, p);
+	break;
+    case LCAT:
+	/* list concatenation */
+	if (p->lh.t != LIST) {
+	    p->err = E_PARSE;
+	} else if (ok_lcat_type(l->t) && ok_lcat_type(r->t)) {
+	    ret = eval_lcat(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
 	break;
     default: 
 	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
@@ -4794,7 +4884,9 @@ static void printnode (const NODE *t, const parser *p)
 	printnode(t->v.b2.r, p);
 	pputc(p->prn, ')');
     } else if (t->t == LIST) {
-	pputs(p->prn, "LIST (lost!)");
+	pputs(p->prn, "LIST");
+    } else if (t->t == LVEC) {
+	pputs(p->prn, "LVEC");
     } else if (t->t != EMPTY) {
 	pputs(p->prn, "weird tree - ");
 	printsymb(t->t, p);
@@ -4809,6 +4901,15 @@ static int ok_matrix_op (int op)
     if (op == B_ASN || op == B_ADD || op == B_SUB ||
 	op == B_MUL || op == B_DIV || 
 	op == INC || op == DEC) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+static int ok_list_op (int op)
+{
+    if (op == B_ASN || op == B_ADD || op == B_SUB) {
 	return 1;
     } else {
 	return 0;
@@ -5180,6 +5281,10 @@ static void pre_process (parser *p, int flags)
 	if (p->lh.m0 != NULL) {
 	    p->lh.t = MAT;
 	    newvar = 0;
+	} else if (get_list_by_name(test)) {
+	    p->lh.islist = 1;
+	    p->lh.t = LIST;
+	    newvar = 0;
 	}
     } else if (var_is_scalar(p->dinfo, p->lh.v)) {
 	p->lh.t = NUM;
@@ -5255,10 +5360,17 @@ static void pre_process (parser *p, int flags)
 	return;
     }
 
-    /* for matrices, we don't accept the full range of
+    /* matrices: we accept only a limited range of
        modified assignment operators */
     if (p->lh.t == MAT && !ok_matrix_op(p->op)) {
-	pprintf(p->prn, "%s: not implemented for matrices\n", opstr);
+	sprintf(gretl_errmsg, _("'%s' : not implemented for matrices"), opstr);
+	p->err = E_PARSE;
+	return;
+    }
+
+    /* lists: same story as matrices */
+    if (p->lh.t == LIST && !ok_list_op(p->op)) {
+	sprintf(gretl_errmsg, _("'%s' : not implemented for lists"), opstr);
 	p->err = E_PARSE;
 	return;
     }	
@@ -5608,6 +5720,61 @@ static void matrix_edit (parser *p)
     }
 }
 
+static int edit_list (parser *p)
+{
+    int tmplist[2] = {1,0};
+    const int *list = NULL;
+    int v = -1;
+
+    if (p->lh.islist == 0) {
+	/* creating a list from scratch */
+	if (p->ret->t == LIST) {
+	    if (strcmp(p->lh.name, p->ret->v.str)) {
+		rename_saved_list(p->ret->v.str, p->lh.name);
+	    }
+	    return 0;
+	} 
+    }
+
+    if (p->ret->t == LIST) {
+	list = get_list_by_name(p->ret->v.str);
+    } else if (p->ret->t == LVEC) {
+	list = p->ret->v.ivec;
+    } else if (p->ret->t == UVAR) {
+	v = p->ret->v.idnum;
+    } else if (p->ret->t == NUM) {
+	v = p->ret->v.xval;
+    }
+
+    if (list == NULL) {
+	/* v should be ID number of series */
+	if (v < 0 || v >= p->dinfo->v) {
+	    p->err = E_UNKVAR;
+	} else if (var_is_scalar(p->dinfo, v)) {
+	    p->err = E_TYPES;
+	} else {
+	    list = tmplist;
+	    tmplist[1] = v;
+	}
+    }
+
+    if (!p->err) {
+	if (p->lh.islist == 0) {
+	    remember_list(list, p->lh.name, NULL);
+	} else if (p->op == B_ASN) {
+	    p->err = replace_list_by_name(p->lh.name, list);
+	} else if (p->op == B_ADD) {
+	    p->err = append_to_list_by_name(p->lh.name, list);
+	} else if (p->op == B_SUB) {
+	    p->err = subtract_from_list_by_name(p->lh.name, list);
+	} else {
+	    p->err = E_TYPES;
+	}
+    }
+
+    return p->err;
+}
+
 static int matrix_missvals (const gretl_matrix *m)
 {
     if (m == NULL) {
@@ -5629,7 +5796,7 @@ static int matrix_missvals (const gretl_matrix *m)
 			  n->v.m->cols == 1)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
-			   t == LIST)
+			   t == LIST || t == UVAR || t == LVEC)
 
 static int gen_check_return_type (parser *p)
 {
@@ -5670,9 +5837,9 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_MISSDATA;
 	}
     } else if (p->targ == LIST) {
-	if (r->t != LIST) {
+	if (!ok_lcat_type(r->t)) {
 	    p->err = E_TYPES;
-	}
+	} 
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
@@ -5818,9 +5985,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    matrix_edit(p);
 	}
     } else if (p->targ == LIST) {
-	if (strcmp(p->lh.name, r->v.str)) {
-	    rename_saved_list(r->v.str, p->lh.name);
-	}
+	edit_list(p);
     }
 
 #if EDEBUG /* print results */
@@ -5900,6 +6065,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.m1 = NULL;
     p->lh.substr = NULL;
     p->lh.mspec = NULL;
+    p->lh.islist = 0;
 
     p->obs = 0;
     p->sym = 0;
