@@ -538,8 +538,9 @@ double *generate_series (const char *s, double ***pZ,
 		/* steal the generated series */
 		x = p.ret->v.xvec;
 		p.ret->v.xvec = NULL;
+	    } else if (p.ret->flags & UVEC_NODE) {
+		x = copyvec((*pZ)[p.ret->v.idnum], p.dinfo->n);
 	    } else {
-		/* copy it */
 		x = copyvec(p.ret->v.xvec, p.dinfo->n);
 	    }
 	} else {
