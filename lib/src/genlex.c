@@ -1131,7 +1131,7 @@ void lex (parser *p)
 		parser_ungetc(p);
 	    }
         default: 
-	    if (bare_data_type(p->sym)) {
+	    if (bare_data_type(p->sym) || closing_sym(p->sym)) {
 		p->sym = LCAT;
 		return;
 	    }

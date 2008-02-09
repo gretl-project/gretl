@@ -302,6 +302,8 @@ enum {
 
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
 
+#define closing_sym(s) (s == RPR || s == RBR || s == RCB)
+
 
 /* functions where the right-hand "argument" is actually a return
    location */

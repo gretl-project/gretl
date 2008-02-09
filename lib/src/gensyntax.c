@@ -74,7 +74,7 @@ static NODE *newref (parser *p, int t)
 	} else {
 	    n->v.idnum = p->idnum;
 	}
-	n->flags = 0;
+	n->flags = (t == USERIES)? UVEC_NODE : 0;
     }
 
     return n;

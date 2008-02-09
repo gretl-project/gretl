@@ -41,7 +41,11 @@
 		       f == TVEC || f == VECH || f == UNVECH)
 
 #define ok_lcat_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
+			 n->t == USERIES || \
 			 (n->t == VEC && (n->flags & UVEC_NODE)))
+
+#define series_type(t) (t == VEC || t == USERIES)
+#define uvar_type(t) (t == USCLR || t == USERIES)
 
 #define getvec(n,p) ((n->flags & UVEC_NODE)? \
 		     (*p->Z)[n->v.idnum] : n->v.xvec)
@@ -2195,10 +2199,11 @@ static int *node_get_list (NODE *n, parser *p)
 	} else {
 	    list = gretl_list_copy(src);
 	}
-    } else if (n->t == VEC || n->t == NUM) {
-	int v = (n->t == USERIES)? n->v.idnum : n->v.xval;
+    } else if (n->t == USERIES || n->t == VEC || n->t == NUM) {
+	int v = (series_type(n->t))? n->v.idnum : n->v.xval;
 
 	if (v < 0 || v >= p->dinfo->v) {
+	    sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), v);
 	    p->err = E_UNKVAR;
 	} else {
 	    list = gretl_list_new(1);
@@ -2988,6 +2993,7 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     int r = nsep + 1;
     int c = (seppos > 0)? seppos : m;
     int nelem = m - nsep;
+    double x;
     int i, j, k;
 
     /* check that all rows are the same length */
@@ -3029,7 +3035,12 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 		if (n->t == EMPTY) {
 		    n = t->v.bn.n[k++];
 		} 
-		gretl_matrix_set(M, i, j, n->v.xval);
+		if (n->t == USCLR) {
+		    x = (*p->Z)[n->v.idnum][0];
+		} else {
+		    x = n->v.xval;
+		}
+		gretl_matrix_set(M, i, j, x);
 	    }
 	}
     }
@@ -3070,14 +3081,18 @@ static int *full_series_list (const DATAINFO *pdinfo, int *err)
 
 #define MATRIX_SKIP_MISSING 1
 
-static gretl_matrix *matrix_from_list (NODE *t, parser *p)
+static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 {
     gretl_matrix *M;
     int *list = NULL;
     int freelist = 0;
 
-    if (t != NULL) {
-	list = get_list_by_name(t->v.str);
+    if (n != NULL) {
+	if (n->t == LIST) {
+	    list = get_list_by_name(n->v.str);
+	} else if (n->t == LVEC) {
+	    list = n->v.ivec;
+	}
 	if (list == NULL) {
 	    p->err = E_DATA;
 	}
@@ -3168,7 +3183,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     for (i=0; i<m && !p->err; i++) {
 	int type = r->v.bn.n[i]->t;
 
-	if (type == USCLR || type == USERIES) {
+	if (uvar_type(type)) {
 	    /* let dataset variables through "as is" */
 	    n = r->v.bn.n[i];
 	} else {
@@ -3222,7 +3237,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.str);
 	} else if (n->t == STR) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
-	} else if (n->t == USCLR || n->t == USERIES) {
+	} else if (uvar_type(n->t)) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->v.idnum);
 	} 
 
@@ -3474,7 +3489,9 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 		return NULL;
 	    } 
 	    k += list[0];
-	} else if (n->t == VEC) {
+	} else if (n->t == LVEC) {
+	    k += n->v.ivec[0];
+	} else if (series_type(n->t)) {
 	    k++;
 	}
     }
@@ -3492,7 +3509,12 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	    for (j=1; j<=list[0]; j++) {
 		X[s++] = (*p->Z)[list[j]];
 	    }
-	} else if (n->t == VEC) {
+	} else if (n->t == LVEC) {
+	    list = n->v.ivec;
+	    for (j=1; j<=list[0]; j++) {
+		X[s++] = (*p->Z)[list[j]];
+	    }	    
+	} else if (series_type(n->t)) {
 	    X[s++] = getvec(n, p);
 	}
     }
@@ -3555,7 +3577,8 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 }
 
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
-                          s == DUM || s == LIST)
+                          s == DUM || s == LIST || s == USCLR || \
+			  s == USERIES || s == LVEC)
 
 /* composing a matrix from scalars, series or lists */
 
@@ -3609,13 +3632,13 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 		break;
 	    }
 	}
-	if (n->t == NUM) {
+	if (n->t == NUM || n->t == USCLR) {
 	    nnum++;
-	} else if (n->t == VEC) {
+	} else if (series_type(n->t)) {
 	    nvec++;
 	} else if (n->t == DUM) {
 	    dum++;
-	} else if (n->t == LIST) {
+	} else if (n->t == LIST || n->t == LVEC) {
 	    nlist++;
 	} else if (n->t == EMPTY) {
 	    if (nsep == 0) {
@@ -4181,7 +4204,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l == NULL && p->err == 0) {
 	    p->err = 1;
 	}
-    }
+    } 
 
     if (p->err) {
 	goto bailout;
@@ -4702,9 +4725,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case LCAT:
 	/* list concatenation */
-	if (p->lh.t != LIST) {
-	    p->err = E_PARSE;
-	} else if (ok_lcat_node(l) && ok_lcat_node(r)) {
+	if (ok_lcat_node(l) && ok_lcat_node(r)) {
 	    ret = eval_lcat(l, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -4855,7 +4876,7 @@ static void printnode (const NODE *t, const parser *p)
 	}
     } else if (t->t == MAT) {
 	gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
-    } else if (t->t == USCLR || t->t == USERIES) {
+    } else if (uvar_type(t->t)) {
 	pprintf(p->prn, "%s", p->dinfo->varname[t->v.idnum]);
     } else if (t->t == UMAT || t->t == UOBJ) {
 	pprintf(p->prn, "%s", t->v.str);
