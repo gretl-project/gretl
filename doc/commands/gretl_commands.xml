@@ -7031,7 +7031,9 @@
 	  <para><lit>loop_maxiter</lit>: one positive integer value.
 	  Sets the maximum number of iterations that a
 	  <lit>while</lit> loop is allowed before halting (see <cmdref
-	  targ="loop"/>).
+	  targ="loop"/>). Note that this setting only affects the
+	  <lit>while</lit> variant, as its purpose is to forcibly
+	  break potentially infinite loops.
 	  </para>
 	</li>
 	<li>
