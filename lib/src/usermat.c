@@ -540,7 +540,7 @@ static int *mspec_to_list (int type, union msel *sel, int n,
 
     for (i=1; i<=slice[0] && !*err; i++) {
 	if (slice[i] < 1 || slice[i] > n) {
-	    fprintf(stderr, "index value %d is out of bounds\n", 
+	    sprintf(gretl_errmsg, _("Index value %d is out of bounds"), 
 		    slice[i]);
 	    *err = 1;
 	}
