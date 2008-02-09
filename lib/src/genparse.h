@@ -23,7 +23,7 @@
 #include "usermat.h"
 #include "gretl_func.h"
 
-#define GENDEBUG 8
+#define GENDEBUG 0
 
 /* this may be a good idea, but perhaps risky? */
 #define PRESERVE_AUX_NODES 0
