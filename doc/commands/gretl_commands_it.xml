@@ -519,6 +519,10 @@
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
         <option>
+         <flag>--hessian</flag>
+	 <effect>calcola la matrice di covarianza a partire dall'Hessiana</effect>
+        </option>
+        <option>
          <flag>--nc</flag>
          <effect>non include l'intercetta</effect>
         </option>
@@ -609,7 +613,8 @@
         possibile scrivere il suo nome nel campo.
       </para>
 
-      <para>Il funzionamento predefinito utilizza la funzionalità ARMA 
+      <para>
+        Il funzionamento predefinito utilizza la funzionalità ARMA 
         <quote>interna</quote> di gretl, che usa la stima di massima
         verosimiglianza esatta usando il filtro di Kalman; come opzione è
         possibile usare la stima di massima verosimiglianza condizionale.
@@ -618,15 +623,25 @@
         Per i dettagli su queste opzioni si veda la <guideref targ="arma-estimation"/>.
       </para>
 
-      <para>L'algoritmo interno di gretl per ARMA utilizza una procedura di
+      <para>
+        L'algoritmo interno di gretl per ARMA utilizza una procedura di
 	massima verosimiglianza condizionale, implementata attraverso la stima 
 	iterata	con minimi quadrati della regressione del prodotto esterno del
 	gradiente (OPG). Si veda la <guideref targ="jack-arma"/> per la logica della
 	procedura. I coefficienti AR (e quelli per gli eventuali regressori 
 	aggiuntivi) sono inizializzati usando una auto-regressione OLS, mentre
-	i coefficienti MA sono inizializzati a zero.</para>
+	i coefficienti MA sono inizializzati a zero.
+      </para>
 
-      <para>Il valore AIC mostrato nei modelli ARIMA è calcolato secondo la
+      <para context="cli">
+        Quando si usa il codice ARMA interno, le deviazioni standard sono stimate
+        col metodo del prodotto esterno del gradiente, ma se si usa l'opzione
+        <lit>--hessian</lit> viene usata l'inversa negativa dell'Hessiana (che
+        è approssimata numericamente).
+      </para>
+
+      <para>
+        Il valore AIC mostrato nei modelli ARIMA è calcolato secondo la
 	definizione usata in <program>X-12-ARIMA</program>, ossia
 	  <equation status="display" 
 	  tex="\[\mbox{AIC}=-2\ell+2k\]"
