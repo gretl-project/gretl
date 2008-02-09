@@ -417,6 +417,18 @@ static NODE *aux_lvec_node (parser *p, int n)
     }
 }
 
+static NODE *vec_pointer_node (NODE *t, parser *p)
+{
+    NODE *n = get_aux_node(p, VEC, 0, 0);
+
+    if (n != NULL) {
+	n->v.idnum = t->v.idnum;
+	n->flags |= UVEC_NODE;
+    }
+
+    return n;
+}
+
 static NODE *aux_matrix_node (parser *p)
 {
     return get_aux_node(p, MAT, 0, 1);
@@ -2937,9 +2949,7 @@ static NODE *uvar_node (NODE *t, parser *p)
 	    ret->v.xval = (*p->Z)[t->v.idnum][0];
 	}
     } else if (t->t == USERIES) {
-	ret = t;
-	t->t = VEC;
-	t->flags |= UVEC_NODE;
+	ret = vec_pointer_node(t, p);
     }
 
     return ret;
