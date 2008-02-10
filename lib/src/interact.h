@@ -62,8 +62,7 @@ typedef enum {
 
 #define HIDDEN_COMMAND(c) (c == ADDTO || \
                            c == FUNCERR || \
-                           c == OMITFROM || \
-                           c == REMEMBER)
+                           c == OMITFROM)
     
 /* functions follow */
 

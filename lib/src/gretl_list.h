@@ -124,4 +124,8 @@ int load_user_lists_file (const char *fname);
 
 int gretl_serialize_lists (const char *fname);
 
+void gretl_list_print (const char *lname, 
+		       const DATAINFO *pdinfo,
+		       PRN *prn);
+
 #endif /* GRETL_LIST_H */

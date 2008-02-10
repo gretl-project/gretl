@@ -1821,6 +1821,29 @@ char *trim_slash (char *s)
     return s;
 }
 
+/**
+ * gretl_string_ends_with:
+ * @s: string to examine.
+ * @test: string to test for.
+ *
+ * Returns: 1 if @s ends with @test, else 0.
+ */
+
+int gretl_string_ends_with (const char *s, const char *test)
+{
+    int nt = strlen(test);
+    int n = strlen(s);
+    int ret = 0;
+
+    if (n >= nt) {
+	const char *p = s + n - nt;
+
+	ret = !strcmp(p, test);
+    }
+
+    return ret;
+}
+
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
 {
     GPatternSpec *pspec;
@@ -1854,8 +1877,3 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
 
     return list;
 }
-
-    
-
-
-

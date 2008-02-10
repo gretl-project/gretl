@@ -113,7 +113,6 @@ typedef enum {
     PWE,
     QLRTEST,
     QUIT,
-    REMEMBER,
     RENAME,
     RESET,
     RESTRICT,

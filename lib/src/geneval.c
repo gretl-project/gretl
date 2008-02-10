@@ -40,12 +40,20 @@
 		       f == LDET || f == DIAG || f == TRANSP || \
 		       f == TVEC || f == VECH || f == UNVECH)
 
+#define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
+
+#define series_node(n) (n->t == VEC &&(n->flags & UVEC_NODE)) 
+
 #define ok_lcat_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
 			 n->t == USERIES || \
-			 (n->t == VEC && (n->flags & UVEC_NODE)))
+			 (n->t == VEC && (n->flags & UVEC_NODE)) || \
+			 (n->t == DUM && n->v.idnum == DUM_DATASET))
+
+#define null_node(n) (n->t == DUM && n->v.idnum == DUM_NULL)
 
 #define series_type(t) (t == VEC || t == USERIES)
 #define uvar_type(t) (t == USCLR || t == USERIES)
+#define list_type(t) (t == LIST || t == LVEC)
 
 #define getvec(n,p) ((n->flags & UVEC_NODE)? \
 		     (*p->Z)[n->v.idnum] : n->v.xvec)
@@ -411,13 +419,13 @@ static NODE *aux_ivec_node (parser *p, int n)
     }
 }
 
-static NODE *aux_lvec_node (parser *p, int n)
+static NODE *aux_lvec_node (parser *p)
 {
     if (p->dinfo->n == 0) {
 	gretl_errmsg_set(_("No dataset is in place"));
 	return NULL;
     } else {
-	return get_aux_node(p, LVEC, n, 1);
+	return get_aux_node(p, LVEC, 0, 1);
     }
 }
 
@@ -2186,6 +2194,114 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 
     return ret;
 }
+/* argument is series or list; value returned is list in either
+   case */
+
+static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (ret != NULL && starting(p)) {
+	NODE *ln = (f == LLAG)? r : l;
+	int *list = NULL;
+	int order;
+
+	if (ln->t == VEC) {
+	    list = gretl_list_new(1);
+	    list[1] = ln->v.idnum;
+	} else if (ln->t == LVEC) {
+	    list = gretl_list_copy(ln->v.ivec);
+	} else {
+	    list = gretl_list_copy(get_list_by_name(ln->v.str));
+	}
+
+	if (list == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    switch (f) {
+	    case LLAG:
+		order = l->v.xval;
+		p->err = list_laggenr(&list, order, p->Z, p->dinfo);
+		break;
+	    case DUMIFY:
+		p->err = list_dumgenr(&list, p->Z, p->dinfo, OPT_F);
+		break;
+	    default:
+		break;
+	    }
+
+	    ret->v.ivec = list;
+	}
+    }
+
+    return ret;
+}
+
+#define ok_list_func(f) (f == LOG || f == DIF || \
+			 f == LDIF || f == SDIF)
+
+/* functions that are "basically" for series, but which
+   can also be applied to lists */
+
+static NODE *apply_list_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (!ok_list_func(f)) {
+	p->err = E_TYPES;
+	return ret;
+    }
+
+    if (ret != NULL && starting(p)) {
+	int *src = (n->t == LVEC)? n->v.ivec : 
+	    get_list_by_name(n->v.str);
+	int *list = gretl_list_copy(src);
+	int t = 0;
+
+	if (list == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    switch (f) {
+	    case LOG:
+		p->err = list_loggenr(list, p->Z, p->dinfo);
+		break;
+	    case DIF:
+	    case LDIF:
+	    case SDIF:
+		if (f == DIF) t = DIFF;
+		else if (f == LDIF) t = LDIFF;
+		else if (f == SDIF) t = SDIFF;
+		p->err = list_diffgenr(list, t, p->Z, p->dinfo);
+		break;
+	    default:
+		break;
+	    }
+
+	    ret->v.ivec = list;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *dataset_list_node (parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = full_var_list(p->dinfo, NULL);
+
+	if (list == NULL) {
+	    list = gretl_null_list();
+	}
+	if (list == NULL) {
+	    p->err = E_DATA;
+	}
+	ret->v.ivec = list;
+    }
+
+    return ret;
+}
 
 static int *node_get_list (NODE *n, parser *p)
 {
@@ -2213,6 +2329,8 @@ static int *node_get_list (NODE *n, parser *p)
 		list[1] = v;
 	    }
 	}
+    } else if (dataset_dum(n)) {
+	list = full_var_list(p->dinfo, NULL);
     }
 
     return list;
@@ -2220,7 +2338,7 @@ static int *node_get_list (NODE *n, parser *p)
 
 static NODE *eval_lcat (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_lvec_node(p, 0);
+    NODE *ret = aux_lvec_node(p);
 
     if (ret != NULL && starting(p)) {
 	int *llist, *rlist = NULL;
@@ -4215,7 +4333,6 @@ static NODE *eval (NODE *t, parser *p)
     case VEC:
     case MAT:
     case STR:
-    case DUM:
     case MSPEC:
     case EMPTY:
     case ABSENT:
@@ -4224,6 +4341,14 @@ static NODE *eval (NODE *t, parser *p)
     case LVEC:
 	/* terminal symbol: pass on through */
 	ret = t;
+	break;
+    case DUM:
+	if (t->v.idnum == DUM_DATASET) {
+	    ret = dataset_list_node(p);
+	} else {
+	    /* otherwise treat as terminal */
+	    ret = t;
+	}
 	break;
     case FARGS:
 	/* will be evaluated in context */
@@ -4327,6 +4452,13 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES; 
 	}
 	break;
+    case LLAG:
+	if (l->t == NUM && (series_node(r) || list_type(r->t))) {
+	    ret = list_gen_func(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES; 
+	}
+	break;
     case U_NEG: 
     case U_POS:
     case U_NOT:
@@ -4358,6 +4490,16 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
+	} else if (t->t == LOG && list_type(l->t)) {
+	    ret = apply_list_func(l, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case DUMIFY:
+	/* series or list argument */ 
+	if (series_node(l) || list_type(l->t)) {
+	    ret = list_gen_func(l, NULL, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -4424,6 +4566,14 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case LDIF:
     case SDIF:
+	if (l->t == VEC || l->t == MAT) {
+	    ret = series_series_func(l, r, t->t, p);
+	} else if (list_type(l->t)) {
+	    ret = apply_list_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, VEC, l, p);
+	} 
+	break;
     case ODEV:
     case HPFILT:
     case BKFILT:
@@ -4446,6 +4596,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);
+	} else if (list_type(l->t)) {
+	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	}
@@ -5179,7 +5331,7 @@ static NODE *lhs_copy_node (parser *p)
 
 static void parser_try_print (parser *p)
 {
-    if (p->lh.v == 0 && p->lh.m0 == NULL) {
+    if (p->lh.v == 0 && p->lh.m0 == NULL && !p->lh.islist) {
 	/* varname on left is not the name of a current variable */
 	p->err = E_EQN;
     } else if (p->lh.substr != NULL) {
@@ -5777,39 +5929,47 @@ static void matrix_edit (parser *p)
 
 static int edit_list (parser *p)
 {
+    NODE *r = p->ret;
     int tmplist[2] = {1,0};
     const int *list = NULL;
     int v = -1;
 
     if (p->lh.islist == 0) {
 	/* creating a list from scratch */
-	if (p->ret->t == LIST) {
-	    if (strcmp(p->lh.name, p->ret->v.str)) {
-		rename_saved_list(p->ret->v.str, p->lh.name);
+	if (r->t == LIST) {
+	    if (strcmp(p->lh.name, r->v.str)) {
+		rename_saved_list(r->v.str, p->lh.name);
 	    }
 	    return 0;
 	} 
     }
 
-    if (p->ret->t == LIST) {
-	list = get_list_by_name(p->ret->v.str);
-    } else if (p->ret->t == LVEC) {
-	list = p->ret->v.ivec;
-    } else if (p->ret->t == VEC) {
-	v = p->ret->v.idnum;
-    } else if (p->ret->t == NUM) {
-	v = p->ret->v.xval;
-    }
+    if (r->t == LIST) {
+	list = get_list_by_name(r->v.str);
+    } else if (r->t == LVEC) {
+	list = r->v.ivec;
+    } else if (r->t == DUM && r->v.idnum == DUM_DATASET) {
+	list = full_var_list(p->dinfo, NULL);
+    } else if (r->t == VEC) {
+	v = r->v.idnum;
+    } else if (r->t == NUM) {
+	v = r->v.xval;
+    } 
 
     if (list == NULL) {
-	/* v should be ID number of series */
-	if (v < 0 || v >= p->dinfo->v) {
-	    p->err = E_UNKVAR;
-	} else if (var_is_scalar(p->dinfo, v)) {
-	    p->err = E_TYPES;
-	} else {
+	if (r->t == EMPTY) {
 	    list = tmplist;
-	    tmplist[1] = v;
+	    tmplist[0] = 0;
+	} else {
+	    /* v should be ID number of series */
+	    if (v < 0 || v >= p->dinfo->v) {
+		p->err = E_UNKVAR;
+	    } else if (var_is_scalar(p->dinfo, v)) {
+		p->err = E_TYPES;
+	    } else {
+		list = tmplist;
+		tmplist[1] = v;
+	    }
 	}
     }
 
@@ -5851,7 +6011,8 @@ static int matrix_missvals (const gretl_matrix *m)
 			  n->v.m->cols == 1)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
-			   t == LIST || t == USERIES || t == LVEC)
+			   t == LIST || t == USERIES || \
+			   t == LVEC || t == DUM || t == EMPTY)
 
 static int gen_check_return_type (parser *p)
 {
@@ -5892,7 +6053,7 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_MISSDATA;
 	}
     } else if (p->targ == LIST) {
-	if (!ok_lcat_node(r)) {
+	if (r->t != EMPTY && !ok_lcat_node(r)) {
 	    p->err = E_TYPES;
 	} 
     } else {
@@ -6161,6 +6322,8 @@ void gen_save_or_print (parser *p, PRN *prn)
 	if (p->flags & (P_DISCARD | P_PRINT)) {
 	    if (p->ret->t == MAT) {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
+	    } else if (p->ret->t == LIST) {
+		gretl_list_print(p->lh.name, p->dinfo, p->prn);
 	    } else {
 		printnode(p->ret, p);
 		pputc(p->prn, '\n');

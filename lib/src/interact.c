@@ -188,31 +188,6 @@ static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
     return ret;
 }
 
-/* check for a command that generates a list via a user-defined
-   function: this must be handled as GENR
-*/
-
-static int list_genr_command (char *line)
-{
-    char *s = strchr(line, '=');
-    int ret = 0;
-
-    if (s != NULL) {
-	char name[FN_NAMELEN] = {0};
-	int n;
-
-	s++;
-	s += strspn(s, " ");
-	n = gretl_varchar_spn(s);
-	if (n > 0) {
-	    strncat(name, s, (n > FN_NAMELEN - 1)? FN_NAMELEN - 1 : n);
-	    ret = (get_user_function_by_name(name) != NULL);
-	}	
-    }
-
-    return ret;
-}
-
 static void cmd_set_param_direct (CMD *cmd, const char *s)
 {
     free(cmd->param);
@@ -251,12 +226,14 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "sample")) {
 	cmd->ci = SMPL;
     } else if (!strcmp(s, "list")) {
-	if (list_genr_command(line)) {
-	    cmd->ci = GENR;
-	} else {
-	    cmd->ci = REMEMBER;
-	    cmd->opt = OPT_L;
-	}
+	char lname[VNAMELEN];
+
+	if (gretl_string_ends_with(line, "print")) {
+	    if (sscanf(line, "list %15s", lname)) {
+		strcpy(line, lname);
+	    }
+	} 
+	cmd->ci = GENR;
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
     } else if (!strcmp(s, "funcerr")) {
@@ -287,7 +264,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                            c == MULTIPLY || \
                            c == NULLDATA || \
                            c == OMITFROM || \
-                           c == REMEMBER || \
                            c == SETMISS)
 
 #define REQUIRES_ORDER(c) (c == ADF || \
@@ -1038,52 +1014,6 @@ static int expand_command_list (CMD *cmd, int add)
     return 0;
 }
 
-/* something like "list xl -= foo", "list xl += foo" */
-
-static void 
-shrink_or_expand_list (CMD *cmd, char *line, DATAINFO *pdinfo)
-{
-    int *llist, *rlist, *list;
-    char *s;
-    int expand = 0;
-
-    llist = get_list_by_name(cmd->param);
-    if (llist == NULL) {
-	cmd->err = E_UNKVAR;
-	return;
-    }
-
-    expand = (*line == '+');
-    s = line + 2; /* skip "-=/+=" */
-
-    rlist = gretl_list_build(s, pdinfo, &cmd->err);
-    if (cmd->err) {
-	return;
-    }
-
-    if (expand) {
-	list = gretl_list_copy(llist);
-	if (list == NULL) {
-	    cmd->err = E_ALLOC;
-	} else {
-	    cmd->err = gretl_list_add_list(&list, rlist);
-	}
-    } else {
-	list = gretl_list_diff_new(llist, rlist, 1);
-    }
-
-    if (list == NULL) {
-	if (!cmd->err) {
-	    cmd->err = 1; /* FIXME */
-	}
-    } else {
-	free(cmd->list);
-	cmd->list = list;
-    }
-
-    free(rlist);
-}
-
 /* Get the total number of lags and set the increment for
    generating successive lags.  Allows for mixed leads
    and lags. */
@@ -1393,33 +1323,6 @@ static int wildcard_expand (const char *s, int *lpos,
     return ok;
 }
 
-static int get_whole_dataset (const char *s, int *lpos,
-			      const DATAINFO *pdinfo, CMD *cmd)
-{
-    int ok = 0;
-
-    if (!strcmp(s, "dataset")) {
-	int nv = 0;
-	int *dlist = full_var_list(pdinfo, &nv);
-
-	if (dlist != NULL) {
-	    int k, llen = *lpos;
-
-	    if (expand_command_list(cmd, nv)) {
-		return 0;
-	    }
-	    for (k=1; k<=nv; k++) {
-		cmd->list[llen++] = dlist[k];
-	    }
-	    free(dlist);
-	    *lpos = llen;
-	    ok = 1;
-	}
-    }
-
-    return ok;
-}
-
 static int matrix_name_ok (const char *s, CMD *cmd)
 {
     int ok = 0;
@@ -1630,6 +1533,8 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 	ret = 1;
     } else if (get_matrix_by_name(s)) {
 	ret = 1;
+    } else if (get_list_by_name(s)) {
+	ret = 1;
     }
 
     return ret;
@@ -1733,10 +1638,7 @@ static void cmd_param_grab_word (CMD *cmd, const char *s, int *nf)
 	cmd->param = gretl_strndup(s, n);
 	if (cmd->param == NULL) {
 	    cmd->err = E_ALLOC;
-	} else if (cmd->ci == REMEMBER && nf != NULL && 
-		   *(s+n) != '\0' && *(s+n) != ' ') {
-	    *nf += 1;
-	}
+	} 
     }
 }
 
@@ -1846,50 +1748,6 @@ static int resize_command_list (CMD *cmd, int nf)
     }
 
     return cmd->err;
-}
-
-static int maybe_print_object (const char *line, int nf, CMD *cmd)
-{
-    int ret = 0;
-
-    if (cmd->opt & OPT_L) {
-	char word[8];
-	int *list;
-
-	if (nf == 0 || (sscanf(line, "%5s", word) && !strcmp(word, "print"))) {
-	    list = get_list_by_name(cmd->param);
-	    if (list != NULL) {
-		cmd->list[0] = 0;
-		free(cmd->extra);
-		cmd->extra = gretl_strdup(cmd->param);
-		*cmd->param = '\0';
-		cmd->ci = PRINT;
-		cmd->opt = OPT_NONE;
-		ret = 1;
-	    }
-	}
-    }
-
-    return ret;
-}
-
-static int creating_null_list (CMD *cmd, int nf, const char *s)
-{
-    int ret = 0;
-
-    if ((nf == 1 || nf == 2) && cmd->opt & OPT_L) {
-	while (*s == ' ') s++;
-	if (*s == '=') {
-	    s++;
-	    while (*s == ' ') s++;
-	    if (!strcmp(s, "null") || !strcmp(s, "NULL")) {
-		cmd->list[0] = 0;
-		ret = 1;
-	    }
-	}
-    }
-
-    return ret;
 }
 
 /* below: count fields, considering space as the field separator but
@@ -2017,40 +1875,6 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
     return ok;
 }
 
-static int ok_list_matrix (const char *s, int *lpos,
-			   const DATAINFO *pdinfo, CMD *cmd)
-{
-    const gretl_matrix *m = get_matrix_by_name(s);
-    int n = gretl_vector_get_length(m);
-    int ok = 0;
-
-    if (n > 0) {
-	int i, llen = *lpos;
-	double vi, ci;
-
-	for (i=0; i<n; i++) {
-	    vi = gretl_vector_get(m, i);
-	    ci = (double) (int) vi;
-	    if (ci != vi || ci < 0 || ci >= pdinfo->v) {
-		return 0;
-	    } 
-	}
-
-	if (expand_command_list(cmd, n)) {
-	    return 0;
-	}
-
-	for (i=0; i<n; i++) {
-	    cmd->list[llen++] = gretl_vector_get(m, i);
-	}
-
-	*lpos = llen;
-	ok = 1;
-    }
-	
-    return ok;
-}
-
 static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 				   double ***pZ, DATAINFO *pdinfo, 
 				   CMD *cmd)
@@ -2096,13 +1920,7 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	ok = 1;
     } else if (cmd->ci == PRINT && matrix_name_ok(s, cmd)) {
 	ok = 1;
-    } else if (cmd->ci == REMEMBER && 
-	       ok_list_matrix(s, &k, pdinfo, cmd)) {
-	ok = 1;
-    } else if (cmd->ci == REMEMBER && 
-	       get_whole_dataset(s, &k, pdinfo, cmd)) {
-	ok = 1;
-    }
+    } 
 
     *pk = k;
 
@@ -2236,15 +2054,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* replace simple aliases and a few specials */
     catch_command_alias(line, cmd);
-
-    /* "remember": capture the line in cmd's "extra" field */
-    if (cmd->ci == REMEMBER) {
-	free(cmd->extra);
-	cmd->extra = gretl_strdup(line);
-#if CMD_DEBUG
-	fprintf(stderr, "cmd->extra = '%s'\n", cmd->extra);
-#endif
-    }
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
@@ -2447,7 +2256,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci == ADDTO ||
 	cmd->ci == OMITFROM ||
 	cmd->ci == MULTIPLY ||
-	cmd->ci == REMEMBER ||
 	cmd->ci == SETMISS) {
 	capture_param(line, cmd, &nf, (const double **) *pZ, pdinfo);
 	if (cmd->err) {
@@ -2467,30 +2275,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    if (cmd->ci == REMEMBER) {
-	if (nf <= 1 && maybe_print_object(line, nf, cmd)) {
-	    goto cmd_exit;
-	} else if (nf == 0) {
-	    /* creating empty object implicitly, OK */
-	    goto cmd_exit;
-	} else if (creating_null_list(cmd, nf, rem)) {
-	    /* creating empty object with explicit "null" */
-	    goto cmd_exit;
-	} 
-	line += strspn(line, " ");
-	if (!strncmp(line, "-=", 2) || !strncmp(line, "+=", 2)) {
-	    /* adding or subtracting lists */
-	    shrink_or_expand_list(cmd, line, pdinfo);
-	    goto cmd_exit;
-	} else if (*line != '=') {
-	    cmd->err = E_PARSE;
-	    goto cmd_exit;
-	}
-	line += strspn(line, "=");
-	pos = (*line == ' ')? 0 : -1;
-	nf = count_free_fields(line);
-	linelen = strlen(line);
-    } else if (cmd->ci == MULTIPLY || cmd->ci == VECM) { 
+    if (cmd->ci == MULTIPLY || cmd->ci == VECM) { 
 	free(cmd->extra);
 	cmd->extra = gretl_word_strdup(line, NULL);
 	shift_string_left(line, strlen(cmd->extra));
@@ -2597,8 +2382,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
     } else if (cmd->ci != SETMISS && 
 	       cmd->ci != PRINT &&
-	       cmd->ci != DELEET &&
-	       cmd->ci != REMEMBER) {
+	       cmd->ci != DELEET) {
 	/* the command needs a list but doesn't have one */
 	if (cmd->list[0] == 0) {
 	    cmd->err = E_ARGS;
@@ -3182,7 +2966,7 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 
 static int more_coming (const CMD *cmd, int i, int gotsep)
 {
-    if (cmd->opt && cmd->ci != REMEMBER) {
+    if (cmd->opt) {
 	return 1;
     } else if (cmd->linfo == NULL) {
 	return (i < cmd->list[0]);
@@ -3265,9 +3049,6 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 	}
     } else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
 	*plen += print_maybe_quoted_str(cmd->param, prn);
-	if (cmd->ci == REMEMBER) {
-	    *plen += pputs(prn, " =");
-	}
     }
 
     if (cmd->ci == VECM && cmd->extra != NULL) {
@@ -4353,14 +4134,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));
 	}
-	break;
-
-    case REMEMBER:
-	if (cmd->opt & OPT_P) {
-	    ; /* let echo do the work? */
-	} else if (cmd->opt & OPT_L) {
-	    err = remember_list(cmd->list, cmd->param, prn);
-	} 
 	break;
 
     case SHELL:

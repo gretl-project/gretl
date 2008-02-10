@@ -2596,9 +2596,7 @@ static int maybe_refresh_list (CMD *cmd, const LOOPSET *loop,
 {
     int ret = 0;
 
-    if (cmd->ci == REMEMBER && (cmd->opt & OPT_L)) {
-	ret = modifies_loop_list(loop, cmd->extra);
-    } else if (cmd->ci == GENR) {
+    if (cmd->ci == GENR) {
 	ret = modifies_loop_list(loop, line);
     }
 

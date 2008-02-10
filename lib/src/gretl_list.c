@@ -2264,3 +2264,43 @@ int gretl_serialize_lists (const char *fname)
 
     return 0;
 }
+
+/**
+ * gretl_list_print:
+ * @lname: name of list.
+ * @pdinfo:
+ * @prn:
+ * 
+ * Prints to @prn the given @list of variables, by name.
+ */
+
+void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
+		       PRN *prn)
+{
+    const int *list = get_list_by_name(lname);
+    int testlen = 62;
+    int i, li, len = 0;
+
+    if (list == NULL) {
+	pprintf(prn, _("Unknown variable '%s'"), lname);
+	pputc(prn, '\n');
+    } else if (list[0] == 0) {
+	pputs(prn, "null\n");
+    } else {
+	for (i=1; i<=list[0]; i++) {
+	    li = list[i];
+	    if (li == LISTSEP) {
+		len += pputs(prn, "; ");
+	    } else if (li < 0 || li >= pdinfo->v) {
+		len += pputs(prn, "?? ");
+	    } else {
+		len += pprintf(prn, "%s ", pdinfo->varname[li]);
+		if (len > testlen && i < list[0]) {
+		    pputs(prn, "\\\n "); 
+		    len = 1;
+		}
+	    }
+	}
+	pputc(prn, '\n');
+    }
+}

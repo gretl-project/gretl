@@ -131,6 +131,7 @@ struct str_table funcs[] = {
     { DIF,      "diff" },
     { LDIF,     "ldiff" },
     { SDIF,     "sdiff" },
+    { LLAG,     "lags" },
     { TOINT,    "int" },
     { ROUND,    "round" },
     { CEIL,     "ceil" },
@@ -253,6 +254,7 @@ struct str_table funcs[] = {
     { MRSEL,    "selifr" },
     { MCSEL,    "selifc" },
     { POLROOTS, "polroots" },
+    { DUMIFY,   "dummify" },
     { 0,        NULL }
 };
 
@@ -261,6 +263,7 @@ struct str_table func_alias[] = {
     { GAMMA,    "gamma" },
     { RPOISSON, "poisson" },
     { PVAL,     "pvalue" },
+    { LOG,      "logs" },
     { 0,        NULL }
 };
 
