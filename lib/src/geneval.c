@@ -4252,6 +4252,19 @@ static NODE *dollar_str_node (NODE *t, parser *p)
     return ret;
 }
 
+static NODE *wildlist_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = varname_match_list(p->dinfo, n->v.str);
+
+	ret->v.ivec = list;
+    }
+
+    return ret;
+}
+
 static void transpose_matrix_result (NODE *n, parser *p)
 {
     if (n == NULL || p->err) {
@@ -4339,10 +4352,16 @@ static NODE *eval (NODE *t, parser *p)
     case EMPTY:
     case ABSENT:
     case U_ADDR:
-    case LIST:
     case LVEC:
 	/* terminal symbol: pass on through */
 	ret = t;
+	break;
+    case LIST:
+	if (strchr(t->v.str, '*')) {
+	    ret = wildlist_node(t, p);
+	} else {
+	    ret = t;
+	}
 	break;
     case DUM:
 	if (t->v.idnum == DUM_DATASET) {
