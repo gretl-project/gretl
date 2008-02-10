@@ -2307,7 +2307,9 @@ static int *node_get_list (NODE *n, parser *p)
 {
     int *list = NULL;
 
-    if (n->t == LVEC || n->t == LIST) {
+    if (n->t == LIST && strchr(n->v.str, '*')) {
+	list = varname_match_list(p->dinfo, n->v.str);
+    } else if (n->t == LVEC || n->t == LIST) {
 	int *src = (n->t == LVEC)? n->v.ivec : get_list_by_name(n->v.str);
 
 	if (src == NULL) {

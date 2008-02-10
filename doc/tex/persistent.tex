@@ -51,7 +51,7 @@ example
 %
 \begin{code}
 list xlist = 1 2 3
-list xlist = 4 5 6
+xlist = 4 5 6
 \end{code}
 
 After the second assignment, \texttt{xlist} contains just variables 4,
@@ -63,20 +63,20 @@ we can make use of the fact that a named list stands in for a
 %
 \begin{code}
 list xlist = xlist 5 6 7
-list xlist = 9 10 xlist 11 12
+xlist = 9 10 xlist 11 12
 \end{code}
 %
 Another option for appending a term to a list is to use \texttt{+=},
 as in
 %
 \begin{code}
-list xlist += cpi
+xlist += cpi
 \end{code}
 %
 To drop a variable from a list, use \texttt{-=}:
 %
 \begin{code}
-list xlist -= cpi
+xlist -= cpi
 \end{code}
 %
 
@@ -103,10 +103,10 @@ using the function \texttt{nelem()}.
 %
 \begin{code}
 list xlist = 1 2 3
-genr nl = nelem(xlist)
+nl = nelem(xlist)
 \end{code}
 
-The scalar \texttt{nl} will be assigned a value of 3 since
+The (scalar) variable \texttt{nl} will be assigned a value of 3 since
 \texttt{xlist} contains 3 members.
 
 You can display the membership of a named list as illustrated in this
@@ -115,8 +115,8 @@ interactive session:
 \begin{code}
 ? list xlist = x1 x2 x3
 Added list 'xlist'
-? list xlist print
- xlist: x1 x2 x3
+? xlist
+ x1 x2 x3
 \end{code}
 %
 Note that \texttt{print xlist} will do something different, namely
@@ -127,9 +127,9 @@ expected).
 
 Given a named list of variables, you are able to generate lists of
 transformations of these variables using a special form of the
-commands \texttt{logs}, \texttt{lags}, \texttt{diff}, \texttt{ldiff},
-\texttt{sdiff} or \texttt{square}.  In this context these keywords
-must be followed directly by a named list in parentheses.  For example
+commands \texttt{logs}, \texttt{lags}, \texttt{diff}, \texttt{ldiff}
+or \texttt{sdiff}.  In this context these keywords must be followed
+directly by a named list in parentheses.  For example
 %
 \begin{code}
 list xlist = x1 x2 x3

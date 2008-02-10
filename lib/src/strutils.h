@@ -156,4 +156,6 @@ int gretl_string_ends_with (const char *s, const char *test);
 
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);
 
+int varname_match_any (const DATAINFO *pdinfo, const char *pattern);
+
 #endif /* STRUTILS_H */

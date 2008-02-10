@@ -675,6 +675,10 @@ static void look_up_word (const char *s, parser *p)
 		} else if (string_is_defined(s)) {
 		    p->sym = STR;
 		    p->idstr = gretl_strdup(get_named_string(s));
+		} else if (p->targ == LIST &&
+			   varname_match_any(p->dinfo, s)) {
+		    p->sym = LIST;
+		    p->idstr = gretl_strdup(s);
 		} else {
 		    err = 1;
 		}
@@ -741,6 +745,17 @@ static void word_check_next_char (const char *s, parser *p)
     }
 }
 
+static int is_word_char (parser *p)
+{
+    if (strchr(wordchars, p->ch) != NULL) {
+	return 1;
+    } else if (p->targ == LIST && p->ch == '*') {
+	return 1;
+    }
+
+    return 0;
+}
+
 static void getword (parser *p)
 {  
     char word[32];
@@ -750,7 +765,7 @@ static void getword (parser *p)
     word[i++] = p->ch;
     parser_getc(p);
 
-    while (p->ch != 0 && strchr(wordchars, p->ch) != NULL && i < 31) {
+    while (p->ch != 0 && is_word_char(p) && i < 31) {
 	word[i++] = p->ch;
 	parser_getc(p);
     }

@@ -1851,6 +1851,7 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
     int i, n = 0;
 
     pspec = g_pattern_spec_new(pattern);
+
     for (i=1; i<pdinfo->v; i++) { 
 	if (var_is_series(pdinfo, i) &&
 	    g_pattern_match_string(pspec, pdinfo->varname[i])) {
@@ -1876,4 +1877,24 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
     g_pattern_spec_free(pspec);
 
     return list;
+}
+
+int varname_match_any (const DATAINFO *pdinfo, const char *pattern)
+{
+    GPatternSpec *pspec;
+    int i, ret = 0;
+
+    pspec = g_pattern_spec_new(pattern);
+
+    for (i=1; i<pdinfo->v; i++) { 
+	if (var_is_series(pdinfo, i) &&
+	    g_pattern_match_string(pspec, pdinfo->varname[i])) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    g_pattern_spec_free(pspec);
+
+    return ret;
 }
