@@ -427,10 +427,51 @@ enum transform_results {
     VARNAME_DUPLICATE
 };
 
+#define TR_OVERWRITE 0 /* FIXME: should be 1? */
+
+static int transform_handle_duplicate (int v, const double *x,
+				       const char *label,
+				       DATAINFO *pdinfo, double **Z,
+				       int origv)
+{
+    int ret = VARNAME_DUPLICATE;
+    int t, ok = 0;
+
+    if (!strcmp(label, VARLABEL(pdinfo, v))) {
+	/* labels identical, so OK? */
+	ok = 1;
+	
+    }
+
+#if TR_OVERWRITE
+    if (!ok && v < origv) {
+	if (strlen(pdinfo->varname[v]) < VNAMELEN - 1) {
+	    ok = 1;
+	}
+    }
+#endif
+
+    if (ok) {
+#if TRDEBUG
+	fprintf(stderr, "check_add_transform: updating var %d (%s)\n",
+		v, pdinfo->varname[v]);
+#endif
+	for (t=0; t<pdinfo->n; t++) {
+	    Z[v][t] = x[t];
+	}
+	strcpy(VARLABEL(pdinfo, v), label);
+	pdinfo->varinfo[v]->flags = 0;
+	ret = VAR_EXISTS_OK;
+    }	
+
+    return ret;
+}
+
 static int 
 check_add_transform (int vnum, const double *x,
 		     const char *vname, const char *label,
-		     DATAINFO *pdinfo, double ***pZ)
+		     DATAINFO *pdinfo, double ***pZ,
+		     int origv)
 {
     int t, ret = VAR_ADDED_OK;
 
@@ -457,20 +498,8 @@ check_add_transform (int vnum, const double *x,
 	    }
 	    ret = VAR_EXISTS_OK;
 	} else {
-	    if (!strcmp(label, VARLABEL(pdinfo, vnum))) {
-		/* labels match: update the values */
-#if TRDEBUG
-		fprintf(stderr, "check_add_transform: updating var %d (%s)\n",
-			vnum, vname);
-#endif
-		for (t=0; t<pdinfo->n; t++) {
-		    (*pZ)[vnum][t] = x[t];
-		}
-		ret = VAR_EXISTS_OK;
-	    } else {
-		/* labels do not match: problem */
-		ret = VARNAME_DUPLICATE;
-	    }
+	    ret = transform_handle_duplicate(vnum, x, label, pdinfo,
+					     *pZ, origv);
 	}
     } else {
 	/* no var of this name, working from scratch */
@@ -494,12 +523,15 @@ check_add_transform (int vnum, const double *x,
    The dummies resulting from DUMMIFY are automatically marked as
    discrete.
 
+   origv is the number of variables in the dataset prior to the
+   current round of adding.
+
    Return the ID number of the transformed var, or -1 on error.
 */
 
 static int get_transform (int ci, int v, int aux, double x, 
 			  double ***pZ, DATAINFO *pdinfo,
-			  int startlen)
+			  int startlen, int origv)
 {
     char vname[VNAMELEN];
     char label[MAXLABEL];
@@ -554,7 +586,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	}
 	vno = varindex(pdinfo, vname);
 
-	err = check_add_transform(vno, vx, vname, label, pdinfo, pZ);
+	err = check_add_transform(vno, vx, vname, label, pdinfo, pZ, origv);
 	if (err != VAR_EXISTS_OK && err != VAR_ADDED_OK) {
 	    vno = -1;
 	}
@@ -593,7 +625,8 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
     } else if (lag == 0) {
 	lno = v;
     } else {
-	lno = get_transform(LAGS, v, lag, 0.0, pZ, pdinfo, VNAMELEN - 3);
+	lno = get_transform(LAGS, v, lag, 0.0, pZ, pdinfo, 
+			    VNAMELEN - 3, pdinfo->v);
     }
 
     return lno;
@@ -613,7 +646,8 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
-    return get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, VNAMELEN - 3);
+    return get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, 
+			 VNAMELEN - 3, pdinfo->v);
 }
 
 /**
@@ -630,7 +664,8 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 
 int invgenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
-    return get_transform(INVERSE, v, 0, 0.0, pZ, pdinfo, VNAMELEN - 3);
+    return get_transform(INVERSE, v, 0, 0.0, pZ, pdinfo, 
+			 VNAMELEN - 3, pdinfo->v);
 }
 
 /**
@@ -662,7 +697,8 @@ int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
 	return -1;
     }
 
-    return get_transform(ci, v, 0, 0.0, pZ, pdinfo, VNAMELEN - 3);
+    return get_transform(ci, v, 0, 0.0, pZ, pdinfo, 
+			 VNAMELEN - 3, pdinfo->v);
 }
 
 /**
@@ -687,7 +723,8 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    return get_transform(SQUARE, vi, vj, 0.0, pZ, pdinfo, VNAMELEN - 3);
+    return get_transform(SQUARE, vi, vj, 0.0, pZ, pdinfo, 
+			 VNAMELEN - 3, pdinfo->v);
 }
 
 static int 
@@ -757,6 +794,7 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
 
 int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
 {
+    int origv = pdinfo->v;
     int tnum, i, v;
     int startlen;
     int n_ok = 0;
@@ -773,7 +811,8 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}
 
-	tnum = get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, startlen);
+	tnum = get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, startlen,
+			     origv);
 
 	if (tnum > 0) {
 	    n_ok++;
@@ -814,6 +853,7 @@ static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
 
 int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
 {
+    int origv = pdinfo->v;
     int *list = *plist;
     int *laglist = NULL;
     int l, i, j;
@@ -845,7 +885,7 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	for (l=1; l<=order; l++) {
-	    lv = get_transform(LAGS, v, l, 0.0, pZ, pdinfo, startlen);
+	    lv = get_transform(LAGS, v, l, 0.0, pZ, pdinfo, startlen, origv);
 #if TRDEBUG > 1
 	    fprintf(stderr, "base var '%s', lag %d: lv = %d\n",
 		    pdinfo->varname[v], l, lv);
@@ -905,6 +945,7 @@ int default_lag_order (const DATAINFO *pdinfo)
 
 int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
 {
+    int origv = pdinfo->v;
     int i, v, startlen;
     int tnum, err = 0;
 
@@ -920,7 +961,7 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	tnum = get_transform(ci, v, 0, 0.0, pZ, pdinfo, startlen);
+	tnum = get_transform(ci, v, 0, 0.0, pZ, pdinfo, startlen, origv);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
@@ -951,6 +992,7 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
 int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt)
 {
+    int origv = pdinfo->v;
     int *list = *plist;
     int l0 = list[0];
     int *xpxlist = NULL;
@@ -982,7 +1024,8 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	    continue;
 	}
 
-	tnum = get_transform(SQUARE, vi, vi, 0.0, pZ, pdinfo, startlen);
+	tnum = get_transform(SQUARE, vi, vi, 0.0, pZ, pdinfo, startlen,
+			     origv);
 	if (tnum > 0) {
 	    xpxlist[k++] = tnum;
 	    xpxlist[0] += 1;
@@ -1052,6 +1095,7 @@ static int dummify_candidate (int v, double **Z, DATAINFO *pdinfo)
 int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt)
 {
+    int origv = pdinfo->v;
     int *list = *plist;
     int *tmplist = NULL;
     double *x = NULL;
@@ -1114,7 +1158,8 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 #endif
 
 	for (j=jmin; j<jmax && !err; j++) {
-	    tnum = get_transform(DUMMIFY, vi, j+1, x[j], pZ, pdinfo, startlen);
+	    tnum = get_transform(DUMMIFY, vi, j+1, x[j], pZ, pdinfo, 
+				 startlen, origv);
 #if DUMDEBUG   
 	    fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);
 #endif
