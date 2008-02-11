@@ -4,7 +4,7 @@ version 1.7.2, in progress
 - Fix bug in recording result of TSLS heteroskedasticity test
 - Add sscanf command (a subset of C sscanf functionality)
 - Add shell capture for strings via $(shellcommand)
-- Paths stuff: add non-configurable "dotdir" to hold per-user
+- Paths stuff: add (non-configurable) "dotdir" to hold per-user
   automatically-created files
 - Fix bugs 1861010, 1868859, 1869271, 1870459, 1870973,
   1871110, 1871135, 1873625, 1874601, 1881849
@@ -32,7 +32,8 @@ version 1.7.2, in progress
   $sargan
 - Many small improvements to the GUI
 - Add systematic documentation for the functions available
-  in the genr command   
+  in the genr command 
+- Enable "append" command in loops
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

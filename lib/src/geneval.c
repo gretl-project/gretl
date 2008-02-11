@@ -45,11 +45,9 @@
 #define series_node(n) (n->t == VEC &&(n->flags & UVEC_NODE)) 
 
 #define ok_lcat_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
-			 n->t == USERIES || \
+			 n->t == USERIES || n->t == MAT || n->t == EMPTY || \
 			 (n->t == VEC && (n->flags & UVEC_NODE)) || \
 			 (n->t == DUM && n->v.idnum == DUM_DATASET))
-
-#define null_node(n) (n->t == DUM && n->v.idnum == DUM_NULL)
 
 #define series_type(t) (t == VEC || t == USERIES)
 #define uvar_type(t) (t == USCLR || t == USERIES)
@@ -2306,6 +2304,7 @@ static NODE *dataset_list_node (parser *p)
 static int *node_get_list (NODE *n, parser *p)
 {
     int *list = NULL;
+    int v = 0;
 
     if (n->t == LIST && strchr(n->v.str, '*')) {
 	list = varname_match_list(p->dinfo, n->v.str);
@@ -2318,11 +2317,11 @@ static int *node_get_list (NODE *n, parser *p)
 	    list = gretl_list_copy(src);
 	}
     } else if (n->t == USERIES || n->t == VEC || n->t == NUM) {
-	int v = (series_type(n->t))? n->v.idnum : n->v.xval;
-
+	v = (series_type(n->t))? n->v.idnum : n->v.xval;
 	if (v < 0 || v >= p->dinfo->v) {
-	    sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), v);
 	    p->err = E_UNKVAR;
+	} else if (var_is_scalar(p->dinfo, v)) {
+	    p->err = E_TYPES;
 	} else {
 	    list = gretl_list_new(1);
 	    if (list == NULL) {
@@ -2331,8 +2330,45 @@ static int *node_get_list (NODE *n, parser *p)
 		list[1] = v;
 	    }
 	}
+    } else if (n->t == EMPTY) {
+	list = gretl_null_list();
     } else if (dataset_dum(n)) {
 	list = full_var_list(p->dinfo, NULL);
+    } else if (n->t == MAT) {
+	if (gretl_is_null_matrix(n->v.m)) {
+	    list = gretl_null_list();
+	    if (list == NULL) {
+		p->err = E_ALLOC;
+	    }
+	} else {
+	    int i, k = gretl_vector_get_length(n->v.m);
+
+	    if (k == 0) {
+		p->err = E_TYPES;
+	    } else {
+		for (i=0; i<k; i++) {
+		    v = (int) n->v.m->val[i];
+		    if (v < 0 || v >= p->dinfo->v) {
+			p->err = E_UNKVAR;
+			break;
+		    }
+		}
+		if (!p->err) {
+		    list = gretl_list_new(k);
+		    if (list == NULL) {
+			p->err = E_ALLOC;
+		    } else {
+			for (i=0; i<k; i++) {
+			    list[i+1] = (int) n->v.m->val[i];
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    if (p->err == E_UNKVAR) {
+	sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), v);
     }
 
     return list;
@@ -5951,9 +5987,7 @@ static void matrix_edit (parser *p)
 static int edit_list (parser *p)
 {
     NODE *r = p->ret;
-    int tmplist[2] = {1,0};
-    const int *list = NULL;
-    int v = -1;
+    int *list = NULL;
 
     if (p->lh.islist == 0) {
 	/* creating a list from scratch */
@@ -5965,34 +5999,7 @@ static int edit_list (parser *p)
 	} 
     }
 
-    if (r->t == LIST) {
-	list = get_list_by_name(r->v.str);
-    } else if (r->t == LVEC) {
-	list = r->v.ivec;
-    } else if (r->t == DUM && r->v.idnum == DUM_DATASET) {
-	list = full_var_list(p->dinfo, NULL);
-    } else if (r->t == VEC) {
-	v = r->v.idnum;
-    } else if (r->t == NUM) {
-	v = r->v.xval;
-    } 
-
-    if (list == NULL) {
-	if (r->t == EMPTY) {
-	    list = tmplist;
-	    tmplist[0] = 0;
-	} else {
-	    /* v should be ID number of series */
-	    if (v < 0 || v >= p->dinfo->v) {
-		p->err = E_UNKVAR;
-	    } else if (var_is_scalar(p->dinfo, v)) {
-		p->err = E_TYPES;
-	    } else {
-		list = tmplist;
-		tmplist[1] = v;
-	    }
-	}
-    }
+    list = node_get_list(r, p);
 
     if (!p->err) {
 	if (p->lh.islist == 0) {
@@ -6007,6 +6014,8 @@ static int edit_list (parser *p)
 	    p->err = E_TYPES;
 	}
     }
+
+    free(list);
 
     return p->err;
 }
