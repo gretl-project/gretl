@@ -509,6 +509,8 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
 
     if (libset_get_bool(USE_CWD) || gretl_path_is_absolute(fname)) {
 	cmd->param = fname;
+    } else if (cmd->ci == OUTFILE && !strcmp(fname, "null")) {
+	cmd->param = fname;
     } else {
 	cmd->param = gretl_strdup_printf("%s%s", gretl_work_dir(), fname);
 	free(fname);

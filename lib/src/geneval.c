@@ -6125,7 +6125,11 @@ static int gen_check_return_type (parser *p)
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
-	p->targ = r->t;
+	if (r->t == LVEC) {
+	    p->targ = LIST;
+	} else {
+	    p->targ = r->t;
+	}
     }
 
     return p->err;

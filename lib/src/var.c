@@ -579,7 +579,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     ci = (code >= VECM_ESTIMATE)? VECM : VAR;
 
     if ((ci == VAR && order < 1) || (ci == VECM && order < 0)) {
-	sprintf(gretl_errmsg, "VAR: invalid lag order %d", order);
+	sprintf(gretl_errmsg, _("Invalid lag order %d"), order);
 	*errp = E_DATA;
 	return NULL;
     }
