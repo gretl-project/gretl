@@ -328,6 +328,11 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 
     if (gretl_list_has_separator(list)) {
 	err = gretl_list_split_on_separator(list, &v->ylist, &v->xlist);
+	if (!err && v->ylist == NULL) {
+	    sprintf(gretl_errmsg, "%s: needs at least two variables",
+		    gretl_command_word(v->ci));
+	    err = E_PARSE;
+	}
     } else {
 	v->ylist = gretl_list_copy(list);
 	if (v->ylist == NULL) {
@@ -593,11 +598,12 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     err = VAR_make_lists(var, list, Z, pdinfo);
 
     if (!err && var->ylist[0] < 2) {
-	strcpy(gretl_errmsg, "VAR: needs at least two variables");
+	sprintf(gretl_errmsg, "%s: needs at least two variables",
+		gretl_command_word(ci));
 	err = E_DATA;
     }
 
-    if (rank > var->ylist[0]) {
+    if (!err && rank > var->ylist[0]) {
 	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
 	err = E_DATA;
     }

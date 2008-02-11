@@ -1866,16 +1866,17 @@ int gretl_list_has_separator (const int *list)
 int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
 {
     int *list1 = NULL, *list2 = NULL;
-    int i, n = -1;
+    int i, n = 0;
+    int err = 0;
 
-    for (i=1; i<list[0] && n<0; i++) {
+    for (i=1; i<=list[0] && n==0; i++) {
 	if (list[i] == LISTSEP) {
 	    n = i;
 	}
     }
 
-    if (n < 0) {
-	return E_PARSE;
+    if (n == 0) {
+	err = E_PARSE;
     }
 
     if (n > 1) {
@@ -1888,20 +1889,22 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
 	}
     }
 
-    list2 = gretl_list_new(list[0] - n);
-    if (list2 == NULL) {
-	free(list1);
-	return E_ALLOC;
-    }
+    if (n < list[0]) {
+	list2 = gretl_list_new(list[0] - n);
+	if (list2 == NULL) {
+	    free(list1);
+	    return E_ALLOC;
+	}
 
-    for (i=1; i<=list2[0]; i++) {
-	list2[i] = list[i + n];
+	for (i=1; i<=list2[0]; i++) {
+	    list2[i] = list[i + n];
+	}
     }
 
     *plist1 = list1;
     *plist2 = list2;
     
-    return 0;
+    return err;
 }
 
 static int real_list_dup (const int *list, int start, int stop)
