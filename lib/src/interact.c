@@ -2251,7 +2251,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        "multiply" takes a multiplier;
        "omitfrom" and "addto" take the ID of a previous model;
        "setmiss" takes a value to be interpreted as missing;
-       "remember" takes a thing to remember;
        these are captured in cmd->param
     */
     if (REQUIRES_ORDER(cmd->ci) ||
