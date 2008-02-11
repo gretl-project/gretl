@@ -3629,12 +3629,35 @@
   <command name="help" section="Utilities" 
     label="Help on commands" context="cli">
 
+    <usage>
+      <altforms>
+        <altform><lit>help</lit></altform>
+	<altform><lit>help functions</lit></altform>
+        <altform><lit>help</lit> <repl>command</repl></altform>
+        <altform><lit>help</lit> <repl>function</repl></altform>
+      </altforms>
+      <options>
+	<option>
+	  <flag>--func</flag>
+	  <effect>select functions help</effect>
+	</option>
+      </options>
+    </usage>
+
     <description>
       <para>
-	Gives a list of available commands. <cmd>help</cmd>
-	<repl>command</repl> describes <repl>command</repl> (&eg;
-	<cmd>help smpl</cmd>).  You can type <cmd>man</cmd> instead of
-	<cmd>help</cmd> if you like. 
+	If no arguments are given, prints a list of available commands. If the
+	single argument <lit quote="true">functions</lit> is given, prints a
+	list of available functions (see <cmdref targ="genr"/>).
+      </para>
+      <para>
+	<lit>help</lit> <repl>command</repl> describes <repl>command</repl>
+	(&eg; <lit>help smpl</lit>).  <lit>help</lit> <repl>function</repl> 
+	describes <repl>function</repl> (&eg; <lit>help ldet</lit>).
+	Some functions have the same names as related commands (&eg;
+	<lit>diff</lit>): in that case the default is to print help
+	for the command, but you can get help on the function by
+	using the <lit>--func</lit> option.
       </para> 
     </description>
 

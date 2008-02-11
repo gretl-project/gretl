@@ -149,6 +149,7 @@ struct gretl_option gretl_opts[] = {
     { HECKIT,   OPT_M, "ml" },
     { HECKIT,   OPT_T, "two-step" },
     { HECKIT,   OPT_V, "verbose" },
+    { HELP,     OPT_F, "func" },
     { HILU,     OPT_B, "no-corc" },
     { HSK,      OPT_Q, "quiet" },
     { KPSS,     OPT_T, "trend" },

@@ -2513,6 +2513,8 @@ static int func_help_topics (const char *helpfile, PRN *prn)
  * cli_help:
  * @cmdword: the command on which help is wanted.
  * @paths: pointer to gretl paths structure.
+ * @opt: may include %OPT_F to give priority to functions
+ * rather than commands.
  * @prn: pointer to gretl printing struct.
  *
  * Searches in the gretl helpfile for help on @cmdword and, 
@@ -2523,16 +2525,19 @@ static int func_help_topics (const char *helpfile, PRN *prn)
  * requested topic was not found.
  */
 
-int cli_help (const char *cmdword, PATHS *paths, PRN *prn)
+int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn)
 {
     static int recode = -1;
     char helpfile[FILENAME_MAX];
     FILE *fp;
+    int noword, funhelp = (opt & OPT_F);
     char word[9];
     char line[128];
-    int i, j, ok;
+    int i, j, ok = 0;
 
-    if (cmdword == NULL || *cmdword == '\0') {
+    noword = (cmdword == NULL || *cmdword == '\0');
+
+    if (noword && !funhelp) {
 	pputs(prn, _("\nValid gretl commands are:\n"));
 	j = 1;
 	for (i=1; i<NC; i++) {
@@ -2555,12 +2560,14 @@ int cli_help (const char *cmdword, PATHS *paths, PRN *prn)
 	return 0;
     }
 
-    if (!strcmp(cmdword, "functions")) {
+    if (!strcmp(cmdword, "functions") || (noword && funhelp)) {
 	sprintf(helpfile, "%s%s", paths->gretldir, _("genrcli.hlp"));
 	return func_help_topics(helpfile, prn);
     }
 
-    ok = gretl_command_number(cmdword) > 0;
+    if (!funhelp) {
+	ok = gretl_command_number(cmdword) > 0;
+    } 
 
     if (ok) {
 	strcpy(helpfile, paths->cli_helpfile);

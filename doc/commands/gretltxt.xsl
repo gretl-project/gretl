@@ -199,7 +199,7 @@
 
 <xsl:template match="altform">
   <xsl:if test="position() > 1">
-    <xsl:text>&#xa;                  </xsl:text>
+    <xsl:text>&#xa;            </xsl:text>
   </xsl:if> 
   <xsl:apply-templates/>
 </xsl:template>
@@ -340,7 +340,13 @@
 </xsl:template>
 
 <xsl:template match="lit">
+  <xsl:if test="@quote='true'">
+    <xsl:text>"</xsl:text> 
+  </xsl:if>
   <xsl:apply-templates/>
+  <xsl:if test="@quote='true'">
+    <xsl:text>"</xsl:text>
+  </xsl:if>  
 </xsl:template>
 
 <xsl:template match="math|mathvar">

@@ -628,7 +628,7 @@
 	  <seelist>
 	    <fncref targ="critical"/>
 	    <fncref targ="invcdf"/>
-	    <fncref targ="pval"/>
+	    <fncref targ="pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -856,7 +856,7 @@
 	  <seelist>
 	    <fncref targ="cdf"/>
 	    <fncref targ="invcdf"/>
-	    <fncref targ="pval"/>
+	    <fncref targ="pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -927,14 +927,14 @@
 
     <function name="diff" output="asinput">
       <fnargs>
-	<fnarg type="series-or-mat">y</fnarg>
+	<fnarg type="smlist">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Computes first differences.  If <argname>y</argname> is a series,
-	  starting values are set to <lit>NA</lit>.  If <argname>y</argname> is
-	  a matrix, differencing is done by columns and starting values are
-	  set to 0.
+	  Computes first differences.  If <argname>y</argname> is a series, or
+	  a list of series, starting values are set to <lit>NA</lit>.  If
+	  <argname>y</argname> is a matrix, differencing is done by columns
+	  and starting values are set to 0.
 	</para>
 	<para>
 	  <seelist>
@@ -1519,7 +1519,7 @@
 	  <seelist>
 	    <fncref targ="cdf"/>
 	    <fncref targ="critical"/>
-	    <fncref targ="pval"/>
+	    <fncref targ="pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1612,6 +1612,22 @@
       </description>
     </function>
 
+    <function name="lags" output="list">
+      <fnargs>
+	<fnarg type="scalar">p</fnarg>
+	<fnarg type="series-or-list">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Generates lags 1 to <argname>p</argname> of the series
+	  <argname>y</argname>, or if <argname>y</argname> is a list, of all
+	  variables in the list.  If <argname>p</argname> = 0, the maximum
+	  lag defaults to the periodicity of the data; otherwise
+	  <argname>p</argname> must be positive.
+	</para>
+      </description>
+    </function>
+
     <function name="lastobs" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -1645,9 +1661,9 @@
       </description>
     </function>
 
-    <function name="ldiff" output="series">
+    <function name="ldiff" output="asinput">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">y</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2535,7 +2551,7 @@
       </description>
     </function>
 
-    <function name="pval" output="asinput">
+    <function name="pvalue" output="asinput">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
@@ -2889,9 +2905,9 @@
       </description>
     </function>
 
-    <function name="sdiff" output="series">
+    <function name="sdiff" output="asinput">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">y</fnarg>
       </fnargs>   
       <description>
 	<para>

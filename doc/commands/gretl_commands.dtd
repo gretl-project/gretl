@@ -171,7 +171,11 @@
 <!ELEMENT cmd      (#PCDATA)>
 <!ELEMENT mathvar  (#PCDATA | sub | sup)*>
 <!ELEMENT sub      (#PCDATA)>
-<!ELEMENT sup     (#PCDATA)>
+<!ELEMENT sup      (#PCDATA)>
+
+<!ATTLIST lit
+   quote (true | false) "false"
+>
 
 <!ATTLIST repl
    quote (true | false) "false"

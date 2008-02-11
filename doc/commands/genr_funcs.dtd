@@ -49,7 +49,7 @@
     type      (scalar | series | vector | rvec | cvec | matrix | smatrix | symmat | 
                matrixref | anyfloat | scalar-or-series | series-or-vec | 
                series-or-mat | list | coeffname | string | char | sslist | 
-               pscalar | seebelow) "series"
+               series-or-list | smlist | pscalar | seebelow) "series"
     optional  (true | false) "false"
 >
 

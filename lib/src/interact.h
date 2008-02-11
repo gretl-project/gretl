@@ -91,7 +91,7 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo);
 
 int command_number (const char *cmd);
 
-int cli_help (const char *cmdword, PATHS *paths, PRN *prn);
+int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn);
 
 int parseopt (const char **argv, int argc, char *fname, 
 	      int *force_lang);

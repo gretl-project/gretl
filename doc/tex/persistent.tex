@@ -6,7 +6,7 @@
 \section{Named lists}
 \label{named-lists}
 
-Many \app{gretl} commands take one or more lists of variables as
+Many \app{gretl} commands take one or more lists of series as
 arguments.  To make this easier to handle in the context of command
 scripts, and in particular within user-defined functions, \app{gretl}
 offers the possibility of \textit{named lists}.  
@@ -14,26 +14,32 @@ offers the possibility of \textit{named lists}.
 \subsection{Creating and modifying named lists}
 
 A named list is created using the keyword \texttt{list}, followed by
-the name of the list, an equals sign, and either \texttt{null} (to
-create an empty list) or one or more variables to be placed on the
-list.  For example,
+the name of the list, an equals sign, and an expression that forms a
+list.  The most basic sort of expression that works in this context
+is a space-separated list of variables, given either by name or
+by ID number.  For example,
 %
 \begin{code}
 list xlist = 1 2 3 4
 list reglist = income price 
-list empty_list = null
 \end{code}
 
-A special form is available: if you use the keyword \texttt{dataset}
-in place of an actual list on the right-hand side, this constructs a
-list containing all the data series in the current dataset (except
-the pre-defined \texttt{const}).
+Note that the variables in question must be of the series type: you
+can't include scalars in a named list.
+
+Two special forms are available:
+\begin{itemize}
+\item If you use the keyword \texttt{null} on the right-hand side,
+  you get an empty list.
+\item If you use the keyword \texttt{dataset} on the right, you get
+  a list containing all the series in the current dataset (except
+  the pre-defined \texttt{const}).
+\end{itemize}
 
 The name of the list must start with a letter, and must be composed
 entirely of letters, numbers or the underscore character.  The maximum
 length of the name is 15 characters; list names cannot contain
-spaces.  When adding variables to a list, you can refer to them either
-by name or by their ID numbers. 
+spaces.  
 
 Once a named list has been created, it will be ``remembered'' for the
 duration of the \app{gretl} session, and can be used in the context of
@@ -66,8 +72,8 @@ list xlist = xlist 5 6 7
 xlist = 9 10 xlist 11 12
 \end{code}
 %
-Another option for appending a term to a list is to use \texttt{+=},
-as in
+Another option for appending a term (or a list) to an existing list is
+to use \texttt{+=}, as in
 %
 \begin{code}
 xlist += cpi
@@ -79,6 +85,46 @@ To drop a variable from a list, use \texttt{-=}:
 xlist -= cpi
 \end{code}
 %
+
+In most contexts where lists are used in \app{gretl}, it is expected
+that they do not contain any duplicated elements.  If you form a new
+list by simple concatenation, as in \texttt{list L3 = L1 L2}
+(where \texttt{L1} and \texttt{L2} are existing lists), it's possible
+that the result may contain duplicates.  To guard against this you can
+form a new list as the union of two existing ones:
+%
+\begin{code}
+list L3 = L1 || L2
+\end{code}
+%
+The result is a list that contains all the members of \texttt{L1},
+plus any members of \texttt{L2} that are not already in \texttt{L1}.
+
+In the same vein, you can construct a new list as the intersection of
+two existing ones:
+%
+\begin{code}
+list L3 = L1 && L2
+\end{code}
+%
+Here \texttt{L3} contains all the elements that are present in both
+\texttt{L1} and \texttt{L2}.
+
+
+\subsection{Lists and matrices}
+
+Another way of forming a list is by assignment from a matrix.  The
+matrix in question must be interpretable as a vector containing ID
+numbers of (series) variables.  It may be either a row or a column
+vector, and each of its elements must have an integer part that is
+no greater than the number of variables in the data set.  For example:
+%
+\begin{code}
+matrix m = {1,2,3,4}
+list L = m
+\end{code}
+%
+The above is OK provided the data set contains at least 4 variables.
 
 \subsection{Querying a list}
 
@@ -109,8 +155,8 @@ nl = nelem(xlist)
 The (scalar) variable \texttt{nl} will be assigned a value of 3 since
 \texttt{xlist} contains 3 members.
 
-You can display the membership of a named list as illustrated in this
-interactive session:
+You can display the membership of a named list just by giving its name,
+as illustrated in this interactive session:
 %
 \begin{code}
 ? list xlist = x1 x2 x3
@@ -126,19 +172,18 @@ expected).
 \subsection{Generating lists of transformed variables}
 
 Given a named list of variables, you are able to generate lists of
-transformations of these variables using a special form of the
-commands \texttt{logs}, \texttt{lags}, \texttt{diff}, \texttt{ldiff}
-or \texttt{sdiff}.  In this context these keywords must be followed
-directly by a named list in parentheses.  For example
+transformations of these variables using the functions
+commands \texttt{log}, \texttt{lags}, \texttt{diff}, \texttt{ldiff}
+or \texttt{sdiff}.  For example
 %
 \begin{code}
 list xlist = x1 x2 x3
-list lxlist = logs(xlist)
+list lxlist = log(xlist)
 list difflist = diff(xlist)
 \end{code}
 
-When generating a list of \textit{lags} in this way, you can specify
-the maximum lag order inside the parentheses, before the list name and
+When generating a list of \textit{lags} in this way, you specify the
+maximum lag order inside the parentheses, before the list name and
 separated by a comma.  For example
 %
 \begin{code}
@@ -153,37 +198,11 @@ scalar order = 4
 list laglist = lags(order, xlist)
 \end{code}
 
-These command will populate \texttt{laglist} with the specified number
-of lags of the variables in \texttt{xlist}.  (As with the ordinary
-\texttt{lags} command, you can omit the order, in which case this is
-determined automatically based on the frequency of the data.)  One
-further special feature is available when generating lags, namely, you
-can give the name of a single variable in place of a named list on the
-right-hand side, as in
-%
-\begin{code}
-series lx = log(x)
-list laglist = lags(4, lx)
-\end{code}
-
-Note that the ordinary syntax for, e.g., \texttt{logs}, is just
-%
-\begin{code}
-logs x1 x2 x3
-\end{code}
-%
-If \texttt{xlist} is a named list, you can also say
-%
-\begin{code}
-logs xlist
-\end{code}
-%
-but this form will not save the logs as a named list; for that you
-need the form
-%
-\begin{code}
-list loglist = logs(xlist)
-\end{code}
+These commands will populate \texttt{laglist} with the specified
+number of lags of the variables in \texttt{xlist}.  You can give the
+name of a single series in place of a list as the second argument to
+\texttt{lags}: this is equivalent to giving a list with just one
+member.
 
 
 \subsection{Checking for missing values}

@@ -241,7 +241,7 @@ struct str_table funcs[] = {
     { LISTLEN,  "nelem" },
     { CDF,      "cdf" },
     { INVCDF,   "invcdf" },
-    { PVAL,     "pval" },
+    { PVAL,     "pvalue" },
     { CRIT,     "critical" },
     { RANDGEN,  "randgen" },
     { MAKEMASK, "makemask" },
@@ -262,7 +262,7 @@ struct str_table func_alias[] = {
     { GAMMA,    "gammafunc" },
     { GAMMA,    "gamma" },
     { RPOISSON, "poisson" },
-    { PVAL,     "pvalue" },
+    { PVAL,     "pval" },
     { LOG,      "logs" },
     { 0,        NULL }
 };

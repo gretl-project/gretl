@@ -20,6 +20,7 @@
  <gentext key="series-or-vec" text="serie o vettore"/>
  <gentext key="series-or-mat" text="serie o matrice"/>
  <gentext key="scalar-or-series" text="scalare o serie"/>
+ <gentext key="series-or-list" text="serie o lista"/>
  <gentext key="asinput"       text="stesso tipo dell'argomento"/>
  <gentext key="scalar"        text="scalare"/>
  <gentext key="pscalar"       text="scalare tra 0 e 1"/>
@@ -36,6 +37,7 @@
  <gentext key="char"          text="carattere"/>
  <gentext key="coeffname"     text="nome del coefficiente"/>
  <gentext key="sslist"        text="scalare, serie o lista"/>
+ <gentext key="smlist"        text="serie, matrice o lista"/>
  <gentext key="optional"      text="opzionale"/>
  <gentext key="seebelow"      text="vedi sotto"/>
  <gentext key="chapter"       text="il capitolo"/>

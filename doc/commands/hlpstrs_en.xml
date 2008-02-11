@@ -20,6 +20,7 @@
  <gentext key="series-or-vec" text="series or vector"/>
  <gentext key="series-or-mat" text="series or matrix"/>
  <gentext key="scalar-or-series" text="scalar or series"/>
+ <gentext key="series-or-list" text="series or list"/>
  <gentext key="asinput"       text="same type as input"/>
  <gentext key="scalar"        text="scalar"/>
  <gentext key="pscalar"       text="scalar between 0 and 1"/>
@@ -36,6 +37,7 @@
  <gentext key="char"          text="character"/>
  <gentext key="coeffname"     text="name of coefficient"/>
  <gentext key="sslist"        text="scalar, series or list"/>
+ <gentext key="smlist"        text="series, matrix or list"/>
  <gentext key="optional"      text="optional"/>
  <gentext key="seebelow"      text="see below"/>
  <gentext key="chapter"       text="Chapter"/> 

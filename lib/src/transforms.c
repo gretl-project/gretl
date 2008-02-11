@@ -820,6 +820,7 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
     int startlen;
 
     if (order < 0) {
+	sprintf(gretl_errmsg, _("Invalid lag order %d"), order);
 	return E_DATA;
     }
 
