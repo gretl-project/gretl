@@ -3488,6 +3488,12 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 	return 1;
     } else if (*fname == '\0') {
 	return E_ARGS;
+    } else if (!strcmp(fname, "null")) {
+	if (gretl_messages_on()) {
+	   pputs(prn, _("Now discarding output\n")); 
+	}
+	print_start_redirection(prn, NULL);
+	strcpy(outname, fname);
     } else {
 	FILE *fp;
 

@@ -775,6 +775,8 @@ int printing_is_redirected (PRN *prn)
 	if (prn->fpaux != NULL || 
 	    (prn->fp != NULL && prn->buf != NULL)) {
 	    ret = 1;
+	} else if (prn->fixed) {
+	    ret = 1;
 	}
     }
 
@@ -796,13 +798,18 @@ int print_start_redirection (PRN *prn, FILE *fp)
     int err = 0;
 
     if (prn != NULL) {
-	/* flush and save the current stream */
+	/* flush the current stream */
 	if (prn->fp != NULL) {
 	    fflush(prn->fp);
 	}
-	prn->fpaux = prn->fp;
-	/* hook output to specified file */
-	prn->fp = fp;
+	if (fp == NULL) {
+	    /* disable printing */
+	    prn->fixed = 1;
+	} else {
+	    /* hook output to specified file */
+	    prn->fpaux = prn->fp;
+	    prn->fp = fp;
+	}
     } else {
 	err = 1;
     }
@@ -824,10 +831,14 @@ int print_end_redirection (PRN *prn)
 {
     int err = 0;
 
-    if (prn != NULL && prn->fp != NULL) {
-	fclose(prn->fp);
-	prn->fp = prn->fpaux;
-	prn->fpaux = NULL;
+    if (prn != NULL) {
+	if (prn->fixed) {
+	    prn->fixed = 0;
+	} else if (prn->fp != NULL) {
+	    fclose(prn->fp);
+	    prn->fp = prn->fpaux;
+	    prn->fpaux = NULL;
+	}
     } else {
 	err = 1;
     }
