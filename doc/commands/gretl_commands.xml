@@ -5660,7 +5660,16 @@
 	<lit>--close</lit>.  For example if an <cmd>ols</cmd> command
 	intervened, its output would go to
 	<filename>regress.txt</filename> rather than the
-	screen.</para>
+	screen.
+      </para>
+
+      <para>
+	In a variant on the above, if you give the keyword <lit>null</lit>
+	in place of a real filename along with the <lit>--write</lit>
+	option, the effect is to suppress all printed output until
+	the next <lit>outfile --close</lit>.
+      </para>
+
     </description>
 
   </command>
