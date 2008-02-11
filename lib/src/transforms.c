@@ -427,7 +427,9 @@ enum transform_results {
     VARNAME_DUPLICATE
 };
 
-#define TR_OVERWRITE 0 /* FIXME: should be 1? */
+/* Note: new behavior as of 2008-02-11 */
+
+#define TR_OVERWRITE 1
 
 static int transform_handle_duplicate (int v, const double *x,
 				       const char *label,
@@ -445,9 +447,7 @@ static int transform_handle_duplicate (int v, const double *x,
 
 #if TR_OVERWRITE
     if (!ok && v < origv) {
-	if (strlen(pdinfo->varname[v]) < VNAMELEN - 1) {
-	    ok = 1;
-	}
+	ok = 1;
     }
 #endif
 
@@ -779,6 +779,41 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
     return len;
 }
 
+static int screen_out_var (int v, double **Z, const DATAINFO *pdinfo,
+			   int f)
+{
+    int ok = 1;
+
+    if (f == LOGS || f == SQUARE) {
+	if (v == 0 || var_is_scalar(pdinfo, v)) {
+	    ok = 1; 
+	}
+	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {
+	    ok = 0;
+	}
+    } else if (f == LAGS) {
+	if (v == 0 || var_is_scalar(pdinfo, v)) {
+	    ok = 0;
+	}
+    } else if (f == DIFF || f == LDIFF || f == SDIFF) {
+	if (var_is_scalar(pdinfo, v)) {
+	    ok = 0;
+	}
+    } else if (f == DUMMIFY) {
+	ok = 0; /* reverse burden of proof */
+	if (v > 0 && var_is_series(pdinfo, v)) {
+	    if (var_is_discrete(pdinfo, v)) {
+		/* pre-approved */
+		ok = 1;
+	    } else if (gretl_isdiscrete(0, pdinfo->n - 1, Z[v])) {
+		ok = 1;
+	    }
+	}
+    }
+
+    return !ok;
+}
+
 /**
  * list_loggenr:
  * @list: on entry, list of variables to process; on exit,
@@ -804,10 +839,7 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 
-	if (v == 0 || var_is_scalar(pdinfo, v)) {
-	    continue; 
-	}
-	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[v])) {
+	if (screen_out_var(v, *pZ, pdinfo, LOGS)) {
 	    continue;
 	}
 
@@ -880,7 +912,7 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
     for (i=1; i<=list[0]; i++) {
 	int lv, v = list[i];
 
-	if (v == 0 || var_is_scalar(pdinfo, v)) {
+	if (screen_out_var(v, *pZ, pdinfo, LAGS)) {
 	    continue;
 	}
 
@@ -947,7 +979,8 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
 {
     int origv = pdinfo->v;
     int i, v, startlen;
-    int tnum, err = 0;
+    int tnum, l0 = 0;
+    int err = 0;
 
     if (ci != DIFF && ci != LDIFF && ci != SDIFF) {
 	return 1;
@@ -961,13 +994,19 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
+	if (screen_out_var(v, *pZ, pdinfo, ci)) {
+	    continue;
+	}
 	tnum = get_transform(ci, v, 0, 0.0, pZ, pdinfo, startlen, origv);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
 	    list[i] = tnum;
+	    l0++;
 	}
     }
+
+    list[0] = l0;
 
     return err;
 }
@@ -1017,10 +1056,7 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     for (i=1; i<=l0; i++) {
 	vi = list[i];
 
-	if (vi == 0 || var_is_scalar(pdinfo, vi)) {
-	    continue; 
-	}
-	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[vi])) {
+	if (screen_out_var(vi, *pZ, pdinfo, SQUARE)) {
 	    continue;
 	}
 
@@ -1052,24 +1088,6 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 }
 
 #define DUMDEBUG 0
-
-static int dummify_candidate (int v, double **Z, DATAINFO *pdinfo)
-{
-    if (var_is_discrete(pdinfo, v)) {
-	/* pre-approved */
-	return 1;
-    }
-
-    if (v == 0 || var_is_scalar(pdinfo, v)) {
-	return 0;
-    }  
-
-    if (gretl_isdiscrete(0, pdinfo->n - 1, Z[v])) {
-	return 1;
-    }
-
-    return 0;
-}
 
 /**
  * list_dumgenr:
@@ -1122,7 +1140,7 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	int jmin, jmax;
 	double xt;
 
-	if (!dummify_candidate(vi, *pZ, pdinfo)) {
+	if (screen_out_var(vi, *pZ, pdinfo, DUMMIFY)) {
 	    continue;
 	}
 
