@@ -964,6 +964,11 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     } 
 
+    if (Xlist == NULL || Zlist == NULL) {
+	err = E_ARGS;
+	goto bailout;
+    }
+
     err = make_heckit_NA_mask(HC, Xlist, Zlist, (const double **) *pZ, 
 			      pdinfo);
     if (err) {

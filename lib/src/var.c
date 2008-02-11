@@ -328,16 +328,16 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 
     if (gretl_list_has_separator(list)) {
 	err = gretl_list_split_on_separator(list, &v->ylist, &v->xlist);
-	if (!err && v->ylist == NULL) {
-	    sprintf(gretl_errmsg, "%s: needs at least two variables",
-		    gretl_command_word(v->ci));
-	    err = E_PARSE;
-	}
     } else {
 	v->ylist = gretl_list_copy(list);
 	if (v->ylist == NULL) {
 	    err = E_ALLOC;
 	}
+    }
+
+    if (!err && (v->ylist == NULL || v->ylist[0] < 2)) {
+	/* first test for at least 2 endog vars */
+	err = E_ARGS;
     }
 
     if (!err && v->ci == VECM) {
@@ -360,6 +360,11 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 	if (v->rlist != NULL) {
 	    gretl_list_purge_const(v->rlist, Z, pdinfo);
 	}	
+    }
+
+    if (!err && (v->ylist == NULL || v->ylist[0] < 2)) {
+	/* re-test after (possibly) losing const */
+	err = E_ARGS;
     }
 
 #if VDEBUG
@@ -596,12 +601,6 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     }
 
     err = VAR_make_lists(var, list, Z, pdinfo);
-
-    if (!err && var->ylist[0] < 2) {
-	sprintf(gretl_errmsg, "%s: needs at least two variables",
-		gretl_command_word(ci));
-	err = E_DATA;
-    }
 
     if (!err && rank > var->ylist[0]) {
 	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
@@ -2355,19 +2354,18 @@ johansen_wrapper (int code, int order, int rank,
 		  const int *list, 
 		  gretl_restriction *rset, 
 		  const double **Z, const DATAINFO *pdinfo, 
-		  gretlopt opt, PRN *prn)
+		  gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *jvar;
-    int err = 0;
 
     jvar = gretl_VAR_new(code, order - 1, rank, list, Z, pdinfo,
-			 opt, &err);
+			 opt, err);
     if (jvar == NULL) {
 	return NULL;
     }    
 
     if (jvar != NULL && !jvar->err) {
-	jvar->err = johansen_driver(jvar, rset, Z, pdinfo, opt, prn);
+	*err = jvar->err = johansen_driver(jvar, rset, Z, pdinfo, opt, prn);
     }
 
     return jvar;
@@ -2396,8 +2394,10 @@ GRETL_VAR *johansen_test (int order, const int *list,
 			  const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
+    int err = 0;
+
     return johansen_wrapper(VECM_CTEST, order, 0, list, NULL, 
-			    Z, pdinfo, opt, prn);
+			    Z, pdinfo, opt, prn, &err);
 }
 
 /**
@@ -2424,16 +2424,11 @@ int johansen_test_simple (int order, const int *list,
 			  const double **Z, const DATAINFO *pdinfo, 
 			  gretlopt opt, PRN *prn)
 {
-    GRETL_VAR *jvar;
-    int err;
+    GRETL_VAR *jvar = NULL;
+    int err = 0;
 
     jvar = johansen_wrapper(VECM_CTEST, order, 0, list, NULL, 
-			    Z, pdinfo, opt, prn);
-    if (jvar == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = jvar->err;
-    }
+			    Z, pdinfo, opt, prn, &err);
 
     if (jvar != NULL) {
 	gretl_VAR_free(jvar);
@@ -2470,17 +2465,11 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     }
 
     jvar = johansen_wrapper(VECM_ESTIMATE, order, rank, list, NULL, 
-			    Z, pdinfo, opt, prn);
+			    Z, pdinfo, opt, prn, err);
     
-    if (jvar != NULL) {
-	if (!jvar->err) {
-	    gretl_VAR_print(jvar, pdinfo, opt, prn);
-	} else {
-	    *err = jvar->err;
-	}
-    } else {
-	*err = 1;
-    }
+    if (jvar != NULL && !jvar->err) {
+	gretl_VAR_print(jvar, pdinfo, opt, prn);
+    } 
 
     return jvar;
 }
@@ -2577,13 +2566,9 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
     jvar = johansen_wrapper(VECM_ESTIMATE, orig->order + 1, 
 			    orig->jinfo->rank, list,
 			    rset, Z, pdinfo, 
-			    jopt, prn);
+			    jopt, prn, err);
 
-    if (jvar == NULL) {
-	*err = 1;
-    } else if (jvar->err) {
-	*err = jvar->err;
-    } else {
+    if (jvar != NULL && !jvar->err) {
 	gretlopt ropt, prnopt = OPT_NONE;
 	int df;
 

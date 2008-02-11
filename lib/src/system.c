@@ -1760,14 +1760,19 @@ static int make_tsls_style_elist (equation_system *sys)
 
     for (i=0; i<sys->n_equations && !err; i++) {
 	slist = sys->lists[i];
+	if (!gretl_list_has_separator(slist)) {
+	    continue;
+	}
 	err = gretl_list_split_on_separator(slist, &Y, &Z);
 	if (!err) {
-	    for (j=1; j<=Y[0]; j++) {
-		k = Y[j];
-		if (!in_gretl_list(Z, k) && !in_gretl_list(elist, k)) {
-		    gretl_list_append_term(&elist, k);
-		    if (elist == NULL) {
-			err = E_ALLOC;
+	    if (Y != NULL && Z != NULL) {
+		for (j=1; j<=Y[0]; j++) {
+		    k = Y[j];
+		    if (!in_gretl_list(Z, k) && !in_gretl_list(elist, k)) {
+			gretl_list_append_term(&elist, k);
+			if (elist == NULL) {
+			    err = E_ALLOC;
+			}
 		    }
 		}
 	    }

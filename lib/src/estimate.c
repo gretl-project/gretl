@@ -3789,9 +3789,9 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 	int *base = NULL;
 	int *poly = NULL;
 
-	gretl_list_split_on_separator(list, &base, &poly);
-	if (base == NULL || poly == NULL) {
-	    mpmod.errcode = E_ALLOC;
+	mpmod.errcode = gretl_list_split_on_separator(list, &base, &poly);
+	if (mpmod.errcode == 0 && (base == NULL || poly == NULL)) {
+	    mpmod.errcode = E_ARGS;
 	} else {
 	    mpmod.errcode = (*mplsq)(base, poly, Z, pdinfo,  
 				     gretl_errmsg, &mpmod, OPT_S);

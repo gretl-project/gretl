@@ -1022,7 +1022,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     ninst = list[0] - pos;
 
     if (rlen < 2 || ninst <= 0) {
-	tsls.errcode = E_DATA;
+	tsls.errcode = E_ARGS;
 	return tsls;
     }
 

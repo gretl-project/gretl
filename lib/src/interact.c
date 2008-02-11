@@ -4460,7 +4460,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (s->callback != NULL) {
 		s->callback(s, pZ, pdinfo);
 	    }
-	    /* FIXME else ? */
 	}
 	break;
 
