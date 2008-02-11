@@ -2395,6 +2395,33 @@ static NODE *eval_lcat (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *llist, *rlist = NULL;
+	int *list = NULL;
+
+	llist = node_get_list(l, p);
+	if (llist != NULL) {
+	    rlist = node_get_list(r, p);
+	}
+	if (rlist != NULL) {
+	    if (f == B_AND) {
+		list = gretl_list_intersection(llist, rlist, &p->err);
+	    } else if (f == B_OR) {
+		list = gretl_list_union(llist, rlist, &p->err);
+	    }
+	}
+	ret->v.ivec = list;
+	free(llist);
+	free(rlist);
+    }
+
+    return ret;
+}
+
 /* check for missing obs in a list of variables */
 
 static NODE *list_ok_func (NODE *n, parser *p)
@@ -3261,15 +3288,21 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 	return NULL;
     }
 
+    if (list != NULL && list[0] == 0) {
+	M = gretl_null_matrix_new();
+    } else {
+	const double **Z = (const double **) *p->Z;
+
 #if MATRIX_SKIP_MISSING
-    M = gretl_matrix_data_subset_skip_missing(list, (const double **) *p->Z, 
-					      p->dinfo->t1, p->dinfo->t2, 
-					      &p->err);
+	M = gretl_matrix_data_subset_skip_missing(list, Z, 
+						  p->dinfo->t1, p->dinfo->t2, 
+						  &p->err);
 #else
-    M = gretl_matrix_data_subset_no_missing(list, (const double **) *p->Z, 
-					    p->dinfo->t1, p->dinfo->t2, 
-					    &p->err);
+	M = gretl_matrix_data_subset_no_missing(list, Z, 
+						p->dinfo->t1, p->dinfo->t2, 
+						&p->err);
 #endif
+    }
 
     if (freelist) {
 	free(list);
@@ -4450,6 +4483,9 @@ static NODE *eval (NODE *t, parser *p)
 		   (l->t == VEC || l->t == NUM) && 
 		   r->t == STR) {
 	    ret = number_string_calc(l, r, t->t, p);
+	} else if ((t->t == B_AND || t->t == B_OR) &&
+		   ok_lcat_node(l) && ok_lcat_node(r)) {
+	    ret = list_and_or(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}

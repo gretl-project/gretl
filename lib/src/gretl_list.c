@@ -1192,22 +1192,8 @@ int gretl_list_purge_const (int *list, const double **Z,
     return gotc;
 }
 
-/**
- * gretl_list_add:
- * @orig: an array of integers, the first element of which holds
- * a count of the number of elements following.
- * @add: list of variables to be added.
- * @err: location to receive error code.
- *
- * Creates a list containing the union of elements of @orig 
- * and the elements of @add.  If one or more elements of
- * @add were already present in @orig, the error code is
- * %E_ADDDUP.
- *
- * Returns: new list on success, %NULL on error.
- */
-
-int *gretl_list_add (const int *orig, const int *add, int *err)
+static int *real_gretl_list_union (const int *orig, const int *add, 
+				   int *err, int duperr)
 {
     int i, j, k;
     int *big;
@@ -1216,7 +1202,7 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 
     *err = 0;
 
-    big = malloc((norig + nadd + 1) * sizeof *big);
+    big = gretl_list_new(norig + nadd);
     if (big == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1234,9 +1220,13 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 	for (j=1; j<=norig; j++) {
 	    if (add[i] == orig[j]) {
 		/* a "new" var was already present */
-		free(big);
-		*err = E_ADDDUP;
-		return NULL;
+		if (duperr) {
+		    free(big);
+		    *err = E_ADDDUP;
+		    return NULL;
+		} else {
+		    match = 1;
+		}
 	    }
 	}
 	if (!match) {
@@ -1245,13 +1235,99 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 	}
     }
 
-    if (big[0] == norig) {
+    if (duperr && big[0] == norig) {
 	free(big);
 	*err = E_NOADD;
 	return NULL;
     }
 
     return big;
+}
+
+/**
+ * gretl_list_add:
+ * @orig: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @add: list of variables to be added.
+ * @err: location to receive error code.
+ *
+ * Creates a list containing the union of elements of @orig 
+ * and the elements of @add.  If one or more elements of
+ * @add were already present in @orig, the error code is
+ * %E_ADDDUP.
+ *
+ * Returns: new list on success, %NULL on error.
+ */
+
+int *gretl_list_add (const int *orig, const int *add, int *err)
+{
+    return real_gretl_list_union(orig, add, err, 1);
+}
+
+/**
+ * gretl_list_union:
+ * @l1: list of integers.
+ * @l2: list of integers.
+ * @err: location to receive error code.
+ *
+ * Creates a list holding the union of @l1 and @l2.
+ *
+ * Returns: new list on success, %NULL on error.
+ */
+
+int *gretl_list_union (const int *l1, const int *l2, int *err)
+{
+    return real_gretl_list_union(l1, l2, err, 0);
+}
+
+/**
+ * gretl_list_intersection:
+ * @l1: list of integers.
+ * @l2: list of integers.
+ * @err: location to receive error code.
+ *
+ * Creates a list holding the intersection of @l1 and @l2.
+ *
+ * Returns: new list on success, %NULL on error.
+ */
+
+int *gretl_list_intersection (const int *l1, const int *l2, int *err)
+{
+    int *ret = NULL;
+    int i, j;
+    int n = 0;
+
+    for (i=1; i<=l1[0]; i++) {
+	for (j=1; j<=l2[0]; j++) {
+	    if (l2[j] == l1[i]) {
+		n++;
+		break;
+	    }
+	}
+    }
+
+    if (n == 0) {
+	ret = gretl_null_list();
+    } else {
+	ret = gretl_list_new(n);
+	if (ret != NULL) {
+	    n = 1;
+	    for (i=1; i<=l1[0]; i++) {
+		for (j=1; j<=l2[0]; j++) {
+		    if (l2[j] == l1[i]) {
+			ret[n++] = l1[i];
+			break;
+		    }
+		}
+	    }
+	}
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return ret;
 }
 
 /**
