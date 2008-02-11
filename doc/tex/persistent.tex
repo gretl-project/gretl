@@ -172,9 +172,9 @@ expected).
 \subsection{Generating lists of transformed variables}
 
 Given a named list of variables, you are able to generate lists of
-transformations of these variables using the functions
-commands \texttt{log}, \texttt{lags}, \texttt{diff}, \texttt{ldiff}
-or \texttt{sdiff}.  For example
+transformations of these variables using the functions \texttt{log},
+\texttt{lags}, \texttt{diff}, \texttt{ldiff}, \texttt{sdiff} or
+\texttt{dummify}.  For example
 %
 \begin{code}
 list xlist = x1 x2 x3
@@ -203,6 +203,12 @@ number of lags of the variables in \texttt{xlist}.  You can give the
 name of a single series in place of a list as the second argument to
 \texttt{lags}: this is equivalent to giving a list with just one
 member.
+
+The \texttt{dummify} function creates a set of dummy variables coding
+for all but one of the distinct values taken on by the original
+variable, which should be discrete.  (The smallest value is taken as
+the omitted catgory.)  Like lags, this function returns a list even if
+the input is a single series.
 
 
 \subsection{Checking for missing values}

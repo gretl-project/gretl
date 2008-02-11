@@ -1013,6 +1013,20 @@
       </description>
     </function>
 
+    <function name="dummify" output="list">
+      <fnargs>
+	<fnarg type="series-or-list">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>x</argname> should be a discrete series, or
+	  list of such series.  This function creates a set of dummy variables
+	  coding for the distinct values in the series; the smallest value is
+	  taken as the omitted category and is not explicitly represented.
+	</para>
+      </description>
+    </function>
+
     <function name="eigengen" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>

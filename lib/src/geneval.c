@@ -4583,7 +4583,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
-	} else if (t->t == LOG && list_type(l->t)) {
+	} else if (list_type(l->t) && t->t == LOG) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    p->err = E_TYPES;
