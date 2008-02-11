@@ -3202,11 +3202,13 @@ get_matrix_return (const char *mname, int action, int *err)
     return ret;
 }
 
-static int unlocalize_list (const char *lname, DATAINFO *pdinfo)
+static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 {
     const int *list = get_list_by_name(lname);
     int d = gretl_function_depth();
-    int i, vi, err = 0;
+    const char *vname;
+    int upd = d - 1;
+    int i, j, t, vi;
 
 #if UDEBUG
     fprintf(stderr, "unlocalize_list: '%s', function depth = %d\n", lname, d);
@@ -3214,24 +3216,41 @@ static int unlocalize_list (const char *lname, DATAINFO *pdinfo)
 #endif	    
 
     if (list == NULL) {
-	err = E_DATA;
-    } else {
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (vi != 0 && vi < pdinfo->v) {
-		if (STACK_LEVEL(pdinfo, vi) == d) {
-		    STACK_LEVEL(pdinfo, vi) -= 1;
+	return E_DATA;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	int overwrite = 0;
+
+	vi = list[i];
+	vname = pdinfo->varname[vi];
+	if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
+	    for (j=1; j<pdinfo->v; j++) { 
+		if (STACK_LEVEL(pdinfo, j) == upd && 
+		    !strcmp(pdinfo->varname[j], vname)) {
+		    overwrite = 1;
+		    break;
 		}
-		unset_var_const(pdinfo, vi);
 	    }
+	    if (overwrite) {
+		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		    Z[j][t] = Z[vi][t];
+		}
+	    } else {
+		STACK_LEVEL(pdinfo, vi) = upd;
+	    }
+	}
+	if (vi > 0 && vi < pdinfo->v) {
+	    unset_var_const(pdinfo, vi);
 	}
     }
 
-    return err;
+    return 0;
 }
 
 static char *
-get_list_return (const char *lname, DATAINFO *pdinfo, int *err)
+get_list_return (const char *lname, double **Z, DATAINFO *pdinfo, 
+		 int *err)
 {
     
     char *ret = gretl_strdup(lname);
@@ -3242,7 +3261,7 @@ get_list_return (const char *lname, DATAINFO *pdinfo, int *err)
 #if UDEBUG
 	fprintf(stderr, "get_list_return: calling unlocalize_list\n");
 #endif
-	*err = unlocalize_list(lname, pdinfo);
+	*err = unlocalize_list(lname, Z, pdinfo);
 	if (!*err) {
 	    *err = named_list_lower_level(lname);
 	}
@@ -3288,7 +3307,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    *(gretl_matrix **) ret = get_matrix_return(u->retname, GET_COPY, &err);
 	} else if (rtype == GRETL_TYPE_LIST) {
-	    *(char **) ret = get_list_return(u->retname, pdinfo, &err);
+	    *(char **) ret = get_list_return(u->retname, Z, pdinfo, &err);
 	}
 
 	if (err == E_UNKVAR) {
@@ -3328,7 +3347,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	    fprintf(stderr, "function_assign_returns: calling unlocalize_list on '%s'\n",
 		    fp->name);
 #endif	    
-	    unlocalize_list(fp->name, pdinfo);
+	    unlocalize_list(fp->name, Z, pdinfo);
 	}
     }
 
