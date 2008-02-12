@@ -91,7 +91,7 @@ install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
 	$(INSTALL_DATA) $(topsrc)/gretl.1 $(prefix)/share/man/man1
 
-install_help: $(AUTO_HELPFILES)
+install_help: help
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(tooldir)/mkinstalldirs $(gretldir)/doc
 	$(tooldir)/mkinstalldirs $(gretldir)/helpfigs

@@ -971,6 +971,14 @@
 	  <argname>y</argname> is a matrix, differencing is done by columns
 	  and starting values are set to 0. 
 	</para>
+	<para> 
+	  When a list is returned, the individual variables are
+	  automatically named according to the template
+	  <lit>d_</lit><repl>varname</repl> where <repl>varname</repl> is the
+	  name of the original series.  The name is truncated if necessary,
+	  and may be adjusted in case of non-uniqueness in the set of names
+	  thus constructed.
+	</para> 
 	<para>
 	  <seelist>
 	    <fncref targ="cum"/>
@@ -1023,6 +1031,15 @@
 	  list of such series.  This function creates a set of dummy variables
 	  coding for the distinct values in the series; the smallest value is
 	  taken as the omitted category and is not explicitly represented.
+	</para>
+	<para> 
+	  The generated variables are automatically named according to
+	  the template
+	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>i</repl> where
+	  <repl>varname</repl> is the name of the original series and
+	  <repl>i</repl> is a 1-based index.  The original portion of the name
+	  is truncated if necessary, and may be adjusted in case of
+	  non-uniqueness in the set of names thus constructed. 
 	</para>
       </description>
     </function>
@@ -1674,6 +1691,14 @@
 	  lag defaults to the periodicity of the data; otherwise
 	  <argname>p</argname> must be positive.
 	</para>
+	<para> 
+	  The generated variables are automatically named according to
+	  the template <repl>varname</repl><lit>_</lit><repl>i</repl> where
+	  <repl>varname</repl> is the name of the original series and
+	  <repl>i</repl> is the specific lag.  The original portion of the
+	  name is truncated if necessary, and may be adjusted in case of
+	  non-uniqueness in the set of names thus constructed.  
+	</para>
       </description>
     </function>
 
@@ -1719,12 +1744,26 @@
 	  Computes log differences; starting values are set to
 	  <lit>NA</lit>.
 	</para>
+	<para> 
+	  When a list is returned, the individual variables are
+	  automatically named according to the template
+	  <lit>ld_</lit><repl>varname</repl> where <repl>varname</repl> is the
+	  name of the original series.  The name is truncated if necessary,
+	  and may be adjusted in case of non-uniqueness in the set of names
+	  thus constructed.
+	</para> 
+	<para>
+	  <seelist> 
+	    <fncref targ="diff"/>
+	    <fncref targ="sdiff"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
     <function name="log" output="asinput">
       <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -1732,6 +1771,14 @@
 	  values. Note: <lit>ln</lit> is an acceptable alias for
 	  <lit>log</lit>.
 	</para>
+	<para> 
+	  When a list is returned, the individual variables are
+	  automatically named according to the template
+	  <lit>l_</lit><repl>varname</repl> where <repl>varname</repl> is the
+	  name of the original series.  The name is truncated if necessary,
+	  and may be adjusted in case of non-uniqueness in the set of names
+	  thus constructed.
+	</para> 
       </description>
     </function>
 
@@ -2986,6 +3033,20 @@
 	  <math>k</math> is the periodicity of the current dataset (see
 	  <fncref targ="$pd"/>). Starting values are set to
 	  <lit>NA</lit>.
+	</para>
+	<para> 
+	  When a list is returned, the individual variables are
+	  automatically named according to the template
+	  <lit>sd_</lit><repl>varname</repl> where <repl>varname</repl> is the
+	  name of the original series.  The name is truncated if necessary,
+	  and may be adjusted in case of non-uniqueness in the set of names
+	  thus constructed.
+	</para> 
+	<para>
+	  <seelist> 
+	    <fncref targ="diff"/>
+	    <fncref targ="ldiff"/>
+	  </seelist>
 	</para>
       </description>
     </function>

@@ -1675,7 +1675,7 @@
 
     <function name="log" output="asinput">
       <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="anyfloat-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>

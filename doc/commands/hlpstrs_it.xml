@@ -21,6 +21,7 @@
  <gentext key="series-or-mat" text="serie o matrice"/>
  <gentext key="scalar-or-series" text="scalare o serie"/>
  <gentext key="series-or-list" text="serie o lista"/>
+ <gentext key="anyfloat-or-list" text="scalare, serie, matrice o lista"/>
  <gentext key="asinput"       text="stesso tipo dell'argomento"/>
  <gentext key="scalar"        text="scalare"/>
  <gentext key="pscalar"       text="scalare tra 0 e 1"/>
