@@ -794,24 +794,6 @@ struct mangled_name {
 static struct mangled_name *mnames;
 static int n_mnames;
 
-static int push_mangled_name (int v, const char *s)
-{
-    static struct mangled_name *tmp;
-
-    tmp = realloc(mnames, (n_mnames + 1) * sizeof *tmp);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    mnames = tmp;
-    mnames[n_mnames].v = v;
-    mnames[n_mnames].s = gretl_strdup(s);
-
-    n_mnames++;
-
-    return 0;
-}
-
 static void destroy_mangled_names (void)
 {
     int i;
@@ -822,6 +804,26 @@ static void destroy_mangled_names (void)
     free(mnames);
     mnames = NULL;
     n_mnames = 0;
+}
+
+static int push_mangled_name (int v, const char *s)
+{
+    static struct mangled_name *tmp;
+
+    tmp = realloc(mnames, (n_mnames + 1) * sizeof *tmp);
+
+    if (tmp == NULL) {
+	destroy_mangled_names();
+	return E_ALLOC;
+    }
+
+    mnames = tmp;
+    mnames[n_mnames].v = v;
+    mnames[n_mnames].s = gretl_strdup(s);
+
+    n_mnames++;
+
+    return 0;
 }
 
 static char *get_mangled_name_by_id (int v)
@@ -839,23 +841,24 @@ static char *get_mangled_name_by_id (int v)
 
 static int make_mangled_name (int v, const char *s, int nc)
 {
-    char tmp[16], hstr[16];
+    char tmp[16], sfx[16];
     int n, err;
 
     if (get_mangled_name_by_id(v)) {
 	return 0;
     }
 
-    *tmp = *hstr = '\0';
+    *tmp = *sfx = '\0';
     /* we know the bit out here must be distinct? */
-    strcat(hstr, s + nc);
-    n = strlen(hstr);
+    strcat(sfx, s + nc);
+    n = strlen(sfx);
     strncat(tmp, s, nc - n);
-    strcat(tmp, hstr);
+    strcat(tmp, sfx);
 
 #if TRDEBUG
     fprintf(stderr, "mangled name: '%s' -> '%s'\n", s, tmp);
 #endif
+
     err = push_mangled_name(v, tmp);
 
     return err;

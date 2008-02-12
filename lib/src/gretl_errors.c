@@ -205,4 +205,25 @@ void gretl_error_clear (void)
     error_printed = 0;
 }
 
+#if 0 /* not yet */
+
+static char *warnbuf;
+
+void gretl_warning_add (const char *s)
+{
+    free(warnbuf);
+    warnbuf = gretl_strdup(s);
+}
+
+const char *gretl_warning_get (void)
+{
+    if (warnbuf != NULL) {
+	return warnbuf;
+    } else {
+	return "";
+    }
+}
+
+#endif
+
 
