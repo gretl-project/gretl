@@ -32,6 +32,8 @@ enum {
     INVERSE = NC + 1
 };
 
+static char *get_mangled_name_by_id (int v);
+
 static int check_vals (const double *x, const double *y, int n)
 {
     int ret = VARS_IDENTICAL;
@@ -536,6 +538,7 @@ static int get_transform (int ci, int v, int aux, double x,
     char vname[VNAMELEN];
     char label[MAXLABEL];
     int len, vno = -1, err = 0;
+    const char *srcname;
     double *vx;
 
     vx = testvec(pdinfo->n);
@@ -573,6 +576,11 @@ static int get_transform (int ci, int v, int aux, double x,
 	make_transform_label(label, pdinfo->varname[v], ci, aux);
     }
 
+    srcname = get_mangled_name_by_id(v);
+    if (srcname == NULL) {
+	srcname = pdinfo->varname[v];
+    }
+
     for (len=startlen; len<=VNAMELEN; len++) {
 	if (len == VNAMELEN) {
 	    /* last resort: hack the name */
@@ -581,8 +589,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	    make_xp_varname(vname, pdinfo->varname[v],
 			    pdinfo->varname[aux], len);
 	} else {
-	    make_transform_varname(vname, pdinfo->varname[v], ci, 
-				   aux, len);
+	    make_transform_varname(vname, srcname, ci, aux, len);
 	}
 	vno = varindex(pdinfo, vname);
 
@@ -779,39 +786,161 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
     return len;
 }
 
-static int screen_out_var (int v, double **Z, const DATAINFO *pdinfo,
-			   int f)
-{
-    int ok = 1;
+struct mangled_name {
+    int v;
+    char *s;
+};
 
-    if (f == LOGS || f == SQUARE) {
-	if (v == 0 || var_is_scalar(pdinfo, v)) {
-	    ok = 1; 
-	}
-	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {
-	    ok = 0;
-	}
-    } else if (f == LAGS) {
-	if (v == 0 || var_is_scalar(pdinfo, v)) {
-	    ok = 0;
-	}
-    } else if (f == DIFF || f == LDIFF || f == SDIFF) {
-	if (var_is_scalar(pdinfo, v)) {
-	    ok = 0;
-	}
-    } else if (f == DUMMIFY) {
-	ok = 0; /* reverse burden of proof */
-	if (v > 0 && var_is_series(pdinfo, v)) {
-	    if (var_is_discrete(pdinfo, v)) {
-		/* pre-approved */
-		ok = 1;
-	    } else if (gretl_isdiscrete(0, pdinfo->n - 1, Z[v])) {
-		ok = 1;
-	    }
+static struct mangled_name *mnames;
+static int n_mnames;
+
+static int push_mangled_name (int v, const char *s)
+{
+    static struct mangled_name *tmp;
+
+    tmp = realloc(mnames, (n_mnames + 1) * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    mnames = tmp;
+    mnames[n_mnames].v = v;
+    mnames[n_mnames].s = gretl_strdup(s);
+
+    n_mnames++;
+
+    return 0;
+}
+
+static void destroy_mangled_names (void)
+{
+    int i;
+
+    for (i=0; i<n_mnames; i++) {
+	free(mnames[i].s);
+    }
+    free(mnames);
+    mnames = NULL;
+    n_mnames = 0;
+}
+
+static char *get_mangled_name_by_id (int v)
+{
+    int i;
+
+    for (i=0; i<n_mnames; i++) {
+	if (mnames[i].v == v) {
+	    return mnames[i].s;
 	}
     }
 
-    return !ok;
+    return NULL;
+}
+
+static int make_mangled_name (int v, const char *s, int nc)
+{
+    char tmp[16], hstr[16];
+    int n, err;
+
+    if (get_mangled_name_by_id(v)) {
+	return 0;
+    }
+
+    *tmp = *hstr = '\0';
+    /* we know the bit out here must be distinct? */
+    strcat(hstr, s + nc);
+    n = strlen(hstr);
+    strncat(tmp, s, nc - n);
+    strcat(tmp, hstr);
+
+#if TRDEBUG
+    fprintf(stderr, "mangled name: '%s' -> '%s'\n", s, tmp);
+#endif
+    err = push_mangled_name(v, tmp);
+
+    return err;
+}
+
+static int 
+transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
+			   int f)
+{
+    int maxc = VNAMELEN - 3;
+    int longnames = 0;
+    char **S = NULL;
+    int i, v, ok;
+    int err = 0;
+
+    if (f == SQUARE || f == LDIFF || f == SDIFF) {
+	/* 3-character prefixes */
+	maxc--;
+    } else if (f == DUMMIFY) {
+	/* "D" plus suffix */
+	maxc--;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	ok = 1;
+
+	if (f == LOGS || f == SQUARE) {
+	    if (v == 0 || var_is_scalar(pdinfo, v)) {
+		ok = 1; 
+	    }
+	    if (gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {
+		ok = 0;
+	    }
+	} else if (f == LAGS) {
+	    if (v == 0 || var_is_scalar(pdinfo, v)) {
+		ok = 0;
+	    }
+	} else if (f == DIFF || f == LDIFF || f == SDIFF) {
+	    if (var_is_scalar(pdinfo, v)) {
+		ok = 0;
+	    }
+	} else if (f == DUMMIFY) {
+	    ok = 0; /* reverse burden of proof */
+	    if (v > 0 && var_is_series(pdinfo, v)) {
+		if (var_is_discrete(pdinfo, v)) {
+		    /* pre-approved */
+		    ok = 1;
+		} else if (gretl_isdiscrete(0, pdinfo->n - 1, Z[v])) {
+		    ok = 1;
+		}
+	    }
+	}
+
+	if (!ok) {
+	    gretl_list_delete_at_pos(list, i--);
+	} else if (strlen(pdinfo->varname[v]) > maxc) {
+	    strings_array_add(&S, &longnames, pdinfo->varname[v]);
+	}
+    }
+
+    if (list[0] == 0) {
+	err = E_TYPES;
+    }
+
+    if (longnames > 0) {
+	if (!err) {
+	    int j, herr = 0;
+
+	    for (i=0; i<longnames && !herr; i++) {
+		for (j=i+1; j<longnames && !herr; j++) {
+		    if (!strncmp(S[i], S[j], maxc)) {
+			v = varindex(pdinfo, S[i]);
+			herr = make_mangled_name(v, S[i], maxc);
+			v = varindex(pdinfo, S[j]);
+			herr += make_mangled_name(v, S[j], maxc);
+		    }
+		}
+	    }
+	}
+
+	free_strings_array(S, longnames);
+    }
+
+    return err;
 }
 
 /**
@@ -830,29 +959,34 @@ static int screen_out_var (int v, double **Z, const DATAINFO *pdinfo,
 int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int origv = pdinfo->v;
-    int tnum, i, v;
+    int tnum, i, j, v;
     int startlen;
-    int n_ok = 0;
+    int l0 = 0;
+    int err;
+
+    err = transform_preprocess_list(list, *pZ, pdinfo, LOGS);
+    if (err) {
+	return err;
+    }
 
     startlen = get_starting_length(list, pdinfo, 2);
 
+    j = 1;
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-
-	if (screen_out_var(v, *pZ, pdinfo, LOGS)) {
-	    continue;
-	}
-
 	tnum = get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, startlen,
 			     origv);
-
 	if (tnum > 0) {
-	    n_ok++;
-	    list[i] = tnum;
+	    list[j++] = tnum;
+	    l0++;
 	}
     }
 
-    return (n_ok > 0)? 0 : E_LOGS;
+    list[0] = l0;
+
+    destroy_mangled_names();
+
+    return (l0 > 0)? 0 : E_LOGS;
 }
 
 static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
@@ -888,8 +1022,9 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
     int origv = pdinfo->v;
     int *list = *plist;
     int *laglist = NULL;
-    int l, i, j;
-    int startlen;
+    int l, i, j, v, lv;
+    int startlen, l0 = 0;
+    int err;
 
     if (order < 0) {
 	sprintf(gretl_errmsg, _("Invalid lag order %d"), order);
@@ -900,38 +1035,42 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
 	order = default_lag_order(pdinfo);
     } 
 
+    err = transform_preprocess_list(list, *pZ, pdinfo, LAGS);
+    if (err) {
+	return err;
+    }
+
     laglist = make_lags_list(list, order, pdinfo);
     if (laglist == NULL) {
+	destroy_mangled_names();
 	return E_ALLOC;
     }
 
     startlen = get_starting_length(list, pdinfo, (order > 9)? 3 : 2);
 
     j = 1;
-    
     for (i=1; i<=list[0]; i++) {
-	int lv, v = list[i];
-
-	if (screen_out_var(v, *pZ, pdinfo, LAGS)) {
-	    continue;
-	}
-
+	v = list[i];
 	for (l=1; l<=order; l++) {
 	    lv = get_transform(LAGS, v, l, 0.0, pZ, pdinfo, startlen, origv);
 #if TRDEBUG > 1
 	    fprintf(stderr, "base var '%s', lag %d: lv = %d\n",
 		    pdinfo->varname[v], l, lv);
 #endif
-	    if (lv < 0) {
-		return 1;
-	    }
+	    if (lv > 0) {
 #if TRDEBUG > 1
-	    fprintf(stderr, "lag var name '%s', label '%s'\n",
-		    pdinfo->varname[lv], VARLABEL(pdinfo, lv));
+		fprintf(stderr, "lag var name '%s', label '%s'\n",
+			pdinfo->varname[lv], VARLABEL(pdinfo, lv));
 #endif
-	    laglist[j++] = lv;
+		laglist[j++] = lv;
+		l0++;
+	    }
 	}
     }
+
+    destroy_mangled_names();
+
+    laglist[0] = l0;
 
     free(*plist);
     *plist = laglist;
@@ -980,7 +1119,7 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
     int origv = pdinfo->v;
     int i, v, startlen;
     int tnum, l0 = 0;
-    int err = 0;
+    int err;
 
     if (ci != DIFF && ci != LDIFF && ci != SDIFF) {
 	return 1;
@@ -988,15 +1127,17 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
 
     if (ci == SDIFF && !dataset_is_seasonal(pdinfo)) {
 	return E_PDWRONG;
-    }    
+    } 
+
+    err = transform_preprocess_list(list, *pZ, pdinfo, ci);
+    if (err) {
+	return err;
+    }
 
     startlen = get_starting_length(list, pdinfo, (ci == DIFF)? 2 : 3);
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	if (screen_out_var(v, *pZ, pdinfo, ci)) {
-	    continue;
-	}
 	tnum = get_transform(ci, v, 0, 0.0, pZ, pdinfo, startlen, origv);
 	if (tnum < 0) {
 	    err = 1;
@@ -1007,6 +1148,8 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
     }
 
     list[0] = l0;
+
+    destroy_mangled_names();
 
     return err;
 }
@@ -1033,16 +1176,24 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 {
     int origv = pdinfo->v;
     int *list = *plist;
-    int l0 = list[0];
     int *xpxlist = NULL;
     int tnum, i, j, k, vi, vj;
-    int startlen;
+    int startlen, l0;
+    int err;
+
+    err = transform_preprocess_list(list, *pZ, pdinfo, SQUARE);
+    if (err) {
+	return err;
+    }
+
+    l0 = list[0];
 
     if (opt & OPT_O) {
 	int maxterms = (l0 * l0 + l0) / 2;
     
 	xpxlist = gretl_list_new(maxterms);
 	if (xpxlist == NULL) {
+	    destroy_mangled_names();
 	    return E_ALLOC;
 	}
     } else {
@@ -1055,18 +1206,12 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     k = 1;
     for (i=1; i<=l0; i++) {
 	vi = list[i];
-
-	if (screen_out_var(vi, *pZ, pdinfo, SQUARE)) {
-	    continue;
-	}
-
 	tnum = get_transform(SQUARE, vi, vi, 0.0, pZ, pdinfo, startlen,
 			     origv);
 	if (tnum > 0) {
 	    xpxlist[k++] = tnum;
 	    xpxlist[0] += 1;
 	}
-
 	if (opt & OPT_O) {
 	    for (j=i+1; j<=l0; j++) {
 		vj = list[j];
@@ -1078,6 +1223,8 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
     }
+
+    destroy_mangled_names();
 
     if (opt & OPT_O) {
 	free(*plist);
@@ -1119,30 +1266,32 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     double *x = NULL;
     int i, j, t, n;
     int startlen;
-    int err = 0;
+    int err;
+
+    err = transform_preprocess_list(list, *pZ, pdinfo, DUMMIFY);
+    if (err) {
+	return err;
+    }
 
     tmplist = gretl_null_list();
     if (tmplist == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
     
     x = malloc(pdinfo->n * sizeof *x);
     if (x == NULL) {
-	free(tmplist);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    startlen = get_starting_length(list, pdinfo, 3); /* ?? */
+     startlen = get_starting_length(list, pdinfo, 3);
 
     for (i=1; i<=list[0] && !err; i++) {
 	int vi = list[i];
 	int nuniq, tnum;
 	int jmin, jmax;
 	double xt;
-
-	if (screen_out_var(vi, *pZ, pdinfo, DUMMIFY)) {
-	    continue;
-	}
 
 	n = 0;
 	for (t=0; t<pdinfo->n; t++) {
@@ -1199,6 +1348,8 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 
     free(x);
 
+ bailout:
+
     if (!err) {
 	free(*plist);
 	*plist = tmplist;
@@ -1208,6 +1359,8 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     } else {
 	free(tmplist);
     }
+
+    destroy_mangled_names();
 
     return err;
 }
