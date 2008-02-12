@@ -1774,7 +1774,8 @@ int cli_read_rc (PATHS *paths)
 	s = getcwd(cwd, MAXLEN);
 	if (s != NULL) {
 	    *paths->workdir = '\0';
-	    strncat(paths->workdir, s, MAXLEN - 1);
+	    strncat(paths->workdir, s, MAXLEN - 2);
+	    ensure_slash(paths->workdir);
 	}
     }
 
