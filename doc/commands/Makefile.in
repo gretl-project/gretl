@@ -216,8 +216,6 @@ help-all: $(HLPSTAMP) $(FIGSTAMP) $(GENSTAMP)
 check: validate 
 	-./validate $(CMDSDIR)/gretl_commands.xml
 	-./validate $(CMDSDIR)/gretl_commands_it.xml
-	-./validate $(CMDSDIR)/gretl_funcs.xml
-	-./validate $(CMDSDIR)/gretl_funcs_it.xml
 
 docclean:
 	 rm -f *.txt *.xml
