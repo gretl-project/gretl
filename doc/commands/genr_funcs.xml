@@ -1953,14 +1953,20 @@
       </description>
     </function>
 
-    <function name="mean" output="scalar">
+    <function name="mean" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The sample mean of the non-missing observations in series
-	  <argname>y</argname>.
+	  If <argname>x</argname> is a series, returns the (scalar) sample
+	  mean, skipping any missing observations.
+	</para>
+	<para>
+	  If <argname>x</argname> is a list, returns a series <math>y</math>
+	  such that <math>y</math><sub>t</sub> is the mean of the values of
+	  the variables in the list at observation <math>t</math>, or
+	  <lit>NA</lit> if there are any missing values at <math>t</math>.
 	</para>
       </description>
     </function>
@@ -3007,14 +3013,23 @@
       </description>
     </function>
 
-    <function name="sd" output="scalar">
+    <function name="sd" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>     
       <description>
 	<para>
-	  Sample standard deviation of the non-missing observations in
-	  series <argname>y</argname>. 
+	  If <argname>x</argname> is a series, returns the (scalar) sample
+	  standard deviation, skipping any missing observations.
+	</para>
+	<para>
+	  If <argname>x</argname> is a list, returns a series <math>y</math>
+	  such that <math>y</math><sub>t</sub> is the sample standard
+	  deviation of the values of the variables in the list at observation
+	  <math>t</math>, or <lit>NA</lit> if there are any missing values at
+	  <math>t</math>.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="var"/>
 	  </seelist>
@@ -3414,17 +3429,26 @@
       </description>
     </function>
 
-    <function name="var" output="scalar">
+    <function name="var" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">x</fnarg>
       </fnargs>     
       <description>
 	<para>
-	  Sample variance of the non-missing observations in
-	  <math>y</math>; the sum of squared deviations from the mean is
-	  divided by (<math>n</math> &minus; 1) for <math>n</math> &gt; 1.
-	  If <math>n</math> = 1, zero is returned; if <math>n</math> = 0,
-	  <lit>NA</lit> is returned. 
+	  If <argname>x</argname> is a series, returns the (scalar) sample
+	  variance, skipping any missing observations.
+	</para>
+	<para>
+	  If <argname>x</argname> is a list, returns a series <math>y</math>
+	  such that <math>y</math><sub>t</sub> is the sample variance of the
+	  values of the variables in the list at observation <math>t</math>,
+	  or <lit>NA</lit> if there are any missing values at <math>t</math>.
+	</para>
+	<para>
+	  In each case the sum of squared deviations from the mean is divided
+	  by (<math>n</math> &minus; 1) for <math>n</math> &gt; 1. Otherwise
+	  the variance is given as zero if <math>n</math> = 1, or as
+	  <lit>NA</lit> if <math>n</math> = 0.
 	</para>
 	<para>
 	  <seelist>
@@ -3464,6 +3488,88 @@
 	    <fncref targ="vec"/>
 	  </seelist>
 	</para>
+      </description>
+    </function>
+
+    <function name="wmean" output="series">
+      <fnargs>
+	<fnarg type="list">Y</fnarg>
+	<fnarg type="list">W</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
+	  is the weighted mean of the values of the variables in list
+	  <argname>Y</argname> at observation <math>t</math>, the respective
+	  weights given by the values of the variables in list
+	  <argname>W</argname> at <math>t</math>.  The weights can therefore
+	  be time-varying. The lists <argname>Y</argname> and
+	  <argname>W</argname> must be of the same length and the weights must
+	  be non-negative.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="wsd"/>
+	    <fncref targ="wvar"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="wsd" output="series">
+      <fnargs>
+	<fnarg type="list">Y</fnarg>
+	<fnarg type="list">W</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
+	  is the weighted sample standard deviation of the values of the
+	  variables in list <argname>Y</argname> at observation
+	  <math>t</math>, the respective weights given by the values of the
+	  variables in list <argname>W</argname> at <math>t</math>.  The
+	  weights can therefore be time-varying. The lists
+	  <argname>Y</argname> and <argname>W</argname> must be of the same
+	  length and the weights must be non-negative.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="wmean"/>
+	    <fncref targ="wvar"/>
+	  </seelist>
+	</para> 
+      </description>
+    </function>
+
+    <function name="wvar" output="series">
+      <fnargs>
+	<fnarg type="list">X</fnarg>
+	<fnarg type="list">W</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns a series <math>y</math> such that <math>y</math><sub>t</sub>
+	  is the weighted sample variance of the values of the
+	  variables in list <argname>X</argname> at observation
+	  <math>t</math>, the respective weights given by the values of the
+	  variables in list <argname>W</argname> at <math>t</math>.  The
+	  weights can therefore be time-varying. The lists
+	  <argname>Y</argname> and <argname>W</argname> must be of the same
+	  length and the weights must be non-negative.
+	</para>
+	<para context="tex">
+	  The weighted sample variance is computed as
+	  \[ s^2_w = \frac{n'}{n'-1} \,
+	  \frac{\sum_{i=1}^n w_i(x_i - \bar{x}_w)^2}{\sum_{i=1}^n w_i} \]
+	  where $n'$ is the number of non-zero weights and $\bar{x}_w$ is
+	  the weighted mean.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="wmean"/>
+	    <fncref targ="wsd"/>
+	  </seelist>
+	</para> 
       </description>
     </function>
 

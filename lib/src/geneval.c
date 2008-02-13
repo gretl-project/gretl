@@ -44,14 +44,13 @@
 
 #define series_node(n) (n->t == VEC &&(n->flags & UVEC_NODE)) 
 
-#define ok_lcat_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
+#define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
 			 n->t == USERIES || n->t == MAT || n->t == EMPTY || \
 			 (n->t == VEC && (n->flags & UVEC_NODE)) || \
 			 (n->t == DUM && n->v.idnum == DUM_DATASET))
 
 #define series_type(t) (t == VEC || t == USERIES)
 #define uvar_type(t) (t == USCLR || t == USERIES)
-#define list_type(t) (t == LIST || t == LVEC)
 
 #define getvec(n,p) ((n->flags & UVEC_NODE)? \
 		     (*p->Z)[n->v.idnum] : n->v.xvec)
@@ -65,6 +64,8 @@ static void printnode (const NODE *t, const parser *p);
 static NODE *eval (NODE *t, parser *p);
 
 static void node_type_error (int ntype, int goodt, NODE *bad, parser *p);
+
+static int *node_get_list (NODE *n, parser *p);
 
 static const char *typestr (int t)
 {
@@ -80,6 +81,9 @@ static const char *typestr (int t)
 	return "string";
     case U_ADDR:
 	return "address";
+    case LIST:
+    case LVEC:
+	return "list";
     default:
 	return "?";
     }
@@ -2252,14 +2256,12 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
     }
 
     if (ret != NULL && starting(p)) {
-	int *src = (n->t == LVEC)? n->v.ivec : 
-	    get_list_by_name(n->v.str);
-	int *list = gretl_list_copy(src);
+	int *list = node_get_list(n, p);
 	int t = 0;
 
-	if (list == NULL) {
-	    p->err = E_ALLOC;
-	} else {
+	/* note: list is modified below */
+
+	if (list != NULL) {
 	    switch (f) {
 	    case LOG:
 		p->err = list_loggenr(list, p->Z, p->dinfo);
@@ -2275,7 +2277,6 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 	    default:
 		break;
 	    }
-
 	    ret->v.ivec = list;
 	}
     }
@@ -2433,28 +2434,32 @@ static NODE *list_to_series_func (NODE *n, int f, parser *p)
 	int *list = node_get_list(n, p);
 
 	if (list != NULL) {
-	    const double **Z = (const double **) *p->Z;
-
-	    switch (f) {
-	    case MEAN:
-		p->err = cross_sectional_mean(ret->v.xvec,
-					      list, 
-					      Z, p->dinfo);
-		break;
-	    case SD:
-		p->err = cross_sectional_stddev(ret->v.xvec,
-						list,
-						Z, p->dinfo);
-		break;
-	    case VCE:
-		p->err = cross_sectional_variance(ret->v.xvec,
-						  list,
-						  Z, p->dinfo);
-		break;
-	    default:
-		break;
-	    }
+	    p->err = cross_sectional_stat(ret->v.xvec, list,
+					  (const double **) *p->Z, 
+					  p->dinfo, f);
+	    free(list);
 	}
+    }
+
+    return ret;
+}
+
+static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	int *llist = node_get_list(l, p);
+	int *rlist = node_get_list(r, p);
+
+	if (llist != NULL && rlist != NULL) {
+	    p->err = x_sectional_weighted_stat(ret->v.xvec,
+					       llist, rlist,
+					       (const double **) *p->Z, 
+					       p->dinfo, f);
+	}
+	free(llist);
+	free(rlist);
     }
 
     return ret;
@@ -2467,13 +2472,14 @@ static NODE *list_ok_func (NODE *n, parser *p)
     NODE *ret = aux_vec_node(p, p->dinfo->n);
 
     if (ret != NULL && starting(p)) {
-	const int *list = get_list_by_name(n->v.str);
+	int *list = node_get_list(n, p);
 	int allbad = 0;
 	int nseries = 0;
 	int i, v, t;
 	double x;
 
 	if (list == NULL || list[0] == 0) {
+	    free(list);
 	    return ret;
 	}
 
@@ -2506,6 +2512,8 @@ static NODE *list_ok_func (NODE *n, parser *p)
 		ret->v.xvec[t] = x;
 	    }
 	}
+
+	free(list);
     }
 
     return ret;
@@ -4522,7 +4530,7 @@ static NODE *eval (NODE *t, parser *p)
 		   r->t == STR) {
 	    ret = number_string_calc(l, r, t->t, p);
 	} else if ((t->t == B_AND || t->t == B_OR) &&
-		   ok_lcat_node(l) && ok_lcat_node(r)) {
+		   ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_and_or(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -4584,7 +4592,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case LLAG:
-	if (l->t == NUM && (series_node(r) || list_type(r->t))) {
+	if (l->t == NUM && ok_list_node(r)) {
 	    ret = list_gen_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; 
@@ -4621,7 +4629,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
-	} else if (list_type(l->t) && t->t == LOG) {
+	} else if (ok_list_node(l) && t->t == LOG) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -4629,7 +4637,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case DUMIFY:
 	/* series or list argument */ 
-	if (series_node(l) || list_type(l->t)) {
+	if (ok_list_node(l)) {
 	    ret = list_gen_func(l, NULL, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -4699,7 +4707,7 @@ static NODE *eval (NODE *t, parser *p)
     case SDIF:
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
-	} else if (list_type(l->t)) {
+	} else if (ok_list_node(l)) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
@@ -4727,7 +4735,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);
-	} else if (list_type(l->t)) {
+	} else if (ok_list_node(l) && t->t == DIF) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
@@ -4763,7 +4771,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_scalar_func(l, t->t, p);
 	} else if ((t->t == MEAN || t->t == SD || t->t == VCE)
-		   && ok_lcat_node(l)) {
+		   && ok_list_node(l)) {
 	    /* list -> series also acceptable for these cases */
 	    ret = list_to_series_func(l, t->t, p);
 	} else {
@@ -5012,12 +5020,22 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case LCAT:
 	/* list concatenation */
-	if (ok_lcat_node(l) && ok_lcat_node(r)) {
+	if (ok_list_node(l) && ok_list_node(r)) {
 	    ret = eval_lcat(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
 	break;
+    case WMEAN:
+    case WVAR:
+    case WSD:
+	/* two lists -> series */
+	if (ok_list_node(l) && ok_list_node(r)) {
+	    ret = list_list_series_func(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;	
     default: 
 	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);
@@ -6161,7 +6179,7 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_MISSDATA;
 	}
     } else if (p->targ == LIST) {
-	if (r->t != EMPTY && !ok_lcat_node(r)) {
+	if (r->t != EMPTY && !ok_list_node(r)) {
 	    p->err = E_TYPES;
 	} 
     } else {

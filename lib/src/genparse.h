@@ -206,49 +206,52 @@ enum {
 	      MRSEL,
               MCSEL,
 	      LLAG,
-              F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+	      WMEAN,
+	      WVAR,
+  /* 180 */   WSD,
+	      F2_MAX,	  /* SEPARATOR: end of two-arg functions */
               MSHAPE,
-  /* 180 */   SVD,
+	      SVD,
               MOLS,
 	      FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 	      COM,	  /* comma */
               DOT,	  /* period */
 	      SEMI,	  /* semi-colon */
 	      COL,	  /* colon */
-	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
+  /* 190 */   PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
-  /* 190 */   USCLR,	  /* user variable, scalar */
+	      USCLR,	  /* user variable, scalar */
               USERIES,	  /* user variable, series */
 	      UMAT,	  /* user-defined matrix */
 	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
               IVEC,	  /* vector of integers, evaluated */
-	      LVEC,       /* list, as array of ints */
+  /* 200 */   LVEC,       /* list, as array of ints */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
-  /* 200 */   MSL,	  /* matrix plus subspec */
+	      MSL,	  /* matrix plus subspec */
               DMSL,	  /* "dollar" matrix plus subspec */
 	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
 	      MSL2,	  /* unevaluated matrix subspec */
               MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
-              LAG,	  
+  /* 210 */   LAG,	  
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
-  /* 210 */   OVAR,	  /* object variable: variable "under" an object */
+	      OVAR,	  /* object variable: variable "under" an object */
               LOOPIDX,	  /* loop index variable */
 	      LIST,	  /* reference to named list */
 	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,
 	      ABSENT,
-	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
+  /* 220 */   DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
-  /* 220 */   INC,   
+	      INC,   
               DEC,
 	      QUERY,
 	      EOT,	  /* end of transmission */
@@ -462,8 +465,19 @@ const char *dumname (int t);
 /* handling declarations of variables */
 int check_declarations (char ***pS, parser *p);
 
-/* handling sorted market strings */
+/* handling sorted marker strings */
 int maybe_pick_up_sorted_markers (parser *p);
+
+/* in genfuncs.c, used only internally */
+int cross_sectional_stat (double *x, const int *list, 
+			  const double **Z, 
+			  const DATAINFO *pdinfo,
+			  int f);
+int x_sectional_weighted_stat (double *x, const int *list, 
+			       const int *wlist,
+			       const double **Z, 
+			       const DATAINFO *pdinfo,
+			       int f);
 
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);

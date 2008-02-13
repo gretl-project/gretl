@@ -1737,49 +1737,113 @@ int check_declarations (char ***pS, parser *p)
     return n;
 }
 
-int cross_sectional_mean (double *x, const int *list, 
-			  const double **Z, 
-			  const DATAINFO *pdinfo)
+static double mean_at_obs (const int *list, const double **Z, int t)
 {
-    double xbar;
+    double xi, xsum = 0.0;
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	xi = Z[list[i]][t];
+	if (na(xi)) {
+	    return NADBL;
+	}
+	xsum += xi;
+    }
+
+    return xsum / list[0];
+}
+
+static double weighted_mean_at_obs (const int *list, const int *wlist,
+				    const double **Z, int t,
+				    double *pwsum, int *pm)
+{
+    double w, xi, wsum = 0.0, wxbar = 0.0;
+    int i, m = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	w = Z[wlist[i]][t];
+	if (na(w) || w < 0.0) {
+	    return NADBL;
+	}
+	if (w > 0.0) {
+	    wsum += w;
+	    m++;
+	}
+    }
+
+    if (wsum <= 0.0) {
+	return NADBL;
+    }
+
+    if (pwsum != NULL) {
+	*pwsum = wsum;
+    }
+
+    if (pm != NULL) {
+	*pm = m;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	xi = Z[list[i]][t];
+	if (na(xi)) {
+	    return NADBL;
+	}
+	w = Z[wlist[i]][t] / wsum;
+	wxbar += xi * w;
+    }
+
+    return wxbar;
+}
+
+/* Computes weighted mean of the variables in list using the
+   (possibly time-varying) weights given in wtlist.
+*/
+
+static int x_sectional_weighted_mean (double *x, const int *list, 
+				      const int *wlist,
+				      const double **Z, 
+				      const DATAINFO *pdinfo)
+{
     int n = list[0];
-    int i, t, v;
+    int t, v;
+
+    if (wlist != NULL && wlist[0] != n) {
+	return E_DATA;
+    }
 
     if (n == 0) {
 	return 0;
     } else if (n == 1) {
 	v = list[1];
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    x[t] = Z[v][t];
+	    x[t] = Z[v][t]; 
 	}
 	return 0;
     }
-	
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xbar = 0.0;
-	for (i=1; i<=list[0]; i++) {
-	    v = list[i];
-	    if (na(Z[v][t])) {
-		xbar = NADBL;
-		break;
-	    } else {
-		xbar += Z[v][t];
-	    }
+	if (wlist != NULL) {
+	    x[t] = weighted_mean_at_obs(list, wlist, Z, t, NULL, NULL);
+	} else {
+	    x[t] = mean_at_obs(list, Z, t);
 	}
-	x[t] = (na(xbar))? xbar : xbar / n;
     }
 
     return 0;
 }
 
-int cross_sectional_variance (double *x, const int *list, 
-			      const double **Z, 
-			      const DATAINFO *pdinfo)
+static int x_sectional_wtd_variance (double *x, const int *list,
+				     const int *wlist,
+				     const double **Z, 
+				     const DATAINFO *pdinfo)
 {
-    double xdev, xbar;
-    int n = list[0];
+    double xdev, xbar, wsum;
+    int m = 0, n = list[0];
     int i, t, v;
+
+    if (wlist != NULL && wlist[0] != n) {
+	return E_DATA;
+    }
 
     if (n == 0) {
 	return 0;
@@ -1791,40 +1855,47 @@ int cross_sectional_variance (double *x, const int *list,
     }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xbar = 0.0;
-	for (i=1; i<=list[0]; i++) {
-	    v = list[i];
-	    if (na(Z[v][t])) {
-		xbar = NADBL;
-		break;
-	    } else {
-		xbar += Z[v][t];
-	    }
+	if (wlist != NULL) {
+	    xbar = weighted_mean_at_obs(list, wlist, Z, t, &wsum, &m);
+	} else {
+	    xbar = mean_at_obs(list, Z, t);
 	}
 	if (na(xbar)) {
 	    x[t] = NADBL;
 	    continue;
 	}
-	xbar /= n;
+	if (wlist != NULL && m < 2) {
+	    x[t] = (m == 1)? 0.0 : NADBL;
+	    continue;
+	}
 	x[t] = 0.0;
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
 	    xdev = Z[v][t] - xbar;
-	    x[t] += xdev * xdev;
-	}	
-	x[t] /= (n - 1);
+	    if (wlist != NULL) {
+		x[t] += xdev * xdev * Z[wlist[i]][t] / wsum;
+	    } else {
+		x[t] += xdev * xdev;
+	    }
+	}
+	if (wlist != NULL) {
+	    x[t] *= m / (m - 1);
+	} else {
+	    x[t] /= (n - 1);
+	}
     }
 
     return 0;
 }
 
-int cross_sectional_stddev (double *x, const int *list, 
-			    const double **Z, 
-			    const DATAINFO *pdinfo)
+static int x_sectional_wtd_stddev (double *x, const int *list, 
+				   const int *wlist,
+				   const double **Z, 
+				   const DATAINFO *pdinfo)
 {
     int t, err;
 
-    err = cross_sectional_variance(x, list, Z, pdinfo);
+    err = x_sectional_wtd_variance(x, list, wlist, Z, pdinfo);
 
     if (!err) {
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -1835,4 +1906,37 @@ int cross_sectional_stddev (double *x, const int *list,
     }
 
     return err;
+}
+
+int cross_sectional_stat (double *x, const int *list, 
+			  const double **Z, 
+			  const DATAINFO *pdinfo,
+			  int f)
+{
+    if (f == MEAN) {
+	return x_sectional_weighted_mean(x, list, NULL, Z, pdinfo);
+    } else if (f == VCE) {
+	return x_sectional_wtd_variance(x, list, NULL, Z, pdinfo);
+    } else if (f == SD) {
+	return x_sectional_wtd_stddev(x, list, NULL, Z, pdinfo);
+    } else {
+	return E_DATA;
+    }
+}
+
+int x_sectional_weighted_stat (double *x, const int *list, 
+			       const int *wlist,
+			       const double **Z, 
+			       const DATAINFO *pdinfo,
+			       int f)
+{
+    if (f == WMEAN) {
+	return x_sectional_weighted_mean(x, list, wlist, Z, pdinfo);
+    } else if (f == WVAR) {
+	return x_sectional_wtd_variance(x, list, wlist, Z, pdinfo);
+    } else if (f == WSD) {
+	return x_sectional_wtd_stddev(x, list, wlist, Z, pdinfo);
+    } else {
+	return E_DATA;
+    }
 }

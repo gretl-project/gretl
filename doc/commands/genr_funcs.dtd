@@ -35,7 +35,7 @@
    name    CDATA #REQUIRED
    targ    CDATA #IMPLIED
    output  (scalar | series | matrix | smatrix |
-            rvec | cvec | list | asinput) "series"
+            rvec | cvec | list | asinput | scalar-or-series) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 

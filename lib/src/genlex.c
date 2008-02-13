@@ -255,6 +255,9 @@ struct str_table funcs[] = {
     { MCSEL,    "selifc" },
     { POLROOTS, "polroots" },
     { DUMIFY,   "dummify" },
+    { WMEAN,    "wmean" },
+    { WVAR,     "wvar" },
+    { WSD,      "wsd" },
     { 0,        NULL }
 };
 
