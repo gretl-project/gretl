@@ -2192,6 +2192,7 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 
     return ret;
 }
+
 /* argument is series or list; value returned is list in either
    case */
 
@@ -2417,6 +2418,43 @@ static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
 	ret->v.ivec = list;
 	free(llist);
 	free(rlist);
+    }
+
+    return ret;
+}
+
+/* argument is list; value returned is series */
+
+static NODE *list_to_series_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	int *list = node_get_list(n, p);
+
+	if (list != NULL) {
+	    const double **Z = (const double **) *p->Z;
+
+	    switch (f) {
+	    case MEAN:
+		p->err = cross_sectional_mean(ret->v.xvec,
+					      list, 
+					      Z, p->dinfo);
+		break;
+	    case SD:
+		p->err = cross_sectional_stddev(ret->v.xvec,
+						list,
+						Z, p->dinfo);
+		break;
+	    case VCE:
+		p->err = cross_sectional_variance(ret->v.xvec,
+						  list,
+						  Z, p->dinfo);
+		break;
+	    default:
+		break;
+	    }
+	}
     }
 
     return ret;
@@ -4724,6 +4762,10 @@ static NODE *eval (NODE *t, parser *p)
 	/* functions taking series arg, returning scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_scalar_func(l, t->t, p);
+	} else if ((t->t == MEAN || t->t == SD || t->t == VCE)
+		   && ok_lcat_node(l)) {
+	    /* list -> series also acceptable for these cases */
+	    ret = list_to_series_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	} 

@@ -77,4 +77,17 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo);
 int get_t_from_obs_string (const char *s, const double **Z, 
 			   const DATAINFO *pdinfo);
 
+int cross_sectional_mean (double *x, const int *list, 
+			  const double **Z, 
+			  const DATAINFO *pdinfo);
+
+int cross_sectional_variance (double *x, const int *list, 
+			      const double **Z, 
+			      const DATAINFO *pdinfo);
+
+int cross_sectional_stddev (double *x, const int *list, 
+			    const double **Z, 
+			    const DATAINFO *pdinfo);
+
+
 #endif /* GENFUNCS_H */

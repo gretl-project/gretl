@@ -1737,3 +1737,101 @@ int check_declarations (char ***pS, parser *p)
     return n;
 }
 
+int cross_sectional_mean (double *x, const int *list, 
+			  const double **Z, 
+			  const DATAINFO *pdinfo)
+{
+    double xbar;
+    int n = list[0];
+    int i, t, v;
+
+    if (n == 0) {
+	return 0;
+    } else if (n == 1) {
+	v = list[1];
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    x[t] = Z[v][t];
+	}
+	return 0;
+    }
+	
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xbar = 0.0;
+	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
+	    if (na(Z[v][t])) {
+		xbar = NADBL;
+		break;
+	    } else {
+		xbar += Z[v][t];
+	    }
+	}
+	x[t] = (na(xbar))? xbar : xbar / n;
+    }
+
+    return 0;
+}
+
+int cross_sectional_variance (double *x, const int *list, 
+			      const double **Z, 
+			      const DATAINFO *pdinfo)
+{
+    double xdev, xbar;
+    int n = list[0];
+    int i, t, v;
+
+    if (n == 0) {
+	return 0;
+    } else if (n == 1) {
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    x[t] = 0.0;
+	}
+	return 0;
+    }
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xbar = 0.0;
+	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
+	    if (na(Z[v][t])) {
+		xbar = NADBL;
+		break;
+	    } else {
+		xbar += Z[v][t];
+	    }
+	}
+	if (na(xbar)) {
+	    x[t] = NADBL;
+	    continue;
+	}
+	x[t] = 0.0;
+	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
+	    xdev = Z[v][t] - xbar;
+	    x[t] += xdev * xdev;
+	}	
+	x[t] /= (n - 1);
+    }
+
+    return 0;
+}
+
+int cross_sectional_stddev (double *x, const int *list, 
+			    const double **Z, 
+			    const DATAINFO *pdinfo)
+{
+    int t, err;
+
+    err = cross_sectional_variance(x, list, Z, pdinfo);
+
+    if (!err) {
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    if (!na(x[t])) {
+		x[t] = sqrt(x[t]);
+	    }
+	}
+    }
+
+    return err;
+}
