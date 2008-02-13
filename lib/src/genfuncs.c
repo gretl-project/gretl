@@ -1737,6 +1737,9 @@ int check_declarations (char ***pS, parser *p)
     return n;
 }
 
+/* cross-sectional mean of observations on variables in @list
+   at time @t */
+
 static double mean_at_obs (const int *list, const double **Z, int t)
 {
     double xi, xsum = 0.0;
@@ -1752,6 +1755,9 @@ static double mean_at_obs (const int *list, const double **Z, int t)
 
     return xsum / list[0];
 }
+
+/* weighted cross-sectional mean of observations on variables in @list
+   at time @t, weights given in @wlist */
 
 static double weighted_mean_at_obs (const int *list, const int *wlist,
 				    const double **Z, int t,
@@ -1795,8 +1801,9 @@ static double weighted_mean_at_obs (const int *list, const int *wlist,
     return wxbar;
 }
 
-/* Computes weighted mean of the variables in list using the
-   (possibly time-varying) weights given in wtlist.
+/* Computes weighted mean of the variables in @list using the
+   (possibly time-varying) weights given in @wlist, or the
+   unweighted mean if @wlist is NULL.
 */
 
 static int x_sectional_weighted_mean (double *x, const int *list, 
@@ -1812,7 +1819,7 @@ static int x_sectional_weighted_mean (double *x, const int *list,
     }
 
     if (n == 0) {
-	return 0;
+	return 0; /* all NAs */
     } else if (n == 1) {
 	v = list[1];
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -1832,6 +1839,11 @@ static int x_sectional_weighted_mean (double *x, const int *list,
     return 0;
 }
 
+/* Computes weighted sample variance of the variables in @list using
+   the (possibly time-varying) weights given in @wlist, or the
+   unweighted sample variance if @wlist is NULL
+*/
+
 static int x_sectional_wtd_variance (double *x, const int *list,
 				     const int *wlist,
 				     const double **Z, 
@@ -1846,7 +1858,7 @@ static int x_sectional_wtd_variance (double *x, const int *list,
     }
 
     if (n == 0) {
-	return 0;
+	return 0; /* all NAs */
     } else if (n == 1) {
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    x[t] = 0.0;
