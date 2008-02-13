@@ -1805,6 +1805,7 @@ int cross_sectional_variance (double *x, const int *list,
 	    x[t] = NADBL;
 	    continue;
 	}
+	xbar /= n;
 	x[t] = 0.0;
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
