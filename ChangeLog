@@ -34,6 +34,8 @@ version 1.7.2, in progress
 - Add systematic documentation for the functions available
   in the genr command 
 - Enable "append" command in loops
+- Ordered logit and probit: don't insist that the dependent
+  variable has a minimum of zero
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

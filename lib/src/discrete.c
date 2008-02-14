@@ -800,18 +800,10 @@ ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
 {
     if (!var_is_discrete(pdinfo, v) && 
 	!gretl_is_oprobit_ok(pdinfo->t1, pdinfo->t2, Z[v])) {
-	sprintf(gretl_errmsg, "The variable '%s' is not discrete",
+	sprintf(gretl_errmsg, _("The variable '%s' is not discrete"),
 		pdinfo->varname[v]);
 	return 0;
-    } else {
-	double m = gretl_min(pdinfo->t1, pdinfo->t2, Z[v]);
-
-	if (m != 0.0) {
-	    sprintf(gretl_errmsg, "The minimum value of '%s' is not 0",
-		    pdinfo->varname[v]);
-	    return 0;
-	}
-    }
+    } 
 
     return 1;
 }

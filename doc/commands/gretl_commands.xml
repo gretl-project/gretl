@@ -4472,11 +4472,9 @@
 	MacKinnon (2004, Chapter 10) for details.
       </para>
       <para>
-	If the dependent variable is not binary, but is discrete and has a
-	minimum value of 0, then Ordered Logit estimates are obtained.  In
-	this case robust standard errors are not yet available.  (If the
-	variable selected as dependent is not discrete, or does not have a
-	minimum of zero, an error is flagged.)
+	If the dependent variable is not binary but is discrete, then Ordered
+	Logit estimates are obtained.  (If the variable selected as dependent
+	is not discrete, an error is flagged.)
       </para>
       <para>
 	If you want to use logit for analysis of proportions (where
@@ -6263,12 +6261,9 @@
 	MacKinnon (2004, Chapter 10) for details.
       </para>
       <para>
-	If the dependent variable is not binary, but is discrete and
-	has a minimum value of 0, then Ordered Probit estimates are
-	obtained.  In this case robust standard errors are not yet
-	available.  (If the variable selected as dependent is not
-	discrete, or does not have a minimum of zero, an error is
-	flagged.)
+	If the dependent variable is not binary but is discrete, then Ordered
+	Probit estimates are obtained.  (If the variable selected as dependent
+	is not discrete, an error is flagged.)
       </para>
       <para>
 	Probit for analysis of proportions is not implemented in

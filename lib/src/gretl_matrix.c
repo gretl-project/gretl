@@ -2092,7 +2092,6 @@ void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg)
 
 void debug_print_matrix (const gretl_matrix *m, const char *msg)
 {
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
     char full[64] = {0};
 
     if (msg != NULL) {
@@ -2102,8 +2101,20 @@ void debug_print_matrix (const gretl_matrix *m, const char *msg)
 	sprintf(full, " (%p)", (void *) m);
     }
 
-    gretl_matrix_print_to_prn(m, full, prn);
-    gretl_print_destroy(prn);
+    if (m != NULL) {
+	int i, n = m->rows * m->cols;
+	int d = (int) ceil(log10((double) n));
+
+	fprintf(stderr, "%s\n", full);
+	for (i=0; i<n; i++) {
+	    fprintf(stderr, "val[%0*d] = % .10E\n", d, i, m->val[i]);
+	}
+    } else {
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+
+	gretl_matrix_print_to_prn(m, full, prn);
+	gretl_print_destroy(prn);
+    }
 }
 
 #define DEFAULT_EQTOL 1.5e-12

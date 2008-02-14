@@ -32,6 +32,7 @@ struct op_container_ {
     int *y;           /* dependent variable */
     double **Z;       /* data */
     int *list;
+    int m;            /* min of y */
     int M;            /* max of y */
     int t1;           /* beginning of sample */
     int t2;           /* end of sample */
@@ -84,13 +85,14 @@ static void op_container_destroy (op_container *OC)
     free(OC);
 }
 
-static op_container *op_container_new (int type, double **Z, MODEL *pmod, 
+static op_container *op_container_new (int type, double **Z, MODEL *pmod,  
 				       gretlopt opt)
 {
+    op_container *OC;
     int i, t, nx, vy;
     int nobs = pmod->nobs;
 
-    op_container *OC = malloc(sizeof *OC);
+    OC = malloc(sizeof *OC);
     if (OC == NULL) {
 	return NULL;
     }
@@ -105,7 +107,9 @@ static op_container *op_container_new (int type, double **Z, MODEL *pmod,
     OC->k = pmod->ncoeff;
 
     vy = pmod->list[1];
+    OC->m = (int) gretl_min(OC->t1, OC->t2, Z[vy]);
     OC->M = (int) gretl_max(OC->t1, OC->t2, Z[vy]);
+    OC->M -= OC->m;
     nx = OC->k - (OC->M - 1);
     OC->nx = nx;
     OC->opt = opt;
@@ -134,7 +138,7 @@ static op_container *op_container_new (int type, double **Z, MODEL *pmod,
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    OC->y[i++] = (int) Z[vy][t];
+	    OC->y[i++] = (int) Z[vy][t] - OC->m;
 	}
     }
 
@@ -175,6 +179,7 @@ static int compute_probs (const double *theta, op_container *OC)
     }
 
     s = 0;
+
     for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
 	if (na(OC->pmod->uhat[t])) {
 #if ODEBUG > 1
@@ -184,6 +189,7 @@ static int compute_probs (const double *theta, op_container *OC)
 	}
 
 	yt = OC->y[s];
+
 	if (yt == 0) {
 	    ystar1 = OC->ndx[s];
 	} else if (yt == 1) {
@@ -286,11 +292,10 @@ static int bad_cutpoints (const double *theta, const op_container *OC)
 
 static double op_loglik (const double *theta, void *ptr)
 {
+    op_container *OC = (op_container *) ptr;
     double x, ll = 0.0;
     int err;
     int i, s, t, v;
-    
-    op_container *OC = (op_container *) ptr;
     
     if (bad_cutpoints(theta, OC)) {
 #if ODEBUG > 1
@@ -413,16 +418,11 @@ static int ihess_from_ascore (op_container *OC, double *theta, gretl_matrix *inH
 	theta[i] -= smal;
     }
 
-    /* make symmetric */
-    for (i=0; i<k; i++) {
-	for (j=i+1; j<k; j++) {
-	    x = 0.5 * (gretl_matrix_get(inH, i, j) + gretl_matrix_get(inH, j, i));
-	    gretl_matrix_set(inH, i, j, x);
-	    gretl_matrix_set(inH, j, i, x);
-	}
-    }
+    gretl_matrix_xtr_symmetric(inH);
 
     free(g0);
+
+    gretl_matrix_print(inH, "H");
 
     err = gretl_invert_symmetric_matrix(inH);
 
@@ -527,7 +527,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 {
     int npar = OC->k;
     int nx = OC->nx;
-    double x, y;
+    double x;
     int i, j, k, s, t, v;
 
     pmod->t1 = OC->t1;
@@ -581,7 +581,6 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 
 	/* X\hat{beta} */
 	pmod->yhat[t] = x;
-	y = OC->Z[OC->list[1]][t];
 	pred = get_pred(OC, pmod, x); /* should we do anything with this? */
 	/* compute generalized residual */
 	pmod->uhat[t] = gen_resid(theta, OC, s++);
@@ -661,6 +660,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		       gretlopt opt, PRN *prn)
 {
+    op_container *OC;
     int i, npar;
     gretl_matrix *V = NULL;
     double *theta = NULL;
@@ -679,7 +679,7 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	opt &= ~OPT_R;
     }
 
-    op_container *OC = op_container_new(ci, Z, pmod, opt);
+    OC = op_container_new(ci, Z, pmod, opt);
     if (OC == NULL) {
 	return E_ALLOC;
     }
@@ -696,6 +696,10 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	theta[i] = pmod->coeff[i];
     }
 
+    if (OC->m != 0) {
+	theta[0] -= OC->m;
+    }
+
     /* 
        the following is very heuristic, has no sound theoretical 
        justification but seems to work in practice. So much
@@ -706,11 +710,10 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	theta[i] = 0.5 * pmod->coeff[i];
     }
 
-
 #if ODEBUG
     fputs("Starting values:\n", stderr);
     for (i=0; i<npar; i++) {
-	fprintf(stderr, "theta[%d] = %12.8f\n", i, theta[i]);
+	fprintf(stderr, "theta[%d] = % .12E\n", i, theta[i]);
     }
     fprintf(stderr, "\ninitial loglikelihood = %12.8f\n", 
 	    op_loglik(theta, OC));
@@ -723,7 +726,7 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		   prn);
 
     if (err) {
-	return err;
+	goto bailout;
     } else {
 	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
     }
@@ -735,10 +738,14 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
     V = oprobit_vcv(OC, theta, &err);
 
 #if ODEBUG > 1
-    gretl_matrix_print(V, "Covariance matrix");
+    debug_print_matrix(V, "Covariance matrix");
 #endif
 
-    fill_model(pmod, pdinfo, OC, theta, V);
+    if (!err) {
+	fill_model(pmod, pdinfo, OC, theta, V);
+    }
+
+ bailout:
 
     free(theta);
     gretl_matrix_free(V);
@@ -761,13 +768,12 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&model);
 
-    dumlist = malloc(2 * sizeof *dumlist);
+    dumlist = gretl_list_new(1);
     if (dumlist == NULL) {
 	model.errcode = E_ALLOC;
 	return model;
     }
 
-    dumlist[0] = 1;
     dumlist[1] = list[1];
 
     model.errcode = list_dumgenr(&dumlist, pZ, pdinfo, OPT_F);
@@ -796,6 +802,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* run initial OLS */
     model = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
+	fprintf(stderr, "ordered_estimate: initial OLS failed\n");
 	goto bailout;
     }
 
@@ -807,7 +814,12 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
 #if ODEBUG > 1
     pprintf(prn, "oprobit_estimate: initial OLS\n");
-    printmodel(&model, pdinfo, OPT_NONE, prn);
+    if (1) {
+	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
+    
+	printmodel(&model, pdinfo, OPT_NONE, errprn);
+	gretl_print_destroy(errprn);
+    }
 #endif
 
     /* do the actual ordered probit analysis */
