@@ -8858,7 +8858,7 @@
         dipendente ponderata sulla sola costante ponderata.
       </para>
       <para>
-        <repl>variabile-pesi</repl> è una variabile dummy, la stima WLS
+        Se <repl>variabile-pesi</repl> è una variabile dummy, la stima WLS
         equivale a eliminare tutte le osservazioni per cui essa vale zero.
       </para>
       <para context="gui">
