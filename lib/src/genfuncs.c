@@ -466,6 +466,113 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
     return 0;
 }
 
+/**
+ * filter_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @pdinfo: data set information.
+ * @A: matrix for autoregressive polynomial.
+ * @C: matrix for moving average polynomial.
+ *
+ * Filters x according to y_t = C(L)/A(L) x_t; the matrices A and C
+ * must have two columns, or be empty. The rows of A and C must
+ * contain the coefficients for the powers other than 0 (assumed 1),
+ * with the exponents on column one and the corresponding coefficient
+ * on column two. For example, the matrix corresponding to the
+ * polynomial C(L) = 1 - 0.75 L^2 should be given as { 2, 0.75 };
+ * negative exponents are allowed.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+
+int filter_series(const double *x, double *y, const DATAINFO *pdinfo, 
+		  gretl_matrix *A, gretl_matrix *C)
+{
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int err = 0;
+
+    int t, s, i, m;
+    int amin, amax, cmin, cmax;
+
+    err = array_adjust_t1t2(x, &t1, &t2);
+    if (err) {
+	return E_DATA;
+    } 
+
+    int n = t2 - t1 + 1;
+    double *e, coef;
+    e = malloc(n * sizeof *e);
+
+    if (e==NULL) {
+	return E_ALLOC;
+    }
+
+    if (gretl_is_null_matrix(C)) {
+	s = 0;
+	for(t=t1; t<=t2; t++) {
+	    e[s++] = x[t];
+	}
+    } else {
+	cmin = cmax = 0;
+	for(i=0; i<C->rows; i++) {
+	    m = gretl_matrix_get(C,i,0);
+	    if (m<cmin) {
+		cmin = m; 
+	    } else if (m>cmax) {
+		cmax = m; 
+	    } 
+	}
+
+	s = 0;
+	for(t=t1; t<=t2; t++) {
+	    e[s] = x[t];
+	    if ((s>=cmax) && (t<=s-cmin)) {
+		for(i=0; i<C->rows; i++) {
+		    m = gretl_matrix_get(C,i,0);
+		    coef = gretl_matrix_get(C,i,1);
+		    e[s] += x[t-m]*coef;
+		} 
+	    }
+	    s++;
+	} 
+    }
+
+    if (gretl_is_null_matrix(A)) {
+	s = 0;
+	for(t=t1; t<=t2; t++) {
+	    y[t] = e[s++];
+	}
+    } else {
+	amin = amax = 0;
+	for(i=0; i<A->rows; i++) {
+	    m = gretl_matrix_get(A,i,0);
+	    if (m<amin) {
+		amin = m; 
+	    } else if (m>amax) {
+		amax = m; 
+	    } 
+	}
+
+	s = 0;
+	for(t=t1; t<=t2-amin; t++) {
+	    y[t] = e[s];
+	    for(i=0; i<A->rows; i++) {
+		m = gretl_matrix_get(A,i,0);
+		coef = gretl_matrix_get(A,i,1);
+		if (s >= m) {
+		    y[t] -= y[t-m]*coef;
+		}
+	    } 
+	    s++;
+	}
+    }
+
+    free(e);
+    return err;
+}
+
 int panel_mean_series (const double *x, double *y, const DATAINFO *pdinfo)
 {
     const int *unit;

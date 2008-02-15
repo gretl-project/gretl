@@ -260,6 +260,7 @@ struct str_table funcs[] = {
     { WVAR,     "wvar" },
     { WSD,      "wsd" },
     { XPX,      "xpx" },
+    { FILTER,   "filter" },
     { 0,        NULL }
 };
 

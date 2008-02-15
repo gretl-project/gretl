@@ -3742,8 +3742,48 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = user_matrix_ols(Y, X, Uname, &p->err);
 	}
+
+    } else if (t->t == FILTER) {
+	const double *x;
+	double *y = NULL;
+	gretl_matrix *A = NULL;
+	gretl_matrix *C = NULL;
+
+	if (k != 3) {
+	    n_args_error(k, 3, "filter", p);
     }	
 
+	e = eval(n->v.bn.n[0], p);
+	if (e == NULL) {
+	    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    p->err = E_DATA;
+	} else if (!series_type(e->t)) {
+	    p->err = E_TYPES;
+	} else {
+	    x = getvec(e, p);
+	}
+
+	for (i=1; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 1) {
+		A = e->v.m;
+	    } else {
+		C = e->v.m;
+	    }
+	} 
+	
+	if (!p->err) {
+	    ret = aux_vec_node(p, p->dinfo->n);
+	}
+	y = ret->v.xvec;
+	if (!p->err) {
+	    p->err = filter_series(x, y, p->dinfo, A, C);
+	}
+    }	
+
+    if (!(t->t == FILTER)) {
     if (!p->err) {
 	ret = aux_matrix_node(p);
     }
@@ -3754,7 +3794,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 	ret->v.m = m;
     }
-
+    }
     return ret;
 }
 
@@ -5015,6 +5055,7 @@ static NODE *eval (NODE *t, parser *p)
     case MSHAPE:
     case SVD:
     case MOLS:
+    case FILTER:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;
