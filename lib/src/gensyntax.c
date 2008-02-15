@@ -318,6 +318,7 @@ static NODE *base (parser *p, NODE *up)
 	break;
     case B_SUB:
     case B_ADD:
+    case B_RANGE:
     case DOT:
 	lex(p);
 	t = expr(p);
@@ -899,7 +900,7 @@ static NODE *expr4 (parser *p)
     while (!p->err && (p->sym == B_ADD || p->sym == B_SUB || 
 		       p->sym == DOTADD || p->sym == DOTSUB ||
 		       p->sym == MCCAT || p->sym == MRCAT ||
-		       p->sym == LCAT)) {
+		       p->sym == LCAT || p->sym == B_RANGE)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

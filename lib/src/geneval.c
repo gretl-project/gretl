@@ -45,8 +45,7 @@
 #define series_node(n) (n->t == VEC &&(n->flags & UVEC_NODE)) 
 
 #define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
-			 n->t == USERIES || n->t == MAT || \
-			 n->t == EMPTY || n->t == LAG || \
+			 n->t == USERIES || n->t == MAT || n->t == EMPTY || \
 			 (n->t == VEC && (n->flags & UVEC_NODE)) || \
 			 (n->t == DUM && n->v.idnum == DUM_DATASET))
 
@@ -2304,6 +2303,47 @@ static NODE *dataset_list_node (parser *p)
     return ret;
 }
 
+static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	int *list = NULL;
+	int lv = l->v.idnum;
+
+	if (r->t == IVEC) {
+	    int minlag = -r->v.ivec[0];
+	    int maxlag = -r->v.ivec[1];
+
+	    list = laggenr_from_to(lv, minlag, maxlag, p->Z, 
+				   p->dinfo, &p->err);
+	} else {
+	    int lag = -r->v.xval;
+
+	    lv = laggenr(lv, lag, p->Z, p->dinfo);
+	    if (lv > 0) {
+		list = gretl_list_new(1);
+		if (list != NULL) {
+		    list[1] = lv;
+		}
+	    }
+	}
+
+	if (list != NULL) {
+	    ret = aux_lvec_node(p);
+	    if (ret != NULL) {
+		ret->v.ivec = list;
+	    } else {
+		free(list);
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
 static int *node_get_list (NODE *n, parser *p)
 {
     int *list = NULL;
@@ -2365,21 +2405,6 @@ static int *node_get_list (NODE *n, parser *p)
 			    list[i+1] = (int) n->v.m->val[i];
 			}
 		    }
-		}
-	    }
-	}
-    } else if (n->t == LAG) {
-	NODE *l = n->v.b2.l;
-	NODE *r = eval(n->v.b2.r, p);
-	int lag, lv = l->v.idnum;
-	
-	if (r != NULL) {
-	    lag = -r->v.xval;
-	    lv = laggenr(lv, lag, p->Z, p->dinfo);
-	    if (lv > 0) {
-		list = gretl_list_new(1);
-		if (list != NULL) {
-		    list[1] = lv;
 		}
 	    }
 	}
@@ -4693,8 +4718,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case LAG:
 	if (p->targ == LIST) {
-	    /* don't evaluate here */
-	    ret = t;
+	    ret = get_lag_list(l, r, p);
 	    break;
 	}
     case OBS:
@@ -4721,7 +4745,8 @@ static NODE *eval (NODE *t, parser *p)
 	ret = mspec_node(l, r, p);
 	break;
     case SUBSL:
-	/* matrix sub-slice, x:y */
+    case B_RANGE:
+	/* matrix sub-slice, x:y or lag range 'p to q' */
 	ret = process_subslice(l, r, p);
 	break;
     case LDIF:
@@ -5265,6 +5290,8 @@ static void printnode (const NODE *t, const parser *p)
 	pputs(p->prn, "LIST");
     } else if (t->t == LVEC) {
 	pputs(p->prn, "LVEC");
+    } else if (t->t == LAG) {
+	pputs(p->prn, "LAG");
     } else if (t->t != EMPTY) {
 	pputs(p->prn, "weird tree - ");
 	printsymb(t->t, p);
@@ -6682,6 +6709,9 @@ int realgen (const char *s, parser *p, double ***pZ,
 	parser_free_aux_nodes(p);
     }
 #else
+# if EDEBUG
+    fprintf(stderr, "calling parser_free_aux_nodes\n");
+# endif
     parser_free_aux_nodes(p);
 #endif
 

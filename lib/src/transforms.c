@@ -627,7 +627,11 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 {
     int lno;
 
-    if (var_is_scalar(pdinfo, v) || lag > pdinfo->n) {
+    if (var_is_scalar(pdinfo, v)) {
+	sprintf(gretl_errmsg, _("variable %s is a scalar"), pdinfo->varname[v]);
+	lno = -1;
+    } else if (lag > pdinfo->n || -lag > pdinfo->n) {
+	sprintf(gretl_errmsg, _("Invalid lag order %d"), lag);
 	lno = -1;
     } else if (lag == 0) {
 	lno = v;
@@ -637,6 +641,67 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
     }
 
     return lno;
+}
+
+/**
+ * laggenr_from_to: 
+ * @v: ID number in dataset of source variable.
+ * @minlag: minimum lag order.
+ * @maxlag: maximum lag order.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ * @err: location to receive error code.
+ *
+ * Creates the specified lags of variable @v if they do not
+ * already exist.
+ *
+ * Returns: list of lag variables, or %NULL or on error.
+ */
+
+int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ, 
+		      DATAINFO *pdinfo, int *err)
+{
+    int *llist;
+    int i, lv, nlags = -1;
+    int p, reverse;
+
+    if (maxlag < 0) {
+	nlags = -maxlag + minlag + 1;
+    } else if (maxlag > 0) {
+	nlags = maxlag - minlag + 1;
+    } 
+
+    if (nlags <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    llist = gretl_list_new(nlags);
+    if (llist == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    reverse = (maxlag < minlag);
+    p = minlag;
+
+    for (i=0; i<nlags; i++) {
+	lv = laggenr(v, p, pZ, pdinfo);
+	if (lv < 0) {
+	    *err = E_DATA;
+	    free(llist);
+	    llist = NULL;
+	    break;
+	}
+	llist[i+1] = lv;
+	if (reverse) {
+	    p--;
+	} else {
+	    p++;
+	}
+    }
+
+    return llist;
 }
 
 /**

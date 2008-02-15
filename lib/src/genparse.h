@@ -50,6 +50,7 @@ enum {
               B_AND,
   /* 20 */    B_OR,
               B_TRMUL,
+	      B_RANGE,
               LPR,     /* left paren */
               RPR,     /* right paren */
               LBR,     /* left bracket */
@@ -57,8 +58,8 @@ enum {
               LCB,     /* left curly bracket */
               RCB,     /* right curly bracket */
               DOTMULT,
-              DOTDIV,
-  /* 30 */    DOTPOW,
+  /* 30 */    DOTDIV,
+	      DOTPOW,
               DOTADD,
               DOTSUB,
               DOTEQ,
@@ -67,8 +68,8 @@ enum {
               KRON,     /* Kronecker product */
               MCCAT,    /* matrix concatenation (columns) */
               MRCAT,    /* matrix concatenation (rows) */
-	      LCAT,     /* list concatentation */
-  /* 40 */    OP_MAX,   /* SEPARATOR: end of operators */
+  /* 40 */    LCAT,     /* list concatentation */
+	      OP_MAX,   /* SEPARATOR: end of operators */
 	      ABS,
               TOINT,
               CEIL,
@@ -77,8 +78,8 @@ enum {
 	      SIN,
 	      COS,
 	      TAN,
-	      ASIN,
-  /* 50 */    ACOS,
+  /* 50 */    ASIN,
+	      ACOS,
 	      ATAN,
 	      LOG,
 	      LOG10,
@@ -87,8 +88,8 @@ enum {
               SQRT,
               DIF,	  /* first difference */
               LDIF,	  /* log difference */
-              SDIF,	  /* seasonal difference */
-  /* 60 */    SORT,	  /* ascending sort */
+  /* 60 */    SDIF,	  /* seasonal difference */
+	      SORT,	  /* ascending sort */
 	      DSORT,	  /* descending sort */
               RANKING,    
 	      ODEV,	  /* orthogonal deviation */
@@ -97,8 +98,8 @@ enum {
               T2,   
               CUM,
               MISSING,
-              OK,
-  /* 70 */    MISSZERO,
+  /* 70 */    OK,
+	      MISSZERO,
 	      ZEROMISS,
               MEDIAN,
 	      GINI,
@@ -107,8 +108,8 @@ enum {
               MIN,
               MAX,
               SD,
-              VCE,	  /* variance */
-  /* 80 */    SST,
+  /* 80 */    VCE,	  /* variance */
+	      SST,
 	      CNORM,
               DNORM,
 	      QNORM,
@@ -117,8 +118,8 @@ enum {
               HPFILT,
               BKFILT,
               RESAMPLE,
-              PMEAN,
-  /* 90 */    PSD,
+  /* 90 */    PMEAN,
+	      PSD,
 	      IMAT,
               SUMR,
 	      SUMC,
@@ -127,8 +128,8 @@ enum {
               MCOV,
               MCORR,
               CDEMEAN,
-              CHOL,
-  /* 100 */   INV,
+  /* 100 */   CHOL,
+	      INV,
 	      INVPD,
               GINV,
 	      DIAG,
@@ -137,8 +138,8 @@ enum {
               VECH,	
               UNVECH,
               ROWS,
-              COLS,
-  /* 110 */   DET,
+  /* 110 */   COLS,
+	      DET,
 	      LDET,
               TRACE,
 	      NORM1,
@@ -147,8 +148,8 @@ enum {
               RANK, 
               OBSNUM,
               ISSERIES,
-              ISLIST,	 
-  /* 120 */   ISSTRING,
+  /* 120 */   ISLIST,	 
+	      ISSTRING,
 	      ISNULL,
               LISTLEN,
 	      PVAL,
@@ -157,8 +158,8 @@ enum {
               CRIT,  
               RANDGEN,
               RPOISSON,
-              MAKEMASK,
-  /* 130 */   VALUES,
+  /* 130 */   MAKEMASK,
+	      VALUES,
 	      NULLSPC,
               MEXP,
 	      MINC,
@@ -167,8 +168,8 @@ enum {
               MAXR,
               IMINC, 
               IMAXC,
-              IMINR,
-  /* 140 */   IMAXR,
+  /* 140 */   IMINR,
+	      IMAXR,
 	      FFT,
               FFTI,
 	      UPPER,
@@ -177,8 +178,8 @@ enum {
 	      POLROOTS,
 	      DUMIFY,
               FUNC_MAX,	  /* SEPARATOR: end of single-arg functions */
-	      COR,
-  /* 150 */   COV,
+  /* 150 */   COR,
+	      COV,
 	      SORTBY,
 	      RUNIFORM,
               RNORMAL,
@@ -187,8 +188,8 @@ enum {
               ONES,
               SEQ,
               MUNIF,
-              MNORM,
-  /* 160 */   QFORM,
+  /* 160 */   MNORM,
+	      QFORM,
 	      MLAG,
 	      QR,
               EIGSYM,	 
@@ -197,8 +198,8 @@ enum {
               BFGSMAX,
               LRVAR,
               PRINCOMP,
-              QUANTILE,
-  /* 170 */   CMULT,	  /* complex multiplication */
+  /* 170 */   QUANTILE,
+	      CMULT,	  /* complex multiplication */
 	      CDIV,	  /* complex division */
 	      MXTAB,
               MWRITE,
@@ -207,8 +208,8 @@ enum {
               MCSEL,
 	      LLAG,
 	      WMEAN,
-	      WVAR,
-  /* 180 */   WSD,
+  /* 180 */   WVAR,
+	      WSD,
 	      F2_MAX,	  /* SEPARATOR: end of two-arg functions */
               MSHAPE,
 	      SVD,
@@ -217,8 +218,8 @@ enum {
 	      COM,	  /* comma */
               DOT,	  /* period */
 	      SEMI,	  /* semi-colon */
-	      COL,	  /* colon */
-  /* 190 */   PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
+  /* 190 */   COL,	  /* colon */
+	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
 	      USCLR,	  /* user variable, scalar */
@@ -227,8 +228,8 @@ enum {
 	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
-              IVEC,	  /* vector of integers, evaluated */
-  /* 200 */   LVEC,       /* list, as array of ints */
+  /* 200 */   IVEC,	  /* vector of integers, evaluated */
+	      LVEC,       /* list, as array of ints */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
 	      MSL,	  /* matrix plus subspec */
@@ -237,8 +238,8 @@ enum {
 	      MSL2,	  /* unevaluated matrix subspec */
               MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
-	      MDEF,	  /* explicit matrix definition {...} */
-  /* 210 */   LAG,	  
+  /* 210 */   MDEF,	  /* explicit matrix definition {...} */
+	      LAG,	  
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      OVAR,	  /* object variable: variable "under" an object */
@@ -247,8 +248,8 @@ enum {
 	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,
-	      ABSENT,
-  /* 220 */   DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
+  /* 220 */   ABSENT,
+	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
 	      INC,   

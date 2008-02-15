@@ -36,6 +36,7 @@ version 1.7.2, in progress
 - Enable "append" command in loops
 - Ordered logit and probit: don't insist that the dependent
   variable has a minimum of zero
+- Windows installer: updated packaged zlib1.dll
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"

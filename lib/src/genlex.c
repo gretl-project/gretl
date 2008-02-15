@@ -942,6 +942,9 @@ static void deprecation_note (parser *p)
 
 #define unary_context(p) (p->sym < F2_MAX || p->sym == COM)
 
+#define lag_range_sym(p) (p->ch == 't' && *p->point == 'o' && \
+			  *(p->point + 1) == ' ')
+
 void lex (parser *p)
 {
 #if LDEBUG
@@ -971,6 +974,11 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '*': 
+	    if (p->targ == LIST) {
+		/* treat '*' as wildcard */
+		getword(p);
+		return;
+	    }
 	    parser_getc(p);
 	    if (p->ch == '*') {
 		p->sym = KRON;
@@ -1152,7 +1160,14 @@ void lex (parser *p)
 		parser_ungetc(p);
 	    }
         default: 
-	    if (bare_data_type(p->sym) || closing_sym(p->sym)) {
+	    if (p->targ == LIST && lag_range_sym(p)) {
+		p->sym = B_RANGE;
+		parser_getc(p);
+		parser_getc(p);
+		return;
+	    }
+	    if (bare_data_type(p->sym) || closing_sym(p->sym) ||
+		(p->targ == LIST && p->sym == LAG)) {
 		p->sym = LCAT;
 		return;
 	    }
@@ -1270,6 +1285,8 @@ const char *getsymb (int t, const parser *p)
 	return "<=";
     case B_AND: 
 	return "&&";
+    case B_RANGE:
+	return " to ";
     case U_ADDR:
 	return "&";
     case B_OR: 

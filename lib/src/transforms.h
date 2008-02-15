@@ -40,6 +40,9 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo);
 
 int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo);
 
+int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ, 
+		      DATAINFO *pdinfo, int *err);
+
 int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 
 int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
