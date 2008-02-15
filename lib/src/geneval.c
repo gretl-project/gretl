@@ -45,7 +45,8 @@
 #define series_node(n) (n->t == VEC &&(n->flags & UVEC_NODE)) 
 
 #define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
-			 n->t == USERIES || n->t == MAT || n->t == EMPTY || \
+			 n->t == USERIES || n->t == MAT || \
+			 n->t == EMPTY || n->t == LAG || \
 			 (n->t == VEC && (n->flags & UVEC_NODE)) || \
 			 (n->t == DUM && n->v.idnum == DUM_DATASET))
 
@@ -2367,6 +2368,21 @@ static int *node_get_list (NODE *n, parser *p)
 		}
 	    }
 	}
+    } else if (n->t == LAG) {
+	NODE *l = n->v.b2.l;
+	NODE *r = eval(n->v.b2.r, p);
+	int lag, lv = l->v.idnum;
+	
+	if (r != NULL) {
+	    lag = -r->v.xval;
+	    lv = laggenr(lv, lag, p->Z, p->dinfo);
+	    if (lv > 0) {
+		list = gretl_list_new(1);
+		if (list != NULL) {
+		    list[1] = lv;
+		}
+	    }
+	}
     }
 
     if (p->err == E_UNKVAR) {
@@ -4676,6 +4692,11 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case LAG:
+	if (p->targ == LIST) {
+	    /* don't evaluate here */
+	    ret = t;
+	    break;
+	}
     case OBS:
     case MOVAVG:
 	/* series on left, scalar on right */
