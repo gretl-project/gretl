@@ -46,8 +46,7 @@
 
 #define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
 			 n->t == USERIES || n->t == MAT || n->t == EMPTY || \
-			 (n->t == VEC && (n->flags & UVEC_NODE)) || \
-			 (n->t == DUM && n->v.idnum == DUM_DATASET))
+			 (n->t == VEC && (n->flags & UVEC_NODE)))
 
 #define series_type(t) (t == VEC || t == USERIES)
 #define uvar_type(t) (t == USCLR || t == USERIES)
@@ -2241,7 +2240,7 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 }
 
 #define ok_list_func(f) (f == LOG || f == DIF || \
-			 f == LDIF || f == SDIF)
+			 f == LDIF || f == SDIF || f == XPX)
 
 /* functions that are "basically" for series, but which
    can also be applied to lists */
@@ -2274,6 +2273,9 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 		else if (f == SDIF) t = SDIFF;
 		p->err = list_diffgenr(list, t, p->Z, p->dinfo);
 		break;
+	    case XPX:
+		p->err = list_xpxgenr(&list, p->Z, p->dinfo, OPT_O);
+		break;
 	    default:
 		break;
 	    }
@@ -2298,6 +2300,21 @@ static NODE *dataset_list_node (parser *p)
 	    p->err = E_DATA;
 	}
 	ret->v.ivec = list;
+    }
+
+    return ret;
+}
+
+static NODE *trend_node (parser *p)
+{
+    NODE *ret = aux_vec_node(p, 0);
+
+    if (ret != NULL && starting(p)) {
+	p->err = gen_time(p->Z, p->dinfo, 1);
+	if (!p->err) {
+	    ret->v.idnum = varindex(p->dinfo, "time");
+	    ret->flags = UVEC_NODE;
+	}
     }
 
     return ret;
@@ -4522,6 +4539,8 @@ static NODE *eval (NODE *t, parser *p)
     case DUM:
 	if (t->v.idnum == DUM_DATASET) {
 	    ret = dataset_list_node(p);
+	} else if (t->v.idnum == DUM_TREND) {
+	    ret = trend_node(p);
 	} else {
 	    /* otherwise treat as terminal */
 	    ret = t;
@@ -5072,6 +5091,13 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
+    case XPX:
+	if (ok_list_node(l)) {
+	    ret = apply_list_func(l, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;	
     case WMEAN:
     case WVAR:
     case WSD:

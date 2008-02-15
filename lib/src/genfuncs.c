@@ -1237,7 +1237,7 @@ make_panel_time_var (double *x, const DATAINFO *pdinfo)
  * will correctly represent the location in time of
  * each observation.  The index is 1-based.
  *
- * Returns: 0 on success, non-zero code on error.
+ * Returns: 0 on success, non-zero on error.
  */
 
 int gen_time (double ***pZ, DATAINFO *pdinfo, int tm)

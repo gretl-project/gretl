@@ -62,6 +62,7 @@ struct str_table dummies[] = {
     { DUM_NULL,    "null" },
     { DUM_DIAG,    "diag" },
     { DUM_DATASET, "dataset" },
+    { DUM_TREND,   "time" },
     { 0,        NULL }
 };
 
@@ -258,6 +259,7 @@ struct str_table funcs[] = {
     { WMEAN,    "wmean" },
     { WVAR,     "wvar" },
     { WSD,      "wsd" },
+    { XPX,      "xpx" },
     { 0,        NULL }
 };
 

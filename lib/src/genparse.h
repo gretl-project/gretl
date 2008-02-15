@@ -177,8 +177,9 @@ enum {
               MREAD,
 	      POLROOTS,
 	      DUMIFY,
-              FUNC_MAX,	  /* SEPARATOR: end of single-arg functions */
-  /* 150 */   COR,
+	      XPX,
+  /* 150 */   FUNC_MAX,	  /* SEPARATOR: end of single-arg functions */
+	      COR,
 	      COV,
 	      SORTBY,
 	      RUNIFORM,
@@ -187,8 +188,8 @@ enum {
 	      ZEROS,
               ONES,
               SEQ,
-              MUNIF,
-  /* 160 */   MNORM,
+  /* 160 */   MUNIF,
+	      MNORM,
 	      QFORM,
 	      MLAG,
 	      QR,
@@ -197,8 +198,8 @@ enum {
 	      FDJAC,
               BFGSMAX,
               LRVAR,
-              PRINCOMP,
-  /* 170 */   QUANTILE,
+  /* 170 */   PRINCOMP,
+	      QUANTILE,
 	      CMULT,	  /* complex multiplication */
 	      CDIV,	  /* complex division */
 	      MXTAB,
@@ -207,8 +208,8 @@ enum {
 	      MRSEL,
               MCSEL,
 	      LLAG,
-	      WMEAN,
-  /* 180 */   WVAR,
+  /* 180 */   WMEAN,
+	      WVAR,
 	      WSD,
 	      F2_MAX,	  /* SEPARATOR: end of two-arg functions */
               MSHAPE,
@@ -217,8 +218,8 @@ enum {
 	      FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 	      COM,	  /* comma */
               DOT,	  /* period */
-	      SEMI,	  /* semi-colon */
-  /* 190 */   COL,	  /* colon */
+  /* 190 */   SEMI,	  /* semi-colon */
+	      COL,	  /* colon */
 	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
@@ -227,8 +228,8 @@ enum {
 	      UMAT,	  /* user-defined matrix */
 	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
-	      VEC,	  /* series, evaluated */
-  /* 200 */   IVEC,	  /* vector of integers, evaluated */
+  /* 200 */   VEC,	  /* series, evaluated */
+	      IVEC,	  /* vector of integers, evaluated */
 	      LVEC,       /* list, as array of ints */
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
@@ -237,8 +238,8 @@ enum {
 	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
 	      MSL2,	  /* unevaluated matrix subspec */
               MSPEC,	  /* evaluated matrix subspec */
-	      SUBSL,	  /* row or column component of MSPEC */
-  /* 210 */   MDEF,	  /* explicit matrix definition {...} */
+  /* 210 */   SUBSL,	  /* row or column component of MSPEC */
+	      MDEF,	  /* explicit matrix definition {...} */
 	      LAG,	  
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
@@ -247,8 +248,8 @@ enum {
 	      LIST,	  /* reference to named list */
 	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
-	      EMPTY,
-  /* 220 */   ABSENT,
+  /* 220 */   EMPTY,
+	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
@@ -268,7 +269,8 @@ enum {
 enum {
     DUM_NULL = 1,
     DUM_DIAG,
-    DUM_DATASET
+    DUM_DATASET,
+    DUM_TREND
 };
 
 #define GENSTRLEN 128

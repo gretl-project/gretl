@@ -3573,6 +3573,24 @@
       </description>
     </function>
 
+    <function name="xpx" output="list">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns a list that references the squares and cross-products
+	  of the variables in list <argname>L</argname>.  Squares are
+	  named on the pattern <lit>sq_</lit><repl>varname</repl> and
+	  cross-products on the pattern 
+	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  The input
+	  variable names are truncated if need be, and the output
+	  names may be adjusted in case of duplication
+	  of names in the returned list.
+	</para>
+      </description>
+    </function>
+
     <function name="zeromiss" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
