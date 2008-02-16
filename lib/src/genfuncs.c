@@ -479,15 +479,15 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
  * contain the coefficients for the powers other than 0 (assumed 1),
  * with the exponents on column one and the corresponding coefficient
  * on column two. For example, the matrix corresponding to the
- * polynomial C(L) = 1 - 0.75 L^2 should be given as { 2, 0.75 };
- * negative exponents are allowed.
+ * polynomial C(L) = 1 - 0.75 L^2 should be given as { 2, -0.75 };
+ * negative exponents (leads) are allowed for the C polynomial only.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
 
 int filter_series(const double *x, double *y, const DATAINFO *pdinfo, 
-		  gretl_matrix *A, gretl_matrix *C)
+		  gretl_matrix *A, gretl_matrix *C, double y0)
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
@@ -495,6 +495,38 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
 
     int t, s, i, m;
     int amin, amax, cmin, cmax;
+
+    if (gretl_is_null_matrix(C)) {
+	cmin = cmax = 0;
+    } else {
+	cmin = cmax = 0;
+	for(i=0; i<C->rows; i++) {
+	    m = gretl_matrix_get(C,i,0);
+	    if (m<cmin) {
+		cmin = m; 
+	    } else if (m>cmax) {
+		cmax = m; 
+	    } 
+	}
+    }
+
+    if (gretl_is_null_matrix(A)) {
+	amin = amax = 0;
+    } else {
+	amin = amax = 0;
+	for(i=0; i<A->rows; i++) {
+	    m = gretl_matrix_get(A,i,0);
+	    if (m<amin) {
+		amin = m; 
+	    } else if (m>amax) {
+		amax = m; 
+	    } 
+	}
+    }
+
+    if (amin<0) {
+	return E_DATA;
+    } 
 
     err = array_adjust_t1t2(x, &t1, &t2);
     if (err) {
@@ -509,60 +541,42 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
+    s = 0;
     if (gretl_is_null_matrix(C)) {
-	s = 0;
 	for(t=t1; t<=t2; t++) {
 	    e[s++] = x[t];
 	}
     } else {
-	cmin = cmax = 0;
-	for(i=0; i<C->rows; i++) {
-	    m = gretl_matrix_get(C,i,0);
-	    if (m<cmin) {
-		cmin = m; 
-	    } else if (m>cmax) {
-		cmax = m; 
-	    } 
-	}
-
-	s = 0;
 	for(t=t1; t<=t2; t++) {
-	    e[s] = x[t];
-	    if ((s>=cmax) && (t<=s-cmin)) {
+	    if ((s>=cmax) && (t<=t2+cmin)) {
+		e[s] = x[t];
 		for(i=0; i<C->rows; i++) {
 		    m = gretl_matrix_get(C,i,0);
 		    coef = gretl_matrix_get(C,i,1);
 		    e[s] += x[t-m]*coef;
 		} 
+	    } else {
+		e[s] = NADBL;
 	    }
 	    s++;
 	} 
     }
 
+    s = 0;
     if (gretl_is_null_matrix(A)) {
-	s = 0;
 	for(t=t1; t<=t2; t++) {
 	    y[t] = e[s++];
 	}
     } else {
-	amin = amax = 0;
-	for(i=0; i<A->rows; i++) {
-	    m = gretl_matrix_get(A,i,0);
-	    if (m<amin) {
-		amin = m; 
-	    } else if (m>amax) {
-		amax = m; 
-	    } 
-	}
-
-	s = 0;
+	double xlag;
 	for(t=t1; t<=t2-amin; t++) {
 	    y[t] = e[s];
 	    for(i=0; i<A->rows; i++) {
 		m = gretl_matrix_get(A,i,0);
 		coef = gretl_matrix_get(A,i,1);
-		if (s >= m) {
-		    y[t] -= y[t-m]*coef;
+		xlag = (s < m) ? y0 : y[t-m];
+		if(!na(xlag)) {
+		    y[t] -= coef*xlag;
 		}
 	    } 
 	    s++;

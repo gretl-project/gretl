@@ -3779,7 +3779,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 	y = ret->v.xvec;
 	if (!p->err) {
-	    p->err = filter_series(x, y, p->dinfo, A, C);
+	    p->err = filter_series(x, y, p->dinfo, A, C, 0);
 	}
     }	
 

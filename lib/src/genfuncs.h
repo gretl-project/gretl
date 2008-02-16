@@ -44,7 +44,7 @@ int fracdiff_series (const double *x, double *y, double d,
 		     const DATAINFO *pdinfo);
 
 int filter_series(const double *x, double *y, const DATAINFO *pdinfo, 
-		  gretl_matrix *A, gretl_matrix *C);
+		  gretl_matrix *A, gretl_matrix *C, double y0);
 
 int panel_mean_series (const double *x, double *y, const DATAINFO *pdinfo);
 
