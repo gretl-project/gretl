@@ -904,7 +904,10 @@ static double getval (GtkWidget *w, int t)
     }
 
     *s = '\0';
+
+    while (isspace(*text)) text++;
     strncat(s, text, 31);
+    tailstrip(s);
 
     if (get_local_decpoint() != '.') {
 	gretl_push_c_numeric_locale();
@@ -1320,7 +1323,7 @@ static void get_random (GtkWidget *w, CalcChild *child)
 	break;
     case BINOMIAL_DIST: 
 	gretl_command_sprintf("genr %s = randgen(B,%g,%g)", vname, 
-			      x[1], x[0]);
+			      x[0], x[1]);
 	break;
     case POISSON_DIST: 
 	/* FIXME allow variable as param? */

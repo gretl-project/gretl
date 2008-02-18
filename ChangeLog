@@ -37,6 +37,8 @@ version 1.7.2, in progress
 - Ordered logit and probit: don't insist that the dependent
   variable has a minimum of zero
 - Windows installer: updated packaged zlib1.dll
+- Fix bug in arima auto-differencing, for non-seasonal order
+  greater than 1 plus seasonal differencing
 
 12/25/2007 version 1.7.1
 - Add documentation for "set stopwatch"
