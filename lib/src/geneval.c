@@ -3661,7 +3661,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = gretl_matrix_shape(A, r, c);
 	}
-
     } else if (t->t == SVD) {
 	gretl_matrix *A = NULL;
 	const char *lname = NULL;
@@ -3742,20 +3741,19 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = user_matrix_ols(Y, X, Uname, &p->err);
 	}
-
     } else if (t->t == FILTER) {
-	const double *x;
+	const double *x = NULL;
 	double *y = NULL;
 	gretl_matrix *A = NULL;
 	gretl_matrix *C = NULL;
 
 	if (k != 3) {
 	    n_args_error(k, 3, "filter", p);
-    }	
+	}	
 
 	e = eval(n->v.bn.n[0], p);
 	if (e == NULL) {
-	    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    fprintf(stderr, "eval_nargs_func: failed to evaluate arg 0\n");
 	    p->err = E_DATA;
 	} else if (!series_type(e->t)) {
 	    p->err = E_TYPES;
@@ -3776,25 +3774,25 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	
 	if (!p->err) {
 	    ret = aux_vec_node(p, p->dinfo->n);
-	}
-	y = ret->v.xvec;
-	if (!p->err) {
-	    p->err = filter_series(x, y, p->dinfo, A, C, 0);
+	    if (!p->err) {
+		y = ret->v.xvec;
+		p->err = filter_series(x, y, p->dinfo, A, C, 0);
+	    }
 	}
     }	
 
-    if (!(t->t == FILTER)) {
-    if (!p->err) {
-	ret = aux_matrix_node(p);
+    if (t->t != FILTER) {
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }
+	    ret->v.m = m;
+	}
     }
 
-    if (!p->err) {
-	if (ret->v.m != NULL) {
-	    gretl_matrix_free(ret->v.m);
-	}
-	ret->v.m = m;
-    }
-    }
     return ret;
 }
 

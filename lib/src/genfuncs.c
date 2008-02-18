@@ -491,20 +491,20 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
-    int err = 0;
-
-    int t, s, i, m;
+    int t, s, i, m, n;
     int amin, amax, cmin, cmax;
+    double coef, *e;
+    int err = 0;
 
     if (gretl_is_null_matrix(C)) {
 	cmin = cmax = 0;
     } else {
 	cmin = cmax = 0;
-	for(i=0; i<C->rows; i++) {
-	    m = gretl_matrix_get(C,i,0);
-	    if (m<cmin) {
+	for (i=0; i<C->rows; i++) {
+	    m = gretl_matrix_get(C, i, 0);
+	    if (m < cmin) {
 		cmin = m; 
-	    } else if (m>cmax) {
+	    } else if (m > cmax) {
 		cmax = m; 
 	    } 
 	}
@@ -514,17 +514,17 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
 	amin = amax = 0;
     } else {
 	amin = amax = 0;
-	for(i=0; i<A->rows; i++) {
-	    m = gretl_matrix_get(A,i,0);
-	    if (m<amin) {
+	for (i=0; i<A->rows; i++) {
+	    m = gretl_matrix_get(A, i, 0);
+	    if (m < amin) {
 		amin = m; 
-	    } else if (m>amax) {
+	    } else if (m > amax) {
 		amax = m; 
 	    } 
 	}
     }
 
-    if (amin<0) {
+    if (amin < 0) {
 	return E_DATA;
     } 
 
@@ -533,11 +533,10 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
 	return E_DATA;
     } 
 
-    int n = t2 - t1 + 1;
-    double *e, coef;
+    n = t2 - t1 + 1;
     e = malloc(n * sizeof *e);
 
-    if (e==NULL) {
+    if (e == NULL) {
 	return E_ALLOC;
     }
 
@@ -547,13 +546,13 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
 	    e[s++] = x[t];
 	}
     } else {
-	for(t=t1; t<=t2; t++) {
-	    if ((s>=cmax) && (t<=t2+cmin)) {
+	for (t=t1; t<=t2; t++) {
+	    if (s >= cmax && t <= t2+cmin) {
 		e[s] = x[t];
-		for(i=0; i<C->rows; i++) {
-		    m = gretl_matrix_get(C,i,0);
-		    coef = gretl_matrix_get(C,i,1);
-		    e[s] += x[t-m]*coef;
+		for (i=0; i<C->rows; i++) {
+		    m = gretl_matrix_get(C, i, 0);
+		    coef = gretl_matrix_get(C, i, 1);
+		    e[s] += x[t-m] * coef;
 		} 
 	    } else {
 		e[s] = NADBL;
@@ -564,19 +563,20 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
 
     s = 0;
     if (gretl_is_null_matrix(A)) {
-	for(t=t1; t<=t2; t++) {
+	for (t=t1; t<=t2; t++) {
 	    y[t] = e[s++];
 	}
     } else {
 	double xlag;
-	for(t=t1; t<=t2-amin; t++) {
+
+	for (t=t1; t<=t2-amin; t++) {
 	    y[t] = e[s];
-	    for(i=0; i<A->rows; i++) {
-		m = gretl_matrix_get(A,i,0);
-		coef = gretl_matrix_get(A,i,1);
-		xlag = (s < m) ? y0 : y[t-m];
-		if(!na(xlag)) {
-		    y[t] -= coef*xlag;
+	    for (i=0; i<A->rows; i++) {
+		m = gretl_matrix_get(A, i, 0);
+		coef = gretl_matrix_get(A, i, 1);
+		xlag = (s < m)? y0 : y[t-m];
+		if (!na(xlag)) {
+		    y[t] -= coef * xlag;
 		}
 	    } 
 	    s++;
@@ -584,6 +584,7 @@ int filter_series(const double *x, double *y, const DATAINFO *pdinfo,
     }
 
     free(e);
+
     return err;
 }
 
