@@ -486,8 +486,8 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
  */
 
 
-int filter_series(const double *x, double *y, const DATAINFO *pdinfo, 
-		  gretl_matrix *A, gretl_matrix *C, double y0)
+int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
+		   gretl_matrix *A, gretl_matrix *C, double y0)
 {
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;

@@ -284,33 +284,26 @@ static int arima_integrate (double *dx, const double *x,
 	if (d > 0) {
 	    ix[t] += x[t-1];
 	} 
-	if (d > 1) {
-	    ix[t] += x[t-1];
-	    ix[t] -= x[t-2];
+	if (d == 2) {
+	    ix[t] += x[t-1] - x[t-2];
 	}
 	if (D > 0) {
 	    ix[t] += x[t-s];
 	    if (d > 0) {
 		ix[t] -= x[t-s-1];
 	    }
-	    if (d > 1) {
-		ix[t] -= x[t-s-1];
-		ix[t] += x[t-2*s];
+	    if (d == 2) {
+		ix[t] -= x[t-s-1] - x[t-s-2];
 	    }	    
 	} 
-	if (D > 1) {
-	    ix[t] += x[t-s];
-	    ix[t] -= x[t-2*s];
+	if (D == 2) {
+	    ix[t] += x[t-s] - x[t-2*s];
 	    if (d > 0) {
-		ix[t] += x[t-s];
-		ix[t] -= x[t-s-1];
-		ix[t] += x[t-2*s-1];
+		ix[t] -= x[t-s-1] - x[t-2*s-1];
 	    }
-	    if (d > 1) {
-		ix[t] -= 2 * x[t-s-1];
-		ix[t] += 2 * x[t-s-2];
-		ix[t] += x[t-2*s-1];
-		ix[t] -= x[t-2*s-2];
+	    if (d == 2) {
+		ix[t] -= x[t-s-1] - x[t-2*s-1];
+		ix[t] += x[t-s-2] - x[t-2*s-2];
 	    }
 	}
     }
@@ -889,7 +882,7 @@ arima_difference (const double *y, struct arma_info *ainfo)
 	if (ainfo->d > 0) {
 	    dy[t] -= y[t-1];
 	} 
-	if (ainfo->d > 1) {
+	if (ainfo->d == 2) {
 	    dy[t] -= y[t-1] - y[t-2];
 	}
 	if (ainfo->D > 0) {
@@ -897,30 +890,25 @@ arima_difference (const double *y, struct arma_info *ainfo)
 	    if (ainfo->d > 0) {
 		dy[t] += y[t-s-1];
 	    }
-	    if (ainfo->d > 1) {
+	    if (ainfo->d == 2) {
 		dy[t] += y[t-s-1] - y[t-s-2];
 	    }	    
 	} 
-	if (ainfo->D > 1) {
-	    dy[t] -= y[t-s];
-	    dy[t] += y[t-2*s];
+	if (ainfo->D == 2) {
+	    dy[t] -= y[t-s] - y[t-2*s];
 	    if (ainfo->d > 0) {
-		dy[t] -= y[t-s];
-		dy[t] += y[t-s-1];
-		dy[t] -= y[t-2*s-1];
+		dy[t] += y[t-s-1] - y[t-2*s-1];
 	    }
-	    if (ainfo->d > 1) {
-		dy[t] += 2 * y[t-s-1];
-		dy[t] -= 2 * y[t-s-2];
-		dy[t] -= y[t-2*s-1];
-		dy[t] += y[t-2*s-2];
+	    if (ainfo->d == 2) {
+		dy[t] += y[t-s-1] - y[t-2*s-1];
+		dy[t] -= y[t-s-2] - y[t-2*s-2];
 	    }
 	}
     }
 
 #if ARMA_DEBUG > 1
     for (t=0; t<ainfo->T; t++) {
-	fprintf(stderr, "dy[%d] = %g\n", t, dy[t]);
+	fprintf(stderr, "dy[%d] = % 12.5f\n", t, dy[t]);
     }
 #endif    
 
