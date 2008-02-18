@@ -890,8 +890,7 @@ arima_difference (const double *y, struct arma_info *ainfo)
 	    dy[t] -= y[t-1];
 	} 
 	if (ainfo->d > 1) {
-	    dy[t] -= y[t-1];
-	    dy[t] += y[t-2];
+	    dy[t] -= y[t-1] - y[t-2];
 	}
 	if (ainfo->D > 0) {
 	    dy[t] -= y[t-s];
@@ -899,8 +898,7 @@ arima_difference (const double *y, struct arma_info *ainfo)
 		dy[t] += y[t-s-1];
 	    }
 	    if (ainfo->d > 1) {
-		dy[t] += y[t-s-1];
-		dy[t] -= y[t-2*s];
+		dy[t] += y[t-s-1] - y[t-s-2];
 	    }	    
 	} 
 	if (ainfo->D > 1) {
@@ -919,6 +917,12 @@ arima_difference (const double *y, struct arma_info *ainfo)
 	    }
 	}
     }
+
+#if ARMA_DEBUG > 1
+    for (t=0; t<ainfo->T; t++) {
+	fprintf(stderr, "dy[%d] = %g\n", t, dy[t]);
+    }
+#endif    
 
     ainfo->dy = dy;
 
