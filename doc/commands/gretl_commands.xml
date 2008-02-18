@@ -3724,23 +3724,26 @@
 
     <description>
       <para>
-	An OLS regression is run and the residuals are saved.  The
-	logs of the squares of these residuals then become the
-	dependent variable in an auxiliary regression, on the
-	right-hand side of which are the original independent
-	variables plus their squares.  The fitted values from the
-	auxiliary regression are then used to construct a weight
-	series, and the original model is re-estimated using weighted
-	least squares.  This final result is reported.
+	This command is applicable where heteroskedasticity is present in the
+	form of an unknown function of the regressors which can be
+	approximated by a quadratic relationship.  In that context it offers
+	the possibility of consistent standard errors and more efficient
+	parameter estimates as compared with OLS.  
       </para>
-
-      <para>The weight series is formed as
-	<equation status="inline"
-	  tex="$1/e^{y^*}$"
-	  ascii="1/exp(y*)"
-	  graphic="hsk"/>, where <mathvar>y</mathvar><sup>*</sup>
-	denotes the fitted values from the auxiliary
-	regression.</para>
+      <para>
+	The procedure involves (a) OLS estimation of the model of interest,
+	followed by (b) an auxiliary regression to generate an estimate of the
+	error variance, then finally (c) weighted least squares, using as
+	weight the reciprocal of the estimated variance.
+      </para>
+      <para>
+	In the auxiliary regression (b) we regress the log of the squared
+	residuals from the first OLS on the original regressors and their
+	squares.  The log transformation is performed to ensure that the
+	estimated variances are non-negative.  Call the fitted values from
+	this regression <math>u</math><sup>*</sup>.  The weight series for the
+	final WLS is then formed as 1/exp(<math>u</math><sup>*</sup>).
+      </para>
     </description>
 
     <gui-access>

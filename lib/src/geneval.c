@@ -3618,7 +3618,7 @@ static void n_args_error (int k, int n, const char *s, parser *p)
     pprintf(p->prn, _("Number of arguments (%d) does not "
 		      "match the number of\nparameters for "
 		      "function %s (%d)"),
-	    k, "mshape", n);
+	    k, s, n);
     p->err = 1;
 }
 
@@ -3668,7 +3668,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char **name;
 
 	if (k != 3) {
-	    n_args_error(k, 3, "sdv", p);
+	    n_args_error(k, 3, "svd", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -3707,7 +3707,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const char *Uname = NULL;
 
 	if (k != 3) {
-	    n_args_error(k, 3, "sdv", p);
+	    n_args_error(k, 3, "mols", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -3743,17 +3743,17 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
     } else if (t->t == FILTER) {
 	const double *x = NULL;
-	double *y = NULL;
 	gretl_matrix *A = NULL;
 	gretl_matrix *C = NULL;
+	double y0 = 0;
 
-	if (k != 3) {
+	if (k != 3 && k != 4) {
 	    n_args_error(k, 3, "filter", p);
 	}	
 
 	e = eval(n->v.bn.n[0], p);
 	if (e == NULL) {
-	    fprintf(stderr, "eval_nargs_func: failed to evaluate arg 0\n");
+	    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", 0);
 	    p->err = E_DATA;
 	} else if (!series_type(e->t)) {
 	    p->err = E_TYPES;
@@ -3766,17 +3766,30 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 1) {
-		A = e->v.m;
-	    } else {
-		C = e->v.m;
+		if (e->t != MAT) {
+		    p->err = E_TYPES;
+		} else {
+		    A = e->v.m;
+		}
+	    } else if (i == 2) {
+		if (e->t != MAT) {
+		    p->err = E_TYPES;
+		} else {
+		    C = e->v.m;
+		}
+	    } else if (i == 3) {
+		if (e->t != NUM) {
+		    p->err = E_TYPES;
+		} else {
+		    y0 = e->v.xval;
+		}
 	    }
 	} 
 	
 	if (!p->err) {
 	    ret = aux_vec_node(p, p->dinfo->n);
 	    if (!p->err) {
-		y = ret->v.xvec;
-		p->err = filter_series(x, y, p->dinfo, A, C, 0);
+		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
 	    }
 	}
     }	

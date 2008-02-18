@@ -492,14 +492,12 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
     int t, s, i, m, n;
-    int amin, amax, cmin, cmax;
+    int amin = 0, amax = 0;
+    int cmin = 0, cmax = 0;
     double coef, *e;
     int err = 0;
 
-    if (gretl_is_null_matrix(C)) {
-	cmin = cmax = 0;
-    } else {
-	cmin = cmax = 0;
+    if (!gretl_is_null_matrix(C)) {
 	for (i=0; i<C->rows; i++) {
 	    m = gretl_matrix_get(C, i, 0);
 	    if (m < cmin) {
@@ -510,10 +508,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	}
     }
 
-    if (gretl_is_null_matrix(A)) {
-	amin = amax = 0;
-    } else {
-	amin = amax = 0;
+    if (!gretl_is_null_matrix(A)) {
 	for (i=0; i<A->rows; i++) {
 	    m = gretl_matrix_get(A, i, 0);
 	    if (m < amin) {
@@ -542,7 +537,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 
     s = 0;
     if (gretl_is_null_matrix(C)) {
-	for(t=t1; t<=t2; t++) {
+	for (t=t1; t<=t2; t++) {
 	    e[s++] = x[t];
 	}
     } else {
@@ -574,10 +569,15 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	    for (i=0; i<A->rows; i++) {
 		m = gretl_matrix_get(A, i, 0);
 		coef = gretl_matrix_get(A, i, 1);
+#if 1
+		xlag = (t < m || na(y[t-m]))? y0 : y[t-m];
+		y[t] -= coef * xlag;
+#else
 		xlag = (s < m)? y0 : y[t-m];
 		if (!na(xlag)) {
 		    y[t] -= coef * xlag;
 		}
+#endif
 	    } 
 	    s++;
 	}
