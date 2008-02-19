@@ -92,6 +92,45 @@ static void gen_write_warning (const parser *p, PRN *prn)
     }
 }
 
+static int maybe_record_lag_info (parser *p)
+{
+    const char *s = p->input;
+    int n = strlen(p->lh.name);
+    char vname[VNAMELEN];
+    int lag;
+
+    if (!strncmp(s, "genr ", 5)) {
+	s += 5;
+    } else if (!strncmp(s, "series ", 7)) {
+	s += 7;
+    }
+
+    s += strspn(s, " ");
+
+    if (!strncmp(s, p->lh.name, n)) {
+	s += n;
+	s += strspn(s, " ");
+	if (*s == '=') s++;
+	s += strspn(s, " ");
+    }
+
+    if (sscanf(s, "%15[^ ()](%d)", vname, &lag) == 2) {
+	s = strchr(s, ')');
+	if (s != NULL && string_is_blank(s + 1)) {
+	    int pv = varindex(p->dinfo, vname);
+
+	    if (pv < p->dinfo->v) {
+		strcpy(p->dinfo->varinfo[p->lh.v]->parent, 
+		   p->dinfo->varname[pv]);
+		p->dinfo->varinfo[p->lh.v]->transform = LAGS;
+		p->dinfo->varinfo[p->lh.v]->lag = -lag;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static void gen_write_label (parser *p, int oldv)
 {
     char tmp[MAXLABEL];
@@ -108,6 +147,8 @@ static void gen_write_label (parser *p, int oldv)
 	   observation in a series */
 	return;
     }
+
+    maybe_record_lag_info(p);
 
     *tmp = '\0';
 

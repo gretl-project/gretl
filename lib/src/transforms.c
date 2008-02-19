@@ -154,15 +154,16 @@ make_transform_label (char *label, const char *parent,
 
 int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
 {
-    const char *test = VARLABEL(pdinfo, v);
-    char pm, vname[VNAMELEN];
-    int lag, ret = 0;
+    int pv = 0, ret = 0;
 
-    if (sscanf(test, "= %15[^(](t %c %d)", vname, &pm, &lag) == 3) {
+    if (pdinfo->varinfo[v]->transform == LAGS) {
+	pv = varindex(pdinfo, pdinfo->varinfo[v]->parent);
+	pv = (pv < pdinfo->v)? pv : 0;
+    }
+
+    if (pv > 0) {
 	if (parent != NULL) {
-	    int pv = varindex(pdinfo, vname);
-
-	    *parent = (pv < pdinfo->v)? pv : 0;
+	    *parent = pv;
 	}
 	ret = 1;
     }
@@ -172,15 +173,11 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
 
 int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
 {
-    const char *test = VARLABEL(pdinfo, v);
-    char vname[VNAMELEN];
-    double val;
     int pv = pdinfo->v;
     int i = 0, ret = 0;
 
-    if (sscanf(test, _("dummy for %s = %lf"), vname, &val) == 2 ||
-	sscanf(test, "dummy for %s = %lf", vname, &val) == 2) {
-	pv = varindex(pdinfo, vname);
+    if (pdinfo->varinfo[v]->transform == DUMMIFY) {
+	pv = varindex(pdinfo, pdinfo->varinfo[v]->parent);
     } else if (!strncmp(pdinfo->varname[v], "dt_", 3)) {
 	if (sscanf(pdinfo->varname[v] + 3, "%d", &i) && i > 1) {
 	    pv = varindex(pdinfo, "dt_1");
@@ -603,8 +600,18 @@ static int get_transform (int ci, int v, int aux, double x,
 	}
     }
 
-    if (!err && ci == DUMMIFY && vno > 0) {
-	set_var_discrete(pdinfo, vno, 1);
+    if (!err && vno > 0) {
+	if (ci == DUMMIFY) {
+	    strcpy(pdinfo->varinfo[vno]->parent, pdinfo->varname[v]);
+	    pdinfo->varinfo[vno]->transform = DUMMIFY;
+	    set_var_discrete(pdinfo, vno, 1);
+	} else if (ci == LAGS || ci == DIFF) {
+	    strcpy(pdinfo->varinfo[vno]->parent, pdinfo->varname[v]);
+	    pdinfo->varinfo[vno]->transform = ci;
+	    if (ci == LAGS) {
+		pdinfo->varinfo[vno]->lag = aux;
+	    }
+	}
     }
 
     return vno;

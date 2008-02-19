@@ -475,7 +475,10 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 {
     vinfo->label[0] = '\0';
     vinfo->display_name[0] = '\0';
+    vinfo->parent[0] = '\0';
     vinfo->flags = 0;
+    vinfo->transform = 0;
+    vinfo->lag = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->stack_level = 0;
     vinfo->line_width = 1;
@@ -499,7 +502,10 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
 
     strcpy(targ->label, src->label);
     strcpy(targ->display_name, src->display_name);
+    strcpy(targ->parent, src->parent);
     targ->flags = src->flags;
+    targ->transform = src->transform;
+    targ->lag = src->lag;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
     targ->line_width = src->line_width;

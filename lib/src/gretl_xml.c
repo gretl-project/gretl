@@ -29,6 +29,8 @@
 
 #undef XML_DEBUG
 
+#define GRETLDATA_VERSION "1.1"
+
 #ifdef WIN32
 # include <glib.h>
 static xmlDocPtr gretl_xmlParseFile (const char *fname)
@@ -1221,9 +1223,9 @@ int gretl_write_matrix_as_gdt (const char *fname,
 
     gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 	     "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-	     "<gretldata name=\"%s\" frequency=\"1\" "
+	     "<gretldata version=\"%s\" name=\"%s\" frequency=\"1\" "
 	     "startobs=\"1\" endobs=\"%d\" type=\"cross-section\">\n", 
-	     datname, T);
+	     GRETLDATA_VERSION, datname, T);
 
     free(xmlbuf);
 
@@ -1378,15 +1380,15 @@ int gretl_write_gdt (const char *fname, const int *list,
     if (gz) {
 	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		 "<gretldata name=\"%s\" frequency=\"%s\" "
+		 "<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
-		 xmlbuf, freqstr, startdate, enddate);
+		 GRETLDATA_VERSION, xmlbuf, freqstr, startdate, enddate);
     } else {
 	fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		"<gretldata name=\"%s\" frequency=\"%s\" "
+		"<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
 		"startobs=\"%s\" endobs=\"%s\" ", 
-		xmlbuf, freqstr, startdate, enddate);
+		GRETLDATA_VERSION, xmlbuf, freqstr, startdate, enddate);
     }
 
     if (gz) {
@@ -1464,7 +1466,36 @@ int gretl_write_gdt (const char *fname, const int *list,
 		    fprintf(fp, "\n displayname=\"%s\"", xmlbuf);
 		}
 	    }
-	} 
+	}
+
+	if (*PARENT(pdinfo, v)) {
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, PARENT(pdinfo, v), sizeof xmlbuf);
+	    if (!uerr) {
+		if (gz) {
+		    gzprintf(fz, "\n parent=\"%s\"", xmlbuf);
+		} else {
+		    fprintf(fp, "\n parent=\"%s\"", xmlbuf);
+		}
+	    }
+	}
+
+	if (pdinfo->varinfo[i]->transform != 0) {
+	    const char *tr = gretl_command_word(pdinfo->varinfo[i]->transform);
+
+	    if (gz) {
+		gzprintf(fz, "\n transform=\"%s\"", tr);
+	    } else {
+		fprintf(fp, "\n transform=\"%s\"", tr);
+	    }
+	}
+
+	if (pdinfo->varinfo[i]->lag != 0) {
+	    if (gz) {
+		gzprintf(fz, "\n lag=\"%d\"", pdinfo->varinfo[i]->lag);
+	    } else {
+		fprintf(fp, "\n lag=\"%d\"", pdinfo->varinfo[i]->lag);
+	    }
+	}	    
 
 	if (COMPACT_METHOD(pdinfo, v) != COMPACT_NONE) {
 	    const char *meth = compact_method_to_string(COMPACT_METHOD(pdinfo, v));
@@ -1638,11 +1669,30 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 		var_set_display_name(pdinfo, i, (char *) tmp);
 		free(tmp);
 	    }
+	    tmp = xmlGetProp(cur, (XUC) "parent");
+	    if (tmp != NULL) {
+		strcpy(pdinfo->varinfo[i]->parent, (char *) tmp); 
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "transform");
+	    if (tmp != NULL) {
+		int ci = gretl_command_number((char *) tmp);
+
+		pdinfo->varinfo[i]->transform = ci; 
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "lag");
+	    if (tmp != NULL) {
+		pdinfo->varinfo[i]->transform = atoi((char *) tmp); 
+		free(tmp);
+	    }
+
 	    tmp = xmlGetProp(cur, (XUC) "compact-method");
 	    if (tmp != NULL) {
 		COMPACT_METHOD(pdinfo, i) = compact_string_to_int((char *) tmp);
 		free(tmp);
 	    }
+
 	    tmp = xmlGetProp(cur, (XUC) "discrete");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
@@ -1899,6 +1949,19 @@ static long get_filesize (const char *fname)
     }
 }
 
+static double get_gdt_version (xmlNodePtr node)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) "version");
+    double v = 1.0;
+
+    if (tmp != NULL) {
+	v = dot_atof((char *) tmp);
+	free(tmp);
+    }
+
+    return v;
+}
+
 static int xml_get_data_structure (xmlNodePtr node, int *dtype)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "type");
@@ -2029,6 +2092,56 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
     return err;
 }
 
+static int lag_from_label (int v, const DATAINFO *pdinfo, int *lag)
+{
+    const char *test = VARLABEL(pdinfo, v);
+    char pm, vname[VNAMELEN];
+    int pv = 0;
+
+    if (sscanf(test, "= %15[^(](t %c %d)", vname, &pm, lag) == 3) {
+	pv = varindex(pdinfo, vname);
+	pv = (pv < pdinfo->v)? pv : 0;
+    }
+
+    return pv;
+}
+
+static int dummy_child_from_label (int v, const DATAINFO *pdinfo)
+{
+    const char *test = VARLABEL(pdinfo, v);
+    char vname[VNAMELEN];
+    double val;
+    int pv = 0;
+
+    if (sscanf(test, _("dummy for %s = %lf"), vname, &val) == 2 ||
+	sscanf(test, "dummy for %s = %lf", vname, &val) == 2) {
+	pv = varindex(pdinfo, vname);
+	pv = (pv < pdinfo->v)? pv : 0;
+    }
+
+    return pv;
+}
+
+static void record_transform_info (double **Z, DATAINFO *pdinfo)
+{
+    int i, p, pv;
+
+    for (i=1; i<pdinfo->v; i++) {
+	pv = lag_from_label(i, pdinfo, &p);
+	if (pv > 0) {
+	    strcpy(pdinfo->varinfo[i]->parent, pdinfo->varname[pv]);
+	    pdinfo->varinfo[i]->transform = LAGS;
+	    pdinfo->varinfo[i]->lag = p;
+	} else {
+	    pv = dummy_child_from_label(i, pdinfo);
+	    if (pv > 0) {
+		strcpy(pdinfo->varinfo[i]->parent, pdinfo->varname[pv]);
+		pdinfo->varinfo[i]->transform = DUMMIFY;
+	    }
+	}
+    }
+}
+
 static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
 {
     pprintf(prn, M_("\nRead datafile %s\n"), fname);
@@ -2065,6 +2178,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
     int newdata = (*pZ == NULL);
     int gotvars = 0, gotobs = 0, err = 0;
     int caldata = 0;
+    double gdtversion = 1.0;
     long fsz, progress = 0L;
 
     gretl_error_clear();
@@ -2110,6 +2224,8 @@ int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
 	err = 1;
 	goto bailout;
     }
+
+    gdtversion = get_gdt_version(cur);
 
     /* set some datainfo parameters */
 
@@ -2215,6 +2331,10 @@ int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
 	} else {
 	    err = dataset_finalize_panel_indices(pdinfo);
 	}
+    }
+
+    if (!err && gdtversion < 1.1) {
+	record_transform_info(*pZ, pdinfo);
     }
 
     if (err && tmpdinfo != NULL) {

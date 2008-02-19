@@ -254,7 +254,10 @@ typedef struct equation_system_ equation_system;
 struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
+    char parent[VNAMELEN];
     int flags;
+    int transform;
+    int lag;
     char compact_method;
     char stack_level;
     char line_width;
@@ -395,6 +398,7 @@ struct MODEL_ {
 
 #define VARLABEL(p,i)        ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)     ((p->varinfo[i])->display_name)
+#define PARENT(p,i)          ((p->varinfo[i])->parent)
 #define COMPACT_METHOD(p,i)  ((p->varinfo[i])->compact_method)
 #define STACK_LEVEL(p,i)     ((p->varinfo[i])->stack_level)
 #define SORTED_MARKER(p,i,t) ((p->varinfo[i])->sorted_markers[t])

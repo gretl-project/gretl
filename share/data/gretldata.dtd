@@ -4,6 +4,7 @@
 
 <!ELEMENT gretldata (description?, variables, observations)>
 <!ATTLIST gretldata
+   version      NMTOKEN #IMPLIED
    name         NMTOKEN #IMPLIED
    frequency    CDATA #IMPLIED
    startobs     CDATA #IMPLIED
@@ -26,6 +27,9 @@
     name           NMTOKEN #IMPLIED
     label          CDATA   #IMPLIED
     displayname    CDATA   #IMPLIED
+    parent         CDATA   #IMPLIED
+    transform      CDATA   #IMPLIED
+    lag            CDATA   #IMPLIED
     compact-method CDATA   #IMPLIED
     discrete       CDATA   #IMPLIED
     role           CDATA   #IMPLIED
