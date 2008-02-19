@@ -3614,12 +3614,34 @@
 
   <command name="help" section="Utilities" label="Aiuto sui comandi" context="cli">
 
+    <usage>
+      <altforms>
+        <altform><lit>help</lit></altform>
+        <altform><lit>help functions</lit></altform>
+        <altform><lit>help</lit> <repl>comando</repl></altform>
+        <altform><lit>help</lit> <repl>funzione</repl></altform>
+      </altforms>
+      <options>
+       <option>
+         <flag>--func</flag>
+         <effect>sceglie l'aiuto sulle funzioni</effect>
+       </option>
+      </options>
+    </usage>
+
     <description>
       <para>
-	Mostra un elenco dei comandi disponibili, <cmd>help</cmd>
-	<repl>comando</repl> descrive il <repl>comando</repl> (ad es.
-	<cmd>help smpl</cmd>).  Al posto di <cmd>help</cmd> si può usare
-	<cmd>man</cmd> se si preferisce.
+        Se non vengono indicati argomenti, mostra un elenco dei comandi disponibili.
+        Indicando l'argomento <lit quote="true">functions</lit>, mostra un
+        elenco delle funzioni disponibili (si veda <cmdref targ="genr"/>).
+      </para> 
+      <para> 
+        <cmd>help</cmd> <repl>comando</repl> descrive il <repl>comando</repl>
+        (ad es.  <cmd>help smpl</cmd>). <lit>help</lit> <repl>funzione</repl>
+        descrive la <repl>funzione</repl> (ad es. <lit>help ldet</lit>).
+        Alcune funzioni hanno lo stesso nome dei comandi relativi (ad esempio
+        <lit>diff</lit>): in questo caso verrà mostrato l'aiuto relativo al
+        comando, a meno che non si usi l'opzione <lit>--func</lit>.
       </para> 
     </description>
 
@@ -3686,21 +3708,27 @@
 
     <description>
       <para>
-	Stima una regressione OLS e ne salva i residui. I logaritmi
-        dei quadrati di questi residui diventano la variabile dipendente
-        di una regressione ausiliaria che ha come regressori le
-        variabili indipendenti originali e i loro quadrati. I valori
-        stimati dalla regressione ausiliaria sono quindi usati per
-        costruire una serie di pesi, usati per ri-stimare il modello
-        originale con la procedura dei minimi quadrati ponderati.
-        Viene riportato il risultato finale.</para>
-
-      <para>La serie dei pesi è composta da
-	<equation status="inline"
-          tex="$1/e^{y^*}$"
-          ascii="1/exp(y*)"
-	  graphic="hsk"/>, dove <mathvar>y</mathvar><sup>*</sup>
-	denota i valori stimati dalla regressione ausiliaria.</para>
+        Questo comando è utile in presenza di eteroschedasticità sotto forma di
+        una funzione incognita dei regressori, che può essere approssimata da
+        una relazione quadratica. In questo contesto, offre la possibilità di
+        avere errori standard consistenti e stime dei parametri più efficienti,
+        rispetto alla stima OLS.
+      </para>
+      <para>
+        La procedura richiede: (a) la stima OLS del modello, (b) una regressione
+        ausiliaria per generare la stima della varianza dell'errore e (c) la
+        stima con minimi quadrati ponderati, usando come peso il reciproco della
+        varianza stimata.
+      </para>
+      <para>
+        Nella regressione ausiliaria (b) il logaritmo dei quadrati dei residui
+        dalla prima regressione OLS viene regredito sui regressori originali e
+        sui loro quadrati. La trasformazione logaritmica viene effettuata per
+        assicurarsi che le varianze stimate siano non negative. Indicando con
+        <math>u</math><sup>*</sup> i valori stimati da questa regressione, la
+        serie dei pesi per la regressione con minimi quadrati ponderati è data
+        da 1/exp(<math>u</math><sup>*</sup>).
+     </para>
     </description>
 
     <gui-access>
@@ -4425,10 +4453,9 @@
         MacKinnon 2004, cap. 10.
       </para>
       <para>
-	Se la variabile dipendente non è binaria, ma è discreta e ha un valore
-        minimo di 0, si ottengono stime Logit ordinate. Se la variabile
-        scelta come dipendente non è discreta, o non ha un valore minimo pari a
-        zero, viene emesso un messaggio di errore.
+        Se la variabile dipendente non è binaria, ma è discreta, si ottengono
+        stime Logit ordinate. Se la variabile scelta come dipendente non è
+        discreta, viene emesso un messaggio di errore.
       </para>
       <para>
 	Per condurre un'analisi delle proporzioni (dove la variabile
@@ -5597,22 +5624,36 @@
     </usage>
 
     <description>
-      <para>Scrive i risultati sul <repl>file-output</repl>, fino a nuovo
+      <para>
+        Scrive i risultati sul <repl>file-output</repl>, fino a nuovo
         ordine. Usando l'opzione <lit>--append</lit>, i risultati
         vengono aggiunti a un file esistente, mentre <lit>--write</lit>
         apre un nuovo file (o ne sovrascrive uno esistente). Può essere
-        aperto solo un file alla volta.</para>
+        aperto solo un file alla volta.
+      </para>
 
-      <para>L'opzione <lit>--close</lit> può essere usata per chiudere
-      un file di output aperto in precedenza, tornando a scrivere i
-      risultati sul canale predefinito.</para>
+      <para>
+        L'opzione <lit>--close</lit> può essere usata per chiudere
+        un file di output aperto in precedenza, tornando a scrivere i
+        risultati sul canale predefinito.
+      </para>
 
-      <para>Nel primo degli esempi precedenti viene aperto il file
+      <para>
+        Nel primo degli esempi precedenti viene aperto il file
 	<filename>regress.txt</filename>, mentre nel secondo viene
         chiuso. Se prima del comando <lit>--close</lit> fosse
         eseguito un comando <cmd>ols</cmd>, i risultati della
         regressione verrebbero scritti su
-        <filename>regress.txt</filename> invece che sullo schermo.</para>
+        <filename>regress.txt</filename> invece che sullo schermo.
+      </para>
+
+      <para>
+        Esiste una variante: se si usa la parola chiave <lit>null</lit>
+        al posto di un nome di file insieme all'opzione <lit>--write</lit>,
+        l'effetto è quello di sopprimere la stampa dei risultati fino alla
+        successiva istruzione <lit>outfile --close</lit>.
+      </para>
+
     </description>
 
   </command>
@@ -6167,11 +6208,9 @@
         MacKinnon 2004, cap. 10.
       </para>
       <para>
-	Se la variabile dipendente non è binaria, ma è discreta e ha un valore
-        minimo di 0, si ottengono stime Probit ordinate; in questo caso non sono
-        ancora disponibili gli errori standard robusti. Se la variabile
-        scelta come dipendente non è discreta, o non ha un valore minimo pari a
-        superiore o pari a zero, viene emesso un messaggio di errore.
+        Se la variabile dipendente non è binaria, ma è discreta, si ottengono
+        stime Logit ordinate. Se la variabile scelta come dipendente non è
+        discreta, viene emesso un messaggio di errore.
       </para>
       <para>
 	Il probit per l'analisi delle proporzioni non è ancora stato
@@ -6955,6 +6994,9 @@
           <para><lit>loop_maxiter</lit>: un valore intero positivo.
           Imposta il numero massimo di iterazioni consentite prima che un loop
           di tipo <lit>while</lit> si fermi (si veda <cmdref targ="loop"/>).
+          Si noti che questa impostazione riguarda solo la variante
+          <lit>while</lit>, visto che lo scopo è quello di interrompere
+          possibili cicli infiniti.
          </para>
         </li>
 	<li>
