@@ -1297,10 +1297,10 @@ static int kalman_arma (const int *alist, double *coeff,
 	b[i] = coeff[i];
     }
 
-#if AINIT_DEBUG
+#if 1 || AINIT_DEBUG
     fputs("initial coefficients:\n", stderr);
     for (i=0; i<ainfo->nc; i++) {
-	fprintf(stderr, " b[%d] = %g\n", i, b[i]);
+	fprintf(stderr, " b[%d] = %.10g\n", i, b[i]);
     }
 #endif
 
@@ -2455,8 +2455,12 @@ static int user_arma_init (double *coeff, struct arma_info *ainfo,
 	return E_DATA;
     }
 
-    if (!(flags & ARMA_EXACT)) {
-	/* in EXACT case, this is handled within BFGS */
+    if (flags & ARMA_EXACT) {
+	/* initialization is handled within BFGS */
+	for (i=0; i<ainfo->nc; i++) {
+	    coeff[i] = 0.0;
+	}	
+    } else {
 	const gretl_matrix *m = get_init_vals();
 
 	pputs(prn, "\narma initialization: at user-specified values\n\n");

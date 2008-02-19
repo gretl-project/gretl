@@ -33,16 +33,16 @@ struct search_replace {
     GtkWidget *w;
     GtkWidget *f_entry;
     GtkWidget *r_entry;
-    gchar *f_text;
-    gchar *r_text;
+    gchar *find;
+    gchar *replace;
 };
 
 static void replace_string_callback (GtkWidget *widget, 
 				     struct search_replace *s)
 {
-    s->f_text = 
+    s->find = 
 	gtk_editable_get_chars(GTK_EDITABLE(s->f_entry), 0, -1);
-    s->r_text = 
+    s->replace = 
 	gtk_editable_get_chars(GTK_EDITABLE(s->r_entry), 0, -1);
     gtk_widget_destroy(s->w);
 }
@@ -50,8 +50,8 @@ static void replace_string_callback (GtkWidget *widget,
 static void trash_replace (GtkWidget *widget, 
 			   struct search_replace *s)
 {
-    s->f_text = NULL;
-    s->r_text = NULL;
+    s->find = NULL;
+    s->replace = NULL;
     gtk_widget_destroy(s->w);
 }
 
@@ -61,59 +61,58 @@ static void replace_string_dialog (struct search_replace *s)
 
     s->w = gtk_dialog_new();
 
-    gtk_window_set_title (GTK_WINDOW (s->w), _("gretl: replace"));
-    gtk_container_set_border_width (GTK_CONTAINER (s->w), 5);
+    gtk_window_set_title(GTK_WINDOW(s->w), _("gretl: replace"));
+    gtk_container_set_border_width(GTK_CONTAINER(s->w), 5);
 
     /* Find part */
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_("Find:"));
-    gtk_widget_show (label);
+    gtk_widget_show(label);
     s->f_entry = gtk_entry_new();
-    gtk_widget_show (s->f_entry);
-    gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX(hbox), s->f_entry, TRUE, TRUE, 0);
-    gtk_widget_show (hbox);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->vbox), 
-                        hbox, TRUE, TRUE, 5);
+    gtk_widget_show(s->f_entry);
+    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), s->f_entry, TRUE, TRUE, 0);
+    gtk_widget_show(hbox);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->vbox), 
+		       hbox, TRUE, TRUE, 5);
 
     /* Replace part */
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_("Replace with:"));
-    gtk_widget_show (label);
+    gtk_widget_show(label);
     s->r_entry = gtk_entry_new();
-    g_signal_connect(G_OBJECT (s->r_entry), 
-		     "activate", 
-		     G_CALLBACK (replace_string_callback), s);
+    g_signal_connect(G_OBJECT(s->r_entry), "activate", 
+		     G_CALLBACK(replace_string_callback), s);
 
-    gtk_widget_show (s->r_entry);
-    gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
-    gtk_widget_show (hbox);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->vbox), 
+    gtk_widget_show(s->r_entry);
+    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
+    gtk_widget_show(hbox);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->vbox), 
 		       hbox, TRUE, TRUE, 5);
 
-    gtk_box_set_spacing(GTK_BOX (GTK_DIALOG (s->w)->action_area), 15);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(s->w)->action_area), 15);
     gtk_box_set_homogeneous(GTK_BOX 
-			    (GTK_DIALOG (s->w)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW (s->w), GTK_WIN_POS_MOUSE);
+			    (GTK_DIALOG(s->w)->action_area), TRUE);
+    gtk_window_set_position(GTK_WINDOW(s->w), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(s->w), "destroy",
 		     gtk_main_quit, NULL);
 
     /* replace button -- make this the default */
-    button = gtk_button_new_with_label (_("Replace all"));
+    button = gtk_button_new_with_label(_("Replace all"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
-    g_signal_connect(G_OBJECT (button), "clicked",
-		     G_CALLBACK (replace_string_callback), s);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(replace_string_callback), s);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     /* cancel button */
-    button = gtk_button_new_with_label (_("Cancel"));
+    button = gtk_button_new_with_label(_("Cancel"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(trash_replace), s);
@@ -121,41 +120,27 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(s->f_entry);
-    gtk_widget_show (s->w);
+    gtk_widget_show(s->w);
 
     gtk_main();
 }
 
 void text_replace (windata_t *vwin, guint u, GtkWidget *w)
 {
-    gchar *buf;
+    gchar *buf = NULL;
+    char *modbuf = NULL;
     int count = 0;
     size_t sz, fullsz, len, diff;
-    char *replace = NULL, *find = NULL;
-    char *modbuf, *p, *q;
-    gchar *old;
-    struct search_replace *s;
+    char *p, *q;
+    gchar *tmp;
+    struct search_replace s;
     GtkTextBuffer *gedit;
     GtkTextIter sel_start, sel_end, start, end;
     gboolean selected = FALSE;
 
-    s = mymalloc(sizeof *s);
-    if (s == NULL) return;
+    replace_string_dialog(&s);
 
-    replace_string_dialog(s);
-
-    if (s->f_text == NULL || s->r_text == NULL) {
-	free(s);
-	return;
-    }
-
-    find = s->f_text;
-    replace = s->r_text;
-
-    if (!strlen(find)) {
-	free(find);
-	free(replace);
-	free(s);
+    if (s.find == NULL || s.replace == NULL || *s.find == '\0') {
 	return;
     }
 
@@ -171,43 +156,42 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
 	buf = gtk_text_buffer_get_text(gedit, &start, &end, FALSE);
     }
 
-    if (buf == NULL || !(sz = strlen(buf))) return;
+    if (buf == NULL || *buf == '\0') {
+	goto cleanup;
+    }
 
+    sz = strlen(buf);
     fullsz = gtk_text_buffer_get_char_count(gedit);
 
-    len = strlen(find);
-    diff = strlen(replace) - len;
+    len = strlen(s.find);
+    diff = strlen(s.replace) - len;
 
     p = buf;
     while (*p && (size_t) (p - buf) <= fullsz) {
-	if ((q = strstr(p, find))) {
+	q = strstr(p, s.find);
+	if (q != NULL) {
 	    count++;
-	    p = q + 1;
+	    p = q + len;
+	} else {
+	    break;
 	}
-	else break;
     }
 
-    if (count) {
-	fullsz += count * diff;
-    } else {
+    if (count == 0) {
 	errbox(_("String to replace was not found"));
-	g_free(buf);
-	return;
+	goto cleanup;
     }
 
+    fullsz += count * diff;
     modbuf = mymalloc(fullsz + 1);
     if (modbuf == NULL) {
-	free(find);
-	free(replace);
-	free(s);
-	return;
+	goto cleanup;
     }
 
     *modbuf = '\0';
 
     if (selected) {
-	gchar *tmp = gtk_text_buffer_get_text(gedit, &start, &sel_start, FALSE);
-
+	tmp = gtk_text_buffer_get_text(gedit, &start, &sel_start, FALSE);
 	if (tmp != NULL) {
 	    strcat(modbuf, tmp);
 	    g_free(tmp);
@@ -216,9 +200,10 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
 
     p = buf;
     while (*p && (size_t) (p - buf) <= fullsz) {
-	if ((q = strstr(p, find))) {
+	q = strstr(p, s.find);
+	if (q != NULL) {
 	    strncat(modbuf, p, q - p);
-	    strcat(modbuf, replace);
+	    strcat(modbuf, s.replace);
 	    p = q + len;
 	} else {
 	    strcat(modbuf, p);
@@ -227,31 +212,36 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     }
 
     if (selected) {
-	gchar *tmp = gtk_text_buffer_get_text(gedit, &sel_end, &end, FALSE);
-
+	tmp = gtk_text_buffer_get_text(gedit, &sel_end, &end, FALSE);
 	if (tmp != NULL) {
 	    strcat(modbuf, tmp);
 	    g_free(tmp);
 	}
     }    
 
-    /* save original buffer for "undo" */
-    old = g_object_steal_data(G_OBJECT(vwin->w), "undo");
-    if (old != NULL) {
-	g_free(old);
-    }
-
-    g_object_set_data(G_OBJECT(vwin->w), "undo", 
-		      gtk_text_buffer_get_text(gedit, &start, &end, FALSE));
+    if (vwin->sbuf == NULL) {
+	/* replace copy of original buffer for "undo" */
+	tmp = g_object_steal_data(G_OBJECT(vwin->w), "undo");
+	if (tmp != NULL) {
+	    g_free(tmp);
+	}
+	if (selected) {
+	    tmp = gtk_text_buffer_get_text(gedit, &start, &end, FALSE);
+	    g_object_set_data(G_OBJECT(vwin->w), "undo", tmp);
+	} else {
+	    g_object_set_data(G_OBJECT(vwin->w), "undo", buf);
+	    buf = NULL;
+	}
+    } 
 
     /* now insert the modified buffer */
     gtk_text_buffer_delete(gedit, &start, &end);
-    gtk_text_buffer_insert(gedit, &start, modbuf, strlen(modbuf));
+    gtk_text_buffer_insert(gedit, &start, modbuf, -1);
 
-    /* and clean up */
-    free(find);
-    free(replace);
-    free(s);
+ cleanup:
+
+    free(s.find);
+    free(s.replace);
     free(modbuf);
     g_free(buf);
 }

@@ -636,10 +636,12 @@ static void kalman_print_state (kalman *K, int t)
 {
     int j;
 
+    /* if (t > 5) return; */
+
     fprintf(stderr, "Iteration %d:\n", t);
 
     for (j=0; j<K->n; j++) {
-	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", j, 
+	fprintf(stderr, "y[%d] = %.10g, err[%d] = %.10g\n", j, 
 		gretl_matrix_get(K->y, t, j), 
 		j, gretl_vector_get(K->e, j));
     }

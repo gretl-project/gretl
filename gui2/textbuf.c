@@ -120,13 +120,13 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	*sel = 1;
-	return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     } else {
 	*sel = 0;
 	gtk_text_buffer_get_start_iter(tbuf, &start);
 	gtk_text_buffer_get_end_iter(tbuf, &end);
-	return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     }
+
+    return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 }
 
 int textview_set_text (GtkWidget *view, const gchar *text)
@@ -209,14 +209,13 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 	GtkTextMark *ins;
 
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-
 	ins = gtk_text_buffer_get_insert(buf);
 
 	gtk_text_buffer_get_start_iter(buf, &start);
 	gtk_text_buffer_get_end_iter(buf, &end);
 	gtk_text_buffer_delete(buf, &start, &end);
 
-	gtk_text_buffer_insert(buf, &start, old, strlen(old));
+	gtk_text_buffer_insert(buf, &start, old, -1);
 	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
 				     ins, 0.0, TRUE, 0.1, 0.0);
 	g_free(old);
@@ -320,7 +319,7 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
 static void 
 real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
 {
-    GtkSourceLanguagesManager *manager;    
+    GtkSourceLanguagesManager *manager; 
     GtkSourceLanguage *language = NULL;
     FILE *fp = NULL;
 
@@ -440,7 +439,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
 {
-    GtkSourceLanguagesManager *lm;
+    GtkSourceLanguagesManager *lm = gtk_source_languages_manager_new();
     GtkSourceBuffer *sbuf;
     GtkSourceTagStyle *tagstyle;
     GdkColormap *cmap;
@@ -453,7 +452,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gdk_color_parse("blue", &blue);
     gdk_colormap_alloc_color(cmap, &blue, FALSE, TRUE);
 
-    lm = gtk_source_languages_manager_new();
     tagstyle = gtk_source_tag_style_new();
     
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));

@@ -1390,7 +1390,7 @@ void free_windata (GtkWidget *w, gpointer data)
 
     if (vwin != NULL) {
 	if (vwin->w != NULL) { 
-	    gchar *undo = g_object_get_data(G_OBJECT(vwin->w), "undo");
+	    gchar *undo = g_object_steal_data(G_OBJECT(vwin->w), "undo");
 	    
 	    if (undo != NULL) {
 		g_free(undo);
