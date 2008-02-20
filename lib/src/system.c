@@ -1766,7 +1766,7 @@ static int make_tsls_style_elist (equation_system *sys)
 	err = gretl_list_split_on_separator(slist, &Y, &Z);
 	if (!err) {
 	    if (Y != NULL && Z != NULL) {
-		for (j=1; j<=Y[0]; j++) {
+		for (j=1; j<=Y[0] && !err; j++) {
 		    k = Y[j];
 		    if (!in_gretl_list(Z, k) && !in_gretl_list(elist, k)) {
 			gretl_list_append_term(&elist, k);
@@ -1790,30 +1790,73 @@ static int make_tsls_style_elist (equation_system *sys)
     return err;
 }
 
+static int infer_elist_from_insts (equation_system *sys)
+{
+    const int *Z = sys->instr_vars;
+    const int *slist;
+    int *elist = NULL;
+    int i, j, k;
+    int err = 0;
+
+    for (i=0; i<sys->n_equations && !err; i++) {
+	slist = sys->lists[i];
+	if (gretl_list_has_separator(slist)) {
+	    continue;
+	}
+	for (j=1; j<=slist[0] && !err; j++) {
+	    k = slist[j];
+	    if (!in_gretl_list(Z, k)) {
+		gretl_list_append_term(&elist, k);
+		if (elist == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	sys->endog_vars = elist;
+    } 
+
+    return err;
+}
+
 #define system_needs_endog_list(s) (s->method != SYS_METHOD_SUR && \
 				    s->method != SYS_METHOD_OLS && \
 				    s->method != SYS_METHOD_WLS)
 
 static int make_instrument_list (equation_system *sys)
 {
-    int *ilist, *elist = sys->endog_vars;
+    int *ilist, *elist;
     int i, j, k, nexo, maxnexo = 0;
+    int err = 0;
 
-    if (system_needs_endog_list(sys) && elist == NULL) {
+    if (system_needs_endog_list(sys) && sys->endog_vars == NULL) {
 	/* first pass: handle 3SLS? */
-	make_tsls_style_elist(sys);
-	elist = sys->endog_vars;
+	err = make_tsls_style_elist(sys);
     }
 
-    if (system_needs_endog_list(sys) && elist == NULL) {
+    if (!err && system_needs_endog_list(sys) && sys->endog_vars == NULL) {
+	if (sys->instr_vars != NULL) {
+	    err = infer_elist_from_insts(sys);
+	}
+    }
+
+    if (!err && system_needs_endog_list(sys) && sys->endog_vars == NULL) {
 	gretl_errmsg_set(_("No list of endogenous variables was given"));
-	return E_DATA;
+	err = E_DATA;
+    }
+
+    if (err) {
+	return err;
     }
 
     if (sys->instr_vars != NULL) {
 	/* job is already done */
 	return 0;
     }
+
+    elist = sys->endog_vars;
 
     /* First pass: get a count of the max possible number of
        exogenous variables (probably an over-estimate due to

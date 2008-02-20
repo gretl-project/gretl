@@ -1542,7 +1542,7 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
     return ret;
 }
 
-/* if we find a semicolon directly after a varname, insert a space so
+/* if we find a semicolon without a preceding space, insert a space so
    that we can count the fields in the line correctly */
 
 static int fix_semicolon_after_var (char *s)
@@ -1551,7 +1551,7 @@ static int fix_semicolon_after_var (char *s)
     int i, j;
 
     for (i=0; i<len-1; i++) {
-	if (isalnum((unsigned char) s[i]) && s[i+1] == ';') {
+	if (s[i] != ' ' && s[i+1] == ';') {
 	    if (len < MAXLINE - 1) {
 		for (j=len; j>i+1; j--) {
 		    s[j] = s[j-1];

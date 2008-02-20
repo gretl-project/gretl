@@ -1048,7 +1048,7 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 	    gotsep = 1;
 	    continue;
 	}
-	if (gotsep && list[i] > 0) {
+	if (gotsep) {
 	    if (tex) {
 		tex_escape(vname, pdinfo->varname[list[i]]);
 	    } else {
