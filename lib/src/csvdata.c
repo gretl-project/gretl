@@ -84,6 +84,10 @@ time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn);
 
 static void csvdata_free (csvdata *c)
 {
+    if (c == NULL) {
+	return;
+    }
+
     if (c->descrip != NULL) {
 	free(c->descrip);
     }

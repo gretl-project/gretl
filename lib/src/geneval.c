@@ -514,15 +514,9 @@ static double xy_calc (double x, double y, int op, parser *p)
 	return 0.0;
     }
 
-    /* otherwise NA propagates to the result, unless we're testing
-       for equality (?)
-    */
+    /* otherwise NA propagates to the result */
     if (na(x) || na(y)) {
-	if ((op == B_EQ || op == B_NEQ) && (!na(x) || !na(y))) {
-	    ; /* proceed */
-	} else {
-	    return NADBL;
-	}
+	return NADBL;
     }
 
     errno = 0;

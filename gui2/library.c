@@ -5519,7 +5519,10 @@ void do_open_csv_octave (char *fname, int code, int append)
 
     view_buffer(prn, 78, 350, buf, IMPORT, NULL); 
 
-    if (err) return;
+    if (err) {
+	delete_from_filelist(FILE_LIST_DATA, fname);
+	return;
+    }
 
     maybe_display_string_table();
     data_status |= IMPORT_DATA;

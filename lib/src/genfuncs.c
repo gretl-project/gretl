@@ -1912,12 +1912,14 @@ static double weighted_mean_at_obs (const int *list, const int *wlist,
     }
 
     for (i=1; i<=list[0]; i++) {
-	xi = Z[list[i]][t];
-	if (na(xi)) {
-	    return NADBL;
-	}
 	w = Z[wlist[i]][t] / wsum;
-	wxbar += xi * w;
+	if (w > 0) {
+	    xi = Z[list[i]][t];
+	    if (na(xi)) {
+		return NADBL;
+	    }
+	    wxbar += xi * w;
+	}
     }
 
     return wxbar;

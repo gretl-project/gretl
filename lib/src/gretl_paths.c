@@ -1608,7 +1608,7 @@ int gretl_normalize_path (char *path)
     int i, n = 0;
     int err = 0;
 
-    if (*path == '\0') {
+    if (*path == '\0' || strstr(path, SLASHSTR) == NULL) {
 	return 0;
     }
 

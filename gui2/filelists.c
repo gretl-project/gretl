@@ -233,6 +233,10 @@ static void clear_files_list (int ftype, char **filep)
     };
     int i;
 
+    if (mdata == NULL || mdata->ifac == NULL) {
+	return;
+    }
+
     if (ftype == FILE_LIST_WDIR) {
 	/* not displayed like the others */
 	return;
@@ -519,6 +523,10 @@ static void real_add_files_to_menus (int ftype)
     };
     int jmin = 0, jmax = NFILELISTS-1;
     int i, j;
+
+    if (mdata == NULL || mdata->ifac == NULL) {
+	return;
+    }
 
     if (ftype < NFILELISTS - 1) {
 	jmin = ftype;

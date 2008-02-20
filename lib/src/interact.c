@@ -4939,6 +4939,7 @@ static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)
     if (*err) {
 	gretl_errmsg_set(_("error evaluating 'if'"));
     } else if (na(val)) {
+	*err = 1;
 	strcpy(gretl_errmsg, _("indeterminate condition for 'if'"));
     } else {
 	ret = (int) val;

@@ -987,6 +987,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
     
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
+	delete_from_filelist(FILE_LIST_DATA, fname);
 	file_read_errbox(fname);
 	return 1;
     } else {
@@ -1043,6 +1044,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	    errbox(_("Failed to import data"));
 	}
 	gretl_print_destroy(errprn);
+	delete_from_filelist(FILE_LIST_DATA, fname);
 	return 1;
     } else {
 	if (errbuf != NULL && *errbuf != '\0') {
