@@ -6,6 +6,7 @@
 "AWM","Euro area macroeconomic data, 1970-1998"
 "b-g","Bollerslev and Ghysels exchange rate data"
 "bjg","Box and Jenkins Series G (airline passengers)"
+"broiler","Epple and McCallum broiler chicken data"
 "denmark","Johansen's Danish macroeconomic data"
 "djclose","Daily close of Dow-Jones, 1980s"
 "ects_nls","Nonlinear least squares example"
