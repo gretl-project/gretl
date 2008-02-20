@@ -683,6 +683,8 @@ real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    wsheet_menu(book, 0);
 	    sheetnum = 0;
 	}
+    } else {
+	sheetnum = 0;
     }
 
     if (book->selected == -1) {
