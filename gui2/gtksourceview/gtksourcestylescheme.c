@@ -22,8 +22,10 @@
 #include <config.h>
 #endif
 
-#include "gtksourcestylescheme.h"
 #include "gtksourceview-i18n.h"
+
+#include "gtksourcestylescheme.h"
+
 
 static void gtk_source_style_scheme_base_init (gpointer g_class);
 
@@ -69,6 +71,15 @@ gtk_source_style_scheme_base_init (gpointer g_class)
     	}
 }
 
+/**
+ * gtk_source_style_scheme_get_tag_style:
+ * @scheme: a #GtkSourceStyleScheme.
+ * @style_name: the name of a style.
+ *
+ * Gets the tag associated with the given @style_name in the style @scheme.
+ *
+ * Return value: a #GtkSourceTagStyle.
+ **/
 GtkSourceTagStyle *
 gtk_source_style_scheme_get_tag_style (GtkSourceStyleScheme *scheme,
 				       const gchar          *style_name)
@@ -79,6 +90,14 @@ gtk_source_style_scheme_get_tag_style (GtkSourceStyleScheme *scheme,
 	return GTK_SOURCE_STYLE_SCHEME_GET_CLASS (scheme)->get_tag_style (scheme, style_name);
 }
 
+/**
+ * gtk_source_style_scheme_get_name:
+ * @scheme: a #GtkSourceStyleScheme.
+ *
+ * Gets the name of the given style @scheme.
+ *
+ * Return value: the name of the style scheme.
+ **/
 const gchar *
 gtk_source_style_scheme_get_name (GtkSourceStyleScheme *scheme)
 {
@@ -87,6 +106,14 @@ gtk_source_style_scheme_get_name (GtkSourceStyleScheme *scheme)
 	return GTK_SOURCE_STYLE_SCHEME_GET_CLASS (scheme)->get_name (scheme);
 }
 
+/**
+ * gtk_source_style_scheme_get_style_names:
+ * @scheme: a #GtkSourceStyleScheme.
+ *
+ * Gets a list of style names in the given style @scheme.
+ *
+ * Return value: a list of 
+ **/
 GSList *
 gtk_source_style_scheme_get_style_names (GtkSourceStyleScheme *scheme)
 {
@@ -286,7 +313,9 @@ gtk_source_default_style_scheme_init (GtkSourceDefaultStyleScheme *scheme)
 	g_hash_table_insert (scheme->styles, 
 			     g_strdup (N_("Specials")),
 			     ts);
+ 
 
+	/* "Others" is DEPRECATED, it has been replaced by "Data Type" */
 	ts = new_tag_style ("#2E8B57", NULL, TRUE, FALSE);
 	g_hash_table_insert (scheme->styles, 
 			     g_strdup (N_("Others")),
@@ -366,6 +395,13 @@ gtk_source_default_style_scheme_get_style_names (GtkSourceStyleScheme *scheme)
 
 static GtkSourceStyleScheme* default_style_scheme = NULL;
 
+/**
+ * gtk_source_style_scheme_get_default:
+ *
+ * Gets the default style scheme.
+ *
+ * Return value: a #GtkSourceStyleScheme.
+ **/
 GtkSourceStyleScheme *
 gtk_source_style_scheme_get_default (void)
 {

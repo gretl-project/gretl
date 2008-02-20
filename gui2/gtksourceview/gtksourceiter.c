@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- 
  *  gtksourceiter.h
  *
- *  Copyright (C) 2000, 2002 Paolo Maggi 
+ *  Copyright (C) 2000 - 2005 Paolo Maggi 
  *  Copyright (C) 2002, 2003 Jeroen Zwartepoorte
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,12 +32,58 @@
 
 #define GTK_TEXT_UNKNOWN_CHAR 0xFFFC
 
-static gchar *
-g_utf8_strcasestr (const gchar *haystack, const gchar *needle)
+/* this function acts like g_utf8_offset_to_pointer() except that if it finds a
+ * decomposable character it consumes the decomposition length from the given
+ * offset.  So it's useful when the offset was calculated for the normalized
+ * version of str, but we need a pointer to str itself. */
+static const gchar *
+pointer_from_offset_skipping_decomp (const gchar *str, gint offset)
+{
+	gchar *casefold, *normal;
+	const gchar *p, *q;
+
+	p = str;
+	while (offset > 0)
+	{
+		q = g_utf8_next_char (p);
+		casefold = g_utf8_casefold (p, q - p);
+		normal = g_utf8_normalize (casefold, -1, G_NORMALIZE_NFD);
+		offset -= g_utf8_strlen (normal, -1);
+		g_free (casefold);
+		g_free (normal);
+		p = q;
+	}
+	return p;
+}
+
+static gboolean
+exact_prefix_cmp (const gchar *string,
+		  const gchar *prefix,
+		  guint        prefix_len)
+{
+	GUnicodeType type;
+
+	if (strncmp (string, prefix, prefix_len) != 0)
+		return FALSE;
+	if (string[prefix_len] == '\0')
+		return TRUE;
+
+	type = g_unichar_type (g_utf8_get_char (string + prefix_len));
+
+	/* If string contains prefix, check that prefix is not followed
+	 * by a unicode mark symbol, e.g. that trailing 'a' in prefix
+	 * is not part of two-char a-with-hat symbol in string. */
+	return type != G_UNICODE_NON_SPACING_MARK &&
+		type != G_UNICODE_ENCLOSING_MARK &&
+		type != G_UNICODE_NON_SPACING_MARK;
+}
+
+static const gchar *
+utf8_strcasestr (const gchar *haystack, const gchar *needle)
 {
 	gsize needle_len;
 	gsize haystack_len;
-	gchar *ret = NULL;
+	const gchar *ret = NULL;
 	gchar *p;
 	gchar *casefold;
 	gchar *caseless_haystack;
@@ -47,7 +93,7 @@ g_utf8_strcasestr (const gchar *haystack, const gchar *needle)
 	g_return_val_if_fail (needle != NULL, NULL);
 
 	casefold = g_utf8_casefold (haystack, -1);
-	caseless_haystack = g_utf8_normalize (casefold, -1, G_NORMALIZE_ALL);
+	caseless_haystack = g_utf8_normalize (casefold, -1, G_NORMALIZE_NFD);
 	g_free (casefold);
 
 	needle_len = g_utf8_strlen (needle, -1);
@@ -71,9 +117,9 @@ g_utf8_strcasestr (const gchar *haystack, const gchar *needle)
 
 	while (*p)
 	{
-		if ((strncmp (p, needle, needle_len) == 0))
+		if (exact_prefix_cmp (p, needle, needle_len))
 		{
-			ret = g_utf8_offset_to_pointer (haystack, i);
+			ret = pointer_from_offset_skipping_decomp (haystack, i);
 			goto finally_1;
 		}
 
@@ -87,12 +133,12 @@ finally_1:
 	return ret;
 }
 
-static gchar *
-g_utf8_strrcasestr (const gchar *haystack, const gchar *needle)
+static const gchar *
+utf8_strrcasestr (const gchar *haystack, const gchar *needle)
 {
 	gsize needle_len;
 	gsize haystack_len;
-	gchar *ret = NULL;
+	const gchar *ret = NULL;
 	gchar *p;
 	gchar *casefold;
 	gchar *caseless_haystack;
@@ -102,7 +148,7 @@ g_utf8_strrcasestr (const gchar *haystack, const gchar *needle)
 	g_return_val_if_fail (needle != NULL, NULL);
 
 	casefold = g_utf8_casefold (haystack, -1);
-	caseless_haystack = g_utf8_normalize (casefold, -1, G_NORMALIZE_ALL);
+	caseless_haystack = g_utf8_normalize (casefold, -1, G_NORMALIZE_NFD);
 	g_free (casefold);
 
 	needle_len = g_utf8_strlen (needle, -1);
@@ -120,16 +166,15 @@ g_utf8_strrcasestr (const gchar *haystack, const gchar *needle)
 		goto finally_1;
 	}
 
-	haystack_len = strlen (caseless_haystack);
-	needle_len = strlen (needle);
-	p = (gchar *)caseless_haystack + haystack_len - needle_len;
 	i = haystack_len - needle_len;
+	p = g_utf8_offset_to_pointer (caseless_haystack, i);
+	needle_len = strlen (needle);
 
 	while (p >= caseless_haystack)
 	{
-		if (strncasecmp (p, needle, needle_len) == 0)
+		if (exact_prefix_cmp (p, needle, needle_len))
 		{
-			ret = g_utf8_offset_to_pointer (haystack, i);
+			ret = pointer_from_offset_skipping_decomp (haystack, i);
 			goto finally_1;
 		}
 
@@ -144,8 +189,8 @@ finally_1:
 }
 
 static gboolean
-g_utf8_caselessnmatch (const char *s1, const char *s2,
-		       gssize n1, gssize n2)
+utf8_caselessnmatch (const char *s1, const char *s2,
+		     gssize n1, gssize n2)
 {
 	gchar *casefold;
 	gchar *normalized_s1;
@@ -160,11 +205,11 @@ g_utf8_caselessnmatch (const char *s1, const char *s2,
 	g_return_val_if_fail (n2 > 0, FALSE);
 
 	casefold = g_utf8_casefold (s1, n1);
-	normalized_s1 = g_utf8_normalize (casefold, -1, G_NORMALIZE_ALL);
+	normalized_s1 = g_utf8_normalize (casefold, -1, G_NORMALIZE_NFD);
 	g_free (casefold);
 
 	casefold = g_utf8_casefold (s2, n2);
-	normalized_s2 = g_utf8_normalize (casefold, -1, G_NORMALIZE_ALL);
+	normalized_s2 = g_utf8_normalize (casefold, -1, G_NORMALIZE_NFD);
 	g_free (casefold);
 
 	len_s1 = strlen (normalized_s1);
@@ -177,7 +222,7 @@ g_utf8_caselessnmatch (const char *s1, const char *s2,
 
 finally_2:
 	g_free (normalized_s1);
-	g_free (normalized_s2);	
+	g_free (normalized_s2); 
 
 	return ret;
 }
@@ -186,7 +231,8 @@ static void
 forward_chars_with_skipping (GtkTextIter *iter,
 			     gint         count,
 			     gboolean     skip_invisible,
-			     gboolean     skip_nontext)
+			     gboolean     skip_nontext,
+			     gboolean     skip_decomp)
 {
 	gint i;
 
@@ -198,12 +244,34 @@ forward_chars_with_skipping (GtkTextIter *iter,
 	{
 		gboolean ignored = FALSE;
 
+		/* minimal workaround to avoid the infinite loop of bug #168247.
+		 * It doesn't fix the problemjust the symptom...
+		 */
+		if (gtk_text_iter_is_end (iter))
+			return;
+
 		if (skip_nontext && gtk_text_iter_get_char (iter) == GTK_TEXT_UNKNOWN_CHAR)
 			ignored = TRUE;
 
 		if (!ignored && skip_invisible &&
 		    /* _gtk_text_btree_char_is_invisible (iter)*/ FALSE)
 			ignored = TRUE;
+
+		if (!ignored && skip_decomp)
+		{
+			/* being UTF8 correct sucks; this accounts for extra
+			   offsets coming from canonical decompositions of
+			   UTF8 characters (e.g. accented characters) which 
+			   g_utf8_normalize() performs */
+			gchar *normal;
+			gchar buffer[6];
+			gint buffer_len;
+
+			buffer_len = g_unichar_to_utf8 (gtk_text_iter_get_char (iter), buffer);
+			normal = g_utf8_normalize (buffer, buffer_len, G_NORMALIZE_NFD);
+			i -= (g_utf8_strlen (normal, -1) - 1);
+			g_free (normal);
+		}
 
 		gtk_text_iter_forward_char (iter);
 
@@ -258,15 +326,15 @@ lines_match (const GtkTextIter *start,
 
 	if (match_start) /* if this is the first line we're matching */
 	{
-		found = g_utf8_strcasestr (line_text, *lines);
+		found = utf8_strcasestr (line_text, *lines);
 	}
 	else
 	{
 		/* If it's not the first line, we have to match from the
 		 * start of the line.
 		 */
-		if (g_utf8_caselessnmatch (line_text, *lines, strlen (line_text),
-					   strlen (*lines)))
+		if (utf8_caselessnmatch (line_text, *lines, strlen (line_text),
+					 strlen (*lines)))
 			found = line_text;
 		else
 			found = NULL;
@@ -286,18 +354,14 @@ lines_match (const GtkTextIter *start,
 	/* If match start needs to be returned, set it to the
 	 * start of the search string.
 	 */
+	forward_chars_with_skipping (&next, offset, visible_only, !slice, FALSE);
 	if (match_start)
 	{
 		*match_start = next;
-
-		forward_chars_with_skipping (match_start, offset,
-					     visible_only, !slice);
 	}
 
 	/* Go to end of search string */
-	offset += g_utf8_strlen (*lines, -1);
-
-	forward_chars_with_skipping (&next, offset, visible_only, !slice);
+	forward_chars_with_skipping (&next, g_utf8_strlen (*lines, -1), visible_only, !slice, TRUE);
 
 	g_free (line_text);
 
@@ -360,15 +424,15 @@ backward_lines_match (const GtkTextIter *start,
 
 	if (match_start) /* if this is the first line we're matching */
 	{
-		found = g_utf8_strrcasestr (line_text, *lines);
+		found = utf8_strrcasestr (line_text, *lines);
 	}
 	else
 	{
 		/* If it's not the first line, we have to match from the
 		 * start of the line.
 		 */
-		if (g_utf8_caselessnmatch (line_text, *lines, strlen (line_text),
-					   strlen (*lines)))
+		if (utf8_caselessnmatch (line_text, *lines, strlen (line_text),
+					 strlen (*lines)))
 			found = line_text;
 		else
 			found = NULL;
@@ -383,19 +447,18 @@ backward_lines_match (const GtkTextIter *start,
 	/* Get offset to start of search string */
 	offset = g_utf8_strlen (line_text, found - line_text);
 
+	forward_chars_with_skipping (&next, offset, visible_only, !slice, FALSE);
+
 	/* If match start needs to be returned, set it to the
 	 * start of the search string.
 	 */
 	if (match_start)
 	{
 		*match_start = next;
-		gtk_text_iter_set_visible_line_offset (match_start, offset);
 	}
 
 	/* Go to end of search string */
-	offset += g_utf8_strlen (*lines, -1);
-
-	forward_chars_with_skipping (&next, offset, visible_only, !slice);
+	forward_chars_with_skipping (&next, g_utf8_strlen (*lines, -1), visible_only, !slice, TRUE);
 
 	g_free (line_text);
 
@@ -442,7 +505,7 @@ strbreakup (const char *string,
 			new_string[len] = 0;
 			casefold = g_utf8_casefold (new_string, -1);
 			g_free (new_string);
-			new_string = g_utf8_normalize (casefold, -1, G_NORMALIZE_ALL);
+			new_string = g_utf8_normalize (casefold, -1, G_NORMALIZE_NFD);
 			g_free (casefold);
 			string_list = g_slist_prepend (string_list, new_string);
 			n++;
@@ -455,7 +518,7 @@ strbreakup (const char *string,
 	{
 		n++;
 		casefold = g_utf8_casefold (string, -1);
-		new_string = g_utf8_normalize (casefold, -1, G_NORMALIZE_ALL);
+		new_string = g_utf8_normalize (casefold, -1, G_NORMALIZE_NFD);
 		g_free (casefold);
 		string_list = g_slist_prepend (string_list, new_string);
 	}
@@ -475,12 +538,12 @@ strbreakup (const char *string,
 
 /**
  * gtk_source_iter_forward_search:
- * @iter: start of search
- * @str: a search string
- * @flags: flags affecting how the search is done
- * @match_start: return location for start of match, or %NULL
- * @match_end: return location for end of match, or %NULL
- * @limit: bound for the search, or %NULL for the end of the buffer
+ * @iter: start of search.
+ * @str: a search string.
+ * @flags: flags affecting how the search is done.
+ * @match_start: return location for start of match, or %%NULL.
+ * @match_end: return location for end of match, or %%NULL.
+ * @limit: bound for the search, or %%NULL for the end of the buffer.
  * 
  * Searches forward for @str. Any match is returned by setting 
  * @match_start to the first character of the match and @match_end to the 
@@ -502,7 +565,7 @@ strbreakup (const char *string,
  * Same as gtk_text_iter_forward_search(), but supports case insensitive
  * searching.
  * 
- * Return value: whether a match was found
+ * Return value: whether a match was found.
  **/
 gboolean
 gtk_source_iter_forward_search (const GtkTextIter   *iter,
@@ -574,8 +637,8 @@ gtk_source_iter_forward_search (const GtkTextIter   *iter,
 		if (lines_match (&search, (const gchar**)lines,
 				 visible_only, slice, &match, &end))
 		{
-			if (limit == NULL || (limit &&
-					      gtk_text_iter_compare (&end, limit) < 0))
+			if (limit == NULL ||
+			    (limit && gtk_text_iter_compare (&end, limit) <= 0))
 			{
 				retval = TRUE;
 
@@ -595,17 +658,17 @@ gtk_source_iter_forward_search (const GtkTextIter   *iter,
 
 /**
  * gtk_source_iter_backward_search:
- * @iter: a #GtkTextIter where the search begins
- * @str: search string
- * @flags: bitmask of flags affecting the search
- * @match_start: return location for start of match, or %NULL
- * @match_end: return location for end of match, or %NULL
- * @limit: location of last possible @match_start, or %NULL for start of buffer
+ * @iter: a #GtkTextIter where the search begins.
+ * @str: search string.
+ * @flags: bitmask of flags affecting the search.
+ * @match_start: return location for start of match, or %%NULL.
+ * @match_end: return location for end of match, or %%NULL.
+ * @limit: location of last possible @match_start, or %%NULL for start of buffer.
  * 
  * Same as gtk_text_iter_backward_search(), but supports case insensitive
  * searching.
  * 
- * Return value: whether a match was found
+ * Return value: whether a match was found.
  **/
 gboolean
 gtk_source_iter_backward_search (const GtkTextIter   *iter,

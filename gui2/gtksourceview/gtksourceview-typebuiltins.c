@@ -5,9 +5,8 @@
 #include "gtksourceview-typebuiltins.h"
 
 
-
 /* enumerations from "gtksourceiter.h" */
-static const GEnumValue _gtk_source_search_flags_values[] = {
+static const GFlagsValue _gtk_source_search_flags_values[] = {
   { GTK_SOURCE_SEARCH_VISIBLE_ONLY, "GTK_SOURCE_SEARCH_VISIBLE_ONLY", "visible-only" },
   { GTK_SOURCE_SEARCH_TEXT_ONLY, "GTK_SOURCE_SEARCH_TEXT_ONLY", "text-only" },
   { GTK_SOURCE_SEARCH_CASE_INSENSITIVE, "GTK_SOURCE_SEARCH_CASE_INSENSITIVE", "case-insensitive" },
@@ -20,11 +19,10 @@ gtk_source_search_flags_get_type (void)
   static GType type = 0;
 
   if (!type)
-    type = g_enum_register_static ("GtkSourceSearchFlags", _gtk_source_search_flags_values);
+    type = g_flags_register_static ("GtkSourceSearchFlags", _gtk_source_search_flags_values);
 
   return type;
 }
-
 
 
 /* enumerations from "gtksourcetagstyle.h" */
@@ -44,7 +42,6 @@ gtk_source_tag_style_mask_get_type (void)
 
   return type;
 }
-
 
 
 /* Generated data ends here */

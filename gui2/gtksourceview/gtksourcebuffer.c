@@ -32,14 +32,13 @@
 #include <gtk/gtk.h>
 
 #include "gtksourceview-i18n.h"
+
 #include "gtksourcebuffer.h"
 #include "gtksourcetag.h"
 #include "gtksourcetag-private.h"
-
 #include "gtksourceundomanager.h"
 #include "gtksourceview-marshal.h"
 #include "gtktextregion.h"
-
 #include "gtksourceiter.h"
 
 /*
@@ -211,8 +210,8 @@ static void      ensure_highlighted                     (GtkSourceBuffer        
 							 const GtkTextIter       *start,
 							 const GtkTextIter       *end);
 
-static gboolean	 gtk_source_buffer_find_bracket_match_real (GtkTextIter          *orig, 
-							    gint                  max_chars);
+static gboolean	 gtk_source_buffer_find_bracket_match_with_limit (GtkTextIter    *orig, 
+								  gint            max_chars);
 
 static void	 gtk_source_buffer_remove_all_source_tags (GtkSourceBuffer   *buffer,
 					  		const GtkTextIter *start,
@@ -408,7 +407,6 @@ gtk_source_buffer_init (GtkSourceBuffer *buffer)
 			  "can_redo",
 			  G_CALLBACK (gtk_source_buffer_can_redo_handler),
 			  buffer);
-
 }
 
 static void 
@@ -417,7 +415,6 @@ tag_added_or_removed_cb (GtkTextTagTable *table, GtkTextTag *tag, GtkSourceBuffe
 	sync_with_tag_table (buffer);
 	
 }
-
 
 static void 
 tag_table_changed_cb (GtkSourceTagTable *table, GtkSourceBuffer *buffer)
@@ -431,6 +428,7 @@ gtk_source_buffer_constructor (GType                  type,
 			       GObjectConstructParam *construct_param)
 {
 	GObject *g_object;
+	gboolean tag_table_specified = FALSE;
 	gint i;
 
 	/* Check the construction parameters to see if the user
@@ -438,25 +436,31 @@ gtk_source_buffer_constructor (GType                  type,
 	 * GtkSourceTagTable if he didn't */
 	for (i = 0; i < n_construct_properties; i++)
 	{
-		if (!strcmp ("tag-table", construct_param [i].pspec->name) &&
-		    g_value_get_object (construct_param [i].value) == NULL)
+		if (!strcmp ("tag-table", construct_param [i].pspec->name))
 		{
+			if (g_value_get_object (construct_param [i].value) == NULL)
+			{
 #if (GLIB_MINOR_VERSION <= 2)
-			g_value_set_object_take_ownership (construct_param [i].value,
-							   gtk_source_tag_table_new ());
+				g_value_set_object_take_ownership (construct_param [i].value,
+								   gtk_source_tag_table_new ());
 #else
-			g_value_take_object (construct_param [i].value,
-					     gtk_source_tag_table_new ());
+				g_value_take_object (construct_param [i].value,
+						     gtk_source_tag_table_new ());
 #endif
+			}
+			else
+			{
+				tag_table_specified = TRUE;
+			}
 
 			break;
 		}
 	}
-	
+
 	g_object = G_OBJECT_CLASS (parent_class)->constructor (type, 
 							       n_construct_properties,
 							       construct_param);
-	
+
 	if (g_object) 
 	{
 		GtkSourceTagStyle *tag_style;
@@ -482,6 +486,10 @@ gtk_source_buffer_constructor (GType                  type,
 
 		if (GTK_IS_SOURCE_TAG_TABLE (GTK_TEXT_BUFFER (source_buffer)->tag_table))
 		{
+			/* sync with the tag table if the user passed one */
+			if (tag_table_specified)
+				sync_with_tag_table (source_buffer);
+
 			g_signal_connect (GTK_TEXT_BUFFER (source_buffer)->tag_table ,
 					  "changed",
 					  G_CALLBACK (tag_table_changed_cb),
@@ -504,7 +512,7 @@ gtk_source_buffer_constructor (GType                  type,
 					  source_buffer);				
 		}
 	}
-	
+
 	return g_object;
 }
 
@@ -512,6 +520,7 @@ static void
 gtk_source_buffer_finalize (GObject *object)
 {
 	GtkSourceBuffer *buffer;
+	GtkTextTagTable *tag_table;
 
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (GTK_IS_SOURCE_BUFFER (object));
@@ -546,6 +555,14 @@ gtk_source_buffer_finalize (GObject *object)
 
 	if (buffer->priv->language != NULL)
 		g_object_unref (buffer->priv->language);
+
+	tag_table = GTK_TEXT_BUFFER (buffer)->tag_table;
+	g_signal_handlers_disconnect_by_func (tag_table,
+					      (gpointer)tag_table_changed_cb,
+					      buffer);
+	g_signal_handlers_disconnect_by_func (tag_table,
+					      (gpointer)tag_added_or_removed_cb,
+					      buffer);	
 
 	g_free (buffer->priv);
 	buffer->priv = NULL;
@@ -643,7 +660,7 @@ gtk_source_buffer_get_property (GObject    *object,
 
 /**
  * gtk_source_buffer_new:
- * @table: a #GtkSourceTagTable, or NULL to create a new one.
+ * @table: a #GtkSourceTagTable, or %NULL to create a new one.
  * 
  * Creates a new source buffer.
  * 
@@ -657,7 +674,7 @@ gtk_source_buffer_new (GtkSourceTagTable *table)
 	buffer = GTK_SOURCE_BUFFER (g_object_new (GTK_TYPE_SOURCE_BUFFER, 
 						  "tag-table", table, 
 						  NULL));
-	
+
 	return buffer;
 }
 
@@ -761,7 +778,7 @@ gtk_source_buffer_move_cursor (GtkTextBuffer *buffer,
 		return;
 
 	iter1 = *iter;
-	if (gtk_source_buffer_find_bracket_match_real (&iter1, MAX_CHARS_BEFORE_FINDING_A_MATCH)) 
+	if (gtk_source_buffer_find_bracket_match_with_limit (&iter1, MAX_CHARS_BEFORE_FINDING_A_MATCH)) 
 	{
 		if (!GTK_SOURCE_BUFFER (buffer)->priv->bracket_mark)
 			GTK_SOURCE_BUFFER (buffer)->priv->bracket_mark =
@@ -1007,11 +1024,14 @@ iter_has_syntax_tag (const GtkTextIter *iter)
 {
 	const GtkSyntaxTag *tag;
 	GSList *list;
+	GSList *l;
 
 	g_return_val_if_fail (iter != NULL, NULL);
 
 	list = gtk_text_iter_get_tags (iter);
 	tag = NULL;
+
+	l = list;
 
 	while ((list != NULL) && (tag == NULL)) {
 		if (GTK_IS_SYNTAX_TAG (list->data))
@@ -1019,7 +1039,7 @@ iter_has_syntax_tag (const GtkTextIter *iter)
 		list = g_slist_next (list);
 	}
 
-	g_slist_free (list);
+	g_slist_free (l);
 
 	return tag;
 }
@@ -1059,9 +1079,6 @@ gtk_source_buffer_find_bracket_match_real (GtkTextIter *orig, gint max_chars)
 
 	iter = *orig;
 
-	if (!gtk_text_iter_backward_char (&iter))
-		return FALSE;
-	
 	cur_char = gtk_text_iter_get_char (&iter);
 
 	base_char = search_char = cur_char;
@@ -1139,6 +1156,34 @@ gtk_source_buffer_find_bracket_match_real (GtkTextIter *orig, gint max_chars)
 	return found;
 }
 
+/* Note that we take into account both the character following the cursor and the
+ * one preceding it. If there are brackets on both sides the one following the 
+ * cursor takes precedence.
+ */
+static gboolean
+gtk_source_buffer_find_bracket_match_with_limit (GtkTextIter *orig, gint max_chars)
+{
+	GtkTextIter iter;
+
+	if (gtk_source_buffer_find_bracket_match_real (orig, max_chars))
+	{
+		return TRUE;
+	}
+
+	iter = *orig;
+	if (!gtk_text_iter_starts_line (&iter) &&
+	    gtk_text_iter_backward_char (&iter))
+	{
+		if (gtk_source_buffer_find_bracket_match_real (&iter, max_chars))
+		{
+			*orig = iter;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 /**
  * gtk_source_iter_find_matching_bracket:
  * @iter: a #GtkTextIter.
@@ -1149,7 +1194,7 @@ gtk_source_buffer_find_bracket_match_real (GtkTextIter *orig, gint max_chars)
  *
  * @iter must be a #GtkTextIter belonging to a #GtkSourceBuffer.
  * 
- * Return value: TRUE if the matching bracket was found and the @iter
+ * Return value: %TRUE if the matching bracket was found and the @iter
  * iter moved.
  **/
 gboolean
@@ -1157,7 +1202,7 @@ gtk_source_iter_find_matching_bracket (GtkTextIter *iter)
 {
 	g_return_val_if_fail (iter != NULL, FALSE);
 
-	return gtk_source_buffer_find_bracket_match_real (iter, -1);
+	return gtk_source_buffer_find_bracket_match_with_limit (iter, -1);
 }
 
 /**
@@ -1166,7 +1211,7 @@ gtk_source_iter_find_matching_bracket (GtkTextIter *iter)
  * 
  * Determines whether a source buffer can undo the last action.
  * 
- * Return value: TRUE if it's possible to undo the last action.
+ * Return value: %TRUE if it's possible to undo the last action.
  **/
 gboolean
 gtk_source_buffer_can_undo (GtkSourceBuffer *buffer)
@@ -1183,7 +1228,7 @@ gtk_source_buffer_can_undo (GtkSourceBuffer *buffer)
  * Determines whether a source buffer can redo the last action
  * (i.e. if the last operation was an undo).
  * 
- * Return value: TRUE if a redo is possible.
+ * Return value: %TRUE if a redo is possible.
  **/
 gboolean
 gtk_source_buffer_can_redo (GtkSourceBuffer *buffer)
@@ -1323,7 +1368,7 @@ gtk_source_buffer_end_not_undoable_action (GtkSourceBuffer *buffer)
  * Determines whether bracket match highlighting is activated for the
  * source buffer.
  * 
- * Return value: TRUE if the source buffer will highlight matching
+ * Return value: %TRUE if the source buffer will highlight matching
  * brackets.
  **/
 gboolean
@@ -1337,7 +1382,7 @@ gtk_source_buffer_get_check_brackets (GtkSourceBuffer *buffer)
 /**
  * gtk_source_buffer_set_check_brackets:
  * @buffer: a #GtkSourceBuffer.
- * @check_brackets: TRUE if you want matching brackets highlighted.
+ * @check_brackets: %TRUE if you want matching brackets highlighted.
  * 
  * Controls the bracket match highlighting function in the buffer.  If
  * activated, when you position your cursor over a bracket character
@@ -1428,7 +1473,7 @@ gtk_source_buffer_set_bracket_match_style (GtkSourceBuffer         *source_buffe
  * Determines whether text highlighting is activated in the source
  * buffer.
  * 
- * Return value: TRUE if highlighting is enabled.
+ * Return value: %TRUE if highlighting is enabled.
  **/
 gboolean
 gtk_source_buffer_get_highlight (GtkSourceBuffer *buffer)
@@ -1441,10 +1486,10 @@ gtk_source_buffer_get_highlight (GtkSourceBuffer *buffer)
 /**
  * gtk_source_buffer_set_highlight:
  * @buffer: a #GtkSourceBuffer.
- * @highlight: TRUE if you want to activate highlighting.
+ * @highlight: %TRUE if you want to activate highlighting.
  * 
  * Controls whether text is highlighted in the buffer.  If @highlight
- * is TRUE, the text will be highlighted according to the patterns
+ * is %TRUE, the text will be highlighted according to the patterns
  * installed in the buffer (either set with
  * gtk_source_buffer_set_language() or by adding individual
  * #GtkSourceTag tags to the buffer's tag table).  Otherwise, any
@@ -1499,9 +1544,9 @@ gtk_source_buffer_set_highlight (GtkSourceBuffer *buffer,
 static gboolean
 idle_worker (GtkSourceBuffer *source_buffer)
 {
+	GtkTextRegionIterator reg_iter;
 	GtkTextIter start_iter, end_iter, last_end_iter;
-	gint i;
-	
+
 	if (source_buffer->priv->worker_last_offset >= 0) {
 		/* the syntax regions table is incomplete */
 		build_syntax_regions_table (source_buffer, NULL);
@@ -1509,17 +1554,22 @@ idle_worker (GtkSourceBuffer *source_buffer)
 
 	/* Now we highlight subregions requested by our views */
 	gtk_text_buffer_get_iter_at_offset (GTK_TEXT_BUFFER (source_buffer), &last_end_iter, 0);
-	for (i = 0; i < gtk_text_region_subregions (
-		     source_buffer->priv->highlight_requests); i++) {
-		gtk_text_region_nth_subregion (source_buffer->priv->highlight_requests,
-					       i, &start_iter, &end_iter);
+
+	gtk_text_region_get_iterator (source_buffer->priv->highlight_requests,
+	                              &reg_iter, 0);
+
+	while (!gtk_text_region_iterator_is_end (&reg_iter))
+	{
+		gtk_text_region_iterator_get_subregion (&reg_iter,
+							&start_iter,
+							&end_iter);
 
 		if (source_buffer->priv->worker_last_offset < 0 ||
 		    source_buffer->priv->worker_last_offset >=
 		    gtk_text_iter_get_offset (&end_iter)) {
-			ensure_highlighted (source_buffer, 
-					    &start_iter, 
-					    &end_iter);
+			ensure_highlighted (source_buffer,
+			                    &start_iter,
+			                    &end_iter);
 			last_end_iter = end_iter;
 		} else {
 			/* since the subregions are ordered, we are
@@ -1528,15 +1578,16 @@ idle_worker (GtkSourceBuffer *source_buffer)
 			 * analyzed text */
 			break;
 		}
+
+		gtk_text_region_iterator_next (&reg_iter);
 	}
+
 	gtk_text_buffer_get_iter_at_offset (GTK_TEXT_BUFFER (source_buffer), &start_iter, 0);
 
 	if (!gtk_text_iter_equal (&start_iter, &last_end_iter)) {
 		/* remove already highlighted subregions from requests */
-		gtk_text_region_substract (source_buffer->priv->highlight_requests,
-					   &start_iter, &last_end_iter);
-		gtk_text_region_clear_zero_length_subregions (
-			source_buffer->priv->highlight_requests);
+		gtk_text_region_subtract (source_buffer->priv->highlight_requests,
+					  &start_iter, &last_end_iter);
 	}
 	
 	if (source_buffer->priv->worker_last_offset < 0) {
@@ -1587,18 +1638,13 @@ static const GtkSyntaxTag *
 get_syntax_start (GtkSourceBuffer      *source_buffer,
 		  const gchar          *text,
 		  gint                  length,
+		  guint                 match_options,
 		  GtkSourceBufferMatch *match)
 {
 	GList *list;
 	GtkSyntaxTag *tag;
 	gint pos;
 	
-	/*
-	g_return_val_if_fail (text != NULL, NULL);
-	g_return_val_if_fail (length >= 0, NULL);
-	g_return_val_if_fail (match != NULL, NULL);
-	*/
-
 	if (length == 0)
 		return NULL;
 	
@@ -1615,7 +1661,8 @@ get_syntax_start (GtkSourceBuffer      *source_buffer,
 			text,
 			pos,
 			length,
-			match);
+			match,
+			match_options);
 		if (pos < 0 || !is_escaped (source_buffer, text, match->startindex))
 			break;
 		pos = match->startpos + 1;
@@ -1628,7 +1675,8 @@ get_syntax_start (GtkSourceBuffer      *source_buffer,
 		tag = list->data;
 		
 		if (gtk_source_regex_match (tag->reg_start, text,
-					    pos, match->endindex))
+					    pos, match->endindex,
+					    match_options))
 			return tag;
 
 		list = g_list_next (list);
@@ -1641,6 +1689,7 @@ static gboolean
 get_syntax_end (GtkSourceBuffer      *source_buffer,
 		const gchar          *text,
 		gint                  length,
+		guint                 match_options,
 		GtkSyntaxTag         *tag,
 		GtkSourceBufferMatch *match)
 {
@@ -1657,7 +1706,7 @@ get_syntax_end (GtkSourceBuffer      *source_buffer,
 	pos = 0;
 	do {
 		pos = gtk_source_regex_search (tag->reg_end, text, pos,
-					       length, match);
+					       length, match, match_options);
 		if (pos < 0 || !is_escaped (source_buffer, text, match->startindex))
 			break;
 		pos = match->startpos + 1;
@@ -1835,12 +1884,12 @@ delimiter_is_equal (SyntaxDelimiter *d1, SyntaxDelimiter *d2)
 
 /**
  * next_syntax_region:
- * @source_buffer: the GtkSourceBuffer to work on
- * @state: the current SyntaxDelimiter
- * @head: text to analyze
- * @head_length: length in bytes of @head
- * @head_offset: offset in the buffer where @head starts
- * @match: GtkSourceBufferMatch object to get the results
+ * @source_buffer: the #GtkSourceBuffer to work on.
+ * @state: the current #SyntaxDelimiter.
+ * @head: text to analyze.
+ * @head_length: length in bytes of @head.
+ * @head_offset: offset in the buffer where @head starts.
+ * @match: a #GtkSourceBufferMatch object to get the results.
  * 
  * This function can be seen as a single iteration in the analyzing
  * process.  It takes the current @state, searches for the next syntax
@@ -1848,7 +1897,7 @@ delimiter_is_equal (SyntaxDelimiter *d1, SyntaxDelimiter *d2)
  * @state to reflect the new state.  @match is also filled with the
  * matching bounds.
  * 
- * Return value: TRUE if a syntax pattern was found in @head.
+ * Return value: %TRUE if a syntax pattern was found in @head.
  **/
 static gboolean 
 next_syntax_region (GtkSourceBuffer      *source_buffer,
@@ -1856,6 +1905,7 @@ next_syntax_region (GtkSourceBuffer      *source_buffer,
 		    const gchar          *head,
 		    gint                  head_length,
 		    gint                  head_offset,
+		    guint                 head_options,
 		    GtkSourceBufferMatch *match)
 {
 	GtkSyntaxTag *tag;
@@ -1865,7 +1915,7 @@ next_syntax_region (GtkSourceBuffer      *source_buffer,
 		/* we come from a non-syntax colored region, so seek
 		 * for an opening pattern */
 		tag = (GtkSyntaxTag *) get_syntax_start (
-			source_buffer, head, head_length, match);
+			source_buffer, head, head_length, head_options, match);
 
 		if (!tag)
 			return FALSE;
@@ -1878,7 +1928,7 @@ next_syntax_region (GtkSourceBuffer      *source_buffer,
 		/* seek the closing pattern for the current syntax
 		 * region */
 		found = get_syntax_end (source_buffer,
-					head, head_length,
+					head, head_length, head_options, 
 					state->tag, match);
 		
 		if (!found)
@@ -1903,6 +1953,7 @@ build_syntax_regions_table (GtkSourceBuffer   *source_buffer,
 	gboolean use_old_data;
 	gchar *slice, *head;
 	gint offset, head_length;
+	guint slice_options;
 	GtkSourceBufferMatch match;
 	SyntaxDelimiter delim;
 	GTimer *timer;
@@ -1962,6 +2013,10 @@ build_syntax_regions_table (GtkSourceBuffer   *source_buffer,
 	head = slice;
 	head_length = strlen (head);
 
+	/* we always stop processing at line ends */
+	slice_options = (gtk_text_iter_get_line_offset (&start) != 0 ?
+			 GTK_SOURCE_REGEX_NOT_BOL : 0);
+
 	timer = g_timer_new ();
 
 	/* MAIN LOOP: build the table */
@@ -1971,6 +2026,7 @@ build_syntax_regions_table (GtkSourceBuffer   *source_buffer,
 					 head,
 					 head_length,
 					 offset,
+					 slice_options,
 					 &match)) {
 			/* no further data */
 			break;
@@ -2004,6 +2060,18 @@ build_syntax_regions_table (GtkSourceBuffer   *source_buffer,
 		head += match.endindex;
 		head_length -= match.endindex;
 		offset += match.endpos;
+
+		/* recalculate b-o-l matching options */
+		if (match.endindex > 0)
+		{
+			GtkTextIter tmp;
+			gtk_text_buffer_get_iter_at_offset (GTK_TEXT_BUFFER (source_buffer),
+							    &tmp, offset);
+			if (gtk_text_iter_get_line_offset (&tmp) != 0)
+				slice_options |= GTK_SOURCE_REGEX_NOT_BOL;
+			else
+				slice_options &= ~GTK_SOURCE_REGEX_NOT_BOL;
+		}
 	}
     
 	g_free (slice);
@@ -2034,18 +2102,32 @@ build_syntax_regions_table (GtkSourceBuffer   *source_buffer,
 		/* update worker information */
 		source_buffer->priv->worker_last_offset =
 			gtk_text_iter_is_end (&end) ? -1 : gtk_text_iter_get_offset (&end);
-		
+
 		head_length = gtk_text_iter_get_offset (&end) -	gtk_text_iter_get_offset (&start);
-		
+
 		if (head_length > 0) {
 			/* update profile information only if we didn't use the saved data */
-			source_buffer->priv->worker_batch_size =
-				MAX (head_length * WORKER_TIME_SLICE
-				     / (g_timer_elapsed (timer, NULL) * 1000),
-				     MINIMUM_WORKER_BATCH);
+			gdouble et;
+			gint batch_size;
+
+			/* elapsed time in milliseconds */
+			et = 1000 * g_timer_elapsed (timer, NULL);
+
+			/* make sure the elapsed time is never 0.
+			 * This happens in particular with the GTimer
+			 * implementation on win32 which is not accurate.
+			 * 1 ms seems to work well enough as a fallback.
+			 */
+			et = et != 0 ? et : 1.0;
+
+			batch_size = MIN (head_length * WORKER_TIME_SLICE / et,
+					  G_MAXINT);
+
+			source_buffer->priv->worker_batch_size = 
+				MAX (batch_size, MINIMUM_WORKER_BATCH);
 		}
 	}
-		
+
 	/* make sure the analyzed region gets highlighted */
 	refresh_range (source_buffer, &start, &end);
 	
@@ -2075,6 +2157,7 @@ update_syntax_regions (GtkSourceBuffer *source_buffer,
 	gint first_region, region;
 	gint table_index, expected_end_index;
 	gchar *slice, *head;
+	guint slice_options;
 	gint head_length, head_offset;
 	GtkTextIter start_iter, end_iter;
 	GtkSourceBufferMatch match;
@@ -2111,7 +2194,21 @@ update_syntax_regions (GtkSourceBuffer *source_buffer,
 		/* update saved table offsets which potentially
 		 * contain the offset */
 		region = bsearch_offset (source_buffer->priv->old_syntax_regions, start_offset);
-		adjust_table_offsets (source_buffer->priv->old_syntax_regions, region, delta);
+		if (region > 0)
+		{
+			/* Changes to the uncontrolled regions. We can't possibly
+			   know if some of the syntax regions changed, so we
+			   invalidate the saved information */
+			if (source_buffer->priv->old_syntax_regions) {
+				g_array_free (source_buffer->priv->old_syntax_regions, TRUE);
+				source_buffer->priv->old_syntax_regions = NULL;
+			}
+		}
+		else
+		{
+			adjust_table_offsets (source_buffer->priv->old_syntax_regions,
+					      region, delta);
+		}
 		return;
 	}
 	
@@ -2200,6 +2297,12 @@ update_syntax_regions (GtkSourceBuffer *source_buffer,
 	head = slice = gtk_text_iter_get_slice (&start_iter, &end_iter);
 	head_length = strlen (head);
 
+	/* eol match options is constant for this run */
+	slice_options = ((gtk_text_iter_get_line_offset (&start_iter) != 0 ?
+			  GTK_SOURCE_REGEX_NOT_BOL : 0) |
+			 (!gtk_text_iter_ends_line (&end_iter) ?
+			  GTK_SOURCE_REGEX_NOT_EOL : 0));
+
 	/* We will start analyzing the slice of text and see if it
 	 * matches the information from the table.  When we hit a
 	 * mismatch, it means we need to invalidate. */
@@ -2209,6 +2312,7 @@ update_syntax_regions (GtkSourceBuffer *source_buffer,
 				   head,
 				   head_length,
 				   head_offset,
+				   slice_options,
 				   &match)) {
 		/* correct offset, since the table has the old offsets */
 		if (delim.offset > start_offset + delta)
@@ -2231,6 +2335,18 @@ update_syntax_regions (GtkSourceBuffer *source_buffer,
 		head_length -= match.endindex;
 		head_offset += match.endpos;
 		table_index++;
+
+		/* recalculate b-o-l matching options */
+		if (match.endindex > 0)
+		{
+			GtkTextIter tmp;
+			gtk_text_buffer_get_iter_at_offset (GTK_TEXT_BUFFER (source_buffer),
+							    &tmp, head_offset);
+			if (gtk_text_iter_get_line_offset (&tmp) != 0)
+				slice_options |= GTK_SOURCE_REGEX_NOT_BOL;
+			else
+				slice_options &= ~GTK_SOURCE_REGEX_NOT_BOL;
+		}
 	}
 
 	g_free (slice);
@@ -2277,12 +2393,12 @@ update_syntax_regions (GtkSourceBuffer *source_buffer,
 
 /**
  * search_patterns:
- * @matches: the starting list of matches to work from (can be NULL)
- * @text: the text which will be searched for
- * @length: the length (in bytes) of @text
- * @offset: the offset the beginning of @text is at
- * @index: an index to add the match indexes (usually: @text - base_text)
- * @patterns: additional patterns (can be NULL)
+ * @matches: the starting list of matches to work from (can be %NULL).
+ * @text: the text which will be searched for.
+ * @length: the length (in bytes) of @text.
+ * @offset: the offset the beginning of @text is at.
+ * @index: an index to add the match indexes (usually: @text - base_text).
+ * @patterns: additional patterns (can be %NULL).
  * 
  * This function will fill and return a list of PatternMatch
  * structures ordered by match position in @text.  The initial list to
@@ -2302,6 +2418,7 @@ search_patterns (GList       *matches,
 		 gint         length,
 		 gint         offset,
 		 gint         index,
+		 guint        match_options,
 		 GList       *patterns)
 {
 	GtkSourceBufferMatch match;
@@ -2337,7 +2454,8 @@ search_patterns (GList       *matches,
 					     text,
 					     0,
 					     length,
-					     &match);
+					     &match,
+					     match_options);
 		
 		if (i >= 0 && match.endpos != i) {
 			GList *p;
@@ -2390,7 +2508,8 @@ static void
 check_pattern (GtkSourceBuffer *source_buffer,
 	       GtkTextIter     *start,
 	       const gchar     *text,
-	       gint             length)
+	       gint             length,
+	       guint            match_options)
 {
 	GList *matches;
 	gint offset, index;
@@ -2423,6 +2542,7 @@ check_pattern (GtkSourceBuffer *source_buffer,
 	matches = search_patterns (NULL,
 				   ptr, length,
 				   offset, index,
+				   match_options,
 				   gtk_source_buffer_get_pattern_entries (source_buffer));
 	
 	while (matches && length > 0) {
@@ -2450,6 +2570,7 @@ check_pattern (GtkSourceBuffer *source_buffer,
 		matches = search_patterns (matches,
 					   ptr, length,
 					   offset, index,
+					   match_options,
 					   NULL);
 	}
 
@@ -2477,6 +2598,7 @@ highlight_region (GtkSourceBuffer *source_buffer,
 	GArray *table;
 	gint region;
 	gchar *slice, *slice_ptr;
+	guint slice_options;
 	GTimer *timer;
 
 	timer = NULL;
@@ -2486,7 +2608,6 @@ highlight_region (GtkSourceBuffer *source_buffer,
  			   gtk_text_iter_get_offset (start),
  			   gtk_text_iter_get_offset (end));
  	});
-
 	
 	table = source_buffer->priv->syntax_regions;
 	g_return_if_fail (table != NULL);
@@ -2543,8 +2664,16 @@ highlight_region (GtkSourceBuffer *source_buffer,
 			   non-syntax patterns */
 			tmp = g_utf8_offset_to_pointer (slice_ptr,
 							e_off - b_off);
+
+			/* calculate beginning and end of line match options */
+			slice_options = ((gtk_text_iter_get_line_offset (&b_iter) != 0 ?
+					  GTK_SOURCE_REGEX_NOT_BOL : 0) |
+					 (!gtk_text_iter_ends_line (&e_iter) ?
+					  GTK_SOURCE_REGEX_NOT_EOL : 0));
+
 			check_pattern (source_buffer, &b_iter,
-				       slice_ptr, tmp - slice_ptr);
+				       slice_ptr, tmp - slice_ptr,
+				       slice_options);
 			slice_ptr = tmp;
 		}
 
@@ -2579,7 +2708,7 @@ ensure_highlighted (GtkSourceBuffer   *source_buffer,
 		    const GtkTextIter *end)
 {
 	GtkTextRegion *region;
-	
+
 #if 0
 	DEBUG (g_message ("ensure_highlighted %d to %d",
 			  gtk_text_iter_get_offset (start),
@@ -2590,23 +2719,28 @@ ensure_highlighted (GtkSourceBuffer   *source_buffer,
 	region = gtk_text_region_intersect (
 		source_buffer->priv->refresh_region, start, end);
 	if (region) {
-		GtkTextIter iter1, iter2;
-		gint i;
-		
+		GtkTextRegionIterator reg_iter;
+
+		gtk_text_region_get_iterator (region, &reg_iter, 0);
+
 		/* highlight all subregions from the intersection.
                    hopefully this will only be one subregion */
-		for (i = 0; i < gtk_text_region_subregions (region); i++) {
-			gtk_text_region_nth_subregion (region, i,
-						       &iter1, &iter2);
-			highlight_region (source_buffer, &iter1, &iter2);
+		while (!gtk_text_region_iterator_is_end (&reg_iter))
+		{
+			GtkTextIter s, e;
+
+			gtk_text_region_iterator_get_subregion (&reg_iter,
+								&s, &e);
+			highlight_region (source_buffer, &s, &e);
+
+			gtk_text_region_iterator_next (&reg_iter);
 		}
+
 		gtk_text_region_destroy (region, TRUE);
+
 		/* remove the just highlighted region */
-		gtk_text_region_substract (source_buffer->priv->refresh_region,
-					   start, 
-					   end);
-		gtk_text_region_clear_zero_length_subregions (
-			source_buffer->priv->refresh_region);
+		gtk_text_region_subtract (source_buffer->priv->refresh_region,
+					  start, end);
 	}
 }
 
@@ -2676,9 +2810,9 @@ pointer_cmp (gconstpointer a, gconstpointer b)
 
 /**
  * gtk_source_buffer_remove_all_source_tags:
- * @buffer: a #GtkSourceBuffer
- * @start: one bound of range to be untagged
- * @end: other bound of range to be untagged
+ * @buffer: a #GtkSourceBuffer.
+ * @start: one bound of range to be untagged.
+ * @end: other bound of range to be untagged.
  * 
  * Removes all tags in the range between @start and @end.  Be careful
  * with this function; it could remove tags added in code unrelated to
@@ -2811,7 +2945,7 @@ gtk_source_buffer_remove_all_source_tags (GtkSourceBuffer   *buffer,
 /**
  * gtk_source_buffer_set_language:
  * @buffer: a #GtkSourceBuffer.
- * @language: a #GtkSourceLanguage to set, or NULL.
+ * @language: a #GtkSourceLanguage to set, or %NULL.
  * 
  * Sets the #GtkSourceLanguage the source buffer will use, adding
  * #GtkSourceTag tags with the language's patterns and setting the
@@ -2868,7 +3002,7 @@ gtk_source_buffer_set_language (GtkSourceBuffer   *buffer,
  * object should not be unreferenced by the user.
  * 
  * Return value: the #GtkSourceLanguage set by
- * gtk_source_buffer_set_language(), or NULL.
+ * gtk_source_buffer_set_language(), or %NULL.
  **/
 GtkSourceLanguage *
 gtk_source_buffer_get_language (GtkSourceBuffer *buffer)
@@ -2930,9 +3064,9 @@ gtk_source_buffer_set_escape_char (GtkSourceBuffer *buffer,
 
 /**
  * markers_binary_search:
- * @buffer: the GtkSourceBuffer where the markers are
- * @iter: the position to search for
- * @last_cmp: where to return the value of the last comparision made (optional)
+ * @buffer: the GtkSourceBuffer where the markers are.
+ * @iter: the position to search for.
+ * @last_cmp: where to return the value of the last comparision made (optional).
  * 
  * Performs a binary search among the markers in @buffer for the
  * position of the @iter.  Returns the nearest matching marker (its
@@ -2940,7 +3074,7 @@ gtk_source_buffer_set_escape_char (GtkSourceBuffer *buffer,
  * comparision between the returned marker and the given iter.
  * 
  * Return value: an index in the markers array or -1 if the array is
- * empty
+ * empty.
  **/
 static gint
 markers_binary_search (GtkSourceBuffer *buffer, GtkTextIter *iter, gint *last_cmp)
@@ -2985,14 +3119,14 @@ markers_binary_search (GtkSourceBuffer *buffer, GtkTextIter *iter, gint *last_cm
 
 /**
  * markers_linear_lookup:
- * @buffer: the source buffer where the markers are
- * @marker: which marker to search for
- * @start: index from where to start looking
- * @direction: direction to search for
+ * @buffer: the source buffer where the markers are.
+ * @marker: which marker to search for.
+ * @start: index from where to start looking.
+ * @direction: direction to search for.
  * 
- * Search the markers array of @buffer starting from @start for
+ * Searches the markers array of @buffer starting from @start for
  * markers at the same position as the one at @start.  If @marker is
- * non-NULL search for that marker specifically, otherwise return the
+ * non-%NULL search for that marker specifically, otherwise return the
  * first or the last marker at the staring position, depending on
  * @direction.
  *
@@ -3000,7 +3134,7 @@ markers_binary_search (GtkSourceBuffer *buffer, GtkTextIter *iter, gint *last_cm
  * 0 means both and is mostly useful when looking for a specific
  * @marker.
  * 
- * Return value: the index of the searched marker
+ * Return value: the index of the searched marker.
  **/
 static gint 
 markers_linear_lookup (GtkSourceBuffer *buffer,
@@ -3125,8 +3259,8 @@ markers_insert (GtkSourceBuffer *buffer, GtkSourceMarker *marker)
 /**
  * gtk_source_buffer_create_marker:
  * @buffer: a #GtkSourceBuffer.
- * @name: the name of the marker, or NULL.
- * @type: a string defining the marker type, or NULL.
+ * @name: the name of the marker, or %NULL.
+ * @type: a string defining the marker type, or %NULL.
  * @where: location to place the marker.
  * 
  * Creates a marker in the @buffer of type @type.  A marker is
@@ -3143,7 +3277,7 @@ markers_insert (GtkSourceBuffer *buffer, GtkSourceMarker *marker)
  * emissions.
  *
  * Like a #GtkTextMark, a #GtkSourceMarker can be anonymous if the
- * passed @name is NULL.  Also, the buffer owns the markers so you
+ * passed @name is %NULL.  Also, the buffer owns the markers so you
  * shouldn't unreference it.
  *
  * Markers always have left gravity and are moved to the beginning of
@@ -3289,9 +3423,9 @@ gtk_source_buffer_delete_marker (GtkSourceBuffer *buffer,
  * @name: name of the marker to retrieve.
  * 
  * Looks up the #GtkSourceMarker named @name in @buffer, returning
- * NULL if it doesn't exists.
+ * %NULL if it doesn't exists.
  * 
- * Return value: the #GtkSourceMarker whose name is @name, or NULL.
+ * Return value: the #GtkSourceMarker whose name is @name, or %NULL.
  **/
 GtkSourceMarker *
 gtk_source_buffer_get_marker (GtkSourceBuffer *buffer,
@@ -3455,7 +3589,7 @@ gtk_source_buffer_get_markers_in_region (GtkSourceBuffer   *buffer,
  * Returns the first (nearest to the top of the buffer) marker in
  * @buffer.
  * 
- * Return value: a reference to the first #GtkSourceMarker, or NULL if
+ * Return value: a reference to the first #GtkSourceMarker, or %NULL if
  * there are no markers in the buffer.
  **/
 GtkSourceMarker *
@@ -3477,7 +3611,7 @@ gtk_source_buffer_get_first_marker (GtkSourceBuffer *buffer)
  * Returns the last (nearest to the bottom of the buffer) marker in
  * @buffer.
  * 
- * Return value: a reference to the last #GtkSourceMarker, or NULL if
+ * Return value: a reference to the last #GtkSourceMarker, or %NULL if
  * there are no markers in the buffer.
  **/
 GtkSourceMarker *
@@ -3529,7 +3663,7 @@ gtk_source_buffer_get_iter_at_marker (GtkSourceBuffer *buffer,
  * others using gtk_source_marker_next().
  * 
  * Return value: the #GtkSourceMarker nearest to the right of @iter,
- * or NULL if there are no more markers after @iter.
+ * or %NULL if there are no more markers after @iter.
  **/
 GtkSourceMarker *
 gtk_source_buffer_get_next_marker (GtkSourceBuffer *buffer,
@@ -3577,7 +3711,7 @@ gtk_source_buffer_get_next_marker (GtkSourceBuffer *buffer,
  * others using gtk_source_marker_prev().
  * 
  * Return value: the #GtkSourceMarker nearest to the left of @iter,
- * or NULL if there are no more markers before @iter.
+ * or %NULL if there are no more markers before @iter.
  **/
 GtkSourceMarker *
 gtk_source_buffer_get_prev_marker (GtkSourceBuffer *buffer,

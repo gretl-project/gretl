@@ -21,12 +21,21 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <string.h>
+#include <fcntl.h>
 
 #include <libxml/xmlreader.h>
 
-#include "gtksourcelanguage-private.h"
+#include <glib/gstdio.h>
+#include <glib/gmappedfile.h>
+
 #include "gtksourceview-i18n.h"
+
+#include "gtksourcelanguage-private.h"
 #include "gtksourcelanguage.h"
 #include "gtksourcetag.h"
 
@@ -46,6 +55,8 @@ enum {
 	LAST_SIGNAL
 };
 
+static GtkSourceTagStyle normal_style = { TRUE, 0 };
+
 static guint 	 signals[LAST_SIGNAL] = { 0 };
 
 static GObjectClass 	 *parent_class  = NULL;
@@ -63,9 +74,10 @@ _gtk_source_language_new_from_file (const gchar			*filename,
 {
 	GtkSourceLanguage *lang = NULL;
 
-	xmlTextReaderPtr reader;
+	xmlTextReaderPtr reader = NULL;
 	gint ret;
-	
+	int fd;
+
 	g_return_val_if_fail (filename != NULL, NULL);
 	g_return_val_if_fail (lm != NULL, NULL);
 
@@ -83,7 +95,7 @@ _gtk_source_language_new_from_file (const gchar			*filename,
 
 				name = xmlTextReaderName (reader);
 
-				if (strcmp (name, "language") == 0)
+				if (xmlStrcmp (name, BAD_CAST "language") == 0)
 				{
 
 					lang = process_language_node (reader, filename);
@@ -100,7 +112,7 @@ _gtk_source_language_new_from_file (const gchar			*filename,
 		}
 	
 		xmlFreeTextReader (reader);
-        	
+
 		if (ret != 0) 
 		{
 	            g_warning("Failed to parse '%s'", filename);
@@ -115,7 +127,6 @@ _gtk_source_language_new_from_file (const gchar			*filename,
 	
 	return lang;
 }
-
 
 GType
 gtk_source_language_get_type (void)
@@ -212,10 +223,10 @@ static const gchar invalid_chars[] = " \t\r\n\"$&<>,+=#!()'|{}[]?~`;%\\";
 
 /**
  * escape_id:
- * @arbitrary_text: some text in any encoding or format
- * @len: length of @arbitrary_text in bytes, or -1 if @arbitrary_text is nul-terminated
+ * @arbitrary_text: some text in any encoding or format.
+ * @len: length of @arbitrary_text in bytes, or -1 if @arbitrary_text is nul-terminated.
  * 
- * Return value: a nul-terminated valid part of a GConf key
+ * Return value: a null-terminated valid part of a GConf key.
  **/
 static gchar*
 escape_id (const gchar *arbitrary_text, gint len)
@@ -261,8 +272,8 @@ escape_id (const gchar *arbitrary_text, gint len)
 static GtkSourceLanguage *
 process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 {
-	gchar *version;
-	gchar *mimetypes;
+	xmlChar *version;
+	xmlChar *mimetypes;
 	gchar** mtl;
 	int i;
 	xmlChar *tmp;
@@ -273,16 +284,21 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 
 	lang->priv->lang_file_name = g_strdup (filename);
 	
-	lang->priv->translation_domain = xmlTextReaderGetAttribute (reader, "translation-domain");
+	lang->priv->translation_domain = (gchar *) xmlTextReaderGetAttribute (
+			reader, BAD_CAST "translation-domain");
 	if (lang->priv->translation_domain == NULL)
 	{
-		lang->priv->translation_domain = xmlStrdup (GETTEXT_PACKAGE);
+		/* if the attribute "translation-domain" exists then
+		 * lang->priv->translation_domain is a xmlChar so it must always
+		 * be a xmlChar, this is why xmlStrdup() is used instead of
+		 * g_strdup() */
+		lang->priv->translation_domain = (gchar *)xmlStrdup (BAD_CAST GETTEXT_PACKAGE);
 	}
 	
-	tmp = xmlTextReaderGetAttribute (reader, "_name");
+	tmp = xmlTextReaderGetAttribute (reader, BAD_CAST "_name");
 	if (tmp == NULL)
 	{
-		lang->priv->name = xmlTextReaderGetAttribute (reader, "name");
+		lang->priv->name = (gchar *)xmlTextReaderGetAttribute (reader, BAD_CAST "name");
 		if (lang->priv->name == NULL)
 		{
 			g_warning ("Impossible to get language name from file '%s'",
@@ -292,23 +308,28 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 			return NULL;
 		}
 
-		id_temp = xmlStrdup (lang->priv->name);
+		id_temp = xmlStrdup (BAD_CAST lang->priv->name);
 	}
 	else
 	{
 		id_temp = xmlStrdup (tmp);
-		lang->priv->name = xmlStrdup (dgettext (lang->priv->translation_domain, tmp));
+		/* if tmp is NULL then lang->priv->name is a xmlChar so it must
+		 * always be a xmlChar, this is why xmlStrdup() is used instead
+		 * of g_strdup() */
+		lang->priv->name = (gchar *)xmlStrdup (BAD_CAST dgettext (
+					lang->priv->translation_domain,
+					(gchar *)tmp));
 		xmlFree (tmp);
 	}
 
 	g_return_val_if_fail (id_temp != NULL, NULL);
-	lang->priv->id = escape_id (id_temp, -1);
+	lang->priv->id = escape_id ((gchar *)id_temp, -1);
 	xmlFree (id_temp);
 
-	tmp = xmlTextReaderGetAttribute (reader, "_section");
+	tmp = xmlTextReaderGetAttribute (reader, BAD_CAST "_section");
 	if (tmp == NULL)
 	{
-		lang->priv->section = xmlTextReaderGetAttribute (reader, "section");
+		lang->priv->section = (gchar *)xmlTextReaderGetAttribute (reader, BAD_CAST "section");
 		if (lang->priv->section == NULL)
 		{
 			g_warning ("Impossible to get language section from file '%s'",
@@ -320,11 +341,16 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 	}
 	else
 	{
-		lang->priv->section = xmlStrdup (dgettext (lang->priv->translation_domain, tmp));
+		/* if tmp is NULL then lang->priv->section is a xmlChar so it
+		 * must always be a xmlChar, this is why xmlStrdup() is used
+		 * instead of g_strdup() */
+		lang->priv->section = (gchar *)xmlStrdup (BAD_CAST dgettext (
+					lang->priv->translation_domain,
+					(gchar *)tmp));
 		xmlFree (tmp);
 	}
 	
-	version = xmlTextReaderGetAttribute (reader, "version");
+	version = xmlTextReaderGetAttribute (reader, BAD_CAST "version");
 	if (version == NULL)
 	{
 		g_warning ("Impossible to get version number from file '%s'",
@@ -335,10 +361,10 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 	}
 	else
 	{
-		if (strcmp (version , "1.0") != 0)
+		if (xmlStrcmp (version , BAD_CAST "1.0") != 0)
 		{
 			g_warning ("Usupported language spec version '%s' in file '%s'",
-				   version, filename);
+				   (gchar *)version, filename);
 
 			xmlFree (version);
 			
@@ -349,7 +375,7 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 		xmlFree (version);
 	}
 
-	mimetypes = xmlTextReaderGetAttribute (reader, "mimetypes");
+	mimetypes = xmlTextReaderGetAttribute (reader, BAD_CAST "mimetypes");
 	if (mimetypes == NULL)
 	{
 		g_warning ("Impossible to get mimetypes from file '%s'",
@@ -359,19 +385,16 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 		return NULL;
 	}
 
-	mtl = g_strsplit (mimetypes, ";" , 0);
+	mtl = g_strsplit ((gchar *)mimetypes, ";", 0);
 
-	i = 0; 
-	
-	do
+	for (i = 0; mtl[i] != NULL; i++)
 	{
+		/* steal the strings from the array */
 		lang->priv->mime_types = g_slist_prepend (lang->priv->mime_types,
-				g_strdup (mtl[i]));
+							  mtl[i]);
+	}
 
-		++i;
-	} while (mtl[i] != NULL);
-
-	g_strfreev (mtl);
+	g_free (mtl);
 	xmlFree (mimetypes);
 
 	lang->priv->mime_types = g_slist_reverse (lang->priv->mime_types);
@@ -419,7 +442,7 @@ gtk_source_language_get_name (GtkSourceLanguage *language)
  *
  * Returns the localized section of the language.
  * Each language belong to a section (ex. HTML belogs to the
- * Markup section)
+ * Markup section).
  *
  * Return value: the section of @language.
  **/
@@ -432,6 +455,15 @@ gtk_source_language_get_section	(GtkSourceLanguage *language)
 	return g_strdup (language->priv->section);
 }
 
+/**
+ * gtk_source_language_get_mime_types:
+ * @language: a #GtkSourceLanguage.
+ *
+ * Returns a list of mime types for the given @language.  After usage you should
+ * free each element of the list as well as the list itself.
+ *
+ * Return value: a list of mime types (strings). 
+ **/
 GSList *
 gtk_source_language_get_mime_types (GtkSourceLanguage *language)
 {
@@ -459,14 +491,14 @@ gtk_source_language_get_mime_types (GtkSourceLanguage *language)
 static GSList *
 get_mime_types_from_file (GtkSourceLanguage *language)
 {
-	xmlTextReaderPtr reader;
+	xmlTextReaderPtr reader = NULL;
 	gint ret;
 	GSList *mime_types = NULL;
 
 	g_return_val_if_fail (GTK_IS_SOURCE_LANGUAGE (language), NULL);
 	g_return_val_if_fail (language->priv->lang_file_name != NULL, NULL);
-		
-	reader = xmlNewTextReaderFilename (language->priv->lang_file_name);
+
+	reader = xmlNewTextReaderFilename (language->priv->lang_file_name);		
 
 	if (reader != NULL) 
 	{
@@ -480,13 +512,12 @@ get_mime_types_from_file (GtkSourceLanguage *language)
 
 				name = xmlTextReaderName (reader);
 
-				if (strcmp (name, "language") == 0)
+				if (xmlStrcmp (name, BAD_CAST "language") == 0)
 				{
 					gchar *mimetypes;
-					gchar** mtl;
-					gint i;
 
-					mimetypes = xmlTextReaderGetAttribute (reader, "mimetypes");
+					mimetypes = (gchar *)xmlTextReaderGetAttribute (reader,
+							BAD_CAST "mimetypes");
 					
 					if (mimetypes == NULL)
 					{
@@ -497,20 +528,19 @@ get_mime_types_from_file (GtkSourceLanguage *language)
 					}
 					else
 					{
+						gchar **mtl;
+						gint i;
 
-						mtl = g_strsplit (mimetypes, ";" , 0);
+						mtl = g_strsplit (mimetypes, ";", 0);
 
-						i = 0; 
-	
-						do
+						for (i = 0; mtl[i] != NULL; i++)
 						{
+							/* steal the strings from the array */
 							mime_types = g_slist_prepend (mime_types,
-										      g_strdup (mtl[i]));
+										      mtl[i]);
+						}
 
-							++i;
-						} while (mtl[i] != NULL);
-
-						g_strfreev (mtl);
+						g_free (mtl);
 						xmlFree (mimetypes);
 
 						ret = 0;
@@ -522,11 +552,10 @@ get_mime_types_from_file (GtkSourceLanguage *language)
 			
 			if (ret != 0)
 				ret = xmlTextReaderRead (reader);
-			
 		}
 	
 		xmlFreeTextReader (reader);
-        	
+
 		if (ret != 0) 
 		{
 	            g_warning("Failed to parse '%s'", language->priv->lang_file_name);
@@ -542,6 +571,15 @@ get_mime_types_from_file (GtkSourceLanguage *language)
 	return mime_types;
 }
 
+/**
+ * gtk_source_language_set_mime_types:
+ * @language: a #GtkSourceLanguage
+ * @mime_types: a list of mime types (strings).
+ *
+ * Sets a list of @mime_types for the given @language.
+ * If @mime_types is %NULL this function will use the default mime
+ * types from the language file.
+ **/
 void 
 gtk_source_language_set_mime_types (GtkSourceLanguage	*language,
 				    const GSList	*mime_types)
@@ -621,7 +659,7 @@ parseLineComment (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 			
 		start_regex = xmlNodeListGetString (doc, child->xmlChildrenNode, 1);
 			
-		tag = gtk_line_comment_tag_new (id, name, strconvescape (start_regex));
+		tag = gtk_line_comment_tag_new (id, (gchar *)name, strconvescape ((gchar *)start_regex));
 
 		xmlFree (start_regex);
 	}
@@ -680,9 +718,9 @@ parseBlockComment (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 	}
 
 	tag = gtk_block_comment_tag_new (id,
-					 name, 
-					 strconvescape (start_regex), 
-					 strconvescape (end_regex));
+					 (gchar *)name, 
+					 strconvescape ((gchar *)start_regex), 
+					 strconvescape ((gchar *)end_regex));
 
 	xmlFree (start_regex);
 	xmlFree (end_regex);
@@ -703,11 +741,11 @@ parseString (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 
 	xmlNodePtr child;
 
-	prop = xmlGetProp (cur, "end-at-line-end");
+	prop = xmlGetProp (cur, BAD_CAST "end-at-line-end");
 	if (prop != NULL)
 	{
-		if (!xmlStrcasecmp (prop, (const xmlChar *)"TRUE") ||
-		    !xmlStrcmp (prop, (const xmlChar *)"1"))
+		if (!xmlStrcasecmp (prop, BAD_CAST "TRUE") ||
+		    !xmlStrcmp (prop, BAD_CAST "1"))
 
 				end_at_line_end = TRUE;
 			else
@@ -752,9 +790,9 @@ parseString (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 	}
 
 	tag = gtk_string_tag_new (id,
-				  name, 
-				  strconvescape (start_regex), 
-				  strconvescape (end_regex), 
+				  (gchar *)name, 
+				  strconvescape ((gchar *)start_regex), 
+				  strconvescape ((gchar *)end_regex), 
 				  end_at_line_end);
 
 	xmlFree (start_regex);
@@ -780,7 +818,7 @@ parseKeywordList (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 
 	xmlNodePtr child;
 
-	prop = xmlGetProp (cur, "case-sensitive");
+	prop = xmlGetProp (cur, BAD_CAST "case-sensitive");
 	if (prop != NULL)
 	{
 		if (!xmlStrcasecmp (prop, (const xmlChar *)"TRUE") ||
@@ -793,7 +831,7 @@ parseKeywordList (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 		xmlFree (prop);	
 	}
 
-	prop = xmlGetProp (cur, "match-empty-string-at-beginning");
+	prop = xmlGetProp (cur, BAD_CAST "match-empty-string-at-beginning");
 	if (prop != NULL)
 	{
 		if (!xmlStrcasecmp (prop, (const xmlChar *)"TRUE") ||
@@ -806,7 +844,7 @@ parseKeywordList (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 		xmlFree (prop);	
 	}
 
-	prop = xmlGetProp (cur, "match-empty-string-at-end");
+	prop = xmlGetProp (cur, BAD_CAST "match-empty-string-at-end");
 	if (prop != NULL)
 	{
 		if (!xmlStrcasecmp (prop, (const xmlChar *)"TRUE") ||
@@ -819,18 +857,18 @@ parseKeywordList (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 		xmlFree (prop);	
 	}
 
-	prop = xmlGetProp (cur, "beginning-regex");
+	prop = xmlGetProp (cur, BAD_CAST "beginning-regex");
 	if (prop != NULL)
 	{
-		beginning_regex = g_strdup (prop);
+		beginning_regex = g_strdup ((gchar *)prop);
 		
 		xmlFree (prop);	
 	}
 
-	prop = xmlGetProp (cur, "end-regex");
+	prop = xmlGetProp (cur, BAD_CAST "end-regex");
 	if (prop != NULL)
 	{
-		end_regex = g_strdup (prop);
+		end_regex = g_strdup ((gchar *)prop);
 		
 		xmlFree (prop);	
 	}
@@ -844,7 +882,7 @@ parseKeywordList (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 			xmlChar *keyword;
 			keyword = xmlNodeListGetString (doc, child->xmlChildrenNode, 1);
 			
-			list = g_slist_prepend (list, strconvescape (keyword));
+			list = g_slist_prepend (list, strconvescape ((gchar *)keyword));
 		}
 
 		child = child->next;
@@ -864,7 +902,7 @@ parseKeywordList (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 	}
 
 	tag = gtk_keyword_list_tag_new (id,
-					name, 
+					(gchar *)name, 
 					list,
 					case_sensitive,
 					match_empty_string_at_beginning,
@@ -896,7 +934,8 @@ parsePatternItem (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 			
 		regex = xmlNodeListGetString (doc, child->xmlChildrenNode, 1);
 			
-		tag = gtk_pattern_tag_new (id, name, strconvescape (regex));
+		tag = gtk_pattern_tag_new (id, (gchar *)name,
+				strconvescape ((gchar *)regex));
 
 		xmlFree (regex);
 	}
@@ -955,9 +994,9 @@ parseSyntaxItem (xmlDocPtr doc, xmlNodePtr cur, gchar* id, xmlChar *name)
 	}
 
 	tag = gtk_syntax_tag_new (id,
-				  name, 
-				  strconvescape (start_regex),
-				  strconvescape (end_regex));
+				  (gchar *)name, 
+				  strconvescape ((gchar *)start_regex),
+				  strconvescape ((gchar *)end_regex));
 
 	xmlFree (start_regex);
 	xmlFree (end_regex);
@@ -971,9 +1010,17 @@ tag_style_changed_cb (GtkSourceLanguage *language,
 		      GtkSourceTag	*tag)
 {
 	GtkSourceTagStyle *ts;
+	gchar *tag_id;
 
-	if (strcmp (gtk_source_tag_get_id (tag), id) != 0)
+	tag_id = gtk_source_tag_get_id (tag);
+
+	if (strcmp (tag_id, id) != 0)
+	{
+		g_free (tag_id);
 		return;
+	}
+
+	g_free (tag_id);
 
 	ts = gtk_source_language_get_tag_style (language, id);
 
@@ -994,24 +1041,26 @@ parseTag (GtkSourceLanguage *language,
 	GtkTextTag *tag = NULL;
 	xmlChar *name;
 	xmlChar *style;
-	xmlChar *id_temp;
+	gchar   *id_temp;
 	gchar   *id;
 	
-	name = xmlGetProp (cur, "_name");
+	name = xmlGetProp (cur, BAD_CAST "_name");
 	if (name == NULL)
 	{
-		name = xmlGetProp (cur, "name");
-		id_temp =xmlStrdup (name);
+		name = xmlGetProp (cur, BAD_CAST "name");
+		id_temp = g_strdup ((gchar *)name);
 	}
 	else
 	{
-		xmlChar *tmp = xmlStrdup (dgettext (language->priv->translation_domain, name));
-		id_temp = xmlStrdup (name);
+		xmlChar *tmp = xmlStrdup (BAD_CAST dgettext (
+					language->priv->translation_domain,
+					(gchar *)name));
+		id_temp = g_strdup ((gchar *)name);
 		xmlFree (name);
 		name = tmp;
 	}
 	
-	style = xmlGetProp (cur, "style");
+	style = xmlGetProp (cur, BAD_CAST "style");
 
 	if (name == NULL)
 	{
@@ -1020,12 +1069,12 @@ parseTag (GtkSourceLanguage *language,
 
 	g_return_val_if_fail (id_temp != NULL, tag_list);
 	id = escape_id (id_temp, -1);
-	xmlFree (id_temp);
+	g_free (id_temp);
 
 	if (style == NULL)
 	{
 		/* FIXME */
-		style = xmlStrdup ("Normal");
+		style = xmlStrdup (BAD_CAST "Normal");
 	}
 	
 	if (!xmlStrcmp (cur->name, (const xmlChar *)"line-comment"))
@@ -1066,7 +1115,7 @@ parseTag (GtkSourceLanguage *language,
 		if (populate_styles_table)
 			g_hash_table_insert (language->priv->tag_id_to_style_name, 
 					     g_strdup (id), 
-					     g_strdup (style));
+					     g_strdup ((gchar *)style));
 
 		ts = gtk_source_language_get_tag_style (language, id);
 
@@ -1098,10 +1147,22 @@ language_file_parse (GtkSourceLanguage *language,
 	GSList *tag_list = NULL;
 	xmlDocPtr doc;
 	xmlNodePtr cur;
-
+	GMappedFile *mf;
+	
 	xmlKeepBlanksDefault (0);
 
-	doc = xmlParseFile (language->priv->lang_file_name);
+	mf = g_mapped_file_new (language->priv->lang_file_name, FALSE, NULL);
+	
+	if (mf == NULL)
+		doc = NULL;
+	else
+	{
+		doc = xmlParseMemory (g_mapped_file_get_contents (mf), 
+				      g_mapped_file_get_length (mf));
+
+		g_mapped_file_free (mf);
+	}
+	
 	if (doc == NULL)
 	{
 		g_warning ("Impossible to parse file '%s'",
@@ -1143,7 +1204,7 @@ language_file_parse (GtkSourceLanguage *language,
 			gunichar esc_char;
 			
 			escape = xmlNodeListGetString (doc, cur->xmlChildrenNode, 1);
-			esc_char = g_utf8_get_char_validated (escape, -1);
+			esc_char = g_utf8_get_char_validated ((gchar *)escape, -1);
 			if (esc_char < 0)
 			{
 				g_warning ("Invalid (non UTF8) escape character in file '%s'",
@@ -1176,6 +1237,15 @@ language_file_parse (GtkSourceLanguage *language,
 	return tag_list;
 }
 
+/**
+ * gtk_source_language_get_tags:
+ * @language: a #GtkSourceLanguage.
+ *
+ * Returns a list of tags for the given @language.  You should unref the tags
+ * and free the list after usage.
+ *
+ * Return value: a list of #GtkSourceTag objects.
+ **/
 GSList *
 gtk_source_language_get_tags (GtkSourceLanguage *language)
 {
@@ -1227,6 +1297,16 @@ gtk_source_language_lazy_init_hash_tables (GtkSourceLanguage *language)
 	return TRUE;
 }
 
+/**
+ * gtk_source_language_get_tag_style:
+ * @language: a #GtkSourceLanguage.
+ * @tag_id: the ID of a #GtkSourceTag.
+ *
+ * Gets the style of the tag whose ID is @tag_id. If the style is 
+ * not defined then returns the default style.
+ *
+ * Return value: a #GtkSourceTagStyle.
+ **/
 GtkSourceTagStyle *
 gtk_source_language_get_tag_style (GtkSourceLanguage *language, 
 				   const gchar       *tag_id)
@@ -1252,6 +1332,15 @@ gtk_source_language_get_tag_style (GtkSourceLanguage *language,
 	}
 }
 
+/**
+ * gtk_source_language_get_tag_default_style:
+ * @language: a #GtkSourceLanguage.
+ * @tag_id: the ID of a #GtkSourceTag.
+ *
+ * Gets the default style of the tag whose ID is @tag_id. 
+ *
+ * Return value: a #GtkSourceTagStyle.
+ **/
 GtkSourceTagStyle*
 gtk_source_language_get_tag_default_style (GtkSourceLanguage *language,
 					   const gchar       *tag_id)
@@ -1269,28 +1358,28 @@ gtk_source_language_get_tag_default_style (GtkSourceLanguage *language,
 
 	if (style_name != NULL)
 	{
-		const GtkSourceTagStyle *tmp;
+		GtkSourceTagStyle *tmp;
 
 		g_return_val_if_fail (language->priv->style_scheme != NULL, NULL);
 
 		tmp = gtk_source_style_scheme_get_tag_style (language->priv->style_scheme,
 							     style_name);
 		if (tmp == NULL)
-			return NULL;
+			return gtk_source_tag_style_copy (&normal_style);
 		else
-			return gtk_source_tag_style_copy (tmp);
+			return tmp;
 	}
 	else
-		return NULL;
+		return gtk_source_tag_style_copy (&normal_style);
 }
 
 /**
  * gtk_source_language_set_tag_style:
  * @language: a #GtkSourceLanguage.
- * @tag_id: the ID of a #GtkSourceTag
- * @style: a #GtkSourceTagStyle
+ * @tag_id: the ID of a #GtkSourceTag.
+ * @style: a #GtkSourceTagStyle.
  *
- * Set the @style of the tag whose ID is @tag_id. If @style is NULL
+ * Sets the @style of the tag whose ID is @tag_id. If @style is %NULL
  * restore the default style.
  **/
 void 
@@ -1326,6 +1415,14 @@ gtk_source_language_set_tag_style (GtkSourceLanguage       *language,
 		       tag_id);
 }
 
+/**
+ * gtk_source_language_get_style_scheme:
+ * @language: a #GtkSourceLanguage.
+ * 
+ * Gets the style scheme associated with the given @language.
+ *
+ * Return value: a #GtkSourceStyleScheme.
+ **/
 GtkSourceStyleScheme *
 gtk_source_language_get_style_scheme (GtkSourceLanguage *language)
 {
@@ -1363,6 +1460,13 @@ style_changed_cb (GtkSourceStyleScheme *scheme,
 		       tag_id);	
 }
 
+/**
+ * gtk_source_language_set_style_scheme:
+ * @language: a #GtkSourceLanguage.
+ * @scheme: a #GtkSourceStyleScheme.
+ * 
+ * Sets the style scheme of the given @language.
+ **/
 void 
 gtk_source_language_set_style_scheme (GtkSourceLanguage    *language,
 				      GtkSourceStyleScheme *scheme)
@@ -1390,6 +1494,14 @@ gtk_source_language_set_style_scheme (GtkSourceLanguage    *language,
 			  G_CALLBACK (style_changed_cb), language);
 }
 
+/**
+ * gtk_source_language_get_escape_char:
+ * @language: a #GtkSourceLanguage.
+ * 
+ * Gets the value of the ESC character in the given @language.
+ * 
+ * Return value: the value of the ESC character.
+ **/
 gunichar 
 gtk_source_language_get_escape_char (GtkSourceLanguage *language)
 {
