@@ -128,6 +128,8 @@ static void replace_string_dialog (struct search_replace *s)
 void text_replace (windata_t *vwin, guint u, GtkWidget *w)
 {
     gchar *buf = NULL;
+    gchar *fullbuf = NULL;
+    gchar *selbuf = NULL;
     char *modbuf = NULL;
     int count = 0;
     size_t sz, fullsz, len, diff;
@@ -149,11 +151,14 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     gtk_text_buffer_get_start_iter(gedit, &start);
     gtk_text_buffer_get_end_iter(gedit, &end);
 
+    fullbuf = gtk_text_buffer_get_text(gedit, &start, &end, FALSE);
+
     if (gtk_text_buffer_get_selection_bounds(gedit, &sel_start, &sel_end)) {
 	selected = TRUE;
-	buf = gtk_text_buffer_get_text(gedit, &sel_start, &sel_end, FALSE);
+	selbuf = gtk_text_buffer_get_text(gedit, &sel_start, &sel_end, FALSE);
+	buf = selbuf;
     } else {
-	buf = gtk_text_buffer_get_text(gedit, &start, &end, FALSE);
+	buf = fullbuf;
     }
 
     if (buf == NULL || *buf == '\0') {
@@ -161,7 +166,7 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     }
 
     sz = strlen(buf);
-    fullsz = gtk_text_buffer_get_char_count(gedit);
+    fullsz = strlen(fullbuf);
 
     len = strlen(s.find);
     diff = strlen(s.replace) - len;
@@ -225,13 +230,8 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
 	if (tmp != NULL) {
 	    g_free(tmp);
 	}
-	if (selected) {
-	    tmp = gtk_text_buffer_get_text(gedit, &start, &end, FALSE);
-	    g_object_set_data(G_OBJECT(vwin->w), "undo", tmp);
-	} else {
-	    g_object_set_data(G_OBJECT(vwin->w), "undo", buf);
-	    buf = NULL;
-	}
+	g_object_set_data(G_OBJECT(vwin->w), "undo", fullbuf);
+	fullbuf = NULL;
     } 
 
     /* now insert the modified buffer */
@@ -243,7 +243,8 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     free(s.find);
     free(s.replace);
     free(modbuf);
-    g_free(buf);
+    g_free(fullbuf);
+    g_free(selbuf);
 }
 
 static int special_text_handler (windata_t *vwin, guint fmt, int what)

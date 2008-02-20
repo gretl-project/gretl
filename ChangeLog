@@ -7,7 +7,7 @@ version 1.7.2, in progress
 - Paths stuff: add (non-configurable) "dotdir" to hold per-user
   automatically-created files
 - Fix bugs 1861010, 1868859, 1869271, 1870459, 1870973,
-  1871110, 1871135, 1873625, 1874601, 1881849
+  1871110, 1871135, 1873625, 1874601, 1881849, 1897648
 - Rationalize frequency plot dialog
 - Add Help item to forecast dialog
 - Fixes for matrix "dot operations"
