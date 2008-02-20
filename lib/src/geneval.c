@@ -495,8 +495,8 @@ static double xy_calc (double x, double y, int op, parser *p)
     double z = NADBL;
 
 #if EDEBUG > 1
-    fprintf(stderr, "xy_calc: x = %g, y = %g, op = '%s'\n",
-	    x, y, getsymb(op, NULL));
+    fprintf(stderr, "xy_calc: x = %g, y = %g, op = %d ('%s')\n",
+	    x, y, op, getsymb(op, NULL));
 #endif
 
     /* assignment */
@@ -2692,6 +2692,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	    if (v < p->dinfo->v) {
 		ret->v.xval = var_is_series(p->dinfo, v);
+	    } else {
+		ret->v.xval = 0;
 	    }
 	} else if (f == ISLIST || f == LISTLEN) {
 	    int *list = get_list_by_name(s);

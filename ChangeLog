@@ -36,7 +36,8 @@ version 1.7.2, in progress
 - Enable "append" command in loops
 - Ordered logit and probit: don't insist that the dependent
   variable has a minimum of zero
-- Windows installer: updated packaged zlib1.dll
+- Windows installer: update GTK version, packaged zlib1.dll, 
+  and gtksourceview DLL.
 - Fix bug in arima auto-differencing, for non-seasonal order
   greater than 1 plus seasonal differencing
 

@@ -1047,8 +1047,11 @@ void lex (parser *p)
 	    }
 	    return;
         case '=': 
-	    p->sym = B_EQ;
 	    parser_getc(p);
+	    if (p->ch == '=') {
+		parser_getc(p);
+	    }
+	    p->sym = B_EQ;
 	    return;
         case '>': 
 	    parser_getc(p);
