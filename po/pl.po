@@ -1,14 +1,15 @@
 # Polish translation for gretl-1.7.2.pre1
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.uni.torun.pl>
+# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008
 # 
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.7.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-20 15:11-0500\n"
-"PO-Revision-Date: 2008-02-08 22:00+0100\n"
+"PO-Revision-Date: 2008-02-21 21:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1794,9 +1795,9 @@ msgid "Iteration %d: log likelihood = %#.12g"
 msgstr "Iteracja %d: Logarytm wiarygodno¶ci = %#.12g"
 
 #: lib/src/discrete.c:803
-#, fuzzy, c-format
+#, c-format
 msgid "The variable '%s' is not discrete"
-msgstr "Zmienna %s jest skalarem\n"
+msgstr "Zmienna '%s' nie jest dyskretna"
 
 #: lib/src/discrete.c:971
 msgid "Illegal non-positive value of the dependent variable"
@@ -1946,7 +1947,6 @@ msgstr "b³êdy standardowe prognozy"
 
 #: lib/src/geneval.c:406 lib/src/geneval.c:416 lib/src/geneval.c:426
 #: lib/src/geneval.c:6281
-#, fuzzy
 msgid "No dataset is in place"
 msgstr "Nie otwarto bazy danych"
 
@@ -1997,14 +1997,14 @@ msgid "Unmatched '%c'\n"
 msgstr "Niedopasowany '%c\n"
 
 #: lib/src/geneval.c:5851
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for matrices"
-msgstr "Ten test jest zaimplementowany tylko dla modeli estymowanych KMNK"
+msgstr "'%s' :nie jest zaimplementowane dla macierzy"
 
 #: lib/src/geneval.c:5858
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for lists"
-msgstr "Ten test jest zaimplementowany tylko dla modeli estymowanych KMNK"
+msgstr "'%s' : nie jest zaimplementowane dla list"
 
 #: lib/src/genfuncs.c:1026
 #, c-format
@@ -2469,7 +2469,7 @@ msgstr "Brak niezale¿nych zmiennych dla polecenia 'omit'"
 
 #: lib/src/gretl_errors.c:48
 msgid "No independent variables were omitted"
-msgstr "Brak pominiêtych niezale¿nych zmiennych"
+msgstr "Brak zmiennych niezale¿nych do pominiêcia"
 
 #: lib/src/gretl_errors.c:49
 msgid "No new independent variables were added"
@@ -3584,9 +3584,8 @@ msgid "Output is already diverted to '%s'\n"
 msgstr "Wyniki s± ju¿ kierowane do '%s'\n"
 
 #: lib/src/interact.c:3501
-#, fuzzy
 msgid "Now discarding output\n"
-msgstr "Teraz wyniki dodawane s± do '%s'\n"
+msgstr "Trwa usuwanie wyników\n"
 
 #: lib/src/interact.c:3517
 #, c-format
@@ -3634,9 +3633,8 @@ msgid "Error in computing model selection criteria.\n"
 msgstr "B³±d w obliczeniach kryteriów selekcji modelu.\n"
 
 #: lib/src/interact.c:3897
-#, fuzzy
 msgid "This command is not available\n"
-msgstr "To polecenie wymaga jednej zmiennej.\n"
+msgstr "To polecenie nie jest dostêpne\n"
 
 #: lib/src/interact.c:3907
 msgid "Error adding log differences of variables.\n"
@@ -5860,9 +5858,9 @@ msgid "dummy for %s = %g"
 msgstr "sztuczna zm. %s = %g"
 
 #: lib/src/transforms.c:641 lib/src/transforms.c:1105 lib/src/var.c:582
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid lag order %d"
-msgstr "B³êdny rz±d opó¼nienia dla ARCH(%d)"
+msgstr "B³êdny rz±d opó¼nienia %d"
 
 #: lib/src/transforms.c:1420
 msgid "dummify: no suitable variables were found"
@@ -5884,9 +5882,9 @@ msgstr ""
 "zm."
 
 #: lib/src/usermat.c:543
-#, fuzzy, c-format
+#, c-format
 msgid "Index value %d is out of bounds"
-msgstr "VECM: rz±d %d jest spoza zakresu"
+msgstr "Wartoœæ indeksu %d jest spoza zakresu"
 
 #: lib/src/usermat.c:961
 #, c-format
@@ -6295,13 +6293,12 @@ msgid "%s opened OK\n"
 msgstr "Plik %s poprawnie otwarty\n"
 
 #: cli/gretlcli.c:1022
-#, fuzzy
 msgid "Dataset cleared\n"
-msgstr "Tabela modeli zosta³a wyczyszczona"
+msgstr "Dane zosta³y wyczyszczone\n"
 
 #: gui2/about.c:30
 msgid "\"By econometricians, for econometricians.\""
-msgstr "\"Ekonometrycy dla ekonometryków.\""
+msgstr "\"Ekonometrycy dla ekonometryków\""
 
 #: gui2/about.c:88
 msgid "About gretl"
@@ -6718,7 +6715,7 @@ msgstr "gamma"
 
 #: gui2/calculator.c:1833
 msgid "binomial"
-msgstr "binomial"
+msgstr "dwumianowy"
 
 #: gui2/calculator.c:1834
 msgid "poisson"
@@ -6758,7 +6755,7 @@ msgstr "mno¿nik skali"
 
 #: gui2/calculator.c:1882
 msgid "trials"
-msgstr "próby"
+msgstr "liczba do¶wiadczeñ"
 
 #: gui2/calculator.c:1888 gui2/model_table.c:592 gui2/model_table.c:594
 #: gui2/model_table.c:596
@@ -6775,7 +6772,7 @@ msgstr "warto¶æ"
 
 #: gui2/calculator.c:1901 gui2/fncall.c:580
 msgid "name"
-msgstr "Nazwa"
+msgstr "Nazwa zmiennej"
 
 #: gui2/calculator.c:2083
 #, c-format
@@ -14065,8 +14062,7 @@ msgid ""
 "VIF(j) = 1/(1 - R(j)^2), where R(j) is the multiple correlation coefficient\n"
 "between variable j and the other independent variables"
 msgstr ""
-"VIF(j) = 1/(1 - R(j)^2), gdzie R(j) jest wspó³czynnikiem korelacji "
-"wielorakiej\n"
+"VIF(j) = 1/(1 - R(j)^2), gdzie R(j) jest wspó³czynnikiem korelacji wielorakiej\n"
 "pomiêdzy zmienn± 'j' a pozosta³ymi zmiennymi niezale¿nymi modelu."
 
 #: plugin/workbook.c:543
@@ -14081,6 +14077,3 @@ msgstr ""
 #: plugin/workbook.c:637
 msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany b³±d czytania pliku\n"
-
-#~ msgid "Ending value for loop index must be greater than starting value."
-#~ msgstr "Koñcowy indeks liczby pêtli musi byæ wiêkszy od startowego."
