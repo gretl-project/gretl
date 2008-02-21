@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-20 15:11-0500\n"
-"PO-Revision-Date: 2008-02-21 10:01+0100\n"
+"PO-Revision-Date: 2008-02-21 13:34+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -6310,7 +6310,7 @@ msgstr "%s aperto con successo\n"
 
 #: cli/gretlcli.c:1022
 msgid "Dataset cleared\n"
-msgstr "Dataset cancellato\c"
+msgstr "Dataset cancellato\n"
 
 #: gui2/about.c:30
 msgid "\"By econometricians, for econometricians.\""
