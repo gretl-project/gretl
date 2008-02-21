@@ -154,14 +154,15 @@ print_equation_system_info (const equation_system *sys,
 			    const DATAINFO *pdinfo, 
 			    gretlopt opt, PRN *prn)
 {
+    int header = (opt & OPT_H);
     int i;
 
     
-    if ((opt & OPT_H) && sys->name != NULL) {
+    if (header && sys->name != NULL) {
 	pprintf(prn, "Equation system %s\n", sys->name);
     }
 
-    if (!(opt & OPT_H)) {
+    if (!header) {
 	for (i=0; i<sys->n_equations; i++) {
 	    print_system_equation(sys->lists[i], pdinfo, prn);
 	}    
@@ -172,7 +173,7 @@ print_equation_system_info (const equation_system *sys,
     }
 
     if (sys->endog_vars != NULL) {
-	pputs(prn, (opt & OPT_H)? "Endogenous variables:" : "endog");
+	pputs(prn, (header)? "Endogenous variables:" : "endog");
 	for (i=1; i<=sys->endog_vars[0]; i++) {
 	    pprintf(prn, " %s", pdinfo->varname[sys->endog_vars[i]]);
 	}
@@ -180,7 +181,7 @@ print_equation_system_info (const equation_system *sys,
     }
 
     if (sys->instr_vars != NULL) {
-	pputs(prn, (opt & OPT_H)? "Exogenous variables:" : "instr");
+	pputs(prn, (header)? "Exogenous variables:" : "instr");
 	for (i=1; i<=sys->instr_vars[0]; i++) {
 	    pprintf(prn, " %s", pdinfo->varname[sys->instr_vars[i]]);
 	}
@@ -2387,6 +2388,51 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     pputc(prn, '\n');
 }
 
+#define DO_COEFF_ANALYSIS 0
+
+#if DO_COEFF_ANALYSIS
+
+static int print_coeff_analysis (equation_system *sys,
+				 DATAINFO *pdinfo,
+				 PRN *prn)
+{
+    const MODEL *pmod;
+    const int *elist = sys->endog_vars;
+    const char *vname;
+    int i, j, vj, endo, lag;
+
+    pprintf(prn, "       %-10s %-3s %-3s  coeff\n", 
+	    "var", "X/Y", "lag");
+
+    for (i=0; i<sys->n_equations; i++) {
+	pmod = sys->models[i];
+	for (j=0; j<pmod->ncoeff; j++) {
+	    endo = 0;
+	    vj = pmod->list[j+2];
+	    if (pdinfo->varinfo[vj]->lag != 0) {
+		vname = pdinfo->varinfo[vj]->parent;
+		lag = pdinfo->varinfo[vj]->lag;
+		vj = varindex(pdinfo, vname);
+	    } else {
+		vname = pdinfo->varname[vj];
+		lag = 0;
+	    }
+	    if (elist != NULL) {
+		endo = in_gretl_list(elist, vj);
+	    }
+	    pprintf(prn, "B[%d,%d] %-10s %3s %3d % .8E\n",
+		    i, j, vname, (endo)? "Y" : "X",
+		    lag, pmod->coeff[j]);
+	}
+    }
+
+    pputc(prn, '\n');
+
+    return 0;
+}
+
+#endif
+
 int 
 system_save_and_print_results (equation_system *sys,
 			       double ***pZ, DATAINFO *pdinfo,
@@ -2451,6 +2497,12 @@ system_save_and_print_results (equation_system *sys,
 		    sys->method == SYS_METHOD_SUR)) {
 	print_system_overid_test(sys, prn);
     }
+
+#if DO_COEFF_ANALYSIS
+    if (!err) {
+	print_coeff_analysis(sys, pdinfo, prn);
+    }	
+#endif
 
     return err;
 }

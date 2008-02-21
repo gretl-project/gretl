@@ -3,16 +3,15 @@
 # New York: John Wiley and Sons, 1950.
 
 open klein.gdt
+
 genr W = Wp + Wg
 genr A = t - 1931
-genr P1 = P(-1)
-genr X1 = X(-1)
 
 # set the model up as a system
 system name="Klein Model 1"
- equation C 0 P P1 W 
- equation I 0 P P1 K1
- equation Wp 0 X X1 A
+ equation C 0 P P(-1) W 
+ equation I 0 P P(-1) K1
+ equation Wp 0 X X(-1) A
  identity P = X - T - Wp
  identity W = Wp + Wg
  identity X = C + I + G
