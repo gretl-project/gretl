@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-20 15:11-0500\n"
-"PO-Revision-Date: 2008-02-04 18:47+0100\n"
+"PO-Revision-Date: 2008-02-21 10:01+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1797,9 +1797,9 @@ msgid "Iteration %d: log likelihood = %#.12g"
 msgstr "Iterazione %d: log verosimiglianza = %#.12g"
 
 #: lib/src/discrete.c:803
-#, fuzzy, c-format
+#, c-format
 msgid "The variable '%s' is not discrete"
-msgstr "La variabile %s è uno scalare\n"
+msgstr "La variabile '%s' non è discreta"
 
 #: lib/src/discrete.c:971
 msgid "Illegal non-positive value of the dependent variable"
@@ -1949,7 +1949,6 @@ msgstr "errori standard della previsione"
 
 #: lib/src/geneval.c:406 lib/src/geneval.c:416 lib/src/geneval.c:426
 #: lib/src/geneval.c:6281
-#, fuzzy
 msgid "No dataset is in place"
 msgstr "Nessun database aperto"
 
@@ -2000,14 +1999,14 @@ msgid "Unmatched '%c'\n"
 msgstr "Numero errato di \"%c\"\n"
 
 #: lib/src/geneval.c:5851
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for matrices"
-msgstr "Questo test è implementato solo per modelli OLS"
+msgstr "'%s' : non implementato per le matrici"
 
 #: lib/src/geneval.c:5858
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for lists"
-msgstr "Questo test è implementato solo per modelli OLS"
+msgstr "'%s' : non implementato per le liste"
 
 #: lib/src/genfuncs.c:1026
 #, c-format
@@ -3595,9 +3594,8 @@ msgid "Output is already diverted to '%s'\n"
 msgstr "I risultati sono già rediretti a '%s'\n"
 
 #: lib/src/interact.c:3501
-#, fuzzy
 msgid "Now discarding output\n"
-msgstr "Aggiunta dei risultati a '%s'\n"
+msgstr "I risultati non saranno salvati\n"
 
 #: lib/src/interact.c:3517
 #, c-format
@@ -3644,9 +3642,8 @@ msgid "Error in computing model selection criteria.\n"
 msgstr "Errore nel calcolo dei criteri di selezione del modello.\n"
 
 #: lib/src/interact.c:3897
-#, fuzzy
 msgid "This command is not available\n"
-msgstr "Questo comando richiede una variabile.\n"
+msgstr "Questo comando non è disponibile\n"
 
 #: lib/src/interact.c:3907
 msgid "Error adding log differences of variables.\n"
@@ -5878,9 +5875,9 @@ msgid "dummy for %s = %g"
 msgstr "dummy per %s = %g"
 
 #: lib/src/transforms.c:641 lib/src/transforms.c:1105 lib/src/var.c:582
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid lag order %d"
-msgstr "Ordine di ritardo non valido per arch (%d)"
+msgstr "Ordine di ritardo non valido %d"
 
 #: lib/src/transforms.c:1420
 msgid "dummify: no suitable variables were found"
@@ -5900,9 +5897,9 @@ msgstr ""
 "Occorrono almeno %d altri strumenti."
 
 #: lib/src/usermat.c:543
-#, fuzzy, c-format
+#, c-format
 msgid "Index value %d is out of bounds"
-msgstr "vecm: il rango %d è fuori dai limiti"
+msgstr "Il valore indice %d è fuori dai limiti"
 
 #: lib/src/usermat.c:961
 #, c-format
@@ -6312,9 +6309,8 @@ msgid "%s opened OK\n"
 msgstr "%s aperto con successo\n"
 
 #: cli/gretlcli.c:1022
-#, fuzzy
 msgid "Dataset cleared\n"
-msgstr "Tabella modelli cancellata"
+msgstr "Dataset cancellato\c"
 
 #: gui2/about.c:30
 msgid "\"By econometricians, for econometricians.\""
