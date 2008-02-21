@@ -387,7 +387,8 @@ tsls_make_hatlist (const int *reglist, int *instlist, int *hatlist)
 	}
 	if (endog) {
 	    if (reglist[i] == 0) {
-		/* found const in reglist but not instlist: needs fixing */
+		/* found const in reglist but not instlist: 
+		   needs fixing -- or is this debatable? */
 		addconst = 1;
 	    } else {
 		hatlist[++k] = reglist[i];
