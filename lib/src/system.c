@@ -2413,6 +2413,12 @@ static int print_coeff_analysis (equation_system *sys,
 		vname = pdinfo->varinfo[vj]->parent;
 		lag = pdinfo->varinfo[vj]->lag;
 		vj = varindex(pdinfo, vname);
+		if (vj == pdinfo->v) {
+		    vj = pmod->list[j+2];
+		    vname = pdinfo->varname[vj];
+		    fprintf(stderr, "%s: lag parent has disappeared!\n",
+			    vname);
+		}
 	    } else {
 		vname = pdinfo->varname[vj];
 		lag = 0;
