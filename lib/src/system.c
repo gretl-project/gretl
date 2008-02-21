@@ -1020,7 +1020,6 @@ int equation_system_finalize (equation_system *sys,
     return err;
 }
 
-
 /* Implement the "estimate" command, which must give the name of a pre-defined
    equation system and an estimation method, as in:
 
