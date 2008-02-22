@@ -2249,7 +2249,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     strcpy(vwin->fname, filename);
 
     viewer_box_config(vwin);
-    make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
+    make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE || role == VIEW_FILE));
 
     if (view_file_use_sourceview(role)) {
 	create_source(vwin, hsize, vsize, editable);

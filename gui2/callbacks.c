@@ -254,6 +254,9 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_TEX:
 	file_selector(_("Save LaTeX file"), file_code, FSEL_DATA_MISC, vwin->data);
 	break;
+    case SAVE_TEXT:
+	file_selector(_("Save text"), file_code, FSEL_DATA_MISC, vwin->data);
+	break;
     case SAVE_GP_CMDS:
 	file_selector(_("Save gnuplot commands"), file_code, FSEL_DATA_MISC, vwin);
 	break;
@@ -516,6 +519,9 @@ void file_save_callback (GtkWidget *w, gpointer data)
 	    break;
 	case GR_PLOT:
 	    u = SAVE_GP_CMDS;
+	    break;
+	case VIEW_FILE:
+	    u = SAVE_TEXT;
 	    break;
 	default:
 	    errbox(_("Sorry, not yet implemented"));
