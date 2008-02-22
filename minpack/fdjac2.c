@@ -1,6 +1,6 @@
 /* fdjac2.f -- translated by f2c (version 20030306) */
 
-#include "f2c.h"
+#include "gretl_f2c.h"
 #include "minpack.h"
 
 static integer c__1 = 1;

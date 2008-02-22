@@ -20,7 +20,7 @@
 /* Private header for sharing info between nls.c and gmm.c */
 
 #include "libgretl.h" 
-#include "f2c.h"
+#include "gretl_f2c.h"
 
 typedef struct parm_ parm;
 typedef struct ocset_ ocset;

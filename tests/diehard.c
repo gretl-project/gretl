@@ -1,9 +1,7 @@
 /* diehard.f -- translated by f2c (version 19950110).
-   You must link the resulting object file with the libraries:
-	-lf2c -lm   (in that order)
 */
 
-#include "f2c.h"
+#include "gretl_f2c.h"
 #include <string.h>
 
 /* Table of constant values */

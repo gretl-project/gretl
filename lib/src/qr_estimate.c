@@ -25,7 +25,7 @@
 #include "gretl_panel.h"
 #include "estim_private.h"
 
-#include "f2c.h"
+#include "gretl_f2c.h"
 #include "clapack_double.h"
 
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */

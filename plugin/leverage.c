@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 
-#include "f2c.h"
+#include "gretl_f2c.h"
 #include "clapack_double.h"
 
 #include <gtk/gtk.h>

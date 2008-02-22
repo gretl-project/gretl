@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 
-#include "f2c.h"
+#include "gretl_f2c.h"
 #include "clapack_double.h"
 
 static double packed_matrix_norm (const double *x, int k)

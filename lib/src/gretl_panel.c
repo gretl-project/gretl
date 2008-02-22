@@ -20,7 +20,7 @@
 /* panel estimation and dataset handling for gretl */
 
 #include "libgretl.h"
-#include "f2c.h"
+#include "gretl_f2c.h"
 #include "clapack_double.h"
 #include "gretl_model.h"
 #include "gretl_panel.h"
