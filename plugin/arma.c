@@ -1251,7 +1251,7 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
     int i, k = 0;
 
 #if AINIT_DEBUG
-    fprintf(stderr, "transform_arma_const\n");
+    fprintf(stderr, "transform_arma_const: initially = %g\n", b[0]);
 #endif
 
     for (i=0; i<ainfo->p; i++) {
@@ -1297,10 +1297,10 @@ static int kalman_arma (const int *alist, double *coeff,
 	b[i] = coeff[i];
     }
 
-#if 1 || AINIT_DEBUG
+#if AINIT_DEBUG
     fputs("initial coefficients:\n", stderr);
     for (i=0; i<ainfo->nc; i++) {
-	fprintf(stderr, " b[%d] = %.10g\n", i, b[i]);
+	fprintf(stderr, " b[%d] = % .10E\n", i, b[i]);
     }
 #endif
 
@@ -2078,19 +2078,6 @@ static int ar_arma_init (const int *list, double *coeff,
 	err = armod.errcode;
     }
 
-    if (!err) {
-	arma_init_transcribe_coeffs(ainfo, &armod, coeff);
-    }
-
-    if (!err && arma_exact_ml(ainfo) && ainfo->ifc && 
-	(!nonlin || ainfo->nexo == 0)) {
-	/* handle the case where we need to translate from an
-	   estimate of the regression constant to the
-	   unconditional mean of y_t
-	*/
-	transform_arma_const(coeff, ainfo);
-    }
-
 #if AINIT_DEBUG
     if (!err) {
 	fprintf(stderr, "LS init: ncoeff = %d, nobs = %d\n", 
@@ -2100,6 +2087,25 @@ static int ar_arma_init (const int *list, double *coeff,
 	}
     } else {
 	fprintf(stderr, "LS init: armod.errcode = %d\n", err);
+    }
+#endif
+
+    if (!err) {
+	arma_init_transcribe_coeffs(ainfo, &armod, coeff);
+    }
+
+    /* handle the case where we need to translate from an
+       estimate of the regression constant to the
+       unconditional mean of y_t
+    */
+#if 1
+    if (!err && arma_exact_ml(ainfo) && ainfo->ifc && !nonlin) {
+	transform_arma_const(coeff, ainfo);
+    }
+#else
+    if (!err && arma_exact_ml(ainfo) && ainfo->ifc && 
+	(!nonlin || ainfo->nexo == 0)) {
+	transform_arma_const(coeff, ainfo);
     }
 #endif
 
