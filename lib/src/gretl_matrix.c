@@ -29,8 +29,6 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
-static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
-
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 #define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
@@ -66,6 +64,13 @@ static void set_gretl_matrix_err (int err)
     if (gretl_matrix_err == 0) {
 	gretl_matrix_err = err;
     }
+}
+
+static int wspace_fail (integer info, double w0)
+{
+    fprintf(stderr, "gretl_matrix: workspace query failed: info = %ld, "
+	    "work[0] = %g\n", info, w0);
+    return E_DATA;
 }
 
 /* An efficient means of allocating temporary storage for lapack
@@ -4387,7 +4392,7 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     integer n = M->cols;
 
     integer info = 0;
-    integer lwork = -1;
+    integer lwork = -1L;
     integer lda = m;
     integer *iwork = NULL;
     doublereal *tau = NULL;
@@ -4514,7 +4519,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 {
     integer m, n, lda;
     integer info = 0;
-    integer lwork = -1;
+    integer lwork = -1L;
     doublereal *tau = NULL;
     doublereal *work = NULL;
     doublereal *work2;
@@ -4807,13 +4812,12 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 	return E_SINGULAR;
     }
 
-    lwork = -1;
+    lwork = -1L;
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
 	free(ipiv);
-	return 1;
+	return wspace_fail(info, work[0]);
     }
 
     lwork = (integer) work[0];
@@ -4983,7 +4987,7 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     integer n, info;
     integer *ipiv;
     integer *iwork;
-    integer lwork = -1;
+    integer lwork = -1L;
     double anorm, rcond;
     double *work;
     int err = 0;
@@ -5013,8 +5017,7 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     /* workspace query */
     dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info);   
     if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
-	err = 1;
+	err = wspace_fail(info, work[0]);
 	goto bailout;
     }
 
@@ -5635,13 +5638,12 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	jvr = 'N';
     }	
 
-    lwork = -1; /* find optimal workspace size */
+    lwork = -1L; /* find optimal workspace size */
     dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl, 
 	   &nvl, vr, &nvr, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
-	*err = 1;
+	*err = wspace_fail(info, work[0]);
 	goto bailout;
     }	
 
@@ -5731,13 +5733,12 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     w = evals->val;
 
-    lwork = -1; /* find optimal workspace size */
+    lwork = -1L; /* find optimal workspace size */
     dsyev_(&jobz, &uplo, &n, m->val, &n, 
 	   w, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
-	*err = 1;
+	*err = wspace_fail(info, work[0]);
 	goto bailout;
     }	
 
@@ -5920,7 +5921,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 {
     integer m, n, lda;
     integer ldu = 1, ldvt = 1;
-    integer lwork = -1;
+    integer lwork = -1L;
     integer info;
     gretl_matrix *b = NULL;
     gretl_matrix *s = NULL;
@@ -6002,7 +6003,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	    vtval, &ldvt, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
+	err = wspace_fail(info, work[0]);
 	goto bailout;
     }	
 
@@ -6946,7 +6947,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     integer m, n;
     integer nrhs = 1;
     integer lda, ldb;
-    integer lwork = -1;
+    integer lwork = -1L;
     integer rank;
     integer info;
     double rcond = -1.0;
@@ -6999,7 +7000,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 	    &rank, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
+	err = wspace_fail(info, work[0]);
 	goto bailout;
     }	
 
@@ -7078,7 +7079,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     gretl_matrix *C = NULL;
     integer m, n, nrhs;
     integer lda, ldb;
-    integer lwork = -1;
+    integer lwork = -1L;
     integer rank;
     integer info;
     double rcond = -1.0;
@@ -7137,7 +7138,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	    &rank, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
+	err = wspace_fail(info, work[0]);
 	goto bailout;
     }	
 

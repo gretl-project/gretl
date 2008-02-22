@@ -2102,7 +2102,7 @@ static int ar_arma_init (const int *list, double *coeff,
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc && !nonlin) {
 	transform_arma_const(coeff, ainfo);
     }
-#else
+#else /* we had this prior to 2008-02-22 */
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc && 
 	(!nonlin || ainfo->nexo == 0)) {
 	transform_arma_const(coeff, ainfo);

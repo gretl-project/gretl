@@ -263,18 +263,33 @@ get_printf_format_chunk (const char *s, int *fc,
     const char *p = s;
     int n;
 
-    p++; /* % */
+    p++; /* move past % */
 
     /* '#', if present, must come first */
     if (*p == '#') {
 	p++;
     }
 
-    /* 'width' could be < 0 */
+    /* zero padding? */
+    if (*p == '0') {
+	p++;
+    }
+
+    /* left justification? */
     if (*p == '-') {
 	p++;
     }
 
+    /* leading space before positive number? */
+    if (*p == ' ') {
+	p++;
+    }
+
+    /* always print sign? */
+    if (*p == '+') {
+	p++;
+    }
+ 
     /* optional width? */
     n = strspn(p, numchars);
     if (n == 0 && *p == '*') {
