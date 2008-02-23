@@ -1,11 +1,5 @@
-/* f2c.h  --  Standard Fortran to C header file */
-
-/**  barf  [ba:rf]  2.  "He suggested using FORTRAN, and everybody barfed."
-
-	- From The Shogakukan DICTIONARY OF NEW ENGLISH (Second edition) */
-
-#ifndef F2C_INCLUDE
-#define F2C_INCLUDE
+#ifndef GRETL_F2C_H
+#define GRETL_F2C_H
 
 typedef long int integer;
 typedef unsigned long uinteger;
@@ -19,12 +13,6 @@ typedef long int logical;
 typedef short int shortlogical;
 typedef char logical1;
 typedef char integer1;
-#if 0	/* Adjust for integer*8. */
-typedef long long longint;		/* system-dependent */
-typedef unsigned long long ulongint;	/* system-dependent */
-#define qbit_clear(a,b)	((a) & ~((ulongint)1 << (b)))
-#define qbit_set(a,b)	((a) |  ((ulongint)1 << (b)))
-#endif
 
 #define TRUE_ (1)
 #define FALSE_ (0)
@@ -202,27 +190,4 @@ typedef VOID H_f;	/* character function */
 typedef VOID Z_f;	/* double complex function */
 typedef doublereal E_f;	/* real function with -R not specified */
 
-/* undef any lower-case symbols that your C compiler predefines, e.g.: */
-
-#ifndef Skip_f2c_Undefs
-#undef cray
-#undef gcos
-#undef mc68010
-#undef mc68020
-#undef mips
-#undef pdp11
-#undef sgi
-#undef sparc
-#undef sun
-#undef sun2
-#undef sun3
-#undef sun4
-#undef u370
-#undef u3b
-#undef u3b2
-#undef u3b5
-#undef unix
-#undef vax
-#endif
-
-#endif /* F2C_INCLUDE */
+#endif /* GRETL_F2C_H */
