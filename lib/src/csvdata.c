@@ -1458,7 +1458,8 @@ static void csv_parsing_header (const char *fname, PRN *prn)
  * @pdinfo: pointer to data information struct.
  * @fname: name of CSV file.
  * @opt: use %OPT_C to force interpretation of data colums containing
- * strings as coded values and not errors.
+ * strings as coded values and not errors; for use of %OPT_T see
+ * the help for "append".
  * @prn: gretl printing struct (can be NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
@@ -1653,7 +1654,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, M_("warning: some variable names were duplicated\n"));
     }
 
-    err = merge_or_replace_data(pZ, pdinfo, &c->Z, &c->dinfo, prn);
+    err = merge_or_replace_data(pZ, pdinfo, &c->Z, &c->dinfo, opt, prn);
 
     if (!err && newdata && c->descrip != NULL) {
 	pdinfo->descrip = c->descrip;

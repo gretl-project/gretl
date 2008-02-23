@@ -892,17 +892,20 @@ int main (int argc, char *argv[])
 
 	switch (ftype) {
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(&Z, datainfo, paths.datfile, &paths, prn);
+	    err = gretl_get_data(&Z, datainfo, paths.datfile, &paths, 
+				 OPT_NONE, prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, OPT_NONE, 
-				 prn);
+	    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, 
+				 OPT_NONE, prn);
 	    break;
 	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, datainfo, paths.datfile, OPT_NONE, prn);
+	    err = import_csv(&Z, datainfo, paths.datfile, 
+			     OPT_NONE, prn);
 	    break;
 	case GRETL_OCTAVE:
-	    err = import_octave(&Z, datainfo, paths.datfile, prn);
+	    err = import_octave(&Z, datainfo, paths.datfile, 
+				OPT_NONE, prn);
 	    break;
 	case GRETL_EXCEL:
 	case GRETL_GNUMERIC:

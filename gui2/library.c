@@ -5508,7 +5508,7 @@ void do_open_csv_octave (char *fname, int code, int append)
     if (bufopen(&prn)) return;
 
     if (code == OPEN_OCTAVE) {
-	err = import_octave(&Z, datainfo, fname, prn);
+	err = import_octave(&Z, datainfo, fname, OPT_NONE, prn);
 	strcpy(dtype, "Octave");
     } else {
 	err = import_csv(&Z, datainfo, fname, OPT_NONE, prn); 
@@ -6533,17 +6533,17 @@ static int gui_open_append (ExecState *s, double ***pZ,
     if (k == GRETL_CSV_DATA) {
 	err = import_csv(pZ, pdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
-	err = import_octave(pZ, pdinfo, datfile, prn);
+	err = import_octave(pZ, pdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, pdinfo, datfile, &paths, 
 			     OPT_P, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, pdinfo, k, datfile, prn);
+	err = import_other(pZ, pdinfo, k, datfile, OPT_NONE, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
 	err = gretl_get_data(pZ, pdinfo, datfile, &paths, 
-			     prn);
+			     OPT_NONE, prn);
     }
 
     if (err) {

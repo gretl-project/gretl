@@ -457,7 +457,7 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_NATIVE_DATA:
 	    err = gretl_get_data(&Z, datainfo, paths.datfile, &paths, 
-				 prn);
+				 OPT_NONE, prn);
 	    break;
 	case GRETL_XML_DATA:
 	    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, 
@@ -467,13 +467,14 @@ int main (int argc, char *argv[])
 	    err = import_csv(&Z, datainfo, paths.datfile, OPT_NONE, prn);
 	    break;
 	case GRETL_OCTAVE:
-	    err = import_octave(&Z, datainfo, paths.datfile, prn);
+	    err = import_octave(&Z, datainfo, paths.datfile, OPT_NONE, prn);
 	    break;
 	case GRETL_GNUMERIC:
 	case GRETL_EXCEL:
 	case GRETL_WF1:
 	case GRETL_DTA:
-	    err = import_other(&Z, datainfo, ftype, paths.datfile, prn);
+	    err = import_other(&Z, datainfo, ftype, paths.datfile, 
+			       OPT_NONE, prn);
 	    break;
 	case GRETL_SCRIPT:
 	    runit = 1;
@@ -695,19 +696,19 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } 
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, pdinfo, datfile, OPT_NONE, prn);
+	err = import_csv(pZ, pdinfo, datfile, cmd->opt, prn);
     } else if (k == GRETL_OCTAVE) {
-	err = import_octave(pZ, pdinfo, datfile, prn);
+	err = import_octave(pZ, pdinfo, datfile, cmd->opt, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, pdinfo, k, datfile, prn);
+	err = import_other(pZ, pdinfo, k, datfile, cmd->opt, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, pdinfo, datfile, &paths, 
-			     OPT_NONE, prn);
+			     cmd->opt, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
 	err = gretl_get_data(pZ, pdinfo, datfile, &paths, 
-			     prn);
+			     cmd->opt, prn);
     }
 
     if (err) {

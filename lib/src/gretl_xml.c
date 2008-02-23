@@ -2305,7 +2305,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
 
     data_read_message(fname, tmpdinfo, prn);
 
-    err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, prn);
+    err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, opt, prn);
 
     if (!err && newdata && ppaths != NULL && fname != ppaths->datfile) {
 	strcpy(ppaths->datfile, fname);

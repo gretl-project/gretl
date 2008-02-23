@@ -982,7 +982,8 @@ int get_worksheet_data (char *fname, int datatype, int append)
     PRN *errprn;
     const char *errbuf;
     FILE *fp;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
+    int (*sheet_get_data)(const char*, double ***, DATAINFO *, 
+			  gretlopt, PRN *);
     int err = 0;
     
     fp = gretl_fopen(fname, "r");
@@ -995,10 +996,10 @@ int get_worksheet_data (char *fname, int datatype, int append)
     }
 
     if (datatype == GRETL_GNUMERIC) {
-	sheet_get_data = gui_get_plugin_function("wbook_get_data",
+	sheet_get_data = gui_get_plugin_function("gnumeric_get_data",
 						 &handle);
     } else if (datatype == GRETL_EXCEL) {
-	sheet_get_data = gui_get_plugin_function("excel_get_data",
+	sheet_get_data = gui_get_plugin_function("xls_get_data",
 						 &handle);
     } else if (datatype == GRETL_ODS) {
 	sheet_get_data = gui_get_plugin_function("ods_get_data",
@@ -1026,7 +1027,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	return 1;
     }
 
-    err = (*sheet_get_data)(fname, &Z, datainfo, errprn);
+    err = (*sheet_get_data)(fname, &Z, datainfo, OPT_G, errprn);
     close_plugin(handle);
 
     if (err == -1) {
@@ -1159,7 +1160,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 				 OPT_P, errprn);
 	} else {
 	    err = gretl_get_data(&Z, datainfo, tryfile, &paths, 
-				 errprn);
+				 OPT_NONE, errprn);
 	}
 
 	gretl_print_destroy(errprn);

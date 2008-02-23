@@ -25290,7 +25290,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
 #include <stdlib.h>
-#include <f2c.h>
+#include "gretl_f2c.h"
 
 int
 main ()

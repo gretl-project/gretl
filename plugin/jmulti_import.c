@@ -298,7 +298,7 @@ static int read_jmulti_data (FILE *fp, char *line, int len,
 }
 
 int jmulti_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		     PRN *prn)
+		     gretlopt opt, PRN *prn)
 {
     int maxlen = 0;
     int nvar = 0, nobs = 0;
@@ -383,7 +383,7 @@ int jmulti_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	newinfo->descrip = descrip;
 	descrip = NULL;
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, prn);
+	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
     }
 
  bailout:

@@ -3651,7 +3651,8 @@ static int run_script (const char *fname, ExecState *s,
 }
 
 static int append_data (const char *line, double ***pZ,
-			DATAINFO *pdinfo, PRN *prn)
+			DATAINFO *pdinfo, gretlopt opt,
+			PRN *prn)
 {
     char fname[MAXLEN] = {0};
     int k, err = 0;
@@ -3665,16 +3666,16 @@ static int append_data (const char *line, double ***pZ,
     k = detect_filetype(fname, NULL, prn);
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, pdinfo, fname, OPT_NONE, prn);
+	err = import_csv(pZ, pdinfo, fname, opt, prn);
     } else if (k == GRETL_OCTAVE) {
-	err = import_octave(pZ, pdinfo, fname, prn);
+	err = import_octave(pZ, pdinfo, fname, opt, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, pdinfo, k, fname, prn);
+	err = import_other(pZ, pdinfo, k, fname, opt, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, pdinfo, fname, NULL, 
-			     OPT_NONE, prn);
+			     opt, prn);
     } else {
-	err = gretl_get_data(pZ, pdinfo, fname, NULL, prn);
+	err = gretl_get_data(pZ, pdinfo, fname, NULL, opt, prn);
     }
 
     return err;
@@ -3748,7 +3749,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     switch (cmd->ci) {
 
     case APPEND:
-	err = append_data(line, pZ, pdinfo, prn);
+	err = append_data(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case ADF:

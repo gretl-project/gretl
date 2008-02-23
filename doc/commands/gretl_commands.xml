@@ -259,6 +259,12 @@
       <arguments>
         <argument>datafile</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--time-series</flag>
+	  <effect>see below</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
@@ -266,7 +272,31 @@
 	Opens a data file and appends the content to the current
 	dataset, if the new data are compatible.  The program will try
 	to detect the format of the data file (native, plain text, CSV,
-	Gnumeric, Excel, etc.).
+	Gnumeric, Excel, etc.). 
+      </para>
+      <para>
+	The appended data may take the form of either additional observations
+	on variables already present in the dataset, or new variables.
+	in the case of adding variables, compatibility requires either
+	(a) that the number of observations for the new data equals that
+	for the current data, or (b) that the new data carries clear
+	observation information so that gretl can work out how to place the
+	values.  
+      </para>
+      <para>
+	A special feature is supported for appending to a panel dataset. Let
+	<math>n</math> denote the number of cross-sectional units in the panel,
+	<math>T</math> denote the number of time periods, and <math>m</math>
+	denote the number of observations for the new data. If <math>m =
+	  n</math> the new data are taken to be time-invariant, and are copied
+	into place for each time period. On the other hand, if <math>m =
+	  T</math> the data are treated as non-varying across the panel units,
+	and are copied into place for each unit. If the panel is
+	<quote>square</quote>, and <math>m</math> equals both <math>n</math>
+	and <math>T</math>, an ambiguity arises. The default in this case is
+	to treat the new data as time-invariant, but you can force gretl to
+	treat the new data as time series via the <lit>--time-series</lit>
+	option.  (This option is ignored in all other cases.)
       </para>
 
     </description>

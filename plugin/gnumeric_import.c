@@ -638,10 +638,10 @@ sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-static int 
-real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		     int gui, PRN *prn)
+int gnumeric_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		       gretlopt opt, PRN *prn)
 {
+    int gui = (opt & OPT_G);
     wbook gbook;
     wbook *book = &gbook;
     wsheet gsheet;
@@ -809,7 +809,7 @@ real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, prn);
+	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
     } 
 
  getout:
@@ -824,17 +824,5 @@ real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     return err;
-}
-
-int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    PRN *prn)
-{
-    return real_wbook_get_data(fname, pZ, pdinfo, 1, prn);
-}
-
-int cli_get_gnumeric (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		      PRN *prn)
-{
-    return real_wbook_get_data(fname, pZ, pdinfo, 0, prn);
 }
 

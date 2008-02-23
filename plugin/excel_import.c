@@ -1339,10 +1339,10 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-static int 
-real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		     int gui, PRN *prn)
+int xls_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		  gretlopt opt, PRN *prn)
 {
+    int gui = (opt & OPT_G);
     wbook xbook;
     wbook *book = &xbook;
     double **newZ = NULL;
@@ -1513,7 +1513,7 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, prn);
+    err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
 
  getout:
     
@@ -1536,16 +1536,5 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     return err;
 }  
 
-int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    PRN *prn)
-{
-    return real_excel_get_data(fname, pZ, pdinfo, 1, prn);
-}
-
-int cli_get_xls (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		 PRN *prn)
-{
-    return real_excel_get_data(fname, pZ, pdinfo, 0, prn);
-}
 
 

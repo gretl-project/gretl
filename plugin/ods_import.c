@@ -1133,7 +1133,8 @@ static int ods_prune_columns (ods_sheet *sheet)
 }
 
 static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
-				ods_sheet *sheet, PRN *prn)
+				ods_sheet *sheet, gretlopt opt,
+				PRN *prn)
 {
     PRN *tprn;
     int err;
@@ -1148,7 +1149,7 @@ static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	err = merge_or_replace_data(pZ, pdinfo, &sheet->Z, 
-				    &sheet->dinfo, prn);
+				    &sheet->dinfo, opt, prn);
     }  
 
     return err;
@@ -1167,10 +1168,11 @@ static char *get_absolute_path (const char *fname)
     return ret;
 }
 
-static int read_ods_file (const char *fname, 
-			  double ***pZ, DATAINFO *pdinfo,
-			  int gui, PRN *prn)
+int ods_get_data (const char *fname, 
+		  double ***pZ, DATAINFO *pdinfo,
+		  gretlopt opt, PRN *prn)
 {
+    int gui = (opt & OPT_G);
     ods_sheet *sheet = NULL;
     int (*gretl_unzip_file)(const char *, GError **);
     const char *udir = gretl_dot_dir();
@@ -1274,7 +1276,7 @@ static int read_ods_file (const char *fname,
     }
 
     if (!err) {
-	err = finalize_ods_import(pZ, pdinfo, sheet, prn); 
+	err = finalize_ods_import(pZ, pdinfo, sheet, opt, prn); 
     }
 
     ods_sheet_free(sheet);
@@ -1282,18 +1284,5 @@ static int read_ods_file (const char *fname,
     return err;
 }
 
-int ods_get_data (const char *fname, 
-		  double ***pZ, DATAINFO *pdinfo,
-		  PRN *prn)
-{
-    return read_ods_file(fname, pZ, pdinfo, 1, prn);
-}
-
-int cli_get_ods (const char *fname, 
-		 double ***pZ, DATAINFO *pdinfo,
-		 PRN *prn)
-{
-    return read_ods_file(fname, pZ, pdinfo, 0, prn);
-}
 
 

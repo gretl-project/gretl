@@ -45,7 +45,7 @@ dnl
   rm -f conf.lapacktest
   AC_TRY_RUN([
 #include <stdlib.h>
-#include <f2c.h>
+#include "gretl_f2c.h"
 
 int 
 main ()
