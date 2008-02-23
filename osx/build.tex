@@ -17,7 +17,7 @@
 
 \begin{center}
   {\Large \textbf{Building a gretl disk image for OS X}}\\[6pt]
-Allin Cottrell, 22 January 2008
+Allin Cottrell, 23 February 2008
 \end{center}
 
 \section{Objective}
@@ -56,7 +56,8 @@ The method is as follows:
   ``space'' into which you'll install gretl and gnuplot.
 \item Under Fink, install various required third-party packages
   (including the ``dev'' or developer components).  This includes
-  GTK+ and friends (glib, atk, gdk, pango).
+  GTK+ and friends (glib, atk, gdk, pango).  The glib package
+  should be version 2.8 or later.
 \item Configure and build gnuplot; install gnuplot into
   the \texttt{Gretl.app} folder.
 \item Configure and build gretl; install gretl into the right place
@@ -274,13 +275,14 @@ rm liblist
 \end{code}
 
 %$
-But having done this, we (may) need to add a few things:
-\texttt{libpangoft2-1.0.0.dylib} (not picked up, maybe an indirect
-dependency); \texttt{libgd.2.dylib} from the custom build of gd2 (see
+But having done this, we may need to add a few things:
+\texttt{libgd.2.dylib} from the custom build of gd2 (see
 section~\ref{sec:gpbuild}), \texttt{libmpfr.1.dylib} from Fink (if
 available) to support the gretl plugin.  On the other hand, if
 \texttt{libiconv.2.dylib} has been picked up from the Fink
-installation it can be deleted since it's provided by OS X.
+installation it's possible this can be deleted: libiconv.2.dylib is
+provided by OS X, so provided that the minor version is recent enough
+we don't need to package it.
 
 \textit{Other files}: 
 
