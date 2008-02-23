@@ -1408,6 +1408,7 @@ gtk_source_view_expose (GtkWidget      *widget,
 				(* GTK_WIDGET_CLASS (parent_class)->expose_event)
 				(widget, event);
 
+#if 0
 		/* Draw the right margin vertical line + overlay. */
 		if (view->priv->show_margin && 
 		    (event->window == gtk_text_view_get_window (text_view, GTK_TEXT_WINDOW_TEXT)))
@@ -1522,6 +1523,7 @@ gtk_source_view_expose (GtkWidget      *widget,
 				g_message ("Time to draw the margin: %g (sec * 1000)", g_timer_elapsed (timer, NULL) * 1000);
 			});
 		}
+#endif		
 	}
 	
 	return event_handled;	
