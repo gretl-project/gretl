@@ -2139,6 +2139,68 @@ static void merge_error (char *msg, PRN *prn)
     strcpy(gretl_errmsg, msg);
 }
 
+static int panel_expand_ok (DATAINFO *pdinfo, DATAINFO *addinfo)
+{
+    int n = pdinfo->paninfo->nunits;
+    int T = pdinfo->paninfo->Tmax;
+    int ok = 0;
+
+    if (addinfo->n == n && n == T) {
+	/* ambiguous: FIXME */
+	ok = 0;
+    } else if (addinfo->n == n) {
+	if (addinfo->pd == 1) {
+	    ok = 1;
+	}
+    } else if (addinfo->n == T) {
+	ok = 1;
+    }
+
+    return ok;
+}
+
+static int panel_append_special (int addvars, 
+				 double ***pZ, 
+				 DATAINFO *pdinfo, 
+				 double **addZ, 
+				 DATAINFO *addinfo,
+				 PRN *prn)
+{
+    int n = pdinfo->paninfo->nunits;
+    int T = pdinfo->paninfo->Tmax;
+    int k = pdinfo->v;
+    int i, j, s, p, t;
+    int err = 0;
+
+    if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
+	merge_error(_("Out of memory adding data\n"), prn);
+	err = 1;
+    }
+
+    for (i=1; i<addinfo->v && !err; i++) {
+	int v = varindex(pdinfo, addinfo->varname[i]);
+
+	if (v >= k) {
+	    /* a new variable */
+	    v = k++;
+	    strcpy(pdinfo->varname[v], addinfo->varname[i]);
+	    copy_varinfo(pdinfo->varinfo[v], addinfo->varinfo[i]);
+	} 
+
+	s = 0;
+	for (j=0; j<n; j++) {
+	    /* loop across units */
+	    for (t=0; t<T; t++) {
+		/* loop across periods */
+		p = (addinfo->n == n)? j : t;
+		(*pZ)[v][s++] = addZ[i][p]; 
+	    }
+	}
+    }
+
+    return err;
+}
+
 /**
  * merge_data:
  * @pZ: pointer to data set.
@@ -2158,6 +2220,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn)
 {
     int addsimple = 0;
+    int addpanel = 0;
     int addvars = 0;
     int addobs = 0;
     int offset = 0;
@@ -2170,13 +2233,17 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	/* we'll allow undated data to be merged with dated, provided
 	   the number of observations matches OK */
 	addsimple = 1;
+    } else if (dataset_is_panel(pdinfo) && panel_expand_ok(pdinfo, addinfo)) {
+	/* allow appending to panel if the number of obs matches
+	   either the cross-section size or the time-series length */
+	addpanel = 1;
     } else if (pdinfo->pd != addinfo->pd) {
 	merge_error(_("Data frequency does not match\n"), prn);
 	err = 1;
     }
 
     if (!err) {
-	if (!addsimple) {
+	if (!addsimple && !addpanel) {
 	    addobs = compare_ranges(pdinfo, addinfo, &offset);
 	}
 	addvars = count_add_vars(pdinfo, addinfo);
@@ -2187,7 +2254,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	err = 1;
     }
 
-    if (!err && pdinfo->markers != addinfo->markers) {
+    if (!err && !addpanel && pdinfo->markers != addinfo->markers) {
 	if (addinfo->n != pdinfo->n) {
 	    merge_error(_("Inconsistency in observation markers\n"), prn);
 	    err = 1;
@@ -2195,7 +2262,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	    dataset_destroy_obs_markers(addinfo);
 	}
     }
-	
+
     /* if checks are passed, try merging the data */
 
     if (!err && addobs > 0) { 
@@ -2242,7 +2309,9 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!err) { 
+    if (!err && addpanel) {
+	err = panel_append_special(addvars, pZ, pdinfo, addZ, addinfo, prn);
+    } else if (!err) { 
 	int k = pdinfo->v;
 	int i, t;
 
