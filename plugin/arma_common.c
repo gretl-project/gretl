@@ -25,6 +25,7 @@ struct arma_info {
     int pd;          /* periodicity of data */
     int T;           /* full length of data series */
     double *dy;      /* differenced dependent variable */
+    double dyscale;  /* scale factor for dy */
     const char *pqspec; /* input string with specific AR, MA lags */
 };
 
@@ -73,6 +74,7 @@ arma_info_init (struct arma_info *ainfo, char flags,
     ainfo->T = pdinfo->n;
 
     ainfo->dy = NULL;
+    ainfo->dyscale = 1.0;
     ainfo->pqspec = pqspec;
 }
 

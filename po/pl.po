@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-20 15:11-0500\n"
-"PO-Revision-Date: 2008-02-21 21:00+0100\n"
+"PO-Revision-Date: 2008-02-25 15:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4141,7 +4141,7 @@ msgstr "Heckit"
 
 #: lib/src/modelprint.c:868 gui2/selector.c:2277
 msgid "Poisson"
-msgstr "Poisson"
+msgstr "Poissona"
 
 #: lib/src/modelprint.c:869
 msgid "NLS"
@@ -5531,7 +5531,7 @@ msgid ""
 " area to the right of %g = %g\n"
 msgstr ""
 "\n"
-"Gamma (shape %g, scale %g, ¶rednia %g, wariancja %g):\n"
+"Gamma (kszta³t %g, skala %g, ¶rednia %g, wariancja %g):\n"
 " prawostronny obszar krytyczny dla %g = %g\n"
 
 #: lib/src/pvalues.c:1267
@@ -5542,7 +5542,7 @@ msgid ""
 " Prob(x > %d) = %g\n"
 msgstr ""
 "\n"
-"Binomial (p = %g, n = %d):\n"
+"Dwumianowy (p = %g, n = %d):\n"
 " Prob(x > %d) = %g\n"
 
 #: lib/src/pvalues.c:1272 lib/src/pvalues.c:1288
@@ -5563,7 +5563,7 @@ msgid ""
 "Poisson (mean = %g): "
 msgstr ""
 "\n"
-"Poisson (¶rednia = %g): "
+"Rozk³ad Poissona (¶rednia = %g): "
 
 #: lib/src/strutils.c:1484
 #, c-format
@@ -6473,7 +6473,7 @@ msgstr "Binomial(%d, %g)"
 #: gui2/calculator.c:195
 #, c-format
 msgid "Poisson(%g)"
-msgstr "Poisson(%g)"
+msgstr "Poissona(%g)"
 
 #: gui2/calculator.c:385
 msgid "Standard errors"
@@ -6719,7 +6719,7 @@ msgstr "dwumianowy"
 
 #: gui2/calculator.c:1834
 msgid "poisson"
-msgstr "poisson"
+msgstr "Poissona"
 
 #: gui2/calculator.c:1835
 msgid " DW "
@@ -6747,11 +6747,11 @@ msgstr "stopnie swobody mianownika"
 
 #: gui2/calculator.c:1877
 msgid "shape"
-msgstr "shape"
+msgstr "parametr kszta³tu"
 
 #: gui2/calculator.c:1878 gui2/gpt_dialog.c:1184
 msgid "scale"
-msgstr "mno¿nik skali"
+msgstr "parametr skali"
 
 #: gui2/calculator.c:1882
 msgid "trials"
@@ -9563,7 +9563,7 @@ msgstr "/Dodawanie zmiennych/_time - zmienna czasowa t"
 
 #: gui2/gretl.c:413
 msgid "/Add/_Random variable..."
-msgstr "/Dodawanie zmiennych/_Generowanie zmiennych..."
+msgstr "/Dodawanie zmiennych/_Generowanie zmiennych losowych..."
 
 #: gui2/gretl.c:417
 msgid "/Add/_Periodic dummies"

@@ -269,6 +269,10 @@ equation_system_new (int method, const char *name)
     sys->sigma = NULL;
     sys->uhat = NULL;
 
+    sys->Gamma = NULL;
+    sys->B = NULL;
+    sys->A = NULL;
+
     sys->lists = NULL;
     sys->endog_vars = NULL;
     sys->instr_vars = NULL;
@@ -326,6 +330,21 @@ static void system_clear_results (equation_system *sys)
     if (sys->uhat != NULL) {
 	gretl_matrix_free(sys->uhat);
 	sys->uhat = NULL;
+    }
+
+    if (sys->Gamma != NULL) {
+	gretl_matrix_free(sys->Gamma);
+	sys->Gamma = NULL;
+    }
+
+    if (sys->B != NULL) {
+	gretl_matrix_free(sys->B);
+	sys->B = NULL;
+    }
+
+    if (sys->A != NULL) {
+	gretl_matrix_free(sys->A);
+	sys->A = NULL;
     }
 }
 
@@ -2388,9 +2407,52 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     pputc(prn, '\n');
 }
 
-#define DO_COEFF_ANALYSIS 0
+#define DO_COEFF_ANALYSIS 1
 
 #if DO_COEFF_ANALYSIS
+
+enum {
+    ENDOG,
+    EXOG,
+    PREDET
+};
+
+static int categorize_variable (int vnum, const int *elist, 
+				const int *ilist, int *col, 
+				int *lag, DATAINFO *pdinfo)
+{
+    const char *vname;
+    int v;
+
+    *lag = 0;
+
+    if (elist != NULL) {
+	*col = in_gretl_list(elist, vnum);
+	if (*col > 0) {
+	    return ENDOG;
+	}
+    }
+
+    /* may be a lagged endogenous variable */
+    *lag = pdinfo->varinfo[vnum]->lag;
+    if (*lag == 0) {
+	/* instrument, surely */
+	*col = in_gretl_list(ilist, vnum);
+	return EXOG;
+    } else {
+	vname = pdinfo->varinfo[vnum]->parent;
+	v = varindex(pdinfo, vname);
+	*col = in_gretl_list(elist, v);
+	if (*col > 0) {
+	    return PREDET;
+	} else {
+	    *col = in_gretl_list(ilist, v);
+	    return EXOG;
+	}
+    }
+
+    return -1;
+}
 
 static int print_coeff_analysis (equation_system *sys,
 				 DATAINFO *pdinfo,
@@ -2398,41 +2460,114 @@ static int print_coeff_analysis (equation_system *sys,
 {
     const MODEL *pmod;
     const int *elist = sys->endog_vars;
-    const char *vname;
-    int i, j, vj, endo, lag;
+    const int *ilist = sys->instr_vars;
+    int *true_inst = NULL;
+    int ne = sys->n_equations;
+    int ni = sys->n_identities;
+    int n = ne + ni;
+    int type, col;
+    int i, j, vj, lag;
 
-    pprintf(prn, "       %-10s %-3s %-3s  coeff\n", 
-	    "var", "X/Y", "lag");
+    sys->Gamma = gretl_zero_matrix_new(n, n);
+    if (sys->Gamma == NULL) {
+	return E_ALLOC;
+    }
 
-    for (i=0; i<sys->n_equations; i++) {
+    true_inst = gretl_list_copy(ilist);
+    if (true_inst == NULL) {
+	gretl_matrix_free(sys->Gamma);
+	sys->Gamma = NULL;
+	return E_ALLOC;
+    }
+
+    printlist(elist, "endogenous vars");
+    printlist(ilist, "instruments");
+
+    /* process equations */
+
+    for (i=0; i<ne; i++) {
 	pmod = sys->models[i];
-	for (j=0; j<pmod->ncoeff; j++) {
-	    endo = 0;
-	    vj = pmod->list[j+2];
-	    if (pdinfo->varinfo[vj]->lag != 0) {
-		vname = pdinfo->varinfo[vj]->parent;
-		lag = pdinfo->varinfo[vj]->lag;
-		vj = varindex(pdinfo, vname);
-		if (vj == pdinfo->v) {
-		    vj = pmod->list[j+2];
-		    vname = pdinfo->varname[vj];
-		    fprintf(stderr, "%s: lag parent has disappeared!\n",
-			    vname);
-		}
+	pprintf(prn, "Equation %d:\n", i + 1);
+	
+	for (j=1; j<=pmod->list[0] && pmod->list[j]!=LISTSEP; j++) {
+	    vj = pmod->list[j];
+	    type = categorize_variable(vj, elist, ilist, 
+				       &col, &lag, pdinfo);
+	    pprintf(prn, "%-10s (%2d): %4d %4d %4d:", 
+		    pdinfo->varname[vj], vj, type, col, lag);
+
+	    if (j > 1) {
+		pprintf(prn, " % #.8g\n", pmod->coeff[j-2]);
 	    } else {
-		vname = pdinfo->varname[vj];
-		lag = 0;
+		pputc(prn, '\n');
 	    }
-	    if (elist != NULL) {
-		endo = in_gretl_list(elist, vj);
+
+	    if (type == ENDOG) {
+		if (j == 1) {
+		    gretl_matrix_set(sys->Gamma, i, col-1, 1.0);
+		} else {
+		    gretl_matrix_set(sys->Gamma, i, col-1, -pmod->coeff[j-2]);
+		}
+	    } else if (type == PREDET) {
+		int pos = in_gretl_list(true_inst, vj);
+
+		gretl_list_delete_at_pos(true_inst, pos);
 	    }
-	    pprintf(prn, "B[%d,%d] %-10s %3s %3d % .8E\n",
-		    i, j, vname, (endo)? "Y" : "X",
-		    lag, pmod->coeff[j]);
+	}
+	pputc(prn, '\n');
+    }
+
+    printlist(true_inst, "true instruments");
+
+    sys->A = gretl_zero_matrix_new(n, elist[0]);
+    sys->B = gretl_zero_matrix_new(n, true_inst[0]);
+
+    /* process identities */
+
+    for (i=0; i<sys->n_identities; i++) {
+	const identity *ident = sys->idents[i];
+	int lcol, rcol;
+
+	lcol = in_gretl_list(elist, ident->depvar);
+	if (lcol > 0) {
+	    gretl_matrix_set(sys->Gamma, lcol-1, lcol-1, 1.0);
+	    for (j=0; j<ident->n_atoms; j++) {
+		vj = ident->atoms[j].varnum;
+		rcol = in_gretl_list(elist, vj);
+		if (rcol > 0) {
+		    gretl_matrix_set(sys->Gamma, lcol-1, rcol-1, 
+				     (ident->atoms[j].op)? 1 : -1);
+		} else {
+		    rcol = in_gretl_list(true_inst, vj);
+		    if (rcol > 0) {
+			gretl_matrix_set(sys->B, lcol-1, rcol-1, 
+					 (ident->atoms[j].op)? -1 : 1);
+		    }
+		}
+	    }
 	}
     }
 
-    pputc(prn, '\n');
+    gretl_matrix_print_to_prn(sys->Gamma, "sys->Gamma", prn);
+
+    for (i=0; i<ne; i++) {
+	pmod = sys->models[i];
+	for (j=1; j<=pmod->list[0] && pmod->list[j] != LISTSEP; j++) {
+	    vj = pmod->list[j];
+	    type = categorize_variable(vj, elist, true_inst, 
+				       &col, &lag, pdinfo);
+	    if (type == EXOG) {
+		gretl_matrix_set(sys->B, i, col-1, pmod->coeff[j-2]);
+	    } else if (type == PREDET) {
+		gretl_matrix_set(sys->A, i, col-1, pmod->coeff[j-2]);
+	    }
+	}
+    }
+
+    gretl_matrix_print_to_prn(sys->A, "sys->A", prn);
+    gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
+
+    free(true_inst);
 
     return 0;
 }

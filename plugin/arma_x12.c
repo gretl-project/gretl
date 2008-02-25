@@ -155,13 +155,18 @@ static int print_iterations (const char *path, PRN *prn)
     return err;
 }
 
+#define daily_frequency(f) (f == 5 || f == 6 || f == 7)
+
 static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 {
     char date[12] = {0};
 
-    if (dated_daily_data(pdinfo)) {
-	/* FIXME? */
-	return atoi(s);
+    if (daily_frequency(pdinfo->pd)) {
+	int t, maj, min;
+
+	sscanf(s, "%1d%2d", &maj, &min);
+	t = (maj - 1) * pdinfo->pd + min - 1;
+	return t;
     }
 
     if (pdinfo->pd > 1) {
@@ -575,10 +580,12 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     int yr, subper = 0;
     char *s;
 
-    /* daily data: for now we'll try just numbering the observations
-       consecutively */
-    if (dated_daily_data(pdinfo)) {
-	sprintf(str, "%d", t + 1);
+    /* daily data: FIXME when dated? */
+    if (daily_frequency(pdinfo->pd)) {
+	int maj = t / pdinfo->pd + 1;
+	int min = (t + 1) % pdinfo->pd;
+
+	sprintf(str, "%d.%d", maj, min);
 	return;
     } 
 
@@ -675,16 +682,10 @@ static int write_spc_file (const char *fname,
 
     gretl_push_c_numeric_locale();
 
-    make_x12a_date_string(ainfo->t1, pdinfo, datestr);
+    fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
+	    pdinfo->varname[ainfo->yno]);
 
-    if (dated_daily_data(pdinfo)) {
-	/* FIXME? */
-	fprintf(fp, "series {\n period = 1\n title = \"%s\"\n",  
-		pdinfo->varname[ainfo->yno]);
-    } else {
-	fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
-		pdinfo->varname[ainfo->yno]);
-    }	
+    make_x12a_date_string(ainfo->t1, pdinfo, datestr);
     fprintf(fp, " start = %s\n", datestr);
 
     ylist[0] = 1;

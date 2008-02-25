@@ -1267,6 +1267,28 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
     b[0] /= (narfac * sarfac);
 }
 
+static int kalman_undo_y_scaling (struct arma_info *ainfo,
+				  gretl_matrix *y, double *b, 
+				  kalman *K)
+{
+    int s, t, T = ainfo->t2 - ainfo->t1 + 1;
+    int err = 0;
+
+    b[0] *= ainfo->dyscale;
+
+    s = ainfo->t1;
+    for (t=0; t<T; t++) {
+	y->val[t] *= ainfo->dyscale;
+	ainfo->dy[s++] *= ainfo->dyscale;
+    }
+
+    if (na(kalman_arma_ll(b, K))) {
+	err = 1;
+    }
+
+    return err;
+}
+
 static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			struct arma_info *ainfo, MODEL *pmod,
@@ -1401,6 +1423,10 @@ static int kalman_arma (const int *alist, double *coeff,
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
 	} 
+    }
+
+    if (!err && ainfo->dyscale != 1.0) {
+	kalman_undo_y_scaling(ainfo, y, b, K);
     }
 
     if (err) {
@@ -1994,6 +2020,22 @@ static void arma_init_transcribe_coeffs (struct arma_info *ainfo,
     }	
 }
 
+static void maybe_rescale_dy (struct arma_info *ainfo)
+{
+    double ybar = fabs(gretl_mean(0, ainfo->T - 1, ainfo->dy));
+
+    if (ybar > 250) {
+	int t;
+
+	for (t=0; t<ainfo->T; t++) {
+	    if (!na(ainfo->dy[t])) {
+		ainfo->dy[t] /= ybar;
+	    }
+	}
+	ainfo->dyscale = ybar;
+    }
+}
+
 /* Run a least squares model to get initial values for the AR
    coefficients, either OLS or NLS.  We use NLS if there is
    nonlinearity due to either (a) the presence of both a seasonal and
@@ -2041,7 +2083,12 @@ static int ar_arma_init (const int *list, double *coeff,
     if (narmax > 0) {
 	/* ARMAX-induced lags of exog vars */
 	av += ainfo->nexo * ptotal;
-    }    
+    } 
+
+    if (arma_exact_ml(ainfo) && ainfo->ifc && ainfo->nexo == 0
+	&& ainfo->q == 0 && ainfo->Q == 0 && ainfo->dy != NULL) {
+	maybe_rescale_dy(ainfo);
+    }
 
     adinfo = create_new_dataset(&aZ, av, an, 0);
     if (adinfo == NULL) {
@@ -2098,16 +2145,10 @@ static int ar_arma_init (const int *list, double *coeff,
        estimate of the regression constant to the
        unconditional mean of y_t
     */
-#if 1
-    if (!err && arma_exact_ml(ainfo) && ainfo->ifc && !nonlin) {
-	transform_arma_const(coeff, ainfo);
-    }
-#else /* we had this prior to 2008-02-22 */
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc && 
 	(!nonlin || ainfo->nexo == 0)) {
 	transform_arma_const(coeff, ainfo);
     }
-#endif
 
     if (!err && prn != NULL) {
 	if (nonlin) {

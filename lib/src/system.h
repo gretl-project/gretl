@@ -71,6 +71,9 @@ struct equation_system_ {
     gretl_matrix *R;            /* LHS of any linear restrictions */
     gretl_matrix *q;            /* RHS of any linear restrictions */  
     gretl_matrix *uhat;         /* residuals, all equations */
+    gretl_matrix *Gamma;        /* structural form Gamma matrix (endog + identities)*/
+    gretl_matrix *B;            /* structural form B matrix (exogenous) */
+    gretl_matrix *A;            /* structural form A matrix (lagged endogenous) */
     MODEL **models;             /* set of pointers to per-equation models: just
 				   convenience pointers -- these should NOT be
 				   freed as part of sys cleanup
