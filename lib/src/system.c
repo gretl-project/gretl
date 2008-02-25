@@ -2407,7 +2407,7 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     pputc(prn, '\n');
 }
 
-#define DO_COEFF_ANALYSIS 1
+#define DO_COEFF_ANALYSIS 0
 
 #if DO_COEFF_ANALYSIS
 
