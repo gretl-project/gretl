@@ -1,4 +1,4 @@
-version 1.7.2, in progress
+2/25/2008 version 1.7.2
 - list-creation: add "dataset" option to use all currently
   available data series
 - Fix bug in recording result of TSLS heteroskedasticity test
