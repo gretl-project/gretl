@@ -1152,10 +1152,13 @@ language_file_parse (GtkSourceLanguage *language,
 	GSList *tag_list = NULL;
 	xmlDocPtr doc;
 	xmlNodePtr cur;
+#if GLIB_MINOR_VERSION >= 8	
 	GMappedFile *mf;
+#endif	
 	
 	xmlKeepBlanksDefault (0);
 
+#if GLIB_MINOR_VERSION >= 8
 	mf = g_mapped_file_new (language->priv->lang_file_name, FALSE, NULL);
 	
 	if (mf == NULL)
@@ -1167,6 +1170,21 @@ language_file_parse (GtkSourceLanguage *language,
 
 		g_mapped_file_free (mf);
 	}
+#else
+	if (1)
+		gchar *content = NULL;
+		gsize length = 0;
+		
+		g_file_get_contents (language->priv->lang_file_name, &content, &length, NULL);
+		if (content != NULL) {
+			doc = xmlParseMemory (content, length);
+			g_free (content);
+		} else {
+			doc = NULL;
+		}
+	}	
+
+#endif	
 	
 	if (doc == NULL)
 	{
