@@ -1964,6 +1964,37 @@ static int max_numchars (const gretl_matrix *m)
     return cmax;
 }
 
+void 
+gretl_matrix_print_constructor (const gretl_matrix *m, const char *s, 
+				PRN *prn)
+{
+    double x;
+    int i, j;
+
+    if (prn == NULL || m == NULL || m->val == NULL ||
+	s == NULL || *s == '\0') {
+	return;
+    }
+
+    pprintf(prn, "matrix %s = { \\\n", s);
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, i, j);
+	    pprintf(prn, " %.14g", x);
+	    if (j == m->cols - 1) {
+		if (i == m->rows - 1) {
+		    pputs(prn, " }\n");
+		} else {
+		    pputs(prn, " ; \\\n");
+		}
+	    } else {
+		pputc(prn, ',');
+	    }
+	}
+    }
+}
+
 static void 
 real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
 			  int packed, int errout, PRN *prn)

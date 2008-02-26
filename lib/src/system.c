@@ -268,6 +268,7 @@ equation_system_new (int method, const char *name)
     sys->vcv = NULL;
     sys->sigma = NULL;
     sys->uhat = NULL;
+    sys->yhat = NULL;
 
     sys->Gamma = NULL;
     sys->B = NULL;
@@ -330,6 +331,11 @@ static void system_clear_results (equation_system *sys)
     if (sys->uhat != NULL) {
 	gretl_matrix_free(sys->uhat);
 	sys->uhat = NULL;
+    }
+
+    if (sys->yhat != NULL) {
+	gretl_matrix_free(sys->yhat);
+	sys->yhat = NULL;
     }
 
     if (sys->Gamma != NULL) {
@@ -1972,8 +1978,8 @@ system_set_restriction_matrices (equation_system *sys,
 
 double *
 equation_system_get_series (const equation_system *sys, 
-				  const DATAINFO *pdinfo,
-				  int idx, const char *key, int *err)
+			    const DATAINFO *pdinfo,
+			    int idx, const char *key, int *err)
 {
     double *x = NULL;
     const char *msel;
@@ -2020,12 +2026,38 @@ equation_system_get_series (const equation_system *sys,
     return x;
 }
 
+static int system_add_yhat (equation_system *sys)
+{
+    int T = sys->t2 - sys->t1 + 1;
+    int k = sys->n_equations;
+    double x;
+    int i, s, t;
+
+    sys->yhat = gretl_matrix_alloc(T, k);
+    if (sys->yhat == NULL) {
+	return E_ALLOC;
+    }
+
+    sys->yhat->t1 = sys->t1;
+    sys->yhat->t2 = sys->t2;
+
+    for (i=0; i<k; i++) {
+	s = 0;
+	for (t=sys->t1; t<=sys->t2; t++) {
+	    x = sys->models[i]->yhat[t];
+	    gretl_matrix_set(sys->yhat, s++, i, x);
+	}
+    }
+
+    return 0;
+}
+
 /* retrieve a copy of a specified matrix from an equation
    system */
 
 gretl_matrix *
 equation_system_get_matrix (const equation_system *sys, int idx, 
-				  int *err)
+			    int *err)
 {
     gretl_matrix *M = NULL;
 
@@ -2044,6 +2076,9 @@ equation_system_get_matrix (const equation_system *sys, int idx,
 	break;
     case M_UHAT:
 	M = gretl_matrix_copy(sys->uhat);
+	break;
+    case M_YHAT:
+	M = gretl_matrix_copy(sys->yhat);
 	break;
     case M_VCV:
 	if (sys->vcv == NULL) {
@@ -2411,7 +2446,29 @@ print_system_sigma (const equation_system *sys, PRN *prn)
 
 #if DO_COEFF_ANALYSIS
 
-#define PRINTEQ 0
+static int *make_elist_from_models (equation_system *sys)
+{
+    int *elist;
+    int i, vi, pos;
+
+    elist = gretl_list_new(sys->n_equations);
+    if (elist == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<sys->n_equations; i++) {
+	vi = sys->models[i]->list[1];
+	elist[i+1] = vi;
+	pos = in_gretl_list(sys->instr_vars, vi);
+	if (pos > 0) {
+	    gretl_list_delete_at_pos(sys->instr_vars, pos);
+	}
+    }
+
+    return elist;
+}
+
+#define PRINTEQ 1
 
 enum {
     ENDOG,
@@ -2428,11 +2485,9 @@ static int categorize_variable (int vnum, const int *elist,
 
     *lag = 0;
 
-    if (elist != NULL) {
-	*col = in_gretl_list(elist, vnum);
-	if (*col > 0) {
-	    return ENDOG;
-	}
+    *col = in_gretl_list(elist, vnum);
+    if (*col > 0) {
+	return ENDOG;
     }
 
     /* may be a lagged endogenous variable */
@@ -2469,6 +2524,15 @@ static int print_coeff_analysis (equation_system *sys,
     int n = ne + ni;
     int type, col;
     int i, j, vj, lag, maxlag = 0;
+
+    if (elist == NULL) {
+	/* SUR and possibly some others? */
+	sys->endog_vars = make_elist_from_models(sys);
+	if (sys->endog_vars == NULL) {
+	    return E_ALLOC;
+	}
+	elist = sys->endog_vars;
+    }
 
     sys->Gamma = gretl_zero_matrix_new(n, n);
     if (sys->Gamma == NULL) {
@@ -2527,8 +2591,9 @@ static int print_coeff_analysis (equation_system *sys,
     pprintf(prn, "Maximum lag of predetermined variables = %d\n", maxlag);
 
     sys->B = gretl_zero_matrix_new(n, true_inst[0]);
+
     if (maxlag) {
-	sys->A = gretl_zero_matrix_new(n, maxlag*elist[0]);
+	sys->A = gretl_zero_matrix_new(n, maxlag * elist[0]);
     }
 
     /* process identities */
@@ -2558,6 +2623,7 @@ static int print_coeff_analysis (equation_system *sys,
     }
 
     gretl_matrix_print_to_prn(sys->Gamma, "sys->Gamma", prn);
+    /* gretl_matrix_print_constructor(sys->Gamma, "Gamma", prn); */
 
     for (i=0; i<ne; i++) {
 	pmod = sys->models[i];
@@ -2568,19 +2634,21 @@ static int print_coeff_analysis (equation_system *sys,
 	    if (type == EXOG) {
 		gretl_matrix_set(sys->B, i, col-1, pmod->coeff[j-2]);
 	    } else if (type == PREDET) {
-		col = n*(lag-1) + col - 1;
+		col = n * (lag - 1) + col - 1;
 		gretl_matrix_set(sys->A, i, col, pmod->coeff[j-2]);
 	    }
 	}
     }
 
-    if(maxlag) {
+    if (maxlag) {
 	gretl_matrix_print_to_prn(sys->A, "sys->A", prn);
+	/* gretl_matrix_print_constructor(sys->A, "sysA", prn); */
     } else {
-	pputs(prn, "\nNo lagged endogenous variables used as instruments\n\n");
+	pputs(prn, "No lagged endogenous variables used as instruments\n\n");
     }
 
     gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
+    /* gretl_matrix_print_constructor(sys->B, "sysB", prn); */
 
     free(true_inst);
 
@@ -2597,10 +2665,12 @@ system_save_and_print_results (equation_system *sys,
     int m = sys->n_equations;
     int nr = system_n_restrictions(sys);
     int i, j = 0;
-    int err = 0;
+    int err;
+
+    err = system_add_yhat(sys);
 
     if (opt & OPT_Q) {
-	return 0;
+	return err;
     }    
 
     if (sys->flags & SYSTEM_SAVE_UHAT) {
