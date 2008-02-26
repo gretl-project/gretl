@@ -2407,9 +2407,11 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     pputc(prn, '\n');
 }
 
-#define DO_COEFF_ANALYSIS 0
+#define DO_COEFF_ANALYSIS 1
 
 #if DO_COEFF_ANALYSIS
+
+#define PRINTEQ 0
 
 enum {
     ENDOG,
@@ -2466,7 +2468,7 @@ static int print_coeff_analysis (equation_system *sys,
     int ni = sys->n_identities;
     int n = ne + ni;
     int type, col;
-    int i, j, vj, lag;
+    int i, j, vj, lag, maxlag = 0;
 
     sys->Gamma = gretl_zero_matrix_new(n, n);
     if (sys->Gamma == NULL) {
@@ -2487,12 +2489,14 @@ static int print_coeff_analysis (equation_system *sys,
 
     for (i=0; i<ne; i++) {
 	pmod = sys->models[i];
+#if PRINTEQ
 	pprintf(prn, "Equation %d:\n", i + 1);
-	
+#endif	
 	for (j=1; j<=pmod->list[0] && pmod->list[j]!=LISTSEP; j++) {
 	    vj = pmod->list[j];
 	    type = categorize_variable(vj, elist, ilist, 
 				       &col, &lag, pdinfo);
+#if PRINTEQ
 	    pprintf(prn, "%-10s (%2d): %4d %4d %4d:", 
 		    pdinfo->varname[vj], vj, type, col, lag);
 
@@ -2501,7 +2505,7 @@ static int print_coeff_analysis (equation_system *sys,
 	    } else {
 		pputc(prn, '\n');
 	    }
-
+#endif
 	    if (type == ENDOG) {
 		if (j == 1) {
 		    gretl_matrix_set(sys->Gamma, i, col-1, 1.0);
@@ -2510,7 +2514,9 @@ static int print_coeff_analysis (equation_system *sys,
 		}
 	    } else if (type == PREDET) {
 		int pos = in_gretl_list(true_inst, vj);
-
+		if (lag > maxlag) {
+		    maxlag = lag;
+		}
 		gretl_list_delete_at_pos(true_inst, pos);
 	    }
 	}
@@ -2518,9 +2524,12 @@ static int print_coeff_analysis (equation_system *sys,
     }
 
     printlist(true_inst, "true instruments");
+    pprintf(prn, "Maximum lag of predetermined variables = %d\n", maxlag);
 
-    sys->A = gretl_zero_matrix_new(n, elist[0]);
     sys->B = gretl_zero_matrix_new(n, true_inst[0]);
+    if (maxlag) {
+	sys->A = gretl_zero_matrix_new(n, maxlag*elist[0]);
+    }
 
     /* process identities */
 
@@ -2559,12 +2568,18 @@ static int print_coeff_analysis (equation_system *sys,
 	    if (type == EXOG) {
 		gretl_matrix_set(sys->B, i, col-1, pmod->coeff[j-2]);
 	    } else if (type == PREDET) {
-		gretl_matrix_set(sys->A, i, col-1, pmod->coeff[j-2]);
+		col = n*(lag-1) + col - 1;
+		gretl_matrix_set(sys->A, i, col, pmod->coeff[j-2]);
 	    }
 	}
     }
 
-    gretl_matrix_print_to_prn(sys->A, "sys->A", prn);
+    if(maxlag) {
+	gretl_matrix_print_to_prn(sys->A, "sys->A", prn);
+    } else {
+	pputs(prn, "\nNo lagged endogenous variables used as instruments\n\n");
+    }
+
     gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
 
     free(true_inst);
