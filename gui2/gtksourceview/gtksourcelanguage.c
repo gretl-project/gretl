@@ -1162,26 +1162,26 @@ language_file_parse (GtkSourceLanguage *language,
 	mf = g_mapped_file_new (language->priv->lang_file_name, FALSE, NULL);
 	
 	if (mf == NULL)
-		doc = NULL;
+	    doc = NULL;
 	else
-	{
+	    {
 		doc = xmlParseMemory (g_mapped_file_get_contents (mf), 
 				      g_mapped_file_get_length (mf));
 
 		g_mapped_file_free (mf);
-	}
+	    }
 #else
-	if (1)
-		gchar *content = NULL;
-		gsize length = 0;
+	if (1) {
+	    gchar *content = NULL;
+	    gsize length = 0;
 		
-		g_file_get_contents (language->priv->lang_file_name, &content, &length, NULL);
-		if (content != NULL) {
-			doc = xmlParseMemory (content, length);
-			g_free (content);
-		} else {
-			doc = NULL;
-		}
+	    g_file_get_contents (language->priv->lang_file_name, &content, &length, NULL);
+	    if (content != NULL) {
+		doc = xmlParseMemory (content, length);
+		g_free (content);
+	    } else {
+		doc = NULL;
+	    }
 	}	
 
 #endif	
