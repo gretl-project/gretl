@@ -2442,7 +2442,7 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     pputc(prn, '\n');
 }
 
-#define DO_COEFF_ANALYSIS 1
+#define DO_COEFF_ANALYSIS 0
 
 #if DO_COEFF_ANALYSIS
 
@@ -2511,8 +2511,78 @@ static int categorize_variable (int vnum, const int *elist,
     return -1;
 }
 
+static int calculate_fitted (equation_system *sys,
+			     int *true_inst, int maxlag,
+			     double **Z, DATAINFO *pdinfo,
+			     PRN *prn)
+{
+    gretl_matrix *G = NULL, *y1 = NULL, *x = NULL;
+    gretl_matrix *y = NULL, *yh = NULL;
+    const int *elist = sys->endog_vars;
+    const int *ilist = sys->instr_vars;
+    int n = sys->n_equations + sys->n_identities;
+    int type, col;
+    int i, vi, t, lag;
+
+    G = gretl_matrix_copy(sys->Gamma);
+    gretl_SVD_invert_matrix(G);
+
+    y = gretl_matrix_alloc(n, 1);
+    yh = gretl_matrix_alloc(n, 1);
+    if (maxlag > 0) {
+	y1 = gretl_matrix_alloc(maxlag * elist[0], 1);
+    }
+    x = gretl_matrix_alloc(true_inst[0], 1);
+
+    pprintf(prn, "Gamma^{-1}*(A*ylag + B*x_t)\n\n");
+
+    for (t=sys->t1; t<=sys->t2; t++) {
+	fprintf(stderr, "t = %d\n", t);
+	if (maxlag > 0) {
+	    gretl_matrix_zero(y1);
+	    for (i=1; i<=ilist[0]; i++) {
+		vi = ilist[i];
+		type = categorize_variable(vi, elist, true_inst, 
+					   &col, &lag, pdinfo);
+		if (type == PREDET) {
+		    col = n * (lag - 1) + col - 1;
+		    fprintf(stderr, " ylag[%d] = Z[%d][%d] = %g\n", 
+			    col, vi, t, Z[vi][t]);
+		    y1->val[col] = Z[vi][t];
+		}
+	    }
+	}
+	for (i=1; i<=true_inst[0]; i++) {
+	    fprintf(stderr, "    x[%d] = Z[%d][%d] = %g\n", 
+		    i-1, true_inst[i], t, Z[true_inst[i]][t]);
+	    x->val[i-1] = Z[true_inst[i]][t];
+	}
+	if (maxlag > 0) {
+	    gretl_matrix_multiply(sys->A, y1, y);
+	} else {
+	    gretl_matrix_zero(y);
+	}
+	gretl_matrix_multiply_mod(sys->B, GRETL_MOD_NONE,
+				  x, GRETL_MOD_NONE,
+				  y, GRETL_MOD_CUMULATE);
+	gretl_matrix_multiply(G, y, yh);
+	for (i=0; i<n; i++) {
+	    pprintf(prn, "%#10.5g ", yh->val[i]);
+	}
+	pputc(prn, '\n');
+    }
+
+    gretl_matrix_free(y);
+    gretl_matrix_free(yh);
+    gretl_matrix_free(y1);
+    gretl_matrix_free(x);
+    gretl_matrix_free(G);
+
+    return 0;
+}
+
 static int print_coeff_analysis (equation_system *sys,
-				 DATAINFO *pdinfo,
+				 double **Z, DATAINFO *pdinfo,
 				 PRN *prn)
 {
     const MODEL *pmod;
@@ -2623,7 +2693,6 @@ static int print_coeff_analysis (equation_system *sys,
     }
 
     gretl_matrix_print_to_prn(sys->Gamma, "sys->Gamma", prn);
-    /* gretl_matrix_print_constructor(sys->Gamma, "Gamma", prn); */
 
     for (i=0; i<ne; i++) {
 	pmod = sys->models[i];
@@ -2640,15 +2709,18 @@ static int print_coeff_analysis (equation_system *sys,
 	}
     }
 
-    if (maxlag) {
+    if (maxlag > 0) {
 	gretl_matrix_print_to_prn(sys->A, "sys->A", prn);
-	/* gretl_matrix_print_constructor(sys->A, "sysA", prn); */
     } else {
 	pputs(prn, "No lagged endogenous variables used as instruments\n\n");
     }
 
     gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
-    /* gretl_matrix_print_constructor(sys->B, "sysB", prn); */
+
+#if 1
+    /* test: try calculating fitted values */
+    calculate_fitted(sys, true_inst, maxlag, Z, pdinfo, prn);
+#endif
 
     free(true_inst);
 
@@ -2726,7 +2798,7 @@ system_save_and_print_results (equation_system *sys,
 
 #if DO_COEFF_ANALYSIS
     if (!err) {
-	print_coeff_analysis(sys, pdinfo, prn);
+	print_coeff_analysis(sys, *pZ, pdinfo, prn);
     }	
 #endif
 

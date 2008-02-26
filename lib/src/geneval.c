@@ -1612,7 +1612,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_matrix_infinity_norm(m);
 	    break;
 	case RCOND:
-	    ret->v.xval = gretl_symmetric_matrix_rcond(m, &p->err);
+	    ret->v.xval = gretl_matrix_rcond(m, &p->err);
 	    break;
 	case RANK:
 	    ret->v.xval = gretl_matrix_rank(m, &p->err);

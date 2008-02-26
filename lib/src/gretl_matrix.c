@@ -2231,9 +2231,11 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 	    if (sneq(x, y)) {
 		fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
 			i, j, x, j, i, y);
+#if 0
 		if (m->rows < 100) {
 		    gretl_matrix_print(m, "gretl_matrix_is_symmetric()");
 		}
+#endif
 		return 0;
 	    }
 	}
@@ -4307,6 +4309,75 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
 }
 
 /**
+ * gretl_general_matrix_rcond:
+ * @m: matrix to examine.
+ * @err: location to receive error code.
+ * 
+ * Estimates the reciprocal condition number of the general
+ * real matrix @m (in the 1-norm), using the lapack 
+ * functions %dgetrf and %dgecon.
+ *
+ * Returns: the estimate, or #NADBL on failure to allocate memory.
+ */
+
+static double gretl_general_matrix_rcond (const gretl_matrix *A, 
+					  int *err)
+{
+    gretl_matrix *a = NULL;
+    char norm = '1';
+    integer m, n, lda, info;
+    integer *iwork = NULL;
+    integer *ipiv = NULL;
+    double *work = NULL;
+    double anorm, rcond = NADBL;
+
+    *err = 0;
+
+    if (gretl_is_null_matrix(A)) {
+	return NADBL;
+    }
+
+    m = A->rows;
+    n = A->cols;
+    lda = A->rows;
+
+    a = gretl_matrix_copy(A);
+    work = malloc((4 * n) * sizeof *work);
+    iwork = malloc(n * sizeof *iwork);
+    ipiv = malloc(min(m, n) * sizeof *ipiv);
+
+    if (a == NULL || work == NULL || iwork == NULL || ipiv == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    anorm = gretl_matrix_one_norm(a);
+
+    dgetrf_(&m, &n, a->val, &lda, ipiv, &info);   
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_general_matrix_rcond:\n"
+		" dgetrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	rcond = 0.0;
+    } else {
+	dgecon_(&norm, &n, a->val, &lda, &anorm, &rcond, work, iwork, &info);
+	if (info != 0) {
+	    *err = 1;
+	    rcond = NADBL;
+	}
+    }
+
+ bailout:
+
+    free(work);
+    free(iwork);
+    free(ipiv);
+    gretl_matrix_free(a);
+
+    return rcond;
+}
+
+/**
  * gretl_symmetric_matrix_rcond:
  * @m: matrix to examine.
  * @err: location to receive error code.
@@ -4368,6 +4439,26 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
     gretl_matrix_free(a);
 
     return rcond;
+}
+
+/**
+ * gretl_matrix_rcond:
+ * @m: matrix to examine.
+ * @err: location to receive error code.
+ * 
+ * Estimates the reciprocal condition number of the real 
+ * matrix @m (in the 1-norm).
+ *
+ * Returns: the estimate, or #NADBL on failure to allocate memory.
+ */
+
+double gretl_matrix_rcond (const gretl_matrix *m, int *err)
+{
+    if (gretl_matrix_is_symmetric(m)) {
+	return gretl_symmetric_matrix_rcond(m, err);
+    } else {
+	return gretl_general_matrix_rcond(m, err);
+    }
 }
 
 /**

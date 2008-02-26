@@ -139,6 +139,8 @@ add_file ${TOPDIR}/share/gretlcmd.hlp gretl/gretlcmd_hlp.txt
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
 add_file ${TOPDIR}/share/genrcli.hlp gretl/genrcli.hlp
 add_file ${TOPDIR}/share/genrgui.hlp gretl/genrgui.hlp
+add_file ${TOPDIR}/share/genrcli.hlp.it gretl/genrcli.hlp.it
+add_file ${TOPDIR}/share/genrgui.hlp.it gretl/genrgui.hlp.it
 for f in ${TOPDIR}/share/texfigs/*.png ; do
    add_file $f gretl/helpfigs/`basename $f`
 done

@@ -1,3 +1,6 @@
+version 1.7.3, in progress
+- make the rcond function available for asymmetric matrices
+
 2/25/2008 version 1.7.2
 - list-creation: add "dataset" option to use all currently
   available data series
