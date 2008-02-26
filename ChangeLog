@@ -1,5 +1,8 @@
 version 1.7.3, in progress
-- make the rcond function available for asymmetric matrices
+- Make the rcond function available for asymmetric matrices
+- Enable the $yhat accessor for fitted values in equation
+  systems
+- Add Italian function help to Windows build
 
 2/25/2008 version 1.7.2
 - list-creation: add "dataset" option to use all currently
