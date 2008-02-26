@@ -30,8 +30,13 @@
 
 #include <libxml/xmlreader.h>
 
-#include <glib/gstdio.h>
-#include <glib/gmappedfile.h>
+#include <glib/gutils.h>
+#if GLIB_MINOR_VERSION >= 6
+# include <glib/gstdio.h>
+#endif
+#if GLIB_MINOR_VERSION >= 8
+# include <glib/gmappedfile.h>
+#endif
 
 #include "gtksourceview-i18n.h"
 
