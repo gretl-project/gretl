@@ -2207,15 +2207,8 @@ static int sneq (double x, double y)
     return reldiff > eq_tol;
 }
 
-/**
- * gretl_matrix_is_symmetric:
- * @m: gretl_matrix.
- *
- * Returns: 1 if @m is symmetric (with a small relative tolerance
- * for asymmetry), otherwise 0.
- */
-
-int gretl_matrix_is_symmetric (const gretl_matrix *m)
+static int real_gretl_matrix_is_symmetric (const gretl_matrix *m,
+					   int verbose)
 {
     double x, y;
     int i, j;
@@ -2229,19 +2222,32 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 	    x = gretl_matrix_get(m, i, j);
 	    y = gretl_matrix_get(m, j, i);
 	    if (sneq(x, y)) {
-		fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
-			i, j, x, j, i, y);
-#if 0
-		if (m->rows < 100) {
-		    gretl_matrix_print(m, "gretl_matrix_is_symmetric()");
+		if (verbose) {
+		    fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
+			    i, j, x, j, i, y);
+		    if (m->rows < 100) {
+			gretl_matrix_print(m, "gretl_matrix_is_symmetric()");
+		    }
 		}
-#endif
 		return 0;
 	    }
 	}
     }
 
     return 1;
+}
+
+/**
+ * gretl_matrix_is_symmetric:
+ * @m: gretl_matrix.
+ *
+ * Returns: 1 if @m is symmetric (with a small relative tolerance
+ * for asymmetry), otherwise 0.
+ */
+
+int gretl_matrix_is_symmetric (const gretl_matrix *m)
+{
+    return real_gretl_matrix_is_symmetric(m, 0);
 }
 
 /**
@@ -2369,7 +2375,7 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
 	return det;
     }
 
-    if (!gretl_matrix_is_symmetric(m)) {
+    if (!real_gretl_matrix_is_symmetric(m, 1)) {
 	fputs("gretl_vcv_log_determinant: matrix is not symmetric\n", stderr);
 	return det;
     }
@@ -5240,7 +5246,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	return 0;
     }
 
-    if (!gretl_matrix_is_symmetric(a)) {
+    if (!real_gretl_matrix_is_symmetric(a, 1)) {
 	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
 	return 1;
     }
@@ -5426,7 +5432,7 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
 	return 0;
     }
 
-    if (!gretl_matrix_is_symmetric(a)) {
+    if (!real_gretl_matrix_is_symmetric(a, 1)) {
 	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
 	return 1;
     }
@@ -5833,7 +5839,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    if (!gretl_matrix_is_symmetric(m)) {
+    if (!real_gretl_matrix_is_symmetric(m, 1)) {
 	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
 	*err = E_NONCONF;
 	return NULL;
@@ -5896,13 +5902,13 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 static int gensymm_conformable (const gretl_matrix *A,
 				const gretl_matrix *B)
 {
-    if (!gretl_matrix_is_symmetric(A)) {
+    if (!real_gretl_matrix_is_symmetric(A, 1)) {
 	fputs("gretl_gensymm_eigenvals: matrix A is not symmetric\n", 
 	      stderr);
 	return 0;
     }
 
-    if (!gretl_matrix_is_symmetric(B)) {
+    if (!real_gretl_matrix_is_symmetric(B, 1)) {
 	fputs("gretl_gensymm_eigenvals: matrix B is not symmetric\n", 
 	      stderr);
 	return 0;
