@@ -1271,15 +1271,21 @@ static int kalman_undo_y_scaling (struct arma_info *ainfo,
 				  gretl_matrix *y, double *b, 
 				  kalman *K)
 {
-    int s, t, T = ainfo->t2 - ainfo->t1 + 1;
+    double *beta = b + 1 + ainfo->np + ainfo->P +
+	ainfo->nq + ainfo->Q;
+    int i, t, T = ainfo->t2 - ainfo->t1 + 1;
     int err = 0;
 
     b[0] *= ainfo->dyscale;
 
-    s = ainfo->t1;
+    for (i=0; i<ainfo->nexo; i++) {
+	beta[i] *= ainfo->dyscale;
+    }
+
+    i = ainfo->t1;
     for (t=0; t<T; t++) {
 	y->val[t] *= ainfo->dyscale;
-	ainfo->dy[s++] *= ainfo->dyscale;
+	ainfo->dy[i++] *= ainfo->dyscale;
     }
 
     if (na(kalman_arma_ll(b, K))) {
@@ -2022,9 +2028,9 @@ static void arma_init_transcribe_coeffs (struct arma_info *ainfo,
 
 static void maybe_rescale_dy (struct arma_info *ainfo)
 {
-    double ybar = fabs(gretl_mean(0, ainfo->T - 1, ainfo->dy));
+    double ybar = gretl_mean(0, ainfo->T - 1, ainfo->dy);
 
-    if (ybar > 250) {
+    if (fabs(ybar) > 250) {
 	int t;
 
 	for (t=0; t<ainfo->T; t++) {
@@ -2085,8 +2091,7 @@ static int ar_arma_init (const int *list, double *coeff,
 	av += ainfo->nexo * ptotal;
     } 
 
-    if (arma_exact_ml(ainfo) && ainfo->ifc && ainfo->nexo == 0
-	&& ainfo->q == 0 && ainfo->Q == 0 && ainfo->dy != NULL) {
+    if (arma_exact_ml(ainfo) && ainfo->ifc && ainfo->dy != NULL) {
 	maybe_rescale_dy(ainfo);
     }
 
