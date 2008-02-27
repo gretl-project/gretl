@@ -29,6 +29,7 @@
 #include "nlspec.h"
 #include "cmd_private.h"
 
+#include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
 
 #define NLS_DEBUG 0

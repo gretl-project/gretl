@@ -1,7 +1,9 @@
 #ifndef GRETL_F2C_H
 #define GRETL_F2C_H
 
-typedef long int integer;
+#include <glib.h>
+
+typedef gint32 integer;
 typedef unsigned long uinteger;
 typedef char *address;
 typedef short int shortint;

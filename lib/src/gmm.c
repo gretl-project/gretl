@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "qr_estimate.h"
 
+#include "gretl_f2c.h"
 #include "../../minpack/minpack.h"
 
 #define GMM_DEBUG 0

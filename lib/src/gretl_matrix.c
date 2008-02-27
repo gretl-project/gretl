@@ -68,8 +68,10 @@ static void set_gretl_matrix_err (int err)
 
 static int wspace_fail (integer info, double w0)
 {
-    fprintf(stderr, "gretl_matrix: workspace query failed: info = %ld, "
-	    "work[0] = %g\n", info, w0);
+    int iinfo = (int) info;
+
+    fprintf(stderr, "gretl_matrix: workspace query failed: info = %d, "
+	    "work[0] = %g\n", iinfo, w0);
     return E_DATA;
 }
 
@@ -4520,7 +4522,7 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     integer n = M->cols;
 
     integer info = 0;
-    integer lwork = -1L;
+    integer lwork = -1;
     integer lda = m;
     integer *iwork = NULL;
     doublereal *tau = NULL;
@@ -4647,7 +4649,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 {
     integer m, n, lda;
     integer info = 0;
-    integer lwork = -1L;
+    integer lwork = -1;
     doublereal *tau = NULL;
     doublereal *work = NULL;
     doublereal *work2;
@@ -4940,7 +4942,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 	return E_SINGULAR;
     }
 
-    lwork = -1L;
+    lwork = -1;
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
@@ -5115,7 +5117,7 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     integer n, info;
     integer *ipiv;
     integer *iwork;
-    integer lwork = -1L;
+    integer lwork = -1;
     double anorm, rcond;
     double *work;
     int err = 0;
@@ -5766,7 +5768,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	jvr = 'N';
     }	
 
-    lwork = -1L; /* find optimal workspace size */
+    lwork = -1; /* find optimal workspace size */
     dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl, 
 	   &nvl, vr, &nvr, work, &lwork, &info);
 

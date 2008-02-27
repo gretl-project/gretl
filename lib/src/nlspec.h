@@ -20,7 +20,6 @@
 /* Private header for sharing info between nls.c and gmm.c */
 
 #include "libgretl.h" 
-#include "gretl_f2c.h"
 
 typedef struct parm_ parm;
 typedef struct ocset_ ocset;
@@ -57,7 +56,7 @@ struct _nlspec {
     double tol;         /* tolerance for stopping iteration */
     parm *params;       /* array of information on function parameters
 			   (see the parm_ struct above) */
-    doublereal *coeff;  /* coefficient estimates */
+    double *coeff;      /* coefficient estimates */
     double *hessvec;    /* vech representation of negative inverse of
 			   Hessian */
     char **aux;         /* auxiliary commands */
