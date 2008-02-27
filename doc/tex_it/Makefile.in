@@ -77,7 +77,7 @@ functex:
 	make -C ../commands functex_it
 
 date.tex:
-	LANG=it_IT date "+%B %Y" > $@
+	LANG=it_IT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
 onepass: gretl-guide-it.tex links textables
 	pdflatex gretl-guide-it
