@@ -2640,10 +2640,11 @@ int dataset_op_from_string (const char *s)
     return op;
 }
 
-static int dataset_int_param (const char *s, int op, 
+static int dataset_int_param (const char **ps, int op, 
 			      double **Z, DATAINFO *pdinfo, 
 			      int *err)
 {
+    const char *s = *ps;
     char test[32];
     int k = 0;
 
@@ -2655,6 +2656,7 @@ static int dataset_int_param (const char *s, int op,
 
     *test = '\0';
     sscanf(s, "%31s", test);
+    *ps += strlen(test);
 
     k = gretl_int_from_string(test, (const double **) Z, pdinfo, err);
     if (*err) {
@@ -2703,12 +2705,18 @@ static int compact_data_set_wrapper (const char *s, double ***pZ,
 {
     CompactMethod method = COMPACT_AVG;
 
-    if (strstr(s, "sum")) {
+    s += strspn(s, " ");
+
+    if (!strcmp(s, "sum")) {
 	method = COMPACT_SUM;
-    } else if (strstr(s, "first")) {
+    } else if (!strcmp(s, "first") || !strcmp(s, "sop")) {
 	method = COMPACT_SOP;
-    } else if (strstr(s, "last")) {
+    } else if (!strcmp(s, "last") || !strcmp(s, "eop")) {
 	method = COMPACT_EOP;
+    } else if (!strcmp(s, "avg") || !strcmp(s, "average")) {
+	method = COMPACT_AVG;
+    } else if (*s != '\0') {
+	return E_PARSE;
     }
 
     return compact_data_set(pZ, pdinfo, k, method, 0, 0);
@@ -2823,7 +2831,7 @@ int modify_dataset (int op, const int *list, const char *s,
 
     if (op == DS_ADDOBS || op == DS_COMPACT || 
 	op == DS_EXPAND || op == DS_RESAMPLE) {
-	k = dataset_int_param(s, op, *pZ, pdinfo, &err);
+	k = dataset_int_param(&s, op, *pZ, pdinfo, &err);
 	if (err) {
 	    return err;
 	}

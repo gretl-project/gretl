@@ -3,6 +3,7 @@ version 1.7.3, in progress
 - Enable the $yhat accessor for fitted values in equation
   systems
 - Add Italian function help to Windows build
+- Fixes for weekly to monthly data compaction
 
 2/25/2008 version 1.7.2
 - list-creation: add "dataset" option to use all currently

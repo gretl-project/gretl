@@ -2606,51 +2606,44 @@ static int get_n_ok_months (const DATAINFO *pdinfo,
 
 static int 
 weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, 
-		      int mn)
+		      CompactMethod method)
 { 
     char obsstr[OBSLEN];
-    int *den;
+    int *mn = NULL;
     int yr, mon, day;
     int monbak = 0;
     int i, s, t = 0;
     int err = 0;
 
-    den = malloc(pdinfo->v * sizeof *den);
-    if (den == NULL) {
+    mn = malloc(pdinfo->v * sizeof *mn);
+    if (mn == NULL) {
 	return E_ALLOC;
     }
 
     for (i=1; i<pdinfo->v; i++) {
 	/* initialize all series, first obs */
 	if (var_is_series(pdinfo, i)) {
-	    mZ[i][0] = 0.0;
-	    den[i] = 0;
+	    mZ[i][0] = NADBL;
+	    mn[i] = 0;
 	}
     }    
 
     for (s=0; s<pdinfo->n; s++) {
 	/* loop across the weekly obs in this month */
-#if WEEKLY_DEBUG
-	fprintf(stderr, "\n** weekly to monthly monthly loop, s = %d\n", s);
-#endif
 	ntodate_full(obsstr, s, pdinfo);
 	sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day);
-#if WEEKLY_DEBUG
-	fprintf(stderr, " month = %d\n", mon);
-#endif
-
 	if (monbak > 0 && mon != monbak) {
 	    /* new month: finalize the previous one */
 	    for (i=1; i<pdinfo->v; i++) {
 		if (var_is_series(pdinfo, i)) {
-#if WEEKLY_DEBUG
-		    fprintf(stderr, " finalizing monthly obs %d, var %d, den = %d\n", 
-			    t, i, den[i]);
-#endif
-		    if (den[i] > 0) {
-			mZ[i][t] /= (double) den[i];
-		    } else {
-			mZ[i][t] = NADBL;
+		    if (method == COMPACT_EOP) {
+			if (s > 0) {
+			    mZ[i][t] = Z[i][s-1];
+			}
+		    } else if (method == COMPACT_AVG) {
+			if (mn[i] > 0) {
+			    mZ[i][t] /= (double) mn[i];
+			}
 		    }
 		}
 	    }
@@ -2660,39 +2653,46 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 		for (i=1; i<pdinfo->v; i++) {
 		    /* initialize all series, current obs */
 		    if (var_is_series(pdinfo, i)) {
-			mZ[i][t] = 0.0;
-			den[i] = 0;
+			if (method == COMPACT_SOP) {
+			    mZ[i][t] = Z[i][s];
+			} else {
+			    mZ[i][t] = NADBL;
+			}
+			mn[i] = 0;
 		    }
 		}  		
 	    }
 	} 
 
-	/* cumulate non-missing weekly observations */
+	/* cumulate non-missing weekly observations? */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (var_is_series(pdinfo, i)) {
-		if (!na(Z[i][s])) {
-		    mZ[i][t] += Z[i][s];
-		    den[i] += 1;
+		if (method == COMPACT_SOP) {
+		    ; /* handled above */
+		} else if (method == COMPACT_EOP) {
+		    mZ[i][t] = Z[i][s];
+		} else if (!na(Z[i][s])) {
+		    if (na(mZ[i][t])) {
+			mZ[i][t] = Z[i][s];
+		    } else {
+			mZ[i][t] += Z[i][s];
+		    }
+		    mn[i] += 1;
 		}
 		if (mon == monbak && s == pdinfo->n - 1) {
-#if WEEKLY_DEBUG
-		    fprintf(stderr, " finalizing monthly obs %d, var %d, den = %d\n", 
-			    t, i, den[i]);
-#endif
 		    /* reached the end: ship out last obs */
-		    if (den[i] > 0) {
-			mZ[i][t] /= (double) den[i];
-		    } else {
+		    if (method == COMPACT_EOP) {
 			mZ[i][t] = NADBL;
+		    } else if (method == COMPACT_AVG && mn[i] > 0) {
+			mZ[i][t] /= (double) mn[i];
 		    }
 		}		    
 	    }
 	}
-
 	monbak = mon;
     }
 
-    free(den);
+    free(mn);
 
     return err;
 }
@@ -2746,10 +2746,8 @@ weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
     return mcount;
 }
 
-/* for now, averaging is the only compaction option in this case */
-
 static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
-				      CompactMethod default_method)
+				      CompactMethod method)
 {
     double **mZ = NULL;
     DATAINFO minfo;
@@ -2788,7 +2786,7 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 
     /* compact series */
     if (!err && nseries > 0) {
-	err = weeks_to_months_exec(mZ, (const double **) *pZ, pdinfo, minfo.n);
+	err = weeks_to_months_exec(mZ, (const double **) *pZ, pdinfo, method);
     }
 
     if (err) {
