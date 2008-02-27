@@ -2358,16 +2358,21 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
     int i, err = 0;
 
     if (!isalpha((unsigned char) *fname)) {
-	strcpy(gretl_errmsg, "function names must start with a letter");
+	strcpy(gretl_errmsg, _("Function names must start with a letter"));
 	err = 1;
     } else if (gretl_command_number(fname)) {
-	sprintf(gretl_errmsg, "'%s' is the name of a gretl command",
+	sprintf(gretl_errmsg, _("'%s' is the name of a gretl command"),
+		fname);
+	err = 1;
+    } else if (function_lookup(fname)) {
+	sprintf(gretl_errmsg, _("'%s' is the name of a built-in function"),
 		fname);
 	err = 1;
     } else {
 	for (i=0; i<n_ufuns; i++) {
 	    if (!strcmp(fname, ufuns[i]->name)) {
-		pprintf(prn, "Redefining function '%s'\n", fname);
+		pprintf(prn, _("Redefining function '%s'"), fname);
+		pputc(prn, '\n');
 		if (pfun != NULL) {
 		    clear_ufunc_data(ufuns[i]);
 		    *pfun = ufuns[i];

@@ -450,7 +450,6 @@ NODE *obs_node (parser *p);
 NODE *msl_node_direct (parser *p);
 void context_error (int c, parser *p);
 const char *getsymb (int t, const parser *p);
-int function_lookup (const char *s);
 
 int realgen (const char *s, parser *p, double ***Z, 
 	     DATAINFO *pdinfo, PRN *prn, int flags);

@@ -117,8 +117,6 @@ int genr_special_word (const char *s);
 
 int genr_function_word (const char *s);
 
-/* following functions used in nls.c */
-
 int genr_is_print (const GENERATOR *p);
 
 void genr_set_na_check (GENERATOR *genr);
@@ -126,6 +124,8 @@ void genr_set_na_check (GENERATOR *genr);
 void genr_unset_na_check (GENERATOR *genr);
 
 int function_from_string (const char *s);
+
+int function_lookup (const char *s);
 
 int const_lookup (const char *s);
 

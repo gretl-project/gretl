@@ -240,16 +240,15 @@ static const char *res2[] = {
  * gretl_reserved_word:
  * @str: string to be tested.
  *
- * Returns non-zero if @str is a reserved word that cannot figure as the
- * name of a user-defined variable, otherwise 0.
+ * Returns non-zero if @str is a reserved word that cannot 
+ * figure as the name of a user-defined variable, otherwise 0.
  */
 
 int gretl_reserved_word (const char *str)
 {
     const char *ruses[] = {
 	N_("a constant"),
-	N_("an internal variable"),
-	N_("a function")
+	N_("an internal variable")
     };
     static int n1 = sizeof res1 / sizeof res1[0];
     static int n2 = sizeof res2 / sizeof res2[0];
@@ -265,10 +264,6 @@ int gretl_reserved_word (const char *str)
 	if (!strcmp(str, res2[i])) {
 	    ret = 2;
 	}
-    }
-
-    if (!ret && function_from_string(str)) {
-	ret = 3;
     }
 
     if (ret > 0) {
