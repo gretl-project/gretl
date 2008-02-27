@@ -2718,7 +2718,7 @@ static int print_coeff_analysis (equation_system *sys,
     gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
 
 #if 1
-    /* test: try calculating fitted values */
+    /* test: try calculating jointly-fitted values */
     calculate_fitted(sys, true_inst, maxlag, Z, pdinfo, prn);
 #endif
 
