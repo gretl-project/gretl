@@ -3633,12 +3633,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     gretl_matrix *m = NULL;
     int i, k = n->v.bn.n_nodes;
 
-    if (t->t == MSHAPE) {
+    if (t->t == MSHAPE || t->t == TRIMR) {
 	gretl_matrix *A = NULL;
 	int r = 0, c = 0;
 
 	if (k != 3) {
-	    n_args_error(k, 3, "mshape", p);
+	    n_args_error(k, 3, (t->t == MSHAPE)? "mshape" : "trimr", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -3661,7 +3661,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    m = gretl_matrix_shape(A, r, c);
+	    if (t->t == MSHAPE) {
+		m = gretl_matrix_shape(A, r, c);
+	    } else {
+		m = gretl_matrix_trim_rows(A, r, c, &p->err);
+	    }
 	}
     } else if (t->t == SVD) {
 	gretl_matrix *A = NULL;
@@ -5069,6 +5073,7 @@ static NODE *eval (NODE *t, parser *p)
     case SVD:
     case MOLS:
     case FILTER:
+    case TRIMR:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;

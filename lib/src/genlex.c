@@ -261,6 +261,7 @@ struct str_table funcs[] = {
     { WSD,      "wsd" },
     { XPX,      "xpx" },
     { FILTER,   "filter" },
+    { TRIMR,    "trimr" },
     { 0,        NULL }
 };
 

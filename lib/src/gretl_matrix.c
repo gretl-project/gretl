@@ -8653,6 +8653,55 @@ gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
 }
 
 /**
+ * gretl_matrix_trim_rows:
+ * @A: array to process.
+ * @ttop: rows to trim at top.
+ * @tbot: rows to trim at bottom.
+ * @err: location to receive error code.
+ *
+ * Creates a new matrix which is a copy of @A with @ttop rows 
+ * trimmed from the top and @tbot rows trimmed from the
+ * bottom.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A, 
+				      int ttop, int tbot,
+				      int *err)
+{
+    gretl_matrix *B;
+    double x;
+    int i, j, m;
+
+    if (gretl_is_null_matrix(A)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    m = A->rows - (ttop + tbot);
+
+    if (ttop < 0 || tbot < 0 || m <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+    
+    B = gretl_matrix_alloc(m, A->cols);
+    if (B == NULL) {
+	return NULL;
+    }
+
+    for (j=0; j<A->cols; j++) {
+	for (i=0; i<m; i++) {
+	    x = gretl_matrix_get(A, i + ttop, j);
+	    gretl_matrix_set(B, i, j, x);
+	}
+    }
+
+    return B;
+}
+
+/**
  * gretl_matrix_minmax:
  * @A: m x n matrix to examine.
  * @mm: 0 for minimum, 1 for maximum.

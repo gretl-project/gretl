@@ -588,6 +588,10 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 gretl_matrix *gretl_matrix_shape (const gretl_matrix *A, 
 				  int r, int c);
 
+gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A, 
+				      int ttop, int tbot,
+				      int *err);
+
 gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A, 
 				   int mm, int rc, int idx,
 				   int *err);

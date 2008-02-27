@@ -5,6 +5,9 @@ version 1.7.3, in progress
 - Add Italian function help to Windows build
 - Weekly to monthly data compaction: respect the user's
   choice of compaction method
+- Fix for 64-bit platforms: don't use "long" as the C
+  counterpart of Fortran 77 "INTEGER"
+- Add trimr matrix function (as in Gauss)
 
 2/25/2008 version 1.7.2
 - list-creation: add "dataset" option to use all currently

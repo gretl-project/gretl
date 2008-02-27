@@ -216,9 +216,10 @@ enum {
 	      SVD,
               MOLS,
 	      FILTER,
+	      TRIMR,
 	      FN_MAX,	  /* SEPARATOR: end of n-arg functions */
-	      COM,	  /* comma */
-  /* 190 */   DOT,	  /* period */
+  /* 190 */   COM,	  /* comma */
+	      DOT,	  /* period */
 	      SEMI,	  /* semi-colon */
 	      COL,	  /* colon */
 	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
@@ -227,8 +228,8 @@ enum {
 	      USCLR,	  /* user variable, scalar */
               USERIES,	  /* user variable, series */
 	      UMAT,	  /* user-defined matrix */
-	      UOBJ,	  /* user-defined object (e.g. model) */
-  /* 200 */   NUM,	  /* scalar, evaluated */
+  /* 200 */   UOBJ,	  /* user-defined object (e.g. model) */
+	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      IVEC,	  /* vector of integers, evaluated */
 	      LVEC,       /* list, as array of ints */
@@ -237,8 +238,8 @@ enum {
 	      MSL,	  /* matrix plus subspec */
               DMSL,	  /* "dollar" matrix plus subspec */
 	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
-	      MSL2,	  /* unevaluated matrix subspec */
-  /* 210 */   MSPEC,	  /* evaluated matrix subspec */
+  /* 210 */   MSL2,	  /* unevaluated matrix subspec */
+	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
 	      LAG,	  
@@ -247,8 +248,8 @@ enum {
 	      OVAR,	  /* object variable: variable "under" an object */
               LOOPIDX,	  /* loop index variable */
 	      LIST,	  /* reference to named list */
-	      STR,	  /* string */
-  /* 220 */   FARGS,	  /* set of n function arguments */
+  /* 220 */   STR,	  /* string */
+	      FARGS,	  /* set of n function arguments */
 	      EMPTY,
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */

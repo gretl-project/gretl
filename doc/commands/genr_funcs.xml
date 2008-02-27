@@ -2926,16 +2926,14 @@
 
     <function name="rcond" output="scalar">
       <fnargs>
-	<fnarg type="symmat">A</fnarg>
+	<fnarg type="smatrix">A</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the reciprocal condition number for
-	  <argname>A</argname>, which must be symmetric and positive
-	  definite, with respect to the 1-norm.  In many circumstances,
-	  this is a better measure of the sensitivity of
-	  <argname>A</argname> to numerical operations such as inversion
-	  than the determinant.
+	  Returns the reciprocal condition number for <argname>A</argname>
+	  with respect to the 1-norm.  In many circumstances, this is a better
+	  measure of the sensitivity of <argname>A</argname> to numerical
+	  operations such as inversion than the determinant.
 	</para>
 	<para context="notex">
 	  The value is computed as the reciprocal of the product, 1-norm
@@ -3101,6 +3099,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="selifc"/>
+	    <fncref targ="trimr"/>
 	  </seelist>
 	</para>
       </description>
@@ -3331,11 +3330,34 @@
       <description>
 	<para>
 	  Matrix transposition. Note: this is rarely used; in order to get
-	  the trasnpose of a matrix, in most cases you can just use the
+	  the transpose of a matrix, in most cases you can just use the
 	  prime operator: <lit>X'</lit>.
 	</para>
       </description>
     </function>
+
+    <function name="trimr" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar">ttop</fnarg>
+	<fnarg type="scalar">tbot</fnarg>
+      </fnargs>   
+      <description>
+	<para>
+	  Returns a matrix that is a copy of <argname>X</argname> with
+	  <argname>ttop</argname> rows trimmed at the top and
+	  <argname>tbot</argname> rows trimmed at the bottom.  The latter two
+	  arguments must be non-negative, and must sum to less than the total
+	  rows of <argname>X</argname>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="selifr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
 
     <function name="uniform" output="series">
       <fnargs>
