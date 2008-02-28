@@ -383,7 +383,7 @@ double gretl_matrix_one_norm (const gretl_matrix *m);
 
 double gretl_matrix_infinity_norm (const gretl_matrix *m);
 
-int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
+int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b);
 
 int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b);
 

@@ -2574,6 +2574,79 @@ double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err)
     return gretl_LU_determinant(a, 1, 1, err);
 }
 
+static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
+{
+    free(targ->val);
+    targ->val = src->val;
+    src->val = NULL;
+
+    targ->rows = src->rows;
+    targ->cols = src->cols;
+    targ->t1 = src->t1;
+    targ->t2 = src->t2;
+
+    src->rows = src->cols = 0;
+    src->t1 = src->t2 = 0;
+}
+
+/* least squares solution using QR */
+
+static int overdet_solve (gretl_matrix *a, gretl_matrix *b,
+			  integer m, integer n, integer nrhs,
+			  integer ldb)
+{
+    char trans = 'N';
+    integer info;
+    integer lda = m;
+    integer lwork = -1;
+    double *work;
+    int err = 0;
+
+    work = lapack_malloc(sizeof *work);
+    if (work == NULL) {
+	return E_ALLOC;
+    }  
+    
+    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb, 
+	   work, &lwork, &info);
+    if (info != 0) {
+	err = wspace_fail(info, work[0]);
+    }
+
+    lwork = (integer) work[0];
+
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	return E_ALLOC;
+    }      
+
+    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb, 
+	   work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "overdet_solve: dgels gave info = %d\n", 
+		(int) info);
+	err = E_DATA;
+    } 
+
+    /* Note: we could retrieve the sum(s) of squared errors from
+       b on output if we wanted to.  But for now we'll trim
+       b to contain just the solution. */
+
+    if (!err) {
+	gretl_matrix *c;
+
+	c = gretl_matrix_trim_rows(b, 0, m - n, &err);
+	if (!err) {
+	    matrix_grab_content(b, c);
+	    gretl_matrix_free(c);
+	}
+    }
+
+    lapack_free(work);
+
+    return err;
+}
+
 /**
  * gretl_LU_solve:
  * @a: gretl_matrix.
@@ -2586,12 +2659,12 @@ double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err)
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
+int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 {
     char trans = 'N';
     integer info;
     integer m, n;
-    integer nrhs, ldb;
+    integer ldb, nrhs = 1;
     integer *ipiv;
     int err = 0;
 
@@ -2603,14 +2676,18 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     n = a->cols;
 
     if (b->cols == 1) {
-	nrhs = 1;
 	ldb = b->rows;
     } else if (b->rows == 1) {
-	nrhs = 1;
 	ldb = b->cols;
     } else {
 	nrhs = b->cols;
 	ldb = b->rows;
+    }
+
+    if (m > n) {
+	return overdet_solve(a, b, m, n, nrhs, ldb);
+    } else if (m < n) {
+	return E_DATA;
     }
 
     ipiv = malloc(n * sizeof *ipiv);

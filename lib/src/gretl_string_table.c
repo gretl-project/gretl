@@ -842,13 +842,44 @@ static char *gretl_strstr (const char **pline, int *err)
     return ret;
 }
 
+static char *retrieve_date_string (const char **pline, 
+				   const DATAINFO *pdinfo,
+				   int *err)
+{
+    char *ret = NULL;
+    int t;
+
+    if (sscanf(*pline, "%d", &t) == 1) {
+	const char *s = strchr(*pline, ')');
+	char datestr[OBSLEN] = {0};
+
+	if (s != NULL) {
+	    *pline = s + 1;
+	}	
+	if (t > 0 && t <= pdinfo->n) {
+	    ntodate(datestr, t-1, pdinfo);
+	    ret = gretl_strdup(datestr);
+	} else {
+	    *err = E_DATA;
+	}
+    } else {
+	*err = E_PARSE;
+    }
+
+    return ret;
+}
+
 static char *retrieve_arg_name (const char **pline, int *err)
 {
     char argvar[VNAMELEN];
     char *ret = NULL;
 
     if (sscanf(*pline, "%15[^)])", argvar) == 1) {
-	*pline = strchr(*pline, ')') + 1;
+	const char *s = strchr(*pline, ')');
+
+	if (s != NULL) {
+	    *pline = s + 1;
+	}
 	ret = gretl_func_get_arg_name(argvar);
     } else {
 	*err = E_PARSE;
@@ -904,7 +935,9 @@ static char *retrieve_file_content (const char **pline, int *err)
     return ret;
 }
 
-static char *get_string_element (const char **pline, int *err)
+static char *get_string_element (const char **pline, 
+				 const DATAINFO *pdinfo,
+				 int *err)
 {
     const char *line = *pline;
     const char *s;
@@ -935,6 +968,11 @@ static char *get_string_element (const char **pline, int *err)
 	*pline += 8;
 	return retrieve_arg_name(pline, err);
     }
+
+    if (!strncmp(line, "date(", 5)) {
+	*pline += 5;
+	return retrieve_date_string(pline, pdinfo, err);
+    }    
 
     if (!strncmp(line, "readfile(", 9)) {
 	*pline += 9;
@@ -1106,7 +1144,7 @@ static int get_plus_mod (char *s1, const char **pline, int *plus)
      string <name> += "<s2>" "<s2>"  ... "<sn>"
 */
 
-int process_string_command (const char *line, PRN *prn)
+int process_string_command (const char *line, const DATAINFO *pdinfo, PRN *prn)
 {
     saved_string *str;
     char *newstr = NULL;
@@ -1175,7 +1213,7 @@ int process_string_command (const char *line, PRN *prn)
 	char *s1 = NULL;
 	int plus = 0;
 
-	s1 = get_string_element(&line, &err);
+	s1 = get_string_element(&line, pdinfo, &err);
 	if (!err) {
 	    err = get_plus_mod(s1, &line, &plus);
 	    if (!err) {

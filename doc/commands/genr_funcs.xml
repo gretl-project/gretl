@@ -1391,8 +1391,10 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a vector containing the row indices of the maxima of the
-	  columns of <argname>X</argname>. 
+	  Returns the row indices of the maxima of the columns of
+	  <argname>X</argname>. 
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="imaxr"/> 
 	    <fncref targ="iminc"/>
@@ -1408,8 +1410,10 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns a vector containing the column indices of the maxima of
-	  the rows of <argname>X</argname>. 
+	  Returns the column indices of the maxima of the rows of
+	  <argname>X</argname>. 
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="imaxc"/>
 	    <fncref targ="iminr"/>
@@ -1427,9 +1431,11 @@
 	<para>
 	  Returns the row indices of the minima of the columns of
 	  <math>X</math>. 
+	</para>
+	<para>
 	  <seelist>
-	    <fncref targ="imaxc"/>
 	    <fncref targ="iminr"/>
+	    <fncref targ="imaxc"/>
 	    <fncref targ="minc"/>
 	  </seelist>
 	</para>
@@ -1442,11 +1448,13 @@
       </fnargs>    
       <description>
 	<para>
-	  Returns the column indices of the maxima of the rows of
+	  Returns the column indices of the mimima of the rows of
 	  <math>X</math>. 
+	</para>
+	<para>
 	  <seelist>
-	    <fncref targ="imaxr"/> 
-	    <fncref targ="iminc"/>
+	    <fncref targ="iminc"/> 
+	    <fncref targ="imaxr"/>
 	    <fncref targ="minr"/>
 	  </seelist>
 	</para>
@@ -1894,6 +1902,8 @@
       <description>
 	<para>
 	  Returns the maxima of the columns of <argname>X</argname>.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="imaxc"/>
 	    <fncref targ="maxr"/>
@@ -1910,8 +1920,10 @@
       <description>
 	<para>
 	  Returns the maxima of the rows of <argname>X</argname>. 
+	</para>
+	<para>
 	  <seelist>
-	    <fncref targ="imaxr"/>
+	    <fncref targ="imaxc"/>
 	    <fncref targ="maxc"/> 
 	    <fncref targ="minr"/>
 	  </seelist>
@@ -2055,6 +2067,8 @@
       <description>
 	<para>
 	  Returns the minima of the columns of <argname>X</argname>.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="iminc"/>
 	    <fncref targ="maxc"/> 
@@ -2071,6 +2085,8 @@
       <description>
 	<para>
 	  Returns the minima of the rows of <argname>X</argname>. 
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="iminr"/>
 	    <fncref targ="maxr"/> 

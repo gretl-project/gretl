@@ -858,11 +858,11 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 /**
  * ntodate:
  * @datestr: string to which date is to be printed.
- * @nt: an observation number (zero-based).
+ * @t: an observation number (zero-based).
  * @pdinfo: data information struct.
  * 
  * print to @datestr the calendar representation of observation
- * number nt.
+ * number @t.
  * 
  * Returns: the observation string.
  */

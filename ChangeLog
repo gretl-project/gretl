@@ -8,8 +8,10 @@ version 1.7.3, in progress
 - Fix for 64-bit platforms: don't use "long" as the C
   counterpart of Fortran 77 "INTEGER"
 - Add trimr matrix function (as in Gauss)
+- Extend matrix "division" a la Gauss
 - Disallow user functions with the same name as a built-in
   function
+- Update several screenshots in User's Guide
 
 2/25/2008 version 1.7.2
 - list-creation: add "dataset" option to use all currently
