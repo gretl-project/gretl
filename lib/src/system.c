@@ -182,6 +182,8 @@ static int get_predet_parent (const equation_system *sys, int v, int *lag)
 	}
     }
 
+    *lag = 0;
+
     return -1;
 }
 
@@ -2587,7 +2589,7 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     pputc(prn, '\n');
 }
 
-#define DO_COEFF_ANALYSIS 0
+#define DO_COEFF_ANALYSIS 1
 
 #if DO_COEFF_ANALYSIS
 
@@ -2687,14 +2689,12 @@ static int calculate_fitted (equation_system *sys,
 		    y1->val[col] = Z[vi][t];
 		}
 	    }
-	}
-	for (i=1; i<=xlist[0]; i++) {
-	    x->val[i-1] = Z[xlist[i]][t];
-	}
-	if (maxlag > 0) {
 	    gretl_matrix_multiply(sys->A, y1, y);
 	} else {
 	    gretl_matrix_zero(y);
+	}
+	for (i=1; i<=xlist[0]; i++) {
+	    x->val[i-1] = Z[xlist[i]][t];
 	}
 	gretl_matrix_multiply_mod(sys->B, GRETL_MOD_NONE,
 				  x, GRETL_MOD_NONE,
@@ -2705,6 +2705,7 @@ static int calculate_fitted (equation_system *sys,
 	}
 	pputc(prn, '\n');
     }
+    pputc(prn, '\n');
 
     gretl_matrix_free(y);
     gretl_matrix_free(yh);
@@ -2776,7 +2777,6 @@ static int print_coeff_analysis (equation_system *sys,
     printlist(xlist, "exogenous vars");
 
     maxlag = sys_max_predet_lag(sys);
-    pprintf(prn, "Maximum lag of predetermined variables = %d\n", maxlag);
 
     /* allocate coefficient matrices */
 
@@ -2836,6 +2836,7 @@ static int print_coeff_analysis (equation_system *sys,
 	for (j=0; j<=ident->n_atoms; j++) {
 	    if (j == 0) {
 		vj = ident->depvar;
+		x = 1.0;
 	    } else {
 		vj = ident->atoms[j-1].varnum;
 		x = (ident->atoms[j-1].op)? -1.0 : 1.0;
