@@ -235,19 +235,18 @@ produces the product of $X$-transpose and $Y$.  In effect,
 the expression \texttt{X'Y} is shorthand for \texttt{X'*Y}
 (which is also valid).
 
-In matrix ``division'', $A/B$ is algebraically equivalent to
-$B^{-1}A$ (pre-multiplication by the inverse of the ``divisor'').
-Therefore the following two expressions are equivalent in principle:
+In matrix ``division'', the statement 
 %
 \begin{code}
-matrix C = A / B
-matrix C = inv(B) * A
+matrix C = A/B
 \end{code}
 %
-where \texttt{inv} is the matrix inversion function (see below for
-more on matrix functions).  The first form, however, may be more
-accurate than the second; the solution is obtained via LU
-decomposition, without the explicit calculation of the inverse.
+is interpreted as a request to find the matrix $C$ that solves $BC=A$.
+If $B$ is a square matrix, this is treated as equivalent to $B^{-1}A$,
+which fails if $B$ is singular.  If $B$ is a $T \times k$ matrix with
+$T > k$, then $C$ is the least-squares solution, $C = (B'B)^{-1}B'A$,
+which fails if $B'B$ is singular.  Otherwise the operation necessarily
+fails.
 
 In \textit{element-wise multiplication} if we write
 %
