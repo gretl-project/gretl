@@ -1,12 +1,12 @@
-version 1.7.3, in progress
+2/29/2008 version 1.7.3
+- Fix for 64-bit platforms: don't use "long" as the C
+  counterpart of Fortran 77 "INTEGER"
 - Make the rcond function available for asymmetric matrices
 - Enable the $yhat accessor for fitted values in equation
   systems
 - Add Italian function help to Windows build
 - Weekly to monthly data compaction: respect the user's
   choice of compaction method, as claimed
-- Fix for 64-bit platforms: don't use "long" as the C
-  counterpart of Fortran 77 "INTEGER"
 - Add trimr matrix function (as in Gauss)
 - Extend matrix "division" a la Gauss
 - Disallow user functions with the same name as a built-in
