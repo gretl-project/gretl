@@ -2661,7 +2661,6 @@ static int categorize_variable (int vnum, const equation_system *sys,
     return ret;
 }
 
-
 static int *make_exogenous_list (equation_system *sys)
 {
     int *xlist = NULL;
