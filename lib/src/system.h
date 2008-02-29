@@ -51,10 +51,11 @@ struct equation_system_ {
     int t1;                     /* starting observation number */
     int t2;                     /* ending observation number */
     int method;                 /* estimation method */
-    int n_equations;            /* number of stochastic equations */
-    int n_identities;           /* number of identities */
+    int neqns;                  /* number of stochastic equations */
+    int nidents;                /* number of identities */
     int n_obs;                  /* number of observations per equation */
     int n_predet;               /* number of predetermined regressors */
+    int maxlag;                 /* max lag of endogenous variable */
     int iters;                  /* number of iterations taken */
     char flags;                 /* to record options (e.g. save residuals) */
     double ll;                  /* log-likelihood (restricted) */
@@ -64,8 +65,9 @@ struct equation_system_ {
     double diag;                /* test stat for diagonal covariance matrix */
     double bdiff;               /* summary stat for change in coefficients */
     int **lists;                /* regression lists for stochastic equations */
-    int *endog_vars;            /* list of endogenous variables */
-    int *instr_vars;            /* list of instruments (exogenous vars) */
+    int *elist;                 /* list of endogenous variables */
+    int *ilist;                 /* list of instruments */
+    int *xlist;                 /* list of truly exogenous variables */
     predet *pre_vars;           /* array of info on predetermined regressors */
     identity **idents;          /* set of identities */
     gretl_matrix *b;            /* coefficient estimates */
@@ -78,6 +80,7 @@ struct equation_system_ {
     gretl_matrix *Gamma;        /* structural form Gamma matrix (endog + identities)*/
     gretl_matrix *B;            /* structural form B matrix (exogenous) */
     gretl_matrix *A;            /* structural form A matrix (lagged endogenous) */
+    gretl_matrix *F;            /* forecast matrix */
     MODEL **models;             /* set of pointers to per-equation models: just
 				   convenience pointers -- these should NOT be
 				   freed as part of sys cleanup
@@ -195,6 +198,11 @@ void system_set_save_flag (equation_system *sys);
 void system_unset_save_flag (equation_system *sys);
 
 int system_save_flag_is_set (equation_system *sys);
+
+const gretl_matrix *
+system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
+			    const double **Z, DATAINFO *pdinfo, 
+			    gretlopt opt, int *err);
 
 #ifndef GRETLCLI
 

@@ -99,7 +99,7 @@ static fiml_system *fiml_system_new (equation_system *sys, int *err)
 
     fsys->sys = sys;
 
-    fsys->g = sys->n_equations;
+    fsys->g = sys->neqns;
     fsys->n = sys->n_obs;
     fsys->gn = fsys->g * fsys->n;
     fsys->totk = system_n_indep_vars(sys);

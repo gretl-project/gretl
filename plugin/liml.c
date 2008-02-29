@@ -349,7 +349,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     }
 
     /* compute and set log-likelihood, etc */
-    ll = sys->n_equations * LN_2_PI;
+    ll = sys->neqns * LN_2_PI;
     ll += log(lmin);
     ll += gretl_matrix_log_determinant(W1, &err);
     ll *= -(T / 2.0);
@@ -381,7 +381,7 @@ int liml_driver (equation_system *sys, double ***pZ,
 {
     int i, err = 0;
 
-    for (i=0; i<sys->n_equations && !err; i++) {
+    for (i=0; i<sys->neqns && !err; i++) {
 #if LDEBUG > 1
 	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
 #endif

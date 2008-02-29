@@ -109,7 +109,7 @@ static int
 gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
 {
     const gretl_matrix *e = sys->uhat;
-    int m = sys->n_equations;
+    int m = sys->neqns;
     int T = sys->n_obs;
     int geomean = system_vcv_geomean(sys);
     int i, j, t;
@@ -189,7 +189,7 @@ liml_scale_vcv (equation_system *sys, gretl_matrix *vcv)
     int vi, vj;
     int i, j, k;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	s2 = sys->models[i]->sigma * sys->models[i]->sigma;
 	for (j=0; j<sys->models[i]->ncoeff; j++) {
 	    for (k=j; k<sys->models[i]->ncoeff; k++) {
@@ -223,7 +223,7 @@ single_eq_common_sigma_scale_vcv (equation_system *sys, gretl_matrix *vcv)
 
     /* is this right? */
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	ess += sys->models[i]->ess;
 	den += sys->models[i]->nobs;
 	if (dfc) {
@@ -250,7 +250,7 @@ single_eq_scale_vcv (equation_system *sys, gretl_matrix *vcv)
     int ioff = 0, joff = 0;
     int i, k, ii, jj;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	pmod = sys->models[i];
 	s2 = pmod->sigma * pmod->sigma;
 	k = pmod->ncoeff;
@@ -315,7 +315,7 @@ calculate_sys_coeffs (equation_system *sys,
 #endif
 
     j0 = 0;
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	for (j=0; j<sys->models[i]->ncoeff; j++) {
 	    k = j0 + j;
 	    bij = gretl_vector_get(y, k);
@@ -352,7 +352,7 @@ calculate_sys_coeffs (equation_system *sys,
 
     /* now set the model standard errors */
     j0 = 0;
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	for (j=0; j<sys->models[i]->ncoeff; j++) {
 	    k = j0 + j;
 	    sys->models[i]->sderr[j] = sqrt(gretl_matrix_get(vcv, k, k));
@@ -426,7 +426,7 @@ static int hansen_sargan_test (equation_system *sys,
 {
     const int *exlist = system_get_instr_vars(sys);
     int nx = exlist[0];
-    int m = sys->n_equations;
+    int m = sys->neqns;
     int T = sys->n_obs;
     int df = system_get_overid_df(sys);
 
@@ -535,7 +535,7 @@ static int basic_system_allocate (equation_system *sys,
 				  gretl_matrix **X,
 				  gretl_matrix **y)
 {
-    int m = sys->n_equations;
+    int m = sys->neqns;
     int T = sys->n_obs;
     int ldx = mk + nr;
 
@@ -569,7 +569,7 @@ static int basic_system_allocate (equation_system *sys,
 
 double sur_ll (equation_system *sys)
 {
-    int m = sys->n_equations;
+    int m = sys->neqns;
     int T = sys->n_obs;
     gretl_matrix *sigtmp;
     double ldet;
@@ -705,7 +705,7 @@ static void clean_up_models (equation_system *sys)
     double ess = 0.0;
     int i;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	ess += sys->models[i]->ess;
 	if (sys->method == SYS_METHOD_3SLS || 
 	    sys->method == SYS_METHOD_FIML || 
@@ -728,9 +728,9 @@ static int drop_redundant_instruments (equation_system *sys,
     int j, k, pos, err = 0;
 
     for (j=1; j<=droplist[0]; j++) {
-	pos = gretl_list_position(droplist[j], sys->instr_vars);
+	pos = gretl_list_position(droplist[j], sys->ilist);
 	if (pos > 0) {
-	    gretl_list_delete_at_pos(sys->instr_vars, pos);
+	    gretl_list_delete_at_pos(sys->ilist, pos);
 	} else {
 	    err = 1;
 	}
@@ -803,7 +803,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* number of equations */
-    m = sys->n_equations;
+    m = sys->neqns;
 
     /* max indep vars per equation */
     k = system_max_indep_vars(sys);

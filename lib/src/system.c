@@ -211,19 +211,19 @@ print_equation_system_info (const equation_system *sys,
     }
 
     if (!header) {
-	for (i=0; i<sys->n_equations; i++) {
+	for (i=0; i<sys->neqns; i++) {
 	    print_system_equation(sys->lists[i], pdinfo, prn);
 	}    
     }
 
-    for (i=0; i<sys->n_identities; i++) {
+    for (i=0; i<sys->nidents; i++) {
 	print_system_identity(sys->idents[i], pdinfo, opt, prn);
     }
 
-    if (sys->endog_vars != NULL) {
+    if (sys->elist != NULL) {
 	pputs(prn, (header)? "Endogenous variables:" : "endog");
-	for (i=1; i<=sys->endog_vars[0]; i++) {
-	    vi = sys->endog_vars[i];
+	for (i=1; i<=sys->elist[0]; i++) {
+	    vi = sys->elist[i];
 	    pprintf(prn, " %s", pdinfo->varname[vi]);
 	}
 	pputc(prn, '\n');
@@ -239,20 +239,20 @@ print_equation_system_info (const equation_system *sys,
 	    }
 	    pputc(prn, '\n');
 	}    
-	if (sys->instr_vars != NULL && sys->instr_vars[0] > sys->n_predet) {
+	if (sys->ilist != NULL && sys->ilist[0] > sys->n_predet) {
 	    pputs(prn, "Exogenous variables:");
-	    for (i=1; i<=sys->instr_vars[0]; i++) {
-		vi = sys->instr_vars[i];
+	    for (i=1; i<=sys->ilist[0]; i++) {
+		vi = sys->ilist[i];
 		if (!instrument_is_predet(sys, vi)) {
 		    pprintf(prn, " %s", pdinfo->varname[vi]);
 		}
 	    }
 	    pputc(prn, '\n');
 	}
-    } else if (sys->instr_vars != NULL) {
+    } else if (sys->ilist != NULL) {
 	pputs(prn, "instr");
-	for (i=1; i<=sys->instr_vars[0]; i++) {
-	    vi = sys->instr_vars[i];
+	for (i=1; i<=sys->ilist[0]; i++) {
+	    vi = sys->ilist[i];
 	    pprintf(prn, " %s", pdinfo->varname[vi]);
 	}
 	pputc(prn, '\n');
@@ -318,8 +318,8 @@ equation_system_new (int method, const char *name)
 
     sys->t1 = sys->t2 = 0;
 
-    sys->n_equations = 0;
-    sys->n_identities = 0;
+    sys->neqns = 0;
+    sys->nidents = 0;
 
     sys->R = NULL;
     sys->q = NULL;
@@ -328,6 +328,7 @@ equation_system_new (int method, const char *name)
     sys->iters = 0;
     sys->flags = 0;
     sys->n_predet = 0;
+    sys->maxlag = 0;
 
     sys->ll = sys->llu = NADBL;
     sys->X2 = NADBL;
@@ -344,10 +345,12 @@ equation_system_new (int method, const char *name)
     sys->Gamma = NULL;
     sys->B = NULL;
     sys->A = NULL;
+    sys->F = NULL;
 
     sys->lists = NULL;
-    sys->endog_vars = NULL;
-    sys->instr_vars = NULL;
+    sys->elist = NULL;
+    sys->ilist = NULL;
+    sys->xlist = NULL;
     sys->pre_vars = NULL;
     sys->idents = NULL;
 
@@ -424,6 +427,11 @@ static void system_clear_results (equation_system *sys)
 	gretl_matrix_free(sys->A);
 	sys->A = NULL;
     }
+
+    if (sys->F != NULL) {
+	gretl_matrix_free(sys->F);
+	sys->F = NULL;
+    }
 }
 
 void equation_system_destroy (equation_system *sys)
@@ -439,19 +447,20 @@ void equation_system_destroy (equation_system *sys)
 	return;
     }
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	free(sys->lists[i]);
     }
     free(sys->lists);
     sys->lists = NULL;
 
-    for (i=0; i<sys->n_identities; i++) {
+    for (i=0; i<sys->nidents; i++) {
 	destroy_ident(sys->idents[i]);
     }
     free(sys->idents);
 
-    free(sys->endog_vars);
-    free(sys->instr_vars);
+    free(sys->elist);
+    free(sys->ilist);
+    free(sys->xlist);
     free(sys->pre_vars);
 
     free(sys->name);
@@ -476,7 +485,7 @@ static void sur_rearrange_lists (equation_system *sys,
     if (sys->method == SYS_METHOD_SUR) {
 	int i;
 
-	for (i=0; i<sys->n_equations; i++) {
+	for (i=0; i<sys->neqns; i++) {
 	    reglist_check_for_const(sys->lists[i], Z, pdinfo);
 	}
     }
@@ -503,7 +512,7 @@ int equation_system_append (equation_system *sys,
 	return E_DATA;
     }
 
-    neq = sys->n_equations;
+    neq = sys->neqns;
 
     sys->lists = realloc(sys->lists, (neq + 1) * sizeof *sys->lists);
     if (sys->lists == NULL) {
@@ -517,7 +526,7 @@ int equation_system_append (equation_system *sys,
 	return E_ALLOC;
     }
 
-    sys->n_equations += 1;
+    sys->neqns += 1;
 
     return 0;
 }
@@ -690,10 +699,10 @@ equation_system *equation_system_start (const char *line,
 
 static int system_get_dfu (const equation_system *sys)
 {
-    int dfu = sys->n_obs * sys->n_equations;
+    int dfu = sys->n_obs * sys->neqns;
     int i;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	dfu -= sys->lists[i][0] - 1;
     }
 
@@ -1095,7 +1104,7 @@ int equation_system_finalize (equation_system *sys,
 	return 1;
     }
 
-    if (sys->n_equations < 2) {
+    if (sys->neqns < 2) {
 	strcpy(gretl_errmsg, _(toofew));
 	equation_system_destroy(sys);
 	return 1;
@@ -1188,7 +1197,7 @@ static int get_real_list_length (const int *list)
 
 int system_get_list_length (const equation_system *sys, int i)
 {
-    if (i >= 0 && i < sys->n_equations) {
+    if (i >= 0 && i < sys->neqns) {
 	return get_real_list_length(sys->lists[i]);
     } else {
 	return 0;
@@ -1199,7 +1208,7 @@ int system_max_indep_vars (const equation_system *sys)
 {
     int i, nvi, nv = 0;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	nvi = get_real_list_length(sys->lists[i]) - 1;
 	if (nvi > nv) nv = nvi;
     }
@@ -1211,7 +1220,7 @@ int system_n_indep_vars (const equation_system *sys)
 {
     int i, nvi, nv = 0;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	nvi = get_real_list_length(sys->lists[i]) - 1;
 	nv += nvi;
     }
@@ -1244,7 +1253,7 @@ int system_adjust_t1t2 (equation_system *sys,
 {
     int i, err = 0;
 
-    for (i=0; i<sys->n_equations && !err; i++) {
+    for (i=0; i<sys->neqns && !err; i++) {
 	err = check_for_missing_obs(sys->lists[i], t1, t2, Z, NULL);
     }
 
@@ -1262,16 +1271,16 @@ int *compose_tsls_list (equation_system *sys, int i)
     int *list;
     int j, k1, k2;
 
-    if (i >= sys->n_equations) {
+    if (i >= sys->neqns) {
 	return NULL;
     }
 
-    if (sys->instr_vars == NULL && make_instrument_list(sys, NULL)) {
+    if (sys->ilist == NULL && make_instrument_list(sys, NULL)) {
 	return NULL;
     }
 
     k1 = sys->lists[i][0];
-    k2 = sys->instr_vars[0];
+    k2 = sys->ilist[0];
 
     list = malloc((k1 + k2 + 2) * sizeof *list);
     if (list == NULL) {
@@ -1286,7 +1295,7 @@ int *compose_tsls_list (equation_system *sys, int i)
 	} else if (j == k1 + 1) {
 	    list[j] = LISTSEP;
 	} else {
-	    list[j] = sys->instr_vars[j - (k1 + 1)];
+	    list[j] = sys->ilist[j - (k1 + 1)];
 	}
     }
 
@@ -1397,14 +1406,14 @@ int system_n_restrictions (const equation_system *sys)
 
 int *system_get_list (const equation_system *sys, int i)
 {
-    if (i >= sys->n_equations) return NULL;
+    if (i >= sys->neqns) return NULL;
 
     return sys->lists[i];
 }
 
 int system_get_depvar (const equation_system *sys, int i)
 {
-    if (i >= sys->n_equations) return 0;
+    if (i >= sys->neqns) return 0;
 
     return sys->lists[i][1];
 }
@@ -1416,12 +1425,12 @@ int system_get_method (const equation_system *sys)
 
 int *system_get_endog_vars (const equation_system *sys)
 {
-    return sys->endog_vars;
+    return sys->elist;
 }
 
 int *system_get_instr_vars (const equation_system *sys)
 {
-    return sys->instr_vars;
+    return sys->ilist;
 }
 
 void system_attach_coeffs (equation_system *sys, gretl_matrix *b)
@@ -1462,7 +1471,7 @@ void system_attach_uhat (equation_system *sys, gretl_matrix *uhat)
 
 MODEL *system_get_model (const equation_system *sys, int i)
 {
-    if (sys->models == NULL || i >= sys->n_equations) {
+    if (sys->models == NULL || i >= sys->neqns) {
 	return NULL; 
     }   
 
@@ -1481,7 +1490,7 @@ static int sys_eqn_indep_coeffs (const equation_system *sys, int eq)
 {
     int nc;
 
-    if (eq >= sys->n_equations) {
+    if (eq >= sys->neqns) {
 	nc = 0;
     } else if (sys->R == NULL) {
 	nc = sys->lists[eq][0] - 1;
@@ -1524,7 +1533,7 @@ system_vcv_denom (const equation_system *sys, int i, int j)
     double den = sys->n_obs;
 
     if ((sys->flags & SYSTEM_VCV_GEOMEAN) &&
-	i < sys->n_equations && j < sys->n_equations) {
+	i < sys->neqns && j < sys->neqns) {
 	int ki = sys_eqn_indep_coeffs(sys, i);
 
 	if (j == i) {
@@ -1546,9 +1555,9 @@ int system_get_overid_df (const equation_system *sys)
 {
     int gl, i, k = 0;
 
-    gl = sys->n_equations * sys->instr_vars[0];
+    gl = sys->neqns * sys->ilist[0];
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	k += sys->lists[i][0] - 1;
     }
 
@@ -1563,7 +1572,7 @@ int rhs_var_in_identity (const equation_system *sys, int lhsvar,
     const identity *ident;
     int i, j;
 
-    for (i=0; i<sys->n_identities; i++) {
+    for (i=0; i<sys->nidents; i++) {
 	ident = sys->idents[i];
 	if (ident->depvar == lhsvar) {
 	    for (j=0; j<ident->n_atoms; j++) {
@@ -1711,7 +1720,7 @@ add_identity_to_sys (equation_system *sys, const char *line,
 {
     identity **pident;
     identity *ident;
-    int ni = sys->n_identities;
+    int ni = sys->nidents;
     int err = 0;
 
     ident = parse_identity(line, pdinfo, &err);
@@ -1726,7 +1735,7 @@ add_identity_to_sys (equation_system *sys, const char *line,
 
     sys->idents = pident;
     sys->idents[ni] = ident;
-    sys->n_identities += 1;
+    sys->nidents += 1;
 
     return 0;
 }
@@ -1742,12 +1751,12 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
     int err = 0;
 
     if (which == ENDOG_LIST) {
-	if (sys->endog_vars != NULL) {
+	if (sys->elist != NULL) {
 	    strcpy(gretl_errmsg, "Only one list of endogenous variables may be given");
 	    return 1;
 	} 
     } else if (which == INSTR_LIST) {
-	if (sys->instr_vars != NULL) {
+	if (sys->ilist != NULL) {
 	    strcpy(gretl_errmsg, "Only one list of instruments may be given");
 	    return 1;
 	} else if (0 && sys->method != SYS_METHOD_3SLS && 
@@ -1811,9 +1820,9 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
     }
 
     if (which == ENDOG_LIST) {
-	sys->endog_vars = list;
+	sys->elist = list;
     } else {
-	sys->instr_vars = list;
+	sys->ilist = list;
     }
 
     return 0;
@@ -1891,7 +1900,7 @@ static int make_tsls_style_elist (equation_system *sys)
     int i, j, k;
     int err = 0;
 
-    for (i=0; i<sys->n_equations && !err; i++) {
+    for (i=0; i<sys->neqns && !err; i++) {
 	slist = sys->lists[i];
 	if (!gretl_list_has_separator(slist)) {
 	    continue;
@@ -1915,7 +1924,7 @@ static int make_tsls_style_elist (equation_system *sys)
     }
 
     if (!err) {
-	sys->endog_vars = elist;
+	sys->elist = elist;
     } else {
 	free(elist);
     }
@@ -1925,13 +1934,13 @@ static int make_tsls_style_elist (equation_system *sys)
 
 static int infer_elist_from_insts (equation_system *sys)
 {
-    const int *Z = sys->instr_vars;
+    const int *Z = sys->ilist;
     const int *slist;
     int *elist = NULL;
     int i, j, k;
     int err = 0;
 
-    for (i=0; i<sys->n_equations && !err; i++) {
+    for (i=0; i<sys->neqns && !err; i++) {
 	slist = sys->lists[i];
 	if (gretl_list_has_separator(slist)) {
 	    continue;
@@ -1948,7 +1957,7 @@ static int infer_elist_from_insts (equation_system *sys)
     }
 
     if (!err) {
-	sys->endog_vars = elist;
+	sys->elist = elist;
     } 
 
     return err;
@@ -1956,8 +1965,8 @@ static int infer_elist_from_insts (equation_system *sys)
 
 static int predet_check (equation_system *sys, const DATAINFO *pdinfo)
 {
-    const int *elist = sys->endog_vars;
-    const int *ilist = sys->instr_vars;
+    const int *elist = sys->elist;
+    const int *ilist = sys->ilist;
     const char *vname;
     int id = 0, src = 0, lag = 0;
     int i, err = 0;
@@ -1998,18 +2007,18 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
     int i, j, k, nexo, maxnexo = 0;
     int err = 0;
 
-    if (system_needs_endog_list(sys) && sys->endog_vars == NULL) {
+    if (system_needs_endog_list(sys) && sys->elist == NULL) {
 	/* first pass: handle 3SLS? */
 	err = make_tsls_style_elist(sys);
     }
 
-    if (!err && system_needs_endog_list(sys) && sys->endog_vars == NULL) {
-	if (sys->instr_vars != NULL) {
+    if (!err && system_needs_endog_list(sys) && sys->elist == NULL) {
+	if (sys->ilist != NULL) {
 	    err = infer_elist_from_insts(sys);
 	}
     }
 
-    if (!err && system_needs_endog_list(sys) && sys->endog_vars == NULL) {
+    if (!err && system_needs_endog_list(sys) && sys->elist == NULL) {
 	gretl_errmsg_set(_("No list of endogenous variables was given"));
 	err = E_DATA;
     }
@@ -2018,19 +2027,19 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 	return err;
     }
 
-    if (sys->instr_vars != NULL) {
+    if (sys->ilist != NULL) {
 	/* job is already done */
 	return 0;
     }
 
-    elist = sys->endog_vars;
+    elist = sys->elist;
 
     /* First pass: get a count of the max possible number of
        exogenous variables (probably an over-estimate due to
        double-counting).
     */
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	const int *slist = sys->lists[i];
 
 	for (j=2; j<=slist[0]; j++) {
@@ -2040,7 +2049,7 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 	}
     }
 
-    for (i=0; i<sys->n_identities; i++) {
+    for (i=0; i<sys->nidents; i++) {
 	const identity *ident = sys->idents[i];
 
 	for (j=0; j<ident->n_atoms; j++) {
@@ -2066,7 +2075,7 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 
     nexo = 0;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	const int *slist = sys->lists[i];
 
 	for (j=2; j<=slist[0]; j++) {
@@ -2078,7 +2087,7 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 	}
     } 
 
-    for (i=0; i<sys->n_identities; i++) {
+    for (i=0; i<sys->nidents; i++) {
 	const identity *ident = sys->idents[i];
 
 	for (j=0; j<ident->n_atoms; j++) {
@@ -2101,7 +2110,7 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 	ilist[0] = nexo;
     }
 
-    sys->instr_vars = ilist;
+    sys->ilist = ilist;
 
     /* now check for predetermined regressors? */
     if (pdinfo != NULL) {
@@ -2140,7 +2149,7 @@ equation_system_get_series (const equation_system *sys,
     msel = strchr(key, '[');
     if (msel == NULL || sscanf(msel, "[,%d]", &col) != 1) {
 	*err = E_PARSE;
-    } else if (col <= 0 || col > sys->n_equations) {
+    } else if (col <= 0 || col > sys->neqns) {
 	*err = E_DATA;
     }
 
@@ -2176,7 +2185,7 @@ equation_system_get_series (const equation_system *sys,
 static int system_add_yhat (equation_system *sys)
 {
     int T = sys->t2 - sys->t1 + 1;
-    int k = sys->n_equations;
+    int k = sys->neqns;
     double x;
     int i, s, t;
 
@@ -2254,7 +2263,7 @@ int highest_numbered_var_in_system (const equation_system *sys,
 {
     int i, j, v, vmax = 0;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	for (j=1; j<=sys->lists[i][0]; j++) {
 	    v = sys->lists[i][j];
 	    if (v == LISTSEP || v >= pdinfo->v) {
@@ -2345,8 +2354,8 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     }
 
     got = 0;
-    got += gretl_xml_get_prop_as_int(node, "n_equations", &sys->n_equations);
-    got += gretl_xml_get_prop_as_int(node, "n_identities", &sys->n_identities);
+    got += gretl_xml_get_prop_as_int(node, "n_equations", &sys->neqns);
+    got += gretl_xml_get_prop_as_int(node, "nidents", &sys->nidents);
     got += gretl_xml_get_prop_as_char(node, "flags", &sys->flags);
 
     if (got < 3) {
@@ -2354,14 +2363,14 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	goto bailout;
     } 
 
-    sys->lists = malloc(sys->n_equations * sizeof sys->lists);
+    sys->lists = malloc(sys->neqns * sizeof sys->lists);
     if (sys->lists == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    if (sys->n_identities > 0) {
-	sys->idents = malloc(sys->n_identities * sizeof sys->idents);
+    if (sys->nidents > 0) {
+	sys->idents = malloc(sys->nidents * sizeof sys->idents);
 	if (sys->idents == NULL) {
 	    *err = E_ALLOC;
 	    goto bailout;
@@ -2375,9 +2384,11 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	if (!xmlStrcmp(cur->name, (XUC) "eqnlist")) {
 	    sys->lists[i++] = gretl_xml_node_get_list(cur, doc, err); 
 	} else if (!xmlStrcmp(cur->name, (XUC) "endog_vars")) {
-	    sys->endog_vars = gretl_xml_node_get_list(cur, doc, err);
+	    sys->elist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "instr_vars")) {
-	    sys->instr_vars = gretl_xml_node_get_list(cur, doc, err);
+	    sys->ilist = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "exog_vars")) {
+	    sys->xlist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "identity")) {
 	    sys->idents[j++] = sys_retrieve_identity(cur, doc, err); 
 	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
@@ -2388,7 +2399,7 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	cur = cur->next;
     } 
 
-    if (!*err && (i != sys->n_equations || j != sys->n_identities)) {
+    if (!*err && (i != sys->neqns || j != sys->nidents)) {
 	*err = E_DATA;
 	equation_system_destroy(sys);
 	sys = NULL;
@@ -2421,17 +2432,18 @@ int equation_system_serialize (equation_system *sys,
     fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",  
 	    (sys->name != NULL)? sys->name : "none", flags, sys->method);
 
-    fprintf(fp, "n_equations=\"%d\" n_identities=\"%d\" flags=\"%d\">\n",
-	    sys->n_equations, sys->n_identities, (int) sys->flags);
+    fprintf(fp, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\">\n",
+	    sys->neqns, sys->nidents, (int) sys->flags);
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	gretl_xml_put_tagged_list("eqnlist", sys->lists[i], fp);
     }
 
-    gretl_xml_put_tagged_list("endog_vars", sys->endog_vars, fp);
-    gretl_xml_put_tagged_list("instr_vars", sys->instr_vars, fp);
+    gretl_xml_put_tagged_list("endog_vars", sys->elist, fp);
+    gretl_xml_put_tagged_list("instr_vars", sys->ilist, fp);
+    gretl_xml_put_tagged_list("exog_vars", sys->xlist, fp);
 
-    for (i=0; i<sys->n_identities; i++) {
+    for (i=0; i<sys->nidents; i++) {
 	xml_print_identity(sys->idents[i], fp);
     }    
 
@@ -2469,7 +2481,7 @@ static int sur_ols_diag (equation_system *sys)
     double s2, ls2sum = 0.0;
     int i, err = 0;
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	s2 = gretl_model_get_double(sys->models[i], "ols_sigma_squared");
 	if (na(s2)) {
 	    err = 1;
@@ -2589,26 +2601,22 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     pputc(prn, '\n');
 }
 
-#define DO_COEFF_ANALYSIS 1
-
-#if DO_COEFF_ANALYSIS
-
 static int *make_elist_from_models (equation_system *sys)
 {
     int *elist;
     int i, vi, pos;
 
-    elist = gretl_list_new(sys->n_equations);
+    elist = gretl_list_new(sys->neqns);
     if (elist == NULL) {
 	return NULL;
     }
 
-    for (i=0; i<sys->n_equations; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	vi = sys->models[i]->list[1];
 	elist[i+1] = vi;
-	pos = in_gretl_list(sys->instr_vars, vi);
+	pos = in_gretl_list(sys->ilist, vi);
 	if (pos > 0) {
-	    gretl_list_delete_at_pos(sys->instr_vars, pos);
+	    gretl_list_delete_at_pos(sys->ilist, pos);
 	}
     }
 
@@ -2629,7 +2637,7 @@ static int categorize_variable (int vnum, const equation_system *sys,
 
     *lag = 0;
 
-    pos = in_gretl_list(sys->endog_vars, vnum);
+    pos = in_gretl_list(sys->elist, vnum);
     if (pos > 0) {
 	ret = ENDOG;
     } else {
@@ -2639,7 +2647,7 @@ static int categorize_variable (int vnum, const equation_system *sys,
 	} else {
 	    int v = get_predet_parent(sys, vnum, lag);
 
-	    pos = in_gretl_list(sys->endog_vars, v);
+	    pos = in_gretl_list(sys->elist, v);
 	    if (pos > 0) {
 		ret = PREDET;
 	    }
@@ -2653,82 +2661,20 @@ static int categorize_variable (int vnum, const equation_system *sys,
     return ret;
 }
 
-static int calculate_fitted (equation_system *sys,
-			     int *xlist, int maxlag,
-			     double **Z, DATAINFO *pdinfo,
-			     PRN *prn)
-{
-    gretl_matrix *G = NULL, *y1 = NULL, *x = NULL;
-    gretl_matrix *y = NULL, *yh = NULL;
-    const int *elist = sys->endog_vars;
-    const int *ilist = sys->instr_vars;
-    int n = sys->n_equations + sys->n_identities;
-    int type, col;
-    int i, vi, t, lag;
-
-    G = gretl_matrix_copy(sys->Gamma);
-    gretl_SVD_invert_matrix(G);
-
-    y = gretl_matrix_alloc(n, 1);
-    yh = gretl_matrix_alloc(n, 1);
-    if (maxlag > 0) {
-	y1 = gretl_matrix_alloc(maxlag * elist[0], 1);
-    }
-    x = gretl_matrix_alloc(xlist[0], 1);
-
-    pprintf(prn, "Gamma^{-1}*(A*ylag + B*x_t)\n\n");
-
-    for (t=sys->t1; t<=sys->t2; t++) {
-	if (maxlag > 0) {
-	    gretl_matrix_zero(y1);
-	    for (i=1; i<=ilist[0]; i++) {
-		vi = ilist[i];
-		type = categorize_variable(vi, sys, xlist, &col, &lag);
-		if (type == PREDET) {
-		    col += n * (lag - 1);
-		    y1->val[col] = Z[vi][t];
-		}
-	    }
-	    gretl_matrix_multiply(sys->A, y1, y);
-	} else {
-	    gretl_matrix_zero(y);
-	}
-	for (i=1; i<=xlist[0]; i++) {
-	    x->val[i-1] = Z[xlist[i]][t];
-	}
-	gretl_matrix_multiply_mod(sys->B, GRETL_MOD_NONE,
-				  x, GRETL_MOD_NONE,
-				  y, GRETL_MOD_CUMULATE);
-	gretl_matrix_multiply(G, y, yh);
-	for (i=0; i<n; i++) {
-	    pprintf(prn, "%#10.5g ", yh->val[i]);
-	}
-	pputc(prn, '\n');
-    }
-    pputc(prn, '\n');
-
-    gretl_matrix_free(y);
-    gretl_matrix_free(yh);
-    gretl_matrix_free(y1);
-    gretl_matrix_free(x);
-    gretl_matrix_free(G);
-
-    return 0;
-}
 
 static int *make_exogenous_list (equation_system *sys)
 {
     int *xlist = NULL;
 
-    if (sys->instr_vars == NULL) {
+    if (sys->ilist == NULL) {
 	xlist = gretl_null_list();
     } else {
 	int i, vi, j = 1;
 
-	xlist = gretl_list_new(sys->instr_vars[0]);
+	xlist = gretl_list_new(sys->ilist[0]);
 	if (xlist != NULL) {
-	    for (i=1; i<=sys->instr_vars[0]; i++) {
-		vi = sys->instr_vars[i];
+	    for (i=1; i<=sys->ilist[0]; i++) {
+		vi = sys->ilist[i];
 		if (instrument_is_predet(sys, vi)) {
 		    xlist[0] -= 1;
 		} else {
@@ -2741,18 +2687,17 @@ static int *make_exogenous_list (equation_system *sys)
     return xlist;
 }
 
-static int print_coeff_analysis (equation_system *sys,
-				 double **Z, DATAINFO *pdinfo,
-				 PRN *prn)
+static int sys_add_structural_form (equation_system *sys,
+				    const DATAINFO *pdinfo)
 {
-    const int *elist = sys->endog_vars;
-    const int *ilist = sys->instr_vars;
-    int *xlist = NULL;
-    int ne = sys->n_equations;
-    int ni = sys->n_identities;
+    const int *elist = sys->elist;
+    const int *ilist = sys->ilist;
+    const int *xlist = sys->xlist;
+    int ne = sys->neqns;
+    int ni = sys->nidents;
     int n = ne + ni;
     double x = 0.0;
-    int type, col, maxlag = 0;
+    int type, col;
     int i, j, vj, lag;
     int err = 0;
 
@@ -2760,36 +2705,37 @@ static int print_coeff_analysis (equation_system *sys,
 
     if (elist == NULL) {
 	/* SUR and possibly some others? */
-	sys->endog_vars = make_elist_from_models(sys);
-	if (sys->endog_vars == NULL) {
+	sys->elist = make_elist_from_models(sys);
+	if (sys->elist == NULL) {
 	    return E_ALLOC;
 	}
-	elist = sys->endog_vars;
+	elist = sys->elist;
     }
 
-    xlist = make_exogenous_list(sys);
     if (xlist == NULL) {
-	return E_ALLOC;
+	sys->xlist = make_exogenous_list(sys);
+	if (sys->xlist == NULL) {
+	    return E_ALLOC;
+	}
+	xlist = sys->xlist;
     }
 
     printlist(elist, "endogenous vars");
     printlist(ilist, "instruments");
     printlist(xlist, "exogenous vars");
 
-    maxlag = sys_max_predet_lag(sys);
+    sys->maxlag = sys_max_predet_lag(sys);
 
     /* allocate coefficient matrices */
 
     sys->Gamma = gretl_zero_matrix_new(n, n);
     if (sys->Gamma == NULL) {
-	free(xlist);
 	return E_ALLOC;
     }
 
-    if (maxlag > 0) {
-	sys->A = gretl_zero_matrix_new(n, maxlag * elist[0]);
+    if (sys->maxlag > 0) {
+	sys->A = gretl_zero_matrix_new(n, sys->maxlag * elist[0]);
 	if (sys->A == NULL) {
-	    free(xlist);
 	    return E_ALLOC;
 	}
     }
@@ -2797,14 +2743,13 @@ static int print_coeff_analysis (equation_system *sys,
     if (xlist[0] > 0) {
 	sys->B = gretl_zero_matrix_new(n, xlist[0]);
 	if (sys->B == NULL) {
-	    free(xlist);
 	    return E_ALLOC;
 	}
     }
 
     /* process stochastic equations */
 
-    for (i=0; i<sys->n_equations && !err; i++) {
+    for (i=0; i<sys->neqns && !err; i++) {
 	const MODEL *pmod = sys->models[i];
 
 	for (j=1; j<=pmod->list[0] && pmod->list[j]!=LISTSEP; j++) {
@@ -2830,7 +2775,7 @@ static int print_coeff_analysis (equation_system *sys,
 
     /* process identities */
 
-    for (i=0; i<sys->n_identities && !err; i++) {
+    for (i=0; i<sys->nidents && !err; i++) {
 	const identity *ident = sys->idents[i];
 
 	for (j=0; j<=ident->n_atoms; j++) {
@@ -2859,40 +2804,191 @@ static int print_coeff_analysis (equation_system *sys,
 	}
     }
 
-    gretl_matrix_print_to_prn(sys->Gamma, "sys->Gamma", prn);
+    gretl_matrix_print(sys->Gamma, "sys->Gamma");
 
     if (sys->A != NULL) {
-	gretl_matrix_print_to_prn(sys->A, "sys->A", prn);
+	gretl_matrix_print(sys->A, "sys->A");
     } else {
-	pputs(prn, "No lagged endogenous variables used as instruments\n");
+	fputs("No lagged endogenous variables used as instruments\n", stderr);
     }
 
     if (sys->B != NULL) {
-	gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
+	gretl_matrix_print(sys->B, "sys->B");
     } else {
-	pputs(prn, "No truly exogenous variables are present\n");
+	fputs("No truly exogenous variables are present\n", stderr);
     }
-
-#if 1
-    if (!err) {
-	/* test: try calculating jointly-fitted values */
-	calculate_fitted(sys, xlist, maxlag, Z, pdinfo, prn);
-    }
-#endif
-
-    free(xlist);
 
     return err;
 }
 
-#endif
+static int sys_add_forecast (equation_system *sys,
+			     int t0, int t1, int t2,
+			     const double **Z, const DATAINFO *pdinfo,
+			     gretlopt opt)
+{
+    gretl_matrix *G = NULL;
+    gretl_matrix *y1 = NULL, *x = NULL;
+    gretl_matrix *y = NULL, *yh = NULL;
+    const int *elist;
+    const int *ilist;
+    const int *xlist;
+    int n = sys->neqns + sys->nidents;
+    double xit;
+    int staticfc = (opt & OPT_S);
+    int type, col, T;
+    int i, vi, s, t, lag;
+    int err = 0;
+
+    if (sys->Gamma == NULL) {
+	err = sys_add_structural_form(sys, pdinfo);
+	if (err) {
+	    return err;
+	}
+    }
+
+    elist = sys->elist;
+    ilist = sys->ilist;
+    xlist = sys->xlist;
+
+    G = gretl_matrix_copy(sys->Gamma);
+    if (G == NULL) {
+	return E_ALLOC;
+    }
+
+    err = gretl_SVD_invert_matrix(G);
+    if (err) {
+	gretl_matrix_free(G);
+	return err;
+    }
+
+    T = t2 - t0 + 1;
+
+    if (sys->F != NULL && sys->F->rows != T) {
+	gretl_matrix_free(sys->F);
+	sys->F = NULL;
+    }
+
+    y = gretl_matrix_alloc(n, 1);
+    yh = gretl_matrix_alloc(n, 1);
+    sys->F = gretl_matrix_alloc(T, n);
+
+    if (y == NULL || yh == NULL || sys->F == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (sys->maxlag > 0) {
+	y1 = gretl_matrix_alloc(sys->maxlag * elist[0], 1);
+	if (y1 == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    if (xlist[0] > 0) {
+	x = gretl_matrix_alloc(xlist[0], 1);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    for (t=t0, s=0; t<=t2; t++, s++) {
+	int miss = 0;
+
+	/* lags of endogenous vars */
+	if (sys->maxlag > 0) {
+	    gretl_matrix_zero(y1);
+	    for (i=1; i<=ilist[0] && !miss; i++) {
+		vi = ilist[i];
+		type = categorize_variable(vi, sys, xlist, &col, &lag);
+		if (type == PREDET) {
+		    col += n * (lag - 1);
+		    if (t < t1 || staticfc || s - lag < 0) {
+			/* pre-forecast value */
+			xit = Z[vi][t];
+		    } else {
+			/* prior forecast value */
+			xit = gretl_matrix_get(sys->F, s - lag, col);
+		    }
+		    if (na(xit)) {
+			miss = 1;
+		    } else {
+			y1->val[col] = xit;
+		    }
+		}
+	    }
+	    if (!miss) {
+		gretl_matrix_multiply(sys->A, y1, y);
+	    }
+	} else {
+	    gretl_matrix_zero(y);
+	}
+
+	/* exogenous vars */
+	if (xlist[0] > 0 && !miss) {
+	    for (i=1; i<=xlist[0] && !miss; i++) {
+		xit = Z[xlist[i]][t];
+		if (na(xit)) {
+		    miss = 1;
+		} else {
+		    x->val[i-1] = xit;
+		}
+	    }
+	    if (!miss) {
+		gretl_matrix_multiply_mod(sys->B, GRETL_MOD_NONE,
+					  x, GRETL_MOD_NONE,
+					  y, GRETL_MOD_CUMULATE);
+	    }
+	}
+
+	if (miss) {
+	    for (i=0; i<n; i++) {
+		gretl_matrix_set(sys->F, s, i, NADBL);
+	    }
+	} else {
+	    /* multiply by Gamma^{-1} */
+	    gretl_matrix_multiply(G, y, yh);
+	    for (i=0; i<n; i++) {
+		gretl_matrix_set(sys->F, s, i, yh->val[i]);
+	    }
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(y);
+    gretl_matrix_free(yh);
+    gretl_matrix_free(y1);
+    gretl_matrix_free(x);
+    gretl_matrix_free(G);
+
+    if (err) {
+	gretl_matrix_free(sys->F);
+	sys->F = NULL;
+    }
+
+    return err;
+}
+
+const gretl_matrix *
+system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
+			    const double **Z, DATAINFO *pdinfo, 
+			    gretlopt opt, int *err)
+{
+    *err = sys_add_forecast(sys, t0, t1, t2, Z, pdinfo, opt);
+
+    return sys->F;
+}
+
+#define DO_TEST_FORECAST 1
 
 int 
 system_save_and_print_results (equation_system *sys,
 			       double ***pZ, DATAINFO *pdinfo,
 			       gretlopt opt, PRN *prn)
 {
-    int m = sys->n_equations;
+    int m = sys->neqns;
     int nr = system_n_restrictions(sys);
     int i, j = 0;
     int err;
@@ -2954,9 +3050,16 @@ system_save_and_print_results (equation_system *sys,
 	print_system_overid_test(sys, prn);
     }
 
-#if DO_COEFF_ANALYSIS
+#if DO_TEST_FORECAST
     if (!err) {
-	print_coeff_analysis(sys, *pZ, pdinfo, prn);
+	/* test: try calculating forecast: use OPT_S for static */
+	int t0 = sys->t1, t1 = sys->t2+1, t2 = sys->t2;
+
+	err = sys_add_forecast(sys, t0, t1, t2, (const double **) *pZ, 
+			       pdinfo, OPT_NONE);
+	if (!err) {
+	    gretl_matrix_print(sys->F, "sys->F");
+	}
     }	
 #endif
 

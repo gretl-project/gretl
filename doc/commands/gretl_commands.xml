@@ -2371,7 +2371,7 @@
 
       <para>
 	The default is to give a static forecast for any portion of
-	the forecast range that lies with the sample range over which
+	the forecast range that lies within the sample range over which
 	the model was estimated, and a dynamic forecast (if relevant)
 	out of sample.  The <lit>dynamic</lit> option requests a
 	dynamic forecast from the earliest possible date, and the

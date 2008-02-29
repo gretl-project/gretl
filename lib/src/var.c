@@ -914,7 +914,7 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
 static int
 VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
-		   const double **Z, DATAINFO *pdinfo, 
+		   const double **Z, const DATAINFO *pdinfo, 
 		   gretlopt opt)
 {
     gretl_matrix *F = NULL;

@@ -3243,17 +3243,18 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     const MODEL *pmod;
     FITRESID *fr;
-    int t1, t2, resp;
+    int t1, t2, t2est, resp;
     int premax, pre_n, dyn_ok;
     gretlopt opt = OPT_NONE;
     int err = 0;
 
     pmod = gretl_VAR_get_model(var, i);
+    t2est = pmod->t2;
 
     t2 = datainfo->n - 1;
 
     /* if no out-of-sample obs are available, alert the user */
-    if (t2 == pmod->t2) {
+    if (t2 == t2est) {
 	err = out_of_sample_info(1, &t2);
 	if (err) {
 	    return;
@@ -3266,9 +3267,9 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 
     /* if there are spare obs available, default to an
        out-of-sample forecast */
-    if (t2 > pmod->t2) {
-	t1 = pmod->t2 + 1;
-	pre_n = pmod->t2 / 2;
+    if (t2 > t2est) {
+	t1 = t2est + 1;
+	pre_n = t2est / 2;
 	if (pre_n > 100) {
 	    pre_n = 100;
 	}
@@ -3295,7 +3296,7 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	opt = OPT_S;
     }
 
-    /* FIXME dating here */
+    /* FIXME dating here? */
 
     fr = get_VAR_forecast(var, i, t1 - pre_n, t1, t2, (const double **) Z, 
 			  datainfo, opt);
@@ -3427,13 +3428,11 @@ static void VAR_resid_mplot_call (gpointer p, guint vecm, GtkWidget *w)
 static void add_VAR_menu_items (windata_t *vwin, int vecm)
 {
     GtkItemFactoryEntry varitem;
-
     const gchar *tpath = N_("/Tests");
     const gchar *gpath = N_("/Graphs");
     const gchar *mpath = N_("/Analysis");
     const gchar *fpath = N_("/Analysis/Forecasts");
     const gchar *dpath = N_("/Save");
-
     GRETL_VAR *var;
     int neqns, vtarg, vshock;
     char tmp[VNAMELEN2];
@@ -3703,28 +3702,31 @@ static void add_SYS_menu_items (windata_t *vwin)
 {
     GtkItemFactoryEntry sysitem;
     const gchar *tpath = N_("/Tests");
+#if 0
+    const gchar *gpath = N_("/Graphs");
+#endif
+    const gchar *fpath = N_("/Analysis/Forecasts");
     const gchar *dpath = N_("/Save");
     equation_system *sys;
-    int i, neqns;
+    char tmp[VNAMELEN2];
+    int i, dv, neqns;
 
     sys = (equation_system *) vwin->data;
     if (sys == NULL) {
 	return;
     }
 
-    neqns = sys->n_equations;
+    neqns = sys->neqns;
 
     sysitem.accelerator = NULL;
     sysitem.callback = NULL;
     sysitem.callback_action = 0;
     sysitem.item_type = "<Branch>";
 
-#if 0
     /* model data menu path */
     sysitem.path = g_strdup(_("/_Analysis"));
     gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
     g_free(sysitem.path);
-#endif
 
     /* add to dataset menu path */
     sysitem.path = g_strdup(_("/_Save"));
@@ -3741,6 +3743,16 @@ static void add_SYS_menu_items (windata_t *vwin)
     g_free(sysitem.path);  
 
     for (i=0; i<neqns; i++) {
+	/* forecast items */
+	dv = sys->lists[i][1];
+	double_underscores(tmp, datainfo->varname[dv]);
+	sysitem.path = g_strdup_printf("%s/%s", _(fpath), tmp);
+	sysitem.callback = dummy_call; /* sys_forecast_callback */
+	sysitem.callback_action = i;
+	sysitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
+	g_free(sysitem.path);
+
 	/* save resids items */
 	sysitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
 				       _("Residuals from equation"), i + 1);
