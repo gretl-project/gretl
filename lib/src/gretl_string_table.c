@@ -296,7 +296,7 @@ static saved_string *saved_strings;
 
 static saved_string built_ins[] = {
     { "gretldir", 0, NULL },
-    { "dotdir",  0, NULL },
+    { "dotdir",   0, NULL },
     { "workdir",  0, NULL },
     { "gnuplot",  0, NULL },
     { "x12a",     0, NULL },
@@ -843,24 +843,44 @@ static char *gretl_strstr (const char **pline, int *err)
 }
 
 static char *retrieve_date_string (const char **pline, 
-				   const DATAINFO *pdinfo,
+				   double ***pZ, DATAINFO *pdinfo,
 				   int *err)
 {
+    const char *s = *pline;
+    int p = 1, n = 0;
     char *ret = NULL;
-    int t;
 
-    if (sscanf(*pline, "%d", &t) == 1) {
-	const char *s = strchr(*pline, ')');
+    while (*s) {
+	if (*s == '(') p++;
+	else if (*s == ')') p--;
+	if (p == 0) {
+	    break;
+	}
+	n++;
+	s++;
+    }
+
+    if (p == 0 && n > 0) {
 	char datestr[OBSLEN] = {0};
+	int t;
 
-	if (s != NULL) {
-	    *pline = s + 1;
-	}	
-	if (t > 0 && t <= pdinfo->n) {
-	    ntodate(datestr, t-1, pdinfo);
-	    ret = gretl_strdup(datestr);
+	ret = gretl_strndup(*pline, n);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
 	} else {
-	    *err = E_DATA;
+	    *pline = s + 1;
+	    t = generate_scalar(ret, pZ, pdinfo, err);
+	    if (!*err && t > 0 && t <= pdinfo->n) {
+		ntodate(datestr, t - 1, pdinfo);
+		free(ret);
+		ret = gretl_strdup(datestr);
+	    } else if (!*err) {
+		*err = E_DATA;
+	    }
+	    if (*err) {
+		free(ret);
+		ret = NULL;
+	    }
 	}
     } else {
 	*err = E_PARSE;
@@ -875,12 +895,9 @@ static char *retrieve_arg_name (const char **pline, int *err)
     char *ret = NULL;
 
     if (sscanf(*pline, "%15[^)])", argvar) == 1) {
-	const char *s = strchr(*pline, ')');
-
-	if (s != NULL) {
-	    *pline = s + 1;
-	}
 	ret = gretl_func_get_arg_name(argvar);
+	*pline += strlen(argvar);
+	if (**pline == ')') *pline += 1;
     } else {
 	*err = E_PARSE;
     }
@@ -936,7 +953,7 @@ static char *retrieve_file_content (const char **pline, int *err)
 }
 
 static char *get_string_element (const char **pline, 
-				 const DATAINFO *pdinfo,
+				 double ***pZ, DATAINFO *pdinfo,
 				 int *err)
 {
     const char *line = *pline;
@@ -969,9 +986,9 @@ static char *get_string_element (const char **pline,
 	return retrieve_arg_name(pline, err);
     }
 
-    if (!strncmp(line, "date(", 5)) {
-	*pline += 5;
-	return retrieve_date_string(pline, pdinfo, err);
+    if (!strncmp(line, "obslabel(", 9)) {
+	*pline += 9;
+	return retrieve_date_string(pline, pZ, pdinfo, err);
     }    
 
     if (!strncmp(line, "readfile(", 9)) {
@@ -1144,7 +1161,8 @@ static int get_plus_mod (char *s1, const char **pline, int *plus)
      string <name> += "<s2>" "<s2>"  ... "<sn>"
 */
 
-int process_string_command (const char *line, const DATAINFO *pdinfo, PRN *prn)
+int process_string_command (const char *line, double ***pZ,
+			    DATAINFO *pdinfo, PRN *prn)
 {
     saved_string *str;
     char *newstr = NULL;
@@ -1213,7 +1231,7 @@ int process_string_command (const char *line, const DATAINFO *pdinfo, PRN *prn)
 	char *s1 = NULL;
 	int plus = 0;
 
-	s1 = get_string_element(&line, pdinfo, &err);
+	s1 = get_string_element(&line, pZ, pdinfo, &err);
 	if (!err) {
 	    err = get_plus_mod(s1, &line, &plus);
 	    if (!err) {

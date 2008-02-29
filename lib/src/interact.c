@@ -4032,7 +4032,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case STRING:
-	err = process_string_command(line, pdinfo, prn);
+	err = process_string_command(line, pZ, pdinfo, prn);
 	break;
 
     case PVALUE:

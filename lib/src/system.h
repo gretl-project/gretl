@@ -43,6 +43,7 @@ enum {
 
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
+typedef struct predet_ predet;
 
 struct equation_system_ {
     char *name;                 /* user-specified name for system, or NULL */
@@ -53,6 +54,7 @@ struct equation_system_ {
     int n_equations;            /* number of stochastic equations */
     int n_identities;           /* number of identities */
     int n_obs;                  /* number of observations per equation */
+    int n_predet;               /* number of predetermined regressors */
     int iters;                  /* number of iterations taken */
     char flags;                 /* to record options (e.g. save residuals) */
     double ll;                  /* log-likelihood (restricted) */
@@ -64,6 +66,7 @@ struct equation_system_ {
     int **lists;                /* regression lists for stochastic equations */
     int *endog_vars;            /* list of endogenous variables */
     int *instr_vars;            /* list of instruments (exogenous vars) */
+    predet *pre_vars;           /* array of info on predetermined regressors */
     identity **idents;          /* set of identities */
     gretl_matrix *b;            /* coefficient estimates */
     gretl_matrix *vcv;          /* covariance matrix of coefficients */

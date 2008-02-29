@@ -52,6 +52,12 @@ struct identity_ {
     id_atom *atoms; /* pointer to RHS "atoms" */
 };
 
+struct predet_ {
+    int id;         /* ID number lag variable */
+    int src;        /* ID number of "parent" */
+    int lag;        /* lag order */
+};
+
 const char *gretl_system_method_strings[] = {
     "sur",
     "3sls",
@@ -90,7 +96,8 @@ const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
 
 static void destroy_ident (identity *ident);
-static int make_instrument_list (equation_system *sys);
+static int make_instrument_list (equation_system *sys,
+				 const DATAINFO *pdinfo);
 
 static void 
 print_system_equation (const int *list, const DATAINFO *pdinfo, 
@@ -138,6 +145,46 @@ print_system_identity (const identity *ident, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 }
 
+static int instrument_is_predet (const equation_system *sys, int v)
+{
+    int i;
+
+    for (i=0; i<sys->n_predet; i++) {
+	if (v == sys->pre_vars[i].id) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static int sys_max_predet_lag (const equation_system *sys)
+{
+    int i, m = 0;
+
+    for (i=0; i<sys->n_predet; i++) {
+	if (sys->pre_vars[i].lag > m) {
+	    m = sys->pre_vars[i].lag;
+	}
+    }
+
+    return m;
+}
+
+static int get_predet_parent (const equation_system *sys, int v, int *lag)
+{
+    int i;
+
+    for (i=0; i<sys->n_predet; i++) {
+	if (v == sys->pre_vars[i].id) {
+	    *lag = sys->pre_vars[i].lag;
+	    return sys->pre_vars[i].src;
+	}
+    }
+
+    return -1;
+}
+
 /**
  * print_equation_system_info:
  * @sys: gretl equation system.
@@ -155,8 +202,7 @@ print_equation_system_info (const equation_system *sys,
 			    gretlopt opt, PRN *prn)
 {
     int header = (opt & OPT_H);
-    int i;
-
+    int i, vi, lag;
     
     if (header && sys->name != NULL) {
 	pprintf(prn, "Equation system %s\n", sys->name);
@@ -175,18 +221,40 @@ print_equation_system_info (const equation_system *sys,
     if (sys->endog_vars != NULL) {
 	pputs(prn, (header)? "Endogenous variables:" : "endog");
 	for (i=1; i<=sys->endog_vars[0]; i++) {
-	    pprintf(prn, " %s", pdinfo->varname[sys->endog_vars[i]]);
+	    vi = sys->endog_vars[i];
+	    pprintf(prn, " %s", pdinfo->varname[vi]);
 	}
 	pputc(prn, '\n');
     }
 
-    if (sys->instr_vars != NULL) {
-	pputs(prn, (header)? "Exogenous variables:" : "instr");
+    if (header) {
+	if (sys->pre_vars != NULL) {
+	    pputs(prn, "Predetermined variables:");
+	    for (i=0; i<sys->n_predet; i++) {
+		vi = sys->pre_vars[i].src;
+		lag = sys->pre_vars[i].lag;
+		pprintf(prn, " %s(-%d)", pdinfo->varname[vi], lag);
+	    }
+	    pputc(prn, '\n');
+	}    
+	if (sys->instr_vars != NULL && sys->instr_vars[0] > sys->n_predet) {
+	    pputs(prn, "Exogenous variables:");
+	    for (i=1; i<=sys->instr_vars[0]; i++) {
+		vi = sys->instr_vars[i];
+		if (!instrument_is_predet(sys, vi)) {
+		    pprintf(prn, " %s", pdinfo->varname[vi]);
+		}
+	    }
+	    pputc(prn, '\n');
+	}
+    } else if (sys->instr_vars != NULL) {
+	pputs(prn, "instr");
 	for (i=1; i<=sys->instr_vars[0]; i++) {
-	    pprintf(prn, " %s", pdinfo->varname[sys->instr_vars[i]]);
+	    vi = sys->instr_vars[i];
+	    pprintf(prn, " %s", pdinfo->varname[vi]);
 	}
 	pputc(prn, '\n');
-    }
+    }	
 }
 
 int system_method_from_string (const char *s)
@@ -257,6 +325,7 @@ equation_system_new (int method, const char *name)
     sys->n_obs = 0;
     sys->iters = 0;
     sys->flags = 0;
+    sys->n_predet = 0;
 
     sys->ll = sys->llu = NADBL;
     sys->X2 = NADBL;
@@ -277,6 +346,7 @@ equation_system_new (int method, const char *name)
     sys->lists = NULL;
     sys->endog_vars = NULL;
     sys->instr_vars = NULL;
+    sys->pre_vars = NULL;
     sys->idents = NULL;
 
     sys->models = NULL;
@@ -380,6 +450,7 @@ void equation_system_destroy (equation_system *sys)
 
     free(sys->endog_vars);
     free(sys->instr_vars);
+    free(sys->pre_vars);
 
     free(sys->name);
 
@@ -950,7 +1021,7 @@ equation_system_estimate (equation_system *sys,
     /* in case we're re-estimating */
     system_clear_results(sys);
 
-    err = make_instrument_list(sys);
+    err = make_instrument_list(sys, pdinfo);
     if (err) {
 	goto system_bailout;
     }
@@ -1193,7 +1264,7 @@ int *compose_tsls_list (equation_system *sys, int i)
 	return NULL;
     }
 
-    if (sys->instr_vars == NULL && make_instrument_list(sys)) {
+    if (sys->instr_vars == NULL && make_instrument_list(sys, NULL)) {
 	return NULL;
     }
 
@@ -1597,6 +1668,41 @@ parse_identity (const char *str, const DATAINFO *pdinfo, int *err)
     return ident;
 }
 
+/* add information regarding a predetermined regressor */
+
+static int 
+add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
+		   int id, int src, int lag)
+{
+    int i, n = sys->n_predet;
+    predet *pre;
+
+    if (id < 0 || src < 0 || id >= pdinfo->v || src >= pdinfo->v) {
+	/* something screwy */
+	return E_DATA;
+    }
+
+    for (i=0; i<n; i++) {
+	if (sys->pre_vars[i].id == id) {
+	    /* already present */
+	    return 0;
+	}
+    }
+
+    pre = realloc(sys->pre_vars, (n + 1) * sizeof *pre);
+    if (pre == NULL) {
+	return E_ALLOC;
+    }
+
+    sys->pre_vars = pre;
+    sys->pre_vars[n].id = id;
+    sys->pre_vars[n].src = src;
+    sys->pre_vars[n].lag = lag;
+    sys->n_predet += 1;
+
+    return 0;
+}
+
 static int 
 add_identity_to_sys (equation_system *sys, const char *line,
 		     const DATAINFO *pdinfo)
@@ -1846,11 +1952,45 @@ static int infer_elist_from_insts (equation_system *sys)
     return err;
 }
 
+static int predet_check (equation_system *sys, const DATAINFO *pdinfo)
+{
+    const int *elist = sys->endog_vars;
+    const int *ilist = sys->instr_vars;
+    const char *vname;
+    int id = 0, src = 0, lag = 0;
+    int i, err = 0;
+
+    for (i=1; i<=elist[0] && !err; i++) {
+	id = elist[i];
+	lag = pdinfo->varinfo[id]->lag;
+	if (lag > 0) {
+	    vname = pdinfo->varinfo[id]->parent;
+	    src = varindex(pdinfo, vname);
+	    err = add_predet_to_sys(sys, pdinfo, id, src, lag);
+	}
+    }
+
+    for (i=1; i<=ilist[0] && !err; i++) {
+	id = ilist[i];
+	lag = pdinfo->varinfo[id]->lag;
+	if (lag > 0) {
+	    vname = pdinfo->varinfo[id]->parent;
+	    src = varindex(pdinfo, vname);
+	    if (in_gretl_list(elist, src)) {
+		err = add_predet_to_sys(sys, pdinfo, id, src, lag);
+	    }
+	}
+    }
+
+    return err;
+}
+
 #define system_needs_endog_list(s) (s->method != SYS_METHOD_SUR && \
 				    s->method != SYS_METHOD_OLS && \
 				    s->method != SYS_METHOD_WLS)
 
-static int make_instrument_list (equation_system *sys)
+static int 
+make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 {
     int *ilist, *elist;
     int i, j, k, nexo, maxnexo = 0;
@@ -1961,7 +2101,12 @@ static int make_instrument_list (equation_system *sys)
 
     sys->instr_vars = ilist;
 
-    return 0;
+    /* now check for predetermined regressors? */
+    if (pdinfo != NULL) {
+	err = predet_check(sys, pdinfo);
+    }
+
+    return err;
 }
 
 void 
@@ -2468,51 +2613,46 @@ static int *make_elist_from_models (equation_system *sys)
     return elist;
 }
 
-#define PRINTEQ 1
-
 enum {
     ENDOG,
     EXOG,
     PREDET
 };
 
-static int categorize_variable (int vnum, const int *elist, 
-				const int *ilist, int *col, 
-				int *lag, DATAINFO *pdinfo)
+static int categorize_variable (int vnum, const equation_system *sys,
+				const int *xlist, int *col,
+				int *lag)
 {
-    const char *vname;
-    int v;
+    int pos, ret = -1;
 
     *lag = 0;
 
-    *col = in_gretl_list(elist, vnum);
-    if (*col > 0) {
-	return ENDOG;
-    }
-
-    /* may be a lagged endogenous variable */
-    *lag = pdinfo->varinfo[vnum]->lag;
-    if (*lag == 0) {
-	/* instrument, surely */
-	*col = in_gretl_list(ilist, vnum);
-	return EXOG;
+    pos = in_gretl_list(sys->endog_vars, vnum);
+    if (pos > 0) {
+	ret = ENDOG;
     } else {
-	vname = pdinfo->varinfo[vnum]->parent;
-	v = varindex(pdinfo, vname);
-	*col = in_gretl_list(elist, v);
-	if (*col > 0) {
-	    return PREDET;
+	pos = in_gretl_list(xlist, vnum);
+	if (pos > 0) {
+	    ret = EXOG;
 	} else {
-	    *col = in_gretl_list(ilist, v);
-	    return EXOG;
+	    int v = get_predet_parent(sys, vnum, lag);
+
+	    pos = in_gretl_list(sys->endog_vars, v);
+	    if (pos > 0) {
+		ret = PREDET;
+	    }
 	}
+    }  
+
+    if (pos > 0) {
+	*col = pos - 1;
     }
 
-    return -1;
+    return ret;
 }
 
 static int calculate_fitted (equation_system *sys,
-			     int *true_inst, int maxlag,
+			     int *xlist, int maxlag,
 			     double **Z, DATAINFO *pdinfo,
 			     PRN *prn)
 {
@@ -2532,30 +2672,24 @@ static int calculate_fitted (equation_system *sys,
     if (maxlag > 0) {
 	y1 = gretl_matrix_alloc(maxlag * elist[0], 1);
     }
-    x = gretl_matrix_alloc(true_inst[0], 1);
+    x = gretl_matrix_alloc(xlist[0], 1);
 
     pprintf(prn, "Gamma^{-1}*(A*ylag + B*x_t)\n\n");
 
     for (t=sys->t1; t<=sys->t2; t++) {
-	fprintf(stderr, "t = %d\n", t);
 	if (maxlag > 0) {
 	    gretl_matrix_zero(y1);
 	    for (i=1; i<=ilist[0]; i++) {
 		vi = ilist[i];
-		type = categorize_variable(vi, elist, true_inst, 
-					   &col, &lag, pdinfo);
+		type = categorize_variable(vi, sys, xlist, &col, &lag);
 		if (type == PREDET) {
-		    col = n * (lag - 1) + col - 1;
-		    fprintf(stderr, " ylag[%d] = Z[%d][%d] = %g\n", 
-			    col, vi, t, Z[vi][t]);
+		    col += n * (lag - 1);
 		    y1->val[col] = Z[vi][t];
 		}
 	    }
 	}
-	for (i=1; i<=true_inst[0]; i++) {
-	    fprintf(stderr, "    x[%d] = Z[%d][%d] = %g\n", 
-		    i-1, true_inst[i], t, Z[true_inst[i]][t]);
-	    x->val[i-1] = Z[true_inst[i]][t];
+	for (i=1; i<=xlist[0]; i++) {
+	    x->val[i-1] = Z[xlist[i]][t];
 	}
 	if (maxlag > 0) {
 	    gretl_matrix_multiply(sys->A, y1, y);
@@ -2581,19 +2715,47 @@ static int calculate_fitted (equation_system *sys,
     return 0;
 }
 
+static int *make_exogenous_list (equation_system *sys)
+{
+    int *xlist = NULL;
+
+    if (sys->instr_vars == NULL) {
+	xlist = gretl_null_list();
+    } else {
+	int i, vi, j = 1;
+
+	xlist = gretl_list_new(sys->instr_vars[0]);
+	if (xlist != NULL) {
+	    for (i=1; i<=sys->instr_vars[0]; i++) {
+		vi = sys->instr_vars[i];
+		if (instrument_is_predet(sys, vi)) {
+		    xlist[0] -= 1;
+		} else {
+		    xlist[j++] = vi;
+		}
+	    }
+	}
+    }
+
+    return xlist;
+}
+
 static int print_coeff_analysis (equation_system *sys,
 				 double **Z, DATAINFO *pdinfo,
 				 PRN *prn)
 {
-    const MODEL *pmod;
     const int *elist = sys->endog_vars;
     const int *ilist = sys->instr_vars;
-    int *true_inst = NULL;
+    int *xlist = NULL;
     int ne = sys->n_equations;
     int ni = sys->n_identities;
     int n = ne + ni;
-    int type, col;
-    int i, j, vj, lag, maxlag = 0;
+    double x = 0.0;
+    int type, col, maxlag = 0;
+    int i, j, vj, lag;
+    int err = 0;
+
+    /* get all the required lists in order */
 
     if (elist == NULL) {
 	/* SUR and possibly some others? */
@@ -2604,127 +2766,122 @@ static int print_coeff_analysis (equation_system *sys,
 	elist = sys->endog_vars;
     }
 
-    sys->Gamma = gretl_zero_matrix_new(n, n);
-    if (sys->Gamma == NULL) {
-	return E_ALLOC;
-    }
-
-    true_inst = gretl_list_copy(ilist);
-    if (true_inst == NULL) {
-	gretl_matrix_free(sys->Gamma);
-	sys->Gamma = NULL;
+    xlist = make_exogenous_list(sys);
+    if (xlist == NULL) {
 	return E_ALLOC;
     }
 
     printlist(elist, "endogenous vars");
     printlist(ilist, "instruments");
+    printlist(xlist, "exogenous vars");
 
-    /* process equations */
-
-    for (i=0; i<ne; i++) {
-	pmod = sys->models[i];
-#if PRINTEQ
-	pprintf(prn, "Equation %d:\n", i + 1);
-#endif	
-	for (j=1; j<=pmod->list[0] && pmod->list[j]!=LISTSEP; j++) {
-	    vj = pmod->list[j];
-	    type = categorize_variable(vj, elist, ilist, 
-				       &col, &lag, pdinfo);
-#if PRINTEQ
-	    pprintf(prn, "%-10s (%2d): %4d %4d %4d:", 
-		    pdinfo->varname[vj], vj, type, col, lag);
-
-	    if (j > 1) {
-		pprintf(prn, " % #.8g\n", pmod->coeff[j-2]);
-	    } else {
-		pputc(prn, '\n');
-	    }
-#endif
-	    if (type == ENDOG) {
-		if (j == 1) {
-		    gretl_matrix_set(sys->Gamma, i, col-1, 1.0);
-		} else {
-		    gretl_matrix_set(sys->Gamma, i, col-1, -pmod->coeff[j-2]);
-		}
-	    } else if (type == PREDET) {
-		int pos = in_gretl_list(true_inst, vj);
-		if (lag > maxlag) {
-		    maxlag = lag;
-		}
-		gretl_list_delete_at_pos(true_inst, pos);
-	    }
-	}
-	pputc(prn, '\n');
-    }
-
-    printlist(true_inst, "true instruments");
+    maxlag = sys_max_predet_lag(sys);
     pprintf(prn, "Maximum lag of predetermined variables = %d\n", maxlag);
 
-    sys->B = gretl_zero_matrix_new(n, true_inst[0]);
+    /* allocate coefficient matrices */
 
-    if (maxlag) {
+    sys->Gamma = gretl_zero_matrix_new(n, n);
+    if (sys->Gamma == NULL) {
+	free(xlist);
+	return E_ALLOC;
+    }
+
+    if (maxlag > 0) {
 	sys->A = gretl_zero_matrix_new(n, maxlag * elist[0]);
+	if (sys->A == NULL) {
+	    free(xlist);
+	    return E_ALLOC;
+	}
+    }
+
+    if (xlist[0] > 0) {
+	sys->B = gretl_zero_matrix_new(n, xlist[0]);
+	if (sys->B == NULL) {
+	    free(xlist);
+	    return E_ALLOC;
+	}
+    }
+
+    /* process stochastic equations */
+
+    for (i=0; i<sys->n_equations && !err; i++) {
+	const MODEL *pmod = sys->models[i];
+
+	for (j=1; j<=pmod->list[0] && pmod->list[j]!=LISTSEP; j++) {
+	    vj = pmod->list[j];
+	    type = categorize_variable(vj, sys, xlist, &col, &lag);
+	    x = (j > 1)? pmod->coeff[j-2] : 1.0;
+	    if (type == ENDOG) {
+		if (j == 1) {
+		    gretl_matrix_set(sys->Gamma, i, col, 1.0);
+		} else {
+		    gretl_matrix_set(sys->Gamma, i, col, -x);
+		}
+	    } else if (type == EXOG) {
+		gretl_matrix_set(sys->B, i, col, x);
+	    } else if (type == PREDET) {
+		col += n * (lag - 1);
+		gretl_matrix_set(sys->A, i, col, x);
+	    } else {
+		err = E_DATA;
+	    }
+	}
     }
 
     /* process identities */
 
-    for (i=0; i<sys->n_identities; i++) {
+    for (i=0; i<sys->n_identities && !err; i++) {
 	const identity *ident = sys->idents[i];
-	int lcol, rcol;
 
-	lcol = in_gretl_list(elist, ident->depvar);
-	if (lcol > 0) {
-	    gretl_matrix_set(sys->Gamma, lcol-1, lcol-1, 1.0);
-	    for (j=0; j<ident->n_atoms; j++) {
-		vj = ident->atoms[j].varnum;
-		rcol = in_gretl_list(elist, vj);
-		if (rcol > 0) {
-		    gretl_matrix_set(sys->Gamma, lcol-1, rcol-1, 
-				     (ident->atoms[j].op)? 1 : -1);
+	for (j=0; j<=ident->n_atoms; j++) {
+	    if (j == 0) {
+		vj = ident->depvar;
+	    } else {
+		vj = ident->atoms[j-1].varnum;
+		x = (ident->atoms[j-1].op)? -1.0 : 1.0;
+	    }
+	    type = categorize_variable(vj, sys, xlist, &col, &lag);
+	    if (type == ENDOG) {
+		if (j == 0) {
+		    gretl_matrix_set(sys->Gamma, ne+i, col, 1.0);
 		} else {
-		    rcol = in_gretl_list(true_inst, vj);
-		    if (rcol > 0) {
-			gretl_matrix_set(sys->B, lcol-1, rcol-1, 
-					 (ident->atoms[j].op)? -1 : 1);
-		    }
+		    gretl_matrix_set(sys->Gamma, ne+i, col, -x);
 		}
+	    } else if (type == EXOG) {
+		gretl_matrix_set(sys->B, ne+i, col, x);
+	    } else if (type == PREDET) {
+		col += n * (lag - 1);
+		gretl_matrix_set(sys->A, ne+i, col, x);
+	    } else {
+		err = E_DATA;
 	    }
 	}
     }
 
     gretl_matrix_print_to_prn(sys->Gamma, "sys->Gamma", prn);
 
-    for (i=0; i<ne; i++) {
-	pmod = sys->models[i];
-	for (j=1; j<=pmod->list[0] && pmod->list[j] != LISTSEP; j++) {
-	    vj = pmod->list[j];
-	    type = categorize_variable(vj, elist, true_inst, 
-				       &col, &lag, pdinfo);
-	    if (type == EXOG) {
-		gretl_matrix_set(sys->B, i, col-1, pmod->coeff[j-2]);
-	    } else if (type == PREDET) {
-		col = n * (lag - 1) + col - 1;
-		gretl_matrix_set(sys->A, i, col, pmod->coeff[j-2]);
-	    }
-	}
-    }
-
-    if (maxlag > 0) {
+    if (sys->A != NULL) {
 	gretl_matrix_print_to_prn(sys->A, "sys->A", prn);
     } else {
-	pputs(prn, "No lagged endogenous variables used as instruments\n\n");
+	pputs(prn, "No lagged endogenous variables used as instruments\n");
     }
 
-    gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
+    if (sys->B != NULL) {
+	gretl_matrix_print_to_prn(sys->B, "sys->B", prn);
+    } else {
+	pputs(prn, "No truly exogenous variables are present\n");
+    }
 
 #if 1
-    /* test: try calculating jointly-fitted values */
-    calculate_fitted(sys, true_inst, maxlag, Z, pdinfo, prn);
+    if (!err) {
+	/* test: try calculating jointly-fitted values */
+	calculate_fitted(sys, xlist, maxlag, Z, pdinfo, prn);
+    }
 #endif
 
-    free(true_inst);
+    free(xlist);
 
-    return 0;
+    return err;
 }
 
 #endif
