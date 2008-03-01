@@ -3237,19 +3237,27 @@ static void multiple_irf_plot_call (gpointer p, guint vecm, GtkWidget *w)
     }
 }
 
-static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
+static void do_system_forecast (gpointer p, int i, int ci)
 {
     windata_t *vwin = (windata_t *) p;
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-    const MODEL *pmod;
+    GRETL_VAR *var = NULL;
+    equation_system *sys = NULL;
     FITRESID *fr;
     int t1, t2, t2est, resp;
     int premax, pre_n, dyn_ok;
     gretlopt opt = OPT_NONE;
     int err = 0;
 
-    pmod = gretl_VAR_get_model(var, i);
-    t2est = pmod->t2;
+    if (ci == VAR) {
+	var = (GRETL_VAR *) vwin->data;
+	t2est = gretl_VAR_get_t2(var);
+	ci = var->ci;
+    } else if (ci == SYSTEM) {
+	sys = (equation_system *) vwin->data;
+	t2est = sys->t2;
+    } else {
+	return;
+    }
 
     t2 = datainfo->n - 1;
 
@@ -3275,7 +3283,11 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	}
 	dyn_ok = 1;
     } else {
-	t1 = effective_order(var);
+	if (var != NULL) {
+	    t1 = effective_order(var);
+	} else {
+	    t1 = sys->maxlag;
+	}
 	pre_n = 0;
 	dyn_ok = 0;
     }
@@ -3298,8 +3310,9 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 
     /* FIXME dating here? */
 
-    fr = get_VAR_forecast(var, i, t1 - pre_n, t1, t2, (const double **) Z, 
-			  datainfo, opt);
+    fr = get_system_forecast(vwin->data, ci, i, t1 - pre_n, t1, t2, 
+			     (const double **) Z, datainfo, 
+			     opt);
 
     if (fr == NULL) {
 	errbox("Forecast failed");
@@ -3320,6 +3333,16 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	}
 	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);
     }
+}
+
+static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
+{
+    do_system_forecast(p, i, VAR);
+}
+
+static void sys_forecast_callback (gpointer p, guint i, GtkWidget *w)
+{
+    do_system_forecast(p, i, SYSTEM);
 }
 
 enum {
@@ -3380,7 +3403,7 @@ static void VAR_test_call (gpointer p, guint code, GtkWidget *w)
     }
 }
 
-static void VAR_roots_plot_call (gpointer p, guint vecm, GtkWidget *w)
+static void VAR_roots_plot_call (gpointer p, guint u, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
@@ -3395,13 +3418,12 @@ static void VAR_roots_plot_call (gpointer p, guint vecm, GtkWidget *w)
     }
 }
 
-static void VAR_resid_plot_call (gpointer p, guint vecm, GtkWidget *w)
+static void system_resid_plot_call (gpointer p, guint ci, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int err;
 
-    err = gretl_VAR_residual_plot(var, datainfo);
+    err = gretl_system_residual_plot(vwin->data, ci, datainfo);
     
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -3410,13 +3432,12 @@ static void VAR_resid_plot_call (gpointer p, guint vecm, GtkWidget *w)
     }
 }
 
-static void VAR_resid_mplot_call (gpointer p, guint vecm, GtkWidget *w)
+static void system_resid_mplot_call (gpointer p, guint ci, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int err;
 
-    err = gretl_VAR_residual_mplot(var, datainfo);
+    err = gretl_system_residual_mplot(vwin->data, ci, datainfo);
     
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -3427,7 +3448,7 @@ static void VAR_resid_mplot_call (gpointer p, guint vecm, GtkWidget *w)
 
 static void add_VAR_menu_items (windata_t *vwin, int vecm)
 {
-    GtkItemFactoryEntry varitem;
+    GtkItemFactoryEntry item;
     const gchar *tpath = N_("/Tests");
     const gchar *gpath = N_("/Graphs");
     const gchar *mpath = N_("/Analysis");
@@ -3441,143 +3462,143 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     var = (GRETL_VAR *) vwin->data;
     neqns = gretl_VAR_get_n_equations(var);
 
-    varitem.accelerator = NULL;
-    varitem.callback = NULL;
-    varitem.callback_action = 0;
-    varitem.item_type = "<Branch>";
+    item.accelerator = NULL;
+    item.callback = NULL;
+    item.callback_action = 0;
+    item.item_type = "<Branch>";
 
-    varitem.path = g_strdup(_("/_Tests"));
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup(_("/_Tests"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
-    varitem.path = g_strdup(_("/_Analysis"));
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup(_("/_Analysis"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
-    varitem.path = g_strdup(_("/_Graphs"));
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup(_("/_Graphs"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
-    varitem.path = g_strdup(_(fpath));
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup(_(fpath));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
     
-    varitem.path = g_strdup(_(dpath));
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup(_(dpath));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* autocorrelation tests */
-    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
-				   _("Autocorrelation"));
-    varitem.callback = VAR_test_call;
-    varitem.callback_action = VAR_AUTOCORR_TEST;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup_printf("%s/%s", _(tpath), 
+				_("Autocorrelation"));
+    item.callback = VAR_test_call;
+    item.callback_action = VAR_AUTOCORR_TEST;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* ARCH tests */
-    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
-				   _("ARCH"));
-    varitem.callback = VAR_test_call;
-    varitem.callback_action = VAR_ARCH_TEST;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup_printf("%s/%s", _(tpath), 
+				_("ARCH"));
+    item.callback = VAR_test_call;
+    item.callback_action = VAR_ARCH_TEST;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* multivariate normality test */
-    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
-				   _("Normality of residuals"));
-    varitem.callback = VAR_test_call;
-    varitem.callback_action = VAR_NORMALITY_TEST;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup_printf("%s/%s", _(tpath), 
+				_("Normality of residuals"));
+    item.callback = VAR_test_call;
+    item.callback_action = VAR_NORMALITY_TEST;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     if (vecm) {
 	/* linear restrictions on cointegrating relations */
-	varitem.path = g_strdup_printf("%s/%s", _(tpath), 
-				       _("Linear restrictions"));
-	varitem.callback = gretl_callback;
-	varitem.callback_action = RESTRICT;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
+	item.path = g_strdup_printf("%s/%s", _(tpath), 
+				    _("Linear restrictions"));
+	item.callback = gretl_callback;
+	item.callback_action = RESTRICT;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
     } else {
 	/* regular VAR: omit exogenous variables test */
 	const int *xlist;
 
 	xlist = gretl_VAR_get_exo_list(var);
 	if (xlist != NULL) {
-	    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
-				       _("Omit exogenous variables..."));
-	    varitem.callback = selector_callback;
-	    varitem.callback_action = VAROMIT;
-	    varitem.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
+	    item.path = g_strdup_printf("%s/%s", _(tpath), 
+					_("Omit exogenous variables..."));
+	    item.callback = selector_callback;
+	    item.callback_action = VAROMIT;
+	    item.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	    g_free(item.path);
 	}	    
     }
 
     /* cross-equation VCV */
-    varitem.path = g_strdup_printf("%s/%s", _(mpath), 
-				   _("Cross-equation covariance matrix"));
-    varitem.callback = VAR_model_data_callback;
-    varitem.callback_action = VAR_VCV;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup_printf("%s/%s", _(mpath), 
+				_("Cross-equation covariance matrix"));
+    item.callback = VAR_model_data_callback;
+    item.callback_action = VAR_VCV;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* impulse response printout */
-    varitem.path = g_strdup_printf("%s/%s", _(mpath), _("Impulse responses"));
-    varitem.callback = VAR_model_data_callback;
-    varitem.callback_action = VAR_IRF;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);    
+    item.path = g_strdup_printf("%s/%s", _(mpath), _("Impulse responses"));
+    item.callback = VAR_model_data_callback;
+    item.callback_action = VAR_IRF;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);    
 
     /* variance decomp printout */
-    varitem.path = g_strdup_printf("%s/%s", _(mpath), 
-				   _("Forecast variance decomposition"));
-    varitem.callback = VAR_model_data_callback;
-    varitem.callback_action = VAR_DECOMP;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path); 
+    item.path = g_strdup_printf("%s/%s", _(mpath), 
+				_("Forecast variance decomposition"));
+    item.callback = VAR_model_data_callback;
+    item.callback_action = VAR_DECOMP;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path); 
 
     if (neqns <= 6) {
 	/* separate residual plot */
-	varitem.path = g_strdup_printf("%s/%s", _(gpath), _("Residual plots"));
-	varitem.callback = VAR_resid_mplot_call;
-	varitem.callback_action = vecm;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
+	item.path = g_strdup_printf("%s/%s", _(gpath), _("Residual plots"));
+	item.callback = system_resid_mplot_call;
+	item.callback_action = VAR;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
     }
 
     /* combined residual plot */
-    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("Combined residual plot"));
-    varitem.callback = VAR_resid_plot_call;
-    varitem.callback_action = vecm;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup_printf("%s/%s", _(gpath), _("Combined residual plot"));
+    item.callback = system_resid_plot_call;
+    item.callback_action = VAR;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* VAR inverse roots */
-    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("VAR inverse roots"));
-    varitem.callback = VAR_roots_plot_call;
-    varitem.callback_action = vecm;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    item.path = g_strdup_printf("%s/%s", _(gpath), _("VAR inverse roots"));
+    item.callback = VAR_roots_plot_call;
+    item.callback_action = vecm;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     if (neqns <= 4) {
 	/* Multiple IRFs */
-	varitem.path = g_strdup_printf("%s/%s", _(gpath), _("Impulse responses (combined)"));
-	varitem.callback = multiple_irf_plot_call;
-	varitem.callback_action = vecm;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
+	item.path = g_strdup_printf("%s/%s", _(gpath), _("Impulse responses (combined)"));
+	item.callback = multiple_irf_plot_call;
+	item.callback_action = vecm;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
     }
 
     for (i=0; i<neqns; i++) {
@@ -3587,51 +3608,51 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	/* forecast items */
 	dv = gretl_VAR_get_variable_number(var, i);
 	double_underscores(tmp, datainfo->varname[dv]);
-	varitem.path = g_strdup_printf("%s/%s", _(fpath), tmp);
-	varitem.callback = VAR_forecast_callback;
-	varitem.callback_action = i;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
+	item.path = g_strdup_printf("%s/%s", _(fpath), tmp);
+	item.callback = VAR_forecast_callback;
+	item.callback_action = i;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
 
 	/* save resids items */
-	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
-				       _("Residuals from equation"), i + 1);
-	varitem.callback = VAR_resid_callback;
-	varitem.callback_action = i;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
+	item.path = g_strdup_printf("%s/%s %d", _(dpath), 
+				    _("Residuals from equation"), i + 1);
+	item.callback = VAR_resid_callback;
+	item.callback_action = i;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
 
 	/* impulse response plots: make branch for target */
 	vtarg = gretl_VAR_get_variable_number(var, i);
 	double_underscores(tmp, datainfo->varname[vtarg]);
 	sprintf(maj, _("Response of %s"), tmp);
 
-	varitem.path = g_strdup_printf("%s/%s", _(gpath), maj);
-	varitem.callback = NULL;
-	varitem.callback_action = 0;
-	varitem.item_type = "<Branch>";
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
+	item.path = g_strdup_printf("%s/%s", _(gpath), maj);
+	item.callback = NULL;
+	item.callback_action = 0;
+	item.item_type = "<Branch>";
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
 
-	varitem.item_type = NULL;
+	item.item_type = NULL;
 	
 	for (j=0; j<neqns; j++) {
 	    GtkWidget *w;
 
 	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_VAR_get_variable_number(var, j);
-	    varitem.callback_action = j;
+	    item.callback_action = j;
 	    double_underscores(tmp, datainfo->varname[vshock]);
 	    sprintf(min, _("to %s"), tmp);
 
-	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
-	    varitem.callback = impulse_plot_call;
-	    varitem.callback_action = j;
-	    varitem.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
+	    item.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
+	    item.callback = impulse_plot_call;
+	    item.callback_action = j;
+	    item.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	    g_free(item.path);
 	    w = gtk_item_factory_get_widget_by_action(vwin->ifac, j);
 	    g_object_set_data(G_OBJECT(w), "targ", GINT_TO_POINTER(i));
 	}
@@ -3640,13 +3661,13 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     if (var->ci == VECM) {
 	/* save ECs items */
 	for (i=0; i<jrank(var); i++) {
-	    varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
-					   _("EC term"), i+1);
-	    varitem.callback = VECM_add_EC_data;
-	    varitem.callback_action = i;
-	    varitem.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
+	    item.path = g_strdup_printf("%s/%s %d", _(dpath), 
+					_("EC term"), i+1);
+	    item.callback = VECM_add_EC_data;
+	    item.callback_action = i;
+	    item.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	    g_free(item.path);
 	}
     }
 
@@ -3700,11 +3721,9 @@ static void SYS_test_call (gpointer p, guint code, GtkWidget *w)
 
 static void add_SYS_menu_items (windata_t *vwin)
 {
-    GtkItemFactoryEntry sysitem;
+    GtkItemFactoryEntry item;
     const gchar *tpath = N_("/Tests");
-#if 0
     const gchar *gpath = N_("/Graphs");
-#endif
     const gchar *fpath = N_("/Analysis/Forecasts");
     const gchar *dpath = N_("/Save");
     equation_system *sys;
@@ -3718,49 +3737,69 @@ static void add_SYS_menu_items (windata_t *vwin)
 
     neqns = sys->neqns;
 
-    sysitem.accelerator = NULL;
-    sysitem.callback = NULL;
-    sysitem.callback_action = 0;
-    sysitem.item_type = "<Branch>";
+    item.accelerator = NULL;
+    item.callback = NULL;
+    item.callback_action = 0;
+    item.item_type = "<Branch>";
 
-    /* model data menu path */
-    sysitem.path = g_strdup(_("/_Analysis"));
-    gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
-    g_free(sysitem.path);
+    item.path = g_strdup(_("/_Analysis"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
-    /* add to dataset menu path */
-    sysitem.path = g_strdup(_("/_Save"));
-    gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
-    g_free(sysitem.path);
+    item.path = g_strdup(_("/_Graphs"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
+
+    item.path = g_strdup(_("/_Save"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* multivariate normality test */
-    sysitem.path = g_strdup_printf("%s/%s", _(tpath), 
+    item.path = g_strdup_printf("%s/%s", _(tpath), 
 				   _("Normality of residuals"));
-    sysitem.callback = SYS_test_call;
-    sysitem.callback_action = SYS_NORMALITY;
-    sysitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
-    g_free(sysitem.path);  
+    item.callback = SYS_test_call;
+    item.callback_action = SYS_NORMALITY;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
+
+    if (neqns <= 6) {
+	/* separate residual plot */
+	item.path = g_strdup_printf("%s/%s", _(gpath), _("Residual plots"));
+	item.callback = system_resid_mplot_call;
+	item.callback_action = SYSTEM;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
+    }  
+
+    /* combined residual plot */
+    item.path = g_strdup_printf("%s/%s", _(gpath), _("Combined residual plot"));
+    item.callback = system_resid_plot_call;
+    item.callback_action = SYSTEM;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     for (i=0; i<neqns; i++) {
 	/* forecast items */
 	dv = sys->lists[i][1];
 	double_underscores(tmp, datainfo->varname[dv]);
-	sysitem.path = g_strdup_printf("%s/%s", _(fpath), tmp);
-	sysitem.callback = dummy_call; /* sys_forecast_callback */
-	sysitem.callback_action = i;
-	sysitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
-	g_free(sysitem.path);
+	item.path = g_strdup_printf("%s/%s", _(fpath), tmp);
+	item.callback = sys_forecast_callback;
+	item.callback_action = i;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
 
 	/* save resids items */
-	sysitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
+	item.path = g_strdup_printf("%s/%s %d", _(dpath), 
 				       _("Residuals from equation"), i + 1);
-	sysitem.callback = SYS_resid_callback;
-	sysitem.callback_action = i;
-	sysitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
-	g_free(sysitem.path);
+	item.callback = SYS_resid_callback;
+	item.callback_action = i;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
     }
 }
 

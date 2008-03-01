@@ -199,9 +199,9 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 			     const double **Z,
 			     const DATAINFO *pdinfo);
 
-int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo);
+int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo);
 
-int gretl_VAR_residual_mplot (const GRETL_VAR *var, const DATAINFO *pdinfo); 
+int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo); 
 
 int gretl_VAR_roots_plot (GRETL_VAR *var);
 

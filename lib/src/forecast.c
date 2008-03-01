@@ -21,6 +21,7 @@
 #include "matrix_extra.h"
 #include "forecast.h"
 #include "var.h"
+#include "system.h"
 
 #define ARF_DEBUG 0
 
@@ -2191,8 +2192,9 @@ static int VAR_display_forecast (const char *str, GRETL_VAR *var,
 	    opt |= OPT_Q;
 	}
 
-	fr = get_VAR_forecast(var, i, t1, t1, t2, (const double **) *pZ, 
-			      pdinfo, opt);
+	fr = get_system_forecast(var, VAR, i, t1, t1, t2, 
+				 (const double **) *pZ, 
+				 pdinfo, opt);
 
 	if (fr == NULL) {
 	    return E_ALLOC;
@@ -2308,8 +2310,10 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 }
 
 /**
- * get_VAR_forecast:
- * @var: the VAR system from which forecasts are wanted.
+ * get_system_forecast:
+ * @p: pointer to the VAR or equation system from which 
+ * forecasts are wanted.
+ * @ci: command index for system (%VAR or %SYSTEM)
  * @i: 0-based index for the variable to forecast, within
  * the VAR system (the dependent variable in the ith equation,
  * counting from 0).
@@ -2333,28 +2337,45 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  * a non-zero value indicates an error condition.
  */
 
-FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
-			    const double **Z, DATAINFO *pdinfo,
-			    gretlopt opt)
+FITRESID *get_system_forecast (void *p, int ci, int i, 
+			       int t0, int t1, int t2,
+			       const double **Z, DATAINFO *pdinfo,
+			       gretlopt opt)
 {
     FITRESID *fr;
-    const gretl_matrix *F;
-    const MODEL *pmod = NULL;
+    GRETL_VAR *var = NULL;
+    equation_system *sys = NULL;
+    const gretl_matrix *F = NULL;
     int nf = t2 - t1 + 1;
+    int df = nf;
     int yno, m, s, t;
 
     if (nf <= 0) {
 	return NULL;
     }
 
-    pmod = gretl_VAR_get_model(var, i);
-    if (pmod == NULL) {
-	return NULL;
+    if (ci == VAR || ci == VECM) {
+	const MODEL *pmod;
+
+	var = (GRETL_VAR *) p;
+	pmod = gretl_VAR_get_model(var, i);
+	if (pmod == NULL) {
+	    return NULL;
+	}
+	yno = pmod->list[1];
+	m = var->neqns;
+	df = pmod->dfd;
+	F = gretl_VAR_get_forecast_matrix(var, t0, t1, t2, Z, pdinfo, opt);
+    } else if (ci == SYSTEM) {
+	sys = (equation_system *) p;
+
+	yno = system_get_depvar(sys, i);
+	m = sys->neqns;
+	F = system_get_forecast_matrix(sys, t0, t1, t2, Z, pdinfo, opt);
     }
 
-    F = gretl_VAR_get_forecast_matrix(var, t0, t1, t2, Z, pdinfo, opt);
     if (F == NULL) {
-	fprintf(stderr, "gretl_VAR_get_forecast_matrix() gave NULL\n");
+	fprintf(stderr, "get_system_forecast: matrix F is NULL\n");
 	return NULL;
     }
 
@@ -2370,20 +2391,15 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
 	}
     }
 
-    fr->model_ci = var->ci;
+    fr->model_ci = ci;
 
     fr->t0 = t0;
     fr->t1 = t1;
     fr->t2 = t2;
 
-    yno = pmod->list[1];
-
-    strcpy(fr->depvar, gretl_model_get_depvar_name(pmod, pdinfo));
-
-    m = var->neqns;
+    strcpy(fr->depvar, pdinfo->varname[yno]);
 
     nf = 0;
-
     for (t=fr->t0, s=0; t<=fr->t2; t++, s++) {
 	fr->actual[t] = Z[yno][t];
 	fr->fitted[t] = gretl_matrix_get(F, s, i);
@@ -2398,16 +2414,18 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
     if (nf == 0) {
 	fr->err = E_MISSDATA;
     } else {
-	if (var->ci == VECM) {
+	if (ci == VECM) {
 	    /* asymptotic normal */
 	    fr->df = var->T;
 	    fr->tval = 1.96;
+	} else if (ci == SYSTEM) {
+	    fr->df = sys->n_obs;
+	    fr->tval = 1.96;
 	} else {
-	    fr->df = pmod->dfd;
+	    fr->df = df;
 	    fr->tval = tcrit95(fr->df);
 	}
 	fit_resid_set_dec_places(fr);
-	strcpy(fr->depvar, pdinfo->varname[yno]);
     }
 
     return fr;

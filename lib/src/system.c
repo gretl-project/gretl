@@ -2028,8 +2028,8 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
     }
 
     if (sys->ilist != NULL) {
-	/* job is already done */
-	return 0;
+	/* job is already done? */
+	goto precheck;
     }
 
     elist = sys->elist;
@@ -2111,6 +2111,8 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
     }
 
     sys->ilist = ilist;
+
+ precheck:
 
     /* now check for predetermined regressors? */
     if (pdinfo != NULL) {
@@ -2686,18 +2688,19 @@ static int *make_exogenous_list (equation_system *sys)
     return xlist;
 }
 
+#define SYSDEBUG 0
+
 static int sys_add_structural_form (equation_system *sys,
 				    const DATAINFO *pdinfo)
 {
     const int *elist = sys->elist;
-    const int *ilist = sys->ilist;
     const int *xlist = sys->xlist;
     int ne = sys->neqns;
     int ni = sys->nidents;
     int n = ne + ni;
     double x = 0.0;
     int type, col;
-    int i, j, vj, lag;
+    int i, j, k, vj, lag;
     int err = 0;
 
     /* get all the required lists in order */
@@ -2719,9 +2722,10 @@ static int sys_add_structural_form (equation_system *sys,
 	xlist = sys->xlist;
     }
 
+#if SYSDEBUG
     printlist(elist, "endogenous vars");
-    printlist(ilist, "instruments");
     printlist(xlist, "exogenous vars");
+#endif
 
     sys->maxlag = sys_max_predet_lag(sys);
 
@@ -2748,11 +2752,13 @@ static int sys_add_structural_form (equation_system *sys,
 
     /* process stochastic equations */
 
+    k = 0;
     for (i=0; i<sys->neqns && !err; i++) {
 	const MODEL *pmod = sys->models[i];
+	const int *mlist = pmod->list;
 
-	for (j=1; j<=pmod->list[0] && pmod->list[j]!=LISTSEP; j++) {
-	    vj = pmod->list[j];
+	for (j=1; j<=mlist[0] && mlist[j]!=LISTSEP; j++) {
+	    vj = mlist[j];
 	    type = categorize_variable(vj, sys, xlist, &col, &lag);
 	    x = (j > 1)? pmod->coeff[j-2] : 1.0;
 	    if (type == ENDOG) {
@@ -2803,6 +2809,7 @@ static int sys_add_structural_form (equation_system *sys,
 	}
     }
 
+#if SYSDEBUG
     gretl_matrix_print(sys->Gamma, "sys->Gamma");
 
     if (sys->A != NULL) {
@@ -2816,6 +2823,7 @@ static int sys_add_structural_form (equation_system *sys,
     } else {
 	fputs("No truly exogenous variables are present\n", stderr);
     }
+#endif
 
     return err;
 }
@@ -2839,10 +2847,7 @@ static int sys_add_forecast (equation_system *sys,
     int err = 0;
 
     if (sys->Gamma == NULL) {
-	err = sys_add_structural_form(sys, pdinfo);
-	if (err) {
-	    return err;
-	}
+	return E_DATA;
     }
 
     elist = sys->elist;
@@ -2973,14 +2978,26 @@ static int sys_add_forecast (equation_system *sys,
 const gretl_matrix *
 system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo, 
-			    gretlopt opt, int *err)
+			    gretlopt opt)
 {
-    *err = sys_add_forecast(sys, t0, t1, t2, Z, pdinfo, opt);
+    if (sys->F != NULL) {
+	int nf = t2 - t0 + 1;
+	int ft1 = gretl_matrix_get_t1(sys->F);
+
+	if (nf == gretl_matrix_rows(sys->F) && t1 == ft1) {
+	    ; /* already done, fine */
+	} else {
+	    gretl_matrix_free(sys->F);
+	    sys->F = NULL;
+	}
+    }
+
+    if (sys->F == NULL) {
+	sys_add_forecast(sys, t0, t1, t2, Z, pdinfo, opt);
+    }
 
     return sys->F;
 }
-
-#define DO_TEST_FORECAST 1
 
 int 
 system_save_and_print_results (equation_system *sys,
@@ -3049,7 +3066,11 @@ system_save_and_print_results (equation_system *sys,
 	print_system_overid_test(sys, prn);
     }
 
-#if DO_TEST_FORECAST
+    if (!err) {
+	err = sys_add_structural_form(sys, pdinfo);
+    }
+
+#if SYSDEBUG
     if (!err) {
 	/* test: try calculating forecast: use OPT_S for static */
 	int t0 = sys->t1, t1 = sys->t2+1, t2 = sys->t2;
@@ -3059,7 +3080,7 @@ system_save_and_print_results (equation_system *sys,
 	if (!err) {
 	    gretl_matrix_print(sys->F, "sys->F");
 	}
-    }	
+    }
 #endif
 
     return err;

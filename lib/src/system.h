@@ -202,7 +202,7 @@ int system_save_flag_is_set (equation_system *sys);
 const gretl_matrix *
 system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo, 
-			    gretlopt opt, int *err);
+			    gretlopt opt);
 
 #ifndef GRETLCLI
 

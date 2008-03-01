@@ -1214,6 +1214,11 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
 const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var)
 {
+    if (var->E != NULL) {
+	var->E->t1 = var->t1;
+	var->E->t2 = var->t2;
+    }
+
     return var->E;
 }
 

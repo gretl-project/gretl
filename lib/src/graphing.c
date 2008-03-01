@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "var.h"
+#include "system.h"
 #include "libset.h"
 #include "matrix_extra.h"
 #include "plotspec.h"
@@ -3380,20 +3381,29 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     return gnuplot_make_graph();
 }
 
-int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo)
+int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
 {
-    const gretl_matrix *E;
+    GRETL_VAR *var = NULL;
+    equation_system *sys = NULL;
+    const gretl_matrix *E = NULL;
     FILE *fp = NULL;
     const double *obs;
     int nvars, nobs;
     int i, v, t, t1, err;
 
-    E = gretl_VAR_get_residual_matrix(var);
+    if (ci == VAR) {
+	var = (GRETL_VAR *) p;
+	E = gretl_VAR_get_residual_matrix(var);
+    } else if (ci == SYSTEM) {
+	sys = (equation_system *) p;
+	E = sys->uhat;
+    }
+
     if (E == NULL) {
 	return E_DATA;
     }
 
-    t1 = gretl_VAR_get_t1(var);
+    t1 = E->t1;
 
     err = gnuplot_init(PLOT_REGULAR, &fp);
     if (err) {
@@ -3405,14 +3415,22 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo)
     nvars = gretl_matrix_cols(E);
     nobs = gretl_matrix_rows(E);
 
-    fputs("# VAR residual plot\n", fp);
+    fputs("# system residual plot\n", fp);
     fputs("set key top left\n", fp);
     fputs("set xzeroaxis\n", fp);
-    fprintf(fp, "set title '%s'\n", G_("VAR residuals"));
+    if (ci == VAR) {
+	fprintf(fp, "set title '%s'\n", G_("VAR residuals"));
+    } else {
+	fprintf(fp, "set title '%s'\n", G_("System residuals"));
+    }
 
     fputs("plot \\\n", fp);
     for (i=0; i<nvars; i++) {
-	v = gretl_VAR_get_variable_number(var, i);
+	if (var != NULL) {
+	    v = gretl_VAR_get_variable_number(var, i);
+	} else {
+	    v = system_get_depvar(sys, i);
+	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines", pdinfo->varname[v]);
 	if (i == nvars - 1) {
 	    fputc('\n', fp);
@@ -3443,9 +3461,11 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo)
     return gnuplot_make_graph();
 }
 
-int gretl_VAR_residual_mplot (const GRETL_VAR *var, const DATAINFO *pdinfo) 
+int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo) 
 {
-    const gretl_matrix *E;
+    const gretl_matrix *E = NULL;
+    GRETL_VAR *var = NULL;
+    equation_system *sys = NULL;
     FILE *fp = NULL;
     const double *obs;
     double startdate;
@@ -3454,7 +3474,14 @@ int gretl_VAR_residual_mplot (const GRETL_VAR *var, const DATAINFO *pdinfo)
     int i, v, t, t1;
     int err = 0;
 
-    E = gretl_VAR_get_residual_matrix(var);
+    if (ci == VAR) {
+	var = (GRETL_VAR *) p;
+	E = gretl_VAR_get_residual_matrix(var);
+    } else if (ci == SYSTEM) {
+	sys = (equation_system *) p;
+	E = sys->uhat;
+    }
+
     if (E == NULL) {
 	return E_DATA;
     }
@@ -3470,7 +3497,7 @@ int gretl_VAR_residual_mplot (const GRETL_VAR *var, const DATAINFO *pdinfo)
     }
 
     nobs = gretl_matrix_rows(E);
-    t1 = gretl_VAR_get_t1(var);
+    t1 = E->t1;
 
     err = gnuplot_init(PLOT_MULTI_SCATTER, &fp);
     if (err) {
@@ -3516,7 +3543,11 @@ int gretl_VAR_residual_mplot (const GRETL_VAR *var, const DATAINFO *pdinfo)
 
 	fputs("set noxlabel\n", fp);
 	fputs("set noylabel\n", fp);
-	v = gretl_VAR_get_variable_number(var, i);
+	if (var != NULL) {
+	    v = gretl_VAR_get_variable_number(var, i);
+	} else {
+	    v = system_get_depvar(sys, i);
+	}
 	fprintf(fp, "set title '%s'\n", pdinfo->varname[v]);
 
 	fputs("plot '-' using 1:2 with lines\n", fp);
