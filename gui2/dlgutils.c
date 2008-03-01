@@ -1142,6 +1142,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     if (cmdcode == SMPLBOOL && dataset_is_restricted()) {
 	sample_replace_buttons(top_vbox, d);
     } else if (cmdcode == SYSTEM) {
+	dialog_option_switch(top_vbox, d, OPT_V);
 	system_estimator_list(top_vbox, d);
     } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);

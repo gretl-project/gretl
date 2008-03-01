@@ -3391,7 +3391,7 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
     int nvars, nobs;
     int i, v, t, t1, err;
 
-    if (ci == VAR) {
+    if (ci == VAR || ci == VECM) {
 	var = (GRETL_VAR *) p;
 	E = gretl_VAR_get_residual_matrix(var);
     } else if (ci == SYSTEM) {
@@ -3474,7 +3474,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo)
     int i, v, t, t1;
     int err = 0;
 
-    if (ci == VAR) {
+    if (ci == VAR || ci == VECM) {
 	var = (GRETL_VAR *) p;
 	E = gretl_VAR_get_residual_matrix(var);
     } else if (ci == SYSTEM) {

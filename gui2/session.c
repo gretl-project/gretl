@@ -879,11 +879,23 @@ int maybe_add_model_to_session (void *ptr, GretlObjType type)
     return real_add_model_to_session(ptr, name, type);
 }
 
-void model_add_as_icon (gpointer p, guint type, GtkWidget *w)
+static int model_type_from_vwin (windata_t *vwin)
+{
+    if (vwin->role == SYSTEM) {
+	return GRETL_OBJ_SYS;
+    } else if (vwin->role == VAR || vwin->role == VECM) {
+	return GRETL_OBJ_VAR;
+    } else {
+	return GRETL_OBJ_EQN;
+    }
+}
+
+void model_add_as_icon (gpointer p, guint u, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     void *ptr = vwin->data;
     const char *name;
+    int type;
 
     if (ptr == NULL) {
 	return;
@@ -897,7 +909,8 @@ void model_add_as_icon (gpointer p, guint type, GtkWidget *w)
 	infobox(_("Model is already saved"));
 	return;
     }
-
+    
+    type = model_type_from_vwin(vwin);
     name = gretl_object_get_name(ptr, type);
 
     if (real_add_model_to_session(ptr, name, type)) {
@@ -907,11 +920,11 @@ void model_add_as_icon (gpointer p, guint type, GtkWidget *w)
     mark_session_changed();
 }
 
-void model_add_as_icon_and_close (gpointer p, guint type, GtkWidget *w)
+void model_add_as_icon_and_close (gpointer p, guint u, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
 
-    model_add_as_icon(p, type, w);
+    model_add_as_icon(p, u, w);
 
     if (!window_is_busy(vwin)) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));

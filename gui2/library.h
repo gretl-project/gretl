@@ -219,11 +219,9 @@ void do_remove_obs (gpointer p, guint u, GtkWidget *w);
 
 void add_logs_etc (gpointer p, guint action, GtkWidget *w);
 
-int add_system_resid (gpointer p, int eqnum, int ci);
+void add_system_resid (gpointer p, int eqnum, GtkWidget *w);
 
 int add_fit_resid (MODEL *pmod, int code, int undo);
-
-int add_system_resid (gpointer p, int eqnum, int ci);
 
 void add_model_stat (MODEL *pmod, int which);
 

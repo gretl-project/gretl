@@ -889,7 +889,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (err) {
 	fprintf(stderr, "system_estimate: after single-equation "
-		"estimation, err = %d", err);
+		"estimation, err = %d\n", err);
 	goto cleanup;
     }
 

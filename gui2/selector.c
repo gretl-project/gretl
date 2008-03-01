@@ -171,6 +171,7 @@ static int arma_const = 1;
 static int arma_x12 = 0;
 static int selvar;
 static int jcase = 2;
+static int verbose;
 
 static int *xlist;
 static int *instlist;
@@ -2224,7 +2225,10 @@ static void construct_cmdlist (selector *sr)
 	    } else {
 		libset_set_bool("fcp", 0);
 	    }
-	}	
+	}
+	if (sr->opts & OPT_V) {
+	    verbose = 1;
+	}
     }
 }
 
@@ -3261,7 +3265,7 @@ static void build_selector_switches (selector *sr)
 	gtk_widget_show_all(hbox);
 #else
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
-	pack_switch(tmp, sr, TRUE, FALSE, OPT_V, 0);
+	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
 #endif
     } else if (sr->code == COINT2 || sr->code == VECM || 
 	       sr->code == VAR || sr->code == VLAGSEL) {
@@ -3272,7 +3276,7 @@ static void build_selector_switches (selector *sr)
 	    pack_switch(tmp, sr, vartrend, FALSE, OPT_T, 0);
 	} else {
 	    tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
-	    pack_switch(tmp, sr, FALSE, FALSE, OPT_V, 0);
+	    pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
 	}
 	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
 	pack_switch(tmp, sr, 

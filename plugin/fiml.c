@@ -916,7 +916,7 @@ int fiml_driver (equation_system *sys, double ***pZ,
     double crit = 1.0;
     double tol = 1.0e-12; /* over-ambitious? */
     double bigtol = 1.0e-9;
-    int verbose = ((opt & OPT_Q) == 0);
+    int verbose = (opt & OPT_V);
     int iters = 0;
     int err = 0;
 

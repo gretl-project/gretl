@@ -1966,40 +1966,10 @@ static int max_numchars (const gretl_matrix *m)
     return cmax;
 }
 
-void 
-gretl_matrix_print_constructor (const gretl_matrix *m, const char *s, 
-				PRN *prn)
-{
-    double x;
-    int i, j;
-
-    if (prn == NULL || m == NULL || m->val == NULL ||
-	s == NULL || *s == '\0') {
-	return;
-    }
-
-    pprintf(prn, "matrix %s = { \\\n", s);
-
-    for (i=0; i<m->rows; i++) {
-	for (j=0; j<m->cols; j++) {
-	    x = gretl_matrix_get(m, i, j);
-	    pprintf(prn, " %.14g", x);
-	    if (j == m->cols - 1) {
-		if (i == m->rows - 1) {
-		    pputs(prn, " }\n");
-		} else {
-		    pputs(prn, " ; \\\n");
-		}
-	    } else {
-		pputc(prn, ',');
-	    }
-	}
-    }
-}
-
 static void 
 real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
-			  int packed, int errout, PRN *prn)
+			  int packed, int errout, 
+			  const char **heads, PRN *prn)
 {
     char numstr[32];
     double x;
@@ -2027,6 +1997,13 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	}
     }
 
+    if (heads != NULL) {
+	for (j=0; j<m->cols; j++) {
+	    pprintf(prn, "%12s ", heads[j]);
+	}
+	pputc(prn, '\n');
+    }
+
     if (packed) {
 	int v, n;
 
@@ -2047,10 +2024,13 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	    pputc(prn, '\n');
 	}
     } else {
-	int cmax = max_numchars(m);
+	int cmax = 0;
 
-	if (cmax > 5) {
-	    cmax = 0;
+	if (heads == NULL) {
+	    cmax = max_numchars(m);
+	    if (cmax > 5) {
+		cmax = 0;
+	    }
 	} 
 
 	for (i=0; i<m->rows; i++) {
@@ -2083,7 +2063,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 void 
 gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 {
-    real_matrix_print_to_prn(m, msg, 0, 0, prn);
+    real_matrix_print_to_prn(m, msg, 0, 0, NULL, prn);
 }
 
 /**
@@ -2098,8 +2078,27 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
 
-    real_matrix_print_to_prn(m, msg, 0, 1, prn);
+    real_matrix_print_to_prn(m, msg, 0, 1, NULL, prn);
     gretl_print_destroy(prn);
+}
+
+/**
+ * gretl_matrix_print_with_col_heads:
+ * @m: matrix to print.
+ * @title: accompanying title (or %NULL if no title is wanted).
+ * @heads: array of strings to identify the columns.
+ * @prn: pointer to gretl printing struct.
+ *
+ * Prints the matrix @m to @prn, with column headings given
+ * by @heads.
+ */
+
+void gretl_matrix_print_with_col_heads (const gretl_matrix *m, 
+					const char *title,
+					const char **heads,
+					PRN *prn)
+{
+    real_matrix_print_to_prn(m, title, 0, 0, heads, prn);
 }
 
 /**
@@ -2115,7 +2114,7 @@ void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
 
-    real_matrix_print_to_prn(m, msg, 1, 0, prn);
+    real_matrix_print_to_prn(m, msg, 1, 0, NULL, prn);
     gretl_print_destroy(prn);
 }
 

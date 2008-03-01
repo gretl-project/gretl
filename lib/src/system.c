@@ -995,7 +995,8 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
  * @sys: pre-defined equation system.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: may include %OPT_Q for relatively quiet operation.
+ * @opt: may include %OPT_Q for relatively quiet operation;
+ * %OPT_V for more verbose.
  * @prn: printing struct.
  * 
  * Estimate a pre-defined equation system and print the results
@@ -1079,6 +1080,7 @@ equation_system_estimate (equation_system *sys,
  * @sys: pre-defined equation system.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
+ * @opt: may include %OPT_V for verbose operaton.
  * @prn: printing struct.
  * 
  * Finalize an equation system, e.g. in response to "end system".
@@ -1092,9 +1094,8 @@ equation_system_estimate (equation_system *sys,
 
 int equation_system_finalize (equation_system *sys, 
 			      double ***pZ, DATAINFO *pdinfo,
-			      PRN *prn)
+			      gretlopt opt, PRN *prn)
 {
-    gretlopt opt = OPT_NONE;
     int err = 0;
 
     gretl_error_clear();

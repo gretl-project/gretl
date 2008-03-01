@@ -60,9 +60,9 @@ void add_boxplot_to_session (const char *boxtmp);
 int cli_add_graph_to_session (const char *fname, const char *gname,
 			      GretlObjType type);
 
-void model_add_as_icon (gpointer p, guint type, GtkWidget *w);
+void model_add_as_icon (gpointer p, guint u, GtkWidget *w);
 
-void model_add_as_icon_and_close (gpointer p, guint type, GtkWidget *w);
+void model_add_as_icon_and_close (gpointer p, guint u, GtkWidget *w);
 
 int maybe_add_model_to_session (void *ptr, GretlObjType type);
 

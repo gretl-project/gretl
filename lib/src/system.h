@@ -101,7 +101,7 @@ int system_parse_line (equation_system *sys,
 
 int equation_system_finalize (equation_system *sys, 
 			      double ***pZ, DATAINFO *pdinfo,
-			      PRN *prn);
+			      gretlopt opt, PRN *prn);
 
 int 
 equation_system_estimate (equation_system *sys, 

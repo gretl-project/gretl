@@ -4434,7 +4434,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case END:
 	if (!strcmp(cmd->param, "system")) {
-	    err = equation_system_finalize(s->sys, pZ, pdinfo, prn);
+	    err = equation_system_finalize(s->sys, pZ, pdinfo, cmd->opt, prn);
 	    if (err || s->sys->name == NULL) {
 		s->sys = NULL;
 	    } else {

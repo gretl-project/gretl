@@ -552,8 +552,10 @@ void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg);
 
 void debug_print_matrix (const gretl_matrix *m, const char *msg);
 
-void gretl_matrix_print_constructor (const gretl_matrix *m, const char *s, 
-				     PRN *prn);
+void gretl_matrix_print_with_col_heads (const gretl_matrix *m, 
+					const char *title,
+					const char **heads,
+					PRN *prn);
 
 void gretl_matrix_set_t1 (gretl_matrix *m, int t);
 

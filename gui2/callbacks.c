@@ -300,16 +300,6 @@ void fit_resid_callback (gpointer data, guint code, GtkWidget *widget)
     add_fit_resid(pmod, code, 0);
 }
 
-void VAR_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
-{
-    add_system_resid(data, eqnum, VAR);
-}
-
-void SYS_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
-{
-    add_system_resid(data, eqnum, SYSTEM);
-}
-
 void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data; 

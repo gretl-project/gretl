@@ -2454,6 +2454,7 @@ static void maybe_grab_system_name (const char *s, char *name)
 void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
     equation_system *my_sys = NULL;
+    gretlopt opt = OPT_NONE;
     gchar *buf;
     PRN *prn;
     char sysname[32] = {0};
@@ -2469,6 +2470,10 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
     }
 
     method = edit_dialog_get_opt(dlg);
+    if (method & OPT_V) {
+	opt = OPT_V;
+	method &= ~OPT_V;
+    }
 
     bufgets_init(buf);
     *sysname = 0;
@@ -2543,7 +2548,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return; 
     }
 
-    err = equation_system_finalize(my_sys, &Z, datainfo, prn);
+    err = equation_system_finalize(my_sys, &Z, datainfo, opt, prn);
     if (err) {
 	errmsg(err, prn);
     } else {
@@ -2565,6 +2570,8 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
     equation_system *my_sys;
+    gretlopt opt = OPT_NONE;
+    int method;
     PRN *prn;
     int err = 0;
 
@@ -2573,7 +2580,13 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    my_sys->method = edit_dialog_get_opt(dlg);
+    method = edit_dialog_get_opt(dlg);
+    if (method & OPT_V) {
+	opt = OPT_V;
+	method &= ~OPT_V;
+    }
+
+    my_sys->method = method;
 
     close_dialog(dlg);
 
@@ -2582,7 +2595,7 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
     }
 
     err = equation_system_estimate(my_sys, &Z, datainfo,
-				   OPT_NONE, prn);
+				   opt, prn);
     if (err) {
 	errmsg(err, prn);
     } 
@@ -4328,12 +4341,13 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     return 0;
 }
 
-int add_system_resid (gpointer p, int eqnum, int ci)
+void add_system_resid (gpointer p, int eqnum, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
+    int ci = vwin->role;
     int err, v;
 
-    if (ci == VAR) {
+    if (ci == VAR || ci == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 
 	err = gretl_VAR_add_resids_to_dataset(var, eqnum,
@@ -4347,7 +4361,7 @@ int add_system_resid (gpointer p, int eqnum, int ci)
 
     if (err) {
 	gui_errmsg(err);
-	return err;
+	return;
     }
 
     v = datainfo->v - 1;
@@ -4358,13 +4372,11 @@ int add_system_resid (gpointer p, int eqnum, int ci)
     if (*datainfo->varname[v] == '\0') {
 	/* the user canceled */
 	dataset_drop_last_variables(1, &Z, datainfo);
-	return 0;
+	return;
     }    
 
     populate_varlist();
     mark_dataset_as_modified();
-
-    return 0;
 }
 
 void add_model_stat (MODEL *pmod, int which)
