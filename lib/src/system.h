@@ -199,6 +199,8 @@ void system_unset_save_flag (equation_system *sys);
 
 int system_save_flag_is_set (equation_system *sys);
 
+int system_print_VCV (equation_system *sys, PRN *prn);
+
 const gretl_matrix *
 system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo, 

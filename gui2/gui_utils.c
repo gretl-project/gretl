@@ -3024,7 +3024,8 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
 
 enum {
     SYS_DATA_RESIDS,
-    SYS_DATA_FITTED
+    SYS_DATA_FITTED,
+    SYS_DATA_VCV
 };
 
 static void system_data_callback (gpointer p, guint code, GtkWidget *w)
@@ -3033,7 +3034,6 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     const gretl_matrix *M = NULL;
-    const char **heads = NULL;
     char *title = NULL;
     gchar *wtitle = NULL;
     PRN *prn;
@@ -3049,50 +3049,64 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
 	return;
     }
 
-    if (code == SYS_DATA_RESIDS) {
+    if (code == SYS_DATA_VCV) {
+	if (var != NULL) {
+	    title = g_strdup(_("gretl: VAR covariance matrix"));
+	    err = gretl_VAR_print_VCV(var, prn);
+	} else {
+	    title = g_strdup(_("gretl: system covariance matrix"));
+	    err = system_print_VCV(sys, prn);
+	}
+    } else if (code == SYS_DATA_RESIDS) {
+	const char **heads = NULL;
+
 	if (var != NULL) {
 	    M = gretl_VAR_get_residual_matrix(var);
 	} else {
 	    M = sys->uhat;
 	}
-    }
 
-    if (M == NULL) {
-	err = E_DATA;
-    } else {
-	k = gretl_matrix_cols(M);
-	heads = malloc(k * sizeof *heads);
-	if (heads == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	int i, v;
-
-	for (i=0; i<k && !err; i++) {
-	    v = (var != NULL)? gretl_VAR_get_variable_number(var, i) :
-		sys->lists[i][1];
-	    if (v < 0 || v >= datainfo->v) {
-		err = E_DATA;
-	    } else {
-		heads[i] = datainfo->varname[v];
+	if (M == NULL) {
+	    err = E_DATA;
+	} else {
+	    k = gretl_matrix_cols(M);
+	    heads = malloc(k * sizeof *heads);
+	    if (heads == NULL) {
+		err = E_ALLOC;
 	    }
 	}
+
+	if (!err) {
+	    int i, v;
+
+	    for (i=0; i<k && !err; i++) {
+		v = (var != NULL)? gretl_VAR_get_variable_number(var, i) :
+		    sys->lists[i][1];
+		if (v < 0 || v >= datainfo->v) {
+		    err = E_DATA;
+		} else {
+		    heads[i] = datainfo->varname[v];
+		}
+	    }
+	}
+
+	if (!err) {
+	    title = gretl_strdup(_("System residuals"));
+	    wtitle = g_strdup_printf("gretl: %s", _("System residuals"));
+	    gretl_matrix_print_with_col_heads(M, title, heads, prn);
+	}
+
+	free(heads);
     }
 
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	title = gretl_strdup(_("System residuals"));
-	gretl_matrix_print_with_col_heads(M, title, heads, prn);
-	wtitle = g_strdup_printf("gretl: %s", _("System residuals"));
-	/* FIXME matrix data */
+	/* FIXME: add matrix as saveable data */
 	view_buffer(prn, 80, 400, wtitle, PRINT, NULL);
     }
 
-    free(heads);
     free(title);
     g_free(wtitle);
 }
@@ -3110,25 +3124,21 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 
     if (bufopen(&prn)) return;
 
-    if (code != VAR_VCV) {
-	h = default_VAR_horizon(datainfo);
-	title = g_strdup_printf("gretl: %s", 
-				(code == VAR_IRF)? _("impulse responses") :
-				_("variance decompositions"));
-	err = checks_dialog(title, NULL, NULL, 0, NULL, 0, NULL,
-			    &h, _("forecast horizon (periods):"),
-			    2, datainfo->n / 2, 0);
-	g_free(title);
-	if (err < 0) {
-	    gretl_print_destroy(prn);
-	    return;
-	} 
-    }
+    h = default_VAR_horizon(datainfo);
+    title = g_strdup_printf("gretl: %s", 
+			    (code == VAR_IRF)? _("impulse responses") :
+			    _("variance decompositions"));
+    err = checks_dialog(title, NULL, NULL, 0, NULL, 0, NULL,
+			&h, _("forecast horizon (periods):"),
+			2, datainfo->n / 2, 0);
+    g_free(title);
 
-    if (code == VAR_VCV) {
-	title = g_strdup(_("gretl: VAR covariance matrix"));
-	err = gretl_VAR_print_VCV(var, prn);
-    } else if (code == VAR_IRF) {
+    if (err < 0) {
+	gretl_print_destroy(prn);
+	return;
+    } 
+
+    if (code == VAR_IRF) {
 	title = g_strdup(_("gretl: VAR impulse responses"));
 	err = gretl_VAR_print_all_impulse_responses(var, datainfo, h, prn);
     } else if (code == VAR_DECOMP) {
@@ -3607,6 +3617,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	}	    
     }
 
+    /* Display residual matrix */
     item.path = g_strdup_printf("%s/%s", _(mpath), 
 				_("Display residuals, all equations"));
     item.callback = system_data_callback;
@@ -3615,16 +3626,16 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
     g_free(item.path);
 
-    if (ci == VAR || ci == VECM) {
-	/* cross-equation VCV */
-	item.path = g_strdup_printf("%s/%s", _(mpath), 
-				    _("Cross-equation covariance matrix"));
-	item.callback = VAR_model_data_callback;
-	item.callback_action = VAR_VCV;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+    /* Display VCV matrix */
+    item.path = g_strdup_printf("%s/%s", _(mpath), 
+				_("Cross-equation covariance matrix"));
+    item.callback = system_data_callback;
+    item.callback_action = SYS_DATA_VCV;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
+    if (ci == VAR || ci == VECM) {
 	/* impulse response printout */
 	item.path = g_strdup_printf("%s/%s", _(mpath), _("Impulse responses"));
 	item.callback = VAR_model_data_callback;

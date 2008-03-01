@@ -2844,7 +2844,7 @@ static int sys_add_forecast (equation_system *sys,
 			     gretlopt opt)
 {
     gretl_matrix *G = NULL;
-    gretl_matrix *y1 = NULL, *x = NULL;
+    gretl_matrix *yl = NULL, *x = NULL;
     gretl_matrix *y = NULL, *yh = NULL;
     const int *elist;
     const int *ilist;
@@ -2892,8 +2892,8 @@ static int sys_add_forecast (equation_system *sys,
     }
 
     if (sys->maxlag > 0) {
-	y1 = gretl_matrix_alloc(sys->maxlag * elist[0], 1);
-	if (y1 == NULL) {
+	yl = gretl_matrix_alloc(sys->maxlag * elist[0], 1);
+	if (yl == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
@@ -2912,12 +2912,11 @@ static int sys_add_forecast (equation_system *sys,
 
 	/* lags of endogenous vars */
 	if (sys->maxlag > 0) {
-	    gretl_matrix_zero(y1);
+	    gretl_matrix_zero(yl);
 	    for (i=1; i<=ilist[0] && !miss; i++) {
 		vi = ilist[i];
 		type = categorize_variable(vi, sys, xlist, &col, &lag);
 		if (type == PREDET) {
-		    col += n * (lag - 1);
 		    if (t < t1 || staticfc || s - lag < 0) {
 			/* pre-forecast value */
 			xit = Z[vi][t];
@@ -2928,16 +2927,21 @@ static int sys_add_forecast (equation_system *sys,
 		    if (na(xit)) {
 			miss = 1;
 		    } else {
-			y1->val[col] = xit;
+			col += n * (lag - 1);
+			yl->val[col] = xit;
 		    }
 		}
 	    }
 	    if (!miss) {
-		gretl_matrix_multiply(sys->A, y1, y);
+		gretl_matrix_multiply(sys->A, yl, y);
 	    }
 	} else {
 	    gretl_matrix_zero(y);
 	}
+
+#if SYSDEBUG
+	gretl_matrix_print(yl, "yl");
+#endif
 
 	/* exogenous vars */
 	if (xlist[0] > 0 && !miss) {
@@ -2973,7 +2977,7 @@ static int sys_add_forecast (equation_system *sys,
 
     gretl_matrix_free(y);
     gretl_matrix_free(yh);
-    gretl_matrix_free(y1);
+    gretl_matrix_free(yl);
     gretl_matrix_free(x);
     gretl_matrix_free(G);
 
@@ -3088,7 +3092,7 @@ system_save_and_print_results (equation_system *sys,
 #if SYSDEBUG
     if (!err) {
 	/* test: try calculating forecast: use OPT_S for static */
-	int t0 = sys->t1, t1 = sys->t2+1, t2 = sys->t2;
+	int t0 = sys->t1, t1 = sys->t2+1, t2 = pdinfo->n-1;
 
 	err = sys_add_forecast(sys, t0, t1, t2, (const double **) *pZ, 
 			       pdinfo, OPT_NONE);
@@ -3097,6 +3101,31 @@ system_save_and_print_results (equation_system *sys,
 	}
     }
 #endif
+
+    return err;
+}
+
+int system_print_VCV (equation_system *sys, PRN *prn)
+{
+    gretl_matrix *S;
+    double ldet;
+    int err = 0;
+
+    if (sys->sigma == NULL) {
+	return E_DATA;
+    }
+
+    S = gretl_matrix_copy(sys->sigma);
+    if (S == NULL) {
+	return E_ALLOC;
+    }
+
+    ldet = gretl_matrix_log_determinant(S, &err);
+    if (!err) {
+	print_contemp_covariance_matrix(sys->sigma, ldet, prn);
+    }
+
+    gretl_matrix_free(S);
 
     return err;
 }

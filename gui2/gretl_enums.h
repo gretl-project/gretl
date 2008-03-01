@@ -67,7 +67,6 @@ enum extra_cmds {
     KERNEL_DENSITY,
     CREATE_DATASET,
     HCCME,
-    VAR_VCV,
     VAR_IRF,
     VAR_DECOMP,
     IRF_BOOT,
