@@ -3019,6 +3019,11 @@ system_save_and_print_results (equation_system *sys,
     int i, j = 0;
     int err;
 
+    if (sys->uhat != NULL) {
+	sys->uhat->t1 = sys->t1;
+	sys->uhat->t2 = sys->t2;
+    }
+
     err = system_add_yhat(sys);
 
     if (opt & OPT_Q) {

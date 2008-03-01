@@ -3022,6 +3022,81 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
     }
 }
 
+enum {
+    SYS_DATA_RESIDS,
+    SYS_DATA_FITTED
+};
+
+static void system_data_callback (gpointer p, guint code, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = NULL;
+    equation_system *sys = NULL;
+    const gretl_matrix *M = NULL;
+    const char **heads = NULL;
+    char *title = NULL;
+    gchar *wtitle = NULL;
+    PRN *prn;
+    int k = 0, err = 0;
+
+    if (vwin->role == SYSTEM) {
+	sys = (equation_system *) vwin->data;
+    } else {
+	var = (GRETL_VAR *) vwin->data;
+    } 
+
+    if ((var == NULL && sys == NULL) || bufopen(&prn)) {
+	return;
+    }
+
+    if (code == SYS_DATA_RESIDS) {
+	if (var != NULL) {
+	    M = gretl_VAR_get_residual_matrix(var);
+	} else {
+	    M = sys->uhat;
+	}
+    }
+
+    if (M == NULL) {
+	err = E_DATA;
+    } else {
+	k = gretl_matrix_cols(M);
+	heads = malloc(k * sizeof *heads);
+	if (heads == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	int i, v;
+
+	for (i=0; i<k && !err; i++) {
+	    v = (var != NULL)? gretl_VAR_get_variable_number(var, i) :
+		sys->lists[i][1];
+	    if (v < 0 || v >= datainfo->v) {
+		err = E_DATA;
+	    } else {
+		heads[i] = datainfo->varname[v];
+	    }
+	}
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	title = gretl_strdup(_("System residuals"));
+	gretl_matrix_print_with_col_heads(M, title, heads, prn);
+	wtitle = g_strdup_printf("gretl: %s", _("System residuals"));
+	/* FIXME matrix data */
+	view_buffer(prn, 80, 400, wtitle, PRINT, NULL);
+    }
+
+    free(heads);
+    free(title);
+    g_free(wtitle);
+}
+
 static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
@@ -3531,6 +3606,14 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    g_free(item.path);
 	}	    
     }
+
+    item.path = g_strdup_printf("%s/%s", _(mpath), 
+				_("Display residuals, all equations"));
+    item.callback = system_data_callback;
+    item.callback_action = SYS_DATA_RESIDS;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     if (ci == VAR || ci == VECM) {
 	/* cross-equation VCV */
