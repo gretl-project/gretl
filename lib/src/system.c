@@ -2248,6 +2248,15 @@ equation_system_get_matrix (const equation_system *sys, int idx,
     case M_SIGMA:
 	M = gretl_matrix_copy(sys->sigma);
 	break;
+    case M_SYSGAM:
+	M = gretl_matrix_copy(sys->Gamma);
+	break;
+    case M_SYSA:
+	M = gretl_matrix_copy(sys->A);
+	break;
+    case M_SYSB:
+	M = gretl_matrix_copy(sys->B);
+	break;
     default:
 	*err = E_BADSTAT;
 	break;

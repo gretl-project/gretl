@@ -112,6 +112,9 @@ struct str_table mvars[] = {
     { M_JS01,    "$s01" },
     { M_HAUSMAN, "$hausman" },
     { M_SARGAN,  "$sargan" },
+    { M_SYSGAM,  "$sysGamma" },
+    { M_SYSA,    "$sysA" },
+    { M_SYSB,    "$sysB" },
     { 0,         NULL }
 };
 

@@ -71,6 +71,9 @@ typedef enum {
     M_JS01,       /* VECM residual cross-product matrix */
     M_HAUSMAN,    /* Hausman test after tsls */
     M_SARGAN,     /* Sargan over-identification test after tsls */
+    M_SYSGAM,     /* Parameter matrix Gamma (simultaneous systems) */
+    M_SYSA,       /* Parameter matrix A (simultaneous systems) */
+    M_SYSB,       /* Parameter matrix B (simultaneous systems) */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 
