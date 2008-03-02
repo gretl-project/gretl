@@ -2370,7 +2370,8 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	sys = (equation_system *) p;
 
 	yno = system_get_depvar(sys, i);
-	m = sys->neqns;
+	/* m = sys->neqns; */
+	m = 0;
 	F = system_get_forecast_matrix(sys, t0, t1, t2, Z, pdinfo, opt);
     }
 
@@ -2384,7 +2385,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	return NULL;
     }
     
-    if (!(opt & OPT_S)) {
+    if (m > 0 && !(opt & OPT_S)) {
 	if (fit_resid_add_sderr(fr)) {
 	    free_fit_resid(fr);
 	    return NULL;
