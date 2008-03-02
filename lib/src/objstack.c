@@ -817,7 +817,7 @@ static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
 	equation_system *sys = (equation_system *) p;
 
 	if (idx == M_T) {
-	    x = sys->n_obs;
+	    x = sys->T;
 	} else if (idx == M_LNL) {
 	    x = sys->ll;
 	} else if (idx == M_ESS) {
@@ -1180,7 +1180,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	    err = 1;
 	}
     } else if (type == GRETL_OBJ_SYS) {
-	if (ci != RESTRICT && ci != TESTUHAT) {
+	if (ci != RESTRICT && ci != TESTUHAT && ci != FCASTERR) {
 	    err = E_NOTIMP;
 	}
     } else if (type == GRETL_OBJ_VAR) {

@@ -53,7 +53,7 @@ struct equation_system_ {
     int method;                 /* estimation method */
     int neqns;                  /* number of stochastic equations */
     int nidents;                /* number of identities */
-    int n_obs;                  /* number of observations per equation */
+    int T;                      /* number of observations per equation */
     int n_predet;               /* number of predetermined regressors */
     int maxlag;                 /* max lag of endogenous variable */
     int iters;                  /* number of iterations taken */
@@ -64,6 +64,7 @@ struct equation_system_ {
     double ess;                 /* total error sum of squares */
     double diag;                /* test stat for diagonal covariance matrix */
     double bdiff;               /* summary stat for change in coefficients */
+    double ldet;                /* log-determinant of covariance matrix */
     int **lists;                /* regression lists for stochastic equations */
     int *elist;                 /* list of endogenous variables */
     int *ilist;                 /* list of instruments */
@@ -81,6 +82,7 @@ struct equation_system_ {
     gretl_matrix *B;            /* structural form B matrix (exogenous) */
     gretl_matrix *A;            /* structural form A matrix (lagged endogenous) */
     gretl_matrix *F;            /* forecast matrix */
+    gretl_matrix *Ve;           /* reduced-form error covariance matrix */
     MODEL **models;             /* set of pointers to per-equation models: just
 				   convenience pointers -- these should NOT be
 				   freed as part of sys cleanup
@@ -199,7 +201,10 @@ void system_unset_save_flag (equation_system *sys);
 
 int system_save_flag_is_set (equation_system *sys);
 
-int system_print_VCV (equation_system *sys, PRN *prn);
+int gretl_system_print (const equation_system *sys, const DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn);
+
+int system_print_VCV (const equation_system *sys, PRN *prn);
 
 const gretl_matrix *
 system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,

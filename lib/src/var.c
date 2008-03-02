@@ -766,7 +766,7 @@ static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
 	gretl_matrix *vd;
 	int totcol;
 
-	vd = gretl_VAR_get_fcast_decomp(var, i, nf - pre_obs);
+	vd = gretl_VAR_get_fcast_decomp(var, i, nf - pre_obs, VDECOMP_RAW);
 	if (vd != NULL) {
 	    totcol = gretl_matrix_cols(vd) - 1;
 	    for (s=0; s<nf; s++) {
@@ -1413,7 +1413,8 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 }
 
 gretl_matrix *
-gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods) 
+gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
+			    int mode) 
 {
     int rows = var->neqns * effective_order(var);
     gretl_matrix *ctmp = NULL, *idx = NULL, *vtmp = NULL;
@@ -1481,18 +1482,19 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods)
 	}
     }
 
-    /* normalize variance contributions as percentage shares */
     for (t=0; t<periods && !err; t++) {
-	double vtot = 0.0;
-	double vi;
+	double vi, vtot = 0.0;
 
 	for (i=0; i<var->neqns; i++) {
 	    vtot += gretl_matrix_get(vd, t, i);
 	}
 
-	for (i=0; i<var->neqns; i++) {
-	    vi = gretl_matrix_get(vd, t, i);
-	    gretl_matrix_set(vd, t, i, 100.0 * vi / vtot);
+	if (mode == VDECOMP_NORMALIZE) {
+	    /* normalize variance contributions as % shares */
+	    for (i=0; i<var->neqns; i++) {
+		vi = gretl_matrix_get(vd, t, i);
+		gretl_matrix_set(vd, t, i, 100.0 * vi / vtot);
+	    }
 	}
 
 	gretl_matrix_set(vd, t, var->neqns, sqrt(vtot));

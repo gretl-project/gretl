@@ -433,7 +433,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	return 1;
     } 
 
-    vd = gretl_VAR_get_fcast_decomp(var, targ, periods);
+    vd = gretl_VAR_get_fcast_decomp(var, targ, periods, VDECOMP_NORMALIZE);
     if (vd == NULL) {
 	return E_ALLOC;
     }

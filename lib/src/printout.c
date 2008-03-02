@@ -2065,7 +2065,6 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 /**
  * text_print_forecast:
  * @fr: pointer to structure containing forecasts.
- * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  * @opt: if includes %OPT_P, make a plot of the forecasts.
  * @prn: printing structure.
@@ -2076,8 +2075,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int text_print_forecast (const FITRESID *fr, 
-			 double ***pZ, DATAINFO *pdinfo, 
+int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn)
 {
     int do_errs = (fr->sderr != NULL);

@@ -26,6 +26,7 @@
 #include "clipboard.h"
 #include "fileselect.h"
 #include "texprint.h"
+#include "system.h"
 
 /* find-and-replace related materials */
 
@@ -313,6 +314,11 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 		gretl_VAR_print_all_fcast_decomps(var, datainfo, h, prn);
 	    }
 	}
+    } else if (cmd == SYSTEM) {
+	/* Note: not used yet */
+	equation_system *sys = (equation_system *) vwin->data;
+
+	gretl_system_print(sys, datainfo, OPT_NONE, prn);
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);
     } 

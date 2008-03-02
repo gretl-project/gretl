@@ -240,7 +240,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     MODEL lmod;
     int *reglist;
     int idf;
-    int T = sys->n_obs;
+    int T = sys->T;
     int i, k;
     int err = 0;
 

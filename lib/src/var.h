@@ -24,6 +24,11 @@
 #include "johansen.h"
 #include "gretl_restrict.h"
 
+enum {
+    VDECOMP_RAW,
+    VDECOMP_NORMALIZE
+};
+
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
 GRETL_VAR *gretl_VAR (int order, int *list, 
@@ -43,7 +48,7 @@ const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
 
 gretl_matrix *
-gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods);
+gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods, int mode);
 
 const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var);
 

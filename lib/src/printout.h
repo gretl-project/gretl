@@ -77,8 +77,7 @@ int print_fit_resid (const MODEL *pmod,
 		     const double **Z, const DATAINFO *pdinfo, 
 		     PRN *prn);
 
-int text_print_forecast (const FITRESID *fr, 
-			 double ***pZ, DATAINFO *pdinfo, 
+int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
 void print_iter_info (int iter, double crit, int type, int k, 

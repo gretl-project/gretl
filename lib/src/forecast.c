@@ -188,11 +188,13 @@ static FITRESID *fit_resid_new (int n)
 
 void free_fit_resid (FITRESID *fr)
 {
-    free(fr->actual);
-    free(fr->fitted);
-    free(fr->resid);
-    free(fr->sderr);
-    free(fr);
+    if (fr != NULL) {
+	free(fr->actual);
+	free(fr->fitted);
+	free(fr->resid);
+	free(fr->sderr);
+	free(fr);
+    }
 }
 
 static void fit_resid_set_dec_places (FITRESID *fr)
@@ -1866,23 +1868,34 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     return err;
 }
 
-static int parse_forecast_string (const char *s, const MODEL *pmod,
+/* t2est is the end of the sample range used in estimating the
+   model 
+*/
+
+static int parse_forecast_string (const char *s, int t2est,
 				  const DATAINFO *pdinfo,
-				  int *t1, int *t2)
+				  int *t1, int *t2,
+				  char *vname)
 {
     char t1str[OBSLEN], t2str[OBSLEN];
-    int err = 0;
+    int n, err = 0;
 
     if (!strncmp(s, "fcasterr", 8)) {
         s += 9;
     }
 
-    if (sscanf(s, "%10s %10s", t1str, t2str) == 2) {
+    if (vname != NULL) {
+	n = sscanf(s, "%10s %10s %15s", t1str, t2str, vname);
+    } else {
+	n = sscanf(s, "%10s %10s", t1str, t2str);
+    }
+
+    if (n >= 2) {
 	*t1 = dateton(t1str, pdinfo);
 	*t2 = dateton(t2str, pdinfo);
-    } else if (pmod != NULL && pdinfo->n - pmod->t2 - 1 > 0) {
+    } else if (pdinfo->n - t2est - 1 > 0) {
 	/* default, if it works: out-of-sample range */
-	*t1 = pmod->t2 + 1;
+	*t1 = t2est + 1;
 	*t2 = pdinfo->n - 1;
     } else {
         err = E_OBS;
@@ -2146,21 +2159,20 @@ static int model_display_forecast (const char *str, MODEL *pmod,
 	return E_NOTIMP;
     }
 
-    err = parse_forecast_string(str, pmod, pdinfo, &t1, &t2);
+    err = parse_forecast_string(str, pmod->t2, pdinfo, &t1, &t2, NULL);
     if (err) {
 	return err;
     }
 
     fr = get_forecast(pmod, t1, t1, t2, pZ, pdinfo, opt);
-
     if (fr == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	err = fr->err;
     }
 
-    err = fr->err;
-
     if (!err) {
-	err = text_print_forecast(fr, pZ, pdinfo, opt, prn);
+	err = text_print_forecast(fr, pdinfo, opt, prn);
     }
 
     free_fit_resid(fr);
@@ -2168,45 +2180,86 @@ static int model_display_forecast (const char *str, MODEL *pmod,
     return err;
 }
 
-static int VAR_display_forecast (const char *str, GRETL_VAR *var, 
-				 double ***pZ, DATAINFO *pdinfo, 
-				 gretlopt opt, PRN *prn)
+static int get_sys_fcast_var (void *ptr, int type, const char *vname,
+			      DATAINFO *pdinfo)
+{
+    int i, vi;
+
+    if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) ptr;
+	int n = gretl_VAR_get_n_equations(var);
+
+	for (i=0; i<n; i++) {
+	    vi = gretl_VAR_get_variable_number(var, i);
+	    if (!strcmp(vname, pdinfo->varname[vi])) {
+		return i;
+	    }
+	}	
+    } else {
+	equation_system *sys = (equation_system *) ptr;
+
+	for (i=0; i<sys->elist[0]; i++) {
+	    vi = sys->elist[i+1];
+	    if (!strcmp(vname, pdinfo->varname[vi])) {
+		return i;
+	    }
+	}
+    }
+
+    return -1;
+}
+
+static int system_display_forecast (const char *str, void *ptr, int type,
+				    const double **Z, DATAINFO *pdinfo, 
+				    gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
-    const MODEL *pmod;
-    int t1, t2;
-    int i, n, err;
+    char vname[VNAMELEN] = {0};
+    int t1, t2, t2est, ci;
+    int i, imax, imin = 0;
+    int err;
 
-    pmod = gretl_VAR_get_model(var, 0);
+    if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) ptr;
 
-    err = parse_forecast_string(str, pmod, pdinfo, &t1, &t2);
+	imax = gretl_VAR_get_n_equations(var) - 1;
+	t2est = gretl_VAR_get_t2(var);
+	ci = var->ci;
+    } else {
+	equation_system *sys = (equation_system *) ptr;
+
+	imax = sys->neqns - 1;
+	t2est = sys->t2;
+	ci = SYSTEM;
+    }
+
+    err = parse_forecast_string(str, t2est, pdinfo, &t1, &t2, vname);
     if (err) {
 	return err;
     }
 
-    n = gretl_VAR_get_n_equations(var);
-
-    for (i=0; i<n && !err; i++) {
-
-	if (i > 0) {
-	    opt |= OPT_Q;
+    if (*vname != '\0') {
+	imin = get_sys_fcast_var(ptr, type, vname, pdinfo);
+	if (imin < 0) {
+	    err = E_DATA;
+	} else {
+	    imax = imin;
 	}
+    }
 
-	fr = get_system_forecast(var, VAR, i, t1, t1, t2, 
-				 (const double **) *pZ, 
+    for (i=imin; i<=imax && !err; i++) {
+	fr = get_system_forecast(ptr, ci, i, t1, t1, t2, Z, 
 				 pdinfo, opt);
-
 	if (fr == NULL) {
-	    return E_ALLOC;
+	    err = E_ALLOC;
+	} else {
+	    err = fr->err;
 	}
-
-	err = fr->err;
-
 	if (!err) {
-	    err = text_print_forecast(fr, pZ, pdinfo, opt, prn);
+	    err = text_print_forecast(fr, pdinfo, opt, prn);
 	}
-
 	free_fit_resid(fr);
+	opt |= OPT_Q;
     }
 
     return err;
@@ -2246,10 +2299,10 @@ int display_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 
     if (type == GRETL_OBJ_EQN) {
 	err = model_display_forecast(str, ptr, pZ, pdinfo, opt, prn);
-    } else if (type == GRETL_OBJ_SYS) {
-	err = E_NOTIMP;
-    } else if (type == GRETL_OBJ_VAR) {
-	err = VAR_display_forecast(str, ptr, pZ, pdinfo, opt, prn);
+    } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
+	err = system_display_forecast(str, ptr, type, 
+				      (const double **) *pZ,
+				      pdinfo, opt, prn);
     } else {
 	err = E_DATA;
     }
@@ -2347,8 +2400,8 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     equation_system *sys = NULL;
     const gretl_matrix *F = NULL;
     int nf = t2 - t1 + 1;
-    int df = nf;
-    int yno, m, s, t;
+    int df = nf, m = 0;
+    int yno, s, t;
 
     if (nf <= 0) {
 	return NULL;
@@ -2369,9 +2422,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) p;
 
-	yno = system_get_depvar(sys, i);
-	/* m = sys->neqns; */
-	m = 0;
+	yno = sys->elist[i+1];
 	F = system_get_forecast_matrix(sys, t0, t1, t2, Z, pdinfo, opt);
     }
 
@@ -2420,7 +2471,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	    fr->df = var->T;
 	    fr->tval = 1.96;
 	} else if (ci == SYSTEM) {
-	    fr->df = sys->n_obs;
+	    fr->df = sys->T;
 	    fr->tval = 1.96;
 	} else {
 	    fr->df = df;

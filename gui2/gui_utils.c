@@ -3034,7 +3034,6 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     const gretl_matrix *M = NULL;
-    char *title = NULL;
     gchar *wtitle = NULL;
     PRN *prn;
     int k = 0, err = 0;
@@ -3051,19 +3050,26 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
 
     if (code == SYS_DATA_VCV) {
 	if (var != NULL) {
-	    title = g_strdup(_("gretl: VAR covariance matrix"));
+	    wtitle = g_strdup(_("gretl: VAR covariance matrix"));
 	    err = gretl_VAR_print_VCV(var, prn);
 	} else {
-	    title = g_strdup(_("gretl: system covariance matrix"));
+	    wtitle = g_strdup(_("gretl: system covariance matrix"));
 	    err = system_print_VCV(sys, prn);
 	}
-    } else if (code == SYS_DATA_RESIDS) {
+    } else if (code == SYS_DATA_RESIDS || code == SYS_DATA_FITTED) {
+	const char *titles[] = {
+	    N_("System residuals"),
+	    N_("System fitted values")
+	};
+	const char *title;
 	const char **heads = NULL;
 
 	if (var != NULL) {
-	    M = gretl_VAR_get_residual_matrix(var);
+	    /* fitted values matrix not currently available */
+	    M = (code == SYS_DATA_RESIDS)? gretl_VAR_get_residual_matrix(var) :
+		NULL;
 	} else {
-	    M = sys->uhat;
+	    M = (code == SYS_DATA_RESIDS)? sys->uhat : sys->yhat;
 	}
 
 	if (M == NULL) {
@@ -3091,9 +3097,9 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
 	}
 
 	if (!err) {
-	    title = gretl_strdup(_("System residuals"));
-	    wtitle = g_strdup_printf("gretl: %s", _("System residuals"));
-	    gretl_matrix_print_with_col_heads(M, title, heads, prn);
+	    title = (code == SYS_DATA_RESIDS)? titles[0] : titles[1];
+	    wtitle = g_strdup_printf("gretl: %s", _(title));
+	    gretl_matrix_print_with_col_heads(M, _(title), heads, prn);
 	}
 
 	free(heads);
@@ -3107,7 +3113,6 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
 	view_buffer(prn, 80, 400, wtitle, PRINT, NULL);
     }
 
-    free(title);
     g_free(wtitle);
 }
 
@@ -3388,7 +3393,7 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	    return;
 	}
 
-	err = text_print_forecast(fr, &Z, datainfo, OPT_P, prn);
+	err = text_print_forecast(fr, datainfo, OPT_P, prn);
 	if (!err) {
 	    register_graph();
 	}
@@ -3521,16 +3526,17 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     const gchar *dpath = N_("/Save");
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
-    int neqns, vtarg, vshock;
+    int neqns, nfc, vtarg, vshock;
     char tmp[VNAMELEN2];
     int i, j;
 
     if (ci == SYSTEM) {
 	sys = (equation_system *) vwin->data;
 	neqns = sys->neqns;
+	nfc = sys->neqns + sys->nidents;
     } else {
 	var = (GRETL_VAR *) vwin->data;
-	neqns = gretl_VAR_get_n_equations(var);
+	nfc = neqns = gretl_VAR_get_n_equations(var);
     }
 
     item.accelerator = NULL;
@@ -3626,6 +3632,17 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
     g_free(item.path);
 
+    if (ci == SYSTEM) {
+	/* Display fitted values matrix */
+	item.path = g_strdup_printf("%s/%s", _(mpath), 
+				    _("Display fitted values, all equations"));
+	item.callback = system_data_callback;
+	item.callback_action = SYS_DATA_FITTED;
+	item.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);  
+    }  
+
     /* Display VCV matrix */
     item.path = g_strdup_printf("%s/%s", _(mpath), 
 				_("Cross-equation covariance matrix"));
@@ -3692,7 +3709,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	g_free(item.path);
     }
 
-    for (i=0; i<neqns; i++) {
+    for (i=0; i<nfc; i++) {
 	char maj[64], min[32];
 	int dv;
 
@@ -3700,7 +3717,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	if (var != NULL) {
 	    dv = gretl_VAR_get_variable_number(var, i);
 	} else {
-	    dv = sys->lists[i][1];
+	    dv = sys->elist[i+1];
 	}
 	double_underscores(tmp, datainfo->varname[dv]);
 	item.path = g_strdup_printf("%s/%s", _(fpath), tmp);
@@ -3710,14 +3727,16 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
 	g_free(item.path);
 
-	/* save resids items */
-	item.path = g_strdup_printf("%s/%s %d", _(dpath), 
-				    _("Residuals from equation"), i + 1);
-	item.callback = add_system_resid;
-	item.callback_action = i;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+	if (i < neqns) {
+	    /* save resids items */
+	    item.path = g_strdup_printf("%s/%s %d", _(dpath), 
+					_("Residuals from equation"), i + 1);
+	    item.callback = add_system_resid;
+	    item.callback_action = i;
+	    item.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	    g_free(item.path);
+	}
 
 	if (var == NULL) {
 	    continue;

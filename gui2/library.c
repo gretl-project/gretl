@@ -1429,7 +1429,7 @@ void do_forecast (gpointer p, guint u, GtkWidget *w)
 	if (rolling) {
 	    err = text_print_fit_resid(fr, datainfo, prn);
 	} else {
-	    err = text_print_forecast(fr, &Z, datainfo, popt, prn);
+	    err = text_print_forecast(fr, datainfo, popt, prn);
 	}
 	if (!err && popt == OPT_P) {
 	    register_graph();

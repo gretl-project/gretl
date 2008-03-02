@@ -324,13 +324,13 @@ equation_system_new (int method, const char *name)
     sys->R = NULL;
     sys->q = NULL;
 
-    sys->n_obs = 0;
+    sys->T = 0;
     sys->iters = 0;
     sys->flags = 0;
     sys->n_predet = 0;
     sys->maxlag = 0;
 
-    sys->ll = sys->llu = NADBL;
+    sys->ll = sys->llu = sys->ldet = NADBL;
     sys->X2 = NADBL;
     sys->ess = NADBL;
     sys->diag = 0.0;
@@ -345,6 +345,7 @@ equation_system_new (int method, const char *name)
     sys->Gamma = NULL;
     sys->B = NULL;
     sys->A = NULL;
+    sys->Ve = NULL;
     sys->F = NULL;
 
     sys->lists = NULL;
@@ -382,6 +383,7 @@ static void system_clear_results (equation_system *sys)
 
     sys->ll = NADBL;
     sys->llu = NADBL;
+    sys->ldet = NADBL;
     sys->X2 = NADBL;
     sys->ess = NADBL;
 
@@ -427,6 +429,11 @@ static void system_clear_results (equation_system *sys)
 	gretl_matrix_free(sys->A);
 	sys->A = NULL;
     }
+
+    if (sys->Ve != NULL) {
+	gretl_matrix_free(sys->Ve);
+	sys->Ve = NULL;
+    }    
 
     if (sys->F != NULL) {
 	gretl_matrix_free(sys->F);
@@ -699,7 +706,7 @@ equation_system *equation_system_start (const char *line,
 
 static int system_get_dfu (const equation_system *sys)
 {
-    int dfu = sys->n_obs * sys->neqns;
+    int dfu = sys->T * sys->neqns;
     int i;
 
     for (i=0; i<sys->neqns; i++) {
@@ -995,8 +1002,7 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
  * @sys: pre-defined equation system.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: may include %OPT_Q for relatively quiet operation;
- * %OPT_V for more verbose.
+ * @opt: may include %OPT_V for more verbose operation.
  * @prn: printing struct.
  * 
  * Estimate a pre-defined equation system and print the results
@@ -1261,7 +1267,7 @@ int system_adjust_t1t2 (equation_system *sys,
     if (!err) {
 	sys->t1 = *t1;
 	sys->t2 = *t2;
-	sys->n_obs = *t2 - *t1 + 1;
+	sys->T = *t2 - *t1 + 1;
     }
 
     return err;
@@ -1531,18 +1537,18 @@ static int sys_eqn_indep_coeffs (const equation_system *sys, int eq)
 double 
 system_vcv_denom (const equation_system *sys, int i, int j)
 {
-    double den = sys->n_obs;
+    double den = sys->T;
 
     if ((sys->flags & SYSTEM_VCV_GEOMEAN) &&
 	i < sys->neqns && j < sys->neqns) {
 	int ki = sys_eqn_indep_coeffs(sys, i);
 
 	if (j == i) {
-	    den = sys->n_obs - ki;
+	    den = sys->T - ki;
 	} else {
 	    int kj = sys_eqn_indep_coeffs(sys, j);
 
-	    den = (sys->n_obs - ki) * (sys->n_obs - kj);
+	    den = (sys->T - ki) * (sys->T - kj);
 	    den = sqrt(den);
 	}
     }
@@ -2030,7 +2036,10 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 
     if (sys->ilist != NULL) {
 	/* job is already done? */
-	goto precheck;
+	if (pdinfo != NULL && sys->n_predet == 0) {
+	    err = predet_check(sys, pdinfo);
+	}
+	return err;
     }
 
     elist = sys->elist;
@@ -2113,8 +2122,6 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 
     sys->ilist = ilist;
 
- precheck:
-
     /* now check for predetermined regressors? */
     if (pdinfo != NULL) {
 	err = predet_check(sys, pdinfo);
@@ -2185,7 +2192,7 @@ equation_system_get_series (const equation_system *sys,
     return x;
 }
 
-static int system_add_yhat (equation_system *sys)
+static int system_add_yhat_matrix (equation_system *sys)
 {
     int T = sys->t2 - sys->t1 + 1;
     int k = sys->neqns;
@@ -2509,39 +2516,6 @@ static int sur_ols_diag (equation_system *sys)
     return err;
 }
 
-static void 
-add_system_results_to_dataset (equation_system *sys, 
-			       int i, int *pj,
-			       double **Z, DATAINFO *pdinfo)
-{
-    const MODEL *pmod = sys->models[i];
-    int t;
-
-    if (sys->flags & SYSTEM_SAVE_UHAT) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t < pmod->t1 || t > pmod->t2) {
-		Z[*pj][t] = NADBL;
-	    } else {
-		Z[*pj][t] = pmod->uhat[t];
-	    }
-	}
-	add_system_var_info(sys, i + 1, pdinfo, *pj, SYSTEM_SAVE_UHAT);
-	*pj += 1;
-    }
-
-    if (sys->flags & SYSTEM_SAVE_YHAT) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t < pmod->t1 || t > pmod->t2) {
-		Z[*pj][t] = NADBL;
-	    } else {
-		Z[*pj][t] = pmod->yhat[t];
-	    }
-	}
-	add_system_var_info(sys, i + 1, pdinfo, *pj, SYSTEM_SAVE_YHAT);
-	*pj += 1;
-    }
-}
-
 static void
 print_system_overid_test (const equation_system *sys,
 			  PRN *prn)
@@ -2580,20 +2554,22 @@ print_system_overid_test (const equation_system *sys,
     }
 }
 
-static void 
-print_system_sigma (const equation_system *sys, PRN *prn)
+int system_print_VCV (const equation_system *sys, PRN *prn)
 {
-    int k = sys->sigma->rows;
-    int df = k * (k - 1) / 2;
-    double ldet;
+    int k, df;
 
-    ldet = gretl_vcv_log_determinant(sys->sigma);
+    if (sys->sigma == NULL) {
+	return E_DATA;
+    }
 
-    print_contemp_covariance_matrix(sys->sigma, ldet, prn);
+    k = sys->sigma->rows;
+    df = k * (k - 1) / 2;
+
+    print_contemp_covariance_matrix(sys->sigma, sys->ldet, prn);
 
     if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
-	if (!na(ldet) && sys->diag != 0.0) {
-	    double lr = sys->n_obs * (sys->diag - ldet);
+	if (!na(sys->ldet) && sys->diag != 0.0) {
+	    double lr = sys->T * (sys->diag - sys->ldet);
 
 	    pprintf(prn, "%s:\n", _("LR test for diagonal covariance matrix"));
 	    pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
@@ -2611,6 +2587,8 @@ print_system_sigma (const equation_system *sys, PRN *prn)
     }
 
     pputc(prn, '\n');
+
+    return 0;
 }
 
 static int *make_elist_from_models (equation_system *sys)
@@ -2699,6 +2677,58 @@ static int *make_exogenous_list (equation_system *sys)
 }
 
 #define SYSDEBUG 0
+
+/* reduced-form error covariance matrix */
+
+static int sys_add_RF_covariance_matrix (equation_system *sys)
+{
+    gretl_matrix *G = NULL, *S = NULL;
+    int n = sys->neqns + sys->nidents;
+    int err = 0;
+
+    if (!gretl_is_identity_matrix(sys->Gamma)) {
+	G = gretl_matrix_copy(sys->Gamma);
+	if (G == NULL) {
+	    return E_ALLOC;
+	}
+    } 
+
+    if (sys->nidents > 0) {
+	S = gretl_zero_matrix_new(n, n);
+	if (S == NULL) {
+	    gretl_matrix_free(G);
+	    return E_ALLOC;
+	}
+	gretl_matrix_inscribe_matrix(S, sys->sigma, 0, 0, GRETL_MOD_NONE);
+    }
+
+    sys->Ve = gretl_matrix_alloc(n, n);
+    if (sys->Ve == NULL) {
+	gretl_matrix_free(G);
+	gretl_matrix_free(S);
+	return E_ALLOC;
+    }
+
+    if (G != NULL) {
+	gretl_SVD_invert_matrix(G);
+	gretl_matrix_qform(G, GRETL_MOD_NONE,
+			   (S != NULL)? S : sys->sigma,
+			   sys->Ve, GRETL_MOD_NONE);
+	gretl_matrix_free(G);
+    } else {
+	gretl_matrix_copy_values(sys->Ve, (S != NULL)? S : sys->sigma);
+    }
+
+#if SYSDEBUG
+    gretl_matrix_print(sys->Ve, "G^{-1} S G^{-1}'");
+#endif
+
+    if (S != NULL) {
+	gretl_matrix_free(S);
+    }
+
+    return err;
+}
 
 static int sys_add_structural_form (equation_system *sys,
 				    const DATAINFO *pdinfo)
@@ -2819,6 +2849,10 @@ static int sys_add_structural_form (equation_system *sys,
 	}
     }
 
+    if (!err) {
+	err = sys_add_RF_covariance_matrix(sys);
+    }
+
 #if SYSDEBUG
     gretl_matrix_print(sys->Gamma, "sys->Gamma");
 
@@ -2864,15 +2898,17 @@ static int sys_add_forecast (equation_system *sys,
     ilist = sys->ilist;
     xlist = sys->xlist;
 
-    G = gretl_matrix_copy(sys->Gamma);
-    if (G == NULL) {
-	return E_ALLOC;
-    }
-
-    err = gretl_SVD_invert_matrix(G);
-    if (err) {
-	gretl_matrix_free(G);
-	return err;
+    if (!gretl_is_identity_matrix(sys->Gamma)) {
+	G = gretl_matrix_copy(sys->Gamma);
+	if (G == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_SVD_invert_matrix(G);
+	}
+	if (err) {
+	    gretl_matrix_free(G);
+	    return err;
+	}
     }
 
     T = t2 - t0 + 1;
@@ -2966,7 +3002,11 @@ static int sys_add_forecast (equation_system *sys,
 	    }
 	} else {
 	    /* multiply by Gamma^{-1} */
-	    gretl_matrix_multiply(G, y, yh);
+	    if (G != NULL) {
+		gretl_matrix_multiply(G, y, yh);
+	    } else {
+		gretl_matrix_multiply(sys->Gamma, y, yh);
+	    }
 	    for (i=0; i<n; i++) {
 		gretl_matrix_set(sys->F, s, i, yh->val[i]);
 	    }
@@ -2984,7 +3024,16 @@ static int sys_add_forecast (equation_system *sys,
     if (err) {
 	gretl_matrix_free(sys->F);
 	sys->F = NULL;
+    } else {
+	sys->F->t1 = t1;
+	sys->F->t2 = t2;
     }
+
+#if SYSDEBUG
+    if (sys->F != NULL) {
+	gretl_matrix_print(sys->F, "sys->F");
+    }
+#endif
 
     return err;
 }
@@ -3013,37 +3062,73 @@ system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
     return sys->F;
 }
 
-int 
-system_save_and_print_results (equation_system *sys,
-			       double ***pZ, DATAINFO *pdinfo,
-			       gretlopt opt, PRN *prn)
+/* respond to "save=..." in system command: add residuals and/or
+   fitted values to dataset as series
+*/
+
+static int sys_save_uhat_yhat (equation_system *sys, double ***pZ,
+			       DATAINFO *pdinfo)
 {
-    int m = sys->neqns;
-    int nr = system_n_restrictions(sys);
-    int i, j = 0;
+    int v = pdinfo->v;
+    int addvars = 0;
     int err;
 
-    if (sys->uhat != NULL) {
-	sys->uhat->t1 = sys->t1;
-	sys->uhat->t2 = sys->t2;
-    }
-
-    err = system_add_yhat(sys);
-
-    if (opt & OPT_Q) {
-	return err;
-    }    
-
     if (sys->flags & SYSTEM_SAVE_UHAT) {
-	j = pdinfo->v;
-	err = dataset_add_series(m, pZ, pdinfo);
+	addvars += sys->neqns;
     } 
 
     if (sys->flags & SYSTEM_SAVE_YHAT) {
-	if (j == 0) {
-	    j = pdinfo->v;
+	addvars += sys->neqns;
+    }
+
+    if (addvars == 0) {
+	return 0;
+    }
+
+    err = dataset_add_series(addvars, pZ, pdinfo);
+
+    if (!err) {
+	const MODEL *pmod;
+	int i, t;
+
+	for (i=0; i<sys->neqns; i++) {
+	    pmod = sys->models[i];
+
+	    if (sys->flags & SYSTEM_SAVE_UHAT) {
+		for (t=0; t<pdinfo->n; t++) {
+		    if (t < pmod->t1 || t > pmod->t2) {
+			(*pZ)[v][t] = NADBL;
+		    } else {
+			(*pZ)[v][t] = pmod->uhat[t];
+		    }
+		}
+		add_system_var_info(sys, i + 1, pdinfo, v++, SYSTEM_SAVE_UHAT);
+	    }
+
+	    if (sys->flags & SYSTEM_SAVE_YHAT) {
+		for (t=0; t<pdinfo->n; t++) {
+		    if (t < pmod->t1 || t > pmod->t2) {
+			(*pZ)[v][t] = NADBL;
+		    } else {
+			(*pZ)[v][t] = pmod->yhat[t];
+		    }
+		}
+		add_system_var_info(sys, i + 1, pdinfo, v++, SYSTEM_SAVE_YHAT);
+	    }
 	}
-	err = dataset_add_series(m, pZ, pdinfo);
+    }
+    
+    return err;
+}
+
+int gretl_system_print (const equation_system *sys, const DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn)
+{
+    int nr = system_n_restrictions(sys);
+    int i;
+
+    if (sys->models == NULL) {
+	return E_DATA;
     }
 
     pputc(prn, '\n');
@@ -3063,21 +3148,15 @@ system_save_and_print_results (equation_system *sys,
 	    sys->method == SYS_METHOD_FIML) {
 	    pprintf(prn, "%s = %g\n", _("Log-likelihood"), sys->ll);
 	}
-	if (sys->method == SYS_METHOD_SUR && nr == 0) {
-	    sur_ols_diag(sys);
-	}
     }
 
     pputc(prn, '\n');
 
-    for (i=0; i<m; i++) {
+    for (i=0; i<sys->neqns; i++) {
 	printmodel(sys->models[i], pdinfo, OPT_NONE, prn);
-	if (!err) {
-	    add_system_results_to_dataset(sys, i, &j, *pZ, pdinfo);
-	}
     }
 
-    print_system_sigma(sys, prn);
+    system_print_VCV(sys, prn);
 
     if (nr == 0 && (sys->method == SYS_METHOD_FIML || 
 		    sys->method == SYS_METHOD_3SLS || 
@@ -3085,8 +3164,42 @@ system_save_and_print_results (equation_system *sys,
 	print_system_overid_test(sys, prn);
     }
 
+    return 0;
+}
+
+int 
+system_save_and_print_results (equation_system *sys,
+			       double ***pZ, DATAINFO *pdinfo,
+			       gretlopt opt, PRN *prn)
+{
+    int nr = system_n_restrictions(sys);
+    int err = 0;
+
+    if (sys->uhat != NULL) {
+	sys->uhat->t1 = sys->t1;
+	sys->uhat->t2 = sys->t2;
+    }
+
+    if (sys->iters > 0 && sys->method == SYS_METHOD_SUR && nr == 0) {
+	sur_ols_diag(sys);
+    }
+
+    sys->ldet = gretl_vcv_log_determinant(sys->sigma);
+
+    err = system_add_yhat_matrix(sys);
+
     if (!err) {
 	err = sys_add_structural_form(sys, pdinfo);
+    }    
+
+    if (!(opt & OPT_Q)) {
+	gretl_system_print(sys, pdinfo, opt, prn);
+    }
+
+    if (!err) {
+	if (sys->flags & (SYSTEM_SAVE_UHAT | SYSTEM_SAVE_YHAT)) {
+	    err = sys_save_uhat_yhat(sys, pZ, pdinfo);
+	}
     }
 
 #if SYSDEBUG
@@ -3105,27 +3218,3 @@ system_save_and_print_results (equation_system *sys,
     return err;
 }
 
-int system_print_VCV (equation_system *sys, PRN *prn)
-{
-    gretl_matrix *S;
-    double ldet;
-    int err = 0;
-
-    if (sys->sigma == NULL) {
-	return E_DATA;
-    }
-
-    S = gretl_matrix_copy(sys->sigma);
-    if (S == NULL) {
-	return E_ALLOC;
-    }
-
-    ldet = gretl_matrix_log_determinant(S, &err);
-    if (!err) {
-	print_contemp_covariance_matrix(sys->sigma, ldet, prn);
-    }
-
-    gretl_matrix_free(S);
-
-    return err;
-}

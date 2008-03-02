@@ -110,7 +110,7 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
 {
     const gretl_matrix *e = sys->uhat;
     int m = sys->neqns;
-    int T = sys->n_obs;
+    int T = sys->T;
     int geomean = system_vcv_geomean(sys);
     int i, j, t;
     double xx;
@@ -427,7 +427,7 @@ static int hansen_sargan_test (equation_system *sys,
     const int *exlist = system_get_instr_vars(sys);
     int nx = exlist[0];
     int m = sys->neqns;
-    int T = sys->n_obs;
+    int T = sys->T;
     int df = system_get_overid_df(sys);
 
     const double *Wi, *Wj;
@@ -457,7 +457,7 @@ static int hansen_sargan_test (equation_system *sys,
 	for (j=i; j<nx; j++) {
 	    Wj = Z[exlist[j+1]] + sys->t1;
 	    x = 0.0;
-	    for (t=0; t<sys->n_obs; t++) {
+	    for (t=0; t<sys->T; t++) {
 		x += Wi[t] * Wj[t];
 	    }
 	    gretl_matrix_set(WTW, i, j, x);
@@ -536,7 +536,7 @@ static int basic_system_allocate (equation_system *sys,
 				  gretl_matrix **y)
 {
     int m = sys->neqns;
-    int T = sys->n_obs;
+    int T = sys->T;
     int ldx = mk + nr;
 
     /* allocate a model for each stochastic equation */
@@ -570,7 +570,7 @@ static int basic_system_allocate (equation_system *sys,
 double sur_ll (equation_system *sys)
 {
     int m = sys->neqns;
-    int T = sys->n_obs;
+    int T = sys->T;
     gretl_matrix *sigtmp;
     double ldet;
 
@@ -812,7 +812,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     mk = system_n_indep_vars(sys);
 
     /* number of observations per series */
-    T = sys->n_obs;
+    T = sys->T;
 
     /* allocate models etc */
     err = basic_system_allocate(sys, mk, nr, &X, &y);

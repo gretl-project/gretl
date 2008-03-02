@@ -1998,8 +1998,12 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     }
 
     if (heads != NULL) {
+	char head[13];
+
 	for (j=0; j<m->cols; j++) {
-	    pprintf(prn, "%12s ", heads[j]);
+	    *head = '\0';
+	    strncat(head, heads[j], 12);
+	    pprintf(prn, "%12s ", head);
 	}
 	pputc(prn, '\n');
     }
