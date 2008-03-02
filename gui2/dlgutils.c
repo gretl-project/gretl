@@ -754,10 +754,43 @@ static void set_sys_method (GtkEditable *entry, dialog_t *d)
 
 	s = strrchr(s, '(');
 	if (s != NULL) {
+	    GtkWidget *bt, *bv;
+
 	    sscanf(s + 1, "%7[^)]", mstr);
 	    d->opt = system_method_from_string(mstr);
+
+	    bt = g_object_get_data(G_OBJECT(entry), "bt");
+	    bv = g_object_get_data(G_OBJECT(entry), "bv");
+
+	    if (d->opt == 0 || d->opt == 1 || d->opt == 6) {
+		/* SUR, 3SLS, WLS */
+		gtk_widget_set_sensitive(bt, TRUE);
+		gtk_widget_set_sensitive(bv, TRUE);
+	    } else if (d->opt == 2) {
+		/* FIML */
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), TRUE);
+		gtk_widget_set_sensitive(bt, FALSE);
+		gtk_widget_set_sensitive(bv, TRUE);
+	    } else {
+		/* LIML, OLS, TSLS */
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), FALSE);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), FALSE);
+		gtk_widget_set_sensitive(bt, FALSE);
+		gtk_widget_set_sensitive(bv, FALSE);
+	    } 
 	}
     } 
+}
+
+static gboolean opt_t_callback (GtkWidget *w, dialog_t *dlg)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	dlg->opt |= OPT_T;
+    } else {
+	dlg->opt &= ~OPT_T;
+    }
+
+    return FALSE;
 }
 
 static gboolean opt_v_callback (GtkWidget *w, dialog_t *dlg)
@@ -804,12 +837,16 @@ static gboolean opt_f_callback (GtkWidget *w, dialog_t *dlg)
     return FALSE;
 }
 
-static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
-				  gretlopt opt)
+static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
+					gretlopt opt)
 {
-    GtkWidget *b, *hbox;
+    GtkWidget *b = NULL;
 
-    if (opt == OPT_V) {
+    if (opt == OPT_T) {
+	b = gtk_check_button_new_with_label(_("Iterated estimation"));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(opt_t_callback), dlg);
+    } else if (opt == OPT_V) {
 	b = gtk_check_button_new_with_label(_("Show details of iterations"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_v_callback), dlg);
@@ -825,16 +862,19 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Show full restricted estimates"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_f_callback), dlg);
-    } else {
-	return;
+    } 
+
+    if (b != NULL) {
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+	gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 5);
+	gtk_widget_show(b);
+
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox);
     }
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 5);
-    gtk_widget_show(b);
-
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox);
+    return b;
 }
 
 static void combo_opt_changed (GtkWidget *w, combo_opts *opts)
@@ -914,11 +954,12 @@ static void build_gmm_combo (GtkWidget *vbox, dialog_t *d)
     gtk_widget_show(hbox);      
 }
 
-static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
+static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
+				   GtkWidget *bt, GtkWidget *bv)
 {
     equation_system *sys = NULL;
     GList *items = NULL;
-    GtkWidget *w, *hbox;
+    GtkWidget *w, *hbox, *entry;
     gchar **strs;
     int method = -1;
     int i;
@@ -948,13 +989,16 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
 
     w = gtk_combo_new();
     gtk_combo_set_popdown_strings(GTK_COMBO(w), items); 
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(w)->entry), FALSE);
+    entry = GTK_COMBO(w)->entry;
+    gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
     g_signal_connect(G_OBJECT(w), "destroy", G_CALLBACK(free_sys_strings), strs);
-    g_signal_connect(G_OBJECT(GTK_COMBO(w)->entry), "changed",
+    g_object_set_data(G_OBJECT(entry), "bt", bt);
+    g_object_set_data(G_OBJECT(entry), "bv", bv);
+    g_signal_connect(G_OBJECT(entry), "changed",
 		     G_CALLBACK(set_sys_method), d);
 
     if (method >= 0) {
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), strs[method]);
+	gtk_entry_set_text(GTK_ENTRY(entry), strs[method]);
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
@@ -1142,8 +1186,11 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     if (cmdcode == SMPLBOOL && dataset_is_restricted()) {
 	sample_replace_buttons(top_vbox, d);
     } else if (cmdcode == SYSTEM) {
-	dialog_option_switch(top_vbox, d, OPT_V);
-	system_estimator_list(top_vbox, d);
+	GtkWidget *bt, *bv;
+
+	bt = dialog_option_switch(top_vbox, d, OPT_T);
+	bv = dialog_option_switch(top_vbox, d, OPT_V);
+	system_estimator_list(top_vbox, d, bt, bv);
     } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	dialog_option_switch(top_vbox, d, OPT_R);

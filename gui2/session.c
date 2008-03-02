@@ -1684,7 +1684,6 @@ static int maybe_raise_object_window (gpointer p)
 static int display_session_model (SESSION_MODEL *sm)
 { 
     PRN *prn;
-    int err = 0;
 
     if (maybe_raise_object_window(sm->ptr)) {
 	return 0;
@@ -1706,12 +1705,13 @@ static int display_session_model (SESSION_MODEL *sm)
 	view_buffer(prn, 78, 450, sm->name, var->ci, var);
     } else if (sm->type == GRETL_OBJ_SYS) {
 	equation_system *sys = (equation_system *) sm->ptr;
+	int cancel = 0;
 
 	edit_dialog(sm->name, NULL, NULL, do_saved_eqn_system, sys, 
-		    SYSTEM, VARCLICK_NONE, NULL); 
+		    SYSTEM, VARCLICK_NONE, &cancel); 
     }
 
-    return err;
+    return 0;
 }
 
 /* callback used in objectsave.c */

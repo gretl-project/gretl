@@ -2451,10 +2451,29 @@ static void maybe_grab_system_name (const char *s, char *name)
     }
 }
 
+static int get_sys_method_from_opt (gretlopt *opt)
+{
+    int method = *opt;
+
+    if (*opt & OPT_V) {
+	/* extract verbose option */
+	*opt |= OPT_V;
+	method &= ~OPT_V;
+    }
+
+    if (*opt & OPT_T) {
+	/* extract iterate option */
+	*opt |= OPT_T;
+	method &= ~OPT_T;
+    }
+
+    return method;
+}
+
 void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
     equation_system *my_sys = NULL;
-    gretlopt opt = OPT_NONE;
+    gretlopt opt;
     gchar *buf;
     PRN *prn;
     char sysname[32] = {0};
@@ -2469,11 +2488,8 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    method = edit_dialog_get_opt(dlg);
-    if (method & OPT_V) {
-	opt = OPT_V;
-	method &= ~OPT_V;
-    }
+    opt = edit_dialog_get_opt(dlg);
+    method = get_sys_method_from_opt(&opt);
 
     bufgets_init(buf);
     *sysname = 0;
@@ -2570,8 +2586,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
     equation_system *my_sys;
-    gretlopt opt = OPT_NONE;
-    int method;
+    gretlopt opt;
     PRN *prn;
     int err = 0;
 
@@ -2580,13 +2595,8 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    method = edit_dialog_get_opt(dlg);
-    if (method & OPT_V) {
-	opt = OPT_V;
-	method &= ~OPT_V;
-    }
-
-    my_sys->method = method;
+    opt = edit_dialog_get_opt(dlg);
+    my_sys->method = get_sys_method_from_opt(&opt);
 
     close_dialog(dlg);
 

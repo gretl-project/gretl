@@ -657,9 +657,9 @@ augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
    three-stage least squares
 */
 
-static int converged (equation_system *sys, 
-		      double *llbak, int *err,
-		      PRN *prn)
+static int sys_converged (equation_system *sys, 
+			  double *llbak, int *err,
+			  gretlopt opt, PRN *prn)
 {
     double crit, tol = 0.0;
     int met = 0;
@@ -671,9 +671,9 @@ static int converged (equation_system *sys,
 	tol = SYS_LL_TOL;
 	crit = ll - *llbak;
 
-#if SDEBUG
-	printf("SUR iteration %d, ll = %.8g\n", sys->iters, ll);
-#endif
+	if (opt & OPT_V) {
+	    pprintf(prn, "Iteration %3d, ll = %#.8g\n", sys->iters, ll);
+	}
 	if (crit <= tol) {
 	    met = 1;
 	} else if (sys->iters < SYS_MAX_ITER) {
@@ -682,17 +682,20 @@ static int converged (equation_system *sys,
     } else if (sys->method == SYS_METHOD_3SLS) {
 	tol = SYS_BDIFF_TOL;
 	crit = sys->bdiff;
-
-#if SDEBUG
-	printf("3SLS iteration %d, crit = %.8g\n", sys->iters, crit);
-#endif
+	if (opt & OPT_V) {
+	    pprintf(prn, "Iteration %3d, criterion = %g\n", sys->iters, crit);
+	}
 	if (crit <= tol) {
 	    met = 1;
 	} 
     }
 
+    if (met && tol > 0 && (opt & OPT_V)) {
+	pprintf(prn, "Tolerance of %g is met\n", tol);
+    }
+
     if (!met && sys->iters >= SYS_MAX_ITER) {
-	pprintf(prn, "reached %d iterations without meeting "
+	pprintf(prn, "Reached %d iterations without meeting "
 		"tolerance of %g\n", sys->iters, tol);
 	*err = E_NOCONV;
     }	
@@ -1084,7 +1087,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (do_iteration) {
-	if (!converged(sys, &llbak, &err, prn)) {
+	if (!sys_converged(sys, &llbak, &err, opt, prn)) {
 	    if (err) {
 		goto cleanup;
 	    } else {
