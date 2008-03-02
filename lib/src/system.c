@@ -53,7 +53,7 @@ struct identity_ {
 };
 
 struct predet_ {
-    int id;         /* ID number lag variable */
+    int id;         /* ID number of lag variable */
     int src;        /* ID number of "parent" */
     int lag;        /* lag order */
 };
@@ -457,12 +457,14 @@ void equation_system_destroy (equation_system *sys)
     for (i=0; i<sys->neqns; i++) {
 	free(sys->lists[i]);
     }
+
     free(sys->lists);
     sys->lists = NULL;
 
     for (i=0; i<sys->nidents; i++) {
 	destroy_ident(sys->idents[i]);
     }
+
     free(sys->idents);
 
     free(sys->elist);
@@ -934,8 +936,9 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
 
     sys->flags = 0;
 
+    /* the iterate option is only available for WLS, SUR or 3SLS */
+
     if (oldflags & SYSTEM_ITERATE) {
-	/* the iterate option is only available for WLS, SUR or 3SLS */
 	if (sys->method == SYS_METHOD_WLS || 
 	    sys->method == SYS_METHOD_SUR ||
 	    sys->method == SYS_METHOD_3SLS) {
@@ -944,6 +947,7 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
     }
 
     /* by default, apply a df correction for single-equation methods */
+
     if (sys->method == SYS_METHOD_OLS || 
 	sys->method == SYS_METHOD_WLS ||
 	sys->method == SYS_METHOD_TSLS || 
@@ -952,6 +956,8 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
 	    sys->flags |= SYSTEM_DFCORR;
 	}
     } 
+
+    /* carry forward the GEOMEAN flag */
 
     if (oldflags & SYSTEM_VCV_GEOMEAN) {
 	sys->flags |= SYSTEM_VCV_GEOMEAN;
@@ -965,8 +971,9 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 
     sys->flags = 0;
 
+    /* the iterate option is available for WLS, SUR or 3SLS */
+
     if (opt & OPT_T) {
-	/* the iterate option is only available for WLS, SUR or 3SLS */
 	if (sys->method == SYS_METHOD_WLS || 
 	    sys->method == SYS_METHOD_SUR ||
 	    sys->method == SYS_METHOD_3SLS) {
@@ -975,6 +982,7 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     }
 
     /* by default, apply a df correction for single-equation methods */
+
     if (sys->method == SYS_METHOD_OLS || 
 	sys->method == SYS_METHOD_WLS ||
 	sys->method == SYS_METHOD_TSLS || 
@@ -3201,19 +3209,6 @@ system_save_and_print_results (equation_system *sys,
 	    err = sys_save_uhat_yhat(sys, pZ, pdinfo);
 	}
     }
-
-#if SYSDEBUG
-    if (!err) {
-	/* test: try calculating forecast: use OPT_S for static */
-	int t0 = sys->t1, t1 = sys->t2+1, t2 = pdinfo->n-1;
-
-	err = sys_add_forecast(sys, t0, t1, t2, (const double **) *pZ, 
-			       pdinfo, OPT_NONE);
-	if (!err) {
-	    gretl_matrix_print(sys->F, "sys->F");
-	}
-    }
-#endif
 
     return err;
 }
