@@ -115,16 +115,15 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 
 	err = dataset_add_series(1, pZ, pdinfo);
 	if (!err) {
-	    int T = pdinfo->t2 + 1;
-	    int offset = 0;
+	    int T, offset = 0;
 
 	    for (t=0; t<=pdinfo->t2; t++) {
 		(*pZ)[v][t] = (*pZ)[varno][t];
 		if (na((*pZ)[v][t])) {
-		    offset++;
-		    T--;
+		    offset = t+1;
 		}
 	    }
+	    T = pdinfo->t2 - offset + 1;
 	    err = GLS_demean_detrend((*pZ)[v] + offset, T, test);
 	}
 	if (err) {

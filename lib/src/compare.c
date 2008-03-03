@@ -1741,8 +1741,8 @@ int autocorr_test (MODEL *pmod, int order,
 	aux.aux = AUX_AR;
 	gretl_model_set_int(&aux, "BG_order", order);
 	trsq = aux.rsq * aux.nobs;
-	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
-	    (aux.nobs - pmod->ncoeff - order)/order; 
+	LMF = (aux.rsq / (1.0 - aux.rsq)) * 
+	    (aux.nobs - pmod->ncoeff - order) / order; 
 	pval = snedecor_cdf_comp(LMF, order, aux.nobs - pmod->ncoeff - order);
 
 	if (pmod->aux != AUX_VAR) {
