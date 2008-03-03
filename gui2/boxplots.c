@@ -1010,7 +1010,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	}
 
 	plotgrp->plots[i].outliers = NULL;
-	plotgrp->plots[i].mean = gretl_mean(0, n, x);
+	plotgrp->plots[i].mean = gretl_mean(0, n-1, x);
 	qsort(x, n, sizeof *x, gretl_compare_doubles);
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
