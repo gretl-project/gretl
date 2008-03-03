@@ -1659,6 +1659,7 @@ int autocorr_test (MODEL *pmod, int order,
     int smpl_t2 = pdinfo->t2;
     int *newlist = NULL;
     MODEL aux;
+    double RSSx = 0, RSSxe = 0;
     int i, t, n = pdinfo->n, v = pdinfo->v; 
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
@@ -1692,7 +1693,7 @@ int autocorr_test (MODEL *pmod, int order,
 	return E_DF;
     }
 
-    newlist = malloc((pmod->list[0] + order + 1) * sizeof *newlist);
+    newlist = gretl_list_new(pmod->list[0] + order);
 
     if (newlist == NULL) {
 	err = E_ALLOC;
@@ -1727,23 +1728,54 @@ int autocorr_test (MODEL *pmod, int order,
 	}
     }
 
+#if 1
     if (!err) {
 	newlist[1] = v;
-	/* printlist(newlist); */
+	/* regression on X only */
+	pdinfo->t1 += order;
+	newlist[0] -= order;
 	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
+	} else {
+	    pdinfo->t1 -= order;
+	    newlist[0] += order;
+	    RSSx = aux.ess;
+	    clear_model(&aux);
+	    /* regression on [X~E] */
+	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
+	    err = aux.errcode;
+	    if (err) {
+		errmsg(aux.errcode, prn);
+	    } else {
+		RSSxe = aux.ess;
+	    }
 	}
     } 
+#else
+    if (!err) {
+	newlist[1] = v;
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
+	err = aux.errcode;
+	if (err) {
+	    errmsg(aux.errcode, prn);
+	} 
+    } 
+#endif
 
     if (!err) {
+	int dfd = aux.nobs - pmod->ncoeff - order;
+
 	aux.aux = AUX_AR;
 	gretl_model_set_int(&aux, "BG_order", order);
 	trsq = aux.rsq * aux.nobs;
-	LMF = (aux.rsq / (1.0 - aux.rsq)) * 
-	    (aux.nobs - pmod->ncoeff - order) / order; 
-	pval = snedecor_cdf_comp(LMF, order, aux.nobs - pmod->ncoeff - order);
+#if 1
+	LMF = ((RSSx - RSSxe) / RSSxe) * dfd / order;
+#else
+	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 
+#endif
+	pval = snedecor_cdf_comp(LMF, order, dfd);
 
 	if (pmod->aux != AUX_VAR) {
 	    if (opt & OPT_Q) {
