@@ -196,7 +196,7 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 		    }
 		} else if (i == j) {
 		    if (x != 1.0) {
-			udiag = 1;
+			udiag = 0;
 		    }
 		}
 		if (j != i && x != gretl_matrix_get(m,j,i)) {
@@ -210,6 +210,8 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 		break;
 	    }
 	}
+	fprintf(stderr, "udiag = %d, uzero = %d, lzero = %d\n", 
+		udiag, uzero, lzero);
 
 	if (udiag && uzero && lzero) {
 	    ret = GRETL_MATRIX_IDENTITY;
