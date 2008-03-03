@@ -210,8 +210,6 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 		break;
 	    }
 	}
-	fprintf(stderr, "udiag = %d, uzero = %d, lzero = %d\n", 
-		udiag, uzero, lzero);
 
 	if (udiag && uzero && lzero) {
 	    ret = GRETL_MATRIX_IDENTITY;
