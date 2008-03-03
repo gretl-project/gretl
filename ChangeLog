@@ -1,3 +1,14 @@
+version 1.7.4, in progress
+- Fix for ADF-GLS test with missing values
+- Fix for detection of unit-diagonal matrix (oops!)
+- Add $fcast and $fcerr accessors for use with fcasterr
+- Autocorrelation test: use Kiviet's original 1986 formula
+  for the LMF statistic
+- system command: enable naming of systems in the manner
+  "sysname <- system"
+- system command: several other changes (write this up when 
+  done)
+
 2/29/2008 version 1.7.3
 - Fix for 64-bit platforms: don't use "long" as the C
   counterpart of Fortran 77 "INTEGER"
