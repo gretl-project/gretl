@@ -41,6 +41,10 @@ static int GLS_demean_detrend (double *y, int T, int test)
 
     zcols = (test == UR_TREND)? 2 : 1;
 
+    if (T - zcols <= 0) {
+	return E_DF;
+    }
+
     ya = gretl_column_vector_alloc(T);
     Za = gretl_matrix_alloc(T, zcols);
     b = gretl_column_vector_alloc(zcols);
