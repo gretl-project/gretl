@@ -25,6 +25,7 @@
 #include "objstack.h"
 #include "usermat.h"
 #include "modelspec.h"
+#include "forecast.h"
 
 #define ODEBUG 0
 
@@ -1005,12 +1006,15 @@ gretl_matrix *
 saved_object_get_matrix (const char *oname, int idx, int *err)
 {
     gretl_matrix *M = NULL;
-    stacker *smatch;
 
-    smatch = find_smatch(oname);
+    if (idx == M_FCAST || idx == M_FCERR) {
+	M = get_forecast_matrix(idx, err);
+    } else {
+	stacker *smatch = find_smatch(oname);
 
-    if (smatch != NULL) {
-	M = real_get_obj_matrix(smatch->ptr, smatch->type, idx, err);
+	if (smatch != NULL) {
+	    M = real_get_obj_matrix(smatch->ptr, smatch->type, idx, err);
+	}
     }
 
     if (M == NULL && !*err) {

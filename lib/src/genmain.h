@@ -74,6 +74,8 @@ typedef enum {
     M_SYSGAM,     /* Parameter matrix Gamma (simultaneous systems) */
     M_SYSA,       /* Parameter matrix A (simultaneous systems) */
     M_SYSB,       /* Parameter matrix B (simultaneous systems) */
+    M_FCAST,      /* last forecast generated via fcasterr */
+    M_FCERR,      /* standard errors associated with M_FCAST */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 

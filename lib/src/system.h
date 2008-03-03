@@ -41,6 +41,12 @@ enum {
     SYSTEM_SAVEIT      = 1 << 6
 };
 
+enum {
+    SYSNAME_NEW,
+    SYSNAME_EST,
+    SYSNAME_RST
+};
+
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
 typedef struct predet_ predet;
@@ -92,7 +98,7 @@ struct equation_system_ {
 equation_system *equation_system_start (const char *line, 
 					gretlopt opt);
 
-char *get_system_name_from_line (const char *s);
+char *get_system_name_from_line (const char *s, int context);
 
 int equation_system_append (equation_system *sys, 
 			    const int *list);

@@ -471,7 +471,7 @@
   <xsl:text>&#10;</xsl:text>
 </xsl:template>
 
-<xsl:template match="math|mathvar">
+<xsl:template match="math">
   <xsl:text>\ensuremath{</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>}</xsl:text>

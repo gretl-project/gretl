@@ -50,9 +50,6 @@ $\ell$
 <texequation fileref="cumulate">
 $y_t = \sum_{\tau=1}^t x_{\tau}$
 </texequation>
-<texequation fileref="hsk">
-$1/e^{y^*}$
-</texequation>
 <texequation fileref="hurst">
 \[\mathrm{RS}(x) = an^H\]
 </texequation>
@@ -88,6 +85,12 @@ $p = 0.75 \times T^{1/3}$
 </texequation>
 <texequation fileref="nw2">
 $p = 4 \times (T/100)^{2/9}$
+</texequation>
+<texequation fileref="structural">
+\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]
+</texequation>
+<texequation fileref="Gamma">
+$\Gamma$
 </texequation>
 <texequation fileref="vif">
 \[\frac{1}{1-R_j^2}\]

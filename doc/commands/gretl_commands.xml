@@ -45,7 +45,7 @@
 	<repl>varlist</repl> are added to the previous model and the
 	new model is estimated. A test statistic for the joint
 	significance of the added variables is printed, along with its
-	p-value. The test statistic is <mathvar>F</mathvar> in the
+	p-value. The test statistic is <math>F</math> in the
 	case of OLS estimation, an asymptotic Wald chi-square value
 	otherwise. A p-value below 0.05 means that the coefficients
 	are jointly significant at the 5 percent level.
@@ -74,7 +74,7 @@
 	The selected variables are added to the previous model and the
 	new model estimated. A test statistic for the joint
 	significance of the added variables is printed, along with its
-	p-value. The test statistic is <mathvar>F</mathvar> in the
+	p-value. The test statistic is <math>F</math> in the
 	case of OLS estimation, an asymptotic Wald chi-square value
 	otherwise. A p-value below 0.05 means that the coefficients
 	are jointly significant at the 5 percent level.
@@ -174,10 +174,10 @@
       </para>
 
       <para>In all cases the dependent variable is the first
-	difference of the specified variable, <mathvar>y</mathvar>,
+	difference of the specified variable, <math>y</math>,
 	and the key independent variable is the first lag of
-	<mathvar>y</mathvar>.  The model is constructed so that the
-	coefficient on lagged <mathvar>y</mathvar> equals 1 minus the
+	<math>y</math>.  The model is constructed so that the
+	coefficient on lagged <math>y</math> equals 1 minus the
 	root in question.  For example, the model with a constant may
 	be written as <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
@@ -185,18 +185,18 @@
 	  graphic="adf1"/></para>
 
       <para context="cli">
-	If the lag order, <mathvar>k</mathvar>, is greater than 0, then
-	<mathvar>k</mathvar> lags of the dependent variable are included
+	If the lag order, <math>k</math>, is greater than 0, then
+	<math>k</math> lags of the dependent variable are included
 	on the right-hand side of the test regressions, subject to the
 	following qualification.  If the <lit>--test-down</lit> option is
-	given, <mathvar>k</mathvar> is taken as the maximum lag
+	given, <math>k</math> is taken as the maximum lag
 	and the actual lag order used is obtained by testing down, using
 	this algorithm:
       </para>
 
       <para context="gui">
-	If the lag order, <mathvar>k</mathvar>, is greater than 0, then
-	<mathvar>k</mathvar> lags of the dependent variable are included
+	If the lag order, <math>k</math>, is greater than 0, then
+	<math>k</math> lags of the dependent variable are included
 	on the right-hand side of the test regressions, subject to the
 	following qualification. If the box labeled <quote>test down from
 	  maximum lag</quote> is checked, the selected lag order is taken
@@ -206,20 +206,20 @@
 
       <nlist>
 	<li><para>Estimate the Dickey&ndash;Fuller regression with
-	    <mathvar>k</mathvar> lags of the dependent variable.
+	    <math>k</math> lags of the dependent variable.
 	  </para>
 	</li>
 	<li><para>Is the last lag significant?  If so, execute the
-	    test with lag order <mathvar>k</mathvar>.  Otherwise, let
-	    <mathvar>k</mathvar> = <mathvar>k</mathvar> &minus; 1; if
-	    <mathvar>k</mathvar> equals 0, execute the test with lag order
+	    test with lag order <math>k</math>.  Otherwise, let
+	    <math>k</math> = <math>k</math> &minus; 1; if
+	    <math>k</math> equals 0, execute the test with lag order
 	    0, else go to step 1.
 	  </para>
 	</li>
       </nlist>
 
       <para>In the context of step 2 above, <quote>significant</quote>
-	means that the <mathvar>t</mathvar>-statistic for the last lag
+	means that the <math>t</math>-statistic for the last lag
 	has an asymptotic two-sided <emphasis>p</emphasis>-value,
 	against the normal distribution, of 0.10 or less.</para> 
 
@@ -675,7 +675,7 @@
 	<equation status="inline" 
 	  tex="$\ell$" ascii="L"
 	  graphic="ell"/> is the
-	log-likelihood and <mathvar>k</mathvar> is the total number of
+	log-likelihood and <math>k</math> is the total number of
 	parameters estimated.  Note that <program>X-12-ARIMA</program>
 	does not produce information criteria such as AIC when estimation
 	is by conditional ML.
@@ -688,8 +688,8 @@
 	  <equation status="display" 
 	  tex="\[z=re^{i2\pi\lambda}\]"
 	  ascii="z = r * exp(i*2*pi*lambda)"
-	  graphic="lambda"/> where <mathvar>z</mathvar> is the root in
-	question and <mathvar>r</mathvar> is its modulus.
+	  graphic="lambda"/> where <math>z</math> is the root in
+	question and <math>r</math> is its modulus.
       </para>
     </description>
 
@@ -722,15 +722,15 @@
 	    <quote>studentized</quote> version is as per Davidson and
 	    MacKinnon's <book>Economic Theory and Methods</book> (ETM),
 	    chapter 5: at each bootstrap replication a
-	    <mathvar>t</mathvar>-ratio is formed as (a) the difference
+	    <math>t</math>-ratio is formed as (a) the difference
 	    between the current and the baseline coefficient estimate,
 	    divided by (b) the baseline estimated standard error. Then the
 	    confidence interval is formed based on the quantiles of this
 	    t-ratio, as explained in ETM.  The P-value option is based on
-	    the distribution of the bootstrap <mathvar>t</mathvar>-ratio:
+	    the distribution of the bootstrap <math>t</math>-ratio:
 	    it is the proportion of the replications where the absolute
 	    value of this statistic exceeds the absolute value of the
-	    baseline <mathvar>t</mathvar>-ratio. 
+	    baseline <math>t</math>-ratio. 
 	  </para>
 	</li>
 	<li>
@@ -744,8 +744,8 @@
 	<li>
 	  <para>The number of replications to perform. Note that when
 	    you're constructing a 95 percent confidence interval it is
-	    desirable that 0.05(<mathvar>B</mathvar> + 1)/2 is an integer
-	    (where <mathvar>B</mathvar> is the number of replications).
+	    desirable that 0.05(<math>B</math> + 1)/2 is an integer
+	    (where <math>B</math> is the number of replications).
 	    So gretl may adjust the chosen number of replications to
 	    ensure this is the case.
 	  </para>
@@ -861,7 +861,7 @@
 	the end of the sample, 0 otherwise, and also creates
 	interaction terms between this dummy and the original
 	independent variables.  An augmented regression is run
-	including these terms and an <mathvar>F</mathvar> statistic is
+	including these terms and an <math>F</math> statistic is
 	calculated, taking the augmented regression as the
 	unrestricted and the original as restricted.  This statistic
 	is appropriate for testing the null hypothesis of no
@@ -985,8 +985,8 @@
 	the first of these steps is omitted.
       </para>
       <para context="gui">
-	If the lag order, <mathvar>k</mathvar>, is greater than 0, then
-	<mathvar>k</mathvar> lags of the dependent variable are included
+	If the lag order, <math>k</math>, is greater than 0, then
+	<math>k</math> lags of the dependent variable are included
 	on the right-hand side of each test regression, unless the box
 	labeled <quote>test down from maximum lag</quote> is checked: in
 	that case the selected lag order is taken as a maximum and the
@@ -1373,16 +1373,16 @@
 	  tex="$\hat{\rho}(u_t, u_{t-s})$" 
 	  ascii="rho(u(t), u(t-s))" 
 	  graphic="autocorr"/> where
-	<mathvar>u</mathvar><sub>t</sub> is the <mathvar>t</mathvar>th
-	observation of the variable <mathvar>u</mathvar> and
-	<mathvar>s</mathvar> is the number of lags.
+	<math>u</math><sub>t</sub> is the <math>t</math>th
+	observation of the variable <math>u</math> and
+	<math>s</math> is the number of lags.
       </para>
 
       <para>
 	The partial autocorrelations (calculated using the Durbin&ndash;Levinson
 	algorithm) are also shown: these are net of the effects of intervening
 	lags.  The command also graphs the correlogram and prints the
-	Box&ndash;Pierce <mathvar>Q</mathvar> statistic for testing the null
+	Box&ndash;Pierce <math>Q</math> statistic for testing the null
 	hypothesis that the series is <quote>white noise</quote>: this is
 	asymptotically distributed as chi-square with degrees of freedom equal
 	to the number of lags used.
@@ -1422,9 +1422,9 @@
 	Computes the Akaike Information Criterion (AIC) and Schwarz's
 	Bayesian Information Criterion (BIC), given <repl>ess</repl>
 	(error sum of squares), the number of observations
-	(<mathvar>T</mathvar>), and the number of coefficients
-	(<mathvar>k</mathvar>). <mathvar>T</mathvar>,
-	<mathvar>k</mathvar>, and <repl>ess</repl> may be numerical
+	(<math>T</math>), and the number of coefficients
+	(<math>k</math>). <math>T</math>,
+	<math>k</math>, and <repl>ess</repl> may be numerical
 	values or names of previously defined variables.
       </para>
       <para>
@@ -1467,12 +1467,12 @@
 	given, the CUSUMSQ test&mdash;for parameter stability.  A
 	series of one-step ahead forecast errors is obtained by
 	running a series of regressions: the first regression uses the
-	first <mathvar>k</mathvar> observations and is used to
+	first <math>k</math> observations and is used to
 	generate a prediction of the dependent variable at observation
-	<mathvar>k</mathvar> + 1; the second uses the first
-	<mathvar>k</mathvar> + 1 observations and generates a
-	prediction for observation <mathvar>k</mathvar> + 2, and so on
-	(where <mathvar>k</mathvar> is the number of parameters in the
+	<math>k</math> + 1; the second uses the first
+	<math>k</math> + 1 observations and generates a
+	prediction for observation <math>k</math> + 2, and so on
+	(where <math>k</math> is the number of parameters in the
 	original model).
       </para>
       <para>
@@ -1484,7 +1484,7 @@
       </para>
       <para>
 	In the case of the CUSUM test, the Harvey&ndash;Collier
-	<mathvar>t</mathvar>-statistic for testing the null hypothesis
+	<math>t</math>-statistic for testing the null hypothesis
 	of parameter stability is also printed.  See Greene's
 	<book>Econometric Analysis</book> for details.  For the
 	CUSUMSQ test, the 95 percent confidence band is calculated
@@ -1706,14 +1706,14 @@
 	the vicinity.</para>
       
       <para>The formula used to compute the estimated density at each
-	reference point, <mathvar>x</mathvar>, is
+	reference point, <math>x</math>, is
       <equation status="display"
 	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
 	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
 	graphic="kernel1"/>
-	where <mathvar>n</mathvar> denotes the number of data
-	points, <mathvar>h</mathvar> is a <quote>bandwidth</quote>
-	parameter, and <mathvar>k</mathvar>() is the kernel function.
+	where <math>n</math> denotes the number of data
+	points, <math>h</math> is a <quote>bandwidth</quote>
+	parameter, and <math>k</math>() is the kernel function.
 	The larger the value of the bandwidth parameter, the smoother
 	the estimated density.</para>
 
@@ -1725,7 +1725,7 @@
 	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
 	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
 	  graphic="kernel2"/>
-	where <mathvar>s</mathvar> denotes the standard deviation
+	where <math>s</math> denotes the standard deviation
 	of the data and IQR denotes the inter-quartile range.  You can
 	widen or shrink the bandwidth via the <quote>bandwidth
 	  adjustment factor</quote>: the actual bandwidth used is
@@ -1857,16 +1857,16 @@
       <para>
 	With the <lit>--sign</lit> option, the Sign test is performed.
 	This test is based on the fact that if two samples,
-	<mathvar>x</mathvar> and <mathvar>y</mathvar>, are drawn randomly
+	<math>x</math> and <math>y</math>, are drawn randomly
 	from the same distribution, the probability that
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub>, for each observation
-	<mathvar>i</mathvar>, should equal 0.5.  The test statistic is
-	<mathvar>w</mathvar>, the number of observations for which
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub>. Under the null hypothesis this
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub>, for each observation
+	<math>i</math>, should equal 0.5.  The test statistic is
+	<math>w</math>, the number of observations for which
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub>. Under the null hypothesis this
 	follows the Binomial distribution with parameters
-	(<mathvar>n</mathvar>, 0.5), where <mathvar>n</mathvar> is the
+	(<math>n</math>, 0.5), where <math>n</math> is the
 	number of observations.
       </para>
       <para>
@@ -1887,11 +1887,11 @@
 	as, for example, the values of a variable for a sample of
 	individuals before and after some treatment.  The test proceeds by
 	finding the differences between the paired observations,
-	<mathvar>x</mathvar><sub>i</sub> &minus;
-	<mathvar>y</mathvar><sub>i</sub>, ranking these differences by
+	<math>x</math><sub>i</sub> &minus;
+	<math>y</math><sub>i</sub>, ranking these differences by
 	absolute value, then assigning to each pair a signed rank, the
 	sign agreeing with the sign of the difference.  One then
-	calculates <mathvar>W</mathvar><sub>+</sub>, the sum of the
+	calculates <math>W</math><sub>+</sub>, the sum of the
 	positive signed ranks.  As with the rank-sum test, this statistic
 	has a well-defined distribution under the null that the median
 	difference is zero, which converges to the Normal for samples
@@ -2130,6 +2130,10 @@
 	  <flag>--geomean</flag>
 	  <effect>see below</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
+	</option>
       </options>
       <examples>
         <example>estimate "Klein Model 1" method=fiml</example>
@@ -2183,8 +2187,12 @@
 	tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]"
 	ascii="sigma(i,j) = u(i)' * u(j) / sqrt((T - ki) * (T - kj))"
 	graphic="syssigma2"/>
-	where the <mathvar>k</mathvar>s denote the number of
+	where the <math>k</math>s denote the number of
 	independent parameters in each equation.
+      </para>
+      <para>
+	If the <lit>verbose</lit> option is given and an iterative
+	method is specified, details of the iterations are printed.
       </para>
     </description>
 
@@ -2275,7 +2283,7 @@
 
     <usage>
       <arguments>
-        <argument optional="true" >startobs endobs</argument>
+        <argument optional="true">startobs endobs</argument>
 	<argument>fitvar</argument>
       </arguments>
       <options>
@@ -2329,6 +2337,7 @@
       <arguments>
         <argument>startobs</argument>
         <argument>endobs</argument>
+	<argument optional="true">varname</argument>
       </arguments>
       <options>
         <option>
@@ -2362,11 +2371,11 @@
 	dependent variable as regressors.  Static forecasts are one
 	step ahead, based on realized values from the previous period,
 	while dynamic forecasts employ the chain rule of forecasting.
-	For example, if a forecast for <mathvar>y</mathvar> in 2008
-	requires as input a value of <mathvar>y</mathvar> for 2007, a
+	For example, if a forecast for <math>y</math> in 2008
+	requires as input a value of <math>y</math> for 2007, a
 	static forecast is impossible without actual data for 2007.  A
 	dynamic forecast for 2008 is possible if a prior forecast can
-	be substituted for <mathvar>y</mathvar> in 2007.
+	be substituted for <math>y</math> in 2007.
       </para>
 
       <para>
@@ -2391,6 +2400,20 @@
 	forecast, and they do not incorporate parameter uncertainty.
 	For nonlinear models, forecast standard errors are not
 	presently available.
+      </para>
+
+      <para context="cli">
+	If the last model is in fact a system of equations, then by default
+	the <lit>fcasterr</lit> command produces forecasts for all the
+	endogenous variables.  You can, however, limit the output to one
+	variable of interest by giving its name following the range of
+	observations (the optional <repl>varname</repl> argument above).
+      </para>
+
+      <para>
+	Forecasts generated by this command can be retrieved via
+	the accessor <lit>$fcast</lit> &mdash; and standard errors, if
+	applicable, via <lit>$fcerr</lit>.  
       </para>
 
     </description>
@@ -3163,7 +3186,7 @@
 	shown regardless of whether or not it is significant.  The other
 	options&mdash;<lit>inverse</lit>, <lit>quadratic</lit> and
 	<lit>loess</lit>&mdash;produce respectively an inverse fit
-	(regression of <mathvar>y</mathvar> on 1/<mathvar>x</mathvar>), a
+	(regression of <math>y</math> on 1/<math>x</math>), a
 	quadratic fit, or a loess fit.  Loess (also sometimes called
 	<quote>lowess</quote>) is a robust locally weighted regression.  
       </para>
@@ -3421,16 +3444,16 @@
       </para>
       <para>
 	Sign test: This test is based on the fact that if two samples,
-	<mathvar>x</mathvar> and <mathvar>y</mathvar>, are drawn randomly
+	<math>x</math> and <math>y</math>, are drawn randomly
 	from the same distribution, the probability that
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub>, for each observation
-	<mathvar>i</mathvar>, should equal 0.5.  The test statistic is
-	<mathvar>w</mathvar>, the number of observations for which
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub>. Under the null hypothesis this
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub>, for each observation
+	<math>i</math>, should equal 0.5.  The test statistic is
+	<math>w</math>, the number of observations for which
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub>. Under the null hypothesis this
 	follows the Binomial distribution with parameters
-	(<mathvar>n</mathvar>, 0.5), where <mathvar>n</mathvar> is the
+	(<math>n</math>, 0.5), where <math>n</math> is the
 	number of observations.
       </para>
       <para>
@@ -3450,11 +3473,11 @@
 	This is designed for matched data pairs such as, for example, the
 	values of a variable for a sample of individuals before and after
 	some treatment.  The test proceeds by finding the differences
-	between the paired observations, <mathvar>x</mathvar><sub>i</sub>
-	&minus; <mathvar>y</mathvar><sub>i</sub>, ranking these
+	between the paired observations, <math>x</math><sub>i</sub>
+	&minus; <math>y</math><sub>i</sub>, ranking these
 	differences by absolute value, then assigning to each pair a
 	signed rank, the sign agreeing with the sign of the difference.
-	One then calculates <mathvar>W</mathvar><sub>+</sub>, the sum of
+	One then calculates <math>W</math><sub>+</sub>, the sum of
 	the positive signed ranks.  As with the rank-sum test, this
 	statistic has a well-defined distribution under the null that the
 	median difference is zero, which converges to the Normal for
@@ -3489,7 +3512,7 @@
       <para>
 	The fixed effects model allows the intercept of the regression to
 	vary across the cross-sectional units.  An
-	<mathvar>F</mathvar>-test is reported for the null hypotheses that
+	<math>F</math>-test is reported for the null hypotheses that
 	the intercepts do not differ. The random effects model decomposes
 	the residual variance into two parts, one part specific to the
 	cross-sectional unit and the other specific to the particular
@@ -3800,22 +3823,22 @@
 
       <para>
 	The Hurst exponent is discussed by Mandelbrot.  In theoretical
-	terms it is the exponent, <mathvar>H</mathvar>, in the
+	terms it is the exponent, <math>H</math>, in the
 	relationship 
 	<equation status="display" 
 	  tex="\[\mathrm{RS}(x) = an^H\]" 
 	  ascii="RS(x) = an^H" 
 	  graphic="hurst"/>where RS is the <quote>rescaled
-	  range</quote> of the variable <mathvar>x</mathvar> in
-	samples of size <mathvar>n</mathvar> and <mathvar>a</mathvar>
+	  range</quote> of the variable <math>x</math> in
+	samples of size <math>n</math> and <math>a</math>
 	is a constant. The rescaled range is the range (maximum minus
 	minimum) of the cumulated value or partial sum of
-	<mathvar>x</mathvar> over the sample period (after subtraction
+	<math>x</math> over the sample period (after subtraction
 	of the sample mean), divided by the sample standard deviation.
       </para>
 
       <para>
-	As a reference point, if <mathvar>x</mathvar> is white noise
+	As a reference point, if <math>x</math> is white noise
 	(zero mean, zero persistence) then the range of its cumulated
 	<quote>wandering</quote> (which forms a random walk), scaled
 	by the standard deviation, grows as the square root of the
@@ -4205,19 +4228,19 @@
     <description>
       <para>
 	Must immediately follow an <cmd>ols</cmd> command. Calculates
-	the leverage (<mathvar>h</mathvar>, which must lie in the
+	the leverage (<math>h</math>, which must lie in the
 	range 0 to 1) for each data point in the sample on which the
 	previous model was estimated.  Displays the residual
-	(<mathvar>u</mathvar>) for each observation along with its
+	(<math>u</math>) for each observation along with its
 	leverage and a measure of its influence on the estimates, 
 	  <equation status="inline" 
 	  tex="$uh/(1 - h)$"
 	  ascii="u*h/(1-h)"
 	  graphic="influence"/>. <quote>Leverage points</quote> for
-	which the value of <mathvar>h</mathvar> exceeds
-	2<mathvar>k</mathvar>/<mathvar>n</mathvar> (where
-	<mathvar>k</mathvar> is the number of parameters being
-	estimated and <mathvar>n</mathvar> is the sample size) are
+	which the value of <math>h</math> exceeds
+	2<math>k</math>/<math>n</math> (where
+	<math>k</math> is the number of parameters being
+	estimated and <math>n</math> is the sample size) are
 	flagged with an asterisk.  For details on the concepts of
 	leverage and influence see Davidson and MacKinnon (1993,
 	Chapter 2).
@@ -4238,10 +4261,10 @@
       <para>
 	Briefly, a <quote>predicted residual</quote> is the difference
 	between the observed value of the dependent variable at
-	observation <mathvar>t</mathvar>, and the fitted value for
-	observation <mathvar>t</mathvar> obtained from a regression in
+	observation <math>t</math>, and the fitted value for
+	observation <math>t</math> obtained from a regression in
 	which that observation is omitted (or a dummy variable with
-	value 1 for observation <mathvar>t</mathvar> alone has been
+	value 1 for observation <math>t</math> alone has been
 	added); the studentized residual is obtained by dividing the
 	predicted residual by its standard error.
       </para>
@@ -4400,10 +4423,10 @@
 
       <para context="cli">The dependent variable must be strictly
 	positive.  If it is a decimal fraction, between 0 and 1, the
-	default is to use a <mathvar>y</mathvar><sup>*</sup> value
+	default is to use a <math>y</math><sup>*</sup> value
 	(the asymptotic maximum of the dependent variable) of 1. If
 	the dependent variable is a percentage, between 0 and 100, the
-	default <mathvar>y</mathvar><sup>*</sup> is 100.
+	default <math>y</math><sup>*</sup> is 100.
       </para>
 
       <para context="cli">
@@ -4416,7 +4439,7 @@
       <para context="gui">
 	You are presented with a dialog box that allows you to specify a
 	different maximum if you wish.  The supplied
-	<mathvar>y</mathvar><sup>*</sup> value must be greater than all of
+	<math>y</math><sup>*</sup> value must be greater than all of
 	the observed values of the dependent variable.
       </para>
 
@@ -4425,7 +4448,7 @@
 	<equation status="display" 
 	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
 	  ascii="y = y* / (1 + exp(-x))"
-	  graphic="logistic2"/> where <mathvar>x</mathvar> represents
+	  graphic="logistic2"/> where <math>x</math> represents
 	either a fitted value or a residual from the OLS regression
 	using the transformed dependent variable.  The reported values
 	are therefore comparable with the original dependent
@@ -4642,18 +4665,18 @@
     <description>
       <para>
 	The Mahalanobis distance is the distance between two points in
-	an <mathvar>k</mathvar>-dimensional space, scaled by the
+	an <math>k</math>-dimensional space, scaled by the
 	statistical variation in each dimension of the space.  For
-	example, if <mathvar>p</mathvar> and <mathvar>q</mathvar> are
-	two observations on a set of <mathvar>k</mathvar> variables
-	with covariance matrix <mathvar>C</mathvar>, then the
+	example, if <math>p</math> and <math>q</math> are
+	two observations on a set of <math>k</math> variables
+	with covariance matrix <math>C</math>, then the
 	Mahalanobis distance between the observations is given by
 	<equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
           graphic="mahal"/>where 
 	<equation status="inline" tex="$(p-q)$" ascii="(p - q)" graphic="mahal2"/> is a
-	<mathvar>k</mathvar>-vector. This reduces to Euclidean
+	<math>k</math>-vector. This reduces to Euclidean
 	distance if the covariance matrix is the identity
 	matrix.</para>
 
@@ -4662,7 +4685,7 @@
 	sample range, the distance is computed between the observation
 	and the centroid of the selected variables.  This distance is
 	the multidimensional counterpart of a standard
-	<mathvar>z</mathvar>-score, and can be used to judge whether a
+	<math>z</math>-score, and can be used to judge whether a
 	given observation <quote>belongs</quote> with a group of other
 	observations.
       </para>
@@ -4726,7 +4749,7 @@
 
     <description>
       <para context="cli">
-	Calculates the <mathvar>t</mathvar> statistic for the null
+	Calculates the <math>t</math> statistic for the null
 	hypothesis that the population means are equal for the
 	variables <repl>var1</repl> and <repl>var2</repl>, and shows
 	its p-value.
@@ -5175,7 +5198,7 @@
 
       <para>
 	Example: Suppose we have a data set with variables
-	<mathvar>C</mathvar> and <mathvar>Y</mathvar> (&eg;
+	<math>C</math> and <math>Y</math> (&eg;
 	<lit>greene11_3.gdt</lit>) and we wish to estimate a nonlinear
 	consumption function of the form
 	<equation status="display"
@@ -5390,8 +5413,8 @@
       </para>
 
       <para>Besides coefficient estimates and standard errors, the
-	program also prints p-values for <mathvar>t</mathvar>
-	(two-tailed) and <mathvar>F</mathvar>-statistics.  A p-value
+	program also prints p-values for <math>t</math>
+	(two-tailed) and <math>F</math>-statistics.  A p-value
 	below 0.01 indicates statistical significance at the 1 percent
 	level and is marked with <lit>***</lit>. <lit>**</lit>
 	indicates significance between 1 and 5 percent and
@@ -5488,7 +5511,7 @@
       </para>
       <para context="gui">
 	When the original model was estimated by OLS, the default test
-	statistic is an <mathvar>F</mathvar>-value, based on the sums of
+	statistic is an <math>F</math>-value, based on the sums of
 	squared residuals for the restricted and unrestricted models. For
 	estimators other than OLS, or if the Wald option is selected, the
 	statistic is an asymptotic Wald chi-square value based on the
@@ -5516,12 +5539,12 @@
       </para>
       <para context="cli">
 	If the original model was estimated by OLS, the test statistic is
-	by default an <mathvar>F</mathvar>-value.  This is based on the
+	by default an <math>F</math>-value.  This is based on the
 	sums of squared residuals for the restricted and unrestricted
 	models, unless the original model was estimated with robust
-	standard errors.  In the latter case <mathvar>F</mathvar> is
+	standard errors.  In the latter case <math>F</math> is
 	computed from the robust estimate of the covariance matrix for the
-	original model.  (It is the <mathvar>F</mathvar>-form of a Wald
+	original model.  (It is the <math>F</math>-form of a Wald
 	test).
       </para>
       <para context="cli">
@@ -5920,7 +5943,7 @@
 	variables, with names <lit>PC1</lit>, <lit>PC2</lit> and so
 	on.  These artificial variables are formed as the sum of
 	(component loading) times (standardized <lit>Xi</lit>), where
-	<lit>Xi</lit> denotes the <mathvar>i</mathvar>th variable in
+	<lit>Xi</lit> denotes the <math>i</math>th variable in
 	<repl>varlist</repl>.</para>
 
       <para>If the <lit>--save-all</lit> flag is given, all of the
@@ -5973,8 +5996,8 @@
 	namely the Geweke and Porter-Hudak (GPH) test and the Local
 	Whittle Estimator.  The null hypothesis in both cases is that the
 	integration order is zero.  By default the order for these tests
-	is the lesser of <mathvar>T</mathvar>/2 and
-	<mathvar>T</mathvar><sup>0.6</sup>.  Again, this value can be
+	is the lesser of <math>T</math>/2 and
+	<math>T</math><sup>0.6</sup>.  Again, this value can be
 	adjusted using the bandwidth parameter.
       </para>
     </description>
@@ -6017,16 +6040,16 @@
 	must take on only non-negative integer values.
       </para>
 
-      <para>If a discrete random variable <mathvar>Y</mathvar> follows
+      <para>If a discrete random variable <math>Y</math> follows
       the Poisson distribution, then
         <equation status="display" 
           tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
           ascii="Pr(Y = y) = exp(-v) * v^y / y!"
           graphic="poisson1"/>
-	for <mathvar>y</mathvar> = 0, 1,
+	for <math>y</math> = 0, 1,
       2,&hellip;.  The mean and variance of the distribution are both
-      equal to <mathvar>v</mathvar>.  In the Poisson regression model,
-      the parameter <mathvar>v</mathvar> is represented as a function
+      equal to <math>v</math>.  In the Poisson regression model,
+      the parameter <math>v</math> is represented as a function
       of one or more independent variables.  The most common version
       (and the only one supported by gretl) has
         <equation status="display" 
@@ -6034,7 +6057,7 @@
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
           graphic="poisson2"/>
 	or in other words the log of
-      <mathvar>v</mathvar> is a linear function of the independent
+      <math>v</math> is a linear function of the independent
       variables.</para>
 
       <para>Optionally, you may add an <quote>offset</quote> variable
@@ -6334,15 +6357,15 @@
       <para>
 	Computes the area to the right of <repl>xval</repl> in the
 	specified distribution (<lit>z</lit> for Gaussian, <lit>t</lit>
-	for Student's <mathvar>t</mathvar>, <lit>X</lit> for chi-square,
-	<lit>F</lit> for <mathvar>F</mathvar>, <lit>G</lit> for gamma,
+	for Student's <math>t</math>, <lit>X</lit> for chi-square,
+	<lit>F</lit> for <math>F</math>, <lit>G</lit> for gamma,
 	<lit>B</lit> for binomial, or <lit>P</lit> for Poisson).  
       </para>
       <para>
 	Depending on the distribution, the following information must be
-	given, before the <repl>xval</repl>: for the <mathvar>t</mathvar>
+	given, before the <repl>xval</repl>: for the <math>t</math>
 	and chi-square distributions, the degrees of freedom; for
-	<mathvar>F</mathvar>, the numerator and denominator degrees of
+	<math>F</math>, the numerator and denominator degrees of
 	freedom; for gamma, the shape and scale parameters; for the
 	binomial distribution, the <quote>success</quote> probability and
 	the number of trials; and for the Poisson distribution, the
@@ -6417,7 +6440,7 @@
 	For each potential break point within the central 70 percent of
 	the observations, a Chow test is performed (see <cmdref
 	  targ="chow"/>). The QLR test statistic is the maximum of the
-	<mathvar>F</mathvar> values from these tests.  It follows a
+	<math>F</math> values from these tests.  It follows a
 	non-standard distribution, the critical values of which are taken
 	from Stock and Watson's <book>Introduction to Econometrics</book>
 	(2003). If the QLR statistic exceeds the critical value at the
@@ -6483,7 +6506,7 @@
 	Must follow the estimation of a model via OLS. Carries out
 	Ramsey's RESET test for model specification (non-linearity) by
 	adding the square and the cube of the fitted values to the
-	regression and calculating the <mathvar>F</mathvar> statistic
+	regression and calculating the <math>F</math> statistic
 	for the null hypothesis that the parameters on the two added
 	terms are zero.
       </para>
@@ -6569,7 +6592,7 @@
 
       <para>
 	In the single-equation case the restrictions are evaluated via
-	a Wald <mathvar>F</mathvar>-test, using the coefficient covariance
+	a Wald <math>F</math>-test, using the coefficient covariance
 	matrix of the model in question.  By default, the restricted
 	coefficient estimates are printed; if you just want the test
 	statistic, you can append the <lit>--quiet</lit> option flag
@@ -6580,7 +6603,7 @@
 	In the system case, the test statistic depends on the estimator
 	chosen: a Likelihood Ratio test if the system is estimated using a
 	Maximum Likelihood method, or an asymptotic
-	<mathvar>F</mathvar>-test otherwise.
+	<math>F</math>-test otherwise.
       </para>
 
     </description>
@@ -6761,13 +6784,13 @@
       <para>
 	Range&ndash;mean plot: this command creates a simple graph to
 	help in deciding whether a time series,
-	<mathvar>y</mathvar>(t), has constant variance or not.  We
+	<math>y</math>(t), has constant variance or not.  We
 	take the full sample t=1,...,T and divide it into small
-	subsamples of arbitrary size <mathvar>k</mathvar>. The first
+	subsamples of arbitrary size <math>k</math>. The first
 	subsample is formed by
-	<mathvar>y</mathvar>(1),...,<mathvar>y</mathvar>(k), the
-	second is <mathvar>y</mathvar>(k+1), ...,
-	<mathvar>y</mathvar>(2k), and so on.  For each subsample we
+	<math>y</math>(1),...,<math>y</math>(k), the
+	second is <math>y</math>(k+1), ...,
+	<math>y</math>(2k), and so on.  For each subsample we
 	calculate the sample mean and range (= maximum minus minimum),
 	and we construct a graph with the means on the horizontal axis
 	and the ranges on the vertical. So each subsample is
@@ -6947,12 +6970,12 @@
 	Generates pairwise graphs of <repl>yvar</repl> against all the
 	variables in <repl>xvarlist</repl>, or of all the variables in
 	<repl>yvarlist</repl> against <repl>xvar</repl>.  The first
-	example above puts variable 1 on the <mathvar>y</mathvar>-axis
+	example above puts variable 1 on the <math>y</math>-axis
 	and draws four graphs, the first having variable 2 on the
-	<mathvar>x</mathvar>-axis, the second variable 3 on the
-	<mathvar>x</mathvar>-axis, and so on.  The second example
+	<math>x</math>-axis, the second variable 3 on the
+	<math>x</math>-axis, and so on.  The second example
 	plots each of variables 1 through 6 against variable 7 on the
-	<mathvar>x</mathvar>-axis. Scanning a set of such plots can be
+	<math>x</math>-axis. Scanning a set of such plots can be
 	a useful step in exploratory data analysis.  The maximum
 	number of plots is six; any extra variable in the list will be
 	ignored.
@@ -7268,12 +7291,12 @@
 	<li>
 	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (the default),
 	    <lit>nw2</lit>, <lit>nw3</lit> or an integer.  Sets the
-	    maximum lag value or bandwidth, <mathvar>p</mathvar>, used
+	    maximum lag value or bandwidth, <math>p</math>, used
 	    when calculating HAC (Heteroskedasticity and Autocorrelation
 	    Consistent) standard errors using the Newey-West approach, for
 	    time series data.  <lit>nw1</lit> and <lit>nw2</lit> represent
 	    two variant automatic calculations based on the sample size,
-	    <mathvar>T</mathvar>: for nw1, 
+	    <math>T</math>: for nw1, 
 	    <equation status="inline"
 	      tex="$p = 0.75 \times T^{1/3}$" 
 	      ascii="p = 0.75 * T^(1/3)"
@@ -7776,7 +7799,7 @@
     <description>
       <para context="cli">
 	Prints Spearman's rank correlation coefficient for the two
-	variables <mathvar>x</mathvar> and <mathvar>y</mathvar>. The
+	variables <math>x</math> and <math>y</math>. The
 	variables do not have to be ranked manually in advance; the
 	function takes care of this.
       </para>
@@ -8165,19 +8188,16 @@
     <usage>
       <altforms>
 	<altform><lit>system method=</lit><repl>estimator</repl></altform>
-	<altform><lit>system name=</lit><repl>sysname</repl></altform>
+	<altform><repl>sysname</repl><lit> &lt;- system</lit></altform>
       </altforms>
-      <arguments>
-        <argument>savevars</argument>
-      </arguments>
       <examples>
-	<example>system name="Klein Model 1"</example>
+	<example>"Klein Model 1" &lt;- system</example>
         <example>system method=sur</example>
-	<example>system method=sur save=resids</example>
-	<example>system method=3sls save=resids,fitted</example>
+	<example>system method=3sls</example>
 	<demos>
 	  <demo>klein.inp</demo>
 	  <demo>kmenta.inp</demo>
+	  <demo>greene14_2.inp</demo>
 	</demos>	  
       </examples>
     </usage>
@@ -8197,7 +8217,7 @@
 	estimate the system once.</para>
 
       <para context="cli">
-	To save the system you should give it a name, as in the first
+	To save the system you should assign it a name, as in the first
 	example (if the name contains spaces it must be surrounded by
 	double quotes).  In this case you estimate the system using
 	the <cmdref targ="estimate"/> command.  With a saved system of
@@ -8218,9 +8238,10 @@
 	system is estimated once its definition is complete.  
       </para>
 
-      <para context="cli">An equation system is terminated by the line
-	<cmd>end system</cmd>.  Within the system four sorts of
-	statement may be given, as follows.</para>
+      <para context="cli">
+	An equation system is terminated by the line <cmd>end system</cmd>.
+	Within the system four sorts of statement may be given, as follows.
+      </para>
 
       <ilist>
 	<li><para><cmdref targ="equation"/>: specify an equation
@@ -8271,33 +8292,47 @@
 	  </para>
 	</li>
 	<li><para><lit>$vcv</lit>: covariance matrix of the coefficients.
-	    If there are <mathvar>k</mathvar> elements in the
-	    <lit>$coeff</lit> vector, this matrix is <mathvar>k</mathvar>
-	    by <mathvar>k</mathvar>.
+	    If there are <math>k</math> elements in the
+	    <lit>$coeff</lit> vector, this matrix is <math>k</math>
+	    by <math>k</math>.
 	  </para>
 	</li>
 	<li><para><lit>$sigma</lit>: cross-equation residual covariance
 	    matrix.
 	  </para>
 	</li>
+	<li><para><lit>$sysGamma</lit>, <lit>$sysA</lit> and <lit>$sysB</lit>: 
+	    structural-form coefficient matrices (see below).
+	  </para>
+	</li>
       </ilist>
 
       <para context="cli">
-	Besides the accessors above, you can arrange to save the residuals
-	and/or fitted values as separate series using the optional
-	<cmd>save=</cmd> field of the <cmd>system</cmd> command, as
-	shown in the examples.  These series are given names on the
-	pattern <lit>uhat_s01</lit> (indicating residuals from equation
-	1 of the system).
+	If you want to retrieve the residuals or fitted values for a
+	specific equation as a data series, select a column from the
+	<lit>$uhat</lit> or <lit>$yhat</lit> matrix and assign it to
+	a series, as in
       </para>
+      <code context="cli">
+	series uh1 = $uhat[,1]
+      </code>
 
       <para>
-	For examples of the specification and estimation of systems of
-	equations, please see the scripts
-	<filename>klein.inp</filename>,
-	<filename>kmenta.inp</filename> and
-	<filename>greene14_2.inp</filename> (supplied with the gretl
-	distribution).
+	The structural-form matrices correspond to the following
+	representation of a simultaneous equations model:
+	<equation status="display"
+	  tex="\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]"
+	  ascii="Gamma y(t) = A y(t-1) + B x(t) + e(t)"
+	  graphic="structural"/> If there are <math>n</math> endogenous
+	variables and <math>k</math> exogenous variables, 
+	<equation status="inline"
+	  tex="$\Gamma$"
+	  ascii="Gamma"
+	  graphic="Gamma"/> is an <by r="n" c="n"/> matrix and <math>B</math>
+	is <by r="n" c="k"/>. If the system contains no lags of the endogenous
+	variables then the <math>A</math> matrix is not present.  If the
+	maximum lag of an endogenous regressor is <math>p</math>,
+	the <math>A</math> matrix is <by r="n" c="np"/>.
       </para>
 
     </description>
@@ -8348,7 +8383,7 @@
 	The format string must be enclosed in double quotes and must be
 	tied to the flag with an equals sign.  The pattern for the format
 	string is as follows.  There are four fields, representing the
-	coefficient, standard error, <mathvar>t</mathvar>-ratio and
+	coefficient, standard error, <math>t</math>-ratio and
 	p-value respectively.  These fields should be separated by
 	vertical bars; they may contain a <lit>printf</lit>-type
 	specification for the formatting of the numeric value in question,
@@ -8365,9 +8400,9 @@
       <para>
 	The first of these specifications prints the values in all columns
 	using 4 decimal places.  The second suppresses the p-value and
-	prints the <mathvar>t</mathvar>-ratio to 3 places.  The third
-	omits the <mathvar>t</mathvar>-ratio.  The last one again omits
-	the <mathvar>t</mathvar>, and prints both coefficient and standard
+	prints the <math>t</math>-ratio to 3 places.  The third
+	omits the <math>t</math>-ratio.  The last one again omits
+	the <math>t</math>, and prints both coefficient and standard
 	error to 8 significant figures.
       </para>
       <para>
@@ -8638,9 +8673,9 @@
 
       <para context="cli">
 	A separate regression is run for each variable in <repl>varlist</repl>.
-	Output for each equation includes <mathvar>F</mathvar>-tests for zero
+	Output for each equation includes <math>F</math>-tests for zero
 	restrictions on all lags of each of the variables, an
-	<mathvar>F</mathvar>-test for the significance of the maximum lag, and,
+	<math>F</math>-test for the significance of the maximum lag, and,
 	if the <lit>--impulse-responses</lit> flag is given, forecast variance
 	decompositions and impulse responses.
       </para>
@@ -8736,13 +8771,13 @@
 
     <description>
       <para context="cli">
-	Calculates the <mathvar>F</mathvar> statistic for the null
+	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances for the variables
 	<repl>var1</repl> and <repl>var2</repl> are equal, and shows
 	its p-value.
       </para>
       <para context="gui">
-	Calculates the <mathvar>F</mathvar> statistic for the null
+	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances are equal for the
 	two selected variables, and shows its p-value.
       </para>
@@ -8935,13 +8970,13 @@
 	Must follow the estimation of a model which includes at least
 	two independent variables. Calculates and displays the
 	Variance Inflation Factors (VIFs) for the regressors.  The VIF
-	for regressor <mathvar>j</mathvar> is defined as
+	for regressor <math>j</math> is defined as
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
 	  ascii="1/(1 - Rj^2)"
-	  graphic="vif"/> where <mathvar>R</mathvar><sub>j</sub> is
+	  graphic="vif"/> where <math>R</math><sub>j</sub> is
 	the coefficient of multiple correlation between regressor
-	<mathvar>j</mathvar> and the other regressors. The factor has
+	<math>j</math> and the other regressors. The factor has
 	a minimum value of 1.0 when the variable in question is
 	orthogonal to the other independent variables.  Neter,
 	Wasserman, and Kutner (1990) suggest inspecting the largest

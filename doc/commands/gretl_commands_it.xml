@@ -45,7 +45,7 @@
         le variabili nella <repl>lista-variabili</repl> e stima il nuovo
         modello. Viene eseguito anche un test per la significatività congiunta 
         delle variabili aggiunte: nel caso di stime OLS, la statistica test è la
-        <mathvar>F</mathvar>, negli altri casi è il chi-quadro asintotico di
+        <math>F</math>, negli altri casi è il chi-quadro asintotico di
         Wald. Un p-value inferiore a 0.05 indica che i coefficienti sono
         congiuntamente significativi al livello del 5 per cento.
       </para>
@@ -72,7 +72,7 @@
 	Aggiunge le variabili selezionate al modello precedente e stima il
         nuovo modello. Viene eseguito anche un test per la significatività congiunta 
         delle variabili aggiunte: nel caso di stime OLS, la statistica test è la
-        <mathvar>F</mathvar>, negli altri casi è il chi-quadro asintotico di
+        <math>F</math>, negli altri casi è il chi-quadro asintotico di
         Wald. Un p-value inferiore a 0.05 indica che i coefficienti sono
         congiuntamente significativi al livello del 5 per cento.
       </para>
@@ -171,10 +171,10 @@
       </para>
       
       <para>In tutti i casi, la variabile dipendente è la differenza prima
-        della variabile specificata, <mathvar>y</mathvar>, e la variabile
+        della variabile specificata, <math>y</math>, e la variabile
         dipendente più importante è il ritardo (di ordine uno) di
-        <mathvar>y</mathvar>. Il modello è costruito in modo che il coefficiente
-        della variabile ritardata <mathvar>y</mathvar> è pari a 1 meno
+        <math>y</math>. Il modello è costruito in modo che il coefficiente
+        della variabile ritardata <math>y</math> è pari a 1 meno
         la radice. Ad esempio, il modello con una costante può essere
         scritto come <equation status="display"
         tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
@@ -182,19 +182,19 @@
 	graphic="adf1"/></para>
 
       <para context="cli">
-        Se l'ordine di ritardi, <mathvar>k</mathvar>, è maggiore di 0, ai
+        Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
         regressori di ognuna delle regressioni calcolate per il test saranno
-        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente, con la
+        aggiunti <math>k</math> ritardi della variabile dipendente, con la
         precisazione che segue. Se si usa l'opzione <lit>--test-down</lit>,
-        <mathvar>k</mathvar> viene interpretato come ritardo massimo, mentre
+        <math>k</math> viene interpretato come ritardo massimo, mentre
         l'ordine di ritardo effettivamente usato viene ottenuto testando
         "all'indietro" con il seguente algoritmo:
       </para>
 
       <para context="gui">
-        Se l'ordine di ritardi, <mathvar>k</mathvar>, è maggiore di 0, ai
+        Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
         regressori di ognuna delle regressioni calcolate per il test saranno
-        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente, con la
+        aggiunti <math>k</math> ritardi della variabile dipendente, con la
         precisazione che segue. Se viene selezionata la casella <quote>test per
         il ritardo massimo</quote>, l'ordine selezionato verrà considerato come
         ordine massimo, e l'ordine da usare effettivamente sarà ricavato
@@ -203,13 +203,13 @@
 
       <nlist>
 	<li><para>Stima la regressione Dickey&ndash;Fuller con
-	    <mathvar>k</mathvar> ritardi della variabile dipendente.
+	    <math>k</math> ritardi della variabile dipendente.
 	  </para>
 	</li>
 	<li><para>Se questo ordine di ritardi è significativo, esegue il test
-        con l'ordine di ritardo <mathvar>k</mathvar>.  Altrimenti, prova il test
-        con <mathvar>k</mathvar> = <mathvar>k</mathvar> &minus; 1; se
-	    <mathvar>k</mathvar> = 0, esegue il test con ordine di ritardo 0,
+        con l'ordine di ritardo <math>k</math>.  Altrimenti, prova il test
+        con <math>k</math> = <math>k</math> &minus; 1; se
+	    <math>k</math> = 0, esegue il test con ordine di ritardo 0,
             altrimenti va al punto 1.
 	  </para>
 	</li>
@@ -217,7 +217,7 @@
 
       <para>
         Durante il punto 2 spiegato sopra, <quote>significativo</quote>
-        significa che la statistica <mathvar>t</mathvar> per l'ultimo ritardo
+        significa che la statistica <math>t</math> per l'ultimo ritardo
         abbia un <emphasis>p</emphasis>-value asintotico a due code per la
         distribuzione normale pari a 0.10 o inferiore.
       </para> 
@@ -650,7 +650,7 @@
 	<equation status="inline" 
 	  tex="$\ell$" ascii="L"
 	  graphic="ell"/>
-        è la log-verosimiglianza e <mathvar>k</mathvar> è il numero totale di
+        è la log-verosimiglianza e <math>k</math> è il numero totale di
         parametri stimati. Si noti che <program>X-12-ARIMA</program> non produce
         criteri di informazione come l'AIC quando la stima è effettuata col
         metodo della massima verosimiglianza condizionale.
@@ -662,8 +662,8 @@
 	  <equation status="display" 
 	  tex="\[z=re^{i2\pi\lambda}\]"
 	  ascii="z = r * exp(i*2*pi*lambda)"
-	  graphic="lambda"/> dove <mathvar>z</mathvar> è la radice in questione
-	  e <mathvar>r</mathvar> è il suo modulo.
+	  graphic="lambda"/> dove <math>z</math> è la radice in questione
+	  e <math>r</math> è il suo modulo.
       </para>
     </description>
 
@@ -697,14 +697,14 @@
             capitolo 5 di <book>Economic Theory and Methods</book> (ETM) di
             Davidson e MacKinnon: ad ogni replicazione bootstrap, viene
             calcolato un rapporto
-	    <mathvar>t</mathvar> come (a) la differenza tra la stima corrente
+	    <math>t</math> come (a) la differenza tra la stima corrente
             del coefficiente e quella di riferimento, divisa per (b) l'errore
             standard di riferimento. Quindi l'intervallo di confidenza viene
             calcolato usando i quantili di questo rapporto t, come spiegato in
             ETM. L'opzione p-value si basa sulla distribuzione del rapporto
-	    <mathvar>t</mathvar> bootstrap: è la proporzione delle replicazioni
+	    <math>t</math> bootstrap: è la proporzione delle replicazioni
             in cui il valore assoluto di questa statistica eccede il valore
-            assoluto del rapporto <mathvar>t</mathvar> di riferimento.
+            assoluto del rapporto <math>t</math> di riferimento.
 	  </para>
 	</li>
 	<li>
@@ -717,8 +717,8 @@
 	<li>
 	  <para>Il numero di replicazioni da eseguire. Si noti che quando si
             costruisce un intervallo di confidenza al 95 per cento è opportuno
-            che 0.05(<mathvar>B</mathvar> + 1)/2 sia un intero
-	    (dove <mathvar>B</mathvar> è il numero di replicazioni), quindi
+            che 0.05(<math>B</math> + 1)/2 sia un intero
+	    (dove <math>B</math> è il numero di replicazioni), quindi
             gretl può aggiustare il numero scelto di replicazioni per assicurare
             questa condizione.
 	  </para>
@@ -835,7 +835,7 @@
 	<repl>osservazione</repl> fino alla fine del campione, 0 altrove; inoltre
         crea dei termini di interazione tra questa dummy e le variabili
         indipendenti originali, stima una regressione che include
-        questi termini e calcola una statistica <mathvar>F</mathvar>,
+        questi termini e calcola una statistica <math>F</math>,
         prendendo la regressione aumentata come non vincolata e la regressione
         originale come vincolata. La statistica è appropriata per testare
         l'ipotesi nulla che non esista un break strutturale in corrispondenza
@@ -959,8 +959,8 @@
         il passo (1) viene saltato.
       </para>
       <para context="gui">
-	Se l'ordine di ritardo, <mathvar>k</mathvar>, è maggior di 0, verranno
-        inclusi <mathvar>k</mathvar> ritardi della variabile dipendente al
+	Se l'ordine di ritardo, <math>k</math>, è maggior di 0, verranno
+        inclusi <math>k</math> ritardi della variabile dipendente al
         secondo membro di ognuna delle regressioni di test, a meno che non si
         usi la casella <quote>test dal massimo ordine di ritardi all'indietro</quote>:
         in questo caso, l'ordine specificato viene considerato come massimo e
@@ -1339,9 +1339,9 @@
 	<equation status="inline" 
 	  tex="$\hat{\rho}(u_t, u_{t-s})$"
 	  ascii="rho(u(t), u(t-s))"
-	  graphic="autocorr"/> dove <mathvar>u</mathvar><sub>t</sub>
-	è la <mathvar>t</mathvar>-esima osservazione della variabile
-	<mathvar>u</mathvar> e <mathvar>s</mathvar> è il numero dei
+	  graphic="autocorr"/> dove <math>u</math><sub>t</sub>
+	è la <math>t</math>-esima osservazione della variabile
+	<math>u</math> e <math>s</math> è il numero dei
 	ritardi.
       </para>
 
@@ -1350,7 +1350,7 @@
         l'algoritmo di Durbin&ndash;Levinson), ossia al
 	netto dell'effetto dei ritardi intermedi. Il comando produce anche
         un grafico del correlogramma e mostra la statistica
-        <mathvar>Q</mathvar> di Box&ndash;Pierce per testare l'ipotesi nulla
+        <math>Q</math> di Box&ndash;Pierce per testare l'ipotesi nulla
         che la serie sia <quote>white noise</quote> (priva di
         autocorrelazione). La statistica si distribuisce asintoticamente come
         chi-quadro con gradi di libertà pari al numero di ritardi specificati.
@@ -1389,8 +1389,8 @@
 	Calcola il criterio di informazione di Akaike (AIC) e il criterio
         di informazione bayesiana di Schwarz (BIC), dati <repl>ess</repl> (somma
         dei quadrati degli errori), il numero delle osservazioni
-	(<mathvar>T</mathvar>) e quello dei coefficienti (<mathvar>k</mathvar>).
-	<mathvar>T</mathvar>, <mathvar>k</mathvar> e
+	(<math>T</math>) e quello dei coefficienti (<math>k</math>).
+	<math>T</math>, <math>k</math> e
 	<repl>ess</repl> possono essere valori numerici o nomi di
         variabili definite in precedenza.
       </para>
@@ -1433,12 +1433,12 @@
         CUSUMSQ ) per la stabilità dei parametri. Viene calcolata una 
         serie di errori di previsione per il periodo successivo,
         attraverso una serie di regressioni: la prima usa le prime
-	<mathvar>k</mathvar> osservazioni e viene usata per generare
+	<math>k</math> osservazioni e viene usata per generare
         la previsione della variabile dipendente per l'osservazione 
-	<mathvar>k</mathvar> + 1; la seconda usa le prime
-        <mathvar>k</mathvar> + 1 osservazioni per generare una previsione
-        per l'osservazione <mathvar>k</mathvar> + 2 e così via (dove
-	<mathvar>k</mathvar> è il numero dei parametri nel modello originale).
+	<math>k</math> + 1; la seconda usa le prime
+        <math>k</math> + 1 osservazioni per generare una previsione
+        per l'osservazione <math>k</math> + 2 e così via (dove
+	<math>k</math> è il numero dei parametri nel modello originale).
       </para>
       <para>
 	Viene mostrata, anche graficamente, la somma cumulata degli errori 
@@ -1449,7 +1449,7 @@
 
       <para>
         Nel caso di test CUSUM, viene mostrata anche la statistica
-        <mathvar>t</mathvar> di Harvey&ndash;Collier per testare l'ipotesi nulla
+        <math>t</math> di Harvey&ndash;Collier per testare l'ipotesi nulla
         della stabilità dei parametri. Si veda il Capitolo 7 di
         <book>Econometric Analysis</book> di Greene, per i dettagli. Per il test
 	CUSUMSQ, la banda di confidenza al 95% è calcolata usando l'algoritmo
@@ -1673,14 +1673,14 @@
       
       <para>
         La formula usata per calcolare la densità stimata in ognuno dei punti di
-        riferimento <mathvar>x</mathvar> è
+        riferimento <math>x</math> è
       <equation status="display"
 	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
 	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
 	graphic="kernel1"/>
-      dove <mathvar>n</mathvar> denota il numero delle osservazioni,
-      <mathvar>h</mathvar> è un parametro di "larghezza di banda" e
-      <mathvar>k</mathvar>() è la funzione kernel. All'aumentare del parametro
+      dove <math>n</math> denota il numero delle osservazioni,
+      <math>h</math> è un parametro di "larghezza di banda" e
+      <math>k</math>() è la funzione kernel. All'aumentare del parametro
       di banda, aumenta il livellamento della densità stimata.
       </para>
 
@@ -1692,7 +1692,7 @@
 	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
 	  graphic="kernel2"/>
 
-      dove <mathvar>s</mathvar> denota lo scarto quadratico medio dei dati e IQR
+      dove <math>s</math> denota lo scarto quadratico medio dei dati e IQR
       denota il range interquartile. È possibile allargare o restringere la
       banda usando il <quote>fattore di aggiustamento della banda</quote>: la
       banda effettivamente utilizzata si ottiene moltiplicando il valore di
@@ -1819,16 +1819,16 @@
       <para>
 	Con l'opzione <lit>--sign</lit>, viene eseguito il test del segno,
         che si basa sul fatto che per due campioni
-	<mathvar>x</mathvar> e <mathvar>y</mathvar> estratti casualmente dalla
+	<math>x</math> e <math>y</math> estratti casualmente dalla
         stessa distribuzione, la probabilità che valga
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub> per ogni osservazione
-	<mathvar>i</mathvar> dovrebbe valere 0.5. La statistica test è
-	<mathvar>w</mathvar>, ossia il numero di osservazioni per cui vale
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub>. Sotto l'ipotesi nulla, questa
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub> per ogni osservazione
+	<math>i</math> dovrebbe valere 0.5. La statistica test è
+	<math>w</math>, ossia il numero di osservazioni per cui vale
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub>. Sotto l'ipotesi nulla, questa
         grandezza si distribuisce come una binomiale con parametri
-	(<mathvar>n</mathvar>, 0.5), dove <mathvar>n</mathvar> è il numero di
+	(<math>n</math>, 0.5), dove <math>n</math> è il numero di
         osservazioni.
       </para>
       <para>
@@ -1850,11 +1850,11 @@
         campioni", come possono essere ad esempio i valori di una variabile in
         un gruppo di individui prima e dopo un certo trattamento. Il test
         procede calcolando le differenze tra le coppie di osservazioni
-	<mathvar>x</mathvar><sub>i</sub> &minus;
-	<mathvar>y</mathvar><sub>i</sub>, ordinando queste differenze per valore
+	<math>x</math><sub>i</sub> &minus;
+	<math>y</math><sub>i</sub>, ordinando queste differenze per valore
         assoluto e assegnando ad ogni coppia un valore di rango con segno, in
         cui il segno rispecchia il segno della differenza. Quindi viene
-        calcolato <mathvar>W</mathvar><sub>+</sub>, la somma di tutti i ranghi
+        calcolato <math>W</math><sub>+</sub>, la somma di tutti i ranghi
         con segno positivo. Come avviene per il test rank-sum, questa
         statistica ha una distribuzione precisa nell'ipotesi nulla che la
         differenza mediana sia zero, distribuzione che converte alla normale nel
@@ -2139,7 +2139,7 @@
        tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]"
        ascii="sigma(i,j) = u(i)' * u(j) / sqrt((T - ki) * (T - kj))"
        graphic="syssigma2"/>
-       dove i <mathvar>k</mathvar> indicano il numero di parametri indipendenti in
+       dove i <math>k</math> indicano il numero di parametri indipendenti in
        ogni equazione.
       </para>
     </description>
@@ -2316,12 +2316,12 @@
         come regressori. Le previsioni statiche sono per il periodo successivo,
         basate sui valori effettivi nel periodo precedente, mentre quelle
         dinamiche usano la regola della previsione a catena.
-        Ad esempio, se la previsione per <mathvar>y</mathvar> nel 2008
- 	richiede come input il valore di <mathvar>y</mathvar> nel 2007,
+        Ad esempio, se la previsione per <math>y</math> nel 2008
+ 	richiede come input il valore di <math>y</math> nel 2007,
         non è possibile calcolare una previsione statica se non si hanno dati
         per il 2007. È possibile calcolare una previsione dinamica per il 2008
         se si dispone di una precedente previsione per
- 	<mathvar>y</mathvar> nel 2007.
+ 	<math>y</math> nel 2007.
        </para>
  
        <para>
@@ -3105,8 +3105,8 @@
         Se si usa l'opzione <lit>linear</lit>, la linea OLS viene mostrata a
         prescindere dalla sua significatività. Le altre opzioni
         (<lit>inverse</lit>, <lit>quadratic</lit> e <lit>loess</lit>) mostrano
-        rispettivamente un fit inverso (la regressione di <mathvar>y</mathvar>
-        su 1/<mathvar>x</mathvar>), un fit quadratico o un fit loess (chiamato
+        rispettivamente un fit inverso (la regressione di <math>y</math>
+        su 1/<math>x</math>), un fit quadratico o un fit loess (chiamato
         a volte anche <quote>lowess</quote>, una regressione robusta con pesi locali).
       </para>
 
@@ -3374,16 +3374,16 @@
       </para>
       <para>
        Test del segno: si basa sul fatto che per due campioni
-	<mathvar>x</mathvar> e <mathvar>y</mathvar> estratti casualmente dalla
+	<math>x</math> e <math>y</math> estratti casualmente dalla
         stessa distribuzione, la probabilità che valga
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub> per ogni osservazione
-	<mathvar>i</mathvar> dovrebbe valere 0.5. La statistica test è
-	<mathvar>w</mathvar>, ossia il numero di osservazioni per cui vale
-	<mathvar>x</mathvar><sub>i</sub> &gt;
-	<mathvar>y</mathvar><sub>i</sub>. Sotto l'ipotesi nulla, questa
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub> per ogni osservazione
+	<math>i</math> dovrebbe valere 0.5. La statistica test è
+	<math>w</math>, ossia il numero di osservazioni per cui vale
+	<math>x</math><sub>i</sub> &gt;
+	<math>y</math><sub>i</sub>. Sotto l'ipotesi nulla, questa
         grandezza si distribuisce come una binomiale con parametri
-	(<mathvar>n</mathvar>, 0.5), dove <mathvar>n</mathvar> è il numero di
+	(<math>n</math>, 0.5), dove <math>n</math> è il numero di
         osservazioni.
       </para>
       <para>
@@ -3403,11 +3403,11 @@
        campioni", come possono essere ad esempio i valori di una variabile in un
        gruppo di individui prima e dopo un certo trattamento. Il test procede
        calcolando le differenze tra le coppie di osservazioni
-       <mathvar>x</mathvar><sub>i</sub> &minus;
-       <mathvar>y</mathvar><sub>i</sub>, ordinando queste differenze per valore
+       <math>x</math><sub>i</sub> &minus;
+       <math>y</math><sub>i</sub>, ordinando queste differenze per valore
        assoluto e assegnando ad ogni coppia un valore di rango con segno, in cui
        il segno rispecchia il segno della differenza. Quindi viene calcolato
-       <mathvar>W</mathvar><sub>+</sub>, la somma di tutti i ranghi con segno
+       <math>W</math><sub>+</sub>, la somma di tutti i ranghi con segno
        positivo. Come avviene per il test rank-sum, questa statistica ha una
        distribuzione precisa nell'ipotesi nulla che la differenza mediana sia
        zero, distribuzione che converte alla normale nel caso di campioni
@@ -3441,7 +3441,7 @@
       <para>
         Il modello a effetti fissi permette all'intercetta della regressione di
         variare per ogni unità cross section. Viene eseguito un test
-        <mathvar>F</mathvar> per l'ipotesi nulla che le intercette non
+        <math>F</math> per l'ipotesi nulla che le intercette non
         differiscano tra loro.  Il modello a effetti casuali scompone la
         varianza dei residui in due parti: una specifica all'unità cross section
         e una specifica all'osservazione particolare (la stima può essere
@@ -3754,21 +3754,21 @@
   
       <para>
        L'esponente di Hurst è discusso da Mandelbrot. In termini teorici è
-       l'esponente <mathvar>H</mathvar> nella relazione
+       l'esponente <math>H</math> nella relazione
        <equation status="display"
          tex="\[\mathrm{RS}(x) = an^H\]"
          ascii="RS(x) = an^H"
          graphic="hurst"/>dove RS è l'<quote>intervallo riscalato</quote>
-         della variabile <mathvar>x</mathvar> in un campione dell'ampiezza
-       <mathvar>n</mathvar>, mentre <mathvar>a</mathvar> è una
+         della variabile <math>x</math> in un campione dell'ampiezza
+       <math>n</math>, mentre <math>a</math> è una
        costante. L'intervallo riscalato è l'intervallo (valore massimo
        meno valore minimo) del valore cumulato, o somma parziale, di
-       <mathvar>x</mathvar> sul periodo del campione (dopo aver sottratto la
+       <math>x</math> sul periodo del campione (dopo aver sottratto la
        media campionaria), diviso per lo scarto quadratico medio campionario.
       </para>
   
       <para>
-       Come punto di riferimento, se <mathvar>x</mathvar> è un rumore bianco
+       Come punto di riferimento, se <math>x</math> è un rumore bianco
        (media zero, persistenza zero) l'intervallo dei suoi valori cumulati
        (che forma una passeggiata casuale), scalato per lo scarto quadratico medio,
        cresce come la radice quadrata dell'ampiezza campionaria, ossia ha un
@@ -4153,19 +4153,19 @@
     <description>
       <para>
 	Deve seguire immediatamente un comando <cmd>ols</cmd>. Calcola
-        il <quote>leverage</quote> (<mathvar>h</mathvar>, compreso tra 0
+        il <quote>leverage</quote> (<math>h</math>, compreso tra 0
         e 1) di ogni osservazione nel campione su cui è stato stimato il
-        precedente modello. Mostra il residuo (<mathvar>u</mathvar>) per
+        precedente modello. Mostra il residuo (<math>u</math>) per
         ogni osservazione assieme al leverage corrispondente e a una
         misura della sua influenza sulla stima:
 	  <equation status="inline" 
 	  tex="$uh/(1 - h)$"
 	  ascii="u*h/(1-h)"
 	  graphic="influence"/>. I <quote>punti di leverage</quote> per
-        cui il valore di <mathvar>h</mathvar> supera
-	2<mathvar>k</mathvar>/<mathvar>n</mathvar> (dove
-	<mathvar>k</mathvar> è il numero dei parametri stimati e
-        <mathvar>n</mathvar> è l'ampiezza del campione) sono indicati
+        cui il valore di <math>h</math> supera
+	2<math>k</math>/<math>n</math> (dove
+	<math>k</math> è il numero dei parametri stimati e
+        <math>n</math> è l'ampiezza del campione) sono indicati
         con un asterisco. Per i dettagli sui concetti di leverage e
         influenza, si veda Davidson e MacKinnon (1993, capitolo 2).
       </para>
@@ -4186,10 +4186,10 @@
         In breve, i <quote>residui previsti</quote>
 	sono la differenza tra il valore osservato e il valore stimato 
         della variabile dipendente all'osservazione
-        <mathvar>t</mathvar>, ottenuti da una regressione in cui
+        <math>t</math>, ottenuti da una regressione in cui
         quell'osservazione è stata omessa (oppure in cui è stata
         aggiunta una variabile dummy che vale 1 solo per l'osservazione
-	<mathvar>t</mathvar>); il residuo studentizzato si ottiene
+	<math>t</math>); il residuo studentizzato si ottiene
         dividendo il residuo previsto per il proprio errore standard.
       </para>
 
@@ -4348,10 +4348,10 @@
 
       <para context="cli">La variabile dipendente dev'essere
         strettamente positiva. Se è una frazione decimale, compresa tra
-        0 e 1, il valore predefinito per <mathvar>y</mathvar><sup>*</sup>
+        0 e 1, il valore predefinito per <math>y</math><sup>*</sup>
         (il massimo asintotico della variabile dipendente) è 1.
         Se la variabile dipendente è una percentuale, compresa tra 0 e
-        100, il valore predefinito di <mathvar>y</mathvar><sup>*</sup>
+        100, il valore predefinito di <math>y</math><sup>*</sup>
         è 100.
       </para>
         
@@ -4365,7 +4365,7 @@
       <para context="gui">
         Nella finestra di dialogo del comando, è possibile specificare
         un valore diverso per il massimo. Il valore fornito
-        <mathvar>y</mathvar><sup>*</sup> deve essere
+        <math>y</math><sup>*</sup> deve essere
         maggiore di tutti i valori osservati della variabile dipendente.
       </para>
 
@@ -4374,7 +4374,7 @@
 	<equation status="display" 
 	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
 	  ascii="y = y* / (1 + exp(-x))"
-	  graphic="logistic2"/> dove <mathvar>x</mathvar> rappresenta
+	  graphic="logistic2"/> dove <math>x</math> rappresenta
 	un valore stimato oppure un residuo della regressione OLS,
         usando la variabile dipendente trasformata. I valori riportati
         sono dunque confrontabili con la variabile dipendente originale.
@@ -4588,18 +4588,18 @@
     <description>
       <para>
        La distanza di Mahalanobis è la distanza tra due punti in uno spazio
-       <mathvar>k</mathvar>-dimensionale, scalata rispetto alla variazione
+       <math>k</math>-dimensionale, scalata rispetto alla variazione
        statistica in ogni dimensione dello spazio. Ad esempio, se
-       <mathvar>p</mathvar> e <mathvar>q</mathvar> sono due osservazioni su
-       un insieme di <mathvar>k</mathvar> variabili con matrice di covarianza
-       <mathvar>C</mathvar>, la distanza di Mahalanobis tra le due osservazioni
+       <math>p</math> e <math>q</math> sono due osservazioni su
+       un insieme di <math>k</math> variabili con matrice di covarianza
+       <math>C</math>, la distanza di Mahalanobis tra le due osservazioni
        è data da
        <equation status="display"
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inversa * (p - q))"
           graphic="mahal"/> dove
        <equation status="inline" tex="$(p-q)$" ascii="(p - q)" graphic="mahal2"/> è un
-       vettore a <mathvar>k</mathvar> dimensioni. Se la matrice di covarianza è
+       vettore a <math>k</math> dimensioni. Se la matrice di covarianza è
        la matrice identità, la distanza di Mahalanobis corrisponde alla distanza
        Euclidea.
       </para>
@@ -4608,7 +4608,7 @@
       variabili selezionate; per ogni osservazione nell'intervallo attuale
       viene calcolata la distanza tra l'osservazione e il centroide delle
       variabili selezionate. La distanza è la controparte multidimensionale di uno
-      <mathvar>z</mathvar>-score standard e può essere usata per giudicare se una certa
+      <math>z</math>-score standard e può essere usata per giudicare se una certa
       osservazione <quote>appartiene</quote> a un gruppo di altre osservazioni.
       </para>
 
@@ -4668,7 +4668,7 @@
 
     <description>
       <para context="cli">
-	Calcola la statistica <mathvar>t</mathvar> per l'ipotesi
+	Calcola la statistica <math>t</math> per l'ipotesi
 	nulla che le medie della popolazione siano uguali per le
         variabili <repl>var1</repl> e <repl>var2</repl>, mostrando il
         suo p-value.
@@ -5116,7 +5116,7 @@
 
       <para>
         Esempio: si supponga di avere un dataset con le variabili
-        <mathvar>C</mathvar> e <mathvar>Y</mathvar> (ad es.
+        <math>C</math> e <math>Y</math> (ad es.
         <lit>greene11_3.gdt</lit>) e di voler stimare una funzione di consumo
         non-lineare del tipo:
 	<equation status="display"
@@ -5328,8 +5328,8 @@
       </para>
 
       <para>Oltre alle stime dei coefficienti e agli errori standard, il
-        programma mostra i p-value per le statistiche <mathvar>t</mathvar>
-	(a due code) e <mathvar>F</mathvar>.  Un p-value inferiore a
+        programma mostra i p-value per le statistiche <math>t</math>
+	(a due code) e <math>F</math>.  Un p-value inferiore a
 	0.01 indica significatività al livello dell'1 per cento ed è
         denotato con <lit>***</lit>. <lit>**</lit> indica invece la
         significatività tra l'1 e il 5 per cento, mentre <lit>*</lit>
@@ -5425,7 +5425,7 @@
       </para>
       <para context="gui">
         Se il modello originale è stato stimato con OLS, la statistica test è un
-        valore <mathvar>F</mathvar>, basato sulle somme dei quadrati dei residui
+        valore <math>F</math>, basato sulle somme dei quadrati dei residui
         del modello vincolato e di quello originale. Per stimatori diversi da OLS,
         o se si usa l'opzione Wald, la statistica è un valore chi-quadro di Wald
         asintotico basato sulla matrice di covarianza del modello originale.
@@ -5452,12 +5452,12 @@
       </para>
       <para context="cli">
 	Se il modello originale è stato stimato con OLS, la statistica test è
-        un valore <mathvar>F</mathvar>, basato sulle somme dei quadrati dei
+        un valore <math>F</math>, basato sulle somme dei quadrati dei
         residui del modello vincolato e di quello originale, a meno che
         quest'ultimo sia stato stimato usando errori standard robusti.
-	In questo caso, il valore <mathvar>F</mathvar> viene calcolato delle
+	In questo caso, il valore <math>F</math> viene calcolato delle
         stime robuste della matrice di covarianza del modello originale (è la
-        versione <mathvar>F</mathvar> di un test di Wald).
+        versione <math>F</math> di un test di Wald).
       </para>
       <para context="cli">
 	Per gli stimatori diversi da OLS, o se si usa l'opzione <lit>--wald</lit>,
@@ -5841,7 +5841,7 @@
       <lit>PC1</lit>, <lit>PC2</lit> e così via.  Queste variabili artificiali
       sono definite come la somma del peso della componente moltiplicato per
       <lit>Xi</lit> standardizzato, dove <lit>Xi</lit> denota la
-      <mathvar>i</mathvar>-esima variabile nella
+      <math>i</math>-esima variabile nella
       <repl>lista-variabili</repl>.</para>
 
       <para>Usando l'opzione <lit>--save-all</lit>, vengono salvate
@@ -5896,7 +5896,7 @@
         (GPH), e lo stimatore locale di Whittle. L'ipotesi nulla in entrambi
         i casi è che l'ordine di integrazione sia zero. Per impostazione
         predefinita, l'ordine per questi test è il valore minore tra
-        <mathvar>T</mathvar>/2 e <mathvar>T</mathvar><sup>0.6</sup>; anche
+        <math>T</math>/2 e <math>T</math><sup>0.6</sup>; anche
         questo valore può essere modificato con il parametro di banda.
        </para>
     </description>
@@ -5938,16 +5938,16 @@
       valori interi non negativi.
       </para>
 
-      <para>Se una variabile casuale discreta <mathvar>Y</mathvar> segue la
+      <para>Se una variabile casuale discreta <math>Y</math> segue la
       distribuzione di Poisson, 
         <equation status="display"
           tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
           ascii="Pr(Y = y) = exp(-v) * v^y / y!"
           graphic="poisson1"/>
-      per <mathvar>y</mathvar> = 0, 1,
+      per <math>y</math> = 0, 1,
       2,&hellip;.  La media e la varianza della distribuzione sono entrambe uguali a
-      <mathvar>v</mathvar>. Nel modello di regressione di Poisson, il parametro
-      <mathvar>v</mathvar> è rappresentato da una funzione di una o più varabili
+      <math>v</math>. Nel modello di regressione di Poisson, il parametro
+      <math>v</math> è rappresentato da una funzione di una o più varabili
       indipendenti. La versione più comune del modello (e l'unica supportata da
       gretl) ha
         <equation status="display"
@@ -5955,7 +5955,7 @@
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
           graphic="poisson2"/>
       ossia il logaritmo di
-      <mathvar>v</mathvar> è una funzione lineare delle variabili indipendenti.
+      <math>v</math> è una funzione lineare delle variabili indipendenti.
       </para>
 
       <para>Opzionalmente è possibile aggiungere una variabile
@@ -6247,16 +6247,16 @@
       <para>
 	Calcola l'area alla destra del <repl>valore-x</repl> nella
         distribuzione indicata (<lit>z</lit> per la Gaussiana,
-	<lit>t</lit> per la <mathvar>t</mathvar> di Student, <lit>X</lit>
-	per la chi-quadro, <lit>F</lit> per la <mathvar>F</mathvar>,
+	<lit>t</lit> per la <math>t</math> di Student, <lit>X</lit>
+	per la chi-quadro, <lit>F</lit> per la <math>F</math>,
 	<lit>G</lit> per la gamma, <lit>B</lit> per la binomiale e
         <lit>P</lit> per la Poisson).
       </para>
       <para>
 	A seconda della distribuzione, occorre fornire le seguenti informazioni,
-        prima del <repl>valore-x</repl>: per le distribuzioni <mathvar>t</mathvar>
+        prima del <repl>valore-x</repl>: per le distribuzioni <math>t</math>
         e chi-quadro occorre indicare i gradi di libertà; per la
-        <mathvar>F</mathvar> sono richiesti i gradi di libertà al numeratore e
+        <math>F</math> sono richiesti i gradi di libertà al numeratore e
         al denominatore; per la gamma sono richiesti il parametro di forma e
         quello di scala; per la binomiale sono richieste la probabilità di
         <quote>successo</quote> e il numero di prove; per la distribuzione di
@@ -6331,7 +6331,7 @@
 	Per ogni possibile punto di rottura compreso nel 70% centrale delle
         osservazioni, viene eseguito un test di Chow (si veda <cmdref
           targ="chow"/>). La statistica del test QLR è il massimo dei valori
-	<mathvar>F</mathvar> di questi test; segue una distribuzione non
+	<math>F</math> di questi test; segue una distribuzione non
         standard, i cui valori critici sono presi da <book>Introduction to
           Econometrics</book> di Stock e Watson (2003). Se la statistica QLR
         eccede il valore critico per un dato livello di significatività, è
@@ -6397,7 +6397,7 @@
 	RESET di Ramsey per la specificazione del modello
         (non-linearità), aggiungendo alla regressione il quadrato e il
         cubo dei valori stimati e calcolando la statistica
-        <mathvar>F</mathvar> per l'ipotesi nulla che i coefficienti dei due
+        <math>F</math> per l'ipotesi nulla che i coefficienti dei due
         termini aggiunti siano pari a zero.
       </para>
     </description>
@@ -6477,7 +6477,7 @@
 
       <para>
         Nel caso dell'equazione singola, i vincoli sono valutati attraverso un
-        test <mathvar>F</mathvar> di Wald, usando la matrice di covarianza dei
+        test <math>F</math> di Wald, usando la matrice di covarianza dei
         coefficienti del modello in questione. In modalità predefinita vengono
         mostrate le stime dei coefficienti vincolati; se si desidera solo la
         statistica test, basta aggiungere l'opzione <lit>--quiet</lit> al
@@ -6487,7 +6487,7 @@
         Nel caso del sistema, la statistica test dipende dallo stimatore scelto:
         un test del rapporto di verosimiglianza nel caso di un sistema stimato
         con un metodo di massima verosimiglianza, o un test
-        <mathvar>F</mathvar> asintotico negli altri casi.
+        <math>F</math> asintotico negli altri casi.
       </para>
 
     </description>
@@ -6666,12 +6666,12 @@
       <para>
 	Grafici Range&ndash;mean: questo comando crea un semplice
         grafico che aiuta a capire se una serie storica
-	<mathvar>y</mathvar>(t) ha varianza costante o no. L'intero
+	<math>y</math>(t) ha varianza costante o no. L'intero
         campione t=1,...,T viene diviso in piccoli sotto-campioni di
-        dimensione arbitraria <mathvar>k</mathvar>. Il primo
+        dimensione arbitraria <math>k</math>. Il primo
         sotto-campione è formato da
-        <mathvar>y</mathvar>(1), ... ,<mathvar>y</mathvar>(k), il secondo
-        da <mathvar>y</mathvar>(k+1), ... , <mathvar>y</mathvar>(2k), e
+        <math>y</math>(1), ... ,<math>y</math>(k), il secondo
+        da <math>y</math>(k+1), ... , <math>y</math>(2k), e
         così via.  Per ogni sotto-campione, vengono calcolati la media e
         il campo di variazione (range: il valore massimo meno quello
         minimo) e viene costruito un grafico con le medie sull'asse
@@ -6851,12 +6851,12 @@
         variabili nella <repl>lista-variabili-x</repl>, oppure di tutte le
         variabili nella <repl>lista-variabili-y</repl> rispetto alla
         <repl>variabile-x</repl>.  Il primo esempio visto sopra assegna
-        la variabile 1 all'asse <mathvar>y</mathvar> e produce quattro
+        la variabile 1 all'asse <math>y</math> e produce quattro
         grafici, il primo con la variabile 2 sull'asse
-	<mathvar>x</mathvar>, il secondo con la variabile 3 sull'asse
-	<mathvar>x</mathvar>, e così via. Il secondo esempio rappresenta
+	<math>x</math>, il secondo con la variabile 3 sull'asse
+	<math>x</math>, e così via. Il secondo esempio rappresenta
 	ognuna delle variabili da 1 a 6 rispetto alla variabile 7
-        sull'asse <mathvar>x</mathvar>. Questi gruppi di grafici sono
+        sull'asse <math>x</math>. Questi gruppi di grafici sono
         utili nell'analisi esplorativa dei dati. È possibile creare fino
         a sei grafici alla volta, eventuali variabili in sovrappiù
         saranno ignorate.
@@ -7173,12 +7173,12 @@
 	  <para><lit>hac_lag</lit>:
 	  <lit>nw1</lit> (valore predefinito), <lit>nw2</lit>,
 	    <lit>nw3</lit>, o un intero.  Imposta il massimo valore di
-            ritardo, o la larghezza di banda, <mathvar>p</mathvar>, usato nel calcolo degli
+            ritardo, o la larghezza di banda, <math>p</math>, usato nel calcolo degli
             errori standard HAC (Heteroskedasticity and Autocorrelation Consistent)
 	    con l'approccio Newey-West, per le serie storiche.
             <lit>nw1</lit> e <lit>nw2</lit> rappresentano due varianti
             di calcolo automatico basate sulla dimensione del campione,
-	    <mathvar>T</mathvar>: per nw1, 
+	    <math>T</math>: per nw1, 
             <equation status="inline"
               tex="$p = 0.75 \times T^{1/3}$"
               ascii="p = 0.75 * T^(1/3)"
@@ -7688,7 +7688,7 @@
     <description>
       <para context="cli">
 	Mostra il coefficiente di correlazione di rango di Spearman per
-        le variabili <mathvar>x</mathvar> e <mathvar>y</mathvar>. Le
+        le variabili <math>x</math> e <math>y</math>. Le
         variabili non devono essere state ordinate manualmente in
         precedenza, se ne occupa la funzione.
       </para>
@@ -8186,8 +8186,8 @@
 	</li>
 	<li>
           <para><lit>$vcv</lit>: la matrice di covarianza dei coefficienti.
-            Se il vettore <lit>$coeff</lit> ha <mathvar>k</mathvar> elementi,
-            questa matrice ha dimensione <mathvar>k</mathvar> per <mathvar>k</mathvar>.
+            Se il vettore <lit>$coeff</lit> ha <math>k</math> elementi,
+            questa matrice ha dimensione <math>k</math> per <math>k</math>.
 	  </para>
 	</li>
 	<li>
@@ -8262,7 +8262,7 @@
         virgolette doppie e deve essere unita all'opzione con un segno di
         uguale. La composizione della stringa di formato è la seguente: ci sono
         quattro campi, che rappresentano il coefficiente, l'errore standard, il
-        rapporto <mathvar>t</mathvar> e il p-value. Questi campi vanno separati
+        rapporto <math>t</math> e il p-value. Questi campi vanno separati
         usando barre verticali e possono contenere una specificazione di formato
         per valori numerici nello stile della funzione <lit>printf</lit>, oppure
         possono essere lasciati in bianco, in modo da sopprimere la
@@ -8279,9 +8279,9 @@
       <para>
 	La prima specificazione stampa i valori di tutte le colonne usando 4
         cifre decimali. La seconda sopprime il p-value e mostra il rapporto
-	<mathvar>t</mathvar> con 3 cifre decimali. La terza omette il rapporto
-	<mathvar>t</mathvar>, mentre l'ultima omette il rapporto
-	<mathvar>t</mathvar> e mostra sia il coefficiente che l'errore standard
+	<math>t</math> con 3 cifre decimali. La terza omette il rapporto
+	<math>t</math>, mentre l'ultima omette il rapporto
+	<math>t</math> e mostra sia il coefficiente che l'errore standard
         con 8 cifre significative.
       </para>
       <para>
@@ -8549,9 +8549,9 @@
       <para context="cli">
 	Viene calcolata una regressione separata per ognuna delle
         variabili nella <repl>lista-variabili</repl>. Il risultato di
-        ogni equazione include i test <mathvar>F</mathvar> per i vincoli
+        ogni equazione include i test <math>F</math> per i vincoli
         di uguaglianza a zero su tutti i ritardi delle variabili, un
-        test <mathvar>F</mathvar> per la significatività del ritardo massimo e,
+        test <math>F</math> per la significatività del ritardo massimo e,
         se è stata usata l'opzione <lit>--impulse-responses</lit>, la
         scomposizione della varianza della previsione e le funzioni di
         impulso-risposta.</para>
@@ -8645,13 +8645,13 @@
 
     <description>
       <para context="cli">
-	Calcola la statistica <mathvar>F</mathvar> per l'ipotesi nulla
+	Calcola la statistica <math>F</math> per l'ipotesi nulla
         che le varianze della popolazione per le variabili
 	<repl>var1</repl> e <repl>var2</repl> siano uguali e mostra il
         p-value.
       </para>
       <para context="gui">
-        Calcola la statistica <mathvar>F</mathvar> per l'ipotesi nulla
+        Calcola la statistica <math>F</math> per l'ipotesi nulla
         che le varianze della popolazione per le variabili selezionate
         siano uguali e mostra il p-value.
       </para>
@@ -8835,13 +8835,13 @@
 	Deve seguire la stima di un modello che includa almeno due variabili
 	indipendenti. Calcola e mostra i fattori di inflazione della varianza
 	(Variance Inflation Factors - VIF) per i regressori.  Il VIF
-	per il regressore <mathvar>j</mathvar> è definito come
+	per il regressore <math>j</math> è definito come
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
 	  ascii="1/(1 - Rj^2)"
-	  graphic="vif"/> dove <mathvar>R</mathvar><sub>j</sub> è il
+	  graphic="vif"/> dove <math>R</math><sub>j</sub> è il
 	coefficiente di correlazione multipla tra il regressore
-	<mathvar>j</mathvar> e gli altri regressori. Il fattore ha un valore
+	<math>j</math> e gli altri regressori. Il fattore ha un valore
         minimo di 1.0 quando la variabile in questione è ortogonale alle altre
         variabili indipendenti.  Neter, Wasserman e Kutner (1990) suggeriscono
         di usare il VIF maggiore come test diagnostico per la collinearità; un

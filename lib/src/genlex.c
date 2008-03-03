@@ -115,6 +115,8 @@ struct str_table mvars[] = {
     { M_SYSGAM,  "$sysGamma" },
     { M_SYSA,    "$sysA" },
     { M_SYSB,    "$sysB" },
+    { M_FCAST,   "$fcast" },
+    { M_FCERR,   "$fcerr" },
     { 0,         NULL }
 };
 

@@ -75,8 +75,8 @@
 <!ELEMENT menu-path    (#PCDATA)>
 <!ELEMENT other-access (#PCDATA)>
 
-<!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
-                lit | emphasis | book | quote | filename |
+<!ELEMENT para (#PCDATA | repl | program | math | equation |
+                lit | emphasis | book | quote | filename | by |
                 func | guideref | cmdref| fncref | tabref | 
                 sub | sup | flag | footnote | refnote | cmd)*>
 <!ATTLIST para
@@ -148,7 +148,7 @@
 <!ELEMENT table (row)+>
 <!ELEMENT row (cell)+>
 <!ELEMENT cell (#PCDATA | lit | repl | emphasis | 
-                func | mathvar | equation | book | quote)*>
+                func | math | equation | book | quote)*>
 <!ATTLIST table
    lwidth   CDATA #IMPLIED
    rwidth   CDATA #IMPLIED
@@ -169,7 +169,7 @@
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>
-<!ELEMENT mathvar  (#PCDATA | sub | sup)*>
+<!ELEMENT math     (#PCDATA | sub | sup)*>
 <!ELEMENT sub      (#PCDATA)>
 <!ELEMENT sup      (#PCDATA)>
 
@@ -181,6 +181,11 @@
    quote (true | false) "false"
 >
 
+<!ELEMENT by EMPTY>
+<!ATTLIST by
+   r    CDATA #REQUIRED
+   c    CDATA #REQUIRED
+>
 
 
 

@@ -543,27 +543,37 @@ int equation_system_append (equation_system *sys,
 /* retrieve the name -- possible quoted with embedded spaces -- for
    an equation system */
 
-char *get_system_name_from_line (const char *s)
+char *get_system_name_from_line (const char *s, int context)
 {
+    char *tests[] = {
+	" name",
+	"estimate ",
+	"restrict "
+    };
+    const char *p = NULL;
     char *name = NULL;
-    const char *p = strstr(s, " name");
     int pchars = 0;
 
-    if (p != NULL) {
-	p += 5;
-    } else {
-	p = strstr(s, "estimate ");
-	if (p == NULL) {
-	    p = strstr(s, "restrict ");
-	}
-	if (p != NULL) {
-	    p += 9;
-	}	
+    if (context < 0 || context > 3) {
+	return NULL;
     }
+
+    p = strstr(s, tests[context]);
+
+    if (context == SYSNAME_NEW && p == NULL) {
+	char savename[MAXSAVENAME];
+
+	gretl_cmd_get_savename(savename);
+	if (*savename != '\0') {
+	    return gretl_strdup(savename);
+	} 
+    } 
 
     if (p == NULL) {
 	return NULL;
     }
+
+    p += strlen(tests[context]);
 
     s = p;
     while (isspace((unsigned char) *s) || *s == '=') {
@@ -684,7 +694,7 @@ equation_system *equation_system_start (const char *line,
 	return NULL;
     }
 
-    sysname = get_system_name_from_line(line);
+    sysname = get_system_name_from_line(line, SYSNAME_NEW);
 
     if (method < 0 && sysname == NULL) {
 	/* neither a method nor a name was specified */
@@ -1161,7 +1171,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    sysname = get_system_name_from_line(line);
+    sysname = get_system_name_from_line(line, SYSNAME_EST);
     if (sysname == NULL) {
 	strcpy(gretl_errmsg, "estimate: no system name was provided");
 	return 1;

@@ -2147,6 +2147,246 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
     return err;
 }
 
+static gretl_matrix *fcast_matrix;
+static gretl_matrix *fcerr_matrix;
+
+gretl_matrix *get_forecast_matrix (int idx, int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *M = NULL;
+
+    if (idx == M_FCAST) {
+	M = fcast_matrix;
+    } else if (idx == M_FCERR) {
+	M = fcerr_matrix;
+    } 
+
+    if (M == NULL) {
+	*err = E_BADSTAT;
+    } else {
+	ret = gretl_matrix_copy(M);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
+static void fr_adjust_sample (FITRESID *fr, int *ft1, int *ft2,
+			      int *et1, int *et2)
+{
+    int t;
+
+    t = fr->t0;
+    while (t<=fr->t2 && na(fr->fitted[t])) {
+	*ft1 = ++t;
+    }
+
+    t = fr->t2;
+    while (t>=*ft1 && na(fr->fitted[t])) {
+	*ft2 = --t;
+    }
+
+    if (fr->sderr != NULL) {
+	t = fr->t0;
+	while (t<=fr->t2 && na(fr->sderr[t])) {
+	    *et1 = ++t;
+	}
+
+	t = fr->t2;
+	while (t>=*et1 && na(fr->sderr[t])) {
+	    *et2 = --t;
+	}
+    }	
+}
+
+static int set_forecast_matrices_from_fr (FITRESID *fr)
+{
+    gretl_matrix *f = NULL;
+    gretl_matrix *e = NULL;
+    int ft1 = fr->t0;
+    int ft2 = fr->t2;
+    int et1 = fr->t0;
+    int et2 = fr->t2;
+    int T, t, s;
+    int err = 0;
+
+    fr_adjust_sample(fr, &ft1, &ft2, &et1, &et2);
+
+    T = ft2 - ft1 + 1;
+    if (T <= 0) {
+	return 0;
+    }
+
+    f = gretl_matrix_alloc(T, 1);
+    if (f == NULL) {
+	return E_ALLOC;
+    }
+
+    f->t1 = ft1;
+    f->t2 = ft2;
+
+    if (fr->sderr != NULL) {
+	T = et2 - et1 + 1;
+	if (T > 0) {
+	    e = gretl_matrix_alloc(T, 1);
+	    if (e == NULL) {
+		err = E_ALLOC;
+	    } else {
+		e->t1 = et1;
+		e->t2 = et2;
+	    }
+	}	    
+    }
+
+    s = 0;
+    for (t=ft1; t<=ft2; t++) {
+	f->val[s++] = fr->fitted[t];
+    }
+
+    if (e != NULL) {
+	s = 0;
+	for (t=et1; t<=et2; t++) {
+	    e->val[s++] = fr->sderr[t];
+	}
+    }
+
+    gretl_matrix_free(fcast_matrix);
+    gretl_matrix_free(fcerr_matrix);
+
+    fcast_matrix = f;
+    fcerr_matrix = e;
+
+    return err;
+}
+
+static int matrix_first_ok_row (const gretl_matrix *a, int jmin, int cols)
+{
+    int jmax = jmin + cols;
+    double x;
+    int i, j, miss;
+
+    for (i=0; i<a->rows; i++) {
+	miss = 0;
+	for (j=jmin; j<jmax && !miss; j++) {
+	    x = gretl_matrix_get(a, i, j);
+	    if (na(x)) {
+		miss = 1;
+	    }
+	}
+	if (!miss) {
+	    break;
+	}
+    }
+
+    return i;
+}
+
+static int matrix_last_ok_row (const gretl_matrix *a, int jmin, int cols)
+{
+    int jmax = jmin + cols;
+    double x;
+    int i, j, miss;
+
+    for (i=a->rows-1; i>=0; i--) {
+	miss = 0;
+	for (j=jmin; j<jmax && !miss; j++) {
+	    x = gretl_matrix_get(a, i, j);
+	    if (na(x)) {
+		miss = 1;
+	    }
+	}
+	if (!miss) {
+	    break;
+	}
+    }
+
+    return i;
+}
+
+static void F_matrix_adjust_sample (const gretl_matrix *F, int have_sderr,
+				    int *f0, int *fn, int *e0, int *en)
+{
+    int k = have_sderr ? F->cols / 2 : F->cols;
+
+    *f0 = matrix_first_ok_row(F, 0, k);
+    *fn = matrix_last_ok_row(F, 0, k);
+
+    if (have_sderr) {
+	*e0 = matrix_first_ok_row(F, k, k);
+	*en = matrix_last_ok_row(F, k, k);
+    }
+}
+
+static int set_forecast_matrices_from_F (const gretl_matrix *F,
+					 int have_sderr)
+{
+    gretl_matrix *f = NULL;
+    gretl_matrix *e = NULL;
+    int k, n = F->cols;
+    int fT = F->rows;
+    int eT = F->rows;
+    int f0 = 0, fn = fT;
+    int e0 = 0, en = eT;
+    double x;
+    int i, j;
+    int err = 0;
+
+    F_matrix_adjust_sample(F, have_sderr, &f0, &fn, &e0, &en);
+    
+    fT = fn - f0 + 1;
+    if (fT <= 0) {
+	return 0;
+    }
+
+    k = have_sderr ? n / 2 : n;
+
+    f = gretl_matrix_alloc(fT, k);
+    if (f == NULL) {
+	return E_ALLOC;
+    }
+
+    f->t1 = F->t1 + f0;
+    f->t2 = F->t1 + fT - 1;
+
+    eT = en - e0 + 1;
+
+    if (have_sderr && eT > 0) {
+	e = gretl_matrix_alloc(eT, k);
+	if (e == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    e->t1 = F->t1 + e0;
+	    e->t2 = F->t1 + eT - 1;
+	}	    
+    }
+
+    for (j=0; j<k; j++) {
+	for (i=0; i<fT; i++) {
+	    x = gretl_matrix_get(F, i + f0, j);
+	    gretl_matrix_set(f, i, j, x);
+	}
+    }
+
+    if (e != NULL) {
+	for (j=0; j<k; j++) {
+	    for (i=0; i<eT; i++) {
+		x = gretl_matrix_get(F, i + e0, k + j);
+		gretl_matrix_set(e, i, j, x);
+	    }
+	}
+    }    
+
+    gretl_matrix_free(fcast_matrix);
+    gretl_matrix_free(fcerr_matrix);
+
+    fcast_matrix = f;
+    fcerr_matrix = e;
+
+    return err;
+}
+
 static int model_display_forecast (const char *str, MODEL *pmod, 
 				   double ***pZ, DATAINFO *pdinfo, 
 				   gretlopt opt, PRN *prn)
@@ -2173,6 +2413,10 @@ static int model_display_forecast (const char *str, MODEL *pmod,
 
     if (!err) {
 	err = text_print_forecast(fr, pdinfo, opt, prn);
+    }
+
+    if (!err) {
+	set_forecast_matrices_from_fr(fr);
     }
 
     free_fit_resid(fr);
@@ -2217,6 +2461,7 @@ static int system_display_forecast (const char *str, void *ptr, int type,
     char vname[VNAMELEN] = {0};
     int t1, t2, t2est, ci;
     int i, imax, imin = 0;
+    int have_sderr = 0;
     int err;
 
     if (type == GRETL_OBJ_VAR) {
@@ -2228,7 +2473,7 @@ static int system_display_forecast (const char *str, void *ptr, int type,
     } else {
 	equation_system *sys = (equation_system *) ptr;
 
-	imax = sys->neqns - 1;
+	imax = sys->neqns + sys->nidents - 1;
 	t2est = sys->t2;
 	ci = SYSTEM;
     }
@@ -2245,7 +2490,7 @@ static int system_display_forecast (const char *str, void *ptr, int type,
 	} else {
 	    imax = imin;
 	}
-    }
+    } 
 
     for (i=imin; i<=imax && !err; i++) {
 	fr = get_system_forecast(ptr, ci, i, t1, t1, t2, Z, 
@@ -2256,10 +2501,27 @@ static int system_display_forecast (const char *str, void *ptr, int type,
 	    err = fr->err;
 	}
 	if (!err) {
+	    have_sderr = (fr->sderr != NULL);
 	    err = text_print_forecast(fr, pdinfo, opt, prn);
+	}
+	if (!err && imin == imax) {
+	    err = set_forecast_matrices_from_fr(fr);
 	}
 	free_fit_resid(fr);
 	opt |= OPT_Q;
+    }
+
+    if (!err && imax > imin) {
+	const gretl_matrix *F;
+
+	if (type == GRETL_OBJ_VAR) {
+	    F = gretl_VAR_get_forecast_matrix(ptr, t1, t1, t2, Z, pdinfo, opt);
+	} else {
+	    F = system_get_forecast_matrix(ptr, t1, t1, t2, Z, pdinfo, opt);
+	}
+	if (F != NULL) {
+	    err = set_forecast_matrices_from_F(F, have_sderr);
+	}
     }
 
     return err;

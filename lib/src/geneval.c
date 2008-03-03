@@ -4438,6 +4438,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	} else {
 	    ret = aux_matrix_node(p);
 	}
+
 	if (ret != NULL) {
 	    if (vtype == GRETL_TYPE_DOUBLE) {
 		ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, &p->err);

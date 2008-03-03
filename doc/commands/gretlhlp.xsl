@@ -392,7 +392,7 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
-<xsl:template match="math|mathvar">
+<xsl:template match="math">
   <xsl:text>&lt;@itl="</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>"&gt;</xsl:text>

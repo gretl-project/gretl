@@ -32,7 +32,7 @@
 	Debe utilizarse después de una instrucción de estimación.  Las variables
 	de <repl>listavar</repl> se añaden al modelo anterior y se estima el
 	nuevo modelo.  Si se añade más de una variable, se presenta el
-	estadístico <mathvar>F</mathvar> para las variables añadidas (sólo para
+	estadístico <math>F</math> para las variables añadidas (sólo para
 	el método MCO) junto con su valor-p. Un valor-p inferior a 0.05 indica
 	que los coeficientes son conjuntamente significativos al nivel del 5 por
 	ciento.
@@ -48,7 +48,7 @@
       <para context="gui">
 	Las variables elegidas se añaden al modelo anterior y se estima
 	el nuevo modelo.  Si se añade más de una variable, se mostrará
-	el estadístico <mathvar>F</mathvar> para las variable añadidas
+	el estadístico <math>F</math> para las variable añadidas
 	(Sólo para el método MCO) y su valor p. Un valor p inferior a 
 	0.05 indica que los coeficientes son conjuntamente significativos 
 	al nivel del 5 por ciento.
@@ -113,12 +113,12 @@
           Calcula los estadísticos para dos contrastes de Dickey-Fuller.
 	  En cada caso la hipótesis nula es que la variable seleccionada
 	  presenta una raíz unitaria. El primero es un estadístico
-	  <mathvar>t</mathvar> basado en el modelo 
+	  <math>t</math> basado en el modelo 
 	  <equation status="display"
 	  tex="\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]"
 	  ascii="(1 - L)x(t) = m + gx(t-1) + e(t)"
 	  graphic="adf1"/> La hipótesis nula es que
-	<mathvar>g</mathvar> = 0. En el segundo contraste (aumentado)
+	<math>g</math> = 0. En el segundo contraste (aumentado)
 	se realiza la estimación de una regresión no retringida 
 	(cuyos regresores son una constante, una tendencia temporal, el 
 	primer retardo de la variable y <repl quote="true">orden</repl> retardos
@@ -127,10 +127,10 @@
 	  <equation status="display"
 	  tex="\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]"
 	  ascii="F(2, T-k) = [(ESSr - ESSu)/2] / [ESSu/(T - k)]"
-	  graphic="adf2"/> donde <mathvar>T</mathvar> es el tamaño de 
-	  la muestra, <mathvar>k</mathvar> el número de parámetros del modelo
-	  no restringido, y los subíndices <mathvar>u</mathvar> y
-	  <mathvar>r</mathvar> denotan el modelo no restringido y el 
+	  graphic="adf2"/> donde <math>T</math> es el tamaño de 
+	  la muestra, <math>k</math> el número de parámetros del modelo
+	  no restringido, y los subíndices <math>u</math> y
+	  <math>r</math> denotan el modelo no restringido y el 
 	  restringido respectivamente. Hay que señalar que los valores 
 	  críticos para estos estadísticos no son los habituales; se
 	  muestra el valor p cuando es posible determinarlo.
@@ -316,16 +316,16 @@
 	  <equation status="display" 
 	  tex="\[\mbox{AIC}=-2L+2k\]"
 	  ascii="AIC = -2L + 2k"
-	  graphic="aic"/> donde <mathvar>L</mathvar> es la
-	log-verosimilitud y <mathvar>k</mathvar> es el número total
+	  graphic="aic"/> donde <math>L</math> es la
+	log-verosimilitud y <math>k</math> es el número total
 	de parámetros estimados. La <quote>frecuencia</quote> que se 
 	presenta asociada a las raíces AR y MA es el valor &lgr; 
 	que soluciona
 	  <equation status="display" 
 	  tex="\[z=re^{i2\pi\lambda}\]"
 	  ascii="z = r * exp(i*2*pi*lambda)"
-	  graphic="lambda"/> donde <mathvar>z</mathvar> es la raíz en
-	cuestión y <mathvar>r</mathvar> es su módulo.
+	  graphic="lambda"/> donde <math>z</math> es la raíz en
+	cuestión y <math>r</math> es su módulo.
       </para>
     </description>
 
@@ -426,7 +426,7 @@
 	crea los términos de interacción entre esta variable ficticia y las
 	variables independientes originales. Se ejecuta una regresión aumentada
 	incluyendo estos términos y se calcula un estadístico
-	<mathvar>F</mathvar>, tomando la regresión aumentada como 'no
+	<math>F</math>, tomando la regresión aumentada como 'no
 	restringida' y la original como 'restringida'. Este estadístico es
 	adecuado para contrastar la hipótesis nula de que no hay cambio
 	estructural en el punto de ruptura indicado.
@@ -701,9 +701,9 @@
 	<equation status="inline" 
 	  tex="$\rho(u_t, u_{t-s})$"
 	  ascii="rho(u(t), u(t-s))"
-	  graphic="autocorr"/> donde <mathvar>u</mathvar><sub>t</sub>
-	es la <mathvar>t</mathvar>-ésima observación de la variable
-	<mathvar>u</mathvar> y <mathvar>s</mathvar> es el número de 
+	  graphic="autocorr"/> donde <math>u</math><sub>t</sub>
+	es la <math>t</math>-ésima observación de la variable
+	<math>u</math> y <math>s</math> es el número de 
 	retardos.
       </para>
 
@@ -711,7 +711,7 @@
       También se presentan las autocorrelaciones parciales, siendo éstas
       los coeficientes una vez descontado el efecto de los demás retardos 
       intervinientes. Esta instrucción también representa el correlograma
-      y muestra el estadístico <mathvar>Q</mathvar> de Box&ndash;Pierce
+      y muestra el estadístico <math>Q</math> de Box&ndash;Pierce
       para el contraste de la hipótesis nula de que la serie es 
       <quote>ruido blanco</quote>. Este se distribuye asintóticamente como 
       una chi-cuadrado con grados de libertad igual al número de retardos 
@@ -750,9 +750,9 @@
       <para>
       Calcula los estadísticos de selección de modelos (ver Ramanathan,
 	Sección 4.3), dados <repl>scr</repl> (suma de cuadrados de los 
-	residuos), el número de observaciones (<mathvar>T</mathvar>), 
-	y el número de coeficientes (<mathvar>k</mathvar>).
-	<mathvar>T</mathvar>, <mathvar>k</mathvar>, y
+	residuos), el número de observaciones (<math>T</math>), 
+	y el número de coeficientes (<math>k</math>).
+	<math>T</math>, <math>k</math>, y
 	<repl>scr</repl> pueden ser valores numéricos o nombres de 
 	variables definidas previamente.
       </para>
@@ -768,12 +768,12 @@
 	el contraste CUSUM de estabilidad de los parámetros. Se obtiene una
 	serie de errores de predición (escalados) un período hacia adelante al
 	ejecutar una serie de regresiones: la primera regresión utiliza las
-	primeras <mathvar>k</mathvar> observaciones y se usa para generar una
+	primeras <math>k</math> observaciones y se usa para generar una
 	predicción de la variable dependiente en la observación
-	<mathvar>k</mathvar> + 1; la segunda utiliza las primeras
-	<mathvar>k</mathvar> + 1 observaciones y genera una predicción para la
-	observación <mathvar>k</mathvar> + 2, y así sucesivamente (donde
-	<mathvar>k</mathvar> es el número de parámetros en el modelo original).
+	<math>k</math> + 1; la segunda utiliza las primeras
+	<math>k</math> + 1 observaciones y genera una predicción para la
+	observación <math>k</math> + 2, y así sucesivamente (donde
+	<math>k</math> es el número de parámetros en el modelo original).
 	Se muestra y se representa graicamente la suma acumulada de los errores
 	de predicción escalados.  La hipótesis nula de estabilidad en los
 	parámetros se rechaza al nivel de significación del 5 por ciento si la
@@ -781,7 +781,7 @@
       </para>
 
       <para>
-	También se presenta el estadístico <mathvar>t</mathvar> de
+	También se presenta el estadístico <math>t</math> de
 	Harvey&ndash;Collier para contrastar la hipótesis nula de estabilidad de
 	los parámetros. Para más detalles ver Capítulo 7 del libro de Greene
 	<book>Econometric  Analysis</book>.
@@ -1937,7 +1937,7 @@
         El modelo de efectos fijos añade una variable ficticia para todas 
 	menos una de las unidades de sección cruzada, permitiendo al
 	intercepto de la regresión variar a través de estas unidades. Se
-	presenta un estadístico <mathvar>F</mathvar> para el contraste de 
+	presenta un estadístico <math>F</math> para el contraste de 
 	significación conjunta de estas variables ficticias. El modelo de 
 	efectos aleatorios descompone la varianza residual en dos partes,
 	una parte específica de las unidades de sección cruzada y la otra 
@@ -2084,7 +2084,7 @@
 	<equation status="inline"
 	  tex="$1/\sqrt{e^{y^*}}$"
 	  ascii="1/sqrt(exp(y*))"
-	  graphic="hsk"/>, donde <mathvar>y<sup>*</sup></mathvar>
+	  graphic="hsk"/>, donde <math>y<sup>*</sup></math>
 	denota los valores ajustados mediante la regresión auxiliar.
 	</para>
     </description>
@@ -2301,19 +2301,19 @@
     <description>
         <para>
 	Debe ejecutarse inmediatamente después de una instrucción 
-	<cmd>MCO</cmd>. Calcula el apalancamiento (<mathvar>h</mathvar>, 
+	<cmd>MCO</cmd>. Calcula el apalancamiento (<math>h</math>, 
 	que debe estar entre 0 y 1) para cada punto de datos de la muestra 
 	sobre la que se estimó el último modelo.  Presenta el residuo
-	(<mathvar>u</mathvar>) de cada observación junto a su apalancamiento
+	(<math>u</math>) de cada observación junto a su apalancamiento
 	y una medida de su influencia sobre las estimaciones, 
 	  <equation status="inline" 
 	  tex="$uh/(1 - h)$"
 	  ascii="u*h/(1-h)"
 	  graphic="influence"/>. Los <quote>puntos palanca</quote> para los cuales
-	el valor de <mathvar>h</mathvar> es mayor que 
-	2<mathvar>k</mathvar>/<mathvar>n</mathvar> (donde
-	<mathvar>k</mathvar> es el número de parámetros estimados
-	y <mathvar>n</mathvar> es el tamaño muestral) se marcan con un
+	el valor de <math>h</math> es mayor que 
+	2<math>k</math>/<math>n</math> (donde
+	<math>k</math> es el número de parámetros estimados
+	y <math>n</math> es el tamaño muestral) se marcan con un
 	asterisco. Para más detalles sobre los conceptos de apalancamiento e influencia
 	ver Davidson and MacKinnon (1993, Capítulo 2).
       </para>
@@ -2330,10 +2330,10 @@
 	  Econometrics</book>, capítulo 12; y también Belsley, Kuh y
 	Welsch (1980).  En resumen, un <quote>residuo predicho</quote>
 	es la diferencia entre el valor observado de la variable dependiente
-	en la observación <mathvar>t</mathvar> y el valor ajustado
-	para la observación <mathvar>t</mathvar> obtenido de una regresión
+	en la observación <math>t</math> y el valor ajustado
+	para la observación <math>t</math> obtenido de una regresión
 	en la que se omite esa observación (o se añade una variable ficticia
-	con valor 1 sólo para la observación  <mathvar>t</mathvar>); 
+	con valor 1 sólo para la observación  <math>t</math>); 
 	el residuo studentizado se obtiene dividiendo el residuo predicho
 	por su desviación típica.</para>
 
@@ -2454,9 +2454,9 @@
 
       <para context="cli">La variable dependiente debe ser estrictamente positiva.
         Si es una fracción decimal, entre 0 y 1, por defecto se usa
-	un valor <mathvar>y</mathvar><sup>*</sup> (el máximo asintótico
+	un valor <math>y</math><sup>*</sup> (el máximo asintótico
 	de la variable dependiente) of 1. Si la variable dependiente es un porcentaje,
-	entre 0 y 100, por defecto <mathvar>y</mathvar><sup>*</sup> es 100.  
+	entre 0 y 100, por defecto <math>y</math><sup>*</sup> es 100.  
 	Si Vd. desea establecer otro valor máximo utilice el parámetro opcional
 	<lit>ymax=</lit><repl>valor</repl> después de la lista de regresores.  
 	El valor proporcionado debe ser mayor que todos los valores observados de 
@@ -2476,7 +2476,7 @@
 	<equation status="display" 
 	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
 	  ascii="y = ymax / (1 + exp(-x))"
-	  graphic="logistic2"/> donde <mathvar>x</mathvar> representa
+	  graphic="logistic2"/> donde <math>x</math> representa
 	o un valor ajustado o un residuo de la regresión MCO usando
 	la variable dependiente transformada.  Los valores que se presentan son 
 	así comparables con los valores originales de la variable dependiente.</para>
@@ -2659,7 +2659,7 @@
 
     <description>
       <para context="cli">
-        Calcula el estadístico <mathvar>t</mathvar> para la hipótesis 
+        Calcula el estadístico <math>t</math> para la hipótesis 
 	nula de que las medias poblacionales de las variables 
 	<repl>var1</repl> y <repl>var2</repl> son iguales, y presenta su
 	valor p. Por defecto se calcula el estadístico bajo el supuesto de que 
@@ -3096,8 +3096,8 @@
 
       <para>Además de las estimaciones de los coeficientes y de las 
         desviaciones típicas, el programa también presenta los valores p
-	de los estadísticos <mathvar>t</mathvar> (a dos colas) y
-	<mathvar>F</mathvar>.  Un valor p inferior a 0,01 indica
+	de los estadísticos <math>t</math> (a dos colas) y
+	<math>F</math>.  Un valor p inferior a 0,01 indica
 	significatividad al nivel del 1 por ciento y se denota mediante
 	<lit>***</lit>. <lit>**</lit> indica un nivel de significatividad 
 	entre el 1 y 5 por ciento y <lit>*</lit> indica significatividad
@@ -3162,7 +3162,7 @@
         Esta instrucción debe invocarse justo después de una instrucción 
 	de estimación. Las variables seleccionadas se omiten del modelo 
 	anterior y se estima el nuevo modelo. Si se omite más de una variable,
-	se presentará el estadístico <mathvar>F</mathvar> de Wald para las variables
+	se presentará el estadístico <math>F</math> de Wald para las variables
 	omitidas y su valor p (sólo para el método MCO).  Un valor p
 	inferior a 0,05 indica que los coeficientes son conjuntamente significativos
 	al nivel de significación del 5 por ciento.
@@ -3448,7 +3448,7 @@
 	datos, con nombres <lit>PC1</lit>, <lit>PC2</lit> y así sucesivamente.
 	Estas variables artificiales se forman como la suma de (ponderaciones de
 	los componentes) por (<lit>Xi</lit> estandarizadas), donde <lit>Xi</lit>
-	denota la <mathvar>i</mathvar>-ésima variable de la lista
+	denota la <math>i</math>-ésima variable de la lista
 	<repl>listavar</repl>.</para>
 
       <para>Si se da la opción <lit>--save-all</lit>, se guardan todos los
@@ -3486,11 +3486,11 @@
 	<equation status="inline"
 	  tex="$2\sqrt{T}$"
 	  ascii="2*sqrt(T)"
-	  graphic="tworootT"/> (donde <mathvar>T</mathvar> es el
+	  graphic="tworootT"/> (donde <math>T</math> es el
 	tamaño muestral) para estimar el espectro (ver Capítulo
 	18 del libro de Greene <book>Econometric Analysis</book>). Cuando 
 	se presenta el periodograma muestral, también se proporciona 
-	un contraste <mathvar>t</mathvar> sobre integración fraccional de la serie
+	un contraste <math>t</math> sobre integración fraccional de la serie
 	(<quote>memoria larga</quote>): la hipótesis nula es que el orden de 
 	integración es cero.
 	</para>
@@ -3685,11 +3685,11 @@
       <para>
         Calcula el área a la derecha de <repl>xval</repl> en la distribución
 	especificada (<lit>z</lit> para Gaussiana, <lit>t</lit> para la
-	<mathvar>t</mathvar> de Student, <lit>X</lit> para la chi-cuadrado,
-	<lit>F</lit> para la <mathvar>F</mathvar> y <lit>G</lit> para la
-	distribución gamma).  Para las ditribuciones <mathvar>t</mathvar> y
+	<math>t</math> de Student, <lit>X</lit> para la chi-cuadrado,
+	<lit>F</lit> para la <math>F</math> y <lit>G</lit> para la
+	distribución gamma).  Para las ditribuciones <math>t</math> y
 	chi-cuadrado deben proporcionarse los grados de libertad; para la
-	<mathvar>F</mathvar> hay que proporcionar los grados de libertad del
+	<math>F</math> hay que proporcionar los grados de libertad del
 	numerador y del denominador; y para la distribución gamma se necesitan
 	la media y la varianza.
       </para>
@@ -3790,7 +3790,7 @@
 	Realiza el contraste de especificación de modelos (no linealidad)
 	RESET de Ramsey. Para ello añade a la regresión el cuadrado 
 	y el cubo de los valores ajustados y calcula el estadístico
-	<mathvar>F</mathvar> para la hipótesis nula de que los parámetros 
+	<math>F</math> para la hipótesis nula de que los parámetros 
 	de las dos variables añadidas son cero.
       </para>
     </description>
@@ -3895,11 +3895,11 @@
       <para>
         Gráfico Rango&ndash;media plot: esta instrucción crea un sencillo
 	gráfico para ayudar a decidir si una serie temporal,
-	<mathvar>y</mathvar>(t), tiene varianza constante o no. Se toma la
+	<math>y</math>(t), tiene varianza constante o no. Se toma la
 	muestra completa t=1,...,T y se divide en pequeñas submuestras de tamaño
-	arbitrario <mathvar>k</mathvar>. La primera submuestra se forma con
-	<mathvar>y</mathvar>(1),...,<mathvar>y</mathvar>(k), la segunda con
-	<mathvar>y</mathvar>(k+1), ..., <mathvar>y</mathvar>(2k), y así
+	arbitrario <math>k</math>. La primera submuestra se forma con
+	<math>y</math>(1),...,<math>y</math>(k), la segunda con
+	<math>y</math>(k+1), ..., <math>y</math>(2k), y así
 	sucesivamente. Para cada submuetra se calcula la media muestral y el
 	rango (= el máximo menos el mínimo), y se forma un gráfico con las
 	medias en el eje horizontal y los rangos en el vertical. Así, cada
@@ -4056,11 +4056,11 @@
 	a todas las variables de la lista <repl>xlistavar</repl>, o
 	de todas las variables de la lista <repl>ylistavar</repl> con respecto
 	a <repl>xvar</repl>.  El primer ejemplo de arriba sitúa
-	la variable 1 en el eje <mathvar>y</mathvar> y realiza cuatro 
-	gráficos, el primero con la variable 2 en el eje <mathvar>x</mathvar>, 
-	el segundo con la variable 3 en el eje <mathvar>x</mathvar>, y así
+	la variable 1 en el eje <math>y</math> y realiza cuatro 
+	gráficos, el primero con la variable 2 en el eje <math>x</math>, 
+	el segundo con la variable 3 en el eje <math>x</math>, y así
 	sucesivamente.  En el segundo ejemplo se representa cada una de las
-	variables 1,..., 6 con respecto a la variable 7 en el eje <mathvar>x</mathvar>. 
+	variables 1,..., 6 con respecto a la variable 7 en el eje <math>x</math>. 
 	Revisar un conjunto de gráficos como estos puede ser útil
 	al realizar análisis exploratorio de datos. El número máximo de gráficos 
 	es seis; cualquier otra variable extra en la lista será ignorada.
@@ -4117,12 +4117,12 @@
 	  <para><lit>hac_lag</lit>:
 	  <lit>nw1</lit> (por defecto) o
 	    <lit>nw2</lit>, o un entero.  Establece el retardo máximo, 
-	    <mathvar>p</mathvar>, usado al calcular desviaciones típicas 
+	    <math>p</math>, usado al calcular desviaciones típicas 
 	    HAC (Heteroskedasticity and Autocorrelation Consistent) usando 
 	    el método de Newey-West para datos de series temporales. 
 	    <lit>nw1</lit> y <lit>nw2</lit> representan dos 
 	    variantes para el cálculo automático basadas en el 
-	    tamaño muestral, <mathvar>T</mathvar>: para nw1, 
+	    tamaño muestral, <math>T</math>: para nw1, 
 	  <equation status="inline"
 	    tex="$p = 0.75 \times T^{1/3}$"
 	    ascii="p = 0.75 * T^(1/3)"
@@ -4438,7 +4438,7 @@
     <description>
       <para context="cli">
         Presenta el coeficiente de rango de correlación para las dos
-	variables <mathvar>x</mathvar> e <mathvar>y</mathvar>. 
+	variables <math>x</math> e <math>y</math>. 
 	No es necesario antes ordenar y hacer el ranking de
         las variables, la función se encarga de ello.
       </para>
@@ -4859,8 +4859,8 @@
       <para context="cli">
 	Se ejecuta una regresión por separado para cada variable de
 	<repl>listavar</repl>. La salida de cada ecuación presenta los
-	contrastes <mathvar>F</mathvar> de restricciones cero de todos los
-	retardos de cada variable; un contraste <mathvar>F</mathvar> de
+	contrastes <math>F</math> de restricciones cero de todos los
+	retardos de cada variable; un contraste <math>F</math> de
 	significatividad del retardo máximo; descomposiciones de la varianza de
 	predicción y las funciones impulso-respuesta.
 	</para>
@@ -4903,13 +4903,13 @@
 
     <description>
       <para context="cli">
-	Calcula el estadístico <mathvar>F</mathvar> para contrastar 
+	Calcula el estadístico <math>F</math> para contrastar 
 	la hipótesis nula de que las varianzas poblacionales de las
 	variables <repl>var1</repl> y <repl>var2</repl> son iguales, 
 	y muestra su valor p.
       </para>
       <para context="gui">
-	Calcula el estadístico <mathvar>F</mathvar> para contrastar 
+	Calcula el estadístico <math>F</math> para contrastar 
 	la hipótesis nula  de que las varianzas poblacionales de las 
 	dos variables seleccionadas son iguales y muestra su valor p.
       </para>
@@ -4930,13 +4930,13 @@
 	que incluya al menos dos variables independientes. Calcula y muestra
 	los factores de inflación de varianza (VIFs) de los regresores.  El 
 	factor de inflación de varianza (VIF) del regresor 
-	<mathvar>j</mathvar> se define como
+	<math>j</math> se define como
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
 	  ascii="1/(1 - Rj^2"
-	  graphic="vif"/> donde <mathvar>R</mathvar><sub>j</sub> es
+	  graphic="vif"/> donde <math>R</math><sub>j</sub> es
 	el coeficiente de correlación múltiple entre el regresor
-	<mathvar>j</mathvar> y los demás regresores. El factor tiene un 
+	<math>j</math> y los demás regresores. El factor tiene un 
 	valor mínimo de 1,0 cuando la variable en cuestión es
 	ortogonal a las demás variables independientes.  Neter,
 	Wasserman, y Kutner (1990) sugieren inspeccionar el mayor

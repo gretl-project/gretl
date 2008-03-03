@@ -349,7 +349,7 @@
   </xsl:if>  
 </xsl:template>
 
-<xsl:template match="math|mathvar">
+<xsl:template match="math">
   <xsl:apply-templates/>
 </xsl:template>
 
