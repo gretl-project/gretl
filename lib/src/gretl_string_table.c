@@ -1003,7 +1003,7 @@ static char *get_string_element (const char **pline,
 
     if (!strncmp(line, "$(", 2)) {
 	return gretl_backtick(pline, err);
-    }    
+    }   
 
     if (*line != '"') {
 	*err = E_PARSE;
@@ -1249,6 +1249,45 @@ int process_string_command (const char *line, double ***pZ,
 	    free(str->s);
 	    str->s = newstr;
 	}
+    }
+
+    if (!err && gretl_messages_on()) {
+	if (str->s[0] == '\0') {
+	    pprintf(prn, _("Saved empty string as '%s'\n"), targ);
+	} else {
+	    pprintf(prn, _("Saved string as '%s'\n"), targ);
+	}
+    }
+
+    return err;
+}
+
+int add_string_directly (const char *targ, const char *val, PRN *prn)
+{
+    saved_string *str;
+    int builtin = 0;
+    int err = 0;
+
+    str = get_saved_string_by_name(targ, &builtin);
+
+    if (str != NULL && builtin) {
+	pprintf(prn, _("You cannot overwrite '%s'\n"), targ);
+	return E_DATA;
+    }	
+
+    if (str != NULL) {
+	free(str->s);
+	str->s = NULL;
+    } else {
+	str = add_named_string(targ);
+	if (str == NULL) {
+	    return E_ALLOC;
+	}
+    } 
+
+    str->s = gretl_strdup(val);
+    if (str->s == NULL) {
+	err = E_ALLOC;
     }
 
     if (!err && gretl_messages_on()) {

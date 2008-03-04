@@ -1417,7 +1417,7 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 			    int mode) 
 {
     int rows = var->neqns * effective_order(var);
-    gretl_matrix *ctmp = NULL, *idx = NULL, *vtmp = NULL;
+    gretl_matrix *idx = NULL, *vtmp = NULL;
     gretl_matrix *cic = NULL, *vt = NULL;
     gretl_matrix *vd = NULL;
     int i, t, err = 0;
@@ -1433,16 +1433,14 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
     }
 
     vd = gretl_matrix_alloc(periods, var->neqns + 1);
-    ctmp = gretl_matrix_alloc(var->neqns, rows);
     idx = gretl_matrix_alloc(var->neqns, var->neqns); 
     cic = gretl_matrix_alloc(rows, rows);
     vt = gretl_matrix_alloc(rows, rows);
     vtmp = gretl_matrix_alloc(rows, rows);
 
-    if (vd == NULL || ctmp == NULL || idx == NULL ||
-	cic == NULL || vt == NULL || vtmp == NULL) {
+    if (vd == NULL || idx == NULL || cic == NULL || 
+	vt == NULL || vtmp == NULL) {
 	gretl_matrix_free(vd);
-	gretl_matrix_free(ctmp);
 	gretl_matrix_free(idx);
 	gretl_matrix_free(cic);
 	gretl_matrix_free(vt);
@@ -1461,24 +1459,21 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 
 	    if (t == 0) {
 		/* calculate initial variances */
-		err = gretl_matrix_multiply_mod(idx, GRETL_MOD_NONE,
-						var->C, GRETL_MOD_TRANSPOSE,
-						ctmp, GRETL_MOD_NONE);
-		err = gretl_matrix_multiply(var->C, ctmp, cic);
+		err = gretl_matrix_qform(var->C, GRETL_MOD_NONE,
+					 idx, cic, GRETL_MOD_NONE);
 		gretl_matrix_copy_values(vt, cic);
 	    } else {
 		/* calculate further variances */
-		err = gretl_matrix_multiply_mod(vt, GRETL_MOD_NONE,
-						var->A, GRETL_MOD_TRANSPOSE,
-						vtmp, GRETL_MOD_NONE);
-		err = gretl_matrix_multiply(var->A, vtmp, vt);
+		gretl_matrix_copy_values(vtmp, vt);
+		err = gretl_matrix_qform(var->A, GRETL_MOD_NONE,
+					 vtmp, vt, GRETL_MOD_NONE);
 		gretl_matrix_add_to(vt, cic);
 	    }
 
-	    if (err) break;
-
-	    vti = gretl_matrix_get(vt, targ, targ);
-	    gretl_matrix_set(vd, t, i, vti);
+	    if (!err) {
+		vti = gretl_matrix_get(vt, targ, targ);
+		gretl_matrix_set(vd, t, i, vti);
+	    }
 	}
     }
 
@@ -1500,7 +1495,6 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 	gretl_matrix_set(vd, t, var->neqns, sqrt(vtot));
     }
 
-    gretl_matrix_free(ctmp);
     gretl_matrix_free(idx);
     gretl_matrix_free(cic);
     gretl_matrix_free(vt);

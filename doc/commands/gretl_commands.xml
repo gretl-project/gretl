@@ -5278,6 +5278,12 @@
       <arguments>
         <argument>series_length</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--preserve</flag>
+	  <effect>preserve matrices</effect>
+        </option>
+      </options>
       <examples>
         <example>nulldata 500</example>
       </examples>
@@ -5294,6 +5300,11 @@
 	set. This command may be useful in conjunction with
 	<cmd>loop</cmd>.  See also the <quote>seed</quote> option to
 	the <cmdref targ="set"/> command.
+      </para>
+      <para>
+	By default, this command cleans out all data in gretl's current
+	workspace.  If you give the <lit>--preserve</lit> option, however,
+	any currently defined matrices are retained.
       </para>
     </description>
 

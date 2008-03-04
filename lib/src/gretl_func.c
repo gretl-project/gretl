@@ -3256,10 +3256,29 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 }
 
 static char *
+get_string_return (const char *sname, double **Z, DATAINFO *pdinfo, 
+		   int *err)
+{
+    
+    const char *s = get_named_string(sname);
+    char *ret = NULL;
+
+    if (s == NULL) {
+	*err = E_DATA;
+    } else {
+	ret = gretl_strdup(s);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
+static char *
 get_list_return (const char *lname, double **Z, DATAINFO *pdinfo, 
 		 int *err)
 {
-    
     char *ret = gretl_strdup(lname);
 
     if (ret == NULL) {
@@ -3315,6 +3334,8 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	    *(gretl_matrix **) ret = get_matrix_return(u->retname, GET_COPY, &err);
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    *(char **) ret = get_list_return(u->retname, Z, pdinfo, &err);
+	} else if (rtype == GRETL_TYPE_STRING) {
+	    *(char **) ret = get_string_return(u->retname, Z, pdinfo, &err);
 	}
 
 	if (err == E_UNKVAR) {

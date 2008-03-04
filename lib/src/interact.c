@@ -446,18 +446,20 @@ static void maybe_extract_savename (char *s, CMD *cmd)
     *cmd->savename = 0;
 
     if (strncmp(s, "genr ", 5) && strstr(s, "<-")) {
-	int n, len, quote;
+	int n, len, quoted;
 
-	quote = (*s == '"');
+	quoted = (*s == '"');
 	len = strcspn(s, "<");
-	if (len < 1) {
+	if (len - quoted == 0) {
 	    return;
 	}
-	n = len - 1 - quote;
+	n = len - quoted;
 	if (n > MAXSAVENAME - 1) {
 	    n = MAXSAVENAME - 1;
 	}
-	strncat(cmd->savename, s + quote, n);
+	strncat(cmd->savename, s + quoted, n);
+	tailstrip(cmd->savename);
+	n = strlen(cmd->savename);
 	if (cmd->savename[n-1] == '"') {
 	    cmd->savename[n-1] = 0;
 	}

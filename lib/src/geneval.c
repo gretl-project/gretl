@@ -374,6 +374,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = newmdef(n);
 	} else if (t == LIST) {
 	    ret = newlist();
+	} else if (t == STR) {
+	    ret = newstr(NULL);
 	}
 
 	if (ret == NULL) {
@@ -465,6 +467,11 @@ static NODE *aux_mdef_node (parser *p, int n)
 static NODE *aux_list_node (parser *p)
 {
     return get_aux_node(p, LIST, 0, 0);
+}
+
+static NODE *aux_string_node (parser *p)
+{
+    return get_aux_node(p, STR, 0, 0);
 }
 
 static NODE *aux_any_node (parser *p)
@@ -3447,7 +3454,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     if (!simple_ufun_call(p)) {
 	rtype = user_func_get_return_type(uf);
 	if (rtype != GRETL_TYPE_DOUBLE && rtype != GRETL_TYPE_SERIES &&
-	    rtype != GRETL_TYPE_MATRIX && rtype != GRETL_TYPE_LIST) {
+	    rtype != GRETL_TYPE_MATRIX && rtype != GRETL_TYPE_LIST &&
+	    rtype != GRETL_TYPE_STRING) {
 	    fprintf(stderr, "%s: invalid return type %d\n", funname, rtype);
 	    p->err = E_TYPES;
 	    return NULL;
@@ -3560,6 +3568,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
 	    retp = &sret;
+	} else if (rtype == GRETL_TYPE_STRING) {
+	    retp = &sret;
 	}
 
 	if ((p->flags & P_UFRET) && 
@@ -3601,7 +3611,15 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    }
 		    ret->v.str = sret;
 		}
-	    }
+	    } else if (rtype == GRETL_TYPE_STRING) {
+		ret = aux_string_node(p);
+		if (ret != NULL) {
+		    if (is_tmp_node(ret)) {
+			free(ret->v.str);
+		    }
+		    ret->v.str = sret;
+		}
+	    }		
 	}
 
 	if (descrip != NULL) {
@@ -6214,6 +6232,18 @@ static void matrix_edit (parser *p)
     }
 }
 
+static int edit_string (parser *p)
+{
+    if (p->ret->v.str == NULL) {
+	p->err = E_DATA;
+    } else {
+	p->err = add_string_directly(p->lh.name, p->ret->v.str, 
+				     p->prn);
+    }
+
+    return p->err;
+}
+
 static int edit_list (parser *p)
 {
     NODE *r = p->ret;
@@ -6272,7 +6302,8 @@ static int matrix_missvals (const gretl_matrix *m)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
 			   t == LIST || t == USERIES || \
-			   t == LVEC || t == DUM || t == EMPTY)
+			   t == LVEC || t == DUM || t == EMPTY || \
+			   t == STR)
 
 static int gen_check_return_type (parser *p)
 {
@@ -6467,6 +6498,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     } else if (p->targ == LIST) {
 	edit_list(p);
+    } else if (p->targ == STR) {
+	edit_string(p);
     }
 
 #if EDEBUG /* print results */

@@ -1728,7 +1728,10 @@ int autocorr_test (MODEL *pmod, int order,
 	}
     }
 
-#if 1
+    /* LMF apparatus: see Kiviet, Review of Economic Studies,
+       53/2, 1986, equation (5), p. 245.
+    */
+
     if (!err) {
 	newlist[1] = v;
 	/* regression on X only */
@@ -1736,33 +1739,22 @@ int autocorr_test (MODEL *pmod, int order,
 	newlist[0] -= order;
 	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
 	err = aux.errcode;
-	if (err) {
-	    errmsg(aux.errcode, prn);
-	} else {
-	    pdinfo->t1 -= order;
-	    newlist[0] += order;
+	if (!err) {
 	    RSSx = aux.ess;
 	    clear_model(&aux);
+	    pdinfo->t1 -= order;
+	    newlist[0] += order;
 	    /* regression on [X~E] */
 	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
 	    err = aux.errcode;
-	    if (err) {
-		errmsg(aux.errcode, prn);
-	    } else {
+	    if (!err) {
 		RSSxe = aux.ess;
 	    }
 	}
-    } 
-#else
-    if (!err) {
-	newlist[1] = v;
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
-	err = aux.errcode;
 	if (err) {
-	    errmsg(aux.errcode, prn);
-	} 
+	    errmsg(err, prn);
+	}
     } 
-#endif
 
     if (!err) {
 	int dfd = aux.nobs - pmod->ncoeff - order;
@@ -1770,11 +1762,7 @@ int autocorr_test (MODEL *pmod, int order,
 	aux.aux = AUX_AR;
 	gretl_model_set_int(&aux, "BG_order", order);
 	trsq = aux.rsq * aux.nobs;
-#if 1
 	LMF = ((RSSx - RSSxe) / RSSxe) * dfd / order;
-#else
-	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 
-#endif
 	pval = snedecor_cdf_comp(LMF, order, dfd);
 
 	if (pmod->aux != AUX_VAR) {

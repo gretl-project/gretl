@@ -80,11 +80,11 @@ static NODE *newref (parser *p, int t)
     return n;
 }
 
-static NODE *newstr (parser *p)
+NODE *newstr (parser *p)
 {  
     NODE *n;
 
-    if (p->idstr == NULL) {
+    if (p != NULL && p->idstr == NULL) {
 	fprintf(stderr, "newstr: input is NULL\n");
 	return NULL;
     }
@@ -93,12 +93,12 @@ static NODE *newstr (parser *p)
 
 #if MDEBUG
     fprintf(stderr, "newstr: allocated node at %p (s = '%s')\n", 
-	    (void *) n, p->idstr);
+	    (void *) n, (p != NULL)? p->idstr : "null");
 #endif
 
     if (n != NULL) {
 	n->t = STR;
-	n->v.str = p->idstr;
+	n->v.str = (p != NULL)? p->idstr : NULL;
 	n->flags = 0;
     }
 
