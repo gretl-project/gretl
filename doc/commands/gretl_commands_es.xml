@@ -1109,12 +1109,6 @@
         <argument>obs_inic</argument>
         <argument>obs_fin</argument>
       </arguments>
-      <options>
-        <option>
-	  <flag>--plot</flag>
-	  <effect>mostrar el gráfico</effect>
-        </option>
-      </options>
     </usage>
 
     <description>

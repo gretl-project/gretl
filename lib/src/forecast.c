@@ -2411,7 +2411,7 @@ static int model_display_forecast (const char *str, MODEL *pmod,
 	err = fr->err;
     }
 
-    if (!err) {
+    if (!err && !(opt & OPT_Q)) {
 	err = text_print_forecast(fr, pdinfo, opt, prn);
     }
 
@@ -2502,7 +2502,9 @@ static int system_display_forecast (const char *str, void *ptr, int type,
 	}
 	if (!err) {
 	    have_sderr = (fr->sderr != NULL);
-	    err = text_print_forecast(fr, pdinfo, opt, prn);
+	    if (!(opt & OPT_Q)) {
+		err = text_print_forecast(fr, pdinfo, opt, prn);
+	    }
 	}
 	if (!err && imin == imax) {
 	    err = set_forecast_matrices_from_fr(fr);
@@ -2533,10 +2535,11 @@ static int system_display_forecast (const char *str, void *ptr, int type,
  * by a space.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
  * out of sample (in cases where this distinction is meaningful).
+ * If includes %OPT_Q, don't print the forecast.
  * @prn: printing structure.
  *
  * Computes forecasts based on the last model estimated, over the 

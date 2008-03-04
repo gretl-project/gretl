@@ -2287,10 +2287,6 @@
       </arguments>
       <options>
         <option>
-	  <flag>--plot</flag>
-	  <effect>mostra il grafico</effect>
-        </option>
-        <option>
 	  <flag>--dynamic</flag>
 	  <effect>crea previsioni dinamiche</effect>
         </option>
