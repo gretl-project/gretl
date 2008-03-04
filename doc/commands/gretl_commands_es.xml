@@ -1141,21 +1141,6 @@
 
   </command>
 
-  <command name="fit" section="Prediction" context="cli">
-
-    <description>
-      <para>
-	Es un atajo a <cmd>fcast</cmd>. Debe de ejecutarse después de una
-	instrucción de estimación.  Genera los valores ajustados basados en la
-	última regresión, para la mustra actual, y los guarda en una serie
-	denominada <lit>autofit</lit>. En el caso de modelos de series
-	temporales también hace emerger un gráfico con los valores originales y
-	ajustados de la variable dependiente con respecto al tiempo.
-      </para>
-    </description>
-
-  </command>
-
   <command name="freq" section="Statistics" context="cli">
 
     <usage>
@@ -1289,8 +1274,7 @@
         Crea variables nuevas, normalmente como transformaciones de
 	variables ya existentes. Ver también <cmdref targ="diff"/>, 
 	<cmdref targ="logs"/>, <cmdref targ="lags"/>, 
-	<cmdref targ="ldiff"/>, <cmdref targ="multiply"/> y
-	<cmdref targ="square"/> como atajos.
+	<cmdref targ="ldiff"/> y <cmdref targ="square"/> como atajos.
       </para>
 
       <para>
@@ -2826,45 +2810,6 @@
     <gui-access>
       <menu-path>/Modelo/MCO de alta precisión</menu-path>
     </gui-access>
-
-  </command>
-
-  <command name="multiply" section="Transformations" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>x</argument>
-        <argument>sufijo</argument>
-        <argument>listavar</argument>
-      </arguments>
-      <examples>
-        <example>multiply invpop pc 3 4 5 6</example>
-        <example>multiply 1000 big x1 x2 x3</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-        Las variables de <repl>listavar</repl> (referenciadas por nombre 
-	o número) se multiplican por <repl>x</repl>, que puede ser un valor 
-	numérico o el nombre de una variable previamente definida.
-	Los productos se nombran con el <repl>sufijo</repl> especificado
-	(máximo 3 caracteres). Si es necesario, se truncan primero los 
-	nombres originales de las variables. Por ejemplo, supongamos
-	que Vd. desea crear las versiones per cápita de ciertas variables, 
-	y tiene la variable <lit>pob</lit> (población).  Un conjunto de 
-	instrucciones adecuado sería:</para>
-      
-      <code>
-	genr invpob = 1/pob
-	multiply invpob pc income</code>
-
-      <para>que creará <lit>incomepc</lit> como el producto de 
-      	<lit>income</lit> e <lit>invpob</lit>, y
-	<lit>expendpc</lit> como <lit>expend</lit> por
-	<lit>invpob</lit>.
-      </para>
-    </description>
 
   </command>
 

@@ -622,33 +622,12 @@ static void printf_strip (char *s)
     }
 }
 
-static void
-cli_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		     PRN *prn)
-{
-    int plotlist[3];
-    int err = 0;
-
-    plotlist[0] = 2;
-    plotlist[1] = gretl_model_get_depvar(pmod);
-    plotlist[2] = varindex(pdinfo, "autofit");
-
-    err = gnuplot(plotlist, NULL, (const double **) *pZ, 
-		  pdinfo, OPT_B | OPT_O | OPT_T);
-
-    if (err) {
-	pputs(prn, _("gnuplot command failed\n"));
-    }
-}
-
 static void cli_exec_callback (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo)
 {
     int ci = s->cmd->ci;
 
-    if (ci == FIT && dataset_is_time_series(pdinfo)) {
-	cli_do_autofit_plot(s->models[0], pZ, pdinfo, s->prn);
-    } else if (ci == VAR || ci == VECM) {
+    if (ci == VAR || ci == VECM) {
 	maybe_stack_var(s->var, s->cmd);
     } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
 	maybe_stack_var(s->var, s->cmd);

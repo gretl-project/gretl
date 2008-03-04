@@ -8,6 +8,7 @@ version 1.7.4, in progress
   "sysname <- system"
 - system command: several other changes (write this up when 
   done)
+- remove obsolete commands: fit, multiply
 
 2/29/2008 version 1.7.3
 - Fix for 64-bit platforms: don't use "long" as the C

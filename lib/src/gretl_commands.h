@@ -58,7 +58,6 @@ typedef enum {
     ESTIMATE,
     FCAST,   
     FCASTERR, 
-    FIT,  
     FREQ, 
     FUNC,
     FUNCERR,
@@ -93,7 +92,6 @@ typedef enum {
     MLE,
     MODELTAB,
     MPOLS,
-    MULTIPLY,
     NLS,
     NULLDATA,
     OLS,     
@@ -171,7 +169,6 @@ typedef enum {
                         c == CUSUM || \
                         c == FCAST || \
                         c == FCASTERR || \
-                        c == FIT || \
                         c == FREQ || \
                         c == GRAPH || \
                         c == HAUSMAN || \
@@ -211,7 +208,6 @@ typedef enum {
                               c == TABPRINT || \
                               c == EQNPRINT || \
                               c == FCAST || \
-                              c == FIT || \
                               c == FCASTERR || \
                               c == HAUSMAN || \
                               c == LEVERAGE || \

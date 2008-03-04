@@ -2424,22 +2424,6 @@
 
   </command>
 
-  <command name="fit" section="Prediction" 
-    label="Generate fitted values" context="cli">
-
-    <description>
-      <para>
-	A shortcut to <cmdref targ="fcast"/>. Must follow an estimation
-	command.  Generates fitted values, in a series called
-	<lit>autofit</lit>, for the current sample, based on the last
-	regression.  In the case of time-series models, also pops up a
-	graph of fitted and actual values of the dependent variable
-	against time.
-      </para>
-    </description>
-
-  </command>
-
   <command name="freq" section="Statistics" label="Frequency distribution">
 
     <usage>
@@ -2683,8 +2667,8 @@
       <para>
 	Creates new variables, usually through transformations of existing
 	variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
-	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref
-	targ="multiply"/>, <cmdref targ="sdiff"/> and <cmdref targ="square"/>
+	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, 
+	<cmdref targ="sdiff"/> and <cmdref targ="square"/>
 	for shortcuts. In the context of a <lit>genr</lit> formula, existing
 	variables must be referenced by name, not ID number.  The formula should
 	be a well-formed combination of variable names, constants, operators and
@@ -5112,46 +5096,6 @@
     <gui-access>
       <menu-path>/Model/Other linear models/High precision OLS</menu-path>
     </gui-access>
-
-  </command>
-
-  <command name="multiply" section="Transformations" 
-    label="Multiply variables" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>x</argument>
-        <argument>suffix</argument>
-        <argument>varlist</argument>
-      </arguments>
-      <examples>
-        <example>multiply invpop pc 3 4 5 6</example>
-        <example>multiply 1000 big x1 x2 x3</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	The variables in <repl>varlist</repl> (referenced by name or
-	number) are multiplied by <repl>x</repl>, which may be either
-	a numerical value or the name of a variable already defined.
-	The products are named with the specified <repl>suffix</repl>
-	(maximum 3 characters). The original variable names are
-	truncated first if need be. For instance, suppose you want to
-	create per capita versions of certain variables, and you have
-	the variable <lit>pop</lit> (population).  A suitable set of
-	commands is then:</para>
-      <code>
-	genr invpop = 1/pop
-	multiply invpop pc income
-      </code>
-
-      <para>which will create <lit>incomepc</lit> as the product of
-	<lit>income</lit> and <lit>invpop</lit>, and
-	<lit>expendpc</lit> as <lit>expend</lit> times
-	<lit>invpop</lit>.
-      </para>
-    </description>
 
   </command>
 

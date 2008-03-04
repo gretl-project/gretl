@@ -6458,36 +6458,12 @@ static int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
-static void 
-gui_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		     PRN *prn)
-{
-    int plotlist[3];
-    int err;
-
-    plotlist[0] = 2;
-    plotlist[1] = gretl_model_get_depvar(pmod);
-    plotlist[2] = varindex(datainfo, "autofit");
-
-    err = gnuplot(plotlist, NULL, (const double **) *pZ, pdinfo,
-		  OPT_T | OPT_O); 
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph();
-    }
-}
-
 static void gui_exec_callback (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo)
 {
     int ci = s->cmd->ci;
 
-    if (ci == FIT && s->flags == CONSOLE_EXEC && 
-	dataset_is_time_series(pdinfo)) {
-	gui_do_autofit_plot(models[0], pZ, pdinfo, s->prn);
-    } else if (ci == FREQ && s->flags == CONSOLE_EXEC) {
+    if (ci == FREQ && s->flags == CONSOLE_EXEC) {
 	register_graph();
     } else if (ci == SETOBS || ci == SMPL) {
 	set_sample_label(pdinfo);

@@ -100,7 +100,6 @@ struct CoeffIntervals_ {
 	                     c == CUSUM || \
 	                     c == FCAST || \
 	                     c == FCASTERR || \
-	                     c == FIT || \
                              c == LEVERAGE || \
 	                     c == LMTEST || \
                              c == OMIT || \

@@ -2355,21 +2355,6 @@
 
   </command>
 
-  <command name="fit" section="Prediction" label="Genera valori stimati" context="cli">
-
-    <description>
-      <para>
-	Una scorciatoia per <cmdref targ="fcast"/>. Deve seguire un comando
-        di stima. Genera valori stimati per il campione corrente basati
-        sull'ultima regressione e li salva nella serie <lit>autofit</lit>.
-	Nel caso di modelli di serie storiche, mostra anche un grafico dei
-        valori stimati e di quelli effettivi della variabile dipendente
-        rispetto al tempo.
-      </para>
-    </description>
-
-  </command>
-
   <command name="freq" section="Statistics" label="Distribuzione di frequenza">
 
     <usage>
@@ -2605,15 +2590,16 @@
 	e <lit>matrix</lit> sono sinonimi per questo comando.
       </para>
       <para>
-	Crea nuove variabili, di solito per mezzo di trasformazioni
-        di variabili esistenti. Si veda anche <cmdref targ="diff"/>,
-        <cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref targ="ldiff"/>,
-        <cmdref targ="multiply"/> e <cmdref targ="square"/> per le
-        scorciatoie. Nel contesto di una formula <lit>genr</lit>, le variabili esistenti
-        devono essere referenziate per nome, non per numero identificativo.
-        La formula dev'essere una combinazione ben definita di nomi di
-        variabile, costanti, operatori e funzioni (descritte oltre). Ulteriori
-        dettagli su alcuni aspetti di questo comando si possono trovare nella
+	Crea nuove variabili, di solito per mezzo di trasformazioni di
+	variabili esistenti. Si veda anche <cmdref targ="diff"/>,
+        <cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref
+	  targ="ldiff"/> e <cmdref targ="square"/> per le scorciatoie. Nel
+	contesto di una formula <lit>genr</lit>, le variabili esistenti
+	devono essere referenziate per nome, non per numero
+	identificativo. La formula dev'essere una combinazione ben
+	definita di nomi di variabile, costanti, operatori e funzioni
+	(descritte oltre). Ulteriori dettagli su alcuni aspetti di questo
+	comando si possono trovare nella
         <guideref targ="chap-genr"/>.
       </para>
 
@@ -5030,46 +5016,6 @@
     <gui-access>
       <menu-path>/Modello/Altri modelli lineari/MPOLS - Minimi quadrati in alta precisione</menu-path>
     </gui-access>
-
-  </command>
-
-  <command name="multiply" section="Transformations" label="Moltiplica variabili" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>x</argument>
-        <argument>suffisso</argument>
-        <argument>lista-variabili</argument>
-      </arguments>
-      <examples>
-        <example>multiply invpop pc 3 4 5 6</example>
-        <example>multiply 1000 big x1 x2 x3</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Le variabili nella <repl>lista-variabili</repl> (indicate per
-        nome o numero) sono moltiplicate per <repl>x</repl>, che può
-        essere un valore numerico o il nome di una variabile già
-        definita. I prodotti verranno chiamati con il
-        <repl>suffisso</repl> specificato (massimo 3 caratteri),
-        troncando i nomi delle variabili originali se ce n'è bisogno per motivi
-        di spazio. Ad esempio, si supponga di voler creare la versione
-        procapite di una serie di variabili, usando la variabile <lit>pop</lit>
-        (popolazione).  Lo si può fare con i comandi seguenti:</para>
-      
-      <code>
-	genr invpop = 1/pop
-	multiply invpop pc income
-      </code>
-
-      <para>che creeranno <lit>incomepc</lit> come prodotto di
-	<lit>income</lit> e <lit>invpop</lit>, e
-	<lit>expendpc</lit> come <lit>expend</lit> per
-	<lit>invpop</lit>.
-      </para>
-    </description>
 
   </command>
 

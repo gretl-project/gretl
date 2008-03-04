@@ -372,7 +372,6 @@ int ok_in_loop (int c)
 	c == DATAMOD ||
 	c == DELEET ||
 	c == EQNPRINT ||
-	c == FIT ||
 	c == FUNC ||
 	c == GNUPLOT ||
 	c == HURST ||

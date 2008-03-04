@@ -29,7 +29,4 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
-		    DATAINFO *pdinfo);
-
 #endif /* COMPAT_H */

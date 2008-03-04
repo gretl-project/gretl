@@ -251,6 +251,9 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "transpos")) {
 	cmd->ci = DATAMOD;
 	cmd_set_param_direct(cmd, "transpose");
+    } else if (!strcmp(s, "fit")) {
+	cmd->ci = FCAST;
+	strcpy(line, "fcast autofit");
     }
 
     return cmd->ci;
@@ -261,7 +264,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                            c == FCAST || \
                            c == FUNC || \
                            c == LOOP ||  \
-                           c == MULTIPLY || \
                            c == NULLDATA || \
                            c == OMITFROM || \
                            c == SETMISS)
@@ -286,7 +288,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == EQNPRINT || \
 	               c == FCAST || \
 	               c == FCASTERR || \
-	               c == FIT || \
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
@@ -2248,7 +2249,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* 
-       "multiply" takes a multiplier;
        "omitfrom" and "addto" take the ID of a previous model;
        "setmiss" takes a value to be interpreted as missing;
        these are captured in cmd->param
@@ -2256,7 +2256,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (REQUIRES_ORDER(cmd->ci) ||
 	cmd->ci == ADDTO ||
 	cmd->ci == OMITFROM ||
-	cmd->ci == MULTIPLY ||
 	cmd->ci == SETMISS) {
 	capture_param(line, cmd, &nf, (const double **) *pZ, pdinfo);
 	if (cmd->err) {
@@ -2276,7 +2275,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    if (cmd->ci == MULTIPLY || cmd->ci == VECM) { 
+    if (cmd->ci == VECM) { 
 	free(cmd->extra);
 	cmd->extra = gretl_word_strdup(line, NULL);
 	shift_string_left(line, strlen(cmd->extra));
@@ -3821,20 +3820,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case FCAST:
-    case FIT:
-	if (cmd->ci == FIT) {
-	    err = add_forecast("fcast autofit", models[0], pZ, pdinfo, cmd->opt);
-	} else {
-	    err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
-	}
+	err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
 	if (!err) {
-	    if (cmd->ci == FIT) {
-		pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
-	    }
 	    maybe_list_vars(pdinfo, prn);
-	    if (cmd->ci == FIT && s->callback != NULL) {
-		s->callback(s, pZ, pdinfo);
-	    }
 	}
 	break;
 
@@ -3945,13 +3933,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (err) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	} else {
-	    maybe_list_vars(pdinfo, prn);
-	}
-	break;
-
-    case MULTIPLY:
-	err = gretl_multiply(cmd->param, cmd->list, cmd->extra, pZ, pdinfo);
-	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
