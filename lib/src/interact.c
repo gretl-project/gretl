@@ -445,12 +445,12 @@ static void maybe_extract_savename (char *s, CMD *cmd)
 {
     *cmd->savename = 0;
 
-    if (strncmp(s, "genr ", 5) && strstr(s, " <- ")) {
+    if (strncmp(s, "genr ", 5) && strstr(s, "<-")) {
 	int n, len, quote;
 
 	quote = (*s == '"');
 	len = strcspn(s, "<");
-	if (len < 2) {
+	if (len < 1) {
 	    return;
 	}
 	n = len - 1 - quote;
@@ -462,7 +462,10 @@ static void maybe_extract_savename (char *s, CMD *cmd)
 	    cmd->savename[n-1] = 0;
 	}
 	strcpy(cmd_savename, cmd->savename);
-	shift_string_left(s, len + 3);
+	shift_string_left(s, len + 2);
+	while (*s == ' ') {
+	    shift_string_left(s, 1);
+	}
     }
 }
 
