@@ -2828,7 +2828,7 @@ static int real_do_model (int action)
     double rho;
     int err = 0;
 
-#if 1
+#if 0
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 
@@ -2992,6 +2992,8 @@ static int real_do_model (int action)
     return 0;
 }
 
+#define ar1_code(c) (c == CORC || c == HILU || c == PWE)
+
 int do_model (selector *sr) 
 {
     const char *buf;
@@ -3013,12 +3015,17 @@ int do_model (selector *sr)
 	pols = 1;
     }
 
-    strcpy(estimator, gretl_command_word(ci));
+    if (ar1_code(ci)) {
+	strcpy(estimator, "ar1");
+    } else {
+	strcpy(estimator, gretl_command_word(ci));
+    }
+
     libcmd.opt = selector_get_opts(sr);
 
     if (pols) {
 	libcmd.opt |= OPT_P;
-    } else if (ci == CORC || ci == HILU || ci == PWE) {
+    } else if (ar1_code(ci)) {
 	if (ci == HILU) {
 	    libcmd.opt |= OPT_H;
 	} else if (ci == PWE) {
