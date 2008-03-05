@@ -129,7 +129,6 @@ typedef enum {
     SQUARE,
     SSCANF,
     STORE, 
-    STRING,
     SUMMARY,
     SYSTEM,
     TABPRINT,

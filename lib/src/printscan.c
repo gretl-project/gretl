@@ -55,6 +55,8 @@ static int printf_escape (int c, PRN *prn)
     return 0;
 }
 
+#if 0
+
 /* various string argument variants, optionally followed
    by "+ offset" */
 
@@ -103,7 +105,8 @@ static char *printf_get_string (const char *s, const double **Z,
 	}
     } else if (sscanf(s, "argname(%15[^)])", strarg)) {
 	/* name of function argument */
-	char *aname = gretl_func_get_arg_name(strarg);
+	int err = 0;
+	char *aname = gretl_func_get_arg_name(strarg, &err);
 
 	if (aname != NULL) {
 	    strcpy(tmpstr, aname);
@@ -112,7 +115,7 @@ static char *printf_get_string (const char *s, const double **Z,
 	    q = strchr(s, ')') + 1;
 	    free(aname);
 	}
-    } else if (sscanf(s, "date(%15[^)])", strarg)) {
+    } else if (sscanf(s, "date(%15[^)])", strarg)) { /* FIXME */
 	/* date string */
 	t = -1;
 	if (isdigit(*strarg)) {
@@ -160,6 +163,64 @@ static char *printf_get_string (const char *s, const double **Z,
 
     return ret;
 }
+
+#else
+
+static char *printf_get_string (char *s, double ***pZ,
+				DATAINFO *pdinfo, int t, 
+				int *err)
+{
+    const char *p = NULL;
+    const char *q = NULL;
+    char *ret = NULL;
+    int v, len = 0;
+
+    /* specials, not yet in genr */
+
+    if (sscanf(s, "varname(%d)", &v)) {
+	/* name of variable identified by number */
+	if (v >= 0 && v < pdinfo->v) {
+	    p = pdinfo->varname[v];
+	    len = strlen(p);
+	    q = strchr(s, ')') + 1;
+	}
+    } else if (!strncmp(s, "marker", 6) && pdinfo->S != NULL) {
+	/* observation label */
+	p = pdinfo->S[t];
+	len = strlen(p);
+	q = s + 6;
+    }
+
+    if (p != NULL) {
+	int offset = 0;
+
+	if (q != NULL) {
+	    while (isspace(*q)) q++;
+	    if (*q == '+') {
+		q++;
+		offset = atoi(q);
+		len -= offset;
+	    }
+	}
+	if (len >= 0) {
+	    ret = gretl_strndup(p + offset, len);
+	}
+    } else {
+	ret = generate_string(s, pZ, pdinfo, err);
+    }
+
+    if (ret == NULL) {
+	ret = gretl_strdup("NA");
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return ret;
+}
+
+#endif
 
 static double printf_get_scalar (char *s, double ***pZ,
 				 DATAINFO *pdinfo, int t, 
@@ -413,8 +474,7 @@ static int print_arg (char **pfmt, char **pargs,
     arg = get_next_arg(*pargs, &alen, &err);
     if (!err) {
 	if (fc == 's') {
-	    str = printf_get_string(arg, (const double **) *pZ, 
-				    pdinfo, t, &err);
+	    str = printf_get_string(arg, pZ, pdinfo, t, &err);
 	} else {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
 	    if (!err && na(x)) {

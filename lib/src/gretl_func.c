@@ -3752,7 +3752,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 /* look up name of supplied argument based on name of variable
    inside function */
 
-char *gretl_func_get_arg_name (const char *argvar)
+char *gretl_func_get_arg_name (const char *argvar, int *err)
 {
     ufunc *u = currently_called_function();
     char *ret = NULL;
@@ -3772,6 +3772,9 @@ char *gretl_func_get_arg_name (const char *argvar)
 
     if (ret == NULL) {
 	ret = gretl_strdup("");
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
     }
 
     return ret;

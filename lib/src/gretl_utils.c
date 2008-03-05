@@ -1526,6 +1526,7 @@ void libgretl_cleanup (void)
     gretl_functions_cleanup();
     libset_cleanup();
     gretl_command_hash_cleanup();
+    gretl_function_hash_cleanup();
     saved_strings_cleanup();
     lapack_mem_free();
 

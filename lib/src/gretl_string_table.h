@@ -62,4 +62,12 @@ int is_codevar (const char *s);
 
 int set_codevars (const char *s);
 
+char *gretl_getenv (const char *key, int *err);
+
+char *retrieve_date_string (int t, const DATAINFO *pdinfo, int *err);
+
+char *retrieve_file_content (const char *fname, int *err);
+
+char *gretl_backtick (const char *arg, int *err);
+
 #endif /* GRETL_STRING_TABLE_H */

@@ -112,6 +112,9 @@ double generate_scalar (const char *s, double ***pZ,
 double *generate_series (const char *s, double ***pZ, 
 			 DATAINFO *pdinfo, int *err);
 
+char *generate_string (const char *s, double ***pZ, 
+		       DATAINFO *pdinfo, int *err);
+
 int print_object_var (const char *oname, const char *param,
 		      double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn);
@@ -133,6 +136,8 @@ int function_from_string (const char *s);
 int function_lookup (const char *s);
 
 int const_lookup (const char *s);
+
+void gretl_function_hash_cleanup (void);
 
 #endif /* GENMAIN_H */
 

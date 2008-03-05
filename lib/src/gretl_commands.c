@@ -139,7 +139,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { SQUARE,   "square" },
     { SSCANF,   "sscanf" },
     { STORE,    "store" },   
-    { STRING,   "string" },
     { SUMMARY,  "summary" },
     { SYSTEM,   "system" },
     { TABPRINT, "tabprint" },
@@ -162,6 +161,7 @@ static struct gretl_cmd gretl_cmd_aliases[] = {
     { GENR, "series" },   
     { GENR, "scalar" },  
     { GENR, "matrix" },  
+    { GENR, "string" },
     { LOOP, "for" },   
     { LOOP, "foreach" },
     { LOOP, "while" },
@@ -205,7 +205,7 @@ int gretl_command_number (const char *s)
     if (ht == NULL) {
 	gretl_command_hash_init();
     }
-    
+
     p = g_hash_table_lookup(ht, s);
     if (p != NULL) {
 	ret = GPOINTER_TO_INT(p);

@@ -42,17 +42,20 @@
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
-#define series_node(n) (n->t == VEC &&(n->flags & UVEC_NODE)) 
+#define series_node(n) (n->t == VEC &&(n->flags & UVAR_NODE)) 
 
 #define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
 			 n->t == USERIES || n->t == MAT || n->t == EMPTY || \
-			 (n->t == VEC && (n->flags & UVEC_NODE)))
+			 (n->t == VEC && (n->flags & UVAR_NODE)))
 
 #define series_type(t) (t == VEC || t == USERIES)
 #define uvar_type(t) (t == USCLR || t == USERIES)
 
-#define getvec(n,p) ((n->flags & UVEC_NODE)? \
+#define getvec(n,p) ((n->flags & UVAR_NODE)? \
 		     (*p->Z)[n->v.idnum] : n->v.xvec)
+
+#define getval(n,p) ((n->flags & UVAR_NODE)? \
+		     (*p->Z)[n->v.idnum][0] : n->v.xval)
 
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
@@ -438,7 +441,7 @@ static NODE *vec_pointer_node (NODE *t, parser *p)
 
     if (n != NULL) {
 	n->v.idnum = t->v.idnum;
-	n->flags |= UVEC_NODE;
+	n->flags |= UVAR_NODE;
     }
 
     return n;
@@ -931,6 +934,31 @@ static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
 
     return ret;
 }
+
+static NODE *string_offset (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (starting(p)) {
+	int n = strlen(l->v.str);
+	int k = r->v.xval;
+
+	if (k < 0) {
+	    p->err = E_DATA;
+	} else if (k >= n) {
+	    ret->v.str = gretl_strdup("");
+	} else {
+	    ret->v.str = gretl_strdup(l->v.str + k);
+	}
+
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
 
 /* try interpreting the string on the right as identifying
    an observation number */
@@ -2320,7 +2348,7 @@ static NODE *trend_node (parser *p)
 	p->err = gen_time(p->Z, p->dinfo, 1);
 	if (!p->err) {
 	    ret->v.idnum = varindex(p->dinfo, "time");
-	    ret->flags = UVEC_NODE;
+	    ret->flags = UVAR_NODE;
 	}
     }
 
@@ -2727,6 +2755,93 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    if (t > 0) {
 		ret->v.xval = t;
 	    }
+	}
+    }
+
+    return ret;
+}
+
+static NODE *argname_from_uvar (NODE *n, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *s = p->dinfo->varname[n->v.idnum];
+
+	ret->v.str = gretl_func_get_arg_name(s, &p->err);
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	} 	
+    }
+
+    return ret;
+}
+
+static NODE *get_obs_label (NODE *n, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int t = n->v.xval;
+
+	ret->v.str = retrieve_date_string(t, p->dinfo, &p->err);
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	} 	
+    }
+
+    return ret;
+}
+
+static NODE *single_string_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *s = n->v.str;
+
+	if (f == S_GETENV) {
+	    ret->v.str = gretl_getenv(s, &p->err);
+	} else if (f == S_ARGNAME) {
+	    ret->v.str = gretl_func_get_arg_name(s, &p->err);
+	} else if (f == S_READFILE) {
+	    ret->v.str = retrieve_file_content(s, &p->err);
+	} else if (f == S_BACKTICK) {
+	    ret->v.str = gretl_backtick(s, &p->err);
+	} else {
+	    p->err = E_DATA;
+	}
+
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	}    
+    }
+
+    return ret;
+}
+
+static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *sl = l->v.str;
+	const char *sr = r->v.str;
+	char *sret;
+
+	if (f == S_STRSTR) {
+	    sret = strstr(sl, sr);
+	    if (sret != NULL) {
+		ret->v.str = gretl_strdup(sret);
+	    } else {
+		ret->v.str = gretl_strdup("");
+	    }
+	} else {
+	    p->err = E_DATA;
+	}
+
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
 	}
     }
 
@@ -4643,7 +4758,9 @@ static NODE *eval (NODE *t, parser *p)
 	/* arithmetic and logical binary operators: be as
 	   flexible as possible with regard to argument types
 	*/
-	if (l->t == NUM && r->t == NUM) {
+	if (t->t == B_ADD && l->t == STR && r->t == NUM) {
+	    ret = string_offset(l, r, p);
+	} else if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
 	} else if ((l->t == VEC && r->t == VEC) ||
 		   (l->t == VEC && r->t == NUM) ||
@@ -5186,6 +5303,33 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;	
+    case S_GETENV:
+    case S_ARGNAME:
+    case S_READFILE:
+    case S_BACKTICK:
+	if (l->t == STR) {
+	    ret = single_string_func(l, t->t, p);
+	} else if (t->t == S_ARGNAME && (l->flags & UVAR_NODE)) {
+	    ret = argname_from_uvar(l, p);
+	} else {
+	    node_type_error(t->t, STR, l, p);
+	}
+	break;
+    case S_OBSLABEL:
+	if (l->t == NUM) {
+	    ret = get_obs_label(l, p);
+	} else {
+	    node_type_error(t->t, NUM, l, p);
+	}
+	break;
+
+    case S_STRSTR:
+	if (l->t == STR && r->t == STR) {
+	    ret = two_string_func(l, r, t->t, p);
+	} else {
+	    node_type_error(t->t, STR, (l->t == STR)? r : l, p);
+	}
+	break;	
     default: 
 	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);
@@ -5405,25 +5549,12 @@ static void printnode (const NODE *t, const parser *p)
 /* which modified assignment operators of the type '+=' 
    will we accept, when generating a matrix? */
 
-static int ok_matrix_op (int op)
-{
-    if (op == B_ASN || op == B_ADD || op == B_SUB ||
-	op == B_MUL || op == B_DIV || 
-	op == INC || op == DEC) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-static int ok_list_op (int op)
-{
-    if (op == B_ASN || op == B_ADD || op == B_SUB) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
+#define ok_matrix_op(o) (o == B_ASN || o == B_ADD || \
+			 o == B_SUB || o == B_MUL || \
+			 o == B_DIV || o == INC || \
+			 o == DEC)
+#define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
+#define ok_string_op(o) (o == B_ASN || o == B_ADD) 
 
 /* read operator from "genr" formula: this is either
    simple assignment or something like '+=' */
@@ -5725,6 +5856,8 @@ static void pre_process (parser *p, int flags)
 	p->targ = NUM;
     } else if (flags & P_SERIES) {
 	p->targ = VEC;
+    } else if (flags & P_STRING) {
+	p->targ = STR;
     } else if (!strncmp(s, "scalar ", 7)) {
 	p->targ = NUM;
 	s += 7;
@@ -5737,7 +5870,10 @@ static void pre_process (parser *p, int flags)
     } else if (!strncmp(s, "list ", 5)) {
 	p->targ = LIST;
 	s += 5;
-    }	
+    } else if (!strncmp(s, "string ", 7)) {
+	p->targ = STR;
+	s += 7;
+    }
 
     if (p->flags & P_DISCARD) {
 	/* doing a simple "eval" */
@@ -5794,7 +5930,10 @@ static void pre_process (parser *p, int flags)
 	    p->lh.islist = 1;
 	    p->lh.t = LIST;
 	    newvar = 0;
-	}
+	} else if (get_named_string(test)) {
+	    p->lh.t = STR;
+	    newvar = 0;
+	}	    
     } else if (var_is_scalar(p->dinfo, p->lh.v)) {
 	p->lh.t = NUM;
 	newvar = 0;
@@ -5883,6 +6022,13 @@ static void pre_process (parser *p, int flags)
 	p->err = E_PARSE;
 	return;
     }	
+
+    /* strings: ditto */
+    if (p->lh.t == STR && !ok_string_op(p->op)) {
+	sprintf(gretl_errmsg, _("'%s' : not implemented for strings"), opstr);
+	p->err = E_PARSE;
+	return;
+    }    
 
     /* advance past operator */
     s += strlen(opstr);
@@ -6234,11 +6380,37 @@ static void matrix_edit (parser *p)
 
 static int edit_string (parser *p)
 {
-    if (p->ret->v.str == NULL) {
-	p->err = E_DATA;
+    const char *src = NULL;
+
+    if (p->ret->t == EMPTY) {
+	src = "";
     } else {
-	p->err = add_string_directly(p->lh.name, p->ret->v.str, 
-				     p->prn);
+	src = p->ret->v.str;
+    }
+
+    if (src == NULL) {
+	p->err = E_DATA;
+    } else if (p->op == B_ASN) {
+	p->err = add_string_directly(p->lh.name, src, p->prn);
+    } else if (p->op == B_ADD) {
+	const char *orig = get_named_string(p->lh.name);
+
+	if (orig == NULL) {
+	    p->err = E_DATA;
+	} else if (*src == '\0') {
+	    ; /* no-op */
+	} else {
+	    char *full = malloc(strlen(orig) + strlen(src) + 1);
+	    
+	    if (full == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		strcpy(full, orig);
+		strcat(full, src);
+		p->err = add_string_directly(p->lh.name, full, p->prn);
+		free(full);
+	    }
+	}
     }
 
     return p->err;
@@ -6347,6 +6519,10 @@ static int gen_check_return_type (parser *p)
 	if (r->t != EMPTY && !ok_list_node(r)) {
 	    p->err = E_TYPES;
 	} 
+    } else if (p->targ == STR) {
+	if (r->t != EMPTY && r->t != STR) {
+	    p->err = E_TYPES;
+	}
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
@@ -6600,6 +6776,8 @@ static void parser_init (parser *p, const char *str,
 	p->targ = NUM;
     } else if (p->flags & P_SERIES) {
 	p->targ = VEC;
+    } else if (p->flags & P_STRING) {
+	p->targ = STR;
     } else if (p->flags & P_UFUN) {
 	p->targ = EMPTY;
     } else {

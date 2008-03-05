@@ -28,12 +28,14 @@
 /* this may be a good idea, but perhaps risky? */
 #define PRESERVE_AUX_NODES 0
 
+/* operators, types, punctuation */
+
 enum {
               U_NEG = 1,
               U_POS,
               U_NOT,
               U_ADDR,
-              U_MAX,   /* SEPARATOR: end of unary operators */ 
+              U_MAX,      /* SEPARATOR: end of unary operators */ 
               B_ASN,
               B_ADD,
               B_SUB,
@@ -51,12 +53,12 @@ enum {
   /* 20 */    B_OR,
               B_TRMUL,
 	      B_RANGE,
-              LPR,     /* left paren */
-              RPR,     /* right paren */
-              LBR,     /* left bracket */
-              RBR,     /* right bracket */
-              LCB,     /* left curly bracket */
-              RCB,     /* right curly bracket */
+              LPR,        /* left paren */
+              RPR,        /* right paren */
+              LBR,        /* left bracket */
+              RBR,        /* right bracket */
+              LCB,        /* left curly bracket */
+              RCB,        /* right curly bracket */
               DOTMULT,
   /* 30 */    DOTDIV,
 	      DOTPOW,
@@ -65,160 +67,12 @@ enum {
               DOTEQ,
               DOTGT,
               DOTLT,
-              KRON,     /* Kronecker product */
-              MCCAT,    /* matrix concatenation (columns) */
-              MRCAT,    /* matrix concatenation (rows) */
-  /* 40 */    LCAT,     /* list concatentation */
-	      OP_MAX,   /* SEPARATOR: end of operators */
-	      ABS,
-              TOINT,
-              CEIL,
-	      FLOOR,
-              ROUND,
-	      SIN,
-	      COS,
-	      TAN,
-  /* 50 */    ASIN,
-	      ACOS,
-	      ATAN,
-	      LOG,
-	      LOG10,
-              LOG2,
-              EXP,
-              SQRT,
-              DIF,	  /* first difference */
-              LDIF,	  /* log difference */
-  /* 60 */    SDIF,	  /* seasonal difference */
-	      SORT,	  /* ascending sort */
-	      DSORT,	  /* descending sort */
-              RANKING,    
-	      ODEV,	  /* orthogonal deviation */
-              NOBS,
-              T1,
-              T2,   
-              CUM,
-              MISSING,
-  /* 70 */    OK,
-	      MISSZERO,
-	      ZEROMISS,
-              MEDIAN,
-	      GINI,
-              SUM,   
-              MEAN,
-              MIN,
-              MAX,
-              SD,
-  /* 80 */    VCE,	  /* variance */
-	      SST,
-	      CNORM,
-              DNORM,
-	      QNORM,
-              GAMMA,	
-              LNGAMMA,
-              HPFILT,
-              BKFILT,
-              RESAMPLE,
-  /* 90 */    PMEAN,
-	      PSD,
-	      IMAT,
-              SUMR,
-	      SUMC,
-              MEANR,	 
-              MEANC,
-              MCOV,
-              MCORR,
-              CDEMEAN,
-  /* 100 */   CHOL,
-	      INV,
-	      INVPD,
-              GINV,
-	      DIAG,
-              TRANSP,
-              TVEC,
-              VECH,	
-              UNVECH,
-              ROWS,
-  /* 110 */   COLS,
-	      DET,
-	      LDET,
-              TRACE,
-	      NORM1,
-              INFNORM,
-              RCOND,
-              RANK, 
-              OBSNUM,
-              ISSERIES,
-  /* 120 */   ISLIST,	 
-	      ISSTRING,
-	      ISNULL,
-              LISTLEN,
-	      PVAL,
-              CDF,
-              INVCDF,
-              CRIT,  
-              RANDGEN,
-              RPOISSON,
-  /* 130 */   MAKEMASK,
-	      VALUES,
-	      NULLSPC,
-              MEXP,
-	      MINC,
-              MAXC,
-              MINR,
-              MAXR,
-              IMINC, 
-              IMAXC,
-  /* 140 */   IMINR,
-	      IMAXR,
-	      FFT,
-              FFTI,
-	      UPPER,
-              LOWER,
-              MREAD,
-	      POLROOTS,
-	      DUMIFY,
-	      XPX,
-  /* 150 */   FUNC_MAX,	  /* SEPARATOR: end of single-arg functions */
-	      COR,
-	      COV,
-	      SORTBY,
-	      RUNIFORM,
-              RNORMAL,
-	      FRACDIF,
-	      ZEROS,
-              ONES,
-              SEQ,
-  /* 160 */   MUNIF,
-	      MNORM,
-	      QFORM,
-	      MLAG,
-	      QR,
-              EIGSYM,	 
-	      EIGGEN,
-	      FDJAC,
-              BFGSMAX,
-              LRVAR,
-  /* 170 */   PRINCOMP,
-	      QUANTILE,
-	      CMULT,	  /* complex multiplication */
-	      CDIV,	  /* complex division */
-	      MXTAB,
-              MWRITE,
-	      MOVAVG,
-	      MRSEL,
-              MCSEL,
-	      LLAG,
-  /* 180 */   WMEAN,
-	      WVAR,
-	      WSD,
-	      F2_MAX,	  /* SEPARATOR: end of two-arg functions */
-              MSHAPE,
-	      SVD,
-              MOLS,
-	      FILTER,
-	      TRIMR,
-	      FN_MAX,	  /* SEPARATOR: end of n-arg functions */
-  /* 190 */   COM,	  /* comma */
+              KRON,       /* Kronecker product */
+              MCCAT,      /* matrix concatenation (columns) */
+              MRCAT,      /* matrix concatenation (rows) */
+  /* 40 */    LCAT,       /* list concatentation */
+	      OP_MAX,     /* SEPARATOR: end of operators */
+	      COM,	  /* comma */
 	      DOT,	  /* period */
 	      SEMI,	  /* semi-colon */
 	      COL,	  /* colon */
@@ -226,9 +80,9 @@ enum {
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
 	      USCLR,	  /* user variable, scalar */
-              USERIES,	  /* user variable, series */
+  /* 50 */    USERIES,	  /* user variable, series */
 	      UMAT,	  /* user-defined matrix */
-  /* 200 */   UOBJ,	  /* user-defined object (e.g. model) */
+	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      IVEC,	  /* vector of integers, evaluated */
@@ -236,9 +90,9 @@ enum {
 	      MAT,	  /* matrix, evaluated */
 	      OBS,	  /* observation from a series */
 	      MSL,	  /* matrix plus subspec */
-              DMSL,	  /* "dollar" matrix plus subspec */
+  /* 60 */    DMSL,	  /* "dollar" matrix plus subspec */
 	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
-  /* 210 */   MSL2,	  /* unevaluated matrix subspec */
+	      MSL2,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
@@ -246,9 +100,9 @@ enum {
 	      DVAR,	  /* $ dataset variable (scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      OVAR,	  /* object variable: variable "under" an object */
-              LOOPIDX,	  /* loop index variable */
+  /* 70 */    LOOPIDX,	  /* loop index variable */
 	      LIST,	  /* reference to named list */
-  /* 220 */   STR,	  /* string */
+	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,
 	      ABSENT,
@@ -256,10 +110,170 @@ enum {
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
 	      INC,   
-              DEC,
+  /* 80 */    DEC,
 	      QUERY,
 	      EOT,	  /* end of transmission */
 	      UNK 
+};
+
+/* functions: don't collide with the enumeration above */
+
+enum {
+    FUNC_MIN = 1 << 8,
+    ABS,
+    TOINT,
+    CEIL,
+    FLOOR,
+    ROUND,
+    SIN,
+    COS,
+    TAN,
+    ASIN,
+    ACOS,
+    ATAN,
+    LOG,
+    LOG10,
+    LOG2,
+    EXP,
+    SQRT,
+    DIF,	  /* first difference */
+    LDIF,	  /* log difference */
+    SDIF,	  /* seasonal difference */
+    SORT,	  /* ascending sort */
+    DSORT,	  /* descending sort */
+    RANKING,    
+    ODEV,	  /* orthogonal deviation */
+    NOBS,
+    T1,
+    T2,   
+    CUM,
+    MISSING,
+    OK,
+    MISSZERO,
+    ZEROMISS,
+    MEDIAN,
+    GINI,
+    SUM,   
+    MEAN,
+    MIN,
+    MAX,
+    SD,
+    VCE,	  /* variance */
+    SST,
+    CNORM,
+    DNORM,
+    QNORM,
+    GAMMA,	
+    LNGAMMA,
+    HPFILT,
+    BKFILT,
+    RESAMPLE,
+    PMEAN,
+    PSD,
+    IMAT,
+    SUMR,
+    SUMC,
+    MEANR,	 
+    MEANC,
+    MCOV,
+    MCORR,
+    CDEMEAN,
+    CHOL,
+    INV,
+    INVPD,
+    GINV,
+    DIAG,
+    TRANSP,
+    TVEC,
+    VECH,	
+    UNVECH,
+    ROWS,
+    COLS,
+    DET,
+    LDET,
+    TRACE,
+    NORM1,
+    INFNORM,
+    RCOND,
+    RANK, 
+    OBSNUM,
+    ISSERIES,
+    ISLIST,	 
+    ISSTRING,
+    ISNULL,
+    LISTLEN,
+    PVAL,
+    CDF,
+    INVCDF,
+    CRIT,  
+    RANDGEN,
+    RPOISSON,
+    MAKEMASK,
+    VALUES,
+    NULLSPC,
+    MEXP,
+    MINC,
+    MAXC,
+    MINR,
+    MAXR,
+    IMINC, 
+    IMAXC,
+    IMINR,
+    IMAXR,
+    FFT,
+    FFTI,
+    UPPER,
+    LOWER,
+    MREAD,
+    POLROOTS,
+    DUMIFY,
+    XPX,
+    S_GETENV,
+    S_ARGNAME,
+    S_OBSLABEL,
+    S_READFILE,
+    S_BACKTICK,
+    FUNC_MAX,	  /* SEPARATOR: end of single-arg functions */
+    COR,
+    COV,
+    SORTBY,
+    RUNIFORM,
+    RNORMAL,
+    FRACDIF,
+    ZEROS,
+    ONES,
+    SEQ,
+    MUNIF,
+    MNORM,
+    QFORM,
+    MLAG,
+    QR,
+    EIGSYM,	 
+    EIGGEN,
+    FDJAC,
+    BFGSMAX,
+    LRVAR,
+    PRINCOMP,
+    QUANTILE,
+    CMULT,	  /* complex multiplication */
+    CDIV,	  /* complex division */
+    MXTAB,
+    MWRITE,
+    MOVAVG,
+    MRSEL,
+    MCSEL,
+    LLAG,
+    WMEAN,
+    WVAR,
+    WSD,
+    S_STRSTR,
+    F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+    MSHAPE,
+    SVD,
+    MOLS,
+    FILTER,
+    TRIMR,
+    FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
 enum {
@@ -277,7 +291,7 @@ enum {
 
 #define GENSTRLEN 128
 
-#define func_symb(s) (s > OP_MAX && s < FUNC_MAX)
+#define func_symb(s) (s > FUNC_MIN && s < FUNC_MAX)
 #define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
 #define funcn_symb(s) (s > F2_MAX && s < FN_MAX)
 #define string_arg_func(s) (s == ISSERIES || s == ISNULL || s == ISLIST || \
@@ -361,7 +375,7 @@ enum {
     AUX_NODE    = 1 << 0,
     TMP_NODE    = 1 << 1,
     TRANSP_NODE = 1 << 2,
-    UVEC_NODE   = 1 << 3
+    UVAR_NODE   = 1 << 3
 };
 
 struct node {
@@ -378,14 +392,15 @@ enum {
     P_PRINT   = 1 <<  4, /* command just prints an existing var */
     P_SCALAR  = 1 <<  5, /* return a scalar result (only) */ 
     P_SERIES  = 1 <<  6, /* return a series result (only) */
-    P_PRIVATE = 1 <<  7, /* generating a private or internal var */
-    P_COMPILE = 1 <<  8, /* just compiling tree, not evaluating */
-    P_EXEC    = 1 <<  9, /* evaluating pre-built tree */ 
-    P_SLICE   = 1 << 10, /* compute matrix slice specification */
-    P_UFUN    = 1 << 11, /* user function call with no assignment */
-    P_SORT    = 1 << 12, /* doing a simple sort of a variable */
-    P_NATEST  = 1 << 13, /* testing for NAs in expression */
-    P_UFRET   = 1 << 14  /* returning value generated by user function */
+    P_STRING  = 1 <<  7, /* return a string result (only) */
+    P_PRIVATE = 1 <<  8, /* generating a private or internal var */
+    P_COMPILE = 1 <<  9, /* just compiling tree, not evaluating */
+    P_EXEC    = 1 << 10, /* evaluating pre-built tree */ 
+    P_SLICE   = 1 << 11, /* compute matrix slice specification */
+    P_UFUN    = 1 << 12, /* user function call with no assignment */
+    P_SORT    = 1 << 13, /* doing a simple sort of a variable */
+    P_NATEST  = 1 << 14, /* testing for NAs in expression */
+    P_UFRET   = 1 << 15  /* returning value generated by user function */
 };
 
 struct lhinfo {

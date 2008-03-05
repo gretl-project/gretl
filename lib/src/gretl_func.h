@@ -87,7 +87,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 void *ret, char **descrip,
 			 PRN *prn);
 
-char *gretl_func_get_arg_name (const char *argvar);
+char *gretl_func_get_arg_name (const char *argvar, int *err);
 
 void set_drop_function_vars (int s);
 

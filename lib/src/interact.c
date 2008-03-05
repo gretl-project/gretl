@@ -331,7 +331,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == SHELL || \
                        c == SPRINTF || \
 		       c == SSCANF || \
-                       c == STRING || \
                        c == SYSTEM || \
                        c == TABPRINT || \
                        c == TESTUHAT || \
@@ -1553,6 +1552,8 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
     } else if (get_matrix_by_name(s)) {
 	ret = 1;
     } else if (get_list_by_name(s)) {
+	ret = 1;
+    } else if (get_named_string(s)) {
 	ret = 1;
     }
 
@@ -3186,11 +3187,6 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
-    /* or don't get echoed in interactive use */
-    if ((flags & CMD_CLI) && cmd->ci == STRING) {
-	return;
-    }
-
     /* special case: "store" command: record as comment */
     if (recording && cmd->ci == STORE) {
 	pprintf(prn, "# store '%s'", cmd->param);
@@ -4028,10 +4024,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = do_sscanf(line, pZ, pdinfo, prn);
 	break;
 
-    case STRING:
-	err = process_string_command(line, pZ, pdinfo, prn);
-	break;
-
     case PVALUE:
 	err = batch_pvalue(line, pZ, pdinfo, prn);
 	break;
@@ -4716,7 +4708,6 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 		       c == PVALUE || \
 		       c == PRINT || \
 		       c == PRINTF || \
-		       c == STRING || \
 		       c == HELP || \
 		       c == SET || \
 		       c == FUNC || \
@@ -4737,6 +4728,7 @@ int ready_for_command (const char *line)
 	"launch",
 	"matrix",
 	"scalar",
+	"string",
 	NULL 
     };
     int i, ok = 0;

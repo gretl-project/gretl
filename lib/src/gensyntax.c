@@ -74,7 +74,7 @@ static NODE *newref (parser *p, int t)
 	} else {
 	    n->v.idnum = p->idnum;
 	}
-	n->flags = (t == USERIES)? UVEC_NODE : 0;
+	n->flags = (t == USERIES)? UVAR_NODE : 0;
     }
 
     return n;
@@ -801,19 +801,6 @@ static NODE *powterm (parser *p)
 
     return t;
 }
-
-#if 0
-/* chunk that may be needed, modified */
-if (unary_op(sym)) {
-    if (p->ch == 0) {
-	/* no input left: provoke error */
-	p->sym = sym;
-	t = base(p, NULL);
-    } else {
-	/* continue as usual */
-    }
-}
-#endif
 
 static NODE *factor (parser *p)
 {  

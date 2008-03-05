@@ -25,6 +25,8 @@
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 
+#include <glib.h>
+
 #define NUMLEN 32
 #define MAXQUOTE 64
 
@@ -267,16 +269,23 @@ struct str_table funcs[] = {
     { XPX,      "xpx" },
     { FILTER,   "filter" },
     { TRIMR,    "trimr" },
+    { S_GETENV,   "getenv" },
+    { S_ARGNAME,  "argname" },
+    { S_OBSLABEL, "obslabel" },
+    { S_READFILE, "readfile" },
+    { S_BACKTICK, "grab" },
+    { S_STRSTR,   "strstr" },
     { 0,        NULL }
 };
 
 struct str_table func_alias[] = {
-    { GAMMA,    "gammafunc" },
-    { GAMMA,    "gamma" },
-    { RPOISSON, "poisson" },
-    { PVAL,     "pval" },
-    { LOG,      "logs" },
-    { 0,        NULL }
+    { GAMMA,      "gammafunc" },
+    { GAMMA,      "gamma" },
+    { RPOISSON,   "poisson" },
+    { PVAL,       "pval" },
+    { LOG,        "logs" },
+    { S_OBSLABEL, "date" },
+    { 0,          NULL }
 };
 
 int const_lookup (const char *s)
@@ -305,6 +314,21 @@ const char *constname (int c)
     return "unknown";
 }
 
+static GHashTable *gretl_function_hash_init (void)
+{
+    GHashTable *ht;
+    int i;
+
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    for (i=0; funcs[i].str != NULL; i++) {
+	g_hash_table_insert(ht, (gpointer) funcs[i].str, 
+			    GINT_TO_POINTER(funcs[i].id));
+    }
+
+    return ht;
+}
+
 enum {
     NO_ALIAS,
     ALLOW_ALIAS
@@ -312,15 +336,31 @@ enum {
 
 static int real_function_lookup (const char *s, int a)
 {
-    int i;
+    static GHashTable *fht;
+    gpointer p;
+    int ret = 0;
 
-    for (i=0; funcs[i].id != 0; i++) {
-	if (!strcmp(s, funcs[i].str)) {
-	    return funcs[i].id;
+    if (s == NULL) {
+	/* cleanup signal */
+	if (fht != NULL) {
+	    g_hash_table_destroy(fht);
+	    fht = NULL;
 	}
+	return 0;
     }
 
-    if (a == ALLOW_ALIAS) {
+    if (fht == NULL) {
+	fht = gretl_function_hash_init();
+    }
+    
+    p = g_hash_table_lookup(fht, s);
+    if (p != NULL) {
+	ret = GPOINTER_TO_INT(p);
+    }
+
+    if (ret == 0 && a == ALLOW_ALIAS) {
+	int i;
+
 	for (i=0; func_alias[i].id != 0; i++) {
 	    if (!strcmp(s, func_alias[i].str)) {
 		return func_alias[i].id;
@@ -328,7 +368,12 @@ static int real_function_lookup (const char *s, int a)
 	} 
     }   
 
-    return 0;
+    return ret;
+}
+
+void gretl_function_hash_cleanup (void)
+{
+    real_function_lookup(NULL, 0);
 }
 
 int function_lookup (const char *s)
@@ -637,6 +682,22 @@ NODE *obs_node (parser *p)
     return ret;
 }
 
+static void look_up_string_variable (const char *s, parser *p)
+{
+    const char *val = get_named_string(s + 1);
+
+    if (val != NULL) {
+	p->idstr = gretl_strdup(val);
+	if (p->idstr == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    p->sym = STR;
+	}
+    } else {
+	undefined_symbol_error(s, p);
+    }
+}
+
 static void look_up_dollar_word (const char *s, parser *p)
 {
     p->idnum = dvar_lookup(s);
@@ -775,7 +836,7 @@ static void getword (parser *p)
     char word[32];
     int i = 0;
 
-    /* we know the first char is acceptable (and might be '$') */
+    /* we know the first char is acceptable (and might be '$' or '@') */
     word[i++] = p->ch;
     parser_getc(p);
 
@@ -812,11 +873,13 @@ static void getword (parser *p)
 
     if (*word == '$' || !strcmp(word, "t") || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
+    } else if (*word == '@') {
+	look_up_string_variable(word, p);
     } else {
 	look_up_word(word, p);
     }
 
-    if (!p->err) {
+    if (!p->err && *word != '@') {
 	word_check_next_char(word, p);
     }
 
@@ -1189,7 +1252,8 @@ void lex (parser *p)
 		p->xval = getdbl(p);
 		p->sym = NUM;
 		return;
-	    } else if (islower(p->ch) || isupper(p->ch) || p->ch == '$') {
+	    } else if (islower(p->ch) || isupper(p->ch) || 
+		       p->ch == '$' || p->ch == '@') {
 		getword(p);
 		return;
 	    } else if (p->ch == '"') {
@@ -1208,7 +1272,7 @@ void lex (parser *p)
 
 const char *getsymb (int t, const parser *p)
 {  
-    if ((t > OP_MAX && t < FUNC_MAX) ||
+    if ((t > FUNC_MIN && t < FUNC_MAX) ||
 	(t > FUNC_MAX && t < F2_MAX) ||
 	(t > F2_MAX && t < FN_MAX)) {
 	return funname(t);

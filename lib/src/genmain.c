@@ -74,6 +74,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	}
     } else if (p->targ == LIST) {
 	pprintf(prn, _("Generated list %s"), p->lh.name);
+    } else {
+	return;
     }
 
     pputc(prn, '\n');
@@ -574,7 +576,7 @@ double *generate_series (const char *s, double ***pZ,
 		/* steal the generated series */
 		x = p.ret->v.xvec;
 		p.ret->v.xvec = NULL;
-	    } else if (p.ret->flags & UVEC_NODE) {
+	    } else if (p.ret->flags & UVAR_NODE) {
 		x = copyvec((*pZ)[p.ret->v.idnum], p.dinfo->n);
 	    } else {
 		x = copyvec(p.ret->v.xvec, p.dinfo->n);
@@ -587,6 +589,29 @@ double *generate_series (const char *s, double ***pZ,
     gen_cleanup(&p);
 
     return x;
+}
+
+/* retrieve a string result directly */
+
+char *generate_string (const char *s, double ***pZ, 
+		       DATAINFO *pdinfo, int *err)
+{
+    parser p;
+    char *ret = NULL;
+
+    *err = realgen(s, &p, pZ, pdinfo, NULL, P_STRING | P_PRIVATE);
+
+    if (!*err) {
+	if (p.ret->t == STR) {
+	    ret = gretl_strdup(p.ret->v.str);
+	} else {
+	    *err = E_TYPES;
+	}
+    }
+
+    gen_cleanup(&p);
+
+    return ret;
 }
 
 /* retrieve and print a variable from "within" a saved
