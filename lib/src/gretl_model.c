@@ -3755,16 +3755,15 @@ int is_model_cmd (const char *s)
 
     if (!strcmp(s, "add")  ||
 	!strcmp(s, "ar") ||
+	!strcmp(s, "ar1") ||
 	!strcmp(s, "arbond") ||
 	!strcmp(s, "arch") ||
 	!strcmp(s, "arima") ||
 	!strcmp(s, "arma") ||
-	!strcmp(s, "corc") ||
 	!strcmp(s, "endnls") ||
 	!strcmp(s, "garch") ||
 	!strcmp(s, "hccm") ||
 	!strcmp(s, "heckit")  ||
-	!strcmp(s, "hilu") ||
 	!strcmp(s, "hsk")  ||
 	!strcmp(s, "lad")  ||
 	!strcmp(s, "logistic") ||
@@ -3776,7 +3775,6 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "poisson") ||
 	!strcmp(s, "pooled") ||
 	!strcmp(s, "probit") ||
-	!strcmp(s, "pwe")  ||
 	!strcmp(s, "tobit") ||
 	!strcmp(s, "tsls") ||
 	!strcmp(s, "wls")) {
@@ -3803,7 +3801,7 @@ int is_quiet_model_test (int ci, gretlopt opt)
  * @test_ci:  index of command to be tested.
  * @opt: option for command to be tested.
  * @model_ci: command index of a gretl model (for example,
- * %OLS, %WLS or %CORC).
+ * %OLS, %WLS or %AR1).
  *
  * Returns: 1 if the model-related command in question is
  * meaningful and acceptable in the context of the specific

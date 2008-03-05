@@ -23,14 +23,13 @@
 /* model commands plus ADD and OMIT */
 #define vcv_opt_ok(c) (c == ADD || \
                        c == AR || \
+		       c == AR1 || \
                        c == ARBOND || \
                        c == ARMA || \
-                       c == CORC || \
                        c == HECKIT || \
                        c == GARCH || \
                        c == GMM || \
                        c == HCCM || \
-                       c == HILU || \
                        c == HSK || \
                        c == LAD || \
                        c == LOGISTIC || \
@@ -43,7 +42,6 @@
                        c == PANEL || \
                        c == POISSON || \
                        c == PROBIT || \
-                       c == PWE || \
                        c == TOBIT || \
                        c == TSLS || \
                        c == WLS)
@@ -79,6 +77,10 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_F, "difference" },
     { ADF,      OPT_E, "test-down" },
     { ADF,      OPT_G, "gls" },
+    { AR1,      OPT_B, "no-corc"},
+    { AR1,      OPT_H, "hilu"},
+    { AR1,      OPT_P, "pwe"},
+    { AR1,      OPT_Q, "quiet"},
     { APPEND,   OPT_T, "time-series" },
     { ARBOND,   OPT_A, "asymptotic" },
     { ARBOND,   OPT_D, "time-dummies" },
@@ -101,7 +103,6 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },
     { COINT2,   OPT_V, "verbose" },
-    { CORC,     OPT_Q, "quiet" },
     { CORR,     OPT_K, "kendall" },
     { CORR,     OPT_S, "spearman" },
     { CORR,     OPT_U, "uniform" },
@@ -152,7 +153,6 @@ struct gretl_option gretl_opts[] = {
     { HECKIT,   OPT_T, "two-step" },
     { HECKIT,   OPT_V, "verbose" },
     { HELP,     OPT_F, "func" },
-    { HILU,     OPT_B, "no-corc" },
     { HSK,      OPT_Q, "quiet" },
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
@@ -684,6 +684,10 @@ static void tail_strip (char *s)
     }
 }
 
+#define ar1_alias(s) (!strcmp(s, "corc") || \
+		      !strcmp(s, "hilu") || \
+		      !strcmp(s, "pwe"))
+
 /**
  * get_gretl_options:
  * @line: command line to parse.
@@ -732,6 +736,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = GMM;
     } else if (strstr(line, "end restrict")) {
 	ci = RESTRICT;
+    } else if (ar1_alias(cmdword)) {
+	ci = AR1;
     } else {
 	ci = gretl_command_number(cmdword);
     }

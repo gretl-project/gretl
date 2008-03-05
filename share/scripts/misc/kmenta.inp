@@ -19,5 +19,5 @@ estimate Kmenta method=tsls
 estimate Kmenta method=liml
 estimate Kmenta method=3sls
 estimate Kmenta method=3sls --iterate
-estimate Kmenta method=fiml
+estimate Kmenta method=fiml --verbose
 

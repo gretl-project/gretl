@@ -7,10 +7,10 @@ genr DiffI = diff(DI)
 # Model A - Static model with OLS estimation 
 ols Cons 0 DI
 # Model A - Static model with AR(1) error & CORC estimation 
-corc Cons 0 DI
+ar1 Cons 0 DI
 # Model A - Static model with AR(1) error & mixed HILU-CORC 
 # estimation.  Note that CORC misses the global minimum here also. 
-hilu Cons 0 DI
+ar1 Cons 0 DI --hilu
 # Retrieve sigma tilde square for Likelihood Ratio test 
 genr sgmasqr = $ess/$T
 # Suppress the first observation 

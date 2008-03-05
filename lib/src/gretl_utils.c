@@ -1322,13 +1322,10 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case AR:
 	*tmpmod = ar_func(cmd.list, pZ, pdinfo, OPT_NONE, NULL);
 	break;
-    case CORC:
-    case HILU:
-    case PWE:
-	rho = estimate_rho(cmd.list, pZ, pdinfo, cmd.ci, 
-			   &err, cmd.opt, NULL);
+    case AR1:
+	rho = estimate_rho(cmd.list, pZ, pdinfo, cmd.opt, NULL, &err);
 	if (!err) {
-	    *tmpmod = ar1_lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
+	    *tmpmod = ar1_lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, rho);
 	}
 	break;
     case HSK:

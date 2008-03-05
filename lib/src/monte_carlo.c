@@ -333,14 +333,13 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 }
 
 #define plain_model_ci(c) (c == AR ||		\
+			   c == AR1 ||          \
 			   c == ARBOND ||	\
 			   c == ARCH ||		\
 			   c == ARMA ||		\
-			   c == CORC ||		\
 			   c == GARCH ||	\
 			   c == HCCM ||		\
 			   c == HECKIT ||	\
-			   c == HILU ||		\
 			   c == HSK ||		\
 			   c == LAD ||		\
 			   c == LOGISTIC ||	\
@@ -350,7 +349,6 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 			   c == PANEL ||	\
 			   c == POISSON ||	\
 			   c == PROBIT ||	\
-			   c == PWE ||		\
 			   c == TOBIT ||	\
 			   c == TSLS ||		\
 			   c == WLS)

@@ -34,7 +34,7 @@ static struct MODELSPEC *mspec;
  * model_ci_from_modelspec:
  * @i: index number of model within modelspec array.
  *
- * Returns: the command index (e.g. OLS, CORC) associated
+ * Returns: the command index (e.g. OLS, AR1) associated
  * with the model specification.
  */
 

@@ -308,6 +308,7 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 {
     int i, t, yno = pmod->list[1];
+    int pwe = gretl_model_get_int(pmod, "pwe");
     double x, pw1 = 0.0;
 
     if (gretl_model_add_arinfo(pmod, 1)) {
@@ -315,7 +316,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 	return 1;
     }
 
-    if (pmod->ci == PWE) {
+    if (pwe) {
 	pw1 = sqrt(1.0 - rho * rho);
     }
 
@@ -324,7 +325,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     gretl_model_set_double(pmod, "rho_in", rho);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (t == pmod->t1 && pmod->ci == PWE) {
+	if (t == pmod->t1 && pwe) {
 	    x = pw1 * Z[yno][t];
 	    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
 		x -= pmod->coeff[i] * pw1 * Z[pmod->list[i+2]][t];
@@ -696,7 +697,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int missv = 0, misst = 0;
     int jackknife = 0;
     int use_qr = libset_get_bool(USE_QR);
-    int pwe = (ci == PWE || (opt & OPT_P));
+    int pwe = (opt & OPT_P);
     int yno, i;
 
     gretl_error_clear();
@@ -716,9 +717,13 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_model_smpl_init(&mdl, pdinfo);
     model_stats_init(&mdl);
 
-    if (pwe) {
-	gretl_model_set_int(&mdl, "pwe", 1);
-    }
+    if (ci == AR1) {
+	if (opt & OPT_P) {
+	    gretl_model_set_int(&mdl, "pwe", 1);
+	} else if (opt & OPT_H) {
+	    gretl_model_set_int(&mdl, "hilu", 1);
+	}
+    } 
 
     if (list[0] == 1 || pdinfo->v == 1) {
 	fprintf(stderr, "E_DATA: lsq: list[0] = %d, pdinfo->v = %d\n",
@@ -867,7 +872,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     model_depvar_stats(&mdl, (const double **) *pZ);
 
     /* Doing an autoregressive procedure? */
-    if (ci == CORC || ci == HILU || ci == PWE) {
+    if (ci == AR1) {
 	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) { 
 	    goto lsq_abort;
 	}
@@ -876,7 +881,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 		goto lsq_abort;
 	    }
 	}
-	if (ci == HILU && (opt & OPT_B)) {
+	if ((opt & OPT_H) && (opt & OPT_B)) {
 	    gretl_model_set_int(&mdl, "no-corc", 1);
 	}
     }
@@ -1787,13 +1792,14 @@ static int hilu_plot (double *ssr, double *rho, int n)
     return 0;
 }
 
-static double autores (MODEL *pmod, const double **Z, int ci)
+static double autores (MODEL *pmod, const double **Z, gretlopt opt)
 {
     int t, v, t1 = pmod->t1;
     double x, num = 0.0, den = 0.0;
     double rhohat;
 
-    if (ci == CORC || ci == HILU) {
+    if (!(opt & OPT_P)) {
+	/* not using Prais-Winsten */
 	t1--;
     }
 
@@ -1821,13 +1827,12 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ci: %CORC for Cochrane-Orcutt, %HILU for Hildreth-Lu,
- *      %PWE for Prais-Winsten estimator.
- * @err: pointer for error code.
- * @opt: option flags: may include %OPT_B to suppress Cochrane-Orcutt
- *       fine-tuning of Hildreth-Lu results, %OPT_P to generate
- *       a gnuplot graph of the search in case @ci = %HILU.
+ * @opt: option flags: may include %OPT_H to use Hildreth-Lu,
+ *       %OPT_P to use Prais-Winsten, %OPT_B to suppress Cochrane-Orcutt
+ *       fine-tuning of Hildreth-Lu results, %OPT_G to generate
+ *       a gnuplot graph of the search in Hildreth-Lu case.
  * @prn: gretl printing struct.
+ * @err: location to receeve error code.
  *
  * Estimate the quasi-differencing coefficient for use with the
  * Cochrane-Orcutt, Hildreth-Lu or Prais-Winsten procedures for
@@ -1838,7 +1843,7 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  */
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     GretlCmdIndex ci, int *err, gretlopt opt, PRN *prn)
+		     gretlopt opt, PRN *prn, int *err)
 {
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
@@ -1848,8 +1853,8 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     int missv = 0, misst = 0;
     gretlopt lsqopt = OPT_A;
     int quiet = (opt & OPT_Q);
-    int ascii = !(opt & OPT_P);
-    MODEL corc_model;
+    int ascii = !(opt & OPT_G);
+    MODEL armod;
 
     gretl_error_clear();
     *err = 0;
@@ -1863,23 +1868,23 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    gretl_model_init(&corc_model);
+    gretl_model_init(&armod);
 
-    if (ci == PWE) {
+    if (opt & OPT_P) {
 	/* Prais-Winsten treatment of first observation */
 	lsqopt |= OPT_P;
     } 
 
-    if (ci == HILU) { 
+    if (opt & OPT_H) { 
 	/* Do Hildreth-Lu first */
 	for (rho = -0.990, iter = 0; rho < 1.0; rho += .01, iter++) {
-	    clear_model(&corc_model);
-	    corc_model = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
-	    if ((*err = corc_model.errcode)) {
-		clear_model(&corc_model);
+	    clear_model(&armod);
+	    armod = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+	    if ((*err = armod.errcode)) {
+		clear_model(&armod);
 		goto bailout;
 	    }
-	    ess = corc_model.ess;
+	    ess = armod.ess;
 	    if (ascii && !quiet) {
 		char num[16];
 		int chk;
@@ -1914,13 +1919,13 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (finalrho > 0.989) {
 	    /* try exploring this funny region? */
 	    for (rho = 0.99; rho <= 0.999; rho += .001) {
-		clear_model(&corc_model);
-		corc_model = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
-		if ((*err = corc_model.errcode)) {
-		    clear_model(&corc_model);
+		clear_model(&armod);
+		armod = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+		if ((*err = armod.errcode)) {
+		    clear_model(&armod);
 		    goto bailout;
 		}
-		ess = corc_model.ess;
+		ess = armod.ess;
 		if (ess < essmin) {
 		    essmin = ess;
 		    finalrho = rho;
@@ -1931,13 +1936,13 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (finalrho > 0.9989) {
 	    /* this even funnier one? */
 	    for (rho = 0.9991; rho <= 0.9999; rho += .0001) {
-		clear_model(&corc_model);
-		corc_model = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
-		if ((*err = corc_model.errcode)) {
-		    clear_model(&corc_model);
+		clear_model(&armod);
+		armod = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+		if ((*err = armod.errcode)) {
+		    clear_model(&armod);
 		    goto bailout;
 		}
-		ess = corc_model.ess;
+		ess = armod.ess;
 		if (ess < essmin) {
 		    essmin = ess;
 		    finalrho = rho;
@@ -1957,27 +1962,27 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } else { 
 	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A);
-	if (!corc_model.errcode && corc_model.dfd == 0) {
-	    corc_model.errcode = E_DF;
+	armod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	if (!armod.errcode && armod.dfd == 0) {
+	    armod.errcode = E_DF;
 	}
-	if ((*err = corc_model.errcode)) {
-	    clear_model(&corc_model);
+	if ((*err = armod.errcode)) {
+	    clear_model(&armod);
 	    goto bailout;
 	}
-	rho0 = rho = corc_model.rho;
+	rho0 = rho = armod.rho;
     }
 
     if (na(rho)) {
 	*err = E_NOCONV;
-	clear_model(&corc_model);
+	clear_model(&armod);
 	goto bailout;
     }
 
-    if (ci != HILU || !(opt & OPT_B)) {
+    if (!(opt & OPT_H) || !(opt & OPT_B)) {
 
 	if (!quiet) {
-	    if (ci == HILU) {
+	    if (opt & OPT_H) {
 		pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n"));
 	    } else {
 		pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
@@ -1991,36 +1996,34 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	diff = 1.0;
 
 	while (diff > 0.001) {
-	    if (!quiet) {
-		pprintf(prn, "          %10d %12.5f", ++iter, rho);
-	    }
-	    clear_model(&corc_model);
-	    corc_model = ar1_lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
+	    clear_model(&armod);
+	    armod = ar1_lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
 #if AR_DEBUG
-	    fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
-		    corc_model.t1, 
-		    corc_model.uhat[corc_model.t1],
-		    corc_model.uhat[corc_model.t1+1]);
+	    fprintf(stderr, "armod: t1=%d, first two uhats: %g, %g\n",
+		    armod.t1, 
+		    armod.uhat[armod.t1],
+		    armod.uhat[armod.t1+1]);
 #endif
-	    if ((*err = corc_model.errcode)) {
-		clear_model(&corc_model);
+	    if ((*err = armod.errcode)) {
+		clear_model(&armod);
 		goto bailout;
 	    }
 	    if (!quiet) {
-		pprintf(prn, "   %g\n", corc_model.ess);
+		pprintf(prn, "          %10d %12.5f", ++iter, rho);
+		pprintf(prn, "   %g\n", armod.ess);
 	    }
 
-	    rho = autores(&corc_model, (const double **) *pZ, ci);
+	    rho = autores(&armod, (const double **) *pZ, opt);
 
 #if AR_DEBUG
-	    pputs(prn, "CORC model (using rho-transformed data)\n");
-	    printmodel(&corc_model, pdinfo, OPT_NONE, prn);
+	    pputs(prn, "AR1 model (using rho-transformed data)\n");
+	    printmodel(&armod, pdinfo, OPT_NONE, prn);
 	    pprintf(prn, "autores gives rho = %g\n", rho);
 #endif
 
 	    if (rho > .99999 || rho < -.99999) {
 		*err = E_NOCONV;
-		clear_model(&corc_model);
+		clear_model(&armod);
 		goto bailout;
 	    }
 
@@ -2034,7 +2037,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    clear_model(&corc_model);
+    clear_model(&armod);
 
  bailout:
 
@@ -2821,13 +2824,13 @@ MODEL ar_func (const int *list, double ***pZ,
 
     cpos = reglist_check_for_const(reglist, (const double **) *pZ, pdinfo);
 
-    /* special case: ar 1 ; ... => use CORC */
+    /* special case: ar 1 ; ... => use AR1 */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	xx = estimate_rho(reglist, pZ, pdinfo, CORC, &err, OPT_NONE, prn);
+	xx = estimate_rho(reglist, pZ, pdinfo, OPT_NONE, prn, &err);
 	if (err) {
 	    ar.errcode = err;
 	} else {
-	    ar = ar1_lsq(reglist, pZ, pdinfo, CORC, OPT_NONE, xx);
+	    ar = ar1_lsq(reglist, pZ, pdinfo, AR1, OPT_NONE, xx);
 	    printmodel(&ar, pdinfo, opt, prn); 
 	}
 	goto bailout;

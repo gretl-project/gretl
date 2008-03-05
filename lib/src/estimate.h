@@ -29,7 +29,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    GretlCmdIndex ci, gretlopt opt, double rho);
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     GretlCmdIndex ci, int *err, gretlopt opt, PRN *prn);
+		     gretlopt opt, PRN *prn, int *err);
 
 MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo); 
 

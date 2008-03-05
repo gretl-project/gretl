@@ -95,6 +95,9 @@ enum extra_cmds {
     DATASORT,
     WORKDIR,
     DFGLS,
+    CORC,
+    HILU,
+    PWE,
     GUI_CMD_MAX
 };
 

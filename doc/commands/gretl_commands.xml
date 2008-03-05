@@ -364,6 +364,74 @@
 
   </command>
 
+  <command name="ar1" section="Estimation" label="AR(1) estimation">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--hilu</flag>
+	  <effect>use Hildreth&ndash;Lu procedure</effect>
+	</option>
+	<option>
+	  <flag>--pwe</flag>
+	  <effect>use Prais&ndash;Winsten estimator</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--no-corc</flag>
+	  <effect>do not fine-tune results with Cochrane-Orcutt</effect>
+	</option>
+      </options>
+      <examples>
+        <example>ar1 1 0 2 4 6 7</example>
+	<example>ar1 y 0 xlist --hilu --no-corc</example>
+	<example>ar1 y 0 xlist --pwe</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Computes feasible GLS estimates for a model in which the error term is
+	assumed to follow a first-order autoregressive process.
+      </para>
+      <para>
+	The default method is the Cochrane&ndash;Orcutt iterative procedure
+	(see, for example, Section 9.4 of Ramanathan, 2002). Iteration is
+	terminated when successive estimates of the autocorrelation
+	coefficient do not differ by more than 0.001 or after 20 iterations.
+      </para>
+      <para>
+	If the <lit>--hilu</lit> option is given, the Hildreth&ndash;Lu search
+	procedure is used.  The results are then fine-tuned using the
+	Cochrane&ndash;Orcutt method, unless the <lit>--no-corc</lit> flag is
+	specified.  (The latter option is ignored if <lit>--hilu</lit>
+	is not specified.)
+      </para>
+      <para>
+	If the <lit>--pwe</lit> option is given, the Prais&ndash;Winsten
+	estimator is used.  This involves an an iteration similar to
+	Cochrane&ndash;Orcutt; the difference is that while
+	Cochrane&ndash;Orcutt discards the first observation,
+	Prais&ndash;Winsten makes use of it. See, for example, Chapter 13 of
+	Greene's <book>Econometric Analysis</book> (2000) for details.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Time series/Cochrane-Orcutt</menu-path>
+      <menu-path>/Model/Time series/Hildreth-Lu</menu-path>
+      <menu-path>/Model/Time series/Prais-Winsten</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="arbond" section="Estimation" label="Dynamic panel models">
 
     <usage>
@@ -1269,40 +1337,6 @@
       </para>
 
     </description>
-
-  </command>
-
-  <command name="corc" section="Estimation" label="Cochrane-Orcutt estimation">
-
-    <usage>
-      <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
-	</option>
-      </options>
-      <examples>
-        <example>corc 1 0 2 4 6 7</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Computes parameter estimates using the Cochrane&ndash;Orcutt
-	iterative procedure (see Section 9.4 of Ramanathan, 2002). Iteration
-	is terminated when successive estimates of the autocorrelation
-	coefficient do not differ by more than 0.001 or after 20
-	iterations.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Model/Time series/Cochrane-Orcutt</menu-path>
-    </gui-access>
 
   </command>
 
@@ -3702,45 +3736,6 @@
 
     <gui-access>
       <menu-path>/Help</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="hilu" section="Estimation" label="Hildreth-Lu estimation">
-
-    <usage>
-      <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
-	</option>
-	<option>
-	  <flag>--no-corc</flag>
-	  <effect>do not fine-tune results with Cochrane-Orcutt</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>Computes parameter estimates for the specified model using
-	the Hildreth&ndash;Lu search procedure.  The results are
-	fine-tuned using the Cochrane&ndash;Orcutt iterative method,
-	unless the <lit>--no-corc</lit> flag is specified.
-      </para>
-      <para>
-	This procedure is designed to correct for serial correlation
-	of the error term.  The error sum of squares of the
-	transformed model is graphed against the value of &rgr; from
-	&minus;0.99 to 0.99.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Model/Time Series/Hildreth-Lu</menu-path>
     </gui-access>
 
   </command>
@@ -6342,43 +6337,6 @@
 
     <gui-access>
       <menu-path>/Tools/P-value finder</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="pwe" section="Estimation" label="Prais-Winsten estimator">
-
-    <usage>
-      <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
-	</option>
-      </options>
-      <examples>
-        <example>pwe 1 0 2 4 6 7</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Computes parameter estimates using the Prais&ndash;Winsten
-	procedure, an implementation of feasible GLS which is designed
-	to handle first-order autocorrelation of the error term.  The
-	procedure is iterated, as with <cmdref targ="corc"/>; the
-	difference is that while Cochrane&ndash;Orcutt discards the
-	first observation, Prais&ndash;Winsten makes use of it. See,
-	for example, Chapter 13 of Greene's <book>Econometric
-	  Analysis</book> (2000) for details.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Model/Time series/Prais-Winsten</menu-path>
     </gui-access>
 
   </command>

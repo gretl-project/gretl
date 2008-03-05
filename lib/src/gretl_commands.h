@@ -27,6 +27,7 @@ typedef enum {
     ADF,
     APPEND,
     AR,  
+    AR1,
     ARBOND,
     ARCH,
     ARMA,
@@ -36,7 +37,6 @@ typedef enum {
     COEFFSUM,
     COINT,
     COINT2,
-    CORC,     
     CORR,     
     CORRGM,   
     CRITERIA,
@@ -70,7 +70,6 @@ typedef enum {
     HCCM,    
     HECKIT,
     HELP,    
-    HILU,    
     HSK,
     HURST,
     IF,
@@ -108,7 +107,6 @@ typedef enum {
     PRINTF,
     PROBIT,
     PVALUE, 
-    PWE,
     QLRTEST,
     QUIT,
     RENAME,
@@ -150,11 +148,11 @@ typedef enum {
 } GretlCmdIndex;
 
 #define NEEDS_TWO_VARS(c)  ((c) == AR || (c) == ARCH || (c) == COINT || \
-                            (c) == CORC || (c) == CORR || (c) == HCCM || \
-                            (c) == HILU || (c) == HSK || (c) == LOGIT || \
-                            (c) == SPEARMAN || (c) == OLS || (c) == PROBIT || \
+                            (c) == AR1 || (c) == CORR || (c) == HCCM || \
+                            (c) == HSK || (c) == LOGIT || (c) == PROBIT || \
+                            (c) == SPEARMAN || (c) == OLS || \
                             (c) == TSLS || (c) == VAR || (c) == WLS || \
-			    (c) == PWE || (c) == XTAB)
+			    (c) == XTAB)
 
 #define TEXTSAVE_OK(c) (c == ADD || \
                         c == ADDTO || \

@@ -41,8 +41,8 @@ genr LM = $trsq
 pvalue X 1 LM
 smpl 1941 ;
 # mixed Hilu-Corc estimation of the general model 
-hilu milit const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
- lkwar lvwar lkrus lgorb lsalt
+ar1 milit const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
+ lkwar lvwar lkrus lgorb lsalt --hilu
 # recursively omit variable with the highest p-value 
 omit lhdem
 omit lelect

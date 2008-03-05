@@ -1996,6 +1996,11 @@ static int predet_check (equation_system *sys, const DATAINFO *pdinfo)
     int id = 0, src = 0, lag = 0;
     int i, err = 0;
 
+    if (elist == NULL) {
+	/* FIXME SUR */
+	return 0;
+    }
+
     for (i=1; i<=elist[0] && !err; i++) {
 	id = elist[i];
 	lag = pdinfo->varinfo[id]->lag;

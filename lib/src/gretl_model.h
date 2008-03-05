@@ -46,20 +46,13 @@ struct CoeffIntervals_ {
 };
 
 #define AR_MODEL(c) (c == AR || \
+		     c == AR1 || \
                      c == ARMA || \
-                     c == CORC || \
-                     c == GARCH || \
-                     c == HILU || \
-                     c == PWE)
+                     c == GARCH)
 
-#define AR1_MODEL(c) (c == CORC || \
-                      c == HILU || \
-                      c == PWE)
+#define AR1_MODEL(c) (c == AR1)
 
-#define SIMPLE_AR_MODEL(c) (c == AR || \
-                            c == CORC || \
-                            c == HILU || \
-                            c == PWE)
+#define SIMPLE_AR_MODEL(c) (c == AR || c == AR1)
 
 #define ML_ESTIMATOR(c) (c == ARMA || \
                          c == GARCH || \
@@ -74,12 +67,10 @@ struct CoeffIntervals_ {
                    c == PROBIT || \
                    c == TOBIT)
 
-#define LSQ_MODEL(c) (c == CORC || \
+#define LSQ_MODEL(c) (c == AR1 || \
                       c == HCCM || \
-                      c == HILU || \
                       c == HSK || \
                       c == OLS || \
-                      c == PWE || \
                       c == WLS)
 
 #define ASYMPTOTIC_MODEL(c) (c == ARBOND || \

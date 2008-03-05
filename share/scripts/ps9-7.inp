@@ -4,6 +4,6 @@ genr Wt=WAGES*100/PRDEFL
 # The above is real wages, Pt is real profit income 
 genr Pt=Yt-Wt
 ols Ct 0 Wt Pt
-corc Ct 0 Wt Pt
+ar1 Ct 0 Wt Pt
 # note that the mixed hilu-corc procedure yields global minimum 
-hilu Ct 0 Wt Pt
+ar1 Ct 0 Wt Pt --hilu

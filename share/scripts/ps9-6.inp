@@ -1,4 +1,4 @@
 # PS9.6, for Example 9.7
 open data9-1
-hilu demand 0 price income temp
-corc demand 0 price income temp
+ar1 demand 0 price income temp --hilu
+ar1 demand 0 price income temp

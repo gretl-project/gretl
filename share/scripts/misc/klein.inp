@@ -22,7 +22,7 @@ end system
 estimate "Klein Model 1" method=ols
 estimate "Klein Model 1" method=tsls
 estimate "Klein Model 1" method=3sls
-estimate "Klein Model 1" method=fiml
+estimate "Klein Model 1" method=fiml --verbose
 estimate "Klein Model 1" method=liml
 
 

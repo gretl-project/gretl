@@ -527,7 +527,7 @@ static int obs_diff_ok (const MODEL *old, const MODEL *new)
 {
     int tdiff, ndiff = new->nobs - old->nobs;
 
-    if (old->ci == CORC || old->ci == HILU || old->ci == PWE) {
+    if (old->ci == AR1) {
 	return 0;
     }
 
@@ -562,14 +562,16 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 
     /* recreate options and auxiliary vars, if required */
 
-    if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
-	gretlopt hlopt = OPT_NONE;
-
-	if (orig->ci == HILU && gretl_model_get_int(orig, "no-corc")) {
-	    hlopt = OPT_B;
+    if (orig->ci == AR1) {
+	if (gretl_model_get_int(orig, "hilu")) {
+	    myopt = OPT_H;
+	    if (gretl_model_get_int(orig, "no-corc")) {
+		myopt |= OPT_B;
+	    }
+	} else if (gretl_model_get_int(orig, "pwe")) {
+	    myopt = OPT_P;
 	}
-	rho = estimate_rho(list, pZ, pdinfo, orig->ci, 
-			   &rep.errcode, hlopt, prn);
+	rho = estimate_rho(list, pZ, pdinfo, myopt, prn, &rep.errcode);
     } else if (orig->ci == WLS || orig->ci == AR || 
 	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
 	int *full_list = full_model_list(orig, list);
@@ -655,7 +657,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	rep = panel_model(list, pZ, pdinfo, myopt, prn);
 	break;
     default:
-	/* handles OLS, WLS, HSK, HCCM, etc. */
+	/* handles OLS, AR1, WLS, HSK, HCCM, etc. */
 	if (gretl_model_get_int(orig, "robust")) {
 	    myopt |= OPT_R;
 	}

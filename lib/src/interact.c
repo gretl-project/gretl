@@ -254,7 +254,18 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "fit")) {
 	cmd->ci = FCAST;
 	strcpy(line, "fcast autofit");
-    }
+    } else if (!strcmp(s, "corc")) {
+	strcpy(s, "ar1");
+	cmd->ci = AR1;
+    } else if (!strcmp(s, "hilu")) {
+	strcpy(s, "ar1");
+	cmd->ci = AR1;
+	cmd->opt |= OPT_H;
+    } else if (!strcmp(s, "pwe")) {
+	strcpy(s, "ar1");
+	cmd->ci = AR1;
+	cmd->opt |= OPT_P;
+    }	
 
     return cmd->ci;
 }
@@ -4173,11 +4184,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 
-    case CORC:
-    case HILU:
-    case PWE:
-	rho = estimate_rho(cmd->list, pZ, pdinfo, cmd->ci,
-			   &err, cmd->opt, prn);
+    case AR1:
+	rho = estimate_rho(cmd->list, pZ, pdinfo, cmd->opt, prn, &err);
 	if (!err) {
 	    clear_model(models[0]);
 	    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);

@@ -5,7 +5,7 @@ genr time
 genr tsq = time*time
 smpl 1960 1989 
 # quadratic Model B
-corc calwage 0 time tsq
+ar1 calwage 0 time tsq
 # obtain one-step ahead forecasts
 fcast 1960 1994 yhatb --static
 # reset sample range and regress actual against predicted calwage

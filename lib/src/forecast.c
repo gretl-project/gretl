@@ -1350,7 +1350,7 @@ static int max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
 }
 
 /* Set things up for computing forecast error variance for ar models
-   (AR, CORC, HILU, PWE).  This is complicated by the fact that there
+   (AR, AR1).  This is complicated by the fact that there
    may be a lagged dependent variable in the picture.  If there is,
    the effective AR coefficients have to be incremented, for the
    purposes of calculating forecast variance.  But I'm not sure this
@@ -1418,11 +1418,10 @@ set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod,
    out-of-sample forecasts.  These calculations, like those for
    ARMA, do not take into account parameter uncertainty.
 
-   This code is used for AR, CORC, HILU and PWE models; it
-   is also used for dynamic forecasting with models that do
-   not have an explicit AR error process but that have one
-   or more lagged values of the dependent variable as
-   regressors.  
+   This code is used for AR and AR1 models; it is also used for
+   dynamic forecasting with models that do not have an explicit AR
+   error process but that have one or more lagged values of the
+   dependent variable as regressors.
 */
 
 static int ar_fcast (Forecast *fc, MODEL *pmod, 
@@ -1437,7 +1436,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
     int miss, yno;
     int i, k, v, t, tk;
     int p, dvlag, pmax = 0;
-    int npsi = 0;
+    int pwe, npsi = 0;
     int err = 0;
 
 #if AR_DEBUG
@@ -1456,6 +1455,8 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	set_up_ar_fcast_variance(fc, pmod, pmax, npsi, &phi, &psi, &errphi);
     }
 
+    pwe = gretl_model_get_int(pmod, "pwe");
+
     for (t=fc->t1; t<=fc->t2; t++) {
 	miss = 0;
 	yh = 0.0;
@@ -1468,7 +1469,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	    continue;
 	}
 
-        if (pmod->ci == PWE && t == pmod->t1) {
+        if (pwe && t == pmod->t1) {
             /* PWE first obs is special */
             fc->yhat[t] = pmod->yhat[t];
             continue;
@@ -2023,8 +2024,8 @@ static int organize_fcast_vars (const char *yhname, const char *sdname,
  * or, by default, over the sample range currently defined in @pdinfo.
  *
  * In the case of "simple" models with an autoregressive error term 
- * (%AR, %CORC, %HILU, %PWE) the predicted values incorporate
- * the forecastable portion of the error.  
+ * (%AR, %AR1) the predicted values incorporate the forecastable portion 
+ * of the error.  
  *
  * Returns: 0 on success, non-zero error code on failure.
  */

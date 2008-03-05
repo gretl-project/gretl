@@ -871,16 +871,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == GMM) return N_("GMM");
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == GARCH) return N_("GARCH");
-    else if (ci == CORC) {
-	if (tex_format(prn)) return N_("Cochrane--Orcutt");
-	else return N_("Cochrane-Orcutt");
-    } else if (ci == HILU) {
-	if (tex_format(prn)) return N_("Hildreth--Lu");
-	else return N_("Hildreth-Lu");
-    } else if (ci == PWE) {
-	if (tex_format(prn)) return N_("Prais--Winsten");
-	else return N_("Prais-Winsten");
-    } else if (ci == ARBOND) {
+    else if (ci == ARBOND) {
 	if (tex_format(prn)) return N_("Arellano--Bond");
 	else return N_("Arellano-Bond");
     } else {
@@ -890,7 +881,18 @@ static const char *simple_estimator_string (int ci, PRN *prn)
 
 const char *estimator_string (const MODEL *pmod, PRN *prn)
 {
-    if (pmod->ci == ARMA) {
+    if (pmod->ci == AR1) {
+	if (gretl_model_get_int(pmod, "hilu")) {
+	    if (tex_format(prn)) return N_("Hildreth--Lu");
+	    else return N_("Hildreth-Lu");
+	} else if (gretl_model_get_int(pmod, "pwe")) {
+	    if (tex_format(prn)) return N_("Prais--Winsten");
+	    else return N_("Prais-Winsten");
+	} else {
+	    if (tex_format(prn)) return N_("Cochrane--Orcutt");
+	    else return N_("Cochrane-Orcutt");
+	}
+    } else if (pmod->ci == ARMA) {
 	if (gretl_model_get_int(pmod, "armax")) {
 	    return N_("ARMAX");
 	} else if (gretl_model_get_int(pmod, "arima_d") ||
@@ -1745,8 +1747,8 @@ static void print_model_heading (const MODEL *pmod,
 	pputc(prn, '\n');
     }    
 
-    /* rhohat for CORC and HILU (TeX) */
-    else if (pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) {
+    /* rhohat for AR1 (TeX) */
+    else if (pmod->ci == AR1) {
 	if (tex) {
 	    pprintf(prn, "$\\hat{\\rho}$ = %g\n", 
 		    gretl_model_get_double(pmod, "rho_in"));
@@ -2448,8 +2450,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
     }
 
-    else if (pmod->ci == AR || pmod->ci == CORC || 
-	     pmod->ci == HILU || pmod->ci == PWE) {
+    else if (pmod->ci == AR || pmod->ci == AR1) {
 
 	rho_differenced_stats_message(prn);
 

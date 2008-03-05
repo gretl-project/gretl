@@ -358,9 +358,6 @@ static int common_df (void)
 static const char *short_estimator_string (const MODEL *pmod, PRN *prn)
 {
     if (pmod->ci == HSK) return N_("HSK");
-    else if (pmod->ci == CORC) return N_("CORC");
-    else if (pmod->ci == HILU) return N_("HILU");
-    else if (pmod->ci == PWE) return N_("PWE");
     else if (pmod->ci == ARCH) return N_("ARCH");
     else if (pmod->ci == WLS) {
 	if (gretl_model_get_int(pmod, "iters")) {
@@ -375,6 +372,14 @@ static const char *short_estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("GLS");
 	} else {
 	    return N_("Between");
+	}
+    } else if (pmod->ci == AR1) {
+	if (gretl_model_get_int(pmod, "hilu")) {
+	    return N_("HILU");
+	} else if (gretl_model_get_int(pmod, "pwe")) {
+	    return N_("PWE");
+	} else {
+	    return N_("CORC");
 	}
     } else {
 	return estimator_string(pmod, prn);

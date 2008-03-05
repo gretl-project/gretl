@@ -2828,7 +2828,7 @@ static int real_do_model (int action)
     double rho;
     int err = 0;
 
-#if 0
+#if 1
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 
@@ -2844,18 +2844,16 @@ static int real_do_model (int action)
 
     switch (action) {
 
-    case CORC:
-    case HILU:
-    case PWE: 
-	rho = estimate_rho(libcmd.list, &Z, datainfo, action, 
-			   &err, (libcmd.opt | OPT_P), prn);
+    case AR1:
+	rho = estimate_rho(libcmd.list, &Z, datainfo,  
+			   (libcmd.opt | OPT_G), prn, &err);
 	if (err) {
 	    gui_errmsg(err);
 	    break;
 	}
-	*pmod = ar1_lsq(libcmd.list, &Z, datainfo, action, OPT_NONE, rho);
+	*pmod = ar1_lsq(libcmd.list, &Z, datainfo, action, libcmd.opt, rho);
 	err = model_output(pmod, prn);
-	if (action == HILU) {
+	if (libcmd.opt & OPT_H) {
 	    register_graph();
 	}
 	break;
@@ -2998,8 +2996,7 @@ int do_model (selector *sr)
 {
     const char *buf;
     char estimator[9];
-    int action;
-    int pols = 0;
+    int ci, pols = 0;
 
     if (selector_error(sr)) {
 	return 1;
@@ -3010,23 +3007,30 @@ int do_model (selector *sr)
 	return 1;
     }
 
-    action = selector_code(sr);
-    if (action == OLS && dataset_is_panel(datainfo)) {
-	action = PANEL;
+    ci = selector_code(sr);
+    if (ci == OLS && dataset_is_panel(datainfo)) {
+	ci = PANEL;
 	pols = 1;
     }
 
-    strcpy(estimator, gretl_command_word(action));
+    strcpy(estimator, gretl_command_word(ci));
     libcmd.opt = selector_get_opts(sr);
 
     if (pols) {
 	libcmd.opt |= OPT_P;
+    } else if (ci == CORC || ci == HILU || ci == PWE) {
+	if (ci == HILU) {
+	    libcmd.opt |= OPT_H;
+	} else if (ci == PWE) {
+	    libcmd.opt |= OPT_P;
+	}
+	ci = AR1;
     }
 
     gretl_command_sprintf("%s %s%s", estimator, buf, 
-			  print_flags(libcmd.opt, action));
+			  print_flags(libcmd.opt, ci));
 
-    return real_do_model(action);
+    return real_do_model(ci);
 }
 
 int do_vector_model (selector *sr) 

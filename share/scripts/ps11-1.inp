@@ -17,7 +17,7 @@ smpl 1960 1989
 # Note that the OLS estimates exhibit serial correlation
 ols calwage 0 time
 # linear Model A
-corc calwage 0 time
+ar1 calwage 0 time
 # obtain one-step-ahead predicted values
 fcast 1990 1994 yhata --static
 # reset sample range
@@ -32,7 +32,7 @@ criteria essa 5 2
 # reset sample range to beginning
 smpl 1960 1989
 # quadratic Model B
-corc calwage 0 time tsq
+ar1 calwage 0 time tsq
 # obtain predicted value
 fcast 1990 1994 yhatb --static
 # reset sample range and regress actual against predicted calwage
@@ -45,7 +45,7 @@ genr essb = sum(uhatb*uhatb)
 criteria essb 5 2
 smpl 1960 1989
 # cubic Model C
-corc calwage 0 time tsq t3
+ar1 calwage 0 time tsq t3
 # obtain predicted value
 fcast 1990 1994 yhatc --static
 # reset sample range and regress actual against predicted calwage
@@ -58,7 +58,7 @@ genr essc = sum(uhatc*uhatc)
 criteria essc 5 2
 smpl 1960 1989
 # linear-log Model D
-corc calwage 0 l_time
+ar1 calwage 0 l_time
 # obtain predicted value
 fcast 1990 1994 yhatd --static
 # reset sample range and regress actual against predicted calwage
@@ -71,7 +71,7 @@ genr essd = sum(uhatd*uhatd)
 criteria essd 5 2
 smpl 1960 1989
 # reciprocal Model E
-corc calwage 0 invt
+ar1 calwage 0 invt
 # obtain predicted value
 fcast 1990 1994 yhate --static
 # reset sample range and regress actual against predicted calwage
@@ -84,7 +84,7 @@ genr esse = sum(uhate*uhate)
 criteria esse 5 2
 smpl 1960 1989
 # log-linear Model F
-corc l_calwage 0 time
+ar1 l_calwage 0 time
 # obtain predicted value
 fcast 1990 1994 yhatf --static
 smpl 1960 1994
@@ -101,7 +101,7 @@ genr essf = sum(uhatf*uhatf)
 criteria essf 5 2
 smpl 1960 1989
 # double-log Model G
-corc l_calwage 0 l_time
+ar1 l_calwage 0 l_time
 # obtain predicted value
 fcast 1990 1994 yhatg --static
 smpl 1960 1994
