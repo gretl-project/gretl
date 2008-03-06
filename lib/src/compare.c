@@ -2244,6 +2244,8 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
     return err;
 }
 
+#define okfreq(p) (p == 1 || p == 4 || p == 12 || p == 24 || p == 52)
+
 static int cusum_do_graph (double a, double b, const double *W, 
 			   int t1, int k, int m, 
 			   DATAINFO *pdinfo, gretlopt opt)
@@ -2253,23 +2255,19 @@ static int cusum_do_graph (double a, double b, const double *W,
     double x0 = 0.0;
     int j, t;
     int err = 0;
-    double frac = 1;
-    double slope = b;
-
-    if (pdinfo->pd > 1) {
-	slope *= pdinfo->pd;
-	frac = 1.0 / pdinfo->pd;
-    }
+    double frac = 1.0;
 
     err = gnuplot_init(PLOT_CUSUM, &fq);
     if (err) {
 	return err;
     }
 
-    if (dataset_is_time_series(pdinfo)) { 
+    if (dataset_is_time_series(pdinfo) && okfreq(pdinfo->pd)) {
+	b *= pdinfo->pd;
+	frac /= pdinfo->pd;
         obs = gretl_plotx(pdinfo);
 	if (obs != NULL) {
-	    x0 = obs[t1+k];
+	    x0 = obs[t1 + k];
 	}
     }
 
@@ -2282,16 +2280,16 @@ static int cusum_do_graph (double a, double b, const double *W,
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		G_("CUSUMSQ plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", slope, x0 - frac);
-	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, slope, x0 - frac);
-	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, slope, x0 - frac);
+	fprintf(fq, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", b, x0 - frac);
+	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0 - frac);
+	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0 - frac);
     } else {
 	fputs("set xzeroaxis\n", fq);
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		G_("CUSUM plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, slope, x0);
-	fprintf(fq, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, slope, x0);
+	fprintf(fq, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0);
+	fprintf(fq, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0);
     }	
 
     fputs("'-' using 1:2 w linespoints lt 1\n", fq);
