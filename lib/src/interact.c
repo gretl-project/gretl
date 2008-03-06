@@ -1553,7 +1553,7 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 	ret = 1;
     } else if (get_list_by_name(s)) {
 	ret = 1;
-    } else if (get_named_string(s)) {
+    } else if (get_string_by_name(s)) {
 	ret = 1;
     }
 

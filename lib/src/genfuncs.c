@@ -1836,7 +1836,7 @@ int check_declarations (char ***pS, parser *p)
 	if (varindex(p->dinfo, S[i]) < p->dinfo->v || 
 	    get_matrix_by_name(S[i]) ||
 	    get_list_by_name(S[i]) ||
-	    get_named_string(S[i])) {
+	    get_string_by_name(S[i])) {
 	    /* variable already exists */
 	    p->err = E_DATA;
 	} else if (check_varname(S[i])) {

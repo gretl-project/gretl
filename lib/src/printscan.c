@@ -977,8 +977,8 @@ static int get_literal_length (const char *s)
     return n;
 }
 
-/* split line into source string, format and arguments: for now
-   we only accept named string variables as sources 
+/* split line into source string, format and arguments: 
+   acceptable sources are string literals or string variables
 */
 
 static int 
@@ -994,39 +994,42 @@ split_scanf_line (const char *s, char **src, char **format,
 	s += 7;
     } 
 
-    /* string literal or string variable as source */
     s += strspn(s, " ");
-    if (*s == '@') {
-	s++;
-	n = gretl_varchar_spn(s);
-	if (n == 0) {
-	    return E_PARSE;
-	}
-    } else if (*s == '"') {
+
+    /* string literal or string variable as source */
+    if (*s == '"') {
 	*literal = 1;
 	s++;
 	n = get_literal_length(s);
+    } else {
+	if (*s == '@') s++;
+	n = gretl_varchar_spn(s);
     } 
+
+    if (n == 0) {
+	return E_PARSE;
+    }
 
     srcname = gretl_strndup(s, n);
     if (srcname == NULL) {
 	return E_ALLOC;
+    }
+
+    if (*literal) {
+	*src = srcname;
+	s++;
     } else {
-	if (*literal) {
-	    *src = srcname;
-	    s++;
-	} else {
-	    *src = get_named_string(srcname);
-	    free(srcname);
-	    if (*src == NULL) {
-		return E_UNKVAR;
-	    }
+	*src = get_string_by_name(srcname);
+	free(srcname);
+	if (*src == NULL) {
+	    return E_UNKVAR;
 	}
-	s += n;
-	if (*s == ',') {
-	    gotcom = 1;
-	    s++;
-	}
+    }
+
+    s += n;
+    if (*s == ',') {
+	gotcom = 1;
+	s++;
     }
 
     /* skip to next field */

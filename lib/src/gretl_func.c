@@ -3260,7 +3260,7 @@ get_string_return (const char *sname, double **Z, DATAINFO *pdinfo,
 		   int *err)
 {
     
-    const char *s = get_named_string(sname);
+    const char *s = get_string_by_name(sname);
     char *ret = NULL;
 
     if (s == NULL) {

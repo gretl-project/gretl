@@ -287,6 +287,7 @@ struct str_table func_alias[] = {
     { F_PVAL,      "pval" },
     { F_LOG,       "logs" },
     { F_OBSLABEL,  "date" },
+    { F_BACKTICK,  "$" },
     { 0,          NULL }
 };
 
@@ -582,13 +583,9 @@ static char *get_quoted_string (parser *p)
     int n = parser_charpos(p, '"');
     char *s = NULL;
 
-    if (n > 0) {
+    if (n >= 0) {
 	s = gretl_strndup(p->point, n);
 	parser_advance(p, n + 1);
-    } else if (n == 0) {	
-	parser_print_input(p);
-	pprintf(p->prn, _("Empty string\n"));
-	p->err = E_PARSE;
     } else {
 	parser_print_input(p);
 	pprintf(p->prn, _("Unmatched '%c'\n"), '"');
@@ -686,7 +683,7 @@ NODE *obs_node (parser *p)
 
 static void look_up_string_variable (const char *s, parser *p)
 {
-    const char *val = get_named_string(s + 1);
+    const char *val = get_string_by_name(s + 1);
 
     if (val != NULL) {
 	p->idstr = gretl_strdup(val);
@@ -748,7 +745,7 @@ static void look_up_word (const char *s, parser *p)
 		    p->idstr = gretl_strdup(s);
 		} else if (string_is_defined(s)) {
 		    p->sym = STR;
-		    p->idstr = gretl_strdup(get_named_string(s));
+		    p->idstr = gretl_strdup(get_string_by_name(s));
 		} else if (p->targ == LIST &&
 			   varname_match_any(p->dinfo, s)) {
 		    p->sym = LIST;
@@ -870,7 +867,7 @@ static void getword (parser *p)
 	return;
     }
 
-    if (*word == '$' || !strcmp(word, "t") || !strcmp(word, "obs")) {
+    if ((*word == '$' && word[1]) || !strcmp(word, "t") || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
     } else if (*word == '@') {
 	look_up_string_variable(word, p);

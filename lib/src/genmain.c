@@ -65,7 +65,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	}
     } else if (p->targ == MAT) {
 	if (p->lh.m0 != NULL && p->lh.substr != NULL && 
-	    *p->lh.substr !='\0') {
+	    *p->lh.substr != '\0') {
 	    pprintf(prn, _("Modified matrix %s"), p->lh.name);
 	} else if (p->lh.m0 != NULL) {
 	    pprintf(prn, _("Replaced matrix %s"), p->lh.name);
@@ -73,9 +73,17 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    pprintf(prn, _("Generated matrix %s"), p->lh.name);
 	}
     } else if (p->targ == LIST) {
-	pprintf(prn, _("Generated list %s"), p->lh.name);
+	if (p->flags & P_LHLIST) {
+	    pprintf(prn, _("Replaced list %s"), p->lh.name);
+	} else {
+	    pprintf(prn, _("Generated list %s"), p->lh.name);
+	}
     } else if (p->targ == STR) {
-	pprintf(prn, _("Generated string %s"), p->lh.name);
+	if (p->flags & P_LHSTR) {
+	    pprintf(prn, _("Replaced string %s"), p->lh.name);
+	} else {
+	    pprintf(prn, _("Generated string %s"), p->lh.name);
+	}
     } else {
 	return;
     }

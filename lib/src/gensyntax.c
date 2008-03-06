@@ -391,43 +391,53 @@ static NODE *base (parser *p, NODE *up)
 
 static NODE *get_string_arg (parser *p)
 {
-    char str[GENSTRLEN] = {0};
-    int i, close = -1;
+    if (p->ch == ')') {
+	/* allow empty arg string "()" */
+	p->idstr = gretl_strdup("");
+    } else {
+	int i, paren = 1, quoted = 0;
+	int close = -1, started = 0;
+	const char *s = p->point;
 
-    if (p->ch != ')') {
-	/* allow for empty arg string "()" */
-	int j, started = 0;
-
-	close = parser_charpos(p, ')');
-
-	if (close < 0 || close > GENSTRLEN - 2) {
-	    p->err = E_PARSE;
-	    if (close > 0) {
-		pprintf(p->prn, _("String is too long (%d versus %d max)\n"),
-			close, GENSTRLEN);
-	    } else {
-		unmatched_symbol_error('(', p);
+	/* find length of string to closing paren */
+	i = 0;
+	while (*s) {
+	    if (!quoted && *s == ')') paren--;
+	    if (paren == 0) {
+		close = i;
+		break;
 	    }
+	    if (*s == '"') {
+		quoted = !quoted;
+	    } else if (!quoted && *s == '(') {
+		paren++;
+	    }
+	    s++;
+	    i++;
+	}
+
+	if (close < 0) {
+	    unmatched_symbol_error('(', p);
 	    return NULL;
 	}
 
-	j = 0;
 	for (i=0; i<=close; i++) {
 	    if (!started && !isspace(p->ch)) {
+		p->idstr = gretl_strndup(p->point + i - 1, close - i + 1);
 		started = 1;
-	    }
-	    if (started) {
-		str[j++] = p->ch;
 	    }
 	    parser_getc(p);
 	}
     }
 
+    if (p->idstr == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
     parser_getc(p);
     lex(p);
-
-    tailstrip(str);
-    p->idstr = gretl_strdup(str); /* leakage possible? */
+    tailstrip(p->idstr);
 
     return newstr(p);
 }

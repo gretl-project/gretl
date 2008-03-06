@@ -7770,9 +7770,6 @@
 	sprintf myvar "%g", x
 	print "myvar has value @myvar"
       </code>
-      <para>
-	See also <cmdref targ="string"/>.
-      </para>
     </description>
 
   </command>
@@ -8015,59 +8012,6 @@
     <gui-access>
       <menu-path>/File/Save data; /File/Export data</menu-path>
     </gui-access>
-
-  </command>
-
-  <command name="string" section="Utilities" label="Define a string" context="cli">
-    
-    <usage>
-      <arguments>
-        <argument>stringvar</argument>
-	<argpunct>= </argpunct>
-	<argument>expression</argument>
-      </arguments>
-      <examples>
-	<example>string mystr = "P-value: "</example>
-	<example>string homedir = getenv("HOME")</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Saves a string named <repl>stringvar</repl>.  The
-	<repl>expression</repl> can take the following forms: the keyword
-	<lit>null</lit> to create an empty string; a literal string,
-	enclosed in double quotes; a series of such strings, separated by
-	spaces (these strings will be concatenated); a call to the
-	<lit>getenv</lit> function to retrieve a string from the program's
-	environment; a call to the <lit>argname</lit> function; or
-	a call to capture the output from a shell command.
-      </para>
-      <para>
-	The <lit>argname</lit> function is designed for use in
-	scripts containing user-defined functions: it takes as its
-	single argument the name of a variable inside a function, and
-	it returns the name by which that variable was known in the
-	script that called the function.
-      </para>
-      <para>
-	To capture output from a shell command, the form
-	<lit>$(</lit><repl>shellcommand</repl><lit>)</lit> is used.  That
-	is, a valid shell command is enclosed in parentheses and preceded
-	by a dollar sign.  This facility works only if shell commands are
-	enabled in gretl.
-      </para>
-      <para>
-	After defining a string variable, the variable can be printed
-	using its name preceded by <lit>@</lit>, as in
-      </para>
-      <code>
-	print "mystr = @mystr"
-      </code>
-      <para>
-	See also <cmdref targ="printf"/>,  <cmdref targ="sprintf"/>.
-      </para>
-    </description>
 
   </command>
 

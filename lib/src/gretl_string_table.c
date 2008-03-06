@@ -375,10 +375,9 @@ static saved_string *get_saved_string_by_name (const char *name,
     return NULL;
 }
 
-/* for use in the context of the "printf" and "sprintf" commands:
-   access a saved string by name */
+/* access a saved string by name */
 
-char *get_named_string (const char *name)
+char *get_string_by_name (const char *name)
 {
     int i, n, d;
 
@@ -678,7 +677,7 @@ int string_is_defined (const char *sname)
     
     str = get_saved_string_by_name(sname, &builtin);
 
-    return (str != NULL && str->s != NULL && str->s[0]);
+    return (str != NULL && str->s != NULL);
 }
 
 int is_user_string (const char *sname)

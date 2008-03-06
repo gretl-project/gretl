@@ -386,17 +386,19 @@ cottrell's home directory is /home/cottrell
 \end{code}
 %
 To check whether you got a non-empty value from a given call to
-\texttt{getenv}, you can use the function \texttt{isstring}, as in
+\texttt{getenv}, you can use the function \texttt{strlen}, which
+retrieves the length of the string, as in
 %
 \begin{code}
 ? string temp = getenv("TEMP")
 Saved empty string as 'temp'
-? scalar x = isstring(@temp)
+? scalar x = strlen(@temp)
 Generated scalar x (ID 2) = 0
 \end{code}
-%
-Note that \texttt{isstring} is really shorthand for ``is a string that
-actually contains something''.  
+
+The function \texttt{isstring} returns 1 if its argument is the name
+of a string variable, 0 otherwise.  However, if the return is 1
+the string may still be empty.
 
 At present the \texttt{getenv} function can only be used on the
 right-hand side of a \texttt{string} assignment, as in the above

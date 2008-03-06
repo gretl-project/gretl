@@ -48,6 +48,9 @@
 
 #define uvar_node(n) ((n->t == NUM || n->t == VEC) && n->aux >= 0)
 
+#define lhlist(p) (p->flags & P_LHLIST)
+#define lhstr(p) (p->flags & P_LHSTR)
+
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
@@ -5759,8 +5762,7 @@ static NODE *lhs_copy_node (parser *p)
 
 static void parser_try_print (parser *p)
 {
-    if (p->lh.v == 0 && p->lh.m0 == NULL && 
-	!p->lh.islist && !get_named_string(p->lh.name)) {
+    if (p->lh.v == 0 && p->lh.m0 == NULL && !lhlist(p) && !lhstr(p)) {
 	/* varname on left is not the name of a current variable */
 	p->err = E_EQN;
     } else if (p->lh.substr != NULL) {
@@ -5920,10 +5922,11 @@ static void pre_process (parser *p, int flags)
 	    p->lh.t = MAT;
 	    newvar = 0;
 	} else if (get_list_by_name(test)) {
-	    p->lh.islist = 1;
+	    p->flags |= P_LHLIST;
 	    p->lh.t = LIST;
 	    newvar = 0;
-	} else if (get_named_string(test)) {
+	} else if (get_string_by_name(test)) {
+	    p->flags |= P_LHSTR;
 	    p->lh.t = STR;
 	    newvar = 0;
 	}	    
@@ -6386,7 +6389,7 @@ static int edit_string (parser *p)
     } else if (p->op == B_ASN) {
 	p->err = save_named_string(p->lh.name, src, p->prn);
     } else if (p->op == B_ADD) {
-	const char *orig = get_named_string(p->lh.name);
+	const char *orig = get_string_by_name(p->lh.name);
 
 	if (orig == NULL) {
 	    p->err = E_DATA;
@@ -6414,7 +6417,7 @@ static int edit_list (parser *p)
     NODE *r = p->ret;
     int *list = NULL;
 
-    if (p->lh.islist == 0) {
+    if (!lhlist(p)) {
 	/* creating a list from scratch */
 	if (r->t == LIST) {
 	    if (strcmp(p->lh.name, r->v.str)) {
@@ -6427,7 +6430,7 @@ static int edit_list (parser *p)
     list = node_get_list(r, p);
 
     if (!p->err) {
-	if (p->lh.islist == 0) {
+	if (!lhlist(p)) {
 	    remember_list(list, p->lh.name, NULL);
 	} else if (p->op == B_ASN) {
 	    p->err = replace_list_by_name(p->lh.name, list);
@@ -6747,7 +6750,6 @@ static void parser_init (parser *p, const char *str,
     p->lh.m1 = NULL;
     p->lh.substr = NULL;
     p->lh.mspec = NULL;
-    p->lh.islist = 0;
 
     p->obs = 0;
     p->sym = 0;
@@ -6792,7 +6794,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    } else if (p->ret->t == LIST) {
 		gretl_list_print(p->lh.name, p->dinfo, p->prn);
 	    } else if (p->ret->t == STR) {
-		pprintf(p->prn, "%s\n", get_named_string(p->lh.name));
+		pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));
 	    } else {
 		printnode(p->ret, p);
 		pputc(p->prn, '\n');
