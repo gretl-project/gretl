@@ -319,14 +319,14 @@ static NODE *base (parser *p, NODE *up)
     case B_SUB:
     case B_ADD:
     case B_RANGE:
-    case DOT:
+    case P_DOT:
 	lex(p);
 	t = expr(p);
 	break;
-    case LPR: /* left paren '(' */
+    case G_LPR: /* left paren '(' */
 	lex(p);
 	t = expr(p);
-	if (p->sym == RPR) {
+	if (p->sym == G_RPR) {
 	    if (up != NULL && up->t != LAG && unary_apost(p)) {
 		set_transpose(up);
 		parser_getc(p);
@@ -336,14 +336,14 @@ static NODE *base (parser *p, NODE *up)
 	    expected_symbol_error(')', p);
 	}
 	break;
-    case LBR: /* left bracket '[' */
+    case G_LBR: /* left bracket '[' */
 	if (up == NULL) {
 	    goto deferr;
 	}
 	if (up->t == OBS) {
 	    t = obs_node(p);
 	}
-	if (p->sym == RBR) {
+	if (p->sym == G_RBR) {
 	    if (up->t == MSL || up->t == DMSL) {
 		if (p->ch == '\'') {
 		    set_transpose(up);
@@ -431,7 +431,7 @@ static void get_multi_args (NODE *t, parser *p)
     fprintf(stderr, "get_multi_args, p->sym = %d\n", p->sym);
 #endif    
 
-    if (p->sym == LPR) {
+    if (p->sym == G_LPR) {
 	lex(p);
 	while (p->ch != 0 && !p->err) {
 	    n = expr(p);
@@ -440,12 +440,12 @@ static void get_multi_args (NODE *t, parser *p)
 	    } else {
 		p->err = push_bn_node(t, n);
 	    }
-	    if (p->sym == COM) {
+	    if (p->sym == P_COM) {
 		/* in case acceptance of plain strings was set,
 		   turn it off after the first arg */
 		p->getstr = 0;
 		lex(p);
-	    } else if (p->sym == RPR) {
+	    } else if (p->sym == G_RPR) {
 		break;
 	    }
 	}
@@ -454,7 +454,7 @@ static void get_multi_args (NODE *t, parser *p)
     }
 
     if (cexp == 0 && !p->err) {
-	if (p->sym == RPR) {
+	if (p->sym == G_RPR) {
 	    lex(p);
 	} else {
 	    unmatched_symbol_error('(', p);
@@ -475,7 +475,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
     fprintf(stderr, "get_matrix_def, p->sym = %d\n", p->sym);
 #endif    
 
-    if (p->sym == LCB) {
+    if (p->sym == G_LCB) {
 	lex(p);
 	while (p->ch != 0 && !p->err) {
 	    n = expr(p);
@@ -484,13 +484,13 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 	    } else {
 		p->err = push_bn_node(t, n);
 	    }
-	    if (p->sym == COM) {
+	    if (p->sym == P_COM) {
 		lex(p);
-	    } else if (p->sym == SEMI) {
+	    } else if (p->sym == P_SEMI) {
 		n = newempty(EMPTY);
 		p->err = push_bn_node(t, n);
 		lex(p);
-	    } else if (p->sym == RCB) {
+	    } else if (p->sym == G_RCB) {
 		if (p->ch == '\'') {
 		    set_transpose(t);
 		    parser_getc(p);
@@ -506,7 +506,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
     }
 
     if (cexp == 0) {
-	if (p->sym == RCB) {
+	if (p->sym == G_RCB) {
 	    lex(p);
 	} else {
 	    unmatched_symbol_error('{', p);
@@ -528,42 +528,42 @@ static void get_slice_parts (NODE *t, parser *p)
 
     set_matrix_slice_on();
 
-    if (p->sym == LBR) {
+    if (p->sym == G_LBR) {
 	lex(p);
-	if (p->sym == COM) {
+	if (p->sym == P_COM) {
 	    /* empty row spec, OK */
 	    t->v.b2.l = newempty(EMPTY);
 	} else {
 	    t->v.b2.l = expr(p);
 	}
-	if (p->sym == COL) {
+	if (p->sym == P_COL) {
 	    /* need second part of colon-separated range */
 	    t->v.b2.l = newb2(SUBSL, t->v.b2.l, NULL);
 	    lex(p);
 	    t->v.b2.l->v.b2.r = expr(p);
 	}
-	if (p->sym == RBR) {
+	if (p->sym == G_RBR) {
 	    /* no comma, no second arg string: may be OK */
 	    t->v.b2.r = newempty(ABSENT);
 	    lex(p);
 	    set_matrix_slice_off();
 	    return;
 	}
-	if (p->sym == COM) {
+	if (p->sym == P_COM) {
 	    lex(p);
-	    if (p->sym == RBR) {
+	    if (p->sym == G_RBR) {
 		/* empty column spec, OK */
 		t->v.b2.r = newempty(EMPTY);
 	    } else {
 		t->v.b2.r = expr(p);
 	    }
-	    if (p->sym == COL) {
+	    if (p->sym == P_COL) {
 		/* need second part of colon-separated range */
 		t->v.b2.r = newb2(SUBSL, t->v.b2.r, NULL);
 		lex(p);
 		t->v.b2.r->v.b2.r = expr(p);
 	    }
-	    if (p->sym == RBR) {
+	    if (p->sym == G_RBR) {
 		if (p->ch == '\'') {
 		    set_transpose(t); /* ?? */
 		    parser_getc(p);
@@ -597,9 +597,9 @@ static void get_args (NODE *t, parser *p, int opt)
     fprintf(stderr, "get_args...\n");
 #endif    
 
-    if (p->sym == LPR) {
+    if (p->sym == G_LPR) {
 	lex(p);
-	if (p->sym == RPR && opt == BOTH_OPT) {
+	if (p->sym == G_RPR && opt == BOTH_OPT) {
 	    /* no args, but it's OK */
 	    t->v.b2.l = newempty(EMPTY);
 	    t->v.b2.r = newempty(EMPTY);
@@ -607,16 +607,16 @@ static void get_args (NODE *t, parser *p, int opt)
 	    return;
 	}
 	t->v.b2.l = expr(p);
-	if (p->sym == RPR && opt == RIGHT_OPT) {
+	if (p->sym == G_RPR && opt == RIGHT_OPT) {
 	    /* no second arg, but it's OK */
 	    t->v.b2.r = newempty(EMPTY);
 	    lex(p);
 	    return;
 	}	    
-	if (p->sym == COM) {
+	if (p->sym == P_COM) {
 	    lex(p);
 	    t->v.b2.r = expr(p);
-	    if (p->sym == RPR) {
+	    if (p->sym == G_RPR) {
 		if (p->ch == '\'') {
 		    set_transpose(t);
 		    parser_getc(p);
@@ -677,7 +677,7 @@ static NODE *powterm (parser *p)
 	    p->sym, p->ch? p->ch : '0', p->ch);
 #endif
 
-    if (p->sym == RUNIFORM || p->sym == RNORMAL) {
+    if (p->sym == F_RUNIFORM || p->sym == F_RNORMAL) {
 	opt = BOTH_OPT;
     }
 
@@ -703,7 +703,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = get_string_arg(p);
 	}	
-    } else if (func_symb(p->sym)) {
+    } else if (func1_symb(p->sym)) {
 	t = newb1(p->sym, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -743,14 +743,14 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newstr(p);
 	    get_ovar_ref(t, p);
 	}
-    } else if (p->sym == LPR) {
+    } else if (p->sym == G_LPR) {
 	/* dummy root for parenthesized expressions, to facilitate
 	   taking the transpose of matrix stuff, e.g. (A*B)' */
 	t = newb1(EROOT, NULL);
 	if (t != NULL) {
 	    t->v.b1.b = base(p, t);
 	}
-    } else if (p->sym == LCB) {
+    } else if (p->sym == G_LCB) {
 	/* explicit matrix definition, possibly followed by
 	   a "subslice" specification */
 	int sub = 0;
@@ -832,7 +832,7 @@ static NODE *factor (parser *p)
 		set_transpose(t);
 	    } else {
 		while (!p->err && (p->sym == B_POW || 
-				   p->sym == DOTPOW ||
+				   p->sym == B_DOTPOW ||
 				   p->sym == B_TRMUL)) {
 		    t = newb2(p->sym, t, NULL);
 		    if (t != NULL) {
@@ -860,8 +860,8 @@ static NODE *term (parser *p)
     }
 
     while (!p->err && (p->sym == B_MUL || p->sym == B_DIV || 
-		       p->sym == B_MOD || p->sym == DOTMULT || 
-		       p->sym == DOTDIV || p->sym == KRON)) {
+		       p->sym == B_MOD || p->sym == B_DOTMULT || 
+		       p->sym == B_DOTDIV || p->sym == B_KRON)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -885,9 +885,9 @@ static NODE *expr4 (parser *p)
     }
 
     while (!p->err && (p->sym == B_ADD || p->sym == B_SUB || 
-		       p->sym == DOTADD || p->sym == DOTSUB ||
-		       p->sym == MCCAT || p->sym == MRCAT ||
-		       p->sym == LCAT || p->sym == B_RANGE)) {
+		       p->sym == B_DOTADD || p->sym == B_DOTSUB ||
+		       p->sym == B_MCCAT || p->sym == B_MRCAT ||
+		       p->sym == B_LCAT || p->sym == B_RANGE)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -911,7 +911,7 @@ static NODE *expr3 (parser *p)
     }
 
     while (!p->err && (p->sym == B_GT || p->sym == B_LT || 
-		       p->sym == DOTGT || p->sym == DOTLT || 
+		       p->sym == B_DOTGT || p->sym == B_DOTLT || 
 		       p->sym == B_GTE || p->sym == B_LTE)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
@@ -936,7 +936,7 @@ static NODE *expr2 (parser *p)
     }
 
     while (!p->err && (p->sym == B_EQ || p->sym == B_NEQ ||
-		       p->sym == DOTEQ)) {
+		       p->sym == B_DOTEQ)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -1010,7 +1010,7 @@ NODE *expr (parser *p)
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b3.m = expr(p);
-	    if (p->sym == COL) {
+	    if (p->sym == P_COL) {
 		lex(p);
 		t->v.b3.r = expr(p);
 	    } else {

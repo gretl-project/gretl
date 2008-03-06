@@ -271,6 +271,10 @@ static int real_remember_list (const int *list, const char *name,
     saved_list *orig = NULL;
     int err = 0;
 
+    if (list == NULL) {
+	return E_DATA;
+    }
+
 #if LDEBUG
     fprintf(stderr, "remember_list (in): name='%s', force_new=%d,"
 	    " n_lists=%d\n", name, force_new, n_lists);
@@ -310,7 +314,9 @@ static int real_remember_list (const int *list, const char *name,
 	    if (gretl_messages_on()) {
 		const char *realname = list_stack[n_lists]->name;
 
-		pprintf(prn, _("Added list '%s'\n"), realname);
+		if (list[0] > 0) {
+		    pprintf(prn, _("Added list '%s'\n"), realname);
+		}
 		if (strlen(realname) < strlen(name)) {
 		    pprintf(prn, _("Warning: the name was truncated to %d characters\n"), 
 			    LNAMELEN - 1);

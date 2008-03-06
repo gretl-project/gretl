@@ -53,29 +53,29 @@ enum {
   /* 20 */    B_OR,
               B_TRMUL,
 	      B_RANGE,
-              LPR,        /* left paren */
-              RPR,        /* right paren */
-              LBR,        /* left bracket */
-              RBR,        /* right bracket */
-              LCB,        /* left curly bracket */
-              RCB,        /* right curly bracket */
-              DOTMULT,
-  /* 30 */    DOTDIV,
-	      DOTPOW,
-              DOTADD,
-              DOTSUB,
-              DOTEQ,
-              DOTGT,
-              DOTLT,
-              KRON,       /* Kronecker product */
-              MCCAT,      /* matrix concatenation (columns) */
-              MRCAT,      /* matrix concatenation (rows) */
-  /* 40 */    LCAT,       /* list concatentation */
+              G_LPR,      /* left paren */
+              G_RPR,      /* right paren */
+              G_LBR,      /* left bracket */
+              G_RBR,      /* right bracket */
+              G_LCB,      /* left curly bracket */
+              G_RCB,      /* right curly bracket */
+              B_DOTMULT,
+  /* 30 */    B_DOTDIV,
+	      B_DOTPOW,
+              B_DOTADD,
+              B_DOTSUB,
+              B_DOTEQ,
+              B_DOTGT,
+              B_DOTLT,
+              B_KRON,     /* Kronecker product */
+              B_MCCAT,    /* matrix concatenation (columns) */
+              B_MRCAT,    /* matrix concatenation (rows) */
+  /* 40 */    B_LCAT,     /* list concatentation */
 	      OP_MAX,     /* SEPARATOR: end of operators */
-	      COM,	  /* comma */
-	      DOT,	  /* period */
-	      SEMI,	  /* semi-colon */
-	      COL,	  /* colon */
+	      P_COM,	  /* comma */
+	      P_DOT,	  /* period */
+	      P_SEMI,	  /* semi-colon */
+	      P_COL,	  /* colon */
 	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
@@ -119,160 +119,162 @@ enum {
 /* functions: don't collide with the enumeration above */
 
 enum {
-    FUNC_MIN = 1 << 8,
-    ABS,
-    TOINT,
-    CEIL,
-    FLOOR,
-    ROUND,
-    SIN,
-    COS,
-    TAN,
-    ASIN,
-    ACOS,
-    ATAN,
-    LOG,
-    LOG10,
-    LOG2,
-    EXP,
-    SQRT,
-    DIF,	  /* first difference */
-    LDIF,	  /* log difference */
-    SDIF,	  /* seasonal difference */
-    SORT,	  /* ascending sort */
-    DSORT,	  /* descending sort */
-    RANKING,    
-    ODEV,	  /* orthogonal deviation */
-    NOBS,
-    T1,
-    T2,   
-    CUM,
-    MISSING,
-    OK,
-    MISSZERO,
-    ZEROMISS,
-    MEDIAN,
-    GINI,
-    SUM,   
-    MEAN,
-    MIN,
-    MAX,
-    SD,
-    VCE,	  /* variance */
-    SST,
-    CNORM,
-    DNORM,
-    QNORM,
-    GAMMA,	
-    LNGAMMA,
-    HPFILT,
-    BKFILT,
-    RESAMPLE,
-    PMEAN,
-    PSD,
-    IMAT,
-    SUMR,
-    SUMC,
-    MEANR,	 
-    MEANC,
-    MCOV,
-    MCORR,
-    CDEMEAN,
-    CHOL,
-    INV,
-    INVPD,
-    GINV,
-    DIAG,
-    TRANSP,
-    TVEC,
-    VECH,	
-    UNVECH,
-    ROWS,
-    COLS,
-    DET,
-    LDET,
-    TRACE,
-    NORM1,
-    INFNORM,
-    RCOND,
-    RANK, 
-    OBSNUM,
-    ISSERIES,
-    ISLIST,	 
-    ISSTRING,
-    ISNULL,
-    LISTLEN,
-    PVAL,
-    CDF,
-    INVCDF,
-    CRIT,  
-    RANDGEN,
-    RPOISSON,
-    MAKEMASK,
-    VALUES,
-    NULLSPC,
-    MEXP,
-    MINC,
-    MAXC,
-    MINR,
-    MAXR,
-    IMINC, 
-    IMAXC,
-    IMINR,
-    IMAXR,
-    FFT,
-    FFTI,
-    UPPER,
-    LOWER,
-    MREAD,
-    POLROOTS,
-    DUMIFY,
-    XPX,
-    S_GETENV,
-    S_ARGNAME,
-    S_OBSLABEL,
-    S_READFILE,
-    S_BACKTICK,
-    FUNC_MAX,	  /* SEPARATOR: end of single-arg functions */
-    COR,
-    COV,
-    SORTBY,
-    RUNIFORM,
-    RNORMAL,
-    FRACDIF,
-    ZEROS,
-    ONES,
-    SEQ,
-    MUNIF,
-    MNORM,
-    QFORM,
-    MLAG,
-    QR,
-    EIGSYM,	 
-    EIGGEN,
-    FDJAC,
-    BFGSMAX,
-    LRVAR,
-    PRINCOMP,
-    QUANTILE,
-    CMULT,	  /* complex multiplication */
-    CDIV,	  /* complex division */
-    MXTAB,
-    MWRITE,
-    MOVAVG,
-    MRSEL,
-    MCSEL,
-    LLAG,
-    WMEAN,
-    WVAR,
-    WSD,
-    S_STRSTR,
+    F1_MIN = 1 << 8,
+    F_ABS,
+    F_TOINT,
+    F_CEIL,
+    F_FLOOR,
+    F_ROUND,
+    F_SIN,
+    F_COS,
+    F_TAN,
+    F_ASIN,
+    F_ACOS,
+    F_ATAN,
+    F_LOG,
+    F_LOG10,
+    F_LOG2,
+    F_EXP,
+    F_SQRT,
+    F_DIFF,	  /* first difference */
+    F_LDIFF,	  /* log difference */
+    F_SDIFF,	  /* seasonal difference */
+    F_SORT,	  /* ascending sort */
+    F_DSORT,	  /* descending sort */
+    F_RANKING,    
+    F_ODEV,	  /* orthogonal deviation */
+    F_NOBS,
+    F_T1,
+    F_T2,   
+    F_CUM,
+    F_MISSING,
+    F_DATAOK,
+    F_MISSZERO,
+    F_ZEROMISS,
+    F_MEDIAN,
+    F_GINI,
+    F_SUM,   
+    F_MEAN,
+    F_MIN,
+    F_MAX,
+    F_SD,
+    F_VCE,	  /* variance */
+    F_SST,
+    F_CNORM,
+    F_DNORM,
+    F_QNORM,
+    F_GAMMA,	
+    F_LNGAMMA,
+    F_HPFILT,
+    F_BKFILT,
+    F_RESAMPLE,
+    F_PMEAN,
+    F_PSD,
+    F_IMAT,
+    F_SUMR,
+    F_SUMC,
+    F_MEANR,	 
+    F_MEANC,
+    F_MCOV,
+    F_MCORR,
+    F_CDEMEAN,
+    F_CHOL,
+    F_INV,
+    F_INVPD,
+    F_GINV,
+    F_DIAG,
+    F_TRANSP,
+    F_VEC,
+    F_VECH,	
+    F_UNVECH,
+    F_ROWS,
+    F_COLS,
+    F_DET,
+    F_LDET,
+    F_TRACE,
+    F_NORM1,
+    F_INFNORM,
+    F_RCOND,
+    F_RANK, 
+    F_OBSNUM,
+    F_ISSERIES,
+    F_ISLIST,	 
+    F_ISSTRING,
+    F_ISNULL,
+    F_LISTLEN,
+    F_PVAL,
+    F_CDF,
+    F_INVCDF,
+    F_CRIT,  
+    F_RANDGEN,
+    F_RPOISSON,
+    F_MAKEMASK,
+    F_VALUES,
+    F_NULLSPC,
+    F_MEXP,
+    F_MINC,
+    F_MAXC,
+    F_MINR,
+    F_MAXR,
+    F_IMINC, 
+    F_IMAXC,
+    F_IMINR,
+    F_IMAXR,
+    F_FFT,
+    F_FFTI,
+    F_UPPER,
+    F_LOWER,
+    F_MREAD,
+    F_POLROOTS,
+    F_DUMIFY,
+    F_XPX,
+    F_GETENV,
+    F_ARGNAME,
+    F_OBSLABEL,
+    F_READFILE,
+    F_BACKTICK,
+    F_STRLEN,
+    F_VARNAME,
+    F1_MAX,	  /* SEPARATOR: end of single-arg functions */
+    F_COR,
+    F_COV,
+    F_SORTBY,
+    F_RUNIFORM,
+    F_RNORMAL,
+    F_FRACDIFF,
+    F_ZEROS,
+    F_ONES,
+    F_SEQ,
+    F_MUNIF,
+    F_MNORM,
+    F_QFORM,
+    F_MLAG,
+    F_QR,
+    F_EIGSYM,	 
+    F_EIGGEN,
+    F_FDJAC,
+    F_BFGSMAX,
+    F_LRVAR,
+    F_PRINCOMP,
+    F_QUANTILE,
+    F_CMULT,	  /* complex multiplication */
+    F_CDIV,	  /* complex division */
+    F_MXTAB,
+    F_MWRITE,
+    F_MOVAVG,
+    F_MRSEL,
+    F_MCSEL,
+    F_LLAG,
+    F_WMEAN,
+    F_WVAR,
+    F_WSD,
+    F_STRSTR,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
-    MSHAPE,
-    SVD,
-    MOLS,
-    FILTER,
-    TRIMR,
+    F_MSHAPE,
+    F_SVD,
+    F_MOLS,
+    F_FILTER,
+    F_TRIMR,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
@@ -291,14 +293,15 @@ enum {
 
 #define GENSTRLEN 128
 
-#define func_symb(s) (s > FUNC_MIN && s < FUNC_MAX)
-#define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
+#define func1_symb(s) (s > F1_MIN && s < F1_MAX)
+#define func2_symb(s) (s > F1_MAX && s < F2_MAX)
 #define funcn_symb(s) (s > F2_MAX && s < FN_MAX)
-#define string_arg_func(s) (s == ISSERIES || s == ISNULL || s == ISLIST || \
-                            s == LISTLEN || s == ISSTRING || s == OBSNUM)
 
-#define string0_func(s) (s == PVAL || s == CDF || s == INVCDF || \
-                         s == CRIT || s == RANDGEN)
+#define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || s == F_ISLIST || \
+                            s == F_LISTLEN || s == F_ISSTRING || s == F_OBSNUM)
+
+#define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
+                         s == F_CRIT || s == F_RANDGEN)
 
 #define unary_op(s) (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
@@ -308,8 +311,8 @@ enum {
                    s == MSL2 || s == SUBSL || s == LAG || \
                    s == OBS)
 
-#define b1sym(s) (unary_op(s) || func_symb(s) || funcn_symb(s) || \
-                  s == LPR || s == EROOT)
+#define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
+                  s == G_LPR || s == EROOT)
 
 #define evalb1(s) (b1sym(s) && !(string0_func(s)) && s != U_ADDR && \
                    !func2_symb(s) && s != EROOT)
@@ -326,12 +329,12 @@ enum {
 
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
 
-#define closing_sym(s) (s == RPR || s == RBR || s == RCB)
+#define closing_sym(s) (s == G_RPR || s == G_RBR || s == G_RCB)
 
 
 /* functions where the right-hand "argument" is actually a return
    location */
-#define r_return(s) (s == QR || s == EIGSYM || s == EIGGEN)
+#define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGGEN)
 
 #define dollar_node(n) (n->t == DVAR || n->t == MVAR || \
                         (n->t == MSL && n->v.b2.l->v.str[0] == '$'))

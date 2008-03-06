@@ -522,6 +522,7 @@ int destroy_saved_strings_at_level (int d)
     return err;
 }
 
+#if 0
 static void copy_unescape (char *targ, const char *src, int n)
 {
     int c, i = 0;
@@ -542,6 +543,7 @@ static void copy_unescape (char *targ, const char *src, int n)
 
     *targ = '\0';
 }
+#endif
 
 static int shell_grab (const char *arg, char **sout)
 {
@@ -556,15 +558,7 @@ static int shell_grab (const char *arg, char **sout)
 	return 1;
     }
 
-    if (strchr(arg, '@')) { /* FIXME */
-	char tmp[MAXLEN];
-
-	strcpy(tmp, arg);
-	substitute_named_strings(tmp);
-	gretl_shell_grab(tmp, sout);
-    } else {
-	gretl_shell_grab(arg, sout);
-    }
+    gretl_shell_grab(arg, sout);
 
     if (sout != NULL && *sout != NULL) {
 	/* trim trailing newline */
@@ -613,6 +607,7 @@ char *gretl_getenv (const char *key, int *err)
     return val;
 }
 
+#if 0
 static char *strim (char *s)
 {
     int n;
@@ -625,6 +620,7 @@ static char *strim (char *s)
 
     return s;
 }
+#endif
 
 char *retrieve_date_string (int t, const DATAINFO *pdinfo, int *err)
 {
@@ -705,61 +701,17 @@ int is_user_string (const char *sname)
     return 0;
 }
 
-/* for use in "sprintf" command */
-
 int save_named_string (const char *name, const char *s, PRN *prn)
 {
     saved_string *str;
     int builtin = 0;
-
-    if (s == NULL) {
-	return E_DATA;
-    }
-
-    str = get_saved_string_by_name(name, &builtin);
-    
-    if (str != NULL && builtin) {
-	pprintf(prn, _("You cannot overwrite '%s'\n"), name);
-	return E_DATA;
-    }
-
-    if (str == NULL) {
-	str = add_named_string(name);
-	if (str == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    if (str->s != NULL) {
-	free(str->s);
-    }
-
-    str->s = gretl_strdup(s);
-    if (str->s == NULL) {
-	return E_ALLOC;
-    }
-
-    if (gretl_messages_on()) {
-	if (str->s[0] == '\0') {
-	    pprintf(prn, _("Saved empty string as '%s'\n"), name);
-	} else {
-	    pprintf(prn, _("Saved string as '%s'\n"), name);
-	}
-    }
-
-    return 0;
-}
-
-int add_string_directly (const char *targ, const char *val, PRN *prn)
-{
-    saved_string *str;
-    int builtin = 0;
+    int add = 0;
     int err = 0;
 
-    str = get_saved_string_by_name(targ, &builtin);
+    str = get_saved_string_by_name(name, &builtin);
 
     if (str != NULL && builtin) {
-	pprintf(prn, _("You cannot overwrite '%s'\n"), targ);
+	pprintf(prn, _("You cannot overwrite '%s'\n"), name);
 	return E_DATA;
     }	
 
@@ -767,22 +719,23 @@ int add_string_directly (const char *targ, const char *val, PRN *prn)
 	free(str->s);
 	str->s = NULL;
     } else {
-	str = add_named_string(targ);
+	str = add_named_string(name);
 	if (str == NULL) {
 	    return E_ALLOC;
 	}
+	add = 1;
     } 
 
-    str->s = gretl_strdup(val);
+    str->s = gretl_strdup(s);
     if (str->s == NULL) {
 	err = E_ALLOC;
     }
 
-    if (!err && gretl_messages_on()) {
-	if (str->s[0] == '\0') {
-	    pprintf(prn, _("Saved empty string as '%s'\n"), targ);
+    if (!err && gretl_messages_on() && *s != '\0') {
+	if (add) {
+	    pprintf(prn, _("Added string '%s'\n"), name); 
 	} else {
-	    pprintf(prn, _("Saved string as '%s'\n"), targ);
+	    pprintf(prn, _("Saved string '%s'\n"), name);
 	}
     }
 
@@ -878,8 +831,13 @@ int substitute_named_strings (char *line)
 	return 0;
     }
 
-    if (!strncmp(line, "string", 6)) {
-	/* when defining a string, let @foo be handled as a variable */
+    /* when using the genr apparatus, let @foo be handled as a variable */
+    if (!strncmp(line, "string ", 7) ||
+	!strncmp(line, "series ", 7) ||
+	!strncmp(line, "scalar ", 7) ||
+	!strncmp(line, "matrix ", 7) ||
+	!strncmp(line, "genr ", 5) ||
+	!strncmp(line, "list ", 5)) {
 	return 0;
     }
 

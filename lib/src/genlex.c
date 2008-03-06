@@ -123,168 +123,170 @@ struct str_table mvars[] = {
 };
 
 struct str_table funcs[] = {
-    { ABS,      "abs" },
-    { SIN,      "sin" },
-    { COS,      "cos" },
-    { TAN,      "tan" },
-    { ASIN,     "asin" },
-    { ACOS,     "acos" },
-    { ATAN,     "atan" },
-    { LOG,      "log" },
-    { LOG,      "ln" },
-    { LOG10,    "log10" },
-    { LOG2,     "log2" },
-    { EXP,      "exp" },
-    { SQRT,     "sqrt" },
-    { DIF,      "diff" },
-    { LDIF,     "ldiff" },
-    { SDIF,     "sdiff" },
-    { LLAG,     "lags" },
-    { TOINT,    "int" },
-    { ROUND,    "round" },
-    { CEIL,     "ceil" },
-    { FLOOR,    "floor" },
-    { SORT,     "sort" }, 
-    { DSORT,    "dsort" }, 
-    { SORTBY,   "sortby" }, 
-    { RANKING,  "ranking" },
-    { ODEV,     "orthdev" },
-    { NOBS,     "nobs" },
-    { T1,       "firstobs" },
-    { T2,       "lastobs" },
-    { RUNIFORM, "uniform" }, 
-    { RNORMAL,  "normal" }, 
-    { RPOISSON, "genpois" },
-    { CUM,      "cum" }, 
-    { MISSING,  "missing" },
-    { OK,       "ok" },        /* opposite of missing */
-    { MISSZERO, "misszero" },
-    { LRVAR,    "lrvar" },
-    { QUANTILE, "quantile" },
-    { MEDIAN,   "median" },
-    { GINI,     "gini" },
-    { ZEROMISS, "zeromiss" },
-    { SUM,      "sum" },
-    { MEAN,     "mean" },
-    { MIN,      "min" },
-    { MAX,      "max" },
-    { SD,       "sd" },
-    { VCE,      "var" },
-    { SST,      "sst" },
-    { CNORM,    "cnorm" },
-    { DNORM,    "dnorm" },
-    { QNORM,    "qnorm" },
-    { GAMMA,    "gammafun" },
-    { LNGAMMA,  "lngamma" },
-    { RESAMPLE, "resample" },
-    { PMEAN,    "pmean" },     /* panel mean */
-    { PSD,      "psd" },       /* panel std dev */
-    { HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
-    { BKFILT,   "bkfilt" },    /* Baxter-King filter */
-    { FRACDIF,  "fracdiff" },  /* fractional difference */
-    { COV,      "cov" },
-    { COR,      "corr" },
-    { MOVAVG,   "movavg" },
-    { IMAT,     "I" },
-    { ZEROS,    "zeros" },
-    { ONES,     "ones" },
-    { SEQ,      "seq" },
-    { MUNIF,    "muniform" },
-    { MNORM,    "mnormal" },
-    { SUMR,     "sumr" },
-    { SUMC,     "sumc" },
-    { MEANR,    "meanr" },
-    { MEANC,    "meanc" },
-    { MINC,     "minc" },
-    { MAXC,     "maxc" },
-    { MINR,     "minr" },
-    { MAXR,     "maxr" },
-    { IMINC,    "iminc" },
-    { IMAXC,    "imaxc" },
-    { IMINR,    "iminr" },
-    { IMAXR,    "imaxr" }, 
-    { FFT,      "fft" },
-    { FFTI,     "ffti" },
-    { CMULT,    "cmult" },
-    { CDIV,     "cdiv" },
-    { MCOV,     "mcov" },
-    { MCORR,    "mcorr" },
-    { MXTAB,    "mxtab" },
-    { CDEMEAN,  "cdemean" },
-    { CHOL,     "cholesky" },
-    { INV,      "inv" },
-    { INVPD,    "invpd" },
-    { GINV,     "ginv" },
-    { DIAG,     "diag" },
-    { TRANSP,   "transp" },
-    { TVEC,     "vec" },
-    { VECH,     "vech" },
-    { UNVECH,   "unvech" },
-    { UPPER,    "upper" },
-    { LOWER,    "lower" },
-    { ROWS,     "rows" },
-    { COLS,     "cols" },
-    { DET,      "det" },
-    { LDET,     "ldet" },
-    { TRACE,    "tr" },
-    { NORM1,    "onenorm" },
-    { INFNORM,  "infnorm" },
-    { RCOND,    "rcond" },
-    { RANK,     "rank" },
-    { QFORM,    "qform" },
-    { MLAG,     "mlag" },
-    { QR,       "qrdecomp" },
-    { EIGSYM,   "eigensym" },
-    { EIGGEN,   "eigengen" },
-    { NULLSPC,  "nullspace" },
-    { PRINCOMP, "princomp" },
-    { MEXP,     "mexp" },
-    { FDJAC,    "fdjac" },
-    { BFGSMAX,  "BFGSmax" },
-    { OBSNUM,   "obsnum" },
-    { ISSERIES, "isseries" },
-    { ISLIST,   "islist" },
-    { ISSTRING, "isstring" },
-    { ISNULL,   "isnull" },
-    { LISTLEN,  "nelem" },
-    { CDF,      "cdf" },
-    { INVCDF,   "invcdf" },
-    { PVAL,     "pvalue" },
-    { CRIT,     "critical" },
-    { RANDGEN,  "randgen" },
-    { MAKEMASK, "makemask" },
-    { VALUES,   "values" },
-    { MSHAPE,   "mshape" },
-    { SVD,      "svd" },
-    { MOLS,     "mols" },
-    { MREAD,    "mread" },
-    { MWRITE,   "mwrite" },
-    { MRSEL,    "selifr" },
-    { MCSEL,    "selifc" },
-    { POLROOTS, "polroots" },
-    { DUMIFY,   "dummify" },
-    { WMEAN,    "wmean" },
-    { WVAR,     "wvar" },
-    { WSD,      "wsd" },
-    { XPX,      "xpx" },
-    { FILTER,   "filter" },
-    { TRIMR,    "trimr" },
-    { S_GETENV,   "getenv" },
-    { S_ARGNAME,  "argname" },
-    { S_OBSLABEL, "obslabel" },
-    { S_READFILE, "readfile" },
-    { S_BACKTICK, "grab" },
-    { S_STRSTR,   "strstr" },
+    { F_ABS,      "abs" },
+    { F_SIN,      "sin" },
+    { F_COS,      "cos" },
+    { F_TAN,      "tan" },
+    { F_ASIN,     "asin" },
+    { F_ACOS,     "acos" },
+    { F_ATAN,     "atan" },
+    { F_LOG,      "log" },
+    { F_LOG,      "ln" },
+    { F_LOG10,    "log10" },
+    { F_LOG2,     "log2" },
+    { F_EXP,      "exp" },
+    { F_SQRT,     "sqrt" },
+    { F_DIFF,     "diff" },
+    { F_LDIFF,    "ldiff" },
+    { F_SDIFF,    "sdiff" },
+    { F_LLAG,     "lags" },
+    { F_TOINT,    "int" },
+    { F_ROUND,    "round" },
+    { F_CEIL,     "ceil" },
+    { F_FLOOR,    "floor" },
+    { F_SORT,     "sort" }, 
+    { F_DSORT,    "dsort" }, 
+    { F_SORTBY,   "sortby" }, 
+    { F_RANKING,  "ranking" },
+    { F_ODEV,     "orthdev" },
+    { F_NOBS,     "nobs" },
+    { F_T1,       "firstobs" },
+    { F_T2,       "lastobs" },
+    { F_RUNIFORM, "uniform" }, 
+    { F_RNORMAL,  "normal" }, 
+    { F_RPOISSON, "genpois" },
+    { F_CUM,      "cum" }, 
+    { F_MISSING,  "missing" },
+    { F_DATAOK,   "ok" },        /* opposite of missing */
+    { F_MISSZERO, "misszero" },
+    { F_LRVAR,    "lrvar" },
+    { F_QUANTILE, "quantile" },
+    { F_MEDIAN,   "median" },
+    { F_GINI,     "gini" },
+    { F_ZEROMISS, "zeromiss" },
+    { F_SUM,      "sum" },
+    { F_MEAN,     "mean" },
+    { F_MIN,      "min" },
+    { F_MAX,      "max" },
+    { F_SD,       "sd" },
+    { F_VCE,      "var" },
+    { F_SST,      "sst" },
+    { F_CNORM,    "cnorm" },
+    { F_DNORM,    "dnorm" },
+    { F_QNORM,    "qnorm" },
+    { F_GAMMA,    "gammafun" },
+    { F_LNGAMMA,  "lngamma" },
+    { F_RESAMPLE, "resample" },
+    { F_PMEAN,    "pmean" },     /* panel mean */
+    { F_PSD,      "psd" },       /* panel std dev */
+    { F_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
+    { F_BKFILT,   "bkfilt" },    /* Baxter-King filter */
+    { F_FRACDIFF, "fracdiff" },  /* fractional difference */
+    { F_COV,      "cov" },
+    { F_COR,      "corr" },
+    { F_MOVAVG,   "movavg" },
+    { F_IMAT,     "I" },
+    { F_ZEROS,    "zeros" },
+    { F_ONES,     "ones" },
+    { F_SEQ,      "seq" },
+    { F_MUNIF,    "muniform" },
+    { F_MNORM,    "mnormal" },
+    { F_SUMR,     "sumr" },
+    { F_SUMC,     "sumc" },
+    { F_MEANR,    "meanr" },
+    { F_MEANC,    "meanc" },
+    { F_MINC,     "minc" },
+    { F_MAXC,     "maxc" },
+    { F_MINR,     "minr" },
+    { F_MAXR,     "maxr" },
+    { F_IMINC,    "iminc" },
+    { F_IMAXC,    "imaxc" },
+    { F_IMINR,    "iminr" },
+    { F_IMAXR,    "imaxr" }, 
+    { F_FFT,      "fft" },
+    { F_FFTI,     "ffti" },
+    { F_CMULT,    "cmult" },
+    { F_CDIV,     "cdiv" },
+    { F_MCOV,     "mcov" },
+    { F_MCORR,    "mcorr" },
+    { F_MXTAB,    "mxtab" },
+    { F_CDEMEAN,  "cdemean" },
+    { F_CHOL,     "cholesky" },
+    { F_INV,      "inv" },
+    { F_INVPD,    "invpd" },
+    { F_GINV,     "ginv" },
+    { F_DIAG,     "diag" },
+    { F_TRANSP,   "transp" },
+    { F_VEC,      "vec" },
+    { F_VECH,     "vech" },
+    { F_UNVECH,   "unvech" },
+    { F_UPPER,    "upper" },
+    { F_LOWER,    "lower" },
+    { F_ROWS,     "rows" },
+    { F_COLS,     "cols" },
+    { F_DET,      "det" },
+    { F_LDET,     "ldet" },
+    { F_TRACE,    "tr" },
+    { F_NORM1,    "onenorm" },
+    { F_INFNORM,  "infnorm" },
+    { F_RCOND,    "rcond" },
+    { F_RANK,     "rank" },
+    { F_QFORM,    "qform" },
+    { F_MLAG,     "mlag" },
+    { F_QR,       "qrdecomp" },
+    { F_EIGSYM,   "eigensym" },
+    { F_EIGGEN,   "eigengen" },
+    { F_NULLSPC,  "nullspace" },
+    { F_PRINCOMP, "princomp" },
+    { F_MEXP,     "mexp" },
+    { F_FDJAC,    "fdjac" },
+    { F_BFGSMAX,  "BFGSmax" },
+    { F_OBSNUM,   "obsnum" },
+    { F_ISSERIES, "isseries" },
+    { F_ISLIST,   "islist" },
+    { F_ISSTRING, "isstring" },
+    { F_ISNULL,   "isnull" },
+    { F_LISTLEN,  "nelem" },
+    { F_CDF,      "cdf" },
+    { F_INVCDF,   "invcdf" },
+    { F_PVAL,     "pvalue" },
+    { F_CRIT,     "critical" },
+    { F_RANDGEN,  "randgen" },
+    { F_MAKEMASK, "makemask" },
+    { F_VALUES,   "values" },
+    { F_MSHAPE,   "mshape" },
+    { F_SVD,      "svd" },
+    { F_MOLS,     "mols" },
+    { F_MREAD,    "mread" },
+    { F_MWRITE,   "mwrite" },
+    { F_MRSEL,    "selifr" },
+    { F_MCSEL,    "selifc" },
+    { F_POLROOTS, "polroots" },
+    { F_DUMIFY,   "dummify" },
+    { F_WMEAN,    "wmean" },
+    { F_WVAR,     "wvar" },
+    { F_WSD,      "wsd" },
+    { F_XPX,      "xpx" },
+    { F_FILTER,   "filter" },
+    { F_TRIMR,    "trimr" },
+    { F_GETENV,   "getenv" },
+    { F_ARGNAME,  "argname" },
+    { F_OBSLABEL, "obslabel" },
+    { F_READFILE, "readfile" },
+    { F_BACKTICK, "grab" },
+    { F_STRSTR,   "strstr" },
+    { F_STRLEN,   "strlen" },
+    { F_VARNAME,  "varname" },
     { 0,        NULL }
 };
 
 struct str_table func_alias[] = {
-    { GAMMA,      "gammafunc" },
-    { GAMMA,      "gamma" },
-    { RPOISSON,   "poisson" },
-    { PVAL,       "pval" },
-    { LOG,        "logs" },
-    { S_OBSLABEL, "date" },
+    { F_GAMMA,     "gammafunc" },
+    { F_GAMMA,     "gamma" },
+    { F_RPOISSON,  "poisson" },
+    { F_PVAL,      "pval" },
+    { F_LOG,       "logs" },
+    { F_OBSLABEL,  "date" },
     { 0,          NULL }
 };
 
@@ -789,7 +791,7 @@ static void word_check_next_char (const char *s, parser *p)
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
 	    p->sym = DMSTR;
-	} else if (!func_symb(p->sym) && !func2_symb(p->sym) &&
+	} else if (!func1_symb(p->sym) && !func2_symb(p->sym) &&
 		   !funcn_symb(p->sym) && p->sym != UFUN) {
 	    p->err = 1;
 	} 
@@ -1055,7 +1057,7 @@ void lex (parser *p)
 	    }
 	    parser_getc(p);
 	    if (p->ch == '*') {
-		p->sym = KRON;
+		p->sym = B_KRON;
 		parser_getc(p);
 	    } else {
 		p->sym = B_MUL;
@@ -1101,7 +1103,7 @@ void lex (parser *p)
 #endif
 	    return;
         case '|': 
-	    p->sym = (matrix_gen(p))? MRCAT : B_OR;
+	    p->sym = (matrix_gen(p))? B_MRCAT : B_OR;
 	    parser_getc(p);
 	    if (p->ch == '|') {
 		p->sym = B_OR;
@@ -1146,47 +1148,47 @@ void lex (parser *p)
 	    }
 	    return;
         case '(': 
-	    p->sym = LPR;
+	    p->sym = G_LPR;
 	    parser_getc(p);
 	    return;
         case ')': 
-	    p->sym = RPR;
+	    p->sym = G_RPR;
 	    parser_getc(p);
 	    return;
         case '[': 
-	    p->sym = LBR;
+	    p->sym = G_LBR;
 	    parser_getc(p);
 	    return;
         case '{': 
-	    p->sym = LCB;
+	    p->sym = G_LCB;
 	    parser_getc(p);
 	    return;
         case '}': 
-	    p->sym = RCB;
+	    p->sym = G_RCB;
 	    parser_getc(p);
 	    return;
         case ']': 
-	    p->sym = RBR;
+	    p->sym = G_RBR;
 	    parser_getc(p);
 	    return;
         case '~':
-	    p->sym = MCCAT;
+	    p->sym = B_MCCAT;
 	    parser_getc(p);
 	    return;
         case '`': 
-	    p->sym = MRCAT;
+	    p->sym = B_MRCAT;
 	    parser_getc(p);
 	    return;
         case ',': 
-	    p->sym = COM;
+	    p->sym = P_COM;
 	    parser_getc(p);
 	    return;
         case ';': 
-	    p->sym = SEMI;
+	    p->sym = P_SEMI;
 	    parser_getc(p);
 	    return;
         case ':': 
-	    p->sym = COL;
+	    p->sym = P_COL;
 	    parser_getc(p);
 	    return;
         case '?': 
@@ -1195,41 +1197,41 @@ void lex (parser *p)
 	    return;
 	case '.':
 	    if (*p->point == '$') {
-		p->sym = DOT;
+		p->sym = P_DOT;
 		parser_getc(p);
 		return;
 	    }
 	    parser_getc(p);
 	    if (p->ch == '*') {
-		p->sym = DOTMULT;
+		p->sym = B_DOTMULT;
 		parser_getc(p);
 		return;
 	    } else if (p->ch == '/') {
-		p->sym = DOTDIV;
+		p->sym = B_DOTDIV;
 		parser_getc(p);
 		return;
 	    } else if (p->ch == '^') {
-		p->sym = DOTPOW;
+		p->sym = B_DOTPOW;
 		parser_getc(p);
 		return;
 	    } else if (p->ch == '+') {
-		p->sym = DOTADD;
+		p->sym = B_DOTADD;
 		parser_getc(p);
 		return;
 	    } else if (p->ch == '-') {
-		p->sym = DOTSUB;
+		p->sym = B_DOTSUB;
 		parser_getc(p);
 		return;
 	    } else if (p->ch == '=') {
-		p->sym = DOTEQ;
+		p->sym = B_DOTEQ;
 		parser_getc(p);
 		return;
 	    } else if (p->ch == '>') {
-		p->sym = DOTGT;
+		p->sym = B_DOTGT;
 		parser_getc(p);
 		return;
 	    } else if (p->ch == '<') {
-		p->sym = DOTLT;
+		p->sym = B_DOTLT;
 		parser_getc(p);
 		return;
 	    } else {
@@ -1245,7 +1247,7 @@ void lex (parser *p)
 	    }
 	    if (bare_data_type(p->sym) || closing_sym(p->sym) ||
 		(p->targ == LIST && p->sym == LAG)) {
-		p->sym = LCAT;
+		p->sym = B_LCAT;
 		return;
 	    }
 	    if (isdigit(p->ch) || (p->ch == '.' && isdigit(*p->point))) {
@@ -1272,8 +1274,8 @@ void lex (parser *p)
 
 const char *getsymb (int t, const parser *p)
 {  
-    if ((t > FUNC_MIN && t < FUNC_MAX) ||
-	(t > FUNC_MAX && t < F2_MAX) ||
+    if ((t > F1_MIN && t < F1_MAX) ||
+	(t > F1_MAX && t < F2_MAX) ||
 	(t > F2_MAX && t < FN_MAX)) {
 	return funname(t);
     }
@@ -1371,48 +1373,48 @@ const char *getsymb (int t, const parser *p)
 	return "||";	
     case U_NOT: 
 	return "!";
-    case LPR: 
+    case G_LPR: 
 	return "(";
-    case RPR: 
+    case G_RPR: 
 	return ")";
-    case LBR: 
+    case G_LBR: 
 	return "[";
-    case RBR: 
+    case G_RBR: 
 	return "]";
-    case LCB: 
+    case G_LCB: 
 	return "{";
-    case RCB: 
+    case G_RCB: 
 	return "}";
-    case DOTMULT: 
+    case B_DOTMULT: 
 	return ".*";
-    case DOTDIV: 
+    case B_DOTDIV: 
 	return "./";
-    case DOTPOW: 
+    case B_DOTPOW: 
 	return ".^";
-    case DOTADD: 
+    case B_DOTADD: 
 	return ".+";
-    case DOTSUB: 
+    case B_DOTSUB: 
 	return ".-";
-    case DOTEQ: 
+    case B_DOTEQ: 
 	return ".=";
-    case DOTGT: 
+    case B_DOTGT: 
 	return ".>";
-    case DOTLT: 
+    case B_DOTLT: 
 	return ".<";
-    case KRON: 
+    case B_KRON: 
 	return "**";
-    case MCCAT: 
+    case B_MCCAT: 
 	return "~";
-    case MRCAT: 
-    case LCAT:
+    case B_MRCAT: 
+    case B_LCAT:
 	return "|";
-    case COM: 
+    case P_COM: 
 	return ",";
-    case DOT: 
+    case P_DOT: 
 	return ".";
-    case SEMI: 
+    case P_SEMI: 
 	return ";";
-    case COL: 
+    case P_COL: 
 	return ":";
     case QUERY: 
 	return "?";

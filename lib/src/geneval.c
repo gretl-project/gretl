@@ -36,9 +36,9 @@
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
 
-#define nullmat_ok(f) (f == ROWS || f == COLS || f == DET || \
-		       f == LDET || f == DIAG || f == TRANSP || \
-		       f == TVEC || f == VECH || f == UNVECH)
+#define nullmat_ok(f) (f == F_ROWS || f == F_COLS || f == F_DET || \
+		       f == F_LDET || f == F_DIAG || f == F_TRANSP || \
+		       f == F_VEC || f == F_VECH || f == F_UNVECH)
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
@@ -487,11 +487,11 @@ static void eval_warning (parser *p, int op)
     if (*p->warning == '\0') {
 	if (op == B_POW) {
 	    strcpy(p->warning, _("invalid operands for '^'"));
-	} else if (op == LOG) {
+	} else if (op == F_LOG) {
 	    strcpy(p->warning, _("invalid argument for log()"));
-	} else if (op == SQRT) {
+	} else if (op == F_SQRT) {
 	    strcpy(p->warning, _("invalid argument for sqrt()"));
-	} else if (op == EXP) {
+	} else if (op == F_EXP) {
 	    strcpy(p->warning, _("invalid argument for exp()"));
 	}
     }
@@ -583,48 +583,48 @@ static int dist_argc (char *s, int f)
     case 'u':
     case 'U':
 	s[0] = 'u';
-	return (f == RANDGEN)? 2 : 0;
+	return (f == F_RANDGEN)? 2 : 0;
     case '1':
     case 'z':
     case 'n':
     case 'N':
 	s[0] = 'z';
-	return (f == RANDGEN)? 2 : 1;
+	return (f == F_RANDGEN)? 2 : 1;
     case '2':
     case 't':
 	s[0] = 't';
-	return (f == RANDGEN)? 1 : 2;
+	return (f == F_RANDGEN)? 1 : 2;
     case '3':
     case 'c':
     case 'x':
     case 'X':
 	s[0] = 'X';
-	return (f == RANDGEN)? 1 : 2;
+	return (f == F_RANDGEN)? 1 : 2;
     case '4':
     case 'f':
     case 'F':
 	s[0] = 'F';
-	return (f == RANDGEN)? 2 : 3;
+	return (f == F_RANDGEN)? 2 : 3;
     case '5':
     case 'g':
     case 'G':
 	s[0] = 'G';
-	return (f == CRIT || f == INVCDF)? 0 : 
-	    (f == RANDGEN)? 2 : 3;
+	return (f == F_CRIT || f == F_INVCDF)? 0 : 
+	    (f == F_RANDGEN)? 2 : 3;
     case '6':
     case 'b':
     case 'B':
 	s[0] = 'B';
-	return (f == RANDGEN)? 2 : 3;
+	return (f == F_RANDGEN)? 2 : 3;
     case '7':
     case 'D':
 	s[0] = 'D';
-	return (f == CDF)? 3 : 0;
+	return (f == F_CDF)? 3 : 0;
     case '8':
     case 'p':
     case 'P':
 	s[0] = 'P';
-	return (f == RANDGEN)? 1 : 2;
+	return (f == F_RANDGEN)? 1 : 2;
     }
 
     return 0;
@@ -685,13 +685,13 @@ static double scalar_pdist (int t, char d, double *parm,
 	}
     }
 
-    if (t == PVAL) {
+    if (t == F_PVAL) {
 	x = gretl_get_pvalue(d, parm);
-    } else if (t == CDF) {
+    } else if (t == F_CDF) {
 	x = gretl_get_cdf(d, parm);
-    } else if (t == INVCDF) {
+    } else if (t == F_INVCDF) {
 	x = gretl_get_cdf_inverse(d, parm);
-    } else if (t == CRIT) {
+    } else if (t == F_CRIT) {
 	x = gretl_get_critval(d, parm);
     } else {
 	p->err = 1;
@@ -789,7 +789,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
     if (starting(p)) {
 	NODE *e, *s, *r = n->v.b1.b;
 	int i, k, argc, m = r->v.bn.n_nodes;
-	int rgen = (n->t == RANDGEN);
+	int rgen = (n->t == F_RANDGEN);
 	double *pvec = NULL, *bvec = NULL;
 	gretl_matrix *pmat = NULL, *bmat = NULL;
 	double parm[3];
@@ -939,7 +939,7 @@ static NODE *string_offset (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
 
-    if (starting(p)) {
+    if (ret != NULL && starting(p)) {
 	int n = strlen(l->v.str);
 	int k = r->v.xval;
 
@@ -959,6 +959,16 @@ static NODE *string_offset (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *strings_are_equal (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	ret->v.xval = (strcmp(l->v.str, r->v.str) == 0);
+    }
+
+    return ret;
+}
 
 /* try interpreting the string on the right as identifying
    an observation number */
@@ -1043,14 +1053,14 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 static int op_symbol (int op)
 {
     switch (op) {
-    case DOTMULT: return '*';
-    case DOTDIV:  return '/';
-    case DOTPOW:  return '^';
-    case DOTADD:  return '+';
-    case DOTSUB:  return '-';
-    case DOTEQ:   return '=';
-    case DOTGT:   return '>';
-    case DOTLT:   return '<';
+    case B_DOTMULT: return '*';
+    case B_DOTDIV:  return '/';
+    case B_DOTPOW:  return '^';
+    case B_DOTADD:  return '+';
+    case B_DOTSUB:  return '-';
+    case B_DOTEQ:   return '=';
+    case B_DOTGT:   return '>';
+    case B_DOTLT:   return '<';
     default: return 0;
     }
 }
@@ -1070,7 +1080,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 
     if (gretl_is_null_matrix(A) ||
 	gretl_is_null_matrix(B)) {
-	if (op != MCCAT && op != MRCAT) {
+	if (op != B_MCCAT && op != B_MRCAT) {
 	    *err = E_NONCONF;
 	    return NULL;
 	}
@@ -1104,10 +1114,10 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    }
 	}
 	break;
-    case MCCAT:
+    case B_MCCAT:
 	C = gretl_matrix_col_concat(A, B, err);
 	break;
-    case MRCAT:
+    case B_MRCAT:
 	C = gretl_matrix_row_concat(A, B, err);
 	break;
     case B_MUL:
@@ -1144,7 +1154,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 					     C, GRETL_MOD_NONE);
 	}	
 	break;
-    case QFORM:
+    case F_QFORM:
 	/* quadratic form, A * B * A', for symmetric B */
 	ra = gretl_matrix_rows(A);
 	ca = gretl_matrix_cols(A);
@@ -1189,31 +1199,31 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    }
 	}
 	break;
-    case DOTMULT:
-    case DOTDIV:
-    case DOTPOW:
-    case DOTADD:
-    case DOTSUB:
-    case DOTEQ:
-    case DOTGT:
-    case DOTLT:
+    case B_DOTMULT:
+    case B_DOTDIV:
+    case B_DOTPOW:
+    case B_DOTADD:
+    case B_DOTSUB:
+    case B_DOTEQ:
+    case B_DOTGT:
+    case B_DOTLT:
 	/* apply operator element-wise */
 	C = gretl_matrix_dot_op(A, B, op_symbol(op), err);
 	break;
-    case KRON:
+    case B_KRON:
 	/* Kronecker product */
 	C = gretl_matrix_kronecker_product_new(A, B, err);
 	break;
-    case CMULT:
+    case F_CMULT:
 	C = gretl_matrix_complex_multiply(A, B, err);
 	break;
-    case CDIV:
+    case F_CDIV:
 	C = gretl_matrix_complex_divide(A, B, err);
 	break;
-    case MRSEL:
+    case F_MRSEL:
 	C = gretl_matrix_bool_sel(A, B, 1, err);
 	break;
-    case MCSEL:
+    case F_MCSEL:
 	C = gretl_matrix_bool_sel(A, B, 0, err);
 	break;
     default:
@@ -1323,7 +1333,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 {
     NODE *ret = NULL;
 
-    if (op == KRON) {
+    if (op == B_KRON) {
 	p->err = E_TYPES;
 	return NULL;
     }
@@ -1627,29 +1637,29 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
     if (ret != NULL && starting(p)) {
 
 	switch (f) {
-	case ROWS:
+	case F_ROWS:
 	    ret->v.xval = m->rows;
 	    break;
-	case COLS:
+	case F_COLS:
 	    ret->v.xval = m->cols;
 	    break;
-	case DET:
-	case LDET:
+	case F_DET:
+	case F_LDET:
 	    ret->v.xval = user_matrix_get_determinant(m, f, &p->err);
 	    break;
-	case TRACE:
+	case F_TRACE:
 	    ret->v.xval = gretl_matrix_trace(m, &p->err);
 	    break;
-	case NORM1:
+	case F_NORM1:
 	    ret->v.xval = gretl_matrix_one_norm(m);
 	    break;
-	case INFNORM:
+	case F_INFNORM:
 	    ret->v.xval = gretl_matrix_infinity_norm(m);
 	    break;
-	case RCOND:
+	case F_RCOND:
 	    ret->v.xval = gretl_matrix_rcond(m, &p->err);
 	    break;
-	case RANK:
+	case F_RANK:
 	    ret->v.xval = gretl_matrix_rank(m, &p->err);
 	    break;
 	default:
@@ -1681,9 +1691,9 @@ static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
 
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
-    *mm = (f == MAXR || f == MAXC || f == IMAXR || f == IMAXC);
-    *rc = (f == MINC || f == MAXC || f == IMINC || f == IMAXC);
-    *idx = (f == IMINR || f == IMINC || f == IMAXR || f == IMAXC);
+    *mm = (f == F_MAXR || f == F_MAXC || f == F_IMAXR || f == F_IMAXC);
+    *rc = (f == F_MINC || f == F_MAXC || f == F_IMINC || f == F_IMAXC);
+    *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 
 static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
@@ -1702,83 +1712,83 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	gretl_error_clear();
 
 	switch (f) {
-	case SUMC:
+	case F_SUMC:
 	    ret->v.m = gretl_matrix_column_sum(m, &p->err);
 	    break;
-	case SUMR:
+	case F_SUMR:
 	    ret->v.m = gretl_matrix_row_sum(m, &p->err);
 	    break;
-	case MEANC:
+	case F_MEANC:
 	    ret->v.m = gretl_matrix_column_mean(m, &p->err);
 	    break;
-	case MEANR:
+	case F_MEANR:
 	    ret->v.m = gretl_matrix_row_mean(m, &p->err);
 	    break;
-	case SD:
+	case F_SD:
 	    ret->v.m = gretl_matrix_column_sd(m, &p->err);
 	    break;
-	case MCOV:
+	case F_MCOV:
 	    ret->v.m = gretl_covariance_matrix(m, 0, &p->err);
 	    break;
-	case MCORR:
+	case F_MCORR:
 	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
 	    break;
-	case CUM:
+	case F_CUM:
 	    ret->v.m = gretl_matrix_cumcol(m, &p->err);
 	    break;
-	case DIF:
+	case F_DIFF:
 	    ret->v.m = gretl_matrix_diffcol(m, 0, &p->err);
 	    break;
-	case RESAMPLE:
+	case F_RESAMPLE:
 	    ret->v.m = gretl_matrix_resample(m, 0, &p->err);
 	    break;
-	case CDEMEAN:
-	case CHOL:
-	case INV:
-	case INVPD:
-	case GINV:
-	case UPPER:
-	case LOWER:
+	case F_CDEMEAN:
+	case F_CHOL:
+	case F_INV:
+	case F_INVPD:
+	case F_GINV:
+	case F_UPPER:
+	case F_LOWER:
 	    ret->v.m = user_matrix_matrix_func(m, f, &p->err);
 	    break;
-	case DIAG:
+	case F_DIAG:
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
 	    break;
-	case TRANSP:
+	case F_TRANSP:
 	    ret->v.m = gretl_matrix_copy_transpose(m);
 	    break;
-	case TVEC:
+	case F_VEC:
 	    ret->v.m = user_matrix_vec(m, &p->err);
 	    break;
-	case VECH:
+	case F_VECH:
 	    ret->v.m = user_matrix_vech(m, &p->err);
 	    break;
-	case UNVECH:
+	case F_UNVECH:
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
-	case NULLSPC:
+	case F_NULLSPC:
 	    ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
 	    break;
-	case MEXP:
+	case F_MEXP:
 	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
-	case FFT:
+	case F_FFT:
 	    ret->v.m = gretl_matrix_fft(m, &p->err);
 	    break;
-	case FFTI:
+	case F_FFTI:
 	    ret->v.m = gretl_matrix_ffti(m, &p->err);
 	    break;
-	case POLROOTS:
+	case F_POLROOTS:
 	    ret->v.m = gretl_matrix_polroots(m, &p->err);
 	    break;
-	case MINC:
-	case MAXC:
-	case MINR:
-	case MAXR:
-	case IMINC:
-	case IMAXC:
-	case IMINR:
-	case IMAXR:  
+	case F_MINC:
+	case F_MAXC:
+	case F_MINR:
+	case F_MAXR:
+	case F_IMINC:
+	case F_IMAXC:
+	case F_IMINR:
+	case F_IMAXR:  
 	    matrix_minmax_indices(f, &a, &b, &c);
 	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
 	    break;
@@ -1809,7 +1819,7 @@ static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
 	gretl_error_clear();
 
 	switch (f) {
-	case MREAD:
+	case F_MREAD:
 	    ret->v.m = gretl_matrix_read_from_text(n->v.str, &p->err);
 	    break;
 	default:
@@ -1855,13 +1865,13 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	}
 
 	switch (f) {
-	case QR:
+	case F_QR:
 	    ret->v.m = user_matrix_QR_decomp(m, rname, &p->err);
 	    break;
-	case EIGSYM:
+	case F_EIGSYM:
 	    ret->v.m = user_matrix_eigen_analysis(m, rname, 1, &p->err);
 	    break;
-	case EIGGEN:
+	case F_EIGGEN:
 	    ret->v.m = user_matrix_eigen_analysis(m, rname, 0, &p->err);
 	    break;
 	}
@@ -1880,7 +1890,7 @@ static int ok_matrix_dim (double xr, double xc, int f)
 {
     double xm, imax = (double) INT_MAX;
 
-    if (f == SEQ) {
+    if (f == F_SEQ) {
 	/* negative parameters are OK */
 	return (fabs(xr) < imax && 
 		fabs(xc) < imax);
@@ -1888,8 +1898,8 @@ static int ok_matrix_dim (double xr, double xc, int f)
 
     xm = xr * xc;
 
-    if (f == IMAT || f == ZEROS || f == ONES || f == MUNIF || \
-	f == MNORM) {
+    if (f == F_IMAT || f == F_ZEROS || f == F_ONES || f == F_MUNIF || \
+	f == F_MNORM) {
 	/* zero is OK for matrix creation functions, which then 
 	   return an empty matrix 
 	*/
@@ -1909,7 +1919,7 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	double xr = l->v.xval;
-	double xc = (f == IMAT)? l->v.xval : r->v.xval;
+	double xc = (f == F_IMAT)? l->v.xval : r->v.xval;
 	int rows, cols;
 
 	gretl_error_clear();
@@ -1924,23 +1934,23 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	cols = xc;
 
 	switch (f) {
-	case IMAT:
+	case F_IMAT:
 	    ret->v.m = gretl_identity_matrix_new(rows);
 	    break;
-	case ZEROS:
+	case F_ZEROS:
 	    ret->v.m = gretl_zero_matrix_new(rows, cols);
 	    break;
-	case ONES:
+	case F_ONES:
 	    ret->v.m = gretl_unit_matrix_new(rows, cols);
 	    break;
-	case SEQ:
+	case F_SEQ:
 	    ret->v.m = gretl_matrix_seq(rows, cols);
 	    break;
-	case MUNIF:
+	case F_MUNIF:
 	    ret->v.m = gretl_random_matrix_new(rows, cols, 
 					       D_UNIFORM);
 	    break;
-	case MNORM:
+	case F_MNORM:
 	    ret->v.m = gretl_random_matrix_new(rows, cols,
 					       D_NORMAL);
 	    break;
@@ -2110,10 +2120,10 @@ static double real_apply_func (double x, int f, parser *p)
 
     if (xna(x)) {
 	switch (f) {
-	case MISSING:
+	case F_MISSING:
 	    return 1.0;
-	case OK:
-	case MISSZERO:
+	case F_DATAOK:
+	case F_MISSZERO:
 	    return 0.0;
 	default:
 	    return NADBL;
@@ -2127,73 +2137,73 @@ static double real_apply_func (double x, int f, parser *p)
 	return x;
     case U_NOT:
 	return x == 0;
-    case ABS:
+    case F_ABS:
 	return fabs(x);
-    case TOINT:
+    case F_TOINT:
 	return (double) (int) x;
-    case CEIL:
+    case F_CEIL:
 	return ceil(x);
-    case FLOOR:
+    case F_FLOOR:
 	return floor(x);
-    case ROUND:
+    case F_ROUND:
 	if (x < 0) {
 	    return (x - floor(x) <= 0.5)? floor(x) : ceil(x);
 	} else {
 	    return (x - floor(x) < 0.5)? floor(x) : ceil(x);
 	}
-    case SIN:
+    case F_SIN:
 	return sin(x);
-    case COS:
+    case F_COS:
 	return cos(x);
-    case TAN:
+    case F_TAN:
 	return tan(x);
-    case ASIN:
+    case F_ASIN:
 	return asin(x);
-    case ACOS:
+    case F_ACOS:
 	return acos(x);
-    case ATAN:
+    case F_ATAN:
 	return atan(x);
-    case CNORM:
+    case F_CNORM:
 	return normal_cdf(x);
-    case DNORM:
+    case F_DNORM:
 	return normal_pdf(x);
-    case QNORM:
+    case F_QNORM:
 	return normal_cdf_inverse(x);
-    case GAMMA:
+    case F_GAMMA:
 	return cephes_gamma(x);
-    case LNGAMMA:
+    case F_LNGAMMA:
 	return cephes_lgamma(x);
-    case MISSING:
+    case F_MISSING:
 	return 0.0;
-    case OK:
+    case F_DATAOK:
 	return 1.0;
-    case MISSZERO:
+    case F_MISSZERO:
 	return x;
-    case ZEROMISS:
+    case F_ZEROMISS:
 	return (x == 0.0)? NADBL : x;
-    case SQRT:
+    case F_SQRT:
 	y = sqrt(x);
 	if (errno) {
-	    eval_warning(p, SQRT);
+	    eval_warning(p, F_SQRT);
 	}
 	return y;
-    case LOG:
-    case LOG10:
-    case LOG2:
+    case F_LOG:
+    case F_LOG10:
+    case F_LOG2:
 	y = log(x);
-	if (f == LOG10 && !errno) {
+	if (f == F_LOG10 && !errno) {
 	    y /= log(10.0);
-	} else if (f == LOG2 && !errno) {
+	} else if (f == F_LOG2 && !errno) {
 	    y /= log(2.0);
 	}
 	if (errno) {
-	    eval_warning(p, LOG);
+	    eval_warning(p, F_LOG);
 	}
 	return y;
-    case EXP:
+    case F_EXP:
 	y = exp(x);
 	if (errno) {
-	    eval_warning(p, EXP);
+	    eval_warning(p, F_EXP);
 	}
 	return y;
     default:
@@ -2239,7 +2249,7 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_lvec_node(p);
 
     if (ret != NULL && starting(p)) {
-	NODE *ln = (f == LLAG)? r : l;
+	NODE *ln = (f == F_LLAG)? r : l;
 	int *list = NULL;
 	int order;
 
@@ -2256,11 +2266,11 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = E_ALLOC;
 	} else {
 	    switch (f) {
-	    case LLAG:
+	    case F_LLAG:
 		order = l->v.xval;
 		p->err = list_laggenr(&list, order, p->Z, p->dinfo);
 		break;
-	    case DUMIFY:
+	    case F_DUMIFY:
 		p->err = list_dumgenr(&list, p->Z, p->dinfo, OPT_F);
 		break;
 	    default:
@@ -2274,8 +2284,9 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-#define ok_list_func(f) (f == LOG || f == DIF || \
-			 f == LDIF || f == SDIF || f == XPX)
+#define ok_list_func(f) (f == F_LOG || f == F_DIFF || \
+			 f == F_LDIFF || f == F_SDIFF || \
+			 f == F_XPX)
 
 /* functions that are "basically" for series, but which
    can also be applied to lists */
@@ -2297,18 +2308,18 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 
 	if (list != NULL) {
 	    switch (f) {
-	    case LOG:
+	    case F_LOG:
 		p->err = list_loggenr(list, p->Z, p->dinfo);
 		break;
-	    case DIF:
-	    case LDIF:
-	    case SDIF:
-		if (f == DIF) t = DIFF;
-		else if (f == LDIF) t = LDIFF;
-		else if (f == SDIF) t = SDIFF;
+	    case F_DIFF:
+	    case F_LDIFF:
+	    case F_SDIFF:
+		if (f == F_DIFF) t = DIFF;
+		else if (f == F_LDIFF) t = LDIFF;
+		else if (f == F_SDIFF) t = SDIFF;
 		p->err = list_diffgenr(list, t, p->Z, p->dinfo);
 		break;
-	    case XPX:
+	    case F_XPX:
 		p->err = list_xpxgenr(&list, p->Z, p->dinfo, OPT_O);
 		break;
 	    default:
@@ -2626,14 +2637,14 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	double y = 0.0;
 	int v = 0;
 
-	if (f == RPOISSON) {
+	if (f == F_RPOISSON) {
 	    if (l->t == VEC) {
 		vx = getvec(l, p);
 		v = 1;
 	    } else {
 		x = l->v.xval;
 	    }
-	} else if (f == RUNIFORM || f == RNORMAL) {
+	} else if (f == F_RUNIFORM || f == F_RNORMAL) {
 	    x = (l->t == EMPTY)? NADBL : l->v.xval;
 	    y = (r->t == EMPTY)? NADBL : r->v.xval;
 	} else {
@@ -2641,19 +2652,19 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	switch (f) {
-	case RUNIFORM:
+	case F_RUNIFORM:
 	    p->err = gretl_rand_uniform_minmax(ret->v.xvec, 
 					       p->dinfo->t1, 
 					       p->dinfo->t2,
 					       x, y);
 	    break;
-	case RNORMAL:
+	case F_RNORMAL:
 	    p->err = gretl_rand_normal_full(ret->v.xvec, 
 					    p->dinfo->t1, 
 					    p->dinfo->t2,
 					    x, y);
 	    break;
-	case RPOISSON:
+	case F_RPOISSON:
 	    gretl_rand_poisson(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
 			       (v)? vx : &x, v);
 	    break;
@@ -2677,10 +2688,10 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	const double *y = getvec(r, p);
 
 	switch (f) {
-	case COR:
+	case F_COR:
 	    ret->v.xval = gretl_corr(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
 	    break;
-	case COV:
+	case F_COV:
 	    ret->v.xval = gretl_covar(p->dinfo->t1, p->dinfo->t2, x, y);
 	    break;
 	default:
@@ -2722,7 +2733,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	const char *s = n->v.str;
 
 	ret->v.xval = NADBL;
-	if (f == ISSERIES) {
+	if (f == F_ISSERIES) {
 	    int v = varindex(p->dinfo, s);
 
 	    if (v < p->dinfo->v) {
@@ -2730,17 +2741,17 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    } else {
 		ret->v.xval = 0;
 	    }
-	} else if (f == ISLIST || f == LISTLEN) {
+	} else if (f == F_ISLIST || f == F_LISTLEN) {
 	    int *list = get_list_by_name(s);
 
 	    if (list != NULL) {
-		ret->v.xval = (f == ISLIST)? 1.0 : list[0];
-	    } else if (f == ISLIST) {
+		ret->v.xval = (f == F_ISLIST)? 1.0 : list[0];
+	    } else if (f == F_ISLIST) {
 		ret->v.xval = 0;
 	    }
-	} else if (f == ISSTRING) {
+	} else if (f == F_ISSTRING) {
 	    ret->v.xval = string_is_defined(s);
-	} else if (f == ISNULL) {
+	} else if (f == F_ISNULL) {
 	    ret->v.xval = 1;
 	    if (varindex(p->dinfo, s) < p->dinfo->v) {
 		ret->v.xval = 0.0;
@@ -2749,12 +2760,14 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    } else if (get_list_by_name(s)) {
 		ret->v.xval = 0.0;
 	    } 
-	} else if (f == OBSNUM) {
+	} else if (f == F_OBSNUM) {
 	    int t = get_observation_number(s, p->dinfo);
 
 	    if (t > 0) {
 		ret->v.xval = t;
 	    }
+	} else if (f == F_STRLEN) {
+	    ret->v.xval = strlen(s);
 	}
     }
 
@@ -2777,14 +2790,25 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *get_obs_label (NODE *n, parser *p)
+static NODE *int_to_string_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	int t = n->v.xval;
+	int i = n->v.xval;
 
-	ret->v.str = retrieve_date_string(t, p->dinfo, &p->err);
+	if (f == F_OBSLABEL) {
+	    ret->v.str = retrieve_date_string(i, p->dinfo, &p->err);
+	} else if (f == F_VARNAME) {
+	    if (i >= 0 && i < p->dinfo->v) {
+		ret->v.str = gretl_strdup(p->dinfo->varname[i]);
+	    } else {
+		p->err = E_DATA;
+	    }
+	} else {
+	    p->err = E_DATA;
+	}
+
 	if (!p->err && ret->v.str == NULL) {
 	    p->err = E_ALLOC;
 	} 	
@@ -2800,13 +2824,13 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *s = n->v.str;
 
-	if (f == S_GETENV) {
+	if (f == F_GETENV) {
 	    ret->v.str = gretl_getenv(s, &p->err);
-	} else if (f == S_ARGNAME) {
+	} else if (f == F_ARGNAME) {
 	    ret->v.str = gretl_func_get_arg_name(s, &p->err);
-	} else if (f == S_READFILE) {
+	} else if (f == F_READFILE) {
 	    ret->v.str = retrieve_file_content(s, &p->err);
-	} else if (f == S_BACKTICK) {
+	} else if (f == F_BACKTICK) {
 	    ret->v.str = gretl_backtick(s, &p->err);
 	} else {
 	    p->err = E_DATA;
@@ -2829,7 +2853,7 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	const char *sr = r->v.str;
 	char *sret;
 
-	if (f == S_STRSTR) {
+	if (f == F_STRSTR) {
 	    sret = strstr(sl, sr);
 	    if (sret != NULL) {
 		ret->v.str = gretl_strdup(sret);
@@ -2885,7 +2909,7 @@ static int series_get_end (int n, const double *x)
     return t + 1;
 }
 
-#define series_cast_optional(f) (f == SD) 
+#define series_cast_optional(f) (f == F_SD) 
 
 static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, parser *p)
 {
@@ -2919,7 +2943,7 @@ series_scalar_func (NODE *n, int f, parser *p)
 	if (n->t == MAT) {
 	    cast_to_series(n, f, &tmp, p);
 	    if (p->err) {
-		if (f == SD) {
+		if (f == F_SD) {
 		    /* offer column s.d. instead */
 		    p->err = 0;
 		    return matrix_to_matrix_func(n, f, p);
@@ -2932,40 +2956,40 @@ series_scalar_func (NODE *n, int f, parser *p)
 	x = getvec(n, p);
 
 	switch (f) {
-	case SUM:
+	case F_SUM:
 	    ret->v.xval = gretl_sum(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case MEAN:
+	case F_MEAN:
 	    ret->v.xval = gretl_mean(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case SD:
+	case F_SD:
 	    ret->v.xval = gretl_stddev(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case VCE:
+	case F_VCE:
 	    ret->v.xval = gretl_variance(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case SST:
+	case F_SST:
 	    ret->v.xval = gretl_sst(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case MIN:
+	case F_MIN:
 	    ret->v.xval = gretl_min(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case MAX: 
+	case F_MAX: 
 	    ret->v.xval = gretl_max(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case MEDIAN:
+	case F_MEDIAN:
 	    ret->v.xval = gretl_median(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case GINI:
+	case F_GINI:
 	    ret->v.xval = gretl_gini(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case NOBS:
+	case F_NOBS:
 	    ret->v.xval = series_get_nobs(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case T1:
+	case F_T1:
 	    ret->v.xval = series_get_start(p->dinfo->n, x);
 	    break;
-	case T2:
+	case F_T2:
 	    ret->v.xval = series_get_end(p->dinfo->n, x);
 	    break;
 	default:
@@ -2995,7 +3019,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	const double *xvec;
 
 	if (l->t == MAT) {
-	    if (f == QUANTILE) {
+	    if (f == F_QUANTILE) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL) {
 		    ret->v.m = gretl_matrix_quantiles(l->v.m, r->v.xval,
@@ -3018,11 +3042,11 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	xvec = getvec(l, p);
 
 	switch (f) {
-	case LRVAR:
+	case F_LRVAR:
 	    ret->v.xval = gretl_long_run_variance(p->dinfo->t1, p->dinfo->t2, 
 						  xvec, (int) (r->v.xval));
 	    break;
-	case QUANTILE:
+	case F_QUANTILE:
 	    ret->v.xval = gretl_quantile(p->dinfo->t1, p->dinfo->t2, xvec, 
 					 r->v.xval);
 	    break;
@@ -3205,7 +3229,7 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
 		} else {
 		    double *x = ret->v.m->val;
 
-		    qsort(x, n, sizeof *x, (f == SORT)? gretl_compare_doubles :
+		    qsort(x, n, sizeof *x, (f == F_SORT)? gretl_compare_doubles :
 			  gretl_inverse_compare_doubles);
 		}
 	    } else {
@@ -3259,7 +3283,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
-    if (f == SDIF && !dataset_is_seasonal(p->dinfo)) {
+    if (f == F_SDIFF && !dataset_is_seasonal(p->dinfo)) {
 	p->err = E_PDWRONG;
 	return NULL;
     } else {
@@ -3282,37 +3306,37 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	y = ret->v.xvec;
 
 	switch (f) {
-	case HPFILT:
+	case F_HPFILT:
 	    p->err = hp_filter(x, y, p->dinfo, OPT_NONE);
 	    break;
-	case BKFILT:
+	case F_BKFILT:
 	    p->err = bkbp_filter(x, y, p->dinfo);
 	    break;
-	case FRACDIF:
+	case F_FRACDIFF:
 	    p->err = fracdiff_series(x, y, r->v.xval, p->dinfo);
 	    break;
-	case DIF:
-	case LDIF:
-	case SDIF:
+	case F_DIFF:
+	case F_LDIFF:
+	case F_SDIFF:
 	    p->err = diff_series(x, y, f, p->dinfo); 
 	    break;
-	case ODEV:
+	case F_ODEV:
 	    p->err = orthdev_series(x, y, p->dinfo); 
 	    break;
-	case CUM:
+	case F_CUM:
 	    p->err = cum_series(x, y, p->dinfo); 
 	    break;
-	case RESAMPLE:
+	case F_RESAMPLE:
 	    p->err = resample_series(x, y, p->dinfo); 
 	    break;
-	case PMEAN:
+	case F_PMEAN:
 	    p->err = panel_mean_series(x, y, p->dinfo); 
 	    break;
-	case PSD:
+	case F_PSD:
 	    p->err = panel_sd_series(x, y, p->dinfo); 
 	    break;
-	case RANKING:
-	    p->err = rank_series(x, y, SORT, p->dinfo); 
+	case F_RANKING:
+	    p->err = rank_series(x, y, F_SORT, p->dinfo); 
 	    break;
 	default:
 	    break;
@@ -3766,12 +3790,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     gretl_matrix *m = NULL;
     int i, k = n->v.bn.n_nodes;
 
-    if (t->t == MSHAPE || t->t == TRIMR) {
+    if (t->t == F_MSHAPE || t->t == F_TRIMR) {
 	gretl_matrix *A = NULL;
 	int r = 0, c = 0;
 
 	if (k != 3) {
-	    n_args_error(k, 3, (t->t == MSHAPE)? "mshape" : "trimr", p);
+	    n_args_error(k, 3, (t->t == F_MSHAPE)? "mshape" : "trimr", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -3794,13 +3818,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    if (t->t == MSHAPE) {
+	    if (t->t == F_MSHAPE) {
 		m = gretl_matrix_shape(A, r, c);
 	    } else {
 		m = gretl_matrix_trim_rows(A, r, c, &p->err);
 	    }
 	}
-    } else if (t->t == SVD) {
+    } else if (t->t == F_SVD) {
 	gretl_matrix *A = NULL;
 	const char *lname = NULL;
 	const char *rname = NULL;
@@ -3840,7 +3864,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = user_matrix_SVD(A, lname, rname, &p->err);
 	}
-    } else if (t->t == MOLS) {
+    } else if (t->t == F_MOLS) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
 	const char *Uname = NULL;
@@ -3880,7 +3904,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = user_matrix_ols(Y, X, Uname, &p->err);
 	}
-    } else if (t->t == FILTER) {
+    } else if (t->t == F_FILTER) {
 	const double *x = NULL;
 	gretl_matrix *A = NULL;
 	gretl_matrix *C = NULL;
@@ -3933,7 +3957,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
     }	
 
-    if (t->t != FILTER) {
+    if (t->t != F_FILTER) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -4760,6 +4784,8 @@ static NODE *eval (NODE *t, parser *p)
 	*/
 	if (t->t == B_ADD && l->t == STR && r->t == NUM) {
 	    ret = string_offset(l, r, p);
+	} else if (t->t == B_EQ && l->t == STR && r->t == STR) {
+	    ret = strings_are_equal(l, r, p);
 	} else if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
 	} else if ((l->t == VEC && r->t == VEC) ||
@@ -4801,14 +4827,14 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES; 
 	}
 	break;
-    case DOTMULT:
-    case DOTDIV:
-    case DOTPOW:
-    case DOTADD:
-    case DOTSUB:
-    case DOTEQ:
-    case DOTGT:
-    case DOTLT:
+    case B_DOTMULT:
+    case B_DOTDIV:
+    case B_DOTPOW:
+    case B_DOTADD:
+    case B_DOTSUB:
+    case B_DOTEQ:
+    case B_DOTGT:
+    case B_DOTLT:
 	/* matrix-matrix or matrix-scalar binary operators */
 	if ((l->t == MAT && r->t == MAT) ||
 	    (l->t == MAT && r->t == NUM) ||
@@ -4821,14 +4847,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
 	}
 	break;
-    case KRON:
-    case MCCAT:
-    case MRCAT:
-    case QFORM:
-    case CMULT:
-    case CDIV:
-    case MRSEL:
-    case MCSEL:
+    case B_KRON:
+    case B_MCCAT:
+    case B_MRCAT:
+    case F_QFORM:
+    case F_CMULT:
+    case F_CDIV:
+    case F_MRSEL:
+    case F_MCSEL:
 	/* matrix-only binary operators (but promote scalars) */
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {
@@ -4837,14 +4863,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
 	}
 	break;
-    case MLAG:
+    case F_MLAG:
 	if (l->t == MAT && r->t == NUM) {
 	    ret = matrix_lag(l, r, p);
 	} else {
 	    p->err = E_TYPES; 
 	}
 	break;
-    case LLAG:
+    case F_LLAG:
 	if (l->t == NUM && ok_list_node(r)) {
 	    ret = list_gen_func(l, r, t->t, p);
 	} else {
@@ -4854,27 +4880,27 @@ static NODE *eval (NODE *t, parser *p)
     case U_NEG: 
     case U_POS:
     case U_NOT:
-    case ABS:
-    case TOINT:
-    case CEIL:
-    case FLOOR:
-    case ROUND:
-    case SIN:
-    case COS:
-    case TAN:
-    case ASIN:
-    case ACOS:
-    case ATAN:
-    case LOG:
-    case LOG10:
-    case LOG2:
-    case EXP:
-    case SQRT:
-    case CNORM:
-    case DNORM:
-    case QNORM:
-    case GAMMA:
-    case LNGAMMA:
+    case F_ABS:
+    case F_TOINT:
+    case F_CEIL:
+    case F_FLOOR:
+    case F_ROUND:
+    case F_SIN:
+    case F_COS:
+    case F_TAN:
+    case F_ASIN:
+    case F_ACOS:
+    case F_ATAN:
+    case F_LOG:
+    case F_LOG10:
+    case F_LOG2:
+    case F_EXP:
+    case F_SQRT:
+    case F_CNORM:
+    case F_DNORM:
+    case F_QNORM:
+    case F_GAMMA:
+    case F_LNGAMMA:
 	/* functions taking one argument, any type */
 	if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
@@ -4882,13 +4908,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
-	} else if (ok_list_node(l) && t->t == LOG) {
+	} else if (ok_list_node(l) && t->t == F_LOG) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
 	break;
-    case DUMIFY:
+    case F_DUMIFY:
 	/* series or list argument */ 
 	if (ok_list_node(l)) {
 	    ret = list_gen_func(l, NULL, t->t, p);
@@ -4896,9 +4922,9 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case MISSING:
-    case MISSZERO:
-    case ZEROMISS:
+    case F_MISSING:
+    case F_MISSZERO:
+    case F_ZEROMISS:
 	/* one series or scalar argument needed */
 	if (l->t == VEC) {
 	    ret = apply_series_func(l, t->t, p);
@@ -4908,7 +4934,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	}
 	break;
-    case OK:
+    case F_DATAOK:
 	/* series, scalar or list argument needed */
 	if (l->t == VEC) {
 	    ret = apply_series_func(l, t->t, p);
@@ -4920,7 +4946,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	}
 	break;
-    case MAKEMASK:
+    case F_MAKEMASK:
 	/* one series argument needed: vector output */
 	if (l->t == VEC) {
 	    ret = make_series_mask(l, p);
@@ -4934,7 +4960,7 @@ static NODE *eval (NODE *t, parser *p)
 	    break;
 	}
     case OBS:
-    case MOVAVG:
+    case F_MOVAVG:
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, VEC, l, p);
@@ -4944,7 +4970,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_lag(l, r, p); 
 	} else if (t->t == OBS) {
 	    ret = series_obs(l, r, p); 
-	} else if (t->t == MOVAVG) {
+	} else if (t->t == F_MOVAVG) {
 	    ret = series_movavg(l, r, p); 
 	}
 	break;
@@ -4961,8 +4987,8 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix sub-slice, x:y or lag range 'p to q' */
 	ret = process_subslice(l, r, p);
 	break;
-    case LDIF:
-    case SDIF:
+    case F_LDIFF:
+    case F_SDIFF:
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (ok_list_node(l)) {
@@ -4971,13 +4997,13 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;
-    case ODEV:
-    case HPFILT:
-    case BKFILT:
-    case FRACDIF:
-    case PMEAN:
-    case PSD:
-    case RANKING:
+    case F_ODEV:
+    case F_HPFILT:
+    case F_BKFILT:
+    case F_FRACDIFF:
+    case F_PMEAN:
+    case F_PSD:
+    case F_RANKING:
 	/* series argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
@@ -4985,26 +5011,26 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;
-    case CUM:
-    case DIF:
-    case RESAMPLE:
+    case F_CUM:
+    case F_DIFF:
+    case F_RESAMPLE:
 	/* series or matrix argument */
 	if (l->t == VEC) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);
-	} else if (ok_list_node(l) && t->t == DIF) {
+	} else if (ok_list_node(l) && t->t == F_DIFF) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	}
 	break;
-    case SORT:
-    case DSORT:
-    case VALUES:
+    case F_SORT:
+    case F_DSORT:
+    case F_VALUES:
 	/* series or vector argument needed */
 	if (l->t == VEC || l->t == MAT) {
-	    if (t->t == VALUES) {
+	    if (t->t == F_VALUES) {
 		ret = vector_values(l, p);
 	    } else {
 		ret = vector_sort(l, t->t, p);
@@ -5013,22 +5039,22 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;
-    case SUM:
-    case MEAN:
-    case SD:
-    case VCE:
-    case SST:
-    case MIN:
-    case MAX:
-    case MEDIAN:
-    case GINI:
-    case NOBS:
-    case T1:
-    case T2:
+    case F_SUM:
+    case F_MEAN:
+    case F_SD:
+    case F_VCE:
+    case F_SST:
+    case F_MIN:
+    case F_MAX:
+    case F_MEDIAN:
+    case F_GINI:
+    case F_NOBS:
+    case F_T1:
+    case F_T2:
 	/* functions taking series arg, returning scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_scalar_func(l, t->t, p);
-	} else if ((t->t == MEAN || t->t == SD || t->t == VCE)
+	} else if ((t->t == F_MEAN || t->t == F_SD || t->t == F_VCE)
 		   && ok_list_node(l)) {
 	    /* list -> series also acceptable for these cases */
 	    ret = list_to_series_func(l, t->t, p);
@@ -5036,8 +5062,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;	
-    case LRVAR:
-    case QUANTILE:	
+    case F_LRVAR:
+    case F_QUANTILE:	
 	/* takes series and scalar arg, returns scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    if (r->t == NUM) {
@@ -5049,8 +5075,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	}
 	break;
-    case RUNIFORM:
-    case RNORMAL:
+    case F_RUNIFORM:
+    case F_RNORMAL:
 	/* functions taking zero or two scalars as args */
 	if (l->t == NUM && r->t == NUM) {
 	    ret = series_fill_func(l, r, t->t, p);
@@ -5060,7 +5086,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, NUM, (l->t == NUM)? r : l, p);
 	} 
 	break;
-    case RPOISSON:
+    case F_RPOISSON:
 	/* one arg: scalar or series */
 	if (l->t == NUM || l->t == VEC) {
 	    ret = series_fill_func(l, NULL, t->t, p);
@@ -5068,8 +5094,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;
-    case COR:
-    case COV:
+    case F_COR:
+    case F_COV:
 	/* functions taking two series as args */
 	if (l->t == VEC && r->t == VEC) {
 	    ret = series_2_func(l, r, t->t, p);
@@ -5077,7 +5103,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
 	} 
 	break;
-    case MXTAB:
+    case F_MXTAB:
 	/* functions taking two series or matrices as args and returning 
 	   a matrix */
 	if ((l->t == VEC && r->t == VEC) || (l->t == MAT && r->t == MAT)) {
@@ -5086,7 +5112,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
 	} 
 	break;
-    case SORTBY:
+    case F_SORTBY:
 	/* takes two series as args, returns series */
 	if (l->t == VEC && r->t == VEC) {
 	    ret = series_sort_by(l, r, p);
@@ -5094,12 +5120,12 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
 	} 
 	break;	
-    case IMAT:
-    case ZEROS:
-    case ONES:
-    case SEQ:
-    case MUNIF:
-    case MNORM:
+    case F_IMAT:
+    case F_ZEROS:
+    case F_ONES:
+    case F_SEQ:
+    case F_MUNIF:
+    case F_MNORM:
 	/* matrix-creation functions */
 	if (l->t != NUM || (r != NULL && r->t != NUM)) {
 	    node_type_error(t->t, NUM, NULL, p);
@@ -5107,37 +5133,37 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_fill_func(l, r, t->t, p);
 	}
 	break;
-    case SUMC:
-    case SUMR:
-    case MEANC:
-    case MEANR:
-    case MCOV:
-    case MCORR:
-    case CDEMEAN:
-    case CHOL:
-    case INV:
-    case INVPD:
-    case GINV:
-    case DIAG:
-    case TRANSP:
-    case TVEC:
-    case VECH:
-    case UNVECH:
-    case UPPER:
-    case LOWER:
-    case NULLSPC:
-    case MEXP:
-    case MINC:
-    case MAXC:
-    case MINR:
-    case MAXR:
-    case IMINC:
-    case IMAXC:
-    case IMINR:
-    case IMAXR: 
-    case FFT:
-    case FFTI:
-    case POLROOTS:
+    case F_SUMC:
+    case F_SUMR:
+    case F_MEANC:
+    case F_MEANR:
+    case F_MCOV:
+    case F_MCORR:
+    case F_CDEMEAN:
+    case F_CHOL:
+    case F_INV:
+    case F_INVPD:
+    case F_GINV:
+    case F_DIAG:
+    case F_TRANSP:
+    case F_VEC:
+    case F_VECH:
+    case F_UNVECH:
+    case F_UPPER:
+    case F_LOWER:
+    case F_NULLSPC:
+    case F_MEXP:
+    case F_MINC:
+    case F_MAXC:
+    case F_MINR:
+    case F_MAXR:
+    case F_IMINC:
+    case F_IMAXC:
+    case F_IMINR:
+    case F_IMAXR: 
+    case F_FFT:
+    case F_FFTI:
+    case F_POLROOTS:
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);
@@ -5145,15 +5171,15 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, MAT, l, p);
 	}
 	break;
-    case ROWS:
-    case COLS:
-    case DET:
-    case LDET:
-    case TRACE:
-    case NORM1:
-    case INFNORM:
-    case RCOND:
-    case RANK:
+    case F_ROWS:
+    case F_COLS:
+    case F_DET:
+    case F_LDET:
+    case F_TRACE:
+    case F_NORM1:
+    case F_INFNORM:
+    case F_RCOND:
+    case F_RANK:
 	/* matrix -> scalar functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_scalar_func(l, t->t, p);
@@ -5161,7 +5187,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, MAT, l, p);
 	}
 	break;
-    case MREAD:
+    case F_MREAD:
 	/* string -> matrix functions */
 	if (l->t == STR) {
 	    ret = string_to_matrix_func(l, t->t, p);
@@ -5169,9 +5195,9 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case QR:
-    case EIGSYM:
-    case EIGGEN:
+    case F_QR:
+    case F_EIGSYM:
+    case F_EIGGEN:
 	/* matrix -> matrix functions, with indirect return */
 	if (l->t != MAT) {
 	    node_type_error(t->t, MAT, l, p);
@@ -5181,14 +5207,14 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
 	break;
-    case BFGSMAX:
-    case FDJAC:
-    case MWRITE:
+    case F_BFGSMAX:
+    case F_FDJAC:
+    case F_MWRITE:
 	/* matrix, with string as second arg */
 	if (l->t == MAT && r->t == STR) {
-	    if (t->t == BFGSMAX) {
+	    if (t->t == F_BFGSMAX) {
 		ret = BFGS_maximize(l, r, p);
-	    } else if (t->t == FDJAC) {
+	    } else if (t->t == F_FDJAC) {
 		ret = numeric_jacobian(l, r, p);
 	    } else {
 		ret = matrix_csv_write(l, r, p);
@@ -5197,7 +5223,7 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	} 
 	break;
-    case PRINCOMP:
+    case F_PRINCOMP:
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && r->t == NUM) {
 	    ret = matrix_princomp(l, r, p);
@@ -5205,11 +5231,11 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	} 
 	break;	
-    case MSHAPE:
-    case SVD:
-    case MOLS:
-    case FILTER:
-    case TRIMR:
+    case F_MSHAPE:
+    case F_SVD:
+    case F_MOLS:
+    case F_FILTER:
+    case F_TRIMR:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;
@@ -5242,23 +5268,24 @@ static NODE *eval (NODE *t, parser *p)
     case LOOPIDX:
 	ret = loop_index_node(t, p);
 	break;
-    case OBSNUM:
-    case ISSERIES:
-    case ISLIST:
-    case ISSTRING:
-    case ISNULL:
-    case LISTLEN:
+    case F_OBSNUM:
+    case F_ISSERIES:
+    case F_ISLIST:
+    case F_ISSTRING:
+    case F_ISNULL:
+    case F_LISTLEN:
+    case F_STRLEN:
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {
 	    node_type_error(t->t, STR, l, p);
 	}
 	break;
-    case CDF:
-    case INVCDF:
-    case CRIT:
-    case PVAL:
-    case RANDGEN:
+    case F_CDF:
+    case F_INVCDF:
+    case F_CRIT:
+    case F_PVAL:
+    case F_RANDGEN:
 	if (t->v.b1.b->t == FARGS) {
 	    ret = eval_pdist(t, p);
 	} else {
@@ -5278,7 +5305,7 @@ static NODE *eval (NODE *t, parser *p)
     case QUERY:
 	ret = eval_query(t, p);
 	break;
-    case LCAT:
+    case B_LCAT:
 	/* list concatenation */
 	if (ok_list_node(l) && ok_list_node(r)) {
 	    ret = eval_lcat(l, r, p);
@@ -5286,16 +5313,16 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case XPX:
+    case F_XPX:
 	if (ok_list_node(l)) {
 	    ret = apply_list_func(l, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
 	break;	
-    case WMEAN:
-    case WVAR:
-    case WSD:
+    case F_WMEAN:
+    case F_WVAR:
+    case F_WSD:
 	/* two lists -> series */
 	if (ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_list_series_func(l, r, t->t, p);
@@ -5303,27 +5330,27 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;	
-    case S_GETENV:
-    case S_ARGNAME:
-    case S_READFILE:
-    case S_BACKTICK:
+    case F_GETENV:
+    case F_ARGNAME:
+    case F_READFILE:
+    case F_BACKTICK:
 	if (l->t == STR) {
 	    ret = single_string_func(l, t->t, p);
-	} else if (t->t == S_ARGNAME && (l->flags & UVAR_NODE)) {
+	} else if (t->t == F_ARGNAME && (l->flags & UVAR_NODE)) {
 	    ret = argname_from_uvar(l, p);
 	} else {
 	    node_type_error(t->t, STR, l, p);
 	}
 	break;
-    case S_OBSLABEL:
+    case F_OBSLABEL:
+    case F_VARNAME:
 	if (l->t == NUM) {
-	    ret = get_obs_label(l, p);
+	    ret = int_to_string_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, NUM, l, p);
 	}
 	break;
-
-    case S_STRSTR:
+    case F_STRSTR:
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, t->t, p);
 	} else {
@@ -5506,7 +5533,7 @@ static void printnode (const NODE *t, const parser *p)
 	printnode(t->v.b2.l, p);
 	pputc(p->prn, '.');
 	printnode(t->v.b2.r, p);
-    } else if (func_symb(t->t)) {
+    } else if (func1_symb(t->t)) {
 	printsymb(t->t, p);
 	pputc(p->prn, '(');
 	printnode(t->v.b1.b, p);
@@ -5704,28 +5731,36 @@ static void do_decl (parser *p)
 
     n = check_declarations(&S, p);
 
-    if (n > 0) {
-	for (i=0; i<n && !p->err; i++) {
-	    if (S[i] != NULL) {
-		if (p->targ == MAT) {
-		    gretl_matrix *m = gretl_null_matrix_new();
+    if (n == 0) {
+	return;
+    }
 
-		    if (m == NULL) {
-			p->err = E_ALLOC;
-		    } else {
-			p->err = user_matrix_add(m, S[i]);
-		    }
+    for (i=0; i<n && !p->err; i++) {
+	if (S[i] != NULL) {
+	    if (p->targ == MAT) {
+		gretl_matrix *m = gretl_null_matrix_new();
+
+		if (m == NULL) {
+		    p->err = E_ALLOC;
 		} else {
-		    if (p->targ == NUM) {
-			p->err = dataset_add_scalar(p->Z, p->dinfo);
-		    } else if (p->targ == VEC) {
-			p->err = dataset_add_series(1, p->Z, p->dinfo);
-		    }
-		    if (!p->err) {
-			v = p->dinfo->v - 1;
-			strcpy(p->dinfo->varname[v], S[i]);
-		    }
-		} 
+		    p->err = user_matrix_add(m, S[i]);
+		}
+	    } else if (p->targ == NUM || p->targ == VEC) {
+		if (p->targ == NUM) {
+		    p->err = dataset_add_scalar(p->Z, p->dinfo);
+		} else if (p->targ == VEC) {
+		    p->err = dataset_add_series(1, p->Z, p->dinfo);
+		}
+		if (!p->err) {
+		    v = p->dinfo->v - 1;
+		    strcpy(p->dinfo->varname[v], S[i]);
+		}
+	    } else if (p->targ == LIST) {
+		int *nlist = gretl_null_list();
+
+		p->err = remember_list(nlist, S[i], p->prn);
+	    } else if (p->targ == STR) {
+		p->err = save_named_string(S[i], "", p->prn);
 	    }
 	}
     }
@@ -5767,7 +5802,8 @@ static NODE *lhs_copy_node (parser *p)
 
 static void parser_try_print (parser *p)
 {
-    if (p->lh.v == 0 && p->lh.m0 == NULL && !p->lh.islist) {
+    if (p->lh.v == 0 && p->lh.m0 == NULL && 
+	!p->lh.islist && !get_named_string(p->lh.name)) {
 	/* varname on left is not the name of a current variable */
 	p->err = E_EQN;
     } else if (p->lh.substr != NULL) {
@@ -6391,7 +6427,7 @@ static int edit_string (parser *p)
     if (src == NULL) {
 	p->err = E_DATA;
     } else if (p->op == B_ASN) {
-	p->err = add_string_directly(p->lh.name, src, p->prn);
+	p->err = save_named_string(p->lh.name, src, p->prn);
     } else if (p->op == B_ADD) {
 	const char *orig = get_named_string(p->lh.name);
 
@@ -6407,7 +6443,7 @@ static int edit_string (parser *p)
 	    } else {
 		strcpy(full, orig);
 		strcat(full, src);
-		p->err = add_string_directly(p->lh.name, full, p->prn);
+		p->err = save_named_string(p->lh.name, full, p->prn);
 		free(full);
 	    }
 	}
@@ -6799,6 +6835,8 @@ void gen_save_or_print (parser *p, PRN *prn)
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	    } else if (p->ret->t == LIST) {
 		gretl_list_print(p->lh.name, p->dinfo, p->prn);
+	    } else if (p->ret->t == STR) {
+		pprintf(p->prn, "%s\n", get_named_string(p->lh.name));
 	    } else {
 		printnode(p->ret, p);
 		pputc(p->prn, '\n');
@@ -6854,7 +6892,7 @@ static void maybe_set_return_flags (parser *p)
 {
     NODE *t = p->tree;
 
-    if (t != NULL && (t->t == SORT || t->t == DSORT)) {
+    if (t != NULL && (t->t == F_SORT || t->t == F_DSORT)) {
 	NODE *l = t->v.b1.b;
 
 	if (l->t == USERIES) {

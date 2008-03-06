@@ -2256,9 +2256,9 @@ static int cusum_do_graph (double a, double b, const double *W,
     double frac = 1;
     double slope = b;
 
-    if( pdinfo->pd==4 || pdinfo->pd==12 ) {
+    if (pdinfo->pd > 1) {
 	slope *= pdinfo->pd;
-	frac = 1.0/pdinfo->pd;
+	frac = 1.0 / pdinfo->pd;
     }
 
     err = gnuplot_init(PLOT_CUSUM, &fq);
@@ -2295,6 +2295,7 @@ static int cusum_do_graph (double a, double b, const double *W,
     }	
 
     fputs("'-' using 1:2 w linespoints lt 1\n", fq);
+
     for (j=0; j<m; j++) { 
 	t = t1 + k + j;
 	if (obs != NULL) {
@@ -2303,6 +2304,7 @@ static int cusum_do_graph (double a, double b, const double *W,
 	    fprintf(fq, "%d %g\n", t, W[j]);
 	}
     }
+
     fputs("e\n", fq);
 
     gretl_pop_c_numeric_locale();

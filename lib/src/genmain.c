@@ -74,6 +74,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	}
     } else if (p->targ == LIST) {
 	pprintf(prn, _("Generated list %s"), p->lh.name);
+    } else if (p->targ == STR) {
+	pprintf(prn, _("Generated string %s"), p->lh.name);
     } else {
 	return;
     }

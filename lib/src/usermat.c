@@ -980,7 +980,7 @@ user_matrix_get_determinant (gretl_matrix *m, int f, int *err)
     }
 
     if (tmp != NULL) {
-	if (f == LDET) {
+	if (f == F_LDET) {
 	    d = gretl_matrix_log_determinant(tmp, err);
 	} else {
 	    d = gretl_matrix_determinant(tmp, err);
@@ -1010,19 +1010,19 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f,
     }
 
     if (R != NULL) {
-	if (f == CDEMEAN) {
+	if (f == F_CDEMEAN) {
 	    gretl_matrix_demean_by_column(R);
-	} else if (f == CHOL) {
+	} else if (f == F_CHOL) {
 	    *err = gretl_matrix_cholesky_decomp(R);
-	} else if (f == INVPD) {
+	} else if (f == F_INVPD) {
 	    *err = gretl_invpd(R);
-	} else if (f == GINV) {
+	} else if (f == F_GINV) {
 	    *err = gretl_matrix_moore_penrose(R);
-	} else if (f == INV) {
+	} else if (f == F_INV) {
 	    *err = gretl_invert_matrix(R);
-	} else if (f == UPPER) {
+	} else if (f == F_UPPER) {
 	    *err = gretl_matrix_zero_upper(R);
-	} else if (f == LOWER) {
+	} else if (f == F_LOWER) {
 	    *err = gretl_matrix_zero_lower(R);
 	} else {
 	    *err = E_DATA;

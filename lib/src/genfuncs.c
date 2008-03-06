@@ -22,6 +22,7 @@
 #include "genparse.h"
 #include "libset.h"
 #include "monte_carlo.h"
+#include "gretl_string_table.h"
 
 #include <errno.h>
 
@@ -95,7 +96,7 @@ int sort_series (const double *x, double *y, int f,
 	}
     }
 
-    if (f == DSORT) {
+    if (f == F_DSORT) {
 	if (markers) {
 	    qsort(vm, i, sizeof *vm, inverse_compare_vms);
 	} else {
@@ -242,7 +243,7 @@ int rank_series (const double *x, double *y, int f,
 	}
     }
     
-    if (f == DSORT) {
+    if (f == F_DSORT) {
 	qsort(sx, m, sizeof *sx, gretl_inverse_compare_doubles);
     } else {
 	qsort(sx, m, sizeof *sx, gretl_compare_doubles);
@@ -267,13 +268,13 @@ int rank_series (const double *x, double *y, int f,
  * diff_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @f: function, %DIF, %SDIF or %LDIF.
+ * @f: function, %F_DIFF, %F_SDIFF or %F_LDIFF.
  * @pdinfo: data set information.
  *
  * Calculates the differenced counterpart to the input 
- * series @x.  If @f = %SDIF, the seasonal difference is
- * computed; if @f = %LDIF, the log difference, and if
- * @f = DIF, the ordinary first difference.
+ * series @x.  If @f = %F_SDIFF, the seasonal difference is
+ * computed; if @f = %F_LDIFF, the log difference, and if
+ * @f = %F_DIFF, the ordinary first difference.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -282,7 +283,7 @@ int diff_series (const double *x, double *y, int f,
 		 const DATAINFO *pdinfo)
 {
     int t1 = pdinfo->t1;
-    int k = (f == SDIF)? pdinfo->pd : 1;
+    int k = (f == F_SDIFF)? pdinfo->pd : 1;
     int t, err = 0;
 
     if (t1 < k) {
@@ -300,9 +301,9 @@ int diff_series (const double *x, double *y, int f,
 	    continue;
 	}
 
-	if (f == DIF || f == SDIF) {
+	if (f == F_DIFF || f == F_SDIFF) {
 	    y[t] = x[t] - x[t-k];
-	} else if (f == LDIF) {
+	} else if (f == F_LDIFF) {
 	    if (x[t] <= 0.0 || x[t-k] <= 0.0) {
 		err = E_LOGS; /* FIXME: should be warning? */
 	    } else {
@@ -1805,7 +1806,9 @@ int check_declarations (char ***pS, parser *p)
 {
     char **S;
     const char *s;
-    int i, m, n = 1;
+    int i, n = 1;
+
+    gretl_error_clear();
 
     if (p->lh.substr == NULL) {
 	p->err = E_ALLOC;
@@ -1829,28 +1832,21 @@ int check_declarations (char ***pS, parser *p)
 	S[i] = gretl_word_strdup(s, &s);
     }
 
-    m = 0;
-    for (i=0; i<n; i++) {
+    for (i=0; i<n && !p->err; i++) {
 	if (varindex(p->dinfo, S[i]) < p->dinfo->v || 
 	    get_matrix_by_name(S[i]) ||
-	    get_list_by_name(S[i])) {
+	    get_list_by_name(S[i]) ||
+	    get_named_string(S[i])) {
 	    /* variable already exists */
-	    free(S[i]);
-	    S[i] = NULL;
+	    p->err = E_DATA;
 	} else if (check_varname(S[i])) {
 	    /* invalid name */
 	    p->err = E_DATA;
-	} else {
-	    m++;
-	}
-    }
-
-    if (m == 0) {
-	p->err = E_DATA;
-	strcpy(gretl_errmsg, "Invalid declaration");
+	} 
     }
 
     if (p->err) {
+	gretl_errmsg_set(_("Invalid declaration"));
 	free_strings_array(S, n);
     } else {
 	*pS = S;
@@ -2049,11 +2045,11 @@ int cross_sectional_stat (double *x, const int *list,
 			  const DATAINFO *pdinfo,
 			  int f)
 {
-    if (f == MEAN) {
+    if (f == F_MEAN) {
 	return x_sectional_weighted_mean(x, list, NULL, Z, pdinfo);
-    } else if (f == VCE) {
+    } else if (f == F_VCE) {
 	return x_sectional_wtd_variance(x, list, NULL, Z, pdinfo);
-    } else if (f == SD) {
+    } else if (f == F_SD) {
 	return x_sectional_wtd_stddev(x, list, NULL, Z, pdinfo);
     } else {
 	return E_DATA;
@@ -2066,11 +2062,11 @@ int x_sectional_weighted_stat (double *x, const int *list,
 			       const DATAINFO *pdinfo,
 			       int f)
 {
-    if (f == WMEAN) {
+    if (f == F_WMEAN) {
 	return x_sectional_weighted_mean(x, list, wlist, Z, pdinfo);
-    } else if (f == WVAR) {
+    } else if (f == F_WVAR) {
 	return x_sectional_wtd_variance(x, list, wlist, Z, pdinfo);
-    } else if (f == WSD) {
+    } else if (f == F_WSD) {
 	return x_sectional_wtd_stddev(x, list, wlist, Z, pdinfo);
     } else {
 	return E_DATA;

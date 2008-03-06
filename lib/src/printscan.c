@@ -55,117 +55,6 @@ static int printf_escape (int c, PRN *prn)
     return 0;
 }
 
-#if 0
-
-/* various string argument variants, optionally followed
-   by "+ offset" */
-
-static char *printf_get_string (const char *s, const double **Z,
-				const DATAINFO *pdinfo, 
-				int t, int *err)
-{
-    char *ret = NULL;
-    char tmpstr[16], strarg[16];
-    const char *p = NULL, *q = NULL;
-    int v, offset = 0;
-    int len = 0;
-
-#if PSDEBUG
-    fprintf(stderr, "printf_get_string: looking at '%s'\n", s);
-#endif
-
-    if (*s == '@') {
-	char sname[VNAMELEN] = {0};
-	int n = gretl_varchar_spn(s + 1);
-
-	len = n;
-	if (len >= VNAMELEN) {
-	    len = VNAMELEN - 1;
-	}
-	strncat(sname, s + 1, len);
-	p = get_named_string(sname);
-	if (p != NULL) {
-	    len = strlen(p);
-	    q = s + 1 + n;
-	}
-    } else if (*s == '"') {
-	/* literal string */
-	p = strrchr(s + 1, '"');
-	if (p != NULL) {
-	    q = p + 1;
-	    len = p - s - 1;
-	    p = s + 1;
-	}
-    } else if (sscanf(s, "varname(%d)", &v)) {
-	/* name of variable identified by number */
-	if (v >= 0 && v < pdinfo->v) {
-	    p = pdinfo->varname[v];
-	    len = strlen(p);
-	    q = strchr(s, ')') + 1;
-	}
-    } else if (sscanf(s, "argname(%15[^)])", strarg)) {
-	/* name of function argument */
-	int err = 0;
-	char *aname = gretl_func_get_arg_name(strarg, &err);
-
-	if (aname != NULL) {
-	    strcpy(tmpstr, aname);
-	    p = tmpstr;
-	    len = strlen(p);
-	    q = strchr(s, ')') + 1;
-	    free(aname);
-	}
-    } else if (sscanf(s, "date(%15[^)])", strarg)) { /* FIXME */
-	/* date string */
-	t = -1;
-	if (isdigit(*strarg)) {
-	    t = atoi(strarg);
-	} else {
-	    v = varindex(pdinfo, strarg);
-	    if (v < pdinfo->v) {
-		t = Z[v][0];
-	    }
-	}
-	if (t > 0 && t <= pdinfo->n) {
-	    ntodate(tmpstr, t - 1, pdinfo);
-	    p = tmpstr;
-	    len = strlen(p);
-	    q = strchr(s, ')') + 1;
-	}
-    } else if (!strncmp(s, "marker", 6) && pdinfo->S != NULL) {
-	/* observation label */
-	p = pdinfo->S[t];
-	len = strlen(p);
-	q = s + 6;
-    }
-
-    if (p != NULL) {
-	if (q != NULL) {
-	    while (isspace(*q)) q++;
-	    if (*q == '+') {
-		q++;
-		offset = atoi(q);
-		len -= offset;
-	    }
-	}
-	if (len >= 0) {
-	    ret = gretl_strndup(p + offset, len);
-	}
-    }
-
-    if (ret == NULL) {
-	ret = gretl_strdup("NA");
-    }
-
-    if (ret == NULL) {
-	*err = E_ALLOC;
-    }
-
-    return ret;
-}
-
-#else
-
 static char *printf_get_string (char *s, double ***pZ,
 				DATAINFO *pdinfo, int t, 
 				int *err)
@@ -173,34 +62,22 @@ static char *printf_get_string (char *s, double ***pZ,
     const char *p = NULL;
     const char *q = NULL;
     char *ret = NULL;
-    int v, len = 0;
+    int len = 0;
 
-    /* specials, not yet in genr */
+    /* special, not yet in genr */
 
-    if (sscanf(s, "varname(%d)", &v)) {
-	/* name of variable identified by number */
-	if (v >= 0 && v < pdinfo->v) {
-	    p = pdinfo->varname[v];
-	    len = strlen(p);
-	    q = strchr(s, ')') + 1;
-	}
-    } else if (!strncmp(s, "marker", 6) && pdinfo->S != NULL) {
+    if (!strncmp(s, "marker", 6) && pdinfo->S != NULL) {
 	/* observation label */
+	int offset = 0;
+
 	p = pdinfo->S[t];
 	len = strlen(p);
 	q = s + 6;
-    }
-
-    if (p != NULL) {
-	int offset = 0;
-
-	if (q != NULL) {
-	    while (isspace(*q)) q++;
-	    if (*q == '+') {
-		q++;
-		offset = atoi(q);
-		len -= offset;
-	    }
+	while (isspace(*q)) q++;
+	if (*q == '+') {
+	    q++;
+	    offset = atoi(q);
+	    len -= offset;
 	}
 	if (len >= 0) {
 	    ret = gretl_strndup(p + offset, len);
@@ -219,8 +96,6 @@ static char *printf_get_string (char *s, double ***pZ,
 
     return ret;
 }
-
-#endif
 
 static double printf_get_scalar (char *s, double ***pZ,
 				 DATAINFO *pdinfo, int t, 
