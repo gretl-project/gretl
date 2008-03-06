@@ -87,7 +87,7 @@ static char *printf_get_string (char *s, double ***pZ,
     }
 
     if (ret == NULL) {
-	ret = gretl_strdup("NA");
+	ret = gretl_strdup("");
     }
 
     if (ret == NULL) {

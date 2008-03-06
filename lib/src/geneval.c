@@ -5720,7 +5720,7 @@ static void do_decl (parser *p)
 
 		p->err = remember_list(nlist, S[i], p->prn);
 	    } else if (p->targ == STR) {
-		p->err = save_named_string(S[i], "", p->prn);
+		p->err = save_named_string(S[i], "", NULL);
 	    }
 	}
     }
@@ -6387,7 +6387,7 @@ static int edit_string (parser *p)
     if (src == NULL) {
 	p->err = E_DATA;
     } else if (p->op == B_ASN) {
-	p->err = save_named_string(p->lh.name, src, p->prn);
+	p->err = save_named_string(p->lh.name, src, NULL);
     } else if (p->op == B_ADD) {
 	const char *orig = get_string_by_name(p->lh.name);
 
@@ -6403,7 +6403,7 @@ static int edit_string (parser *p)
 	    } else {
 		strcpy(full, orig);
 		strcat(full, src);
-		p->err = save_named_string(p->lh.name, full, p->prn);
+		p->err = save_named_string(p->lh.name, full, NULL);
 		free(full);
 	    }
 	}

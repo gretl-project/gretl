@@ -245,7 +245,7 @@ command is simpler: you can type, for example,
 \begin{code}
 string s1 = "some stuff I want to save"
 string s2 = getenv("HOME")
-string s3 = @foostr + 10
+string s3 = s1 + 11
 \end{code}
 %
 The first field after \texttt{string} is the name under which the
@@ -256,21 +256,23 @@ following forms:
 
 \begin{itemize}
 \item a string literal (enclosed in double quotes); or
-\item the name of an existing string variable, with \verb|@|
-  prepended; or
+\item the name of an existing string variable; or
 \item a function that returns a string (see below); or
-\item any of the above followed by \texttt{+} and an integer offset;
-  or
-\item any of the above, followed by a space, followed by another
-  such field.
+\item any of the above followed by \texttt{+} and an integer offset.
 \end{itemize}
 
 The role of the integer offset is to use a substring of the preceding
-element, starting at the given character offset.  An error is flagged
-is the offset is greater than the length of the string in question.
+element, starting at the given character offset.  An empty string is
+returned if the offset is greater than the length of the string in
+question.
 
-If more than one such component is present, the resulting string
-is the concatenation of the elements.
+To add to the end of an existing string you can use the operator
+\texttt{+=}, as in
+%
+\begin{code}
+string s1 = "some stuff I want to "
+string s1 += "save"
+\end{code}
 
 The \texttt{sprintf} command is more flexible.  It works exactly as
 \app{gretl}'s \texttt{printf} command except that the ``format''
@@ -282,16 +284,14 @@ scalar x = 8
 sprintf foo "var%d", x
 \end{code}
 
-To \textit{retrieve the value} of a string variable, you give the name
-of the variable preceded by the ``at'' sign, \verb|@|.  
-
-In most contexts, the \verb|@| notation is treated as a ``macro''.
-That is, if a sequence of characters in a \app{gretl} command
-following the symbol \verb|@| is recognized as the name of a string
-variable, the value of that variable is sustituted literally into the
-command line before the regular parsing of the command is
-carried out.  This is illustrated in the following interactive
-session:
+To use the \emph{value} of a string variable in a command, give the
+name of the variable preceded by the ``at'' sign, \verb|@|.  This
+notation is treated as a ``macro''.  That is, if a sequence of
+characters in a \app{gretl} command following the symbol \verb|@| is
+recognized as the name of a string variable, the value of that
+variable is sustituted literally into the command line before the
+regular parsing of the command is carried out.  This is illustrated in
+the following interactive session:
 %
 \begin{code}
 ? scalar x = 8
@@ -320,31 +320,33 @@ print var8
 It would therefore print the value(s) of the variable \texttt{var8},
 if such a variable exists, or would generate an error otherwise.
 
-In certain specific contexts, however, it is natural to treat
-\verb|@|-variables as variables in their own right, and \app{gretl}
-does so.  These contexts are:
+In some contexts, however, one wants to treat string variables as
+variables in their own right: to do this, give the name of
+the variable without a leading \verb|@| symbol.  This is the
+way to handle such variables in the following contexts:
+
 \begin{itemize}
 \item When they appear among the arguments to the commands \texttt{printf} and
   \texttt{sprintf}.
 \item On the right-hand side of a \texttt{string} assignment.
-\item When they appear as an argument to the function
-  \texttt{isstring} (see below).
+\item When they appear as an argument to the function taking
+  a string argument.
 \end{itemize}
 
 Here is an illustration of the use of named string arguments with
 \texttt{printf}:
 %
 \begin{code}
-? string vstr = "variance"
-Saved string as 'vstr'
-? printf "vstr: %12s\n", @vstr
+string vstr = "variance"
+Generated string vstr
+printf "vstr: %12s\n", vstr
 vstr:     variance
 \end{code}
 %
-Note that \verb|@vstr| should not be put in quotes in this context.
+Note that \texttt{vstr} should not be put in quotes in this context.
 Similarly with
 \begin{code}
-? string copy = @vstr
+? string vstr_copy = vstr
 \end{code}
 
 \subsection{Built-in strings}
@@ -357,13 +359,13 @@ are as shown in Table~\ref{tab-strings}.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{ll}
-  \verb|@gretldir| & the \app{gretl} installation directory \\
-  \verb|@workdir| & user's current \app{gretl} working directory \\
-  \verb|@gnuplot| & path to, or name of, the \app{gnuplot} executable \\
-  \verb|@tramo|& path to, or name of, the \app{tramo} executable \\
-  \verb|@x12a| & path to, or name of, the \app{x-12-arima} executable \\
-  \verb|@tramodir| & \app{tramo} data directory \\
-  \verb|@x12adir| & \app{x-12-arima} data directory \\
+  \texttt{gretldir} & the \app{gretl} installation directory \\
+  \texttt{workdir} & user's current \app{gretl} working directory \\
+  \texttt{gnuplot} & path to, or name of, the \app{gnuplot} executable \\
+  \texttt{tramo}& path to, or name of, the \app{tramo} executable \\
+  \texttt{x12a} & path to, or name of, the \app{x-12-arima} executable \\
+  \texttt{tramodir} & \app{tramo} data directory \\
+  \texttt{x12adir} & \app{x-12-arima} data directory \\
 \end{tabular}
 \caption{Built-in string variables}
 \label{tab-strings}
@@ -392,7 +394,7 @@ retrieves the length of the string, as in
 \begin{code}
 ? string temp = getenv("TEMP")
 Saved empty string as 'temp'
-? scalar x = strlen(@temp)
+? scalar x = strlen(temp)
 Generated scalar x (ID 2) = 0
 \end{code}
 
@@ -424,7 +426,7 @@ the syntax
 The \textsl{filename} field may include components that are
 string variables.  For example
 
-\verb|string foo = readfile(@x12adir/QNC.rts)|
+\verb|string foo = readfile(x12adir/QNC.rts)|
 
 \subsection{The \texttt{strstr} function}
 
@@ -441,7 +443,7 @@ returned; otherwise the portion of \textsl{s1} starting with
 \begin{code}
 ? string hw = "hello world"
 Saved string as 'hw'
-? string w = strstr(@hw, "o")
+? string w = strstr(hw, "o")
 Saved string as 'w'
 ? print "@w"
 o world

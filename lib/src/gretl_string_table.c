@@ -710,7 +710,11 @@ int save_named_string (const char *name, const char *s, PRN *prn)
     str = get_saved_string_by_name(name, &builtin);
 
     if (str != NULL && builtin) {
-	pprintf(prn, _("You cannot overwrite '%s'\n"), name);
+	if (prn == NULL) {
+	    sprintf(gretl_errmsg, _("You cannot overwrite '%s'\n"), name);
+	} else {
+	    pprintf(prn, _("You cannot overwrite '%s'\n"), name);
+	}
 	return E_DATA;
     }	
 
@@ -730,15 +734,13 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 	err = E_ALLOC;
     }
 
-#if 0
-    if (!err && gretl_messages_on() && *s != '\0') {
+    if (prn != NULL && !err && gretl_messages_on() && *s != '\0') {
 	if (add) {
-	    pprintf(prn, _("Added string '%s'\n"), name); 
+	    pprintf(prn, _("Generated string %s\n"), name); 
 	} else {
-	    pprintf(prn, _("Saved string '%s'\n"), name);
+	    pprintf(prn, _("Replaced string %s\n"), name);
 	}
     }
-#endif
 
     return err;
 }
