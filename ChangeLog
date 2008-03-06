@@ -9,6 +9,11 @@ version 1.7.4, in progress
 - system command: several other changes (write this up when 
   done)
 - remove obsolete commands: fit, multiply
+- consolidate the commands corc, hilu and pwe into one new
+  command with options: ar1
+- Fix for the case of graphing 6 time series together
+- Fix bug 1908139
+- Move handling of strings into "genr"
 
 2/29/2008 version 1.7.3
 - Fix for 64-bit platforms: don't use "long" as the C

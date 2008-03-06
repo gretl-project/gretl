@@ -732,11 +732,8 @@ static void look_up_word (const char *s, parser *p)
 	    } else {
 		p->idnum = varindex(p->dinfo, s);
 		if (p->idnum < p->dinfo->v) {
-		    if (var_is_scalar(p->dinfo, p->idnum)) {
-			p->sym = USCLR;
-		    } else {
-			p->sym = USERIES;
-		    }
+		    p->sym = (var_is_scalar(p->dinfo, p->idnum))?
+			USCALAR : USERIES;
 		} else if (get_matrix_by_name(s)) {
 		    p->sym = UMAT;
 		    p->idstr = gretl_strdup(s);
@@ -1312,7 +1309,7 @@ const char *getsymb (int t, const parser *p)
     if (p != NULL) {
 	if (t == NUM) {
 	    return fromdbl(p->xval); 
-	} else if (t == USCLR || t == USERIES) {
+	} else if (t == USCALAR || t == USERIES) {
 	    return p->dinfo->varname[p->idnum];
 	} else if (t == UMAT || t == UOBJ ||
 		   t == LOOPIDX) {

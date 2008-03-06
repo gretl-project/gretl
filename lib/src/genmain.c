@@ -573,15 +573,15 @@ double *generate_series (const char *s, double ***pZ,
     *err = realgen(s, &p, pZ, pdinfo, NULL, P_SERIES | P_PRIVATE);
 
     if (!*err) {
-	if (p.ret->t == VEC) {
-	    if (p.ret->flags & TMP_NODE) {
+	NODE *n = p.ret;
+
+	if (n->t == VEC) {
+	    if (n->flags & TMP_NODE) {
 		/* steal the generated series */
-		x = p.ret->v.xvec;
-		p.ret->v.xvec = NULL;
-	    } else if (p.ret->flags & UVAR_NODE) {
-		x = copyvec((*pZ)[p.ret->v.idnum], p.dinfo->n);
+		x = n->v.xvec;
+		n->v.xvec = NULL;
 	    } else {
-		x = copyvec(p.ret->v.xvec, p.dinfo->n);
+		x = copyvec(n->v.xvec, p.dinfo->n);
 	    }
 	} else {
 	    *err = E_TYPES;

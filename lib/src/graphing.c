@@ -68,8 +68,12 @@ struct gnuplot_info_ {
 #define MAX_LETTERBOX_LINES 8
 #define PREFER_CAIRO 1
 
-#define use_impulses(g) ((g)->flags & GPT_IMPULSES)
 #define ts_plot(g) ((g)->flags & GPT_TS)
+#define use_impulses(g) ((g)->flags & GPT_IMPULSES)
+
+#if GP_DEBUG
+static void print_gnuplot_flags (int flags, int revised);
+#endif
 
 struct plot_type_info {
     PlotType ptype;
@@ -248,6 +252,10 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 	    *f = PLOT_FIT_OLS;
 	}
     }
+
+#if GP_DEBUG
+    print_gnuplot_flags(flags, 0);
+#endif
 
     return flags;
 }
@@ -1522,7 +1530,7 @@ check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
     /* find minima, maxima of the y-axis vars */
     for (i=1; i<gi->list[0]; i++) {
 	gretl_minmax(gi->t1, gi->t2, Z[gi->list[i]], 
-		     &ymin[i], &ymax[i]);
+		     &ymin[i-1], &ymax[i-1]);
     }
 
     gi->flags &= ~GPT_Y2AXIS;
@@ -1533,16 +1541,22 @@ check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
 	    if (j == i) {
 		continue;
 	    }
-	    ratio = ymax[i] / ymax[j];
+	    ratio = ymax[i-1] / ymax[j-1];
 	    if (ratio > 5.0 || ratio < 0.2) {
 		gi->flags |= GPT_Y2AXIS;
 		oddcount++;
 	    }
 	}
 	if (oddcount == gi->list[0] - 2) {
+	    /* series at list position i differs considerably in scale
+	       from all the others in the list */
 	    *oddman = i;
 	    break;
 	}
+    }
+
+    if (*oddman == 0) {
+	gi->flags &= ~GPT_Y2AXIS;
     }
 }
 
@@ -1694,6 +1708,9 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 	 l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
 	&& !(gi->flags & GPT_DUMMY)) {
 	/* allow probe for using two y axes */
+#if GP_DEBUG
+	fprintf(stderr, "l0 = %d, setting y2axis probe\n", l0);
+#endif
 	gi->flags |= GPT_Y2AXIS;
     } 
 
@@ -1706,6 +1723,10 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     if (literal != NULL && strstr(literal, "set style data")) {
 	gi->flags |= GPT_DATA_STYLE;
     }
+
+#if GP_DEBUG
+    print_gnuplot_flags(gi->flags, 1);
+#endif
 
     return 0;
 }
@@ -1722,9 +1743,13 @@ static void clear_gpinfo (gnuplot_info *gi)
 }
 
 #if GP_DEBUG
-static void print_gnuplot_flags (GnuplotFlags flags)
+static void print_gnuplot_flags (int flags, int revised)
 {
-    fprintf(stderr, "*** gnuplot() called with flags:\n");
+    if (revised) {
+	fprintf(stderr, "*** gnuplot flags after initial revision:\n");
+    } else {
+	fprintf(stderr, "*** gnuplot() called with flags:\n");
+    }
 
     if (flags & GPT_IMPULSES) {
 	fprintf(stderr, " GPT_IMPULSES\n");
@@ -1761,6 +1786,15 @@ static void print_gnuplot_flags (GnuplotFlags flags)
     }
     if (flags & GPT_TS) {
 	fprintf(stderr, " GPT_TS\n");
+    }
+    if (flags & GPT_Y2AXIS) {
+	fprintf(stderr, " GPT_Y2AXIS\n");
+    }
+    if (flags & GPT_AUTO_FIT) {
+	fprintf(stderr, " GPT_AUTO_FIT\n");
+    }
+    if (flags & GPT_FIT_HIDDEN) {
+	fprintf(stderr, " GPT_FIT_HIDDEN\n");
     }
 }
 #endif

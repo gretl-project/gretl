@@ -731,6 +731,7 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 	err = E_ALLOC;
     }
 
+#if 0
     if (!err && gretl_messages_on() && *s != '\0') {
 	if (add) {
 	    pprintf(prn, _("Added string '%s'\n"), name); 
@@ -738,6 +739,7 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 	    pprintf(prn, _("Saved string '%s'\n"), name);
 	}
     }
+#endif
 
     return err;
 }
@@ -831,13 +833,9 @@ int substitute_named_strings (char *line)
 	return 0;
     }
 
-    /* when using the genr apparatus, let @foo be handled as a variable */
-    if (!strncmp(line, "string ", 7) ||
-	!strncmp(line, "series ", 7) ||
-	!strncmp(line, "scalar ", 7) ||
-	!strncmp(line, "matrix ", 7) ||
-	!strncmp(line, "genr ", 5) ||
-	!strncmp(line, "list ", 5)) {
+    /* when using the genr apparatus for a string, let @foo be handled 
+       as a variable (FIXME?) */
+    if (!strncmp(line, "string ", 7)) {
 	return 0;
     }
 

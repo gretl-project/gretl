@@ -42,20 +42,11 @@
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
-#define series_node(n) (n->t == VEC &&(n->flags & UVAR_NODE)) 
-
 #define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
-			 n->t == USERIES || n->t == MAT || n->t == EMPTY || \
-			 (n->t == VEC && (n->flags & UVAR_NODE)))
+			 n->t == MAT || n->t == EMPTY || \
+			 (n->t == VEC && n->aux >= 0))
 
-#define series_type(t) (t == VEC || t == USERIES)
-#define uvar_type(t) (t == USCLR || t == USERIES)
-
-#define getvec(n,p) ((n->flags & UVAR_NODE)? \
-		     (*p->Z)[n->v.idnum] : n->v.xvec)
-
-#define getval(n,p) ((n->flags & UVAR_NODE)? \
-		     (*p->Z)[n->v.idnum][0] : n->v.xval)
+#define uvar_node(n) ((n->t == NUM || n->t == VEC) && n->aux >= 0)
 
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
@@ -415,6 +406,16 @@ static NODE *aux_vec_node (parser *p, int n)
     }
 }
 
+static NODE *aux_series_node (parser *p, int n)
+{
+    if (p->dinfo->n == 0) {
+	gretl_errmsg_set(_("No dataset is in place"));
+	return NULL;
+    } else {
+	return get_aux_node(p, VEC, n, 0);
+    }
+}
+
 static NODE *aux_ivec_node (parser *p, int n)
 {
     if (p->dinfo->n == 0) {
@@ -433,18 +434,6 @@ static NODE *aux_lvec_node (parser *p)
     } else {
 	return get_aux_node(p, LVEC, 0, 1);
     }
-}
-
-static NODE *vec_pointer_node (NODE *t, parser *p)
-{
-    NODE *n = get_aux_node(p, VEC, 0, 0);
-
-    if (n != NULL) {
-	n->v.idnum = t->v.idnum;
-	n->flags |= UVAR_NODE;
-    }
-
-    return n;
 }
 
 static NODE *aux_matrix_node (parser *p)
@@ -639,7 +628,7 @@ static NODE *make_series_mask (NODE *n, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	const double *x = getvec(n, p);
+	const double *x = n->v.xvec;
 	gretl_matrix *v;
 	int t, s, T = 0;
 
@@ -826,11 +815,11 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    if (s->t == NUM) {
 		parm[i] = s->v.xval;
 	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
-		pvec = getvec(s, p);
+		pvec = s->v.xvec;
 	    } else if (i == k && !rgen && s->t == MAT && bvec == NULL) {
 		pmat = s->v.m;
 	    } else if (i == k-1 && d == 'D' && s->t == VEC) {
-		bvec = getvec(s, p);
+		bvec = s->v.xvec;
 	    } else if (i == k-1 && d == 'D' && s->t == MAT) {
 		bmat = s->v.m;
 	    } else {
@@ -843,7 +832,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
-		    pvec = getvec(e, p);
+		    pvec = e->v.xvec;
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k && !rgen && e->t == MAT && bvec == NULL) {
@@ -851,7 +840,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k-1 && d == 'D' && e->t == VEC) {
-		    bvec = getvec(e, p);
+		    bvec = e->v.xvec;
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k-1 && d == 'D' && e->t == MAT) {
@@ -1001,7 +990,7 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
     t1 = (autoreg(p))? p->obs : p->dinfo->t1;
     t2 = (autoreg(p))? p->obs : p->dinfo->t2;
 
-    if (l->t == VEC) x = getvec(l, p);
+    if (l->t == VEC) x = l->v.xvec;
 
     for (t=t1; t<=t2; t++) {
 	if (x != NULL) {
@@ -1034,8 +1023,8 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     t1 = (autoreg(p))? p->obs : p->dinfo->t1;
     t2 = (autoreg(p))? p->obs : p->dinfo->t2;
 
-    if (l->t == VEC) x = getvec(l, p);
-    if (r->t == VEC) y = getvec(r, p);
+    if (l->t == VEC) x = l->v.xvec;
+    if (r->t == VEC) y = r->v.xvec;
 
     for (t=t1; t<=t2; t++) {
 	if (x != NULL) {
@@ -1281,17 +1270,14 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 	gretl_matrix *a = NULL;
 	gretl_matrix *b = NULL;
 	gretl_matrix *c = NULL;
-	const double *xvec;
 
 	if (l->t == VEC) {
-	    xvec = getvec(l, p);
-	    a = tmp_matrix_from_series(xvec, p->dinfo, &p->err);
+	    a = tmp_matrix_from_series(l->v.xvec, p->dinfo, &p->err);
 	    c = a;
 	    b = r->v.m;
 	} else {
-	    xvec = getvec(r, p);
 	    a = l->v.m;
-	    b = tmp_matrix_from_series(xvec, p->dinfo, &p->err);
+	    b = tmp_matrix_from_series(r->v.xvec, p->dinfo, &p->err);
 	    c = b;
 	}
 
@@ -2231,10 +2217,8 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 	/* AC: changed for autoreg case, 2007/7/1 */
 	t1 = (autoreg(p))? p->obs : p->dinfo->t1;
 	t2 = (autoreg(p))? p->obs : p->dinfo->t2;
-	const double *xvec = getvec(n, p);
-
 	for (t=t1; t<=t2; t++) {
-	    ret->v.xvec[t] = real_apply_func(xvec[t], f, p);
+	    ret->v.xvec[t] = real_apply_func(n->v.xvec[t], f, p);
 	}
     }
 
@@ -2255,7 +2239,7 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 
 	if (ln->t == VEC) {
 	    list = gretl_list_new(1);
-	    list[1] = ln->v.idnum;
+	    list[1] = ln->aux;
 	} else if (ln->t == LVEC) {
 	    list = gretl_list_copy(ln->v.ivec);
 	} else {
@@ -2353,13 +2337,13 @@ static NODE *dataset_list_node (parser *p)
 
 static NODE *trend_node (parser *p)
 {
-    NODE *ret = aux_vec_node(p, 0);
+    NODE *ret = aux_series_node(p, 0);
 
     if (ret != NULL && starting(p)) {
 	p->err = gen_time(p->Z, p->dinfo, 1);
 	if (!p->err) {
-	    ret->v.idnum = varindex(p->dinfo, "time");
-	    ret->flags = UVAR_NODE;
+	    ret->aux = varindex(p->dinfo, "time");
+	    ret->v.xvec = (*p->Z)[ret->aux];
 	}
     }
 
@@ -2372,7 +2356,15 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 
     if (starting(p)) {
 	int *list = NULL;
-	int lv = l->v.idnum;
+	int lv;
+
+	if (l->t != VEC || l->aux < 0 || 
+	    (r->t != IVEC && r->t != NUM)) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
+
+	lv = l->aux;
 
 	if (r->t == IVEC) {
 	    int minlag = -r->v.ivec[0];
@@ -2422,8 +2414,8 @@ static int *node_get_list (NODE *n, parser *p)
 	} else {
 	    list = gretl_list_copy(src);
 	}
-    } else if (n->t == USERIES || n->t == VEC || n->t == NUM) {
-	v = (series_type(n->t))? n->v.idnum : n->v.xval;
+    } else if (n->t == VEC || n->t == NUM) {
+	v = (n->t == VEC)? n->aux : n->v.xval;
 	if (v < 0 || v >= p->dinfo->v) {
 	    p->err = E_UNKVAR;
 	} else if (var_is_scalar(p->dinfo, v)) {
@@ -2639,7 +2631,7 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 
 	if (f == F_RPOISSON) {
 	    if (l->t == VEC) {
-		vx = getvec(l, p);
+		vx = l->v.xvec;
 		v = 1;
 	    } else {
 		x = l->v.xval;
@@ -2684,8 +2676,8 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	const double *x = getvec(l, p);
-	const double *y = getvec(r, p);
+	const double *x = l->v.xvec;
+	const double *y = r->v.xvec;
 
 	switch (f) {
 	case F_COR:
@@ -2712,8 +2704,8 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 	if (l->t == MAT && r->t == MAT) {
 	    ret->v.m = matrix_matrix_xtab(l->v.m, r->v.m, &p->err);
 	} else if (l->t == VEC && r->t == VEC) {
-	    const double *x = getvec(l, p);
-	    const double *y = getvec(r, p);
+	    const double *x = l->v.xvec;
+	    const double *y = r->v.xvec;
 	    
 	    ret->v.m = gretl_matrix_xtab(p->dinfo->t1, p->dinfo->t2, 
 					 x, y, &p->err);
@@ -2779,7 +2771,7 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	const char *s = p->dinfo->varname[n->v.idnum];
+	const char *s = p->dinfo->varname[n->aux];
 
 	ret->v.str = gretl_func_get_arg_name(s, &p->err);
 	if (!p->err && ret->v.str == NULL) {
@@ -2953,7 +2945,7 @@ series_scalar_func (NODE *n, int f, parser *p)
 	    }
 	}
 
-	x = getvec(n, p);
+	x = n->v.xvec;
 
 	switch (f) {
 	case F_SUM:
@@ -3039,7 +3031,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    return ret;
 	}
 
-	xvec = getvec(l, p);
+	xvec = l->v.xvec;
 
 	switch (f) {
 	case F_LRVAR:
@@ -3070,7 +3062,6 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
     
 
     if (ret != NULL) {
-	const double *x = getvec(l, p);
 	char word[16];
 	int t;
 
@@ -3086,7 +3077,7 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 				  p->dinfo);
 
 	if (t >= 0 && t < p->dinfo->n) {
-	    ret->v.xval = x[t];
+	    ret->v.xval = l->v.xvec[t];
 	} else {
 	    ret->v.xval = NADBL;
 	}
@@ -3098,7 +3089,7 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
-    const double *x = getvec(l, p);
+    const double *x = l->v.xvec;
     int k = (int) r->v.xval;
     int t, t1, t2;
 
@@ -3149,7 +3140,7 @@ static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 static NODE *series_lag (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
-    const double *x = getvec(l, p);
+    const double *x = l->v.xvec;
     int k = (int) -r->v.xval;
     int t, s, t1, t2;
 
@@ -3190,10 +3181,7 @@ static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (l->t == VEC && r->t == VEC) {
-	    const double *x = getvec(l, p);
-	    const double *y = getvec(r, p);
-
-	    p->err = gretl_sort_by(x, y, ret->v.xvec, p->dinfo); 
+	    p->err = gretl_sort_by(l->v.xvec, r->v.xvec, ret->v.xvec, p->dinfo); 
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -3214,9 +3202,7 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (l->t == VEC) {
-	    const double *x = getvec(l, p);
-
-	    p->err = sort_series(x, ret->v.xvec, f, p->dinfo); 
+	    p->err = sort_series(l->v.xvec, ret->v.xvec, f, p->dinfo); 
 	} else if (gretl_is_null_matrix(l->v.m)) {
 	    p->err = E_DATA;
 	} else {
@@ -3256,7 +3242,7 @@ static NODE *vector_values (NODE *l, parser *p)
 
 	if (l->t == VEC) {
 	    n = p->dinfo->t2 - p->dinfo->t1 + 1;
-	    x = getvec(l, p) + p->dinfo->t1;
+	    x = l->v.xvec + p->dinfo->t1;
 	} else if (!gretl_is_null_matrix(l->v.m)) {
 	    n = gretl_vector_get_length(l->v.m);
 	    x = l->v.m->val;
@@ -3302,7 +3288,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    }
 	}
 
-	x = getvec(l, p);
+	x = l->v.xvec;
 	y = ret->v.xvec;
 
 	switch (f) {
@@ -3376,25 +3362,6 @@ static NODE *apply_matrix_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-/* node holding a user-defined variable, either a scalar
-   or a series */
-
-static NODE *uvar_node (NODE *t, parser *p)
-{
-    NODE *ret = NULL;
-
-    if (t->t == USCLR) {
-	ret = aux_scalar_node(p);
-	if (ret != NULL) {
-	    ret->v.xval = (*p->Z)[t->v.idnum][0];
-	}
-    } else if (t->t == USERIES) {
-	ret = vec_pointer_node(t, p);
-    }
-
-    return ret;
-}
-
 /* node holding a user-defined matrix */
 
 static NODE *umatrix_node (NODE *t, parser *p)
@@ -3428,7 +3395,6 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     int r = nsep + 1;
     int c = (seppos > 0)? seppos : m;
     int nelem = m - nsep;
-    double x;
     int i, j, k;
 
     /* check that all rows are the same length */
@@ -3470,12 +3436,7 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 		if (n->t == EMPTY) {
 		    n = t->v.bn.n[k++];
 		} 
-		if (n->t == USCLR) {
-		    x = (*p->Z)[n->v.idnum][0];
-		} else {
-		    x = n->v.xval;
-		}
-		gretl_matrix_set(M, i, j, x);
+		gretl_matrix_set(M, i, j, n->v.xval);
 	    }
 	}
     }
@@ -3623,9 +3584,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* evaluate the function arguments */
 
     for (i=0; i<m && !p->err; i++) {
-	int type = r->v.bn.n[i]->t;
-
-	if (uvar_type(type)) {
+	if (uvar_node(r->v.bn.n[i])) {
 	    /* let dataset variables through "as is" */
 	    n = r->v.bn.n[i];
 	} else {
@@ -3646,13 +3605,15 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
 #endif
 
-	if (n->t == U_ADDR) {
+	if (uvar_node(n)) {
+	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->aux);
+	} else if (n->t == U_ADDR) {
 	    NODE *u = n->v.b1.b;
 
-	    if (u->t == USCLR) {
-		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->v.idnum);
-	    } else if (u->t == USERIES) {
-		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->v.idnum);
+	    if (u->t == NUM) {
+		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->aux);
+	    } else if (u->t == VEC) {
+		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->aux);
 	    } else if (u->t == UMAT) {
 		user_matrix *m = get_user_matrix_by_name(u->v.str);
 
@@ -3672,15 +3633,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (n->t == NUM) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_DOUBLE, &n->v.xval);
 	} else if (n->t == VEC) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_SERIES, getvec(n, p));
+	    p->err = push_fn_arg(args, GRETL_TYPE_SERIES, n->v.xvec);
 	} else if (n->t == MAT) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_MATRIX, n->v.m);
 	} else if (n->t == LIST) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.str);
 	} else if (n->t == STR) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
-	} else if (uvar_type(n->t)) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->v.idnum);
 	} 
 
 	if (p->err) {
@@ -3918,10 +3877,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (e == NULL) {
 	    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", 0);
 	    p->err = E_DATA;
-	} else if (!series_type(e->t)) {
+	} else if (e->t != VEC) {
 	    p->err = E_TYPES;
 	} else {
-	    x = getvec(e, p);
+	    x = e->v.xvec;
 	}
 
 	for (i=1; i<k && !p->err; i++) {
@@ -3998,7 +3957,7 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	    k += list[0];
 	} else if (n->t == LVEC) {
 	    k += n->v.ivec[0];
-	} else if (series_type(n->t)) {
+	} else if (n->t == VEC) {
 	    k++;
 	}
     }
@@ -4021,8 +3980,8 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	    for (j=1; j<=list[0]; j++) {
 		X[s++] = (*p->Z)[list[j]];
 	    }	    
-	} else if (series_type(n->t)) {
-	    X[s++] = getvec(n, p);
+	} else if (n->t == VEC) {
+	    X[s++] = n->v.xvec;
 	}
     }
 
@@ -4084,8 +4043,7 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 }
 
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
-                          s == DUM || s == LIST || s == USCLR || \
-			  s == USERIES || s == LVEC)
+                          s == DUM || s == LIST || s == LVEC)
 
 /* composing a matrix from scalars, series or lists */
 
@@ -4139,9 +4097,9 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 		break;
 	    }
 	}
-	if (n->t == NUM || n->t == USCLR) {
+	if (n->t == NUM) {
 	    nnum++;
-	} else if (series_type(n->t)) {
+	} else if (n->t == VEC) {
 	    nvec++;
 	} else if (n->t == DUM) {
 	    dum++;
@@ -4269,7 +4227,7 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 	    return NULL;
 	}
 	if (l->t == VEC) {
-	    xvec = getvec(l, p);
+	    xvec = l->v.xvec;
 	} else if (l->t == NUM) {
 	    x = l->v.xval;
 	} else {
@@ -4284,7 +4242,7 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 	    return NULL;
 	}
 	if (r->t == VEC) {
-	    yvec = getvec(r, p);
+	    yvec = r->v.xvec;
 	} else if (r->t == NUM) {
 	    y = r->v.xval;
 	} else {
@@ -4361,13 +4319,12 @@ static NODE *ternary_return_node (NODE *n, parser *p)
 	    ret->v.xval = n->v.xval;
 	}
     } else if (n->t == VEC) {
-	const double *x = getvec(n, p);
 	int t, T = p->dinfo->n;
 
 	ret = aux_vec_node(p, T);
 	if (ret != NULL) {
 	    for (t=0; t<T; t++) {
-		ret->v.xvec[t] = x[t];
+		ret->v.xvec[t] = n->v.xvec[t];
 	    }
 	}
     } else if (n->t == MAT) {
@@ -4415,7 +4372,7 @@ static NODE *eval_query (NODE *t, parser *p)
 	} else if (e->t == NUM) {
 	    x = e->v.xval;
 	} else {
-	    vec = getvec(e, p);
+	    vec = e->v.xvec;
 	}
     }
 
@@ -4732,7 +4689,11 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     switch (t->t) {
-    case NUM: 
+    case NUM:
+	if (t->aux > 0) {
+	    /* update numerical value */
+	    t->v.xval = (*p->Z)[t->aux][0];
+	}
     case VEC:
     case MAT:
     case STR:
@@ -4959,6 +4920,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = get_lag_list(l, r, p);
 	    break;
 	}
+	/* otherwise fall through */
     case OBS:
     case F_MOVAVG:
 	/* series on left, scalar on right */
@@ -5239,11 +5201,6 @@ static NODE *eval (NODE *t, parser *p)
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;
-    case USCLR: 
-    case USERIES:
-	/* user-defined variable */
-	ret = uvar_node(t, p);
-	break;
     case UMAT:
 	/* user-defined matrix */
 	ret = umatrix_node(t, p);
@@ -5336,7 +5293,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BACKTICK:
 	if (l->t == STR) {
 	    ret = single_string_func(l, t->t, p);
-	} else if (t->t == F_ARGNAME && (l->flags & UVAR_NODE)) {
+	} else if (t->t == F_ARGNAME && uvar_node(l)) {
 	    ret = argname_from_uvar(l, p);
 	} else {
 	    node_type_error(t->t, STR, l, p);
@@ -5474,6 +5431,8 @@ static void printnode (const NODE *t, const parser *p)
 {  
     if (t == NULL) {
 	pputs(p->prn, "NULL"); 
+    } else if (uvar_node(t)) {
+	pprintf(p->prn, "%s", p->dinfo->varname[t->aux]);
     } else if (t->t == NUM) {
 	if (na(t->v.xval)) {
 	    pputs(p->prn, "NA");
@@ -5481,7 +5440,7 @@ static void printnode (const NODE *t, const parser *p)
 	    pprintf(p->prn, "%.8g", t->v.xval);
 	}
     } else if (t->t == VEC) {
-	const double *x = getvec(t, p);
+	const double *x = t->v.xvec;
 	int i, j = 1;
 
 	if (p->lh.v > 0 && p->lh.v < p->dinfo->v) {
@@ -5502,8 +5461,6 @@ static void printnode (const NODE *t, const parser *p)
 	}
     } else if (t->t == MAT) {
 	gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
-    } else if (uvar_type(t->t)) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->v.idnum]);
     } else if (t->t == UMAT || t->t == UOBJ) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == DVAR) {
@@ -6117,23 +6074,23 @@ static int has_missvals (const double *x, const DATAINFO *pdinfo)
 
 static void gen_check_errvals (parser *p)
 {
-    if (p->ret == NULL || 
-	(p->ret->t == VEC && getvec(p->ret, p) == NULL)) {
+    NODE *n = p->ret;
+
+    if (n == NULL || (n->t == VEC && n->v.xvec == NULL)) {
 	return;
     }
 
-    if (p->ret->t == NUM) {
-	if (!isfinite(p->ret->v.xval)) {
-	    p->ret->v.xval = NADBL;
+    if (n->t == NUM) {
+	if (!isfinite(n->v.xval)) {
+	    n->v.xval = NADBL;
 	    p->warn = 1;
 	}
-    } else if (p->ret->t == VEC) {
-	double *x = getvec(p->ret, p);
+    } else if (n->t == VEC) {
 	int t;
 
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    if (!isfinite(x[t])) {
-		x[t] = NADBL;
+	    if (!isfinite(n->v.xvec[t])) {
+		n->v.xvec[t] = NADBL;
 		p->warn = 1;
 	    }
 	}
@@ -6183,7 +6140,7 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
     } else if (r->t == VEC) {
 	/* result was a series, not a matrix */
 	int i, n = p->dinfo->t2 - p->dinfo->t1 + 1;
-	const double *x = getvec(r, p);
+	const double *x = r->v.xvec;
 
 	m = gretl_column_vector_alloc(n);
 	if (m == NULL) {
@@ -6302,7 +6259,7 @@ static void assign_to_matrix (parser *p)
 	if (p->ret->t == NUM) {
 	    m->val[0] = p->ret->v.xval;
 	} else if (p->ret->t == VEC) {
-	    const double *x = getvec(p->ret, p);
+	    const double *x = p->ret->v.xvec;
 	    int i, s = p->dinfo->t1;
 
 	    for (i=0; i<m->rows; i++) {
@@ -6509,9 +6466,8 @@ static int matrix_missvals (const gretl_matrix *m)
 			  n->v.m->cols == 1)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
-			   t == LIST || t == USERIES || \
-			   t == LVEC || t == DUM || t == EMPTY || \
-			   t == STR)
+			   t == LIST || t == LVEC || t == DUM || \
+			   t == EMPTY || t == STR)
 
 static int gen_check_return_type (parser *p)
 {
@@ -6544,7 +6500,7 @@ static int gen_check_return_type (parser *p)
 	}
     } else if (p->targ == MAT) {
 	/* error if result contains NAs */
-	if (r->t == VEC && has_missvals(getvec(r, p), p->dinfo)) {
+	if (r->t == VEC && has_missvals(r->v.xvec, p->dinfo)) {
 	    p->err = E_MISSDATA;
 	} else if (r->t == NUM && xna(r->v.xval)) {
 	    p->err = E_MISSDATA;
@@ -6650,7 +6606,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
 	    }
 	} else if (r->t == VEC) {
-	    const double *x = getvec(r, p);
+	    const double *x = r->v.xvec;
 	    int t1 = p->dinfo->t1;
 
 	    if (autoreg(p) && p->op == B_ASN) {
@@ -6895,7 +6851,7 @@ static void maybe_set_return_flags (parser *p)
     if (t != NULL && (t->t == F_SORT || t->t == F_DSORT)) {
 	NODE *l = t->v.b1.b;
 
-	if (l->t == USERIES) {
+	if (l->t == VEC && l->aux >= 0) {
 	    p->flags |= P_SORT;
 	}
     } else if (t != NULL && t->t == UFUN) {
@@ -7011,7 +6967,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 #endif
 	    p->ret = eval(p->tree, p);
 	    if (p->ret != NULL && p->ret->t == VEC) {
-		x = getvec(p->ret, p);
+		x = p->ret->v.xvec;
 		if (!na(x[t])) { 
 #if EDEBUG
 		    fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d]\n",

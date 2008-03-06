@@ -79,8 +79,8 @@ enum {
 	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
-	      USCLR,	  /* user variable, scalar */
-  /* 50 */    USERIES,	  /* user variable, series */
+	      USCALAR,	  /* user variable, scalar */
+  /* 50 */    USERIES,    /* user variable, series */
 	      UMAT,	  /* user-defined matrix */
 	      UOBJ,	  /* user-defined object (e.g. model) */
 	      NUM,	  /* scalar, evaluated */
@@ -377,13 +377,13 @@ union val {
 enum {
     AUX_NODE    = 1 << 0,
     TMP_NODE    = 1 << 1,
-    TRANSP_NODE = 1 << 2,
-    UVAR_NODE   = 1 << 3
+    TRANSP_NODE = 1 << 2
 };
 
 struct node {
     short t;       /* type indentifier */
     char flags;    /* AUX_NODE etc., see above */
+    int aux;       /* additional info (e.g. variable ID number) */
     union val v;   /* value (of whatever type) */
 };
 
