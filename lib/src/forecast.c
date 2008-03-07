@@ -2011,7 +2011,6 @@ static int organize_fcast_vars (const char *yhname, const char *sdname,
  * @str: command string, giving a starting observation, ending
  * observation, and variable name to use for the forecast values
  * (the starting and ending observations may be omitted).
- * @pmod: pointer to model.
  * @pZ: pointer to data matrix.
  * @pdinfo: pointer to data information struct.
  * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
@@ -2060,6 +2059,8 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
     nf = sscanf(str, "%*s %10s %10s %15s %15s", t1str, t2str, yhname, sdname);
     if (nf < 3) {
 	if (sscanf(str, "%*s" "%15s %15s", yhname, sdname) < 1) {
+	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
+		    "fcast");
 	    return E_PARSE;
 	}
     }

@@ -268,11 +268,11 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	VMatrix *corr = (VMatrix *) vwin->data;
 
 	special_print_vmatrix(corr, datainfo, prn);
-    } else if (cmd == FCAST) {
+    } else if (cmd == AFR) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
 	special_print_fit_resid(fr, datainfo, prn);
-    } else if (cmd == FCASTERR) {
+    } else if (cmd == FCAST) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
 	special_print_forecast(fr, datainfo, prn);

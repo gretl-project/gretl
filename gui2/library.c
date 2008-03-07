@@ -1317,7 +1317,7 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-void do_forecast (gpointer p, guint u, GtkWidget *w) 
+void gui_do_forecast (gpointer p, guint u, GtkWidget *w) 
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -1403,7 +1403,7 @@ void do_forecast (gpointer p, guint u, GtkWidget *w)
 	ntodate(endobs, t2, datainfo);
 
 	gretl_command_sprintf("fcasterr %s %s%s", startobs, endobs,
-			      print_flags(opt, FCASTERR));
+			      print_flags(opt, FCAST));
 
 	if (check_and_record_command()) {
 	    return;
@@ -1437,7 +1437,7 @@ void do_forecast (gpointer p, guint u, GtkWidget *w)
 	if (!rolling && fr->sderr == NULL) {
 	    width = 60;
 	}
-	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);
+	view_buffer(prn, width, 400, _("gretl: forecasts"), FCAST, fr);
     }
 }
 
@@ -4773,7 +4773,7 @@ void display_fit_resid (gpointer p, guint code, GtkWidget *w)
 	gretl_print_destroy(prn);
     } else {
 	text_print_fit_resid(fr, datainfo, prn);
-	view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, fr);  
+	view_buffer(prn, 78, 350, _("gretl: display data"), AFR, fr);  
     }  
 }
 

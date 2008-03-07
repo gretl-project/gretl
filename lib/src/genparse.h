@@ -53,30 +53,30 @@ enum {
   /* 20 */    B_OR,
               B_TRMUL,
 	      B_RANGE,
-              G_LPR,      /* left paren */
-              G_RPR,      /* right paren */
-              G_LBR,      /* left bracket */
-              G_RBR,      /* right bracket */
-              G_LCB,      /* left curly bracket */
-              G_RCB,      /* right curly bracket */
               B_DOTMULT,
-  /* 30 */    B_DOTDIV,
+	      B_DOTDIV,
 	      B_DOTPOW,
               B_DOTADD,
               B_DOTSUB,
               B_DOTEQ,
               B_DOTGT,
-              B_DOTLT,
+  /* 30 */    B_DOTLT,
               B_KRON,     /* Kronecker product */
-              B_MCCAT,    /* matrix concatenation (columns) */
-              B_MRCAT,    /* matrix concatenation (rows) */
-  /* 40 */    B_LCAT,     /* list concatentation */
-	      OP_MAX,     /* SEPARATOR: end of operators */
-	      P_COM,	  /* comma */
+              B_MCCAT,    /* matrix column concatenation */
+              B_MRCAT,    /* matrix row concatenation */
+	      B_LCAT,     /* list concatentation */
+	      OP_MAX,     /* SEPARATOR: end of binary operators */
+              G_LPR,      /* grouping: left paren */
+              G_RPR,      /* right paren */
+              G_LBR,      /* left bracket */
+              G_RBR,      /* right bracket */
+  /* 40 */    G_LCB,      /* left curly bracket */
+	      G_RCB,      /* right curly bracket */  
+	      P_COM,	  /* punctuation: comma */
 	      P_DOT,	  /* period */
 	      P_SEMI,	  /* semi-colon */
 	      P_COL,	  /* colon */
-	      PUNCT_MAX,  /* SEPARATOR: end of punctuation marks */
+	      PUNCT_MAX,  /* SEPARATOR: end of grouping and punctuation marks */
               CON,	  /* named constant */
               DUM,	  /* dummy variable */
 	      USCALAR,	  /* user variable, scalar */

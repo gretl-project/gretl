@@ -253,7 +253,14 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd_set_param_direct(cmd, "transpose");
     } else if (!strcmp(s, "fit")) {
 	cmd->ci = FCAST;
+	cmd->opt |= OPT_F;
 	strcpy(line, "fcast autofit");
+    } else if (!strcmp(s, "fcast")) {
+	cmd->ci = FCAST;
+	cmd->opt |= OPT_F;
+    } else if (!strcmp(s, "fcasterr")) {
+	cmd->ci = FCAST;
+	cmd->opt |= OPT_R;
     } else if (!strcmp(s, "corc")) {
 	strcpy(s, "ar1");
 	cmd->ci = AR1;
@@ -272,7 +279,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 
 #define REQUIRES_PARAM(c) (c == ADDTO || \
                            c == DATAMOD || \
-                           c == FCAST || \
                            c == FUNC || \
                            c == LOOP ||  \
                            c == NULLDATA || \
@@ -298,7 +304,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == ESTIMATE || \
 	               c == EQNPRINT || \
 	               c == FCAST || \
-	               c == FCASTERR || \
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
@@ -3832,9 +3837,23 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case FCAST:
-	err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
-	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	if (cmd->opt & OPT_F) {
+	    /* old "fcast" compatibility */
+	    int oldv = pdinfo->v;
+	    
+	    cmd->opt &= ~OPT_F;
+	    err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
+	    if (pdinfo->v > oldv) {
+		/* FIXME: Generated/Replaced */
+		maybe_list_vars(pdinfo, prn);
+	    }
+	} else if (cmd->opt & OPT_R) {
+	    /* old "fcasterr" compatibility */
+	    cmd->opt &= ~OPT_R;
+	    err = display_forecast(line, pZ, pdinfo, cmd->opt, prn);
+	} else {
+	    /* new: "forecast" (FIXME) */
+	    err = display_forecast(line, pZ, pdinfo, cmd->opt, prn);
 	}
 	break;
 
@@ -4368,10 +4387,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		pprintf(prn, _("Model printed to %s\n"), texfile);
 	    }
 	}
-	break;
-
-    case FCASTERR:
-	err = display_forecast(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case RESTRICT:

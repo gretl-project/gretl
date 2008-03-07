@@ -2205,7 +2205,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_widget_grab_default(tmp);
 
     /* Create a "Help" button */
-    context_help_button(GTK_DIALOG(rset->dlg)->action_area, FCASTERR);
+    context_help_button(GTK_DIALOG(rset->dlg)->action_area, FCAST);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);

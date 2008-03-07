@@ -90,7 +90,6 @@ struct CoeffIntervals_ {
 	                     c == CHOW || \
 	                     c == CUSUM || \
 	                     c == FCAST || \
-	                     c == FCASTERR || \
                              c == LEVERAGE || \
 	                     c == LMTEST || \
                              c == OMIT || \

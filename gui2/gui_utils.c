@@ -279,7 +279,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Analysis/_Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL, GNULL },
     { N_("/Analysis/_Forecasts..."), NULL, 
-      do_forecast, FCASTERR, NULL, GNULL },
+      gui_do_forecast, 0, NULL, GNULL },
     { N_("/Analysis/_Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL, GNULL },
     { N_("/Analysis/Confidence _ellipse..."), NULL, 
@@ -1413,7 +1413,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (vwin->role == CORR || vwin->role == PCA || 
 		   vwin->role == COVAR) {
 	    free_vmatrix(vwin->data);
-	} else if (vwin->role == FCASTERR || vwin->role == FCAST) {
+	} else if (vwin->role == FCAST || vwin->role == AFR) {
 	    free_fit_resid(vwin->data);
 	} else if (vwin->role == COEFFINT) {
 	    free_coeff_intervals(vwin->data);
@@ -1613,7 +1613,7 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	add_leverage_data(vwin);
     } else if (vwin->role == MAHAL) {
 	add_mahalanobis_data(vwin);
-    } else if (vwin->role == FCASTERR) {
+    } else if (vwin->role == FCAST) {
 	add_fcast_data(vwin);
     }
 
@@ -1825,7 +1825,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 	if (vwin->role != PCA && vwin->role != LEVERAGE && 
-	    vwin->role != MAHAL && vwin->role != FCASTERR &&
+	    vwin->role != MAHAL && vwin->role != FCAST &&
 	    viewbar_items[i].flag == ADD_DATA_ITEM) {
 	    continue;
 	}
@@ -3400,7 +3400,7 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	if (fr->sderr == NULL) {
 	    width = 50;
 	}
-	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);
+	view_buffer(prn, width, 400, _("gretl: forecasts"), FCAST, fr);
     }
 }
 

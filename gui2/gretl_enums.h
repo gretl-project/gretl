@@ -98,6 +98,7 @@ enum extra_cmds {
     CORC,
     HILU,
     PWE,
+    AFR, /* actual, fitted, residual */
     GUI_CMD_MAX
 };
 
@@ -266,7 +267,7 @@ enum dynamic_forecast_status {
 
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
                                  c == ALL_SUMMARY || \
-	                         c == CORR || c == ALL_CORR || c == FCASTERR || \
+	                         c == CORR || c == ALL_CORR || \
 	                         c == FCAST || c == COEFFINT || \
 	                         c == COVAR || c == VIEW_MODEL || \
                                  c == VIEW_MODELTABLE || c == VAR || c == VECM || \

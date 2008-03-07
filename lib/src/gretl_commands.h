@@ -57,7 +57,6 @@ typedef enum {
     EQUATION,
     ESTIMATE,
     FCAST,   
-    FCASTERR, 
     FREQ, 
     FUNC,
     FUNCERR,
@@ -165,7 +164,6 @@ typedef enum {
                         c == CRITERIA || \
                         c == CUSUM || \
                         c == FCAST || \
-                        c == FCASTERR || \
                         c == FREQ || \
                         c == GRAPH || \
                         c == HAUSMAN || \
@@ -205,7 +203,6 @@ typedef enum {
                               c == TABPRINT || \
                               c == EQNPRINT || \
                               c == FCAST || \
-                              c == FCASTERR || \
                               c == HAUSMAN || \
                               c == LEVERAGE || \
                               c == LMTEST || \
