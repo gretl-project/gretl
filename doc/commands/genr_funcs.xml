@@ -333,13 +333,12 @@
     <function name="$stopwatch" output="scalar">
       <description>
 	<para>
-	  Must be preceded by the <lit>set stopwatch</lit> command, which
-	  activates the measurement of CPU time.  The <quote>clock</quote>
-	  stops when the accessor <lit>$stopwatch</lit> is used, either in
-	  assigning it to a variable or simply by printing it. The
-	  accessor <lit>$stopwatch</lit> yields the seconds of CPU time
-	  that have elapsed since the <lit>set stopwatch</lit> statement
-	  command.
+	  Must be preceded by <lit>set stopwatch</lit>, which activates the
+	  measurement of CPU time.  The first use of this accessor yields the
+	  seconds of CPU time that have elapsed since the <lit>set
+	    stopwatch</lit> command.  At each access the clock is reset, so
+	  subsequent uses of <lit>$stopwatch</lit> yield the seconds of CPU
+	  time since the previous access.
 	</para>
       </description>
     </function>
