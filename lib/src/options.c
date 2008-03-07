@@ -126,6 +126,8 @@ struct gretl_option gretl_opts[] = {
     { ESTIMATE, OPT_V, "verbose" },
     { FCAST,    OPT_D, "dynamic" },
     { FCAST,    OPT_S, "static" },
+    { FCAST,    OPT_Q, "quiet" },
+    { FCAST,    OPT_O, "out-of-sample" },
     { FREQ,     OPT_O, "gamma" },
     { FREQ,     OPT_Q, "quiet" },
     { FREQ,     OPT_S, "silent" },

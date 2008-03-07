@@ -1873,33 +1873,47 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
    model 
 */
 
-static int parse_forecast_string (const char *s, int t2est,
+static int parse_forecast_string (const char *s, gretlopt opt, 
+				  int t2est,
 				  const DATAINFO *pdinfo,
 				  int *t1, int *t2,
 				  char *vname)
 {
-    char t1str[OBSLEN], t2str[OBSLEN];
+    char t1str[16], t2str[16];
     int n, err = 0;
 
     if (!strncmp(s, "fcasterr", 8)) {
-        s += 9;
+        s += 8;
+    } else if (!strncmp(s, "fcast", 5)) {
+	s += 5;
     }
 
     if (vname != NULL) {
-	n = sscanf(s, "%10s %10s %15s", t1str, t2str, vname);
+	n = sscanf(s, "%15s %15s %15s", t1str, t2str, vname);
+	if (n == 1) {
+	    strcpy(vname, t1str);
+	    n = 0;
+	} else if (n == 3) {
+	    n = 2;
+	}
     } else {
-	n = sscanf(s, "%10s %10s", t1str, t2str);
+	n = sscanf(s, "%15s %15s", t1str, t2str);
     }
 
-    if (n >= 2) {
+    if (n == 2) {
 	*t1 = dateton(t1str, pdinfo);
 	*t2 = dateton(t2str, pdinfo);
-    } else if (pdinfo->n - t2est - 1 > 0) {
-	/* default, if it works: out-of-sample range */
-	*t1 = t2est + 1;
-	*t2 = pdinfo->n - 1;
+    } else if (opt & OPT_O) {
+	/* out of sample, if possible */
+	if (pdinfo->n - t2est - 1 > 0) {
+	    *t1 = t2est + 1;
+	    *t2 = pdinfo->n - 1;
+	} else {
+	    err = E_OBS;
+	}
     } else {
-        err = E_OBS;
+	*t1 = pdinfo->t1;
+	*t2 = pdinfo->t2;
     } 
 
     return err;
@@ -2207,9 +2221,9 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     return err;
 }
 
-static int model_display_forecast (const char *str, MODEL *pmod, 
-				   double ***pZ, DATAINFO *pdinfo, 
-				   gretlopt opt, PRN *prn)
+static int model_do_forecast (const char *str, MODEL *pmod, 
+			      double ***pZ, DATAINFO *pdinfo, 
+			      gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
     int t1, t2;
@@ -2219,7 +2233,7 @@ static int model_display_forecast (const char *str, MODEL *pmod,
 	return E_NOTIMP;
     }
 
-    err = parse_forecast_string(str, pmod->t2, pdinfo, &t1, &t2, NULL);
+    err = parse_forecast_string(str, opt, pmod->t2, pdinfo, &t1, &t2, NULL);
     if (err) {
 	return err;
     }
@@ -2273,9 +2287,9 @@ static int get_sys_fcast_var (void *ptr, int type, const char *vname,
     return -1;
 }
 
-static int system_display_forecast (const char *str, void *ptr, int type,
-				    const double **Z, DATAINFO *pdinfo, 
-				    gretlopt opt, PRN *prn)
+static int system_do_forecast (const char *str, void *ptr, int type,
+			       const double **Z, DATAINFO *pdinfo, 
+			       gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
     char vname[VNAMELEN] = {0};
@@ -2298,7 +2312,7 @@ static int system_display_forecast (const char *str, void *ptr, int type,
 	ci = SYSTEM;
     }
 
-    err = parse_forecast_string(str, t2est, pdinfo, &t1, &t2, vname);
+    err = parse_forecast_string(str, opt, t2est, pdinfo, &t1, &t2, vname);
     if (err) {
 	return err;
     }
@@ -2384,11 +2398,11 @@ static int display_forecast (const char *str, double ***pZ,
     }
 
     if (type == GRETL_OBJ_EQN) {
-	err = model_display_forecast(str, ptr, pZ, pdinfo, opt, prn);
+	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
     } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
-	err = system_display_forecast(str, ptr, type, 
-				      (const double **) *pZ,
-				      pdinfo, opt, prn);
+	err = system_do_forecast(str, ptr, type, 
+				 (const double **) *pZ,
+				 pdinfo, opt, prn);
     } else {
 	err = E_DATA;
     }
@@ -2396,40 +2410,21 @@ static int display_forecast (const char *str, double ***pZ,
     return err;
 }
 
-static int organize_fcast_vars (const char *yhname, const char *sdname,
-				int *vi, int *vj, double ***pZ,
-				DATAINFO *pdinfo)
+static int organize_fcast_var (const char *yhname, int *v, 
+			       double ***pZ,
+			       DATAINFO *pdinfo)
 {
-    int nadd = 0;
     int err = 0;
 
-    *vi = *vj = 0;
+    *v = 0;
 
     if (check_varname(yhname)) {
 	return 1;
     }
 
-    if (*sdname && check_varname(sdname)) {
-	return 1;
-    }
-
-    *vi = varindex(pdinfo, yhname);
-    if (*vi == pdinfo->v) {
-	nadd++;
-    }
-
-    if (*sdname) {
-	*vj = varindex(pdinfo, sdname);
-	if (*vj == pdinfo->v) {
-	    if (nadd > 0) {
-		*vj += 1;
-	    }
-	    nadd++;
-	}
-    }
-
-    if (nadd > 0) {
-	err = dataset_add_series(nadd, pZ, pdinfo);
+    *v = varindex(pdinfo, yhname);
+    if (*v == pdinfo->v) {
+	err = dataset_add_series(1, pZ, pdinfo);
     }
 
     return err;
@@ -2464,10 +2459,9 @@ static int add_forecast (const char *str, double ***pZ,
     MODEL *pmod;
     GretlObjType type;
     int oldv = pdinfo->v;
-    int t, t1, t2, vi, vj;
+    int t, t1, t2, v;
     char t1str[OBSLEN], t2str[OBSLEN];
     char yhname[VNAMELEN];
-    char sdname[VNAMELEN];
     int nf, err = 0;
 
     pmod = get_last_model(&type);
@@ -2488,14 +2482,14 @@ static int add_forecast (const char *str, double ***pZ,
 	return E_DATA;
     }
 
-    *yhname = *sdname = 0;
+    *yhname = 0;
 
     /* the name for forecast values should either be in the 2nd or 4th
-       position; it may be followed by a name for the standard errors
+       position
     */
-    nf = sscanf(str, "%*s %10s %10s %15s %15s", t1str, t2str, yhname, sdname);
+    nf = sscanf(str, "%*s %10s %10s %15s", t1str, t2str, yhname);
     if (nf < 3) {
-	if (sscanf(str, "%*s" "%15s %15s", yhname, sdname) < 1) {
+	if (sscanf(str, "%*s %15s", yhname) < 1) {
 	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
 		    "fcast");
 	    return E_PARSE;
@@ -2513,7 +2507,7 @@ static int add_forecast (const char *str, double ***pZ,
 	t2 = pdinfo->t2;
     }
 
-    err = organize_fcast_vars(yhname, sdname, &vi, &vj, pZ, pdinfo);
+    err = organize_fcast_var(yhname, &v, pZ, pdinfo);
     if (err) {
 	return err;
     }
@@ -2526,18 +2520,10 @@ static int add_forecast (const char *str, double ***pZ,
 
 	forecast_init(&fc);
 
-	strcpy(pdinfo->varname[vi], yhname);
-	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
+	strcpy(pdinfo->varname[v], yhname);
+	strcpy(VARLABEL(pdinfo, v), _("predicted values"));
 
-	if (vj > 0) {
-	    strcpy(pdinfo->varname[vj], sdname);
-	    strcpy(VARLABEL(pdinfo, vj), _("forecast standard errors"));
-	}
-
-	fc.yhat = (*pZ)[vi];
-	if (vj > 0) {
-	    fc.sderr = (*pZ)[vj];
-	} 
+	fc.yhat = (*pZ)[v];
 
 	for (t=0; t<pdinfo->n; t++) {
 	    fc.yhat[t] = NADBL;
@@ -2627,7 +2613,7 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn)
 {
     int oldv = pdinfo->v;
-    char vname[VNAMELEN];
+    char vname[VNAMELEN] = {0};
     int err, add = 0;
 
     if (!(opt & OPT_R)) {

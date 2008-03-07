@@ -266,7 +266,7 @@ enum dynamic_forecast_status {
 };
 
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
-                                 c == ALL_SUMMARY || \
+                                 c == ALL_SUMMARY || c == AFR || \
 	                         c == CORR || c == ALL_CORR || \
 	                         c == FCAST || c == COEFFINT || \
 	                         c == COVAR || c == VIEW_MODEL || \

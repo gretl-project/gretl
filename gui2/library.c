@@ -601,6 +601,7 @@ void add_fcast_data (windata_t *vwin)
 
     make_fcast_save_name(vname, fr->depvar);
     strcpy(datainfo->varname[v], vname);
+
     sprintf(VARLABEL(datainfo, v), _("forecast of %s"), fr->depvar);
 
     /* give the user a chance to choose a different name */

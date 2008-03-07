@@ -13,6 +13,7 @@ version 1.7.4, in progress
   command with options: ar1
 - Fix for the case of graphing 6 time series together
 - Fix bugs 1908139, 1909469
+- Fix documentation of $stopwatch
 - Move handling of strings into "genr"
 
 2/29/2008 version 1.7.3
