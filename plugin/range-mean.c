@@ -216,7 +216,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     clear_model(&rmmod);
 
-    destroy_auxiliary_dataset(rmZ, rminfo);
+    destroy_dataset(rmZ, rminfo);
 
     return err;
 }

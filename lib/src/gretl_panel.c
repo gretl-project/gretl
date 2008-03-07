@@ -1656,7 +1656,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	}
     }
 
-    destroy_auxiliary_dataset(wZ, winfo);
+    destroy_dataset(wZ, winfo);
     free(felist);
 
     return femod;
@@ -2054,7 +2054,7 @@ static int random_effects (panelmod_t *pan,
 	clear_model(&remod);
     }
 
-    destroy_auxiliary_dataset(reZ, reinfo);
+    destroy_dataset(reZ, reinfo);
 
     free(relist);    
     free(hlist);
@@ -2405,7 +2405,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (ginfo != NULL) {
-	    destroy_auxiliary_dataset(gZ, ginfo);
+	    destroy_dataset(gZ, ginfo);
 	}
     }
 
@@ -2431,7 +2431,7 @@ static int between_model (panelmod_t *pan, const double **Z,
     }
 
     if (ginfo != NULL) {
-	destroy_auxiliary_dataset(gZ, ginfo);
+	destroy_dataset(gZ, ginfo);
     }
 
     return err;
@@ -2667,7 +2667,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (ginfo != NULL) {
-	    destroy_auxiliary_dataset(gZ, ginfo);
+	    destroy_dataset(gZ, ginfo);
 	}
     }
 
@@ -3320,7 +3320,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     free(aclist);
     clear_model(&aux); 
 
-    destroy_auxiliary_dataset(tmpZ, tmpinfo);
+    destroy_dataset(tmpZ, tmpinfo);
 
     return err;
 }

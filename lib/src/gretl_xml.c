@@ -2338,7 +2338,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
     }
 
     if (err && tmpdinfo != NULL) {
-	destroy_auxiliary_dataset(tmpZ, tmpdinfo);
+	destroy_dataset(tmpZ, tmpdinfo);
     }
 
 #ifdef ENABLE_NLS

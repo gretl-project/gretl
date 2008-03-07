@@ -698,7 +698,7 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     err = read_dta_data(fp, newZ, newinfo, &st, namelen, &nvread, prn);
 
     if (err) {
-	destroy_auxiliary_dataset(newZ, newinfo);
+	destroy_dataset(newZ, newinfo);
 	if (st != NULL) {
 	    gretl_string_table_destroy(st);
 	}	

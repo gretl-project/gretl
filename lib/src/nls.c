@@ -1615,7 +1615,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
     glist = gretl_list_new(spec->ncoeff + 1);
 
     if (glist == NULL) {
-	destroy_auxiliary_dataset(gZ, gdinfo);
+	destroy_dataset(gZ, gdinfo);
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
 	return gnr;
@@ -1718,7 +1718,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	transcribe_nls_function(&gnr, spec->nlfunc);
     }
 
-    destroy_auxiliary_dataset(gZ, gdinfo);
+    destroy_dataset(gZ, gdinfo);
     free(glist);
 
     return gnr;

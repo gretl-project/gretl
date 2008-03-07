@@ -263,7 +263,7 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 
     clear_model(&hmod);
 
-    destroy_auxiliary_dataset(hZ, hinfo);
+    destroy_dataset(hZ, hinfo);
 
     return err;
 }

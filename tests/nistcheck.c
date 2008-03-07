@@ -941,7 +941,7 @@ int main (int argc, char *argv[])
 #if 1
 	    free_data_digits(datainfo);
 #endif
-	    destroy_auxiliary_dataset(Z, datainfo);
+	    destroy_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
 	    
@@ -1045,7 +1045,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 #if 1
 	    free_data_digits(datainfo);
 #endif
-	    destroy_auxiliary_dataset(Z, datainfo);
+	    destroy_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
 	    

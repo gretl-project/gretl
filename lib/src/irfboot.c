@@ -66,7 +66,7 @@ static void irf_boot_free (irfboot *b)
     gretl_matrix_free(b->C0);
 
     if (b->Z != NULL) {
-	destroy_auxiliary_dataset(b->Z, b->dinfo);
+	destroy_dataset(b->Z, b->dinfo);
     }
 
     free(b->sample);

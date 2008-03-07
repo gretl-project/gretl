@@ -1542,7 +1542,7 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list)
 
 static void loop_store_free (LOOPSET *loop)
 {
-    destroy_auxiliary_dataset(loop->sZ, loop->sdinfo);
+    destroy_dataset(loop->sZ, loop->sdinfo);
     loop->sZ = NULL;
     loop->sdinfo = NULL;
 }

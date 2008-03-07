@@ -2178,7 +2178,7 @@ static int ar_arma_init (const int *list, double *coeff,
 
     /* clean up */
     free(alist);
-    destroy_auxiliary_dataset(aZ, adinfo);
+    destroy_dataset(aZ, adinfo);
     clear_model(&armod);
 
     return err;
@@ -2497,7 +2497,7 @@ static int hr_arma_init (const int *list, double *coeff,
     free(pass2list);
     free(arlags);
     free(malags);
-    destroy_auxiliary_dataset(aZ, adinfo);
+    destroy_dataset(aZ, adinfo);
     clear_model(&armod);
 
     if (!err && prn != NULL) {

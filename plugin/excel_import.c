@@ -1530,7 +1530,7 @@ int xls_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (newinfo != NULL) {
-	destroy_auxiliary_dataset(newZ, newinfo);
+	destroy_dataset(newZ, newinfo);
     }
 
     return err;

@@ -273,8 +273,6 @@ create_auxiliary_dataset (double ***pZ, int nvar, int nobs);
 
 void destroy_dataset (double **Z, DATAINFO *pdinfo);
 
-void destroy_auxiliary_dataset (double **Z, DATAINFO *pdinfo);
-
 void clear_datainfo (DATAINFO *pdinfo, int code);
 
 int allocate_Z (double ***pZ, const DATAINFO *pdinfo);

@@ -374,7 +374,7 @@ int jmulti_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     err = read_jmulti_data(fp, line, maxlen, newZ, newinfo);
     if (err) {
-	destroy_auxiliary_dataset(newZ, newinfo);
+	destroy_dataset(newZ, newinfo);
     } else {
 	if (fix_varname_duplicates(newinfo)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));

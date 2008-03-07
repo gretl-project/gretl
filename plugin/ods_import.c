@@ -175,7 +175,7 @@ static void ods_sheet_free (ods_sheet *sheet)
 	    xmlCleanupParser();
 	}
 
-	destroy_auxiliary_dataset(sheet->Z, sheet->dinfo);
+	destroy_dataset(sheet->Z, sheet->dinfo);
 
 	free(sheet);
     }

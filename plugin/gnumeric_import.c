@@ -820,7 +820,7 @@ int gnumeric_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     gretl_pop_c_numeric_locale();
 
     if (err && newinfo != NULL) {
-	destroy_auxiliary_dataset(newZ, newinfo);
+	destroy_dataset(newZ, newinfo);
     }
 
     return err;

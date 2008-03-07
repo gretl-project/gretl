@@ -35,10 +35,16 @@
   dataset around so that it can be restored later.  The pointers fullZ
   and fullinfo are used to record the addresses of the full data
   matrix and DATAINFO struct respectively.
+
+  In addition, peerinfo keeps track of the location of the DATAINFO
+  struct associated with the back-up full dataset; by means of this,
+  we can know when to free the full dataset and when not to (for
+  instance, if we're freeing an auxiliary dataset).
 */
 
 static double **fullZ;
 static DATAINFO *fullinfo;
+static DATAINFO *peerinfo;
 
 #define SUBMASK_SENTINEL 127
 
@@ -176,15 +182,17 @@ static char *make_submask (int n)
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo)
 {
-    if (fullZ != NULL) {
-	free_Z(fullZ, fullinfo);
-	fullZ = NULL;
-    }
-
-    if (fullinfo != NULL) {
-	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
-	free(fullinfo);
-	fullinfo = NULL;
+    if (pdinfo == peerinfo) {
+	if (fullZ != NULL) {
+	    free_Z(fullZ, fullinfo);
+	    fullZ = NULL;
+	}
+	if (fullinfo != NULL) {
+	    clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
+	    free(fullinfo);
+	    fullinfo = NULL;
+	}
+	peerinfo = NULL;
     }
 }
 
@@ -204,6 +212,7 @@ relink_to_full_dataset (double ***pZ, DATAINFO *pdinfo)
     fullZ = NULL;
     free(fullinfo);
     fullinfo = NULL;
+    peerinfo = NULL;
 }
 
 /* sync malloced elements of the fullinfo struct that might
@@ -741,6 +750,7 @@ static int backup_full_dataset (double **Z, DATAINFO *pdinfo)
 
     if (pdinfo != NULL) {
 	*fullinfo = *pdinfo;
+	peerinfo = pdinfo;
     } 
 
 #if SUBDEBUG
@@ -1552,7 +1562,7 @@ void free_model_dataset (MODEL *pmod)
 #if SUBDEBUG
 	fprintf(stderr, "Deep freeing model->dataset\n");
 #endif
-	destroy_auxiliary_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
+	destroy_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
 	free(pmod->dataset);
 	pmod->dataset = NULL;
     }

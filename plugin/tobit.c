@@ -422,7 +422,7 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
     clear_model(&mod);
     free(list);
 
-    destroy_auxiliary_dataset(cZ, cinfo);
+    destroy_dataset(cZ, cinfo);
     
     return err;
 }
