@@ -144,7 +144,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
     extra = nsamp % k;
     m = (nsamp / k) + ((extra >= 3)? 1 : 0);
 
-    rminfo = create_new_dataset(&rmZ, 3, m, 0);
+    rminfo = create_auxiliary_dataset(&rmZ, 3, m);
     if (rminfo == NULL) {
 	return E_ALLOC;
     }
@@ -216,7 +216,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     clear_model(&rmmod);
 
-    destroy_dataset(rmZ, rminfo);
+    destroy_auxiliary_dataset(rmZ, rminfo);
 
     return err;
 }

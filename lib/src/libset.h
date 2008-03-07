@@ -76,6 +76,7 @@ typedef enum {
 #define USE_QR       "qr"
 #define USE_FCP      "fcp"
 #define VECM_NORM    "vecm_norm"
+#define ARMA_VCV     "arma_vcv"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 

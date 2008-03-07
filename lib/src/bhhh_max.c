@@ -545,7 +545,7 @@ int bhhh_max (LL_FUNC loglik,
     }
 
     /* create temp dataset for OPG regression: k vars plus constant */    
-    tinfo = create_new_dataset(&tZ, k + 1, minfo->n, 0);
+    tinfo = create_auxiliary_dataset(&tZ, k + 1, minfo->n);
     if (tinfo == NULL) {
 	free(delta);
 	free(ctemp);
@@ -694,7 +694,7 @@ int bhhh_max (LL_FUNC loglik,
     }
 
     /* free all remaining temp stuff */
-    destroy_dataset(tZ, tinfo);
+    destroy_auxiliary_dataset(tZ, tinfo);
     free(blist);
 
     if (bmod != minfo->pmod) {

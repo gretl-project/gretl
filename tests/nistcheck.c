@@ -438,8 +438,8 @@ int read_nist_file (const char *fname,
 	/* allocate data matrix once we know its size */
 	if (nvar > 0 && nobs > 0 && Z == NULL) {
 
-	    dinfo = create_new_dataset(&Z, nvar + 1 + npoly, 
-				       nobs, 0);
+	    dinfo = create_auxiliary_dataset(&Z, nvar + 1 + npoly, 
+					     nobs);
 	    if (dinfo == NULL) {
 		free_mp_results(certvals);
 		fclose(fp);
@@ -941,7 +941,7 @@ int main (int argc, char *argv[])
 #if 1
 	    free_data_digits(datainfo);
 #endif
-	    destroy_dataset(Z, datainfo);
+	    destroy_auxiliary_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
 	    
@@ -1045,7 +1045,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 #if 1
 	    free_data_digits(datainfo);
 #endif
-	    destroy_dataset(Z, datainfo);
+	    destroy_auxiliary_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
 	    

@@ -1542,7 +1542,7 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list)
 
 static void loop_store_free (LOOPSET *loop)
 {
-    destroy_dataset(loop->sZ, loop->sdinfo);
+    destroy_auxiliary_dataset(loop->sZ, loop->sdinfo);
     loop->sZ = NULL;
     loop->sdinfo = NULL;
 }
@@ -1579,7 +1579,7 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 
     n = (loop->itermax > 0)? loop->itermax : DEFAULT_NOBS;
 
-    loop->sdinfo = create_new_dataset(&loop->sZ, list[0] + 1, n, 0);
+    loop->sdinfo = create_auxiliary_dataset(&loop->sZ, list[0] + 1, n);
     if (loop->sdinfo == NULL) {
 	return E_ALLOC;
     }

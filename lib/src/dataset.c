@@ -105,6 +105,8 @@ void set_sorted_markers (DATAINFO *pdinfo, int v, char **S)
     pdinfo->varinfo[v]->sorted_markers = S;
 }
 
+static int aux_dataset;
+
 /**
  * clear_datainfo:
  * @pdinfo: data information struct.
@@ -134,6 +136,8 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
     if (code == CLEAR_FULL) {
+	int aux = aux_dataset;
+
 	if (pdinfo->varname != NULL) {
 	    for (i=0; i<pdinfo->v; i++) {
 		free(pdinfo->varname[i]); 
@@ -149,11 +153,16 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	    pdinfo->varinfo = NULL;
 	}
 	if (pdinfo->descrip != NULL) {
+	    if (!aux && !strcmp(pdinfo->descrip, "auxiliary")) {
+		aux = 1;
+	    }
 	    free(pdinfo->descrip);
 	    pdinfo->descrip = NULL;
 	}
 
-	maybe_free_full_dataset(pdinfo);
+	if (!aux) {
+	    maybe_free_full_dataset(pdinfo);
+	}
 
 	/* added Sat Dec  4 12:19:26 EST 2004 */
 	pdinfo->v = pdinfo->n = 0;
@@ -174,6 +183,26 @@ void destroy_dataset (double **Z, DATAINFO *pdinfo)
 
     if (pdinfo != NULL) {
 	clear_datainfo(pdinfo, CLEAR_FULL); 
+	free(pdinfo);
+    }
+}
+
+/**
+ * destroy_auxiliary_dataset:
+ * @Z: data array.
+ * @pdinfo: dataset information struct.
+ *
+ * Frees all resources associated with @Z and @pdinfo.
+ */
+
+void destroy_auxiliary_dataset (double **Z, DATAINFO *pdinfo)
+{
+    free_Z(Z, pdinfo);
+
+    if (pdinfo != NULL) {
+	aux_dataset = 1;
+	clear_datainfo(pdinfo, CLEAR_FULL); 
+	aux_dataset = 0;
 	free(pdinfo);
     }
 }
@@ -650,6 +679,20 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
 
     dataset_obs_info_default(pdinfo);
     pdinfo->descrip = NULL;
+
+    return pdinfo;
+}
+
+DATAINFO *
+create_auxiliary_dataset (double ***pZ, int nvar, int nobs)
+{
+    DATAINFO *pdinfo;
+
+    pdinfo = create_new_dataset(pZ, nvar, nobs, 0);
+
+    if (pdinfo != NULL) {
+	pdinfo->descrip = gretl_strdup("auxiliary");
+    }
 
     return pdinfo;
 }

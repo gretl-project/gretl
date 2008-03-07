@@ -100,7 +100,7 @@ static void csvdata_free (csvdata *c)
 	free(c->codelist);
     }
 
-    destroy_dataset(c->Z, c->dinfo);
+    destroy_auxiliary_dataset(c->Z, c->dinfo);
 
     free(c);
 }

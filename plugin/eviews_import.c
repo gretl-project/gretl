@@ -321,7 +321,7 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     err = read_wf1_variables(fp, offset, newZ, newinfo, &nvread, prn);
 
     if (err) {
-	destroy_dataset(newZ, newinfo);
+	destroy_auxiliary_dataset(newZ, newinfo);
     } else {
 	int nvtarg = newinfo->v - 1;
 

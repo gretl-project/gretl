@@ -74,6 +74,8 @@ FITRESID *
 rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			    int t0, int t1, int t2);
 
+void forecast_matrix_cleanup (void);
+
 #endif /* FORECAST_H */
 
 

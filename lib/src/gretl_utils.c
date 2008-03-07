@@ -28,6 +28,7 @@
 #include "loop_private.h"
 #include "texprint.h"
 #include "gretl_string_table.h"
+#include "forecast.h"
 
 #include <errno.h>
 #include <time.h>
@@ -1529,6 +1530,7 @@ void libgretl_cleanup (void)
     gretl_function_hash_cleanup();
     saved_strings_cleanup();
     lapack_mem_free();
+    forecast_matrix_cleanup();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

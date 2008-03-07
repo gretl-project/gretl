@@ -66,7 +66,7 @@ static void irf_boot_free (irfboot *b)
     gretl_matrix_free(b->C0);
 
     if (b->Z != NULL) {
-	destroy_dataset(b->Z, b->dinfo);
+	destroy_auxiliary_dataset(b->Z, b->dinfo);
     }
 
     free(b->sample);
@@ -455,7 +455,7 @@ static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
 	nv += var->rlist[0];
     }
 
-    b->dinfo = create_new_dataset(&b->Z, nv, pdinfo->n, 0);
+    b->dinfo = create_auxiliary_dataset(&b->Z, nv, pdinfo->n);
     if (b->dinfo == NULL) {
 	return E_ALLOC;
     }   

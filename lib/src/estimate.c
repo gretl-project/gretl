@@ -3592,7 +3592,6 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     tmod = (*tobit_estimate) (list, pZ, pdinfo, prn);
 
     close_plugin(handle);
-
     set_model_id(&tmod);
 
     return tmod;

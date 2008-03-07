@@ -83,6 +83,7 @@ struct set_vars_ {
     double bhhh_toler;          /* convergence tolerance, BHHH */
     int garch_vcv;              /* GARCH vcv variant */
     int garch_robust_vcv;       /* GARCH vcv variant, robust estimation */
+    int arma_vcv;               /* ARMA vcv variant */
     int bkbp_k;                 /* Baxter-King k */
     int bkbp_p0;                /* Baxter-King periods[0] */
     int bkbp_p1;                /* Baxter-King periods[1] */
@@ -167,6 +168,12 @@ static const char *garch_vcv_strs[] = {
     NULL
 };
 
+static const char *arma_vcv_strs[] = {
+    "op",
+    "hessian",
+    NULL
+};
+
 static const char *hac_kernel_strs[] = {
     "bartlett", 
     "parzen", 
@@ -190,6 +197,8 @@ static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
 	return garch_vcv_strs;
+    } else if (!strcmp(s, ARMA_VCV)) {
+	return arma_vcv_strs;
     } else if (!strcmp(s, HAC_KERNEL)) {
 	return hac_kernel_strs;
     } else if (!strcmp(s, HC_VERSION)) {
@@ -223,6 +232,8 @@ static const char *libset_option_string (const char *s)
 	return hac_lag_string(); /* special */
     } else if (!strcmp(s, GARCH_VCV)) {
 	return garch_vcv_strs[state->garch_vcv];
+    } else if (!strcmp(s, ARMA_VCV)) {
+	return arma_vcv_strs[state->arma_vcv];
     } else if (!strcmp(s, HAC_KERNEL)) {
 	return hac_kernel_strs[state->ropts.hkern];
     } else if (!strcmp(s, HC_VERSION)) {
@@ -317,6 +328,7 @@ static void state_vars_init (set_vars *sv)
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
     sv->garch_vcv = VCV_UNSET;
+    sv->arma_vcv = VCV_OP;
     sv->garch_robust_vcv = VCV_UNSET;
 
     sv->bkbp_k = UNSET_INT;
@@ -705,6 +717,14 @@ static int parse_libset_int_code (const char *s,
 		return 0;
 	    }
 	}
+    } else if (!strcmp(s, ARMA_VCV)) {
+	if (!strcmp(code, "op")) {
+	    state->arma_vcv = VCV_OP;
+	    return 0;
+	} else if (!strcmp(code, "hessian")) {
+	    state->arma_vcv = VCV_HESSIAN;
+	    return 0;
+	}
     } else if (!strcmp(s, HAC_KERNEL)) {
 	for (i=0; i<KERNEL_MAX; i++) {
 	    if (!strcmp(code, hac_kernel_strs[i])) {
@@ -1032,6 +1052,7 @@ static void libset_print_bool (const char *s, PRN *prn)
 }
 
 #define coded_intvar(s) (!strcmp(s, GARCH_VCV) || \
+			 !strcmp(s, ARMA_VCV) || \
 			 !strcmp(s, HAC_LAG) || \
 			 !strcmp(s, HAC_KERNEL) || \
                          !strcmp(s, HC_VERSION) || \
@@ -1127,6 +1148,7 @@ static int display_settings (PRN *prn)
 
     libset_print_int(BOOTREP, prn);
     libset_print_int(GARCH_VCV, prn);
+    libset_print_int(ARMA_VCV, prn);
     libset_print_bool(FORCE_HC, prn);
     libset_print_int(HAC_LAG, prn);
     libset_print_int(HAC_KERNEL, prn);
@@ -1325,12 +1347,16 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    if (!err) {
 		err = libset_set_int(setobj, k);
 	    }
-	} 	    
+	} else {
+	    err = E_UNKVAR;
+	}
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
 	    err = set_bkbp_limits(setarg, setarg2, Z, pdinfo, prn);
 	} else if (!strcmp(setobj, "linewidth")) {
 	    err = set_line_width(setarg, setarg2, pdinfo, prn);
+	} else {
+	    err = E_UNKVAR;
 	}
     }
 		    
@@ -1421,6 +1447,8 @@ int libset_get_int (const char *s)
 	return state->garch_vcv;
     } else if (!strcmp(s, GARCH_ROBUST_VCV)) {
 	return state->garch_robust_vcv;
+    } else if (!strcmp(s, ARMA_VCV)) {
+	return state->arma_vcv;
     } else if (!strcmp(s, HAC_KERNEL)) {
 	return state->ropts.hkern;
     } else if (!strcmp(s, HC_VERSION)) {

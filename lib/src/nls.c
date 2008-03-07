@@ -1596,7 +1596,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 
     /* number of variables = 1 (const) + 1 (depvar) + spec->ncoeff
        (derivatives) */
-    gdinfo = create_new_dataset(&gZ, spec->ncoeff + 2, pdinfo->n, 0);
+    gdinfo = create_auxiliary_dataset(&gZ, spec->ncoeff + 2, pdinfo->n);
     if (gdinfo == NULL) {
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
@@ -1615,7 +1615,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
     glist = gretl_list_new(spec->ncoeff + 1);
 
     if (glist == NULL) {
-	destroy_dataset(gZ, gdinfo);
+	destroy_auxiliary_dataset(gZ, gdinfo);
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
 	return gnr;
@@ -1718,7 +1718,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	transcribe_nls_function(&gnr, spec->nlfunc);
     }
 
-    destroy_dataset(gZ, gdinfo);
+    destroy_auxiliary_dataset(gZ, gdinfo);
     free(glist);
 
     return gnr;

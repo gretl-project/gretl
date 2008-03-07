@@ -268,7 +268,12 @@ DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 			      int markers   /* case markers or not? */
 			      );
 
+DATAINFO *
+create_auxiliary_dataset (double ***pZ, int nvar, int nobs);
+
 void destroy_dataset (double **Z, DATAINFO *pdinfo);
+
+void destroy_auxiliary_dataset (double **Z, DATAINFO *pdinfo);
 
 void clear_datainfo (DATAINFO *pdinfo, int code);
 

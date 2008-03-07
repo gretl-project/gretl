@@ -1984,6 +1984,19 @@ FITRESID *get_forecast (MODEL *pmod, int t0, int t1, int t2,
 static gretl_matrix *fcast_matrix;
 static gretl_matrix *fcerr_matrix;
 
+void forecast_matrix_cleanup (void)
+{
+    if (fcast_matrix != NULL) {
+	gretl_matrix_free(fcast_matrix);
+	fcast_matrix = NULL;
+    }
+
+    if (fcerr_matrix != NULL) {
+	gretl_matrix_free(fcerr_matrix);
+	fcerr_matrix = NULL;
+    }
+}    
+
 gretl_matrix *get_forecast_matrix (int idx, int *err)
 {
     gretl_matrix *ret = NULL;
@@ -2293,6 +2306,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 {
     FITRESID *fr;
     char vname[VNAMELEN] = {0};
+    gretlopt printopt = OPT_NONE;
     int t1, t2, t2est, ci;
     int i, imax, imin = 0;
     int have_sderr = 0;
@@ -2337,14 +2351,14 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	if (!err) {
 	    have_sderr = (fr->sderr != NULL);
 	    if (!(opt & OPT_Q)) {
-		err = text_print_forecast(fr, pdinfo, opt, prn);
+		err = text_print_forecast(fr, pdinfo, printopt, prn);
 	    }
 	}
 	if (!err && imin == imax) {
 	    err = set_forecast_matrices_from_fr(fr);
 	}
 	free_fit_resid(fr);
-	opt |= OPT_Q;
+	printopt |= OPT_Q;
     }
 
     if (!err && imax > imin) {

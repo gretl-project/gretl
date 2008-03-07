@@ -228,7 +228,7 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 
     k = get_depth(T);
 
-    hinfo = create_new_dataset(&hZ, 3, k, 0);
+    hinfo = create_auxiliary_dataset(&hZ, 3, k);
     if (hinfo == NULL) return E_ALLOC;
 
     pprintf(prn, _("Rescaled range figures for %s"), 
@@ -263,7 +263,7 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 
     clear_model(&hmod);
 
-    destroy_dataset(hZ, hinfo);
+    destroy_auxiliary_dataset(hZ, hinfo);
 
     return err;
 }

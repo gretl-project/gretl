@@ -802,7 +802,7 @@ int write_tx_data (char *fname, int varnum,
 #endif
 
     /* create little temporary dataset */
-    tmpinfo = create_new_dataset(&tmpZ, 4, pdinfo->n, 0);
+    tmpinfo = create_auxiliary_dataset(&tmpZ, 4, pdinfo->n);
     if (tmpinfo == NULL) {
 	return E_ALLOC;
     }
@@ -898,7 +898,7 @@ int write_tx_data (char *fname, int varnum,
 	}
     }
 
-    destroy_dataset(tmpZ, tmpinfo);
+    destroy_auxiliary_dataset(tmpZ, tmpinfo);
 
     return err;
 }

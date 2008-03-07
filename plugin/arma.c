@@ -1295,6 +1295,19 @@ static int kalman_undo_y_scaling (struct arma_info *ainfo,
     return err;
 }
 
+static int arma_use_hessian (gretlopt opt)
+{
+    if (getenv("ARMA_USE_HESSIAN") != NULL) {
+	return 1;
+    } else if (opt & OPT_H) {
+	return 1;
+    } else if (libset_get_int(ARMA_VCV) == VCV_HESSIAN) {
+	return 1;
+    }
+
+    return 0;
+}
+
 static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			struct arma_info *ainfo, MODEL *pmod,
@@ -1443,7 +1456,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
 
-	if (getenv("ARMA_USE_HESSIAN") != NULL || (opt & OPT_H)) { 
+	if (arma_use_hessian(opt)) { 
 	    kalman_do_ma_check = 0;
 	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
 	    kalman_do_ma_check = 1;
@@ -2095,7 +2108,7 @@ static int ar_arma_init (const int *list, double *coeff,
 	maybe_rescale_dy(ainfo);
     }
 
-    adinfo = create_new_dataset(&aZ, av, an, 0);
+    adinfo = create_auxiliary_dataset(&aZ, av, an);
     if (adinfo == NULL) {
 	return E_ALLOC;
     }
@@ -2165,7 +2178,7 @@ static int ar_arma_init (const int *list, double *coeff,
 
     /* clean up */
     free(alist);
-    destroy_dataset(aZ, adinfo);
+    destroy_auxiliary_dataset(aZ, adinfo);
     clear_model(&armod);
 
     return err;
@@ -2300,7 +2313,7 @@ static int hr_arma_init (const int *list, double *coeff,
 	y = Z[ainfo->yno];
     }
 
-    adinfo = create_new_dataset(&aZ, pass1v + qtotal, an, 0);
+    adinfo = create_auxiliary_dataset(&aZ, pass1v + qtotal, an);
     if (adinfo == NULL) {
 	return E_ALLOC;
     }
@@ -2484,7 +2497,7 @@ static int hr_arma_init (const int *list, double *coeff,
     free(pass2list);
     free(arlags);
     free(malags);
-    destroy_dataset(aZ, adinfo);
+    destroy_auxiliary_dataset(aZ, adinfo);
     clear_model(&armod);
 
     if (!err && prn != NULL) {

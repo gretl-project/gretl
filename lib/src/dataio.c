@@ -1958,7 +1958,7 @@ int gretl_get_data (double ***pZ, DATAINFO *pdinfo, char *datfile,
  bailout:
 
     if (err && tmpdinfo != NULL) {
-	destroy_dataset(tmpZ, tmpdinfo);
+	destroy_auxiliary_dataset(tmpZ, tmpdinfo);
     }
 
     return err;
@@ -2383,7 +2383,7 @@ int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
 
     if (*pZ0 != NULL) {
 	err = merge_data(pZ0, pdinfo0, *pZ1, *ppdinfo1, opt, prn);
-	destroy_dataset(*pZ1, *ppdinfo1);
+	destroy_auxiliary_dataset(*pZ1, *ppdinfo1);
     } else {
 	*pdinfo0 = **ppdinfo1;
 	free(*ppdinfo1);

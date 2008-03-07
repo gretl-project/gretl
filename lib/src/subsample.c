@@ -232,6 +232,11 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int err = 0;
 
+#if SUBDEBUG
+    fprintf(stderr, "attach_subsample_to_model: fullZ = %p\n",
+	    (void *) fullZ);
+#endif
+
     if (fullZ != NULL) {
 	/* sync, in case anything has moved */
 	sync_dataset_elements(pdinfo);
@@ -1547,7 +1552,7 @@ void free_model_dataset (MODEL *pmod)
 #if SUBDEBUG
 	fprintf(stderr, "Deep freeing model->dataset\n");
 #endif
-	destroy_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
+	destroy_auxiliary_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
 	free(pmod->dataset);
 	pmod->dataset = NULL;
     }

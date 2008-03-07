@@ -757,7 +757,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	    pan->vlist[0], pan->NT);
 #endif
 
-    winfo = create_new_dataset(wZ, pan->vlist[0], pan->NT, 0);
+    winfo = create_auxiliary_dataset(wZ, pan->vlist[0], pan->NT);
     if (winfo == NULL) {
 	goto bailout;
     }
@@ -860,7 +860,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	    v1 + v2, pan->NT);
 #endif
 
-    reinfo = create_new_dataset(reZ, v1 + v2, pan->NT, 0);
+    reinfo = create_auxiliary_dataset(reZ, v1 + v2, pan->NT);
     if (reinfo == NULL) {
 	return NULL;
     }
@@ -965,7 +965,7 @@ group_means_dataset (panelmod_t *pan,
 	    gv, gn);
 #endif
 
-    ginfo = create_new_dataset(gZ, gv, gn, 0);
+    ginfo = create_auxiliary_dataset(gZ, gv, gn);
     if (ginfo == NULL) {
 	return NULL;
     }
@@ -1656,7 +1656,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	}
     }
 
-    destroy_dataset(wZ, winfo);
+    destroy_auxiliary_dataset(wZ, winfo);
     free(felist);
 
     return femod;
@@ -2054,7 +2054,7 @@ static int random_effects (panelmod_t *pan,
 	clear_model(&remod);
     }
 
-    destroy_dataset(reZ, reinfo);
+    destroy_auxiliary_dataset(reZ, reinfo);
 
     free(relist);    
     free(hlist);
@@ -2405,7 +2405,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (ginfo != NULL) {
-	    destroy_dataset(gZ, ginfo);
+	    destroy_auxiliary_dataset(gZ, ginfo);
 	}
     }
 
@@ -2431,7 +2431,7 @@ static int between_model (panelmod_t *pan, const double **Z,
     }
 
     if (ginfo != NULL) {
-	destroy_dataset(gZ, ginfo);
+	destroy_auxiliary_dataset(gZ, ginfo);
     }
 
     return err;
@@ -2667,7 +2667,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (ginfo != NULL) {
-	    destroy_dataset(gZ, ginfo);
+	    destroy_auxiliary_dataset(gZ, ginfo);
 	}
     }
 
@@ -3220,7 +3220,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     nv = pmod->list[0] + order;
 
     /* create temporary reduced dataset */
-    tmpinfo = create_new_dataset(&tmpZ, nv, nobs, 0);
+    tmpinfo = create_auxiliary_dataset(&tmpZ, nv, nobs);
     if (tmpinfo == NULL) return E_ALLOC;
 
     make_reduced_data_info(tmpinfo, pdinfo, order);
@@ -3320,7 +3320,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     free(aclist);
     clear_model(&aux); 
 
-    destroy_dataset(tmpZ, tmpinfo);
+    destroy_auxiliary_dataset(tmpZ, tmpinfo);
 
     return err;
 }
