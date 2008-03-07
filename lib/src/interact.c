@@ -255,9 +255,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = FCAST;
 	cmd->opt |= OPT_F;
 	strcpy(line, "fcast autofit");
-    } else if (!strcmp(s, "fcast")) {
-	cmd->ci = FCAST;
-	cmd->opt |= OPT_F;
     } else if (!strcmp(s, "fcasterr")) {
 	cmd->ci = FCAST;
 	cmd->opt |= OPT_R;
@@ -3837,24 +3834,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case FCAST:
-	if (cmd->opt & OPT_F) {
-	    /* old "fcast" compatibility */
-	    int oldv = pdinfo->v;
-	    
-	    cmd->opt &= ~OPT_F;
-	    err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
-	    if (pdinfo->v > oldv) {
-		/* FIXME: Generated/Replaced */
-		maybe_list_vars(pdinfo, prn);
-	    }
-	} else if (cmd->opt & OPT_R) {
-	    /* old "fcasterr" compatibility */
-	    cmd->opt &= ~OPT_R;
-	    err = display_forecast(line, pZ, pdinfo, cmd->opt, prn);
-	} else {
-	    /* new: "forecast" (FIXME) */
-	    err = display_forecast(line, pZ, pdinfo, cmd->opt, prn);
-	}
+	err = do_forecast(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case FREQ:

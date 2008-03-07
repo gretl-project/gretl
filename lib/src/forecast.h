@@ -60,12 +60,8 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 			       const double **Z, DATAINFO *pdinfo,
 			       gretlopt opt);
 
-int display_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn);
-
-int add_forecast (const char *str, MODEL *pmod, 
-		  double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt);
+int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn);
 
 void forecast_options_for_model (MODEL *pmod, const double **Z,
 				 const DATAINFO *pdinfo,

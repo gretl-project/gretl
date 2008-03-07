@@ -66,7 +66,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { EQNPRINT, "eqnprint" },
     { EQUATION, "equation" },
     { ESTIMATE, "estimate" },
-    { FCAST,    "forecast" }, 
+    { FCAST,    "fcast" }, 
     { FREQ,     "freq" }, 
     { FUNC,     "function" },
     { FUNCERR,  "error" },

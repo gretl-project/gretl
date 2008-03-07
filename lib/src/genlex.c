@@ -64,7 +64,6 @@ struct str_table dummies[] = {
     { DUM_NULL,    "null" },
     { DUM_DIAG,    "diag" },
     { DUM_DATASET, "dataset" },
-    { DUM_TREND,   "time" },
     { 0,        NULL }
 };
 
@@ -731,6 +730,9 @@ static void look_up_word (const char *s, parser *p)
 		if (p->idnum < p->dinfo->v) {
 		    p->sym = (var_is_scalar(p->dinfo, p->idnum))?
 			USCALAR : USERIES;
+		} else if (!strcmp(s, "time")) {
+		    p->sym = DUM;
+		    p->idnum = DUM_TREND;
 		} else if (get_matrix_by_name(s)) {
 		    p->sym = UMAT;
 		    p->idstr = gretl_strdup(s);

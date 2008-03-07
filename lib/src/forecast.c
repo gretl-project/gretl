@@ -1967,188 +1967,6 @@ FITRESID *get_forecast (MODEL *pmod, int t0, int t1, int t2,
     return fr;
 }
 
-static int organize_fcast_vars (const char *yhname, const char *sdname,
-				int *vi, int *vj, double ***pZ,
-				DATAINFO *pdinfo)
-{
-    int nadd = 0;
-    int err = 0;
-
-    *vi = *vj = 0;
-
-    if (check_varname(yhname)) {
-	return 1;
-    }
-
-    if (*sdname && check_varname(sdname)) {
-	return 1;
-    }
-
-    *vi = varindex(pdinfo, yhname);
-    if (*vi == pdinfo->v) {
-	nadd++;
-    }
-
-    if (*sdname) {
-	*vj = varindex(pdinfo, sdname);
-	if (*vj == pdinfo->v) {
-	    if (nadd > 0) {
-		*vj += 1;
-	    }
-	    nadd++;
-	}
-    }
-
-    if (nadd > 0) {
-	err = dataset_add_series(nadd, pZ, pdinfo);
-    }
-
-    return err;
-}
-
-/**
- * add_forecast:
- * @str: command string, giving a starting observation, ending
- * observation, and variable name to use for the forecast values
- * (the starting and ending observations may be omitted).
- * @pZ: pointer to data matrix.
- * @pdinfo: pointer to data information struct.
- * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
- * a static forecast.  By default, the forecast is static within
- * the data range over which the model was estimated, and dynamic
- * out of sample (in cases where this distinction is meaningful).
- *
- * Adds to the dataset a new variable containing predicted values for the
- * dependent variable in @pmod over the specified range of observations,
- * or, by default, over the sample range currently defined in @pdinfo.
- *
- * In the case of "simple" models with an autoregressive error term 
- * (%AR, %AR1) the predicted values incorporate the forecastable portion 
- * of the error.  
- *
- * Returns: 0 on success, non-zero error code on failure.
- */
-
-int add_forecast (const char *str, MODEL *pmod, double ***pZ,
-		  DATAINFO *pdinfo, gretlopt opt)
-{
-    int oldv = pdinfo->v;
-    int t, t1, t2, vi, vj;
-    char t1str[OBSLEN], t2str[OBSLEN];
-    char yhname[VNAMELEN];
-    char sdname[VNAMELEN];
-    int nf, err = 0;
-
-    if (pmod->ci == ARBOND) {
-	return E_NOTIMP; /* FIXME */
-    }
-
-    *t1str = '\0'; *t2str = '\0';
-
-    /* Reject in case model was estimated using repacked daily
-       data: this case should be handled more elegantly */
-    if (gretl_model_get_int(pmod, "daily_repack")) {
-	return E_DATA;
-    }
-
-    *yhname = *sdname = 0;
-
-    /* the name for forecast values should either be in the 2nd or 4th
-       position; it may be followed by a name for the standard errors
-    */
-    nf = sscanf(str, "%*s %10s %10s %15s %15s", t1str, t2str, yhname, sdname);
-    if (nf < 3) {
-	if (sscanf(str, "%*s" "%15s %15s", yhname, sdname) < 1) {
-	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
-		    "fcast");
-	    return E_PARSE;
-	}
-    }
-
-    if (*t1str && *t2str) {
-	t1 = dateton(t1str, pdinfo);
-	t2 = dateton(t2str, pdinfo);
-	if (t1 < 0 || t2 < 0 || t2 < t1) {
-	    return E_DATA;
-	}
-    } else {
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
-    }
-
-    err = organize_fcast_vars(yhname, sdname, &vi, &vj, pZ, pdinfo);
-    if (err) {
-	return err;
-    }
-
-    nf = 0;
-
-    if (!err) {
-	const double **Z = (const double **) *pZ;
-	Forecast fc;
-
-	forecast_init(&fc);
-
-	strcpy(pdinfo->varname[vi], yhname);
-	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
-
-	if (vj > 0) {
-	    strcpy(pdinfo->varname[vj], sdname);
-	    strcpy(VARLABEL(pdinfo, vj), _("forecast standard errors"));
-	}
-
-	fc.yhat = (*pZ)[vi];
-	if (vj > 0) {
-	    fc.sderr = (*pZ)[vj];
-	} 
-
-	for (t=0; t<pdinfo->n; t++) {
-	    fc.yhat[t] = NADBL;
-	    if (fc.sderr != NULL) {
-		fc.sderr[t] = NADBL;
-	    }	
-	}
-
-	fc.t1 = t1;
-	fc.t2 = t2;
-	fc.model_t2 = pmod->t2;
-
-	get_forecast_method(&fc, pmod, pdinfo, opt);
-
-	if (pmod->ci == ARMA && fc.method == FC_STATIC) {
-	    fc_add_eps(&fc, pdinfo->n);
-	}
-
-	/* write forecast values into the newly added variable(s) */
-	if (pmod->ci == NLS) {
-	    nls_fcast(&fc, pmod, pZ, pdinfo);
-	} else if (SIMPLE_AR_MODEL(pmod->ci)) {
-	    ar_fcast(&fc, pmod, Z, pdinfo);
-	} else if (pmod->ci == ARMA) {
-	    arma_fcast(&fc, pmod, Z, pdinfo);
-	} else if (pmod->ci == GARCH) {
-	    garch_fcast(&fc, pmod, Z, pdinfo);
-	} else {
-	    linear_fcast(&fc, pmod, Z, pdinfo);
-	}
-
-	forecast_free(&fc);
-
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!na(fc.yhat[t])) {
-		nf++;
-	    }
-	}
-    }
-
-    if (nf == 0) {
-	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
-	err = E_DATA;
-    }
-
-    return err;
-}
-
 static gretl_matrix *fcast_matrix;
 static gretl_matrix *fcerr_matrix;
 
@@ -2552,8 +2370,9 @@ static int system_display_forecast (const char *str, void *ptr, int type,
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int display_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn)
+static int display_forecast (const char *str, double ***pZ, 
+			     DATAINFO *pdinfo, gretlopt opt, 
+			     PRN *prn)
 {
     GretlObjType type;
     void *ptr;
@@ -2572,6 +2391,271 @@ int display_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 				      pdinfo, opt, prn);
     } else {
 	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int organize_fcast_vars (const char *yhname, const char *sdname,
+				int *vi, int *vj, double ***pZ,
+				DATAINFO *pdinfo)
+{
+    int nadd = 0;
+    int err = 0;
+
+    *vi = *vj = 0;
+
+    if (check_varname(yhname)) {
+	return 1;
+    }
+
+    if (*sdname && check_varname(sdname)) {
+	return 1;
+    }
+
+    *vi = varindex(pdinfo, yhname);
+    if (*vi == pdinfo->v) {
+	nadd++;
+    }
+
+    if (*sdname) {
+	*vj = varindex(pdinfo, sdname);
+	if (*vj == pdinfo->v) {
+	    if (nadd > 0) {
+		*vj += 1;
+	    }
+	    nadd++;
+	}
+    }
+
+    if (nadd > 0) {
+	err = dataset_add_series(nadd, pZ, pdinfo);
+    }
+
+    return err;
+}
+
+/**
+ * add_forecast:
+ * @str: command string, giving a starting observation, ending
+ * observation, and variable name to use for the forecast values
+ * (the starting and ending observations may be omitted).
+ * @pZ: pointer to data matrix.
+ * @pdinfo: pointer to data information struct.
+ * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * a static forecast.  By default, the forecast is static within
+ * the data range over which the model was estimated, and dynamic
+ * out of sample (in cases where this distinction is meaningful).
+ *
+ * Adds to the dataset a new variable containing predicted values for the
+ * dependent variable in @pmod over the specified range of observations,
+ * or, by default, over the sample range currently defined in @pdinfo.
+ *
+ * In the case of "simple" models with an autoregressive error term 
+ * (%AR, %AR1) the predicted values incorporate the forecastable portion 
+ * of the error.  
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+static int add_forecast (const char *str, double ***pZ,
+			 DATAINFO *pdinfo, gretlopt opt)
+{
+    MODEL *pmod;
+    GretlObjType type;
+    int oldv = pdinfo->v;
+    int t, t1, t2, vi, vj;
+    char t1str[OBSLEN], t2str[OBSLEN];
+    char yhname[VNAMELEN];
+    char sdname[VNAMELEN];
+    int nf, err = 0;
+
+    pmod = get_last_model(&type);
+
+    if (pmod == NULL || type != GRETL_OBJ_EQN) {
+	return E_BADSTAT;
+    }
+
+    if (pmod->ci == ARBOND) {
+	return E_NOTIMP; /* FIXME */
+    }
+
+    *t1str = *t2str = '\0';
+
+    /* Reject in case model was estimated using repacked daily
+       data: this case should be handled more elegantly */
+    if (gretl_model_get_int(pmod, "daily_repack")) {
+	return E_DATA;
+    }
+
+    *yhname = *sdname = 0;
+
+    /* the name for forecast values should either be in the 2nd or 4th
+       position; it may be followed by a name for the standard errors
+    */
+    nf = sscanf(str, "%*s %10s %10s %15s %15s", t1str, t2str, yhname, sdname);
+    if (nf < 3) {
+	if (sscanf(str, "%*s" "%15s %15s", yhname, sdname) < 1) {
+	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
+		    "fcast");
+	    return E_PARSE;
+	}
+    }
+
+    if (*t1str && *t2str) {
+	t1 = dateton(t1str, pdinfo);
+	t2 = dateton(t2str, pdinfo);
+	if (t1 < 0 || t2 < 0 || t2 < t1) {
+	    return E_DATA;
+	}
+    } else {
+	t1 = pdinfo->t1;
+	t2 = pdinfo->t2;
+    }
+
+    err = organize_fcast_vars(yhname, sdname, &vi, &vj, pZ, pdinfo);
+    if (err) {
+	return err;
+    }
+
+    nf = 0;
+
+    if (!err) {
+	const double **Z = (const double **) *pZ;
+	Forecast fc;
+
+	forecast_init(&fc);
+
+	strcpy(pdinfo->varname[vi], yhname);
+	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
+
+	if (vj > 0) {
+	    strcpy(pdinfo->varname[vj], sdname);
+	    strcpy(VARLABEL(pdinfo, vj), _("forecast standard errors"));
+	}
+
+	fc.yhat = (*pZ)[vi];
+	if (vj > 0) {
+	    fc.sderr = (*pZ)[vj];
+	} 
+
+	for (t=0; t<pdinfo->n; t++) {
+	    fc.yhat[t] = NADBL;
+	    if (fc.sderr != NULL) {
+		fc.sderr[t] = NADBL;
+	    }	
+	}
+
+	fc.t1 = t1;
+	fc.t2 = t2;
+	fc.model_t2 = pmod->t2;
+
+	get_forecast_method(&fc, pmod, pdinfo, opt);
+
+	if (pmod->ci == ARMA && fc.method == FC_STATIC) {
+	    fc_add_eps(&fc, pdinfo->n);
+	}
+
+	/* write forecast values into the newly added variable(s) */
+	if (pmod->ci == NLS) {
+	    nls_fcast(&fc, pmod, pZ, pdinfo);
+	} else if (SIMPLE_AR_MODEL(pmod->ci)) {
+	    ar_fcast(&fc, pmod, Z, pdinfo);
+	} else if (pmod->ci == ARMA) {
+	    arma_fcast(&fc, pmod, Z, pdinfo);
+	} else if (pmod->ci == GARCH) {
+	    garch_fcast(&fc, pmod, Z, pdinfo);
+	} else {
+	    linear_fcast(&fc, pmod, Z, pdinfo);
+	}
+
+	forecast_free(&fc);
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!na(fc.yhat[t])) {
+		nf++;
+	    }
+	}
+    }
+
+    if (nf == 0) {
+	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int count_fcast_params (const char *s, char *vname)
+{
+    char s1[16], s2[16], s3[16];
+    int n;
+
+    n = sscanf(s, "%*s %15s %15s %15s", s1, s2, s3);
+
+    if (n == 1) {
+	strcpy(vname, s1);
+    } else if (n == 3) {
+	strcpy(vname, s3);
+    }
+
+    return n;
+}
+
+/**
+ * do_forecast:
+ * @str: command string, which may include a starting 
+ * observation and ending observation, and/or the name of a 
+ * variable for saving the forecast values.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: pointer to data information struct.
+ * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
+ * a static forecast.  By default, the forecast is static within
+ * the data range over which the model was estimated, and dynamic
+ * out of sample (in cases where this distinction is meaningful).
+ * %OPT_Q can be used to suppress printing of the forecast;
+ * %OPT_P can be used to ensure that the values are printed.
+ *
+ * In the case of "simple" models with an autoregressive error term 
+ * (%AR, %AR1) the predicted values incorporate the forecastable portion 
+ * of the error.  
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
+{
+    int oldv = pdinfo->v;
+    char vname[VNAMELEN];
+    int err, add = 0;
+
+    if (!(opt & OPT_R)) {
+	/* OPT_R -> "fcasterr" compatibility */
+	int n = count_fcast_params(str, vname);
+
+	if (n == 1 || n == 3) {
+	    add = 1;
+	}
+    }
+
+    if (add) {
+	err = add_forecast(str, pZ, pdinfo, opt);
+    } else {
+	err = display_forecast(str, pZ, pdinfo, opt, prn);
+    }
+
+    if (!err && add) {
+	int v = varindex(pdinfo, vname);
+
+	if (v < oldv) {
+	    pprintf(prn, _("Replaced series %s (ID %d)"),
+		    vname, v);
+	} else {
+	    pprintf(prn, _("Generated series %s (ID %d)"),
+		    vname, v);
+	}
+	pputc(prn, '\n');
     }
 
     return err;
