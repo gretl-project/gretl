@@ -898,7 +898,7 @@ int write_tx_data (char *fname, int varnum,
 	}
     }
 
-    destroy_auxiliary_dataset(tmpZ, tmpinfo);
+    destroy_dataset(tmpZ, tmpinfo);
 
     return err;
 }
