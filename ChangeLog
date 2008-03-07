@@ -11,6 +11,7 @@ version 1.7.4, in progress
 - remove obsolete commands: fit, multiply
 - consolidate the commands corc, hilu and pwe into one new
   command with options: ar1
+- merge with fcasterr command with fcast
 - Fix for the case of graphing 6 time series together
 - Fix bugs 1908139, 1909469
 - Fix documentation of $stopwatch

@@ -1613,7 +1613,7 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	add_leverage_data(vwin);
     } else if (vwin->role == MAHAL) {
 	add_mahalanobis_data(vwin);
-    } else if (vwin->role == FCAST || vwin->role == AFR) {
+    } else if (vwin->role == FCAST) {
 	add_fcast_data(vwin);
     }
 
