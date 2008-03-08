@@ -3069,7 +3069,7 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
 	    M = (code == SYS_DATA_RESIDS)? gretl_VAR_get_residual_matrix(var) :
 		NULL;
 	} else {
-	    M = (code == SYS_DATA_RESIDS)? sys->uhat : sys->yhat;
+	    M = (code == SYS_DATA_RESIDS)? sys->E : sys->yhat;
 	}
 
 	if (M == NULL) {
@@ -3323,7 +3323,7 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) vwin->data;
 	t2est = sys->t2;
-	static_model = (sys->maxlag == 0);
+	static_model = (sys->order == 0);
     } else {
 	return;
     }
@@ -3355,7 +3355,7 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	if (var != NULL) {
 	    t1 = effective_order(var);
 	} else {
-	    t1 = sys->maxlag;
+	    t1 = sys->order;
 	}
 	pre_n = 0;
 	dyn_ok = 0;
@@ -3717,7 +3717,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	if (var != NULL) {
 	    dv = gretl_VAR_get_variable_number(var, i);
 	} else {
-	    dv = sys->elist[i+1];
+	    dv = sys->ylist[i+1];
 	}
 	double_underscores(tmp, datainfo->varname[dv]);
 	item.path = g_strdup_printf("%s/%s", _(fpath), tmp);

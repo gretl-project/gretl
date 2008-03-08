@@ -762,7 +762,7 @@ static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
 				   int pre_obs)
 {
     gretl_matrix *se = NULL;
-    double vti;
+    double ftj, vti;
     int n = var->neqns;
     int k = F->rows - pre_obs;
     int i, j, s;
@@ -778,13 +778,18 @@ static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
 
     for (j=0; j<n; j++) {
 	for (s=0; s<F->rows; s++) {
-	    i = s - pre_obs;
-	    if (i < 0) {
-		vti = sqrt(gretl_matrix_get(var->S, j, j));
+	    ftj = gretl_matrix_get(F, s, j);
+	    if (na(ftj)) {
+		gretl_matrix_set(F, s, n + j, NADBL);
 	    } else {
-		vti = gretl_matrix_get(se, i, j);
+		i = s - pre_obs;
+		if (i < 0) {
+		    vti = sqrt(gretl_matrix_get(var->S, j, j));
+		} else {
+		    vti = gretl_matrix_get(se, i, j);
+		}
+		gretl_matrix_set(F, s, n + j, vti);
 	    }
-	    gretl_matrix_set(F, s, n + j, vti);
 	}
     }
 
@@ -1095,26 +1100,15 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t0, int t1, int t2,
 			       gretlopt opt)
 {
     if (var->F != NULL) {
-	int ncols, nf = t2 - t0 + 1;
-	int ft1 = gretl_matrix_get_t1(var->F);
-
-	ncols = (opt & OPT_S)? var->neqns: 2 * var->neqns;
-
-	if (nf == gretl_matrix_rows(var->F) && t1 == ft1 && 
-	    ncols == gretl_matrix_cols(var->F)) {
-	    ; /* already done, fine */
-	} else {
-	    gretl_matrix_free(var->F);
-	    var->F = NULL;
-	}
+	/* There's a forecast attached, but it may not be what we want */
+	gretl_matrix_free(var->F);
+	var->F = NULL;
     }
 
-    if (var->F == NULL) {
-	if (var->ci == VECM) {
-	    VECM_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
-	} else {
-	    VAR_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
-	}
+    if (var->ci == VECM) {
+	VECM_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
+    } else {
+	VAR_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
     }
 
     return var->F;

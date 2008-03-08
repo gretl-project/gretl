@@ -3430,7 +3430,7 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
 	E = gretl_VAR_get_residual_matrix(var);
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) p;
-	E = sys->uhat;
+	E = sys->E;
     }
 
     if (E == NULL) {
@@ -3513,7 +3513,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo)
 	E = gretl_VAR_get_residual_matrix(var);
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) p;
-	E = sys->uhat;
+	E = sys->E;
     }
 
     if (E == NULL) {

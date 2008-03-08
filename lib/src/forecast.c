@@ -83,53 +83,51 @@ static int dummy_ar_info_init (MODEL *pmod)
 static int 
 allocate_basic_fit_resid_arrays (FITRESID *fr)
 {
-    int t;
+    int t, T = fr->nobs;
+    int err = 0;
 
-    fr->actual = malloc(fr->nobs * sizeof *fr->actual);
-    if (fr->actual == NULL) {
-	return E_ALLOC;
-    }
-
-    fr->fitted = malloc(fr->nobs * sizeof *fr->fitted);
-    if (fr->fitted == NULL) {
-	free(fr->actual);
-	fr->actual = NULL;
-	return E_ALLOC;
-    }
-
-    fr->resid = malloc(fr->nobs * sizeof *fr->resid);
-    if (fr->resid == NULL) {
-	free(fr->actual);
-	free(fr->fitted);
-	fr->actual = NULL;
-	fr->fitted = NULL;
-	return E_ALLOC;
-    }
-
-    for (t=0; t<fr->nobs; t++) {
-	fr->actual[t] = fr->fitted[t] = fr->resid[t] = NADBL;
-    }
-
+    fr->actual = NULL;
+    fr->fitted = NULL;
+    fr->resid = NULL;
     fr->sderr = NULL;
 
-    return 0;
+    fr->actual = malloc(T * sizeof *fr->actual);
+    fr->fitted = malloc(T * sizeof *fr->fitted);
+    fr->resid = malloc(T * sizeof *fr->resid);
+
+    if (fr->actual == NULL || fr->fitted == NULL ||
+	fr->resid == NULL) {
+	err = E_ALLOC;
+	free(fr->actual);
+	free(fr->fitted);
+	free(fr->resid);
+	fr->actual = NULL;
+	fr->fitted = NULL;
+	fr->resid = NULL;
+    } else {
+	for (t=0; t<T; t++) {
+	    fr->actual[t] = fr->fitted[t] = fr->resid[t] = NADBL;
+	}
+    }
+
+    return err;
 }
 
 static int fit_resid_add_sderr (FITRESID *fr)
 {
-    int t;
+    int t, err = 0;
 
     fr->sderr = malloc(fr->nobs * sizeof *fr->sderr);
 
     if (fr->sderr == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	for (t=0; t<fr->nobs; t++) {
+	    fr->sderr[t] = NADBL;
+	}
     }
 
-    for (t=0; t<fr->nobs; t++) {
-	fr->sderr[t] = NADBL;
-    }
-
-    return 0;
+    return err;
 }
 
 /**
@@ -241,7 +239,6 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 	fr->sigma = NADBL;
     } else {
 	fr->sigma = gretl_model_get_double(pmod, "sigma_orig");
-
 	if (na(fr->sigma)) {
 	    fr->sigma = pmod->sigma;
 	}
@@ -1775,6 +1772,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	if (!AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
 	    /* we'll do Davidson-MacKinnon error variance */
 	    DM_errs = 1;
+	    fc.t1 = fr->t1 = fr->t0; /* ?? */
 	} else if (fc.method == FC_DYNAMIC) {
 	    /* we'll do dynamic forecast errors throughout */
 	    dyn_errs = 1;
@@ -2207,7 +2205,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     }
 
     f->t1 = F->t1 + f0;
-    f->t2 = F->t1 + fT - 1;
+    f->t2 = f->t1 + fT - 1;
 
     eT = en - e0 + 1;
 
@@ -2217,7 +2215,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 	    err = E_ALLOC;
 	} else {
 	    e->t1 = F->t1 + e0;
-	    e->t2 = F->t1 + eT - 1;
+	    e->t2 = e->t1 + eT - 1;
 	}	    
     }
 
@@ -2302,8 +2300,8 @@ static int get_sys_fcast_var (void *ptr, int type, const char *vname,
     } else {
 	equation_system *sys = (equation_system *) ptr;
 
-	for (i=0; i<sys->elist[0]; i++) {
-	    vi = sys->elist[i+1];
+	for (i=0; i<sys->ylist[0]; i++) {
+	    vi = sys->ylist[i+1];
 	    if (!strcmp(vname, pdinfo->varname[vi])) {
 		return i;
 	    }
@@ -2313,27 +2311,75 @@ static int get_sys_fcast_var (void *ptr, int type, const char *vname,
     return -1;
 }
 
+static int refill_system_forecast (FITRESID *fr, void *p, int i, 
+				   const double **Z, DATAINFO *pdinfo,
+				   gretlopt opt)
+{
+    GRETL_VAR *var = NULL;
+    const gretl_matrix *F = NULL;
+    equation_system *sys = NULL;
+    int nf, m, yno = 0;
+    int s, t;
+
+    if (fr->model_ci == VAR || fr->model_ci == VECM) {
+	var = (GRETL_VAR *) p;
+	yno = var->ylist[i+1];
+	F = var->F;
+    } else if (fr->model_ci == SYSTEM) {
+	sys = (equation_system *) p;
+	yno = sys->ylist[i+1];
+	F = sys->F;
+    } 
+
+    if (F == NULL) {
+	return E_DATA;
+    }
+
+    m = F->cols / 2;
+    strcpy(fr->depvar, pdinfo->varname[yno]);
+
+    nf = 0;
+    for (t=fr->t0, s=0; t<=fr->t2; t++, s++) {
+	fr->actual[t] = Z[yno][t];
+	fr->fitted[t] = gretl_matrix_get(F, s, i);
+	if (!na(fr->fitted[t])) {
+	    nf++;
+	}
+	if (fr->sderr != NULL) {
+	    fr->sderr[t] = gretl_matrix_get(F, s, i + m);
+	}
+    }
+
+    if (nf == 0) {
+	fr->err = E_MISSDATA;
+    } else {
+	fit_resid_set_dec_places(fr);
+    }
+
+    return fr->err;
+}
+
 static int system_do_forecast (const char *str, void *ptr, int type,
 			       const double **Z, DATAINFO *pdinfo, 
 			       gretlopt opt, PRN *prn)
 {
-    FITRESID *fr;
+    FITRESID *fr = NULL;
     char vname[VNAMELEN] = {0};
     gretlopt printopt = OPT_NONE;
+    GRETL_VAR *var = NULL;
+    equation_system *sys = NULL;
     int t0, t1, t2, t2est, ci;
     int i, imax, imin = 0;
     int have_sderr = 0;
     int err;
 
     if (type == GRETL_OBJ_VAR) {
-	GRETL_VAR *var = (GRETL_VAR *) ptr;
-
+	var = (GRETL_VAR *) ptr;
 	imax = gretl_VAR_get_n_equations(var) - 1;
 	t2est = gretl_VAR_get_t2(var);
 	ci = var->ci;
     } else {
-	equation_system *sys = (equation_system *) ptr;
-
+	sys = (equation_system *) ptr;
 	imax = sys->neqns + sys->nidents - 1;
 	t2est = sys->t2;
 	ci = SYSTEM;
@@ -2355,12 +2401,12 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     } 
 
     for (i=imin; i<=imax && !err; i++) {
-	fr = get_system_forecast(ptr, ci, i, t0, t1, t2, Z, 
-				 pdinfo, opt);
-	if (fr == NULL) {
-	    err = E_ALLOC;
+	if (i == imin) {
+	    fr = get_system_forecast(ptr, ci, i, t0, t1, t2, Z, 
+				     pdinfo, opt);
+	    err = (fr == NULL)? E_ALLOC : fr->err;
 	} else {
-	    err = fr->err;
+	    err = refill_system_forecast(fr, ptr, i, Z, pdinfo, opt);
 	}
 	if (!err) {
 	    have_sderr = (fr->sderr != NULL);
@@ -2371,18 +2417,15 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	if (!err && imin == imax) {
 	    err = set_forecast_matrices_from_fr(fr);
 	}
-	free_fit_resid(fr);
 	printopt |= OPT_Q;
     }
+
+    free_fit_resid(fr);
 
     if (!err && imax > imin) {
 	const gretl_matrix *F;
 
-	if (type == GRETL_OBJ_VAR) {
-	    F = gretl_VAR_get_forecast_matrix(ptr, t0, t1, t2, Z, pdinfo, opt);
-	} else {
-	    F = system_get_forecast_matrix(ptr, t0, t1, t2, Z, pdinfo, opt);
-	}
+	F = (var != NULL)? var->F : sys->F;
 	if (F != NULL) {
 	    err = set_forecast_matrices_from_F(F, have_sderr);
 	}
@@ -2758,7 +2801,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 FITRESID *get_system_forecast (void *p, int ci, int i, 
 			       int t0, int t1, int t2,
 			       const double **Z, DATAINFO *pdinfo,
-			       gretlopt opt)
+			       gretlopt opt) 
 {
     FITRESID *fr;
     GRETL_VAR *var = NULL;
@@ -2773,22 +2816,16 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     }
 
     if (ci == VAR || ci == VECM) {
-	const MODEL *pmod;
-
 	var = (GRETL_VAR *) p;
-	pmod = gretl_VAR_get_model(var, i);
-	if (pmod == NULL) {
-	    return NULL;
-	}
-	yno = pmod->list[1];
+	yno = var->ylist[i+1];
 	m = var->neqns;
-	df = pmod->dfd;
+	df = var->df;
 	F = gretl_VAR_get_forecast_matrix(var, t0, t1, t2, Z, pdinfo, opt);
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) p;
-
-	yno = sys->elist[i+1];
+	yno = sys->ylist[i+1];
 	m = sys->neqns + sys->nidents;
+	df = sys->df;
 	F = system_get_forecast_matrix(sys, t0, t1, t2, Z, pdinfo, opt);
     }
 
@@ -2835,9 +2872,6 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	if (ci == VECM) {
 	    /* asymptotic normal */
 	    fr->df = var->T;
-	    fr->tval = 1.96;
-	} else if (ci == SYSTEM) {
-	    fr->df = sys->T;
 	    fr->tval = 1.96;
 	} else {
 	    fr->df = df;

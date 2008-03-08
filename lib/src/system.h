@@ -56,12 +56,13 @@ struct equation_system_ {
     int refcount;               /* for saving/deleting */
     int t1;                     /* starting observation number */
     int t2;                     /* ending observation number */
+    int T;                      /* number of observations per equation */
+    int df;                     /* T - average coeffs per equation */
     int method;                 /* estimation method */
     int neqns;                  /* number of stochastic equations */
     int nidents;                /* number of identities */
-    int T;                      /* number of observations per equation */
     int n_predet;               /* number of predetermined regressors */
-    int maxlag;                 /* max lag of endogenous variable */
+    int order;                  /* max lag of endogenous variable */
     int iters;                  /* number of iterations taken */
     char flags;                 /* to record options (e.g. save residuals) */
     double ll;                  /* log-likelihood (restricted) */
@@ -72,23 +73,23 @@ struct equation_system_ {
     double bdiff;               /* summary stat for change in coefficients */
     double ldet;                /* log-determinant of covariance matrix */
     int **lists;                /* regression lists for stochastic equations */
-    int *elist;                 /* list of endogenous variables */
+    int *ylist;                 /* list of endogenous variables */
     int *ilist;                 /* list of instruments */
     int *xlist;                 /* list of truly exogenous variables */
     predet *pre_vars;           /* array of info on predetermined regressors */
     identity **idents;          /* set of identities */
     gretl_matrix *b;            /* coefficient estimates */
     gretl_matrix *vcv;          /* covariance matrix of coefficients */
-    gretl_matrix *sigma;        /* cross-equation covariance matrix */
+    gretl_matrix *S;            /* cross-equation covariance matrix */
     gretl_matrix *R;            /* LHS of any linear restrictions */
     gretl_matrix *q;            /* RHS of any linear restrictions */  
-    gretl_matrix *uhat;         /* residuals, all equations */
+    gretl_matrix *E;            /* residuals, all equations */
     gretl_matrix *yhat;         /* fitted values, all equations */
     gretl_matrix *Gamma;        /* structural form Gamma matrix (endog + identities)*/
     gretl_matrix *B;            /* structural form B matrix (exogenous) */
     gretl_matrix *A;            /* structural form A matrix (lagged endogenous) */
     gretl_matrix *F;            /* forecast matrix */
-    gretl_matrix *Ve;           /* reduced-form error covariance matrix */
+    gretl_matrix *Sr;           /* reduced-form error covariance matrix */
     MODEL **models;             /* set of pointers to per-equation models: just
 				   convenience pointers -- these should NOT be
 				   freed as part of sys cleanup
@@ -152,9 +153,9 @@ const char *system_method_short_string (int method);
 int *system_get_endog_vars (const equation_system *sys);
 int *system_get_instr_vars (const equation_system *sys);
 
-void system_attach_uhat (equation_system *sys, gretl_matrix *uhat);
+void system_attach_uhat (equation_system *sys, gretl_matrix *E);
 
-void system_attach_sigma (equation_system *sys, gretl_matrix *sigma);
+void system_attach_sigma (equation_system *sys, gretl_matrix *S);
 
 void system_attach_coeffs (equation_system *sys, gretl_matrix *b);
 void system_attach_vcv (equation_system *sys, gretl_matrix *vcv);

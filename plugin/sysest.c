@@ -108,7 +108,7 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 static int
 gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
 {
-    const gretl_matrix *e = sys->uhat;
+    const gretl_matrix *e = sys->E;
     int m = sys->neqns;
     int T = sys->T;
     int geomean = system_vcv_geomean(sys);
@@ -169,7 +169,7 @@ sys_resids (equation_system *sys, int eq, const double **Z)
 	pmod->yhat[t] = yh;
 	pmod->uhat[t] = Z[pmod->list[1]][t] - yh;
 	/* for cross-equation vcv */
-	gretl_matrix_set(sys->uhat, t - pmod->t1, pmod->ID, pmod->uhat[t]);
+	gretl_matrix_set(sys->E, t - pmod->t1, pmod->ID, pmod->uhat[t]);
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
@@ -484,7 +484,7 @@ static int hansen_sargan_test (equation_system *sys,
 	    Wj = Z[exlist[j+1]] + sys->t1;
 	    x = 0.0;
 	    for (t=0; t<T; t++) {
-		x += gretl_matrix_get(sys->uhat, t, i) * Wj[t];
+		x += gretl_matrix_get(sys->E, t, i) * Wj[t];
 	    }
 	    gretl_matrix_set(eW, i, j, x);
 	}
@@ -511,7 +511,7 @@ static int hansen_sargan_test (equation_system *sys,
 		x += gretl_matrix_get(tmp, i, t) * 
 		    gretl_matrix_get(eW, j, t); /* transposed */
 	    }
-	    X2 += gretl_matrix_get(sys->sigma, i, j) * x;
+	    X2 += gretl_matrix_get(sys->S, i, j) * x;
 	}
     }
 
@@ -542,13 +542,13 @@ static int basic_system_allocate (equation_system *sys,
     /* allocate a model for each stochastic equation */
     sys->models = gretl_model_array_new(m);
 
-    sys->uhat = gretl_matrix_alloc(T, m);
-    if (sys->uhat == NULL) {
+    sys->E = gretl_matrix_alloc(T, m);
+    if (sys->E == NULL) {
 	return E_ALLOC;
     }
 
-    sys->sigma = gretl_matrix_alloc(m, m);
-    if (sys->sigma == NULL) {
+    sys->S = gretl_matrix_alloc(m, m);
+    if (sys->S == NULL) {
 	return E_ALLOC;
     }
 
@@ -886,7 +886,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	for (t=0; t<T; t++) {
-	    gretl_matrix_set(sys->uhat, t, i, pmod->uhat[t + sys->t1]);
+	    gretl_matrix_set(sys->E, t, i, pmod->uhat[t + sys->t1]);
 	}
     }
 
@@ -909,19 +909,19 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     */
  iteration_start:
 
-    gls_sigma_from_uhat(sys, sys->sigma);
+    gls_sigma_from_uhat(sys, sys->S);
 
 #if SDEBUG > 1
-    gretl_matrix_print(sys->sigma, "gls_sigma_from_uhat");
+    gretl_matrix_print(sys->S, "gls_sigma_from_uhat");
 #endif
 
     if (method == SYS_METHOD_WLS) {
 	gretl_matrix_zero(X);
-	err = gretl_invert_diagonal_matrix(sys->sigma);
+	err = gretl_invert_diagonal_matrix(sys->S);
     } else if (single_equation || rtsls) {
 	gretl_matrix_zero(X);
     } else {
-	err = gretl_invert_symmetric_matrix(sys->sigma);    
+	err = gretl_invert_symmetric_matrix(sys->S);    
     }
 
 #if SDEBUG
@@ -986,7 +986,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    if (rtsls || (single_equation && method != SYS_METHOD_WLS)) {
 		sij = 1.0;
 	    } else {
-		sij = gretl_matrix_get(sys->sigma, i, j);
+		sij = gretl_matrix_get(sys->S, i, j);
 	    }
 
 	    kronecker_place(X, M, krow, kcol, sij);
@@ -1054,7 +1054,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		if (rtsls || (single_equation && method != SYS_METHOD_WLS)) {
 		    sil = 1.0;
 		} else {
-		    sil = gretl_matrix_get(sys->sigma, i, l);
+		    sil = gretl_matrix_get(sys->S, i, l);
 		}
 
 		yv += xx * sil;
@@ -1103,7 +1103,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* refresh sigma (non-inverted) */
-    gls_sigma_from_uhat(sys, sys->sigma);
+    gls_sigma_from_uhat(sys, sys->S);
 
     if (method == SYS_METHOD_FIML) {
 	/* compute FIML estimates */

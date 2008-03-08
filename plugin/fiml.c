@@ -916,7 +916,7 @@ int fiml_driver (equation_system *sys, double ***pZ,
     double crit = 1.0;
     double tol = 1.0e-12; /* over-ambitious? */
     double bigtol = 1.0e-9;
-    int verbose = (opt & OPT_V);
+    int verbose = 0;
     int iters = 0;
     int err = 0;
 
@@ -925,8 +925,12 @@ int fiml_driver (equation_system *sys, double ***pZ,
 	return err;
     }
 
+    if ((opt & OPT_V) && !(opt & OPT_Q)) {
+	verbose = 1;
+    }
+
 #if FDEBUG
-    /* check uhat calculation: set intial uhat based from 3SLS */
+    /* check uhat calculation: set intial uhat based on 3SLS */
     fiml_uhat_init(fsys);
 #endif
 
