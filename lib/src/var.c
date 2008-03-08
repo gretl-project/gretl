@@ -759,32 +759,45 @@ void gretl_VAR_free (GRETL_VAR *var)
 }
 
 static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
-				   int nf, int pre_obs)
+				   int pre_obs)
 {
-    gretl_matrix *se;
+    gretl_matrix *se = NULL;
     double vti;
-    int i, s;
+    int n = var->neqns;
+    int k = F->rows - pre_obs;
+    int i, j, s;
     int err = 0;
 
-    se = gretl_VAR_get_fcast_se(var, nf - pre_obs);
+    if (k > 0) {
+	se = gretl_VAR_get_fcast_se(var, k);
+	if (se == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    for (j=0; j<n; j++) {
+	for (s=0; s<F->rows; s++) {
+	    i = s - pre_obs;
+	    if (i < 0) {
+		vti = sqrt(gretl_matrix_get(var->S, j, j));
+	    } else {
+		vti = gretl_matrix_get(se, i, j);
+	    }
+	    gretl_matrix_set(F, s, n + j, vti);
+	}
+    }
 
     if (se != NULL) {
-	for (i=0; i<var->neqns; i++) {
-	    for (s=0; s<nf; s++) {
-		if (s < pre_obs) {
-		    gretl_matrix_set(F, s, var->neqns + i, NADBL);
-		} else {
-		    vti = gretl_matrix_get(se, s - pre_obs, i);
-		    gretl_matrix_set(F, s, var->neqns + i, vti);
-		}
-	    }
-	}
 	gretl_matrix_free(se);
-    } else {
-	err = E_ALLOC;
-	for (i=0; i<var->neqns; i++) {
-	    for (s=0; s<nf; s++) {
-		gretl_matrix_set(F, s, var->neqns + i, NADBL);
+    }
+
+ bailout:
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    for (s=0; s<F->rows; s++) {
+		gretl_matrix_set(F, s, n + i, NADBL);
 	    }
 	}
     }
@@ -798,7 +811,6 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 		  gretlopt opt)
 {
     const MODEL *pmod;
-    gretl_matrix *F;
     double fti, xti, xtid;
     int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
@@ -813,14 +825,18 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
        if forecast is dynamic.
     */
 
-    F = gretl_zero_matrix_new(nf, fcols);
-    if (F == NULL) {
+    var->F = gretl_zero_matrix_new(nf, fcols);
+    if (var->F == NULL) {
 	return E_ALLOC;
     }
 
     if (var->detflags & DET_SEAS) {
 	m = get_subperiod(t0, pdinfo, NULL);
     }
+
+#if 0
+    fprintf(stderr, "var fcast: t0=%d, t1=%d, t2=%d\n", t0, t1, t2);
+#endif
 
     for (t=t0, s=0; t<=t2; t++, s++) {
 	int miss = 0;
@@ -852,7 +868,7 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			if (t - lag >= 0) {
 			    xtid = Z[vj][t-lag];
 			}
-			xti = gretl_matrix_get(F, s - lag, j);
+			xti = gretl_matrix_get(var->F, s-lag, j);
 		    }
 		    if (!na(xti)) {
 			fti += pmod->coeff[k] * xti;
@@ -896,7 +912,7 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 		fti = NADBL;
 	    }
 
-	    gretl_matrix_set(F, s, i, fti);
+	    gretl_matrix_set(var->F, s, i, fti);
 	}
 
 	if (var->detflags & DET_SEAS) {
@@ -904,18 +920,15 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	}
     }
 
-    /* now get variances, if not static */
     if (!staticfc) {
-	VAR_add_fcast_variance(var, F, nf, t1 - t0);
+	VAR_add_fcast_variance(var, var->F, t1 - t0);
     }
 
-    gretl_matrix_set_t1(F, t0);
-    gretl_matrix_set_t2(F, t2);
-
-    var->F = F;
+    gretl_matrix_set_t1(var->F, t0);
+    gretl_matrix_set_t2(var->F, t2);
 
 #if VDEBUG
-    gretl_matrix_print(F, "var->F");
+    gretl_matrix_print(var->F, "var->F");
 #endif
 
     return 0;
@@ -926,9 +939,7 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 		   const double **Z, const DATAINFO *pdinfo, 
 		   gretlopt opt)
 {
-    gretl_matrix *F = NULL;
     gretl_matrix *B = NULL;
-
     double s0 = 0, s1 = 1;
     int order = effective_order(var);
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
@@ -940,14 +951,15 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
     fcols = (staticfc)? var->neqns : 2 * var->neqns;
 
-    F = gretl_zero_matrix_new(nf, fcols);
-    if (F == NULL) {
+    var->F = gretl_zero_matrix_new(nf, fcols);
+    if (var->F == NULL) {
 	return E_ALLOC;
     }
 
     B = VAR_coeff_matrix_from_VECM(var);
     if (B == NULL) {
-	gretl_matrix_free(F);
+	gretl_matrix_free(var->F);
+	var->F = NULL;
 	return E_ALLOC;
     }
 
@@ -985,7 +997,7 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 		    } else {
 			/* prior forecast value preferred */
 			xtjd = Z[vj][t-k];
-			xtj = gretl_matrix_get(F, s-k, j);
+			xtj = gretl_matrix_get(var->F, s-k, j);
 		    }
 		    if (!na(xtj)) {
 			fti += bij * xtj;
@@ -1053,7 +1065,7 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	    
 	set_fcast:
 
-	    gretl_matrix_set(F, s, i, fti);
+	    gretl_matrix_set(var->F, s, i, fti);
 	}
 
 	if (nseas > 0) {
@@ -1063,18 +1075,15 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
     gretl_matrix_free(B);
 
-    /* now get variances, if not static */
     if (!staticfc) {
-	VAR_add_fcast_variance(var, F, nf, t1 - t0);
+	VAR_add_fcast_variance(var, var->F, t1 - t0);
     }
 
-    gretl_matrix_set_t1(F, t0);
-    gretl_matrix_set_t2(F, t2);
-
-    var->F = F;
+    gretl_matrix_set_t1(var->F, t0);
+    gretl_matrix_set_t2(var->F, t2);
 
 #if VDEBUG
-    gretl_matrix_print(F, "var->F");
+    gretl_matrix_print(var->F, "var->F");
 #endif
 
     return 0;

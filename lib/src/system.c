@@ -2895,29 +2895,135 @@ static int sys_add_structural_form (equation_system *sys,
     return err;
 }
 
-#if SYSDEBUG
-static int sys_add_fc_stderrs (equation_system *sys,
-			       int t0, int t1, int t2)
+static gretl_matrix *sys_companion_matrix (equation_system *sys)
 {
     gretl_matrix *C; /* companion form */
     int m = sys->A->rows;
     int n = sys->A->cols;
 
     C = gretl_zero_matrix_new(n, n);
-    if (C == NULL) {
-	return E_ALLOC;
+
+    if (C != NULL) {
+	gretl_matrix_inscribe_matrix(C, sys->A, 0, 0,
+				     GRETL_MOD_NONE);
+	gretl_matrix_inscribe_I(C, m, 0, n - m);
     }
 
-    gretl_matrix_inscribe_matrix(C, sys->A, 0, 0,
-				 GRETL_MOD_NONE);
-    gretl_matrix_inscribe_I(C, m, 0, n - m);
-    
-    gretl_matrix_print(C, "sys compan");
-    gretl_matrix_free(C);
-
-    return 0;
-}
+#if 0    
+    gretl_matrix_print(C, "system companion matrix");
 #endif
+
+    return C;
+}
+
+static gretl_matrix *
+sys_get_fcast_se (equation_system *sys, int periods)
+{
+    int k = sys->A->cols;
+    int n = sys->neqns + sys->nidents;
+    gretl_matrix *Tmp = NULL;
+    gretl_matrix *V0 = NULL, *Vt = NULL;
+    gretl_matrix *C = NULL, *se = NULL;
+    double vti;
+    int i, t;
+
+    if (periods <= 0) {
+	fprintf(stderr, "Invalid number of periods\n");
+	return NULL;
+    }
+
+    C = sys_companion_matrix(sys);
+    if (C == NULL) {
+	return NULL;
+    }
+
+    se = gretl_zero_matrix_new(periods, n);
+    Vt = gretl_matrix_alloc(k, k);
+    V0 = gretl_zero_matrix_new(k, k);
+    Tmp = gretl_matrix_alloc(k, k);
+
+    if (se == NULL || V0 == NULL || 
+	Vt == NULL || Tmp == NULL) {
+	gretl_matrix_free(se);
+	gretl_matrix_free(V0);
+	gretl_matrix_free(Vt);
+	gretl_matrix_free(Tmp);
+	return NULL;
+    }
+
+    for (t=0; t<periods; t++) {
+	if (t == 0) {
+	    /* initial variance */
+	    gretl_matrix_inscribe_matrix(V0, sys->Ve, 0, 0, GRETL_MOD_NONE);
+	    gretl_matrix_copy_values(Vt, V0);
+	} else {
+	    /* calculate further variances */
+	    gretl_matrix_copy_values(Tmp, Vt);
+	    gretl_matrix_qform(C, GRETL_MOD_NONE,
+			       Tmp, Vt, GRETL_MOD_NONE);
+	    gretl_matrix_add_to(Vt, V0);
+	}
+
+	for (i=0; i<n; i++) {
+	    vti = gretl_matrix_get(Vt, i, i);
+	    gretl_matrix_set(se, t, i, sqrt(vti));
+	}
+    }
+
+    gretl_matrix_free(C);
+    gretl_matrix_free(V0);
+    gretl_matrix_free(Vt);
+    gretl_matrix_free(Tmp);
+
+    return se;
+}
+
+static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
+				   int pre_obs)
+{
+    gretl_matrix *se = NULL;
+    double vti;
+    int n = sys->neqns;
+    int k = F->rows - pre_obs;
+    int i, j, s;
+    int err = 0;
+
+    if (k > 0) {
+	se = sys_get_fcast_se(sys, k);
+	if (se == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    for (j=0; j<n; j++) {
+	for (s=0; s<F->rows; s++) {
+	    i = s - pre_obs;
+	    if (i < 0) {
+		vti = sqrt(gretl_matrix_get(sys->sigma, j, j));
+	    } else {
+		vti = gretl_matrix_get(se, i, j);
+	    }
+	    gretl_matrix_set(F, s, n + j, vti);
+	}
+    }
+
+    if (se != NULL) {
+	gretl_matrix_free(se);
+    }
+
+ bailout:
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    for (s=0; s<F->rows; s++) {
+		gretl_matrix_set(F, s, n + i, NADBL);
+	    }
+	}
+    }
+
+    return err;
+}
 
 static int sys_add_forecast (equation_system *sys,
 			     int t0, int t1, int t2,
@@ -2933,7 +3039,7 @@ static int sys_add_forecast (equation_system *sys,
     int n = sys->neqns + sys->nidents;
     double xit, xitd;
     int staticfc = (opt & OPT_S);
-    int type, col, T;
+    int type, col, T, ncols;
     int i, vi, s, t, lag;
     int err = 0;
 
@@ -2966,15 +3072,17 @@ static int sys_add_forecast (equation_system *sys,
     }
 
     T = t2 - t0 + 1;
+    ncols = (staticfc)? n : 2 * n;
 
-    if (sys->F != NULL && sys->F->rows != T) {
+    if (sys->F != NULL && 
+	(sys->F->rows != T || sys->F->cols != ncols)) {
 	gretl_matrix_free(sys->F);
 	sys->F = NULL;
     }
 
     y = gretl_matrix_alloc(n, 1);
     yh = gretl_matrix_alloc(n, 1);
-    sys->F = gretl_matrix_alloc(T, n);
+    sys->F = gretl_matrix_alloc(T, ncols);
 
     if (y == NULL || yh == NULL || sys->F == NULL) {
 	err = E_ALLOC;
@@ -3089,11 +3197,14 @@ static int sys_add_forecast (equation_system *sys,
 	sys->F->t2 = t2;
     }
 
+    if (!err && !staticfc) {
+	sys_add_fcast_variance(sys, sys->F, t1 - t0);
+    }
+
 #if SYSDEBUG
     if (sys->F != NULL) {
 	gretl_matrix_print(sys->F, "sys->F");
     }
-    sys_add_fc_stderrs(sys, t0, t1, t2);
 #endif
 
     return err;
@@ -3105,10 +3216,13 @@ system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
 			    gretlopt opt)
 {
     if (sys->F != NULL) {
-	int nf = t2 - t0 + 1;
+	int ncols, nf = t2 - t0 + 1;
 	int ft1 = gretl_matrix_get_t1(sys->F);
 
-	if (nf == gretl_matrix_rows(sys->F) && t1 == ft1) {
+	ncols = (opt & OPT_S)? sys->neqns: 2 * sys->neqns;
+
+	if (nf == gretl_matrix_rows(sys->F) && t1 == ft1 &&
+	    ncols == gretl_matrix_cols(sys->F)) {
 	    ; /* already done, fine */
 	} else {
 	    gretl_matrix_free(sys->F);

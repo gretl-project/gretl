@@ -1876,7 +1876,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 static int parse_forecast_string (const char *s, gretlopt opt, 
 				  int t2est,
 				  const DATAINFO *pdinfo,
-				  int *t1, int *t2,
+				  int *t0, int *t1, int *t2,
 				  char *vname)
 {
     char t1str[16], t2str[16];
@@ -1901,20 +1901,32 @@ static int parse_forecast_string (const char *s, gretlopt opt,
     }
 
     if (n == 2) {
-	*t1 = dateton(t1str, pdinfo);
+	*t0 = *t1 = dateton(t1str, pdinfo);
 	*t2 = dateton(t2str, pdinfo);
+	if (*t2 < *t1) {
+	    err = E_DATA;
+	}
     } else if (opt & OPT_O) {
 	/* out of sample, if possible */
 	if (pdinfo->n - t2est - 1 > 0) {
-	    *t1 = t2est + 1;
+	    *t0 = *t1 = t2est + 1;
 	    *t2 = pdinfo->n - 1;
 	} else {
 	    err = E_OBS;
 	}
     } else {
-	*t1 = pdinfo->t1;
+	*t0 = *t1 = pdinfo->t1;
 	*t2 = pdinfo->t2;
     } 
+
+    if (!err) {
+	if (opt & OPT_S) {
+	    /* force static forecast */
+	    *t1 = *t2 + 1;
+	} else if (!(opt & OPT_D)) {
+	    *t1 = t2est + 1;
+	}
+    }
 
     return err;
 }
@@ -2239,19 +2251,20 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 			      gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
-    int t1, t2;
+    int t0, t1, t2;
     int err;
 
     if (pmod->ci == ARBOND) {
 	return E_NOTIMP;
     }
 
-    err = parse_forecast_string(str, opt, pmod->t2, pdinfo, &t1, &t2, NULL);
+    err = parse_forecast_string(str, opt, pmod->t2, pdinfo, 
+				&t0, &t1, &t2, NULL);
     if (err) {
 	return err;
     }
 
-    fr = get_forecast(pmod, t1, t1, t2, pZ, pdinfo, opt);
+    fr = get_forecast(pmod, t0, t1, t2, pZ, pdinfo, opt);
     if (fr == NULL) {
 	err = E_ALLOC;
     } else {
@@ -2307,7 +2320,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     FITRESID *fr;
     char vname[VNAMELEN] = {0};
     gretlopt printopt = OPT_NONE;
-    int t1, t2, t2est, ci;
+    int t0, t1, t2, t2est, ci;
     int i, imax, imin = 0;
     int have_sderr = 0;
     int err;
@@ -2326,7 +2339,8 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	ci = SYSTEM;
     }
 
-    err = parse_forecast_string(str, opt, t2est, pdinfo, &t1, &t2, vname);
+    err = parse_forecast_string(str, opt, t2est, pdinfo, 
+				&t0, &t1, &t2, vname);
     if (err) {
 	return err;
     }
@@ -2341,7 +2355,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     } 
 
     for (i=imin; i<=imax && !err; i++) {
-	fr = get_system_forecast(ptr, ci, i, t1, t1, t2, Z, 
+	fr = get_system_forecast(ptr, ci, i, t0, t1, t2, Z, 
 				 pdinfo, opt);
 	if (fr == NULL) {
 	    err = E_ALLOC;
@@ -2365,9 +2379,9 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	const gretl_matrix *F;
 
 	if (type == GRETL_OBJ_VAR) {
-	    F = gretl_VAR_get_forecast_matrix(ptr, t1, t1, t2, Z, pdinfo, opt);
+	    F = gretl_VAR_get_forecast_matrix(ptr, t0, t1, t2, Z, pdinfo, opt);
 	} else {
-	    F = system_get_forecast_matrix(ptr, t1, t1, t2, Z, pdinfo, opt);
+	    F = system_get_forecast_matrix(ptr, t0, t1, t2, Z, pdinfo, opt);
 	}
 	if (F != NULL) {
 	    err = set_forecast_matrices_from_F(F, have_sderr);
@@ -2750,7 +2764,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     const gretl_matrix *F = NULL;
-    int nf = t2 - t1 + 1;
+    int nf = t2 - t0 + 1;
     int df = nf, m = 0;
     int yno, s, t;
 
@@ -2774,6 +2788,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	sys = (equation_system *) p;
 
 	yno = sys->elist[i+1];
+	m = sys->neqns + sys->nidents;
 	F = system_get_forecast_matrix(sys, t0, t1, t2, Z, pdinfo, opt);
     }
 
