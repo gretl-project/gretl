@@ -2895,6 +2895,30 @@ static int sys_add_structural_form (equation_system *sys,
     return err;
 }
 
+#if SYSDEBUG
+static int sys_add_fc_stderrs (equation_system *sys,
+			       int t0, int t1, int t2)
+{
+    gretl_matrix *C; /* companion form */
+    int m = sys->A->rows;
+    int n = sys->A->cols;
+
+    C = gretl_zero_matrix_new(n, n);
+    if (C == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_inscribe_matrix(C, sys->A, 0, 0,
+				 GRETL_MOD_NONE);
+    gretl_matrix_inscribe_I(C, m, 0, n - m);
+    
+    gretl_matrix_print(C, "sys compan");
+    gretl_matrix_free(C);
+
+    return 0;
+}
+#endif
+
 static int sys_add_forecast (equation_system *sys,
 			     int t0, int t1, int t2,
 			     const double **Z, const DATAINFO *pdinfo,
@@ -2907,7 +2931,7 @@ static int sys_add_forecast (equation_system *sys,
     const int *ilist;
     const int *xlist;
     int n = sys->neqns + sys->nidents;
-    double xit;
+    double xit, xitd;
     int staticfc = (opt & OPT_S);
     int type, col, T;
     int i, vi, s, t, lag;
@@ -2920,6 +2944,13 @@ static int sys_add_forecast (equation_system *sys,
     elist = sys->elist;
     ilist = sys->ilist;
     xlist = sys->xlist;
+
+#if SYSDEBUG
+    printlist(elist, "elist");
+    printlist(ilist, "ilist");
+    printlist(xlist, "xlist");
+    fprintf(stderr, "sys->maxlag = %d\n", sys->maxlag);
+#endif
 
     if (!gretl_is_identity_matrix(sys->Gamma)) {
 	G = gretl_matrix_copy(sys->Gamma);
@@ -2976,19 +3007,25 @@ static int sys_add_forecast (equation_system *sys,
 		vi = ilist[i];
 		type = categorize_variable(vi, sys, xlist, &col, &lag);
 		if (type == PREDET) {
+		    xitd = NADBL;
 		    if (t < t1 || staticfc || s - lag < 0) {
 			/* pre-forecast value */
 			xit = Z[vi][t];
 		    } else {
-			/* prior forecast value */
+			/* prior forecast value preferred */
+			if (s - lag >= 0) {
+			    xitd = xit = Z[vi][t];
+			} 
 			xit = gretl_matrix_get(sys->F, s - lag, col);
 		    }
-		    if (na(xit)) {
-			miss = 1;
-		    } else {
-			col += n * (lag - 1);
+		    col += n * (lag - 1);
+		    if (!na(xit)) {
 			yl->val[col] = xit;
-		    }
+		    } else if (!na(xitd)) {
+			yl->val[col] = xitd;
+		    } else {
+			miss = 1;
+		    } 
 		}
 	    }
 	    if (!miss) {
@@ -3056,6 +3093,7 @@ static int sys_add_forecast (equation_system *sys,
     if (sys->F != NULL) {
 	gretl_matrix_print(sys->F, "sys->F");
     }
+    sys_add_fc_stderrs(sys, t0, t1, t2);
 #endif
 
     return err;

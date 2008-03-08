@@ -799,7 +799,7 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 {
     const MODEL *pmod;
     gretl_matrix *F;
-    double fti, xti;
+    double fti, xti, xtid;
     int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
     int i, j, k, s, t;
@@ -839,6 +839,7 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	    for (j=0; j<var->neqns; j++) {
 		vj = var->ylist[j+1];
 		for (lag=1; lag<=var->order; lag++) {
+		    xtid = NADBL;
 		    if (t < t1 || staticfc || s - lag < 0) {
 			/* pre-forecast value */
 			if (t - lag < 0) {
@@ -847,14 +848,19 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			    xti = Z[vj][t-lag];
 			}
 		    } else {
-			/* prior forecast value */
-			xti = gretl_matrix_get(F, s - lag, j); /* ?? */
+			/* prior forecast value preferred */
+			if (t - lag >= 0) {
+			    xtid = Z[vj][t-lag];
+			}
+			xti = gretl_matrix_get(F, s - lag, j);
 		    }
-		    if (na(xti)) {
-			miss = 1;
-		    } else {
+		    if (!na(xti)) {
 			fti += pmod->coeff[k] * xti;
-		    }
+		    } else if (!na(xtid)) {
+			fti += pmod->coeff[k] * xtid;
+		    } else {
+			miss = 1;
+		    } 
 		    k++;
 		}
 	    }
@@ -954,8 +960,8 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     for (t=t0, s=0; t<=t2; t++, s++) {
 
 	for (i=0; i<var->neqns; i++) {
-	    double bij, xtj, fti = 0.0;
-	    int ft, col = 0;
+	    double bij, xtj, xtjd, fti = 0.0;
+	    int col = 0;
 
 	    /* unrestricted constant, if present */
 	    if (var->ifc) {
@@ -972,19 +978,23 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			break;
 		    }			
 		    bij = gretl_matrix_get(B, i, col++);
-		    ft = s - k;
-		    if (t >= t1 && ft >= 0 && !staticfc) {
-			/* use prior forecast if available */
-			xtj = gretl_matrix_get(F, ft, j);
-		    } else {
+		    xtjd = NADBL;
+		    if (t < t1 || staticfc || s - k < 0) {
+			/* pre-forecast value */
 			xtj = Z[vj][t-k];
+		    } else {
+			/* prior forecast value preferred */
+			xtjd = Z[vj][t-k];
+			xtj = gretl_matrix_get(F, s-k, j);
 		    }
-		    if (na(xtj)) {
+		    if (!na(xtj)) {
+			fti += bij * xtj;
+		    } else if (!na(xtjd)) {
+			fti += bij * xtjd;
+		    } else {
 			fti = NADBL;
 			break;
-		    } else {
-			fti += bij * xtj;
-		    }
+		    } 
 		}
 		if (na(fti)) {
 		    break;
