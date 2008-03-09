@@ -1541,7 +1541,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     rewind(fp);
 
     /* read lines, check for consistency in number of fields */
-    err = csv_fields_check(line, maxlen, fp, c, prn);
+    err = csv_fields_check(line, maxlen, fp, c, mprn);
     if (err) {
 	goto csv_bailout;
     }
