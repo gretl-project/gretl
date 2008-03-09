@@ -1,21 +1,22 @@
 version 1.7.4, in progress
 - Fix for ADF-GLS test with missing values
 - Fix for detection of unit-diagonal matrix (oops!)
-- Add $fcast and $fcerr accessors for use with fcasterr
+- Merge fit and fcasterr commands with fcast
+- Add $fcast and $fcerr accessors for use with fcast
 - Autocorrelation test: use Kiviet's original 1986 formula
   for the LMF statistic
-- system command: enable naming of systems in the manner
+- "system" command: enable naming of systems in the manner
   "sysname <- system"
-- system command: several other changes (write this up when 
-  done)
-- remove obsolete commands: fit, multiply
-- consolidate the commands corc, hilu and pwe into one new
+- Several other enhancements to "system" (write this up when 
+  finished)
+- remove obsolete command: multiply
+- Consolidate the commands corc, hilu and pwe into one new
   command with options: ar1
-- merge with fcasterr command with fcast
 - Fix for the case of graphing 6 time series together
 - Fix bugs 1908139, 1909469
 - Fix documentation of $stopwatch
 - Move handling of strings into "genr"
+- Fix sub-sampling bug (which was new in 1.7.3)
 
 2/29/2008 version 1.7.3
 - Fix for 64-bit platforms: don't use "long" as the C
