@@ -21,8 +21,52 @@
 #define VAR_H_
 
 #include "gretl_matrix.h"
-#include "johansen.h"
 #include "gretl_restrict.h"
+
+typedef struct JohansenInfo_ JohansenInfo;
+
+struct GRETL_VAR_ {
+    int ci;              /* command index (VAR or VECM) */
+    int refcount;        /* for saving/deleting */
+    int err;             /* error code */
+    int neqns;           /* number of equations in system */
+    int order;           /* lag order */
+    int t1;              /* starting observation */
+    int t2;              /* ending observation */
+    int T;               /* number of observations */
+    int df;              /* T - average coeffs per equation */
+    int ifc;             /* equations include a constant (1) or not (0) */
+    int ncoeff;          /* total coefficients per equation */
+    int *ylist;          /* list of stochastic vars */
+    int *xlist;          /* list of exogenous variables */
+    int *rlist;          /* restricted exogenous variables (VECM only) */
+    int detflags;        /* record of automatic deterministic vars added */
+    int robust;          /* computing robust std errors? */
+    int qr;              /* using QR decomposition? */
+    gretl_matrix *Y;     /* matrix of dependent variables */
+    gretl_matrix *X;     /* matrix of independent variables */
+    gretl_matrix *B;     /* basic coefficient matrix */
+    gretl_matrix *XTX;   /* X'X */
+    gretl_matrix *A;     /* augmented coefficient matrix (companion form) */
+    gretl_matrix *L;     /* lambda: inverse roots of A(L) polynomial */
+    gretl_matrix *E;     /* residuals matrix */
+    gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
+    gretl_matrix *S;     /* cross-equation variance matrix */
+    gretl_matrix *F;     /* optional forecast matrix */
+    MODEL **models;      /* pointers to individual equation estimates */
+    double *Fvals;       /* hold results of F-tests */
+    double *Ivals;       /* hold results of info criteria comparisons */
+    double ldet;         /* log-determinant of S */
+    double ll;           /* log-likelihood */
+    double AIC;          /* Akaike criterion */
+    double BIC;          /* Bayesian criterion */
+    double HQC;          /* Hannan-Quinn criterion */
+    double LR;           /* for likelihood-ratio testing */
+    double LB;           /* Ljung-Box (Portmanteau) test statistic */
+    int LBs;             /* order for for Portmanteau test */
+    JohansenInfo *jinfo; /* extra information for VECMs */
+    char *name;          /* for use in session management */
+};
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
@@ -35,9 +79,9 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
 		       gretlopt opt, PRN *prn, int *err);
 
 const gretl_matrix *
-gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, int pre_obs,
+gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, 
 			       const double **Z, DATAINFO *pdinfo,
-			       gretlopt opt);
+			       gretlopt opt, int *err);
 
 const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
@@ -45,6 +89,9 @@ gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
 gretl_matrix *
 gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 			    int *errp);
+
+int 
+gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C);
 
 const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var);
 

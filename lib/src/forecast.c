@@ -80,39 +80,6 @@ static int dummy_ar_info_init (MODEL *pmod)
     return 0;
 }
 
-static int 
-allocate_basic_fit_resid_arrays (FITRESID *fr)
-{
-    int t, T = fr->nobs;
-    int err = 0;
-
-    fr->actual = NULL;
-    fr->fitted = NULL;
-    fr->resid = NULL;
-    fr->sderr = NULL;
-
-    fr->actual = malloc(T * sizeof *fr->actual);
-    fr->fitted = malloc(T * sizeof *fr->fitted);
-    fr->resid = malloc(T * sizeof *fr->resid);
-
-    if (fr->actual == NULL || fr->fitted == NULL ||
-	fr->resid == NULL) {
-	err = E_ALLOC;
-	free(fr->actual);
-	free(fr->fitted);
-	free(fr->resid);
-	fr->actual = NULL;
-	fr->fitted = NULL;
-	fr->resid = NULL;
-    } else {
-	for (t=0; t<T; t++) {
-	    fr->actual[t] = fr->fitted[t] = fr->resid[t] = NADBL;
-	}
-    }
-
-    return err;
-}
-
 static int fit_resid_add_sderr (FITRESID *fr)
 {
     int t, err = 0;
@@ -128,52 +95,6 @@ static int fit_resid_add_sderr (FITRESID *fr)
     }
 
     return err;
-}
-
-/**
- * fit_resid_new:
- * @n: the number of observations to allow for, or 0 if this
- * information will be added later.
- *
- * Allocates a #FITRESID struct for holding fitted values and
- * residuals from a model (or out-of-sample forecasts).  If
- * @n is greater than 0 the arrays required for that number
- * of observations will be allocated.
- *
- * Returns: pointer to allocated structure, or %NULL on failure.
- */
-
-static FITRESID *fit_resid_new (int n)
-{
-    FITRESID *fr = malloc(sizeof *fr);
-
-    if (fr == NULL) {
-	return NULL;
-    }
-
-    fr->model_ID = 0;
-    fr->model_ci = 0;
-    fr->model_t1 = 0;
-    fr->err = 0;
-    fr->t0 = 0;
-    fr->t1 = 0;
-    fr->t2 = 0;
-    fr->nobs = 0;
-
-    if (n > 0) {
-	fr->nobs = n;
-	if (allocate_basic_fit_resid_arrays(fr)) {
-	    free(fr);
-	    fr = NULL;
-	} 
-    } else {
-	fr->actual = NULL;
-	fr->fitted = NULL;
-	fr->resid = NULL;
-	fr->sderr = NULL;
-    } 
-    
-    return fr;
 }
 
 /**
@@ -193,6 +114,142 @@ void free_fit_resid (FITRESID *fr)
 	free(fr->sderr);
 	free(fr);
     }
+}
+
+/**
+ * fit_resid_new_with_length:
+ * @n: the number of observations to allow for, or 0 if this
+ * information will be added later.
+ *
+ * Allocates a #FITRESID struct for holding fitted values and
+ * residuals from a model (or out-of-sample forecasts).  If
+ * @n is greater than 0 the arrays required for that number
+ * of observations will be allocated.
+ *
+ * Returns: pointer to allocated structure, or %NULL on failure.
+ */
+
+static FITRESID *fit_resid_new_with_length (int n, int add_errs)
+{
+    FITRESID *f = malloc(sizeof *f);
+
+    if (f == NULL) {
+	return NULL;
+    }
+
+    f->method = 0;
+    f->model_ID = 0;
+    f->model_ci = 0;
+    f->model_t1 = 0;
+    f->t0 = 0;
+    f->t1 = 0;
+    f->t2 = 0;
+    f->df = 0;
+    f->nobs = 0;
+    f->pmax = PMAX_NOT_AVAILABLE;
+
+    f->sigma = NADBL;
+    f->tval = NADBL;
+
+    f->actual = NULL;
+    f->fitted = NULL;
+    f->resid = NULL;
+    f->sderr = NULL;
+
+    *f->depvar = '\0';
+
+    f->actual = malloc(n * sizeof *f->actual);
+    f->fitted = malloc(n * sizeof *f->fitted);
+    f->resid = malloc(n * sizeof *f->resid);
+    if (add_errs) {
+	f->sderr = malloc(n * sizeof *f->sderr);
+    }
+
+    if (f->actual == NULL || f->fitted == NULL || f->resid == NULL ||
+	(add_errs && f->sderr == NULL)) {
+	free_fit_resid(f);
+	f = NULL;
+    } else {
+	int t;
+
+	for (t=0; t<n; t++) {
+	    f->actual[t] = f->fitted[t] = f->resid[t] = NADBL;
+	    if (f->sderr != NULL) {
+		f->sderr[t] = NADBL;
+	    }
+	}
+	f->nobs = n;
+    }
+
+    return f;
+}
+
+static FITRESID *fit_resid_new_for_model (const MODEL *pmod, 
+					  const DATAINFO *pdinfo,
+					  int t1, int t2, int pre_n,
+					  int *err)
+{
+    FITRESID *fr;
+
+    if (t1 < 0 || t2 < 0 || t2 < t1) {
+	*err = E_OBS;
+	return NULL;
+    }
+
+    fr = fit_resid_new_with_length(pdinfo->n, 0);
+
+    if (fr == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    fr->t1 = t1;
+    fr->t2 = t2;
+
+    if (pre_n > 0) {
+	fr->t0 = fr->t1 - pre_n;
+    } else {
+	fr->t0 = t1;
+    }
+
+    fr->model_ID = pmod->ID;
+    fr->model_ci = pmod->ci;
+    fr->model_t1 = pmod->t1;
+
+    return fr;
+}
+
+static FITRESID *fit_resid_new_for_system (int ci, 
+					   const DATAINFO *pdinfo,
+					   int t1, int t2, int pre_n,
+					   int *err)
+{
+    FITRESID *fr;
+
+    if (t1 < 0 || t2 < 0 || t2 < t1) {
+	*err = E_OBS;
+	return NULL;
+    }
+
+    fr = fit_resid_new_with_length(pdinfo->n, 1);
+
+    if (fr == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    fr->t1 = t1;
+    fr->t2 = t2;
+
+    if (pre_n > 0) {
+	fr->t0 = fr->t1 - pre_n;
+    } else {
+	fr->t0 = t1;
+    }
+
+    fr->model_ci = ci;
+
+    return fr;
 }
 
 static void fit_resid_set_dec_places (FITRESID *fr)
@@ -216,6 +273,7 @@ static void fit_resid_set_dec_places (FITRESID *fr)
  * are wanted.
  * @Z: data array using which @pmod was estimated.
  * @pdinfo: dataset information.
+ * @err: location to receive error code.
  *
  * Allocates a #FITRESID structure and fills it out with
  * the actual and predicted values of the dependent variable
@@ -225,13 +283,14 @@ static void fit_resid_set_dec_places (FITRESID *fr)
  */
 
 FITRESID *get_fit_resid (const MODEL *pmod, const double **Z, 
-			 const DATAINFO *pdinfo)
+			 const DATAINFO *pdinfo, int *err)
 {
-    int depvar, t;
     FITRESID *fr;
+    int dv, t;
 
-    fr = fit_resid_new(pdinfo->n);
-    if (fr == NULL) {
+    fr = fit_resid_new_for_model(pmod, pdinfo, pmod->t1, pmod->t2,
+				 0, err);
+    if (*err) {
 	return NULL;
     }
 
@@ -244,21 +303,16 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 	}
     }
 
-    depvar = gretl_model_get_depvar(pmod);
-
-    fr->t0 = pmod->t1;
-    fr->t1 = pmod->t1;
-    fr->t2 = pmod->t2;
+    dv = gretl_model_get_depvar(pmod);
 
     for (t=0; t<fr->nobs; t++) {
-	fr->actual[t] = Z[depvar][t];
+	fr->actual[t] = Z[dv][t];
 	fr->fitted[t] = pmod->yhat[t];
 	fr->resid[t] = pmod->uhat[t];
     }
 
     fit_resid_set_dec_places(fr);
-
-    strcpy(fr->depvar, pdinfo->varname[depvar]);
+    strcpy(fr->depvar, pdinfo->varname[dv]);
     
     return fr;
 }
@@ -399,36 +453,6 @@ has_real_exog_regressors (MODEL *pmod, const int *dvlags,
     } 
 
     return ret;
-}
-
-static int 
-fit_resid_init (int t0, int t1, int t2, const MODEL *pmod, 
-		const DATAINFO *pdinfo, FITRESID *fr)
-{
-    if (t0 > t1) { 
-	t0 = t1;
-    }
-
-    fr->t0 = t0;
-    fr->t1 = t1;
-    fr->t2 = t2;
-
-    if (fr->t1 < 0 || fr->t2 < 0 || fr->t2 < fr->t1) {
-	fr->err = E_OBS;
-    }
-
-    if (!fr->err) {
-	fr->nobs = pdinfo->n;
-	fr->err = allocate_basic_fit_resid_arrays(fr);
-    }
-
-    fr->model_ID = pmod->ID;
-    fr->model_ci = pmod->ci;
-    fr->model_t1 = pmod->t1;
-
-    fr->pmax = PMAX_NOT_AVAILABLE;
-
-    return fr->err;
 }
 
 #define AR_DEBUG 0
@@ -1772,7 +1796,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	if (!AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
 	    /* we'll do Davidson-MacKinnon error variance */
 	    DM_errs = 1;
-	    fc.t1 = fr->t1 = fr->t0; /* ?? */
 	} else if (fc.method == FC_DYNAMIC) {
 	    /* we'll do dynamic forecast errors throughout */
 	    dyn_errs = 1;
@@ -1867,17 +1890,15 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     return err;
 }
 
-/* t2est is the end of the sample range used in estimating the
-   model 
-*/
-
-static int parse_forecast_string (const char *s, gretlopt opt, 
+static int parse_forecast_string (const char *s, 
+				  gretlopt opt, 
 				  int t2est,
 				  const DATAINFO *pdinfo,
-				  int *t0, int *t1, int *t2,
+				  int *pt1, int *pt2,
 				  char *vname)
 {
     char t1str[16], t2str[16];
+    int t1 = 0, t2 = 0;
     int n, err = 0;
 
     if (!strncmp(s, "fcasterr", 8)) {
@@ -1887,6 +1908,7 @@ static int parse_forecast_string (const char *s, gretlopt opt,
     }
 
     if (vname != NULL) {
+	*vname = '\0';
 	n = sscanf(s, "%15s %15s %15s", t1str, t2str, vname);
 	if (n == 1) {
 	    strcpy(vname, t1str);
@@ -1899,50 +1921,46 @@ static int parse_forecast_string (const char *s, gretlopt opt,
     }
 
     if (n == 2) {
-	*t0 = *t1 = dateton(t1str, pdinfo);
-	*t2 = dateton(t2str, pdinfo);
-	if (*t2 < *t1) {
+	t1 = dateton(t1str, pdinfo);
+	t2 = dateton(t2str, pdinfo);
+	if (t1 < 0 || t2 < 0 || t2 < t1) {
 	    err = E_DATA;
 	}
     } else if (opt & OPT_O) {
 	/* out of sample, if possible */
 	if (pdinfo->n - t2est - 1 > 0) {
-	    *t0 = *t1 = t2est + 1;
-	    *t2 = pdinfo->n - 1;
+	    t1 = t2est + 1;
+	    t2 = pdinfo->n - 1;
 	} else {
 	    err = E_OBS;
 	}
     } else {
-	*t0 = *t1 = pdinfo->t1;
-	*t2 = pdinfo->t2;
+	/* default: sample range */
+	t1 = pdinfo->t1;
+	t2 = pdinfo->t2;
     } 
 
     if (!err) {
-	if (opt & OPT_S) {
-	    /* force static forecast */
-	    *t1 = *t2 + 1;
-	} else if (!(opt & OPT_D)) {
-	    *t1 = t2est + 1;
-	}
+	*pt1 = t1;
+	*pt2 = t2;
     }
 
     return err;
 }
 
-/* public forecast-related functions follow */
-
 /**
  * get_forecast:
  * @pmod: the model from which forecasts are wanted.
- * @t0: start of data display range.
  * @t1: start of forecast range.
  * @t2: end of forecast range.
+ * @pre_n: numbe of pre-forecast observations to include.
  * @pZ: pointer to data array using which @pmod was estimated.
  * @pdinfo: dataset information.
- * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
  * out of sample (in cases where a dynamic forecast is meaningful).
+ * @err: location to receive error code.
  *
  * Allocates a #FITRESID structure and fills it out with forecasts
  * based on @pmod, over the specified range of observations.  
@@ -1958,35 +1976,32 @@ static int parse_forecast_string (const char *s, gretlopt opt,
  * estimates, provided the error term may be assumed to be serially 
  * uncorrelated.
  *
- * Returns: pointer to allocated structure, or %NULL on failure.
- * The %err member of the returned object should be checked:
- * a non-zero value indicates an error condition.
+ * Returns: pointer to allocated structure, or %NULL on failure,
+ * in which case an error code is assigned via @err.
  */
 
-FITRESID *get_forecast (MODEL *pmod, int t0, int t1, int t2,
+FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 			double ***pZ, DATAINFO *pdinfo,
-			gretlopt opt) 
+			gretlopt opt, int *err) 
 {
     FITRESID *fr;
-
-    fr = fit_resid_new(0); 
-    if (fr == NULL) {
-	return NULL;
-    }
 
     /* Reject in case model was estimated using repacked daily
        data: this case should be handled more elegantly */
     if (gretl_model_get_int(pmod, "daily_repack")) {
-	fr->err = E_DATA;
-	return fr;
+	*err = E_DATA;
+	return NULL;
     }
 
-    fit_resid_init(t0, t1, t2, pmod, pdinfo, fr); 
-    if (fr->err) {
-	return fr;
-    }
+    fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, pre_n, err);
 
-    fr->err = real_get_fcast(fr, pmod, pZ, pdinfo, opt);
+    if (!*err) {
+	*err = real_get_fcast(fr, pmod, pZ, pdinfo, opt);
+	if (*err) {
+	    free_fit_resid(fr);
+	    fr = NULL;
+	}
+    }
 
     return fr;
 }
@@ -2162,26 +2177,27 @@ static int matrix_last_ok_row (const gretl_matrix *a, int jmin, int cols)
     return i;
 }
 
-static void F_matrix_adjust_sample (const gretl_matrix *F, int have_sderr,
-				    int *f0, int *fn, int *e0, int *en)
+static void F_matrix_adjust_sample (const gretl_matrix *F, 
+				    int *f0, int *fn, 
+				    int *e0, int *en)
 {
-    int k = have_sderr ? F->cols / 2 : F->cols;
+    int k = F->cols / 2;
 
     *f0 = matrix_first_ok_row(F, 0, k);
     *fn = matrix_last_ok_row(F, 0, k);
 
-    if (have_sderr) {
-	*e0 = matrix_first_ok_row(F, k, k);
-	*en = matrix_last_ok_row(F, k, k);
-    }
+    *e0 = matrix_first_ok_row(F, k, k);
+    *en = matrix_last_ok_row(F, k, k);
 }
 
 static int set_forecast_matrices_from_F (const gretl_matrix *F,
-					 int have_sderr)
+					 int imin, int imax)
 {
+    gretl_matrix *F1 = NULL;
     gretl_matrix *f = NULL;
     gretl_matrix *e = NULL;
-    int k, n = F->cols;
+    int n = F->cols;
+    int k = n / 2;
     int fT = F->rows;
     int eT = F->rows;
     int f0 = 0, fn = fT;
@@ -2190,14 +2206,28 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     int i, j;
     int err = 0;
 
-    F_matrix_adjust_sample(F, have_sderr, &f0, &fn, &e0, &en);
+    if (imin == imax) {
+	/* extract one pair of columns */
+	F1 = gretl_matrix_alloc(fT, 2);
+	if (F1 == NULL) {
+	    return E_ALLOC;
+	}
+	for (i=0; i<fT; i++) {
+	    x = gretl_matrix_get(F, i, imin);
+	    gretl_matrix_set(F1, i, 0, x);
+	    x = gretl_matrix_get(F, i, imin + k);
+	    gretl_matrix_set(F1, i, 1, x);
+	}
+	F = F1;
+	k = 1;
+    }
+
+    F_matrix_adjust_sample(F, &f0, &fn, &e0, &en);
     
     fT = fn - f0 + 1;
     if (fT <= 0) {
-	return 0;
+	return E_MISSDATA;
     }
-
-    k = have_sderr ? n / 2 : n;
 
     f = gretl_matrix_alloc(fT, k);
     if (f == NULL) {
@@ -2209,7 +2239,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 
     eT = en - e0 + 1;
 
-    if (have_sderr && eT > 0) {
+    if (eT > 0) {
 	e = gretl_matrix_alloc(eT, k);
 	if (e == NULL) {
 	    err = E_ALLOC;
@@ -2241,6 +2271,10 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     fcast_matrix = f;
     fcerr_matrix = e;
 
+    if (F1 != NULL) {
+	gretl_matrix_free(F1);
+    }
+
     return err;
 }
 
@@ -2249,7 +2283,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 			      gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
-    int t0, t1, t2;
+    int t1, t2;
     int err;
 
     if (pmod->ci == ARBOND) {
@@ -2257,17 +2291,12 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     err = parse_forecast_string(str, opt, pmod->t2, pdinfo, 
-				&t0, &t1, &t2, NULL);
+				&t1, &t2, NULL);
     if (err) {
 	return err;
     }
 
-    fr = get_forecast(pmod, t0, t1, t2, pZ, pdinfo, opt);
-    if (fr == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = fr->err;
-    }
+    fr = get_forecast(pmod, t1, t2, 0, pZ, pdinfo, opt, &err);
 
     if (!err && !(opt & OPT_Q)) {
 	err = text_print_forecast(fr, pdinfo, opt, prn);
@@ -2282,64 +2311,44 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     return err;
 }
 
-static int get_sys_fcast_var (void *ptr, int type, const char *vname,
+static int get_sys_fcast_var (const int *ylist, const char *vname,
 			      DATAINFO *pdinfo)
 {
     int i, vi;
 
-    if (type == GRETL_OBJ_VAR) {
-	GRETL_VAR *var = (GRETL_VAR *) ptr;
-	int n = gretl_VAR_get_n_equations(var);
-
-	for (i=0; i<n; i++) {
-	    vi = gretl_VAR_get_variable_number(var, i);
-	    if (!strcmp(vname, pdinfo->varname[vi])) {
-		return i;
-	    }
-	}	
-    } else {
-	equation_system *sys = (equation_system *) ptr;
-
-	for (i=0; i<sys->ylist[0]; i++) {
-	    vi = sys->ylist[i+1];
-	    if (!strcmp(vname, pdinfo->varname[vi])) {
-		return i;
-	    }
+    for (i=0; i<ylist[0]; i++) {
+	vi = ylist[i+1];
+	if (!strcmp(vname, pdinfo->varname[vi])) {
+	    return i;
 	}
     }
 
     return -1;
 }
 
-static int refill_system_forecast (FITRESID *fr, void *p, int i, 
-				   const double **Z, DATAINFO *pdinfo,
-				   gretlopt opt)
+/* grab the relevant range from system forecast matrix and write it
+   into a FITRESID struct for printing or graphing
+*/
+
+static int fill_system_forecast (FITRESID *fr, int i, int yno,
+				 const gretl_matrix *F,
+				 const double **Z, DATAINFO *pdinfo,
+				 gretlopt opt)
 {
-    GRETL_VAR *var = NULL;
-    const gretl_matrix *F = NULL;
-    equation_system *sys = NULL;
-    int nf, m, yno = 0;
-    int s, t;
+    int m = F->cols / 2;
+    int s, t, nf;
+    int err = 0;
 
-    if (fr->model_ci == VAR || fr->model_ci == VECM) {
-	var = (GRETL_VAR *) p;
-	yno = var->ylist[i+1];
-	F = var->F;
-    } else if (fr->model_ci == SYSTEM) {
-	sys = (equation_system *) p;
-	yno = sys->ylist[i+1];
-	F = sys->F;
-    } 
-
-    if (F == NULL) {
-	return E_DATA;
-    }
-
-    m = F->cols / 2;
     strcpy(fr->depvar, pdinfo->varname[yno]);
 
+    /* pre-forecast observations */
+    for (t=fr->t0; t<fr->t1; t++) {
+	fr->actual[t] = Z[yno][t];
+    }
+
+    /* actual forecasts */
     nf = 0;
-    for (t=fr->t0, s=0; t<=fr->t2; t++, s++) {
+    for (t=fr->t1, s=0; t<=fr->t2; t++, s++) {
 	fr->actual[t] = Z[yno][t];
 	fr->fitted[t] = gretl_matrix_get(F, s, i);
 	if (!na(fr->fitted[t])) {
@@ -2351,201 +2360,147 @@ static int refill_system_forecast (FITRESID *fr, void *p, int i,
     }
 
     if (nf == 0) {
-	fr->err = E_MISSDATA;
+	err = E_MISSDATA;
     } else {
 	fit_resid_set_dec_places(fr);
     }
 
-    return fr->err;
+    return err;
 }
 
 static int system_do_forecast (const char *str, void *ptr, int type,
 			       const double **Z, DATAINFO *pdinfo, 
 			       gretlopt opt, PRN *prn)
 {
-    FITRESID *fr = NULL;
     char vname[VNAMELEN] = {0};
-    gretlopt printopt = OPT_NONE;
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
-    int t0, t1, t2, t2est, ci;
-    int i, imax, imin = 0;
-    int have_sderr = 0;
-    int err;
+    const int *ylist = NULL;
+    const gretl_matrix *F = NULL;
+    int t1 = 0, t2 = 0;
+    int t2est, ci;
+    int imax, imin = 0;
+    int df = 0;
+    int err = 0;
 
     if (type == GRETL_OBJ_VAR) {
 	var = (GRETL_VAR *) ptr;
-	imax = gretl_VAR_get_n_equations(var) - 1;
-	t2est = gretl_VAR_get_t2(var);
+	imax = var->neqns - 1;
+	t2est = var->t2;
 	ci = var->ci;
+	df = var->df;
+	ylist = var->ylist;
     } else {
 	sys = (equation_system *) ptr;
 	imax = sys->neqns + sys->nidents - 1;
 	t2est = sys->t2;
 	ci = SYSTEM;
+	df = sys->df;
+	ylist = sys->ylist;
     }
 
-    err = parse_forecast_string(str, opt, t2est, pdinfo, 
-				&t0, &t1, &t2, vname);
-    if (err) {
-	return err;
-    }
+    err = parse_forecast_string(str, opt, t2est, pdinfo, &t1, &t2, vname);
 
-    if (*vname != '\0') {
-	imin = get_sys_fcast_var(ptr, type, vname, pdinfo);
+    if (!err) {
+	if (var != NULL) {
+	    F = gretl_VAR_get_forecast_matrix(var, t1, t2, Z, pdinfo, 
+					      opt, &err);
+	} else {
+	    F = system_get_forecast_matrix(sys, t1, t2, Z, pdinfo, 
+					   opt, &err);
+	} 
+    }
+    
+    if (!err && *vname != '\0') {
+	imin = get_sys_fcast_var(ylist, vname, pdinfo);
 	if (imin < 0) {
 	    err = E_DATA;
 	} else {
 	    imax = imin;
 	}
-    } 
+    }
 
-    for (i=imin; i<=imax && !err; i++) {
-	if (i == imin) {
-	    fr = get_system_forecast(ptr, ci, i, t0, t1, t2, Z, 
-				     pdinfo, opt);
-	    err = (fr == NULL)? E_ALLOC : fr->err;
-	} else {
-	    err = refill_system_forecast(fr, ptr, i, Z, pdinfo, opt);
+    if (!err) {
+	/* arrange to save forecast and errors */
+	err = set_forecast_matrices_from_F(F, imin, imax);
+    }	
+
+    if (err) {
+	return err;
+    }
+
+    if (!(opt & OPT_Q)) {
+	/* assemble and print per-equation forecasts */
+	gretlopt printopt = OPT_NONE;
+	FITRESID *fr = NULL;
+	int i;
+
+	fr = fit_resid_new_for_system(ci, pdinfo, t1, t2, 0, &err);
+	if (err) {
+	    return err;
 	}
-	if (!err) {
-	    have_sderr = (fr->sderr != NULL);
-	    if (!(opt & OPT_Q)) {
+
+    	if (ci == VECM) {
+	    /* asymptotic normal */
+	    fr->df = var->T;
+	    fr->tval = 1.96;
+	} else {
+	    fr->df = df;
+	    fr->tval = tcrit95(fr->df);
+	}
+    
+	for (i=imin; i<=imax && !err; i++) {
+	    err = fill_system_forecast(fr, i, ylist[i+1], F,
+				       Z, pdinfo, opt);
+	    if (!err) {
 		err = text_print_forecast(fr, pdinfo, printopt, prn);
 	    }
+	    printopt |= OPT_Q;
 	}
-	if (!err && imin == imax) {
-	    err = set_forecast_matrices_from_fr(fr);
-	}
-	printopt |= OPT_Q;
-    }
 
-    free_fit_resid(fr);
-
-    if (!err && imax > imin) {
-	const gretl_matrix *F;
-
-	F = (var != NULL)? var->F : sys->F;
-	if (F != NULL) {
-	    err = set_forecast_matrices_from_F(F, have_sderr);
-	}
+	free_fit_resid(fr);
     }
 
     return err;
 }
 
-/**
- * display_forecast:
- * @str: string giving starting and ending observations, separated
- * by a space.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
- * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
- * a static forecast.  By default, the forecast is static within
- * the data range over which the model was estimated, and dynamic
- * out of sample (in cases where this distinction is meaningful).
- * If includes %OPT_Q, don't print the forecast.
- * @prn: printing structure.
- *
- * Computes forecasts based on the last model estimated, over the 
- * range of observations given in @str.  Forecast standard errors 
- * are also computed if possible.  The results are printed to @prn, 
- * and are also plotted if %OPT_P is given.
- *
- * Returns: 0 on success, non-zero error code on error.
- */
-
-static int display_forecast (const char *str, double ***pZ, 
-			     DATAINFO *pdinfo, gretlopt opt, 
-			     PRN *prn)
-{
-    GretlObjType type;
-    void *ptr;
-    int err;
-
-    ptr = get_last_model(&type);  
-    if (ptr == NULL) {
-	return E_DATA;
-    }
-
-    if (type == GRETL_OBJ_EQN) {
-	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
-    } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
-	err = system_do_forecast(str, ptr, type, 
-				 (const double **) *pZ,
-				 pdinfo, opt, prn);
-    } else {
-	err = E_DATA;
-    }
-
-    return err;
-}
-
-static int organize_fcast_var (const char *yhname, int *v, 
-			       double ***pZ,
-			       DATAINFO *pdinfo)
+static int set_up_fcast_var (const char *yhname, int *v, 
+			     double ***pZ,
+			     DATAINFO *pdinfo)
 {
     int err = 0;
 
-    *v = 0;
-
-    if (check_varname(yhname)) {
-	return 1;
-    }
-
     *v = varindex(pdinfo, yhname);
+
     if (*v == pdinfo->v) {
-	err = dataset_add_series(1, pZ, pdinfo);
+	/* new variable */
+	if (check_varname(yhname)) {
+	    err = E_DATA;
+	} else {
+	    err = dataset_add_series(1, pZ, pdinfo);
+	}
     }
 
     return err;
 }
 
-/**
- * add_forecast:
- * @str: command string, giving a starting observation, ending
- * observation, and variable name to use for the forecast values
- * (the starting and ending observations may be omitted).
- * @pZ: pointer to data matrix.
- * @pdinfo: pointer to data information struct.
- * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
- * a static forecast.  By default, the forecast is static within
- * the data range over which the model was estimated, and dynamic
- * out of sample (in cases where this distinction is meaningful).
- *
- * Adds to the dataset a new variable containing predicted values for the
- * dependent variable in @pmod over the specified range of observations,
- * or, by default, over the sample range currently defined in @pdinfo.
- *
- * In the case of "simple" models with an autoregressive error term 
- * (%AR, %AR1) the predicted values incorporate the forecastable portion 
- * of the error.  
- *
- * Returns: 0 on success, non-zero error code on failure.
+/* add_single_forecast: respond to "do_forecast" for the case where we
+   are just adding a forecast series, for a single-equation model, to
+   the dataset
  */
 
-static int add_forecast (const char *str, double ***pZ,
-			 DATAINFO *pdinfo, gretlopt opt)
+static int add_single_forecast (const char *str, MODEL *pmod,
+				double ***pZ, DATAINFO *pdinfo, 
+				gretlopt opt, PRN *prn)
 {
-    MODEL *pmod;
-    GretlObjType type;
     int oldv = pdinfo->v;
     int t, t1, t2, v;
-    char t1str[OBSLEN], t2str[OBSLEN];
     char yhname[VNAMELEN];
-    int nf, err = 0;
-
-    pmod = get_last_model(&type);
-
-    if (pmod == NULL || type != GRETL_OBJ_EQN) {
-	return E_BADSTAT;
-    }
+    int err = 0;
 
     if (pmod->ci == ARBOND) {
 	return E_NOTIMP; /* FIXME */
     }
-
-    *t1str = *t2str = '\0';
 
     /* Reject in case model was estimated using repacked daily
        data: this case should be handled more elegantly */
@@ -2553,41 +2508,21 @@ static int add_forecast (const char *str, double ***pZ,
 	return E_DATA;
     }
 
-    *yhname = 0;
-
-    /* the name for forecast values should either be in the 2nd or 4th
-       position
-    */
-    nf = sscanf(str, "%*s %10s %10s %15s", t1str, t2str, yhname);
-    if (nf < 3) {
-	if (sscanf(str, "%*s %15s", yhname) < 1) {
-	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
-		    "fcast");
-	    return E_PARSE;
-	}
+    err = parse_forecast_string(str, opt, pmod->t2, pdinfo, &t1, &t2, yhname);
+    if (!err && *yhname == '\0') {
+	sprintf(gretl_errmsg, _("%s: required parameter is missing"),
+		"fcast");
+	err = E_PARSE;
     }
 
-    if (*t1str && *t2str) {
-	t1 = dateton(t1str, pdinfo);
-	t2 = dateton(t2str, pdinfo);
-	if (t1 < 0 || t2 < 0 || t2 < t1) {
-	    return E_DATA;
-	}
-    } else {
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
+    if (!err) {
+	err = set_up_fcast_var(yhname, &v, pZ, pdinfo);
     }
-
-    err = organize_fcast_var(yhname, &v, pZ, pdinfo);
-    if (err) {
-	return err;
-    }
-
-    nf = 0;
 
     if (!err) {
 	const double **Z = (const double **) *pZ;
 	Forecast fc;
+	int nf = 0;
 
 	forecast_init(&fc);
 
@@ -2633,30 +2568,32 @@ static int add_forecast (const char *str, double ***pZ,
 		nf++;
 	    }
 	}
+    
+	if (nf == 0) {
+	    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
+	    err = E_DATA;
+	}
     }
 
-    if (nf == 0) {
-	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
-	err = E_DATA;
+    if (!err) {
+	if (v < oldv) {
+	    pprintf(prn, _("Replaced series %s (ID %d)"),
+		    yhname, v);
+	} else {
+	    pprintf(prn, _("Generated series %s (ID %d)"),
+		    yhname, v);
+	}
+	pputc(prn, '\n');
     }
 
     return err;
 }
 
-static int count_fcast_params (const char *s, char *vname)
+static int count_fcast_params (const char *s)
 {
     char s1[16], s2[16], s3[16];
-    int n;
 
-    n = sscanf(s, "%*s %15s %15s %15s", s1, s2, s3);
-
-    if (n == 1) {
-	strcpy(vname, s1);
-    } else if (n == 3) {
-	strcpy(vname, s3);
-    }
-
-    return n;
+    return sscanf(s, "%*s %15s %15s %15s", s1, s2, s3);
 }
 
 /**
@@ -2683,13 +2620,20 @@ static int count_fcast_params (const char *s, char *vname)
 int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
-    int oldv = pdinfo->v;
-    char vname[VNAMELEN] = {0};
+    void *ptr;
+    GretlObjType type;
     int err, add = 0;
 
-    if (!(opt & OPT_R)) {
-	/* OPT_R -> "fcasterr" compatibility */
-	int n = count_fcast_params(str, vname);
+    ptr = get_last_model(&type);
+    if (ptr == NULL) {
+	return E_BADSTAT;
+    }
+
+    if (opt & OPT_R) {
+	; /* "fcasterr" compatibility */
+    } else if (type == GRETL_OBJ_EQN) {
+	/* single equation, old fcast compatibility */
+	int n = count_fcast_params(str);
 
 	if (n == 1 || n == 3) {
 	    add = 1;
@@ -2697,22 +2641,16 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (add) {
-	err = add_forecast(str, pZ, pdinfo, opt);
+	/* just add forecast series to dataset */
+	err = add_single_forecast(str, ptr, pZ, pdinfo, opt, prn);
+    } else if (type == GRETL_OBJ_EQN) {
+	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
+    } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
+	err = system_do_forecast(str, ptr, type, 
+				 (const double **) *pZ,
+				 pdinfo, opt, prn);
     } else {
-	err = display_forecast(str, pZ, pdinfo, opt, prn);
-    }
-
-    if (!err && add) {
-	int v = varindex(pdinfo, vname);
-
-	if (v < oldv) {
-	    pprintf(prn, _("Replaced series %s (ID %d)"),
-		    vname, v);
-	} else {
-	    pprintf(prn, _("Generated series %s (ID %d)"),
-		    vname, v);
-	}
-	pputc(prn, '\n');
+	err = E_DATA;
     }
 
     return err;
@@ -2774,111 +2712,83 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  * get_system_forecast:
  * @p: pointer to the VAR or equation system from which 
  * forecasts are wanted.
- * @ci: command index for system (%VAR or %SYSTEM)
+ * @ci: command index for system (%VAR, %VECM or %SYSTEM)
  * @i: 0-based index for the variable to forecast, within
- * the VAR system (the dependent variable in the ith equation,
- * counting from 0).
- * @t0: start of data display range.
+ * the equation system.
  * @t1: start of forecast range.
  * @t2: end of forecast range.
- * @Z: data array using which @var was estimated.
+ * @pre_n: number of pre-forecast observations to include.
+ * @Z: data array on which system was estimated.
  * @pdinfo: dataset information.
- * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
  * out of sample.
+ * @err: location to receive error code.
  *
  * Allocates a #FITRESID structure and fills it out with forecasts
- * based on @var, over the specified range of observations.  
- * If @t0 is less than @t1, the observations prior to @t1 will
- * not contain forecasts.
+ * based on the system at location @p, over the specified range of 
+ * observations.
  * 
  * Returns: pointer to allocated structure, or %NULL on failure.
- * The %err member of the returned object should be checked:
- * a non-zero value indicates an error condition.
  */
 
 FITRESID *get_system_forecast (void *p, int ci, int i, 
-			       int t0, int t1, int t2,
+			       int t1, int t2, int pre_n,
 			       const double **Z, DATAINFO *pdinfo,
-			       gretlopt opt) 
+			       gretlopt opt, int *err) 
 {
     FITRESID *fr;
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     const gretl_matrix *F = NULL;
-    int nf = t2 - t0 + 1;
-    int df = nf, m = 0;
-    int yno, s, t;
+    int nf = t2 - t1 + 1;
+    int yno, df = 0;
 
     if (nf <= 0) {
+	*err = E_DATA;
 	return NULL;
     }
 
     if (ci == VAR || ci == VECM) {
 	var = (GRETL_VAR *) p;
 	yno = var->ylist[i+1];
-	m = var->neqns;
 	df = var->df;
-	F = gretl_VAR_get_forecast_matrix(var, t0, t1, t2, Z, pdinfo, opt);
+	F = gretl_VAR_get_forecast_matrix(var, t1, t2, Z, pdinfo, opt, err);
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) p;
 	yno = sys->ylist[i+1];
-	m = sys->neqns + sys->nidents;
 	df = sys->df;
-	F = system_get_forecast_matrix(sys, t0, t1, t2, Z, pdinfo, opt);
+	F = system_get_forecast_matrix(sys, t1, t2, Z, pdinfo, opt, err);
+    } else {
+	*err = E_DATA;
     }
 
-    if (F == NULL) {
+    if (*err) {
 	fprintf(stderr, "get_system_forecast: matrix F is NULL\n");
 	return NULL;
     }
 
-    fr = fit_resid_new(pdinfo->n);
-    if (fr == NULL) {
+    fr = fit_resid_new_for_system(ci, pdinfo, t1, t2, pre_n, err);
+    if (*err) {
 	return NULL;
     }
     
-    if (m > 0 && !(opt & OPT_S)) {
-	if (fit_resid_add_sderr(fr)) {
-	    free_fit_resid(fr);
-	    return NULL;
-	}
-    }
-
-    fr->model_ci = ci;
-
-    fr->t0 = t0;
-    fr->t1 = t1;
-    fr->t2 = t2;
-
-    strcpy(fr->depvar, pdinfo->varname[yno]);
-
-    nf = 0;
-    for (t=fr->t0, s=0; t<=fr->t2; t++, s++) {
-	fr->actual[t] = Z[yno][t];
-	fr->fitted[t] = gretl_matrix_get(F, s, i);
-	if (!na(fr->fitted[t])) {
-	    nf++;
-	}
-	if (fr->sderr != NULL) {
-	    fr->sderr[t] = gretl_matrix_get(F, s, i + m);
-	}
-    }
-
-    if (nf == 0) {
-	fr->err = E_MISSDATA;
+    if (ci == VECM) {
+	/* asymptotic normal */
+	fr->df = var->T;
+	fr->tval = 1.96;
     } else {
-	if (ci == VECM) {
-	    /* asymptotic normal */
-	    fr->df = var->T;
-	    fr->tval = 1.96;
-	} else {
-	    fr->df = df;
-	    fr->tval = tcrit95(fr->df);
-	}
-	fit_resid_set_dec_places(fr);
+	fr->df = df;
+	fr->tval = tcrit95(fr->df);
     }
+
+    *err = fill_system_forecast(fr, i, yno, F, Z, pdinfo, opt);
+
+    if (*err) {
+	free_fit_resid(fr);
+	fr = NULL;
+    } 
 
     return fr;
 }
@@ -2954,40 +2864,35 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 
 FITRESID * 
 rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    int t0, int t1, int t2)
+			    int t1, int t2, int *err)
 {
     FITRESID *fr;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
     double xit, yf;
+    int t0 = pmod->t1;
     int nf = t2 - t1 + 1;
     MODEL mod;
     int i, s, t;
-    int err = 0;
 
-    fr = fit_resid_new(0); 
-    if (fr == NULL) {
+    if (pmod->ci != OLS) {
+	*err = E_OLSONLY;
 	return NULL;
     }
 
-    if (pmod->ci != OLS) {
-	fr->err = E_OLSONLY;
-	return fr;
-    }
-
     if (gretl_model_get_int(pmod, "daily_repack")) {
-	fr->err = E_DATA;
-	return fr;
+	*err = E_DATA;
+	return NULL;
     }
 
     if (t1 - t0 < pmod->ncoeff || t2 < t1) {
-	fr->err = E_DATA;
-	return fr;
+	*err = E_OBS;
+	return NULL;
     }
 
-    fit_resid_init(t1, t1, t2, pmod, pdinfo, fr); 
-    if (fr->err) {
-	return fr;
+    fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, 0, err); 
+    if (*err) {
+	return NULL;
     }
 
     fr->method = FC_ONESTEP;
@@ -3002,7 +2907,7 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     for (s=0; s<nf; s++) {
 	mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A);
 	if (mod.errcode) {
-	    err = mod.errcode;
+	    *err = mod.errcode;
 	    clear_model(&mod);
 	    break;
 	}
@@ -3028,7 +2933,10 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
-    if (!fr->err) {
+    if (*err) {
+	free_fit_resid(fr);
+	fr = NULL;
+    } else {
 	fit_resid_set_dec_places(fr);
 	strcpy(fr->depvar, pdinfo->varname[pmod->list[1]]);
     }

@@ -30,8 +30,6 @@ typedef enum {
     J_UNREST_TREND
 } JohansenCode;
 
-typedef struct JohansenInfo_ JohansenInfo;
-
 struct JohansenInfo_ {
     int ID;               /* for identifying saved vars */
     JohansenCode code;    /* see enumeration above */
@@ -55,49 +53,6 @@ struct JohansenInfo_ {
     int lrdf;             /* df for likelihood ratio test */
     double prior_ll;      /* ll for prior model in restriction sequence */
     int prior_df;         /* df for prior model in restriction sequence */
-};
-
-struct GRETL_VAR_ {
-    int ci;              /* command index (VAR or VECM) */
-    int refcount;        /* for saving/deleting */
-    int err;             /* error code */
-    int neqns;           /* number of equations in system */
-    int order;           /* lag order */
-    int t1;              /* starting observation */
-    int t2;              /* ending observation */
-    int T;               /* number of observations */
-    int df;              /* T - average coeffs per equation */
-    int ifc;             /* equations include a constant (1) or not (0) */
-    int ncoeff;          /* total coefficients per equation */
-    int *ylist;          /* list of stochastic vars */
-    int *xlist;          /* list of exogenous variables */
-    int *rlist;          /* restricted exogenous variables (VECM only) */
-    int detflags;        /* record of automatic deterministic vars added */
-    int robust;          /* computing robust std errors? */
-    int qr;              /* using QR decomposition? */
-    gretl_matrix *Y;     /* matrix of dependent variables */
-    gretl_matrix *X;     /* matrix of independent variables */
-    gretl_matrix *B;     /* basic coefficient matrix */
-    gretl_matrix *XTX;   /* X'X */
-    gretl_matrix *A;     /* augmented coefficient matrix (companion form) */
-    gretl_matrix *L;     /* lambda: inverse roots of A(L) polynomial */
-    gretl_matrix *E;     /* residuals matrix */
-    gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
-    gretl_matrix *S;     /* cross-equation variance matrix */
-    gretl_matrix *F;     /* optional forecast matrix */
-    MODEL **models;      /* pointers to individual equation estimates */
-    double *Fvals;       /* hold results of F-tests */
-    double *Ivals;       /* hold results of info criteria comparisons */
-    double ldet;         /* log-determinant of S */
-    double ll;           /* log-likelihood */
-    double AIC;          /* Akaike criterion */
-    double BIC;          /* Bayesian criterion */
-    double HQC;          /* Hannan-Quinn criterion */
-    double LR;           /* for likelihood-ratio testing */
-    double LB;           /* Ljung-Box (Portmanteau) test statistic */
-    int LBs;             /* order for for Portmanteau test */
-    JohansenInfo *jinfo; /* extra information for VECMs */
-    char *name;          /* for use in session management */
 };
 
 #define jcode(v) ((v->jinfo == NULL)? 0 : v->jinfo->code)
@@ -125,9 +80,6 @@ int johansen_test_simple (int order, const int *list,
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
 
 int gretl_VECM_id (GRETL_VAR *vecm);
-
-int 
-gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C);
 
 int *list_composite (const int *list1, const int *list2,
 		     const int *list3);

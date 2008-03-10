@@ -214,9 +214,9 @@ int gretl_system_print (const equation_system *sys, const DATAINFO *pdinfo,
 int system_print_VCV (const equation_system *sys, PRN *prn);
 
 const gretl_matrix *
-system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
+system_get_forecast_matrix (equation_system *sys, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo, 
-			    gretlopt opt);
+			    gretlopt opt, int *err);
 
 #ifndef GRETLCLI
 

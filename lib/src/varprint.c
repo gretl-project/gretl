@@ -19,6 +19,7 @@
 
 #include "libgretl.h" 
 #include "var.h"  
+#include "johansen.h"
 #include "varprint.h"
 #include "libset.h"
 #include "texprint.h"

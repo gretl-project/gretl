@@ -19,6 +19,7 @@
 
 #include "libgretl.h" 
 #include "var.h"  
+#include "johansen.h"
 #include "vartest.h"
 #include "matrix_extra.h"
 #include "libset.h"

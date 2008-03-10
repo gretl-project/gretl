@@ -2195,16 +2195,16 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
 		     const DATAINFO *pdinfo, PRN *prn)
 {
     FITRESID *fr;
+    int err = 0;
 
-    fr = get_fit_resid(pmod, Z, pdinfo);
-    if (fr == NULL) {
-	return 1;
+    fr = get_fit_resid(pmod, Z, pdinfo, &err);
+
+    if (!err) {
+	text_print_fit_resid(fr, pdinfo, prn);
+	free_fit_resid(fr);
     }
 
-    text_print_fit_resid(fr, pdinfo, prn);
-    free_fit_resid(fr);
-
-    return 0;
+    return err;
 }
 
 static void print_iter_val (double x, int i, int k, PRN *prn)

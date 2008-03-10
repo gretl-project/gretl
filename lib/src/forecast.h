@@ -42,23 +42,22 @@ struct FITRESID_ {
     int df;
     int t0, t1, t2;
     int nobs;
-    int err;
     char depvar[VNAMELEN];
 };
 
 void free_fit_resid (FITRESID *fr);
 
 FITRESID *get_fit_resid (const MODEL *pmod, const double **Z, 
-			 const DATAINFO *pdinfo);
+			 const DATAINFO *pdinfo, int *err);
 
-FITRESID *get_forecast (MODEL *pmod, int t0, int t1, int t2,
+FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 			double ***pZ, DATAINFO *pdinfo,
-			gretlopt opt);
+			gretlopt opt, int *err);
 
 FITRESID *get_system_forecast (void *p, int ci, int i, 
-			       int t0, int t1, int t2,
+			       int t1, int t2, int pre_n,
 			       const double **Z, DATAINFO *pdinfo,
-			       gretlopt opt);
+			       gretlopt opt, int *err);
 
 int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
@@ -72,7 +71,7 @@ gretl_matrix *get_forecast_matrix (int idx, int *err);
 
 FITRESID *
 rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    int t0, int t1, int t2);
+			    int t1, int t2, int *err);
 
 void forecast_matrix_cleanup (void);
 

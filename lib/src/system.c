@@ -3001,12 +3001,12 @@ sys_get_fcast_se (equation_system *sys, int periods)
 }
 
 static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
-				   int pre_obs)
+				   int n_static)
 {
     gretl_matrix *se = NULL;
     double ftj, vti;
     int n = sys->neqns + sys->nidents;
-    int k = F->rows - pre_obs;
+    int k = F->rows - n_static;
     int i, j, s;
     int err = 0;
 
@@ -3024,7 +3024,7 @@ static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
 	    if (na(ftj)) {
 		gretl_matrix_set(F, s, n + j, NADBL);
 	    } else {
-		i = s - pre_obs;
+		i = s - n_static;
 		if (i < 0) {
 		    if (j < sys->neqns) {
 			vti = sqrt(gretl_matrix_get(sys->Sr, j, j));
@@ -3058,7 +3058,7 @@ static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
 }
 
 static int sys_add_forecast (equation_system *sys,
-			     int t0, int t1, int t2,
+			     int t1, int t2,
 			     const double **Z, const DATAINFO *pdinfo,
 			     gretlopt opt)
 {
@@ -3070,8 +3070,7 @@ static int sys_add_forecast (equation_system *sys,
     const int *xlist;
     int n = sys->neqns + sys->nidents;
     double xit, xitd;
-    int staticfc = (opt & OPT_S);
-    int type, col, T, ncols;
+    int tdyn, type, col, T, ncols;
     int i, vi, s, t, lag;
     int err = 0;
 
@@ -3103,8 +3102,16 @@ static int sys_add_forecast (equation_system *sys,
 	}
     }
 
-    T = t2 - t0 + 1;
-    ncols = (staticfc)? n : 2 * n;
+    T = t2 - t1 + 1;
+    ncols = 2 * n;
+
+    if (opt & OPT_S) {
+	tdyn = t2 + 1;
+    } else if (opt & OPT_D) {
+	tdyn = t1;
+    } else {
+	tdyn = sys->t2 + 1;
+    }
 
     y = gretl_matrix_alloc(n, 1);
     yh = gretl_matrix_alloc(n, 1);
@@ -3131,7 +3138,7 @@ static int sys_add_forecast (equation_system *sys,
 	}
     }
 
-    for (t=t0, s=0; t<=t2; t++, s++) {
+    for (t=t1, s=0; t<=t2; t++, s++) {
 	int miss = 0;
 
 	/* lags of endogenous vars */
@@ -3142,7 +3149,7 @@ static int sys_add_forecast (equation_system *sys,
 		type = categorize_variable(vi, sys, xlist, &col, &lag);
 		if (type == PREDET) {
 		    xitd = NADBL;
-		    if (t < t1 || staticfc || s - lag < 0) {
+		    if (t < tdyn || s - lag < 0) {
 			/* pre-forecast value */
 			xit = Z[vi][t];
 		    } else {
@@ -3219,7 +3226,7 @@ static int sys_add_forecast (equation_system *sys,
 	gretl_matrix_free(sys->F);
 	sys->F = NULL;
     } else {
-	gretl_matrix_set_t1(sys->F, t0);
+	gretl_matrix_set_t1(sys->F, t1);
 	gretl_matrix_set_t2(sys->F, t2);
     }
 
@@ -3227,8 +3234,8 @@ static int sys_add_forecast (equation_system *sys,
     gretl_matrix_print(sys->F, "sys->F, forecasts only");
 #endif
 
-    if (!err && !staticfc) {
-	sys_add_fcast_variance(sys, sys->F, t1 - t0);
+    if (!err) {
+	sys_add_fcast_variance(sys, sys->F, tdyn - t1);
     }
 
 #if SYSDEBUG
@@ -3239,16 +3246,16 @@ static int sys_add_forecast (equation_system *sys,
 }
 
 const gretl_matrix *
-system_get_forecast_matrix (equation_system *sys, int t0, int t1, int t2,
+system_get_forecast_matrix (equation_system *sys, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo, 
-			    gretlopt opt)
+			    gretlopt opt, int *err)
 {
     if (sys->F != NULL) {
 	gretl_matrix_free(sys->F);
 	sys->F = NULL;
     }
 	
-    sys_add_forecast(sys, t0, t1, t2, Z, pdinfo, opt);
+    *err = sys_add_forecast(sys, t1, t2, Z, pdinfo, opt);
 
     return sys->F;
 }

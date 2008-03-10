@@ -21,6 +21,7 @@
 
 #include "libgretl.h" 
 #include "var.h"  
+#include "johansen.h"
 #include "varprint.h"
 #include "vartest.h"
 #include "libset.h"
@@ -759,14 +760,20 @@ void gretl_VAR_free (GRETL_VAR *var)
 }
 
 static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
-				   int pre_obs)
+				   int n_static)
 {
     gretl_matrix *se = NULL;
     double ftj, vti;
-    int n = var->neqns;
-    int k = F->rows - pre_obs;
+    int k, n = var->neqns;
     int i, j, s;
     int err = 0;
+
+    if (n_static < 0) {
+	fprintf(stderr, "n_static = %d\n", n_static);
+	n_static = 0;
+    }
+
+    k = F->rows - n_static;
 
     if (k > 0) {
 	se = gretl_VAR_get_fcast_se(var, k);
@@ -782,7 +789,7 @@ static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
 	    if (na(ftj)) {
 		gretl_matrix_set(F, s, n + j, NADBL);
 	    } else {
-		i = s - pre_obs;
+		i = s - n_static;
 		if (i < 0) {
 		    vti = sqrt(gretl_matrix_get(var->S, j, j));
 		} else {
@@ -810,20 +817,39 @@ static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
     return err;
 }
 
+/* determine start of dynamic portion of forecast */
+
+static int VAR_get_tdyn (GRETL_VAR *var, int t1, int t2, gretlopt opt)
+{
+    int td;
+
+    if (opt & OPT_D) {
+	/* force dynamic */
+	td = t1;
+    } else if (opt & OPT_S) {
+	/* force static */
+	td = t2 + 1;
+    } else {
+	/* out of sample */
+	td = var->t2 + 1;
+    }
+
+    return td;
+}
+
 static int
-VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
+VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
 		  const double **Z, const DATAINFO *pdinfo, 
 		  gretlopt opt)
 {
     const MODEL *pmod;
     double fti, xti, xtid;
-    int nf = t2 - t0 + 1;
-    int staticfc = (opt & OPT_S);
+    int tdyn, nf = t2 - t1 + 1;
     int i, j, k, s, t;
     int lag, vj, m = 0;
     int fcols;
 
-    fcols = (staticfc)? var->neqns : 2 * var->neqns;
+    fcols = 2 * var->neqns;
 
     /* rows = number of forecast periods; cols = 1 to hold forecast
        for each variable, plus 1 to hold variance for each variable
@@ -836,14 +862,17 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     }
 
     if (var->detflags & DET_SEAS) {
-	m = get_subperiod(t0, pdinfo, NULL);
+	m = get_subperiod(t1, pdinfo, NULL);
     }
 
+    /* start of dynamic portion of forecast? */
+    tdyn = VAR_get_tdyn(var, t1, t2, opt);
+
 #if 0
-    fprintf(stderr, "var fcast: t0=%d, t1=%d, t2=%d\n", t0, t1, t2);
+    fprintf(stderr, "var fcast: t1=%d, tdyn=%d, t2=%d\n", t1, tdyn, t2);
 #endif
 
-    for (t=t0, s=0; t<=t2; t++, s++) {
+    for (t=t1, s=0; t<=t2; t++, s++) {
 	int miss = 0;
 
 	for (i=0; i<var->neqns; i++) {
@@ -861,7 +890,7 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 		vj = var->ylist[j+1];
 		for (lag=1; lag<=var->order; lag++) {
 		    xtid = NADBL;
-		    if (t < t1 || staticfc || s - lag < 0) {
+		    if (t < tdyn || s - lag < 0) {
 			/* pre-forecast value */
 			if (t - lag < 0) {
 			    xti = NADBL;
@@ -925,11 +954,9 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	}
     }
 
-    if (!staticfc) {
-	VAR_add_fcast_variance(var, var->F, t1 - t0);
-    }
+    VAR_add_fcast_variance(var, var->F, tdyn - t1);
 
-    gretl_matrix_set_t1(var->F, t0);
+    gretl_matrix_set_t1(var->F, t1);
     gretl_matrix_set_t2(var->F, t2);
 
 #if VDEBUG
@@ -940,7 +967,7 @@ VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 }
 
 static int
-VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
+VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
 		   const double **Z, const DATAINFO *pdinfo, 
 		   gretlopt opt)
 {
@@ -949,12 +976,11 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     int order = effective_order(var);
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int nseas = var->jinfo->seasonals;
-    int nf = t2 - t0 + 1;
-    int staticfc = (opt & OPT_S);
+    int tdyn, nf = t2 - t1 + 1;
     int i, j, k, vj, s, t;
     int fcols, m = 0;
 
-    fcols = (staticfc)? var->neqns : 2 * var->neqns;
+    fcols = 2 * var->neqns;
 
     var->F = gretl_zero_matrix_new(nf, fcols);
     if (var->F == NULL) {
@@ -968,13 +994,16 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	return E_ALLOC;
     }
 
+    /* start of dynamic portion of forecast? */
+    tdyn = VAR_get_tdyn(var, t1, t2, opt);
+
     if (nseas > 0) {
-	m = get_subperiod(t0, pdinfo, NULL);
+	m = get_subperiod(t1, pdinfo, NULL);
 	s1 -= 1.0 / pdinfo->pd;
 	s0 = s1 - 1;
     }
 
-    for (t=t0, s=0; t<=t2; t++, s++) {
+    for (t=t1, s=0; t<=t2; t++, s++) {
 
 	for (i=0; i<var->neqns; i++) {
 	    double bij, xtj, xtjd, fti = 0.0;
@@ -996,7 +1025,7 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 		    }			
 		    bij = gretl_matrix_get(B, i, col++);
 		    xtjd = NADBL;
-		    if (t < t1 || staticfc || s - k < 0) {
+		    if (t < tdyn || s - k < 0) {
 			/* pre-forecast value */
 			xtj = Z[vj][t-k];
 		    } else {
@@ -1080,11 +1109,9 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
     gretl_matrix_free(B);
 
-    if (!staticfc) {
-	VAR_add_fcast_variance(var, var->F, t1 - t0);
-    }
+    VAR_add_fcast_variance(var, var->F, tdyn - t1);
 
-    gretl_matrix_set_t1(var->F, t0);
+    gretl_matrix_set_t1(var->F, t1);
     gretl_matrix_set_t2(var->F, t2);
 
 #if VDEBUG
@@ -1095,9 +1122,9 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 }
 
 const gretl_matrix *
-gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t0, int t1, int t2,
+gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 			       const double **Z, DATAINFO *pdinfo, 
-			       gretlopt opt)
+			       gretlopt opt, int *err)
 {
     if (var->F != NULL) {
 	/* There's a forecast attached, but it may not be what we want */
@@ -1106,9 +1133,9 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t0, int t1, int t2,
     }
 
     if (var->ci == VECM) {
-	VECM_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
+	*err = VECM_add_forecast(var, t1, t2, Z, pdinfo, opt);
     } else {
-	VAR_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
+	*err = VAR_add_forecast(var, t1, t2, Z, pdinfo, opt);
     }
 
     return var->F;

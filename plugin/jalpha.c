@@ -19,8 +19,8 @@
 
 #include "libgretl.h"
 #include "libset.h"
-#include "gretl_matrix.h"
 #include "var.h"
+#include "johansen.h"
 #include "jprivate.h"
 
 /* Computations concerned with testing restrictions on the alpha

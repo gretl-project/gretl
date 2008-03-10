@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "var.h"
+#include "johansen.h"
 #include "textbuf.h"
 #include "gpt_control.h"
 #include "graph_page.h"
@@ -1333,7 +1334,7 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
     gretlopt opt = OPT_NONE;
     FITRESID *fr;
     PRN *prn;
-    int resp, err;
+    int resp, err = 0;
 
     /* try to figure which options might be applicable */
     forecast_options_for_model(pmod, (const double **) Z, datainfo, &dyn_ok, 
@@ -1394,8 +1395,8 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
 
     if (rolling) {
 	fr = rolling_OLS_one_step_fcast(pmod, &Z, datainfo,
-					pmod->t1, t1, t2);
-	if (fr != NULL) {
+					t1, t2, &err);
+	if (!err) {
 	    /* roll-back for graph */
 	    fr->t0 -= pre_n;
 	}
@@ -1410,20 +1411,17 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
 	    return;
 	}
 
-	fr = get_forecast(pmod, t1 - pre_n, t1, t2, &Z, datainfo, opt);
+	fr = get_forecast(pmod, t1, t2, pre_n, &Z, datainfo, 
+			  opt, &err);
     }
 
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    if (fr == NULL) {
-	gui_errmsg(1);
-	gretl_print_destroy(prn);
-    } else if (fr->err) {
-	gui_errmsg(fr->err);
-	free_fit_resid(fr);
+    if (err) {
+	gui_errmsg(err);
     } else {
+	err = bufopen(&prn);
+    }
+
+    if (!err) {
 	gretlopt popt = (LIMDEP(pmod->ci))? OPT_NONE : OPT_P;
 	int width = 78;
 
@@ -4764,13 +4762,14 @@ void display_fit_resid (gpointer p, guint code, GtkWidget *w)
     MODEL *pmod = (MODEL *) vwin->data;
     FITRESID *fr;
     PRN *prn;
+    int err = 0;
 
     if (bufopen(&prn)) return;
 
-    fr = get_fit_resid(pmod, (const double **) Z, datainfo);
+    fr = get_fit_resid(pmod, (const double **) Z, datainfo, &err);
 
     if (fr == NULL) {
-	gui_errmsg(1);
+	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
 	text_print_fit_resid(fr, datainfo, prn);

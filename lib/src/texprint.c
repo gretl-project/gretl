@@ -20,6 +20,7 @@
 /* texprint.c for gretl - LaTeX output from modeling */
 
 #include "libgretl.h"
+#include "var.h"
 #include "johansen.h"
 #include "texprint.h"
 

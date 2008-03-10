@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "var.h"
+#include "johansen.h"
 #include "varprint.h"
 #include "modelspec.h"
 #include "forecast.h"
@@ -3377,14 +3378,12 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	opt = OPT_S;
     }
 
-    /* FIXME dating here? */
-
-    fr = get_system_forecast(vwin->data, ci, i, t1 - pre_n, t1, t2, 
+    fr = get_system_forecast(vwin->data, ci, i, t1, t2, pre_n,
 			     (const double **) Z, datainfo, 
-			     opt);
+			     opt, &err);
 
-    if (fr == NULL) {
-	errbox("Forecast failed");
+    if (err) {
+	gui_errmsg(err);
     } else {
 	int width = 78;
 	PRN *prn;

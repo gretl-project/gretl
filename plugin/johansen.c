@@ -21,6 +21,7 @@
 #include "pvalues.h"
 #include "gretl_matrix.h"
 #include "var.h"
+#include "johansen.h"
 #include "vartest.h"
 #include "libset.h"
 #include "jprivate.h"
