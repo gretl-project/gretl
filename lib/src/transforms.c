@@ -261,7 +261,7 @@ static int get_lag (int v, int lag, double *lagvec,
 {
     int t1 = (lag > 0)? lag : 0;
     int t2 = pdinfo->n - 1;
-    int t, lt;
+    int t, lt, miss;
 
     for (t=0; t<pdinfo->n; t++) {
 	lagvec[t] = NADBL;
@@ -270,8 +270,10 @@ static int get_lag (int v, int lag, double *lagvec,
     if (dated_daily_data(pdinfo)) {
 	for (t=t1; t<=t2; t++) {
 	    lt = t - lag;
-	    while (lt >= 0 && na(Z[v][lt])) {
+	    miss = 0;
+	    while (na(Z[v][lt]) && lt > 0 && miss < 6) {
 		lt--;
+		miss++;
 	    }
 	    lagvec[t] = Z[v][lt];
 	}

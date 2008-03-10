@@ -1740,6 +1740,9 @@ int autocorr_test (MODEL *pmod, int order,
 	pdinfo->t1 += order;
 	newlist[0] -= order;
 	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
+#if 0
+	printmodel(&aux, pdinfo, OPT_NONE, prn);
+#endif
 	err = aux.errcode;
 	if (!err) {
 	    RSSx = aux.ess;
@@ -1748,6 +1751,9 @@ int autocorr_test (MODEL *pmod, int order,
 	    newlist[0] += order;
 	    /* regression on [X~E] */
 	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
+#if 0
+	    printmodel(&aux, pdinfo, OPT_NONE, prn);
+#endif
 	    err = aux.errcode;
 	    if (!err) {
 		RSSxe = aux.ess;
