@@ -44,7 +44,7 @@ enum {
 } system_test_types;
 
 struct id_atom_ {
-    int op;         /* operator (plus or miinus) */
+    int op;         /* operator (plus or minus) */
     int varnum;     /* ID number of variable to right of operator */
 };
 
@@ -3027,7 +3027,7 @@ static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
 		i = s - pre_obs;
 		if (i < 0) {
 		    if (j < sys->neqns) {
-			vti = sqrt(gretl_matrix_get(sys->S, j, j));
+			vti = sqrt(gretl_matrix_get(sys->Sr, j, j));
 		    } else {
 			/* LHS of identity */
 			vti = 0.0;
