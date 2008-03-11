@@ -5743,6 +5743,7 @@ static NODE *lhs_copy_node (parser *p)
 
     n->t = p->targ;
     n->flags = 0;
+    n->aux = -1;
 
     if (p->targ == NUM) {
 	n->v.xval = (*p->Z)[p->lh.v][0];
@@ -6523,6 +6524,9 @@ static int gen_check_return_type (parser *p)
 	   on the type of the object we computed */
 	if (r->t == LVEC) {
 	    p->targ = LIST;
+	} else if (r->t == MAT && gretl_matrix_is_scalar(r->v.m)) {
+	    /* cast a 1 x 1 matrix to a scalar */
+	    p->targ = NUM;
 	} else {
 	    p->targ = r->t;
 	}
