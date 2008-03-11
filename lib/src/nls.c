@@ -3689,6 +3689,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 typedef struct umax_ umax;
 
 struct umax_ {
+    GretlType gentype;
     gretl_matrix *b;
     int ncoeff;
     GENERATOR *g;
@@ -3699,8 +3700,9 @@ struct umax_ {
     PRN *prn;
 };
 
-static void umax_init (umax *u)
+static void umax_init (umax *u, GretlType t)
 {
+    u->gentype = t;
     u->b = NULL;
     u->ncoeff = 0;
     u->g = NULL;
@@ -3762,7 +3764,11 @@ static int user_gen_setup (umax *u,
     GENERATOR *g;
     int err = 0;
 
-    sprintf(formula, "$umax=%s", fncall);
+    if (u->gentype == GRETL_TYPE_MATRIX) {
+	sprintf(formula, "matrix $umax=%s", fncall);
+    } else {
+	sprintf(formula, "$umax=%s", fncall);
+    }
 
     g = genr_compile(formula, pZ, pdinfo, &err);
 
@@ -3794,7 +3800,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
     int fcount = 0, gcount = 0;
     double tol;
 
-    umax_init(&u);
+    umax_init(&u, GRETL_TYPE_DOUBLE);
 
     u.ncoeff = gretl_vector_get_length(b);
     if (u.ncoeff == 0) {
@@ -3905,10 +3911,12 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 
     *err = 0;
 
-    umax_init(&u);
+    umax_init(&u, GRETL_TYPE_MATRIX);
 
     n = gretl_vector_get_length(theta);
     if (n == 0) {
+	fprintf(stderr, "fdjac: gretl_vector_get_length gave %d for theta\n",
+		n);
 	*err = E_DATA;
 	return NULL;
     }
@@ -3918,11 +3926,12 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 
     *err = user_gen_setup(&u, fncall, pZ, pdinfo);
     if (*err) {
-	fprintf(stderr, "ldjac: error %d from user_gen_setup\n", *err);
+	fprintf(stderr, "fdjac: error %d from user_gen_setup\n", *err);
 	goto bailout;
     }
 
     if (u.m_out == NULL) {
+	fprintf(stderr, "fdjac: u.m_out is NULL\n");
 	*err = E_TYPES; /* FIXME */
 	goto bailout;
     }

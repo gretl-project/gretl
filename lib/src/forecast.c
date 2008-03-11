@@ -1090,7 +1090,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     int xvars, yno;
     int *xlist = NULL;
     int p, q, px = 0, npsi = 0;
-    int t1 = fc->t1;
+    int fcstart = fc->t1;
     int ar_smax, ma_smax;
     int regarma = 0;
     int i, s, t;
@@ -1110,8 +1110,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	if (fc->t2 <= pmod->t2) {
 	    /* no "real" forecasts were called for, we're done */
 	    return 0;
-	}
-	t1 = pmod->t2 + 1;
+	} 
+	fcstart = pmod->t2 + 1;
     }
 
     p = arma_model_max_AR_lag(pmod);
@@ -1163,7 +1163,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     /* setup for forecast error variance */
     if (fc->sderr != NULL) {
-	npsi = fc->t2 - t1 + 1;
+	npsi = fc->t2 - fcstart + 1;
 	psi = malloc(npsi * sizeof *psi);
     }
 
@@ -1186,7 +1186,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     y = Z[yno];
 
     /* do real forecast */
-    for (t=t1; t<=fc->t2 && !err; t++) {
+    for (t=fcstart; t<=fc->t2 && !err; t++) {
 	double yh = 0.0;
 	int miss = 0;
 
@@ -1308,7 +1308,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* forecast error variance */
 	if (psi != NULL) {
-	    vl = arma_variance(phi, p, theta, q, psi, npsi, t - t1 + 1);
+	    vl = arma_variance(phi, p, theta, q, psi, npsi, t - fcstart + 1);
 	    fc->sderr[t] = pmod->sigma * sqrt(vl);
 	}
     }
@@ -1781,6 +1781,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     int dummy_AR = 0;
     int DM_errs = 0;
     int dyn_errs = 0;
+    int tdyn = 0;
     int nf = 0;
     int t, err = 0;
 
@@ -1846,6 +1847,15 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = linear_fcast(&fc, pmod, Z, pdinfo);
     }
 
+    /* start of dynamic range */
+    if (fc.method == FC_DYNAMIC) {
+	tdyn = fr->t1;
+    } else if (fc.method == FC_STATIC) {
+	tdyn = fr->t2 + 1;
+    } else {
+	tdyn = pmod->t2 + 1;
+    }
+
     forecast_free(&fc);
 
     if (dummy_AR) {
@@ -1855,18 +1865,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     for (t=0; t<fr->nobs; t++) {
-	if (t < fr->t1) {
-	    if (t >= pmod->t1 && t <= pmod->t2) {
-		fr->fitted[t] = pmod->yhat[t];
-		fr->resid[t] = pmod->uhat[t];
-	    } else {
-		fr->fitted[t] = fr->resid[t] = NADBL;
-	    }
-	    if (fr->sderr != NULL) {
-		fr->sderr[t] = NADBL;
-	    }
-	} else if (!na(fr->fitted[t])) {
-	    nf++;
+	if (t >= fr->t1 && t <= fr->t2) {
+	    if (!na(fr->fitted[t])) {
+		nf++;
+	    }	    
 	}
 	fr->actual[t] = (*pZ)[yno][t];
     }
@@ -2566,8 +2568,8 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 	int n = count_fcast_params(str);
 
 	if (n == 1 || n == 3) {
-	    /* add named fcast series directly */
-	    opt |= OPT_A;
+	    /* add named fcast series directly, don't print */
+	    opt |= (OPT_A | OPT_Q);
 	}
     }
 
