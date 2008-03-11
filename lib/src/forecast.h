@@ -71,7 +71,7 @@ gretl_matrix *get_forecast_matrix (int idx, int *err);
 
 FITRESID *
 rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    int t1, int t2, int *err);
+			    int t1, int t2, int pre_n, int *err);
 
 void forecast_matrix_cleanup (void);
 

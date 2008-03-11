@@ -1907,17 +1907,14 @@ static int parse_forecast_string (const char *s,
 	s += 5;
     }
 
-    if (vname != NULL) {
-	*vname = '\0';
-	n = sscanf(s, "%15s %15s %15s", t1str, t2str, vname);
-	if (n == 1) {
-	    strcpy(vname, t1str);
-	    n = 0;
-	} else if (n == 3) {
-	    n = 2;
-	}
-    } else {
-	n = sscanf(s, "%15s %15s", t1str, t2str);
+    *vname = '\0';
+
+    n = sscanf(s, "%15s %15s %15s", t1str, t2str, vname);
+    if (n == 1) {
+	strcpy(vname, t1str);
+	n = 0;
+    } else if (n == 3) {
+	n = 2;
     }
 
     if (n == 2) {
@@ -2278,20 +2275,73 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     return err;
 }
 
+/* compatibility with behaviour of old fcast command */
+
+static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
+				 double ***pZ, DATAINFO *pdinfo,
+				 PRN *prn)
+{
+    int oldv = pdinfo->v;
+    int v, err = 0;
+
+    v = varindex(pdinfo, vname);
+
+    if (v == pdinfo->v) {
+	/* new variable */
+	if (check_varname(vname)) {
+	    err = E_DATA;
+	} else {
+	    err = dataset_add_series(1, pZ, pdinfo);
+	    if (!err) {
+		strcpy(pdinfo->varname[v], vname);
+	    }
+	}
+    }
+
+    if (!err) {
+	int t;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[v][t] = fr->fitted[t];
+	}
+
+	strcpy(VARLABEL(pdinfo, v), _("predicted values"));
+
+	if (v < oldv) {
+	    pprintf(prn, _("Replaced series %s (ID %d)"),
+		    vname, v);
+	} else {
+	    pprintf(prn, _("Generated series %s (ID %d)"),
+		    vname, v);
+	}
+	pputc(prn, '\n');
+    }
+
+    return err;
+}
+
 static int model_do_forecast (const char *str, MODEL *pmod, 
 			      double ***pZ, DATAINFO *pdinfo, 
 			      gretlopt opt, PRN *prn)
 {
+    char vname[VNAMELEN];
     FITRESID *fr;
     int t1, t2;
     int err;
 
-    if (pmod->ci == ARBOND) {
+    if (pmod->ci == ARBOND || pmod->ci == HECKIT) {
+	/* FIXME */
 	return E_NOTIMP;
     }
 
+    /* Reject in case model was estimated using repacked daily
+       data: this case should be handled more elegantly */
+    if (gretl_model_get_int(pmod, "daily_repack")) {
+	return E_DATA;
+    }
+
     err = parse_forecast_string(str, opt, pmod->t2, pdinfo, 
-				&t1, &t2, NULL);
+				&t1, &t2, vname);
     if (err) {
 	return err;
     }
@@ -2300,6 +2350,11 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 
     if (!err && !(opt & OPT_Q)) {
 	err = text_print_forecast(fr, pdinfo, opt, prn);
+    }
+
+    if (!err && (opt & OPT_A)) {
+	/* add forecast directly */
+	err = add_fcast_to_dataset(fr, vname, pZ, pdinfo, prn);
     }
 
     if (!err) {
@@ -2372,7 +2427,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 			       const double **Z, DATAINFO *pdinfo, 
 			       gretlopt opt, PRN *prn)
 {
-    char vname[VNAMELEN] = {0};
+    char vname[VNAMELEN];
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     const int *ylist = NULL;
@@ -2464,131 +2519,6 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     return err;
 }
 
-static int set_up_fcast_var (const char *yhname, int *v, 
-			     double ***pZ,
-			     DATAINFO *pdinfo)
-{
-    int err = 0;
-
-    *v = varindex(pdinfo, yhname);
-
-    if (*v == pdinfo->v) {
-	/* new variable */
-	if (check_varname(yhname)) {
-	    err = E_DATA;
-	} else {
-	    err = dataset_add_series(1, pZ, pdinfo);
-	}
-    }
-
-    return err;
-}
-
-/* add_single_forecast: respond to "do_forecast" for the case where we
-   are just adding a forecast series, for a single-equation model, to
-   the dataset
- */
-
-static int add_single_forecast (const char *str, MODEL *pmod,
-				double ***pZ, DATAINFO *pdinfo, 
-				gretlopt opt, PRN *prn)
-{
-    int oldv = pdinfo->v;
-    int t, t1, t2, v;
-    char yhname[VNAMELEN];
-    int err = 0;
-
-    if (pmod->ci == ARBOND) {
-	return E_NOTIMP; /* FIXME */
-    }
-
-    /* Reject in case model was estimated using repacked daily
-       data: this case should be handled more elegantly */
-    if (gretl_model_get_int(pmod, "daily_repack")) {
-	return E_DATA;
-    }
-
-    err = parse_forecast_string(str, opt, pmod->t2, pdinfo, &t1, &t2, yhname);
-    if (!err && *yhname == '\0') {
-	sprintf(gretl_errmsg, _("%s: required parameter is missing"),
-		"fcast");
-	err = E_PARSE;
-    }
-
-    if (!err) {
-	err = set_up_fcast_var(yhname, &v, pZ, pdinfo);
-    }
-
-    if (!err) {
-	const double **Z = (const double **) *pZ;
-	Forecast fc;
-	int nf = 0;
-
-	forecast_init(&fc);
-
-	strcpy(pdinfo->varname[v], yhname);
-	strcpy(VARLABEL(pdinfo, v), _("predicted values"));
-
-	fc.yhat = (*pZ)[v];
-
-	for (t=0; t<pdinfo->n; t++) {
-	    fc.yhat[t] = NADBL;
-	    if (fc.sderr != NULL) {
-		fc.sderr[t] = NADBL;
-	    }	
-	}
-
-	fc.t1 = t1;
-	fc.t2 = t2;
-	fc.model_t2 = pmod->t2;
-
-	get_forecast_method(&fc, pmod, pdinfo, opt);
-
-	if (pmod->ci == ARMA && fc.method == FC_STATIC) {
-	    fc_add_eps(&fc, pdinfo->n);
-	}
-
-	/* write forecast values into the newly added variable(s) */
-	if (pmod->ci == NLS) {
-	    nls_fcast(&fc, pmod, pZ, pdinfo);
-	} else if (SIMPLE_AR_MODEL(pmod->ci)) {
-	    ar_fcast(&fc, pmod, Z, pdinfo);
-	} else if (pmod->ci == ARMA) {
-	    arma_fcast(&fc, pmod, Z, pdinfo);
-	} else if (pmod->ci == GARCH) {
-	    garch_fcast(&fc, pmod, Z, pdinfo);
-	} else {
-	    linear_fcast(&fc, pmod, Z, pdinfo);
-	}
-
-	forecast_free(&fc);
-
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!na(fc.yhat[t])) {
-		nf++;
-	    }
-	}
-    
-	if (nf == 0) {
-	    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
-	    err = E_DATA;
-	}
-    }
-
-    if (!err) {
-	if (v < oldv) {
-	    pprintf(prn, _("Replaced series %s (ID %d)"),
-		    yhname, v);
-	} else {
-	    pprintf(prn, _("Generated series %s (ID %d)"),
-		    yhname, v);
-	}
-	pputc(prn, '\n');
-    }
-
-    return err;
-}
-
 static int count_fcast_params (const char *s)
 {
     char s1[16], s2[16], s3[16];
@@ -2622,28 +2552,26 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 {
     void *ptr;
     GretlObjType type;
-    int err, add = 0;
+    int err;
 
     ptr = get_last_model(&type);
     if (ptr == NULL) {
 	return E_BADSTAT;
     }
 
-    if (opt & OPT_R) {
-	; /* "fcasterr" compatibility */
+    if (opt & OPT_E) {
+	; /* OPT_E -> "fcasterr" compatibility */
     } else if (type == GRETL_OBJ_EQN) {
 	/* single equation, old fcast compatibility */
 	int n = count_fcast_params(str);
 
 	if (n == 1 || n == 3) {
-	    add = 1;
+	    /* add named fcast series directly */
+	    opt |= OPT_A;
 	}
     }
 
-    if (add) {
-	/* just add forecast series to dataset */
-	err = add_single_forecast(str, ptr, pZ, pdinfo, opt, prn);
-    } else if (type == GRETL_OBJ_EQN) {
+    if (type == GRETL_OBJ_EQN) {
 	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
     } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
 	err = system_do_forecast(str, ptr, type, 
@@ -2864,13 +2792,12 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 
 FITRESID * 
 rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    int t1, int t2, int *err)
+			    int t1, int t2, int pre_n, int *err)
 {
     FITRESID *fr;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
     double xit, yf;
-    int t0 = pmod->t1;
     int nf = t2 - t1 + 1;
     MODEL mod;
     int i, s, t;
@@ -2885,19 +2812,19 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    if (t1 - t0 < pmod->ncoeff || t2 < t1) {
+    if (t1 - pmod->t1 < pmod->ncoeff || t2 < t1) {
 	*err = E_OBS;
 	return NULL;
     }
 
-    fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, 0, err); 
+    fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, pre_n, err); 
     if (*err) {
 	return NULL;
     }
 
     fr->method = FC_ONESTEP;
 
-    pdinfo->t1 = t0;
+    pdinfo->t1 = pmod->t1;
     pdinfo->t2 = t1 - 1;
 
     for (t=0; t<pdinfo->n; t++) {
@@ -2925,7 +2852,11 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	fr->fitted[t] = yf;
-	
+
+	if (!na(fr->actual[t]) && !na(fr->fitted[t])) {
+	    fr->resid[t] = fr->actual[t] - fr->fitted[t];
+	}
+
 	clear_model(&mod);
 	pdinfo->t2 += 1;
     }

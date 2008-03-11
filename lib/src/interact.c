@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "monte_carlo.h"
 #include "var.h"
+#include "johansen.h"
 #include "gretl_func.h"
 #include "compat.h"
 #include "system.h"
@@ -257,7 +258,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 	strcpy(line, "fcast autofit");
     } else if (!strcmp(s, "fcasterr")) {
 	cmd->ci = FCAST;
-	cmd->opt |= OPT_R;
+	cmd->opt |= OPT_E;
     } else if (!strcmp(s, "corc")) {
 	strcpy(s, "ar1");
 	cmd->ci = AR1;

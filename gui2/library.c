@@ -1395,11 +1395,7 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
 
     if (rolling) {
 	fr = rolling_OLS_one_step_fcast(pmod, &Z, datainfo,
-					t1, t2, &err);
-	if (!err) {
-	    /* roll-back for graph */
-	    fr->t0 -= pre_n;
-	}
+					t1, t2, pre_n, &err);
     } else {
 	ntodate(startobs, t1, datainfo);
 	ntodate(endobs, t2, datainfo);

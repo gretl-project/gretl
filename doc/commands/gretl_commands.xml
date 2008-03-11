@@ -2330,6 +2330,10 @@
 	  <effect>create static forecast</effect>
         </option>
         <option>
+	  <flag>--out-of-sample</flag>
+	  <effect>generate post-sample forecast</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>don't print the forecast</effect>
         </option>
@@ -2342,25 +2346,36 @@
 
     <description>
 
-      <para>
-	Must follow an estimation command.  Forecasts are generated for the
-	specified range of observations, or the currently defined sample range
-	if no <repl>startobs</repl> and <repl>endobs</repl> are given.
-	Depending on the nature of the model, standard errors may also
-	be generated (see below).
+      <para context="gui">
+	Must follow an estimation command.  Forecasts are generated for
+	the specified range of observations. Depending on the nature of
+	the model, standard errors may also be generated (see below).
       </para>
 
       <para context="cli">
-	If the last model estimated is a single equation, then the optional
-	<repl>varname</repl> argument has the following effect: the forecast
-	values are not printed, but are saved to the dataset under the given
-	name.  If the last model is a system of equations,
+	Must follow an estimation command.  Forecasts are generated for a
+	certain range of observations: if <repl>startobs</repl> and
+	<repl>endobs</repl> are given, for that range (if possible);
+	otherwise if the <lit>--out-of-sample</lit> option is given, for
+	observations following the range over which the model was
+	estimated; otherwise over the currently defined sample range.  If
+	an out-of-sample forecast is requested but no relevant
+	observations are available, an error is flagged. Depending on the
+	nature of the model, standard errors may also be generated (see
+	below).
+      </para>
+
+      <para context="cli">
+	If the last model estimated is a single equation, then the
+	optional <repl>varname</repl> argument has the following effect:
+	the forecast values are not printed, but are saved to the dataset
+	under the given name.  If the last model is a system of equations,
 	<repl>varname</repl> has a different effect, namely selecting a
-	particular endogenous variable for forecasting (the default being to
-	produce forecasts for all the endogenous variables). In the system
-	case, or if <repl>varname</repl> is not given, the forecast values can
-	be retrieved using the accessor <lit>$fcast</lit>, and the standard
-	errors, if available, via <lit>$fcerr</lit>.
+	particular endogenous variable for forecasting (the default being
+	to produce forecasts for all the endogenous variables). In the
+	system case, or if <repl>varname</repl> is not given, the forecast
+	values can be retrieved using the accessor <lit>$fcast</lit>, and
+	the standard errors, if available, via <lit>$fcerr</lit>.
       </para>
 
       <para>
