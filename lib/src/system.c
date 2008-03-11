@@ -1477,6 +1477,7 @@ void system_attach_vcv (equation_system *sys, gretl_matrix *vcv)
     }
 
     sys->vcv = vcv;
+    gretl_matrix_xtr_symmetric(sys->vcv);
 }
 
 void system_attach_sigma (equation_system *sys, gretl_matrix *S)
@@ -1921,33 +1922,29 @@ static int sys_in_list (const int *list, int k)
 
 static int make_tsls_style_ylist (equation_system *sys)
 {
-    const int *slist;
-    int *ylist = NULL;
-    int *Y = NULL;
-    int *Z = NULL;
-    int i, j, k;
+    int *test, *ylist = NULL;
+    int i, vi, sep = 0;
     int err = 0;
 
-    for (i=0; i<sys->neqns && !err; i++) {
-	slist = sys->lists[i];
-	if (!gretl_list_has_separator(slist)) {
-	    continue;
+    for (i=0; i<sys->neqns; i++) {
+	if (gretl_list_has_separator(sys->lists[i])) {
+	    sep++;
 	}
-	err = gretl_list_split_on_separator(slist, &Y, &Z);
-	if (!err) {
-	    if (Y != NULL && Z != NULL) {
-		for (j=1; j<=Y[0] && !err; j++) {
-		    k = Y[j];
-		    if (!in_gretl_list(Z, k) && !in_gretl_list(ylist, k)) {
-			gretl_list_append_term(&ylist, k);
-			if (ylist == NULL) {
-			    err = E_ALLOC;
-			}
-		    }
+    }
+
+    if (sep > 0) {
+	ylist = gretl_null_list();
+	if (ylist == NULL) {
+	    err = E_ALLOC;
+	}
+	for (i=0; i<sys->neqns && !err; i++) {
+	    vi = sys->lists[i][1];
+	    if (!in_gretl_list(ylist, vi)) {
+		test = gretl_list_append_term(&ylist, vi);
+		if (test == NULL) {
+		    err = E_ALLOC;
 		}
 	    }
-	    free(Y);
-	    free(Z);
 	}
     }
 
@@ -2029,6 +2026,40 @@ static int predet_check (equation_system *sys, const DATAINFO *pdinfo)
     return err;
 }
 
+static int sys_max_nexo (equation_system *sys)
+{
+    const int *slist;
+    int i, j, vj, gotsep;
+    int n = 0;
+
+    for (i=0; i<sys->neqns; i++) {
+	slist = sys->lists[i];
+	gotsep = 0;
+	for (j=2; j<=slist[0]; j++) {
+	    vj = slist[j];
+	    if (gotsep) {
+		n++;
+	    } else if (vj == LISTSEP) {
+		gotsep = 1;
+	    } else if (!sys_in_list(sys->ylist, vj)) {
+		n++;
+	    }
+	}
+    }
+
+    for (i=0; i<sys->nidents; i++) {
+	const identity *ident = sys->idents[i];
+
+	for (j=0; j<ident->n_atoms; j++) {
+	    if (!sys_in_list(sys->ylist, ident->atoms[j].varnum)) {
+		n++;
+	    }
+	}
+    }
+
+    return n;
+}
+
 #define system_needs_endog_list(s) (s->method != SYS_METHOD_SUR && \
 				    s->method != SYS_METHOD_OLS && \
 				    s->method != SYS_METHOD_WLS)
@@ -2037,7 +2068,8 @@ static int
 make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 {
     int *ilist, *ylist;
-    int i, j, k, nexo, maxnexo = 0;
+    int nexo, maxnexo;
+    int i, j, vj;
     int err = 0;
 
     if (system_needs_endog_list(sys) && sys->ylist == NULL) {
@@ -2070,37 +2102,17 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 
     ylist = sys->ylist;
 
-    /* First pass: get a count of the max possible number of
-       exogenous variables (probably an over-estimate due to
-       double-counting).
+    /* Get a count of the max possible number of exogenous variables
+       (probably an over-estimate due to double-counting).
     */
 
-    for (i=0; i<sys->neqns; i++) {
-	const int *slist = sys->lists[i];
+    maxnexo = sys_max_nexo(sys);
 
-	for (j=2; j<=slist[0]; j++) {
-	    if (!sys_in_list(ylist, slist[j])) {
-		maxnexo++;
-	    }
-	}
-    }
-
-    for (i=0; i<sys->nidents; i++) {
-	const identity *ident = sys->idents[i];
-
-	for (j=0; j<ident->n_atoms; j++) {
-	    if (!sys_in_list(ylist, ident->atoms[j].varnum)) {
-		maxnexo++;
-	    }
-	}
-    }
-
-    ilist = malloc((maxnexo + 1) * sizeof *ilist);
+    ilist = gretl_list_new(maxnexo);
     if (ilist == NULL) {
 	return E_ALLOC;
     }
 
-    ilist[0] = maxnexo;
     for (i=1; i<=maxnexo; i++) {
 	ilist[i] = -1;
     }
@@ -2115,10 +2127,11 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 	const int *slist = sys->lists[i];
 
 	for (j=2; j<=slist[0]; j++) {
-	    k = slist[j];
-	    if (!sys_in_list(ylist, k) && 
-		!sys_in_list(ilist, k)) {
-		ilist[++nexo] = k;
+	    vj = slist[j];
+	    if (vj != LISTSEP && 
+		!sys_in_list(ylist, vj) && 
+		!sys_in_list(ilist, vj)) {
+		ilist[++nexo] = vj;
 	    }
 	}
     } 
@@ -2127,22 +2140,16 @@ make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
 	const identity *ident = sys->idents[i];
 
 	for (j=0; j<ident->n_atoms; j++) {
-	    k = ident->atoms[j].varnum;
-	    if (!sys_in_list(ylist, k) &&
-		!sys_in_list(ilist, k)) {
-		ilist[++nexo] = k;
+	    vj = ident->atoms[j].varnum;
+	    if (!sys_in_list(ylist, vj) &&
+		!sys_in_list(ilist, vj)) {
+		ilist[++nexo] = vj;
 	    }
 	}
     }
 
     /* Trim the list (remove effect of double-counting) */
-
     if (nexo < maxnexo) {
-	int *plist = realloc(ilist, (nexo + 1) * sizeof *plist);
-
-	if (plist != NULL) {
-	    ilist = plist;
-	}
 	ilist[0] = nexo;
     }
 
@@ -2682,23 +2689,38 @@ static int categorize_variable (int vnum, const equation_system *sys,
     return ret;
 }
 
+/* Assemble list of exogenous variables for a system that
+   does not already have one (e.g. SUR?).  We go through
+   all the model lists and proceed by elimination: the
+   variable is exogenous if it's not marked as endogenous
+   and neither is it marked as predetermined (i.e. is a
+   lag of an endogenous variable).
+*/
+
 static int *make_exogenous_list (equation_system *sys)
 {
-    int *xlist = NULL;
+    const MODEL *pmod;
+    const int *mlist;
+    int *xlist, *test;
+    int i, j, vj;
 
-    if (sys->ilist == NULL) {
-	xlist = gretl_null_list();
-    } else {
-	int i, vi, j = 1;
-
-	xlist = gretl_list_new(sys->ilist[0]);
-	if (xlist != NULL) {
-	    for (i=1; i<=sys->ilist[0]; i++) {
-		vi = sys->ilist[i];
-		if (instrument_is_predet(sys, vi)) {
-		    xlist[0] -= 1;
-		} else {
-		    xlist[j++] = vi;
+    xlist = gretl_null_list();
+    if (xlist == NULL) {
+	return NULL;
+    }
+    
+    for (i=0; i<sys->neqns; i++) {
+	pmod = sys->models[i];
+	mlist = pmod->list;
+	for (j=1; j<=mlist[0] && mlist[j]!=LISTSEP; j++) {
+	    vj = mlist[j];
+	    if (!in_gretl_list(sys->ylist, vj) &&
+		!in_gretl_list(xlist, vj) &&
+		!instrument_is_predet(sys, vj)) {
+		test = gretl_list_append_term(&xlist, vj);
+		if (test == NULL) {
+		    free(xlist);
+		    return NULL;
 		}
 	    }
 	}
@@ -2842,6 +2864,9 @@ static int sys_add_structural_form (equation_system *sys,
 		col += n * (lag - 1);
 		gretl_matrix_set(sys->A, i, col, x);
 	    } else {
+		fprintf(stderr, "sys_add_structural_form: i=%d, j=%d, vj=%d, type=%d\n",
+			i, j, vj, type);
+		printlist(mlist, "model list");
 		err = E_DATA;
 	    }
 	}
@@ -3388,7 +3413,7 @@ system_save_and_print_results (equation_system *sys,
 
     if (!err) {
 	err = sys_add_structural_form(sys, pdinfo);
-    }    
+    } 
 
     if (!(opt & OPT_Q)) {
 	gretl_system_print(sys, pdinfo, opt, prn);
