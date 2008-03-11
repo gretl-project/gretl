@@ -423,7 +423,7 @@ static NODE *get_string_arg (parser *p)
 
 	for (i=0; i<=close; i++) {
 	    if (!started && !isspace(p->ch)) {
-		p->idstr = gretl_strndup(p->point + i - 1, close - i + 1);
+		p->idstr = gretl_strndup(p->point - 1, close - i + 1);
 		started = 1;
 	    }
 	    parser_getc(p);

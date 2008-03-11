@@ -2164,6 +2164,8 @@ static int mainlb_(int *n, int *m, double *x,
 	nint = 0;
 	nintol = 0;
 	nskip = 0;
+	nenter = 0;
+	ileave = 0;
 	nfree = *n;
 #if 0
 	tol = *factr * epsmch;

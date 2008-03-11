@@ -74,7 +74,8 @@ enum {
     GAMMA_DIST,
     BINOMIAL_DIST,
     POISSON_DIST,
-    DW_DIST
+    DW_DIST,
+    MAX_DIST
 };  
 
 enum {
@@ -666,7 +667,7 @@ static void dist_graph (int d, double *parms)
     }
 }
 
-#define ALT_CHI NGRAPHS
+#define ALT_CHI MAX_DIST
 
 static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 {
@@ -675,7 +676,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     const char *f1 = NULL, *f2 = NULL;
     char v1[32] = {0};
     char v2[32] = {0};
-    char got[NGRAPHS+1] = {0};
+    char got[MAX_DIST+1] = {0};
     int ids[ID_MAX] = {0};
     double x[2] = {0};
     int i, k, alt = 0;
