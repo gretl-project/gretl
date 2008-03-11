@@ -4591,6 +4591,16 @@ static NODE *dollar_str_node (NODE *t, parser *p)
 						   p->dinfo, &p->err);
 
 	if (na(ret->v.xval)) {
+	    const char *s = get_string_by_name(r->v.str);
+
+	    if (s != NULL) {
+		p->err = 0;
+		ret->v.xval = gretl_model_get_data_element(NULL, l->v.idnum, s, 
+							   p->dinfo, &p->err);
+	    }
+	}
+
+	if (na(ret->v.xval)) {
 	    p->err = 1;
 	    pprintf(p->prn, _("'%s': invalid argument for %s()\n"), 
 		    r->v.str, mvarname(l->v.idnum));
