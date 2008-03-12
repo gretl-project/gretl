@@ -98,8 +98,7 @@ const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
 
 static void destroy_ident (identity *ident);
-static int make_instrument_list (equation_system *sys,
-				 const DATAINFO *pdinfo);
+
 static int 
 add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
 		   int id, int src, int lag);
@@ -1061,11 +1060,6 @@ equation_system_estimate (equation_system *sys,
     /* in case we're re-estimating */
     system_clear_results(sys);
 
-    err = make_instrument_list(sys, pdinfo);
-    if (err) {
-	goto system_bailout;
-    }
-
     if (sys->method == SYS_METHOD_SUR) {
 	sur_rearrange_lists(sys, (const double **) *pZ, pdinfo);
     }
@@ -1381,9 +1375,7 @@ int equation_system_finalize (equation_system *sys,
 	return 1;
     } 
 
-#if 1
     err = sys_check_lists(sys, pdinfo);
-#endif
 
     if (!err && sys->name != NULL) {
 	/* save the system for subsequent estimation */
@@ -1541,10 +1533,6 @@ int *compose_tsls_list (equation_system *sys, int i)
     int j, k1, k2;
 
     if (i >= sys->neqns) {
-	return NULL;
-    }
-
-    if (sys->ilist == NULL && make_instrument_list(sys, NULL)) {
 	return NULL;
     }
 
@@ -2088,271 +2076,6 @@ system_parse_line (equation_system *sys, const char *line,
     return err;
 }
 
-static int sys_in_list (const int *list, int k)
-{
-    int i;
-
-    if (list == NULL) {
-	return 0;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] < 0) break;
-	if (k == list[i]) return 1;
-    }
-
-    return 0;
-}
-
-/* Handle the case where we were not given an explicit list 
-   of endogenous variables, but rather the individual equations
-   were given in TSLS style: "y X ; Z".  This is supported
-   for the TSLS and 3SLS methods.
-*/
-
-static int make_tsls_style_ylist (equation_system *sys)
-{
-    int *test, *ylist = NULL;
-    int i, vi, sep = 0;
-    int err = 0;
-
-    for (i=0; i<sys->neqns; i++) {
-	if (gretl_list_has_separator(sys->lists[i])) {
-	    sep++;
-	}
-    }
-
-    if (sep > 0) {
-	ylist = gretl_null_list();
-	if (ylist == NULL) {
-	    err = E_ALLOC;
-	}
-	for (i=0; i<sys->neqns && !err; i++) {
-	    vi = sys->lists[i][1];
-	    if (!in_gretl_list(ylist, vi)) {
-		test = gretl_list_append_term(&ylist, vi);
-		if (test == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
-	}
-    }
-
-    if (!err) {
-	sys->ylist = ylist;
-    } else {
-	free(ylist);
-    }
-
-    return err;
-}
-
-static int infer_ylist_from_insts (equation_system *sys)
-{
-    const int *Z = sys->ilist;
-    const int *slist;
-    int *ylist = NULL;
-    int i, j, k;
-    int err = 0;
-
-    for (i=0; i<sys->neqns && !err; i++) {
-	slist = sys->lists[i];
-	if (gretl_list_has_separator(slist)) {
-	    continue;
-	}
-	for (j=1; j<=slist[0] && !err; j++) {
-	    k = slist[j];
-	    if (!in_gretl_list(Z, k)) {
-		gretl_list_append_term(&ylist, k);
-		if (ylist == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
-	}
-    }
-
-    if (!err) {
-	sys->ylist = ylist;
-    } 
-
-    return err;
-}
-
-static int predet_check (equation_system *sys, const DATAINFO *pdinfo)
-{
-    const int *ylist = sys->ylist;
-    const int *ilist = sys->ilist;
-    const char *vname;
-    int id = 0, src = 0, lag = 0;
-    int i, err = 0;
-
-    if (ylist == NULL) {
-	/* FIXME SUR */
-	return 0;
-    }
-
-    for (i=1; i<=ylist[0] && !err; i++) {
-	id = ylist[i];
-	lag = pdinfo->varinfo[id]->lag;
-	if (lag > 0) {
-	    vname = pdinfo->varinfo[id]->parent;
-	    src = varindex(pdinfo, vname);
-	    err = add_predet_to_sys(sys, pdinfo, id, src, lag);
-	}
-    }
-
-    for (i=1; i<=ilist[0] && !err; i++) {
-	id = ilist[i];
-	lag = pdinfo->varinfo[id]->lag;
-	if (lag > 0) {
-	    vname = pdinfo->varinfo[id]->parent;
-	    src = varindex(pdinfo, vname);
-	    if (in_gretl_list(ylist, src)) {
-		err = add_predet_to_sys(sys, pdinfo, id, src, lag);
-	    }
-	}
-    }
-
-    return err;
-}
-
-static int sys_max_nexo (equation_system *sys)
-{
-    const int *slist;
-    int i, j, vj, gotsep;
-    int n = 0;
-
-    for (i=0; i<sys->neqns; i++) {
-	slist = sys->lists[i];
-	gotsep = 0;
-	for (j=2; j<=slist[0]; j++) {
-	    vj = slist[j];
-	    if (gotsep) {
-		n++;
-	    } else if (vj == LISTSEP) {
-		gotsep = 1;
-	    } else if (!sys_in_list(sys->ylist, vj)) {
-		n++;
-	    }
-	}
-    }
-
-    for (i=0; i<sys->nidents; i++) {
-	const identity *ident = sys->idents[i];
-
-	for (j=0; j<ident->n_atoms; j++) {
-	    if (!sys_in_list(sys->ylist, ident->atoms[j].varnum)) {
-		n++;
-	    }
-	}
-    }
-
-    return n;
-}
-
-#define system_needs_endog_list(s) (s->method != SYS_METHOD_SUR && \
-				    s->method != SYS_METHOD_OLS && \
-				    s->method != SYS_METHOD_WLS)
-
-static int 
-make_instrument_list (equation_system *sys, const DATAINFO *pdinfo)
-{
-    int *ilist, *ylist;
-    int nexo, maxnexo;
-    int i, j, vj;
-    int err = 0;
-
-    if (system_needs_endog_list(sys) && sys->ylist == NULL) {
-	/* first pass: handle 3SLS? */
-	err = make_tsls_style_ylist(sys);
-    }
-
-    if (!err && system_needs_endog_list(sys) && sys->ylist == NULL) {
-	if (sys->ilist != NULL) {
-	    err = infer_ylist_from_insts(sys);
-	}
-    }
-
-    if (!err && system_needs_endog_list(sys) && sys->ylist == NULL) {
-	gretl_errmsg_set(_("No list of endogenous variables was given"));
-	err = E_DATA;
-    }
-
-    if (err) {
-	return err;
-    }
-
-    if (sys->ilist != NULL) {
-	/* job is already done? */
-	if (pdinfo != NULL && sys->n_predet == 0) {
-	    err = predet_check(sys, pdinfo);
-	}
-	return err;
-    }
-
-    ylist = sys->ylist;
-
-    /* Get a count of the max possible number of exogenous variables
-       (probably an over-estimate due to double-counting).
-    */
-
-    maxnexo = sys_max_nexo(sys);
-
-    ilist = gretl_list_new(maxnexo);
-    if (ilist == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=1; i<=maxnexo; i++) {
-	ilist[i] = -1;
-    }
-
-    /* Form list of exogenous variables, drawing on both the
-       stochastic equations and the identities, if any. 
-    */
-
-    nexo = 0;
-
-    for (i=0; i<sys->neqns; i++) {
-	const int *slist = sys->lists[i];
-
-	for (j=2; j<=slist[0]; j++) {
-	    vj = slist[j];
-	    if (vj != LISTSEP && 
-		!sys_in_list(ylist, vj) && 
-		!sys_in_list(ilist, vj)) {
-		ilist[++nexo] = vj;
-	    }
-	}
-    } 
-
-    for (i=0; i<sys->nidents; i++) {
-	const identity *ident = sys->idents[i];
-
-	for (j=0; j<ident->n_atoms; j++) {
-	    vj = ident->atoms[j].varnum;
-	    if (!sys_in_list(ylist, vj) &&
-		!sys_in_list(ilist, vj)) {
-		ilist[++nexo] = vj;
-	    }
-	}
-    }
-
-    /* Trim the list (remove effect of double-counting) */
-    if (nexo < maxnexo) {
-	ilist[0] = nexo;
-    }
-
-    sys->ilist = ilist;
-
-    /* now check for predetermined regressors? */
-    if (pdinfo != NULL) {
-	err = predet_check(sys, pdinfo);
-    }
-
-    return err;
-}
-
 void 
 system_set_restriction_matrices (equation_system *sys,
 				 gretl_matrix *R, gretl_matrix *q)
@@ -2819,28 +2542,6 @@ int system_print_VCV (const equation_system *sys, PRN *prn)
     return 0;
 }
 
-static int *make_ylist_from_models (equation_system *sys)
-{
-    int *ylist;
-    int i, vi, pos;
-
-    ylist = gretl_list_new(sys->neqns);
-    if (ylist == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<sys->neqns; i++) {
-	vi = sys->models[i]->list[1];
-	ylist[i+1] = vi;
-	pos = in_gretl_list(sys->ilist, vi);
-	if (pos > 0) {
-	    gretl_list_delete_at_pos(sys->ilist, pos);
-	}
-    }
-
-    return ylist;
-}
-
 enum {
     ENDOG,
     EXOG,
@@ -2848,8 +2549,7 @@ enum {
 };
 
 static int categorize_variable (int vnum, const equation_system *sys,
-				const int *xlist, int *col,
-				int *lag)
+				int *col, int *lag)
 {
     int pos, ret = -1;
 
@@ -2859,7 +2559,7 @@ static int categorize_variable (int vnum, const equation_system *sys,
     if (pos > 0) {
 	ret = ENDOG;
     } else {
-	pos = in_gretl_list(xlist, vnum);
+	pos = in_gretl_list(sys->xlist, vnum);
 	if (pos > 0) {
 	    ret = EXOG;
 	} else {
@@ -2877,46 +2577,6 @@ static int categorize_variable (int vnum, const equation_system *sys,
     }
 
     return ret;
-}
-
-/* Assemble list of exogenous variables for a system that
-   does not already have one (e.g. SUR?).  We go through
-   all the model lists and proceed by elimination: the
-   variable is exogenous if it's not marked as endogenous
-   and neither is it marked as predetermined (i.e. is a
-   lag of an endogenous variable).
-*/
-
-static int *make_exogenous_list (equation_system *sys)
-{
-    const MODEL *pmod;
-    const int *mlist;
-    int *xlist, *test;
-    int i, j, vj;
-
-    xlist = gretl_null_list();
-    if (xlist == NULL) {
-	return NULL;
-    }
-    
-    for (i=0; i<sys->neqns; i++) {
-	pmod = sys->models[i];
-	mlist = pmod->list;
-	for (j=1; j<=mlist[0] && mlist[j]!=LISTSEP; j++) {
-	    vj = mlist[j];
-	    if (!in_gretl_list(sys->ylist, vj) &&
-		!in_gretl_list(xlist, vj) &&
-		!instrument_is_predet(sys, vj)) {
-		test = gretl_list_append_term(&xlist, vj);
-		if (test == NULL) {
-		    free(xlist);
-		    return NULL;
-		}
-	    }
-	}
-    }
-
-    return xlist;
 }
 
 /* reduced-form error covariance matrix */
@@ -2984,25 +2644,6 @@ static int sys_add_structural_form (equation_system *sys,
     int i, j, k, vj, lag;
     int err = 0;
 
-    /* get all the required lists in order */
-
-    if (ylist == NULL) {
-	/* SUR and possibly some others? */
-	sys->ylist = make_ylist_from_models(sys);
-	if (sys->ylist == NULL) {
-	    return E_ALLOC;
-	}
-	ylist = sys->ylist;
-    }
-
-    if (xlist == NULL) {
-	sys->xlist = make_exogenous_list(sys);
-	if (sys->xlist == NULL) {
-	    return E_ALLOC;
-	}
-	xlist = sys->xlist;
-    }
-
 #if SYSDEBUG
     printlist(ylist, "endogenous vars");
     printlist(xlist, "exogenous vars");
@@ -3040,7 +2681,7 @@ static int sys_add_structural_form (equation_system *sys,
 
 	for (j=1; j<=mlist[0] && mlist[j]!=LISTSEP; j++) {
 	    vj = mlist[j];
-	    type = categorize_variable(vj, sys, xlist, &col, &lag);
+	    type = categorize_variable(vj, sys, &col, &lag);
 	    x = (j > 1)? pmod->coeff[j-2] : 1.0;
 	    if (type == ENDOG) {
 		if (j == 1) {
@@ -3075,7 +2716,7 @@ static int sys_add_structural_form (equation_system *sys,
 		vj = ident->atoms[j-1].varnum;
 		x = (ident->atoms[j-1].op)? -1.0 : 1.0;
 	    }
-	    type = categorize_variable(vj, sys, xlist, &col, &lag);
+	    type = categorize_variable(vj, sys, &col, &lag);
 	    if (type == ENDOG) {
 		if (j == 0) {
 		    gretl_matrix_set(sys->Gamma, ne+i, col, 1.0);
@@ -3285,9 +2926,9 @@ static int sys_add_forecast (equation_system *sys,
     gretl_matrix *G = NULL;
     gretl_matrix *yl = NULL, *x = NULL;
     gretl_matrix *y = NULL, *yh = NULL;
-    const int *ylist;
-    const int *ilist;
-    const int *xlist;
+    const int *ylist = sys->ylist;
+    const int *ilist = sys->ilist;
+    const int *xlist = sys->xlist;
     int n = sys->neqns + sys->nidents;
     double xit, xitd;
     int tdyn, type, col, T, ncols;
@@ -3297,10 +2938,6 @@ static int sys_add_forecast (equation_system *sys,
     if (sys->Gamma == NULL) {
 	return E_DATA;
     }
-
-    ylist = sys->ylist;
-    ilist = sys->ilist;
-    xlist = sys->xlist;
 
 #if SYSDEBUG
     printlist(ylist, "ylist");
@@ -3366,7 +3003,7 @@ static int sys_add_forecast (equation_system *sys,
 	    gretl_matrix_zero(yl);
 	    for (i=1; i<=ilist[0] && !miss; i++) {
 		vi = ilist[i];
-		type = categorize_variable(vi, sys, xlist, &col, &lag);
+		type = categorize_variable(vi, sys, &col, &lag);
 		if (type == PREDET) {
 		    xitd = NADBL;
 		    if (t < tdyn || s - lag < 0) {
