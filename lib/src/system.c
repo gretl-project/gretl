@@ -24,7 +24,7 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 
-#define SYSDEBUG 0
+#define SYSDEBUG 2
 
 enum {
     OP_PLUS,
@@ -100,6 +100,9 @@ const char *toofew = N_("An equation system must have at least two equations");
 static void destroy_ident (identity *ident);
 static int make_instrument_list (equation_system *sys,
 				 const DATAINFO *pdinfo);
+static int 
+add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
+		   int id, int src, int lag);
 
 static void 
 print_system_equation (const int *list, const DATAINFO *pdinfo, 
@@ -494,12 +497,10 @@ static void sur_rearrange_lists (equation_system *sys,
 				 const double **Z,
 				 const DATAINFO *pdinfo)
 {
-    if (sys->method == SYS_METHOD_SUR) {
-	int i;
+    int i;
 
-	for (i=0; i<sys->neqns; i++) {
-	    reglist_check_for_const(sys->lists[i], Z, pdinfo);
-	}
+    for (i=0; i<sys->neqns; i++) {
+	reglist_check_for_const(sys->lists[i], Z, pdinfo);
     }
 }
 
@@ -1102,6 +1103,242 @@ equation_system_estimate (equation_system *sys,
     return err;
 }
 
+/* prior to system estimation, get all the required lists of variables
+   in order 
+*/
+
+static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
+{
+    const int *slist;
+    const char *vname;
+    const identity *ident;
+    int user_ylist = (sys->ylist != NULL);
+    int *biglist = NULL;
+    int *ylist = NULL;
+    int *xplist = NULL;
+    int src, lag;
+    int nxp, bign = 0;
+    int i, j, k, vj;
+    int err = 0;
+
+    /* Compose a minimal (and possibly incomplete) list of endogenous
+       variables, including all vars that appear on the left-hand side
+       of structural equations or identities.  While we're at it, get
+       an upper bound to the grand total number of variables that
+       appear in the system ("bign" may be an overstatement due to
+       double-counting).
+    */
+
+    ylist = gretl_list_new(sys->neqns + sys->nidents);
+    if (ylist == NULL) {
+	return E_ALLOC;
+    }
+
+    k = 0;
+
+    for (i=0; i<sys->neqns; i++) {
+	slist = sys->lists[i];
+	bign += slist[0] - gretl_list_has_separator(slist);
+	vj = slist[1];
+	if (!in_gretl_list(ylist, vj)) {
+	    ylist[++k] = vj;
+	} 
+    }
+
+    for (i=0; i<sys->nidents; i++) {
+	ident = sys->idents[i];
+	bign += 1 + ident->n_atoms;
+	vj = ident->depvar;
+	if (!in_gretl_list(ylist, vj)) {
+	    ylist[++k] = vj;
+	} 
+    }    
+
+    ylist[0] = k;
+
+#if SYSDEBUG
+    printlist(ylist, "system auto ylist");
+#endif
+
+    /* If the user gave a list of endogenous vars, check that it
+       contains all the endogenous variables we found above (recorded
+       in ylist).
+    */
+
+    if (sys->ylist != NULL) {
+	for (j=0; j<=ylist[0] && !err; j++) {
+	    vj = ylist[j];
+	    if (!in_gretl_list(sys->ylist, vj)) {
+		sprintf(gretl_errmsg, "%s appears on the left-hand side "
+			"of an equation but is not marked as endogenous", 
+			pdinfo->varname[vj]);
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (err) {
+	goto bailout;
+    }
+
+    /* If the user did not give an endogenous list, use the one we
+       computed above.
+    */
+
+    if (sys->ylist == NULL) {
+	sys->ylist = ylist;
+	ylist = NULL;
+    }
+
+    /* Now, for reference, compose a big list of all the variables in
+       the system (referenced in structural equations or identities).
+    */
+
+    biglist = gretl_list_new(bign);
+    if (biglist == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=1; i<=bign; i++) {
+	biglist[i] = -1;
+    }
+
+    k = 0;
+
+    for (i=0; i<sys->neqns; i++) {
+	slist = sys->lists[i];
+	for (j=1; j<=slist[0]; j++) {
+	    vj = slist[j];
+	    if (vj != LISTSEP && !in_gretl_list(biglist, vj)) {
+		biglist[++k] = vj;
+	    }
+	}
+    }
+
+    for (i=0; i<sys->nidents; i++) {
+	ident = sys->idents[i];
+	for (j=0; j<=ident->n_atoms; j++) {
+	    if (j == 0) {
+		vj = ident->depvar;
+	    } else {
+		vj = ident->atoms[j-1].varnum;
+	    }
+	    if (!in_gretl_list(biglist, vj)) {
+		biglist[++k] = vj;
+	    }
+	}
+    }    
+
+    biglist[0] = k;
+
+#if SYSDEBUG
+    printlist(biglist, "system biglist (all vars)");
+#endif
+
+    /* If the user gave an endogenous list, check that it doesn't
+       contain any variables that are not actually present in the
+       system.
+     */
+
+    if (user_ylist) {
+	for (j=1; j<=sys->ylist[0]; j++) {
+	    vj = sys->ylist[j];
+	    if (!in_gretl_list(biglist, vj)) {
+		fprintf(stderr, "%s is marked as endogenous but is "
+			"not present in the system\n", pdinfo->varname[vj]);
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (err) {
+	goto bailout;
+    }
+
+    /* By elimination from biglist, using ylist, compose a maximal
+       list of exogenous and predetermined variables, "xplist".
+    */
+
+    nxp = biglist[0] - sys->ylist[0];
+    xplist = gretl_list_new(nxp);
+    if (xplist == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    k = 0;
+    for (j=1; j<=biglist[0]; j++) {
+	vj = biglist[j];
+	if (!in_gretl_list(sys->ylist, vj)) {
+	    xplist[++k] = vj;
+	}
+    }
+
+#if SYSDEBUG
+    printlist(xplist, "system auto xplist (exog + predet)");
+#endif
+
+    /* If the user gave a list of instruments, check that it does
+       not contain anything that is in fact clearly endogenous.
+     */
+
+    if (sys->ilist != NULL) {
+	for (j=1; j<sys->ilist[0]; j++) {
+	    vj = sys->ilist[j];
+	    if (in_gretl_list(sys->ylist, vj)) {
+		fprintf(stderr, "%s is marked as an instrument "
+			"but is endogenous\n", pdinfo->varname[vj]);
+		err = E_DATA;
+	    }
+	}
+    }
+
+    /* If the user did not give a list of instruments, use the
+       one we computed above.  FIXME: is this necessary??
+    */
+
+    if (!err && sys->ilist == NULL) {
+	sys->ilist = gretl_list_copy(xplist);
+	if (sys->ilist == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    /* Now narrow down "xplist", removing variables that are in fact
+       lags of endogenous variables (and recording them as such): this
+       should leave a list of truly exogenous variables.
+    */
+
+    for (j=1; j<=xplist[0] && !err; j++) {
+	vj = xplist[j];
+	lag = pdinfo->varinfo[vj]->lag;
+	if (lag > 0) {
+	    vname = pdinfo->varinfo[vj]->parent;
+	    src = varindex(pdinfo, vname);
+	    if (in_gretl_list(sys->ylist, src)) {
+		err = add_predet_to_sys(sys, pdinfo, vj, src, lag);
+		gretl_list_delete_at_pos(xplist, j--);
+	    }
+	}
+    }
+
+#if SYSDEBUG
+    printlist(xplist, "final system exog list");
+#endif
+
+    sys->xlist = xplist;
+    xplist = NULL;
+
+ bailout:
+
+    free(biglist);
+    free(ylist);
+    free(xplist);
+
+    return err;
+}
+
 /**
  * equation_system_finalize:
  * @sys: pre-defined equation system.
@@ -1142,9 +1379,13 @@ int equation_system_finalize (equation_system *sys,
 	strcpy(gretl_errmsg, _(badsystem));
 	equation_system_destroy(sys);
 	return 1;
-    }    
+    } 
 
-    if (sys->name != NULL) {
+#if 1
+    err = sys_check_lists(sys, pdinfo);
+#endif
+
+    if (!err && sys->name != NULL) {
 	/* save the system for subsequent estimation */
 	err = gretl_stack_object_as(sys, GRETL_OBJ_SYS, sys->name);
     }
@@ -1771,12 +2012,9 @@ add_identity_to_sys (equation_system *sys, const char *line,
 
 static int
 add_aux_list_to_sys (equation_system *sys, const char *line,
-		     const DATAINFO *pdinfo, int which)
+		     double ***pZ, DATAINFO *pdinfo, int which)
 {
-    const char *p;
-    char vname[VNAMELEN];
     int *list;
-    int i, j, v, nf, len, cplen;
     int err = 0;
 
     if (which == ENDOG_LIST) {
@@ -1788,79 +2026,31 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
 	if (sys->ilist != NULL) {
 	    strcpy(gretl_errmsg, "Only one list of instruments may be given");
 	    return 1;
-	} else if (0 && sys->method != SYS_METHOD_3SLS && 
-		   sys->method != SYS_METHOD_TSLS) {
-	    /* FIXME ?? */
-	    strcpy(gretl_errmsg, "Instruments may be specified only "
-		   "for 3SLS or TSLS");
-	    return 1;
-	}
+	} 
     } else {
-	return 1;
+	return E_DATA;
     }
 
-    nf = count_fields(line);
-    if (nf < 1) {
-	return 1;
-    }
+    line += strspn(line, " ");
 
-    list = gretl_list_new(nf);
-    if (list == NULL) {
-	return E_ALLOC;
-    }
+    list = generate_list(line, pZ, pdinfo, &err);
 
-    p = line;
-    j = 1;
-    for (i=1; i<=nf && !err; i++) {
-	while (isspace(*p)) p++;
-	*vname = '\0';
-	cplen = len = strcspn(p, " \t\n");
-	if (cplen > VNAMELEN - 1) {
-	    cplen = VNAMELEN - 1;
-	}
-	strncat(vname, p, cplen);
-	if (isdigit(*vname)) {
-	    v = atoi(vname);
+    if (!err) {
+	if (which == ENDOG_LIST) {
+	    sys->ylist = list;
 	} else {
-	    v = varindex(pdinfo, vname);
+	    sys->ilist = list;
 	}
-	if (v < 0 || v >= pdinfo->v) {
-	    /* maybe a named list */
-	    int *sublist = get_list_by_name(vname);
-
-	    if (sublist == NULL) {
-		sprintf(gretl_errmsg, _("Undefined variable '%s'."), vname);
-		err = 1;
-	    } else {
-		err = gretl_list_insert_list_minus(&list, sublist, j);
-		if (!err) {
-		    j += sublist[0];
-		}
-	    }
-	} else {
-	    list[j++] = v;
-	}
-	p += len;
-    }
-	
-    if (err) {
-	free(list);
-	return err;
     }
 
-    if (which == ENDOG_LIST) {
-	sys->ylist = list;
-    } else {
-	sys->ilist = list;
-    }
-
-    return 0;
+    return err;
 }
 
 /**
  * system_parse_line:
  * @sys: initialized equation system.
  * @line: command line.
+ * @pZ: pointer to dats array.
  * @pdinfo: dataset information.
  * 
  * Modifies @sys according to the command supplied in @line,
@@ -1875,7 +2065,7 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
 
 int 
 system_parse_line (equation_system *sys, const char *line,
-		   const DATAINFO *pdinfo)
+		   double ***pZ, DATAINFO *pdinfo)
 {
     int err = 0;
 
@@ -1884,9 +2074,9 @@ system_parse_line (equation_system *sys, const char *line,
     if (strncmp(line, "identity", 8) == 0) {
 	err = add_identity_to_sys(sys, line + 8, pdinfo);
     } else if (strncmp(line, "endog", 5) == 0) {
-	err = add_aux_list_to_sys(sys, line + 5, pdinfo, ENDOG_LIST);
+	err = add_aux_list_to_sys(sys, line + 5, pZ, pdinfo, ENDOG_LIST);
     } else if (strncmp(line, "instr", 5) == 0) {
-	err = add_aux_list_to_sys(sys, line + 5, pdinfo, INSTR_LIST);
+	err = add_aux_list_to_sys(sys, line + 5, pZ, pdinfo, INSTR_LIST);
     } else {
 	err = E_PARSE;
     }
@@ -2864,13 +3054,15 @@ static int sys_add_structural_form (equation_system *sys,
 		col += n * (lag - 1);
 		gretl_matrix_set(sys->A, i, col, x);
 	    } else {
-		fprintf(stderr, "sys_add_structural_form: i=%d, j=%d, vj=%d, type=%d\n",
+		fprintf(stderr, "add_structural_form: i=%d, j=%d, vj=%d, type=%d\n",
 			i, j, vj, type);
 		printlist(mlist, "model list");
 		err = E_DATA;
 	    }
 	}
     }
+
+    fprintf(stderr, "here 0: err = %d\n", err);
 
     /* process identities */
 
@@ -2898,14 +3090,20 @@ static int sys_add_structural_form (equation_system *sys,
 		col += n * (lag - 1);
 		gretl_matrix_set(sys->A, ne+i, col, x);
 	    } else {
+		fprintf(stderr, "add_structural_form: i=%d, j=%d, vj=%d, type=%d\n",
+			i, j, vj, type);
 		err = E_DATA;
 	    }
 	}
     }
 
+    fprintf(stderr, "here 1: err = %d\n", err);
+
     if (!err) {
 	err = sys_add_RF_covariance_matrix(sys);
     }
+
+    fprintf(stderr, "here 2: err = %d\n", err);
 
 #if SYSDEBUG
     gretl_matrix_print(sys->Gamma, "sys->Gamma");

@@ -115,6 +115,9 @@ double *generate_series (const char *s, double ***pZ,
 char *generate_string (const char *s, double ***pZ, 
 		       DATAINFO *pdinfo, int *err);
 
+int *generate_list (const char *s, double ***pZ, 
+		    DATAINFO *pdinfo, int *err);
+
 int print_object_var (const char *oname, const char *param,
 		      double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn);

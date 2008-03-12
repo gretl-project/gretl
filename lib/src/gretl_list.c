@@ -157,10 +157,13 @@ const char *get_list_name_by_index (int idx)
 int *get_list_by_name (const char *name)
 {
     int *ret = NULL;
-    saved_list *sl = get_saved_list_by_name(name);
+    saved_list *sl;
 
-    if (sl != NULL) {
-	ret = sl->list;
+    if (name != NULL) {
+	sl = get_saved_list_by_name(name);
+	if (sl != NULL) {
+	    ret = sl->list;
+	}
     }
 
     return ret;

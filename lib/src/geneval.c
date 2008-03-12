@@ -5864,6 +5864,8 @@ static void pre_process (parser *p, int flags)
 	p->targ = VEC;
     } else if (flags & P_STRING) {
 	p->targ = STR;
+    } else if (flags & P_LIST) {
+	p->targ = LIST;
     } else if (!strncmp(s, "scalar ", 7)) {
 	p->targ = NUM;
 	s += 7;
@@ -6786,6 +6788,8 @@ static void parser_init (parser *p, const char *str,
 	p->targ = VEC;
     } else if (p->flags & P_STRING) {
 	p->targ = STR;
+    } else if (p->flags & P_LIST) {
+	p->targ = LIST;
     } else if (p->flags & P_UFUN) {
 	p->targ = EMPTY;
     } else {

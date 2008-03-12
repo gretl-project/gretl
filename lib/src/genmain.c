@@ -624,6 +624,42 @@ char *generate_string (const char *s, double ***pZ,
     return ret;
 }
 
+/* retrieve a list result directly */
+
+int *generate_list (const char *s, double ***pZ, 
+		    DATAINFO *pdinfo, int *err)
+{
+    parser p;
+    int *ret = NULL;
+
+    *err = realgen(s, &p, pZ, pdinfo, NULL, P_LIST | P_PRIVATE);
+
+    if (!*err) {
+	if (p.ret->t == LIST) {
+	    const int *nlist = get_list_by_name(p.ret->v.str);
+
+	    if (nlist == NULL) {
+		*err = E_DATA;
+	    } else {
+		ret = gretl_list_copy(nlist);
+	    }
+	} else if (p.ret->t == LVEC) {
+	    ret = p.ret->v.ivec;
+	    p.ret->v.ivec = NULL;
+	} else {
+	    *err = E_TYPES;
+	}
+    }
+
+    if (ret == NULL && !*err) {
+	*err = E_ALLOC;
+    }
+
+    gen_cleanup(&p);
+
+    return ret;
+}
+
 /* retrieve and print a variable from "within" a saved
    object
 */

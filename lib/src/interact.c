@@ -4400,7 +4400,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		gretl_cmd_set_context(cmd, SYSTEM);
 	    }
 	} else {
-	    err = system_parse_line(s->sys, line, pdinfo);
+	    err = system_parse_line(s->sys, line, pZ, pdinfo);
 	    if (err) {
 		s->sys = NULL;
 	    } 

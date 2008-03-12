@@ -2537,7 +2537,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 		} 
 	    }
 	} else {
-	    err = system_parse_line(my_sys, bufline, datainfo);
+	    err = system_parse_line(my_sys, bufline, &Z, datainfo);
 	    if (err) {
 		/* sys is destroyed on error */
 		gui_errmsg(err);

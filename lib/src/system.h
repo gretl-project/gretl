@@ -105,8 +105,9 @@ int equation_system_append (equation_system *sys,
 			    const int *list);
 
 int system_parse_line (equation_system *sys,
-		       const char *line, 
-		       const DATAINFO *pdinfo);
+		       const char *line,
+		       double ***pZ, 
+		       DATAINFO *pdinfo);
 
 int equation_system_finalize (equation_system *sys, 
 			      double ***pZ, DATAINFO *pdinfo,
