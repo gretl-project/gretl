@@ -24,7 +24,7 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 
-#define SYSDEBUG 2
+#define SYSDEBUG 0
 
 enum {
     OP_PLUS,
@@ -1166,7 +1166,7 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     */
 
     if (sys->ylist != NULL) {
-	for (j=0; j<=ylist[0] && !err; j++) {
+	for (j=1; j<=ylist[0] && !err; j++) {
 	    vj = ylist[j];
 	    if (!in_gretl_list(sys->ylist, vj)) {
 		sprintf(gretl_errmsg, "%s appears on the left-hand side "
@@ -1245,8 +1245,8 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
 	for (j=1; j<=sys->ylist[0]; j++) {
 	    vj = sys->ylist[j];
 	    if (!in_gretl_list(biglist, vj)) {
-		fprintf(stderr, "%s is marked as endogenous but is "
-			"not present in the system\n", pdinfo->varname[vj]);
+		sprintf(gretl_errmsg, "%s is marked as endogenous but is "
+			"not present in the system", pdinfo->varname[vj]);
 		err = E_DATA;
 	    }
 	}
@@ -1284,11 +1284,11 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
      */
 
     if (sys->ilist != NULL) {
-	for (j=1; j<sys->ilist[0]; j++) {
+	for (j=1; j<=sys->ilist[0]; j++) {
 	    vj = sys->ilist[j];
 	    if (in_gretl_list(sys->ylist, vj)) {
-		fprintf(stderr, "%s is marked as an instrument "
-			"but is endogenous\n", pdinfo->varname[vj]);
+		sprintf(gretl_errmsg, "%s is marked as an instrument "
+			"but is endogenous", pdinfo->varname[vj]);
 		err = E_DATA;
 	    }
 	}
