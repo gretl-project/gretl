@@ -1686,7 +1686,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     int t;
 
     pputs(prn, "\\begin{center}\n");
-    if (fr->model_ci == ARMA) {
+    if (fr->asymp) {
 	pprintf(prn, _("For 95\\%% confidence intervals, $z(.025) = %.2f$\n\n"), 
 		1.96);
     } else {
@@ -1791,7 +1791,7 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
     double maxerr;
     char tmp[128];
 
-    if (fr->model_ci == ARMA) {
+    if (fr->asymp) {
 	sprintf(tmp, I_("For 95%% confidence intervals, z(.025) = %.2f"), 
 		1.96);
     } else {

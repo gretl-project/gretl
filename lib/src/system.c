@@ -60,6 +60,12 @@ struct predet_ {
     int lag;        /* lag order */
 };
 
+struct liml_data_ {
+    double *lmin;   /* min. eigenvalues */
+    double *ll;     /* log likelihood */
+    int *idf;       /* overidentification df */
+};
+
 const char *gretl_system_method_strings[] = {
     "sur",
     "3sls",
@@ -98,10 +104,10 @@ const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
 
 static void destroy_ident (identity *ident);
-
 static int 
 add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
 		   int id, int src, int lag);
+static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo);
 
 static void 
 print_system_equation (const int *list, const DATAINFO *pdinfo, 
@@ -149,24 +155,11 @@ print_system_identity (const identity *ident, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 }
 
-static int instrument_is_predet (const equation_system *sys, int v)
-{
-    int i;
-
-    for (i=0; i<sys->n_predet; i++) {
-	if (v == sys->pre_vars[i].id) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 static int sys_max_predet_lag (const equation_system *sys)
 {
     int i, m = 0;
 
-    for (i=0; i<sys->n_predet; i++) {
+    for (i=0; i<sys->plist[0]; i++) {
 	if (sys->pre_vars[i].lag > m) {
 	    m = sys->pre_vars[i].lag;
 	}
@@ -179,7 +172,7 @@ static int get_predet_parent (const equation_system *sys, int v, int *lag)
 {
     int i;
 
-    for (i=0; i<sys->n_predet; i++) {
+    for (i=0; i<sys->plist[0]; i++) {
 	if (v == sys->pre_vars[i].id) {
 	    *lag = sys->pre_vars[i].lag;
 	    return sys->pre_vars[i].src;
@@ -236,18 +229,18 @@ print_equation_system_info (const equation_system *sys,
     if (header) {
 	if (sys->pre_vars != NULL) {
 	    pputs(prn, "Predetermined variables:");
-	    for (i=0; i<sys->n_predet; i++) {
+	    for (i=0; i<sys->plist[0]; i++) {
 		vi = sys->pre_vars[i].src;
 		lag = sys->pre_vars[i].lag;
 		pprintf(prn, " %s(-%d)", pdinfo->varname[vi], lag);
 	    }
 	    pputc(prn, '\n');
 	}    
-	if (sys->ilist != NULL && sys->ilist[0] > sys->n_predet) {
+	if (sys->ilist != NULL && sys->ilist[0] > sys->plist[0]) {
 	    pputs(prn, "Exogenous variables:");
 	    for (i=1; i<=sys->ilist[0]; i++) {
 		vi = sys->ilist[i];
-		if (!instrument_is_predet(sys, vi)) {
+		if (!in_gretl_list(sys->plist, vi)) {
 		    pprintf(prn, " %s", pdinfo->varname[vi]);
 		}
 	    }
@@ -296,20 +289,25 @@ const char *system_method_short_string (int method)
 }
 
 static equation_system *
-equation_system_new (int method, const char *name)
+equation_system_new (int method, const char *name, int *err)
 {
     equation_system *sys;
 
     if (method < 0 && name == NULL) {
+	*err = E_DATA;
 	return NULL;
     }
 
     sys = malloc(sizeof *sys);
-    if (sys == NULL) return NULL;
+    if (sys == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     if (name != NULL) {
 	sys->name = gretl_strdup(name);
 	if (sys->name == NULL) {
+	    *err = E_ALLOC;
 	    free(sys);
 	    return NULL;
 	}
@@ -331,7 +329,6 @@ equation_system_new (int method, const char *name)
 
     sys->iters = 0;
     sys->flags = 0;
-    sys->n_predet = 0;
     sys->order = 0;
 
     sys->ll = sys->llu = sys->ldet = NADBL;
@@ -356,10 +353,12 @@ equation_system_new (int method, const char *name)
     sys->ylist = NULL;
     sys->ilist = NULL;
     sys->xlist = NULL;
+    sys->plist = NULL;
     sys->pre_vars = NULL;
     sys->idents = NULL;
 
     sys->models = NULL;
+    sys->ldata = NULL;
 
     return sys;
 }
@@ -444,6 +443,13 @@ static void system_clear_results (equation_system *sys)
 	gretl_matrix_free(sys->F);
 	sys->F = NULL;
     }
+
+    if (sys->ldata != NULL) {
+	free(sys->ldata->lmin);
+	free(sys->ldata->ll);
+	free(sys->ldata->idf);
+	free(sys->ldata);
+    }
 }
 
 void equation_system_destroy (equation_system *sys)
@@ -475,6 +481,7 @@ void equation_system_destroy (equation_system *sys)
     free(sys->ylist);
     free(sys->ilist);
     free(sys->xlist);
+    free(sys->plist);
     free(sys->pre_vars);
 
     free(sys->name);
@@ -683,7 +690,8 @@ system_set_flags (equation_system *sys, const char *s, gretlopt opt)
  */
 
 equation_system *equation_system_start (const char *line, 
-					gretlopt opt)
+					gretlopt opt,
+					int *err)
 {
     equation_system *sys = NULL;
     char *sysname = NULL;
@@ -694,6 +702,7 @@ equation_system *equation_system_start (const char *line,
     if (method == SYS_METHOD_MAX) {
 	/* invalid method was given */
 	strcpy(gretl_errmsg, _(badsystem));
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -702,15 +711,16 @@ equation_system *equation_system_start (const char *line,
     if (method < 0 && sysname == NULL) {
 	/* neither a method nor a name was specified */
 	strcpy(gretl_errmsg, _(badsystem));
-	return NULL;
+	*err = E_DATA;
     }
 
-    sys = equation_system_new(method, sysname);
-    if (sys == NULL) {
-	return NULL;
+    if (!*err) {
+	sys = equation_system_new(method, sysname, err);
     }
 
-    system_set_flags(sys, line, opt);
+    if (sys != NULL) {
+	system_set_flags(sys, line, opt);
+    }
 
     if (sysname != NULL) {
 	free(sysname);
@@ -786,7 +796,7 @@ system_print_F_test (const equation_system *sys,
     F /= dfn;
 
     pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
-    pprintf(prn, "  F(%d,%d) = %g %s %g\n", dfn, dfu, F,
+    pprintf(prn, "  F(%d,%d) = %g %s %.4f\n", dfn, dfu, F,
 	    _("with p-value"), snedecor_cdf_comp(F, dfn, dfu));
     pputc(prn, '\n');    
 
@@ -814,7 +824,7 @@ system_print_LR_test (const equation_system *sys,
     pprintf(prn, "%s:\n", _("LR test for the specified restrictions"));
     pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), llr);
     pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
-    pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
+    pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
 	    df, X2, _("with p-value"), chisq_cdf_comp(X2, df));
     pputc(prn, '\n');    
 }
@@ -1045,6 +1055,15 @@ equation_system_estimate (equation_system *sys,
 
     gretl_error_clear();
 
+    if (sys->xlist == NULL) {
+	/* allow for the possibility that we're looking at a
+	   system restored from a session file */
+	err = sys_check_lists(sys, pdinfo);
+	if (err) {
+	    return err;
+	}
+    }
+
     if (opt == OPT_UNSET) {
 	opt = OPT_NONE;
 	adjust_sys_flags_for_method(sys, sys->method);
@@ -1115,6 +1134,13 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     int i, j, k, vj;
     int err = 0;
 
+    /* start an empty list for predetermined variables */
+
+    sys->plist = gretl_null_list();
+    if (sys->plist == NULL) {
+	return E_ALLOC;
+    }
+
     /* Compose a minimal (and possibly incomplete) list of endogenous
        variables, including all vars that appear on the left-hand side
        of structural equations or identities.  While we're at it, get
@@ -1155,8 +1181,8 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
 #endif
 
     /* If the user gave a list of endogenous vars, check that it
-       contains all the endogenous variables we found above (recorded
-       in ylist).
+       contains all the presumably endogenous variables we found above
+       (as recorded in ylist).
     */
 
     if (sys->ylist != NULL) {
@@ -1289,7 +1315,7 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
     }
 
     /* If the user did not give a list of instruments, use the
-       one we computed above.  FIXME: is this necessary??
+       one we computed above.
     */
 
     if (!err && sys->ilist == NULL) {
@@ -1527,7 +1553,7 @@ int system_adjust_t1t2 (equation_system *sys,
     return err;
 }
 
-int *compose_tsls_list (equation_system *sys, int i)
+int *compose_tsls_list (const equation_system *sys, int i)
 {
     int *list;
     int j, k1, k2;
@@ -1539,12 +1565,10 @@ int *compose_tsls_list (equation_system *sys, int i)
     k1 = sys->lists[i][0];
     k2 = sys->ilist[0];
 
-    list = malloc((k1 + k2 + 2) * sizeof *list);
+    list = gretl_list_new(k1 + k2 + 1);
     if (list == NULL) {
 	return NULL;
     }
-
-    list[0] = k1 + k2 + 1;
 
     for (j=1; j<=list[0]; j++) {
 	if (j <= k1) {
@@ -1631,19 +1655,28 @@ system_add_resids_to_dataset (equation_system *sys,
     return 0;
 }
 
-/* simple accessor functions */
-
-const char *system_get_full_string (const equation_system *sys)
+static const char *system_get_full_string (const equation_system *sys,
+					   int tex)
 {
+    static char sysstr[128];
+    const char *lstr = gretl_system_long_strings[sys->method];
+    
     if (sys->flags & SYSTEM_ITERATE) {
-	static char sysstr[64];
-
-	sprintf(sysstr, _("iterated %s"), gretl_system_long_strings[sys->method]);
-	return sysstr;
+	if (tex) {
+	    sprintf(sysstr, I_("iterated %s"), I_(lstr));
+	} else {
+	    sprintf(sysstr, _("iterated %s"), _(lstr));
+	}
+    } else if (tex) {
+	strcpy(sysstr, I_(lstr));
     } else {
-	return gretl_system_long_strings[sys->method];
+	strcpy(sysstr, _(lstr));
     }
+
+    return sysstr;
 }
+
+/* simple accessor functions */
 
 int system_want_df_corr (const equation_system *sys)
 {
@@ -1943,7 +1976,8 @@ static int
 add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
 		   int id, int src, int lag)
 {
-    int i, n = sys->n_predet;
+    int n = sys->plist[0];
+    int *test;
     predet *pre;
 
     if (id < 0 || src < 0 || id >= pdinfo->v || src >= pdinfo->v) {
@@ -1951,11 +1985,9 @@ add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    for (i=0; i<n; i++) {
-	if (sys->pre_vars[i].id == id) {
-	    /* already present */
-	    return 0;
-	}
+    if (in_gretl_list(sys->plist, id)) {
+	/* already present */
+	return 0;
     }
 
     pre = realloc(sys->pre_vars, (n + 1) * sizeof *pre);
@@ -1967,7 +1999,12 @@ add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
     sys->pre_vars[n].id = id;
     sys->pre_vars[n].src = src;
     sys->pre_vars[n].lag = lag;
-    sys->n_predet += 1;
+
+    /* add to list of predetermined variable IDs */
+    test = gretl_list_append_term(&sys->plist, id);
+    if (test == NULL) {
+	return E_ALLOC;
+    } 
 
     return 0;
 }
@@ -2317,9 +2354,8 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	return NULL;
     }     
 
-    sys = equation_system_new(method, name);
-    if (sys == NULL) {
-	*err = E_ALLOC;
+    sys = equation_system_new(method, name, err);
+    if (*err) {
 	return NULL;
     }
 
@@ -2357,8 +2393,6 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	    sys->ylist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "instr_vars")) {
 	    sys->ilist = gretl_xml_node_get_list(cur, doc, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "exog_vars")) {
-	    sys->xlist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "identity")) {
 	    sys->idents[j++] = sys_retrieve_identity(cur, doc, err); 
 	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
@@ -2371,6 +2405,9 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 
     if (!*err && (i != sys->neqns || j != sys->nidents)) {
 	*err = E_DATA;
+    }
+
+    if (*err) {
 	equation_system_destroy(sys);
 	sys = NULL;
     }
@@ -2411,7 +2448,6 @@ int equation_system_serialize (equation_system *sys,
 
     gretl_xml_put_tagged_list("endog_vars", sys->ylist, fp);
     gretl_xml_put_tagged_list("instr_vars", sys->ilist, fp);
-    gretl_xml_put_tagged_list("exog_vars", sys->xlist, fp);
 
     for (i=0; i<sys->nidents; i++) {
 	xml_print_identity(sys->idents[i], fp);
@@ -2468,10 +2504,11 @@ static int sur_ols_diag (equation_system *sys)
 }
 
 static void
-print_system_overid_test (const equation_system *sys,
-			  PRN *prn)
+print_system_overid_test (const equation_system *sys, PRN *prn)
 {
+    int tex = tex_format(prn);
     int df = system_get_overid_df(sys);
+    double pv;
 
     if (sys->method == SYS_METHOD_FIML && df > 0) {
 	double X2;
@@ -2482,31 +2519,61 @@ print_system_overid_test (const equation_system *sys,
 	}
 
 	X2 = 2.0 * (sys->llu - sys->ll);
+	pv = chisq_cdf_comp(X2, df);
 
-	pprintf(prn, "%s:\n", _("LR over-identification test"));
-	pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), sys->ll);
-	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), sys->llu);
-	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		df, X2, _("with p-value"), chisq_cdf_comp(X2, df));
-	pputc(prn, '\n');
+	if (tex) {
+	    pprintf(prn, "%s:\\\\\n", I_("LR over-identification test"));
+	    if (sys->ll < 0) {
+		pprintf(prn, "  %s = $-$%g", I_("Restricted log-likelihood"), -sys->ll);
+	    } else {
+		pprintf(prn, "  %s = %g", I_("Restricted log-likelihood"), sys->ll);
+	    }
+	    gretl_prn_newline(prn);
+	    if (sys->llu < 0) {
+		pprintf(prn, "  %s = $-$%g", I_("Unrestricted log-likelihood"), -sys->llu);
+	    } else {
+		pprintf(prn, "  %s = %g", I_("Unrestricted log-likelihood"), sys->llu);
+	    }
+	    gretl_prn_newline(prn);
+	    pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f\n", 
+		    df, X2, I_("with p-value"), pv);
+	} else {
+	    pprintf(prn, "%s:\n", _("LR over-identification test"));
+	    pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), sys->ll);
+	    pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), sys->llu);
+	    pprintf(prn, "  %s(%d) = %g %s %.4f\n\n", _("Chi-square"),
+		    df, X2, _("with p-value"), pv);
+	}
     } else if ((sys->method == SYS_METHOD_3SLS || 
 		sys->method == SYS_METHOD_SUR) && df > 0) {
 	if (na(sys->X2) || sys->X2 <= 0.0) {
-	    pputs(prn, _("Warning: the Hansen-Sargan over-identification test "
-		  "failed.\nThis probably indicates that the estimation "
-		  "problem is ill-conditioned.\n"));
+	    if (!tex) {
+		pputs(prn, _("Warning: the Hansen-Sargan over-identification test "
+			     "failed.\nThis probably indicates that the estimation "
+			     "problem is ill-conditioned.\n"));
+		pputc(prn, '\n');
+	    }
 	    return;
 	}
 
-	pprintf(prn, "%s:\n", _("Hansen-Sargan over-identification test"));
-	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		df, sys->X2, _("with p-value"), chisq_cdf_comp(sys->X2, df));
-	pputc(prn, '\n');
+	pv = chisq_cdf_comp(sys->X2, df);
+
+	if (tex) {
+	    pprintf(prn, "\\noindent %s:\\\\\n", 
+		    I_("Hansen--Sargan over-identification test"));
+	    pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f\\\\\n", 
+		    df, sys->X2, I_("with p-value"), pv);
+	} else {
+	    pprintf(prn, "%s:\n", _("Hansen-Sargan over-identification test"));
+	    pprintf(prn, "  %s(%d) = %g %s %.4f\n\n", _("Chi-square"),
+		    df, sys->X2, _("with p-value"), pv);
+	}
     }
 }
 
 int system_print_VCV (const equation_system *sys, PRN *prn)
 {
+    int tex = tex_format(prn);
     int k, df;
 
     if (sys->S == NULL) {
@@ -2521,19 +2588,37 @@ int system_print_VCV (const equation_system *sys, PRN *prn)
     if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
 	if (!na(sys->ldet) && sys->diag != 0.0) {
 	    double lr = sys->T * (sys->diag - sys->ldet);
+	    double x = chisq_cdf_comp(lr, df);
 
-	    pprintf(prn, "%s:\n", _("LR test for diagonal covariance matrix"));
-	    pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		    df, lr, _("with p-value"), chisq_cdf_comp(lr, df));
+	    if (tex) {
+		pprintf(prn, "%s:\\\\\n", I_("LR test for diagonal covariance matrix"));
+		pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f", 
+			df, lr, I_("with p-value"), x);
+		gretl_prn_newline(prn);
+	    } else {
+		pprintf(prn, "%s:\n", _("LR test for diagonal covariance matrix"));
+		pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
+		    df, lr, _("with p-value"), x);
+	    }
 	}
     } else {
-	double lm = sys->diag;
-
+	double x, lm = sys->diag;
+	
 	if (lm > 0) {
-	    pprintf(prn, "%s:\n", 
-		    _("Breusch-Pagan test for diagonal covariance matrix"));
-	    pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		    df, lm, _("with p-value"), chisq_cdf_comp(lm, df));
+	    x = chisq_cdf_comp(lm, df);
+	    if (tex) {
+		pprintf(prn, "%s:", 
+			I_("Breusch--Pagan test for diagonal covariance matrix"));
+		gretl_prn_newline(prn);
+		pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f", df, lm, 
+			I_("with p-value"), x);
+		gretl_prn_newline(prn);
+	    } else {
+		pprintf(prn, "%s:\n", 
+			_("Breusch-Pagan test for diagonal covariance matrix"));
+		pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
+			df, lm, _("with p-value"), x);
+	    }
 	}
     }
 
@@ -2577,6 +2662,22 @@ static int categorize_variable (int vnum, const equation_system *sys,
     }
 
     return ret;
+}
+
+static int get_col_and_lag (int vnum, const equation_system *sys,
+			    int *col, int *lag)
+{
+    int vp, pos, err = 0;
+
+    vp = get_predet_parent(sys, vnum, lag);
+    pos = in_gretl_list(sys->ylist, vp);
+    if (pos > 0) {
+	*col = pos - 1;
+    } else {
+	err = 1;
+    }
+
+    return err;
 }
 
 /* reduced-form error covariance matrix */
@@ -2927,11 +3028,11 @@ static int sys_add_forecast (equation_system *sys,
     gretl_matrix *yl = NULL, *x = NULL;
     gretl_matrix *y = NULL, *yh = NULL;
     const int *ylist = sys->ylist;
-    const int *ilist = sys->ilist;
     const int *xlist = sys->xlist;
+    const int *plist = sys->plist;
     int n = sys->neqns + sys->nidents;
     double xit, xitd;
-    int tdyn, type, col, T, ncols;
+    int tdyn, col, T, ncols;
     int i, vi, s, t, lag;
     int err = 0;
 
@@ -2941,8 +3042,8 @@ static int sys_add_forecast (equation_system *sys,
 
 #if SYSDEBUG
     printlist(ylist, "ylist");
-    printlist(ilist, "ilist");
     printlist(xlist, "xlist");
+    printlist(plist, "plist");
     fprintf(stderr, "sys->order = %d\n", sys->order);
 #endif
 
@@ -3001,30 +3102,28 @@ static int sys_add_forecast (equation_system *sys,
 	/* lags of endogenous vars */
 	if (sys->order > 0) {
 	    gretl_matrix_zero(yl);
-	    for (i=1; i<=ilist[0] && !miss; i++) {
-		vi = ilist[i];
-		type = categorize_variable(vi, sys, &col, &lag);
-		if (type == PREDET) {
-		    xitd = NADBL;
-		    if (t < tdyn || s - lag < 0) {
-			/* pre-forecast value */
-			xit = Z[vi][t];
-		    } else {
-			/* prior forecast value preferred */
-			if (s - lag >= 0) {
-			    xitd = xit = Z[vi][t];
-			} 
-			xit = gretl_matrix_get(sys->F, s - lag, col);
-		    }
-		    col += n * (lag - 1);
-		    if (!na(xit)) {
-			yl->val[col] = xit;
-		    } else if (!na(xitd)) {
-			yl->val[col] = xitd;
-		    } else {
-			miss = 1;
+	    for (i=1; i<=plist[0] && !miss; i++) {
+		vi = plist[i];
+		get_col_and_lag(vi, sys, &col, &lag);
+		xitd = NADBL;
+		if (t < tdyn || s - lag < 0) {
+		    /* pre-forecast value */
+		    xit = Z[vi][t];
+		} else {
+		    /* prior forecast value preferred */
+		    if (s - lag >= 0) {
+			xitd = xit = Z[vi][t];
 		    } 
+		    xit = gretl_matrix_get(sys->F, s - lag, col);
 		}
+		col += n * (lag - 1);
+		if (!na(xit)) {
+		    yl->val[col] = xit;
+		} else if (!na(xitd)) {
+		    yl->val[col] = xitd;
+		} else {
+		    miss = 1;
+		} 
 	    }
 	    if (!miss) {
 		gretl_matrix_multiply(sys->A, yl, y);
@@ -3176,39 +3275,248 @@ static int sys_save_uhat_yhat (equation_system *sys, double ***pZ,
     return err;
 }
 
-int gretl_system_print (const equation_system *sys, const DATAINFO *pdinfo, 
-			gretlopt opt, PRN *prn)
+/* attach to the system some extra statistics generated in the course
+   of estimation via LIML */
+
+static int sys_attach_ldata (equation_system *sys)
 {
-    int nr = system_n_restrictions(sys);
-    int i;
+    int i, n = sys->neqns;
+    int err = 0;
 
-    if (sys->models == NULL) {
-	return E_DATA;
-    }
+    sys->ldata = malloc(sizeof *sys->ldata);
 
-    pputc(prn, '\n');
-
-    if (sys->name != NULL) {
-	pprintf(prn, "%s, %s\n", _("Equation system"), sys->name);
-	pprintf(prn, "%s: %s\n", _("Estimator"), 
-		system_get_full_string(sys));
+    if (sys->ldata == NULL) {
+	err = E_ALLOC;
     } else {
-	pprintf(prn, "%s, %s\n", _("Equation system"),
-		system_get_full_string(sys));
-    }
+	sys->ldata->lmin = NULL;
+	sys->ldata->ll = NULL;
+	sys->ldata->idf = NULL;
 
-    if (sys->iters > 0) {
-	pprintf(prn, _("Convergence achieved after %d iterations\n"), sys->iters);
-	if (sys->method == SYS_METHOD_SUR || 
-	    sys->method == SYS_METHOD_FIML) {
-	    pprintf(prn, "%s = %g\n", _("Log-likelihood"), sys->ll);
+	sys->ldata->lmin = malloc(n * sizeof *sys->ldata->lmin);
+	sys->ldata->ll = malloc(n * sizeof *sys->ldata->ll);
+	sys->ldata->idf = malloc(n * sizeof *sys->ldata->idf);
+
+	if (sys->ldata->lmin == NULL ||
+	    sys->ldata->ll == NULL ||
+	    sys->ldata->idf == NULL) {
+	    free(sys->ldata->lmin);
+	    free(sys->ldata->ll);
+	    free(sys->ldata->idf);
+	    free(sys->ldata);
+	    sys->ldata = NULL;
+	    err = E_ALLOC;
 	}
     }
 
-    pputc(prn, '\n');
+    if (!err) {
+	const MODEL *pmod;
 
-    for (i=0; i<sys->neqns; i++) {
-	printmodel(sys->models[i], pdinfo, OPT_NONE, prn);
+	for (i=0; i<n; i++) {
+	    pmod = sys->models[i];
+	    sys->ldata->lmin[i] = gretl_model_get_double(pmod, "lmin");
+	    sys->ldata->ll[i] = pmod->lnL;
+	    sys->ldata->idf[i] = gretl_model_get_int(pmod, "idf");
+	}
+    }
+
+    return err;
+}
+
+static int sys_print_reconstituted_models (const equation_system *sys,
+					   const double **Z,
+					   const DATAINFO *pdinfo,
+					   PRN *prn)
+{
+    MODEL mod;
+    const double *y;
+    double x;
+    int print_insts = 0;
+    int ifc, nc, ncmax = 0;
+    int i, j, t, k = 0;
+    int err = 0;
+
+    gretl_model_init(&mod);
+
+    mod.t1 = sys->t1;
+    mod.t2 = sys->t2;
+    mod.nobs = sys->T;
+    mod.aux = AUX_SYS;
+    gretl_model_set_int(&mod, "method", sys->method);
+
+    mod.lnL = NADBL;
+
+    if (sys->method == SYS_METHOD_TSLS ||
+	sys->method == SYS_METHOD_3SLS ||
+	sys->method == SYS_METHOD_FIML ||
+	sys->method == SYS_METHOD_LIML) {
+	mod.ci = TSLS;
+    } else {
+	mod.ci = OLS;
+    }
+
+    print_insts = sys->method == SYS_METHOD_TSLS ||
+	sys->method == SYS_METHOD_3SLS;
+
+    for (i=0; i<sys->neqns && !err; i++) {
+	int *mlist = sys->lists[i];
+	int freelist = 0;
+
+	mod.ID = i;
+
+	if (print_insts && !gretl_list_has_separator(mlist)) {
+	    mod.list = compose_tsls_list(sys, i);
+	    if (mod.list == NULL) {
+		err = E_ALLOC;
+	    } else {
+		freelist = 1;
+	    }
+	} else {
+	    mod.list = mlist;
+	}
+
+	if (!err) {
+	    ifc = nc = 0;
+	    for (j=2; j<=mod.list[0]; j++) {
+		if (mod.list[j] == 0) {
+		    ifc = 1;
+		} else if (mod.list[j] == LISTSEP) {
+		    break;
+		}
+		nc++;
+	    }
+	}
+
+	if (!err && nc > ncmax) {
+	    mod.coeff = realloc(mod.coeff, nc * sizeof *mod.coeff);
+	    mod.sderr = realloc(mod.sderr, nc * sizeof *mod.sderr);
+	    ncmax = nc;
+	}
+
+	if (mod.coeff == NULL || mod.sderr == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+
+	mod.ncoeff = nc;
+	mod.dfn = nc - ifc;
+	mod.dfd = (sys->flags & SYSTEM_DFCORR)? mod.nobs - nc : mod.nobs;
+
+	y = Z[mod.list[1]];
+	mod.ybar = gretl_mean(mod.t1, mod.t2, y);
+	mod.sdy = gretl_stddev(mod.t1, mod.t2, y);
+
+	mod.ess = 0.0;
+	for (t=0; t<sys->T; t++) {
+	    x = gretl_matrix_get(sys->E, t, i);
+	    mod.ess += x * x;
+	}
+
+	if (sys->method == SYS_METHOD_OLS ||
+	    sys->method == SYS_METHOD_TSLS ||
+	    sys->method == SYS_METHOD_LIML) {
+	    /* single-equation methods */
+	    mod.sigma = sqrt(mod.ess / mod.dfd);
+	} else {
+	    mod.sigma = sqrt(gretl_matrix_get(sys->S, i, i));
+	}
+
+	for (j=0; j<mod.ncoeff; j++) {
+	    mod.coeff[j] = sys->b->val[k];
+	    mod.sderr[j] = sqrt(gretl_matrix_get(sys->vcv, k, k));
+	    k++;
+	}
+
+	if (sys->method == SYS_METHOD_LIML && sys->ldata != NULL) {
+	    gretl_model_set_double(&mod, "lmin", sys->ldata->lmin[i]);
+	    mod.lnL = sys->ldata->ll[i];
+	    gretl_model_set_int(&mod, "idf", sys->ldata->idf[i]);
+	}
+
+	printmodel(&mod, pdinfo, OPT_NONE, prn);
+
+	if (freelist) {
+	    free(mod.list);
+	}
+
+	mod.list = NULL;
+    }
+
+    clear_model(&mod);
+    
+    return err;
+}
+
+int gretl_system_print (equation_system *sys, 
+			const double **Z, const DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn)
+{
+    int tex = tex_format(prn);
+    int nr = system_n_restrictions(sys);
+    int i;
+
+    if (sys->models != NULL && 
+	sys->method == SYS_METHOD_LIML &&
+	sys->ldata == NULL) {
+	sys_attach_ldata(sys);
+    }
+
+    if (tex) {
+	pputs(prn, "\\begin{center}\n");
+	if (sys->name != NULL) {
+	    pprintf(prn, "%s, %s\\\\\n", I_("Equation system"), sys->name);
+	    pprintf(prn, "%s: %s", I_("Estimator"), 
+		    system_get_full_string(sys, 1));
+	} else {
+	    pprintf(prn, "%s, %s", I_("Equation system"),
+		    system_get_full_string(sys, 1));
+	}
+    } else {
+	pputc(prn, '\n');
+	if (sys->name != NULL) {
+	    pprintf(prn, "%s, %s\n", _("Equation system"), sys->name);
+	    pprintf(prn, "%s: %s\n", _("Estimator"), 
+		    system_get_full_string(sys, 0));
+	} else {
+	    pprintf(prn, "%s, %s\n", _("Equation system"),
+		    system_get_full_string(sys, 0));
+	}
+    }
+
+    if (sys->iters > 0) {
+	gretl_prn_newline(prn);
+	if (tex) {
+	    pprintf(prn, I_("Convergence achieved after %d iterations\n"), sys->iters);
+	} else {
+	    pprintf(prn, _("Convergence achieved after %d iterations\n"), sys->iters);
+	}
+	if (sys->method == SYS_METHOD_SUR || 
+	    sys->method == SYS_METHOD_FIML) {
+	    if (tex) {
+		gretl_prn_newline(prn);
+		pprintf(prn, "%s = ", I_("Log-likelihood"));
+		if (sys->ll < 0) {
+		    pprintf(prn, "$-$%g", -sys->ll);
+		} else {
+		    pprintf(prn, "%g", sys->ll);
+		}
+	    } else {
+		pprintf(prn, "%s = %g\n", _("Log-likelihood"), sys->ll);
+	    }
+	}
+    }
+
+    if (tex) {
+	pputs(prn, "\n\\end{center}\n\n");
+    } else {
+	pputc(prn, '\n');
+    }    
+
+    if (sys->models != NULL) {
+	for (i=0; i<sys->neqns; i++) {
+	    printmodel(sys->models[i], pdinfo, OPT_NONE, prn);
+	}
+    } else {
+	sys_print_reconstituted_models(sys, Z, pdinfo, prn);
     }
 
     system_print_VCV(sys, prn);
@@ -3248,7 +3556,7 @@ system_save_and_print_results (equation_system *sys,
     } 
 
     if (!(opt & OPT_Q)) {
-	gretl_system_print(sys, pdinfo, opt, prn);
+	gretl_system_print(sys, (const double **) *pZ, pdinfo, opt, prn);
     }
 
     if (!err) {

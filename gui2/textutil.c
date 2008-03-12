@@ -315,10 +315,9 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	    }
 	}
     } else if (cmd == SYSTEM) {
-	/* Note: not used yet */
 	equation_system *sys = (equation_system *) vwin->data;
 
-	gretl_system_print(sys, datainfo, OPT_NONE, prn);
+	gretl_system_print(sys, (const double **) Z, datainfo, OPT_NONE, prn);
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);
     } 
@@ -379,7 +378,7 @@ void model_tex_save (gpointer data, guint fmt, GtkWidget *w)
     special_text_handler(vwin, fmt, W_SAVE);
 }
 
-void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
+void system_tex_callback (gpointer data, guint opt, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
 

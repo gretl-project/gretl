@@ -319,11 +319,11 @@ static GtkItemFactoryEntry model_tex_items[] = {
       0, NULL, GNULL }
 };
 
-static GtkItemFactoryEntry VAR_tex_items[] = {
+static GtkItemFactoryEntry sys_tex_items[] = {
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/_View"), NULL, var_tex_callback, 0, NULL, GNULL },
-    { N_("/LaTeX/_Copy"), NULL, var_tex_callback, 1, NULL, GNULL },
-    { N_("/LaTeX/_Save"), NULL, var_tex_callback, 2, NULL, GNULL }
+    { N_("/LaTeX/_View"), NULL, system_tex_callback, 0, NULL, GNULL },
+    { N_("/LaTeX/_Copy"), NULL, system_tex_callback, 1, NULL, GNULL },
+    { N_("/LaTeX/_Save"), NULL, system_tex_callback, 2, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry system_items[] = {
@@ -3788,11 +3788,11 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	}
     }
 
-    if (var != NULL && latex_is_ok()) {
-	int n = sizeof VAR_tex_items / sizeof VAR_tex_items[0];
+    if (latex_is_ok()) {
+	int n = sizeof sys_tex_items / sizeof sys_tex_items[0];
 
 	for (i=0; i<n; i++) {
-	    gtk_item_factory_create_item(vwin->ifac, &VAR_tex_items[i], 
+	    gtk_item_factory_create_item(vwin->ifac, &sys_tex_items[i], 
 					 vwin, 1);
 	}
     }

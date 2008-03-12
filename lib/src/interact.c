@@ -4393,10 +4393,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case SYSTEM:
 	/* system of equations */
 	if (s->sys == NULL) {
-	    s->sys = equation_system_start(line, cmd->opt);
-	    if (s->sys == NULL) {
-		err = 1;
-	    } else {
+	    s->sys = equation_system_start(line, cmd->opt, &err);
+	    if (!err) {
 		gretl_cmd_set_context(cmd, SYSTEM);
 	    }
 	} else {

@@ -257,7 +257,7 @@ default value of the preamble is as follows:
     
 \begin{code}
 \documentclass[11pt]{article}
-\usepackage[latin1]{inputenc}
+\usepackage[latin1]{inputenc} %% but see below
 \usepackage{amsmath}
 \usepackage{dcolumn,longtable}
 \begin{document}
@@ -271,7 +271,7 @@ the font by altering the \texttt{documentclass} declaration or
 including an alternative font package.
 
 The line \verb|\usepackage[latin1]{inputenc}| is automatically
-modified if \app{gretl} finds itself running on a system where UTF-8
+changed if \app{gretl} finds itself running on a system where UTF-8
 is the default character encoding --- see section~\ref{tex-encode}
 below.
 
@@ -365,7 +365,7 @@ employed, you may want to pay attention here.
 is standard on the local system.  If the system encoding is in the
 ISO-8859 family, this will probably be OK wihout any special effort on
 the part of the user.  Newer GNU/Linux systems, however, typically use
-Unicode (UTF-8).  This is also OK, so long as your \TeX\ system can
+Unicode (UTF-8).  This is also OK so long as your \TeX\ system can
 handle UTF-8 input, which requires use of the \app{latex-ucs} package.
 So: if you are using \app{gretl} to generate \TeX\ in a non-English
 locale, where the system encoding is UTF-8, you will need to ensure

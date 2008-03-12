@@ -725,6 +725,7 @@ void
 print_contemp_covariance_matrix (const gretl_matrix *m, 
 				 double ldet, PRN *prn)
 {
+    int tex = tex_format(prn);
     int rows = gretl_matrix_rows(m);
     int cols = gretl_matrix_cols(m);
     int jmax = 1;
@@ -732,13 +733,26 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
     double x;
     int i, j;
 
-    pprintf(prn, "%s\n(%s)\n\n",
-	    _("Cross-equation VCV for residuals"),
-	    _("correlations above the diagonal"));
+    if (tex) {
+	pputs(prn, "\\begin{center}\n");
+	pprintf(prn, "%s \\\\\n", I_("Cross-equation VCV for residuals"));
+	pprintf(prn, "(%s)\n\n", I_("correlations above the diagonal"));
+	pputs(prn, "\\[\n\\begin{array}{");
+	for (j=0; j<cols; j++) {
+	    pputc(prn, 'c');
+	}
+	pputs(prn, "}\n");
+    } else {
+	pprintf(prn, "%s\n", _("Cross-equation VCV for residuals"));
+	pprintf(prn, "(%s)\n\n", _("correlations above the diagonal"));
+    }
 
     for (i=0; i<rows; i++) {
 	for (j=0; j<jmax; j++) {
 	    pprintf(prn, "%#13.5g", gretl_matrix_get(m, i, j));
+	    if (tex && j < cols - 1) {
+		pputs(prn, " & ");
+	    }
 	}
 	for (j=jmax; j<cols; j++) {
 	    x = gretl_matrix_get(m, i, i) * gretl_matrix_get(m, j, j);
@@ -746,16 +760,40 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 	    x = gretl_matrix_get(m, i, j) / x;
 	    sprintf(numstr,"(%.3f)", x); 
 	    pprintf(prn, "%13s", numstr);
+	    if (tex && j < cols - 1) {
+		pputs(prn, " & ");
+	    }	    
 	}
-	pputc(prn, '\n');
+	if (tex) {
+	    pputs(prn, "\\\\\n");
+	} else {
+	    pputc(prn, '\n');
+	}
 	if (jmax < cols) {
 	    jmax++;
 	}
     }
 
+    if (tex) {
+	pputs(prn, "\\end{array}\n\\]\n");
+    }    
+
     if (!na(ldet)) {
-	pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);
+	if (tex) {
+	    if (ldet < 0) {
+		pprintf(prn, "\n%s = ", I_("log determinant"));
+		pprintf(prn, "$-$%g\n", -ldet);
+	    } else {
+		pprintf(prn, "\n%s = %g\n", I_("log determinant"), ldet);
+	    }
+	} else {
+	    pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);
+	}
     }
+
+    if (tex) {
+	pputs(prn, "\n\\end{center}\n");
+    } 
 }
 
 /**
@@ -2096,7 +2134,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     }
 
     if (do_errs && !(opt & OPT_Q)) {
-	if (fr->model_ci == ARMA || fr->model_ci == VECM) {
+	if (fr->asymp) {
 	    pprintf(prn, _(" For 95%% confidence intervals, z(.025) = %.2f\n"), 
 		    1.96);
 	} else {

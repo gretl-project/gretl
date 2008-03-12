@@ -297,7 +297,7 @@ char *gp_gettext (const char *msgid)
 
 char *iso_gettext (const char *msgid)
 {
-    static int iso_ok = -1;
+    static int iso_switch = -1;
     static const char *cset;
     static int cli;
     char *ret;
@@ -312,14 +312,16 @@ char *iso_gettext (const char *msgid)
 	return gettext(msgid);
     }
 
-    if (iso_ok < 0) {
+    if (iso_switch < 0) {
 	/* not yet determined */
 	cset = get_gretl_charset();
 	fprintf(stderr, "get_gretl_charset gave %s\n", cset);
-	iso_ok = (cset != NULL);
+	iso_switch = (cset != NULL);
     }
 
-    if (iso_ok) {
+    fprintf(stderr, "cset = %s, iso_switch = %d\n", cset, iso_switch);
+
+    if (iso_switch) {
 	bind_textdomain_codeset(PACKAGE, cset);
 	ret = gettext(msgid);
 	bind_textdomain_codeset(PACKAGE, "UTF-8");

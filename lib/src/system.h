@@ -50,6 +50,7 @@ enum {
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
 typedef struct predet_ predet;
+typedef struct liml_data_ liml_data;
 
 struct equation_system_ {
     char *name;                 /* user-specified name for system, or NULL */
@@ -61,7 +62,6 @@ struct equation_system_ {
     int method;                 /* estimation method */
     int neqns;                  /* number of stochastic equations */
     int nidents;                /* number of identities */
-    int n_predet;               /* number of predetermined regressors */
     int order;                  /* max lag of endogenous variable */
     int iters;                  /* number of iterations taken */
     char flags;                 /* to record options (e.g. save residuals) */
@@ -76,6 +76,7 @@ struct equation_system_ {
     int *ylist;                 /* list of endogenous variables */
     int *ilist;                 /* list of instruments */
     int *xlist;                 /* list of truly exogenous variables */
+    int *plist;                 /* list of predetermined variables */
     predet *pre_vars;           /* array of info on predetermined regressors */
     identity **idents;          /* set of identities */
     gretl_matrix *b;            /* coefficient estimates */
@@ -94,10 +95,12 @@ struct equation_system_ {
 				   convenience pointers -- these should NOT be
 				   freed as part of sys cleanup
 				*/
+    liml_data *ldata;           /* extra info from LIML estimation */
 };
 
 equation_system *equation_system_start (const char *line, 
-					gretlopt opt);
+					gretlopt opt,
+					int *err);
 
 char *get_system_name_from_line (const char *s, int context);
 
@@ -123,8 +126,6 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 void equation_system_destroy (equation_system *sys);
 
-const char *system_get_full_string (const equation_system *sys);
-
 int system_want_df_corr (const equation_system *sys);
 
 int system_n_restrictions (const equation_system *sys);
@@ -139,7 +140,7 @@ int *system_get_list (const equation_system *sys, int i);
 
 int system_get_list_length (const equation_system *sys, int i);
 
-int *compose_tsls_list (equation_system *sys, int i);
+int *compose_tsls_list (const equation_system *sys, int i);
 
 int system_get_depvar (const equation_system *sys, int i);
 
@@ -209,7 +210,8 @@ void system_unset_save_flag (equation_system *sys);
 
 int system_save_flag_is_set (equation_system *sys);
 
-int gretl_system_print (const equation_system *sys, const DATAINFO *pdinfo, 
+int gretl_system_print (equation_system *sys, 
+			const double **Z, const DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn);
 
 int system_print_VCV (const equation_system *sys, PRN *prn);

@@ -379,6 +379,7 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 {
     double lmin = gretl_model_get_double(pmod, "lmin");
     int idf = gretl_model_get_int(pmod, "idf");
+    int tex = tex_format(prn);
 
     if (!gretl_model_get_int(pmod, "restricted")) {
 	print_ll(pmod, prn);
@@ -389,16 +390,30 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 #endif
 
     if (!na(lmin)) {
-	pprintf(prn, "  Smallest eigenvalue = %g\n", lmin);
+	if (tex) {
+	    pprintf(prn, "%s & %g\\\\\n", I_("Smallest eigenvalue"), lmin);
+	} else {
+	    pprintf(prn, "  %s = %g\n", _("Smallest eigenvalue"), lmin);
+	}
 
 	if (idf > 0) {
 	    double X2 = pmod->nobs * log(lmin);
+	    double pv = chisq_cdf_comp(X2, idf);
 
-	    pprintf(prn, "  %s:\n", _("LR over-identification test"));
-	    pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
-		    idf, X2, _("with p-value"), chisq_cdf_comp(X2, idf));
+	    if (tex_format(prn)) {
+		pprintf(prn, "%s, $\\chi^2(%d)$ & %g\\\\\n", 
+			I_("LR over-identification test"), idf, X2);
+		pprintf(prn, "$\\quad$ %s %.4f\n", I_("with p-value"), pv);
+	    } else {
+		pprintf(prn, "  %s:\n", _("LR over-identification test"));
+		pprintf(prn, "    %s(%d) = %g %s %.4f\n", _("Chi-square"),
+			idf, X2, _("with p-value"), pv);
+	    }
 	} else if (idf == 0) {
-	    pprintf(prn, "  %s\n", _("Equation is just identified"));
+	    pprintf(prn, "  %s", 
+		    (tex)? I_("Equation is just identified") :
+		    _("Equation is just identified"));
+	    gretl_prn_newline(prn);
 	}
     }
 }
@@ -1149,11 +1164,12 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
     int k = gretl_model_get_int(pmod, "hac_kernel");
     int h = gretl_model_get_int(pmod, "hac_lag");
     int white = gretl_model_get_int(pmod, "hac_prewhiten");
+    int utf = plain_format(prn);
     double bt;
 
     if (k == KERNEL_QS) {
 	bt = gretl_model_get_double(pmod, "qs_bandwidth");
-	if (plain_format(prn)) {
+	if (utf) {
 	    pprintf(prn, _("HAC standard errors, "
 			   "bandwidth %.2f"), bt);
 	} else {
@@ -1161,7 +1177,7 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 			    "bandwidth %.2f"), bt);
 	}
     } else {
-	if (plain_format(prn)) {
+	if (utf) {
 	    pprintf(prn, _("HAC standard errors, "
 			   "bandwidth %d"), h);
 	} else {
@@ -1171,7 +1187,7 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
     }
 
     pputc(prn, ' ');
-    if (plain_format(prn)) {
+    if (utf) {
 	pprintf(prn, "(%s", _(kstrs[k]));
     } else {
 	pprintf(prn, "(%s", I_(kstrs[k]));
@@ -1179,7 +1195,7 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
     }
     if (white) {
 	pputs(prn, ", ");
-	pputs(prn, (plain_format(prn))? _("prewhitened") : 
+	pputs(prn, (utf)? _("prewhitened") : 
 	      I_("prewhitened"));
     }
 
@@ -1460,7 +1476,8 @@ static void print_model_heading (const MODEL *pmod,
     char startdate[OBSLEN], enddate[OBSLEN], vname[32];
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
-    int utf = plain_format(prn);
+    int plain = plain_format(prn);
+    int utf = plain;
     int csv = csv_format(prn);
     int dvnl = 1;
     int order = 0;
@@ -1482,7 +1499,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_KPSS:
     case AUX_RESET:
     case AUX_GROUPWISE:
-	if (utf) {
+	if (plain) {
 	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn)));
 	} else if (tex) {
 	    pprintf(prn, "\n%s\n", I_(aux_string(pmod->aux, prn)));
@@ -2002,7 +2019,7 @@ static void weighted_stats_message (PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}%s:\n\n", I_(msg));
+	pprintf(prn, "\\vspace{1em}%s:\n\n", _(msg));
     } else { /* RTF */
 	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));	
     }
@@ -2015,7 +2032,7 @@ static void original_stats_message (PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}\n%s:\n\n", I_(msg));
+	pprintf(prn, "\\vspace{1em}\n%s:\n\n", _(msg));
     } else { /* RTF */
 	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
     }
@@ -2028,7 +2045,7 @@ static void rho_differenced_stats_message (PRN *prn)
     if (plain_format(prn)) {    
 	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}\n%s:\n\n", I_(msg));
+	pprintf(prn, "\\vspace{1em}\n%s:\n\n", _(msg));
     } else { /* RTF */
 	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
     }	
@@ -2113,8 +2130,6 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
     }
 }
-
-
 
 static char active_decpoint (void)
 {
@@ -3007,7 +3022,7 @@ static void root_start (const char *tag, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "  %s\n", _(tag));
     } else if (tex_format(prn)) {
-	pprintf(prn, "%s \\\\ \n", I_(tag));
+	pprintf(prn, "%s \\\\ \n", _(tag));
     } else if (rtf_format(prn)) {
 	pputs(prn, RTF_ROOT_ROW);
 	pprintf(prn, "\\ql %s\\cell\\ql \\cell\\ql \\cell\\ql \\cell\\ql \\cell"
@@ -3369,11 +3384,11 @@ static void print_binary_statistics (const MODEL *pmod,
 		    i, model_chisq, I_("p-value"), 
 		    chisq_cdf_comp(model_chisq, i));
 	}
-	pprintf(prn, "%s (%s) = %g\\\\\n", I_(aic_str), I_(aic_abbrev),
+	pprintf(prn, "%s (%s) = %g\\\\\n", I_(aic_str), _(aic_abbrev),
 		crit[C_AIC]);
-	pprintf(prn, "%s (%s) = %g\\\\\n", I_(bic_str), I_(bic_abbrev),
+	pprintf(prn, "%s (%s) = %g\\\\\n", I_(bic_str), _(bic_abbrev),
 		crit[C_BIC]);
-	pprintf(prn, "%s (%s) = %g\\\\\n", I_(tex_hqc_str), I_(hqc_abbrev),
+	pprintf(prn, "%s (%s) = %g\\\\\n", I_(tex_hqc_str), _(hqc_abbrev),
 		crit[C_HQC]);
 	pputs(prn, "\\end{raggedright}\n");
     }

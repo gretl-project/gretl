@@ -34,7 +34,7 @@ void model_tex_view (gpointer data, guint fmt, GtkWidget *w);
 
 void model_tex_save (gpointer data, guint fmt, GtkWidget *w);
 
-void var_tex_callback (gpointer data, guint opt, GtkWidget *w);
+void system_tex_callback (gpointer data, guint opt, GtkWidget *w);
 
 void window_copy (gpointer data, guint how, GtkWidget *w);
 

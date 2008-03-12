@@ -139,7 +139,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
 
     f->method = 0;
     f->model_ID = 0;
-    f->model_ci = 0;
+    f->asymp = 0;
     f->model_t1 = 0;
     f->t0 = 0;
     f->t1 = 0;
@@ -213,13 +213,14 @@ static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
     }
 
     fr->model_ID = pmod->ID;
-    fr->model_ci = pmod->ci;
     fr->model_t1 = pmod->t1;
+
+    fr->asymp = ASYMPTOTIC_MODEL(pmod->ci);
 
     return fr;
 }
 
-static FITRESID *fit_resid_new_for_system (int ci, 
+static FITRESID *fit_resid_new_for_system (int asy, 
 					   const DATAINFO *pdinfo,
 					   int t1, int t2, int pre_n,
 					   int *err)
@@ -247,7 +248,7 @@ static FITRESID *fit_resid_new_for_system (int ci,
 	fr->t0 = t1;
     }
 
-    fr->model_ci = ci;
+    fr->asymp = asy;
 
     return fr;
 }
@@ -2490,14 +2491,16 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	/* assemble and print per-equation forecasts */
 	gretlopt printopt = OPT_NONE;
 	FITRESID *fr = NULL;
-	int i;
+	int i, asy;
 
-	fr = fit_resid_new_for_system(ci, pdinfo, t1, t2, 0, &err);
+	asy = (ci == VECM);
+
+	fr = fit_resid_new_for_system(asy, pdinfo, t1, t2, 0, &err);
 	if (err) {
 	    return err;
 	}
 
-    	if (ci == VECM) {
+    	if (asy) {
 	    /* asymptotic normal */
 	    fr->df = var->T;
 	    fr->tval = 1.96;
@@ -2673,7 +2676,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     equation_system *sys = NULL;
     const gretl_matrix *F = NULL;
     int nf = t2 - t1 + 1;
-    int yno, df = 0;
+    int yno, asy, df = 0;
 
     if (nf <= 0) {
 	*err = E_DATA;
@@ -2699,12 +2702,14 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	return NULL;
     }
 
-    fr = fit_resid_new_for_system(ci, pdinfo, t1, t2, pre_n, err);
+    asy = (ci == VECM);
+
+    fr = fit_resid_new_for_system(asy, pdinfo, t1, t2, pre_n, err);
     if (*err) {
 	return NULL;
     }
     
-    if (ci == VECM) {
+    if (asy) {
 	/* asymptotic normal */
 	fr->df = var->T;
 	fr->tval = 1.96;

@@ -2510,11 +2510,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    startline = g_strdup_printf("system method=%s", 
 					system_method_short_string(method));
 	    /* FIXME opt? */
-	    my_sys = equation_system_start(startline, OPT_NONE);
-	    if (my_sys == NULL) {
-		fprintf(stderr, "do_eqn_system: sys is NULL\n");
- 		err = 1;
-	    }
+	    my_sys = equation_system_start(startline, OPT_NONE, &err);
 	}
 
 	if (err) {
