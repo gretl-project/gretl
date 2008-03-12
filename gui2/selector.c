@@ -4038,6 +4038,10 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 
     /* plus lag selection stuff, if relevant */
     if (dataset_lags_ok(datainfo)) {
+	if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY || \
+	    ci == SCATTERS || ci == GR_3D) {
+	    unhide_lags_switch(sr);
+	}
 	if (MODEL_CODE(ci) && ci != ARMA) {
 	    lag_selector_button(sr);
 	} 
