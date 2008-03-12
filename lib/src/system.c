@@ -3097,13 +3097,12 @@ static int sys_add_structural_form (equation_system *sys,
 	}
     }
 
-    fprintf(stderr, "here 1: err = %d\n", err);
-
     if (!err) {
 	err = sys_add_RF_covariance_matrix(sys);
+	if (err) {
+	    fprintf(stderr, "error %d in sys_add_RF_covariance_matrix\n", err);
+	}
     }
-
-    fprintf(stderr, "here 2: err = %d\n", err);
 
 #if SYSDEBUG
     gretl_matrix_print(sys->Gamma, "sys->Gamma");
