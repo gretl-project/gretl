@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-20 15:11-0500\n"
-"PO-Revision-Date: 2008-02-21 09:19+0100\n"
+"PO-Revision-Date: 2008-03-12 11:08+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -6317,7 +6317,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Traducido al Español por Ignacio Díaz-Emparanza <ignacio.diaz-emparanza@ehu."
-"es>"
+"es> se agradece la financiación del proyecto del MEC MTM2006-06550"
 
 #: gui2/about.c:163
 msgid "License"
@@ -10917,7 +10917,7 @@ msgstr "el archivo de ayuda %s no está actualizado\n"
 
 #: gui2/helpfiles.c:709 gui2/helpfiles.c:1077
 msgid "genrgui.hlp"
-msgstr "genrgui.hlp.es"
+msgstr "genrgui.hlp"
 
 #: gui2/helpfiles.c:944
 msgid "Show English help"
