@@ -3062,8 +3062,6 @@ static int sys_add_structural_form (equation_system *sys,
 	}
     }
 
-    fprintf(stderr, "here 0: err = %d\n", err);
-
     /* process identities */
 
     for (i=0; i<sys->nidents && !err; i++) {
