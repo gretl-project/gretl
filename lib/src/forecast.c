@@ -341,31 +341,26 @@ static int *model_xlist (MODEL *pmod)
 static int 
 has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int *xlist;
-    char xname[VNAMELEN], tmp[VNAMELEN];  
-    const char *label;
     const char *yname;
-    int i, lag;
-    int ret = 0;
+    int *xlist;
+    int i, vi;
 
     xlist = model_xlist(pmod);
     if (xlist == NULL) {
 	return 0;
     }
 
-    yname = pdinfo->varname[gretl_model_get_depvar(pmod)];
+    yname = gretl_model_get_depvar_name(pmod, pdinfo);
 
     for (i=1; i<=xlist[0]; i++) {
-	label = VARLABEL(pdinfo, xlist[i]);
-	if ((sscanf(label, "= %15[^(](t - %d)", xname, &lag) == 2 ||
-	     sscanf(label, "%15[^=]=%15[^(](-%d)", tmp, xname, &lag) == 3) &&
-	    !strcmp(xname, yname)) {
-	    ret = 1;
-	    break;
+        vi = xlist[i];
+	if (pdinfo->varinfo[vi]->lag > 0 &&
+	    !strcmp(yname, pdinfo->varinfo[vi]->parent)) {
+	    return 1;
 	}
     }
 
-    return ret;
+    return 0;
 }
 
 /* Makes a list to keep track of any "independent variables" that are
@@ -395,25 +390,24 @@ static int process_lagged_depvar (MODEL *pmod,
     }
 
     xlist = model_xlist(pmod);
+
     dvlags = malloc(xlist[0] * sizeof *dvlags);
+
     if (dvlags == NULL) {
-	err = 1;
+	err = E_ALLOC;
     } else {
-	char xname[VNAMELEN], tmp[VNAMELEN];
-	const char *label;
 	const char *yname;
-	int i, lag;
+	int i, vi;
 
-	yname = pdinfo->varname[gretl_model_get_depvar(pmod)];
+	yname = gretl_model_get_depvar_name(pmod, pdinfo);
 
-	for (i=0; i<xlist[0]; i++) {
-	    label = VARLABEL(pdinfo, xlist[i+1]);
-	    if ((sscanf(label, "= %15[^(](t - %d)", xname, &lag) == 2 ||
-		 sscanf(label, "%15[^=]=%15[^(](-%d)", tmp, xname, &lag) == 3) &&
-		!strcmp(xname, yname)) {
-		dvlags[i] = lag;
+	for (i=1; i<=xlist[0]; i++) {
+            vi = xlist[i];
+	    if (pdinfo->varinfo[vi]->lag > 0 &&
+		!strcmp(yname, pdinfo->varinfo[vi]->parent)) {
+		dvlags[i-1] = pdinfo->varinfo[vi]->lag;
 	    } else {
-		dvlags[i] = 0;
+		dvlags[i-1] = 0;
 	    }
 	}
     } 
@@ -1016,7 +1010,9 @@ static double arma_variance (const double *phi, int p,
 /* When forecasting based on an armax model estimated using X12A,
    or via the Kalman filter, we need to form the series X\beta
    so that we can subtract X\beta_{t-i} from y_{t-i} in
-   computing the AR portion of the forecast.
+   computing the AR portion of the forecast. "beta" below
+   is the array of ARMAX coefficients, not including the
+   constant.
 */
 
 static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
@@ -1381,39 +1377,27 @@ static int max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
 
 static int
 set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod, 
-			  int pmax, int npsi, double **phi, double **psi,
-			  double **errphi)
+			  int pmax, int npsi, double **pphi, double **ppsi,
+			  double **perrphi)
 {
+    double *errphi = NULL;
+    double *psi = NULL;
+    double *phi = NULL;
     int err = 0;
     
-    *errphi = NULL;
-    *psi = NULL;
-    *phi = NULL;
+    errphi = make_phi_from_arinfo(pmod->arinfo, pmax);
+    psi = malloc(npsi * sizeof *psi);
+    phi = malloc((pmax + 1) * sizeof *phi);
 
-    *errphi = make_phi_from_arinfo(pmod->arinfo, pmax);
-    if (*errphi == NULL) {
+    if (errphi == NULL || psi == NULL || phi == NULL) {
+	free(errphi);
+	free(psi);
+	free(phi);
 	err = E_ALLOC;
-    }
-
-    if (!err) {
-	*psi = malloc(npsi * sizeof **psi);
-	if (*psi == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	*phi = malloc((pmax + 1) * sizeof **phi);
-	if (*phi == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (err) {
-	free(*errphi);
-	*errphi = NULL;
-	free(*psi);
-	*psi = NULL;
+    } else {
+	*perrphi = errphi;
+	*pphi = phi;
+	*ppsi = psi;
     }
 
     return err;
@@ -2676,7 +2660,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     equation_system *sys = NULL;
     const gretl_matrix *F = NULL;
     int nf = t2 - t1 + 1;
-    int yno, asy, df = 0;
+    int asy, df = 0, yno = 0;
 
     if (nf <= 0) {
 	*err = E_DATA;
