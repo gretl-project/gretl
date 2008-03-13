@@ -460,7 +460,9 @@ static int transform_handle_duplicate (int v, const double *x,
 	for (t=0; t<pdinfo->n; t++) {
 	    Z[v][t] = x[t];
 	}
-	strcpy(VARLABEL(pdinfo, v), label);
+	if (*label != '\0') {
+	    strcpy(VARLABEL(pdinfo, v), label);
+	}
 	pdinfo->varinfo[v]->flags = 0;
 	ret = VAR_EXISTS_OK;
     }	
@@ -518,6 +520,22 @@ check_add_transform (int vnum, const double *x,
     return ret;
 }
 
+static int get_lag_ID (int srcv, int lag, const DATAINFO *pdinfo)
+{
+    const char *vname = pdinfo->varname[srcv];
+    VARINFO *vinfo;
+    int i;
+
+    for (i=1; i<pdinfo->v; i++) {
+	vinfo = pdinfo->varinfo[i];
+	if (vinfo->lag == lag && !strcmp(vinfo->parent, vname)) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
 /* get_transform: create specified transformation of variable v if
    this variable does not already exist.
 
@@ -534,8 +552,8 @@ static int get_transform (int ci, int v, int aux, double x,
 			  double ***pZ, DATAINFO *pdinfo,
 			  int startlen, int origv)
 {
-    char vname[VNAMELEN];
-    char label[MAXLABEL];
+    char vname[VNAMELEN] = {0};
+    char label[MAXLABEL] = {0};
     int len, vno = -1, err = 0;
     const char *srcname;
     double *vx;
@@ -564,6 +582,15 @@ static int get_transform (int ci, int v, int aux, double x,
 
     if (err) {
 	return -1;
+    }
+
+    if (ci == LAGS && (vno = get_lag_ID(v, aux, pdinfo)) > 0) {
+	/* special case: pre-existing lag */
+	err = check_add_transform(vno, vx, vname, label, pdinfo, pZ, origv);
+	if (err != VAR_EXISTS_OK) {
+	    vno = -1;
+	}
+	return vno;
     }
 
     if (ci == SQUARE && v != aux) {

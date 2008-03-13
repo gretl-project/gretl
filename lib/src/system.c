@@ -1902,72 +1902,151 @@ static identity *ident_new (int nv)
 }
 
 static identity *
-parse_identity (const char *str, const DATAINFO *pdinfo, int *err)
+parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 {
     identity *ident;
-    const char *p;
-    char f1[24], f2[16];
-    char op, vname1[VNAMELEN], vname2[VNAMELEN];
-    int i, nv;
+    char *test;
+    const char *p = str;
+    char vname[VNAMELEN];
+    int lag, gotop = 0;
+    int i, v, nv, len;
 
-    sprintf(f1, "%%%ds = %%%d[^+ -]", VNAMELEN - 1, VNAMELEN - 1);
-    sprintf(f2, "%%c %%%d[^+ -]", VNAMELEN - 1);
+#if SYSDEBUG
+    fprintf(stderr, "parse_identity: input = '%s'\n", str);
+#endif
 
-    if (sscanf(str, f1, vname1, vname2) != 2) {
-	*err = E_PARSE;
-	return NULL;
-    }
+    /* First pass: count the elements and check everything for validity.
+       nv is the number of variables appearing on the right-hand side 
+       of the identity (nv >= 1).  
+    */
 
-    p = str;
-    nv = 1;
-    while (*p) {
-	if (*p == '+' || *p == '-') nv++;
-	p++;
-    }
-
-    ident = ident_new(nv);
-    if (ident == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    ident->depvar = varindex(pdinfo, vname1);
-    if (ident->depvar == pdinfo->v) {
-	destroy_ident(ident);
-	*err = E_UNKVAR;
-	return NULL;
-    }
-
-    ident->atoms[0].op = OP_PLUS;
-    ident->atoms[0].varnum = varindex(pdinfo, vname2);
-    if (ident->atoms[0].varnum == pdinfo->v) {
-	destroy_ident(ident);
-	*err = E_UNKVAR;
-	return NULL;
-    }
-
-    p = str;
-    for (i=1; i<nv && !*err; i++) {
-	p += strcspn(p, "+-");
-	sscanf(p, f2, &op, vname1);
-	if (op == '+') op = OP_PLUS;
-	else if (op == '-') op = OP_MINUS;
-	else *err = E_PARSE;
-	if (!*err) {
-	    ident->atoms[i].op = op;
-	    ident->atoms[i].varnum = varindex(pdinfo, vname1);
-	    if (ident->atoms[i].varnum == pdinfo->v) {
+    i = 0;
+    while (*p && !*err) {
+	p += strspn(p, " ");
+	if (i == 0) {
+	    /* left-hand side variable */
+	    len = gretl_varchar_spn(p);
+	    if (len == 0) {
+		*err = E_PARSE;
+	    } else if (len >= VNAMELEN) {
 		*err = E_UNKVAR;
+	    } else {
+		*vname = '\0';
+		strncat(vname, p, len);
+		v = varindex(pdinfo, vname);
+		if (v == pdinfo->v) {
+		    *err = E_UNKVAR;
+		} else {
+		    p += len;
+		    p += strspn(p, " ");
+		    if (*p != '=') {
+			*err = E_PARSE;
+		    } else {
+			p++;
+			i++;
+			gotop = 1;
+		    }
+		}
+	    }
+	} else if (*p == '+' || *p == '-') {
+	    gotop = 1;
+	    p++;
+	} else if (i > 1 && !gotop) {
+	    /* rhs: no + or - given */
+	    *err = E_PARSE;
+	} else {
+	    /* right-hand size variable (may be lag) */
+	    len = gretl_varchar_spn(p);
+	    if (len >= VNAMELEN) {
+		*err = E_UNKVAR;
+	    } else if (gotop && len == 0) {
+		/* dangling operator */
+		*err = E_PARSE;
+	    } else {
+		*vname = '\0';
+		strncat(vname, p, len);
+		v = varindex(pdinfo, vname);
+		if (v == pdinfo->v) {
+		    *err = E_UNKVAR;
+		} else {
+		    p += len;
+		    if (*p == '(') {
+			lag = strtol(p + 1, &test, 10);
+			if (*test != ')') {
+			    *err = E_PARSE;
+			} else if (lag >= 0) {
+			    *err = E_DATA;
+			} else {
+			    v = laggenr(v, -lag, pZ, pdinfo);
+			    if (v < 0) {
+				*err = E_DATA;
+			    } else {
+				p = test + 1;
+			    }
+			}
+		    }
+		    i++;
+		    gotop = 0;
+		}
 	    }
 	}
-	p++;
+    }
+
+    if (gotop) {
+	/* trailing operator */
+	*err = E_PARSE;
+    }
+
+    if (!*err) {
+	nv = i - 1;
+	if (nv < 1) {
+	    *err = E_PARSE;
+	} else {
+	    ident = ident_new(nv);
+	    if (ident == NULL) {
+		*err = E_ALLOC;
+		return NULL;
+	    }
+	}    
     }
 
     if (*err) {
-	destroy_ident(ident);
-	ident = NULL;
+	return NULL; 
     }
-       
+
+    ident->atoms[0].op = OP_PLUS;
+
+    /* Second pass: fill out the identity */
+
+    p = str;
+    i = 0;
+    while (*p) {
+	p += strspn(p, " ");
+	if (i == 0) {
+	    *vname = '\0';
+	    strncat(vname, p, gretl_varchar_spn(p));
+	    ident->depvar = varindex(pdinfo, vname);
+	    p = strchr(p, '=') + 1;
+	    i++;
+	} else if (*p == '+' || *p == '-') {
+	    ident->atoms[i-1].op = (*p == '+')? OP_PLUS : OP_MINUS;
+	    p++;
+	} else {
+	    len = gretl_varchar_spn(p);
+	    *vname = '\0';
+	    strncat(vname, p, len);
+	    v = varindex(pdinfo, vname);
+	    p += len;
+	    if (*p == '(') {
+		lag = strtol(p + 1, &test, 10);
+		v = laggenr(v, -lag, pZ, pdinfo);
+		p = test + 1;
+	    }
+	    ident->atoms[i-1].varnum = v;
+	    i++;
+	}
+    }
+
     return ident;
 }
 
@@ -2012,14 +2091,14 @@ add_predet_to_sys (equation_system *sys, const DATAINFO *pdinfo,
 
 static int 
 add_identity_to_sys (equation_system *sys, const char *line,
-		     const DATAINFO *pdinfo)
+		     double ***pZ, DATAINFO *pdinfo)
 {
     identity **pident;
     identity *ident;
     int ni = sys->nidents;
     int err = 0;
 
-    ident = parse_identity(line, pdinfo, &err);
+    ident = parse_identity(line, pZ, pdinfo, &err);
     if (ident == NULL) return err;
 
     /* connect the identity to the equation system */
@@ -2098,7 +2177,7 @@ system_parse_line (equation_system *sys, const char *line,
     gretl_error_clear();
 
     if (strncmp(line, "identity", 8) == 0) {
-	err = add_identity_to_sys(sys, line + 8, pdinfo);
+	err = add_identity_to_sys(sys, line + 8, pZ, pdinfo);
     } else if (strncmp(line, "endog", 5) == 0) {
 	err = add_aux_list_to_sys(sys, line + 5, pZ, pdinfo, ENDOG_LIST);
     } else if (strncmp(line, "instr", 5) == 0) {
