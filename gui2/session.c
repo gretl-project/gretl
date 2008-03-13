@@ -44,6 +44,7 @@
 #include "gretl_xml.h"
 #include "gretl_func.h"
 #include "modelspec.h"
+#include "matrix_extra.h"
 #include "cmd_private.h"
 
 #include <sys/stat.h>

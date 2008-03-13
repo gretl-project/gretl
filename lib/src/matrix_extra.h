@@ -68,4 +68,16 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err);
 
 int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname);
 
+void 
+gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn);
+
+void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg);
+
+void debug_print_matrix (const gretl_matrix *m, const char *msg);
+
+void gretl_matrix_print_with_col_heads (const gretl_matrix *m, 
+					const char *title,
+					const char **heads,
+					PRN *prn);
+
 #endif /* MATRIX_EXTRA_H */

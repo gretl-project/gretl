@@ -1004,7 +1004,7 @@ int user_matrix_set_column_names (const gretl_matrix *M,
 	}
 
 	for (i=0; i<n && !err; i++) {
-	    S[i] = gretl_strdup(pdinfo->varname[list[i+1]]);
+	    S[i] = gretl_strndup(pdinfo->varname[list[i+1]], 12);
 	    if (S[i] == NULL) {
 		err = E_ALLOC;
 	    }

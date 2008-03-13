@@ -27,6 +27,7 @@
 #include "gretl_xml.h"
 #include "gretl_func.h"
 #include "system.h"
+#include "matrix_extra.h"
 #include "bootstrap.h"
 
 #include <sys/stat.h>

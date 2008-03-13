@@ -25,6 +25,7 @@
 #include "libgretl.h" 
 #include "libset.h"
 #include "usermat.h"
+#include "matrix_extra.h"
 #include "gretl_func.h"
 #include "nlspec.h"
 #include "cmd_private.h"

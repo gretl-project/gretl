@@ -173,6 +173,8 @@ int get_gretl_matrix_err (void);
 
 void clear_gretl_matrix_err (void);
 
+void gretl_matrix_print (const gretl_matrix *m, const char *msg);
+
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 
 int gretl_matrix_is_idempotent (const gretl_matrix *m);
@@ -542,20 +544,6 @@ int gretl_matrix_columnwise_product (const gretl_matrix *A,
 int
 gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
 				gretl_matrix *DXD);
-
-void 
-gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn);
-
-void gretl_matrix_print (const gretl_matrix *m, const char *msg);
-
-void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg);
-
-void debug_print_matrix (const gretl_matrix *m, const char *msg);
-
-void gretl_matrix_print_with_col_heads (const gretl_matrix *m, 
-					const char *title,
-					const char **heads,
-					PRN *prn);
 
 void gretl_matrix_set_t1 (gretl_matrix *m, int t);
 

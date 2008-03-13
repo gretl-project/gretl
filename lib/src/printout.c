@@ -24,6 +24,7 @@
 #include "libset.h"
 #include "forecast.h"
 #include "gretl_func.h"
+#include "matrix_extra.h"
 
 #include <time.h>
 

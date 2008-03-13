@@ -62,7 +62,7 @@ struct predet_ {
 
 struct liml_data_ {
     double *lmin;   /* min. eigenvalues */
-    double *ll;     /* log likelihood */
+    double *ll;     /* per-equation log likelihood */
     int *idf;       /* overidentification df */
 };
 
@@ -449,6 +449,7 @@ static void system_clear_results (equation_system *sys)
 	free(sys->ldata->ll);
 	free(sys->ldata->idf);
 	free(sys->ldata);
+	sys->ldata = NULL;
     }
 }
 
