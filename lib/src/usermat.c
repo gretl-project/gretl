@@ -257,6 +257,10 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 	fprintf(stderr, " freeing u->M at %p, replacing with "
 		"matrix at %p\n", u->M, M);
 #endif
+	if (u->colnames != NULL && M->cols != u->M->cols) {
+	    free_strings_array(u->colnames, u->M->cols);
+	    u->colnames = NULL;
+	}
 	gretl_matrix_free(u->M);
 	u->M = M;
     }
