@@ -276,6 +276,7 @@ struct str_table funcs[] = {
     { F_STRSTR,   "strstr" },
     { F_STRLEN,   "strlen" },
     { F_VARNAME,  "varname" },
+    { F_COLNAMES, "colnames" },
     { 0,        NULL }
 };
 

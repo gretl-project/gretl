@@ -302,7 +302,12 @@ char *iso_gettext (const char *msgid)
     static int cli;
     char *ret;
 
-    /* command line program: switching of codesets is not required */
+    /* command line program: switching of codesets should not be 
+       required, since unlike the GUI program there's no need
+       to force UTF-8 as the default.  Though there might be 
+       a problem with gnuplot, perhaps?
+    */
+
     if (!strcmp(msgid, "@CLI_INIT")) {
 	cli = 1;
 	return NULL;
@@ -312,14 +317,24 @@ char *iso_gettext (const char *msgid)
 	return gettext(msgid);
     }
 
+    /* iso_switch: we'll reckon that if the system character set is
+       not UTF-8, and is an ISO-9958-N or Windows CP12NN 8-bit set,
+       then we should probably recode when printing translated strings
+       in the context of writing TeX, CSV and RTF files.  If
+       iso_switch is non-zero (once it's determinate) this makes the
+       I_() gettext macro use the system encoding, otherwise I_() is
+       equivalent to plain _(), which always spits out UTF-8.  There's
+       a possible FIXME here: perhaps we should always recode for RTF
+       files -- is a UTF-8 encoded RTF file kosher?  But this seems
+       like a corner case.
+    */
+
     if (iso_switch < 0) {
 	/* not yet determined */
 	cset = get_gretl_charset();
 	fprintf(stderr, "get_gretl_charset gave %s\n", cset);
 	iso_switch = (cset != NULL);
     }
-
-    fprintf(stderr, "cset = %s, iso_switch = %d\n", cset, iso_switch);
 
     if (iso_switch) {
 	bind_textdomain_codeset(PACKAGE, cset);

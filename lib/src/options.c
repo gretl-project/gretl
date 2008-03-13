@@ -122,6 +122,7 @@ struct gretl_option gretl_opts[] = {
     { TABPRINT, OPT_O, "complete" },
     { ESTIMATE, OPT_M, "geomean" },
     { ESTIMATE, OPT_N, "no-df-corr" },
+    { ESTIMATE, OPT_Q, "quiet" },
     { ESTIMATE, OPT_T, "iterate" },
     { ESTIMATE, OPT_V, "verbose" },
     { FCAST,    OPT_D, "dynamic" },

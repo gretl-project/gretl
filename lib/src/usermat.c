@@ -33,6 +33,7 @@ struct user_matrix_ {
     gretl_matrix *M;
     int level;
     char name[VNAMELEN];
+    char **colnames;
 };
 
 static user_matrix **matrices;
@@ -84,6 +85,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
     u->level = gretl_function_depth();
     *u->name = '\0';
     strncat(u->name, name, VNAMELEN - 1);
+    u->colnames = NULL;
 
     return u;
 }
@@ -785,8 +787,13 @@ static void destroy_user_matrix (user_matrix *u)
     fprintf(stderr, "destroy_user_matrix: freeing matrix at %p...", 
 	    (void *) u->M);
 #endif
+
+    if (u->colnames != NULL) {
+	free_strings_array(u->colnames, u->M->cols);
+    }
     gretl_matrix_free(u->M);
     free(u);
+
 #if MDEBUG
     fprintf(stderr, " done\n");
 #endif
@@ -963,6 +970,60 @@ int user_matrix_destroy_by_name (const char *name, PRN *prn)
     }
 
     return err;
+}
+
+int user_matrix_set_column_names (const gretl_matrix *M, 
+				  const int *list,
+				  const DATAINFO *pdinfo)
+{
+    user_matrix *u = get_user_matrix_by_data(M);
+    int i, n, err = 0;
+
+    if (u == NULL) {
+	return E_UNKVAR;
+    }
+
+    n = M->cols;
+
+    if (list == NULL || list[0] == 0) {
+	if (u->colnames != NULL) {
+	    free_strings_array(u->colnames, n);
+	    u->colnames = NULL;
+	}
+    } else if (list[0] != n) {
+	err = E_NONCONF;
+    } else {
+	char **S = strings_array_new(n);
+
+	if (S == NULL) {
+	    err = E_ALLOC;
+	}
+
+	for (i=0; i<n && !err; i++) {
+	    S[i] = gretl_strdup(pdinfo->varname[list[i+1]]);
+	    if (S[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+
+	if (err) {
+	    free_strings_array(S, n);
+	} else {
+	    if (u->colnames != NULL) {
+		free_strings_array(u->colnames, n);
+	    }
+	    u->colnames = S;
+	}
+    }
+
+    return err;
+}
+
+const char **user_matrix_get_column_names (const gretl_matrix *M)
+{
+    user_matrix *u = get_user_matrix_by_data(M);
+
+    return (u != NULL)? (const char **) u->colnames : NULL;
 }
 
 double 

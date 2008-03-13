@@ -2674,6 +2674,7 @@ static int get_col_and_lag (int vnum, const equation_system *sys,
     if (pos > 0) {
 	*col = pos - 1;
     } else {
+	*col = 0;
 	err = 1;
     }
 
@@ -3331,7 +3332,7 @@ static int sys_print_reconstituted_models (const equation_system *sys,
     const double *y;
     double x;
     int print_insts = 0;
-    int ifc, nc, ncmax = 0;
+    int ifc = 0, nc = 0, ncmax = 0;
     int i, j, t, k = 0;
     int err = 0;
 

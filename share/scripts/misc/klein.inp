@@ -6,6 +6,7 @@ open klein.gdt
 
 genr W = Wp + Wg
 genr A = t - 1931
+genr K1 = K(-1)
 
 # set the model up as a system
 system name="Klein Model 1"
@@ -15,7 +16,8 @@ system name="Klein Model 1"
  identity P = X - T - Wp
  identity W = Wp + Wg
  identity X = C + I + G
- endog C I Wp P W X
+ identity K = K1 + I
+ endog C I Wp P W X K
 end system
 
 # and estimate it in various ways

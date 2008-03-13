@@ -269,6 +269,7 @@ enum {
     F_WVAR,
     F_WSD,
     F_STRSTR,
+    F_COLNAMES,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,

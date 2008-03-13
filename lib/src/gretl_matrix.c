@@ -1997,6 +1997,10 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	}
     }
 
+    if (heads == NULL) {
+	heads = user_matrix_get_column_names(m);
+    }
+
     if (heads != NULL) {
 	char head[13];
 
