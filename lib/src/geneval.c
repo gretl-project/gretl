@@ -400,10 +400,15 @@ static NODE *aux_scalar_node (parser *p)
     return get_aux_node(p, NUM, 0, 0);
 }
 
+static void no_data_error (void)
+{
+    gretl_errmsg_set(_("No dataset is in place"));
+}
+
 static NODE *aux_vec_node (parser *p, int n)
 {
     if (p->dinfo->n == 0) {
-	gretl_errmsg_set(_("No dataset is in place"));
+	no_data_error();
 	return NULL;
     } else {
 	return get_aux_node(p, VEC, n, 1);
@@ -413,7 +418,7 @@ static NODE *aux_vec_node (parser *p, int n)
 static NODE *aux_series_node (parser *p, int n)
 {
     if (p->dinfo->n == 0) {
-	gretl_errmsg_set(_("No dataset is in place"));
+	no_data_error();
 	return NULL;
     } else {
 	return get_aux_node(p, VEC, n, 0);
@@ -423,7 +428,7 @@ static NODE *aux_series_node (parser *p, int n)
 static NODE *aux_ivec_node (parser *p, int n)
 {
     if (p->dinfo->n == 0) {
-	gretl_errmsg_set(_("No dataset is in place"));
+	no_data_error();
 	return NULL;
     } else {
 	return get_aux_node(p, IVEC, n, 1);
@@ -433,7 +438,7 @@ static NODE *aux_ivec_node (parser *p, int n)
 static NODE *aux_lvec_node (parser *p)
 {
     if (p->dinfo->n == 0) {
-	gretl_errmsg_set(_("No dataset is in place"));
+	no_data_error();
 	return NULL;
     } else {
 	return get_aux_node(p, LVEC, 0, 1);
@@ -6521,8 +6526,8 @@ static int gen_check_return_type (parser *p)
 	return (p->err = E_DATA);
     }
 
-    if (p->dinfo->n == 0 && r->t != MAT && r->t != NUM) {
-	gretl_errmsg_set(_("No dataset is in place"));
+    if (p->dinfo->n == 0 && r->t != MAT && r->t != NUM && r->t != STR) {
+	no_data_error();
 	return (p->err = E_DATA);
     }
 

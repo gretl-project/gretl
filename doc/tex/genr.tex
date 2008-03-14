@@ -571,20 +571,20 @@ which produces a forward-difference approximation to the Jacobian.
 \subsection{The BFGS maximizer}
 \label{sec:BFGSmax}
 
-The \texttt{BFGSmax} function takes two arguments: a vector holding the
-initial values of a set of parameters, and a string specifying a call
-to a function that calculates the (scalar) criterion to be maximized,
-given the current parameter values and any other relevant data.  If
-the object is in fact minimization, this function should return the
-negative of the criterion.  On successful completion, \texttt{BFGSmax}
-returns the maximized value of the criterion and the matrix given via
-the first argument holds the parameter values which produce the
-maximum.  Here is an example:
+The \texttt{BFGSmax} function takes two arguments: a vector holding
+the initial values of a set of parameters, and a call to a function
+that calculates the (scalar) criterion to be maximized, given the
+current parameter values and any other relevant data.  If the object
+is in fact minimization, this function should return the negative of
+the criterion.  On successful completion, \texttt{BFGSmax} returns the
+maximized value of the criterion and the matrix given via the first
+argument holds the parameter values which produce the maximum.  Here
+is an example:
 %
 \begin{code}
 matrix X = { dataset }
 matrix theta = { 1, 100 }'
-scalar J = BFGSmax(theta, "ObjFunc(&theta, &X)")
+scalar J = BFGSmax(theta, ObjFunc(&theta, &X))
 \end{code}
 %
 It is assumed here that \texttt{ObjFunc} is a user-defined function
@@ -613,7 +613,7 @@ nulldata 10
 matrix theta = { 0 , 0 }
 
 set max_verbose 1
-M = BFGSmax(theta, "Rosenbrock(&theta)")
+M = BFGSmax(theta, Rosenbrock(&theta))
 
 print theta
 \end{scode}
@@ -646,14 +646,13 @@ of progress).
 user-defined function via the \texttt{fdjac} function. 
 
 This function again takes two arguments: an $n \times 1$ matrix
-holding initial parameter values and a string specifying a call to a
-function that calculates and returns an $m \times 1$ matrix, given the
-current parameter values and any other relevant data.  On successful
-completion it returns an $m \times n$ matrix holding the Jacobian.
-For example,
+holding initial parameter values and a function call that calculates
+and returns an $m \times 1$ matrix, given the current parameter values
+and any other relevant data.  On successful completion it returns an
+$m \times n$ matrix holding the Jacobian.  For example,
 %
 \begin{code}
-matrix Jac = fdjac(theta, "SumOC(&theta, &X)")
+matrix Jac = fdjac(theta, SumOC(&theta, &X))
 \end{code}
 where we assume that \texttt{SumOC} is a user-defined function with
 the following structure:
@@ -730,7 +729,7 @@ matrix theta = $coeff
 matrix V = $vcv
 
 mpc = MPC(&theta, &Y)
-matrix Jac = fdjac(theta, "MPC(&theta, &Y)")
+matrix Jac = fdjac(theta, MPC(&theta, &Y))
 Sigma = qform(Jac, V)
 
 printf "\nmpc = %g, std.err = %g\n", mpc, sqrt(Sigma)

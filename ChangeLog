@@ -6,7 +6,10 @@ version 1.7.4, in progress
 - Autocorrelation test: use Kiviet's original 1986 formula
   for the LMF statistic
 - "system" command: enable naming of systems in the manner
-  "sysname <- system"
+  "sysname <- system"; enable forecasts; make parsing of
+  identities more robust; enable TeX view/print in GUI;
+  add new accessors $yhat, $sysGamma, $sysA, $sysB
+- "estimate" command: add --quiet option
 - Several other enhancements to "system" (write this up when 
   finished)
 - remove obsolete command: multiply
@@ -15,8 +18,12 @@ version 1.7.4, in progress
 - Fix for the case of graphing 6 time series together
 - Fix bugs 1908139, 1909469
 - Fix documentation of $stopwatch
-- Move handling of strings into "genr"
-- Enable TeX view/print for simultaneous equation systems
+- Move handling of strings into "genr"; add strlen function
+- fdjac and BFGSmax functions: don't require that the
+  function-call argument be wrapped in quotes
+- "corr" command: allow printing of ranked data for Kendall's
+  tau as well as spearman (verbose option); also add a
+  verbose check-box to the rank-correlation dialog
 - Fix sub-sampling bug (new in 1.7.3)
 
 2/29/2008 version 1.7.3

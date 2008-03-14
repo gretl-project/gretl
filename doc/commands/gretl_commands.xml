@@ -1356,6 +1356,10 @@
 	  <flag>--kendall</flag>
 	  <effect>Kendall's tau</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print rankings</effect>
+	</option>
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -1374,8 +1378,13 @@
 	The (mutually exclusive) options <lit>--spearman</lit> and
 	<lit>--kendall</lit> produce, respectively, Spearman's rank
 	correlation rho and Kendall's rank correlation tau in place of the
-	default Pearson coefficient.  When either of these options is
-	given, <repl>varlist</repl> should contain just two variables.
+	default Pearson coefficient.  When either of these options is given,
+	<repl>varlist</repl> should contain just two variables.
+      </para>
+      <para>
+	When a rank correlation is computed, the <lit>verbose</lit> option can
+	be used to print the original and ranked data (otherwise this option
+	is ignored).
       </para>
     </description>
 
@@ -7793,15 +7802,15 @@
 	<lit>sscanf</lit> function in the C programming language.
       </para>
       <para>
-	<repl>source</repl> may be either a literal string, enclosed in
-	double quotes, or the name of a predefined string variable
-	(starting with <lit>@</lit>).  <repl>format</repl> is defined
-	similarly to the format string in <cmdref targ="printf"/> (more on
-	this below). <repl>args</repl> should be a comma-separated list
-	containing the names of pre-defined variables: these are the
-	targets of conversion from <repl>source</repl>.  (For those
-	used to C: one can prefix the names of numerical variables
-	with <lit>&amp;</lit> but this is not required.)
+	<repl>source</repl> may be either a literal string, enclosed in double
+	quotes, or the name of a predefined string variable.
+	<repl>format</repl> is defined similarly to the format string in
+	<cmdref targ="printf"/> (more on this below). <repl>args</repl> should
+	be a comma-separated list containing the names of pre-defined
+	variables: these are the targets of conversion from
+	<repl>source</repl>.  (For those used to C: one can prefix the names
+	of numerical variables with <lit>&amp;</lit> but this is not
+	required.)
       </para>
       <para>
 	Literal	text in <repl>format</repl> is matched against
@@ -7862,9 +7871,9 @@
 	sscanf "123456", "%3d%3d", x, y
 
 	sprintf S "1 2 3 4\n5 6 7 8"
-	print "@S"
+	S
 	matrix m
-	sscanf @S, "%m", m
+	sscanf S, "%m", m
 	print m
       </code>
 

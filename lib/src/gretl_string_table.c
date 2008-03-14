@@ -641,27 +641,28 @@ char *retrieve_date_string (int t, const DATAINFO *pdinfo, int *err)
 
 char *retrieve_file_content (const char *fname, int *err)
 {
-    char fullname[FILENAME_MAX];
     char *ret = NULL;
 
-    *fullname = '\0';
-    strncat(fullname, fname, FILENAME_MAX - 1);
-
-    if (*fullname != '\0') {
+    if (fname == NULL || *fname == '\0') {
+	*err = E_DATA;
+    } else {
+	char fullname[FILENAME_MAX];
 	GError *gerr = NULL;
 	gsize len = 0;
+	
 
+	*fullname = '\0';
+	strncat(fullname, fname, FILENAME_MAX - 1);
 	addpath(fullname, NULL, 0);
 
 	g_file_get_contents(fullname, &ret, &len, &gerr);
+
 	if (gerr != NULL) {
 	    gretl_errmsg_set(gerr->message);
 	    g_error_free(gerr);
 	    *err = E_FOPEN;
 	}
-    } else {
-	*err = E_DATA;
-    }
+    } 
 
     return ret;
 }

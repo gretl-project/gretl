@@ -110,27 +110,24 @@ static void make_ranking (const double *sz, int m,
 		    rz[j] = avg;
 		}
 	    }
-	    *ties = 1;
+	    if (ties != NULL) {
+		*ties = 1;
+	    }
 	} 
 
 	r += cases;
     }
 }
 
-static int real_spearman_rho (const double *x, const double *y, int n, 
-			      double *rho, double *zval,
-			      double **rxout, double **ryout, 
-			      int *pm)
+static int rankcorr_get_rankings (const double *x, const double *y, int n, 
+				  double **rxout, double **ryout, 
+				  int *pm, int *ties)
 {
     double *sx = NULL, *sy = NULL;
     double *rx = NULL, *ry = NULL;
-    double sd, sr;
-    int i, m, ties = 0;
-
-    *rho = *zval = NADBL;
+    int i, m = 0;
 
     /* count non-missing pairs */
-    m = 0;
     for (i=0; i<n; i++) {
 	if (!na(x[i]) && !na(y[i])) {
 	    m++;
@@ -174,8 +171,39 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     }
 
     /* make rankings by comparing "raw" x, y with sorted */
-    make_ranking(sx, m, x, y, n, rx, &ties, RANK_X);
-    make_ranking(sy, m, x, y, n, ry, &ties, RANK_Y);
+    make_ranking(sx, m, x, y, n, rx, ties, RANK_X);
+    make_ranking(sy, m, x, y, n, ry, ties, RANK_Y);
+
+    /* save the ranks */
+    *rxout = rx;
+    *ryout = ry;
+
+    if (pm != NULL) {
+	*pm = m;
+    }
+
+    free(sx);
+    free(sy);
+
+    return 0;
+}
+
+static int real_spearman_rho (const double *x, const double *y, int n, 
+			      double *rho, double *zval,
+			      double **rxout, double **ryout, 
+			      int *pm)
+{
+    double *rx = NULL, *ry = NULL;
+    double sd, sr;
+    int i, m, ties = 0;
+    int err = 0;
+
+    *rho = *zval = NADBL;
+
+    err = rankcorr_get_rankings(x, y, n, &rx, &ry, &m, &ties);
+    if (err) {
+	return err;
+    }
 
     if (ties == 0) {
 	/* calculate rho and z-score, no ties */
@@ -195,23 +223,44 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     }
 
     /* save the ranks, if wanted */
-    if (rxout != NULL) {
+    if (rxout != NULL && ry != NULL) {
 	*rxout = rx;
-    } else {
-	free(rx);
-    }
-    if (ryout != NULL) {
 	*ryout = ry;
     } else {
+	free(rx);
 	free(ry);
     }
 
     *pm = m;
 
-    free(sx);
-    free(sy);
+    return err;
+}
 
-    return 0;
+static void print_raw_and_ranked (int vx, int vy,
+				  const double *x, const double *y, 
+				  const double *rx, const double *ry,
+				  const DATAINFO *pdinfo,
+				  PRN *prn)
+{
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int t, i = 0;
+
+    obs_marker_init(pdinfo);
+    pprintf(prn, "\n     %s ", _("Obs"));
+    pprintf(prn, "%13s%13s%13s%13s\n\n", pdinfo->varname[vx], _("rank"),
+	    pdinfo->varname[vy], _("rank"));
+
+    for (t=0; t<T; t++) {
+	print_obs_marker(t + pdinfo->t1, pdinfo, prn);
+	if (!(na(x[t])) && !(na(y[t]))) {
+	    gretl_printxn(x[t], 15, prn);
+	    pprintf(prn, "%15g", rx[i]);
+	    gretl_printxn(y[t], 15, prn);
+	    pprintf(prn, "%15g", ry[i]);
+	    i++;
+	}
+	pputc(prn, '\n');
+    }
 }
 
 /**
@@ -235,7 +284,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
     double *rx = NULL, *ry = NULL;
     const double *x, *y;
     double rho, zval;
-    int vx, vy, t, m;
+    int vx, vy, m;
     int err;
 
     if (list[0] != 2) {
@@ -293,26 +342,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
  skipit:
 
     if (rx != NULL && ry != NULL) { 
-	/* print raw and ranked data */
-	int i = 0;
-
-	obs_marker_init(pdinfo);
-	pprintf(prn, "\n     %s ", _("Obs"));
-	pprintf(prn, "%13s%13s%13s%13s\n\n", pdinfo->varname[vx], _("rank"),
-	       pdinfo->varname[vy], _("rank"));
-
-	for (t=0; t<T; t++) {
-	    print_obs_marker(t + pdinfo->t1, pdinfo, prn);
-	    if (!(na(x[t])) && !(na(y[t]))) {
-		gretl_printxn(x[t], 15, prn);
-		pprintf(prn, "%15g", rx[i]);
-		gretl_printxn(y[t], 15, prn);
-		pprintf(prn, "%15g", ry[i]);
-		i++;
-	    }
-	    pputc(prn, '\n');
-	}
-
+	print_raw_and_ranked(vx, vy, x, y, rx, ry, pdinfo, prn);
 	free(rx);
 	free(ry);
     }
@@ -515,8 +545,21 @@ int kendall (const int *list, const double **Z, const DATAINFO *pdinfo,
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), z,
 		normal_pvalue_2(z));
-	pputc(prn, '\n');
     }
+
+    if (opt & OPT_V) {
+	double *rx = NULL, *ry = NULL;
+
+	rankcorr_get_rankings(x, y, T, &rx, &ry, NULL, NULL);
+
+	if (rx != NULL && ry != NULL) { 
+	    print_raw_and_ranked(vx, vy, x, y, rx, ry, pdinfo, prn);
+	    free(rx);
+	    free(ry);
+	}
+    }
+
+    pputc(prn, '\n');
 
     /* clean up */
     free(xy);

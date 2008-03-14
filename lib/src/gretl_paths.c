@@ -721,7 +721,6 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 {
     char orig[MAXLEN];
     char *tmp = fname;
-    char *dwork = NULL;
     FILE *test;
 
     strcpy(orig, fname);
@@ -785,18 +784,21 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     }
 
     /* try looking in default workdir? */
-    dwork = get_default_workdir(ppaths);
-    if (dwork != NULL) {
-	int ok = 0;
+    if (ppaths != NULL) {
+	char *dwork = get_default_workdir(ppaths);
 
-	fname = tmp;
-	strcpy(fname, orig);
-	if ((fname = search_dir(fname, dwork, USER_SEARCH))) { 
-	    ok = 1;
-	}
-	free(dwork);
-	if (ok) {
-	    return fname;
+	if (dwork != NULL) {
+	    int ok = 0;
+
+	    fname = tmp;
+	    strcpy(fname, orig);
+	    if ((fname = search_dir(fname, dwork, USER_SEARCH))) { 
+		ok = 1;
+	    }
+	    free(dwork);
+	    if (ok) {
+		return fname;
+	    }
 	}
     }
 

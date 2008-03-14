@@ -1023,6 +1023,7 @@ int do_rankcorr (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
+    const char *flagstr;
     PRN *prn;
     char title[64];
     gint err;
@@ -1031,20 +1032,17 @@ int do_rankcorr (selector *sr)
 	return 1;
     }
 
-    if (opt & OPT_K) {
-	gretl_command_sprintf("corr%s --kendall", buf);
-    } else {
-	gretl_command_sprintf("spearman%s --verbose", buf);
-    }
+    flagstr = print_flags(opt, CORR); 
+    gretl_command_sprintf("corr%s%s", buf, flagstr);
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return 1;
     }
 
     if (opt & OPT_K) {
-	err = kendall(libcmd.list, (const double **) Z, datainfo, OPT_V, prn);
+	err = kendall(libcmd.list, (const double **) Z, datainfo, opt, prn);
     } else {
-	err = spearman(libcmd.list, (const double **) Z, datainfo, OPT_V, prn);
+	err = spearman(libcmd.list, (const double **) Z, datainfo, opt, prn);
     }
 
     if (err) {
@@ -1056,8 +1054,7 @@ int do_rankcorr (selector *sr)
     strcpy(title, "gretl: ");
     strcat(title, _("rank correlation"));
 
-    view_buffer(prn, 78, 400, title, (opt & OPT_K)? PRINT : SPEARMAN, 
-		NULL); 
+    view_buffer(prn, 78, 400, title, PRINT, NULL); 
 
     return 0;
 }

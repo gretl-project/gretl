@@ -386,8 +386,15 @@ static NODE *base (parser *p, NODE *up)
     return t;
 }
 
-/* grab parenthesized string argument, for some special
-   functions */
+/* Grab a string argument.  Note: we have a mechanism in genlex.c for
+   retrieving arguments that take the form of quoted string literals
+   or names of string variables.  The special use of this function is
+   to grab a literal string without requiring the user to wrap it in
+   quotes; we use it only where we know the only acceptable argument
+   is a string.  This function assumes that the argument in question
+   is the last (or only) argument to a function: we look for a closing
+   parenthesis and flag an error if we don't find one.
+*/
 
 static NODE *get_string_arg (parser *p)
 {
@@ -670,6 +677,7 @@ static void get_args (NODE *t, parser *p, int opt)
 	}	    
 	if (p->sym == P_COM) {
 	    if (opt == RIGHT_STR) {
+		/* the second arg must be a literal string */
 		t->v.b2.r = get_string_arg(p);
 	    } else {
 		lex(p);

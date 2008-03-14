@@ -7749,15 +7749,15 @@
 	<lit>sscanf</lit> del linguaggio di programmazione C.
       </para>
       <para>
-        La <repl>stringa</repl> può essere una stringa vera e propria, racchiusa
-        tra virgolette doppie, o il nome di una variabile stringa predefinita
-        (che comincia col carattere <lit>@</lit>). Il <repl>formato</repl> è
-        definito in modo simile alla stringa di formato del comando <cmdref
-        targ="printf"/> (si veda oltre). Gli <repl>argomenti</repl> sono una
-        lista separata da virgole che contiene i nomi di variabili predefinite
-        che verranno assegnate a seconda dei valori letti dalla
-        <repl>stringa</repl>. Per chi conosce il C: è possibile prefissare con
-        <lit>&amp;</lit> i nomi delle variabili numeriche, ma non è richiesto.
+        La <repl>stringa</repl> può essere una stringa vera e propria,
+	racchiusa tra virgolette doppie, o il nome di una variabile stringa
+	predefinita. Il <repl>formato</repl> è definito in modo simile alla
+	stringa di formato del comando <cmdref targ="printf"/> (si veda
+	oltre). Gli <repl>argomenti</repl> sono una lista separata da virgole
+	che contiene i nomi di variabili predefinite che verranno assegnate a
+	seconda dei valori letti dalla <repl>stringa</repl>. Per chi conosce
+	il C: è possibile prefissare con <lit>&amp;</lit> i nomi delle
+	variabili numeriche, ma non è richiesto.
       </para>
       <para>
 	Le regole specificate nel <repl>formato</repl> vengono usate per
@@ -7818,9 +7818,9 @@
 	sscanf "123456", "%3d%3d", x, y
 
 	sprintf S "1 2 3 4\n5 6 7 8"
-	print "@S"
+	S
 	matrix m
-	sscanf @S, "%m", m
+	sscanf S, "%m", m
 	print m
       </code>
 

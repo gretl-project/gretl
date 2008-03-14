@@ -1971,14 +1971,15 @@ static gchar *make_viewer_title (int role, const char *fname)
 
     switch (role) {
     case GUI_HELP: 
-    case FUNCS_HELP:
 	title = g_strdup(_("gretl: help")); break;
+    case FUNCS_HELP:
+	title = g_strdup(_("gretl: function reference")); break;
     case CLI_HELP:
-	title = g_strdup(_("gretl: command syntax")); break;
+	title = g_strdup(_("gretl: command reference")); break;
     case GUI_HELP_EN: 
 	title = g_strdup("gretl: help"); break;
     case CLI_HELP_EN:
-	title = g_strdup("gretl: command syntax"); break;
+	title = g_strdup("gretl: command reference"); break;
     case VIEW_LOG:
 	title = g_strdup(_("gretl: command log")); break;
     case CONSOLE:

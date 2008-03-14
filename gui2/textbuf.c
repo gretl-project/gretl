@@ -862,10 +862,21 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	    } else {
 		int role = object_get_int(tview, "role");
 
-		if ((role == FUNCS_HELP && !xref) || xref) {
-		    genr_funcs_ref(p, page, NULL);
+		fprintf(stderr, "follow_if_link: page=%d, role=%d, xref=%d\n",
+			page, role, xref);
+
+		if (role == FUNCS_HELP) {
+		    if (xref) {
+			plain_text_cmdref(p, page, NULL);
+		    } else {
+			genr_funcs_ref(p, page, NULL);
+		    }
 		} else {
-		    plain_text_cmdref(p, page, NULL);
+		    if (xref) {
+			genr_funcs_ref(p, page, NULL);
+		    } else {
+			plain_text_cmdref(p, page, NULL);
+		    }
 		}
 	    }
 	    break;

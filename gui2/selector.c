@@ -114,6 +114,7 @@ struct _selector {
                          c == PANEL_WLS || \
                          c == PANEL_B || \
                          c == PROBIT || \
+			 c == SPEARMAN || \
                          c == TOBIT || \
                          c == TSLS || \
                          c == VAR || \
@@ -3302,7 +3303,10 @@ static void build_selector_switches (selector *sr)
     } else if (sr->code == XTAB) {
 	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
-    } 
+    } else if (sr->code == SPEARMAN) {
+	tmp = gtk_check_button_new_with_label(_("Show rankings"));
+	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
+    }	
 
 #ifdef HAVE_X12A    
     if (sr->code == ARMA) {

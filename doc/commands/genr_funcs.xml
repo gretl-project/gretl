@@ -1318,6 +1318,19 @@
       </description>
     </function>
 
+    <function name="getenv" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  If an environment variable by the name of <argname>s</argname>
+	  is defined, returns the value of that variable, otherwise
+	  returns an empty string.
+	</para>
+      </description>
+    </function>
+
     <function name="gini" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -2970,6 +2983,22 @@
       </description>
     </function>
 
+    <function name="readfile" output="string">
+      <fnargs>
+	<fnarg type="string">fname</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  If a file by the name of <argname>fname</argname> exists and
+	  is readable, returns a string containing the content of
+	  this file, otherwise flags an error.  
+	</para>
+	<para>
+	  Also see the <cmdref targ="sscanf"/> command.
+	</para>
+      </description>
+    </function>
+
     <function name="resample" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
@@ -3216,6 +3245,32 @@
 	  <seelist> 
 	    <fncref targ="var"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="strlen" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns the number of characters in <argname>s</argname>.
+	</para>
+      </description>
+    </function>
+
+    <function name="strstr" output="string">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Searches <argname>s1</argname> for an occurrence of the string
+	  <argname>s2</argname>.  If a match is found, returns a copy of the
+	  portion of <argname>s1</argname> that starts with
+	  <argname>s2</argname>, otherwise returns an empty string.
 	</para>
       </description>
     </function>
