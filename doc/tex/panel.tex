@@ -450,10 +450,77 @@ efficient: it does not make the fullest use of the available
 instruments for $\Delta y_{i,t-1}$, nor does it take into account the
 differenced structure of the error $\eta_{it}$.  It is improved upon
 by the methods of Arellano and Bond (1991) and Blundell and Bond
-(1998).  There is provisional support for the Arellano--Bond method in
-current gretl --- please see the documentation for the \cmd{arbond}
-command.
+(1998).  
 
+\app{Gretl} implements natively the Arellano--Bond estimator; the
+rationale behind it is, strictly speaking, that of a GMM estimator,
+but it can be illustrated briefly as follows (see Arellano (2003) for
+a comprehensive exposition). Consider again equation
+(\ref{eq:fe-dyn}): if for each individual we have observations through
+time that go from 1 to $T$, we may write the following system:
+\begin{eqnarray}
+  \label{eq:arbond3}
+  \Delta y_{i,3} & = & \Delta X_{i,3}\beta + \rho \Delta y_{i,2} +
+  \eta_{i,3} \\
+  \label{eq:arbond4}
+  \Delta y_{i,4} & = & \Delta X_{i,4}\beta + \rho \Delta y_{i,4} +
+  \eta_{i,4} \\
+  \label{eq:arbondT}
+  \notag \vdots \\
+  \Delta y_{i,T} & = & \Delta X_{i,T}\beta + \rho \Delta y_{i,T} +
+  \eta_{i,T} 
+\end{eqnarray}
+Following the same logic as for the Anderson--Hsiao estimator, we see
+that the only possible instrument for $\Delta y_{i,2}$ in equation
+(\ref{eq:arbond3}) is $y_{i,1}$, but for equation (\ref{eq:arbond4})
+we can use \emph{both} $y_{i,1}$ and $y_{i,2}$ as instruments for
+$\Delta y_{i,3}$ , thereby gaining efficiency. Likewise, for the final
+period $T$ we can use as instruments all values of $y_{i,t}$ up to $t
+= T-2$. In practice, the Arellano--Bond technique estimates the above
+system, with an increasing number of instruments for each equation.
+
+Estimation is typically carried out in two steps: in step 1 the
+parameters are estimated by assuming that the covariance matrix of the
+$\eta_{i,t}$ terms is proportional to
+\[
+\left[
+  \begin{array}{rrrrr}
+    2 & -1 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 & \cdots & 0 \\
+    0 & -1 & 2 & \cdots & 0 \\
+    & \vdots & & \ddots & \vdots \\
+    0 & 0 & 0 & \cdots & 2 \\
+  \end{array}
+\right] ,
+\]
+as it should if the disturbances in the original model $u_{i,t}$ were
+homoskedastic and uncorrelated. This yields a consistent, but not
+necessarily efficient, estimator.
+
+Step 2 uses the parameters estimated in step 1 to compute an estimate
+of the covariance of the $\eta_{i,t}$ disturbances, and re-estimates
+the parameters based on that. This procedure has the double effect of
+handling heteroskedasticity and/or serial correlation, plus producing
+estimators that are asymptotically efficient.
+
+One-step estimators were sometimes preferred, in the past, on the
+ground of them being more robust. Plus, computing the covariance
+matrix of the 2-step estimator via the standard GMM formulae has been
+shown to produce grossly biased results in finite
+samples. \app{Gretl}, however, implements the finite-sample correction
+devised in Windmeijer (2005), so standard errors for the 2-step
+estimator can be considered relatively accurate.
+
+By default, \app{gretl}'s \cmd{arbond} command estimates the parameters in
+\[
+  A(L) y_{i,t} = X_{i,t}\beta + v_i + u_{i,t} 
+\]
+via the 1-step procedure, by automatically differentiating the
+dependent variable (note that the right-hand side variable are not
+automatically differentiated) and using all available
+instruments. However, these choices (plus some others) can be
+overridden: please see the documentation for the \cmd{arbond} command
+and the \texttt{arbond91} example file supplied with \app{gretl}.
 
 \section{Illustration: the Penn World Table}
 \label{PWT}
