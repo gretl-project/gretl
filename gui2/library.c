@@ -45,6 +45,7 @@
 #include "gretl_panel.h"
 #include "usermat.h"
 #include "matrix_extra.h"
+#include "gretl_string_table.h"
 #include "texprint.h"
 #include "bootstrap.h"
 #include "fileselect.h"
@@ -6718,6 +6719,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 	if (get_matrix_by_name(cmd->param)) {
 	    err = session_matrix_destroy_by_name(cmd->param, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}
+	if (get_string_by_name(cmd->param)) {
+	    err = delete_saved_string(cmd->param, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    } 

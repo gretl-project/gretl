@@ -54,6 +54,8 @@ int is_user_string (const char *sname);
 
 void saved_strings_cleanup (void);
 
+int delete_saved_string (const char *name, PRN *prn);
+
 int destroy_saved_strings_at_level (int d);
 
 int is_codevar (const char *s);

@@ -968,7 +968,7 @@ int user_matrix_destroy_by_name (const char *name, PRN *prn)
 
     err = user_matrix_destroy(u);
 
-    if (!err && prn != NULL) {
+    if (!err && prn != NULL && gretl_messages_on()) {
 	pprintf(prn, _("Deleted matrix %s"), name);
 	pputc(prn, '\n');
     }
@@ -976,9 +976,60 @@ int user_matrix_destroy_by_name (const char *name, PRN *prn)
     return err;
 }
 
-int user_matrix_set_column_names (const gretl_matrix *M, 
-				  const int *list,
-				  const DATAINFO *pdinfo)
+int umatrix_set_colnames_from_string (const gretl_matrix *M, 
+				      const char *s)
+{
+    user_matrix *u = get_user_matrix_by_data(M);
+    int i, n, err = 0;
+
+    if (u == NULL) {
+	return E_UNKVAR;
+    }
+
+    n = M->cols;
+
+    if (s == NULL || *s == '\0') {
+	if (u->colnames != NULL) {
+	    free_strings_array(u->colnames, n);
+	    u->colnames = NULL;
+	}
+    } else if (count_fields(s) != n) {
+	err = E_NONCONF;
+    } else {
+	char **S = strings_array_new(n);
+	char *tmp;
+
+	if (S == NULL) {
+	    err = E_ALLOC;
+	}
+
+	for (i=0; i<n && !err; i++) {
+	    tmp = gretl_word_strdup(s, &s);
+	    if (tmp != NULL) {
+		S[i] = gretl_strndup(tmp, 12);
+	    }
+	    if (S[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	    free(tmp);
+	}
+
+	if (err) {
+	    free_strings_array(S, n);
+	} else {
+	    if (u->colnames != NULL) {
+		free_strings_array(u->colnames, n);
+	    }
+	    u->colnames = S;
+	}
+    }
+
+    return err;
+}
+
+int umatrix_set_colnames_from_list (const gretl_matrix *M, 
+				    const int *list,
+				    const DATAINFO *pdinfo)
 {
     user_matrix *u = get_user_matrix_by_data(M);
     int i, n, err = 0;
@@ -1528,6 +1579,40 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
     return E;
 }
 
+static void xml_put_user_matrix (user_matrix *u, FILE *fp)
+{
+    gretl_matrix *M;
+    int i, j;
+
+    if (u == NULL || u->M == NULL) {
+	return;
+    }
+
+    M = u->M;
+
+    fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"", 
+	    u->name, M->rows, M->cols);
+
+    if (u->colnames != NULL) {
+	fputs(" colnames=\"", fp);
+	for (j=0; j<M->cols; j++) {
+	    fputs(u->colnames[j], fp);
+	    fputc((j < M->cols - 1)? ' ' : '"', fp);
+	}
+    } 
+
+    fputs(">\n", fp);
+
+    for (i=0; i<M->rows; i++) {
+	for (j=0; j<M->cols; j++) {
+	    fprintf(fp, "%.15g ", gretl_matrix_get(M, i, j));
+	}
+	fputc('\n', fp);
+    }
+
+    fputs("</gretl-matrix>\n", fp); 
+}
+
 void write_matrices_to_file (FILE *fp)
 {
     int i;
@@ -1539,7 +1624,7 @@ void write_matrices_to_file (FILE *fp)
 
     for (i=0; i<n_matrices; i++) {
 	if (matrices[i]->M != NULL) {
-	    gretl_xml_put_matrix(matrices[i]->M, matrices[i]->name, fp);
+	    xml_put_user_matrix(matrices[i], fp);
 	}
     }
 

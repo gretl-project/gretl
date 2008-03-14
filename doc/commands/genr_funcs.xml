@@ -756,6 +756,24 @@
       </description>
     </function>
 
+    <function name="colnames" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="list-or-string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Attaches names to the columns of the <by r="T" c="k"/> matrix
+	  <argname>M</argname>. If <argname>s</argname> is a named list, the
+	  column names are copied from the names of the variables; the list
+	  must have <math>k</math> members. If <argname>s</argname> is a
+	  string, it should contain <math>k</math> space-separated
+	  sub-strings.  The return value is 0 on successful completion,
+	  non-zero on error.
+	</para>
+      </description>
+    </function>
+
     <function name="cols" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>

@@ -453,6 +453,61 @@ int add_string_as (const char *s, const char *name)
     return err;
 }
 
+static int destroy_saved_string (saved_string *S)
+{
+    int i, j, ns = n_saved_strings - 1;
+    int err = 0;
+
+    for (i=0; i<n_saved_strings; i++) {
+	if (&saved_strings[i] == S) {
+	    free(saved_strings[i].s);
+	    for (j=i; j<ns; j++) {
+		saved_strings[j] = saved_strings[j+1];
+	    }
+	    break;
+	}
+    } 
+
+    if (ns == 0) {
+	free(saved_strings);
+	saved_strings = NULL;
+    } else {
+	saved_string *tmp = realloc(saved_strings, ns * sizeof *tmp);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    saved_strings = tmp;
+	}
+    }
+
+    n_saved_strings = ns;
+
+    return err;
+}
+
+int delete_saved_string (const char *name, PRN *prn)
+{
+    saved_string *S;
+    int err, builtin = 0;
+
+    S = get_saved_string_by_name(name, &builtin);
+    if (S == NULL) {
+	err = E_UNKVAR;
+    } else if (builtin) {
+	sprintf(gretl_errmsg, _("You cannot delete '%s'"), name);
+	err = E_DATA;
+    } else {
+	err = destroy_saved_string(S);
+	if (!err && prn != NULL && gretl_messages_on()) {
+	    pprintf(prn, _("Deleted string %s"), name);
+	    pputc(prn, '\n');
+	}
+    }
+
+    return err;
+}
+
 void saved_strings_cleanup (void)
 {
     int i;

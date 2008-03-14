@@ -40,7 +40,8 @@ typedef enum {
     SHEET_INSERT_OBS_OK = 1 << 2,
     SHEET_ADD_OBS_OK    = 1 << 3,
     SHEET_USE_COMMA     = 1 << 4,
-    SHEET_MODIFIED      = 1 << 5
+    SHEET_MODIFIED      = 1 << 5,
+    SHEET_COLNAME_MOD   = 1 << 6
 } SheetFlags;
 
 enum {
@@ -70,6 +71,7 @@ typedef struct {
     gretl_matrix *matrix;
     gretl_matrix *oldmat;
     char mname[VNAMELEN];
+    const char **colnames;
     int *varlist;
     int datacols, datarows;
     int totcols;
@@ -342,6 +344,44 @@ static void update_sheet_matrix (Spreadsheet *sheet)
     }
 }
 
+static void maybe_update_column_names (Spreadsheet *sheet)
+{
+    if (sheet->flags & SHEET_COLNAME_MOD) {
+	gretl_matrix *M = sheet->oldmat;
+	GtkTreeViewColumn *col;
+	const char *title;
+	char *cnames;
+	int j, err = 0;
+
+	cnames = malloc(M->cols * 13 + 1);
+
+	if (cnames == NULL) {
+	    err = 1;
+	} else {
+	    *cnames = '\0';
+	    for (j=0; j<M->cols && !err; j++) {
+		title = NULL;
+		col = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view), j + 1);
+		if (col != NULL) {
+		    title = gtk_tree_view_column_get_title(col);
+		}
+		if (title != NULL) {
+		    strcat(cnames, title);
+		    strcat(cnames, " ");
+		} else {
+		    err = 1;
+		}
+	    }
+	    if (!err) {
+		umatrix_set_colnames_from_string(M, cnames);
+	    }
+	    free(cnames);
+	}
+
+	sheet->flags &= ~SHEET_COLNAME_MOD;
+    }
+}
+
 /* in case we're editing a pre-existing matrix, carry the
    modifications back */
 
@@ -366,6 +406,9 @@ static void update_saved_matrix (Spreadsheet *sheet)
 		sheet->oldmat = m;
 	    }
 	}
+
+	maybe_update_column_names(sheet);
+
 	/* record the fact that a matrix has been changed */
 	mark_session_changed();
     }
@@ -678,20 +721,63 @@ static void name_new_obs (GtkWidget *widget, dialog_t *dlg)
 
 static void name_var_dialog (Spreadsheet *sheet) 
 {
+    int cancel = 0;
+
     edit_dialog (_("gretl: name variable"), 
 		 _("Enter name for new variable\n"
 		   "(max. 15 characters)"),
 		 NULL, name_new_var, sheet, 
-		 0, VARCLICK_NONE, NULL);
+		 0, VARCLICK_NONE, &cancel);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
 {
+    int cancel = 0;
+
     edit_dialog (_("gretl: case marker"), 
 		 _("Enter case marker for new obs\n"
 		   "(max. 8 characters)"),
 		 NULL, name_new_obs, sheet, 
-		 0, VARCLICK_NONE, NULL);
+		 0, VARCLICK_NONE, &cancel);
+}
+
+static void name_matrix_col (GtkWidget *widget, dialog_t *dlg) 
+{
+    GtkTreeViewColumn *col = (GtkTreeViewColumn *) edit_dialog_get_data(dlg);
+    const gchar *buf, *old;
+    char colname[12];
+
+    buf = edit_dialog_get_text(dlg);
+    if (buf == NULL || validate_varname(buf)) {
+	return;
+    }
+
+    *colname = 0;
+    strncat(colname, buf, 12);
+
+    close_dialog(dlg);
+
+    old = gtk_tree_view_column_get_title(col);
+
+    if (strcmp(old, colname)) {
+	Spreadsheet *sheet = g_object_get_data(G_OBJECT(col), "sheet");
+
+	gtk_tree_view_column_set_title(col, colname);
+	sheet->flags |= SHEET_COLNAME_MOD;
+	sheet_set_modified(sheet, TRUE);
+    }
+}
+
+static void name_column_dialog (GtkTreeViewColumn *col, gpointer p) 
+{
+    int cancel = 0;
+
+    edit_dialog (_("gretl: name column"), 
+		 _("Enter name for column\n"
+		   "(max. 12 characters)"),
+		 gtk_tree_view_column_get_title(col),
+		 name_matrix_col, col, 
+		 0, VARCLICK_NONE, &cancel);
 }
 
 static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
@@ -1164,6 +1250,7 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
 	g_object_set_data(G_OBJECT(sheet->win), "object", u);
 
 	sheet->oldmat = m;
+	maybe_update_column_names(sheet);
 	sheet_set_modified(sheet, FALSE);
     }
 }
@@ -1831,7 +1918,11 @@ static int build_sheet_view (Spreadsheet *sheet)
 
     if (sheet->matrix != NULL) {
 	for (i=1; i<=sheet->datacols; i++) {
-	    sprintf(tmpstr, "%d", i);
+	    if (sheet->colnames != NULL) {
+		double_underscores(tmpstr, sheet->colnames[i-1]);
+	    } else {
+		sprintf(tmpstr, "%d", i);
+	    }
 	    column = gtk_tree_view_column_new_with_attributes(tmpstr,
 							      sheet->datacell,
 							      "text", 
@@ -1840,6 +1931,10 @@ static int build_sheet_view (Spreadsheet *sheet)
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	    set_up_sheet_column(column, width, TRUE);
 	    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(i));
+	    g_object_set_data(G_OBJECT(column), "sheet", sheet);
+	    gtk_tree_view_column_set_clickable(column, TRUE);
+	    g_signal_connect(G_OBJECT(column), "clicked",
+			     G_CALLBACK(name_column_dialog), column);
 	}
     } else {
 	colnum = 0;
@@ -1976,6 +2071,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->varlist = NULL;
     sheet->matrix = NULL;
     sheet->oldmat = NULL;
+    sheet->colnames = NULL;
     sheet->cmd = c;
     sheet->flags = 0;
 
@@ -2755,7 +2851,6 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 			 int block)
 {
     Spreadsheet *sheet = NULL;
-    gretl_matrix *oldmat = m;
     int err = 0;
 
     if (m == NULL || name == NULL) {
@@ -2768,8 +2863,8 @@ static void edit_matrix (gretl_matrix *m, const char *name,
     }
 
     strcpy(sheet->mname, name);
-    sheet->oldmat = oldmat;
-    sheet->matrix = gretl_matrix_copy(oldmat);
+    sheet->oldmat = m;
+    sheet->matrix = gretl_matrix_copy(m);
     if (sheet->matrix == NULL) {
 	err = E_ALLOC;
     }
@@ -2779,6 +2874,7 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 	free(sheet);
 	sheet = NULL;
     } else {
+	sheet->colnames = user_matrix_get_column_names(m);
 	sheet->datarows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
 	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, block);

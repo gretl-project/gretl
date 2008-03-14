@@ -40,6 +40,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "usermat.h"
+#include "gretl_string_table.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -848,10 +849,17 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		errmsg(err, prn);
 	    } 
 	    break;
+	}
+	if (get_string_by_name(cmd->param)) {
+	    err = delete_saved_string(cmd->param, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
 	}	    
 	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, &k);
 	if (err) {
-	    pputs(prn, _("Failed to shrink the data set"));
+	    errmsg(err, prn);
 	} else {
 	    if (k) {
 		pputs(prn, _("Take note: variables have been renumbered"));

@@ -1676,12 +1676,17 @@ static NODE *matrix_colnames (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *m = l->v.m;
-	int *list = node_get_list(r, p);
 
-	if (p->err) {
-	    ret->v.xval = 1;
+	if (r->t == STR) {
+	    ret->v.xval = umatrix_set_colnames_from_string(m, r->v.str);
 	} else {
-	    ret->v.xval = user_matrix_set_column_names(m, list, p->dinfo);
+	    int * list = node_get_list(r, p);
+
+	    if (p->err) {
+		ret->v.xval = 1;
+	    } else {
+		ret->v.xval = umatrix_set_colnames_from_list(m, list, p->dinfo);
+	    }
 	}
     }
 
@@ -5231,8 +5236,8 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_COLNAMES:
-	/* matrix, list as second arg */
-	if (l->t == MAT && ok_list_node(r)) {
+	/* matrix, list or string as second arg */
+	if (l->t == MAT && (ok_list_node(r) || r->t == STR)) {
 	    ret = matrix_colnames(l, r, p);
 	} else {
 	    p->err = E_TYPES;

@@ -2228,8 +2228,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (cmd->ci == DELEET) {
-	if (nf == 1 && get_matrix_by_name(rem)) {
-	    /* special for deleting a named matrix */
+	if (nf == 1 && (get_matrix_by_name(rem) || get_string_by_name(rem))) {
+	    /* special for deleting a named matrix or string */
 	    cmd_param_grab_string(cmd, rem);
 	    goto cmd_exit;
 	}
@@ -3147,6 +3147,10 @@ static int command_is_silent (const CMD *cmd, const char *line)
                              c->ci == ARMA || c->ci == GARCH || \
                              c->ci == ARBOND)
 
+#define print_param_last(c) (c == ARBOND || \
+			     c == DELEET || \
+			     c == LOGISTIC)
+
 /**
  * echo_cmd:
  * @cmd: pointer to #CMD struct.
@@ -3252,7 +3256,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     } 
 
     /* print parameter after list, if wanted */
-    if ((cmd->ci == LOGISTIC || cmd->ci == ARBOND) && *cmd->param != '\0') {
+    if (print_param_last(cmd->ci) && *cmd->param != '\0') {
 	len = strlen(cmd->param) + 1;
 	if (llen + len > LINELEN) {
 	    pputs(prn, " \\\n ");
@@ -4717,6 +4721,7 @@ int ready_for_command (const char *line)
 {
     const char *ok_cmds[] = {
 	"import", 
+	"delete",
 	"eval",
 	"!",
 	"launch",

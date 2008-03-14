@@ -25,6 +25,7 @@ version 1.7.4, in progress
   tau as well as spearman (verbose option); also add a
   verbose check-box to the rank-correlation dialog
 - User's Guide: add a discussion of Arellano-Bond
+- Enable "delete" command for saved strings
 - Fix sub-sampling bug (new in 1.7.3)
 
 2/29/2008 version 1.7.3

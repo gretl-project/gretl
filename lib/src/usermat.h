@@ -89,9 +89,12 @@ int copy_matrix_as (const gretl_matrix *m, const char *new);
 int user_matrix_set_name_and_level (const gretl_matrix *M, char *name, 
 				    int level);
 
-int user_matrix_set_column_names (const gretl_matrix *M, 
-				  const int *list,
-				  const DATAINFO *pdinfo);
+int umatrix_set_colnames_from_string (const gretl_matrix *M, 
+				      const char *s);
+
+int umatrix_set_colnames_from_list (const gretl_matrix *M, 
+				    const int *list,
+				    const DATAINFO *pdinfo);
 
 const char **user_matrix_get_column_names (const gretl_matrix *M);
 

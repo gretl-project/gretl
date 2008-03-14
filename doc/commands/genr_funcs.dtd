@@ -50,7 +50,7 @@
                matrixref | anyfloat | scalar-or-series | series-or-vec | 
                series-or-mat | list | coeffname | string | char | sslist | 
                series-or-list | smlist | pscalar | seebelow |
-               anyfloat-or-list) "series"
+               anyfloat-or-list | list-or-string) "series"
     optional  (true | false) "false"
 >
 

@@ -958,16 +958,18 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 }
 
 /**
- * gretl_xml_get_matrix:
+ * xml_get_user_matrix:
  * @node: XML node pointer.
  * @doc: XML document pointer.
+ * @colnames: location to receive column strings, if present.
  * @err: location to receive error code.
  * 
  * Returns: allocated gretl matrix read from @node, or %NULL 
  * on failure.
  */
 
-gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
+static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc, 
+					  char **colnames, int *err)
 {
     gretl_matrix *m = NULL;
     xmlChar *tmp;
@@ -1009,6 +1011,10 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
 	return NULL;
     }
 
+    if (colnames != NULL) {
+	*colnames = (char *) xmlGetProp(node, (XUC) "colnames");
+    }
+
     m = gretl_matrix_alloc(rows, cols);
     if (m == NULL) {
 	*err = E_ALLOC;
@@ -1046,6 +1052,22 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
     }
 
     return m;
+}
+
+/**
+ * gretl_xml_get_matrix:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated gretl matrix read from @node, or %NULL 
+ * on failure.
+ */
+
+gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
+				    int *err)
+{
+    return xml_get_user_matrix(node, doc, NULL, err);
 }
 
 /**
@@ -2439,6 +2461,7 @@ int load_user_matrix_file (const char *fname)
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     gretl_matrix *m;
+    char *colnames;
     char *name;
     int err = 0;
 
@@ -2456,10 +2479,15 @@ int load_user_matrix_file (const char *fname)
 	    if (name == NULL) {
 		err = 1;
 	    } else {
-		m = gretl_xml_get_matrix(cur, doc, &err);
+		colnames = NULL;
+		m = xml_get_user_matrix(cur, doc, &colnames, &err);
 		if (m != NULL) {
 		    err = user_matrix_add(m, name);
+		    if (!err && colnames != NULL) {
+			umatrix_set_colnames_from_string(m, colnames);
+		    }
 		}
+		free(colnames);
 		free(name);
 	    }
 	}
