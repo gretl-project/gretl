@@ -350,7 +350,7 @@ static void maybe_update_column_names (Spreadsheet *sheet)
 	gretl_matrix *M = sheet->oldmat;
 	GtkTreeViewColumn *col;
 	const char *title;
-	char *cnames;
+	char *cnames, tmp[13];
 	int j, err = 0;
 
 	cnames = malloc(M->cols * 13 + 1);
@@ -366,7 +366,9 @@ static void maybe_update_column_names (Spreadsheet *sheet)
 		    title = gtk_tree_view_column_get_title(col);
 		}
 		if (title != NULL) {
-		    strcat(cnames, title);
+		    *tmp = '\0';
+		    single_underscores(tmp, title);
+		    strcat(cnames, tmp);
 		    strcat(cnames, " ");
 		} else {
 		    err = 1;
@@ -745,15 +747,16 @@ static void name_matrix_col (GtkWidget *widget, dialog_t *dlg)
 {
     GtkTreeViewColumn *col = (GtkTreeViewColumn *) edit_dialog_get_data(dlg);
     const gchar *buf, *old;
-    char colname[12];
+    char tmp[13], colname[24];
 
     buf = edit_dialog_get_text(dlg);
     if (buf == NULL || validate_varname(buf)) {
 	return;
     }
 
-    *colname = 0;
-    strncat(colname, buf, 12);
+    *tmp = 0;
+    strncat(tmp, buf, 12);
+    double_underscores(colname, tmp);
 
     close_dialog(dlg);
 
@@ -1303,9 +1306,9 @@ static void set_ok_transforms (Spreadsheet *sheet)
 static int rejig_sheet_cols (Spreadsheet *sheet)
 {
     int n = sheet->matrix->cols - sheet->datacols;
-    GtkTreeViewColumn *column;
+    GtkTreeViewColumn *col;
     GtkListStore *store;
-    char rstr[16];
+    char cstr[16];
     int i;
 
     sheet->datacols = sheet->matrix->cols;
@@ -1320,17 +1323,28 @@ static int rejig_sheet_cols (Spreadsheet *sheet)
 
     if (n > 0) {
 	for (i=0; i<n; i++) {
-	    sprintf(rstr, "%d", sheet->datacols - n + i + 1);
-	    add_treeview_column_with_title(sheet, rstr);
+	    sprintf(cstr, "%d", sheet->datacols - n + i + 1);
+	    add_treeview_column_with_title(sheet, cstr);
 	}
     } else {
 	n = -n;
 	for (i=0; i<n; i++) {
-	    column = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view),
-					      sheet->datacols + n - i);
+	    col = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view),
+					   sheet->datacols + n - i);
 	    gtk_tree_view_remove_column(GTK_TREE_VIEW(sheet->view),
-					column);
+					col);
 	}
+    }
+
+    for (i=1; i<=sheet->matrix->cols; i++) {
+	sprintf(cstr, "%d", i);
+	col = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view), i);
+	gtk_tree_view_column_set_title(col, cstr);
+	gtk_tree_view_column_set_clickable(col, TRUE);
+	g_object_set_data(G_OBJECT(col), "sheet", sheet);
+	g_signal_connect(G_OBJECT(col), "clicked",
+			 G_CALLBACK(name_column_dialog), col);
+
     }
 
     return 0;
@@ -1936,6 +1950,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	    g_signal_connect(G_OBJECT(column), "clicked",
 			     G_CALLBACK(name_column_dialog), column);
 	}
+	sheet->colnames = NULL;
     } else {
 	colnum = 0;
 	for (i=1; i<=sheet->varlist[0]; i++) {
