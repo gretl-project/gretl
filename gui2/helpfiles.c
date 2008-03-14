@@ -133,6 +133,22 @@ static struct gui_help_item gui_help_items[] = {
     { -1,             NULL },
 };
 
+enum {
+    COMPAT_CORC = GUI_CMD_MAX + 1,
+    COMPAT_FCASTERR,
+    COMPAT_HILU,
+    COMPAT_PWE
+};
+
+static struct gui_help_item compat_help_items[] = {
+    { GUI_CMD_MAX,     "nothing" },
+    { COMPAT_CORC,     "corc" },
+    { COMPAT_FCASTERR, "fcasterr" },
+    { COMPAT_HILU,     "hilu" },
+    { COMPAT_PWE,      "pwe" },
+    { -1,              NULL }
+};
+
 /* state the topic headings from the help files so they 
    can be translated */
 const char *intl_topics[] = {
@@ -161,6 +177,19 @@ static int extra_command_number (const char *s)
     return -1;
 }
 
+static int compat_command_number (const char *s)
+{
+    int i;
+
+    for (i=1; compat_help_items[i].code > 0; i++) {
+	if (!strcmp(s, compat_help_items[i].string)) {
+	    return compat_help_items[i].code;
+	}
+    }
+
+    return -1;
+}
+
 static char *help_string_from_cmd (int cmd)
 {
     int i;
@@ -170,6 +199,13 @@ static char *help_string_from_cmd (int cmd)
 	    return gui_help_items[i].string;
 	}
     }
+
+    for (i=1; compat_help_items[i].code > 0; i++) {
+	if (cmd == compat_help_items[i].code) {
+	    return compat_help_items[i].string;
+	}
+    }
+
 
     return NULL;    
 }
@@ -279,6 +315,10 @@ static int help_topic_number (const char *word, int gui)
 
     if (hnum == 0 && gui) {
 	hnum = extra_command_number(word);
+    }
+
+    if (hnum <= 0) {
+	hnum = compat_command_number(word);
     }
 
     return hnum;
@@ -846,6 +886,22 @@ static char *get_gui_help_string (int pos)
     return NULL;
 }
 
+static char *get_compat_help_string (int pos)
+{
+    int i, j;
+
+    for (i=0; cli_heads[i] != NULL; i++) { 
+	for (j=0; j<cli_heads[i]->ntopics; j++) {
+	    if (pos == cli_heads[i]->pos[j]) {
+		return help_string_from_cmd(cli_heads[i]->topics[j]);
+	    }
+	}
+    }
+
+    return NULL;
+}
+
+
 static int gui_pos_from_cmd (int cmd, int en)
 {
     help_head **heads;
@@ -1050,7 +1106,15 @@ static void add_help_topics (windata_t *hwin, int flags)
 			topic_ok = 0;
 		    }
 		} else {
-		    topic_ok = 0;
+		    char *cstr = get_compat_help_string(hds[i]->pos[j]);
+
+		    if (cstr != NULL) {
+			hitem.path = 
+			    g_strdup_printf("%s/%s/%s", 
+					    mpath, headname, cstr);
+		    } else {		    
+			topic_ok = 0;
+		    }
 		}
 	    }
 

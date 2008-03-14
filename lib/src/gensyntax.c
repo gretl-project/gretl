@@ -391,11 +391,22 @@ static NODE *base (parser *p, NODE *up)
 
 static NODE *get_string_arg (parser *p)
 {
+    int wrapped = 0;
+
+    while (p->ch == ' ') {
+	parser_getc(p);
+    }
+
+    if (p->ch == '"') {
+	wrapped = 1;
+	parser_getc(p);
+    }
+
     if (p->ch == ')') {
 	/* allow empty arg string "()" */
 	p->idstr = gretl_strdup("");
     } else {
-	int i, paren = 1, quoted = 0;
+	int i, paren = 1, quoted = wrapped;
 	int close = -1, started = 0;
 	const char *s = p->point;
 
@@ -437,14 +448,30 @@ static NODE *get_string_arg (parser *p)
 
     parser_getc(p);
     lex(p);
+
     tailstrip(p->idstr);
+
+    if (wrapped) {
+	int n = strlen(p->idstr);
+
+	if (p->idstr[n-1] == '"') {
+	    p->idstr[n-1] = '\0';
+	} else {
+	    unmatched_symbol_error('"', p);
+	}
+    }
+
+#if SDEBUG
+    fprintf(stderr, "get_string_arg: '%s'\n", p->idstr);
+#endif
 
     return newstr(p);
 }
 
 enum {
     BOTH_OPT = 1,
-    RIGHT_OPT
+    RIGHT_OPT,
+    RIGHT_STR
 };
 
 /* gather an unknown number of comma-separated arguments
@@ -642,16 +669,20 @@ static void get_args (NODE *t, parser *p, int opt)
 	    return;
 	}	    
 	if (p->sym == P_COM) {
-	    lex(p);
-	    t->v.b2.r = expr(p);
-	    if (p->sym == G_RPR) {
-		if (p->ch == '\'') {
-		    set_transpose(t);
-		    parser_getc(p);
-		}
-		lex(p);
+	    if (opt == RIGHT_STR) {
+		t->v.b2.r = get_string_arg(p);
 	    } else {
-		cexp = ')';
+		lex(p);
+		t->v.b2.r = expr(p);
+		if (p->sym == G_RPR) {
+		    if (p->ch == '\'') {
+			set_transpose(t);
+			parser_getc(p);
+		    }
+		    lex(p);
+		} else {
+		    cexp = ')';
+		}
 	    }
 	} else {
 	    cexp = ',';
@@ -707,6 +738,8 @@ static NODE *powterm (parser *p)
 
     if (p->sym == F_RUNIFORM || p->sym == F_RNORMAL) {
 	opt = BOTH_OPT;
+    } else if (p->sym == F_FDJAC || p->sym == F_BFGSMAX) {
+	opt = RIGHT_STR;
     }
 
     if (func2_symb(p->sym)) {
@@ -743,6 +776,12 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newref(p, USERIES); 
 	    lex(p);
 	    t->v.b2.r = base(p, t);
+	}
+    } else if (func2_symb(p->sym)) {
+	t = newb2(p->sym, NULL, NULL);
+	if (t != NULL) {
+	    lex(p);
+	    get_args(t, p, opt);
 	}
     } else if (p->sym == MSL || p->sym == DMSL) {
 	t = newb2(p->sym, NULL, NULL);
