@@ -10,8 +10,6 @@ version 1.7.4, in progress
   identities more robust; enable TeX view/print in GUI;
   add new accessors $yhat, $sysGamma, $sysA, $sysB
 - "estimate" command: add --quiet option
-- Several other enhancements to "system" (write this up when 
-  finished)
 - remove obsolete command: multiply
 - Consolidate the commands corc, hilu and pwe into one new
   command with options: ar1
