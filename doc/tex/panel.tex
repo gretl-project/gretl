@@ -452,12 +452,12 @@ differenced structure of the error $\eta_{it}$.  It is improved upon
 by the methods of Arellano and Bond (1991) and Blundell and Bond
 (1998).  
 
-\app{Gretl} implements natively the Arellano--Bond estimator; the
+\app{Gretl} implements natively the Arellano--Bond estimator.  The
 rationale behind it is, strictly speaking, that of a GMM estimator,
 but it can be illustrated briefly as follows (see Arellano (2003) for
 a comprehensive exposition). Consider again equation
-(\ref{eq:fe-dyn}): if for each individual we have observations through
-time that go from 1 to $T$, we may write the following system:
+(\ref{eq:fe-dyn}): if for each individual we have observations
+dated from 1 to $T$, we may write the following system:
 \begin{eqnarray}
   \label{eq:arbond3}
   \Delta y_{i,3} & = & \Delta X_{i,3}\beta + \rho \Delta y_{i,2} +
@@ -474,14 +474,14 @@ Following the same logic as for the Anderson--Hsiao estimator, we see
 that the only possible instrument for $\Delta y_{i,2}$ in equation
 (\ref{eq:arbond3}) is $y_{i,1}$, but for equation (\ref{eq:arbond4})
 we can use \emph{both} $y_{i,1}$ and $y_{i,2}$ as instruments for
-$\Delta y_{i,3}$ , thereby gaining efficiency. Likewise, for the final
+$\Delta y_{i,3}$, thereby gaining efficiency. Likewise, for the final
 period $T$ we can use as instruments all values of $y_{i,t}$ up to $t
-= T-2$. In practice, the Arellano--Bond technique estimates the above
+= T-2$. The Arellano--Bond technique estimates the above
 system, with an increasing number of instruments for each equation.
 
 Estimation is typically carried out in two steps: in step 1 the
-parameters are estimated by assuming that the covariance matrix of the
-$\eta_{i,t}$ terms is proportional to
+parameters are estimated on the assumption that the covariance matrix
+of the $\eta_{i,t}$ terms is proportional to
 \[
 \left[
   \begin{array}{rrrrr}
@@ -491,38 +491,38 @@ $\eta_{i,t}$ terms is proportional to
     & \vdots & & \ddots & \vdots \\
     0 & 0 & 0 & \cdots & 2 \\
   \end{array}
-\right] ,
+\right] 
 \]
-as it should if the disturbances in the original model $u_{i,t}$ were
-homoskedastic and uncorrelated. This yields a consistent, but not
-necessarily efficient, estimator.
+as should be the case if the disturbances in the original model
+$u_{i,t}$ were homoskedastic and uncorrelated. This yields a
+consistent, but not necessarily efficient, estimator.
 
 Step 2 uses the parameters estimated in step 1 to compute an estimate
-of the covariance of the $\eta_{i,t}$ disturbances, and re-estimates
-the parameters based on that. This procedure has the double effect of
-handling heteroskedasticity and/or serial correlation, plus producing
+of the covariance of the $\eta_{i,t}$, and re-estimates the parameters
+based on that. This procedure has the double effect of handling
+heteroskedasticity and/or serial correlation, plus producing
 estimators that are asymptotically efficient.
 
-One-step estimators were sometimes preferred, in the past, on the
-ground of them being more robust. Plus, computing the covariance
-matrix of the 2-step estimator via the standard GMM formulae has been
-shown to produce grossly biased results in finite
-samples. \app{Gretl}, however, implements the finite-sample correction
-devised in Windmeijer (2005), so standard errors for the 2-step
-estimator can be considered relatively accurate.
+One-step estimators have sometimes been preferred on the grounds that
+they are more robust.  Moreover, computing the covariance matrix of the
+2-step estimator via the standard GMM formulae has been shown to
+produce grossly biased results in finite samples. \app{Gretl},
+however, implements the finite-sample correction devised by Windmeijer
+(2005), so standard errors for the 2-step estimator can be considered
+relatively accurate.
 
 By default, \app{gretl}'s \cmd{arbond} command estimates the parameters in
 \[
   A(L) y_{i,t} = X_{i,t}\beta + v_i + u_{i,t} 
 \]
-via the 1-step procedure, by automatically differentiating the
-dependent variable (note that the right-hand side variable are not
-automatically differentiated) and using all available
-instruments. However, these choices (plus some others) can be
-overridden: please see the documentation for the \cmd{arbond} command
-and the \texttt{arbond91} example file supplied with \app{gretl}.
+via the 1-step procedure.  The dependent variable is automatically
+differenced (but note that the right-hand side variables are not
+automatically differenced), and all available instruments are used.
+However, these choices (plus some others) can be overridden: please
+see the documentation for the \cmd{arbond} command in the \GCR{} and
+the \texttt{arbond91} example file supplied with \app{gretl}.
 
-\section{Illustration: the Penn World Table}
+\section{Panel illustration: the Penn World Table}
 \label{PWT}
 
 The Penn World Table (homepage at
