@@ -1089,6 +1089,11 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 	return 1;
     }
 
+    if (len == 0) {
+	*pmask = RESAMPLED;
+	return 0;
+    }
+
     mask = calloc(len, 1);
 
     if (mask == NULL) {

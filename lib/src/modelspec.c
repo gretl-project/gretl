@@ -104,7 +104,7 @@ void free_modelspec (void)
 	while (mspec[i].cmd != NULL) {
 	    free(mspec[i].cmd);
 	    if (mspec[i].submask != NULL) {
-		free(mspec[i].submask);
+		free_subsample_mask(mspec[i].submask);
 	    }
 	    i++;
 	}

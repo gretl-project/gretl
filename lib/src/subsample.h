@@ -31,11 +31,15 @@ typedef enum {
     SUBSAMPLE_UNKNOWN
 } SubsampleMode;
 
+#define RESAMPLED ((char *) 0xdeadbeef)
+
 double ***fetch_full_Z (void);
 
 void reset_full_Z (double ***pZ);
 
 DATAINFO *fetch_full_datainfo (void);
+
+void free_subsample_mask (char *s);
 
 char *copy_subsample_mask (const char *src);
 
@@ -64,6 +68,8 @@ int get_full_length_n (void);
 int set_sample (const char *line, const double **Z, DATAINFO *pdinfo);
 
 int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state);
+
+int backup_full_dataset (double **Z, DATAINFO *pdinfo);
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 

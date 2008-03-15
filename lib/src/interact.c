@@ -3892,7 +3892,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case DATAMOD:
 	err = modify_dataset(cmd->aux, cmd->list, cmd->param, pZ, 
-				 pdinfo, prn);
+			     pdinfo, prn);
 	if (!err) { 
 	    print_smpl(pdinfo, get_full_length_n(), prn);
 	    if (s->callback != NULL) {
@@ -4885,7 +4885,7 @@ void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
-    free(s->submask);
+    free_subsample_mask(s->submask);
     s->funcerr = 0;
 }
 

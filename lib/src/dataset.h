@@ -45,6 +45,7 @@ typedef enum {
     DS_SORTBY,
     DS_DSORTBY,
     DS_RESAMPLE,
+    DS_RESTORE,
     DS_CLEAR
 } DatasetOp;
 

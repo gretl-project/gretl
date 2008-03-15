@@ -2160,7 +2160,6 @@ void clear_model (MODEL *pmod)
 	debug_print_model_info(pmod, "Doing clear_model");
 #endif
 	if (pmod->list != NULL) free(pmod->list);
-	if (pmod->submask != NULL) free(pmod->submask);
 	if (pmod->missmask != NULL) free(pmod->missmask);
 	if (pmod->coeff != NULL) free(pmod->coeff);
 	if (pmod->sderr != NULL) free(pmod->sderr);
@@ -2170,6 +2169,10 @@ void clear_model (MODEL *pmod)
 	if (pmod->vcv != NULL) free(pmod->vcv);
 	if (pmod->name != NULL) free(pmod->name);
 	if (pmod->depvar != NULL) free(pmod->depvar);
+
+	if (pmod->submask != NULL) {
+	    free_subsample_mask(pmod->submask);
+	}
 
 	if (pmod->arinfo != NULL) {
 	    clear_ar_info(pmod);

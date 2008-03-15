@@ -85,19 +85,32 @@ static int get_submask_length (const char *s)
 {
     int n = 1;
 
-    while (*s != SUBMASK_SENTINEL) {
-	n++;
-	s++;
+    if (s == RESAMPLED) {
+	n = 0;
+    } else {
+	while (*s != SUBMASK_SENTINEL) {
+	    n++;
+	    s++;
+	}
     }
 
     return n;
+}
+
+void free_subsample_mask (char *s)
+{
+    if (s != RESAMPLED && s != NULL) {
+	free(s);
+    }
 }
 
 char *copy_subsample_mask (const char *src)
 {
     char *ret = NULL;
 
-    if (src != NULL) {
+    if (src == RESAMPLED) {
+	ret = RESAMPLED;
+    } else if (src != NULL) {
 	int n = get_submask_length(src);
 
 	ret = malloc(n * sizeof *ret);
@@ -124,7 +137,10 @@ int write_model_submask (const MODEL *pmod, FILE *fp)
 {
     int ret = 0;
 
-    if (pmod->submask != NULL) {
+    if (pmod->submask == RESAMPLED) {
+	fputs("<submask length=\"0\"></submask>\n", fp);
+	ret = 1;
+    } else if (pmod->submask != NULL) {
 	int i, n = get_submask_length(pmod->submask);
 
 	fprintf(fp, "<submask length=\"%d\">", n);
@@ -142,7 +158,10 @@ int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
 {
     int ret = 0;
 
-    if (complex_subsampled()) {
+    if (pdinfo->submask == RESAMPLED) {
+	fputs("<submask length=\"0\"></submask>\n", fp);
+	ret = 1;
+    } else if (complex_subsampled()) {
 	int i, n = get_submask_length(pdinfo->submask);
 
 	fprintf(fp, "<submask length=\"%d\">", n);
@@ -158,6 +177,10 @@ int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
 
 int submask_cmp (const char *m1, const char *m2)
 {
+    if (m1 == RESAMPLED || m2 == RESAMPLED) {
+	return m1 == RESAMPLED && m2 == RESAMPLED;
+    }
+
     while (*m1 != SUBMASK_SENTINEL && *m2 != SUBMASK_SENTINEL) {
 	if (*m1 != *m2) {
 	    return 1;
@@ -251,13 +274,93 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	sync_dataset_elements(pdinfo);
 
 	if (pmod->submask != NULL) {
-	    free(pmod->submask);
+	    free_subsample_mask(pmod->submask);
 	}
 
 	pmod->submask = copy_subsample_mask(pdinfo->submask);
 	if (pmod->submask == NULL) {
 	    err = E_ALLOC;
 	}
+    }
+
+    return err;
+}
+
+static int
+resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
+{
+    int newv = fullinfo->v;
+    double **newZ = NULL;
+    int drop = 0;
+    int i, j, err = 0;
+
+    /* carry back values of pre-existing scalars */
+
+    for (i=1; i<fullinfo->v && i<pdinfo->v; i++) {
+	if (var_is_scalar(pdinfo, i)) {
+	    fullZ[i][0] = (*RZ)[i][0];
+	} 
+    }
+
+    /* figure how many scalars and how many series have been added */
+
+    for (i=fullinfo->v; i<pdinfo->v && !err; i++) {
+	if (var_is_scalar(pdinfo, i)) {
+	    newv++;
+	} else {
+	    drop++;
+	}
+    }
+
+    /* if new series have been added, drop them all */
+
+    if (drop > 0) {
+	int *list = gretl_list_new(drop);
+
+	if (list == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    j = 1;
+	    for (i=fullinfo->v; i<pdinfo->v; i++) {
+		if (var_is_series(pdinfo, i)) {
+		    list[j++] = i;
+		}
+	    }	    
+	}
+	
+	if (list != NULL) {
+	    err = dataset_drop_listed_variables(list, RZ, pdinfo, NULL);
+	    free(list);
+	}
+    }
+
+    /* if new scalars have been added, add them to fullZ */
+
+    if (!err && newv > fullinfo->v) {
+	newZ = realloc(fullZ, newv * sizeof *fullZ);
+	if (newZ == NULL) {
+	    newv = fullinfo->v;
+	    err = E_ALLOC;
+	} else {
+	    int j = fullinfo->v;
+
+	    fullZ = newZ;
+	    for (i=fullinfo->v; i<pdinfo->v && !err; i++) {
+		if (var_is_scalar(pdinfo, i)) {
+		    fullZ[j] = malloc(sizeof **newZ);
+		    if (fullZ[j] == NULL) {
+			err = E_ALLOC;
+		    } else {
+			fullZ[j][0] = (*RZ)[i][0];
+			j++;
+		    }
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	fullinfo->v = newv;
     }
 
     return err;
@@ -464,7 +567,10 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
        which may have moved */
     sync_dataset_elements(pdinfo);
 
-    if (!err) {
+    if (pdinfo->submask == RESAMPLED) {
+	/* not regular subsample but resampled dataset */
+	resample_update_dataset(pZ, pdinfo);
+    } else {
 	/* update values for pre-existing series, which may have been
 	   modified via genr etc */
 	update_full_data_values((const double **) *pZ, pdinfo);
@@ -737,7 +843,7 @@ static int make_random_mask (const char *oldmask, const char *line,
     return err;
 }
 
-static int backup_full_dataset (double **Z, DATAINFO *pdinfo)
+int backup_full_dataset (double **Z, DATAINFO *pdinfo)
 {
     fullZ = Z;
 

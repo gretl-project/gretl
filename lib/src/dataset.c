@@ -124,7 +124,7 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
     } 
 
     if (pdinfo->submask != NULL) {
-	free(pdinfo->submask);
+	free_subsample_mask(pdinfo->submask);
 	pdinfo->submask = NULL;
     }
 
@@ -2651,6 +2651,8 @@ int dataset_op_from_string (const char *s)
 	op = DS_DSORTBY;
     } else if (!strcmp(s, "resample")) {
 	op = DS_RESAMPLE;
+    } else if (!strcmp(s, "restore")) {
+	op = DS_RESTORE;
     } else if (!strcmp(s, "clear")) {
 	op = DS_CLEAR;
     }
@@ -2745,6 +2747,7 @@ static int compact_data_set_wrapper (const char *s, double ***pZ,
 static int dataset_resample (int n, double ***pZ, DATAINFO *pdinfo)
 {
     double **RZ = NULL;
+    DATAINFO *rinfo = NULL;
     char **S = NULL;
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     int v = pdinfo->v;
@@ -2755,14 +2758,22 @@ static int dataset_resample (int n, double ***pZ, DATAINFO *pdinfo)
 	return E_DATA;
     }
 
+    rinfo = datainfo_new();
+    if (rinfo == NULL) {
+	return E_ALLOC;
+    }
+
     RZ = malloc(v * sizeof *RZ);
     if (RZ == NULL) {
+	free(rinfo);
 	return E_ALLOC;
     }
 
     for (i=0; i<v; i++) {
 	RZ[i] = NULL;
     }
+
+    rinfo->v = v;
 
     j = 0;
     for (i=0; i<pdinfo->v && !err; i++) {
@@ -2786,11 +2797,7 @@ static int dataset_resample (int n, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (err) {
-	for (i=0; i<v; i++) {
-	    free(RZ[i]);
-	}
-	free(RZ);
-	return E_ALLOC;
+	goto bailout;
     }
 
     if (pdinfo->markers == REGULAR_MARKERS) {
@@ -2811,22 +2818,34 @@ static int dataset_resample (int n, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    free_Z(*pZ, pdinfo);
-    *pZ = RZ;
-
     if (S != NULL) {
-	dataset_destroy_obs_markers(pdinfo);
-	pdinfo->S = S;
-	pdinfo->markers = REGULAR_MARKERS;
-    } else if (pdinfo->S != NULL) {
-	dataset_destroy_obs_markers(pdinfo);
-    }
+	rinfo->S = S;
+	rinfo->markers = REGULAR_MARKERS;
+    } 
 
-    pdinfo->v = v;
-    pdinfo->n = n;
-    pdinfo->t1 = 0;
-    pdinfo->t2 = n - 1;
-    dataset_obs_info_default(pdinfo);
+    rinfo->varname = pdinfo->varname;
+    rinfo->varinfo = pdinfo->varinfo;
+    rinfo->descrip = pdinfo->descrip;
+
+    rinfo->n = n;
+    rinfo->t1 = 0;
+    rinfo->t2 = n - 1;
+    dataset_obs_info_default(rinfo);
+
+    rinfo->submask = RESAMPLED;
+
+ bailout:
+
+    if (err) {
+	free_Z(RZ, rinfo);
+	clear_datainfo(rinfo, CLEAR_SUBSAMPLE);
+	free(rinfo);
+    } else {
+	backup_full_dataset(*pZ, pdinfo);
+	*pZ = RZ;
+	*pdinfo = *rinfo;
+	free(rinfo);
+    }
 
     return err;
 }
@@ -2835,6 +2854,7 @@ int modify_dataset (int op, const int *list, const char *s,
 		    double ***pZ, DATAINFO *pdinfo, 
 		    PRN *prn)
 {
+    static int resampled;
     int k = 0, err = 0;
 
     if (op == DS_CLEAR) {
@@ -2842,7 +2862,7 @@ int modify_dataset (int op, const int *list, const char *s,
 	return E_NOTIMP;
     }
 
-    if (complex_subsampled()) {
+    if (op != DS_RESTORE && complex_subsampled()) {
 	strcpy(gretl_errmsg, _("The data set is currently sub-sampled"));
 	return 1;
     }
@@ -2869,6 +2889,17 @@ int modify_dataset (int op, const int *list, const char *s,
 	err = dataset_sort(s, *pZ, pdinfo, OPT_D);
     } else if (op == DS_RESAMPLE) {
 	err = dataset_resample(k, pZ, pdinfo);
+	if (!err) {
+	    resampled = 1;
+	}
+    } else if (op == DS_RESTORE) {
+	if (resampled) {
+	    err = restore_full_sample(pZ, pdinfo, NULL);
+	    resampled = 0;
+	} else {
+	    pprintf(prn, "dataset restore: dataset is not resampled\n");
+	    err = E_DATA;
+	}
     } else if (op == DS_DELETE) {
 	pprintf(prn, "dataset delete: not ready yet\n");
     } else if (op == DS_KEEP) {
