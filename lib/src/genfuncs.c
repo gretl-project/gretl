@@ -1816,9 +1816,16 @@ int check_declarations (char ***pS, parser *p)
     }
 
     s = p->lh.substr;
+    s += strspn(s, " ");
+
     while (*s) {
-	if (*s == ',') n++;
-	s++;
+	if (*s == ',' || *s == ' ') {
+	    n++;
+	    s++;
+	    s += strspn(s, " ");
+	} else {
+	    s++;
+	}
     }
 
     S = strings_array_new(n);
@@ -1830,6 +1837,10 @@ int check_declarations (char ***pS, parser *p)
     s = p->lh.substr;
     for (i=0; i<n; i++) {
 	S[i] = gretl_word_strdup(s, &s);
+	if (S[i] == NULL) {
+	    p->err = E_DATA;
+	    break;
+	}
     }
 
     for (i=0; i<n && !p->err; i++) {

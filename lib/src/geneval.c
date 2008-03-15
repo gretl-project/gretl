@@ -6922,7 +6922,7 @@ static int decl_check (parser *p, int flags)
 	p->err = E_PARSE;
 	sprintf(gretl_errmsg, "Bare declarations are not allowed here:\n> '%s'",
 		p->input);
-    }
+    } 
 
     return p->err;
 }
@@ -6965,6 +6965,11 @@ int realgen (const char *s, parser *p, double ***pZ,
 	    return 1;
 	}
     }
+
+#if EDEBUG
+    fprintf(stderr, "after parser (re-)init, p->err = %d (decl? %s)\n", 
+	    p->err, (p->flags & P_DECL)? "yes" : "no");
+#endif
 
     if (p->flags & P_DECL) {
 	decl_check(p, flags);
