@@ -1843,6 +1843,10 @@ int check_declarations (char ***pS, parser *p)
 	}
     }
 
+    if (*s != '\0') {
+	p->err = E_DATA;
+    }
+
     for (i=0; i<n && !p->err; i++) {
 	if (varindex(p->dinfo, S[i]) < p->dinfo->v || 
 	    get_matrix_by_name(S[i]) ||
