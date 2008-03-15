@@ -328,7 +328,7 @@ static int resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
 	}
 	
 	if (list != NULL) {
-	    err = dataset_drop_listed_variables(list, RZ, pdinfo, NULL);
+	    err = dataset_drop_listed_variables(list, RZ, pdinfo, NULL, NULL);
 	    free(list);
 	}
     }

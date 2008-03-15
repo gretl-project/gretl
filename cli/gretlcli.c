@@ -857,15 +857,16 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    } 
 	    break;
 	}	    
-	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, &k);
+	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
+					    &k, prn);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
 	    if (k) {
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
+		maybe_list_vars(pdinfo, prn);
 	    }
-	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 

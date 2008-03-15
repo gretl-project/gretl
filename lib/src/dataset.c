@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_func.h"
+#include "libset.h"
 
 #define DDEBUG 0
 
@@ -1615,13 +1616,15 @@ int overwrite_err (const DATAINFO *pdinfo, int v)
 
 static int real_drop_listed_vars (int *list, double ***pZ, 
 				  DATAINFO *pdinfo, int *renumber,
-				  int drop)
+				  int drop, PRN *prn)
 {
     double **Z = *pZ;
     int oldv = pdinfo->v, vmax = pdinfo->v;
+    char vname[VNAMELEN] = {0};
+    int d0, d1;
     int delmin = oldv;
     int i, v, ndel = 0; 
-    int err;
+    int err = 0;
 
     if (renumber != NULL) {
 	*renumber = 0;
@@ -1632,10 +1635,16 @@ static int real_drop_listed_vars (int *list, double ***pZ,
 	return 0;
     }
 
+    d0 = list[0];
+
     check_variable_deletion_list(list, pdinfo);
-    if (list[0] == 0) {
-	/* FIXME reporting */
-	return 0;
+    d1 = list[0];
+    if (prn != NULL && d1 == 1) {
+	strcpy(vname, pdinfo->varname[list[1]]);
+    }
+
+    if (d1 == 0) {
+	goto finish;
     }
 
 #if DDEBUG
@@ -1717,6 +1726,33 @@ static int real_drop_listed_vars (int *list, double ***pZ,
 
     err = shrink_dataset_to_size(pZ, pdinfo, oldv - ndel, drop);
 
+ finish:
+
+    /* report results, if appropriate */
+
+    if (!err && prn != NULL) {
+	if (d0 == d1) {
+	    if (gretl_messages_on()) {
+		if (*vname != '\0') {
+		    pprintf(prn, "Deleted %s", vname);
+		} else {
+		    pprintf(prn, "Deleted %d variables", d1);
+		}
+		pputc(prn, '\n');
+	    }
+	} else {
+	    if (d1 == 0) {
+		pputs(prn, "No variables deleted");
+	    } else if (*vname != '\0') {
+		pprintf(prn, "Deleted %s", vname);
+	    } else {
+		pprintf(prn, "Deleted %d variables", d1);
+	    }
+	    pputs(prn, " (some data were in use)\n");
+	    
+	}
+    }
+
     return err;
 }
 
@@ -1746,6 +1782,7 @@ static int *make_dollar_list (DATAINFO *pdinfo, int *err)
  * @renumber: location for return of information on whether
  * remaining variables have been renumbered as a result, or
  * %NULL.
+ * @prn: pointer to printing struct.
  *
  * Deletes the variables given in @list from the dataset.  Remaining
  * variables may have their ID numbers changed as a consequence. If
@@ -1757,7 +1794,8 @@ static int *make_dollar_list (DATAINFO *pdinfo, int *err)
 
 int dataset_drop_listed_variables (int *list, double ***pZ, 
 				   DATAINFO *pdinfo, 
-				   int *renumber)
+				   int *renumber,
+				   PRN *prn)
 {
     int *dlist = NULL;
     int free_dlist = 0;
@@ -1789,7 +1827,7 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
     }
 
     err = real_drop_listed_vars(dlist, pZ, pdinfo, renumber,
-				DROP_NORMAL);
+				DROP_NORMAL, prn);
 
     if (dlist[0] > 0) {
 	if (!err) {
@@ -1801,7 +1839,7 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
 	    DATAINFO *fdinfo = fetch_full_datainfo();
 
 	    err = real_drop_listed_vars(dlist, fZ, fdinfo, NULL,
-					DROP_SPECIAL);
+					DROP_SPECIAL, NULL);
 	    reset_full_Z(fZ);
 	}
     }
@@ -1832,7 +1870,7 @@ int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo)
 	return E_DATA;
     }
 
-    return dataset_drop_listed_variables(list, pZ, pdinfo, NULL);
+    return dataset_drop_listed_variables(list, pZ, pdinfo, NULL, NULL);
 }
 
 /**
@@ -1877,7 +1915,8 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
 		    list[j++] = i;
 		}
 	    }	    
-	    err = dataset_drop_listed_variables(list, pZ, pdinfo, NULL);
+	    err = dataset_drop_listed_variables(list, pZ, pdinfo, 
+						NULL, NULL);
 	    free(list);
 	}
     }

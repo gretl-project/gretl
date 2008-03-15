@@ -4789,6 +4789,12 @@ static int maybe_prune_delete_list (int *list)
     if (vmax > vsave) {
 	vsave = vmax;
     }
+
+    /* and models saved via command line */
+    vmax = highest_numbered_var_in_saved_object(datainfo);
+    if (vmax > vsave) {
+	vsave = vmax;
+    }    
     
     for (i=1; i<=list[0]; i++) {
 	if (list[i] <= vsave) {
@@ -4878,7 +4884,7 @@ static void real_delete_vars (int id, int *dlist)
     }
 
     err = dataset_drop_listed_variables(libcmd.list, &Z, datainfo, 
-					&renumber);
+					&renumber, NULL);
 
     if (err) {
 	nomem();
@@ -6734,17 +6740,17 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 	maybe_prune_delete_list(cmd->list);
-	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, &k);
+	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
+					    &k, prn);
 	if (err) {
-	    pputs(prn, _("Failed to shrink the data set"));
-	    pputc(prn, '\n');
+	    errmsg(err, prn);
 	} else {
 	    if (k) {
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
+		maybe_list_vars(pdinfo, prn);
 	    }
 	    maybe_clear_selector(cmd->list);
-	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 

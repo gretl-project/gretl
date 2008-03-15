@@ -1253,37 +1253,35 @@ void free_session (void)
 
 int highest_numbered_variable_in_session (void)
 {
-    MODEL *pmod;
-    GRETL_VAR *var;
-    equation_system *sys;
+    GretlObjType type;
+    void *ptr;
     int i, mvm, vmax = 0;
 
-    if (session.models) {
-	for (i=0; i<session.nmodels; i++) {
-	    if (session.models[i]->type == GRETL_OBJ_EQN) {
-		pmod = session.models[i]->ptr;
-		if (pmod != NULL) {
-		    mvm = highest_numbered_var_in_model(pmod, datainfo);
-		    if (mvm > vmax) {
-			vmax = mvm;
-		    }
-		}
-	    } else if (session.models[i]->type == GRETL_OBJ_VAR) {
-		var = session.models[i]->ptr;
-		if (var != NULL) {
-		    mvm = gretl_VAR_get_highest_variable(var);
-		    if (mvm > vmax) {
-			vmax = mvm;
-		    }
-		}		
-	    } else if (session.models[i]->type == GRETL_OBJ_SYS) {
-		sys = session.models[i]->ptr;
-		if (sys != NULL) {
-		    mvm = highest_numbered_var_in_system(sys, datainfo);
-		    if (mvm > vmax) {
-			vmax = mvm;
-		    }
-		}
+    if (session.models == NULL) {
+	return 0;
+    }
+
+    for (i=0; i<session.nmodels; i++) {
+	ptr = session.models[i]->ptr;
+	if (ptr == NULL) {
+	    continue;
+	}
+	type = session.models[i]->type;
+	if (type == GRETL_OBJ_EQN) {
+	    mvm = highest_numbered_var_in_model((MODEL *) ptr, datainfo);
+	    if (mvm > vmax) {
+		vmax = mvm;
+	    }
+	} else if (type == GRETL_OBJ_VAR) {
+	    mvm = gretl_VAR_get_highest_variable((GRETL_VAR *) ptr);
+	    if (mvm > vmax) {
+		vmax = mvm;
+	    }
+	} else if (type == GRETL_OBJ_SYS) {
+	    mvm = highest_numbered_var_in_system((equation_system *) ptr, 
+						 datainfo);
+	    if (mvm > vmax) {
+		vmax = mvm;
 	    }
 	}
     }
