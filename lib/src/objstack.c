@@ -1241,6 +1241,51 @@ int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+int check_variable_deletion_list (int *list, const DATAINFO *pdinfo)
+{
+    GretlObjType type;
+    void *ptr;
+    int pruned = 0;
+    int i, mvm, vsave = 0;
+
+    for (i=-1; i<n_obj; i++) {
+	if (i < 0) {
+	    ptr = get_last_model(&type);
+	} else {
+	    ptr = ostack[i].ptr;
+	    type = ostack[i].type;
+	}
+	if (ptr == NULL) {
+	    continue;
+	}
+	if (type == GRETL_OBJ_EQN) {
+	    mvm = highest_numbered_var_in_model((MODEL *) ptr, pdinfo);
+	    if (mvm > vsave) {
+		vsave = mvm;
+	    }
+	} else if (type == GRETL_OBJ_VAR) {
+	    mvm = gretl_VAR_get_highest_variable((GRETL_VAR *) ptr);
+	    if (mvm > vsave) {
+		vsave = mvm;
+	    }
+	} else if (type == GRETL_OBJ_SYS) {
+	    mvm = highest_numbered_var_in_system((equation_system *) ptr, pdinfo);
+	    if (mvm > vsave) {
+		vsave = mvm;
+	    }
+	}
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] <= vsave) {
+	    gretl_list_delete_at_pos(list, i--);
+	    pruned = 1;
+	}
+    }
+
+    return pruned;
+}
+
 void gretl_saved_objects_cleanup (void)
 {
     int i;

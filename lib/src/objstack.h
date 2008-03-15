@@ -135,6 +135,8 @@ void set_genr_model (MODEL *pmod);
 
 void unset_genr_model (void);
 
+int check_variable_deletion_list (int *list, const DATAINFO *pdinfo);
+
 void gretl_saved_objects_cleanup (void);
 
 #endif

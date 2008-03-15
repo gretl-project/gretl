@@ -4792,8 +4792,7 @@ static int maybe_prune_delete_list (int *list)
     
     for (i=1; i<=list[0]; i++) {
 	if (list[i] <= vsave) {
-	    gretl_list_delete_at_pos(list, i);
-	    i--;
+	    gretl_list_delete_at_pos(list, i--);
 	    pruned = 1;
 	}
     }

@@ -1613,7 +1613,7 @@ int overwrite_err (const DATAINFO *pdinfo, int v)
     return E_DATA;
 }
 
-static int real_drop_listed_vars (const int *list, double ***pZ, 
+static int real_drop_listed_vars (int *list, double ***pZ, 
 				  DATAINFO *pdinfo, int *renumber,
 				  int drop)
 {
@@ -1627,8 +1627,14 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 	*renumber = 0;
     }
 
-    if (list == NULL) {
+    if (list == NULL || list[0] == 0) {
 	/* no-op */
+	return 0;
+    }
+
+    check_variable_deletion_list(list, pdinfo);
+    if (list[0] == 0) {
+	/* FIXME reporting */
 	return 0;
     }
 
@@ -1785,17 +1791,19 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
     err = real_drop_listed_vars(dlist, pZ, pdinfo, renumber,
 				DROP_NORMAL);
 
-    if (!err) {
-	err = gretl_lists_revise(dlist, 0);
-    }
+    if (dlist[0] > 0) {
+	if (!err) {
+	    err = gretl_lists_revise(dlist, 0);
+	}
 
-    if (!err && complex_subsampled()) {
-	double ***fZ = fetch_full_Z();
-	DATAINFO *fdinfo = fetch_full_datainfo();
+	if (!err && complex_subsampled()) {
+	    double ***fZ = fetch_full_Z();
+	    DATAINFO *fdinfo = fetch_full_datainfo();
 
-	err = real_drop_listed_vars(dlist, fZ, fdinfo, NULL,
-				    DROP_SPECIAL);
-	reset_full_Z(fZ);
+	    err = real_drop_listed_vars(dlist, fZ, fdinfo, NULL,
+					DROP_SPECIAL);
+	    reset_full_Z(fZ);
+	}
     }
 
     if (free_dlist) {
