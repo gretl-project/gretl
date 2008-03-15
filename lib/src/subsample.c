@@ -286,8 +286,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     return err;
 }
 
-static int
-resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
+static int resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
 {
     int newv = fullinfo->v;
     double **newZ = NULL;
@@ -304,7 +303,7 @@ resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
 
     /* figure how many scalars and how many series have been added */
 
-    for (i=fullinfo->v; i<pdinfo->v && !err; i++) {
+    for (i=fullinfo->v; i<pdinfo->v; i++) {
 	if (var_is_scalar(pdinfo, i)) {
 	    newv++;
 	} else {
@@ -342,9 +341,8 @@ resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
 	    newv = fullinfo->v;
 	    err = E_ALLOC;
 	} else {
-	    int j = fullinfo->v;
-
 	    fullZ = newZ;
+	    j = fullinfo->v;
 	    for (i=fullinfo->v; i<pdinfo->v && !err; i++) {
 		if (var_is_scalar(pdinfo, i)) {
 		    fullZ[j] = malloc(sizeof **newZ);
@@ -588,9 +586,7 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 	}
     }
 
-    if (err == E_ALLOC) {
-        sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
-    } else if (err == E_NOMERGE) {
+    if (err == E_NOMERGE) {
         sprintf(gretl_errmsg, 
 		_("Missing sub-sample information; can't merge data\n"));
     }
@@ -1126,6 +1122,11 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
     double **subZ = NULL;
     DATAINFO *subinfo;
     int err = 0;
+
+    if (mask == RESAMPLED) {
+	fprintf(stderr, "restrict_sample_from_mask: got RESAMPLED!\n");
+	return E_DATA;
+    }
 
     subinfo = datainfo_new();
     if (subinfo == NULL) {
