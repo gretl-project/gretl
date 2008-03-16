@@ -1632,7 +1632,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 			       int narmax, double ***pZ, DATAINFO *pdinfo) 
 {
 #if AINIT_DEBUG
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
     gretlopt nlsopt = OPT_A | OPT_V;
 #else
     PRN *prn = NULL;
@@ -2469,7 +2469,7 @@ static int hr_arma_init (const int *list, double *coeff,
 	err = armod.errcode;
     } else {
 #if AINIT_DEBUG
-	PRN *modprn = gretl_print_new(GRETL_PRINT_STDERR);
+	PRN *modprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
 	printmodel(&armod, adinfo, OPT_S, modprn);
 	gretl_print_destroy(modprn);

@@ -46,11 +46,11 @@ typedef enum {
 
 void gretl_print_destroy (PRN *prn);
 
-PRN *gretl_print_new (PrnType ptype);
+PRN *gretl_print_new (PrnType ptype, int *err);
 
-PRN *gretl_print_new_with_filename (const char *fname);
+PRN *gretl_print_new_with_filename (const char *fname, int *err);
 
-PRN *gretl_print_new_with_tempfile (void);
+PRN *gretl_print_new_with_tempfile (int *err);
 
 int gretl_print_has_tempfile (PRN *prn);
 

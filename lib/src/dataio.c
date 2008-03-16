@@ -1223,7 +1223,7 @@ int write_data (const char *fname, const int *list,
     gretl_error_clear();
 
     if (list == NULL || list[0] == 0) {
-	return 1;
+	return E_ARGS;
     }
 
     l0 = list[0];
@@ -1244,7 +1244,7 @@ int write_data (const char *fname, const int *list,
 	',' == pdinfo->decpoint) {
 	sprintf(gretl_errmsg, _("You can't use the same character for "
 				"the column delimiter and the decimal point"));
-	return 1;
+	return E_DATA;
     }
 
     strcpy(datfile, fname);
@@ -1287,7 +1287,7 @@ int write_data (const char *fname, const int *list,
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) {
 	    fclose(fp);
-	    return 1;
+	    return E_ALLOC;
 	}
 	for (i=1; i<=l0; i++) {
 	    v = list[i];

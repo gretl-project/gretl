@@ -862,7 +862,7 @@ void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
 }
 
 static PRN *make_tex_prn (int ID, char *texfile,
-			  int eqn, int doc)
+			  int eqn, int doc, int *err)
 {
     PrnFormat fmt = GRETL_FORMAT_TEX;
     PRN *prn;
@@ -874,7 +874,8 @@ static PRN *make_tex_prn (int ID, char *texfile,
 	gretl_maybe_switch_dir(texfile);
     }
 
-    prn = gretl_print_new_with_filename(texfile);
+    prn = gretl_print_new_with_filename(texfile, err);
+
     if (prn != NULL) {
 	if (eqn) {
 	    fmt |= GRETL_FORMAT_EQN;
@@ -1344,10 +1345,9 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *texfile,
     int doc = (opt & OPT_O);
     int err = 0;
 
-    prn = make_tex_prn(pmod->ID, texfile, eqn, doc);
-    if (prn == NULL) {
-	err = 1;
-    } else {
+    prn = make_tex_prn(pmod->ID, texfile, eqn, doc, &err);
+
+    if (!err) {
 	err = tex_print_model(pmod, pdinfo, opt, prn);
 	gretl_print_destroy(prn);
     }

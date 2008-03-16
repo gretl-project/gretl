@@ -2944,7 +2944,7 @@ int modify_dataset (int op, const int *list, const char *s,
 	    err = restore_full_sample(pZ, pdinfo, NULL);
 	    resampled = 0;
 	} else {
-	    pprintf(prn, "dataset restore: dataset is not resampled\n");
+	    pprintf(prn, _("dataset restore: dataset is not resampled\n"));
 	    err = E_DATA;
 	}
     } else if (op == DS_DELETE) {

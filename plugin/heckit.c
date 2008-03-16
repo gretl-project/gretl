@@ -946,7 +946,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 			  h_container *HC) 
 {
 #if HDEBUG
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT);
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 #endif
     MODEL hm;
     MODEL probmod;

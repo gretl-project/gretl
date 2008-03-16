@@ -1225,6 +1225,10 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
     int tnum, l0 = 0;
     int err;
 
+    if (list[0] == 0) {
+	return 0;
+    }
+
     if (ci != DIFF && ci != LDIFF && ci != SDIFF) {
 	return 1;
     }

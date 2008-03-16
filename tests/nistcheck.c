@@ -918,7 +918,7 @@ int main (int argc, char *argv[])
 
     libgretl_init();
 
-    prn = gretl_print_new(GRETL_PRINT_STDOUT); 
+    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); 
 
     for (j=0; j<ntests; j++) {
 	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,
@@ -1020,7 +1020,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
     sprintf(datadir, "%snist", datapath);
 
-    prn = gretl_print_new_with_filename(outfile); 
+    prn = gretl_print_new_with_filename(outfile, NULL); 
 
     nist_intro(prn);
 

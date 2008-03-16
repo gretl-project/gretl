@@ -414,7 +414,10 @@ int main (int argc, char *argv[])
     logo(); 
     session_time(NULL);
 
-    prn = gretl_print_new(GRETL_PRINT_STDOUT);
+    prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
+    if (err) {
+	noalloc(_("output stream"));
+    }
 
     line = malloc(MAXLINE);
     if (line == NULL) {
@@ -434,9 +437,9 @@ int main (int argc, char *argv[])
     if (!batch) {
 	strcpy(cmdfile, gretl_work_dir());
 	strcat(cmdfile, "session.inp");
-	cmdprn = gretl_print_new_with_filename(cmdfile);
-	if (cmdprn == NULL) {
-	    printf(_("Can't open file to save commands\n"));
+	cmdprn = gretl_print_new_with_filename(cmdfile, &err);
+	if (err) {
+	    errmsg(err, prn);
 	    return EXIT_FAILURE;
 	}
     }

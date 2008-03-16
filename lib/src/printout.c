@@ -74,7 +74,7 @@ void session_time (PRN *prn)
     PRN *myprn = NULL;
 
     if (prn == NULL) {
-	myprn = gretl_print_new(GRETL_PRINT_STDOUT);
+	myprn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 	prn = myprn;
     }
 
@@ -111,7 +111,7 @@ void gui_logo (PRN *prn)
     PRN *myprn = NULL;
 
     if (prn == NULL) {
-	myprn = gretl_print_new(GRETL_PRINT_STDOUT);
+	myprn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 	prn = myprn;
     }
 	
@@ -1720,8 +1720,11 @@ int printdata (const int *list, const char *mstr,
     if (list == NULL || list[0] == 0) {
 	if (mstr != NULL) {
 	    goto endprint;
-	} else {
+	} else if (list == NULL) {
 	    plist = full_var_list(pdinfo, &nvars);
+	} else {
+	    /* explicitly empty list: no-op */
+	    return 0;
 	}
     } else {
 	nvars = list[0];
@@ -1732,7 +1735,7 @@ int printdata (const int *list, const char *mstr,
 
     if (plist == NULL) {
 	if (nvars == 0) {
-	    pputs(prn, "No data\n");
+	    pputs(prn, _("No data\n"));
 	    goto endprint;
 	} else {
 	    return E_ALLOC;

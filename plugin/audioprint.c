@@ -321,9 +321,10 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
 {
     PRN *prn;
     const char *buf;
+    int err = 0;
 
-    prn = gretl_print_new(GRETL_PRINT_BUFFER);
-    if (prn == NULL) return 1;
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    if (err) return err;
     
     /* descriptive statistics */
     if (role == SUMMARY || role == VAR_SUMMARY) {

@@ -391,7 +391,7 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     int ok;
 
     if (sout != NULL) {
-	prn = gretl_print_new(GRETL_PRINT_BUFFER);
+	prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     } else {
 	prn = inprn;
     }

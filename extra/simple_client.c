@@ -43,7 +43,7 @@ int main (void)
     libgretl_init();
 
     logo(); /* print version info and session time */
-    prn = gretl_print_new(GRETL_PRINT_STDOUT); /* simple printing */
+    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); /* simple printing */
 
     /* create the datainfo struct and data matrix -- pass in pointer
        to data array; specify the number of variables (allowing one

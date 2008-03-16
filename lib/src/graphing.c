@@ -2078,9 +2078,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	strcpy(xlabel, var_get_graph_name(pdinfo, v));
     }
 
-    prn = gretl_print_new(GRETL_PRINT_BUFFER);
-    if (prn == NULL) {
-	err = E_ALLOC;
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    if (err) {
 	goto bailout;
     }
 

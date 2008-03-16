@@ -3659,25 +3659,30 @@ static Summary *summary_new (const int *list)
 }
 
 /**
- * summary:
+ * get_summary:
  * @list: list of variables to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
+ * @errlocation to receive error code.
  *
  * Calculates descriptive summary statistics for the specified variables.
  *
- * Returns: struct containing the summary statistics.
+ * Returns: struct containing the summary statistics, or %NULL
+ * on failure.
  */
 
-Summary *summary (const int *list, const double **Z, 
-		  const DATAINFO *pdinfo, PRN *prn) 
+Summary *get_summary (const int *list, const double **Z, 
+		      const DATAINFO *pdinfo, PRN *prn,
+		      int *err) 
 {
     Summary *s;
     int i, vi, ni, nmax;
 
     s = summary_new(list);
+
     if (s == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -3733,6 +3738,26 @@ Summary *summary (const int *list, const double **Z,
     }
 
     return s;
+}
+
+int list_summary (const int *list, const double **Z, 
+		  const DATAINFO *pdinfo, PRN *prn)
+{
+    Summary *summ;
+    int err = 0;
+
+    if (list[0] == 0) {
+	return 0;
+    }
+
+    summ = get_summary(list, Z, pdinfo, prn, &err);
+
+    if (!err) {
+	print_summary(summ, pdinfo, prn);
+	free_summary(summ);
+    }
+
+    return err;
 }
 
 /**
@@ -4112,6 +4137,10 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
 {
     VMatrix *corr;
     int err = 0;
+
+    if (list[0] == 0) {
+	return 0;
+    }
 
     corr = corrlist(list, Z, pdinfo, opt, &err);
     if (err) {
@@ -4514,16 +4543,17 @@ int mahalanobis_distance (const int *list, double ***pZ,
 }
 
 MahalDist *get_mahal_distances (const int *list, double ***pZ,
-			     DATAINFO *pdinfo, gretlopt opt,
-			     PRN *prn)
+				DATAINFO *pdinfo, gretlopt opt,
+				PRN *prn, int *err)
 {
     MahalDist *md = mahal_dist_new(list, pdinfo->n);
-    int err;
 
-    if (md != NULL) {
-	err = real_mahalanobis_distance(list, pZ, pdinfo, opt, 
-					md, prn);
-	if (err) {
+    if (md == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = real_mahalanobis_distance(list, pZ, pdinfo, opt, 
+					 md, prn);
+	if (*err) {
 	    free_mahal_dist(md);
 	    md = NULL;
 	}

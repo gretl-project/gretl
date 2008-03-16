@@ -1553,7 +1553,7 @@ static int transcribe_nls_function (MODEL *pmod, const char *s)
 static void 
 print_GNR_dataset (const int *list, double **gZ, DATAINFO *gdinfo)
 {
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
     int t1 = gdinfo->t1;
 
     fprintf(stderr, "gdinfo->t1 = %d, gdinfo->t2 = %d\n",

@@ -1007,10 +1007,15 @@ void gretl_matrix_print_with_col_heads (const gretl_matrix *m,
 
 void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg)
 {
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+    PRN *prn;
+    int err = 0;
 
-    real_matrix_print_to_prn(m, msg, 1, 0, NULL, prn);
-    gretl_print_destroy(prn);
+    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+
+    if (!err) {
+	real_matrix_print_to_prn(m, msg, 1, 0, NULL, prn);
+	gretl_print_destroy(prn);
+    }
 }
 
 /**
@@ -1042,10 +1047,14 @@ void debug_print_matrix (const gretl_matrix *m, const char *msg)
 	    fprintf(stderr, "val[%0*d] = % .10E\n", d, i, m->val[i]);
 	}
     } else {
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+	PRN *prn;
+	int err = 0;
 
-	gretl_matrix_print_to_prn(m, full, prn);
-	gretl_print_destroy(prn);
+	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	if (!err) {
+	    gretl_matrix_print_to_prn(m, full, prn);
+	    gretl_print_destroy(prn);
+	}
     }
 }
 

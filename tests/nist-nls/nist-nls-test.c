@@ -884,7 +884,7 @@ static int run_gretl_nls_check (void)
     PRN *prn;
 
     if (verbose) {
-	prn = gretl_print_new(GRETL_PRINT_STDOUT);
+	prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
     } else {
 	prn = NULL;
     }

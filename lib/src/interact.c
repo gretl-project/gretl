@@ -995,6 +995,12 @@ static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
 	return 0;
     }
 
+    if (cmd->flags & CMD_NULLIST) {
+	/* no-op */
+	cmd->flags ^= CMD_NULLIST;
+	return 0;
+    }
+
     list = full_var_list(pdinfo, &nv);
 
     if (list == NULL) {
@@ -1921,11 +1927,17 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	cmd->list[k++] = v;
 	ok = 1;
     } else if ((xlist = get_list_by_name(s)) != NULL) {
-	cmd->list[0] -= 1;
-	cmd->err = gretl_list_insert_list(&cmd->list, xlist, k);
-	if (!cmd->err) { 
-	    k += xlist[0];
+	if (cmd->list[0] == 1 && xlist[0] == 0) {
+	    cmd->list[0] = 0;
+	    cmd->flags |= CMD_NULLIST;
 	    ok = 1;
+	} else {
+	    cmd->list[0] -= 1;
+	    cmd->err = gretl_list_insert_list(&cmd->list, xlist, k);
+	    if (!cmd->err) { 
+		k += xlist[0];
+		ok = 1;
+	    }
 	}
     } else if (strchr(s, '(') != NULL) {
 	if (auto_lag_ok(s, &k, pZ, pdinfo, cmd)) {
@@ -3731,8 +3743,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     char *line = s->line;
     MODEL **models = s->models;
     PRN *prn = s->prn;
-    VMatrix *corrmat;
-    Summary *summ;
     double rho;
     char runfile[MAXLEN];
     int *listcpy = NULL;
@@ -3747,10 +3757,15 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (RETURNS_LIST(cmd->ci)) {
-	/* list is potentially modified -> make a copy */
-	listcpy = gretl_list_copy(cmd->list);
-	if (listcpy == NULL) {
-	    return E_ALLOC;
+	if (cmd->list[0] == 0) {
+	    /* no-op */
+	    return 0;
+	} else {
+	    /* list is potentially modified -> make a copy */
+	    listcpy = gretl_list_copy(cmd->list);
+	    if (listcpy == NULL) {
+		return E_ALLOC;
+	    }
 	}
     }
 
@@ -3808,27 +3823,18 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	order = atoi(cmd->param);
 	err = corrgram(cmd->list[1], order, 0, (const double **) *pZ, pdinfo, 
 		       prn, cmd->opt | OPT_A);
-	if (err) {
-	    pputs(prn, _("Failed to generate correlogram\n"));
-	}
 	break;
 
     case XCORRGM:
 	order = atoi(cmd->param);
 	err = xcorrgram(cmd->list, order, (const double **) *pZ, pdinfo, 
 			prn, cmd->opt | OPT_A);
-	if (err) {
-	    pputs(prn, _("Failed to generate correlogram\n"));
-	}
 	break;
 
     case PERGM:
 	order = atoi(cmd->param);
 	err = periodogram(cmd->list[1], order, (const double **) *pZ, pdinfo, 
 			  cmd->opt | OPT_N, prn);
-	if (err) {
-	    pputs(prn, _("Failed to generate periodogram\n"));
-	}
 	break;
 
     case BREAK:
@@ -3868,22 +3874,23 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case PCA:
-	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, 
-			   OPT_U, &err);
-	if (!err) {
-	    err = call_pca_plugin(corrmat, pZ, pdinfo, &cmd->opt, prn);
-	    if (cmd->opt && !err) {
-		maybe_list_vars(pdinfo, prn);
+	if (cmd->list[0] > 0) {
+	    VMatrix *corrmat;
+
+	    corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, 
+			       OPT_U, &err);
+	    if (!err) {
+		err = call_pca_plugin(corrmat, pZ, pdinfo, &cmd->opt, prn);
+		if (cmd->opt && !err) {
+		    maybe_list_vars(pdinfo, prn);
+		}
+		free_vmatrix(corrmat);
 	    }
-	    free_vmatrix(corrmat);
 	}
 	break;
 
     case CRITERIA:
 	err = parse_criteria(line, (const double **) *pZ, pdinfo, prn);
-	if (err) { 
-	    pputs(prn, _("Error in computing model selection criteria.\n"));
-	}
 	break;
 
     case DATA:
@@ -3898,22 +3905,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (s->callback != NULL) {
 		s->callback(s, pZ, pdinfo);
 	    }
-	} else if (err == E_NOTIMP) {
-	    pputs(prn, _("This command is not available\n"));
-	}
+	} 
 	break;
 
     case DIFF:
     case LDIFF:
     case SDIFF:
 	err = list_diffgenr(listcpy, cmd->ci, pZ, pdinfo);
-	if (err) {
-	    if (cmd->ci == LDIFF) {
-		pputs(prn, _("Error adding log differences of variables.\n"));
-	    } else if (cmd->ci == DIFF) {
-		pputs(prn, _("Error adding first differences of variables.\n"));
-	    }
-	} else {
+	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
@@ -3928,27 +3927,21 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case LAGS:
 	order = atoi(cmd->param);
 	err = list_laggenr(&listcpy, order, pZ, pdinfo); 
-	if (err) {
-	    pputs(prn, _("Error adding lags of variables.\n"));
-	} else {
+	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case LOGS:
 	err = list_loggenr(listcpy, pZ, pdinfo);
-	if (err) {
-	    pputs(prn, _("Error adding logs of variables.\n"));
-	} else {
+	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case SQUARE:
 	err = list_xpxgenr(&listcpy, pZ, pdinfo, cmd->opt);
-	if (err) {
-	    pputs(prn, _("Failed to generate squares\n"));
-	} else {
+	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
@@ -4040,13 +4033,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SUMMARY:
-	summ = summary(cmd->list, (const double **) *pZ, pdinfo, prn);
-	if (summ == NULL) {
-	    pputs(prn, _("generation of summary stats failed\n"));
-	} else {
-	    print_summary(summ, pdinfo, prn);
-	    free_summary(summ);
-	}
+	err = list_summary(cmd->list, (const double **) *pZ, pdinfo, prn);
 	break; 
 
     case XTAB:
@@ -4117,30 +4104,21 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case STORE:
-	if (*cmd->param != '\0') {
-	    if (gretl_messages_on()) {
-		if ((cmd->opt & OPT_Z) && !has_suffix(cmd->param, ".gz")) {
-		    pprintf(prn, _("store: using filename %s.gz\n"), cmd->param);
-		} else {
-		    pprintf(prn, _("store: using filename %s\n"), cmd->param);
-		}
-	    }
-	} else {
-	    pprintf(prn, _("store: no filename given\n"));
-	    break;
-	}
-	if (write_data(cmd->param, cmd->list, (const double **) *pZ,
-		       pdinfo, cmd->opt, NULL)) {
-	    pprintf(prn, _("write of data file failed\n"));
-	    err = 1;
+	if (*cmd->param == '\0') {
+	    pputs(prn, _("store: no filename given\n"));
 	    break;
 	}
 	if (gretl_messages_on()) {
-	    pprintf(prn, _("Data written OK.\n"));
+	    if ((cmd->opt & OPT_Z) && !has_suffix(cmd->param, ".gz")) {
+		pprintf(prn, _("store: using filename %s.gz\n"), cmd->param);
+	    } else {
+		pprintf(prn, _("store: using filename %s\n"), cmd->param);
+	    }
 	}
-	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && pdinfo->markers) {
-	    pprintf(prn, _("Warning: case markers not saved in "
-			   "binary datafile\n"));
+	err = write_data(cmd->param, cmd->list, (const double **) *pZ,
+			 pdinfo, cmd->opt, NULL);
+	if (!err && gretl_messages_on()) {
+	    pprintf(prn, _("Data written OK.\n"));
 	}
 	break;
 
@@ -4330,7 +4308,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = reset_test(models[0], pZ, pdinfo, OPT_NONE, prn);
 	} else if (cmd->ci == CHOW || cmd->ci == QLRTEST) {
 	    err = chow_test(line, models[0], pZ, pdinfo, OPT_NONE, prn);
-	} else { /* VIF */
+	} else if (cmd->ci == VIF) { 
 	    err = vif_test(models[0], pZ, pdinfo, prn);
 	} 
 	break;
@@ -4366,9 +4344,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = texprint(models[0], pdinfo, texfile, 
 			   (cmd->ci == EQNPRINT)? (cmd->opt | OPT_E) :
 			   cmd->opt);
-	    if (err) {
-		pprintf(prn, _("Couldn't open tex file for writing\n"));
-	    } else {
+	    if (!err) {
 		pprintf(prn, _("Model printed to %s\n"), texfile);
 	    }
 	}
@@ -4460,14 +4436,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case INCLUDE:
 	err = getopenfile(line, runfile, NULL, OPT_S);
 	if (err) { 
-	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	} 
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_user_matrix_file(runfile);
-	    if (err) {
-		pprintf(prn, _("Error reading %s\n"), runfile);
-	    }
 	    break;
 	}
 	if (!strcmp(runfile, s->runfile)) { 

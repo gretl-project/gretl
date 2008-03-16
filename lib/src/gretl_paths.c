@@ -121,6 +121,8 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     gsize wrote;
     FILE *fp = NULL;
 
+    errno = 0;
+
     if (mode != NULL && *mode == 'r') {
 	/* opening for reading */
 	fp = fopen(fname, mode);
@@ -146,6 +148,10 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	} else {
 	    fp = fopen(fname, mode);
 	}
+    }
+
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno();
     }
 
     return fp;

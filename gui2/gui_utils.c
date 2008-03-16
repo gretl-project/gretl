@@ -1137,7 +1137,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	return;
     } else { 
 	/* native data */
-	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
+	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
 	if (datatype == GRETL_XML_DATA) {
 	    err = gretl_read_gdt(&Z, datainfo, tryfile, &paths, 

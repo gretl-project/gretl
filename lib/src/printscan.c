@@ -519,9 +519,9 @@ static int real_do_printf (const char *line, double ***pZ,
 	if (*targ == '\0') {
 	    return E_PARSE;
 	}
-	prn = gretl_print_new(GRETL_PRINT_BUFFER);
-	if (prn == NULL) {
-	    return E_ALLOC;
+	prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+	if (err) {
+	    return err;
 	}
     } 
 
@@ -1181,11 +1181,13 @@ int do_sscanf (const char *line, double ***pZ,
 
 int generate_obs_markers (const char *s, double ***pZ, DATAINFO *pdinfo)
 {
-    PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER);
+    PRN *prn;
     int t, err = 0;
 
-    if (prn == NULL) {
-	return E_ALLOC;
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+
+    if (err) {
+	return err;
     }
 
     if (pdinfo->S == NULL) {

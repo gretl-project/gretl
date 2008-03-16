@@ -257,11 +257,10 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
     strcpy(fullname, paths.dotdir);
     strcat(fullname, fname);
 
-    *pprn = gretl_print_new_with_filename(fullname);
+    *pprn = gretl_print_new_with_filename(fullname, &err);
 
-    if (*pprn == NULL) {
-	file_write_errbox(fname);
-	err = 1;
+    if (err) {
+	gui_errmsg(err);
     }
 
     return err;
@@ -269,14 +268,15 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
 
 gint bufopen (PRN **pprn)
 {
-    *pprn = gretl_print_new(GRETL_PRINT_BUFFER);
+    int err = 0;
 
-    if (*pprn == NULL) {
-	nomem();
-	return 1;
+    *pprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+
+    if (err) {
+	gui_errmsg(err);
     }
 
-    return 0;
+    return err;
 }
 
 static void maybe_quote_filename (char *s, char *cmd)
@@ -708,16 +708,13 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
     case PCA:
 	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
 		       (action == PCA)? OPT_U : OPT_NONE, &err);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	    return;
-	} 
-	if (action == CORR) {
-	    print_corrmat(obj, datainfo, prn);
-	} else {
-	    err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
+	if (!err) {
+	    if (action == CORR) {
+		print_corrmat(obj, datainfo, prn);
+	    } else {
+		err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
 				  NULL, prn);
+	    }
 	}	    
 	break;
 
@@ -741,22 +738,16 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	if (libcmd.list[0] <= 4) {
 	    opt = OPT_V;
 	}
-	obj = get_mahal_distances(libcmd.list, &Z, datainfo, opt, prn);
-	if (obj == NULL) {
-	    gui_errmsg(1);
-	    gretl_print_destroy(prn);
-	    return;
-	}
+	obj = get_mahal_distances(libcmd.list, &Z, datainfo, opt, 
+				  prn, &err);
 	break;
 
     case SUMMARY:
-	obj = summary(libcmd.list, (const double **) Z, datainfo, prn);
-	if (obj == NULL) {
-	    gui_errmsg(1);
-	    gretl_print_destroy(prn);
-	    return;
-	}	    
-	print_summary(obj, datainfo, prn);
+	obj = get_summary(libcmd.list, (const double **) Z, datainfo, 
+			  prn, &err);
+	if (!err) {
+	    print_summary(obj, datainfo, prn);
+	}
 	break;
     }
 
@@ -6137,9 +6128,9 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	sprintf(texfile, "%swindow.tex", paths.dotdir);
     } 
 
-    fprn = gretl_print_new_with_filename(texfile);
-    if (fprn == NULL) {
-	file_write_errbox(texfile);
+    fprn = gretl_print_new_with_filename(texfile, &err);
+    if (err) {
+	gui_errmsg(err);
 	return;
     }
 

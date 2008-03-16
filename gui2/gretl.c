@@ -872,8 +872,8 @@ int main (int argc, char *argv[])
     if (open_datafile) {
 	PRN *prn; 
 
-	prn = gretl_print_new(GRETL_PRINT_STDERR);
-	if (prn == NULL) exit(EXIT_FAILURE);
+	prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	if (err) exit(EXIT_FAILURE);
 
 	*paths.datfile = '\0';
 

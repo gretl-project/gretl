@@ -815,7 +815,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 #if ODEBUG > 1
     pprintf(prn, "oprobit_estimate: initial OLS\n");
     if (1) {
-	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
+	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
     
 	printmodel(&model, pdinfo, OPT_NONE, errprn);
 	gretl_print_destroy(errprn);

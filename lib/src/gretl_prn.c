@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include <stdarg.h>
+#include <errno.h>
 #include <glib.h>
 
 struct PRN_ {
@@ -81,7 +82,9 @@ void gretl_print_destroy (PRN *prn)
 static int prn_add_tempfile (PRN *prn)
 {
     char fname[MAXLEN];
-    int fd;
+    int fd, err = 0;
+
+    errno = 0;
 
     sprintf(fname, "%sprntmp.XXXXXX", gretl_dot_dir());
 
@@ -90,26 +93,42 @@ static int prn_add_tempfile (PRN *prn)
 #else
     fd = mkstemp(fname);
 #endif
+
     if (fd == -1) {
-	return E_FOPEN;
+	err = E_FOPEN;
     } else {
 	prn->fname = gretl_strdup(fname);
-	prn->fp = fdopen(fd, "w");
+	if (prn->fname == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    prn->fp = fdopen(fd, "w");
+	    if (prn->fp == NULL) {
+		err = E_FOPEN;
+	    }
+	}
     }
 
-    return 0;
+    if (errno != 0) {
+	gretl_errmsg_set_from_errno();
+	
+    }
+
+    return err;
 }
 
 static PRN *real_gretl_print_new (PrnType ptype, 
 				  const char *fname,
-				  char *buf)
+				  char *buf,
+				  int *err)
 {
     PRN *prn = malloc(sizeof *prn);
 
     if (prn == NULL) {
-	fprintf(stderr, _("gretl_prn_new: out of memory\n"));
+	*err = E_ALLOC;
 	return NULL;
     }
+
+    *err = 0;
 
 #if PRN_DEBUG
     fprintf(stderr, "real_gretl_print_new: type=%d, fname='%s', buf=%p\n",
@@ -129,13 +148,13 @@ static PRN *real_gretl_print_new (PrnType ptype,
     if (ptype == GRETL_PRINT_FILE) {
 	prn->fp = gretl_fopen(fname, "w");
 	if (prn->fp == NULL) {
-	    fprintf(stderr, _("gretl_prn_new: couldn't open %s\n"), fname);
+	    *err = E_FOPEN;
 	    free(prn);
 	    prn = NULL;
 	} 
     } else if (ptype == GRETL_PRINT_TEMPFILE) {
-	if (prn_add_tempfile(prn)) {
-	    fprintf(stderr, "gretl_prn_new: couldn't open tempfile\n");
+	*err = prn_add_tempfile(prn);
+	if (*err) {
 	    free(prn);
 	    prn = NULL;
 	} else {
@@ -156,7 +175,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	    int p = pprintf(prn, "@init");
 
 	    if (p < 0) {
-		fprintf(stderr, _("gretl_prn_new: out of memory\n"));
+		*err = E_ALLOC;
 		free(prn);
 		prn = NULL;
 	    }
@@ -172,6 +191,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
 /**
  * gretl_print_new:
  * @ptype: code indicating the desired printing mode.
+ * @err: location to receive error code, or %NULL.
  * 
  * Create and initialize a gretl printing struct. If @ptype
  * is %GRETL_PRINT_BUFFER, output will go to an automatically
@@ -187,23 +207,28 @@ static PRN *real_gretl_print_new (PrnType ptype,
  * Returns: pointer to newly created struct, or %NULL on failure.
  */
 
-PRN *gretl_print_new (PrnType ptype)
+PRN *gretl_print_new (PrnType ptype, int *err)
 {
+    int myerr, *errp;
+
     if (ptype == GRETL_PRINT_FILE) {
 	fprintf(stderr, "gretl_print_new: needs a filename\n");
 	return NULL;
     }
 
+    errp = (err == NULL)? &myerr : err;
+
 #if PRN_DEBUG
     fprintf(stderr, "gretl_print_new() called, type = %d\n", ptype);
 #endif
 
-    return real_gretl_print_new(ptype, NULL, NULL);
+    return real_gretl_print_new(ptype, NULL, NULL, errp);
 }
 
 /**
  * gretl_print_new_with_filename:
  * @fname: name of the file to be opened for writing.
+ * @err: location to receive error code.
  * 
  * Create and initialize a gretl printing struct, with
  * output directed to the named file.  
@@ -211,18 +236,19 @@ PRN *gretl_print_new (PrnType ptype)
  * Returns: pointer to newly created struct, or %NULL on failure.
  */
 
-PRN *gretl_print_new_with_filename (const char *fname)
+PRN *gretl_print_new_with_filename (const char *fname, int *err)
 {
     if (fname == NULL) {
 	fprintf(stderr, _("gretl_prn_new: Must supply a filename\n"));
 	return NULL;
     }
 
-    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL);
+    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, err);
 }
 
 /**
  * gretl_print_new_with_tempfile:
+ * @err: location to receive error code.
  * 
  * Create and initialize a gretl printing struct, with
  * output directed to a temporary file, which is deleted
@@ -231,9 +257,9 @@ PRN *gretl_print_new_with_filename (const char *fname)
  * Returns: pointer to newly created struct, or %NULL on failure.
  */
 
-PRN *gretl_print_new_with_tempfile (void)
+PRN *gretl_print_new_with_tempfile (int *err)
 {
-    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL);
+    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, err);
 }
 
 /**
@@ -268,7 +294,9 @@ PRN *gretl_print_new_with_buffer (char *buf)
     if (buf == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf);
+	int err;
+
+	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, &err);
     }
 }
 
@@ -967,7 +995,7 @@ char prn_delim (PRN *prn)
 /**
  * set_up_verbose_printer.
  * @opt: %OPT_V for verbosity.
- * @prn: currently active printing struct
+ * @prn: currently active printing struct.
  *
  * Returns: printing struct for verbose output.
  */
@@ -978,7 +1006,9 @@ PRN *set_up_verbose_printer (gretlopt opt, PRN *prn)
 
     if (opt & OPT_V) {
 	if (iter_print_func_installed()) {
-	    vprn = gretl_print_new_with_tempfile();
+	    int err;
+
+	    vprn = gretl_print_new_with_tempfile(&err);
 	} else {
 	    vprn = prn;
 	}

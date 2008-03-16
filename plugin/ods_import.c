@@ -1142,7 +1142,7 @@ static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
     err = ods_prune_columns(sheet);
 
     if (!err) {
-	tprn = gretl_print_new(GRETL_PRINT_STDERR);
+	tprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	ts_check(sheet, tprn);
 	gretl_print_destroy(tprn);
     }

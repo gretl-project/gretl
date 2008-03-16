@@ -173,9 +173,12 @@ int periodogram (int varno, int width,
 		 const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
-Summary *summary (const int *list, const double **Z, 
-		  const DATAINFO *pdinfo,
-		  PRN *prn);
+Summary *get_summary (const int *list, const double **Z, 
+		      const DATAINFO *pdinfo,
+		      PRN *prn, int *err);
+
+int list_summary (const int *list, const double **Z, 
+		  const DATAINFO *pdinfo, PRN *prn);
 
 void print_summary (const Summary *summ,
 		    const DATAINFO *pdinfo,
@@ -218,7 +221,7 @@ int mahalanobis_distance (const int *list, double ***pZ,
 
 MahalDist *get_mahal_distances (const int *list, double ***pZ,
 				DATAINFO *pdinfo, gretlopt opt,
-				PRN *prn);
+				PRN *prn, int *err);
 
 void free_mahal_dist (MahalDist *md);
 
