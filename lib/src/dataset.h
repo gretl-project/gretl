@@ -369,6 +369,11 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
 
 const char *var_get_graph_name (const DATAINFO *pdinfo, int i);
 
+unsigned int get_resampling_seed (void);
+
+int dataset_resample (int n, unsigned int seed,
+		      double ***pZ, DATAINFO *pdinfo);
+
 int dataset_op_from_string (const char *s);
 
 int modify_dataset (int op, const int *list, const char *s, 

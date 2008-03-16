@@ -367,7 +367,6 @@ int ok_in_loop (int c)
 	c == CORRGM ||
 	c == CUSUM ||
 	c == DATA ||
-	c == DATAMOD ||
 	c == DELEET ||
 	c == EQNPRINT ||
 	c == FUNC ||

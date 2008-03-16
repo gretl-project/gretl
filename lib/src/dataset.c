@@ -2191,7 +2191,7 @@ static int get_optional_offset (const char *s, const double **Z,
 
     if (p != NULL) {
 	if (strncmp(p, "--offset=", 9)) {
-	    *err = E_SYNTAX;
+	    *err = E_PARSE;
 	} else {
 	    off = get_stack_param_val(p + 9, Z, pdinfo);
 	    if (off < 0 || off > pdinfo->n - 1) {
@@ -2211,7 +2211,7 @@ static int get_optional_length (const char *s, const double **Z,
 
     if (p != NULL) {
 	if (strncmp(p, "--length=", 9)) {
-	    *err = E_SYNTAX;
+	    *err = E_PARSE;
 	} else {
 	    len = get_stack_param_val(p + 9, Z, pdinfo);
 	    if (len < 0 || len > pdinfo->n) {
@@ -2278,7 +2278,7 @@ int dataset_stack_variables (const char *vname, const char *line,
     line += 6; /* skip "stack(" */
     if (*line == ',') {
 	free(scpy);
-	return E_SYNTAX;
+	return E_PARSE;
     }
 
     /* copy active portion of line (we use strtok below) */
@@ -2290,7 +2290,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 
     p = strrchr(s, ')');
     if (p == NULL) {
-	err = E_SYNTAX;
+	err = E_PARSE;
 	goto bailout;
     }
 
@@ -2326,7 +2326,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 	nv++;
 
 	if (nv < 2) {
-	    return E_SYNTAX;
+	    return E_PARSE;
 	}
 
 	vnum = malloc(nv * sizeof *vnum);
@@ -2789,9 +2789,17 @@ static int compact_data_set_wrapper (const char *s, double ***pZ,
     return compact_data_set(pZ, pdinfo, k, method, 0, 0);
 }
 
+static unsigned int resample_seed;
+
+unsigned int get_resampling_seed (void)
+{
+    return resample_seed;
+}
+
 /* resample the dataset by observation, with replacement */
 
-static int dataset_resample (int n, double ***pZ, DATAINFO *pdinfo)
+int dataset_resample (int n, unsigned int seed,
+		      double ***pZ, DATAINFO *pdinfo)
 {
     double **RZ = NULL;
     DATAINFO *rinfo = NULL;
@@ -2851,6 +2859,13 @@ static int dataset_resample (int n, double ***pZ, DATAINFO *pdinfo)
 	S = strings_array_new_with_length(n, OBSLEN);
     }
 
+    if (seed > 0) {
+	resample_seed = seed;
+	gretl_rand_set_seed(seed);
+    } else {
+	resample_seed = gretl_rand_get_seed();
+    }
+
     for (t=0; t<n; t++) {
 	s = gretl_rand_int_max(T) + pdinfo->t1;
 	j = 1;
@@ -2905,8 +2920,28 @@ int modify_dataset (int op, const int *list, const char *s,
     int k = 0, err = 0;
 
     if (op == DS_CLEAR) {
-	/* for now, must be handled by the calling program */
+	/* must be handled by the calling program */
 	return E_NOTIMP;
+    }
+
+    if (gretl_function_depth() > 0) {
+	strcpy(gretl_errmsg, _("The 'dataset' command is not available within functions"));
+	return 1;
+    }
+
+    if (op != DS_RESAMPLE && op != DS_RESTORE && gretl_looping()) {
+	pputs(prn, _("Sorry, this command is not available in loop mode\n"));
+	return 1;
+    }
+
+    if (op == DS_RESAMPLE && resampled) {
+	/* repeated "resample": implicitly restore first */
+	err = restore_full_sample(pZ, pdinfo, NULL);
+	if (err) {
+	    return err;
+	} else {
+	    resampled = 0;
+	}
     }
 
     if (op != DS_RESTORE && complex_subsampled()) {
@@ -2935,7 +2970,7 @@ int modify_dataset (int op, const int *list, const char *s,
     } else if (op == DS_DSORTBY) {
 	err = dataset_sort(s, *pZ, pdinfo, OPT_D);
     } else if (op == DS_RESAMPLE) {
-	err = dataset_resample(k, pZ, pdinfo);
+	err = dataset_resample(k, 0, pZ, pdinfo);
 	if (!err) {
 	    resampled = 1;
 	}

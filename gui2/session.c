@@ -130,6 +130,8 @@ struct sample_info {
     int t1;
     int t2;
     char *mask;
+    unsigned int seed;
+    int resample_n;
 };
 
 enum {
@@ -998,6 +1000,8 @@ static void sinfo_init (struct sample_info *sinfo)
     sinfo->t1 = 0;
     sinfo->t2 = 0;
     sinfo->mask = NULL;
+    sinfo->seed = 0;
+    sinfo->resample_n = 0;
 }
 
 static int set_session_dirname (const char *sname)
@@ -1107,7 +1111,10 @@ void do_open_session (void)
     session_file_make_path(fname, "lists.xml");
     err = maybe_read_lists_file(fname);
 
-    if (sinfo.mask != NULL) {
+    if (sinfo.resample_n > 0) {
+	err = dataset_resample(sinfo.resample_n, sinfo.seed, &Z, 
+			       datainfo);
+    } else if (sinfo.mask != NULL) {
 	err = restrict_sample_from_mask(sinfo.mask, &Z, datainfo);
     }
 

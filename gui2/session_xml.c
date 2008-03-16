@@ -319,6 +319,21 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
 	    err = data_submask_from_xml(cur, doc, sinfo);
+	} else if (!xmlStrcmp(cur->name, (XUC) "resample")) {
+	    tmp = xmlGetProp(cur, (XUC) "seed");
+	    if (tmp != NULL) {
+		sinfo->seed = (unsigned) atoi((const char *) tmp);
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "n");
+	    if (tmp != NULL) {
+		sinfo->resample_n = atoi((const char *) tmp);
+		free(tmp);
+	    }
+	    if (sinfo->resample_n <= 0) {
+		sinfo->seed = 0;
+		sinfo->resample_n = 0;
+	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "models")) {
 	    tmp = xmlGetProp(cur, (XUC) "count");
 	    if (tmp != NULL) {

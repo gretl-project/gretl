@@ -193,6 +193,10 @@ static int submask_match (const char *s1, const char *s2, int n)
 {
     int t;
 
+    if (s1 == RESAMPLED || s2 == RESAMPLED) {
+	return s1 == RESAMPLED && s2 == RESAMPLED;
+    }
+
     for (t=0; t<n; t++) {
 	if (s1[t] != s2[t]) return 0;
     }

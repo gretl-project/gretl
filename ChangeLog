@@ -26,6 +26,7 @@ version 1.7.4, in progress
 - Enable "delete" command for saved strings
 - Enable naming of matrix columns, via colnames function or
   the GUI matrix editor
+- Enable "dataset resample" in loops (experimental)
 - Fix sub-sampling bug (new in 1.7.3)
 
 2/29/2008 version 1.7.3

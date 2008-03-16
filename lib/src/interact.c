@@ -497,11 +497,11 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
 	char *p = strchr(s + 1, *s);
 
 	if (p == NULL) {
-	    return E_SYNTAX;
+	    return E_PARSE;
 	}
 	*len = p - s - 1;
 	if (*len == 0) {
-	    return E_SYNTAX;
+	    return E_PARSE;
 	}
 	*quoted = 1;
     } else {
@@ -2257,7 +2257,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    pos = 0;
 	} else if (cmd->ci == RHODIFF) {
 	    /* rhodiff: param field is not optional */
-	    cmd->err = E_SYNTAX;
+	    cmd->err = E_ARGS;
 	    goto cmd_exit;
 	} else {
 	    /* lags: param is optional */
@@ -4511,7 +4511,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (s->cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
 	if (!ok_in_loop(s->cmd->ci)) {
-            pprintf(s->prn, _("Sorry, this command is not available in loop mode\n"));
+            pputs(s->prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         }
 	err = gretl_loop_append_line(s, pZ, pdinfo);

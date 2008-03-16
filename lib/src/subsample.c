@@ -159,7 +159,9 @@ int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
     int ret = 0;
 
     if (pdinfo->submask == RESAMPLED) {
-	fputs("<submask length=\"0\"></submask>\n", fp);
+	unsigned int seed = get_resampling_seed();
+
+	fprintf(fp, "<resample seed=\"%u\" n=\"%d\"/>\n", seed, pdinfo->n);
 	ret = 1;
     } else if (complex_subsampled()) {
 	int i, n = get_submask_length(pdinfo->submask);
@@ -1112,9 +1114,11 @@ make_restriction_mask (int mode, const char *line, const int *list,
     return err;
 }
 
-/* this is also used in session.c, when re-establishing
-   a previously sub-sampled data state on reopening 
-   a saved session */
+/* This is also used in session.c, when re-establishing a previously
+   sub-sampled data state on reopening a saved session, and also on
+   exit from a user function when the dataset was sub-sampled on
+   entry to the function.
+*/
 
 int 
 restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
