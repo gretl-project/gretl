@@ -3831,14 +3831,18 @@ static void maybe_unrestrict_dataset (void)
     }
 }
 
-#define DROP_MISSROWS 999
+enum {
+    DWIZ_CREATE   = 1 << 0,
+    DWIZ_DROPMISS = 1 << 1
+};
 
 static int
-datawiz_make_changes (DATAINFO *dwinfo, int create)
+datawiz_make_changes (DATAINFO *dwinfo, int flags)
 {
     char setline[32];
     gretlopt opt = OPT_NONE;
-    int delmiss = 0;
+    int create = (flags & DWIZ_CREATE);
+    int delmiss = (flags & DWIZ_DROPMISS);
     int delete_markers = 0;
     int err = 0;
 
@@ -3862,11 +3866,6 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
 	err = set_panel_structure_from_vars(dwinfo->t1, dwinfo->t2,
 					    Z, datainfo);
 	goto finalize;
-    }
-
-    if (GPOINTER_TO_INT(dwinfo->data) == DROP_MISSROWS) {
-	delmiss = 1;
-	dwinfo->data = NULL;
     }
 
     /* check for nothing to be done */
@@ -4104,7 +4103,7 @@ struct ts_pd {
     const char *label;
 };
 
-static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
+static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo, int *flags)
 {
     struct ts_pd ok_pd[] = {
 	{  1, N_("Annual") },
@@ -4161,7 +4160,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 		nunits, nperiods);
     } 
 
-    if (GPOINTER_TO_INT(dwinfo->data) == DROP_MISSROWS) {
+    if (*flags & DWIZ_DROPMISS) {
 	strcat(ctxt, "\n");
 	strcat(ctxt, _("(dropping missing observations)"));
     }
@@ -4587,21 +4586,21 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
     return dwspin;
 }
 
-static void set_purge_missobs (GtkWidget *w, DATAINFO *dwinfo)
+static void set_purge_missobs (GtkWidget *w, int *flags)
 {
     if (GTK_TOGGLE_BUTTON(w)->active) {
-	dwinfo->data = GINT_TO_POINTER(DROP_MISSROWS);
+	*flags |= DWIZ_DROPMISS;
     } else {
-	dwinfo->data = NULL;
+	*flags &= ~DWIZ_DROPMISS;
     }    
 }
 
-static void maybe_add_missobs_purger (GtkWidget *vbox, DATAINFO *dwinfo)
+static void maybe_add_missobs_purger (GtkWidget *vbox, int *flags)
 {
     double missfrac = 0.0;
     int active = 0;
 
-    if (GPOINTER_TO_INT(dwinfo->data) == DROP_MISSROWS) {
+    if (*flags & DWIZ_DROPMISS) {
 	active = 1;
     } else {
 	missfrac = missing_obs_fraction((const double **) Z, 
@@ -4619,7 +4618,7 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, DATAINFO *dwinfo)
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
 	}
 	g_signal_connect(G_OBJECT(chk), "toggled", 
-			 G_CALLBACK(set_purge_missobs), dwinfo);
+			 G_CALLBACK(set_purge_missobs), flags);
 	gtk_widget_show_all(hbox);
     }
 }
@@ -4629,7 +4628,7 @@ static void reactivate_main_menus (GtkWidget *w, gpointer p)
     main_menus_enable(TRUE);
 }
 
-static int datawiz_dialog (int step, DATAINFO *dwinfo)
+static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
 {
     struct setvar_and_spin sspin;
     GtkWidget *dialog;
@@ -4773,7 +4772,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     if (step == DW_STARTING_OBS && Z != NULL &&
 	dwinfo->structure == TIME_SERIES &&
 	(dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7)) {
-	maybe_add_missobs_purger(GTK_DIALOG(dialog)->vbox, dwinfo);
+	maybe_add_missobs_purger(GTK_DIALOG(dialog)->vbox, flags);
     }
 
     /* panel: selectors for unit and time index variables? */
@@ -4792,7 +4791,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     if (step == DW_CONFIRM) {
 	char ctxt[512];
 
-	make_confirmation_text(ctxt, dwinfo);
+	make_confirmation_text(ctxt, dwinfo, flags);
 	tempwid = gtk_label_new(ctxt);
 	gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
@@ -4850,6 +4849,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 {
     DATAINFO *dwinfo;
+    int flags = 0;
     int step = DW_SET_TYPE;
     int ret = DW_CANCEL;
 
@@ -4859,12 +4859,16 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 	return;
     }
 
+    if (create) {
+	flags |= DWIZ_CREATE;
+    }
+
     /* copy current relevant info */
     dwinfo_init(dwinfo);
 
     while (step != DW_DONE && !all_done) {
 
-	ret = datawiz_dialog(step, dwinfo);
+	ret = datawiz_dialog(step, dwinfo, &flags);
 
 	switch (ret) {
 
@@ -4953,7 +4957,7 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
     }
 
     if (ret != DW_CANCEL && !all_done) {
-	datawiz_make_changes(dwinfo, create);
+	datawiz_make_changes(dwinfo, flags);
     }
 
     if (ret == DW_CANCEL && !all_done && create) {

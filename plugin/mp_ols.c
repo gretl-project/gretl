@@ -163,16 +163,15 @@ static void make_poly_series (MPMODEL *pmod, mpf_t **mpZ,
 }
 
 static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
-			    unsigned char **digits,
-			    int i, int mpi)
+			    const int *zdigits, int i, int mpi)
 {
     char numstr[64];
     int t, s = 0; 
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (digits != NULL && digits[i] != NULL) {
+	if (zdigits != NULL && zdigits[i] > 0 && zdigits[i] < DBL_DIG) {
 	    /* do trick with strings */
-	    sprintf(numstr, "%.*g", digits[i][t], Z[i][t]);
+	    sprintf(numstr, "%.*g", zdigits[i], Z[i][t]);
 	    mpf_init_set_str(mpZ[mpi][s], numstr, 10);
 	} else { 
 	    /* do straight conversion */
@@ -190,10 +189,10 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
    trick", namely print the double to a string using a precision that
    was recorded at the time the original data were read, then set the
    mpf_t from that string.  This is designed to avoid the transmission
-   to the mpf_t of garbage lying beyond DBL_DIGITS into the double.
+   to the mpf_t of garbage lying beyond DBL_DIG into the double.
    The trick is applicable only for data read from some original
    source, e.g. the NIST data files; also, it works only if the
-   original data had a precision of not more than DBL_DIGITS.  
+   original data had a precision of not more than DBL_DIG.  
 
    Besides converting ordinary data, this function is also used to
    generate powers of x in the case of a polynomial regression of y on
@@ -202,8 +201,8 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
    powers of x is done in regular double precision, so we do it here.
 */
 
-static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z, 
-			 const DATAINFO *pdinfo, 
+static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
+			 const double **Z, const DATAINFO *pdinfo, 
 			 char **xnames)
 {
     int i, s, t;
@@ -212,7 +211,6 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
     int npoly, mp_poly_pos = 0;
     int listpt, nvars = 0, v = 0;
     mpf_t **mpZ = NULL;
-    unsigned char **digits = (unsigned char **) pdinfo->data;
     int err = 0;
 
     if (n <= 0) {
@@ -277,7 +275,7 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 	    mp_poly_pos = nvars;
 	}
 	    
-	fill_mp_series(mpmod, Z, mpZ, digits, mpmod->list[i], nvars); 
+	fill_mp_series(mpmod, Z, mpZ, zdigits, mpmod->list[i], nvars); 
 	mpmod->varlist[i] = mpmod->list[i];
         if (xnames != NULL && i > 1) { 	 
 	    strcpy(xnames[v++], pdinfo->varname[mpmod->list[i]]); 	 
@@ -948,7 +946,9 @@ static char **allocate_xnames (const int *list)
 /**
  * mplsq:
  * @list: dependent variable plus list of regressors.
- * @polylist: list of polynomial terms (or NULL).
+ * @polylist: list of polynomial terms (or %NULL).
+ * @zdigits: list of digits of input precision for data series
+ * (or %NULL).
  * @Z: data array.
  * @pdinfo: information on the data set.
  * @errbuf: where to print any error message.
@@ -963,7 +963,7 @@ static char **allocate_xnames (const int *list)
  * Returns: 0 on success, error code on failure.
  */
 
-int mplsq (const int *list, const int *polylist,
+int mplsq (const int *list, const int *polylist, const int *zdigits,
 	   const double **Z, DATAINFO *pdinfo, 
 	   char *errbuf, MODEL *pmod, gretlopt opt) 
 {
@@ -979,7 +979,7 @@ int mplsq (const int *list, const int *polylist,
     *errbuf = 0;
 
     if (list == NULL || Z == NULL || pdinfo == NULL ||
-	list[0] == 1 || pdinfo->v == 1) {
+	list[0] < 2 || pdinfo->v < 2) {
 	return E_DATA;
     }
 
@@ -1033,7 +1033,7 @@ int mplsq (const int *list, const int *polylist,
     mpmod.ifc = mp_rearrange(mpmod.list);
 
     /* construct multiple-precision data matrix */
-    mpZ = make_mpZ(&mpmod, Z, pdinfo, xnames);
+    mpZ = make_mpZ(&mpmod, zdigits, Z, pdinfo, xnames);
 
     if (mpZ == NULL) {
 	err = E_ALLOC;

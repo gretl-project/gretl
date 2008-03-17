@@ -602,8 +602,6 @@ DATAINFO *datainfo_new (void)
     dinfo->descrip = NULL;
     dinfo->submask = NULL;
 
-    dinfo->data = NULL;
-
     dinfo->structure = CROSS_SECTION;
 
     return dinfo;
@@ -743,7 +741,6 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->markers = NO_MARKERS;
     pdinfo->delim = ',';
     pdinfo->descrip = NULL;
-    pdinfo->data = NULL;
     pdinfo->paninfo = NULL;
     pdinfo->submask = NULL;
     

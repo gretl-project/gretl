@@ -3775,8 +3775,9 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 {
     void *handle = NULL;
-    int (*mplsq)(const int *, const int *, const double **, 
-		 DATAINFO *, char *, MODEL *, gretlopt);
+    int (*mplsq)(const int *, const int *, const int *, 
+		 const double **, DATAINFO *, char *, 
+		 MODEL *, gretlopt);
     MODEL mpmod;
 
     gretl_model_init(&mpmod);
@@ -3795,13 +3796,13 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 	if (mpmod.errcode == 0 && (base == NULL || poly == NULL)) {
 	    mpmod.errcode = E_ARGS;
 	} else {
-	    mpmod.errcode = (*mplsq)(base, poly, Z, pdinfo,  
+	    mpmod.errcode = (*mplsq)(base, poly, NULL, Z, pdinfo,  
 				     gretl_errmsg, &mpmod, OPT_S);
 	}
 	free(base);
 	free(poly);
     } else {
-	mpmod.errcode = (*mplsq)(list, NULL, Z, pdinfo,  
+	mpmod.errcode = (*mplsq)(list, NULL, NULL, Z, pdinfo,  
 				 gretl_errmsg, &mpmod, OPT_S); 
     }
 

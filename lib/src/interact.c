@@ -385,13 +385,13 @@ static int catch_command_alias (char *line, CMD *cmd)
                                c == PRINT || \
                                c == STORE)
 
-#define RETURNS_LIST(c) (c == DIFF || \
-                         c == DUMMIFY || \
-                         c == LDIFF || \
-                         c == SDIFF || \
-                         c == LAGS || \
-                         c == LOGS || \
-                         c == SQUARE)
+#define MODIFIES_LIST(c) (c == DIFF || \
+			  c == DUMMIFY || \
+			  c == LDIFF || \
+			  c == SDIFF || \
+			  c == LAGS || \
+			  c == LOGS || \
+			  c == SQUARE)
 
 enum {
     SET_FALSE,
@@ -1206,7 +1206,7 @@ static int auto_transform_ok (const char *s, int *lpos,
 	}
 
 	trans = gretl_command_number(fword);
-	if (!RETURNS_LIST(trans)) {
+	if (!MODIFIES_LIST(trans)) {
 	    trans = 0;
 	}
 
@@ -3756,7 +3756,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (RETURNS_LIST(cmd->ci)) {
+    if (MODIFIES_LIST(cmd->ci)) {
 	if (cmd->list[0] == 0) {
 	    /* no-op */
 	    return 0;

@@ -113,27 +113,26 @@ Wampler1 - Wampler5: create powers of x, 2 to 5
   
 */
 
-static unsigned char get_data_digits (const char *numstr)
+static int get_data_digits (const char *s)
 {
-    unsigned char digits = 0;
+    int digits = 0;
 
-    while (*numstr == '-' || *numstr == '.' || *numstr == ',' ||
-	   isdigit((unsigned char) *numstr)) {
-	if (isdigit((unsigned char) *numstr)) digits++;
-	numstr++;
+    while (*s == '-' || *s == '.' || *s == ',' ||
+	   isdigit((unsigned char) *s)) {
+	if (isdigit((unsigned char) *s)) digits++;
+	s++;
     }
-    
+
     return digits;
 }
 
-static 
-int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
-		    int polyterms, PRN *prn)
+static int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
+			   int *zdigits, int polyterms, 
+			   PRN *prn)
 {
     double xx;
-    int i, t;
+    int i, t, dit;
     int realvars = dinfo->v - polyterms;
-    unsigned char d, **digits = (unsigned char **) dinfo->data;
     char numstr[64];
 
     if (verbose > 1) {
@@ -160,17 +159,17 @@ int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		pputs(prn, "Data ended prematurely\n");
 		return 1;
 	    } else {
-#if 1
-		d = get_data_digits(numstr);
-		if (digits != NULL && digits[i] != NULL) {
-		    digits[i][t] = d;
+		if (zdigits != NULL) {
+		    dit = get_data_digits(numstr);
+		    if (dit > zdigits[i]) {
+			zdigits[i] = dit;
+		    }
 		}
-#endif
 		xx = atof(numstr);
 	    }
 	    Z[i][t] = xx;
-	} /* got data for obs t */
-    } /* got data for all obs */
+	} 
+    } 
 
     return 0;
 } 
@@ -282,57 +281,30 @@ static double log_error (double q, double c, PRN *prn)
     return le;
 }
 
-static 
-void free_data_digits (DATAINFO *dinfo)
+static int allocate_data_digits (const DATAINFO *dinfo, int **zdigits)
 {
-    unsigned char **digits = (unsigned char **) dinfo->data;
-
-    if (digits != NULL) {
-	int i;
-
-	for (i=1; i<dinfo->v; i++) {
-	    free(digits[i]);
-	}
-	free(digits);
-	dinfo->data = NULL;
-    }
-}
-
-static 
-int allocate_data_digits (DATAINFO *dinfo)
-{
-    unsigned char **digits;
+    int *zd;
     int i;
 
-    digits = malloc(dinfo->v * sizeof *digits);
-    if (digits == NULL) return 1;
+    zd = malloc(dinfo->v * sizeof *zd);
+    if (zd == NULL) return 1;
 
-    digits[0] = NULL;
-
-    for (i=1; i<dinfo->v; i++) {
-	digits[i] = malloc(dinfo->n * sizeof **digits);
-	if (digits[i] == NULL) {
-	    int j;
-
-	    for (j=1; j<i; j++) free(digits[j]);
-	    free(digits);
-	    return 1;
-	}
-	memset(digits[i], '0', dinfo->n);
+    for (i=0; i<dinfo->v; i++) {
+	zd[i] = 0;
     }
 
-    dinfo->data = digits;
+    *zdigits = zd;
 
     return 0;
 }
 
-static 
-int read_nist_file (const char *fname, 
-		    double ***pZ,
-		    DATAINFO **pdinfo,
-		    mp_results **pcertvals,
-		    int *polyterms,
-		    PRN *prn)
+static int read_nist_file (const char *fname, 
+			   double ***pZ,
+			   DATAINFO **pdinfo,
+			   mp_results **pcertvals,
+			   int *polyterms,
+			   int **zdigits,
+			   PRN *prn)
 {
     FILE *fp;    
     char *p, line[MAXLEN], difficulty[48];
@@ -445,14 +417,13 @@ int read_nist_file (const char *fname,
 		fclose(fp);
 		return 1;
 	    }
-#if 1
-	    if (allocate_data_digits(dinfo)) {
+
+	    if (allocate_data_digits(dinfo, zdigits)) {
 		free_mp_results(certvals);
 		free_datainfo(dinfo);
 		fclose(fp);
 		return 1;
 	    }	
-#endif	
 	}
 
 	/* read the certified results */
@@ -480,7 +451,7 @@ int read_nist_file (const char *fname,
 		      "allocated: file is problematic\n");
 		fclose(fp);
 		return 1;
-	    } else if (grab_nist_data(fp, Z, dinfo, npoly, prn)) {
+	    } else if (grab_nist_data(fp, Z, dinfo, *zdigits, npoly, prn)) {
 		fclose(fp);
 		return 1;
 	    } 
@@ -619,12 +590,14 @@ static void *get_mplsq (void **handle);
 static
 int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo, 
 			     mp_results *certvals, int npoly,
-			     int *mpfails, PRN *prn)
+			     const int *zdigits, int *mpfails, 
+			     PRN *prn)
 {
     PRN *vprn;
     void *handle = NULL;
-    int (*mplsq)(const int *, const int *, const double **, 
-		 const DATAINFO *, char *, MODEL *, gretlopt);
+    int (*mplsq)(const int *, const int *, const int *,
+		 const double **, const DATAINFO *, char *, 
+		 MODEL *, gretlopt);
     int *list = NULL, *polylist = NULL;
     char errbuf[MAXLEN];
     int i, err = 0;
@@ -678,8 +651,9 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     }
 
     if (!err) {
-        err = (*mplsq)(list, polylist, (const double **) *pZ, 
-		       dinfo, errbuf, &model, OPT_NONE); 
+        err = (*mplsq)(list, polylist, zdigits, 
+		       (const double **) *pZ, dinfo, errbuf, 
+		       &model, OPT_NONE); 
     }
 
     close_plugin(handle);
@@ -880,6 +854,7 @@ int main (int argc, char *argv[])
     mp_results *certvals = NULL;
     int ntests, missing = 0, modelerrs = 0, poorvals = 0;
     int polyterms = 0, mpfails = 0;
+    int *zdigits = NULL;
     const char *prog;
 
 # ifdef LONGLEY_ONLY
@@ -922,29 +897,26 @@ int main (int argc, char *argv[])
 
     for (j=0; j<ntests; j++) {
 	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,
-			   &polyterms, prn)) {
+			   &polyterms, &zdigits, prn)) {
 	    pprintf(prn, "Error processing %s\n", nist_files[j]);
 	    missing++;
 
 	} else {
-
 	    run_gretl_comparison (nist_files[j], &Z, datainfo, certvals,
 				  &modelerrs, &poorvals, prn);
 
 # ifdef USE_GMP
-	    run_gretl_mp_comparison (&Z, datainfo, certvals,
-				     polyterms, &mpfails, prn);
+	    run_gretl_mp_comparison (&Z, datainfo, certvals, polyterms, 
+				     zdigits, &mpfails, prn);
 # endif
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
-#if 1
-	    free_data_digits(datainfo);
-#endif
 	    destroy_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
-	    
+	    free(zdigits);
+	    zdigits = NULL;
 	}
     }
 
@@ -996,6 +968,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
     double **Z = NULL;
     DATAINFO *datainfo;
     mp_results *certvals = NULL;
+    int *zdigits = NULL;
     int ntests, missing = 0, modelerrs = 0, poorvals = 0;
     int polyterms = 0, mpfails = 0;
     const char *nist_files[] = { 
@@ -1026,29 +999,26 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
     for (j=0; j<ntests; j++) {
 	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,
-			   &polyterms, prn)) {
+			   &polyterms, &zdigits, prn)) {
 	    pprintf(prn, "Error processing %s\n", nist_files[j]);
 	    missing++;
 
 	} else {
-
 	    run_gretl_comparison (nist_files[j], &Z, datainfo, certvals,
 				  &modelerrs, &poorvals, prn);
 
 # ifdef USE_GMP
-	    run_gretl_mp_comparison (&Z, datainfo, certvals,
-				     polyterms, &mpfails, prn);
+	    run_gretl_mp_comparison (&Z, datainfo, certvals, polyterms, 
+				     zdigits, &mpfails, prn);
 # endif
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
-#if 1
-	    free_data_digits(datainfo);
-#endif
 	    destroy_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
-	    
+	    free(zdigits);
+	    zdigits = NULL;
 	}
     }
 
