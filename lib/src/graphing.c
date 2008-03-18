@@ -2965,14 +2965,23 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     }
 
     fputs("set key left top\nplot \\\n", fp);
+
     if (depvar_present) {
 	fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
 		varname);
     }
+
     fprintf(fp, "'-' using 1:2 title '%s' w lines", G_("forecast"));
+
     if (do_errs) {
+#if 0
+	fprintf(fp, " , \\\n'-' using 1:2 title '%s' w lines lt 3, \\\n"
+		"'-' using 1:2 notitle w lines lt 3\n",
+		G_("95 percent confidence interval"));
+#else
 	fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
 		G_("95 percent confidence interval"));
+#endif
     } else {
 	fputc('\n', fp);
     }
@@ -3000,6 +3009,24 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     fputs("e\n", fp);
 
     if (do_errs) {
+#if 0
+	for (t=t1; t<=t2; t++) {
+	    if (na(yhat[t]) || na(maxerr[t])) {
+		fprintf(fp, "%.8g ?\n", obs[t]);
+	    } else {
+		fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t] + maxerr[t]);
+	    }
+	}
+	fputs("e\n", fp);
+	for (t=t1; t<=t2; t++) {
+	    if (na(yhat[t]) || na(maxerr[t])) {
+		fprintf(fp, "%.8g ?\n", obs[t]);
+	    } else {
+		fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t] - maxerr[t]);
+	    }
+	}
+	fputs("e\n", fp);
+#else
 	for (t=t1; t<=t2; t++) {
 	    if (na(yhat[t]) || na(maxerr[t])) {
 		fprintf(fp, "%.8g ? ?\n", obs[t]);
@@ -3008,6 +3035,7 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	    }
 	}
 	fputs("e\n", fp);
+#endif
     }
 
     gretl_pop_c_numeric_locale();

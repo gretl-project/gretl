@@ -514,8 +514,8 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
     gretl_matrix *V = NULL;
     gretl_vector *Xs = NULL;
     gretl_vector *b = NULL;
-
     double s2 = pmod->sigma * pmod->sigma;
+    double vyh, xval;
     int k = pmod->ncoeff;
     int i, vi, t;
     int err = 0;
@@ -540,7 +540,6 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 
     for (t=fc->t1; t<=fc->t2 && !err; t++) {
 	int missing = 0;
-	double vyh;
 
 	/* skip if we can't compute forecast */
 	if (t >= pmod->t1 && t <= pmod->t2) {
@@ -549,8 +548,6 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 
 	/* populate Xs vector for observation */
 	for (i=0; i<k && !missing; i++) {
-	    double xval;
-
 	    vi = pmod->list[i + 2];
 	    xval = Z[vi][t];
 	    if (na(xval)) {
@@ -1854,7 +1851,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	    if (!na(fr->fitted[t])) {
 		nf++;
 	    }	    
-	}
+	} else if (t >= fr->t0 && t >= pmod->t1 && t <= pmod->t2) {
+	    fr->fitted[t] = pmod->yhat[t];
+	    fr->resid[t] = pmod->uhat[t];
+	}	    
 	fr->actual[t] = (*pZ)[yno][t];
     }
 
@@ -1937,7 +1937,7 @@ static int parse_forecast_string (const char *s,
  * @pmod: the model from which forecasts are wanted.
  * @t1: start of forecast range.
  * @t2: end of forecast range.
- * @pre_n: numbe of pre-forecast observations to include.
+ * @pre_n: number of pre-forecast observations to include.
  * @pZ: pointer to data array using which @pmod was estimated.
  * @pdinfo: dataset information.
  * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
