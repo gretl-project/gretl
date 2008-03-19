@@ -112,7 +112,7 @@ process_gtk
 for f in \
     libgmp-3.dll libxml2.dll readline5.dll history5.dll zlib1.dll \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
-    iconv.dll intl.dll libfftw3-3.dll
+    iconv.dll intl.dll libfftw3-3.dll libpng13.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
@@ -121,10 +121,10 @@ done
 # add_file $HOME_WIN32/misc-dll/libpdf.dll gretl/$f
 
 # extra DLLs (FIXME: remove these as soon as possible!)
-for f in jpeg62.dll libtiff3.dll
-do
-    add_file $HOME_WIN32/misc-dll/$f gretl/$f
-done
+# for f in jpeg62.dll libtiff3.dll
+# do
+#     add_file $HOME_WIN32/misc-dll/$f gretl/$f
+# done
 
 # gretl lang files for gtksourceview
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
