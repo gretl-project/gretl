@@ -300,14 +300,16 @@ static int validate_range (double *r)
     return err;
 }
 
+enum {
+    ERRORBARS = 1,
+    FILLEDCURVE
+};
+
 static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
 {
     const gchar *yaxis;
     int supress_y2 = 0;
     int i, k, err = 0;
-
-    /* entry_to_gp_string translates from utf-8 to the locale, if
-       using NLS */
 
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].widget != NULL) {
@@ -361,9 +363,25 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     if (!err) {   
 	for (i=0; i<spec->n_lines; i++) {
 	    if (stylecombo[i] != NULL) {
+		int oldalt = 0;
+
+		if (!strncmp(spec->lines[i].style, "filled", 6)) {
+		    oldalt = FILLEDCURVE;
+		} else if (!strncmp(spec->lines[i].style, "error", 5)) {
+		    oldalt = ERRORBARS;
+		}
 		entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
 				   spec->lines[i].style, 
 				   sizeof spec->lines[0].style);
+		if (oldalt == FILLEDCURVE &&
+		    !strncmp(spec->lines[i].style, "error", 5)) {
+		    spec->flags &= ~GPT_FILL_SWITCH;
+		    spec->flags |= GPT_ERR_SWITCH;
+		} else if (oldalt == ERRORBARS &&
+			   !strncmp(spec->lines[i].style, "filled", 6)) {
+		    spec->flags &= ~GPT_ERR_SWITCH;
+		    spec->flags |= GPT_FILL_SWITCH;
+		}
 	    }
 	    if (linetitle[i] != NULL) {
 		entry_to_gp_string(linetitle[i], 
@@ -1162,16 +1180,30 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	stylecombo[i] = gtk_combo_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  stylecombo[i], 2, 3, tbl_len-1, tbl_len);
-	/* errorbars style is not exchangeable with the others */
-	if (!strcmp(spec->lines[i].style, "errorbars")) {
+
+	/* the errorbars and filledcurves styles are not exchangeable
+	   with the others */
+	if (!strcmp(spec->lines[i].style, "errorbars") &&
+	    !gnuplot_has_style_fill()) {
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
 			       spec->lines[i].style); 
 	    gtk_widget_set_sensitive(stylecombo[i], FALSE);
+	} else if (!strcmp(spec->lines[i].style, "errorbars") ||
+		   !strcmp(spec->lines[i].style, "filledcurve")) {
+	    GList *altsty = NULL;
+
+	    altsty = g_list_append(altsty, "errorbars"); 
+	    altsty = g_list_append(altsty, "filledcurve");
+	    gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), altsty); 
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
+			       spec->lines[i].style); 
+	    g_list_free(altsty);
 	} else {
 	    gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), stylist); 
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
 			       spec->lines[i].style); 
 	} 
+
 	gtk_widget_show(stylecombo[i]);	
 
 	if (!do_scale_axis) {

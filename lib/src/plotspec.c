@@ -378,6 +378,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     int mono = get_mono_output(spec);
     int started_data_lines = 0;
     int n_lines = spec->n_lines;
+    double et, yt;
     double *x[4];
     int any_y2 = 0;
     int miss = 0;
@@ -497,7 +498,9 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	} else {
 	    fputs("set style fill solid 0.6\n", fp);
 	}
-    }  
+    } else if (spec->code == PLOT_FORECAST) {
+	fputs("set style fill solid 0.4\n", fp);
+    }
 
     if (spec->flags & GPT_ALL_MARKERS) {
 	print_data_labels(spec, fp);
@@ -574,8 +577,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 
+	fprintf(stderr, "lines[%d]: ncols = %d\n", i, spec->lines[i].ncols);
+
 	if (!started_data_lines) {
 	    x[0] = spec->data;
+	    /* see below for subsequent adjustment of x[1] */
 	    x[1] = x[0] + spec->nobs;
 	    started_data_lines = 1;
 	} 
@@ -584,6 +590,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	x[3] = x[2] + spec->nobs;
 
 	for (t=0; t<spec->nobs; t++) {
+	    /* print x-axis value */
 	    if (na(x[0][t])) {
 		fputs("? ", fp);
 		miss = 1;
@@ -591,6 +598,28 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 		fprintf(fp, "%.8g ", x[0][t]);
 	    }
 
+	    /* conversion, if needed, between (y, ydelta) and
+	       (ylow, yhigh)
+	     */
+	    if ((spec->flags & GPT_FILL_SWITCH) && 
+		spec->lines[i].ncols == 3) {
+		yt = x[1][t];
+		et = x[2][t];
+		if (!na(yt) && !na(et)) {
+		    x[1][t] = yt - et;
+		    x[2][t] = yt + et;
+		}
+	    } else if ((spec->flags & GPT_ERR_SWITCH) && 
+		       spec->lines[i].ncols == 3) {
+		if (!na(x[1][t]) && !na(x[2][t])) {
+		    et = (x[2][t] - x[1][t]) / 2.0;
+		    yt = x[1][t] + et;
+		    x[1][t] = yt;
+		    x[2][t] = et;
+		}
+	    } 
+
+	    /* print y-axis value(s) */
 	    for (j=1; j<spec->lines[i].ncols; j++) {
 		if (na(x[j][t])) {
 		    fputs("? ", fp);

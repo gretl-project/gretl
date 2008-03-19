@@ -2011,7 +2011,8 @@ int print_data_sorted (const int *list, const int *obsvec,
 #define SIGMA_MIN 1.0e-18
 
 int
-text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
+text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, 
+		      PRN *prn)
 {
     int onestep = fr->method == FC_ONESTEP;
     int t, anyast = 0;
@@ -2096,7 +2097,8 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	} else {
 	    err = plot_fcast_errs(t0, fr->t2, obs, 
 				  fr->actual, fr->fitted, NULL, 
-				  fr->depvar, (ts)? pdinfo->pd : 0);
+				  fr->depvar, (ts)? pdinfo->pd : 0,
+				  OPT_NONE);
 	}
     }
 
@@ -2112,7 +2114,9 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
  * @prn: printing structure.
  *
  * Print the forecasts in @fr to @prn, and also plot the
- * forecasts if %OPT_P is given.
+ * forecasts if %OPT_P is given.  If %OPT_F is given in
+ * addition to %OPT_P, use fill style for the confidence
+ * bands when plotting a forecast with standard errors.
  *
  * Returns: 0 on success, non-zero error code on error.
  */
@@ -2210,7 +2214,8 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	} else {
 	    err = plot_fcast_errs(fr->t0, fr->t2, obs, 
 				  fr->actual, fr->fitted, maxerr, 
-				  fr->depvar, (ts)? pdinfo->pd : 0);
+				  fr->depvar, (ts)? pdinfo->pd : 0,
+				  opt);
 	}
     }
 

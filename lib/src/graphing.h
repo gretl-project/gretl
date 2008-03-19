@@ -49,7 +49,9 @@ typedef enum {
     GPT_LETTERBOX      = 1 << 19, /* special format for time series graphs */
     GPT_PARAMETRIC     = 1 << 20, /* gnuplot should be in parametric mode */
     GPT_XZEROAXIS      = 1 << 21, /* show x = 0 line */
-    GPT_YZEROAXIS      = 1 << 22  /* show y = 0 line */
+    GPT_YZEROAXIS      = 1 << 22, /* show y = 0 line */
+    GPT_FILL_SWITCH    = 1 << 23, /* switching from errorbars to fill */
+    GPT_ERR_SWITCH     = 1 << 24  /* switching from fill to errorbars */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
@@ -186,7 +188,7 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo);
 int plot_fcast_errs (int t1, int t2, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
-		     int time_series);
+		     int tsfreq, gretlopt opt);
 
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,

@@ -2904,15 +2904,48 @@ int plot_freq (FreqDist *freq, DistCode dist)
     return gnuplot_make_graph();
 }
 
+static void print_y_data (const double *x, const double *y,
+			  int t1, int t2, FILE *fp)
+{
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(y[t])) {
+	    fprintf(fp, "%.8g ?\n", x[t]);
+	} else {
+	    fprintf(fp, "%.8g %.8g\n", x[t], y[t]);
+	}
+    }
+    fputs("e\n", fp);
+}
+
+static void print_confband_data (const double *x, const double *y,
+				 const double *e, int t1, int t2, 
+				 int fill, FILE *fp)
+{
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(y[t]) || na(e[t])) {
+	    fprintf(fp, "%.8g ? ?\n", x[t]);
+	} else if (fill) {
+	    fprintf(fp, "%.8g %.8g %.8g\n", x[t], y[t] - e[t], y[t] + e[t]);
+	} else {
+	    fprintf(fp, "%.8g %.8g %.8g\n", x[t], y[t], e[t]);
+	} 
+    }
+    fputs("e\n", fp);
+}
+
 int plot_fcast_errs (int t1, int t2, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
-		     int time_series)
+		     int tsfreq, gretlopt opt)
 {
     FILE *fp = NULL;
     double xmin, xmax, xrange;
     int depvar_present = 0;
-    int do_errs = (maxerr != NULL);
+    int use_fill, do_errs = (maxerr != NULL);
     int t, n, err;
 
     /* don't graph empty portion of forecast */
@@ -2943,6 +2976,9 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	}
     }
 
+    /* OPT_F -> use fill style for confidence bands */
+    use_fill = (do_errs)? (opt & OPT_F) : 0;
+
     fputs("# forecasts with 95 pc conf. interval\n", fp);
 
     gretl_minmax(t1, t2, obs, &xmin, &xmax);
@@ -2951,91 +2987,74 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     xmax += xrange * .025;
 
     gretl_push_c_numeric_locale();
-
     fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
-
     gretl_pop_c_numeric_locale();
 
     gnuplot_missval_string(fp);
 
-    if (time_series) {
-	fprintf(fp, "# timeseries %d\n", time_series);
+    if (tsfreq > 0) {
+	fprintf(fp, "# timeseries %d\n", tsfreq);
     } else if (n < 33) {
 	fputs("set xtics 1\n", fp);
     }
 
-    fputs("set key left top\nplot \\\n", fp);
-
-    if (depvar_present) {
-	fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
-		varname);
+    if (use_fill) {
+	fprintf(fp, "set style fill solid 0.4\n");
     }
 
-    fprintf(fp, "'-' using 1:2 title '%s' w lines", G_("forecast"));
+    fputs("set key left top\n", fp);
+    fputs("plot \\\n", fp);
 
-    if (do_errs) {
-#if 0
-	fprintf(fp, " , \\\n'-' using 1:2 title '%s' w lines lt 3, \\\n"
-		"'-' using 1:2 notitle w lines lt 3\n",
-		G_("95 percent confidence interval"));
-#else
-	fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
-		G_("95 percent confidence interval"));
-#endif
+    if (use_fill) {
+	/* plot the confidence bands first so the other lines
+	   come out on top */
+	if (do_errs) {
+	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n",
+		    G_("95 percent confidence interval"));
+	} 
+	if (depvar_present) {
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1 , \\\n",
+		    varname);
+	}
+	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 2\n", G_("forecast"));
     } else {
-	fputc('\n', fp);
+	/* plot confidence bands last */
+	if (depvar_present) {
+	    fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
+		    varname);
+	}
+	fprintf(fp, "'-' using 1:2 title '%s' w lines", G_("forecast"));
+	if (do_errs) {
+	    fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
+		    G_("95 percent confidence interval"));
+	} else {
+	    fputc('\n', fp);
+	}
     }
 
     gretl_push_c_numeric_locale();
 
-    if (depvar_present) {
-	for (t=t1; t<=t2; t++) {
-	    if (na(depvar[t])) {
-		fprintf(fp, "%.8g ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%.8g %.8g\n", obs[t], depvar[t]);
-	    }
-	}
-	fputs("e\n", fp);
-    }
+    /* write out the inline data, the order depending on whether
+       or not we're using fill style for the confidence
+       bands
+    */
 
-    for (t=t1; t<=t2; t++) {
-	if (na(yhat[t])) {
-	    fprintf(fp, "%.8g ?\n", obs[t]);
-	} else {
-	    fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t]);
+    if (use_fill) {
+	if (do_errs) {
+	    print_confband_data(obs, yhat, maxerr, t1, t2, 1, fp);
 	}
-    }
-    fputs("e\n", fp);
-
-    if (do_errs) {
-#if 0
-	for (t=t1; t<=t2; t++) {
-	    if (na(yhat[t]) || na(maxerr[t])) {
-		fprintf(fp, "%.8g ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t] + maxerr[t]);
-	    }
+	if (depvar_present) {
+	    print_y_data(obs, depvar, t1, t2, fp);
 	}
-	fputs("e\n", fp);
-	for (t=t1; t<=t2; t++) {
-	    if (na(yhat[t]) || na(maxerr[t])) {
-		fprintf(fp, "%.8g ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t] - maxerr[t]);
-	    }
+	print_y_data(obs, yhat, t1, t2, fp);
+    } else {
+	if (depvar_present) {
+	    print_y_data(obs, depvar, t1, t2, fp);
 	}
-	fputs("e\n", fp);
-#else
-	for (t=t1; t<=t2; t++) {
-	    if (na(yhat[t]) || na(maxerr[t])) {
-		fprintf(fp, "%.8g ? ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%.8g %.8g %.8g\n", obs[t], yhat[t], maxerr[t]);
-	    }
-	}
-	fputs("e\n", fp);
-#endif
+	print_y_data(obs, yhat, t1, t2, fp);
+	if (do_errs) {
+	    print_confband_data(obs, yhat, maxerr, t1, t2, 0, fp);
+	}	
     }
 
     gretl_pop_c_numeric_locale();

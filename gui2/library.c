@@ -1413,9 +1413,12 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
 	if (rolling) {
 	    err = text_print_fit_resid(fr, datainfo, prn);
 	} else {
+	    if (gnuplot_has_style_fill()) {
+		popt |= OPT_F;
+	    }
 	    err = text_print_forecast(fr, datainfo, popt, prn);
 	}
-	if (!err && popt == OPT_P) {
+	if (!err && (popt & OPT_P)) {
 	    register_graph();
 	}
 	if (!rolling && fr->sderr == NULL) {
