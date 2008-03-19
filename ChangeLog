@@ -1,4 +1,4 @@
-version 1.7.4, in progress
+3/20/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values
 - Fix for detection of unit-diagonal matrix (oops!)
 - Merge fit and fcasterr commands with fcast
