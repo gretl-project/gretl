@@ -2373,6 +2373,7 @@ static int get_sys_fcast_var (const int *ylist, const char *vname,
 */
 
 static int fill_system_forecast (FITRESID *fr, int i, int yno,
+				 GRETL_VAR *var, equation_system *sys,
 				 const gretl_matrix *F,
 				 const double **Z, DATAINFO *pdinfo,
 				 gretlopt opt)
@@ -2386,6 +2387,18 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
     /* pre-forecast observations */
     for (t=fr->t0; t<fr->t1; t++) {
 	fr->actual[t] = Z[yno][t];
+	if (sys != NULL) {
+	    if (t >= sys->t1 && t <= sys->t2) {
+		s = t - sys->t1;
+		fr->fitted[t] = gretl_matrix_get(sys->yhat, s, i);
+	    }
+	} else if (var != NULL) {
+	    if (t >= var->t1 && t <= var->t2) {
+		s = t - var->t1;
+		fr->fitted[t] = gretl_matrix_get(var->Y, s, i) -
+		    gretl_matrix_get(var->E, s, i);
+	    }
+	}
     }
 
     /* actual forecasts */
@@ -2494,8 +2507,8 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	}
     
 	for (i=imin; i<=imax && !err; i++) {
-	    err = fill_system_forecast(fr, i, ylist[i+1], F,
-				       Z, pdinfo, opt);
+	    err = fill_system_forecast(fr, i, ylist[i+1], var, sys, 
+				       F, Z, pdinfo, opt);
 	    if (!err) {
 		err = text_print_forecast(fr, pdinfo, printopt, prn);
 	    }
@@ -2702,7 +2715,8 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	fr->tval = tcrit95(fr->df);
     }
 
-    *err = fill_system_forecast(fr, i, yno, F, Z, pdinfo, opt);
+    *err = fill_system_forecast(fr, i, yno, var, sys, 
+				F, Z, pdinfo, opt);
 
     if (*err) {
 	free_fit_resid(fr);

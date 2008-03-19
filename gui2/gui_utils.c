@@ -3387,6 +3387,7 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
     if (err) {
 	gui_errmsg(err);
     } else {
+	gretlopt popt = OPT_P;
 	int width = 78;
 	PRN *prn;
 
@@ -3394,7 +3395,11 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	    return;
 	}
 
-	err = text_print_forecast(fr, datainfo, OPT_P, prn);
+	if (gnuplot_has_style_fill() && fr->sderr != NULL) {
+	    popt |= OPT_F;
+	}
+
+	err = text_print_forecast(fr, datainfo, popt, prn);
 	if (!err) {
 	    register_graph();
 	}

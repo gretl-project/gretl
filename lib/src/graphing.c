@@ -2937,6 +2937,8 @@ static void print_confband_data (const double *x, const double *y,
     fputs("e\n", fp);
 }
 
+#define FCAST_USE_FILL 1
+
 int plot_fcast_errs (int t1, int t2, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
@@ -2976,8 +2978,10 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	}
     }
 
+#if FCAST_USE_FILL
     /* OPT_F -> use fill style for confidence bands */
     use_fill = (do_errs)? (opt & OPT_F) : 0;
+#endif
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
 
