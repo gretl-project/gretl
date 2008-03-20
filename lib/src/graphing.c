@@ -2919,25 +2919,34 @@ static void print_y_data (const double *x, const double *y,
     fputs("e\n", fp);
 }
 
+enum {
+    CONF_BARS,
+    CONF_FILL,
+    CONF_LOW,
+    CONF_HIGH
+};
+
 static void print_confband_data (const double *x, const double *y,
 				 const double *e, int t1, int t2, 
-				 int fill, FILE *fp)
+				 int mode, FILE *fp)
 {
     int t;
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t]) || na(e[t])) {
 	    fprintf(fp, "%.8g ? ?\n", x[t]);
-	} else if (fill) {
+	} else if (mode == CONF_FILL) {
 	    fprintf(fp, "%.8g %.8g %.8g\n", x[t], y[t] - e[t], y[t] + e[t]);
+	} else if (mode == CONF_LOW) {
+	    fprintf(fp, "%.8g %.8g\n", x[t], y[t] - e[t]);
+	} else if (mode == CONF_HIGH) {
+	    fprintf(fp, "%.8g %.8g\n", x[t], y[t] + e[t]);
 	} else {
 	    fprintf(fp, "%.8g %.8g %.8g\n", x[t], y[t], e[t]);
 	} 
     }
     fputs("e\n", fp);
 }
-
-#define FCAST_USE_FILL 1
 
 int plot_fcast_errs (int t1, int t2, const double *obs, 
 		     const double *depvar, const double *yhat, 
@@ -2947,7 +2956,8 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     FILE *fp = NULL;
     double xmin, xmax, xrange;
     int depvar_present = 0;
-    int use_fill, do_errs = (maxerr != NULL);
+    int use_fill = 0, use_lines = 0;
+    int do_errs = (maxerr != NULL);
     int t, n, err;
 
     /* don't graph empty portion of forecast */
@@ -2978,10 +2988,13 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	}
     }
 
-#if FCAST_USE_FILL
-    /* OPT_F -> use fill style for confidence bands */
-    use_fill = (do_errs)? (opt & OPT_F) : 0;
-#endif
+    if (do_errs) {
+	if (opt & OPT_F) {
+	    use_fill = 1;
+	} else if (opt & OPT_L) {
+	    use_lines = 1;
+	}
+    }
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
 
@@ -3029,8 +3042,14 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	}
 	fprintf(fp, "'-' using 1:2 title '%s' w lines", G_("forecast"));
 	if (do_errs) {
-	    fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
-		    G_("95 percent confidence interval"));
+	    if (use_lines) {
+		fprintf(fp, " , \\\n'-' using 1:2 title '%s' w lines , \\\n",
+			G_("95 percent confidence interval"));
+		fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
+	    } else {
+		fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
+			G_("95 percent confidence interval"));
+	    }
 	} else {
 	    fputc('\n', fp);
 	}
@@ -3045,7 +3064,7 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 
     if (use_fill) {
 	if (do_errs) {
-	    print_confband_data(obs, yhat, maxerr, t1, t2, 1, fp);
+	    print_confband_data(obs, yhat, maxerr, t1, t2, CONF_FILL, fp);
 	}
 	if (depvar_present) {
 	    print_y_data(obs, depvar, t1, t2, fp);
@@ -3057,7 +3076,12 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	}
 	print_y_data(obs, yhat, t1, t2, fp);
 	if (do_errs) {
-	    print_confband_data(obs, yhat, maxerr, t1, t2, 0, fp);
+	    if (use_lines) {
+		print_confband_data(obs, yhat, maxerr, t1, t2, CONF_LOW, fp);
+		print_confband_data(obs, yhat, maxerr, t1, t2, CONF_HIGH, fp);
+	    } else {
+		print_confband_data(obs, yhat, maxerr, t1, t2, CONF_BARS, fp);
+	    }
 	}	
     }
 

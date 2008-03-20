@@ -577,8 +577,6 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 
-	fprintf(stderr, "lines[%d]: ncols = %d\n", i, spec->lines[i].ncols);
-
 	if (!started_data_lines) {
 	    x[0] = spec->data;
 	    /* see below for subsequent adjustment of x[1] */
@@ -601,21 +599,21 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    /* conversion, if needed, between (y, ydelta) and
 	       (ylow, yhigh)
 	     */
-	    if ((spec->flags & GPT_FILL_SWITCH) && 
-		spec->lines[i].ncols == 3) {
-		yt = x[1][t];
-		et = x[2][t];
-		if (!na(yt) && !na(et)) {
-		    x[1][t] = yt - et;
-		    x[2][t] = yt + et;
-		}
-	    } else if ((spec->flags & GPT_ERR_SWITCH) && 
-		       spec->lines[i].ncols == 3) {
-		if (!na(x[1][t]) && !na(x[2][t])) {
-		    et = (x[2][t] - x[1][t]) / 2.0;
-		    yt = x[1][t] + et;
-		    x[1][t] = yt;
-		    x[2][t] = et;
+	    if (spec->lines[i].ncols == 3) {
+		if (spec->flags & GPT_FILL_SWITCH) { 
+		    yt = x[1][t];
+		    et = x[2][t];
+		    if (!na(yt) && !na(et)) {
+			x[1][t] = yt - et;
+			x[2][t] = yt + et;
+		    }
+		} else if (spec->flags & GPT_ERR_SWITCH) {
+		    if (!na(x[1][t]) && !na(x[2][t])) {
+			et = (x[2][t] - x[1][t]) / 2.0;
+			yt = x[1][t] + et;
+			x[1][t] = yt;
+			x[2][t] = et;
+		    }
 		}
 	    } 
 

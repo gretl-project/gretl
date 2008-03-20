@@ -375,12 +375,12 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 				   sizeof spec->lines[0].style);
 		if (oldalt == FILLEDCURVE &&
 		    !strncmp(spec->lines[i].style, "error", 5)) {
-		    spec->flags &= ~GPT_FILL_SWITCH;
 		    spec->flags |= GPT_ERR_SWITCH;
+		    spec->flags &= ~GPT_FILL_SWITCH;
 		} else if (oldalt == ERRORBARS &&
 			   !strncmp(spec->lines[i].style, "filled", 6)) {
-		    spec->flags &= ~GPT_ERR_SWITCH;
 		    spec->flags |= GPT_FILL_SWITCH;
+		    spec->flags &= ~GPT_ERR_SWITCH;
 		}
 	    }
 	    if (linetitle[i] != NULL) {
@@ -460,6 +460,8 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	redisplay_edited_plot(plot);
 	mark_session_changed();
     }
+
+    spec->flags &= ~(GPT_FILL_SWITCH | GPT_ERR_SWITCH);
 }
 
 static void set_keyspec_sensitivity (GPT_SPEC *spec)

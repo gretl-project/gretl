@@ -3309,6 +3309,7 @@ static void multiple_irf_plot_call (gpointer p, guint u, GtkWidget *w)
 
 static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
 {
+    static gretlopt gopt = OPT_P;
     windata_t *vwin = (windata_t *) p;
     int ci = vwin->role;
     GRETL_VAR *var = NULL;
@@ -3369,7 +3370,7 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2,
 			   0, premax, &pre_n,
-			   dyn_ok, NULL);
+			   dyn_ok, &gopt, NULL);
     if (resp < 0) {
 	return;
     }
@@ -3387,7 +3388,6 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gretlopt popt = OPT_P;
 	int width = 78;
 	PRN *prn;
 
@@ -3395,11 +3395,7 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	    return;
 	}
 
-	if (gnuplot_has_style_fill() && fr->sderr != NULL) {
-	    popt |= OPT_F;
-	}
-
-	err = text_print_forecast(fr, datainfo, popt, prn);
+	err = text_print_forecast(fr, datainfo, gopt, prn);
 	if (!err) {
 	    register_graph();
 	}

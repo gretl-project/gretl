@@ -111,7 +111,8 @@ int add_obs_dialog (const char *blurb, int addmin);
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int pmin, int pmax, int *p,
-		     int dyn, MODEL *pmod);
+		     int dyn, gretlopt *optp,
+		     MODEL *pmod);
 
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,

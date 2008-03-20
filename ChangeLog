@@ -1,4 +1,4 @@
-3/20/2008 version 1.7.4
+3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values
 - Fix for detection of unit-diagonal matrix (oops!)
 - Merge fit and fcasterr commands with fcast
@@ -27,6 +27,10 @@
 - Enable naming of matrix columns, via colnames function or
   the GUI matrix editor
 - Enable "dataset resample" in loops (experimental)
+- Runs test: enable the "--difference" option in the CLI;
+  handle the case where positive and negative values are not
+  equiprobable by default, but add an "--equal" option to 
+  impose the equiprobability assumption
 - Fix sub-sampling bug (new in 1.7.3)
 
 2/29/2008 version 1.7.3

@@ -1310,6 +1310,7 @@ int out_of_sample_info (int add_ok, int *t2)
 
 void gui_do_forecast (gpointer p, guint u, GtkWidget *w) 
 {
+    static gretlopt gopt = OPT_P;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
@@ -1367,7 +1368,7 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
     resp = forecast_dialog(t1min, t2, &t1,
 			   0, t2, &t2,
 			   0, premax, &pre_n,
-			   dyn_ok, pmod);
+			   dyn_ok, &gopt, pmod);
     unset_window_busy(vwin);
 
     if (resp < 0) {
@@ -1407,18 +1408,19 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
     }
 
     if (!err) {
-	gretlopt popt = (LIMDEP(pmod->ci))? OPT_NONE : OPT_P;
 	int width = 78;
 
 	if (rolling) {
 	    err = text_print_fit_resid(fr, datainfo, prn);
 	} else {
-	    if (gnuplot_has_style_fill()) {
-		popt |= OPT_F;
+	    if (LIMDEP(pmod->ci)) {
+		gopt &= ~OPT_P;
+	    } else {
+		gopt |= OPT_P;
 	    }
-	    err = text_print_forecast(fr, datainfo, popt, prn);
+	    err = text_print_forecast(fr, datainfo, gopt, prn);
 	}
-	if (!err && (popt & OPT_P)) {
+	if (!err && (gopt & OPT_P)) {
 	    register_graph();
 	}
 	if (!rolling && fr->sderr == NULL) {

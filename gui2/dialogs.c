@@ -2098,7 +2098,8 @@ static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int pmin, int pmax, int *p,
-		     int dyn, MODEL *pmod)
+		     int dyn, gretlopt *optp,
+		     MODEL *pmod)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
 			     "to graph");
@@ -2194,6 +2195,42 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		       hbox, TRUE, TRUE, 5);
     /* get the max pre-forecast obs right */
     gtk_adjustment_value_changed(GTK_ADJUSTMENT(rset->adj1));
+
+    /* graph style selection */
+    if (1) {
+	static const char *strs[] = {
+	    N_("error bars"),
+	    N_("low and high lines"),
+	    N_("shaded area"),
+	    NULL
+	};
+	static gretlopt opts[] = {
+	    OPT_NONE,
+	    OPT_L,
+	    OPT_F
+	};
+	static combo_opts ci_opts;
+	int deflt;
+
+	if (gnuplot_has_style_fill()) {
+	    deflt = (*optp & OPT_L)? 1 : (*optp & OPT_F)? 2 : 0;
+	} else {
+	    strs[2] = NULL;
+	    deflt = (*optp & OPT_L)? 1 : 0;
+	}
+
+	ci_opts.strs = strs;
+	ci_opts.vals = opts;
+	ci_opts.optp = optp;
+
+	hbox = gtk_hbox_new(FALSE, 0);
+	tmp = gtk_label_new(_("Plot confidence interval using"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	tmp = gretl_opts_combo(&ci_opts, deflt);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, TRUE, TRUE, 5);
+    }
 
     /* Cancel button */
     cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
@@ -3551,13 +3588,18 @@ int freq_dialog (const char *title, const char *blurb,
 
 #if defined(G_OS_WIN32)
 
+/* use MS Windows native "MessageBox" */
+
 static void msgbox (const char *msg, int msgtype)
 {
     gchar *trmsg = NULL;
     int nls_on = doing_nls();
     int utype;
 
-    if (nls_on) {
+    if (nls_on && !gretl_is_ascii(msg) && g_utf8_validate(msg, -1, NULL)) {
+	/* recode messages in UTF-8, but don't try to recode messages
+	   that are already in the locale encoding (strerror) 
+	*/
 	trmsg = my_locale_from_utf8(msg);
 	if (trmsg == NULL) {
 	    return;
@@ -3583,19 +3625,34 @@ static void msgbox (const char *msg, int msgtype)
     }
 }
 
-#else /* gtk 2 native */
+#else /* use GTK+ message_dialog */
 
 static void msgbox (const char *msg, int msgtype)
 {
+    gchar *trmsg = NULL;
     GtkWidget *dialog;
 
-    dialog = gtk_message_dialog_new (NULL, /* GTK_WINDOW(mdata->w), */
-				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     msgtype,
-				     GTK_BUTTONS_CLOSE,
-				     msg);
-    gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy (dialog);
+    if (!g_utf8_validate(msg, -1, NULL)) {
+	/* it's possible we have an OS string from strerror() that is
+	   not UTF-8 encoded */
+	trmsg = my_locale_to_utf8(msg);
+	if (trmsg == NULL) {
+	    return;
+	}
+    }     
+
+    dialog = gtk_message_dialog_new(NULL, /* GTK_WINDOW(mdata->w), */
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    msgtype,
+				    GTK_BUTTONS_CLOSE,
+				    (trmsg != NULL)? trmsg : msg);
+
+    gtk_dialog_run(GTK_DIALOG (dialog));
+    gtk_widget_destroy(dialog);
+
+    if (trmsg != NULL) {
+	g_free(trmsg);
+    }    
 }
 
 #endif /* msgbox variants */
