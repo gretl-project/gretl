@@ -238,6 +238,8 @@ struct gretl_option gretl_opts[] = {
     { RESTRICT, OPT_V, "verbose" },
     { RESTRICT, OPT_L, "lbfgs" },
     { RESTRICT, OPT_N, "no-scaling" },
+    { RUNS,     OPT_D, "difference" },
+    { RUNS,     OPT_E, "equal" },
     { SCATTERS, OPT_L, "with-lines" },
     { SETINFO,  OPT_C, "continuous" },
     { SETINFO,  OPT_D, "discrete" },

@@ -6745,6 +6745,10 @@
 	  <flag>--difference</flag>
 	  <effect>use first difference of variable</effect>
 	</option>
+	<option>
+	  <flag>--equal</flag>
+	  <effect>positive and negative values are equiprobable</effect>
+	</option>
       </options>
     </usage>
 
@@ -6766,6 +6770,14 @@
 	differenced prior to the analysis, hence the runs are interpreted
 	as sequences of consecutive increases or decreases in the
 	value of the variable.
+      </para>
+      <para>
+	If the <lit>--equal</lit> option is given, the null hypothesis
+	incorporates the assumption that positive and negative values
+	are equiprobable, otherwise the test statistic is invariant
+	with respect to the <quote>fairness</quote> of the process
+	generating the sequence, and the test focuses on independence
+	alone.  
       </para>
     </description>
 

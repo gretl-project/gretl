@@ -705,10 +705,11 @@ double lockes_test (const double *x, int t1, int t2)
 
 /**
  * runs_test:
- * @varno: ID number of the variable to process.
+ * @v: ID number of the variable to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
- * @opt: %OPT_D to use first difference of variable.
+ * @opt: %OPT_D to use first difference of variable, %OPT_E
+ * to assume positive and negative are equiprobable.
  * @prn: gretl printing struct.
  *
  * Performs, and prints the results of, the runs test for randomness
@@ -718,7 +719,7 @@ double lockes_test (const double *x, int t1, int t2)
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 
+int runs_test (int v, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
     double xt, *x, mu, s2, sigma;
@@ -739,8 +740,8 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 	double xt1;
 
 	for (t=pdinfo->t1 + 1; t<=pdinfo->t2; t++) {
-	    xt = Z[varno][t];
-	    xt1 = Z[varno][t-1];
+	    xt = Z[v][t];
+	    xt1 = Z[v][t-1];
 	    if (na(xt) || na(xt1)) {
 		continue;
 	    }
@@ -748,7 +749,7 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 	} 	
     } else {
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    xt = Z[varno][t];
+	    xt = Z[v][t];
 	    if (na(xt)) {
 		continue;
 	    }
@@ -776,25 +777,24 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
-#if 1
-    /* don't assume that + and - are equiprobable */
-    N2 = 2.0 * Np * Nm;
-    mu = 1.0 + N2 / n;
-    s2 = (N2 * (N2 - n)) / (n*n * (n-1));
-    if (s2 == 0) {
+    if (opt & OPT_E) {
+	mu = 1.0 + n / 2.0;
+	s2 = ((double) n - 1) / 4.0;
+    } else {
+	/* don't assume that + and - are equiprobable */
+	N2 = 2.0 * Np * Nm;
+	mu = 1.0 + N2 / n;
+	s2 = (N2 * (N2 - n)) / (n*n * (n-1));
+    }
+
+    if (s2 <= 0) {
 	sigma = 0;
 	z = pval = NADBL;
     } else {
 	sigma = sqrt(s2);
 	z = (runs - mu) / sigma;
 	pval = normal_pvalue_2(z);
-    }
-#else
-    mu = (1.0 + n / 2.0);
-    sigma = sqrt((double) n - 1) / 2.0;
-    z = (runs - mu) / sigma;
-    pval = normal_pvalue_2(z);
-#endif
+    }	
 
     if (opt & OPT_D) {
 	pprintf(prn, "\n%s\n", _("Runs test (first difference)"));
@@ -803,14 +803,20 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     }
 
     pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
-	    pdinfo->varname[varno], runs);
+	    pdinfo->varname[v], runs);
 
     if (na(z)) {
 	pprintf(prn, _("Test statistic cannot be computed: try "
 		       "the deviation from the median?\n"));
     } else {
-	pprintf(prn, _("Under the null hypothesis of randomness, R "
-		   "follows N(%g, %g)\n"), mu, sigma);
+	if (opt & OPT_E) {
+	    pprintf(prn, _("Under the null hypothesis of independence and equal "
+			   "probability of positive\nand negative values, R "
+			   "follows N(%g, %g)\n"), mu, sigma);
+	} else {
+	    pprintf(prn, _("Under the null hypothesis of independence, R "
+			   "follows N(%g, %g)\n"), mu, sigma);
+	}
 	pprintf(prn, _("z-score = %g, with two-tailed p-value %g\n"), z, pval);
     }
 

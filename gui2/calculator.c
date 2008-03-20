@@ -1399,6 +1399,10 @@ static void np_test (GtkWidget *w, test_t *test)
 	    GTK_TOGGLE_BUTTON(test->extra)->active) {
 	    opt |= OPT_D;
 	}
+	if (test->check != NULL &&
+	    GTK_TOGGLE_BUTTON(test->check)->active) {
+	    opt |= OPT_E;
+	}	
 	err = runs_test(v1, (const double **) Z, datainfo, 
 			opt, prn);
     }	
@@ -2462,15 +2466,26 @@ static void make_nptest_tab (CalcChild *child, int idx)
 			      rows - 1, rows);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
+    gtk_widget_show(tmp);
+    test->extra = tmp; 
+
+    if (idx == NP_RUNS) {
+	rows += 1;
+	gtk_table_resize(GTK_TABLE(tbl), rows, 2);
+	tmp = gtk_check_button_new_with_label(_("Assume positive and negative are equiprobable"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, 
+				  rows - 1, rows);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+	gtk_widget_show(tmp);
+	test->check = tmp; 
+    }
+
     if (idx == NP_DIFF) {
 	gtk_widget_set_sensitive(tmp, FALSE);
 	g_signal_connect(G_OBJECT(test->radio[0]), "toggled",
 			 G_CALLBACK(toggle_verbose_state),
 			 tmp);
     }
-
-    gtk_widget_show(tmp);
-    test->extra = tmp; 
 }
 
 /* make tab (notebook page) for hypothesis test */
