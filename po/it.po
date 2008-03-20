@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-18 10:49-0400\n"
-"PO-Revision-Date: 2008-02-21 13:34+0100\n"
+"PO-Revision-Date: 2008-03-20 11:55+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1194,9 +1194,8 @@ msgid "Dataset extended by %d observations"
 msgstr "Il dataset è stato esteso di %d osservazioni"
 
 #: lib/src/dataset.c:2925
-#, fuzzy
 msgid "The 'dataset' command is not available within functions"
-msgstr "Questo comando non è disponibile\n"
+msgstr "Il comando \"dataset\" non è disponibile all'interno di funzioni"
 
 #: lib/src/dataset.c:2930 lib/src/interact.c:4514 gui2/library.c:6657
 msgid "Sorry, this command is not available in loop mode\n"
@@ -1208,7 +1207,7 @@ msgstr "Al momento sul dataset è definito un sotto-campione"
 
 #: lib/src/dataset.c:2979
 msgid "dataset restore: dataset is not resampled\n"
-msgstr ""
+msgstr "ripristino dataset: dataset non ricampionato\n"
 
 #: lib/src/dbread.c:349 lib/src/dbread.c:590
 msgid "Couldn't open database index file"
@@ -2028,9 +2027,9 @@ msgid "'%s' : not implemented for lists"
 msgstr "'%s' : non implementato per le liste"
 
 #: lib/src/geneval.c:6074
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for strings"
-msgstr "'%s' : non implementato per le liste"
+msgstr "'%s' : non implementato per le stringhe"
 
 #: lib/src/genfuncs.c:1027
 #, c-format
@@ -2111,9 +2110,8 @@ msgid "per-unit constants from model %d"
 msgstr "costanti per unità del modello %d"
 
 #: lib/src/genfuncs.c:1864
-#, fuzzy
 msgid "Invalid declaration"
-msgstr "Scarto quadratico medio non valido"
+msgstr "Dichiarazione non valida"
 
 #: lib/src/genlex.c:554 lib/src/genlex.c:555
 #, c-format
@@ -2175,9 +2173,9 @@ msgid "Generated matrix %s"
 msgstr "Generata la matrice %s"
 
 #: lib/src/genmain.c:77
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced list %s"
-msgstr "Sostituita la lista '%s'\n"
+msgstr "Sostituita la lista %s"
 
 #: lib/src/genmain.c:79
 #, c-format
@@ -2185,14 +2183,14 @@ msgid "Generated list %s"
 msgstr "Generata la lista %s"
 
 #: lib/src/genmain.c:83
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced string %s"
-msgstr "Sostituita la matrice %s"
+msgstr "Sostituita la stringa %s"
 
 #: lib/src/genmain.c:85
-#, fuzzy, c-format
+#, c-format
 msgid "Generated string %s"
-msgstr "Generata la matrice %s"
+msgstr "Generata la stringa %s"
 
 #: lib/src/genmain.c:98 lib/src/genmain.c:101
 msgid "Warning"
@@ -2410,9 +2408,8 @@ msgid "VAR residuals"
 msgstr "Residui del VAR"
 
 #: lib/src/graphing.c:3485 gui2/gui_utils.c:3064
-#, fuzzy
 msgid "System residuals"
-msgstr "Residui"
+msgstr "Residui del sistema"
 
 #: lib/src/graphing.c:3659
 msgid "VAR inverse roots in relation to the unit circle"
@@ -2591,22 +2588,22 @@ msgstr "Nessuna descrizione disponibile"
 
 #: lib/src/gretl_func.c:2361
 msgid "Function names must start with a letter"
-msgstr ""
+msgstr "I nomi di funzione devono iniziare con una lettera"
 
 #: lib/src/gretl_func.c:2364
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is the name of a gretl command"
-msgstr "\"%s\" non è un comando di gretl.\n"
+msgstr "\"%s\" è il nome di un comando gretl"
 
 #: lib/src/gretl_func.c:2368
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is the name of a built-in function"
-msgstr "'%s' è il nome di una serie"
+msgstr "'%s' è il nome di una funzione interna"
 
 #: lib/src/gretl_func.c:2374
-#, fuzzy, c-format
+#, c-format
 msgid "Redefining function '%s'"
-msgstr "Cancellata la funzione '%s'\n"
+msgstr "Ridefinizione funzione '%s'"
 
 #: lib/src/gretl_func.c:2406
 #, c-format
@@ -3180,14 +3177,14 @@ msgstr ""
 " %s\n"
 
 #: lib/src/gretl_string_table.c:498
-#, fuzzy, c-format
+#, c-format
 msgid "You cannot delete '%s'"
-msgstr "Impossibile sovrascrivere '%s'\n"
+msgstr "Impossibile eliminare '%s'"
 
 #: lib/src/gretl_string_table.c:503
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted string %s"
-msgstr "Generata la matrice %s"
+msgstr "Eliminata la stringa %s"
 
 #: lib/src/gretl_string_table.c:611 lib/src/gretl_win32.c:549
 #: lib/src/interact.c:2886
@@ -3200,14 +3197,14 @@ msgid "You cannot overwrite '%s'\n"
 msgstr "Impossibile sovrascrivere '%s'\n"
 
 #: lib/src/gretl_string_table.c:795
-#, fuzzy, c-format
+#, c-format
 msgid "Generated string %s\n"
-msgstr "Generata la matrice %s"
+msgstr "Generata la stringa %s\n"
 
 #: lib/src/gretl_string_table.c:797
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced string %s\n"
-msgstr "Sostituita la matrice %s"
+msgstr "Sostituita la stringa %s\n"
 
 #: lib/src/gretl_string_table.c:874 lib/src/interact.c:3627 cli/gretlcli.c:289
 #: gui2/library.c:6396
@@ -3921,9 +3918,8 @@ msgid "HQC"
 msgstr "HQC"
 
 #: lib/src/modelprint.c:394 lib/src/modelprint.c:396
-#, fuzzy
 msgid "Smallest eigenvalue"
-msgstr "Autovalore"
+msgstr "Autovalore minimo"
 
 #: lib/src/modelprint.c:405 lib/src/modelprint.c:408 lib/src/system.c:2605
 #: lib/src/system.c:2621
@@ -5381,9 +5377,8 @@ msgid "list is empty"
 msgstr "la lista è vuota"
 
 #: lib/src/printout.c:1738
-#, fuzzy
 msgid "No data\n"
-msgstr "dei dati"
+msgstr "Nessun dato\n"
 
 #: lib/src/printout.c:1786
 #, c-format
@@ -5758,9 +5753,8 @@ msgstr ""
 "Probabilmente il problema di stima è mal-condizionato.\n"
 
 #: lib/src/system.c:2643
-#, fuzzy
 msgid "Hansen--Sargan over-identification test"
-msgstr "Test di sovra-identificazione di Hansen-Sargan"
+msgstr "Test di sovra-identificazione di Hansen--Sargan"
 
 #: lib/src/system.c:2647
 msgid "Hansen-Sargan over-identification test"
@@ -5771,9 +5765,8 @@ msgid "LR test for diagonal covariance matrix"
 msgstr "Test LR per la matrice di covarianza diagonale"
 
 #: lib/src/system.c:2691
-#, fuzzy
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr "Test Breusch-Pagan per la matrice di covarianza diagonale"
+msgstr "Test Breusch--Pagan per la matrice di covarianza diagonale"
 
 #: lib/src/system.c:2698
 msgid "Breusch-Pagan test for diagonal covariance matrix"
@@ -6182,10 +6175,10 @@ msgstr "Impossibile allocare memoria per %s\n"
 msgid "data information"
 msgstr "Informazioni sui dati"
 
+## ???
 #: cli/gretlcli.c:419
-#, fuzzy
 msgid "output stream"
-msgstr "Formato"
+msgstr "Output"
 
 #: cli/gretlcli.c:424
 msgid "command line"
@@ -6232,7 +6225,7 @@ msgstr ""
 
 #: cli/gretlcli.c:803 gui2/library.c:6650
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
-msgstr "Inserire i comandi per il loop.  Digitare 'endloop' per uscire\n"
+msgstr "Inserire i comandi per il loop.  Digitare \"endloop\" per uscire\n"
 
 #: cli/gretlcli.c:810
 #, c-format
@@ -10551,14 +10544,12 @@ msgid "gretl: help"
 msgstr "gretl: comandi GUI"
 
 #: gui2/gui_utils.c:1976
-#, fuzzy
 msgid "gretl: function reference"
-msgstr "Guida alle funzioni di gretl"
+msgstr "gretl: guida alle funzioni"
 
 #: gui2/gui_utils.c:1978
-#, fuzzy
 msgid "gretl: command reference"
-msgstr "Guida ai comandi di gretl"
+msgstr "gretl: guida ai comandi"
 
 #: gui2/gui_utils.c:1984
 msgid "gretl: command log"
@@ -10715,14 +10706,12 @@ msgid "gretl: VAR covariance matrix"
 msgstr "gretl: matrice di covarianza VAR"
 
 #: gui2/gui_utils.c:3059
-#, fuzzy
 msgid "gretl: system covariance matrix"
-msgstr "gretl: matrice di covarianza VAR"
+msgstr "gretl: matrice di covarianza del sistema"
 
 #: gui2/gui_utils.c:3065
-#, fuzzy
 msgid "System fitted values"
-msgstr "Valori stimati"
+msgstr "Valori stimati del sistema"
 
 #: gui2/gui_utils.c:3137 gui2/gui_utils.c:3234
 msgid "impulse responses"
@@ -10822,14 +10811,12 @@ msgid "Omit exogenous variables..."
 msgstr "Ometti variabili esogene..."
 
 #: gui2/gui_utils.c:3629
-#, fuzzy
 msgid "Display residuals, all equations"
-msgstr "residuo di sistema, equazione %d"
+msgstr "Mostra residui, tutte le equazioni"
 
 #: gui2/gui_utils.c:3639
-#, fuzzy
 msgid "Display fitted values, all equations"
-msgstr "valore stimato di sistema, equazione %d"
+msgstr "Mostra valori stimati, tutte le equazioni"
 
 #: gui2/gui_utils.c:3658
 msgid "Impulse responses"
@@ -12223,9 +12210,8 @@ msgid "Show zeros explicitly"
 msgstr "Mostra esplicitamente i valori zero"
 
 #: gui2/selector.c:3307
-#, fuzzy
 msgid "Show rankings"
-msgstr "Mostra dettagli"
+msgstr "Mostra graduatorie"
 
 #: gui2/selector.c:3313
 msgid "Use X-12-ARIMA"
@@ -13075,18 +13061,16 @@ msgstr ""
 "(max. 8 caratteri)"
 
 #: gui2/ssheet.c:778
-#, fuzzy
 msgid "gretl: name column"
-msgstr "gretl: nome variabile"
+msgstr "gretl: nome colonna"
 
 #: gui2/ssheet.c:779
-#, fuzzy
 msgid ""
 "Enter name for column\n"
 "(max. 12 characters)"
 msgstr ""
-"Inserire un nome per la nuova variabile\n"
-"(max. 15 caratteri)"
+"Inserire un nome per la colonna\n"
+"(max. 12 caratteri)"
 
 #: gui2/ssheet.c:897
 msgid "gretl: specify scalar"
