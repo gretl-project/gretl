@@ -772,7 +772,7 @@ int runs_test (int v, const double **Z, const DATAINFO *pdinfo,
 	} else {
 	    Nm++;
 	}
-	if ((x[t] > 0 && x[t-1] < 0) || (x[t] < 0 && x[t-1] > 0)) { 
+	if ((x[t] > 0 && x[t-1] <= 0) || (x[t] <= 0 && x[t-1] > 0)) { 
 	    runs++;
 	}
     }
