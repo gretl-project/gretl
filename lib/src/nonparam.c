@@ -721,11 +721,13 @@ double lockes_test (const double *x, int t1, int t2)
 int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
-    double xt, *x, mean, sd;
-    double z, pval;
+    double xt, *x, mu, s2, sigma;
+    double N2, z, pval;
+    int Np, Nm;
     int t, n, runs = 1;
 
     n = pdinfo->t2 - pdinfo->t1 + 1;
+
     x = malloc(n * sizeof *x);
     if (x == NULL) {
 	return E_ALLOC;
@@ -760,16 +762,39 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 	return 1;
     }
 
+    Np = (x[0] > 0);
+    Nm = 1 - Np;
+
     for (t=1; t<n; t++) {
+	if (x[t] > 0) {
+	    Np++;
+	} else {
+	    Nm++;
+	}
 	if ((x[t] > 0 && x[t-1] < 0) || (x[t] < 0 && x[t-1] > 0)) { 
 	    runs++;
 	}
     }
 
-    mean = (1.0 + n / 2.0);
-    sd = sqrt((double) n - 1) / 2.0;
-    z = fabs((runs - mean) / sd);
+#if 1
+    /* don't assume that + and - are equiprobable */
+    N2 = 2.0 * Np * Nm;
+    mu = 1.0 + N2 / n;
+    s2 = (N2 * (N2 - n)) / (n*n * (n-1));
+    if (s2 == 0) {
+	sigma = 0;
+	z = pval = NADBL;
+    } else {
+	sigma = sqrt(s2);
+	z = (runs - mu) / sigma;
+	pval = normal_pvalue_2(z);
+    }
+#else
+    mu = (1.0 + n / 2.0);
+    sigma = sqrt((double) n - 1) / 2.0;
+    z = (runs - mu) / sigma;
     pval = normal_pvalue_2(z);
+#endif
 
     if (opt & OPT_D) {
 	pprintf(prn, "\n%s\n", _("Runs test (first difference)"));
@@ -779,9 +804,17 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 
     pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
 	    pdinfo->varname[varno], runs);
-    pprintf(prn, _("Under the null hypothesis of randomness, R "
-	    "follows N(%g, %g)\n"), mean, sd);
-    pprintf(prn, _("z-score = %g, with two-tailed p-value %g\n"), z, pval);
+
+    if (na(z)) {
+	pprintf(prn, _("Test statistic cannot be computed: try "
+		       "the deviation from the median?\n"));
+    } else {
+	pprintf(prn, _("Under the null hypothesis of randomness, R "
+		   "follows N(%g, %g)\n"), mu, sigma);
+	pprintf(prn, _("z-score = %g, with two-tailed p-value %g\n"), z, pval);
+    }
+
+    pputc(prn, '\n');
 
     record_test_result(z, pval, "runs");
   
