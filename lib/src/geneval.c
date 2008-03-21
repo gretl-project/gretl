@@ -3118,6 +3118,25 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const double *x = l->v.xvec;
+	int k = (int) r->v.xval;
+	int t1 = p->dinfo->t1;
+	int t2 = p->dinfo->t2;
+
+	while (na(x[t1]) && t1 <= t2) t1++;
+	while (na(x[t2]) && t2 >= t1) t2--;
+	
+	ret->v.xval = ljung_box(k, t1, t2, x, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
@@ -4965,6 +4984,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* otherwise fall through */
     case OBS:
     case F_MOVAVG:
+    case F_LJUNGBOX:
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, VEC, l, p);
@@ -4976,6 +4996,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_obs(l, r, p); 
 	} else if (t->t == F_MOVAVG) {
 	    ret = series_movavg(l, r, p); 
+	} else if (t->t == F_LJUNGBOX) {
+	    ret = series_ljung_box(l, r, p); 
 	}
 	break;
     case MSL:

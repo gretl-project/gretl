@@ -1799,6 +1799,42 @@
       </description>
     </function>
 
+    <function name="ljungbox" output="scalar">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="scalar">p</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the Ljung&ndash;Box Q' statistic for the series
+	  <argname>y</argname> using lag order <argname>p</argname>. The
+	  currently defined sample range is used.  The lag order must be
+	  greater than or equal to 1 and less than the number of available
+	  observations.  
+	</para>
+	<para>
+	  This statistic may be referred to the chi-square distribution with
+	  <argname>p</argname> degrees of freedom as a test of the null
+	  hypothesis that the series <argname>y</argname> is serially
+	  independent.
+	  <seelist>
+	    <fncref targ="pvalue"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="lngamma" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Log of the gamma function of <argname>x</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="log" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat-or-list">x</fnarg>
@@ -1817,17 +1853,6 @@
 	  and may be adjusted in case of non-uniqueness in the set of names
 	  thus constructed.
 	</para> 
-      </description>
-    </function>
-
-    <function name="lngamma" output="asinput">
-      <fnargs>
-	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Log of the gamma function of <argname>x</argname>.
-	</para>
       </description>
     </function>
 

@@ -3649,3 +3649,37 @@ system_save_and_print_results (equation_system *sys,
     return err;
 }
 
+int system_autocorrelation_test (equation_system *sys, int order, 
+				 PRN *prn)
+{
+    double *u, lb;
+    int i, err = 0;
+
+    for (i=0; i<sys->neqns && !err; i++) {
+	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	u = sys->E->val + (i * sys->T);
+	lb = ljung_box(order, 0, sys->T - 1, u, &err);
+	if (!err) {
+	    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
+		    lb, _("with p-value"), _("Chi-square"), order,
+		    lb, chisq_cdf_comp(lb, order));
+	    pputc(prn, '\n');
+	}
+    }
+
+    return err;
+}
+
+int system_arch_test (equation_system *sys, int order, PRN *prn)
+{
+    const double *u;
+    int i, err = 0;
+
+    for (i=0; i<sys->neqns && !err; i++) {
+	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	u = sys->E->val + (i * sys->T);
+	err = array_arch_test(u, sys->T, order, OPT_NONE, prn);
+    }
+
+    return err;
+}

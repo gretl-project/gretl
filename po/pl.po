@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.7.4.pre
+# Polish translation for gretl-1.7.4
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
@@ -6,10 +6,10 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.7.1\n"
+"Project-Id-Version: gretl-1.7.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-20 19:31-0400\n"
-"PO-Revision-Date: 2008-03-19 19:00+0100\n"
+"PO-Revision-Date: 2008-03-21 11:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1195,9 +1195,8 @@ msgid "Dataset extended by %d observations"
 msgstr "Zakres danych rozszerzony o %d obserwacje"
 
 #: lib/src/dataset.c:2925
-#, fuzzy
 msgid "The 'dataset' command is not available within functions"
-msgstr "To polecenie nie jest dostêpne\n"
+msgstr "To polecenie 'dataset' nie jest dostêpne z funkcjami"
 
 #: lib/src/dataset.c:2930 lib/src/interact.c:4514 gui2/library.c:6662
 msgid "Sorry, this command is not available in loop mode\n"
@@ -3171,14 +3170,14 @@ msgstr ""
 " %s\n"
 
 #: lib/src/gretl_string_table.c:498
-#, fuzzy, c-format
+#, c-format
 msgid "You cannot delete '%s'"
-msgstr "Niemo¿liwe nadpisanie '%s'\n"
+msgstr "Niemo¿liwe usuniêcie '%s'"
 
 #: lib/src/gretl_string_table.c:503
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted string %s"
-msgstr "Wygenerowano ³añcuch znaków %s"
+msgstr "Usuniêto ³añcuch znaków %s"
 
 #: lib/src/gretl_string_table.c:611 lib/src/gretl_win32.c:549
 #: lib/src/interact.c:2886
@@ -5046,16 +5045,18 @@ msgid "Test statistic cannot be computed: try the deviation from the median?\n"
 msgstr ""
 
 #: lib/src/nonparam.c:813
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Under the null hypothesis of independence and equal probability of positive\n"
 "and negative values, R follows N(%g, %g)\n"
-msgstr "Hipoteza zerowa: próba jest losowa, dla R odpowiednio N(%g, %g)\n"
+msgstr ""
+"Test niezale¿no¶ci oparty na liczbie dodatnich i ujemnych serii.\n"
+"Hipoteza zerowa: próba jest losowa, dla R odpowiednio N(%g, %g),\n"
 
 #: lib/src/nonparam.c:817
-#, fuzzy, c-format
+#, c-format
 msgid "Under the null hypothesis of independence, R follows N(%g, %g)\n"
-msgstr "Hipoteza zerowa: próba jest losowa, dla R odpowiednio N(%g, %g)\n"
+msgstr "Hipoteza zerowa: próba jest losowa, dla R odpowiednio N(%g, %g),\n"
 
 #: lib/src/nonparam.c:820
 #, c-format
@@ -5373,9 +5374,8 @@ msgid "list is empty"
 msgstr "Lista jest pusta"
 
 #: lib/src/printout.c:1738
-#, fuzzy
 msgid "No data\n"
-msgstr "danych"
+msgstr "Brak danych\n"
 
 #: lib/src/printout.c:1786
 #, c-format
@@ -6174,9 +6174,8 @@ msgid "data information"
 msgstr "informacja o pliku danych"
 
 #: cli/gretlcli.c:419
-#, fuzzy
 msgid "output stream"
-msgstr "Format pliku"
+msgstr "strumieñ wyj¶ciowy"
 
 #: cli/gretlcli.c:424
 msgid "command line"
@@ -6580,7 +6579,7 @@ msgstr "Wska¼nik struktury w próbie = %g\n"
 #: gui2/calculator.c:1503
 #, c-format
 msgid "Null hypothesis: Difference of means = %g\n"
-msgstr "Hipoteza zerowa: Ró¿nica dwóch ¶rednich = %g\n"
+msgstr "Hipoteza zerowa: ró¿nica dwóch ¶rednich = %g\n"
 
 #: gui2/calculator.c:1506
 #, c-format
@@ -6819,7 +6818,7 @@ msgstr "Wykorzystaj pierwsze ró¿nice"
 
 #: gui2/calculator.c:2475
 msgid "Assume positive and negative are equiprobable"
-msgstr ""
+msgstr "Dla dodatnich i ujemnych serii"
 
 #: gui2/calculator.c:2502
 msgid "variance"
@@ -7851,23 +7850,20 @@ msgid "End"
 msgstr "Koñcowa obs.:"
 
 #: gui2/dialogs.c:2202
-#, fuzzy
 msgid "error bars"
-msgstr "B³±d"
+msgstr "s³upki zakresu"
 
 #: gui2/dialogs.c:2203
-#, fuzzy
 msgid "low and high lines"
-msgstr "Allow anti-aliasing of lines"
+msgstr "linie dolnej i górnej granicy"
 
 #: gui2/dialogs.c:2204
 msgid "shaded area"
-msgstr ""
+msgstr "cieniowany obszar"
 
 #: gui2/dialogs.c:2227
-#, fuzzy
 msgid "Plot confidence interval using"
-msgstr "95% przedzia³ ufno¶ci"
+msgstr "Wykres przedzia³ów ufno¶ci jako"
 
 #: gui2/dialogs.c:2289
 msgid "Add observations"
@@ -13065,18 +13061,16 @@ msgstr ""
 "(maksymalnie 8 znaków)"
 
 #: gui2/ssheet.c:778
-#, fuzzy
 msgid "gretl: name column"
-msgstr "gretl: nazwa zmiennej"
+msgstr "gretl: nazwa kolumny"
 
 #: gui2/ssheet.c:779
-#, fuzzy
 msgid ""
 "Enter name for column\n"
 "(max. 12 characters)"
 msgstr ""
-"Wprowad¼ nazwê nowej zmiennej\n"
-"(maksymalnie 15 znaków)"
+"Wprowad¼ nazwê kolumny\n"
+"(maksymalnie 12 znaków)"
 
 #: gui2/ssheet.c:897
 msgid "gretl: specify scalar"
@@ -14145,51 +14139,3 @@ msgstr ""
 msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany b³±d czytania pliku\n"
 
-#~ msgid "gretl_prn_new: out of memory\n"
-#~ msgstr "gret_prn_new: b³±d pamiêci\n"
-
-#~ msgid "gretl_prn_new: couldn't open %s\n"
-#~ msgstr "gret_prn_new: niemo¿liwe otwarcie pliku %s\n"
-
-#~ msgid "Failed to generate correlogram\n"
-#~ msgstr "B³±d w wyznaczaniu korelogramu\n"
-
-#~ msgid "Failed to generate periodogram\n"
-#~ msgstr "B³±d w generowaniu periodogramu\n"
-
-#~ msgid "Error in computing model selection criteria.\n"
-#~ msgstr "B³±d w obliczeniach kryteriów selekcji modelu.\n"
-
-#~ msgid "Error adding log differences of variables.\n"
-#~ msgstr "B³±d w dodaniu do bazy logarytmów pierwszych ró¿nic zmiennych.\n"
-
-#~ msgid "Error adding first differences of variables.\n"
-#~ msgstr "B³±d w dodaniu do bazy pierwszych ró¿nic zmiennych.\n"
-
-#~ msgid "Error adding lags of variables.\n"
-#~ msgstr "B³±d w dodaniu do bazy zmiennych opó¼nionych.\n"
-
-#~ msgid "Error adding logs of variables.\n"
-#~ msgstr "B³±d w dodaniu do bazy logarytmów zmiennych.\n"
-
-#~ msgid "Failed to generate squares\n"
-#~ msgstr "B³±d w generowaniu kwadratów\n"
-
-#~ msgid "generation of summary stats failed\n"
-#~ msgstr "B³±d w wyzanaczaniu statystyk opisowych\n"
-
-#~ msgid "Warning: case markers not saved in binary datafile\n"
-#~ msgstr ""
-#~ "Uwaga: opisy przypadków nie mo¿na zapisaæ jako binarny plik danych\n"
-
-#~ msgid "Couldn't open tex file for writing\n"
-#~ msgstr "Niemo¿liwe otwarcie pliku tex do zapisu\n"
-
-#~ msgid "Out of memory expanding data set\n"
-#~ msgstr "Brak pamiêci dla rozszerzenia zbioru danych\n"
-
-#~ msgid "Can't open file to save commands\n"
-#~ msgstr "Niemo¿liwe otwarcie pliku do zapisu poleceñ\n"
-
-#~ msgid "Failed to shrink the data set"
-#~ msgstr "B³±d w zbiorze danych (typu 'shrink')"

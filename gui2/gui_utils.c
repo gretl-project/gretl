@@ -3449,13 +3449,21 @@ static void system_test_call (gpointer p, guint code, GtkWidget *w)
     }	
 
     if (code == SYS_AUTOCORR_TEST) {
-	strcpy(title, _("gretl: LM test (autocorrelation)"));
-	err = gretl_VAR_autocorrelation_test(var, order, 
-					     &Z, datainfo, 
-					     prn);
+	strcpy(title, _("gretl: autocorrelation"));
+	if (var != NULL) {
+	    err = gretl_VAR_autocorrelation_test(var, order, 
+						 &Z, datainfo, 
+						 prn);
+	} else {
+	    err = system_autocorrelation_test(sys, order, prn);
+	}
     } else if (code == SYS_ARCH_TEST) {
 	strcpy(title, _("gretl: ARCH test"));
-	err = gretl_VAR_arch_test(var, order, datainfo, prn);
+	if (var != NULL) {
+	    err = gretl_VAR_arch_test(var, order, datainfo, prn);
+	} else {
+	    err = system_arch_test(sys, order, prn);
+	}
     } else if (code == SYS_NORMALITY_TEST) {
 	sprintf(title, "gretl: %s", _("Test for normality of residual"));
 	if (var != NULL) {
@@ -3566,30 +3574,25 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
     g_free(item.path);
 
-    /* FIXME: the following two tests should be enabled for the SYSTEM
-       command on time-series data, but the infrastructure is not yet
-       in place.  Also, these tests should really be multivariate.
-    */
+    /* FIXME: the following two tests should really be multivariate */
 
-    if (var != NULL) {
-	/* univariate autocorrelation tests */
-	item.path = g_strdup_printf("%s/%s", _(tpath), 
-				    _("Autocorrelation"));
-	item.callback = system_test_call;
-	item.callback_action = SYS_AUTOCORR_TEST;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+    /* univariate autocorrelation tests */
+    item.path = g_strdup_printf("%s/%s", _(tpath), 
+				_("Autocorrelation"));
+    item.callback = system_test_call;
+    item.callback_action = SYS_AUTOCORR_TEST;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
-	/* univariate ARCH tests */
-	item.path = g_strdup_printf("%s/%s", _(tpath), 
-				    _("ARCH"));
-	item.callback = system_test_call;
-	item.callback_action = SYS_ARCH_TEST;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
-    }
+    /* univariate ARCH tests */
+    item.path = g_strdup_printf("%s/%s", _(tpath), 
+				_("ARCH"));
+    item.callback = system_test_call;
+    item.callback_action = SYS_ARCH_TEST;
+    item.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* multivariate normality test */
     item.path = g_strdup_printf("%s/%s", _(tpath), 

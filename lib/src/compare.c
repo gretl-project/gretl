@@ -1310,26 +1310,30 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     return err;
 }
 
-static int 
-ljung_box (int m, int t1, int t2, const double *y, double *pLB)
+double ljung_box (int m, int t1, int t2, const double *y, int *err)
 {
     double acf, LB = 0.0;
     int k, n = t2 - t1 + 1;
+
+    *err = 0;
 
     /* calculate acf up to lag m, cumulating LB */
     for (k=1; k<=m; k++) {
 	acf = gretl_acf(k, t1, t2, y);
 	if (na(acf)) {
-	    return E_MISSDATA;
+	    *err = E_MISSDATA;
+	    break;
 	}
 	LB += acf * acf / (n - k);
     }
 
-    LB *= n * (n + 2.0);
+    if (*err) {
+	LB = NADBL;
+    } else {
+	LB *= n * (n + 2.0);
+    }
 
-    *pLB = LB;
-
-    return 0;
+    return LB;
 }
 
 /**
@@ -1636,23 +1640,6 @@ static int tsls_autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
-static int ljung_box_only (MODEL *pmod, int order, PRN *prn)
-{
-    double lb = 0;
-    int err;
-
-    err = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &lb);
-
-    if (!err) {
-	pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
-		lb, _("with p-value"), _("Chi-square"), order,
-		lb, chisq_cdf_comp(lb, order));
-	pputc(prn, '\n');
-    }
-
-    return err;
-}
-
 /**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
@@ -1697,11 +1684,6 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (dataset_is_panel(pdinfo)) {
 	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
-    }
-
-    if (pmod->list[0] == 1) {
-	/* VECM model */
-	return ljung_box_only(pmod, order, prn);
     }
 
     /* impose original sample range */
@@ -1788,6 +1770,7 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (!err) {
 	int dfd = aux.nobs - pmod->ncoeff - order;
+	int lberr;
 
 	aux.aux = AUX_AR;
 	gretl_model_set_int(&aux, "BG_order", order);
@@ -1804,15 +1787,19 @@ int autocorr_test (MODEL *pmod, int order,
 	    pprintf(prn, "%s: LMF = %f,\n", _("Test statistic"), LMF);
 	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		    order, aux.nobs - pmod->ncoeff - order, LMF, pval);
+
 	    pprintf(prn, "\n%s: TR^2 = %f,\n", 
 		    _("Alternative statistic"), trsq);
-	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
+	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", _("with p-value"), 
 		    _("Chi-square"), order, trsq, chisq_cdf_comp(trsq, order));
-	    if (ljung_box(order, pmod->t1, pmod->t2, (*pZ)[v], &lb) == 0) {
+
+	    lb = ljung_box(order, pmod->t1, pmod->t2, (*pZ)[v], &lberr);
+	    if (!na(lb)) {
 		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
 			lb, _("with p-value"), _("Chi-square"), order,
 			lb, chisq_cdf_comp(lb, order));
 	    }
+
 	    pputc(prn, '\n');
 	    record_test_result(LMF, pval, _("autocorrelation"));
 	}

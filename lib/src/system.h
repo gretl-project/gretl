@@ -233,4 +233,9 @@ system_save_and_print_results (equation_system *sys,
 			       double ***pZ, DATAINFO *pdinfo,
 			       gretlopt opt, PRN *prn);
 
+int system_autocorrelation_test (equation_system *sys, int order, 
+				 PRN *prn);
+
+int system_arch_test (equation_system *sys, int order, PRN *prn);
+
 #endif /* EQUATION_SYSTEM_H */

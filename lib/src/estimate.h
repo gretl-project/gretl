@@ -74,6 +74,9 @@ MODEL ar_func (const int *list,
 int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
+int array_arch_test (const double *u, int n, int order, 
+		     gretlopt opt, PRN *prn);
+
 MODEL arch_model (const int *list, int order, 
 		  double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn);

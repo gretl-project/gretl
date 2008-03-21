@@ -41,14 +41,28 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn)
 {
+    MODEL *pmod;
+    double lb;
     int i, err = 0;
 
     for (i=0; i<var->neqns && !err; i++) {
+	pmod = var->models[i];
 	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
-	err = autocorr_test(var->models[i], order, pZ, pdinfo,
-			    OPT_Q | OPT_S, prn);
-	gretl_model_test_print(var->models[i], 0, prn);
-	gretl_model_destroy_tests(var->models[i]);
+	if (pmod->list[0] == 1) {
+	    /* VECM */
+	    lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
+	    if (!err) {
+		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
+			lb, _("with p-value"), _("Chi-square"), order,
+			lb, chisq_cdf_comp(lb, order));
+		pputc(prn, '\n');
+	    }
+	} else {
+	    err = autocorr_test(pmod, order, pZ, pdinfo,
+				OPT_Q | OPT_S, prn);
+	    gretl_model_test_print(var->models[i], 0, prn);
+	    gretl_model_destroy_tests(var->models[i]);
+	}
     }
 
     return err;

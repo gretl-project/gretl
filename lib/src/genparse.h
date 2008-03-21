@@ -270,6 +270,7 @@ enum {
     F_WSD,
     F_STRSTR,
     F_COLNAMES,
+    F_LJUNGBOX,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,

@@ -3195,7 +3195,7 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 	    gretl_model_test_print_direct(test, heading, prn);
 	}
 
-	if (opt & OPT_S) {
+	if (pmod != NULL && (opt & OPT_S)) {
 	    maybe_add_test_to_model(pmod, test);
 	} else {
 	    model_test_free(test);
@@ -3205,45 +3205,22 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
     record_test_result(LM, pv, "ARCH");
 }
 
-/**
- * arch_test:
- * @pmod: model to be tested.
- * @order: lag order for ARCH process.
- * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save test results to model;
- * if %OPT_Q, be less verbose.
- * @prn: gretl printing struct.
- *
- * Tests @pmod for AutoRegressive Conditional Heteroskedasticity.  
- * 
- * Returns: 0 on success, non-zero code on error.
- */
-
-int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo, 
-	       gretlopt opt, PRN *prn)
+static int real_arch_test (const double *u, int T, int order, 
+			   MODEL *pmod, const DATAINFO *pdinfo, 
+			   gretlopt opt, PRN *prn)
 {
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *V = NULL;
-    int T = pmod->nobs;
     int i, k, s, t;
     double x, s2, rsq;
     double *ps2 = NULL;
     int err = 0;
 
-    if (pmod->missmask != NULL) {
-	return E_MISSDATA;
-    }
-
     gretl_error_clear();
 
-    if (order == 0) {
-	/* use data frequency as default lag order */
-	order = pdinfo->pd;
-    }
-
-    if (order < 1 || order > T - pmod->list[0]) {
+    if (order < 1 || order > T - 1) {
 	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
 	return E_DATA;
     }
@@ -3276,13 +3253,13 @@ int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo,
 
     for (i=0; i<k; i++) {
 	for (t=0; t<T; t++) {
-	    s = t + pmod->t1 + order;
+	    s = t + order;
 	    if (i == 0) {
-		x = pmod->uhat[s];
+		x = u[s];
 		gretl_vector_set(y, t, x * x);
 		gretl_matrix_set(X, t, i, 1.0);
 	    } else {
-		x = pmod->uhat[s - i];
+		x = u[s - i];
 		gretl_matrix_set(X, t, i, x * x);
 	    }
 	}
@@ -3307,6 +3284,48 @@ int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo,
     gretl_matrix_free(V);
 
     return err;
+}
+
+/**
+ * arch_test:
+ * @pmod: model to be tested.
+ * @order: lag order for ARCH process.
+ * @pdinfo: information on the data set.
+ * @opt: if flags include %OPT_S, save test results to model;
+ * if %OPT_Q, be less verbose.
+ * @prn: gretl printing struct.
+ *
+ * Tests @pmod for AutoRegressive Conditional Heteroskedasticity.  
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo, 
+	       gretlopt opt, PRN *prn)
+{
+    int err;
+
+    if (pmod->missmask != NULL) {
+	err = E_MISSDATA;
+    } else {
+	const double *u = pmod->uhat + pmod->t1;
+
+	if (order == 0) {
+	    /* use data frequency as default lag order */
+	    order = pdinfo->pd;
+	}
+
+	err = real_arch_test(u, pmod->nobs, order, pmod, pdinfo, 
+			     opt, prn);
+    }
+
+    return err;
+}
+
+int array_arch_test (const double *u, int n, int order, 
+		     gretlopt opt, PRN *prn)
+{
+    return real_arch_test(u, n, order, NULL, NULL, opt, prn);
 }
 
 /**
