@@ -1636,6 +1636,23 @@ static int tsls_autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
+static int ljung_box_only (MODEL *pmod, int order, PRN *prn)
+{
+    double lb = 0;
+    int err;
+
+    err = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &lb);
+
+    if (!err) {
+	pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
+		lb, _("with p-value"), _("Chi-square"), order,
+		lb, chisq_cdf_comp(lb, order));
+	pputc(prn, '\n');
+    }
+
+    return err;
+}
+
 /**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
@@ -1680,6 +1697,11 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (dataset_is_panel(pdinfo)) {
 	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
+    }
+
+    if (pmod->list[0] == 1) {
+	/* VECM model */
+	return ljung_box_only(pmod, order, prn);
     }
 
     /* impose original sample range */

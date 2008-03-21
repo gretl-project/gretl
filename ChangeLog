@@ -31,6 +31,8 @@
   handle the case where positive and negative values are not
   equiprobable by default, but add an "--equal" option to 
   impose the equiprobability assumption
+- Fix for "data error" in VECM autocorrelation tests (for now
+  we'll just do Ljung-Box)
 - Fix sub-sampling bug (new in 1.7.3)
 
 2/29/2008 version 1.7.3
