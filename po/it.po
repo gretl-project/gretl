@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.7.2\n"
+"Project-Id-Version: gretl 1.7.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-20 19:31-0400\n"
-"PO-Revision-Date: 2008-03-20 11:55+0100\n"
+"PO-Revision-Date: 2008-03-21 20:43+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -5058,19 +5058,21 @@ msgstr ""
 
 #: lib/src/nonparam.c:809
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
+msgstr "La statistica test non può essere calcolata: provare con lo scarto dalla mediana?\n"
 
 #: lib/src/nonparam.c:813
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Under the null hypothesis of independence and equal probability of positive\n"
 "and negative values, R follows N(%g, %g)\n"
-msgstr "Sotto l'ipotesi nulla di casualità, R segue N(%g, %g)\n"
+msgstr ""
+"Sotto l'ipotesi nulla di indipendenza e pari probabilità tra valori\n"
+"positivi e negativi, R segue N(%g, %g)\n"
 
 #: lib/src/nonparam.c:817
-#, fuzzy, c-format
+#, c-format
 msgid "Under the null hypothesis of independence, R follows N(%g, %g)\n"
-msgstr "Sotto l'ipotesi nulla di casualità, R segue N(%g, %g)\n"
+msgstr "Sotto l'ipotesi nulla di indipendenza, R segue N(%g, %g)\n"
 
 #: lib/src/nonparam.c:820
 #, c-format
@@ -6837,7 +6839,7 @@ msgstr "Usa la differenza prima"
 
 #: gui2/calculator.c:2475
 msgid "Assume positive and negative are equiprobable"
-msgstr ""
+msgstr "Assumi che i valori positivi e negativi siano equiprobabili"
 
 #: gui2/calculator.c:2502
 msgid "variance"
@@ -7871,23 +7873,21 @@ msgid "End"
 msgstr "Fine"
 
 #: gui2/dialogs.c:2202
-#, fuzzy
 msgid "error bars"
-msgstr "errore"
+msgstr "Barre di errore"
 
+## Corretto?
 #: gui2/dialogs.c:2203
-#, fuzzy
 msgid "low and high lines"
-msgstr "Abilita anti-aliasing delle linee"
+msgstr "Linee di confidenza"
 
 #: gui2/dialogs.c:2204
 msgid "shaded area"
-msgstr ""
+msgstr "Area ombreggiata"
 
 #: gui2/dialogs.c:2227
-#, fuzzy
 msgid "Plot confidence interval using"
-msgstr "Intervallo di confidenza al 95%"
+msgstr "Disegna l'intervallo di confidenza usando"
 
 #: gui2/dialogs.c:2289
 msgid "Add observations"
