@@ -1,3 +1,9 @@
+version 1.7.5, in progress
+- max() and min() functions: extend the syntax to allow a list
+  largument
+- Reading CSV data: automatically substitute '_' for illegal
+  characters in variable names
+  
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values
 - Fix for detection of unit-diagonal matrix (oops!)

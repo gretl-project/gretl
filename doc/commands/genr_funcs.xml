@@ -1938,14 +1938,17 @@
       </description>
     </function>
 
-    <function name="max" output="scalar">
+    <function name="max" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The maximum of the non-missing observations in series
-	  <argname>y</argname>.
+	  If the argument <argname>y</argname> is a series, returns the
+	  (scalar) maximum of the non-missing observations in the series.
+	  If the argument is a list, returns a series each of whose
+	  elements is the maximum of the values of the listed variables at
+	  the given observation.
 	</para>
       </description>
     </function>
@@ -2103,14 +2106,17 @@
       </description>
     </function>
 
-    <function name="min" output="scalar">
+    <function name="min" output="scalar-or-series">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-list">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The minimum of the non-missing observations in series
-	  <argname>y</argname>.
+	  If the argument <argname>y</argname> is a series, returns the
+	  (scalar) minimum of the non-missing observations in the series.
+	  If the argument is a list, returns a series each of whose
+	  elements is the minimum of the values of the listed variables at
+	  the given observation.
 	</para>
       </description>
     </function>

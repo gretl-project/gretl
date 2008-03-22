@@ -1236,6 +1236,17 @@ static int csv_fields_check (char *line, int maxlen, FILE *fp,
     return err;
 }
 
+static void strip_illegals (char *s)
+{
+    int i;
+
+    for (i=1; s[i]!='\0'; i++) {
+	if (!isalnum(s[i])) {
+	    s[i] = '_';
+	}
+    }
+}
+
 static int 
 csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
 {
@@ -1308,7 +1319,9 @@ static int csv_varname_scan (csvdata *c, char *line, int maxlen, FILE *fp,
 		    numcount++;
 		} else {
 		    iso_to_ascii(c->dinfo->varname[nv]);
+		    strip_illegals(c->dinfo->varname[nv]);
 		    if (check_varname(c->dinfo->varname[nv])) {
+			fprintf(stderr, "bombing here\n");
 			errmsg(1, prn);
 			err = E_DATA;
 		    }
