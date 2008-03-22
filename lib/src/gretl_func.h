@@ -52,6 +52,8 @@ int fn_param_type (const ufunc *fun, int i);
 
 const char *fn_param_name (const ufunc *fun, int i);
 
+const char *fn_param_descrip (const ufunc *fun, int i);
+
 double fn_param_default (const ufunc *fun, int i);
 
 double fn_param_minval (const ufunc *fun, int i);

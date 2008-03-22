@@ -594,9 +594,14 @@ static void function_call_dialog (call_info *cinfo)
 
 	for (i=0; i<cinfo->n_params; i++) {
 	    const char *pname = fn_param_name(cinfo->func, i);
+	    const char *desc = fn_param_descrip(cinfo->func, i);
 	    int ptype = fn_param_type(cinfo->func, i);
-	    
-	    label = gtk_label_new(pname);
+
+	    if (desc != NULL) {
+		label = gtk_label_new(desc);
+	    } else {
+		label = gtk_label_new(pname);
+	    }
 	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);

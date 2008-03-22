@@ -964,6 +964,50 @@ static double poisson_cdf_inverse (int k, double p)
     return x;
 }
 
+static double 
+weibull_critval (double shape, double scale, double rtail)
+{
+    double ret = NADBL;
+
+    if (shape > 0 && scale > 0 && rtail > 0) {
+	ret = scale * pow(-log(rtail), 1.0 / shape);
+    }
+
+    return ret;
+}
+
+/**
+ * weibull_cdf:
+ * @shape: shape parameter > 0.
+ * @scale: scale parameter > 0.
+ * @x: test value.
+ *
+ * Returns: the probability of X <= @x, for X an r.v. that follows
+ * the Weibull distribution with parameters @shape and @scale.
+ */
+
+static double weibull_cdf (double shape, double scale, double x)
+{
+    double ret = NADBL;
+
+    if (shape > 0 && scale > 0 && x >= 0) {
+	ret = 1.0 - exp(pow(-x/scale, shape));
+    }
+
+    return ret;
+}
+
+static double weibull_cdf_comp (double shape, double scale, double x)
+{
+    double ret = NADBL;
+
+    if (shape > 0 && scale > 0 && x >= 0) {
+	ret = exp(pow(-x/scale, shape));
+    }
+
+    return ret;
+}
+
 /* order in x: [params], alpha, critval */
 
 void print_critval (char st, double *x, double c, PRN *prn)
@@ -994,6 +1038,10 @@ void print_critval (char st, double *x, double c, PRN *prn)
     case 'P':
 	pprintf(prn, "Poisson (mean = %g)", x[0]);
 	apos = 1;
+	break;
+    case 'W':
+	pprintf(prn, "Weibull (shape = %g, scale = %g)", x[0], x[1]);
+	apos = 2;
 	break;
     }
 
@@ -1039,7 +1087,7 @@ double gretl_get_cdf_inverse (char st, double *p)
 	x = binomial_cdf_inverse((int) p[2], (int) p[1], p[0]);
     } else if (st == 'P') {
 	x = poisson_cdf_inverse((int) p[0], p[1]);
-    }
+    } 
 
     return x;
 }
@@ -1060,6 +1108,8 @@ double gretl_get_critval (char st, double *p)
 	x = binomial_critval(p[2], p[0], (int) p[1]);
     } else if (st == 'P') {
 	x = poisson_critval(p[1], p[0]);
+    } else if (st == 'W') {
+	x = weibull_critval(p[0], p[1], p[2]);
     }
 
     return x;
@@ -1085,6 +1135,8 @@ double gretl_get_cdf (char st, double *p)
 	x = bvnorm_cdf(p[1], p[2], p[0]);
     } else if (st == 'P') {
 	x = poisson_cdf(p[0], (int) p[1]);
+    } else if (st == 'W') {
+	x = weibull_cdf(p[0], p[1], p[2]);
     }
 
     return x;
@@ -1108,6 +1160,8 @@ double gretl_get_pvalue (char st, const double *p)
 	x = binomial_cdf_comp((int) p[2], (int) p[1], p[0]);
     } else if (st == 'P') {
 	x = poisson_cdf_comp(p[0], (int) p[1]);
+    } else if (st == 'W') {
+	x = weibull_cdf_comp(p[0], p[1], p[2]);
     }
 
     dparm_set(p);
@@ -1164,7 +1218,11 @@ double *gretl_get_random_series (char st, const double *p,
 	double m = p[0]; /* FIXME? */
 
 	gretl_rand_poisson(x, pdinfo->t1, pdinfo->t2, &m, 0);
-    }
+    } else if (st == 'W') {
+	double shape = p[0], scale = p[1];
+
+	*err = gretl_rand_weibull(x, pdinfo->t1, pdinfo->t2, shape, scale);
+    }	
 
     return x;
 }
@@ -1293,6 +1351,17 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	}
 	break;	
 
+    case 'w':
+    case 'W':
+    case '9':
+	pprintf(prn, _("\nWeibull (shape = %g, scale = %g): "), 
+		p[0], p[1]);
+	err = print_pv_string(p[2], pv, prn);
+	if (err) return;
+	pc = weibull_cdf(p[0], p[1], p[2]);
+	pprintf(prn, _("(to the left: %g)\n"), pc);
+	break;
+
     default:
 	break;
     }
@@ -1308,6 +1377,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
  * pvalue G mean variance x (Gamma distribution).
  * pvalue B prob n x (Binomial distribution).
  * pvalue P mean k (Poisson distribution).
+ * pvalue W shape scale x (Weibull distribution).
  * @pZ: pointer to the data array.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.

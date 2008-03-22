@@ -616,8 +616,13 @@
 	    <para>
 	      Poisson (p or P): Mean
 	    </para>
-	  </li>	  
-	</ilist>
+	  </li>	
+	  <li>
+	    <para>
+	      Weibull (w or W): shape; scale
+	    </para>
+	  </li>	
+ 	</ilist>
 	<para context="tex">
 	  \begin{center} 
 	  \begin{tabular}{llll} 
@@ -638,7 +643,9 @@
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp;
 	  probability &amp; trials \\ 
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; 
-	  mean &amp; -- 
+	  mean &amp; -- \\
+	  Weibull &amp; \texttt{w} or \texttt{W} &amp; 
+	  shape &amp; scale
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -2773,7 +2780,7 @@
 	  the distribution; see <fncref targ="cdf"/> for details.  The
 	  distributions supported by the <lit>pval</lit> function are
 	  the standard normal, <math>t</math>, Chi square, <math>F</math>,
-	  gamma, binomial and Poisson.
+	  gamma, binomial, Poisson and Weibull.
 	</para>
 	<para>
 	  <seelist>
@@ -2974,7 +2981,12 @@
 	    <para>
 	      Poisson (p or P): Mean
 	    </para>
-	  </li>	  
+	  </li>	
+	  <li>
+	    <para>
+	      Weibull (w or W): shape; scale
+	    </para>
+	  </li>	
 	</ilist>
 	<para context="tex">
 	  \begin{center}
@@ -2987,7 +2999,8 @@
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.)\\
 	  Gamma &amp; \texttt{g} or \texttt{G} &amp; shape &amp; scale \\
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$ \\
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; --
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; -- \\
+	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale
 	  \end{tabular}
 	  \end{center}
 	</para>

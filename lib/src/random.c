@@ -555,6 +555,46 @@ void gretl_rand_poisson (double *a, int t1, int t2, const double *m,
     }
 }
 
+/* f(x; k, \lambda) = (k/\lambda) (x/\lambda)^{k-1} e^{-(x/\lambda)^k} */
+
+/**
+ * gretl_rand_weibull:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @shape: shape parameter > 0.
+ * @scale: scale parameter > 0.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the Weibull distribution with shape @k and scale @lambda.
+ *
+ * Returns: 0 on success, non-zero if either parameter is out of
+ * bounds.
+ */
+
+int gretl_rand_weibull (double *a, int t1, int t2, double shape,
+			double scale) 
+{
+    int err = 0;
+
+    if (shape <= 0 || scale <= 0) {
+	err = E_DATA;
+    } else {
+	double u, kinv = 1.0 / shape;
+	int t;
+
+	for (t=t1; t<=t2; t++) {
+	    u = gretl_one_uniform();
+	    while (u == 0.0) {
+		u = gretl_one_uniform();
+	    }
+	    a[t] = scale * pow(-log(u), kinv);
+	}
+    }
+
+    return err;
+}
+
 /**
  * gretl_rand_int_max:
  * @max: the maximum value (open)

@@ -36,6 +36,7 @@ typedef struct fn_param_ fn_param;
 
 struct fn_param_ {
     char *name;
+    char *descrip;
     char type;
     char flags;
     double deflt;
@@ -345,6 +346,12 @@ const char *fn_param_name (const ufunc *fun, int i)
 	fun->params[i].name;
 }
 
+const char *fn_param_descrip (const ufunc *fun, int i)
+{
+    return (i < 0 || i >= fun->n_params)? NULL :
+	fun->params[i].descrip;
+}
+
 double fn_param_default (const ufunc *fun, int i)
 {
     return (i < 0 || i >= fun->n_params)? NADBL :
@@ -485,7 +492,7 @@ ufunc *get_user_function_by_name (const char *name)
        look first for functions from the same package */
 
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, (ufuns[i])->name)) {
+	if (!strcmp(name, ufuns[i]->name)) {
 	    fun = ufuns[i];
 	    if (fun->pkgID == ID || ID == 0) {
 		break;
@@ -498,7 +505,7 @@ ufunc *get_user_function_by_name (const char *name)
     if (ID > 0 && fun == NULL) {
 	/* fall back on unpackaged functions */
 	for (i=0; i<n_ufuns; i++) {
-	    if (!strcmp(name, (ufuns[i])->name)) {
+	    if (!strcmp(name, ufuns[i]->name)) {
 		fun = ufuns[i];
 		if (fun->pkgID == 0) {
 		    break;
@@ -533,6 +540,7 @@ static fn_param *allocate_params (int n)
 
     for (i=0; i<n; i++) {
 	params[i].name = NULL;
+	params[i].descrip = NULL;
 	params[i].type = 0;
 	params[i].flags = 0;
 	params[i].deflt = NADBL;
@@ -580,6 +588,7 @@ static void free_params_array (fn_param *params, int n)
 
     for (i=0; i<n; i++) {
 	free(params[i].name);
+	free(params[i].descrip);
     }
     free(params);
 }
@@ -763,7 +772,8 @@ static int field_to_type (const char *s)
     }
 }    
 
-static int func_read_params (xmlNodePtr node, ufunc *fun)
+static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
+			     ufunc *fun)
 {
     xmlNodePtr cur;
     char *field;
@@ -789,12 +799,16 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 
     cur = node->xmlChildrenNode;
     n = 0;
+
+    /* FIXME get param description below */
+
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "param")) {
 	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
 		fun->params[n].name = field;
 	    } else {
 		err = E_DATA;
+		break;
 	    }
 	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
 		fun->params[n].type = field_to_type(field);
@@ -817,7 +831,10 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 		}
 	    } else {
 		err = E_DATA;
+		break;
 	    }
+	    gretl_xml_child_get_string(cur, doc, "description", 
+				       &fun->params[n].descrip);
 	    n++;
 	}	    
 	cur = cur->next;
@@ -1061,7 +1078,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	if (!xmlStrcmp(cur->name, (XUC) "help")) {
 	    gretl_xml_node_get_string(cur, doc, &fun->help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
-	    err = func_read_params(cur, fun);
+	    err = func_read_params(cur, doc, fun);
 	    if (err) {
 		fprintf(stderr, "%s: error parsing function parameters\n",
 			fun->name);
@@ -1176,6 +1193,11 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	    }
 	    if (fun->params[i].flags & ARG_CONST) {
 		fputs(" const=\"true\"", fp);
+	    }
+	    if (fun->params[i].descrip != NULL) {
+		gretl_xml_put_tagged_string("description", 
+					    fun->params[i].descrip,
+					    fp);
 	    }
 	    fputs("/>\n", fp);
 	}

@@ -22,6 +22,9 @@
 <!ELEMENT version     (#PCDATA)>
 <!ELEMENT date        (#PCDATA)>
 <!ELEMENT description (#PCDATA)>
+<!ATTLIST description
+   lang CDATA #IMPLIED
+>
 
 <!ELEMENT gretl-function (help?, params?, return?, code)>
 <!ATTLIST gretl-function
@@ -36,21 +39,24 @@
    count CDATA #REQUIRED
 >
 
-<!ELEMENT param EMPTY>
+<!ELEMENT param description?>
 <!ATTLIST param
-   name CDATA #REQUIRED
+   name    CDATA #REQUIRED
    default CDATA #IMPLIED
    min     CDATA #IMPLIED
    max     CDATA #IMPLIED
    optional (true|false) 'false'
    const    (true|false) 'false'
-   type (bool|boolean|int|scalar|series|list|matrix|scalarref|seriesref|matrixref) 'series'
+   type (bool | boolean | int | scalar | series | list |
+         matrix | scalarref | seriesref | matrixref |
+         string) 'series'
 >
 
 <!ELEMENT return EMPTY>
 <!ATTLIST return
    name CDATA #REQUIRED
-   type (bool|boolean|int|scalar|series|list|matrix) 'series'
+   type (bool | boolean | int | scalar | series | list | 
+         matrix | string) 'series'
 >
 
 <!ELEMENT code (#PCDATA)>

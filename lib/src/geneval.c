@@ -623,6 +623,12 @@ static int dist_argc (char *s, int f)
     case 'P':
 	s[0] = 'P';
 	return (f == F_RANDGEN)? 1 : 2;
+    case '9':
+    case 'w':
+    case 'W':
+	s[0] = 'W';
+	return (f == F_INVCDF)? 0 : 
+	    (f == F_RANDGEN)? 2 : 3;
     }
 
     return 0;

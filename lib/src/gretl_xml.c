@@ -762,6 +762,43 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
     return list;
 }
 
+/**
+ * gretl_xml_child_get_string:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @name: name of child node.
+ * @pstr: location to receive string.
+ * 
+ * Returns: 1 if a string is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc, 
+				const char *name, char **pstr)
+{
+    xmlNodePtr cur;
+    xmlChar *tmp;
+    int ret = 0;
+
+    *pstr = NULL;
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL) {
+	if (!xmlStrcmp(cur->name, (XUC) name)) {
+	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    if (tmp != NULL) {
+		*pstr = (char *) tmp;
+		ret = 1;
+	    }
+	    break;
+	}
+	cur = cur->next;
+    }
+
+    return ret;
+}
+
 static const char *skip_to_next (const char *s)
 {
     s += strspn(s, " \r\n");

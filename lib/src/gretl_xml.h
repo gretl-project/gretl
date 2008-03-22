@@ -83,6 +83,9 @@ int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc,
 int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc, 
 				       char **pstr);
 
+int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc, 
+				const char *name, char **pstr);
+
 int *gretl_xml_get_int_array (xmlNodePtr node, xmlDocPtr doc,
 			      int *nelem, int *err);
 

@@ -6275,6 +6275,7 @@
 	<example>pvalue G shape scale x</example>
 	<example>pvalue B bprob 10 6</example>
 	<example>pvalue P lambda x</example>
+	<example>pvalue W shape scale x</example>
       </examples>
     </usage>
 
@@ -6284,7 +6285,8 @@
 	specified distribution (<lit>z</lit> for Gaussian, <lit>t</lit>
 	for Student's <math>t</math>, <lit>X</lit> for chi-square,
 	<lit>F</lit> for <math>F</math>, <lit>G</lit> for gamma,
-	<lit>B</lit> for binomial, or <lit>P</lit> for Poisson).  
+	<lit>B</lit> for binomial, <lit>P</lit> for Poisson, or
+	<lit>W</lit> for Weibull).  
       </para>
       <para>
 	Depending on the distribution, the following information must be
@@ -6293,8 +6295,9 @@
 	<math>F</math>, the numerator and denominator degrees of
 	freedom; for gamma, the shape and scale parameters; for the
 	binomial distribution, the <quote>success</quote> probability and
-	the number of trials; and for the Poisson distribution, the
-	parameter &lgr; (which is both the mean and the variance). As
+	the number of trials; for the Poisson distribution, the
+	parameter &lgr; (which is both the mean and the variance); and
+	for the Weibull distribution, shape and scale parameters. As
 	shown in the examples above, the numerical parameters may be given
 	in numeric form or as the names of variables.
       </para>

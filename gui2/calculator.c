@@ -21,10 +21,10 @@
 
 #define NTESTS 6
 #define NPTESTS 2
-#define NPVAL 7
-#define NDISTS 7
-#define NGRAPHS 6
-#define NRAND 8
+#define NPVAL 8
+#define NDISTS 8
+#define NGRAPHS 7
+#define NRAND 9
 #define NTESTENTRY 7
 #define NDISTENTRY 4
 
@@ -74,6 +74,7 @@ enum {
     GAMMA_DIST,
     BINOMIAL_DIST,
     POISSON_DIST,
+    WEIBULL_DIST,
     DW_DIST,
     MAX_DIST
 };  
@@ -122,6 +123,8 @@ static int get_dist_and_params (const char *s, int *d, double *x)
 	*d = BINOMIAL_DIST;
     } else if (sscanf(s, "# Poisson(%lf)", &x[0]) == 1) {
 	*d = POISSON_DIST;
+    } else if (sscanf(s, "# Weibull(%lf,%lf)", &x[0], &x[1]) == 2) {
+	*d = WEIBULL_DIST;
     } else {
 	ret = 0;
     }
@@ -151,7 +154,9 @@ static int current_graph_dist (png_plot *plot)
 	    d = BINOMIAL_DIST;
 	} else if (!strncmp(s, "# Poisson(", 10)) {
 	    d = POISSON_DIST;
-	} 
+	} else if (!strncmp(s, "# Weibull(", 10)) {
+	    d = WEIBULL_DIST;
+	}
     }
 
     return d;
@@ -194,6 +199,8 @@ dist_graph_title (int dist, double *parms)
 	s = g_strdup_printf(G_("Binomial(%d, %g)"), (int) parms[1], parms[0]);
     } else if (dist == POISSON_DIST) {
 	s = g_strdup_printf(G_("Poisson(%g)"), parms[0]);
+    } else if (dist == WEIBULL_DIST) {
+	s = g_strdup_printf(G_("Weibull(%g, %g)"), parms[0], parms[1]);
     }
 
     return s;
@@ -215,6 +222,8 @@ static gchar *dist_comment_line (int dist, double *parms)
 	s = g_strdup_printf("# Binomial(%d,%g)", (int) parms[1], parms[0]);
     } else if (dist == POISSON_DIST) {
 	s = g_strdup_printf("# Poisson(%g)", parms[0]);
+    } else if (dist == WEIBULL_DIST) {
+	s = g_strdup_printf("# Weibull(%g,%g)", parms[0], parms[1]);
     }
 
     return s;
@@ -227,6 +236,8 @@ enum {
     ID_L,
     ID_M,
     ID_S,
+    ID_SHP,
+    ID_SCL,
     ID_MAX
 };
 
@@ -241,6 +252,7 @@ enum {
 #define F_COMB   "comb(n,k)=n!/(k!*(n-k)!)"
 #define F_BINOM  "binom(k,n,p)=comb(int(n),int(k))*p**k*(1-p)**(n-k)"
 #define F_POIS   "poisson(z,k)=exp(-z)*(z**k)/(int(k))!"
+#define F_WEIB   "weibull(x,shp,scl)=(shp/scl)*(x/scl)**(shp-1.0)*exp(-(x/scl)**shp)"
 
 static void 
 dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax)
@@ -293,6 +305,11 @@ dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax)
 	st = 'P';
 	*xmin = 0;
 	x[1] = 0.0015;
+    } else if (d == WEIBULL_DIST) {
+	st = 'W';
+	*xmin = 0;
+	x[1] = parms[1];
+	x[2] = 0.0004;
     }
 
     if (st) {
@@ -330,6 +347,11 @@ static double dist_xmax (int d, double *parms)
 	st = 'P';
 	x[1] = 0.0015;
 	break;
+    case WEIBULL_DIST:
+	st = 'W';
+	x[1] = parms[1];
+	x[2] = 0.0015;
+	break;
     }
 
     return gretl_get_critval(st, x);
@@ -344,6 +366,7 @@ static int n_literal_lines (int d, int alt, int ptype)
 	n = (ptype == PLOT_H_TEST)? 2 : 4; 
 	break;
     case T_DIST:
+    case WEIBULL_DIST:
 	n = 4;
 	break;
     case CHISQ_DIST:	
@@ -483,6 +506,11 @@ make_plot_line (char *targ, int d, int alt, const int *ids)
     case POISSON_DIST:
 	k = ids[ID_L] + 1;
 	sprintf(targ, "int(t),poisson(lambda%d,t)", k);
+	break;
+    case WEIBULL_DIST:
+	k = ids[ID_SHP] + 1;
+	j = ids[ID_SCL] + 1;
+	sprintf(targ, "t,weibull(t,shp%d,scl%d)", k, j);
 	break;
     } 
 }
@@ -641,6 +669,11 @@ static void dist_graph (int d, double *parms)
 	fprintf(fp, "lambda1=%g\n", parms[0]);
 	fprintf(fp, "%s\n", F_POIS);
 	break;
+    case WEIBULL_DIST:
+	fprintf(fp, "shp1=%g\n", parms[0]);
+	fprintf(fp, "scl1=%g\n", parms[1]);
+	fprintf(fp, "%s\n", F_WEIB);
+	break;
     }
 
     fprintf(fp, "plot \\\n");
@@ -728,7 +761,15 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	    if (id > ids[ID_S]) {
 		ids[ID_S] = id;
 	    }
-	}	    
+	} else if (sscanf(s, "shp%d=", &id) == 1) {
+	    if (id > ids[ID_SHP]) {
+		ids[ID_SHP] = id;
+	    }
+	} else if (sscanf(s, "scl%d=", &id) == 1) {
+	    if (id > ids[ID_SCL]) {
+		ids[ID_SCL] = id;
+	    }
+	}
     }
 
     /* alternate forms for some plots */
@@ -779,6 +820,12 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	k = ids[ID_L] + 1;
 	sprintf(v1, "lambda%d=%g", k, parms[0]);
 	break;
+    case WEIBULL_DIST:
+	k = ids[ID_SHP] + 1;
+	sprintf(v1, "shp%d=%g", k, parms[0]);
+	k = ids[ID_SCL] + 1;
+	sprintf(v2, "scl%d=%g", k, parms[1]);
+	break;
     }  
 
     if (*v1) {
@@ -828,6 +875,9 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	break;
     case POISSON_DIST:
 	if (!got[POISSON_DIST]) f1 = F_POIS;
+	break;
+    case WEIBULL_DIST:
+	if (!got[WEIBULL_DIST]) f1 = F_WEIB;
 	break;
     }
 
@@ -1016,8 +1066,10 @@ static int page_from_dist (int code, int dist)
 	    return 4;
 	case POISSON_DIST:
 	    return 5;
-	case DW_DIST:
+	case WEIBULL_DIST:
 	    return 6;
+	case DW_DIST:
+	    return 7;
 	}
     }
 
@@ -1045,6 +1097,8 @@ static int dist_from_page (int code, int page)
 	case 5:
 	    return POISSON_DIST;
 	case 6:
+	    return WEIBULL_DIST;
+	case 7:
 	    return DW_DIST;
 	}
     }
@@ -1054,9 +1108,9 @@ static int dist_from_page (int code, int page)
 
 static char dist_to_char (int d)
 {
-    const char *dchars = "uztXFGBP";
+    const char *dchars = "uztXFGBPW";
 
-    return (d >= 0 && d < 8)? dchars[d] : 0;
+    return (d >= 0 && d < 10)? dchars[d] : 0;
 }
 
 static int 
@@ -1090,6 +1144,7 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
 	if (x[j++] < 0) return 1;
 	break;
     case GAMMA_DIST: 
+    case WEIBULL_DIST:
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* shape */
 	if (na(x[j++])) return 1;
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* scale */
@@ -1219,6 +1274,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
     case CHISQ_DIST:
     case F_DIST:
     case GAMMA_DIST:
+    case WEIBULL_DIST:
 	x[j] = getval(tabs[i]->entry[j], C_POS_DBL);
 	if (na(x[j])) return;
 	break;
@@ -1320,6 +1376,10 @@ static void get_random (GtkWidget *w, CalcChild *child)
 	break;
     case GAMMA_DIST:
 	gretl_command_sprintf("genr %s = randgen(G,%g,%g)", vname, 
+			      x[0], x[1]);
+	break;
+    case WEIBULL_DIST:
+	gretl_command_sprintf("genr %s = randgen(W,%g,%g)", vname, 
 			      x[0], x[1]);
 	break;
     case BINOMIAL_DIST: 
@@ -1837,6 +1897,7 @@ static void make_dist_tab (CalcChild *child, int i)
 	N_("gamma"),	    
 	N_("binomial"),
 	N_("poisson"),
+	N_("weibull"),
 	N_(" DW "),
     };
     int d = dist_from_page(child->code, i);
@@ -1879,6 +1940,7 @@ static void make_dist_tab (CalcChild *child, int i)
 	calc_entry(tbl, &rows, N_("dfd"), child, i);
 	break;
     case GAMMA_DIST:
+    case WEIBULL_DIST:
 	calc_entry(tbl, &rows, N_("shape"), child, i);
 	calc_entry(tbl, &rows, N_("scale"), child, i);
 	break;
