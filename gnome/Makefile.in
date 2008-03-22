@@ -16,10 +16,10 @@ ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
 endif
 
-desktopdir = $(gnome_prefix)/share/applications
-mimedir = $(gnome_prefix)/share/mime-info
-gpixmaps = $(gnome_prefix)/share/pixmaps
-schemadir = $(gnome_prefix)/etc/gconf/schemas
+desktopdir = $(DESTDIR)$(gnome_prefix)/share/applications
+mimedir = $(DESTDIR)$(gnome_prefix)/share/mime-info
+gpixmaps = $(DESTDIR)$(gnome_prefix)/share/pixmaps
+schemadir = $(DESTDIR)$(gnome_prefix)/etc/gconf/schemas
 
 install: install-images install-misc
 

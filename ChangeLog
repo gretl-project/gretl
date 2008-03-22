@@ -3,6 +3,7 @@ version 1.7.5, in progress
   largument
 - Reading CSV data: automatically substitute '_' for illegal
   characters in variable names
+- Support DESTDIR for make install
   
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

@@ -203,6 +203,9 @@ gretl_matrix *gretl_matrix_seq (int start, int end);
 
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
+int gretl_matrix_copy_row (gretl_matrix *dest, int di,
+			   const gretl_matrix *src, int si);
+
 int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n);
 
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);

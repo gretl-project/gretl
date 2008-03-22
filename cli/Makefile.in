@@ -61,13 +61,13 @@ $(CLI): .deps $(OBJS)
 .PHONY :
 
 install: $(CLI) installdirs
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(bindir)/$(CLI)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(DESTDIR)$(bindir)/$(CLI)
 
 install-strip: $(CLI) installdirs
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(CLI) $(bindir)/$(CLI)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(CLI) $(DESTDIR)$(bindir)/$(CLI)
 
 installdirs: $(tooldir)/mkinstalldirs
-	$(tooldir)/mkinstalldirs $(bindir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir)
 
 clean:
 	rm -f *.o $(CLI)

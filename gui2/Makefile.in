@@ -185,27 +185,27 @@ gtksourceview/libgtksourceview-lite.a:
 install: install-exec install-data $(query_install_gnome) $(query_install_lang)
 
 install-strip: $(PROG) install-data $(query_install_gnome)
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
 install-data: installdirs
-	$(INSTALL_PROGRAM) ../gretl_sh $(bindir)/gretl
-	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(gretldir)
-	$(INSTALL_DATA) $(topsrc)/COPYING $(gretldir)
+	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
+	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
+	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)
 
 install-exec: $(PROG) installdirs 
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
 
 install-gnome: $(PROG) installdirs 
 	$(MAKE) -C ../gnome install 
 
 install-lang: gretl.lang
-	$(tooldir)/mkinstalldirs $(langdir)
-	$(INSTALL_DATA) gretl.lang $(langdir)
-	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(langdir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
+	$(INSTALL_DATA) gretl.lang $(DESTDIR)$(langdir)
+	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(DESTDIR)$(langdir)
 
 installdirs:
-	$(tooldir)/mkinstalldirs $(bindir) 
-	$(tooldir)/mkinstalldirs $(gretldir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir) 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
 
 clean:
 	rm -f *.o $(PROG)

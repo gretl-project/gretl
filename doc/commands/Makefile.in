@@ -4,7 +4,6 @@ datarootdir = @datarootdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
 MAKE = @MAKE@
-INSTALL = @INSTALL@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 XSLT_CFLAGS = @XSLT_CFLAGS@
@@ -15,8 +14,6 @@ GLIB_LIBS = @GLIB_LIBS@
 prefix = @prefix@
 datadir = @datadir@
 localedir = $(datadir)/locale
-
-have_gtk = @have_gtk@
 
 GRETLINC = -I$(topsrc)/lib/src -I../..
 GRETLLIB = ../../lib/libgretl-1.0.la

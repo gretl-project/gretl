@@ -61,7 +61,7 @@ help:
 
 install: installdirs install_datafiles install_scripts install_functions \
 	install_help install_fonts $(query_install_help)
-	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(gretldir)/gretl.stamp
+	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(DESTDIR)$(gretldir)/gretl.stamp
 	make -C bcih install
 
 install-strip: install
@@ -69,64 +69,65 @@ install-strip: install
 install_datafiles:
 	for f in $(sharesrc)/data/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data ; done
-	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(gretldir)/data 
-	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(gretldir)/data 
+	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(DESTDIR)$(gretldir)/data 
+	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(DESTDIR)$(gretldir)/data 
 	for f in $(sharesrc)/data/greene/* ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/greene ; done
 	for f in $(sharesrc)/data/misc/* ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/data/misc ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/misc ; done
 	for f in $(topsrc)/tests/*.dat ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/data/nist ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data/nist ; done
 
 install_scripts:
 	for f in $(sharesrc)/scripts/* ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/scripts ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts ; done
 	for f in $(sharesrc)/scripts/misc/* ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/scripts/misc ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/scripts/misc ; done
 
 install_functions:
-	$(INSTALL_DATA) $(sharesrc)/functions/gretlfunc.dtd $(gretldir)/functions 
+	$(INSTALL_DATA) $(sharesrc)/functions/gretlfunc.dtd $(DESTDIR)$(gretldir)/functions 
 
 install_man: gretl.1
-	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
-	$(INSTALL_DATA) $(topsrc)/gretl.1 $(prefix)/share/man/man1
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(prefix)/share/man/man1
+	$(INSTALL_DATA) $(topsrc)/gretl.1 $(DESTDIR)$(prefix)/share/man/man1
 
 install_help: $(query_make_help)
-	$(tooldir)/mkinstalldirs $(gretldir)
-	$(tooldir)/mkinstalldirs $(gretldir)/doc
-	$(tooldir)/mkinstalldirs $(gretldir)/helpfigs
-	$(INSTALL_DATA) $(EN_GUI_HLP) $(gretldir)/gretlgui.hlp
-	$(INSTALL_DATA) $(EN_CMD_HLP) $(gretldir)/gretlcmd.hlp
-	$(INSTALL_DATA) $(EN_CLI_HLP) $(gretldir)/gretlcli.hlp
-	$(INSTALL_DATA) $(ES_GUI_HLP) $(gretldir)/gretlgui.hlp.es
-	$(INSTALL_DATA) $(ES_CMD_HLP) $(gretldir)/gretlcmd.hlp.es
-	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
-	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretlgui.hlp.it
-	$(INSTALL_DATA) $(IT_CMD_HLP) $(gretldir)/gretlcmd.hlp.it
-	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
-	$(INSTALL_DATA) $(EN_CLI_GENHLP) $(gretldir)/genrcli.hlp
-	$(INSTALL_DATA) $(EN_GUI_GENHLP) $(gretldir)/genrgui.hlp
-	$(INSTALL_DATA) $(IT_CLI_GENHLP) $(gretldir)/genrcli.hlp.it
-	$(INSTALL_DATA) $(IT_GUI_GENHLP) $(gretldir)/genrgui.hlp.it
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/doc
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/helpfigs
+	$(INSTALL_DATA) $(EN_GUI_HLP) $(DESTDIR)$(gretldir)/gretlgui.hlp
+	$(INSTALL_DATA) $(EN_CMD_HLP) $(DESTDIR)$(gretldir)/gretlcmd.hlp
+	$(INSTALL_DATA) $(EN_CLI_HLP) $(DESTDIR)$(gretldir)/gretlcli.hlp
+	$(INSTALL_DATA) $(ES_GUI_HLP) $(DESTDIR)$(gretldir)/gretlgui.hlp.es
+	$(INSTALL_DATA) $(ES_CMD_HLP) $(DESTDIR)$(gretldir)/gretlcmd.hlp.es
+	$(INSTALL_DATA) $(ES_CLI_HLP) $(DESTDIR)$(gretldir)/gretlcli.hlp.es
+	$(INSTALL_DATA) $(IT_GUI_HLP) $(DESTDIR)$(gretldir)/gretlgui.hlp.it
+	$(INSTALL_DATA) $(IT_CMD_HLP) $(DESTDIR)$(gretldir)/gretlcmd.hlp.it
+	$(INSTALL_DATA) $(IT_CLI_HLP) $(DESTDIR)$(gretldir)/gretlcli.hlp.it
+	$(INSTALL_DATA) $(EN_CLI_GENHLP) $(DESTDIR)$(gretldir)/genrcli.hlp
+	$(INSTALL_DATA) $(EN_GUI_GENHLP) $(DESTDIR)$(gretldir)/genrgui.hlp
+	$(INSTALL_DATA) $(IT_CLI_GENHLP) $(DESTDIR)$(gretldir)/genrcli.hlp.it
+	$(INSTALL_DATA) $(IT_GUI_GENHLP) $(DESTDIR)$(gretldir)/genrgui.hlp.it
 	for f in $(sharesrc)/texfigs/*.png ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/helpfigs ; done
 	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \
-	if test -f $$f ; then $(INSTALL_DATA) $$f $(gretldir)/doc ; fi ; done
+	if test -f $$f ; then $(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; fi ; done
 
 install_fonts:
 	for f in $(sharesrc)/fonts/*.ttf ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/fonts ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/fonts ; done
 
 installdirs:
-	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
-	$(tooldir)/mkinstalldirs $(gretldir)/data/greene
-	$(tooldir)/mkinstalldirs $(gretldir)/data/misc
-	$(tooldir)/mkinstalldirs $(gretldir)/data/nist
-	$(tooldir)/mkinstalldirs $(gretldir)/scripts
-	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
-	$(tooldir)/mkinstalldirs $(gretldir)/db
-	$(tooldir)/mkinstalldirs $(gretldir)/functions
-	$(tooldir)/mkinstalldirs $(gretldir)/fonts
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir) 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/greene
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/misc
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/nist
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/misc 
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/fonts
 
 clean:
 	make -C bcih clean

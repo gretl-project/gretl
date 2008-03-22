@@ -279,16 +279,16 @@ $(GRETLLIB):
 
 install: $(GRETLLIB) $(PLUGINS) $(URCDATA) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
-	$(PLUGINS) $(plugindir)
-	$(INSTALL_DATA) $(URCDATA) $(plugindir)/data
+	$(PLUGINS) $(DESTDIR)$(plugindir)
+	$(INSTALL_DATA) $(URCDATA) $(DESTDIR)$(plugindir)/data
 
 install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
-	$(PLUGINS) $(plugindir)
+	$(PLUGINS) $(DESTDIR)$(plugindir)
 
 installdirs:
-	$(topsrc)/tools/mkinstalldirs $(plugindir)
-	$(topsrc)/tools/mkinstalldirs $(plugindir)/data
+	$(topsrc)/tools/mkinstalldirs $(DESTDIR)$(plugindir)
+	$(topsrc)/tools/mkinstalldirs $(DESTDIR)$(plugindir)/data
 
 clean:
 	rm -f *.lo *.o *.la

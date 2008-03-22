@@ -41,13 +41,13 @@ includedir = $(prefix)/include/gretl
 aclocaldir = $(prefix)/share/aclocal
 pkgconfigdir = $(libdir)/pkgconfig
 
-INSTALLDIRS = $(libdir) $(includedir) $(aclocaldir)
+INSTALLDIRS = $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(aclocaldir)
 
 LIBGRETL = libgretl-1.0.la 
 
 # Libraries:
 ifeq ($(have_gtk),2.0)
-  INSTALLDIRS += $(pkgconfigdir)
+  INSTALLDIRS += $(DESTDIR)$(pkgconfigdir)
   INSTALL_CFG = install-cfg-new
 else
   INSTALL_CFG = install-cfg-old
@@ -236,21 +236,21 @@ $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 .PHONY: 
 
 install: $(LIBGRETL) install-data
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $< $(libdir)/$<
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $< $(DESTDIR)$(libdir)/$<
 
 install-strip: $(LIBGRETL) install-data
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $< $(libdir)/$<
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $< $(DESTDIR)$(libdir)/$<
 
 install-data: installdirs $(INSTALL_CFG)
 	for f in $(PUBLIC_HDRS) ; do \
-	$(INSTALL_DATA) $(libsrc)/$$f $(includedir) ; done
+	$(INSTALL_DATA) $(libsrc)/$$f $(DESTDIR)$(includedir) ; done
 
 install-cfg-old: ../gretl-config
-	$(INSTALL_PROGRAM) ../gretl-config $(bindir)
-	$(INSTALL_DATA) $(topsrc)/gretl.m4 $(aclocaldir)
+	$(INSTALL_PROGRAM) ../gretl-config $(DESTDIR)$(bindir)
+	$(INSTALL_DATA) $(topsrc)/gretl.m4 $(DESTDIR)$(aclocaldir)
 
 install-cfg-new: ../gretl.pc
-	$(INSTALL_DATA) ../gretl.pc $(pkgconfigdir)
+	$(INSTALL_DATA) ../gretl.pc $(DESTDIR)$(pkgconfigdir)
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)

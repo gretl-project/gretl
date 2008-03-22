@@ -548,6 +548,44 @@ gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_copy_row:
+ * @dest: destination matrix.
+ * @di: row to copy into.
+ * @src: source matrix.
+ * @si: row to copy from.
+ *
+ * Copies the values from row @si of @src into row @di
+ * of @dest, provided @src and @dest have the same number
+ * of columns.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_matrix_copy_row (gretl_matrix *dest, int di,
+			   const gretl_matrix *src, int si)
+{
+    int err = 0;
+
+    if (dest == NULL || src == NULL ||
+	gretl_is_null_matrix(dest) ||
+	gretl_is_null_matrix(src)) {
+	err = E_DATA;
+    } else if (dest->cols != src->cols) {
+	err = E_NONCONF;
+    } else {
+	double x;
+	int j;
+	
+	for (j=0; j<src->cols; j++) {
+	    x = gretl_matrix_get(src, si, j);
+	    gretl_matrix_set(dest, di, j, x);
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_matrix_free:
  * @m: matrix to be freed.
  *

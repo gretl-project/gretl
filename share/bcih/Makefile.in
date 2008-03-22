@@ -14,8 +14,8 @@ mkbin: mkbin.c
 	$(CC) -o $@ $<
 
 install: fedstl.bin
-	$(INSTALL_DATA) fedstl.bin $(gretldir)/db/fedstl.bin
-	$(INSTALL_DATA) $(topsrc)/share/bcih/fedstl.idx $(gretldir)/db/fedstl.idx
+	$(INSTALL_DATA) fedstl.bin $(DESTDIR)$(gretldir)/db/fedstl.bin
+	$(INSTALL_DATA) $(topsrc)/share/bcih/fedstl.idx $(DESTDIR)$(gretldir)/db/fedstl.idx
 
 clean:
 	rm -f mkbin fedstl.bin

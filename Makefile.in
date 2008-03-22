@@ -58,8 +58,8 @@ install-strip: $(SUBDIRS) installdirs install-man
 	$(MAKE) -C share install-strip
 
 install-man:
-	$(tooldir)/install_man $(tooldir) $(prefix) $(topsrc)/gretl.1 
-	$(tooldir)/install_man $(tooldir) $(prefix) $(topsrc)/gretl-config.1
+	$(tooldir)/install_man $(tooldir) $(DESTDIR)$(prefix) $(topsrc)/gretl.1 
+	$(tooldir)/install_man $(tooldir) $(DESTDIR)$(prefix) $(topsrc)/gretl-config.1
 
 tags:
 	etags $(topsrc)/lib/src/*.[ch] $(topsrc)/cli/*.[ch] \
