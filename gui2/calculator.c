@@ -350,7 +350,7 @@ static double dist_xmax (int d, double *parms)
     case WEIBULL_DIST:
 	st = 'W';
 	x[1] = parms[1];
-	x[2] = 0.0015;
+	x[2] = 0.0004;
 	break;
     }
 
