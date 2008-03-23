@@ -1195,11 +1195,14 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 		fputs(" const=\"true\"", fp);
 	    }
 	    if (fun->params[i].descrip != NULL) {
+		fputs(">\n", fp);
 		gretl_xml_put_tagged_string("description", 
 					    fun->params[i].descrip,
 					    fp);
+		fputs("  </param>\n", fp);
+	    } else {
+		fputs("/>\n", fp);
 	    }
-	    fputs("/>\n", fp);
 	}
 	fputs(" </params>\n", fp);
 
@@ -2444,60 +2447,89 @@ static int comma_count (const char *s)
     return nc;
 }
 
-static int read_deflt_min_max (char *s, fn_param *param,
-			       int *namelen)
+static int read_deflt_min_max (char **ps, fn_param *param)
 {
-    char *p = strchr(s, '[');
+    char *p = *ps;
+    double x, y, z;
     int err = 0;
 
-    if (p != NULL) {
-	double x, y, z;
-
-	if (param->type == GRETL_TYPE_BOOL) {
-	    if (sscanf(p, "[%lf]", &x) == 1) {
-		param->deflt = x;
-	    } else {
-		err = E_DATA;
-	    }
+    if (param->type == GRETL_TYPE_BOOL) {
+	if (sscanf(p, "[%lf]", &x) == 1) {
+	    param->deflt = x;
 	} else {
-	    if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
-		param->min = x;
-		param->max = y;
-		param->deflt = z;
-	    } else if (sscanf(p, "[%lf::%lf]", &x, &y) == 2) {
-		param->min = x;
-		param->deflt = y;
-	    } else if (sscanf(p, "[%lf:%lf:]", &x, &y) == 2) {
-		param->min = x;
-		param->max = y;
-	    } else if (sscanf(p, "[:%lf:%lf]", &x, &y) == 2) {
-		param->max = x;
-		param->deflt = y;
-	    } else if (sscanf(p, "[%lf]", &x) == 1) {
-		param->deflt = x;
-	    } else {
-		err = E_DATA;
-	    }
+	    err = E_PARSE;
 	}
-	if (!err) {
-	    *namelen = p - s;
+    } else {
+	if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
+	    param->min = x;
+	    param->max = y;
+	    param->deflt = z;
+	} else if (sscanf(p, "[%lf::%lf]", &x, &y) == 2) {
+	    param->min = x;
+	    param->deflt = y;
+	} else if (sscanf(p, "[%lf:%lf:]", &x, &y) == 2) {
+	    param->min = x;
+	    param->max = y;
+	} else if (sscanf(p, "[:%lf:%lf]", &x, &y) == 2) {
+	    param->max = x;
+	    param->deflt = y;
+	} else if (sscanf(p, "[%lf]", &x) == 1) {
+	    param->deflt = x;
+	} else {
+	    err = E_PARSE;
+	}
+    }
+
+    if (!err) {
+	p = strchr(p, ']');
+	if (p == NULL) {
+	    err = E_PARSE;
+	} else {
+	    *ps = p + 1;
 	}
     }
 
     return err;
 }
 
-static int read_param_option (char *s, fn_param *param,
-			      int *namelen)
+static int read_param_option (char **ps, fn_param *param)
 {
-    char *p = strstr(s, "[null]");
+    int err = E_PARSE;
 
-    if (p != NULL) {
-	param->flags |= ARG_OPTIONAL;
-	*namelen -= 6;
+    if (!strncmp(*ps, "[null]", 6)) {
+	err = 0;
+	*ps += 6;
     }
 
-    return 0;
+    return err;
+}
+
+static int read_param_comment (char **ps, fn_param *param)
+{
+    char *p = *ps + 1;
+    int len = 0;
+    int err = E_PARSE;
+
+    while (*p) {
+	if (*p == '"') {
+	    err = 0;
+	    break;
+	}
+	len++;
+	p++;
+    }
+
+    if (!err && len > 0) {
+	p = *ps + 1;
+	param->descrip = gretl_strndup(p, len);
+	if (param->descrip == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    *ps = p + len + 1;
+	}
+    }
+
+    return err;
 }
 
 static int parse_function_param (char *s, fn_param *param, int i)
@@ -2506,6 +2538,10 @@ static int parse_function_param (char *s, fn_param *param, int i)
     char *name;
     int type, len;
     int err = 0;
+
+#if 0
+    fprintf(stderr, "parse_function_param: s = '%s'\n", s);
+#endif
 
     while (isspace(*s)) s++;
 
@@ -2516,7 +2552,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     }
 
     /* get arg or return type */
-    len = strcspn(s, " ");
+    len = gretl_varchar_spn(s);
     if (len > 21) {
 	err = E_PARSE;
     } else {
@@ -2539,44 +2575,64 @@ static int parse_function_param (char *s, fn_param *param, int i)
     }
     
     while (isspace(*s)) s++;
-    len = strcspn(s, " ");
+    len = gretl_varchar_spn(s);
     if (len == 0) {
 	sprintf(gretl_errmsg, "parameter %d: name is missing", i);
 	err = E_PARSE;
-    }
-
-    if (err) {
-	return err;
-    }    
-
-    if (gretl_scalar_type(type)) {
-	param->type = type;
-	err = read_deflt_min_max(s, param, &len);
-    }
-
-    if (gretl_ref_type(type) || type == GRETL_TYPE_LIST) {
-	param->type = type;
-	err = read_param_option(s, param, &len);
-    }    
-
-    if (!err) {
+    } else {
 	name = gretl_strndup(s, len);
 	if (name == NULL) {
 	    err = E_ALLOC;
 	}
+    }	
+
+    if (err) {
+	return err;
+    }
+
+    param->type = type;
+
+    s += len;
+    s += strspn(s, " ");
+
+    if (gretl_scalar_type(type)) {
+	if (*s == '[') { 
+	    err = read_deflt_min_max(&s, param);
+	}
+    }
+
+    if (gretl_ref_type(type) || type == GRETL_TYPE_LIST) {
+	if (*s == '[') { 
+	    err = read_param_option(&s, param);
+	}
+    } 
+
+    s += strspn(s, " ");
+
+    if (*s == '"') {
+	err = read_param_comment(&s, param);
+    } 
+
+    if (!err && *s != '\0') {
+	/* got trailing unparseable stuff */
+	err = E_PARSE;
     }
 
     if (!err) {
-	param->type = type;
 	param->name = name;
+    } else {
+	free(name);
+	free(param->descrip);
+	param->descrip = NULL;
     }
 
-#if FN_DEBUG
+#if 1 || FN_DEBUG
     if (!err) {
 	fprintf(stderr, " param[%d] = '%s', ptype = %d\n", 
 		i, name, type);
-	fprintf(stderr, "min=%g, max=%g, deflt=%g\n", 
+	fprintf(stderr, "  min=%g, max=%g, deflt=%g\n", 
 		param->min, param->max, param->deflt);
+	fprintf(stderr, "  comment = '%s'\n", param->descrip); 
     }
 #endif
 

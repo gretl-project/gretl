@@ -577,37 +577,26 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
 			   tbl, FALSE, FALSE, 5);
 
-	label = gtk_label_new(_("name"));
-	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, 0, 1,
-			 GTK_EXPAND, GTK_FILL, 5, 5);
-	gtk_widget_show(label);
-
-	label = gtk_label_new(_("type"));
-	gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, 0, 1,
-			 GTK_EXPAND, GTK_FILL, 5, 5);
-	gtk_widget_show(label);
-
 	label = gtk_label_new(_("selection"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 2, 3, 0, 1,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
 
 	for (i=0; i<cinfo->n_params; i++) {
-	    const char *pname = fn_param_name(cinfo->func, i);
 	    const char *desc = fn_param_descrip(cinfo->func, i);
 	    int ptype = fn_param_type(cinfo->func, i);
 
 	    if (desc != NULL) {
 		label = gtk_label_new(desc);
 	    } else {
-		label = gtk_label_new(pname);
+		gchar *tmp = g_strdup_printf("%s (%s)",
+					     fn_param_name(cinfo->func, i), 
+					     arg_type_string(ptype));
+		label = gtk_label_new(tmp);
+		g_free(tmp);			     
 	    }
-	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i+1, i+2,
-			     GTK_EXPAND, GTK_FILL, 5, 5);
-	    gtk_widget_show(label);
 
-	    label = gtk_label_new(arg_type_string(ptype));
-	    gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, i+1, i+2,
+	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 2, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
 
