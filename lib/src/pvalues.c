@@ -969,7 +969,7 @@ weibull_critval (double shape, double scale, double rtail)
 {
     double ret = NADBL;
 
-    if (shape > 0 && scale > 0 && rtail > 0) {
+    if (shape > 0 && scale > 0 && rtail > 0 && rtail < 1) {
 	ret = scale * pow(-log(rtail), 1.0 / shape);
     }
 
@@ -990,8 +990,12 @@ static double weibull_cdf (double shape, double scale, double x)
 {
     double ret = NADBL;
 
-    if (shape > 0 && scale > 0 && x >= 0) {
-	ret = 1.0 - exp(-pow(x/scale, shape));
+    if (shape > 0 && scale > 0) {
+	if (x == 0.0) {
+	    ret = 0.0;
+	} else if (x > 0.0) {
+	    ret = 1.0 - exp(-pow(x/scale, shape));
+	}
     }
 
     return ret;
@@ -1001,8 +1005,12 @@ static double weibull_cdf_comp (double shape, double scale, double x)
 {
     double ret = NADBL;
 
-    if (shape > 0 && scale > 0 && x >= 0) {
-	ret = exp(-pow(x/scale, shape));
+    if (shape > 0 && scale > 0) {
+	if (x == 0.0) {
+	    ret = 1.0;
+	} else if (x > 0.0) {
+	    ret = exp(-pow(x/scale, shape));
+	}
     }
 
     return ret;
