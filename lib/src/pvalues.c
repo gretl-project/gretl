@@ -991,7 +991,7 @@ static double weibull_cdf (double shape, double scale, double x)
     double ret = NADBL;
 
     if (shape > 0 && scale > 0 && x >= 0) {
-	ret = 1.0 - exp(pow(-x/scale, shape));
+	ret = 1.0 - exp(-pow(x/scale, shape));
     }
 
     return ret;
@@ -1002,7 +1002,7 @@ static double weibull_cdf_comp (double shape, double scale, double x)
     double ret = NADBL;
 
     if (shape > 0 && scale > 0 && x >= 0) {
-	ret = exp(pow(-x/scale, shape));
+	ret = exp(-pow(x/scale, shape));
     }
 
     return ret;
