@@ -1159,6 +1159,11 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
 	    subinfo->structure = STACKED_TIME_SERIES;
 	    subinfo->n += np;
 	    subinfo->pd = subinfo->n / n;
+	    /* FIXME does the above really work with the "paninfo"
+	       apparatus? */
+	} else if (n == 1 && subinfo->n == pdinfo->pd) {
+	    /* time series for single panel unit */
+	    subinfo->structure = SPECIAL_TIME_SERIES;
 	}
     }
 

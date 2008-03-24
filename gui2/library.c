@@ -4925,6 +4925,15 @@ void do_graph_var (int varnum)
 
     if (varnum <= 0) return;
 
+    if (datainfo->structure == STACKED_TIME_SERIES) {
+	int u1 = datainfo->paninfo->unit[datainfo->t1];
+	int u2 = datainfo->paninfo->unit[datainfo->t2];
+
+	if (u1 == u2) {
+	    goto tsplot;
+	}
+    }
+
     if (datainfo->structure == STACKED_TIME_SERIES &&
 	datainfo->n / datainfo->pd < 10 &&
 	balanced_panel(datainfo)) {
@@ -4937,6 +4946,8 @@ void do_graph_var (int varnum)
 	do_freqplot(NULL, 0, NULL);
 	return;
     }
+
+ tsplot:
 
     gretl_command_sprintf("gnuplot %s --time-series --with-lines", 
 			  datainfo->varname[varnum]);
