@@ -907,6 +907,13 @@ static void print_opt_flags (fn_param *param, PRN *prn)
     }
 }
 
+static void print_param_description (fn_param *param, PRN *prn)
+{
+    if (param->descrip != NULL && *param->descrip != '\0') {
+	pprintf(prn, " \"%s\"", param->descrip);
+    }
+}
+
 static void print_deflt_min_max (fn_param *param, PRN *prn)
 {
     double x = param->min;
@@ -968,6 +975,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 		   fun->params[i].type == GRETL_TYPE_LIST) {
 	    print_opt_flags(&fun->params[i], prn);
 	}
+	print_param_description(&fun->params[i], prn);
 	if (i == fun->n_params - 1) {
 	    pputc(prn, ')');
 	} else {
