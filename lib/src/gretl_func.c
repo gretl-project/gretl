@@ -800,8 +800,6 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     cur = node->xmlChildrenNode;
     n = 0;
 
-    /* FIXME get param description below */
-
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "param")) {
 	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
@@ -2437,10 +2435,15 @@ static int maybe_delete_function (const char *fname, PRN *prn)
 
 static int comma_count (const char *s)
 {
+    int quoted = 0;
     int nc = 0;
 
     while (*s) {
-	if (*s == ',') nc++;
+	if (*s == '"') {
+	    quoted = !quoted;
+	} else if (!quoted && *s == ',') {
+	    nc++;
+	}
 	s++;
     }
 
@@ -2539,7 +2542,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     int type, len;
     int err = 0;
 
-#if 0
+#if FN_DEBUG
     fprintf(stderr, "parse_function_param: s = '%s'\n", s);
 #endif
 
@@ -2626,7 +2629,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	param->descrip = NULL;
     }
 
-#if 1 || FN_DEBUG
+#if FN_DEBUG
     if (!err) {
 	fprintf(stderr, " param[%d] = '%s', ptype = %d\n", 
 		i, name, type);
@@ -2728,7 +2731,17 @@ static int parse_fn_definition (char *fname,
     }
 
     if (!err) {
-	charsub(s, ',', 0);
+	int quoted = 0;
+
+	p = s;
+	while (*p) {
+	    if (*p == '"') {
+		quoted = !quoted;
+	    } else if (!quoted && *p == ',') {
+		*p = '\0';
+	    }
+	    p++;
+	}
 	p = s;
 	for (i=0; i<np && !err; i++) {
 	    err = parse_function_param(p, &params[i], i);
