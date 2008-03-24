@@ -814,12 +814,12 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		if (gretl_scalar_type(fun->params[n].type)) {
 		    gretl_xml_get_prop_as_double(cur, "default", 
 						 &fun->params[n].deflt);
-		}
-		if (fun->params[n].type == GRETL_TYPE_INT) {
-		    gretl_xml_get_prop_as_double(cur, "min", 
-						 &fun->params[n].min);
-		    gretl_xml_get_prop_as_double(cur, "max", 
-						 &fun->params[n].max);
+		    if (fun->params[n].type != GRETL_TYPE_BOOL) {
+			gretl_xml_get_prop_as_double(cur, "min", 
+						     &fun->params[n].min);
+			gretl_xml_get_prop_as_double(cur, "max", 
+						     &fun->params[n].max);
+		    }
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "optional")) {
 		    fun->params[n].flags |= ARG_OPTIONAL;
@@ -914,33 +914,26 @@ static void print_param_description (fn_param *param, PRN *prn)
     }
 }
 
-static void print_deflt_min_max (fn_param *param, PRN *prn)
+static void print_min_max_deflt (fn_param *param, PRN *prn)
 {
-    double x = param->min;
-    double y = param->max;
-    double z = param->deflt;
+    double mi = param->min;
+    double ma = param->max;
+    double d = param->deflt;
 
-    if (na(x) && na(y) && na(z)) {
+    if (na(mi) && na(ma) && na(d)) {
 	return; /* no-op */
-    } else if (na(x) && na(y) && !na(z)) {
-	pprintf(prn, "[%g]", z);
+    } else if (na(mi) && na(ma)) {
+	/* default value only */
+	pprintf(prn, "[%g]", d);
 	return;
     }
 
     pputc(prn, '[');
-    if (na(x)) {
-	pputc(prn, ':');
-    } else {
-	pprintf(prn, "%g:", x);
-    }
-    if (na(y)) {
-	pputc(prn, ':');
-    } else {
-	pprintf(prn, "%g:", y);
-    }  
-    if (!na(z)) {
-	pprintf(prn, "%g", z);
-    }   
+    if (!na(mi)) pprintf(prn, "%g", mi);
+    pputc(prn, ':');
+    if (!na(ma)) pprintf(prn, "%g", ma);
+    pputc(prn, ':');
+    if (!na(d)) pprintf(prn, "%g", d);
     pputc(prn, ']');
 }
 
@@ -970,7 +963,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 		pprintf(prn, "[%g]", fun->params[i].deflt);
 	    }
 	} else if (gretl_scalar_type(fun->params[i].type)) {
-	    print_deflt_min_max(&fun->params[i], prn);
+	    print_min_max_deflt(&fun->params[i], prn);
 	} else if (gretl_ref_type(fun->params[i].type) || 
 		   fun->params[i].type == GRETL_TYPE_LIST) {
 	    print_opt_flags(&fun->params[i], prn);
@@ -2458,7 +2451,7 @@ static int comma_count (const char *s)
     return nc;
 }
 
-static int read_deflt_min_max (char **ps, fn_param *param)
+static int read_min_max_deflt (char **ps, fn_param *param)
 {
     char *p = *ps;
     double x, y, z;
@@ -2608,7 +2601,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
     if (gretl_scalar_type(type)) {
 	if (*s == '[') { 
-	    err = read_deflt_min_max(&s, param);
+	    err = read_min_max_deflt(&s, param);
 	}
     }
 

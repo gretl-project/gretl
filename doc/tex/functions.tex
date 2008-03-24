@@ -66,13 +66,13 @@ C programming language.  In addition, parameters may be modified by
 the tag \texttt{const} (again, see \ref{funscope}).
 
 Besides these required elements, the specification of a
-\texttt{scalar} parameter may include up to three pieces of additional
-information: a minimum value, a maximum, and a default.  These
-additional values should directly follow the name of the parameter,
-enclosed in square brackets and with the individual elements separated
-by colons.  For example, suppose we have an integer parameter
-\texttt{order} for which we wish to specify a minimum of 1, a maximum
-of 12, and a default of 4.  We can write
+\texttt{scalar} or \texttt{int} parameter may include up to three
+pieces of additional information: a minimum value, a maximum, and a
+default.  These additional values should directly follow the name of
+the parameter, enclosed in square brackets and with the individual
+elements separated by colons.  For example, suppose we have an integer
+parameter \texttt{order} for which we wish to specify a minimum of 1,
+a maximum of 12, and a default of 4.  We can write
 %    
 \begin{code}
 int order[1:12:4]
@@ -90,6 +90,15 @@ For a parameter of type \texttt{bool}, you can specify a default of
 bool verbose[0]
 \end{code} 
 %
+
+Finally, for a parameter of any type you can append a short
+descriptive string --- this will show up as an aid to the user if the
+function is packaged (see section~\ref{sec:func-packages} below) and
+called via \app{gretl}'s graphical interface.  The string should be
+enclosed in double quotes, and inserted before the comma that precedes
+the following parameter (or the closing right parenthesis of the
+function definition, in the case of the last parameter).
+
 
 You may define a function that has no parameters (these are called
 ``routines'' in some programming languages).  In this case,  
@@ -479,13 +488,12 @@ returns 1 for a non-empty string, 0 otherwise.
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
-they can return a single variable --- a scalar, series, list or
-matrix.  (At this point functions cannot return strings.)
-The return value, if any, is specified via a statement within the
-function body beginning with the keyword \verb+return+, followed by a
-type specifier and the name of a variable (as in the listing of
-parameters).  There can be only one such statement.  An example of a
-valid return statement is shown below:
+they can return a single variable --- a scalar, series, list, matrix
+or string.  The return value, if any, is specified via a statement
+within the function body beginning with the keyword \verb+return+,
+followed by a type specifier and the name of a variable (as in the
+listing of parameters).  There can be only one such statement.  An
+example of a valid return statement is shown below:
 %    
 \begin{code}
 return scalar SSR
