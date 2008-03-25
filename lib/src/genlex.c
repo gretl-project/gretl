@@ -194,6 +194,7 @@ struct str_table funcs[] = {
     { F_SUMC,     "sumc" },
     { F_MEANR,    "meanr" },
     { F_MEANC,    "meanc" },
+    { F_SDC,      "sdc" },
     { F_MINC,     "minc" },
     { F_MAXC,     "maxc" },
     { F_MINR,     "minr" },
@@ -278,6 +279,7 @@ struct str_table funcs[] = {
     { F_VARNAME,  "varname" },
     { F_COLNAMES, "colnames" },
     { F_LJUNGBOX, "ljungbox" },
+    { F_DGNORM,   "dgnorm" },
     { 0,        NULL }
 };
 

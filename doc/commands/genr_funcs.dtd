@@ -34,7 +34,7 @@
 <!ATTLIST function
    name    CDATA #REQUIRED
    targ    CDATA #IMPLIED
-   output  (scalar | series | matrix | smatrix | string |
+   output  (scalar | series | matrix | smatrix | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >

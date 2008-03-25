@@ -175,6 +175,7 @@ enum {
     F_SUMC,
     F_MEANR,	 
     F_MEANC,
+    F_SDC,
     F_MCOV,
     F_MCORR,
     F_CDEMEAN,
@@ -277,6 +278,7 @@ enum {
     F_MOLS,
     F_FILTER,
     F_TRIMR,
+    F_DGNORM,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

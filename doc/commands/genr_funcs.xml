@@ -967,6 +967,23 @@
       </description>
     </function>  
 
+    <function name="dgnorm" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="scalar-or-series">mu</fnarg>
+	<fnarg type="scalar-or-series">sigma</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the density at abscissa <argname>x</argname> for the normal
+	  distribution with mean <argname>mu</argname> and standard deviation
+	  <argname>sigma</argname>.  If all the arguments are scalars the
+	  value returned is a scalar, otherwise a series is returned.
+	  (For the standard normal distribution, see also <fncref targ="dnorm"/>.)
+	</para>
+      </description>
+    </function>
+
     <function name="diag" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2058,6 +2075,7 @@
 	  <seelist>
 	    <fncref targ="meanr"/>
 	    <fncref targ="sumc"/>
+	    <fncref targ="sdc"/>
 	  </seelist>
 	</para>
       </description>
@@ -3136,6 +3154,22 @@
 	<para>
 	  <seelist> 
 	    <fncref targ="var"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="sdc" output="rvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the standard deviations of the columns of
+	  <argname>X</argname> (with no degrees of freedom correction). 
+	  <seelist>
+	    <fncref targ="meanc"/>
+	    <fncref targ="sumc"/>
 	  </seelist>
 	</para>
       </description>

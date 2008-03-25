@@ -1749,6 +1749,7 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    ret->v.m = gretl_matrix_row_mean(m, &p->err);
 	    break;
 	case F_SD:
+	case F_SDC:
 	    ret->v.m = gretl_matrix_column_sd(m, &p->err);
 	    break;
 	case F_MCOV:
@@ -3928,16 +3929,16 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	if (k != 3 && k != 4) {
 	    n_args_error(k, 3, "filter", p);
-	}	
-
-	e = eval(n->v.bn.n[0], p);
-	if (e == NULL) {
-	    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", 0);
-	    p->err = E_DATA;
-	} else if (e->t != VEC) {
-	    p->err = E_TYPES;
 	} else {
-	    x = e->v.xvec;
+	    e = eval(n->v.bn.n[0], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", 0);
+		p->err = E_DATA;
+	    } else if (e->t != VEC) {
+		p->err = E_TYPES;
+	    } else {
+		x = e->v.xvec;
+	    }
 	}
 
 	for (i=1; i<k && !p->err; i++) {
@@ -3971,9 +3972,51 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
 	    }
 	}
-    }	
+    } else if (t->t == F_DGNORM) {
+	double *xvec[3] = { NULL };
+	double xval[3] = { 0 };
+	int anyvec = 0;
 
-    if (t->t != F_FILTER) {
+	if (k != 3) {
+	    n_args_error(k, 3, "dgnorm", p);
+	} else {
+	    for (i=0; i<k && !p->err; i++) {
+		e = eval(n->v.bn.n[i], p);
+		if (e == NULL) {
+		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+		} else if (e->t == VEC) {
+		    xvec[i] = e->v.xvec;
+		    anyvec = 1;
+		} else if (e->t == NUM) {
+		    xval[i] = e->v.xval;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    ret = (anyvec)? aux_vec_node(p, p->dinfo->n) : aux_scalar_node(p);
+	}
+
+	if (!p->err) {
+	    if (anyvec) {
+		double xi, mi, si;
+
+		for (i=p->dinfo->t1; i<=p->dinfo->t2; i++) {
+		    xi = (xvec[0] != NULL)? xvec[0][i] : xval[0];
+		    mi = (xvec[1] != NULL)? xvec[1][i] : xval[1];
+		    si = (xvec[2] != NULL)? xvec[2][i] : xval[2];
+		    ret->v.xvec[i] = general_normal_pdf(xi, mi, si);
+		}
+	    } else {
+		ret->v.xval = general_normal_pdf(xval[0], xval[1],
+						 xval[2]);
+	    }
+	}
+    }		
+
+    if (t->t != F_FILTER && t->t != F_DGNORM) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -5170,6 +5213,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_SUMR:
     case F_MEANC:
     case F_MEANR:
+    case F_SDC:
     case F_MCOV:
     case F_MCORR:
     case F_CDEMEAN:
@@ -5277,6 +5321,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MOLS:
     case F_FILTER:
     case F_TRIMR:
+    case F_DGNORM:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;

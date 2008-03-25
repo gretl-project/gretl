@@ -698,6 +698,28 @@ double normal_pdf (double x)
 }
 
 /**
+ * general_normal_pdf:
+ * @x: double-precision value.
+ * @mu: mean.
+ * @sigma: standard deviation.
+ * 
+ * Returns: the value of the normal PDF with mean @mu
+ * and standard deviation @sigma evaluated at @x.
+ */
+
+double general_normal_pdf (double x, double mu, double sigma)
+{
+    if (na(x) || na(mu) || na(sigma) || sigma <= 0.0) {
+	return NADBL;
+    } else {
+	double d = x - mu;
+
+	return (1 / (sigma * sqrt(M_2PI))) * 
+	    exp(-0.5 * d * d / (sigma * sigma));
+    }
+}
+
+/**
  * log_normal_pdf:
  * @x: double-precision value.
  * 

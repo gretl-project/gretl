@@ -58,6 +58,8 @@ double normal_cdf_inverse (double x);
 
 double normal_pdf (double x);
 
+double general_normal_pdf (double x, double mu, double sigma);
+
 double normal_critval (double a);
 
 double log_normal_pdf (double x);
