@@ -758,6 +758,11 @@ gretl_matrix *genr_get_output_matrix (const parser *p)
     }
 }
 
+const char *genr_get_formula (const GENERATOR *genr)
+{
+    return genr->input;
+}
+
 int genr_is_print (const parser *p)
 {
     return (p->flags & P_PRINT);

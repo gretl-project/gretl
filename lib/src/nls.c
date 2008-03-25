@@ -251,8 +251,10 @@ static int nls_genr_setup (nlspec *s)
     return err;
 }
 
-/* if i == 0 we're calculating the function; if i > 0 we're calculating
-   a derivative */
+/* If i == 0 we're calculating the function; if i > 0 we're calculating
+   a derivative.  Either way, we recalculate any auxiliary variables
+   first.
+*/
 
 static int nls_auto_genr (nlspec *s, int i)
 {
@@ -284,8 +286,9 @@ static int nls_auto_genr (nlspec *s, int i)
 
     j = s->naux + i;
 #if NLS_DEBUG
-    fprintf(stderr, " j = naux + i = %d+%d = %d: executing genr[%d]\n", 
+    fprintf(stderr, " j = naux+i = %d+%d = %d: executing genr[%d]:\n", 
 	    s->naux, i, j, j);
+    fprintf(stderr, " %s\n", genr_get_formula(s->genrs[j]));
 #endif
     s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
 
@@ -2154,11 +2157,19 @@ static int
 nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
 		 integer *iflag, void *p)
 {
-    /* write current parameter values into dataset Z */
-    update_coeff_values(x, p);
+    int err;
 
-    /* calculate function at x, results into fvec */    
-    if (nl_function_calc(fvec, p)) {
+    /* write current parameter values into dataset Z */
+    err = update_coeff_values(x, p);
+
+    /* calculate function at x, results into fvec */  
+    if (!err) {
+	err = nl_function_calc(fvec, p);
+    }
+    
+    if (err) {
+	/* flag error to minpack */
+	fprintf(stderr, "nls_calc_approx: got error %d\n", err);
 	*iflag = -1;
     }
 
