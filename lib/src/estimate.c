@@ -2453,13 +2453,20 @@ static void print_HET_1 (double z, double pval, PRN *prn)
 	    _("with p-value"), z, pval);
 }
 
-static void print_whites_test (double TR2, int df, double pval, PRN *prn)
+static void print_whites_test (double LM, int df, double pval, 
+			       gretlopt opt, PRN *prn)
 {
-    pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
-    pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), TR2);
+    if (opt & OPT_B) {
+	pprintf(prn, "\n%s\n", _("Breusch-Pagan test for heteroskedasticity"));
+	pprintf(prn, "\n%s: LM = %f,\n", _("Test statistic"), LM);
+    } else {
+	pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
+	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
+    }
+
     pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
 	    _("with p-value"), _("Chi-square"), 
-	    df, TR2, pval); 
+	    df, LM, pval); 
 }
 
 /* For White's test, see if we have enough degrees of freedom
@@ -2627,13 +2634,48 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     return err;
 }
 
+/* Should we bother with this?  Offer Koenker? */
+
+static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
+			 double ***pZ, DATAINFO *pdinfo,
+			 int *err)
+{
+    double s2, gt, gbar = 0.0, TSS = 0.0;
+    double LM = NADBL;
+    int t, v = list[1];
+
+    s2 = pmod->ess / pmod->nobs;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	gt = pmod->uhat[t] * pmod->uhat[t] / s2;
+	gbar += gt;
+	(*pZ)[v][t] = gt;
+    }
+
+    gbar /= pmod->nobs;
+ 
+    *aux = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    *err = aux->errcode;
+
+    if (!*err) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    gt = (*pZ)[v][t];
+	    TSS += (gt - gbar) * (gt - gbar);
+	}
+	LM = .5 * (TSS - aux->ess);
+    }
+
+    return LM;
+}
+
 /**
  * whites_test:
  * @pmod: pointer to model.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: if flags include %OPT_S, save results to model; %OPT_Q
- * means don't print the auxiliary regression.
+ * means don't print the auxiliary regression;  %OPT_B means
+ * do the simpler Breusch-Pagan variant.
  * @prn: gretl printing struct.
  *
  * Runs White's test for heteroskedasticity on the given model.
@@ -2644,10 +2686,12 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
-    int aux, lo, ncoeff, yno, t;
+    int lo, ncoeff, yno, t;
+    int BP = (opt & OPT_B);
+    int aux = AUX_NONE;
     int v = pdinfo->v;
     int *list = NULL;
-    double zz;
+    double zz, LM;
     MODEL white;
     int err = 0;
 
@@ -2670,10 +2714,12 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* what can we do, with the degrees of freedom available? */
-    aux = get_whites_aux(pmod, (const double **) *pZ);
-    if (aux == AUX_NONE) {
-	return E_DF;
-    } 
+    if (!BP) {
+	aux = get_whites_aux(pmod, (const double **) *pZ);
+	if (aux == AUX_NONE) {
+	    return E_DF;
+	}
+    }
 
     gretl_model_init(&white);
 
@@ -2700,10 +2746,14 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	/* build aux regression list, adding squares and
-	   (possibly) cross-products of the original 
-	   independent vars */
-	list = augment_regression_list(pmod->list, aux, pZ, pdinfo);
+	if (BP) {
+	    list = gretl_list_copy(pmod->list);
+	} else {
+	    /* build aux regression list, adding squares and
+	       (possibly) cross-products of the original 
+	       independent vars */
+	    list = augment_regression_list(pmod->list, aux, pZ, pdinfo);
+	}
 	if (list == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -2713,35 +2763,46 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	/* run auxiliary regression */
-	white = lsq(list, pZ, pdinfo, OLS, OPT_A);
-	err = white.errcode;
+	if (BP) {
+	    LM = get_BP_LM(pmod, list, &white, pZ, pdinfo, &err);
+	} else {
+	    white = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	    err = white.errcode;
+	    if (!err) {
+		LM = white.rsq * white.nobs;
+	    }
+	}
     }
 
     if (!err) {
-	double TR2 = white.rsq * white.nobs;
 	int df = white.ncoeff - 1;
-	double pval = chisq_cdf_comp(TR2, df);
+	double pval = chisq_cdf_comp(LM, df);
 
-	if (opt & OPT_Q) {
-	    print_whites_test(TR2, df, pval, prn);
+	if (BP || (opt & OPT_Q)) {
+	    print_whites_test(LM, df, pval, opt, prn);
 	} else {
-	    white.aux = AUX_WHITE;
+	    white.aux = (BP)? AUX_BP : AUX_WHITE;
 	    printmodel(&white, pdinfo, OPT_NONE, prn);
 	}
 
 	if (opt & OPT_S) {
-	    ModelTest *test = model_test_new(GRETL_TEST_WHITES);
-
+	    ModelTestType mt = BP? GRETL_TEST_BP : GRETL_TEST_WHITES;
+	    ModelTest *test = model_test_new(mt);
+	    
 	    if (test != NULL) {
-		model_test_set_teststat(test, GRETL_STAT_TR2);
+		model_test_set_teststat(test, GRETL_STAT_LM);
 		model_test_set_dfn(test, df);
-		model_test_set_value(test, TR2);
+		model_test_set_value(test, LM);
 		model_test_set_pvalue(test, pval);
 		maybe_add_test_to_model(pmod, test);
 	    }	  
 	}
 
-	record_test_result(TR2, pval, _("White's"));
+	if (BP) {
+	    record_test_result(LM, pval, "Breusch-Pagan");
+	} else {
+	    record_test_result(LM, pval, _("White's"));
+	}
     }
 
     clear_model(&white);
@@ -3181,7 +3242,7 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
     }
 
     if (test != NULL) {
-	model_test_set_teststat(test, GRETL_STAT_TR2);
+	model_test_set_teststat(test, GRETL_STAT_LM);
 	model_test_set_order(test, order);
 	model_test_set_dfn(test, order);
 	model_test_set_value(test, LM);

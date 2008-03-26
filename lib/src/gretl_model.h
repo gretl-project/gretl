@@ -117,6 +117,7 @@ typedef enum {
     GRETL_TEST_PANEL_BP,
     GRETL_TEST_PANEL_TIMEDUM,
     GRETL_TEST_HET_1,
+    GRETL_TEST_BP,
     GRETL_TEST_MAX
 } ModelTestType;
 

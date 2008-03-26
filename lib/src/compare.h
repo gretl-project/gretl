@@ -54,6 +54,7 @@ typedef enum {
     AUX_JOHANSEN,  /* Johansen cointegration test */
     AUX_GROUPWISE, /* testing for groupwise heteroskedasticity */
     AUX_HET_1, /* aux. regression for Pesaran-Taylor HET_1 test */
+    AUX_BP,    /* aux. regression for Breusch-Pagan heterosked. test */
     AUX_AUX    /* auxiliary regression not otherwise specified */
 } ModelAuxCode;
 

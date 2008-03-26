@@ -464,7 +464,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 	double OTest = smod.rsq * smod.nobs;
 
 	if (test != NULL) {
-	    model_test_set_teststat(test, GRETL_STAT_TR2);
+	    model_test_set_teststat(test, GRETL_STAT_LM);
 	    model_test_set_dfn(test, Orank);
 	    model_test_set_value(test, OTest);
 	    model_test_set_pvalue(test, chisq_cdf_comp(OTest, Orank));

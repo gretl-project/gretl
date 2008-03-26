@@ -2572,6 +2572,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_WHITES,
       N_("White's test for heteroskedasticity"),
       N_("heteroskedasticity not present") },
+    { GRETL_TEST_BP,
+      N_("Breusch-Pagan test for heteroskedasticity"),
+      N_("heteroskedasticity not present") },
     { GRETL_TEST_SARGAN,
       N_("Sargan over-identification test"),
       N_("all instruments are valid") },
@@ -2719,14 +2722,8 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     int tex = tex_format(prn);
 
     switch (test->teststat) {
-    case GRETL_STAT_TR2:
-	if (tex) {
-	    sprintf(str, "$TR^2$ = %g", test->value);
-	} else if (rtf_format(prn)) {
-	    sprintf(str, "TR{\\super 2} = %g", test->value);
-	} else {
-	    sprintf(str, "TR^2 = %g", test->value);
-	}
+    case GRETL_STAT_LM:
+	sprintf(str, "LM = %g", test->value);
 	break;
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
@@ -2788,7 +2785,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     int tex = tex_format(prn);
 
     switch (test->teststat) {
-    case GRETL_STAT_TR2:
+    case GRETL_STAT_LM:
 	if (tex) sprintf(str, "$P$($\\chi^2_{%d} >$ %g) = %g", 
 			 test->dfn, test->value, test->pvalue);
 	else sprintf(str, "P(Chi-Square(%d) > %g) = %g", 

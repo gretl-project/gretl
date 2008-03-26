@@ -159,7 +159,7 @@ enum progress_return_flags {
 enum test_stats {
     GRETL_STAT_NONE,
     GRETL_STAT_NORMAL_CHISQ,
-    GRETL_STAT_TR2,
+    GRETL_STAT_LM,
     GRETL_STAT_F,
     GRETL_STAT_LMF,
     GRETL_STAT_HARVEY_COLLIER,

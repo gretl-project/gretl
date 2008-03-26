@@ -762,7 +762,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	    test = model_test_new((aux_code == AUX_SQ)?
 				  GRETL_TEST_SQUARES : GRETL_TEST_LOGS);
 	    if (test != NULL) {
-		model_test_set_teststat(test, GRETL_STAT_TR2);
+		model_test_set_teststat(test, GRETL_STAT_LM);
 		model_test_set_dfn(test, df);
 		model_test_set_value(test, trsq);
 		model_test_set_pvalue(test, chisq_cdf_comp(trsq, df));
@@ -2793,9 +2793,12 @@ int lmtest_driver (const char *param,
 	}
     }
 
-    /* heteroskedasticity (White) */
-    if (!err && (opt & OPT_W)) {
+    /* heteroskedasticity (White or Breusch-Pagan) */
+    if (!err && (opt & (OPT_W | OPT_B))) {
 	if (type == GRETL_OBJ_EQN) {
+	    if (opt & OPT_B) {
+		testopt |= OPT_B;
+	    }
 	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
