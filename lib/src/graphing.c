@@ -734,6 +734,10 @@ void graph_palette_reset (int i)
     }
 }
 
+#define USE_SMALL_FONT(t) (t == PLOT_MULTI_IRF || \
+			   t == PLOT_MULTI_SCATTER || \
+			   t == PLOT_PANEL)
+
 static void 
 write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
 			   int pngterm)
@@ -744,8 +748,8 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
 
 	nf = sscanf(grfont, "%s %d", fname, &fsize);
 	if (nf == 2) {
-	    if ((ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) 
-		&& gp_small_font_size > 0) {
+	    if (USE_SMALL_FONT(ptype) && gp_small_font_size > 0) {
+		fprintf(stderr, "Doing small font\n");
 		sprintf(fstr, " font \"%s,%d\"", fname, gp_small_font_size);
 	    } else {
 		sprintf(fstr, " font \"%s,%d\"", fname, fsize);
@@ -756,8 +760,7 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
     } else {
 	int shrink = 0;
 
-	if ((ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) 
-	    && gp_small_font_size > 0) {
+	if (USE_SMALL_FONT(ptype) && gp_small_font_size > 0) {
 	    char fname[64];
 	    int fsize;
 
@@ -778,7 +781,7 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
 static void 
 write_old_gnuplot_font_string (char *fstr, PlotType ptype)
 {
-    if (ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) {
+    if (USE_SMALL_FONT(ptype)) {
 	strcpy(fstr, " tiny");
     } else {
 	strcpy(fstr, " small");
@@ -2204,7 +2207,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    }
 	} else if (panel_plot(pdinfo, gi.t1, gi.t2)) {
 	    make_panel_unit_tics(pdinfo, &gi, prn);
-	    strcpy(xlabel, G_("units"));
+	    strcpy(xlabel, G_("time series by group"));
 	}
     } 
 
@@ -3271,41 +3274,87 @@ static void get_x_and_y_sizes (int n, int *x, int *y)
     }
 }
 
-/* panel: plot one variable as a time series, with separate plots for
-   each cross-sectional unit 
+static int panel_ytic_width (double ymin, double ymax)
+{
+    char s1[16], s2[16];
+    int n1, n2;
+
+    if (ymin < 0 && ymax > 0) {
+	sprintf(s1, "% g", ymin);
+	sprintf(s2, "% g", ymax);
+    } else {
+	sprintf(s1, "%g", ymin);
+	sprintf(s2, "%g", ymax);
+    }
+
+    n1 = strlen(s1);
+    n2 = strlen(s2);
+
+    return (n1 > n2)? n1 : n2;
+}
+
+/* Panel: plot one variable as a time series, with separate plots for
+   each cross-sectional unit.  By default we arrange the plots in a
+   grid, but if OPT_V is given we make each plot full width and
+   stack the plots vertically on the "page".
 */
 
 int 
-gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo) 
+gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
+		     gretlopt opt) 
 {
     FILE *fp = NULL;
-    int i, j, k;
-    int t, t0;
-    int xnum, ynum;
+    int i, j, k, v, t, t0;
+    int w, xnum, ynum;
     float xfrac, yfrac;
-    float xorig = 0.0;
-    float yorig;
+    float yorig, xorig = 0.0;
+    const double *y;
+    double yt, ymin, ymax, incr;
+    int nunits, T = pdinfo->pd;
     int err = 0;
 
-    int T = pdinfo->pd;
-    int nunits = pdinfo->n / T;
+    nunits = pdinfo->paninfo->unit[pdinfo->t2] -
+	pdinfo->paninfo->unit[pdinfo->t1] + 1;
+    
+    if (opt & OPT_V) {
+	xnum = 1;
+	ynum = nunits;
+    } else {
+	get_x_and_y_sizes(nunits, &xnum, &ynum);
+    }
 
-    get_x_and_y_sizes(nunits, &xnum, &ynum);
     if (xnum == 0 || ynum == 0) {
 	return E_DATA;
     }
+
+    gp_small_font_size = (nunits > 4)? 7 : 0;
 
     err = gnuplot_init(PLOT_PANEL, &fp);
     if (err) {
 	return err;
     }
 
+    v = list[1];
+    y = Z[v];
+    gretl_minmax(pdinfo->t1, pdinfo->t2, y, &ymin, &ymax);
+    w = panel_ytic_width(ymin, ymax);
+
     xfrac = 1.0 / xnum;
     yfrac = 1.0 / ynum;
 
     fputs("set key top left\n", fp);
+    fputs("set datafile missing \"?\"\n", fp);
+    fputs("set xtics nomirror\n", fp);
+    fputs("set ytics nomirror\n", fp);
+    fprintf(fp, "set format y \"%%%dg\"\n", w);
     fputs("set multiplot\n", fp);
-    fprintf(fp, "set xlabel '%s'\n", _("time"));
+
+    if (opt & OPT_V) {
+	fputs("set noxlabel\n", fp);
+    } else {
+	fprintf(fp, "set xlabel '%s'\n", G_("time"));
+    }
+
     fputs("set xzeroaxis\n", fp);
 
     gretl_push_c_numeric_locale();
@@ -3316,42 +3365,46 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo)
     fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
 
     k = 0;
-    t0 = 0;
+    t0 = pdinfo->t1;
 
-    for (i=0; i<xnum; i++) {
+    for (i=0; i<xnum && k<nunits; i++) {
 
 	yorig = 1.0 - yfrac;
 
-	for (j=0; j<ynum; j++) {
-	    int vj = list[1];
-
-	    if (k == nunits) {
-		break;
-	    }
+	for (j=0; j<ynum && k<nunits; j++, k++) {
 
 	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
-	    fprintf(fp, "set title '%s (%d)'\n", pdinfo->varname[vj], k+1);
-	    fputs("plot \\\n'-' using 1:2 notitle w lines\n", fp);
+
+	    if (opt & OPT_V) {
+		gretl_minmax(t0, t0 + T - 1, y, &ymin, &ymax);
+		incr = (ymax - ymin) / 2.0;
+		fprintf(fp, "set ytics %g\n", incr);
+		fprintf(fp, "set ylabel '%s (%d)'\n", pdinfo->varname[v], k+1);
+	    } else {
+		fprintf(fp, "set title '%s (%d)'\n", pdinfo->varname[v], k+1);
+	    }
+
+	    fputs("plot \\\n'-' using 1:($2) notitle w lines\n", fp);
 
 	    for (t=0; t<T; t++) {
-		fprintf(fp, "%d %.8g\n", t+1, Z[vj][t+t0]);
+		yt = y[t+t0];
+		if (na(yt)) {
+		    fprintf(fp, "%d ?\n", t+1);
+		} else {
+		    fprintf(fp, "%d %.8g\n", t+1, yt);
+		}
 	    }
 	    fputs("e\n", fp);
 
-	    k++;
-	    if (k == nunits) {
-		break;
+	    if (k < nunits) {
+		t0 += T;
+		yorig -= yfrac;
 	    }
-
-	    t0 += T;
-	    yorig -= yfrac;
 	}
 
-	if (k == nunits) {
-	    break;
-	}	
-
-	xorig += xfrac;
+	if (k < nunits) {
+	    xorig += xfrac;
+	}
     }
 
     fputs("unset multiplot\n", fp);

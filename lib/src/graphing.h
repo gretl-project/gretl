@@ -183,7 +183,8 @@ int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo,
 	       PRN *prn);
 
 int 
-gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo);
+gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
+		     gretlopt opt);
 
 int plot_fcast_errs (int t1, int t2, const double *obs, 
 		     const double *depvar, const double *yhat, 

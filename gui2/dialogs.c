@@ -1622,6 +1622,32 @@ static void free_rsetting (GtkWidget *w, struct range_setting *rset)
     free(rset);
 }
 
+static int unit_get_first_obs (int u)
+{
+    int t;
+
+    for (t=0; t<datainfo->n; t++) {
+	if (datainfo->paninfo->unit[t] == u) {
+	    return t;
+	}
+    }
+
+    return 0;
+}
+
+static int unit_get_last_obs (int u)
+{
+    int t;
+
+    for (t=1; t<datainfo->n; t++) {
+	if (datainfo->paninfo->unit[t] == u + 1) {
+	    return t - 1;
+	}
+    }
+
+    return 0;
+}
+
 static gboolean
 set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
@@ -1663,15 +1689,15 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	} 
     } else {
 	ObsButton *button;
-	const gchar *s1, *s2;
+	char s1[OBSLEN], s2[OBSLEN];
 	int t1, t2;	
 
 	button = OBS_BUTTON(rset->startspin);
-	s1 = gtk_entry_get_text(GTK_ENTRY(button));
+	strcpy(s1, gtk_entry_get_text(GTK_ENTRY(button)));
 	t1 = (int) obs_button_get_value(button);
 
 	button = OBS_BUTTON(rset->endspin);
-	s2 = gtk_entry_get_text(GTK_ENTRY(button));
+	strcpy(s2, gtk_entry_get_text(GTK_ENTRY(button)));
 	t2 = (int) obs_button_get_value(button); 
 
 	if (rset->opt & OPT_C) {
@@ -1683,7 +1709,13 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    }
 	    gtk_widget_destroy(rset->dlg);
 	    return TRUE;
-	} 
+	} else if (rset->opt & OPT_P) {
+	    /* selecting panel group range */
+	    t1 = unit_get_first_obs(t1);
+	    t2 = unit_get_last_obs(t2);
+	    ntodate(s1, t1, datainfo);
+	    ntodate(s2, t2, datainfo);
+	}
 
 	if (t1 != datainfo->t1 || t2 != datainfo->t2) {
 	    gretl_command_sprintf("smpl %s %s", s1, s2);
@@ -1751,7 +1783,7 @@ static GList *get_dummy_list (int *thisdum)
 gboolean update_obs_label (GtkEditable *entry, gpointer data)
 {
     struct range_setting *rset = (struct range_setting *) data;
-    char obstext[32];
+    char obstext[48];
     int nobs = 0;
 
     if (entry != NULL) {
@@ -1770,7 +1802,11 @@ gboolean update_obs_label (GtkEditable *entry, gpointer data)
     }
     
     if (nobs > 0) {
-	sprintf(obstext, _("Observations: %d"), nobs);  
+	if (rset->opt == OPT_P) {
+	    sprintf(obstext, _("Included groups: %d"), nobs);
+	} else {
+	    sprintf(obstext, _("Observations: %d"), nobs);  
+	}
 	gtk_label_set_text(GTK_LABEL(rset->obslabel), obstext); 
     }
 
@@ -1821,6 +1857,52 @@ static struct range_setting *rset_new (guint code, gpointer p,
     rset->t2 = t2;
 
     return rset;
+}
+
+/* Special sample range selector for panel datasets: express the
+   choice as a matter of which units/groups to include 
+*/
+
+static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
+{
+    DATAINFO dinfo = {0};
+    GtkWidget *lbl;
+    GtkWidget *vbox;
+    GtkWidget *hbox;
+
+    dinfo.n = datainfo->n / datainfo->pd;
+    dinfo.t1 = datainfo->paninfo->unit[datainfo->t1];
+    dinfo.t2 = datainfo->paninfo->unit[datainfo->t2];
+    dataset_obs_info_default(&dinfo);
+
+    lbl = gtk_label_new(_("Panel groups"));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       lbl, FALSE, FALSE, 5);
+    hbox = gtk_hbox_new(TRUE, 5);
+
+    /* spinner for u1 */
+    vbox = gtk_vbox_new(FALSE, 5);
+    lbl = gtk_label_new(_("Start:"));
+    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
+    rset->adj1 = gtk_adjustment_new(dinfo.t1, 0, dinfo.n - 1, 1, 1, 1);
+    rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &dinfo);
+    gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+
+    /* spinner for u2 */
+    vbox = gtk_vbox_new(FALSE, 5);
+    lbl = gtk_label_new(_("End:"));
+    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
+    rset->adj2 = gtk_adjustment_new(dinfo.t2, 0, dinfo.n - 1, 1, 1, 1);
+    rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &dinfo);
+    gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+
+    /* inter-connect the two spinners */
+    g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
+    g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
+
+    return hbox;
 }
 
 typedef enum {
@@ -1899,7 +1981,6 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     GList *dumlist = NULL;
     int thisdum = 0;
     GtkWidget *tempwid, *hbox;
-    char obstext[32];
 
     if (u == SMPLDUM) {
 	dumlist = get_dummy_list(&thisdum);
@@ -1957,9 +2038,13 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	rset->startspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->startspin, FALSE, FALSE, 5);
 
-	/* pack the spinner apparatus */
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
+    } else if (u == SMPL && dataset_is_panel(datainfo)) {
+	hbox = panel_sample_spinbox(rset);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+	rset->opt = OPT_P;
     } else { 
 	/* either plain SMPL or CREATE_DATASET */
 	hbox = obs_spinbox(rset, _("Set sample range"), 
@@ -1967,16 +2052,13 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 			   0, datainfo->n - 1, &datainfo->t1,
 			   0, datainfo->n - 1, &datainfo->t2,
 			   SPIN_LABEL_ABOVE);
-
-	/* pack the spinner apparatus */
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
     }
 
     if (u != SMPLRAND) {
-	/* label showing number of observations */
-	sprintf(obstext, _("Observations: %d"), datainfo->t2 - datainfo->t1 + 1);
-	rset->obslabel = gtk_label_new(obstext);
+	/* label that will show the number of observations */
+	rset->obslabel = gtk_label_new("");
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   rset->obslabel, FALSE, FALSE, 5);
     }

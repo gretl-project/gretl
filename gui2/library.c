@@ -4906,15 +4906,13 @@ void delete_selected_vars (void)
     real_delete_vars(0, NULL);
 }
 
-static void do_stacked_ts_plot (int varnum)
+static void do_stacked_ts_plot (int v, gretlopt opt)
 {
-    int list[2];
+    int list[2] = { 1, v };
     int err;
     
-    list[0] = 1;
-    list[1] = varnum;
-
-    err = gretl_panel_ts_plot(list, (const double **) Z, datainfo);
+    err = gretl_panel_ts_plot(list, (const double **) Z, datainfo,
+			      opt);
 
     gui_graph_handler(err);
 }
@@ -4926,32 +4924,31 @@ void do_graph_var (int varnum)
     if (varnum <= 0) return;
 
     if (datainfo->structure == STACKED_TIME_SERIES) {
-	int u1 = datainfo->paninfo->unit[datainfo->t1];
-	int u2 = datainfo->paninfo->unit[datainfo->t2];
+	int nunits = datainfo->paninfo->unit[datainfo->t2] -
+	    datainfo->paninfo->unit[datainfo->t1] + 1;
 
-	if (u1 == u2) {
+	if (nunits == 1) {
 	    goto tsplot;
-	}
-    }
+	} else if (nunits < 10) {
+	    const char *strs[] = {
+		N_("use a single graph"),
+		N_("multiple plots in grid"),
+		N_("multiple plots arranged vertically"),
+	    };
+	    int ret, ns = (nunits <= 5)? 3 : 2;
 
-    if (datainfo->structure == STACKED_TIME_SERIES &&
-	datainfo->n / datainfo->pd < 10 &&
-	balanced_panel(datainfo)) {
-	const char *opts[] = {
-	    N_("on a single graph"),
-	    N_("in separate small graphs")
-	};
-	int ret;
+	    ret = radio_dialog(_("gretl: define graph"), _("Panel time-series graph"), 
+			       strs, ns, 0, 0);
+	    if (ret < 0) {
+		/* canceled */
+		return;
+	    } else if (ret > 0) {
+		/* multiples */
+		gretlopt opt = (ret == 2)? OPT_V : OPT_NONE;
 
-	ret = radio_dialog(_("gretl: define graph"), _("Plot the series"), 
-			   opts, 2, 0, 0);
-	if (ret < 0) {
-	    /* canceled */
-	    return;
-	} else if (ret == 1) {
-	    /* multiples */
-	    do_stacked_ts_plot(varnum);
-	    return;
+		do_stacked_ts_plot(varnum, opt);
+		return;
+	    }
 	}
     }
 
