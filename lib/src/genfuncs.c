@@ -1482,9 +1482,9 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 {
     static double *x;
     static int ptype;
-    static int T;
+    static int Tbak;
 
-    int t, y1;
+    int t, y1, T;
     int new_ptype;
     float rm;
 
@@ -1499,7 +1499,9 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 
     new_ptype = plotvar_code(pdinfo);
 
-    if (x != NULL && new_ptype == ptype && T == pdinfo->n) {
+    T = pdinfo->n;
+
+    if (x != NULL && new_ptype == ptype && Tbak == T) {
 	/* a suitable array is already at hand */
 	return x;
     }
@@ -1508,12 +1510,12 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 	free(x);
     }
 
-    x = malloc(pdinfo->n * sizeof *x);
+    x = malloc(T * sizeof *x);
     if (x == NULL) {
 	return NULL;
     }
 
-    T = pdinfo->n;
+    Tbak = T;
     ptype = new_ptype;
 
     y1 = (int) pdinfo->sd0;

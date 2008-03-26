@@ -2001,6 +2001,62 @@ static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
     pputs(prn, ")\n");
 }
 
+static void make_panel_unit_tics (const DATAINFO *pdinfo, 
+				  gnuplot_info *gi, 
+				  PRN *prn)
+{
+    int maxtics, ticskip;
+    double ntics;
+    int printed;
+    int u, t, n;
+
+    pputs(prn, "# literal lines = 1\n"); 
+    pputs(prn, "set xtics ("); 
+
+    gretl_push_c_numeric_locale();
+
+    maxtics = pdinfo->paninfo->unit[gi->t2] - 
+	pdinfo->paninfo->unit[gi->t1] + 1;
+
+    ntics = maxtics;
+    while (ntics > 14) {
+	ntics /= 1.5;
+    }
+
+    ticskip = maxtics / ceil(ntics);
+
+    n = printed = 0;
+    for (t=gi->t1; t<=gi->t2 && printed<ntics; t++) {
+	u = pdinfo->paninfo->unit[t];
+	if (t == gi->t1 || u != pdinfo->paninfo->unit[t-1]) {
+	    if (n % ticskip == 0) {
+		pprintf(prn, "\"%d\" %.8g", u + 1, gi->x[t]);
+		if (++printed < ntics) {
+		    pputs(prn, ", ");
+		}
+	    }
+	    n++;
+	}
+    } 
+
+    gretl_pop_c_numeric_locale();
+
+    pputs(prn, ")\n");
+}
+
+/* panel plot includes two or more time series, end-to-end */
+
+static int panel_plot (const DATAINFO *pdinfo, int t1, int t2)
+{
+    if (dataset_is_panel(pdinfo)) {
+	if (pdinfo->paninfo->unit[t2] != pdinfo->paninfo->unit[t1]) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -2146,6 +2202,9 @@ int gnuplot (const int *plotlist, const char *literal,
 		    pputs(prn, "set mxtics 4\n");
 		}
 	    }
+	} else if (panel_plot(pdinfo, gi.t1, gi.t2)) {
+	    make_panel_unit_tics(pdinfo, &gi, prn);
+	    strcpy(xlabel, G_("units"));
 	}
     } 
 
@@ -2246,7 +2305,7 @@ int gnuplot (const int *plotlist, const char *literal,
     if (gi.flags & GPT_Y2AXIS) {
 	for (i=1; i<list[0]; i++) {
 	    set_lwstr(pdinfo, list[i], lwstr);
-	    fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
+	    fprintf(fp, "'-' using 1:($2) axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
 		    var_get_graph_name(pdinfo, list[i]), 
 		    (i == oddman)? G_("right") : G_("left"),
@@ -2259,15 +2318,15 @@ int gnuplot (const int *plotlist, const char *literal,
 	strcpy(s1, (gi.flags & GPT_RESIDS)? G_("residual") : 
 	       var_get_graph_name(pdinfo, list[1]));
 	strcpy(s2, var_get_graph_name(pdinfo, list[3]));
-	fprintf(fp, " '-' using 1:2 title \"%s (%s=1)\", \\\n", s1, s2);
-	fprintf(fp, " '-' using 1:2 title \"%s (%s=0)\"\n", s1, s2);
+	fprintf(fp, " '-' using 1:($2) title \"%s (%s=1)\", \\\n", s1, s2);
+	fprintf(fp, " '-' using 1:($2) title \"%s (%s=0)\"\n", s1, s2);
     } else if (gi.yformula != NULL) {
-	fprintf(fp, " '-' using 1:2 title \"%s\" w points , \\\n", G_("actual"));	
+	fprintf(fp, " '-' using 1:($2) title \"%s\" w points , \\\n", G_("actual"));	
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, G_("fitted"));
     } else if (gi.flags & GPT_FA) {
 	set_withstr(gi.flags, withstr);
-	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 2, \\\n", G_("fitted"), withstr);
-	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 1\n", G_("actual"), withstr);	
+	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 2, \\\n", G_("fitted"), withstr);
+	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", G_("actual"), withstr);	
     } else {
 	for (i=1; i<list[0]; i++)  {
 	    set_lwstr(pdinfo, list[i], lwstr);
@@ -2279,7 +2338,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    if (!use_impulses(&gi)) { 
 		set_withstr(gi.flags, withstr);
 	    }
-	    fprintf(fp, " '-' using 1:2 title \"%s\" %s%s", s1, withstr, lwstr);
+	    fprintf(fp, " '-' using 1:($2) title \"%s\" %s%s", s1, withstr, lwstr);
 	    if (i < list[0] - 1 || (gi.flags & GPT_AUTO_FIT)) {
 	        fputs(" , \\\n", fp); 
 	    } else {

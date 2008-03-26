@@ -520,8 +520,12 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	if (strcmp(spec->lines[i].scale, "NA")) {
 	    if (!strcmp(spec->lines[i].scale, "1.0")) {
 		fputs("'-' using 1", fp);
-		for (k=2; k<=spec->lines[i].ncols; k++) {
-		    fprintf(fp, ":%d", k);
+		if (spec->lines[i].ncols == 2) {
+		    fputs(":($2)", fp);
+		} else {
+		    for (k=2; k<=spec->lines[i].ncols; k++) {
+			fprintf(fp, ":%d", k);
+		    }
 		}
 		fputc(' ', fp);
 	    } else {

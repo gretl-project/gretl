@@ -4937,8 +4937,22 @@ void do_graph_var (int varnum)
     if (datainfo->structure == STACKED_TIME_SERIES &&
 	datainfo->n / datainfo->pd < 10 &&
 	balanced_panel(datainfo)) {
-	do_stacked_ts_plot(varnum);
-	return;
+	const char *opts[] = {
+	    N_("on a single graph"),
+	    N_("in separate small graphs")
+	};
+	int ret;
+
+	ret = radio_dialog(_("gretl: define graph"), _("Plot the series"), 
+			   opts, 2, 0, 0);
+	if (ret < 0) {
+	    /* canceled */
+	    return;
+	} else if (ret == 1) {
+	    /* multiples */
+	    do_stacked_ts_plot(varnum);
+	    return;
+	}
     }
 
     if (!dataset_is_time_series(datainfo) &&
