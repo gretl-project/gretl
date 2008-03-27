@@ -4501,7 +4501,7 @@ static NODE *eval_query (NODE *t, parser *p)
 }
 
 #define dvar_scalar(i) (i < R_SCALAR_MAX)
-#define dvar_series(i) (i == R_INDEX)
+#define dvar_series(i) (i == R_INDEX || i == R_PUNIT)
 
 static double dvar_get_value (int i, parser *p)
 {
@@ -4534,17 +4534,33 @@ static double dvar_get_value (int i, parser *p)
 static double *dvar_get_series (int i, parser *p)
 {
     double *x = NULL;
+    int t;
 
     switch (i) {
     case R_INDEX:
 	x = malloc(p->dinfo->n * sizeof *x);
 	if (x != NULL) {
-	    int t, yr = p->dinfo->structure == TIME_SERIES 
-		&& p->dinfo->pd == 1;
+	    int yr = p->dinfo->structure == TIME_SERIES && p->dinfo->pd == 1;
 
 	    for (t=0; t<p->dinfo->n; t++) {
 		x[t] = (yr)? p->dinfo->sd0 + t : t + 1;
 	    }
+	} else {
+	    p->err = E_ALLOC;
+	}
+	break;
+    case R_PUNIT:
+	if (p->dinfo->paninfo != NULL) {
+	    x = malloc(p->dinfo->n * sizeof *x);
+	    if (x != NULL) {
+		for (t=0; t<p->dinfo->n; t++) {
+		    x[t] = p->dinfo->paninfo->unit[t];
+		}
+	    } else {
+		p->err = E_ALLOC;
+	    }
+	} else {
+	    p->err = E_PDWRONG;
 	}
 	break;
     default:

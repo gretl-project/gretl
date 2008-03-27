@@ -410,6 +410,16 @@
       </description>
     </function>
 
+    <function name="$unit" output="series">
+      <description>
+	<para>
+	  Valid for panel datasets only.  Returns a series with
+	  value 1 for all observations on the first unit or group,
+	  2 for observations on the second unit, and so on.
+	</para>
+      </description>
+    </function>
+
     <function name="$vcv" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s1</fnarg>

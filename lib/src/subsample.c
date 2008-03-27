@@ -458,6 +458,10 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 	if (var_is_series(pdinfo, i)) {
 	    fullZ[i] = malloc(N * sizeof **newZ);
 	} else {
+#if SUBDEBUG
+	    fprintf(stderr, " new var %d (%s) is a scalar\n", i, 
+		    pdinfo->varname[i]);
+#endif
 	    fullZ[i] = malloc(sizeof **newZ);
 	}
 	if (fullZ[i] == NULL) {
@@ -1147,21 +1151,19 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
 
     if (dataset_is_panel(pdinfo)) {
 	/* are we able to reconstitute a panel? */
-	int np, n = count_panel_units(mask, pdinfo);
+	int npad, nunits = count_panel_units(mask, pdinfo);
 
-	if (n > 1 && subinfo->n > n) {
+	if (nunits > 1 && subinfo->n > nunits) {
 	    /* add padding rows if need be */
-	    np = make_panel_submask(mask, pdinfo, &err);
+	    npad = make_panel_submask(mask, pdinfo, &err);
 	    if (err) {
 		free(subinfo);
 		return err;
 	    }
 	    subinfo->structure = STACKED_TIME_SERIES;
-	    subinfo->n += np;
-	    subinfo->pd = subinfo->n / n;
-	    /* FIXME does the above really work with the "paninfo"
-	       apparatus? */
-	} else if (n == 1 && subinfo->n == pdinfo->pd) {
+	    subinfo->n += npad;
+	    subinfo->pd = subinfo->n / nunits;
+	} else if (nunits == 1 && subinfo->n == pdinfo->pd) {
 	    /* time series for single panel unit */
 	    subinfo->structure = SPECIAL_TIME_SERIES;
 	}

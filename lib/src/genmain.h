@@ -36,6 +36,7 @@ typedef enum {
     R_NSCAN,      /* number of items scanned via sscanf */
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
+    R_PUNIT,      /* 1-based panel unit index */
     R_MAX
 } RetrievalIndex;
 

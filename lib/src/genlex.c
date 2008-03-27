@@ -80,6 +80,7 @@ struct str_table dvars[] = {
     { R_T2,        "$t2" },
     { R_STOPWATCH, "$stopwatch" },
     { R_NSCAN,     "$nscan" },
+    { R_PUNIT,     "$unit" },
     { 0,           NULL },
 };
 

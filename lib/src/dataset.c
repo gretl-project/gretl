@@ -255,7 +255,7 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo)
  * @pdinfo: dataset information struct
  *
  * Allocates space in @pdinfo for two indices representing
- * the unit or group and time-period, respectively,  of each 
+ * the unit or group and time-period, respectively, of each 
  * observation in a panel data set.
  *
  * Returns: 0 on success, %E_ALLOC on error.

@@ -3815,17 +3815,19 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     return err;
 }
 
-static int non_negative (const double *x, int n)
+static int check_index_values (const double *x, int n)
 {
     int i;
 
     for (i=1; i<n; i++) {
 	if (x[i] < 0) {
-	    return 0;
+	    return E_DATA;
+	} else if (na(x[i])) {
+	    return E_MISSDATA;
 	}
     }    
 
-    return 1;
+    return 0;
 }
 
 static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
@@ -3994,15 +3996,20 @@ int set_panel_structure_from_line (const char *line,
     }
 
     err = uv_tv_from_line(line, pdinfo, &uv, &tv);
-    if (err) {
-	return err;
+
+    if (!err) {
+	err = check_index_values(Z[uv], n);
     }
 
-    if (!non_negative(Z[uv], n) || !non_negative(Z[tv], n)) {
-	return E_DATA;
+    if (!err) {
+	err = check_index_values(Z[tv], n);
     }
 
-    return set_panel_structure_from_vars(uv, tv, Z, pdinfo);
+    if (!err) {
+	err = set_panel_structure_from_vars(uv, tv, Z, pdinfo);
+    }
+
+    return err;
 }
 
 /* utility functions */
