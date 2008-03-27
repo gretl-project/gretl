@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
+#include "matrix_extra.h"
 
 #include <errno.h>
 
@@ -193,7 +194,7 @@ get_printf_format_chunk (const char *s, int *fc,
 			 int *len, int *wstar, int *pstar,
 			 int *err)
 {
-    const char *cnvchars = "eEfgGxduxs";
+    const char *cnvchars = "eEfgGxduxsm";
     const char *numchars = "0123456789";
     char *chunk = NULL;
     const char *p = s;
@@ -291,6 +292,7 @@ static int print_arg (char **pfmt, char **pargs,
     char *fmt = NULL;
     char *arg = NULL;
     char *str = NULL;
+    gretl_matrix *m = NULL;
     double x = NADBL;
     int flen = 0, alen = 0;
     int wstar = 0, pstar = 0;
@@ -350,6 +352,15 @@ static int print_arg (char **pfmt, char **pargs,
     if (!err) {
 	if (fc == 's') {
 	    str = printf_get_string(arg, pZ, pdinfo, t, &err);
+	} else if (fc == 'm') {
+	    m = get_matrix_by_name(arg);
+	    if (m == NULL) {
+		if (varindex(pdinfo, arg) < pdinfo->v) {
+		    err = E_TYPES;
+		} else {
+		    err = E_UNKVAR;
+		}
+	    }
 	} else {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
 	    if (!err && na(x)) {
@@ -376,6 +387,8 @@ static int print_arg (char **pfmt, char **pargs,
 	} else {
 	    pprintf(prn, fmt, str);
 	}
+    } else if (fc == 'm') {
+	gretl_matrix_print_plain(m, prn);
     } else if (strchr(intconv, fc)) {
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, (int) x);

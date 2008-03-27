@@ -80,4 +80,6 @@ void gretl_matrix_print_with_col_heads (const gretl_matrix *m,
 					const char **heads,
 					PRN *prn);
 
+void gretl_matrix_print_plain (const gretl_matrix *m, PRN *prn);
+
 #endif /* MATRIX_EXTRA_H */

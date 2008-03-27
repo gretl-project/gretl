@@ -4,6 +4,7 @@
 "bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"
 "camtriv","Ordered Probit (Cameron and Trivedi)","doctor visits"
 "convolve","Fast Fourier Transform","artificial data"
+"credscore","Testing for heteroskedasticity","credit card spending"
 "denmark","Vector Error Correction Model","Danish macro data"
 "ects_nls","Nonlinear least squares (Davidson)","artificial data"
 "hall_cbapm","Nonlinear GMM estimation","Consumption and asset returns"

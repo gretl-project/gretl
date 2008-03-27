@@ -198,16 +198,26 @@ int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
     return ret;
 }
 
-static void make_xp_varname (char *vname, const char *v1, 
-			     const char *v2, int len)
+static void make_xp_varname (char *vname, int v1, int v2,
+			     const DATAINFO *pdinfo,
+			     int len)
 {
-    int v2len = len / 2;
-    int v1len = (len % 2)? v2len : v2len - 1;
+    int n1 = strlen(pdinfo->varname[v1]);
+    int n2 = strlen(pdinfo->varname[v2]);
+    int cut = n1 + n2 + 1 - len;
+    int cut1 = 0, cut2 = 0;
+
+    if (cut > 0) {
+	cut1 = cut2 = cut/2;
+	if (cut % 2) {
+	    cut2++;
+	}
+    }
 
     *vname = '\0';
-    strncat(vname, v1, v1len);
+    strncat(vname, pdinfo->varname[v1], n1 - cut1);
     strcat(vname, "_");
-    strncat(vname, v2, v2len);
+    strncat(vname, pdinfo->varname[v2], n2 - cut2);    
 }
 
 /* Array into which to write a generated variable, prior to testing
@@ -612,8 +622,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	    /* last resort: hack the name */
 	    make_varname_unique(vname, 0, pdinfo);
 	} else if (ci == SQUARE && v != aux) {
-	    make_xp_varname(vname, pdinfo->varname[v],
-			    pdinfo->varname[aux], len);
+	    make_xp_varname(vname, v, aux, pdinfo, len);
 	} else {
 	    make_transform_varname(vname, srcname, ci, aux, len);
 	}

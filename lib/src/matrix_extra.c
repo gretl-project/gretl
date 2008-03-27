@@ -875,7 +875,7 @@ static int max_numchars (const gretl_matrix *m)
 
 static void 
 real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
-			  int packed, int errout, 
+			  int packed, int errout, int plain,
 			  const char **heads, PRN *prn)
 {
     char numstr[32];
@@ -895,7 +895,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	return;
     }
 
-    if (msg != NULL && *msg != '\0') {
+    if (msg != NULL && *msg != '\0' && !plain) {
 	pprintf(prn, "%s (%d x %d)", msg, m->rows, m->cols);
 	if (!(m->t1 == 0 && m->t2 == 0)) {
 	    pprintf(prn, " [t1 = %d, t2 = %d]\n\n", m->t1 + 1, m->t2 + 1);
@@ -974,7 +974,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 void 
 gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 {
-    real_matrix_print_to_prn(m, msg, 0, 0, NULL, prn);
+    real_matrix_print_to_prn(m, msg, 0, 0, 0, NULL, prn);
 }
 
 /**
@@ -993,7 +993,12 @@ void gretl_matrix_print_with_col_heads (const gretl_matrix *m,
 					const char **heads,
 					PRN *prn)
 {
-    real_matrix_print_to_prn(m, title, 0, 0, heads, prn);
+    real_matrix_print_to_prn(m, title, 0, 0, 0, heads, prn);
+}
+
+void gretl_matrix_print_plain (const gretl_matrix *m, PRN *prn)
+{
+    real_matrix_print_to_prn(m, NULL, 0, 0, 1, NULL, prn);
 }
 
 /**
@@ -1013,7 +1018,7 @@ void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg)
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
     if (!err) {
-	real_matrix_print_to_prn(m, msg, 1, 0, NULL, prn);
+	real_matrix_print_to_prn(m, msg, 1, 0, 0, NULL, prn);
 	gretl_print_destroy(prn);
     }
 }

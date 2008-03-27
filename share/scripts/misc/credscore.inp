@@ -1,0 +1,58 @@
+# William Green's example of testing for heteroskedasticity,
+# Econometric Analysis, 5e, chapter 11
+
+open credscore.gdt
+
+# select individuals with non-zero expenditures
+smpl Avgexp > 0 --restrict
+
+square Income
+# basic OLS
+list Xlist = Age OwnRent Income sq_Income
+ols Avgexp 0 Xlist
+# save squared residuals
+u2 = $uhat^2
+# White's standard errors
+ols Avgexp 0 Xlist --robust --quiet
+White = $stderr'
+set hc_version 1
+ols Avgexp 0 Xlist --robust --quiet
+DM1 = $stderr'
+set hc_version 2
+ols Avgexp 0 Xlist --robust --quiet
+DM2 = $stderr'
+print "Robust standard error estimates"
+printf "White's S.E.:\n%m", White 
+# Note: there's a typo in Greene's presentation of D and M(1)
+printf "D and M (1):\n%m", DM1
+printf "D and M (2):\n%m", DM2 
+
+# White's test
+lmtest --white --quiet
+
+set echo off
+set messages off
+
+# Breusch-Pagan test using just Income and its square
+genr s2 = sum(u2)/$T
+genr g = u2/s2
+list BPlist = Income sq_Income
+ols g 0 BPlist --quiet
+genr gdev = g - mean(g)
+genr TSS = sum(gdev*gdev)
+genr LM = .5*(TSS-$ess)
+df = nelem(BPlist)
+printf "Breusch-Pagan   LM(%d) = %6.3f [%.3g]\n", df, LM, pvalue(X,df,LM)
+
+# Koenker variant
+genr V = (1/$T)*sum((u2 - s2)^2)
+genr g = u2 - s2
+ols g 0 BPlist --quiet
+genr gdev = g - mean(g)
+genr TSS = sum(gdev*gdev)
+genr LMK = (TSS-$ess)/V
+printf "Koenker-Bassett LM(%d) = %6.3f [%.3g]\n", df, LMK, pvalue(X,df,LMK)
+printf "For df = %d, Chi-square(.05) = %.3f\n", df, critical(X,df,.05)
+
+
+

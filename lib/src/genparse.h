@@ -296,6 +296,7 @@ enum {
 };
 
 #define GENSTRLEN 128
+#define NO_VNUM -1
 
 #define func1_symb(s) (s > F1_MIN && s < F1_MAX)
 #define func2_symb(s) (s > F1_MAX && s < F2_MAX)
@@ -389,7 +390,7 @@ enum {
 struct node {
     short t;       /* type indentifier */
     char flags;    /* AUX_NODE etc., see above */
-    int aux;       /* additional info (e.g. variable ID number) */
+    int vnum;      /* associated variable ID number */
     union val v;   /* value (of whatever type) */
 };
 

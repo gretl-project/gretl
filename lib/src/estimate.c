@@ -2125,6 +2125,8 @@ int *augment_regression_list (const int *orig, int aux,
 		    }
 		    vnew = xpxgenr(vi, vj, pZ, pdinfo);
 		    if (vnew > 0) {
+			/* ensure uniqueness of generated varnames */
+			sprintf(pdinfo->varname[vnew], "X%d_X%d", i-1, j-1);
 			list[++k] = vnew;
 		    }
 		}
@@ -2791,7 +2793,11 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (BP) {
 	    LM = get_BP_LM(pmod, list, &white, pZ, pdinfo, opt, &err);
 	} else {
+	    int qrbak = libset_get_bool(USE_QR);
+
+	    libset_set_bool(USE_QR, 1);
 	    white = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	    libset_set_bool(USE_QR, qrbak);
 	    err = white.errcode;
 	    if (!err) {
 		LM = white.rsq * white.nobs;

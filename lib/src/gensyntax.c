@@ -53,7 +53,7 @@ static NODE *newempty (int t)
 	n->t = t;
 	n->v.idnum = 0;
 	n->flags = 0;
-	n->aux = -1;
+	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -70,13 +70,13 @@ static NODE *newref (parser *p, int t)
 
     if (n != NULL) {
 	if (t == USCALAR) {
-	    n->aux = p->idnum;
+	    n->vnum = p->idnum;
 	    n->t = NUM;
-	    n->v.xval = (*p->Z)[n->aux][0];
+	    n->v.xval = (*p->Z)[n->vnum][0];
 	} else if (t == USERIES) {
-	    n->aux = p->idnum;
+	    n->vnum = p->idnum;
 	    n->t = VEC;
-	    n->v.xvec = (*p->Z)[n->aux];
+	    n->v.xvec = (*p->Z)[n->vnum];
 	} else {
 	    n->t = t;
 	    if (t == UMAT || t == UOBJ || t == LOOPIDX || t == LIST) {
@@ -84,7 +84,7 @@ static NODE *newref (parser *p, int t)
 	    } else {
 		n->v.idnum = p->idnum;
 	    }
-	    n->aux = -1;
+	    n->vnum = NO_VNUM;
 	}
 	n->flags = 0;
     }
@@ -112,7 +112,7 @@ NODE *newstr (parser *p)
 	n->t = STR;
 	n->v.str = (p != NULL)? p->idstr : NULL;
 	n->flags = 0;
-	n->aux = -1;
+	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -133,7 +133,7 @@ NODE *newdbl (double x)
 	n->t = NUM;
 	n->v.xval = x;
 	n->flags = 0;
-	n->aux = -1;
+	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -154,7 +154,7 @@ static NODE *newb1 (int t, NODE *b)
 	n->t = t;
 	n->v.b1.b = b;
 	n->flags = 0;
-	n->aux = -1;
+	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -176,7 +176,7 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
 	n->v.b2.l = l;
 	n->v.b2.r = r;
 	n->flags = 0;
-	n->aux = -1;
+	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -199,7 +199,7 @@ static NODE *newb3 (int t, NODE *l, NODE *m, NODE *r)
 	n->v.b3.m = m;
 	n->v.b3.r = r;
 	n->flags = 0;
-	n->aux = -1;
+	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -221,7 +221,7 @@ static NODE *newbn (int t)
 	n->v.bn.n_nodes = 0;
 	n->v.bn.n = NULL;
 	n->flags = 0;
-	n->aux = -1;
+	n->vnum = NO_VNUM;
     }
 
     return n;

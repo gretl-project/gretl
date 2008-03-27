@@ -45,9 +45,9 @@
 
 #define ok_list_node(n) (n->t == LIST || n->t == LVEC || n->t == NUM || \
 			 n->t == MAT || n->t == EMPTY || \
-			 (n->t == VEC && n->aux >= 0))
+			 (n->t == VEC && n->vnum >= 0))
 
-#define uvar_node(n) ((n->t == NUM || n->t == VEC) && n->aux >= 0)
+#define uvar_node(n) ((n->t == NUM || n->t == VEC) && n->vnum >= 0)
 
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
@@ -194,6 +194,7 @@ static NODE *newmdef (int k)
 	n->t = MDEF;
 	n->v.bn.n_nodes = k;
 	n->flags = 0;
+	n->vnum = NO_VNUM;
     }
 
     return n;
@@ -214,6 +215,7 @@ static NODE *newvec (int n, int tmp)
 	b->t = VEC;
 	b->flags = (tmp)? TMP_NODE : 0;
 	b->v.xvec = NULL;
+	b->vnum = NO_VNUM;
 	if (n > 0) {
 	    b->v.xvec = malloc(n * sizeof *b->v.xvec);
 	    if (b->v.xvec == NULL) {
@@ -243,6 +245,7 @@ static NODE *newivec (int n, int type)
     if (b != NULL) {
 	b->t = type;
 	b->flags = TMP_NODE;
+	b->vnum = NO_VNUM;
 	if (n > 0) {
 	    b->v.ivec = malloc(n * sizeof(int));
 	    if (b->v.ivec == NULL) {
@@ -270,6 +273,7 @@ static NODE *newmat (int tmp)
     if (b != NULL) {
 	b->t = MAT;
 	b->flags = (tmp)? TMP_NODE : 0;
+	b->vnum = NO_VNUM;
 	b->v.m = NULL;
     }
 
@@ -289,6 +293,7 @@ static NODE *newmspec (void)
     if (b != NULL) {
 	b->t = MSPEC;
 	b->flags = TMP_NODE;
+	b->vnum = NO_VNUM;
 	b->v.mspec = NULL;
     }
 
@@ -308,6 +313,7 @@ static NODE *newlist (void)
     if (b != NULL) {
 	b->t = LIST;
 	b->flags = TMP_NODE;
+	b->vnum = NO_VNUM;
 	b->v.str = NULL;
     }    
 
@@ -2278,7 +2284,7 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 
 	if (ln->t == VEC) {
 	    list = gretl_list_new(1);
-	    list[1] = ln->aux;
+	    list[1] = ln->vnum;
 	} else if (ln->t == LVEC) {
 	    list = gretl_list_copy(ln->v.ivec);
 	} else {
@@ -2381,8 +2387,8 @@ static NODE *trend_node (parser *p)
     if (ret != NULL && starting(p)) {
 	p->err = gen_time(p->Z, p->dinfo, 1);
 	if (!p->err) {
-	    ret->aux = varindex(p->dinfo, "time");
-	    ret->v.xvec = (*p->Z)[ret->aux];
+	    ret->vnum = varindex(p->dinfo, "time");
+	    ret->v.xvec = (*p->Z)[ret->vnum];
 	}
     }
 
@@ -2397,13 +2403,13 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 	int *list = NULL;
 	int lv;
 
-	if (l->t != VEC || l->aux < 0 || 
+	if (l->t != VEC || l->vnum < 0 || 
 	    (r->t != IVEC && r->t != NUM)) {
 	    p->err = E_TYPES;
 	    return NULL;
 	}
 
-	lv = l->aux;
+	lv = l->vnum;
 
 	if (r->t == IVEC) {
 	    int minlag = -r->v.ivec[0];
@@ -2454,7 +2460,7 @@ static int *node_get_list (NODE *n, parser *p)
 	    list = gretl_list_copy(src);
 	}
     } else if (n->t == VEC || n->t == NUM) {
-	v = (n->t == VEC)? n->aux : n->v.xval;
+	v = (n->t == VEC)? n->vnum : n->v.xval;
 	if (v < 0 || v >= p->dinfo->v) {
 	    p->err = E_UNKVAR;
 	} else if (var_is_scalar(p->dinfo, v)) {
@@ -2810,7 +2816,7 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	const char *s = p->dinfo->varname[n->aux];
+	const char *s = p->dinfo->varname[n->vnum];
 
 	ret->v.str = gretl_func_get_arg_name(s, &p->err);
 	if (!p->err && ret->v.str == NULL) {
@@ -3664,14 +3670,14 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 #endif
 
 	if (uvar_node(n)) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->aux);
+	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->vnum);
 	} else if (n->t == U_ADDR) {
 	    NODE *u = n->v.b1.b;
 
 	    if (u->t == NUM) {
-		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->aux);
+		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->vnum);
 	    } else if (u->t == VEC) {
-		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->aux);
+		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->vnum);
 	    } else if (u->t == UMAT) {
 		user_matrix *m = get_user_matrix_by_name(u->v.str);
 
@@ -4800,9 +4806,9 @@ static NODE *eval (NODE *t, parser *p)
 
     switch (t->t) {
     case NUM:
-	if (t->aux > 0) {
+	if (t->vnum > 0) {
 	    /* update numerical value */
-	    t->v.xval = (*p->Z)[t->aux][0];
+	    t->v.xval = (*p->Z)[t->vnum][0];
 	}
     case VEC:
     case MAT:
@@ -5556,7 +5562,7 @@ static void printnode (const NODE *t, const parser *p)
     if (t == NULL) {
 	pputs(p->prn, "NULL"); 
     } else if (uvar_node(t)) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->aux]);
+	pprintf(p->prn, "%s", p->dinfo->varname[t->vnum]);
     } else if (t->t == NUM) {
 	if (na(t->v.xval)) {
 	    pputs(p->prn, "NA");
@@ -5864,7 +5870,7 @@ static NODE *lhs_copy_node (parser *p)
 
     n->t = p->targ;
     n->flags = 0;
-    n->aux = -1;
+    n->vnum = NO_VNUM;
 
     if (p->targ == NUM) {
 	n->v.xval = (*p->Z)[p->lh.v][0];
@@ -6982,7 +6988,7 @@ static void maybe_set_return_flags (parser *p)
     if (t != NULL && (t->t == F_SORT || t->t == F_DSORT)) {
 	NODE *l = t->v.b1.b;
 
-	if (l->t == VEC && l->aux >= 0) {
+	if (l->t == VEC && l->vnum >= 0) {
 	    p->flags |= P_SORT;
 	}
     } else if (t != NULL && t->t == UFUN) {
