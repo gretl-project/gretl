@@ -2458,6 +2458,9 @@ static void print_whites_test (double LM, int df, double pval,
 {
     if (opt & OPT_B) {
 	pprintf(prn, "\n%s\n", _("Breusch-Pagan test for heteroskedasticity"));
+	if (opt & OPT_R) {
+	    pprintf(prn, "%s\n", _("with Koenker robust variance estimator"));
+	}
 	pprintf(prn, "\n%s: LM = %f,\n", _("Test statistic"), LM);
     } else {
 	pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
@@ -2634,20 +2637,38 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     return err;
 }
 
-/* Should we bother with this?  Offer Koenker? */
+/* Compute LM statistic as per Breusch and Pagan (Econometrica, 1979),
+   with the option to use the robust variance estimator proposed by
+   Koenker (Journal of Econometrics, 1981).
+*/
 
 static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 			 double ***pZ, DATAINFO *pdinfo,
-			 int *err)
+			 gretlopt opt, int *err)
 {
-    double s2, gt, gbar = 0.0, TSS = 0.0;
-    double LM = NADBL;
+    double s2, u2t, gt;
+    double gbar = 0.0, TSS = 0.0;
+    double V = 0.0, LM = NADBL;
     int t, v = list[1];
 
     s2 = pmod->ess / pmod->nobs;
 
+    if (opt & OPT_R) {
+	/* calculate robust variance estimate a la Koenker */
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    u2t = pmod->uhat[t] * pmod->uhat[t];
+	    V += (u2t - s2) * (u2t - s2);
+	}
+	V /= pmod->nobs;
+    }
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	gt = pmod->uhat[t] * pmod->uhat[t] / s2;
+	u2t = pmod->uhat[t] * pmod->uhat[t];
+	if (opt & OPT_R) {
+	    gt = u2t - s2;
+	} else {
+	    gt = u2t / s2;
+	}
 	gbar += gt;
 	(*pZ)[v][t] = gt;
     }
@@ -2662,7 +2683,11 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 	    gt = (*pZ)[v][t];
 	    TSS += (gt - gbar) * (gt - gbar);
 	}
-	LM = .5 * (TSS - aux->ess);
+	if (opt & OPT_R) {
+	    LM = (TSS - aux->ess) / V;
+	} else {
+	    LM = .5 * (TSS - aux->ess);
+	}
     }
 
     return LM;
@@ -2764,7 +2789,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	/* run auxiliary regression */
 	if (BP) {
-	    LM = get_BP_LM(pmod, list, &white, pZ, pdinfo, &err);
+	    LM = get_BP_LM(pmod, list, &white, pZ, pdinfo, opt, &err);
 	} else {
 	    white = lsq(list, pZ, pdinfo, OLS, OPT_A);
 	    err = white.errcode;

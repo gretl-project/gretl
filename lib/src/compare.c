@@ -2798,6 +2798,9 @@ int lmtest_driver (const char *param,
 	if (type == GRETL_OBJ_EQN) {
 	    if (opt & OPT_B) {
 		testopt |= OPT_B;
+		if (opt & OPT_R) {
+		    testopt |= OPT_R;
+		}
 	    }
 	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
 	} else {

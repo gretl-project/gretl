@@ -25,8 +25,7 @@
 #include "texprint.h"
 
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || \
-                       a == AUX_AR || a == AUX_VAR || a == AUX_HET_1 || \
-		       a == AUX_BP)
+                       a == AUX_AR || a == AUX_VAR || a == AUX_HET_1)
 
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
@@ -337,7 +336,7 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR ||
-	pmod->aux == AUX_HET_1 || pmod->aux == AUX_BP) {
+	pmod->aux == AUX_HET_1) {
 	return;
     }
 
@@ -843,8 +842,6 @@ static const char *aux_string (int aux, PRN *prn)
 		 "(log terms)");
     } else if (aux == AUX_WHITE) {
 	return N_("White's test for heteroskedasticity");
-    } else if (aux == AUX_BP) {
-	return N_("Breusch-Pagan test for heteroskedasticity");
     } else if (aux == AUX_HET_1) {
 	return N_("Pesaran-Taylor test for heteroskedasticity");
     } else if (aux == AUX_CHOW) {
@@ -1494,7 +1491,6 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_SQ:
     case AUX_LOG:
     case AUX_WHITE:
-    case AUX_BP:
     case AUX_HET_1:	
     case AUX_CHOW:
     case AUX_COINT:
@@ -1662,8 +1658,7 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}$" : "uhat");
-    } else if (pmod->aux == AUX_WHITE || pmod->aux == AUX_HET_1 ||
-	       pmod->aux == AUX_BP) {
+    } else if (pmod->aux == AUX_WHITE || pmod->aux == AUX_HET_1) {
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}^2$" : "uhat^2");
@@ -2341,7 +2336,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
-    if (pmod->aux == AUX_WHITE || pmod->aux == AUX_BP) { 
+    if (pmod->aux == AUX_WHITE) { 
 	rsqline(pmod, prn);
 	print_whites_results(pmod, prn);
 	goto close_format;
