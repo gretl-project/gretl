@@ -3602,11 +3602,13 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
 	  compare_obs);
 
     for (i=1; i<pdinfo->v; i++) {
-	for (t=0; t<n; t++) {
-	    tmp[t] = Z[i][t];
-	}
-	for (t=0; t<n; t++) {
-	    Z[i][t] = tmp[s.points[t].obsnum];
+	if (var_is_series(pdinfo, i)) {
+	    for (t=0; t<n; t++) {
+		tmp[t] = Z[i][t];
+	    }
+	    for (t=0; t<n; t++) {
+		Z[i][t] = tmp[s.points[t].obsnum];
+	    }
 	}	
     }
 

@@ -1163,6 +1163,7 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo)
 	    subinfo->structure = STACKED_TIME_SERIES;
 	    subinfo->n += npad;
 	    subinfo->pd = subinfo->n / nunits;
+	    /* note: panel indices are added below */
 	} else if (nunits == 1 && subinfo->n == pdinfo->pd) {
 	    /* time series for single panel unit */
 	    subinfo->structure = SPECIAL_TIME_SERIES;
