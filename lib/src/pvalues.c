@@ -25,6 +25,30 @@
 #include "../../cephes/libprob.h"
 
 #include <errno.h>
+
+double gamma_function (double x)
+{
+    double ret = cephes_gamma(x);
+
+    if (get_cephes_errno()) {
+	fprintf(stderr, "gamma_function: arg = %g\n", x);
+	ret = NADBL;
+    }
+
+    return ret;
+}
+
+double log_gamma_function (double x)
+{
+    double ret = cephes_lgamma(x);
+
+    if (get_cephes_errno()) {
+	fprintf(stderr, "log_gamma_function: arg = %g\n", x);
+	ret = NADBL;
+    }
+
+    return ret;
+}
  
 /**
  * binomial_cdf:
@@ -699,15 +723,15 @@ double normal_pdf (double x)
 
 /**
  * general_normal_pdf:
- * @x: double-precision value.
  * @mu: mean.
  * @sigma: standard deviation.
+ * @x: abscissa value.
  * 
  * Returns: the value of the normal PDF with mean @mu
  * and standard deviation @sigma evaluated at @x.
  */
 
-double general_normal_pdf (double x, double mu, double sigma)
+double general_normal_pdf (double mu, double sigma, double x)
 {
     if (na(x) || na(mu) || na(sigma) || sigma <= 0.0) {
 	return NADBL;
@@ -855,6 +879,26 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
     }
 
     return p;
+}
+
+double gamma_pdf (double shape, double scale, double x)
+{
+    errno = 0;
+
+    if (shape <= 0 || scale <= 0 || x <= 0) {
+	return NADBL;
+    } else {
+	double x1 = pow(x, shape - 1.0);
+	double x2 = exp(-x/scale);
+	double x3 = pow(scale, shape);
+	double x4 = gamma_function(shape);
+
+	if (errno || na(x4)) {
+	    return NADBL;
+	} else {
+	    return x1 * x2 / (x3 * x4);
+	}
+    }
 }
 
 /**

@@ -486,17 +486,30 @@ static NODE *aux_any_node (parser *p)
     return get_aux_node(p, 0, 0, 0);
 }
 
-static void eval_warning (parser *p, int op)
+static void eval_warning (parser *p, int op, int err)
 {
     if (*p->warning == '\0') {
 	if (op == B_POW) {
-	    strcpy(p->warning, _("invalid operands for '^'"));
+	    strcpy(p->warning, "'^'");
 	} else if (op == F_LOG) {
-	    strcpy(p->warning, _("invalid argument for log()"));
+	    strcpy(p->warning, "log()");
 	} else if (op == F_SQRT) {
-	    strcpy(p->warning, _("invalid argument for sqrt()"));
+	    strcpy(p->warning, "sqrt()");
 	} else if (op == F_EXP) {
-	    strcpy(p->warning, _("invalid argument for exp()"));
+	    strcpy(p->warning, "exp()");
+	} else if (op == F_GAMMA) {
+	    strcpy(p->warning, "gammafun()");
+	} else if (op == F_LNGAMMA) {
+	    strcpy(p->warning, "lgamma()");
+	}
+
+	if (err) {
+	    char *s = strerror(err);
+	
+	    if (s != NULL) {
+		strcat(p->warning, ": ");
+		strcat(p->warning, s);
+	    }
 	}
     }
 }
@@ -569,7 +582,7 @@ static double xy_calc (double x, double y, int op, parser *p)
     case B_POW:
 	z = pow(x, y);
 	if (errno) {
-	    eval_warning(p, op);
+	    eval_warning(p, op, errno);
 	}
 	return z;
     default: 
@@ -2201,9 +2214,17 @@ static double real_apply_func (double x, int f, parser *p)
     case F_QNORM:
 	return normal_cdf_inverse(x);
     case F_GAMMA:
-	return cephes_gamma(x);
+	y = gamma_function(x);
+	if (na(y)) {
+	    eval_warning(p, f, errno);
+	}	
+	return y;
     case F_LNGAMMA:
-	return cephes_lgamma(x);
+	y = log_gamma_function(x);
+	if (na(y)) {
+	    eval_warning(p, f, errno);
+	}
+	return y;
     case F_MISSING:
 	return 0.0;
     case F_DATAOK:
@@ -2215,7 +2236,7 @@ static double real_apply_func (double x, int f, parser *p)
     case F_SQRT:
 	y = sqrt(x);
 	if (errno) {
-	    eval_warning(p, F_SQRT);
+	    eval_warning(p, f, errno);
 	}
 	return y;
     case F_LOG:
@@ -2228,13 +2249,13 @@ static double real_apply_func (double x, int f, parser *p)
 	    y /= log(2.0);
 	}
 	if (errno) {
-	    eval_warning(p, F_LOG);
+	    eval_warning(p, F_LOG, errno);
 	}
 	return y;
     case F_EXP:
 	y = exp(x);
 	if (errno) {
-	    eval_warning(p, F_EXP);
+	    eval_warning(p, F_EXP, errno);
 	}
 	return y;
     default:
@@ -3978,13 +3999,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
 	    }
 	}
-    } else if (t->t == F_DGNORM) {
+    } else if (t->t == F_DGNORM || t->t == F_DGAMMA) {
 	double *xvec[3] = { NULL };
 	double xval[3] = { 0 };
 	int anyvec = 0;
 
 	if (k != 3) {
-	    n_args_error(k, 3, "dgnorm", p);
+	    n_args_error(k, 3, (t->t == F_DGNORM)? "dgnorm" : "dgamma", p);
 	} else {
 	    for (i=0; i<k && !p->err; i++) {
 		e = eval(n->v.bn.n[i], p);
@@ -4007,22 +4028,28 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	if (!p->err) {
 	    if (anyvec) {
-		double xi, mi, si;
+		double x1, x2, x3;
 
 		for (i=p->dinfo->t1; i<=p->dinfo->t2; i++) {
-		    xi = (xvec[0] != NULL)? xvec[0][i] : xval[0];
-		    mi = (xvec[1] != NULL)? xvec[1][i] : xval[1];
-		    si = (xvec[2] != NULL)? xvec[2][i] : xval[2];
-		    ret->v.xvec[i] = general_normal_pdf(xi, mi, si);
+		    x1 = (xvec[0] != NULL)? xvec[0][i] : xval[0];
+		    x2 = (xvec[1] != NULL)? xvec[1][i] : xval[1];
+		    x3 = (xvec[2] != NULL)? xvec[2][i] : xval[2];
+		    if (t->t == F_DGNORM) {
+			ret->v.xvec[i] = general_normal_pdf(x1, x2, x3);
+		    } else {
+			ret->v.xvec[i] = gamma_pdf(x1, x2, x3);
+		    }
 		}
-	    } else {
+	    } else if (t->t == F_DGNORM) {
 		ret->v.xval = general_normal_pdf(xval[0], xval[1],
 						 xval[2]);
-	    }
+	    } else {
+		ret->v.xval = gamma_pdf(xval[0], xval[1], xval[2]);
+	    }		
 	}
     }		
 
-    if (t->t != F_FILTER && t->t != F_DGNORM) {
+    if (t->t != F_FILTER && t->t != F_DGNORM && t->t != F_DGAMMA) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -5344,6 +5371,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FILTER:
     case F_TRIMR:
     case F_DGNORM:
+    case F_DGAMMA:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;
@@ -6232,7 +6260,7 @@ static void gen_check_errvals (parser *p)
     if (n->t == NUM) {
 	if (!isfinite(n->v.xval)) {
 	    n->v.xval = NADBL;
-	    p->warn = 1;
+	    p->warn = E_NAN;
 	}
     } else if (n->t == VEC) {
 	int t;
@@ -6240,7 +6268,7 @@ static void gen_check_errvals (parser *p)
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
 		n->v.xvec[t] = NADBL;
-		p->warn = 1;
+		p->warn = E_NAN;
 	    }
 	}
     }

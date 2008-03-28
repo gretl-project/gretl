@@ -767,6 +767,11 @@ static int nl_missval_check (nlspec *s)
 	}
     }
 
+    if (t2 - t1 + 1 == 0) {
+	fprintf(stderr, "nl_missval_check: no valid data\n");
+	return E_DATA;
+    }
+
     if (t2 - t1 + 1 < s->ncoeff) {
 	return E_DF;
     }
@@ -905,15 +910,15 @@ static int nl_function_calc (double *f, void *p)
 {
     nlspec *s = (nlspec *) p;
     const double *y;
-    int t;
+    int t, err = 0;
 
 #if NLS_DEBUG > 1
     fprintf(stderr, "\n*** nl_function_calc called\n");
 #endif
 
     /* calculate residual given current parameter estimates */
-    if (nl_calculate_fvec(s)) {
-	return 1;
+    if ((err = nl_calculate_fvec(s))) {
+	return err;
     }
 
     s->crit = 0.0;
@@ -2157,19 +2162,21 @@ static int
 nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
 		 integer *iflag, void *p)
 {
-    int err;
+    int erru, errc, err;
 
     /* write current parameter values into dataset Z */
-    err = update_coeff_values(x, p);
+    err = erru = update_coeff_values(x, p);
 
     /* calculate function at x, results into fvec */  
     if (!err) {
-	err = nl_function_calc(fvec, p);
+	err = errc = nl_function_calc(fvec, p);
     }
     
     if (err) {
 	/* flag error to minpack */
-	fprintf(stderr, "nls_calc_approx: got error %d\n", err);
+	fprintf(stderr, "nls_calc_approx: got error %d from %s\n", 
+		err, (erru)? "update_coeff_values" : 
+		"nl_function_calc");
 	*iflag = -1;
     }
 

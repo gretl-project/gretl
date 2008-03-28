@@ -20,6 +20,10 @@
 #ifndef PVALUES_H
 #define PVALUES_H
 
+double gamma_function (double x);
+
+double log_gamma_function (double x);
+
 double binomial_cdf (int k, int n, double p);
 
 double binomial_cdf_comp (int k, int n, double p);
@@ -58,11 +62,13 @@ double normal_cdf_inverse (double x);
 
 double normal_pdf (double x);
 
-double general_normal_pdf (double x, double mu, double sigma);
+double general_normal_pdf (double mu, double sigma, double x);
 
 double normal_critval (double a);
 
 double log_normal_pdf (double x);
+
+double gamma_pdf (double shape, double scale, double x);
 
 double bvnorm_cdf (double a, double b, double rho);
 

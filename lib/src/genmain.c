@@ -95,7 +95,7 @@ static void gen_write_warning (const parser *p, PRN *prn)
 {
     if (prn != NULL && !repeating_function_exec()) {
 	if (*p->warning != '\0') {
-	    pprintf(prn, "%s: %s: %s\n", _("Warning"),
+	    pprintf(prn, "%s: %s\n", 
 		    p->warning, _("missing values were generated"));
 	} else {
 	    pprintf(prn, "%s: %s\n", _("Warning"),
@@ -712,7 +712,9 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     realgen(NULL, p, pZ, pdinfo, prn, P_EXEC);
-    gen_save_or_print(p, prn);
+    if (p->err == 0) {
+	gen_save_or_print(p, prn);
+    }
     gen_cleanup(p);
 #if PRESERVE_AUX_NODES
     p->ecount += 1;

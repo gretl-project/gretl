@@ -279,6 +279,7 @@ enum {
     F_FILTER,
     F_TRIMR,
     F_DGNORM,
+    F_DGAMMA,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

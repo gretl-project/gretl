@@ -977,11 +977,27 @@
       </description>
     </function>  
 
+    <function name="dgamma" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">shape</fnarg>
+	<fnarg type="scalar-or-series">scale</fnarg>
+	<fnarg type="scalar-or-series">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the density at abscissa <argname>x</argname> for the
+	  Gamma distribution with parameters <argname>shape</argname> and
+	  <argname>scale</argname>.  If all the arguments are scalars the
+	  value returned is a scalar, otherwise a series is returned.
+	</para>
+      </description>
+    </function>
+
     <function name="dgnorm" output="seebelow">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
 	<fnarg type="scalar-or-series">mu</fnarg>
 	<fnarg type="scalar-or-series">sigma</fnarg>
+	<fnarg type="scalar-or-series">x</fnarg>
       </fnargs>
       <description>
 	<para>

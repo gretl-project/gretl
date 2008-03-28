@@ -65,8 +65,8 @@ enum gretl_error_codes {
     E_NOIDENT,     /* 41 */
     E_EXTERNAL,    /* 42 */
     E_DB_DUP,      /* 43 : duplicate vars found when saving to database */
-    E_OK,          /* 44 : not really an error */
-    E_MAX          /* 45 */
+    E_OK,          /* 45 : not really an error */
+    E_MAX          /* 46 */
 }; 
 
 void errmsg (int err, PRN *prn);
