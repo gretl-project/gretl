@@ -2654,12 +2654,12 @@
       </examples>
       <description>
 	<para>
-	  Probability density function calculator. Returns the density of the
-	  given distribution at <argname>x</argname>.  See 
-	  <fncref targ="cdf"/> for details of the required arguments.  The
-	  distributions supported by the <lit>pdf</lit> function are the
-	  normal, Student's <math>t</math>, chi-square, <math>F</math>, Gamma
-	  and Weibull.
+	  Probability density function calculator. Returns the density at
+	  <argname>x</argname> of the distribution identified by the code
+	  <argname>c</argname>.  See <fncref targ="cdf"/> for details of the
+	  required arguments.  The distributions supported by the
+	  <lit>pdf</lit> function are the normal, Student's <math>t</math>,
+	  chi-square, <math>F</math>, Gamma and Weibull.
 	</para>
       </description>
     </function>

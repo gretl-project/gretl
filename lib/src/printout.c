@@ -1756,6 +1756,7 @@ int printdata (const int *list, const char *mstr,
     lineno = 1;
 
     /* screen out any scalars and print them first */
+
     for (j=1; j<=plist[0]; j++) {
 	int len, v = plist[j];
 
@@ -1820,7 +1821,8 @@ int printdata (const int *list, const char *mstr,
 	ncol = 5;
     }
 
-    /* print data by observations */
+    /* main block: print data by observations */
+
     for (j=0; j<=plist[0]/ncol; j++) {
 	char obs_string[OBSLEN];
 
