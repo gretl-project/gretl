@@ -1030,7 +1030,21 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the density function for a standard normal. 
+	  Returns the density of the standard normal distribution at
+	  <argname>x</argname>.  To get the density for a non-standard
+	  normal distribution at <math>x</math>, pass the
+	  <math>z</math>-score of <math>x</math> to the <lit>dnorm</lit>
+	  function and multiply the result by the Jacobian of the
+	  <math>z</math> transformation, namely 1 over &sigma;, as
+	  illustrated below:
+	</para>
+	<code>
+	  mu = 100
+	  sigma = 5
+	  x = 109
+	  fx = (1/sigma) * dnorm((x-mu)/sigma)
+	</code>
+	<para>
 	  <seelist>
 	    <fncref targ="cnorm"/>
 	    <fncref targ="qnorm"/>
@@ -2660,6 +2674,9 @@
 	  required arguments.  The distributions supported by the
 	  <lit>pdf</lit> function are the normal, Student's <math>t</math>,
 	  chi-square, <math>F</math>, Gamma and Weibull.
+	</para>
+	<para>
+	  For the normal distribution, see also <fncref targ="dnorm"/>.
 	</para>
       </description>
     </function>
