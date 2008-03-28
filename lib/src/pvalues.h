@@ -24,9 +24,9 @@ double gamma_function (double x);
 
 double log_gamma_function (double x);
 
-double binomial_cdf (int k, int n, double p);
+double binomial_cdf (double p, int n, int k);
 
-double binomial_cdf_comp (int k, int n, double p);
+double binomial_cdf_comp (double p, int n, int k);
 
 double x_factorial (double x);
 
@@ -36,25 +36,15 @@ double normal_pvalue_2 (double x);
 
 double normal_pvalue_1 (double x);
 
-double student_cdf (double x, int df);
+double student_pvalue_2 (int df, double x);
 
-double student_cdf_comp (double x, int df);
+double chisq_cdf (int df, double x);
 
-double student_pvalue_2 (double x, int df);
+double chisq_cdf_comp (int df, double x);
 
-double student_critval (double a, double df);
+double snedecor_cdf_comp (int dfn, int dfd, double x);
 
-double chisq_cdf (double x, int df);
-
-double chisq_cdf_comp (double x, int df);
-
-double chisq_critval (double a, int df);
-
-double snedecor_cdf (double x, int dfn, int dfd);
-
-double snedecor_cdf_comp (double x, int dfn, int dfd);
-
-double snedecor_critval (double a, int dfn, int dfd);
+double snedecor_critval (int dfn, int dfd, double a);
 
 double normal_cdf (double x);
 
@@ -62,13 +52,9 @@ double normal_cdf_inverse (double x);
 
 double normal_pdf (double x);
 
-double general_normal_pdf (double mu, double sigma, double x);
-
 double normal_critval (double a);
 
 double log_normal_pdf (double x);
-
-double gamma_pdf (double shape, double scale, double x);
 
 double bvnorm_cdf (double a, double b, double rho);
 
@@ -83,6 +69,8 @@ double cephes_gamma (double x);
 double cephes_lgamma (double x); 
 
 double gretl_get_pvalue (char st, const double *p);
+
+double gretl_get_pdf (char st, double *p);
 
 double gretl_get_cdf (char st, double *p);
 

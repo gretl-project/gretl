@@ -248,6 +248,7 @@ struct str_table funcs[] = {
     { F_ISSTRING, "isstring" },
     { F_ISNULL,   "isnull" },
     { F_LISTLEN,  "nelem" },
+    { F_PDF,      "pdf" },
     { F_CDF,      "cdf" },
     { F_INVCDF,   "invcdf" },
     { F_PVAL,     "pvalue" },
@@ -280,8 +281,6 @@ struct str_table funcs[] = {
     { F_VARNAME,  "varname" },
     { F_COLNAMES, "colnames" },
     { F_LJUNGBOX, "ljungbox" },
-    { F_DGNORM,   "dgnorm" },
-    { F_DGAMMA,   "dgamma" },
     { 0,        NULL }
 };
 

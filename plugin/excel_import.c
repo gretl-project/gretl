@@ -1184,7 +1184,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	startcol++;
     } 
 
-    for (i=startcol; i<=totcols; i++) {
+    for (i=startcol; i<totcols; i++) { /* was i<=totcols */
 	int ts, missing = 0;
 
 	if (blank_col[i]) {

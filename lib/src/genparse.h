@@ -203,6 +203,7 @@ enum {
     F_ISSTRING,
     F_ISNULL,
     F_LISTLEN,
+    F_PDF,
     F_PVAL,
     F_CDF,
     F_INVCDF,
@@ -278,8 +279,6 @@ enum {
     F_MOLS,
     F_FILTER,
     F_TRIMR,
-    F_DGNORM,
-    F_DGAMMA,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
@@ -309,7 +308,7 @@ enum {
 			    s == F_BACKTICK)
 
 #define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
-                         s == F_CRIT || s == F_RANDGEN)
+                         s == F_CRIT || s == F_RANDGEN || s == F_PDF)
 
 #define unary_op(s) (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

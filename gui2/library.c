@@ -1665,7 +1665,7 @@ int do_confidence_region (selector *sr)
     b[1] = pmod->coeff[v[1]];
 
     t = tcrit95(pmod->dfd);
-    kF = 2.0 * snedecor_critval(.05, 2, pmod->dfd);
+    kF = 2.0 * snedecor_critval(2, pmod->dfd, .05);
 
     gretl_model_get_param_name(pmod, datainfo, v[0], iname);
     gretl_model_get_param_name(pmod, datainfo, v[1], jname);
@@ -3486,7 +3486,7 @@ static void normal_test (MODEL *pmod, FreqDist *freq)
 	model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
 	model_test_set_dfn(test, 2);
 	model_test_set_value(test, freq->test);
-	model_test_set_pvalue(test, chisq_cdf_comp(freq->test, 2));
+	model_test_set_pvalue(test, chisq_cdf_comp(2, freq->test));
 	maybe_add_test_to_model(pmod, test);
     }
 }
@@ -5306,14 +5306,15 @@ void display_var (void)
     int height = 400;
     int vec = 1;
     int n = datainfo->t2 - datainfo->t1 + 1;
+    int v = mdata_active_var();
 
     list[0] = 1;
-    list[1] = mdata_active_var();
+    list[1] = v;
 
-    if (var_is_scalar(datainfo, list[1])) {
+    if (var_is_scalar(datainfo, v)) {
 	vec = 0;
 	height = 140;
-    } else if (all_missing(list[1])) {
+    } else if (all_missing(v)) {
 	return;
     }
 
@@ -5337,16 +5338,17 @@ void display_var (void)
 	}
 
 	err = printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
+
 	if (err) {
 	    nomem();
 	    gretl_print_destroy(prn);
 	    return;
 	}
 	vwin = view_buffer(prn, 36, height, 
-			   datainfo->varname[list[1]], 
+			   datainfo->varname[v], 
 			   (vec)? VIEW_SERIES : VIEW_SCALAR, 
 			   NULL);
-	series_view_connect(vwin, list[1]);
+	series_view_connect(vwin, v);
     }
 }
 

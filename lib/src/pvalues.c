@@ -52,16 +52,16 @@ double log_gamma_function (double x)
  
 /**
  * binomial_cdf:
- * @k: maximum number of successes.
- * @n: number of trials.
  * @p: probability of success on each trial.
+ * @n: number of trials.
+ * @k: maximum number of successes. 
  *
  * Returns: the probability of @k or less successes on
  * @n trials given binomial probability @p, or
  * #NADBL on failure.
  */
 
-double binomial_cdf (int k, int n, double p)
+double binomial_cdf (double p, int n, int k)
 {
     double x = NADBL;
 
@@ -77,16 +77,16 @@ double binomial_cdf (int k, int n, double p)
 
 /**
  * binomial_cdf_comp:
- * @k: maximum number of successes.
- * @n: number of trials.
  * @p: probability of success on each trial.
+ * @n: number of trials.
+ * @k: maximum number of successes.
  *
  * Returns: the probability of @k + 1 or more successes on
  * @n trials given binomial probability @p, or
  * #NADBL on failure.
  */
 
-double binomial_cdf_comp (int k, int n, double p)
+double binomial_cdf_comp (double p, int n, int k)
 {
     double x = NADBL;
 
@@ -106,7 +106,7 @@ double binomial_cdf_comp (int k, int n, double p)
     equal to the given cumulative probability y.
 */
 
-static double binomial_cdf_inverse (int k, int n, double y)
+static double binomial_cdf_inverse (double y, int n, int k)
 {
     double p = NADBL;
 
@@ -122,7 +122,7 @@ static double binomial_cdf_inverse (int k, int n, double y)
 
 /* The following is no doubt horribly inefficient */
 
-static double binomial_critval (double a, double p, int n)
+static double binomial_critval (double p, int n, double a)
 {
     double pk, ac = 1 - a;
     int k;
@@ -132,7 +132,7 @@ static double binomial_critval (double a, double p, int n)
     }
 
     for (k=n; k>0; k--) {
-	pk = binomial_cdf(k, n, p);
+	pk = binomial_cdf(p, n, k);
 	if (pk < ac) {
 	    break;
 	}
@@ -301,15 +301,15 @@ double normal_pvalue_1 (double x)
 
 /**
  * student_cdf:
- * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
+ * @x: the cutoff point in the distribution.
  * 
  * Returns: the integral from minus infinity to @x of
  * the Student's t distribution with @df degrees of freedom, or
  * #NADBL on failure.
  */
 
-double student_cdf (double x, int df)
+double student_cdf (int df, double x)
 {
     double p = NADBL;
 
@@ -325,15 +325,15 @@ double student_cdf (double x, int df)
 
 /**
  * student_cdf_comp:
- * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
+ * @x: the cutoff point in the distribution.
  * 
  * Returns: the integral from @x to infinity of
  * the t distribution with @df degrees of freedom, or
  * #NADBL on failure.
  */
 
-double student_cdf_comp (double x, int df)
+static double student_cdf_comp (int df, double x)
 {
     double p = NADBL;
 
@@ -379,15 +379,15 @@ static double normal_cdf_comp (double x)
 
 /**
  * student_pvalue_2:
- * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
+ * @x: the cutoff point in the distribution.
  * 
  * Returns: the probability that t(@df) is greater than @x
  * (two-sided, using the absolute value of @x), or
  * #NADBL on failure.
  */
 
-double student_pvalue_2 (double x, int df)
+double student_pvalue_2 (int df, double x)
 {
     double p = NADBL;
 
@@ -411,15 +411,15 @@ double student_pvalue_2 (double x, int df)
 
 /**
  * student_critval:
- * @a: right-tail probability.
  * @df: degrees of freedom.
+ * @a: right-tail probability.
  *
  * Returns: the argument x such that the integral from x to 
  * infinity of the t(@df) density is equal to the given
  * probability @a, or #NADBL on failure.
  */
 
-double student_critval (double a, double df)
+static double student_critval (double df, double a)
 {
     double x;
 
@@ -448,7 +448,7 @@ double student_critval (double a, double df)
     return x;
 }
 
-static double student_cdf_inverse (double a, double df)
+static double student_cdf_inverse (double df, double a)
 {
     double x;
 
@@ -471,15 +471,15 @@ static double student_cdf_inverse (double a, double df)
 
 /**
  * chisq_cdf:
- * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
+ * @x: the cutoff point in the distribution.
  * 
  * Returns: the integral from 0 to @x of the chi-squared
  * distribution with @df degrees of freedom, or #NADBL
  * on failure.
  */
 
-double chisq_cdf (double x, int df)
+double chisq_cdf (int df, double x)
 {
     double p = NADBL;
 
@@ -495,15 +495,15 @@ double chisq_cdf (double x, int df)
 
 /**
  * chisq_cdf_comp:
- * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
+ * @x: the cutoff point in the distribution.
  * 
  * Returns: the integral from @x to infinity of the chi-squared
  * distribution with @df degrees of freedom, or #NADBL
  * on failure.
  */
 
-double chisq_cdf_comp (double x, int df)
+double chisq_cdf_comp (int df, double x)
 {
     double p = NADBL;
 
@@ -519,15 +519,15 @@ double chisq_cdf_comp (double x, int df)
 
 /**
  * chisq_critval:
- * @a: right-tail probability.
  * @df: degrees of freedom.
+ * @a: right-tail probability.
  * 
  * Returns: the Chi-square argument x such that the integral
  * from x to infinity of the Chi-square density is equal
  * to the given probability @a, or #NADBL on failure.
  */
 
-double chisq_critval (double a, int df)
+static double chisq_critval (int df, double a)
 {
     double x = NADBL;
 
@@ -541,7 +541,7 @@ double chisq_critval (double a, int df)
     return x;
 }
 
-static double chisq_cdf_inverse (double a, int df)
+static double chisq_cdf_inverse (int df, double a)
 {
     double x = NADBL;
 
@@ -557,15 +557,15 @@ static double chisq_cdf_inverse (double a, int df)
 
 /**
  * snedecor_cdf:
- * @x: the cutoff point in the distribution.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
+ * @x: the cutoff point in the distribution.
  * 
  * Returns: the integral of the F distribution with @dfn and
  * @dfd degrees of freedom, from 0 to @x, or #NADBL on failure.
  */
 
-double snedecor_cdf (double x, int dfn, int dfd)
+static double snedecor_cdf (int dfn, int dfd, double x)
 {
     double p = NADBL;
 
@@ -581,16 +581,16 @@ double snedecor_cdf (double x, int dfn, int dfd)
 
 /**
  * snedecor_cdf_comp:
- * @x: the cutoff point in the distribution.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
+ * @x: the cutoff point in the distribution.
  * 
  * Returns: the integral of the F distribution with @dfn and
  * @dfd degrees of freedom, from @x to infinity, or #NADBL 
  * on failure.
  */
 
-double snedecor_cdf_comp (double x, int dfn, int dfd)
+double snedecor_cdf_comp (int dfn, int dfd, double x)
 {
     double p = NADBL;
 
@@ -606,16 +606,16 @@ double snedecor_cdf_comp (double x, int dfn, int dfd)
 
 /**
  * snedecor_critval:
- * @a: right-tail probability.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
+ * @a: right-tail probability.
  * 
  * Returns: the F argument x such that the integral
  * from x to infinity of the F density is equal
  * to the given probability @a, or #NADBL on failure.
  */
 
-double snedecor_critval (double a, int dfn, int dfd)
+double snedecor_critval (int dfn, int dfd, double a)
 {
     double x = NADBL;
 
@@ -629,7 +629,7 @@ double snedecor_critval (double a, int dfn, int dfd)
     return x;
 }
 
-static double snedecor_cdf_inverse (double a, int dfn, int dfd)
+static double snedecor_cdf_inverse (int dfn, int dfd, double a)
 {
     double x = NADBL;
 
@@ -641,6 +641,114 @@ static double snedecor_cdf_inverse (double a, int dfn, int dfd)
     }
 
     return x;
+}
+
+/* PDFs */
+
+static double Binv (double p, double q)
+{
+    double f = NADBL;
+
+    errno = 0;
+
+    if (p > 0 && q > 0) {
+	double x1 = log_gamma_function(p + q);
+	double x2 = log_gamma_function(p);
+	double x3 = log_gamma_function(q);
+
+	if (!na(x1) && !na(x2) && !na(x3)) {
+	    f = exp(x1 - x2 - x3);
+	    if (errno) {
+		f = NADBL;
+	    }
+	}
+    }
+
+    return f;
+}    
+
+static double snedecor_pdf (int m, int n, double x)
+{
+    double fx = NADBL;
+
+    errno = 0;
+
+    if (m > 0 && n > 0 && x > 0) {
+	double x1 = Binv(0.5*m, 0.5*n);
+	double x2 = pow((double) m / n, 0.5 * m);
+	double x3 = pow(x, 0.5*m - 1.0);
+	double x4 = pow(1.0 + m/n * x, 0.5 * (m+n));
+
+	if (!errno && !na(x1)) {
+	    fx = x1 * x2 * x3 / x4;
+	}
+    }
+
+    return fx;
+}
+
+static double chisq_pdf (int m, double x)
+{
+    double fx = NADBL;
+
+    errno = 0;
+
+    if (m > 0 && x >= 0) {
+	double m2 = m / 2.0;
+	double x1 = pow(.5, m2);
+	double x2 = gamma_function(m2);
+	double x3 = pow(x, m2 - 1.0);
+	double x4 = exp(-x / 2.0);
+
+	if (!errno && !na(x2)) {
+	    fx = (x1/x2) * x3 * x4;
+	}
+    }
+
+    return fx;
+}
+
+static double student_pdf (int m, double x)
+{
+    double fx = NADBL;
+
+    errno = 0;
+
+    if (m > 0) {
+	double x1 = Binv(0.5*m, 0.5);
+	double x2 = sqrt((double) m);
+	double x3 = 1.0 + x * x / m;
+	double x4 = 0.5 * (m + 1.0);
+
+	if (!errno && !na(x1)) {
+	    fx = (x1 / x2) * pow(x3, -x4);
+	    if (errno) {
+		fx = NADBL;
+	    }
+	}
+    }
+
+    return fx;
+}
+
+static double weibull_pdf (double k, double l, double x)
+{
+    double fx = NADBL;
+
+    errno = 0;
+
+    if (k > 0 && l > 0 && x >= 0) {
+	double x1 = k / l;
+	double x2 = pow(x / l, k - 1.0);
+	double x3 = pow(x / l, k);
+	double x4 = exp(-x3);
+
+	if (!errno) {
+	    fx = x1 * x2 * x4;
+	}
+    }
+
+    return fx;
 }
 
 /**
@@ -883,22 +991,22 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
 
 double gamma_pdf (double shape, double scale, double x)
 {
+    double p = NADBL;
+
     errno = 0;
 
-    if (shape <= 0 || scale <= 0 || x <= 0) {
-	return NADBL;
-    } else {
+    if (shape > 0 && scale > 0 && x > 0) {
 	double x1 = pow(x, shape - 1.0);
 	double x2 = exp(-x/scale);
 	double x3 = pow(scale, shape);
 	double x4 = gamma_function(shape);
 
-	if (errno || na(x4)) {
-	    return NADBL;
-	} else {
-	    return x1 * x2 / (x3 * x4);
+	if (!errno && !na(x4)) {
+	    p = x1 * x2 / (x3 * x4);
 	}
     }
+
+    return p;
 }
 
 /**
@@ -981,7 +1089,7 @@ static double poisson_pmf (double lambda, int k)
    or perhaps binary search.
 */
 
-static double poisson_critval (double a, double mu)
+static double poisson_critval (double mu, double a)
 {
     double pk = 0.0;
     double ac = 1 - a;
@@ -1152,13 +1260,13 @@ double gretl_get_cdf_inverse (char st, double *p)
     if (st == 'z') {
 	x = normal_cdf_inverse(p[0]);
     } else if (st == 't') {
-	x = student_cdf_inverse(p[1], p[0]);
+	x = student_cdf_inverse(p[0], p[1]);
     } else if (st == 'X') {
-	x = chisq_cdf_inverse(p[1], (int) p[0]);
+	x = chisq_cdf_inverse((int) p[0], p[1]);
     } else if (st == 'F') {
-	x = snedecor_cdf_inverse(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_cdf_inverse((int) p[0], (int) p[1], p[2]);
     } else if (st == 'B') {
-	x = binomial_cdf_inverse((int) p[2], (int) p[1], p[0]);
+	x = binomial_cdf_inverse((int) p[0], (int) p[1], p[2]);
     } else if (st == 'P') {
 	x = poisson_cdf_inverse((int) p[0], p[1]);
     } 
@@ -1173,15 +1281,15 @@ double gretl_get_critval (char st, double *p)
     if (st == 'z') {
 	x = normal_critval(p[0]);
     } else if (st == 't') {
-	x = student_critval(p[1], p[0]);
+	x = student_critval(p[0], p[1]);
     } else if (st == 'X') {	
-	x = chisq_critval(p[1], (int) p[0]);
+	x = chisq_critval((int) p[0], p[1]);
     } else if (st == 'F') {
-	x = snedecor_critval(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_critval((int) p[0], (int) p[1], p[2]);
     } else if (st == 'B') {
-	x = binomial_critval(p[2], p[0], (int) p[1]);
+	x = binomial_critval(p[0], (int) p[1], p[2]);
     } else if (st == 'P') {
-	x = poisson_critval(p[1], p[0]);
+	x = poisson_critval(p[0], p[1]);
     } else if (st == 'W') {
 	x = weibull_critval(p[0], p[1], p[2]);
     }
@@ -1196,21 +1304,42 @@ double gretl_get_cdf (char st, double *p)
     if (st == 'z') {
 	x = normal_cdf(p[0]);
     } else if (st == 't') {
-	x = student_cdf(p[1], (int) p[0]);
+	x = student_cdf((int) p[0], p[1]);
     } else if (st == 'X') {
-	x = chisq_cdf(p[1], (int) p[0]);
+	x = chisq_cdf((int) p[0], p[1]);
     } else if (st == 'F') {
-	x = snedecor_cdf(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_cdf((int) p[0], (int) p[1], p[2]);
     } else if (st == 'G') {
 	x = gamma_cdf(p[0], p[1], p[2], 1);
     } else if (st == 'B') {
-	x = binomial_cdf((int) p[2], (int) p[1], p[0]);
+	x = binomial_cdf(p[0], (int) p[1], (int) p[2]);
     } else if (st == 'D') {
 	x = bvnorm_cdf(p[1], p[2], p[0]);
     } else if (st == 'P') {
 	x = poisson_cdf(p[0], (int) p[1]);
     } else if (st == 'W') {
 	x = weibull_cdf(p[0], p[1], p[2]);
+    }
+
+    return x;
+}
+
+double gretl_get_pdf (char st, double *p)
+{
+    double x = NADBL;
+
+    if (st == 'z') {
+	x = normal_pdf(p[0]);
+    } else if (st == 't') {
+	x = student_pdf((int) p[0], p[1]);
+    } else if (st == 'X') {
+	x = chisq_pdf((int) p[0], p[1]);
+    } else if (st == 'F') {
+	x = snedecor_pdf((int) p[0], (int) p[1], p[2]);
+    } else if (st == 'G') {
+	x = gamma_pdf(p[0], p[1], p[2]);
+    } else if (st == 'W') {
+	x = weibull_pdf(p[0], p[1], p[2]);
     }
 
     return x;
@@ -1223,15 +1352,15 @@ double gretl_get_pvalue (char st, const double *p)
     if (st == 'z') {
 	x = normal_cdf_comp(p[0]);
     } else if (st == 't') {
-	x = student_cdf_comp(p[1], (int) p[0]);
+	x = student_cdf_comp((int) p[0], p[1]);
     } else if (st == 'X') {
-	x = chisq_cdf_comp(p[1], (int) p[0]);
+	x = chisq_cdf_comp((int) p[0], p[1]);
     } else if (st == 'F') {
-	x = snedecor_cdf_comp(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_cdf_comp((int) p[0], (int) p[1], p[2]);
     } else if (st == 'G') {
 	x = gamma_cdf_comp(p[0], p[1], p[2], 1);
     } else if (st == 'B') {
-	x = binomial_cdf_comp((int) p[2], (int) p[1], p[0]);
+	x = binomial_cdf_comp(p[0], (int) p[1], (int) p[2]);
     } else if (st == 'P') {
 	x = poisson_cdf_comp(p[0], (int) p[1]);
     } else if (st == 'W') {
@@ -1356,7 +1485,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pv, 1 - 2 * pv);
 	} else {
-	    pc = student_cdf(p[1], (int) p[0]);
+	    pc = student_cdf((int) p[0], p[1]);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pc, 1 - 2 * pc);
@@ -1370,7 +1499,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	pprintf(prn, "\n%s(%d): ", _("Chi-square"), (int) p[0]);
 	err = print_pv_string(p[1], pv, prn);
 	if (err) return;
-	pc = chisq_cdf(p[1], p[0]);
+	pc = chisq_cdf(p[0], p[1]);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
@@ -1380,7 +1509,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	pprintf(prn, "\nF(%d, %d): ", (int) p[0], (int) p[1]);
 	err = print_pv_string(p[2], pv, prn);
 	if (err) return;
-	pc = snedecor_cdf(p[2], (int) p[0], (int) p[1]);
+	pc = snedecor_cdf((int) p[0], (int) p[1], p[2]);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
@@ -1399,11 +1528,11 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	pprintf(prn, _("\nBinomial (p = %g, n = %d):"
 		       "\n Prob(x > %d) = %g\n"), 
 		p[0], (int) p[1], (int) p[2], pv);
-	pc = binomial_cdf(p[2], p[1], p[0]);
+	pc = binomial_cdf(p[0], p[1], p[2]);
 	if (p[2] > 0) {
 	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[2], pc);
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2],
-		    pc - binomial_cdf(p[2] - 1, p[1], p[0]));
+		    pc - binomial_cdf(p[0], p[1], p[2] - 1));
 	} else {
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2], pc);
 	}

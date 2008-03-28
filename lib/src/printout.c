@@ -238,7 +238,7 @@ static void print_freq_test (const FreqDist *freq, PRN *prn)
     double pval = NADBL;
 
     if (freq->dist == D_NORMAL) {
-	pval = chisq_cdf_comp(freq->test, 2);
+	pval = chisq_cdf_comp(2, freq->test);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of normal distribution"));
 	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
@@ -521,7 +521,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
 	pputc(prn, '\n');
 	pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
-		pearson, df, chisq_cdf_comp(pearson, df));
+		pearson, df, chisq_cdf_comp(df, pearson));
 	pputc(prn, '\n');
 	if (n5p < 0.80) {
 	    pputs(prn, "Warning: Less than of 80% of cells had expected "
@@ -1702,10 +1702,11 @@ int printdata (const int *list, const char *mstr,
 	       const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
+    int pause = gretl_get_text_pause();
     int j, v, v1, v2, jc, nvjc, lineno, ncol;
     int screenvar = 0;
     int scalars = 0;
-    int nvars = 0, sortvar = 0;
+    int sortvar = 0;
     int maxlen = 0, bplen = 13;
     int *plist = NULL;
     int *pmax = NULL; 
@@ -1713,34 +1714,36 @@ int printdata (const int *list, const char *mstr,
     char line[128];
     int err = 0;
 
-    int pause = gretl_get_text_pause();
-
     printdata_blocks = 0;
 
-    if (list == NULL || list[0] == 0) {
-	if (mstr != NULL) {
-	    goto endprint;
-	} else if (list == NULL) {
-	    plist = full_var_list(pdinfo, &nvars);
+    if (list != NULL && list[0] == 0) {
+	/* explicitly empty list given */
+	if (mstr == NULL) {
+	    return 0; /* no-op */
 	} else {
-	    /* explicitly empty list: no-op */
-	    return 0;
+	    goto endprint;
 	}
+    } else if (list == NULL) {
+	/* no list given */
+	if (mstr == NULL) {
+	    int nvars = 0;
+
+	    plist = full_var_list(pdinfo, &nvars);
+	    if (nvars == 0) {
+		/* no-op */
+		return 0;
+	    }
+	} else {
+	    goto endprint;
+	} 
     } else {
-	nvars = list[0];
-	if (nvars > 0) {
-	    plist = gretl_list_copy(list);
-	}
+	plist = gretl_list_copy(list);
     }
 
+    /* at this point plist should have something in it */
     if (plist == NULL) {
-	if (nvars == 0) {
-	    pputs(prn, _("No data\n"));
-	    goto endprint;
-	} else {
-	    return E_ALLOC;
-	}
-    }
+	return E_ALLOC;
+    } 
 
     if (gretl_list_has_separator(plist)) {
 	err = adjust_print_list(plist, &screenvar, opt);
@@ -1768,12 +1771,13 @@ int printdata (const int *list, const char *mstr,
 	    }
 	}
     }
-
+    
     if (scalars) {
 	pputc(prn, '\n');
     }
 
     if (plist[0] == 0) {
+	/* no series left after elimination of scalars */
 	pputc(prn, '\n');
 	goto endprint;
     }
@@ -1782,12 +1786,14 @@ int printdata (const int *list, const char *mstr,
 	/* not by observations, but by variable */
 	pputc(prn, '\n');
 	for (j=1; j<=plist[0]; j++) {
+	    int vj = plist[j];
+
 	    if (plist[0] > 1) {
-		pprintf(prn, _("Varname: %s\n"), pdinfo->varname[plist[j]]);
+		pprintf(prn, _("Varname: %s\n"), pdinfo->varname[vj]);
 	    }
-	    print_var_smpl(plist[j], Z, pdinfo, prn);
+	    print_var_smpl(vj, Z, pdinfo, prn);
 	    pputc(prn, '\n');
-	    printz(Z[plist[j]], pdinfo, prn, opt);
+	    printz(Z[vj], pdinfo, prn, opt);
 	    pputc(prn, '\n');
 	}
 	goto endprint;
@@ -1820,11 +1826,13 @@ int printdata (const int *list, const char *mstr,
 
 	jc = j * ncol;
 	nvjc = plist[0] - jc;
-	v1 = jc +1;
+	v1 = jc + 1;
+
 	if (nvjc) {
 	    /* starting a new block of variables */
 	    v2 = (ncol > nvjc)? nvjc : ncol;
 	    v2 += jc;
+
 	    varheading(plist, v1, v2, bplen, pdinfo, prn);
 	    printdata_blocks++;
 
@@ -1848,7 +1856,7 @@ int printdata (const int *list, const char *mstr,
 		} else {
 		    get_obs_string(obs_string, t, pdinfo);
 		}
-		
+
 		sprintf(line, "%8s ", obs_string);
 		
 		for (v=v1; v<=v2; v++) {

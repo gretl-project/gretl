@@ -1607,7 +1607,7 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
 	pprintf(prn, _("Restricted loglikelihood (lr) = %.8g\n"), llr);
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
 	if (df > 0) {
-	    double pv = chisq_cdf_comp(x, df);
+	    double pv = chisq_cdf_comp(df, x);
 
 	    if (jvar->jinfo->lrdf > 0) {
 		pprintf(prn, _("Allowing for prior restriction, df = %d\n"), df);

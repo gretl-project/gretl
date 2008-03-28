@@ -323,7 +323,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), m - 2,
-		tval, student_pvalue_2(tval, m - 2));
+		tval, student_pvalue_2(m - 2, tval));
     } else if (m >= 7) {
 	double pval = spearman_signif(fabs(rho), m);
 
@@ -1160,11 +1160,11 @@ static int sign_test (const double *x, const double *y,
     pprintf(prn, _("Under the null hypothesis of no difference, W "
 		   "follows B(%d, %.1f)\n"), n, 0.5);
     pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w, 
-	    binomial_cdf(w, n, 0.5));
+	    binomial_cdf(0.5, n, w));
     if (w == 0) {
 	pv = 1.0;
     } else {
-	pv = binomial_cdf_comp(w - 1, n, 0.5);
+	pv = binomial_cdf_comp(0.5, n, w - 1);
     }
     pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, pv);
 

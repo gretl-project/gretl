@@ -2763,7 +2763,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
 
     if (J->df > 0) {
 	double x = 2.0 * (jvar->ll - J->ll);
-	double pv = chisq_cdf_comp(x, J->df);
+	double pv = chisq_cdf_comp(J->df, x);
 	
 
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);

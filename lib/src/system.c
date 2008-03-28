@@ -798,7 +798,7 @@ system_print_F_test (const equation_system *sys,
 
     pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
     pprintf(prn, "  F(%d,%d) = %g %s %.4f\n", dfn, dfu, F,
-	    _("with p-value"), snedecor_cdf_comp(F, dfn, dfu));
+	    _("with p-value"), snedecor_cdf_comp(dfn, dfu, F));
     pputc(prn, '\n');    
 
  bailout:
@@ -826,7 +826,7 @@ system_print_LR_test (const equation_system *sys,
     pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), llr);
     pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
     pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
-	    df, X2, _("with p-value"), chisq_cdf_comp(X2, df));
+	    df, X2, _("with p-value"), chisq_cdf_comp(df, X2));
     pputc(prn, '\n');    
 }
 
@@ -2599,7 +2599,7 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
 	}
 
 	X2 = 2.0 * (sys->llu - sys->ll);
-	pv = chisq_cdf_comp(X2, df);
+	pv = chisq_cdf_comp(df, X2);
 
 	if (tex) {
 	    pprintf(prn, "%s:\\\\\n", I_("LR over-identification test"));
@@ -2636,7 +2636,7 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
 	    return;
 	}
 
-	pv = chisq_cdf_comp(sys->X2, df);
+	pv = chisq_cdf_comp(df, sys->X2);
 
 	if (tex) {
 	    pprintf(prn, "\\noindent %s:\\\\\n", 
@@ -2668,7 +2668,7 @@ int system_print_VCV (const equation_system *sys, PRN *prn)
     if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
 	if (!na(sys->ldet) && sys->diag != 0.0) {
 	    double lr = sys->T * (sys->diag - sys->ldet);
-	    double x = chisq_cdf_comp(lr, df);
+	    double x = chisq_cdf_comp(df, lr);
 
 	    if (tex) {
 		pprintf(prn, "%s:\\\\\n", I_("LR test for diagonal covariance matrix"));
@@ -2685,7 +2685,7 @@ int system_print_VCV (const equation_system *sys, PRN *prn)
 	double x, lm = sys->diag;
 	
 	if (lm > 0) {
-	    x = chisq_cdf_comp(lm, df);
+	    x = chisq_cdf_comp(df, lm);
 	    if (tex) {
 		pprintf(prn, "%s:", 
 			I_("Breusch--Pagan test for diagonal covariance matrix"));
@@ -3662,7 +3662,7 @@ int system_autocorrelation_test (equation_system *sys, int order,
 	if (!err) {
 	    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
 		    lb, _("with p-value"), _("Chi-square"), order,
-		    lb, chisq_cdf_comp(lb, order));
+		    lb, chisq_cdf_comp(order, lb));
 	    pputc(prn, '\n');
 	}
     }

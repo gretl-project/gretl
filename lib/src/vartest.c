@@ -54,7 +54,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 	    if (!err) {
 		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
 			lb, _("with p-value"), _("Chi-square"), order,
-			lb, chisq_cdf_comp(lb, order));
+			lb, chisq_cdf_comp(order, lb));
 		pputc(prn, '\n');
 	    }
 	} else {
@@ -379,7 +379,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
 		gretl_matrix_set(lltab, m, 1, 0);
 	    } else {
 		LRtest = 2.0 * (ll - gretl_matrix_get(lltab, m-1, 0));
-		gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(LRtest, n * n));
+		gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(n * n, LRtest));
 	    }	
 	    
 	    for (c=0; c<N_IVALS; c++) {
@@ -397,7 +397,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
     if (!err) {
 	gretl_matrix_set(lltab, m, 0, var->ll);
 	LRtest = 2.0 * (var->ll - gretl_matrix_get(lltab, m - 1, 0));
-	gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(LRtest, n * n));
+	gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(n * n, LRtest));
 	gretl_matrix_set(crittab, m, 0, var->AIC);
 	gretl_matrix_set(crittab, m, 1, var->BIC);
 	gretl_matrix_set(crittab, m, 2, var->HQC);
@@ -640,7 +640,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 
     LR = orig->T * (new->ldet - orig->ldet);
     df = orig->neqns * omitlist[0];
-    pval = chisq_cdf_comp(LR, df);
+    pval = chisq_cdf_comp(df, LR);
     
     pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		 "zero for the variables\n\n"));

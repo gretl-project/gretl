@@ -467,7 +467,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 	    model_test_set_teststat(test, GRETL_STAT_LM);
 	    model_test_set_dfn(test, Orank);
 	    model_test_set_value(test, OTest);
-	    model_test_set_pvalue(test, chisq_cdf_comp(OTest, Orank));
+	    model_test_set_pvalue(test, chisq_cdf_comp(Orank, OTest));
 	    maybe_add_test_to_model(tsls_model, test);
 	}	
     }
@@ -529,7 +529,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
 	    model_test_set_dfn(test, df);
 	    model_test_set_value(test, HTest);
-	    model_test_set_pvalue(test, chisq_cdf_comp(HTest, df));
+	    model_test_set_pvalue(test, chisq_cdf_comp(df, HTest));
 	    maybe_add_test_to_model(tmod, test);
 	}
     }

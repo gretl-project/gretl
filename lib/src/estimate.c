@@ -2807,7 +2807,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	int df = white.ncoeff - 1;
-	double pval = chisq_cdf_comp(LM, df);
+	double pval = chisq_cdf_comp(df, LM);
 
 	if (BP || (opt & OPT_Q)) {
 	    print_whites_test(LM, df, pval, opt, prn);
@@ -3257,7 +3257,7 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 {
     ModelTest *test = model_test_new(GRETL_TEST_ARCH);
     double LM = T * rsq;
-    double pv = chisq_cdf_comp(LM, order);
+    double pv = chisq_cdf_comp(order, LM);
 
     if (V != NULL) {
 	int i, k = order + 1;

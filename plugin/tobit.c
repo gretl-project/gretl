@@ -318,7 +318,7 @@ static int add_norm_test_to_model (MODEL *pmod, double X2)
         model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
         model_test_set_dfn(test, 2);
         model_test_set_value(test, X2);
-        model_test_set_pvalue(test, chisq_cdf_comp(X2, 2));
+        model_test_set_pvalue(test, chisq_cdf_comp(2, X2));
         maybe_add_test_to_model(pmod, test);
     } else {
         err = 1;

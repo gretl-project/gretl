@@ -1446,7 +1446,7 @@ static int get_fitted_line (gnuplot_info *gi,
 	if (gi->fit == PLOT_FIT_NONE) {
 	    double v = gretl_matrix_get(V, 1, 1);
 	    int T = gretl_vector_get_length(y);
-	    double pv = student_pvalue_2(c[1] / sqrt(v), T - k);
+	    double pv = student_pvalue_2(T - k, c[1] / sqrt(v));
 
 	    if (pv < .10) {
 		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
@@ -2587,7 +2587,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
     smod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
 
     if (!smod.errcode && !na(smod.fstt) &&
-	(snedecor_cdf_comp(smod.fstt, smod.dfn, smod.dfd) < .10 || (opt & OPT_F))) {
+	(snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < .10 || (opt & OPT_F))) {
 	double uadj = (umax - umin) * 0.02;
 	double vadj = (vmax - vmin) * 0.02;
 
@@ -2860,7 +2860,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 			G_("Test statistic for normality"),
 			gnuplot_label_front_string());
 		print_freq_test_label(label, G_("Chi-squared(2) = %.3f pvalue = %.5f"), 
-				      freq->test, chisq_cdf_comp(freq->test, 2));
+				      freq->test, chisq_cdf_comp(2, freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, gnuplot_label_front_string());
 	    }	

@@ -600,52 +600,64 @@ static int dist_argc (char *s, int f)
     case 'u':
     case 'U':
 	s[0] = 'u';
+	/* only F_RANDGEN is supported */
 	return (f == F_RANDGEN)? 2 : 0;
     case '1':
     case 'z':
     case 'n':
     case 'N':
 	s[0] = 'z';
+	/* all functions supported */
 	return (f == F_RANDGEN)? 2 : 1;
     case '2':
     case 't':
 	s[0] = 't';
+	/* all functions supported */
 	return (f == F_RANDGEN)? 1 : 2;
     case '3':
     case 'c':
     case 'x':
     case 'X':
 	s[0] = 'X';
+	/* all functions supported */
 	return (f == F_RANDGEN)? 1 : 2;
     case '4':
     case 'f':
     case 'F':
 	s[0] = 'F';
+	/* all functions supported */
 	return (f == F_RANDGEN)? 2 : 3;
     case '5':
     case 'g':
     case 'G':
 	s[0] = 'G';
+	/* partial support */
 	return (f == F_CRIT || f == F_INVCDF)? 0 : 
 	    (f == F_RANDGEN)? 2 : 3;
     case '6':
     case 'b':
     case 'B':
 	s[0] = 'B';
+	/* pdf not supported */
+	if (f == F_PDF) return 0;
 	return (f == F_RANDGEN)? 2 : 3;
     case '7':
     case 'D':
 	s[0] = 'D';
+	/* only cdf is supported */
 	return (f == F_CDF)? 3 : 0;
     case '8':
     case 'p':
     case 'P':
 	s[0] = 'P';
+	/* pdf not supported */
+	if (f == F_PDF) return 0;
 	return (f == F_RANDGEN)? 1 : 2;
     case '9':
     case 'w':
     case 'W':
 	s[0] = 'W';
+	/* inverse cdf not supported */
 	return (f == F_INVCDF)? 0 : 
 	    (f == F_RANDGEN)? 2 : 3;
     }
@@ -710,6 +722,8 @@ static double scalar_pdist (int t, char d, double *parm,
 
     if (t == F_PVAL) {
 	x = gretl_get_pvalue(d, parm);
+    } else if (t == F_PDF) {
+	x = gretl_get_pdf(d, parm);
     } else if (t == F_CDF) {
 	x = gretl_get_cdf(d, parm);
     } else if (t == F_INVCDF) {
@@ -3999,57 +4013,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
 	    }
 	}
-    } else if (t->t == F_DGNORM || t->t == F_DGAMMA) {
-	double *xvec[3] = { NULL };
-	double xval[3] = { 0 };
-	int anyvec = 0;
+    } 
 
-	if (k != 3) {
-	    n_args_error(k, 3, (t->t == F_DGNORM)? "dgnorm" : "dgamma", p);
-	} else {
-	    for (i=0; i<k && !p->err; i++) {
-		e = eval(n->v.bn.n[i], p);
-		if (e == NULL) {
-		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-		} else if (e->t == VEC) {
-		    xvec[i] = e->v.xvec;
-		    anyvec = 1;
-		} else if (e->t == NUM) {
-		    xval[i] = e->v.xval;
-		} else {
-		    p->err = E_TYPES;
-		}
-	    }
-	}
-
-	if (!p->err) {
-	    ret = (anyvec)? aux_vec_node(p, p->dinfo->n) : aux_scalar_node(p);
-	}
-
-	if (!p->err) {
-	    if (anyvec) {
-		double x1, x2, x3;
-
-		for (i=p->dinfo->t1; i<=p->dinfo->t2; i++) {
-		    x1 = (xvec[0] != NULL)? xvec[0][i] : xval[0];
-		    x2 = (xvec[1] != NULL)? xvec[1][i] : xval[1];
-		    x3 = (xvec[2] != NULL)? xvec[2][i] : xval[2];
-		    if (t->t == F_DGNORM) {
-			ret->v.xvec[i] = general_normal_pdf(x1, x2, x3);
-		    } else {
-			ret->v.xvec[i] = gamma_pdf(x1, x2, x3);
-		    }
-		}
-	    } else if (t->t == F_DGNORM) {
-		ret->v.xval = general_normal_pdf(xval[0], xval[1],
-						 xval[2]);
-	    } else {
-		ret->v.xval = gamma_pdf(xval[0], xval[1], xval[2]);
-	    }		
-	}
-    }		
-
-    if (t->t != F_FILTER && t->t != F_DGNORM && t->t != F_DGAMMA) {
+    if (t->t != F_FILTER) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -5370,8 +5336,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MOLS:
     case F_FILTER:
     case F_TRIMR:
-    case F_DGNORM:
-    case F_DGAMMA:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;
@@ -5412,6 +5376,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, STR, l, p);
 	}
 	break;
+    case F_PDF:
     case F_CDF:
     case F_INVCDF:
     case F_CRIT:

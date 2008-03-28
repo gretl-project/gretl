@@ -1767,14 +1767,14 @@ restriction_set_print_result (gretl_restriction *rset,
 
     if (asym) {
 	rset->code = GRETL_STAT_WALD_CHISQ;
-	rset->pval = chisq_cdf_comp(rset->test, rset->k);
+	rset->pval = chisq_cdf_comp(rset->k, rset->test);
 	pprintf(prn, "\n%s: %s(%d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust chi^2"): "chi^2",
 		rset->k, rset->test);
     } else {
 	rset->code = GRETL_STAT_F;
 	rset->test /= rset->k;
-	rset->pval = snedecor_cdf_comp(rset->test, rset->k, pmod->dfd);
+	rset->pval = snedecor_cdf_comp(rset->k, pmod->dfd, rset->test);
 	pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust F"): "F",
 		rset->k, pmod->dfd, rset->test);

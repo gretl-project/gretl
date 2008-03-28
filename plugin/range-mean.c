@@ -197,7 +197,9 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, _("slope of range against mean = %g\n"),
 		rmmod.coeff[1]);
 	if (rmmod.sderr[1] > 0) {
-	    tpval = student_pvalue_2(rmmod.coeff[1] / rmmod.sderr[1], rmmod.dfd);
+	    double tval = rmmod.coeff[1] / rmmod.sderr[1];
+
+	    tpval = student_pvalue_2(rmmod.dfd, tval);
 	    pprintf(prn, _("p-value for H0: slope = 0 is %g\n"), tpval);
 	} else {
 	    tpval = 1.0;

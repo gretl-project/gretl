@@ -1511,7 +1511,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	} else {
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"), n1-1,
 		    x[0], x[2], se, ts);
-	    pv = student_pvalue_2(ts, n1 - 1);
+	    pv = student_pvalue_2(n1 - 1, ts);
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) {
 		gparm[0] = n1 - 1;
@@ -1530,9 +1530,9 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 		n1-1, n1-1, x[0], x[1], ts);
 
 	if (x[0] > x[1]) {
-	    pv = chisq_cdf_comp(ts, n1 - 1);
+	    pv = chisq_cdf_comp(n1 - 1, ts);
 	} else {
-	    pv = chisq_cdf(ts, n1 - 1);
+	    pv = chisq_cdf(n1 - 1, ts);
 	}
 	print_pv(prn, 2.0 * pv, pv);
 	if (grf) {
@@ -1611,9 +1611,9 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
 		    n1 + n2 - 2, x[0], x[2], se, ts);
 	    if (ts > 0) {
-		pv = student_pvalue_2(ts, n1 + n2 - 2);
+		pv = student_pvalue_2(n1 + n2 - 2, ts);
 	    } else {
-		pv = student_pvalue_2(-ts, n1 + n2 - 2);
+		pv = student_pvalue_2(n1 + n2 - 2, -ts);
 	    }
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) {
@@ -1657,12 +1657,12 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	    ts = x[0] / x[1];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n1 - 1, n2 - 1, ts);
-	    pv = snedecor_cdf_comp(ts, n1 - 1, n2 - 1);
+	    pv = snedecor_cdf_comp(n1 - 1, n2 - 1, ts);
 	} else {
 	    ts = x[1] / x[0];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n2 - 1, n1 - 1, ts);
-	    pv = snedecor_cdf_comp(ts, n2 - 1, n1 - 1);
+	    pv = snedecor_cdf_comp(n2 - 1, n1 - 1, ts);
 	}
 
 	print_pv(prn, 2.0 * pv, pv);

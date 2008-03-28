@@ -1260,36 +1260,43 @@ void free_strings_array (char **strs, int nstrs)
     }
 }
 
+static int maybe_year_plus (const char *s)
+{
+    int n = strlen(s);
+
+    if (n > 8 && isdigit(s[0]) && isdigit(s[1]) &&
+	isdigit(s[2]) && isdigit(s[3]) && !isdigit(s[4])) {
+	return 1;
+    }
+
+    return 0;
+}
+
 static char *
-real_get_obs_string (char *obs, int t, const DATAINFO *pdinfo, int full)
+real_get_obs_string (char *s, int t, const DATAINFO *pdinfo, int full)
 {
     if (pdinfo->markers && pdinfo->S != NULL) { 
 	/* data marker strings present */
-	strcpy(obs, pdinfo->S[t]);
+	if (full) {
+	    strcpy(s, pdinfo->S[t]);
+	} else {
+	    *s = '\0';
+	    if (maybe_year_plus(pdinfo->S[t])) {
+		/* daily date, year first? */
+		strncat(s, pdinfo->S[t] + 2, 8);
+	    } else {
+		strncat(s, pdinfo->S[t], 8);
+	    }
+	}
     } else {
 	if (full) {
-	    ntodate_full(obs, t, pdinfo);
+	    ntodate_full(s, t, pdinfo);
 	} else {
-	    ntodate(obs, t, pdinfo);
+	    ntodate(s, t, pdinfo);
 	}
     }
 
-    if (!full) {
-	if (strlen(obs) > 8) { 
-	    char tmp[9];
-
-	    if (isdigit(*obs) && isdigit(*(obs + 1))) {
-		strcpy(tmp, obs + 2);
-		strcpy(obs, tmp);
-	    } else {
-		*tmp = '\0';
-		strncat(tmp, obs, 8);
-		strcpy(obs, tmp);
-	    }
-	} 
-    }
-
-    return obs;
+    return s;
 }
 
 /**

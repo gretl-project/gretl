@@ -1359,7 +1359,7 @@ multivariate_normality_test (const gretl_matrix *E,
     } else {
 	pputs(prn, "Test for multivariate normality of residuals\n");
 	pprintf(prn, "Doornik-Hansen Chi-square(%d) = %g, ", 2 * p, X2);
-	pprintf(prn, "with p-value = %g\n", chisq_cdf_comp(X2, 2 * p));
+	pprintf(prn, "with p-value = %g\n", chisq_cdf_comp(2 * p, X2));
     }
 
  bailout:
@@ -1736,7 +1736,7 @@ static void record_freq_test (const FreqDist *freq)
     double pval = NADBL;
 
     if (freq->dist == D_NORMAL) {
-	pval = chisq_cdf_comp(freq->test, 2);
+	pval = chisq_cdf_comp(2, freq->test);
     } else if (freq->dist == D_GAMMA) {
 	pval = normal_pvalue_2(freq->test);
     }	
@@ -2620,7 +2620,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	box += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
 	pprintf(prn, "%12.4f", box);
 	if (k >= nparam) {
-	    pprintf(prn, "  [%5.3f]", chisq_cdf_comp(box, dfQ++));
+	    pprintf(prn, "  [%5.3f]", chisq_cdf_comp(dfQ++, box));
 	}
 	pputc(prn, '\n');
     }
@@ -2886,7 +2886,7 @@ static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
 		_("GPH test for fractional integration"), m,
 		_("Estimated degree of integration"), bi, se,
 		_("test statistic"), df, tval, 
-		_("with p-value"), student_pvalue_2(tval, df));
+		_("with p-value"), student_pvalue_2(df, tval));
     } 
 
  bailout:
@@ -4067,7 +4067,7 @@ static void printcorr (const VMatrix *v, PRN *prn)
 
 	    pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	    pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), n2,
-		tval, student_pvalue_2(tval, n2));
+		    tval, student_pvalue_2(n2, tval));
 	    pputc(prn, '\n');
 	} else {
 	    pprintf(prn, _("5%% critical value (two-tailed) = "
@@ -4226,7 +4226,7 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     t = mdiff / se;
-    pval = student_pvalue_2(t, df);
+    pval = student_pvalue_2(df, t);
 
     pprintf(prn, _("\nEquality of means test "
 	    "(assuming %s variances)\n\n"), (vardiff)? _("unequal") : _("equal"));
@@ -4307,7 +4307,7 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	dfd = n1 - 1;
     }
 
-    pval = snedecor_cdf_comp(F, dfn, dfd);
+    pval = snedecor_cdf_comp(dfn, dfd, F);
 
     pputs(prn, _("\nEquality of variances test\n\n"));
     pprintf(prn, "   %s: ", pdinfo->varname[list[1]]);
@@ -4319,7 +4319,7 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    _("The two population variances are equal"));
     pprintf(prn, "   %s: F(%d,%d) = %g\n", _("Test statistic"), dfn, dfd, F);
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
-    if (snedecor_cdf_comp(F, dfn, dfd) > .10)
+    if (snedecor_cdf_comp(dfn, dfd, F) > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
     record_test_result(F, pval, _("difference of variances"));

@@ -2687,7 +2687,7 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 
 	if (df > 0) {
 	    double x = 2 * (orig->ll - jvar->ll);
-	    double pv = chisq_cdf_comp(x, df);
+	    double pv = chisq_cdf_comp(df, x);
 
 	    rset_add_results(rset, x, pv, jvar->ll);
 	    rset_record_LR_result(rset);

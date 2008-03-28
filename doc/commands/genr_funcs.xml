@@ -677,6 +677,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="pdf"/>
 	    <fncref targ="critical"/>
 	    <fncref targ="invcdf"/>
 	    <fncref targ="pvalue"/>
@@ -976,39 +977,6 @@
 	</para>
       </description>
     </function>  
-
-    <function name="dgamma" output="seebelow">
-      <fnargs>
-	<fnarg type="scalar-or-series">shape</fnarg>
-	<fnarg type="scalar-or-series">scale</fnarg>
-	<fnarg type="scalar-or-series">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Computes the density at abscissa <argname>x</argname> for the
-	  Gamma distribution with parameters <argname>shape</argname> and
-	  <argname>scale</argname>.  If all the arguments are scalars the
-	  value returned is a scalar, otherwise a series is returned.
-	</para>
-      </description>
-    </function>
-
-    <function name="dgnorm" output="seebelow">
-      <fnargs>
-	<fnarg type="scalar-or-series">mu</fnarg>
-	<fnarg type="scalar-or-series">sigma</fnarg>
-	<fnarg type="scalar-or-series">x</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Computes the density at abscissa <argname>x</argname> for the normal
-	  distribution with mean <argname>mu</argname> and standard deviation
-	  <argname>sigma</argname>.  If all the arguments are scalars the
-	  value returned is a scalar, otherwise a series is returned.
-	  (For the standard normal distribution, see also <fncref targ="dnorm"/>.)
-	</para>
-      </description>
-    </function>
 
     <function name="diag" output="matrix">
       <fnargs>
@@ -2669,6 +2637,29 @@
 	  <seelist>
 	    <fncref targ="diff"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="pdf" output="asinput">
+      <fnargs>
+	<fnarg type="char">c</fnarg>
+	<fnarg type="seebelow">&hellip;</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <examples>
+	<example>f1 = pdf(N, -2.5)</example>
+	<example>f2 = pdf(X, 3, y)</example>
+	<example>f3 = pdf(W, shape, scale, y)</example>
+      </examples>
+      <description>
+	<para>
+	  Probability density function calculator. Returns the density of the
+	  given distribution at <argname>x</argname>.  See 
+	  <fncref targ="cdf"/> for details of the required arguments.  The
+	  distributions supported by the <lit>pdf</lit> function are the
+	  normal, Student's <math>t</math>, chi-square, <math>F</math>, Gamma
+	  and Weibull.
 	</para>
       </description>
     </function>

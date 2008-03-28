@@ -398,7 +398,7 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 
 	if (idf > 0) {
 	    double X2 = pmod->nobs * log(lmin);
-	    double pv = chisq_cdf_comp(X2, idf);
+	    double pv = chisq_cdf_comp(idf, X2);
 
 	    if (tex_format(prn)) {
 		pprintf(prn, "%s, $\\chi^2(%d)$ & %g\\\\\n", 
@@ -473,7 +473,7 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 	df = gretl_model_get_int(pmod, "J_df");
     }
 
-    pv = chisq_cdf_comp(x, df);
+    pv = chisq_cdf_comp(df, x);
 
     if (tex_format(prn)) {
 	pprintf(prn, "%s: ", I_(texstrs[j]));
@@ -674,7 +674,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
 	} else {
 	    pprintf(prn, "  %s = %.*g", tmp, XDIGITS(pmod), pmod->fstt);
-	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
 	}
     } else if (tex_format(prn)) {
 	if (na(pmod->fstt)) {
@@ -685,7 +685,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
 	    tex_dcolumn_double(pmod->fstt, x1str);
 	    pprintf(prn, "$F(%d, %d)$ & %s \\\\\n", pmod->dfn, pmod->dfd, x1str);
-	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
 	}
     } else if (rtf_format(prn)) {
 	char tmp[32];
@@ -695,7 +695,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, RTFTAB "%s %s\n", tmp, I_("undefined"));
 	} else {
 	    pprintf(prn, RTFTAB "%s = %g", tmp, pmod->fstt);
-	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
 	}
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s (%d, %d)\"%c", I_("F-statistic"), pmod->dfn, pmod->dfd,
@@ -704,7 +704,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "\"%s\"\n", I_("undefined"));
 	} else {
 	    pprintf(prn, "%.15g%c", pmod->fstt, prn_delim(prn));
-	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
 	}
     }	
 }
@@ -2055,7 +2055,7 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 {
     double X = pmod->rsq * pmod->nobs;
     int df = pmod->ncoeff - 1;
-    double pv = chisq_cdf_comp(X, df);
+    double pv = chisq_cdf_comp(df, X);
 
     if (plain_format(prn)) {
 	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), X);
@@ -2807,7 +2807,7 @@ void print_arch_coeffs (const double *a, const double *se,
 	mc.b = a[i];
 	mc.se = se[i];
 	mc.tval = a[i] / se[i];
-	mc.pval = student_pvalue_2(mc.tval, T - (order + 1));
+	mc.pval = student_pvalue_2(T - (order + 1), mc.tval);
 
 	if (tex_format(prn)) {
 	    sprintf(mc.name, "$\\alpha_%d$", i);
@@ -2898,7 +2898,7 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 	gretl_print_value (arinfo->rho[c], prn);
 	bufspace(2, prn);
 	gretl_print_value (arinfo->sderr[c], prn); 
-	pval = student_pvalue_2(xx, dfd);
+	pval = student_pvalue_2(dfd, xx);
 	pprintf(prn, " %7.3f ", xx, pval);
 	print_pval_str(pval, pvalstr);
 	pprintf(prn, "%*s\n", UTF_WIDTH(pvalstr, 12), pvalstr);
@@ -2919,7 +2919,7 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 		coeff,
 		sderr,
 		arinfo->rho[c] / arinfo->sderr[c],
-		student_pvalue_2(xx, dfd));
+		student_pvalue_2(dfd, xx));
     } else if (rtf_format(prn)) {
 	char pvalstr[16];
 	double pval;
@@ -2929,7 +2929,7 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 	rtf_print_double(arinfo->rho[c], prn);
 	rtf_print_double(arinfo->sderr[c], prn);
 	pprintf(prn, " \\qc %.4f\\cell", xx);
-	pval = student_pvalue_2(xx, dfd);
+	pval = student_pvalue_2(dfd, xx);
 	print_pval_str(pval, pvalstr);
 	pprintf(prn, " \\qc %s\\cell", pvalstr);
 	if (pval < 0.01) {
@@ -3313,7 +3313,7 @@ static void print_binary_statistics (const MODEL *pmod,
 	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
 		    i, model_chisq, _("p-value"), 
-		    chisq_cdf_comp(model_chisq, i));
+		    chisq_cdf_comp(i, model_chisq));
 	}
 	pprintf(prn, "  %s (%s) = %g\n", _(aic_str), _(aic_abbrev),
 		crit[C_AIC]);
@@ -3347,7 +3347,7 @@ static void print_binary_statistics (const MODEL *pmod,
 	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
 		    i, model_chisq, I_("p-value"), 
-		    chisq_cdf_comp(model_chisq, i));
+		    chisq_cdf_comp(i, model_chisq));
 	}
 	pprintf(prn, "\\par %s (%s) = %g\n", I_(aic_str), I_(aic_abbrev),
 		crit[C_AIC]);
@@ -3382,7 +3382,7 @@ static void print_binary_statistics (const MODEL *pmod,
 	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\\\\n",
 		    I_("Likelihood ratio test"), 
 		    i, model_chisq, I_("p-value"), 
-		    chisq_cdf_comp(model_chisq, i));
+		    chisq_cdf_comp(i, model_chisq));
 	}
 	pprintf(prn, "%s (%s) = %g\\\\\n", I_(aic_str), _(aic_abbrev),
 		crit[C_AIC]);

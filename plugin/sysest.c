@@ -517,7 +517,7 @@ static int hansen_sargan_test (equation_system *sys,
 
 #if SDEBUG
     fprintf(stderr, "Hansen-Sargan: Chi-square(%d) = %g (p-value %g)\n", 
-	    df, X2, chisq_cdf_comp(X2, df));
+	    df, X2, chisq_cdf_comp(df, X2));
 #endif
     sys->X2 = X2;
 
