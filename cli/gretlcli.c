@@ -259,7 +259,7 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-/* allow for backslash continuation of lines */
+/* allow for continuation of lines */
 
 static int maybe_get_input_line_continuation (char *line)
 {

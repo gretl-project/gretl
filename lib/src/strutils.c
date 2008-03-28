@@ -855,21 +855,22 @@ int get_base (char *targ, const char *src, char c)
  * Drop leading space and trailing space and newline from string,
  * then replace a trailing backslash (if any) with a space.
  * 
- * Returns: 1 if a trailing backslash was found, otherwise 0.
+ * Returns: 1 if a trailing backslash or comma was found, 
+ * otherwise 0.
  */
 
 int top_n_tail (char *str)
 {
-    int i, len, bs = 0;
+    int i, n, cont = 0;
 
     if (str == NULL || *str == 0 || *str == '\n' || *str == '\r') {
 	return 0;
     }
 
-    len = strlen(str);
+    n = strlen(str) - 1;
 
     /* chop any trailing space */
-    for (i=len-1; i>=0; i--) {
+    for (i=n; i>=0; i--) {
 	if (isspace((unsigned char) str[i])) {
 	    str[i] = 0;
 	} else {
@@ -878,9 +879,9 @@ int top_n_tail (char *str)
     }
 
     if (*str != 0) {
-	/* drop any leading spaces, also possible questionmark
-	   2007-11-07: try to catch non-breaking spaces too */
-#if 1
+	/* Drop any leading spaces, also possible questionmark.  Try
+	   to catch non-breaking spaces too -- ugh, Windows!
+	*/
 	i = 0;
 	while (isspace((unsigned char) str[i]) || 
 	       str[i] == '?' ||
@@ -888,22 +889,23 @@ int top_n_tail (char *str)
 	       str[i] == (char) 0xA0) {
 	    i++;
 	}
-#else
-	i = strspn(str, " \t?");
-#endif
 	if (i > 0) {
 	    shift_string_left(str, i);
 	}
 
 	/* replace backslash, if present */
-	len = strlen(str);
-	if (str[len - 1] == '\\') {
-	    str[len - 1] = ' ';
-	    bs = 1;
+	n = strlen(str) - 1;
+	if (n >= 0) {
+	    if (str[n] == '\\') {
+		str[n] = ' ';
+		cont = 1;
+	    } else if (str[n] == ',') {
+		cont = 1;
+	    }
 	}
     }
 
-    return bs;
+    return cont;
 }  
 
 /**
