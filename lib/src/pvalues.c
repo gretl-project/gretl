@@ -674,10 +674,11 @@ static double snedecor_pdf (int m, int n, double x)
     errno = 0;
 
     if (m > 0 && n > 0 && x > 0) {
-	double x1 = Binv(0.5*m, 0.5*n);
-	double x2 = pow((double) m / n, 0.5 * m);
-	double x3 = pow(x, 0.5*m - 1.0);
-	double x4 = pow(1.0 + m/n * x, 0.5 * (m+n));
+	double xm = m, xn = n;
+	double x1 = Binv(0.5*xm, 0.5*xn);
+	double x2 = pow(xm / xn, 0.5*xm);
+	double x3 = pow(x, 0.5*xm - 1.0);
+	double x4 = pow(1.0 + xm/xn * x, 0.5 * (xm+xn));
 
 	if (!errno && !na(x1)) {
 	    fx = x1 * x2 * x3 / x4;
