@@ -5379,7 +5379,7 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
     if (kid != NULL) {
 	const char *txt = gretl_print_get_buffer(prn);
 
-	textview_append_text_colorized(kid->w, txt);
+	textview_append_text_colorized(kid->w, txt, 0);
 	gretl_print_destroy(prn);
 	return 1;
     }

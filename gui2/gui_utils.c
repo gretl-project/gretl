@@ -59,6 +59,7 @@
 #include "../pixmaps/mini.boxplot.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
+#include "../pixmaps/mini.pin.xpm"
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # include "../pixmaps/info_24.xpm"
 #endif
@@ -114,7 +115,8 @@ enum {
     SORT_BY_ITEM,
     FORMAT_ITEM,
     INDEX_ITEM,
-    EDIT_SCRIPT_ITEM
+    EDIT_SCRIPT_ITEM,
+    STICKIFY_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -1487,7 +1489,8 @@ void gretl_stock_icons_init (void)
 	mini_session_xpm,
 	mini_plot_xpm,
 	mini_model_xpm,
-	mini_func_xpm
+	mini_func_xpm,
+	mini_pin_xpm
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -1508,7 +1511,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_ICONS,
 	GRETL_STOCK_SCATTER,
 	GRETL_STOCK_MODEL,
-	GRETL_STOCK_FUNC
+	GRETL_STOCK_FUNC,
+	GRETL_STOCK_PIN
     };
     int n = sizeof stocks / sizeof stocks[0];
 
@@ -1699,6 +1703,25 @@ static void script_index (GtkWidget *w, windata_t *vwin)
     display_files(NULL, PS_FILES, NULL);
 }
 
+static void set_output_sticky (GtkWidget *w, windata_t *vwin)
+{
+    const char *opts[] = {
+	N_("Running a script replaces text"),
+	N_("Running a script adds to text")
+    };
+    int resp, deflt;
+
+    deflt = (vwin->flags & VWIN_STICKY)? 1 : 0;
+
+    resp = radio_dialog(NULL, NULL, opts, 2, deflt, 0);
+
+    if (resp == 0) {
+	vwin->flags &= ~VWIN_STICKY;
+    } else if (resp == 1) {
+	vwin->flags |= VWIN_STICKY;
+    }
+}
+
 struct viewbar_item {
     const char *str;
     const gchar *icon;
@@ -1730,6 +1753,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, add_matrix_callback, ADD_MATRIX_ITEM },
+    { N_("Make sticky"), GRETL_STOCK_PIN, set_output_sticky, STICKIFY_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }
@@ -1796,81 +1820,83 @@ static void make_viewbar (windata_t *vwin, int text_out)
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 
     for (i=0; viewbar_items[i].str != NULL; i++) {
+	struct viewbar_item *vitem = &viewbar_items[i];
 	GtkWidget *w;
 
-	toolfunc = viewbar_items[i].toolfunc;
+	toolfunc = vitem->toolfunc;
 
-	if (!edit_ok && viewbar_items[i].flag == EDIT_ITEM) {
+	if (!edit_ok && vitem->flag == EDIT_ITEM) {
 	    continue;
 	}
 
-	if (!run_ok && viewbar_items[i].flag == RUN_ITEM) {
+	if (!run_ok && vitem->flag == RUN_ITEM) {
 	    continue;
 	}
 
-	if (vwin->role != EDIT_SCRIPT && viewbar_items[i].flag == MAIL_ITEM) {
+	if (vwin->role != EDIT_SCRIPT && vitem->flag == MAIL_ITEM) {
 	    continue;
 	}	
 
-	if (!help_ok && viewbar_items[i].flag == HELP_ITEM) {
+	if (!help_ok && vitem->flag == HELP_ITEM) {
 	    continue;
 	}
 
-	if (vwin->role != GR_PLOT && viewbar_items[i].flag == GP_ITEM) {
+	if (vwin->role != GR_PLOT && vitem->flag == GP_ITEM) {
 	    continue;
 	}
 
-	if (vwin->role == VIEW_SCALAR && viewbar_items[i].flag == 0) {
+	if (vwin->role == VIEW_SCALAR && vitem->flag == 0) {
 	    continue;
 	}
 
 	if ((!latex_ok || !MULTI_FORMAT_ENABLED(vwin->role)) && 
-	    viewbar_items[i].flag == TEX_ITEM) {
+	    vitem->flag == TEX_ITEM) {
 	    continue;
 	}
 
 	if (vwin->role != PCA && vwin->role != LEVERAGE && 
 	    vwin->role != MAHAL && vwin->role != FCAST &&
-	    viewbar_items[i].flag == ADD_DATA_ITEM) {
+	    vitem->flag == ADD_DATA_ITEM) {
 	    continue;
 	}
 
-	if (vwin->role != XTAB && viewbar_items[i].flag == ADD_MATRIX_ITEM) {
+	if (vwin->role != XTAB && vitem->flag == ADD_MATRIX_ITEM) {
 	    continue;
 	}
 
-	if (!sort_ok && viewbar_items[i].flag == SORT_ITEM) {
+	if (!sort_ok && vitem->flag == SORT_ITEM) {
 	    continue;
 	}
 
-	if (!sort_by_ok && viewbar_items[i].flag == SORT_BY_ITEM) {
+	if (!sort_by_ok && vitem->flag == SORT_BY_ITEM) {
 	    continue;
 	}
 
-	if (!plot_ok && viewbar_items[i].flag == PLOT_ITEM) {
+	if (!plot_ok && vitem->flag == PLOT_ITEM) {
 	    continue;
 	}
 
-	if (!format_ok && viewbar_items[i].flag == FORMAT_ITEM) {
+	if (!format_ok && vitem->flag == FORMAT_ITEM) {
 	    continue;
 	}
 
-	if (vwin->role != EDIT_SCRIPT && 
-	    viewbar_items[i].flag == EDIT_SCRIPT_ITEM) {
+	if (vwin->role != EDIT_SCRIPT && vitem->flag == EDIT_SCRIPT_ITEM) {
 	    continue;
 	}
 
-	if (vwin->role != VIEW_SCRIPT && 
-	    viewbar_items[i].flag == INDEX_ITEM) {
+	if (vwin->role != VIEW_SCRIPT && vitem->flag == INDEX_ITEM) {
 	    continue;
 	}
 
-	if (viewbar_items[i].flag == COPY_ITEM && 
-	    !editor_role(vwin->role)) {
+	if (vwin->role != SCRIPT_OUT && vitem->flag == STICKIFY_ITEM) {
+	    continue;
+	}
+
+	if (vitem->flag == COPY_ITEM && !editor_role(vwin->role)) {
 	    toolfunc = choose_copy_format_callback;
 	}
 
-	if (viewbar_items[i].flag == SAVE_ITEM) { 
+	if (vitem->flag == SAVE_ITEM) { 
 	    if (!edit_ok || vwin->role == SCRIPT_OUT) {
 		/* script output doesn't already have a filename */
 		continue;
@@ -1882,7 +1908,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    }
 	}
 
-	if (viewbar_items[i].flag == SAVE_AS_ITEM) {
+	if (vitem->flag == SAVE_AS_ITEM) {
 	    if (!save_as_ok) {
 		continue;
 	    } else if (MULTI_FORMAT_ENABLED(vwin->role) ||
@@ -1891,25 +1917,25 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    }
 	}
 
-	if (viewbar_items[i].flag == PLOT_ITEM) {
-	    set_plot_icon(&viewbar_items[i]);
+	if (vitem->flag == PLOT_ITEM) {
+	    set_plot_icon(vitem);
 	}
 
 	button = gtk_image_new();
-	gtk_image_set_from_stock(GTK_IMAGE(button), viewbar_items[i].icon, 
+	gtk_image_set_from_stock(GTK_IMAGE(button), vitem->icon, 
 				 GTK_ICON_SIZE_MENU);
         w = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				    NULL, _(viewbar_items[i].str), NULL,
+				    NULL, _(vitem->str), NULL,
 				    button, toolfunc, vwin);
 
 	g_object_set_data(G_OBJECT(w), "flag", 
-			  GINT_TO_POINTER(viewbar_items[i].flag));
+			  GINT_TO_POINTER(vitem->flag));
 
-	if (viewbar_items[i].flag == SAVE_ITEM) { 
+	if (vitem->flag == SAVE_ITEM) { 
 	    /* nothing to save just yet */
 	    gtk_widget_set_sensitive(w, FALSE);
 	} 
-	if (viewbar_items[i].flag == SAVE_AS_ITEM &&
+	if (vitem->flag == SAVE_AS_ITEM &&
 	    strstr(vwin->fname, "script_tmp")) {
 	    gtk_widget_set_sensitive(w, FALSE);
 	}
@@ -2083,14 +2109,33 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 
 static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
 {
+    int sticky = (vwin->flags & VWIN_STICKY);
     GtkTextBuffer *buf;
+    const char *newtext;
 
+    newtext = gretl_print_get_buffer(prn);
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-    gtk_text_buffer_set_text(buf, "", -1);
-    view_buffer_insert_text(vwin, prn);
+
+    if (sticky) {
+	/* append to previous content */
+	GtkTextMark *mark;
+	GtkTextIter iter;
+
+	gtk_text_buffer_get_end_iter(buf, &iter);
+	mark = gtk_text_buffer_create_mark(buf, NULL, &iter, TRUE);
+	textview_append_text_colorized(vwin->w, newtext, 1);
+	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
+				     mark, 0.0, TRUE, 0, 0.05);
+	gtk_text_buffer_delete_mark(buf, mark);
+    } else {
+	/* replace previous content */
+	gtk_text_buffer_set_text(buf, "", -1);
+	textview_set_text_colorized(vwin->w, newtext);
+	cursor_to_top(vwin);
+    }
+
     gretl_print_destroy(prn);
 
-    cursor_to_top(vwin);
     gtk_window_present(GTK_WINDOW(vwin->dialog));
 
     return vwin;

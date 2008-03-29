@@ -32,6 +32,7 @@
 #define GRETL_STOCK_CONSOLE "gretl-console"
 #define GRETL_STOCK_SCATTER "gretl-scatter"
 #define GRETL_STOCK_FUNC    "gretl-func"
+#define GRETL_STOCK_PIN     "gretl-pin"
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # define NO_INFO_ICON 1
@@ -49,7 +50,8 @@
 enum windata_flags {
     VWIN_HELP_ACTIVE  = 1 << 0,
     VWIN_BUSY         = 1 << 1,
-    VWIN_DELETE_FNAME = 1 << 2
+    VWIN_DELETE_FNAME = 1 << 2,
+    VWIN_STICKY       = 1 << 3
 };
 
 typedef struct _windata_t windata_t;

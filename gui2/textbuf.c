@@ -74,6 +74,17 @@ void cursor_to_top (windata_t *vwin)
 				 mark, 0.0, FALSE, 0, 0);
 }
 
+void cursor_to_mark (windata_t *vwin, GtkTextMark *mark)
+{
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w)); 
+    GtkTextIter iter;
+
+    gtk_text_buffer_get_iter_at_mark(buf, &iter, mark);
+    gtk_text_buffer_place_cursor(buf, &iter);
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
+				 mark, 0.0, TRUE, 0, 0.1);
+}
+
 gint get_char_width (GtkWidget *widget)
 {
     PangoLayout *pl;
@@ -590,13 +601,14 @@ GtkTextBuffer *gretl_text_buf_new (void)
 
 static void 
 real_textview_add_colorized (GtkWidget *view, const char *buf,
-			     int append)
+			     int append, int trim)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter; 
     int thiscolor = PLAIN_TEXT;
     int nextcolor;
     char readbuf[MAXSTR];
+    int i = 0;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
@@ -611,6 +623,9 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
     bufgets_init(buf);
 
     while (bufgets(readbuf, sizeof readbuf, buf)) {
+	if (trim && i++ < 2) {
+	    continue;
+	}
 
 	if (ends_with_backslash(readbuf)) {
 	    nextcolor = BLUE_TEXT;
@@ -638,12 +653,12 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 
 void textview_set_text_colorized (GtkWidget *view, const char *buf)
 {
-    real_textview_add_colorized(view, buf, 0);
+    real_textview_add_colorized(view, buf, 0, 0);
 }
 
-void textview_append_text_colorized (GtkWidget *view, const char *buf)
+void textview_append_text_colorized (GtkWidget *view, const char *buf, int trim)
 {
-    real_textview_add_colorized(view, buf, 1);
+    real_textview_add_colorized(view, buf, 1, trim);
 }
 
 void textview_insert_file (windata_t *vwin, const char *fname)

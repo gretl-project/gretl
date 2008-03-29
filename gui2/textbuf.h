@@ -32,6 +32,8 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
 
 void cursor_to_top (windata_t *vwin);
 
+void cursor_to_mark (windata_t *vwin, GtkTextMark *mark);
+
 gint get_char_width (GtkWidget *widget);
 
 GtkTextBuffer *gretl_text_buf_new (void);
@@ -55,7 +57,8 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget);
 
 void textview_set_text_colorized (GtkWidget *view, const char *buf);
 
-void textview_append_text_colorized (GtkWidget *view, const char *buf);
+void textview_append_text_colorized (GtkWidget *view, const char *buf,
+				     int trim);
 
 void textview_insert_file (windata_t *vwin, const char *fname);
 
