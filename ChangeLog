@@ -12,12 +12,16 @@ version 1.7.5, in progress
   accompany each parameter, for use in GUI
 - Add $unit accessor to get a panel unit index
 - Add "--breusch-pagan" option to lmtest command (with --robust
-  option to use the Koenker robust variance estimator)
+  option to use the Koenker robust variance estimator); also
+  add this test to the GUI
 - Fix some bugs in sub-sampling of panel datasets
 - Revise the GUI for setting the sample range for panel data
 - Improvements for panel time-series graphs
 - Fix bug in importing data with long numeric observation 
   labels
+- printf command: add "%m" specifier for matrices
+- GUI script output window: add option of making output
+  "sticky" (running a script appends to text)
   
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

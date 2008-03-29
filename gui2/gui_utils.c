@@ -1753,7 +1753,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, add_matrix_callback, ADD_MATRIX_ITEM },
-    { N_("Make sticky"), GRETL_STOCK_PIN, set_output_sticky, STICKIFY_ITEM },
+    { N_("Stickiness..."), GRETL_STOCK_PIN, set_output_sticky, STICKIFY_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }
