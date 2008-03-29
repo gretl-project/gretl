@@ -86,7 +86,7 @@ static const char *typestr (int t)
     }
 }
 
-static void free_tree (NODE *t, const char *msg)
+static void free_tree (NODE *t, parser *p, const char *msg)
 {
     if (t == NULL) {
 	return;
@@ -102,18 +102,18 @@ static void free_tree (NODE *t, const char *msg)
 	int i;
 
 	for (i=0; i<t->v.bn.n_nodes; i++) {
-	    free_tree(t->v.bn.n[i], msg);
+	    free_tree(t->v.bn.n[i], p, msg);
 	}
 	free(t->v.bn.n);
     } else if (b3sym(t->t)) {
-	free_tree(t->v.b3.l, msg);
-	free_tree(t->v.b3.m, msg);
-	free_tree(t->v.b3.r, msg);
+	free_tree(t->v.b3.l, p, msg);
+	free_tree(t->v.b3.m, p, msg);
+	free_tree(t->v.b3.r, p, msg);
     } else if (b2sym(t->t)) {
-	free_tree(t->v.b2.l, msg);
-	free_tree(t->v.b2.r, msg);
+	free_tree(t->v.b2.l, p, msg);
+	free_tree(t->v.b2.r, p, msg);
     } else if (b1sym(t->t)) {
-	free_tree(t->v.b1.b, msg);
+	free_tree(t->v.b1.b, p, msg);
     } 
 
 #if EDEBUG
@@ -137,6 +137,10 @@ static void free_tree (NODE *t, const char *msg)
 	free(t->v.str);
     }
 
+    if (p != NULL && t == p->ret) {
+	p->ret = NULL;
+    }
+
     free(t);
 }
 
@@ -156,7 +160,7 @@ void parser_free_aux_nodes (parser *p)
     if (p->aux != NULL) {
 	for (i=0; i<p->n_aux; i++) {
 	    if (p->aux[i] != p->ret) {
-		free_tree(p->aux[i], "Aux");
+		free_tree(p->aux[i], p, "Aux");
 	    }
 	}
 	free(p->aux);
@@ -385,7 +389,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	if (ret == NULL) {
 	    p->err = (t == 0)? E_DATA : E_ALLOC;
 	} else if (add_aux_node(p, ret)) {
-	    free_tree(ret, "On error");
+	    free_tree(ret, p, "On error");
 	    ret = NULL;
 	} 
     } else if (p->aux == NULL) {
@@ -877,23 +881,23 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		}
 		if (e->t == NUM) {
 		    parm[i] = e->v.xval;
-		    free_tree(s, "Pdist");
+		    free_tree(s, p, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
 		    pvec = e->v.xvec;
-		    free_tree(s, "Pdist");
+		    free_tree(s, p, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k && !rgen && e->t == MAT && bvec == NULL) {
 		    pmat = e->v.m;
-		    free_tree(s, "Pdist");
+		    free_tree(s, p, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k-1 && d == 'D' && e->t == VEC) {
 		    bvec = e->v.xvec;
-		    free_tree(s, "Pdist");
+		    free_tree(s, p, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k-1 && d == 'D' && e->t == MAT) {
 		    bmat = e->v.m;
-		    free_tree(s, "Pdist");
+		    free_tree(s, p, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else {
 		    p->err = E_INVARG;
@@ -1433,7 +1437,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    }
 	} else {
 	    if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
-		free_tree(ret, "On error");
+		free_tree(ret, p, "On error");
 		return NULL;
 	    }
 
@@ -3454,7 +3458,7 @@ static NODE *apply_matrix_func (NODE *n, int f, parser *p)
 	double x;
 
 	if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
-	    free_tree(ret, "On error");
+	    free_tree(ret, p, "On error");
 	    return NULL;
 	}
 
@@ -4194,7 +4198,7 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 	    }
 	    if (ok_matdef_sym(n->t)) {
 		if (nn == t) {
-		    free_tree(t->v.bn.n[i], "MatDef");
+		    free_tree(t->v.bn.n[i], p, "MatDef");
 		}
 		nn->v.bn.n[i] = n;
 	    } else {
@@ -6980,20 +6984,20 @@ void gen_cleanup (parser *p)
     if (reusable(p)) {
 #if PRESERVE_AUX_NODES
 	if (p->ret != p->tree && !is_aux_node(p->ret)) {
-	    free_tree(p->ret, "p->ret");
+	    free_tree(p->ret, p, "p->ret");
 	    p->ret = NULL;
 	}
 #else
 	if (p->ret != p->tree) {
-	    free_tree(p->ret, "p->ret");
+	    free_tree(p->ret, p, "p->ret");
 	    p->ret = NULL;
 	}
 #endif
     } else {
 	if (p->ret != p->tree) {
-	    free_tree(p->tree, "p->tree");
+	    free_tree(p->tree, p, "p->tree");
 	}
-	free_tree(p->ret, "p->ret");
+	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
 	free(p->lh.mspec);
     }
