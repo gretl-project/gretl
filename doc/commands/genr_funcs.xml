@@ -2359,6 +2359,20 @@
       </description>
     </function>
 
+    <function name="msortby" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar">c</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a matrix in which the rows of <argname>X</argname>
+	  are sorted by increasing value of the elements in
+	  column <argname>c</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="muniform" output="matrix">
       <fnargs>
 	<fnarg type="scalar">r</fnarg>

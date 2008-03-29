@@ -1523,7 +1523,10 @@ static NODE *matrix_csv_write (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *matrix_lag (NODE *l, NODE *r, parser *p)
+/* matrix on left, scalar on right */
+
+static NODE *matrix_scalar_func (NODE *l, NODE *r, 
+				 int f, parser *p)
 {
     NODE *ret = NULL;
 
@@ -1541,7 +1544,11 @@ static NODE *matrix_lag (NODE *l, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	ret->v.m = gretl_matrix_lag(m, k, 0.0);
+	if (f == F_MLAG) {
+	    ret->v.m = gretl_matrix_lag(m, k, 0.0);
+	} else if (f == F_MSORTBY) {
+	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
+	}
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -4950,8 +4957,10 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MLAG:
+    case F_MSORTBY:
+	/* matrix on left, scalar on right */
 	if (l->t == MAT && r->t == NUM) {
-	    ret = matrix_lag(l, r, p);
+	    ret = matrix_scalar_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; 
 	}

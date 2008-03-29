@@ -602,6 +602,9 @@ gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
 				    const gretl_matrix *sel, 
 				    int rowsel, int *err);
 
+gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m, 
+					   int k, int *err);
+
 void lapack_mem_free (void);
 
 #endif /* GRETL_MATRIX_H */

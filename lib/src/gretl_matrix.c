@@ -9114,3 +9114,64 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 
     return ret;
 }
+
+/**
+ * gretl_matrix_sort_by_column:
+ * @m: matrix.
+ * @k: column by which to sort.
+ * @err: location to receive error code.
+ *
+ * Produces a matrix which contains the rows of @m, re-
+ * ordered by increasing value of the elements in column
+ * @k.  
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m, 
+					   int k, int *err)
+{
+    struct rsort {
+	double x;
+	int row;
+    } *rs; 
+    gretl_matrix *a;
+    double x;
+    int i, j;
+
+    if (gretl_is_null_matrix(m) || k < 0 || k >= m->cols) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    rs = malloc(m->rows * sizeof *rs);
+    if (rs == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    a = gretl_matrix_copy(m);
+    if (a == NULL) {
+	free(rs);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	rs[i].x = gretl_matrix_get(m, i, k);
+	rs[i].row = i;
+    }
+
+    qsort(rs, m->rows, sizeof *rs, gretl_compare_doubles);
+
+    for (j=0; j<m->cols; j++) {
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, rs[i].row, j);
+	    gretl_matrix_set(a, i, j, x);
+	}
+    }
+
+    free(rs);
+
+    return a;
+}

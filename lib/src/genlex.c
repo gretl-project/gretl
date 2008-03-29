@@ -281,6 +281,7 @@ struct str_table funcs[] = {
     { F_VARNAME,  "varname" },
     { F_COLNAMES, "colnames" },
     { F_LJUNGBOX, "ljungbox" },
+    { F_MSORTBY,  "msortby" },
     { 0,        NULL }
 };
 

@@ -3989,8 +3989,8 @@ int set_panel_structure_from_line (const char *line,
 				   double **Z, 
 				   DATAINFO *pdinfo)
 {
-    int n = pdinfo->n; /* ? */
-    int uv, tv;
+    int n = pdinfo->n;
+    int uv = 0, tv = 0;
     int err = 0;
 
     if (!strncmp(line, "setobs", 6)) {
