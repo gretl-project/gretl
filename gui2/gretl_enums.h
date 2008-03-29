@@ -62,6 +62,8 @@ enum extra_cmds {
     LMTEST_LOGS,
     LMTEST_SQUARES,
     LMTEST_WHITE,
+    LMTEST_BP,
+    LMTEST_BPK,
     LMTEST_BG,
     LMTEST_GROUPWISE,
     KERNEL_DENSITY,

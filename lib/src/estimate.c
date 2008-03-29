@@ -2649,7 +2649,6 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 			 gretlopt opt, int *err)
 {
     double s2, u2t, gt;
-    double gbar = 0.0, TSS = 0.0;
     double V = 0.0, LM = NADBL;
     int t, v = list[1];
 
@@ -2671,24 +2670,26 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 	} else {
 	    gt = u2t / s2;
 	}
-	gbar += gt;
 	(*pZ)[v][t] = gt;
     }
 
-    gbar /= pmod->nobs;
- 
     *aux = lsq(list, pZ, pdinfo, OLS, OPT_A);
     *err = aux->errcode;
 
     if (!*err) {
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    gt = (*pZ)[v][t];
-	    TSS += (gt - gbar) * (gt - gbar);
-	}
-	if (opt & OPT_R) {
-	    LM = (TSS - aux->ess) / V;
+	double RSS = aux->tss - aux->ess;
+
+	if (RSS < 0) {
+	    *err = E_DATA;
 	} else {
-	    LM = .5 * (TSS - aux->ess);
+	    if (opt & OPT_R) {
+		gretl_model_set_int(aux, "robust", 1);
+		LM = RSS / V;
+	    } else {
+		LM = .5 * RSS;
+	    }
+	    gretl_model_set_double(aux, "BPLM", LM);
+	    aux->aux = AUX_BP;
 	}
     }
 
@@ -2801,6 +2802,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    err = white.errcode;
 	    if (!err) {
 		LM = white.rsq * white.nobs;
+		white.aux = AUX_WHITE;
 	    }
 	}
     }
@@ -2809,10 +2811,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	int df = white.ncoeff - 1;
 	double pval = chisq_cdf_comp(df, LM);
 
-	if (BP || (opt & OPT_Q)) {
+	if (opt & OPT_Q) {
 	    print_whites_test(LM, df, pval, opt, prn);
 	} else {
-	    white.aux = (BP)? AUX_BP : AUX_WHITE;
 	    printmodel(&white, pdinfo, OPT_NONE, prn);
 	}
 

@@ -260,7 +260,10 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/Non-linearity (_logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
     { N_("/Tests/_Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
     { "/Tests/sep2", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/_Heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
+    { N_("/Tests/_Heteroskedasticity"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Tests/Heteroskedasticity/White's test"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
+    { N_("/Tests/Heteroskedasticity/Breusch-Pagan"), NULL, do_lmtest, LMTEST_BP, NULL, GNULL },
+    { N_("/Tests/Heteroskedasticity/Koenker"), NULL, do_lmtest, LMTEST_BPK, NULL, GNULL },
     { N_("/Tests/_Normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
     { N_("/Tests/_Influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
     { N_("/Tests/_Collinearity"), NULL, do_vif, VIF, NULL, GNULL },
@@ -2607,6 +2610,12 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	    } else if (cmd_ci == LMTEST_WHITE) {
 		cmd_ci = LMTEST;
 		opt = OPT_W;
+	    } else if (cmd_ci == LMTEST_BP) {
+		cmd_ci = LMTEST;
+		opt = OPT_B;
+	    } else if (cmd_ci == LMTEST_BPK) {
+		cmd_ci = LMTEST;
+		opt = OPT_B | OPT_R;
 	    } else if (cmd_ci == ARCH) {
 		cmd_ci = LMTEST;
 		opt = OPT_H;

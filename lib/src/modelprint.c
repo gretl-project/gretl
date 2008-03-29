@@ -25,7 +25,8 @@
 #include "texprint.h"
 
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || \
-                       a == AUX_AR || a == AUX_VAR || a == AUX_HET_1)
+                       a == AUX_AR || a == AUX_VAR || a == AUX_HET_1 || \
+		       a == AUX_BP)
 
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
@@ -321,6 +322,33 @@ static void pseudorsqline (const MODEL *pmod, PRN *prn)
     }	
 }
 
+static void rssline (const MODEL *pmod, PRN *prn)
+{
+    double RSS;
+
+    if (na(pmod->ess) || na(pmod->tss)) {
+	return;
+    }
+
+    RSS = pmod->tss - pmod->ess;
+
+    if (plain_format(prn)) { 
+	pprintf(prn, "  %s = %.*g\n", _("Explained sum of squares"), 
+		XDIGITS(pmod), RSS);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Explained sum of squares"), 
+		RSS);
+    } else if (tex_format(prn)) {  
+	char r2[32];
+
+	tex_dcolumn_double(RSS, r2);
+	pprintf(prn, "%s = %s \\\\\n", I_("Explained sum of squares"), r2);
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Explained sum of squares"), 
+		prn_delim(prn), RSS);
+    }	
+}
+
 static const char *aic_str = N_("Akaike information criterion");
 static const char *bic_str = N_("Schwarz Bayesian criterion");
 static const char *hqc_str = N_("Hannan-Quinn criterion");
@@ -336,7 +364,7 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR ||
-	pmod->aux == AUX_HET_1) {
+	pmod->aux == AUX_HET_1 || pmod->aux == AUX_BP) {
 	return;
     }
 
@@ -842,6 +870,8 @@ static const char *aux_string (int aux, PRN *prn)
 		 "(log terms)");
     } else if (aux == AUX_WHITE) {
 	return N_("White's test for heteroskedasticity");
+    } else if (aux == AUX_BP) {
+	return N_("Breusch-Pagan test for heteroskedasticity");
     } else if (aux == AUX_HET_1) {
 	return N_("Pesaran-Taylor test for heteroskedasticity");
     } else if (aux == AUX_CHOW) {
@@ -1491,6 +1521,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_SQ:
     case AUX_LOG:
     case AUX_WHITE:
+    case AUX_BP:
     case AUX_HET_1:	
     case AUX_CHOW:
     case AUX_COINT:
@@ -1662,6 +1693,16 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}^2$" : "uhat^2");
+    } else if (pmod->aux == AUX_BP) {
+	const char *fmt;
+
+	if (gretl_model_get_int(pmod, "robust")) {
+	    fmt = N_("scaled %s (Koenker robust variant)");
+	} else {
+	    fmt = N_("scaled %s");
+	}
+	pprintf(prn, "%s: ", (utf)? _("Dependent variable") : I_("Dependent variable"));
+	pprintf(prn, (utf)? _(fmt) : I_(fmt), (tex)? "$\\hat{u}^2$" : "uhat^2");
     } else if (pmod->aux == AUX_ARCH) {
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
@@ -2073,6 +2114,33 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_bp_results (const MODEL *pmod, PRN *prn)
+{
+    double pv, X = gretl_model_get_double(pmod, "BPLM");
+    int df = pmod->ncoeff - 1;
+
+    if (na(X)) {
+	return;
+    }
+
+    pv = chisq_cdf_comp(df, X);
+
+    if (plain_format(prn)) {
+	pprintf(prn, "\n%s: LM = %f,\n", _("Test statistic"), X);
+	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
+		_("with p-value"), _("Chi-square"), df, X, pv);
+    } else if (rtf_format(prn)) { /* FIXME */
+	pprintf(prn, "\\par \\ql\n%s: LM = %f,\n", I_("Test statistic"), 
+		X);
+	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
+		I_("with p-value"), I_("Chi-square"), df, X, pv);
+    } else if (tex_format(prn)) {
+	pprintf(prn, "\n%s: LM = %f,\n", I_("Test statistic"), X);
+	pprintf(prn, "%s = $P$($\\chi^2(%d)$ > %f) = %f\n\n",
+		I_("with p-value"), df, X, pv);
+    }
+}
+
 static void print_HET_1_results (const MODEL *pmod, PRN *prn)
 {
     double z = fabs(pmod->coeff[1]) / pmod->sderr[1];
@@ -2341,6 +2409,12 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_whites_results(pmod, prn);
 	goto close_format;
     }
+
+    if (pmod->aux == AUX_BP) { 
+	rssline(pmod, prn);
+	print_bp_results(pmod, prn);
+	goto close_format;
+    }    
 
     if (pmod->ci == ARMA) {
 	print_middle_table_start(prn);

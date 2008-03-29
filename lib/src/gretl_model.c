@@ -3928,8 +3928,8 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	if (ci == OMIT || ci == OMITFROM || ci == COEFFSUM) {
 	    ok = 0;
 	} else if (pmod->ifc && ci == LMTEST) {
-	    /* const only: rule out squares, logs, White's */
-	    if (opt & (OPT_W | OPT_S | OPT_L)) {
+	    /* const only: rule out squares, logs, h'sked */
+	    if (opt & (OPT_W | OPT_B| OPT_S | OPT_L)) {
 		ok = 0;
 	    }
 	}

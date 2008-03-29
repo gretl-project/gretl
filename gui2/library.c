@@ -1733,6 +1733,24 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
 	}
+    } else if (action == LMTEST_BP) {
+	gretl_command_strcpy("lmtest --breusch-pagan");
+	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_B, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    strcat(title, _("(heteroskedasticity)"));
+	}
+    } else if (action == LMTEST_BPK) {
+	gretl_command_strcpy("lmtest --breusch-pagan --robust");
+	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_B | OPT_R, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    strcat(title, _("(heteroskedasticity)"));
+	}
     } else if (action == LMTEST_GROUPWISE) {
 	gretl_command_strcpy("lmtest --panel");
 	err = groupwise_hetero_test(pmod, &Z, datainfo, prn);

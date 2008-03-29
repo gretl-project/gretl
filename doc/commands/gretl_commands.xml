@@ -4268,6 +4268,14 @@
 	  <effect>heteroskedasticity, White's test</effect>
         </option>
         <option>
+	  <flag>--breusch-pagan</flag>
+	  <effect>heteroskedasticity, Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>robust variance estimate for Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
 	  <flag>--panel</flag>
 	  <effect>heteroskedasticity, groupwise</effect>
         </option>
@@ -4280,32 +4288,31 @@
 
     <description context="gui">
       <para>
-	Under this heading fall several hypothesis tests.  What they have
-	in common is that the test involves the estimation of an auxiliary
+	Under this heading fall several hypothesis tests.  What they have in
+	common is that the test involves the estimation of an auxiliary
 	regression, where the dependent variable is the residual from some
 	<quote>original</quote> regression.  The right-hand side variables
-	include those from the original regression, along with some
-	additional terms.  The test statistic is calculated as (sample
-	size * R-squared) from the auxiliary regression: this is
-	distributed as chi-square with degrees of freedom equal to the
-	number of additional terms, under the null hypothesis that the
-	additional terms have no explanatory power over the residual.  A
-	<quote>large</quote> chi-square value (small p-value) suggests
-	that this null hypothesis should be rejected.
+	include those from the original regression, along with some additional
+	terms.  In most cases the test statistic is calculated as (sample size
+	* R-squared) from the auxiliary regression: this is distributed as
+	chi-square with degrees of freedom equal to the number of additional
+	terms, under the null hypothesis that the additional terms have no
+	explanatory power over the residual.  A <quote>large</quote>
+	chi-square value (small p-value) suggests that this null hypothesis
+	should be rejected.
       </para>
     </description>
 
     <description context="cli">
       <para>
-	Must immediately follow an estimation command. Depending on
-	the option given, this command carries out one of the following:
-	Lagrange Multiplier test for nonlinearity (logs or squares);
-	White's test for heteroskedasticity; the LMF test for serial
-	correlation (see Kiviet, 1986); or a test for ARCH
-	(Autoregressive Conditional Heteroskedasticity, see also the
-	<cmd>arch</cmd> command).  Most of the options are only
-	available for models estimated via OLS, but see below for
-	details regarding two-stage least squares.
+	Must immediately follow an estimation command. Depending on the option
+	given, this command carries out one of the following: a Lagrange
+	Multiplier test for nonlinearity (logs or squares); White's test or
+	the Breusch&ndash;Pagan test for heteroskedasticity; the LMF test for
+	serial correlation (Kiviet, 1986); or a test for ARCH (Autoregressive
+	Conditional Heteroskedasticity; see also the <cmd>arch</cmd> command).
+	Most of the options are only available for models estimated via OLS,
+	but see below for details regarding two-stage least squares.  
       </para>
       <para>
 	The optional <lit>order</lit> argument is relevant only in case
@@ -4313,6 +4320,12 @@
 	selected.  The default is to run these tests using a lag order
 	equal to the periodicity of the data, but this can be adjusted by
 	supplying a specific lag order.
+      </para>
+      <para>
+	The <lit>--robust</lit> option applies only when the
+	Breusch&ndash;Pagan test is selected; its effect is to use the robust
+	variance estimator proposed by Koenker (1981), making the test less
+	sensitive to the assumption of normality.
       </para>
       <para>
 	The <lit>--panel</lit> option is available only when the model
@@ -4329,12 +4342,11 @@
       </para>
       <para>
 	When a model has been estimated by two-stage least squares (see
-	<cmdref targ="tsls"/>), the LM principle breaks down and gretl
-	offers some equivalents: the <flag>--autocorr</flag> option
-	computes Godfrey's test for autocorrelation (Review of Economics
-	and Statistics, 1994) while the <flag>--white</flag> option yields
-	Pesaran and Taylor's HET1 heteroskedasticity test (Oxford Bulletin
-	of Economics and Statistics, 1999).
+	<cmdref targ="tsls"/>), the LM principle breaks down and gretl offers
+	some equivalents: the <flag>--autocorr</flag> option computes
+	Godfrey's test for autocorrelation (Godfrey, 1994) while the
+	<flag>--white</flag> option yields the HET1 heteroskedasticity test
+	(Pesaran and Taylor, 1999).
       </para>
     </description>
 

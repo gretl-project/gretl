@@ -317,10 +317,6 @@
   <xsl:call-template name="dnl"/>
 </xsl:template>
 
-<xsl:template match="description">
-  <xsl:apply-templates/>
-</xsl:template>
-
 <xsl:template match="fnargs">
   <xsl:choose>
     <xsl:when test="count(fnarg) > 1">

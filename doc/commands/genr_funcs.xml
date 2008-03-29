@@ -2278,10 +2278,11 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the OLS estimates obtained by regressing the <by r="T"
-	    c="n"/> matrix <argname>Y</argname> on the <by r="T" c="k"/>
-	  matrix <argname>X</argname>. The Cholesky decomposition is used. If
-	  the third argument is not <lit>null</lit>, the matrix
+	  Returns a <by r="k" c="n"/> matrix of parameter estimates obtained
+	  by OLS regression of the <by r="T" c="n"/> matrix
+	  <argname>Y</argname> on the <by r="T" c="k"/> matrix
+	  <argname>X</argname>. The Cholesky decomposition is used. If the
+	  third argument is not <lit>null</lit>, the <by r="T" c="n"/> matrix
 	  <argname>U</argname> will contain the residuals.
 	</para>
       </description>
@@ -2362,13 +2363,13 @@
     <function name="msortby" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="scalar">c</fnarg>
+	<fnarg type="scalar">j</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns a matrix in which the rows of <argname>X</argname>
-	  are sorted by increasing value of the elements in
-	  column <argname>c</argname>.
+	  are reordered by increasing value of the elements in
+	  column <argname>j</argname>.
 	</para>
       </description>
     </function>

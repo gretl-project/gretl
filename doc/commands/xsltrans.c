@@ -72,6 +72,10 @@ static void build_params (char const **params, int content,
 	params[i++] = "lang";
 	params[i++] = lang;
     }    
+
+    /* note: help='cli' is the default in gretlhlp.xsl;
+       we need give an explicit value here only if we
+       want to override that */
     
     if (content == CONTENT_GUI) {
 	params[i++] = "hlp";
