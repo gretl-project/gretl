@@ -2166,15 +2166,25 @@ static int get_data_xy (png_plot *plot, int x, int y,
 
 	base = plot->spec->logbase[0];
 	if (base != 0) {
-	    dprop = (dx - xmin) / (xmax - xmin);
-	    lr = log(xmax / xmin) / log(base);
-	    dx = pow(base, dprop * lr);
+	    if (xmin > 0) {
+		dprop = (dx - xmin) / (xmax - xmin);
+		lr = log(xmax / xmin) / log(base);
+		dx = pow(base, dprop * lr);
+	    } else {
+		dx = NADBL;
+		ok = 0;
+	    }
 	}
 	base = plot->spec->logbase[1];
 	if (base != 0) {
-	    dprop = (dy - ymin) / (ymax - ymin);
-	    lr = log(ymax / ymin) / log(base);
-	    dy = pow(base, dprop * lr);
+	    if (ymin > 0) {
+		dprop = (dy - ymin) / (ymax - ymin);
+		lr = log(ymax / ymin) / log(base);
+		dy = pow(base, dprop * lr);
+	    } else {
+		dy = NADBL;
+		ok = 0;
+	    }
 	}
     } else if (plot_is_polar(plot)) {
 	double px = atan2(dy, dx);

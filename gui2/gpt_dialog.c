@@ -1581,8 +1581,8 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
     /* axis scale: linear vs log? */
 
-    if ((axis == 0 && plot_get_xmin(plot) > 0.0) ||
-	(axis == 1 && plot_get_ymin(plot) > 0.0)) {
+    if ((axis == 0 && plot_get_xmin(plot) >= 0.0) ||
+	(axis == 1 && plot_get_ymin(plot) >= 0.0)) {
 	GtkWidget *combo;
 	GList *strs = NULL;
 
