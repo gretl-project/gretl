@@ -20,6 +20,16 @@
 #ifndef CALCULATOR_H
 #define CALCULATOR_H
 
+typedef enum {
+    C_INT,
+    C_POS_INT,
+    C_DBL,
+    C_POS_DBL,
+    C_FRAC
+} EntryValType;
+
+double entry_get_numeric_value (GtkWidget *w, EntryValType t);
+
 void stats_calculator (gpointer p, guint code, GtkWidget *w);
 
 #endif /* CALCULATOR_H */

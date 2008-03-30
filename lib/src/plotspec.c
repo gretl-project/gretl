@@ -69,6 +69,9 @@ GPT_SPEC *plotspec_new (void)
     for (i=0; i<4; i++) {
 	spec->range[i][0] = NADBL;
 	spec->range[i][1] = NADBL;
+	if (i < 3) {
+	    spec->logbase[i] = 0.0;
+	}
     }
 
     spec->b_ols = NULL;
@@ -330,16 +333,23 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     gretl_push_c_numeric_locale();
 
     for (i=0; i<4; i++) {
+	if (i < 3 && spec->logbase[i] > 0.0) {
+	    fprintf(fp, "set logscale %s %g\n", rstrs[i], spec->logbase[i]);
+	}
+
 	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
 	    spec->range[i][0] == spec->range[i][1]) {
 	    continue;
 	}
+
 	if ((i == 2 && !(spec->flags & GPT_Y2AXIS)) ||
 	    (i == 3 && !(spec->flags & GPT_PARAMETRIC))) {
 	    continue;
 	}
+
 	fprintf(fp, "set %srange [%.7g:%.7g]\n", rstrs[i], 
 		spec->range[i][0], spec->range[i][1]);
+
 	if (i == 4 && spec->code == PLOT_PROB_DIST && spec->samples == 0) {
 	    int ns = spec->range[i][1] - spec->range[i][0] + 1;
 

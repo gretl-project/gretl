@@ -194,7 +194,7 @@ get_printf_format_chunk (const char *s, int *fc,
 			 int *len, int *wstar, int *pstar,
 			 int *err)
 {
-    const char *cnvchars = "eEfgGxduxsm";
+    const char *cnvchars = "eEfgGxduxs";
     const char *numchars = "0123456789";
     char *chunk = NULL;
     const char *p = s;
@@ -352,15 +352,8 @@ static int print_arg (char **pfmt, char **pargs,
     if (!err) {
 	if (fc == 's') {
 	    str = printf_get_string(arg, pZ, pdinfo, t, &err);
-	} else if (fc == 'm') {
-	    m = get_matrix_by_name(arg);
-	    if (m == NULL) {
-		if (varindex(pdinfo, arg) < pdinfo->v) {
-		    err = E_TYPES;
-		} else {
-		    err = E_UNKVAR;
-		}
-	    }
+	} else if ((m = get_matrix_by_name(arg)) != NULL) {
+	    ; /* OK, we'll print the matrix */
 	} else {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
 	    if (!err && na(x)) {
@@ -378,7 +371,11 @@ static int print_arg (char **pfmt, char **pargs,
 
     /* do the actual printing */
 
-    if (fc == 's') {
+    if (m != NULL) {
+	if (!wstar) wid = -1;
+	if (!pstar) prec = -1;
+	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
+    } else if (fc == 's') {
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, str);
 	} else if (wstar || pstar) {
@@ -387,8 +384,6 @@ static int print_arg (char **pfmt, char **pargs,
 	} else {
 	    pprintf(prn, fmt, str);
 	}
-    } else if (fc == 'm') {
-	gretl_matrix_print_plain(m, prn);
     } else if (strchr(intconv, fc)) {
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, (int) x);

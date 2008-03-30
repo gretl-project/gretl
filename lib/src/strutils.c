@@ -893,14 +893,19 @@ int top_n_tail (char *str)
 	    shift_string_left(str, i);
 	}
 
-	/* replace backslash, if present */
-	n = strlen(str) - 1;
-	if (n >= 0) {
-	    if (str[n] == '\\') {
-		str[n] = ' ';
-		cont = 1;
-	    } else if (str[n] == ',') {
-		cont = 1;
+	/* does this line start a comment? */
+	if (strchr(str, '#') || !strncmp(str, "/*", 2)) {
+	    ; /* leave well alone */
+	} else {
+	    /* replace backslash, if present */
+	    n = strlen(str) - 1;
+	    if (n >= 0) {
+		if (str[n] == '\\') {
+		    str[n] = ' ';
+		    cont = 1;
+		} else if (str[n] == ',') {
+		    cont = 1;
+		}
 	    }
 	}
     }

@@ -22,10 +22,10 @@ set hc_version 2
 ols Avgexp 0 Xlist --robust --quiet
 DM2 = $stderr'
 print "Robust standard error estimates"
-printf "White's S.E.:\n%m", White 
+printf "White's S.E.:\n%8.3f", White 
 # Note: there's a typo in Greene's presentation of D and M(1)
-printf "D and M (1):\n%m", DM1
-printf "D and M (2):\n%m", DM2 
+printf "D and M (1):\n%8.3f", DM1
+printf "D and M (2):\n%8.3f", DM2 
 
 # White's test
 lmtest --white --quiet

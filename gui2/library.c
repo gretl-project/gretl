@@ -6414,6 +6414,7 @@ static int execute_script (const char *runfile, const char *buf,
 	    }
 	} else { 
 	    char *gotline = NULL;
+	    int contd;
 
 	    *line = '\0';
 
@@ -6428,8 +6429,10 @@ static int execute_script (const char *runfile, const char *buf,
 		goto endwhile;
 	    }
 
-	    while (top_n_tail(line) && !exec_err) {
-		/* handle backslash-continued lines */
+	    contd = top_n_tail(line);
+
+	    while (contd && !state.in_comment) {
+		/* handle continued lines */
 		*tmp = '\0';
 
 		if (fb != NULL) {
@@ -6443,11 +6446,13 @@ static int execute_script (const char *runfile, const char *buf,
 			pprintf(prn, _("Maximum length of command line "
 				       "(%d bytes) exceeded\n"), MAXLINE);
 			exec_err = 1;
+			break;
 		    } else {
 			strcat(line, tmp);
 			compress_spaces(line);
 		    }
-		}		
+		}
+		contd = top_n_tail(line);
 	    }
 
 	    if (!exec_err) {

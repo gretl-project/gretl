@@ -93,14 +93,6 @@ enum {
     NP_RUNS
 };
 
-enum {
-    C_INT,
-    C_POS_INT,
-    C_DBL,
-    C_POS_DBL,
-    C_FRAC
-};
-
 /* functions relating to distribution graphics */
 
 static int get_dist_and_params (const char *s, int *d, double *x)
@@ -923,7 +915,20 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
 /* end of graphics functions */
 
-/* getval: get a numerical value from a text entry box
+static double get_real_const (const char *s, EntryValType t)
+{
+    if (t == C_DBL || t == C_POS_DBL) {
+	if (!strcmp(s, "e")) {
+	    return 2.71828182845904523536;
+	} else if (!strcmp(s, "pi")) {
+	    return M_PI;
+	}
+    }
+
+    return NADBL;
+}
+
+/* entry_get_numeric_value: get a numerical value from a text entry box
 
    t == C_DBL: parse the entry as a double
    t == C_POS_DBL: parse as a positive double
@@ -939,7 +944,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
    C_INT and C_POS_INT, we flag an error by returning -1.
 */
 
-static double getval (GtkWidget *w, int t)
+double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 {
     const gchar *text = gtk_entry_get_text(GTK_ENTRY(w));
     char s[32];
@@ -959,6 +964,11 @@ static double getval (GtkWidget *w, int t)
     while (isspace(*text)) text++;
     strncat(s, text, 31);
     tailstrip(s);
+
+    x = get_real_const(s, t);
+    if (!na(x)) {
+	return x;
+    }
 
     if (get_local_decpoint() != '.') {
 	gretl_push_c_numeric_locale();
@@ -1012,6 +1022,8 @@ static double getval (GtkWidget *w, int t)
 
     return x;
 }
+
+#define getval(w,t) entry_get_numeric_value(w,t)
 
 /* call plugin function to look up part of the table of
    critical values for the Durbin-Watson statistic

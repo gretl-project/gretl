@@ -197,6 +197,16 @@ int plot_is_mouseable (const png_plot *plot)
     return !(plot->status & PLOT_DONT_MOUSE);
 }
 
+double plot_get_xmin (png_plot *plot)
+{
+    return (plot != NULL)? plot->xmin : -1;
+}
+
+double plot_get_ymin (png_plot *plot)
+{
+    return (plot != NULL)? plot->ymin : -1;
+}
+
 void set_plot_has_y2_axis (png_plot *plot, gboolean s)
 {
     if (s == TRUE) {
@@ -1371,6 +1381,38 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
     return err;
 }
 
+static int read_plot_logscale (const char *s, GPT_SPEC *spec)
+{
+    char axis[3] = {0};
+    double base = 0;
+    int i, n, err = 0;
+
+    n = sscanf(s, "%2s %lf", axis, &base);
+
+    if (n < 1 || (n == 2 && base < 1.1)) {
+	err = 1;
+    } else {
+	if (n == 1) {
+	    base = 10.0;
+	}
+	if (!strcmp(axis, "x")) {
+	    i = 0;
+	} else if (!strcmp(axis, "y")) {
+	    i = 1;
+	} else if (!strcmp(axis, "y2")) {
+	    i = 2;
+	} else {
+	    err = 1;
+	}
+    }
+    
+    if (!err) {
+	spec->logbase[i] = base;
+    }
+
+    return err;
+}
+
 static int catch_value (char *targ, const char *src, int maxlen)
 {
     int i, n;
@@ -1453,6 +1495,12 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	    return 1;
 	}
+    } else if (!strcmp(variable, "logscale")) {
+	if (read_plot_logscale(value, spec)) {
+	    errbox(_("Failed to parse gnuplot file"));
+	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
+	    return 1;
+	}	
     } else if (!strcmp(variable, "title")) {
 	strcpy(spec->titles[0], value);
     } else if (!strcmp(variable, "xlabel")) {
@@ -2064,6 +2112,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     return err;
 }
 
+#define has_log_axis(s) (s->logbase[0] != 0 || s->logbase[1] != 0)
+
 static int get_data_xy (png_plot *plot, int x, int y, 
 			double *data_x, double *data_y)
 {
@@ -2094,7 +2144,6 @@ static int get_data_xy (png_plot *plot, int x, int y,
 #endif
 
     if (xmin == 0.0 && xmax == 0.0) { 
-	/* unknown x range */
 	fprintf(stderr, "get_data_xy: unknown x range\n");
     } else {
 	dx = xmin + ((double) x - plot->pixel_xmin) / 
@@ -2103,7 +2152,6 @@ static int get_data_xy (png_plot *plot, int x, int y,
 
     if (!na(dx)) {
 	if (ymin == 0.0 && ymax == 0.0) { 
-	    /* unknown y range */
 	    fprintf(stderr, "get_data_xy: unknown y range\n");
 	} else {
 	    dy = ymax - ((double) y - plot->pixel_ymin) / 
@@ -2113,6 +2161,21 @@ static int get_data_xy (png_plot *plot, int x, int y,
 
     if (na(dx) || na(dx)) {
 	ok = 0;
+    } else if (has_log_axis(plot->spec)) {
+	double base, dprop, lr;
+
+	base = plot->spec->logbase[0];
+	if (base != 0) {
+	    dprop = (dx - xmin) / (xmax - xmin);
+	    lr = log(xmax / xmin) / log(base);
+	    dx = pow(base, dprop * lr);
+	}
+	base = plot->spec->logbase[1];
+	if (base != 0) {
+	    dprop = (dy - ymin) / (ymax - ymin);
+	    lr = log(ymax / ymin) / log(base);
+	    dy = pow(base, dprop * lr);
+	}
     } else if (plot_is_polar(plot)) {
 	double px = atan2(dy, dx);
 	double py = sqrt(dx * dx + dy * dy);

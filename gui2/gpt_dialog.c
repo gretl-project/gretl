@@ -25,6 +25,7 @@
 #include "session.h"
 #include "dlgutils.h"
 #include "fileselect.h"
+#include "calculator.h"
 
 #include "../pixmaps/mouse.xpm"
 
@@ -39,6 +40,7 @@ struct gpt_range_t {
     GtkWidget *isauto;
     GtkWidget *min;
     GtkWidget *max;
+    GtkWidget *lbase;
 };
 
 static GtkWidget **linetitle;
@@ -113,6 +115,20 @@ static void flip_manual_range (GtkWidget *widget, gpointer data)
 
     gtk_widget_set_sensitive(GTK_WIDGET(axis_range[i].min), !s);
     gtk_widget_set_sensitive(GTK_WIDGET(axis_range[i].max), !s);
+}
+
+static void disable_lbase (GtkWidget *b, GtkWidget *entry)
+{
+    gboolean s = GTK_TOGGLE_BUTTON(b)->active;
+
+    gtk_widget_set_sensitive(entry, !s);
+}
+
+static void enable_lbase (GtkWidget *b, GtkWidget *entry)
+{
+    gboolean s = GTK_TOGGLE_BUTTON(b)->active;
+
+    gtk_widget_set_sensitive(entry, s);
 }
 
 /* Take text from a gtkentry and write to gnuplot spec string */
@@ -300,6 +316,25 @@ static int validate_range (double *r)
     return err;
 }
 
+static int 
+set_logscale_from_entry (GPT_SPEC *spec, int i, GtkWidget *entry)
+{
+    double base;
+    int err = 0;
+
+    base = entry_get_numeric_value(entry, C_POS_DBL);
+    if (na(base)) {
+	err = 1;
+    } else if (!na(base) && base < 1.1) {
+	err = 1;
+	errbox("bad base");
+    } else {
+	spec->logbase[i] = base;
+    }
+
+    return err;
+}
+
 enum {
     ERRORBARS = 1,
     FILLEDCURVE
@@ -355,6 +390,13 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		    spec->range[i][0] = entry_to_gp_double(axis_range[i].min);
 		    spec->range[i][1] = entry_to_gp_double(axis_range[i].max);
 		    err = validate_range(spec->range[i]);
+		}
+	    }
+	    if (axis_range[i].lbase != NULL) {
+		if (GTK_WIDGET_SENSITIVE(axis_range[i].lbase)) {
+		    err = set_logscale_from_entry(spec, i, axis_range[i].lbase);
+		} else {
+		    spec->logbase[i] = 0.0;
 		}
 	    }
 	}
@@ -449,7 +491,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    if (fitcombo != NULL) {
+    if (!err && fitcombo != NULL) {
 	fittype_from_combo(GTK_COMBO(fitcombo)->entry, spec);
     }
 
@@ -1410,7 +1452,8 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis) 
 {
-    GtkWidget *vbox, *manual, *tbl;
+    png_plot *plot = (png_plot *) spec->ptr;
+    GtkWidget *b1, *b2, *entry, *vbox, *tbl;
     GtkWidget *label = NULL;
     char *labelstr = NULL;
     int i, tbl_len;
@@ -1461,8 +1504,9 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
     if (spec->code != PLOT_REGULAR) return;
 
-    /* axis range: auto versus manual buttons */
     axis_range[axis].ID = axis;
+
+    /* axis range: "auto" button */
     tbl_len += 3;
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
 
@@ -1470,32 +1514,26 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, 
 			      tbl_len-3, tbl_len-2);
     gtk_widget_show(label);
-
-    axis_range[axis].isauto = 
-	gtk_radio_button_new_with_label(NULL, _("auto axis range"));
-
-    g_signal_connect(G_OBJECT(axis_range[axis].isauto), "clicked",
+    b1 = gtk_radio_button_new_with_label(NULL, _("auto axis range"));
+    g_signal_connect(G_OBJECT(b1), "clicked",
 		     G_CALLBACK(flip_manual_range), 
-		     GINT_TO_POINTER(axis_range[axis].ID));
+		     GINT_TO_POINTER(axis));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 1, 
+			      tbl_len-2, tbl_len-1);
+    gtk_widget_show(b1);
+    axis_range[axis].isauto = b1;
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON
-				 (axis_range[axis].isauto), TRUE);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), axis_range[axis].isauto, 
-			      0, 1, tbl_len-2, tbl_len-1);
-    gtk_widget_show(axis_range[axis].isauto);
-
-    manual = 
-	gtk_radio_button_new_with_label(gtk_radio_button_get_group 
-					(GTK_RADIO_BUTTON 
-					 (axis_range[axis].isauto)),
-					_("manual range:")); 
-    g_signal_connect(G_OBJECT(manual), "clicked",
+    /* axis range: manual range button */
+    b2 = gtk_radio_button_new_with_label(gtk_radio_button_get_group 
+					 (GTK_RADIO_BUTTON(b1)),
+					 _("manual range:")); 
+    g_signal_connect(G_OBJECT(b2), "clicked",
 		     G_CALLBACK(flip_manual_range), 
-		     GINT_TO_POINTER(axis_range[axis].ID));
-
-    gtk_table_attach_defaults(GTK_TABLE(tbl), manual, 0, 1, 
+		     GINT_TO_POINTER(axis));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 1, 
 			      tbl_len-1, tbl_len);
-    gtk_widget_show(manual);
+    gtk_widget_show(b2);
 
     /* axis range min. entry */
     tbl_len++;
@@ -1504,16 +1542,15 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 			      label, 0, 1, tbl_len-1, tbl_len);
     gtk_widget_show(label);
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
-    axis_range[axis].min = gtk_entry_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), axis_range[axis].min, 
-			      1, 2, tbl_len-1, tbl_len);
-    gtk_entry_set_text(GTK_ENTRY(axis_range[axis].min), "");
-
-    g_signal_connect(G_OBJECT(axis_range[axis].min), "activate", 
+    entry = gtk_entry_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, 
+			      tbl_len-1, tbl_len);
+    gtk_entry_set_text(GTK_ENTRY(entry), "");
+    g_signal_connect(G_OBJECT(entry), "activate", 
 		     G_CALLBACK(apply_gpt_changes), 
 		     spec);
-
-    gtk_widget_show(axis_range[axis].min);
+    gtk_widget_show(entry);
+    axis_range[axis].min = entry;
 
     /* axis range max. entry */
     tbl_len++;
@@ -1522,26 +1559,83 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 			      tbl_len-1, tbl_len);
     gtk_widget_show(label);
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
-    axis_range[axis].max = gtk_entry_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), axis_range[axis].max, 
-			      1, 2, tbl_len-1, tbl_len);
-    gtk_entry_set_text(GTK_ENTRY(axis_range[axis].max), "");
-
-    g_signal_connect(G_OBJECT(axis_range[axis].max), "activate", 
+    entry = gtk_entry_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, 
+			      tbl_len-1, tbl_len);
+    gtk_entry_set_text(GTK_ENTRY(entry), "");
+    g_signal_connect(G_OBJECT(entry), "activate", 
 		     G_CALLBACK(apply_gpt_changes), 
 		     spec);
-
-    gtk_widget_show(axis_range[axis].max);
+    gtk_widget_show(entry);
+    axis_range[axis].max = entry;
 
     if (na(spec->range[axis][0])) {
-	flip_manual_range(NULL, GINT_TO_POINTER(axis_range[axis].ID));
+	flip_manual_range(NULL, GINT_TO_POINTER(axis));
     } else {
 	double_to_gp_entry(spec->range[axis][0], axis_range[axis].min);
 	double_to_gp_entry(spec->range[axis][1], axis_range[axis].max);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(axis_range[axis].isauto), 
 				     FALSE);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(manual), 
-				     TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
+    }
+
+    /* axis scale: linear vs log? */
+
+    if ((axis == 0 && plot_get_xmin(plot) > 0.0) ||
+	(axis == 1 && plot_get_ymin(plot) > 0.0)) {
+	GtkWidget *combo;
+	GList *strs = NULL;
+
+	strs = g_list_append(strs, "e");
+	strs = g_list_append(strs, "2");
+	strs = g_list_append(strs, "10");
+
+	tbl_len += 3;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
+
+	label = gtk_label_new("");
+	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, 
+				  tbl_len-3, tbl_len-2);
+	gtk_widget_show(label);
+	b1 = gtk_radio_button_new_with_label(NULL, _("linear scale"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 1, 
+				  tbl_len-2, tbl_len-1);
+	gtk_widget_show(b1);
+
+	b2 = gtk_radio_button_new_with_label(gtk_radio_button_get_group 
+					     (GTK_RADIO_BUTTON(b1)),
+					     _("logarithmic scale, base:")); 
+	gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 1, 
+				  tbl_len-1, tbl_len);
+	gtk_widget_show(b2);    
+
+	combo = gtk_combo_new();
+	gtk_combo_set_popdown_strings(GTK_COMBO(combo), strs); 
+	g_list_free(strs);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), combo, 1, 2, 
+				  tbl_len-1, tbl_len);
+	entry = GTK_COMBO(combo)->entry;
+	g_signal_connect(G_OBJECT(entry), "activate", 
+			 G_CALLBACK(apply_gpt_changes), 
+			 spec);
+	gtk_widget_show(combo);
+	axis_range[axis].lbase = entry;
+
+	if (spec->logbase[axis] > 1.1) {
+	    gchar *txt = g_strdup_printf("%g", spec->logbase[axis]);
+
+	    gtk_entry_set_text(GTK_ENTRY(entry), txt);
+	    g_free(txt);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
+	} else {
+	    gtk_widget_set_sensitive(entry, FALSE);
+	}
+
+	g_signal_connect(G_OBJECT(b1), "clicked", G_CALLBACK(disable_lbase), 
+			 entry);
+	g_signal_connect(G_OBJECT(b2), "clicked", G_CALLBACK(enable_lbase), 
+			 entry);
     }
 }
 
@@ -1613,6 +1707,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 
     for (i=0; i<MAX_AXES; i++) {
 	axis_range[i].isauto = NULL;
+	axis_range[i].lbase = NULL;
     }
 
     for (i=0; i<NTITLES; i++) {

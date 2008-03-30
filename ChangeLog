@@ -19,9 +19,11 @@ version 1.7.5, in progress
 - Improvements for panel time-series graphs
 - Fix bug in importing data with long numeric observation 
   labels
-- printf command: add "%m" specifier for matrices
+- printf command: allow matrices in place of scalars (e.g.
+  using "%f" or "%g" conversion)
 - GUI script output window: add option of making output
   "sticky" (running a script appends to text)
+- Add log-axis option to GUI graph editing dialog
   
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

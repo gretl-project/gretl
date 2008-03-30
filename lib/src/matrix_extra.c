@@ -996,9 +996,53 @@ void gretl_matrix_print_with_col_heads (const gretl_matrix *m,
     real_matrix_print_to_prn(m, title, 0, 0, 0, heads, prn);
 }
 
-void gretl_matrix_print_plain (const gretl_matrix *m, PRN *prn)
+void gretl_matrix_print_with_format (const gretl_matrix *m, 
+				     const char *fmt,
+				     int wid, int prec,
+				     PRN *prn)
 {
-    real_matrix_print_to_prn(m, NULL, 0, 0, 1, NULL, prn);
+    if (prn == NULL) {
+	return;
+    }
+
+    if (gretl_is_null_matrix(m) || fmt == NULL || *fmt == '\0') {
+	real_matrix_print_to_prn(m, NULL, 0, 0, 1, NULL, prn);
+    } else {
+	int intcast = 0;
+	double x;
+	int i, j, c;
+
+	c = fmt[strlen(fmt)-1];
+	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
+	    intcast = 1;
+	}
+
+	for (i=0; i<m->rows; i++) {
+	    for (j=0; j<m->cols; j++) {
+		x = gretl_matrix_get(m, i, j);
+		if (intcast) {
+		    if (wid >= 0 && prec >= 0) {
+			pprintf(prn, fmt, wid, prec, (int) x);
+		    } else if (wid >= 0 || prec >= 0) {
+			c = (wid >= 0)? wid : prec;
+			pprintf(prn, fmt, c, (int) x);
+		    } else {
+			pprintf(prn, fmt, (int) x);
+		    }
+		} else {
+		    if (wid >= 0 && prec >= 0) {
+			pprintf(prn, fmt, wid, prec, x);
+		    } else if (wid >= 0 || prec >= 0) {
+			c = (wid >= 0)? wid : prec;
+			pprintf(prn, fmt, c, x);
+		    } else {
+			pprintf(prn, fmt, x);
+		    }
+		}
+	    }
+	    pputc(prn, '\n');
+	}
+    }
 }
 
 /**

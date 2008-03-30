@@ -59,6 +59,7 @@ typedef struct {
     char yvarname[MAXDISP];    /* name of y variable */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[4][2];        /* axis range specifiers */
+    double logbase[3];         /* axis log-scales base (0 for linear) */
     char keyspec[MAXTITLE];    /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */

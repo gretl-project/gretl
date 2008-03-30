@@ -264,14 +264,16 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 static int maybe_get_input_line_continuation (char *line)
 {
     char tmp[MAXLINE];
-    int err = 0;
+    int contd, err = 0;
 
     if (!strncmp(line, "quit", 4)) {
 	return 0;
     }
 
-    while (top_n_tail(line)) {
-	tmp[0] = '\0';
+    contd = top_n_tail(line);
+
+    while (contd) {
+	*tmp = '\0';
 
 	if (batch || runit) {
 	    fgets(tmp, MAXLINE - 1, fb);
@@ -295,6 +297,7 @@ static int maybe_get_input_line_continuation (char *line)
 		compress_spaces(line);
 	    }
 	}
+	contd = top_n_tail(line);
     }
 
     return err;
@@ -577,14 +580,16 @@ int main (int argc, char *argv[])
 		continue;
 	    }
 	}
-
-	overflow = maybe_get_input_line_continuation(line); 
-	if (overflow) {
-	    break;
-	} else {
-	    strcpy(linecopy, line);
-	    err = exec_line(&state, &Z, datainfo);
+	
+	if (!state.in_comment) {
+	    overflow = maybe_get_input_line_continuation(line); 
+	    if (overflow) {
+		break;
+	    }
 	}
+
+	strcpy(linecopy, line);
+	err = exec_line(&state, &Z, datainfo);
     } /* end of get commands loop */
 
     /* leak check -- try explicitly freeing all memory allocated */
