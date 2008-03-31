@@ -55,6 +55,8 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget);
 
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget);
 
+int text_can_undo (windata_t *vwin);
+
 void textview_set_text_colorized (GtkWidget *view, const char *buf);
 
 void textview_append_text_colorized (GtkWidget *view, const char *buf,
@@ -83,6 +85,6 @@ void sourceview_insert_file (windata_t *vwin, const char *fname);
 
 void sourceview_insert_buffer (windata_t *vwin, const char *buf);
 
-void script_tabs_dialog (GtkWidget *w, gpointer p);
+void script_tabs_dialog (GtkWidget *w, windata_t *vwin);
 
 #endif /* TEXTBUF_H */

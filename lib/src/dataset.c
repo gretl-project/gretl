@@ -2365,6 +2365,10 @@ int dataset_stack_variables (const char *vname, const char *line,
 	goto bailout;
     }
 
+#if PDEBUG
+    fprintf(stderr, "offset = %d, maxok = %d\n", offset, maxok);
+#endif
+
     if (offset + maxok > pdinfo->n) {
 	err = E_DATA;
 	goto bailout;
@@ -2403,6 +2407,10 @@ int dataset_stack_variables (const char *vname, const char *line,
 	    maxok = 0;
 	}
     }
+
+#if PDEBUG
+    fprintf(stderr, "bign = %d, allocating bigx (oldn = %d)\n", bign, pdinfo->n);
+#endif
 
     /* allocate stacked series */
     bigx = malloc(bign * sizeof *bigx);

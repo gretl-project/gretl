@@ -233,6 +233,17 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
     }
 }
 
+int text_can_undo (windata_t *vwin)
+{
+    if (vwin->sbuf != NULL) {
+	return gtk_source_buffer_can_undo(vwin->sbuf);
+    } else {
+	gchar *old = g_object_get_data(G_OBJECT(vwin->w), "undo");
+
+	return old != NULL;
+    }
+}
+
 static void strip_CRLF (char *s)
 {
     int n = strlen(s);
@@ -1198,7 +1209,7 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
     return FALSE;
 }
 
-GtkWidget *build_help_popup (windata_t *hwin)
+static GtkWidget *build_help_popup (windata_t *hwin)
 {
     const char *items[] = {
 	N_("Index"),
@@ -1585,7 +1596,7 @@ static void unindent_region (GtkWidget *w, gpointer p)
     bufgets_finalize(tb->chunk);
 }
 
-void script_tabs_dialog (GtkWidget *w, gpointer p)
+void script_tabs_dialog (GtkWidget *w, windata_t *vwin)
 {
     const char *title = _("gretl: configure tabs");
     const char *spintxt = _("Spaces per tab");

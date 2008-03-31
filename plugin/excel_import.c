@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #include "libgretl.h"
 #include "version.h"
@@ -341,6 +342,21 @@ static int row_col_err (int row, int col, PRN *prn)
     return err;
 }
 
+static int locale_numeric_string (const char *str)
+{
+    char *test;
+    int ret = 1;
+
+    errno = 0;
+
+    strtod(str, &test);
+    if (*test != '\0' || errno == ERANGE) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
 static int check_copy_string (struct sheetrow *prow, int row, int col, 
 			      int idx, const char *s)
 {
@@ -387,9 +403,20 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 		}
 	    }
 	    *p = '\0';
-	    dprintf("converting sst[%d] '%s' to numeric as %s\n", idx, s, q);
-	    prow->cells[col] = q;
-	    return 0;
+
+	    /* If we don't do a rigorous check on q, as below, we're
+	       liable to end up with zeros where there should be NAs.
+	       However, there's some ambiguity over whether we should
+	       be using the C locale or not.  Hmm. 
+	    */ 
+
+	    if (locale_numeric_string(q)) {
+		dprintf("converting sst[%d] '%s' to numeric as %s\n", idx, s, q);
+		prow->cells[col] = q;
+		return 0;
+	    } else {
+		free(q);
+	    }
 	} 
     }
 

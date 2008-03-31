@@ -17,7 +17,7 @@ void open_data (gpointer data, guint dir_code, GtkWidget *widget);
 
 void open_script (gpointer data, guint code, GtkWidget *widget);
 
-void file_save (gpointer data, guint file_code, GtkWidget *widget);
+void file_save (windata_t *vwin, guint file_code, GtkWidget *widget);
 
 void dummy_call (void);
 
@@ -37,7 +37,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget);
 
 void model_genr_callback (gpointer data, guint u, GtkWidget *widget);
 
-void file_save_callback (GtkWidget *w, gpointer data);
+void file_save_callback (GtkWidget *w, windata_t *vwin);
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
 

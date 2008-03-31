@@ -117,7 +117,6 @@ static void replace_string_dialog (struct search_replace *s)
 		       button, TRUE, TRUE, FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(trash_replace), s);
-
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(s->f_entry);
@@ -140,6 +139,9 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     GtkTextBuffer *gedit;
     GtkTextIter sel_start, sel_end, start, end;
     gboolean selected = FALSE;
+
+    s.find = NULL;
+    s.replace = NULL;
 
     replace_string_dialog(&s);
 

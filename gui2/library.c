@@ -5475,9 +5475,8 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     set_gretl_echo(1);
 }
 
-void do_run_script (GtkWidget *w, gpointer p)
+void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-    windata_t *vwin = (windata_t *) p;
     gchar *buf;
     int sel = 0;
 

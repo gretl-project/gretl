@@ -68,7 +68,7 @@ static void en_text_cmdref (gpointer p, guint u, GtkWidget *w);
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
 static void find_in_listbox (GtkWidget *widget, gpointer data);
-static void find_string_dialog (void (*findfunc)(), gpointer data);
+static void find_string_dialog (void (*findfunc)(), windata_t *vwin);
 
 static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
@@ -1703,23 +1703,22 @@ static void parent_find (GtkWidget *finder, windata_t *caller)
     }
 }
 
-static void find_string_dialog (void (*findfunc)(), gpointer p)
+static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 {
-    windata_t *mydat = (windata_t *) p;
     GtkWidget *label;
     GtkWidget *button;
     GtkWidget *hbox;
 
     if (find_window != NULL) {
-	g_object_set_data(G_OBJECT(find_window), "windat", mydat);
-	parent_find(find_window, mydat);
+	g_object_set_data(G_OBJECT(find_window), "windat", vwin);
+	parent_find(find_window, vwin);
 	gdk_window_raise(find_window->window);
 	return;
     }
 
     find_window = gretl_dialog_new(_("gretl: find"), NULL, 0);
-    g_object_set_data(G_OBJECT(find_window), "windat", mydat);
-    parent_find(find_window, mydat);
+    g_object_set_data(G_OBJECT(find_window), "windat", vwin);
+    parent_find(find_window, vwin);
 
     g_signal_connect(G_OBJECT(find_window), "destroy",
 		     G_CALLBACK(close_find_dialog),
@@ -1768,9 +1767,9 @@ static void find_string_dialog (void (*findfunc)(), gpointer p)
     gtk_widget_show(find_window);
 }
 
-void text_find_callback (GtkWidget *w, gpointer data)
+void text_find_callback (GtkWidget *w, windata_t *vwin)
 {
-    find_string_dialog(find_in_text, data);
+    find_string_dialog(find_in_text, vwin);
 }
 
 static GtkTooltips *gretl_tips;

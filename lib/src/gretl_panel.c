@@ -3342,16 +3342,15 @@ int panel_autocorr_test (MODEL *pmod, int order,
 
 int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 {
-    int sts = (pdinfo->structure == STACKED_TIME_SERIES);
+    int oldmode = pdinfo->structure;
     double *tmp;
     char **markers = NULL;
     double pdx;
-    int pd = pdinfo->pd;
-    int nblocks = pdinfo->n / pd;
-    int i, j, t;
+    int T, n;
+    int i, j, s, t;
 
-    if (pdinfo->structure != STACKED_TIME_SERIES &&
-	pdinfo->structure != STACKED_CROSS_SECTION) {
+    if (oldmode != STACKED_TIME_SERIES &&
+	oldmode != STACKED_CROSS_SECTION) {
 	return E_DATA;
     }
 
@@ -3360,19 +3359,39 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 	return E_ALLOC;
     }
 
+    if (oldmode == STACKED_CROSS_SECTION) {
+	n = pdinfo->pd;
+	T = pdinfo->n / n;
+    } else {
+	T = pdinfo->pd;
+	n = pdinfo->n / T;
+    }
+
     /* copy the data series across in transformed order */
     for (i=1; i<pdinfo->v; i++) {
 	if (var_is_scalar(pdinfo, i)) {
 	    continue;
 	}
 	for (t=0; t<pdinfo->n; t++) {
+	    /* transcribe to tmp in original order */
 	    tmp[t] = Z[i][t];
 	}
-	for (j=0; j<pd; j++) {
-	    for (t=0; t<nblocks; t++) {
-		Z[i][j * nblocks + t] = tmp[j + pd * t];
+	s = 0;
+	if (oldmode == STACKED_CROSS_SECTION) {
+	    /* convert to stacked time-series */
+	    for (j=0; j<n; j++) {
+		for (t=0; t<T; t++) {
+		    Z[i][s++] = tmp[t * n + j];
+		}
 	    }
-	}
+	} else {
+	    /* convert to stacked cross-sections */
+	    for (t=0; t<T; t++) {
+		for (j=0; j<n; j++) {
+		    Z[i][s++] = tmp[j * T + t];
+		}
+	    } 
+	}  
     }
 
     /* rearrange observations markers if relevant */
@@ -3382,9 +3401,18 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 	    for (t=0; t<pdinfo->n; t++) {
 		strcpy(markers[t], pdinfo->S[t]);
 	    }
-	    for (j=0; j<pd; j++) {
-		for (t=0; t<nblocks; t++) {
-		    strcpy(pdinfo->S[j * nblocks + t], markers[j + pd * t]);
+	    s = 0;
+	    if (oldmode == STACKED_CROSS_SECTION) {
+		for (j=0; j<n; j++) {
+		    for (t=0; t<T; t++) {
+			strcpy(pdinfo->S[s++], markers[t * n + j]);
+		    }
+		}
+	    } else {
+		for (t=0; t<T; t++) {
+		    for (j=0; j<n; j++) {
+			strcpy(pdinfo->S[s++], markers[j * T + t]);
+		    }
 		}
 	    }
 	    free_strings_array(markers, pdinfo->n);
@@ -3394,17 +3422,25 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 	}
     }
 
-    /* change the datainfo setup */
-    pdinfo->structure = (sts)? STACKED_CROSS_SECTION : STACKED_TIME_SERIES;
-    pdinfo->pd = nblocks;
-
     pdinfo->sd0 = 1.0;
     pdx = 0.1;
-    while (nblocks /= 10) {
-	pdx *= 0.1;
-    }
-    pdinfo->sd0 += pdx;
 
+    /* change the datainfo setup */
+    if (oldmode == STACKED_CROSS_SECTION) {
+	pdinfo->structure = STACKED_TIME_SERIES;
+	pdinfo->pd = T;
+	while (T /= 10) {
+	    pdx *= 0.1;
+	}	
+    } else {
+	pdinfo->structure = STACKED_CROSS_SECTION;
+	pdinfo->pd = n;
+	while (n /= 10) {
+	    pdx *= 0.1;
+	}
+    }
+	
+    pdinfo->sd0 += pdx;
     ntodate(pdinfo->stobs, 0, pdinfo);
     ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 

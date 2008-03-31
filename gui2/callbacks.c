@@ -218,9 +218,8 @@ void open_script (gpointer data, guint action, GtkWidget *widget)
     }
 }
 
-void file_save (gpointer data, guint file_code, GtkWidget *widget)
+void file_save (windata_t *vwin, guint file_code, GtkWidget *widget)
 {
-    windata_t *vwin = (windata_t *) data;
     gretlopt opt = OPT_NONE;
     gpointer p = NULL;
 
@@ -477,10 +476,9 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 		action, varclick, &cancel);   
 }
 
-void file_save_callback (GtkWidget *w, gpointer data)
+void file_save_callback (GtkWidget *w, windata_t *vwin)
 {
     guint u = 0;
-    windata_t *vwin = (windata_t *) data;
 
     if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
 	const char *opts[] = {
@@ -519,7 +517,7 @@ void file_save_callback (GtkWidget *w, gpointer data)
 	}
     }
 
-    file_save(data, u, w);
+    file_save(vwin, u, w);
 }
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 

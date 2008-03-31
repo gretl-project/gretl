@@ -37,7 +37,7 @@ void datafile_find (GtkWidget *widget, gpointer data);
 
 void menu_find (gpointer data, guint dbfind, GtkWidget *widget);
 
-void text_find_callback (GtkWidget *w, gpointer data);
+void text_find_callback (GtkWidget *w, windata_t *vwin);
 
 char *quoted_help_string (const char *s);
 

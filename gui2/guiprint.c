@@ -38,6 +38,8 @@
 # endif
 #endif
 
+#define PAGE_LINES 47
+
 #ifdef NATIVE_PRINTING
 
 static gchar *user_string (void)
@@ -87,7 +89,7 @@ static char *header_string (void)
 
 #endif /* NATIVE_PRINTING */
 
-/* Windows only: print using Windows spooler */
+/* win32: print using Windows spooler */
 
 #if defined(G_OS_WIN32)
 
@@ -101,7 +103,7 @@ void winprint (char *fullbuf, char *selbuf)
     DOCINFO di;
     TEXTMETRIC lptm;
     BYTE charset;
-    int px, x, y, incr, page_lines = 47;
+    int px, x, y, incr;
     gchar *printbuf = NULL;
     gchar *hdrstart, hdr[90];
     size_t len;
@@ -201,7 +203,7 @@ void winprint (char *fullbuf, char *selbuf)
 	TextOut(dc, x, px / 8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
-	while (*printbuf && line < page_lines) { /* lines loop */
+	while (*printbuf && line < PAGE_LINES) { /* lines loop */
 	    len = strcspn(printbuf, "\n");
 	    TextOut(dc, x, y, printbuf, len);
 	    printbuf += len + 1;
@@ -344,7 +346,7 @@ int winprint_graph (char *emfname)
 #include <fcntl.h>
 
 #define GRETL_PRINT_CONFIG_FILE "gretl-print-config"
-#define GRETL_PBM_TMP           "gretltmp.pbm"
+#define GRETL_PBM_TMP "gretltmp.pbm"
 #define GRETL_PNG_TMP "gretltmp.png"
 
 static GdkPixbuf *png_mono_pixbuf (const char *fname);
@@ -409,6 +411,8 @@ save_gretl_print_config_to_file (GnomePrintConfig *gretl_print_config)
 
 #define GUCAST (const guchar *)
 
+/* still under gnomeprint conditional */
+
 void winprint (char *fullbuf, char *selbuf)
 {
     GnomePrintJob *job;
@@ -420,7 +424,6 @@ void winprint (char *fullbuf, char *selbuf)
     GnomeFont *font = NULL;
     gchar *hdrstart;
     char *p, linebuf[90], hdr[90];
-    int page_lines = 47;
     int x, y, line, page;
     size_t len;
 
@@ -471,7 +474,7 @@ void winprint (char *fullbuf, char *selbuf)
 	gnome_print_moveto(gpc, x, y);
 	gnome_print_show(gpc, GUCAST hdr);
 	y = 720;
-	while (*p && line < page_lines) { /* lines loop */
+	while (*p && line < PAGE_LINES) { /* lines loop */
 	    len = strcspn(p, "\n");
 	    *linebuf = '\0';
 	    strncat(linebuf, p, len);
@@ -614,9 +617,7 @@ void gtk_print_graph (const char *fname)
     gtk_widget_destroy(dialog);
 }
 
-#endif /* G_OS_WIN32, USE_GNOMEPRINT */
-
-#ifdef USE_GNOMEPRINT
+/* still under gnomeprint conditional */
 
 static GdkPixbuf *png_mono_pixbuf (const char *fname)
 {
@@ -672,6 +673,8 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
 #ifdef GTK_PRINTING
 
+/* native GTK printing with recent GTK+ */
+
 #define GRETL_PNG_TMP "gretltmp.png"
 
 struct print_info {
@@ -692,10 +695,6 @@ static void begin_text_print (GtkPrintOperation *op,
     PangoFontDescription *desc;
     GtkPageSetup *setup;
     gdouble x, y;
-    int lines = 0;
-    const char *p;
-
-    pinfo->pagelines = 54; /* FIXME? */
  
     setup = gtk_print_context_get_page_setup(context);
 
@@ -735,18 +734,6 @@ static void begin_text_print (GtkPrintOperation *op,
     pango_font_description_free(desc);
     pango_layout_set_width(pinfo->layout, -1);
     pango_layout_set_alignment(pinfo->layout, PANGO_ALIGN_LEFT);
-
-    p = pinfo->buf;
-    while (*p) {
-	if (*p == '\n') {
-	    lines++;
-	}
-	p++;
-    }
-
-    pinfo->n_pages = lines / pinfo->pagelines + 
-	(lines % pinfo->pagelines != 0);
-    gtk_print_operation_set_n_pages(op, pinfo->n_pages);
 }
 
 static void
@@ -791,6 +778,23 @@ draw_text_page (GtkPrintOperation *op, GtkPrintContext *context,
     pango_cairo_show_layout(pinfo->cr, pinfo->layout);
 }
 
+static void job_set_n_pages (GtkPrintOperation *op, struct print_info *pinfo)
+{
+    const char *s = pinfo->buf;
+    int lines = 0;
+
+    while (*s) {
+	if (*s == '\n') {
+	    lines++;
+	}
+	s++;
+    }
+
+    pinfo->n_pages = lines / pinfo->pagelines + 
+	(lines % pinfo->pagelines != 0);
+    gtk_print_operation_set_n_pages(op, pinfo->n_pages);
+}
+
 static GtkPrintSettings *settings = NULL;
 
 void winprint (char *fullbuf, char *selbuf)
@@ -808,11 +812,15 @@ void winprint (char *fullbuf, char *selbuf)
 
     gtk_print_operation_set_use_full_page(op, FALSE);
     gtk_print_operation_set_unit(op, GTK_UNIT_POINTS);
+    gtk_print_operation_set_n_pages(op, 1); /* FIXME */
 
     pinfo.buf = (selbuf != NULL)? selbuf : fullbuf;
     pinfo.p = pinfo.buf;
     pinfo.hdr = header_string();
     pinfo.layout = NULL;
+    pinfo.pagelines = 54; /* FIXME */
+
+    job_set_n_pages(op, &pinfo); 
 
     g_signal_connect(op, "begin_print", G_CALLBACK(begin_text_print), &pinfo);
     g_signal_connect(op, "draw_page", G_CALLBACK(draw_text_page), &pinfo);

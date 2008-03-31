@@ -65,7 +65,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *w);
 
 void set_currdir_from_filename (const char *fname);
 
-void do_run_script (GtkWidget *w, gpointer data);
+void do_run_script (GtkWidget *w, windata_t *vwin);
 
 void run_script_fragment (windata_t *vwin, gchar *buf);
 

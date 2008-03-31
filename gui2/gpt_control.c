@@ -1033,14 +1033,13 @@ static void real_send_to_gp (const char *tmpfile)
 /* callback for execute icon in window editing gnuplot
    commands */
 
-void gp_send_callback (GtkWidget *w, gpointer data)
+void gp_send_callback (GtkWidget *w, windata_t *vwin)
 {
 #ifdef G_OS_WIN32
     int addpause = 1;
 #else
     int addpause = 0;
 #endif
-    windata_t *vwin = (windata_t *) data;
     gchar *tmpfile;
     char *buf;
     int err = 0;
