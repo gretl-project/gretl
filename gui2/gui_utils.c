@@ -1540,18 +1540,6 @@ static void save_plot_commands_callback (GtkWidget *w, windata_t *vwin)
     auto_save_plot(vwin);
 }
 
-/* when copying from windows where a choice of copy format
-   is appropriate */
-
-static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
-{
-    if (vwin->role == VIEW_SCALAR) {
-	scalar_to_clipboard(vwin);
-    } else {
-	copy_format_dialog(vwin, W_COPY);
-    }
-}
-
 /* is any text selected? */
 
 static int vwin_selection_present (gpointer p)
@@ -1569,17 +1557,25 @@ static int vwin_selection_present (gpointer p)
     return ret;
 }
 
-/* copying when only plain text is appropriate */
+#define editor_role(r) (r == EDIT_SCRIPT || \
+                        r == EDIT_HEADER || \
+                        r == EDIT_NOTES || \
+                        r == EDIT_FUNC_CODE || \
+                        r == GR_PLOT)
+
+#define script_role(r) (r == VIEW_SCRIPT || r == VIEW_LOG)
 
 static void text_copy_callback (GtkWidget *w, windata_t *vwin)
 {
-    int fmt = GRETL_FORMAT_TXT;
-
     if (vwin_selection_present(vwin)) {
-	fmt = GRETL_FORMAT_SELECTION;
+	window_copy(vwin, GRETL_FORMAT_SELECTION, w);
+    } else if (vwin->role == VIEW_SCALAR) {
+	scalar_to_clipboard(vwin);
+    } else if (!script_role(vwin->role) && !editor_role(vwin->role)) {
+	copy_format_dialog(vwin, W_COPY);
+    } else {
+	window_copy(vwin, GRETL_FORMAT_TXT, w);
     }
-
-    window_copy(vwin, fmt, w);
 }
 
 static void text_paste_callback (GtkWidget *w, windata_t *vwin)
@@ -1782,12 +1778,6 @@ static void set_plot_icon (struct viewbar_item *vitem)
 #define format_ok(r)  (r == VIEW_SERIES || r == VIEW_SCALAR)
 #define plot_ok(r)    (r == VIEW_SERIES)
 
-#define editor_role(r) (r == EDIT_SCRIPT || \
-                        r == EDIT_HEADER || \
-                        r == EDIT_NOTES || \
-                        r == EDIT_FUNC_CODE || \
-                        r == GR_PLOT)
-
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
                         r == MAHAL || r == FCAST)
 
@@ -1835,8 +1825,6 @@ static toolfunc item_get_callback (struct viewbar_item *item, windata_t *vwin,
 	return NULL;
     } else if (r != SCRIPT_OUT && f == STICKIFY_ITEM) {
 	return NULL;
-    } else if (f == COPY_ITEM && !editor_role(r)) {
-	func = choose_copy_format_callback;
     } else if (f == SAVE_ITEM) { 
 	if (!edit_ok(r) || r == SCRIPT_OUT) {
 	    /* script output doesn't already have a filename */
