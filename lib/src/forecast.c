@@ -2388,9 +2388,16 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
     for (t=fr->t0; t<fr->t1; t++) {
 	fr->actual[t] = Z[yno][t];
 	if (sys != NULL) {
-	    if (t >= sys->t1 && t <= sys->t2) {
-		s = t - sys->t1;
-		fr->fitted[t] = gretl_matrix_get(sys->yhat, s, i);
+	    if (i < sys->neqns && sys->lists[i][1] == yno) {
+		/* Note: right now we can only handle here endogenous
+		   variables that appear on the LHS of stochastic
+		   equations, because only such variables have an
+		   associated column in sys->yhat.
+		*/
+		if (t >= sys->t1 && t <= sys->t2) {
+		    s = t - sys->t1;
+		    fr->fitted[t] = gretl_matrix_get(sys->yhat, s, i);
+		}
 	    }
 	} else if (var != NULL) {
 	    if (t >= var->t1 && t <= var->t2) {
