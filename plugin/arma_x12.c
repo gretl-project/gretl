@@ -749,6 +749,10 @@ static int write_spc_file (const char *fname,
 
     fputs("estimate {\n", fp);
 
+    /* could enable here: "tol = XX, maxiter = NN"  
+       the default is tol = 1.0e-5, maxiter = 200 
+    */
+
     if (opt & OPT_V) {
 	fputs(" print = (acm itr lkf lks mdl est rts rcm)\n", fp);
     } else {
