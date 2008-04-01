@@ -3630,10 +3630,6 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     */
     err = read_plotspec_from_file(plot->spec, &plot->pd, &polar);
 
-#if 1
-    fprintf(stderr, "read_plotspec_from_file: err = %d\n", err);
-#endif
-
     if (err) {
 	plot->err = 1;
 	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
@@ -3668,9 +3664,6 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /* note need for corresponding unref */
     gtk_widget_ref(plot->shell);
 
-#if 1
-    fprintf(stderr, "setting window title\n");
-#endif
     gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 
     gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
 
@@ -3776,9 +3769,6 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     }
 
     gtk_widget_show(vbox);
-#if 1
-    fprintf(stderr, "calling gtk_widget_show on plot->shell\n");
-#endif
     gtk_widget_show(plot->shell);       
 
     /* set the focus to the canvas area */

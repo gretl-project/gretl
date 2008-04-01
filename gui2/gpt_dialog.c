@@ -187,36 +187,35 @@ static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
 
 static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
 {
-    gchar *s = gtk_combo_box_get_active_text(box);
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
-    char title[128];
+    gchar *s, *title = NULL;
     FitType f;
 
     if (*s1 == '\0' || *s2 == '\0') {
 	return FALSE;
     }
 
+    s = gtk_combo_box_get_active_text(box);
     f = fit_type_from_string(s);
     g_free(s);
 
-    *title = '\0';
-
     if (f == PLOT_FIT_OLS) {
-	sprintf(title, _("%s versus %s (with least squares fit)"),
+	title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
 		s1, s2);
     } else if (f == PLOT_FIT_QUADRATIC) {
-	sprintf(title, _("%s versus %s (with quadratic fit)"),
+	title = g_strdup_printf(_("%s versus %s (with quadratic fit)"),
 		s1, s2);
     } else if (f == PLOT_FIT_INVERSE) {
-	sprintf(title, _("%s versus %s (with inverse fit)"),
+	title = g_strdup_printf(_("%s versus %s (with inverse fit)"),
 		s1, s2);
     } else if (f == PLOT_FIT_LOESS) {
-	sprintf(title, _("%s versus %s (with loess fit)"),
+	title = g_strdup_printf(_("%s versus %s (with loess fit)"),
 		s1, s2);
     }
 
     gtk_entry_set_text(GTK_ENTRY(gpt_titles[0].widget), title);
+    g_free(title);
     
     return FALSE;
 }
@@ -369,6 +368,8 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     for (i=0; i<spec->n_lines; i++) {
 	spec->lines[i].yaxis = 1;
 	if (!supress_y2 && yaxiscombo[i] != NULL) {
+	    fprintf(stderr, "line %d, yaxiscombo[i]=%p\n",
+		    i, (void *) yaxiscombo[i]);
 	    gchar *str = 
 		gtk_combo_box_get_active_text(GTK_COMBO_BOX(yaxiscombo[i]));
 
