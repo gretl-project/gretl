@@ -1677,19 +1677,15 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
     if (rset->opt & OPT_O) {
 	/* sampling using a dummy var */
-	const gchar *buf;
-	char dumv[VNAMELEN];
+	gchar *dumv;
 
-	buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry));
-
-	if (sscanf(buf, "%15s", dumv) != 1) {
-	    return TRUE;
-	}
-
+	dumv = gtk_combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
 	gretl_command_sprintf("smpl %s --dummy", dumv);
+	g_free(dumv);
+
 	if (check_and_record_command()) {
 	    return TRUE;
-	}
+	}	
 
 	err = bool_subsample(rset->opt);
 	if (!err) {
@@ -1802,20 +1798,18 @@ static GList *get_dummy_list (int *thisdum)
     return dumlist;
 }
 
-gboolean update_obs_label (GtkEditable *entry, gpointer data)
+gboolean update_obs_label (GtkComboBox *box, gpointer data)
 {
     struct range_setting *rset = (struct range_setting *) data;
     char obstext[48];
     int nobs = 0;
 
-    if (entry != NULL) {
-	const gchar *vname = gtk_entry_get_text(GTK_ENTRY(entry));
+    if (box != NULL) {
+	gchar *vname = gtk_combo_box_get_active_text(box);
+	int v = varindex(datainfo, vname);
 
-	if (*vname != '\0') {
-	    int v = varindex(datainfo, vname);
-
-	    nobs = gretl_isdummy(0, datainfo->n - 1, Z[v]);
-	}
+	nobs = gretl_isdummy(0, datainfo->n - 1, Z[v]);
+	g_free(vname);
     } else {
 	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
 	int t2 = (int) obs_button_get_value(OBS_BUTTON(rset->endspin));
@@ -2020,22 +2014,23 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     if (rset == NULL) return;
 
     if (u == SMPLDUM) {
+	GList *dlist;
+
 	tempwid = gtk_label_new(_("Name of dummy variable to use:"));
 	hbox = gtk_hbox_new(TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
-	
-	rset->combo = gtk_combo_new();
-	gtk_combo_set_popdown_strings(GTK_COMBO(rset->combo), dumlist); 
-	g_list_free(dumlist);
-	if (thisdum > 0) {
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 
-			       datainfo->varname[thisdum]);
+
+	rset->combo = gtk_combo_box_new_text();
+	dlist = dumlist;
+	while (dlist != NULL) {
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(rset->combo), dlist->data);
+	    dlist = dlist->next;
 	}
-	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), VNAMELEN-1);
-	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry), FALSE);
-	g_signal_connect(G_OBJECT(GTK_COMBO(rset->combo)->entry), "changed",
+	gtk_combo_box_set_active(GTK_COMBO_BOX(rset->combo), thisdum);
+	g_list_free(dumlist);
+	g_signal_connect(G_OBJECT(rset->combo), "changed",
 			 G_CALLBACK(update_obs_label), rset);
 
 	hbox = gtk_hbox_new(TRUE, 5);
@@ -2091,15 +2086,14 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     }
 
     if (u == SMPLDUM) {
-	update_obs_label(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry),
-			 rset);
+	update_obs_label(GTK_COMBO_BOX(rset->combo), rset);
     }
 
     /* Cancel button */
     cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, NULL);
 
     /* "OK" button */
-    tempwid = ok_button(GTK_DIALOG (rset->dlg)->action_area);
+    tempwid = ok_button(GTK_DIALOG(rset->dlg)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(set_sample_from_dialog), rset);
     gtk_widget_grab_default(tempwid);
@@ -2426,27 +2420,15 @@ int add_obs_dialog (const char *blurb, int addmin)
     return ainfo.val;
 }
 
-static GList *compose_var_selection_list (const int *list)
-{
-    GList *varlist = NULL;
-    int i;
-
-    for (i=1; i<=list[0]; i++) {
-	varlist = g_list_append(varlist, datainfo->varname[list[i]]);
-    }
-
-    return varlist;
-}
-
 static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(dlg), "combo");
     int *selvar = g_object_get_data(G_OBJECT(dlg), "selvar");
-    const char *vname;
+    gchar *vname;
 
-    vname = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry));
-
+    vname = gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
     *selvar = varindex(datainfo, vname);
+    g_free(vname);
 }
 
 static void 
@@ -2502,9 +2484,8 @@ int select_var_from_list_with_opt (const int *list,
     unsigned char flags;
     GtkWidget *tempwid, *hbox;
     GtkWidget *dlg, *combo;
-    GList *varlist;
     gchar *title;
-    int selvar = -1;
+    int i, selvar = -1;
 
     title = g_strdup_printf("gretl: %s", _("select variable"));
 
@@ -2518,19 +2499,14 @@ int select_var_from_list_with_opt (const int *list,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
 
-    varlist = compose_var_selection_list(list);
-    if (varlist == NULL) {
-	return -1;
+    combo = gtk_combo_box_new_text();
+    for (i=1; i<=list[0]; i++) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), 
+				  datainfo->varname[list[i]]);
     }
-	
-    combo = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(combo), varlist); 
-    g_list_free(varlist);
 
-    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), VNAMELEN-1);
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), 
-		       datainfo->varname[list[list[0]]]);
+    /* select last entry in list */
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), list[0] - 1);
 
     hbox = gtk_hbox_new(TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
@@ -4579,13 +4555,13 @@ static GList *panelvars_list (void)
     return vlist;
 }
 
-static gboolean update_panel_var (GtkEditable *entry, DATAINFO *dwinfo)
+static gboolean update_panel_var (GtkWidget *box, DATAINFO *dwinfo)
 {
-    const gchar *vname = gtk_entry_get_text(GTK_ENTRY(entry));
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(entry), "index"));
+    gchar *vname = gtk_combo_box_get_active_text(GTK_COMBO_BOX(box));
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(box), "index"));
     int v = varindex(datainfo, vname);
 
-    /* note: borrowing t1, t2 here to record index var IDs */
+    /* note: borrowing t1, t2 here to record index var IDs ! */
 
     if (i == 0) {
 	dwinfo->t1 = v;
@@ -4593,61 +4569,67 @@ static gboolean update_panel_var (GtkEditable *entry, DATAINFO *dwinfo)
 	dwinfo->t2 = v;
     }
 
+    g_free(vname);
+
     return FALSE;
 }
 
-static 
-void panelvar_candidates (GList *vlist, char *uname, char *tname)
+/* Try to find the most likely candidates for the unit (uidx) and time
+   (tidx) index variables, given a list of variables that might
+   perhaps be acceptable.
+*/
+
+static void panelvar_candidates (GList *vlist, int *uidx, int *tidx)
 {
-    GList *mylist = vlist;
+    GList *list = vlist;
     const char *vname;
     char vtest[VNAMELEN];
+    int i;
 
-    *uname = '\0';
-    *tname = '\0';
+    *uidx = *tidx = -1;
 
-    while (mylist != NULL) {
-	vname = (const char *) mylist->data;
+    for (i=0; list != NULL; i++) {
+	vname = (const char *) list->data;
 	strcpy(vtest, vname);
 	lower(vtest);
-	if (!strcmp(vtest, "time") || 
-	    !strcmp(vtest, "year") ||
-	    !strcmp(vtest, "period")) {
-	    strcpy(tname, vname);
-	} else if (!strcmp(vtest, "unit") ||
-		   !strcmp(vtest, "group")) {
-	    strcpy(uname, vname);
-	}
-	mylist = g_list_next(mylist);
-    }
-}
-
-static void 
-maybe_set_panelvar (GtkEntry *entry, GList *vlist,
-		    char *uname, char *tname, int i)
-{
-    if (i == 0) {
-	if (*uname != '\0') {
-	    gtk_entry_set_text(entry, uname);
-	} else {
-	    strcpy(uname, (char *) vlist->data);
-	}
-    } else {
-	if (*tname != '\0') {
-	    gtk_entry_set_text(entry, tname);
-	} else {	    
-	    GList *mylist = vlist;
-
-	    while (mylist != NULL) {
-		if (strcmp(uname, (char *) mylist->data)) {
-		    gtk_entry_set_text(entry, mylist->data);
-		    break;
-		}
-		mylist = g_list_next(mylist);
+	if (*tidx < 0) {
+	    if (!strcmp(vtest, "time") || 
+		!strcmp(vtest, "year") ||
+		!strcmp(vtest, "period")) {
+		*tidx = i;
 	    }
 	}
+	if (*uidx < 0) {
+	    if (!strcmp(vtest, "unit") ||
+		!strcmp(vtest, "group") ||
+		!strcmp(vtest, "country") ||
+		!strcmp(vtest, "id")) {
+		*uidx = i;
+	    }
+	}
+	if (*uidx >= 0 && *tidx >= 0) {
+	    break;
+	}
+	list = list->next;
+    }
+
+    /* if we didn't succeed above, just ensure a non-conflicting
+       assignment to uidx and tidx */
+
+    if (*uidx < 0) {
+	if (*tidx < 0) {
+	    *uidx = 0;
+	    *tidx = 1;
+	} else {
+	    *uidx = (*tidx == 0)? 1 : 0;
+	}
+    } else if (*tidx < 0) {
+	*tidx = (*uidx == 0)? 1 : 0;
     }
 }
+
+/* combo box selector for variables possibly representing the
+   panel unit and time-period */
 
 static GtkWidget *dwiz_combo (GList *vlist, DATAINFO *dwinfo)
 {
@@ -4658,32 +4640,33 @@ static GtkWidget *dwiz_combo (GList *vlist, DATAINFO *dwinfo)
     GtkWidget *w;
     GtkWidget *table;
     GtkWidget *combo;
-    char uname[VNAMELEN];
-    char tname[VNAMELEN];
+    int uidx, tidx;
     int i;
 
-    panelvar_candidates(vlist, uname, tname);
+    panelvar_candidates(vlist, &uidx, &tidx);
 
     table = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
 
     for (i=0; i<2; i++) {
+	GList *list = vlist;
+
 	w = gtk_label_new(_(strs[i]));
 	gtk_table_attach_defaults(GTK_TABLE(table), w, 0, 1, i, i+1);
 
-	combo = gtk_combo_new();
+	combo = gtk_combo_box_new_text();
 	gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, i, i+1);
 
-	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), 15);
-	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
-	gtk_combo_set_popdown_strings(GTK_COMBO(combo), vlist); 
-	g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "index",
-			  GINT_TO_POINTER(i));
-	g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "destroy",
+	while (list != NULL) {
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(combo), list->data);
+	    list = list->next;
+	}
+
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), (i == 0)? uidx : tidx);
+	g_object_set_data(G_OBJECT(combo), "index", GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(combo), "destroy",
 			 G_CALLBACK(update_panel_var), dwinfo);
-	maybe_set_panelvar(GTK_ENTRY(GTK_COMBO(combo)->entry), vlist,
-			   uname, tname, i);
     }
 
     return table;

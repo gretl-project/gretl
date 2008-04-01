@@ -897,57 +897,57 @@ static gboolean takes_effect_on_restart (void)
 
 #define HIDE_SPANISH_MANUAL 1
 
-static GList *get_settings_list (void *var, int *nopt)
+static const char **get_radio_setting_strings (void *var, int *n)
 {
-    char *hc_strs[] = {
-	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
-    };
-    char *hc_panel_strs[] = {
-	"Arellano", "PCSE"
-    };
-    char *garch_strs[] = {
-	"QML", "BW"
-    };
-    const char *man_strs[] = {
+    static const char *man_strs[] = {
         N_("English (US letter paper)"),
         N_("English (A4 paper)"),
         N_("Italian"),
 	N_("Spanish")
     };
-    GList *list = NULL;
-    int i, n = 0;
+    const char **strs = NULL;
+
+    *n = 0;
+
+    if (var == &manpref) {
+	strs = man_strs;
+	*n = sizeof man_strs / sizeof man_strs[0];
+#if HIDE_SPANISH_MANUAL
+	*n -= 1;
+#endif
+    }
+
+    return strs;
+}
+
+static const char **get_list_setting_strings (void *var, int *n)
+{
+    static const char *hc_strs[] = {
+	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
+    };
+    static const char *hc_panel_strs[] = {
+	"Arellano", "PCSE"
+    };
+    static const char *garch_strs[] = {
+	"QML", "BW"
+    };
+    const char **strs = NULL;
+
+    *n = 0;
 
     if (var == hc_xsect || var == hc_tseri) {
-	n = sizeof hc_strs / sizeof hc_strs[0];
-	if (var == hc_xsect) n--;
-	for (i=0; i<n; i++) {
-	    list = g_list_append(list, hc_strs[i]);
-	}
+	strs = hc_strs;
+	*n = sizeof hc_strs / sizeof hc_strs[0];
+	if (var == hc_xsect) *n -= 1;
     } else if (var == hc_panel) {
-	n = sizeof hc_panel_strs / sizeof hc_panel_strs[0];
-	for (i=0; i<n; i++) {
-	    list = g_list_append(list, hc_panel_strs[i]);
-	}
+	strs = hc_panel_strs;
+	*n = sizeof hc_panel_strs / sizeof hc_panel_strs[0];
     } else if (var == hc_garch) {
-	n = sizeof garch_strs / sizeof garch_strs[0];
-	for (i=0; i<n; i++) {
-	    list = g_list_append(list, garch_strs[i]);
-	}
-    } else if (var == &manpref) {
-	n = sizeof man_strs / sizeof man_strs[0];
-#if HIDE_SPANISH_MANUAL
-	n--;
-#endif
-	for (i=0; i<n; i++) {
-	    list = g_list_append(list, _(man_strs[i]));
-	}
-    }
+	strs = garch_strs;
+	*n = sizeof garch_strs / sizeof garch_strs[0];
+    } 
 
-    if (nopt != NULL) {
-	*nopt = n;
-    }
-
-    return list;
+    return strs;
 }
 
 static void 
@@ -1142,7 +1142,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	} else if (rc->flags & LISTSET) {
 	    char *strvar = (char *) rc->var;
-	    GList *list;
+	    const char **strs;
+	    int j, nopt, active = 0;
 
 	    s_len++;
 
@@ -1153,24 +1154,25 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				      w, 0, 1, s_len - 1, s_len);
 	    gtk_widget_show(w);
 
-	    rc->widget = gtk_combo_new();
+	    rc->widget = gtk_combo_box_new_text();
 	    gtk_table_attach(GTK_TABLE(s_table), rc->widget, 
 			     1, 2, s_len-1, s_len,
 			     0, 0, 0, 0);
-
-	    list = get_settings_list(rc->var, NULL);
-	    gtk_combo_set_popdown_strings(GTK_COMBO(rc->widget), list);
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), strvar);
-	    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 8);
-	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
-				      FALSE);
+	    strs = get_list_setting_strings(rc->var, &nopt);
+	    for (j=0; j<nopt; j++) {
+		gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), 
+					  strs[j]);
+		if (!strcmp(strs[j], strvar)) {
+		    active = j;
+		}
+	    }
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
 	    gtk_widget_show(rc->widget);
 	} else if (rc->flags & RADIOSET) {
-	    int i, rcval = *(int *) (rc->var);
-	    int nopt = 0;
+	    int nopt, j, rcval = *(int *) (rc->var);
 	    GtkWidget *b;
 	    GSList *group = NULL;
-	    GList *list, *mylist;
+	    const char **strs;
 
 	    b_len++;
 	    b = gtk_label_new(_(rc->description));
@@ -1179,26 +1181,24 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				      b_len - 1, b_len);
 	    gtk_widget_show(b);
 
-	    mylist = list = get_settings_list(rc->var, &nopt);
+	    strs = get_radio_setting_strings(rc->var, &nopt);
 
-	    for (i=0; i<nopt; i++) {
+	    for (j=0; j<nopt; j++) {
 		b_len++;
 		gtk_table_resize(GTK_TABLE(b_table), b_len, 2);
-		b = gtk_radio_button_new_with_label(group, mylist->data);
+		b = gtk_radio_button_new_with_label(group, _(strs[j]));
 		gtk_table_attach_defaults(GTK_TABLE(b_table), b, 
 					  b_col, b_col + 1, 
 					  b_len - 1, b_len);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), i == rcval);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), j == rcval);
 		g_object_set_data(G_OBJECT(b), "action", 
-				  GINT_TO_POINTER(i));
+				  GINT_TO_POINTER(j));
 		g_signal_connect(G_OBJECT(b), "clicked",
 				 G_CALLBACK(radio_change_value),
 				 rc->var);
 		gtk_widget_show(b);
 		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
-		mylist = g_list_next(mylist);
 	    }
-	    g_list_free(list);
 	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
@@ -1402,14 +1402,14 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 		    strncat(strvar, str, rc_vars[i].len - 1);
 		}
 	    } else if (rc_vars[i].flags & LISTSET) {
-		GtkWidget *entry = GTK_COMBO(rc_vars[i].widget)->entry;
+		GtkComboBox *box = GTK_COMBO_BOX(rc_vars[i].widget);
+		gchar *boxval;
 
-		str = gtk_entry_get_text(GTK_ENTRY(entry));
-		if (str != NULL && *str != '\0') { 
-		    strvar = (char *) rc_vars[i].var;
-		    *strvar = '\0';
-		    strncat(strvar, str, rc_vars[i].len - 1);
-		}
+		boxval = gtk_combo_box_get_active_text(box);
+		strvar = (char *) rc_vars[i].var;
+		*strvar = '\0';
+		strcat(strvar, boxval);
+		g_free(boxval);
 	    }
 	}
     }

@@ -164,13 +164,11 @@ static FitType fit_type_from_string (const char *s)
     return f;
 }
 
-static void fittype_from_combo (GtkWidget *w, GPT_SPEC *spec)
+static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
 {
     FitType f = PLOT_FIT_NONE;
-    const char *s;
+    gchar *s = gtk_combo_box_get_active_text(box);
 
-    g_return_if_fail(GTK_IS_ENTRY(w));
-    s = gtk_entry_get_text(GTK_ENTRY(w));
     f = fit_type_from_string(s);
 
     if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
@@ -183,11 +181,13 @@ static void fittype_from_combo (GtkWidget *w, GPT_SPEC *spec)
 	}
 	spec->fit = f;
     }
+
+    g_free(s);
 }
 
-static gboolean fit_type_changed (GtkEditable *entry, GPT_SPEC *spec)
+static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
 {
-    const gchar *s = gtk_entry_get_text(GTK_ENTRY(entry));
+    gchar *s = gtk_combo_box_get_active_text(box);
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
     char title[128];
@@ -198,6 +198,7 @@ static gboolean fit_type_changed (GtkEditable *entry, GPT_SPEC *spec)
     }
 
     f = fit_type_from_string(s);
+    g_free(s);
 
     *title = '\0';
 
@@ -342,7 +343,7 @@ enum {
 
 static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
 {
-    const gchar *yaxis;
+    gchar *s;
     int supress_y2 = 0;
     int i, k, err = 0;
 
@@ -353,8 +354,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    entry_to_gp_string(GTK_COMBO(keycombo)->entry, spec->keyspec, 
-		       sizeof spec->keyspec);
+    s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(keycombo));
+    strcpy(spec->keyspec, s);
+    g_free(s);
 
     spec->flags &= ~GPT_Y2AXIS;
 
@@ -366,16 +368,17 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     for (i=0; i<spec->n_lines; i++) {
 	spec->lines[i].yaxis = 1;
-	if (supress_y2 || yaxiscombo[i] == NULL) {
-	    continue;
-	}
-	yaxis = 
-	    gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
-	if (yaxis != NULL && *yaxis && !strcmp(yaxis, "right")) {
-	    spec->lines[i].yaxis = 2;	
-	}
-	if (spec->lines[i].yaxis == 2) {
-	    spec->flags |= GPT_Y2AXIS;
+	if (!supress_y2 && yaxiscombo[i] != NULL) {
+	    gchar *str = 
+		gtk_combo_box_get_active_text(GTK_COMBO_BOX(yaxiscombo[i]));
+
+	    if (!strcmp(str, "right")) {
+		spec->lines[i].yaxis = 2;	
+	    }
+	    if (spec->lines[i].yaxis == 2) {
+		spec->flags |= GPT_Y2AXIS;
+	    }
+	    g_free(str);
 	}
     }
 
@@ -492,7 +495,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     if (!err && fitcombo != NULL) {
-	fittype_from_combo(GTK_COMBO(fitcombo)->entry, spec);
+	fittype_from_combo(GTK_COMBO_BOX(fitcombo), spec);
     }
 
     if (!err) {
@@ -798,7 +801,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     static int show_aa_check = -1;
     GtkWidget *label, *vbox, *tbl;
     int i, rows = 1;
-    GList *keypos_list = NULL;
+    int kactive = 0;
     gchar *keypos[] = {
 	"left top",
 	"right top",
@@ -809,10 +812,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	NULL
     };
 
-    for (i=0; keypos[i] != NULL; i++) {
-	keypos_list = g_list_append(keypos_list, keypos[i]);
-    }
-   
     vbox = gp_page_vbox(notebook, _("Main"));
 
     tbl = gp_dialog_table(rows, TAB_MAIN_COLS, vbox);
@@ -856,39 +855,37 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			      label, 0, 1, rows-1, rows);
     gtk_widget_show(label);
 
-    keycombo = gtk_combo_new();
+    keycombo = gtk_combo_box_new_text();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
-    gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos_list); 
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
+    for (i=0; keypos[i] != NULL; i++) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(keycombo), keypos[i]);
+	if (!strcmp(keypos[i], spec->keyspec)) {
+	    kactive = i;
+	}
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(keycombo), kactive);
     gtk_widget_show(keycombo);
-    g_list_free(keypos_list);
 
     /* choice of fitted line type, if appropriate */
     if (spec->fit != PLOT_FIT_NA) {
-	GList *fitlist = NULL;
-
-	for (i=0; fittype_strings[i] != NULL; i++) {
-	    fitlist = g_list_append(fitlist, _(fittype_strings[i]));
-	}
-
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+
 	label = gtk_label_new(_("fitted line"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  label, 0, 1, rows-1, rows);
 	gtk_widget_show(label);
 
-	fitcombo = gtk_combo_new();
+	fitcombo = gtk_combo_box_new_text();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
-	gtk_combo_set_popdown_strings(GTK_COMBO(fitcombo), fitlist); 
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(fitcombo)->entry), 
-			   _(fittype_strings[spec->fit]));
-	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(fitcombo)->entry), FALSE);
-	g_signal_connect(G_OBJECT(GTK_COMBO(fitcombo)->entry), "changed",
+	for (i=0; fittype_strings[i] != NULL; i++) {
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(fitcombo), _(fittype_strings[i]));
+	}
+	gtk_combo_box_set_active(GTK_COMBO_BOX(fitcombo), spec->fit);
+	g_signal_connect(G_OBJECT(fitcombo), "changed",
 			 G_CALLBACK(fit_type_changed), spec);
 	gtk_widget_show(fitcombo);
-	g_list_free(fitlist);
     } else {
 	fitcombo = NULL;
     }
@@ -1124,7 +1121,6 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     int i, tbl_len, tbl_num, tbl_col;
     char label_text[32];
     GList *stylist = NULL;
-    GList *yaxis_loc = NULL;
     int do_scale_axis = 0;
 
     if (spec->code == PLOT_REGULAR && (spec->flags & GPT_TS)) {
@@ -1147,11 +1143,6 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     stylist = g_list_append(stylist, "impulses");
     stylist = g_list_append(stylist, "dots");
     stylist = g_list_append(stylist, "steps");
-
-    if (do_scale_axis) {
-	yaxis_loc = g_list_append(yaxis_loc, "left");
-	yaxis_loc = g_list_append(yaxis_loc, "right");
-    }
 
     vbox = gp_dialog_vbox();
     gtk_widget_show(vbox);
@@ -1283,12 +1274,13 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 				      label, 1, 2, tbl_len-1, tbl_len);
 	    gtk_widget_show(label);
 
-	    yaxiscombo[i] = gtk_combo_new();
+	    yaxiscombo[i] = gtk_combo_box_new_text();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
-	    gtk_combo_set_popdown_strings(GTK_COMBO(yaxiscombo[i]), yaxis_loc); 
-	    gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
-				(spec->lines[i].yaxis == 1)? "left" : "right");  
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(yaxiscombo[i]), "left");
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(yaxiscombo[i]), "right");
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(yaxiscombo[i]), 
+				     (spec->lines[i].yaxis == 1)? 0 : 1);
 	    gtk_widget_show(yaxiscombo[i]);
 	}
 
@@ -1318,10 +1310,6 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     g_list_free(stylist);
-
-    if (yaxis_loc != NULL) {    
-	g_list_free(yaxis_loc);
-    }
 }
 
 static void label_pos_to_entry (double *pos, GtkWidget *w)

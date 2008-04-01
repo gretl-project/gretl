@@ -342,27 +342,23 @@ static int row_col_err (int row, int col, PRN *prn)
     return err;
 }
 
-static int locale_numeric_string (const char *str)
-{
-    char *test;
-    int ret = 1;
-
-    errno = 0;
-
-    strtod(str, &test);
-    if (*test != '\0' || errno == ERANGE) {
-	ret = 0;
-    }
-
-    return ret;
-}
+/* This function is called on LABELSST records: we check for possible
+   NAs and also for numeric values that may have strayed into the
+   string table, and that shouldn't really be treated as quoted
+   strings.  We don't just use strtod at the outset, because some
+   XLS files (put out by agencies that should know better!) contain
+   numerical values that are "nicely formatted" as text using spaces
+   or commas for thousands separators -- we try stripping this
+   junk out first before doing the numeric-value test.
+*/
 
 static int check_copy_string (struct sheetrow *prow, int row, int col, 
 			      int idx, const char *s)
 {
     if (row > 0 && col > 0) {
+	const char *numok = "0123456789 -,.";
 	int i, len = strlen(s);
-	int commas = 0;
+	int commas = 0, digits = 0;
 	static int warned = 0;
 
 	if (len == 0) {
@@ -372,15 +368,20 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	}	    
 
 	for (i=0; i<len; i++) {
-	    if (!isdigit(s[i]) && s[i] != ' ' && s[i] != '-' &&
-		s[i] != ',' && s[i] != '.') {
+	    if (strchr(numok, s[i]) == NULL) {
+		/* does not look promising for numerical value */
 		len = 0;
 		break;
 	    }
-	    if (s[i] == ',') commas++;
+	    if (isdigit(s[i])) {
+		digits++;
+	    } else if (s[i] == ',') {
+		commas++;
+	    }
 	}
 
-	if (len > 0) {
+	if (len > 0 && digits > 0) {
+	    /* may be numerical? */
 	    char *p, *q = malloc(len + 1);
 
 	    if (q == NULL) return 1;
@@ -397,21 +398,19 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 			warned = 1;
 		    }
 		    if (len - i != 4) {
-			/* probably decimal? */
+			/* comma is probably decimal separator? */
 			*p++ = '.';
 		    }
 		}
 	    }
 	    *p = '\0';
 
-	    /* If we don't do a rigorous check on q, as below, we're
-	       liable to end up with zeros where there should be NAs.
-	       However, there's some ambiguity over whether we should
-	       be using the C locale or not.  Hmm. 
+	    /* If we don't do a rigorous check on q, as below, we
+	       may end up with zeros where there should be NAs.
 	    */ 
 
-	    if (locale_numeric_string(q)) {
-		dprintf("converting sst[%d] '%s' to numeric as %s\n", idx, s, q);
+	    if (numeric_string(q)) {
+		dprintf("taking sst[%d] '%s' to be numeric string: %s\n", idx, s, q);
 		prow->cells[col] = q;
 		return 0;
 	    } else {

@@ -740,46 +740,41 @@ static void sample_replace_buttons (GtkWidget *box, gpointer data)
     gtk_widget_show(tmp);
 }
 
-static void free_sys_strings (GtkWidget *w, char **strs)
+static void set_sys_method (GtkComboBox *box, dialog_t *d)
 {
-    free_strings_array(strs,  SYS_METHOD_MAX - 1); 
-}
+    gchar *str = gtk_combo_box_get_active_text(box);
+    char *s, mstr[8] = {0};
 
-static void set_sys_method (GtkEditable *entry, dialog_t *d)
-{
-    const gchar *s = gtk_entry_get_text(GTK_ENTRY(entry));
-    
-    if (*s != '\0') {
-	char mstr[8] = {0};
+    s = strrchr(str, '(');
 
-	s = strrchr(s, '(');
-	if (s != NULL) {
-	    GtkWidget *bt, *bv;
+    if (s != NULL) {
+	GtkWidget *bt, *bv;
 
-	    sscanf(s + 1, "%7[^)]", mstr);
-	    d->opt = system_method_from_string(mstr);
+	sscanf(s + 1, "%7[^)]", mstr);
+	d->opt = system_method_from_string(mstr);
 
-	    bt = g_object_get_data(G_OBJECT(entry), "bt");
-	    bv = g_object_get_data(G_OBJECT(entry), "bv");
+	bt = g_object_get_data(G_OBJECT(box), "bt");
+	bv = g_object_get_data(G_OBJECT(box), "bv");
 
-	    if (d->opt == 0 || d->opt == 1 || d->opt == 6) {
-		/* SUR, 3SLS, WLS */
-		gtk_widget_set_sensitive(bt, TRUE);
-		gtk_widget_set_sensitive(bv, TRUE);
-	    } else if (d->opt == 2) {
-		/* FIML */
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), TRUE);
-		gtk_widget_set_sensitive(bt, FALSE);
-		gtk_widget_set_sensitive(bv, TRUE);
-	    } else {
-		/* LIML, OLS, TSLS */
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), FALSE);
-		gtk_widget_set_sensitive(bt, FALSE);
-		gtk_widget_set_sensitive(bv, FALSE);
-	    } 
-	}
-    } 
+	if (d->opt == 0 || d->opt == 1 || d->opt == 6) {
+	    /* SUR, 3SLS, WLS */
+	    gtk_widget_set_sensitive(bt, TRUE);
+	    gtk_widget_set_sensitive(bv, TRUE);
+	} else if (d->opt == 2) {
+	    /* FIML */
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), TRUE);
+	    gtk_widget_set_sensitive(bt, FALSE);
+	    gtk_widget_set_sensitive(bv, TRUE);
+	} else {
+	    /* LIML, OLS, TSLS */
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), FALSE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), FALSE);
+	    gtk_widget_set_sensitive(bt, FALSE);
+	    gtk_widget_set_sensitive(bv, FALSE);
+	} 
+    }
+
+    g_free(str);
 }
 
 static gboolean opt_t_callback (GtkWidget *w, dialog_t *dlg)
@@ -877,48 +872,36 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     return b;
 }
 
-static void combo_opt_changed (GtkWidget *w, combo_opts *opts)
+static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
 {
-    const char *s = gtk_entry_get_text(GTK_ENTRY(w));
+    gchar *s = gtk_combo_box_get_active_text(box);
     int i;
 
-    if (s != NULL && *s != '\0') {
-        for (i=0; opts->strs[i] != NULL; i++) {
-            if (!strcmp(s, _(opts->strs[i]))) {
-                *opts->optp |= opts->vals[i];
-            } else {
-		*opts->optp &= ~opts->vals[i];
-	    }
-        }
+    for (i=0; opts->strs[i] != NULL; i++) {
+	if (!strcmp(s, _(opts->strs[i]))) {
+	    *opts->optp |= opts->vals[i];
+	} else {
+	    *opts->optp &= ~opts->vals[i];
+	}
     }
+
+    g_free(s);
 }
 
 GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
 {
     GtkWidget *combo;
-    GList *optlist = NULL;
-    int i, ni, n = 0;
-
-    for (i=0; opts->strs[i] != NULL; i++) {
-	optlist = g_list_append(optlist, _(opts->strs[i]));
-	ni = strlen(_(opts->strs[i]));
-	if (ni > n) {
-	    n = ni;
-	}
-    } 
+    int i;
 
     *opts->optp |= opts->vals[deflt];
 
-    combo = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(combo), optlist); 
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), 
-		       _(opts->strs[deflt]));
-    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), n);
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), 
-			      FALSE);
-    g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
+    combo = gtk_combo_box_new_text();
+    for (i=0; opts->strs[i] != NULL; i++) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _(opts->strs[i]));
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
+    g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(combo_opt_changed), opts);
-    g_list_free(optlist);
 
     return combo;
 }
@@ -958,25 +941,13 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
 				   GtkWidget *bt, GtkWidget *bv)
 {
     equation_system *sys = NULL;
-    GList *items = NULL;
-    GtkWidget *w, *hbox, *entry;
-    gchar **strs;
-    int method = -1;
+    GtkWidget *w, *hbox;
+    gchar *str;
+    int method = 0;
     int i;
 
     if (d->data != NULL) {
 	sys = (equation_system *) d->data;
-    }
-
-    strs = strings_array_new(SYS_METHOD_MAX);
-
-    for (i=SYS_METHOD_SUR; i<SYS_METHOD_MAX; i++) {
-	strs[i] = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
-				  system_method_short_string(i));
-	items = g_list_append(items, strs[i]);
-	if (sys != NULL && sys->method == i) {
-	    method = i;
-	}
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -987,19 +958,24 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_widget_show(w);
 
-    w = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(w), items); 
-    entry = GTK_COMBO(w)->entry;
-    gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-    g_signal_connect(G_OBJECT(w), "destroy", G_CALLBACK(free_sys_strings), strs);
-    g_object_set_data(G_OBJECT(entry), "bt", bt);
-    g_object_set_data(G_OBJECT(entry), "bv", bv);
-    g_signal_connect(G_OBJECT(entry), "changed",
-		     G_CALLBACK(set_sys_method), d);
+    w = gtk_combo_box_new_text();
 
-    if (method >= 0) {
-	gtk_entry_set_text(GTK_ENTRY(entry), strs[method]);
+    for (i=SYS_METHOD_SUR; i<SYS_METHOD_MAX; i++) {
+	str = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
+			      system_method_short_string(i));
+	gtk_combo_box_append_text(GTK_COMBO_BOX(w), str);
+	g_free(str);
+	if (sys != NULL && sys->method == i) {
+	    method = i;
+	}
     }
+
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), method);
+
+    g_object_set_data(G_OBJECT(w), "bt", bt);
+    g_object_set_data(G_OBJECT(w), "bv", bv);
+    g_signal_connect(G_OBJECT(w), "changed",
+		     G_CALLBACK(set_sys_method), d);
 
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
     gtk_widget_show(w);  
