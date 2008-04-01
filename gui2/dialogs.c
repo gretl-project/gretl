@@ -1097,17 +1097,23 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->label_entry));
     newstr = trim_text(edttext);
 
-    if (newstr != NULL && strcmp(VARLABEL(datainfo, v), newstr)) {
+    if (newstr != NULL) {
 	if (vset->formula) {
-	    if (try_regenerate_var(v, newstr)) {
+	    int err = try_regenerate_var(v, newstr);
+
+	    if (err) {
 		free(newstr);
 		return;
+	    } else {
+		changed = 1;
 	    }
 	}
-	*VARLABEL(datainfo, v) = 0;
-	strncat(VARLABEL(datainfo, v), newstr, MAXLABEL - 1);
-	changed = 1;
-	gui_changed = 1;
+	if (strcmp(VARLABEL(datainfo, v), newstr)) {
+	    *VARLABEL(datainfo, v) = 0;
+	    strncat(VARLABEL(datainfo, v), newstr, MAXLABEL - 1);
+	    changed = 1;
+	    gui_changed = 1;
+	}
     }
 
     free(newstr);
@@ -1177,11 +1183,9 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	if (changed) {
 	    record_varlabel_change(v);
 	}
-
 	if (gui_changed) {
 	    show_varinfo_changes(v);
 	}
-
 	if (changed || comp_changed || gui_changed || disc_changed) {
 	    mark_dataset_as_modified();
 	}
@@ -1216,10 +1220,13 @@ static const char *comp_int_to_string (int i)
 
 static int formula_ok (int v)
 {
-    if (!var_is_scalar(datainfo, v) &&
-	var_is_generated(datainfo, v)) {
+    if (!var_is_scalar(datainfo, v) && var_is_generated(datainfo, v)) {
 	const char *s = VARLABEL(datainfo, v);
 	int n = strlen(s);
+
+	/* note: the test for a trailing dot here is to check
+	   that we don't have a long genr formula that has been
+	   truncated into the variable's description */
 
 	if (n > 0 && s[n-1] != '.') {
 	    return 1;
@@ -1227,6 +1234,15 @@ static int formula_ok (int v)
     }
 
     return 0;
+}
+
+static void 
+vset_toggle_formula (GtkComboBox *box, struct varinfo_settings *vset)
+{
+    gchar *s = gtk_combo_box_get_active_text(box);
+
+    vset->formula = !strcmp(s, _("Formula:"));
+    g_free(s);
 }	    
 
 void varinfo_dialog (int varnum, int full)
@@ -1288,7 +1304,13 @@ void varinfo_dialog (int varnum, int full)
     /* read/set descriptive string or genr formula */
     hbox = gtk_hbox_new(FALSE, 5);
     if (vset->formula) {
-	tmp = gtk_label_new(_("Formula:"));
+	tmp = gtk_combo_box_new_text();
+	gtk_combo_box_append_text(GTK_COMBO_BOX(tmp), _("Description:"));
+	gtk_combo_box_append_text(GTK_COMBO_BOX(tmp), _("Formula:"));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
+	vset->formula = 0;
+	g_signal_connect(G_OBJECT(tmp), "changed", 
+			 G_CALLBACK(vset_toggle_formula), vset);
     } else {
 	tmp = gtk_label_new(_("Description:"));
     }
