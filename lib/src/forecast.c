@@ -2378,11 +2378,21 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 				 const double **Z, DATAINFO *pdinfo,
 				 gretlopt opt)
 {
+    gretl_matrix *yhat = NULL;
     int m = F->cols / 2;
     int s, t, nf;
     int err = 0;
 
     strcpy(fr->depvar, pdinfo->varname[yno]);
+
+    if (sys != NULL && fr->t0 < fr->t1) {
+	/* experimental */
+	yhat = sys_get_fitted_values(sys, i, fr->t0, fr->t1, 
+				     Z, pdinfo, &err);
+#if 0
+	gretl_matrix_print(yhat, "yhat_i");
+#endif
+    }
 
     /* pre-forecast observations */
     for (t=fr->t0; t<fr->t1; t++) {
@@ -2398,6 +2408,8 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 		    s = t - sys->t1;
 		    fr->fitted[t] = gretl_matrix_get(sys->yhat, s, i);
 		}
+	    } else if (yhat != NULL) {
+		fr->fitted[t] = gretl_vector_get(yhat, t - yhat->t1);
 	    }
 	} else if (var != NULL) {
 	    if (t >= var->t1 && t <= var->t2) {
@@ -2406,6 +2418,10 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 		    gretl_matrix_get(var->E, s, i);
 	    }
 	}
+    }
+
+    if (yhat != NULL) {
+	gretl_matrix_free(yhat);
     }
 
     /* actual forecasts */

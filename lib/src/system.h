@@ -221,6 +221,12 @@ system_get_forecast_matrix (equation_system *sys, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo, 
 			    gretlopt opt, int *err);
 
+gretl_matrix *sys_get_fitted_values (equation_system *sys,
+				     int v, int t1, int t2,
+				     const double **Z, 
+				     const DATAINFO *pdinfo,
+				     int *err);
+
 #ifndef GRETLCLI
 
 equation_system *

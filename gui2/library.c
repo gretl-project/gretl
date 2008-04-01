@@ -154,6 +154,8 @@ void register_graph (void)
 {
     const char *msg;
 
+    gretl_error_clear();
+
     gnuplot_show_png_by_name(gretl_plotfile());
 
     msg = gretl_errmsg_get();
@@ -5291,7 +5293,7 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
 	    if (opt & OPT_L) {
 		err = multi_scatters(libcmd.list, (const double **) Z, 
 				     datainfo, opt);
-	    } else {		
+	    } else {	
 		err = gnuplot(libcmd.list, NULL, (const double **) Z, 
 			      datainfo, opt);
 	    } 

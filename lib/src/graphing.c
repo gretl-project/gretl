@@ -958,7 +958,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 		color_string);
     }
 
-#if GP_DEBUG
+#if 1 || GP_DEBUG
     fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
 #endif
 
@@ -1159,7 +1159,7 @@ int gnuplot_make_graph (void)
     err = gretl_spawn(plotcmd);  
 #endif
 
-#if GP_DEBUG
+#if 1 || GP_DEBUG
     fprintf(stderr, "gnuplot_make_graph:\n"
 	    " plotcmd='%s', err = %d\n", plotcmd, err);
 #endif
@@ -1185,6 +1185,9 @@ static void make_gtitle (gnuplot_info *gi, int code,
 	if (gi->fit == PLOT_FIT_OLS) {
 	    sprintf(title, G_("%s versus %s (with least squares fit)"),
 		    s1, s2);
+#if 1
+	    fprintf(stderr, "title: '%s'\n", title);
+#endif	    
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
 	    sprintf(title, G_("%s versus %s (with inverse fit)"),
 		    s1, s2);

@@ -3100,6 +3100,162 @@ static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
     return err;
 }
 
+/* Experimental: generate "fitted values " (in-sample, prior to the
+   forecast period) for variables that do not appear on the left-hand
+   side of any stochastic equation.  But I'm not quite sure how these
+   should be defined.
+*/
+
+gretl_matrix *sys_get_fitted_values (equation_system *sys,
+				     int v, int t1, int t2,
+				     const double **Z, const DATAINFO *pdinfo,
+				     int *err)
+{
+    gretl_matrix *F = NULL;
+    gretl_matrix *G = NULL;
+    gretl_matrix *yl = NULL, *x = NULL;
+    gretl_matrix *y = NULL, *yh = NULL;
+    const int *ylist = sys->ylist;
+    const int *xlist = sys->xlist;
+    const int *plist = sys->plist;
+    int n = sys->neqns + sys->nidents;
+    double xit;
+    int col, T;
+    int i, vi, s, t, lag;
+
+    if (sys->Gamma == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+#if SYSDEBUG
+    printlist(ylist, "ylist");
+    printlist(xlist, "xlist");
+    printlist(plist, "plist");
+    fprintf(stderr, "sys->order = %d\n", sys->order);
+#endif
+
+    if (!gretl_is_identity_matrix(sys->Gamma)) {
+	G = gretl_matrix_copy(sys->Gamma);
+	if (G == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = gretl_SVD_invert_matrix(G);
+	}
+	if (*err) {
+	    gretl_matrix_free(G);
+	    return NULL;
+	}
+    }
+
+    T = t2 - t1 + 1;
+
+    y = gretl_matrix_alloc(n, 1);
+    yh = gretl_matrix_alloc(n, 1);
+    F = gretl_zero_matrix_new(T, 1);
+
+    if (y == NULL || yh == NULL || F == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (sys->order > 0) {
+	yl = gretl_matrix_alloc(sys->order * ylist[0], 1);
+	if (yl == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    if (xlist[0] > 0) {
+	x = gretl_matrix_alloc(xlist[0], 1);
+	if (x == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    for (t=t1, s=0; t<=t2; t++, s++) {
+	int miss = 0;
+
+	/* lags of endogenous vars */
+	if (sys->order > 0) {
+	    gretl_matrix_zero(yl);
+	    for (i=1; i<=plist[0] && !miss; i++) {
+		vi = plist[i];
+		get_col_and_lag(vi, sys, &col, &lag);
+		xit = Z[vi][t];
+		col += n * (lag - 1);
+		if (na(xit)) {
+		    miss = 1;
+		} else {
+		    yl->val[col] = xit;
+		} 
+	    }
+	    if (!miss) {
+		gretl_matrix_multiply(sys->A, yl, y);
+	    }
+	} else {
+	    gretl_matrix_zero(y);
+	}
+
+#if SYSDEBUG > 1
+	gretl_matrix_print(yl, "yl");
+#endif
+
+	/* exogenous vars */
+	if (xlist[0] > 0 && !miss) {
+	    for (i=1; i<=xlist[0] && !miss; i++) {
+		xit = Z[xlist[i]][t];
+		if (na(xit)) {
+		    miss = 1;
+		} else {
+		    x->val[i-1] = xit;
+		}
+	    }
+	    if (!miss) {
+		gretl_matrix_multiply_mod(sys->B, GRETL_MOD_NONE,
+					  x, GRETL_MOD_NONE,
+					  y, GRETL_MOD_CUMULATE);
+	    }
+	}
+
+	if (miss) {
+	    gretl_vector_set(sys->F, s, NADBL);
+	} else {
+	    /* multiply by Gamma^{-1} */
+	    if (G != NULL) {
+		gretl_matrix_multiply(G, y, yh);
+	    } else {
+		gretl_matrix_multiply(sys->Gamma, y, yh);
+	    }
+	    gretl_vector_set(F, s, yh->val[v]);
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(y);
+    gretl_matrix_free(yh);
+    gretl_matrix_free(yl);
+    gretl_matrix_free(x);
+    gretl_matrix_free(G);
+
+    if (*err) {
+	gretl_matrix_free(F);
+	F = NULL;
+    } else {
+	gretl_matrix_set_t1(F, t1);
+	gretl_matrix_set_t2(F, t2);
+    }
+
+#if SYSDEBUG
+    gretl_matrix_print(F, "F: calculated fitted values");
+#endif
+
+    return F;
+}
+
 static int sys_add_forecast (equation_system *sys,
 			     int t1, int t2,
 			     const double **Z, const DATAINFO *pdinfo,

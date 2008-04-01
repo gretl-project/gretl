@@ -271,9 +271,6 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     /* the original dependent variable */
     y = (*pZ)[pmod->list[1]];
 
-    /* local_list includes a weight variable */
-    local_list[0] = pmod->list[0] + 1;
-
     /* weighting variable (first newly added var) */
     local_list[1] = origv;
     wgt = (*pZ)[origv];
