@@ -2049,7 +2049,8 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
     return ret;
 }
 
-static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
+static GtkWidget *
+build_script_popup (windata_t *vwin, struct textbit **ptb)
 {
     const char *items[] = {
 	N_("Comment line"),
@@ -2063,17 +2064,25 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), NULL);
 
+    /* "generic" text window menu -- we may add to this */
+    pmenu = build_text_popup(vwin);
+
     tb = vwin_get_textbit(vwin, AUTO_SELECT_LINE);
     if (tb == NULL) {
-	return NULL;
+	*ptb = NULL;
+	return pmenu;
+    }
+
+    tb->commented = text_is_commented(tb->chunk);
+
+    if (tb->commented > 0 && vwin->role != EDIT_SCRIPT) {
+	g_free(tb->chunk);
+	free(tb);
+	*ptb = NULL;
+	return pmenu;
     }
 
     *ptb = tb;
-    tb->commented = text_is_commented(tb->chunk);
-
-    if (tb->commented <= 0 || vwin->role == EDIT_SCRIPT) {
-	pmenu = gtk_menu_new();
-    }
 
     if (tb->commented <= 0) {
 	/* we have some uncommented material: allow exec option */
@@ -2131,20 +2140,7 @@ static GtkWidget *build_script_popup (windata_t *vwin, struct textbit **ptb)
 			 vwin);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-
-	item = gtk_menu_item_new_with_label(_("Configure tabs..."));
-	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(script_tabs_dialog),
-			 NULL);
-	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }	
-
-    if (pmenu == NULL) {
-	g_free(tb->chunk);
-	free(tb);
-	*ptb = NULL;
-    }
 
     return pmenu;
 }

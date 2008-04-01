@@ -1727,7 +1727,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_BY_ITEM },
-    { N_("Configure..."), GTK_STOCK_PREFERENCES, script_tabs_dialog, EDIT_SCRIPT_ITEM },
+    { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, script_tabs_dialog, EDIT_SCRIPT_ITEM },
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Scripts index"), GTK_STOCK_INDEX, script_index, INDEX_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
@@ -1741,6 +1741,15 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }
 };
+
+static int edit_script_popup_item (struct viewbar_item *item)
+{
+    return !strcmp(item->icon, GTK_STOCK_COPY) ||
+	!strcmp(item->icon, GTK_STOCK_PASTE) ||
+	!strcmp(item->icon, GTK_STOCK_FIND) ||
+	!strcmp(item->icon, GTK_STOCK_UNDO) ||
+	!strcmp(item->icon, GTK_STOCK_FIND_AND_REPLACE);
+}
 
 static void set_plot_icon (struct viewbar_item *vitem)
 {
@@ -1933,7 +1942,7 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
     }
 }
 
-static GtkWidget *build_text_popup (windata_t *vwin)
+GtkWidget *build_text_popup (windata_t *vwin)
 {
     struct viewbar_item *vitem;
     toolfunc func;
@@ -1943,7 +1952,17 @@ static GtkWidget *build_text_popup (windata_t *vwin)
 
     for (i=0; viewbar_items[i].str != NULL; i++) {
 	vitem = &viewbar_items[i];
-	func = item_get_callback(vitem, vwin, 0, 0);
+	if (vwin->role == EDIT_SCRIPT) {
+	    /* the script editor popup may have some special stuff
+	       added: don't clutter it up */
+	    if (edit_script_popup_item(vitem)) {
+		func = vitem->func;
+	    } else {
+		func = NULL;
+	    }
+	} else {
+	    func = item_get_callback(vitem, vwin, 0, 0);
+	}
 	if (func != NULL) {
 	    if (func == text_paste_callback) {
 		GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);

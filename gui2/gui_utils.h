@@ -79,6 +79,8 @@ GtkWidget *match_window_by_data (const gpointer p);
 
 GtkWidget *match_window_by_filename (const char *fname);
 
+GtkWidget *build_text_popup (windata_t *vwin);
+
 void mark_content_saved (windata_t *vwin);
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
