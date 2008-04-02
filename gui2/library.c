@@ -6332,30 +6332,44 @@ static int ok_script_file (const char *runfile)
     return 1;
 }
 
-static void output_line (const char *line, PRN *prn) 
+static void output_line (const char *line, ExecState *s, PRN *prn) 
 {
-    int coding = gretl_compiling_function() || 
-	gretl_compiling_loop();
+    int coding = gretl_compiling_function() || gretl_compiling_loop();
     int n = strlen(line);
 
-    if ((line[0] == '/' && line[1] == '*') ||
+    if (coding) {
+	pputs(prn, "> ");
+    }
+
+    if (s->in_comment || (line[0] == '/' && line[1] == '*') ||
 	(line[n-1] == '/' && line[n-2] == '*')) {
-	pprintf(prn, "\n%s\n", line);
-    } else if (line[0] == '#') {
-	if (coding) {
-	    pprintf(prn, "> %s\n", line);
-	} else {
-	    pprintf(prn, "%s\n", line);
-	}
+	pprintf(prn, "%s\n", line);
+    } else if (*line == '#') {
+	pprintf(prn, "%s\n", line);
     } else if (!string_is_blank(line)) {
-	const char *leader;
-	
-	leader = (coding)? "> " : "? ";
-	pputs(prn, leader); 
+	if (!coding) {
+	    pputs(prn, "? ");
+	}
 	n = 2;
 	safe_print_line(line, &n, prn);
 	pputc(prn, '\n');
     }
+}
+
+static char *get_an_input_line (char *line, FILE *fp,
+				const char *buf)
+{
+    char *s;
+
+    *line = '\0';
+
+    if (fp != NULL) {
+	s = fgets(line, MAXLINE, fp);
+    } else {
+	s = bufgets(line, MAXLINE, buf);
+    }
+
+    return s;
 }
 
 /* run commands from runfile or buf, output to prn */
@@ -6416,43 +6430,32 @@ static int execute_script (const char *runfile, const char *buf,
 	    char *gotline = NULL;
 	    int contd;
 
-	    *line = '\0';
-
-	    if (fb != NULL) {
-		gotline = fgets(line, MAXLINE, fb);
-	    } else {
-		gotline = bufgets(line, MAXLINE, buf);
-	    }
-
+	    gotline = get_an_input_line(line, fb, buf);
 	    if (gotline == NULL) {
 		/* done reading */
 		goto endwhile;
 	    }
 
-	    contd = top_n_tail(line);
-
-	    while (contd && !state.in_comment) {
-		/* handle continued lines */
-		*tmp = '\0';
-
-		if (fb != NULL) {
-		    fgets(tmp, MAXLINE, fb);
-		} else {
-		    bufgets(tmp, MAXLINE, buf); 
-		}
-
-		if (!exec_err && *tmp != '\0') {
-		    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
-			pprintf(prn, _("Maximum length of command line "
-				       "(%d bytes) exceeded\n"), MAXLINE);
-			exec_err = 1;
-			break;
-		    } else {
-			strcat(line, tmp);
-			compress_spaces(line);
-		    }
-		}
+	    if (!state.in_comment) {
 		contd = top_n_tail(line);
+		while (contd && !state.in_comment) {
+		    /* handle continued lines */
+		    get_an_input_line(tmp, fb, buf);
+		    if (!exec_err && *tmp != '\0') {
+			if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
+			    pprintf(prn, _("Maximum length of command line "
+					   "(%d bytes) exceeded\n"), MAXLINE);
+			    exec_err = 1;
+			    break;
+			} else {
+			    strcat(line, tmp);
+			    compress_spaces(line);
+			}
+		    }
+		    contd = top_n_tail(line);
+		}
+	    } else {
+		tailstrip(line);
 	    }
 
 	    if (!exec_err) {
@@ -6461,7 +6464,8 @@ static int execute_script (const char *runfile, const char *buf,
 		} else if (!strncmp(line, "(* saved objects:", 17)) { 
 		    strcpy(line, "quit"); 
 		} else if (gretl_echo_on() && !including) {
-		    output_line(line, prn);
+		    /* FIXME move this? */
+		    output_line(line, &state, prn);
 		}
 		strcpy(tmp, line);
 		if (runfile != NULL) {

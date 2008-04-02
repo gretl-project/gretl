@@ -3150,40 +3150,41 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
 
     if (pbuf == NULL) {
-	gchar *trfname = NULL;
-	gsize bytes;
-
 	verbose_gerror_report(gerr, "gdk_pixbuf_new_from_file");
-	g_error_free(gerr);
-	gerr = NULL;
+	if (g_error_matches(gerr, G_FILE_ERROR, G_FILE_ERROR_INVAL)) {
+	    gchar *trfname = NULL;
+	    gsize bytes;
 
-	if (!g_utf8_validate(fname, -1, NULL)) {
-	    fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
-	    trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
-	    if (trfname == NULL) {
-		verbose_gerror_report(gerr, "g_locale_to_utf8");
+	    g_error_free(gerr);
+	    gerr = NULL;
+
+	    if (!g_utf8_validate(fname, -1, NULL)) {
+		fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
+		trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
+		if (trfname == NULL) {
+		    verbose_gerror_report(gerr, "g_locale_to_utf8");
+		}
+	    } else {
+		fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
+		trfname = g_locale_from_utf8(fname, -1, NULL, &bytes, &gerr);
+		if (trfname == NULL) {
+		    verbose_gerror_report(gerr, "g_locale_from_utf8");
+		}
 	    }
-	} else {
-	    fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
-	    trfname = g_locale_from_utf8(fname, -1, NULL, &bytes, &gerr);
-	    if (trfname == NULL) {
-		verbose_gerror_report(gerr, "g_locale_from_utf8");
+
+	    if (trfname != NULL) {
+		pbuf = gdk_pixbuf_new_from_file(trfname, &gerr);
+		g_free(trfname);
+		if (pbuf == NULL) {
+		    verbose_gerror_report(gerr, "gdk_pixbuf_new_from_file");
+		}
 	    }
 	}
-
-	if (trfname != NULL) {
-	    pbuf = gdk_pixbuf_new_from_file(trfname, &gerr);
-	    g_free(trfname);
-	    if (pbuf == NULL) {
-		verbose_gerror_report(gerr, "gdk_pixbuf_new_from_file");
-	    }
-	}
-
 	if (gerr != NULL) {
 	    errbox(gerr->message);
 	    g_error_free(gerr);
 	}
-    }
+    } 
 
     return pbuf;
 }

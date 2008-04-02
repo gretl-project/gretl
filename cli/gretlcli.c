@@ -586,6 +586,8 @@ int main (int argc, char *argv[])
 	    if (overflow) {
 		break;
 	    }
+	} else {
+	    tailstrip(line);
 	}
 
 	strcpy(linecopy, line);
@@ -611,15 +613,8 @@ int main (int argc, char *argv[])
     return 0;
 }
 
-static void printf_strip (char *s)
+static void printline (const char *s)
 {
-    int i, n = strlen(s);
-
-    for (i=n-1; i>0; i--) {
-	if (isspace(s[i]) || s[i] == '\r') s[i] = '\0';
-	else break;
-    }
-
     if (gretl_compiling_loop()) {
 	printf("> %s\n", s);
     } else {
@@ -783,7 +778,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd->ci == CMD_COMMENT && gretl_echo_on()) {
-	printf_strip(linebak);
+	printline(linebak);
     }
 
     if (cmd->ci < 0) {

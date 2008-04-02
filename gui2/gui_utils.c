@@ -4202,35 +4202,37 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents)
     ok = g_file_get_contents(fname, contents, NULL, &gerr);
 
     if (gerr != NULL) {
-	gchar *trfname = NULL;
-	gsize bytes;
-
 	verbose_gerror_report(gerr, "g_file_get_contents");
-	g_error_free(gerr);
-	gerr = NULL;
+	if (g_error_matches(gerr, G_FILE_ERROR, G_FILE_ERROR_INVAL)) {
+	    gchar *trfname = NULL;
+	    gsize bytes;
 
-	if (!g_utf8_validate(fname, -1, NULL)) {
-	    fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
-	    trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
-	    if (trfname == NULL) {
-		verbose_gerror_report(gerr, "g_locale_to_utf8");
+	    verbose_gerror_report(gerr, "g_file_get_contents");
+	    g_error_free(gerr);
+	    gerr = NULL;
+
+	    if (!g_utf8_validate(fname, -1, NULL)) {
+		fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
+		trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
+		if (trfname == NULL) {
+		    verbose_gerror_report(gerr, "g_locale_to_utf8");
+		}
+	    } else {
+		fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
+		trfname = g_locale_from_utf8(fname, -1, NULL, &bytes, &gerr);
+		if (trfname == NULL) {
+		    verbose_gerror_report(gerr, "g_locale_from_utf8");
+		}
 	    }
-	} else {
-	    fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
-	    trfname = g_locale_from_utf8(fname, -1, NULL, &bytes, &gerr);
-	    if (trfname == NULL) {
-		verbose_gerror_report(gerr, "g_locale_from_utf8");
+
+	    if (trfname != NULL) {
+		ok = g_file_get_contents(trfname, contents, NULL, &gerr);
+		g_free(trfname);
+		if (!ok) {
+		    verbose_gerror_report(gerr, "g_file_get_contents");
+		}
 	    }
 	}
-
-	if (trfname != NULL) {
-	    ok = g_file_get_contents(trfname, contents, NULL, &gerr);
-	    g_free(trfname);
-	    if (!ok) {
-		verbose_gerror_report(gerr, "g_file_get_contents");
-	    }
-	}
-
 	if (gerr != NULL) {
 	    errbox(gerr->message);
 	    g_error_free(gerr);

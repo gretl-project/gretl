@@ -151,8 +151,9 @@ static int filter_comments (char *s, CMD *cmd)
 
     tmp[j] = '\0';
     strcpy(s, tmp);
+    tailstrip(s);
 
-    if (string_is_blank(s)) { /* was *s == '\0' */
+    if (*s == '\0') { 
 	filt = 1;
     } else if (!ignore) {
 	/* '#' comments */
