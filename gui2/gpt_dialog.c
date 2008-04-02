@@ -63,6 +63,8 @@ static GtkWidget *y2_check;
 static GtkWidget *ttfcombo;
 static GtkWidget *ttfspin;
 
+static int gui_nlines;
+
 #define MAX_AXES 3
 
 struct gpt_range_t axis_range[MAX_AXES];
@@ -166,10 +168,11 @@ static FitType fit_type_from_string (const char *s)
 
 static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
 {
-    FitType f = PLOT_FIT_NONE;
     gchar *s = gtk_combo_box_get_active_text(box);
+    FitType f;
 
     f = fit_type_from_string(s);
+    g_free(s);
 
     if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
 	f == PLOT_FIT_INVERSE || f == PLOT_FIT_LOESS) {
@@ -181,8 +184,6 @@ static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
 	}
 	spec->fit = f;
     }
-
-    g_free(s);
 }
 
 static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
@@ -190,7 +191,7 @@ static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
     gchar *s, *title = NULL;
-    FitType f;
+    FitType f = PLOT_FIT_NONE;
 
     if (*s1 == '\0' || *s2 == '\0') {
 	return FALSE;
@@ -214,8 +215,10 @@ static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
 		s1, s2);
     }
 
-    gtk_entry_set_text(GTK_ENTRY(gpt_titles[0].widget), title);
-    g_free(title);
+    if (title != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(gpt_titles[0].widget), title);
+	g_free(title);
+    }
     
     return FALSE;
 }
@@ -340,9 +343,8 @@ enum {
     FILLEDCURVE
 };
 
-static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
+static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec) 
 {
-    gchar *s;
     int supress_y2 = 0;
     int i, k, err = 0;
 
@@ -353,33 +355,32 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(keycombo));
-    strcpy(spec->keyspec, s);
-    g_free(s);
+    if (keycombo != NULL) {
+	gchar *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(keycombo));
+
+	strcpy(spec->keyspec, s);
+	g_free(s);
+    }
 
     spec->flags &= ~GPT_Y2AXIS;
 
-    if (y2_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(y2_check)->active) {
-	    supress_y2 = 1;
-	} 
+    if (y2_check != NULL && GTK_TOGGLE_BUTTON(y2_check)->active) {
+	supress_y2 = 1;
     } 
 
-    for (i=0; i<spec->n_lines; i++) {
+    for (i=0; i<gui_nlines; i++) {
 	spec->lines[i].yaxis = 1;
 	if (!supress_y2 && yaxiscombo[i] != NULL) {
-	    fprintf(stderr, "line %d, yaxiscombo[i]=%p\n",
-		    i, (void *) yaxiscombo[i]);
-	    gchar *str = 
+	    gchar *s = 
 		gtk_combo_box_get_active_text(GTK_COMBO_BOX(yaxiscombo[i]));
 
-	    if (!strcmp(str, "right")) {
+	    if (!strcmp(s, "right")) {
 		spec->lines[i].yaxis = 2;	
 	    }
 	    if (spec->lines[i].yaxis == 2) {
 		spec->flags |= GPT_Y2AXIS;
 	    }
-	    g_free(str);
+	    g_free(s);
 	}
     }
 
@@ -407,7 +408,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     if (!err) {   
-	for (i=0; i<spec->n_lines; i++) {
+	for (i=0; i<gui_nlines; i++) {
 	    if (stylecombo[i] != NULL) {
 		int oldalt = 0;
 
@@ -516,7 +517,7 @@ static void set_keyspec_sensitivity (GPT_SPEC *spec)
     const char *p;
     int i;
 
-    for (i=0; i<spec->n_lines; i++) {
+    for (i=0; i<gui_nlines; i++) {
 	p = gtk_entry_get_text(GTK_ENTRY(linetitle[i]));
 	if (p != NULL && *p != 0) {
 	    state = TRUE;
@@ -653,7 +654,7 @@ static void toggle_axis_selection (GtkWidget *w, GPT_SPEC *spec)
     int no_y2 = GTK_TOGGLE_BUTTON(w)->active;
     int i;
 
-    for (i=0; i<spec->n_lines; i++) {
+    for (i=0; i<gui_nlines; i++) {
 	if (yaxiscombo[i] != NULL) {
 	    gtk_widget_set_sensitive(yaxiscombo[i], !no_y2);
 	}
@@ -1151,7 +1152,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     label = gtk_label_new(_("Lines"));
     gtk_widget_show(label);
 
-    if (spec->n_lines > 4) {
+    if (gui_nlines > 4) {
 	GtkWidget *scroller;
 	
 	scroller = gtk_scrolled_window_new(NULL, NULL);
@@ -1172,7 +1173,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
    
     tbl_num = tbl_col = 0;
 
-    for (i=0; i<spec->n_lines; i++) {
+    for (i=0; i<gui_nlines; i++) {
 	/* identifier and key or legend text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -1672,6 +1673,8 @@ static int gpt_allocate_widgets (int n)
 	linescale[i] = NULL;
 	linewidth[i] = NULL;
     }
+
+    gui_nlines = n;
 
     return 0;
 }

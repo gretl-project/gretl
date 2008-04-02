@@ -3148,20 +3148,44 @@ static int render_pngfile (png_plot *plot, int view)
     gint height;
     GdkPixbuf *pbuf;
     char pngname[MAXLEN];
-    GError *error = NULL;
+    GError *gerr = NULL;
 
     build_path(pngname, paths.dotdir, "gretltmp.png", NULL);
 #if 1
     fprintf(stderr, "pngname: '%s'\n", pngname);
 #endif
 
-    pbuf = gdk_pixbuf_new_from_file(pngname, &error);
+    pbuf = gdk_pixbuf_new_from_file(pngname, &gerr);
+
     if (pbuf == NULL) {
-	fprintf(stderr, "error from gdk_pixbuf_new_from_file\n");
-        errbox(error->message);
-        g_error_free(error);
-	remove(pngname);
-	return 1;
+	gchar *tr;
+	gsize bytes;
+
+	fprintf(stderr, "On first try: %s\n", gerr->message);
+	g_error_free(gerr);
+	gerr = NULL;
+
+	if (!g_utf8_validate(pngname, -1, NULL)) {
+	    fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
+	    tr = g_locale_to_utf8(pngname, -1, NULL, &bytes, &gerr);
+	} else {
+	    fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
+	    tr = g_locale_from_utf8(pngname, -1, NULL, &bytes, &gerr);
+	}
+
+	g_free(tr);
+
+	if (gerr == NULL) {
+	    fprintf(stderr, "Conversion apparently OK, trying again\n");
+	    pbuf = gdk_pixbuf_new_from_file(pngname, &gerr);
+	}
+
+	if (gerr) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	    remove(pngname);
+	    return 1;
+	}
     }
 
     width = gdk_pixbuf_get_width(pbuf);
