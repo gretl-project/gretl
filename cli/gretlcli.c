@@ -613,11 +613,7 @@ int main (int argc, char *argv[])
 
 static void printf_strip (char *s)
 {
-    int i, n;
-
-    while (isspace((unsigned char) *s)) s++;
-
-    n = strlen(s);
+    int i, n = strlen(s);
 
     for (i=n-1; i>0; i--) {
 	if (isspace(s[i]) || s[i] == '\r') s[i] = '\0';

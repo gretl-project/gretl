@@ -878,12 +878,14 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, int r,
     r0 = m->rows;
 
     /* generate uniform random series */
-    gretl_rand_uniform(z, 0, r-1);
+    gretl_rand_uniform(z, 0, r - 1);
 
     /* sample from source matrix based on row indices */
     for (i=0; i<r; i++) {
 	k = (int) (r0 * z[i]);
-	if (k > r0-1) k = r0 - 1;
+	if (k > r0 - 1) {
+	    k = r0 - 1;
+	}
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, k, j);
 	    gretl_matrix_set(R, i, j, x);
