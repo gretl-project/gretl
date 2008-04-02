@@ -354,16 +354,16 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname);
 static GnomePrintConfig *load_gretl_print_config_from_file (void)
 {
     gchar *file_name;
-    gboolean res;
     gchar *contents;
     GnomePrintConfig *gretl_print_config;
+    int err;
 	
     file_name = gnome_util_home_file(GRETL_PRINT_CONFIG_FILE);
 
-    res = g_file_get_contents(file_name, &contents, NULL, NULL);
+    err = gretl_file_get_contents(file_name, &contents);
     g_free(file_name);
 
-    if (res) {
+    if (!err) {
 	gretl_print_config = gnome_print_config_from_string(contents, 0);
 	g_free(contents);
     } else {

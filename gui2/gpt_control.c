@@ -3142,51 +3142,65 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 			 event->area.width, event->area.height);
 }
 
-static int render_pngfile (png_plot *plot, int view)
+static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 {
-    gint width;
-    gint height;
     GdkPixbuf *pbuf;
-    char pngname[MAXLEN];
     GError *gerr = NULL;
 
-    build_path(pngname, paths.dotdir, "gretltmp.png", NULL);
-#if 1
-    fprintf(stderr, "pngname: '%s'\n", pngname);
-#endif
-
-    pbuf = gdk_pixbuf_new_from_file(pngname, &gerr);
+    pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
 
     if (pbuf == NULL) {
-	gchar *tr;
+	gchar *trfname = NULL;
 	gsize bytes;
 
-	fprintf(stderr, "On first try at gdk_pixbuf_new_from_file:\n %s\n", 
-		gerr->message);
+	verbose_gerror_report(gerr, "gdk_pixbuf_new_from_file");
 	g_error_free(gerr);
 	gerr = NULL;
 
-	if (!g_utf8_validate(pngname, -1, NULL)) {
+	if (!g_utf8_validate(fname, -1, NULL)) {
 	    fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
-	    tr = g_locale_to_utf8(pngname, -1, NULL, &bytes, &gerr);
+	    trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
+	    if (trfname == NULL) {
+		verbose_gerror_report(gerr, "g_locale_to_utf8");
+	    }
 	} else {
 	    fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
-	    tr = g_locale_from_utf8(pngname, -1, NULL, &bytes, &gerr);
+	    trfname = g_locale_from_utf8(fname, -1, NULL, &bytes, &gerr);
+	    if (trfname == NULL) {
+		verbose_gerror_report(gerr, "g_locale_from_utf8");
+	    }
 	}
 
-	g_free(tr);
-
-	if (gerr == NULL) {
-	    fprintf(stderr, "Conversion apparently OK, trying again\n");
-	    pbuf = gdk_pixbuf_new_from_file(pngname, &gerr);
+	if (trfname != NULL) {
+	    pbuf = gdk_pixbuf_new_from_file(trfname, &gerr);
+	    g_free(trfname);
+	    if (pbuf == NULL) {
+		verbose_gerror_report(gerr, "gdk_pixbuf_new_from_file");
+	    }
 	}
 
-	if (gerr) {
+	if (gerr != NULL) {
 	    errbox(gerr->message);
 	    g_error_free(gerr);
-	    remove(pngname);
-	    return 1;
 	}
+    }
+
+    return pbuf;
+}
+
+static int render_pngfile (png_plot *plot, int view)
+{
+    gint width, height;
+    GdkPixbuf *pbuf;
+    char pngname[MAXLEN];
+
+    build_path(pngname, paths.dotdir, "gretltmp.png", NULL);
+
+    pbuf = gretl_pixbuf_new_from_file(pngname);
+
+    if (pbuf == NULL) {
+	remove(pngname);
+	return 1;
     }
 
     width = gdk_pixbuf_get_width(pbuf);

@@ -2382,14 +2382,11 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     windata_t *vwin;
     gchar *fbuf = NULL;
     gchar *title = NULL;
-    GError *gerr = NULL;
     int hsize = 80, vsize = 400;
 
     /* grab content of the appropriate help file into a buffer */
-    g_file_get_contents(filename, &fbuf, NULL, &gerr);
-    if (gerr != NULL) {
-	errbox(gerr->message);
-	g_error_free(gerr);
+    gretl_file_get_contents(filename, &fbuf);
+    if (fbuf == NULL) {
 	return NULL;
     }
 
@@ -4189,3 +4186,56 @@ void startR (const char *Rcommand)
 }
 
 #endif /* ! G_OS_WIN32 */
+
+void verbose_gerror_report (GError *gerr, const char *src)
+{
+    fprintf(stderr, "GError details from %s\n"
+	    " message: '%s'\n domain = %d, code = %d\n",
+	    src, gerr->message, gerr->domain, gerr->code);
+}
+
+int gretl_file_get_contents (const gchar *fname, gchar **contents)
+{
+    GError *gerr = NULL;
+    gboolean ok;
+
+    ok = g_file_get_contents(fname, contents, NULL, &gerr);
+
+    if (gerr != NULL) {
+	gchar *trfname = NULL;
+	gsize bytes;
+
+	verbose_gerror_report(gerr, "g_file_get_contents");
+	g_error_free(gerr);
+	gerr = NULL;
+
+	if (!g_utf8_validate(fname, -1, NULL)) {
+	    fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
+	    trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
+	    if (trfname == NULL) {
+		verbose_gerror_report(gerr, "g_locale_to_utf8");
+	    }
+	} else {
+	    fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
+	    trfname = g_locale_from_utf8(fname, -1, NULL, &bytes, &gerr);
+	    if (trfname == NULL) {
+		verbose_gerror_report(gerr, "g_locale_from_utf8");
+	    }
+	}
+
+	if (trfname != NULL) {
+	    ok = g_file_get_contents(trfname, contents, NULL, &gerr);
+	    g_free(trfname);
+	    if (!ok) {
+		verbose_gerror_report(gerr, "g_file_get_contents");
+	    }
+	}
+
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	}
+    }
+
+    return !ok;
+}	

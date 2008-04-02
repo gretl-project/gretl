@@ -124,6 +124,10 @@ int get_worksheet_data (char *fname, int datatype, int append);
 
 char *double_underscores (char *targ, const char *src);
 
+void verbose_gerror_report (GError *gerr, const char *src);
+
+int gretl_file_get_contents (const gchar *fname, gchar **contents);
+
 #ifndef G_OS_WIN32
 void startR (const char *Rcommand);
 int browser_open (const char *url);

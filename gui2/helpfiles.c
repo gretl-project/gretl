@@ -742,17 +742,16 @@ static int make_func_help_mapping (void)
     if (ffinder == NULL) {
 	gchar *fname = NULL;
 	gchar *s, *buf = NULL;
-	GError *gerr = NULL;
 	char word[12];
 	int i = 0, pos = 0;
+	int err;
 
 	fname = g_strdup_printf("%s%s", paths.gretldir, _("genrgui.hlp"));
 
-	g_file_get_contents(fname, &buf, NULL, &gerr);
-	if (gerr != NULL) {
-	    errbox(gerr->message);
-	    g_error_free(gerr);
-	    return 1;
+	err = gretl_file_get_contents(fname, &buf);
+	if (err) {
+	    g_free(fname);
+	    return err;
 	}
 
 	s = buf;

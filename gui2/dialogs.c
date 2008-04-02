@@ -3666,9 +3666,9 @@ int freq_dialog (const char *title, const char *blurb,
     return ret;
 }
 
-#if defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 
-/* use MS Windows native "MessageBox" */
+/* MS Windows native "MessageBox" */
 
 static void msgbox (const char *msg, int msgtype)
 {
@@ -3680,22 +3680,14 @@ static void msgbox (const char *msg, int msgtype)
 	/* recode messages in UTF-8, but don't try to recode messages
 	   that are already in the locale encoding (strerror) 
 	*/
-	trmsg = my_locale_from_utf8(msg);
-	if (trmsg == NULL) {
-	    return;
-	}
+	gsize bytes;
+
+	trmsg = g_locale_from_utf8(msg, -1, NULL, &bytes, NULL);
     } 
 
-    switch (msgtype) {
-    case GTK_MESSAGE_WARNING:
-	utype = MB_ICONWARNING;
-	break;
-    case GTK_MESSAGE_ERROR:
-	utype = MB_ICONERROR;
-	break;
-    default:
-	utype = MB_ICONINFORMATION;
-    }
+    utype = (msgtype == GTK_MESSAGE_WARNING)? MB_ICONWARNING :
+	(msgtype == GTK_MESSAGE_ERROR)? MB_ICONERROR :
+	MB_ICONINFORMATION;
 
     MessageBox(NULL, (trmsg != NULL)? trmsg : msg, "gretl", 
 	       MB_OK | utype);
@@ -3705,7 +3697,7 @@ static void msgbox (const char *msg, int msgtype)
     }
 }
 
-#else /* use GTK+ message_dialog */
+#else /* not win32 */
 
 static void msgbox (const char *msg, int msgtype)
 {
@@ -3715,10 +3707,9 @@ static void msgbox (const char *msg, int msgtype)
     if (!g_utf8_validate(msg, -1, NULL)) {
 	/* it's possible we have an OS string from strerror() that is
 	   not UTF-8 encoded */
-	trmsg = my_locale_to_utf8(msg);
-	if (trmsg == NULL) {
-	    return;
-	}
+	gsize bytes;
+
+	trmsg = g_locale_to_utf8(msg, -1, NULL, &bytes, NULL);
     }     
 
     dialog = gtk_message_dialog_new(NULL, /* GTK_WINDOW(mdata->w), */
@@ -3727,7 +3718,7 @@ static void msgbox (const char *msg, int msgtype)
 				    GTK_BUTTONS_CLOSE,
 				    (trmsg != NULL)? trmsg : msg);
 
-    gtk_dialog_run(GTK_DIALOG (dialog));
+    gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 
     if (trmsg != NULL) {
@@ -3735,7 +3726,7 @@ static void msgbox (const char *msg, int msgtype)
     }    
 }
 
-#endif /* msgbox variants */
+#endif
 
 void errbox (const char *template, ...)
 {

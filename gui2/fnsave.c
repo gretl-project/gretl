@@ -873,6 +873,7 @@ static void do_upload (const char *fname)
     GdkCursor *cursor;
     GdkWindow *w1;
     gint x, y;
+    int error_printed = 0;
     int err = 0;
 
     login_dialog(&linfo);
@@ -890,11 +891,11 @@ static void do_upload (const char *fname)
     gdk_display_sync(disp);
     gdk_cursor_unref(cursor);
 
-    g_file_get_contents(fname, &buf, NULL, NULL);
+    err = gretl_file_get_contents(fname, &buf);
 
-    if (buf == NULL) {
-	err = E_ALLOC;
-    } else {  
+    if (err) {
+	error_printed = 1;
+    } else {
 	ubuf = url_encode_string(buf);
 	ulogin = url_encode_string(linfo.login);
 	upass = url_encode_string(linfo.pass);
@@ -914,7 +915,9 @@ static void do_upload (const char *fname)
     gdk_window_set_cursor(w1, NULL);
 
     if (err) {
-	gui_errmsg(err);
+	if (!error_printed) {
+	    gui_errmsg(err);
+	}
     } else if (retbuf != NULL && *retbuf != '\0') {
 	infobox(retbuf);
     }

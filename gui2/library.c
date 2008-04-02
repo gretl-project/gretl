@@ -3748,8 +3748,8 @@ void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
 
     *errtext = 0;
 
-    err = write_tx_data (fname, v, &Z, datainfo, 
-			 &graph, prog, workdir, errtext);
+    err = write_tx_data(fname, v, &Z, datainfo, 
+			&graph, prog, workdir, errtext);
     
     close_plugin(handle);
 
@@ -3764,9 +3764,8 @@ void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
 	return;
     }
 
-    g_file_get_contents(fname, &databuf, NULL, NULL);
-    if (databuf == NULL) {
-	gui_errmsg(E_EXTERNAL);
+    err = gretl_file_get_contents(fname, &databuf);
+    if (err) {
 	return;
     }
 
