@@ -3161,7 +3161,8 @@ static int render_pngfile (png_plot *plot, int view)
 	gchar *tr;
 	gsize bytes;
 
-	fprintf(stderr, "On first try: %s\n", gerr->message);
+	fprintf(stderr, "On first try at gdk_pixbuf_new_from_file:\n %s\n", 
+		gerr->message);
 	g_error_free(gerr);
 	gerr = NULL;
 
