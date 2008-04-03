@@ -3533,11 +3533,17 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 		err = anyerr;
 	    }
 	} else {
+	    int vmax = pdinfo->v;
+
 	    for (i=orig_v; i<pdinfo->v; i++) {
 		if (STACK_LEVEL(pdinfo, i) == d) {
-		    anyerr = dataset_drop_variable(i--, pZ, pdinfo);
+		    anyerr = dataset_drop_variable(i, pZ, pdinfo);
 		    if (anyerr && !err) {
 			err = anyerr;
+		    }
+		    if (pdinfo->v < vmax) {
+			vmax = pdinfo->v;
+			i--;
 		    }
 		} 
 	    }

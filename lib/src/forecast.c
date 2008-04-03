@@ -2385,14 +2385,16 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 
     strcpy(fr->depvar, pdinfo->varname[yno]);
 
+#if 0
+    /* this is not well worked-out, and may be a bad idea even in
+       principle */
     if (sys != NULL && fr->t0 < fr->t1) {
 	/* experimental */
 	yhat = sys_get_fitted_values(sys, i, fr->t0, fr->t1, 
 				     Z, pdinfo, &err);
-#if 0
 	gretl_matrix_print(yhat, "yhat_i");
-#endif
     }
+#endif
 
     /* pre-forecast observations */
     for (t=fr->t0; t<fr->t1; t++) {
