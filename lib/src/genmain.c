@@ -64,10 +64,10 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 		    p->lh.name, p->lh.v);
 	}
     } else if (p->targ == MAT) {
-	if (p->lh.m0 != NULL && p->lh.substr != NULL && 
+	if ((p->flags & P_LHMAT) && p->lh.substr != NULL && 
 	    *p->lh.substr != '\0') {
 	    pprintf(prn, _("Modified matrix %s"), p->lh.name);
-	} else if (p->lh.m0 != NULL) {
+	} else if (p->flags & P_LHMAT) {
 	    pprintf(prn, _("Replaced matrix %s"), p->lh.name);
 	} else {
 	    pprintf(prn, _("Generated matrix %s"), p->lh.name);

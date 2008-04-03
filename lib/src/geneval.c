@@ -6071,6 +6071,7 @@ static void pre_process (parser *p, int flags)
 	p->lh.v = 0;
 	p->lh.m0 = get_matrix_by_name(test);
 	if (p->lh.m0 != NULL) {
+	    p->flags |= P_LHMAT;
 	    p->lh.t = MAT;
 	    newvar = 0;
 	} else if (get_list_by_name(test)) {
