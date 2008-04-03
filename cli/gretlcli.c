@@ -597,7 +597,7 @@ int main (int argc, char *argv[])
     if (!err) {
 	err = gretl_if_state_check(0);
 	if (err) {
-	    printf("%s\n", gretl_errmsg);
+	    errmsg(err, prn);
 	}
     }
 

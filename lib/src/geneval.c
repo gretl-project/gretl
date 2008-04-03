@@ -6427,6 +6427,7 @@ static void assign_to_matrix (parser *p)
 	/* replace the old matrix with result */
 	m = grab_or_copy_matrix_result(p);
 	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
+	p->lh.m0 = NULL; /* invalidate pointer */
     }
 
     p->lh.m1 = m;
