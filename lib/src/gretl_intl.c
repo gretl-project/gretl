@@ -318,7 +318,7 @@ char *iso_gettext (const char *msgid)
     }
 
     /* iso_switch: we'll reckon that if the system character set is
-       not UTF-8, and is an ISO-9958-N or Windows CP12NN 8-bit set,
+       not UTF-8, and is an ISO-8859-N or Windows CP12NN 8-bit set,
        then we should probably recode when printing translated strings
        in the context of writing TeX, CSV and RTF files.  If
        iso_switch is non-zero (once it's determinate) this makes the

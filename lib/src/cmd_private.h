@@ -64,7 +64,9 @@ void gretl_exec_state_clear (ExecState *s);
 
 void gretl_exec_state_uncomment (ExecState *s);
 
-int gretl_exec_state_finalize (void);
+void gretl_if_state_clear (void);
+
+int gretl_if_state_finalize (void);
 
 int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 

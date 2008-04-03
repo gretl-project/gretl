@@ -162,11 +162,13 @@ static int filter_comments (char *s, CMD *cmd)
     }
 
     if (filt) {
+	/* the whole line is a comment */
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_COMMENT;
     }
 
     if (ignore) {
+	/* the line ends in multi-line comment mode */
 	cmd->flags |= CMD_IGNORE;
     } else {
 	cmd->flags &= ~CMD_IGNORE;
@@ -5022,7 +5024,14 @@ static int get_if_state (int code)
     return ifstate(code, &err);
 }
 
-int gretl_exec_state_finalize (void)
+void gretl_if_state_clear (void)
+{
+    int err;
+
+    ifstate(RELAX, &err);
+}
+
+int gretl_if_state_finalize (void)
 {
     int ret, err = 0;
 
