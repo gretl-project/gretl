@@ -594,6 +594,13 @@ int main (int argc, char *argv[])
 	err = exec_line(&state, &Z, datainfo);
     } /* end of get commands loop */
 
+    if (!err) {
+	err = gretl_if_state_check(0);
+	if (err) {
+	    printf("%s\n", gretl_errmsg);
+	}
+    }
+
     /* leak check -- try explicitly freeing all memory allocated */
 
     destroy_working_models(models, 2);

@@ -4859,6 +4859,7 @@ void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
+    set_as_last_model(NULL, GRETL_OBJ_NULL);
     free_subsample_mask(s->submask);
     s->funcerr = 0;
 }
@@ -5003,7 +5004,7 @@ static int ifstate (int code, int *err)
 
 #if IFDEBUG
     fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n", 
-	    ret, indent, *err);
+	    ret, indent, (err == NULL)? 0 : *err);
 #endif
 
     return ret;
@@ -5026,19 +5027,37 @@ static int get_if_state (int code)
 
 void gretl_if_state_clear (void)
 {
-    int err;
-
-    ifstate(RELAX, &err);
+    ifstate(RELAX, NULL);
 }
 
 int gretl_if_state_finalize (void)
 {
     int ret, err = 0;
 
-    ret = ifstate(IS_TRUE, &err);
+    ret = ifstate(IS_TRUE, NULL);
 
     if (!ret) {
-	ifstate(RELAX, &err);
+	ifstate(RELAX, NULL);
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
+int gretl_if_state_record (void)
+{
+    return ifstate(GETINDENT, NULL);
+}
+
+int gretl_if_state_check (int indent0)
+{
+    int indent, err = 0;
+
+    indent = ifstate(GETINDENT, NULL);
+
+    if (indent != indent0) {
+	sprintf(gretl_errmsg, _("Unmatched \"%s\""), "if");
+	ifstate(RELAX, NULL);
 	err = E_PARSE;
     }
 

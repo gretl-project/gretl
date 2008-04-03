@@ -3698,7 +3698,7 @@ static int check_function_args (ufunc *u, fnargs *args,
     return err;
 }
 
-static void fn_state_init (CMD *cmd, ExecState *state)
+static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
 {
     cmd->list = NULL;
     cmd->param = NULL;
@@ -3708,6 +3708,8 @@ static void fn_state_init (CMD *cmd, ExecState *state)
     state->cmd = NULL;
     state->models = NULL;
     state->submask = NULL;
+
+    *indent0 = gretl_if_state_record();
 }
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
@@ -3722,7 +3724,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    int started = 0;
+    int indent0, started = 0;
     int i, err = 0;
  
     *funcerr_msg = '\0';
@@ -3737,7 +3739,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     /* precaution */
-    fn_state_init(&cmd, &state);
+    fn_state_init(&cmd, &state, &indent0);
 
 #if FN_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", args->argc);
@@ -3826,6 +3828,12 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
+
+    if (err) {
+	gretl_if_state_clear();
+    } else {
+	err = gretl_if_state_check(indent0);
+    }
 
     function_assign_returns(u, args, rtype, *pZ, pdinfo,
 			    ret, descrip, prn, &err);

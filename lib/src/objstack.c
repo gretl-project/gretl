@@ -53,7 +53,7 @@ static GretlObjType get_stacked_type_by_data (void *ptr)
 	}
     }
 
-    return GRETL_OBJ_UNKNOWN;
+    return GRETL_OBJ_NULL;
 }
 
 /**
@@ -334,12 +334,16 @@ void set_as_last_model (void *ptr, GretlObjType type)
     if (last_model.ptr != ptr || last_model.type != type) {
 	last_model.ptr = ptr;
 	last_model.type = type;
-	gretl_object_ref(ptr, type);
+	if (ptr != NULL) {
+	    gretl_object_ref(ptr, type);
+	}
     }
 
 #if ODEBUG
-    fprintf(stderr, " refcount on \"last_model\" = %d\n",
-	    gretl_object_get_refcount(last_model.ptr, last_model.type));
+    if (last_model.ptr != NULL) {
+	fprintf(stderr, " refcount on \"last_model\" = %d\n",
+		gretl_object_get_refcount(last_model.ptr, last_model.type));
+    }
 #endif
 }
 
@@ -904,7 +908,7 @@ void set_genr_model (MODEL *pmod)
 
 void unset_genr_model (void)
 {
-    genr_model.type = GRETL_OBJ_UNKNOWN;
+    genr_model.type = GRETL_OBJ_NULL;
     genr_model.ptr = NULL;
 }
 
@@ -951,7 +955,7 @@ GretlObjType gretl_model_get_type (const char *name)
     stacker *smatch = find_smatch(name);
 
     if (smatch == NULL) {
-	return GRETL_OBJ_UNKNOWN;
+	return GRETL_OBJ_NULL;
     } else {
 	return smatch->type;
     }

@@ -2641,7 +2641,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     char errline[MAXLINE];
-    int mod_id = 0;
+    int indent0, mod_id = 0;
     int err = 0;
 
     /* for the benefit of the caller: register the fact that execution
@@ -2652,6 +2652,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	pputs(prn, "Got a NULL loop\n");
 	return 1;
     }
+
+    indent0 = gretl_if_state_record();
 
     set_loop_on(loop_is_quiet(loop)); /* libset.c */
 
@@ -2816,13 +2818,20 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 0;
 	}
 
-	loop->iter += 1;
+	if (err) {
+	    gretl_if_state_clear();
+	} else {
+	    err = gretl_if_state_check(indent0);
+	}
 
-	if (indexed_loop(loop)) {
-	    loop->ival += 1;
-	} else if (lrefresh) {
-	    /* added 2008-01-11, AC */
-	    loop_list_refresh(loop, pdinfo);
+	if (!err) {
+	    loop->iter += 1;
+	    if (indexed_loop(loop)) {
+		loop->ival += 1;
+	    } else if (lrefresh) {
+		/* added 2008-01-11, AC */
+		loop_list_refresh(loop, pdinfo);
+	    }
 	}
 
     } /* end iterations of loop */

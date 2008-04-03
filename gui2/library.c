@@ -6382,7 +6382,7 @@ static int execute_script (const char *runfile, const char *buf,
     char line[MAXLINE] = {0};
     char tmp[MAXLINE] = {0};
     int including = (exec_code & INCLUDE_EXEC);
-    int bufread = 0;
+    int indent0, bufread = 0;
     int exec_err = 0;
 
 #if 0
@@ -6418,6 +6418,7 @@ static int execute_script (const char *runfile, const char *buf,
 
     gretl_exec_state_init(&state, 0, line, &libcmd, models, prn);
     set_iter_print_func(NULL);
+    indent0 = gretl_if_state_record();
 
     while (libcmd.ci != QUIT) {
 	if (gretl_execute_loop()) { 
@@ -6498,12 +6499,7 @@ static int execute_script (const char *runfile, const char *buf,
     if (exec_err) {
 	gretl_if_state_clear();
     } else {
-	exec_err = gretl_if_state_finalize();
-	if (exec_err) {
-	    pputc(prn, '\n');
-	    pprintf(prn, _("Unmatched \"%s\""), "if");
-	    pputc(prn, '\n');
-	}
+	exec_err = gretl_if_state_check(indent0);
     }
 
     if (exec_err) {
