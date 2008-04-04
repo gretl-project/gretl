@@ -708,6 +708,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 
     case CORR:
     case PCA:
+	/* FIXME option handling here */
 	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
 		       (action == PCA)? OPT_U : OPT_NONE, &err);
 	if (!err) {
@@ -715,7 +716,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 		print_corrmat(obj, datainfo, prn);
 	    } else {
 		err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
-				  NULL, prn);
+				      NULL, prn);
 	    }
 	}	    
 	break;
