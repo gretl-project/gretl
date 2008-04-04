@@ -799,28 +799,30 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
     int r = A->rows;
     int c = A->cols;
     int i, j, err = 0;
-    FILE *f;
+    FILE *fp;
 
-    f = fopen(fname, "w");
+    gretl_maybe_switch_dir(fname);
 
-    if (f == NULL) {
+    fp = fopen(fname, "w");
+
+    if (fp == NULL) {
 	return E_FOPEN;
     }
 
-    fprintf(f, "%d\t%d\n", r, c);
+    fprintf(fp, "%d\t%d\n", r, c);
     
     gretl_push_c_numeric_locale();
 
     for (i=0; i<r; i++) {
 	for (j=0; j<c; j++) {
-	    fprintf(f, "%26.18E\t", gretl_matrix_get(A, i, j));
+	    fprintf(fp, "%26.18E\t", gretl_matrix_get(A, i, j));
 	}
-	fputc('\n', f);
+	fputc('\n', fp);
     }
 
     gretl_pop_c_numeric_locale();
     
-    fclose(f);
+    fclose(fp);
 
     return err;
 }

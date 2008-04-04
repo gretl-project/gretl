@@ -616,8 +616,8 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter; 
-    int thiscolor = PLAIN_TEXT;
-    int nextcolor;
+    int nextcolor, thiscolor = PLAIN_TEXT;
+    int in_comment = 0;
     char readbuf[MAXSTR];
     int i = 0;
 
@@ -644,9 +644,18 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	    nextcolor = PLAIN_TEXT;
 	}
 
-	if (*readbuf == '#' || *readbuf == '?' || *readbuf == '>') {
+	if (*readbuf == '#' || *readbuf == '?' || 
+	    *readbuf == '>' || in_comment) {
 	    thiscolor = BLUE_TEXT;
+	} else if (!strncmp(readbuf, "/*", 2)) {
+	    in_comment = 1;
+	    thiscolor = nextcolor = BLUE_TEXT;
 	} 
+
+	if (strstr(readbuf, "*/")) {
+	    in_comment = 0;
+	    nextcolor = PLAIN_TEXT;
+	}	
 
 	if (thiscolor == BLUE_TEXT) {
 	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,

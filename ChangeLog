@@ -29,7 +29,10 @@ version 1.7.5, in progress
 - Add guard against unmatched "if" in loops, functions and
   scripts
 - Fix bug: VARs and equation systems not getting removed as
-  "last model" on exit from user-defined functions
+  "last model" on exit from user-defined functions, which
+  could cause strange errors
+- Fix for forecasts from equation systems displayed in the
+  GUI program
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values
