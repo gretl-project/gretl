@@ -658,11 +658,26 @@ static int bad_ichar (char c)
     return err;
 }
 
+static int index_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
+			  int *err)
+{
+    int v = varindex(pdinfo, s);
+    int k = 0;
+
+    if (v < pdinfo->v) {
+	k = (int) (*pZ)[v][0];
+    } else {
+	k = (int) generate_scalar(s, pZ, pdinfo, err);
+    }
+
+    return k;
+}
+
 #define maybe_date(s) (strchr(s, ':') || strchr(s, '/'))
 
 static int parse_as_indexed_loop (LOOPSET *loop,
-				  const double **Z,
-				  const DATAINFO *pdinfo,
+				  double ***pZ,
+				  DATAINFO *pdinfo,
 				  char ichar,
 				  const char *lvar, 
 				  const char *start,
@@ -674,6 +689,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 
     if (lvar != NULL) {
 	if (strlen(lvar) > 1) {
+	    /* deliberately set invalid ichar */
 	    ichar = 'x';
 	} else {
 	    ichar = *lvar;
@@ -697,13 +713,14 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    } else {
 		err = E_DATA;
 	    }
-	} else if (numeric_string(start)) {
+	} else if (integer_string(start)) {
 	    nstart = atoi(start);
+	    /* FIXME check for annual date here? */
 #if LOOP_DEBUG
-	    fprintf(stderr, "numeric string: nstart = %d\n", nstart);
+	    fprintf(stderr, "integer string: nstart = %d\n", nstart);
 #endif
 	} else {
-	    err = controller_set_var(&loop->init, loop, pdinfo, start);
+	    nstart = index_get_int(start, pZ, pdinfo, &err);
 	}
     }
 
@@ -717,23 +734,19 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    if (nend < 0) {
 		err = E_DATA;
 	    }
-	} else if (numeric_string(end)) {
+	} else if (integer_string(end)) {
 	    nend = atoi(end);
 #if LOOP_DEBUG
-	    fprintf(stderr, "numeric string: nend = %d\n", nend);
+	    fprintf(stderr, "integer string: nend = %d\n", nend);
 #endif
 	} else {
-	    err = controller_set_var(&loop->final, loop, pdinfo, end);
+	    nend = index_get_int(end, pZ, pdinfo, &err);
 	}
     }
 
     if (!err) {
-	if (loop->init.vnum == 0) {
-	    loop->init.val = nstart;
-	} 
-	if (loop->final.vnum == 0) {
-	    loop->final.val = nend;
-	} 
+	loop->init.val = nstart;
+	loop->final.val = nend;
 	if (dated) {
 	    loop->type = DATED_LOOP;
 	} else {
@@ -743,9 +756,8 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_as_indexed_loop: init.val=%g, final.val=%g, "
-	    "final.vnum=%d\n", loop->init.val, loop->final.val,
-	    loop->final.vnum);
+    fprintf(stderr, "parse_as_indexed_loop: init.val=%g, final.val=%g\n",
+	    loop->init.val, loop->final.val);
 #endif
 
     return err;
@@ -1184,11 +1196,10 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 #endif
 
     if (sscanf(s, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo,
-				    ichar, NULL, op, rvar);
+	err = parse_as_indexed_loop(loop, pZ, pdinfo, ichar, NULL, op, rvar);
     } else if (sscanf(s, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
-				    0, lvar, op, rvar);
+	/* FIXME disable this? */
+	err = parse_as_indexed_loop(loop, pZ, pdinfo, 0, lvar, op, rvar);
     } else if (!strncmp(s, "foreach", 7)) {
 	err = parse_as_each_loop(loop, pdinfo, s + 7);
     } else if (!strncmp(s, "for", 3)) {

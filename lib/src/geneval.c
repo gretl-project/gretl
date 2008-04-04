@@ -2775,7 +2775,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.xval = gretl_corr(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
 	    break;
 	case F_COV:
-	    ret->v.xval = gretl_covar(p->dinfo->t1, p->dinfo->t2, x, y);
+	    ret->v.xval = gretl_covar(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
 	    break;
 	default:
 	    break;
@@ -4558,7 +4558,7 @@ static double *dvar_get_series (int i, parser *p)
 	    x = malloc(p->dinfo->n * sizeof *x);
 	    if (x != NULL) {
 		for (t=0; t<p->dinfo->n; t++) {
-		    x[t] = p->dinfo->paninfo->unit[t];
+		    x[t] = p->dinfo->paninfo->unit[t] + 1;
 		}
 	    } else {
 		p->err = E_ALLOC;

@@ -305,6 +305,32 @@ int numeric_string (const char *str)
 }
 
 /**
+ * integer_string:
+ * @str: the string to examine.
+ *
+ * Returns: 1 if the given @str represents an integer, otherwise 0.
+ */
+
+int integer_string (const char *str)
+{
+    char *test;
+    int ret = 1;
+
+    if (str == NULL || *str == '\0') {
+	return 0;
+    }
+
+    errno = 0;
+
+    strtol(str, &test, 10);
+    if (*test != '\0' || errno != 0) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+/**
  * ends_with_backslash:
  * @s: the string to examine.
  *

@@ -3877,16 +3877,16 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case PCA:
 	if (cmd->list[0] > 0) {
-	    VMatrix *corrmat;
+	    VMatrix *cmat;
 
-	    corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, 
-			       OPT_U, &err);
+	    cmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, 
+			    cmd->opt | OPT_U, &err);
 	    if (!err) {
-		err = call_pca_plugin(corrmat, pZ, pdinfo, &cmd->opt, prn);
+		err = call_pca_plugin(cmat, pZ, pdinfo, &cmd->opt, prn);
 		if (cmd->opt && !err) {
 		    maybe_list_vars(pdinfo, prn);
 		}
-		free_vmatrix(corrmat);
+		free_vmatrix(cmat);
 	    }
 	}
 	break;
@@ -4098,7 +4098,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = restrict_sample(line, cmd->list, pZ, pdinfo, 
 				  s, cmd->opt, prn);
 	} else { 
-	    err = set_sample(line, (const double **) *pZ, pdinfo);
+	    err = set_sample(line, pZ, pdinfo);
 	}
 	if (!err) {
 	    print_smpl(pdinfo, get_full_length_n(), prn);

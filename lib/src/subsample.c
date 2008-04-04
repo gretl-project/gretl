@@ -1348,39 +1348,58 @@ static int panel_round (const DATAINFO *pdinfo, int t, int code)
     return t;
 }
 
-static int 
-get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo,
-		  int code)
+static int smpl_get_int (char *s, double ***pZ, DATAINFO *pdinfo,
+			 int *err)
 {
-    int v, ret = -1;
+    int k = 0;
+
+    if (integer_string(s)) {
+	k = atoi(s);
+    } else {
+	int v = varindex(pdinfo, s);
+
+	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
+	    k = (int) (*pZ)[v][0];
+	} else {
+	    k = (int) generate_scalar(s, pZ, pdinfo, err);
+	}
+    }
+
+    return k;
+}
+
+static int get_sample_limit (char *s, double ***pZ, DATAINFO *pdinfo,
+			     int code)
+{
+    int ret = -1;
+    int err = 0;
 
     if (*s == '-' || *s == '+') {
 	/* increment/decrement form */
-	int incr = 0;
+	int incr = smpl_get_int(s + 1, pZ, pdinfo, &err);
 
-	if (isdigit((unsigned char) s[1])) {
-	    incr = atoi(s);
-	} else {
-	    v = varindex(pdinfo, s + 1);
-	    if (v < pdinfo->v) {
-		incr = (int) Z[v][0];
-		if (*s == '-') {
-		    incr = -incr;
-		}
+	if (!err) {
+	    if (*s == '-') {
+		incr = -incr;
 	    }
-	}
-	if (dataset_is_panel(pdinfo)) {
-	    incr *= pdinfo->paninfo->Tmax;
-	}
-	if (code == SMPL_T1) {
-	    ret = pdinfo->t1 + incr;
-	} else {
-	    ret = pdinfo->t2 + incr;
+	    if (dataset_is_panel(pdinfo)) {
+		incr *= pdinfo->paninfo->Tmax;
+	    }
+	    if (code == SMPL_T1) {
+		ret = pdinfo->t1 + incr;
+	    } else {
+		ret = pdinfo->t2 + incr;
+	    }
 	}
     } else {
 	/* absolute form */
-	ret = get_t_from_obs_string(s, Z, pdinfo);
-	if (dataset_is_panel(pdinfo)) {
+	ret = get_t_from_obs_string(s, (const double **) pZ, pdinfo);
+	if (ret < 0) {
+	    ret = smpl_get_int(s, pZ, pdinfo, &err);
+	    /* convert to base 0 */
+	    if (!err) ret--;
+	}
+	if (ret >= 0 && dataset_is_panel(pdinfo)) {
 	    ret = panel_round(pdinfo, ret, code);
 	}
     }
@@ -1388,7 +1407,7 @@ get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo,
     return ret;
 }
 
-int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
+int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 {
     int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
     char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
@@ -1421,7 +1440,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
 	    strcpy(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
-	    new_t1 = get_sample_limit(newstart, Z, pdinfo, SMPL_T1);
+	    new_t1 = get_sample_limit(newstart, pZ, pdinfo, SMPL_T1);
 	    if (new_t1 < 0 || new_t1 >= pdinfo->n) {
 		strcpy(gretl_errmsg, _("error in new starting obs"));
 		return 1;
@@ -1439,7 +1458,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     }
 
     if (strcmp(newstart, ";")) {
-	new_t1 = get_sample_limit(newstart, Z, pdinfo, SMPL_T1);
+	new_t1 = get_sample_limit(newstart, pZ, pdinfo, SMPL_T1);
 	if (new_t1 < 0 || new_t1 >= pdinfo->n) {
 	    strcpy(gretl_errmsg, _("error in new starting obs"));
 	    return 1;
@@ -1447,7 +1466,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     }
 
     if (strcmp(newstop, ";")) {
-	new_t2 = get_sample_limit(newstop, Z, pdinfo, SMPL_T2);
+	new_t2 = get_sample_limit(newstop, pZ, pdinfo, SMPL_T2);
 	if (new_t2 < 0 || new_t2 >= pdinfo->n) {
 	    strcpy(gretl_errmsg, _("error in new ending obs"));
 	    return 1;

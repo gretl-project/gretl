@@ -65,7 +65,7 @@ int complex_subsampled (void);
 
 int get_full_length_n (void);
 
-int set_sample (const char *line, const double **Z, DATAINFO *pdinfo);
+int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo);
 
 int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state);
 

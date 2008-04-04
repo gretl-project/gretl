@@ -1159,6 +1159,12 @@ static int make_ess (MODEL *pmod, const double **Z)
 
 #define SMALLDIFF 9.0e-16
 
+/* The heuristic used here is that the model effectively
+   contains a constant or intercept if the means of y and
+   yhat are the same, where "the same" means that the
+   relative difference is less than SMALLDIFF.
+*/
+
 int check_for_effective_const (MODEL *pmod, const double *y)
 {
     double x1 = 0.0, x2 = 0.0;
@@ -1173,6 +1179,9 @@ int check_for_effective_const (MODEL *pmod, const double *y)
     }
 
     reldiff = fabs((x1 - x2) / x2);
+#if 0
+    fprintf(stderr, "check_for_effective_const: reldiff = %g\n", reldiff);
+#endif
 
     if (reldiff < SMALLDIFF) {
 	gretl_model_set_int(pmod, "effconst", 1);

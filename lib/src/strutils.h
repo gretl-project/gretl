@@ -43,6 +43,8 @@ int has_suffix (const char *str, const char *sfx);
 
 int numeric_string (const char *str);
 
+int integer_string (const char *str);
+
 int count_fields (const char *s);
 
 double dot_atof (const char *s);

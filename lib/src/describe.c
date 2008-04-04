@@ -776,13 +776,16 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
  * @t2: ending observation.
  * @x: data series.
  * @y: data series.
+ * @missing: location to receive information on the number
+ * of missing observations that were skipped, or %NULL.
  *
  * Returns: the covariance of the series @x and @y from obs
  * @t1 to obs @t2, skipping any missing values, or #NADBL 
  * on failure.
  */
 
-double gretl_covar (int t1, int t2, const double *x, const double *y)
+double gretl_covar (int t1, int t2, const double *x, const double *y,
+		    int *missing)
 {
     double sx, sy, sxy, xt, yt, xbar, ybar;
     int t, nn, n = t2 - t1 + 1;
@@ -821,6 +824,10 @@ double gretl_covar (int t1, int t2, const double *x, const double *y)
 	    sy = yt - ybar;
 	    sxy = sxy + (sx * sy);
 	}
+    }
+
+    if (missing != NULL) {
+	*missing = n - nn;
     }
 
     return sxy / (nn - 1);
@@ -3809,27 +3816,35 @@ void free_vmatrix (VMatrix *vmat)
     }
 }
 
-/* compute correlation matrix, using maximum possible sample
-   for each coefficient */
+/* compute correlation or covariance matrix, using maximum possible
+   sample for each coefficient */
 
-static int max_correlation_matrix (VMatrix *v, const double **Z)
+static int max_corrcov_matrix (VMatrix *v, const double **Z,
+			       gretlopt opt)
 {
     int i, j, vi, vj, nij;
     int nmaxmin = v->t2 - v->t1 + 1;
     int nmaxmax = 0;
     int m = v->dim;
-    int missing = 0;
+    int missing;
 
     for (i=0; i<m; i++) {  
 	vi = v->list[i+1];
 	for (j=i; j<m; j++)  {
 	    vj = v->list[j+1];
 	    nij = ijton(i, j, m);
-	    if (i == j) {
+	    missing = 0;
+	    if (i == j && !(opt & OPT_C)) {
 		v->vec[nij] = 1.0;
 	    } else {
-		v->vec[nij] = gretl_corr(v->t1, v->t2, Z[vi], Z[vj], 
-					 &missing);
+		missing = 0;
+		if (opt & OPT_C) {
+		    v->vec[nij] = gretl_covar(v->t1, v->t2, Z[vi], Z[vj], 
+					      &missing);
+		} else {
+		    v->vec[nij] = gretl_corr(v->t1, v->t2, Z[vi], Z[vj], 
+					     &missing);
+		}
 		if (missing > 0) {
 		    int n = v->t2 - v->t1 + 1 - missing;
 
@@ -3863,10 +3878,11 @@ static int max_correlation_matrix (VMatrix *v, const double **Z)
     return 0;
 }
 
-/* compute correlation matrix, ensuring we use the same sample
-   for all coefficients */
+/* compute correlation or covariance matrix, ensuring we use the same
+   sample for all coefficients */
 
-static int uniform_correlation_matrix (VMatrix *v, const double **Z)
+static int uniform_corrcov_matrix (VMatrix *v, const double **Z,
+				   gretlopt opt)
 {
     double *xbar = NULL, *ssx = NULL;
     int m = v->dim;
@@ -3953,7 +3969,7 @@ static int uniform_correlation_matrix (VMatrix *v, const double **Z)
 		v->vec[nij] = 1.0;
 	    } else if (ssx[i] == 0.0 || ssx[j] == 0.0) {
 		v->vec[nij] = NADBL;
-	    } else {
+	    } else if (!(opt & OPT_C)) {
 		v->vec[nij] /= sqrt(ssx[i] * ssx[j]);
 	    }
 	}
@@ -3976,7 +3992,11 @@ static int uniform_correlation_matrix (VMatrix *v, const double **Z)
  * @err: location to receive error code.
  *
  * Computes pairwise correlation coefficients for the variables
- * specified in @list, skipping any constants.
+ * specified in @list, skipping any constants.  If the option
+ * flags contain %OPT_U, a uniform sample is ensured: only those
+ * observations for which all the listed variables have valid
+ * values are used.  If %OPT_C is included, we actually calculate
+ * covariances rather than correlations.
  *
  * Returns: gretl correlation matrix struct, or %NULL on failure.
  */
@@ -4023,10 +4043,10 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 
     if (opt & OPT_U) {
 	/* impose uniform sample size */
-	*err = uniform_correlation_matrix(v, Z);
+	*err = uniform_corrcov_matrix(v, Z, opt);
     } else {
 	/* sample sizes may differ */
-	*err = max_correlation_matrix(v, Z);
+	*err = max_corrcov_matrix(v, Z, opt);
     }
 
     if (!*err) {

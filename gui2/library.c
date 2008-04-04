@@ -1238,7 +1238,7 @@ void do_samplebool (GtkWidget *w, dialog_t *dlg)
 
 int do_set_sample (void)
 {
-    return set_sample(cmdline, (const double **) Z, datainfo);
+    return set_sample(cmdline, &Z, datainfo);
 }
 
 void count_missing (void)
@@ -6905,7 +6905,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
  	    err = restrict_sample(line, cmd->list, pZ, pdinfo,
  				  NULL, cmd->opt, prn);
  	} else {
- 	    err = set_sample(line, (const double **) *pZ, pdinfo);
+ 	    err = set_sample(line, pZ, pdinfo);
  	}
   	if (err) {
   	    errmsg(err, prn);

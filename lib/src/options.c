@@ -220,6 +220,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_V, "verbose" },
     { PANEL,    OPT_W, "unit-weights" },
     { POISSON,  OPT_V, "verbose" },
+    { PCA,      OPT_C, "covariance" },
     { PCA,      OPT_A, "save-all" },
     { PCA,      OPT_O, "save" },
     { PERGM,    OPT_O, "bartlett" },
@@ -496,7 +497,9 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
 		    for (i=0; i<n; i++) {
 			opt = opt_from_flag(p[i]);
 			if (!opt_is_valid(opt, ci, p[i])) {
-			    *err = 1;
+			    if (err != NULL) {
+				*err = 1;
+			    }
 			    return 0L;
 			}
 			ret |= opt;
@@ -767,7 +770,7 @@ gretlopt get_gretl_options (char *line, int *err)
 
     if (ci != SETINFO && ci != TABPRINT && ci != EQNPRINT) {
 	/* try for short-form options (e.g. "-o") */
-	opt = get_short_opts(line, ci, &myerr);
+	opt = get_short_opts(line, ci, (ci == SMPL)? NULL : &myerr);
 	if (!myerr && opt) {
 	    oflags |= opt;
 	}
