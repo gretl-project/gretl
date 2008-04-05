@@ -499,29 +499,24 @@ void add_mahalanobis_data (windata_t *vwin)
 
 void add_pca_data (windata_t *vwin)
 {
-    int err, oldv = datainfo->v;
-    gretlopt oflag = OPT_D;
-    VMatrix *corrmat = (VMatrix *) vwin->data;
+    VMatrix *cmat = (VMatrix *) vwin->data;
+    int oldv = datainfo->v;
+    int err;
 
-    err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
+    err = call_pca_plugin(cmat, &Z, datainfo, OPT_D, NULL);
 
     if (err) {
 	gui_errmsg(err);
-	return;
-    }
-
-    if (datainfo->v > oldv) {
+    } else if (datainfo->v > oldv) {
 	/* if data were added, register the command */
-	if (oflag == OPT_O || oflag == OPT_A) {
-	    char *liststr = gretl_list_to_string(corrmat->list);
-	    
-	    if (liststr != NULL) {
-		const char *flagstr = print_flags(oflag, PCA); 
-
-		gretl_command_sprintf("pca %s%s", liststr, flagstr);
-		check_and_record_command();
-		free(liststr);
-	    }
+	int addv = datainfo->v - oldv;
+	char *liststr = gretl_list_to_string(cmat->list);
+	gretlopt opt = (addv == cmat->list[0])? OPT_O : OPT_A;
+	
+	if (liststr != NULL) {
+	    gretl_command_sprintf("pca %s%s", liststr, print_flags(opt, PCA));
+	    check_and_record_command();
+	    free(liststr);
 	}
     }
 }
@@ -708,7 +703,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 
     case CORR:
     case PCA:
-	/* FIXME option handling here */
+	/* FIXME OPT_C for PCA? */
 	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
 		       (action == PCA)? OPT_U : OPT_NONE, &err);
 	if (!err) {
@@ -716,7 +711,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 		print_corrmat(obj, datainfo, prn);
 	    } else {
 		err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
-				      NULL, prn);
+				      OPT_NONE, prn);
 	    }
 	}	    
 	break;

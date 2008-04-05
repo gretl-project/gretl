@@ -3816,11 +3816,15 @@ void free_vmatrix (VMatrix *vmat)
     }
 }
 
+enum {
+    CORRMAT = 0,
+    COVMAT
+};
+
 /* compute correlation or covariance matrix, using maximum possible
    sample for each coefficient */
 
-static int max_corrcov_matrix (VMatrix *v, const double **Z,
-			       gretlopt opt)
+static int max_corrcov_matrix (VMatrix *v, const double **Z, int flag)
 {
     int i, j, vi, vj, nij;
     int nmaxmin = v->t2 - v->t1 + 1;
@@ -3834,11 +3838,11 @@ static int max_corrcov_matrix (VMatrix *v, const double **Z,
 	    vj = v->list[j+1];
 	    nij = ijton(i, j, m);
 	    missing = 0;
-	    if (i == j && !(opt & OPT_C)) {
+	    if (i == j && flag == CORRMAT) {
 		v->vec[nij] = 1.0;
 	    } else {
 		missing = 0;
-		if (opt & OPT_C) {
+		if (flag == COVMAT) {
 		    v->vec[nij] = gretl_covar(v->t1, v->t2, Z[vi], Z[vj], 
 					      &missing);
 		} else {
@@ -3878,30 +3882,36 @@ static int max_corrcov_matrix (VMatrix *v, const double **Z,
     return 0;
 }
 
-/* compute correlation or covariance matrix, ensuring we use the same
-   sample for all coefficients */
+/* compute correlation or covariance matrix, ensuring we
+   use the same sample for all coefficients */
 
-static int uniform_corrcov_matrix (VMatrix *v, const double **Z,
-				   gretlopt opt)
+static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
 {
     double *xbar = NULL, *ssx = NULL;
     int m = v->dim;
     int mm = (m * (m + 1)) / 2;
     double d1, d2;
-    int i, j, nij, t;
+    int i, j, jmin, nij, t;
     int miss, n = 0;
 
     xbar = malloc(m * sizeof *xbar);
-    ssx = malloc(m * sizeof *ssx);
-
-    if (xbar == NULL || ssx == NULL) {
-	free(xbar);
-	free(ssx);
+    if (xbar == NULL) {
 	return E_ALLOC;
     }
 
+    if (flag == CORRMAT) {
+	ssx = malloc(m * sizeof *ssx);
+	if (ssx == NULL) {
+	    free(xbar);
+	    return E_ALLOC;
+	}
+	for (i=0; i<m; i++) {
+	    ssx[i] = 0.0;
+	}
+    }    
+
     for (i=0; i<m; i++) {
-	xbar[i] = ssx[i] = 0.0;
+	xbar[i] = 0.0;
     }       
 
     /* first pass: get sample size and sums */
@@ -3950,8 +3960,11 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z,
 	if (!miss) {
 	    for (i=0; i<m; i++) {
 		d1 = Z[v->list[i+1]][t] - xbar[i];
-		ssx[i] += d1 * d1;
-		for (j=i+1; j<m; j++) {
+		if (ssx != NULL) {
+		    ssx[i] += d1 * d1;
+		}
+		jmin = (flag == COVMAT)? i : i + 1;
+		for (j=jmin; j<m; j++) {
 		    nij = ijton(i, j, m);
 		    d2 = Z[v->list[j+1]][t] - xbar[j];
 		    v->vec[nij] += d1 * d2;
@@ -3962,15 +3975,17 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z,
 
     /* finalize: compute correlations */
 
-    for (i=0; i<m; i++) {  
-	for (j=i; j<m; j++)  {
-	    nij = ijton(i, j, m);
-	    if (i == j) {
-		v->vec[nij] = 1.0;
-	    } else if (ssx[i] == 0.0 || ssx[j] == 0.0) {
-		v->vec[nij] = NADBL;
-	    } else if (!(opt & OPT_C)) {
-		v->vec[nij] /= sqrt(ssx[i] * ssx[j]);
+    if (flag == CORRMAT) {
+	for (i=0; i<m; i++) {  
+	    for (j=i; j<m; j++)  {
+		nij = ijton(i, j, m);
+		if (i == j) {
+		    v->vec[nij] = 1.0;
+		} else if (ssx[i] == 0.0 || ssx[j] == 0.0) {
+		    v->vec[nij] = NADBL;
+		} else {
+		    v->vec[nij] /= sqrt(ssx[i] * ssx[j]);
+		}
 	    }
 	}
     }
@@ -3978,7 +3993,9 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z,
     v->n = n;
 
     free(xbar);
-    free(ssx);
+    if (ssx != NULL) {
+	free(ssx);
+    }
 
     return 0;
 }
@@ -4004,6 +4021,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z,
 VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 		   gretlopt opt, int *err)
 {
+    int flag = (opt & OPT_C)? COVMAT : CORRMAT;
     VMatrix *v;
     int i, m, mm;
 
@@ -4043,10 +4061,10 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 
     if (opt & OPT_U) {
 	/* impose uniform sample size */
-	*err = uniform_corrcov_matrix(v, Z, opt);
+	*err = uniform_corrcov_matrix(v, Z, flag);
     } else {
 	/* sample sizes may differ */
-	*err = max_corrcov_matrix(v, Z, opt);
+	*err = max_corrcov_matrix(v, Z, flag);
     }
 
     if (!*err) {
@@ -4059,7 +4077,7 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 	}
     }	
 
-    v->ci = CORR;
+    v->ci = (flag == CORRMAT)? CORR : 0;
 
  bailout:
     

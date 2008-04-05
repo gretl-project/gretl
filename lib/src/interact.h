@@ -105,8 +105,8 @@ void safe_print_line (const char *line, int *plen, PRN *prn);
 
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 
-int call_pca_plugin (VMatrix *corrmat, double ***pZ,
-		     DATAINFO *pdinfo, gretlopt *pflag,
+int call_pca_plugin (VMatrix *cmat, double ***pZ,
+		     DATAINFO *pdinfo, gretlopt opt,
 		     PRN *prn);
 
 int ready_for_command (const char *line);

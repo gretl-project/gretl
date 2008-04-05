@@ -141,7 +141,7 @@ struct plugin_function plugin_functions[] = {
 #endif
 
     /* principal components analysis */
-    { "pca_from_corrmat", P_PCA },
+    { "pca_from_cmatrix", P_PCA },
 
     /* GUI progress bar */
     { "show_progress", P_PROGRESS_BAR },

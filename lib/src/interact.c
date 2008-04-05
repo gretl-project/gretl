@@ -3566,25 +3566,50 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
     return err;
 }
 
-int call_pca_plugin (VMatrix *corrmat, double ***pZ,
-		     DATAINFO *pdinfo, gretlopt *pflag,
+int call_pca_plugin (VMatrix *cmat, double ***pZ,
+		     DATAINFO *pdinfo, gretlopt opt,
 		     PRN *prn)
 {
     void *handle = NULL;
-    int (*pca_from_corrmat) (VMatrix *, double ***, DATAINFO *,
-			     gretlopt *, PRN *);
+    int (*pca_from_cmatrix) (VMatrix *, double ***, DATAINFO *,
+			     gretlopt, PRN *);
     int err = 0;
 
     gretl_error_clear();
     
-    pca_from_corrmat = get_plugin_function("pca_from_corrmat", &handle);
-    if (pca_from_corrmat == NULL) {
+    pca_from_cmatrix = get_plugin_function("pca_from_cmatrix", &handle);
+    if (pca_from_cmatrix == NULL) {
         return 1;
     }
         
-    err = (* pca_from_corrmat) (corrmat, pZ, pdinfo, pflag, prn);
+    err = (* pca_from_cmatrix) (cmat, pZ, pdinfo, opt, prn);
     close_plugin(handle);
     
+    return err;
+}
+
+static int do_pca (int *list, double ***pZ, DATAINFO *pdinfo,
+		   gretlopt opt, PRN *prn)
+{
+    int err = 0;
+
+    if (list[0] > 0) {
+	VMatrix *cmat;
+
+	/* adding OPT_U ensures a uniform sample for the
+	   correlation or covariance matrix */
+	cmat = corrlist(list, (const double **) *pZ, pdinfo, 
+			opt | OPT_U, &err);
+	if (!err) {
+	    err = call_pca_plugin(cmat, pZ, pdinfo, opt, prn);
+	    if (!err && (opt & (OPT_O | OPT_A))) {
+		/* results saved as series */
+		maybe_list_vars(pdinfo, prn);
+	    }
+	    free_vmatrix(cmat);
+	}
+    }
+
     return err;
 }
 
@@ -3876,19 +3901,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case PCA:
-	if (cmd->list[0] > 0) {
-	    VMatrix *cmat;
-
-	    cmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, 
-			    cmd->opt | OPT_U, &err);
-	    if (!err) {
-		err = call_pca_plugin(cmat, pZ, pdinfo, &cmd->opt, prn);
-		if (cmd->opt && !err) {
-		    maybe_list_vars(pdinfo, prn);
-		}
-		free_vmatrix(cmat);
-	    }
-	}
+	err = do_pca(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case CRITERIA:

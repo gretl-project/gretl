@@ -22,7 +22,7 @@
 
 #include <gtk/gtk.h>
 
-#undef PCA_DEBUG
+#define PCA_DEBUG 0
 
 struct flag_info {
     GtkWidget *dialog;
@@ -154,33 +154,39 @@ static gretlopt pca_flag_dialog (void)
     if (flag == PCA_SAVE_MAIN) return OPT_O;
     if (flag == PCA_SAVE_ALL) return OPT_A;
 
-    return 0L;
+    return OPT_NONE;
 }
 
-static void pca_print (VMatrix *vmat, gretl_matrix *m,
-		       gretl_matrix *evals, PRN *prn)
+static void pca_print (VMatrix *cmat, gretl_matrix *E,
+		       gretl_matrix *C, PRN *prn)
 {
     double x, y;
-    int n = vmat->dim;
+    char pcname[8];
+    int n = cmat->dim;
     int i, j, cols;
 
     pprintf(prn, "%s\n\n", _("Principal Components Analysis"));
-    pprintf(prn, "%s\n\n", _("Eigenanalysis of the Correlation Matrix"));
+
+    if (cmat->ci == CORR) {
+	pprintf(prn, "%s\n\n", _("Eigenanalysis of the Correlation Matrix"));
+    } else {
+	pprintf(prn, "%s\n\n", _("Eigenanalysis of the Covariance Matrix"));
+    }
 
     pputs(prn, _("Component  Eigenvalue  Proportion   Cumulative\n"));
 
     x = 0.0;
     y = 0.0;
 
-    for (i=n-1; i>=0; i--) {
-	y += evals->val[i] / n;
-	pprintf(prn, "%5d%13.4f%13.4f%13.4f\n", n - i,
-		evals->val[i], evals->val[i] / n, y);
-	x += evals->val[i];
+    for (i=0; i<n; i++) {
+	y += E->val[i] / n;
+	pprintf(prn, "%5d%13.4f%13.4f%13.4f\n", i + 1,
+		E->val[i], E->val[i] / n, y);
+	x += E->val[i];
     }
     pputc(prn, '\n');
 
-#ifdef PCA_DEBUG
+#if PCA_DEBUG
     fprintf(stderr, "check: sum of evals = %g\n", x);
 #endif
 
@@ -188,21 +194,24 @@ static void pca_print (VMatrix *vmat, gretl_matrix *m,
 
     cols = n;
     while (cols > 0) {
+	int imax = n - cols + 7;
+	int jmin = cols - 7;
 	int colsdone = 0;
 
-	pprintf(prn, "%-16s", _("Variable"));
-	for (i=n-cols; i<n-cols+7 && i<n; i++) {
-	    char pcname[8];
+	imax = (imax < n)? imax : n;
+	jmin = (jmin > 0)? jmin : 0;
 
+	pprintf(prn, "%-16s", _("Variable"));
+	for (i=n-cols; i<imax; i++) {
 	    sprintf(pcname, "PC%d", i + 1);
 	    pprintf(prn, "%9s", pcname);
 	    colsdone++;
 	}
 	pputc(prn, '\n');
 	for (i=0; i<n; i++) {
-	    pprintf(prn, "%-16s", vmat->names[i]);
-	    for (j=cols-1; j>cols-8 && j>=0; j--) {
-		pprintf(prn, "%9.3f", gretl_matrix_get(m, i, j));
+	    pprintf(prn, "%-16s", cmat->names[i]);
+	    for (j=jmin; j<cols; j++) {
+		pprintf(prn, "%9.3f", gretl_matrix_get(C, i, j));
 	    }
 	    pputc(prn, '\n');
 	}
@@ -232,32 +241,173 @@ static int standardize (double *y, const double *x, int n)
     return 0;
 }
 
-int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
-		      DATAINFO *pdinfo, gretlopt *popt,
+/* add PCs to the dataset, either "major" ones or all */
+
+static int pca_save_components (VMatrix *cmat, 
+				gretl_matrix *E, gretl_matrix *C, 
+				double ***pZ, DATAINFO *pdinfo,
+				gretlopt opt)
+{
+    int save_all = (opt & OPT_A);
+    double **sZ = NULL;
+    double x;
+    int *plist = NULL;
+    int m, v = pdinfo->v;
+    int k = cmat->dim;
+    int i, j, t, vi;
+    int err = 0;
+
+    if (save_all) {
+	m = k;
+    } else {
+	m = 0;
+	for (i=0; i<k; i++) {
+	    if (E->val[i] > 1.0) {
+		m++;
+	    }
+	}
+    }
+
+    plist = gretl_list_new(m);
+    if (plist == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	/* build list of PCs */
+	j = 1;
+	for (i=0; i<k; i++) {
+	    if (save_all || E->val[i] > 1.0) {
+		plist[j++] = i;
+	    }
+	}
+	err = dataset_add_series(m, pZ, pdinfo);
+    }
+
+    if (!err) {
+	/* construct standardized versions of variables */
+	sZ = doubles_array_new(k, pdinfo->n); 
+	if (sZ == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<k && !err; i++) {
+		vi = cmat->list[i+1];
+		err = standardize(sZ[i], (const double *) (*pZ)[vi], 
+				  pdinfo->n);
+	    }
+	}
+    }
+
+    if (!err) {
+	for (i=1; i<=plist[0]; i++) {
+	    int pi = plist[i];
+	    double load;
+
+	    vi = v + i - 1;
+	    sprintf(pdinfo->varname[vi], "PC%d", i);
+	    make_varname_unique(pdinfo->varname[vi], vi, pdinfo);
+	    sprintf(VARLABEL(pdinfo, vi), "Component with "
+		    "eigenvalue = %.4f", E->val[pi]);
+
+	    for (t=0; t<pdinfo->n; t++) {
+		(*pZ)[vi][t] = 0.0;
+		for (j=0; j<k; j++) {
+		    x = sZ[j][t];
+		    if (na(x)) {
+			(*pZ)[vi][t] = NADBL;
+			break;
+		    } else {
+			load = gretl_matrix_get(C, j, pi);
+			(*pZ)[vi][t] += load * x;
+		    }
+		}
+	    }
+	}
+    }
+
+    free(plist);
+    doubles_array_free(sZ, k);
+
+    return err;
+}
+
+/* when we're working with a covariance matrix rather than a correlation
+   matrix, scale the eigenvalues so they have a mean of 1.0
+*/
+
+static int covar_eigen_scale (gretl_matrix *E, gretl_matrix *C)
+{
+    int i, ci, m = gretl_vector_get_length(E);
+    double Cij, scl = 0.0;
+ 
+#if PCA_DEBUG
+    gretl_matrix_print(E, "unscaled E");
+    gretl_matrix_print(C, "unscaled C");
+#endif
+
+    for (i=0; i<m; i++) {
+	if (E->val[i] < 0) {
+	    E->val[i] = -E->val[i];
+	    for (ci=0; ci<C->rows; ci++) {
+		Cij = gretl_matrix_get(C, ci, i);
+		gretl_matrix_set(C, ci, i, -Cij);
+	    }
+	}
+	scl += E->val[i];
+    }
+
+    scl /= (double) m;
+
+    /* FIXME scaling of eigenvectors? */
+
+    gretl_matrix_divide_by_scalar(E, scl);
+    gretl_matrix_multiply_by_scalar(C, scl);
+    
+#if PCA_DEBUG
+    gretl_matrix_print(E, "scaled E");
+    gretl_matrix_print(C, "scaled C");
+#endif
+
+    return 0;
+}
+
+/* The incoming option here: When this function is called from the
+   CLI, the option may be OPT_O (save the first component), or OPT_A
+   (save all the components), or none.  The results are printed in all
+   cases.  As for the GUI, we either get no option (simply display the
+   results) or OPT_D.  The latter means that we should not display the
+   results, but should put up a dialog box allowing the user to decide
+   what to save.
+
+   Note that depending on the original option supplied to the "pca"
+   command, the incoming matrix may be either a correlation matrix
+   (the default) or a covariance matrix.  This prior option is not
+   included in the gretlopt passed here; it's encoded in the "ci"
+   member of the VMatrix struct.
+ */
+
+int pca_from_cmatrix (VMatrix *cmat, double ***pZ,
+		      DATAINFO *pdinfo, gretlopt opt,
 		      PRN *prn)
 {
     gretl_matrix *C;
     gretl_matrix *evals = NULL;
-    int k = corrmat->dim;
-    int i, j, t, vi, idx;
+    gretlopt saveopt = opt;
+    int k = cmat->dim;
+    int i, j, idx;
     double x;
-    gretlopt opt = OPT_NONE;
     int err = 0;
 
-    if (popt != NULL) {
-	opt = *popt;
-    }
-
     if (opt & OPT_D) { 
-	opt = pca_flag_dialog();
-	if (!opt) {
+	saveopt = pca_flag_dialog();
+	if (saveopt == OPT_NONE) {
 	    /* canceled */
-	    *popt = OPT_NONE;
 	    return 0; 
 	}
     }    
 
     C = gretl_matrix_alloc(k, k);
+
     if (C == NULL) {
 	return E_ALLOC;
     }
@@ -265,106 +415,35 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
     for (i=0; i<k; i++) {
 	for (j=0; j<k; j++) {
 	    idx = ijton(i, j, k);
-	    x = corrmat->vec[idx];
+	    x = cmat->vec[idx];
 	    gretl_matrix_set(C, i, j, x);
 	}
     }
 
+#if PCA_DEBUG
+    gretl_matrix_print(C, "original C, in pca");
+#endif
+
     evals = gretl_symmetric_matrix_eigenvals(C, 1, &err);
-    if (err) {
-	gretl_matrix_free(C);
-	return err;
+
+    if (!err && cmat->ci != CORR) {
+	covar_eigen_scale(evals, C);
     }
 
-    if (prn != NULL) {
-	pca_print(corrmat, C, evals, prn);
+    if (!err) {
+	err = gretl_symmetric_eigen_sort(evals, C, 0);
     }
 
-    if (opt) {
-	/* add PCs to the dataset */
-	double **sZ = NULL;
-	int *plist = NULL;
-	int m, v = pdinfo->v;
+    if (!err && prn != NULL) {
+	pca_print(cmat, evals, C, prn);
+    }
 
-	if (opt & OPT_A) {
-	    m = k;
-	} else {
-	    m = 0;
-	    for (i=0; i<k; i++) {
-		if (evals->val[i] > 1.0) {
-		    m++;
-		}
-	    }
-	}
-
-	plist = gretl_list_new(m);
-	if (plist == NULL) {
-	    err = E_ALLOC;
-	}
-
-	if (!err) {
-	    /* build list of PCs */
-	    j = 1;
-	    for (i=k-1; i>=0; i--) {
-		if ((opt & OPT_A) || evals->val[i] > 1.0) {
-		    plist[j++] = i;
-		}
-	    }
-	    err = dataset_add_series(m, pZ, pdinfo);
-	}
-
-	if (!err) {
-	    /* construct standardized versions of variables */
-	    sZ = doubles_array_new(k, pdinfo->n); 
-	    if (sZ == NULL) {
-		err = E_ALLOC;
-	    } else {
-		for (i=0; i<k && !err; i++) {
-		    vi = corrmat->list[i+1];
-		    err = standardize(sZ[i], (const double *) (*pZ)[vi], 
-				      pdinfo->n);
-		}
-	    }
-	}
-
-	if (!err) {
-	    for (i=1; i<=plist[0]; i++) {
-		int pi = plist[i];
-		double load;
-
-		vi = v + i - 1;
-		sprintf(pdinfo->varname[vi], "PC%d", i);
-		make_varname_unique(pdinfo->varname[vi], vi, pdinfo);
-		sprintf(VARLABEL(pdinfo, vi), "Component with "
-			"eigenvalue = %.4f", evals->val[pi]);
-
-		for (t=0; t<pdinfo->n; t++) {
-		    (*pZ)[vi][t] = 0.0;
-		    for (j=0; j<k; j++) {
-			x = sZ[j][t];
-			if (na(x)) {
-			    (*pZ)[vi][t] = NADBL;
-			    break;
-			} else {
-			    load = gretl_matrix_get(C, j, pi);
-			    (*pZ)[vi][t] += load * x;
-			}
-		    }
-		}
-	    }
-	}
-
-	free(plist);
-	doubles_array_free(sZ, k);
-
-    } /* end opt (save PCs) conditional */
+    if (!err && saveopt) {
+	err = pca_save_components(cmat, evals, C, pZ, pdinfo, saveopt);
+    }
 
     gretl_matrix_free(evals);
     gretl_matrix_free(C);
 
-    if (popt != NULL) {
-	*popt = opt;
-    }
-
-    return 0;
+    return err;
 }

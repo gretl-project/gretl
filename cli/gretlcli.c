@@ -127,6 +127,7 @@ static void file_get_line (char *line, CMD *cmd)
     if (*line == '\0') {
 	strcpy(line, "quit");
     } else {
+	tailstrip(line);
 	*linebak = 0;
 	strncat(linebak, line, MAXLINE - 1);
     }
@@ -136,7 +137,7 @@ static void file_get_line (char *line, CMD *cmd)
     }
 
     if (gretl_echo_on() && cmd->ci == RUN && batch && *line == '(') {
-	printf("%s", line);
+	printf("%s\n", line);
 	*linebak = 0;
     }
 }
