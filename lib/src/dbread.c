@@ -1512,12 +1512,12 @@ const char *get_db_name (void)
     return db_name;
 }
 
-int db_set_sample (const char *line, DATAINFO *pdinfo)
+int db_set_sample (const char *s, DATAINFO *pdinfo)
 {
-    char cmd[5], start[OBSLEN], stop[OBSLEN];
+    char start[OBSLEN], stop[OBSLEN];
     int t1 = 0, t2 = 0;
 
-    if (sscanf(line, "%4s %8s %8s", cmd, start, stop) != 3) {
+    if (sscanf(s, "%10s %10s", start, stop) != 2) {
 	sprintf(gretl_errmsg, _("error reading smpl line"));
 	return 1;
     }

@@ -90,7 +90,7 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
 
 const char *get_db_name (void);
 
-int db_set_sample (const char *line, DATAINFO *pdinfo);
+int db_set_sample (const char *s, DATAINFO *pdinfo);
 
 int db_get_series (const char *line, double ***pZ, DATAINFO *datainfo, 
 		   PRN *prn);

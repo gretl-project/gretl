@@ -48,6 +48,9 @@ static DATAINFO *peerinfo;
 
 #define SUBMASK_SENTINEL 127
 
+static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
+			 int *err);
+
 /* accessors for full dataset, when sub-sampled */
 
 double ***fetch_full_Z (void)
@@ -684,8 +687,7 @@ static int copy_dummy_to_mask (char *mask, const double *x, int n)
     return err;
 }
 
-static int mask_from_temp_dummy (const char *line,
-				 double ***pZ, DATAINFO *pdinfo, 
+static int mask_from_temp_dummy (const char *s, double ***pZ, DATAINFO *pdinfo, 
 				 char *mask)
 {
     char formula[MAXLEN];
@@ -693,7 +695,7 @@ static int mask_from_temp_dummy (const char *line,
     int err = 0;
 
     *formula = '\0';
-    strncat(formula, line + 4, MAXLEN - 1);
+    strncat(formula, s, MAXLEN - 1);
 
     x = generate_series(formula, pZ, pdinfo, &err);
 
@@ -709,21 +711,13 @@ static int mask_from_temp_dummy (const char *line,
     return err;
 }
 
-static int mask_from_dummy (const char *line,
-			    const double **Z, const DATAINFO *pdinfo,
+static int mask_from_dummy (const char *s, const double **Z, const DATAINFO *pdinfo,
 			    char *mask)
 {
     char dname[VNAMELEN] = {0};
     int dnum, err = 0;
 
-    /* + 4 to skip the command word "smpl" */
-    sscanf(line + 4, "%15s", dname);
-
-    if (*dname == 0) {
-	strcpy(gretl_errmsg, "Unrecognized sample command");
-	return 1;
-    }
-
+    sscanf(s, "%15s", dname);
     dnum = varindex(pdinfo, dname);
 
     if (dnum == pdinfo->v) {
@@ -782,31 +776,18 @@ count_panel_units (const char *mask, const DATAINFO *pdinfo)
     return n;
 }
 
-/* construct mask for takig random sub-sample from dataset */
+/* construct mask for taking random sub-sample from dataset */
 
-static int make_random_mask (const char *oldmask, const char *line, 
-			     const double **Z, const DATAINFO *pdinfo,
+static int make_random_mask (const char *s, const char *oldmask, 
+			     double ***pZ, DATAINFO *pdinfo,
 			     char *mask)
 {
-    char s[VNAMELEN] = {0};
     unsigned u;
-    int i, subn = 0;
+    int i, subn;
     int cases = 0;
     int err = 0;
 
-    sscanf(line + 4, "%15s", s);
-    if (*s == 0) {
-	sprintf(gretl_errmsg, _("Invalid number of cases %d"), subn);
-	return 0;
-    } else if (isdigit(*s)) {
-	subn = atoi(s);
-    } else {
-	int v = varindex(pdinfo, s);
-
-	if (v < pdinfo->v && !na(Z[v][0])) {
-	    subn = Z[v][0];
-	}
-    }
+    subn = smpl_get_int(s, pZ, pdinfo, &err);
 
     if (subn <= 0 || subn >= pdinfo->n) {
 	err = 1;
@@ -832,7 +813,7 @@ static int make_random_mask (const char *oldmask, const char *line,
 	mask[i] = 0;
     }
 
-    for (i=0; (cases != subn); i++) {
+    for (i=0; cases != subn; i++) {
 	u = gretl_rand_int_max(pdinfo->n);
 	if (oldmask == NULL || oldmask[u]) {
 	    mask[u] = 1;
@@ -1052,13 +1033,21 @@ make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
     return np;
 }
 
+#define needs_string_arg(m) (m == SUBSAMPLE_RANDOM || \
+	                     m == SUBSAMPLE_USE_DUMMY || \
+                             m == SUBSAMPLE_BOOLEAN)
+
 static int 
-make_restriction_mask (int mode, const char *line, const int *list, 
+make_restriction_mask (int mode, const char *s, const int *list, 
 		       double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn, const char *oldmask, char **pmask)
 {
     char *mask = NULL;
     int sn = 0, err = 0;
+
+    if (needs_string_arg(mode) && (s == NULL || *s == '\0')) {
+	return E_ARGS;
+    }
 
     mask = make_submask(pdinfo->n);
     if (mask == NULL) {
@@ -1069,12 +1058,11 @@ make_restriction_mask (int mode, const char *line, const int *list,
     if (mode == SUBSAMPLE_DROP_MISSING) {   
 	err = make_missing_mask(list, (const double **) *pZ, pdinfo, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
-	err = make_random_mask(oldmask, line, (const double **) *pZ,
-			       pdinfo, mask);
+	err = make_random_mask(s, oldmask, pZ, pdinfo, mask);
     } else if (mode == SUBSAMPLE_USE_DUMMY) {
-	err = mask_from_dummy(line, (const double **) *pZ, pdinfo, mask);
+	err = mask_from_dummy(s, (const double **) *pZ, pdinfo, mask);
     } else if (mode == SUBSAMPLE_BOOLEAN) {
-	err = mask_from_temp_dummy(line, pZ, pdinfo, mask);
+	err = mask_from_temp_dummy(s, pZ, pdinfo, mask);
     } else {
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
 	err = 1;
@@ -1270,6 +1258,12 @@ int restrict_sample (const char *line, const int *list,
 	    (void *) state);
 #endif
 
+    if (line != NULL) {
+	/* skip the command word */
+	line += strcspn(line, " ");
+	line += strspn(line, " ");
+    }
+
     mode = get_restriction_mode(opt);
     if (mode == SUBSAMPLE_UNKNOWN) {
 	strcpy(gretl_errmsg, "Unrecognized sample command");
@@ -1348,7 +1342,7 @@ static int panel_round (const DATAINFO *pdinfo, int t, int code)
     return t;
 }
 
-static int smpl_get_int (char *s, double ***pZ, DATAINFO *pdinfo,
+static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
 			 int *err)
 {
     int k = 0;
@@ -1410,9 +1404,12 @@ static int get_sample_limit (char *s, double ***pZ, DATAINFO *pdinfo,
 int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 {
     int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
-    char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
+    char newstart[OBSLEN], newstop[OBSLEN];
 
     gretl_error_clear();
+
+    line += strcspn(line, " ");
+    line += strspn(line, " ");
 
     nf = count_fields(line);
 
@@ -1425,18 +1422,18 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
     }
 #endif
 
-    if (nf == 3 && pdinfo->n == 0) {
+    if (nf == 2 && pdinfo->n == 0) {
 	/* database special */
 	return db_set_sample(line, pdinfo);
     }
 
-    if (nf == 1) {
+    if (nf == 0) {
 	/* no-op, just print the current sample */
 	return 0;
     }
 	
-    if (nf == 2) {
-	if (sscanf(line, "%4s %10s", cmd, newstart) != 2) {
+    if (nf == 1) {
+	if (sscanf(line, "%10s", newstart) != 1) {
 	    strcpy(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
@@ -1450,9 +1447,9 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    /* now we're looking at nf = 3 (3 fields) case */
+    /* now we're looking at nf = 2 (2 fields) case */
 
-    if (sscanf(line, "%4s %10s %10s", cmd, newstart, newstop) != 3) {
+    if (sscanf(line, "%10s %10s", newstart, newstop) != 2) {
 	strcpy(gretl_errmsg, _("error reading smpl line"));
 	return 1;
     }
