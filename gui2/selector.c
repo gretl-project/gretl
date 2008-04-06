@@ -177,6 +177,7 @@ static int garch_p = 1;
 static int garch_q = 1;
 static int arma_const = 1;
 static int arma_x12 = 0;
+static int arma_hessian = 0;
 static int selvar;
 static int jcase = 2;
 static int verbose;
@@ -2220,6 +2221,9 @@ static void construct_cmdlist (selector *sr)
 	    if (sr->opts & OPT_N) {
 		arma_const = 0;
 	    } 
+	    if (sr->opts & OPT_H) {
+		arma_hessian = 1;
+	    } 
 	    if (sr->opts & OPT_X) {
 		arma_x12 = 1;
 	    } else {
@@ -3322,6 +3326,8 @@ static void build_selector_switches (selector *sr)
     if (sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
 	pack_switch(tmp, sr, arma_x12, FALSE, OPT_X, 0);
+	tmp = gtk_check_button_new_with_label(_("Parameter covariance matrix via Hessian"));
+	pack_switch(tmp, sr, arma_hessian, FALSE, OPT_H, 0);
     }	
 #endif
 
