@@ -2073,7 +2073,6 @@ static void selector_cancel_unavailable_options (selector *sr)
 {
     if (sr->code == ARMA) {
 	if ((sr->opts & OPT_H) && !GTK_WIDGET_SENSITIVE(sr->hess_button)) {
-	    fprintf(stderr, "removing OPT_H\n");
 	    sr->opts ^= OPT_H;
 	}
     }
@@ -3224,6 +3223,8 @@ static void call_iters_dialog (GtkWidget *w, selector *sr)
 
 #endif
 
+#ifdef HAVE_X12A
+
 static gboolean x12a_vs_hessian (GtkWidget *w, selector *sr)
 {
     if (sr->hess_button != NULL) {
@@ -3234,6 +3235,8 @@ static gboolean x12a_vs_hessian (GtkWidget *w, selector *sr)
 
     return FALSE;
 }
+
+#endif
 
 #define robust_conf(c) (c != LOGIT && c != PROBIT)
 
