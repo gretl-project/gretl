@@ -58,6 +58,8 @@ struct _selector {
     GtkWidget *add_button;
     GtkWidget *remove_button;
     GtkWidget *lags_button;
+    GtkWidget *hess_button;
+    GtkWidget *x12a_button;
     GtkWidget *extra[N_EXTRA];
     GtkWidget *radios[N_RADIOS];
     int code;
@@ -2067,6 +2069,16 @@ static void parse_special_graph_data (selector *sr)
     }
 }
 
+static void selector_cancel_unavailable_options (selector *sr)
+{
+    if (sr->code == ARMA) {
+	if ((sr->opts & OPT_H) && !GTK_WIDGET_SENSITIVE(sr->hess_button)) {
+	    fprintf(stderr, "removing OPT_H\n");
+	    sr->opts ^= OPT_H;
+	}
+    }
+}
+
 /* main function for building a command list from information stored
    in the various selector widgets */
 
@@ -2242,6 +2254,8 @@ static void construct_cmdlist (selector *sr)
 	    verbose = 1;
 	}
     }
+
+    selector_cancel_unavailable_options(sr);
 }
 
 static void cancel_selector (GtkWidget *widget, selector *sr)
@@ -2878,6 +2892,8 @@ static void selector_init (selector *sr, guint code, const char *title,
     sr->add_button = NULL;
     sr->remove_button = NULL;
     sr->lags_button = NULL;
+    sr->hess_button = NULL;
+    sr->x12a_button = NULL;
 
     for (i=0; i<N_EXTRA; i++) {
 	sr->extra[i] = NULL;
@@ -3208,6 +3224,17 @@ static void call_iters_dialog (GtkWidget *w, selector *sr)
 
 #endif
 
+static gboolean x12a_vs_hessian (GtkWidget *w, selector *sr)
+{
+    if (sr->hess_button != NULL) {
+	gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+	gtk_widget_set_sensitive(sr->hess_button, !s);
+    }
+
+    return FALSE;
+}
+
 #define robust_conf(c) (c != LOGIT && c != PROBIT)
 
 static void build_selector_switches (selector *sr) 
@@ -3322,14 +3349,17 @@ static void build_selector_switches (selector *sr)
 	pack_switch(tmp, sr, verbose, FALSE, OPT_U, 0);
     }
 
-#ifdef HAVE_X12A    
     if (sr->code == ARMA) {
-	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
-	pack_switch(tmp, sr, arma_x12, FALSE, OPT_X, 0);
-	tmp = gtk_check_button_new_with_label(_("Parameter covariance matrix via Hessian"));
-	pack_switch(tmp, sr, arma_hessian, FALSE, OPT_H, 0);
-    }	
+	sr->hess_button = 
+	    gtk_check_button_new_with_label(_("Parameter covariance matrix via Hessian"));
+	pack_switch(sr->hess_button, sr, arma_hessian, FALSE, OPT_H, 0);
+#ifdef HAVE_X12A   
+	sr->x12a_button = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
+	pack_switch(sr->x12a_button, sr, arma_x12, FALSE, OPT_X, 0);
+	g_signal_connect(G_OBJECT(sr->x12a_button), "toggled",
+			 G_CALLBACK(x12a_vs_hessian), sr);
 #endif
+    }    
 
     if (sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Use Fiorentini et al algorithm"));
@@ -3611,6 +3641,23 @@ static void build_xtab_radios (selector *sr)
     sr->radios[2] = b3;
 }
 
+static gboolean arma_estimator_switch (GtkComboBox *box, selector *sr)
+{
+    if (sr->hess_button != NULL) {
+	GtkWidget *xb = sr->x12a_button;
+
+	if (xb == NULL || !GTK_TOGGLE_BUTTON(xb)->active) {
+	    gchar *s = gtk_combo_box_get_active_text(box);
+
+	    gtk_widget_set_sensitive(sr->hess_button, 
+				     !strcmp(s, _("Exact Maximum Likelihood")));
+	    g_free(s);
+	}
+    }
+
+    return FALSE;
+}
+
 static void build_arma_combo (selector *sr)
 {
     GtkWidget *hbox, *combo;
@@ -3630,7 +3677,9 @@ static void build_arma_combo (selector *sr)
     arma_opts.vals = opts;
     arma_opts.optp = &sr->opts;
 
-    combo = gretl_opts_combo(&arma_opts, deflt);
+    combo = gretl_opts_combo_full(&arma_opts, deflt, 
+				  G_CALLBACK(arma_estimator_switch),
+				  sr);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);

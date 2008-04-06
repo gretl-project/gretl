@@ -888,7 +888,9 @@ static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
     g_free(s);
 }
 
-GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
+GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt, 
+				  GCallback callback,
+				  gpointer calldata)
 {
     GtkWidget *combo;
     int i;
@@ -902,8 +904,17 @@ GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(combo_opt_changed), opts);
+    if (callback != NULL) {
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 callback, calldata);
+    }
 
     return combo;
+}
+
+GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
+{
+    return gretl_opts_combo_full(opts, deflt, NULL, NULL);
 }
 
 static void build_gmm_combo (GtkWidget *vbox, dialog_t *d)

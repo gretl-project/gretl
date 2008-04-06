@@ -91,6 +91,10 @@ char *entry_box_get_trimmed_text (GtkWidget *w);
 
 GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt);
 
+GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt, 
+				  GCallback callback,
+				  gpointer calldata);
+
 dialog_opts *dialog_opts_new (int n, int type, 
 			      gretlopt *optp,
 			      const gretlopt *vals,

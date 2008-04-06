@@ -5496,13 +5496,8 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
     return err;
 }
 
-enum {
-    EIGEN_SORT_SYMMETRIC  = 1 << 0,
-    EIGEN_SORT_DESCENDING = 1 << 1
-};
-
 static int real_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, int rank,
-			    int flags)
+			    int flag)
 {
     struct esort {
 	double vr;
@@ -5532,7 +5527,7 @@ static int real_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, int rank,
 
     for (i=0; i<n; i++) {
 	es[i].vr = evals->val[i];
-	if (flags & EIGEN_SORT_SYMMETRIC) {
+	if (flag == GRETL_MATRIX_SYMMETRIC) {
 	    es[i].vi = 0.0;
 	} else {
 	    es[i].vi = evals->val[i + n];
@@ -5544,7 +5539,7 @@ static int real_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, int rank,
 
     for (i=0; i<n; i++) {
 	evals->val[i] = es[i].vr;
-	if (!(flags & EIGEN_SORT_SYMMETRIC)) {
+	if (flag != GRETL_MATRIX_SYMMETRIC) {
 	    evals->val[i + n] = es[i].vi;
 	}
     }
@@ -5609,7 +5604,7 @@ int gretl_general_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 				int rank)
 {
-    return real_eigen_sort(evals, evecs, rank, EIGEN_SORT_SYMMETRIC);    
+    return real_eigen_sort(evals, evecs, rank, GRETL_MATRIX_SYMMETRIC);    
 }
 
 static void gretl_matrix_replace_data (gretl_matrix *m, double *x)
