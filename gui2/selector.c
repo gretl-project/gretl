@@ -105,6 +105,7 @@ struct _selector {
                          c == ARMA || \
                          c == COINT || \
                          c == COINT2 || \
+			 c == CORR || \
                          c == GARCH || \
                          c == HECKIT || \
                          c == HILU || \
@@ -136,6 +137,12 @@ struct _selector {
                      c == COINT2)
 
 #define USE_ZLIST(c) (c == TSLS || c == HECKIT)
+
+#define RHS_PREFILL(c) (c == CORR || \
+	                c == MAHAL || \
+			c == PCA || \
+                	c == SUMMARY || \
+			c == XTAB)
 
 #define dataset_lags_ok(d) ((d)->structure == TIME_SERIES || \
 			    (d)->structure == SPECIAL_TIME_SERIES || \
@@ -211,7 +218,7 @@ static int want_radios (selector *sr)
 
     if (c == PANEL || c == SCATTERS || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
-	c == XTAB || c == SPEARMAN) {
+	c == XTAB || c == SPEARMAN || c == PCA) {
 	return 1;
     } else if (c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -3306,7 +3313,10 @@ static void build_selector_switches (selector *sr)
     } else if (sr->code == SPEARMAN) {
 	tmp = gtk_check_button_new_with_label(_("Show rankings"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
-    }	
+    } else if (sr->code == CORR) {	
+	tmp = gtk_check_button_new_with_label(_("Ensure uniform sample size"));
+	pack_switch(tmp, sr, verbose, FALSE, OPT_U, 0);
+    }
 
 #ifdef HAVE_X12A    
     if (sr->code == ARMA) {
@@ -3396,6 +3406,22 @@ static void build_rankcorr_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Kendall's tau"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_K, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
+static void build_pca_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Use correlation matrix"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Use covariance matrix"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_C, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
@@ -3693,7 +3719,9 @@ static void build_selector_radios (selector *sr)
 	build_xtab_radios(sr);
     } else if (sr->code == SPEARMAN) {
 	build_rankcorr_radios(sr);
-    } 
+    } else if (sr->code == PCA) {
+	build_pca_radios(sr);
+    }
 }
 
 static void build_selector_combo (selector *sr)
@@ -4314,7 +4342,6 @@ static void selector_add_top_entry (selector *sr)
 }
 
 #if 0 /* not ready */
-
 static int ols_omit_select (windata_t *vwin)
 {
     if (vwin->role == VIEW_MODEL) {
@@ -4325,8 +4352,28 @@ static int ols_omit_select (windata_t *vwin)
 	return 0;
     }
 }
-
 #endif
+
+static void maybe_prefill_RHS (selector *sr)
+{
+    int *list = main_window_selection_as_list();
+
+    if (list != NULL && list[0] >= 2) {
+	GtkListStore *store;
+	GtkTreeIter iter;
+	int i;
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1)));
+	gtk_list_store_clear(store);
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+	for (i=1; i<=list[0]; i++) {
+	    list_append_var_simple(store, &iter, list[i]);
+	}
+    }
+
+    free(list);
+}
 
 void simple_selection (const char *title, int (*callback)(), guint ci,
 		       gpointer p) 
@@ -4441,6 +4488,13 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 
     gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
     gtk_widget_show(right_vbox);
+
+    /* pre-fill RHS box? Only if we have 2 or more vars selected in the
+       main window and if the command is "suitable"
+    */
+    if (RHS_PREFILL(ci)) {
+	maybe_prefill_RHS(sr);
+    }
 
     /* connect removal from right signal */
     g_signal_connect(G_OBJECT(sr->remove_button), "clicked", 

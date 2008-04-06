@@ -160,7 +160,7 @@ static gretlopt pca_flag_dialog (void)
 static void pca_print (VMatrix *cmat, gretl_matrix *E,
 		       gretl_matrix *C, PRN *prn)
 {
-    double x, y;
+    double cum, esum;
     char pcname[8];
     int n = cmat->dim;
     int i, j, cols;
@@ -175,20 +175,22 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 
     pputs(prn, _("Component  Eigenvalue  Proportion   Cumulative\n"));
 
-    x = 0.0;
-    y = 0.0;
+    if (cmat->ci == CORR) {
+	esum = n;
+    } else {
+	esum = 0.0;
+	for (i=0; i<n; i++) {
+	    esum += E->val[i];
+	}
+    }
 
+    cum = 0.0;
     for (i=0; i<n; i++) {
-	y += E->val[i] / n;
+	cum += E->val[i] / esum;
 	pprintf(prn, "%5d%13.4f%13.4f%13.4f\n", i + 1,
-		E->val[i], E->val[i] / n, y);
-	x += E->val[i];
+		E->val[i], E->val[i] / esum, cum);
     }
     pputc(prn, '\n');
-
-#if PCA_DEBUG
-    fprintf(stderr, "check: sum of evals = %g\n", x);
-#endif
 
     pprintf(prn, "%s\n\n", _("Eigenvectors (component loadings)"));
 
@@ -202,12 +204,14 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 	jmin = (jmin > 0)? jmin : 0;
 
 	pprintf(prn, "%-16s", _("Variable"));
+
 	for (i=n-cols; i<imax; i++) {
 	    sprintf(pcname, "PC%d", i + 1);
 	    pprintf(prn, "%9s", pcname);
 	    colsdone++;
 	}
 	pputc(prn, '\n');
+
 	for (i=0; i<n; i++) {
 	    pprintf(prn, "%-16s", cmat->names[i]);
 	    for (j=jmin; j<cols; j++) {
@@ -215,8 +219,9 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 	    }
 	    pputc(prn, '\n');
 	}
-	cols -= colsdone;
 	pputc(prn, '\n');
+
+	cols -= colsdone;
     }
 }
 
@@ -331,46 +336,6 @@ static int pca_save_components (VMatrix *cmat,
     return err;
 }
 
-/* when we're working with a covariance matrix rather than a correlation
-   matrix, scale the eigenvalues so they have a mean of 1.0
-*/
-
-static int covar_eigen_scale (gretl_matrix *E, gretl_matrix *C)
-{
-    int i, ci, m = gretl_vector_get_length(E);
-    double Cij, scl = 0.0;
- 
-#if PCA_DEBUG
-    gretl_matrix_print(E, "unscaled E");
-    gretl_matrix_print(C, "unscaled C");
-#endif
-
-    for (i=0; i<m; i++) {
-	if (E->val[i] < 0) {
-	    E->val[i] = -E->val[i];
-	    for (ci=0; ci<C->rows; ci++) {
-		Cij = gretl_matrix_get(C, ci, i);
-		gretl_matrix_set(C, ci, i, -Cij);
-	    }
-	}
-	scl += E->val[i];
-    }
-
-    scl /= (double) m;
-
-    /* FIXME scaling of eigenvectors? */
-
-    gretl_matrix_divide_by_scalar(E, scl);
-    gretl_matrix_multiply_by_scalar(C, scl);
-    
-#if PCA_DEBUG
-    gretl_matrix_print(E, "scaled E");
-    gretl_matrix_print(C, "scaled C");
-#endif
-
-    return 0;
-}
-
 /* The incoming option here: When this function is called from the
    CLI, the option may be OPT_O (save the first component), or OPT_A
    (save all the components), or none.  The results are printed in all
@@ -425,10 +390,6 @@ int pca_from_cmatrix (VMatrix *cmat, double ***pZ,
 #endif
 
     evals = gretl_symmetric_matrix_eigenvals(C, 1, &err);
-
-    if (!err && cmat->ci != CORR) {
-	covar_eigen_scale(evals, C);
-    }
 
     if (!err) {
 	err = gretl_symmetric_eigen_sort(evals, C, 0);

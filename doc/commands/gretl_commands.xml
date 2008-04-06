@@ -1341,13 +1341,17 @@
   </command>
 
   <command name="corr" section="Statistics" 
-    label="Correlation coefficients" context="cli">
+    label="Correlation coefficients">
 
     <usage>
       <arguments>
         <argument optional="true">varlist</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--uniform</flag>
+	  <effect>ensure uniform sample</effect>
+	</option>
 	<option>
 	  <flag>--spearman</flag>
 	  <effect>Spearman's rho</effect>
@@ -1363,16 +1367,34 @@
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
+	<example>corr ylist --uniform</example>
 	<example>corr x y --spearman</example>
       </examples>
     </usage>
 
-    <description>
+    <description context="gui">
       <para>
-	By default, prints the pairwise correlation coefficients
-	(Pearson's product-moment correlation) for the variables in
-	<repl>varlist</repl>, or for all variables in the data set if
-	<repl>varlist</repl> is not given.
+	Prints the pairwise correlation coefficients (Pearson's product-moment
+	correlation) for the selected variables. The default behavior is to
+	use all available observations for computing each pairwise
+	coefficient, but if the option box is checked the sample is limited (if
+	necessary) so that the same set of observations is used for all the
+	coefficients.  This option has an effect only if there are differing
+	numbers of missing values for the variables used.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	By default, prints the pairwise correlation coefficients (Pearson's
+	product-moment correlation) for the variables in <repl>varlist</repl>,
+	or for all variables in the data set if <repl>varlist</repl> is not
+	given.  The standard behavior is to use all available observations for
+	computing each pairwise coefficient, but if the <flag>--uniform</flag>
+	option is given the sample is limited (if necessary) so that the same
+	set of observations is used for all the coefficients.  This option
+	has an effect only if there are differing numbers of missing values
+	for the variables used.
       </para>
       <para>
 	The (mutually exclusive) options <lit>--spearman</lit> and
@@ -5857,34 +5879,57 @@
       </arguments>
       <options>
         <option>
+	  <flag>--covariance</flag>
+	  <effect>use the covariance matrix</effect>
+        </option>	
+        <option>
 	  <flag>--save</flag>
-	  <effect>Save major components</effect>
+	  <effect>save major components</effect>
         </option>	
         <option>
 	  <flag>--save-all</flag>
-	  <effect>Save all components</effect>
+	  <effect>save all components</effect>
         </option>
       </options>
     </usage>
 
-    <description>
-      <para>Principal Components Analysis.  Prints the eigenvalues of
-	the correlation matrix for the variables in
-	<repl>varlist</repl> along with the proportion of the joint
-	variance accounted for by each component.  Also prints the
-	corresponding eigenvectors (or <quote>component
-	  loadings</quote>).</para>  
+    <description context="gui">
+      <para>
+	Principal Components Analysis.  Prints the eigenvalues of the
+	correlation matrix (or the covariance matrix if the option box is
+	checked) for the variables in <repl>varlist</repl>, along with the
+	proportion of the joint variance accounted for by each component.
+	Also prints the corresponding eigenvectors (or <quote>component
+	  loadings</quote>).
+      </para>
+      <para>
+	In the window displaying the results, you have the option of
+	saving the principal components to the dataset as series.
+      </para> 
+    </description>
 
-      <para>If the <lit>--save</lit> flag is given, components with
-	eigenvalues greater than 1.0 are saved to the dataset as
-	variables, with names <lit>PC1</lit>, <lit>PC2</lit> and so
-	on.  These artificial variables are formed as the sum of
-	(component loading) times (standardized <lit>Xi</lit>), where
-	<lit>Xi</lit> denotes the <math>i</math>th variable in
-	<repl>varlist</repl>.</para>
-
-      <para>If the <lit>--save-all</lit> flag is given, all of the
-	components are saved as described above.</para> 
+    <description context="cli">
+      <para>
+	Principal Components Analysis.  Prints the eigenvalues of the
+	correlation matrix (or the covariance matrix if the
+	<flag>--covariance</flag> option is given) for the variables in
+	<repl>varlist</repl>, along with the proportion of the joint variance
+	accounted for by each component.  Also prints the corresponding
+	eigenvectors (or <quote>component loadings</quote>).
+      </para>
+      <para>
+	If the <lit>--save</lit> flag is given, components with eigenvalues
+	greater than the mean (which means greater than 1.0 if the analysis is
+	based on the correlation matrix) are saved to the dataset as
+	series, with names <lit>PC1</lit>, <lit>PC2</lit> and so on.  These
+	artificial variables are formed as the sum of (component loading)
+	times (standardized <lit>Xi</lit>), where <lit>Xi</lit> denotes the
+	<math>i</math>th variable in <repl>varlist</repl>.
+      </para>
+      <para>
+	If the <lit>--save-all</lit> flag is given, all of the components are
+	saved as described above.
+      </para> 
     </description>
 
     <gui-access>

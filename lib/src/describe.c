@@ -3973,7 +3973,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
 	}
     } 
 
-    /* finalize: compute correlations */
+    /* finalize: compute correlations or covariances */
 
     if (flag == CORRMAT) {
 	for (i=0; i<m; i++) {  
@@ -3987,6 +3987,10 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
 		    v->vec[nij] /= sqrt(ssx[i] * ssx[j]);
 		}
 	    }
+	}
+    } else {
+	for (i=0; i<mm; i++) {
+	    v->vec[i] /= (n - 1);
 	}
     }
 

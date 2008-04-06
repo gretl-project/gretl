@@ -648,7 +648,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 
     switch (action) {
     case CORR:
-	gretl_command_sprintf("corr%s", liststr);
+	gretl_command_sprintf("corr%s", liststr, print_flags(opt, CORR));
 	strcat(title, _("correlation matrix"));
 	break;
     case ALL_CORR:
@@ -657,7 +657,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	action = CORR;
 	break;
     case PCA:
-	gretl_command_sprintf("pca%s", liststr);
+	gretl_command_sprintf("pca%s", liststr, print_flags(opt, PCA));
 	strcat(title, _("principal components"));
 	break;
     case MAHAL:
@@ -703,9 +703,8 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 
     case CORR:
     case PCA:
-	/* FIXME OPT_C for PCA? */
 	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
-		       (action == PCA)? OPT_U : OPT_NONE, &err);
+		       (action == PCA)? (opt | OPT_U) : opt, &err);
 	if (!err) {
 	    if (action == CORR) {
 		print_corrmat(obj, datainfo, prn);
@@ -773,23 +772,16 @@ static int menu_op_wrapper (selector *sr)
 
 void do_menu_op (gpointer p, guint action, GtkWidget *w)
 {
-    if (multivar_action(action) && mdata_selection_count() < 2) {
-	char title[32];
-
-	sprintf(title, "gretl: %s", gretl_command_word(action));
-	simple_selection(title, menu_op_wrapper, action, NULL);
-	return;
-    } else if (action == CORR || action == SUMMARY || action == PCA || 
-	       action == MAHAL || action == XTAB) {
-	char *buf = main_window_selection_as_string();
-
-	if (buf != NULL) {
-	    real_do_menu_op(action, buf, OPT_NONE);
-	    free(buf);
-	} 
-    } else {
+    if (action == VAR_SUMMARY || action == FREQ) {
+	/* a single-variable action */
 	real_do_menu_op(action, NULL, OPT_NONE);
-    }
+    } else {
+	gchar *title;
+
+	title = g_strdup_printf("gretl: %s", gretl_command_word(action));
+	simple_selection(title, menu_op_wrapper, action, NULL);
+	g_free(title);
+    } 
 }
 
 int do_coint (selector *sr)
