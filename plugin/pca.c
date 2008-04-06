@@ -100,7 +100,7 @@ static gretlopt pca_flag_dialog (void)
 
     /* Only those with eigenvalues > 1.0 */
     button = gtk_radio_button_new_with_label(NULL, 
-					     _("Components with eigenvalues > 1.0"));
+					     _("Components with eigenvalues > mean"));
     gtk_box_pack_start(GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
