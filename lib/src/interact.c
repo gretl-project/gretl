@@ -45,7 +45,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 1
 #define ARMA_DBG 0
 
 #include "laginfo.c"
@@ -1989,9 +1989,9 @@ static int sepcount_error (int ci, int nsep)
 
 /* Get the first word out of line.  In general this should be a
    command word (starting with a alphabetical character), but there
-   are a few of special case: shell commands, starting with the "!"
-   escape; and restriction specifications, which may start with "-"
-   (as in "-b1 + b2 = 0") or a numerical multiplier.
+   are a few special case: shell commands start with the "!"  escape;
+   restriction specifications may start with "-" (as in "-b1 + b2 =
+   0") or a numerical multiplier.
 */
 
 static int get_command_word (const char *line, CMD *cmd)
@@ -4585,8 +4585,8 @@ static int could_be_varname (const char *s)
  * Parse @line and assign to the %ci field of @cmd the index number of
  * the command embedded in @line.  Note: this is a "lite" version of
  * parse_command_line().  It is used when commands are being stacked
- * for execution within a loop.  Note that command options are not
- * parsed out of @line.
+ * for execution within a loop.  Command options are not parsed out of
+ * @line.
  *
  * Returns: 1 on error, otherwise 0.
  */
@@ -4612,9 +4612,18 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     }
 
     if (!get_command_word(line, cmd)) {
-	cmd_set_nolist(cmd);
-	cmd->ci = CMD_NULL;
-	return 0;
+	if (*line == '$') {
+	    /* most plausible possibility? */
+	    strcpy(cmd->word, "genr");
+	    cmd->ci = GENR;
+	} else {
+	    cmd_set_nolist(cmd);
+	    cmd->ci = CMD_NULL;
+#if CMD_DEBUG
+	    fprintf(stderr, "get_command_index: got nothing, returning 0\n");
+#endif
+	    return 0;
+	}
     }
 
 #if CMD_DEBUG
