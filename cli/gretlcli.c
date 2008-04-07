@@ -887,9 +887,14 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			     "which is a dummy variable\n(with values 1 or 0)\n"));
 		break;
 	    }
-	    
-	    err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			  pdinfo, plot_opt(cmd->opt, batch));
+	    if (cmd->opt & OPT_C) {
+		err = xy_plot_with_control(cmd->list, cmd->param, 
+					   (const double **) *pZ, pdinfo, 
+					   plot_opt(cmd->opt, batch));
+	    } else {
+		err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
+			      pdinfo, plot_opt(cmd->opt, batch));
+	    }
 	} else {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
 				 plot_opt(cmd->opt, batch));

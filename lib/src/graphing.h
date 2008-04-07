@@ -32,26 +32,27 @@ typedef enum {
     GPT_RESIDS         = 1 << 2,  /* doing residual plot */
     GPT_FA             = 1 << 3,  /* doing fitted/actual plot */
     GPT_DUMMY          = 1 << 4,  /* using a dummy for separation */
-    GPT_BATCH          = 1 << 5,  /* working in batch mode */
-    GPT_GUI            = 1 << 6,  /* called from GUI context */
-    GPT_FIT_OMIT       = 1 << 7,  /* User said don't draw fitted line on graph */
-    GPT_DATA_STYLE     = 1 << 8,  /* data style is set by user */
-    GPT_FILE           = 1 << 9,  /* send output to named file */
-    GPT_IDX            = 1 << 10, /* plot against time or obs index */
-    GPT_TS             = 1 << 11, /* doing time series plot */
-    GPT_Y2AXIS         = 1 << 12, /* plot has second y-axis */
-    GPT_AUTO_FIT       = 1 << 13, /* automatic (OLS) fitted line was added */
-    GPT_FIT_HIDDEN     = 1 << 14, /* autofit line calculated, but suppressed */
-    GPT_MINIMAL_BORDER = 1 << 15, /* omitting top and right borders */
-    GPT_PNG_OUTPUT     = 1 << 16, /* output is to PNG file */
-    GPT_ALL_MARKERS    = 1 << 17, /* all observation markers displayed */
-    GPT_ALL_MARKERS_OK = 1 << 18, /* OK to show all observation markers */
-    GPT_LETTERBOX      = 1 << 19, /* special format for time series graphs */
-    GPT_PARAMETRIC     = 1 << 20, /* gnuplot should be in parametric mode */
-    GPT_XZEROAXIS      = 1 << 21, /* show x = 0 line */
-    GPT_YZEROAXIS      = 1 << 22, /* show y = 0 line */
-    GPT_FILL_SWITCH    = 1 << 23, /* switching from errorbars to fill */
-    GPT_ERR_SWITCH     = 1 << 24  /* switching from fill to errorbars */
+    GPT_XYZ            = 1 << 5,  /* X-Y, controlling for Z */
+    GPT_BATCH          = 1 << 6,  /* working in batch mode */
+    GPT_GUI            = 1 << 7,  /* called from GUI context */
+    GPT_FIT_OMIT       = 1 << 8,  /* User said don't draw fitted line on graph */
+    GPT_DATA_STYLE     = 1 << 9,  /* data style is set by user */
+    GPT_FILE           = 1 << 10, /* send output to named file */
+    GPT_IDX            = 1 << 11, /* plot against time or obs index */
+    GPT_TS             = 1 << 12, /* doing time series plot */
+    GPT_Y2AXIS         = 1 << 13, /* plot has second y-axis */
+    GPT_AUTO_FIT       = 1 << 14, /* automatic (OLS) fitted line was added */
+    GPT_FIT_HIDDEN     = 1 << 15, /* autofit line calculated, but suppressed */
+    GPT_MINIMAL_BORDER = 1 << 16, /* omitting top and right borders */
+    GPT_PNG_OUTPUT     = 1 << 17, /* output is to PNG file */
+    GPT_ALL_MARKERS    = 1 << 18, /* all observation markers displayed */
+    GPT_ALL_MARKERS_OK = 1 << 19, /* OK to show all observation markers */
+    GPT_LETTERBOX      = 1 << 20, /* special format for time series graphs */
+    GPT_PARAMETRIC     = 1 << 21, /* gnuplot should be in parametric mode */
+    GPT_XZEROAXIS      = 1 << 22, /* show x = 0 line */
+    GPT_YZEROAXIS      = 1 << 23, /* show y = 0 line */
+    GPT_FILL_SWITCH    = 1 << 24, /* switching from errorbars to fill */
+    GPT_ERR_SWITCH     = 1 << 25  /* switching from fill to errorbars */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
@@ -210,6 +211,10 @@ int gretl_VAR_roots_plot (GRETL_VAR *var);
 
 int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 			     const char *iname, const char *jname);
+
+int xy_plot_with_control (const int *list, const char *literal,
+			  const double **Z, const DATAINFO *pdinfo,
+			  gretlopt opt);
 
 int is_auto_fit_string (const char *s);
 

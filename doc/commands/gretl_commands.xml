@@ -1312,6 +1312,29 @@
     </description>
   </command>
 
+  <command name="controlled" section="Graphs" context="gui"
+    label="Scatterplot with control">
+
+    <description>
+      <para>
+	This command requires the selection of three variables, one for the X
+	axis, one for the Y axis, and one for which you wish to control (call
+	it Z).  The plot shows adjusted Y against adjusted X, where the
+	adjusted version of the variable is the residual from an OLS
+	regression on Z.  
+      </para>
+      <para>
+	Example: You have data on wages, experience and education level
+	for a sample of people.  You wish to plot wages against education,
+	controlling for experience.  In that case you select wages for
+	the Y axis, education for the X axis, and experience as the control.
+	The plot shows wages against education, with both variables
+	<quote>purged</quote> of the effect of experience.
+      </para>
+    </description>
+
+  </command>
+
   <command name="copy-formats" section="Utilities" context="gui"
     label="Copy formats">
 
@@ -2327,8 +2350,8 @@
 	the last of which must be a dummy variable (values 1 or 0).
 	The Y variable is plotted against the X variable, with the
 	data points colored differently depending on the value of the
-	third.</para>
-
+	third.
+      </para>
       <para>Example: You have data on wages and educational attainment
 	for a sample of people; you also have a dummy variable with
 	value 1 for men and 0 for women (as in Ramanathan's
@@ -2336,12 +2359,11 @@
 	  plot</quote> of <lit>WAGE</lit> against <lit>EDUC</lit>
 	using the <lit>GENDER</lit> dummy as factor will show the data
 	points for men in one color and those for women in another
-	(with a legend to identify them).</para>
-
+	(with a legend to identify them).
+      </para>
     </description>
 
   </command>
-  
 
   <command name="fcast" section="Prediction" 
     label="Generate forecasts">

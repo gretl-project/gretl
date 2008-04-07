@@ -23,6 +23,7 @@ enum extra_cmds {
     GR_XY,
     GR_IMP,
     GR_DUMMY,
+    GR_XYZ,
     GR_BOX,
     GR_NBOX,
     GR_3D,

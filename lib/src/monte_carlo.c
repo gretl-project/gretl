@@ -152,6 +152,7 @@ struct LOOPSET_ {
     LOOPSET *parent;
     LOOPSET **children;
     int n_children;
+    int parent_line;
 };
 
 #define loop_is_progressive(l) (l->flags & LOOP_PROGRESSIVE)
@@ -405,6 +406,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     loop->children = children;
     loop->children[nc] = child;
     child->parent = loop;
+    child->parent_line = loop->n_cmds + 1;
     child->level = loop->level + 1;
 
 #if LOOP_DEBUG
@@ -461,6 +463,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->parent = NULL;
     loop->children = NULL;
     loop->n_children = 0;
+    loop->parent_line = 0;
 }
 
 static LOOPSET *gretl_loop_new (LOOPSET *parent)
@@ -2610,6 +2613,19 @@ static int maybe_refresh_list (CMD *cmd, const LOOPSET *loop,
     return ret;
 }
 
+static LOOPSET *find_child_by_line (LOOPSET *loop, int line)
+{
+    int i;
+
+    for (i=0; i<loop->n_children; i++) {
+	if (loop->children[i]->parent_line == line) {
+	    return loop->children[i];
+	}
+    }
+
+    return NULL;
+}
+
 /* get the next command for a loop by pulling a line off the
    stack of loop commands.
 */
@@ -2678,7 +2694,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	int modnum = 0;
 	int lmodnum = 0;
 	int printnum = 0;
-	int childnum = 0;
 	int lrefresh = 0;
 	int j;
 
@@ -2735,12 +2750,13 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    */
 
 	    if (cmd->ci == LOOP) {
-		if (childnum < loop->n_children) {
-		    currloop = loop->children[childnum++];
-		    err = gretl_loop_exec(s, pZ, pdinfo);
-		} else {
+		currloop = find_child_by_line(loop, j);
+		if (currloop == NULL) {
+		    currloop = loop;
 		    fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
 		    err = 1;
+		} else {
+		    err = gretl_loop_exec(s, pZ, pdinfo);
 		}
 	    } else if (cmd->ci == BREAK) {
 		loop->brk = 1;

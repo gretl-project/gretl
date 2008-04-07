@@ -5092,6 +5092,39 @@ int do_dummy_graph (selector *sr)
     return 0;
 }
 
+/* X-Y scatter, controlling for Z */
+
+int do_xyz_graph (selector *sr)
+{
+    const char *buf = selector_list(sr);
+    int err;
+
+    if (buf == NULL) return 1;
+
+    gretl_command_sprintf("gnuplot %s --control", buf);
+
+    if (check_and_record_command()) {
+	return 1;
+    }
+
+    if (libcmd.list[0] != 3) {
+	errbox(_("You must supply three variables"));
+	return 1;
+    }
+
+    err = xy_plot_with_control(libcmd.list, NULL, 
+			       (const double **) Z, 
+			       datainfo, OPT_G);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+    }    
+
+    return 0;
+}
+
 int do_graph_from_selector (selector *sr)
 {
     gretlopt opt = OPT_G;
@@ -6790,8 +6823,14 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case GNUPLOT:
     case SCATTERS:
 	if (cmd->ci == GNUPLOT) {
-	    err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			  pdinfo, gopt | cmd->opt); 
+	    if (cmd->opt & OPT_C) {
+		err = xy_plot_with_control(cmd->list, cmd->param, 
+					   (const double **) *pZ, pdinfo,
+					   gopt | cmd->opt);
+	    } else {
+		err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
+			      pdinfo, gopt | cmd->opt); 
+	    }
 	} else {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
 				 gopt | cmd->opt);

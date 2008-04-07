@@ -231,6 +231,8 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 
     if (opt & OPT_Z) {
 	flags |= GPT_DUMMY;
+    } else if (opt & OPT_C) {
+	flags |= GPT_XYZ;
     } else {
 	if (opt & OPT_S) {
 	    flags |= GPT_FIT_OMIT;
@@ -1709,7 +1711,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) && 
 	 l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
-	&& !(gi->flags & GPT_DUMMY)) {
+	&& !(gi->flags & GPT_DUMMY)) { /* FIXME GPT_XYZ */
 	/* allow probe for using two y axes */
 #if GP_DEBUG
 	fprintf(stderr, "l0 = %d, setting y2axis probe\n", l0);
@@ -1768,6 +1770,9 @@ static void print_gnuplot_flags (int flags, int revised)
     }
     if (flags & GPT_DUMMY) {
 	fprintf(stderr, " GPT_DUMMY\n");
+    }
+    if (flags & GPT_XYZ) {
+	fprintf(stderr, " GPT_XYZ\n");
     }
     if (flags & GPT_BATCH) {
 	fprintf(stderr, " GPT_BATCH\n");
@@ -3847,6 +3852,21 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     return gnuplot_make_graph();
 }
 
+/**
+ * confidence_ellipse_plot:
+ * @V: 2x2 covariance matrix.
+ * @b: 2-vector containing point estimates
+ * @t: critical t-value for 95% confidence.
+ * @c: 
+ * @iname: name of first parameter.
+ * @jname: name of second parameter.
+ *
+ * Plots a 95% confidence ellipse for the parameter estimates
+ * in @b with covariance @V.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 			     const char *iname, const char *jname)
 {
@@ -3916,6 +3936,143 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
     fclose(fp);
 
     return gnuplot_make_graph();
+}
+
+/**
+ * xy_plot_with_control:
+ * @list: list of variables by ID number: Y, X, control.
+ * @literal: extra gnuplot commands or %NULL.
+ * @Z: data array.
+ * @pdinfo: pointer to dataset information.
+ * @opt: use %OPT_G for GUI graph.
+ *
+ * Constructs a scatterplot of modified Y against modified X,
+ * where the modification consists in taking the residuals from
+ * OLS regression of the variable in question on the control variable,
+ * a la Frisch-Waugh-Lovell.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int xy_plot_with_control (const int *list, const char *literal,
+			  const double **Z, const DATAINFO *pdinfo,
+			  gretlopt opt)
+{
+    int vy = list[1], vx = list[2], vz = list[3];
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int mlist[3] = {2, 0, 0};
+    MODEL mod;
+    DATAINFO *ginfo = NULL;
+    double **gZ = NULL;
+    int s, t, T;
+    int err = 0;
+
+    if (list == NULL || list[0] != 3) {
+	return E_DATA;
+    }
+
+    /* make sure we have a uniform sample for the two regressions */
+
+    for (t=t1; t<=t2; t++) {
+	if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    for (t=t2; t>=t1; t--) {
+	if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {
+	    t2--;
+	} else {
+	    break;
+	}
+    }  
+
+    /* count the maximum usable observations */
+    T = t2 - t1 + 1;
+    if (T < 3) {
+	return E_DATA;
+    }
+
+    /* recount the usable observations, allowing for NAs in reduced
+       sample */
+    for (t=t1; t<=t2; t++) {
+	if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {
+	    T--;
+	}
+    }
+    if (T < 3) {
+	return E_DATA;
+    }    
+
+    /* create temporary dataset */
+
+    ginfo = create_new_dataset(&gZ, 4, T, 0);
+    if (ginfo == NULL) {
+	return E_ALLOC;
+    }
+
+    strcpy(ginfo->varname[1], pdinfo->varname[vy]);
+    strcpy(ginfo->varname[2], pdinfo->varname[vx]);
+
+    sprintf(ginfo->varinfo[1]->display_name, G_("adjusted %s"), pdinfo->varname[vy]);
+    sprintf(ginfo->varinfo[2]->display_name, G_("adjusted %s"), pdinfo->varname[vx]);
+    
+    s = 0;
+    for (t=t1; t<=t2; t++) {
+	if (!na(Z[vy][t]) && !na(Z[vx][t]) && !na(Z[vz][t])) {
+	    gZ[1][s] = Z[vy][t];
+	    gZ[2][s] = Z[vx][t];
+	    gZ[3][s] = Z[vz][t];
+	    s++;
+	}
+    }
+
+    /* regress Y on Z and save the residuals */
+
+    mlist[1] = 1;
+    mlist[2] = 3;
+    mod = lsq(mlist, &gZ, ginfo, OLS, OPT_A);
+    err = mod.errcode;
+    if (err) {
+	clear_model(&mod);
+	goto bailout;
+    } else {
+	for (t=0; t<mod.nobs; t++) {
+	    gZ[1][t] = mod.uhat[t];
+	}
+	clear_model(&mod);
+    }
+
+    /* regress X on Z and save the residuals */
+
+    mlist[1] = 2;    
+    mod = lsq(mlist, &gZ, ginfo, OLS, OPT_A);
+    err = mod.errcode;
+    if (err) {
+	clear_model(&mod);
+	goto bailout;
+    } else {
+	for (t=0; t<mod.nobs; t++) {
+	    gZ[2][t] = mod.uhat[t];
+	}
+	clear_model(&mod);
+    }
+
+    /* call for scatter of purged Y against purged X */
+
+    mlist[1] = 1;
+    mlist[2] = 2;
+    err = gnuplot(mlist, literal, (const double **) gZ, 
+		  ginfo, opt | OPT_C);
+
+ bailout:
+
+    /* trash the temporary dataset */
+    destroy_dataset(gZ, ginfo);
+
+    return err;
 }
 
 int is_auto_fit_string (const char *s)

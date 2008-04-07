@@ -99,9 +99,12 @@ struct _selector {
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
                         c == DIFF || c == LDIFF)
 
-#define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
+#define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || \
+		       c == GR_DUMMY || c == GR_XYZ || c == GR_3D)
 
 #define TWO_VARS_CODE(c) (c == SPEARMAN || c == ELLIPSE || c == XCORRGM)
+
+#define THREE_VARS_GRAPH(c) (c == GR_DUMMY || c == GR_XYZ || c == GR_3D)
 
 #define WANT_TOGGLES(c) (c == ARBOND || \
                          c == ARMA || \
@@ -1394,7 +1397,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	default_y = -1;
     }
 
-    if (sr->code == GR_DUMMY || sr->code == GR_3D) {
+    if (THREE_VARS_GRAPH(sr->code)) {
 	/* clear special slot */
 	gtk_entry_set_text(GTK_ENTRY(sr->rvars1), "");
     } else {
@@ -1946,7 +1949,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->code == WLS || sr->code == POISSON || 
 	sr->code == AR || sr->code == HECKIT ||
-	sr->code == GR_DUMMY || sr->code == GR_3D) {
+	THREE_VARS_GRAPH(sr->code)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
 	    if (sr->code == WLS) {
@@ -1958,7 +1961,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	    } else if (sr->code == HECKIT) {
 		warnbox(_("You must specify a selection variable"));
 		sr->error = 1;
-	    } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
+	    } else if (THREE_VARS_GRAPH(sr->code)) { 
 		warnbox(("You must select a Y-axis variable"));
 		sr->error = 1;
 	    }
@@ -1969,7 +1972,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	return;
     }
 
-    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) {
+    if (sr->code == WLS || THREE_VARS_GRAPH(sr->code)) {
 	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
 	sprintf(numstr, "%d ", k);
 	add_to_cmdlist(sr, numstr);
@@ -2057,8 +2060,10 @@ static void parse_special_graph_data (selector *sr)
     if (txt == NULL || !*txt) {
 	if (sr->code == GR_3D) {
 	    warnbox(_("You must select a Z-axis variable"));
-	} else {
+	} else if (sr->code == GR_DUMMY) {
 	    warnbox(_("You must select a factor variable"));
+	} else {
+	    warnbox(_("You must select a control variable"));
 	}
 	sr->error = 1;
     } else {
@@ -2121,7 +2126,7 @@ static void construct_cmdlist (selector *sr)
 	return;
     }
 
-    if (sr->code == GR_DUMMY || sr->code == GR_3D) { 
+    if (THREE_VARS_GRAPH(sr->code)) { 
 	parse_special_graph_data(sr);
 	return;
     } 
@@ -2357,6 +2362,7 @@ static char *extra_string (int ci)
 	return N_("List of AR lags");
     case GR_DUMMY:
     case GR_3D:
+    case GR_XYZ:	
 	return N_("Y-axis variable");
     default:
 	return NULL;
@@ -2650,17 +2656,21 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     gtk_widget_show(hbox); 
 }
 
-static void dummy_box (selector *sr, GtkWidget *vbox)
+static void graph_zvar_box (selector *sr, GtkWidget *vbox)
 {
-    sr->rvars1 = entry_with_label_and_chooser(sr, vbox,
-					      _("Factor (dummy)"), 0,
-					      set_factor_callback);
-}
+    const gchar *label;
 
-static void zvar_box (selector *sr, GtkWidget *vbox)
-{
-    sr->rvars1 = entry_with_label_and_chooser(sr, vbox,
-					      _("Z-axis variable"), 0,
+    if (sr->code == GR_3D) {
+	label = N_("Z-axis variable");
+    } else if (sr->code == GR_DUMMY) {
+	label = _("Factor (dummy)");
+    } else if (sr->code == GR_XYZ) {
+	label = N_("Control variable");
+    } else {
+	return;
+    }
+
+    sr->rvars1 = entry_with_label_and_chooser(sr, vbox, _(label), 0,
 					      set_factor_callback);
 }
 
@@ -2778,7 +2788,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	vbox_add_hsep(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->code == WLS || sr->code == POISSON || 
-	sr->code == GR_DUMMY || sr->code == GR_3D) { 
+	       THREE_VARS_GRAPH(sr->code)) {
 	extra_var_box(sr, right_vbox);
     } else if (USE_ZLIST(sr->code)) {
 	primary_rhs_varlist(sr, right_vbox);
@@ -3911,6 +3921,8 @@ static GtkWidget *selection_dialog_top_label (int ci)
 	s = _("multiple scatterplots");
     else if (ci == GR_DUMMY)
 	s = _("factorized plot");
+    else if (ci == GR_XYZ)
+	s = _("scatterplot with control");
     else if (ci == SAVE_FUNCTIONS) 
 	s = _("functions to package");
     else
@@ -4067,8 +4079,8 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     if (MODEL_CODE(ci)) { 
 	/* models: top right -> dependent variable */
 	yvar = build_depvar_section(sr, right_vbox, preselect);
-    } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY
-	       || ci == SCATTERS || ci == GR_3D) {
+    } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
+	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ) {
 	/* graphs: top right -> x-axis variable */
 	build_x_axis_section(sr, right_vbox);
     } else if (ci == SAVE_FUNCTIONS) {
@@ -4078,16 +4090,13 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
-	ci == GR_DUMMY || ci == GR_3D) {
+	THREE_VARS_GRAPH(ci)) {
 	build_mid_section(sr, right_vbox);
     }
     
-    if (ci == GR_DUMMY) {
-	/* special case: choose dummy var for factorized plot */
-	dummy_box(sr, right_vbox);
-    } else if (ci == GR_3D) {
-	/* special case: choose Z axis variable */
-	zvar_box(sr, right_vbox);
+    if (THREE_VARS_GRAPH(ci)) {
+	/* choose extra var for plot */
+	graph_zvar_box(sr, right_vbox);
     } else if (AUX_LAST(ci)) {
 	auxiliary_rhs_varlist(sr, right_vbox);
     } else { 
@@ -4129,7 +4138,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     /* plus lag selection stuff, if relevant */
     if (dataset_lags_ok(datainfo)) {
 	if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY || \
-	    ci == SCATTERS || ci == GR_3D) {
+	    ci == SCATTERS || ci == GR_3D || ci == GR_XYZ) {
 	    unhide_lags_switch(sr);
 	}
 	if (MODEL_CODE(ci) && ci != ARMA) {

@@ -45,7 +45,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 1
+#define CMD_DEBUG 0
 #define ARMA_DBG 0
 
 #include "laginfo.c"
@@ -4124,11 +4124,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 	if (gretl_messages_on()) {
-	    if ((cmd->opt & OPT_Z) && !has_suffix(cmd->param, ".gz")) {
-		pprintf(prn, _("store: using filename %s.gz\n"), cmd->param);
-	    } else {
-		pprintf(prn, _("store: using filename %s\n"), cmd->param);
-	    }
+	    pprintf(prn, _("store: using filename %s\n"), cmd->param);
 	}
 	err = write_data(cmd->param, cmd->list, (const double **) *pZ,
 			 pdinfo, cmd->opt, NULL);

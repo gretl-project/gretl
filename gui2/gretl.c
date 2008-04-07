@@ -370,6 +370,8 @@ GtkItemFactoryEntry data_items[] = {
       NULL, selector_callback, GR_IMP, NULL, GNULL },
     { N_("/View/Graph specified vars/X-Y with _factor separation..."), 
       NULL, selector_callback, GR_DUMMY, NULL, GNULL },
+    { N_("/View/Graph specified vars/X-Y with _control..."), 
+      NULL, selector_callback, GR_XYZ, NULL, GNULL },
     { N_("/View/Graph specified vars/_Boxplots..."), 
       NULL, gretl_callback, GR_BOX, NULL, GNULL },
     { N_("/View/Graph specified vars/_Notched boxplots..."), 

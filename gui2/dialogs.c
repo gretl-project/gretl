@@ -1806,10 +1806,15 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 
     if (box != NULL) {
 	gchar *vname = gtk_combo_box_get_active_text(box);
-	int v = varindex(datainfo, vname);
 
-	nobs = gretl_isdummy(0, datainfo->n - 1, Z[v]);
-	g_free(vname);
+	if (vname != NULL) {
+	    int v = varindex(datainfo, vname);
+
+	    if (v < datainfo->v) {
+		nobs = gretl_isdummy(0, datainfo->n - 1, Z[v]);
+	    }
+	    g_free(vname);
+	}
     } else {
 	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
 	int t2 = (int) obs_button_get_value(OBS_BUTTON(rset->endspin));
