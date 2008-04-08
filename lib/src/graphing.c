@@ -4008,7 +4008,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 
     /* create temporary dataset */
 
-    ginfo = create_new_dataset(&gZ, 4, T, 0);
+    ginfo = create_auxiliary_dataset(&gZ, 4, T);
     if (ginfo == NULL) {
 	return E_ALLOC;
     }

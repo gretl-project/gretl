@@ -1394,10 +1394,6 @@ static void print_model_droplist (const MODEL *pmod,
     const int *dlist = gretl_model_get_data(pmod, "droplist");
     const char *tag = N_("Omitted due to exact collinearity:");
 
-    if (pmod->ci == PANEL && gretl_model_get_int(pmod, "between")) {
-	return;
-    }
-
     print_extra_list(tag, dlist, pdinfo, prn);
 }
 

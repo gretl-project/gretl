@@ -488,8 +488,7 @@ static int seek_file_collections (int location)
     closedir(dir);
     g_free(tmp);
 
-    if (location == USER_SEARCH && i == 0) {
-	i++;
+    if (location == USER_SEARCH && i++ == 0) {
 	tmp = g_strdup(paths.dotdir);
 	trim_slash(tmp);
 	goto user_search_2;

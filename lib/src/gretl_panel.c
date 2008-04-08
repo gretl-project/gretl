@@ -940,6 +940,8 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
     return reinfo;
 }
 
+#define BETWEEN_DEBUG 0
+
 /* Construct a mini-dataset containing the group means, in
    order to run the group-means or "between" regression.
 */
@@ -947,9 +949,10 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 static DATAINFO *
 group_means_dataset (panelmod_t *pan,
 		     const double **Z, const DATAINFO *pdinfo,
-		     double ***gZ)
+		     double ***pgZ)
 {
     DATAINFO *ginfo;
+    double **gZ = NULL;
     double x;
     int gn = pan->effn;
     int gv = pan->pooled->list[0];
@@ -965,7 +968,7 @@ group_means_dataset (panelmod_t *pan,
 	    gv, gn);
 #endif
 
-    ginfo = create_auxiliary_dataset(gZ, gv, gn);
+    ginfo = create_auxiliary_dataset(&gZ, gv, gn);
     if (ginfo == NULL) {
 	return NULL;
     }
@@ -977,11 +980,15 @@ group_means_dataset (panelmod_t *pan,
 	if (vj == 0) {
 	    continue;
 	}
-	
+
+#if BETWEEN_DEBUG
+	strcpy(ginfo->varname[k], pdinfo->varname[vj]);
+#else
 	if (pan->opt & OPT_B) {
 	    /* will save the "between" model: so name the variables */
 	    strcpy(ginfo->varname[k], pdinfo->varname[vj]);
 	}
+#endif
 
 	s = 0;
 	for (i=0; i<pan->nunits; i++) { 
@@ -998,34 +1005,56 @@ group_means_dataset (panelmod_t *pan,
 		    x += Z[vj][bigt];
 		}
 	    }
-	    (*gZ)[k][s] = x / Ti;
-	    s++;
+	    gZ[k][s++] = x / Ti;
 	}
 	k++;
     }
+
+#if BETWEEN_DEBUG
+    if (1) {
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+	printdata(NULL, NULL, (const double **) gZ, ginfo, OPT_O, prn);
+	gretl_print_destroy(prn);
+    }
+#endif
+
+    *pgZ = gZ;
 
     return ginfo;
 }
 
 /* spruce up the between model and attach it to pan */
 
-static int save_between_model (MODEL *pmod, DATAINFO *ginfo, 
-			       panelmod_t *pan)
+static int save_between_model (MODEL *pmod, const int *blist,
+			       DATAINFO *ginfo, panelmod_t *pan)
 {
-    int i, err = 0;
+    int *droplist;
+    int i, j, dpos;
+    int err = 0;
 
     pmod->ci = PANEL;
     gretl_model_set_int(pmod, "between", 1);
-    set_model_id(pmod);
     pmod->dw = NADBL;
 
     gretl_model_add_panel_varnames(pmod, ginfo, NULL);
 
+    droplist = gretl_model_get_data(pmod, "droplist");
+
+    /* replace both the model's regression list and its list of
+       dropped variables, if any, with the ID numbers of the
+       corresponding variables in the main dataset 
+    */
+    j = 1;
     for (i=1; i<=pmod->list[0]; i++) {
-	pmod->list[i] = pan->pooled->list[i];
+	if (i > 1 && droplist != NULL) {
+	    while ((dpos = in_gretl_list(droplist, blist[j]))) {
+		droplist[dpos] = pan->pooled->list[j];
+		j++;
+	    }
+	}
+	pmod->list[i] = pan->pooled->list[j++];
     }
-    
-    /* FIXME handle droplist? */
 
     *pan->realmod = *pmod;
 
@@ -1038,10 +1067,10 @@ static int save_between_model (MODEL *pmod, DATAINFO *ginfo,
 static int
 between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
 {
-    MODEL bmod;
     gretlopt bopt;
+    MODEL bmod;
     int *blist;
-    int i, j;
+    int i, j, k;
     int err = 0;
 
     blist = gretl_list_new(ginfo->v);
@@ -1049,14 +1078,16 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
 	return E_ALLOC;
     }
 
-    j = 1;
-    for (i=1; i<=blist[0]; i++) { 
-	if (pan->pooled->list[i] != 0) {
-	    blist[i] = j++;
-	}
+    j = k = 1;
+    for (i=1; i<=ginfo->v; i++) { 
+	if (pan->pooled->list[i] == 0) {
+	    blist[k++] = 0;
+	} else {
+	    blist[k++] = j++;
+	} 
     }
 
-    bopt = (pan->opt & OPT_D)? OPT_A : OPT_A | OPT_Z;
+    bopt = (pan->opt & OPT_B)? OPT_NONE : OPT_A;
     bmod = lsq(blist, gZ, ginfo, OLS, bopt);
 
     if (bmod.errcode == 0) {
@@ -1068,8 +1099,8 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
 #endif
     }
 
-    if (pan->opt & OPT_B) {
-	err = save_between_model(&bmod, ginfo, pan);
+    if (!err && (pan->opt & OPT_B)) {
+	err = save_between_model(&bmod, blist, ginfo, pan);
     } else {
 	clear_model(&bmod);
     }
@@ -1572,7 +1603,7 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
 
 #if PDEBUG > 1
 
-static void verbose_femod_print (MODEL *femod, const double *wZ,
+static void verbose_femod_print (MODEL *femod, double **wZ,
 				 DATAINFO *winfo, PRN *prn)
 {
     int i, j;
@@ -2394,10 +2425,15 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    err = E_ALLOC;
 	} else {
 	    err = between_variance(&pan, &gZ, ginfo);
+	    fprintf(stderr, "between_variance: err = %d\n", err);
 	}
 
 	if (err) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
+	    if (err == E_SINGULAR) {
+		/* treat this as non-fatal */
+		err = 0;
+	    }
 	} else {
 	    random_effects(&pan, (const double **) *pZ, pdinfo, 
 			   (const double **) gZ, ginfo, prn);

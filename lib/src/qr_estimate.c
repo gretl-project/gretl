@@ -825,6 +825,8 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank)
     return err;
 }
 
+#define REDEBUG 0
+
 static void
 drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
 {
@@ -841,7 +843,7 @@ drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
     }
 
 #if REDEBUG
-    printlist(pmod->list, "pmod->list, into drop_redundant_vars\n");
+    printlist(pmod->list, "pmod->list, into drop_redundant_vars");
     fprintf(stderr, "rank = %d\n", rank);
 #endif
 
