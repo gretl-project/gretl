@@ -1801,8 +1801,7 @@ static GList *get_dummy_list (int *thisdum)
 gboolean update_obs_label (GtkComboBox *box, gpointer data)
 {
     struct range_setting *rset = (struct range_setting *) data;
-    char obstext[48];
-    int nobs = 0;
+    int n = 0;
 
     if (box != NULL) {
 	gchar *vname = gtk_combo_box_get_active_text(box);
@@ -1811,7 +1810,7 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	    int v = varindex(datainfo, vname);
 
 	    if (v < datainfo->v) {
-		nobs = gretl_isdummy(0, datainfo->n - 1, Z[v]);
+		n = gretl_isdummy(0, datainfo->n - 1, Z[v]);
 	    }
 	    g_free(vname);
 	}
@@ -1819,16 +1818,19 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
 	int t2 = (int) obs_button_get_value(OBS_BUTTON(rset->endspin));
 
-	nobs = t2 - t1 + 1;  
+	n = t2 - t1 + 1;  
     }
     
-    if (nobs > 0) {
+    if (n > 0) {
+	gchar *obstr = NULL;
+
 	if (rset->opt == OPT_P) {
-	    sprintf(obstext, _("Included groups: %d"), nobs);
+	    obstr = g_strdup_printf(_("Included groups: %d"), n);
 	} else {
-	    sprintf(obstext, _("Observations: %d"), nobs);  
+	    obstr = g_strdup_printf(_("Observations: %d"), n);  
 	}
-	gtk_label_set_text(GTK_LABEL(rset->obslabel), obstext); 
+	gtk_label_set_text(GTK_LABEL(rset->obslabel), obstr); 
+	g_free(obstr);
     }
 
     return FALSE;

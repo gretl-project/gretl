@@ -2153,6 +2153,39 @@ int *augment_regression_list (const int *orig, int aux,
     return list;
 }
 
+/* For observation s, see if the regression list contains a variable
+   that has a single non-zero value at that particular observation.
+   We run this check on observations showing an OLS residual of zero.
+*/
+
+static int observation_is_dummied (const MODEL *pmod,
+				   int *list, const double **Z,
+				   int s)
+{
+    int i, t, v;
+    int ret = 0;
+
+    for (i=list[0]; i>=2; i--) {
+	v = list[i];
+	if (v == 0) {
+	    continue;
+	}
+	ret = 1;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if ((t == s && Z[v][t] == 0.0) || (t != s && Z[v][t] != 0.0)) {
+		ret = 0;
+		break;
+	    }
+	}
+	if (ret) {
+	    gretl_list_delete_at_pos(list, i);
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 /* get_hsk_weights: take the residuals from the model pmod, square them
    and take logs; find the fitted values for this series using an
    auxiliary regression including the original independent variables
@@ -2164,13 +2197,20 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
     int oldv = pdinfo->v;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int *lcpy = NULL;
     int *list = NULL;
     int err = 0, shrink = 0;
     double xx;
     MODEL aux;
 
+    lcpy = gretl_list_copy(pmod->list);
+    if (lcpy == NULL) {
+	return E_ALLOC;
+    }
+
     /* allocate space for an additional variable */
     if (dataset_add_series(1, pZ, pdinfo)) {
+	free(lcpy);
 	return E_ALLOC;
     }
 
@@ -2179,6 +2219,13 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	xx = pmod->uhat[t];
 	if (na(xx)) {
 	    (*pZ)[oldv][t] = NADBL;
+	} else if (xx == 0.0) {
+	    if (observation_is_dummied(pmod, lcpy, (const double **) *pZ, t)) {
+		(*pZ)[oldv][t] = NADBL;
+	    } else {
+		fprintf(stderr, "hsk: got a zero residual, could be a problem!\n");
+		(*pZ)[oldv][t] = -1.0e16; /* ?? */
+	    }
 	} else {
 	    (*pZ)[oldv][t] = log(xx * xx);
 	}
@@ -2186,12 +2233,12 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 
     /* build regression list, adding the squares of the original
        independent vars */
-    list = augment_regression_list(pmod->list, AUX_SQ, pZ, pdinfo);
+    list = augment_regression_list(lcpy, AUX_SQ, pZ, pdinfo);
     if (list == NULL) {
 	return E_ALLOC;
     }
 
-    list[1] = oldv; /* the newly added uhat-squared */
+    list[1] = oldv; /* the newly added log(uhat-squared) */
 
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
@@ -2223,6 +2270,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     }
 
     free(list);
+    free(lcpy);
 
     return err;
 }
@@ -3141,21 +3189,21 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 	zlist = gretl_null_list();
     }
 
-    for (i=offset; i<=pmod->list[0]; i++) {
+    for (i=pmod->list[0]; i>=offset; i--) {
         v = pmod->list[i];
         if (modelvar_iszero(pmod, Z[v])) {
 	    if (zlist != NULL) {
 		gretl_list_append_term(&zlist, v);
 	    }
-	    fprintf(stderr, "Deleting var at pos %d, all zero\n", i);
-	    gretl_list_delete_at_pos(pmod->list, i--);
+	    fprintf(stderr, "Deleting var %d at list pos %d: all zero\n", v, i);
+	    gretl_list_delete_at_pos(pmod->list, i);
 	}
     }
 
     if (pmod->nwt) {
 	int t, wtzero;
 
-	for (i=offset; i<=pmod->list[0]; i++) {
+	for (i=pmod->list[0]; i>=offset; i--) {
 	    v = pmod->list[i];
 	    wtzero = 1;
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -3169,7 +3217,7 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		if (zlist != NULL) {
 		    gretl_list_append_term(&zlist, v);
 		}
-		gretl_list_delete_at_pos(pmod->list, i--);
+		gretl_list_delete_at_pos(pmod->list, i);
 	    }
 	}
     }

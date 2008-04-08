@@ -1617,6 +1617,9 @@ static void print_model_heading (const MODEL *pmod,
 		_(system_short_string(pmod)),
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
     } else if (!dataset_is_panel(pdinfo)) {
+	const char *estr = estimator_string(pmod, prn);
+	const char *fmt;
+
 	if (pmod->missmask != NULL) {
 	    int mc = model_missval_count(pmod);
 
@@ -1626,11 +1629,15 @@ static void print_model_heading (const MODEL *pmod,
 		mc = Tmax - gretl_model_get_int(pmod, "totobs");
 	    }
 
-	    pprintf(prn, (utf)?
-		    _("%s estimates using %d observations from %s%s%s") :
-		    I_("%s estimates using %d observations from %s%s%s"),
-		    _(estimator_string(pmod, prn)), 
-		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+	    if (strlen(estr) > 24) {
+		fmt = N_("%s estimates %s%s%s (T = %d)");
+		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr),
+			startdate, (tex)? "--" : "-", enddate, pmod->nobs);
+	    } else {
+		fmt = N_("%s estimates using %d observations from %s%s%s");
+		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr),
+			pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+	    }
 	    if (mc > 0) {
 		gretl_prn_newline(prn);
 		pprintf(prn, "%s: %d",
@@ -1638,11 +1645,16 @@ static void print_model_heading (const MODEL *pmod,
 			I_("Missing or incomplete observations dropped"), mc);
 	    }
 	} else {
-	    pprintf(prn, (utf)?
-		    _("%s estimates using the %d observations %s%s%s") :
-		    I_("%s estimates using the %d observations %s%s%s"),
-		    _(estimator_string(pmod, prn)), 
-		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+	    if (strlen(estr) > 24) {
+		fmt = N_("%s estimates %s%s%s (T = %d)");
+		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr), 
+			startdate, (tex)? "--" : "-", enddate, pmod->nobs);
+
+	    } else {
+		fmt = N_("%s estimates using the %d observations %s%s%s");
+		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr), 
+			pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+	    }
 	}
     } else {
 	int effn = gretl_model_get_int(pmod, "n_included_units");
