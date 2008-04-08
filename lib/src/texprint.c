@@ -861,17 +861,19 @@ void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
     pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("HQC"), var->HQC);
 }
 
-static PRN *make_tex_prn (int ID, char *texfile,
+static PRN *make_tex_prn (int ID, const char *fname,
 			  int eqn, int doc, int *err)
 {
+    char texfile[FILENAME_MAX];
     PrnFormat fmt = GRETL_FORMAT_TEX;
     PRN *prn;
 
-    if (*texfile == '\0') {
+    if (*fname == '\0') {
 	sprintf(texfile, "%s%s_%d.tex", gretl_work_dir(),
 		(eqn)? "equation" : "model", ID);
     } else {
-	gretl_maybe_switch_dir(texfile);
+	fname = gretl_maybe_switch_dir(fname);
+	strcpy(texfile, fname);       
     }
 
     prn = gretl_print_new_with_filename(texfile, err);

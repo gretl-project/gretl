@@ -440,7 +440,7 @@ static int seek_file_collections (int location)
     DIR *dir, *try;  
     struct dirent *dirent;
     char *subdir;
-    int err = 0;
+    int i = 0, err = 0;
 
     if (location == DATA_SEARCH) {
 	tmp = g_strdup_printf("%sdata", paths.gretldir);
@@ -452,6 +452,8 @@ static int seek_file_collections (int location)
     } else {
 	return 1;
     }
+
+ user_search_2:
 
     dir = opendir(tmp);
     if (dir == NULL) {
@@ -484,7 +486,14 @@ static int seek_file_collections (int location)
     }
 
     closedir(dir);
-    free(tmp);
+    g_free(tmp);
+
+    if (location == USER_SEARCH && i == 0) {
+	i++;
+	tmp = g_strdup(paths.dotdir);
+	trim_slash(tmp);
+	goto user_search_2;
+    }
 
     return err;
 }

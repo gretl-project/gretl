@@ -3491,7 +3491,7 @@ static void do_print_string (char *str, PRN *prn)
 }
 
 static int 
-do_outfile_command (gretlopt flag, char *fname, PRN *prn)
+do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 {
     static char outname[MAXLEN];
     int diverted = 0;
@@ -3537,7 +3537,7 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
     } else {
 	FILE *fp;
 
-	gretl_maybe_switch_dir(fname);
+	fname = gretl_maybe_switch_dir(fname);
 
 	if (flag == OPT_W) {
 	    fp = gretl_fopen(fname, "w");

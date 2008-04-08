@@ -1230,7 +1230,7 @@ int write_data (const char *fname, const int *list,
 
     fmt = format_from_opt_or_name(opt, fname, &delim);
 
-    gretl_maybe_switch_dir(fname);
+    fname = gretl_maybe_switch_dir(fname);
 
     if (fmt == 0 || fmt == GRETL_DATA_GZIPPED) {
 	return gretl_write_gdt(fname, list, Z, pdinfo, fmt, ppaths);

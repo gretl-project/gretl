@@ -801,7 +801,7 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
     int i, j, err = 0;
     FILE *fp;
 
-    gretl_maybe_switch_dir(fname);
+    fname = gretl_maybe_switch_dir(fname);
 
     fp = fopen(fname, "w");
 

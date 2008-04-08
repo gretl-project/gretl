@@ -919,7 +919,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     }
 
     /* handle tilde == HOME */
-    if (*fname == '~') {
+    if (fname[0] == '~' && fname[1] == '/') {
 	substitute_homedir(fname);
     }
 
@@ -1591,9 +1591,16 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
    beginning with '.', or if STATE_USE_CWD is set).
 */
 
-void gretl_maybe_switch_dir (const char *fname)
+const char *gretl_maybe_switch_dir (const char *fname)
 {
-    if (!g_path_is_absolute(fname)) {
+    if (fname[0] == '~' && fname[1] == '/') {
+	char *home = getenv("HOME");
+	
+	if (home != NULL) {
+	    chdir(home);
+	    fname += 2;
+	}
+    } else if (!g_path_is_absolute(fname)) {
 	if (dotpath(fname) || libset_get_bool(USE_CWD)) {
 	    char *sdir = get_shelldir();
 
@@ -1604,6 +1611,8 @@ void gretl_maybe_switch_dir (const char *fname)
 	    chdir(gretl_paths.workdir);
 	}
     }
+
+    return fname;
 }
 
 /* remove '.' and '..' from @path */

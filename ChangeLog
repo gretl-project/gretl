@@ -30,7 +30,7 @@ version 1.7.5, in progress
   scripts
 - Fix bug: VARs and equation systems not getting removed as
   "last model" on exit from user-defined functions, which
-  could cause strange errors
+  could cause strange errors in complex scripts
 - Fix for forecasts from equation systems displayed in the
   GUI program
 - Updates to some screenshots in the User's Guide
@@ -38,6 +38,18 @@ version 1.7.5, in progress
   the covariance matrix instead of the correlation matrix
 - corr command: document the --uniform option and add it to
   the GUI
+- Fix bug: loops inside conditionals inside a loop were not
+  executing properly in some cases
+- X-Y scatterplot: add option of controlling for a third
+  variable
+- hsk command: fix for the case where the model includes a
+  dummy that is specific to a particular observation
+- arima specification dialog: add checkbox for basing
+  standard errors on the Hessian
+- store, outfile, etc.: if the filename starts with "~/",
+  expand this to the user's home directory, if possible
+- Search for data file collections: add the user's gretl
+  data directory ("dotdir") to the path searched
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

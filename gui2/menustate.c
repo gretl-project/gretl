@@ -23,11 +23,13 @@
 #include "console.h"
 #include "guiprint.h"
 #include "ssheet.h"
+#include "menustate.h"
 
 void refresh_data (void)
 {
     if (data_status) {
 	populate_varlist();
+	set_sample_label(datainfo);
     }
 }
 
