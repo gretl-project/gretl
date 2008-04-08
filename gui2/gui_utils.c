@@ -262,7 +262,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/Non-linearity (_logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
     { N_("/Tests/_Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
     { "/Tests/sep2", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/_Heteroskedasticity"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Tests/_Heteroskedasticity"), NULL, NULL, LMTEST_WHITE, "<Branch>", GNULL },
     { N_("/Tests/Heteroskedasticity/White's test"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
     { N_("/Tests/Heteroskedasticity/Breusch-Pagan"), NULL, do_lmtest, LMTEST_BP, NULL, GNULL },
     { N_("/Tests/Heteroskedasticity/Koenker"), NULL, do_lmtest, LMTEST_BPK, NULL, GNULL },
@@ -2671,7 +2671,7 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
     gretlopt opt = OPT_NONE;
     char path[128];
-    int i, cmd_ci, ok;
+    int i, a, ok;
 
     if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) { 
 	/* FIXME? */
@@ -2680,36 +2680,39 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
     }
 
     for (i=0; model_items[i].path != NULL; i++) {
-	if (model_items[i].item_type == NULL &&
-	    strstr(model_items[i].path, "Tests")) {
-	    cmd_ci = model_items[i].callback_action;
+	if (strstr(model_items[i].path, "Tests")) {
+	    a = model_items[i].callback_action;
 
-	    if (cmd_ci == LMTEST_SQUARES) {
-		cmd_ci = LMTEST;
+	    if (a == 0) {
+		continue;
+	    }
+
+	    if (a == LMTEST_SQUARES) {
+		a = LMTEST;
 		opt = OPT_S;
-	    } else if (cmd_ci == LMTEST_LOGS) {
-		cmd_ci = LMTEST;
+	    } else if (a == LMTEST_LOGS) {
+		a = LMTEST;
 		opt = OPT_L;
-	    } else if (cmd_ci == LMTEST_WHITE) {
-		cmd_ci = LMTEST;
+	    } else if (a == LMTEST_WHITE) {
+		a = LMTEST;
 		opt = OPT_W;
-	    } else if (cmd_ci == LMTEST_BP) {
-		cmd_ci = LMTEST;
+	    } else if (a == LMTEST_BP) {
+		a = LMTEST;
 		opt = OPT_B;
-	    } else if (cmd_ci == LMTEST_BPK) {
-		cmd_ci = LMTEST;
+	    } else if (a == LMTEST_BPK) {
+		a = LMTEST;
 		opt = OPT_B | OPT_R;
-	    } else if (cmd_ci == ARCH) {
-		cmd_ci = LMTEST;
+	    } else if (a == ARCH) {
+		a = LMTEST;
 		opt = OPT_H;
-	    } else if (cmd_ci == LMTEST) { 
+	    } else if (a == LMTEST) { 
 		/* unqualified: autocorrelation */
 		opt = OPT_A;
-	    } else if (cmd_ci == CUSUMSQ) {
-		cmd_ci = CUSUM;
+	    } else if (a == CUSUMSQ) {
+		a = CUSUM;
 	    }
 		
-	    ok = model_test_ok(cmd_ci, opt, pmod, datainfo);
+	    ok = model_test_ok(a, opt, pmod, datainfo);
 	    copy_no_underscore(path, model_items[i].path);
 	    flip(ifac, path, ok);
 	}
