@@ -1131,6 +1131,23 @@ int get_precision (const double *x, int n, int placemax)
     return pmax;
 }
 
+gretlopt data_save_opt_from_suffix (const char *fname)
+{
+    gretlopt opt = OPT_NONE;
+
+    if (has_suffix(fname, ".R")) {
+	opt = OPT_R;
+    } else if (has_suffix(fname, ".m")) {
+	opt = OPT_M;
+    } else if (has_suffix(fname, ".csv") ||
+	       has_suffix(fname, ".txt") ||
+	       has_suffix(fname, ".asc")) {
+	opt = OPT_C;
+    } 
+
+    return opt;
+}
+
 static GretlDataFormat 
 format_from_opt_or_name (gretlopt opt, const char *fname,
 			 char *delim)

@@ -137,6 +137,8 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
 
 GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
+gretlopt data_save_opt_from_suffix (const char *fname);
+
 int check_varname (const char *varname);
 
 int check_atof (const char *numstr);

@@ -145,7 +145,7 @@ struct LOOPSET_ {
     MODEL **models;
     LOOP_MODEL *lmodels;
     LOOP_PRINT *prns;
-    char storefile[MAXLEN];
+    char *storefile;
     gretlopt storeopt;
     double **sZ;
     DATAINFO *sdinfo;
@@ -172,7 +172,6 @@ static void loop_model_free (LOOP_MODEL *lmod);
 static void loop_print_free (LOOP_PRINT *lprn);
 static void loop_store_free (LOOPSET *loop);
 static void controller_free (controller *clr);
-static int loop_store_save (LOOPSET *loop, PRN *prn);
 static void set_active_loop (LOOPSET *loop);
 
 #define LOOP_BLOCK 32
@@ -455,7 +454,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->lmodels = NULL;
     loop->prns = NULL;
 
-    loop->storefile[0] = '\0';
+    loop->storefile = NULL;
     loop->storeopt = OPT_NONE;
     loop->sZ = NULL;
     loop->sdinfo = NULL;
@@ -1558,6 +1557,29 @@ static void loop_store_free (LOOPSET *loop)
     destroy_dataset(loop->sZ, loop->sdinfo);
     loop->sZ = NULL;
     loop->sdinfo = NULL;
+    free(loop->storefile);
+    loop->storefile = NULL;
+}
+
+static int set_loop_store_filename (LOOPSET *loop, const char *fname,
+				    gretlopt opt)
+{
+    if (fname == NULL || *fname == '\0') {
+	return E_ARGS;
+    }
+
+    loop->storefile = gretl_strdup(fname);
+    if (loop->storefile == NULL) {
+	return E_ALLOC;
+    }
+
+    if (opt == OPT_NONE) {
+	opt = data_save_opt_from_suffix(loop->storefile);
+    }
+
+    loop->storeopt = opt;    
+
+    return 0;
 }
 
 /**
@@ -1577,7 +1599,7 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 			    const int *list, DATAINFO *pdinfo,
 			    gretlopt opt)
 {
-    int i, n;
+    int i, n, err = 0;
 
     if (loop->sZ != NULL) {
 	strcpy(gretl_errmsg, "Only one 'store' command is allowed in a "
@@ -1590,17 +1612,18 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 	return E_DATA;
     }
 
+    err = set_loop_store_filename(loop, fname, opt);
+    if (err) {
+	return err;
+    }
+
     n = (loop->itermax > 0)? loop->itermax : DEFAULT_NOBS;
 
     loop->sdinfo = create_auxiliary_dataset(&loop->sZ, list[0] + 1, n);
     if (loop->sdinfo == NULL) {
 	return E_ALLOC;
     }
-
-    loop->storefile[0] = '\0';
-    strncat(loop->storefile, fname, MAXLEN - 1);
-    loop->storeopt = opt;
-
+    
 #if LOOP_DEBUG
     fprintf(stderr, "loop_store_init: created sZ, v = %d, n = %d\n",
 	    loop->sdinfo->v, loop->sdinfo->n);
@@ -2195,6 +2218,34 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
     pputc(prn, '\n');
 }
 
+static int loop_store_save (LOOPSET *loop, PRN *prn)
+{
+    int *list;
+    int err = 0;
+
+    list = gretl_consecutive_list_new(1, loop->sdinfo->v - 1);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    loop->sdinfo->t2 = loop->iter - 1;
+
+    pprintf(prn, _("store: using filename %s\n"), loop->storefile);
+
+    err = write_data(loop->storefile, list, (const double **) loop->sZ, 
+		     loop->sdinfo, loop->storeopt, NULL);
+
+    if (!err) {
+	pprintf(prn, _("Data written OK.\n"));
+    } else {
+	pprintf(prn, _("write of data file failed\n"));
+    }
+
+    free(list);
+
+    return err;
+}
+
 /**
  * print_loop_results:
  * @loop: pointer to loop struct.
@@ -2251,46 +2302,6 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	    }
 	}
     }
-}
-
-static int loop_store_save (LOOPSET *loop, PRN *prn)
-{
-    char fname[MAXLEN];
-    int *list;
-    int err = 0;
-
-    list = gretl_consecutive_list_new(1, loop->sdinfo->v - 1);
-    if (list == NULL) {
-	return E_ALLOC;
-    }
-
-    /* organize filename */
-    if (loop->storefile[0] == '\0') {
-	sprintf(fname, "%sloopdata.gdt", gretl_work_dir());	
-    } else {
-	strcpy(fname, loop->storefile);
-    }
-
-    if (loop->storeopt == OPT_NONE && !has_suffix(fname, ".gdt")) {
-	strcat(fname, ".gdt");
-    }
-
-    loop->sdinfo->t2 = loop->iter - 1;
-
-    pprintf(prn, _("store: using filename %s\n"), fname);
-
-    err = write_data(fname, list, (const double **) loop->sZ, 
-		     loop->sdinfo, loop->storeopt, NULL);
-
-    if (!err) {
-	pprintf(prn, _("Data written OK.\n"));
-    } else {
-	pprintf(prn, _("write of data file failed\n"));
-    }
-
-    free(list);
-
-    return err;
 }
 
 static int 

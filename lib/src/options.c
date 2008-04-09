@@ -210,6 +210,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_W, "write" },
     { PANEL,    OPT_B, "between" },
     { PANEL,    OPT_D, "time-dummies" },
+    { PANEL,    OPT_F, "fixed-effects" },
     { PANEL,    OPT_H, "hausman-reg" },
     { PANEL,    OPT_O, "vcv" },
     { PANEL,    OPT_P, "pooled" },

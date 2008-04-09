@@ -5754,6 +5754,34 @@ void gui_sort_data (gpointer p, guint u, GtkWidget *w)
     }
 }
 
+void gui_resample_data (gpointer p, guint u, GtkWidget *w)
+{
+    gchar *title;
+    int resp, n = datainfo->n;
+
+    title = g_strdup_printf("gretl: %s", _("resample dataset"));
+
+    resp = spin_dialog(title, _("Resampling with replacement"), 
+		       &n, _("Number of cases"), 
+		       1, 1000000, 0);
+
+    g_free(title);
+
+    if (resp != GRETL_CANCEL) {
+	gchar *nstr = g_strdup_printf("%d", n);
+	int err;
+
+	err = modify_dataset(DS_RESAMPLE, NULL, nstr, 
+			     &Z, datainfo, NULL);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    mark_dataset_as_modified();
+	}
+	g_free(nstr);
+    }
+}
+
 static int db_write_response (const char *savename, const int *list)
 {
     gchar *msg;

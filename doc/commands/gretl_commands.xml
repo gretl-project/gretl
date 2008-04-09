@@ -1657,18 +1657,18 @@
         <example>dataset expand 12</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
+	<example>dataset resample 500</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Performs various operations on the data set as a whole, depending
-	on the given <repl>keyword</repl>, which must be
-	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit>,
-	<lit>transpose</lit>, <lit>sortby</lit> or <lit>dsortby</lit>.
-	Note: these actions are not available when the dataset is
-	currently subsampled by selection of cases on some Boolean
-	criterion.
+	Performs various operations on the data set as a whole, depending on
+	the given <repl>keyword</repl>, which must be <lit>addobs</lit>,
+	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
+	<lit>sortby</lit>, <lit>dsortby</lit> or <lit>resample</lit>.  Note:
+	these actions are not available when the dataset is currently
+	subsampled by selection of cases on some Boolean criterion.
       </para>
       <para>
 	<lit>addobs</lit>: Must be followed by a positive integer.  Adds
@@ -1719,6 +1719,16 @@
 	<lit>dsortby</lit>: Works as <lit>sortby</lit> except that
 	the re-ordering is by decreasing value of the key variable.
       </para>
+      <para>
+	<lit>resample</lit>: Constructs a new dataset by random
+	sampling, with replacement, of the rows of the current dataset.
+	One argument is required, namely the number of rows to
+	include.  This may be less than, equal to, or greater than
+	the number of observations in the original data.  The
+	original dataset can be retrieved via the command
+	<lit>smpl full</lit>.  
+      </para>
+
     </description>
 
     <gui-access>
@@ -5483,12 +5493,12 @@
 
     <description>
       <para context="gui">
-	This command re-estimates the given model after omitting the
-	specified variables, or after sequentially omitting insignificant
-	variables if the relevant box is checked.  Besides the usual model
+	This command re-estimates the given model after omitting the specified
+	variables, or after sequentially omitting insignificant variables if
+	the relevant box is available and is checked.  Besides the usual model
 	output, it prints a test for the joint significance of the omitted
-	variables. The null hypothesis is that the true coefficients on
-	all the omitted variables equal zero.
+	variables. The null hypothesis is that the true coefficients on all
+	the omitted variables equal zero.
       </para>
       <para context="gui">
 	When the original model was estimated by OLS, the default test
@@ -5741,8 +5751,12 @@
 	  <effect>print covariance matrix</effect>
 	</option>
         <option>
+	  <flag>--fixed-effects</flag>
+	  <effect>estimate with group fixed effects</effect>
+        </option>
+        <option>
 	  <flag>--random-effects</flag>
-	  <effect>random rather than fixed effects</effect>
+	  <effect>random effects or GLS model</effect>
         </option>
         <option>
 	  <flag>--between</flag>
@@ -5773,11 +5787,9 @@
 
     <description>
       <para>
-	Estimates a panel model, by default using the fixed effects
-	estimator.  Depending on the number of cross-sectional units and
-	the number of independent variables, this is implemented either by
-	adding a set of dummy variables representing the units, or by
-	subtracting the group or unit means from the original data.
+	Estimates a panel model.  By default the fixed effects estimator is
+	used; this is implemented by subtracting the group or unit means from
+	the original data.
       </para>
       <para context="cli">
 	If the <lit>--random-effects</lit> flag is given, random effects
@@ -5799,7 +5811,7 @@
       </para>
       <para context="gui">
 	If the "Random effects" button is checked, random effects
-	estimates are computed, using the method of Swamy and Arora.
+	GLS estimates are computed, using the method of Swamy and Arora.
       </para>
       <para>
 	For more details on panel estimation, please see <guideref
@@ -6210,26 +6222,25 @@
 
     <description>
       <para>
-	Prints scalar values and/or strings under the control of a
-	format string (providing a small subset of the
-	<lit>printf()</lit> statement in the C programming language).
-	Recognized numeric formats are <lit>%e</lit>, <lit>%E</lit>,
-	<lit>%f</lit>, <lit>%g</lit>, <lit>%G</lit> and <lit>%d</lit>,
-	in each case with the various modifiers available in C.
-	Examples: the format <lit>%.10g</lit> prints a value to 10
-	significant figures; <lit>%12.6f</lit> prints a value to 6
-	decimal places, with a width of 12 characters.  The format
+	Prints scalar values, matrices, or strings under the control of a
+	format string (providing a subset of the <lit>printf()</lit>
+	statement in the C programming language).  Recognized numeric formats
+	are <lit>%e</lit>, <lit>%E</lit>, <lit>%f</lit>, <lit>%g</lit>,
+	<lit>%G</lit> and <lit>%d</lit>, in each case with the various
+	modifiers available in C.  Examples: the format <lit>%.10g</lit>
+	prints a value to 10 significant figures; <lit>%12.6f</lit> prints a
+	value to 6 decimal places, with a width of 12 characters.  The format
 	<lit>%s</lit> should be used for strings.
       </para>
-
-      <para>The format string itself must be enclosed in double
-	quotes.  The values to be printed must follow the format
-	string, separated by commas.  These values should take the
-	form of either (a) the names of variables in the dataset, (b)
-	expressions that are valid for the <cmd>genr</cmd> command, or
-	(c) the special functions <lit>varname()</lit> or
-	<lit>date()</lit>.  The following example prints the values of
-	two variables plus that of a calculated expression:
+      <para>
+	The format string itself must be enclosed in double quotes.  The
+	values to be printed must follow the format string, separated by
+	commas.  These values should take the form of either (a) the names of
+	scalar variables or matrices, (b) expressions that are valid for the
+	<cmd>genr</cmd> command, or (c) the special functions
+	<lit>varname()</lit> or <lit>date()</lit>.  The following example
+	prints the values of two variables plus that of a calculated
+	expression:
       </para>
       <code>
 	ols 1 0 2 3
@@ -6239,10 +6250,9 @@
       </code>
 
       <para>
-	The next lines illustrate the use of the varname and date
-	functions, which respectively print the name of a variable,
-	given its ID number, and a date string, given a 1-based
-	observation number.
+	The next lines illustrate the use of the varname and date functions,
+	which respectively print the name of a variable, given its ID number,
+	and a date string, given a 1-based observation number.
       </para>
       <code>
 	printf "The name of variable %d is %s\n", i, varname(i)
@@ -6250,11 +6260,30 @@
       </code>
 
       <para>
+	If a matrix argument is given in association with a numeric
+	format, the entire matrix is printed using the specified format
+	for each element.
+      </para>
+      <para>
 	The maximum length of a format string is 127 characters.  The
 	escape sequences <lit>\n</lit> (newline), <lit>\t</lit> (tab),
 	<lit>\v</lit> (vertical tab) and <lit>\\</lit> (literal
 	backslash) are recognized.  To print a literal percent sign,
-	use <lit>%%</lit>.</para>
+	use <lit>%%</lit>.
+      </para>
+      <para>
+	As in C, numerical values that form part of the format (width and or
+	precision) may be given directly as numbers, as in <lit>%10.4f</lit>,
+	or they may be given as variables.  In the latter case, one puts
+	asterisks into the format string and supplies corresponding arguments
+	in order.  For example,
+      </para>
+      <code>
+	scalar width = 12
+	scalar precision = 6
+	printf "x = %*.*f\n", width, precision, x
+      </code>
+ 
     </description>
 
   </command>

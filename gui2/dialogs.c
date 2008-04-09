@@ -3368,7 +3368,7 @@ int checks_dialog (const char *title, const char *blurb,
     if (spinvar != NULL) {
 	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
 	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tmp, TRUE, TRUE, 5);
 	spin = g_object_get_data(G_OBJECT(tmp), "spin-button");
     }

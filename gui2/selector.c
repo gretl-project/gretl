@@ -3551,6 +3551,8 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
 
 static void build_omit_test_radios (selector *sr)
 {
+    windata_t *vwin = (windata_t *) sr->data;
+    MODEL *pmod = (MODEL *) vwin->data;
     GtkWidget *b1, *b2, *b3;
     GtkObject *adj;
     GSList *group;
@@ -3559,25 +3561,27 @@ static void build_omit_test_radios (selector *sr)
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Estimate reduced model"));
     pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+    sr->radios[0] = b1;
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Wald test, based on covariance matrix"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_W, 0);
-
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
-    b3 = gtk_radio_button_new_with_label(group, _("Sequential elimination of variables\n"
-						  "using two-sided p-value:"));
-    g_signal_connect(G_OBJECT(b3), "toggled",
-		     G_CALLBACK(auto_omit_callback), sr);
-
-    adj = gtk_adjustment_new(0.10, 0.01, 0.99, 0.01, 0.1, 1);
-    sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
-    pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0]);
-    gtk_widget_set_sensitive(sr->extra[0], FALSE);
-
-    sr->radios[0] = b1;
     sr->radios[1] = b2;
-    sr->radios[2] = b3;
+
+    if (pmod->ci != PANEL) {
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
+	b3 = gtk_radio_button_new_with_label(group, _("Sequential elimination of variables\n"
+						      "using two-sided p-value:"));
+	g_signal_connect(G_OBJECT(b3), "toggled",
+			 G_CALLBACK(auto_omit_callback), sr);
+
+	adj = gtk_adjustment_new(0.10, 0.01, 0.99, 0.01, 0.1, 1);
+	sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+	pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0]);
+	gtk_widget_set_sensitive(sr->extra[0], FALSE);
+
+	sr->radios[2] = b3;
+    }
 }
 
 static void build_panel_radios (selector *sr)

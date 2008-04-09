@@ -52,8 +52,6 @@ struct INTERNAL_PATHS {
 
 static struct INTERNAL_PATHS gretl_paths;
 
-static char *get_default_workdir (PATHS *paths);
-
 static int add_suffix (char *fname, const char *sfx)
 {
     if (strrchr(fname, '.') == NULL) {
@@ -791,7 +789,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 
     /* try looking in default workdir? */
     if (ppaths != NULL) {
-	char *dwork = get_default_workdir(ppaths);
+	char *dwork = gretl_default_workdir(ppaths);
 
 	if (dwork != NULL) {
 	    int ok = 0;
@@ -1139,7 +1137,7 @@ static void correct_blank_dotdir (PATHS *paths)
    to it
 */
 
-static char *get_default_workdir (PATHS *paths)
+char *gretl_default_workdir (PATHS *paths)
 {
     char *base = mydocs_path();
     char *ret = NULL;
@@ -1187,7 +1185,7 @@ static void correct_blank_dotdir (char *path)
     } 
 }
 
-static char *get_default_workdir (PATHS *paths)
+char *gretl_default_workdir (PATHS *paths)
 {
     char *home = getenv("HOME");
     char *ret = NULL;

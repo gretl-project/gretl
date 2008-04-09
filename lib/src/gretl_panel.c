@@ -708,6 +708,13 @@ static int *real_varying_list (panelmod_t *pan)
     return vlist;
 }
 
+/* with FE_NEW we follow stata's approach for fixed effects: we
+   subtract the groups means but add back in the grand means, for
+   each variable. That way, we estimate an "average" constant
+   and get its standard error */
+
+#define FE_NEW 1
+
 /* Construct a version of the dataset from which the group means are
    subtracted, for the "within" regression.  Nota bene: this auxiliary
    dataset is not necessarily of full length: missing observations
@@ -762,6 +769,60 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
+#if FE_NEW
+
+    for (j=1; j<=vlist[0]; j++) {
+	double xbar, gxbar = 0.0;
+
+	vj = vlist[j];
+	gxbar = 0.0;
+	s = 0;
+
+	for (i=0; i<pan->nunits; i++) {
+	    int Ti = pan->unit_obs[i];
+	    int got = 0;
+
+	    if (Ti == 0) {
+		continue;
+	    }
+
+	    /* first pass: find the group mean */
+	    xbar = 0.0;
+	    for (t=0; t<pan->T; t++) {
+		bigt = panel_index(i, t);
+		if (!panel_missing(pan, bigt)) {
+		    xbar += Z[vj][bigt];
+		}
+	    }
+
+	    gxbar += xbar;
+	    xbar /= Ti;
+	    
+	    /* second pass: calculate de-meaned values */
+	    got = 0;
+	    for (t=0; t<pan->T && got<Ti; t++) { 
+		bigt = panel_index(i, t);
+		if (!panel_missing(pan, bigt)) {
+		    (*wZ)[j][s] = Z[vj][bigt] - xbar;
+		    got++;
+		    if (pan->small2big != NULL) {
+			pan->small2big[s] = bigt;
+			pan->big2small[bigt] = s;
+		    }
+		    s++;
+		}
+	    }
+	}
+
+	/* wZ = data - group mean + grand mean */
+	gxbar /= pan->NT;
+	for (s=0; s<pan->NT; s++) {
+	    (*wZ)[j][s] += gxbar;
+	}
+    }
+
+#else
+
     s = 0;
 
     for (i=0; i<pan->nunits; i++) { 
@@ -806,6 +867,8 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	    }
 	}	    
     }
+
+#endif
 
  bailout:
 
@@ -949,10 +1012,9 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 static DATAINFO *
 group_means_dataset (panelmod_t *pan,
 		     const double **Z, const DATAINFO *pdinfo,
-		     double ***pgZ)
+		     double ***gZ)
 {
     DATAINFO *ginfo;
-    double **gZ = NULL;
     double x;
     int gn = pan->effn;
     int gv = pan->pooled->list[0];
@@ -968,7 +1030,7 @@ group_means_dataset (panelmod_t *pan,
 	    gv, gn);
 #endif
 
-    ginfo = create_auxiliary_dataset(&gZ, gv, gn);
+    ginfo = create_auxiliary_dataset(gZ, gv, gn);
     if (ginfo == NULL) {
 	return NULL;
     }
@@ -1005,7 +1067,7 @@ group_means_dataset (panelmod_t *pan,
 		    x += Z[vj][bigt];
 		}
 	    }
-	    gZ[k][s++] = x / Ti;
+	    (*gZ)[k][s++] = x / Ti;
 	}
 	k++;
     }
@@ -1014,12 +1076,10 @@ group_means_dataset (panelmod_t *pan,
     if (1) {
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
-	printdata(NULL, NULL, (const double **) gZ, ginfo, OPT_O, prn);
+	printdata(NULL, NULL, (const double **) *gZ, ginfo, OPT_O, prn);
 	gretl_print_destroy(prn);
     }
 #endif
-
-    *pgZ = gZ;
 
     return ginfo;
 }
@@ -1224,7 +1284,11 @@ static void panel_df_correction (MODEL *pmod, int k)
     int i;
 
     pmod->dfd -= k;
+#if FE_NEW
+    pmod->dfn += k;
+#else
     pmod->dfn += k - 1; 
+#endif
 
     pmod->sigma *= dfcorr;
 
@@ -1252,11 +1316,19 @@ static int print_fe_results (panelmod_t *pan,
     pputc(prn, '\n');
 
     /* print the slope coefficients, for varying regressors */
+#if FE_NEW
+    for (i=0; i<pmod->ncoeff; i++) {
+	int vi = pan->vlist[i+2];
+
+	print_panel_coeff(pmod, pdinfo->varname[vi], i, prn);
+    }
+#else
     for (i=0; i<pmod->ncoeff; i++) {
 	int vi = pan->vlist[i+3];
 
 	print_panel_coeff(pmod, pdinfo->varname[vi], i, prn);
     }
+#endif
     pputc(prn, '\n');   
 
     pprintf(prn, _("%d group means were subtracted from the data"), pan->effn);
@@ -1399,8 +1471,10 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 		gretl_list_delete_at_pos(targ->list, i--);
 	    }
 	}
+#if !FE_NEW
 	/* and remove the const */
 	gretl_list_delete_at_pos(targ->list, 2);
+#endif
     }
 
 #if PDEBUG
@@ -1430,6 +1504,11 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     fmod->tss = pan->pooled->tss;
     fmod->ifc = 1;
 
+    gretl_model_set_double(fmod, "rsq_within", fmod->rsq);
+    fmod->fstt = (fmod->rsq / (1.0 - fmod->rsq)) * 
+	((double) fmod->dfd / (fmod->ncoeff - 1));
+    gretl_model_set_double(fmod, "F_variables", fmod->fstt); /* ?? */
+
     /* should we modify R^2 in this way? */
     fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
 
@@ -1446,7 +1525,7 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 	    ((double) fmod->dfd / fmod->dfn);
     }
 
-    fmod->ncoeff = fmod->dfn + 1;
+    fmod->ncoeff = fmod->dfn + 1; /* number of params estimated */
     ls_criteria(fmod);
     fmod->ncoeff = nc;
 
@@ -1491,11 +1570,18 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 	    bigt = panel_index(i, t);
 	    if (!na(pmod->uhat[bigt])) {
 		ahi += Z[pmod->list[1]][bigt];
+#if FE_NEW
+		for (j=1; j<pmod->ncoeff; j++) {
+		    ahi -= pmod->coeff[j] * Z[pmod->list[j+2]][bigt];
+		}
+#else
 		for (j=0; j<pmod->ncoeff; j++) {
 		    ahi -= pmod->coeff[j] * Z[pmod->list[j+2]][bigt];
 		}
+#endif
 	    }
 	}
+
 	ahi /= Ti;
 
 	for (t=0; t<pan->T; t++) {
@@ -1644,7 +1730,11 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 
     gretl_model_init(&femod);
 
+#if FE_NEW
+    felist = gretl_list_new(pan->vlist[0]); 
+#else
     felist = gretl_list_new(pan->vlist[0] - 1);
+#endif
     if (felist == NULL) {
 	femod.errcode = E_ALLOC;
 	return femod;
@@ -1657,9 +1747,17 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	return femod;
     } 
 
+#if FE_NEW
+    felist[1] = 1;
+    felist[2] = 0;
+    for (i=3; i<=felist[0]; i++) {
+	felist[i] = i - 1;
+    }
+#else
     for (i=1; i<=felist[0]; i++) {
 	felist[i] = i;
     }
+#endif
 
     femod = lsq(felist, &wZ, winfo, OLS, lsqopt);
 
@@ -1672,7 +1770,11 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
     } else {
 	/* we estimated a bunch of group means, and have to
 	   subtract degrees of freedom */
+#if FE_NEW
+	panel_df_correction(&femod, pan->N_fe - 1);
+#else
 	panel_df_correction(&femod, pan->N_fe);
+#endif
 #if PDEBUG > 1
 	verbose_femod_print(&femod, wZ, winfo, prn);
 #endif
@@ -1857,9 +1959,15 @@ static int within_variance (panelmod_t *pan,
 	}
 
 	if (pan->bdiff != NULL && pan->sigma != NULL) {
+#if FE_NEW
+	    for (i=1; i<femod.ncoeff; i++) {
+		pan->bdiff[i-1] = femod.coeff[i];
+	    }
+#else
 	    for (i=0; i<femod.ncoeff; i++) {
 		pan->bdiff[i] = femod.coeff[i];
 	    }
+#endif
 	    femod_regular_vcv(&femod);
 	    pan->sigma_e = femod.sigma;
 	    vcv_slopes(pan, &femod, VCV_INIT);
@@ -2032,7 +2140,7 @@ static int random_effects (panelmod_t *pan,
 	int *biglist = gretl_list_add(relist, hlist, &err);
 
 	if (!err) {
-	    remod = lsq(biglist, &reZ, reinfo, OLS, lsqopt);
+	    remod = lsq(biglist, &reZ, reinfo, OLS, OPT_A);
 	    if (remod.errcode == 0) {
 		URSS = remod.ess;
 	    }
@@ -2425,7 +2533,6 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    err = E_ALLOC;
 	} else {
 	    err = between_variance(&pan, &gZ, ginfo);
-	    fprintf(stderr, "between_variance: err = %d\n", err);
 	}
 
 	if (err) { 
@@ -2549,7 +2656,9 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     }
 }
 
-#define estimator_specified(o) (o & (OPT_U|OPT_B|OPT_P))
+/* fixed effects | random effects | between | pooled */
+
+#define estimator_specified(o) (o & (OPT_F|OPT_U|OPT_B|OPT_P))
 
 /* real_panel_model:
  * @list: list containing model specification.

@@ -47,6 +47,8 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 
 #define XDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : GRETL_DIGITS)
 
+#define FDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : 5)
+
 #define ordered_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
                            gretl_model_get_int(m, "ordered"))
 
@@ -250,6 +252,7 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     };
     int ridx = 0;
     int adjr2 = 1;
+    int fdig;
 
     if (na(pmod->rsq)) {
 	return;
@@ -267,18 +270,19 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	ridx = 1;
     }
 
+    fdig = FDIGITS(pmod);
+
     if (plain_format(prn)) { 
-	pprintf(prn, "  %s = %.*g\n", _(plainrsq[ridx]), 
-		XDIGITS(pmod), pmod->rsq);
+	pprintf(prn, "  %s = %.*f\n", _(plainrsq[ridx]), fdig, pmod->rsq);
 	if (adjr2) {
-	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
-		    XDIGITS(pmod), pmod->adjrsq);
+	    pprintf(prn, "  %s = %.*f\n", _("Adjusted R-squared"),  
+		    fdig, pmod->adjrsq);
 	}
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_(rtfrsq[ridx]), pmod->rsq);
+	pprintf(prn, RTFTAB "%s = %.*f\n", I_(rtfrsq[ridx]), fdig, pmod->rsq);
 	if (adjr2) {
-	    pprintf(prn, RTFTAB "%s = %g\n", I_("Adjusted R{\\super 2}"),  
-		    pmod->adjrsq);
+	    pprintf(prn, RTFTAB "%s = %.*f\n", I_("Adjusted R{\\super 2}"),  
+		    fdig, pmod->adjrsq);
 	}	
     } else if (tex_format(prn)) {  
 	char r2[32];
@@ -290,13 +294,22 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
 	}
     } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_(plainrsq[ridx]), 
+	pprintf(prn, "\"%s\"%c%.15f\n", I_(plainrsq[ridx]), 
 		prn_delim(prn), pmod->rsq);
 	if (adjr2) {
-	    pprintf(prn, "\"%s\"%c%.15g\n", I_("Adjusted R-squared"),  
+	    pprintf(prn, "\"%s\"%c%.15f\n", I_("Adjusted R-squared"),  
 		    prn_delim(prn), pmod->adjrsq);
 	}
     }	
+
+    if (plain_format(prn) && pmod->ci == PANEL) {
+	double wr2 = gretl_model_get_double(pmod, "rsq_within");
+
+	if (!na(wr2)) {
+	    pprintf(prn, "  %s = %.*f\n", _("Within R-squared"), 
+		    fdig, wr2);
+	}
+    }
 }
 
 static void pseudorsqline (const MODEL *pmod, PRN *prn)
