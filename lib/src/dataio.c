@@ -2069,23 +2069,23 @@ static int count_add_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo)
     return addvars;
 }
 
-static int compare_ranges (const DATAINFO *pdinfo,
-			   const DATAINFO *addinfo,
+static int compare_ranges (const DATAINFO *targ,
+			   const DATAINFO *src,
 			   int *offset)
 {
     int ed0, sd1, ed1;
     int addobs = -1;
 
-    ed0 = dateton(pdinfo->endobs, pdinfo);
-    sd1 = merge_dateton(addinfo->stobs, pdinfo);
-    ed1 = merge_dateton(addinfo->endobs, pdinfo);
+    ed0 = dateton(targ->endobs, targ);
+    sd1 = merge_dateton(src->stobs, targ);
+    ed1 = merge_dateton(src->endobs, targ);
 
-#if 1
+#if 0
     fprintf(stderr, "compare_ranges:\n"
-	    " pdinfo->n = %d, addinfo->n = %d\n"
-	    " pdinfo->stobs = '%s', addinfo->stobs = '%s'\n" 
+	    " targ->n = %d, src->n = %d\n"
+	    " targ->stobs = '%s', src->stobs = '%s'\n" 
 	    " sd1 = %d, ed1 = %d\n",
-	    pdinfo->n, addinfo->n, pdinfo->stobs, addinfo->stobs,
+	    targ->n, src->n, targ->stobs, src->stobs,
 	    sd1, ed1);
 #endif
 
@@ -2112,7 +2112,7 @@ static int compare_ranges (const DATAINFO *pdinfo,
     } else if (sd1 == ed0 + 1) {
 	/* case: new data start right after end of old */
 	*offset = sd1;
-	addobs = addinfo->n;
+	addobs = src->n;
     } else if (sd1 > 0) {
 	/* case: new data start later than old */
 	if (sd1 <= ed0) {
@@ -2203,6 +2203,33 @@ static int panel_append_special (int addvars,
     return err;
 }
 
+static int 
+just_append_rows (const DATAINFO *targ, const DATAINFO *src,
+		  int *offset)
+{
+    if (targ->structure == CROSS_SECTION &&
+	src->structure == CROSS_SECTION &&
+	targ->markers == 0 &&
+	src->markers == 0) {
+	*offset = targ->n;
+	return src->n;
+    } else {
+	return 0;
+    }
+}
+
+static int add_ts_ok (const DATAINFO *targ, const DATAINFO *src)
+{
+    int ret = 0;
+
+    if (src->pd == 1 && src->structure == CROSS_SECTION &&
+	src->n == targ->n) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 /**
  * merge_data:
  * @pZ: pointer to data set.
@@ -2232,10 +2259,9 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 
     /* first check for conformability */
 
-    if (addinfo->pd == 1 && addinfo->structure == CROSS_SECTION &&
-	addinfo->n == pdinfo->n) {
-	/* we'll allow undated data to be merged with dated, provided
-	   the number of observations matches OK */
+    if (dataset_is_time_series(pdinfo) && add_ts_ok(pdinfo, addinfo)) {
+	/* we'll allow undated data to be merged with dated, sideways,
+	   provided the number of observations matches OK */
 	addsimple = 1;
     } else if (dataset_is_panel(pdinfo) && 
 	       panel_expand_ok(pdinfo, addinfo, opt)) {
@@ -2252,6 +2278,9 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	    addobs = compare_ranges(pdinfo, addinfo, &offset);
 	}
 	addvars = count_add_vars(pdinfo, addinfo);
+	if (addobs <= 0 && addvars == 0) {
+	    addobs = just_append_rows(pdinfo, addinfo, &offset);
+	}
     }
 
     if (!err && (addobs < 0 || addvars < 0)) {
@@ -2267,6 +2296,11 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	    dataset_destroy_obs_markers(addinfo);
 	}
     }
+
+#if 0
+    fprintf(stderr, "merge_data: addvars = %d, addobs = %d\n",
+	    addvars, addobs);
+#endif
 
     /* if checks are passed, try merging the data */
 
