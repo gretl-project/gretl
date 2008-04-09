@@ -708,10 +708,11 @@ static int *real_varying_list (panelmod_t *pan)
     return vlist;
 }
 
-/* with FE_NEW we follow stata's approach for fixed effects: we
+/* With FE_NEW we follow stata's approach for fixed effects: we
    subtract the groups means but add back in the grand means, for
-   each variable. That way, we estimate an "average" constant
-   and get its standard error */
+   each variable. That way, we can estimate an "average" constant
+   and get its standard error.
+*/
 
 #define FE_NEW 1
 

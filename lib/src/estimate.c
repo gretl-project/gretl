@@ -2981,7 +2981,6 @@ MODEL ar_func (const int *list, double ***pZ,
 	    ar.errcode = err;
 	} else {
 	    ar = ar1_lsq(reglist, pZ, pdinfo, AR1, OPT_NONE, xx);
-	    printmodel(&ar, pdinfo, opt, prn); 
 	}
 	goto bailout;
     }

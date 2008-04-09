@@ -1572,16 +1572,18 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
     return ret;
 }
 
-/* if we find a semicolon without a preceding space, insert a space so
-   that we can count the fields in the line correctly */
+/* if we find a semicolon without a preceding or following space,
+   insert a space so that we can count the fields in the line
+   correctly */
 
-static int fix_semicolon_after_var (char *s)
+static int fix_semicolon_separation (char *s)
 {
     int len = strlen(s);
     int i, j;
 
     for (i=0; i<len-1; i++) {
-	if (s[i] != ' ' && s[i+1] == ';') {
+	if ((s[i] != ' ' && s[i+1] == ';') ||
+	    (s[i] == ';' && s[i+1] && s[i+1] != ' ')) {
 	    if (len < MAXLINE - 1) {
 		for (j=len; j>i+1; j--) {
 		    s[j] = s[j-1];
@@ -1592,7 +1594,7 @@ static int fix_semicolon_after_var (char *s)
 	    } else {
 		break;
 	    }
-	}
+	} 
     }
 
     return len;
@@ -2212,8 +2214,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	arma_maybe_rewrite(line, cmd);
     }
 
-    /* fix lines that contain a semicolon right after a var */
-    linelen = fix_semicolon_after_var(line);
+    /* fix lines that contain a semicolon stuck to another element */
+    linelen = fix_semicolon_separation(line);
 
     /* arbond special: if there's a block-diagonal instruments
        portion to the command, grab that in literal form for
@@ -4165,7 +4167,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
 				    cmd->opt, prn);
-	}	    
+	}
 	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 
