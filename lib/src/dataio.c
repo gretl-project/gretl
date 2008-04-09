@@ -2209,8 +2209,8 @@ just_append_rows (const DATAINFO *targ, const DATAINFO *src,
 {
     if (targ->structure == CROSS_SECTION &&
 	src->structure == CROSS_SECTION &&
-	targ->markers == 0 &&
-	src->markers == 0) {
+	targ->markers == 0 && src->markers == 0 &&
+	targ->sd0 == 1 && src->sd0 == 1) {
 	*offset = targ->n;
 	return src->n;
     } else {
