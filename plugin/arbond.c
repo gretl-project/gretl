@@ -1864,11 +1864,24 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     return err;
 }
 
-static void arbond_make_dy_and_X (arbond *ab, const double *y,
-				  const double **Z)
+static int arbond_make_dy_and_X (arbond *ab, const double *y,
+				 const double **Z, 
+				 const DATAINFO *pdinfo)
 {
     int i, j, s, t, k = 0;
+    double *ody = NULL;
     double x;
+
+    if (ab->opt & OPT_H) {
+	ody = malloc(pdinfo->n * sizeof *ody);
+	if (ody == NULL) {
+	    return E_ALLOC;
+	}
+	for (t=0; t<pdinfo->n; t++) {
+	    ody[t] = 0.0;
+	}
+	orthdev_series(y, ody, pdinfo);
+    }
 
     for (i=0; i<ab->N; i++) {
 	if (skip_unit(ab, i)) {
@@ -1880,10 +1893,18 @@ static void arbond_make_dy_and_X (arbond *ab, const double *y,
 	    }
 	    s = data_index(ab, i) + t;
 	    /* current difference of dependent var */
-	    gretl_vector_set(ab->dy, k, y[s] - y[s-1]);
+	    if (ody != NULL) {
+		gretl_vector_set(ab->dy, k, ody[s]);
+	    } else {
+		gretl_vector_set(ab->dy, k, y[s] - y[s-1]);
+	    }
 	    for (j=0; j<ab->p; j++) {
 		/* lagged difference of dependent var */
-		gretl_matrix_set(ab->dX, k, j, y[s-j-1] - y[s-j-2]);
+		if (ody != NULL) {
+		    gretl_matrix_set(ab->dX, k, j, ody[s-j-1]);
+		} else {
+		    gretl_matrix_set(ab->dX, k, j, y[s-j-1] - y[s-j-2]);
+		}
 	    }
 	    for (j=0; j<ab->nx; j++) {
 		/* independent vars */
@@ -1899,10 +1920,16 @@ static void arbond_make_dy_and_X (arbond *ab, const double *y,
 	}
     }
 
+    if (ody != NULL) {
+	free(ody);
+    }
+
 #if ADEBUG
     gretl_matrix_print(ab->dy, "dy");
     gretl_matrix_print(ab->dX, "X");
 #endif
+
+    return 0;
 }
 
 static int arbond_make_Z_and_A (arbond *ab, const double *y,
@@ -2178,19 +2205,23 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     /* build the differenced vector \bar{y} plus the
        X matrix
     */
-    arbond_make_dy_and_X(&ab, X[ab.yno], X);
+    err = arbond_make_dy_and_X(&ab, X[ab.yno], X, pdinfo);
 
     /* build instrument matrix blocks, Z_i, and insert into
        big Z' matrix; cumulate first-stage A_N as we go */
-    err = arbond_make_Z_and_A(&ab, X[ab.yno], X);
+    if (!err) {
+	err = arbond_make_Z_and_A(&ab, X[ab.yno], X);
+    }
 
     /* invert A_N: we back up ab.A in case inversion fails */
-    gretl_matrix_copy_values(ab.Acpy, ab.A);
-    err = gretl_invert_symmetric_matrix(ab.A);
-    if (err) {
-	fprintf(stderr, "inverting ab.A failed on first pass\n");
-	/* failed: try again, reducing A based on its rank */
-	err = try_alt_inverse(&ab);
+    if (!err) {
+	gretl_matrix_copy_values(ab.Acpy, ab.A);
+	err = gretl_invert_symmetric_matrix(ab.A);
+	if (err) {
+	    fprintf(stderr, "inverting ab.A failed on first pass\n");
+	    /* failed: try again, reducing A based on its rank */
+	    err = try_alt_inverse(&ab);
+	}
     }
 
 #if ADEBUG

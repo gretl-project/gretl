@@ -84,6 +84,7 @@ struct gretl_option gretl_opts[] = {
     { APPEND,   OPT_T, "time-series" },
     { ARBOND,   OPT_A, "asymptotic" },
     { ARBOND,   OPT_D, "time-dummies" },
+    { ARBOND,   OPT_H, "orthdev" },
     { ARBOND,   OPT_T, "two-step" },
     { ARMA,     OPT_C, "conditional" },
     { ARMA,     OPT_H, "hessian" },
