@@ -3367,7 +3367,9 @@ int panel_autocorr_test (MODEL *pmod, int order,
 
     /* create temporary reduced dataset */
     tmpinfo = create_auxiliary_dataset(&tmpZ, nv, nobs);
-    if (tmpinfo == NULL) return E_ALLOC;
+    if (tmpinfo == NULL) {
+	return E_ALLOC;
+    }
 
     make_reduced_data_info(tmpinfo, pdinfo, order);
 
@@ -3434,6 +3436,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 	gretl_model_set_int(&aux, "BG_order", order);
 	printmodel(&aux, tmpinfo, OPT_NONE, prn);
 	trsq = aux.rsq * aux.nobs;
+	/* FIXME LMF */
 	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 
 	pval = snedecor_cdf_comp(order, dfd, LMF);
 

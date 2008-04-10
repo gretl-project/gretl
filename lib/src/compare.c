@@ -1683,7 +1683,11 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     if (dataset_is_panel(pdinfo)) {
+#if 1
+	return E_NOTIMP;
+#else
 	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
+#endif
     }
 
     /* impose original sample range */

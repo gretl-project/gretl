@@ -3938,11 +3938,12 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     if (ok && !dataset_is_time_series(pdinfo)) {
 	/* time-series-only tests */
 	if (ci == CHOW || ci == CUSUM || ci == QLRTEST || 
-	    (ci == LMTEST && (opt & OPT_H))) {
+	    (ci == LMTEST && (opt & (OPT_H | OPT_A)))) {
 	    ok = 0;
 	}
     }
 
+#if 0
     if (ok && !dataset_is_time_series(pdinfo) &&
 	!dataset_is_panel(pdinfo)) {
 	/* time-series or panel tests */
@@ -3950,6 +3951,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	    ok = 0;
 	}
     }
+#endif
 
     if (ok && !dataset_is_panel(pdinfo)) {
 	/* panel-only tests */
