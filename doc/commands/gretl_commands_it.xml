@@ -253,16 +253,43 @@
       <arguments>
         <argument>file-dati</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--time-series</flag>
+	  <effect>si veda oltre</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
       <para>
-       Apre un file di dati e aggiunge il suo contenuto al dataset
-       corrente, se i nuovi dati sono compatibili. Il programma cerca
-       di riconoscere il formato del file di dati (interno, testo semplice,
-       CSV, Gnumeric, Excel, ecc.).
+        Apre un file di dati e aggiunge il suo contenuto al dataset
+        corrente, se i nuovi dati sono compatibili. Il programma cerca
+        di riconoscere il formato del file di dati (interno, testo semplice,
+        CSV, Gnumeric, Excel, ecc.).
       </para>
-
+      <para>
+	I dati aggiunti possono avere la forma di osservazioni aggiuntive su
+        variabili già presenti nel dataset, o di nuove variabili. In
+        quest'ultimo caso occorre che il numero delle nuove osservazioni sia
+        pari a quello delle osservazioni presenti nel dataset, oppure che i
+        nuovi dati includano informazioni precise sulle osservazioni in modo che
+        gretl possa capire come aggiungere i valori.
+      </para>
+      <para>
+	Nel caso di aggiunta di dati a un dataset panel, c'è una possibilità
+        speciale. Detti <math>n</math> il numero di unità cross-section, 
+	<math>T</math> il numero di periodi temporali, e <math>m</math> il
+        numero di nuove osservazioni da aggiungere. Se <math>m = n</math> i nuovi
+        dati saranno considerati invarianti nel tempo, e saranno copiati per
+        ognuno dei periodi temporali. D'altra parte, se <math>m = T</math> i dati
+        saranno trattati come invarianti tra le unità. Se il panel è
+	<quote>quadrato</quote>, ed <math>m</math> è pari sia ad <math>n</math>
+        che a <math>T</math>, il comportamento predefinito consiste nel trattare
+        i nuovi casi come invarianti nel tempo, ma è possibile forzare
+        l'interpretazione dei nuovi dati come serie storiche usando l'opzione
+	<lit>--time-series</lit> (che verrà ignorata in tutti gli altri casi).
+      </para>
     </description>
 
     <gui-access>
@@ -324,6 +351,74 @@
 
     <gui-access>
       <menu-path>/Modello/Serie storiche/AR - Stima autoregressiva</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="ar1" section="Estimation" label="Stima AR(1)">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--hilu</flag>
+	  <effect>usa la procedura di Hildreth&ndash;Lu</effect>
+	</option>
+	<option>
+	  <flag>--pwe</flag>
+	  <effect>usa lo stimatore di Prais&ndash;Winsten</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--no-corc</flag>
+	  <effect>non affinare i risultati con Cochrane-Orcutt</effect>
+	</option>
+      </options>
+      <examples>
+        <example>ar1 1 0 2 4 6 7</example>
+	<example>ar1 y 0 xlist --hilu --no-corc</example>
+	<example>ar1 y 0 xlist --pwe</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Calcola stime feasible GLS per un modello in cui il termine di errore
+        segue un processo autoregressivo del prim'ordine.
+      </para>
+      <para>
+	Il metodo predefinito è la procedura iterativa di Cochrane&ndash;Orcutt
+        (si veda ad esempio il capitolo 9.4 di Ramanathan, 2002). La procedura
+        termina quando le stime successive del coefficiente di
+        autocorrelazione non differiscono per più di 0.001, oppure dopo 20 iterazioni.
+      </para>
+      <para>
+	Se si usa l'opzione <lit>--hilu</lit>, verrà usata la procedura di ricerca
+        di Hildreth&ndash;Lu.  I risultati sono quindi ottimizzati con la
+        procedura iterativa di Cochrane&ndash;Orcutt, a meno che non si usi
+        l'opzione <lit>--no-corc</lit> (che viene ignorata se non viene
+        specificata <lit>--hilu</lit>).
+      </para>
+      <para>
+        Se si usa l'opzione <lit>--pwe</lit>, viene usato lo stimatore di
+        Prais&ndash;Winsten, che prevede una procedura simile a quella di
+        Cochrane&ndash;Orcutt; la differenza è che mentre Cochrane&ndash;Orcutt
+        tralascia la prima osservazione, Prais&ndash;Winsten ne fa uso.  Per i
+        dettagli, si veda per esempio il capitolo 13 di <book>Econometric
+        Analysis</book> (2000) di Greene.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Serie storiche/Cochrane-Orcutt</menu-path>
+      <menu-path>/Modello/Serie storiche/Hildreth-Lu</menu-path>
+      <menu-path>/Modello/Serie storiche/Prais-Winsten</menu-path>
     </gui-access>
 
   </command>
@@ -1210,6 +1305,29 @@
     </description>
   </command>
 
+  <command name="controlled" section="Graphs" context="gui"
+    label="Grafici a dispersione con controllo">
+
+    <description>
+      <para>
+        Questo comando richiede la scelta di tre variabili, una per l'asse X,
+        una per l'asse Y e una variabile di controllo (chiamata Z). Il grafico
+        mostra le variabili X e Y controllate per la variabile Z, ossia i
+        residui della regressione OLS di ogni variabile su Z.
+      </para>
+      <para>
+	Esempio: si hanno dati sui salari, l'esperienza e il livello
+        educativo in un campione di persone e si vuole un grafico dei salari
+        rispetto all'educazione, controllando per l'esperienza. In questo caso,
+        basta selezionare i salari per l'asse Y, l'educazione per l'asse X e
+        l'esperienza come variabile di controllo: il grafico mostrerà la
+        relazione tra le due variabili <quote>depurate</quote> dall'effetto
+        dell'esperienza.
+      </para>
+    </description>
+
+  </command>
+
   <command name="copy-formats" section="Utilities" context="gui"
     label="Formati di copia">
 
@@ -1239,47 +1357,17 @@
 
   </command>
 
-  <command name="corc" section="Estimation" label="Stima Cochrane-Orcutt">
-
-    <usage>
-      <arguments>
-        <argument>variabile-dipendente</argument>
-        <argument>variabili-indipendenti</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
-	</option>
-      </options>
-      <examples>
-        <example>corc 1 0 2 4 6 7</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Calcola le stime dei parametri usando la procedura iterativa di
-        Cochrane&ndash;Orcutt (si veda il Capitolo 9.4 di Ramanathan, 2002)
-        La procedura si ferma quando le stime consecutive del coefficiente
-        di autocorrelazione differiscono per meno di 0.001, oppure dopo
-        20 iterazioni.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/Serie storiche/Cochrane-Orcutt</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="corr" section="Statistics" label="Coefficienti di correlazione" context="cli">
+  <command name="corr" section="Statistics" label="Coefficienti di correlazione">
 
     <usage>
       <arguments>
         <argument optional="true">lista-variabili</argument>
       </arguments>
       <options>
+ 	<option>
+	 <flag>--uniform</flag>
+         <effect>assicura l'uniformità del campione</effect>
+	</option>
 	<option>
 	  <flag>--spearman</flag>
 	  <effect>Rho di Spearman</effect>
@@ -1288,20 +1376,44 @@
 	  <flag>--kendall</flag>
 	  <effect>Tau di Kendall</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i ranghi</effect>
+	</option>
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
+	<example>corr ylist --uniform</example>
 	<example>corr x y --spearman</example>
       </examples>
     </usage>
 
-    <description>
+    <description context="gui">
+      <para>
+        Mostra le coppie di coefficienti di correlazione (la correlazione del
+        prodotto dei momenti di Pearson) per le variabili selezionate. Il
+        comportamento predefinito consiste nell'usare tutte le osservazioni
+        disponibili per calcolare ognuno dei coefficienti, ma attivando
+        l'opportuna casella il campione verrà limitato (se necessario) in modo
+        che per tutti i coefficienti venga usato lo stesso insieme di
+        osservazioni. Questa opzione ha effetto solo se le diverse variabili
+        contengono un numero diverso di valori mancanti.
+      </para>
+    </description>
+
+    <description context="cli">
       <para>
         Per impostazione predefinita, mostra le coppie di coefficienti di
         correlazione (la correlazione del prodotto dei momenti di Pearson)
         per le variabili date nella <repl>lista-variabili</repl>, o
         per tutte le variabili del dataset se non viene specificata alcuna
-        <repl>lista-variabili</repl>.
+        <repl>lista-variabili</repl>. Il comportamento predefinito consiste
+        nell'usare tutte le osservazioni disponibili per calcolare ognuno dei
+        coefficienti, ma se si usa l'opzione <flag>--uniform</flag> il campione
+        verrà limitato (se necessario) in modo che per tutti i coefficienti
+        venga usato lo stesso insieme di osservazioni. Questa opzione ha effetto
+        solo se le diverse variabili contengono un numero diverso di valori
+        mancanti.
       </para>
       <para>
 	Le opzioni (mutualmente esclusive) <lit>--spearman</lit> e
@@ -1310,6 +1422,11 @@
         del solito coefficiente di Pearson. Quando si usa una di queste opzioni,
         la <repl>lista-variabili</repl> deve contenere solo due variabili.
        </para>
+      <para>
+        Quando viene calcolata la correlazione di rango, si può usare l'opzione
+        <lit>--verbose</lit> per mostrare i dati originali e ordinati
+        (altrimenti questa opzione verrà ignorata).
+      </para>
     </description>
 
     <gui-access>
@@ -1537,6 +1654,7 @@
         <example>dataset expand 12</example>
         <example>dataset transpose</example>
         <example>dataset sortby x1</example>
+	<example>dataset resample 500</example>
       </examples>
     </usage>
 
@@ -1545,7 +1663,8 @@
 	Esegue varie operazioni sull'intero dataset, a seconda della
         <repl>parola-chiave</repl> usata, che può essere
 	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit>,
-	<lit>transpose</lit>, <lit>sortby</lit> o <lit>dsortby</lit>.
+	<lit>transpose</lit>, <lit>sortby</lit>, <lit>dsortby</lit> o
+        <lit>resample</lit>.
         Nota: questi comandi non sono disponibili quando
         sul dataset è definito un sotto-campione ottenuto selezionando le
         osservazioni con un criterio Booleano.
@@ -1598,6 +1717,14 @@
       <para>
        <lit>dsortby</lit>: funziona come <lit>sortby</lit> ma riordina le
        osservazioni secondo i valori decrescenti della variabile specificata.
+      </para>
+      <para>
+	<lit>resample</lit>: costruisce un nuovo dataset attraverso un
+        campionamento causale, con reimmissione, delle righe del dataset
+        corrente. È richiesto un argomento, ossia il numero di righe da
+        includere, che può essere minore, uguale o maggiore del numero di
+        osservazioni nei dati originali. Il dataset originale può essere
+        recuperato usando il comando <lit>smpl full</lit>.  
       </para>
     </description>
 
@@ -2072,7 +2199,7 @@
 
     <usage>
       <arguments>
-        <argument>nome_sistema</argument>
+        <argument>nome-sistema</argument>
         <argument>stimatore</argument>
       </arguments>
       <options>
@@ -2088,6 +2215,10 @@
          <flag>--geomean</flag>
          <effect>si veda oltre</effect>
        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle iterazioni</effect>
+	</option>
       </options>
       <examples>
         <example>estimate "Klein Model 1" method=fiml</example>
@@ -2141,6 +2272,10 @@
        graphic="syssigma2"/>
        dove i <math>k</math> indicano il numero di parametri indipendenti in
        ogni equazione.
+      </para>
+      <para>
+        Se si usa l'opzione <lit>--verbose</lit> e un metodo iterativo, vengono
+        mostrati i dettagli delle iterazioni.
       </para>
     </description>
 
@@ -2228,12 +2363,12 @@
   </command>
   
 
-  <command name="fcast" section="Prediction" label="Genera previsioni" context="cli">
+  <command name="fcast" section="Prediction" label="Genera previsioni">
 
     <usage>
       <arguments>
         <argument optional="true" >oss-iniziale oss-finale</argument>
-	<argument>var-stima</argument>
+	<argument optional="true">nome-variabile</argument>
       </arguments>
       <options>
         <option>
@@ -2243,6 +2378,14 @@
         <option>
 	  <flag>--static</flag>
 	  <effect>crea previsioni statiche</effect>
+        </option>
+        <option>
+	  <flag>--out-of-sample</flag>
+	  <effect>genera previsioni fuori dal campione</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra le previsioni</effect>
         </option>
       </options>
       <examples>
@@ -2252,60 +2395,38 @@
     </usage>
 
     <description>
-      <para>
+      <para contest="gui">
 	Deve seguire un comando di stima.  Calcola previsioni
-        per l'intervallo specificato (o per il più lungo intervallo
-        possibile, se non viene specificata alcuna <repl>oss-iniziale</repl>
-        e <repl>oss-finale</repl>) e salva i valori nella variabile
-	<repl>var-stima</repl>, che può essere stampata e rappresentata
-        graficamente o con un diagramma ASCII. Le variabili indipendenti
-        sono quelle del modello originale, non è possibile introdurre altre
-        variabili. Se viene specificato un processo di errore autoregressivo,
-	la previsione incorpora la frazione prevedibile del processo di errore.
+        per l'intervallo specificato. A seconda del tipo di modello, calcola
+        anche gli errori standard (si veda oltre).
+      </para>
+      <para context="cli">
+	Deve seguire un comando di stima.  Calcola previsioni
+        per un certo intervallo delle osservazioni. L'intervallo può essere
+        specificato indicando <repl>oss-iniziale</repl>
+        e <repl>oss-finale</repl>, oppure con l'opzione
+        <lit>--out-of-sample</lit> (in questo caso la previsione sarà per le
+        osservazioni successive a quelle su cui è stato stimato il modello); se
+        non si usa alcuna opzione, l'intervallo sarà quello attualmente
+        impostato. Se si sceglie una previsione fuori dal campione ma non sono
+        disponibili osservazioni, viene segnalato un errore. A seconda del tipo
+        di modello, calcola anche gli errori standard (si veda oltre).
+      </para>
+      <para context="cli">
+	Se l'ultimo modello stimato consiste in un'equazione singola,
+        l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto seguente:
+	i valori della previsione non sono mostrati, ma vengono salvati nel
+        dataset con il nome di variabile indicato. Se l'ultimo modello stimato è
+        un sistema di equazioni, <repl>nome-variabile</repl> ha un effetto
+        diverso, ossia seleziona una particolare varabile endogena per cui
+        effettuare la previsione (l'impostazione predefinita consiste nel
+        produrre previsioni per tutte le variabili endogene). Nel caso del
+        sistema, o se non viene specificata <repl>nome-variabile</repl>, i
+        valori della previsione possono essere recuperati usando la varaiabile
+        accessoria <lit>$fcast</lit>, mentre gli errori standard, se
+        disponibili, con <lit>$fcerr</lit>.
       </para>
       <para>
-	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
-        modelli dinamici, che comprendono un processo di errore autoregressivo,
-        o che comprendono uno o più valori ritardati della variabile dipendente
-        come regressori. Si veda <cmdref targ="fcasterr"/> per maggiori
-        dettagli.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Finestra del modello, /Analisi/Previsioni</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="fcasterr" section="Prediction" label="Previsioni con intervalli di confidenza">
-
-    <usage>
-      <arguments>
-        <argument>oss-iniziale</argument>
-        <argument>oss-finale</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--dynamic</flag>
-	  <effect>crea previsioni dinamiche</effect>
-        </option>
-        <option>
-	  <flag>--static</flag>
-	  <effect>crea previsioni statiche</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Dopo aver stimato un modello è possibile usare questo comando
-        per rappresentare i valori stimati su un intervallo di osservazioni
-	specificato, insieme agli errori standard stimati per queste previsioni
-        (a seconda del tipo di modello e dei dati disponibili)
-        e agli intervalli di confidenza al 95 per cento.</para>
-
-       <para>
 	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
         modelli dinamici, che comprendono un processo di errore autoregressivo,
         o che comprendono uno o più valori ritardati della variabile dipendente
@@ -2346,7 +2467,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Analisi/Previsioni con errori standard</menu-path>
+      <menu-path>Finestra del modello, /Analisi/Previsioni</menu-path>
     </gui-access>
 
   </command>
@@ -2589,7 +2710,7 @@
 	Crea nuove variabili, di solito per mezzo di trasformazioni di
 	variabili esistenti. Si veda anche <cmdref targ="diff"/>,
         <cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref
-	  targ="ldiff"/> e <cmdref targ="square"/> per le scorciatoie. Nel
+	  targ="ldiff"/>, <cmdref targ="sdiff"/> e <cmdref targ="square"/> per le scorciatoie. Nel
 	contesto di una formula <lit>genr</lit>, le variabili esistenti
 	devono essere referenziate per nome, non per numero
 	identificativo. La formula dev'essere una combinazione ben
@@ -3633,45 +3754,6 @@
 
   </command>
 
-  <command name="hilu" section="Estimation" label="Stima Hildreth-Lu">
-
-    <usage>
-      <arguments>
-        <argument>variabile-dipendente</argument>
-        <argument>variabili-indipendenti</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
-	</option>
-        <option>
-          <flag>--no-corc</flag>
-          <effect>non affina i risultati con Cochrane-Orcutt</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>Calcola le stime dei parametri per il modello specificato
-	usando la procedura di ricerca di Hildreth&ndash;Lu. I risultati sono
-        ottimizzati con la procedura iterativa di Cochrane&ndash;Orcutt, a meno
-        che non si usi l'opzione <lit>--no-corc</lit>.
-      </para>
-      <para>
-        Questa procedura è progettata per correggere l'effetto
-        della correlazione seriale nel termine di errore. Viene mostrato
-        un grafico della somma dei quadrati degli errori per il modello
-        trasformato rispetto ai valori di &rgr; da &minus;0.99 a 0.99.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/Serie storiche/Hildreth-Lu</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="hsk" section="Estimation"
     label="Stime corrette per l'eteroschedasticità">
 
@@ -4220,6 +4302,14 @@
 	  <effect>eteroschedasticità, test di White</effect>
         </option>
         <option>
+	  <flag>--breusch-pagan</flag>
+	  <effect>eteroschedasticità, test di Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>stima robusta della varianza per Breusch&ndash;Pagan</effect>
+        </option>
+        <option>
 	  <flag>--panel</flag>
 	  <effect>eteroschedasticità, a gruppi</effect>
         </option>
@@ -4249,13 +4339,13 @@
 
     <description context="cli">
       <para>
-	Deve seguire immediatamente un comando di stima. A seconda
-        dell'opzione usata, il comando esegue uno dei test seguenti:
-        test dei moltiplicatori di Lagrange per la non-linearità (logaritmi o
-        quadrati), test di White per l'eteroschedasticità, test LMF per la
+        Deve seguire immediatamente un comando di stima. A seconda dell'opzione
+        usata, il comando esegue uno dei test seguenti: test dei moltiplicatori
+        di Lagrange per la non-linearità (logaritmi o quadrati), test di White o
+        test di Breusch&ndash;Pagan per l'eteroschedasticità, test LMF per la
         correlazione seriale (si veda Kiviet, 1986) o test per il modello ARCH
         (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
-   	<cmd>arch</cmd>). La maggior parte delle opzioni sono disponibili solo
+        <cmd>arch</cmd>). La maggior parte delle opzioni sono disponibili solo
         per modelli stimati con OLS, ma si veda oltre per alcuni dettagli
         riguardanti la stima con i minimi quadrati a due stadi.
       </para>
@@ -4265,6 +4355,12 @@
         Per impostazione predefinita, questi test sono eseguiti usando un ordine
         di ritardo pari alla periodicità dei dati, ma è possibile anche
         impostare un ordine di ritardo specifico.
+      </para>
+       <para>
+	L'opzione <lit>--robust</lit> ha effetto solo se viene scelto il test di
+	Breusch&ndash;Pagan; l'effetto è quello di usare lo stimatore robusto
+        per la varianza proposto da Koenker (1981), rendendo il test meno
+        sensibile all'ipotesi di normalità.
       </para>
       <para>
 	L'opzione <lit>--panel</lit> è disponibile solo se il modello viene
@@ -4284,10 +4380,9 @@
         (si veda <cmdref targ="tsls"/>), non è possibile usare il test LM, quindi
         gretl offre alcuni test equivalenti; in questo caso, l'opzione
         <flag>--autocorr</flag> calcola il test di Godfrey per
-        l'autocorrelazione (si veda: Review of Economics and Statistics, 1994),
-        mentre l'opzione <flag>--white</flag> produce il test HET1 di Pesaran e
-        Taylor per l'eteroschedasticità (si veda: Oxford Bulletin of Economics
-        and Statistics, 1999).
+        l'autocorrelazione (si veda Godfrey 1994),
+        mentre l'opzione <flag>--white</flag> produce il test HET1 per
+        l'eteroschedasticità (si veda Pesaran e Taylor 1999).
       </para>
     </description>
 
@@ -5190,6 +5285,12 @@
       <arguments>
         <argument>lunghezza_serie</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--preserve</flag>
+	  <effect>preserva le matrici</effect>
+        </option>
+      </options>
       <examples>
         <example>nulldata 500</example>
       </examples>
@@ -5205,6 +5306,12 @@
         dati di prova. Questo comando può essere usato insieme a
         <cmd>loop</cmd>.  Si veda anche l'opzione <quote>seed</quote> del
         comando <cmdref targ="set"/>.
+      </para>
+      <para>
+	Per impostazione predefinita, questo comando cancella tutti i dati
+        presenti nell'ambiente di lavoro di gretl. Usando l'opzione
+        <lit>--preserve</lit>, verranno mantenute tutte le matrici attualmente
+        definite.
       </para>
     </description>
 
@@ -5608,9 +5715,13 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
+        <option>
+	  <flag>--fixed-effects</flag>
+	  <effect>stima con effetti di gruppo fissi</effect>
+        </option>
  	<option>
 	  <flag>--random-effects</flag>
-	  <effect>effetti casuali invece che fissi</effect>
+	  <effect>effetti casuali o modello GLS</effect>
 	</option>
 	<option>
 	  <flag>--between</flag>
@@ -5642,14 +5753,12 @@
     <description>
       <para>
         Stima un modello panel, per impostazione predefinita usando lo stimatore
-        a effetti fissi. A seconda del numero di unità cross section e di
-        variabili indipendenti, la stima è implementata aggiungendo un insieme
-        di variabili dummy che rappresentano le unità, oppure sottraendo le
+        a effetti fissi; la stima è implementata sottraendo le
         medie di gruppo o delle unità dai dati originali.
       </para>
       <para context="cli">
         Se si usa l'opzione <lit>--random-effects</lit>, viene usato il modello
-        a effetti casuali, usando il metodo di Swamy e Arora.
+        GLS a effetti casuali, usando il metodo di Swamy e Arora.
       </para>
       <para context="cli">
         In alternativa, con l'opzione <lit>--unit-weights</lit>, il modello viene
@@ -5760,6 +5869,10 @@
         <argument>lista-variabili</argument>
       </arguments>
       <options>
+         <option>
+	  <flag>--covariance</flag>
+	  <effect>usa la matrice di covarianza</effect>
+        </option>	
         <option>
 	  <flag>--save</flag>
 	  <effect>salva le componenti principali</effect>
@@ -5771,23 +5884,42 @@
       </options>
     </usage>
 
-    <description>
-      <para>Analisi delle componenti principali. Mostra gli autovalori
-      della matrice di correlazione per le variabili nella
+    <description context="gui">
+      <para>
+        Analisi delle componenti principali. Mostra gli autovalori
+        della matrice di correlazione (o della matrice di covarianza, se si usa
+        la casella opportuna) per le variabili selezionate, insieme alla
+        proporzione della varianza comune spiegata da ogni componente. Mostra
+        anche i corrispondenti autovettori (o <quote>pesi della
+        componente</quote>).
+      </para>
+      <para>
+	Nella finestra che mostra i risultati è possibile salvare le componenti
+        principali come serie nel dataset.
+      </para> 
+    </description>
+
+    <description context="cli">
+      <para>
+        Analisi delle componenti principali. Mostra gli autovalori
+        della matrice di correlazione (o della matrice di covarianza, se si
+        usa l'opzione <flag>--covariance</flag>) per le variabili nella
 	<repl>lista-variabili</repl>, insieme alla proporzione della
         varianza comune spiegata da ogni componente. Mostra anche i
-        corrispondenti autovettori (o <quote>pesi della componente</quote>).</para>  
-
-      <para>Usando l'opzione <lit>--save</lit>, le componenti con autovalori
-      maggiori di 1.0 vengono salvati nel dataset come variabili, con i nomi
-      <lit>PC1</lit>, <lit>PC2</lit> e così via.  Queste variabili artificiali
-      sono definite come la somma del peso della componente moltiplicato per
-      <lit>Xi</lit> standardizzato, dove <lit>Xi</lit> denota la
-      <math>i</math>-esima variabile nella
-      <repl>lista-variabili</repl>.</para>
-
-      <para>Usando l'opzione <lit>--save-all</lit>, vengono salvate
-      tutte le componenti, come descritto sopra.</para> 
+        corrispondenti autovettori (o <quote>pesi della componente</quote>).
+      </para>  
+      <para>
+        Usando l'opzione <lit>--save</lit>, le componenti con autovalori
+        maggiori di 1.0 vengono salvati nel dataset come variabili, con i nomi
+        <lit>PC1</lit>, <lit>PC2</lit> e così via.  Queste variabili artificiali
+        sono definite come la somma del peso della componente moltiplicato per
+        <lit>Xi</lit> standardizzato, dove <lit>Xi</lit> denota la
+        <math>i</math>-esima variabile nella <repl>lista-variabili</repl>.
+      </para>
+      <para>
+        Usando l'opzione <lit>--save-all</lit>, vengono salvate
+        tutte le componenti, come descritto sopra.
+      </para> 
     </description>
 
     <gui-access>
@@ -6072,18 +6204,34 @@
         rispettivamente mostrano il nome di una variabile dato il suo numero
         identificativo, e una stringa data, dato un numero di osservazione.
       </para>
- 
        <code>
  	printf "Il nome della variabile %d è %s\n", i, varname(i)
  	printf "La data dell'osservazione %d è %s\n", j, date(j)
       </code>
- 
-       <para>
+      <para>
+	Se si usa un argomento matrice insieme a un formato numerico, l'intera
+        matrice verrà stampata usando per ogni elemento il formato numerico
+        indicato.
+      </para>
+      <para>
 	La lunghezza massima di una stringa di formato è di 127
         caratteri. Vengono riconosciute le sequenze di escape
 	<lit>\n</lit> (newline), <lit>\t</lit> (tab),
 	<lit>\v</lit> (tab verticale) e <lit>\\</lit> (barra inversa).
-        Per stampare un segno di percentuale, si usi <lit>%%</lit>.</para>
+        Per stampare un segno di percentuale, si usi <lit>%%</lit>.
+      </para>
+      <para>
+	Come in C, i valori numerici che fanno parte del formato (larghezza e
+        precisione) possono essere dati direttamente come numeri, come in
+	<lit>%10.4f</lit>, o come variabili. Nell'ultimo caso, si inseriscono
+        asterischi nella stringa di formato e si forniscono nell'ordine gli
+        argomenti corrispondenti. Ad esempio:
+      </para>
+      <code>
+	scalar larghezza = 12
+	scalar precisione = 6
+	printf "x = %*.*f\n", larghezza, precisione, x
+      </code>
     </description>
 
   </command>
@@ -6182,6 +6330,7 @@
 	<example>pvalue G forma scala x</example>
         <example>pvalue B bprob 10 6</example>
 	<example>pvalue P lambda x</example>
+	<example>pvalue W shape scale x</example>
       </examples>
     </usage>
 
@@ -6191,8 +6340,8 @@
         distribuzione indicata (<lit>z</lit> per la Gaussiana,
 	<lit>t</lit> per la <math>t</math> di Student, <lit>X</lit>
 	per la chi-quadro, <lit>F</lit> per la <math>F</math>,
-	<lit>G</lit> per la gamma, <lit>B</lit> per la binomiale e
-        <lit>P</lit> per la Poisson).
+	<lit>G</lit> per la gamma, <lit>B</lit> per la binomiale,
+        <lit>P</lit> per la Poisson e <lit>W</lit> for Weibull).
       </para>
       <para>
 	A seconda della distribuzione, occorre fornire le seguenti informazioni,
@@ -6203,7 +6352,8 @@
         quello di scala; per la binomiale sono richieste la probabilità di
         <quote>successo</quote> e il numero di prove; per la distribuzione di
         Poisson va indicato il parametro &lgr; (che rappresenta sia la media che
-        la varianza). Come si vede dagli esempi precedenti, gli argomenti
+        la varianza); per la distribuzione Weibull, i parametri di forma e scala.
+        Come si vede dagli esempi precedenti, gli argomenti
         numerici possono essere indicati sotto forma di numero o come nomi di
         variabili.
       </para>
@@ -6219,43 +6369,6 @@
 
     <gui-access>
       <menu-path>/Strumenti/Calcola p-value</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="pwe" section="Estimation" label="Stimatore di Prais-Winsten">
-
-    <usage>
-      <arguments>
-        <argument>variabile-dipendente</argument>
-        <argument>variabili-indipendenti</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
-	</option>
-      </options>
-      <examples>
-        <example>pwe 1 0 2 4 6 7</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Calcola le stime dei parametri usando la procedura
-        Prais&ndash;Winsten, un'implementazione GLS sviluppata per
-        gestire l'autocorrelazione del primo ordine nel termine di
-        errore. La procedura viene iterata, così come in <cmdref
-        targ="corc"/>; la differenza è che mentre Cochrane&ndash;Orcutt
-        tralascia la prima osservazione, Prais&ndash;Winsten ne fa uso.
-        Per i dettagli, si veda per esempio il capitolo 13 di
-        <book>Econometric Analysis</book> (2000) di Greene.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/Serie storiche/PWE - Prais-Winsten</menu-path>
     </gui-access>
 
   </command>
@@ -6680,6 +6793,10 @@
          <flag>--difference</flag>
          <effect>usa la differenza prima della variabile</effect>
        </option>
+	<option>
+	  <flag>--equal</flag>
+	  <effect>i valori positivi e negativi sono equiprobabili</effect>
+	</option>
       </options>
     </usage>
 
@@ -6701,6 +6818,13 @@
        prima dell'analisi, quindi le successioni sono interpretabili come
        sequenze di incrementi o decrementi consecutivi nel valore della
        variabile.
+      </para>
+      <para>
+        Se si usa l'opzione <lit>--equal</lit>, l'ipotesi nulla incorpora
+        l'assunzione che i valori positivi e negativi siano equiprobabili,
+        altrimenti la statistica test è invariante rispetto
+        all'<quote>equilibrio</quote> del processo che genera la sequenza,
+        focalizzandosi solo sull'indipendenza.
       </para>
     </description>
 
@@ -7687,9 +7811,6 @@
 	sprintf variabile "%g", x
 	print "variabile ha il valore @variabile"
       </code>
-      <para>
-	Si veda anche <cmdref targ="string"/>.
-      </para>
     </description>
 
   </command>
@@ -7937,59 +8058,6 @@
 
   </command>
 
-  <command name="string" section="Utilities" label="Definisce una stringa" context="cli">
-    
-    <usage>
-      <arguments>
-        <argument>var-stringa</argument>
-	<argpunct>= </argpunct>
-	<argument>espressione</argument>
-      </arguments>
-      <examples>
-	<example>string pvalue = "P-value: "</example>
-	<example>string homedir = getenv("HOME")</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Salva una stringa chiamata <repl>var-stringa</repl>.
-	L'<repl>espressione</repl> può avere le forme seguenti: la parola chiave
-        <repl>null</repl> per creare una stringa vuota; una stringa
-        letterale, racchiusa tra virgolette doppie; una serie di stringhe di
-        questo tipo, separate da spazi (le stringhe verranno concatenate);
-        una chiamata alla funzione <lit>getenv</lit> per recuperare
-        una stringa dall'ambiente del programma; una chiamata alla funzione 
-        <lit>argname</lit>; oppure una chiamata per catturare l'output di un
-        comando shell.
-      </para>
-      <para>
-	La funzione <lit>argname</lit> è pensata per essere usata negli script
-        che contengono funzioni definite dall'utente: richiede come singolo
-        argomento il nome di una variabile all'interno di una funzione, e
-        produce il nome che quella variabile ha nello script che ha chiamato la
-        funzione.
-      </para>
-      <para>
-	Per catturare l'output di un comando shell, si può usare la forma
-	<lit>$(</lit><repl>comando-shell</repl><lit>)</lit>, ossia il comando
-        è racchiuso tra parentesi precedute dal carattere dollaro. Questa
-        funzione è attiva solo se in gretl sono stati abilitati i comandi shell.
-      </para>
-      <para>
-	Dopo aver definito una variabile stringa in questo modo, è possibile
-        stamparla usando il suo nome preceduto da <lit>@</lit>, come in
-      </para>
-      <code>
-	print "stringa = @stringa"
-      </code>
-      <para>
-	Si veda anche <cmdref targ="printf"/> e <cmdref targ="sprintf"/>.
-      </para>
-    </description>
-
-  </command>
-
   <command name="summary" section="Statistics" label="Statistiche descrittive" context="cli">
 
     <usage>
@@ -8021,19 +8089,16 @@
     <usage>
       <altforms>
 	<altform><lit>system method=</lit><repl>stimatore</repl></altform>
-	<altform><lit>system name=</lit><repl>nome_sistema</repl></altform>
+	<altform><repl>nome-sistema</repl><lit> &lt;- system</lit></altform>
       </altforms>
-      <arguments>
-        <argument>variabili-salvate</argument>
-      </arguments>
       <examples>
-	<example>system name="Klein Model 1"</example>
+	<example>"Klein Model 1" &lt;- system</example>
         <example>system method=sur</example>
-	<example>system method=sur save=resids</example>
-	<example>system method=3sls save=resids,fitted</example>
+	<example>system method=3sls</example>
 	<demos>
 	  <demo>klein.inp</demo>
 	  <demo>kmenta.inp</demo>
+	  <demo>greene14_2.inp</demo>
 	</demos>
       </examples>
     </usage>
@@ -8137,24 +8202,39 @@
           incrociata tra equazioni.
 	  </para>
 	</li>
+	<li><para><lit>$sysGamma</lit>, <lit>$sysA</lit> e <lit>$sysB</lit>: 
+          matrici dei coefficienti in forma strutturale (si veda oltre).
+	  </para>
+	</li>
       </ilist>
 
       <para context="cli">
-	Oltre a questi accessori, è possibile salvare i residui e/o i valori
-        stimati usando il campo opzionale <cmd>save=</cmd> del comando
-        <cmd>system</cmd>, come mostrato negli esempi. Queste serie vengono
-        create con nomi del tipo <lit>uhat_s01</lit> (che indica i residui della
-        prima equazione del sistema).
+        Se si vuole salvare i residui o i valori stimati per una specifica
+        equazione come serie di dati, basta selezionare la colonna dalla matrice
+	<lit>$uhat</lit> o <lit>$yhat</lit> e assegnarla a una serie, come in
+      </para>
+      <code context="cli">
+	series uh1 = $uhat[,1]
+      </code>
+
+      <para>
+	Le matrici in forma strutturale corrispondono alla seguente
+        rappresentazione di un modello ad equazioni simultanee:
+	<equation status="display"
+	  tex="\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]"
+	  ascii="Gamma y(t) = A y(t-1) + B x(t) + e(t)"
+	  graphic="structural"/> Se ci sono <math>n</math> variabili endogene e
+          <math>k</math> variabili esogene,
+	<equation status="inline"
+	  tex="$\Gamma$"
+	  ascii="Gamma"
+	  graphic="Gamma"/> è una matrice <by r="n" c="n"/> e <math>B</math> è
+	<by r="n" c="k"/>. Se il sistema non contiene ritardi delle variabili
+        endogene, la matrice <math>A</math> non è presente. Se il massimo
+        ritardo di un regressore endogeno è <math>p</math>, la matrice
+	<math>A</math> è <by r="n" c="np"/>.
        </para>
       
-      <para>Per esempi completi di specificazione e stima di un
-	sistema di equazioni, si vedano gli script
-	<filename>klein.inp</filename>,
-	<filename>kmenta.inp</filename> e
-	<filename>greene14_2.inp</filename> forniti con la
-	distribuzione di gretl.
-       </para>
-
     </description>
     
     <gui-access>
