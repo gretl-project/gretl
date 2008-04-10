@@ -2163,13 +2163,14 @@ static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn)
 {
-    int i, vi;
     bigval mean, m, sd;
+    int i, vi;
 
     if (lprn == NULL) {
 	return;
     }
 
+    pprintf(prn, _("Statistics for %d repetitions\n"), n); 
     pputs(prn, "    ");
     pputs(prn, _("   Variable     mean         std. dev.\n"));
 
@@ -2270,16 +2271,19 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
     k = 0;
 
     for (i=0; i<loop->n_cmds; i++) {
+	gretlopt opt = OPT_NONE;
+
 #if LOOP_DEBUG
 	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
 		i+1, i, loop->lines[i]);
 #endif
-	if (!loop_is_progressive(loop) && loop->ci[i] == OLS) {
-	    gretlopt opt;
 
+	if (plain_model_ci(loop->ci[i])) {
 	    strcpy(linecpy, loop->lines[i]);
 	    opt = get_gretl_options(linecpy, NULL);
-	    
+	}	    
+
+	if (!loop_is_progressive(loop) && loop->ci[i] == OLS) {
 	    if (model_print_deferred(opt)) {
 		MODEL *pmod = loop->models[j++];
 
@@ -2289,7 +2293,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	}
 
 	if (loop_is_progressive(loop)) {
-	    if (plain_model_ci(loop->ci[i])) {
+	    if (plain_model_ci(loop->ci[i]) && !(opt & OPT_Q)) {
 		print_loop_model(&loop->lmodels[j], iters, pdinfo, prn);
 		loop_model_zero(&loop->lmodels[j]);
 		j++;
@@ -2780,7 +2784,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		/* if this is the first time round, allocate space
 		   for each loop model */
 		if (loop->iter == 0) {
-		    if (loop_is_progressive(loop)) {
+		    if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
 			err = add_loop_model(loop);
 		    } else if (model_print_deferred(cmd->opt)) {
 			err = add_model_record(loop);
@@ -2791,7 +2795,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		    err = gretl_cmd_exec(s, pZ, pdinfo);
 		}
 		if (!err) {
-		    if (loop_is_progressive(loop)) {
+		    if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
 			int m = lmodnum++;
 
 			if (loop->iter == 0) {
@@ -2813,7 +2817,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			model_count_minus();
 		    } else {
 			s->models[0]->ID = ++mod_id; /* ?? */
-			printmodel(s->models[0], pdinfo, cmd->opt, prn);
+			if (!(cmd->opt & OPT_Q)) {
+			    printmodel(s->models[0], pdinfo, cmd->opt, prn);
+			}
 			set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 		    }
 		}
@@ -2836,6 +2842,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 					    pdinfo);
 		}
 	    } else if (loop_is_progressive(loop) && not_ok_in_progloop(cmd->ci)) {
+		sprintf(gretl_errmsg, _("%s: not implemented in 'progressive' loops"),
+			cmd->word);
 		err = 1;
 	    } else {
 		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
