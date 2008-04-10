@@ -631,11 +631,6 @@ static const char *selected_varname (void)
     return datainfo->varname[mdata_active_var()];
 }
 
-#define multivar_action(a) (a == CORR || \
-                            a == MAHAL || \
-                            a == PCA || \
-                            a == XTAB)
-
 static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 {
     PRN *prn;
@@ -664,11 +659,6 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	gretl_command_sprintf("mahal%s", liststr);
 	hsize = 60;
 	strcat(title, _("Mahalanobis distances"));
-	break;
-    case FREQ:
-	gretl_command_sprintf("freq %s", selected_varname());
-	strcat(title, _("frequency distribution"));
-	vsize = 340;
 	break;
     case XTAB:
 	gretl_command_sprintf("xtab %s%s", liststr, print_flags(opt, XTAB));
@@ -713,11 +703,6 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 				      OPT_NONE, prn);
 	    }
 	}	    
-	break;
-
-    case FREQ:
-	err = freqdist(libcmd.list[1], (const double **) Z, datainfo,
-		       0, OPT_NONE, prn);
 	break;
 
     case XTAB:
@@ -772,9 +757,16 @@ static int menu_op_wrapper (selector *sr)
 
 void do_menu_op (gpointer p, guint action, GtkWidget *w)
 {
-    if (action == VAR_SUMMARY || action == FREQ) {
-	/* a single-variable action */
+    if (action == VAR_SUMMARY) {
+	/* single-variable action */
 	real_do_menu_op(action, NULL, OPT_NONE);
+    } else if (action == SUMMARY || action == MAHAL) {
+	char *buf = main_window_selection_as_string();
+
+	if (buf != NULL) {
+	    real_do_menu_op(action, buf, OPT_NONE);
+	    free(buf);
+	} 
     } else {
 	gchar *title;
 
@@ -3576,14 +3568,15 @@ series_has_negative_vals (const double *x)
     return 0;
 }
 
-void do_freqplot (gpointer p, guint u, GtkWidget *w)
+void do_freq_dist (gpointer p, guint plot, GtkWidget *w)
 {
-    FreqDist *freq;
+    FreqDist *freq = NULL;
     gretlopt opt = OPT_NONE;
     int dist = D_NONE;
     int v = mdata_active_var();
     double fmin = NADBL;
     double fwid = NADBL;
+    gchar *tmp = NULL;
     int discrete = 0;
     int nbins = 0;
     int err = 0;
@@ -3620,23 +3613,26 @@ void do_freqplot (gpointer p, guint u, GtkWidget *w)
 	    return;
 	}
 
-	bintxt = g_strdup_printf(_("Frequency plot for %s (n = %d, "
-				   "range %g to %g)"), 
+	tmp = g_strdup_printf(_("range %g to %g"), xmin, xmax);
+	bintxt = g_strdup_printf(_("%s (n = %d, %s)"), 
 				 datainfo->varname[v],
-				 n, xmin, xmax);
+				 n, tmp);
+	g_free(tmp);
+	tmp = g_strdup_printf("gretl: %s", _("frequency distribution"));
 
 	if (discrete) {
 	    /* minimal dialog */
-	    err = freq_dialog("gretl: frequency plot setup", bintxt, NULL,
-			      0, NULL, NULL, xmin, xmax, &dist);
+	    err = freq_dialog(tmp, bintxt, NULL, 0, NULL, NULL, 
+			      xmin, xmax, &dist, plot);
 	} else {
 	    /* full dialog */
 	    if (n % 2 == 0) n--;
-	    err = freq_dialog("gretl: frequency plot setup", bintxt, &nbins,
-			      n, &fmin, &fwid, xmin, xmax, &dist);
+	    err = freq_dialog(tmp, bintxt, &nbins, n, &fmin, &fwid, 
+			      xmin, xmax, &dist, plot);
 	}
 
 	g_free(bintxt);
+	g_free(tmp);
 
 	if (err < 0) {
 	    /* canceled */
@@ -3659,24 +3655,33 @@ void do_freqplot (gpointer p, guint u, GtkWidget *w)
 	return;
     }
 
-    freq = get_freq(v, (const double **) Z, datainfo, fmin, fwid, nbins, 
-		    1, opt, &err);
+    freq = get_freq(v, (const double **) Z, datainfo, 
+		    fmin, fwid, nbins, 1, opt, &err);
+
+    if (plot && !err) {
+	if (opt == OPT_O && series_has_negative_vals(Z[v])) {
+	    errbox(_("Data contain negative values: gamma distribution not "
+		     "appropriate"));
+	} else {
+	    err = plot_freq(freq, dist);
+	    if (!err) {
+		register_graph();
+	    }
+	}
+    } else if (!err) {
+	PRN *prn = NULL;
+
+	if (bufopen(&prn) == 0) {
+	    tmp = g_strdup_printf("gretl: %s", _("frequency distribution"));
+	    print_freq(freq, prn);
+	    view_buffer(prn, 78, 340, tmp, FREQ, NULL);
+	    g_free(tmp);
+	}
+    }
 
     if (err) {
 	gui_errmsg(err);
 	return;
-    }
-
-    if (opt == OPT_O && series_has_negative_vals(Z[v])) {
-	errbox(_("Data contain negative values: gamma distribution not "
-		 "appropriate"));
-    } else {
-	err = plot_freq(freq, dist);
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    register_graph();
-	}
     }
 
     free_freq(freq);
@@ -4961,7 +4966,7 @@ void do_graph_var (int varnum)
 
     if (!dataset_is_time_series(datainfo) &&
 	datainfo->structure != STACKED_TIME_SERIES) {
-	do_freqplot(NULL, 0, NULL);
+	do_freq_dist(NULL, 1, NULL);
 	return;
     }
 

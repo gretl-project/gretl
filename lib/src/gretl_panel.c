@@ -551,6 +551,90 @@ static void femod_regular_vcv (MODEL *pmod)
     }
 }
 
+#if 0 /* not ready yet */
+
+/* See Cameron and Trivedi, Microeconometrics, 21.3.4 */
+
+static int panel_autocorr_1 (MODEL *pmod, const panelmod_t *pan)
+{
+    double *ubar;
+    double *ctt, *css, *cst;
+    double uit, uis, rho;
+    int i, t, ti;
+    int n = 0;
+ 
+    ubar = malloc(pan->T * sizeof *ubar);
+    ctt = malloc(pan->T * sizeof *ctt);
+    css = malloc(pan->T * sizeof *css);
+    cst = malloc(pan->T * sizeof *cst);
+
+    if (ubar == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<pan->T; t++) {
+	ubar[t] = 0.0;
+	ctt[t] = css[t] = cst[t] = 0.0;
+    }
+
+    for (i=0; i<pan->nunits; i++) {
+	if (pan->unit_obs[i] > 0) {
+	    for (t=0; t<pan->T; t++) {
+		ti = panel_index(i, t);
+		uit = pmod->uhat[ti];
+		if (!na(uit)) {
+		    ubar[t] += uit;
+		}
+	    }
+	    n++;
+	}
+    }
+
+    for (t=0; t<pan->T; t++) {
+	ubar[t] /= n;
+    }
+
+    for (i=0; i<pan->nunits; i++) {
+	if (pan->unit_obs[i] > 0) {
+	    for (t=0; t<pan->T; t++) {
+		ti = panel_index(i, t);
+		uit = pmod->uhat[ti];
+		if (t > 0) {
+		    uis = pmod->uhat[ti-1];
+		} else {
+		    uis = NADBL;
+		}
+		if (!na(uit)) {
+		    ctt[t] += (uit - ubar[t]) * (uit - ubar[t]);
+		}
+		if (!na(uis)) {
+		    css[t] += (uis - ubar[t-1]) * (uis - ubar[t-1]);
+		}
+		if (!na(uis) && !na(uit)) {
+		    cst[t] += (uis - ubar[t-1]) * (uit - ubar[t-1]);
+		}		
+	    }
+	}
+    }
+
+    for (t=1; t<pan->T; t++) {
+	ctt[t] /= (n - 1);
+	css[t] /= (n - 1);
+	cst[t] /= (n - 1);
+	rho = cst[t] / sqrt(css[t] * ctt[t]);
+	fprintf(stderr, "rho(%d) = %g\n", t, rho);
+    }
+
+    free(ubar);
+    free(ctt);
+    free(cst);
+    free(css);
+    
+    return 0;
+}
+
+#endif
+
 /* Durbin-Watson statistic for the fixed effects model.  We only
    use units that have at least two time-series observations.
 */
@@ -635,25 +719,6 @@ static int hausman_allocate (panelmod_t *pan)
 
 /* printing routines for the "panel diagnostics" test */
 
-#if 0
-
-static void print_panel_coeff (const MODEL *pmod,
- 			       const char *vname,
- 			       int i, PRN *prn)
-{
-    model_coeff mc;
-
-    model_coeff_init(&mc);
-    mc.b = pmod->coeff[i];
-    mc.se = pmod->sderr[i];
-    mc.tval = mc.b / mc.se;
-    mc.pval = student_pvalue_2(pmod->dfd, mc.tval);
-    strcpy(mc.name, vname);
-    print_coeff(&mc, prn);
-}
-
-#else
-
 static void print_panel_coeff (const MODEL *pmod,
  			       const char *vname,
  			       int i, PRN *prn)
@@ -667,8 +732,6 @@ static void print_panel_coeff (const MODEL *pmod,
     pprintf(prn, "%*s: %14.5g %15s %15s\n", VNAMELEN, vname,
  	    pmod->coeff[i], errstr, pvstr);
 }
-
-#endif
 
 static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 {
@@ -708,14 +771,6 @@ static int *real_varying_list (panelmod_t *pan)
     return vlist;
 }
 
-/* With FE_NEW we follow stata's approach for fixed effects: we
-   subtract the groups means but add back in the grand means, for
-   each variable. That way, we can estimate an "average" constant
-   and get its standard error.
-*/
-
-#define FE_NEW 1
-
 /* Construct a version of the dataset from which the group means are
    subtracted, for the "within" regression.  Nota bene: this auxiliary
    dataset is not necessarily of full length: missing observations
@@ -727,7 +782,6 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 		       double ***wZ, panelmod_t *pan)
 {
     DATAINFO *winfo = NULL;
-    double *xbar = NULL;
     int *vlist = NULL;
     int i, j, vj;
     int s, t, bigt;
@@ -752,12 +806,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 
     vlist = real_varying_list(pan);
     if (vlist == NULL) {
-	goto bailout;
-    }
-
-    xbar = malloc(vlist[0] * sizeof *xbar);
-    if (xbar == NULL) {
-	goto bailout;
+	return NULL;
     }
 
 #if PDEBUG
@@ -767,10 +816,9 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 
     winfo = create_auxiliary_dataset(wZ, pan->vlist[0], pan->NT);
     if (winfo == NULL) {
-	goto bailout;
+	free(vlist);
+	return NULL;
     }
-
-#if FE_NEW
 
     for (j=1; j<=vlist[0]; j++) {
 	double xbar, gxbar = 0.0;
@@ -821,60 +869,6 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	    (*wZ)[j][s] += gxbar;
 	}
     }
-
-#else
-
-    s = 0;
-
-    for (i=0; i<pan->nunits; i++) { 
-	int Ti = pan->unit_obs[i];
-	int got = 0;
-
-	if (Ti == 0) {
-	    continue;
-	}
-
-	/* first pass: find the group means */
-	for (j=0; j<vlist[0]; j++) {
-	    xbar[j] = 0.0;
-	}
-	for (t=0; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    if (!panel_missing(pan, bigt)) {
-		for (j=0; j<vlist[0]; j++) {
-		    vj = vlist[j+1];
-		    xbar[j] += Z[vj][bigt];
-		}
-	    }
-	}
-	for (j=0; j<vlist[0]; j++) {
-	    xbar[j] /= Ti;
-	}	
-
-	/* second pass: calculate de-meaned values */
-	for (t=0; t<pan->T && got<Ti; t++) { 
-	    bigt = panel_index(i, t);
-	    if (!panel_missing(pan, bigt)) {
-		for (j=0; j<vlist[0]; j++) {
-		    vj = vlist[j+1];
-		    (*wZ)[j+1][s] = Z[vj][bigt] - xbar[j];
-		}
-		got++;
-		if (pan->small2big != NULL) {
-		    pan->small2big[s] = bigt;
-		    pan->big2small[bigt] = s;
-		}
-		s++;
-	    }
-	}	    
-    }
-
-#endif
-
- bailout:
-
-    free(vlist);
-    free(xbar);
 
     return winfo;
 }
@@ -1285,11 +1279,7 @@ static void panel_df_correction (MODEL *pmod, int k)
     int i;
 
     pmod->dfd -= k;
-#if FE_NEW
     pmod->dfn += k;
-#else
-    pmod->dfn += k - 1; 
-#endif
 
     pmod->sigma *= dfcorr;
 
@@ -1317,19 +1307,11 @@ static int print_fe_results (panelmod_t *pan,
     pputc(prn, '\n');
 
     /* print the slope coefficients, for varying regressors */
-#if FE_NEW
     for (i=0; i<pmod->ncoeff; i++) {
 	int vi = pan->vlist[i+2];
 
 	print_panel_coeff(pmod, pdinfo->varname[vi], i, prn);
     }
-#else
-    for (i=0; i<pmod->ncoeff; i++) {
-	int vi = pan->vlist[i+3];
-
-	print_panel_coeff(pmod, pdinfo->varname[vi], i, prn);
-    }
-#endif
     pputc(prn, '\n');   
 
     pprintf(prn, _("%d group means were subtracted from the data"), pan->effn);
@@ -1472,10 +1454,6 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 		gretl_list_delete_at_pos(targ->list, i--);
 	    }
 	}
-#if !FE_NEW
-	/* and remove the const */
-	gretl_list_delete_at_pos(targ->list, 2);
-#endif
     }
 
 #if PDEBUG
@@ -1571,15 +1549,9 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 	    bigt = panel_index(i, t);
 	    if (!na(pmod->uhat[bigt])) {
 		ahi += Z[pmod->list[1]][bigt];
-#if FE_NEW
 		for (j=1; j<pmod->ncoeff; j++) {
 		    ahi -= pmod->coeff[j] * Z[pmod->list[j+2]][bigt];
 		}
-#else
-		for (j=0; j<pmod->ncoeff; j++) {
-		    ahi -= pmod->coeff[j] * Z[pmod->list[j+2]][bigt];
-		}
-#endif
 	    }
 	}
 
@@ -1731,11 +1703,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 
     gretl_model_init(&femod);
 
-#if FE_NEW
     felist = gretl_list_new(pan->vlist[0]); 
-#else
-    felist = gretl_list_new(pan->vlist[0] - 1);
-#endif
     if (felist == NULL) {
 	femod.errcode = E_ALLOC;
 	return femod;
@@ -1748,17 +1716,11 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	return femod;
     } 
 
-#if FE_NEW
     felist[1] = 1;
     felist[2] = 0;
     for (i=3; i<=felist[0]; i++) {
 	felist[i] = i - 1;
     }
-#else
-    for (i=1; i<=felist[0]; i++) {
-	felist[i] = i;
-    }
-#endif
 
     femod = lsq(felist, &wZ, winfo, OLS, lsqopt);
 
@@ -1771,11 +1733,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
     } else {
 	/* we estimated a bunch of group means, and have to
 	   subtract degrees of freedom */
-#if FE_NEW
 	panel_df_correction(&femod, pan->N_fe - 1);
-#else
-	panel_df_correction(&femod, pan->N_fe);
-#endif
 #if PDEBUG > 1
 	verbose_femod_print(&femod, wZ, winfo, prn);
 #endif
@@ -1915,6 +1873,9 @@ static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
     fe_model_add_ahat(pmod, Z, pdinfo, pan);
     set_model_id(pmod);
     panel_dwstat(pmod, pan);
+#if 0
+    panel_autocorr_1(pmod, pan);
+#endif
     save_fixed_effects_F(pan, pmod);
     time_dummies_wald_test(pan, pmod);
 
@@ -1960,15 +1921,9 @@ static int within_variance (panelmod_t *pan,
 	}
 
 	if (pan->bdiff != NULL && pan->sigma != NULL) {
-#if FE_NEW
 	    for (i=1; i<femod.ncoeff; i++) {
 		pan->bdiff[i-1] = femod.coeff[i];
 	    }
-#else
-	    for (i=0; i<femod.ncoeff; i++) {
-		pan->bdiff[i] = femod.coeff[i];
-	    }
-#endif
 	    femod_regular_vcv(&femod);
 	    pan->sigma_e = femod.sigma;
 	    vcv_slopes(pan, &femod, VCV_INIT);
@@ -4199,20 +4154,37 @@ int set_panel_structure_from_line (const char *line,
     return err;
 }
 
+static int find_time_var (const DATAINFO *pdinfo)
+{
+    const char *tnames[] = {
+	"year",
+	"Year",
+	"period",
+	"Period",
+	NULL
+    };
+    int i, v;
+
+    for (i=0; tnames[i] != NULL; i++) {
+	v = varindex(pdinfo, tnames[i]);
+	if (v < pdinfo->v && var_is_series(pdinfo, v)) {
+	    return v;
+	}
+    }
+
+    return 0;
+}
+    
 /* utility functions */
 
 int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 {
-    int ret, v = varindex(pdinfo, "year");
+    int ret, v = find_time_var(pdinfo);
 
-    if (v == pdinfo->v) {
-	v = varindex(pdinfo, "Year");
-    }
-
-    if (v == pdinfo->v) {
+    if (v == 0) {
 	ret = 0; /* can't guess */
     } else if (floateq(Z[v][0], Z[v][1])) { 
-	/* "year" is same for first two obs */
+	/* "year" or whatever is same for first two obs */
 	pdinfo->structure = STACKED_CROSS_SECTION; 
 	ret = STACKED_CROSS_SECTION;
     } else {
@@ -4421,68 +4393,6 @@ int *panel_list_add (const MODEL *orig, const int *add, int *err)
 	
     return newlist;
 } 
-
-#if 0 /* not ready */
-
-static int panel_obs_freq (FreqDist *fr, int *x, int n)
-{
-    int *ifreq = NULL, *ivals = NULL;
-    int *sorted = NULL;
-    int i, t, last;
-    int err = 0;
-
-    sorted = malloc(n * sizeof *sorted);
-    if (sorted == NULL) {
-	return E_ALLOC;
-    }
-	
-    for (t=0; t<n; t++) {
-	sorted[t] = x[t];
-    }
-	
-    qsort(sorted, n, sizeof *sorted, gretl_compare_ints); 
-    nbins = count_distinct_int_values(sorted, n);
-
-    ifreq = malloc(nbins * sizeof *ifreq);
-    ivals = malloc(nbins * sizeof *ivals);
-    if (ifreq == NULL || ivals == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    ivals[0] = last = sorted[0];
-    ifreq[0] = i = 1;
-
-    for (t=1; t<n; t++) {
-	if (sorted[t] != last) {
-	    last = sorted[t];
-	    ifreq[i] = 1;
-	    ivals[i++] = last;
-	} else {
-	    ifreq[i-1] += 1;
-	}
-    }
-
-    if (freq_add_arrays(freq, nbins)) {
-	*err = E_ALLOC;
-    } else {
-	for (k=0; k<nbins; k++) {
-	    freq->endpt[k] = freq->midpt[k] = ivals[k];
-	    freq->f[k] = ifreq[k];
-	}
-	freq->endpt[nbins] = xmax;
-    }
-
- bailout:
-
-    free(sorted);
-    free(ivals);
-    free(ifreq);
-
-    return err;
-}
-
-#endif
 
 /* calculate the within and between standard deviations for a given
    variable in a panel data set */

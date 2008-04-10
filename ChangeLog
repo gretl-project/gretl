@@ -52,6 +52,9 @@ version 1.7.5, in progress
   data directory ("dotdir") to the path searched
 - "append" command: try harder to make this do what the user
   is most likely to want
+- frequency distribution in GUI: allow choice of bin size,
+  as with frequency plot
+- fixed effects estimation: print the average constant
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

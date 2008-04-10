@@ -3529,18 +3529,24 @@ static void revise_finfo (GtkWidget *w, struct freqdist_info *f)
 
 int freq_dialog (const char *title, const char *blurb,
 		 int *nbins, int nbmax, double *f0, double *fwid,
-		 double xmin, double xmax, int *dist)
+		 double xmin, double xmax, int *dist, int plot)
 {
     const char *strs[] = {
 	N_("Number of bins:"),
 	N_("Minimum value, left bin:"),
 	N_("Bin width:")
     };
-    const char *opts[] = {
+    const char *plot_opts[] = {
 	N_("Show data only"),
 	N_("Show normal distribution"),
 	N_("Show gamma distribution")
     };
+    const char *dist_opts[] = {
+	N_("Show data only"),
+	N_("Test against normal distribution"),
+	N_("Test against gamma distribution")
+    };
+    const char **opts;
     struct freqdist_info finfo;
     GtkWidget *dialog, *rad;
     GtkWidget *tmp, *okb, *tbl;
@@ -3561,6 +3567,8 @@ int freq_dialog (const char *title, const char *blurb,
     finfo.fwid = fwid;
     finfo.xmax = xmax;
     finfo.xmin = xmin;
+
+    opts = (plot)? plot_opts : dist_opts;
 
     /* upper label */
     tmp = dialog_blurb_box(blurb);

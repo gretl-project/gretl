@@ -323,9 +323,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Time series plot"))) 
 	do_graph_var(v);
     else if (!strcmp(item, _("Frequency distribution"))) 
-	do_menu_op(NULL, FREQ, NULL);
+	do_freq_dist(NULL, 0, NULL);
     else if (!strcmp(item, _("Frequency plot"))) 
-	do_freqplot(NULL, 0, NULL);
+	do_freq_dist(NULL, 1, NULL);
     else if (!strcmp(item, _("Boxplot")))
 	do_boxplot_var(v);
     else if (!strcmp(item, _("Gini coefficient")))
