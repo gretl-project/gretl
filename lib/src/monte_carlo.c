@@ -175,7 +175,6 @@ static void controller_free (controller *clr);
 static void set_active_loop (LOOPSET *loop);
 
 #define LOOP_BLOCK 32
-#define N_LOOP_INDICES 5
 
 /* record of state, and communication of state with outside world */
 
@@ -633,14 +632,16 @@ static int parse_as_while_loop (LOOPSET *loop,
     return err;
 }
 
-static const char ichars[N_LOOP_INDICES] = "ijklm"; 
+static const char *ichars = "ijklmpqrs"; 
 
 static int loop_index_char_pos (int c)
 {
     int i;
 
-    for (i=0; i<N_LOOP_INDICES; i++) {
-	if (c == ichars[i]) return i;
+    for (i=0; ichars[i] != '\0'; i++) {
+	if (c == ichars[i]) {
+	    return i;
+	}
     }
 
     return -1;
@@ -652,8 +653,8 @@ static int bad_ichar (char c)
 
     if (loop_index_char_pos(c) < 0) {
 	sprintf(gretl_errmsg, _("The index in a 'for' loop must be a "
-				"single character in the range '%c' to '%c'"),
-		ichars[0], ichars[N_LOOP_INDICES - 1]); 
+				"single character from the set '%s'"),
+		ichars);
 	err = E_DATA;
     }
 
