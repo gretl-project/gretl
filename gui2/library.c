@@ -5504,11 +5504,20 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-    gchar *buf;
-    int sel = 0;
+    if (vwin->role == EDIT_GP) {
+	gp_send_callback(w, vwin);
+    } else if (vwin->role == EDIT_R) {
+	gchar *buf = textview_get_text(vwin->w);
 
-    buf = textview_get_selection_or_all(vwin->w, &sel);
-    real_do_run_script(vwin, buf, sel);
+	startR(buf);
+	g_free(buf);
+    } else {
+	gchar *buf;
+	int sel = 0;
+
+	buf = textview_get_selection_or_all(vwin->w, &sel);
+	real_do_run_script(vwin, buf, sel);
+    }
 }
 
 void run_script_fragment (windata_t *vwin, gchar *buf)

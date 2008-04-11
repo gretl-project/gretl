@@ -259,6 +259,9 @@ void file_save (windata_t *vwin, guint file_code, GtkWidget *widget)
     case SAVE_GP_CMDS:
 	file_selector(_("Save gnuplot commands"), file_code, FSEL_DATA_MISC, vwin);
 	break;
+    case SAVE_R_CMDS:
+	file_selector(_("Save R commands"), file_code, FSEL_DATA_MISC, vwin);
+	break;
     default:
 	dummy_call();
     }
@@ -509,8 +512,11 @@ void file_save_callback (GtkWidget *w, windata_t *vwin)
 	case VIEW_FUNC_CODE:
 	    u = SAVE_SCRIPT;
 	    break;
-	case GR_PLOT:
+	case EDIT_GP:
 	    u = SAVE_GP_CMDS;
+	    break;
+	case EDIT_R:
+	    u = SAVE_R_CMDS;
 	    break;
 	case VIEW_FILE:
 	    u = SAVE_TEXT;

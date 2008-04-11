@@ -140,16 +140,15 @@ int create_child_process (char *prog)
     return real_create_child_process(prog, 1);
 }
 
-void startR (char *Rcommand)
+void startR (const char *buf)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
-    int *list;
-    FILE *fp;
+    FILE *fp, *fq;
     int err = 0;
 
-    if (!data_status) {
+    if (buf == NULL && !data_status) {
 	warnbox(_("Please open a data file first"));
 	return;
     }
@@ -161,27 +160,46 @@ void startR (char *Rcommand)
 	return;
     }
 
-    err = ! SetEnvironmentVariable("R_PROFILE", Rprofile);
+    err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
     if (err) {
 	errbox(_("Couldn't set R_PROFILE environment variable"));
 	fclose(fp);
 	return;
-    } 	
+    } 
 
-    build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
+    if (buf != NULL) {
+	char Rtmp[MAXLEN];
+	
+	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
+	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
+	fputs("if (vnum > 2.41) library(utils)\n", fp);
 
-    sprintf(Rline, "store \"%s\" -r", Rdata);
-    list = command_list_from_string(Rline);
+	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
+	fq = fopen(Rtmp, "w");
+	if (fq != NULL) {
+	    fputs("# load script from gretl\n", fq);
+	    fputs(buf, fq);
+	    fclose(fq);
+	}
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
+	goto next_R;
+    } else {
+	int *list;
 
-    if (list == NULL ||
-	write_data(Rdata, list, (const double **) Z, datainfo, 
+	build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
+	sprintf(Rline, "store \"%s\" -r", Rdata);
+	list = command_list_from_string(Rline);
+
+	if (list == NULL ||
+	    write_data(Rdata, list, (const double **) Z, datainfo, 
 		   OPT_R, NULL)) {
-	errbox(_("Write of R data file failed"));
-	fclose(fp);
-	return; 
-    }
+	    errbox(_("Write of R data file failed"));
+	    fclose(fp);
+	    return; 
+	}
 
-    free(list);
+	free(list);
+    }
 
     if (dataset_is_time_series(datainfo)) {
 	fputs("# load data from gretl\n", fp);
@@ -191,7 +209,6 @@ void startR (char *Rcommand)
 		slash_convert(Rdata, FROM_BACKSLASH));
     } else {
 	char Rtmp[MAXLEN];
-	FILE *fq;
 
 	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
 	fq = gretl_fopen(Rtmp, "w");
@@ -208,6 +225,8 @@ void startR (char *Rcommand)
 	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
 		slash_convert(Rtmp, FROM_BACKSLASH));
     }
+
+ next_R:
 
     fclose(fp);
 

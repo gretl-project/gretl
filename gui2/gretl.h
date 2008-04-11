@@ -105,6 +105,7 @@ extern char Browser[MAXSTR];
 extern char calculator[MAXSTR];
 extern char latex[MAXSTR];
 extern char viewdvi[MAXSTR];
+extern char Rcommand[MAXSTR];
 
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
 extern char midiplayer[MAXSTR];

@@ -102,15 +102,15 @@ enum {
     SAVE_ITEM = 1,
     SAVE_AS_ITEM,
     EDIT_ITEM,
-    GP_ITEM,
     PLOT_ITEM,
-    RUN_ITEM,
+    EXEC_ITEM,
     COPY_ITEM,
     TEX_ITEM,
     ADD_DATA_ITEM,
     ADD_MATRIX_ITEM,
     MAIL_ITEM,
     HELP_ITEM,
+    CMD_HELP_ITEM,
     SORT_ITEM,
     SORT_BY_ITEM,
     FORMAT_ITEM,
@@ -1715,11 +1715,10 @@ struct viewbar_item {
 static struct viewbar_item viewbar_items[] = {
     { N_("Save"), GTK_STOCK_SAVE, view_window_save, SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, file_save_callback, SAVE_AS_ITEM },
-    { N_("Send to gnuplot"), GTK_STOCK_EXECUTE, gp_send_callback, GP_ITEM },
 #ifdef NATIVE_PRINTING
     { N_("Print..."), GTK_STOCK_PRINT, window_print_callback, 0 },
 #endif
-    { N_("Run"), GTK_STOCK_EXECUTE, do_run_script, RUN_ITEM },
+    { N_("Run"), GTK_STOCK_EXECUTE, do_run_script, EXEC_ITEM },
     { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, text_paste_callback, EDIT_ITEM },
     { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
@@ -1730,7 +1729,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, script_tabs_dialog, EDIT_SCRIPT_ITEM },
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Scripts index"), GTK_STOCK_INDEX, script_index, INDEX_ITEM },
-    { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
+    { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, CMD_HELP_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, series_view_graph, PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
@@ -1760,21 +1759,23 @@ static void set_plot_icon (struct viewbar_item *vitem)
     }
 }
 
-#define run_ok(r) (r == EDIT_SCRIPT || \
-                   r == VIEW_SCRIPT || \
-                   r == VIEW_LOG)
+#define exec_ok(r) (r == EDIT_SCRIPT || \
+                    r == EDIT_GP || \
+                    r == EDIT_R)
 
 #define edit_ok(r) (r == EDIT_SCRIPT || \
                     r == EDIT_HEADER || \
                     r == EDIT_NOTES || \
                     r == EDIT_FUNC_CODE || \
-	            r == GR_PLOT || \
-                    r == GR_BOX || \
+	            r == EDIT_GP || \
+                    r == EDIT_BOX || \
+		    r == EDIT_R || \
                     r == SCRIPT_OUT)
 
 #define save_as_ok(r) (r != EDIT_HEADER && \
 	               r != EDIT_NOTES && \
 	               r != EDIT_FUNC_CODE && \
+		       r != EDIT_BOX && \
 		       r != VIEW_SCALAR)
 
 #define help_ok(r) (r == LEVERAGE || \
@@ -1782,6 +1783,10 @@ static void set_plot_icon (struct viewbar_item *vitem)
 		    r == HURST || \
 		    r == RMPLOT || \
 		    r == MAHAL)
+
+#define cmd_help_ok(r) (r == EDIT_SCRIPT || \
+			r == VIEW_SCRIPT || \
+			r == VIEW_LOG)
 
 #define sort_ok(r)    (r == VIEW_SERIES)
 #define format_ok(r)  (r == VIEW_SERIES || r == VIEW_SCALAR)
@@ -1804,13 +1809,13 @@ static toolfunc item_get_callback (struct viewbar_item *item, windata_t *vwin,
 
     if (!edit_ok(r) && f == EDIT_ITEM) {
 	return NULL;
-    } else if (!run_ok(r) && f == RUN_ITEM) {
+    } else if (!exec_ok(r) && f == EXEC_ITEM) {
+	return NULL;
+    } else if (!cmd_help_ok(r) && f == CMD_HELP_ITEM) {
 	return NULL;
     } else if (r != EDIT_SCRIPT && f == MAIL_ITEM) {
 	return NULL;
     } else if (!help_ok(r) && f == HELP_ITEM) {
-	return NULL;
-    } else if (r != GR_PLOT && f == GP_ITEM) {
 	return NULL;
     } else if (r == VIEW_SCALAR && f == 0) {
 	return NULL;
@@ -1859,6 +1864,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 {
     GtkWidget *hbox, *button, *w;
     toolfunc func;
+    const char *tooltip;
     int sortby_ok = has_sortable_data(vwin);
     int latex_ok = latex_is_ok();
     int i;
@@ -1889,11 +1895,21 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    set_plot_icon(vitem);
 	}
 
+	tooltip = vitem->str;
+
+	if (vitem->flag == EXEC_ITEM) {
+	    if (vwin->role == EDIT_GP) {
+		tooltip = N_("Send to gnuplot");
+	    } else if (vwin->role == EDIT_R) {
+		tooltip = N_("Send to R");
+	    }
+	}
+
 	button = gtk_image_new();
 	gtk_image_set_from_stock(GTK_IMAGE(button), vitem->icon, 
 				 GTK_ICON_SIZE_MENU);
         w = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				    NULL, _(vitem->str), NULL,
+				    NULL, _(tooltip), NULL,
 				    button, G_CALLBACK(func), vwin);
 	g_object_set_data(G_OBJECT(w), "flag", 
 			  GINT_TO_POINTER(vitem->flag));
@@ -1936,7 +1952,7 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
 		gtk_widget_set_sensitive(w, FALSE);
 	    } 
 	}
-	if (vitem->flag != GP_ITEM) {
+	if (vitem->flag != EDIT_GP) {
 	    pos++;
 	}
     }
@@ -2065,9 +2081,11 @@ static gchar *make_viewer_title (int role, const char *fname)
 	break;
     case EDIT_NOTES:
 	title = g_strdup(_("gretl: session notes")); break;
-    case GR_PLOT:
-    case GR_BOX:
+    case EDIT_GP:
+    case EDIT_BOX:
 	title = g_strdup(_("gretl: edit plot commands")); break;
+    case EDIT_R:
+	title = g_strdup(_("gretl: edit R commands")); break;
     case SCRIPT_OUT:
 	title = g_strdup(_("gretl: script output")); break;
     case VIEW_DATA:
@@ -2283,7 +2301,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 #define view_file_use_sourceview(r) (r == EDIT_SCRIPT || \
                                      r == VIEW_SCRIPT || \
                                      r == VIEW_LOG || \
-                                     r == GR_PLOT)
+                                     r == EDIT_GP || \
+				     r == EDIT_R)
 
 #define doing_script(r) (r == EDIT_SCRIPT || \
 			 r == VIEW_SCRIPT || \
@@ -2335,7 +2354,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     }
 
     /* grab the "changed" signal when editing a script or graph */
-    if (role == EDIT_SCRIPT || role == GR_PLOT) {
+    if (role == EDIT_SCRIPT || role == EDIT_GP || 
+	role == EDIT_BOX || role == EDIT_R) {
 	attach_content_changed_signal(vwin);
     }
 
@@ -4080,19 +4100,18 @@ int browser_open (const char *url)
 
 #include <signal.h>
 
-void startR (const char *Rcommand)
+void startR (const char *buf)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
-    int *list;
-    FILE *fp;
+    FILE *fp, *fq;
     int enverr;
     int i;
     char *s0, *s1, *s2;
     pid_t pid;
 
-    if (!data_status) {
+    if (buf == NULL && !data_status) {
 	warnbox(_("Please open a data file first"));
 	return;
     }
@@ -4111,20 +4130,39 @@ void startR (const char *Rcommand)
 	return;
     } 	
 
-    build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
+    if (buf != NULL) {
+	char Rtmp[MAXLEN];
+	
+	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
+	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
+	fputs("if (vnum > 2.41) library(utils)\n", fp);
 
-    sprintf(Rline, "store \"%s\" -r", Rdata);
-    list = command_list_from_string(Rline);
+	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
+	fq = fopen(Rtmp, "w");
+	if (fq != NULL) {
+	    fputs("# load script from gretl\n", fq);
+	    fputs(buf, fq);
+	    fclose(fq);
+	}
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
+	goto next_R;
+    } else {
+	int *list;
 
-    if (list == NULL ||
-	write_data(Rdata, list, (const double **) Z, datainfo, 
-		   OPT_R, NULL)) {
-	errbox(_("Write of R data file failed"));
-	fclose(fp);
-	return; 
+	build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
+	sprintf(Rline, "store \"%s\" -r", Rdata);
+	list = command_list_from_string(Rline);
+
+	if (list == NULL ||
+	    write_data(Rdata, list, (const double **) Z, datainfo, 
+		       OPT_R, NULL)) {
+	    errbox(_("Write of R data file failed"));
+	    fclose(fp);
+	    return; 
+	}
+
+	free(list);
     }
-
-    free(list);
 
     if (dataset_is_time_series(datainfo)) {
 	fputs("# load data from gretl\n", fp);
@@ -4133,7 +4171,6 @@ void startR (const char *Rcommand)
 	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rdata);
     } else {
 	char Rtmp[MAXLEN];
-	FILE *fq;
 
 	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
 	fq = fopen(Rtmp, "w");
@@ -4149,12 +4186,16 @@ void startR (const char *Rcommand)
 	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
     }
 
+ next_R:
+
     fclose(fp);
 
     s0 = mymalloc(64);
     s1 = mymalloc(32);
     s2 = mymalloc(32);
-    if (s0 == NULL || s1 == NULL || s2 == NULL) return;
+    if (s0 == NULL || s1 == NULL || s2 == NULL) {
+	return;
+    }
 
     *s0 = *s1 = *s2 = '\0';
     i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);

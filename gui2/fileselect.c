@@ -88,6 +88,7 @@ static struct extmap action_map[] = {
     { SAVE_CONSOLE,      ".inp" },
     { SAVE_SESSION,      ".gretl" },
     { SAVE_GP_CMDS,      ".plt" },
+    { SAVE_R_CMDS,       ".R" },
     { SAVE_BOXPLOT_EPS,  ".eps" },
     { SAVE_BOXPLOT_PS,   ".ps" },
     { SAVE_BOXPLOT_XPM,  ".xpm" },
@@ -339,12 +340,17 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 
 static void filesel_open_script (const char *fname)
 {
-    strcpy(tryfile, fname);
-
-    if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
-	strcpy(scriptfile, tryfile);
-	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	set_currdir_from_filename(scriptfile);
+    if (has_suffix(fname, ".R")) {
+	view_file(fname, 1, 0, 78, 370, EDIT_R);
+    } else if (has_suffix(fname, ".plt")) {
+	view_file(fname, 1, 0, 78, 370, EDIT_GP);	
+    } else {
+	strcpy(tryfile, fname);
+	if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
+	    strcpy(scriptfile, tryfile);
+	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	    set_currdir_from_filename(scriptfile);
+	}
     }
 }
 
@@ -587,47 +593,48 @@ static struct winfilter get_gp_filter (int ttype)
 static struct winfilter get_filter (int action, gpointer data)
 {
     static struct win32_filtermap map[] = {
-	{ SAVE_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{ SAVE_DBDATA,  { N_("gretl database files (*.bin)"), "*.bin" }},
-	{ SAVE_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
-	{ SAVE_CONSOLE, { N_("gretl command files (*.inp)"), "*.inp" }},
-	{ SAVE_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
+	{ SAVE_DATA,        { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{ SAVE_DBDATA,      { N_("gretl database files (*.bin)"), "*.bin" }},
+	{ SAVE_SCRIPT,      { N_("gretl script files (*.inp)"), "*.inp" }},
+	{ SAVE_CONSOLE,     { N_("gretl command files (*.inp)"), "*.inp" }},
+	{ SAVE_SESSION,     { N_("session files (*.gretl)"), "*.gretl" }},
 	{ SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
 	{ SAVE_BOXPLOT_PS,  { N_("postscript files (*.ps)"), "*.ps" }},
-	{ SAVE_GP_CMDS, { N_("gnuplot files (*.plt)"), "*.plt" }},
+	{ SAVE_GP_CMDS,     { N_("gnuplot files (*.plt)"), "*.plt" }},
+	{ SAVE_R_CMDS,      { N_("GNU R files (*.R)"), "*.R" }},
 	{ SAVE_FUNCTIONS,   { N_("gretl function files (*.gfn)"), "*.gfn" }},
-	{ EXPORT_CSV,   { N_("CSV files (*.csv)"), "*.csv" }},
-	{ EXPORT_R,     { N_("GNU R files (*.R)"), "*.R" }},
-	{ EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
-	{ OPEN_OCTAVE,  { N_("GNU Octave files (*.m)"), "*.m" }},
-	{ APPEND_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
-	{ EXPORT_DAT,   { N_("PcGive files (*.dat)"), "*.dat" }},
-	{ EXPORT_JM,    { N_("JMulti files (*.dat)"), "*.dat" }},
-	{ SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
-	{ SAVE_TEX,     { N_("TeX files (*.tex)"), "*.tex" }},
-	{ SAVE_RTF,     { N_("RTF files (*.rtf)"), "*.rtf" }},
-	{ SAVE_TEXT,    { N_("ASCII files (*.txt)"), "*.txt" }},
-	{ OPEN_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
-	{ OPEN_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
-	{ OPEN_CSV,     { N_("CSV files (*.csv)"), "*.csv" }},
-	{ APPEND_CSV,   { N_("CSV files (*.csv)"), "*.csv" }},
-	{ OPEN_ASCII,   { N_("ASCII files (*.txt)"), "*.txt" }},
-	{ APPEND_ASCII, { N_("ASCII files (*.txt)"), "*.txt" }},
-	{ OPEN_GNUMERIC,   { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
-	{ APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
-	{ OPEN_EXCEL,   { N_("Excel files (*.xls)"), "*.xls" }},
-	{ APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
-	{ OPEN_WF1,     { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
-	{ APPEND_WF1,   { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
-	{ OPEN_DTA,     { N_("Stata files (*.dta)"), "*.dta" }},
-	{ APPEND_DTA,   { N_("Stata files (*.dta)"), "*.dta" }},
-	{ OPEN_JMULTI,  { N_("JMulTi files (*.dat)"), "*.dat" }},
-	{ APPEND_JMULTI,{ N_("JMulTi files (*.dat)"), "*.dat" }},
-	{ OPEN_ODS,     { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
-	{ APPEND_ODS,   { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
-	{ OPEN_RATS_DB, { N_("RATS databases (*.rat)"), "*.rat" }},
-	{ OPEN_PCGIVE_DB, { N_("PcGive data files (*.bn7)"), "*.bn7" }},
-	{ SET_PROG,     { N_("program files (*.exe)"), "*.exe" }}
+	{ EXPORT_CSV,       { N_("CSV files (*.csv)"), "*.csv" }},
+	{ EXPORT_R,         { N_("GNU R files (*.R)"), "*.R" }},
+	{ EXPORT_OCTAVE,    { N_("GNU Octave files (*.m)"), "*.m" }},
+	{ OPEN_OCTAVE,      { N_("GNU Octave files (*.m)"), "*.m" }},
+	{ APPEND_OCTAVE,    { N_("GNU Octave files (*.m)"), "*.m" }},
+	{ EXPORT_DAT,       { N_("PcGive files (*.dat)"), "*.dat" }},
+	{ EXPORT_JM,        { N_("JMulti files (*.dat)"), "*.dat" }},
+	{ SAVE_OUTPUT,      { N_("text files (*.txt)"), "*.txt" }},
+	{ SAVE_TEX,         { N_("TeX files (*.tex)"), "*.tex" }},
+	{ SAVE_RTF,         { N_("RTF files (*.rtf)"), "*.rtf" }},
+	{ SAVE_TEXT,        { N_("ASCII files (*.txt)"), "*.txt" }},
+	{ OPEN_SCRIPT,      { N_("gretl script files (*.inp)"), "*.inp" }},
+	{ OPEN_SESSION,     { N_("session files (*.gretl)"), "*.gretl" }},
+	{ OPEN_CSV,         { N_("CSV files (*.csv)"), "*.csv" }},
+	{ APPEND_CSV,       { N_("CSV files (*.csv)"), "*.csv" }},
+	{ OPEN_ASCII,       { N_("ASCII files (*.txt)"), "*.txt" }},
+	{ APPEND_ASCII,     { N_("ASCII files (*.txt)"), "*.txt" }},
+	{ OPEN_GNUMERIC,    { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
+	{ APPEND_GNUMERIC,  { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
+	{ OPEN_EXCEL,       { N_("Excel files (*.xls)"), "*.xls" }},
+	{ APPEND_EXCEL,     { N_("Excel files (*.xls)"), "*.xls" }},
+	{ OPEN_WF1,         { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
+	{ APPEND_WF1,       { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
+	{ OPEN_DTA,         { N_("Stata files (*.dta)"), "*.dta" }},
+	{ APPEND_DTA,       { N_("Stata files (*.dta)"), "*.dta" }},
+	{ OPEN_JMULTI,      { N_("JMulTi files (*.dat)"), "*.dat" }},
+	{ APPEND_JMULTI,    { N_("JMulTi files (*.dat)"), "*.dat" }},
+	{ OPEN_ODS,         { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
+	{ APPEND_ODS,       { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
+	{ OPEN_RATS_DB,     { N_("RATS databases (*.rat)"), "*.rat" }},
+	{ OPEN_PCGIVE_DB,   { N_("PcGive data files (*.bn7)"), "*.bn7" }},
+	{ SET_PROG,         { N_("program files (*.exe)"), "*.exe" }}
     };
     static struct winfilter default_filter = {
 	N_("all files (*.*)"), "*.*" 
@@ -876,10 +883,14 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 
     filter = get_file_filter(action, data);
+
     if (action == OPEN_ASCII || action == APPEND_ASCII) {
 	gtk_file_filter_set_name(filter, _("ASCII files (*.txt)"));
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
-    }
+    } else if (action == OPEN_SCRIPT) {
+	gtk_file_filter_set_name(filter, _("gretl script files (*.inp)"));
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+    }	
 
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
 
@@ -888,7 +899,16 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	gtk_file_filter_set_name(filter, _("all files (*.*)"));
 	gtk_file_filter_add_pattern(filter, "*.*");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
-    }
+    } else if (action == OPEN_SCRIPT) {
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("GNU R files (*.R)"));
+	gtk_file_filter_add_pattern(filter, "*.R");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("gnuplot files (*.plt)"));
+	gtk_file_filter_add_pattern(filter, "*.plt");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+    }    
 
     /* FIXME session dir */
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);

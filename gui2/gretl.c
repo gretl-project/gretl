@@ -62,7 +62,7 @@ static GtkWidget *make_main_window (void);
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
 static void set_up_main_menu (void);
-static void startRcallback (gpointer p, guint opt, GtkWidget *w);
+static void start_R_callback (gpointer p, guint opt, GtkWidget *w);
 static void auto_store (void);
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w);
 static void mdata_select_all (void);
@@ -312,7 +312,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/Tools/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tools/_Command log"), NULL, view_command_log, 0, NULL, GNULL },
     { N_("/Tools/_Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
-    { N_("/Tools/Start GNU _R"), NULL, startRcallback, 0, NULL, GNULL },
+    { N_("/Tools/Start GNU _R"), NULL, start_R_callback, 0, NULL, GNULL },
     { "/Tools/sep2", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tools/_Sort variables"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Tools/Sort variables/By _ID number"), NULL, sort_varlist, 0, NULL, GNULL },
@@ -1624,9 +1624,9 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
     }
 }
 
-static void startRcallback (gpointer p, guint opt, GtkWidget *w)
+static void start_R_callback (gpointer p, guint opt, GtkWidget *w)
 {
-    startR(Rcommand);
+    startR(NULL);
 }
 
 #ifndef G_OS_WIN32

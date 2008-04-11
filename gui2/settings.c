@@ -52,7 +52,6 @@ char rcfile[MAXLEN];
 #endif
 
 extern int want_toolbar;
-extern char Rcommand[MAXSTR];
 
 char dbproxy[21];
 int use_proxy;

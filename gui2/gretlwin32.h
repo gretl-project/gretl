@@ -39,7 +39,7 @@ extern int use_wimp;
 
 int create_child_process (char *prog);
 
-void startR (char *Rcommand);
+void startR (const char *buf);
 
 char *slash_convert (char *str, int which);
 

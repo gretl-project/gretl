@@ -355,10 +355,14 @@ real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
 		
     manager = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
 
-    if (vwin->role == GR_PLOT) {
+    if (vwin->role == EDIT_GP) {
 	language = 
 	    gtk_source_languages_manager_get_language_from_mime_type 
 	    (manager, "application/x-gnuplot");
+    } else if (vwin->role == EDIT_R) {
+	language = 
+	    gtk_source_languages_manager_get_language_from_mime_type 
+	    (manager, "text/x-R");
     } else {
 	language = 
 	    gtk_source_languages_manager_get_language_from_mime_type 

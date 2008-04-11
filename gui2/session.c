@@ -2572,7 +2572,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    session_file_make_path(fullname, graph->fname);
 	    remove_png_term_from_plotfile_by_name(fullname);
 	    view_file(fullname, 1, 0, 78, 400, 
-		      (obj->sort == GRETL_OBJ_GRAPH)? GR_PLOT : GR_BOX);
+		      (obj->sort == GRETL_OBJ_GRAPH)? EDIT_GP : EDIT_BOX);
 	}
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);
