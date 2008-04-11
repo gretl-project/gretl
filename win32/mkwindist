@@ -132,6 +132,8 @@ add_file ${TOPDIR}/build/gui2/gretl.lang \
   gretl/share/gtksourceview-1.0/language-specs/gretl.lang
 add_file ${TOPDIR}/gui2/gnuplot.lang \
   gretl/share/gtksourceview-1.0/language-specs/gnuplot.lang
+add_file ${TOPDIR}/gui2/R.lang \
+  gretl/share/gtksourceview-1.0/language-specs/R.lang
 
 # help files, license, logo
 add_file ${TOPDIR}/share/gretlgui.hlp gretl/gretlgui_hlp.txt

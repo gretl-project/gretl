@@ -202,6 +202,7 @@ install-lang: gretl.lang
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
 	$(INSTALL_DATA) gretl.lang $(DESTDIR)$(langdir)
 	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(DESTDIR)$(langdir)
+	$(INSTALL_DATA) $(topsrc)/gui2/R.lang $(DESTDIR)$(langdir)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir) 
