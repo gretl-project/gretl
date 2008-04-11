@@ -3695,6 +3695,31 @@
       </description>
     </function>
 
+    <function name="varname" output="string">
+      <fnargs>
+	<fnarg type="scalar">i</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns the name of the variable with ID number
+	  <argname>i</argname>, or generates an error if there is no such
+	  variable.
+	</para>
+      </description>
+    </function>
+
+    <function name="varnum" output="scalar">
+      <fnargs>
+	<fnarg type="string">varname</fnarg>
+      </fnargs>     
+      <description>
+	<para>
+	  Returns the ID number of the variable called
+	  <argname>varname</argname>, or NA is there is no such variable.
+	</para>
+      </description>
+    </function>
+
     <function name="vec" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>

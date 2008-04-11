@@ -1258,9 +1258,13 @@ static void view_window_save (GtkWidget *widget, windata_t *vwin)
 {
     if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	/* special case: a newly created script */
-	file_save(vwin, SAVE_SCRIPT, NULL);
-	strcpy(vwin->fname, scriptfile);
-	mark_content_saved(vwin);
+	if (vwin->role == EDIT_SCRIPT) {
+	    file_save(vwin, SAVE_SCRIPT, NULL);
+	} else if (vwin->role == EDIT_GP) {
+	    file_save(vwin, SAVE_GP_CMDS, NULL);
+	} else if (vwin->role == EDIT_R) {
+	    file_save(vwin, SAVE_R_CMDS, NULL);
+	}
     } else {
 	FILE *fp;
 	gchar *text;
@@ -2308,6 +2312,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 			 r == VIEW_SCRIPT || \
 			 r == VIEW_LOG)
 
+#define editing_script(r) (r == EDIT_SCRIPT || \
+	                   r == EDIT_GP || \
+                           r == EDIT_R || \
+                           r == EDIT_BOX)
+
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
 {
@@ -2353,12 +2362,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	textview_insert_file(vwin, filename);
     }
 
-    /* grab the "changed" signal when editing a script or graph */
-    if (role == EDIT_SCRIPT || role == EDIT_GP || 
-	role == EDIT_BOX || role == EDIT_R) {
-	attach_content_changed_signal(vwin);
-    }
-
     /* catch some special keystrokes */
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
@@ -2367,8 +2370,10 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
     }
 
-    /* alert for unsaved changes on exit */
-    if (role == EDIT_SCRIPT || role == GR_PLOT) {
+    /* editing script or graph: grab the "changed" signal and
+       set up alert for unsaved changes on exit */
+    if (editing_script(role)) {
+	attach_content_changed_signal(vwin);	
 	g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
     }

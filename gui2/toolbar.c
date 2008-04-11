@@ -91,7 +91,7 @@ static void go_session (void)
 
 static void new_script_callback (void)
 {
-    do_new_script(NULL, 0, NULL);
+    do_new_script(NULL, EDIT_SCRIPT, NULL);
 }
 
 static void show_funcs_callback (GtkWidget *w, gpointer p)

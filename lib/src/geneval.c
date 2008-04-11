@@ -2873,6 +2873,25 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *string_to_int_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *s = n->v.str;
+
+	if (f == F_VARNUM) {
+	    int v = varindex(p->dinfo, s);
+
+	    ret->v.xval = (v == p->dinfo->v)? NADBL : v;
+	} else {
+	    p->err = E_DATA;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *int_to_string_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -5457,6 +5476,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = int_to_string_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, NUM, l, p);
+	}
+	break;
+    case F_VARNUM:
+	if (l->t == STR) {
+	    ret = string_to_int_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, STR, l, p);
 	}
 	break;
     case F_STRSTR:

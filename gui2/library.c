@@ -5502,15 +5502,128 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     set_gretl_echo(1);
 }
 
+static void send_script_to_R (const gchar *buf)
+{
+    gchar *argv[5];
+    FILE *fp;
+    gchar *profile_fname = NULL;
+    gchar *script_fname = NULL;
+    gchar *out = NULL;
+    gchar *errout = NULL;
+    gint status = 0;
+    GError *gerr = NULL;
+
+    profile_fname = g_strdup_printf("%sgretl.Rprofile", paths.dotdir);
+    script_fname = g_strdup_printf("%sRscript.tmp", paths.dotdir);
+
+    fp = gretl_fopen(profile_fname, "w");
+    if (fp == NULL) {
+	file_write_errbox(profile_fname);
+	goto bailout;
+    }
+
+    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
+    fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
+    fputs("if (vnum > 2.41) library(utils)\n", fp);
+    fprintf(fp, "source(\"%s\", echo=TRUE)\n", script_fname);
+    fclose(fp);
+
+#ifdef G_OS_WIN32
+    status = !SetEnvironmentVariable("R_PROFILE", profile_fname);
+#else
+    status = setenv("R_PROFILE", profile_fname, 1);
+#endif
+    if (status) {
+	errbox(_("Couldn't set R_PROFILE environment variable"));
+	goto bailout;
+    } 
+
+    fp = gretl_fopen(script_fname, "w");
+    if (fp == NULL) {
+	file_write_errbox(script_fname);
+	goto bailout;
+    }
+
+    fputs("# load script from gretl\n", fp);
+    fputs(buf, fp);
+    fclose(fp);
+
+#ifdef G_OS_WIN32
+    argv[0] = "Rterm.exe"; /* ?? */
+#else
+    argv[0] = "R";
+#endif
+    argv[1] = "--no-save";
+    argv[2] = "--no-init-file";
+    argv[3] = "--no-restore-data";
+    argv[4] = NULL;
+
+#ifndef G_OS_WIN32
+    signal(SIGCHLD, SIG_DFL);
+#endif
+
+    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+		 NULL, NULL, &out, &errout,
+		 &status, &gerr);
+
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    } else if (status != 0) {
+	fprintf(stderr, "exit status = %d\n", status);
+	if (errout != NULL) {
+	    errbox(errout);
+	}
+    } else if (out != NULL) {
+	PRN *prn = gretl_print_new_with_buffer(out);
+
+	view_buffer(prn, 78, 350, _("R output"), PRINT, NULL);
+	out = NULL;
+    } else {
+	warnbox("Got no output");
+    }
+    
+    g_free(out);
+    g_free(errout);
+
+ bailout:
+
+    remove(profile_fname);
+    g_free(profile_fname);
+
+    remove(script_fname);
+    g_free(script_fname);
+}
+
+static void run_R_script (windata_t *vwin)
+{
+    gchar *buf = textview_get_text(vwin->w);
+
+    if (buf == NULL || *buf == '\0') {
+	warnbox("No input to run");
+    } else {
+	const char *opts[] = {
+	    "Non-interactive (just get output)",
+	    "Interactive R session"
+	};
+	int resp = radio_dialog("gretl: R", "R mode", opts, 2, 0, 0);
+
+	if (resp == 0) {
+	    send_script_to_R(buf);
+	} else {
+	    startR(buf);
+	}
+    }
+
+    g_free(buf);
+}
+
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == EDIT_GP) {
 	gp_send_callback(w, vwin);
     } else if (vwin->role == EDIT_R) {
-	gchar *buf = textview_get_text(vwin->w);
-
-	startR(buf);
-	g_free(buf);
+	run_R_script(vwin);
     } else {
 	gchar *buf;
 	int sel = 0;
@@ -5563,6 +5676,7 @@ void do_open_script (void)
 
 void do_new_script (gpointer p, guint u, GtkWidget *w) 
 {
+    int action = (u == FUNC)? EDIT_SCRIPT : u;
     char temp[MAXLEN];
     FILE *fp;
 
@@ -5577,8 +5691,13 @@ void do_new_script (gpointer p, guint u, GtkWidget *w)
     }
 
     fclose(fp);
-    strcpy(scriptfile, temp); /* ?? */
-    view_file(scriptfile, 1, 1, 78, 370, EDIT_SCRIPT);
+
+    if (action == EDIT_SCRIPT) {
+	strcpy(scriptfile, temp); /* ?? */
+	view_file(scriptfile, 1, 1, 78, 370, action);
+    } else {
+	view_file(temp, 1, 1, 78, 370, action);
+    }
 }
 
 void maybe_display_string_table (void)

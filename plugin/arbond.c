@@ -409,9 +409,16 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 
 static int anymiss (arbond *ab, const double **Z, int s)
 {
+#if 0
+    int imin = (ab->opt & OPT_H)? -1 : 0;
+    int imax = (ab->opt & OPT_H)? ab->p : ab->p + 1;
+#else
+    int imin = 0;
+    int imax = ab->p + 1;
+#endif
     int i;
 
-    for (i=0; i<=ab->p+1; i++) {
+    for (i=imin; i<=imax; i++) {
 	if (na(Z[ab->yno][s-i])) {
 	    return 1;
 	}
@@ -448,6 +455,7 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 {
     const double *y = Z[ab->yno];
     char *mask = NULL;
+    int tmin, tmax;
     int t1min = ab->T - 1;
     int t1imin = ab->T - 1;
     int t2max = 0;
@@ -483,6 +491,14 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 	ab->qmax = ab->T;
     }
 
+#if 0
+    tmin = (ab->opt & OPT_M)? ab->p : ab->p + 1;
+    tmax = (ab->opt & OPT_M)? ab->T - 1 : ab->T;
+#else
+    tmin = ab->p + 1;
+    tmax = ab->T;
+#endif
+
     for (i=0; i<ab->N; i++) {
 	int t1i = ab->T - 1, t2i = 0; 
 	int Ti = 0, usable = 0;
@@ -502,7 +518,7 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 	*/
 
 	s = data_index(ab, i);
-	for (t=ab->p+1; t<ab->T; t++) {
+	for (t=tmin; t<tmax; t++) {
 	    if (anymiss(ab, Z, s + t)) {
 		mask[t] = 1;
 	    } else {
@@ -581,8 +597,13 @@ static int arbond_sample_check (arbond *ab, const double **Z)
     } else {
 	/* compute the number of columns in Zi */
 	int tau = t2max - t1min + 1;
-	int nblocks = tau - ab->p - 1; /* was tau - 2 */
-	int bcols, cols = 0;
+	int nblocks, bcols, cols = 0;
+
+#if 0
+	nblocks = (ab->opt & OPT_H)? tau - ab->p : tau - ab->p - 1;
+#else
+	nblocks = tau - ab->p - 1;
+#endif
 
 #if ADEBUG
 	fprintf(stderr, "\ntau = %d (ab->p = %d)\n", tau, ab->p);
@@ -1387,6 +1408,7 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 				 const double **X, const DATAINFO *pdinfo)
 {
     const double *y = X[ab->yno];
+    char prefix;
     double x;
     int i, j;
     int err = 0;
@@ -1423,10 +1445,12 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	return pmod->errcode;
     }
 
+    prefix = (ab->opt & OPT_H)? 'O' : 'D';
+
     j = 0;
     for (i=0; i<ab->p; i++) {
 	/* FIXME possible varname overflow */
-	sprintf(pmod->params[j++], "D%.10s(-%d)", pdinfo->varname[ab->yno], i+1);
+	sprintf(pmod->params[j++], "%c%.10s(-%d)", prefix, pdinfo->varname[ab->yno], i+1);
     }
 
     for (i=0; i<ab->nx; i++) {
@@ -1878,7 +1902,7 @@ static int arbond_make_dy_and_X (arbond *ab, const double *y,
 	    return E_ALLOC;
 	}
 	for (t=0; t<pdinfo->n; t++) {
-	    ody[t] = 0.0;
+	    ody[t] = NADBL;
 	}
 	orthdev_series(y, ody, pdinfo);
     }
@@ -2037,19 +2061,27 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	gretl_matrix_print(ab->Zi, zstr);
 #endif
 
-	err = make_first_diff_matrix(ab, i);
-
-	/* Cumulate Z_i' H Z_i into A_N */
-	gretl_matrix_qform(ab->Zi, GRETL_MOD_TRANSPOSE,
-			   ab->H, ab->A, GRETL_MOD_CUMULATE); 
+	if (ab->opt & OPT_H) {
+	    gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
+				      ab->Zi, GRETL_MOD_NONE,
+				      ab->A, GRETL_MOD_CUMULATE);
+	} else {
+	    err = make_first_diff_matrix(ab, i);
+	
+	    /* Cumulate Z_i' H Z_i into A_N */
+	    gretl_matrix_qform(ab->Zi, GRETL_MOD_TRANSPOSE,
+			       ab->H, ab->A, GRETL_MOD_CUMULATE);
+	}
 
 	/* Write Zi into ZT at offset 0, c */
 	gretl_matrix_inscribe_matrix(ab->ZT, ab->Zi, 0, c, GRETL_MOD_TRANSPOSE);
 	c += Ti;
     }
 
-    /* clean up */
-    make_first_diff_matrix(NULL, 0);
+    if (!(ab->opt & OPT_H)) {
+	/* clean up */
+	make_first_diff_matrix(NULL, 0);
+    }
 
     if (!err) {
 	/* mask zero rows of ZT, if required */

@@ -237,6 +237,7 @@ enum {
     F_BACKTICK,
     F_STRLEN,
     F_VARNAME,
+    F_VARNUM,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -306,7 +307,7 @@ enum {
 #define string_arg_func(s) (s == F_ISSERIES || s == F_ISNULL || \
 			    s == F_ISLIST || s == F_LISTLEN || \
 			    s == F_ISSTRING || s == F_OBSNUM || \
-			    s == F_BACKTICK)
+			    s == F_BACKTICK || s == F_VARNUM)
 
 #define string0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
                          s == F_CRIT || s == F_RANDGEN || s == F_PDF)

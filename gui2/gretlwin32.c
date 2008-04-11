@@ -140,6 +140,29 @@ int create_child_process (char *prog)
     return real_create_child_process(prog, 1);
 }
 
+/* try registry for path to R binname */
+
+int get_true_R_path (const char *binname)
+{
+    char tmp[MAX_PATH] = {0}; 
+    int err;
+
+    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
+
+    if (err) {
+	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
+    }
+
+    if (!err) {
+	strcat(tmp, "\\bin\\");
+	strcat(tmp, binname);
+	*Rcommand = '\0';
+	strncat(Rcommand, tmp, MAXSTR - 1);
+    }
+
+    return err;
+}
+
 void startR (const char *buf)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
@@ -234,22 +257,10 @@ void startR (const char *buf)
     err = real_create_child_process(Rline, 0);
 
     if (err) {
-	/* failed: try registry for Rgui.exe path? */
-	char tmp[MAX_PATH] = {0}; 
-
-	err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
-	if (err) {
-	    err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
-	}
+	err = get_true_R_path("Rgui.exe");
 	if (!err) {
-	    strcat(tmp, "\\bin\\Rgui.exe");
-	    sprintf(Rline, "\"%s\" %s %s", tmp, supp1, supp2);
-	    err = real_create_child_process(Rline, 1);
-	    if (!err) {
-		/* got a good R path, so record it */
-		*Rcommand = '\0';
-		strncat(Rcommand, tmp, MAXSTR - 1);
-	    }
+	    sprintf(Rline, "\"%s\" %s %s", Rcommand, supp1, supp2);
+	    real_create_child_process(Rline, 1);
 	}
     }
 }

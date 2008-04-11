@@ -356,7 +356,12 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
 
 	if (n > 0) {
 	    xbar /= n;
-	    y[t] = sqrt(n / (n + 1.0)) * (x[t] - xbar);
+	    /* Lead one period, for compatibility with first diffs.
+	       I.e. we lose the first observation rather than the
+	       last.  This is for arbond.  Cf. Doornik, Bond and
+	       Arellano, DPD documentation.
+	    */
+	    y[t+1] = sqrt(n / (n + 1.0)) * (x[t] - xbar);
 	}
     }
 

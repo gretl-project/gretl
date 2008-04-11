@@ -263,7 +263,14 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Script files/_Practice file..."), "", display_files, PS_FILES, 
       "<StockItem>", GTK_STOCK_OPEN },
+#if 0
     { N_("/File/Script files/_New script"), "", do_new_script, 0, "<StockItem>", GTK_STOCK_NEW },
+#else
+    { N_("/File/Script files/_New script"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/Script files/_New script/gretl script"), "", do_new_script, EDIT_SCRIPT, NULL, GNULL },
+    { N_("/File/Script files/_New script/gnuplot script"), "", do_new_script, EDIT_GP, NULL, GNULL },
+    { N_("/File/Script files/_New script/R script"), "", do_new_script, EDIT_R, NULL, GNULL },
+#endif
 
     /* File, session files */
     { N_("/File/_Session files"), NULL, NULL, 0, "<Branch>", GNULL },

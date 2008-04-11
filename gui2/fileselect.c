@@ -310,7 +310,9 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	strcpy(scriptfile, fname);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	script_window_update(vwin, fname);
-    }
+    } else if (action == SAVE_GP_CMDS || action == SAVE_R_CMDS) {
+	script_window_update(vwin, fname);
+    } 
 }
 
 static void set_startdir (char *startdir, int action)
@@ -665,7 +667,7 @@ static char *make_winfilter (int action, gpointer data)
     struct winfilter filter;
     char *ret, *p;
 
-    ret = calloc(128, 1);
+    ret = calloc(256, 1);
     if (ret == NULL) {
 	return NULL;
     }
@@ -681,6 +683,17 @@ static char *make_winfilter (int action, gpointer data)
     strcpy(p, I_(filter.descrip));
     p += strlen(p) + 1;
     strcpy(p, filter.pat);
+
+    if (action == OPEN_SCRIPT) {
+	p += strlen(p) + 1;
+	strcpy(p, I_("gnuplot files (*.plt)"));
+	p += strlen(p) + 1;
+	strcpy(p, "*.plt");
+	p += strlen(p) + 1;
+	strcpy(p, I_("GNU R files (*.*)"));
+	p += strlen(p) + 1;
+	strcpy(p, "*.R");
+    }	
 
     if (strncmp(filter.descrip, "all", 3)) {
 	p += strlen(p) + 1;
