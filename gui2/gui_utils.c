@@ -4158,11 +4158,11 @@ static void real_start_R (void)
 
 #endif /* !G_OS_WIN32 */
 
-void start_R (const char *buf)
+void start_R (const char *buf, int send_data)
 {
     char Rprofile[MAXLEN], Rsrc[MAXLEN];
     FILE *fprof = NULL, *fsrc = NULL;
-    int send_data, send_script;
+    int send_script;
     int err;
 
     if (buf == NULL && !data_status) {
@@ -4193,10 +4193,8 @@ void start_R (const char *buf)
 
     /* FIXME: what about sending both? */
     if (buf == NULL) {
-	send_data = 1;
 	send_script = 0;
     } else {
-	send_data = 0;
 	send_script = 1;
     }
 

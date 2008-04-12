@@ -5502,7 +5502,7 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     set_gretl_echo(1);
 }
 
-static void send_script_to_R (const gchar *buf)
+static void send_script_to_R (const gchar *buf, int send_data)
 {
     gchar *argv[5];
     FILE *fp;
@@ -5543,6 +5543,43 @@ static void send_script_to_R (const gchar *buf)
 	file_write_errbox(script_fname);
 	goto bailout;
     }
+
+    if (send_data) {
+	int *list;
+	char Rdata[MAXLEN], Rline[MAXLEN];
+
+	build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
+	sprintf(Rline, "store \"%s\" -r", Rdata);
+	list = command_list_from_string(Rline);
+
+	if (list == NULL ||
+	    write_data(Rdata, list, (const double **) Z, datainfo, 
+		       OPT_R, NULL)) {
+	    errbox(_("Write of R data file failed"));
+	    fclose(fp);
+	    return; 
+	}
+	free(list);
+
+	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
+	if (dataset_is_time_series(datainfo)) {
+	    char *p, datestr[OBSLEN];
+	    int subper = 1;
+	    
+	    ntodate_full(datestr, datainfo->t1, datainfo);
+	    p = strchr(datestr, ':');
+	    if (p != NULL) {
+		subper = atoi(p + 1);
+	    }
+	    
+	    fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
+			atoi(datestr), subper, datainfo->pd);
+	    
+	} else {
+	    fprintf(fp, "attach(gretldata)\n");
+	}
+    }
+
 
     fputs("# load script from gretl\n", fp);
     fputs(buf, fp);
@@ -5598,6 +5635,7 @@ static void send_script_to_R (const gchar *buf)
 static void run_R_script (windata_t *vwin)
 {
     gchar *buf = textview_get_text(vwin->w);
+    int send_data = 1;
 
     if (buf == NULL || *buf == '\0') {
 	warnbox("No input to run");
@@ -5609,9 +5647,9 @@ static void run_R_script (windata_t *vwin)
 	int resp = radio_dialog("gretl: R", "R mode", opts, 2, 0, 0);
 
 	if (resp == 0) {
-	    send_script_to_R(buf);
+	    send_script_to_R(buf, send_data);
 	} else {
-	    start_R(buf);
+	    start_R(buf, send_data);
 	}
     }
 
