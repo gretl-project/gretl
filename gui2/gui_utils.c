@@ -4111,7 +4111,7 @@ static void real_start_R (void)
     const char *supp2 = "--no-restore-data";
     char *s0 = NULL, *s1 = NULL, *s2 = NULL;
     pid_t pid;
-    int i;
+    int n;
 
     s0 = mymalloc(64);
     s1 = mymalloc(32);
@@ -4123,9 +4123,9 @@ static void real_start_R (void)
 
     *s0 = *s1 = *s2 = '\0';
 
-    i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
+    n = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
 
-    if (i == 0) {
+    if (n == 0) {
 	errbox(_("No command was supplied to start R"));
 	goto bailout;
     }
@@ -4138,11 +4138,11 @@ static void real_start_R (void)
 	perror("fork");
 	return;
     } else if (pid == 0) {  
-	if (i == 1) {
+	if (n == 1) {
 	    execlp(s0, s0, supp1, supp2, NULL);
-	} else if (i == 2) {
+	} else if (n == 2) {
 	    execlp(s0, s0, s1, supp1, supp2, NULL);
-	} else if (i == 3) {
+	} else if (n == 3) {
 	    execlp(s0, s0, s1, s2, supp1, supp2, NULL);
 	}
 	perror("execlp");
@@ -4204,6 +4204,7 @@ void start_R (const char *buf)
     build_path(Rsrc, paths.dotdir, "Rsrc", NULL);
     fsrc = fopen(Rsrc, "w");
     if (fsrc == NULL) {
+	file_write_errbox(Rsrc);
 	err = E_FOPEN;
 	goto bailout;
     }	
