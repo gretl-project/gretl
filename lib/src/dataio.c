@@ -1266,14 +1266,10 @@ int write_data (const char *fname, const int *list,
 
     strcpy(datfile, fname);
 
-    if (fmt == GRETL_DATA_R && dataset_is_time_series(pdinfo)) {
-	fmt = GRETL_DATA_R_TS;
-    }
-
     /* write header and label files if not exporting to other formats */
-    if (fmt != GRETL_DATA_R && fmt != GRETL_DATA_R_TS && 
-	fmt != GRETL_DATA_CSV && fmt != GRETL_DATA_OCTAVE &&
-	fmt != GRETL_DATA_DAT && fmt != GRETL_DATA_JM) {
+    if (fmt != GRETL_DATA_R && fmt != GRETL_DATA_CSV && 
+	fmt != GRETL_DATA_OCTAVE && fmt != GRETL_DATA_DAT && 
+	fmt != GRETL_DATA_JM) {
 	if (!has_suffix(datfile, ".gz")) {
 	    switch_ext(hdrfile, datfile, "hdr");
 	    switch_ext(lblfile, datfile, "lbl");
@@ -1359,6 +1355,14 @@ int write_data (const char *fname, const int *list,
 	    delim = ' ';
 	}
 
+	if (fmt == GRETL_DATA_R && dataset_is_time_series(pdinfo)) {
+	    char datestr[OBSLEN];
+
+	    ntodate_full(datestr, pdinfo->t1, pdinfo);
+	    fprintf(fp, "# time-series data: start = %s, frequency = %d\n",
+		    datestr, pdinfo->pd);
+	}
+
 	/* variable names */
 	if (fmt == GRETL_DATA_CSV && print_obs && 
 	    (pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
@@ -1398,50 +1402,6 @@ int write_data (const char *fname, const int *list,
 		} else {
 		    fputc('\n', fp);
 		}
-	    }
-	}
-    } else if (fmt == GRETL_DATA_R_TS) {
-	char *p, datestr[OBSLEN];
-	int subper = 1;
-
-	fprintf(fp, "\"%s\" <- ts (t (matrix (data = c(\n", "gretldata");
-
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    for (i=1; i<=l0; i++) {
-		v = list[i];
-		xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
-		if (na(xx)) {
-		    fputs("NA", fp);
-		} else {
-		    fprintf(fp, "%g", xx);
-		}
-		if (i == l0) {
-		    if (t == pdinfo->t2) {
-			fputs("),\n", fp);
-		    } else {
-			fputs(" ,\n", fp);
-		    }
-		} else {
-		    fputs(" , ", fp);
-		}
-	    }
-	}
-
-	ntodate_full(datestr, pdinfo->t1, pdinfo);
-	p = strchr(datestr, ':');
-	if (p != NULL) {
-	    subper = atoi(p + 1);
-	}
-	fprintf(fp, "nrow = %d, ncol = %d)), start = c(%d,%d), frequency = %d)\n",
-		l0, pdinfo->t2 - pdinfo->t1 + 1, 
-		atoi(datestr), subper, pdinfo->pd);
-	fprintf(fp, "colnames(%s) <- c(", "gretldata");
-	for (i=1; i<=l0; i++) {
-	    fprintf(fp, "\"%s\"", pdinfo->varname[list[i]]);
-	    if (i < l0) {
-		fputs(", ", fp);
-	    } else {
-		fputs(")\n", fp);
 	    }
 	}
     } else if (fmt == GRETL_DATA_OCTAVE) { 

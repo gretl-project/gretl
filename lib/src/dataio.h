@@ -29,7 +29,6 @@ typedef enum {
     GRETL_DATA_OCTAVE,    /* data in Gnu Octave format */
     GRETL_DATA_CSV,       /* data in Comma Separated Values format */
     GRETL_DATA_R,         /* data in Gnu R format */
-    GRETL_DATA_R_TS,      /* data in Gnu R format (time series) */
     GRETL_DATA_GZIPPED,   /* gzipped data */
     GRETL_DATA_TRAD,      /* traditional (ESL-style) data */
     GRETL_DATA_DAT,       /* data in PcGive format */

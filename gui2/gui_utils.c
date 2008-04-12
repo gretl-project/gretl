@@ -4105,109 +4105,29 @@ int browser_open (const char *url)
 
 #include <signal.h>
 
-void startR (const char *buf)
+static void real_start_R (void)
 {
-    char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
-    FILE *fp, *fq;
-    int enverr;
-    int i;
-    char *s0, *s1, *s2;
+    char *s0 = NULL, *s1 = NULL, *s2 = NULL;
     pid_t pid;
-
-    if (buf == NULL && !data_status) {
-	warnbox(_("Please open a data file first"));
-	return;
-    }
-
-    build_path(Rprofile, paths.dotdir, "gretl.Rprofile", NULL);
-    fp = fopen(Rprofile, "w");
-    if (fp == NULL) {
-	file_write_errbox(Rprofile);
-	return;
-    }
-
-    enverr = setenv("R_PROFILE", Rprofile, 1);
-    if (enverr) {
-	errbox(_("Couldn't set R_PROFILE environment variable"));
-	fclose(fp);
-	return;
-    } 	
-
-    if (buf != NULL) {
-	char Rtmp[MAXLEN];
-	
-	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
-	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
-	fputs("if (vnum > 2.41) library(utils)\n", fp);
-
-	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
-	fq = fopen(Rtmp, "w");
-	if (fq != NULL) {
-	    fputs("# load script from gretl\n", fq);
-	    fputs(buf, fq);
-	    fclose(fq);
-	}
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
-	goto next_R;
-    } else {
-	int *list;
-
-	build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
-	sprintf(Rline, "store \"%s\" -r", Rdata);
-	list = command_list_from_string(Rline);
-
-	if (list == NULL ||
-	    write_data(Rdata, list, (const double **) Z, datainfo, 
-		       OPT_R, NULL)) {
-	    errbox(_("Write of R data file failed"));
-	    fclose(fp);
-	    return; 
-	}
-
-	free(list);
-    }
-
-    if (dataset_is_time_series(datainfo)) {
-	fputs("# load data from gretl\n", fp);
-	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
-	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rdata);
-    } else {
-	char Rtmp[MAXLEN];
-
-	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
-	fq = fopen(Rtmp, "w");
-	if (fq != NULL) {
-	    fputs("# load data from gretl\n", fq);
-	    fputs("library(stats)\n", fq);
-	    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fq);
-	    fputs("if (vnum > 2.41) library(utils)\n", fq);
-	    fprintf(fq, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
-	    fprintf(fq, "attach(gretldata)\n");
-	    fclose(fq);
-	}
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
-    }
-
- next_R:
-
-    fclose(fp);
+    int i;
 
     s0 = mymalloc(64);
     s1 = mymalloc(32);
     s2 = mymalloc(32);
+
     if (s0 == NULL || s1 == NULL || s2 == NULL) {
-	return;
+	goto bailout;
     }
 
     *s0 = *s1 = *s2 = '\0';
+
     i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
+
     if (i == 0) {
 	errbox(_("No command was supplied to start R"));
-	free(s0); free(s1); free(s2);
-	return;
+	goto bailout;
     }
 
     signal(SIGCHLD, SIG_IGN); 
@@ -4229,12 +4149,151 @@ void startR (const char *buf)
 	_exit(EXIT_FAILURE);
     }
 
+ bailout:
+
     free(s0); 
     free(s1); 
     free(s2);
 }
 
-#endif /* ! G_OS_WIN32 */
+#endif /* !G_OS_WIN32 */
+
+void start_R (const char *buf)
+{
+    char Rprofile[MAXLEN], Rsrc[MAXLEN];
+    FILE *fprof = NULL, *fsrc = NULL;
+    int send_data, send_script;
+    int err;
+
+    if (buf == NULL && !data_status) {
+	warnbox(_("Please open a data file first"));
+	return;
+    }
+
+    /* set up for a temporary R profile, so R knows what to do */
+    build_path(Rprofile, paths.dotdir, "gretl.Rprofile", NULL);
+    fprof = fopen(Rprofile, "w");
+    if (fprof == NULL) {
+	file_write_errbox(Rprofile);
+	return;
+    }
+
+#ifdef G_OS_WIN32
+    err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
+#else
+    err = setenv("R_PROFILE", Rprofile, 1);
+#endif
+
+    if (err) {
+	errbox(_("Couldn't set R_PROFILE environment variable"));
+	fclose(fprof);
+	remove(Rprofile);
+	return;
+    } 	
+
+    /* FIXME: what about sending both? */
+    if (buf == NULL) {
+	send_data = 1;
+	send_script = 0;
+    } else {
+	send_data = 0;
+	send_script = 1;
+    }
+
+    /* open file to be sourced by profile */
+    build_path(Rsrc, paths.dotdir, "Rsrc", NULL);
+    fsrc = fopen(Rsrc, "w");
+    if (fsrc == NULL) {
+	err = E_FOPEN;
+	goto bailout;
+    }	
+
+    /* write common profile stuff */
+    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fprof);
+    fputs("if (vnum > 2.41) library(utils)\n", fprof);
+    fputs("library(stats)\n", fprof);
+    fputs("if (vnum <= 1.89) library(ts)\n", fprof);
+
+    if (send_data) {
+	gchar *Rline = NULL, *Rdata = NULL;
+	int *list;
+
+	/* write out current dataset in R format */
+	Rdata = g_strdup_printf("%sRdata.tmp", paths.dotdir);
+	Rline = g_strdup_printf("store \"%s\" -r", Rdata);
+	list = command_list_from_string(Rline);
+	g_free(Rline);
+
+	if (list == NULL ||
+	    write_data(Rdata, list, (const double **) Z, datainfo, 
+		       OPT_R, NULL)) {
+	    errbox(_("Write of R data file failed"));
+	    g_free(Rdata);
+	    err = E_FOPEN;
+	    goto bailout;
+	}
+
+	free(list);
+
+	fputs("# load data from gretl\n", fsrc);
+#ifdef G_OS_WIN32
+	fprintf(fsrc, "gretldata <- read.table(\"%s\", header=TRUE)\n", 
+		slash_convert(Rdata, FROM_BACKSLASH));
+#else
+	fprintf(fsrc, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
+#endif
+	g_free(Rdata);
+
+	if (dataset_is_time_series(datainfo)) {
+	    char *p, datestr[OBSLEN];
+	    int subper = 1;
+	    
+	    ntodate_full(datestr, datainfo->t1, datainfo);
+	    p = strchr(datestr, ':');
+	    if (p != NULL) {
+		subper = atoi(p + 1);
+	    }
+	    
+	    fprintf(fsrc, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
+			atoi(datestr), subper, datainfo->pd);
+	} else {
+	    fputs("attach(gretldata)\n", fsrc);
+	}
+    }
+
+    if (send_script) {
+	/* pass on the script supplied in the 'buf' argument */
+	fputs("# load script from gretl\n", fsrc);
+	fputs(buf, fsrc);
+    }
+
+    /* complete the R profile, to source the commands and/or data */
+#ifdef G_OS_WIN32
+    fprintf(fprof, "source(\"%s\", echo=TRUE)\n", slash_convert(Rsrc, FROM_BACKSLASH));
+#else    
+    fprintf(fprof, "source(\"%s\", echo=TRUE)\n", Rsrc);
+#endif
+
+ bailout:
+
+    if (fprof != NULL) {
+	fclose(fprof);
+    }
+    if (fsrc != NULL) {
+	fclose(fsrc);
+    }
+
+    if (err) {
+	remove(Rprofile);
+	remove(Rsrc);
+    } else {
+#ifdef G_OS_WIN32
+	win32_start_R();
+#else
+	real_start_R();
+#endif
+    }
+}
 
 void verbose_gerror_report (GError *gerr, const char *src)
 {

@@ -5611,7 +5611,7 @@ static void run_R_script (windata_t *vwin)
 	if (resp == 0) {
 	    send_script_to_R(buf);
 	} else {
-	    startR(buf);
+	    start_R(buf);
 	}
     }
 

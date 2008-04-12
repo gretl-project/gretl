@@ -163,106 +163,26 @@ int get_true_R_path (const char *binname)
     return err;
 }
 
-void startR (const char *buf)
+void win32_start_R (void)
 {
-    char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
-    FILE *fp, *fq;
-    int err = 0;
-
-    if (buf == NULL && !data_status) {
-	warnbox(_("Please open a data file first"));
-	return;
-    }
-
-    build_path(Rprofile, paths.dotdir, "gretl.Rprofile", NULL);
-    fp = gretl_fopen(Rprofile, "w");
-    if (fp == NULL) {
-	errbox(_("Couldn't write R startup file"));
-	return;
-    }
-
-    err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
-    if (err) {
-	errbox(_("Couldn't set R_PROFILE environment variable"));
-	fclose(fp);
-	return;
-    } 
-
-    if (buf != NULL) {
-	char Rtmp[MAXLEN];
-	
-	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
-	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
-	fputs("if (vnum > 2.41) library(utils)\n", fp);
-
-	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
-	fq = fopen(Rtmp, "w");
-	if (fq != NULL) {
-	    fputs("# load script from gretl\n", fq);
-	    fputs(buf, fq);
-	    fclose(fq);
-	}
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
-	goto next_R;
-    } else {
-	int *list;
-
-	build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
-	sprintf(Rline, "store \"%s\" -r", Rdata);
-	list = command_list_from_string(Rline);
-
-	if (list == NULL ||
-	    write_data(Rdata, list, (const double **) Z, datainfo, 
-		   OPT_R, NULL)) {
-	    errbox(_("Write of R data file failed"));
-	    fclose(fp);
-	    return; 
-	}
-
-	free(list);
-    }
-
-    if (dataset_is_time_series(datainfo)) {
-	fputs("# load data from gretl\n", fp);
-	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
-	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
-		slash_convert(Rdata, FROM_BACKSLASH));
-    } else {
-	char Rtmp[MAXLEN];
-
-	build_path(Rtmp, paths.dotdir, "Rtmp", NULL);
-	fq = gretl_fopen(Rtmp, "w");
-	if (fq != NULL) {
-	    fputs("# load data from gretl\n", fq);
-	    fputs("library(stats)\n", fq);
-	    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fq);
-	    fputs("if (vnum > 2.41) library(utils)\n", fq);
-	    fprintf(fq, "gretldata <- read.table(\"%s\", header=TRUE)\n", 
-		    slash_convert(Rdata, FROM_BACKSLASH));
-	    fprintf(fq, "attach(gretldata)\n");
-	    fclose(fq);
-	}
-	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
-		slash_convert(Rtmp, FROM_BACKSLASH));
-    }
-
- next_R:
-
-    fclose(fp);
-
-    sprintf(Rline, "\"%s\" %s %s", Rcommand, supp1, supp2);
+    gchar *Rline = NULL;
+    int err;
+    
+    Rline = g_strdup_printf("\"%s\" %s %s", Rcommand, supp1, supp2);
     err = real_create_child_process(Rline, 0);
 
     if (err) {
 	err = get_true_R_path("Rgui.exe");
 	if (!err) {
-	    sprintf(Rline, "\"%s\" %s %s", Rcommand, supp1, supp2);
+	    g_free(Rline);
+	    Rline = g_strdup_printf("\"%s\" %s %s", Rcommand, supp1, supp2);
 	    real_create_child_process(Rline, 1);
 	}
     }
+
+    g_free(Rline);
 }
 
 char *slash_convert (char *str, int which)
