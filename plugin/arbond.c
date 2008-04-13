@@ -829,7 +829,12 @@ static int sargan_test (arbond *ab)
 					  &err);
 
     if (ab->step == 1) {
-	ab->sargan *= 2.0 / ab->s2; /* allow for scale factor in H */
+	/* allow for scale factor in H */
+	if (ab->opt & OPT_H) {
+	    ab->sargan /= ab->s2;
+	} else {
+	    ab->sargan *= 2.0 / ab->s2; 
+	}
     }
 
 #if ADEBUG
