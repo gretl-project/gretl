@@ -4165,7 +4165,7 @@ void start_R (const char *buf, int send_data)
     int send_script;
     int err;
 
-    if (buf == NULL && !data_status) {
+    if (send_data && !data_status) {
 	warnbox(_("Please open a data file first"));
 	return;
     }
@@ -4190,13 +4190,8 @@ void start_R (const char *buf, int send_data)
 	remove(Rprofile);
 	return;
     } 	
-
-    /* FIXME: what about sending both? */
-    if (buf == NULL) {
-	send_script = 0;
-    } else {
-	send_script = 1;
-    }
+    
+    send_script = (buf != NULL);
 
     /* open file to be sourced by profile */
     build_path(Rsrc, paths.dotdir, "Rsrc", NULL);
@@ -4208,7 +4203,8 @@ void start_R (const char *buf, int send_data)
     }	
 
     /* write common profile stuff */
-    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fprof);
+    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
+	  fprof);
     fputs("if (vnum > 2.41) library(utils)\n", fprof);
     fputs("library(stats)\n", fprof);
     fputs("if (vnum <= 1.89) library(ts)\n", fprof);

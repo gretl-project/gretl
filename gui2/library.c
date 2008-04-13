@@ -5635,7 +5635,7 @@ static void send_script_to_R (const gchar *buf, int send_data)
 static void run_R_script (windata_t *vwin)
 {
     gchar *buf = textview_get_text(vwin->w);
-    int send_data = 1;
+    int send_data = data_status;
 
     if (buf == NULL || *buf == '\0') {
 	warnbox("No input to run");
