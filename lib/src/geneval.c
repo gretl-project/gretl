@@ -2348,6 +2348,9 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 	    case F_DUMIFY:
 		p->err = list_dumgenr(&list, p->Z, p->dinfo, OPT_F);
 		break;
+	    case F_ODEV:
+		p->err = list_orthdev(list, p->Z, p->dinfo);
+		break;
 	    default:
 		break;
 	    }
@@ -2361,7 +2364,7 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 
 #define ok_list_func(f) (f == F_LOG || f == F_DIFF || \
 			 f == F_LDIFF || f == F_SDIFF || \
-			 f == F_XPX)
+			 f == F_XPX || f == F_ODEV)
 
 /* functions that are "basically" for series, but which
    can also be applied to lists */
@@ -2396,6 +2399,9 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 		break;
 	    case F_XPX:
 		p->err = list_xpxgenr(&list, p->Z, p->dinfo, OPT_O);
+		break;
+	    case F_ODEV:
+		p->err = list_orthdev(list, p->Z, p->dinfo);
 		break;
 	    default:
 		break;
@@ -5111,7 +5117,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_LDIFF:
     case F_SDIFF:
-	if (l->t == VEC || l->t == MAT) {
+    case F_ODEV:	
+	if (l->t == VEC || (t->t != F_ODEV && l->t == MAT)) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else if (ok_list_node(l)) {
 	    ret = apply_list_func(l, t->t, p);
@@ -5119,7 +5126,6 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;
-    case F_ODEV:
     case F_HPFILT:
     case F_BKFILT:
     case F_FRACDIFF:

@@ -96,6 +96,7 @@ typedef enum {
     OMIT,
     OMITFROM,
     OPEN,
+    ORTHDEV,
     OUTFILE,
     PANEL,
     PCA,

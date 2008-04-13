@@ -82,6 +82,9 @@ make_transform_varname (char *vname, const char *orig, int ci,
     } else if (ci == SDIFF) {
 	strcpy(vname, "sd_");
 	strncat(vname, orig, len - 3);
+    } else if (ci == ORTHDEV) {
+	strcpy(vname, "o_");
+	strncat(vname, orig, len - 2);
     } else if (ci == LOGS) {
 	strcpy(vname, "l_");
 	strncat(vname, orig, len - 2);
@@ -370,6 +373,14 @@ static int get_diff (int v, double *diffvec, int ci,
     return 0;
 }
 
+/* orthogonal deviations */
+
+static int get_orthdev (int v, double *xvec, const double **Z, 
+			const DATAINFO *pdinfo)
+{
+    return orthdev_series(Z[v], xvec, pdinfo);
+}
+
 /* write square or cross-product into xvec */
 
 static int get_xpx (int vi, int vj, double *xvec, const double **Z, 
@@ -580,6 +591,8 @@ static int get_transform (int ci, int v, int aux, double x,
 	err = get_log(v, vx, (const double **) *pZ, pdinfo);
     } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
 	err = get_diff(v, vx, ci, (const double **) *pZ, pdinfo);
+    } else if (ci == ORTHDEV) {
+	err = get_orthdev(v, vx, (const double **) *pZ, pdinfo);
     } else if (ci == SQUARE) {
 	/* "aux" = second variable number */
 	err = get_xpx(v, aux, vx, (const double **) *pZ, pdinfo);
@@ -1007,7 +1020,8 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
 	    if (v == 0 || var_is_scalar(pdinfo, v)) {
 		ok = 0;
 	    }
-	} else if (f == DIFF || f == LDIFF || f == SDIFF) {
+	} else if (f == DIFF || f == LDIFF || f == SDIFF || 
+		   f == ORTHDEV) {
 	    if (var_is_scalar(pdinfo, v)) {
 		ok = 0;
 	    }
@@ -1256,6 +1270,58 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
 	tnum = get_transform(ci, v, 0, 0.0, pZ, pdinfo, startlen, origv);
+	if (tnum < 0) {
+	    err = 1;
+	} else {
+	    list[i] = tnum;
+	    l0++;
+	}
+    }
+
+    list[0] = l0;
+
+    destroy_mangled_names();
+
+    return err;
+}
+
+/**
+ * list_orthdev:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generate orthogonal deviations of the variables in @list, and add
+ * them to the data set.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo)
+{
+    int origv = pdinfo->v;
+    int i, v, startlen;
+    int tnum, l0 = 0;
+    int err;
+
+    if (list[0] == 0) {
+	return 0;
+    }
+
+    if (!dataset_is_panel(pdinfo)) {
+	return E_PDWRONG;
+    } 
+
+    err = transform_preprocess_list(list, *pZ, pdinfo, ORTHDEV);
+    if (err) {
+	return err;
+    }
+
+    startlen = get_starting_length(list, pdinfo, 2);
+    
+    for (i=1; i<=list[0] && !err; i++) {
+	v = list[i];
+	tnum = get_transform(ORTHDEV, v, 0, 0.0, pZ, pdinfo, startlen, origv);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
@@ -1541,3 +1607,5 @@ int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
 	    
     return idx;
 }
+
+

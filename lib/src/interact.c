@@ -381,6 +381,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                                   c == SDIFF || \
                                   c == SMPL || \
                                   c == SQUARE || \
+                                  c == ORTHDEV || \
                                   c == STORE || \
                                   c == SUMMARY)
 
@@ -394,7 +395,8 @@ static int catch_command_alias (char *line, CMD *cmd)
 			  c == SDIFF || \
 			  c == LAGS || \
 			  c == LOGS || \
-			  c == SQUARE)
+			  c == SQUARE || \
+	                  c == ORTHDEV)
 
 enum {
     SET_FALSE,
@@ -1256,6 +1258,8 @@ static int auto_transform_ok (const char *s, int *lpos,
 	cmd->err = list_loggenr(genlist, pZ, pdinfo);
     } else if (trans == DIFF || trans == LDIFF || trans == SDIFF) {
 	cmd->err = list_diffgenr(genlist, trans, pZ, pdinfo);
+    } else if (trans == ORTHDEV) {
+	cmd->err = list_orthdev(genlist, pZ, pdinfo);
     } else if (trans == SQUARE) {
 	cmd->err = list_xpxgenr(&genlist, pZ, pdinfo, opt);
     } else if (trans == LAGS) {
@@ -3929,6 +3933,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case LDIFF:
     case SDIFF:
 	err = list_diffgenr(listcpy, cmd->ci, pZ, pdinfo);
+	if (!err) {
+	    maybe_list_vars(pdinfo, prn);
+	}
+	break;
+
+    case ORTHDEV:
+	err = list_orthdev(listcpy, pZ, pdinfo);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}

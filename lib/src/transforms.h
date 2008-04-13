@@ -38,6 +38,8 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo);
 
 int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo);
 
+int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo);
+
 int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo);
 
 int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ, 

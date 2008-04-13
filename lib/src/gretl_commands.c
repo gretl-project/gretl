@@ -106,6 +106,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { OMIT,     "omit" },
     { OMITFROM, "omitfrom" },
     { OPEN,     "open" },
+    { ORTHDEV,  "orthdev" },
     { OUTFILE,  "outfile" },
     { PANEL,    "panel" },
     { PCA,      "pca" },
