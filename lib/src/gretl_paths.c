@@ -828,6 +828,8 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     fname = tmp;
     strcpy(fname, orig);
 
+    gretl_error_clear();
+
     return NULL;
 }
 

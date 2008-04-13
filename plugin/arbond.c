@@ -1888,24 +1888,43 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     return err;
 }
 
+static double odev_at_lag (const double *x, int t, int lag, int pd)
+{
+    double ret, xbar = 0.0;
+    int s, Tt, n = 0;
+
+    t -= lag + 1;
+
+    if (t < 0 || na(x[t])) {
+	return NADBL;
+    }
+
+    Tt = pd - (t % pd) - (lag + 1);
+
+    for (s=1; s<=Tt; s++) {
+	if (!na(x[t+s])) {
+	    xbar += x[t+s];
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	xbar /= n;
+	ret = sqrt(n / (n + 1.0)) * (x[t] - xbar);
+    } else {
+	ret = NADBL;
+    }
+
+    return ret;
+}
+
 static int arbond_make_dy_and_X (arbond *ab, const double *y,
 				 const double **Z, 
 				 const DATAINFO *pdinfo)
 {
+    int odev = (ab->opt & OPT_H);
     int i, j, s, t, k = 0;
-    double *ody = NULL;
     double x;
-
-    if (ab->opt & OPT_H) {
-	ody = malloc(pdinfo->n * sizeof *ody);
-	if (ody == NULL) {
-	    return E_ALLOC;
-	}
-	for (t=0; t<pdinfo->n; t++) {
-	    ody[t] = NADBL;
-	}
-	orthdev_series(y, ody, pdinfo);
-    }
 
     for (i=0; i<ab->N; i++) {
 	if (skip_unit(ab, i)) {
@@ -1917,15 +1936,17 @@ static int arbond_make_dy_and_X (arbond *ab, const double *y,
 	    }
 	    s = data_index(ab, i) + t;
 	    /* current difference of dependent var */
-	    if (ody != NULL) {
-		gretl_vector_set(ab->dy, k, ody[s]);
+	    if (odev) {
+		x = odev_at_lag(y, s, 0, pdinfo->pd);
+		gretl_vector_set(ab->dy, k, x);
 	    } else {
 		gretl_vector_set(ab->dy, k, y[s] - y[s-1]);
 	    }
 	    for (j=0; j<ab->p; j++) {
 		/* lagged difference of dependent var */
-		if (ody != NULL) {
-		    gretl_matrix_set(ab->dX, k, j, ody[s-j-1]);
+		if (odev) {
+		    x = odev_at_lag(y, s, j+1, pdinfo->pd);
+		    gretl_matrix_set(ab->dX, k, j, x);
 		} else {
 		    gretl_matrix_set(ab->dX, k, j, y[s-j-1] - y[s-j-2]);
 		}
@@ -1942,10 +1963,6 @@ static int arbond_make_dy_and_X (arbond *ab, const double *y,
 	    }	    
 	    k++;
 	}
-    }
-
-    if (ody != NULL) {
-	free(ody);
     }
 
 #if ADEBUG
