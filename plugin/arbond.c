@@ -829,7 +829,7 @@ static int sargan_test (arbond *ab)
 					  &err);
 
     if (ab->step == 1) {
-	/* allow for scale factor in H */
+	/* allow for scale factor in H matrix */
 	if (ab->opt & OPT_H) {
 	    ab->sargan /= ab->s2;
 	} else {
