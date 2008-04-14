@@ -140,9 +140,30 @@ int create_child_process (char *prog)
     return real_create_child_process(prog, 1);
 }
 
-/* try registry for path to R binname */
+gchar *R_path_from_registry (void)
+{
+    char tmp[MAX_PATH] = {0}; 
+    gchar *ret = NULL;
+    int err;
 
-int get_true_R_path (const char *binname)
+    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
+
+    if (err) {
+	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
+    }
+
+    if (!err) {
+	strcat(tmp, "\\bin\\");
+	strcat(tmp, "Rterm.exe");
+	ret = g_strdup(tmp);
+    }
+
+    return ret;
+}
+
+/* try registry for path to Rgui.exe */
+
+static int Rgui_path_from_registry (void)
 {
     char tmp[MAX_PATH] = {0}; 
     int err;
@@ -155,7 +176,7 @@ int get_true_R_path (const char *binname)
 
     if (!err) {
 	strcat(tmp, "\\bin\\");
-	strcat(tmp, binname);
+	strcat(tmp, "Rgui.exe");
 	*Rcommand = '\0';
 	strncat(Rcommand, tmp, MAXSTR - 1);
     }
@@ -163,7 +184,9 @@ int get_true_R_path (const char *binname)
     return err;
 }
 
-void win32_start_R (void)
+/* start R in asynchronous (interactive) mode */
+
+void win32_start_R_async (void)
 {
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
@@ -174,11 +197,13 @@ void win32_start_R (void)
     err = real_create_child_process(Rline, 0);
 
     if (err) {
-	err = get_true_R_path("Rgui.exe");
+	err = Rgui_path_from_registry();
 	if (!err) {
 	    g_free(Rline);
 	    Rline = g_strdup_printf("\"%s\" %s %s", Rcommand, supp1, supp2);
 	    real_create_child_process(Rline, 1);
+	} else {
+	    gui_errmsg(E_EXTERNAL);
 	}
     }
 

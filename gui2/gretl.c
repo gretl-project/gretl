@@ -1633,7 +1633,7 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 
 static void start_R_callback (gpointer p, guint opt, GtkWidget *w)
 {
-    start_R(NULL, 1);
+    start_R(NULL, 1, 1);
 }
 
 #ifndef G_OS_WIN32

@@ -91,6 +91,10 @@ int radio_dialog_with_spinner (const char *title, const char **opts,
 			       int *spinvar, const char *spintxt,
 			       int spinmin, int spinmax);
 
+int radio_dialog_with_check (const char *title, const char *label, 
+			     const char **opts, int nopts, int deflt, int hcode,
+			     int *checkvar, const char *checktxt);
+
 int checks_dialog (const char *title, const char *blurb,
 		   const char **opts, int nopts, 
 		   int *active, int nradios, int *rvar,

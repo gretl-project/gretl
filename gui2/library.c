@@ -5506,154 +5506,30 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     set_gretl_echo(1);
 }
 
-static void send_script_to_R (const gchar *buf, int send_data)
-{
-    gchar *argv[5];
-    FILE *fp;
-    gchar *profile_fname = NULL;
-    gchar *script_fname = NULL;
-    gchar *out = NULL;
-    gchar *errout = NULL;
-    gint status = 0;
-    GError *gerr = NULL;
-
-    profile_fname = g_strdup_printf("%sgretl.Rprofile", paths.dotdir);
-    script_fname = g_strdup_printf("%sRscript.tmp", paths.dotdir);
-
-    fp = gretl_fopen(profile_fname, "w");
-    if (fp == NULL) {
-	file_write_errbox(profile_fname);
-	goto bailout;
-    }
-
-    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
-    fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
-    fputs("if (vnum > 2.41) library(utils)\n", fp);
-    fprintf(fp, "source(\"%s\", echo=TRUE)\n", script_fname);
-    fclose(fp);
-
-#ifdef G_OS_WIN32
-    status = !SetEnvironmentVariable("R_PROFILE", profile_fname);
-#else
-    status = setenv("R_PROFILE", profile_fname, 1);
-#endif
-    if (status) {
-	errbox(_("Couldn't set R_PROFILE environment variable"));
-	goto bailout;
-    } 
-
-    fp = gretl_fopen(script_fname, "w");
-    if (fp == NULL) {
-	file_write_errbox(script_fname);
-	goto bailout;
-    }
-
-    if (send_data) {
-	int *list;
-	char Rdata[MAXLEN], Rline[MAXLEN];
-
-	build_path(Rdata, paths.dotdir, "Rdata.tmp", NULL);
-	sprintf(Rline, "store \"%s\" -r", Rdata);
-	list = command_list_from_string(Rline);
-
-	if (list == NULL ||
-	    write_data(Rdata, list, (const double **) Z, datainfo, 
-		       OPT_R, NULL)) {
-	    errbox(_("Write of R data file failed"));
-	    fclose(fp);
-	    return; 
-	}
-	free(list);
-
-	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
-	if (dataset_is_time_series(datainfo)) {
-	    char *p, datestr[OBSLEN];
-	    int subper = 1;
-	    
-	    ntodate_full(datestr, datainfo->t1, datainfo);
-	    p = strchr(datestr, ':');
-	    if (p != NULL) {
-		subper = atoi(p + 1);
-	    }
-	    
-	    fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
-			atoi(datestr), subper, datainfo->pd);
-	    
-	} else {
-	    fprintf(fp, "attach(gretldata)\n");
-	}
-    }
-
-
-    fputs("# load script from gretl\n", fp);
-    fputs(buf, fp);
-    fclose(fp);
-
-#ifdef G_OS_WIN32
-    argv[0] = "Rterm.exe"; /* ?? */
-#else
-    argv[0] = "R";
-#endif
-    argv[1] = "--no-save";
-    argv[2] = "--no-init-file";
-    argv[3] = "--no-restore-data";
-    argv[4] = NULL;
-
-#ifndef G_OS_WIN32
-    signal(SIGCHLD, SIG_DFL);
-#endif
-
-    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-		 NULL, NULL, &out, &errout,
-		 &status, &gerr);
-
-    if (gerr != NULL) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    } else if (status != 0) {
-	fprintf(stderr, "exit status = %d\n", status);
-	if (errout != NULL) {
-	    errbox(errout);
-	}
-    } else if (out != NULL) {
-	PRN *prn = gretl_print_new_with_buffer(out);
-
-	view_buffer(prn, 78, 350, _("R output"), PRINT, NULL);
-	out = NULL;
-    } else {
-	warnbox("Got no output");
-    }
-    
-    g_free(out);
-    g_free(errout);
-
- bailout:
-
-    remove(profile_fname);
-    g_free(profile_fname);
-
-    remove(script_fname);
-    g_free(script_fname);
-}
-
 static void run_R_script (windata_t *vwin)
 {
     gchar *buf = textview_get_text(vwin->w);
-    int send_data = data_status;
 
     if (buf == NULL || *buf == '\0') {
 	warnbox("No input to run");
     } else {
 	const char *opts[] = {
-	    "Non-interactive (just get output)",
-	    "Interactive R session"
+	    N_("Non-interactive (just get output)"),
+	    N_("Interactive R session")
 	};
-	int resp = radio_dialog("gretl: R", "R mode", opts, 2, 0, 0);
+	int send_data = data_status;
+	int resp;
 
-	if (resp == 0) {
-	    send_script_to_R(buf, send_data);
+	if (send_data) {
+	    resp = radio_dialog_with_check("gretl: R", _("R mode"), 
+					   opts, 2, 0, 0,
+					   &send_data, _("pre-load data"));
 	} else {
-	    start_R(buf, send_data);
+	    resp = radio_dialog("gretl: R", _("R mode"), opts, 2, 0, 0);
+	}
+
+	if (resp >= 0) {
+	    start_R(buf, send_data, resp);
 	}
     }
 

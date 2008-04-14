@@ -2657,12 +2657,19 @@
 	  structure. Computes the forward orthogonal deviations for
 	  variable <argname>y</argname>, that is 
 	  \[ \tilde{y}_{i,t} =
-	  \sqrt{ \frac{T_i - t + 1}{T_i - t}} \left( y_{i,t} -
-	  \frac{1}{T_i - t - 1} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
+	  \sqrt{ \frac{T_i - t}{T_i - t + 1}} \left( y_{i,t} -
+	  \frac{1}{T_i - t} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
 	</para>
 	<para>
 	  This transformation is sometimes used instead of differencing to
-	  remove individual effects from panel data. 
+	  remove individual effects from panel data.  For compatibility with
+	  first differences, the deviations are stored one step ahead of their
+	  true temporal location (that is, the value at observation
+	  <math>t</math> is the deviation that, strictly speaking, belongs at
+	  <math>t</math> &minus; 1).  That way one loses the first observation
+	  in each time series, not the last.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="diff"/>
 	  </seelist>

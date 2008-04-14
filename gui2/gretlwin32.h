@@ -39,7 +39,9 @@ extern int use_wimp;
 
 int create_child_process (char *prog);
 
-void win32_start_R (void);
+void win32_start_R_async (void);
+
+gchar *R_path_from_registry (void);
 
 char *slash_convert (char *str, int which);
 

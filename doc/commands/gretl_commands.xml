@@ -5682,6 +5682,34 @@
 
   </command>
 
+  <command name="orthdev" section="Transformations" 
+    label="Orthogonal deviations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Applicable with panel data only. A series of forward orthogonal
+	deviations is obtained for each variable in <repl>varlist</repl> and
+	stored in a new variable with the prefix <lit>o_</lit>. Thus
+	<cmd>orthdev x y</cmd> creates the new variables <lit>o_x</lit> and
+	<lit>o_y</lit>.
+      </para>
+      <para>
+	The values are stored one step ahead of their true temporal location
+	(that is, <lit>o_x</lit> at observation <math>t</math> holds the
+	deviation that, strictly speaking, belongs at <math>t</math> &minus;
+	1).  This is for compatibility with first differences: one loses the
+	first observation in each time series, not the last.
+      </para>
+    </description>
+
+  </command>
+
   <command name="outfile" section="Printing" 
     label="Direct printing to file" context="cli">
 

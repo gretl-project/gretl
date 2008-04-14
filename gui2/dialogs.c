@@ -38,6 +38,7 @@ static int all_done;
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
 				  int hcode, gpointer p);
+static GtkWidget *option_checkbox (int *checkvar, const char *checktxt);
 static void set_radio_opt (GtkWidget *w, int *opt);
 
 void menu_exit_check (void)
@@ -3100,7 +3101,7 @@ static void set_radio_opt (GtkWidget *w, int *opt)
 
 int real_radio_dialog (const char *title, const char *label,
 		       const char **opts, int nopts, int deflt, int hcode,
-		       int *spinvar, const char *spintxt,
+		       int *extravar, const char *extratxt,
 		       int spinmin, int spinmax)
 {
     GtkWidget *dialog;
@@ -3142,9 +3143,15 @@ int real_radio_dialog (const char *title, const char *label,
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-    /* create spinner if wanted */
-    if (spinvar != NULL) {
-	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, 0, NULL);
+    if (extravar != NULL) {
+	if (spinmin == 0 && spinmax == 0) {
+	    /* must be checkbox */
+	    vbox_add_hsep(GTK_DIALOG(dialog)->vbox);
+	    tmp = option_checkbox(extravar, extratxt);
+	} else {
+	    /* create spinner */
+	    tmp = option_spinbox(extravar, extratxt, spinmin, spinmax, 0, NULL);
+	}
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tmp, TRUE, TRUE, 0);
@@ -3185,6 +3192,15 @@ int radio_dialog_with_spinner (const char *title, const char **opts,
     return real_radio_dialog(title, NULL, opts, nopts, deflt, hcode,
 			     spinvar, spintxt, spinmin, spinmax);
 }
+
+int radio_dialog_with_check (const char *title, const char *label, 
+			     const char **opts, int nopts, int deflt, 
+			     int hcode, int *checkvar, const char *checktxt)
+{
+    return real_radio_dialog(title, label, opts, nopts, deflt, hcode,
+			     checkvar, checktxt, 0, 0);
+}
+
 
 /* selections in relation to kernel density estimation */
 
@@ -3319,6 +3335,28 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     }
 
     g_object_set_data(G_OBJECT(hbox), "spin-button", button);
+
+    return hbox;
+}
+
+static void option_check_set (GtkWidget *w, int *checkvar)
+{
+    *checkvar = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+}
+
+static GtkWidget *option_checkbox (int *checkvar, const char *checktxt)
+{
+    GtkWidget *hbox;
+    GtkWidget *button;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    button = gtk_check_button_new_with_label(checktxt);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_widget_show(button);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), *checkvar);
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(option_check_set), checkvar);
 
     return hbox;
 }

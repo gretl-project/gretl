@@ -128,7 +128,7 @@ void verbose_gerror_report (GError *gerr, const char *src);
 
 int gretl_file_get_contents (const gchar *fname, gchar **contents);
 
-void start_R (const char *buf, int send_data);
+void start_R (const char *buf, int send_data, int interactive);
 
 #ifndef G_OS_WIN32
 int browser_open (const char *url);
