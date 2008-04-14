@@ -2448,8 +2448,7 @@ static void rbuf_finalize (const char *s)
  * @buf: source buffer.
  *
  * This function works much like fgets, reading successive lines 
- * from a buffer rather than a file.  It differs from fgets in 
- * that it discards the line termination ("\n" or "\r\n") on output.  
+ * from a buffer rather than a file.  
  * Important note: use of bufgets() on a particular buffer must be 
  * preceded by a call to bufgets_init() on the same buffer, and must be
  * followed by a call to bufgets_finalize(), again on the same
@@ -2528,12 +2527,10 @@ char *bufgets (char *s, size_t size, const char *buf)
 	p += 2;
     }
 
-#if 1
-    /* replace newline? */
+    /* replace newline */
     if (status && i < size - 1) {
 	strcat(s, "\n");
     }
-#endif
 
     rbuf_set_point(buf, p);
 

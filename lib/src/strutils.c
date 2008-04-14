@@ -877,15 +877,18 @@ int get_base (char *targ, const char *src, char c)
 /**
  * top_n_tail:
  * @str: the string to process.
+ * @err: location to receive error code, or %NULL
  *
  * Drop leading space and trailing space and newline from string,
  * then replace a trailing backslash (if any) with a space.
+ * If @str does not end with a newline, and @err is not %NULL,
+ * then %E_TOOLONG is written to @err.
  * 
  * Returns: 1 if a trailing backslash or comma was found, 
  * otherwise 0.
  */
 
-int top_n_tail (char *str)
+int top_n_tail (char *str, int *err)
 {
     int i, n, cont = 0;
 
@@ -894,6 +897,10 @@ int top_n_tail (char *str)
     }
 
     n = strlen(str) - 1;
+
+    if (err != NULL && str[n] != '\n') {
+	*err = E_TOOLONG;
+    }
 
     /* chop any trailing space */
     for (i=n; i>=0; i--) {

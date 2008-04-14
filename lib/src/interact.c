@@ -117,6 +117,7 @@ static int filter_comments (char *s, CMD *cmd)
     int j = 0, filt = 0;
 
     if (strlen(s) >= MAXLINE) {
+	cmd->err = E_TOOLONG;
 	return 0;
     }
 
@@ -1580,7 +1581,7 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
    insert a space so that we can count the fields in the line
    correctly */
 
-static int fix_semicolon_separation (char *s)
+static int fix_semicolon_separation (char *s, CMD *cmd)
 {
     int len = strlen(s);
     int i, j;
@@ -1596,6 +1597,7 @@ static int fix_semicolon_separation (char *s)
 		s[len + 1] = '\0';
 		len++;
 	    } else {
+		cmd->err = E_TOOLONG;
 		break;
 	    }
 	} 
@@ -2055,7 +2057,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->err) {
 	return cmd->err;
     }    
-    
+
     compress_spaces(line);
 
 #if CMD_DEBUG
@@ -2219,7 +2221,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* fix lines that contain a semicolon stuck to another element */
-    linelen = fix_semicolon_separation(line);
+    linelen = fix_semicolon_separation(line, cmd);
+    if (cmd->err) {
+	return cmd->err;
+    }
 
     /* arbond special: if there's a block-diagonal instruments
        portion to the command, grab that in literal form for
@@ -3652,14 +3657,17 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
 	return 0;
     }
 
-    while (top_n_tail(line)) {
+    while (top_n_tail(line, &err)) {
+	if (err) {
+	    break;
+	}
 	*tmp = '\0';
 	fgets(tmp, sizeof tmp, fp);
 	if (*tmp != '\0') {
 	    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
 		pprintf(prn, _("Maximum length of command line "
 			       "(%d bytes) exceeded\n"), MAXLINE);
-		err = 1;
+		err = E_TOOLONG;
 		break;
 	    } else {
 		strcat(line, tmp);

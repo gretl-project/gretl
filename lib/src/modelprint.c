@@ -834,19 +834,24 @@ static void dhline (const MODEL *pmod, PRN *prn)
 
 static int least_significant_coeff (const MODEL *pmod)
 {
-    double tstat, tmin = 4.0;
+    double x, tmin = 4.0;
     int i, k = 0;
     
     for (i=pmod->ifc; i<pmod->ncoeff; i++) {
-	tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
-	if (tstat < tmin) {
-	    tmin = tstat;
-	    k = i;
+	if (pmod->sderr[i] > 0) {
+	    x = fabs(pmod->coeff[i] / pmod->sderr[i]);
+	    if (x < tmin) {
+		tmin = x;
+		k = i;
+	    }
 	}
     }
 
-    if (coeff_pval(pmod->ci, tmin, pmod->dfd) > .10) {
-	return pmod->list[k+2];
+    if (tmin < 4.0) {
+	x = coeff_pval(pmod->ci, tmin, pmod->dfd);
+	if (!na(x) && x > .10) {
+	    return pmod->list[k+2];
+	}
     }
 
     return 0;

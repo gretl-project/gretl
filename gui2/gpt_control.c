@@ -1997,7 +1997,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 		if (!fgets(gpline, MAXLEN - 1, fp)) {
 		    errbox(_("Plot file is corrupted"));
 		} else {
-		    top_n_tail(gpline);
+		    top_n_tail(gpline, NULL);
 		    spec->literal[i] = g_strdup(gpline);
 		}
 	    }
@@ -2058,7 +2058,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     done = 0;
 
     while (!err) {
-	top_n_tail(gpline);
+	top_n_tail(gpline, NULL);
 
 	if (!chop_comma(gpline)) {
 	    /* line did not end with comma -> no continuation of

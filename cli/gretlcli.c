@@ -122,14 +122,15 @@ static void noalloc (const char *str)
 static void file_get_line (char *line, CMD *cmd)
 {
     clear(line, MAXLINE);
-    fgets(line, MAXLINE - 1, fb);
+    fgets(line, MAXLINE, fb);
 
     if (*line == '\0') {
 	strcpy(line, "quit");
     } else {
-	tailstrip(line);
+	/* tailstrip(line); */
 	*linebak = 0;
-	strncat(linebak, line, MAXLINE - 1);
+	strncat(linebak, line, MAXLINE-1);
+	tailstrip(linebak);
     }
 
     if (!strncmp(line, "noecho", 6)) {
@@ -137,7 +138,7 @@ static void file_get_line (char *line, CMD *cmd)
     }
 
     if (gretl_echo_on() && cmd->ci == RUN && batch && *line == '(') {
-	printf("%s\n", line);
+	printf("%s", line);
 	*linebak = 0;
     }
 }
@@ -247,8 +248,12 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	rl_gets(&line_read, (coding)? "> " : "? ");
 	if (line_read == NULL) {
 	    strcpy(s->line, "quit");
+	} else if (strlen(line_read) > MAXLINE - 2) {
+	    err = E_TOOLONG;
 	} else {
-	    strcpy(s->line, line_read);
+	    *s->line = '\0';
+	    strncat(s->line, line_read, MAXLINE - 2);
+	    strcat(s->line, "\n");
 	}
 #else
 	printf("%s", (coding)? "> " : "? ");
@@ -271,9 +276,9 @@ static int maybe_get_input_line_continuation (char *line)
 	return 0;
     }
 
-    contd = top_n_tail(line);
+    contd = top_n_tail(line, &err);
 
-    while (contd) {
+    while (contd && !err) {
 	*tmp = '\0';
 
 	if (batch || runit) {
@@ -298,7 +303,7 @@ static int maybe_get_input_line_continuation (char *line)
 		compress_spaces(line);
 	    }
 	}
-	contd = top_n_tail(line);
+	contd = top_n_tail(line, &err);
     }
 
     return err;
@@ -553,7 +558,7 @@ int main (int argc, char *argv[])
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
-	sprintf(line, "run %s", runfile);
+	sprintf(line, "run %s\n", runfile);
 	exec_line(&state, &Z, datainfo);
     }
 
@@ -581,17 +586,16 @@ int main (int argc, char *argv[])
 		continue;
 	    }
 	}
-	
+
 	if (!state.in_comment) {
 	    overflow = maybe_get_input_line_continuation(line); 
 	    if (overflow) {
 		break;
 	    }
-	} else {
-	    tailstrip(line);
-	}
+	} 
 
 	strcpy(linecopy, line);
+	tailstrip(linecopy);
 	err = exec_line(&state, &Z, datainfo);
     } /* end of get commands loop */
 
@@ -957,7 +961,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
 	printf(_("type a filename to store output (enter to quit): "));
 	get_a_filename(outfile);
-	top_n_tail(outfile);
+	top_n_tail(outfile, NULL);
 
 	if (*outfile != 0 && *outfile != '\n' && *outfile != '\r' 
 	    && strcmp(outfile, "q")) {

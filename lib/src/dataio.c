@@ -1605,38 +1605,35 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 {
     FILE * fp;
-    char line[MAXLEN], *label, varname[VNAMELEN];
+    char line[MAXLEN], varname[VNAMELEN];
+    char *p;
     int v;
     
     gretl_error_clear();
 
     fp = gretl_fopen(lblfile, "r");
-    if (fp == NULL) return 0;
+    if (fp == NULL) {
+	return 0;
+    }
 
-    while (1) {
-        if (fgets(line, MAXLEN-1, fp) == NULL) {
-            fclose(fp);
-            return 0;
-        }
+    while (fgets(line, MAXLEN, fp)) {
+	tailstrip(line);
         if (sscanf(line, "%s", varname) != 1) {
-            fclose(fp);
 	    sprintf(gretl_errmsg, _("Bad data label in %s"), lblfile); 
-            return 0;
-        }
-        label = line + strlen(varname);
-        if (top_n_tail(label) == E_ALLOC) {
-            fclose(fp);
-            return E_ALLOC;
+            break;
         }
 	v = varindex(pdinfo, varname);
 	if (v < pdinfo->v) {
-	    strcpy(VARLABEL(pdinfo, v), label);
+	    p = line + strlen(varname);
+	    p += strspn(p, " \t");
+	    VARLABEL(pdinfo, v)[0] = '\0';
+	    strncat(VARLABEL(pdinfo, v), p, MAXLABEL - 1);
 	} else {
 	    fprintf(stderr, I_("extraneous label for var '%s'\n"), varname);
 	}
     }
 
-    if (fp != NULL) fclose(fp);
+    fclose(fp);
 
     return 0;
 }

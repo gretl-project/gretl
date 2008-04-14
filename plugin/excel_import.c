@@ -209,9 +209,10 @@ static char *convert8to7 (const char *s, int count)
 
     dest = malloc(VNAMELEN);
     *dest = '\0';
+    s += strspn(s, " \t");
     strncat(dest, s, count);
     iso_to_ascii(dest);
-    top_n_tail(dest);
+    tailstrip(dest);
 
     dprintf("convert8to7: returning '%s'\n", dest);
 
