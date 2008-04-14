@@ -1326,7 +1326,10 @@ static int arbond_variance (arbond *ab)
 #endif
 
     /* while we're at it... */
-    ar_test(ab, C);
+    if (!(ab->opt & OPT_H)) {
+	/* FIXME */
+	ar_test(ab, C);
+    }
     sargan_test(ab);
     arbond_wald_test(ab);
 
@@ -2037,7 +2040,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	    }
 	    
 	    /* additional block-diagonal columns, if required --
-	       needs for checking for the unbalanced case 
+	       needs checking for the unbalanced case 
 	    */
 	    zj = 0;
 	    for (zi=0; zi<ab->nzb; zi++) {
@@ -2083,14 +2086,14 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	gretl_matrix_print(ab->Zi, zstr);
 #endif
 
+	/* Cumulate Z_i' H Z_i into A_N */
 	if (ab->opt & OPT_H) {
+	    /* orthogonal deviations: "H" is identity matrix */
 	    gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
 				      ab->Zi, GRETL_MOD_NONE,
 				      ab->A, GRETL_MOD_CUMULATE);
 	} else {
 	    err = make_first_diff_matrix(ab, i);
-	
-	    /* Cumulate Z_i' H Z_i into A_N */
 	    gretl_matrix_qform(ab->Zi, GRETL_MOD_TRANSPOSE,
 			       ab->H, ab->A, GRETL_MOD_CUMULATE);
 	}
