@@ -1809,6 +1809,10 @@ static int arbond_calculate (arbond *ab)
 	ab->doZX = 0;
     }
 
+#if ADEBUG
+    gretl_matrix_print(ab->ZX, "Z'X");
+#endif
+
     /* find X'Z A */
     gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
 			      ab->A, GRETL_MOD_NONE,
@@ -1816,6 +1820,9 @@ static int arbond_calculate (arbond *ab)
 
     /* calculate "numerator", X'ZAZ'y */
     gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
+#if ADEBUG
+    gretl_matrix_print(ab->R1, "Z'y");
+#endif
     gretl_matrix_multiply(ab->XZA, ab->R1, ab->beta);
 
     /* calculate "denominator", X'ZAZ'X */
@@ -2101,6 +2108,10 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	    free(zmask);
 	}
     } 
+
+#if ADEBUG
+    gretl_matrix_print(ab->A, "\\sum Z_i' H Z_i");
+#endif
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(ab->A, ab->N);
