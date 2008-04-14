@@ -4079,32 +4079,6 @@ char *double_underscores (char *targ, const char *src)
     return targ;
 }
 
-#ifndef G_OS_WIN32
-
-int browser_open (const char *url)
-{
-# if defined(USE_GNOME)
-    gnome_url_show(url, NULL); 
-# elif defined(OSX_BUILD)
-    osx_open_url(url);
-# else
-    gchar *urlcmd;
-    int err;
-    
-    urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
-    err = gretl_spawn(urlcmd);
-    g_free(urlcmd);
-
-    if (err) {
-	gretl_fork("Browser", url);
-    }
-# endif /* !GNOME, !OSX */
-
-    return 0;
-}
-
-#endif
-
 #ifdef G_OS_WIN32
 
 static void run_R_sync (void)
@@ -4135,7 +4109,29 @@ static void run_R_sync (void)
     g_free(Rterm);
 }
 
-#else
+#else /* some non-Windows functions follow */
+
+int browser_open (const char *url)
+{
+# if defined(USE_GNOME)
+    gnome_url_show(url, NULL); 
+# elif defined(OSX_BUILD)
+    osx_open_url(url);
+# else
+    gchar *urlcmd;
+    int err;
+    
+    urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
+    err = gretl_spawn(urlcmd);
+    g_free(urlcmd);
+
+    if (err) {
+	gretl_fork("Browser", url);
+    }
+# endif /* !GNOME, !OSX */
+
+    return 0;
+}
 
 #include <signal.h>
 
