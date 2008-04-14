@@ -409,13 +409,8 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 
 static int anymiss (arbond *ab, const double **Z, int s)
 {
-#if 0
-    int imin = (ab->opt & OPT_H)? -1 : 0;
-    int imax = (ab->opt & OPT_H)? ab->p : ab->p + 1;
-#else
     int imin = 0;
     int imax = ab->p + 1;
-#endif
     int i;
 
     for (i=imin; i<=imax; i++) {
@@ -491,13 +486,8 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 	ab->qmax = ab->T;
     }
 
-#if 0
-    tmin = (ab->opt & OPT_M)? ab->p : ab->p + 1;
-    tmax = (ab->opt & OPT_M)? ab->T - 1 : ab->T;
-#else
     tmin = ab->p + 1;
     tmax = ab->T;
-#endif
 
     for (i=0; i<ab->N; i++) {
 	int t1i = ab->T - 1, t2i = 0; 
@@ -597,13 +587,8 @@ static int arbond_sample_check (arbond *ab, const double **Z)
     } else {
 	/* compute the number of columns in Zi */
 	int tau = t2max - t1min + 1;
-	int nblocks, bcols, cols = 0;
-
-#if 0
-	nblocks = (ab->opt & OPT_H)? tau - ab->p : tau - ab->p - 1;
-#else
-	nblocks = tau - ab->p - 1;
-#endif
+	int nblocks = tau - ab->p - 1;
+	int bcols, cols = 0;
 
 #if ADEBUG
 	fprintf(stderr, "\ntau = %d (ab->p = %d)\n", tau, ab->p);
