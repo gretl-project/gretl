@@ -415,6 +415,15 @@ static int obs_is_usable (arbond *ab, const double **Z, int s)
     int imax = ab->p + 1;
     int i;
 
+    /* FIXME orthgonal deviations: we can compute such a
+       deviation for time-slot s if we have a value for
+       y at s-1 (given that we shift these forward) plus
+       one or more valid observations at s, s+1, ...
+       If I'm thinking correctly we don't necessarily 
+       require a valid value at s, or in other words
+       the first block below is too conservative.
+    */
+
     for (i=0; i<=imax; i++) {
 	if (na(Z[ab->yno][s-i])) {
 	    return 0;
