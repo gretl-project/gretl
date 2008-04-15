@@ -403,31 +403,35 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     return err;
 }
 
-/* see if there are NAs for the dependent variable, or
-   for any of the independent variables, at a given
-   observation */
+/* See if we have valid values for the dependent variable, and all of
+   the independent variables, and at least one instrument, at the
+   given observation, s.
+*/
 
-static int anymiss (arbond *ab, const double **Z, int s)
+static int obs_is_usable (arbond *ab, const double **Z, int s)
 {
     int imin = 0;
     int imax = ab->p + 1;
     int i;
 
+    /* FIXME orthogonal deviations */
+
     for (i=imin; i<=imax; i++) {
 	if (na(Z[ab->yno][s-i])) {
-	    return 1;
+	    return 0;
 	}
     }
 
     if (ab->xlist != NULL) {
+	/* check the independent vars */
 	for (i=1; i<=ab->xlist[0]; i++) {
 	    if (na(Z[ab->xlist[i]][s])) {
-		return 1;
+		return 0;
 	    }
 	}
     }
 
-    return 0;
+    return 1;
 }
 
 static int bzcols (arbond *ab, int i)
@@ -509,13 +513,13 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 
 	s = data_index(ab, i);
 	for (t=tmin; t<tmax; t++) {
-	    if (anymiss(ab, Z, s + t)) {
-		mask[t] = 1;
-	    } else {
+	    if (obs_is_usable(ab, Z, s + t)) {
 		usable++;
 		if (t < t1i) t1i = t;
 		if (t > t2i) t2i = t;
-	    } 
+	    } else {
+		mask[t] = 1;
+	    }
 	}
 
 	if (usable == 0) {
@@ -1810,7 +1814,7 @@ static int arbond_calculate (arbond *ab)
     }
 
 #if ADEBUG
-    gretl_matrix_print(ab->ZX, "Z'X");
+    gretl_matrix_print(ab->ZX, "Z'X (arbond_calculate)");
 #endif
 
     /* find X'Z A */
@@ -1821,7 +1825,7 @@ static int arbond_calculate (arbond *ab)
     /* calculate "numerator", X'ZAZ'y */
     gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
 #if ADEBUG
-    gretl_matrix_print(ab->R1, "Z'y");
+    gretl_matrix_print(ab->R1, "Z'y (arbond_calculate)");
 #endif
     gretl_matrix_multiply(ab->XZA, ab->R1, ab->beta);
 
@@ -1986,6 +1990,8 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
     int err = 0;
 
     gretl_matrix_zero(ab->A);
+    gretl_matrix_zero(ab->ZX);
+    gretl_matrix_zero(ab->R1);
 
     for (i=0; i<ab->N && !err; i++) {
 	int ycols = ab->p; /* intial y block width */
@@ -2076,6 +2082,47 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 #if ADEBUG
 	sprintf(zstr, "Z_%d", i + 1);
 	gretl_matrix_print(ab->Zi, zstr);
+#endif
+
+#if 0
+
+	/* Try cumulating Z'X and Z'y here: we need to extract the
+	   relevant Ti-related slices of dX and dy.
+	*/
+	gretl_matrix *dXi, *dyi;
+	static int row;
+	int merr = 0;
+
+	dXi = gretl_matrix_alloc(ab->Zi->rows, ab->dX->cols);
+	dyi = gretl_matrix_alloc(ab->Zi->rows, 1);
+	
+	fprintf(stderr, "dXi = %d x %d\n", dXi->rows, dXi->cols);
+	fprintf(stderr, "dyi = %d x %d\n", dyi->rows, dyi->cols);
+	
+
+	merr += gretl_matrix_extract_matrix(dXi, ab->dX, row, 0,
+					    GRETL_MOD_NONE);
+	gretl_matrix_print(dXi, "dXi");
+
+	merr += gretl_matrix_extract_matrix(dyi, ab->dy, row, 0,
+					    GRETL_MOD_NONE);
+
+	merr += gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
+					  dXi, GRETL_MOD_NONE,
+					  ab->ZX, GRETL_MOD_CUMULATE);
+
+	merr += gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
+					  dyi, GRETL_MOD_NONE,
+					  ab->R1, GRETL_MOD_CUMULATE);
+
+	fprintf(stderr, "merr = %d\n", merr);
+	row += Ti;
+
+	gretl_matrix_print(ab->ZX, "Z'X");
+	gretl_matrix_print(ab->R1, "Z'y");
+
+	gretl_matrix_free(dXi);
+	gretl_matrix_free(dyi);
 #endif
 
 	/* Cumulate Z_i' H Z_i into A_N */
