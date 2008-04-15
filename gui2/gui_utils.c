@@ -802,7 +802,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     if (mods & GDK_CONTROL_MASK) {
 	if (key->keyval == GDK_f) {
-	    /* Ctrl-S: find */
+	    /* Ctrl-F: find */
 	    text_find_callback(NULL, vwin);
 	    return TRUE;
 	} else if (key->keyval == GDK_c) {
@@ -4100,7 +4100,7 @@ static void run_R_sync (void)
     if (err) {
 	gui_errmsg(err);
     } else {
-	gchar *Rout = g_strdup_printf("%s\\R.out", paths.dotdir);
+	gchar *Rout = g_strdup_printf("%sR.out", paths.dotdir);
 
 	view_file(Rout, 0, 1, 78, 350, VIEW_FILE);
 	g_free(Rout);
@@ -4305,7 +4305,7 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
     } else {
 #ifdef G_OS_WIN32
 	if (!interactive) {
-	    gchar *Rout = g_strdup_printf("%s/R.out", paths.dotdir);
+	    gchar *Rout = g_strdup_printf("%sR.out", paths.dotdir);
 
 	    fprintf(fp, "sink(\"%s\")\n", slash_convert(Rout, FROM_BACKSLASH));
 	    g_free(Rout);
