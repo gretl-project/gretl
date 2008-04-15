@@ -403,20 +403,17 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     return err;
 }
 
-/* See if we have valid values for the dependent variable, and all of
-   the independent variables, and at least one instrument, at the
-   given observation, s.
+/* See if we have valid values for the dependent variable (in
+   differenced or deviations form) plus p lags of same, and all of
+   the independent variables, at the given observation, s.
 */
 
 static int obs_is_usable (arbond *ab, const double **Z, int s)
 {
-    int imin = 0;
     int imax = ab->p + 1;
     int i;
 
-    /* FIXME orthogonal deviations */
-
-    for (i=imin; i<=imax; i++) {
+    for (i=0; i<=imax; i++) {
 	if (na(Z[ab->yno][s-i])) {
 	    return 0;
 	}
@@ -505,10 +502,10 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 	    mask[t] = 0;
 	}
 
-	/* identify the observations at which we can form the required
+	/* Identify the observations at which we can form the required
 	   Delta y terms, have the requisite independent variables,
 	   and can construct at least one orthogonality condition
-	   using a lagged level of y
+	   using a lagged level of y.
 	*/
 
 	s = data_index(ab, i);
@@ -527,7 +524,7 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 	    ab->ui[i].t1 = -1;
 	    ab->ui[i].t2 = -1;
 #if ADEBUG
-	    fprintf(stderr, "not usable\n");
+	    fprintf(stderr, "unit not usable\n");
 #endif
 	    continue;
 	}
