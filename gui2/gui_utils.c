@@ -4083,7 +4083,7 @@ char *double_underscores (char *targ, const char *src)
 
 static void run_R_sync (void)
 {
-    gchar *Rterm, *Rout, *cmd;
+    gchar *Rterm, *cmd;
     int err;
 
     Rterm = R_path_from_registry();
@@ -4092,19 +4092,20 @@ static void run_R_sync (void)
 	return;
     }
 
-    Rout = g_strdup_printf("%s\\R.out", paths.dotdir);
     cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
-			  "--quiet > \"%s\"", Rterm, Rout);
+			  "--quiet", Rterm);
 
     err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
 
     if (err) {
 	gui_errmsg(err);
     } else {
+	gchar *Rout = g_strdup_printf("%s\\R.out", paths.dotdir);
+
 	view_file(Rout, 0, 1, 78, 350, VIEW_FILE);
+	g_free(Rout);
     }
 
-    g_free(Rout);
     g_free(cmd);
     g_free(Rterm);
 }
@@ -4302,6 +4303,14 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
 	file_write_errbox(Rsrc);
 	err = E_FOPEN;
     } else {
+#ifdef G_OS_WIN32
+	if (!interactive) {
+	    gchar *Rout = g_strdup_printf("%s/R.out", paths.dotdir);
+
+	    fprintf(fp, "sink(\"%s\")\n", slash_convert(Rout, FROM_BACKSLASH));
+	    g_free(Rout);
+	}
+#endif
 	if (send_data) {
 	    err = write_data_for_R(fp);
 	}

@@ -38,6 +38,7 @@ struct diag_info {
 struct arbond_ {
     gretlopt opt;         /* option flags */
     int doZX;             /* calculation flag */
+    int doZy;             /* calculation flag */
     int step;             /* what step are we on? */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
@@ -353,6 +354,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->opt = opt;
     ab->step = 1;
     ab->doZX = 1;
+    ab->doZy = 1;
     ab->nx = 0;
     ab->nz = 0;
     ab->t1min = 0;
@@ -1820,7 +1822,11 @@ static int arbond_calculate (arbond *ab)
 			      ab->XZA, GRETL_MOD_NONE);
 
     /* calculate "numerator", X'ZAZ'y */
-    gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
+    if (ab->doZy) {
+	gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
+    } else {
+	ab->doZy = 1;
+    }
 #if ADEBUG
     gretl_matrix_print(ab->R1, "Z'y (arbond_calculate)");
 #endif
@@ -1903,7 +1909,7 @@ static double odev_at_lag (const double *x, int t, int lag, int pd)
     Tt = pd - (t % pd) - (lag + 1);
 
     for (s=1; s<=Tt; s++) {
-	if (!na(x[t+s])) {
+	if (!na(x[t+s]) && !na(x[t+s+lag])) {
 	    xbar += x[t+s];
 	    n++;
 	}
@@ -1974,9 +1980,15 @@ static int arbond_make_dy_and_X (arbond *ab, const double *y,
     return 0;
 }
 
+#define TRY_CUM 0
+
 static int arbond_make_Z_and_A (arbond *ab, const double *y,
 				const double **Z)
 {
+#if TRY_CUM
+    gretl_matrix *dXi = NULL, *dyi = NULL;
+    int cum_row = 0;
+#endif
     int i, j, k, s, t, c = 0;
     int zi, zj, zk;
     double x;
@@ -1985,6 +1997,11 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
     char zstr[8];
 #endif
     int err = 0;
+
+#if TRY_CUM
+    dXi = gretl_matrix_alloc(ab->Zi->rows, ab->dX->cols);
+    dyi = gretl_matrix_alloc(ab->Zi->rows, 1);
+#endif
 
     gretl_matrix_zero(ab->A);
     gretl_matrix_zero(ab->ZX);
@@ -2081,28 +2098,22 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	gretl_matrix_print(ab->Zi, zstr);
 #endif
 
-#if 0
-
+#if TRY_CUM
 	/* Try cumulating Z'X and Z'y here: we need to extract the
 	   relevant Ti-related slices of dX and dy.
 	*/
-	gretl_matrix *dXi, *dyi;
-	static int row;
 	int merr = 0;
 
-	dXi = gretl_matrix_alloc(ab->Zi->rows, ab->dX->cols);
-	dyi = gretl_matrix_alloc(ab->Zi->rows, 1);
+	gretl_matrix_reuse(dXi, Ti, -1);
+	gretl_matrix_reuse(dyi, Ti, -1);
 	
-	fprintf(stderr, "dXi = %d x %d\n", dXi->rows, dXi->cols);
-	fprintf(stderr, "dyi = %d x %d\n", dyi->rows, dyi->cols);
-	
-
-	merr += gretl_matrix_extract_matrix(dXi, ab->dX, row, 0,
+	merr += gretl_matrix_extract_matrix(dXi, ab->dX, cum_row, 0,
 					    GRETL_MOD_NONE);
 	gretl_matrix_print(dXi, "dXi");
 
-	merr += gretl_matrix_extract_matrix(dyi, ab->dy, row, 0,
+	merr += gretl_matrix_extract_matrix(dyi, ab->dy, cum_row, 0,
 					    GRETL_MOD_NONE);
+	gretl_matrix_print(dyi, "dyi");
 
 	merr += gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
 					  dXi, GRETL_MOD_NONE,
@@ -2113,13 +2124,11 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 					  ab->R1, GRETL_MOD_CUMULATE);
 
 	fprintf(stderr, "merr = %d\n", merr);
-	row += Ti;
-
+	cum_row += Ti;
+#if ADEBUG
 	gretl_matrix_print(ab->ZX, "Z'X");
 	gretl_matrix_print(ab->R1, "Z'y");
-
-	gretl_matrix_free(dXi);
-	gretl_matrix_free(dyi);
+#endif
 #endif
 
 	/* Cumulate Z_i' H Z_i into A_N */
@@ -2144,6 +2153,12 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	make_first_diff_matrix(NULL, 0);
     }
 
+#if TRY_CUM
+    ab->doZX = 0;
+    ab->doZy = 0;
+    gretl_matrix_free(dXi);
+    gretl_matrix_free(dyi);
+#else
     if (!err) {
 	/* mask zero rows of ZT, if required */
 	zmask = zero_row_mask(ab->ZT, &err);
@@ -2152,6 +2167,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	    free(zmask);
 	}
     } 
+#endif
 
 #if ADEBUG
     gretl_matrix_print(ab->A, "\\sum Z_i' H Z_i");
