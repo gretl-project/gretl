@@ -2138,7 +2138,8 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 	}
 
 	if (a != NULL) {
-	    if (gretl_matrix_is_scalar(a)) {
+	    if (0 && gretl_matrix_is_scalar(a)) {
+		/* should we automatically cast to scalar? */
 		ret = aux_scalar_node(p);
 		if (ret != NULL) {
 		    ret->v.xval = a->val[0];
@@ -5972,7 +5973,7 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
 	return 0;
     }
 
-    n = strcspn(s, "+-([= ");
+    n = strcspn(s, "*/%^|~+-([= ");
 
     if (n > 0) {
 	if (*(s+n) == '[') {
