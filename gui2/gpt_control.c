@@ -250,7 +250,7 @@ static FILE *open_gp_file (const char *fname, const char *mode)
 
 static int commented_term_line (const char *s)
 {
-    return !strncmp(s, "# set term png", 14);
+    return !strncmp(s, "# set terminal png", 18);
 }
 
 static int set_output_line (const char *s)
@@ -294,7 +294,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	/* see if there's already a png term setting, possibly commented
 	   out, that can be reused */
 	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (!strncmp(fline, "set term png", 12)) {
+	    if (!strncmp(fline, "set terminal png", 16)) {
 		strcat(restore_line, fline);
 		break;
 	    } else if (commented_term_line(fline) && *restore_line == '\0') {
@@ -347,7 +347,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    printit = 1;
-	    if (!strncmp(fline, "set term png", 12)) {
+	    if (!strncmp(fline, "set terminal png", 16)) {
 		if (!png_line_saved) {
 		    /* comment it out, for future reference */
 		    fprintf(ftmp, "# %s", fline);
@@ -659,7 +659,7 @@ void filter_gnuplot_file (int ttype, int latin, int mono, int recolor,
 	    break;
 	}
 
-	if (!strncmp(pline, "set term", 8) ||
+	if (!strncmp(pline, "set terminal", 12) ||
 	    !strncmp(pline, "set enco", 8) ||
 	    !strncmp(pline, "set outp", 8)) {
 	    continue;
@@ -774,7 +774,7 @@ static int revise_plot_file (const char *inname,
 #endif
 
     if (outtarg != NULL && *outtarg != '\0') {
-	fprintf(fpout, "set term %s\n", term);
+	fprintf(fpout, "set terminal %s\n", term);
 	fprintf(fpout, "set output '%s'\n", outtarg);
     }	
 
@@ -1078,7 +1078,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     build_path(emfname, paths.dotdir, "gpttmp.emf", NULL);
 
     term = get_gretl_emf_term_line(spec->code, color);
-    if (!strncmp(term, "set term ", 9)) {
+    if (!strncmp(term, "set terminal ", 13)) {
 	term += 9;
     }
 
@@ -3355,8 +3355,8 @@ static int get_dumb_plot_yrange (png_plot *plot)
 
     /* switch to the "dumb" (ascii) terminal in gnuplot */
     while (fgets(line, MAXLEN-1, fpin)) {
-	if (strstr(line, "set term")) {
-	    fputs("set term dumb\n", fpout);
+	if (strstr(line, "set terminal")) {
+	    fputs("set terminal dumb\n", fpout);
 	} else if (strstr(line, "set output")) { 
 	    fprintf(fpout, "set output '%s'\n", dumbtxt);
 	} else if (ok_dumb_line(line)) {

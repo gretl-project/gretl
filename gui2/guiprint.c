@@ -639,12 +639,12 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 	return NULL;
     }
 
-    fprintf(ftmp, "set term pbm mono\n"
+    fprintf(ftmp, "set terminal pbm mono\n"
 	    "set output '%s%s'\n", 
 	    paths.dotdir, GRETL_PBM_TMP);
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
-	if (strncmp(fline, "set term", 8) && 
+	if (strncmp(fline, "set terminal", 12) && 
 	    strncmp(fline, "set output", 10)) {
 	    fputs(fline, ftmp);
 	}

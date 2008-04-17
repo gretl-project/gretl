@@ -573,9 +573,9 @@ static int font_is_ok (const char *fname)
     }
 
     if (pngterm == GP_PNG_CAIRO) {
-	sprintf(cmd, "set term pngcairo font \"%s,10\"", fname);
+	sprintf(cmd, "set terminal pngcairo font \"%s,10\"", fname);
     } else {
-	sprintf(cmd, "set term png font %s 10", fname);
+	sprintf(cmd, "set terminal png font %s 10", fname);
     }
 
     err = gnuplot_test_command(cmd);

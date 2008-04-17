@@ -356,10 +356,10 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     if (gpage.term == GP_TERM_PDF) {
 	if (pdfterm == GP_PDF_CAIRO) {
 	    /* FIXME font size? */
-	    fprintf(fq, "set term pdfcairo font \"sans,5\"%s", 
+	    fprintf(fq, "set terminal pdfcairo font \"sans,5\"%s", 
 		    (gpage.mono)? " monochrome dashed" : " ");
 	} else {
-	    fprintf(fq, "set term pdf%s", (gpage.mono)? " monochrome dashed" : " color");
+	    fprintf(fq, "set terminal pdf%s", (gpage.mono)? " monochrome dashed" : " color");
 	}
 	if (scale != 1.0) {
 	    fprintf(fq, " size %g,%g\n", scale * 5.0, scale * 3.0);
@@ -368,7 +368,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	}	
 	fname = gpage_fname(".pdf", i);
     } else {
-	fprintf(fq, "set term postscript eps%s\n", (gpage.mono)? " monochrome" : " color");
+	fprintf(fq, "set terminal postscript eps%s\n", (gpage.mono)? " monochrome" : " color");
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
 	}
