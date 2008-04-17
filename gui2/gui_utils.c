@@ -1765,7 +1765,8 @@ static void set_plot_icon (struct viewbar_item *vitem)
 
 #define exec_ok(r) (r == EDIT_SCRIPT || \
                     r == EDIT_GP || \
-                    r == EDIT_R)
+                    r == EDIT_R || \
+	            r == VIEW_SCRIPT)
 
 #define edit_ok(r) (r == EDIT_SCRIPT || \
                     r == EDIT_HEADER || \

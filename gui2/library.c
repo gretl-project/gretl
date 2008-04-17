@@ -6456,8 +6456,9 @@ static void output_line (const char *line, ExecState *s, PRN *prn)
     }
 }
 
-static char *get_an_input_line (char *line, FILE *fp,
-				const char *buf)
+static char *gui_get_input_line (char *line, FILE *fp,
+				 const char *buf,
+				 int *err)
 {
     char *s;
 
@@ -6467,6 +6468,14 @@ static char *get_an_input_line (char *line, FILE *fp,
 	s = fgets(line, MAXLINE, fp);
     } else {
 	s = bufgets(line, MAXLINE, buf);
+    }
+
+    if (s != NULL) {
+	int n = strlen(line);
+	
+	if (line[n-1] != '\n') {
+	    *err = E_TOOLONG;
+	}
     }
 
     return s;
@@ -6530,32 +6539,32 @@ static int execute_script (const char *runfile, const char *buf,
 	    char *gotline = NULL;
 	    int contd;
 
-	    gotline = get_an_input_line(line, fb, buf);
+	    gotline = gui_get_input_line(line, fb, buf, &exec_err);
 	    if (gotline == NULL) {
 		/* done reading */
 		goto endwhile;
 	    }
 
-	    if (!state.in_comment) {
-		contd = top_n_tail(line, &exec_err);
-		while (contd && !state.in_comment && !exec_err) {
-		    /* handle continued lines */
-		    get_an_input_line(tmp, fb, buf);
-		    if (!exec_err && *tmp != '\0') {
-			if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
-			    pprintf(prn, _("Maximum length of command line "
-					   "(%d bytes) exceeded\n"), MAXLINE);
-			    exec_err = E_TOOLONG;
-			    break;
-			} else {
-			    strcat(line, tmp);
-			    compress_spaces(line);
-			}
-		    }
+	    if (!exec_err) {
+		if (!state.in_comment) {
 		    contd = top_n_tail(line, &exec_err);
+		    while (contd && !state.in_comment && !exec_err) {
+			/* handle continued lines */
+			gui_get_input_line(tmp, fb, buf, &exec_err);
+			if (!exec_err && *tmp != '\0') {
+			    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
+				exec_err = E_TOOLONG;
+				break;
+			    } else {
+				strcat(line, tmp);
+				compress_spaces(line);
+			    }
+			}
+			contd = top_n_tail(line, &exec_err);
+		    }
+		} else {
+		    tailstrip(line);
 		}
-	    } else {
-		tailstrip(line);
 	    }
 
 	    if (!exec_err) {
@@ -6577,7 +6586,11 @@ static int execute_script (const char *runfile, const char *buf,
 
 	    if (exec_err) {
 		pprintf(prn, _("\nError executing script: halting\n"));
-		pprintf(prn, "> %s\n", tmp);
+		if (exec_err == E_TOOLONG) {
+		    errmsg(exec_err, prn);
+		} else {
+		    pprintf(prn, "> %s\n", tmp);
+		}
 		goto endwhile;
 	    }
 	} /* end non-loop command processor */

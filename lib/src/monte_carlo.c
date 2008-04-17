@@ -215,8 +215,8 @@ static double controller_evaluate_expr (const char *expr,
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "controller_evaluate_expr: expr = '%s', genr err = %d\n", 
-	    expr, err);
+    fprintf(stderr, "controller_evaluate_expr: iftest=%d, expr='%s', err=%d\n", 
+	    iftest, expr, err);
 #endif
 
     if (!err && !iftest) {
@@ -1295,7 +1295,11 @@ start_new_loop (char *s, LOOPSET *inloop,
     return loop;
 }
 
-#define MAX_FOR_TIMES  100000
+#if LOOP_DEBUG
+# define MAX_FOR_TIMES  10
+#else
+# define MAX_FOR_TIMES  100000
+#endif
 
 static int loop_count_too_high (LOOPSET *loop)
 {

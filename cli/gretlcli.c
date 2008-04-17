@@ -119,15 +119,16 @@ static void noalloc (const char *str)
     exit(EXIT_FAILURE);
 }
 
-static void file_get_line (char *line, CMD *cmd)
+static int file_get_line (char *line, CMD *cmd)
 {
     clear(line, MAXLINE);
     fgets(line, MAXLINE, fb);
 
     if (*line == '\0') {
 	strcpy(line, "quit");
+    } else if (line[strlen(line)-1] != '\n') {
+	return E_TOOLONG;
     } else {
-	/* tailstrip(line); */
 	*linebak = 0;
 	strncat(linebak, line, MAXLINE-1);
 	tailstrip(linebak);
@@ -141,6 +142,8 @@ static void file_get_line (char *line, CMD *cmd)
 	printf("%s", line);
 	*linebak = 0;
     }
+
+    return 0;
 }
 
 #ifdef ENABLE_NLS
@@ -233,7 +236,7 @@ static void get_a_filename (char *fname)
 }
 
 static int 
-get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+cli_get_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     int coding = gretl_compiling_function() || 
 	gretl_compiling_loop();
@@ -241,7 +244,7 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (runit || batch) {
 	/* reading from script file */
-	file_get_line(s->line, s->cmd);
+	err = file_get_line(s->line, s->cmd);
     } else {
 	/* interactive use */
 #ifdef HAVE_READLINE
@@ -294,9 +297,7 @@ static int maybe_get_input_line_continuation (char *line)
 
 	if (*tmp != '\0') {
 	    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
-		fprintf(stderr, _("Maximum length of command line "
-				  "(%d bytes) exceeded\n"), MAXLINE);
-		err = 1;
+		err = E_TOOLONG;
 		break;
 	    } else {
 		strcat(line, tmp);
@@ -568,7 +569,6 @@ int main (int argc, char *argv[])
     /* main command loop */
     while (cmd.ci != QUIT && fb != NULL && !xout) {
 	char linecopy[MAXLINE];
-	int overflow;
 
 	if (err && errfatal) {
 	    gretl_abort(linecopy);
@@ -580,16 +580,17 @@ int main (int argc, char *argv[])
 	    }
 	    set_errfatal(ERRFATAL_AUTO);
 	} else {
-	    err = get_an_input_line(&state, &Z, datainfo);
+	    err = cli_get_input_line(&state, &Z, datainfo);
 	    if (err) {
 		errmsg(err, prn);
-		continue;
+		break;
 	    }
 	}
 
 	if (!state.in_comment) {
-	    overflow = maybe_get_input_line_continuation(line); 
-	    if (overflow) {
+	    err = maybe_get_input_line_continuation(line); 
+	    if (err) {
+		errmsg(err, prn);
 		break;
 	    }
 	} 

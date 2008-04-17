@@ -67,7 +67,7 @@ static const char *gretl_error_messages[] = {
     N_("Incompatible options"),                                  /* E_BADOPT */
     N_("The restrictions do not identify the parameters"),       /* E_NOIDENT */
     N_("External command failed"),                               /* E_EXTERNAL */
-    N_("Maximum length of command line exceeded"),               /* E_TOOLONG */        
+    N_("Maximum length of command line (8192 bytes) exceeded"),  /* E_TOOLONG */        
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */

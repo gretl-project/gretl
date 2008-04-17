@@ -6005,6 +6005,29 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
     return (*lhs == '\0')? E_PARSE : 0;
 }
 
+/* in the case of a "private" genr we allow ourselves some
+   more latitude in variable names, so as not to collide
+   with userspace names: specifically, we can use '$'
+*/
+
+static int check_private_varname (const char *s)
+{
+    const char *ok = "abcdefghijklmnopqrstuvwxyz"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"0123456789_$";
+    int n = 0, err = 0;
+
+    if (isalpha(*s) || *s == '$') {
+	n = strspn(s, ok);
+    }
+
+    if (n != strlen(s)) {
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
 /* process the left-hand side of a genr formula */
 
 static void pre_process (parser *p, int flags)
@@ -6133,8 +6156,12 @@ static void pre_process (parser *p, int flags)
     }
 
     /* if new public variable, check name for legality */
-    if (newvar && !(flags & P_PRIVATE)) {
-	p->err = check_varname(test);
+    if (newvar) {
+	if (flags & P_PRIVATE) {
+	    p->err = check_private_varname(test);
+	} else {
+	    p->err = check_varname(test);
+	}
 	if (p->err) {
 	    return;
 	}
