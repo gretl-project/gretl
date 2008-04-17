@@ -639,7 +639,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 	return NULL;
     }
 
-    fprintf(ftmp, "set terminal pbm mono\n"
+    fprintf(ftmp, "set term pbm mono\n"
 	    "set output '%s%s'\n", 
 	    paths.dotdir, GRETL_PBM_TMP);
 

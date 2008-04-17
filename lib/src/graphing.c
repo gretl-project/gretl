@@ -430,12 +430,12 @@ int gnuplot_has_ttf (int reset)
        with X11 */
 
     if (err == -1 || reset) {
-	err = gnuplot_test_command("set terminal png font luxisr 8");
+	err = gnuplot_test_command("set term png font luxisr 8");
 	if (err) {
-	    err = gnuplot_test_command("set terminal png font Vera 8");
+	    err = gnuplot_test_command("set term png font Vera 8");
 	}
 	if (err) {
-	    err = gnuplot_test_command("set terminal png font arial 8");
+	    err = gnuplot_test_command("set term png font arial 8");
 	}
     }
 
@@ -447,7 +447,7 @@ static int gnuplot_has_size (void)
     static int err = -1; 
     
     if (err == -1) {
-	err = gnuplot_test_command("set terminal png size 640,480");
+	err = gnuplot_test_command("set term png size 640,480");
     }
 
     return !err;
@@ -495,7 +495,7 @@ int gnuplot_pdf_terminal (void)
 
     if (ret == -1) {
 #if PREFER_CAIRO
-	int err = gnuplot_test_command("set terminal pdfcairo");
+	int err = gnuplot_test_command("set term pdfcairo");
 #else
 	int err = 1;
 #endif
@@ -503,7 +503,7 @@ int gnuplot_pdf_terminal (void)
 	if (!err) {
 	    ret = GP_PDF_CAIRO;
 	} else {
-	    err = gnuplot_test_command("set terminal pdf");
+	    err = gnuplot_test_command("set term pdf");
 	    if (!err) {
 		ret = GP_PDF_PDFLIB;
 	    } else {
@@ -520,7 +520,7 @@ static int gnuplot_has_x11 (void)
     static int err = -1; 
 
     if (err == -1) {
-	err = gnuplot_test_command("set terminal x11");
+	err = gnuplot_test_command("set term x11");
     }
 
     return !err;
@@ -539,7 +539,7 @@ int gnuplot_png_terminal (void)
 
     if (ret == -1) {
 #if PREFER_CAIRO
-	int err = gnuplot_test_command("set terminal pngcairo");
+	int err = gnuplot_test_command("set term pngcairo");
 #else
 	int err = 1;
 #endif
@@ -550,13 +550,13 @@ int gnuplot_png_terminal (void)
 	} else {
 	    /* try the old-style command: if it fails, we have 
 	       the libgd driver, we hope! */
-	    err = gnuplot_test_command("set terminal png color");
+	    err = gnuplot_test_command("set term png color");
 	    if (!err) {
 		fprintf(stderr, "gnuplot: got old png driver\n");
 		ret = GP_PNG_OLD;
 	    } else {
 		fprintf(stderr, "gnuplot: using libgd png driver\n");
-		err = gnuplot_test_command("set terminal png truecolor");
+		err = gnuplot_test_command("set term png truecolor");
 		ret = (err)? GP_PNG_GD1 : GP_PNG_GD2;
 	    }
 	}
@@ -570,7 +570,7 @@ int gnuplot_has_bbox (void)
     static int err = -1;
 
     if (err == -1) {
-	err = gnuplot_test_command("set terminal png ; "
+	err = gnuplot_test_command("set term png ; "
 				   "set output '/dev/null' ; "
 				   "plot x ; print GPVAL_TERM_XMIN");
     }
@@ -876,7 +876,7 @@ static void do_plot_bounding_box (void)
  * %GRETL_PNG_GRAPH_FONT.  Also appends a color-specification string 
  * if the gnuplot PNG driver supports this.
  *
- * Returns: the terminal string, "set terminal png ..."
+ * Returns: the terminal string, "set term png ..."
  */
 
 const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
@@ -951,11 +951,11 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     }
 
     if (pngterm == GP_PNG_CAIRO) {
-	sprintf(png_term_line, "set terminal pngcairo%s%s",
+	sprintf(png_term_line, "set term pngcairo%s%s",
 		font_string, size_string);
 	strcat(png_term_line, "\nset encoding utf8"); /* FIXME? */
     } else {
-	sprintf(png_term_line, "set terminal png%s%s%s%s",
+	sprintf(png_term_line, "set term png%s%s%s%s",
 		truecolor_string, font_string, size_string, 
 		color_string);
     }
@@ -997,7 +997,7 @@ static void png_font_to_emf (const char *pngfont, char *emfline)
  * Constructs a suitable line for sending to gnuplot to invoke
  * the EMF "terminal".  
  *
- * Returns: the term string, "set terminal emf ..."
+ * Returns: the term string, "set term emf ..."
  */
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color)
@@ -1005,7 +1005,7 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
     static char emf_term_line[256];
     const char *grfont = NULL;
     
-    strcpy(emf_term_line, "set terminal emf ");
+    strcpy(emf_term_line, "set term emf ");
 
     if (color) {
 	strcat(emf_term_line, "color ");
@@ -2655,7 +2655,7 @@ int gnuplot_3d (int *list, const char *literal,
 #ifndef WIN32
     if (gnuplot_has_x11()) {
 	/* wxt is too slow/jerky? */
-	fputs("set terminal x11\n", fq);
+	fputs("set term x11\n", fq);
     }
 #endif
 

@@ -250,8 +250,7 @@ static FILE *open_gp_file (const char *fname, const char *mode)
 
 static int commented_term_line (const char *s)
 {
-    return !strncmp(s, "# set terminal png", 18) ||
-	!strncmp(s, "# set term png", 14);
+    return !strncmp(s, "# set term png", 14);
 }
 
 static int set_output_line (const char *s)
@@ -273,8 +272,7 @@ enum {
 
 static int is_png_term_line (const char *s)
 {
-    return !strncmp(s, "set terminal png", 16) ||
-	!strncmp(s, "set term png", 12);
+    return !strncmp(s, "set term png", 12);
 }
 
 static int 
@@ -781,7 +779,7 @@ static int revise_plot_file (const char *inname,
 #endif
 
     if (outtarg != NULL && *outtarg != '\0') {
-	fprintf(fpout, "set terminal %s\n", term);
+	fprintf(fpout, "set term %s\n", term);
 	fprintf(fpout, "set output '%s'\n", outtarg);
     }	
 
@@ -1086,8 +1084,8 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 
     term = get_gretl_emf_term_line(spec->code, color);
     
-    if (!strncmp(term, "set terminal ", 13)) {
-	term += 13;
+    if (!strncmp(term, "set term ", 9)) {
+	term += 9;
     }
 
     err = revise_plot_file(spec->fname, plttmp, emfname, term);
@@ -3363,8 +3361,8 @@ static int get_dumb_plot_yrange (png_plot *plot)
 
     /* switch to the "dumb" (ascii) terminal in gnuplot */
     while (fgets(line, MAXLEN-1, fpin)) {
-	if (strstr(line, "set terminal")) {
-	    fputs("set terminal dumb\n", fpout);
+	if (strstr(line, "set term")) {
+	    fputs("set term dumb\n", fpout);
 	} else if (strstr(line, "set output")) { 
 	    fprintf(fpout, "set output '%s'\n", dumbtxt);
 	} else if (ok_dumb_line(line)) {
