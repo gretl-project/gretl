@@ -6634,7 +6634,7 @@ static int edit_list (parser *p)
     if (!p->err) {
 	if (!lhlist(p)) {
 	    /* no pre-existing LHS list: must be simple assignment */
-	    remember_list(list, p->lh.name, NULL);
+	    p->err = remember_list(list, p->lh.name, NULL);
 	} else if (p->op == B_ASN) {
 	    /* assign to (i.e. replace) existing LHS list */
 	    p->err = replace_list_by_name(p->lh.name, list);
