@@ -6629,28 +6629,20 @@ static int edit_string (parser *p)
 static int edit_list (parser *p)
 {
     NODE *r = p->ret;
-    int *list = NULL;
-
-    if (!lhlist(p)) {
-	/* creating a list from scratch */
-	if (r->t == LIST) {
-	    if (!strcmp(p->lh.name, r->v.str)) {
-		rename_saved_list(r->v.str, p->lh.name);
-	    }
-	    return 0;
-	} 
-    }
-
-    list = node_get_list(r, p);
+    int *list = node_get_list(r, p);
 
     if (!p->err) {
 	if (!lhlist(p)) {
+	    /* no pre-existing LHS list: must be simple assignment */
 	    remember_list(list, p->lh.name, NULL);
 	} else if (p->op == B_ASN) {
+	    /* assign to (i.e. replace) existing LHS list */
 	    p->err = replace_list_by_name(p->lh.name, list);
 	} else if (p->op == B_ADD) {
+	    /* add to existing LHS list */
 	    p->err = append_to_list_by_name(p->lh.name, list);
 	} else if (p->op == B_SUB) {
+	    /* remove elements from existing LHS list */
 	    p->err = subtract_from_list_by_name(p->lh.name, list);
 	} else {
 	    p->err = E_TYPES;
