@@ -22,7 +22,6 @@
 
 typedef enum {
     GRETL_OBJ_NULL,
-    GRETL_OBJ_ANY,
     GRETL_OBJ_EQN,
     GRETL_OBJ_SYS,
     GRETL_OBJ_VAR,
@@ -38,6 +37,7 @@ typedef enum {
     GRETL_OBJ_PLOT,
     GRETL_OBJ_TEXT,
     GRETL_OBJ_MATRIX,
+    GRETL_OBJ_ANY,
     GRETL_OBJ_MAX
 } GretlObjType;
 

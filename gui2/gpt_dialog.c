@@ -565,7 +565,7 @@ static const char *get_font_filename (const char *showname)
 static int font_is_ok (const char *fname)
 {
     static int pngterm;
-    char cmd[64];
+    gchar *cmd;
     int err;
 
     if (pngterm == 0) {
@@ -573,12 +573,13 @@ static int font_is_ok (const char *fname)
     }
 
     if (pngterm == GP_PNG_CAIRO) {
-	sprintf(cmd, "set terminal pngcairo font \"%s,10\"", fname);
+	cmd = g_strdup_printf("set terminal pngcairo font \"%s,10\"", fname);
     } else {
-	sprintf(cmd, "set terminal png font %s 10", fname);
+	cmd = g_strdup_printf("set terminal png font %s 10", fname);
     }
 
     err = gnuplot_test_command(cmd);
+    g_free(cmd);
 
     return err == 0;
 }

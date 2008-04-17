@@ -250,7 +250,8 @@ static FILE *open_gp_file (const char *fname, const char *mode)
 
 static int commented_term_line (const char *s)
 {
-    return !strncmp(s, "# set terminal png", 18);
+    return !strncmp(s, "# set terminal png", 18) ||
+	!strncmp(s, "# set term png", 14);
 }
 
 static int set_output_line (const char *s)
@@ -269,6 +270,12 @@ enum {
     REMOVE_PNG,
     ADD_PNG
 };
+
+static int is_png_term_line (const char *s)
+{
+    return !strncmp(s, "set terminal png", 16) ||
+	!strncmp(s, "set term png", 12);
+}
 
 static int 
 add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
@@ -294,7 +301,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	/* see if there's already a png term setting, possibly commented
 	   out, that can be reused */
 	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (!strncmp(fline, "set terminal png", 16)) {
+	    if (is_png_term_line(fline)) {
 		strcat(restore_line, fline);
 		break;
 	    } else if (commented_term_line(fline) && *restore_line == '\0') {
@@ -347,7 +354,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    printit = 1;
-	    if (!strncmp(fline, "set terminal png", 16)) {
+	    if (is_png_term_line(fline)) {
 		if (!png_line_saved) {
 		    /* comment it out, for future reference */
 		    fprintf(ftmp, "# %s", fline);
@@ -659,7 +666,7 @@ void filter_gnuplot_file (int ttype, int latin, int mono, int recolor,
 	    break;
 	}
 
-	if (!strncmp(pline, "set terminal", 12) ||
+	if (!strncmp(pline, "set term", 8) ||
 	    !strncmp(pline, "set enco", 8) ||
 	    !strncmp(pline, "set outp", 8)) {
 	    continue;
@@ -1078,8 +1085,9 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     build_path(emfname, paths.dotdir, "gpttmp.emf", NULL);
 
     term = get_gretl_emf_term_line(spec->code, color);
+    
     if (!strncmp(term, "set terminal ", 13)) {
-	term += 9;
+	term += 13;
     }
 
     err = revise_plot_file(spec->fname, plttmp, emfname, term);

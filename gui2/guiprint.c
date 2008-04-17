@@ -644,7 +644,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 	    paths.dotdir, GRETL_PBM_TMP);
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
-	if (strncmp(fline, "set terminal", 12) && 
+	if (strncmp(fline, "set term", 8) && 
 	    strncmp(fline, "set output", 10)) {
 	    fputs(fline, ftmp);
 	}
