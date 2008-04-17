@@ -6634,7 +6634,7 @@ static int edit_list (parser *p)
     if (!lhlist(p)) {
 	/* creating a list from scratch */
 	if (r->t == LIST) {
-	    if (strcmp(p->lh.name, r->v.str)) {
+	    if (!strcmp(p->lh.name, r->v.str)) {
 		rename_saved_list(r->v.str, p->lh.name);
 	    }
 	    return 0;
