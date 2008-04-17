@@ -1460,12 +1460,31 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+/* We're looking at a string argument that is supposed to represent
+   a function call: we'll do a rudimentary heuristic check here.
+   FIXME this should be more rigorous.
+*/
+
+static int is_function_call (const char *s)
+{
+    if (!strchr(s, '(')) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 static NODE *numeric_jacobian (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
 	const char *s = r->v.str;
+
+	if (!is_function_call(s)) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
 
 	ret = aux_matrix_node(p);
 	if (ret == NULL) { 
@@ -1487,6 +1506,11 @@ static NODE *BFGS_maximize (NODE *l, NODE *r, parser *p)
     if (starting(p)) {
 	gretl_matrix *m = l->v.m;
 	const char *s = r->v.str;
+
+	if (!is_function_call(s)) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
 
 	if (gretl_is_null_matrix(m)) {
 	    p->err = E_DATA;
