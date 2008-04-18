@@ -486,6 +486,7 @@ static int is_gen_special (const char *s, char *spec, const char **rem)
                         !(f & P_DISCARD) && \
                         !(f & P_PRIVATE) && \
                         !(f & P_UFUN) && \
+                        !(f & P_QUIET) && \
                         !(f & P_DECL))
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
@@ -503,6 +504,10 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (opt & OPT_U) {
 	flags |= P_UFUN;
+    }
+
+    if (opt & OPT_Q) {
+	flags |= P_QUIET;
     }
 
 #if GDEBUG

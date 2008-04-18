@@ -211,7 +211,7 @@ static double controller_evaluate_expr (const char *expr,
 	iftest = 1;
 	x = generate_scalar(expr, pZ, pdinfo, &err);
     } else {
-	err = generate(expr, pZ, pdinfo, OPT_P, NULL);
+	err = generate(expr, pZ, pdinfo, OPT_Q, NULL); /* OPT_P */
     }
 
 #if LOOP_DEBUG
@@ -236,7 +236,10 @@ static double controller_evaluate_expr (const char *expr,
     }
 
     if (err) {
-	gretl_errmsg_set(_("error evaluating loop condition"));
+	strcpy(gretl_errmsg, _("error evaluating loop condition"));
+	strcat(gretl_errmsg, ": '");
+	strcat(gretl_errmsg, expr);
+	strcat(gretl_errmsg, "'");
     }
 
     return x;

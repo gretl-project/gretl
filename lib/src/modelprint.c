@@ -3525,8 +3525,16 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "  F(%d, %d) = %g / %g (%s)\n\n", pmod->dfn, pmod->dfd, 
 		msr, mse, _("undefined"));
     } else {
-	pprintf(prn, "  F(%d, %d) = %g / %g = %g\n\n", 
-		pmod->dfn, pmod->dfd, msr, mse, msr / mse);
+	double F = msr / mse;
+	double pv = snedecor_cdf_comp(pmod->dfn, pmod->dfd, F);
+
+	pprintf(prn, "  F(%d, %d) = %g / %g = %g ", 
+		pmod->dfn, pmod->dfd, msr, mse, F);
+	if (pv < .0001) {
+	    pprintf(prn, "[%s %.3g]\n\n", _("p-value"), pv);
+	} else {
+	    pprintf(prn, "[%s %.4f]\n\n", _("p-value"), pv); 
+	}
     }
 
     return 0;
