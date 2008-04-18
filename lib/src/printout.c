@@ -2217,7 +2217,8 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     if ((opt & OPT_P) && fr->nobs > 0) {
 	const double *obs = gretl_plotx(pdinfo);
 	int ts = dataset_is_time_series(pdinfo);
-	
+
+	/* FIXME daily data x-axis */
 
 	if (obs == NULL) {
 	    err = 1;

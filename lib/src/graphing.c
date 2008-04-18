@@ -1957,7 +1957,8 @@ static void graph_month_name (char *mname, int m)
 /* for short daily time-series plots: write month names
    into the xtics */
 
-static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
+static void make_named_month_tics (const gnuplot_info *gi, double yrs, 
+				   PRN *prn)
 {
     double t0 = gi->x[gi->t1];
     double t1 = gi->x[gi->t2];
@@ -2063,6 +2064,27 @@ static int panel_plot (const DATAINFO *pdinfo, int t1, int t2)
     }
 
     return 0;
+}
+
+static void make_calendar_tics (const DATAINFO *pdinfo,
+				const gnuplot_info *gi,
+				PRN *prn)
+{
+    double yrs = (gi->t2 - gi->t1 + 1.0) / (pdinfo->pd * 52.0);
+
+    if (yrs <= 3) {
+	make_named_month_tics(gi, yrs, prn);
+    } else if (yrs < 6) {
+	/* don't show ugly "fractions of years" */
+	pputs(prn, "set xtics 1\n");
+	if (yrs < 3) {
+	    /* put monthly minor tics */
+	    pputs(prn, "set mxtics 12\n");
+	} else if (yrs < 5) {
+	    /* quarterly minor tics */
+	    pputs(prn, "set mxtics 4\n");
+	}
+    }
 }
 
 /**
@@ -2195,21 +2217,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    pputs(prn, "set xtics nomirror 0,1\n"); 
 	    pputs(prn, "set mxtics 12\n");
 	} else if (dated_daily_data(pdinfo)) {
-	    double yrs = (gi.t2 - gi.t1 + 1.0) / (pdinfo->pd * 52.0);
-
-	    if (yrs <= 3) {
-		make_named_month_tics(&gi, yrs, prn);
-	    } else if (yrs < 6) {
-		/* don't show ugly "fractions of years" */
-		pputs(prn, "set xtics 1\n");
-		if (yrs < 3) {
-		    /* put monthly minor tics */
-		    pputs(prn, "set mxtics 12\n");
-		} else if (yrs < 5) {
-		    /* quarterly minor tics */
-		    pputs(prn, "set mxtics 4\n");
-		}
-	    }
+	    make_calendar_tics(pdinfo, &gi, prn);
 	} else if (panel_plot(pdinfo, gi.t1, gi.t2)) {
 	    make_panel_unit_tics(pdinfo, &gi, prn);
 	    strcpy(xlabel, G_("time series by group"));
