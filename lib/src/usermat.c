@@ -122,6 +122,11 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 	return 0;
     }
 
+    if (!gretl_matrix_is_finite(M)) {
+	gretl_errmsg_set(_("Matrix is not finite"));
+	return E_NAN;
+    }
+
 #if 0
     if (check_varname(name)) {
 	return E_DATA;
@@ -250,6 +255,11 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 {
     if (u == NULL) {
 	return E_UNKVAR;
+    }
+
+    if (!gretl_matrix_is_finite(M)) {
+	gretl_errmsg_set(_("Matrix is not finite"));
+	return E_NAN;
     }
 
     if (M != u->M) {
@@ -1534,6 +1544,24 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     return B;
 }
 
+static void maybe_eigen_trim (gretl_matrix *E)
+{
+    double x;
+    int i, allreal = 1;
+
+    for (i=0; i<E->rows; i++) {
+	x = gretl_matrix_get(E, i, 1);
+	if (x != 0.0) {
+	    allreal = 0;
+	    break;
+	}
+    }
+
+    if (allreal) {
+	gretl_matrix_reuse(E, -1, 1);
+    }
+}
+
 gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 			    int *err)
@@ -1546,6 +1574,11 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 	*err = E_DATA;
 	return NULL;
     }
+
+    if (!gretl_matrix_is_finite(m)) {
+	*err = E_NAN;
+	return NULL;
+    }    
 
     if (rname != NULL && strcmp(rname, "null")) {
 	vecs = 1;
@@ -1565,6 +1598,9 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 	    E = gretl_symmetric_matrix_eigenvals(C, vecs, err);
 	} else {
 	    E = gretl_general_matrix_eigenvals(C, vecs, err);
+	    if (E != NULL && E->cols == 2) {
+		maybe_eigen_trim(E);
+	    }
 	}
     }
 

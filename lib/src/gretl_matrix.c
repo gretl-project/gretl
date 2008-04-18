@@ -157,6 +157,23 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     return m;
 }
 
+int gretl_matrix_is_finite (const gretl_matrix *m)
+{
+    if (m == NULL) {
+	return 0;
+    } else {
+	int i, n = m->rows * m->cols;
+
+	for (i=0; i<n; i++) {
+	    if (xna(m->val[i])) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
 int gretl_matrix_get_structure (const gretl_matrix *m)
 {
     int ret = 0;

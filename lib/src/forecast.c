@@ -2378,30 +2378,18 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 				 const double **Z, DATAINFO *pdinfo,
 				 gretlopt opt)
 {
-    gretl_matrix *yhat = NULL;
     int m = F->cols / 2;
     int s, t, nf;
     int err = 0;
 
     strcpy(fr->depvar, pdinfo->varname[yno]);
 
-#if 0
-    /* this is not well worked-out, and may be a bad idea even in
-       principle */
-    if (sys != NULL && fr->t0 < fr->t1) {
-	/* experimental */
-	yhat = sys_get_fitted_values(sys, i, fr->t0, fr->t1, 
-				     Z, pdinfo, &err);
-	gretl_matrix_print(yhat, "yhat_i");
-    }
-#endif
-
-    /* pre-forecast observations */
+    /* "pre-forecast" observations */
     for (t=fr->t0; t<fr->t1; t++) {
 	fr->actual[t] = Z[yno][t];
 	if (sys != NULL) {
 	    if (i < sys->neqns && sys->lists[i][1] == yno) {
-		/* Note: right now we can only handle here endogenous
+		/* Note: right now we can only handle endogenous
 		   variables that appear on the LHS of stochastic
 		   equations, because only such variables have an
 		   associated column in sys->yhat.
@@ -2410,20 +2398,13 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 		    s = t - sys->t1;
 		    fr->fitted[t] = gretl_matrix_get(sys->yhat, s, i);
 		}
-	    } else if (yhat != NULL) {
-		fr->fitted[t] = gretl_vector_get(yhat, t - yhat->t1);
 	    }
 	} else if (var != NULL) {
 	    if (t >= var->t1 && t <= var->t2) {
 		s = t - var->t1;
-		fr->fitted[t] = gretl_matrix_get(var->Y, s, i) -
-		    gretl_matrix_get(var->E, s, i);
+		fr->fitted[t] = fr->actual[t] - gretl_matrix_get(var->E, s, i);
 	    }
 	}
-    }
-
-    if (yhat != NULL) {
-	gretl_matrix_free(yhat);
     }
 
     /* actual forecasts */

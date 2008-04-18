@@ -211,7 +211,7 @@ static double controller_evaluate_expr (const char *expr,
 	iftest = 1;
 	x = generate_scalar(expr, pZ, pdinfo, &err);
     } else {
-	err = generate(expr, pZ, pdinfo, OPT_Q, NULL); /* OPT_P */
+	err = generate(expr, pZ, pdinfo, OPT_Q, NULL); /* was OPT_P */
     }
 
 #if LOOP_DEBUG

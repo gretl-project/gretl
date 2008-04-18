@@ -6900,6 +6900,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* assignment to submatrix of original */
 	    matrix_edit(p);
 	}
+	if (!p->err && p->lh.m1 != NULL) {
+	    /* check we didn't get any infs or NaNs */
+	    if (!gretl_matrix_is_finite(p->lh.m1)) {
+		p->err = E_NAN;
+	    }
+	}
     } else if (p->targ == LIST) {
 	edit_list(p);
     } else if (p->targ == STR) {

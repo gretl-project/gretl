@@ -55,6 +55,10 @@ version 1.7.5, in progress
 - frequency distribution in GUI: allow choice of bin size,
   as with frequency plot
 - fixed effects estimation: print the average constant
+- eigengen function: make this behave as the manual says
+- OLS anova: add p-value for the F-statistic
+- Fix VECM forecast graph in GUI ("pre-forecast" fitted
+  values were not integrated)
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values
