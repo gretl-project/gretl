@@ -5536,6 +5536,18 @@ static void run_R_script (windata_t *vwin)
     g_free(buf);
 }
 
+static void ensure_newline_termination (gchar **ps)
+{
+    gchar *s = *ps;
+
+    if (s != NULL && *s != '\0' && s[strlen(s)-1] != '\n') {
+	gchar *tmp = g_strdup_printf("%s\n", s);
+
+	g_free(s);
+	*ps = tmp;
+    }
+}
+
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == EDIT_GP) {
@@ -5547,6 +5559,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	int sel = 0;
 
 	buf = textview_get_selection_or_all(vwin->w, &sel);
+	ensure_newline_termination(&buf);
 	real_do_run_script(vwin, buf, sel);
     }
 }
@@ -6470,12 +6483,8 @@ static char *gui_get_input_line (char *line, FILE *fp,
 	s = bufgets(line, MAXLINE, buf);
     }
 
-    if (s != NULL) {
-	int n = strlen(line);
-	
-	if (line[n-1] != '\n') {
-	    *err = E_TOOLONG;
-	}
+    if (*line != '\0' && line[strlen(line)-1] != '\n') {
+	*err = E_TOOLONG;
     }
 
     return s;
