@@ -45,6 +45,7 @@ static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
 static gboolean 
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
+static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -434,11 +435,12 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    do_run_script(w, vwin);
 	    ret = TRUE;
 	} else if (key->keyval == GDK_Return) {
-	    gchar *str = textview_get_current_line(w);
+	    gchar *str = textview_get_current_line_with_newline(w);
 
-	    if (str != NULL && !string_is_blank(str)) {
-		run_script_fragment(vwin, str);
-	    } else if (str != NULL) {
+	    if (str != NULL) {
+		if (!string_is_blank(str)) {
+		    run_script_fragment(vwin, str);
+		}
 		g_free(str);
 	    }
 	    ret = TRUE;
@@ -1294,6 +1296,20 @@ gchar *textview_get_current_line (GtkWidget *view)
     gtk_text_iter_forward_to_line_end(&end);
 
     return gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+}
+
+static gchar *textview_get_current_line_with_newline (GtkWidget *view)
+{
+    gchar *s = textview_get_current_line(view);
+
+    if (s != NULL && *s != '\0' && s[strlen(s)-1] != '\n') {
+	gchar *tmp = g_strdup_printf("%s\n", s);
+
+	g_free(s);
+	s = tmp;
+    }
+
+    return s;
 }
 
 /* Determine whether or not any of the lines in a chunk of text

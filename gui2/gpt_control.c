@@ -1038,7 +1038,7 @@ static void real_send_to_gp (const char *tmpfile)
 /* callback for execute icon in window editing gnuplot
    commands */
 
-void gp_send_callback (GtkWidget *w, windata_t *vwin)
+void run_gp_script (gchar *buf)
 {
 #ifdef G_OS_WIN32
     int addpause = 1;
@@ -1046,17 +1046,10 @@ void gp_send_callback (GtkWidget *w, windata_t *vwin)
     int addpause = 0;
 #endif
     gchar *tmpfile;
-    char *buf;
     int err = 0;
-
-    buf = textview_get_text(vwin->w);
-    if (buf == NULL) {
-	return;
-    }
 
     tmpfile = g_strdup_printf("%showtmp.gp", paths.dotdir);
     err = dump_plot_buffer(buf, tmpfile, addpause);
-    g_free(buf);
 
     if (!err) {
 	real_send_to_gp(tmpfile);

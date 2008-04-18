@@ -5434,15 +5434,7 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     int shown = 0;
     int code, err;
 
-    if (buf == NULL || *buf == '\0') {
-	warnbox("No commands to execute");
-	if (buf != NULL) {
-	    g_free(buf);
-	}
-    }    
-
     if (bufopen(&prn)) {
-	g_free(buf);
 	return;
     }
 
@@ -5474,7 +5466,6 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     gdk_cursor_unref(cursor);
 
     err = execute_script(NULL, buf, prn, code);
-    g_free(buf);
 
     if (wcurr != NULL) {
 	gdk_window_set_cursor(wcurr, NULL);
@@ -5506,41 +5497,33 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
     set_gretl_echo(1);
 }
 
-static void run_R_script (windata_t *vwin)
+static void run_R_script (gchar *buf)
 {
-    gchar *buf = textview_get_text(vwin->w);
+    const char *opts[] = {
+	N_("Non-interactive (just get output)"),
+	N_("Interactive R session")
+    };
+    int send_data = data_status;
+    int resp;
 
-    if (buf == NULL || *buf == '\0') {
-	warnbox("No input to run");
+    if (send_data) {
+	resp = radio_dialog_with_check("gretl: R", _("R mode"), 
+				       opts, 2, 0, 0,
+				       &send_data, _("pre-load data"));
     } else {
-	const char *opts[] = {
-	    N_("Non-interactive (just get output)"),
-	    N_("Interactive R session")
-	};
-	int send_data = data_status;
-	int resp;
-
-	if (send_data) {
-	    resp = radio_dialog_with_check("gretl: R", _("R mode"), 
-					   opts, 2, 0, 0,
-					   &send_data, _("pre-load data"));
-	} else {
-	    resp = radio_dialog("gretl: R", _("R mode"), opts, 2, 0, 0);
-	}
-
-	if (resp >= 0) {
-	    start_R(buf, send_data, resp);
-	}
+	resp = radio_dialog("gretl: R", _("R mode"), opts, 2, 0, 0);
     }
 
-    g_free(buf);
+    if (resp >= 0) {
+	start_R(buf, send_data, resp);
+    }
 }
 
 static void ensure_newline_termination (gchar **ps)
 {
     gchar *s = *ps;
 
-    if (s != NULL && *s != '\0' && s[strlen(s)-1] != '\n') {
+    if (s[strlen(s)-1] != '\n') {
 	gchar *tmp = g_strdup_printf("%s\n", s);
 
 	g_free(s);
@@ -5550,18 +5533,34 @@ static void ensure_newline_termination (gchar **ps)
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
-    if (vwin->role == EDIT_GP) {
-	gp_send_callback(w, vwin);
-    } else if (vwin->role == EDIT_R) {
-	run_R_script(vwin);
-    } else {
-	gchar *buf;
-	int sel = 0;
+    gchar *buf;
+    int sel = 0;
 
+    if (vwin->role == EDIT_GP || vwin->role == EDIT_GP) {
+	buf = textview_get_text(vwin->w);
+    } else {
 	buf = textview_get_selection_or_all(vwin->w, &sel);
-	ensure_newline_termination(&buf);
+    }
+
+    if (buf == NULL || *buf == '\0') {
+	warnbox("No commands to execute");
+	if (buf != NULL) {
+	    g_free(buf);
+	}
+	return;
+    }  
+
+    ensure_newline_termination(&buf);
+
+    if (vwin->role == EDIT_GP) {
+	run_gp_script(buf);
+    } else if (vwin->role == EDIT_R) {
+	run_R_script(buf);
+    } else {
 	real_do_run_script(vwin, buf, sel);
     }
+
+    g_free(buf);
 }
 
 void run_script_fragment (windata_t *vwin, gchar *buf)
