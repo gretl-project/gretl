@@ -1470,6 +1470,33 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
     }
 }
 
+static void parse_spreadsheet_params (char *line, CMD *cmd)
+{
+    char *p[3];
+
+    p[0] = strstr(line, "--sheet=");
+    p[1] = strstr(line, "--xoffset=");
+    p[2] = strstr(line, "--yoffset=");
+
+    if (p[0] != NULL || p[1] != NULL || p[2] != NULL) {
+	free(cmd->list);
+	cmd->list = gretl_list_new(3);
+	if (cmd->list == NULL) {
+	    cmd->err = E_ALLOC;
+	} else {
+	    if (p[0] != NULL) {
+		cmd->list[1] = atoi(p[0] + 8);
+	    }
+	    if (p[1] != NULL) {
+		cmd->list[2] = atoi(p[1] + 10);
+	    }
+	    if (p[2] != NULL) {
+		cmd->list[3] = atoi(p[2] + 10);
+	    }
+	}
+    }
+}
+
 #define FIELDLEN 64
 
 static int get_field_length (const char *s)
@@ -2158,6 +2185,14 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        new name */
     else if (cmd->ci == RENAME) {
 	parse_rename_cmd(line, cmd, pdinfo);
+    }  
+
+    /* the "open" command may have spreadsheet parameters */
+    else if (cmd->ci == OPEN) {
+	parse_spreadsheet_params(line, cmd);
+	if (cmd->err) {
+	    return cmd->err;
+	}
     }  
 
     /* commands that never take a list of variables */
@@ -3721,9 +3756,9 @@ static int run_script (const char *fname, ExecState *s,
     return err;
 }
 
-static int append_data (const char *line, double ***pZ,
-			DATAINFO *pdinfo, gretlopt opt,
-			PRN *prn)
+static int append_data (const char *line, const int *list,
+			double ***pZ, DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn)
 {
     char fname[MAXLEN] = {0};
     int k, err = 0;
@@ -3741,7 +3776,7 @@ static int append_data (const char *line, double ***pZ,
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, pdinfo, fname, opt, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, pdinfo, k, fname, opt, prn);
+	err = import_other(list, pZ, pdinfo, k, fname, opt, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, pdinfo, fname, NULL, 
 			     opt, prn);
@@ -3823,7 +3858,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     switch (cmd->ci) {
 
     case APPEND:
-	err = append_data(line, pZ, pdinfo, cmd->opt, prn);
+	err = append_data(line, cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case ADF:

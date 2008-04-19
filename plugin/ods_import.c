@@ -444,6 +444,7 @@ static int real_read_cell (xmlNodePtr cur,
     t = iread - vnames;
 
     if (v >= sheet->dinfo->v || t >= sheet->dinfo->n) {
+	fprintf(stderr, "v = %d, t = %d: out of bounds?\n", v, t);
 	return E_DATA;
     }
 
@@ -548,6 +549,7 @@ static int real_read_cell (xmlNodePtr cur,
 	}
 	free(val);
     } else {
+	fprintf(stderr, " vtype = %d??\n", vtype); 
 	err = E_DATA;
     }
 
@@ -568,12 +570,13 @@ static int read_data_row (xmlNodePtr cur,
 			  int readrow,
 			  PRN *prn)
 {
+    int readmax = tab->cols - sheet->xoffset;
     int tabcol = 0, readcol = 0;
     int err = 0;
 
     cur = cur->xmlChildrenNode;
 
-    while (cur != NULL && !err && readcol < tab->cols) {
+    while (cur != NULL && !err && readcol < readmax) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-cell")) {
 	    if (tabcol >= sheet->xoffset) {
 		err = real_read_cell(cur, sheet, 
@@ -739,7 +742,7 @@ static int repeat_data_row (ods_sheet *sheet, int iread,
     int i, t = iread - vnames;
 
     if (t < 1 || t >= sheet->dinfo->n) {
-	pprintf(prn, "Found a repeated row in the wrong place");
+	pprintf(prn, "Found a repeated row in the wrong place\n");
 	return E_DATA;
     }
 
@@ -758,7 +761,8 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
 {
     ods_table *tab;
     xmlNodePtr cur;
-    int i, nr, tabrow = 0, readrow = 0;
+    int i, nr, maxrow;
+    int tabrow = 0, readrow = 0;
     int err = 0;
     
     if (sheet->seltab < 0 || sheet->seltab >= sheet->n_tables) {
@@ -776,12 +780,13 @@ static int read_table_content (ods_sheet *sheet, PRN *prn)
     if (err) {
 	return err;
     }
-    
+
+    maxrow = tab->rows - sheet->yoffset;
     cur = tab->node->xmlChildrenNode;
 
     gretl_push_c_numeric_locale();
 
-    while (cur != NULL && !err && readrow < tab->rows) {
+    while (cur != NULL && !err && readrow < maxrow) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
 	    nr = ods_row_height(cur);
 	    if (tabrow >= sheet->yoffset) {
@@ -889,7 +894,7 @@ get_table_dimensions (xmlNodePtr cur, ods_sheet *sheet)
     return err;
 }
 
-static ods_sheet *read_content (PRN *prn, int *err) 
+static ods_sheet *ods_read_content (PRN *prn, int *err) 
 {
     ods_sheet *sheet = NULL;
     xmlDocPtr doc = NULL;
@@ -1052,7 +1057,7 @@ static int ods_book_init (wbook *book, ods_sheet *sheet)
 {
     int i, err = 0;
 
-    wbook_init(book);
+    wbook_init(book, NULL);
 
     if (sheet->n_tables > 0) {
 	book->sheetnames = strings_array_new(sheet->n_tables);
@@ -1072,6 +1077,24 @@ static int ods_book_init (wbook *book, ods_sheet *sheet)
     }
 
     return err;
+}
+
+static int set_ods_params_from_list (ods_sheet *sheet, 
+				     const int *list)
+{
+    if (list[1] < 0 || list[1] >= sheet->n_tables) {
+	gretl_errmsg_set(_("Invalid argument for worksheet import"));
+	return E_DATA;
+    } else {
+	if (list[1] > 0) {
+	    sheet->seltab = list[1] - 1;
+	} else {
+	    sheet->seltab = 0;
+	}
+	sheet->xoffset = list[2];
+	sheet->yoffset = list[3];
+	return 0;
+    }
 }
 
 static int ods_sheet_dialog (ods_sheet *sheet, int *err)
@@ -1168,7 +1191,7 @@ static char *get_absolute_path (const char *fname)
     return ret;
 }
 
-int ods_get_data (const char *fname, 
+int ods_get_data (const char *fname, const int *list, 
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
@@ -1244,7 +1267,7 @@ int ods_get_data (const char *fname,
     }
 
     if (!err) {
-	sheet = read_content(prn, &err);
+	sheet = ods_read_content(prn, &err);
     }
 
     remove_temp_dir(dname);
@@ -1264,6 +1287,8 @@ int ods_get_data (const char *fname,
 		ods_sheet_free(sheet);
 		return -1;
 	    } 
+	} else if (list != NULL && list[0] == 3) {
+	    err = set_ods_params_from_list(sheet, list);
 	} else {
 	    sheet->seltab = 0;
 	    sheet->xoffset = sheet->tables[0]->xoffset;
@@ -1283,6 +1308,3 @@ int ods_get_data (const char *fname,
 
     return err;
 }
-
-
-

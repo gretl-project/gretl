@@ -363,9 +363,20 @@ static void wbook_free (wbook *book)
     free(book->missmask);
 }
 
+static int wbook_check_params (wbook *book)
+{
+    if (book->selected < 0 || book->selected >= book->nsheets) {
+	return E_DATA;
+    } else if (book->col_offset < 0 || book->row_offset < 0) {
+	return E_DATA;
+    } else {
+	return 0;
+    }
+}
+
 #endif /* !ODS_IMPORTER */
 
-static void wbook_init (wbook *book)
+static void wbook_init (wbook *book, const int *list)
 {
     book->version = 0;
     book->nsheets = 0;
@@ -379,6 +390,14 @@ static void wbook_init (wbook *book)
     book->missmask = NULL;
     book->get_min_offset = NULL;
     book->data = NULL;
+
+    if (list != NULL && list[0] == 3) {
+	if (list[1] > 0) {
+	    book->selected = list[1] - 1;
+	}
+	book->col_offset = list[2];
+	book->row_offset = list[3];
+    }
 }
 
 static const char *column_label (int col)

@@ -6708,7 +6708,8 @@ static int gui_open_append (ExecState *s, double ***pZ,
 	err = gretl_read_gdt(pZ, pdinfo, datfile, &paths, 
 			     OPT_P, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, pdinfo, k, datfile, OPT_NONE, prn);
+	err = import_other(cmd->list, pZ, pdinfo, k, datfile, 
+			   OPT_NONE, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {

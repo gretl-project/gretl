@@ -2781,6 +2781,7 @@ int import_octave (double ***pZ, DATAINFO *pdinfo,
 
 /**
  * import_other:
+ * @list: list of parameters for spreadsheet import, or %NULL.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
  * @ftype: type of data file.
@@ -2793,13 +2794,15 @@ int import_octave (double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_other (double ***pZ, DATAINFO *pdinfo, 
+int import_other (const int *list, 
+		  double ***pZ, DATAINFO *pdinfo, 
 		  int ftype, const char *fname, 
 		  gretlopt opt, PRN *prn)
 {
     void *handle;
     FILE *fp;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO *, 
+    int (*sheet_get_data)(const char*, const int *,
+			  double ***, DATAINFO *, 
 			  gretlopt, PRN *);
     int err = 0;
 
@@ -2837,7 +2840,7 @@ int import_other (double ***pZ, DATAINFO *pdinfo,
     if (sheet_get_data == NULL) {
         err = 1;
     } else {
-	err = (*sheet_get_data)(fname, pZ, pdinfo, opt, prn);
+	err = (*sheet_get_data)(fname, list, pZ, pdinfo, opt, prn);
 	close_plugin(handle);
     }
 

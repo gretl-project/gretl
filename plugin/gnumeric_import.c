@@ -489,7 +489,8 @@ static int wbook_record_name (char *name, wbook *book)
     return 0;
 }
 
-static int wbook_get_info (const char *fname, wbook *book, PRN *prn) 
+static int wbook_get_info (const char *fname, const int *list,
+			   wbook *book, PRN *prn) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
@@ -499,7 +500,7 @@ static int wbook_get_info (const char *fname, wbook *book, PRN *prn)
     LIBXML_TEST_VERSION 
 	xmlKeepBlanksDefault(0);
 
-    wbook_init(book);
+    wbook_init(book, list);
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
@@ -638,7 +639,8 @@ sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int gnumeric_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int gnumeric_get_data (const char *fname, const int *list,
+		       double ***pZ, DATAINFO *pdinfo,
 		       gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
@@ -661,7 +663,7 @@ int gnumeric_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     gretl_push_c_numeric_locale();
 
-    if (wbook_get_info(fname, book, prn)) {
+    if (wbook_get_info(fname, list, book, prn)) {
 	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
 	goto getout;
@@ -684,7 +686,14 @@ int gnumeric_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    sheetnum = 0;
 	}
     } else {
-	sheetnum = 0;
+	err = wbook_check_params(book);
+	if (err) {
+	    gretl_errmsg_set(_("Invalid argument for worksheet import"));
+	} else if (book->selected >= 0) {
+	    sheetnum = book->selected;
+	} else {
+	    sheetnum = 0;
+	}
     }
 
     if (book->selected == -1) {

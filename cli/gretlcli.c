@@ -487,7 +487,7 @@ int main (int argc, char *argv[])
 	case GRETL_EXCEL:
 	case GRETL_WF1:
 	case GRETL_DTA:
-	    err = import_other(&Z, datainfo, ftype, paths.datfile, 
+	    err = import_other(NULL, &Z, datainfo, ftype, paths.datfile, 
 			       OPT_NONE, prn);
 	    break;
 	case GRETL_SCRIPT:
@@ -692,7 +692,8 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, pdinfo, datfile, cmd->opt, prn);
     } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(pZ, pdinfo, k, datfile, cmd->opt, prn);
+	err = import_other(cmd->list, pZ, pdinfo, k, datfile, 
+			   cmd->opt, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, pdinfo, datfile, &paths, 
 			     cmd->opt, prn);

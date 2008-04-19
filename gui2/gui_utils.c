@@ -957,7 +957,8 @@ int get_worksheet_data (char *fname, int datatype, int append)
     PRN *errprn;
     const char *errbuf;
     FILE *fp;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO *, 
+    int (*sheet_get_data)(const char*, const int *,
+			  double ***, DATAINFO *, 
 			  gretlopt, PRN *);
     int err = 0;
     
@@ -1002,7 +1003,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	return 1;
     }
 
-    err = (*sheet_get_data)(fname, &Z, datainfo, OPT_G, errprn);
+    err = (*sheet_get_data)(fname, NULL, &Z, datainfo, OPT_G, errprn);
     close_plugin(handle);
 
     if (err == -1) {

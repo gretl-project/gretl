@@ -1366,7 +1366,8 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int xls_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int xls_get_data (const char *fname, const int *list, 
+		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
@@ -1388,7 +1389,7 @@ int xls_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     gretl_push_c_numeric_locale();
 
-    wbook_init(book);
+    wbook_init(book, list);
 
     if (excel_book_get_info(fname, book)) {
 	pputs(prn, _("Failed to get workbook info"));
@@ -1400,11 +1401,18 @@ int xls_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	wbook_print_info(book);
     }
 
-    if (!err && gui) {
-	wsheet_menu(book, book->nsheets > 1);
-	if (book_debugging(book)) {
-	    debug_print = 1;
-	    print_version();
+    if (!err) {
+	if (gui) {
+	    wsheet_menu(book, book->nsheets > 1);
+	    if (book_debugging(book)) {
+		debug_print = 1;
+		print_version();
+	    }
+	} else {
+	    err = wbook_check_params(book);
+	    if (err) {
+		gretl_errmsg_set(_("Invalid argument for worksheet import"));
+	    }
 	}
     }
 
