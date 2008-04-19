@@ -1366,7 +1366,7 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int xls_get_data (const char *fname, const int *list, 
+int xls_get_data (const char *fname, int *list, 
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
@@ -1549,6 +1549,10 @@ int xls_get_data (const char *fname, const int *list,
     }
 
     err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+
+    if (!err && gui) {
+	wbook_record_params(book, list);
+    }
 
  getout:
     

@@ -5644,6 +5644,9 @@
 	  <flag>--www</flag>
 	  <effect>use a database on the gretl server</effect>
 	</option>
+	<option>
+	  <note>See below for spreadsheet-specific options</note>
+	</option>
       </options>
       <examples>
         <example>open data4-1</example>
@@ -5662,6 +5665,23 @@
 	the name of the file and various heuristics, gretl will try to
 	detect the format of the data file (native, plain text, CSV, MS
 	Excel, Stata, etc.).
+      </para>
+
+      <para>
+	When opening a spreadsheet file (Gnumeric, Open Document or XLS), you
+	may give up to three additional parameters following the filename. You
+	can select a particular worksheet within the file by giving its
+	(1-based) number, using the syntax, &eg;, <lit>--sheet=2</lit>. The
+	default is to read the first worksheet. You can also specify a column
+	and/or row offset into the worksheet via, &eg;,
+      </para>
+      <code>
+	--xoffset=3 --yoffset=2
+      </code>
+      <para>
+	which would cause gretl to ignore the first 3 columns and the first 2
+	rows.  The default is an offset of 0 in both dimensions, that is, to
+	start reading at the top-left cell.
       </para>
 
       <para>

@@ -128,8 +128,7 @@ int import_octave (double ***pZ, DATAINFO *pdinfo,
 		   const char *fname, gretlopt opt,
 		   PRN *prn);
 
-int import_other (const int *list,
-		  double ***pZ, DATAINFO *pdinfo, 
+int import_other (int *list, double ***pZ, DATAINFO *pdinfo, 
 		  int ftype, const char *fname, 
 		  gretlopt opt, PRN *prn);
 

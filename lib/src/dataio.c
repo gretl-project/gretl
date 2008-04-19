@@ -2794,16 +2794,15 @@ int import_octave (double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_other (const int *list, 
-		  double ***pZ, DATAINFO *pdinfo, 
+int import_other (int *list, double ***pZ, DATAINFO *pdinfo, 
 		  int ftype, const char *fname, 
 		  gretlopt opt, PRN *prn)
 {
     void *handle;
     FILE *fp;
-    int (*sheet_get_data)(const char*, const int *,
-			  double ***, DATAINFO *, 
-			  gretlopt, PRN *);
+    int (*sheet_get_data) (const char*, int *,
+			   double ***, DATAINFO *, 
+			   gretlopt, PRN *);
     int err = 0;
 
 #ifdef ENABLE_NLS

@@ -885,38 +885,75 @@ void *myrealloc (void *ptr, size_t size)
     return mem;
 }
 
-/* ........................................................... */
-
 void mark_dataset_as_modified (void)
 {
     data_status |= MODIFIED_DATA;
     set_sample_label(datainfo);
 }
 
-void register_data (char *fname, const char *user_fname,
-		    int record)
+static void gui_record_data_opening (const char *fname, const int *list)
+{
+    const char *recname = (fname != NULL)? fname : paths.datfile;
+
+    if (haschar(' ', recname) >= 0) {
+	gretl_command_sprintf("open \"%s\"", recname);
+    } else {
+	gretl_command_sprintf("open %s", recname);
+    }
+
+    if (list != NULL && list[0] == 3) {
+	/* record spreadsheet parameters */
+	char parm[32];
+
+	if (list[1] != 1) {
+	    sprintf(parm, " --sheet=%d", list[1]);
+	    gretl_command_strcat(parm);
+	}
+	if (list[2] != 0) {
+	    sprintf(parm, " --xoffset=%d", list[2]);
+	    gretl_command_strcat(parm);
+	}
+	if (list[3] != 0) {
+	    sprintf(parm, " --yoffset=%d", list[3]);
+	    gretl_command_strcat(parm);
+	}
+    }
+
+    check_and_record_command();
+}
+
+#define file_opened(f) (f == DATAFILE_OPENED || \
+	                f == OPENED_VIA_CLI || \
+                        f == OPENED_VIA_SESSION)
+
+static void real_register_data (int flag, const char *user_fname, 
+				const int *list)
 {    
     /* basic accounting */
     data_status |= HAVE_DATA;
     orig_vars = datainfo->v;
 
     /* set appropriate data_status bits */
-    if (fname == NULL) {
+    if (file_opened(flag)) {
+	if (!(data_status & IMPORT_DATA)) {
+	    /* we opened a native data file */
+	    if (has_system_prefix(paths.datfile, &paths, DATA_SEARCH)) {
+		data_status |= BOOK_DATA;
+		data_status &= ~USER_DATA;
+	    } else {
+		data_status &= ~BOOK_DATA;
+		data_status |= USER_DATA; 
+	    }
+	    if (is_gzipped(paths.datfile)) {
+		data_status |= GZIPPED_DATA;
+	    } else {
+		data_status &= ~GZIPPED_DATA;
+	    }	    
+	}
+    } else {
+	/* we modified the current dataset somehow */
 	data_status |= GUI_DATA;
 	mark_dataset_as_modified();
-    } else if (!(data_status & IMPORT_DATA)) {
-	if (has_system_prefix(paths.datfile, &paths, DATA_SEARCH)) {
-	    data_status |= BOOK_DATA;
-	    data_status &= ~USER_DATA;
-	} else {
-	    data_status &= ~BOOK_DATA;
-	    data_status |= USER_DATA; 
-	}
-	if (is_gzipped(paths.datfile)) {
-	    data_status |= GZIPPED_DATA;
-	} else {
-	    data_status &= ~GZIPPED_DATA;
-	}
     }
 
     /* sync main window with datafile */
@@ -925,20 +962,32 @@ void register_data (char *fname, const char *user_fname,
     main_menubar_state(TRUE);
     session_menu_state(TRUE);
 
-    /* record opening of data file in command log */
-    if (record && fname != NULL) {
-	mkfilelist(FILE_LIST_DATA, fname);
-	gretl_command_sprintf("open %s", user_fname ? user_fname : fname);
-	check_and_record_command();
+    /* Record the opening of the data file in the GUI recent files
+       list and command log; note that we don't do this if the file
+       was opened via script or console, or if it was opened as a
+       side effect of re-opening a saved session.
+    */
+    if (flag == DATAFILE_OPENED) {
+	gui_record_data_opening(user_fname, list);
     } 
 
-    if (fname != NULL) {
+    if (1) { /* FIXME! */
 	/* focus the data window */
 	gtk_widget_grab_focus(mdata->listbox);
     }
 
     /* invalidate "remove extra obs" menu item */
     drop_obs_state(FALSE);
+}
+
+void register_data (int flag)
+{
+    real_register_data(flag, NULL, NULL);
+}
+
+void register_startup_data (const char *fname)
+{
+    real_register_data(DATAFILE_OPENED, fname, NULL);
 }
 
 #define APPENDING(action) (action == APPEND_DATA || \
@@ -956,10 +1005,12 @@ int get_worksheet_data (char *fname, int datatype, int append)
     void *handle;
     PRN *errprn;
     const char *errbuf;
+    int list[4] = {3, 1, 0, 0};
+    int *plist = NULL;
     FILE *fp;
-    int (*sheet_get_data)(const char*, const int *,
-			  double ***, DATAINFO *, 
-			  gretlopt, PRN *);
+    int (*sheet_get_data) (const char*, int *,
+			   double ***, DATAINFO *, 
+			   gretlopt, PRN *);
     int err = 0;
     
     fp = gretl_fopen(fname, "r");
@@ -974,12 +1025,15 @@ int get_worksheet_data (char *fname, int datatype, int append)
     if (datatype == GRETL_GNUMERIC) {
 	sheet_get_data = gui_get_plugin_function("gnumeric_get_data",
 						 &handle);
+	plist = list;
     } else if (datatype == GRETL_EXCEL) {
 	sheet_get_data = gui_get_plugin_function("xls_get_data",
 						 &handle);
+	plist = list;
     } else if (datatype == GRETL_ODS) {
 	sheet_get_data = gui_get_plugin_function("ods_get_data",
 						 &handle);
+	plist = list;
     } else if (datatype == GRETL_WF1) {
 	sheet_get_data = gui_get_plugin_function("wf1_get_data",
 						 &handle);
@@ -1003,7 +1057,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	return 1;
     }
 
-    err = (*sheet_get_data)(fname, NULL, &Z, datainfo, OPT_G, errprn);
+    err = (*sheet_get_data)(fname, plist, &Z, datainfo, OPT_G, errprn);
     close_plugin(handle);
 
     if (err == -1) {
@@ -1035,14 +1089,14 @@ int get_worksheet_data (char *fname, int datatype, int append)
     gretl_print_destroy(errprn);
 
     if (append) {
-	register_data(NULL, NULL, 0);
+	register_data(DATA_APPENDED);
     } else {
 	data_status |= IMPORT_DATA;
 	if (fname != paths.datfile) {
 	    strcpy(paths.datfile, fname);
 	}
 	if (mdata != NULL) {
-	    register_data(fname, NULL, 1);
+	    real_register_data(DATAFILE_OPENED, NULL, plist);
 	}
 	if (!dataset_is_time_series(datainfo) && 
 	    !dataset_is_panel(datainfo) && mdata != NULL) {
@@ -1154,10 +1208,10 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
 
     if (append) {
-	register_data(NULL, NULL, 0);
+	register_data(DATA_APPENDED);
     } else {
 	strcpy(paths.datfile, tryfile);
-	register_data(paths.datfile, NULL, 1);
+	register_data(DATAFILE_OPENED);
     } 
 }
 

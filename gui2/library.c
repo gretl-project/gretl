@@ -245,7 +245,7 @@ int gretl_command_strcpy (const char *s)
     return 0;
 }
 
-static int gretl_command_strcat (const char *s)
+int gretl_command_strcat (const char *s)
 {
     strcat(cmdline, s);
 
@@ -281,27 +281,6 @@ gint bufopen (PRN **pprn)
     return err;
 }
 
-static void maybe_quote_filename (char *s, char *cmd)
-{
-    size_t len = strlen(cmd);
-
-    if (strlen(s) > len + 1) {
-	char *p = s + len + 1;
-
-	if (*p == '"' || *p == '\'') {
-	    return;
-	}
-	
-	if (strchr(p, ' ')) {
-	    char tmp[MAXLEN];
-
-	    *tmp = 0;
-	    strcpy(tmp, p);
-	    sprintf(s, "%s \"%s\"", cmd, tmp);
-	}
-    }
-}
-
 static int cmd_init (char *s)
 {
     PRN *echo;
@@ -316,11 +295,8 @@ static int cmd_init (char *s)
     fprintf(stderr, "libcmd.word: '%s'\n", libcmd.word);
     fprintf(stderr, "libcmd.param: '%s'\n", libcmd.param);
     fprintf(stderr, "libcmd.opt: %d\n", (int) libcmd.opt);
+    fprintf(stderr, "line: '%s'\n", s);
 #endif
-
-    if (libcmd.ci == OPEN || libcmd.ci == RUN) {
-	maybe_quote_filename(s, libcmd.word);
-    }
 
     /* arrange to have the command recorded on a stack */
     if (bufopen(&echo)) {
@@ -5678,10 +5654,10 @@ void do_open_csv_octave (char *fname, int code, int append)
     data_status |= IMPORT_DATA;
 
     if (append) {
-	register_data(NULL, NULL, 0);
+	register_data(DATA_APPENDED);
     } else {
 	strcpy(paths.datfile, fname);
-	register_data(fname, NULL, 1);
+	register_data(DATAFILE_OPENED);
     }
 }
 
@@ -6650,8 +6626,8 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
-static int gui_open_append (ExecState *s, double ***pZ,
-			    DATAINFO *pdinfo, PRN *prn)
+static int script_open_append (ExecState *s, double ***pZ,
+			       DATAINFO *pdinfo, PRN *prn)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -6736,9 +6712,9 @@ static int gui_open_append (ExecState *s, double ***pZ,
 
     if (pdinfo->v > 0 && !dbdata) {
 	if (cmd->ci == APPEND) {
-	    register_data(NULL, NULL, 0);
+	    register_data(DATA_APPENDED);
 	} else {
-	    register_data(paths.datfile, NULL, 0);
+	    register_data(OPENED_VIA_CLI);
 	}
 	varlist(pdinfo, prn);
     }
@@ -6874,7 +6850,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = db_get_series(line, pZ, pdinfo, prn);
         if (!err) { 
 	    clean_up_varlabels(pdinfo);
-	    register_data(NULL, NULL, 0);
+	    register_data(DATA_APPENDED);
             varlist(pdinfo, prn);
         }
 	break;
@@ -6955,7 +6931,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case OPEN:
     case APPEND:
-	err = gui_open_append(s, pZ, pdinfo, prn);
+	err = script_open_append(s, pZ, pdinfo, prn);
 	break;
 
     case MODELTAB:
@@ -6983,7 +6959,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (err) { 
 	    pprintf(prn, _("Failed to create empty data set\n"));
 	} else {
-	    register_data(NULL, NULL, 0);
+	    register_data(NULLDATA_STARTED);
 	}
 	break;
 

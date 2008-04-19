@@ -982,7 +982,7 @@ int main (int argc, char *argv[])
     /* run init script, if found? */
 
     if (have_data()) {
-	register_data(paths.datfile, tryfile, 1);
+	register_startup_data(tryfile);
 	maybe_display_string_table();
 	*tryfile = 0;
     }

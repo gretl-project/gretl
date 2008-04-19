@@ -276,6 +276,10 @@
   <xsl:text>)</xsl:text>
 </xsl:template>
 
+<xsl:template match="note">
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="funcref">
   <xsl:apply-templates/> 
 </xsl:template>

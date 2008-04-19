@@ -221,6 +221,14 @@ enum data_status_flags {
     GZIPPED_DATA  = 1 << 6
 };
 
+enum register_data_flags {
+    DATAFILE_OPENED = 1,
+    OPENED_VIA_CLI,
+    OPENED_VIA_SESSION,
+    DATA_APPENDED,
+    NULLDATA_STARTED
+};
+
 enum drag_types {
     GRETL_FILENAME,
     GRETL_DBSERIES_PTR,

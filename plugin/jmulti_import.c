@@ -297,7 +297,8 @@ static int read_jmulti_data (FILE *fp, char *line, int len,
     return err;
 }
 
-int jmulti_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int jmulti_get_data (const char *fname, int *list,
+		     double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn)
 {
     int maxlen = 0;

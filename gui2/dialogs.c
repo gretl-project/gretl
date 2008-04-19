@@ -3951,7 +3951,7 @@ static void maybe_start_editing (void)
 
     if (resp == GRETL_NO || canceled) {
 	/* accept the default blank dataset */
-	register_data(NULL, NULL, 0);
+	register_data(NULLDATA_STARTED);
     }	
 }
 
@@ -4116,7 +4116,7 @@ datawiz_make_changes (DATAINFO *dwinfo, int flags)
 	if (datainfo->n < 1001) {
 	    maybe_start_editing();
 	} else {
-	    register_data(NULL, NULL, 0);
+	    register_data(NULLDATA_STARTED);
 	}
     } else {
 	if (delete_markers) {

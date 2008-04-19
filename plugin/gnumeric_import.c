@@ -639,7 +639,7 @@ sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int gnumeric_get_data (const char *fname, const int *list,
+int gnumeric_get_data (const char *fname, int *list,
 		       double ***pZ, DATAINFO *pdinfo,
 		       gretlopt opt, PRN *prn)
 {
@@ -819,6 +819,10 @@ int gnumeric_get_data (const char *fname, const int *list,
 	}
 
 	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+
+	if (!err && gui) {
+	    wbook_record_params(book, list);
+	}
     } 
 
  getout:

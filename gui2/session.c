@@ -733,7 +733,7 @@ int add_graph_to_session (char *fname, char *fullname)
 	    gui_errmsg(err);
 	    return 1;
 	}
-	register_data(NULL, NULL, 0);
+	register_data(NULLDATA_STARTED);
     }
     
     errno = 0;
@@ -1126,7 +1126,7 @@ void do_open_session (void)
     datainfo->t1 = sinfo.t1;
     datainfo->t2 = sinfo.t2;
 
-    register_data(paths.datfile, NULL, 0);
+    register_data(OPENED_VIA_SESSION);
 
     if (sinfo.mask != NULL) {
 	set_sample_label(datainfo);

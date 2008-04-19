@@ -3204,8 +3204,9 @@ static int command_is_silent (const CMD *cmd, const char *line)
    mechanism */
 
 #define dont_print_list(c) ((c->flags & CMD_NOLIST) || \
-                             c->ci == ARMA || c->ci == GARCH || \
-                             c->ci == ARBOND)
+                             c->ci == ARBOND || \
+                             c->ci == ARMA || \
+			     c->ci == GARCH)
 
 #define print_param_last(c) (c == ARBOND || \
 			     c == DELEET || \
@@ -3756,7 +3757,7 @@ static int run_script (const char *fname, ExecState *s,
     return err;
 }
 
-static int append_data (const char *line, const int *list,
+static int append_data (const char *line, int *list,
 			double ***pZ, DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn)
 {

@@ -648,7 +648,8 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     return err;
 }
 
-int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int dta_get_data (const char *fname, int *list,
+		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
     int namelen = 0;

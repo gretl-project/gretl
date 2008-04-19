@@ -236,6 +236,10 @@
   <xsl:text>)</xsl:text>
 </xsl:template>
 
+<xsl:template match="note">
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="repl">
   <xsl:if test="@quote='true'">
     <xsl:text>"</xsl:text>

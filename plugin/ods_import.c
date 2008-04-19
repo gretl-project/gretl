@@ -1079,6 +1079,16 @@ static int ods_book_init (wbook *book, ods_sheet *sheet)
     return err;
 }
 
+static void record_ods_params_to_list (ods_sheet *sheet, 
+				       int *list)
+{
+    if (list != NULL && list[0] == 3) {
+	list[1] = sheet->seltab + 1;
+	list[2] = sheet->xoffset;
+	list[3] = sheet->yoffset;
+    }
+}
+
 static int set_ods_params_from_list (ods_sheet *sheet, 
 				     const int *list)
 {
@@ -1191,7 +1201,7 @@ static char *get_absolute_path (const char *fname)
     return ret;
 }
 
-int ods_get_data (const char *fname, const int *list, 
+int ods_get_data (const char *fname, int *list, 
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
@@ -1302,6 +1312,9 @@ int ods_get_data (const char *fname, const int *list,
 
     if (!err) {
 	err = finalize_ods_import(pZ, pdinfo, sheet, opt, prn); 
+	if (!err && gui) {
+	    record_ods_params_to_list(sheet, list);
+	}
     }
 
     ods_sheet_free(sheet);

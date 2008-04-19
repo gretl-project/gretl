@@ -290,6 +290,12 @@
   <xsl:text>) \\</xsl:text>
 </xsl:template>
 
+<xsl:template match="note">
+  <xsl:text> </xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text> \\</xsl:text>
+</xsl:template>
+
 <xsl:template match="demos">
   <xsl:if test="position() = 1">
     <xsl:choose>

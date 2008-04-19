@@ -65,7 +65,7 @@
 
 <!ELEMENT altform (#PCDATA | repl | lit)*>
 
-<!ELEMENT option   (flag, effect)>
+<!ELEMENT option   (flag?, effect?, note?)>
 
 <!ELEMENT example  (#PCDATA)>
 <!ELEMENT demo     (#PCDATA)>

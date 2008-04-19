@@ -427,7 +427,7 @@ add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
     }
 
     if (!err) {
-	register_data(NULL, NULL, 0);
+	register_data(DATA_APPENDED);
     }
 }
 

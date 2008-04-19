@@ -275,7 +275,8 @@ static int check_file_type (FILE *fp)
     return err;
 }
 
-int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int wf1_get_data (const char *fname, int *list,
+		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
     FILE *fp;

@@ -374,6 +374,15 @@ static int wbook_check_params (wbook *book)
     }
 }
 
+static void wbook_record_params (wbook *book, int *list)
+{
+    if (list != NULL && list[0] == 3) {
+	list[1] = book->selected + 1;
+	list[2] = book->col_offset;
+	list[3] = book->row_offset;
+    }
+}
+
 #endif /* !ODS_IMPORTER */
 
 static void wbook_init (wbook *book, const int *list)

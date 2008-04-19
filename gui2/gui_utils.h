@@ -50,8 +50,9 @@ void nomem (void);
 
 void mark_dataset_as_modified (void);
 
-void register_data (char *fname, const char *user_fname,
-		    int record);
+void register_data (int flag);
+
+void register_startup_data (const char *fname);
 
 void do_open_data (GtkWidget *w, gpointer data, int code);
 

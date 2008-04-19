@@ -1185,8 +1185,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	}
     }
 
-    data_status |= (GUI_DATA | MODIFIED_DATA);
-    register_data(NULL, NULL, 0);
+    register_data(DATA_APPENDED);
 
     if (missobs) {
 	infobox(_("Warning: there were missing observations"));
@@ -2146,8 +2145,7 @@ static void empty_dataset_guard (void)
 	infobox(_("Warning: there were missing observations"));
     }
 
-    data_status |= (GUI_DATA | MODIFIED_DATA);
-    register_data(NULL, NULL, 0);
+    register_data(DATA_APPENDED);
 }
 
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
