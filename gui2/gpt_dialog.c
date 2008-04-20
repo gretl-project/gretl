@@ -56,7 +56,6 @@ static GtkWidget *labelpos[MAX_PLOT_LABELS];
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *fitcombo;
-static GtkWidget *termcombo;
 static GtkWidget *border_check;
 static GtkWidget *markers_check;
 static GtkWidget *y2_check;
