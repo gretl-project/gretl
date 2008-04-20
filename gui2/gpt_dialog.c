@@ -1038,80 +1038,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 }
 
-static void gpt_save_as_callback (GtkWidget *button, GPT_SPEC *spec) 
-{
-    GtkWidget *w = GTK_COMBO(termcombo)->entry;
-    const gchar *str;
-
-    str = gtk_entry_get_text(GTK_ENTRY(w));
-    if (str == NULL || *str == '\0') {
-	return;
-    }
-
-    *spec->termtype = '\0';
-    strncat(spec->termtype, str, sizeof spec->termtype - 1);
-
-    file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-		  FSEL_DATA_MISC, spec);
-}
-
-static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec) 
-{
-    GtkWidget *label, *vbox, *tbl;
-    GtkWidget *button;
-    int i, tbl_len;
-    GList *termlist = NULL;
-    gchar *termtypes[] = {
-	"postscript",
-	"postscript color",
-	"PDF",
-	"fig",
-	"latex",
-	"png",
-	"plot commands",
-	NULL
-    }; 
-    int pdf_ok = gnuplot_pdf_terminal();
-
-    for (i=0; termtypes[i] != NULL; i++) {
-	if (!pdf_ok && !strcmp(termtypes[i], "PDF")) {
-	    continue;
-	}
-	termlist = g_list_append(termlist, termtypes[i]);
-    }
-   
-    vbox = gp_page_vbox(notebook, _("Output to file"));
-
-    tbl_len = 1;
-    tbl = gp_dialog_table(tbl_len, 2, vbox);
-    gtk_widget_show(tbl);
-   
-    tbl_len++;
-    label = gtk_label_new(_("output format"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      label, 0, 1, tbl_len-1, tbl_len);
-    gtk_widget_show(label);
-
-    termcombo = gtk_combo_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), termcombo, 1, 2, 
-			      tbl_len-1, tbl_len);
-    gtk_combo_set_popdown_strings(GTK_COMBO(termcombo), termlist); 
-    gtk_widget_show(termcombo);
-    g_list_free(termlist); 
-
-    /* button to generate output to file */
-    button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    tbl_len++;
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      button, 1, 2, tbl_len-1, tbl_len);
-    g_signal_connect (G_OBJECT(button), "clicked", 
-		      G_CALLBACK(gpt_save_as_callback), 
-		      spec);
-    gtk_widget_grab_default(button);
-    gtk_widget_show(button);  
-}
-
 static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)
 {
     set_keyspec_sensitivity(spec);
@@ -1736,8 +1662,8 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     if (spec->lines != NULL) {
 	gpt_tab_lines(notebook, spec);
     }
+
     gpt_tab_labels(notebook, spec); 
-    gpt_tab_output(notebook, spec);
 
     hbox = GTK_DIALOG(gpt_control)->action_area;
 

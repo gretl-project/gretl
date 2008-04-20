@@ -134,7 +134,7 @@ static void create_selection_gc (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
 static void graph_display_pdf (GPT_SPEC *spec);
 #ifdef G_OS_WIN32
-static void win32_process_graph (GPT_SPEC *spec, int color, int dest);
+static void win32_process_graph (GPT_SPEC *spec, int dest);
 #endif
 
 enum {
@@ -426,63 +426,42 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 int gp_term_code (gpointer p)
 {
     GPT_SPEC *spec = (GPT_SPEC *) p;
-    const char *s = spec->termtype;
 
-    if (!strncmp(s, "postscript", 10)) 
-	return GP_TERM_EPS;
-    else if (!strncmp(s, "PDF", 3) || !strncmp(s, "pdf", 3))
-	return GP_TERM_PDF;
-    else if (!strcmp(s, "fig")) 
-	return GP_TERM_FIG;
-    else if (!strcmp(s, "latex")) 
-	return GP_TERM_TEX;
-    else if (!strncmp(s, "png", 3)) 
-	return GP_TERM_PNG;
-    else if (!strncmp(s, "emf", 3)) 
-	return GP_TERM_EMF;
-    else if (!strncmp(s, "svg", 3)) 
-	return GP_TERM_SVG;
-    else if (!strcmp(s, "plot commands")) 
-	return GP_TERM_PLT;
-    else 
-	return GP_TERM_NONE;
+    return spec->termtype;
 }
 
-#define PDF_CAIRO_STRING "pdfcairo font \"sans,5\""
+#define PDF_CAIRO_STRING "set term pdfcairo font \"sans,5\""
 
 static void 
-get_full_term_string (const GPT_SPEC *spec, char *termstr, int *cmds)
+get_full_term_string (const GPT_SPEC *spec, char *termstr) 
 {
-    if (!strcmp(spec->termtype, "postscript color")) {
-	strcpy(termstr, "postscript eps color"); 
-    } else if (!strcmp(spec->termtype, "postscript")) {
-	strcpy(termstr, "postscript eps"); 
-    } else if (!strcmp(spec->termtype, "PDF")) {
+    int mono = (spec->flags & GPT_MONO);
+
+    if (spec->termtype == GP_TERM_EPS) {
+	if (mono) {
+	    strcpy(termstr, "set term postscript eps mono"); 
+	} else {
+	    strcpy(termstr, "set term postscript eps color");
+	} 
+    } else if (spec->termtype == GP_TERM_PDF) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
 	    strcpy(termstr, PDF_CAIRO_STRING);
 	} else {
-	    strcpy(termstr, "pdf");
+	    strcpy(termstr, "set term pdf");
 	}
-    } else if (!strcmp(spec->termtype, "fig")) {
-	strcpy(termstr, "fig");
-    } else if (!strcmp(spec->termtype, "latex")) {
-	strcpy(termstr, "latex");
-    } else if (!strncmp(spec->termtype, "png", 3)) { 
+    } else if (spec->termtype == GP_TERM_FIG) {
+	strcpy(termstr, "set term fig");
+    } else if (spec->termtype == GP_TERM_PNG) { 
 	const char *png_str = 
 	    get_gretl_png_term_line(spec->code, spec->flags);
 
-	strcpy(termstr, png_str + 9);
-    } else if (!strcmp(spec->termtype, "emf color")) {
+	strcpy(termstr, png_str); 
+    } else if (spec->termtype == GP_TERM_EMF) {
 	const char *emf_str = 
-	    get_gretl_emf_term_line(spec->code, 1);
+	    get_gretl_emf_term_line(spec->code, !mono);
 
-	strcpy(termstr, emf_str + 9);
-    } else if (!strcmp(spec->termtype, "plot commands")) {
-	strcpy(termstr, spec->termtype);
-	*cmds = 1;
-    } else {
-	strcpy(termstr, spec->termtype);
-    }
+	strcpy(termstr, emf_str);
+    } 
 }
 
 static char *gp_contd_string (char *s)
@@ -730,20 +709,22 @@ static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
     }
 } 
 
-static int revise_plot_file (const char *inname, 
+static int revise_plot_file (GPT_SPEC *spec, 
 			     const char *pltname,
 			     const char *outtarg,
-			     const char *term)
+			     const char *setterm)
 {
     FILE *fpin = NULL;
     FILE *fpout = NULL;
-    int ttype = 0, latin = 0;
-    int mono = 0, recolor = 0;
+    int mono = (spec->flags & GPT_MONO);
+    int ttype = spec->termtype;
+    int latin = 0;
+    int recolor = 0;
     int err = 0;
 
-    fpin = gretl_fopen(inname, "r");
+    fpin = gretl_fopen(spec->fname, "r");
     if (fpin == NULL) {
-	file_read_errbox(inname);
+	file_read_errbox(spec->fname);
 	return 1;
     }
 
@@ -752,18 +733,6 @@ static int revise_plot_file (const char *inname,
 	fclose(fpin);
 	file_write_errbox(pltname);
 	return 1;
-    }
-
-    if (!strncmp(term, "emf", 3)) {
-	ttype = GP_TERM_EMF;
-    } else if (!strncmp(term, "png", 3)) {
-	ttype = GP_TERM_PNG;
-    } else if (!strncmp(term, "post", 4)) {
-	ttype = GP_TERM_EPS;
-    } else if (!strncmp(term, "pdf", 3)) {
-	ttype = GP_TERM_PDF;
-    } else if (strstr(term, "commands")) {
-	ttype = GP_TERM_PLT;
     }
 
 #ifdef ENABLE_NLS
@@ -779,14 +748,9 @@ static int revise_plot_file (const char *inname,
 #endif
 
     if (outtarg != NULL && *outtarg != '\0') {
-	fprintf(fpout, "set term %s\n", term);
+	fprintf(fpout, "%s\n", setterm);
 	fprintf(fpout, "set output '%s'\n", outtarg);
     }	
-
-    if (strstr(term, " mono") || 
-	(strstr(term, "postscr") && !strstr(term, "color"))) {
-	mono = 1;
-    }    
 
     if (!mono && (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF)
 	&& !gnuplot_has_rgb()) {
@@ -804,24 +768,17 @@ static int revise_plot_file (const char *inname,
 void save_graph_to_file (gpointer data, const char *fname)
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
-    char term[MAXLEN];
+    char setterm[MAXLEN];
     char pltname[MAXLEN];
-    int cmds = 0;
     int err = 0;
 
-    get_full_term_string(spec, term, &cmds);
+    get_full_term_string(spec, setterm);
 
-    if (cmds) {
-	/* saving plot commands to file */
-	strcpy(pltname, fname);
-	err = revise_plot_file(spec->fname, pltname, NULL, term);
-    } else {
-	/* saving some form of gnuplot output */
-	build_path(pltname, paths.dotdir, "gptout.tmp", NULL);
-	err = revise_plot_file(spec->fname, pltname, fname, term);
-    }
+    build_path(pltname, paths.dotdir, "gptout.tmp", NULL);
 
-    if (!err && !cmds) {
+    err = revise_plot_file(spec, pltname, fname, setterm);
+
+    if (!err) {
 	gchar *plotcmd;
 
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
@@ -841,23 +798,23 @@ static void graph_display_pdf (GPT_SPEC *spec)
 {
     char pdfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
-    static char term[32];
+    static char setterm[64];
     gchar *plotcmd;
     int err = 0;
 
-    if (*term == '\0') {
+    if (*setterm == '\0') {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
 	    fprintf(stderr, "gnuplot: using pdfcairo driver\n");
-	    strcpy(term, PDF_CAIRO_STRING);
+	    strcpy(setterm, PDF_CAIRO_STRING);
 	} else {
-	    strcpy(term, "pdf");
+	    strcpy(setterm, "set term pdf");
 	}
     }
 
     build_path(plttmp, paths.dotdir, "gptout.tmp", NULL);
     build_path(pdfname, paths.dotdir, GRETL_PDF_TMP, NULL);
 
-    err = revise_plot_file(spec->fname, plttmp, pdfname, term);
+    err = revise_plot_file(spec, plttmp, pdfname, setterm);
     if (err) {
 	return;
     }
@@ -1064,24 +1021,22 @@ void run_gp_script (gchar *buf)
 /* common code for sending an EMF file to the clipboard,
    or printing an EMF, on MS Windows */
 
-static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
+static void win32_process_graph (GPT_SPEC *spec, int dest)
 {
     char emfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
     gchar *plotcmd;
-    const char *term;
-    int err = 0;
+    const char *setterm;
+    int color, err = 0;
 
     build_path(plttmp, paths.dotdir, "gptout.tmp", NULL);
     build_path(emfname, paths.dotdir, "gpttmp.emf", NULL);
 
-    term = get_gretl_emf_term_line(spec->code, color);
-    
-    if (!strncmp(term, "set term ", 9)) {
-	term += 9;
-    }
+    color = !(spec->flags & GPT_MONO);
 
-    err = revise_plot_file(spec->fname, plttmp, emfname, term);
+    setterm = get_gretl_emf_term_line(spec->code, color);
+    
+    err = revise_plot_file(spec, plttmp, emfname, setterm);
     if (err) {
 	return;
     }
@@ -2566,34 +2521,31 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
     gchar *item = (gchar *) data;
     gpointer ptr = g_object_get_data(G_OBJECT(w), "plot");
     png_plot *plot = (png_plot *) ptr;
-    gint color = strcmp(item, _("monochrome"));
     GtkWidget *parent = (GTK_MENU(w->parent))->parent_menu_item;
     gchar *parent_item = g_object_get_data(G_OBJECT(parent), "string");
 
+    if (!strcmp(item, _("monochrome"))) {
+	plot->spec->flags |= GPT_MONO;
+    }
+
     if (!strcmp(parent_item, _("Save as postscript (EPS)..."))) {
-	strcpy(plot->spec->termtype, "postscript");
-	if (color) {
-	    strcat(plot->spec->termtype, " color");
-	} 
+	plot->spec->termtype = GP_TERM_EPS;
 	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
-	strcpy(plot->spec->termtype, "emf");
-	if (color) {
-	    strcat(plot->spec->termtype, " color");
-	} else {
-	    strcat(plot->spec->termtype, " mono");
-	}
+	plot->spec->termtype = GP_TERM_EMF;
 	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } 
 #ifdef G_OS_WIN32
     else if (!strcmp(parent_item, _("Copy to clipboard"))) {
-	win32_process_graph(plot->spec, color, WIN32_TO_CLIPBOARD);
+	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
     } else if (!strcmp(parent_item, _("Print"))) {
-	win32_process_graph(plot->spec, color, WIN32_TO_PRINTER);
+	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
     }    
 #endif   
+
+    plot->spec->flags &= ~GPT_MONO;
 
     return TRUE;
 }
@@ -2679,19 +2631,11 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     if (!strcmp(item, _("Add another curve..."))) {
 	stats_calculator(plot, CALC_GRAPH_ADD, NULL);
     } else if (!strcmp(item, _("Save as PNG..."))) {
-	if (gnuplot_png_terminal() == GP_PNG_CAIRO) {
-	    strcpy(plot->spec->termtype, "pngcairo");
-	} else {
-	    strcpy(plot->spec->termtype, "png");
-	}
+	plot->spec->termtype = GP_TERM_PNG;
         file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save as PDF..."))) {
-	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    strcpy(plot->spec->termtype, PDF_CAIRO_STRING);
-	} else {
-	    strcpy(plot->spec->termtype, "pdf");
-	}
+	plot->spec->termtype = GP_TERM_PDF;
         file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
@@ -3108,7 +3052,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	break;
 #ifdef G_OS_WIN32
     case GDK_c:
-	win32_process_graph(plot->spec, 1, WIN32_TO_CLIPBOARD);
+	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
 	break;
 #endif
 #ifdef HAVE_AUDIO

@@ -95,7 +95,7 @@ GPT_SPEC *plotspec_new (void)
     spec->boxwidth = 0;
     spec->samples = 0;
 
-    spec->termtype[0] = 0;
+    spec->termtype = GP_TERM_NONE;
 
     return spec;
 }
@@ -364,18 +364,6 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     gretl_pop_c_numeric_locale();
 }
 
-static int get_mono_output (const GPT_SPEC *spec)
-{
-    if (strstr(spec->termtype, " mono")) {
-	return 1;
-    } else if (strstr(spec->termtype, "postscr") && 
-	       !strstr(spec->termtype, "color")) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
                      s->fit == PLOT_FIT_QUADRATIC || \
                      s->fit == PLOT_FIT_INVERSE || \
@@ -385,7 +373,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t;
     int png = get_png_output(spec);
-    int mono = get_mono_output(spec);
+    int mono = (spec->flags & GPT_MONO);
     int started_data_lines = 0;
     int n_lines = spec->n_lines;
     double et, yt;

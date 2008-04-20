@@ -63,7 +63,7 @@ typedef struct {
     char keyspec[MAXTITLE];    /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
-    char termtype[MAXTITLE];   /* gnuplot "term" setting */
+    int termtype;              /* gnuplot "terminal" code */
     int n_lines;               /* number of lines */
     int samples;               /* number of samples for parametric plots */
     float boxwidth;            /* when using box style for frequency plots */

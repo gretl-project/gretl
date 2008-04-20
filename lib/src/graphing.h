@@ -52,7 +52,8 @@ typedef enum {
     GPT_XZEROAXIS      = 1 << 22, /* show x = 0 line */
     GPT_YZEROAXIS      = 1 << 23, /* show y = 0 line */
     GPT_FILL_SWITCH    = 1 << 24, /* switching from errorbars to fill */
-    GPT_ERR_SWITCH     = 1 << 25  /* switching from fill to errorbars */
+    GPT_ERR_SWITCH     = 1 << 25, /* switching from fill to errorbars */
+    GPT_MONO           = 1 << 26  /* monochrome output */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
