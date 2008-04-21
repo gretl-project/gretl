@@ -48,7 +48,6 @@
 
 /* We used to test for `BSTRING' here, but only GCC and Emacs define
    `BSTRING', as far as I know, and neither of them use this code.  */
-#if HAVE_STRING_H || STDC_HEADERS
 #include <string.h>
 #ifndef bcmp
 #define bcmp(s1, s2, n)	memcmp ((s1), (s2), (n))
@@ -59,17 +58,8 @@
 #ifndef bzero
 #define bzero(s, n)	memset ((s), 0, (n))
 #endif
-#else
-#include <strings.h>
-#endif
 
-#ifdef STDC_HEADERS
 #include <stdlib.h>
-#else
-char *malloc ();
-char *realloc ();
-#endif
-
 
 /* Define the syntax stuff for \<, \>, etc.  */
 
@@ -122,7 +112,7 @@ init_syntax_once ()
 #endif /* not emacs */
 
 /* Get the interface, including the syntax bits.  */
-#include "regex.h"
+#include "gnu-regex/regex.h"
 
 /* isalpha etc. are used for the character classes.  */
 #include <ctype.h>
