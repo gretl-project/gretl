@@ -1488,9 +1488,11 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
     static double *x;
     static int ptype;
     static int Tbak;
+    static double sd0bak;
 
     int t, y1, T;
     int new_ptype;
+    double sd0;
     float rm;
 
     if (pdinfo == NULL) {
@@ -1499,14 +1501,15 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 	x = NULL;
 	ptype = 0;
 	T = 0;
+	sd0 = 0;
 	return NULL;
     }
 
     new_ptype = plotvar_code(pdinfo);
-
     T = pdinfo->n;
+    sd0 = pdinfo->sd0;
 
-    if (x != NULL && new_ptype == ptype && Tbak == T) {
+    if (x != NULL && new_ptype == ptype && Tbak == T && sd0 == sd0bak) {
 	/* a suitable array is already at hand */
 	return x;
     }
@@ -1522,9 +1525,10 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 
     Tbak = T;
     ptype = new_ptype;
+    sd0bak = sd0;
 
-    y1 = (int) pdinfo->sd0;
-    rm = pdinfo->sd0 - y1;
+    y1 = (int) sd0;
+    rm = sd0 - y1;
 
     switch (ptype) {
     case PLOTVAR_ANNUAL: 
