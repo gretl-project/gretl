@@ -1366,7 +1366,7 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int xls_get_data (const char *fname, int *list, 
+int xls_get_data (const char *fname, int *list, char *sheetname,
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
@@ -1389,7 +1389,7 @@ int xls_get_data (const char *fname, int *list,
 
     gretl_push_c_numeric_locale();
 
-    wbook_init(book, list);
+    wbook_init(book, list, sheetname);
 
     if (excel_book_get_info(fname, book)) {
 	pputs(prn, _("Failed to get workbook info"));

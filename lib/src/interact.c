@@ -793,6 +793,7 @@ static int arma_maybe_rewrite (char *s, CMD *cmd)
 #endif
 
     /* preserve original command line for echo */
+    free(cmd->extra);
     cmd->extra = gretl_strdup(orig);
 
     cmd->param = malloc(strlen(s) + 1);
@@ -1478,13 +1479,22 @@ static int read_dash_param (const char **ps, CMD *cmd)
     int ok = 0;
 
     if (!strncmp(s, "--sheet=", 8)) {
-	parm = strtol(s+8, &test, 10);
+	s += 8;
+	if (*s == '"') {
+	    free(cmd->extra);
+	    cmd->extra = gretl_double_quoted_string_strdup(s, (const char **) &test);
+	    parm = 0;
+	} else {
+	    parm = strtol(s, &test, 10);
+	}
 	i = 1;
-    } else if (!strncmp(s, "--xoffset=", 10)) {
-	parm = strtol(s+10, &test, 10);
+    } else if (!strncmp(s, "--coloffset=", 12)) {
+	s += 12;
+	parm = strtol(s, &test, 10);
 	i = 2;
-    } else if (!strncmp(s, "--yoffset=", 10)) {
-	parm = strtol(s+10, &test, 10);
+    } else if (!strncmp(s, "--rowoffset=", 12)) {
+	s += 12;
+	parm = strtol(s, &test, 10);
 	i = 3;
     }
 
@@ -3808,7 +3818,7 @@ static int append_data (const char *line, int *list,
 			gretlopt opt, PRN *prn)
 {
     char fname[MAXLEN] = {0};
-    int k, err = 0;
+    int ftype, err = 0;
 
     err = getopenfile(line, fname, NULL, OPT_NONE);
     if (err) {
@@ -3816,19 +3826,19 @@ static int append_data (const char *line, int *list,
 	return err;
     }
 
-    k = detect_filetype(fname, NULL, prn);
+    ftype = detect_filetype(fname, NULL, prn);
 
-    if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, pdinfo, fname, opt, prn);
-    } else if (k == GRETL_OCTAVE) {
-	err = import_octave(pZ, pdinfo, fname, opt, prn);
-    } else if (WORKSHEET_IMPORT(k)) {
-	err = import_other(list, pZ, pdinfo, k, fname, opt, prn);
-    } else if (k == GRETL_XML_DATA) {
-	err = gretl_read_gdt(pZ, pdinfo, fname, NULL, 
-			     opt, prn);
+    if (ftype == GRETL_CSV) {
+	err = import_csv(fname, pZ, pdinfo, opt, prn);
+    } else if (SPREADSHEET_IMPORT(ftype)) {
+	err = import_spreadsheet(fname, ftype, list, NULL, pZ, pdinfo, 
+				 opt, prn);
+    } else if (OTHER_IMPORT(ftype)) {
+	err = import_other(fname, ftype, pZ, pdinfo, opt, prn);
+    } else if (ftype == GRETL_XML_DATA) {
+	err = gretl_read_gdt(fname, NULL, pZ, pdinfo, opt, prn);
     } else {
-	err = gretl_get_data(pZ, pdinfo, fname, NULL, opt, prn);
+	err = gretl_get_data(fname, NULL, pZ, pdinfo, opt, prn);
     }
 
     return err;

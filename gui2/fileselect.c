@@ -41,7 +41,7 @@
                               i == OPEN_ASCII || \
                               i == OPEN_OCTAVE || \
                               i == OPEN_GNUMERIC || \
-	                      i == OPEN_EXCEL || \
+	                      i == OPEN_XLS || \
                               i == OPEN_WF1 || \
                               i == OPEN_DTA || \
                               i == OPEN_JMULTI || \
@@ -51,7 +51,7 @@
                                i == APPEND_CSV || \
                                i == APPEND_OCTAVE || \
                                i == APPEND_GNUMERIC || \
-                               i == APPEND_EXCEL || \
+                               i == APPEND_XLS || \
                                i == APPEND_ASCII || \
                                i == APPEND_WF1 || \
                                i == APPEND_DTA || \
@@ -111,8 +111,8 @@ static struct extmap action_map[] = {
     { APPEND_ASCII,      ".txt" },
     { OPEN_GNUMERIC,     ".gnumeric" },
     { APPEND_GNUMERIC,   ".gnumeric" },
-    { OPEN_EXCEL,        ".xls" },
-    { APPEND_EXCEL,      ".xls" },
+    { OPEN_XLS,          ".xls" },
+    { APPEND_XLS,        ".xls" },
     { OPEN_WF1,          ".wf1" },
     { APPEND_WF1,        ".wf1" },
     { OPEN_DTA,          ".dta" },
@@ -624,8 +624,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ APPEND_ASCII,     { N_("ASCII files (*.txt)"), "*.txt" }},
 	{ OPEN_GNUMERIC,    { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{ APPEND_GNUMERIC,  { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
-	{ OPEN_EXCEL,       { N_("Excel files (*.xls)"), "*.xls" }},
-	{ APPEND_EXCEL,     { N_("Excel files (*.xls)"), "*.xls" }},
+	{ OPEN_XLS,         { N_("Excel files (*.xls)"), "*.xls" }},
+	{ APPEND_XLS,       { N_("Excel files (*.xls)"), "*.xls" }},
 	{ OPEN_WF1,         { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
 	{ APPEND_WF1,       { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
 	{ OPEN_DTA,         { N_("Stata files (*.dta)"), "*.dta" }},

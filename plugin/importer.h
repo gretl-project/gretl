@@ -56,6 +56,7 @@ struct wbook_ {
     int nsheets;
     int selected;
     int col_offset, row_offset;
+    char *targname;
     char **sheetnames;
     guint32 *byte_offsets;
     void *colspin, *rowspin;

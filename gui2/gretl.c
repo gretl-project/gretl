@@ -210,7 +210,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/Import/_ASCII..."), NULL, open_data, OPEN_ASCII, NULL, GNULL },
     { N_("/File/Open data/Import/_Octave..."), NULL, open_data, OPEN_OCTAVE, NULL, GNULL },
     { N_("/File/Open data/Import/_Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL, GNULL },
-    { N_("/File/Open data/Import/_Excel..."), NULL, open_data, OPEN_EXCEL, NULL, GNULL },
+    { N_("/File/Open data/Import/_Excel..."), NULL, open_data, OPEN_XLS, NULL, GNULL },
     { N_("/File/Open data/Import/_Open Document..."), NULL, open_data, OPEN_ODS, NULL, GNULL },
     { N_("/File/Open data/Import/_Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
     { N_("/File/Open data/Import/_Stata..."), NULL, open_data, OPEN_DTA, NULL, GNULL },
@@ -223,7 +223,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Append data/_ASCII..."), NULL, open_data, APPEND_ASCII, NULL, GNULL },
     { N_("/File/Append data/_Octave..."), NULL, open_data, APPEND_OCTAVE, NULL, GNULL },
     { N_("/File/Append data/_Gnumeric..."), NULL, open_data, APPEND_GNUMERIC, NULL, GNULL },
-    { N_("/File/Append data/_Excel..."), NULL, open_data, APPEND_EXCEL, NULL, GNULL },
+    { N_("/File/Append data/_Excel..."), NULL, open_data, APPEND_XLS, NULL, GNULL },
     { N_("/File/Append data/_Open Document..."), NULL, open_data, OPEN_ODS, NULL, GNULL },
     { N_("/File/Append data/_Eviews..."), NULL, open_data, APPEND_WF1, NULL, GNULL },
     { N_("/File/Append data/_Stata..."), NULL, open_data, APPEND_DTA, NULL, GNULL },
@@ -900,28 +900,25 @@ int main (int argc, char *argv[])
 
 	switch (ftype) {
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(&Z, datainfo, paths.datfile, &paths, 
+	    err = gretl_get_data(paths.datfile, &paths, &Z, datainfo, 
 				 OPT_NONE, prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, 
+	    err = gretl_read_gdt(paths.datfile, &paths, &Z, datainfo, 
 				 OPT_NONE, prn);
 	    break;
-	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, datainfo, paths.datfile, 
+	case GRETL_CSV:
+	    err = import_csv(paths.datfile, &Z, datainfo, 
 			     OPT_NONE, prn);
 	    break;
-	case GRETL_OCTAVE:
-	    err = import_octave(&Z, datainfo, paths.datfile, 
-				OPT_NONE, prn);
-	    break;
-	case GRETL_EXCEL:
+	case GRETL_XLS:
 	case GRETL_GNUMERIC:
-	case GRETL_WF1:
+	case GRETL_ODS:
 	case GRETL_DTA:
 	case GRETL_JMULTI:
-	case GRETL_ODS:
-	    err = get_worksheet_data(paths.datfile, ftype, 0);
+	case GRETL_OCTAVE:
+	case GRETL_WF1:
+	    err = get_imported_data(paths.datfile, ftype, 0);
 	    break;
 	case GRETL_SCRIPT:
 	case GRETL_SESSION:

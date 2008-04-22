@@ -833,27 +833,19 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     return NULL;
 }
 
-static int get_quoted_filename (const char *line, char *fname)
+static int get_quoted_filename (const char *s, char *fname)
 {
-    char *p;
-    int quote = '"';
     int ret = 0;
 
-    p = strchr(line, quote);
-    if (p == NULL) {
-	quote = '\'';
-	p = strchr(line, quote);
-    }
+    if (*s == '"' || *s == '\'') {
+	const char *p = strchr(s + 1, *s);
 
-    if (p != NULL) {
-	char *q = strrchr(line, quote);
-
-	if (q != NULL) {
-	    size_t len = q - p;
+	if (p != NULL) {
+	    size_t len = p - s;
 
 	    if (len > 0) {
 		*fname = 0;
-		strncat(fname, p+1, len-1);
+		strncat(fname, s+1, len-1);
 		ret = 1;
 	    } 
 	}
@@ -905,12 +897,16 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     int script = (opt & OPT_S)? 1 : 0;
     char *fullname;
 
+    /* skip past command word */
+    line += strcspn(line, " ");
+    line += strspn(line, " ");
+
     if (get_quoted_filename(line, fname)) {
 	/* if the filename was quoted, we'll leave it as is */
 	return 0; 
     }
 
-    if (sscanf(line, "%*s %s", fname) != 1) {
+    if (sscanf(line, "%s", fname) != 1) {
 	return E_PARSE;
     }
 

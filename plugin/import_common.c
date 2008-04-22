@@ -358,6 +358,7 @@ static void wbook_free (wbook *book)
 	free(book->sheetnames[i]);
     }
     free(book->sheetnames);
+    free(book->targname);
     free(book->byte_offsets);
     free(book->xf_list);
     free(book->missmask);
@@ -365,6 +366,16 @@ static void wbook_free (wbook *book)
 
 static int wbook_check_params (wbook *book)
 {
+    if (book->targname != NULL) {
+	int i;
+
+	for (i=0; i<book->nsheets; i++) {
+	    if (!strcmp(book->targname, book->sheetnames[i])) {
+		book->selected = i;
+	    }
+	}
+    }
+
     if (book->selected < 0 || book->selected >= book->nsheets) {
 	return E_DATA;
     } else if (book->col_offset < 0 || book->row_offset < 0) {
@@ -385,11 +396,12 @@ static void wbook_record_params (wbook *book, int *list)
 
 #endif /* !ODS_IMPORTER */
 
-static void wbook_init (wbook *book, const int *list)
+static void wbook_init (wbook *book, const int *list, char *sheetname)
 {
     book->version = 0;
     book->nsheets = 0;
     book->col_offset = book->row_offset = 0;
+    book->targname = NULL;
     book->sheetnames = NULL;
     book->byte_offsets = NULL;
     book->selected = 0;
@@ -400,8 +412,12 @@ static void wbook_init (wbook *book, const int *list)
     book->get_min_offset = NULL;
     book->data = NULL;
 
+    if (sheetname != NULL && *sheetname != '\0') {
+	book->targname = gretl_strdup(sheetname);
+    }
+
     if (list != NULL && list[0] == 3) {
-	if (list[1] > 0) {
+	if (book->targname == NULL && list[1] > 0) {
 	    book->selected = list[1] - 1;
 	}
 	book->col_offset = list[2];

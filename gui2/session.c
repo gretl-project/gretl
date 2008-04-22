@@ -1092,8 +1092,8 @@ void do_open_session (void)
     }
 
     session_file_make_path(paths.datfile, sinfo.datafile);
-    err = gretl_read_gdt(&Z, datainfo, paths.datfile, &paths, OPT_P, 
-			 NULL);
+    err = gretl_read_gdt(paths.datfile, &paths, &Z, datainfo, 
+			 OPT_P, NULL);
     if (err) {
 	/* FIXME more explicit error message */
 	file_read_errbox(sinfo.datafile);

@@ -112,10 +112,11 @@ int gretl_write_matrix_as_gdt (const char *fname,
 
 int gretl_write_gdt (const char *fname, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo, 
-		     GretlDataFormat fmt, PATHS *ppaths);
+		     gretlopt opt, PATHS *ppaths);
 
-int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
-		    PATHS *ppaths, gretlopt opt, PRN *prn);
+int gretl_read_gdt (char *fname, PATHS *ppaths, 
+		    double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn);
 
 char *gretl_get_gdt_description (const char *fname);
 

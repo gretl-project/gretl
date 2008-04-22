@@ -573,6 +573,44 @@ char *gretl_word_strdup (const char *src, const char **ptr)
 }
 
 /**
+ * gretl_double_quoted_string_strdup:
+ * @s: the source string.
+ * @ptr: location to receive end pointer, or %NULL.
+ *
+ * If @s starts with a double quote, return a copy of the 
+ * portion of @s that is enclosed in double quotes.  That is, 
+ * from @s + 1 up to but not including the next double quote.
+ * If @ptr is not %NULL, on output it receives a pointer to
+ * the next byte in @s after the closing quote.
+ *
+ * Returns: the allocated string or %NULL on failure.
+ */
+
+char *gretl_double_quoted_string_strdup (const char *s, const char **ptr)
+{
+    char *ret = NULL;
+    const char *p = NULL;
+
+    if (s != NULL && *s == '"') {
+	s++;
+	p = strchr(s, '"');
+    }
+
+    if (p == NULL) {
+	if (ptr != NULL) {
+	    *ptr = NULL;
+	}
+    } else {
+	if (ptr != NULL) {
+	    *ptr = p + 1;
+	}
+	ret = gretl_strndup(s, p - s);
+    }
+
+    return ret;
+}
+
+/**
  * gretl_string_split:
  * @s: the source string.
  * @n: location to receive the number of substrings.

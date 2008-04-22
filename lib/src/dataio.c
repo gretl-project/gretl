@@ -31,6 +31,19 @@
 
 #include <glib.h>
 
+typedef enum {
+    GRETL_FMT_FLOAT = 1, /* single-precision binary data */
+    GRETL_FMT_DOUBLE,    /* double-precision binary data */
+    GRETL_FMT_OCTAVE,    /* data in Gnu Octave format */
+    GRETL_FMT_CSV,       /* data in Comma Separated Values format */
+    GRETL_FMT_R,         /* data in Gnu R format */
+    GRETL_FMT_GZIPPED,   /* gzipped data */
+    GRETL_FMT_TRAD,      /* traditional (ESL-style) data */
+    GRETL_FMT_DAT,       /* data in PcGive format */
+    GRETL_FMT_DB,        /* gretl native database format */
+    GRETL_FMT_JM         /* JMulti ascii data */
+} GretlDataFormat;
+
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
 
 static int writelbl (const char *lblfile, const int *list, 
@@ -1016,9 +1029,9 @@ static int writehdr (const char *hdrfile, const int *list,
     char startdate[OBSLEN], enddate[OBSLEN];
     int i, binary = 0;
 
-    if (opt == GRETL_DATA_FLOAT) {
+    if (opt == GRETL_FMT_FLOAT) {
 	binary = 1;
-    } else if (opt == GRETL_DATA_DOUBLE) {
+    } else if (opt == GRETL_FMT_DOUBLE) {
 	binary = 2;
     }
 
@@ -1155,33 +1168,33 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
     GretlDataFormat fmt = 0;
     
     if (opt & OPT_T) {
-	fmt = GRETL_DATA_TRAD;
+	fmt = GRETL_FMT_TRAD;
     } else if (opt & OPT_M) {
-	fmt = GRETL_DATA_OCTAVE;
+	fmt = GRETL_FMT_OCTAVE;
     } else if (opt & OPT_R) {
-	fmt = GRETL_DATA_R;
+	fmt = GRETL_FMT_R;
     } else if (opt & OPT_C) {
-	fmt = GRETL_DATA_CSV;
+	fmt = GRETL_FMT_CSV;
     } else if (opt & OPT_Z) {
-	fmt = GRETL_DATA_GZIPPED;
+	fmt = GRETL_FMT_GZIPPED;
     } else if (opt & OPT_D) {
-	fmt = GRETL_DATA_DB;
+	fmt = GRETL_FMT_DB;
     } else if (opt & OPT_G) {
-	fmt = GRETL_DATA_DAT;
+	fmt = GRETL_FMT_DAT;
     } else if (opt & OPT_J) {
-	fmt = GRETL_DATA_JM;
+	fmt = GRETL_FMT_JM;
     }
 
     if (fmt == 0) {
 	if (has_suffix(fname, ".R")) {
-	    fmt = GRETL_DATA_R;
+	    fmt = GRETL_FMT_R;
 	} else if (has_suffix(fname, ".csv")) {
-	    fmt = GRETL_DATA_CSV;
+	    fmt = GRETL_FMT_CSV;
 	} else if (has_suffix(fname, ".m")) {
-	    fmt = GRETL_DATA_OCTAVE;
+	    fmt = GRETL_FMT_OCTAVE;
 	} else if (has_suffix(fname, ".txt") ||
 		   has_suffix(fname, ".asc")) {
-	    fmt = GRETL_DATA_CSV;
+	    fmt = GRETL_FMT_CSV;
 	    *delim = ' ';
 	} 
     }
@@ -1249,15 +1262,17 @@ int write_data (const char *fname, const int *list,
 
     fname = gretl_maybe_switch_dir(fname);
 
-    if (fmt == 0 || fmt == GRETL_DATA_GZIPPED) {
-	return gretl_write_gdt(fname, list, Z, pdinfo, fmt, ppaths);
+    if (fmt == 0 || fmt == GRETL_FMT_GZIPPED) {
+	return gretl_write_gdt(fname, list, Z, pdinfo, 
+			       (fmt == GRETL_FMT_GZIPPED)? OPT_Z : OPT_NONE,
+			       ppaths);
     }
 
-    if (fmt == GRETL_DATA_DB) {
+    if (fmt == GRETL_FMT_DB) {
 	return write_db_data(fname, list, opt, Z, pdinfo);
     }
 
-    if (fmt == GRETL_DATA_CSV && get_csv_delim(pdinfo) == ',' && 
+    if (fmt == GRETL_FMT_CSV && get_csv_delim(pdinfo) == ',' && 
 	',' == pdinfo->decpoint) {
 	sprintf(gretl_errmsg, _("You can't use the same character for "
 				"the column delimiter and the decimal point"));
@@ -1267,9 +1282,9 @@ int write_data (const char *fname, const int *list,
     strcpy(datfile, fname);
 
     /* write header and label files if not exporting to other formats */
-    if (fmt != GRETL_DATA_R && fmt != GRETL_DATA_CSV && 
-	fmt != GRETL_DATA_OCTAVE && fmt != GRETL_DATA_DAT && 
-	fmt != GRETL_DATA_JM) {
+    if (fmt != GRETL_FMT_R && fmt != GRETL_FMT_CSV && 
+	fmt != GRETL_FMT_OCTAVE && fmt != GRETL_FMT_DAT && 
+	fmt != GRETL_FMT_JM) {
 	if (!has_suffix(datfile, ".gz")) {
 	    switch_ext(hdrfile, datfile, "hdr");
 	    switch_ext(lblfile, datfile, "lbl");
@@ -1293,9 +1308,9 @@ int write_data (const char *fname, const int *list,
 	return E_FOPEN;
     }
 
-    if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_OCTAVE || 
-	GRETL_DATA_R || fmt == GRETL_DATA_TRAD || 
-	fmt == GRETL_DATA_DAT || fmt == GRETL_DATA_JM) { 
+    if (fmt == GRETL_FMT_CSV || fmt == GRETL_FMT_OCTAVE || 
+	GRETL_FMT_R || fmt == GRETL_FMT_TRAD || 
+	fmt == GRETL_FMT_DAT || fmt == GRETL_FMT_JM) { 
 	/* an ASCII variant of some sort */
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) {
@@ -1312,11 +1327,11 @@ int write_data (const char *fname, const int *list,
 	}	
     }
 
-    if (fmt != GRETL_DATA_CSV || pdinfo->decpoint != ',') {
+    if (fmt != GRETL_FMT_CSV || pdinfo->decpoint != ',') {
 	gretl_push_c_numeric_locale();
     }
 
-    if (fmt == GRETL_DATA_TRAD) { 
+    if (fmt == GRETL_FMT_TRAD) { 
 	/* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->markers && pdinfo->S != NULL) {
@@ -1338,11 +1353,11 @@ int write_data (const char *fname, const int *list,
 	    }
 	    fputc('\n', fp);
 	}
-    } else if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_R) { 
+    } else if (fmt == GRETL_FMT_CSV || fmt == GRETL_FMT_R) { 
 	/* export CSV or GNU R (dataframe) */
 	int print_obs = 0;
 
-	if (fmt == GRETL_DATA_CSV) {
+	if (fmt == GRETL_FMT_CSV) {
 	    if ((pdinfo->structure == TIME_SERIES || pdinfo->S != NULL)
 		&& !(opt & OPT_X)) {
 		print_obs = 1;
@@ -1355,7 +1370,7 @@ int write_data (const char *fname, const int *list,
 	    delim = ' ';
 	}
 
-	if (fmt == GRETL_DATA_R && dataset_is_time_series(pdinfo)) {
+	if (fmt == GRETL_FMT_R && dataset_is_time_series(pdinfo)) {
 	    char datestr[OBSLEN];
 
 	    ntodate_full(datestr, pdinfo->t1, pdinfo);
@@ -1364,7 +1379,7 @@ int write_data (const char *fname, const int *list,
 	}
 
 	/* variable names */
-	if (fmt == GRETL_DATA_CSV && print_obs && 
+	if (fmt == GRETL_FMT_CSV && print_obs && 
 	    (pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
 	    fprintf(fp, "obs%c", delim);
 	}
@@ -1404,7 +1419,7 @@ int write_data (const char *fname, const int *list,
 		}
 	    }
 	}
-    } else if (fmt == GRETL_DATA_OCTAVE) { 
+    } else if (fmt == GRETL_FMT_OCTAVE) { 
 	/* GNU Octave: write out data as a matrix */
 	fprintf(fp, "# name: X\n# type: matrix\n# rows: %d\n# columns: %d\n", 
 		n, list[0]);
@@ -1421,7 +1436,7 @@ int write_data (const char *fname, const int *list,
 	    }
 	    fputc('\n', fp);
 	}
-    } else if (fmt == GRETL_DATA_DAT) { 
+    } else if (fmt == GRETL_FMT_DAT) { 
 	/* PcGive: data file with load info */
 	int pd = pdinfo->pd;
 
@@ -1455,7 +1470,7 @@ int write_data (const char *fname, const int *list,
 	    }
 	    fputc('\n', fp);
 	}
-    } else if (fmt == GRETL_DATA_JM) { 
+    } else if (fmt == GRETL_FMT_JM) { 
 	/* JMulti: ascii with comments and date info */
 	int maj, min;
 
@@ -1493,7 +1508,7 @@ int write_data (const char *fname, const int *list,
 	}
     }
 
-    if (fmt != GRETL_DATA_CSV || pdinfo->decpoint != ','){
+    if (fmt != GRETL_FMT_CSV || pdinfo->decpoint != ','){
 	gretl_pop_c_numeric_locale();
     }
 
@@ -1753,10 +1768,10 @@ static void try_gdt (char *fname)
 
 /**
  * gretl_get_data:
- * @pZ: pointer to data set.
- * @pdinfo: pointer to data information struct.
  * @datfile: name of file to try.
  * @ppaths: path information struct.
+ * @pZ: pointer to data set.
+ * @pdinfo: pointer to data information struct.
  * @opt: for use with "append".
  * @prn: where messages should be written.
  * 
@@ -1766,8 +1781,9 @@ static void try_gdt (char *fname)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, 
-		    PATHS *ppaths, gretlopt opt, PRN *prn) 
+int gretl_get_data (char *datfile, PATHS *ppaths,
+		    double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
     double **tmpZ = NULL;
@@ -1822,8 +1838,7 @@ int gretl_get_data (double ***pZ, DATAINFO *pdinfo, char *datfile,
 
     /* catch XML files that have strayed in here? */
     if (gdtsuff && gretl_is_xml_file(datfile)) {
-	return gretl_read_gdt(pZ, pdinfo, datfile, ppaths, 
-			      OPT_NONE, prn);
+	return gretl_read_gdt(datfile, ppaths, pZ, pdinfo, OPT_NONE, prn);
     }
 
     tmpdinfo = datainfo_new();
@@ -1843,7 +1858,7 @@ int gretl_get_data (double ***pZ, DATAINFO *pdinfo, char *datfile,
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
-	return import_csv(pZ, pdinfo, datfile, OPT_NONE, prn);
+	return import_csv(datfile, pZ, pdinfo, OPT_NONE, prn);
     } else if (err) {
 	return err;
     } else { 
@@ -2560,24 +2575,9 @@ static int get_max_line_length (FILE *fp, PRN *prn)
     return maxlen;
 }
 
-/**
- * import_octave:
- * @pZ: pointer to data set.
- * @pdinfo: pointer to data information struct.
- * @fname: name of GNU octave ascii data file.
- * @opt: for use with "append".
- * @prn: gretl printing struct (can be NULL).
- * 
- * Open a GNU octave ascii data file (matrix type) and read the data into
- * the current work space.
- * 
- * Returns: 0 on successful completion, non-zero otherwise.
- *
- */
-
-int import_octave (double ***pZ, DATAINFO *pdinfo, 
-		   const char *fname, gretlopt opt,
-		   PRN *prn)
+static int 
+import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo, 
+	       gretlopt opt, PRN *prn)
 {
     DATAINFO *octinfo = NULL;
     double **octZ = NULL;
@@ -2588,18 +2588,6 @@ int import_octave (double ***pZ, DATAINFO *pdinfo,
     int brows = 0, bcols = 0, oldbcols = 0;
     int maxlen, got_type = 0, got_name = 0;
     int i, t, err = 0;
-
-#ifdef ENABLE_NLS
-    if (prn != NULL) {
-	check_for_console(prn);
-    }
-#endif
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	err = E_FOPEN;
-	goto oct_bailout;
-    }   
 
     pprintf(prn, "%s %s...\n", M_("parsing"), fname);
 
@@ -2781,11 +2769,83 @@ int import_octave (double ***pZ, DATAINFO *pdinfo,
 
 /**
  * import_other:
- * @list: list of parameters for spreadsheet import, or %NULL.
+ * @fname: name of file.
+ * @ftype: type of data file.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
- * @ftype: type of data file.
+ * @opt: for use with "append".
+ * @prn: gretl printing struct.
+ * 
+ * Open a data file of a type that requires a special plugin.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int import_other (const char *fname, int ftype,
+		  double ***pZ, DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn)
+{
+    void *handle;
+    FILE *fp;
+    int (*importer) (const char *, 
+		     double ***, DATAINFO *, 
+		     gretlopt, PRN *);
+    int err = 0;
+
+#ifdef ENABLE_NLS
+    check_for_console(prn);
+#endif
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	pprintf(prn, M_("Couldn't open %s\n"), fname);
+	err = E_FOPEN;
+	goto bailout;
+    }
+
+    fclose(fp);
+
+    if (ftype == GRETL_OCTAVE) {
+	/* plugin not needed */
+	return import_octave(fname, pZ, pdinfo, opt, prn);
+    }
+
+    if (ftype == GRETL_WF1) {
+	importer = get_plugin_function("wf1_get_data", &handle);
+    } else if (ftype == GRETL_DTA) {
+	importer = get_plugin_function("dta_get_data", &handle);
+    } else if (ftype == GRETL_JMULTI) {
+	importer = get_plugin_function("jmulti_get_data", &handle);
+    } else {
+	pprintf(prn, M_("Unrecognized data type"));
+	pputc(prn, '\n');
+	return E_DATA;
+    }
+
+    if (importer == NULL) {
+        err = 1;
+    } else {
+	err = (*importer)(fname, pZ, pdinfo, opt, prn);
+	close_plugin(handle);
+    }
+
+ bailout:
+
+#ifdef ENABLE_NLS
+    console_off();
+#endif
+
+    return err;
+}
+
+/**
+ * import_spreadsheet:
  * @fname: name of file.
+ * @ftype: type of data file.
+ * @list: list of parameters for spreadsheet import, or %NULL.
+ * @sheetname: name of worksheet, or %NULL.
+ * @pZ: pointer to data set.
+ * @pdinfo: pointer to data information struct.
  * @opt: fir use with "append".
  * @prn: gretl printing struct.
  * 
@@ -2794,15 +2854,16 @@ int import_octave (double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_other (int *list, double ***pZ, DATAINFO *pdinfo, 
-		  int ftype, const char *fname, 
-		  gretlopt opt, PRN *prn)
+int import_spreadsheet (const char *fname, int ftype, 
+			int *list, char *sheetname,
+			double ***pZ, DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn)
 {
     void *handle;
     FILE *fp;
-    int (*sheet_get_data) (const char*, int *,
-			   double ***, DATAINFO *, 
-			   gretlopt, PRN *);
+    int (*importer) (const char*, int *, char *,
+		     double ***, DATAINFO *, 
+		     gretlopt, PRN *);
     int err = 0;
 
 #ifdef ENABLE_NLS
@@ -2819,27 +2880,21 @@ int import_other (int *list, double ***pZ, DATAINFO *pdinfo,
     fclose(fp);
 
     if (ftype == GRETL_GNUMERIC) {
-	sheet_get_data = get_plugin_function("gnumeric_get_data", &handle);
-    } else if (ftype == GRETL_EXCEL) {
-	sheet_get_data = get_plugin_function("xls_get_data", &handle);
+	importer = get_plugin_function("gnumeric_get_data", &handle);
+    } else if (ftype == GRETL_XLS) {
+	importer = get_plugin_function("xls_get_data", &handle);
     } else if (ftype == GRETL_ODS) {
-	sheet_get_data = get_plugin_function("ods_get_data", &handle);
-    } else if (ftype == GRETL_WF1) {
-	sheet_get_data = get_plugin_function("wf1_get_data", &handle);
-    } else if (ftype == GRETL_DTA) {
-	sheet_get_data = get_plugin_function("dta_get_data", &handle);
-    } else if (ftype == GRETL_JMULTI) {
-	sheet_get_data = get_plugin_function("jmulti_get_data", &handle);
+	importer = get_plugin_function("ods_get_data", &handle);
     } else {
 	pprintf(prn, M_("Unrecognized data type"));
 	pputc(prn, '\n');
 	return E_DATA;
     }
 
-    if (sheet_get_data == NULL) {
+    if (importer == NULL) {
         err = 1;
     } else {
-	err = (*sheet_get_data)(fname, list, pZ, pdinfo, opt, prn);
+	err = (*importer)(fname, list, sheetname, pZ, pdinfo, opt, prn);
 	close_plugin(handle);
     }
 
@@ -2941,7 +2996,7 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (has_suffix(fname, ".gnumeric"))
 	return GRETL_GNUMERIC;
     if (has_suffix(fname, ".xls"))
-	return GRETL_EXCEL;
+	return GRETL_XLS;
     if (has_suffix(fname, ".ods"))
 	return GRETL_ODS;
     if (has_suffix(fname, ".wf1"))
@@ -2953,9 +3008,9 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (has_suffix(fname, ".rat"))
 	return GRETL_RATS_DB;
     if (has_suffix(fname, ".csv"))
-	return GRETL_CSV_DATA;
+	return GRETL_CSV;
     if (has_suffix(fname, ".txt"))
-	return GRETL_CSV_DATA;
+	return GRETL_CSV;
     if (has_suffix(fname, ".m"))
 	return GRETL_OCTAVE;
     if (has_suffix(fname, ".bn7"))

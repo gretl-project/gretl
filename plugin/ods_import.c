@@ -1053,11 +1053,11 @@ static int ods_min_offset (wbook *book, int k)
     return ret;
 }
 
-static int ods_book_init (wbook *book, ods_sheet *sheet)
+static int ods_book_init (wbook *book, ods_sheet *sheet, char *sheetname)
 {
     int i, err = 0;
 
-    wbook_init(book, NULL);
+    wbook_init(book, NULL, sheetname);
 
     if (sheet->n_tables > 0) {
 	book->sheetnames = strings_array_new(sheet->n_tables);
@@ -1079,8 +1079,7 @@ static int ods_book_init (wbook *book, ods_sheet *sheet)
     return err;
 }
 
-static void record_ods_params_to_list (ods_sheet *sheet, 
-				       int *list)
+static void record_ods_params (ods_sheet *sheet, int *list)
 {
     if (list != NULL && list[0] == 3) {
 	list[1] = sheet->seltab + 1;
@@ -1089,29 +1088,54 @@ static void record_ods_params_to_list (ods_sheet *sheet,
     }
 }
 
-static int set_ods_params_from_list (ods_sheet *sheet, 
-				     const int *list)
+static int set_ods_params_from_cli (ods_sheet *sheet, 
+				    const int *list,
+				    char *sheetname)
 {
-    if (list[1] < 0 || list[1] >= sheet->n_tables) {
-	gretl_errmsg_set(_("Invalid argument for worksheet import"));
-	return E_DATA;
-    } else {
-	if (list[1] > 0) {
-	    sheet->seltab = list[1] - 1;
-	} else {
-	    sheet->seltab = 0;
+    int gotname = (sheetname != NULL && *sheetname != '\0');
+    int gotlist = (list != NULL && list[0] == 3);
+    int i;
+
+    if (!gotname && !gotlist) {
+	sheet->seltab = 0;
+	sheet->xoffset = sheet->tables[0]->xoffset;
+	sheet->yoffset = sheet->tables[0]->yoffset;
+	return 0;
+    }
+
+    /* invalidate this */
+    sheet->seltab = -1;
+
+    if (gotname) {
+	for (i=0; i<sheet->n_tables; i++) {
+	    if (!strcmp(sheetname, sheet->tables[i]->name)) {
+		sheet->seltab = i;
+	    }
+	}
+    }
+
+    if (gotlist) {
+	if (!gotname) {
+	    sheet->seltab = list[1];
 	}
 	sheet->xoffset = list[2];
 	sheet->yoffset = list[3];
-	return 0;
     }
+
+    if (sheet->seltab < 0 || sheet->seltab >= sheet->n_tables ||
+	sheet->xoffset < 0 || sheet->yoffset < 0) {
+	gretl_errmsg_set(_("Invalid argument for worksheet import"));
+	return E_DATA;
+    }
+
+    return 0;
 }
 
 static int ods_sheet_dialog (ods_sheet *sheet, int *err)
 {
     wbook book;   
 
-    *err = ods_book_init(&book, sheet);
+    *err = ods_book_init(&book, sheet, NULL);
     if (*err) {
 	return -1;
     }
@@ -1201,7 +1225,7 @@ static char *get_absolute_path (const char *fname)
     return ret;
 }
 
-int ods_get_data (const char *fname, int *list, 
+int ods_get_data (const char *fname, int *list, char *sheetname,
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
@@ -1298,7 +1322,7 @@ int ods_get_data (const char *fname, int *list,
 		return -1;
 	    } 
 	} else if (list != NULL && list[0] == 3) {
-	    err = set_ods_params_from_list(sheet, list);
+	    err = set_ods_params_from_cli(sheet, list, sheetname);
 	} else {
 	    sheet->seltab = 0;
 	    sheet->xoffset = sheet->tables[0]->xoffset;
@@ -1313,7 +1337,7 @@ int ods_get_data (const char *fname, int *list,
     if (!err) {
 	err = finalize_ods_import(pZ, pdinfo, sheet, opt, prn); 
 	if (!err && gui) {
-	    record_ods_params_to_list(sheet, list);
+	    record_ods_params(sheet, list);
 	}
     }
 

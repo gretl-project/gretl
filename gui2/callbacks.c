@@ -176,8 +176,8 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case APPEND_GNUMERIC:
 	file_selector(_("Open Gnumeric file"), code, FSEL_DATA_NONE, NULL);
 	break;
-    case OPEN_EXCEL:
-    case APPEND_EXCEL:
+    case OPEN_XLS:
+    case APPEND_XLS:
 	file_selector(_("Open Excel file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_WF1:

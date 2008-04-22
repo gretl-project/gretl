@@ -490,7 +490,8 @@ static int wbook_record_name (char *name, wbook *book)
 }
 
 static int wbook_get_info (const char *fname, const int *list,
-			   wbook *book, PRN *prn) 
+			   char *sheetname, wbook *book, 
+			   PRN *prn) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
@@ -500,7 +501,7 @@ static int wbook_get_info (const char *fname, const int *list,
     LIBXML_TEST_VERSION 
 	xmlKeepBlanksDefault(0);
 
-    wbook_init(book, list);
+    wbook_init(book, list, sheetname);
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
@@ -639,7 +640,7 @@ sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int gnumeric_get_data (const char *fname, int *list,
+int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 		       double ***pZ, DATAINFO *pdinfo,
 		       gretlopt opt, PRN *prn)
 {
@@ -663,7 +664,7 @@ int gnumeric_get_data (const char *fname, int *list,
 
     gretl_push_c_numeric_locale();
 
-    if (wbook_get_info(fname, list, book, prn)) {
+    if (wbook_get_info(fname, list, sheetname, book, prn)) {
 	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
 	goto getout;

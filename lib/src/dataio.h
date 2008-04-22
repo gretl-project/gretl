@@ -24,25 +24,12 @@
 #include <string.h>
 
 typedef enum {
-    GRETL_DATA_FLOAT = 1, /* single-precision binary data */
-    GRETL_DATA_DOUBLE,    /* double-precision binary data */
-    GRETL_DATA_OCTAVE,    /* data in Gnu Octave format */
-    GRETL_DATA_CSV,       /* data in Comma Separated Values format */
-    GRETL_DATA_R,         /* data in Gnu R format */
-    GRETL_DATA_GZIPPED,   /* gzipped data */
-    GRETL_DATA_TRAD,      /* traditional (ESL-style) data */
-    GRETL_DATA_DAT,       /* data in PcGive format */
-    GRETL_DATA_DB,        /* gretl native database format */
-    GRETL_DATA_JM         /* JMulti ascii data */
-} GretlDataFormat;
-
-typedef enum {
     GRETL_NATIVE_DATA,    /* gretl native format data file */
     GRETL_XML_DATA,       /* gretl xml format data file */
-    GRETL_CSV_DATA,       /* comma-separated data file */
+    GRETL_CSV,            /* comma-separated data file */
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
-    GRETL_EXCEL,          /* MS Excel spreadsheet data */
+    GRETL_XLS,            /* MS Excel spreadsheet data */
     GRETL_ODS,            /* Open Document Spreadsheet data */
     GRETL_WF1,            /* Eviews workfile data */
     GRETL_DTA,            /* Stata .dta data */
@@ -67,11 +54,14 @@ typedef enum {
     VARNAME_BADCHAR       /* illegal character in second or subsequent place */
 } GretlVarnameError;
 
-#define WORKSHEET_IMPORT(f) (f == GRETL_EXCEL || \
-			     f == GRETL_GNUMERIC || \
-			     f == GRETL_ODS || \
-			     f == GRETL_DTA || \
-			     f == GRETL_WF1)
+#define SPREADSHEET_IMPORT(f) (f == GRETL_XLS || \
+			       f == GRETL_GNUMERIC || \
+			       f == GRETL_ODS)
+
+#define OTHER_IMPORT(f) (f == GRETL_DTA || \
+                         f == GRETL_JMULTI || \
+                         f == GRETL_OCTAVE || \
+			 f == GRETL_WF1)
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
                             } while (0);
@@ -112,24 +102,24 @@ int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
 			   double ***pZ1, DATAINFO **ppdinfo1,
 			   gretlopt opt, PRN *prn);
 
-int gretl_get_data (double ***pZ, DATAINFO *pdinfo, 
-		    char *datfile, PATHS *ppaths, 
+int gretl_get_data (char *datfile, PATHS *ppaths,
+		    double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   int data_status, int length,
 		   PRN *prn);
 
-int import_csv (double ***pZ, DATAINFO *pdinfo, 
-		const char *fname, gretlopt opt, 
-		PRN *prn);
+int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo, 
+		gretlopt opt, PRN *prn);
 
-int import_octave (double ***pZ, DATAINFO *pdinfo, 
-		   const char *fname, gretlopt opt,
-		   PRN *prn);
+int import_spreadsheet (const char *fname, int ftype,
+			int *list, char *sheetname,
+			double ***pZ, DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn);
 
-int import_other (int *list, double ***pZ, DATAINFO *pdinfo, 
-		  int ftype, const char *fname, 
+int import_other (const char *fname, int ftype,
+		  double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn);
 
 int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);

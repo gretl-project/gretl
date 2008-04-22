@@ -993,14 +993,14 @@ void register_startup_data (const char *fname)
 #define APPENDING(action) (action == APPEND_DATA || \
                            action == APPEND_CSV || \
                            action == APPEND_GNUMERIC || \
-                           action == APPEND_EXCEL || \
+                           action == APPEND_XLS || \
                            action == APPEND_ODS || \
                            action == APPEND_ASCII || \
                            action == APPEND_WF1 || \
                            action == APPEND_DTA || \
                            action == APPEND_JMULTI)
 
-int get_worksheet_data (char *fname, int datatype, int append)
+int get_imported_data (char *fname, int ftype, int append)
 {
     void *handle;
     PRN *errprn;
@@ -1008,9 +1008,13 @@ int get_worksheet_data (char *fname, int datatype, int append)
     int list[4] = {3, 1, 0, 0};
     int *plist = NULL;
     FILE *fp;
-    int (*sheet_get_data) (const char*, int *,
-			   double ***, DATAINFO *, 
-			   gretlopt, PRN *);
+    int (*ss_importer) (const char *, int *, char *,
+			double ***, DATAINFO *, 
+			gretlopt, PRN *);
+    int (*misc_importer) (const char *, 
+			  double ***, DATAINFO *, 
+			  gretlopt, PRN *);
+
     int err = 0;
     
     fp = gretl_fopen(fname, "r");
@@ -1022,33 +1026,36 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	fclose(fp);
     }
 
-    if (datatype == GRETL_GNUMERIC) {
-	sheet_get_data = gui_get_plugin_function("gnumeric_get_data",
-						 &handle);
+    ss_importer = NULL;
+    misc_importer = NULL;
+
+    if (ftype == GRETL_XLS) {
+	ss_importer = gui_get_plugin_function("xls_get_data",
+					      &handle);
 	plist = list;
-    } else if (datatype == GRETL_EXCEL) {
-	sheet_get_data = gui_get_plugin_function("xls_get_data",
-						 &handle);
+    } else if (ftype == GRETL_GNUMERIC) {
+	ss_importer = gui_get_plugin_function("gnumeric_get_data",
+					      &handle);
 	plist = list;
-    } else if (datatype == GRETL_ODS) {
-	sheet_get_data = gui_get_plugin_function("ods_get_data",
-						 &handle);
+    } else if (ftype == GRETL_ODS) {
+	ss_importer = gui_get_plugin_function("ods_get_data",
+					      &handle);
 	plist = list;
-    } else if (datatype == GRETL_WF1) {
-	sheet_get_data = gui_get_plugin_function("wf1_get_data",
-						 &handle);
-    } else if (datatype == GRETL_DTA) {
-	sheet_get_data = gui_get_plugin_function("dta_get_data",
-						 &handle);
-    } else if (datatype == GRETL_JMULTI) {
-	sheet_get_data = gui_get_plugin_function("jmulti_get_data",
-						 &handle);
+    } else if (ftype == GRETL_DTA) {
+	misc_importer = gui_get_plugin_function("dta_get_data",
+						&handle);
+    } else if (ftype == GRETL_JMULTI) {
+	misc_importer = gui_get_plugin_function("jmulti_get_data",
+						&handle);
+    } else if (ftype == GRETL_WF1) {
+	misc_importer = gui_get_plugin_function("wf1_get_data",
+						&handle);
     } else {
 	errbox(_("Unrecognized data type"));
 	return 1;
     }
 
-    if (sheet_get_data == NULL) {
+    if (ss_importer == NULL && misc_importer == NULL) {
         return 1;
     }
 
@@ -1057,7 +1064,13 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	return 1;
     }
 
-    err = (*sheet_get_data)(fname, plist, &Z, datainfo, OPT_G, errprn);
+    if (SPREADSHEET_IMPORT(ftype)) {
+	err = (*ss_importer)(fname, plist, NULL, &Z, datainfo, 
+			     OPT_G, errprn);
+    } else {
+	err = (*misc_importer)(fname, &Z, datainfo, OPT_G, errprn);
+    }
+	
     close_plugin(handle);
 
     if (err == -1) {
@@ -1081,7 +1094,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	if (errbuf != NULL && *errbuf != '\0') {
 	    infobox(errbuf);
 	}
-	if (datatype == GRETL_DTA) {
+	if (ftype == GRETL_DTA) {
 	    maybe_display_string_table();
 	}
     }
@@ -1125,7 +1138,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 
 void do_open_data (GtkWidget *w, gpointer data, int code)
 {
-    gint datatype, err = 0;
+    gint ftype, err = 0;
     dialog_t *dlg = NULL;
     windata_t *fwin = NULL;
     int append = APPENDING(code);
@@ -1141,27 +1154,27 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII ||
 	code == APPEND_ASCII) {
-	datatype = GRETL_CSV_DATA;
+	ftype = GRETL_CSV;
     } else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
-	datatype = GRETL_GNUMERIC;
+	ftype = GRETL_GNUMERIC;
     } else if (code == OPEN_ODS || code == APPEND_ODS) {
-	datatype = GRETL_ODS;
-    } else if (code == OPEN_EXCEL || code == APPEND_EXCEL) {
-	datatype = GRETL_EXCEL;
+	ftype = GRETL_ODS;
+    } else if (code == OPEN_XLS || code == APPEND_XLS) {
+	ftype = GRETL_XLS;
     } else if (code == OPEN_OCTAVE || code == APPEND_OCTAVE) {
-	datatype = GRETL_OCTAVE;
+	ftype = GRETL_OCTAVE;
     } else if (code == OPEN_WF1 || code == APPEND_WF1) {
-	datatype = GRETL_WF1;
+	ftype = GRETL_WF1;
     } else if (code == OPEN_DTA || code == APPEND_DTA) {
-	datatype = GRETL_DTA;
+	ftype = GRETL_DTA;
     } else if (code == OPEN_JMULTI || code == APPEND_JMULTI) {
-	datatype = GRETL_JMULTI;
+	ftype = GRETL_JMULTI;
     } else {
 	/* no filetype specified: have to guess */
 	PRN *prn;	
 
 	if (bufopen(&prn)) return;
-	datatype = detect_filetype(tryfile, &paths, prn);
+	ftype = detect_filetype(tryfile, &paths, prn);
 	gretl_print_destroy(prn);
     }
 
@@ -1170,26 +1183,20 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	close_session(NULL, &Z, datainfo, OPT_NONE); /* FIXME opt */
     }
 
-    if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||
-	datatype == GRETL_WF1 || datatype == GRETL_DTA ||
-	datatype == GRETL_JMULTI || datatype == GRETL_ODS) {
-	get_worksheet_data(tryfile, datatype, append);
-	return;
-    } else if (datatype == GRETL_CSV_DATA) {
-	do_open_csv_octave(tryfile, OPEN_CSV, append);
-	return;
-    } else if (datatype == GRETL_OCTAVE) {
-	do_open_csv_octave(tryfile, OPEN_OCTAVE, append);
+    if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
+	do_open_csv_octave(tryfile, ftype, append);
+    } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
+	get_imported_data(tryfile, ftype, append);
 	return;
     } else { 
 	/* native data */
 	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
-	if (datatype == GRETL_XML_DATA) {
-	    err = gretl_read_gdt(&Z, datainfo, tryfile, &paths, 
+	if (ftype == GRETL_XML_DATA) {
+	    err = gretl_read_gdt(tryfile, &paths, &Z, datainfo, 
 				 OPT_P, errprn);
 	} else {
-	    err = gretl_get_data(&Z, datainfo, tryfile, &paths, 
+	    err = gretl_get_data(tryfile, &paths, &Z, datainfo, 
 				 OPT_NONE, errprn);
 	}
 

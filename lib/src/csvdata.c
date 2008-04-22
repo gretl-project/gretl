@@ -1469,6 +1469,7 @@ static void csv_parsing_header (const char *fname, PRN *prn)
 
 /**
  * import_csv:
+ * @fname: name of CSV file.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
  * @fname: name of CSV file.
@@ -1483,8 +1484,8 @@ static void csv_parsing_header (const char *fname, PRN *prn)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_csv (double ***pZ, DATAINFO *pdinfo, 
-		const char *fname, gretlopt opt, PRN *prn)
+int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo, 
+		gretlopt opt, PRN *prn)
 {
     csvdata *c = NULL;
     int popit = 0;

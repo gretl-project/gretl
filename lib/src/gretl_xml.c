@@ -1342,7 +1342,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
  * @list: list of variables to write (or %NULL to write all).
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @fmt: if %GRETL_DATA_GZIPPED write gzipped data, else uncompressed.
+ * @opt: if %OPT_Z write gzipped data, else uncompressed.
  * @ppaths: pointer to paths information (or NULL).
  * 
  * Write out in xml a data file containing the values of the given set
@@ -1353,11 +1353,11 @@ int gretl_write_matrix_as_gdt (const char *fname,
 
 int gretl_write_gdt (const char *fname, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo, 
-		     GretlDataFormat fmt, PATHS *ppaths)
+		     gretlopt opt, PATHS *ppaths)
 {
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
-    int gz = (fmt == GRETL_DATA_GZIPPED);
+    int gz = (opt & OPT_Z);
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int panelobs = 0;
     int *pmax = NULL;
@@ -2218,10 +2218,10 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
 
 /**
  * gretl_read_gdt:
- * @pZ: pointer to data set.
- * @pdinfo: pointer to data information struct.
  * @fname: name of file to try.
  * @ppaths: path information struct.
+ * @pZ: pointer to data set.
+ * @pdinfo: pointer to data information struct.
  * @opt: use %OPT_P to display gui progress bar.
  * @prn: where messages should be written.
  * 
@@ -2232,8 +2232,9 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt (double ***pZ, DATAINFO *pdinfo, char *fname,
-		    PATHS *ppaths, gretlopt opt, PRN *prn) 
+int gretl_read_gdt (char *fname, PATHS *ppaths,
+		    double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo;
     double **tmpZ = NULL;
