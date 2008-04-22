@@ -322,7 +322,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == MODELTAB || \
                        c == NLS || \
                        c == NULLDATA || \
- 	               c == OPEN || \
+		       c == OPEN || \
                        c == OUTFILE || \
                        c == PRINTF || \
 	               c == PVALUE || \
@@ -548,7 +548,7 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
 }
 
 static int 
-get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
+get_maybe_quoted_filename (CMD *cmd, char *s, int *nf)
 {
     int err, len = 0;
     int quoted = 0;
@@ -1470,29 +1470,72 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
     }
 }
 
-static void parse_spreadsheet_params (char *line, CMD *cmd)
+static int read_dash_param (const char **ps, CMD *cmd)
 {
-    char *p[3];
+    const char *s = *ps;
+    char *test;
+    int i, parm = -1;
+    int ok = 0;
 
-    p[0] = strstr(line, "--sheet=");
-    p[1] = strstr(line, "--xoffset=");
-    p[2] = strstr(line, "--yoffset=");
+    if (!strncmp(s, "--sheet=", 8)) {
+	parm = strtol(s+8, &test, 10);
+	i = 1;
+    } else if (!strncmp(s, "--xoffset=", 10)) {
+	parm = strtol(s+10, &test, 10);
+	i = 2;
+    } else if (!strncmp(s, "--yoffset=", 10)) {
+	parm = strtol(s+10, &test, 10);
+	i = 3;
+    }
 
-    if (p[0] != NULL || p[1] != NULL || p[2] != NULL) {
-	free(cmd->list);
-	cmd->list = gretl_list_new(3);
-	if (cmd->list == NULL) {
-	    cmd->err = E_ALLOC;
+    if (parm >= 0 && (*test == '\0' || *test == ' ') && 
+	!(cmd->list[0] == 3 && cmd->list[i] > 0)) { 
+	ok = 1;
+	*ps = test;
+	if (cmd->list[0] < 3) {
+	    free(cmd->list);
+	    cmd->list = gretl_list_new(3);
+	    if (cmd->list == NULL) {
+		cmd->err = E_ALLOC;
+	    }
+	}
+	if (!cmd->err) {
+	    cmd->list[i] = parm;
+	}
+    }
+
+    return ok;
+}
+
+static void parse_spreadsheet_params (const char *s, CMD *cmd)
+{
+    int i, ok = 1;
+
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+
+    if (*s == '"') {
+	s = strchr(s+1, '"');
+	if (s == NULL) {
+	    cmd->err = E_PARSE;
+	    return;
+	}
+	s++;
+    } else {
+	s += strcspn(s, " ");
+    }
+
+    s += strspn(s, " ");
+
+    for (i=0; *s && i<3 && ok; i++) {
+	ok = read_dash_param(&s, cmd);
+	if (cmd->err) {
+	    break;
+	} else if (!ok) {
+	    sprintf(gretl_errmsg, _("Parse error in '%s'"), s);
+	    cmd->err = E_PARSE;
 	} else {
-	    if (p[0] != NULL) {
-		cmd->list[1] = atoi(p[0] + 8);
-	    }
-	    if (p[1] != NULL) {
-		cmd->list[2] = atoi(p[1] + 10);
-	    }
-	    if (p[2] != NULL) {
-		cmd->list[3] = atoi(p[2] + 10);
-	    }
+	    s += strspn(s, " ");
 	}
     }
 }
@@ -2187,13 +2230,15 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	parse_rename_cmd(line, cmd, pdinfo);
     }  
 
+#if 1
     /* the "open" command may have spreadsheet parameters */
     else if (cmd->ci == OPEN) {
 	parse_spreadsheet_params(line, cmd);
 	if (cmd->err) {
 	    return cmd->err;
 	}
-    }  
+    } 
+#endif 
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci) || 
@@ -2316,7 +2361,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* "store" is a special case since the filename that comes
        before the list may be quoted, and have spaces in it.  Groan */
     if (cmd->ci == STORE && nf > 0) {
-	cmd->err = get_maybe_quoted_storename(cmd, rem, &nf);
+	cmd->err = get_maybe_quoted_filename(cmd, rem, &nf);
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
@@ -2324,7 +2369,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    if (--nf > 0) {
 		strcpy(line, rem);	
 		linelen = strlen(line);
-	    }		
+	    } 
 	}
     }
 
@@ -3206,7 +3251,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
 #define dont_print_list(c) ((c->flags & CMD_NOLIST) || \
                              c->ci == ARBOND || \
                              c->ci == ARMA || \
-			     c->ci == GARCH)
+			     c->ci == GARCH || \
+                             c->ci == OPEN)
 
 #define print_param_last(c) (c == ARBOND || \
 			     c == DELEET || \

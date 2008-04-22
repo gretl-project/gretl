@@ -6694,7 +6694,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (err) {
-	gui_errmsg(err);
+	pputc(prn, '\n');
 	return err;
     }
 
