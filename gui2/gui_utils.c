@@ -910,11 +910,11 @@ static void gui_record_data_opening (const char *fname, const int *list)
 	    gretl_command_strcat(parm);
 	}
 	if (list[2] != 0) {
-	    sprintf(parm, " --xoffset=%d", list[2]);
+	    sprintf(parm, " --coloffset=%d", list[2]);
 	    gretl_command_strcat(parm);
 	}
 	if (list[3] != 0) {
-	    sprintf(parm, " --yoffset=%d", list[3]);
+	    sprintf(parm, " --rowoffset=%d", list[3]);
 	    gretl_command_strcat(parm);
 	}
     }
