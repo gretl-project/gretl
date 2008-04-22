@@ -1521,6 +1521,7 @@ static void parse_spreadsheet_params (const char *s, CMD *cmd)
 {
     int i, ok = 1;
 
+    /* skip command word */
     s += strcspn(s, " ");
     s += strspn(s, " ");
 
@@ -2240,15 +2241,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	parse_rename_cmd(line, cmd, pdinfo);
     }  
 
-#if 1
-    /* the "open" command may have spreadsheet parameters */
-    else if (cmd->ci == OPEN) {
+    /* the "open" and "append" commands may have spreadsheet parameters */
+    else if (cmd->ci == OPEN || cmd->ci == APPEND) {
 	parse_spreadsheet_params(line, cmd);
 	if (cmd->err) {
 	    return cmd->err;
 	}
     } 
-#endif 
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci) || 
@@ -3813,7 +3812,8 @@ static int run_script (const char *fname, ExecState *s,
     return err;
 }
 
-static int append_data (const char *line, int *list,
+static int append_data (const char *line, int *list, 
+			char *sheetname,
 			double ***pZ, DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn)
 {
@@ -3831,8 +3831,8 @@ static int append_data (const char *line, int *list,
     if (ftype == GRETL_CSV) {
 	err = import_csv(fname, pZ, pdinfo, opt, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(fname, ftype, list, NULL, pZ, pdinfo, 
-				 opt, prn);
+	err = import_spreadsheet(fname, ftype, list, sheetname, 
+				 pZ, pdinfo, opt, prn);
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(fname, ftype, pZ, pdinfo, opt, prn);
     } else if (ftype == GRETL_XML_DATA) {
@@ -3915,7 +3915,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     switch (cmd->ci) {
 
     case APPEND:
-	err = append_data(line, cmd->list, pZ, pdinfo, cmd->opt, prn);
+	err = append_data(line, cmd->list, cmd->extra, pZ, pdinfo, 
+			  cmd->opt, prn);
 	break;
 
     case ADF:
