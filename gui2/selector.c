@@ -5290,7 +5290,7 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 
 static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 {
-    GtkWidget *list[2] = { NULL, NULL };
+    GtkWidget *listw[2] = { NULL, NULL };
     gint ynum = 0;
     int nv[2] = {0};
     int llen, sep;
@@ -5304,24 +5304,29 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 	ynum = selector_get_depvar_number(sr);
     }
 
-    list[0] = (select_lags_primary(sr->code))? sr->rvars1 : sr->rvars2;
+    listw[0] = (select_lags_primary(sr->code))? sr->rvars1 : sr->rvars2;
     if (USE_ZLIST(sr->code)) {
-	list[1] = sr->rvars2;
+	listw[1] = sr->rvars2;
     } 
 
-    for (j=0; list[j] != NULL && j<2; j++) {
+    for (j=0; listw[j] != NULL && j<2; j++) {
 	context = (j == 1)? LAG_W : LAG_X;
-	nv[j] = get_laggable_vars(list[j], context, NULL, NULL);
+	nv[j] = get_laggable_vars(listw[j], context, NULL, NULL);
     }
 
     if (nv[0] == 0) {
-	list[0] = NULL;
+	listw[0] = NULL;
     }
     if (nv[1] == 0) {
-	list[1] = NULL;
+	listw[1] = NULL;
     }
 
     llen = sep = 0;
+
+#if LDEBUG
+    fprintf(stderr, "sr_get_stoch_list: ynum = %d, nv[0] = %d, nv[1] = %d\n",
+	    ynum, nv[0], nv[1]);
+#endif
 
     if (ynum < 0 && nv[0] == 0 && nv[1] == 0) {
 	/* no vars to deal with */
@@ -5331,15 +5336,13 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 	    *pcontext = LAG_X;
 	    llen += nv[0] + 1; /* xvars plus their defaults */
 	    if (ynum > 0) {
-		llen++; /* separator */
-		sep++;
-		llen++; /* dep var row */
+		llen++; sep++; /* separator */
+		llen++;        /* dep var row */
 	    }
 	}
 	if (nv[1] > 0) {
 	    if (nv[0] > 0) {
-		llen++; /* separator from X's */
-		sep++;
+		llen++; sep++; /* separator from X's */
 	    } else {
 		*pcontext = LAG_W;
 	    }
@@ -5347,17 +5350,21 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 	    sep++;
 	    llen += nv[1] + 1; /* instruments plus their defaults */
 	    if (ynum > 0) {
-		llen++; /* separator */
-		sep++;
-		llen++; /* dep var row */
+		llen++; sep++; /* separator */
+		llen++;        /* dep var row */
 	    }	    
 	}
 	if (nv[0] == 0 && nv[1] == 0) {
 	    /* only the dependent variable is present */
 	    *pcontext = LAG_Y_X;
-	    llen++; /* "separator" */
-	    sep++;
+	    llen++; sep++; /* ghost "separator" from X's */
 	    llen++; /* dep var row */
+	    if (USE_ZLIST(sr->code)) {
+		llen++; sep++; /* actual list separator for insts */
+		llen++; sep++; /* "instruments" heading */
+		llen++; sep++; /* ghost "separator" from Z's */
+		llen++; /* dep var row */
+	    }
 	}
 
 	slist = gretl_list_new(llen);
@@ -5365,7 +5372,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 	if (slist != NULL) {
 	    i = 1;
 	    for (j=0; j<2; j++) {
-		if (list[j] == NULL) {
+		if (listw[j] == NULL) {
 		    continue;
 		}
 		context = (j == 1)? LAG_W : LAG_X;
@@ -5376,7 +5383,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 		    slist[i++] = LISTSEP + LAG_W;
 		}
 		slist[i++] = VDEFLT;
-		get_laggable_vars(list[j], context, slist, &i);
+		get_laggable_vars(listw[j], context, slist, &i);
 		if (ynum > 0) {
 		    slist[i++] = LISTSEP + ((j > 0)? LAG_Y_W : LAG_Y_X);
 		    slist[i++] = ynum;
@@ -5385,6 +5392,12 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 	    if (nv[0] == 0 && nv[1] == 0) {
 		slist[i++] = LISTSEP + LAG_Y_X;
 		slist[i++] = ynum;
+		if (USE_ZLIST(sr->code)) {
+		    slist[i++] = LISTSEP;
+		    slist[i++] = LISTSEP + LAG_W;
+		    slist[i++] = LISTSEP + LAG_Y_W;
+		    slist[i++] = ynum;
+		}
 	    }
 	}
 	*nset = llen - sep;
