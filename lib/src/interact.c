@@ -4016,7 +4016,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case DATA:
-	err = db_get_series(line, pZ, pdinfo, prn);
+	err = db_get_series(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case DATAMOD:

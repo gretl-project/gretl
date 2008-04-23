@@ -56,6 +56,7 @@ have_gnu_regex="no"
 have_libxml2="no"
 use_gtksourceview="no"
 have_xslt="no"
+have_odbc="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -67,7 +68,7 @@ AC_CHECK_HEADERS(libintl.h,
 
 if test [ "$try_nls" = "yes" ]
 then
-   AM_GNU_GETTEXT([external])
+   AM_GNU_GETTEXT([external],,)
 fi
 
 dnl
@@ -211,6 +212,14 @@ then
 fi,
 have_audio=no)
 
+AC_ARG_WITH(odbc,
+[  --with-odbc    include ODBC support (experimental)],
+if test "$withval" = "yes"
+then
+  have_odbc=yes
+fi,
+have_odbc=no)
+
 AC_PROG_CC
 
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -339,6 +348,16 @@ if test "$have_audio" = "yes" ; then
   AM_PATH_FLITE(, 
     have_flite="yes"
     AC_DEFINE(HAVE_FLITE)
+  )
+fi
+
+dnl
+dnl Check for unixODBC?
+dnl
+if test "$have_odbc" = "yes" ; then
+  AM_PATH_ODBC(, 
+    have_odbc="yes",
+    have_odbc="no"
   )
 fi
 
@@ -478,6 +497,7 @@ AC_SUBST(have_gtksourceview)
 AC_SUBST(use_gtksourceview)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
+AC_SUBST(have_odbc)
 AC_SUBST(build_mailer)
 AC_SUBST(build_po)
 AC_SUBST(GLIB_CFLAGS)
@@ -678,7 +698,7 @@ Configuration:
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   Experimental audio support:             ${have_audio}
-  
+  Experimental ODBC support:              ${have_odbc}
 
 Now type '$MAKE' to build gretl.
 "

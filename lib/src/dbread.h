@@ -90,10 +90,12 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
 
 const char *get_db_name (void);
 
+int set_odbc_dsn (const char *line, PRN *prn);
+
 int db_set_sample (const char *s, DATAINFO *pdinfo);
 
 int db_get_series (const char *line, double ***pZ, DATAINFO *datainfo, 
-		   PRN *prn);
+		   gretlopt opt, PRN *prn);
 
 int db_delete_series_by_name (const char *line, PRN *prn);
 

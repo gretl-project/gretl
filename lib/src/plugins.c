@@ -59,7 +59,8 @@ enum {
     P_ZIPFILE,
     P_OPROBIT,
     P_ARBOND,
-    P_HECKIT
+    P_HECKIT,
+    P_ODBC
 } plugin_codes;
 
 struct plugin_info {
@@ -105,7 +106,8 @@ struct plugin_info plugins[] = {
     { P_ZIPFILE,         "gretlzip" },
     { P_OPROBIT,         "oprobit" },
     { P_ARBOND,          "arbond" },
-    { P_HECKIT,          "heckit" }
+    { P_HECKIT,          "heckit" },
+    { P_ODBC,            "odbc_import" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -195,6 +197,10 @@ struct plugin_function plugin_functions[] = {
 
     /* Arellano-Bond estimation */
     { "arbond_estimate",    P_ARBOND},
+
+    /* ODBC */
+    { "gretl_odbc_check_dsn", P_ODBC},
+    { "gretl_odbc_get_data",  P_ODBC},
 
     /* sentinel */
     { NULL, 0 }

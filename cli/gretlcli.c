@@ -659,21 +659,26 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     int ftype, dbdata = 0;
     int err = 0;
 
-    err = getopenfile(line, datfile, &paths, (cmd->opt & OPT_W)?
-		      OPT_W : OPT_NONE);
-    if (err) {
-	errmsg(err, prn);
-	return err;
+    if (!(cmd->opt & OPT_O)) {
+	err = getopenfile(line, datfile, &paths, (cmd->opt & OPT_W)?
+			  OPT_W : OPT_NONE);
+	if (err) {
+	    errmsg(err, prn);
+	    return err;
+	}
     }
 
     if (cmd->opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
+    } else if (cmd->opt & OPT_O) {
+	ftype = GRETL_ODBC;
     } else {
 	ftype = detect_filetype(datfile, &paths, prn);
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
-	      ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB);
+	      ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB ||
+	      ftype == GRETL_ODBC);
 
     if (data_status && !batch && !dbdata && cmd->ci != APPEND &&
 	strcmp(datfile, paths.datfile)) {
@@ -700,6 +705,8 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } else if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(datfile, &paths, pZ, pdinfo, 
 			     cmd->opt, prn);
+    } else if (ftype == GRETL_ODBC) {
+	err = set_odbc_dsn(line, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, ftype, &paths, prn);
     } else {

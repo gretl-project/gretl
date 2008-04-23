@@ -1512,6 +1512,39 @@ const char *get_db_name (void)
     return db_name;
 }
 
+static char gretl_dsn[MAXLEN];
+
+int set_odbc_dsn (const char *line, PRN *prn)
+{
+    void *handle = NULL;
+    int (*check_dsn) (char *);
+    int err = 0;
+
+    /* skip command word */
+    line += strcspn(line, " ");
+    line += strspn(line, " ");
+
+    *gretl_dsn = 0;
+    strncat(gretl_dsn, line, MAXLEN - 1);
+
+    gretl_error_clear();
+    
+    check_dsn = get_plugin_function("gretl_odbc_check_dsn", &handle);
+
+    if (check_dsn == NULL) {
+        err = 1;
+    } else {
+        err = (* check_dsn) (gretl_dsn);
+        close_plugin(handle);
+    }
+
+    if (err) {
+	*gretl_dsn = '\0';
+    }
+
+    return err;
+}
+
 int db_set_sample (const char *s, DATAINFO *pdinfo)
 {
     char start[OBSLEN], stop[OBSLEN];
@@ -1647,18 +1680,79 @@ static void free_dbZ (double **dbZ)
     }
 }
 
+static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo, 
+			    PRN *prn)
+{
+    void *handle = NULL;
+    int (*get_data) (const char *, const char *, double **, int *);
+    char vname[VNAMELEN] = {0};
+    double *x = NULL;
+    int n = 0;
+    int err = 0;
+
+    if (*gretl_dsn == '\0') {
+	strcpy(gretl_errmsg, _("No database has been opened"));
+	return 1;
+    } 
+
+    line += strcspn(line, " ");
+    line += strspn(line, " ");
+
+    if (sscanf(line, "%15s", vname) != 1) {
+	/* rough and ready */
+	return E_PARSE;
+    }
+
+    line += strlen(vname);
+    line += strspn(line, " ");
+
+    gretl_error_clear();
+    
+    get_data = get_plugin_function("gretl_odbc_get_data", &handle);
+
+    if (get_data == NULL) {
+        err = 1;
+    } else {
+        err = (*get_data) (gretl_dsn, line, &x, &n);
+        close_plugin(handle);
+    }
+
+    if (!err) {
+	/* FIXME temporary hack!! */
+	int t, v = pdinfo->v;
+
+	printf("Got %d observations via ODBC\n", n);
+
+	err = dataset_add_series(1, pZ, pdinfo);
+	if (!err) {
+	    strcpy(pdinfo->varname[v], vname);
+	    strcpy(VARLABEL(pdinfo, v), "ODBC data");
+	    for (t=0; t<pdinfo->n && t<n; t++) {
+		(*pZ)[v][t] = x[t];
+	    }
+	}
+	free(x);
+    }
+
+    return err;
+}
+
 /* main function for getting a series out of a database, using the
    command-line client or in script or console mode
 */
 
 int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn)
+		   gretlopt opt, PRN *prn)
 {
     char series[VNAMELEN];
     CompactMethod method;
     SERIESINFO sinfo;
     double **dbZ;
     int err = 0;
+
+    if (opt & OPT_O) {
+	return odbc_get_series(line, pZ, pdinfo, prn);
+    }
 
 #if DB_DEBUG
     fprintf(stderr, "db_get_series: line='%s', pZ=%p, pdinfo=%p\n", 

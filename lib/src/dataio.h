@@ -40,6 +40,7 @@ typedef enum {
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_PCGIVE_DB,      /* PcGive bn7/in7 pair */
     GRETL_JMULTI,         /* JMulTi data file */
+    GRETL_ODBC,           /* Open DataBase Connectivity */
     GRETL_UNRECOGNIZED    /* none of the above */
 } GretlFileType;
 

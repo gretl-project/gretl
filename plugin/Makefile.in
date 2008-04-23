@@ -14,6 +14,7 @@ LN = @LN_S@
 build_gui = @build_gui@
 have_gmp = @have_gmp@
 build_mailer = @build_mailer@
+have_odbc = @have_odbc@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -91,7 +92,8 @@ SRCS = excel_import.c \
 	vif.c \
 	poisson.c \
 	gretlzip.c \
-	heckit.c
+	heckit.c \
+	odbc_import.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -149,6 +151,12 @@ ifeq ($(have_gmp),yes)
   GMPDEF = -DUSE_GMP
 endif
 
+ifeq ($(have_odbc),yes)
+  PLUGINS += odbc_import.la
+  ODBC_CFLAGS = @ODBC_CFLAGS@
+  ODBC_LIBS = @ODBC_LIBS@
+endif
+
 vpath %.c $(topsrc)/plugin/libole2
 vpath %.h $(topsrc)/plugin/libole2
 
@@ -163,7 +171,8 @@ endif
 URCDATA = $(topsrc)/plugin/data/urcdata.gz
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
-	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) -I. $(GMPDEF)
+	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) \
+	$(ODBC_CFLAGS) -I. $(GMPDEF)
 
 %.lo: %.c
 	$(COMPILE) $< 
@@ -271,6 +280,9 @@ audio.la: audio.lo midi_utils.lo
 
 mailer.la: mailer.lo codes.lo encode.lo md5c.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
+
+odbc_import.la: odbc_import.lo
+	$(LINK) -o $@ $^ $(GRETLLIB) $(ODBC_LIBS)
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib
