@@ -5,9 +5,9 @@
 
 #include "libgretl.h"
 
-#include <odbc/sql.h>
-#include <odbc/sqlext.h>
-#include <odbc/sqltypes.h>
+#include <sql.h>
+#include <sqlext.h>
+#include <sqltypes.h>
 
 #define OD_error(r) (r != SQL_SUCCESS && r != SQL_SUCCESS_WITH_INFO)
 
