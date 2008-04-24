@@ -120,19 +120,19 @@ static int split_dsn_string (const char *dsn, char **dbname, char **uname,
 }
 
 /* Try connecting to data source.  If penv is NULL we're just checking
-   that it can be opened OK, otherwise we're returning a connection.
+   that it can be opened OK, otherwise we return a connection.
 */
 
 static SQLHDBC 
 gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
 {
-    SQLHENV OD_env = NULL;       /* ODBC environment handle */
-    SQLHDBC OD_hdbc = NULL;      /* connection handle */
-    long OD_ret;                 /* return value from functions */
-    unsigned char OD_stat[10];   /* SQL status */
+    SQLHENV OD_env = NULL;    /* ODBC environment handle */
+    SQLHDBC dbc = NULL;       /* connection handle */
+    long ret;                 /* return value from functions */
+    unsigned char status[10]; /* SQL status */
     SQLINTEGER OD_err;
-    SQLSMALLINT OD_mlen;
-    unsigned char OD_msg[200];
+    SQLSMALLINT mlen;
+    unsigned char msg[200];
     char *dbname = NULL;
     char *uname = NULL;
     char *pword = NULL;
@@ -142,44 +142,44 @@ gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
 	return NULL;
     }
 
-    OD_ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &OD_env);
-    if (OD_error(OD_ret)) {
+    ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &OD_env);
+    if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLAllocHandle for ENV");
 	*err = 1;
 	goto bailout;
     }
 
-    OD_ret = SQLSetEnvAttr(OD_env, SQL_ATTR_ODBC_VERSION, 
-			   (void *) SQL_OV_ODBC3, 0); 
-    if (OD_error(OD_ret)) {
+    ret = SQLSetEnvAttr(OD_env, SQL_ATTR_ODBC_VERSION, 
+			(void *) SQL_OV_ODBC3, 0); 
+    if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLSetEnvAttr");
 	*err = 1;
 	goto bailout;
     }
 
-    OD_ret = SQLAllocHandle(SQL_HANDLE_DBC, OD_env, &OD_hdbc); 
-    if (OD_error(OD_ret)) {
+    ret = SQLAllocHandle(SQL_HANDLE_DBC, OD_env, &dbc); 
+    if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLAllocHandle for DBC");
 	*err = 1;
 	goto bailout;
     }
 
-    SQLSetConnectAttr(OD_hdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER *) 5, 0);
+    SQLSetConnectAttr(dbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER *) 5, 0);
 
     /* Try connecting to the datasource */
 
-    OD_ret = SQLConnect(OD_hdbc, (SQLCHAR *) dbname, SQL_NTS,
-			(SQLCHAR *) uname, SQL_NTS,
-			(SQLCHAR *) pword, SQL_NTS);
+    ret = SQLConnect(dbc, (SQLCHAR *) dbname, SQL_NTS,
+		     (SQLCHAR *) uname, SQL_NTS,
+		     (SQLCHAR *) pword, SQL_NTS);
 
-    if (OD_error(OD_ret)) {
+    if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLConnect");
-	SQLGetDiagRec(SQL_HANDLE_DBC, OD_hdbc, 1, OD_stat, 
-		      &OD_err, OD_msg, 100, &OD_mlen);
-	fprintf(stderr, "Message: %s (err = %d)\n", OD_msg, (int) OD_err);
+	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, 
+		      &OD_err, msg, 100, &mlen);
+	gretl_errmsg_set((char *) msg);
 	*err = 1;
     } else {
-	fprintf(stderr, "Connected to %s OK!\n", dbname);
+	fprintf(stderr, "Connected to DSN '%s'\n", dbname);
     }
 
  bailout:
@@ -194,16 +194,16 @@ gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
 	if (OD_env != NULL) {
 	    SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
 	}
-	if (OD_hdbc != NULL) {
-	    SQLDisconnect(OD_hdbc);
-	    SQLFreeHandle(SQL_HANDLE_ENV, OD_hdbc);
-	    OD_hdbc = NULL;
+	if (dbc != NULL) {
+	    SQLDisconnect(dbc);
+	    SQLFreeHandle(SQL_HANDLE_ENV, dbc);
+	    dbc = NULL;
 	} 
     } else {
 	*penv = OD_env;
     }
 
-    return OD_hdbc;
+    return dbc;
 }
 
 int gretl_odbc_check_dsn (const char *dsn)
@@ -218,56 +218,56 @@ int gretl_odbc_check_dsn (const char *dsn)
 int gretl_odbc_get_data (const char *dsn, char *query, double **px, int *n)
 {
     SQLHENV OD_env = NULL;       /* ODBC environment handle */
-    SQLHDBC OD_hdbc = NULL;      /* connection handle */
+    SQLHDBC dbc = NULL;          /* connection handle */
     SQLHSTMT OD_hstmt = NULL;    /* statement handle */
-    long OD_ret;                 /* return value from functions */
-    unsigned char OD_stat[10];   /* SQL status */
+    long ret;                    /* return value from functions */
+    unsigned char status[10];    /* SQL status */
     SQLINTEGER OD_err, nrows;
-    SQLSMALLINT OD_mlen, ncols;
+    SQLSMALLINT mlen, ncols;
     double xt, *x = NULL;
-    unsigned char OD_msg[200];
+    unsigned char msg[200];
     int err = 0;
 
-    OD_hdbc = gretl_odbc_connect_to_dsn(dsn, &OD_env, &err);
+    dbc = gretl_odbc_connect_to_dsn(dsn, &OD_env, &err);
     if (err) {
 	return err;
     }
 
-    OD_ret = SQLAllocHandle(SQL_HANDLE_STMT, OD_hdbc, &OD_hstmt);
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, dbc, &OD_hstmt);
 
-    if (OD_error(OD_ret)) {
-	printf("Error in AllocStatement %ld\n", OD_ret);
-	SQLGetDiagRec(SQL_HANDLE_DBC, OD_hdbc, 1, OD_stat, &OD_err, 
-		      OD_msg, 100, &OD_mlen);
-	printf("%s (%d)\n", OD_msg, (int) OD_err);
+    if (OD_error(ret)) {
+	gretl_errmsg_set("Error in AllocStatement");
+	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, 
+		      msg, 100, &mlen);
+	gretl_errmsg_set((char *) msg);
 	err = 1;
 	goto bailout;
     }
 
     SQLBindCol(OD_hstmt, 1, SQL_C_DOUBLE, &xt, 150, &OD_err);
 	
-    OD_ret = SQLExecDirect(OD_hstmt, (SQLCHAR *) query, SQL_NTS);   
-    if (OD_error(OD_ret)) {
-	printf("Error in Select %ld\n", OD_ret);
-	SQLGetDiagRec(SQL_HANDLE_DBC, OD_hdbc, 1, OD_stat, &OD_err, OD_msg, 
-		      100, &OD_mlen);
-	printf("%s (%d)\n", OD_msg, (int) OD_err);
+    ret = SQLExecDirect(OD_hstmt, (SQLCHAR *) query, SQL_NTS);   
+    if (OD_error(ret)) {
+	gretl_errmsg_set("Error in SQLExecDirect");
+	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, msg, 
+		      100, &mlen);
+	gretl_errmsg_set((char *) msg);
 	err = 1;
 	goto bailout;
     }
 
-    OD_ret = SQLNumResultCols(OD_hstmt, &ncols);
-    if (OD_error(OD_ret)) {
-	printf("Error in SQLNumResultCols %ld\n", OD_ret);
+    ret = SQLNumResultCols(OD_hstmt, &ncols);
+    if (OD_error(ret)) {
+	gretl_errmsg_set("Error in SQLNumResultCols");
 	err = 1;
 	goto bailout;
     }
 
     printf("Number of Columns = %d\n", (int) ncols);
 
-    OD_ret = SQLRowCount(OD_hstmt, &nrows);
-    if (OD_error(OD_ret)) {
-	printf("Error in SQLRowCount %ld\n", OD_ret);
+    ret = SQLRowCount(OD_hstmt, &nrows);
+    if (OD_error(ret)) {
+	gretl_errmsg_set("Error in SQLRowCount");
 	err = 1;
 	goto bailout;
     }
@@ -275,7 +275,7 @@ int gretl_odbc_get_data (const char *dsn, char *query, double **px, int *n)
     printf("Number of Rows = %d\n", (int) nrows);
 
     if (ncols <= 0 || nrows <= 0) {
-	fprintf(stderr, "Didn't get any data\n");
+	gretl_errmsg_set("Didn't get any data");
 	err = E_DATA;
     } 
 
@@ -289,11 +289,13 @@ int gretl_odbc_get_data (const char *dsn, char *query, double **px, int *n)
     if (!err) {
 	int t = 0;
 
-	OD_ret = SQLFetch(OD_hstmt);  
-	while (OD_ret != SQL_NO_DATA && t < nrows) {
+	ret = SQLFetch(OD_hstmt);  
+	while (ret != SQL_NO_DATA && t < nrows) {
+#if 0
 	    printf("%.10g\n", xt);
+#endif
 	    x[t++] = xt;
-	    OD_ret = SQLFetch(OD_hstmt);  
+	    ret = SQLFetch(OD_hstmt);  
 	}
     }
 
@@ -308,8 +310,8 @@ int gretl_odbc_get_data (const char *dsn, char *query, double **px, int *n)
 	SQLFreeHandle(SQL_HANDLE_STMT, OD_hstmt);
     }
 
-    SQLDisconnect(OD_hdbc);
-    SQLFreeHandle(SQL_HANDLE_DBC, OD_hdbc);
+    SQLDisconnect(dbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, dbc);
     SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
 
     return err;

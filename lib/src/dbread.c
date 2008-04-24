@@ -1695,6 +1695,11 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     } 
 
+    if (pdinfo->n == 0) {
+	strcpy(gretl_errmsg, _("No series length has been defined"));
+	return 1;
+    }
+
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
@@ -1718,17 +1723,26 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	/* FIXME temporary hack!! */
-	int t, v = pdinfo->v;
+	int t, v;
 
 	printf("Got %d observations via ODBC\n", n);
 
-	err = dataset_add_series(1, pZ, pdinfo);
+	if (pdinfo->v == 0) {
+	    /* the data matrix is still empty */
+	    pdinfo->v = 2;
+	    err = start_new_Z(pZ, pdinfo, 0);
+	} else {
+	    err = dataset_add_series(1, pZ, pdinfo);
+	}
 	if (!err) {
+	    v = pdinfo->v - 1;
 	    strcpy(pdinfo->varname[v], vname);
 	    strcpy(VARLABEL(pdinfo, v), "ODBC data");
 	    for (t=0; t<pdinfo->n && t<n; t++) {
 		(*pZ)[v][t] = x[t];
+	    }
+	    for (t=n; t<pdinfo->n; t++) {
+		(*pZ)[v][t] = NADBL;
 	    }
 	}
 	free(x);
