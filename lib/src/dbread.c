@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "swap_bytes.h"
 #include "gretl_www.h"
+#include "libset.h"
 
 #include <glib.h>
 #include <unistd.h>
@@ -1600,7 +1601,6 @@ int set_odbc_dsn (const char *line, PRN *prn)
 	strcat(p, pword);
     }
 
-    free(dbname);
     free(uname);
     free(pword);
 
@@ -1617,7 +1617,11 @@ int set_odbc_dsn (const char *line, PRN *prn)
 
     if (err) {
 	*gretl_dsn = '\0';
+    } else if (gretl_messages_on()) {
+	pprintf(prn, "Connected to ODBC data source '%s'\n", dbname);
     }
+
+    free(dbname);
 
     return err;
 }
@@ -1800,9 +1804,11 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	int t, v;
+	int s, t, v;
 
-	printf("Got %d observations via ODBC\n", n);
+	if (gretl_messages_on()) {
+	    pprintf(prn, "Retrieved %d observations via ODBC\n", n);
+	}
 
 	if (pdinfo->v == 0) {
 	    /* the data matrix is still empty */
@@ -1815,11 +1821,13 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    v = pdinfo->v - 1;
 	    strcpy(pdinfo->varname[v], vname);
 	    strcpy(VARLABEL(pdinfo, v), "ODBC data");
-	    for (t=0; t<pdinfo->n && t<n; t++) {
-		(*pZ)[v][t] = x[t];
-	    }
-	    for (t=n; t<pdinfo->n; t++) {
-		(*pZ)[v][t] = NADBL;
+	    s = 0;
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t>=pdinfo->t1 && t<=pdinfo->t2 && s<n) {
+		    (*pZ)[v][t] = x[s++];
+		} else {
+		    (*pZ)[v][t] = NADBL;
+		}
 	    }
 	}
 	free(x);
