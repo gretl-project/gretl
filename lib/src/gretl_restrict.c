@@ -855,6 +855,12 @@ static int pick_apart (gretl_restriction *r, const char *s,
     return 0;
 }
 
+/* We got a leading letter ('a' or 'b') and now we parse
+   what follows.  The simplest case is just a number, giving
+   e.g., "b1".  Then we assess the validity of what we've
+   found.
+*/
+
 static int parse_b_bit (gretl_restriction *r, const char *s, 
 			int *eq, int *bnum,
 			const DATAINFO *pdinfo)
@@ -862,19 +868,29 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
     int err = E_PARSE;
 
     if (isdigit((unsigned char) *s)) {
-	sscanf(s, "%d", bnum);
-	if (r->type == GRETL_OBJ_VAR) {
-	    *eq = EQN_UNSPEC;
+	char *test;
+
+	*bnum = strtol(s, &test, 10);
+	if (*test) {
+	    /* got some trailing garbage */
+	    if (*test == '/') {
+		gretl_errmsg_sprintf(_("%s: division not allowed here"), s-1);
+	    }
+	    return err;
+	} else {
+	    if (r->type == GRETL_OBJ_VAR) {
+		*eq = EQN_UNSPEC;
+	    }
+	    err = 0;
 	}
-	err = 0;
     } else if (*s == '[') {
 	err = pick_apart(r, s + 1, eq, bnum, pdinfo);
     }
 
     if (*bnum < 1) {
 	if (*gretl_errmsg == '\0') {
-	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		    *bnum);
+	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
+				 *bnum);
 	}
 	err = 1;
     } else {
@@ -889,8 +905,8 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 	    err = E_PARSE;
 	}
     } else if (*eq < 1) {
-	sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
-		*eq);
+	gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
+			     *eq);
 	err = 1;
     } else {
 	*eq -= 1; /* convert to zero base */
@@ -913,9 +929,16 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 
     while (isspace((unsigned char) *s)) s++;
 
+#if RDEBUG
+    fprintf(stderr, "parse_coeff_chunk: s='%s'\n", s);
+#endif
+
     if (ok_letter(r, *s)) {
 	*letter = *s;
 	s++;
+#if RDEBUG
+	fprintf(stderr, " first branch: s='%s'\n", s);
+#endif
 	err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	*x = 1.0;
     } else if (sscanf(s, "%lf", x)) {
@@ -929,8 +952,8 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 	}
     }
 
-    if (err && *gretl_errmsg == '\0') {
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), s0);
+    if (err) {
+	gretl_errmsg_sprintf(_("parse error in '%s'\n"), s0);
     } 
 
 #if RDEBUG

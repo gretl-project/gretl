@@ -173,6 +173,25 @@ void gretl_errmsg_set (const char *str)
 }
 
 /**
+ * gretl_errmsg_sprintf:
+ * @str: an error message.
+ *
+ * If %gretl_errmsg is currently blank, print a formatted
+ * message into place.
+ */
+
+void gretl_errmsg_sprintf (const char *fmt, ...)
+{
+    if (*gretl_errmsg == '\0' && fmt != NULL) {
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(gretl_errmsg, fmt, args);
+	va_end(args);
+    }
+}
+
+/**
  * gretl_errmsg_set_from_errno:
  *
  * If %gretl_errmsg is currently blank, copy the string 
@@ -187,6 +206,7 @@ void gretl_errmsg_set_from_errno (void)
 
     if (errno) {
 	msg = strerror(errno);
+	errno = 0;
     }
 
     if (msg != NULL) {

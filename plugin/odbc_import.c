@@ -1,7 +1,21 @@
-/* trivial test plugin for unixODBC access from gretl */
-
-#include <stdlib.h>
-#include <stdio.h>
+/* 
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 #include "libgretl.h"
 
@@ -177,7 +191,7 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 {
     SQLHENV OD_env = NULL;       /* ODBC environment handle */
     SQLHDBC dbc = NULL;          /* connection handle */
-    SQLHSTMT OD_hstmt = NULL;    /* statement handle */
+    SQLHSTMT stmt = NULL;        /* statement handle */
     long ret;                    /* return value from functions */
     unsigned char status[10];    /* SQL status */
     SQLINTEGER OD_err, nrows;
@@ -191,7 +205,7 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 	return err;
     }
 
-    ret = SQLAllocHandle(SQL_HANDLE_STMT, dbc, &OD_hstmt);
+    ret = SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in AllocStatement");
@@ -202,9 +216,9 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 	goto bailout;
     }
 
-    SQLBindCol(OD_hstmt, 1, SQL_C_DOUBLE, &xt, 150, &OD_err);
+    SQLBindCol(stmt, 1, SQL_C_DOUBLE, &xt, 150, &OD_err);
 	
-    ret = SQLExecDirect(OD_hstmt, (SQLCHAR *) query, SQL_NTS);   
+    ret = SQLExecDirect(stmt, (SQLCHAR *) query, SQL_NTS);   
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLExecDirect");
 	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, msg, 
@@ -214,7 +228,7 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 	goto bailout;
     }
 
-    ret = SQLNumResultCols(OD_hstmt, &ncols);
+    ret = SQLNumResultCols(stmt, &ncols);
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLNumResultCols");
 	err = 1;
@@ -223,7 +237,7 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 
     printf("Number of Columns = %d\n", (int) ncols);
 
-    ret = SQLRowCount(OD_hstmt, &nrows);
+    ret = SQLRowCount(stmt, &nrows);
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLRowCount");
 	err = 1;
@@ -247,13 +261,13 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
     if (!err) {
 	int t = 0;
 
-	ret = SQLFetch(OD_hstmt);  
+	ret = SQLFetch(stmt);  
 	while (ret != SQL_NO_DATA && t < nrows) {
 #if 0
 	    printf("%.10g\n", xt);
 #endif
 	    x[t++] = xt;
-	    ret = SQLFetch(OD_hstmt);  
+	    ret = SQLFetch(stmt);  
 	}
     }
 
@@ -264,8 +278,8 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 	*n = nrows;
     } 
 
-    if (OD_hstmt != NULL) {
-	SQLFreeHandle(SQL_HANDLE_STMT, OD_hstmt);
+    if (stmt != NULL) {
+	SQLFreeHandle(SQL_HANDLE_STMT, stmt);
     }
 
     SQLDisconnect(dbc);
