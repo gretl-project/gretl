@@ -6639,7 +6639,7 @@ static int script_open_append (ExecState *s, double ***pZ,
 	return 0;
     }
 
-    if (!cmd->opt & OPT_O) {
+    if (!(cmd->opt & OPT_O)) {
 	err = getopenfile(line, datfile, &paths, (cmd->opt & OPT_W)? 
 			  OPT_W : OPT_NONE);
 	if (err) {
