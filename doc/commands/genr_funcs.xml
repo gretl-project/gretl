@@ -3352,6 +3352,7 @@
 	    <fncref targ="dsort"/>
 	    <fncref targ="values"/>
 	  </seelist>
+	  For matrices specifically, see <fncref targ="msortby"/>.
 	</para>
       </description>
     </function>

@@ -85,6 +85,9 @@ static int show_list (void)
 
 #endif /* DSN_LIST */
 
+/* We may have up to three strings in the array s, terminated
+   by two NULs */
+
 static void unpack_dsn_string (char *s, char **uname, char **pword)
 {
     s += strlen(s) + 1;
