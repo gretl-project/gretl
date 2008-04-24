@@ -1512,20 +1512,97 @@ const char *get_db_name (void)
     return db_name;
 }
 
+/* Handling of DSN setup for ODBC: we stick the dsn, username
+   and password strings together, separated by NUL bytes and
+   terminated by two NULs.
+*/
+
+static char *get_dsn_field (const char *tag, const char *src)
+{
+    const char *p;
+    char needle[12];
+    char *ret = NULL;
+    
+    sprintf(needle, "%s=", tag);
+    p = strstr(src, needle);
+
+    if (p != NULL) {
+	p += strlen(needle);
+	if (*p == '"' || *p == '\'') {
+	    ret = gretl_quoted_string_strdup(p, NULL);
+	} else {
+	    ret = gretl_strndup(p, strcspn(p, " "));
+	}
+    }
+
+    return ret;
+}
+
+static int dsn_overflow_check (const char *dsn, const char *uname,
+			       const char *password)
+{
+    int n = strlen(dsn) + 1;
+
+    if (uname != NULL) {
+	n += strlen(uname) + 1;
+    }
+
+    if (password != NULL) {
+	n += strlen(password) + 1;
+    }
+
+    return (n > MAXLEN - 1);
+}
+
 static char gretl_dsn[MAXLEN];
 
 int set_odbc_dsn (const char *line, PRN *prn)
 {
     void *handle = NULL;
     int (*check_dsn) (char *);
+    char *dbname = NULL;
+    char *uname = NULL;
+    char *pword = NULL;
+    char *p;
     int err = 0;
 
     /* skip command word */
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
-    *gretl_dsn = 0;
-    strncat(gretl_dsn, line, MAXLEN - 1);
+    memset(gretl_dsn, 0, MAXLEN);
+
+    dbname = get_dsn_field("dsn", line);
+    if (dbname == NULL) {
+	pputs(prn, "You must specify a DSN using 'dsn=...'\n");
+	return E_DATA;
+    }
+
+    uname = get_dsn_field("user", line);
+    pword = get_dsn_field("password", line);
+
+    err = dsn_overflow_check(dbname, uname, pword);
+    if (err) {
+	pprintf(prn, "Data source info would overflow storage of %d bytes\n",
+		MAXLEN);
+	return E_DATA;
+    }
+
+    strcat(gretl_dsn, dbname);
+    p = gretl_dsn + strlen(dbname) + 1;
+
+    if (uname != NULL) {
+	strcat(p, uname);
+	p += strlen(uname) + 1;
+    } 
+
+    if (pword != NULL) {
+	strcat(p, pword);
+    }
+
+    free(dbname);
+    free(uname);
+    free(pword);
 
     gretl_error_clear();
     
@@ -1684,7 +1761,7 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 			    PRN *prn)
 {
     void *handle = NULL;
-    int (*get_data) (const char *, const char *, double **, int *);
+    int (*get_data) (char *, const char *, double **, int *);
     char vname[VNAMELEN] = {0};
     double *x = NULL;
     int n = 0;

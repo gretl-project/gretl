@@ -71,52 +71,18 @@ static int show_list (void)
 
 #endif /* DSN_LIST */
 
-static int split_dsn_string (const char *dsn, char **dbname, char **uname,
-			     char **pword)
+static void unpack_dsn_string (char *s, char **uname, char **pword)
 {
-    char *dsncpy, *chunk;
-    int i, err = 0;
+    s += strlen(s) + 1;
 
-    dsncpy = gretl_strdup(dsn);
-    if (dsncpy == NULL) {
-	return E_ALLOC;
+    if (*s != '\0') {
+	*uname = s;
+	s += strlen(s) + 1;
     }
 
-    /* split terms separated by ':' */
-    for (i=0; i<3 && !err; i++) {
-	chunk = strtok((i == 0)? dsncpy : NULL, ":");
-	if (chunk == NULL) {
-	    break;
-	} else if (i == 0) {
-	    *dbname = gretl_strdup(chunk);
-	    if (*dbname == NULL) err = E_ALLOC;
-	} else if (i == 1) {
-	    *uname = gretl_strdup(chunk);
-	    if (*uname == NULL) err = E_ALLOC;
-	} else if (i == 2) {
-	    *pword = gretl_strdup(chunk);
-	    if (*pword == NULL) err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	if (*uname == NULL) {
-	    *uname = gretl_strdup("");
-	}
-	if (*pword == NULL) {
-	    *pword = gretl_strdup("");
-	}
-	if (*uname == NULL || *pword == NULL) {
-	    free(*dbname);
-	    free(*uname);
-	    free(*pword);
-	    err = E_ALLOC;
-	}
-    }
-
-    free(dsncpy);
-
-    return err;
+    if (*s != '\0') {
+	*pword = s;
+    }   
 }
 
 /* Try connecting to data source.  If penv is NULL we're just checking
@@ -124,7 +90,7 @@ static int split_dsn_string (const char *dsn, char **dbname, char **uname,
 */
 
 static SQLHDBC 
-gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
+gretl_odbc_connect_to_dsn (char *dsn, SQLHENV *penv, int *err)
 {
     SQLHENV OD_env = NULL;    /* ODBC environment handle */
     SQLHDBC dbc = NULL;       /* connection handle */
@@ -133,14 +99,10 @@ gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
     SQLINTEGER OD_err;
     SQLSMALLINT mlen;
     unsigned char msg[200];
-    char *dbname = NULL;
     char *uname = NULL;
     char *pword = NULL;
 
-    *err = split_dsn_string(dsn, &dbname, &uname, &pword);
-    if (*err) {
-	return NULL;
-    }
+    unpack_dsn_string(dsn, &uname, &pword);
 
     ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &OD_env);
     if (OD_error(ret)) {
@@ -168,9 +130,9 @@ gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
 
     /* Try connecting to the datasource */
 
-    ret = SQLConnect(dbc, (SQLCHAR *) dbname, SQL_NTS,
-		     (SQLCHAR *) uname, SQL_NTS,
-		     (SQLCHAR *) pword, SQL_NTS);
+    ret = SQLConnect(dbc, (SQLCHAR *) dsn, SQL_NTS,
+		     (SQLCHAR *) uname, (uname == NULL)? 0 : SQL_NTS,
+		     (SQLCHAR *) pword, (pword == NULL)? 0 : SQL_NTS);
 
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLConnect");
@@ -179,14 +141,10 @@ gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
 	gretl_errmsg_set((char *) msg);
 	*err = 1;
     } else {
-	fprintf(stderr, "Connected to DSN '%s'\n", dbname);
+	fprintf(stderr, "Connected to DSN '%s'\n", dsn);
     }
 
  bailout:
-
-    free(dbname);
-    free(uname);
-    free(pword);
 
     if (*err || penv == NULL) {
 	/* either we bombed out, or we're just checking and the handles
@@ -206,7 +164,7 @@ gretl_odbc_connect_to_dsn (const char *dsn, SQLHENV *penv, int *err)
     return dbc;
 }
 
-int gretl_odbc_check_dsn (const char *dsn)
+int gretl_odbc_check_dsn (char *dsn)
 {
     int err = 0;
 
@@ -215,7 +173,7 @@ int gretl_odbc_check_dsn (const char *dsn)
     return err;
 }
 
-int gretl_odbc_get_data (const char *dsn, char *query, double **px, int *n)
+int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 {
     SQLHENV OD_env = NULL;       /* ODBC environment handle */
     SQLHDBC dbc = NULL;          /* connection handle */

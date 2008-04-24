@@ -1480,9 +1480,9 @@ static int read_dash_param (const char **ps, CMD *cmd)
 
     if (!strncmp(s, "--sheet=", 8)) {
 	s += 8;
-	if (*s == '"') {
+	if (*s == '"' || *s == '\'') {
 	    free(cmd->extra);
-	    cmd->extra = gretl_double_quoted_string_strdup(s, (const char **) &test);
+	    cmd->extra = gretl_quoted_string_strdup(s, (const char **) &test);
 	    parm = 0;
 	} else {
 	    parm = strtol(s, &test, 10);
@@ -2222,30 +2222,26 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    /* TeX printing commands can take a filename parameter, and
-       possibly a format string -- but that's all
-    */
     if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
+	/* TeX printing commands can take a filename parameter, and
+	   possibly a format string -- but that's all
+	*/
 	get_optional_filename_etc(line, cmd);
 	return cmd->err;
-    } 
-
-    /* the "outfile" command may have a filename */
-    else if (cmd->ci == OUTFILE) {
+    } else if (cmd->ci == OUTFILE) {
+	/* the "outfile" command may have a filename */
 	parse_outfile_cmd(line, cmd);
-    }
-
-    /* the "rename" command calls for a variable number and a
-       new name */
-    else if (cmd->ci == RENAME) {
+    } else if (cmd->ci == RENAME) {
+	/* the "rename" command calls for a variable number and a
+	   new name */
 	parse_rename_cmd(line, cmd, pdinfo);
-    }  
-
-    /* the "open" and "append" commands may have spreadsheet parameters */
-    else if (cmd->ci == OPEN || cmd->ci == APPEND) {
-	parse_spreadsheet_params(line, cmd);
-	if (cmd->err) {
-	    return cmd->err;
+    } else if (cmd->ci == OPEN || cmd->ci == APPEND) {
+	/* "open" and "append" may have spreadsheet parameters */
+	if (!(cmd->opt & OPT_O)) {
+	    parse_spreadsheet_params(line, cmd);
+	    if (cmd->err) {
+		return cmd->err;
+	    }
 	}
     } 
 
