@@ -92,7 +92,8 @@ PLUGINSRC = \
         audio.c \
 	urcdist.c \
 	gretlzip.c \
-	heckit.c 
+	heckit.c \
+	odbc_import.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -126,7 +127,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/vif.dll \
 	plugins/urcdist.dll \
 	plugins/gretlzip.dll \
-	plugins/heckit.dll
+	plugins/heckit.dll \
+	plugins/odbc_import.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -428,6 +430,10 @@ plugins/gretlzip.dll: gretlzip.o zfileio.o zipfile.o zipmain.o zipwork.o \
 plugins/heckit.dll: heckit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/odbc_import.dll: odbc_import.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lodbc32
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
