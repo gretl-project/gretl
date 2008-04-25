@@ -3393,7 +3393,8 @@ enum {
     CONF_B_ROWVEC,
     CONF_A_SCALAR,
     CONF_B_SCALAR,
-    CONF_AC_BR
+    CONF_AC_BR,
+    CONF_AR_BC
 };
 
 /**
@@ -3461,6 +3462,11 @@ static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
 	ret = CONF_AC_BR;
 	*r = ra;
 	*c = cb;
+    } else if (rowva && colvb) {
+	/* A is a row and B is a column */
+	ret = CONF_AR_BC;
+	*r = rb;
+	*c = ca;
     }
 
     return ret;
@@ -3610,6 +3616,16 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	    x = a->val[i];
 	    for (j=0; j<nc; j++) {
 		y = b->val[j];
+		y = x_op_y(x, y, op);
+		gretl_matrix_set(c, i, j, y);
+	    }
+	}
+	break;
+    case CONF_AR_BC:
+	for (j=0; j<nc; j++) {
+	    x = a->val[j];
+	    for (i=0; i<nr; i++) {
+		y = b->val[i];
 		y = x_op_y(x, y, op);
 		gretl_matrix_set(c, i, j, y);
 	    }
