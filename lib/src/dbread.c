@@ -1513,9 +1513,8 @@ const char *get_db_name (void)
     return db_name;
 }
 
-/* Handling of DSN setup for ODBC: we stick the dsn, username
-   and password strings together, separated by NUL bytes and
-   terminated by two NULs.
+/* Handling of DSN setup for ODBC: grab the dsn, username
+   and password strings.
 */
 
 static char *get_dsn_field (const char *tag, const char *src)
@@ -1539,39 +1538,57 @@ static char *get_dsn_field (const char *tag, const char *src)
     return ret;
 }
 
-static int dsn_overflow_check (const char *dsn, const char *uname,
-			       const char *password)
+static ODBC_info gretl_odinfo;
+
+static void ODBC_info_clear_read (void)
 {
-    int n = strlen(dsn) + 1;
+    free(gretl_odinfo.coltypes);
+    gretl_odinfo.coltypes = NULL;
 
-    if (uname != NULL) {
-	n += strlen(uname) + 1;
-    }
+    free(gretl_odinfo.fmt);
+    gretl_odinfo.fmt = NULL;
 
-    if (password != NULL) {
-	n += strlen(password) + 1;
-    }
+    gretl_odinfo.query = NULL;
 
-    return (n > MAXLEN - 1);
+    free(gretl_odinfo.x);
+    gretl_odinfo.x = NULL;
+
+    free_strings_array(gretl_odinfo.S, gretl_odinfo.nrows);
+    gretl_odinfo.S = NULL;
+
+    gretl_odinfo.nrows = 0;
+    gretl_odinfo.ncols = 0;
 }
 
-static char gretl_dsn[MAXLEN];
+
+void ODBC_info_clear_all (void)
+{
+    free(gretl_odinfo.dsn);
+    gretl_odinfo.dsn = NULL;
+
+    free(gretl_odinfo.username);
+    gretl_odinfo.username = NULL;
+
+    free(gretl_odinfo.password);
+    gretl_odinfo.password = NULL;
+
+    ODBC_info_clear_read();
+}
 
 int set_odbc_dsn (const char *line, PRN *prn)
 {
     void *handle = NULL;
-    int (*check_dsn) (char *);
+    int (*check_dsn) (ODBC_info *);
     char *dbname = NULL;
     char *uname = NULL;
     char *pword = NULL;
-    char *p;
     int err = 0;
 
     /* skip command word */
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
-    memset(gretl_dsn, 0, MAXLEN);
+    ODBC_info_clear_all();
 
     dbname = get_dsn_field("dsn", line);
     if (dbname == NULL) {
@@ -1582,27 +1599,9 @@ int set_odbc_dsn (const char *line, PRN *prn)
     uname = get_dsn_field("user", line);
     pword = get_dsn_field("password", line);
 
-    err = dsn_overflow_check(dbname, uname, pword);
-    if (err) {
-	pprintf(prn, "Data source info would overflow storage of %d bytes\n",
-		MAXLEN);
-	return E_DATA;
-    }
-
-    strcat(gretl_dsn, dbname);
-    p = gretl_dsn + strlen(dbname) + 1;
-
-    if (uname != NULL) {
-	strcat(p, uname);
-	p += strlen(uname) + 1;
-    } 
-
-    if (pword != NULL) {
-	strcat(p, pword);
-    }
-
-    free(uname);
-    free(pword);
+    gretl_odinfo.dsn = dbname;
+    gretl_odinfo.username = uname;
+    gretl_odinfo.password = pword;
 
     gretl_error_clear();
     
@@ -1611,17 +1610,16 @@ int set_odbc_dsn (const char *line, PRN *prn)
     if (check_dsn == NULL) {
         err = 1;
     } else {
-        err = (* check_dsn) (gretl_dsn);
+        err = (* check_dsn) (&gretl_odinfo);
         close_plugin(handle);
     }
 
     if (err) {
-	*gretl_dsn = '\0';
+	ODBC_info_clear_all();
     } else if (gretl_messages_on()) {
-	pprintf(prn, "Connected to ODBC data source '%s'\n", dbname);
+	pprintf(prn, "Connected to ODBC data source '%s'\n", 
+		gretl_odinfo.dsn);
     }
-
-    free(dbname);
 
     return err;
 }
@@ -1670,14 +1668,15 @@ int db_set_sample (const char *s, DATAINFO *pdinfo)
     return 0;
 }
 
-static const char *
-get_word_and_advance (const char *s, char *word, size_t maxlen)
+static char *
+get_word_and_advance (char *s, char *word, size_t maxlen)
 {
     size_t i = 0;
 
     while (isspace(*s)) s++;
 
     *word = 0;
+
     while (*s && !isspace(*s)) {
 	if (i < maxlen) word[i++] = *s;
 	s++;
@@ -1689,10 +1688,10 @@ get_word_and_advance (const char *s, char *word, size_t maxlen)
     else return NULL;
 }
 
-static const char *
-get_compact_method_and_advance (const char *s, CompactMethod *method)
+static char *
+get_compact_method_and_advance (char *s, CompactMethod *method)
 {
-    const char *p;
+    char *p;
 
     *method = COMPACT_NONE;
 
@@ -1761,17 +1760,31 @@ static void free_dbZ (double **dbZ)
     }
 }
 
-static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo, 
+static int parse_ODBC_format (char *fmt)
+{
+    int err = 0;
+
+    /* FIXME this stub needs to be filled out! */
+
+    if (err) {
+	free(fmt);
+    } else {
+	gretl_odinfo.fmt = fmt;
+    }
+
+    return err;
+}
+
+static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn)
 {
     void *handle = NULL;
-    int (*get_data) (char *, const char *, double **, int *);
+    int (*get_data) (ODBC_info *);
     char vname[VNAMELEN] = {0};
-    double *x = NULL;
-    int n = 0;
+    char *format = NULL;
     int err = 0;
 
-    if (*gretl_dsn == '\0') {
+    if (gretl_odinfo.dsn == NULL) {
 	strcpy(gretl_errmsg, _("No database has been opened"));
 	return 1;
     } 
@@ -1792,18 +1805,36 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     line += strlen(vname);
     line += strspn(line, " ");
 
-    gretl_error_clear();
-    
-    get_data = get_plugin_function("gretl_odbc_get_data", &handle);
-
-    if (get_data == NULL) {
-        err = 1;
+    if (!strncmp(line, "obs-format=", 11)) {
+	line += 11;
+	format = gretl_quoted_string_strdup(line, (const char **) &line);
+	if (format == NULL) {
+	    err = E_PARSE;
+	} else {
+	    err = parse_ODBC_format(format);
+	}
     } else {
-        err = (*get_data) (gretl_dsn, line, &x, &n);
-        close_plugin(handle);
+	/* the default: one data column */
+	gretl_odinfo.ncols = 1;
     }
 
     if (!err) {
+	line += strspn(line, " ");
+	gretl_odinfo.query = (char *) line;
+	gretl_error_clear();
+
+	get_data = get_plugin_function("gretl_odbc_get_data", &handle);
+
+	if (get_data == NULL) {
+	    err = 1;
+	} else {
+	    err = (*get_data) (&gretl_odinfo);
+	    close_plugin(handle);
+	}
+    }
+
+    if (!err) {
+	int n = gretl_odinfo.nrows;
 	int s, t, v;
 
 	if (gretl_messages_on()) {
@@ -1824,14 +1855,15 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    s = 0;
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t>=pdinfo->t1 && t<=pdinfo->t2 && s<n) {
-		    (*pZ)[v][t] = x[s++];
+		    (*pZ)[v][t] = gretl_odinfo.x[s++];
 		} else {
 		    (*pZ)[v][t] = NADBL;
 		}
 	    }
 	}
-	free(x);
     }
+
+    ODBC_info_clear_read();
 
     return err;
 }
@@ -1840,7 +1872,7 @@ static int odbc_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
    command-line client or in script or console mode
 */
 
-int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo, 
+int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn)
 {
     char series[VNAMELEN];
@@ -1986,7 +2018,7 @@ static void maybe_fclose (FILE *fp)
 
 #define DBUFLEN 1024
 
-static int db_delete_series (const char *line, const int *list,
+static int db_delete_series (char *line, const int *list,
 			     const char *fname, PRN *prn)
 {
     dbnumber buf[DBUFLEN];
@@ -2153,7 +2185,7 @@ static int db_delete_series (const char *line, const int *list,
     return err;
 }
 
-int db_delete_series_by_name (const char *line, PRN *prn)
+int db_delete_series_by_name (char *line, PRN *prn)
 {
     return db_delete_series(line, NULL, NULL, prn);
 }

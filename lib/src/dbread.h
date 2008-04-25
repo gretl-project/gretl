@@ -40,9 +40,10 @@ typedef enum {
 
 typedef float dbnumber;
 typedef struct dbwrapper_ dbwrapper;
-typedef struct _SERIESINFO SERIESINFO;
+typedef struct SERIESINFO_ SERIESINFO;
+typedef struct ODBC_info_ ODBC_info;
 
-struct _SERIESINFO {
+struct SERIESINFO_ {
     int t1, t2, v;
     char varname[VNAMELEN];
     char descrip[MAXLABEL];
@@ -59,6 +60,19 @@ struct dbwrapper_ {
     int nv;
     int nalloc;
     SERIESINFO *sinfo;
+};
+
+struct ODBC_info_ {
+    char *dsn;
+    char *username;
+    char *password;
+    char *query;
+    char *fmt;
+    int *coltypes;
+    double *x;
+    char **S;
+    int nrows;
+    int ncols;
 };
 
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
@@ -94,10 +108,10 @@ int set_odbc_dsn (const char *line, PRN *prn);
 
 int db_set_sample (const char *s, DATAINFO *pdinfo);
 
-int db_get_series (const char *line, double ***pZ, DATAINFO *datainfo, 
+int db_get_series (char *line, double ***pZ, DATAINFO *datainfo, 
 		   gretlopt opt, PRN *prn);
 
-int db_delete_series_by_name (const char *line, PRN *prn);
+int db_delete_series_by_name (char *line, PRN *prn);
 
 int db_delete_series_by_number (const int *list, const char *fname);
 

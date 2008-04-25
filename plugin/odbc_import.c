@@ -85,29 +85,13 @@ static int show_list (void)
 
 #endif /* DSN_LIST */
 
-/* We may have up to three strings in the array s, terminated
-   by two NULs */
-
-static void unpack_dsn_string (char *s, char **uname, char **pword)
-{
-    s += strlen(s) + 1;
-
-    if (*s != '\0') {
-	*uname = s;
-	s += strlen(s) + 1;
-    }
-
-    if (*s != '\0') {
-	*pword = s;
-    }   
-}
-
 /* Try connecting to data source.  If penv is NULL we're just checking
    that it can be opened OK, otherwise we return a connection.
 */
 
 static SQLHDBC 
-gretl_odbc_connect_to_dsn (char *dsn, SQLHENV *penv, int *err)
+gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv, 
+			   int *err)
 {
     SQLHENV OD_env = NULL;    /* ODBC environment handle */
     SQLHDBC dbc = NULL;       /* connection handle */
@@ -115,11 +99,8 @@ gretl_odbc_connect_to_dsn (char *dsn, SQLHENV *penv, int *err)
     unsigned char status[10]; /* SQL status */
     SQLINTEGER OD_err;
     SQLSMALLINT mlen;
+    char *uname, *pword;
     unsigned char msg[200];
-    char *uname = NULL;
-    char *pword = NULL;
-
-    unpack_dsn_string(dsn, &uname, &pword);
 
     ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &OD_env);
     if (OD_error(ret)) {
@@ -147,7 +128,10 @@ gretl_odbc_connect_to_dsn (char *dsn, SQLHENV *penv, int *err)
 
     /* Try connecting to the datasource */
 
-    ret = SQLConnect(dbc, (SQLCHAR *) dsn, SQL_NTS,
+    uname = odinfo->username;
+    pword = odinfo->password;
+
+    ret = SQLConnect(dbc, (SQLCHAR *) odinfo->dsn, SQL_NTS,
 		     (SQLCHAR *) uname, (uname == NULL)? 0 : SQL_NTS,
 		     (SQLCHAR *) pword, (pword == NULL)? 0 : SQL_NTS);
 
@@ -158,7 +142,7 @@ gretl_odbc_connect_to_dsn (char *dsn, SQLHENV *penv, int *err)
 	gretl_errmsg_set((char *) msg);
 	*err = 1;
     } else {
-	fprintf(stderr, "Connected to DSN '%s'\n", dsn);
+	fprintf(stderr, "Connected to DSN '%s'\n", odinfo->dsn);
     }
 
  bailout:
@@ -181,16 +165,16 @@ gretl_odbc_connect_to_dsn (char *dsn, SQLHENV *penv, int *err)
     return dbc;
 }
 
-int gretl_odbc_check_dsn (char *dsn)
+int gretl_odbc_check_dsn (ODBC_info *odinfo)
 {
     int err = 0;
 
-    gretl_odbc_connect_to_dsn(dsn, NULL, &err);
+    gretl_odbc_connect_to_dsn(odinfo, NULL, &err);
 
     return err;
 }
 
-int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
+int gretl_odbc_get_data (ODBC_info *odinfo)
 {
     SQLHENV OD_env = NULL;       /* ODBC environment handle */
     SQLHDBC dbc = NULL;          /* connection handle */
@@ -201,9 +185,9 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
     SQLSMALLINT mlen, ncols;
     double xt, *x = NULL;
     unsigned char msg[200];
-    int err = 0;
+    int i, err = 0;
 
-    dbc = gretl_odbc_connect_to_dsn(dsn, &OD_env, &err);
+    dbc = gretl_odbc_connect_to_dsn(odinfo, &OD_env, &err);
     if (err) {
 	return err;
     }
@@ -219,9 +203,15 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
 	goto bailout;
     }
 
-    SQLBindCol(stmt, 1, SQL_C_DOUBLE, &xt, 150, &OD_err);
+    for (i=1; i<=odinfo->ncols; i++) {
+	if (i == odinfo->ncols) {
+	    SQLBindCol(stmt, i, SQL_C_DOUBLE, &xt, 150, &OD_err);
+	} else {
+	    ; /* FIXME */
+	}
+    }
 	
-    ret = SQLExecDirect(stmt, (SQLCHAR *) query, SQL_NTS);   
+    ret = SQLExecDirect(stmt, (SQLCHAR *) odinfo->query, SQL_NTS);   
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLExecDirect");
 	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, msg, 
@@ -239,6 +229,13 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
     }
 
     printf("Number of Columns = %d\n", (int) ncols);
+
+    if (ncols != odinfo->ncols) {
+	gretl_errmsg_sprintf("ODBC: expected %d columns but got %d",
+			     odinfo->ncols, ncols);
+	err = 1;
+	goto bailout;
+    }
 
     ret = SQLRowCount(stmt, &nrows);
     if (OD_error(ret)) {
@@ -277,8 +274,8 @@ int gretl_odbc_get_data (char *dsn, char *query, double **px, int *n)
  bailout:
 
     if (!err) {
-	*px = x;
-	*n = nrows;
+	odinfo->x = x;
+	odinfo->nrows = nrows;
     } 
 
     if (stmt != NULL) {
