@@ -23,6 +23,7 @@
 #include "swap_bytes.h"
 #include "gretl_www.h"
 #include "libset.h"
+#include "dbread.h"
 
 #include <glib.h>
 #include <unistd.h>
@@ -1542,8 +1543,7 @@ static ODBC_info gretl_odinfo;
 
 static void ODBC_info_clear_read (void)
 {
-    free(gretl_odinfo.coltypes);
-    gretl_odinfo.coltypes = NULL;
+    int i;
 
     free(gretl_odinfo.fmt);
     gretl_odinfo.fmt = NULL;
@@ -1558,8 +1558,11 @@ static void ODBC_info_clear_read (void)
 
     gretl_odinfo.nrows = 0;
     gretl_odinfo.ncols = 0;
-}
 
+    for (i=0; i<ODBC_MAXCOLS; i++) {
+	gretl_odinfo.coltypes[i] = 0;
+    }
+}
 
 void ODBC_info_clear_all (void)
 {
@@ -1764,15 +1767,30 @@ static int parse_ODBC_format (char *fmt)
 {
     int err = 0;
 
-    /* FIXME this stub needs to be filled out! */
+    /* FIXME this stub needs to be filled out!  For the moment, for
+       testing, we accept just one hard-wired option, "%d:%d",
+       which can be used for, e.g., year, quarter.
+    */
 
-    if (err) {
-	free(fmt);
-    } else {
+    if (!strcmp(fmt, "%d:%d")) {
+	gretl_odinfo.ncols = 3;
+	gretl_odinfo.coltypes[0] = GRETL_TYPE_INT;
+	gretl_odinfo.coltypes[1] = GRETL_TYPE_INT;
+	gretl_odinfo.coltypes[2] = GRETL_TYPE_DOUBLE;
 	gretl_odinfo.fmt = fmt;
+    } else {
+	free(fmt);
+	err = 1;
     }
 
     return err;
+}
+
+static void odbc_cols_set_default (void)
+{
+    /* expect just one (data) column from ODBC */
+    gretl_odinfo.ncols = 1;
+    gretl_odinfo.coltypes[0] = GRETL_TYPE_DOUBLE;
 }
 
 static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
@@ -1814,8 +1832,7 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	    err = parse_ODBC_format(format);
 	}
     } else {
-	/* the default: one data column */
-	gretl_odinfo.ncols = 1;
+	odbc_cols_set_default();
     }
 
     if (!err) {
@@ -1852,12 +1869,26 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	    v = pdinfo->v - 1;
 	    strcpy(pdinfo->varname[v], vname);
 	    strcpy(VARLABEL(pdinfo, v), "ODBC data");
-	    s = 0;
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t>=pdinfo->t1 && t<=pdinfo->t2 && s<n) {
-		    (*pZ)[v][t] = gretl_odinfo.x[s++];
-		} else {
+	    if (gretl_odinfo.S != NULL) {
+		for (t=0; t<pdinfo->n; t++) {
 		    (*pZ)[v][t] = NADBL;
+		}
+		for (s=0; s<n; s++) {
+		    t = dateton(gretl_odinfo.S[s], pdinfo);
+		    if (t >= 0 && t < pdinfo->n) {
+			(*pZ)[v][t] = gretl_odinfo.x[s];
+		    } else {
+			fprintf(stderr, "Bad obs '%s'\n", gretl_odinfo.S[s]);
+		    }
+		}
+	    } else {
+		s = 0;
+		for (t=0; t<pdinfo->n; t++) {
+		    if (t>=pdinfo->t1 && t<=pdinfo->t2 && s<n) {
+			(*pZ)[v][t] = gretl_odinfo.x[s++];
+		    } else {
+			(*pZ)[v][t] = NADBL;
+		    }
 		}
 	    }
 	}

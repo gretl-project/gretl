@@ -418,7 +418,6 @@ struct MODEL_ {
 #include "gretl_prn.h"
 #include "pvalues.h"
 #include "dataio.h"
-#include "dbread.h"
 #include "strutils.h"
 #include "describe.h"
 #include "printout.h"

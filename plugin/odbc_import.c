@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "dbread.h"
 
 #include <sql.h>
 #include <sqlext.h>
@@ -182,10 +183,14 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     long ret;                    /* return value from functions */
     unsigned char status[10];    /* SQL status */
     SQLINTEGER OD_err, nrows;
+    SQLINTEGER colbytes[4];
     SQLSMALLINT mlen, ncols;
     double xt, *x = NULL;
     unsigned char msg[200];
-    int i, err = 0;
+    long grabint[3];
+    char grabstr[3][16];
+    int i, j, k;
+    int err = 0;
 
     dbc = gretl_odbc_connect_to_dsn(odinfo, &OD_env, &err);
     if (err) {
@@ -203,11 +208,15 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
+    j = k = 0;
+
     for (i=1; i<=odinfo->ncols; i++) {
 	if (i == odinfo->ncols) {
-	    SQLBindCol(stmt, i, SQL_C_DOUBLE, &xt, 150, &OD_err);
-	} else {
-	    ; /* FIXME */
+	    SQLBindCol(stmt, i, SQL_C_DOUBLE, &xt, 0, &colbytes[i-1]);
+	} else if (odinfo->coltypes[i-1] == GRETL_TYPE_INT) {
+	    SQLBindCol(stmt, i, SQL_C_LONG, &grabint[j++], 0, &colbytes[i-1]);
+	} else if (odinfo->coltypes[i-1] == GRETL_TYPE_STRING) {
+	    SQLBindCol(stmt, i, SQL_C_CHAR, &grabstr[k++], 16, &colbytes[i-1]);
 	}
     }
 	
@@ -258,15 +267,45 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	}
     }
 
+    if (!err && odinfo->fmt != NULL) {
+	odinfo->S = strings_array_new_with_length(nrows, OBSLEN);
+	if (odinfo->S == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
     if (!err) {
+	double xtgot;
 	int t = 0;
 
 	ret = SQLFetch(stmt);  
 	while (ret != SQL_NO_DATA && t < nrows) {
-#if 0
-	    printf("%.10g\n", xt);
-#endif
-	    x[t++] = xt;
+	    xtgot = NADBL;
+	    j = k = 0;
+	    fprintf(stderr, "SQLFetch, row %d:\n", t);
+	    for (i=0; i<odinfo->ncols; i++) {
+		if (colbytes[i] == SQL_NULL_DATA) {
+		    fprintf(stderr, " col %d: no data\n", i+1);
+		} else {
+		    fprintf(stderr, " col %d: %d bytes, value ", i+1, (int) colbytes[i]);
+		    if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
+			xtgot = xt;
+			fprintf(stderr, "%.10g\n", xt);
+		    } else if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
+			fprintf(stderr, "%d\n", (int) grabint[j++]);
+		    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
+			fprintf(stderr, "'%s'\n", grabstr[k++]);
+		    }
+		}
+	    }
+	    if (odinfo->S != NULL && odinfo->ncols == 3 && 
+		odinfo->coltypes[0] == GRETL_TYPE_INT &&
+		odinfo->coltypes[1] == GRETL_TYPE_INT) {
+		/* FIXME this needs to be generalized */
+		sprintf(odinfo->S[t], odinfo->fmt, (int) grabint[0],
+			(int) grabint[1]);
+	    }
+	    x[t++] = xtgot;
 	    ret = SQLFetch(stmt);  
 	}
     }

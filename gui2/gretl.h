@@ -33,7 +33,10 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+
 #include "libgretl.h"
+#include "dbread.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

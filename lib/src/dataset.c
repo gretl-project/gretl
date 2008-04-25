@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 #include "libset.h"
+#include "dbread.h"
 
 #define DDEBUG 0
 

@@ -41,6 +41,7 @@
 #include "gretl_panel.h"
 #include "usermat.h"
 #include "gretl_string_table.h"
+#include "dbread.h"
 
 #ifdef WIN32
 # include <windows.h>

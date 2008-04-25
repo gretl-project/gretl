@@ -24,6 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_panel.h"
 #include "cmd_private.h"
+#include "dbread.h"
 
 #define SUBDEBUG 0
 

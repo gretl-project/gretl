@@ -35,6 +35,7 @@
 #include "texprint.h"
 #include "gretl_xml.h"
 #include "gretl_string_table.h"
+#include "dbread.h"
 
 #include <glib.h>
 

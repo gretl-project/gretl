@@ -22,6 +22,7 @@
 #include "gretl_panel.h"
 #include "gretl_func.h"
 #include "usermat.h"
+#include "dbread.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
