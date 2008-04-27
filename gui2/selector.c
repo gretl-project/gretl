@@ -1030,6 +1030,10 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	return;
     }
 
+    if (locus == SR_RVARS2 && USE_RXLIST(sr->code)) {
+	set_varflag(UNRESTRICTED);
+    }
+
     keep_names = 
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->lvars), 
 					  "keep_names"));
