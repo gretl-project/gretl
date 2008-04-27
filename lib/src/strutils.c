@@ -63,9 +63,25 @@ double dot_atof (const char *s)
 {
     double x;
 
-    gretl_push_c_numeric_locale();
+#ifdef ENABLE_NLS
+    static int decpoint = 0;
+
+    if (decpoint == 0) {
+	struct lconv *lc;
+
+	lc = localeconv();
+	decpoint = *lc->decimal_point;
+    }
+    if (decpoint == '.') {
+	x = atof(s);
+    } else {
+	gretl_push_c_numeric_locale();
+	x = atof(s);
+	gretl_pop_c_numeric_locale();
+    }
+#else
     x = atof(s);
-    gretl_pop_c_numeric_locale();
+#endif
 
     return x;
 }
