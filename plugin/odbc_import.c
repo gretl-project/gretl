@@ -218,6 +218,8 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	    SQLBindCol(stmt, i+1, SQL_C_LONG, &grabint[j++], 0, &colbytes[i]);
 	} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
 	    SQLBindCol(stmt, i+1, SQL_C_CHAR, &grabstr[k++], 16, &colbytes[i]);
+	} else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
+	    SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, &grabstr[k++], 10, &colbytes[i]);
 	} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
 	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], 0, &colbytes[i]);
 	}
@@ -290,6 +292,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	    j = k = p = 0;
 	    fprintf(stderr, "SQLFetch, row %d:\n", t);
 	    for (i=0; i<=odinfo->ncols; i++) {
+		*obsbit = '\0';
 		if (colbytes[i] == SQL_NULL_DATA) {
 		    fprintf(stderr, " col %d: no data\n", i+1);
 		} else {
@@ -299,12 +302,17 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 			xtgot = xt;
 		    } else if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
 			sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
-			strcat(odinfo->S[t], obsbit);
-		    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
+		    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING ||
+			       odinfo->coltypes[i] == GRETL_TYPE_DATE) {
 			sprintf(obsbit, odinfo->fmts[i], grabstr[k++]);
-			strcat(odinfo->S[t], obsbit);
 		    } else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
 			sprintf(obsbit, odinfo->fmts[i], grabx[p++]);
+		    }
+		}
+		if (odinfo->S != NULL && *obsbit != '\0') {
+		    if (strlen(odinfo->S[t]) + strlen(obsbit) > OBSLEN - 1) {
+			fprintf(stderr, "Overflow in observation string!\n");
+		    } else {
 			strcat(odinfo->S[t], obsbit);
 		    }
 		}

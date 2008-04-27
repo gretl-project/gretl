@@ -1817,6 +1817,9 @@ static int parse_odbc_format_chunk (char **ps, int i)
 	gretl_odinfo.coltypes[i] = GRETL_TYPE_STRING;
     } else if (*p == 'f' || *p == 'g') {
 	gretl_odinfo.coltypes[i] = GRETL_TYPE_DOUBLE;
+    } else if (*p == 'D') {
+	*p = 's';
+	gretl_odinfo.coltypes[i] = GRETL_TYPE_DATE;
     } else {
 	return E_PARSE;
     }
