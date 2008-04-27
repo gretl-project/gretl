@@ -997,6 +997,8 @@ static double getdbl (parser *p)
 		d += 1.0;
 	    }
 	}
+    } else if (strchr(xstr, '.') == NULL) {
+	d = atof(xstr);
     } else {
 	d = dot_atof(xstr);
     }
