@@ -194,7 +194,7 @@ get_printf_format_chunk (const char *s, int *fc,
 			 int *len, int *wstar, int *pstar,
 			 int *err)
 {
-    const char *cnvchars = "eEfgGxduxs";
+    const char *cnvchars = "eEfgGduxs";
     const char *numchars = "0123456789";
     char *chunk = NULL;
     const char *p = s;

@@ -1545,9 +1545,6 @@ static void ODBC_info_clear_read (void)
 {
     int i;
 
-    free(gretl_odinfo.fmt);
-    gretl_odinfo.fmt = NULL;
-
     gretl_odinfo.query = NULL;
 
     free(gretl_odinfo.x);
@@ -1562,6 +1559,17 @@ static void ODBC_info_clear_read (void)
     for (i=0; i<ODBC_MAXCOLS; i++) {
 	gretl_odinfo.coltypes[i] = 0;
     }
+
+    if (gretl_odinfo.fmts != NULL) {
+	for (i=0; i<gretl_odinfo.ncols; i++) {
+	    free(gretl_odinfo.fmts[i]);
+	}
+	free(gretl_odinfo.fmts);
+	gretl_odinfo.fmts = NULL;
+    }
+
+    gretl_odinfo.nrows = 0;
+    gretl_odinfo.ncols = 0;
 }
 
 void ODBC_info_clear_all (void)
@@ -1763,34 +1771,96 @@ static void free_dbZ (double **dbZ)
     }
 }
 
-static int parse_ODBC_format (char *fmt)
+static int parse_odbc_format_chunk (char **ps, int i)
 {
-    int err = 0;
+    const char *numchars = "0123456789";
+    char *chunk = NULL;
+    char *p = *ps;
+    int n, err = 0;
 
-    /* FIXME this stub needs to be filled out!  For the moment, for
-       testing, we accept just one hard-wired option, "%d:%d",
-       which can be used for, e.g., year, quarter.
-    */
-
-    if (!strcmp(fmt, "%d:%d")) {
-	gretl_odinfo.ncols = 3;
-	gretl_odinfo.coltypes[0] = GRETL_TYPE_INT;
-	gretl_odinfo.coltypes[1] = GRETL_TYPE_INT;
-	gretl_odinfo.coltypes[2] = GRETL_TYPE_DOUBLE;
-	gretl_odinfo.fmt = fmt;
-    } else {
-	free(fmt);
-	err = 1;
+    /* advance to '%' */
+    while (*p && *p != '%') p++; 
+    if (*p == '\0') {
+	return E_PARSE;
     }
+
+    p++; /* move past '%' */
+
+    /* zero padding? */
+    if (*p == '0') {
+	p++;
+    }
+
+    /* optional width? */
+    n = strspn(p, numchars);
+    if (n == 1) {
+	p++;
+    } else if (n > 0) {
+	return E_PARSE;
+    } 
+
+    /* optional dot plus precision? */
+    if (*p == '.') {
+	p++;
+	n = strspn(p, numchars);
+	if (n == 1) {
+	    p++;
+	} else {
+	    return E_PARSE;
+	}
+    }
+
+    /* now we should have a conversion character */
+    if (*p == 'd') {
+	gretl_odinfo.coltypes[i] = GRETL_TYPE_INT;
+    } else if (*p == 's') {
+	gretl_odinfo.coltypes[i] = GRETL_TYPE_STRING;
+    } else if (*p == 'f' || *p == 'g') {
+	gretl_odinfo.coltypes[i] = GRETL_TYPE_DOUBLE;
+    } else {
+	return E_PARSE;
+    }
+
+    /* append any trailing fixed chars */
+    p++;
+    while (*p && *p != '%') p++; 
+    n = p - *ps;
+
+    chunk = gretl_strndup(*ps, n);
+    if (chunk == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = strings_array_add(&gretl_odinfo.fmts, 
+				&gretl_odinfo.ncols, 
+				chunk);
+    }
+
+    *ps = p;
+
+#if 1
+    fprintf(stderr, "set coltype[%d] = %d, fmt='%s'\n", i, 
+	    gretl_odinfo.coltypes[i], gretl_odinfo.fmts[i]);
+#endif
 
     return err;
 }
 
-static void odbc_cols_set_default (void)
+static int parse_odbc_format (char *fmt)
 {
-    /* expect just one (data) column from ODBC */
-    gretl_odinfo.ncols = 1;
-    gretl_odinfo.coltypes[0] = GRETL_TYPE_DOUBLE;
+    char *s = fmt;
+    int i, err = 0;
+
+    for (i=0; i<ODBC_MAXCOLS && !err && *s; i++) {
+	err = parse_odbc_format_chunk(&s, i);
+    }
+
+    if (!err && *s != '\0') {
+	err = E_PARSE;
+    }
+
+    free(fmt);
+
+    return err;
 }
 
 static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
@@ -1829,15 +1899,14 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	if (format == NULL) {
 	    err = E_PARSE;
 	} else {
-	    err = parse_ODBC_format(format);
+	    err = parse_odbc_format(format);
 	}
-    } else {
-	odbc_cols_set_default();
-    }
+    } 
 
     if (!err) {
 	line += strspn(line, " ");
 	gretl_odinfo.query = (char *) line;
+	fprintf(stderr, "SQL query: '%s'\n", line);
 	gretl_error_clear();
 
 	get_data = get_plugin_function("gretl_odbc_get_data", &handle);

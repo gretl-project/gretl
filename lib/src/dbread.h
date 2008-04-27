@@ -62,14 +62,14 @@ struct dbwrapper_ {
     SERIESINFO *sinfo;
 };
 
-#define ODBC_MAXCOLS 4
+#define ODBC_MAXCOLS 3
 
 struct ODBC_info_ {
     char *dsn;
     char *username;
     char *password;
     char *query;
-    char *fmt;
+    char **fmts;
     char coltypes[ODBC_MAXCOLS];
     double *x;
     char **S;

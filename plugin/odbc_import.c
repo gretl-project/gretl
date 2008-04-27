@@ -183,13 +183,15 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     long ret;                    /* return value from functions */
     unsigned char status[10];    /* SQL status */
     SQLINTEGER OD_err, nrows;
-    SQLINTEGER colbytes[4];
     SQLSMALLINT mlen, ncols;
     double xt, *x = NULL;
     unsigned char msg[200];
-    long grabint[3];
-    char grabstr[3][16];
-    int i, j, k;
+    SQLINTEGER colbytes[ODBC_MAXCOLS+1];
+    long grabint[ODBC_MAXCOLS];
+    double grabx[ODBC_MAXCOLS];
+    char grabstr[ODBC_MAXCOLS][16];
+    char obsbit[16];
+    int i, j, k, p;
     int err = 0;
 
     dbc = gretl_odbc_connect_to_dsn(odinfo, &OD_env, &err);
@@ -208,18 +210,22 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    j = k = 0;
+    j = k = p = 0;
 
-    for (i=1; i<=odinfo->ncols; i++) {
-	if (i == odinfo->ncols) {
-	    SQLBindCol(stmt, i, SQL_C_DOUBLE, &xt, 0, &colbytes[i-1]);
-	} else if (odinfo->coltypes[i-1] == GRETL_TYPE_INT) {
-	    SQLBindCol(stmt, i, SQL_C_LONG, &grabint[j++], 0, &colbytes[i-1]);
-	} else if (odinfo->coltypes[i-1] == GRETL_TYPE_STRING) {
-	    SQLBindCol(stmt, i, SQL_C_CHAR, &grabstr[k++], 16, &colbytes[i-1]);
+    /* auxiliary obs columns */
+    for (i=0; i<odinfo->ncols; i++) {
+	if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
+	    SQLBindCol(stmt, i+1, SQL_C_LONG, &grabint[j++], 0, &colbytes[i]);
+	} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
+	    SQLBindCol(stmt, i+1, SQL_C_CHAR, &grabstr[k++], 16, &colbytes[i]);
+	} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
+	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], 0, &colbytes[i]);
 	}
     }
-	
+
+    /* last column: data */
+    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt, 0, &colbytes[i]);
+
     ret = SQLExecDirect(stmt, (SQLCHAR *) odinfo->query, SQL_NTS);   
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLExecDirect");
@@ -239,9 +245,9 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     printf("Number of Columns = %d\n", (int) ncols);
 
-    if (ncols != odinfo->ncols) {
+    if (ncols != odinfo->ncols + 1) {
 	gretl_errmsg_sprintf("ODBC: expected %d columns but got %d",
-			     odinfo->ncols, ncols);
+			     odinfo->ncols + 1, ncols);
 	err = 1;
 	goto bailout;
     }
@@ -267,7 +273,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	}
     }
 
-    if (!err && odinfo->fmt != NULL) {
+    if (!err && odinfo->fmts != NULL) {
 	odinfo->S = strings_array_new_with_length(nrows, OBSLEN);
 	if (odinfo->S == NULL) {
 	    err = E_ALLOC;
@@ -281,29 +287,30 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	ret = SQLFetch(stmt);  
 	while (ret != SQL_NO_DATA && t < nrows) {
 	    xtgot = NADBL;
-	    j = k = 0;
+	    j = k = p = 0;
 	    fprintf(stderr, "SQLFetch, row %d:\n", t);
-	    for (i=0; i<odinfo->ncols; i++) {
+	    for (i=0; i<=odinfo->ncols; i++) {
 		if (colbytes[i] == SQL_NULL_DATA) {
 		    fprintf(stderr, " col %d: no data\n", i+1);
 		} else {
-		    fprintf(stderr, " col %d: %d bytes, value ", i+1, (int) colbytes[i]);
-		    if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
+		    fprintf(stderr, " col %d: %d bytes\n", i+1, (int) colbytes[i]);
+		    if (i == odinfo->ncols) {
+			/* the actual data */
 			xtgot = xt;
-			fprintf(stderr, "%.10g\n", xt);
 		    } else if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
-			fprintf(stderr, "%d\n", (int) grabint[j++]);
+			sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
+			strcat(odinfo->S[t], obsbit);
 		    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
-			fprintf(stderr, "'%s'\n", grabstr[k++]);
+			sprintf(obsbit, odinfo->fmts[i], grabstr[k++]);
+			strcat(odinfo->S[t], obsbit);
+		    } else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
+			sprintf(obsbit, odinfo->fmts[i], grabx[p++]);
+			strcat(odinfo->S[t], obsbit);
 		    }
 		}
 	    }
-	    if (odinfo->S != NULL && odinfo->ncols == 3 && 
-		odinfo->coltypes[0] == GRETL_TYPE_INT &&
-		odinfo->coltypes[1] == GRETL_TYPE_INT) {
-		/* FIXME this needs to be generalized */
-		sprintf(odinfo->S[t], odinfo->fmt, (int) grabint[0],
-			(int) grabint[1]);
+	    if (odinfo->S != NULL) {
+		fprintf(stderr, " obs = '%s'\n", odinfo->S[t]);
 	    }
 	    x[t++] = xtgot;
 	    ret = SQLFetch(stmt);  
