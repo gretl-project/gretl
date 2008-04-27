@@ -4746,6 +4746,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	}
 	break;
     case M_H:
+    case M_SIGMA:
 	if (gretl_model_get_data(pmod, "garch_h") == NULL) {
 	    *err = E_BADSTAT;
 	} else {

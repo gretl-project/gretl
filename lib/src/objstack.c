@@ -947,18 +947,27 @@ static stacker *find_smatch (const char *oname)
     return smatch;
 }
 
-/* retrieve the type of a named model, or of the last model
-   if @name is NULL */
+/* retrieve the type and command index of a named model, or of 
+   the last model if @name is NULL */
 
-GretlObjType gretl_model_get_type (const char *name)
+GretlObjType gretl_model_get_type_and_ci (const char *name,
+					  int *ci)
 {
     stacker *smatch = find_smatch(name);
+    GretlObjType ret = GRETL_OBJ_NULL;
 
-    if (smatch == NULL) {
-	return GRETL_OBJ_NULL;
-    } else {
-	return smatch->type;
+    *ci = 0;
+
+    if (smatch != NULL) {
+	ret = smatch->type;
+	if (ret == GRETL_OBJ_EQN) {
+	    MODEL *pmod = smatch->ptr;
+
+	    *ci = pmod->ci;
+	}
     }
+
+    return ret;
 }
 
 double saved_object_get_scalar (const char *oname, int idx, int *err)

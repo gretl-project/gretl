@@ -3038,7 +3038,7 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     } else if (idx == M_COEFF) {
 	M = VAR_get_coeff_matrix(var, err);
 	copy = 0;
-    } else if (idx == M_VCV) {
+    } else if (idx == M_VCV || idx == M_SIGMA) {
 	src = var->S;
     } else if (vecm_matrix(idx)) {
 	if (var->jinfo != NULL) {
