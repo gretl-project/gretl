@@ -855,6 +855,21 @@ static int pick_apart (gretl_restriction *r, const char *s,
     return 0;
 }
 
+static int bbit_trailing_garbage (const char *s)
+{
+    if (*s) {
+	while (isspace(*s)) s++;
+	if (*s) {
+	    if (*s == '/') {
+		gretl_errmsg_sprintf(_("%s: division not allowed here"), s-1);
+	    }
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* We got a leading letter ('a' or 'b') and now we parse
    what follows.  The simplest case is just a number, giving
    e.g., "b1".  Then we assess the validity of what we've
@@ -871,18 +886,13 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 	char *test;
 
 	*bnum = strtol(s, &test, 10);
-	if (*test) {
-	    /* got some trailing garbage */
-	    if (*test == '/') {
-		gretl_errmsg_sprintf(_("%s: division not allowed here"), s-1);
-	    }
+	if (bbit_trailing_garbage(test)) {
 	    return err;
-	} else {
-	    if (r->type == GRETL_OBJ_VAR) {
-		*eq = EQN_UNSPEC;
-	    }
-	    err = 0;
 	}
+	if (r->type == GRETL_OBJ_VAR) {
+	    *eq = EQN_UNSPEC;
+	}
+	err = 0;
     } else if (*s == '[') {
 	err = pick_apart(r, s + 1, eq, bnum, pdinfo);
     }
