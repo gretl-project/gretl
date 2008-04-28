@@ -19,7 +19,7 @@
 #define ROOTNODE "funcref"
 #define UTF const xmlChar *
 
-#define VERBOSE 0
+#define VERBOSE 4
 
 #define SECTLEN 64
 #define LBLLEN 128
@@ -32,7 +32,6 @@ enum {
     MATSHAPE,
     MATH,
     LINALG,
-    MATRIX_STATS,
     STATS,
     DATA_UTILS,
     FILTERS,
@@ -55,7 +54,6 @@ struct tab_labeler labelers[] = {
     { MATSHAPE,     "matshape",     "Shape/size" },
     { MATH,         "math",         "Element by element" },
     { LINALG,       "linalg",       "Matrix algebra" },
-    { MATRIX_STATS, "matrix-stats", "Statistics" },
     { STATS,        "stats",        "Statistics" },
     { DATA_UTILS,   "data-utils",   "Data utilities" },
     { FILTERS,      "filters",      "Filters" },
@@ -63,7 +61,7 @@ struct tab_labeler labelers[] = {
     { PROBDIST,     "probdist",     "Probability distributions" },
     { STRINGS,      "strings",      "Strings" },
     { TRANSFORMS,   "transforms",   "Transformations" },
-    { ACCESS        "access",       "Accessors" },
+    { ACCESS,       "access",       "Accessors" },
     { TAB_MAX,      NULL,           NULL }
 };
 
@@ -122,7 +120,7 @@ static section *section_new (const char *name)
 	sect->funs = NULL;
 
 	for (i=0; i<TAB_MAX; i++) {
-	    if (!strcmp(sect->name, labelers[i].title)) {
+	    if (!strcmp(sect->name, labelers[i].tag)) {
 		sect->ID = labelers[i].ID;
 		break;
 	    }
@@ -160,11 +158,11 @@ static int section_already_recorded (sectlist *s, const char *name)
 
 static int function_in_gretl (const char *funword)
 {
-    int i;
-
 #if 1
     return 1;
 #else
+    int i;
+
     for (i=1; i<NC; i++) {
 	if (!strcmp(funword, gretl_command_word(i))) {
 	    return 1;
@@ -224,30 +222,92 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
     return err;
 }
 
+static int matrix_return (char *rtype)
+{
+    if (!strcmp(rtype, "matrix") ||
+	!strcmp(rtype, "smatrix") ||
+	!strcmp(rtype, "rvec") ||
+	!strcmp(rtype, "cvec")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+static int ok_matrix_arg (char *atype)
+{
+    int ret = 0;
+
+    if (atype != NULL) {
+	if (!strcmp(atype, "vector") ||
+	    !strcmp(atype, "rvec") ||
+	    !strcmp(atype, "cvec") ||
+	    !strcmp(atype, "matrix") ||
+	    !strcmp(atype, "smatrix") ||
+	    !strcmp(atype, "symmat") ||
+	    !strcmp(atype, "matrixref") ||
+	    !strcmp(atype, "anyfloat") ||
+	    !strcmp(atype, "series-or-vec") ||
+	    !strcmp(atype, "series-or-mat") ||
+	    !strcmp(atype, "anyfloat-or-list")) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 static int 
 place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 {
+    xmlNodePtr n1, n2;
     function *fun, **funs = NULL;
-    char *sname, *fname;
+    char *sname, *fname, *atype, *retval;
+    int matrix_ok = 0;
+    int gotargs = 0;
     int nc, n = -1;
     int i, err = 0;
 
-    if (gui_only(node)) {
-	return 0;
-    }
-
     sname = (char *) xmlGetProp(node, (UTF) "section");
     fname = (char *) xmlGetProp(node, (UTF) "name");
+    retval = (char *) xmlGetProp(node, (UTF) "output");
 
     if (!function_in_gretl(fname)) {
 	fprintf(stderr, "*** '%s': obsolete function, skipping\n", fname);
 	goto bailout;
     }
     
-    if (sname == NULL || fname == NULL) {
+    if (sname == NULL || fname == NULL || retval == NULL) {
 	fprintf(stderr, "Error parsing function\n");
 	return 1;
-    }	
+    }
+
+    if (matrix_return(retval)) {
+	matrix_ok = 1;
+    } else {
+	n1 = node->xmlChildrenNode;
+	while (n1 != NULL && !err && !gotargs) {
+	    if (!xmlStrcmp(n1->name, (UTF) "fnargs")) {
+		gotargs = 1;
+		n2 = n1->xmlChildrenNode;
+		while (n2 != NULL && !err && !matrix_ok) {
+		    if (!xmlStrcmp(n2->name, (UTF) "fnarg")) {
+			atype = (char *) xmlGetProp(n2, (UTF) "type");
+			if (ok_matrix_arg(atype)) {
+			    matrix_ok = 1;
+			}
+			free(atype);
+		    }
+		    n2 = n2->next;
+		}
+	    }
+	    n1 = n1->next;
+	} 
+    }  
+
+    if (!matrix_ok) {
+	goto bailout;
+    }
 
     for (i=0; i<s->nsects; i++) {
 	if (!strcmp(sname, s->sections[i]->name)) {
@@ -261,7 +321,7 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 	return 1;
     }
 
-    fun = function_new(fname, XX);
+    fun = function_new(fname, matrix_ok);
     if (fun == NULL) {
 	fprintf(stderr, "Out of memory\n");
 	return 1;
@@ -293,7 +353,7 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 static int parse_ref_file (sectlist *slist)
 {
     xmlDocPtr doc;
-    xmlNodePtr cur;
+    xmlNodePtr cur, flist;
     char *listname;
     int err = 0;
 
@@ -326,8 +386,9 @@ static int parse_ref_file (sectlist *slist)
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (UTF) "funclist")) {
-	    listname = (char *) xmlGetProp(node, (UTF) "ref");
+	    listname = (char *) xmlGetProp(cur, (UTF) "ref");
 	    if (!strcmp(listname, "functions")) {
+		flist = cur;
 		free(listname);
 		break;
 	    } else {
@@ -348,7 +409,7 @@ static int parse_ref_file (sectlist *slist)
 
     /* second pass: assemble functions in sections */
     if (!err) {
-	cur = xmlDocGetRootElement(doc);
+	cur = flist;
 	cur = cur->xmlChildrenNode;
 	while (cur != NULL && !err) {
 	    if (!xmlStrcmp(cur->name, (UTF) "function")) {
@@ -420,38 +481,35 @@ static const char *section_id_label (int ID)
     return NULL;
 }
 
-/* print out the thematic lists as TeX tables */
+/* print out the matrix-ok functions as a TeX table, organized
+   by "theme" */
+
+const char *tabline =
+    "\\begin{tabular}{p{\\cwid}p{\\cwid}p{\\cwid}p{\\cwid}p{\\cwid}p{\\cwid}}";
 
 static int print_topic_lists (sectlist *s)
 {
     const section *sect;
-    const char *label;
     int i, j;
     int err = 0;
 
     for (i=0; i<TAB_MAX; i++) {
 	sect = get_section_by_id(s, i);
-	if (sect == NULL) {
-	    fprintf(stderr, "Section with ID %d is missing!\n", i);
-	    err = 1;
+	if (sect == NULL || sect->nfuns == 0) {
+	    fprintf(stderr, "Section '%s': no entries\n", labelers[i].title);
 	    continue;
 	}
-	printf("\\subsection{%s}\n"
-	       "\\label{sect-%s}\n\n", _(sect->name),
-	       section_id_label(i));
-	puts("{\\small\n\\begin{longtable}{lp{2in}");
+	printf("\\textbf{%s}\n\\hrulefill\n\n", section_id_label(i));
+	puts(tabline);
 	for (j=0; j<sect->nfuns; j++) {
-	    label = sect->funs[j]->label;
-	    printf("\\fun{\\hyperlink{fun-%s}{%s}} ",
-		   sect->funs[j]->name, sect->funs[j]->name,
-		   label);
-	    if ((j+1) % 2 == 0) {
-		puts("\\\\\n");
+	    printf("\\texttt{%s}", sect->funs[j]->name);
+	    if (j == sect->nfuns - 1 || (j+1) % 6 == 0) {
+		puts(" \\\\");
 	    } else {
-		puts("& ");
+		puts(" &");
 	    }
 	}
-	puts("\\end{longtable}\n}\n");
+	puts("\\end{tabular}\n");
     }
 
     return err;

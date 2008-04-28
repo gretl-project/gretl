@@ -509,7 +509,7 @@
       </description>
     </function>
 
-    <function name="cdemean" section="matrix-stats" output="matrix">
+    <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1319,7 +1319,7 @@
       </description>
     </function>
 
-    <function name="imaxc" section="matrix-stats" output="rvec">
+    <function name="imaxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1336,7 +1336,7 @@
       </description>
     </function>
 
-    <function name="imaxr" section="matrix-stats" output="cvec">
+    <function name="imaxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>    
@@ -1353,7 +1353,7 @@
       </description>
     </function>
 
-    <function name="iminc" section="matrix-stats" output="rvec">
+    <function name="iminc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>    
@@ -1370,7 +1370,7 @@
       </description>
     </function>
 
-    <function name="iminr" section="matrix-stats" output="cvec">
+    <function name="iminr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>    
@@ -1791,7 +1791,7 @@
       </description>
     </function>
 
-    <function name="maxc" section="matrix-stats" output="rvec">
+    <function name="maxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1807,7 +1807,7 @@
       </description>
     </function>
 
-    <function name="maxr" section="matrix-stats" output="cvec">
+    <function name="maxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1823,7 +1823,7 @@
       </description>
     </function>
 
-    <function name="mcorr" section="matrix-stats" output="matrix">
+    <function name="mcorr" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1840,7 +1840,7 @@
       </description>
     </function>
 
-    <function name="mcov" section="matrix-stats" output="matrix">
+    <function name="mcov" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1869,7 +1869,7 @@
       </description>
     </function>
 
-    <function name="meanc" section="matrix-stats" output="rvec">
+    <function name="meanc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1884,7 +1884,7 @@
       </description>
     </function>
 
-    <function name="meanr" section="matrix-stats" output="cvec">
+    <function name="meanr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1946,7 +1946,7 @@
       </description>
     </function>
 
-    <function name="minc" section="matrix-stats" output="rvec">
+    <function name="minc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1962,7 +1962,7 @@
       </description>
     </function>
 
-    <function name="minr" section="matrix-stats" output="cvec">
+    <function name="minr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2058,7 +2058,7 @@
       </description>
     </function>
 
-    <function name="mols" section="matrix-stats" output="matrix">
+    <function name="mols" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
@@ -2204,7 +2204,7 @@
       </description>
     </function>
 
-    <function name="mxtab" section="matrix-stats" output="matrix">
+    <function name="mxtab" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
 	<fnarg type="series-or-vec">y</fnarg>
@@ -3072,7 +3072,7 @@
       </description>
     </function>
 
-    <function name="sumc" section="matrix-stats" output="rvec">
+    <function name="sumc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>     
@@ -3087,7 +3087,7 @@
       </description>
     </function>
 
-    <function name="sumr" section="matrix-stats" output="cvec">
+    <function name="sumr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>  

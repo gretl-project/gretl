@@ -40,7 +40,7 @@ WEBDIR = /home/cottrell/stats/esl/website
 
 all: $(GUIDE) $(REF)
 
-$(GUIDE): gretl-guide-it.tex links textables date.tex
+$(GUIDE): gretl-guide-it.tex links textables_it date.tex
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -56,7 +56,7 @@ gretl-guide-it.tex:
 gretl-ref-it.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_it/$@ . ; fi
 
-.PHONY : links cmdtex functex textables onepass refpass topiclist install clean
+.PHONY : links cmdtex functex textables_it onepass refpass topiclist install clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
@@ -70,8 +70,8 @@ cmdtex:
 topiclist:
 	make -C ../commands topiclist_it
 
-textables:
-	make -C ../commands textables
+textables_it:
+	make -C ../commands textables_it
 
 functex:
 	make -C ../commands functex_it
@@ -79,7 +79,7 @@ functex:
 date.tex:
 	LANG=it_IT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
 
-onepass: gretl-guide-it.tex links textables
+onepass: gretl-guide-it.tex links textables_it
 	pdflatex gretl-guide-it
 
 refpass: gretl-ref-it.tex links cmdtex functex topiclist
@@ -91,7 +91,7 @@ install: $(GUIDE) $(REF)
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
-	rm -f ../commands/textables ../commands/topiclist_it 
+	rm -f ../commands/textables_it ../commands/topiclist_it 
 	rm -f ../commands/cmdtex_it ../commands/functex_it
 
 distclean: clean
