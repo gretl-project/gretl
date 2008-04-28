@@ -1965,8 +1965,9 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     loop->n_cmds += 1;
 
 #if LOOP_DEBUG
-    fprintf(stderr, "loop %p: n_cmds = %d, line[%d] = '%s'\n",
-	    (void *) loop, loop->n_cmds, nc, loop->lines[nc]);
+    fprintf(stderr, "loop %p: n_cmds=%d, line[%d]='%s', ci=%d\n",
+	    (void *) loop, loop->n_cmds, nc, loop->lines[nc],
+	    loop->ci[nc]);
 #endif
 
     return err;
@@ -2658,10 +2659,12 @@ static int next_command (char *targ, LOOPSET *loop, int *j)
     int ret = 1;
 
     if (*j < loop->n_cmds) {
+#if 0
 	if (!isprint(loop->lines[*j][0])) {
 	    fprintf(stderr, "bad line %d from loop at %p\n", *j, (void *) loop);
 	    exit(EXIT_FAILURE);
 	}
+#endif
 	strcpy(targ, loop->lines[*j]);
 	*j += 1;
     } else {

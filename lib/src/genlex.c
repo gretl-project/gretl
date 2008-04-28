@@ -969,10 +969,14 @@ static double getdbl (parser *p)
 {
     char xstr[NUMLEN] = {0};
     double d = NADBL;
+    int gotcol = 0;
     int i = 0;
 
     while (ok_dbl_char(p->ch, xstr, i - 1) && i < NUMLEN - 1) {
 	xstr[i++] = p->ch;
+	if (p->ch == ':') {
+	    gotcol = 1;
+	}
 	parser_getc(p);
     }  
 
@@ -985,7 +989,7 @@ static double getdbl (parser *p)
     fprintf(stderr, "getdbl: xstr = '%s'\n", xstr);
 #endif
     
-    if (strchr(xstr, ':')) {
+    if (gotcol) {
 	if (p->dinfo->pd == 1) {
 	    p->err = E_PDWRONG;
 	} else {
@@ -997,8 +1001,6 @@ static double getdbl (parser *p)
 		d += 1.0;
 	    }
 	}
-    } else if (strchr(xstr, '.') == NULL) {
-	d = atof(xstr);
     } else {
 	d = dot_atof(xstr);
     }
@@ -1312,6 +1314,8 @@ const char *getsymb (int t, const parser *p)
 	return "LIST";
     } else if (t == OVAR) {
 	return "OVAR";
+    } else if (t == EMPTY) {
+	return "EMPTY";
     }
 
     if (p != NULL) {

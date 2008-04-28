@@ -104,7 +104,7 @@ enum {
 	      LIST,	  /* reference to named list */
 	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
-	      EMPTY,
+	      EMPTY,      /* "null" */
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */

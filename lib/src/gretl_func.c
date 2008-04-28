@@ -695,7 +695,8 @@ static const char *arg_type_string (int t)
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
-    case GRETL_TYPE_STRING:     return "string";	
+    case GRETL_TYPE_STRING:     return "string";
+    case GRETL_TYPE_NONE:       return "null";
     }
 
     return "unknown";
@@ -2501,6 +2502,7 @@ static int read_param_option (char **ps, fn_param *param)
     int err = E_PARSE;
 
     if (!strncmp(*ps, "[null]", 6)) {
+	param->flags |= ARG_OPTIONAL;
 	err = 0;
 	*ps += 6;
     }

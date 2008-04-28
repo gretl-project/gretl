@@ -81,6 +81,8 @@ static const char *typestr (int t)
     case LIST:
     case LVEC:
 	return "list";
+    case EMPTY:
+	return "empty";
     default:
 	return "?";
     }
