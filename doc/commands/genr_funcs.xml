@@ -1411,6 +1411,11 @@
 	  \end{eqnarray*}
 	</para>
 	<para>
+	  Moreover, the products <equation status="inline" ascii="ginv(A)*A"  
+	  tex="$A^+ A$"/> and <equation status="inline" ascii="A*ginv(A)"  
+	  tex="$A A^+$"/> are symmetric by construction.
+	</para>
+	<para>
 	  <seelist>
 	    <fncref targ="inv"/>
 	    <fncref targ="svd"/>
