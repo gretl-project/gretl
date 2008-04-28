@@ -5,7 +5,7 @@
 
   <funclist name="Accessors" ref="accessors">
 
-    <function name="$ahat" output="series">
+    <function name="$ahat" section="access" output="series">
       <description>
 	<para>
 	  Must follow the estimation of a fixed-effect panel data model.
@@ -15,7 +15,7 @@
       </description>
     </function>
 
-    <function name="$aic" output="scalar">
+    <function name="$aic" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the Akaike Information Criterion for the last estimated
@@ -24,7 +24,7 @@
       </description>
     </function>
 
-    <function name="$bic" output="scalar">
+    <function name="$bic" section="access" output="scalar">
       <description>
 	<para>
 	  Returns Schwarz's Bayesian Information Criterion for the last
@@ -33,7 +33,7 @@
       </description>
     </function>
 
-    <function name="$coeff" output="scalar" altout="matrix">
+    <function name="$coeff" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -67,7 +67,7 @@
       </description>
     </function>
 
-    <function name="$compan" output="matrix">
+    <function name="$compan" section="access" output="matrix">
       <description>
 	<para>
 	  Must follow the estimation of a VAR or a VECM; returns the
@@ -76,7 +76,7 @@
       </description>
     </function>
 
-    <function name="$df" output="scalar">
+    <function name="$df" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the degrees of freedom of the last estimated model.
@@ -84,7 +84,7 @@
       </description>
     </function>
 
-    <function name="$ess" output="scalar">
+    <function name="$ess" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the error sum of squares of the last estimated model.
@@ -92,7 +92,7 @@
       </description>
     </function>
 
-    <function name="$gmmcrit" output="scalar">
+    <function name="$gmmcrit" section="access" output="scalar">
       <description>
 	<para>
 	  Must follow a <lit>gmm</lit> block. Returns the value of the
@@ -101,7 +101,7 @@
       </description>
     </function>
 
-    <function name="$h" output="series">
+    <function name="$h" section="access" output="series">
       <description>
 	<para>
 	  Must follow a <lit>garch</lit> command. Returns the estimated
@@ -110,7 +110,7 @@
       </description>
     </function>
 
-    <function name="$hausman" output="rvec">
+    <function name="$hausman" section="access" output="rvec">
       <description>
 	<para>
 	  Must follow a <lit>tsls</lit> command. Returns a <by r="1"
@@ -121,7 +121,7 @@
       </description>
     </function>
 
-    <function name="$hqc" output="scalar">
+    <function name="$hqc" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the Hannan-Quinn Information Criterion for the last
@@ -130,7 +130,7 @@
       </description>
     </function>
 
-    <function name="$jalpha" output="matrix">
+    <function name="$jalpha" section="access" output="matrix">
       <description>
 	<para>
 	  Must follow the estimation of a VECM, and returns the loadings
@@ -140,7 +140,7 @@
       </description>
     </function>
 
-    <function name="$jbeta" output="matrix">
+    <function name="$jbeta" section="access" output="matrix">
       <description>
 	<para>
 	  Must follow the estimation of a VECM, and returns the
@@ -152,7 +152,7 @@
       </description>
     </function>
 
-    <function name="$jvbeta" output="smatrix">
+    <function name="$jvbeta" section="access" output="smatrix">
       <description>
 	<para>
 	  Must follow the estimation of a VECM, and returns the estimated
@@ -209,7 +209,7 @@
       </description>
     </function>
 
-    <function name="$lnl" output="scalar">
+    <function name="$lnl" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the log-likelihood for the last estimated model (where
@@ -218,7 +218,7 @@
       </description>
     </function>
 
-    <function name="$ncoeff" output="scalar">
+    <function name="$ncoeff" section="access" output="scalar">
       <description>
 	<para>
 	  Total number of coefficients estimated in the last model.
@@ -226,7 +226,7 @@
       </description>
     </function>
 
-    <function name="$nobs" targ="dnobs" output="scalar">
+    <function name="$nobs" section="access" targ="dnobs" output="scalar">
       <description>
 	<para>
 	  Returns the number of observations in the currently selected
@@ -235,7 +235,7 @@
       </description>
     </function>
 
-    <function name="$nvars" output="scalar">
+    <function name="$nvars" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the number of variables in the dataset (including the
@@ -244,7 +244,7 @@
       </description>
     </function>
 
-    <function name="$pd" output="scalar">
+    <function name="$pd" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the frequency or periodicity of the data (e.g. 4 for
@@ -253,7 +253,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" targ="dpvalue" output="scalar">
+    <function name="$pvalue" section="access" targ="dpvalue" output="scalar">
       <description>
 	<para>
 	  Returns the p-value of the test statistic that was generated by
@@ -267,7 +267,7 @@
       </description>
     </function>
 
-    <function name="$rho" output="scalar">
+    <function name="$rho" section="access" output="scalar">
       <fnargs>
 	<fnarg optional="true" type="scalar">n</fnarg>
       </fnargs>
@@ -282,7 +282,7 @@
       </description>
     </function>
 
-    <function name="$rsq" output="scalar">
+    <function name="$rsq" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the unadjusted <math>R</math><sup>2</sup> from the
@@ -291,7 +291,7 @@
       </description>
     </function>
 
-    <function name="$sargan" output="rvec">
+    <function name="$sargan" section="access" output="rvec">
       <description>
 	<para>
 	  Must follow a <lit>tsls</lit> command. Returns a <by r="1"
@@ -302,7 +302,7 @@
       </description>
     </function>
 
-    <function name="$sigma" output="scalar">
+    <function name="$sigma" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the standard error of the residuals (or Standard Error
@@ -311,7 +311,7 @@
       </description>
     </function>
 
-    <function name="$stderr" output="scalar" altout="matrix">
+    <function name="$stderr" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s</fnarg>
       </fnargs>
@@ -330,7 +330,7 @@
       </description>
     </function>
 
-    <function name="$stopwatch" output="scalar">
+    <function name="$stopwatch" section="access" output="scalar">
       <description>
 	<para>
 	  Must be preceded by <lit>set stopwatch</lit>, which activates the
@@ -343,7 +343,7 @@
       </description>
     </function>
 
-    <function name="$T" output="scalar">
+    <function name="$T" section="access" output="scalar">
       <description>
 	<para>
 	  Number of observations used in estimating the last model.
@@ -351,7 +351,7 @@
       </description>
     </function>
 
-    <function name="$t1" output="scalar">
+    <function name="$t1" section="access" output="scalar">
       <description>
 	<para>
 	  The 1-based index of the first observation in the currently
@@ -360,7 +360,7 @@
       </description>
     </function>
 
-    <function name="$t2" output="scalar">
+    <function name="$t2" section="access" output="scalar">
       <description>
 	<para>
 	  The 1-based index of the last observation in the currently
@@ -369,7 +369,7 @@
       </description>
     </function>
 
-    <function name="$test" output="scalar">
+    <function name="$test" section="access" output="scalar">
       <description>
 	<para>
 	  Returns the value of the test statistic that was generated by
@@ -383,7 +383,7 @@
       </description>
     </function>
 
-    <function name="$trsq" output="scalar">
+    <function name="$trsq" section="access" output="scalar">
       <description>
 	<para>
 	  Returns <math>TR</math><sup>2</sup> (sample size times
@@ -392,7 +392,7 @@
       </description>
     </function>
 
-    <function name="$uhat" output="series">
+    <function name="$uhat" section="access" output="series">
       <description>
 	<para>
 	  Returns the residuals from the last model. This may have
@@ -410,7 +410,7 @@
       </description>
     </function>
 
-    <function name="$unit" output="series">
+    <function name="$unit" section="access" output="series">
       <description>
 	<para>
 	  Valid for panel datasets only.  Returns a series with
@@ -420,7 +420,7 @@
       </description>
     </function>
 
-    <function name="$vcv" output="scalar" altout="matrix">
+    <function name="$vcv" section="access" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg optional="true" type="coeffname">s1</fnarg>
 	<fnarg optional="true" type="coeffname">s2</fnarg>
@@ -447,7 +447,7 @@
       </description>
     </function>
 
-    <function name="$yhat" output="series">
+    <function name="$yhat" section="access" output="series">
       <description>
 	<para>
 	  Returns the fitted values from the last regression.
@@ -459,7 +459,7 @@
 
   <funclist name="Functions proper" ref="functions">
 
-    <function name="abs" output="asinput">
+    <function name="abs" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -470,7 +470,7 @@
       </description>
     </function>
 
-    <function name="acos" output="asinput">
+    <function name="acos" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -483,7 +483,7 @@
       </description>
     </function>
 
-    <function name="asin" output="asinput">
+    <function name="asin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -496,7 +496,7 @@
       </description>
     </function>
 
-    <function name="atan" output="asinput">
+    <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -508,7 +508,7 @@
       </description>
     </function>
 
-    <function name="BFGSmax" output="scalar">
+    <function name="BFGSmax" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="vector">b</fnarg>
 	<fnarg type="string">s</fnarg>
@@ -537,7 +537,7 @@
       </description>
     </function>
 
-    <function name="bkfilt" output="series">
+    <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -553,7 +553,7 @@
       </description>
     </function>
 
-    <function name="cdemean" output="matrix">
+    <function name="cdemean" section="matrix-stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -565,7 +565,7 @@
       </description>
     </function>
 
-    <function name="cdf" output="asinput">
+    <function name="cdf" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
@@ -686,7 +686,7 @@
       </description>
     </function>
 
-    <function name="cdiv" output="matrix">
+    <function name="cdiv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
@@ -706,7 +706,7 @@
       </description>
     </function>
 
-    <function name="ceil" output="asinput">
+    <function name="ceil" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -722,7 +722,7 @@
       </description>
     </function>  
 
-    <function name="cholesky" output="smatrix">
+    <function name="cholesky" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -738,7 +738,7 @@
       </description>
     </function>
 
-    <function name="cmult" output="matrix">
+    <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
@@ -758,7 +758,7 @@
       </description>
     </function>
 
-    <function name="cnorm" output="asinput">
+    <function name="cnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -774,7 +774,7 @@
       </description>
     </function>
 
-    <function name="colnames" output="scalar">
+    <function name="colnames" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="list-or-string">s</fnarg>
@@ -792,7 +792,7 @@
       </description>
     </function>
 
-    <function name="cols" output="scalar">
+    <function name="cols" section="matshape" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -810,7 +810,7 @@
       </description>
     </function>
 
-    <function name="corr" output="scalar">
+    <function name="corr" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y1</fnarg>
 	<fnarg type="series">y2</fnarg>
@@ -828,7 +828,7 @@
       </description>
     </function>
 
-    <function name="cos" output="asinput">
+    <function name="cos" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -839,7 +839,7 @@
       </description>
     </function>
 
-    <function name="cov" output="scalar">
+    <function name="cov" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y1</fnarg>
 	<fnarg type="series">y2</fnarg>
@@ -857,7 +857,7 @@
       </description>
     </function>
 
-    <function name="critical" output="asinput">
+    <function name="critical" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
@@ -932,7 +932,7 @@
       </description>
     </function>  
 
-    <function name="cum" output="asinput">
+    <function name="cum" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
       </fnargs>
@@ -962,7 +962,7 @@
       </description>
     </function>
 
-    <function name="det" output="scalar">
+    <function name="det" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -978,7 +978,7 @@
       </description>
     </function>  
 
-    <function name="diag" output="matrix">
+    <function name="diag" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -995,7 +995,7 @@
       </description>
     </function>
 
-    <function name="diff" output="asinput">
+    <function name="diff" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="smlist">y</fnarg>
       </fnargs>
@@ -1024,7 +1024,7 @@
       </description>
     </function>
 
-    <function name="dnorm" output="asinput">
+    <function name="dnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -1053,7 +1053,7 @@
       </description>
     </function>
 
-    <function name="dsort" output="asinput">
+    <function name="dsort" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
       </fnargs>
@@ -1070,7 +1070,7 @@
       </description>
     </function>
 
-    <function name="dummify" output="list">
+    <function name="dummify" section="transforms" output="list">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
@@ -1093,7 +1093,7 @@
       </description>
     </function>
 
-    <function name="eigengen" output="matrix">
+    <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
@@ -1156,7 +1156,7 @@
       </description>
     </function>
 
-    <function name="eigensym" output="cvec">
+    <function name="eigensym" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
@@ -1187,7 +1187,7 @@
       </description>
     </function>
 
-    <function name="exp" output="asinput">
+    <function name="exp" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -1200,7 +1200,7 @@
       </description>
     </function>
 
-    <function name="fdjac" output="matrix">
+    <function name="fdjac" section="numerical" output="matrix">
       <fnargs>
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="string">s</fnarg>
@@ -1222,7 +1222,7 @@
       </description>
     </function>
 
-    <function name="fft" output="matrix">
+    <function name="fft" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1245,7 +1245,7 @@
       </description>
     </function>
 
-    <function name="ffti" output="matrix">
+    <function name="ffti" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1270,7 +1270,7 @@
       </description>
     </function>
 
-    <function name="firstobs" output="scalar">
+    <function name="firstobs" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -1287,7 +1287,7 @@
       </description>
     </function>
 
-    <function name="floor" output="asinput">
+    <function name="floor" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">y</fnarg>
       </fnargs>    
@@ -1302,7 +1302,7 @@
       </description>
     </function>
 
-    <function name="fracdiff" output="series">
+    <function name="fracdiff" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
@@ -1327,7 +1327,7 @@
       </description>
     </function>
 
-    <function name="gammafun" output="asinput">
+    <function name="gammafun" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>    
@@ -1338,7 +1338,7 @@
       </description>
     </function>
 
-    <function name="genpois" output="series">
+    <function name="genpois" section="probdist" output="series">
       <fnargs>
 	<fnarg type="scalar-or-series">&mu;</fnarg>
       </fnargs>
@@ -1368,7 +1368,7 @@
       </description>
     </function>
 
-    <function name="getenv" output="string">
+    <function name="getenv" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>    
@@ -1381,7 +1381,7 @@
       </description>
     </function>
 
-    <function name="gini" output="scalar">
+    <function name="gini" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>    
@@ -1393,7 +1393,7 @@
       </description>
     </function>
 
-    <function name="ginv" output="matrix">
+    <function name="ginv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
       </fnargs>    
@@ -1431,7 +1431,7 @@
       </description>
     </function>
 
-    <function name="hpfilt" output="series">
+    <function name="hpfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -1447,7 +1447,7 @@
       </description>
     </function>
 
-    <function name="I" output="smatrix">
+    <function name="I" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="scalar">n</fnarg>
       </fnargs>
@@ -1459,7 +1459,7 @@
       </description>
     </function>
 
-    <function name="imaxc" output="rvec">
+    <function name="imaxc" section="matrix-stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -1478,7 +1478,7 @@
       </description>
     </function>
 
-    <function name="imaxr" output="cvec">
+    <function name="imaxr" section="matrix-stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>    
@@ -1497,7 +1497,7 @@
       </description>
     </function>
 
-    <function name="iminc" output="rvec">
+    <function name="iminc" section="matrix-stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>    
@@ -1516,7 +1516,7 @@
       </description>
     </function>
 
-    <function name="iminr" output="cvec">
+    <function name="iminr" section="matrix-stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>    
@@ -1535,7 +1535,7 @@
       </description>
     </function>
 
-    <function name="infnorm" output="scalar">
+    <function name="infnorm" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>    
@@ -1558,7 +1558,7 @@
       </description>
     </function>
 
-    <function name="int" output="asinput">
+    <function name="int" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>  
@@ -1575,7 +1575,7 @@
       </description>
     </function>
 
-    <function name="inv" output="matrix">
+    <function name="inv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>  
@@ -1601,7 +1601,7 @@
       </description>
     </function>
 
-    <function name="invcdf" output="asinput">
+    <function name="invcdf" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
@@ -1673,7 +1673,7 @@
       </description>
     </function>
 
-    <function name="invpd" output="smatrix">
+    <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
       </fnargs>  
@@ -1688,7 +1688,7 @@
       </description>
     </function>
 
-    <function name="islist" output="scalar">
+    <function name="islist" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -1706,7 +1706,7 @@
       </description>
     </function>
 
-    <function name="isnull" output="scalar">
+    <function name="isnull" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -1724,7 +1724,7 @@
       </description>
     </function>  
 
-    <function name="isseries" output="scalar">
+    <function name="isseries" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -1742,7 +1742,7 @@
       </description>
     </function>
 
-    <function name="isstring" output="scalar">
+    <function name="isstring" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -1760,7 +1760,7 @@
       </description>
     </function>
 
-    <function name="lags" output="list">
+    <function name="lags" section="transforms" output="list">
       <fnargs>
 	<fnarg type="scalar">p</fnarg>
 	<fnarg type="series-or-list">y</fnarg>
@@ -1784,7 +1784,7 @@
       </description>
     </function>
 
-    <function name="lastobs" output="scalar">
+    <function name="lastobs" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -1801,7 +1801,7 @@
       </description>
     </function>
 
-    <function name="ldet" output="scalar">
+    <function name="ldet" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -1817,7 +1817,7 @@
       </description>
     </function>
 
-    <function name="ldiff" output="asinput">
+    <function name="ldiff" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
       </fnargs>
@@ -1843,7 +1843,7 @@
       </description>
     </function>
 
-    <function name="ljungbox" output="scalar">
+    <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar">p</fnarg>
@@ -1868,7 +1868,7 @@
       </description>
     </function>
 
-    <function name="lngamma" output="asinput">
+    <function name="lngamma" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -1879,7 +1879,7 @@
       </description>
     </function>
 
-    <function name="log" output="asinput">
+    <function name="log" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat-or-list">x</fnarg>
       </fnargs>
@@ -1900,7 +1900,7 @@
       </description>
     </function>
 
-    <function name="log10" output="asinput">
+    <function name="log10" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -1912,7 +1912,7 @@
       </description>
     </function>
 
-    <function name="log2" output="asinput">
+    <function name="log2" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -1924,7 +1924,7 @@
       </description>
     </function>
 
-    <function name="lower" output="smatrix">
+    <function name="lower" section="matshape" output="smatrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
       </fnargs>
@@ -1946,7 +1946,7 @@
       </description>
     </function>
 
-    <function name="lrvar" output="scalar">
+    <function name="lrvar" section="filters" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar">k</fnarg>
@@ -1968,7 +1968,7 @@
       </description>
     </function>
 
-    <function name="makemask" output="cvec">
+    <function name="makemask" section="data-utils" output="cvec">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -1982,7 +1982,7 @@
       </description>
     </function>
 
-    <function name="max" output="scalar-or-series">
+    <function name="max" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
       </fnargs>
@@ -1997,7 +1997,7 @@
       </description>
     </function>
 
-    <function name="maxc" output="rvec">
+    <function name="maxc" section="matrix-stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2015,7 +2015,7 @@
       </description>
     </function>
 
-    <function name="maxr" output="cvec">
+    <function name="maxr" section="matrix-stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2033,7 +2033,7 @@
       </description>
     </function>
 
-    <function name="mcorr" output="matrix">
+    <function name="mcorr" section="matrix-stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2050,7 +2050,7 @@
       </description>
     </function>
 
-    <function name="mcov" output="matrix">
+    <function name="mcov" section="matrix-stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2067,7 +2067,7 @@
       </description>
     </function>
 
-    <function name="mean" output="scalar-or-series">
+    <function name="mean" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
       </fnargs>
@@ -2085,7 +2085,7 @@
       </description>
     </function>
 
-    <function name="meanc" output="rvec">
+    <function name="meanc" section="matrix-stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2101,7 +2101,7 @@
       </description>
     </function>
 
-    <function name="meanr" output="cvec">
+    <function name="meanr" section="matrix-stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2116,7 +2116,7 @@
       </description>
     </function>
 
-    <function name="median" output="scalar">
+    <function name="median" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -2131,7 +2131,7 @@
       </description>
     </function>
 
-    <function name="mexp" output="smatrix">
+    <function name="mexp" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -2151,7 +2151,7 @@
       </description>
     </function>
 
-    <function name="min" output="scalar-or-series">
+    <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
       </fnargs>
@@ -2166,7 +2166,7 @@
       </description>
     </function>
 
-    <function name="minc" output="rvec">
+    <function name="minc" section="matrix-stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2184,7 +2184,7 @@
       </description>
     </function>
 
-    <function name="minr" output="cvec">
+    <function name="minr" section="matrix-stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2202,7 +2202,7 @@
       </description>
     </function>
 
-    <function name="missing" output="asinput">
+    <function name="missing" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
       </fnargs>
@@ -2220,7 +2220,7 @@
       </description>
     </function>
 
-    <function name="misszero" output="asinput">
+    <function name="misszero" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
       </fnargs>
@@ -2237,7 +2237,7 @@
       </description>
     </function>
 
-    <function name="mlag" output="matrix">
+    <function name="mlag" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar">p</fnarg>
@@ -2264,7 +2264,7 @@
       </description>
     </function>
 
-    <function name="mnormal" output="matrix">
+    <function name="mnormal" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="scalar">r</fnarg>
 	<fnarg type="scalar">c</fnarg>
@@ -2282,7 +2282,7 @@
       </description>
     </function>
 
-    <function name="mols" output="matrix">
+    <function name="mols" section="matrix-stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
@@ -2300,7 +2300,7 @@
       </description>
     </function>
 
-    <function name="mread" output="matrix">
+    <function name="mread" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -2343,7 +2343,7 @@
       </description>
     </function>
 
-    <function name="mshape" output="matrix">
+    <function name="mshape" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar">r</fnarg>
@@ -2372,7 +2372,7 @@
       </description>
     </function>
 
-    <function name="msortby" output="matrix">
+    <function name="msortby" section="matrix-stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar">j</fnarg>
@@ -2386,7 +2386,7 @@
       </description>
     </function>
 
-    <function name="muniform" output="matrix">
+    <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="scalar">r</fnarg>
 	<fnarg type="scalar">c</fnarg>
@@ -2411,7 +2411,7 @@
       </description>
     </function>
 
-    <function name="mwrite" output="scalar">
+    <function name="mwrite" section="matbuild" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="string">s</fnarg>
@@ -2443,7 +2443,7 @@
       </description>
     </function>
 
-    <function name="mxtab" output="matrix">
+    <function name="mxtab" section="matrix-stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
 	<fnarg type="series-or-vec">y</fnarg>
@@ -2465,7 +2465,7 @@
       </description>
     </function>
 
-    <function name="nelem" output="scalar">
+    <function name="nelem" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="list">L</fnarg>
       </fnargs>
@@ -2476,7 +2476,7 @@
       </description>
     </function>
 
-    <function name="nobs" output="scalar">
+    <function name="nobs" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -2488,7 +2488,7 @@
       </description>
     </function>
 
-    <function name="normal" output="series">
+    <function name="normal" section="probdist" output="series">
       <fnargs>
 	<fnarg type="scalar">&mu;</fnarg>
 	<fnarg type="scalar">&sigma;</fnarg>
@@ -2512,7 +2512,7 @@
       </description>
     </function>
 
-    <function name="nullspace" output="matrix">
+    <function name="nullspace" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
       </fnargs>
@@ -2545,7 +2545,7 @@
       </description>
     </function>
 
-    <function name="obs" output="series">
+    <function name="obs" section="data-utils" output="series">
       <description>
 	<para>
 	  Returns a series of consecutive integers, setting 1 at the start
@@ -2562,7 +2562,7 @@
       </description>
     </function>
 
-    <function name="obsnum" output="scalar">
+    <function name="obsnum" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -2589,7 +2589,7 @@
       </description>
     </function>
 
-    <function name="ok" output="asinput">
+    <function name="ok" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="sslist">x</fnarg>
       </fnargs>
@@ -2611,7 +2611,7 @@
       </description>
     </function>
 
-    <function name="onenorm" output="scalar">
+    <function name="onenorm" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2635,7 +2635,7 @@
       </description>
     </function>
 
-    <function name="ones" output="matrix">
+    <function name="ones" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="scalar">r</fnarg>
 	<fnarg type="scalar">c</fnarg>
@@ -2654,7 +2654,7 @@
       </description>
     </function>
 
-    <function name="orthdev" output="series">
+    <function name="orthdev" section="transforms" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -2689,7 +2689,7 @@
       </description>
     </function>
 
-    <function name="pdf" output="asinput">
+    <function name="pdf" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
@@ -2715,7 +2715,7 @@
       </description>
     </function>
 
-    <function name="pmean" output="series">
+    <function name="pmean" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -2744,7 +2744,7 @@
       </description>
     </function>
 
-    <function name="polroots" output="matrix">
+    <function name="polroots" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
       </fnargs>
@@ -2765,7 +2765,7 @@
       </description>
     </function>
 
-    <function name="princomp" output="matrix">
+    <function name="princomp" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar">p</fnarg>
@@ -2808,7 +2808,7 @@
       </description>
     </function>
 
-    <function name="psd" output="series">
+    <function name="psd" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -2844,7 +2844,7 @@
       </description>
     </function>
 
-    <function name="pvalue" output="asinput">
+    <function name="pvalue" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
@@ -2877,7 +2877,7 @@
       </description>
     </function>
 
-    <function name="qform" output="matrix">
+    <function name="qform" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">x</fnarg>
 	<fnarg type="symmat">A</fnarg>
@@ -2895,7 +2895,7 @@
       </description>
     </function>
 
-    <function name="qnorm" output="asinput">
+    <function name="qnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -2912,7 +2912,7 @@
       </description>
     </function>  
 
-    <function name="qrdecomp" output="matrix">
+    <function name="qrdecomp" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;R</fnarg>
@@ -2936,7 +2936,7 @@
       </description>
     </function>
 
-    <function name="quantile" output="scalar" altout="rvec">
+    <function name="quantile" section="stats" output="scalar" altout="rvec">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="pscalar">p</fnarg>
@@ -2962,7 +2962,7 @@
       </description>
     </function>
 
-    <function name="rank" output="scalar">
+    <function name="rank" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2977,7 +2977,7 @@
       </description>
     </function>
 
-    <function name="ranking" output="series">
+    <function name="ranking" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -3007,7 +3007,7 @@
       </description>
     </function>
 
-    <function name="randgen" output="series">
+    <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="char">c</fnarg>
 	<fnarg type="scalar">a</fnarg>
@@ -3100,7 +3100,7 @@
       </description>
     </function>
 
-    <function name="rcond" output="scalar">
+    <function name="rcond" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -3131,7 +3131,7 @@
       </description>
     </function>
 
-    <function name="readfile" output="string">
+    <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
       </fnargs>    
@@ -3147,7 +3147,7 @@
       </description>
     </function>
 
-    <function name="resample" output="asinput">
+    <function name="resample" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
       </fnargs>    
@@ -3164,7 +3164,7 @@
       </description>
     </function>
 
-    <function name="round" output="asinput">
+    <function name="round" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -3185,7 +3185,7 @@
       </description>
     </function>
 
-    <function name="rows" output="scalar">
+    <function name="rows" section="matshape" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -3203,7 +3203,7 @@
       </description>
     </function>
 
-    <function name="sd" output="scalar-or-series">
+    <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
       </fnargs>     
@@ -3227,7 +3227,7 @@
       </description>
     </function>
 
-    <function name="sdc" output="rvec">
+    <function name="sdc" section="matrix-stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -3243,7 +3243,7 @@
       </description>
     </function>
 
-    <function name="sdiff" output="asinput">
+    <function name="sdiff" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
       </fnargs>   
@@ -3272,7 +3272,7 @@
       </description>
     </function>
 
-    <function name="selifc" output="matrix">
+    <function name="selifc" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="rvec">b</fnarg>
@@ -3292,7 +3292,7 @@
       </description>
     </function>
 
-    <function name="selifr" output="matrix">
+    <function name="selifr" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="cvec">b</fnarg>
@@ -3313,7 +3313,7 @@
       </description>
     </function>
 
-    <function name="seq" output="rvec">
+    <function name="seq" section="matbuild" output="rvec">
       <fnargs>
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
@@ -3335,7 +3335,7 @@
       </description>
     </function>
 
-    <function name="sin" output="asinput">
+    <function name="sin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>       
@@ -3351,7 +3351,7 @@
       </description>
     </function>
 
-    <function name="sort" output="asinput">
+    <function name="sort" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
       </fnargs>     
@@ -3369,7 +3369,7 @@
       </description>
     </function>
 
-    <function name="sortby" output="series">
+    <function name="sortby" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y1</fnarg>
 	<fnarg type="series">y2</fnarg>
@@ -3387,7 +3387,7 @@
       </description>
     </function>
 
-    <function name="sqrt" output="asinput">
+    <function name="sqrt" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>     
@@ -3399,7 +3399,7 @@
       </description>
     </function>
 
-    <function name="sst" output="scalar">
+    <function name="sst" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>  
@@ -3414,7 +3414,7 @@
       </description>
     </function>
 
-    <function name="strlen" output="scalar">
+    <function name="strlen" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>  
@@ -3425,7 +3425,7 @@
       </description>
     </function>
 
-    <function name="strstr" output="string">
+    <function name="strstr" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
@@ -3440,7 +3440,7 @@
       </description>
     </function>
 
-    <function name="sum" output="scalar">
+    <function name="sum" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>      
@@ -3452,7 +3452,7 @@
       </description>
     </function>
 
-    <function name="sumc" output="rvec">
+    <function name="sumc" section="matrix-stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>     
@@ -3467,7 +3467,7 @@
       </description>
     </function>
 
-    <function name="sumr" output="cvec">
+    <function name="sumr" section="matrix-stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>  
@@ -3482,7 +3482,7 @@
       </description>
     </function>
 
-    <function name="svd" output="rvec">
+    <function name="svd" section="linalg" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
@@ -3531,7 +3531,7 @@
       </description>
     </function>
 
-    <function name="tan" output="asinput">
+    <function name="tan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -3542,7 +3542,7 @@
       </description>
     </function>
 
-    <function name="tr" output="scalar">
+    <function name="tr" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>    
@@ -3558,7 +3558,7 @@
       </description>
     </function>
 
-    <function name="transp" output="matrix">
+    <function name="transp" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>      
@@ -3571,7 +3571,7 @@
       </description>
     </function>
 
-    <function name="trimr" output="matrix">
+    <function name="trimr" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar">ttop</fnarg>
@@ -3594,7 +3594,7 @@
     </function>
 
 
-    <function name="uniform" output="series">
+    <function name="uniform" section="probdist" output="series">
       <fnargs>
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
@@ -3618,7 +3618,7 @@
       </description>
     </function>
 
-    <function name="unvech" output="smatrix">
+    <function name="unvech" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
 	<fnarg type="scalar">b</fnarg>
@@ -3642,7 +3642,7 @@
       </description>
     </function>
 
-    <function name="upper" output="smatrix">
+    <function name="upper" section="matshape" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>  
@@ -3664,7 +3664,7 @@
       </description>
     </function>
 
-    <function name="values" output="cvec">
+    <function name="values" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
       </fnargs>      
@@ -3686,7 +3686,7 @@
       </description>
     </function>
 
-    <function name="var" output="scalar-or-series">
+    <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
       </fnargs>     
@@ -3715,7 +3715,7 @@
       </description>
     </function>
 
-    <function name="varname" output="string">
+    <function name="varname" section="strings" output="string">
       <fnargs>
 	<fnarg type="scalar">i</fnarg>
       </fnargs>     
@@ -3728,7 +3728,7 @@
       </description>
     </function>
 
-    <function name="varnum" output="scalar">
+    <function name="varnum" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
       </fnargs>     
@@ -3740,7 +3740,7 @@
       </description>
     </function>
 
-    <function name="vec" output="cvec">
+    <function name="vec" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>     
@@ -3756,7 +3756,7 @@
       </description>
     </function>
 
-    <function name="vech" output="cvec">
+    <function name="vech" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>    
@@ -3773,7 +3773,7 @@
       </description>
     </function>
 
-    <function name="wmean" output="series">
+    <function name="wmean" section="stats" output="series">
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -3798,7 +3798,7 @@
       </description>
     </function>
 
-    <function name="wsd" output="series">
+    <function name="wsd" section="stats" output="series">
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -3823,7 +3823,7 @@
       </description>
     </function>
 
-    <function name="wvar" output="series">
+    <function name="wvar" section="stats" output="series">
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -3855,7 +3855,7 @@
       </description>
     </function>
 
-    <function name="xpx" output="list">
+    <function name="xpx" section="transforms" output="list">
       <fnargs>
 	<fnarg type="list">L</fnarg>
       </fnargs>     
@@ -3873,7 +3873,7 @@
       </description>
     </function>
 
-    <function name="zeromiss" output="asinput">
+    <function name="zeromiss" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
       </fnargs>     
@@ -3890,7 +3890,7 @@
       </description>
     </function>
 
-    <function name="zeros" output="matrix">
+    <function name="zeros" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="scalar">r</fnarg>
 	<fnarg type="scalar">c</fnarg>
