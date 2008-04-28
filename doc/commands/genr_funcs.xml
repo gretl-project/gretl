@@ -1403,17 +1403,24 @@
 	  or generalized inverse of <argname>A</argname>, computed
 	  via the singular value decomposition.
 	</para>
+	<para context="notex">
+	  This matrix has the properties <math>A</math>
+	   <math>A</math><sup>+</sup> <math>A</math>
+	  = <math>A</math> and <math>A</math><sup>+</sup>
+	   <math>A</math>  <math>A</math><sup>+</sup>
+	  = <math>A</math><sup>+</sup> .
+	  Moreover, the products <math>A</math>
+	   <math>A</math><sup>+</sup> and <math>A</math><sup>+</sup>
+	   <math>A</math> are symmetric by construction.
+	</para>
 	<para context="tex">
 	  This matrix has the properties
 	  \begin{eqnarray*}
 	  A A^+ A &amp; = &amp; A \\
 	  A^+ A A^+ &amp; = &amp; A^+ 
 	  \end{eqnarray*}
-	</para>
-	<para>
-	  Moreover, the products <equation status="inline" ascii="ginv(A)*A"  
-	  tex="$A^+ A$"/> and <equation status="inline" ascii="A*ginv(A)"  
-	  tex="$A A^+$"/> are symmetric by construction.
+	  Moreover, the products $A^+ A$ and $A A^+$ are
+	  symmetric by construction.
 	</para>
 	<para>
 	  <seelist>
