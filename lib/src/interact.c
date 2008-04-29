@@ -1654,7 +1654,7 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 	ret = 1;
     } else if (get_string_by_name(s)) {
 	ret = 1;
-    }
+    } 
 
     return ret;
 }
@@ -2197,6 +2197,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    if (plausible_genr_start(line, pdinfo)) {
 		cmd->ci = GENR;
 	    } else if (get_user_function_by_name(cmd->word)) {
+		cmd->ci = GENR;
+		cmd->opt = OPT_U;
+	    } else if (is_gretl_function_call(line)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
 	    } else if (get_if_state(IS_FALSE)) {

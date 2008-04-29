@@ -1053,6 +1053,25 @@ Id (2 x 2)
      0.000     1.000
 \end{code}
 
+For presentation purposes you may wish to give titles to the columns
+of a matrix.  For this you can use the \cmd{colnames} function: the first
+argument is a matrix and the second is either a named list of variables,
+whose names will be used as headings, or a string that contains as many
+space-separated substrings as the matrix has columns.  For example,
+%
+\begin{code}
+? matrix M = mnormal(3,3)
+? colnames(M, "foo bar baz")
+? print M
+M (3 x 3)
+
+         foo          bar          baz 
+      1.7102     -0.76072     0.089406 
+    -0.99780      -1.9003     -0.25123 
+    -0.91762     -0.39237      -1.6114
+\end{code}
+
+
 \section{Example: OLS using matrices}
 \label{matrix-example}
 
@@ -1067,7 +1086,7 @@ open data4-1
 matrix X = { const, sqft }
 matrix y = { price }
 matrix b = invpd(X'X) * X'y
-printf "estimated coefficient vector\n"
+print "estimated coefficient vector"
 b
 matrix u = y - X*b
 scalar SSR = u'u
@@ -1075,7 +1094,7 @@ scalar s2 = SSR / (rows(X) - rows(b))
 matrix V = s2 * inv(X'X)
 V
 matrix se = sqrt(diag(V))
-printf "estimated standard errors\n"
+print "estimated standard errors"
 se
 # compare with built-in function
 ols price const sqft --vcv
