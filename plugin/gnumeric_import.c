@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_xml.h"
 #include "importer.h"
+#include "csvdata.h"
 
 #undef IDEBUG
 
@@ -739,7 +740,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	if (book != NULL && book_numeric_dates(book)) {
 	    pd = pd_from_numeric_dates(nrows, r0, 0, sheet->label, book);
 	} else if (sheet->colheads > 0) {
-	    if (obs_column_heading(sheet->label[0])) {
+	    if (import_obs_label(sheet->label[0])) {
 		pd = consistent_date_labels(nrows, r0, 0, sheet->label);
 	    }
 	}

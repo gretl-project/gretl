@@ -926,10 +926,24 @@ static void compress_csv_line (char *line, csvdata *c)
 
 int import_obs_label (const char *s)
 {
-    char tmp[32];
+    char tmp[OBSLEN];
+
+    if (s == NULL) {
+	return 1;
+    }
+
+    if (*s == '"' || *s == '\'') s++;
+
+    if (*s == '\0') {
+	return 1;
+    }
+
+    if (strlen(s) > OBSLEN - 1) {
+	return 0;
+    }
 
     *tmp = '\0';
-    strncat(tmp, s, 31);
+    strncat(tmp, s, OBSLEN - 1);
     lower(tmp);
 
     return (!strcmp(tmp, "obs") ||

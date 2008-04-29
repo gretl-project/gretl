@@ -31,6 +31,7 @@
 
 #include "libgretl.h"
 #include "version.h"
+#include "csvdata.h"
 
 #include "importer.h"
 #include "biff.h"
@@ -1502,7 +1503,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	int r0 = book->row_offset;
 	int c0 = book->col_offset;
 	
-	if (obs_column_heading(rows[r0].cells[c0])) {
+	if (import_obs_label(rows[r0].cells[c0])) {
 	    pd = consistent_date_labels(nrows, r0, c0, NULL);
 	}
     }

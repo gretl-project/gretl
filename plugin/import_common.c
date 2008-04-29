@@ -244,6 +244,42 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
     return pd;
 }
 
+#if 0 /* not yet */
+
+static int 
+new_consistent_date_labels (int nrows, int row_offset, int col_offset, 
+			    char **labels, DATAINFO *pdinfo, int *err)
+{
+    int i, t, tstart = 1 + row_offset;
+    char *s;
+    int ret = 0;
+
+    for (t=tstart; t<nrows; t++) {
+	s = cell_val(t, col_offset);
+	if (*s == '\0') {
+	    return 0;
+	}
+    }
+
+    *err = dataset_allocate_obs_markers(pdinfo);
+    if (*err) {
+	return 0;
+    }
+
+    i = 0;
+    for (t=tstart; t<nrows; t++) {
+	s = cell_val(t, col_offset);
+	if (*s == '"' || *s == '\'') s++;
+	strncat(pdinfo->S[i++], s, OBSLEN - 1);
+    }
+
+    ret = test_markers_for_dates(pZ, pdinfo, skipstr, NULL);
+
+    return ret;
+}
+
+#endif
+
 static int 
 consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels)
 {
@@ -299,37 +335,6 @@ consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels
     fprintf(stderr, " yes: data frequency = %d\n", pd);
 
     return pd;
-}
-
-static int obs_column_heading (const char *label)
-{
-    int ret = 0;
-
-    if (label == NULL) {
-	ret = 1;
-    } else {
-#if 1
-	fprintf(stderr, "obs_column_heading: looking at '%s'\n", label);
-#endif
-	if (*label == '"') {
-	    label++;
-	}
-	if (*label == '\0') {
-	    ret = 1;    
-	} else {
-	    gchar *test = g_strdup(label);
-
-	    lower(test);
-	    if (!strncmp(test, "obs", 3) ||
-		!strcmp(test, "date") ||
-		!strcmp(test, "year")) {
-		ret = 1;
-	    }
-	    g_free(test);
-	}
-    }
-
-    return ret;
 }
 
 static void wbook_print_info (wbook *book) 
