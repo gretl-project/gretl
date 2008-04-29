@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-03-20 19:31-0400\n"
-"PO-Revision-Date: 2008-04-29 19:56+0200\n"
+"PO-Revision-Date: 2008-04-29 19:58+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3008,27 +3008,27 @@ msgstr "gretl: usando los siguientes caminos de búsqueda básicos:\n"
 
 #: lib/src/gretl_paths.c:1426
 msgid "gretlgui_hlp.txt"
-msgstr "gretlgui_hlp_es.txt"
+msgstr "gretlgui_hlp.txt"
 
 #: lib/src/gretl_paths.c:1427
 msgid "gretlcmd_hlp.txt"
-msgstr "gretlcmd_hlp_es.txt"
+msgstr "gretlcmd_hlp.txt"
 
 #: lib/src/gretl_paths.c:1428 lib/src/gretl_paths.c:1431
 msgid "gretlcli_hlp.txt"
-msgstr "gretlcli_hlp_es.txt"
+msgstr "gretlcli_hlp.txt"
 
 #: lib/src/gretl_paths.c:1549
 msgid "gretlgui.hlp"
-msgstr "gretlgui.hlp.es"
+msgstr "gretlgui.hlp"
 
 #: lib/src/gretl_paths.c:1550 lib/src/gretl_paths.c:1554
 msgid "gretlcli.hlp"
-msgstr "gretlcli.hlp.es"
+msgstr "gretlcli.hlp"
 
 #: lib/src/gretl_paths.c:1551
 msgid "gretlcmd.hlp"
-msgstr "gretlcmd.hlp.es"
+msgstr "gretlcmd.hlp"
 
 #: lib/src/gretl_prn.c:242
 #, c-format
@@ -3583,7 +3583,7 @@ msgstr ""
 
 #: lib/src/interact.c:2595
 msgid "genrcli.hlp"
-msgstr "genrcli.hlp.es"
+msgstr "genrcli.hlp"
 
 #: lib/src/interact.c:2611
 #, c-format
