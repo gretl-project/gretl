@@ -1,5 +1,5 @@
-/* Grab info from gretl function reference, and format it
-   as a table of commands arranged by topic.
+/* Grab info from gretl function reference, and format a
+   table of matrix-related functions arranged by topic.
 
    Allin Cottrell, April 2008.
 */
@@ -19,12 +19,9 @@
 #define ROOTNODE "funcref"
 #define UTF const xmlChar *
 
-#define VERBOSE 4
+#define VERBOSE 0
 
 #define SECTLEN 64
-#define LBLLEN 128
-
-int maybe_recode;
 
 /* the order in which the topics should appear */
 enum {
@@ -50,18 +47,18 @@ struct tab_labeler {
 };
 
 struct tab_labeler labelers[] = {
-    { MATBUILD,     "matbuild",     "Creation and I/O" },
-    { MATSHAPE,     "matshape",     "Shape/size" },
-    { MATH,         "math",         "Element by element" },
-    { LINALG,       "linalg",       "Matrix algebra" },
-    { STATS,        "stats",        "Statistics" },
-    { DATA_UTILS,   "data-utils",   "Data utilities" },
-    { FILTERS,      "filters",      "Filters" },
-    { NUMERICAL,    "numerical",    "Numerical methods" },
-    { PROBDIST,     "probdist",     "Probability distributions" },
-    { STRINGS,      "strings",      "Strings" },
-    { TRANSFORMS,   "transforms",   "Transformations" },
-    { ACCESS,       "access",       "Accessors" },
+    { MATBUILD,     "matbuild",     N_("Creation and I/O") },
+    { MATSHAPE,     "matshape",     N_("Shape/size/arrangement") },
+    { MATH,         "math",         N_("Element by element") },
+    { LINALG,       "linalg",       N_("Matrix algebra") },
+    { STATS,        "stats",        N_("Statistics/transformations") },
+    { DATA_UTILS,   "data-utils",   N_("Data utilities") },
+    { FILTERS,      "filters",      N_("Filters") },
+    { NUMERICAL,    "numerical",    N_("Numerical methods") },
+    { PROBDIST,     "probdist",     N_("Probability distributions") },
+    { STRINGS,      "strings",      N_("Strings") },
+    { TRANSFORMS,   "transforms",   N_("Transformations") },
+    { ACCESS,       "access",       N_("Accessors") },
     { TAB_MAX,      NULL,           NULL }
 };
 
@@ -353,7 +350,7 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 static int parse_ref_file (sectlist *slist)
 {
     xmlDocPtr doc;
-    xmlNodePtr cur, flist;
+    xmlNodePtr cur, flist = NULL;
     char *listname;
     int err = 0;
 
@@ -398,6 +395,12 @@ static int parse_ref_file (sectlist *slist)
 	cur = cur->next;
     } 
 
+    if (flist == NULL) {
+	fprintf(stderr, "Couldn't find functions list\n");
+	err = 1;
+	goto bailout;
+    }
+
     /* first pass: walk the tree, picking up section headings */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
@@ -425,7 +428,6 @@ static int parse_ref_file (sectlist *slist)
     xmlCleanupParser();
 
     return err;
-
 }
 
 static void sectlist_init (sectlist *s)
@@ -468,19 +470,6 @@ static section *get_section_by_id (sectlist *s, int ID)
     return NULL;
 }
 
-static const char *section_id_label (int ID)
-{
-    int i;
-
-    for (i=0; i<TAB_MAX; i++) {
-	if (ID == labelers[i].ID) {
-	    return labelers[i].title;
-	}
-    }
-
-    return NULL;
-}
-
 /* print out the matrix-ok functions as a TeX table, organized
    by "theme" */
 
@@ -490,7 +479,7 @@ const char *tabline =
 static int print_topic_lists (sectlist *s)
 {
     const section *sect;
-    int i, j;
+    int i, j, k;
     int err = 0;
 
     for (i=0; i<TAB_MAX; i++) {
@@ -499,11 +488,16 @@ static int print_topic_lists (sectlist *s)
 	    fprintf(stderr, "Section '%s': no entries\n", labelers[i].title);
 	    continue;
 	}
-	printf("\\textbf{%s}\n\\hrulefill\n\n", section_id_label(i));
+	printf("\\textbf{%s}\n\\hrulefill\n\n", _(labelers[i].title));
 	puts(tabline);
 	for (j=0; j<sect->nfuns; j++) {
 	    printf("\\texttt{%s}", sect->funs[j]->name);
-	    if (j == sect->nfuns - 1 || (j+1) % 6 == 0) {
+	    if (j == sect->nfuns - 1) {
+		for (k=j+1; k%6; k++) {
+		    fputs( " &", stdout);
+		}
+		puts(" \\\\ [4pt]");
+	    } else if ((j+1) % 6 == 0) {
 		puts(" \\\\");
 	    } else {
 		puts(" &");
@@ -528,19 +522,13 @@ void nls_init (void)
 
 int main (int argc, char **argv)
 {
-    char *lang;
     sectlist slist;
-    int err;
+    int err = 0;
 
     if (argc != 2) {
 	fprintf(stderr, "Please supply one argument: the name of a "
 		"file to process\n");
 	exit(EXIT_FAILURE);
-    }
-
-    lang = getenv("LANG");
-    if (lang != NULL && strncmp(lang, "en", 2)) {
-	maybe_recode = 1;
     }
 
     nls_init();
