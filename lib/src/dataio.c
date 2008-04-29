@@ -2219,6 +2219,26 @@ static int add_ts_ok (const DATAINFO *targ, const DATAINFO *src)
     return ret;
 }
 
+#if 0
+static int markers_are_ints (const DATAINFO *pdinfo)
+{
+    char *test;
+    int i;
+
+    errno = 0;
+
+    for (i=0; i<pdinfo->n; i++) {
+	strtol(pdinfo->S[i], &test, 10);
+	if (*test || errno) {
+	    errno = 0;
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+#endif
+
 /**
  * merge_data:
  * @pZ: pointer to data set.

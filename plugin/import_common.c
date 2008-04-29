@@ -320,10 +320,9 @@ static int obs_column_heading (const char *label)
 	    gchar *test = g_strdup(label);
 
 	    lower(test);
-	    if (strncmp(test, "obs", 3) == 0 ||
-		strcmp(test, "date") == 0 ||
-		strcmp(test, "year") == 0 ||
-		strcmp(test, "yr") == 0) {
+	    if (!strncmp(test, "obs", 3) ||
+		!strcmp(test, "date") ||
+		!strcmp(test, "year")) {
 		ret = 1;
 	    }
 	    g_free(test);
