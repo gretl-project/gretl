@@ -2890,10 +2890,9 @@ static int real_function_append_line (const char *line, ufunc *fun)
     }
 
     if (string_is_blank(line)) {
-	return 0;
-    }
-
-    if (end_of_function(line)) {
+	/* return 0; */
+	err = strings_array_add(&fun->lines, &fun->n_lines, "");
+    } else if (end_of_function(line)) {
 	if (fun->n_lines == 0) {
 	    sprintf(gretl_errmsg, "%s: empty function", fun->name);
 	    err = 1;
@@ -3780,8 +3779,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
+	if (*u->lines[i] == '\0') {
+	    continue;
+	}
 	strcpy(line, u->lines[i]);
 	err = maybe_exec_line(&state, pZ, pdinfo);
+	if (err) {
+	    fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
+	}
 	if (state.funcerr) {
 #if UDEBUG
 	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", 
@@ -3801,6 +3806,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    }
 	    if (err) {
 		fprintf(stderr, "function_exec: breaking on error in loop\n");
+		fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
 		break;
 	    }
 #if UDEBUG

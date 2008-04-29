@@ -505,7 +505,7 @@ static void get_multi_args (NODE *t, parser *p)
 	    if (p->sym == P_COM) {
 		/* in case acceptance of plain strings was set,
 		   turn it off after the first arg */
-		p->getstr = 0;
+		p->flags &= ~P_GETSTR;
 		lex(p);
 	    } else if (p->sym == G_RPR) {
 		break;
@@ -762,7 +762,7 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		p->getstr = 1;
+		p->flags |= P_GETSTR;
 		get_multi_args(t->v.b1.b, p);
 	    }
 	}	

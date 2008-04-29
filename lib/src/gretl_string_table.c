@@ -877,7 +877,7 @@ static void too_long (void)
 
 #define var_context(s,i) (i > 8 && !strncmp(s - 9, "isstring(", 9))
 
-int substitute_named_strings (char *line)
+int substitute_named_strings (char *line, int *subst)
 {
     char sname[VNAMELEN];
     int len = strlen(line);
@@ -953,6 +953,7 @@ int substitute_named_strings (char *line)
 			len += m - (n + 1);
 			s += m - 1;
 			i += m - 1;
+			*subst = 1;
 		    }
 		    if (freeit) {
 			free(sub);

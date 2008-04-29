@@ -9,14 +9,15 @@
 typedef struct Laginfo_ Laginfo;
 
 enum {
-    CMD_NOLIST  = 1 << 0,
-    CMD_IGNORE  = 1 << 1,
-    CMD_NULLIST = 1 << 2,
-    CMD_CI_OK   = 1 << 3
+    CMD_NOLIST  = 1 << 0, /* command doesn't have a list of variables */
+    CMD_IGNORE  = 1 << 1, /* line should be ignored */
+    CMD_NULLIST = 1 << 2, /* command has been given a null list on input */
+    CMD_SUBST   = 1 << 3  /* string substitution has been done on command */
 };
 
 #define cmd_nolist(c)    (c->flags & CMD_NOLIST)
 #define cmd_ignore(c)    (c->flags & CMD_IGNORE)
+#define cmd_subst(c)     (c->flags & CMD_SUBST)
 
 struct CMD_ {
     char word[FN_NAMELEN];      /* command word */

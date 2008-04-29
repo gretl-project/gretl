@@ -4848,6 +4848,7 @@ static NODE *eval (NODE *t, parser *p)
     NODE *ret = NULL;
 
     if (t == NULL) {
+	fprintf(stderr, "eval: got NULL input node\n");
 	p->err = E_ALLOC;
 	return NULL;
     }
@@ -5847,6 +5848,9 @@ static void get_lh_mspec (parser *p)
 	    printf("Error in subp eval = %d\n", subp.err);
 	    p->err = subp.err;
 	} else {
+	    if (p->lh.mspec != NULL) {
+		free(p->lh.mspec);
+	    }
 	    p->lh.mspec = subp.ret->v.mspec;
 	    subp.ret->v.mspec = NULL;
 	}
@@ -5864,14 +5868,18 @@ static void get_lh_mspec (parser *p)
 static void process_lhs_substr (parser *p)
 {
     if (p->lh.t == NUM) {
+	sprintf(gretl_errmsg, "scalar target variable: specifier '[%s]' is not valid",
+		p->lh.substr);
 	p->err = E_TYPES;
     } else if (p->lh.t == VEC) {
 	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
 					  p->dinfo); 
 	if (p->lh.obs < 0) {
-	    p->err = E_PARSE; /* FIXME message */
+	    sprintf(gretl_errmsg, "'[%s]': bad observation specifier", p->lh.substr);
+	    p->err = E_PARSE;
 	} else {
-	    p->lh.t = NUM;
+	    gretl_error_clear();
+	    p->targ = NUM;
 	}
     } else if (p->lh.t == MAT) {
 	get_lh_mspec(p);
@@ -6055,6 +6063,19 @@ static int check_private_varname (const char *s)
     return err;
 }
 
+static int overwrite_type_check (parser *p)
+{
+    if (p->targ == NUM && p->lh.t == VEC && p->lh.obs >= 0) {
+	/* OK */
+	return 0;
+    } else if (p->targ != p->lh.t) {
+	/* don't overwrite one type with another */
+	return E_TYPES;
+    } else {
+	return 0;
+    }
+}
+
 /* process the left-hand side of a genr formula */
 
 static void pre_process (parser *p, int flags)
@@ -6206,7 +6227,7 @@ static void pre_process (parser *p, int flags)
 	    /* when a type is not specified, set from existing
 	       variable, if present */
 	    p->targ = p->lh.t;
-	} else if (p->targ != p->lh.t) {
+	} else if (overwrite_type_check(p)) {
 	    /* don't overwrite one type with another */
 	    p->err = E_TYPES;
 	    return;
@@ -6709,6 +6730,10 @@ static int gen_check_return_type (parser *p)
 {
     NODE *r = p->ret;
 
+#if EDEBUG
+    fprintf(stderr, "gen_check_return_type: targ = %d\n", p->targ);
+#endif
+
     if (r == NULL) {
 	fprintf(stderr, "gen_check_return_type: p->ret = NULL!\n");
 	return (p->err = E_DATA);
@@ -6831,7 +6856,7 @@ static int save_generated_var (parser *p, PRN *prn)
     
     if (p->targ == NUM) {
 	/* writing a scalar */
-	t = p->lh.obs;
+	t = lh_obs(p);
 	if (r->t == NUM) {
 	    Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
 	} else if (r->t == MAT) {
@@ -6953,7 +6978,6 @@ static void parser_reinit (parser *p, double ***pZ,
     p->xval = 0.0;
     p->idnum = 0;
     p->idstr = NULL;
-    p->getstr = 0;
 
     p->ret = NULL;
     p->err = 0;
@@ -6964,6 +6988,11 @@ static void parser_reinit (parser *p, double ***pZ,
     /* matrix: check the LH name again */
     if (p->targ == MAT && p->lh.m0 == NULL) {
 	p->lh.m0 = get_matrix_by_name(p->lh.name);
+    }
+
+    /* LHS spec: make sure it's up to date */
+    if (p->lh.substr != NULL) {
+	process_lhs_substr(p);
     }
 }
 
@@ -6987,7 +7016,7 @@ static void parser_init (parser *p, const char *str,
     p->lh.name[0] = '\0';
     p->lh.label[0] = '\0';
     p->lh.v = 0;
-    p->lh.obs = 0;
+    p->lh.obs = -1;
     p->lh.m0 = NULL;
     p->lh.m1 = NULL;
     p->lh.substr = NULL;
@@ -6999,7 +7028,6 @@ static void parser_init (parser *p, const char *str,
     p->xval = 0.0;
     p->idnum = 0;
     p->idstr = NULL;
-    p->getstr = 0;
     p->err = 0;
     p->warn = 0;
     p->ecount = 0;
@@ -7139,9 +7167,17 @@ int realgen (const char *s, parser *p, double ***pZ,
 {
     int t;
 
+#if EDEBUG
+    fprintf(stderr, "realgen: task = %s\n", (flags & P_COMPILE)?
+	    "compile" : (flags & P_EXEC)? "exec" : "normal");
+#endif
+
     if (flags & P_EXEC) {
 	parser_reinit(p, pZ, pdinfo, prn);
-	if (p->flags & P_PRINT) {
+	if (p->err) {
+	    fprintf(stderr, "error in parser_reinit\n");
+	    return p->err;
+	} else if (p->op == INC || p->op == DEC || (p->flags & P_PRINT)) {
 	    p->ret = lhs_copy_node(p);
 	    return p->err;
 	} else {
@@ -7151,7 +7187,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 	parser_init(p, s, pZ, pdinfo, prn, flags);
 	if (p->err) {
 	    errmsg(p->err, prn);
-	    return 1;
+	    return p->err;
 	}
     }
 
@@ -7166,25 +7202,26 @@ int realgen (const char *s, parser *p, double ***pZ,
     }
 
     if (p->op == INC || p->op == DEC || (p->flags & P_PRINT)) {
-	p->ret = lhs_copy_node(p);
+	if (!(p->flags & P_COMPILE)) {
+	    p->ret = lhs_copy_node(p);
+	}
 	return p->err;
     }
 
     lex(p);
     if (p->err) {
-	fprintf(stderr, "exiting on lex() error (p->err = %d)\n",
-		p->err);
+	fprintf(stderr, "realgen: exiting on lex() error %d\n", p->err);
 	return p->err;
     }
 
     p->tree = expr(p);
     if (p->err) {
-	fprintf(stderr, "exiting on expr() error\n");
+	fprintf(stderr, "realgen: exiting on expr() error %d\n", p->err);
 	return p->err;
     }
 
 #if EDEBUG
-    fprintf(stderr, "after expr, p->tree->type = %d\n", p->tree->t);
+    fprintf(stderr, "realgen: p->tree->type = %d\n", p->tree->t);
 #endif
 
     if (p->ch != 0) {
@@ -7234,12 +7271,16 @@ int realgen (const char *s, parser *p, double ***pZ,
 	    } 
 	}
 	p->obs = t;
-    } 
+    }
 
     p->aux_i = 0;
     if (!p->err) {
 	p->ret = eval(p->tree, p);
     }
+
+#if EDEBUG
+    fprintf(stderr, "realgen: post-eval, err = %d\n", p->err);
+#endif
 
 #if EDEBUG > 1
     printnode(p->ret, p);

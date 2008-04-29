@@ -1247,14 +1247,19 @@ int strings_array_add (char ***pS, int *n, const char *p)
     }
 
     *pS = Tmp;
-    Tmp[m] = gretl_strdup(p);
 
-    if (Tmp[m] == NULL) {
-	return E_ALLOC;
+    if (p != NULL) {
+	Tmp[m] = gretl_strdup(p);
+	if (Tmp[m] == NULL) {
+	    return E_ALLOC;
+	}
     } else {
-	*n += 1;
-	return 0;
+	Tmp[m] = NULL;
     }
+
+    *n += 1;
+
+    return 0;
 }
 
 /**

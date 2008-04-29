@@ -46,7 +46,7 @@ int process_string_command (const char *line,
 			    double ***pZ, DATAINFO *pdinfo,
 			    PRN *prn);
 
-int substitute_named_strings (char *line);
+int substitute_named_strings (char *line, int *subst);
 
 int string_is_defined (const char *sname);
 

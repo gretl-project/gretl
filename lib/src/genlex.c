@@ -861,11 +861,11 @@ static void getword (parser *p)
 	parser_getc(p);
     }
 
-    if (p->getstr) {
+    if (p->flags & P_GETSTR) {
 	/* uninterpreted string wanted */
 	p->sym = STR;
 	p->idstr = gretl_strdup(word);
-	p->getstr = 0;
+	p->flags ^= P_GETSTR;
 	return;
     }
 

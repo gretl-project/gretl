@@ -1960,10 +1960,6 @@ static int x_sectional_weighted_mean (double *x, const int *list,
     int n = list[0];
     int t, v;
 
-    if (wlist != NULL && wlist[0] != n) {
-	return E_DATA;
-    }
-
     if (n == 0) {
 	return 0; /* all NAs */
     } else if (n == 1) {
@@ -1998,10 +1994,6 @@ static int x_sectional_wtd_variance (double *x, const int *list,
     double xdev, xbar, wsum;
     int m = 0, n = list[0];
     int i, t, v;
-
-    if (wlist != NULL && wlist[0] != n) {
-	return E_DATA;
-    }
 
     if (n == 0) {
 	return 0; /* all NAs */
@@ -2120,6 +2112,12 @@ int x_sectional_weighted_stat (double *x, const int *list,
 			       const DATAINFO *pdinfo,
 			       int f)
 {
+    if (wlist[0] != list[0]) {
+	gretl_errmsg_sprintf("Weighted stats: data list has %d members but weight "
+			     "list has %d", list[0], wlist[0]);
+	return E_DATA;
+    }
+
     if (f == F_WMEAN) {
 	return x_sectional_weighted_mean(x, list, wlist, Z, pdinfo);
     } else if (f == F_WVAR) {

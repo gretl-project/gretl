@@ -36,6 +36,8 @@
 #define SUBST_DEBUG 0
 #define IDX_DEBUG 0
 
+#define GENCOMPILE 1
+
 #if LOOP_DEBUG
 # undef ENABLE_GMP
 #endif
@@ -82,6 +84,7 @@ typedef struct {
 typedef struct {
     int nc;                 /* number of coefficients */
     MODEL *model0;          /* copy of initial model */
+    bigval *bigarray;       /* global pointer array */
     bigval *sum_coeff;      /* sums of coefficient estimates */
     bigval *ssq_coeff;      /* sums of squares of coeff estimates */
     bigval *sum_sderr;      /* sums of estimated std. errors */
@@ -138,6 +141,10 @@ struct LOOPSET_ {
     int n_models;
     int n_loop_models;
     int n_prints;
+#if GENCOMPILE
+    int n_genrs;
+    GENERATOR **genrs;
+#endif
 
     char **lines;
     int *ci;
@@ -193,8 +200,6 @@ int gretl_execute_loop (void)
     return loop_execute;
 }
 
-/* --------------------------------------------------*/
-
 static double controller_evaluate_expr (const char *expr, 
 					const char *vname,
 					int vnum,
@@ -202,44 +207,36 @@ static double controller_evaluate_expr (const char *expr,
 					DATAINFO *pdinfo)
 {
     double x = NADBL;
-    int iftest = 0;
-    int v, err;
+    int v, err = 0;
 
     gretl_error_clear();
 
     if (!strcmp(vname, "iftest")) {
-	iftest = 1;
 	x = generate_scalar(expr, pZ, pdinfo, &err);
     } else {
-	err = generate(expr, pZ, pdinfo, OPT_Q, NULL); /* was OPT_P */
+	err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
+	if (!err) {
+	    v = (vnum > 0)? vnum : varindex(pdinfo, vname);
+	    if (v < pdinfo->v) {
+		x = (*pZ)[v][0];
+	    } else {
+		err = 1;
+	    }
+	}
+    }
+
+    if (!err && na(x)) {
+	err = 1;
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "controller_evaluate_expr: iftest=%d, expr='%s', err=%d\n", 
-	    iftest, expr, err);
+    fprintf(stderr, "controller_evaluate_expr: expr='%s', x=%g, err=%d\n", 
+	    expr, x, err);
 #endif
 
-    if (!err && !iftest) {
-	if (vnum > 0) {
-	    v = vnum;
-	} else {
-	    v = varindex(pdinfo, vname);
-	}
-	if (v < pdinfo->v) {
-	    x = (*pZ)[v][0];
-	    if (na(x)) {
-		err = 1;
-	    }
-	} else {
-	    err = 1;
-	}
-    }
-
     if (err) {
-	strcpy(gretl_errmsg, _("error evaluating loop condition"));
-	strcat(gretl_errmsg, ": '");
-	strcat(gretl_errmsg, expr);
-	strcat(gretl_errmsg, "'");
+	gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
+			     expr);
     }
 
     return x;
@@ -365,6 +362,7 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 
 int ok_in_loop (int c)
 {
+    /* here are the commands we don't currently allow */
     if (c == BXPLOT ||
 	c == CORRGM ||
 	c == CUSUM ||
@@ -446,6 +444,11 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->n_models = 0;
     loop->n_loop_models = 0;
     loop->n_prints = 0;
+
+#if GENCOMPILE
+    loop->n_genrs = 0;
+    loop->genrs = NULL;
+#endif
 
     loop->lines = NULL;
     loop->ci = NULL;
@@ -539,6 +542,13 @@ static void gretl_loop_destroy (LOOPSET *loop)
     }
 
     loop_store_free(loop);
+
+#if GENCOMPILE
+    for (i=0; i<loop->n_genrs; i++) {
+	destroy_genr(loop->genrs[i]);
+    }
+    free(loop->genrs);    
+#endif
 
     if (loop->children != NULL) {
 	free(loop->children);
@@ -1319,7 +1329,6 @@ static int loop_count_too_high (LOOPSET *loop)
 	if (max_iters == 0) {
 	    max_iters = libset_get_int(LOOP_MAXITER);
 	}
-
 	if (nt >= max_iters) {
 	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
 		    max_iters);
@@ -1455,17 +1464,13 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod)
 	return E_ALLOC;
     }
 
-    lmod->sum_coeff = malloc(nc * sizeof *lmod->sum_coeff);
-    if (lmod->sum_coeff == NULL) return E_ALLOC;
+    lmod->bigarray = malloc(nc * 4 * sizeof *lmod->bigarray);
+    if (lmod->bigarray == NULL) return E_ALLOC;
 
-    lmod->ssq_coeff = malloc(nc * sizeof *lmod->ssq_coeff);
-    if (lmod->ssq_coeff == NULL) goto cleanup;
-
-    lmod->sum_sderr = malloc(nc * sizeof *lmod->sum_sderr);
-    if (lmod->sum_sderr == NULL) goto cleanup;
-
-    lmod->ssq_sderr = malloc(nc * sizeof *lmod->ssq_sderr);
-    if (lmod->ssq_sderr == NULL) goto cleanup;
+    lmod->sum_coeff = lmod->bigarray;
+    lmod->ssq_coeff = lmod->sum_coeff + nc;
+    lmod->sum_sderr = lmod->ssq_coeff + nc;
+    lmod->ssq_sderr = lmod->sum_sderr + nc;
 
     lmod->cbak = malloc(nc * sizeof *lmod->cbak);
     if (lmod->cbak == NULL) goto cleanup;
@@ -1489,9 +1494,7 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod)
     return 0;
 
  cleanup:
-    free(lmod->ssq_coeff);
-    free(lmod->sum_sderr);
-    free(lmod->ssq_sderr);
+    free(lmod->bigarray);
     free(lmod->cbak);
     free(lmod->sbak);
     free(lmod->cdiff);
@@ -1650,6 +1653,28 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 
     return 0;
 }
+
+#if GENCOMPILE
+
+static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int j)
+{
+    GENERATOR **genrs;
+    int n = loop->n_genrs;
+
+    genrs = realloc(loop->genrs, (n+1) * sizeof *genrs);
+    if (genrs == NULL) {
+	return E_ALLOC;
+    } 
+
+    loop->genrs = genrs;
+    loop->genrs[n] = genr;
+    loop->n_genrs = n + 1;
+    genr_set_loopline(genr, j);
+
+    return 0;
+}
+
+#endif
 
 static int add_model_record (LOOPSET *loop)
 {
@@ -1859,21 +1884,14 @@ static void loop_model_free (LOOP_MODEL *lmod)
 #endif
 
 #ifdef ENABLE_GMP
-    int i;
+    int i, n = 4 * lmod->model0->ncoeff;
 
-    for (i=0; i<lmod->model0->ncoeff; i++) {
-	mpf_clear(lmod->sum_coeff[i]);
-	mpf_clear(lmod->sum_sderr[i]);
-	mpf_clear(lmod->ssq_coeff[i]);
-	mpf_clear(lmod->ssq_sderr[i]);
+    for (i=0; i<n; i++) {
+	mpf_clear(lmod->bigarray[i]);
     }
 #endif
 
-    free(lmod->sum_coeff);
-    free(lmod->sum_sderr);
-    free(lmod->ssq_coeff);
-    free(lmod->ssq_sderr);
-
+    free(lmod->bigarray);
     free(lmod->cbak);
     free(lmod->sbak);
     free(lmod->cdiff);
@@ -2319,7 +2337,8 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 
 static int 
 substitute_dollar_targ (char *str, const LOOPSET *loop,
-			const double **Z, const DATAINFO *pdinfo)
+			const double **Z, const DATAINFO *pdinfo,
+			int *subst)
 {
     char targ[VNAMELEN + 3] = {0};
     char *p;
@@ -2382,7 +2401,9 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 
 	strcpy(p, pins);
 	strcpy(p + strlen(pins), q);
-	free(q);	
+	free(q);
+
+	*subst = 1;
     }
 
 #if SUBST_DEBUG
@@ -2588,16 +2609,17 @@ subst_loop_in_parentage (const LOOPSET *loop)
 
 static int 
 make_dollar_substitutions (char *str, const LOOPSET *loop,
-			   const double **Z, const DATAINFO *pdinfo)
+			   const double **Z, const DATAINFO *pdinfo,
+			   int *subst)
 {
     int err = 0;
 
     if (indexed_loop(loop) || loop->type == FOR_LOOP) {
-	err = substitute_dollar_targ(str, loop, Z, pdinfo);
+	err = substitute_dollar_targ(str, loop, Z, pdinfo, subst);
     }
 
     while (!err && (loop = subst_loop_in_parentage(loop)) != NULL) {
-	err = substitute_dollar_targ(str, loop, Z, pdinfo);
+	err = substitute_dollar_targ(str, loop, Z, pdinfo, subst);
     }
 
     return err;
@@ -2650,23 +2672,35 @@ static LOOPSET *find_child_by_line (LOOPSET *loop, int line)
     return NULL;
 }
 
+#if GENCOMPILE
+
+static GENERATOR *find_genr_by_line (LOOPSET *loop, int line)
+{
+    int i, ll;
+
+    for (i=0; i<loop->n_genrs; i++) {
+	ll = genr_get_loopline(loop->genrs[i]);
+	if (ll == line) {
+	    return loop->genrs[i];
+	}
+    }
+
+    return NULL;
+}
+
+#endif
+
 /* get the next command for a loop by pulling a line off the
    stack of loop commands.
 */
 
-static int next_command (char *targ, LOOPSET *loop, int *j)
+static int next_command (char *targ, LOOPSET *loop, int *pj)
 {
-    int ret = 1;
+    int ret = 1, j = *pj;
 
-    if (*j < loop->n_cmds) {
-#if 0
-	if (!isprint(loop->lines[*j][0])) {
-	    fprintf(stderr, "bad line %d from loop at %p\n", *j, (void *) loop);
-	    exit(EXIT_FAILURE);
-	}
-#endif
-	strcpy(targ, loop->lines[*j]);
-	*j += 1;
+    if (j < loop->n_cmds) {
+	strcpy(targ, loop->lines[j++]);
+	*pj = j;
     } else {
 	ret = 0;
     }
@@ -2695,7 +2729,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     PRN *prn = s->prn;
     char errline[MAXLINE];
     int indent0, mod_id = 0;
-    int err = 0;
+    int modnum, lmodnum, subst;
+    int printnum, lrefresh;
+    int j, err = 0;
 
     /* for the benefit of the caller: register the fact that execution
        of this loop is now under way */
@@ -2717,33 +2753,24 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     err = top_of_loop(loop, pZ, pdinfo);
     
     while (!err && loop_condition(loop, pZ, pdinfo)) {
-	int modnum = 0;
-	int lmodnum = 0;
-	int printnum = 0;
-	int lrefresh = 0;
-	int j;
-
 #if LOOP_DEBUG
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
+	j = modnum = lmodnum = printnum = lrefresh = subst = 0;
 
 	if (gretl_echo_on() && indexed_loop(loop) && !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, pdinfo, prn);
 	}
 
-	j = 0;
 	while (!err && next_command(line, loop, &j)) {
-
 	    set_active_loop(loop);
-
 #if LOOP_DEBUG
 	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
 #endif
 	    strcpy(errline, line);
-
 	    err = make_dollar_substitutions(line, loop, 
 					    (const double **) *pZ,
-					    pdinfo);
+					    pdinfo, &subst);
 	    if (err) {
 		break;
 	    }
@@ -2759,6 +2786,10 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		break;
 	    }
 
+	    if (!subst && cmd_subst(cmd)) {
+		subst = 1;
+	    }
+
 	    if (is_list_loop(loop) && maybe_refresh_list(cmd, loop, line)) {
 		lrefresh = 1;
 	    }
@@ -2772,7 +2803,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 
 	    /* now branch based on the command index: some commands
-	       require special treatment
+	       require special treatment in loop context
 	    */
 
 	    if (cmd->ci == LOOP) {
@@ -2843,7 +2874,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		    loop_print_update(loop, printnum++, cmd->list, 
 				      (const double **) *pZ, pdinfo);
 		}
-	    } else if (loop_is_progressive(loop) && cmd->ci == STORE) {
+	    } else if (cmd->ci == STORE && loop_is_progressive(loop)) {
 		if (loop->iter == 0) {
 		    err = loop_store_init(loop, cmd->param, cmd->list, 
 					  pdinfo, cmd->opt);
@@ -2856,10 +2887,30 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		sprintf(gretl_errmsg, _("%s: not implemented in 'progressive' loops"),
 			cmd->word);
 		err = 1;
-	    } else {
-		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
+	    } else if (cmd->ci == GENR) {
+		if (!loop_is_verbose(loop)) {
 		    cmd->opt |= OPT_Q;
 		}
+#if GENCOMPILE
+		if (subst || (cmd->opt & OPT_U)) {
+		    err = generate(line, pZ, pdinfo, cmd->opt, prn);
+		} else {
+		    GENERATOR *genr = find_genr_by_line(loop, j);
+
+		    if (genr == NULL) {
+			genr = genr_compile(line, pZ, pdinfo, OPT_NONE, &err);
+			if (!err) {
+			    err = add_loop_genr(loop, genr, j);
+			}
+		    } 
+		    if (!err) {
+			err = execute_genr(genr, pZ, pdinfo, prn);
+		    }
+		}
+#else
+		err = generate(line, pZ, pdinfo, cmd->opt, prn);
+#endif
+	    } else {
 		err = gretl_cmd_exec(s, pZ, pdinfo);
 		if (!err && block_model(cmd)) {
 		    /* NLS, etc. */
@@ -2908,7 +2959,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (loop->n_models > 0) {
-	/* need to update models[0] */
+	/* we need to update models[0] */
 	GretlObjType type;
 	void *ptr = get_last_model(&type);
 	int i;

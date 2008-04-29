@@ -90,12 +90,16 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 
 GENERATOR *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo, 
-			 int *err);
- 
+			 gretlopt opt, int *err);
+
 int execute_genr (GENERATOR *genr, double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn);
 
 void destroy_genr (GENERATOR *genr);
+
+void genr_set_loopline (GENERATOR *genr, int i);
+
+int genr_get_loopline (GENERATOR *genr);
 
 int genr_get_output_varnum (const GENERATOR *genr);
 

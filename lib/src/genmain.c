@@ -40,7 +40,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    pprintf(prn, _("Modified series %s (ID %d)"),
 		    p->lh.name, p->lh.v);
 	} else {
-	    double x = (*p->Z)[p->lh.v][p->lh.obs];
+	    int t = lh_obs(p);
+	    double x = (*p->Z)[p->lh.v][t];
 
 	    if (p->lh.v < oldv) {
 		pprintf(prn, _("Replaced scalar %s (ID %d)"),
@@ -709,9 +710,10 @@ int print_object_var (const char *oname, const char *param,
    probably multiple times */
 
 parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo, 
-		      int *err)
+		      gretlopt opt, int *err)
 {
     parser *p = malloc(sizeof *p);
+    int flags = P_COMPILE;
 
 #if GDEBUG
     fprintf(stderr, "\n*** genr_compile: s = '%s'\n", s);
@@ -722,7 +724,15 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    *err = realgen(s, p, pZ, pdinfo, NULL, P_COMPILE | P_PRIVATE);
+    if (opt & OPT_P) {
+	flags |= P_PRIVATE;
+    }
+
+    *err = realgen(s, p, pZ, pdinfo, NULL, flags);
+
+#if GDEBUG
+    fprintf(stderr, "genr_compile: err = %d\n", *err);
+#endif
 
     return p;
 }
@@ -769,6 +779,20 @@ void destroy_genr (parser *p)
 #endif
 	gen_cleanup(p);
 	free(p);
+    }
+}
+
+void genr_set_loopline (parser *p, int i)
+{
+    p->loopline = i;
+}
+
+int genr_get_loopline (parser *p)
+{
+    if (p == NULL) {
+	return -1;
+    } else {
+	return p->loopline;
     }
 }
 

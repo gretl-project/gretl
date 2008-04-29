@@ -417,7 +417,8 @@ enum {
     P_LHLIST  = 1 << 17, /* there was a pre-existing LHS list */
     P_LHSTR   = 1 << 18, /* there was a pre-existing LHS string */
     P_LHMAT   = 1 << 19, /* there was a pre-existing LHS matrix */
-    P_QUIET   = 1 << 20  /* don't print any messages or labels */
+    P_QUIET   = 1 << 20, /* don't print any messages or labels */
+    P_GETSTR  = 1 << 21  /* state: flag acceptance of plain strings */
 };
 
 struct lhinfo {
@@ -452,6 +453,7 @@ struct parser_ {
     int aux_i;         /* the current ID of the above */
     int ecount;        /* number of times this parser has been exec'd */
     char warning[64];  /* to hold a warning, if needed */
+    int loopline;      /* line number within loop, if applicable */
     /* below: parser state variables */
     int obs;
     int sym;
@@ -459,7 +461,6 @@ struct parser_ {
     double xval;
     int idnum;
     char *idstr;
-    int getstr;
     int err;
     int warn;
 };
@@ -467,6 +468,7 @@ struct parser_ {
 #define starting(p) (p->flags & P_START)
 #define autoreg(p) (p->flags & P_AUTOREG)
 #define simple_ufun_call(p) (p->flags & P_UFUN)
+#define lh_obs(p) ((p->lh.obs > 0)? p->lh.obs : 0)
 
 int parser_getc (parser *p);
 void parser_ungetc (parser *p);

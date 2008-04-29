@@ -174,7 +174,7 @@ static int nls_genr_setup (nlspec *s)
 	    j++;
 	}
 	
-	genrs[i] = genr_compile(formula, s->Z, s->dinfo, &err);
+	genrs[i] = genr_compile(formula, s->Z, s->dinfo, OPT_P, &err);
 
 	if (err) {
 	    fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
@@ -2381,7 +2381,7 @@ static int screen_bad_aux (const char *line, const DATAINFO *pdinfo)
     get_aux_command_word(word, line);
     ci = gretl_command_number(word);
 
-    if (ci == GENR) {
+    if (ci == GENR || ci == PRINT) {
 	err = 0;
     } else if (plausible_genr_start(line, pdinfo)) {
 	err = 0;
@@ -3789,7 +3789,7 @@ static int user_gen_setup (umax *u,
 	sprintf(formula, "$umax=%s", fncall);
     }
 
-    g = genr_compile(formula, pZ, pdinfo, &err);
+    g = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
 
     if (!err) {
 	/* see if the formula actually works */

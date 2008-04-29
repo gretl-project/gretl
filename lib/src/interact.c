@@ -2126,6 +2126,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     int poly = 0;
     int sepcount = 0;
     int ints_ok = 0;
+    int subst = 0;
     char *rem = NULL;
     char s[FIELDLEN] = {0};
 
@@ -2135,10 +2136,17 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     gretl_error_clear();
 
-    cmd->err = substitute_named_strings(line);
+    cmd->err = substitute_named_strings(line, &subst);
     if (cmd->err) {
 	return cmd->err;
-    }    
+    }
+
+    if (subst) {
+	/* record the fact that substitution has been done */
+	cmd->flags |= CMD_SUBST;
+    } else {
+	cmd->flags &= ~CMD_SUBST;
+    }
 
     compress_spaces(line);
 
