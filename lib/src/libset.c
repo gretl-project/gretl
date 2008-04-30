@@ -95,11 +95,11 @@ struct set_vars_ {
 
 #define ECHO "echo"
 #define MESSAGES "messages"
-#define DEBUG "debug"
+#define GRETL_DEBUG "debug"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
-                           !strcmp(s, DEBUG) || \
+                           !strcmp(s, GRETL_DEBUG) || \
                            !strcmp(s, FORCE_DECP) || \
 			   !strcmp(s, FORCE_HC) || \
 			   !strcmp(s, HALT_ON_ERR) || \
@@ -1127,7 +1127,7 @@ static int display_settings (PRN *prn)
     libset_print_int(LOOP_MAXITER, prn);
     libset_print_bool(MAX_VERBOSE, prn);
     libset_print_bool(MESSAGES, prn);
-    libset_print_bool(DEBUG, prn);
+    libset_print_bool(GRETL_DEBUG, prn);
     libset_print_bool(SHELL_OK, prn);
 
     if (*state->shelldir) {
@@ -1594,7 +1594,7 @@ static int boolvar_get_flag (const char *s)
 	return STATE_PREWHITEN;
     } else if (!strcmp(s, PCSE)) {
 	return STATE_USE_PCSE;
-    } else if (!strcmp(s, DEBUG)) {
+    } else if (!strcmp(s, GRETL_DEBUG)) {
 	return gretl_debug;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
@@ -1648,6 +1648,10 @@ int libset_get_bool (const char *s)
 {
     int flag, ret = 0;
 
+    if (!strcmp(s, GRETL_DEBUG)) {
+	return gretl_debug;
+    }
+
     if (check_for_state()) {
 	return 0;
     }
@@ -1686,7 +1690,7 @@ void libset_set_bool (const char *s, int set)
 {
     int flag;
 
-    if (!strcmp(s, DEBUG)) {
+    if (!strcmp(s, GRETL_DEBUG)) {
 	/* global, not "state"-specific */
 	gretl_debug = set;
 	return;

@@ -3075,6 +3075,48 @@ static int localize_list (const char *oldname, fn_param *fp,
     return err;
 }
 
+static int add_null_matrix_arg (const char *name)
+{
+    gretl_matrix *m = gretl_null_matrix_new();
+
+    if (m == NULL) {
+	return E_ALLOC;
+    } else {
+	return user_matrix_add(m, name);
+    }
+}
+
+static int localize_matrix_ref (struct fnarg *arg, const char *name)
+{
+    user_matrix *u = arg->val.um;
+
+    arg->upname = gretl_strdup(user_matrix_get_name(u));
+    if (arg->upname == NULL) {
+	return E_ALLOC;
+    }
+
+    user_matrix_adjust_level(u, 1);
+    user_matrix_set_name(u, name);
+
+    return 0;
+}
+
+static int localize_variable_ref (struct fnarg *arg, DATAINFO *pdinfo,
+				  const char *name)
+{
+    int v = arg->val.idnum;
+
+    arg->upname = gretl_strdup(pdinfo->varname[v]);
+    if (arg->upname == NULL) {
+	return E_ALLOC;
+    } 
+
+    STACK_LEVEL(pdinfo, v) += 1;
+    strcpy(pdinfo->varname[v], name);
+
+    return 0;
+}
+
 /* Scalar function arguments only: if the arg is not supplied, use the
    default that is contained in the function specification, if any.
 */
@@ -3141,24 +3183,12 @@ static int allocate_function_args (ufunc *fun,
 	    err = add_string_as(arg->val.str, fp->name);
 	} else if (fp->type == GRETL_TYPE_SCALAR_REF ||
 		   fp->type == GRETL_TYPE_SERIES_REF) {
-	    int v = arg->val.idnum;
-
-	    arg->upname = gretl_strdup(pdinfo->varname[v]);
-	    if (arg->upname == NULL) {
-		err = E_ALLOC;
-	    } else {
-		STACK_LEVEL(pdinfo, v) += 1;
-		strcpy(pdinfo->varname[v], fp->name);
-	    }
+	    err = localize_variable_ref(arg, pdinfo, fp->name);
 	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
-	    user_matrix *u = arg->val.um;
-
-	    arg->upname = gretl_strdup(user_matrix_get_name(u));
-	    if (arg->upname == NULL) {
-		err = E_ALLOC;
-	    } else {	    
-		user_matrix_adjust_level(u, 1);
-		user_matrix_set_name(u, fp->name);
+	    if (arg->type == GRETL_TYPE_NONE) {
+		err = add_null_matrix_arg(fp->name);
+	    } else {
+		err = localize_matrix_ref(arg, fp->name);
 	    }
 	}
 
@@ -3568,13 +3598,23 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static void start_fncall (ufunc *u, fnargs *args)
+static void start_fncall (ufunc *u, fnargs *args, int *debug,
+			  PRN *prn)
 {
     set_executing_on(u);
     u->args = args;
     push_program_state();
-    set_gretl_echo(0);
-    set_gretl_messages(0);
+
+    if (gretl_debugging_on()) {
+	*debug = 1;
+	set_gretl_echo(1);
+	set_gretl_messages(1);
+	pprintf(prn, "*** executing function %s\n", u->name);
+    } else {
+	*debug = 0;
+	set_gretl_echo(0);
+	set_gretl_messages(0);
+    }
 }
 
 static char funcerr_msg[256];
@@ -3719,7 +3759,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    int indent0, started = 0;
+    int debug, indent0, started = 0;
     int i, err = 0;
  
     *funcerr_msg = '\0';
@@ -3772,7 +3812,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (!err) {
-	start_fncall(u, args);
+	start_fncall(u, args, &debug, prn);
 	started = 1;
     }
 
@@ -3783,6 +3823,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    continue;
 	}
 	strcpy(line, u->lines[i]);
+	if (debug) {
+	    pprintf(prn, "? %s\n", line);
+	}
 	err = maybe_exec_line(&state, pZ, pdinfo);
 	if (err) {
 	    fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
