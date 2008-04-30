@@ -228,15 +228,15 @@ the only difference is that you need to feed a series into
 \texttt{triple2(\&myseries)}. 
 
 Why make the distinction, then? There are two main reasons for doing
-so. The most important one is modularity; the other is performance.
+so: modularity and performance.
 
-The idea of modularity comes from the fact that insulating functions
-from the rest of a script is generally a good idea.  One of the many
-benefits of this approach is that your functions are easily reusable
-in other contexts.  To achieve modularity, \emph{variables created
-  within a function are local to that function, and are destroyed when
-  the function exits}, unless they are made available as return values
-and these values are ``picked up'' or assigned by the caller.
+By modularity we mean the insulation of a function from the rest of
+the script which calls it.  One of the many benefits of this approach
+is that your functions are easily reusable in other contexts.  To
+achieve modularity, \emph{variables created within a function are
+  local to that function, and are destroyed when the function exits},
+unless they are made available as return values and these values are
+``picked up'' or assigned by the caller.
     
 In addition, functions do not have access to variables in ``outer
 scope'' (that is, variables that exist in the script from which the

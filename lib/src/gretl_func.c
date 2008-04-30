@@ -3183,11 +3183,11 @@ static int allocate_function_args (ufunc *fun,
 	    err = add_string_as(arg->val.str, fp->name);
 	} else if (fp->type == GRETL_TYPE_SCALAR_REF ||
 		   fp->type == GRETL_TYPE_SERIES_REF) {
-	    err = localize_variable_ref(arg, pdinfo, fp->name);
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = localize_variable_ref(arg, pdinfo, fp->name);
+	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
-	    if (arg->type == GRETL_TYPE_NONE) {
-		err = add_null_matrix_arg(fp->name);
-	    } else {
+	    if (arg->type != GRETL_TYPE_NONE) {
 		err = localize_matrix_ref(arg, fp->name);
 	    }
 	}
