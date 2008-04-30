@@ -3080,7 +3080,7 @@ static void boolify_local_var (const char *vname, double **Z,
 {
     int v = varindex(pdinfo, vname);
 
-    if (v < pdinfo->v && Z[v][0] != 0.0) {
+    if (v < pdinfo->v && Z[v][0] != 0.0 && !na(Z[v][0])) {
 	Z[v][0] = 1.0;
     }
 }
