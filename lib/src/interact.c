@@ -4571,6 +4571,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (err) { 
 	    break;
 	} 
+	if (gretl_messages_on()) {
+	    pprintf(prn, " %s\n", runfile);
+	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_user_matrix_file(runfile);
 	    break;

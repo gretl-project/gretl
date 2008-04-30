@@ -95,9 +95,11 @@ struct set_vars_ {
 
 #define ECHO "echo"
 #define MESSAGES "messages"
+#define DEBUG "debug"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
+                           !strcmp(s, DEBUG) || \
                            !strcmp(s, FORCE_DECP) || \
 			   !strcmp(s, FORCE_HC) || \
 			   !strcmp(s, HALT_ON_ERR) || \
@@ -129,6 +131,7 @@ struct set_vars_ {
 
 /* global state */
 set_vars *state;
+int gretl_debug;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -463,6 +466,11 @@ int gretl_messages_on (void)
 {
     if (check_for_state()) return 1;
     return flag_to_bool(state, STATE_MSGS_ON);
+}
+
+int gretl_debugging_on (void)
+{
+    return gretl_debug;
 }
 
 char get_csv_delim (const DATAINFO *pdinfo)
@@ -1119,6 +1127,7 @@ static int display_settings (PRN *prn)
     libset_print_int(LOOP_MAXITER, prn);
     libset_print_bool(MAX_VERBOSE, prn);
     libset_print_bool(MESSAGES, prn);
+    libset_print_bool(DEBUG, prn);
     libset_print_bool(SHELL_OK, prn);
 
     if (*state->shelldir) {
@@ -1585,6 +1594,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_PREWHITEN;
     } else if (!strcmp(s, PCSE)) {
 	return STATE_USE_PCSE;
+    } else if (!strcmp(s, DEBUG)) {
+	return gretl_debug;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	
@@ -1674,6 +1685,12 @@ static void libset_set_decpoint (int on)
 void libset_set_bool (const char *s, int set)
 {
     int flag;
+
+    if (!strcmp(s, DEBUG)) {
+	/* global, not "state"-specific */
+	gretl_debug = set;
+	return;
+    }
 
     if (check_for_state()) {
 	return;

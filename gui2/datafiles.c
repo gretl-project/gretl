@@ -1453,6 +1453,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     GtkListStore *store;
     GtkTreeIter iter;
     char fndir[FILENAME_MAX];
+    char *tmp;
     DIR *dir;
     int maxlen = 0;
     int nfn = 0;
@@ -1487,6 +1488,19 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 				    &maxlen);
 	closedir(dir);
     } 
+
+    /* plus any in the default working dir, if not already searched */
+    tmp = gretl_default_workdir(&paths);
+    if (tmp != NULL) {
+	build_path(fndir, tmp, "functions", NULL);
+	dir = opendir(fndir);
+	if (dir != NULL) {
+	    nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+				    &maxlen);
+	    closedir(dir);
+	}
+	free(tmp);
+    }
 
     if (nfn == 0) {
 	if (fresp->try_server == 0) {

@@ -6981,6 +6981,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, _("Run command failed\n"));
 	    break;
 	}
+	if (gretl_messages_on()) {
+	    pprintf(prn, " %s\n", runfile);
+	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_user_XML_file(runfile);
 	    if (err) {

@@ -2930,7 +2930,16 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	int i = n->v.xval;
+	int i;
+
+	if (n->t == NUM) {
+	    i = n->v.xval;
+	} else if (n->t == MAT && gretl_matrix_is_scalar(n->v.m)) {
+	    i = n->v.m->val[0];
+	} else {
+	    node_type_error(f, NUM, n, p);
+	    return NULL;
+	}
 
 	if (f == F_OBSLABEL) {
 	    ret->v.str = retrieve_date_string(i, p->dinfo, &p->err);
@@ -5507,7 +5516,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_OBSLABEL:
     case F_VARNAME:
-	if (l->t == NUM) {
+	if (l->t == NUM || l->t == MAT) {
 	    ret = int_to_string_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, NUM, l, p);
