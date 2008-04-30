@@ -36,7 +36,7 @@
 #define SUBST_DEBUG 0
 #define IDX_DEBUG 0
 
-#define GENCOMPILE 1
+#define GENCOMPILE 0
 
 #if LOOP_DEBUG
 # undef ENABLE_GMP
