@@ -3300,7 +3300,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     int crit_ok, done;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
     int verbose = (opt & OPT_V);
-    int ndelta, fcount, gcount;
+    int fcount, gcount, ndelta = 0;
     double d, fmax, f, f0, sumgrad;
     int i, j, ilast, iter;
     double s, steplen = 0.0;
@@ -3453,6 +3453,9 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		ndelta = n;
 		ilast = gcount;
 	    }
+	} else if (sumgrad == 0.0) {
+	    fprintf(stderr, "gradient is exactly zero!\n");
+	    break;
 	} else {
 	    /* heading in the wrong direction */
 	    if (ilast == gcount) {
@@ -3461,7 +3464,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		*/
 		ndelta = 0;
 		if (gcount == 1) {
-		    err = (broken_gradient(g, n))? E_NAN : E_DATA;
+		    err = (broken_gradient(g, n))? E_NAN : E_NOCONV;
 		}
 	    } else {
 		/* reset for another attempt */
@@ -3511,6 +3514,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     free(X);
     free(c);
     free_triangular_array(H, n);
+
+#if BFGS_DEBUG
+    fprintf(stderr, "BFGS_max: returning %d\n", err);
+#endif
 
     return err;
 }

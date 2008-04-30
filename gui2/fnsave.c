@@ -171,7 +171,7 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
 
 /* for use in File, Save dialog */
 
-void get_default_package_name (char *fname, gpointer p)
+void get_default_package_name (char *fname, gpointer p, int mode)
 {
     function_info *finfo = (function_info *) p;
     const char *pubname;
@@ -181,7 +181,11 @@ void get_default_package_name (char *fname, gpointer p)
 
     if (pubname != NULL) {
 	strcpy(fname, pubname);
-	strcat(fname, ".gfn");	
+	if (mode == SAVE_FUNCTIONS_AS) {
+	    strcat(fname, ".inp");
+	} else {
+	    strcat(fname, ".gfn");
+	}	
     }
 }
 
@@ -358,6 +362,27 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 	g_object_set_data(G_OBJECT(vwin->w), "iface", 
 			  GINT_TO_POINTER(finfo->iface));
     }
+}
+
+static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
+{
+    int n = 0;
+
+    if (finfo->pub >= 0) {
+	n = 1;
+    }
+
+    if (finfo->privlist != NULL) {
+	n += finfo->privlist[0];
+    }
+
+    if (n == 0) {
+	warnbox("No code to save");
+	return;
+    }
+
+    file_selector(_("Save function package"), SAVE_FUNCTIONS_AS, 
+		  FSEL_DATA_MISC, finfo);
 }
 
 static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
@@ -686,6 +711,11 @@ static void finfo_dialog (function_info *finfo)
     } else {
 	finfo->iface = finfo->pub;
     }
+
+    button = gtk_button_new_with_label(_("Save as script"));
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(gfn_to_script_callback), finfo);
 
     gtk_widget_show_all(hbox);
 
@@ -1028,6 +1058,39 @@ int save_user_functions (const char *fname, gpointer p)
     }
 
     return err;
+}
+
+int save_user_functions_as_script (const char *fname, gpointer p)
+{
+    function_info *finfo = p;
+    PRN *prn;
+    int i, err = 0;
+
+    prn = gretl_print_new_with_filename(fname, &err);
+    if (err) {
+	file_write_errbox(fname);
+	return err;
+    }
+
+    pprintf(prn, "# author='%s'\n", finfo->author);
+    pprintf(prn, "# version='%s'\n", finfo->version);
+    pprintf(prn, "# date='%s'\n", finfo->date);
+
+    if (finfo->privlist != NULL) {
+	for (i=1; i<=finfo->privlist[0]; i++) {
+	    pputc(prn, '\n');
+	    gretl_function_print_code(finfo->privlist[i], prn);
+	}
+    }
+
+    if (finfo->pub >= 0) {
+	pputc(prn, '\n');
+	gretl_function_print_code(finfo->pub, prn);
+    }
+
+    gretl_print_destroy(prn);
+
+    return 0;
 }
 
 /* called from function selection dialog: a set of functions has been

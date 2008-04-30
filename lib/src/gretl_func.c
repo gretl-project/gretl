@@ -3075,14 +3075,13 @@ static int localize_list (const char *oldname, fn_param *fp,
     return err;
 }
 
-static int add_null_matrix_arg (const char *name)
+static void boolify_local_var (const char *vname, double **Z,
+			       const DATAINFO *pdinfo)
 {
-    gretl_matrix *m = gretl_null_matrix_new();
+    int v = varindex(pdinfo, vname);
 
-    if (m == NULL) {
-	return E_ALLOC;
-    } else {
-	return user_matrix_add(m, name);
+    if (v < pdinfo->v && Z[v][0] != 0.0) {
+	Z[v][0] = 1.0;
     }
 }
 
@@ -3162,6 +3161,9 @@ static int allocate_function_args (ufunc *fun,
 	    } else {
 		err = dataset_add_scalar_as(arg->val.x, fp->name, 
 					    pZ, pdinfo);
+	    }
+	    if (!err && fp->type == GRETL_TYPE_BOOL) {
+		boolify_local_var(fp->name, *pZ, pdinfo);
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    if (arg->type == GRETL_TYPE_UVAR) {
@@ -3502,6 +3504,10 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
+#if UDEBUG
+    fprintf(stderr, "function_assign_returns: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -3822,14 +3828,18 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	if (*u->lines[i] == '\0') {
 	    continue;
 	}
+
 	strcpy(line, u->lines[i]);
 	if (debug) {
 	    pprintf(prn, "? %s\n", line);
 	}
+
 	err = maybe_exec_line(&state, pZ, pdinfo);
 	if (err) {
 	    fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
+	    fprintf(stderr, "> %s\n", line);
 	}
+
 	if (state.funcerr) {
 #if UDEBUG
 	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", 
@@ -3838,6 +3848,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
 	    set_funcerr_message(u, state.cmd->param);
 	}
+
 	if (gretl_execute_loop()) { 
 #if UDEBUG
 	    fprintf(stderr, "gretl_function_exec: calling gretl_loop_exec\n");
@@ -3857,6 +3868,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #endif
 	}
     }
+
+#if UDEBUG
+    fprintf(stderr, "gretl_function_exec: finished main exec, err = %d\n", err);
+#endif
 
     /* restore the sample that was in place on entry */
 

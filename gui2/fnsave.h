@@ -26,8 +26,10 @@ void prepare_functions_save (void);
 
 int save_user_functions (const char *fname, gpointer p);
 
+int save_user_functions_as_script (const char *fname, gpointer p);
+
 int no_user_functions_check (void);
 
-void get_default_package_name (char *fname, gpointer p);
+void get_default_package_name (char *fname, gpointer p, int mode);
 
 #endif /* FNSAVE_H */

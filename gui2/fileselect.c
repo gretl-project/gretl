@@ -85,6 +85,7 @@ struct extmap {
 static struct extmap action_map[] = {
     { SAVE_DBDATA,       ".bin" },
     { SAVE_SCRIPT,       ".inp" },
+    { SAVE_FUNCTIONS_AS, ".inp" },
     { SAVE_CONSOLE,      ".inp" },
     { SAVE_SESSION,      ".gretl" },
     { SAVE_GP_CMDS,      ".plt" },
@@ -526,6 +527,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	save_session(fname);
     } else if (action == SAVE_FUNCTIONS) {
 	save_user_functions(fname, data);
+    } else if (action == SAVE_FUNCTIONS_AS) {
+	save_user_functions_as_script(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
     } else if (action == SET_PROG || action == SET_DIR) {
@@ -598,6 +601,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ SAVE_DATA,        { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{ SAVE_DBDATA,      { N_("gretl database files (*.bin)"), "*.bin" }},
 	{ SAVE_SCRIPT,      { N_("gretl script files (*.inp)"), "*.inp" }},
+	{ SAVE_FUNCTIONS_AS,{ N_("gretl script files (*.inp)"), "*.inp" }},
 	{ SAVE_CONSOLE,     { N_("gretl command files (*.inp)"), "*.inp" }},
 	{ SAVE_SESSION,     { N_("session files (*.gretl)"), "*.gretl" }},
 	{ SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
@@ -771,8 +775,8 @@ static void win32_file_selector (const char *msg, int action, FselDataSrc src,
 		strcpy(fname, strvar + slashpos(strvar) + 1);
 	    } 
 	}
-    } else if (action == SAVE_FUNCTIONS) {
-	get_default_package_name(fname, data);
+    } else if (action == SAVE_FUNCTIONS || action == SAVE_FUNCTIONS_AS) {
+	get_default_package_name(fname, data, action);
     }
 
     if (doing_nls()) {
@@ -957,14 +961,14 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
 					  strvar);
 	} 
-    } else if (action == SAVE_FUNCTIONS) {
+    } else if (action == SAVE_FUNCTIONS || action == SAVE_FUNCTIONS_AS) {
 	char fname[MAXLEN];
 
 	*fname = '\0';
-	get_default_package_name(fname, data);
+	get_default_package_name(fname, data, action);
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
 					  fname);
-    }	
+    } 
 
     if (gtk_dialog_run(GTK_DIALOG(filesel)) == GTK_RESPONSE_ACCEPT) {
 	char *fname;

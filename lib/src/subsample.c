@@ -1388,7 +1388,7 @@ static int get_sample_limit (char *s, double ***pZ, DATAINFO *pdinfo,
 	}
     } else {
 	/* absolute form */
-	ret = get_t_from_obs_string(s, (const double **) pZ, pdinfo);
+	ret = get_t_from_obs_string(s, (const double **) *pZ, pdinfo);
 	if (ret < 0) {
 	    ret = smpl_get_int(s, pZ, pdinfo, &err);
 	    /* convert to base 0 */
