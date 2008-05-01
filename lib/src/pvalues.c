@@ -709,20 +709,19 @@ static double chisq_pdf (int m, double x)
     return fx;
 }
 
-static double student_pdf (int m, double x)
+static double student_pdf (double m, double x)
 {
     double fx = NADBL;
 
     errno = 0;
 
     if (m > 0) {
-	double x1 = Binv(0.5*m, 0.5);
-	double x2 = sqrt((double) m);
-	double x3 = 1.0 + x * x / m;
-	double x4 = 0.5 * (m + 1.0);
+	double x1 = Binv(0.5*m, 0.5) / sqrt(m);
+	double x2 = m / (m + x * x);
+	double x3 = 0.5 * (m + 1.0);
 
 	if (!errno && !na(x1)) {
-	    fx = (x1 / x2) * pow(x3, -x4);
+	    fx = x1 * pow(x2, x3);
 	    if (errno) {
 		fx = NADBL;
 	    }
@@ -1332,7 +1331,7 @@ double gretl_get_pdf (char st, double *p)
     if (st == 'z') {
 	x = normal_pdf(p[0]);
     } else if (st == 't') {
-	x = student_pdf((int) p[0], p[1]);
+	x = student_pdf(p[0], p[1]);
     } else if (st == 'X') {
 	x = chisq_pdf((int) p[0], p[1]);
     } else if (st == 'F') {
