@@ -472,11 +472,6 @@ static NODE *aux_mspec_node (parser *p)
     return get_aux_node(p, MSPEC, 0, 0);
 }
 
-static NODE *aux_mdef_node (parser *p, int n)
-{
-    return get_aux_node(p, MDEF, n, 0);
-}
-
 static NODE *aux_list_node (parser *p)
 {
     return get_aux_node(p, LIST, 0, 0);
@@ -4223,11 +4218,11 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 
 /* composing a matrix from scalars, series or lists */
 
-static NODE *matrix_def_node (NODE *t, parser *p)
+static NODE *matrix_def_node (NODE *nn, parser *p)
 {
     gretl_matrix *M = NULL;
-    NODE *nn, *n, *ret = NULL;
-    int m = t->v.bn.n_nodes;
+    NODE *n, *ret = NULL;
+    int m = nn->v.bn.n_nodes;
     int nnum = 0, nvec = 0;
     int dum = 0, nsep = 0;
     int nlist = 0;
@@ -4240,21 +4235,12 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 	return NULL;
     }
 
-    if (reusable(p)) {
-	nn = aux_mdef_node(p, m);
-	if (nn == NULL) {
-	    return NULL;
-	}
-    } else {
-	nn = t;
-    }
-
 #if EDEBUG
     fprintf(stderr, "Processing MDEF...\n");
 #endif
 
     for (i=0; i<m && !p->err; i++) {
-	n = t->v.bn.n[i];
+	n = nn->v.bn.n[i];
 	if (ok_matdef_sym(n->t)) {
 	    nn->v.bn.n[i] = n;
 	} else {
@@ -4263,9 +4249,7 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 		break;
 	    }
 	    if (ok_matdef_sym(n->t)) {
-		if (nn == t) {
-		    free_tree(t->v.bn.n[i], p, "MatDef");
-		}
+		free_tree(nn->v.bn.n[i], p, "MatDef");
 		nn->v.bn.n[i] = n;
 	    } else {
 		fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
@@ -7111,17 +7095,10 @@ void gen_save_or_print (parser *p, PRN *prn)
 void gen_cleanup (parser *p)
 {
     if (reusable(p)) {
-#if PRESERVE_AUX_NODES
-	if (p->ret != p->tree && !is_aux_node(p->ret)) {
-	    free_tree(p->ret, p, "p->ret");
-	    p->ret = NULL;
-	}
-#else
 	if (p->ret != p->tree) {
 	    free_tree(p->ret, p, "p->ret");
 	    p->ret = NULL;
 	}
-#endif
     } else {
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, p, "p->tree");
@@ -7301,16 +7278,10 @@ int realgen (const char *s, parser *p, double ***pZ,
     pputc(prn, '\n');
 #endif
 
-#if PRESERVE_AUX_NODES
-    if (!reusable(p)) {
-	parser_free_aux_nodes(p);
-    }
-#else
-# if EDEBUG
+#if EDEBUG
     fprintf(stderr, "calling parser_free_aux_nodes\n");
-# endif
-    parser_free_aux_nodes(p);
 #endif
+    parser_free_aux_nodes(p);
 
     gen_check_errvals(p);
 
