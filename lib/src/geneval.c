@@ -822,6 +822,11 @@ static gretl_matrix *matrix_pdist (int t, char d, double *parm,
     return m;
 }
 
+static double scalar_node_get_value (NODE *n, parser *p)
+{
+    return (n->vnum >= 0)? (*p->Z)[n->vnum][0] : n->v.xval;
+}
+
 /* return a node containing the evaluated result of a
    probability distriution function */
 
@@ -867,7 +872,8 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
 	    if (s->t == NUM) {
-		parm[i] = s->v.xval;
+		parm[i] = scalar_node_get_value(s, p);
+		/* parm[i] = s->v.xval; */
 	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
 		pvec = s->v.xvec;
 	    } else if (i == k && !rgen && s->t == MAT && bvec == NULL) {
@@ -882,6 +888,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    goto disterr;
 		}
 		if (e->t == NUM) {
+		    fprintf(stderr, "setting parm[%d] from eval'd NUM = %g\n", i, e->v.xval);
 		    parm[i] = e->v.xval;
 		    free_tree(s, p, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
@@ -4891,6 +4898,7 @@ static NODE *eval (NODE *t, parser *p)
     case NUM:
 	if (t->vnum > 0) {
 	    /* update numerical value */
+	    fprintf(stderr, "NUM: updating value\n");
 	    t->v.xval = (*p->Z)[t->vnum][0];
 	}
     case VEC:

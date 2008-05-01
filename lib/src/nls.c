@@ -35,6 +35,8 @@
 
 #define NLS_DEBUG 0
 #define ML_DEBUG 0
+#define BFGS_DEBUG 0
+
 #define RSTEPS 4
 
 enum {
@@ -896,6 +898,10 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
 		return 1;
 	    }
 	    g[i] = (f2 - f1) / (2.0 * h);
+#if BFGS_DEBUG > 1
+	    fprintf(stderr, "g[%d] = (%.16g - %.16g) / (2.0 * %g) = %g\n",
+		    i, f2, f1, h, g[i]);
+#endif
 	}
     }
 
@@ -2995,8 +3001,6 @@ static double **triangular_array_new (int n)
     return m;
 }
 
-#define BFGS_DEBUG 0
-
 /* apparatus for constructing numerical approximation to
    the Hessian */
 
@@ -3332,10 +3336,21 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	goto bailout;
     }
 
+#if BFGS_DEBUG
+    fprintf(stderr, "BFGS: first evaluation of f = %g\n", f);
+#endif
+
     f0 = fmax = f;
     iter = ilast = fcount = gcount = 1;
     gradfunc(b, g, n, cfunc, data);
     reverse_gradient(g, n);
+
+#if BFGS_DEBUG
+    fprintf(stderr, "initial gradient:\n");
+    for (i=0; i<n; i++) {
+	fprintf(stderr, " g[%d] = %g\n", i, g[i]);
+    }
+#endif
 
     do {
 	if (verbose) {

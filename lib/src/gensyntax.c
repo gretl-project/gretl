@@ -243,8 +243,8 @@ static int push_bn_node (NODE *t, NODE *n)
 
 #if SDEBUG
     fprintf(stderr, "push_bn_node: n_nodes now = %d, "
-	    "added node of type %d\n", t->v.bn.n_nodes,
-	    n->t);
+	    "added node of type %d (vnum = %d)\n", 
+	    t->v.bn.n_nodes, n->t, n->vnum);
 #endif
 
     return 0;

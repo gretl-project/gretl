@@ -716,7 +716,7 @@ static double student_pdf (double m, double x)
     errno = 0;
 
     if (m > 0) {
-	double x1 = Binv(0.5*m, 0.5) / sqrt(m);
+	double x1 = Binv(0.5 * m, 0.5) / sqrt(m);
 	double x2 = m / (m + x * x);
 	double x3 = 0.5 * (m + 1.0);
 
