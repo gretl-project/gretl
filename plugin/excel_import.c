@@ -1510,6 +1510,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	goto getout;
     }
 
+    /* FIXME move the labels/dates check down here */
+
     if (book_time_series(book)) {
 	ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
     } else {

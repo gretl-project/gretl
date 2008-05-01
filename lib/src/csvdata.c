@@ -267,7 +267,7 @@ static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
 	    fprintf(stderr, "check: Tc = %d, missing = %d\n", Tc, altmiss);
 	    if (altmiss != misscount) {
 		ret = 0;
-	    } else {
+	    } else if (pZ != NULL) {
 		int err;
 
 		fprintf(stderr, "OK, consistent\n");
@@ -552,10 +552,6 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
 
-    if (pZ == NULL) {
-	return E_DATA;
-    }
-
     if (sscanf(lbl1, "%d%1[/-]%d%1[/-]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
 	sscanf(lbl2, "%d%1[/-]%d%1[/-]%d", &d2[0], sep1, &d2[1], sep2, &d2[2]) == 5) {
 	int yr1, mon1, day1;
@@ -726,9 +722,11 @@ time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn)
     return pd;
 }
 
-/* attempt to parse csv row labels as dates.  Return -1 if this
+/* Attempt to parse csv row labels as dates.  Return -1 if this
    doesn't work out, or 0 if the labels seem to be just integer
-   observation numbers, else return the inferred data frequency 
+   observation numbers, else return the inferred data frequency.  The
+   pZ argument may be NULL; in that case we will not attempt to pad
+   weekly data.
 */
 
 int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, 
