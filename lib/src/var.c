@@ -131,6 +131,24 @@ static int VAR_add_residuals_matrix (GRETL_VAR *var)
     return err;
 }
 
+static int VAR_add_vcv_matrix (GRETL_VAR *var)
+{
+    int err = 0;
+
+    if (var->vcv != NULL) {
+	return 0;
+    }      
+
+    int k = var->ncoeff * var->neqns;
+
+    var->vcv = gretl_matrix_alloc(k, k);
+    if (var->vcv == NULL) {
+	err = E_ALLOC;
+    } 
+
+    return err;
+}
+
 int nrestr (const GRETL_VAR *v) 
 {
     int n = 0;
@@ -173,6 +191,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->E = NULL;
     var->C = NULL;
     var->S = NULL;
+    var->vcv = NULL;
     var->F = NULL;
 
     var->models = NULL;
@@ -640,6 +659,10 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
 	err = VAR_add_cholesky_matrix(var);
     }
 
+    if (!err && var->ci == VAR) {
+	err = VAR_add_vcv_matrix(var);
+    }
+
     if (!err && code != VAR_LAGSEL) {
 	err = VAR_add_models(var, pdinfo);
     }
@@ -731,6 +754,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     gretl_matrix_free(var->X);
     gretl_matrix_free(var->B);
     gretl_matrix_free(var->XTX);
+    gretl_matrix_free(var->vcv);
 
     gretl_matrix_free(var->A);
     gretl_matrix_free(var->L);
@@ -1844,6 +1868,13 @@ void VAR_write_A_matrix (GRETL_VAR *v)
     }
 }
 
+void VAR_write_vcv_matrix (GRETL_VAR *v)
+{
+    if (v->S != NULL && v->XTX != NULL) {
+	gretl_matrix_kronecker_product(v->S, v->XTX, v->vcv);
+    }
+}
+
 static int VAR_finalize (GRETL_VAR *var)
 {
     int err = 0;
@@ -1857,7 +1888,9 @@ static int VAR_finalize (GRETL_VAR *var)
     }
     if (!err) {
 	err = VAR_add_stats(var);
+	VAR_write_vcv_matrix(var);
     }
+
     if (!err) {
 	err = gretl_VAR_do_error_decomp(var->S, var->C);
     }
@@ -3038,7 +3071,9 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     } else if (idx == M_COEFF) {
 	M = VAR_get_coeff_matrix(var, err);
 	copy = 0;
-    } else if (idx == M_VCV || idx == M_SIGMA) {
+    } else if (idx == M_VCV) {
+	src = var->vcv;
+    } else if (idx == M_SIGMA) {
 	src = var->S;
     } else if (vecm_matrix(idx)) {
 	if (var->jinfo != NULL) {
@@ -3346,6 +3381,10 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     if (!err && var->A == NULL) {
 	err = VAR_add_companion_matrix(var);
     }
+
+    if (!err && var->vcv == NULL) {
+	err = VAR_add_vcv_matrix(var);
+    } 
 
     if (!err && var->C == NULL) {
 	err = VAR_add_cholesky_matrix(var);

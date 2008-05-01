@@ -52,6 +52,7 @@ struct GRETL_VAR_ {
     gretl_matrix *E;     /* residuals matrix */
     gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
     gretl_matrix *S;     /* cross-equation variance matrix */
+    gretl_matrix *vcv;   /* parameter covariance matrix */
     gretl_matrix *F;     /* optional forecast matrix */
     MODEL **models;      /* pointers to individual equation estimates */
     double *Fvals;       /* hold results of F-tests */
