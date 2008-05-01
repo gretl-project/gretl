@@ -1665,7 +1665,7 @@ int autocorr_test (MODEL *pmod, int order,
     int smpl_t2 = pdinfo->t2;
     int *newlist = NULL;
     MODEL aux;
-    double RSSx = 0, RSSxe = 0;
+    double RSSxe, RSSx = pmod->ess;
     int i, t, n = pdinfo->n, v = pdinfo->v; 
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
@@ -1683,7 +1683,7 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     if (dataset_is_panel(pdinfo)) {
-#if 1
+#if 1 /* FIXME */
 	return E_NOTIMP;
 #else
 	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
@@ -1718,9 +1718,14 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     if (!err) {
-	/* add uhat to data set */
+	/* add uhat to data set: substitute zeros for 
+	   pre-sample values */
 	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = pmod->uhat[t];
+	    if (t < pmod->t1) {
+		(*pZ)[v][t] = 0.0;
+	    } else {
+		(*pZ)[v][t] = pmod->uhat[t];
+	    }
 	}
 	strcpy(pdinfo->varname[v], "uhat");
 	strcpy(VARLABEL(pdinfo, v), _("residual"));
@@ -1744,31 +1749,13 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (!err) {
 	newlist[1] = v;
-	/* regression on X only */
-	pdinfo->t1 += order;
-	newlist[0] -= order;
+	/* regression on [X~E] */
 	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
-#if 0
-	printmodel(&aux, pdinfo, OPT_NONE, prn);
-#endif
 	err = aux.errcode;
-	if (!err) {
-	    RSSx = aux.ess;
-	    clear_model(&aux);
-	    pdinfo->t1 -= order;
-	    newlist[0] += order;
-	    /* regression on [X~E] */
-	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
-#if 0
-	    printmodel(&aux, pdinfo, OPT_NONE, prn);
-#endif
-	    err = aux.errcode;
-	    if (!err) {
-		RSSxe = aux.ess;
-	    }
-	}
 	if (err) {
-	    errmsg(err, prn);
+	   errmsg(err, prn);
+	} else { 
+	    RSSxe = aux.ess;
 	}
     } 
 
