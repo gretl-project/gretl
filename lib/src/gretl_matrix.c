@@ -3084,7 +3084,9 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
     int ioff, joff;
     int Ki, Kj;
 
-    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
+    if (gretl_is_null_matrix(A) || 
+	gretl_is_null_matrix(B) || 
+	gretl_is_null_matrix(K)) {
 	return E_DATA;
     }
 

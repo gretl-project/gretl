@@ -133,13 +133,13 @@ static int VAR_add_residuals_matrix (GRETL_VAR *var)
 
 static int VAR_add_vcv_matrix (GRETL_VAR *var)
 {
-    int err = 0;
+    int k, err = 0;
 
     if (var->vcv != NULL) {
 	return 0;
     }      
 
-    int k = var->ncoeff * var->neqns;
+    k = var->ncoeff * var->neqns;
 
     var->vcv = gretl_matrix_alloc(k, k);
     if (var->vcv == NULL) {
@@ -1868,9 +1868,9 @@ void VAR_write_A_matrix (GRETL_VAR *v)
     }
 }
 
-void VAR_write_vcv_matrix (GRETL_VAR *v)
+static void VAR_write_vcv_matrix (GRETL_VAR *v)
 {
-    if (v->S != NULL && v->XTX != NULL) {
+    if (v->S != NULL && v->XTX != NULL && v->vcv != NULL) {
 	gretl_matrix_kronecker_product(v->S, v->XTX, v->vcv);
     }
 }
@@ -1886,6 +1886,7 @@ static int VAR_finalize (GRETL_VAR *var)
     if (!err && var->order > 1) {
 	err = last_lag_LR_prep(var, var->ifc);
     }
+
     if (!err) {
 	err = VAR_add_stats(var);
 	VAR_write_vcv_matrix(var);
@@ -3371,6 +3372,7 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     MODEL *pmod;
     double x;
     int gotA = (var->A != NULL);
+    int gotV = (var->vcv != NULL);
     int j, i;
     int err = 0;
 
@@ -3415,6 +3417,10 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
 	   file, and gotA should be non-zero 
 	*/
 	VAR_write_A_matrix(var);
+    }
+
+    if (!err && !gotV) {
+	VAR_write_vcv_matrix(var);
     }
 
     return err;

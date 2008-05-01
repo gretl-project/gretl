@@ -99,7 +99,6 @@ struct set_vars_ {
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
-                           !strcmp(s, GRETL_DEBUG) || \
                            !strcmp(s, FORCE_DECP) || \
 			   !strcmp(s, FORCE_HC) || \
 			   !strcmp(s, HALT_ON_ERR) || \
@@ -127,7 +126,8 @@ struct set_vars_ {
 		       !strcmp(s, HORIZON) || \
 		       !strcmp(s, LONGDIGITS) || \
 		       !strcmp(s, LOOP_MAXITER) || \
-		       !strcmp(s, VECM_NORM))
+		       !strcmp(s, VECM_NORM) || \
+		       !strcmp(s, GRETL_DEBUG))
 
 /* global state */
 set_vars *state;
@@ -275,8 +275,11 @@ static int check_for_state (void)
 
 static int flag_to_bool (set_vars *sv, int flag)
 {
-    if (!sv) return 0;
-    return (sv->flags & flag)? 1 : 0;
+    if (!sv) {
+	return 0;
+    } else {
+	return (sv->flags & flag)? 1 : 0;
+    }
 }
 
 static void state_vars_copy (set_vars *sv)
@@ -1127,7 +1130,7 @@ static int display_settings (PRN *prn)
     libset_print_int(LOOP_MAXITER, prn);
     libset_print_bool(MAX_VERBOSE, prn);
     libset_print_bool(MESSAGES, prn);
-    libset_print_bool(GRETL_DEBUG, prn);
+    libset_print_int(GRETL_DEBUG, prn);
     libset_print_bool(SHELL_OK, prn);
 
     if (*state->shelldir) {
@@ -1471,6 +1474,8 @@ int libset_get_int (const char *s)
 	return state->loop_maxiter;
     } else if (!strcmp(s, VECM_NORM)) {
 	return state->vecm_norm;
+    } else if (!strcmp(s, GRETL_DEBUG)) {
+	return gretl_debug;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", s);	
@@ -1516,6 +1521,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 0;
 	*max = NORM_MAX;
 	*var = &state->vecm_norm;
+    } else if (!strcmp(s, GRETL_DEBUG)) {
+	*min = 0;
+	*max = 4;
+	*var = &gretl_debug;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
 		"variable '%s'\n", s);	
@@ -1594,8 +1603,6 @@ static int boolvar_get_flag (const char *s)
 	return STATE_PREWHITEN;
     } else if (!strcmp(s, PCSE)) {
 	return STATE_USE_PCSE;
-    } else if (!strcmp(s, GRETL_DEBUG)) {
-	return gretl_debug;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	
@@ -1648,8 +1655,9 @@ int libset_get_bool (const char *s)
 {
     int flag, ret = 0;
 
-    if (!strcmp(s, GRETL_DEBUG)) {
-	return gretl_debug;
+    if (!strcmp(s, MAX_VERBOSE) && gretl_debug > 1) {
+	/* strong debugging turns on max_verbose */
+	return 1;
     }
 
     if (check_for_state()) {
@@ -1689,12 +1697,6 @@ static void libset_set_decpoint (int on)
 void libset_set_bool (const char *s, int set)
 {
     int flag;
-
-    if (!strcmp(s, GRETL_DEBUG)) {
-	/* global, not "state"-specific */
-	gretl_debug = set;
-	return;
-    }
 
     if (check_for_state()) {
 	return;
