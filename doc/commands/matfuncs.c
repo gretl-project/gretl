@@ -170,6 +170,16 @@ static int function_in_gretl (const char *funword)
 #endif
 }
 
+static int not_wanted (const char *s)
+{
+    if (!strcmp(s, "probdist") ||
+	!strcmp(s, "math")) {
+	return 1;
+    }
+
+    return 0;
+}
+
 static int 
 maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 {
@@ -185,6 +195,11 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 
     if (!approved_section_title(tmp)) {
 	fprintf(stderr, "*** Found unapproved section heading '%s'\n", tmp);
+	return 1;
+    }
+
+    if (not_wanted(tmp)) {
+	return 0;
     }
 
 #if VERBOSE
@@ -314,8 +329,8 @@ place_function (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
     }
 
     if (n < 0) {
-	fprintf(stderr, "Couldn't place function '%s'\n", fname);
-	return 1;
+	/* assume this function is not wanted, in context */
+	goto bailout;
     }
 
     fun = function_new(fname, matrix_ok);

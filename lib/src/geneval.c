@@ -873,7 +873,6 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    s = r->v.bn.n[i+1];
 	    if (s->t == NUM) {
 		parm[i] = scalar_node_get_value(s, p);
-		/* parm[i] = s->v.xval; */
 	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
 		pvec = s->v.xvec;
 	    } else if (i == k && !rgen && s->t == MAT && bvec == NULL) {
@@ -888,7 +887,6 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    goto disterr;
 		}
 		if (e->t == NUM) {
-		    fprintf(stderr, "setting parm[%d] from eval'd NUM = %g\n", i, e->v.xval);
 		    parm[i] = e->v.xval;
 		    free_tree(s, p, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
@@ -4898,7 +4896,6 @@ static NODE *eval (NODE *t, parser *p)
     case NUM:
 	if (t->vnum > 0) {
 	    /* update numerical value */
-	    fprintf(stderr, "NUM: updating value\n");
 	    t->v.xval = (*p->Z)[t->vnum][0];
 	}
     case VEC:

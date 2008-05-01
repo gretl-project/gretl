@@ -1099,23 +1099,9 @@ check_all_varnames (wbook *book, int totcols, const char *blank_col)
 
 static int missval_string (const char *s)
 {
-    if (s + 1 == 0) {
-	return 1;
-    } else {
-	char test[6] = {0};
+    s++;
 
-	strncat(test, s + 1, 4);
-	tailstrip(test);
-	lower(test);
-	if (!strcmp(test, "na") || 
-	    !strcmp(test, "n.a.") ||
-	    !strcmp(test, "..") ||
-	    !strcmp(test, "?")) {
-	    return 1;
-	}
-    }
-
-    return 0;
+    return (*s == '\0' || import_na_string(s));
 }
 
 struct string_err {
