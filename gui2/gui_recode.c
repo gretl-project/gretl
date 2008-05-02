@@ -237,47 +237,48 @@ static gchar *gp_locale_to_utf8 (const gchar *src, int starting)
 
 int maybe_recode_gp_file_to_utf8 (const char *fname)
 {
+    FILE *fin, *fout;
+    gchar *trbuf, *trname = NULL;
+    char line[512];
+    int recoded = 0;
     int err = 0;
-    
-    if (!seven_bit_file(fname)) {
-	FILE *fin, *fout;
-	gchar *trbuf, *trname = NULL;
-	char line[512];
-	int start = 1;
 
-	fin = gretl_fopen(fname, "r");
-	if (fin == NULL) {
-	    return 1;
-	}
+    fin = gretl_fopen(fname, "r");
+    if (fin == NULL) {
+	return 1;
+    }
 
-	trname = g_strdup_printf("%s.tr", fname);
+    trname = g_strdup_printf("%s.tr", fname);
 
-	fout = gretl_fopen(trname, "w");
-	if (fout == NULL) {
-	    fclose(fin);
-	    g_free(trname);
-	    return 1;
-	}	
+    fout = gretl_fopen(trname, "w");
+    if (fout == NULL) {
+	fclose(fin);
+	g_free(trname);
+	return 1;
+    }	
 
-	while (fgets(line, sizeof line, fin)) {
-	    trbuf = gp_locale_to_utf8(line, start);
+    while (fgets(line, sizeof line, fin)) {
+	if (!g_utf8_validate(line, -1, NULL)) {
+	    trbuf = gp_locale_to_utf8(line, !recoded);
 	    if (trbuf != NULL) {
 		fputs(trbuf, fout);
 		g_free(trbuf);
 	    } 
-	    start = 0;
+	    recoded = 1;
+	} else {
+	    fputs(line, fout);
 	}
-
-	fclose(fin);
-	fclose(fout);
-
-	if (!err) {
-	    err = copyfile(trname, fname);
-	}
-
-	remove(trname);
-	g_free(trname);
     }
+
+    fclose(fin);
+    fclose(fout);
+
+    if (recoded) {
+	err = copyfile(trname, fname);
+    }
+
+    remove(trname);
+    g_free(trname);
 
     return err;
 }
