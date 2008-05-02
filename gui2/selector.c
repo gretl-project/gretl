@@ -1006,6 +1006,31 @@ static void select_singleton (selector *sr)
 		       0, v, 1, 0, 2, datainfo->varname[v], -1);
 }
 
+static int varflag_dialog (int v)
+{
+    const char *opts[] = {
+	N_("Unrestricted"),
+	N_("Restricted")
+    };
+    gchar *title, *label;
+    int ret;
+
+    title = g_strdup_printf("gretl: %s", _("add exogenous variable"));
+    label = g_strdup_printf(_("Status of '%s' in VECM:"), datainfo->varname[v]);
+
+    ret = radio_dialog(title, label, opts, 2, 0, 0);
+    if (ret == 0) {
+	set_varflag(UNRESTRICTED);
+    } else if (ret == 1) {
+	set_varflag(RESTRICTED);
+    }
+
+    g_free(title);
+    g_free(label);
+
+    return ret;
+}
+
 static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter, 
 			      selector *sr, int locus)
 {
@@ -1028,10 +1053,6 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
     if (model == NULL) {
 	return;
-    }
-
-    if (locus == SR_RVARS2 && USE_RXLIST(sr->code)) {
-	set_varflag(UNRESTRICTED);
     }
 
     keep_names = 
@@ -1074,6 +1095,11 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	    } 
 	    g_free(vname);
 	} else {
+	    if (locus == SR_RVARS2 && USE_RXLIST(sr->code)) {
+		if (varflag_dialog(v) < 0) {
+		    return;
+		}
+	    }
 #if VLDEBUG
 	    fprintf(stderr, "real_add_generic: calling varlist_insert_var_full\n");
 #endif
