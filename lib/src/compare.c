@@ -2372,6 +2372,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     double wbar = 0.0;
     double *cresid = NULL, *W = NULL;
     int err = 0;
+    int quiet = opt & OPT_Q;
 
     if (pmod->ci != OLS) {
 	return E_OLSONLY;
@@ -2430,8 +2431,9 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    a = a1 + a2 + a3;
 	    /* slope of expectation wrt time */
 	    b = 1.0 / m;
-
-	    pputs(prn, _("Cumulated sum of squared residuals"));
+	    if (!quiet) {
+		pputs(prn, _("Cumulated sum of squared residuals"));
+	    }
 	} else {
 	    wbar /= T - k;
 	    pprintf(prn, "\n%s\n\n", _("CUSUM test for stability of parameters"));
@@ -2448,8 +2450,9 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    a = 0.948 * sqrt((double) m);
 	    /* slope of confidence band limit wrt time */
 	    b = 2.0 * a / m;
-
-	    pputs(prn, _("Cumulated sum of scaled residuals"));
+	    if (!quiet) {
+		pputs(prn, _("Cumulated sum of scaled residuals"));
+	    }
 	}
 
 	pputc(prn, '\n');
@@ -2471,8 +2474,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		W[j] /= sigma;
 		sig = fabs(W[j]) > a + j * b;
 	    }
-	    ntodate(cumdate, pmod->t1 + k + j, pdinfo);
-	    pprintf(prn, " %s %9.3f %s\n", cumdate, W[j], sig? "*" : "");
+	    if (!quiet) {
+		ntodate(cumdate, pmod->t1 + k + j, pdinfo);
+		pprintf(prn, " %s %9.3f %s\n", cumdate, W[j], sig? "*" : "");
+	    }
 	}
 
 	if (!(opt & OPT_R)) {
