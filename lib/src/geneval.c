@@ -883,28 +883,22 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		}
 		if (e->t == NUM) {
 		    parm[i] = e->v.xval;
-		    free_tree(s, p, "Pdist");
-		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
 		    pvec = e->v.xvec;
-		    free_tree(s, p, "Pdist");
-		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k && !rgen && e->t == MAT && bvec == NULL) {
 		    pmat = e->v.m;
-		    free_tree(s, p, "Pdist");
-		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k-1 && d == 'D' && e->t == VEC) {
 		    bvec = e->v.xvec;
-		    free_tree(s, p, "Pdist");
-		    r->v.bn.n[i+1] = NULL;
 		} else if (i == k-1 && d == 'D' && e->t == MAT) {
 		    bmat = e->v.m;
-		    free_tree(s, p, "Pdist");
-		    r->v.bn.n[i+1] = NULL;
 		} else {
 		    p->err = E_INVARG;
 		    goto disterr;
 		}
+		if (!reusable(p)) {
+		    free_tree(s, p, "Pdist");
+		    r->v.bn.n[i+1] = NULL;
+		}		    
 	    }
 	}
 
@@ -4213,6 +4207,23 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
     return m;
 }
 
+static NODE **tmp_node_holder (NODE *n, parser *p)
+{
+    int i, m = n->v.bn.n_nodes;
+    NODE **t = malloc(m * sizeof *t);
+
+    if (t == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<m; i++) {
+	t[i] = n->v.bn.n[i];
+    }
+
+    return t;
+}
+
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
                           s == DUM || s == LIST || s == LVEC)
 
@@ -4222,6 +4233,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 {
     gretl_matrix *M = NULL;
     NODE *n, *ret = NULL;
+    NODE **nntmp = NULL;
     int m = nn->v.bn.n_nodes;
     int nnum = 0, nvec = 0;
     int dum = 0, nsep = 0;
@@ -4233,6 +4245,13 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	fprintf(stderr, "You can't define a matrix in this context\n");
 	p->err = E_TYPES;
 	return NULL;
+    }
+
+    if (reusable(p)) {
+	nntmp = tmp_node_holder(nn, p);
+	if (p->err) {
+	    return NULL;
+	}
     }
 
 #if EDEBUG
@@ -4249,7 +4268,9 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 		break;
 	    }
 	    if (ok_matdef_sym(n->t)) {
-		free_tree(nn->v.bn.n[i], p, "MatDef");
+		if (nntmp == NULL) {
+		    free_tree(nn->v.bn.n[i], p, "MatDef");
+		}
 		nn->v.bn.n[i] = n;
 	    } else {
 		fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
@@ -4317,10 +4338,18 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	}
     }
 
-    for (i=0; i<m; i++) {
+    if (nntmp != NULL) {
+	/* restore the original subnodes */
+	for (i=0; i<m; i++) {
+	    nn->v.bn.n[i] = nntmp[i];
+	}
+	free(nntmp);
+    } else {
 	/* forestall double-freeing: null out any aux nodes */
-	if (is_aux_node(nn->v.bn.n[i])) {
-	    nn->v.bn.n[i] = NULL;
+	for (i=0; i<m; i++) {
+	    if (is_aux_node(nn->v.bn.n[i])) {
+		nn->v.bn.n[i] = NULL;
+	    }
 	}
     }
 	
