@@ -30,31 +30,6 @@ static int seven_bit_string (const unsigned char *s)
     return 1;
 }
 
-static int seven_bit_file (const char *fname)
-{
-    FILE *fp;
-    char line[256];
-    int ascii = 1;
-    
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	return 1;
-    }
-
-    while (fgets(line, sizeof line, fp)) {
-	if (!seven_bit_string((unsigned char *) line)) {
-	    ascii = 0;
-	    break;
-	}
-    }
-
-    fclose(fp);
-
-    fprintf(stderr, "seven_bit_file: returning %d\n", ascii);
-
-    return ascii;
-}
-
 gchar *my_filename_from_utf8 (char *fname)
 {
     const gchar *cset;
