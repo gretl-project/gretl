@@ -740,14 +740,22 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 /* run a previously compiled generator */
 
 int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
-		  PRN *prn)
+		  gretlopt opt, PRN *prn)
 {
+    int flags = P_EXEC;
+
 #if GDEBUG
     fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s'\n", 
 	    (void *) p, p->lh.name);
 #endif
 
-    realgen(NULL, p, pZ, pdinfo, prn, P_EXEC);
+    if (opt & OPT_L) {
+	flags |= P_LOOP;
+    } else if (opt & OPT_S) {
+	flags |= P_SLAVE;
+    }
+
+    realgen(NULL, p, pZ, pdinfo, prn, flags);
     if (p->err == 0) {
 	gen_save_or_print(p, prn);
     }

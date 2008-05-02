@@ -189,7 +189,7 @@ static int nls_genr_setup (nlspec *s)
 	   while we're at it
 	*/
 	genr_set_na_check(genrs[i]);
-	err = execute_genr(genrs[i], s->Z, s->dinfo, s->prn);
+	err = execute_genr(genrs[i], s->Z, s->dinfo, OPT_S, s->prn);
 	genr_unset_na_check(genrs[i]);
 
 	if (err) {
@@ -278,7 +278,7 @@ static int nls_auto_genr (nlspec *s, int i)
 #if NLS_DEBUG
 	fprintf(stderr, " generating aux var %d:\n %s\n", j, s->aux[j]);
 #endif
-	s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
+	s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
     }
 
     if (i == 0 && s->nlfunc == NULL) {
@@ -292,7 +292,7 @@ static int nls_auto_genr (nlspec *s, int i)
 	    s->naux, i, j, j);
     fprintf(stderr, " %s\n", genr_get_formula(s->genrs[j]));
 #endif
-    s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
+    s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
 
     /* make sure we have a correct pointer to matrix deriv */
     if (!s->generr && i > 0 && matrix_deriv(s, i-1)) {
@@ -3774,7 +3774,7 @@ static double user_get_criterion (const double *b, void *p)
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->g, u->Z, u->dinfo, u->prn); 
+    err = execute_genr(u->g, u->Z, u->dinfo, OPT_S, u->prn); 
 
     if (err) {
 	return NADBL;
@@ -3815,7 +3815,7 @@ static int user_gen_setup (umax *u,
 
     if (!err) {
 	/* see if the formula actually works */
-	err = execute_genr(g, pZ, pdinfo, u->prn);
+	err = execute_genr(g, pZ, pdinfo, OPT_S, u->prn);
     }
 
     if (!err) {
@@ -3894,7 +3894,7 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
 	u->b->val[i] = x[i];
     }
 
-    err = execute_genr(u->g, u->Z, u->dinfo, u->prn); 
+    err = execute_genr(u->g, u->Z, u->dinfo, OPT_S, u->prn); 
     if (err) {
 	fprintf(stderr, "execute_genr: err = %d\n", err); 
     }

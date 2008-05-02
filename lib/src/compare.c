@@ -2355,7 +2355,8 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
  * @prn: gretl printing struct.
  *
  * Tests the given model for parameter stability via the CUSUM test,
- * or if @opt includes %OPT_R, via the CUSUMSQ test.
+ * or if @opt includes %OPT_R, via the CUSUMSQ test; %OPT_Q makes
+ * the test quiet.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -2371,8 +2372,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     char cumdate[OBSLEN];
     double wbar = 0.0;
     double *cresid = NULL, *W = NULL;
-    int err = 0;
     int quiet = opt & OPT_Q;
+    int err = 0;
 
     if (pmod->ci != OLS) {
 	return E_OLSONLY;

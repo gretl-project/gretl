@@ -374,7 +374,7 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 
 int ok_in_loop (int c)
 {
-    /* here are the commands we don't currently allow */
+    /* here are the commands we _don't_ currently allow */
     if (c == BXPLOT ||
 	c == CORRGM ||
 	c == CUSUM ||
@@ -2603,12 +2603,14 @@ static void progressive_loop_zero (LOOPSET *loop)
 	loop_model_free(&loop->lmodels[i]);
     }
 
+    loop->lmodels = NULL;
     loop->n_loop_models = 0;
 
     for (i=0; i<loop->n_prints; i++) { 
 	loop_print_free(&loop->prns[i]);
     }
 
+    loop->prns = NULL;
     loop->n_prints = 0;
 
     loop_store_free(&loop->store);
@@ -2997,7 +2999,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		} else {
 		    genr = get_loop_genr_by_line(loop, j, line, pZ, pdinfo, &err);
 		    if (!err) {
-			err = execute_genr(genr, pZ, pdinfo, prn);
+			err = execute_genr(genr, pZ, pdinfo, OPT_L, prn);
 		    }
 		}
 #else

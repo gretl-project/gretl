@@ -6995,6 +6995,14 @@ static void parser_reinit (parser *p, double ***pZ,
 	p->flags |= P_AUTOREG;
     }
 
+    if (saveflags & P_LOOP) {
+	p->flags |= P_LOOP;
+    }
+
+    if (saveflags & P_SLAVE) {
+	p->flags |= P_SLAVE;
+    }
+
     p->Z = pZ;
     p->dinfo = dinfo;
     p->prn = prn;
@@ -7314,7 +7322,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     gen_check_errvals(p);
 
-    if (flags & P_EXEC) {
+    if (flags & P_SLAVE) {
 	/* context is NLS/MLE or similar */
 	if (p->warn != 0 && p->err == 0) {
 	    /* warnings re. NAs become errors */

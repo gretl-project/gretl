@@ -415,7 +415,9 @@ enum {
     P_LHSTR   = 1 << 18, /* there was a pre-existing LHS string */
     P_LHMAT   = 1 << 19, /* there was a pre-existing LHS matrix */
     P_QUIET   = 1 << 20, /* don't print any messages or labels */
-    P_GETSTR  = 1 << 21  /* state: flag acceptance of plain strings */
+    P_GETSTR  = 1 << 21, /* state: flag acceptance of plain strings */
+    P_LOOP    = 1 << 22, /* executing pre-built genr in loop context */
+    P_SLAVE   = 1 << 23  /* running as "slave" of NLS/MLE/GMM */
 };
 
 struct lhinfo {
