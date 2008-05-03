@@ -1003,6 +1003,32 @@ static void build_funcfiles_popup (windata_t *vwin)
     }
 }
 
+static void build_db_popup (windata_t *vwin)
+{
+    if (vwin->popup == NULL) {
+	vwin->popup = gtk_menu_new();
+
+	if (vwin->role == NATIVE_DB) {
+	    add_popup_item(_("List series"), vwin->popup, 
+			   G_CALLBACK(open_db_index), 
+			   vwin);
+	    add_popup_item(_("Find..."), vwin->popup, 
+			   G_CALLBACK(datafile_find), 
+			   vwin);
+	} else {
+	    add_popup_item(_("List series"), vwin->popup, 
+			   G_CALLBACK(open_remote_db_index), 
+			   vwin);
+	    add_popup_item(_("Install"), vwin->popup, 
+			   G_CALLBACK(install_file_from_server), 
+			   vwin);
+	    add_popup_item(_("Find..."), vwin->popup, 
+			   G_CALLBACK(datafile_find), 
+			   vwin);
+	}
+    }
+}
+
 static void show_server_dbs (GtkWidget *w, gpointer p)
 {
     display_files(NULL, REMOTE_DB, NULL);
@@ -1057,7 +1083,7 @@ static struct files_item files_items[] = {
     { N_("Look on server"), BTN_WWW,   GTK_STOCK_NETWORK },
     { N_("Local machine"),  BTN_HOME,  GTK_STOCK_HOME },
     { N_("New"),            BTN_NEW,   GTK_STOCK_NEW },
-    { N_("Find"),           BTN_FIND,  GTK_STOCK_FIND },
+    { N_("Find..."),        BTN_FIND,  GTK_STOCK_FIND },
     { N_("Close"),          BTN_CLOSE, GTK_STOCK_CLOSE },
     { NULL, 0, NULL }
 };
@@ -1336,7 +1362,12 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
 			 G_CALLBACK(popup_menu_handler), 
 			 vwin->popup);
-    }
+    } else if (code == NATIVE_DB || code == REMOTE_DB) {
+	build_db_popup(vwin);
+	g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
+			 G_CALLBACK(popup_menu_handler), 
+			 vwin->popup);
+    }	
 
     if (REMOTE_ACTION(code)) {
 	GtkWidget *hbox;
