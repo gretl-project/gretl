@@ -915,11 +915,13 @@ static void do_upload (const char *fname)
 
     /* set waiting cursor */
     disp = gdk_display_get_default();
-    cursor = gdk_cursor_new(GDK_WATCH);
     w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
-    gdk_window_set_cursor(w1, cursor);
-    gdk_display_sync(disp);
-    gdk_cursor_unref(cursor);
+    if (w1 != NULL) {
+	cursor = gdk_cursor_new(GDK_WATCH);
+	gdk_window_set_cursor(w1, cursor);
+	gdk_display_sync(disp);
+	gdk_cursor_unref(cursor);
+    }
 
     err = gretl_file_get_contents(fname, &buf);
 
@@ -942,7 +944,9 @@ static void do_upload (const char *fname)
     }
 
     /* reset default cursor */
-    gdk_window_set_cursor(w1, NULL);
+    if (w1 != NULL) {
+	gdk_window_set_cursor(w1, NULL);
+    }
 
     if (err) {
 	if (!error_printed) {
