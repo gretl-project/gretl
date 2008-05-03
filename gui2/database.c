@@ -1870,7 +1870,7 @@ static char *get_writable_target (int code, int op, char *objname)
 
 /* note : 'vwin' here is the source viewer window displaying the
    remote file (database or function package) that is being installed
-   oto the local machine.
+   onto the local machine.
 */
 
 static int real_install_file_from_server (windata_t *vwin, int op)
@@ -1923,11 +1923,12 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 
 	if (vwin->role == REMOTE_FUNC_FILES) {
 	    if (op == REAL_INSTALL) {
+		list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
+				      vwin->active_var, 3,
+				      _("Up to date"));
 		if (local != NULL) {
 		    populate_filelist(local, NULL);
-		} else {
-		    infobox(_("Function package installed"));
-		}
+		} 
 	    } else {
 		gui_show_function_info(target, VIEW_FUNC_INFO);
 	    }
@@ -1937,10 +1938,15 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 		if (err != E_FOPEN) {
 		    errbox(_("Error unzipping compressed data"));
 		}
-	    } else if (local != NULL) {
-		populate_filelist(local, NULL);
 	    } else {
-		offer_db_open(target);
+		tree_store_set_string(GTK_TREE_VIEW(vwin->listbox),
+				      vwin->active_var, 2,
+				      _("Up to date"));
+		if (local != NULL) {
+		    populate_filelist(local, NULL);
+		} else {
+		    offer_db_open(target);
+		}
 	    }
 	}
     }
@@ -2121,8 +2127,22 @@ static void get_local_object_status (char *fname, int role, char *status,
 		build_path(fndir, paths.workdir, "functions", NULL);
 		build_path(fullname, fndir, fname, NULL);
 	    }
-	    if ((err = stat(fullname, &fbuf)) == -1) {
-		strcpy(status, _("Not installed"));
+	    err = stat(fullname, &fbuf);
+	    if (err == -1) {
+		if (role == REMOTE_FUNC_FILES) {
+		    /* try default working dir */
+		    char *tmp = gretl_default_workdir(&paths);
+
+		    if (tmp != NULL) {
+			build_path(fndir, tmp, "functions", NULL);
+			build_path(fullname, fndir, fname, NULL);
+			err = stat(fullname, &fbuf);
+			free(tmp);
+		    }
+		}
+		if (err == -1) {
+		    strcpy(status, _("Not installed"));
+		}
 	    } 
 #endif
 	} else {
@@ -2371,7 +2391,7 @@ gint populate_remote_db_list (windata_t *vwin)
 	    /* insert at top level */
 	    gtk_tree_store_append(store, &iter, NULL);
 	    gtk_tree_store_set(store, &iter, 0, row[0], 1, row[1],
-			   2, row[2], -1);
+			       2, row[2], -1);
 	}	    
 
 	i++;

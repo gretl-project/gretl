@@ -273,9 +273,18 @@
 </xsl:template>
 
 <xsl:template match="flag">
-  <xsl:text>\verb|</xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text>|</xsl:text>
+  <xsl:choose>
+    <xsl:when test="contains(.,'|')">
+      <xsl:text>\verb@</xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>@</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>\verb|</xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>|</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>    
 </xsl:template>
 
 <xsl:template match="argpunct">
