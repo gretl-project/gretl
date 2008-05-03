@@ -39,7 +39,7 @@
    count CDATA #REQUIRED
 >
 
-<!ELEMENT param description?>
+<!ELEMENT param (description?)>
 <!ATTLIST param
    name    CDATA #REQUIRED
    default CDATA #IMPLIED
