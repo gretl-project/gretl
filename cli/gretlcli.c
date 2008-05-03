@@ -772,7 +772,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
 	k = saved_object_action(line, pZ, pdinfo, models, prn);
-	if (k == 1) return 0;   /* action was OK */
+	if (k == 1) return 0;   /* action was OK, or ignored */
 	if (k == -1) return 1;  /* action was faulty */
 
 	/* are we ready for this? */

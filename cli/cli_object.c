@@ -176,7 +176,12 @@ static int saved_object_action (const char *line,
 	return 0;
     }
 
-    if (action == OBJ_ACTION_NULL || action == OBJ_ACTION_INVALID) {
+    if (action == OBJ_ACTION_NULL) {
+	free(param);
+	return 1;
+    }
+
+    if (action == OBJ_ACTION_INVALID) {
 	free(param);
 	return -1;
     }
