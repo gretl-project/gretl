@@ -998,6 +998,50 @@ void gretl_matrix_print_with_col_heads (const gretl_matrix *m,
     real_matrix_print_to_prn(m, title, 0, 0, 0, heads, prn);
 }
 
+static void maybe_print_col_heads (const gretl_matrix *m, 
+				   const char *fmt,
+				   int wid, int prec,
+				   int icast, PRN *prn)
+{
+    const char **heads;
+
+    heads = user_matrix_get_column_names(m);
+    
+    if (heads != NULL) {
+	char wtest[32];
+	double x;
+	int j, n;
+
+	x = gretl_matrix_get(m, 0, 0);
+
+	if (icast) {
+	    if (wid >= 0 && prec >= 0) {
+		snprintf(wtest, 32, fmt, wid, prec, (int) x);
+	    } else if (wid >= 0 || prec >= 0) {
+		n = (wid >= 0)? wid : prec;
+		snprintf(wtest, 32, fmt, n, (int) x);
+	    } else {
+		snprintf(wtest, 32, fmt, (int) x);
+	    }
+	} else {
+	    if (wid >= 0 && prec >= 0) {
+		snprintf(wtest, 32, fmt, wid, prec, x);
+	    } else if (wid >= 0 || prec >= 0) {
+		n = (wid >= 0)? wid : prec;
+		snprintf(wtest, 32, fmt, n, x);
+	    } else {
+		snprintf(wtest, 32, fmt, x);
+	    }
+	}
+
+	n = strlen(wtest);
+	for (j=0; j<m->cols; j++) {
+	    pprintf(prn, "%*s", n, heads[j]);
+	}
+	pputc(prn, '\n');
+    }
+}
+
 void gretl_matrix_print_with_format (const gretl_matrix *m, 
 				     const char *fmt,
 				     int wid, int prec,
@@ -1018,6 +1062,8 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
 	    intcast = 1;
 	}
+
+	maybe_print_col_heads(m, fmt, wid, prec, intcast, prn);
 
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
