@@ -1540,6 +1540,10 @@
 	  <flag>--squares</flag>
 	  <effect>esegue il test CUSUMSQ</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>stampa solamente il test di Harvey&ndash;Collier</effect>
+	</option>
       </options>
     </usage>
 
