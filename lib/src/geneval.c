@@ -6190,8 +6190,9 @@ static void pre_process (parser *p, int flags)
 #endif
 
     if (strlen(test) > VNAMELEN - 1) {
-	pprintf(p->prn, "'%s': name is too long and will be truncated\n", test);
-	test[VNAMELEN - 1] = '\0';
+	pprintf(p->prn, _("'%s': name is too long (max 15 characters)\n"), test);
+	p->err = E_DATA;
+	return;
     }
 
     /* find out if the LHS var already exists, and if
