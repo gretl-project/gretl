@@ -31,8 +31,6 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
-#include "gtksourceview-i18n.h"
-
 #include "gtksourcebuffer.h"
 #include "gtksourcetag.h"
 #include "gtksourcetag-private.h"
@@ -275,36 +273,36 @@ gtk_source_buffer_class_init (GtkSourceBufferClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_ESCAPE_CHAR,
 					 g_param_spec_unichar ("escape_char",
-							       _("Escape Character"),
-							       _("Escaping character "
-								 "for syntax patterns"),
+							       "Escape Character",
+							       "Escaping character "
+								 "for syntax patterns",
 							       0,
 							       G_PARAM_READWRITE));
 
 	g_object_class_install_property (object_class,
 					 PROP_CHECK_BRACKETS,
 					 g_param_spec_boolean ("check_brackets",
-							       _("Check Brackets"),
-							       _("Whether to check and "
-								 "highlight matching brackets"),
+							       "Check Brackets",
+							       "Whether to check and "
+								 "highlight matching brackets",
 							       TRUE,
 							       G_PARAM_READWRITE));
 	
 	g_object_class_install_property (object_class,
 					 PROP_HIGHLIGHT,
 					 g_param_spec_boolean ("highlight",
-							       _("Highlight"),
-							       _("Whether to highlight syntax "
-								 "in the buffer"),
+							       "Highlight",
+							       "Whether to highlight syntax "
+								 "in the buffer",
 							       FALSE,
 							       G_PARAM_READWRITE));
 	
 	g_object_class_install_property (object_class,
 					 PROP_MAX_UNDO_LEVELS,
 					 g_param_spec_int ("max_undo_levels",
-							   _("Maximum Undo Levels"),
-							   _("Number of undo levels for "
-							     "the buffer"),
+							   "Maximum Undo Levels",
+							   "Number of undo levels for "
+							     "the buffer",
 							   0,
 							   200,
 							   25,
@@ -313,9 +311,9 @@ gtk_source_buffer_class_init (GtkSourceBufferClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_LANGUAGE,
 					 g_param_spec_object ("language",
-							      _("Language"),
-							      _("Language object to get "
-								"highlighting patterns from"),
+							      "Language",
+							      "Language object to get "
+								"highlighting patterns from",
 							      GTK_TYPE_SOURCE_LANGUAGE,
 							      G_PARAM_READWRITE));
 	
@@ -1624,7 +1622,7 @@ is_escaped (GtkSourceBuffer *source_buffer, const gchar *text, gint index)
 
 	if (source_buffer->priv->escape_char == 0)
 		return FALSE;
-	
+
 	tmp = g_utf8_find_prev_char (text, tmp);
 	while (tmp && g_utf8_get_char (tmp) == source_buffer->priv->escape_char) 
 	{
@@ -1702,12 +1700,12 @@ get_syntax_end (GtkSourceBuffer      *source_buffer,
 
 	if (!match)
 		match = &tmp;
-	
+
 	pos = 0;
 	do {
 		pos = gtk_source_regex_search (tag->reg_end, text, pos,
 					       length, match, match_options);
-		if (pos < 0 || !is_escaped (source_buffer, text, match->startindex))
+		if (pos < 0 || tag->line_end || !is_escaped (source_buffer, text, match->startindex))
 			break;
 		pos = match->startpos + 1;
 	} while (pos >= 0);

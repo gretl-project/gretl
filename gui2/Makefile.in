@@ -14,15 +14,12 @@ have_readline = @have_readline@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
-have_gtksourceview = @have_gtksourceview@
 use_gtksourceview = @use_gtksourceview@
 
 GNOME_CFLAGS = @GNOME_CFLAGS@
 GNOME_LIBS = @GNOME_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
-GTKSOURCEVIEW_CFLAGS = @GTKSOURCEVIEW_CFLAGS@
-GTKSOURCEVIEW_LIBS = @GTKSOURCEVIEW_LIBS@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
@@ -47,20 +44,12 @@ ifeq ($(LN),)
   LN = ln -sf
 endif
 
-ifeq ($(have_gtksourceview),yes)
-  langbase := $(shell pkg-config --variable=prefix gtksourceview-1.0)
-  langdir = $(langbase)/share/gtksourceview-1.0/language-specs
+ifeq ($(use_gtksourceview),yes)
+  GTKSOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
+  GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
+  MY_SOURCEVIEW_LIB = gtksourceview/libgtksourceview-lite.a
+  langdir = $(prefix)/share/gretl/gtksourceview
   query_install_lang = install-lang
-endif
-
-ifeq ($(have_gtksourceview),no)
-  ifeq ($(use_gtksourceview),yes)
-    GTKSOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
-    GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
-    MY_SOURCEVIEW_LIB = gtksourceview/libgtksourceview-lite.a
-    langdir = $(prefix)/share/gretl/gtksourceview
-    query_install_lang = install-lang
-  endif
 endif
 
 ifeq ($(have_gnome),2.0)

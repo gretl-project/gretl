@@ -7199,6 +7199,15 @@
          </para>
 	</li>
 	<li>
+	  <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> or <lit>0</lit>
+	    (the default).  This is for use with user-defined functions.
+	    Setting <lit>debug</lit> to 1 is equivalent to turning
+	    <lit>messages</lit> on within all such functions; setting this
+	    variable to <lit>2</lit> has the additional effect of turning on
+	    <lit>max_verbose</lit> within all functions.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>shell_ok</lit>: <lit>on</lit> or <lit>off</lit>
 	  (the default). Enable launching external programs from
 	  gretl via the system shell. This is disabled by default for

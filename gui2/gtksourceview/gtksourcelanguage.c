@@ -38,8 +38,6 @@
 # include <glib/gmappedfile.h>
 #endif
 
-#include "gtksourceview-i18n.h"
-
 #include "gtksourcelanguage-private.h"
 #include "gtksourcelanguage.h"
 #include "gtksourcetag.h"
@@ -81,7 +79,6 @@ _gtk_source_language_new_from_file (const gchar			*filename,
 
 	xmlTextReaderPtr reader = NULL;
 	gint ret;
-	int fd;
 
 	g_return_val_if_fail (filename != NULL, NULL);
 	g_return_val_if_fail (lm != NULL, NULL);
@@ -198,7 +195,6 @@ gtk_source_language_finalize (GObject *object)
 	{
 		g_free (lang->priv->lang_file_name);
 
-		xmlFree (lang->priv->translation_domain);
 		xmlFree (lang->priv->name);
 		xmlFree (lang->priv->section);
 		g_free  (lang->priv->id);
@@ -289,17 +285,6 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 
 	lang->priv->lang_file_name = g_strdup (filename);
 	
-	lang->priv->translation_domain = (gchar *) xmlTextReaderGetAttribute (
-			reader, BAD_CAST "translation-domain");
-	if (lang->priv->translation_domain == NULL)
-	{
-		/* if the attribute "translation-domain" exists then
-		 * lang->priv->translation_domain is a xmlChar so it must always
-		 * be a xmlChar, this is why xmlStrdup() is used instead of
-		 * g_strdup() */
-		lang->priv->translation_domain = (gchar *)xmlStrdup (BAD_CAST GETTEXT_PACKAGE);
-	}
-	
 	tmp = xmlTextReaderGetAttribute (reader, BAD_CAST "_name");
 	if (tmp == NULL)
 	{
@@ -321,9 +306,7 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 		/* if tmp is NULL then lang->priv->name is a xmlChar so it must
 		 * always be a xmlChar, this is why xmlStrdup() is used instead
 		 * of g_strdup() */
-		lang->priv->name = (gchar *)xmlStrdup (BAD_CAST dgettext (
-					lang->priv->translation_domain,
-					(gchar *)tmp));
+		lang->priv->name = (gchar *)xmlStrdup (BAD_CAST tmp);
 		xmlFree (tmp);
 	}
 
@@ -349,9 +332,7 @@ process_language_node (xmlTextReaderPtr reader, const gchar *filename)
 		/* if tmp is NULL then lang->priv->section is a xmlChar so it
 		 * must always be a xmlChar, this is why xmlStrdup() is used
 		 * instead of g_strdup() */
-		lang->priv->section = (gchar *)xmlStrdup (BAD_CAST dgettext (
-					lang->priv->translation_domain,
-					(gchar *)tmp));
+		lang->priv->section = (gchar *)xmlStrdup (BAD_CAST tmp);
 		xmlFree (tmp);
 	}
 	
@@ -1057,9 +1038,7 @@ parseTag (GtkSourceLanguage *language,
 	}
 	else
 	{
-		xmlChar *tmp = xmlStrdup (BAD_CAST dgettext (
-					language->priv->translation_domain,
-					(gchar *)name));
+		xmlChar *tmp = xmlStrdup (BAD_CAST name);
 		id_temp = g_strdup ((gchar *)name);
 		xmlFree (name);
 		name = tmp;

@@ -2,12 +2,11 @@
 \label{chap:matrices}
 
 Together with the other two basic types of data (series and scalars),
-\app{gretl} also offers a quite comprehensive array of matrix
-methods. This chapter illustrates the peculiarities of matrix syntax
-and discusses briefly some of the more complex matrix functions. For a
-full listing of matrix functions and a comprehensive account of the
-syntax of these functions, please refer to the \emph{Gretl Command
-  Reference}.
+\app{gretl} offers a quite comprehensive array of matrix methods. This
+chapter illustrates the peculiarities of matrix syntax and discusses
+briefly some of the more complex matrix functions. For a full listing
+of matrix functions and a comprehensive account of their syntax,
+please refer to the \emph{Gretl Command Reference}.
 
 \section{Creating matrices}
 \label{sec:matrix-create}
@@ -16,7 +15,7 @@ Matrices can be created using any of these methods:
 
 \begin{enumerate}
 \item By direct specification of the scalar values that compose the
-  matrix, in numerical form, by reference to pre-existing
+  matrix --- in numerical form, by reference to pre-existing
   scalar variables, or using computed values.
 \item By providing a list of data series.
 \item By providing a \textit{named list} of series.
@@ -63,9 +62,9 @@ case: if you want the series arranged in rows, append the transpose
 symbol.  The range of data values included in the matrix depends on
 the current setting of the sample range.
 
-\tip{While gretl's built-in statistical functions are capable of
-  handling missing values, the matrix arithmetic functions are
-  not. When you build a matrix from series that include missing
+\tip{While gretl's built-in statistical functions for data series are
+  capable of handling missing values, the matrix arithmetic functions
+  are not. When you build a matrix from series that include missing
   values, observations for which at least one series has a missing
   value are skipped.}
 
@@ -114,10 +113,6 @@ object.
   gretl variables in general: the name can be no longer than 15
   characters, must start with a letter, and must be composed of
   nothing but letters, numbers and the underscore character.}
-
-You can create new matrices, or replace existing matrices, by means of
-various transformations just as with scalars and data series.  The
-relevant mechanisms are discussed in the next several sections.
 
 \section{Empty matrices}
 \label{sec:emptymatrix}
@@ -177,26 +172,26 @@ has full column rank.
 
 You can select sub-matrices of a given matrix using the syntax
 
-\texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
+\hspace{1em} \texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
 
 where \textsl{rows} can take any of these forms:
 
 \begin{center}
-\begin{tabular}{ll}
-empty & selects all rows \\
-a single integer & selects the single specified row \\
-two integers separated by a colon & selects a range of rows \\
-the name of a matrix & selects the specified rows \\
+\begin{tabular}{lll}
+1. & empty & selects all rows \\
+2. & a single integer & selects the single specified row \\
+3. & two integers separated by a colon & selects a range of rows \\
+4. & the name of a matrix & selects the specified rows \\
 \end{tabular}
 \end{center}
 
-With regard to the second option, the integer value can be given
-numerically, as the name of an existing scalar variable, or as an
-expression that evaluates to a scalar.  With the last option, the
-index matrix given in the \textsl{rows} field must be either $p\times
-1$ or $1\times p$, and should contain integer values in the range 1 to
-$n$, where $n$ is the number of rows in the matrix from which the
-selection is to be made.
+With regard to option 2, the integer value can be given numerically,
+as the name of an existing scalar variable, or as an expression that
+evaluates to a scalar.  With the option 4, the index matrix given
+in the \textsl{rows} field must be either $p\times 1$ or $1\times p$,
+and should contain integer values in the range 1 to $n$, where $n$ is
+the number of rows in the matrix from which the selection is to be
+made.
 
 The \textsl{cols} specification works in the same way, \textit{mutatis
   mutandis}.  Here are some examples.
@@ -313,8 +308,8 @@ the QR decomposition.  Otherwise, the operation necessarily fails.
 
 In ``dot'' operations a binary operation is applied element by
 element; the result of this operation is obvious if the matrices are
-of the same size. However, there are other cases when the ``dot''
-operators may be applied: for example, if we write
+of the same size. However, there are several other cases where such
+operators may be applied.  For example, if we write
 %
 \begin{code}
 matrix C = A .- B
@@ -324,21 +319,21 @@ then the result $C$ depends on the dimensions of $A$ and $B$.  Let $A$
 be an $m \times n$ matrix and let $B$ be $p \times q$; the result is
 as follows:
 \begin{center}
-  \begin{tabular}{p{0.7\textwidth}l}
+  \begin{tabular}{ll}
     \textit{Case} & \textit{Result} \\[4pt]
     Dimensions match ($m=p$ and $n=q$) & 
     $c_{ij} = a_{ij} -  b_{ij}$ \\ 
-    $A$ is a column vector; rows match ($m=p$ and $n=1$) &
+    $A$ is a column vector; rows match ($m=p$; $n=1$) &
     $c_{ij} = a_{i} - b_{ij}$ \\ 
-    $B$ is a column vector; rows match ($m=p$ and $q=1$) &
+    $B$ is a column vector; rows match ($m=p$; $q=1$) &
     $c_{ij} = a_{ij} - b_{i}$ \\ 
-    $A$ is a row vector; columns match ($m=1$ and $n=q$) &
+    $A$ is a row vector; columns match ($m=1$; $n=q$) &
     $c_{ij} = a_{j} - b_{ij}$ \\ 
-    $B$ is a row vector; columns match ($m=p$ and $q=1$) &
+    $B$ is a row vector; columns match ($m=p$; $q=1$) &
     $c_{ij} = a_{ij} - b_{j}$ \\ 
-    $A$ is a column vector; $B$ is a row vector ($n=1$ and $p=1$) &
+    $A$ is a column vector; $B$ is a row vector ($n=1$; $p=1$) &
     $c_{ij} = a_{i} - b_{j}$ \\ 
-    $A$ is a row vector; $B$ is a column vector ($m=1$ and $q=1$) &
+    $A$ is a row vector; $B$ is a column vector ($m=1$; $q=1$) &
     $c_{ij} = a_{j} - b_{i}$ \\ 
     $A$ is a scalar ($m=1$ and $n=1$) &
     $c_{ij} = a - b_{ij}$ \\ 
@@ -413,18 +408,19 @@ context it is reserved for the Kronecker product.)
 \section{Matrix functions}
 \label{sec:matrix-func}
 
-Most \app{gretl} functions apply to matrices as well as series and
-scalars in an element-by-element fashion, and as such their behavior
-should be pretty obvious. This is the case for functions such as
-\texttt{log}, \texttt{exp}, \texttt{sin}, etc.  These functions
-have the effects documented in relation to the \texttt{genr} command.
-For example, if a matrix \texttt{A} is already defined, then
+Most of the \app{gretl} functions available for scalars and series
+also apply to matrices in an element-by-element fashion, and as such
+their behavior should be pretty obvious. This is the case for
+functions such as \texttt{log}, \texttt{exp}, \texttt{sin}, etc.
+These functions have the effects documented in relation to the
+\texttt{genr} command.  For example, if a matrix \texttt{A} is already
+defined, then
 %
 \begin{code}
 matrix B = sqrt(A)
 \end{code}
 %
-generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
+generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All such
 functions require a single matrix as argument, or an expression which
 evaluates to a single matrix.\footnote{Note that to find the ``matrix
   square root'' you need the \texttt{cholesky} function (see below);

@@ -41,20 +41,17 @@ new_readline="no"
 have_zlib="no"
 have_gtk="no"
 have_gtkprint="no"
-have_gtksourceview="no"
 have_gnome="no"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
 have_fftw3="no"
 seek_inet_addr="no"
-highlight="yes"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
 have_gnu_regex="no"
 have_libxml2="no"
-use_gtksourceview="no"
 have_xslt="no"
 have_odbc="no"
 MAKE="make"
@@ -144,16 +141,6 @@ if test -n "${withval}"
 then
   gnome_prefix=${withval}
 fi,)
-
-AC_ARG_WITH(gtksourceview,
-[  --with-gtksourceview  Use installed gtksourceview [[default=auto]]],
-if test "x${withval}" = "xno" || test "$try_gnome" = "no"
-then
-  try_installed_sourceview=no
-else
-  try_installed_sourceview=yes
-fi,
-try_installed_sourceview=yes)
 
 AC_ARG_WITH(gmp,
 [  --with-gmp            Use Gnu Multiple Precision library [[default=auto]]],
@@ -453,28 +440,8 @@ if test "$have_gtk" = "2.0" ; then
     )
 fi
 
-dnl ...and try for gtksourceview flags, unless prohibited
-if test "$have_gtk" = "2.0" && test "$try_installed_sourceview" = "yes" ; then
-   PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
-   have_gtksourceview="yes"
-   use_gtksourceview="yes"
-   AC_DEFINE(USE_GTKSOURCEVIEW),
-   have_gtksourceview="no"
-   )
-fi
-
-dnl Fallback on supplied gtksourceview? Check for libxml2 and gtk >= 2.2.0
-if test "$have_gtk" = "2.0" && test "$highlight" = "yes" && \
-   test "$have_gtksourceview" = "no" ; then
-     PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0,
-     have_libxml2="yes",
-     have_libxml2="no")
-fi
-
-dnl Now try using supplied gtksourceview if preconditions are met
-if test "$highlight" = "yes" && \
-   test "$have_gtksourceview" = "no" && \
-   test "$have_libxml2" = "yes" ; then
+dnl Test regex availability for supplied gtksourceview
+if test "$have_gtk" = "2.0" ; then
      AC_DEFINE(USE_GTKSOURCEVIEW)
      use_gtksourceview="yes"
      AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
@@ -493,7 +460,6 @@ AC_SUBST(build_gui)
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_mpfr)
-AC_SUBST(have_gtksourceview)
 AC_SUBST(use_gtksourceview)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
@@ -502,8 +468,6 @@ AC_SUBST(build_mailer)
 AC_SUBST(build_po)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
-AC_SUBST(GTKSOURCEVIEW_CFLAGS)
-AC_SUBST(GTKSOURCEVIEW_LIBS)
 
 dnl
 dnl Check for gdk-pixbuf support
@@ -687,8 +651,6 @@ Configuration:
   LAPACK support:                         ${have_lapack}
   FFTW3 support:                          ${have_fftw3}
   Build with GTK version:                 ${have_gtk}
-  Script syntax highlighting:             ${use_gtksourceview}
-  Use installed gtksourceview:            ${have_gtksourceview}
   Use GTK printing apparatus:             ${have_gtkprint}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}

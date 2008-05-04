@@ -27,8 +27,6 @@ G_BEGIN_DECLS
 struct _GtkSourceLanguagePrivate 
 {
 	gchar			*lang_file_name;
-	/* this is allocated by libxml, it should be freed using xmlFree() */
-	gchar                   *translation_domain;
 
 	gchar			*id;
 	

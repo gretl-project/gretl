@@ -133,9 +133,7 @@ void output_lang_file (void)
     puts("<language _name=\"gretl\" version=\"1.0\" _section=\"Sources\" "
 	 "mimetypes=\"application/x-gretlsession\">\n");
 
-#if 0 /* causes trouble with backslash-continued lines and comments */
     puts("<escape-char>\\</escape-char>\n");
-#endif
 
     puts("<line-comment _name = \"Line Comment\" style= \"Comment\">");   
     puts(" <start-regex>#</start-regex>");   

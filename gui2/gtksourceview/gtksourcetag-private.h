@@ -49,6 +49,7 @@ struct _GtkSyntaxTag
 	GtkSourceTag		 parent_instance;
 
 	gchar			*start;  
+	gboolean                line_end;
 	GtkSourceRegex		*reg_start;
 	GtkSourceRegex          *reg_end;
 };

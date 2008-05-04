@@ -27,8 +27,6 @@
 
 #include <string.h>
 
-#include "gtksourceview-i18n.h"
-
 #include "gtksourcetag.h"
 #include "gtksourcetag-private.h"
 
@@ -106,16 +104,16 @@ gtk_source_tag_class_init (GtkSourceTagClass *klass)
 	g_object_class_install_property (object_class,
         	                         PROP_ID,
                                    	 g_param_spec_string ("id",
-                                                        _("Tag ID"),
-                                                        _("ID used to refer to the source tag"),
+                                                        "Tag ID",
+                                                        "ID used to refer to the source tag",
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
 
 	g_object_class_install_property (object_class,
         	                         PROP_TAG_STYLE,
                                    	 g_param_spec_boxed ("tag_style",
-                                                       _("Tag style"),
-                                                       _("The style associated with the source tag"),
+                                                       "Tag style",
+                                                       "The style associated with the source tag",
                                                        GTK_TYPE_SOURCE_TAG_STYLE,
                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
 
@@ -281,6 +279,7 @@ gtk_syntax_tag_new (const gchar *id,
 					    NULL));
 	
 	tag->start = g_strdup (pattern_start);
+	tag->line_end = !strcmp(pattern_end, "\n");
 
 	tag->reg_start = gtk_source_regex_compile (pattern_start);
 	if (tag->reg_start == NULL) {

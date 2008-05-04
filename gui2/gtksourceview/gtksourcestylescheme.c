@@ -22,8 +22,6 @@
 #include <config.h>
 #endif
 
-#include "gtksourceview-i18n.h"
-
 #include "gtksourcestylescheme.h"
 
 
@@ -261,74 +259,74 @@ gtk_source_default_style_scheme_init (GtkSourceDefaultStyleScheme *scheme)
 
 	ts = new_tag_style ("#FF00FF", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Base-N Integer")),
+			     g_strdup ("Base-N Integer"),
 			     ts);
 
 	ts = new_tag_style ("#FF00FF", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Character")),
+			     g_strdup ("Character"),
 			     ts);
 
 	ts = new_tag_style ("#0000FF", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Comment")),
+			     g_strdup ("Comment"),
 			     ts);
 
 	ts = new_tag_style ("#2E8B57", NULL, TRUE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Data Type")),
+			     g_strdup ("Data Type"),
 			     ts);
 
 	ts = new_tag_style ("#008A8C", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Function")),
+			     g_strdup ("Function"),
 			     ts);
 
 	ts = new_tag_style ("#FF00FF", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Decimal")),
+			     g_strdup ("Decimal"),
 			     ts);
 
 	ts = new_tag_style ("#FF00FF", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Floating Point")),
+			     g_strdup ("Floating Point"),
 			     ts);
 
 	ts = new_tag_style ("#A52A2A", NULL, TRUE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Keyword")),
+			     g_strdup ("Keyword"),
 			     ts);
 	
 	ts = new_tag_style ("#A020F0", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Preprocessor")),
+			     g_strdup ("Preprocessor"),
 			     ts);
 
 	ts = new_tag_style ("#FF00FF", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("String")),
+			     g_strdup ("String"),
 			     ts);
 
 	ts = new_tag_style ("#FFFFFF", "#FF0000", FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Specials")),
+			     g_strdup ("Specials"),
 			     ts);
  
 
 	/* "Others" is DEPRECATED, it has been replaced by "Data Type" */
 	ts = new_tag_style ("#2E8B57", NULL, TRUE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Others")),
+			     g_strdup ("Others"),
 			     ts);
 
 	ts = new_tag_style ("#008B8B", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Others 2")),
+			     g_strdup ("Others 2"),
 			     ts);
 
 	ts = new_tag_style ("#6A5ACD", NULL, FALSE, FALSE);
 	g_hash_table_insert (scheme->styles, 
-			     g_strdup (N_("Others 3")),
+			     g_strdup ("Others 3"),
 			     ts);
 }
 
@@ -365,7 +363,7 @@ gtk_source_default_style_scheme_get_name (GtkSourceStyleScheme *scheme)
 {
 	g_return_val_if_fail (GTK_IS_SOURCE_STYLE_SCHEME (scheme), NULL);
 
-	return _("Default");
+	return "Default";
 }
 
 static void

@@ -76,10 +76,6 @@ void 		 gtk_source_view_set_show_line_numbers 	(GtkSourceView   *view,
 							 gboolean         show);
 gboolean 	 gtk_source_view_get_show_line_numbers 	(GtkSourceView   *view);
 
-void 		 gtk_source_view_set_show_line_markers  (GtkSourceView   *view,
-							 gboolean         show);
-gboolean	 gtk_source_view_get_show_line_markers  (GtkSourceView   *view);
-
 void 		 gtk_source_view_set_tabs_width 	(GtkSourceView   *view, 
 							 guint            width);
 guint            gtk_source_view_get_tabs_width         (GtkSourceView   *view);
@@ -98,25 +94,9 @@ void		 gtk_source_view_set_indent_on_tab 	(GtkSourceView   *view,
 							 gboolean         enable);
 gboolean	 gtk_source_view_get_indent_on_tab 	(GtkSourceView   *view);
 
-void		 gtk_source_view_set_show_margin 	(GtkSourceView   *view,
-							 gboolean         show);
-gboolean 	 gtk_source_view_get_show_margin 	(GtkSourceView   *view);
-
-void		 gtk_source_view_set_highlight_current_line 	
-							(GtkSourceView   *view,
-							 gboolean         show);
-gboolean 	 gtk_source_view_get_highlight_current_line 	
-							(GtkSourceView   *view);
-
 void		 gtk_source_view_set_margin 		(GtkSourceView   *view,
 							 guint            margin);
 guint		 gtk_source_view_get_margin 		(GtkSourceView   *view);
-
-void             gtk_source_view_set_marker_pixbuf      (GtkSourceView   *view,
-							 const gchar     *marker_type,
-							 GdkPixbuf       *pixbuf);
-GdkPixbuf	*gtk_source_view_get_marker_pixbuf      (GtkSourceView   *view,
-				       			 const gchar     *marker_type);
 
 void		 gtk_source_view_set_smart_home_end	(GtkSourceView   *view,
 							 gboolean         enable);

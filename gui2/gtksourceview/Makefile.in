@@ -16,7 +16,7 @@ endif
 
 DATADIR = $(prefix)/share/gretl
 
-VPATH = $(topsrc)/gui2/gtksourceview
+VPATH = $(topsrc)/gui2/gtksourceview:$(topsrc)/gui2/gnu-regex
 
 override CFLAGS += -I$(topsrc)/gui2 $(GTK_CFLAGS) $(XML_CFLAGS) \
 	-DDATADIR=\"$(DATADIR)\" $(REGEX_DEF)
@@ -32,21 +32,30 @@ SRCS = gtksourcebuffer.c \
 	gtksourcetagtable.c \
 	gtksourceundomanager.c \
 	gtksourceview.c \
-	gtksourceview-i18n.c \
 	gtksourceview-marshal.c \
 	gtksourceview-typebuiltins.c \
 	gtktextregion.c 
 
 OBJS = $(SRCS:.c=.o)
 
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
+
 LIB = libgtksourceview-lite.a
 
 all: $(LIB)
 
-$(LIB): $(OBJS) $(REGEX_OBJ)
-	ar -rs $@ $^
+$(LIB): .deps $(OBJS) $(REGEX_OBJ)
+	ar -rs $@ $(OBJS) $(REGEX_OBJ)
+
+.deps:
+	mkdir $@
+
+-include .deps/*.d
 
 clean:
 	rm -f *.o $(LIB)
+	rm -rf .deps
 
 

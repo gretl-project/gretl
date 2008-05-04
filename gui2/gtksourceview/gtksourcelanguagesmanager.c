@@ -25,14 +25,10 @@
 
 #include <libxml/xmlreader.h>
 
-#include "gtksourceview-i18n.h"
-
 #include "gtksourcelanguagesmanager.h"
 #include "gtksourcelanguage-private.h"
 #include "gtksourcelanguage.h"
 #include "gtksourcetag.h"
-
-#define DEFAULT_GCONF_BASE_DIR		"/apps/gtksourceview"
 
 enum {
 	PROP_0,
@@ -111,10 +107,10 @@ gtk_source_languages_manager_class_init (GtkSourceLanguagesManagerClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_LANG_SPECS_DIRS,
 					 g_param_spec_pointer ("lang_files_dirs",
-						 	       _("Language specification directories"),
-							       _("List of directories where the "
+						 	       "Language specification directories",
+							       "List of directories where the "
 								 "language specification files (.lang) "
-								 "are located"),
+								 "are located",
 							       (G_PARAM_READWRITE | 
 							        G_PARAM_CONSTRUCT_ONLY)));
 }
@@ -209,8 +205,6 @@ gtk_source_languages_manager_finalize (GObject *object)
 	(* G_OBJECT_CLASS (parent_class)->finalize) (object);
 }
 
-#define DEFAULT_GCONF_BASE_DIR	"/apps/gtksourceview"
-
 #define DEFAULT_LANGUAGE_DIR	DATADIR "/gtksourceview"
 #define USER_LANGUAGE_DIR	"gtksourceview-1.0/language-specs"
 #define USER_CONFIG_BASE_DIR	".gnome2"
@@ -235,7 +229,7 @@ gtk_source_languages_manager_set_specs_dirs (GtkSourceLanguagesManager *lm,
 						USER_CONFIG_BASE_DIR, USER_LANGUAGE_DIR, 
 						NULL));
 
-                if (env_language_dir != NULL) 
+                if (env_language_dir != NULL && strcmp(DEFAULT_LANGUAGE_DIR, env_language_dir)) 
                 {
                         lm->priv->language_specs_directories = 
                                 g_slist_prepend (lm->priv->language_specs_directories,
