@@ -46,7 +46,7 @@ static int cli_parse_object_request (const char *line,
     err = gretl_get_object_and_type(word, pptr, type);
 
     if (err) {
-	/* no matching object */
+	/* no matching object: maybe a GUI graph? */
 	if (*param) {
 	    pprintf(prn, _("%s: no such object\n"), word);
 	}
