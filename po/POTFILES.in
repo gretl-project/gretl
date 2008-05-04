@@ -132,6 +132,7 @@ plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/heckit.c
 plugin/import_common.c
+plugin/infomat.c
 plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
@@ -144,6 +145,7 @@ plugin/mailer.c
 plugin/midi_utils.c
 plugin/mod_garch.c
 plugin/mp_ols.c
+plugin/odbc_import.c
 plugin/ods_import.c
 plugin/oprobit.c
 plugin/pca.c
@@ -159,3 +161,10 @@ plugin/tramo-x12a.c
 plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c
+doc/commands/matfuncs.c
+doc/commands/reflow.c
+doc/commands/skeleton.c
+doc/commands/tables.c
+doc/commands/topiclist.c
+doc/commands/validate.c
+doc/commands/xsltrans.c
