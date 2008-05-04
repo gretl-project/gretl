@@ -299,8 +299,6 @@ static int real_remember_list (const int *list, const char *name,
     } else {
 	saved_list **lstack;
 
-	fprintf(stderr, "name = '%s'\n", name);
-
 	err = check_varname(name);
 	if (err) {
 	    return err;
