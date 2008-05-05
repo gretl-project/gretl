@@ -5289,7 +5289,7 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
 	    gretl_command_sprintf("scatters %s --with-lines", liststr);
 	} else {
 	    gretl_command_sprintf("gnuplot%s%s", liststr, 
-				  (a == GR_PLOT)? " --time-series" : "");
+				  (a == GR_PLOT)? " --time-series --with-lines" : "");
 	}
 
 	err = check_and_record_command();

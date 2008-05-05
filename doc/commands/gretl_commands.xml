@@ -3174,6 +3174,10 @@
 	  <effect>use vertical lines</effect>
         </option>
         <option>
+	  <flag>--time-series</flag>
+	  <effect>plot against time</effect>
+        </option>
+        <option>
 	  <flag>--suppress-fit</flag>
 	  <effect>don't show fitted line</effect>
         </option>
@@ -3200,22 +3204,26 @@
       </options>
       <examples>
         <example>gnuplot y1 y2 x</example>
-        <example>gnuplot x time --with-lines</example>
+        <example>gnuplot x --time-series --with-lines</example>
 	<example>gnuplot wages educ gender --dummy</example>
       </examples>
     </usage>
 
     <description>
-      <para>Without the <lit>--dummy</lit> option, the
-	<repl>yvars</repl> are graphed against <repl>xvar</repl>. With
-	<lit>--dummy</lit>, <repl>yvar</repl> is graphed against
-	<repl>xvar</repl> with the points shown in different colors
-	depending on whether the value of <repl>dumvar</repl> is 1 or
-	0.</para>
+      <para>
+	The variables in the list <repl>yvars</repl> are graphed against
+	<repl>xvar</repl>.  For a time series plot you may either
+	give <lit>time</lit> as <repl>xvar</repl> or use the option
+	flag <lit>--time-series</lit>.
+      </para>
 
       <para>
-	The <lit>time</lit> variable behaves specially: if it does not
-	already exist then it will be generated automatically.
+	If the <lit>--dummy</lit> option is selected, exactly three variables
+	should be given: a single <math>y</math> variable, an <math>x</math>
+	variable, and <repl>dumvar</repl>, a dummy variable.  The effect is to
+	plot <repl>yvar</repl> against <repl>xvar</repl> with the points shown
+	in different colors depending on whether the value of
+	<repl>dumvar</repl> is 1 or 0 at the given observation.
       </para>
 
       <para>
@@ -3242,7 +3250,8 @@
 	<quote>lowess</quote>) is a robust locally weighted regression.  
       </para>
 
-      <para>A further option to this command is available: following
+      <para>
+	A further option to this command is available: following
 	the specification of the variables to be plotted and the
 	option flag (if any), you may add literal gnuplot commands to
 	control the appearance of the plot (for example, setting the
