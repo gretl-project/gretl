@@ -248,7 +248,8 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
 
 static int 
 new_consistent_date_labels (int nrows, int row_offset, int col_offset, 
-			    char **labels, DATAINFO *pdinfo, int *err)
+			    char **labels, DATAINFO *newinfo, 
+			    PRN *prn, int *err)
 {
     int i, t, tstart = 1 + row_offset;
     char *s;
@@ -261,7 +262,7 @@ new_consistent_date_labels (int nrows, int row_offset, int col_offset,
 	}
     }
 
-    *err = dataset_allocate_obs_markers(pdinfo);
+    *err = dataset_allocate_obs_markers(newinfo);
     if (*err) {
 	return 0;
     }
@@ -270,10 +271,12 @@ new_consistent_date_labels (int nrows, int row_offset, int col_offset,
     for (t=tstart; t<nrows; t++) {
 	s = cell_val(t, col_offset);
 	if (*s == '"' || *s == '\'') s++;
-	strncat(pdinfo->S[i++], s, OBSLEN - 1);
+	strncat(newinfo->S[i++], s, OBSLEN - 1);
     }
 
-    ret = test_markers_for_dates(pZ, pdinfo, skipstr, NULL);
+    ret = test_markers_for_dates(NULL, newinfo, NULL, prn);
+
+    dataset_destroy_obs_markers(newinfo);
 
     return ret;
 }

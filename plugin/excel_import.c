@@ -1479,30 +1479,36 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     } else if (err == -1) {
 	pputs(prn, _("Warning: there were missing values\n"));
 	err = 0;
-    }	    
+    }
+
+    /* dimensions of the dataset */
+    newinfo->v = n_vars_from_col(book, totcols, blank_col);
+    newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
+    fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
+	    newinfo->v, newinfo->n);
 
     /* do we have a first column containing dates? */
     if (book_numeric_dates(book)) {
 	pd = pd_from_numeric_dates(nrows, book->row_offset, book->col_offset, 
 				   NULL, book);
+	if (pd) {
+	    book_time_series_setup(book, newinfo, pd);
+	}
     } else if (!book_auto_varnames(book)) {
 	int r0 = book->row_offset;
 	int c0 = book->col_offset;
 	
 	if (import_obs_label(rows[r0].cells[c0])) {
+#if 0
+	    pd = new_consistent_date_labels(nrows, r0, c0, NULL, newinfo, prn, &err);
+#else
 	    pd = consistent_date_labels(nrows, r0, c0, NULL);
+#endif
+	    if (pd > 0) {
+		book_time_series_setup(book, newinfo, pd);
+	    }    
 	}
     }
-
-    if (pd) {
-	book_time_series_setup(book, newinfo, pd);
-    }    
-
-    /* number of variables and observations for import dataset */
-    newinfo->v = n_vars_from_col(book, totcols, blank_col);
-    newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
-    fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
-	    newinfo->v, newinfo->n);
 
     /* create import dataset */
     err = start_new_Z(&newZ, newinfo, 0);
