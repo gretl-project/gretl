@@ -205,6 +205,87 @@ gtk_source_languages_manager_finalize (GObject *object)
 	(* G_OBJECT_CLASS (parent_class)->finalize) (object);
 }
 
+#ifdef G_OS_WIN32
+
+#include <windows.h> /* read registry */
+
+# define MAXLEN 512
+
+static int read_gretldir_reg_val (HKEY tree, char *keyval)
+{
+    unsigned long datalen = MAXLEN;
+    int error = 0;
+    HKEY regkey;
+
+    if (RegOpenKeyEx(
+                     tree,                        /* handle to open key */
+                     "Software\\gretl",           /* subkey name */
+                     0,                           /* reserved */
+                     KEY_READ,                    /* access mask */
+                     &regkey                      /* key handle */
+                     ) != ERROR_SUCCESS) {
+        return 1;
+    }
+
+    if (RegQueryValueEx(
+                        regkey,
+                        "gretldir",
+                        NULL,
+                        NULL,
+                        keyval,
+                        &datalen
+                        ) != ERROR_SUCCESS) {
+        error = 1;
+    }
+
+    RegCloseKey(regkey);
+
+    return error;
+}
+
+static void get_gretl_lang_dir (char *targ)
+{
+    size_t n;
+
+    read_gretldir_reg_val(HKEY_LOCAL_MACHINE, targ);
+
+    if (*targ == '\0') {
+        strcpy(targ, "c:\\Program Files\\gretl");
+    }
+
+    n = strlen(targ);
+    if (targ[n-1] != '\\') strcat(targ, "\\");
+
+    strcat(targ, "share\\gtksourceview-1.0\\language-specs");
+}
+
+static void 
+gtk_source_languages_manager_set_specs_dirs (GtkSourceLanguagesManager	*lm,
+					     const GSList		*dirs)
+{
+    char gretl_lang_dir[MAXLEN];
+
+    g_return_if_fail (GTK_IS_SOURCE_LANGUAGES_MANAGER (lm));
+    g_return_if_fail (lm->priv->language_specs_directories == NULL);
+			
+    if (dirs == NULL) {
+	get_gretl_lang_dir(gretl_lang_dir);
+	lm->priv->language_specs_directories =
+	    g_slist_prepend (lm->priv->language_specs_directories,
+			     g_strdup (gretl_lang_dir));
+	return;
+    }
+
+    while (dirs != NULL) {
+	lm->priv->language_specs_directories = 
+	    g_slist_prepend (lm->priv->language_specs_directories,
+			     g_strdup ((const gchar*)dirs->data));
+	dirs = g_slist_next (dirs);
+    }
+}
+
+#else /* !G_OS_WIN32 */
+
 #define DEFAULT_LANGUAGE_DIR	DATADIR "/gtksourceview"
 #define USER_LANGUAGE_DIR	"gtksourceview-1.0/language-specs"
 #define USER_CONFIG_BASE_DIR	".gnome2"
@@ -249,6 +330,8 @@ gtk_source_languages_manager_set_specs_dirs (GtkSourceLanguagesManager *lm,
 		dirs = g_slist_next (dirs);
 	}
 }
+
+#endif /* G_OS_WIN32 vs other */
 
 /**
  * gtk_source_languages_manager_get_lang_files_dirs:

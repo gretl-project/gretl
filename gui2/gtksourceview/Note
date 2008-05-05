@@ -1,2 +1,15 @@
 The sources here are a slighly simplied version of
 gtksourceview version 1.8.5 (March, 2007)
+
+They incorporate a couple of changes for use with gretl.
+
+* Location of the "language spec" directories: we use the
+  registry on Windows, and we consult the environment variable
+  GTKSOURCEVIEW_LANGUAGE_DIR on non-Windows systems.
+
+* Escape character: we mark "\" as escape, but we exempt 
+  newline from being escaped in the context of a gtksourceview
+  regex.  That way, we prevent the "line comment" coloration
+  from bleeding over onto backslash-continued lines.
+
+

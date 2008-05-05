@@ -6,6 +6,7 @@ CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 XML_CFLAGS = @XML_CFLAGS@
 GTK_CFLAGS = @GTK_CFLAGS@
+RX_CFLAGS = @CFLAGS@ -I$(topsrc)/gui2/gtksourceview
 have_gnu_regex = @have_gnu_regex@
 
 ifeq ($(have_gnu_regex),no)
@@ -16,7 +17,7 @@ endif
 
 DATADIR = $(prefix)/share/gretl
 
-VPATH = $(topsrc)/gui2/gtksourceview:$(topsrc)/gui2/gnu-regex
+VPATH = $(topsrc)/gui2/gtksourceview:$(topsrc)/gui2/gtksourceview/gnu-regex
 
 override CFLAGS += -I$(topsrc)/gui2 $(GTK_CFLAGS) $(XML_CFLAGS) \
 	-DDATADIR=\"$(DATADIR)\" $(REGEX_DEF)
@@ -48,6 +49,9 @@ all: $(LIB)
 
 $(LIB): .deps $(OBJS) $(REGEX_OBJ)
 	ar -rs $@ $(OBJS) $(REGEX_OBJ)
+
+regex.o: regex.c
+	$(CC) -c $(RX_CFLAGS) $<
 
 .deps:
 	mkdir $@
