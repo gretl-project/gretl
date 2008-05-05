@@ -2078,6 +2078,13 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
     return ret;
 }
 
+static void line_numbers_cb (GtkWidget *w, windata_t *vwin)
+{
+    int s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(vwin->w));
+
+    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->w), !s);
+}
+
 static GtkWidget *
 build_script_popup (windata_t *vwin, struct textbit **ptb)
 {
@@ -2108,7 +2115,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	g_free(tb->chunk);
 	free(tb);
 	*ptb = NULL;
-	return pmenu;
+	goto line_nums;
     }
 
     *ptb = tb;
@@ -2169,16 +2176,30 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 			 vwin);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
-    }	
+    }
+
+ line_nums:	
+
+    if (GTK_IS_SOURCE_VIEW(vwin->w)) {
+	item = gtk_menu_item_new_with_label(_("Toggle line numbers"));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(line_numbers_cb),
+			 vwin);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+    }
 
     return pmenu;
 }
 
 static gboolean destroy_textbit (GtkWidget **pw, struct textbit *tc)
 {
-    tc->vwin->popup = NULL;
-    g_free(tc->chunk);
-    free(tc);
+    if (tc != NULL) {
+	tc->vwin->popup = NULL;
+	g_free(tc->chunk);
+	free(tc);
+    }
+
     return FALSE;
 }
 
