@@ -1479,6 +1479,39 @@ read_fn_files_in_dir (int role, DIR *dir, const char *fndir,
     return nfn;
 }
 
+static gint 
+compare_pkgnames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
+		  gpointer p)
+{
+    gchar *t1, *t2;
+    gint ret;
+
+    gtk_tree_model_get(model, a, 0, &t1, -1);
+    gtk_tree_model_get(model, b, 0, &t2, -1);
+
+    lower(t1);
+    lower(t2);
+
+    ret = strcmp(t1, t2);
+
+    g_free(t1);
+    g_free(t2);
+
+    return ret;    
+}
+
+static void sort_pkglist (windata_t *vwin)
+{
+    GtkTreeModel *model;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
+
+    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model), 
+					 0, GTK_SORT_ASCENDING);
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
+				    compare_pkgnames, NULL, NULL);
+}
+
 gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 {
     GtkListStore *store;
@@ -1548,7 +1581,9 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	    warnbox(_("No gretl function packages were found on this computer."));
 	}
 	return 1;
-    } 
+    } else {
+	sort_pkglist(vwin);
+    }
 
     return 0;
 }

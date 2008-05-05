@@ -25,7 +25,7 @@ version 1.7.5, in progress
   "sticky" (running a script appends to text)
 - Add log-axis option to GUI graph editing dialog
 - GUI program: add right-click popup menus to more windows
-- Fix bugs 1929957, 1922915, 1951681
+- Fix bugs 1929957, 1922915, 1951681, 1954428, 1954838
 - Add guard against unmatched "if" in loops, functions and
   scripts
 - Fix bug: VARs and equation systems not getting removed as
@@ -51,7 +51,7 @@ version 1.7.5, in progress
 - Search for data file collections: add the user's gretl
   data directory ("dotdir") to the path searched
 - "append" command: try harder to make this do what the user
-  is most likely to want
+  is most likely to want in the case of panel data
 - frequency distribution in GUI: allow choice of bin size,
   as with frequency plot
 - fixed effects estimation: print the average constant
@@ -61,11 +61,14 @@ version 1.7.5, in progress
   values were not integrated)
 - "open" command: add options for controlling importation
   from spreadsheets
-- add "set debug on" option for deugging user-defined functions
+- add "set debug" option for deugging user-defined functions
 - GUI function package: add option to save the packaged
   functions as a regular gretl script
 - Fix bug in modification of LMF autocorrelation test (bug
   was introduced in gretl 1.7.4)
+- Script editor: add option to show line numbers
+- Native database windows: add right-click popup menu
+- Local function package listing: sort alphabetically
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

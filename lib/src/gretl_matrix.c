@@ -7519,7 +7519,11 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
+#if 0
+	err = gretl_cholesky_decomp_solve(XTX, b);
+#else
 	err = gretl_LU_solve(XTX, b);
+#endif
     }
 
     if (!err) {

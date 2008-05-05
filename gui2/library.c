@@ -2860,7 +2860,7 @@ static int real_do_model (int action)
     case LOGIT:
     case PROBIT:
 	*pmod = logit_probit(libcmd.list, &Z, datainfo, action, libcmd.opt,
-			     (libcmd.opt & OPT_V)? prn : NULL);
+			     prn);
 	err = model_output(pmod, prn);
 	break;
 

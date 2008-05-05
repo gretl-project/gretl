@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "missing_private.h"
 
 #define TINY 1.0e-13
 
@@ -344,7 +345,8 @@ static MODEL ordered_model (const int *list, int ci, double ***pZ,
 
 /* calculate standard errors etc using the Hessian */
 
-static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
+static int logit_probit_vcv (MODEL *dmod, int *pclist, gretlopt opt, 
+			     const double **Z)
 {
     int i, err = 0;
 
@@ -395,133 +397,23 @@ static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
 	free(xpx);
     }
 
-    return err;
-}
-
-#if 0 /* not yet */
-
-static double 
-matrix_probit_llhood (const gretl_matrix *y,
-		      const gretl_matrix *yhat)
-{
-    double q, ll = 0.0;
-    int t;
-
-    for (t=0; t<y->rows; t++) {
-	q = 2.0 * y->val[t] - 1.0;
-	ll += log(normal_cdf(q * yhat->val[t]));
-    }
-
-    return ll;
-}
-
-int gretl_matrix_probit (const gretl_matrix *X,
-			 const gretl_matrix *y,
-			 gretl_matrix **pb)
-{
-    gretl_matrix *bX = NULL;
-    gretl_matrix *by = NULL;
-    gretl_matrix *bi = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *yhat = NULL;
-    double ll, lldiff, llbak = -1.0e9;
-    double wt, xti, yt, fx, Fx;
-    double tol = 1.0e-9;
-    int nobs = X->rows;
-    int nc = X->cols;
-    int itermax = 250;
-    int i, t, iter;
-    int err = 0;
-
-    bX = gretl_matrix_alloc(nobs, nc);
-    by = gretl_column_vector_alloc(nobs);
-    bi = gretl_column_vector_alloc(nc);
-    yhat = gretl_column_vector_alloc(nobs);
-    b = gretl_column_vector_alloc(nc);
-
-    if (bX == NULL || by == NULL || bi == NULL || b == NULL) {
-	gretl_matrix_free(bX);
-	gretl_matrix_free(by);
-	gretl_matrix_free(bi);
-	gretl_matrix_free(b);
-	return E_ALLOC;
-    }
-
-    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
-
-    gretl_matrix_multiply(X, b, yhat);
-
-    for (iter=0; iter<itermax; iter++) {
-	/* construct BRMR dataset */
-	for (t=0; t<nobs; t++) {
-	    yt = yhat->val[t];
-	    fx = normal_pdf(yt);
-	    Fx = normal_cdf(yt);
-
-	    if (Fx < 1.0) {
-		wt = 1.0 / sqrt(Fx * (1.0 - Fx));
-	    } else {
-		wt = 0.0;
-	    }
-
-	    by->val[t] = wt * (y->val[t] - Fx);
-	    wt *= fx;
-	    for (i=0; i<nc; i++) {
-		xti = gretl_matrix_get(X, t, i);
-		gretl_matrix_set(bX, t, i, wt * xti);
-	    }
+    if (pclist != NULL) {
+	for (i=0; i<dmod->ncoeff; i++) {
+	    if (in_gretl_list(pclist, dmod->list[i+2])) {
+		dmod->sderr[i] = NADBL;
+	    } 
 	}
-
-	ll = matrix_probit_llhood(y, yhat);
-
-	lldiff = fabs(ll - llbak);
-	if (lldiff < tol) {
-	    break; 
-	}
-
-	llbak = ll;
-
-	err = gretl_matrix_ols(by, bX, bi, NULL, NULL, NULL);
-	if (err) {
-	    fprintf(stderr, "logit_probit: err = %d\n", err);
-	    if (iter > 0) {
-		err = E_NOCONV;
-	    }
-	    break;
-	}
-
-	/* update coefficient estimates */
-	gretl_matrix_add_to(b, bi);
-
-	/* calculate yhat */
-	gretl_matrix_multiply(X, b, yhat);
-    }
-
-    if (!err && lldiff > tol) {
-	err = E_NOCONV;
-    }
-
-    gretl_matrix_free(bX);
-    gretl_matrix_free(by);
-    gretl_matrix_free(bi);
-    gretl_matrix_free(yhat);
-
-    if (!err) {
-	*pb = b;
-    } else {
-	gretl_matrix_free(b);
-    }
+    }	    
 
     return err;
 }
-
-#endif
 
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
 
-static int do_BRMR (const int *list, MODEL *dmod, int ci,
-		    double *beta, const double **Z, 
-		    const DATAINFO *pdinfo, PRN *prn)
+static int do_BRMR (const int *list, const int *pclist,
+		    MODEL *dmod, int ci, double *beta, 
+		    const double **Z, const DATAINFO *pdinfo, 
+		    PRN *prn)
 {
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
@@ -598,7 +490,12 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
 
 	llbak = dmod->lnL;
 
-	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+	if (pclist != NULL) {
+	    err = gretl_matrix_svd_ols(y, X, b, NULL, NULL, NULL);
+	} else {
+	    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+	}
+
 	if (err) {
 	    fprintf(stderr, "logit_probit: err = %d\n", err);
 	    if (iter > 0) {
@@ -606,6 +503,12 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
 	    }
 	    break;
 	}
+
+#if LPDEBUG > 1
+	gretl_matrix_print(y, "y, in BRMR");
+	gretl_matrix_print(X, "X, in BRMR");
+	gretl_matrix_print(b, "b, from BRMR");
+#endif
 
 	/* update coefficient estimates */
 	for (i=0; i<nc; i++) {
@@ -639,12 +542,95 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
     return err;
 }
 
+static char *classifier_check (int *list, int **ppclist, 
+			       double **Z, DATAINFO *pdinfo,
+			       gretlopt opt, PRN *prn, int *err)
+{
+    char *mask = NULL;
+    int *pclist = NULL;
+    const double *y = Z[list[1]];
+    int i, v, ni, t;
+
+    for (i=2; i<=list[0]; i++) {
+	v = list[i];
+	if (v == 0) {
+	    continue;
+	}
+	ni = gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v]);
+	if (ni > 0) {
+	    int same[2] = {0};
+	    int diff[2] = {0};
+	    int maskval, pc = 1;
+
+	    for (t=pdinfo->t1; t<=pdinfo->t2 && pc; t++) {
+		if (Z[v][t] > 0) {
+		    if (y[t] > 0) {
+			same[0] += 1;
+		    } else {
+			diff[0] += 1;
+		    }
+		} else {
+		    if (y[t] == 0) {
+			same[1] += 1;
+		    } else {
+			diff[1] += 1;
+		    }
+		}
+		if (same[0] && diff[0] && same[1] && diff[1]) {
+		    pc = 0;
+		}
+	    }
+
+	    if (pc) {
+		if (!(same[0] && diff[0])) {
+		    maskval = 1;
+		    pprintf(prn, "Note: %s != 0 predicts %s perfectly\n",
+			    pdinfo->varname[v], (same[0])? "success" : "failure");
+		} else {
+		    maskval = 0;
+		    pprintf(prn, "Note: %s == 0 predicts %s perfectly\n",
+			    pdinfo->varname[v], (diff[1])? "success" : "failure");
+		}
+
+		if (opt & OPT_K) {
+		    pclist = gretl_list_append_term(&pclist, v);
+		} else {
+		    if (mask == NULL) {
+			mask = malloc(pdinfo->n + 1);
+			if (mask == NULL) {
+			    *err = E_ALLOC;
+			} else {
+			    memset(mask, '0', pdinfo->n);
+			    mask[pdinfo->n] = 0;
+			}
+		    }
+		    if (mask != NULL) {
+			for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+			    if (Z[v][t] == maskval) {
+				mask[t-pdinfo->t1] = '1';
+			    }
+			}
+			pprintf(prn, "%d observations not used\n", ni);
+		    }
+		    gretl_list_delete_at_pos(list, i--);
+		}
+	    }
+	}
+    }
+
+    *ppclist = pclist;
+
+    return mask;
+}
+
 static MODEL 
-binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
+binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo, 
 		     int ci, gretlopt opt, PRN *prn)
 {
-    int i, t, depvar = list[1];
-    int nx = list[0] - 1;
+    int *list = NULL;
+    int *pclist = NULL;
+    char *mask = NULL;
+    int i, t, depvar, nx;
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
     int *act_pred = NULL;
@@ -654,11 +640,9 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     double *beta = NULL;
 
     gretl_model_init(&dmod);
-    
-    /* allocate space for means of indep vars, coeffs */
-    xbar = malloc(nx * sizeof *xbar);
-    beta = malloc(nx * sizeof *beta);
-    if (xbar == NULL || beta == NULL) {
+
+    list = gretl_list_copy(inlist);
+    if (list == NULL) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -674,6 +658,27 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
 			  (const double **) *pZ);
 
+    mask = classifier_check(list, &pclist, *pZ, pdinfo, opt, prn,
+			    &dmod.errcode);
+    if (dmod.errcode) {
+	goto bailout;
+    }
+
+    depvar = list[1];
+    nx = list[0] - 1;
+
+    /* allocate space for means of indep vars, coeffs */
+    xbar = malloc(nx * sizeof *xbar);
+    beta = malloc(nx * sizeof *beta);
+    if (xbar == NULL || beta == NULL) {
+	dmod.errcode = E_ALLOC;
+	goto bailout;
+    }
+
+    if (mask != NULL) {
+	copy_to_reference_missmask(mask);
+    }
+
     dmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
     if (dmod.errcode == 0 && dmod.ncoeff != nx) {
 	dmod.errcode = E_DATA;
@@ -682,6 +687,10 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (dmod.errcode) {
 	goto bailout;
     }
+
+#if LPDEBUG
+    printmodel(&dmod, pdinfo, OPT_NONE, prn);
+#endif
 
     for (i=0; i<dmod.ncoeff; i++) {
 	beta[i] = dmod.coeff[i];
@@ -694,8 +703,9 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	xbar[i] /= dmod.nobs;
     }
 
-    dmod.errcode = do_BRMR(list, &dmod, ci, beta, (const double **) *pZ, 
-			   pdinfo, prn);
+    dmod.errcode = do_BRMR(list, pclist, &dmod, ci, beta, 
+			   (const double **) *pZ, pdinfo, 
+			   (opt & OPT_V)? prn : NULL);
     if (dmod.errcode) {
 	goto bailout;
     }
@@ -710,7 +720,7 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     dmod.ci = ci;
 
     /* calculate standard errors etc */
-    dmod.errcode = logit_probit_vcv(&dmod, opt, (const double **) *pZ);
+    dmod.errcode = logit_probit_vcv(&dmod, pclist, opt, (const double **) *pZ);
     if (dmod.errcode) {
 	goto bailout;
     }
@@ -788,6 +798,9 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     free(xbar);
     free(beta);
+    free(list);
+    free(mask);
+    free(pclist);
 
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
