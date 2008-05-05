@@ -345,8 +345,7 @@ static MODEL ordered_model (const int *list, int ci, double ***pZ,
 
 /* calculate standard errors etc using the Hessian */
 
-static int logit_probit_vcv (MODEL *dmod, int *pclist, gretlopt opt, 
-			     const double **Z)
+static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
 {
     int i, err = 0;
 
@@ -397,23 +396,14 @@ static int logit_probit_vcv (MODEL *dmod, int *pclist, gretlopt opt,
 	free(xpx);
     }
 
-    if (pclist != NULL) {
-	for (i=0; i<dmod->ncoeff; i++) {
-	    if (in_gretl_list(pclist, dmod->list[i+2])) {
-		dmod->sderr[i] = NADBL;
-	    } 
-	}
-    }	    
-
     return err;
 }
 
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
 
-static int do_BRMR (const int *list, const int *pclist,
-		    MODEL *dmod, int ci, double *beta, 
-		    const double **Z, const DATAINFO *pdinfo, 
-		    PRN *prn)
+static int do_BRMR (const int *list, MODEL *dmod, int ci, 
+		    double *beta, const double **Z, 
+		    const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
@@ -490,11 +480,7 @@ static int do_BRMR (const int *list, const int *pclist,
 
 	llbak = dmod->lnL;
 
-	if (pclist != NULL) {
-	    err = gretl_matrix_svd_ols(y, X, b, NULL, NULL, NULL);
-	} else {
-	    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
-	}
+	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
 
 	if (err) {
 	    fprintf(stderr, "logit_probit: err = %d\n", err);
@@ -542,12 +528,10 @@ static int do_BRMR (const int *list, const int *pclist,
     return err;
 }
 
-static char *classifier_check (int *list, int **ppclist, 
-			       double **Z, DATAINFO *pdinfo,
+static char *classifier_check (int *list, double **Z, DATAINFO *pdinfo,
 			       gretlopt opt, PRN *prn, int *err)
 {
     char *mask = NULL;
-    int *pclist = NULL;
     const double *y = Z[list[1]];
     int i, v, ni, t;
 
@@ -592,33 +576,28 @@ static char *classifier_check (int *list, int **ppclist,
 			    pdinfo->varname[v], (diff[1])? "success" : "failure");
 		}
 
-		if (opt & OPT_K) {
-		    pclist = gretl_list_append_term(&pclist, v);
-		} else {
+		if (mask == NULL) {
+		    mask = malloc(pdinfo->n + 1);
 		    if (mask == NULL) {
-			mask = malloc(pdinfo->n + 1);
-			if (mask == NULL) {
-			    *err = E_ALLOC;
-			} else {
-			    memset(mask, '0', pdinfo->n);
-			    mask[pdinfo->n] = 0;
-			}
+			*err = E_ALLOC;
+		    } else {
+			memset(mask, '0', pdinfo->n);
+			mask[pdinfo->n] = 0;
 		    }
-		    if (mask != NULL) {
-			for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-			    if (Z[v][t] == maskval) {
-				mask[t-pdinfo->t1] = '1';
-			    }
-			}
-			pprintf(prn, "%d observations not used\n", ni);
-		    }
-		    gretl_list_delete_at_pos(list, i--);
 		}
+
+		if (mask != NULL) {
+		    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+			if (Z[v][t] == maskval) {
+			    mask[t-pdinfo->t1] = '1';
+			}
+		    }
+		    pprintf(prn, "%d observations not used\n", ni);
+		}
+		gretl_list_delete_at_pos(list, i--);
 	    }
 	}
     }
-
-    *ppclist = pclist;
 
     return mask;
 }
@@ -628,7 +607,6 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 		     int ci, gretlopt opt, PRN *prn)
 {
     int *list = NULL;
-    int *pclist = NULL;
     char *mask = NULL;
     int i, t, depvar, nx;
     int oldt1 = pdinfo->t1;
@@ -658,7 +636,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
 			  (const double **) *pZ);
 
-    mask = classifier_check(list, &pclist, *pZ, pdinfo, opt, prn,
+    mask = classifier_check(list, *pZ, pdinfo, opt, prn,
 			    &dmod.errcode);
     if (dmod.errcode) {
 	goto bailout;
@@ -676,12 +654,14 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (mask != NULL) {
-	copy_to_reference_missmask(mask);
+	dmod.errcode = copy_to_reference_missmask(mask);
     }
 
-    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
-    if (dmod.errcode == 0 && dmod.ncoeff != nx) {
-	dmod.errcode = E_DATA;
+    if (!dmod.errcode) {
+	dmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	if (dmod.errcode == 0 && dmod.ncoeff != nx) {
+	    dmod.errcode = E_DATA;
+	}
     }
 
     if (dmod.errcode) {
@@ -703,7 +683,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 	xbar[i] /= dmod.nobs;
     }
 
-    dmod.errcode = do_BRMR(list, pclist, &dmod, ci, beta, 
+    dmod.errcode = do_BRMR(list, &dmod, ci, beta, 
 			   (const double **) *pZ, pdinfo, 
 			   (opt & OPT_V)? prn : NULL);
     if (dmod.errcode) {
@@ -720,7 +700,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     dmod.ci = ci;
 
     /* calculate standard errors etc */
-    dmod.errcode = logit_probit_vcv(&dmod, pclist, opt, (const double **) *pZ);
+    dmod.errcode = logit_probit_vcv(&dmod, opt, (const double **) *pZ);
     if (dmod.errcode) {
 	goto bailout;
     }
@@ -800,7 +780,6 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     free(beta);
     free(list);
     free(mask);
-    free(pclist);
 
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
