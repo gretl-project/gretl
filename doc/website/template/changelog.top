@@ -1,7 +1,11 @@
-<html><head><title>gretl changelog</title></head>
-<body bgcolor="#ffffff">
+<html><head><title>gretl changelog</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+</head>
+<body>
 
+<p>
 [<a href="http://gretl.cvs.sourceforge.net/gretl/gretl/">Browse CVS</a>]
 [<a href="./index.html">gretl main page</a>]
+</p>
 
-<h2>gretl changelog</h2>
+<h1>gretl changelog</h1>

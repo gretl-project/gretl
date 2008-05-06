@@ -85,6 +85,7 @@ PUBLIC_HDRS = \
 	graphing.h \
 	gretl_commands.h \
 	gretl_errors.h \
+	gretl_f2c.h \
 	gretl_fft.h \
 	gretl_func.h \
 	gretl_intl.h \

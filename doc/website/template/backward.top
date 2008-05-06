@@ -1,0 +1,19 @@
+<html>
+<head><title>gretl changelog</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+</head>
+<body>
+
+<p>
+[<a href="http://gretl.cvs.sourceforge.net/gretl/gretl/">Browse CVS</a>]
+[<a href="./index.html">gretl main page</a>]
+</p>
+
+<h1>gretl: backward-incompatible changes</h1>
+
+<p>
+Although we try to keep these to a minimum,
+every now and then it becomes necessary to make backward-incompatible
+changes to gretl's scripting language.  This log records such
+changes.
+</p>

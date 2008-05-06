@@ -573,20 +573,34 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     fclose(clogh);
 }
 
-int make_html_changelog (void)
+enum {
+    CHANGE_LOG,
+    BACKWARD_LOG
+};
+
+int make_html_log (int type)
 {
     gretl_version gv[1000];
     char targ[MYLEN];
     char src[MYLEN];
     int nv, err = 0;
 
-    sprintf(targ, "%s/ChangeLog.html", WEBDIR);
+    if (type == CHANGE_LOG) {
+	sprintf(targ, "%s/ChangeLog.html", WEBDIR);
+	sprintf(src, "%s/template/changelog.top", WEBSRC);
+    } else {
+	sprintf(targ, "%s/Backward.html", WEBDIR);
+	sprintf(src, "%s/template/backward.top", WEBSRC);
+    }
 
-    sprintf(src, "%s/template/changelog.top", WEBSRC);
     err = copyfile(src, targ, 0);
     if (err) return err;
 
-    sprintf(src, "%s/ChangeLog", SRCDIR);
+    if (type == CHANGE_LOG) {
+	sprintf(src, "%s/ChangeLog", SRCDIR);
+    } else {
+	sprintf(src, "%s/CompatLog", SRCDIR);
+    }
 
     nv = version_history(src, gv);
 
@@ -665,7 +679,11 @@ int main (int argc, char **argv)
     }
 
     if (!err) {
-	err = make_html_changelog();
+	err = make_html_log(CHANGE_LOG);
+    }
+
+    if (!err) {
+	err = make_html_log(BACKWARD_LOG);
     }
 
     return err;
