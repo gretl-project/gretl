@@ -401,8 +401,8 @@ static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
 
 /*
   If min1 > max0, then there exists a separating hyperplane between
-  all the zeros and all the ones; in this case, the likelihood is
-  unbounded and no MLE exists.
+  all the zeros and all the ones; in this case, the likelihood has
+  no maximum (despite having a supremum at 1) and no MLE exists.
 */
 
 static int perfect_pred_check (const double *y, MODEL *dmod)
