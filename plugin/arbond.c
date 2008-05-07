@@ -1469,20 +1469,10 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     err = gretl_model_allocate_storage(pmod);
 
     if (!err) {
-	gretl_model_new_vcv(pmod, NULL);
-    }
-
-    if (!err) {
 	for (i=0; i<ab->k; i++) {
 	    pmod->coeff[i] = ab->beta->val[i];
-	    for (j=0; j<=i; j++) {
-		x = gretl_matrix_get(ab->vbeta, i, j);
-		pmod->vcv[ijton(i, j, ab->k)] = x;
-		if (i == j) {
-		    pmod->sderr[i] = sqrt(x);
-		}
-	    }
 	}
+	err = gretl_model_write_vcv(pmod, ab->vbeta);
     }
 
     if (!err) {

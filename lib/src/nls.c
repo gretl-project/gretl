@@ -1387,12 +1387,7 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
     }
 
     if (!err) {
-	for (i=0; i<k; i++) {
-	    for (j=0; j<=i; j++) {
-		x = gretl_matrix_get(V, i, j);
-		pmod->vcv[ijton(i, j, k)] = x;
-	    }
-	}
+	err = gretl_model_write_vcv(pmod, V);
     }
 
     gretl_matrix_free(G);
@@ -1415,6 +1410,10 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	for (i=0; i<n; i++) {
 	    pmod->vcv[i] = spec->hessvec[i];
 	}
+	for (i=0; i<k; i++) {
+	    x = pmod->vcv[ijton(i, i, k)];
+	    pmod->sderr[i] = sqrt(x);
+	}
 	vcvopt = VCV_HESSIAN;
     } else {
 	/* either OPG or QML */
@@ -1422,10 +1421,6 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
     }
 
     if (!err) {
-	for (i=0; i<k; i++) {
-	    x = pmod->vcv[ijton(i, i, k)];
-	    pmod->sderr[i] = sqrt(x);
-	}
 	gretl_model_set_int(pmod, "ml_vcv", vcvopt);
     }    
 

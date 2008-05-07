@@ -562,6 +562,19 @@ static int record_y_median (MODEL *pmod, const double *y)
     return 0;
 }
 
+static double lad_loglik (MODEL *pmod)
+{
+    double tau = 0.5, R = 0.0;
+    int n = pmod->nobs;
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	R += pmod->uhat[t] * (tau - (pmod->uhat[t] < 0));
+    }
+
+    return n * (log(tau * (1-tau)) - 1 - log(R/n));
+}
+
 int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
@@ -626,11 +639,12 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
     ladcode = (int) a[m + 1 + n * nrows];
     if (ladcode == 2) {
 	pmod->errcode = E_SINGULAR;
-    } else {
-	gretl_model_set_int(pmod, "ladcode", ladcode);
+    } else if (ladcode == 0) {
+	gretl_model_set_int(pmod, "nonunique", 1);
     }
 
     if (pmod->errcode == 0) {
+	double SAR = a[m + n * nrows];
 
 	for (i=0; i<n; i++) {
 	    pmod->coeff[i] = x[i];
@@ -645,7 +659,7 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 	}
 
 	/* sum of absolute residuals */
-	gretl_model_set_double(pmod, "ladsum", a[m + n * nrows]);
+	gretl_model_set_double(pmod, "ladsum", SAR);
 
 	/* median of dependent variable */
 	record_y_median(pmod, Z[yno]);
@@ -657,12 +671,13 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 
 	/* LaPlace errors: equivalent of standard error is sum of
 	   absolute residuals over nobs */
-	pmod->sigma = pmod->rho / pmod->nobs; 
+	pmod->sigma = SAR / pmod->nobs; 
+
+	lad_loglik(pmod);
 
 	if (bootstrap_vcv(pmod, Z, a, b, e, x, m, n, dim)) {
 	    pmod->errcode = E_ALLOC;
 	}
-
     }
 
     pmod->ci = LAD;

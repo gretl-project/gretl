@@ -230,6 +230,8 @@ int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *pp
 
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
+int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V);
+
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);
 
 int gretl_model_add_arinfo (MODEL *pmod, int nterms);

@@ -1524,6 +1524,51 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
     return err;
 }
 
+/**
+ * gretl_model_write_vcv:
+ * @pmod: pointer to model.
+ * @V: full covariance matrix.
+ * 
+ * Write the covariance matrix @V into the model @pmod, using the
+ * special packed format that is required by the MODEL struct,
+ * and set the standard errors to the square root of the diagonal
+ * elements of this matrix.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
+{
+    int k = pmod->ncoeff;
+    int n = (k * k + k) / 2; 
+    int i, j, idx;
+    double x;
+    int err = 0;
+
+    /* destroy any existing vcv just in case it's wrongly sized */
+    free(pmod->vcv);
+
+    pmod->vcv = malloc(n * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) {
+	err = E_ALLOC;
+    } 
+
+    if (pmod->vcv != NULL) {
+	for (i=0; i<k; i++) {
+	    for (j=0; j<=i; j++) {
+		idx = ijton(i, j, k);
+		x = gretl_matrix_get(V, i, j);
+		pmod->vcv[idx] = x;
+		if (i == j) {
+		    pmod->sderr[i] = sqrt(x);
+		}
+	    }
+	}	
+    }	
+
+    return err;
+}
+
 static double *copy_vcv_subset (const MODEL *pmod)
 {
     double *V;

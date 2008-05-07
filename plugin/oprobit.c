@@ -528,7 +528,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     int npar = OC->k;
     int nx = OC->nx;
     double x;
-    int i, j, k, s, t, v;
+    int i, k, s, t, v;
 
     pmod->t1 = OC->t1;
     pmod->t2 = OC->t2;
@@ -538,27 +538,18 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 
     pmod->ncoeff = npar;
 
-    if (pmod->vcv == NULL) {
-	pmod->vcv = malloc(npar * (npar+1) / 2 * sizeof *pmod->vcv);
-	if (pmod->vcv == NULL) {
-	    pmod->errcode = E_ALLOC;
+    if (V != NULL) {
+	pmod->errcode = gretl_model_write_vcv(pmod, V);
+	if (pmod->errcode) {
 	    return;
 	}
     }
 
-    k = 0;
     for (i=0; i<npar; i++) {
 	pmod->coeff[i] = theta[i];
 #if ODEBUG > 1
 	fprintf(stderr,"theta[%d] = %12.8f\n", i, theta[i]);
 #endif
-	for (j=0; j<=i && V != NULL; j++) {
-	    x = gretl_matrix_get(V, i, j);
-	    pmod->vcv[ijton(i,j,npar)] = x;
-	    if (i == j) {
-		pmod->sderr[i] = sqrt(x);
-	    }
-	}	    
     }
 
     if (OC->opt & OPT_R) {

@@ -948,9 +948,8 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
-    double x;
-    int i, j, s, t;
-    int idx, err = 0;
+    int s, t;
+    int err = 0;
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -975,16 +974,8 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     err = gretl_invert_symmetric_matrix(V);
 
     if (!err) {
-	for (i=0; i<k; i++) {
-	    for (j=0; j<=i; j++) {
-		idx = ijton(i, j, k);
-		x = s2 * gretl_matrix_get(V, i, j);
-		pmod->vcv[idx] = x;
-		if (i == j) {
-		    pmod->sderr[i] = sqrt(x);
-		}
-	    }
-	}
+	gretl_matrix_multiply_by_scalar(V, s2);
+	err = gretl_model_write_vcv(pmod, V);
     }
 
  bailout:

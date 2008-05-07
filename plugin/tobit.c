@@ -259,36 +259,6 @@ static gretl_matrix *tobit_opg_vcv (const tob_container *TC)
     return V;
 }
 
-/* Transcribe the VCV matrix into packed triangular form */
-
-static int pack_vcv (MODEL *pmod, gretl_matrix *v, double scale)
-{
-    const int nv = pmod->ncoeff;
-    const int nterms = nv * (nv + 1) / 2;
-    double x;
-    int i, j, k;
-
-    if (pmod->vcv == NULL) {
-	pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
-	if (pmod->vcv == NULL) {
-	    return E_ALLOC;
-	}
-    } 
-
-    for (i=0; i<nv; i++) {
-	for (j=0; j<=i; j++) {
-	    k = ijton(i, j, nv);
-	    x = gretl_matrix_get(v, i, j);
-	    pmod->vcv[k] = x;
-	    if (scale != 1.0) {
-		pmod->vcv[k] /= scale * scale;
-	    }
-	}
-    }
-
-    return 0;
-}
-
 static double recompute_tobit_ll (const MODEL *pmod, const double *y)
 {
     double lt, ll = 0.0;
@@ -460,10 +430,8 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 
     for (i=0; i<ncoeff; i++) {
 	pmod->coeff[i] = theta[i];
-	pmod->sderr[i] = sqrt(gretl_matrix_get(VCV, i, i));
 	if (scale != 1.0) {
 	    pmod->coeff[i] /= scale;
-	    pmod->sderr[i] /= scale;
 	}
     }
 
@@ -473,7 +441,10 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	pmod->sigma /= scale;	
 	pmod->ybar /= scale;
 	pmod->sdy /= scale;
+	gretl_matrix_divide_by_scalar(VCV, scale * scale);
     }
+
+    gretl_model_write_vcv(pmod, VCV);
 
     pmod->ess = 0.0;
     s = 0;
@@ -510,7 +481,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     chesher_irish_test(pmod, X);
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
     mle_criteria(pmod, 1);
-    pack_vcv(pmod, VCV, scale);
+
     pmod->ci = TOBIT;
 
     gretl_model_set_int(pmod, "censobs", cenc);

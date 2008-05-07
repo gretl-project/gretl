@@ -609,15 +609,16 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		(utf)? _("Sum of squared residuals") :
 		I_("Sum of squared residuals"),
 		GRETL_DIGITS, pmod->ess);
-
-	if (utf) {
-	    int ladcode = gretl_model_get_int(pmod, "ladcode");
-
-	    if (ladcode == 0) {
-		pputs(prn, _("\nWarning: solution is probably not unique\n"));
-	    }
-	}
     }
+}
+
+static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
+{
+    if (plain_format(prn)) {
+	if (gretl_model_get_int(pmod, "nonunique")) {
+	    pputs(prn, _("\nWarning: solution is probably not unique\n"));
+	}
+    }	
 }
 
 static void print_f_pval_str (double pval, PRN *prn)
@@ -2359,7 +2360,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	ladstats(pmod, prn);
+	print_ll(pmod, prn);
 	print_middle_table_end(prn);
+	maybe_print_lad_warning(pmod, prn);
 	goto close_format;
     }
 

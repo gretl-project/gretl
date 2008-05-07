@@ -1216,7 +1216,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     integer m, n, ldjac;
     integer iflag = 0;
 
-    double x, *f;
+    double *f;
     int err = 0;
 
     m = gretl_matrix_cols(s->oc->tmp);
@@ -1296,26 +1296,19 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     }
 
     if (!err) {
-	for (i=0; i<k; i++) {
-	    for (j=0; j<=i; j++) {
-		x = gretl_matrix_get(V, i, j);
-		pmod->vcv[ijton(i, j, k)] = x;
-		if (j == i) {
-		   pmod->sderr[i] = sqrt(x);
-		} 
-	    }
+	err = gretl_model_write_vcv(pmod, V);
+    }
+
+    if (!err && using_HAC(s)) {
+	gretl_model_set_int(pmod, "using_hac", 1);
+	gretl_model_set_int(pmod, "hac_kernel", s->oc->hinfo.kern);
+	if (s->oc->hinfo.kern == KERNEL_QS) {
+	    gretl_model_set_double(pmod, "qs_bandwidth", s->oc->hinfo.bt);
+	} else {
+	    gretl_model_set_int(pmod, "hac_lag", s->oc->hinfo.h);
 	}
-	if (using_HAC(s)) {
-	    gretl_model_set_int(pmod, "using_hac", 1);
-	    gretl_model_set_int(pmod, "hac_kernel", s->oc->hinfo.kern);
-	    if (s->oc->hinfo.kern == KERNEL_QS) {
-		gretl_model_set_double(pmod, "qs_bandwidth", s->oc->hinfo.bt);
-	    } else {
-		gretl_model_set_int(pmod, "hac_lag", s->oc->hinfo.h);
-	    }
-	    if (s->oc->hinfo.whiten) {
-		gretl_model_set_int(pmod, "hac_prewhiten", 1);
-	    }
+	if (s->oc->hinfo.whiten) {
+	    gretl_model_set_int(pmod, "hac_prewhiten", 1);
 	}
     }
 
