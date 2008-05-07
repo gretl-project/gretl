@@ -49,6 +49,8 @@
 
 #define uvar_node(n) ((n->t == NUM || n->t == VEC) && n->vnum >= 0)
 
+#define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
+
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
 
@@ -1050,12 +1052,14 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+/* At least one of the nodes is a series; the other may be a
+   scalar, or 1 x 1 matrix */
+
 static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret;
-    double xt = (l->t == NUM)? l->v.xval : 0.0;
-    double yt = (r->t == NUM)? r->v.xval : 0.0;
     const double *x = NULL, *y = NULL;
+    double xt = 0, yt = 0;
     int t, t1, t2;
 
     ret = aux_vec_node(p, p->dinfo->n);
@@ -1063,16 +1067,24 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-#if EDEBUG
-    fprintf(stderr, "series_calc: l=%p, r=%p, ret=%p\n", 
-	    (void *) l, (void *) r, (void *) ret);
-#endif
+    if (l->t == VEC) {
+	x = l->v.xvec;
+    } else if (l->t == NUM) {
+	xt = l->v.xval;
+    } else if (l->t == MAT) {
+	xt = l->v.m->val[0];
+    }
+
+    if (r->t == VEC) {
+	y = r->v.xvec;
+    } else if (r->t == NUM) {
+	yt = r->v.xval;
+    } else if (r->t == MAT) {
+	yt = r->v.m->val[0];
+    } 
 
     t1 = (autoreg(p))? p->obs : p->dinfo->t1;
     t2 = (autoreg(p))? p->obs : p->dinfo->t2;
-
-    if (l->t == VEC) x = l->v.xvec;
-    if (r->t == VEC) y = r->v.xvec;
 
     for (t=t1; t<=t2; t++) {
 	if (x != NULL) {
@@ -2928,7 +2940,7 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
 
 	if (n->t == NUM) {
 	    i = n->v.xval;
-	} else if (n->t == MAT && gretl_matrix_is_scalar(n->v.m)) {
+	} else if (scalar_matrix_node(n)) {
 	    i = n->v.m->val[0];
 	} else {
 	    node_type_error(f, NUM, n, p);
@@ -4845,6 +4857,19 @@ static void transpose_matrix_result (NODE *n, parser *p)
     }
 }
 
+static int series_calc_nodes (NODE *l, NODE *r)
+{
+    int ret = 0;
+
+    if (l->t == VEC) {
+	ret = (r->t == VEC || r->t == NUM || scalar_matrix_node(r));
+    } else if (r->t == VEC) {
+	ret = (l->t == NUM || scalar_matrix_node(l));
+    }
+
+    return ret;
+}
+
 static void node_type_error (int ntype, int goodt, NODE *bad, parser *p)
 {
     const char *nstr;
@@ -4966,9 +4991,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = strings_are_equal(l, r, p);
 	} else if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
-	} else if ((l->t == VEC && r->t == VEC) ||
-		   (l->t == VEC && r->t == NUM) ||
-		   (l->t == NUM && r->t == VEC)) {
+	} else if (series_calc_nodes(l, r)) {
 	    ret = series_calc(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == MAT) {
 	    if (bool_comp(t->t)) {
@@ -6809,7 +6832,7 @@ static int gen_check_return_type (parser *p)
 	   on the type of the object we computed */
 	if (r->t == LVEC) {
 	    p->targ = LIST;
-	} else if (r->t == MAT && gretl_matrix_is_scalar(r->v.m)) {
+	} else if (scalar_matrix_node(r)) {
 	    /* cast a 1 x 1 matrix to a scalar */
 	    p->targ = NUM;
 	} else {

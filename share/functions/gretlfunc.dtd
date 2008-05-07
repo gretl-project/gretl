@@ -3,12 +3,14 @@
   needs a name, author, version, date, and description.  It also needs
   at least one gretl-function.  The latter must have a name and must
   include function code; it may also have help text, zero or more 
-  parameters, and zero or one return values.
+  parameters, and zero or one return values. And the package may
+  contain a sample script which illustrates a correct call.
  -->
 
 <!ELEMENT gretl-functions (gretl-function-package?)>
 
-<!ELEMENT gretl-function-package (author, version, date, description, gretl-function+)>
+<!ELEMENT gretl-function-package (author, version, date, description, 
+                                  gretl-function+, sample-script?)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -58,6 +60,11 @@
    type (bool | boolean | int | scalar | series | list | 
          matrix | string) 'series'
 >
+
+<!ELEMENT sample_script (code)>
+<!ATTLIST sample_script
+   name CDATA #REQUIRED
+> 
 
 <!ELEMENT code (#PCDATA)>
 
