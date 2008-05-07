@@ -459,7 +459,7 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
     for (iter=0; iter<itermax; iter++) {
 
 	if (perfect_pred_check(yvar, dmod)) {
-	    gretl_errmsg_sprintf("Unbounded likelihood at iteration %d\n",
+	    gretl_errmsg_sprintf("Perfect prediction detected at iteration %d;\nno MLE exists",
 				 iter);
 	    err = E_NOCONV;
 	    break;
