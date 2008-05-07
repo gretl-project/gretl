@@ -399,6 +399,33 @@ static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
     return err;
 }
 
+/*
+  If min1 > max0, then there exists a separating hyperplane between
+  all the zeros and all the ones; in this case, the likelihood is
+  unbounded and no MLE exists.
+*/
+
+static int perfect_pred_check (const double *y, MODEL *dmod)
+{
+    double max0 = -1.0e200;
+    double min1 = 1.0e200;
+    double yt, yht;
+    int t;
+
+    for (t=dmod->t1; t<=dmod->t2; t++) {
+	yt = y[t];
+	yht = dmod->yhat[t];
+	if (yt == 0 && max0 < yht) {
+	    max0 = yht;
+	}
+	if (yt == 1 && min1 > yht) {
+	    min1 = yht;
+	}
+    }
+
+    return (max0 < min1);
+}
+
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
 
 static int do_BRMR (const int *list, MODEL *dmod, int ci, 
@@ -429,6 +456,14 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
     }
 
     for (iter=0; iter<itermax; iter++) {
+
+	if (perfect_pred_check(yvar, dmod)) {
+	    gretl_errmsg_sprintf("Unbounded likelihood at iteration %d\n",
+				 iter);
+	    err = E_NOCONV;
+	    break;
+	}
+
 	/* construct BRMR dataset */
 	s = 0;
 	for (t=dmod->t1; t<=dmod->t2; t++) {
