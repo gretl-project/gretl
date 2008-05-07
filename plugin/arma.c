@@ -991,21 +991,12 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 /* in Kalman case the basic model struct is empty, so we have
    to allocate for coefficients, residuals and so on */
 
-static int kalman_arma_model_allocate (MODEL *pmod, int k, int T,
-				       double *vcv)
+static int kalman_arma_model_allocate (MODEL *pmod, int k, int T)
 {
-    int err = 0;
-
     pmod->ncoeff = k;
     pmod->full_n = T;
 
-    err = gretl_model_allocate_storage(pmod);
-
-    if (!err && vcv == NULL) {
-	err = gretl_model_new_vcv(pmod, NULL);
-    }
-
-    return err;
+    return gretl_model_allocate_storage(pmod);
 }
 
 static int kalman_arma_finish (MODEL *pmod, const int *alist,
@@ -1021,7 +1012,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     pmod->t2 = ainfo->t2;
     pmod->nobs = T;
 
-    pmod->errcode = kalman_arma_model_allocate(pmod, k, ainfo->T, vcv);
+    pmod->errcode = kalman_arma_model_allocate(pmod, k, ainfo->T);
     if (pmod->errcode) {
 	return pmod->errcode;
     }

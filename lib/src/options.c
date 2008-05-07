@@ -42,6 +42,7 @@
                        c == PANEL || \
                        c == POISSON || \
                        c == PROBIT || \
+		       c == QUANTREG || \
                        c == TOBIT || \
                        c == TSLS || \
                        c == WLS)

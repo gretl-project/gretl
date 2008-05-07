@@ -41,7 +41,7 @@ ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
 endif
 
-VPATH = $(topsrc)/plugin:$(topsrc)/tests:$(topsrc)/plugin/mpack
+VPATH = $(topsrc)/plugin:$(topsrc)/tests:$(topsrc)/plugin/mpack:$(topsrc)/plugin/rq
 
 override CFLAGS += -I.. -I$(topsrc)/gui2 -DHAVE_CONFIG_H
 
@@ -93,7 +93,8 @@ SRCS = excel_import.c \
 	poisson.c \
 	gretlzip.c \
 	heckit.c \
-	odbc_import.c
+	odbc_import.c \
+	quantreg.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -122,7 +123,8 @@ PLUGINS = arbond.la \
 	vif.la \
 	poisson.la \
 	gretlzip.la \
-	heckit.la
+	heckit.la \
+	quantreg.la
 
 GUI_DEPENDENT_PLUGINS = excel_import.la \
 	gnumeric_import.la \
@@ -283,6 +285,9 @@ mailer.la: mailer.lo codes.lo encode.lo md5c.lo
 
 odbc_import.la: odbc_import.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(ODBC_LIBS)
+
+quantreg.la: quantreg.lo rqfn.lo rqfnb.lo
+	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

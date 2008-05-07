@@ -3641,7 +3641,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 
 MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 {
-    MODEL lad_model;
+    MODEL lmod;
     void *handle;
     int (*lad_driver) (MODEL *, double **, DATAINFO *);
 
@@ -3649,26 +3649,76 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
        the lad_driver function will overwrite the coefficients etc.
     */
 
-    lad_model = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    lmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 
-    if (lad_model.errcode) {
-        return lad_model;
+    if (lmod.errcode) {
+        return lmod;
     }
 
     lad_driver = get_plugin_function("lad_driver", &handle);
 
     if (lad_driver == NULL) {
 	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	lad_model.errcode = E_FOPEN;
-	return lad_model;
+	lmod.errcode = E_FOPEN;
+	return lmod;
     }
 
-    (*lad_driver) (&lad_model, *pZ, pdinfo);
+    (*lad_driver) (&lmod, *pZ, pdinfo);
     close_plugin(handle);
 
-    set_model_id(&lad_model);
+    if (lmod.errcode == 0) {
+	set_model_id(&lmod);
+    }
 
-    return lad_model;
+    return lmod;
+}
+
+/**
+ * quantreg:
+ * @parm: 
+ * @list: model specification: dependent var and regressors.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on the data set.
+ *
+ * Estimate the model given in @list using the method of Least
+ * Absolute Deviation (LAD).
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL quantreg (const char *parm, const int *list, 
+		double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL qmod;
+    void *handle;
+    int (*rq_driver) (const char *, MODEL *, double **, DATAINFO *);
+
+    /* run an initial OLS to "set the model up" and check for errors.
+       the driver function will overwrite the coefficients etc.
+    */
+
+    qmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+
+    if (qmod.errcode) {
+        return qmod;
+    }
+
+    rq_driver = get_plugin_function("rq_driver", &handle);
+
+    if (rq_driver == NULL) {
+	fprintf(stderr, I_("Couldn't load plugin function\n"));
+	qmod.errcode = E_FOPEN;
+	return qmod;
+    }
+
+    (*rq_driver) (parm, &qmod, *pZ, pdinfo);
+    close_plugin(handle);
+
+    if (qmod.errcode == 0) {
+	set_model_id(&qmod);
+    }
+
+    return qmod;
 }
 
 /**

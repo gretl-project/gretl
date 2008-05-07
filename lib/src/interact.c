@@ -2412,6 +2412,21 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} 
     }
 
+    /* quantreg requires a tau specification */
+    if (cmd->ci == QUANTREG) {
+	capture_param(line, cmd, &nf, NULL, NULL);
+	if (cmd->err) {
+	    goto cmd_exit;
+	} else {
+	    strcpy(rem, line + pos + 1 + strlen(cmd->param));
+	    pos = 0;
+	    if (--nf > 0) {
+		strcpy(line, rem);
+		linelen = strlen(line);
+	    }
+	} 
+    }    
+
     if (cmd->ci == OMITFROM && nf == 0) {
 	cmd_set_nolist(cmd);
 	return cmd->err;
@@ -4315,6 +4330,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case LOGIT:
     case POISSON:
     case PROBIT:
+    case QUANTREG:
     case TOBIT:
     case TSLS:
 	clear_model(models[0]);
@@ -4337,6 +4353,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);
 	} else if (cmd->ci == LAD) {
 	    *models[0] = lad(cmd->list, pZ, pdinfo);
+	} else if (cmd->ci == QUANTREG) {
+	    *models[0] = quantreg(cmd->param, cmd->list, pZ, pdinfo);
 	} else if (cmd->ci == GARCH) {
 	    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == PANEL) {

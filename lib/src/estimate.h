@@ -33,6 +33,9 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo); 
 
+MODEL quantreg (const char *parm, const int *list, 
+		double ***pZ, DATAINFO *pdinfo);
+
 MODEL arma (const int *list, const char *pqspec,
 	    const double **Z, const DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn);

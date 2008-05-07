@@ -60,7 +60,8 @@ enum {
     P_OPROBIT,
     P_ARBOND,
     P_HECKIT,
-    P_ODBC
+    P_ODBC,
+    P_QUANTREG
 } plugin_codes;
 
 struct plugin_info {
@@ -107,7 +108,8 @@ struct plugin_info plugins[] = {
     { P_OPROBIT,         "oprobit" },
     { P_ARBOND,          "arbond" },
     { P_HECKIT,          "heckit" },
-    { P_ODBC,            "odbc_import" }
+    { P_ODBC,            "odbc_import" },
+    { P_QUANTREG,        "quantreg" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -201,6 +203,9 @@ struct plugin_function plugin_functions[] = {
     /* ODBC */
     { "gretl_odbc_check_dsn", P_ODBC},
     { "gretl_odbc_get_data",  P_ODBC},
+
+    /* quantreg */
+    { "rq_driver", P_QUANTREG},
 
     /* sentinel */
     { NULL, 0 }

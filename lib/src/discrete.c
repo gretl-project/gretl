@@ -417,7 +417,7 @@ static int perfect_pred_check (const double *y, MODEL *dmod)
 	if (!na(yht)) {
 	    if (y[t] == 0 && yht > max0) {
 		max0 = yht;
-	    }
+	    } 
 	    if (y[t] == 1 && yht < min1) {
 		min1 = yht;
 	    }

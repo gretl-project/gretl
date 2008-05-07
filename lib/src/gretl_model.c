@@ -3921,7 +3921,8 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
 
     case RESTRICT:
 	if (model_ci == LAD || model_ci == NLS || 
-	    model_ci == MLE || model_ci == GMM) {
+	    model_ci == MLE || model_ci == GMM ||
+	    model_ci == QUANTREG) {
 	    ok = 0;
 	}
 	break;

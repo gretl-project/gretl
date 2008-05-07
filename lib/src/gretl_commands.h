@@ -107,6 +107,7 @@ typedef enum {
     PRINTF,
     PROBIT,
     PVALUE, 
+    QUANTREG,
     QLRTEST,
     QUIT,
     RENAME,

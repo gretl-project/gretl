@@ -1414,7 +1414,6 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 {
     const double *y = X[ab->yno];
     char prefix;
-    double x;
     int i, j;
     int err = 0;
 
