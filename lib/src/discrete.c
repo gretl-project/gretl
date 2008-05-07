@@ -409,21 +409,20 @@ static int perfect_pred_check (const double *y, MODEL *dmod)
 {
     double max0 = -1.0e200;
     double min1 = 1.0e200;
-    double yt, yht;
+    double yht;
     int t;
 
     for (t=dmod->t1; t<=dmod->t2; t++) {
-	yt = y[t];
 	yht = dmod->yhat[t];
-	if (yt == 0 && max0 < yht) {
+	if (y[t] == 0 && yht > max0) {
 	    max0 = yht;
 	}
-	if (yt == 1 && min1 > yht) {
+	if (y[t] == 1 && yht < min1) {
 	    min1 = yht;
 	}
     }
 
-    return (max0 < min1);
+    return (min1 > max0);
 }
 
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
