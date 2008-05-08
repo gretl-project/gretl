@@ -46,6 +46,7 @@ vpath %.c $(extradir)
 vpath %.c $(plugindir)
 vpath %.c $(plugindir)/libole2
 vpath %.c $(plugindir)/zipunzip
+vpath %.c $(plugindir)/rq
 vpath %.c $(topsrc)/tests
 vpath %.h $(libsrcdir):$(topsrc)/cli:$(guidir):$(extradir):$(plugindir):.
 vpath %.h $(topsrc)/cephes:..
@@ -93,7 +94,8 @@ PLUGINSRC = \
 	urcdist.c \
 	gretlzip.c \
 	heckit.c \
-	odbc_import.c
+	odbc_import.c \
+	quantreg.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -128,7 +130,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/urcdist.dll \
 	plugins/gretlzip.dll \
 	plugins/heckit.dll \
-	plugins/odbc_import.dll
+	plugins/odbc_import.dll \
+	plugins/quantreg.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -434,6 +437,10 @@ plugins/heckit.dll: heckit.o dllinit.o
 plugins/odbc_import.dll: odbc_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lodbc32
+
+plugins/quantreg.dll: quantreg.o rqfn.o rqfnb.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
