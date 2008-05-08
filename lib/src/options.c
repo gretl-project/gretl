@@ -125,6 +125,7 @@ struct gretl_option gretl_opts[] = {
     { EQNPRINT, OPT_O, "complete" },
     { EQNPRINT, OPT_T, "t-ratios" },
     { TABPRINT, OPT_O, "complete" },
+    { TABPRINT, OPT_R, "rtf" },
     { ESTIMATE, OPT_M, "geomean" },
     { ESTIMATE, OPT_N, "no-df-corr" },
     { ESTIMATE, OPT_Q, "quiet" },

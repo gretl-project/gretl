@@ -313,6 +313,8 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 
 void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames);
 
+int gretl_model_add_y_median (MODEL *pmod, const double *y);
+
 char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				      const double **Z,
 				      const DATAINFO *pdinfo);

@@ -97,6 +97,66 @@ extern void rqbr_ (integer *n,
     PACKAGE = "quantreg")
 */
 
+struct rq_info {
+    integer n, p;
+    double tau;
+    double beta;
+    double eps;
+    double *rhs;
+    double *d;
+    double *u;
+    double *wn;
+    double *wp;
+    double *aa;
+    integer nit[3];
+    integer info;
+};
+
+static void rq_info_free (struct rq_info *rq)
+{
+    free(rq->rhs);
+    free(rq->d);
+    free(rq->u);
+    free(rq->wn);
+    free(rq->wp);
+    free(rq->aa);
+}
+
+static int rq_info_alloc (struct rq_info *rq, int n, int p,
+			  double tau)
+{
+    int err = 0;
+
+    rq->rhs = NULL;
+    rq->d =   NULL;
+    rq->u =   NULL;
+    rq->wn =  NULL;
+    rq->wp =  NULL;
+    rq->aa =  NULL;
+
+    rq->rhs = malloc(p * sizeof *rq->rhs);
+    rq->d =   malloc(n * sizeof *rq->d);
+    rq->u =   malloc(n * sizeof *rq->u);
+    rq->wn =  malloc(n * 10 * sizeof *rq->wn);
+    rq->wp =  malloc(p * (p + 4) * sizeof *rq->wp);
+    rq->aa =  malloc(p * p * sizeof *rq->aa);
+
+    if (rq->rhs == NULL || rq->d == NULL ||
+	rq->u == NULL || rq->wn == NULL ||
+	rq->wp == NULL || rq->aa == NULL) {
+	rq_info_free(rq);
+	err = E_ALLOC;
+    } else {
+	rq->n = n;
+	rq->p = p;
+	rq->tau = tau;
+	rq->beta = .99995;
+	rq->eps = 1.0e-7;
+    }
+
+    return err;
+}
+
 static double rq_loglik (MODEL *pmod, double tau)
 {
     double R = 0.0;
@@ -109,15 +169,6 @@ static double rq_loglik (MODEL *pmod, double tau)
 
     return n * (log(tau * (1-tau)) - 1 - log(R/n));
 }
-
-#if 0
-static double rq_AIC (int n, double ll)
-{
-    int k = log(n);
-
-    return AIC(ll, k);
-}
-#endif
 
 /* Bandwidth selection for sparsity estimation, as per
    Hall and Sheather (1988, JRSS(B)); rate = O(n^{-1/3})
@@ -135,26 +186,28 @@ static double rq_bandwidth (double tau, int n, double alpha)
 }
 
 static void rq_transcribe_results (MODEL *pmod, 
-				   const gretl_matrix *y, 
-				   double tau,
-				   const double *b, int p,
-				   const double *u, int n)
+				   const gretl_matrix *y,
+				   struct rq_info *rq)
 {
+    double *b = rq->wp;
+    double *u = rq->wn;
     double SAR = 0.0;
     int i, t;
 
-    for (i=0; i<p; i++) {
+    for (i=0; i<rq->p; i++) {
 	pmod->coeff[i] = b[i];
     }
 
     pmod->ess = 0.0;
 
-    for (i=0, t=pmod->t1; i<n; i++, t++) {
+    for (i=0, t=pmod->t1; i<rq->n; i++, t++) {
 	pmod->uhat[t] = u[i];
 	pmod->yhat[t] = y->val[i] - u[i];
 	SAR += fabs(u[i]);
 	pmod->ess += u[i] * u[i];
     }
+
+    gretl_model_set_double(pmod, "tau", rq->tau);
 
     /* sum of absolute residuals */
     gretl_model_set_double(pmod, "ladsum", SAR);
@@ -167,14 +220,14 @@ static void rq_transcribe_results (MODEL *pmod,
     /* LaPlace errors: equivalent of standard error is sum of
        absolute residuals over nobs */
     pmod->sigma = SAR / pmod->nobs; 
-    pmod->lnL = rq_loglik(pmod, tau);
+    pmod->lnL = rq_loglik(pmod, rq->tau);
+    mle_criteria(pmod, 0);
     pmod->ci = LAD;
 }
 
 static void workspace_init (const gretl_matrix *XT,
-			    double tau, double *rhs,
-			    double *d, double *u,
-			    double *wn)
+			    double tau, 
+			    struct rq_info *ws)
 {
     double xsum;
     int p = XT->rows;
@@ -187,198 +240,193 @@ static void workspace_init (const gretl_matrix *XT,
 	for (t=0; t<n; t++) {
 	    xsum += gretl_matrix_get(XT, i, t);
 	}
-	rhs[i] = tau * xsum;
+	ws->rhs[i] = tau * xsum;
     }  
 
     for (i=0; i<n; i++) {
-	d[i] = u[i] = 1.0;
-	wn[i] = tau;
+	ws->d[i] = ws->u[i] = 1.0;
+	ws->wn[i] = tau;
     }
 
     for (i=n; i<n10; i++) {
-	wn[i] = 0.0;
+	ws->wn[i] = 0.0;
     }
+}
+
+static int rq_VCV (MODEL *pmod, gretl_matrix *y,
+		   gretl_matrix *XT, double tau,
+		   struct rq_info *rq)
+{
+    gretl_matrix *p1 = NULL;
+    gretl_matrix *dyhat = NULL;
+    gretl_matrix *fX = NULL;
+    gretl_matrix *fXX = NULL;
+    gretl_matrix *XTX = NULL;
+    gretl_matrix *V = NULL;
+    double macheps = 2.0e-16;
+    double h, tau_h, x, eps23;
+    int n = rq->n;
+    int p = rq->p;
+    int i, t, err = 0;
+
+    /* bandwidth for variance calculation */
+    h = rq_bandwidth(tau, rq->n, 0.05);
+
+    if (tau + h > 1) {
+	fprintf(stderr, "rq variance: tau + h > 1\n");
+	return E_DATA;
+    } else if (tau - h < 0) {
+	fprintf(stderr, "rq variance: tau - h < 0\n");
+	return E_DATA;
+    }    
+
+    eps23 = pow(macheps, 2/3.0);
+
+    p1 =    gretl_matrix_alloc(p, 1);
+    dyhat = gretl_matrix_alloc(n, 1);
+    fX =    gretl_matrix_alloc(p, n);
+    fXX =   gretl_matrix_alloc(p, p);
+    XTX =   gretl_matrix_alloc(p, p);
+    V =     gretl_matrix_alloc(p, p);
+
+    if (p1 == NULL || dyhat == NULL || fX == NULL ||
+	fXX == NULL || XTX == NULL || V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+	
+    tau_h = tau + h;
+    workspace_init(XT, tau_h, rq);
+    rqfnb_(&n, &p, XT->val, y->val, rq->rhs, rq->d, rq->u, &rq->beta, &rq->eps, 
+	   rq->wn, rq->wp, rq->nit, &rq->info);
+    if (rq->info != 0) {
+	fprintf(stderr, "tau + h: info = %d\n", rq->info);
+	err = E_DATA;
+	goto bailout;
+    }
+
+    /* grab coeffs */
+    for (i=0; i<p; i++) {
+	p1->val[i] = rq->wp[i];
+    }
+
+    tau_h = tau - h;
+    workspace_init(XT, tau_h, rq);
+    rqfnb_(&n, &p, XT->val, y->val, rq->rhs, rq->d, rq->u, &rq->beta, &rq->eps, 
+	   rq->wn, rq->wp, rq->nit, &rq->info);
+    if (rq->info != 0) {
+	fprintf(stderr, "tau - h: info = %d\n", rq->info);
+	err = E_DATA;
+	goto bailout;
+    }
+
+    /* diff coeffs */
+    for (i=0; i<p; i++) {
+	p1->val[i] -= rq->wp[i];
+    }
+
+    gretl_matrix_multiply_mod(XT, GRETL_MOD_TRANSPOSE,
+			      p1, GRETL_MOD_NONE,
+			      dyhat, GRETL_MOD_NONE);
+
+    for (t=0; t<n; t++) {
+	if (dyhat->val[t] <= 0) {
+	    fprintf(stderr, "dyhat[%d] is non-positive\n", t);
+	}
+	x = (2.0 * h) / (dyhat->val[t] - eps23);
+	dyhat->val[t] = (x > 0)? sqrt(x) : 0;
+	dyhat->val[t] = (x > 0)? x : 0; 
+	for (i=0; i<p; i++) {
+	    x = gretl_matrix_get(XT, i, t);
+	    x *= dyhat->val[t];
+	    gretl_matrix_set(fX, i, t, x);
+	}
+    }
+
+    gretl_matrix_multiply_mod(fX, GRETL_MOD_NONE,
+			      XT, GRETL_MOD_TRANSPOSE,
+			      fXX, GRETL_MOD_NONE);
+
+    gretl_invert_symmetric_matrix(fXX);
+
+    gretl_matrix_multiply_mod(XT, GRETL_MOD_NONE,
+			      XT, GRETL_MOD_TRANSPOSE,
+			      XTX, GRETL_MOD_NONE);
+
+    gretl_matrix_qform(fXX, GRETL_MOD_NONE,
+		       XTX, V, GRETL_MOD_NONE);
+
+    gretl_matrix_multiply_by_scalar(V, tau * (1 - tau));
+
+    gretl_model_write_vcv(pmod, V);
+
+ bailout:
+
+    gretl_matrix_free(p1);
+    gretl_matrix_free(dyhat);
+    gretl_matrix_free(fX);
+    gretl_matrix_free(fXX);
+    gretl_matrix_free(XTX);
+    gretl_matrix_free(V);
+
+    return err;
 }
 
 static int rq_run (gretl_matrix *y, gretl_matrix *XT, 
 		   double tau, MODEL *pmod)
 {
+    struct rq_info rq;
     integer n = y->rows;
     integer p = XT->rows;
-    integer info, nit[3] = {0};
-    double *rhs = NULL, *d = NULL, *u = NULL; 
-    double *wn = NULL, *wp = NULL, *aa = NULL;
-    double beta = .99995;
-    double h, eps = 1.0e-7;
     int err = 0;
 
-    /* workspace */
-    rhs = malloc(p * sizeof *rhs);
-    d =   malloc(n * sizeof *d);
-    u =   malloc(n * sizeof *u);
-    wn =  malloc(n * 10 * sizeof *wn);
-    wp =  malloc(p * (p + 4) * sizeof *wp);
-    aa =  malloc(p * p * sizeof *aa);
-
-    if (rhs == NULL || d == NULL || u == NULL || wn == NULL ||
-	wp == NULL || aa == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    err = rq_info_alloc(&rq, n, p, tau);
+    if (err) {
+	return err;
     }
 
-    workspace_init(XT, tau, rhs, d, u, wn);
+    workspace_init(XT, tau, &rq);
 
     /* get coefficients (in wp) and residuals (in wn) */
-    rqfn_(&n, &p, XT->val, y->val, rhs, d, u, &beta, &eps, wn, wp, 
-	  aa, nit, &info);
+    rqfn_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, &rq.beta, &rq.eps, 
+	  rq.wn, rq.wp, rq.aa, rq.nit, &rq.info);
 
-    if (info != 0) {
-	fprintf(stderr, "rqfn gave info = %d\n", info);
+    if (rq.info != 0) {
+	fprintf(stderr, "rqfn gave info = %d\n", rq.info);
 	err = E_DATA;
-	goto bailout;
-    }
-
-    /* save coeffs, residuals, etc. */
-    rq_transcribe_results(pmod, y, tau, wp, p, wn, n);
-
-    /* bandwidth for variance calculation */
-    h = rq_bandwidth(tau, n, 0.05);
-
-    if (tau + h > 1) {
-	fprintf(stderr, "rq variance: tau + h > 1\n");
-	err = 1;
-    } else if (tau - h < 0) {
-	fprintf(stderr, "rq variance: tau - h < 0\n");
-	err = 1;
     }
 
     if (!err) {
-	/* compute covariance matrix via "rank inversion" */
-	gretl_matrix *p1 = NULL;
-	gretl_matrix *dyhat = NULL;
-	gretl_matrix *fX = NULL;
-	gretl_matrix *fXX = NULL;
-	gretl_matrix *XTX = NULL;
-	gretl_matrix *V = NULL;
-	double macheps = 2.0e-16;
-	double tau_h, x, eps23;
-	int i, t;
-
-	eps23 = pow(macheps, 2/3.0);
-
-	p1 =    gretl_matrix_alloc(p, 1);
-	dyhat = gretl_matrix_alloc(n, 1);
-	fX =    gretl_matrix_alloc(p, n);
-	fXX =   gretl_matrix_alloc(p, p);
-	XTX =   gretl_matrix_alloc(p, p);
-	V =     gretl_matrix_alloc(p, p);
-
-	if (p1 == NULL || dyhat == NULL || fX == NULL ||
-	    fXX == NULL || XTX == NULL || V == NULL) {
-	    err = E_ALLOC;
-	    goto vcv_bailout;
-	}
-	
-	tau_h = tau + h;
-	workspace_init(XT, tau_h, rhs, d, u, wn);
-	rqfnb_(&n, &p, XT->val, y->val, rhs, d, u, &beta, &eps, wn, wp, 
-	       nit, &info);
-	if (info != 0) {
-	    fprintf(stderr, "tau + h: info = %d\n", info);
-	    goto vcv_bailout;
-	}
-
-	/* grab coeffs */
-	for (i=0; i<p; i++) {
-	    p1->val[i] = wp[i];
-	}
-
-	tau_h = tau - h;
-	workspace_init(XT, tau_h, rhs, d, u, wn);
-	rqfnb_(&n, &p, XT->val, y->val, rhs, d, u, &beta, &eps, wn, wp, 
-	       nit, &info);
-	if (info != 0) {
-	    fprintf(stderr, "tau - h: info = %d\n", info);
-	    goto vcv_bailout;
-	}
-
-	/* diff coeffs */
-	for (i=0; i<p; i++) {
-	    p1->val[i] -= wp[i];
-	}
-
-	gretl_matrix_multiply_mod(XT, GRETL_MOD_TRANSPOSE,
-				  p1, GRETL_MOD_NONE,
-				  dyhat, GRETL_MOD_NONE);
-
-	for (t=0; t<n; t++) {
-	    if (dyhat->val[t] <= 0) {
-		fprintf(stderr, "dyhat[%d] is non-positive\n", t);
-	    }
-	    x = (2.0 * h) / (dyhat->val[t] - eps23);
-	    dyhat->val[t] = (x > 0)? sqrt(x) : 0;
-	    dyhat->val[t] = (x > 0)? x : 0; 
-	    for (i=0; i<p; i++) {
-		x = gretl_matrix_get(XT, i, t);
-		x *= dyhat->val[t];
-		gretl_matrix_set(fX, i, t, x);
-	    }
-	}
-
-	gretl_matrix_multiply_mod(fX, GRETL_MOD_NONE,
-				  XT, GRETL_MOD_TRANSPOSE,
-				  fXX, GRETL_MOD_NONE);
-
-	gretl_invert_symmetric_matrix(fXX);
-
-	gretl_matrix_multiply_mod(XT, GRETL_MOD_NONE,
-				  XT, GRETL_MOD_TRANSPOSE,
-				  XTX, GRETL_MOD_NONE);
-
-	gretl_matrix_qform(fXX, GRETL_MOD_NONE,
-			   XTX, V, GRETL_MOD_NONE);
-
-	gretl_matrix_multiply_by_scalar(V, tau * (1 - tau));
-
-#if 0
-	gretl_matrix_print(V, "VCV");
-#endif
-
-	gretl_model_write_vcv(pmod, V);
-
-    vcv_bailout:
-
-	gretl_matrix_free(p1);
-	gretl_matrix_free(dyhat);
-	gretl_matrix_free(fX);
-	gretl_matrix_free(fXX);
-	gretl_matrix_free(XTX);
-	gretl_matrix_free(V);
+	/* save coeffs, residuals, etc., before computing VCV */
+	rq_transcribe_results(pmod, y, &rq);
     }
 
- bailout:
+    if (!err) {
+	/* compute and add covariance matrix via "rank inversion" */
+	err = rq_VCV(pmod, y, XT, tau, &rq);
+    }
 
-    free(rhs);
-    free(d);
-    free(u);
-    free(wn);
-    free(wp);
-    free(aa);
+    rq_info_free(&rq);
 
     return err;
 }
+
+/* Write y and X from pmod into gretl matrices, respecting the sample
+   range.  Note that for the purposes of the underlying rq functions
+   we want the X matrix in transpose form (XT).
+*/
 
 static int rq_make_matrices (MODEL *pmod,
 			     double **Z, DATAINFO *pdinfo,
 			     gretl_matrix **py,
 			     gretl_matrix **pXT)
 {
-    int n = pdinfo->n;
-    int p = pmod->list[0] - 1;
+    int n = pmod->nobs;
+    int p = pmod->ncoeff;
     int yno = pmod->list[1];
     gretl_matrix *XT = NULL;
     gretl_matrix *y = NULL;
-    int i, t, v;
+    int i, s, t, v;
     int err = 0;
 
     XT = gretl_matrix_alloc(p, n);
@@ -390,14 +438,16 @@ static int rq_make_matrices (MODEL *pmod,
 	return E_ALLOC;
     }
 
-    for (t=0; t<n; t++) {
-	gretl_vector_set(y, t, Z[yno][t]);
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	gretl_vector_set(y, s++, Z[yno][t]);
     }
 
     for (i=0; i<p; i++) {
 	v = pmod->list[i+2];
-	for (t=0; t<n; t++) {
-	    gretl_matrix_set(XT, i, t, Z[v][t]);
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    gretl_matrix_set(XT, i, s++, Z[v][t]);
 	}
     }
 
@@ -425,15 +475,16 @@ int rq_driver (const char *parm, MODEL *pmod,
 	err = E_DATA;
     }
 
-    fprintf(stderr, "tau = %g\n", tau);
-    printlist(pmod->list, "list in quantreg_driver");
-
     if (!err) {
 	err = rq_make_matrices(pmod, Z, pdinfo, &y, &XT);
     }
 
     if (!err) {
 	err = rq_run(y, XT, tau, pmod);
+    }
+
+    if (!err) {
+	gretl_model_add_y_median(pmod, Z[pmod->list[1]]);
     }
 
     gretl_matrix_free(y);

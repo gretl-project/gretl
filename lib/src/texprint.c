@@ -861,7 +861,7 @@ void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
     pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("HQC"), var->HQC);
 }
 
-static PRN *make_tex_prn (int ID, const char *fname,
+static PRN *make_tex_prn (int ID, char *fname,
 			  int eqn, int doc, int *err)
 {
     char texfile[FILENAME_MAX];
@@ -871,8 +871,9 @@ static PRN *make_tex_prn (int ID, const char *fname,
     if (*fname == '\0') {
 	sprintf(texfile, "%s%s_%d.tex", gretl_work_dir(),
 		(eqn)? "equation" : "model", ID);
+	strcpy(fname, texfile);
     } else {
-	fname = gretl_maybe_switch_dir(fname);
+	gretl_maybe_switch_dir(fname);
 	strcpy(texfile, fname);       
     }
 
@@ -886,6 +887,28 @@ static PRN *make_tex_prn (int ID, const char *fname,
 	    fmt |= GRETL_FORMAT_DOC;
 	}
 	gretl_print_set_format(prn, fmt);
+    }
+
+    return prn;
+}
+
+static PRN *make_rtf_prn (int ID, char *fname, int *err)
+{
+    char rtffile[FILENAME_MAX];
+    PRN *prn;
+
+    if (*fname == '\0') {
+	sprintf(rtffile, "%smodel_%d.rtf", gretl_work_dir(), ID);
+	strcpy(fname, rtffile);
+    } else {
+	gretl_maybe_switch_dir(fname);
+	strcpy(rtffile, fname);       
+    }
+
+    prn = gretl_print_new_with_filename(rtffile, err);
+
+    if (prn != NULL) {
+	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
     }
 
     return prn;
@@ -1326,7 +1349,7 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
  * texprint:
  * @pmod: pointer to model.
  * @pdinfo: information regarding the data set.
- * @texfile: name of file to save.
+ * @fname: name of file to save.
  * @opt: if opt & %OPT_O, complete doc, else fragment;
  * if opt & %OPT_E print as equation, otherwise use tabular
  * format; if opt & %OPT_T show t-ratios rather than standard
@@ -1339,7 +1362,7 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *texfile, 
+int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
 	      gretlopt opt)
 {
     PRN *prn;
@@ -1347,10 +1370,26 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *texfile,
     int doc = (opt & OPT_O);
     int err = 0;
 
-    prn = make_tex_prn(pmod->ID, texfile, eqn, doc, &err);
+    prn = make_tex_prn(pmod->ID, fname, eqn, doc, &err);
 
     if (!err) {
 	err = tex_print_model(pmod, pdinfo, opt, prn);
+	gretl_print_destroy(prn);
+    }
+
+    return err;
+}
+
+int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
+	      gretlopt opt)
+{
+    PRN *prn;
+    int err = 0;
+
+    prn = make_rtf_prn(pmod->ID, fname, &err);
+
+    if (!err) {
+	err = printmodel(pmod, pdinfo, opt, prn);
 	gretl_print_destroy(prn);
     }
 

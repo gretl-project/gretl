@@ -4488,14 +4488,19 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if ((models[0])->errcode == E_NAN) {
 	    pprintf(prn, _("Couldn't format model\n"));
 	} else {
-	    char texfile[MAXLEN];
+	    char fname[FILENAME_MAX];
 
-	    strcpy(texfile, cmd->param);
-	    err = texprint(models[0], pdinfo, texfile, 
-			   (cmd->ci == EQNPRINT)? (cmd->opt | OPT_E) :
-			   cmd->opt);
+	    strcpy(fname, cmd->param);
+
+	    if (cmd->opt & OPT_R) {
+		err = rtfprint(models[0], pdinfo, fname, cmd->opt);
+	    } else {
+		err = texprint(models[0], pdinfo, fname, 
+			       (cmd->ci == EQNPRINT)? (cmd->opt | OPT_E) :
+			       cmd->opt);
+	    }
 	    if (!err) {
-		pprintf(prn, _("Model printed to %s\n"), texfile);
+		pprintf(prn, _("Model printed to %s\n"), fname);
 	    }
 	}
 	break;

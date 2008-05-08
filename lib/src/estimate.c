@@ -3693,11 +3693,13 @@ MODEL quantreg (const char *parm, const int *list,
     void *handle;
     int (*rq_driver) (const char *, MODEL *, double **, DATAINFO *);
 
-    /* run an initial OLS to "set the model up" and check for errors.
-       the driver function will overwrite the coefficients etc.
+    /* Run an initial OLS to "set the model up" and check for errors.
+       the driver function will overwrite the coefficients, etc.
+       For now we make life easier by rejecting within-sample missing
+       values (OPT_M).
     */
 
-    qmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    qmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
 
     if (qmod.errcode) {
         return qmod;

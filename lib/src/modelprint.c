@@ -87,8 +87,7 @@ static void print_y_median (const MODEL *pmod, PRN *prn)
 	tex_dcolumn_double(m, s);
 	pprintf(prn, "%s & %s \\\\\n", I_("Median of dependent variable"), s);
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Median of dependent variable"), 
-		m);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Median of dependent variable"), m);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Median of dependent variable"), 
 		prn_delim(prn), m);
@@ -584,7 +583,6 @@ static void print_GMM_test_data (const MODEL *pmod, PRN *prn)
 static void ladstats (const MODEL *pmod, PRN *prn)
 {
     double ladsum = gretl_model_get_double(pmod, "ladsum");
-    int utf = plain_format(prn);
 
     if (tex_format(prn)) {  
 	char x1str[32], x2str[32];
@@ -595,6 +593,13 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		I_("Sum of absolute residuals"), x1str); 
 	pprintf(prn, "%s & %s \\\\\n",
 		I_("Sum of squared residuals"), x2str); 
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %.*g\n", 
+		I_("Sum of absolute residuals"),
+		GRETL_DIGITS, ladsum);
+	pprintf(prn, RTFTAB "%s = %.*g\n", 
+		I_("Sum of squared residuals"),
+		GRETL_DIGITS, pmod->ess);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of absolute residuals"),
 		prn_delim(prn), ladsum);
@@ -602,12 +607,10 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		prn_delim(prn), pmod->ess);
     } else {
 	pprintf(prn, "  %s = %.*g\n", 
-		(utf)? _("Sum of absolute residuals") :
-		I_("Sum of absolute residuals"),
+		_("Sum of absolute residuals"),
 		GRETL_DIGITS, ladsum);
 	pprintf(prn, "  %s = %.*g\n", 
-		(utf)? _("Sum of squared residuals") :
-		I_("Sum of squared residuals"),
+		_("Sum of squared residuals"),
 		GRETL_DIGITS, pmod->ess);
     }
 }
@@ -1016,7 +1019,13 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Two-step Heckit");
 	} else {
 	    return N_("ML Heckit");
-	}	
+	}
+    } else if (pmod->ci == LAD) {
+	if (gretl_model_get_double(pmod, "tau") != NADBL) {
+	    return N_("Quantile");
+	} else {
+	    return N_("LAD");
+	}
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }
@@ -1851,6 +1860,19 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
+    /* tau for quantile regression */
+    else if (pmod->ci == LAD) {
+	double tau = gretl_model_get_double(pmod, "tau");
+
+	if (!na(tau)) {
+	    if (tex) {
+		pprintf(prn, "$\\tau = %g\n", tau);
+	    } else {
+		pprintf(prn, "tau = %g\n", tau);
+	    }
+	}
+    }
+
     /* TSLS: message about redundant instruments */
     if (plain_format(prn) && pmod->ci == TSLS &&
 	gretl_model_get_data(pmod, "inst_droplist") != NULL) {
@@ -2361,6 +2383,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	depvarstats(pmod, prn);
 	ladstats(pmod, prn);
 	print_ll(pmod, prn);
+	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	maybe_print_lad_warning(pmod, prn);
 	goto close_format;

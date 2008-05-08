@@ -42,7 +42,10 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 
 void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn);
 
-int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *texfile, 
+int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
+	      gretlopt opt);
+
+int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
 	      gretlopt opt);
 
 char *tex_escape (char *targ, const char *src);

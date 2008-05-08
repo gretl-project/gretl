@@ -358,6 +358,9 @@ adjust_sample_for_missing (int *sample, int n, const MODEL *pmod)
 }
 
 #define ITERS 500
+#define RESAMPLE_RESIDUALS 0
+
+#if RESAMPLE_RESIDUALS
 
 /* populate dependent var using resampled residuals */
 
@@ -393,6 +396,31 @@ make_data_arrays (MODEL *pmod, double **Z,
 	    pmod->yhat[t++] + pmod->uhat[sample[i]];
     }
 }
+
+#else
+
+/* populate both y and X using resampled data rows */
+
+static void
+make_data_arrays (MODEL *pmod, double **Z,
+		  double *a, double *b,
+		  const int *sample,
+		  int nrows, int k, int m)
+{
+    int i, j, v, t;
+
+    for (i=0; i<m; i++) {
+	t = sample[i];
+	for (j=0; j<k; j++) {
+	    v = pmod->list[j+2];
+	    a[i + j * nrows] = Z[v][t];
+	}
+	v = pmod->list[1];
+	b[i] = a[i + k * nrows] = Z[v][t];
+    }
+}
+
+#endif
 
 /* obtain bootstrap estimates of LAD covariance matrix */
 
@@ -526,43 +554,7 @@ static int bootstrap_vcv (MODEL *pmod, double **Z,
     return 0;
 }
 
-static int record_y_median (MODEL *pmod, const double *y)
-{
-    int T = pmod->t2 - pmod->t1 + 1;
-    double *sy, m;
-    int t, n, n2p;
-
-    sy = malloc(T * sizeof *sy);
-
-    if (sy == NULL) {
-	return E_ALLOC;
-    }
-
-    n = 0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!model_missing(pmod, t)) {
-	    sy[n++] = y[t];
-	}
-    }
-
-    if (n == 0) {
-	free(sy);
-	return E_DATA;
-    }
-
-    qsort(sy, n, sizeof *sy, gretl_compare_doubles); 
-
-    n2p = (T = n / 2) + 1;
-    m = (n % 2)? sy[n2p - 1] : 0.5 * (sy[T - 1] + sy[n2p - 1]);
-
-    gretl_model_set_double(pmod, "ymedian", m);
-
-    free(sy);
-
-    return 0;
-}
-
-static double lad_loglik (MODEL *pmod)
+static void lad_loglik (MODEL *pmod)
 {
     double tau = 0.5, R = 0.0;
     int n = pmod->nobs;
@@ -572,7 +564,8 @@ static double lad_loglik (MODEL *pmod)
 	R += pmod->uhat[t] * (tau - (pmod->uhat[t] < 0));
     }
 
-    return n * (log(tau * (1-tau)) - 1 - log(R/n));
+    pmod->lnL = n * (log(tau * (1-tau)) - 1 - log(R/n));
+    mle_criteria(pmod, 0);
 }
 
 int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
@@ -662,7 +655,7 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 	gretl_model_set_double(pmod, "ladsum", SAR);
 
 	/* median of dependent variable */
-	record_y_median(pmod, Z[yno]);
+	gretl_model_add_y_median(pmod, Z[yno]);
 
 	/* set ess-based stats to missing value */
 	pmod->rsq = NADBL;

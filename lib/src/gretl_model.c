@@ -3820,6 +3820,7 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "poisson") ||
 	!strcmp(s, "pooled") ||
 	!strcmp(s, "probit") ||
+	!strcmp(s, "quantreg") ||
 	!strcmp(s, "tobit") ||
 	!strcmp(s, "tsls") ||
 	!strcmp(s, "wls")) {
@@ -4329,6 +4330,42 @@ void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames)
 {
     pmod->nparams = pmod->ncoeff;
     pmod->params = vnames;
+}
+
+int gretl_model_add_y_median (MODEL *pmod, const double *y)
+{
+    int T = pmod->t2 - pmod->t1 + 1;
+    double *sy, m;
+    int t, n, n2p;
+
+    sy = malloc(T * sizeof *sy);
+
+    if (sy == NULL) {
+	return E_ALLOC;
+    }
+
+    n = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!model_missing(pmod, t)) {
+	    sy[n++] = y[t];
+	}
+    }
+
+    if (n == 0) {
+	free(sy);
+	return E_DATA;
+    }
+
+    qsort(sy, n, sizeof *sy, gretl_compare_doubles); 
+
+    n2p = (T = n / 2) + 1;
+    m = (n % 2)? sy[n2p - 1] : 0.5 * (sy[T - 1] + sy[n2p - 1]);
+
+    gretl_model_set_double(pmod, "ymedian", m);
+
+    free(sy);
+
+    return 0;
 }
 
 /* try to tell if an OLS model with two independent variables is

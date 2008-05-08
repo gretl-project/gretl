@@ -6519,6 +6519,34 @@
 
   </command>
 
+  <command name="quantreg" section="Estimation" 
+    label="Quantile regression">
+
+    <usage>
+      <arguments>
+	<argument>tau</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	EXPERIMENTAL; the syntax is provisional.  For now, <repl>tau</repl>, the
+	desired quantile, should be a single number in the range 0.01 to
+	0.99.  Choosing a <repl>tau</repl> of 0.5 should produce
+	essentially the same results as the <cmd>lad</cmd> command.
+      </para>
+    </description>
+
+  </command>
+
   <command name="quit" section="Utilities" 
     label="Exit the program" context="cli">
 
@@ -8379,6 +8407,10 @@
       </arguments>
       <options>
         <option>
+	  <flag>--rtf</flag>
+	  <effect>Produce RTF instead of &latex;</effect>
+        </option>
+        <option>
 	  <flag>--complete</flag>
 	  <effect>Create a complete document</effect>
         </option>
@@ -8391,13 +8423,17 @@
 
     <description>
       <para>
-	Must follow the estimation of a model.  Prints the estimated
-	model in the form of a &latex; table.  If a filename is
-	specified using the <lit>-f</lit> flag output goes to that
-	file, otherwise it goes to a file with a name of the form
-	<filename>model_N.tex</filename>, where <lit>N</lit> is the
-	number of models estimated to date in the current session. See
-	also <cmdref targ="eqnprint"/>.
+	Must follow the estimation of a model.  Prints the estimated model in
+	tabular form &mdash; by default as &latex;, but as RTF if the
+	<lit>--rtf</lit> flag is given.  If a filename is specified using the
+	<lit>-f</lit> flag output goes to that file, otherwise it goes to a
+	file with a name of the form <filename>model_N.tex</filename> (or
+	<filename>model_N.rtf</filename>), where <lit>N</lit> is the number of
+	models estimated to date in the current session.
+      </para>
+      <para>
+	The further options discussed below are available only when printing
+	the model as &latex;.
       </para>
       <para>
 	If the <lit>--complete</lit> flag is given the &latex; file is
