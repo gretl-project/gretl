@@ -32,7 +32,7 @@ extern void rqfnb_ (integer *n, integer *p, double *a, double *y,
 		    double *eps, double *wn, double *wp, 
 		    integer *nit, integer *info);
 
-#if 0
+#if 0 /* OMG! */
 extern void rqbr_ (integer *m, integer *nn, integer *m5, integer *n3,
 		   integer *n4, double *a, double *b, double *t, double *toler,
 		   integer *ift, double *x, double *e, integer *s,
@@ -136,6 +136,7 @@ static void workspace_init (const gretl_matrix *XT,
     double xsum;
     int p = XT->rows;
     int n = XT->cols;
+    int n10 = n * 10;
     int i, t;
 
     for (i=0; i<p; i++) {
@@ -151,7 +152,7 @@ static void workspace_init (const gretl_matrix *XT,
 	wn[i] = tau;
     }
 
-    for (i=n; i<10*n; i++) {
+    for (i=n; i<n10; i++) {
 	wn[i] = 0.0;
     }
 }
