@@ -17,7 +17,10 @@
  * 
  */
 
-/* FIXME: special licensing needed? */
+/* Please see the additional license, rq/uiuc-ncsa.txt: this license
+   governs the ratfor ("rational fortran") code, authored by Roger
+   Koenker, which is called by this module.
+*/
 
 #include "libgretl.h"
 #include "gretl_f2c.h"
