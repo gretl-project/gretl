@@ -36,25 +36,65 @@ extern void rqfnb_ (integer *n, integer *p, double *a, double *y,
 		    integer *nit, integer *info);
 
 #if 0 /* OMG! */
-extern void rqbr_ (integer *m, integer *nn, integer *m5, integer *n3,
-		   integer *n4, double *a, double *b, double *t, double *toler,
-		   integer *ift, double *x, double *e, integer *s,
-		   double *wa, double *wb, integer *nsol, integer *ndsol,
-		   double *sol, double *dsol, integer *lsol, integer *h,
-		   double *qn, double *cutoff, double *ci, double *tnmat,
-		   double *big, logical lci1);
+extern void rqbr_ (integer *n, 
+		   integer *p, 
+		   integer *n5, 
+		   integer *p3,
+		   integer *p4, 
+		   double *x, 
+		   double *y, 
+		   double *tau, 
+		   double *tol,
+		   integer *ift, 
+		   double *coef, 
+		   double *resid, 
+		   integer *s,
+		   double *wa, 
+		   double *wb, 
+		   integer *nsol, 
+		   integer *ndsol,
+		   double *sol, 
+		   double *dsol, 
+		   integer *lsol, 
+		   integer *h,
+		   double *qn, 
+		   double *cutoff, 
+		   double *ci, 
+		   double *tnmat,
+		   double *big, 
+		   logical lci1);
 #endif
 
 /* 
-    z <- .Fortran("rqbr", as.integer(n), as.integer(p), as.integer(n +
-        5), as.integer(p + 3), as.integer(p + 4), as.double(x),
-        as.double(y), as.double(tau), as.double(tol), flag = as.integer(1),
-        coef = double(p), resid = double(n), integer(n), double((n +
-            5) * (p + 4)), double(n), as.integer(nsol), as.integer(ndsol),
-        sol = double((p + 3) * nsol), dsol = double(n * ndsol),
-        lsol = as.integer(0), h = integer(p * nsol), qn = as.double(qn),
-        cutoff = as.double(cutoff), ci = double(4 * p), tnmat = double(4 *
-            p), as.double(big), as.logical(lci1), PACKAGE = "quantreg")
+    z <- .Fortran("rqbr", 
+    as.integer(n), 
+    as.integer(p), 
+    as.integer(n + 5), 
+    as.integer(p + 3), 
+    as.integer(p + 4), 
+    as.double(x),
+    as.double(y), 
+    as.double(tau), 
+    as.double(tol), 
+    flag = as.integer(1),
+    coef = double(p), 
+    resid = double(n), 
+    integer(n), 
+    double((n + 5) * (p + 4)), 
+    double(n), 
+    as.integer(nsol), 
+    as.integer(ndsol),
+    sol = double((p + 3) * nsol), 
+    dsol = double(n * ndsol),
+    lsol = as.integer(0), 
+    h = integer(p * nsol), 
+    qn = as.double(qn),
+    cutoff = as.double(cutoff), 
+    ci = double(4 * p), 
+    tnmat = double(4 * p), 
+    as.double(big), 
+    as.logical(lci1), 
+    PACKAGE = "quantreg")
 */
 
 static double rq_loglik (MODEL *pmod, double tau)
