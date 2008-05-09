@@ -286,7 +286,7 @@ mailer.la: mailer.lo codes.lo encode.lo md5c.lo
 odbc_import.la: odbc_import.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(ODBC_LIBS)
 
-quantreg.la: quantreg.lo rqfn.lo rqfnb.lo
+quantreg.la: quantreg.lo rqfn.lo rqfnb.lo rqbr.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 $(GRETLLIB):

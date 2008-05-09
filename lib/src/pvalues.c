@@ -448,7 +448,7 @@ static double student_critval (double df, double a)
     return x;
 }
 
-static double student_cdf_inverse (double df, double a)
+double student_cdf_inverse (double df, double a)
 {
     double x;
 

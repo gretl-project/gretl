@@ -3679,19 +3679,23 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  * @list: model specification: dependent var and regressors.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
+ * @opt:
+ * @prn:
  *
- * Estimate the model given in @list using the method of Least
- * Absolute Deviation (LAD).
+ * Estimate the model given in @list using the method of 
+ * quantile regression.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
 MODEL quantreg (const char *parm, const int *list, 
-		double ***pZ, DATAINFO *pdinfo)
+		double ***pZ, DATAINFO *pdinfo,
+		gretlopt opt, PRN *prn)
 {
     MODEL qmod;
     void *handle;
-    int (*rq_driver) (const char *, MODEL *, double **, DATAINFO *);
+    int (*rq_driver) (const char *, MODEL *, double **, DATAINFO *,
+		      gretlopt, PRN *);
 
     /* Run an initial OLS to "set the model up" and check for errors.
        the driver function will overwrite the coefficients, etc.
@@ -3713,7 +3717,7 @@ MODEL quantreg (const char *parm, const int *list,
 	return qmod;
     }
 
-    (*rq_driver) (parm, &qmod, *pZ, pdinfo);
+    (*rq_driver) (parm, &qmod, *pZ, pdinfo, opt, prn);
     close_plugin(handle);
 
     if (qmod.errcode == 0) {

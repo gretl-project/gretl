@@ -4354,7 +4354,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == LAD) {
 	    *models[0] = lad(cmd->list, pZ, pdinfo);
 	} else if (cmd->ci == QUANTREG) {
-	    *models[0] = quantreg(cmd->param, cmd->list, pZ, pdinfo);
+	    *models[0] = quantreg(cmd->param, cmd->list, pZ, pdinfo,
+				  cmd->opt, prn);
 	} else if (cmd->ci == GARCH) {
 	    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == PANEL) {

@@ -1,5 +1,4 @@
-/* rqfnb.f -- translated by f2c (version 20050501).
-*/
+/* rqfnb.f -- translated by f2c (version 20050501) */
 
 #include "gretl_f2c.h"
 

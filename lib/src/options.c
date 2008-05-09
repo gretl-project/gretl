@@ -241,6 +241,7 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_P, "p-values" },
     { PROBIT,   OPT_R, "robust" },
     { PROBIT,   OPT_V, "verbose" },
+    { QUANTREG, OPT_I, "intervals" },
     { QUIT,     OPT_X, "exit" },
     { RESTRICT, OPT_B, "bootstrap" },
     { RESTRICT, OPT_F, "full" },

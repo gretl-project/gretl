@@ -1,5 +1,4 @@
-/* rqfn.f -- translated by Ratfor, version 1.0, then f2c (version 20050501).
-*/
+/* rqfn.f -- translated by Ratfor, version 1.0, then f2c (version 20050501) */
 
 #include "gretl_f2c.h"
 
