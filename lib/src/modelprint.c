@@ -64,7 +64,8 @@ void model_coeff_init (model_coeff *mc)
     mc->se = NADBL;
     mc->tval = NADBL;
     mc->pval = NADBL;
-    mc->slope = NADBL;  
+    mc->slope = NADBL; 
+    mc->lo = mc->hi = NADBL;
     mc->show_pval = 1;
     mc->df_pval = 0;
     mc->name[0] = '\0';
@@ -1949,6 +1950,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 {
     int slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
     int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
+    int intervals = gretl_model_get_data(pmod, "rq_confints") != NULL;
 
     if (plain_format(prn)) {
 	if (pmod->ci == MPOLS) {
@@ -1960,6 +1962,9 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 			 "      T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
 		    "                 %s\n", _("(at mean)"));
+	} else if (intervals) {
+	    pputs(prn, _("      VARIABLE       COEFFICIENT        LOWER   "
+			 "         UPPER\n\n"));
 	} else {
 	    print_coeff_heading(use_param, prn);
 	}
@@ -2749,6 +2754,14 @@ static void plain_print_coeff (const model_coeff *mc, PRN *prn)
 	gretl_print_value(mc->b, prn);
     }
 
+    if (!na(mc->lo) && !na(mc->hi)) {
+	/* printing an interval instead of the usual */
+	gretl_print_value(mc->lo, prn);
+	gretl_print_value(mc->hi, prn);
+	pputc(prn, '\n');
+	return;
+    } 
+
     /* get out if std error is undefined */
     if (na(mc->se)) {
 	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
@@ -2964,6 +2977,7 @@ static void print_coeff_separator (const char *s, PRN *prn)
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
+    gretl_matrix *intervals = NULL;
     const char *sepstr = NULL;
     int seppos = -1;
     model_coeff mc;
@@ -2979,6 +2993,10 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	seppos = pmod->list[0] - 4;
     }
 
+    if (pmod->ci == LAD) {
+	intervals = gretl_model_get_data(pmod, "rq_confints");
+    }
+
     for (i=0; i<nc; i++) {
 
 	err = prepare_model_coeff(pmod, pdinfo, i, &mc, prn);
@@ -2991,7 +3009,12 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	if (plain_format(prn) && pmod->ci == MPOLS) {
 	    print_mp_coeff(&mc, prn);
 	    continue;
-	}	    
+	}
+
+	if (intervals != NULL) {
+	    mc.lo = gretl_matrix_get(intervals, i, 0);
+	    mc.hi = gretl_matrix_get(intervals, i, 1);
+	}
 
 	print_coeff(&mc, prn);
     }

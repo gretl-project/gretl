@@ -177,16 +177,22 @@ replicate_data_item (const model_data_item *orig)
     }
 
     if (item != NULL) {
-	item->ptr = malloc(orig->size);
+	if (orig->type == GRETL_TYPE_MATRIX) {
+	    item->ptr = gretl_matrix_copy(orig->ptr);
+	} else {
+	    item->ptr = malloc(orig->size);
+	}
 	if (item->ptr == NULL) {
 	    free(item->key);
 	    free(item);
 	    item = NULL;
 	}
-    }
-    
+    }	
+
     if (item != NULL) {
-	memcpy(item->ptr, orig->ptr, orig->size);
+	if (orig->type != GRETL_TYPE_MATRIX) {
+	    memcpy(item->ptr, orig->ptr, orig->size);
+	}
 	item->type = orig->type;
 	item->size = orig->size;
 	item->destructor = orig->destructor;
@@ -298,6 +304,31 @@ int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr,
 {
     return gretl_model_set_data_with_destructor(pmod, key, ptr, type, 
 						size, NULL);
+}
+
+static void matrix_free_callback (void *p)
+{
+    gretl_matrix_free((gretl_matrix *) p);
+}
+
+/**
+ * gretl_model_set_matrix_as_data:
+ * @pmod: pointer to #MODEL.
+ * @key: key string, used in retrieval.
+ * @m: matrix to attach.
+ *
+ * Attaches @m to @pmod as data, recoverable via the key @key 
+ * using gretl_model_get_data().
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key, 
+				    gretl_matrix *m)
+{
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) m, 
+						GRETL_TYPE_MATRIX, 0, 
+						matrix_free_callback);
 }
 
 /**

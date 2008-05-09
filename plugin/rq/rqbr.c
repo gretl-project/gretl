@@ -6,6 +6,13 @@
 
 static doublereal c_b15 = 1.;
 
+static double d_sign (doublereal *a, doublereal *b)
+{
+    double x;
+    x = (*a >= 0 ? *a : - *a);
+    return ( *b >= 0 ? x : -x);
+}
+
 /* Output from Public domain Ratfor, version 1.0 */
 /* Subroutine */ int rqbr_(integer *m, integer *nn, integer *m5, integer *n3, 
 	integer *n4, doublereal *a, doublereal *b, doublereal *t, doublereal *

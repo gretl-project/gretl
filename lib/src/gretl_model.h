@@ -158,6 +158,9 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, 
 			  GretlType type, size_t size);
 
+int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key, 
+				    gretl_matrix *m);
+
 int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list);
 
 int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str);
