@@ -3151,6 +3151,10 @@
 	  <effect>usa linee verticali</effect>
         </option>
         <option>
+	  <flag>--time-series</flag>
+	  <effect>mostra rispetto al tempo</effect>
+        </option>
+        <option>
 	  <flag>--suppress-fit</flag>
 	  <effect>non mostra la linea stimata</effect>
         </option>
@@ -3177,21 +3181,25 @@
       </options>
       <examples>
         <example>gnuplot y1 y2 x</example>
-        <example>gnuplot x time --with-lines</example>
+        <example>gnuplot x --time-series --with-lines</example>
 	<example>gnuplot wages educ gender --dummy</example>
       </examples>
     </usage>
 
     <description>
-      <para>Senza l'opzione <lit>--dummy</lit> mostra un grafico delle
-	<repl>variabili-y</repl> rispetto alla <repl>variabile-x</repl>.
-        Con <lit>--dummy</lit>, la <repl>variabile-y</repl> è rappresentata
-        rispetto alla <repl>variabile-x</repl> con i punti colorati diversamente
-        a seconda del valore della <repl>variabile-dummy</repl> (1 o 0).</para>
+       <para>
+ 	Le variabili nella lista <repl>variabili-y</repl> vengono mostrate
+        rispetto alle <repl>variabili-x</repl>. Per avere un grafico storico
+        è possibile usare <lit>time</lit> come <repl>variabile-x</repl>, oppure
+        usare l'opzione <lit>--time-series</lit>.
+       </para>
 
       <para>
-	La variabile <lit>time</lit> si comporta in modo speciale: se non esiste
-        già, verrà generata automaticamente.
+ 	Usando l'opzione <lit>--dummy</lit>, occorre fornire esattamente tre variabili:
+        una variabile <math>y</math>, una variabile <math>x</math>, e una
+        variabile dummy <repl>dumvar</repl>. L'effetto è quello di mostrare
+ 	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo diverso i
+        vari punti, a seconda che <repl>dumvar</repl> valga 1 o 0.
       </para>
 
       <para>
@@ -5612,6 +5620,9 @@
 	  <flag>--www</flag>
 	  <effect>usa un database sul server di gretl</effect>
 	</option>
+	<option>
+	  <note>Si veda oltre per le opzioni specifiche per i fogli elettronici</note>
+	</option>
       </options>
       <examples>
         <example>open data4-1</example>
@@ -5631,6 +5642,25 @@
         file e di alcune sue caratteristiche, gretl cerca di indovinare il
         formato dei dati (standard, testo semplice, CSV, MS Excel, Stata, ecc).
       </para>
+      <para>
+	Quando si apre un file di un foglio elettronico (Gnumeric, Open Document o XLS),
+        è possibile fornire fino a tre parametri aggiuntivi, oltre al nome del
+        file. Per prima cosa, è possibile selezionare un particolare foglio di
+        lavoro all'interno del file, indicando il suo numero con la
+        sintassi <lit>--sheet=2</lit>, oppure indicando il suo nome tra
+        virgolette doppie, usando la sintassi <lit>--sheet="MacroData"</lit>.
+        L'impostazione predefinita consiste nel leggere il primo foglio di
+        lavoro del file. È anche possibile specificare la riga/colonna da cui
+        iniziare a leggere, usando la sintassi
+      </para>
+      <code>
+	--coloffset=3 --rowoffset=2
+      </code>
+      <para>
+	che indica a gretl di ignorare le prime 3 colonne e le prime 2 righe.
+        L'impostazione predefinita consiste nel leggere tutte le celle del
+        foglio, a partire dalla prima in alto a sinistra.
+      </para>
 
       <para>
 	Questo comando può essere usato anche per aprire un database (gretl,
@@ -5646,6 +5676,35 @@
       <menu-path>/File/Apri dati</menu-path>
       <other-access>Trascinare un file di dati in gretl (MS Windows o Gnome)</other-access>
     </gui-access>
+
+  </command>
+
+  <command name="orthdev" section="Transformations" 
+    label="Deviazioni ortogonali" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>lista-variabili</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Utilizzabile solo con dati panel. Per ognuna delle variabili nella
+        <repl>lista-variabili</repl> viene generata una serie di deviazioni
+        ortogonali in avanti, salvata col nome della variabile prefissata da
+	<lit>o_</lit>. Quindi, <cmd>orthdev x y</cmd> crea le nuove variabili
+        <lit>o_x</lit> e <lit>o_y</lit>.
+      </para>
+      <para>
+	I valori sono salvati con un periodo di ritardo rispetto alla loro
+        collocazione temporale (ossia, <lit>o_x</lit> all'osservazione <math>t</math>
+        contiene la deviazione che, in senso stretto, corrisponde al periodo
+        <math>t</math> &minus; 1). Questo comportamento è coerente con quello
+        delle differenze prime: viene persa la prima osservazione di ogni serie,
+        non l'ultima.
+      </para>
+    </description>
 
   </command>
 
@@ -6407,6 +6466,34 @@
 
   </command>
 
+  <command name="quantreg" section="Estimation" 
+    label="Regressione quantile">
+
+    <usage>
+      <arguments>
+	<argument>tau</argument>
+        <argument>variabile-dipendente</argument>
+        <argument>variabili-indipendenti</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	SPERIMENTALE; la sintassi non è definitiva. Per ora, <repl>tau</repl>,
+        il quantile desiderato, deve essere un numero nell'intervallo da 0.01 a
+	0.99. Scegliendo un <repl>tau</repl> di 0.5 si dovrebbero ottenere gli
+        stessi risultati del comando <cmd>lad</cmd>.
+      </para>
+    </description>
+
+  </command>
+
   <command name="quit" section="Utilities" label="Esce dal programma" context="cli">
 
     <description>
@@ -7082,6 +7169,15 @@
             generata una nuova variabile o viene modificato l'intervallo del
             campione.
          </para>
+	</li>
+ 	<li>
+	  <para><lit>debug</lit>: <lit>1</lit>, <lit>2</lit> o <lit>0</lit>
+	    (valore predefinito). Da usare per le funzioni definite dall'utente.
+	    Impostare <lit>debug</lit> a 1 equivale a impostare
+	    <lit>messages</lit> in tutte queste funzioni; impostando la
+            variabile a <lit>2</lit> ha l'effetto aggiuntivo di impostare
+	    <lit>max_verbose</lit> in tutte le funzioni.
+	  </para>
 	</li>
 	<li>
 	  <para><lit>shell_ok</lit>: <lit>on</lit> o <lit>off</lit>
@@ -8256,6 +8352,10 @@
       </arguments>
       <options>
         <option>
+	  <flag>--rtf</flag>
+	  <effect>Produce RTF invece di &latex;</effect>
+        </option>
+        <option>
 	  <flag>--complete</flag>
 	  <effect>Crea un documento completo</effect>
         </option>
@@ -8269,12 +8369,17 @@
     <description>
       <para>
 	Va eseguito dopo la stima di un modello.  Stampa il modello
-        stimato sotto forma di tabella &latex;.  Se viene specificato un
-        nome di file dopo l'opzione <lit>-f</lit>, l'output viene
-        scritto nel file, altrimenti viene scritto in un file col nome
-	<filename>model_N.tex</filename>, dove <lit>N</lit> è il numero
-        dei modelli stimati finora nella sessione in corso.
-	Si veda anche <cmdref targ="eqnprint"/>.
+        stimato sotto forma di tabella, in formato &latex;, o, se viene
+        usata l'opzione <lit>--rtf</lit>, in formato RTF.  Se viene specificato
+        un nome di file dopo l'opzione <lit>-f</lit>, l'output viene scritto nel
+        file, altrimenti viene scritto in un file col nome
+        <filename>model_N.tex</filename> (o <filename>model_N.rtf</filename>),
+        dove <lit>N</lit> è il numero dei modelli stimati finora nella sessione
+        in corso.
+      </para>
+      <para>
+        Le opzioni illustrate di seguito sono disponibili solo per il formato
+        &latex;.
       </para>
       <para>
 	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
