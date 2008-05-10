@@ -565,6 +565,40 @@ static void workspace_init (const gretl_matrix *XT,
     }
 }
 
+#if 0
+static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
+			  gretl_matrix *XT, double tau,
+			  struct rq_info *rq)
+{
+    gretl_matrix *XTX = NULL;
+    double h, sparsity;
+
+    h = ceil(rq->n * rq_bandwidth(tau, rq->n));
+    h = (p + 1 > h)? p + 1 : h;
+
+    gretl_matrix_multiply_mod(XT, GRETL_MOD_NONE,
+			      XT, GRETL_MOD_TRANSPOSE,
+			      XTX, GRETL_MOD_NONE);
+
+    gretl_invert_symmetric_matrix(XTX);
+
+    pz = sum(abs(resid) < eps);
+
+    ir = (pz + 1):(h + pz + 1);
+
+    ord.resid = sort(resid[order(abs(resid))][ir]);
+
+    xt = ir / (n - p);
+
+    sparsity = rq(ord.resid ~ xt)$coef[2];
+
+    cov = sparsity^2 * xxinv * tau * (1 - tau);
+
+    gretl_matrix_multiply_by_scalar(V, tau * (1 - tau)); 
+
+}
+#endif
+
 static int rq_fn_VCV (MODEL *pmod, gretl_matrix *y,
 		      gretl_matrix *XT, double tau,
 		      struct rq_info *rq)
