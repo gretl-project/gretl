@@ -132,6 +132,7 @@ static void rq_transcribe_results (MODEL *pmod,
 	pmod->ess += u[i] * u[i];
     }
 
+    gretl_model_set_int(pmod, "rq", 1);
     gretl_model_set_double(pmod, "tau", tau);
 
     /* sum of absolute residuals */
@@ -822,6 +823,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
     gretl_matrix_multiply_by_scalar(V, tau * (1 - tau));
 
     gretl_model_write_vcv(pmod, V);
+    gretl_model_set_int(pmod, "rq_nid", 1);
 
  bailout:
 

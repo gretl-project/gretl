@@ -1297,38 +1297,57 @@ static void ml_vcv_line (const MODEL *pmod, PRN *prn)
     int v = gretl_model_get_int(pmod, "ml_vcv");
     int tex = tex_format(prn);
     int utf = plain_format(prn);
-    const char *vcvstr = NULL;
+    const char *s = NULL;
 
     switch (v) {
     case VCV_HESSIAN:
-	vcvstr = N_("Standard errors based on Hessian");
+	s = N_("Standard errors based on Hessian");
 	break;
     case VCV_IM:
-	vcvstr = N_("Standard errors based on Information Matrix");
+	s = N_("Standard errors based on Information Matrix");
 	break;
     case VCV_OP:
-	vcvstr = N_("Standard errors based on Outer Products matrix");
+	s = N_("Standard errors based on Outer Products matrix");
 	break;
     case VCV_QML:
-	vcvstr = N_("QML standard errors");
+	s = N_("QML standard errors");
 	break;
     case VCV_BW:
 	if (tex) {
-	    vcvstr = N_("Bollerslev--Wooldridge standard errors");
+	    s = N_("Bollerslev--Wooldridge standard errors");
 	} else {
-	    vcvstr = N_("Bollerslev-Wooldridge standard errors");
+	    s = N_("Bollerslev-Wooldridge standard errors");
 	}
 	break;
     default:
 	break;
     }
 
-    if (vcvstr != NULL) {
+    if (s != NULL) {
 	if (csv_format(prn)) {
-	    pprintf(prn, "\"%s\"\n", I_(vcvstr));
+	    pprintf(prn, "\"%s\"\n", I_(s));
 	} else {
-	    pprintf(prn, "%s\n", (utf)? _(vcvstr) : I_(vcvstr));
+	    pprintf(prn, "%s\n", (utf)? _(s) : I_(s));
 	}
+    }
+}
+
+static void rq_vcv_line (const MODEL *pmod, PRN *prn)
+{
+    int robust = gretl_model_get_int(pmod, "rq_nid");
+    int utf = plain_format(prn);
+    const char *s;
+
+    if (robust) {
+	s = N_("Robust (sandwich) standard errors");
+    } else {
+	s = N_("Asymptotic standard errors assuming IID errors");
+    }
+
+    if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"\n", I_(s));
+    } else {
+	pprintf(prn, "%s\n", (utf)? _(s) : I_(s));
     }
 }
 
@@ -1376,6 +1395,8 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	beck_katz_failed_line(prn);
     } else if (pmod->ci == ARBOND && gretl_model_get_int(pmod, "asy")) {
 	arbond_asy_vcv_line(pmod, prn);
+    } else if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
+	rq_vcv_line(pmod, prn);
     }
 }
 
@@ -1801,6 +1822,19 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
+    /* tau for quantile regression */
+    else if (pmod->ci == LAD) {
+	double tau = gretl_model_get_double(pmod, "tau");
+
+	if (!na(tau)) {
+	    if (tex) {
+		pprintf(prn, "$\\tau = %g\n", tau);
+	    } else {
+		pprintf(prn, "tau = %g\n", tau);
+	    }
+	}
+    }
+
     /* VCV variants */
     print_model_vcv_info(pmod, prn);
 
@@ -1858,19 +1892,6 @@ static void print_model_heading (const MODEL *pmod,
 	} else {
 	    pprintf(prn, "yhat = %g / (1 + exp(-X*b))\n",  
 		    gretl_model_get_double(pmod, "lmax"));
-	}
-    }
-
-    /* tau for quantile regression */
-    else if (pmod->ci == LAD) {
-	double tau = gretl_model_get_double(pmod, "tau");
-
-	if (!na(tau)) {
-	    if (tex) {
-		pprintf(prn, "$\\tau = %g\n", tau);
-	    } else {
-		pprintf(prn, "tau = %g\n", tau);
-	    }
 	}
     }
 
