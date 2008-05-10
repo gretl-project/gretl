@@ -119,6 +119,7 @@ static void rq_transcribe_results (MODEL *pmod,
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->coeff[i] = b[i];
+	pmod->sderr[i] = NADBL;
     }
 
     pmod->ess = 0.0;
@@ -164,7 +165,6 @@ static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci)
 	bhi = gretl_matrix_get(ci, 2, i);
 	gretl_matrix_set(rqci, i, 0, blo);
 	gretl_matrix_set(rqci, i, 1, bhi);
-	pmod->sderr[i] = NADBL;
     }
 
     gretl_model_set_matrix_as_data(pmod, "rq_confints", rqci);
@@ -451,12 +451,12 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	rqbr_(&n, &p, &n5, &p3, &p4, X->val, y->val, &tau, &tol, &ift,
 	      coeff, resid, s, wa, wb, &nsol, &ndsol, sol, dsol,
 	      &lsol, h, qn, &cut, ci->val, tnmat->val, &big, &lci1);
-	if (ift != 0) {
-	    if (1) { /* ?? */
-		fprintf(stderr, "Warning: solution may be non-unique\n");
-	    } else { 
-		fprintf(stderr, "Premature end: conditioning problem in X?\n");
-	    }
+
+	if (ift == 1) {
+	    fprintf(stderr, "Warning: solution may be non-unique\n");
+	} else if (ift == 2){ 
+	    fprintf(stderr, "Premature end: conditioning problem in X?\n");
+	    err = E_NOCONV;
 	}
     }
 
@@ -522,11 +522,11 @@ static int rq_info_alloc (struct rq_info *rq, int n, int p,
     }
 
     rq->rhs = rq->rspace;
-    rq->d =   rq->rhs + p;
-    rq->u =   rq->d + n;
-    rq->wn =  rq->u + n;
-    rq->wp =  rq->wn + n10;
-    rq->aa =  rq->wp + pp4;
+    rq->d   = rq->rhs + p;
+    rq->u   = rq->d + n;
+    rq->wn  = rq->u + n;
+    rq->wp  = rq->wn + n10;
+    rq->aa  = rq->wp + pp4;
 
     rq->n = n;
     rq->p = p;
@@ -593,12 +593,12 @@ static int rq_fn_VCV (MODEL *pmod, gretl_matrix *y,
 
     eps23 = pow(macheps, 2/3.0);
 
-    p1 =    gretl_matrix_alloc(p, 1);
-    f =     gretl_matrix_alloc(n, 1);
-    fX =    gretl_matrix_alloc(p, n);
-    fXX =   gretl_matrix_alloc(p, p);
-    XTX =   gretl_matrix_alloc(p, p);
-    V =     gretl_matrix_alloc(p, p);
+    p1  = gretl_matrix_alloc(p, 1);
+    f   = gretl_matrix_alloc(n, 1);
+    fX  = gretl_matrix_alloc(p, n);
+    fXX = gretl_matrix_alloc(p, p);
+    XTX = gretl_matrix_alloc(p, p);
+    V   = gretl_matrix_alloc(p, p);
 
     if (p1 == NULL || f == NULL || fX == NULL ||
 	fXX == NULL || XTX == NULL || V == NULL) {
@@ -802,6 +802,12 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     if (tau < .01 || tau > .99) {
 	gretl_errmsg_sprintf("quantreg: tau must be >= .01 and <= .99");
+	err = E_DATA;
+    }
+
+    if ((opt & OPT_I) && pmod->list[0] < 3) {
+	gretl_errmsg_set("quantreg: can't do confidence intervals with "
+			 "only one regressor");
 	err = E_DATA;
     }
 
