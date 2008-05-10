@@ -18,8 +18,8 @@
  */
 
 /* Please see the additional license, rq/uiuc-ncsa.txt: this license
-   governs the ratfor ("rational fortran") code, authored by Roger
-   Koenker, which is called by this module.
+   governs the Fortran code, authored by Roger Koenker, which is
+   called by this module.
 */
 
 #include "libgretl.h"
@@ -29,12 +29,9 @@
 
 #define QDEBUG 1
 
-/* Frisch-Newton algorithm */
-
-extern int rqfn_ (integer *n, integer *p, double *a, double *y,
-		  double *rhs, double *d, double *u, double *beta,
-		  double *eps, double *wn, double *wp, double *aa,
-		  integer *nit, integer *info);
+/* Frisch-Newton algorithm: we use this if we're not computing
+   rank-inversion confidence intervals.
+*/
 
 extern int rqfnb_ (integer *n, integer *p, double *a, double *y,
 		   double *rhs, double *d, double *u, double *beta,
@@ -72,7 +69,7 @@ extern int rqbr_ (integer *n,    /* number of observations */
 				    each column of x on the remaining columns */
 		  double *cutoff,  /* critical point for N(0,1) */
 		  double *ci,      /* matrix of confidence intervals, size 4 * p */
-		  double *tnmat,   /* matrix of JGPK rank test statistics */
+		  double *tnmat,   /* matrix of JGPK rank-test statistics */
 		  double *big,     /* "large positive finite floating-point number" */
 		  logical *lci1);  /* do confidence intervals? */
 
@@ -123,7 +120,7 @@ static void rq_transcribe_results (MODEL *pmod,
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->coeff[i] = b[i];
-	pmod->sderr[i] = NADBL;
+	pmod->sderr[i] = NADBL; /* will have to be replaced */
     }
 
     pmod->ess = 0.0;
@@ -288,8 +285,8 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
 	f->val[i] = sqrt(fi); /* ?? */
     }
 
-    /* Now set each qn[j] to SSR from f-weighted regression of X_j
-       on the other regressors.
+    /* Now set each qn[j] to the SSR from an f-weighted regression of 
+       X_j on the other regressors.
     */
 
     gretl_matrix_reuse(coeff, p - 1, 1);
@@ -411,8 +408,8 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
     double tol = calc_eps23;
     double big = NADBL;
     double cut = 0.0;
-    integer nsol = 2;  /* set to min. */
-    integer ndsol = 2; /* set to min. */
+    integer nsol = 2;  /* set to min. allowed */
+    integer ndsol = 2; /* set to min. allowed */
     integer ift, lsol = 0;
     int do_ci = (opt & OPT_I)? 1 : 0;
     int iid = !(opt & OPT_R);
@@ -530,7 +527,6 @@ struct rq_info {
     double *u;
     double *wn;
     double *wp;
-    double *aa;
     integer nit[3];
     integer info;
 };
@@ -547,7 +543,7 @@ static int rq_info_alloc (struct rq_info *rq, int n, int p,
 {
     int n10 = n * 10;
     int pp4 = p * (p + 4);
-    size_t rsize = p + n + n + n10 + pp4 + p * p;
+    size_t rsize = p + n + n + n10 + pp4;
 
     rq->rspace = malloc(rsize * sizeof *rq->rspace);
 
@@ -560,7 +556,6 @@ static int rq_info_alloc (struct rq_info *rq, int n, int p,
     rq->u   = rq->d + n;
     rq->wn  = rq->u + n;
     rq->wp  = rq->wn + n10;
-    rq->aa  = rq->wp + pp4;
 
     rq->n = n;
     rq->p = p;
@@ -696,6 +691,7 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 	fprintf(stderr, "rq_fn_iid_VCV: rqfnb: info = %d\n", rq->info);
 	err = E_DATA;
     } else {
+	/* scale X'X-inverse appropriately */
 	sparsity = rq->wp[1];
 	h = sparsity * sparsity * tau * (1 - tau);
 	gretl_matrix_multiply_by_scalar(V, h); 
@@ -857,8 +853,8 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
     rq_workspace_init(XT, tau, &rq);
 
     /* get coefficients (in wp) and residuals (in wn) */
-    rqfn_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, &rq.beta, &rq.eps, 
-	  rq.wn, rq.wp, rq.aa, rq.nit, &rq.info);
+    rqfnb_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, &rq.beta, &rq.eps, 
+	   rq.wn, rq.wp, rq.nit, &rq.info);
 
     if (rq.info != 0) {
 	fprintf(stderr, "rqfn gave info = %d\n", rq.info);
@@ -990,7 +986,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     /* FIXME: we should probably accept a matrix for tau.  Also, when
        we're doing confidence intervals we should accept an alpha
-       argument.
+       argument (right now we're hard-wired to 90%).
     */
 
     tau = get_user_tau(parm, Z, pdinfo, &err);

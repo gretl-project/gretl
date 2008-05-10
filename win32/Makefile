@@ -438,7 +438,7 @@ plugins/odbc_import.dll: odbc_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lodbc32
 
-plugins/quantreg.dll: quantreg.o rqfn.o rqfnb.o dllinit.o
+plugins/quantreg.dll: quantreg.o rqfnb.o rqbr.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
