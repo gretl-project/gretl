@@ -119,6 +119,7 @@ struct str_table mvars[] = {
     { M_SYSB,    "$sysB" },
     { M_FCAST,   "$fcast" },
     { M_FCERR,   "$fcerr" },
+    { M_COEFF_CI, "$coeff_ci" },
     { 0,         NULL }
 };
 

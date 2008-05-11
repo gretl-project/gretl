@@ -1971,7 +1971,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 {
     int slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
     int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
-    int intervals = gretl_model_get_data(pmod, "rq_confints") != NULL;
+    int intervals = gretl_model_get_data(pmod, "coeff_intervals") != NULL;
 
     if (plain_format(prn)) {
 	if (pmod->ci == MPOLS) {
@@ -3015,7 +3015,7 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (pmod->ci == LAD) {
-	intervals = gretl_model_get_data(pmod, "rq_confints");
+	intervals = gretl_model_get_data(pmod, "coeff_intervals");
     }
 
     for (i=0; i<nc; i++) {

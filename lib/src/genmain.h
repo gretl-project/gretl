@@ -77,6 +77,7 @@ typedef enum {
     M_SYSB,       /* Parameter matrix B (simultaneous systems) */
     M_FCAST,      /* last forecast generated via fcasterr */
     M_FCERR,      /* standard errors associated with M_FCAST */
+    M_COEFF_CI,   /* (assymetric) confidence intervals for coeffs */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 

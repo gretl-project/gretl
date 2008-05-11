@@ -4781,6 +4781,26 @@ static gretl_matrix *model_get_rhovec (const MODEL *pmod, int *err)
     return r;
 }
 
+static gretl_matrix *
+model_get_intervals_matrix (const MODEL *pmod, int *err)
+{
+    gretl_matrix *m, *ci;
+
+    ci = gretl_model_get_data(pmod, "coeff_intervals");
+    if (ci == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    m = gretl_matrix_copy(ci);
+
+    if (m == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return m;
+}
+
 static gretl_matrix *model_get_special_test (const MODEL *pmod, 
 					     int type, int *err)
 {
@@ -4848,6 +4868,9 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
     case M_COEFF:
     case M_SE:
 	M = model_get_estvec(pmod, idx, err);
+	break;
+    case M_COEFF_CI:
+	M = model_get_intervals_matrix(pmod, err);
 	break;
     case M_VCV:
 	M = gretl_vcv_matrix_from_model(pmod, NULL);

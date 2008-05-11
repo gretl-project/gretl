@@ -173,11 +173,7 @@ static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci)
 	gretl_matrix_set(rqci, i, 1, bhi);
     }
 
-    gretl_model_set_matrix_as_data(pmod, "rq_confints", rqci);
-
-#if QDEBUG > 1
-    gretl_matrix_print(rqci, "ci's");
-#endif
+    gretl_model_set_matrix_as_data(pmod, "coeff_intervals", rqci);
 
     return 0;
 }
