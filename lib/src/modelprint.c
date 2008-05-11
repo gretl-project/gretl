@@ -24,6 +24,8 @@
 #include "system.h"
 #include "texprint.h"
 
+#include <glib.h>
+
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || \
                        a == AUX_AR || a == AUX_VAR || a == AUX_HET_1 || \
 		       a == AUX_BP)
@@ -1335,10 +1337,21 @@ static void ml_vcv_line (const MODEL *pmod, PRN *prn)
 static void rq_vcv_line (const MODEL *pmod, PRN *prn)
 {
     int robust = gretl_model_get_int(pmod, "rq_nid");
+    double a = gretl_model_get_double(pmod, "rq_alpha");
     int utf = plain_format(prn);
-    const char *s;
+    int free_s = 0;
+    char *s;
 
-    if (robust) {
+    if (!na(a)) {
+	if (robust) {
+	    s = g_strdup_printf(N_("With robust %g%% confidence intervals"), 
+				100 * (1 - a));
+	} else {
+	    s = g_strdup_printf(N_("With %g%% confidence intervals"), 
+				100 * (1 - a));
+	}
+	free_s = 1;
+    } else if (robust) {
 	s = N_("Robust (sandwich) standard errors");
     } else {
 	s = N_("Asymptotic standard errors assuming IID errors");
@@ -1348,6 +1361,10 @@ static void rq_vcv_line (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "\"%s\"\n", I_(s));
     } else {
 	pprintf(prn, "%s\n", (utf)? _(s) : I_(s));
+    }
+
+    if (free_s) {
+	g_free(s);
     }
 }
 

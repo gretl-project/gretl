@@ -155,7 +155,8 @@ static void rq_transcribe_results (MODEL *pmod,
    a new matrix and attach this to the model for printing 
 */
 
-static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci)
+static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci,
+				double alpha, gretlopt opt)
 {
     gretl_matrix *rqci;
     double blo, bhi;
@@ -174,6 +175,11 @@ static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci)
     }
 
     gretl_model_set_matrix_as_data(pmod, "coeff_intervals", rqci);
+    gretl_model_set_double(pmod, "rq_alpha", alpha);
+
+    if (opt & OPT_R) {
+	gretl_model_set_int(pmod, "rq_nid", 1);
+    }
 
     return 0;
 }
@@ -491,7 +497,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
     if (!err && pmod != NULL) {
 	rq_transcribe_results(pmod, y, tau, coeff, resid);
 	if (do_ci) {
-	    rq_attach_intervals(pmod, ci);
+	    rq_attach_intervals(pmod, ci, alpha, opt);
 	}
     }
 
@@ -973,6 +979,24 @@ static double get_user_tau (const char *s, double **Z, DATAINFO *pdinfo,
     return tau;
 }
 
+static int get_ci_alpha (double *a)
+{
+    double c = get_optval_double(QUANTREG, OPT_I);
+
+    if (na(c)) {
+	*a = 0.1;
+    } else if (c > 1.0 && c < 100.0) {
+	*a = 1 - c / 100;
+    } else if (c < 0.1 || c > .999) {
+	gretl_errmsg_sprintf("Confidence level out of bounds");
+	return E_DATA;
+    } else {
+	*a = 1 - c;
+    }
+
+    return 0;
+}
+
 int rq_driver (const char *parm, MODEL *pmod,
 	       double **Z, DATAINFO *pdinfo,
 	       gretlopt opt, PRN *prn)
@@ -1005,7 +1029,12 @@ int rq_driver (const char *parm, MODEL *pmod,
     if (!err) {
 	if (opt & OPT_I) {
 	    /* doing confidence intervals -> use Borrodale-Roberts */
-	    err = rq_fit_br(y, X, tau, 0.1, opt, pmod, NULL);
+	    double alpha;
+
+	    err = get_ci_alpha(&alpha);
+	    if (!err) {
+		err = rq_fit_br(y, X, tau, alpha, opt, pmod, NULL);
+	    }
 	} else {
 	    /* use Frisch-Newton */
 	    err = rq_fit_fn(y, X, tau, opt, pmod);

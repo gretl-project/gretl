@@ -628,7 +628,8 @@ static int valid_optval (int ci, gretlopt opt, const char *val)
 {
     double x;
 
-    if (ci == OMIT && opt == OPT_A) {
+    if ((ci == OMIT && opt == OPT_A) ||
+	(ci == QUANTREG && opt == OPT_I)) {
 	if (numeric_string(val)) {
 	    x = dot_atof(val);
 	    if (x > 0.0 && x < 1.0) {
