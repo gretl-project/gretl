@@ -133,8 +133,10 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
 			 double tau, struct br_info *rq,
 			 int calc_ci);
 
-/* Bandwidth selection for sparsity estimation, as per
-   Hall and Sheather (1988, JRSS(B)); rate = O(n^{-1/3})
+/* Bandwidth selection for sparsity estimation, as per Hall, P. and
+   Sheather, S. J. (1988), "On the distribution of a studentized
+   quantile", Journal of the Royal Statistical Society, Series B, 50,
+   381–391: rate = O(n^{-1/3})
 */
 
 static double rq_bandwidth (double tau, int n)
@@ -282,11 +284,6 @@ static void rq_interpolate_intervals (struct br_info *rq)
     int p = gretl_matrix_cols(rq->ci);
     int j;
 
-#if QDEBUG > 1
-    gretl_matrix_print(rq->ci, "ci (original, from rqbr)");
-    gretl_matrix_print(rq->tn, "tnmat");
-#endif
-
     for (j=0; j<p; j++) {
 	c1j = gretl_matrix_get(rq->ci, 0, j);
 	c2j = gretl_matrix_get(rq->ci, 1, j);
@@ -300,7 +297,7 @@ static void rq_interpolate_intervals (struct br_info *rq)
 	c3j += fabs(c4j - c3j) * (rq->cut - fabs(tn3)) / fabs(tn4 - tn3);
 	c2j -= fabs(c1j - c2j) * (rq->cut - fabs(tn2)) / fabs(tn1 - tn2);
 
-	/* Write the (1-alpha) intervals into rows 1 and 2 
+	/* Write the (1 - alpha) intervals into rows 1 and 2 
 	   of the matrix ci */
 
 	gretl_matrix_set(rq->ci, 2, j, c3j);
@@ -422,6 +419,8 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     return err;
 }
 
+/* maybe this should be in gretl_matrix.c ? */
+
 static gretl_matrix *get_XTX_inverse (const gretl_matrix *X, int *err)
 {
     int k = min(X->rows, X->cols);
@@ -475,7 +474,7 @@ static int make_iid_qn (const gretl_matrix *X, double *qn)
     return err;
 }
 
-/* allocate workspace to be fed to the Fortran function */
+/* allocate workspace to be fed to the function rqbr */
 
 static int br_info_alloc (struct br_info *rq, int n, int p,
 			  double tau, double alpha,
@@ -542,6 +541,9 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
     return 0;
 }
 
+/* Fortran rqbr changes some of its arguments: we need to
+   reset these for the next round */
+
 static void br_info_reinit (gretl_matrix *X, struct br_info *rq)
 {
     rq->n = X->rows;
@@ -581,7 +583,7 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
     return err;
 }
 
-/* allocate workspace to be fed to the Fortran F-N function */
+/* allocate workspace to be fed to the function rqfnb */
 
 static int fn_info_alloc (struct fn_info *rq, int n, int p,
 			  double tau)
@@ -989,6 +991,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
     }
 
     if (tbeta != NULL) {
+	/* multiple tau values */
 	if (err) {
 	    gretl_matrix_free(tbeta);
 	} else {
