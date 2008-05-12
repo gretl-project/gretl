@@ -211,7 +211,7 @@ static void rq_interpolate_intervals (gretl_matrix *ci,
 	c3j += fabs(c4j - c3j) * (cut - fabs(tn3)) / fabs(tn4 - tn3);
 	c2j -= fabs(c1j - c2j) * (cut - fabs(tn2)) / fabs(tn1 - tn2);
 
-	/* Write the 1-alpha intervals into rows 1 and 2 
+	/* Write the (1-alpha) intervals into rows 1 and 2 
 	   of the matrix ci */
 
 	gretl_matrix_set(ci, 2, j, c3j);
@@ -285,7 +285,7 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     for (i=0; i<n; i++) {
 	fi = (2 * h) / (f->val[i] - eps);
 	fi = (fi < eps)? eps : fi;
-	f->val[i] = sqrt(fi); /* ?? */
+	f->val[i] = sqrt(fi);
     }
 
     /* Now set each qn[j] to the SSR from an f-weighted regression of 
@@ -388,7 +388,9 @@ static int make_iid_qn (const gretl_matrix *X, double *qn)
     return err;
 }
 
-/* OPT_I for intervals; OPT_N for no df; OPT_R for robust (not iid) */
+/* OPT_I for intervals; OPT_N for no df correction; 
+   OPT_R for robust (not iid) 
+*/
 
 static int rq_fit_br (gretl_matrix *y, gretl_matrix *X, 
 		      double tau, double alpha, gretlopt opt,
@@ -570,7 +572,7 @@ static int rq_info_alloc (struct rq_info *rq, int n, int p,
 }
 
 /* Initialize the tau-dependent arrays rhs and wn (rhs is
-   also X-depdendent) and set other entries to 0 or 1.
+   also X-dependent) and set other entries to 0 or 1.
 */
 
 static void rq_workspace_init (const gretl_matrix *XT,
@@ -961,7 +963,7 @@ static double get_user_tau (const char *s, double **Z, DATAINFO *pdinfo,
 	/* fine, got one */
 	*err = 0;
     } else {
-	/* try for named scalar */
+	/* try for a named scalar */
 	int v = varindex(pdinfo, s);
 
 	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
@@ -1006,10 +1008,7 @@ int rq_driver (const char *parm, MODEL *pmod,
     double tau;
     int err = 0;
 
-    /* FIXME: we should probably accept a matrix for tau.  Also, when
-       we're doing confidence intervals we should accept an alpha
-       argument (right now we're hard-wired to 90%).
-    */
+    /* FIXME: we should probably accept a matrix for tau. */
 
     tau = get_user_tau(parm, Z, pdinfo, &err);
     if (err) {
