@@ -3694,7 +3694,7 @@ MODEL quantreg (const char *parm, const int *list,
 {
     MODEL qmod;
     void *handle;
-    int (*rq_driver) (const char *, MODEL *, double **, DATAINFO *,
+    int (*rq_driver) (const char *, MODEL *, double ***, DATAINFO *,
 		      gretlopt, PRN *);
 
     /* Run an initial OLS to "set the model up" and check for errors.
@@ -3717,7 +3717,7 @@ MODEL quantreg (const char *parm, const int *list,
 	return qmod;
     }
 
-    (*rq_driver) (parm, &qmod, *pZ, pdinfo, opt, prn);
+    (*rq_driver) (parm, &qmod, pZ, pdinfo, opt, prn);
     close_plugin(handle);
 
     if (qmod.errcode == 0) {

@@ -649,6 +649,13 @@ gretl_matrix *generate_matrix (const char *s, double ***pZ,
 	    } else {
 		m = gretl_matrix_copy(n->v.m);
 	    }
+	} else if (n->t == NUM) {
+	    m = gretl_matrix_alloc(1, 1);
+	    if (m == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		m->val[0] = n->v.xval;
+	    }
 	} else {
 	    *err = E_TYPES;
 	}

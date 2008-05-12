@@ -1143,60 +1143,44 @@ static double get_user_tau (const char *s, double **Z, DATAINFO *pdinfo,
     return tau;
 }
 
-static gretl_vector *get_user_tauvec (const char *s, double **Z, 
+static gretl_vector *get_user_tauvec (const char *s, double ***pZ, 
 				      DATAINFO *pdinfo, int *err)
 {
     gretl_vector *tau = NULL;
-    gretl_vector *v;
+    int i, n;
 
-    v = get_matrix_by_name(s);
+    tau = generate_matrix(s, pZ, pdinfo, err);
 
-#if 0
-    if (v == NULL) {
-	v = generate_matrix(s, pZ, pdinfo, err);
+    if (*err) {
+	return NULL;
     }
-#endif
 
-    if (v == NULL) {
-	tau = gretl_vector_alloc(1);
-	if (tau == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    tau->val[0] = get_user_tau(s, Z, pdinfo, err);
-	    if (*err) {
-		gretl_vector_free(tau);
-		tau = NULL;
-	    }
-	}
+    n = gretl_vector_get_length(tau);
+
+    if (n == 0) {
+	*err = E_DATA;
     } else {
-	int i, n = gretl_vector_get_length(v);
 	double p;
 
-	if (n == 0) {
-	    *err = E_DATA;
-	} else {
-	    for (i=0; i<n; i++) {
-		p = gretl_vector_get(v, i);
-		if (p < .01 || p > .99) {
-		    gretl_errmsg_sprintf("quantreg: tau must be >= .01 and <= .99");
-		    *err = E_DATA;
-		}
+	for (i=0; i<n; i++) {
+	    p = gretl_vector_get(tau, i);
+	    if (p < .01 || p > .99) {
+		gretl_errmsg_sprintf("quantreg: tau must be >= .01 and <= .99");
+		*err = E_DATA;
 	    }
 	}
+    }
 
-	if (!*err) {
-	    tau = gretl_matrix_copy(v);
-	    if (tau == NULL) {
-		*err = E_ALLOC;
-	    }
-	}
+    if (*err) {
+	gretl_matrix_free(tau);
+	tau = NULL;
     }
 
     return tau;
 }
 
 int rq_driver (const char *parm, MODEL *pmod,
-	       double **Z, DATAINFO *pdinfo,
+	       double ***pZ, DATAINFO *pdinfo,
 	       gretlopt opt, PRN *prn)
 {
     gretl_matrix *y = NULL;
@@ -1212,13 +1196,13 @@ int rq_driver (const char *parm, MODEL *pmod,
     }
 
     if (opt & OPT_I) {
-	tauvec = get_user_tauvec(parm, Z, pdinfo, &err);
+	tauvec = get_user_tauvec(parm, pZ, pdinfo, &err);
     } else {
-	tau = get_user_tau(parm, Z, pdinfo, &err);
+	tau = get_user_tau(parm, *pZ, pdinfo, &err);
     }
 
     if (!err) {
-	err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, opt);
+	err = rq_make_matrices(pmod, *pZ, pdinfo, &y, &X, opt);
     }
 
     if (!err) {
@@ -1232,7 +1216,7 @@ int rq_driver (const char *parm, MODEL *pmod,
     }
 
     if (!err) {
-	gretl_model_add_y_median(pmod, Z[pmod->list[1]]);
+	gretl_model_add_y_median(pmod, (*pZ)[pmod->list[1]]);
     }
 
     gretl_matrix_free(y);
