@@ -735,6 +735,7 @@ static int max_lag_from_numerics (char *s, int *err)
 	if (k > kmax) kmax = k;
 	if (k < kmin) kmin = k;
 	s = rem;
+	s += strspn(s, ", ");
     }
 
     if (kmin < 1) {
@@ -753,6 +754,7 @@ static int max_lag_from_field (char *s, int *err)
     if (*s == '{') {
 	mat = 0;
 	s++;
+	s += strspn(s, ", ");
     }
 
     if (mat) {
