@@ -1151,6 +1151,12 @@ static gretl_vector *get_user_tauvec (const char *s, double **Z,
 
     v = get_matrix_by_name(s);
 
+#if 0
+    if (v == NULL) {
+	v = generate_matrix(s, pZ, pdinfo, err);
+    }
+#endif
+
     if (v == NULL) {
 	tau = gretl_vector_alloc(1);
 	if (tau == NULL) {

@@ -628,6 +628,37 @@ double *generate_series (const char *s, double ***pZ,
     return x;
 }
 
+/* retrieve a matrix result directly */
+
+gretl_matrix *generate_matrix (const char *s, double ***pZ, 
+			       DATAINFO *pdinfo, int *err)
+{
+    parser p;
+    gretl_matrix *m = NULL;
+
+    *err = realgen(s, &p, pZ, pdinfo, NULL, P_MATRIX | P_PRIVATE);
+
+    if (!*err) {
+	NODE *n = p.ret;
+
+	if (n->t == MAT) {
+	    if (n->flags & TMP_NODE) {
+		/* steal the generated matrix */
+		m = n->v.m;
+		n->v.m = NULL;
+	    } else {
+		m = gretl_matrix_copy(n->v.m);
+	    }
+	} else {
+	    *err = E_TYPES;
+	}
+    }
+
+    gen_cleanup(&p);
+
+    return m;
+}
+
 /* retrieve a string result directly */
 
 char *generate_string (const char *s, double ***pZ, 

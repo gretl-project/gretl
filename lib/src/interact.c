@@ -1753,7 +1753,7 @@ static void cmd_param_grab_string (CMD *cmd, const char *s)
     }
 }
 
-static void cmd_param_grab_word (CMD *cmd, const char *s, int *nf)
+static void cmd_param_grab_word (CMD *cmd, const char *s)
 {
     int n = strcspn(s, " =\n\t");
 
@@ -1763,6 +1763,27 @@ static void cmd_param_grab_word (CMD *cmd, const char *s, int *nf)
 	if (cmd->param == NULL) {
 	    cmd->err = E_ALLOC;
 	} 
+    }
+}
+
+static void param_grab_braced (CMD *cmd, const char *s, int *nf)
+{
+    if (*s == '{') {
+	const char *p = strchr(s, '}');
+
+	if (p == NULL) {
+	    cmd->err = E_PARSE;
+	} else {
+	    int n = p - s + 1;
+
+	    free(cmd->param);
+	    cmd->param = gretl_strndup(s, n);
+	    if (cmd->param == NULL) {
+		cmd->err = E_ALLOC;
+	    } 
+	}	    
+    } else {
+	cmd_param_grab_word(cmd, s);
     }
 }
 
@@ -1799,14 +1820,18 @@ static int capture_param (const char *s, CMD *cmd,
 	if (cmd->ci == PRINT || cmd->ci == FUNCERR || cmd->ci == DELEET) {
 	    /* grab the whole remainder of line */
 	    cmd_param_grab_string(cmd, s);
+	} else if (cmd->ci == QUANTREG) {
+	    param_grab_braced(cmd, s, nf);
 	} else {
 	    /* grab one 'word' */
-	    cmd_param_grab_word(cmd, s, nf);
+	    cmd_param_grab_word(cmd, s);
 	}
+
 #if CMD_DEBUG
 	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
 		s, cmd->param);
 #endif
+
 	if (REQUIRES_ORDER(cmd->ci)) {
 	    cmd->order = gretl_int_from_string(cmd->param,
 					       Z, pdinfo, 
@@ -2422,10 +2447,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    strcpy(rem, line + pos + 1 + strlen(cmd->param));
 	    pos = 0;
-	    if (--nf > 0) {
-		strcpy(line, rem);
-		linelen = strlen(line);
-	    }
+	    strcpy(line, rem);
+	    nf = count_free_fields(line);
+	    linelen = strlen(line);
 	} 
     }    
 
@@ -2474,11 +2498,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	/* special: optional width for correlogram, periodogram */
 	if ((cmd->ci == CORRGM || cmd->ci == PERGM) && j == 2) {
 	    cmd->list[0] = 1;
-	    cmd_param_grab_word(cmd, rem, NULL);
+	    cmd_param_grab_word(cmd, rem);
 	    break;
 	} else if (cmd->ci == XCORRGM && j == 3) {
 	    cmd->list[0] = 2;
-	    cmd_param_grab_word(cmd, rem, NULL);
+	    cmd_param_grab_word(cmd, rem);
 	    break;
 	}	    
 

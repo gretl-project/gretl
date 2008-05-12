@@ -6155,6 +6155,8 @@ static void pre_process (parser *p, int flags)
 	p->targ = NUM;
     } else if (flags & P_SERIES) {
 	p->targ = VEC;
+    } else if (flags & P_MATRIX) {
+	p->targ = MAT;
     } else if (flags & P_STRING) {
 	p->targ = STR;
     } else if (flags & P_LIST) {
@@ -7099,6 +7101,8 @@ static void parser_init (parser *p, const char *str,
 	p->targ = NUM;
     } else if (p->flags & P_SERIES) {
 	p->targ = VEC;
+    } else if (p->flags & P_MATRIX) {
+	p->targ = MAT;
     } else if (p->flags & P_STRING) {
 	p->targ = STR;
     } else if (p->flags & P_LIST) {
