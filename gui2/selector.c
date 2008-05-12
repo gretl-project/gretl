@@ -78,7 +78,7 @@ struct _selector {
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
-		       c == HECKIT)
+		       c == HECKIT || c == QUANTREG)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == HCCM || c == HSK || c == ARMA || c == ARCH || \
@@ -86,7 +86,7 @@ struct _selector {
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
-                       c == HECKIT)
+                       c == HECKIT || c == QUANTREG)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
@@ -120,6 +120,7 @@ struct _selector {
                          c == PANEL_WLS || \
                          c == PANEL_B || \
                          c == PROBIT || \
+	                 c == QUANTREG || \
 			 c == SPEARMAN || \
                          c == TOBIT || \
                          c == TSLS || \
@@ -1979,7 +1980,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->code == WLS || sr->code == POISSON || 
 	sr->code == AR || sr->code == HECKIT ||
-	THREE_VARS_GRAPH(sr->code)) {
+	sr->code == QUANTREG || THREE_VARS_GRAPH(sr->code)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
 	    if (sr->code == WLS) {
@@ -1990,6 +1991,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 		sr->error = 1;
 	    } else if (sr->code == HECKIT) {
 		warnbox(_("You must specify a selection variable"));
+		sr->error = 1;
+	    } else if (sr->code == QUANTREG) {
+		warnbox(_("You must specify a quantile"));
 		sr->error = 1;
 	    } else if (THREE_VARS_GRAPH(sr->code)) { 
 		warnbox(("You must select a Y-axis variable"));
@@ -2018,6 +2022,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->code == AR) {
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
+    } else if (sr->code == QUANTREG) {
+	add_to_cmdlist(sr, txt);
+	add_to_cmdlist(sr, " ");
     } else if (sr->code == OMIT) {
 	if (sr->extra[0] != NULL && GTK_WIDGET_IS_SENSITIVE(sr->extra[0])) {
 	    double val;
@@ -2367,6 +2374,8 @@ static char *est_str (int cmdnum)
 	return N_("VECM");
     case LAD:
 	return N_("LAD");
+    case QUANTREG:
+	return N_("Quantile regression");
     case COINT:
     case COINT2:
 	return N_("Cointegration");
@@ -2390,6 +2399,8 @@ static char *extra_string (int ci)
 	return N_("Selection variable");
     case AR:
 	return N_("List of AR lags");
+    case QUANTREG:
+	return N_("Desired quantile");
     case GR_DUMMY:
     case GR_3D:
     case GR_XYZ:	
@@ -2826,6 +2837,12 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	sr->extra[0] = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
+	gtk_widget_show(sr->extra[0]); 
+    } else if (sr->code == QUANTREG) {
+	sr->extra[0] = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
+			   FALSE, TRUE, 0);
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), "0.5");
 	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == VAR || sr->code == VLAGSEL) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
@@ -3278,7 +3295,7 @@ static gboolean x12a_vs_hessian (GtkWidget *w, selector *sr)
 
 #endif
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT)
+#define robust_conf(c) (c != LOGIT && c != PROBIT && c != QUANTREG)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -3287,7 +3304,7 @@ static void build_selector_switches (selector *sr)
     if (sr->code == OLS || sr->code == WLS || 
 	sr->code == GARCH || sr->code == TSLS || sr->code == VAR || 
 	sr->code == LOGIT || sr->code == PROBIT ||
-	sr->code == PANEL) {
+	sr->code == PANEL || sr->code == QUANTREG) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? */
@@ -4124,7 +4141,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
-	THREE_VARS_GRAPH(ci)) {
+	ci == QUANTREG || THREE_VARS_GRAPH(ci)) {
 	build_mid_section(sr, right_vbox);
     }
     

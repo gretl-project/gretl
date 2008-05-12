@@ -1263,9 +1263,13 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* additional info (R^2 etc) */
     if (pmod->ci == LAD) { 
-	sprintf(tmp, "%g", pmod->rho);
-	tex_modify_exponent(tmp);
-	pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s", tmp);
+	double SAR = gretl_model_get_double(pmod, "ladsum");
+
+	if (!na(SAR)) {
+	    sprintf(tmp, "%g", SAR);
+	    tex_modify_exponent(tmp);
+	    pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s", tmp);
+	}
     } else {
 	if (!na(pmod->adjrsq)) {
 	    pprintf(prn, "\\quad \\bar{R}^2 = %.4f ", pmod->adjrsq);
@@ -1331,6 +1335,10 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn)
 {
     int ret;
+
+    if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
+	return E_NOTIMP;
+    }
 
     if (tex_doc_format(prn)) {
 	opt |= OPT_S;

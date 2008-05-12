@@ -24,6 +24,7 @@
 
 #include "libgretl.h"
 #include "gretl_f2c.h"
+#include "usermat.h"
 
 #include <errno.h>
 
@@ -73,11 +74,64 @@ extern int rqbr_ (integer *n,    /* number of observations */
 		  double *big,     /* "large positive finite floating-point number" */
 		  logical *lci1);  /* do confidence intervals? */
 
-static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
-		      double tau, double alpha, gretlopt opt,
-		      MODEL *pmod, gretl_matrix *theta);
+#define calc_eps23 (pow(2.22045e-16, 2/3.0))
 
-#define calc_eps23 (pow(2.0e-16, 2/3.0))
+/* wrapper struct for use with Barrodale-Roberts */
+
+struct br_info {
+    integer n, p;
+    integer n5, p3, p4;
+    integer nsol, ndsol;
+    double tau;
+    double tol;
+    double big;
+    double cut;
+    double *rspace;
+    double *coeff, *resid;
+    double *wa, *wb;
+    double *qn;
+    double *sol, *dsol;
+    integer *ispace;
+    integer *s, *h;
+    gretl_matrix *ci;
+    gretl_matrix *tnmat;
+};
+
+/* wrapper struct for use with Frisch-Newton method */
+
+struct fn_info {
+    integer n, p;
+    double tau;
+    double beta;
+    double eps;
+    double *rspace;
+    double *rhs;
+    double *d;
+    double *u;
+    double *wn;
+    double *wp;
+    integer nit[3];
+    integer info;
+};
+
+/* destructors for the above wrappers */
+
+static void fn_info_free (struct fn_info *rq)
+{
+    free(rq->rspace);
+}
+
+static void br_info_free (struct br_info *rq)
+{
+    free(rq->rspace);
+    free(rq->ispace);
+    gretl_matrix_free(rq->ci);
+    gretl_matrix_free(rq->tnmat);
+}
+
+static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
+			 double tau, struct br_info *rq,
+			 int calc_ci);
 
 /* Bandwidth selection for sparsity estimation, as per
    Hall and Sheather (1988, JRSS(B)); rate = O(n^{-1/3})
@@ -184,52 +238,87 @@ static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci,
     return 0;
 }
 
-static void rq_interpolate_intervals (gretl_matrix *ci,
-				      gretl_matrix *tn,
-				      double cut)
+/* attach the special matrix generated when we estimate
+   the model for several values of tau */
+
+static int rq_attach_multi_intervals (MODEL *pmod, 
+				      gretl_vector *tauvec,
+				      gretl_matrix *tbeta,
+				      double alpha, gretlopt opt)
+{
+#if QDEBUG
+    gretl_matrix_print(tauvec, "tauvec");
+    gretl_matrix_print(tbeta, "tbeta");
+#endif
+
+    gretl_model_set_matrix_as_data(pmod, "rq_tauvec", tauvec);
+    gretl_model_set_matrix_as_data(pmod, "rq_sequence", tbeta);
+    gretl_model_set_double(pmod, "rq_alpha", alpha);
+
+    if (opt & OPT_R) {
+	gretl_model_set_int(pmod, "rq_nid", 1);
+    }
+
+    pmod->ci = LAD;
+    gretl_model_set_int(pmod, "rq", 1);
+
+    pmod->lnL = NADBL;
+    pmod->ess = NADBL;
+    pmod->rsq = NADBL;
+    pmod->adjrsq = NADBL;
+    pmod->fstt = NADBL;
+
+    pmod->criterion[C_AIC] = NADBL;
+    pmod->criterion[C_BIC] = NADBL;
+    pmod->criterion[C_HQC] = NADBL;
+
+    return 0;
+}
+
+static void rq_interpolate_intervals (struct br_info *rq)
 {
     double c1j, c2j, c3j, c4j;
     double tn1, tn2, tn3, tn4;
-    int p = gretl_matrix_cols(ci);
+    int p = gretl_matrix_cols(rq->ci);
     int j;
 
 #if QDEBUG > 1
-    gretl_matrix_print(ci, "ci (original, from rqbr)");
-    gretl_matrix_print(tn, "tnmat");
+    gretl_matrix_print(rq->ci, "ci (original, from rqbr)");
+    gretl_matrix_print(rq->tn, "tnmat");
 #endif
 
     for (j=0; j<p; j++) {
-	c1j = gretl_matrix_get(ci, 0, j);
-	c2j = gretl_matrix_get(ci, 1, j);
-	c3j = gretl_matrix_get(ci, 2, j);
-	c4j = gretl_matrix_get(ci, 3, j);
-	tn1 = gretl_matrix_get(tn, 0, j);
-	tn2 = gretl_matrix_get(tn, 1, j);
-	tn3 = gretl_matrix_get(tn, 2, j);
-	tn4 = gretl_matrix_get(tn, 3, j);
+	c1j = gretl_matrix_get(rq->ci, 0, j);
+	c2j = gretl_matrix_get(rq->ci, 1, j);
+	c3j = gretl_matrix_get(rq->ci, 2, j);
+	c4j = gretl_matrix_get(rq->ci, 3, j);
+	tn1 = gretl_matrix_get(rq->tnmat, 0, j);
+	tn2 = gretl_matrix_get(rq->tnmat, 1, j);
+	tn3 = gretl_matrix_get(rq->tnmat, 2, j);
+	tn4 = gretl_matrix_get(rq->tnmat, 3, j);
 
-	c3j += fabs(c4j - c3j) * (cut - fabs(tn3)) / fabs(tn4 - tn3);
-	c2j -= fabs(c1j - c2j) * (cut - fabs(tn2)) / fabs(tn1 - tn2);
+	c3j += fabs(c4j - c3j) * (rq->cut - fabs(tn3)) / fabs(tn4 - tn3);
+	c2j -= fabs(c1j - c2j) * (rq->cut - fabs(tn2)) / fabs(tn1 - tn2);
 
 	/* Write the (1-alpha) intervals into rows 1 and 2 
 	   of the matrix ci */
 
-	gretl_matrix_set(ci, 2, j, c3j);
-	gretl_matrix_set(ci, 1, j, c2j);
+	gretl_matrix_set(rq->ci, 2, j, c3j);
+	gretl_matrix_set(rq->ci, 1, j, c2j);
     }
 }
 
-/* Robust version of rank-inversion confidence interval 
+/* prep for robust version of rank-inversion confidence interval 
    calculation
 */
 
 static int make_nid_qn (gretl_matrix *y, gretl_matrix *X, 
-			double *qn, double tau, double eps)
+			struct br_info *rq)
 {
-    int n = gretl_matrix_rows(X);
-    int p = gretl_matrix_cols(X);
-    gretl_matrix *coeff = NULL;
-    gretl_matrix *bdiff = NULL;
+    int n = rq->n;
+    int p = rq->p;
+    double eps = rq->tol;
+    gretl_matrix *b = NULL;
     gretl_matrix *f = NULL;
     gretl_matrix *xj = NULL;
     gretl_matrix *uj = NULL;
@@ -239,37 +328,36 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     int badf = 0;
     int err = 0;
 
-    h = rq_bandwidth(tau, n);
+    h = rq_bandwidth(rq->tau, n);
 
-    coeff = gretl_matrix_alloc(p, 1);
-    bdiff = gretl_matrix_alloc(p, 1);
-    f     = gretl_matrix_alloc(n, 1);
-    xj    = gretl_matrix_alloc(n, 1);
-    uj    = gretl_matrix_alloc(n, 1);
-    Xcmp  = gretl_matrix_alloc(n, p - 1);
+    b    = gretl_matrix_alloc(p, 1);
+    f    = gretl_matrix_alloc(n, 1);
+    xj   = gretl_matrix_alloc(n, 1);
+    uj   = gretl_matrix_alloc(n, 1);
+    Xcmp = gretl_matrix_alloc(n, p - 1);
 
-    if (coeff == NULL || bdiff == NULL || f == NULL ||
-	xj == NULL || uj == NULL || Xcmp == NULL) {
+    if (b == NULL || f == NULL || xj == NULL || 
+	uj == NULL || Xcmp == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    rq_fit_br(y, X, tau + h, 0, OPT_NONE, NULL, coeff);
+    real_br_calc(y, X, rq->tau + h, rq, 0);
     for (j=0; j<p; j++) {
-	bdiff->val[j] = coeff->val[j];
+	b->val[j] = rq->coeff[j];
     }
 
-    rq_fit_br(y, X, tau - h, 0, OPT_NONE, NULL, coeff);
+    real_br_calc(y, X, rq->tau - h, rq, 0);
     for (j=0; j<p; j++) {
-	bdiff->val[j] -= coeff->val[j];
+	b->val[j] -= rq->coeff[j];
     }
 
 #if QDEBUG
     fprintf(stderr, "make_nid_qn: bandwidth = %g\n", h);
-    gretl_matrix_print(bdiff, "coeff diffs");
+    gretl_matrix_print(b, "coeff diffs");
 #endif
 
-    gretl_matrix_multiply(X, bdiff, f);
+    gretl_matrix_multiply(X, b, f);
 
     for (i=0; i<n; i++) {
 	if (f->val[i] <= 0) {
@@ -292,7 +380,7 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
        X_j on the other regressors.
     */
 
-    gretl_matrix_reuse(coeff, p - 1, 1);
+    gretl_matrix_reuse(b, p - 1, 1);
 
     for (j=0; j<p; j++) {
 	for (i=0; i<n; i++) {
@@ -312,21 +400,20 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
 	    }
 	}
 
-	err = gretl_matrix_ols(xj, Xcmp, coeff, NULL, uj, NULL);
+	err = gretl_matrix_ols(xj, Xcmp, b, NULL, uj, NULL);
 
 	if (!err) {
-	    qn[j] = 0.0;
+	    rq->qn[j] = 0.0;
 	    for (i=0; i<n; i++) {
 		ui = uj->val[i] / f->val[i];
-		qn[j] += ui * ui;
+		rq->qn[j] += ui * ui;
 	    }
 	}
     }
 
  bailout:
 
-    gretl_matrix_free(coeff);
-    gretl_matrix_free(bdiff);
+    gretl_matrix_free(b);
     gretl_matrix_free(f);
     gretl_matrix_free(xj);
     gretl_matrix_free(uj);
@@ -366,7 +453,7 @@ static gretl_matrix *get_XTX_inverse (const gretl_matrix *X, int *err)
     return XTX;
 }
 
-/* IID version of rank-inversion confidence interval 
+/* prep for IID version of rank-inversion confidence interval 
    calculation
 */
 
@@ -388,162 +475,115 @@ static int make_iid_qn (const gretl_matrix *X, double *qn)
     return err;
 }
 
-/* OPT_I for intervals; OPT_N for no df correction; 
-   OPT_R for robust (not iid) 
-*/
+/* allocate workspace to be fed to the Fortran function */
 
-static int rq_fit_br (gretl_matrix *y, gretl_matrix *X, 
-		      double tau, double alpha, gretlopt opt,
-		      MODEL *pmod, gretl_matrix *theta)
+static int br_info_alloc (struct br_info *rq, int n, int p,
+			  double tau, double alpha,
+			  gretlopt opt)
 {
-    integer p = gretl_matrix_cols(X);
-    integer n = gretl_matrix_rows(X);
-    integer n5 = n + 5;
-    integer p3 = p + 3;
-    integer p4 = p + 4;
-    integer *s, *h, *ispace = NULL;
-    double *rspace = NULL;
-    double *coeff, *resid;
-    double *wa, *wb;
-    double *qn = NULL;
-    double *sol, *dsol;
-    gretl_matrix *tnmat = NULL;
-    gretl_matrix *ci = NULL;
     size_t rsize, isize;
-    double tol = calc_eps23;
-    double big = NADBL;
-    double cut = 0.0;
-    integer nsol = 2;  /* set to min. allowed */
-    integer ndsol = 2; /* set to min. allowed */
+
+    rq->rspace = NULL;
+    rq->ispace = NULL;
+    rq->ci = NULL;
+    rq->tnmat = NULL;
+
+    rq->n5 = n + 5;
+    rq->p3 = p + 3;
+    rq->p4 = p + 4;
+    rq->nsol = rq->ndsol = 2;
+
+    rsize = p + n + rq->n5 * rq->p4 + n + p + rq->nsol * rq->p3 + rq->ndsol * n;
+    isize = n + rq->nsol * p;
+
+    rq->rspace = malloc(rsize * sizeof *rq->rspace);
+    if (rq->rspace == NULL) {
+	return E_ALLOC;
+    }
+
+    rq->ispace = malloc(isize * sizeof *rq->ispace);
+    if (rq->ispace == NULL) {
+	return E_ALLOC;
+    }
+
+    rq->ci = gretl_matrix_alloc(4, p);
+    rq->tnmat = gretl_matrix_alloc(4, p);
+
+    if (rq->ci == NULL || rq->tnmat == NULL) {
+	return E_ALLOC;
+    }
+
+    /* real arrays */
+    rq->coeff = rq->rspace;
+    rq->resid = rq->coeff + p;
+    rq->wa    = rq->resid + n;
+    rq->wb    = rq->wa + rq->n5 * rq->p4;
+    rq->qn    = rq->wb + n;
+    rq->sol   = rq->qn + p;
+    rq->dsol  = rq->sol + rq->nsol * rq->p3;
+
+    /* integer arrays */
+    rq->s = rq->ispace;
+    rq->h = rq->s + n;
+
+    rq->n = n;
+    rq->p = p;
+    rq->tau = tau;
+    rq->tol = calc_eps23;
+    rq->big = NADBL;
+
+    if (opt & OPT_N) {
+	/* no df correction */
+	rq->cut = normal_cdf_inverse(1 - alpha/2);
+    } else {
+	rq->cut = student_cdf_inverse(n - p, 1 - alpha/2);
+    }
+
+    return 0;
+}
+
+static void br_info_reinit (gretl_matrix *X, struct br_info *rq)
+{
+    rq->n = X->rows;
+    rq->p = X->cols;
+
+    rq->n5 = rq->n + 5;
+    rq->p3 = rq->p + 3;
+    rq->p4 = rq->p + 4;
+    rq->nsol = rq->ndsol = 2;
+}
+
+/* Call Barrodale-Roberts Fortran code */
+
+static int real_br_calc (gretl_matrix *y, gretl_matrix *X, 
+			 double tau, struct br_info *rq,
+			 int calc_ci)
+{
     integer ift, lsol = 0;
-    int do_ci = (opt & OPT_I)? 1 : 0;
-    int iid = !(opt & OPT_R);
-    int i, err = 0;
+    logical lci1 = calc_ci;
+    int err = 0;
 
-#if QDEBUG
-    fprintf(stderr, "rq_fit_br: alpha = %g, do_ci = %d, iid = %d, tcrit = %d\n", 
-	    alpha, do_ci, iid, (opt & OPT_N)? 0 : 1);
-#endif
+    rqbr_(&rq->n, &rq->p, &rq->n5, &rq->p3, &rq->p4, 
+	  X->val, y->val, &tau, &rq->tol, &ift,
+	  rq->coeff, rq->resid, rq->s, rq->wa, rq->wb, 
+	  &rq->nsol, &rq->ndsol, rq->sol, rq->dsol,
+	  &lsol, rq->h, rq->qn, &rq->cut, 
+	  rq->ci->val, rq->tnmat->val, 
+	  &rq->big, &lci1);
 
-    rsize = p + n + n5 * p4 + n + p + nsol * p3 + ndsol * n;
-    isize = n + nsol * p;
-
-    rspace = malloc(rsize * sizeof *rspace);
-    if (rspace == NULL) {
-	return E_ALLOC;
+    if (ift == 1) {
+	fprintf(stderr, "Warning: solution may be non-unique\n");
+    } else if (ift == 2){ 
+	fprintf(stderr, "Premature end: conditioning problem in X?\n");
+	err = E_NOCONV;
     }
-
-    ispace = malloc(isize * sizeof *ispace);
-    if (ispace == NULL) {
-	free(rspace);
-	return E_ALLOC;
-    }
-
-    coeff = rspace;
-    resid = coeff + p;
-    wa = resid + n;
-    wb = wa + n5 * p4;
-    qn = wb + n;
-    sol = qn + p;
-    dsol = sol + nsol * p3;
-
-    s = ispace;
-    h = s + n;
-
-    ci = gretl_matrix_alloc(4, p);
-    tnmat = gretl_matrix_alloc(4, p);
-
-    if (ci == NULL || tnmat == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    if (do_ci) {
-	if (opt & OPT_N) {
-	    /* no df correction */
-	    cut = normal_cdf_inverse(1 - alpha/2);
-	    fprintf(stderr, "Normal cutoff = %g\n", cut);
-	} else {
-	    cut = student_cdf_inverse(n - p, 1 - alpha/2);
-	    fprintf(stderr, "t cutoff = %g\n", cut);
-	}
-
-	if (iid) {
-	    /* assuming iid errors */
-	    err = make_iid_qn(X, qn);
-	} else {
-	    /* robust variant */
-	    err = make_nid_qn(y, X, qn, tau, tol);
-	}
-    } 
-    
-    if (!err) {
-	logical lci1 = do_ci;
-
-	rqbr_(&n, &p, &n5, &p3, &p4, X->val, y->val, &tau, &tol, &ift,
-	      coeff, resid, s, wa, wb, &nsol, &ndsol, sol, dsol,
-	      &lsol, h, qn, &cut, ci->val, tnmat->val, &big, &lci1);
-
-	if (ift == 1) {
-	    fprintf(stderr, "Warning: solution may be non-unique\n");
-	} else if (ift == 2){ 
-	    fprintf(stderr, "Premature end: conditioning problem in X?\n");
-	    err = E_NOCONV;
-	}
-    }
-
-    if (!err && do_ci) {
-	rq_interpolate_intervals(ci, tnmat, cut);
-    } 
-
-    if (!err && pmod != NULL) {
-	rq_transcribe_results(pmod, y, tau, coeff, resid);
-	if (do_ci) {
-	    rq_attach_intervals(pmod, ci, alpha, opt);
-	}
-    }
-
-    if (!err && theta != NULL) {
-	for (i=0; i<p; i++) {
-	    theta->val[i] = coeff[i];
-	}
-    }    
-
- bailout:
-
-    free(rspace);
-    free(ispace);
-    gretl_matrix_free(ci);
-    gretl_matrix_free(tnmat);
 
     return err;
 }
 
-/* wrapper struct for use with Frisch-Newton method */
+/* allocate workspace to be fed to the Fortran F-N function */
 
-struct rq_info {
-    integer n, p;
-    double tau;
-    double beta;
-    double eps;
-    double *rspace;
-    double *rhs;
-    double *d;
-    double *u;
-    double *wn;
-    double *wp;
-    integer nit[3];
-    integer info;
-};
-
-static void rq_info_free (struct rq_info *rq)
-{
-    free(rq->rspace);
-}
-
-/* allocate workspace to be fed to the Fortran functions */
-
-static int rq_info_alloc (struct rq_info *rq, int n, int p,
+static int fn_info_alloc (struct fn_info *rq, int n, int p,
 			  double tau)
 {
     int n10 = n * 10;
@@ -577,7 +617,7 @@ static int rq_info_alloc (struct rq_info *rq, int n, int p,
 
 static void rq_workspace_init (const gretl_matrix *XT,
 			       double tau, 
-			       struct rq_info *ws)
+			       struct fn_info *ws)
 {
     double xsum;
     int p = gretl_matrix_rows(XT);
@@ -607,7 +647,7 @@ static void rq_workspace_init (const gretl_matrix *XT,
 
 static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 			  gretl_matrix *XT, double tau,
-			  struct rq_info *rq)
+			  struct fn_info *rq)
 {
     gretl_matrix *V = NULL;
     gretl_matrix *vx = NULL;
@@ -718,7 +758,7 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 
 static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 			  gretl_matrix *XT, double tau,
-			  struct rq_info *rq)
+			  struct fn_info *rq)
 {
     gretl_matrix *p1 = NULL;
     gretl_matrix *f = NULL;
@@ -726,7 +766,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
     gretl_matrix *fXX = NULL;
     gretl_matrix *XTX = NULL;
     gretl_matrix *V = NULL;
-    double h, tau_h, x, eps23;
+    double h, x, eps23;
     int n = rq->n;
     int p = rq->p;
     int i, t, err = 0;
@@ -756,8 +796,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 	goto bailout;
     }
 	
-    tau_h = tau + h;
-    rq_workspace_init(XT, tau_h, rq);
+    rq_workspace_init(XT, tau + h, rq);
     rqfnb_(&n, &p, XT->val, y->val, rq->rhs, 
 	   rq->d, rq->u, &rq->beta, &rq->eps, 
 	   rq->wn, rq->wp, rq->nit, &rq->info);
@@ -772,8 +811,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 	p1->val[i] = rq->wp[i];
     }
 
-    tau_h = tau - h;
-    rq_workspace_init(XT, tau_h, rq);
+    rq_workspace_init(XT, tau - h, rq);
     rqfnb_(&n, &p, XT->val, y->val, rq->rhs, 
 	   rq->d, rq->u, &rq->beta, &rq->eps, 
 	   rq->wn, rq->wp, rq->nit, &rq->info);
@@ -841,17 +879,141 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
     return err;
 }
 
+static int get_ci_alpha (double *a)
+{
+    double c = get_optval_double(QUANTREG, OPT_I);
+
+    if (na(c)) {
+	*a = 0.1;
+    } else if (c > 1.0 && c < 100.0) {
+	*a = 1 - c / 100;
+    } else if (c < 0.1 || c > .999) {
+	gretl_errmsg_sprintf("Confidence level out of bounds");
+	return E_DATA;
+    } else {
+	*a = 1 - c;
+    }
+
+    return 0;
+}
+
+static int 
+write_tbeta_block (gretl_matrix *tbeta, int nt, double *coeff,
+		   gretl_matrix *ci, int k)
+
+{
+    double blo, bhi;
+    int p = ci->cols;
+    int i;
+
+    for (i=0; i<p; i++) {
+	blo = gretl_matrix_get(ci, 1, i);
+	bhi = gretl_matrix_get(ci, 2, i);
+	gretl_matrix_set(tbeta, k, 0, coeff[i]);
+	gretl_matrix_set(tbeta, k, 1, blo);
+	gretl_matrix_set(tbeta, k, 2, bhi);
+	k += nt;
+    }
+
+    return 0;
+}
+
+/* sub-driver for Barrodale-Roberts estimation, with confidence
+   intervals
+*/
+
+static int rq_fit_br (gretl_matrix *y, gretl_matrix *X, 
+		      gretl_vector *tauvec, gretlopt opt, 
+		      MODEL *pmod)
+{
+    struct br_info rq;
+    gretl_matrix *tbeta = NULL;
+    integer n = y->rows;
+    integer p = X->cols;
+    double tau, alpha;
+    int i, ntau;
+    int err = 0;
+
+    err = get_ci_alpha(&alpha);
+    if (err) {
+	/* return right away: don't call br_info_free! */
+	return err;
+    }
+
+    ntau = gretl_vector_get_length(tauvec);
+    tau = gretl_vector_get(tauvec, 0);
+
+    err = br_info_alloc(&rq, n, p, tau, alpha, opt);
+
+    if (ntau > 1) {
+	tbeta = gretl_zero_matrix_new(p * ntau, 3);
+	if (tbeta == NULL) {
+	    err = E_ALLOC;
+	} 
+    } 
+
+    for (i=0; i<ntau && !err; i++) {
+	tau = rq.tau = gretl_vector_get(tauvec, i);
+
+#if QDEBUG
+	fprintf(stderr, "rq_fit_br: i = %d, tau = %g\n", i, tau);
+#endif
+
+	/* preliminary calculations relating to confidence intervals */
+	if (opt & OPT_R) {
+	    /* robust variant */
+	    err = make_nid_qn(y, X, &rq);
+	} else {
+	    /* assuming iid errors */
+	    err = make_iid_qn(X, rq.qn);
+	}
+
+	if (!err) {
+	    /* get the actual estimates */
+	    err = real_br_calc(y, X, tau, &rq, 1);
+	}
+
+	if (!err) {
+	    /* post-process confidence intervals */
+	    rq_interpolate_intervals(&rq);
+	    if (ntau == 1) {
+		/* done: just transcribe everything */
+		rq_transcribe_results(pmod, y, tau, rq.coeff, rq.resid);
+		rq_attach_intervals(pmod, rq.ci, alpha, opt);
+	    } else {
+		/* using multiple tau values */
+		write_tbeta_block(tbeta, ntau, rq.coeff, rq.ci, i);
+		br_info_reinit(X, &rq);
+	    }
+	}
+    }
+
+    if (tbeta != NULL) {
+	if (err) {
+	    gretl_matrix_free(tbeta);
+	} else {
+	    err = rq_attach_multi_intervals(pmod, tauvec, tbeta, alpha, opt);
+	    tauvec = NULL;
+	}
+    }
+
+    gretl_vector_free(tauvec);
+    br_info_free(&rq);
+
+    return err;
+}
+
 /* sub-driver for Frisch-Newton interior point variant */
 
 static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT, 
 		      double tau, gretlopt opt, MODEL *pmod)
 {
-    struct rq_info rq;
+    struct fn_info rq;
     integer n = y->rows;
     integer p = XT->rows;
     int err = 0;
 
-    err = rq_info_alloc(&rq, n, p, tau);
+    err = fn_info_alloc(&rq, n, p, tau);
     if (err) {
 	return err;
     }
@@ -881,7 +1043,7 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 	}
     }
 
-    rq_info_free(&rq);
+    fn_info_free(&rq);
 
     return err;
 }
@@ -981,22 +1143,50 @@ static double get_user_tau (const char *s, double **Z, DATAINFO *pdinfo,
     return tau;
 }
 
-static int get_ci_alpha (double *a)
+static gretl_vector *get_user_tauvec (const char *s, double **Z, 
+				      DATAINFO *pdinfo, int *err)
 {
-    double c = get_optval_double(QUANTREG, OPT_I);
+    gretl_vector *tau = NULL;
+    gretl_vector *v;
 
-    if (na(c)) {
-	*a = 0.1;
-    } else if (c > 1.0 && c < 100.0) {
-	*a = 1 - c / 100;
-    } else if (c < 0.1 || c > .999) {
-	gretl_errmsg_sprintf("Confidence level out of bounds");
-	return E_DATA;
+    v = get_matrix_by_name(s);
+
+    if (v == NULL) {
+	tau = gretl_vector_alloc(1);
+	if (tau == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    tau->val[0] = get_user_tau(s, Z, pdinfo, err);
+	    if (*err) {
+		gretl_vector_free(tau);
+		tau = NULL;
+	    }
+	}
     } else {
-	*a = 1 - c;
+	int i, n = gretl_vector_get_length(v);
+	double p;
+
+	if (n == 0) {
+	    *err = E_DATA;
+	} else {
+	    for (i=0; i<n; i++) {
+		p = gretl_vector_get(v, i);
+		if (p < .01 || p > .99) {
+		    gretl_errmsg_sprintf("quantreg: tau must be >= .01 and <= .99");
+		    *err = E_DATA;
+		}
+	    }
+	}
+
+	if (!*err) {
+	    tau = gretl_matrix_copy(v);
+	    if (tau == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
     }
 
-    return 0;
+    return tau;
 }
 
 int rq_driver (const char *parm, MODEL *pmod,
@@ -1005,20 +1195,20 @@ int rq_driver (const char *parm, MODEL *pmod,
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
-    double tau;
+    gretl_vector *tauvec = NULL;
+    double tau = NADBL;
     int err = 0;
-
-    /* FIXME: we should probably accept a matrix for tau. */
-
-    tau = get_user_tau(parm, Z, pdinfo, &err);
-    if (err) {
-	return E_DATA;
-    }
 
     if ((opt & OPT_I) && pmod->list[0] < 3) {
 	gretl_errmsg_set("quantreg: can't do confidence intervals with "
 			 "only one regressor");
 	err = E_DATA;
+    }
+
+    if (opt & OPT_I) {
+	tauvec = get_user_tauvec(parm, Z, pdinfo, &err);
+    } else {
+	tau = get_user_tau(parm, Z, pdinfo, &err);
     }
 
     if (!err) {
@@ -1028,12 +1218,7 @@ int rq_driver (const char *parm, MODEL *pmod,
     if (!err) {
 	if (opt & OPT_I) {
 	    /* doing confidence intervals -> use Borrodale-Roberts */
-	    double alpha;
-
-	    err = get_ci_alpha(&alpha);
-	    if (!err) {
-		err = rq_fit_br(y, X, tau, alpha, opt, pmod, NULL);
-	    }
+	    err = rq_fit_br(y, X, tauvec, opt, pmod);
 	} else {
 	    /* use Frisch-Newton */
 	    err = rq_fit_fn(y, X, tau, opt, pmod);

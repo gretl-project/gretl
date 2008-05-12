@@ -2918,6 +2918,11 @@ static int real_do_model (int action)
 	err = model_output(pmod, prn);
 	break;	
 
+    case QUANTREG:
+	*pmod = quantreg(libcmd.param, libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	err = model_output(pmod, prn);
+	break;	
+
     case MPOLS:
 	*pmod = mp_ols(libcmd.list, (const double **) Z, datainfo);
 	err = model_output(pmod, prn);

@@ -587,6 +587,10 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 {
     double ladsum = gretl_model_get_double(pmod, "ladsum");
 
+    if (na(ladsum)) {
+	return;
+    }
+
     if (tex_format(prn)) {  
 	char x1str[32], x2str[32];
 
@@ -1024,7 +1028,7 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("ML Heckit");
 	}
     } else if (pmod->ci == LAD) {
-	if (gretl_model_get_double(pmod, "tau") != NADBL) {
+	if (gretl_model_get_int(pmod, "rq")) {
 	    return N_("Quantile");
 	} else {
 	    return N_("LAD");
@@ -1989,6 +1993,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
     int slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
     int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
     int intervals = gretl_model_get_data(pmod, "coeff_intervals") != NULL;
+    int sequence = gretl_model_get_data(pmod, "rq_sequence") != NULL;
 
     if (plain_format(prn)) {
 	if (pmod->ci == MPOLS) {
@@ -2003,6 +2008,9 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	} else if (intervals) {
 	    pputs(prn, _("      VARIABLE       COEFFICIENT        LOWER   "
 			 "         UPPER\n\n"));
+	} else if (sequence) {
+	    pputs(prn, _("      VARIABLE      TAU    COEFFICIENT      "
+			 "LOWER        UPPER\n\n"));
 	} else {
 	    print_coeff_heading(use_param, prn);
 	}
@@ -3013,6 +3021,54 @@ static void print_coeff_separator (const char *s, PRN *prn)
 }
 
 static int 
+print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+{
+    gretl_vector *tauvec = gretl_model_get_data(pmod, "rq_tauvec");
+    gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
+    double tau, bi, blo, bhi;
+    char test[16];
+    int n, taulen = 0;
+    int ntau, i, j, k = 0;
+
+    if (tauvec == NULL || B == NULL) {
+	return E_DATA;
+    }
+
+    ntau = gretl_vector_get_length(tauvec);
+
+    for (j=0; j<ntau; j++) {
+	sprintf(test, "%g", gretl_vector_get(tauvec, j));
+	n = strlen(test);
+	if (n > taulen) {
+	    taulen = n;
+	}
+    }
+
+    n = (taulen < 5)? 5 : taulen;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	pprintf(prn, "  %-15s  ", pdinfo->varname[pmod->list[i+2]]);
+	for (j=0; j<ntau; j++) {
+	    tau = gretl_vector_get(tauvec, j);
+	    bi  = gretl_matrix_get(B, k, 0);
+	    blo = gretl_matrix_get(B, k, 1);
+	    bhi = gretl_matrix_get(B, k, 2);
+	    if (j > 0) {
+		pputs(prn, "                   ");
+	    }
+	    pprintf(prn, "%*.*f %#12.6g %#12.6g %#12.6g\n", n, taulen - 2,
+		    tau, bi, blo, bhi);
+	    k++;
+	}
+	if (i < pmod->ncoeff - 1) {
+	    pputc(prn, '\n');
+	}
+    }
+
+    return 0;
+}
+
+static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *intervals = NULL;
@@ -3021,6 +3077,10 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     model_coeff mc;
     int nc = pmod->ncoeff;
     int i, err = 0, gotnan = 0;
+
+    if (gretl_model_get_data(pmod, "rq_sequence") != NULL) {
+	return print_rq_sequence(pmod, pdinfo, prn);
+    }
 
     if (pmod->ci == PANEL) {
 	nc = pmod->list[0] - 1;

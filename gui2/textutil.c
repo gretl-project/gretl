@@ -286,26 +286,23 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (pmod->errcode) { 
-	    errbox("Couldn't format model");
-	    err = 1;
+	    err = pmod->errcode;
+	} else if (tex_format(prn)) {
+	    err = tex_print_model(pmod, datainfo, 
+				  get_tex_eqn_opt(), 
+				  prn);
 	} else {
-	    if (tex_format(prn)) {
-		tex_print_model(pmod, datainfo, 
-				get_tex_eqn_opt(), 
-				prn);
-	    } else {
-		printmodel(pmod, datainfo, OPT_NONE, prn);
-	    }
+	    err = printmodel(pmod, datainfo, OPT_NONE, prn);
 	}
     } else if (cmd == VAR || cmd == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 
-	gretl_VAR_print(var, datainfo, OPT_NONE, prn);
+	err = gretl_VAR_print(var, datainfo, OPT_NONE, prn);
     } else if (cmd == VAR_IRF || cmd == VAR_DECOMP) {
 	windata_t *parent = vwin->gretl_parent;
 
 	if (parent == NULL) {
-	    errbox("Couldn't find the VAR");
+	    err = E_DATA;
 	} else {
 	    GRETL_VAR *var = (GRETL_VAR *) parent->data;
 	    int h = vwin->active_var; /* here records preferred horizon */
@@ -319,12 +316,15 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
     } else if (cmd == SYSTEM) {
 	equation_system *sys = (equation_system *) vwin->data;
 
-	gretl_system_print(sys, (const double **) Z, datainfo, OPT_NONE, prn);
+	err = gretl_system_print(sys, (const double **) Z, datainfo, 
+				 OPT_NONE, prn);
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);
     } 
 
-    if (!err) {
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	if (what == W_PREVIEW) {
 	    /* there's no RTF preview option */
 	    view_latex(prn);

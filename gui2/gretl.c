@@ -522,6 +522,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Robust estimation"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Model/Robust estimation/Least _Absolute Deviation..."), NULL, 
       model_callback, LAD, NULL, GNULL },
+    { N_("/Model/Robust estimation/_Quantile regression..."), NULL, 
+      model_callback, QUANTREG, NULL, GNULL },
     { N_("/Model/Robust estimation/_Rank correlation..."), NULL, 
       selector_callback, SPEARMAN, NULL, GNULL },
     { N_("/Model/_Maximum likelihood..."), NULL, gretl_callback, MLE, NULL, GNULL },

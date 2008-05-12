@@ -3066,6 +3066,7 @@ static struct type_mapper mapper[] = {
     { GRETL_TYPE_CHAR_ARRAY,   "chararray",   "7" },
     { GRETL_TYPE_CMPLX_ARRAY,  "cmplxarray",  "8" },
     { GRETL_TYPE_STRUCT,       "struct" ,     "9" },
+    { GRETL_TYPE_MATRIX,       "matrix" ,    "10" },
     { GRETL_TYPE_NONE,         "none",        "0" },
 };
 
@@ -3167,6 +3168,10 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	    }
 	} else if (item->type == GRETL_TYPE_STRING) {
 	    fprintf(fp, "%s", (char *) item->ptr);
+	} else if (item->type == GRETL_TYPE_MATRIX) {
+	    gretl_matrix *m = (gretl_matrix *) item->ptr;
+
+	    gretl_xml_put_matrix(m, NULL, fp);
 	} else {
 	    ; /* no-op: not handled */
 	}
@@ -3576,7 +3581,19 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 		err = gretl_model_set_data(pmod, key, cvals, t,
 					   nelem * sizeof *cvals);
 	    }	    
-	} 
+	} else if (t == GRETL_TYPE_MATRIX) {
+	    xmlNodePtr child = cur->xmlChildrenNode;
+	    gretl_matrix *m;
+
+	    if (child == NULL) {
+		err = E_DATA;
+	    } else {
+		m = gretl_xml_get_matrix(child, doc, &err);
+		if (!err) {
+		    err = gretl_model_set_matrix_as_data(pmod, key, m);
+		}
+	    }
+	}
 
 	xmlFree(key);
 	xmlFree(typestr);

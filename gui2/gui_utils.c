@@ -2624,6 +2624,12 @@ check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
     return ret;
 }
 
+static int tau_sequence_model (const MODEL *pmod)
+{
+    return pmod->ci == LAD && 
+	gretl_model_get_data(pmod, "rq_tauvec") != NULL;
+}
+
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title) 
 {
@@ -2647,7 +2653,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	add_model_dataset_items(vwin);
     }
 
-    if (latex_is_ok() && !pmod->errcode) {
+    if (latex_is_ok() && !pmod->errcode && !tau_sequence_model(pmod)) {
 	add_model_tex_items(vwin);
     }    
 
@@ -2761,7 +2767,7 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
     char path[128];
     int i, a, ok;
 
-    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) { 
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) {
 	/* FIXME? */
 	flip(ifac, "/Tests", FALSE);
 	return;
@@ -2830,6 +2836,15 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     /* disallow saving an already-saved model */
     if (pmod->name != NULL) {
 	model_save_state(vwin->ifac, FALSE);
+    }
+
+    if (tau_sequence_model(pmod)) {
+	/* relax later */
+	flip(vwin->ifac, "/Tests", FALSE);
+	flip(vwin->ifac, "/Save", FALSE);
+	flip(vwin->ifac, "/Analysis", FALSE);
+	flip(vwin->ifac, "/Graphs", FALSE);
+	return;
     }
 
     if (pmod->ci == MLE || pmod->ci == GMM) {
@@ -3995,6 +4010,10 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     gboolean s;
     int ok = 1, graphs_ok = 1;
 
+    if (tau_sequence_model(pmod)) {
+	return FALSE;
+    }
+
     if (Z == NULL) {
 	flip(mwin->ifac, "/File/Save to session as icon", FALSE);
 	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
@@ -4003,8 +4022,6 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(mwin->ifac, "/Tests", FALSE);
 	flip(mwin->ifac, "/Graphs", FALSE);
 	flip(mwin->ifac, "/Analysis", FALSE);
-	flip(mwin->ifac, "/LaTeX", FALSE);
-
 	return FALSE;
     }
 
