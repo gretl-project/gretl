@@ -183,7 +183,7 @@ static int garch_p = 1;
 static int garch_q = 1;
 static int arma_const = 1;
 static int arma_x12 = 0;
-static int arma_hessian = 0;
+static int arma_hessian = 1;
 static int selvar;
 static int jcase = 2;
 static int verbose;
@@ -2264,30 +2264,18 @@ static void construct_cmdlist (selector *sr)
     if (!sr->error) {
 	/* record some choices as defaults */
 	if (sr->code == VECM || sr->code == VAR || sr->code == VLAGSEL) {
-	    if (sr->opts & OPT_D) {
-		want_seasonals = 1;
-	    } else {
-		want_seasonals = 0;
-	    }
+	    want_seasonals = (sr->opts & OPT_D)? 1 : 0;
 	}
 	if (sr->code == VECM || sr->code == VAR) {
 	    default_order = order;
 	}
-	if ((sr->code == VAR || sr->code == VLAGSEL) && (sr->opts & OPT_T)) {
-	    vartrend = 1;
+	if (sr->code == VAR || sr->code == VLAGSEL) {
+	    vartrend = (sr->opts & OPT_T)? 1 : 0;
 	}
 	if (sr->code == ARMA) {
-	    if (sr->opts & OPT_N) {
-		arma_const = 0;
-	    } 
-	    if (sr->opts & OPT_H) {
-		arma_hessian = 1;
-	    } 
-	    if (sr->opts & OPT_X) {
-		arma_x12 = 1;
-	    } else {
-		arma_x12 = 0;
-	    }
+	    arma_const = (sr->opts & OPT_N)? 0 : 1;
+	    arma_hessian = (sr->opts & OPT_H)? 1 : 0;
+	    arma_x12 = (sr->opts & OPT_X)? 1 : 0;
 	}
 	if (sr->code == GARCH) {
 	    if (sr->opts & OPT_F) {
@@ -2297,9 +2285,7 @@ static void construct_cmdlist (selector *sr)
 		libset_set_bool("fcp", 0);
 	    }
 	}
-	if (sr->opts & OPT_V) {
-	    verbose = 1;
-	}
+	verbose = (sr->opts & OPT_V)? 1 : 0;
     }
 
     selector_cancel_unavailable_options(sr);

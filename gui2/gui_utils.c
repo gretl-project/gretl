@@ -2665,6 +2665,10 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	add_dummies_to_plot_menu(vwin);
     }
 
+    if (gretl_model_get_data(pmod, "rq_sequence")) {
+	add_tau_plot_menu(vwin);
+    }
+
     g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
 		     G_CALLBACK(check_model_menu), vwin);
 
@@ -3129,17 +3133,17 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     }
 }
 
-static void plot_dummy_call (gpointer data, guint v, GtkWidget *widget)
+static void plot_dummy_call (gpointer p, guint v, GtkWidget *widget)
 {
     GtkCheckMenuItem *item = GTK_CHECK_MENU_ITEM(widget);
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
 
     if (item->active) vwin->active_var = v; 
 }
 
 static void add_dummies_to_plot_menu (windata_t *vwin)
 {
-    GtkItemFactoryEntry dumitem;
+    GtkItemFactoryEntry item;
     MODEL *pmod = vwin->data;
     const gchar *mpath[] = {
 	"/Graphs/dumsep", 
@@ -3149,8 +3153,8 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     char tmp[VNAMELEN2];
     int i, done_branch = 0;
 
-    dumitem.path = NULL;
-    dumitem.accelerator = NULL; 
+    item.path = NULL;
+    item.accelerator = NULL; 
 
     /* put the dummy independent vars on the menu list */
     for (i=2; i<=pmod->list[0]; i++) {
@@ -3166,102 +3170,90 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
 	if (!done_branch) {
 	    /* add separator */
-	    dumitem.callback = NULL;
-	    dumitem.callback_action = 0;
-	    dumitem.item_type = "<Separator>";
-	    dumitem.path = g_strdup_printf(_("%s"), mpath[0]);
-	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	    g_free(dumitem.path);
+	    item.callback = NULL;
+	    item.callback_action = 0;
+	    item.item_type = "<Separator>";
+	    item.path = g_strdup_printf(_("%s"), mpath[0]);
+	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	    g_free(item.path);
 
 	    /* add menu branch */
-	    dumitem.item_type = "<Branch>";
-	    dumitem.path = g_strdup_printf(_("%s"), mpath[1]);
-	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	    g_free(dumitem.path);
+	    item.item_type = "<Branch>";
+	    item.path = g_strdup_printf(_("%s"), mpath[1]);
+	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	    g_free(item.path);
 
 	    /* add "none" option */
-	    dumitem.callback = plot_dummy_call;
-	    dumitem.item_type = "<RadioItem>";
-	    dumitem.path = g_strdup_printf(_("%s/none"), mpath[1]);
-	    radiopath = g_strdup(dumitem.path);
-	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	    g_free(dumitem.path);
+	    item.callback = plot_dummy_call;
+	    item.item_type = "<RadioItem>";
+	    item.path = g_strdup_printf(_("%s/none"), mpath[1]);
+	    radiopath = g_strdup(item.path);
+	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	    g_free(item.path);
 
 	    done_branch = 1;
 	} 
 
-	dumitem.callback_action = pmod->list[i]; 
+	item.callback_action = pmod->list[i]; 
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
-	dumitem.callback = plot_dummy_call;	    
-	dumitem.item_type = radiopath;
-	dumitem.path = g_strdup_printf(_("%s/By %s"), mpath[1], tmp);
-	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	g_free(dumitem.path);
+	item.callback = plot_dummy_call;	    
+	item.item_type = radiopath;
+	item.path = g_strdup_printf(_("%s/By %s"), mpath[1], tmp);
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
     }
 
     g_free(radiopath);
 }
 
+static void tau_plot_call (gpointer p, guint v, GtkWidget *widget)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = (MODEL *) vwin->data;
+    int err;
+
+    err = plot_tau_sequence(pmod, datainfo, v);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+    }    
+}
+
 static void add_tau_plot_menu (windata_t *vwin)
 {
-    GtkItemFactoryEntry dumitem;
+    GtkItemFactoryEntry item;
     MODEL *pmod = vwin->data;
-    const gchar *mpath = N_("/Graphs/XXX")
-    gchar *radiopath = NULL;
+    const gchar *mpath = N_("/Graphs/tau sequence");
     char tmp[VNAMELEN2];
-    int i, done_branch = 0;
+    int i;
 
-    dumitem.path = NULL;
-    dumitem.accelerator = NULL; 
+    flip(vwin->ifac, "/Graphs", TRUE);
+    flip(vwin->ifac, "/Graphs/Residual plot", FALSE);
+    flip(vwin->ifac, "/Graphs/Fitted, actual plot", FALSE);
 
-    /* put the dummy independent vars on the menu list */
+    item.accelerator = NULL; 
+    item.callback = NULL; 
+
+    /* add menu branch */
+    item.item_type = "<Branch>";
+    item.path = g_strdup_printf(_("%s"), mpath);
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
+
+    /* put the independent vars on the menu list */
+
+    item.item_type = NULL;
+    item.callback = tau_plot_call;
+
     for (i=2; i<=pmod->list[0]; i++) {
-
-	if (pmod->list[i] == LISTSEP) {
-	    break;
-	}
-
-	if (pmod->list[i] == 0 ||
-	    !gretl_isdummy(datainfo->t1, datainfo->t2, Z[pmod->list[i]])) {
-	    continue;
-	}
-
-	if (!done_branch) {
-	    /* add separator */
-	    dumitem.callback = NULL;
-	    dumitem.callback_action = 0;
-	    dumitem.item_type = "<Separator>";
-	    dumitem.path = g_strdup_printf(_("%s"), mpath[0]);
-	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	    g_free(dumitem.path);
-
-	    /* add menu branch */
-	    dumitem.item_type = "<Branch>";
-	    dumitem.path = g_strdup_printf(_("%s"), mpath[1]);
-	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	    g_free(dumitem.path);
-
-	    /* add "none" option */
-	    dumitem.callback = plot_dummy_call;
-	    dumitem.item_type = "<RadioItem>";
-	    dumitem.path = g_strdup_printf(_("%s/none"), mpath[1]);
-	    radiopath = g_strdup(dumitem.path);
-	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	    g_free(dumitem.path);
-
-	    done_branch = 1;
-	} 
-
-	dumitem.callback_action = pmod->list[i]; 
+	item.callback_action = i - 2; 
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
-	dumitem.callback = plot_dummy_call;	    
-	dumitem.item_type = radiopath;
-	dumitem.path = g_strdup_printf(_("%s/By %s"), mpath[1], tmp);
-	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
-	g_free(dumitem.path);
+	item.path = g_strdup_printf("%s/%s", mpath, tmp);
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
     }
-
-    g_free(radiopath);
 }
 
 static void x12_output_callback (gpointer p, guint v, GtkWidget *w)

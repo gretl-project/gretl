@@ -28,7 +28,7 @@
 
 #include <errno.h>
 
-#define QDEBUG 1
+#define QDEBUG 0
 
 /* Frisch-Newton algorithm: we use this if we're not computing
    rank-inversion confidence intervals.

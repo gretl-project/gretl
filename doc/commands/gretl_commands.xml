@@ -624,8 +624,8 @@
 	  <effect>print covariance matrix</effect>
         </option>
         <option>
-	  <flag>--hessian</flag>
-	  <effect>base covariance matrix on the Hessian</effect>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
         </option>
         <option>
 	  <flag>--nc</flag>
@@ -727,10 +727,11 @@
       </para>
 
       <para context="cli">
-	When the native ARMA code is used, estimated standard errors are based
-	on the Outer Product of the Gradient by default, but if the
-	<lit>--hessian</lit> option is given they are instead based on the
-	negative inverse of the Hessian (which is approximated numerically).
+	When the native ARMA code is used, estimated standard errors are by
+	default based on a numerical approximation to the (negative inverse
+	of) the Hessian.  But if the <lit>--opg</lit> option is given they are
+	instead based on the Outer Product of the Gradient.  This option is
+	ignored if estimation via <program>X-12-ARIMA</program> is selected. 
       </para>
 
       <para>The AIC value given in connection with ARIMA models is

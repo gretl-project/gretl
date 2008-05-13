@@ -3167,6 +3167,14 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     return gnuplot_make_graph();
 }
 
+#ifndef min
+# define min(x,y) (((x)<(y))? (x):(y))
+#endif
+
+#ifndef max
+# define max(x,y) (((x)>(y))? (x):(y))
+#endif
+
 int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 		       int k)
 {
@@ -3174,6 +3182,9 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     gretl_matrix *tau = gretl_model_get_data(pmod, "rq_tauvec");
     gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
     double tau_i, bi, blo, bhi;
+    double alpha, cval, olsband;
+    double ymin[2], ymax[2];
+    gchar *tmp;
     int ntau, i, j, err;
 
     if (tau == NULL || B == NULL) {
@@ -3187,27 +3198,59 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if ((err = gnuplot_init(PLOT_REGULAR, &fp))) { /* FIXME */
 	return err;
-    }    
+    }   
+
+    alpha = gretl_model_get_double(pmod, "rq_alpha");
+    cval = 100 * (1 - alpha);
+    olsband = student_cdf_inverse(pmod->dfd, 1 - alpha/2) * 
+	pmod->sderr[k];
+
+    /* Try to figure best placement of key */
+    j = k * ntau;
+    ymin[0] = min(gretl_matrix_get(B, j, 1), pmod->coeff[k] - olsband);
+    ymax[0] = max(gretl_matrix_get(B, j, 2), pmod->coeff[k] + olsband);
+    j += ntau - 1;
+    ymin[1] = min(gretl_matrix_get(B, j, 1), pmod->coeff[k] - olsband);
+    ymax[1] = max(gretl_matrix_get(B, j, 2), pmod->coeff[k] + olsband);
 
     fputs("# tau sequence plot\n", fp);
     fputs("set xrange [0.0:1.0]\n", fp);
 
-    gnuplot_missval_string(fp);
+    tmp = g_strdup_printf(G_("Coefficient on %s"), 
+			  pdinfo->varname[pmod->list[k+2]]);
+    fprintf(fp, "set title \"%s\"\n", tmp);
+    g_free(tmp);
 
     fputs("set style fill solid 0.4\n", fp);
-    fputs("set key left top\n", fp);
+
+    if (ymax[0] < .88 * ymax[1]) {
+	fputs("set key left top\n", fp);
+    } else if (ymax[1] < .88 * ymax[0]) {
+	fputs("set key right top\n", fp);
+    } else if (ymin[0] < .88 * ymin[1]) {
+	fputs("set key right bottom\n", fp);
+    } else {
+	fputs("set key left bottom\n", fp);
+    }
+
     fputs("plot \\\n", fp);
 
     /* plot the rq confidence band first so the other lines
        come out on top */
-    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n",
-	    G_("XX percent confidence interval"));
+    tmp = g_strdup_printf(G_("%g percent confidence interval"), cval);
+    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n", tmp);
+    g_free(tmp);
 
-    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1 , \\\n",
-	    G_("Point estimate"));
+    /* rq estimates */
+    fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1 , \\\n",
+	    G_("Quantile point estimates"));
 
-    fprintf(fp, "%g title '%s' w lines lt 1\n", pmod->coeff[k],
-	    G_("OLS coefficient"));
+    /* ols estimate plus (1 - alpha) band */
+    tmp = g_strdup_printf(G_("OLS estimate with %g percent band"), cval);
+    fprintf(fp, "%g title '%s' w lines lt 2 , \\\n", pmod->coeff[k], tmp);
+    g_free(tmp);
+    fprintf(fp, "%g notitle w dots lt 2 , \\\n", pmod->coeff[k] + olsband);
+    fprintf(fp, "%g notitle w dots lt 2\n", pmod->coeff[k] - olsband);
 
     gretl_push_c_numeric_locale();
 

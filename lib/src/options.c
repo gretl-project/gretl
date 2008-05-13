@@ -88,6 +88,7 @@ struct gretl_option gretl_opts[] = {
     { ARBOND,   OPT_H, "orthdev" },
     { ARBOND,   OPT_T, "two-step" },
     { ARMA,     OPT_C, "conditional" },
+    { ARMA,     OPT_G, "opg" },
     { ARMA,     OPT_H, "hessian" },
     { ARMA,     OPT_N, "nc" },    
     { ARMA,     OPT_Q, "quiet" },

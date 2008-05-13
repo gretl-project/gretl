@@ -1279,15 +1279,13 @@ static int kalman_undo_y_scaling (struct arma_info *ainfo,
 
 static int arma_use_hessian (gretlopt opt)
 {
-    if (getenv("ARMA_USE_HESSIAN") != NULL) {
-	return 1;
-    } else if (opt & OPT_H) {
-	return 1;
-    } else if (libset_get_int(ARMA_VCV) == VCV_HESSIAN) {
-	return 1;
+    if (opt & OPT_G) {
+	return 0;
+    } else if (libset_get_int(ARMA_VCV) == VCV_OP) {
+	return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 static int kalman_arma (const int *alist, double *coeff, 
@@ -2830,6 +2828,7 @@ MODEL arma_model (const int *list, const char *pqspec,
     if (vprn != prn) {
 	close_down_verbose_printer(vprn);
     }
+
     vprn = NULL;
 
     return armod;
