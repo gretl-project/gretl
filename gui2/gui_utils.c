@@ -92,6 +92,7 @@ static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_x12_output_menu_item (windata_t *vwin);
+static void add_tau_plot_menu (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, windata_t *vwin);
@@ -2624,10 +2625,11 @@ check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
     return ret;
 }
 
-static int tau_sequence_model (const MODEL *pmod)
+static int rq_special_model (const MODEL *pmod)
 {
     return pmod->ci == LAD && 
-	gretl_model_get_data(pmod, "rq_tauvec") != NULL;
+	(gretl_model_get_data(pmod, "rq_tauvec") != NULL ||
+	 gretl_model_get_data(pmod, "coeff_intervals") != NULL);
 }
 
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
@@ -2653,7 +2655,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	add_model_dataset_items(vwin);
     }
 
-    if (latex_is_ok() && !pmod->errcode && !tau_sequence_model(pmod)) {
+    if (latex_is_ok() && !pmod->errcode && !rq_special_model(pmod)) {
 	add_model_tex_items(vwin);
     }    
 
@@ -2838,7 +2840,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	model_save_state(vwin->ifac, FALSE);
     }
 
-    if (tau_sequence_model(pmod)) {
+    if (rq_special_model(pmod)) {
 	/* relax later */
 	flip(vwin->ifac, "/Tests", FALSE);
 	flip(vwin->ifac, "/Save", FALSE);
@@ -3143,6 +3145,68 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	"/Graphs/dumsep", 
 	N_("/Graphs/Separation")
     };
+    gchar *radiopath = NULL;
+    char tmp[VNAMELEN2];
+    int i, done_branch = 0;
+
+    dumitem.path = NULL;
+    dumitem.accelerator = NULL; 
+
+    /* put the dummy independent vars on the menu list */
+    for (i=2; i<=pmod->list[0]; i++) {
+
+	if (pmod->list[i] == LISTSEP) {
+	    break;
+	}
+
+	if (pmod->list[i] == 0 ||
+	    !gretl_isdummy(datainfo->t1, datainfo->t2, Z[pmod->list[i]])) {
+	    continue;
+	}
+
+	if (!done_branch) {
+	    /* add separator */
+	    dumitem.callback = NULL;
+	    dumitem.callback_action = 0;
+	    dumitem.item_type = "<Separator>";
+	    dumitem.path = g_strdup_printf(_("%s"), mpath[0]);
+	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	    g_free(dumitem.path);
+
+	    /* add menu branch */
+	    dumitem.item_type = "<Branch>";
+	    dumitem.path = g_strdup_printf(_("%s"), mpath[1]);
+	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	    g_free(dumitem.path);
+
+	    /* add "none" option */
+	    dumitem.callback = plot_dummy_call;
+	    dumitem.item_type = "<RadioItem>";
+	    dumitem.path = g_strdup_printf(_("%s/none"), mpath[1]);
+	    radiopath = g_strdup(dumitem.path);
+	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	    g_free(dumitem.path);
+
+	    done_branch = 1;
+	} 
+
+	dumitem.callback_action = pmod->list[i]; 
+	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
+	dumitem.callback = plot_dummy_call;	    
+	dumitem.item_type = radiopath;
+	dumitem.path = g_strdup_printf(_("%s/By %s"), mpath[1], tmp);
+	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	g_free(dumitem.path);
+    }
+
+    g_free(radiopath);
+}
+
+static void add_tau_plot_menu (windata_t *vwin)
+{
+    GtkItemFactoryEntry dumitem;
+    MODEL *pmod = vwin->data;
+    const gchar *mpath = N_("/Graphs/XXX")
     gchar *radiopath = NULL;
     char tmp[VNAMELEN2];
     int i, done_branch = 0;
@@ -4010,7 +4074,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     gboolean s;
     int ok = 1, graphs_ok = 1;
 
-    if (tau_sequence_model(pmod)) {
+    if (rq_special_model(pmod)) {
 	return FALSE;
     }
 
