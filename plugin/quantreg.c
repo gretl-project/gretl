@@ -34,10 +34,19 @@
    rank-inversion confidence intervals.
 */
 
-extern int rqfnb_ (integer *n, integer *p, double *a, double *y,
-		   double *rhs, double *d, double *u, double *beta,
-		   double *eps, double *wn, double *wp, 
-		   integer *nit, integer *info);
+extern int rqfnb_ (integer *n,    /* number of observations */
+		   integer *p,    /* number of parameters */
+		   double *a,     /* matrix of regressors */
+		   double *y,     /* dependent variable vector */
+		   double *rhs, 
+		   double *d, 
+		   double *u, 
+		   double *beta, 
+		   double *eps,    /* tolerance */
+		   double *wn,     /* work array, length n */
+		   double *wp,     /* work array, length p */
+		   integer *nit,   /* iteration counts */
+		   integer *info); /* exit status */
 
 /* Modified simplex, a la Barrodale-Roberts: this variant lets us get
    1-alpha confidence intervals using the rank-inversion method.
@@ -62,18 +71,19 @@ extern int rqbr_ (integer *n,    /* number of observations */
 				    "say 3*n; minimum value = 2" */
 		  integer *ndsol, /* estimated (row) dim. of dual solution array,
 				     "say 3*n; minimum value = 2" */
-		  double *sol,   /* primal solution array, size (p + 3) * nsol (?) */
+		  double *sol,   /* primal solution array, size (p + 3) * nsol */
 		  double *dsol,  /* dual solution array, size n * ndsol */
 		  integer *lsol, /* actual dimension of the solution arrays */
-		  integer *h,    /* matrix of basic observations indices, size p * nsol */
+		  integer *h,    /* matrix of observation indices, size p * nsol */
 		  double *qn,    /* vector of residual variances from projection of 
 				    each column of x on the remaining columns */
-		  double *cutoff,  /* critical point for N(0,1) */
+		  double *cutoff,  /* critical point for interval */
 		  double *ci,      /* matrix of confidence intervals, size 4 * p */
 		  double *tnmat,   /* matrix of JGPK rank-test statistics */
-		  double *big,     /* "large positive finite floating-point number" */
-		  logical *lci1);  /* do confidence intervals? */
+		  double *big,     /* "large positive floating-point number" */
+		  logical *lci1);  /* doing confidence intervals? */
 
+/* machine precision to the 2/3 */
 #define calc_eps23 (pow(2.22045e-16, 2/3.0))
 
 /* wrapper struct for use with Barrodale-Roberts */
@@ -207,8 +217,8 @@ static void rq_transcribe_results (MODEL *pmod,
     pmod->ci = LAD;
 }
 
-/* extract the interpolated lower and upper bounds from ci into
-   a new matrix and attach this to the model for printing 
+/* extract the interpolated lower and upper bounds from the matrix ci
+   into a new matrix and attach this to the model for printing
 */
 
 static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci,
@@ -240,20 +250,23 @@ static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci,
     return 0;
 }
 
-/* attach the special matrix generated when we estimate
-   the model for several values of tau */
+/* attach the special results matrix generated when we estimate the
+   model for several values of tau */
 
 static int rq_attach_multi_intervals (MODEL *pmod, 
 				      gretl_vector *tauvec,
 				      gretl_matrix *tbeta,
 				      double alpha, gretlopt opt)
 {
+    gretl_vector *tcpy;
+
 #if QDEBUG
     gretl_matrix_print(tauvec, "tauvec");
     gretl_matrix_print(tbeta, "tbeta");
 #endif
 
-    gretl_model_set_matrix_as_data(pmod, "rq_tauvec", tauvec);
+    tcpy = gretl_matrix_copy(tauvec);
+    gretl_model_set_matrix_as_data(pmod, "rq_tauvec", tcpy);
     gretl_model_set_matrix_as_data(pmod, "rq_sequence", tbeta);
     gretl_model_set_double(pmod, "rq_alpha", alpha);
 
@@ -305,6 +318,23 @@ static void rq_interpolate_intervals (struct br_info *rq)
     }
 }
 
+static void bad_f_count (const gretl_matrix *f)
+{
+    int n = gretl_vector_get_length(f);
+    int i, badf = 0;
+
+    for (i=0; i<n; i++) {
+	if (f->val[i] <= 0) {
+	    badf++;
+	}
+    }
+
+    if (badf > 0) {
+	fprintf(stderr, "Warning: %g percent of fi's <= 0\n",
+		100 * (double) badf / n);
+    }
+}
+
 /* prep for robust version of rank-inversion confidence interval 
    calculation
 */
@@ -322,7 +352,6 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     gretl_matrix *Xcmp = NULL;
     double h, fi, ui, xik;
     int i, j, k, jj;
-    int badf = 0;
     int err = 0;
 
     h = rq_bandwidth(rq->tau, n);
@@ -356,16 +385,7 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
 
     gretl_matrix_multiply(X, b, f);
 
-    for (i=0; i<n; i++) {
-	if (f->val[i] <= 0) {
-	    badf++;
-	}
-    }
-
-    if (badf > 0) {
-	fprintf(stderr, "Warning: %g percent of fi's <= 0\n",
-		100 * (double) badf / n);
-    }
+    bad_f_count(f);
 
     for (i=0; i<n; i++) {
 	fi = (2 * h) / (f->val[i] - eps);
@@ -837,10 +857,9 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 			      p1, GRETL_MOD_NONE,
 			      f, GRETL_MOD_NONE);
 
+    bad_f_count(f);
+
     for (t=0; t<n; t++) {
-	if (f->val[t] <= 0) {
-	    fprintf(stderr, "f[%d] is non-positive\n", t);
-	}
 	x = (2 * h) / (f->val[t] - eps23);
 	f->val[t] = (x > 0)? sqrt(x) : 0;
 	f->val[t] = (x > 0)? x : 0; 
@@ -899,6 +918,9 @@ static int get_ci_alpha (double *a)
     return 0;
 }
 
+/* write coefficients and lower/upper c.i. values for
+   all parameters at a given value of tau */
+
 static int 
 write_tbeta_block (gretl_matrix *tbeta, int nt, double *coeff,
 		   gretl_matrix *ci, int k)
@@ -952,6 +974,10 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	if (tbeta == NULL) {
 	    err = E_ALLOC;
 	} 
+#if QDEBUG
+	fprintf(stderr, "p = %d, ntau = %d\n", p, ntau);
+	fprintf(stderr, "tbeta = %d x %d\n", tbeta->rows, tbeta->cols);
+#endif
     } 
 
     for (i=0; i<ntau && !err; i++) {
@@ -996,11 +1022,9 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	    gretl_matrix_free(tbeta);
 	} else {
 	    err = rq_attach_multi_intervals(pmod, tauvec, tbeta, alpha, opt);
-	    tauvec = NULL;
 	}
     }
 
-    gretl_vector_free(tauvec);
     br_info_free(&rq);
 
     return err;
@@ -1113,46 +1137,25 @@ static int rq_make_matrices (MODEL *pmod,
     return err;
 }
 
-static double get_user_tau (const char *s, double **Z, DATAINFO *pdinfo,
-			    int *err)
-{
-    char *test;
-    double tau = NADBL;
-
-    *err = E_DATA;
-    errno = 0;
-
-    /* try for a numerical value */
-    tau = strtod(s, &test);
-    if (!errno && *test == '\0') {
-	/* fine, got one */
-	*err = 0;
-    } else {
-	/* try for a named scalar */
-	int v = varindex(pdinfo, s);
-
-	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
-	    tau = Z[v][0];
-	    *err = 0;
-	}
-	errno = 0;
-    }
-
-    if (!*err && (tau < .01 || tau > .99)) {
-	gretl_errmsg_sprintf("quantreg: tau must be >= .01 and <= .99");
-	*err = E_DATA;
-    }	
-
-    return tau;
-}
-
-static gretl_vector *get_user_tauvec (const char *s, double ***pZ, 
-				      DATAINFO *pdinfo, int *err)
+static gretl_vector *get_user_tau (const char *parm, double ***pZ, 
+				   DATAINFO *pdinfo, int *err)
 {
     gretl_vector *tau = NULL;
+    char *s = gretl_strdup(parm);
     int i, n;
 
+    if (s == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* for GUI purposes, we'll accept a string that is like a
+       regular numerical matrix specification but in which the
+       elements are separated by spaces rather than commas 
+    */
+    comma_separate_numbers(s);
     tau = generate_matrix(s, pZ, pdinfo, err);
+    free(s);
 
     if (*err) {
 	return NULL;
@@ -1179,6 +1182,10 @@ static gretl_vector *get_user_tauvec (const char *s, double ***pZ,
 	tau = NULL;
     }
 
+#if QDEBUG
+    gretl_matrix_print(tau, "get_user_tau: tau");
+#endif
+
     return tau;
 }
 
@@ -1188,8 +1195,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
-    gretl_vector *tauvec = NULL;
-    double tau = NADBL;
+    gretl_vector *tau = NULL;
     int err = 0;
 
     if ((opt & OPT_I) && pmod->list[0] < 3) {
@@ -1198,10 +1204,14 @@ int rq_driver (const char *parm, MODEL *pmod,
 	err = E_DATA;
     }
 
-    if (opt & OPT_I) {
-	tauvec = get_user_tauvec(parm, pZ, pdinfo, &err);
-    } else {
-	tau = get_user_tau(parm, *pZ, pdinfo, &err);
+    tau = get_user_tau(parm, pZ, pdinfo, &err);
+
+    if (!err && gretl_vector_get_length(tau) > 1) {
+	/* if given multiple taus, we'll automatically switch to doing
+	   confidence intervals, if we have enough regressors */
+	if (pmod->list[0] >= 3) {
+	    opt |= OPT_I;
+	}
     }
 
     if (!err) {
@@ -1211,10 +1221,10 @@ int rq_driver (const char *parm, MODEL *pmod,
     if (!err) {
 	if (opt & OPT_I) {
 	    /* doing confidence intervals -> use Borrodale-Roberts */
-	    err = rq_fit_br(y, X, tauvec, opt, pmod);
+	    err = rq_fit_br(y, X, tau, opt, pmod);
 	} else {
 	    /* use Frisch-Newton */
-	    err = rq_fit_fn(y, X, tau, opt, pmod);
+	    err = rq_fit_fn(y, X, tau->val[0], opt, pmod);
 	}
     }
 
@@ -1224,6 +1234,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     gretl_matrix_free(y);
     gretl_matrix_free(X);
+    gretl_matrix_free(tau);
 
     if (err && pmod->errcode == 0) {
 	pmod->errcode = err;

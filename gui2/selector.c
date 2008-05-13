@@ -1980,7 +1980,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->code == WLS || sr->code == POISSON || 
 	sr->code == AR || sr->code == HECKIT ||
-	sr->code == QUANTREG || THREE_VARS_GRAPH(sr->code)) {
+	THREE_VARS_GRAPH(sr->code)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
 	    if (sr->code == WLS) {
@@ -1992,13 +1992,18 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	    } else if (sr->code == HECKIT) {
 		warnbox(_("You must specify a selection variable"));
 		sr->error = 1;
-	    } else if (sr->code == QUANTREG) {
-		warnbox(_("You must specify a quantile"));
-		sr->error = 1;
 	    } else if (THREE_VARS_GRAPH(sr->code)) { 
 		warnbox(("You must select a Y-axis variable"));
 		sr->error = 1;
 	    }
+	}
+    } else if (sr->code == QUANTREG) {
+	GtkWidget *e = GTK_COMBO(sr->extra[0])->entry;
+	
+	txt = gtk_entry_get_text(GTK_ENTRY(e));
+	if (txt == NULL || *txt == '\0') {
+	    warnbox(_("You must specify a quantile"));
+	    sr->error = 1;
 	}
     }
 
@@ -2023,8 +2028,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
     } else if (sr->code == QUANTREG) {
+	add_to_cmdlist(sr, "{");
 	add_to_cmdlist(sr, txt);
-	add_to_cmdlist(sr, " ");
+	add_to_cmdlist(sr, "} ");
     } else if (sr->code == OMIT) {
 	if (sr->extra[0] != NULL && GTK_WIDGET_IS_SENSITIVE(sr->extra[0])) {
 	    double val;
@@ -2400,7 +2406,7 @@ static char *extra_string (int ci)
     case AR:
 	return N_("List of AR lags");
     case QUANTREG:
-	return N_("Desired quantile");
+	return N_("Desired quantile(s)");
     case GR_DUMMY:
     case GR_3D:
     case GR_XYZ:	
@@ -2813,6 +2819,16 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
     gtk_widget_show(hbox); 
 }
 
+static GList *make_tau_list (void)
+{
+    GList *list = NULL;
+
+    list = g_list_append(list, "0.25 0.50 0.75");
+    list = g_list_append(list, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
+
+    return list;
+} 
+
 static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp;
@@ -2839,10 +2855,17 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == QUANTREG) {
-	sr->extra[0] = gtk_entry_new();
+	GList *taulist;
+
+	sr->extra[0] = gtk_combo_new();
+	taulist = make_tau_list();
+	gtk_combo_set_popdown_strings(GTK_COMBO(sr->extra[0]), taulist); 
+	g_list_free(taulist);
+	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(sr->extra[0])->entry), "0.5");
+	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sr->extra[0])->entry), 
+				  TRUE);
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
-	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), "0.5");
 	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == VAR || sr->code == VLAGSEL) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);

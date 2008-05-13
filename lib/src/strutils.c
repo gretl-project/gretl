@@ -254,6 +254,43 @@ char *charsub (char *str, char find, char repl)
 }
 
 /**
+ * comma_separate_numbers:
+ * @s: the string to operate on.
+ *
+ * Given a string which contains two or more numbers
+ * separated by spaces and/or commas, revise the
+ * string to ensure that all the numbers are comma-
+ * separated.
+ *
+ * Returns: the (possibly modified) string.
+ */
+
+char *comma_separate_numbers (char *s) 
+{
+    const char *numstart = "+-.0123456789";
+    char *p = s;
+    int i, n, done;
+
+    while (*s) {
+	n = strspn(s, " ,");
+	if (n > 0 && strchr(numstart, s[n])) {
+	    done = 0;
+	    for (i=0; i<n && !done; i++) {
+		if (s[i] == ',') {
+		    done = 1;
+		}
+	    }
+	    if (!done) {
+		*s = ',';
+	    }
+	}
+	s += (n > 0)? n : 1;
+    }
+
+    return p;
+}
+
+/**
  * has_suffix:
  * @str: the string to check.
  * @sfx: the suffix to check for.

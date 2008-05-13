@@ -85,6 +85,8 @@ double gretl_double_from_string (const char *s, const char **ptr);
 
 char *charsub (char *str, char find, char repl);
 
+char *comma_separate_numbers (char *s);
+
 char *shift_string_left (char *str, size_t move);
 
 char *lower (char *str);
