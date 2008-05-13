@@ -1970,6 +1970,26 @@ static int get_rvars2_data (selector *sr, int rows, int context)
     }
 
     return err;
+}
+
+static void rq_check_tau (selector *sr, const char *s)
+{
+    if (s == NULL || *s == '\0') {
+	warnbox(_("You must specify a quantile"));
+	sr->error = 1;
+    } else {
+	gchar *tmp = g_strdup_printf("{%s}", s);
+	gretl_matrix *m;
+
+	comma_separate_numbers(tmp);
+	m = generate_matrix(tmp, &Z, datainfo, &sr->error);
+	gretl_matrix_free(m);
+	g_free(tmp);
+
+	if (sr->error) {
+	    warnbox(_("Invalid quantile specification"));
+	}
+    }
 } 
 
 static void parse_extra_widgets (selector *sr, char *endbit)
@@ -2001,10 +2021,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	GtkWidget *e = GTK_COMBO(sr->extra[0])->entry;
 	
 	txt = gtk_entry_get_text(GTK_ENTRY(e));
-	if (txt == NULL || *txt == '\0') {
-	    warnbox(_("You must specify a quantile"));
-	    sr->error = 1;
-	}
+	rq_check_tau(sr, txt);
     }
 
     if (sr->error) {

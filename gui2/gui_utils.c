@@ -921,6 +921,13 @@ static void gui_record_data_opening (const char *fname, const int *list)
     }
 
     check_and_record_command();
+
+    if (*paths.datfile != '\0') {
+	char tmp[FILENAME_MAX];
+
+	strcpy(tmp, paths.datfile);
+	mkfilelist(FILE_LIST_DATA, tmp);
+    }
 }
 
 #define file_opened(f) (f == DATAFILE_OPENED || \

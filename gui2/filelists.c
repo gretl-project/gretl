@@ -25,6 +25,8 @@
 # include "gretlwin32.h"
 #endif
 
+#define FDEBUG 0
+
 #define NFILELISTS 4
 
 /* lists of recently opened files */
@@ -260,6 +262,9 @@ static void clear_files_list (int ftype, char **filep)
 static void add_files_to_menu (int ftype)
 {
     if (ftype != FILE_LIST_WDIR) {
+#if FDEBUG
+	fprintf(stderr, "add_files_to_menu: ftype = %d\n", ftype);
+#endif
 	real_add_files_to_menus(ftype);
     }
 }
@@ -348,6 +353,11 @@ void mkfilelist (int filetype, char *fname)
     char *tmp[MAXRECENT-1];
     char **filep;
     int i, match = -1;
+
+#if FDEBUG
+    fprintf(stderr, "mkfilelist: type=%d, fname='%s'\n", 
+	    filetype, fname);
+#endif
 
     gretl_normalize_path(fname);
 
