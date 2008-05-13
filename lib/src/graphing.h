@@ -193,6 +193,9 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 		     const double *maxerr, const char *varname, 
 		     int tsfreq, gretlopt opt);
 
+int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
+		       int k);
+
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,

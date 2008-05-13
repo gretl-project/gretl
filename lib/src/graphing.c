@@ -3167,6 +3167,74 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     return gnuplot_make_graph();
 }
 
+int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
+		       int k)
+{
+    FILE *fp;
+    gretl_matrix *tau = gretl_model_get_data(pmod, "rq_tauvec");
+    gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
+    double tau_i, bi, blo, bhi;
+    int ntau, i, j, err;
+
+    if (tau == NULL || B == NULL) {
+	return E_DATA;
+    }
+
+    ntau = gretl_vector_get_length(tau);
+    if (ntau == 0) {
+	return E_DATA;
+    }
+
+    if ((err = gnuplot_init(PLOT_REGULAR, &fp))) { /* FIXME */
+	return err;
+    }    
+
+    fputs("# tau sequence plot\n", fp);
+    fputs("set xrange [0.0:1.0]\n", fp);
+
+    gnuplot_missval_string(fp);
+
+    fputs("set style fill solid 0.4\n", fp);
+    fputs("set key left top\n", fp);
+    fputs("plot \\\n", fp);
+
+    /* plot the rq confidence band first so the other lines
+       come out on top */
+    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n",
+	    G_("XX percent confidence interval"));
+
+    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1 , \\\n",
+	    G_("Point estimate"));
+
+    fprintf(fp, "%g title '%s' w lines lt 1\n", pmod->coeff[k],
+	    G_("OLS coefficient"));
+
+    gretl_push_c_numeric_locale();
+
+    /* write out the values */
+
+    for (i=0, j=k*ntau; i<ntau; i++, j++) {
+	tau_i = gretl_vector_get(tau, i);
+	blo = gretl_matrix_get(B, j, 1);
+	bhi = gretl_matrix_get(B, j, 2);
+	fprintf(fp, "%.8g %.8g %.8g\n", tau_i, blo, bhi);
+    }
+    fputs("e\n", fp);
+
+    for (i=0, j=k*ntau; i<ntau; i++, j++) {
+	tau_i = gretl_vector_get(tau, i);
+	bi  = gretl_matrix_get(B, j, 0);
+	fprintf(fp, "%.8g %.8g\n", tau_i, bi);
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    return gnuplot_make_graph();    
+}
+
 int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
 {
     FILE *fp = NULL;
