@@ -7388,23 +7388,31 @@
 	    covariance matrix, for GARCH models.  If <lit>unset</lit> is given
 	    (the default) then the Hessian is used unless the
 	    <quote>robust</quote> option is given for the garch command, in
-	    which case QML is used.</para>
+	    which case QML is used.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>arma_vcv</lit>: <lit>hessian</lit> (the default) or
+	    <lit>op</lit> (outer product matrix). Specifies the variant
+	    to be used when computing the covariance matrix for ARIMA
+	    models.
+	  </para>
 	</li>
 	<li>
 	  <para><lit>force_hc</lit>: <lit>off</lit> (the default) or
 	    <lit>on</lit>.  By default, with time-series data and when the
-	    <lit>--robust</lit> option is given with <lit>ols</lit>, the HAC
-	    estimator is used.  If you set <lit>force_hc</lit> to
+	    <lit>--robust</lit> option is given with <lit>ols</lit>, the
+	    HAC estimator is used.  If you set <lit>force_hc</lit> to
 	    <quote>on</quote>, this forces calculation of the regular
-	    Heteroskedasticity Consistent Covariance Matrix (which does not take
-	    autocorrelation into account).
+	    Heteroskedasticity Consistent Covariance Matrix (which does
+	    not take autocorrelation into account).
 	  </para>
 	</li>
 	<li>
 	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (the default),
 	    <lit>nw2</lit>, <lit>nw3</lit> or an integer.  Sets the
-	    maximum lag value or bandwidth, <math>p</math>, used
-	    when calculating HAC (Heteroskedasticity and Autocorrelation
+	    maximum lag value or bandwidth, <math>p</math>, used when
+	    calculating HAC (Heteroskedasticity and Autocorrelation
 	    Consistent) standard errors using the Newey-West approach, for
 	    time series data.  <lit>nw1</lit> and <lit>nw2</lit> represent
 	    two variant automatic calculations based on the sample size,
@@ -7423,9 +7431,9 @@
 	</li>
 	<li>
 	  <para><lit>hac_kernel</lit>: <lit>bartlett</lit> (the default),
-	    <lit>parzen</lit>, or <lit>qs</lit> (Quadratic Spectral).
-	    Sets the kernel, or pattern of weights, used when calculating
-	    HAC standard errors.
+	    <lit>parzen</lit>, or <lit>qs</lit> (Quadratic Spectral). Sets
+	    the kernel, or pattern of weights, used when calculating HAC
+	    standard errors.
 	  </para>
 	</li>
 	<li>
@@ -7438,12 +7446,12 @@
 	<li>
 	  <para>
 	    <lit>hc_version</lit>: 0 (the default), 1, 2 or 3. Sets the
-	    variant used when calculating Heteroskedasticity Consistent standard
-	    errors with cross-sectional data.  The options correspond to the
-	    HC0, HC1, HC2 and HC3 discussed by Davidson and MacKinnon in
-	    <book>Econometric Theory and Methods</book>, chapter 5.  HC0
-	    produces what are usually called <quote>White's standard
-	      errors</quote>.
+	    variant used when calculating Heteroskedasticity Consistent
+	    standard errors with cross-sectional data.  The options
+	    correspond to the HC0, HC1, HC2 and HC3 discussed by Davidson
+	    and MacKinnon in <book>Econometric Theory and Methods</book>,
+	    chapter 5.  HC0 produces what are usually called
+	    <quote>White's standard errors</quote>.
 	  </para>
 	</li>
 	<li>
@@ -7462,8 +7470,7 @@
 	    (Unlike the Bartlett and Parzen kernels, the QS bandwidth need
 	    not be an integer.)
 	  </para>
-	</li>
-      </ilist>
+	</li> </ilist>
 
       <para>
 	<emphasis>Filtering</emphasis>

@@ -2274,7 +2274,7 @@ static void construct_cmdlist (selector *sr)
 	}
 	if (sr->code == ARMA) {
 	    arma_const = (sr->opts & OPT_N)? 0 : 1;
-	    arma_hessian = (sr->opts & OPT_H)? 1 : 0;
+	    arma_hessian = (sr->opts & OPT_G)? 0 : 1;
 	    arma_x12 = (sr->opts & OPT_X)? 1 : 0;
 	}
 	if (sr->code == GARCH) {
@@ -3421,7 +3421,7 @@ static void build_selector_switches (selector *sr)
     if (sr->code == ARMA) {
 	sr->hess_button = 
 	    gtk_check_button_new_with_label(_("Parameter covariance matrix via Hessian"));
-	pack_switch(sr->hess_button, sr, arma_hessian, FALSE, OPT_H, 0);
+	pack_switch(sr->hess_button, sr, arma_hessian, TRUE, OPT_G, 0);
 #ifdef HAVE_X12A   
 	sr->x12a_button = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
 	pack_switch(sr->x12a_button, sr, arma_x12, FALSE, OPT_X, 0);

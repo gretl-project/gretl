@@ -173,8 +173,8 @@ static const char *garch_vcv_strs[] = {
 };
 
 static const char *arma_vcv_strs[] = {
-    "op",
     "hessian",
+    "op",
     NULL
 };
 
@@ -230,6 +230,17 @@ static void coded_var_show_opts (const char *s, PRN *prn)
     }
 }
 
+static const char *get_arma_vcv_str (int v)
+{
+    if (v == VCV_HESSIAN) {
+	return arma_vcv_strs[0];
+    } else if (v == VCV_OP) {
+	return arma_vcv_strs[1];
+    } else {
+	return "unknown";
+    }
+}
+
 static const char *libset_option_string (const char *s)
 {
     if (!strcmp(s, HAC_LAG)) {
@@ -237,7 +248,7 @@ static const char *libset_option_string (const char *s)
     } else if (!strcmp(s, GARCH_VCV)) {
 	return garch_vcv_strs[state->garch_vcv];
     } else if (!strcmp(s, ARMA_VCV)) {
-	return arma_vcv_strs[state->arma_vcv];
+	return get_arma_vcv_str(state->arma_vcv);
     } else if (!strcmp(s, HAC_KERNEL)) {
 	return hac_kernel_strs[state->ropts.hkern];
     } else if (!strcmp(s, HC_VERSION)) {
@@ -335,7 +346,7 @@ static void state_vars_init (set_vars *sv)
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
     sv->garch_vcv = VCV_UNSET;
-    sv->arma_vcv = VCV_OP;
+    sv->arma_vcv = VCV_HESSIAN;
     sv->garch_robust_vcv = VCV_UNSET;
 
     sv->bkbp_k = UNSET_INT;
@@ -1188,6 +1199,8 @@ static int display_settings (PRN *prn)
 
     libset_print_int(HORIZON, prn);
     libset_print_int(VECM_NORM, prn);
+
+    pputc(prn, '\n');
     
     return 0;
 }
