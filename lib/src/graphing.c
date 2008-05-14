@@ -27,13 +27,13 @@
 #include "plotspec.h"
 
 #include <unistd.h>
+#include <glib.h>
 
 #define GP_DEBUG 0
 
 #ifdef WIN32
 # include <windows.h>
 #else
-# include <glib.h>
 # include <signal.h>
 # if HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
