@@ -105,6 +105,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_PANEL,          "multiple panel plots" },
     { PLOT_BI_GRAPH,       "double time-series plot" },
     { PLOT_MANY_TS,        "multiple timeseries" },
+    { PLOT_RQ_TAU,         "tau sequence plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -830,6 +831,12 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	print_rgb_hash(cstr, &user_color[BOXCOLOR]);
 	fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
 	fputs("set style line 2 lc rgb \"#000000\"\n", fp);
+    } else if (ptype == PLOT_RQ_TAU) {
+	fputs("set style line 1 lc rgb \"#000000\"\n", fp);
+	for (i=1; i<BOXCOLOR; i++) {
+	    print_rgb_hash(cstr, &user_color[i]);
+	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
+	}
     } else {
 	for (i=0; i<BOXCOLOR; i++) {
 	    print_rgb_hash(cstr, &user_color[i]);
@@ -3196,7 +3203,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    if ((err = gnuplot_init(PLOT_REGULAR, &fp))) { /* FIXME */
+    if ((err = gnuplot_init(PLOT_RQ_TAU, &fp))) {
 	return err;
     }   
 
@@ -3213,8 +3220,8 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     ymin[1] = min(gretl_matrix_get(B, j, 1), pmod->coeff[k] - olsband);
     ymax[1] = max(gretl_matrix_get(B, j, 2), pmod->coeff[k] + olsband);
 
-    fputs("# tau sequence plot\n", fp);
     fputs("set xrange [0.0:1.0]\n", fp);
+    fputs("set xlabel 'tau'\n", fp);
 
     tmp = g_strdup_printf(G_("Coefficient on %s"), 
 			  pdinfo->varname[pmod->list[k+2]]);
@@ -3237,16 +3244,15 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* plot the rq confidence band first so the other lines
        come out on top */
-    tmp = g_strdup_printf(G_("%g percent confidence interval"), cval);
-    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n", tmp);
-    g_free(tmp);
+    fputs("'-' using 1:2:3 notitle w filledcurve lt 3 , \\\n", fp);
 
     /* rq estimates */
-    fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1 , \\\n",
-	    G_("Quantile point estimates"));
+    tmp = g_strdup_printf(G_("Quantile estimates with %g%% band"), cval);
+    fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1 , \\\n", tmp);
+    g_free(tmp);
 
     /* ols estimate plus (1 - alpha) band */
-    tmp = g_strdup_printf(G_("OLS estimate with %g percent band"), cval);
+    tmp = g_strdup_printf(G_("OLS estimate with %g%% band"), cval);
     fprintf(fp, "%g title '%s' w lines lt 2 , \\\n", pmod->coeff[k], tmp);
     g_free(tmp);
     fprintf(fp, "%g notitle w dots lt 2 , \\\n", pmod->coeff[k] + olsband);

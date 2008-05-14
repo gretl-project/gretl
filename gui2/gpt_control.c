@@ -1108,7 +1108,8 @@ static int get_gpt_marker (const char *line, char *label)
                       p == PLOT_TRI_GRAPH || \
                       p == PLOT_BI_GRAPH || \
                       p == PLOT_VAR_ROOTS || \
-		      p == PLOT_ELLIPSE)
+		      p == PLOT_ELLIPSE || \
+		      p == PLOT_RQ_TAU)
 
 /* graphs where we don't attempt to find data coordinates */
 

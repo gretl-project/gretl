@@ -94,6 +94,7 @@ typedef enum {
     PLOT_PANEL,
     PLOT_BI_GRAPH,
     PLOT_MANY_TS,
+    PLOT_RQ_TAU,
     PLOT_TYPE_MAX
 } PlotType;
 
