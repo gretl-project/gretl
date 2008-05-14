@@ -287,6 +287,12 @@
   </xsl:choose>    
 </xsl:template>
 
+<xsl:template match="optparm">
+  <xsl:text>\texttt{[}=\textsl{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>}\texttt{]}</xsl:text>
+</xsl:template>
+
 <xsl:template match="argpunct">
   <xsl:text>\texttt{</xsl:text>
   <xsl:apply-templates/>

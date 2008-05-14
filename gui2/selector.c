@@ -1972,23 +1972,30 @@ static int get_rvars2_data (selector *sr, int rows, int context)
     return err;
 }
 
-static void rq_check_tau (selector *sr, const char *s)
+static void read_quantreg_tau (selector *sr)
 {
+    GtkWidget *e = GTK_COMBO(sr->extra[0])->entry;
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(e));
+	
     if (s == NULL || *s == '\0') {
 	warnbox(_("You must specify a quantile"));
 	sr->error = 1;
     } else {
-	gchar *tmp = g_strdup_printf("{%s}", s);
+	/* convert the GUI string to what ought to be a valid
+	   numerical matrix specification */
+	gchar *tmp = g_strdup_printf("{%s} ", s);
 	gretl_matrix *m;
 
 	comma_separate_numbers(tmp);
 	m = generate_matrix(tmp, &Z, datainfo, &sr->error);
 	gretl_matrix_free(m);
-	g_free(tmp);
 
 	if (sr->error) {
 	    warnbox(_("Invalid quantile specification"));
+	} else {
+	    add_to_cmdlist(sr, tmp);
 	}
+	g_free(tmp);
     }
 } 
 
@@ -1997,6 +2004,11 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     const gchar *txt = NULL;
     char numstr[8];
     int k;
+
+    if (sr->code == QUANTREG) {
+	read_quantreg_tau(sr);
+	return;
+    }
 
     if (sr->code == WLS || sr->code == POISSON || 
 	sr->code == AR || sr->code == HECKIT ||
@@ -2017,12 +2029,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 		sr->error = 1;
 	    }
 	}
-    } else if (sr->code == QUANTREG) {
-	GtkWidget *e = GTK_COMBO(sr->extra[0])->entry;
-	
-	txt = gtk_entry_get_text(GTK_ENTRY(e));
-	rq_check_tau(sr, txt);
-    }
+    } 
 
     if (sr->error) {
 	return;
@@ -2044,10 +2051,6 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->code == AR) {
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
-    } else if (sr->code == QUANTREG) {
-	add_to_cmdlist(sr, "{");
-	add_to_cmdlist(sr, txt);
-	add_to_cmdlist(sr, "} ");
     } else if (sr->code == OMIT) {
 	if (sr->extra[0] != NULL && GTK_WIDGET_IS_SENSITIVE(sr->extra[0])) {
 	    double val;

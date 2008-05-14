@@ -1529,19 +1529,22 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
 int makevcv (MODEL *pmod, double sigma)
 {
     int dec, mst, kk, i, j, kj, icnt, m, k, l = 0;
-    const int nv = pmod->ncoeff;
-    const int nxpx = (nv * nv + nv) / 2; 
+    int nv, nxpx;
     double d;
 
     if (pmod->vcv != NULL) {
+	/* already done */
 	return 0;
     }
 
     if (pmod->xpx == NULL) {
+	/* raw material not available */
 	fprintf(stderr, "makevcv: pmod->xpx = NULL\n");
-	return E_DATA;
+	return E_BADSTAT;
     }
 
+    nv = pmod->ncoeff;
+    nxpx = (nv * nv + nv) / 2; 
     mst = nxpx;
     kk = nxpx - 1;
 

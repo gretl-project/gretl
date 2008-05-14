@@ -161,6 +161,7 @@ static int count_selection (const char *s, int n)
  * @pmod: pointer to model
  * @select: char array indicating which rows and colums to select
  * (or %NULL for the full matrix).
+ * @err: location to receive error code.
  *
  * Produces all or part of the covariance matrix for @pmod 
  * in the form of a gretl_matrix.  Storage is allocated, to be freed
@@ -172,7 +173,7 @@ static int count_selection (const char *s, int n)
  */
 
 gretl_matrix *
-gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
+gretl_vcv_matrix_from_model (MODEL *pmod, const char *select, int *err)
 {
     gretl_matrix *vcv;
     int i, j, idx, nc;
@@ -180,7 +181,8 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
     int k = pmod->ncoeff;
 
     /* first ensure the model _has_ a vcv */
-    if (makevcv(pmod, pmod->sigma)) {
+    *err = makevcv(pmod, pmod->sigma);
+    if (*err) {
 	return NULL;
     }
 
@@ -191,11 +193,13 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
     }
     
     if (nc == 0) {
+	*err = E_DATA;
 	return NULL;
     }
 
     vcv = gretl_matrix_alloc(nc, nc);
     if (vcv == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -227,6 +231,7 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
  * @pmod: pointer to model
  * @select: char array indicating which rows to select
  * (or %NULL for the full vector).
+ * @err: location to receive error code.
  *
  * Produces all or part of the coefficient vector for @pmod  
  * in the form of a gretl column vector.  Storage is allocated, to be freed
@@ -238,7 +243,7 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
  */
 
 gretl_vector *
-gretl_coeff_vector_from_model (const MODEL *pmod, const char *select)
+gretl_coeff_vector_from_model (const MODEL *pmod, const char *select, int *err)
 {
     gretl_vector *b;
     int i, j, nc;
@@ -251,11 +256,13 @@ gretl_coeff_vector_from_model (const MODEL *pmod, const char *select)
     }
     
     if (nc == 0) {
+	*err = E_DATA;
 	return NULL;
     }
 
     b = gretl_column_vector_alloc(nc);
     if (b == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 

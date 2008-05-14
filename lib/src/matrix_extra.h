@@ -32,10 +32,10 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
 gretl_matrix *gretl_matrix_from_scalar (double x);
 
 gretl_matrix *
-gretl_vcv_matrix_from_model (MODEL *pmod, const char *select);
+gretl_vcv_matrix_from_model (MODEL *pmod, const char *select, int *err);
 
 gretl_vector *
-gretl_coeff_vector_from_model (const MODEL *pmod, const char *select);
+gretl_coeff_vector_from_model (const MODEL *pmod, const char *select, int *err);
 
 gretl_matrix *
 gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 

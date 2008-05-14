@@ -472,7 +472,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	if (row_col_err(i, j, prn)) {
 	    return 1;
 	}
-	if (q->ls_op == BIFF_NUMBER || q->ls_op == BIFF_RK) {
+	if (q->ls_op == BIFF_NUMBER || q->ls_op == BIFF_RK || q->ls_op == BIFF_MULRK) {
 	    guint16 xfref = EX_GETXF(q);
 	    int fmt = wbook_find_format(book, xfref);
 
@@ -1034,7 +1034,7 @@ check_all_varnames (wbook *book, int totcols, const char *blank_col)
     int vnames = 0;
     int ret = VARNAMES_NONE;
 
-    if (book_obs_labels(book)) {
+    if (book_obs_labels(book) || book_numeric_dates(book)) {
 	startcol++;
 	gotcols = 1;
     }
@@ -1120,7 +1120,7 @@ check_data_block (wbook *book, int totcols, const char *blank_col,
     int startrow = book->row_offset + 1;
     int j, i, ret = 0;
 
-    if (book_obs_labels(book)) {
+    if (book_obs_labels(book) || book_numeric_dates(book)) {
 	startcol++;
     }
 
@@ -1174,7 +1174,7 @@ n_vars_from_col (wbook *book, int totcols, char *blank_col)
     int offset = book->col_offset;
     int i, nv = 1;
 
-    if (book_time_series(book) || book_obs_labels(book)) {
+    if (book_numeric_dates(book) || book_obs_labels(book)) {
 	offset++;
     }
 
@@ -1194,7 +1194,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
     int roff = book->row_offset;
     int i, t, j = 1;
 
-    if (book_time_series(book) || book_obs_labels(book)) {
+    if (book_obs_labels(book) || book_numeric_dates(book)) {
 	startcol++;
     } 
 
@@ -1255,8 +1255,8 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 }
 
 static int 
-get_sheet_dimensions (int *totcols, int *datacols, char **blank_col,
-		      PRN *prn)
+get_sheet_dimensions (wbook *book, int *totcols, int *datacols, 
+		      char **blank_col, PRN *prn)
 {
     char *blanks = NULL;
     int i, j;
@@ -1314,8 +1314,12 @@ get_sheet_dimensions (int *totcols, int *datacols, char **blank_col,
 	}
     }
 
-    printf("rows=%d, data cols=%d total cols=%d\n", nrows, 
-	   *datacols, *totcols);
+    if (book_numeric_dates(book)) {
+	*datacols -= 1;
+    }
+
+    printf("rows=%d, total cols=%d, data cols=%d\n", nrows, 
+	   *totcols, *datacols);
 
     if (*datacols < 1) {
 	pputs(prn, _("No data found.\n"));
@@ -1428,7 +1432,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     /* get sizes and locate any blank columns */
-    err = get_sheet_dimensions(&totcols, &datacols, &blank_col, prn);
+    err = get_sheet_dimensions(book, &totcols, &datacols, &blank_col, prn);
 
     if (err) goto getout;
 
@@ -1445,6 +1449,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     if (first_col_strings(book)) {
 	puts("found label strings in first imported column");
+    } else if (book_numeric_dates(book)) {
+	puts("found calendar dates in first imported column");
     } else {
 	puts("check for label strings in first imported column: not found");
     }
@@ -1516,7 +1522,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	goto getout;
     }
 
-    /* FIXME move the labels/dates check down here */
+    /* FIXME move the labels/dates check down here? */
 
     if (book_time_series(book)) {
 	ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);

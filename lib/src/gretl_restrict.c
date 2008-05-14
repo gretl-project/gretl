@@ -1851,14 +1851,16 @@ test_restriction_set (gretl_restriction *rset, PRN *prn)
 #endif
 
     err = check_R_matrix(rset->R);
-    if (err) {
-	goto bailout;
+
+    if (!err) {
+	b = gretl_coeff_vector_from_model(pmod, rset->mask, &err);
     }
 
-    b = gretl_coeff_vector_from_model(pmod, rset->mask);
-    vcv = gretl_vcv_matrix_from_model(pmod, rset->mask);
-    if (b == NULL || vcv == NULL) {
-	err = E_ALLOC;
+    if (!err) {
+	vcv = gretl_vcv_matrix_from_model(pmod, rset->mask, &err);
+    }
+
+    if (err) {
 	goto bailout;
     }
 

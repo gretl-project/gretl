@@ -5699,7 +5699,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    evals = gretl_matrix_alloc(n, 2);
+    evals = gretl_zero_matrix_new(n, 2);
     if (evals == NULL) {
 	*err = E_ALLOC;
 	goto bailout;

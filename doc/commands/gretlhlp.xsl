@@ -197,6 +197,12 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="optparm">
+  <xsl:text>[=&lt;@var="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;]</xsl:text>
+</xsl:template>
+
 <xsl:template match="example">
   <xsl:if test="position() > 1">
     <xsl:text>&#xa;&#x9;</xsl:text>

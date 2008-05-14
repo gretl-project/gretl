@@ -26,8 +26,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn);
 
-void tex_coeff_table_start (const char *col1, const char *col2,
-			    int binary, PRN *prn);
+void tex_coeff_table_start (const char **cols, int binary, PRN *prn);
 
 void tex_coeff_table_end (PRN *prn);
 

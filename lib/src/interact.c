@@ -3104,12 +3104,11 @@ void safe_print_line (const char *line, int *plen, PRN *prn)
     }
 }
 
-static int
-print_maybe_quoted_str (const char *s, PRN *prn)
+static int print_command_param (const char *s, PRN *prn)
 {
     int ret = 0;
 
-    if (strchr(s, ' ') != NULL) {
+    if (*s != '{' && strchr(s, ' ') != NULL) {
 	ret += pprintf(prn, " \"%s\"", s);
     } else {
 	ret += pprintf(prn, " %s", s);
@@ -3238,7 +3237,7 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 	    *plen += pprintf(prn, " %s;", cmd->param);
 	}
     } else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
-	*plen += print_maybe_quoted_str(cmd->param, prn);
+	*plen += print_command_param(cmd->param, prn);
     }
 
     if (cmd->ci == VECM && cmd->extra != NULL) {
@@ -3371,7 +3370,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
-    /* print leading string before echo: none if recording */
+    /* print leading string before echo? not if we're recording */
     if (!recording) {
 	if ((flags & CMD_STACKING) || gretl_compiling_function()) {
 	    llen += pputs(prn, "> ");

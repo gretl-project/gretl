@@ -1595,7 +1595,7 @@ int do_confidence_region (selector *sr)
     int v[2];
     double b[2];
     double t, kF;
-    int err;
+    int err = 0;
 
     if (buf == NULL || sscanf(buf, "%d %d", &v[0], &v[1]) != 2) {
 	return 0;
@@ -1613,8 +1613,8 @@ int do_confidence_region (selector *sr)
 
     mask[v[0]] = mask[v[1]] = 1;
 
-    V = gretl_vcv_matrix_from_model(pmod, mask);
-    if (V == NULL) {
+    V = gretl_vcv_matrix_from_model(pmod, mask, &err);
+    if (err) {
 	free(mask);
 	return 0;
     }

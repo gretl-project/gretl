@@ -284,14 +284,21 @@ static int h_container_fill (h_container *HC, const int *Xl,
     HC->ksel = probmod->ncoeff;
 
     HC->beta = gretl_column_vector_alloc(HC->kmain);
-    HC->gama = gretl_coeff_vector_from_model(probmod, NULL);
-    if (HC->beta == NULL || HC->gama == NULL) {
+    if (HC->beta == NULL) {
 	return E_ALLOC;
+    }
+
+    HC->gama = gretl_coeff_vector_from_model(probmod, NULL, &err);
+    if (err) {
+	gretl_matrix_free(HC->beta);
+	HC->beta = NULL;
+	return err;
     }
 
     for (i=0; i<HC->kmain; i++) {
 	gretl_vector_set(HC->beta, i, olsmod->coeff[i]);
     }
+
     HC->lambda = olsmod->coeff[HC->kmain];
 
     /*
@@ -417,13 +424,15 @@ static int h_container_fill (h_container *HC, const int *Xl,
     }
 
     if (!err) {
-	HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
-	HC->u = gretl_matrix_alloc(HC->nunc, 1);
-	HC->ndx = gretl_matrix_alloc(HC->ntot, 1);
-	HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL);
+	HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL, &err);
+    }
 
-	if (HC->fitted == NULL || HC->u == NULL || 
-	    HC->ndx == NULL || HC->VProbit == NULL) {
+    if (!err) {
+	HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
+	HC->u      = gretl_matrix_alloc(HC->nunc, 1);
+	HC->ndx    = gretl_matrix_alloc(HC->ntot, 1);
+
+	if (HC->fitted == NULL || HC->u == NULL || HC->ndx == NULL) {
 	    err = E_ALLOC;
 	}
     }

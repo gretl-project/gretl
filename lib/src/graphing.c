@@ -3930,11 +3930,11 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     FILE *fp = NULL;
     double x, y;
     double px, py;
-    int i, n, err;
+    int i, n, err = 0;
 
-    lam = gretl_VAR_get_roots(var);
-    if (lam == NULL) {
-	return E_ALLOC;
+    lam = gretl_VAR_get_roots(var, &err);
+    if (err) {
+	return err;
     }
 
     err = gnuplot_init(PLOT_VAR_ROOTS, &fp);
@@ -3955,8 +3955,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     fputs("unset ytics\n", fp);
     fputs("set size square\n", fp);
     fputs("set polar\n", fp);
-    fputs("plot 1 w lines, \\\n"
-	  "'-' w points pt 7\n", fp);
+    fputs("plot 1 w lines, \\\n'-' w points pt 7\n", fp);
 
     gretl_push_c_numeric_locale();
     

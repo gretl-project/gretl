@@ -5486,6 +5486,7 @@
 	</option>
 	<option>
 	  <flag>--auto</flag>
+	  <optparm>alpha</optparm>
 	  <effect>sequential elimination, see below</effect>
 	</option>
 	<option>
@@ -6530,21 +6531,82 @@
         <argument>indepvars</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+        <option>
+	  <flag>--intervals</flag>
+	  <optparm>level</optparm>
+	  <effect>compute confidence intervals</effect>
+        </option>
         <option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
       </options>
+      <examples>
+	<example>quantreg 0.25 y 0 xlist</example>
+	<example>quantreg 0.5 y 0 xlist --intervals</example>
+	<example>quantreg 0.5 y 0 xlist --intervals=.95</example>
+	<example>quantreg tauvec y 0 xlist --robust</example>
+      </examples>
+	<demos>
+	  <demo>mrw_qr.inp</demo>
+	</demos>
     </usage>
 
     <description>
       <para>
-	EXPERIMENTAL; the syntax is provisional.  For now, <repl>tau</repl>, the
-	desired quantile, should be a single number in the range 0.01 to
-	0.99.  Choosing a <repl>tau</repl> of 0.5 should produce
-	essentially the same results as the <cmd>lad</cmd> command.
+	Warning: this command is EXPERIMENTAL; the syntax is under
+	construction.
       </para>
+      <para>
+	Quantile regression.  The first argument, <repl>tau</repl>, is the
+	conditional quantile for which estimates are wanted.  It may be given
+	either as a numerical value or as the name of a pre-defined scalar
+	variable; the value must be in the range 0.01 to 0.99. (Alternatively,
+	a vector of values may be given for <repl>tau</repl>; see below for
+	details.) The second and subsequent arguments compose a regression
+	list on the same pattern as <cmdref targ="ols"/>.
+      </para>
+      <para>
+	Without the <lit>--intervals</lit> option, standard errors are printed
+	for the quantile estimates.  By default, these are computed according
+	to the asymptotic formula given by Koenker and Bassett (1978), but if
+	the <lit>--robust</lit> option is given, standard errors that are
+	robust with respect to heteroskedasticity are calculated using the
+	method of Koenker and Zhao (1994).
+      </para>
+      <para>
+	When the <lit>--intervals</lit> option is chosen, confidence intervals
+	are given for the parameter estimates instead of standard errors.
+	These intervals are computed using the rank inversion method, and in
+	general they are asymmetrical about the point estimates.  The specifics
+	of the calculation are inflected by the <lit>--robust</lit> option:
+	without this, the intervals are computed on the assumption of IID
+	errors (Koenker, 1994); with it, they use the robust estimator
+	developed by Koenker and Machado (1999).
+      </para>
+      <para>
+	By default, 90 percent confidence intervals are produced.  You can
+	change this by appending a confidence level (expressed as a decimal
+	fraction) to the intervals option, as in <lit>--intervals=0.95</lit>.
+      </para>
+      <para>
+	Vector-valued <repl>tau</repl>:  instead of supplying a scalar, you
+	may give the name of a pre-defined matrix.  In this case estimates are
+	computed for all the given <repl>tau</repl> values and the results are
+	printed in a special format, showing the sequence of quantile
+	estimates for each regressor in turn.  Note that this alternative
+	implies the <lit>--intervals</lit> option.
+      </para>
+
     </description>
+
+    <gui-access>
+      <menu-path>/Model/Robust estimation/Quantile regression</menu-path>
+    </gui-access>
 
   </command>
 

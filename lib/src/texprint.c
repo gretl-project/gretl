@@ -510,7 +510,8 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
 
 void tex_print_coeff (const model_coeff *mc, PRN *prn)
 {
-    char bstr[64], sestr[64], tstr[64], col4[64];
+    char col1[64], col2[64], col3[64], col4[64];
+    int ncols = 4;
 
     if (use_custom) {
 	tex_print_coeff_custom(mc, prn);
@@ -518,21 +519,27 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
     }
 
     if (na(mc->b)) {
-	sprintf(bstr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	sprintf(col1, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(mc->b, bstr);
+	tex_dcolumn_double(mc->b, col1);
     }
 
-    if (na(mc->se)) {
-	sprintf(sestr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    if (!na(mc->lo) && !na(mc->hi)) {
+	tex_dcolumn_double(mc->lo, col2);
+	tex_dcolumn_double(mc->hi, col3);
+	ncols = 3;
     } else {
-	tex_dcolumn_double(mc->se, sestr);
-    }
+	if (na(mc->se)) {
+	    sprintf(col2, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	} else {
+	    tex_dcolumn_double(mc->se, col2);
+	}
 
-    if (na(mc->tval)) {
-	sprintf(tstr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-    } else {
-	sprintf(tstr, "%.4f", mc->tval);
+	if (na(mc->tval)) {
+	    sprintf(col3, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	} else {
+	    sprintf(col3, "%.4f", mc->tval);
+	}
     }
 
     *col4 = '\0';
@@ -547,18 +554,25 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
 
     pprintf(prn, "%s &\n"
 	    "  %s &\n"
-	    "    %s &\n"
-	    "      %s &\n"
-	    "        %s \\\\\n",  
+	    "    %s &\n",
 	    mc->name,
-	    bstr,
-	    sestr,
-	    tstr,
-	    col4);	    
+	    col1,
+	    col2);
+
+    if (ncols == 4) {
+	pprintf(prn, 
+		"      %s &\n"
+		"        %s \\\\\n",  
+		col3,
+		col4);
+    } else {
+	pprintf(prn, 
+		"      %s \\\\\n",
+		col3);
+    }	
 }
 
-void tex_custom_coeff_table_start (const char *col1, const char *col2,
-				   PRN *prn)
+void tex_custom_coeff_table_start (const char **cols, PRN *prn)
 {
     int i, ncols = 0;
 
@@ -575,10 +589,10 @@ void tex_custom_coeff_table_start (const char *col1, const char *col2,
 
     pputs(prn, "}\n");
 
-    pprintf(prn, "\\multicolumn{1}{c}{%s} &\n", I_(col1));
+    pprintf(prn, "\\multicolumn{1}{c}{%s} &\n", I_(cols[0]));
 
     if (colspec[0][0]) {
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_(col2));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_(cols[1]));
     }
 
     if (!colspec[1][0] && !colspec[2][0] && !colspec[3][0]) {
@@ -590,7 +604,7 @@ void tex_custom_coeff_table_start (const char *col1, const char *col2,
 	if (colspec[0][0]) {
 	    pputs(prn, " &\n");
 	}
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_("Std.\\ Error"));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_(cols[2]));
     }
 
     if (!colspec[2][0] && !colspec[3][0]) {
@@ -602,50 +616,63 @@ void tex_custom_coeff_table_start (const char *col1, const char *col2,
 	if (colspec[0][0] || colspec[1][0]) {
 	    pputs(prn, " &\n");
 	}
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_("$t$-statistic"));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_(cols[3]));
     }
 
     if (colspec[3][0]) {
 	if (colspec[0][0] || colspec[1][0] || colspec[2][0]) {
 	    pputs(prn, " &\n");
 	}
-	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_("p-value"));
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_(cols[4]));
     }
 
     pputs(prn, " \\\\\n");
 }
 
-void tex_coeff_table_start (const char *col1, const char *col2,
-			    int binary, PRN *prn)
+void tex_coeff_table_start (const char **cols, int binary, PRN *prn)
 {
 
     char pt;
 
     if (use_custom) {
-	tex_custom_coeff_table_start(col1, col2, prn);
+	tex_custom_coeff_table_start(cols, prn);
 	return;
     }
 
     pt = get_local_decpoint();
 
-    pprintf(prn, "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}"
-	    "{@{\\extracolsep{\\fill}}\n"
-	    "l%% col 1: varname\n"
-	    "  D{%c}{%c}{-1}%% col 2: coeff\n"
-	    "    D{%c}{%c}{-1}%% col 3: sderr\n"
-	    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
-	    "        D{%c}{%c}{4}}%% col 5: p-value (or slope)\n"
-	    "%s &\n"
-	    "  \\multicolumn{1}{c}{%s} &\n"
-	    "    \\multicolumn{1}{c}{%s} &\n"
-	    "      \\multicolumn{1}{c}{%s} &\n"
-	    "        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
-	    pt, pt, pt, pt, pt, pt, pt, pt, I_(col1),
-	    I_(col2), I_("Std.\\ Error"), 
-	    I_("$t$-statistic"), 
-	    (binary)? I_("Slope"): I_("p-value"),
-	    (binary)? "$^*$" : "");
+    if (cols[4] == NULL) {
+	pprintf(prn, "\\vspace{1em}\n\n"
+		"\\begin{tabular*}{\\textwidth}"
+		"{@{\\extracolsep{\\fill}}\n"
+		"l%% col 1: varname\n"
+		"  D{%c}{%c}{-1}%% col 2: coeff\n"
+		"    D{%c}{%c}{-1}%% col 3\n"
+		"      D{%c}{%c}{-1}}%% col 4\n"
+		"%s &\n"
+		"  \\multicolumn{1}{c}{%s} &\n"
+		"    \\multicolumn{1}{c}{%s} &\n"
+		"      \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
+		pt, pt, pt, pt, pt, pt, 
+		I_(cols[0]), I_(cols[1]), I_(cols[2]), I_(cols[3]));
+    } else {
+	pprintf(prn, "\\vspace{1em}\n\n"
+		"\\begin{tabular*}{\\textwidth}"
+		"{@{\\extracolsep{\\fill}}\n"
+		"l%% col 1: varname\n"
+		"  D{%c}{%c}{-1}%% col 2: coeff\n"
+		"    D{%c}{%c}{-1}%% col 3: sderr\n"
+		"      D{%c}{%c}{-1}%% col 4: t-stat\n"
+		"        D{%c}{%c}{4}}%% col 5: p-value (or slope)\n"
+		"%s &\n"
+		"  \\multicolumn{1}{c}{%s} &\n"
+		"    \\multicolumn{1}{c}{%s} &\n"
+		"      \\multicolumn{1}{c}{%s} &\n"
+		"        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
+		pt, pt, pt, pt, pt, pt, pt, pt, 
+		I_(cols[0]), I_(cols[1]), I_(cols[2]), I_(cols[3]), I_(cols[4]),
+		(binary)? "$^*$" : "");
+    }
 }
 
 void tex_coeff_table_end (PRN *prn)
@@ -1336,7 +1363,7 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 {
     int ret;
 
-    if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
+    if (RQ_SPECIAL_MODEL(pmod)) {
 	return E_NOTIMP;
     }
 
@@ -1378,6 +1405,10 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname,
     int doc = (opt & OPT_O);
     int err = 0;
 
+    if (RQ_SPECIAL_MODEL(pmod)) {
+	return E_NOTIMP;
+    }
+
     prn = make_tex_prn(pmod->ID, fname, eqn, doc, &err);
 
     if (!err) {
@@ -1393,6 +1424,10 @@ int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname,
 {
     PRN *prn;
     int err = 0;
+
+    if (RQ_SPECIAL_MODEL(pmod)) {
+	return E_NOTIMP;
+    }
 
     prn = make_rtf_prn(pmod->ID, fname, &err);
 

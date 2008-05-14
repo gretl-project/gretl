@@ -7135,6 +7135,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 		pputc(p->prn, '\n');
 	    }
 	} else if (p->flags & (P_SCALAR | P_SERIES)) {
+	    /* generating a stipulated type */
 	    gen_check_return_type(p);
 	} else if (p->flags & P_DECL) {
 	    do_decl(p);

@@ -633,8 +633,8 @@ double *generate_series (const char *s, double ***pZ,
 gretl_matrix *generate_matrix (const char *s, double ***pZ, 
 			       DATAINFO *pdinfo, int *err)
 {
-    parser p;
     gretl_matrix *m = NULL;
+    parser p;
 
     *err = realgen(s, &p, pZ, pdinfo, NULL, P_MATRIX | P_PRIVATE);
 
@@ -648,13 +648,20 @@ gretl_matrix *generate_matrix (const char *s, double ***pZ,
 		n->v.m = NULL;
 	    } else {
 		m = gretl_matrix_copy(n->v.m);
+		if (m == NULL) {
+		    *err = E_ALLOC;
+		}
 	    }
 	} else if (n->t == NUM) {
-	    m = gretl_matrix_alloc(1, 1);
-	    if (m == NULL) {
-		*err = E_ALLOC;
+	    if (xna(n->v.xval)) {
+		*err = E_NAN;
 	    } else {
-		m->val[0] = n->v.xval;
+		m = gretl_matrix_alloc(1, 1);
+		if (m == NULL) {
+		    *err = E_ALLOC;
+		} else {
+		    m->val[0] = n->v.xval;
+		}
 	    }
 	} else {
 	    *err = E_TYPES;

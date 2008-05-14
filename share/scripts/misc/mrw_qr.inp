@@ -1,0 +1,28 @@
+# Replicate Table V in Mankiw, Romer and Weil, QJE 1992,
+# plus the quantile regressions in R. Ram, "Parametric
+# variability in cross-country growth regressions: An
+# application of quantile-regression methodology",
+# Economics Letters 99 (2008) pp. 387-9.
+open mrw.gdt
+genr ly60 = log(gdp60)
+genr dlny = log(gdp85) - ly60
+genr ngd = 0.05 + (popgrow/100)
+genr lngd = log(ngd)
+genr linv = log(inv/100)
+genr lschool = log(school/100)
+# set sample to non-oil producing countries
+smpl nonoil --dummy
+# OLS, as per M, R & W
+ols dlny const ly60 linv lngd lschool
+
+# Top quartile
+quantreg 0.75 dlny const ly60 linv lngd lschool
+# Bottom quartile
+quantreg 0.25 dlny const ly60 linv lngd lschool
+
+# Top quartile (robust)
+quantreg 0.75 dlny const ly60 linv lngd lschool --robust
+# Bottom quartile (robust)
+quantreg 0.25 dlny const ly60 linv lngd lschool --robust
+
+

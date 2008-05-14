@@ -520,20 +520,18 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
     int i, vi, t;
     int err = 0;
 
-    V = gretl_vcv_matrix_from_model(pmod, NULL);
-    if (V == NULL) {
-	err = E_ALLOC;
+    V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    b = gretl_coeff_vector_from_model(pmod, NULL, &err);
+    if (err) {
 	goto bailout;
     }
 
     Xs = gretl_vector_alloc(k);
     if (Xs == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    b = gretl_coeff_vector_from_model(pmod, NULL);
-    if (b == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }

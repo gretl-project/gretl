@@ -514,12 +514,12 @@ int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
     char *p, *s = (char *) xmlGetProp(node, (XUC) tag);
     int ret = 0;
 
+    *x = NADBL;
+
     if (s != NULL) {
 	p = s;
 	p += strspn(p, " \r\n");
-	if (!strncmp(p, "NA", 2)) {
-	    *x = NADBL;
-	} else {
+	if (strncmp(p, "NA", 2)) {
 	    *x = atof(p);
 	}
 	free(s);

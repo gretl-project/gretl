@@ -65,12 +65,13 @@
 
 <!ELEMENT altform (#PCDATA | repl | lit)*>
 
-<!ELEMENT option   (flag?, effect?, note?)>
+<!ELEMENT option   (flag?, effect?, note?, optparm?)>
 
 <!ELEMENT example  (#PCDATA)>
 <!ELEMENT demo     (#PCDATA)>
 <!ELEMENT flag     (#PCDATA)>
 <!ELEMENT effect   (#PCDATA)>
+<!ELEMENT optparm  (#PCDATA)>
 
 <!ELEMENT menu-path    (#PCDATA)>
 <!ELEMENT other-access (#PCDATA)>

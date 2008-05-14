@@ -2632,13 +2632,6 @@ check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
     return ret;
 }
 
-static int rq_special_model (const MODEL *pmod)
-{
-    return pmod->ci == LAD && 
-	(gretl_model_get_data(pmod, "rq_tauvec") != NULL ||
-	 gretl_model_get_data(pmod, "coeff_intervals") != NULL);
-}
-
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title) 
 {
@@ -2662,7 +2655,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	add_model_dataset_items(vwin);
     }
 
-    if (latex_is_ok() && !pmod->errcode && !rq_special_model(pmod)) {
+    if (latex_is_ok() && !pmod->errcode && !RQ_SPECIAL_MODEL(pmod)) {
 	add_model_tex_items(vwin);
     }    
 
@@ -2672,7 +2665,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	add_dummies_to_plot_menu(vwin);
     }
 
-    if (gretl_model_get_data(pmod, "rq_sequence")) {
+    if (RQ_SPECIAL_MODEL(pmod)) {
 	add_tau_plot_menu(vwin);
     }
 
@@ -2851,7 +2844,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	model_save_state(vwin->ifac, FALSE);
     }
 
-    if (rq_special_model(pmod)) {
+    if (RQ_SPECIAL_MODEL(pmod)) {
 	/* relax later */
 	flip(vwin->ifac, "/Tests", FALSE);
 	flip(vwin->ifac, "/Save", FALSE);
@@ -3237,8 +3230,9 @@ static void add_tau_plot_menu (windata_t *vwin)
     int i;
 
     flip(vwin->ifac, "/Graphs", TRUE);
-    flip(vwin->ifac, "/Graphs/Residual plot", FALSE);
-    flip(vwin->ifac, "/Graphs/Fitted, actual plot", FALSE);
+
+    gtk_item_factory_delete_item(vwin->ifac, "/Graphs/Residual plot");
+    gtk_item_factory_delete_item(vwin->ifac, "/Graphs/Fitted, actual plot");
 
     item.accelerator = NULL; 
     item.callback = NULL; 
@@ -3249,11 +3243,10 @@ static void add_tau_plot_menu (windata_t *vwin)
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
     g_free(item.path);
 
-    /* put the independent vars on the menu list */
-
     item.item_type = NULL;
     item.callback = tau_plot_call;
 
+    /* put the independent vars on the menu list */
     for (i=2; i<=pmod->list[0]; i++) {
 	item.callback_action = i - 2; 
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
@@ -4073,7 +4066,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     gboolean s;
     int ok = 1, graphs_ok = 1;
 
-    if (rq_special_model(pmod)) {
+    if (RQ_SPECIAL_MODEL(pmod)) {
 	return FALSE;
     }
 

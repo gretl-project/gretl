@@ -1679,7 +1679,8 @@ static int VAR_add_roots (GRETL_VAR *var)
     int err = 0;
 
     if (var->A == NULL) {
-	return 1;
+	fprintf(stderr, "VAR_add_roots: var->A is missing\n");
+	return E_DATA;
     }
 
     var->L = NULL;
@@ -1708,11 +1709,17 @@ static int VAR_add_roots (GRETL_VAR *var)
     return err;
 }
 
-const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var)
+const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var, int *err)
 {
+    if (var == NULL) {
+	fprintf(stderr, "gretl_VAR_get_roots: VAR is NULL\n");
+	*err = E_DATA;
+	return NULL;
+    } 
+
     if (var->L == NULL) {
 	/* roots not computed yet */
-	VAR_add_roots(var);
+	*err = VAR_add_roots(var);
     }
 
     return var->L;

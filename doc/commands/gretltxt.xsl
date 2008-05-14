@@ -171,6 +171,12 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="optparm">
+  <xsl:text>[=</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>]</xsl:text>
+</xsl:template>
+
 <xsl:template match="demos">
   <xsl:if test="position() > 1">
     <xsl:text>&#xa;            </xsl:text>

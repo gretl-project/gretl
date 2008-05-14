@@ -3688,30 +3688,22 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 
     gretl_push_c_numeric_locale();
 
-    got = 0;
-    got += gretl_xml_get_prop_as_double(node, "ess", &pmod->ess);
-    got += gretl_xml_get_prop_as_double(node, "tss", &pmod->tss);
-    got += gretl_xml_get_prop_as_double(node, "sigma", &pmod->sigma);
-    got += gretl_xml_get_prop_as_double(node, "rsq", &pmod->rsq);
-    got += gretl_xml_get_prop_as_double(node, "adjrsq", &pmod->adjrsq);
-    got += gretl_xml_get_prop_as_double(node, "fstt", &pmod->fstt);
-    got += gretl_xml_get_prop_as_double(node, "lnL", &pmod->lnL);
-    got += gretl_xml_get_prop_as_double(node, "ybar", &pmod->ybar);
-    got += gretl_xml_get_prop_as_double(node, "sdy", &pmod->sdy);
+    gretl_xml_get_prop_as_double(node, "ess", &pmod->ess);
+    gretl_xml_get_prop_as_double(node, "tss", &pmod->tss);
+    gretl_xml_get_prop_as_double(node, "sigma", &pmod->sigma);
+    gretl_xml_get_prop_as_double(node, "rsq", &pmod->rsq);
+    gretl_xml_get_prop_as_double(node, "adjrsq", &pmod->adjrsq);
+    gretl_xml_get_prop_as_double(node, "fstt", &pmod->fstt);
+    gretl_xml_get_prop_as_double(node, "lnL", &pmod->lnL);
+    gretl_xml_get_prop_as_double(node, "ybar", &pmod->ybar);
+    gretl_xml_get_prop_as_double(node, "sdy", &pmod->sdy);
 
-    got += gretl_xml_get_prop_as_double(node, "crit0", &pmod->criterion[0]);
-    got += gretl_xml_get_prop_as_double(node, "crit1", &pmod->criterion[1]);
-    got += gretl_xml_get_prop_as_double(node, "crit2", &pmod->criterion[2]);
+    gretl_xml_get_prop_as_double(node, "crit0", &pmod->criterion[0]);
+    gretl_xml_get_prop_as_double(node, "crit1", &pmod->criterion[1]);
+    gretl_xml_get_prop_as_double(node, "crit2", &pmod->criterion[2]);
 
-    got += gretl_xml_get_prop_as_double(node, "dw", &pmod->dw);
-    got += gretl_xml_get_prop_as_double(node, "rho", &pmod->rho);
-
-    if (got < 14) {
-	fprintf(stderr, "gretl_model_from_XML: got(2) = %d (expected 14)\n", got);
-	*err = E_DATA;
-	gretl_pop_c_numeric_locale();
-	goto bailout;
-    }
+    gretl_xml_get_prop_as_double(node, "dw", &pmod->dw);
+    gretl_xml_get_prop_as_double(node, "rho", &pmod->rho);
 
     gretl_xml_get_prop_as_string(node, "name", &pmod->name);
     gretl_xml_get_prop_as_string(node, "depvar", &pmod->depvar);
@@ -4638,13 +4630,13 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 	       (idx == M_H)?
 	       _("Can't retrieve ht: data set has changed") :
 	       _("Can't retrieve series: data set has changed"));
-	*err = 1;
+	*err = E_BADSTAT;
 	return NULL;
     }   
 
     if ((idx == M_UHAT && pmod->uhat == NULL) ||
 	(idx == M_YHAT && pmod->yhat == NULL)) {
-	*err = 1;
+	*err = E_BADSTAT;
 	return NULL;
     }
 
@@ -4652,14 +4644,14 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 	mdata = gretl_model_get_data(pmod, "ahat");
 	if (mdata == NULL) {
 	    strcpy(gretl_errmsg, _("Can't retrieve intercepts"));
-	    *err = 1;
+	    *err = E_BADSTAT;
 	    return NULL;
 	}
     } else if (idx == M_H) {
 	mdata = gretl_model_get_data(pmod, "garch_h");
 	if (mdata == NULL) {
 	    strcpy(gretl_errmsg, _("Can't retrieve error variance"));
-	    *err = 1;
+	    *err = E_BADSTAT;
 	    return NULL;
 	}
     }
@@ -4694,6 +4686,11 @@ model_get_estvec (const MODEL *pmod, int idx, int *err)
     double x;
     int i;
 
+    if (gretl_model_get_data(pmod, "rq_tauvec")) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
     v = gretl_column_vector_alloc(pmod->ncoeff);
     if (v == NULL) {
 	*err = E_ALLOC;
@@ -4713,6 +4710,16 @@ model_get_hatvec (const MODEL *pmod, int idx, int *err)
     gretl_matrix *v = NULL;
     double x;
     int t;
+
+    if (idx == M_UHAT && pmod->uhat == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    if (idx == M_YHAT && pmod->yhat == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (na(pmod->uhat[t])) {
@@ -4890,7 +4897,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	M = model_get_intervals_matrix(pmod, err);
 	break;
     case M_VCV:
-	M = gretl_vcv_matrix_from_model(pmod, NULL);
+	M = gretl_vcv_matrix_from_model(pmod, NULL, err);
 	break;
     case M_AHAT:
 	if (gretl_model_get_data(pmod, "ahat") == NULL) {

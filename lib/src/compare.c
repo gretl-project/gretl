@@ -167,17 +167,11 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
     mask = mask_from_test_list(list, pmod, &err);
 
     if (!err) {
-	C = gretl_vcv_matrix_from_model(pmod, mask);
-	if (C == NULL) {
-	    err = E_ALLOC;
-	} 
+	C = gretl_vcv_matrix_from_model(pmod, mask, &err);
     }
 
     if (!err) {
-	b = gretl_coeff_vector_from_model(pmod, mask);
-	if (b == NULL) {
-	    err = E_ALLOC;
-	} 
+	b = gretl_coeff_vector_from_model(pmod, mask, &err);
     }  
 
     if (!err) {

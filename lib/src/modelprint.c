@@ -1157,13 +1157,7 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (ccount > 0) {
-	if (tex) {
-	    pputs(prn, "\\\\\n");
-	} else if (rtf_format(prn)) {
-	    pputs(prn, "\\par\n");
-	} else {
-	    pputs(prn, "\n");
-	}
+	gretl_prn_newline(prn);
     }
 
     return 0;
@@ -1348,10 +1342,10 @@ static void rq_vcv_line (const MODEL *pmod, PRN *prn)
 
     if (!na(a)) {
 	if (robust) {
-	    s = g_strdup_printf(N_("With robust %g%% confidence intervals"), 
+	    s = g_strdup_printf(N_("With robust %g percent confidence intervals"), 
 				100 * (1 - a));
 	} else {
-	    s = g_strdup_printf(N_("With %g%% confidence intervals"), 
+	    s = g_strdup_printf(N_("With %g percent confidence intervals"), 
 				100 * (1 - a));
 	}
 	free_s = 1;
@@ -1362,10 +1356,12 @@ static void rq_vcv_line (const MODEL *pmod, PRN *prn)
     }
 
     if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"\n", I_(s));
+	pprintf(prn, "\"%s\"", I_(s));
     } else {
-	pprintf(prn, "%s\n", (utf)? _(s) : I_(s));
+	pprintf(prn, "%s", (utf)? _(s) : I_(s));
     }
+
+    gretl_prn_newline(prn);
 
     if (free_s) {
 	g_free(s);
@@ -1849,10 +1845,11 @@ static void print_model_heading (const MODEL *pmod,
 
 	if (!na(tau)) {
 	    if (tex) {
-		pprintf(prn, "$\\tau = %g\n", tau);
+		pprintf(prn, "$\\tau$ = %g", tau);
 	    } else {
-		pprintf(prn, "tau = %g\n", tau);
+		pprintf(prn, "tau = %g", tau);
 	    }
+	    gretl_prn_newline(prn);
 	}
     }
 
@@ -1973,6 +1970,10 @@ static void model_format_start (PRN *prn)
                        "\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx8000\n\\intbl"
 
+#define RTF_INTVL_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+                       "\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
+                       "\n\\intbl"
+
 #define RTF_ROOT_ROW   "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                        "\\cellx500\\cellx1500\\cellx2900\\cellx4300" \
                        "\\cellx5700\\cellx7100\n\\intbl"
@@ -2029,51 +2030,74 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("PARAMETER"), d, I_("ESTIMATE"), d, I_("STDERROR"),
 		    d, I_("T STAT"), d, I_("P-VALUE"));
+	} else if (intervals) {
+	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("LOWER"),
+		    d, I_("UPPER"));
+	} else if (sequence) {
+	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    I_("VARIABLE"), d, "TAU", d, I_("COEFFICIENT"), d, I_("LOWER"),
+		    d, I_("UPPER"));
 	} else {
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
 		    d, I_("T STAT"), d, I_("P-VALUE"));
 	}	
     } else {
-	char col1[16], col2[16];
+	const char *cols[6] = { NULL };
+	int i;
 
 	if (use_param) {
-	    strcpy(col1, N_("Parameter"));
-	    strcpy(col2, N_("Estimate"));
+	    cols[0] = N_("Parameter");
+	    cols[1] = N_("Estimate");
 	} else {
-	    strcpy(col1, N_("Variable"));
-	    strcpy(col2, N_("Coefficient"));
-	}	    
+	    cols[0] = N_("Variable");
+	    cols[1] = N_("Coefficient");
+	}
+
+	if (intervals) {
+	    cols[2] = N_("Lower");
+	    cols[3] = N_("Upper");
+	} else if (sequence) {
+	    cols[2] = N_("tau");
+	    cols[3] = N_("Lower");
+	    cols[4] = N_("Upper");
+	} else {
+	    if (tex_format(prn)) {
+		cols[2] = N_("Std.\\ Error");
+		cols[3] = N_("$t$-statistic");
+	    } else {
+		cols[2] = N_("Std. Error");
+		cols[3] = N_("t-statistic");
+	    }
+	    cols[4] = (slopes)? N_("Slope") : N_("p-value");
+	}
 
 	if (tex_format(prn)) {
-	    tex_coeff_table_start(col1, col2, slopes, prn);
+	    tex_coeff_table_start(cols, slopes, prn);
 	    return;
 	}   
 
 	if (rtf_format(prn)) {
-	    if (slopes) {
-		pprintf(prn, "{" RTF_BINARY_ROW
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s{\\super *}}\\cell"
-			" \\intbl \\row\n",
-			I_(col1), I_(col2), I_("Std. Error"), 
-			I_("t-statistic"), I_("Slope"));
+	    pputc(prn, '{');
+	    if (intervals) {
+		pputs(prn, RTF_INTVL_ROW);
+	    } else if (slopes) {
+		pputs(prn, RTF_BINARY_ROW);
 	    } else {
-		pprintf(prn, "{" RTF_COEFF_ROW
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s}\\cell"
-			" \\qc {\\i %s}\\cell"
-			" \\ql \\cell"
-			" \\intbl \\row\n",
-			I_(col1), I_(col2), I_("Std. Error"), 
-			I_("t-statistic"), I_("p-value"));
+		pputs(prn, RTF_COEFF_ROW);
 	    }
-	    return;
+	    for (i=0; cols[i] != NULL; i++) {
+		if (slopes && i == 4) {
+		    pprintf(prn, " \\qc {\\i %s{\\super *}}\\cell", I_(cols[i]));
+		} else {
+		    pprintf(prn, " \\qc {\\i %s}\\cell", I_(cols[i]));
+		}
+	    }
+	    if (!slopes && !intervals) {
+		pputs(prn, " \\ql \\cell");
+	    }
+	    pputs(prn, " \\intbl \\row\n");
 	} 
     }
 }
@@ -2106,7 +2130,6 @@ static void model_format_end (PRN *prn)
 	pputs(prn, "\n}\n");
     }
 } 
-
 
 static void print_middle_table_start (PRN *prn)
 {
@@ -2848,7 +2871,12 @@ static void rtf_print_double (double xx, PRN *prn)
 
 static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 {
-    pputs(prn, RTF_COEFF_ROW);
+    if (!na(mc->lo)) {
+	pputs(prn, RTF_INTVL_ROW);
+    } else {
+	pputs(prn, RTF_COEFF_ROW);
+    }
+
     pprintf(prn, "\\ql %s\\cell", mc->name);
 
     if (na(mc->b)) {
@@ -2857,11 +2885,17 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 	rtf_print_double(mc->b, prn);
     }
 
+    if (!na(mc->lo) && !na(mc->hi)) {
+	rtf_print_double(mc->lo, prn);
+	rtf_print_double(mc->hi, prn);
+	goto rtf_finish;
+    }
+
     if (na(mc->se)) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
-	goto rtf_coeff_getout;
+	goto rtf_finish;
     } 
 
     rtf_print_double(mc->se, prn); 
@@ -2899,7 +2933,7 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 	} 
     }
 
- rtf_coeff_getout:
+ rtf_finish:
 
     pputs(prn, " \\intbl \\row\n");
 }
@@ -2914,6 +2948,12 @@ static void csv_print_coeff (const model_coeff *mc, PRN *prn)
 	pprintf(prn, "%c\"%s\"", d, I_("undefined"));
     } else {
 	pprintf(prn, "%c%.15g", d, mc->b);
+    }
+
+    if (!na(mc->lo) && !na(mc->hi)) {
+	pprintf(prn, "%c%.15g", d, mc->lo);
+	pprintf(prn, "%c%.15g\n", d, mc->hi);
+	return;
     }
     
     /* get out if std error is undefined */
@@ -3112,6 +3152,7 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	if (intervals != NULL) {
 	    mc.lo = gretl_matrix_get(intervals, i, 0);
 	    mc.hi = gretl_matrix_get(intervals, i, 1);
+	    mc.show_pval = 0;
 	}
 
 	print_coeff(&mc, prn);
