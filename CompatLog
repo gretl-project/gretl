@@ -1,0 +1,28 @@
+version 1.7.5, in progress
+
+$sigma and $vcv accessors:
+
+The $sigma and $vcv accessors have been changed for some model 
+types. Now $sigma always refers to a measure associated with the 
+residual variance, while $vcv always refer to the variance of
+the parameter estimates.
+
+In the case of VARs/VECMs, $vcv formerly referred to the cross-
+equation covariance of the residuals.  Now $sigma is used for
+that purpose; $vcv gets the variance of the coefficients, which
+was not previously accessible.
+
+3/21/2008 version 1.7.4
+
+The old "multiply" command has been removed.
+
+The old commands "corc", "hilu" and "pwe" are consolidated
+into a new one, "ar1".  The old command words remain as
+aliases but their use is deprecated.
+
+2/29/2008 version 1.7.3
+
+You cannot define a user-function having the same name as
+a built-in function.
+
+
