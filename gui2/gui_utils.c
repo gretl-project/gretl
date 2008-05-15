@@ -2837,10 +2837,7 @@ static void arma_x12_menu_mod (windata_t *vwin)
 
 static void rq_coeff_intervals_mod (windata_t *vwin)
 {
-    flip(vwin->ifac, "/Tests/Sum of coefficients", FALSE);
     flip(vwin->ifac, "/Analysis/Confidence intervals for coefficients", FALSE);
-    flip(vwin->ifac, "/Analysis/Confidence ellipse...", FALSE);
-    flip(vwin->ifac, "/Analysis/Coefficient covariance matrix", FALSE);
 }
 
 #define intervals_model(m) (m->ci == LAD && \

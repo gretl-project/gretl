@@ -1063,8 +1063,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	    /* post-process confidence intervals */
 	    rq_interpolate_intervals(&rq);
 	    if (ntau == 1) {
-		/* done: just transcribe everything */
-		rq_transcribe_results(pmod, y, tau, rq.coeff, rq.resid);
+		/* done: just put the intervals onto the model */
 		err = rq_attach_intervals(pmod, rq.ci, alpha, opt);
 	    } else {
 		/* using multiple tau values */
@@ -1197,29 +1196,45 @@ static int rq_make_matrices (MODEL *pmod,
     return err;
 }
 
+static int rq_transpose_X (gretl_matrix **pX)
+{
+    gretl_matrix *XT = gretl_matrix_copy_transpose(*pX);
+    int err = 0;
+
+    if (XT == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_free(*pX);
+	*pX = XT;
+    }
+
+    return err;
+}
+
 /* we try for a vector here, in case the user wishes to supply one,
    but we'll happily settle for a scalar result (a 1-vector) 
 */
 
 static gretl_vector *get_user_tau (const char *parm, double ***pZ, 
-				   DATAINFO *pdinfo, int *err)
+				   DATAINFO *pdinfo, int *ntau,
+				   int *err)
 {
     gretl_vector *tau;
-    int i, n;
+    int i;
 
     tau = generate_matrix(parm, pZ, pdinfo, err);
     if (*err) {
 	return NULL;
     }
 
-    n = gretl_vector_get_length(tau);
+    *ntau = gretl_vector_get_length(tau);
 
-    if (n == 0) {
+    if (*ntau == 0) {
 	*err = E_DATA;
     } else {
 	double p;
 
-	for (i=0; i<n; i++) {
+	for (i=0; i<*ntau; i++) {
 	    p = gretl_vector_get(tau, i);
 	    if (p < .01 || p > .99) {
 		gretl_errmsg_sprintf("quantreg: tau must be >= .01 and <= .99");
@@ -1231,7 +1246,7 @@ static gretl_vector *get_user_tau (const char *parm, double ***pZ,
     if (*err) {
 	gretl_matrix_free(tau);
 	tau = NULL;
-    }
+    } 
 
 #if QDEBUG
     gretl_matrix_print(tau, "get_user_tau: tau");
@@ -1247,11 +1262,12 @@ int rq_driver (const char *parm, MODEL *pmod,
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
     gretl_vector *tau = NULL;
+    int ntau = 0;
     int err = 0;
 
-    tau = get_user_tau(parm, pZ, pdinfo, &err);
+    tau = get_user_tau(parm, pZ, pdinfo, &ntau, &err);
 
-    if (!err && gretl_vector_get_length(tau) > 1) {
+    if (!err && ntau > 1) {
 	/* multiple taus -> implies the "intervals" option */
 	opt |= OPT_I;
     }
@@ -1263,7 +1279,22 @@ int rq_driver (const char *parm, MODEL *pmod,
     }
 
     if (!err) {
-	err = rq_make_matrices(pmod, *pZ, pdinfo, &y, &X, opt);
+	if ((opt & OPT_I) && ntau == 1) {
+	    /* doing intervals, only one tau: we'll do a first run
+	       using F-N so the model will be equipped with standard
+	       errors
+	    */
+	    err = rq_make_matrices(pmod, *pZ, pdinfo, &y, &X, OPT_NONE);
+	    if (!err) {
+		err = rq_fit_fn(y, X, tau->val[0], opt, pmod);
+	    }
+	    if (!err) {
+		/* for B-R the X matrix is tranposed */
+		err = rq_transpose_X(&X);
+	    }
+	} else {
+	    err = rq_make_matrices(pmod, *pZ, pdinfo, &y, &X, opt);
+	}
     }
 
     if (!err) {
