@@ -2830,6 +2830,7 @@ static GList *make_tau_list (void)
     GList *list = NULL;
 
     list = g_list_append(list, "0.25 0.50 0.75");
+    list = g_list_append(list, ".05, .25 .50 .75, .95");
     list = g_list_append(list, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
 
     return list;
@@ -4332,6 +4333,7 @@ static int add_omit_list (gpointer p, selector *sr)
 
 	    for (i=0; i<datainfo->v; i++) {
 		if (!in_gretl_list(xlist, i) && i != dv &&
+		    !var_is_scalar(datainfo, i) && 
 		    !var_is_hidden(datainfo, i)) {
 		    gtk_list_store_append(store, &iter);
 		    gtk_list_store_set(store, &iter, 

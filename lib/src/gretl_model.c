@@ -4691,6 +4691,14 @@ model_get_estvec (const MODEL *pmod, int idx, int *err)
 	return NULL;
     }
 
+    for (i=0; i<pmod->ncoeff; i++) {
+	x = (idx == M_COEFF)? pmod->coeff[i] : pmod->sderr[i];
+	if (na(x)) {
+	    *err = E_BADSTAT;
+	    return NULL;
+	}
+    }
+
     v = gretl_column_vector_alloc(pmod->ncoeff);
     if (v == NULL) {
 	*err = E_ALLOC;

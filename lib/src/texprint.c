@@ -1118,6 +1118,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     int i, nc = pmod->ncoeff;
     int split = 0, offvar = 0;
     int cchars = 0, ccount = 0;
+    int sderr_ok = 1;
 
     if (pmod->ci == POISSON) {
 	offvar = gretl_model_get_int(pmod, "offset_var");
@@ -1172,19 +1173,26 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pputc(prn, '+');
 	    tex_print_float(1.0, prn);
 	} else {
-	    if (opt & OPT_T) {
-		x = pmod->coeff[i] / pmod->sderr[i];
-		pprintf(prn, "%s\\underset{(%.3f)}{", 
-			(pmod->coeff[i] < 0.0)? "-" :
-			(i > 0)? "+" : "", x);
-	    } else {
-		pprintf(prn, "%s\\underset{(%.5g)}{", 
-			(pmod->coeff[i] < 0.0)? "-" :
-			(i > 0)? "+" : "", pmod->sderr[i]);
+	    if (na(pmod->sderr[i])) {
+		sderr_ok = 0;			
+		pprintf(prn, "%s{", (pmod->coeff[i] < 0.0)? "-" :
+			(i > 0)? "+" : "");
+	    } else if (sderr_ok) {
+		if (opt & OPT_T) {
+		    x = pmod->coeff[i] / pmod->sderr[i];
+		    pprintf(prn, "%s\\underset{(%.3f)}{", 
+			    (pmod->coeff[i] < 0.0)? "-" :
+			    (i > 0)? "+" : "", x);
+		} else {
+		    pprintf(prn, "%s\\underset{(%.5g)}{", 
+			    (pmod->coeff[i] < 0.0)? "-" :
+			    (i > 0)? "+" : "", pmod->sderr[i]);
+		}
 	    }
 	    tex_print_float(pmod->coeff[i], prn);
 	    pputc(prn, '}');
 	}
+
 	if (i > 0 || pmod->ifc == 0) {
 	    pputs(prn, "\\,");
 	    if (pmod->ci == ARMA) {
@@ -1295,7 +1303,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (!na(SAR)) {
 	    sprintf(tmp, "%g", SAR);
 	    tex_modify_exponent(tmp);
-	    pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s", tmp);
+	    pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s ", tmp);
 	}
     } else {
 	if (!na(pmod->adjrsq)) {
@@ -1314,7 +1322,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (!na(pmod->sigma)) {
 	    sprintf(tmp, "%.5g", pmod->sigma);
 	    tex_modify_exponent(tmp);
-	    pprintf(prn, "\\quad \\hat{\\sigma} = %s", tmp);
+	    pprintf(prn, "\\quad \\hat{\\sigma} = %s ", tmp);
 	}
 
 	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
@@ -1327,9 +1335,15 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     pputs(prn, "\\notag \\\\\n");
-    pprintf(prn, "\\centerline{(%s)} \\notag\n",
-	    (opt & OPT_T)? I_("$t$-statistics in parentheses") :
-	    I_("standard errors in parentheses"));
+
+    if (sderr_ok) {
+	pprintf(prn, "\\centerline{(%s)} \\notag\n",
+		(opt & OPT_T)? I_("$t$-statistics in parentheses") :
+		I_("standard errors in parentheses"));
+    } else {
+	pputs(prn, "\\notag\n");
+    }
+
     pputs(prn, "\\end{gather}\n");
 
     if (opt & OPT_S) {

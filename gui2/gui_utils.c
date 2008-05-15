@@ -2835,6 +2835,17 @@ static void arma_x12_menu_mod (windata_t *vwin)
     add_x12_output_menu_item(vwin);
 }
 
+static void rq_coeff_intervals_mod (windata_t *vwin)
+{
+    flip(vwin->ifac, "/Tests/Sum of coefficients", FALSE);
+    flip(vwin->ifac, "/Analysis/Confidence intervals for coefficients", FALSE);
+    flip(vwin->ifac, "/Analysis/Confidence ellipse...", FALSE);
+    flip(vwin->ifac, "/Analysis/Coefficient covariance matrix", FALSE);
+}
+
+#define intervals_model(m) (m->ci == LAD && \
+			    gretl_model_get_data(m, "coeff_intervals"))
+
 static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 {
     set_tests_menu_state(vwin->ifac, pmod);
@@ -2851,6 +2862,10 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ifac, "/Analysis", FALSE);
 	flip(vwin->ifac, "/Graphs", FALSE);
 	return;
+    }
+
+    if (intervals_model(pmod)) {
+	rq_coeff_intervals_mod(vwin);
     }
 
     if (pmod->ci == MLE || pmod->ci == GMM) {
@@ -3036,18 +3051,29 @@ static void add_model_tex_items (windata_t *vwin)
     int i, n = sizeof model_tex_items / sizeof model_tex_items[0];
     MODEL *pmod = (MODEL *) vwin->data;
     int eqn_ok = command_ok_for_model(EQNPRINT, 0, pmod->ci);
+    int imod = 0;
     GtkWidget *w;
 
     for (i=0; i<n; i++) {
 	gtk_item_factory_create_item(vwin->ifac, &model_tex_items[i], 
 				     vwin, 1);
-    }  
+    } 
+
+    if (intervals_model(pmod)) {
+	eqn_ok = 0;
+	imod = 1;
+    }
 
     model_tex_equation_state(vwin->ifac, !pmod->errcode && eqn_ok);
+
     w = gtk_item_factory_get_widget(vwin->ifac, 
 				    "/LaTeX/Equation options/Show t-ratios");
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(w),
 				   (gboolean) get_tex_eqn_opt());
+
+    if (imod) {
+	flip(vwin->ifac, "/LaTeX/Tabular options...", FALSE);
+    }
 }
 
 #define VNAMELEN2 32
