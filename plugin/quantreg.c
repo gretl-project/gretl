@@ -487,8 +487,6 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     return err;
 }
 
-/* maybe this should be in gretl_matrix.c ? */
-
 static gretl_matrix *get_XTX_inverse (const gretl_matrix *X, int *err)
 {
     int k = min(X->rows, X->cols);

@@ -1096,7 +1096,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     pmod->t2 = ainfo->t2;
     pmod->nobs = T;
     pmod->ncoeff = k;
-    pmod->full_n = T;
+    pmod->full_n = pdinfo->n;
     
     /* in the Kalman case the basic model struct is empty, so we 
        have to allocate for coefficients, residuals and so on

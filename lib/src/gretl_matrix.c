@@ -2727,6 +2727,29 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     return 0;
 }
 
+/**
+ * gretl_matrix_XTX_new:
+ * @X: matrix to process.
+ *
+ * Returns: a newly allocated matrix containing X'X, or
+ * %NULL on error.
+*/
+
+gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
+{
+    gretl_matrix *XTX = NULL;
+
+    if (!gretl_is_null_matrix(X)) {
+	XTX = gretl_matrix_alloc(X->cols, X->cols);
+    }
+
+    if (XTX != NULL) {
+	matrix_multiply_self_transpose(X, 1, XTX, GRETL_MOD_NONE);
+    }
+
+    return XTX;
+}
+
 #define gretl_mmult_result(c,i,j,x,m) \
     do { \
        if (m==GRETL_MOD_CUMULATE) { \
@@ -2755,7 +2778,6 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
  * Returns: 0 on success; non-zero error code on
  * failure.
 */
-
 
 int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
@@ -7498,7 +7520,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }    
 
     if (!err) {
-	XTX = gretl_matrix_alloc(k, k);
+	XTX = gretl_matrix_XTX_new(X);
 	if (XTX == NULL) err = E_ALLOC;
     }
 
@@ -7506,12 +7528,6 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					y, GRETL_MOD_NONE,
 					b, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-					X, GRETL_MOD_NONE,
-					XTX, GRETL_MOD_NONE);
     }
 
     if (!err && vcv != NULL) {
@@ -7589,7 +7605,7 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
     } 
 
     if (!err) {
-	XTX = gretl_matrix_alloc(k, k);
+	XTX = gretl_matrix_XTX_new(X);
 	if (XTX == NULL) {
 	    err = E_ALLOC;
 	}
@@ -7599,12 +7615,6 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					Y, GRETL_MOD_NONE,
 					B, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-					X, GRETL_MOD_NONE,
-					XTX, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -7675,9 +7685,9 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
-	XTX = gretl_matrix_alloc(k, k);
+	XTX = gretl_matrix_XTX_new(X);
 	V = gretl_column_vector_alloc(ldW);
-	W = gretl_matrix_alloc(ldW, ldW);
+	W = gretl_zero_matrix_new(ldW, ldW);
 	if (XTX == NULL || V == NULL || W == NULL) {
 	    err = E_ALLOC;
 	}
@@ -7706,13 +7716,6 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     /* construct W matrix: X'X augmented by R and R' */
-
-    if (!err) {
-	gretl_matrix_zero(W);
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-					X, GRETL_MOD_NONE,
-					XTX, GRETL_MOD_NONE);
-    }
 
     if (!err) {
 	for (i=0; i<XTX->rows; i++) {

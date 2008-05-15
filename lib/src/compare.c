@@ -1348,8 +1348,10 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 {
     int *newlist;
     MODEL aux;
-    int i, t, v = pdinfo->v; 
     double RF;
+    int i, t, v = pdinfo->v; 
+    int addcols;
+    const char *mode;
     int err = 0;
 
     if (pmod->ci != OLS) {
@@ -1362,18 +1364,15 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&aux);
 
-    int addcols;
-    char mode[64];
-
     if (opt & OPT_C) {
 	addcols = 1;
-	strcpy(mode, "squares only");
+	mode = N_("squares only");
     } else if (opt & OPT_R) {
 	addcols = 1;
-	strcpy(mode, "cubes only");
+	mode = N_("cubes only");
     } else {
 	addcols = 2;
-	strcpy(mode, "squares and cubes");
+	mode = N_("squares and cubes");
     }
 
     if (pmod->ncoeff + addcols >= pdinfo->t2 - pdinfo->t1) {
@@ -1394,9 +1393,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	/* add yhat^2, yhat^3 to data set */
+	/* add yhat^2 and/or yhat^3 to data set */
 	int sqcol = v;
-	int cubecol = (opt & OPT_C) ? v : v+1;
+	int cubecol = (opt & OPT_C) ? v : v + 1;
 
 	for (t = pmod->t1; t<=pmod->t2; t++) {
 	    double xx = pmod->yhat[t];
@@ -1407,7 +1406,6 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    if (!(opt & OPT_R)) {
 		(*pZ)[cubecol][t] = xx * xx * xx;
 	    }
-
 	}
 
 	if (!(opt & OPT_C)) {
@@ -1437,15 +1435,18 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (!(opt & OPT_Q)) {
 	    printmodel(&aux, pdinfo, OPT_NONE, prn);
 	} else {
-	    pprintf(prn, "\n\nRESET specification test (with %s)\n", mode);
+	    pputc(prn, '\n');
+	    pputs(prn, _("RESET specification test"));
+	    pprintf(prn, " (%s)\n", _(mode));
 	}
 
 	RF = ((pmod->ess - aux.ess) / addcols) / (aux.ess / aux.dfd);
 	pval = snedecor_cdf_comp(addcols, aux.dfd, RF);
 
-	pprintf(prn, "\n%s: F = %f,\n", _("Test statistic"), RF);
+	pprintf(prn, "%s: F = %f,\n", _("Test statistic"), RF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		addcols, aux.dfd, RF, pval);
+	pputc(prn, '\n');
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_RESET);
