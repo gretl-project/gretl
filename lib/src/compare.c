@@ -1362,35 +1362,63 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&aux);
 
-    if (pmod->ncoeff + 2 >= pdinfo->t2 - pdinfo->t1) {
+    int addcols;
+    char mode[64];
+
+    if (opt & OPT_C) {
+	addcols = 1;
+	strcpy(mode, "squares only");
+    } else if (opt & OPT_R) {
+	addcols = 1;
+	strcpy(mode, "cubes only");
+    } else {
+	addcols = 2;
+	strcpy(mode, "squares and cubes");
+    }
+
+    if (pmod->ncoeff + addcols >= pdinfo->t2 - pdinfo->t1) {
 	return E_DF;
     }
 
-    newlist = malloc((pmod->list[0] + 3) * sizeof *newlist);
+    newlist = malloc((pmod->list[0] + addcols + 1) * sizeof *newlist);
     if (newlist == NULL) {
 	err = E_ALLOC;
     } else {
-	newlist[0] = pmod->list[0] + 2;
+	newlist[0] = pmod->list[0] + addcols;
 	for (i=1; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_series(2, pZ, pdinfo)) {
+	if (dataset_add_series(addcols, pZ, pdinfo)) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
 	/* add yhat^2, yhat^3 to data set */
+	int sqcol = v;
+	int cubecol = (opt & OPT_C) ? v : v+1;
+
 	for (t = pmod->t1; t<=pmod->t2; t++) {
 	    double xx = pmod->yhat[t];
 
-	    (*pZ)[v][t] = xx * xx;
-	    (*pZ)[v+1][t] = xx * xx * xx;
+	    if (!(opt & OPT_C)) {
+		(*pZ)[sqcol][t] = xx * xx;
+	    }
+	    if (!(opt & OPT_R)) {
+		(*pZ)[cubecol][t] = xx * xx * xx;
+	    }
+
 	}
-	strcpy(pdinfo->varname[v], "yhat^2");
-	strcpy(pdinfo->varname[v+1], "yhat^3");
-	newlist[pmod->list[0] + 1] = v;
-	newlist[pmod->list[0] + 2] = v + 1;
+
+	if (!(opt & OPT_C)) {
+	    strcpy(pdinfo->varname[sqcol], "yhat^2");
+	    newlist[pmod->list[0] + 1] = sqcol;
+	}
+
+	if (!(opt & OPT_R)) {
+	    strcpy(pdinfo->varname[cubecol], "yhat^3");
+	    newlist[newlist[0]] = cubecol;
+	}
     }
 
     if (!err) {
@@ -1405,20 +1433,26 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	double pval;
 
 	aux.aux = AUX_RESET;
-	printmodel(&aux, pdinfo, OPT_NONE, prn);
-	RF = ((pmod->ess - aux.ess) / 2) / (aux.ess / aux.dfd);
-	pval = snedecor_cdf_comp(2, aux.dfd, RF);
+
+	if (!(opt & OPT_Q)) {
+	    printmodel(&aux, pdinfo, OPT_NONE, prn);
+	} else {
+	    pprintf(prn, "\n\nRESET specification test (with %s)\n", mode);
+	}
+
+	RF = ((pmod->ess - aux.ess) / addcols) / (aux.ess / aux.dfd);
+	pval = snedecor_cdf_comp(addcols, aux.dfd, RF);
 
 	pprintf(prn, "\n%s: F = %f,\n", _("Test statistic"), RF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		2, aux.dfd, RF, pval);
+		addcols, aux.dfd, RF, pval);
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_RESET);
 
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_RESET);
-		model_test_set_dfn(test, 2);
+		model_test_set_dfn(test, addcols);
 		model_test_set_dfd(test, aux.dfd);
 		model_test_set_value(test, RF);
 		model_test_set_pvalue(test, pval);
@@ -1430,7 +1464,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     free(newlist);
-    dataset_drop_last_variables(2, pZ, pdinfo); 
+    dataset_drop_last_variables(addcols, pZ, pdinfo); 
     clear_model(&aux); 
 
     return err;
