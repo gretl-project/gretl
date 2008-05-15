@@ -2078,7 +2078,7 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
 
     resp = radio_dialog(_("gretl: RESET test"),
 			_("RESET specification test"),
-			optstrs, 3, 0, 0);
+			optstrs, 3, 0, RESET);
 
     if (resp < 0) {
 	/* canceled */

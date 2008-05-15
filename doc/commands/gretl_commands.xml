@@ -6679,7 +6679,7 @@
 	regression and calculating the <math>F</math> statistic for the
 	null hypothesis that the parameters on the added terms are zero.
       </para>
-      <para>
+      <para context="cli">
 	Both the square and the cube are added, unless one of the options
 	<lit>--squares-only</lit> or <lit>--cubes-only</lit> is given.
       </para>
