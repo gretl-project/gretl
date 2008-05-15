@@ -92,11 +92,11 @@ static NODE *newref (parser *p, int t)
     return n;
 }
 
-NODE *newstr (parser *p)
+static NODE *newstr (parser *p, int t)
 {  
     NODE *n;
 
-    if (p != NULL && p->idstr == NULL) {
+    if (p->idstr == NULL) {
 	fprintf(stderr, "newstr: input is NULL\n");
 	return NULL;
     }
@@ -105,12 +105,12 @@ NODE *newstr (parser *p)
 
 #if MDEBUG
     fprintf(stderr, "newstr: allocated node at %p (s = '%s')\n", 
-	    (void *) n, (p != NULL)? p->idstr : "null");
+	    (void *) n, p->idstr);
 #endif
 
     if (n != NULL) {
-	n->t = STR;
-	n->v.str = (p != NULL)? p->idstr : NULL;
+	n->t = t;
+	n->v.str = p->idstr;
 	n->flags = 0;
 	n->vnum = NO_VNUM;
     }
@@ -472,7 +472,7 @@ static NODE *get_string_arg (parser *p)
     fprintf(stderr, "get_string_arg: '%s'\n", p->idstr);
 #endif
 
-    return newstr(p);
+    return newstr(p, STR);
 }
 
 enum {
@@ -795,7 +795,7 @@ static NODE *powterm (parser *p)
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
 	    if (p->sym == MSL) {
-		t->v.b2.l = newstr(p);
+		t->v.b2.l = newstr(p, STR);
 	    } else {
 		t->v.b2.l = newref(p, MVAR);
 	    }
@@ -815,7 +815,7 @@ static NODE *powterm (parser *p)
     } else if (p->sym == OVAR) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p);
+	    t->v.b2.l = newstr(p, STR);
 	    get_ovar_ref(t, p);
 	}
     } else if (p->sym == G_LPR) {
@@ -847,7 +847,7 @@ static NODE *powterm (parser *p)
     } else if (p->sym == UFUN) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p);
+	    t->v.b2.l = newstr(p, STR);
 	    lex(p);
 	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {
@@ -863,8 +863,8 @@ static NODE *powterm (parser *p)
 		get_multi_args(t->v.b1.b, p);
 	    }
 	}
-    } else if (p->sym == STR) {
-	t = newstr(p);
+    } else if (p->sym == STR || p->sym == VSTR) {
+	t = newstr(p, p->sym);
 	lex(p);
     } else {
 	t = base(p, NULL);

@@ -338,6 +338,24 @@ static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
     return p->err;
 }
 
+static NODE *newstring (void)
+{  
+    NODE *b = malloc(sizeof *b);
+
+#if EDEBUG
+    fprintf(stderr, "newstring: allocated node at %p\n", (void *) b); 
+#endif
+
+    if (b != NULL) {
+	b->t = STR;
+	b->flags = 0;
+	b->vnum = NO_VNUM;
+	b->v.str = NULL;
+    }
+
+    return b;
+}
+
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
 
@@ -387,7 +405,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	} else if (t == LIST) {
 	    ret = newlist();
 	} else if (t == STR) {
-	    ret = newstr(NULL);
+	    ret = newstring();
 	}
 
 	if (ret == NULL) {
@@ -3552,6 +3570,30 @@ static NODE *umatrix_node (NODE *t, parser *p)
     return ret;
 }
 
+/* node holding a cashed-out string variable */
+
+static NODE *string_var_node (NODE *t, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *sval, *sname = t->v.str;
+
+	if (*sname == '@') sname++;
+	sval = get_string_by_name(sname);
+	if (sval == NULL) {
+	    p->err = E_UNKVAR;
+	} else {
+	    ret->v.str = gretl_strdup(sval);
+	    if (ret->v.str == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static NODE *loop_index_node (NODE *t, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -5460,6 +5502,10 @@ static NODE *eval (NODE *t, parser *p)
 	/* user-defined matrix */
 	ret = umatrix_node(t, p);
 	break;
+    case VSTR:
+	/* string variable */
+	ret = string_var_node(t, p);
+	break;
     case OVAR:
     case MVAR:
     case DMSL:
@@ -5772,7 +5818,7 @@ static void printnode (const NODE *t, const parser *p)
 	}
 	printnode(t->v.b2.r, p);
 	pputc(p->prn, ')');
-    } else if (t->t == STR) {
+    } else if (t->t == STR || t->t == VSTR) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == MDEF) {
 	pprintf(p->prn, "{ MDEF }");
@@ -6791,6 +6837,10 @@ static int gen_check_return_type (parser *p)
 	fprintf(stderr, "gen_check_return_type: p->ret = NULL!\n");
 	return (p->err = E_DATA);
     }
+
+#if EDEBUG
+    fprintf(stderr, " and r->type = %d\n", r->t);
+#endif
 
     if (p->dinfo->n == 0 && r->t != MAT && r->t != NUM && r->t != STR) {
 	no_data_error();

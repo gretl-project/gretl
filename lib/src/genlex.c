@@ -693,11 +693,11 @@ static void look_up_string_variable (const char *s, parser *p)
     const char *val = get_string_by_name(s + 1);
 
     if (val != NULL) {
-	p->idstr = gretl_strdup(val);
+	p->idstr = gretl_strdup(s);
 	if (p->idstr == NULL) {
 	    p->err = E_ALLOC;
 	} else {
-	    p->sym = STR;
+	    p->sym = VSTR;
 	}
     } else {
 	undefined_symbol_error(s, p);
@@ -754,8 +754,8 @@ static void look_up_word (const char *s, parser *p)
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
 		} else if (string_is_defined(s)) {
-		    p->sym = STR;
-		    p->idstr = gretl_strdup(get_string_by_name(s));
+		    p->sym = VSTR;
+		    p->idstr = gretl_strdup(s);
 		} else if (p->targ == LIST &&
 			   varname_match_any(p->dinfo, s)) {
 		    p->sym = LIST;
@@ -1315,6 +1315,8 @@ const char *getsymb (int t, const parser *p)
 	return "LIST";
     } else if (t == OVAR) {
 	return "OVAR";
+    } else if (t == VSTR) {
+	return "VSTR";
     } else if (t == EMPTY) {
 	return "EMPTY";
     }

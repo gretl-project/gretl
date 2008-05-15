@@ -3158,6 +3158,10 @@ static int allocate_function_args (ufunc *fun,
 					       pZ, pdinfo);
 	    } else if (arg->type == GRETL_TYPE_NONE) {
 		err = add_scalar_arg_default(fp, pZ, pdinfo);
+	    } else if (arg->type == GRETL_TYPE_MATRIX) {
+		/* "cast" to scalar */
+		err = dataset_add_scalar_as(arg->val.m->val[0], fp->name, 
+					    pZ, pdinfo);
 	    } else {
 		err = dataset_add_scalar_as(arg->val.x, fp->name, 
 					    pZ, pdinfo);
@@ -3684,6 +3688,8 @@ static double arg_get_double_val (struct fnarg *arg,
 	return arg->val.x;
     } else if (arg->type == GRETL_TYPE_UVAR) {
 	return Z[arg->val.idnum][0];
+    } else if (arg->type == GRETL_TYPE_MATRIX) {
+	return arg->val.m->val[0];
     } else {
 	return NADBL;
     }
@@ -3710,6 +3716,10 @@ static int check_function_args (ufunc *u, fnargs *args,
 	} else if (gretl_scalar_type(fp->type) && uvar_scalar(arg, pdinfo)) {
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_SERIES && uvar_series(arg, pdinfo)) {
+	    ; /* OK */
+	} else if (gretl_scalar_type(fp->type) && 
+		   arg->type == GRETL_TYPE_MATRIX &&
+		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK */
 	} else if (fp->type != arg->type) {
 	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 

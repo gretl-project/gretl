@@ -106,8 +106,9 @@ enum {
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
-	      INC,   
-  /* 80 */    DEC,
+	      VSTR,       /* string variable */
+  /* 80 */    INC,   
+	      DEC,
 	      QUERY,
 	      EOT,	  /* end of transmission */
 	      UNK 
@@ -331,7 +332,7 @@ enum {
 #define bnsym(s) (s == MDEF || s == FARGS)
 
 #define freestr(s) (s == STR || s == UMAT || s == UOBJ || \
-                    s == LOOPIDX || s == LIST)
+                    s == LOOPIDX || s == LIST || s == VSTR)
 
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
 
@@ -479,7 +480,6 @@ void parser_print_input (parser *p);
 void lex (parser *s);
 NODE *expr (parser *s);
 NODE *newdbl (double x);
-NODE *newstr (parser *p);
 NODE *obs_node (parser *p);
 NODE *msl_node_direct (parser *p);
 void context_error (int c, parser *p);
