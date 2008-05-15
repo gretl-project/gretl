@@ -1,8 +1,16 @@
 The C files in here are f2c translations of the Fortran
 sources in version 4.17 of the GNU R quantreg package.
 
-The original author is Roger Koenker; some changes have
-been made for R by Martin Maechler.
+The original author is Roger Koenker; I gather that some 
+changes were made for R by Martin Maechler.
 
-Please see the license in uiuc-ncsa.txt.  
+I have added a check to rqbr.c to avoid the possibility
+of getting stuck in an infinite (or near-infinite) loop
+on certain problems.
+
+Please see the original license in uiuc-ncsa.txt.  
+
+Allin Cottrell
+Wake Forest University
+May, 2008
 
