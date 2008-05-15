@@ -2064,15 +2064,36 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    int err = 0;
+    const char *optstrs[] = {
+	N_("squares and cubes"),
+	N_("squares only"),
+	N_("cubes only")
+    };
+    gretlopt opt = OPT_S;
+    int resp, err = 0;
 
     if (gui_exact_fit_check(pmod)) {
 	return;
     }
 
+    resp = radio_dialog(_("gretl: RESET test"),
+			_("RESET specification test"),
+			optstrs, 3, 0, 0);
+
+    if (resp < 0) {
+	/* canceled */
+	return;
+    }
+
     if (bufopen(&prn)) return;
 
-    err = reset_test(pmod, &Z, datainfo, OPT_S, prn);
+    if (resp == 1) {
+	opt |= OPT_R;
+    } else if (resp == 2) {
+	opt |= OPT_C;
+    }
+
+    err = reset_test(pmod, &Z, datainfo, opt, prn);
 
     if (err) {
 	gui_errmsg(err);
