@@ -149,7 +149,7 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
    381–391: rate = O(n^{-1/3})
 */
 
-static double rq_bandwidth (double tau, int n)
+static double hs_bandwidth (double tau, int n, int *err)
 {
     double alpha = 0.05;
     double x0 = normal_cdf_inverse(tau);
@@ -157,8 +157,25 @@ static double rq_bandwidth (double tau, int n)
     double b1 = pow(n, -1 / 3.0);
     double b2 = pow(normal_cdf_inverse(1 - alpha/2), 2 / 3.0);
     double b3 = (1.5 * f0 * f0) / (2 * x0 * x0 + 1);
+    double h = b1 * b2 * pow(b3, 1 / 3.0);
 
-    return b1 * b2 * pow(b3, 1 / 3.0);
+#if QDEBUG
+    fprintf(stderr, "tau = %g, hs bandwidth = %g\n", tau, h);
+#endif
+
+    if (err != NULL) {
+	if (tau + h > 1) {
+	    gretl_errmsg_set("Hall-Sheather bandwidth is out of bounds");
+	    fprintf(stderr, "hs_bandwidth: tau + h > 1\n");
+	    *err = E_DATA;
+	} else if (tau - h < 0) {
+	    gretl_errmsg_set("Hall-Sheather bandwidth is out of bounds");
+	    fprintf(stderr, "hs_bandwidth: tau - h < 0\n");
+	    *err = E_DATA;
+	}  
+    }
+
+    return h;
 }
 
 static double rq_loglik (MODEL *pmod, double tau)
@@ -234,6 +251,7 @@ static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci,
     gretl_matrix *rqci;
     double blo, bhi;
     int i, p = ci->cols;
+    int err = 0;
 
     rqci = gretl_matrix_alloc(p, 2);
     if (rqci == NULL) {
@@ -243,18 +261,25 @@ static int rq_attach_intervals (MODEL *pmod, gretl_matrix *ci,
     for (i=0; i<p; i++) {
 	blo = gretl_matrix_get(ci, 1, i);
 	bhi = gretl_matrix_get(ci, 2, i);
+	if (xna(blo) || xna(bhi) || (blo == 0.0 && bhi == 0.0)) {
+	    err = E_NOCONV;
+	    break;
+	}
 	gretl_matrix_set(rqci, i, 0, blo);
 	gretl_matrix_set(rqci, i, 1, bhi);
     }
 
-    gretl_model_set_matrix_as_data(pmod, "coeff_intervals", rqci);
-    gretl_model_set_double(pmod, "rq_alpha", alpha);
-
-    if (opt & OPT_R) {
-	gretl_model_set_int(pmod, "rq_nid", 1);
+    if (err) {
+	gretl_matrix_free(rqci);
+    } else {
+	gretl_model_set_matrix_as_data(pmod, "coeff_intervals", rqci);
+	gretl_model_set_double(pmod, "rq_alpha", alpha);
+	if (opt & OPT_R) {
+	    gretl_model_set_int(pmod, "rq_nid", 1);
+	}
     }
 
-    return 0;
+    return err;
 }
 
 /* Attach the special results matrix generated when we estimate the
@@ -375,7 +400,10 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     int i, j, k, jj;
     int err = 0;
 
-    h = rq_bandwidth(rq->tau, n);
+    h = hs_bandwidth(rq->tau, n, &err);
+    if (err) {
+	return err;
+    }
 
     b    = gretl_matrix_alloc(p, 1);
     f    = gretl_matrix_alloc(n, 1);
@@ -400,7 +428,6 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     }
 
 #if QDEBUG
-    fprintf(stderr, "make_nid_qn: bandwidth = %g\n", h);
     gretl_matrix_print(b, "coeff diffs");
 #endif
 
@@ -512,6 +539,10 @@ static int make_iid_qn (const gretl_matrix *X, double *qn)
 	gretl_matrix_free(XTX);
     }
 
+#if QDEBUG
+    fprintf(stderr, "make_iid_qn: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -570,7 +601,7 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
     rq->p = p;
     rq->tau = tau;
     rq->tol = calc_eps23;
-    rq->big = NADBL;
+    rq->big = NADBL / 100;
 
     if (opt & OPT_N) {
 	/* no df correction */
@@ -606,6 +637,10 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
     logical lci1 = calc_ci;
     int err = 0;
 
+#if QDEBUG
+    fprintf(stderr, "real_br_calc: calling rqbr, calc_ci = %d\n", calc_ci);
+#endif
+
     rqbr_(&rq->n, &rq->p, &rq->n5, &rq->p3, &rq->p4, 
 	  X->val, y->val, &tau, &rq->tol, &ift,
 	  rq->coeff, rq->resid, rq->s, rq->wa, rq->wb, 
@@ -613,6 +648,10 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
 	  &lsol, rq->h, rq->qn, &rq->cut, 
 	  rq->ci->val, rq->tnmat->val, 
 	  &rq->big, &lci1);
+
+#if QDEBUG
+    fprintf(stderr, "rqbr: ift = %d\n", ift);
+#endif
 
     if (ift == 1) {
 	fprintf(stderr, "Warning: solution may be non-unique\n");
@@ -707,7 +746,7 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 	return err;
     }
 
-    h = ceil(rq->n * rq_bandwidth(tau, rq->n));
+    h = ceil(rq->n * hs_bandwidth(tau, rq->n, NULL));
     h = (rq->p + 1 > h)? rq->p + 1 : h;
     vn = h + 1;
     eps23 = calc_eps23;
@@ -814,15 +853,10 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
     int p = rq->p;
     int i, t, err = 0;
 
-    h = rq_bandwidth(tau, rq->n);
-
-    if (tau + h > 1) {
-	fprintf(stderr, "rq_fn_nid_VCV: tau + h > 1\n");
-	return E_DATA;
-    } else if (tau - h < 0) {
-	fprintf(stderr, "rq_fn_nid_VCV: tau - h < 0\n");
-	return E_DATA;
-    }    
+    h = hs_bandwidth(tau, rq->n, &err);
+    if (err) {
+	return err;
+    }
 
     eps23 = calc_eps23;
 
@@ -954,6 +988,9 @@ write_tbeta_block (gretl_matrix *tbeta, int nt, double *coeff,
     for (i=0; i<p; i++) {
 	blo = gretl_matrix_get(ci, 1, i);
 	bhi = gretl_matrix_get(ci, 2, i);
+	if (xna(blo) || xna(bhi)) {
+	    return E_NAN;
+	}
 	gretl_matrix_set(tbeta, k, 0, coeff[i]);
 	gretl_matrix_set(tbeta, k, 1, blo);
 	gretl_matrix_set(tbeta, k, 2, bhi);
@@ -996,7 +1033,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	    err = E_ALLOC;
 	} 
 #if QDEBUG
-	fprintf(stderr, "p = %d, ntau = %d\n", p, ntau);
+	fprintf(stderr, "p = %d, ntau = %d, alpha = %g\n", p, ntau, alpha);
 	fprintf(stderr, "tbeta = %d x %d\n", tbeta->rows, tbeta->cols);
 #endif
     } 
@@ -1028,11 +1065,13 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	    if (ntau == 1) {
 		/* done: just transcribe everything */
 		rq_transcribe_results(pmod, y, tau, rq.coeff, rq.resid);
-		rq_attach_intervals(pmod, rq.ci, alpha, opt);
+		err = rq_attach_intervals(pmod, rq.ci, alpha, opt);
 	    } else {
 		/* using multiple tau values */
-		write_tbeta_block(tbeta, ntau, rq.coeff, rq.ci, i);
-		br_info_reinit(X, &rq);
+		err = write_tbeta_block(tbeta, ntau, rq.coeff, rq.ci, i);
+		if (!err) {
+		    br_info_reinit(X, &rq);
+		}
 	    }
 	}
     }
@@ -1210,20 +1249,17 @@ int rq_driver (const char *parm, MODEL *pmod,
     gretl_vector *tau = NULL;
     int err = 0;
 
-    if ((opt & OPT_I) && pmod->list[0] < 3) {
-	gretl_errmsg_set("quantreg: can't do confidence intervals with "
-			 "only one regressor");
-	err = E_DATA;
-    }
-
     tau = get_user_tau(parm, pZ, pdinfo, &err);
 
     if (!err && gretl_vector_get_length(tau) > 1) {
-	/* if given multiple taus, we'll automatically switch to doing
-	   confidence intervals, if we have enough regressors */
-	if (pmod->list[0] >= 3) {
-	    opt |= OPT_I;
-	}
+	/* multiple taus -> implies the "intervals" option */
+	opt |= OPT_I;
+    }
+
+    if (!err && (opt & OPT_I) && pmod->list[0] < 3) {
+	gretl_errmsg_set("quantreg: can't do confidence intervals with "
+			 "only one regressor");
+	err = E_DATA;
     }
 
     if (!err) {
