@@ -609,7 +609,32 @@ static gretl_matrix *vQ;
 static double *ac;
 static double *mc;
 
-static struct arma_info *kainfo;    
+static struct arma_info *kainfo;   
+
+static void allocate_kalman_matrices (int r, int r2,
+				      int k, int T)
+{
+    S = gretl_column_vector_alloc(r);
+    P = gretl_matrix_alloc(r, r);
+    F = gretl_matrix_alloc(r, r);
+    A = gretl_column_vector_alloc(k);
+    H = gretl_column_vector_alloc(r);
+    E = gretl_column_vector_alloc(T);
+    Q = gretl_matrix_alloc(r, r);
+    Svar = gretl_matrix_alloc(r2, r2);
+}
+
+static void free_kalman_matrices (void)
+{
+    gretl_matrix_free(S);
+    gretl_matrix_free(P);
+    gretl_matrix_free(F);
+    gretl_matrix_free(A);
+    gretl_matrix_free(H);
+    gretl_matrix_free(E);
+    gretl_matrix_free(Q);
+    gretl_matrix_free(Svar);
+}
 
 static int ainfo_get_r (struct arma_info *ainfo)
 {
@@ -944,10 +969,12 @@ kalman_arma_score_callback (const double *b, int i, void *data)
 */
 
 static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b, 
-			 double s2, int k, int T)
+			 double s2, int k, int T,
+			 PRN *prn)
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
+    double rcond;
     int s, t;
     int err = 0;
 
@@ -956,7 +983,8 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 	pmod->uhat[t] = gretl_vector_get(E, s++);
     }
 
-    G = build_OPG_matrix(b, k, T, kalman_arma_score_callback, (void *) K, &err);
+    G = build_OPG_matrix(b, k, T, kalman_arma_score_callback, 
+			 (void *) K, &err);
     if (err) {
 	goto bailout;
     }
@@ -971,7 +999,15 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 			      G, GRETL_MOD_TRANSPOSE,
 			      V, GRETL_MOD_NONE);
 
-    err = gretl_invert_symmetric_matrix(V);
+    rcond = gretl_symmetric_matrix_rcond(V, &err);
+    if (!err && rcond < 1.0E-10) {
+	pprintf(prn, "OPG: rcond = %g; will try Hessian\n", rcond);
+	err = 1;
+    }
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(V);
+    }
 
     if (!err) {
 	gretl_matrix_multiply_by_scalar(V, s2);
@@ -980,108 +1016,11 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 
  bailout:
 
-    pmod->errcode = err;
-
     gretl_matrix_free(G);
     gretl_matrix_free(V);
     
     return err;
 }
-
-/* in Kalman case the basic model struct is empty, so we have
-   to allocate for coefficients, residuals and so on */
-
-static int kalman_arma_model_allocate (MODEL *pmod, int k, int T)
-{
-    pmod->ncoeff = k;
-    pmod->full_n = T;
-
-    return gretl_model_allocate_storage(pmod);
-}
-
-static int kalman_arma_finish (MODEL *pmod, const int *alist,
-			       struct arma_info *ainfo,
-			       const double **Z, const DATAINFO *pdinfo, 
-			       kalman *K, double *b, double *vcv,
-			       int k, int T)
-{
-    double s2;
-    int kopt, i;
-
-    pmod->t1 = ainfo->t1;
-    pmod->t2 = ainfo->t2;
-    pmod->nobs = T;
-
-    pmod->errcode = kalman_arma_model_allocate(pmod, k, ainfo->T);
-    if (pmod->errcode) {
-	return pmod->errcode;
-    }
-
-    for (i=0; i<k; i++) {
-	pmod->coeff[i] = b[i];
-    }
-
-    s2 = kalman_get_arma_variance(K);
-    pmod->sigma = sqrt(s2);
-
-    pmod->lnL = kalman_get_loglik(K);
-    kopt = kalman_get_options(K);
-
-    /* rescale stuff if we are using average loglikelihood */
-
-    if (kopt & KALMAN_AVG_LL) {
-	pmod->lnL *= T;
-	if (vcv != NULL) {
-	    int k2 = k * (k + 1) / 2;
-
-	    for (i=0; i<k2; i++) {
-		vcv[i] /= T;
-	    }
-	}
-    }
-
-#if ARMA_DEBUG
-    fprintf(stderr, "kalman_arma_finish: doing VCV, method %s\n",
-	    (vcv != NULL)? "Hessian" : "OPG");
-#endif
-
-    if (vcv != NULL) {
-	arma_hessian_vcv(pmod, vcv, k);
-	gretl_model_set_int(pmod, "ml_vcv", VCV_HESSIAN);
-    } else {
-	arma_OPG_vcv(pmod, K, b, s2, k, T);
-	gretl_model_set_int(pmod, "ml_vcv", VCV_OP);
-    }
-
-    write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
-    arma_model_add_roots(pmod, ainfo, b);
-
-    gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
-
-    return pmod->errcode;
-}
-
-#if ARMA_DEBUG
-
-static void debug_print_theta (const double *theta,
-			       const double *Theta)
-{
-    int i, k = 0;
-
-    fprintf(stderr, "kalman_arma_ll():\n");
-
-    for (i=0; i<kainfo->q; i++) {
-	if (MA_included(kainfo, i)) {
-	    fprintf(stderr, "theta[%d] = %#.12g\n", i+1, theta[k++]);
-	}
-    }
-
-    for (i=0; i<kainfo->Q; i++) {
-	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
-    }   
-}
-
-#endif
 
 static int kalman_do_ma_check = 1;
 
@@ -1116,6 +1055,132 @@ static double kalman_arma_ll (const double *b, void *p)
 
     return ll;
 }
+
+static void maybe_rescale_hessian (int kopt, double *vcv, 
+				   int k, int T)
+{
+    if (kopt & KALMAN_AVG_LL) {
+	int i, k2 = k * (k + 1) / 2;
+
+	for (i=0; i<k2; i++) {
+	    vcv[i] /= T;
+	}
+    }
+}
+
+static int arma_use_hessian (gretlopt opt)
+{
+    int ret = 1;
+
+    if (opt & OPT_G) {
+	ret = 0;
+    } else if (libset_get_int(ARMA_VCV) == VCV_OP) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+static int kalman_arma_finish (MODEL *pmod, const int *alist,
+			       struct arma_info *ainfo,
+			       const double **Z, const DATAINFO *pdinfo, 
+			       kalman *K, double *b, int k, int T,
+			       gretlopt opt, PRN *prn)
+{
+    int do_hess = arma_use_hessian(opt);
+    double s2;
+    int kopt, i;
+    int err;
+
+    pmod->t1 = ainfo->t1;
+    pmod->t2 = ainfo->t2;
+    pmod->nobs = T;
+    pmod->ncoeff = k;
+    pmod->full_n = T;
+    
+    /* in the Kalman case the basic model struct is empty, so we 
+       have to allocate for coefficients, residuals and so on
+    */
+
+    err = gretl_model_allocate_storage(pmod);
+    if (err) {
+	return err;
+    }
+
+    for (i=0; i<k; i++) {
+	pmod->coeff[i] = b[i];
+    }
+
+    s2 = kalman_get_arma_variance(K);
+    pmod->sigma = sqrt(s2);
+
+    pmod->lnL = kalman_get_loglik(K);
+    kopt = kalman_get_options(K);
+
+    /* rescale if we're using average loglikelihood */
+    if (kopt & KALMAN_AVG_LL) {
+	pmod->lnL *= T;
+    }
+
+#if ARMA_DEBUG
+    fprintf(stderr, "kalman_arma_finish: doing VCV, method %s\n",
+	    (vcv != NULL)? "Hessian" : "OPG");
+#endif
+
+    if (!do_hess) {
+	/* try OPG first, hessian as fallback */
+	err = arma_OPG_vcv(pmod, K, b, s2, k, T, prn);
+	if (err) {
+	    err = 0;
+	    do_hess = 1;
+	} else {
+	    gretl_model_set_int(pmod, "ml_vcv", VCV_OP);
+	}
+    }	
+
+    if (do_hess) { 
+	double *vcv;
+
+	kalman_do_ma_check = 0;
+	vcv = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
+	kalman_do_ma_check = 1;
+	if (!err) {
+	    maybe_rescale_hessian(kopt, vcv, k, T);
+	    arma_hessian_vcv(pmod, vcv, k);
+	    gretl_model_set_int(pmod, "ml_vcv", VCV_HESSIAN);
+	}
+    }
+
+    if (!err) {
+	write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
+	arma_model_add_roots(pmod, ainfo, b);
+	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
+    }
+
+    return err;
+}
+
+#if ARMA_DEBUG
+
+static void debug_print_theta (const double *theta,
+			       const double *Theta)
+{
+    int i, k = 0;
+
+    fprintf(stderr, "kalman_arma_ll():\n");
+
+    for (i=0; i<kainfo->q; i++) {
+	if (MA_included(kainfo, i)) {
+	    fprintf(stderr, "theta[%d] = %#.12g\n", i+1, theta[k++]);
+	}
+    }
+
+    for (i=0; i<kainfo->Q; i++) {
+	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
+    }   
+}
+
+#endif
 
 static gretl_matrix *form_arma_y_vector (const int *alist, 
 					 const double **Z,
@@ -1277,19 +1342,6 @@ static int kalman_undo_y_scaling (struct arma_info *ainfo,
     return err;
 }
 
-static int arma_use_hessian (gretlopt opt)
-{
-    int ret = 1;
-
-    if (opt & OPT_G) {
-	ret = 0;
-    } else if (libset_get_int(ARMA_VCV) == VCV_OP) {
-	ret = 0;
-    }
-
-    return ret;
-}
-
 static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			struct arma_info *ainfo, MODEL *pmod,
@@ -1361,15 +1413,7 @@ static int kalman_arma (const int *alist, double *coeff,
 
     clear_gretl_matrix_err();
 
-    S = gretl_column_vector_alloc(r);
-    P = gretl_matrix_alloc(r, r);
-    F = gretl_matrix_alloc(r, r);
-    A = gretl_column_vector_alloc(k);
-    H = gretl_column_vector_alloc(r);
-    E = gretl_column_vector_alloc(T);
-    Q = gretl_matrix_alloc(r, r);
-
-    Svar = gretl_matrix_alloc(r2, r2);
+    allocate_kalman_matrices(r, r2, k, T);
 
     if (arma_using_vech(ainfo)) {
 	vQ = gretl_column_vector_alloc(m);
@@ -1430,42 +1474,26 @@ static int kalman_arma (const int *alist, double *coeff,
 	kalman_undo_y_scaling(ainfo, y, b, K);
     }
 
-    if (err) {
-	pmod->errcode = err;
-    } else {
-	double *hess = NULL;
-
+    if (!err) {
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
-
-	if (arma_use_hessian(opt)) { 
-	    kalman_do_ma_check = 0;
-	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
-	    kalman_do_ma_check = 1;
-	    if (err) {
-		/* fall back to OPG */
-		err = 0;
-	    }
-	}
-
-	kalman_arma_finish(pmod, alist, ainfo, Z, pdinfo, 
-			   K, b, hess, ainfo->nc, T);
+	err = kalman_arma_finish(pmod, alist, ainfo, 
+				 Z, pdinfo, K, b, 
+				 ainfo->nc, T, opt,
+				 prn);
     } 
+
+    if (err) {
+	pmod->errcode = err;
+    }
 
     kalman_free(K);
 
-    gretl_matrix_free(S);
-    gretl_matrix_free(P);
-    gretl_matrix_free(F);
-    gretl_matrix_free(A);
-    gretl_matrix_free(H);
-    gretl_matrix_free(E);
-    gretl_matrix_free(Q);
+    free_kalman_matrices();
 
     gretl_matrix_free(y);
     gretl_matrix_free(x);
 
-    gretl_matrix_free(Svar);
     gretl_matrix_free(Svar2);
     gretl_matrix_free(vQ);
 
