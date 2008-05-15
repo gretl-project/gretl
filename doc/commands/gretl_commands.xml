@@ -6654,14 +6654,33 @@
 
   <command name="reset" section="Tests" label="Ramsey's RESET">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print the auxiliary regression</effect>
+	</option>
+	<option>
+	  <flag>--squares-only</flag>
+	  <effect>compute the test by using only the squares</effect>
+	</option>
+	<option>
+	  <flag>--cubes-only</flag>
+	  <effect>compute the test by using only the cubes</effect>
+	</option>
+      </options>
+    </usage>
+
     <description>
       <para>
 	Must follow the estimation of a model via OLS. Carries out
 	Ramsey's RESET test for model specification (non-linearity) by
-	adding the square and the cube of the fitted values to the
-	regression and calculating the <math>F</math> statistic
-	for the null hypothesis that the parameters on the two added
-	terms are zero.
+	adding the square and the cube (unless
+	the <lit>--squares-only</lit> or the <lit>--cubes-only</lit>
+	options are used) of the fitted values to the regression and
+	calculating the <math>F</math> statistic for the null
+	hypothesis that the parameters on the two added terms are
+	zero.
       </para>
     </description>
 

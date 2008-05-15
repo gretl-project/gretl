@@ -6537,12 +6537,31 @@
 
   <command name="reset" section="Tests" label="Test RESET di Ramsey">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra la regressione ausiliaria</effect>
+	</option>
+	<option>
+	  <flag>--squares-only</flag>
+	  <effect>calcola il test coi soli quadrati</effect>
+	</option>
+	<option>
+	  <flag>--cubes-only</flag>
+	  <effect>calcola il test coi soli cubi</effect>
+	</option>
+      </options>
+    </usage>
+
     <description>
       <para>
 	Va eseguito dopo la stima di un modello via OLS. Esegue il test
 	RESET di Ramsey per la specificazione del modello
         (non-linearità), aggiungendo alla regressione il quadrato e il
-        cubo dei valori stimati e calcolando la statistica
+        cubo dei valori stimati (a meno che non siano specificate le
+	opzioni <lit>--squares-only</lit> o
+	<lit>--cubes-only</lit>) e calcolando la statistica
         <math>F</math> per l'ipotesi nulla che i coefficienti dei due
         termini aggiunti siano pari a zero.
       </para>

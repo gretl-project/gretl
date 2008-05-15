@@ -1335,7 +1335,9 @@ double ljung_box (int m, int t1, int t2, const double *y, int *err)
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if contains %OPT_S, save test results to model.
+ * @opt: if contains %OPT_S, save test results to model. %OPT_Q
+ * suppresses the printout of the auxiliary regression. %OPT_R and
+ * %OPT_C stand for "squares only" and "cubes only", respectively.
  * @prn: gretl printing struct.
  *
  * Carries out Ramsey's RESET test for model specification.
@@ -1356,6 +1358,12 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pmod->ci != OLS) {
 	return E_OLSONLY;
+    }
+
+    err = incompatible_options(opt, OPT_C | OPT_R);
+
+    if (err) {
+	return err;
     }
 
     if (exact_fit_check(pmod, prn)) {
