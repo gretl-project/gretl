@@ -6556,11 +6556,36 @@
 	</demos>
     </usage>
 
-    <description>
+    <description context="gui">
       <para>
-	Warning: this command is EXPERIMENTAL; the syntax is under
-	construction.
+	Quantile regression. If you give a single quantile, gretl produces
+	quantile estimates with standard errors.  By default the standard
+	errors are computed according to the asymptotic formula given by
+	Koenker and Bassett (<book>Econometrica</book>, 1978), but if the
+	<quote>robust</quote> box is checked we use the
+	heteroskedasticity-robust variant from Koenker and Zhao
+	(<book>Journal of Nonparametric Statistics</book>, 1994).
       </para>
+      <para>
+	If you give a list of quantiles (see the drop-down list for some
+	possibilities), gretl will calculate point estimates and 90 percent
+	confidence intervals for each of the quantiles.  The
+	<quote>robust</quote> check-box still has an effect: if it is not
+	checked, the intervals are computed on the assumption of IID
+	errors; with it, gretl uses the robust estimator developed by
+	Koenker and Machado (<book>Journal of the American Statistical
+	  Association</book>, 1999).  Note that these intervals are not
+	just <quote>plus or minus so many standard errors</quote>; in
+	general, they are asymmetrical about the point estimates of
+	the coefficients.  
+      </para>
+      <para>
+	To Follow up on the references given above, please see
+	<guideref targ="chap:quantreg"/>.
+      </para>
+    </description>
+
+    <description context="cli">
       <para>
 	Quantile regression.  The first argument, <repl>tau</repl>, is the
 	conditional quantile for which estimates are wanted.  It may be given
@@ -6601,7 +6626,6 @@
 	estimates for each regressor in turn.  Note that this alternative
 	implies the <lit>--intervals</lit> option.
       </para>
-
     </description>
 
     <gui-access>
