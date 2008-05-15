@@ -6662,11 +6662,11 @@
 	</option>
 	<option>
 	  <flag>--squares-only</flag>
-	  <effect>compute the test by using only the squares</effect>
+	  <effect>compute the test using only the squares</effect>
 	</option>
 	<option>
 	  <flag>--cubes-only</flag>
-	  <effect>compute the test by using only the cubes</effect>
+	  <effect>compute the test using only the cubes</effect>
 	</option>
       </options>
     </usage>
@@ -6675,12 +6675,13 @@
       <para>
 	Must follow the estimation of a model via OLS. Carries out
 	Ramsey's RESET test for model specification (non-linearity) by
-	adding the square and the cube (unless
-	the <lit>--squares-only</lit> or the <lit>--cubes-only</lit>
-	options are used) of the fitted values to the regression and
-	calculating the <math>F</math> statistic for the null
-	hypothesis that the parameters on the two added terms are
-	zero.
+	adding the square and/or the cube of the fitted values to the
+	regression and calculating the <math>F</math> statistic for the
+	null hypothesis that the parameters on the added terms are zero.
+      </para>
+      <para>
+	Both the square and the cube are added, unless one of the options
+	<lit>--squares-only</lit> or <lit>--cubes-only</lit> is given.
       </para>
     </description>
 
