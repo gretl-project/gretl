@@ -4985,18 +4985,7 @@ static NODE *eval (NODE *t, parser *p)
 
     switch (t->t) {
     case NUM:
-	if (t->vnum > 0) {
-	    /* update numerical value */
-	    t->v.xval = (*p->Z)[t->vnum][0];
-	}
-	ret = t;
-	break;
     case VEC:
-	if (t->vnum > 0 && (p->flags & P_EXEC)) {
-	    reattach_data_series(t, p);
-	}
-	ret = t;
-	break;
     case MAT:
     case STR:
     case MSPEC:
@@ -5004,6 +4993,11 @@ static NODE *eval (NODE *t, parser *p)
     case ABSENT:
     case U_ADDR:
     case LVEC:
+	if (t->t == NUM && t->vnum > 0) {
+	    t->v.xval = (*p->Z)[t->vnum][0];
+	} else if (t->t == VEC && t->vnum > 0 && (p->flags & P_EXEC)) {
+	    reattach_data_series(t, p);
+	}
 	/* terminal symbol: pass on through */
 	ret = t;
 	break;
