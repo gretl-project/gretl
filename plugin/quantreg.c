@@ -216,8 +216,6 @@ static void rq_transcribe_results (MODEL *pmod,
     int i, t;
 
     if (stage == RQ_STAGE_1) {
-	pmod->ci = LAD;
-	gretl_model_set_int(pmod, "rq", 1);
 	gretl_model_set_double(pmod, "tau", tau);
     }
 
@@ -286,9 +284,6 @@ static int rq_attach_intervals (MODEL *pmod, struct br_info *rq,
     } else {
 	gretl_model_set_matrix_as_data(pmod, "coeff_intervals", rqci);
 	gretl_model_set_double(pmod, "rq_alpha", alpha);
-	if (opt & OPT_R) {
-	    gretl_model_set_int(pmod, "rq_nid", 1);
-	}
     }
 
     return err;
@@ -343,13 +338,6 @@ static int rq_attach_multi_results (MODEL *pmod,
     if (alpha > 0) {
 	gretl_model_set_double(pmod, "rq_alpha", alpha);
     }
-
-    if (opt & OPT_R) {
-	gretl_model_set_int(pmod, "rq_nid", 1);
-    }
-
-    pmod->ci = LAD;
-    gretl_model_set_int(pmod, "rq", 1);
 
     correct_multi_tau_model(pmod);
 
@@ -986,10 +974,6 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 
     err = rq_write_variance(V, pmod, se);
 
-    if (se == NULL) {
-	gretl_model_set_int(pmod, "rq_nid", 1);
-    }
-
  bailout:
 
     gretl_matrix_free(p1);
@@ -1423,7 +1407,13 @@ int rq_driver (const char *parm, MODEL *pmod,
     }
 
     if (!err) {
+	/* some common finishing touches */
 	gretl_model_add_y_median(pmod, (*pZ)[pmod->list[1]]);
+	pmod->ci = LAD;
+	gretl_model_set_int(pmod, "rq", 1);
+	if (opt & OPT_R) {
+	    gretl_model_set_int(pmod, "rq_nid", 1);
+	}
     }
 
     gretl_matrix_free(y);

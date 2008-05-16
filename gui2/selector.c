@@ -225,7 +225,8 @@ static int want_radios (selector *sr)
 
     if (c == PANEL || c == SCATTERS || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
-	c == XTAB || c == SPEARMAN || c == PCA) {
+	c == XTAB || c == SPEARMAN || c == PCA ||
+	c == QUANTREG) {
 	return 1;
     } else if (c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -3341,7 +3342,12 @@ static void build_selector_switches (selector *sr)
 
 	vbox_add_hsep(sr->vbox);
 
-	b1 = gtk_check_button_new_with_label(_("Robust standard errors"));
+	if (sr->code == QUANTREG) {
+	    b1 = gtk_check_button_new_with_label(_("Robust standard errors/intervals"));
+	} else {
+	    b1 = gtk_check_button_new_with_label(_("Robust standard errors"));
+	}
+
 	g_object_set_data(G_OBJECT(b1), "opt", GINT_TO_POINTER(OPT_R));
 	g_signal_connect(G_OBJECT(b1), "toggled",
 			 G_CALLBACK(option_callback), sr);
@@ -3520,6 +3526,22 @@ static void test_boot_switch (selector *sr)
 }
 
 #endif 
+
+static void build_quantreg_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Compute standard errors"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Compute confidence intervals"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_I, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
 
 static void build_rankcorr_radios (selector *sr)
 {
@@ -3870,6 +3892,8 @@ static void build_selector_radios (selector *sr)
 	build_rankcorr_radios(sr);
     } else if (sr->code == PCA) {
 	build_pca_radios(sr);
+    } else if (sr->code == QUANTREG) {
+	build_quantreg_radios(sr);
     }
 }
 

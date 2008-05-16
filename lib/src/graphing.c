@@ -3188,11 +3188,12 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     FILE *fp;
     gretl_matrix *tau = gretl_model_get_data(pmod, "rq_tauvec");
     gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
-    double tau_i, bi, blo, bhi;
-    double alpha, cval, olsband;
+    double tau_i, bi, se, blo, bhi;
+    double alpha, cval, tcrit, olsband;
     double ymin[2], ymax[2];
     gchar *tmp;
-    int ntau, i, j, err;
+    int ntau, bcols;
+    int i, j, err;
 
     if (tau == NULL || B == NULL) {
 	return E_DATA;
@@ -3205,20 +3206,46 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if ((err = gnuplot_init(PLOT_RQ_TAU, &fp))) {
 	return err;
-    }   
+    } 
+
+    bcols = gretl_matrix_cols(B);
 
     alpha = gretl_model_get_double(pmod, "rq_alpha");
+    if (na(alpha)) {
+	alpha = .05;
+    }
+
     cval = 100 * (1 - alpha);
-    olsband = student_cdf_inverse(pmod->dfd, 1 - alpha/2) * 
-	pmod->sderr[k];
+    tcrit = student_cdf_inverse(pmod->dfd, 1 - alpha/2);
+    olsband = tcrit * pmod->sderr[k];
 
     /* Try to figure best placement of key */
+
     j = k * ntau;
-    ymin[0] = min(gretl_matrix_get(B, j, 1), pmod->coeff[k] - olsband);
-    ymax[0] = max(gretl_matrix_get(B, j, 2), pmod->coeff[k] + olsband);
+    if (bcols == 3) {
+	blo = gretl_matrix_get(B, j, 1);
+	bhi = gretl_matrix_get(B, j, 2);
+    } else {
+	bi = gretl_matrix_get(B, j, 0);
+	se = gretl_matrix_get(B, j, 1);
+	blo = bi - tcrit * se;
+	bhi = bi + tcrit * se;
+    }
+    ymin[0] = min(blo, pmod->coeff[k] - olsband);
+    ymax[0] = max(bhi, pmod->coeff[k] + olsband);
+
     j += ntau - 1;
-    ymin[1] = min(gretl_matrix_get(B, j, 1), pmod->coeff[k] - olsband);
-    ymax[1] = max(gretl_matrix_get(B, j, 2), pmod->coeff[k] + olsband);
+    if (bcols == 3) {
+	blo = gretl_matrix_get(B, j, 1);
+	bhi = gretl_matrix_get(B, j, 2);
+    } else {
+	bi = gretl_matrix_get(B, j, 0);
+	se = gretl_matrix_get(B, j, 1);
+	blo = bi - tcrit * se;
+	bhi = bi + tcrit * se;
+    }
+    ymin[1] = min(blo, pmod->coeff[k] - olsband);
+    ymax[1] = max(bhi, pmod->coeff[k] + olsband);
 
     fputs("set xrange [0.0:1.0]\n", fp);
     fputs("set xlabel 'tau'\n", fp);
@@ -3264,15 +3291,22 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 
     for (i=0, j=k*ntau; i<ntau; i++, j++) {
 	tau_i = gretl_vector_get(tau, i);
-	blo = gretl_matrix_get(B, j, 1);
-	bhi = gretl_matrix_get(B, j, 2);
+	if (bcols == 3) {
+	    blo = gretl_matrix_get(B, j, 1);
+	    bhi = gretl_matrix_get(B, j, 2);
+	} else {
+	    bi = gretl_matrix_get(B, j, 0);
+	    se = gretl_matrix_get(B, j, 1);
+	    blo = bi - tcrit * se;
+	    bhi = bi + tcrit * se;
+	}
 	fprintf(fp, "%.8g %.8g %.8g\n", tau_i, blo, bhi);
     }
     fputs("e\n", fp);
 
     for (i=0, j=k*ntau; i<ntau; i++, j++) {
 	tau_i = gretl_vector_get(tau, i);
-	bi  = gretl_matrix_get(B, j, 0);
+	bi = gretl_matrix_get(B, j, 0);
 	fprintf(fp, "%.8g %.8g\n", tau_i, bi);
     }
     fputs("e\n", fp);

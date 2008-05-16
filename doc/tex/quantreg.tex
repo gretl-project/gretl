@@ -116,9 +116,10 @@ bounds in the second.
 
 As a further option, you can give \textsl{tau} as a matrix --- either
 the name of a predefined matrix or in numerical form, as in
-\verb+{.05, .25, .5, .75, .95}+.  This implies the \verb|--intervals|
-option.  The given model is estimated for all the $\tau$ values and
-the results are printed in a special form:
+\verb+{.05, .25, .5, .75, .95}+.  The given model is estimated for all
+the $\tau$ values and the results are printed in a special form, as
+shown below (in this case the \verb|--intervals| option was also
+given).
 
 {\small
 \begin{verbatim}
@@ -165,8 +166,7 @@ marked.
 \begin{figure}
   \centering
   \includegraphics{figures/tau-sequence}
-  \caption{The coefficient on income, dependent variable is
-    expenditure on food; Ernst Engel's data}
+  \caption{Regression of food expenditure on income; Engel's data}
   \label{fig:tau}
 \end{figure}
 
@@ -191,8 +191,7 @@ estimates overlap at all the quantiles considered.
 \begin{figure}
   \centering
   \includegraphics{figures/tau-sequence2}
-  \caption{Coefficient on log of income, dependent variable is log of
-    expenditure on food; 2 observations dropped from full Engel data
+  \caption{Log--log regression; 2 observations dropped from full Engel data
     set.}
   \label{fig:tau2}
 \end{figure}

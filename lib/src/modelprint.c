@@ -1395,7 +1395,9 @@ static void tex_arbond_depvar_name (char *s, const char *vname)
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 {
-    if (gretl_model_get_int(pmod, "using_hac") ||
+    if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
+	rq_vcv_line(pmod, prn);
+    } else if (gretl_model_get_int(pmod, "using_hac") ||
 	gretl_model_get_int(pmod, "hac_kernel") ||
 	gretl_model_get_int(pmod, "hac_lag")) {
 	hac_vcv_line(pmod, prn);
@@ -1411,9 +1413,7 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	beck_katz_failed_line(prn);
     } else if (pmod->ci == ARBOND && gretl_model_get_int(pmod, "asy")) {
 	arbond_asy_vcv_line(pmod, prn);
-    } else if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
-	rq_vcv_line(pmod, prn);
-    }
+    } 
 }
 
 static void print_extra_list (const char *tag, const int *list, 
