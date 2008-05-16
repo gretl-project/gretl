@@ -17,10 +17,10 @@ the method is known as Least Absolute Deviations or LAD.  While the OLS
 problem has a straightforward analytical solution, LAD is a linear
 programming problem.
 
-Quantile regression is a generalization of median regression: fitted
-values represent the conditional $\tau$-quantile of the dependent
-variable --- for example the first quartile ($\tau = .25$) or the
-ninth decile ($\tau = .90$).
+Quantile regression is a generalization of median regression: the
+regression function predicts the conditional $\tau$-quantile of the
+dependent variable --- for example the first quartile ($\tau = .25$)
+or the ninth decile ($\tau = .90$).
 
 If the classical conditions for the validity of OLS are satisfied ---
 that is, if the error term is independently and identically
@@ -39,9 +39,9 @@ command).\footnote{We gratefully acknowledge our borrowing from the
   core of the \texttt{quantreg} package is composed of Fortran code
   written by Roger Koenker; this is accompanied by various driver and
   auxiliary functions written in the \textsf{R} language by Koenker
-  amd Michael Maechler.  The latter functions have been re-worked in C
-  for \app{gretl}.  We have added some guards against numerical
-  problems that are not adequately handled in the original code.}
+  amd Martin M\"achler.  The latter functions have been re-worked in C
+  for \app{gretl}.  We have added some guards against potential
+  numerical problems in small samples.}
 
 \section{Basic syntax}
 
