@@ -6623,8 +6623,7 @@
 	may give the name of a pre-defined matrix.  In this case estimates are
 	computed for all the given <repl>tau</repl> values and the results are
 	printed in a special format, showing the sequence of quantile
-	estimates for each regressor in turn.  Note that this alternative
-	implies the <lit>--intervals</lit> option.
+	estimates for each regressor in turn.
       </para>
     </description>
 

@@ -1387,11 +1387,6 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     tau = get_user_tau(parm, pZ, pdinfo, &ntau, &err);
 
-    if (0 && !err && ntau > 1) {
-	/* multiple taus -> implies the "intervals" option */
-	opt |= OPT_I;
-    }
-
     if (!err && (opt & OPT_I) && pmod->list[0] < 3) {
 	gretl_errmsg_set("quantreg: can't do confidence intervals with "
 			 "only one regressor");
@@ -1422,7 +1417,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 	    /* doing confidence intervals -> use Borrodale-Roberts */
 	    err = rq_fit_br(y, X, tau, opt, pmod);
 	} else {
-	    /* use Frisch-Newton */
+	    /* otherwise use Frisch-Newton */
 	    err = rq_fit_fn(y, X, tau, opt, pmod);
 	}
     }
