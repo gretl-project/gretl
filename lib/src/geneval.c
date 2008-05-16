@@ -150,10 +150,8 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 
 static void parser_aux_init (parser *p)
 {
-    if (p->ecount == 0) {
-	p->aux = NULL;
-	p->n_aux = 0;
-    }
+    p->aux = NULL;
+    p->n_aux = 0;
     p->aux_i = 0;
 }
 
@@ -378,8 +376,6 @@ static int add_aux_node (parser *p, NODE *t)
     return p->err;
 }
 
-#define repeat_exec(p) (p->ecount > 0)
-
 /* get an auxiliary node: if starting from scratch we allocate
    a new node, otherwise we look up an existing one */
 
@@ -387,7 +383,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 {
     NODE *ret = NULL;
 
-    if (starting(p) && !repeat_exec(p)) {
+    if (starting(p)) {
 	if (t == NUM) {
 	    ret = newdbl(NADBL);
 	} else if (t == VEC) {
@@ -4912,6 +4908,18 @@ static int series_calc_nodes (NODE *l, NODE *r)
     return ret;
 }
 
+static void reattach_data_series (NODE *n, parser *p)
+{
+    int v = n->vnum;
+
+    if (v >= p->dinfo->v || var_is_scalar(p->dinfo, v)) {
+	fprintf(stderr, "VEC node, vnum = %d: data have gone adrift!\n", v);
+	p->err = E_DATA;
+    } else {
+	n->v.xvec = (*p->Z)[v];
+    }
+}
+
 static void node_type_error (int ntype, int goodt, NODE *bad, parser *p)
 {
     const char *nstr;
@@ -4979,6 +4987,9 @@ static NODE *eval (NODE *t, parser *p)
 	    t->v.xval = (*p->Z)[t->vnum][0];
 	}
     case VEC:
+	if (t->vnum > 0 && (p->flags & P_EXEC)) {
+	    reattach_data_series(t, p);
+	}
     case MAT:
     case STR:
     case MSPEC:
@@ -5639,6 +5650,9 @@ static NODE *eval (NODE *t, parser *p)
 #if EDEBUG
     fprintf(stderr, "eval (t->t = %03d): returning NODE at %p\n", 
 	    t->t, (void *) ret);
+    if (t->t == VEC) 
+	fprintf(stderr, " (VEC node, xvec at %p, vnum = %d)\n", 
+		(void *) t->v.xvec, t->vnum);
 #endif
 
     return ret;
@@ -6492,6 +6506,10 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
     NODE *r = p->ret;
     gretl_matrix *m = NULL;
 
+#if EDEBUG
+    fprintf(stderr, "grab_or_copy_matrix_result: r->t = %d\n", r->t);
+#endif
+
     if (r->t == NUM) {
 	/* result was a scalar, not a matrix */
 	m = gretl_matrix_alloc(1, 1);
@@ -6730,7 +6748,9 @@ static void matrix_edit (parser *p)
 	p->err = user_matrix_replace_submatrix(p->lh.name, m,
 					       p->lh.mspec);
 	gretl_matrix_free(m);
-	p->ret->v.m = NULL; /* ?? */
+	if (p->ret->t == MAT) {
+	    p->ret->v.m = NULL; /* ?? */
+	}
 	p->lh.m1 = get_matrix_by_name(p->lh.name);
     }
 }
@@ -6830,17 +6850,14 @@ static int gen_check_return_type (parser *p)
     NODE *r = p->ret;
 
 #if EDEBUG
-    fprintf(stderr, "gen_check_return_type: targ = %d\n", p->targ);
+    fprintf(stderr, "gen_check_return_type: targ = %d; ret at %p, type %d\n", 
+	    p->targ, (void *) r, (r == NULL)? -999 : r->t);
 #endif
 
     if (r == NULL) {
 	fprintf(stderr, "gen_check_return_type: p->ret = NULL!\n");
 	return (p->err = E_DATA);
     }
-
-#if EDEBUG
-    fprintf(stderr, " and r->type = %d\n", r->t);
-#endif
 
     if (p->dinfo->n == 0 && r->t != MAT && r->t != NUM && r->t != STR) {
 	no_data_error();
@@ -6849,6 +6866,11 @@ static int gen_check_return_type (parser *p)
 
     if (!ok_return_type(r->t)) {
 	return (p->err = E_TYPES);
+    }
+
+    if (r->t == VEC && r->v.xvec == NULL) {
+	fprintf(stderr, "got VEC return with xvec == NULL!\n");
+	return (p->err = E_DATA);
     }
 
     if (p->targ == NUM) {
@@ -7141,7 +7163,6 @@ static void parser_init (parser *p, const char *str,
     p->idstr = NULL;
     p->err = 0;
     p->warn = 0;
-    p->ecount = 0;
 
     *p->warning = '\0';
 
@@ -7275,7 +7296,7 @@ int realgen (const char *s, parser *p, double ***pZ,
     int t;
 
 #if EDEBUG
-    fprintf(stderr, "realgen: task = %s\n", (flags & P_COMPILE)?
+    fprintf(stderr, "*** realgen: task = %s\n", (flags & P_COMPILE)?
 	    "compile" : (flags & P_EXEC)? "exec" : "normal");
 #endif
 
@@ -7328,7 +7349,8 @@ int realgen (const char *s, parser *p, double ***pZ,
     }
 
 #if EDEBUG
-    fprintf(stderr, "realgen: p->tree->type = %d\n", p->tree->t);
+    fprintf(stderr, "realgen: p->tree at %p, type %d\n", (void *) p->tree, 
+	    p->tree->t);
 #endif
 
     if (p->ch != 0) {

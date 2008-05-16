@@ -452,7 +452,6 @@ struct parser_ {
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
     int aux_i;         /* the current ID of the above */
-    int ecount;        /* number of times this parser has been exec'd */
     char warning[64];  /* to hold a warning, if needed */
     int loopline;      /* line number within loop, if applicable */
     /* below: parser state variables */

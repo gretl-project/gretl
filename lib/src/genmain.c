@@ -801,13 +801,12 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
     }
 
     realgen(NULL, p, pZ, pdinfo, prn, flags);
+
     if (p->err == 0) {
 	gen_save_or_print(p, prn);
     }
+
     gen_cleanup(p);
-#if PRESERVE_AUX_NODES
-    p->ecount += 1;
-#endif
 
 #if GDEBUG
     fprintf(stderr, "execute_genr: returning %d\n", p->err);
