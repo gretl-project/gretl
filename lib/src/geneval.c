@@ -4912,8 +4912,11 @@ static void reattach_data_series (NODE *n, parser *p)
 {
     int v = n->vnum;
 
-    if (v >= p->dinfo->v || var_is_scalar(p->dinfo, v)) {
-	fprintf(stderr, "VEC node, vnum = %d: data have gone adrift!\n", v);
+    if (v >= p->dinfo->v) {
+	fprintf(stderr, "VEC node, ID = %d but p->dinfo->v = %d\n", v, p->dinfo->v);
+	p->err = E_DATA;
+    } else if (var_is_scalar(p->dinfo, v)) {
+	fprintf(stderr, "VEC node, ID = %d but var %d is a scalar?\n", v, v);
 	p->err = E_DATA;
     } else {
 	n->v.xvec = (*p->Z)[v];
@@ -4986,10 +4989,14 @@ static NODE *eval (NODE *t, parser *p)
 	    /* update numerical value */
 	    t->v.xval = (*p->Z)[t->vnum][0];
 	}
+	ret = t;
+	break;
     case VEC:
 	if (t->vnum > 0 && (p->flags & P_EXEC)) {
 	    reattach_data_series(t, p);
 	}
+	ret = t;
+	break;
     case MAT:
     case STR:
     case MSPEC:
