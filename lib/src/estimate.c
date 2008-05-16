@@ -3699,6 +3699,7 @@ MODEL quantreg (const char *parm, const int *list,
     void *handle;
     int (*rq_driver) (const char *, MODEL *, double ***, DATAINFO *,
 		      gretlopt, PRN *);
+    gretlopt olsopt = (OPT_A | OPT_M);
 
     /* Run an initial OLS to "set the model up" and check for errors.
        the driver function will overwrite the coefficients, etc.
@@ -3706,7 +3707,11 @@ MODEL quantreg (const char *parm, const int *list,
        values (OPT_M).
     */
 
-    qmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    if (opt & OPT_R) {
+	olsopt |= OPT_R;
+    }
+
+    qmod = lsq(list, pZ, pdinfo, OLS, olsopt);
 
     if (qmod.errcode) {
         return qmod;

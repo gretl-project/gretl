@@ -3224,7 +3224,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     fputs("set xlabel 'tau'\n", fp);
 
     tmp = g_strdup_printf(G_("Coefficient on %s"), 
-			  pdinfo->varname[pmod->list[k+2]]);
+			  var_get_graph_name(pdinfo, pmod->list[k+2]));
     fprintf(fp, "set title \"%s\"\n", tmp);
     g_free(tmp);
 
