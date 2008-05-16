@@ -294,36 +294,8 @@ static int rq_attach_intervals (MODEL *pmod, struct br_info *rq,
     return err;
 }
 
-/* Attach the special results matrix generated when we estimate the
-   model for several values of tau. In this case we retain the
-   OLS coefficients and standard errors for comparison, but
-   otherwise we invalidate most statistics.
-*/
-
-static int rq_attach_multi_intervals (MODEL *pmod, 
-				      gretl_vector *tauvec,
-				      gretl_matrix *tbeta,
-				      double alpha, gretlopt opt)
+static void correct_multi_tau_model (MODEL *pmod)
 {
-    gretl_vector *tcpy;
-
-#if QDEBUG
-    gretl_matrix_print(tauvec, "tauvec");
-    gretl_matrix_print(tbeta, "tbeta");
-#endif
-
-    tcpy = gretl_matrix_copy(tauvec);
-    gretl_model_set_matrix_as_data(pmod, "rq_tauvec", tcpy);
-    gretl_model_set_matrix_as_data(pmod, "rq_sequence", tbeta);
-    gretl_model_set_double(pmod, "rq_alpha", alpha);
-
-    if (opt & OPT_R) {
-	gretl_model_set_int(pmod, "rq_nid", 1);
-    }
-
-    pmod->ci = LAD;
-    gretl_model_set_int(pmod, "rq", 1);
-
     pmod->lnL = NADBL;
     pmod->ess = NADBL;
     pmod->sigma = NADBL;
@@ -344,6 +316,42 @@ static int rq_attach_multi_intervals (MODEL *pmod,
     pmod->yhat = NULL;
     pmod->xpx = NULL;
     pmod->vcv = NULL;
+}
+
+/* Attach the special results matrix generated when we estimate the
+   model for several values of tau. In this case we retain the
+   OLS coefficients and standard errors for comparison, but
+   otherwise we invalidate most statistics.
+*/
+
+static int rq_attach_multi_results (MODEL *pmod, 
+				    gretl_vector *tauvec,
+				    gretl_matrix *tbeta,
+				    double alpha, gretlopt opt)
+{
+    gretl_vector *tcpy;
+
+#if QDEBUG
+    gretl_matrix_print(tauvec, "tauvec");
+    gretl_matrix_print(tbeta, "tbeta");
+#endif
+
+    tcpy = gretl_matrix_copy(tauvec);
+    gretl_model_set_matrix_as_data(pmod, "rq_tauvec", tcpy);
+    gretl_model_set_matrix_as_data(pmod, "rq_sequence", tbeta);
+
+    if (alpha > 0) {
+	gretl_model_set_double(pmod, "rq_alpha", alpha);
+    }
+
+    if (opt & OPT_R) {
+	gretl_model_set_int(pmod, "rq_nid", 1);
+    }
+
+    pmod->ci = LAD;
+    gretl_model_set_int(pmod, "rq", 1);
+
+    correct_multi_tau_model(pmod);
 
     return 0;
 }
@@ -737,11 +745,34 @@ static void rq_workspace_init (const gretl_matrix *XT,
     }
 }
 
+static int rq_write_variance (const gretl_matrix *V,
+			      MODEL *pmod, double *se)
+{
+    double x;
+    int i, err = 0;
+
+    if (se != NULL) {
+	for (i=0; i<V->cols; i++) {
+	    x = gretl_matrix_get(V, i, i);
+	    if (xna(x) || x < 0) {
+		se[i] = NADBL;
+	    } else {
+		se[i] = sqrt(x);
+	    }
+	}
+    } else {
+	err = gretl_model_write_vcv(pmod, V);
+    }
+
+    return err;
+}
+
 /* IID version of asymptotic F-N covariance matrix */
 
 static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 			  gretl_matrix *XT, double tau,
-			  struct fn_info *rq)
+			  struct fn_info *rq,
+			  double *se)
 {
     gretl_matrix *V = NULL;
     gretl_matrix *vx = NULL;
@@ -834,7 +865,7 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 	sparsity = rq->wp[1];
 	h = sparsity * sparsity * tau * (1 - tau);
 	gretl_matrix_multiply_by_scalar(V, h); 
-	err = gretl_model_write_vcv(pmod, V);
+	err = rq_write_variance(V, pmod, se);
     }
 
  bailout:
@@ -852,7 +883,8 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 
 static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 			  gretl_matrix *XT, double tau,
-			  struct fn_info *rq)
+			  struct fn_info *rq,
+			  double *se)
 {
     gretl_matrix *p1 = NULL;
     gretl_matrix *f = NULL;
@@ -952,8 +984,11 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 
     gretl_matrix_multiply_by_scalar(V, tau * (1 - tau));
 
-    gretl_model_write_vcv(pmod, V);
-    gretl_model_set_int(pmod, "rq_nid", 1);
+    err = rq_write_variance(V, pmod, se);
+
+    if (se == NULL) {
+	gretl_model_set_int(pmod, "rq_nid", 1);
+    }
 
  bailout:
 
@@ -989,8 +1024,8 @@ static int get_ci_alpha (double *a)
    all parameters at a given value of tau */
 
 static int 
-write_tbeta_block (gretl_matrix *tbeta, int nt, double *coeff,
-		   gretl_matrix *ci, int k)
+write_tbeta_block_br (gretl_matrix *tbeta, int nt, double *coeff,
+		      gretl_matrix *ci, int k)
 
 {
     double blo, bhi;
@@ -1006,6 +1041,27 @@ write_tbeta_block (gretl_matrix *tbeta, int nt, double *coeff,
 	gretl_matrix_set(tbeta, k, 0, coeff[i]);
 	gretl_matrix_set(tbeta, k, 1, blo);
 	gretl_matrix_set(tbeta, k, 2, bhi);
+	k += nt;
+    }
+
+    return 0;
+}
+
+/* write coefficients or standard errors for
+   all parameters at a given value of tau */
+
+static int 
+write_tbeta_block_fn (gretl_matrix *tbeta, int nt, double *x,
+		      integer p, int k, int j)
+
+{
+    int i;
+
+    for (i=0; i<p; i++) {
+	if (xna(x[i])) {
+	    return E_NAN;
+	}
+	gretl_matrix_set(tbeta, k, j, x[i]);
 	k += nt;
     }
 
@@ -1039,7 +1095,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 
     err = br_info_alloc(&rq, n, p, tau, alpha, opt);
 
-    if (ntau > 1) {
+    if (!err && ntau > 1) {
 	tbeta = gretl_zero_matrix_new(p * ntau, 3);
 	if (tbeta == NULL) {
 	    err = E_ALLOC;
@@ -1083,7 +1139,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 		}
 	    } else {
 		/* using multiple tau values */
-		err = write_tbeta_block(tbeta, ntau, rq.coeff, rq.ci, i);
+		err = write_tbeta_block_br(tbeta, ntau, rq.coeff, rq.ci, i);
 		if (!err) {
 		    br_info_reinit(X, &rq);
 		}
@@ -1100,7 +1156,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	if (err) {
 	    gretl_matrix_free(tbeta);
 	} else {
-	    err = rq_attach_multi_intervals(pmod, tauvec, tbeta, alpha, opt);
+	    err = rq_attach_multi_results(pmod, tauvec, tbeta, alpha, opt);
 	}
     }
 
@@ -1112,44 +1168,88 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 /* sub-driver for Frisch-Newton interior point variant */
 
 static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT, 
-		      double tau, gretlopt opt, MODEL *pmod)
+		      gretl_vector *tauvec, gretlopt opt, 
+		      MODEL *pmod)
 {
     struct fn_info rq;
+    gretl_matrix *tbeta = NULL;
+    double *se = NULL;
     integer n = y->rows;
     integer p = XT->rows;
+    double tau;
+    int i, ntau;
     int err = 0;
+
+    ntau = gretl_vector_get_length(tauvec);
+    tau = gretl_vector_get(tauvec, 0);
 
     err = fn_info_alloc(&rq, n, p, tau);
     if (err) {
 	return err;
     }
 
-    rq_workspace_init(XT, tau, &rq);
+    if (ntau > 1) {
+	tbeta = gretl_zero_matrix_new(p * ntau, 2);
+	se = malloc(p * sizeof *se);
+	if (tbeta == NULL || se == NULL) {
+	    err = E_ALLOC;
+	} 
+    } 
 
-    /* get coefficients (in wp) and residuals (in wn) */
-    rqfnb_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, &rq.beta, &rq.eps, 
-	   rq.wn, rq.wp, rq.nit, &rq.info);
+    for (i=0; i<ntau && !err; i++) {
+	tau = rq.tau = gretl_vector_get(tauvec, i);
 
-    if (rq.info != 0) {
-	fprintf(stderr, "rqfn gave info = %d\n", rq.info);
-	err = E_DATA;
+#if QDEBUG
+	fprintf(stderr, "rq_fit_fn: i = %d, tau = %g\n", i, tau);
+#endif
+
+	rq_workspace_init(XT, tau, &rq);
+
+	/* get coefficients (in wp) and residuals (in wn) */
+	rqfnb_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, &rq.beta, &rq.eps, 
+	       rq.wn, rq.wp, rq.nit, &rq.info);
+
+	if (rq.info != 0) {
+	    fprintf(stderr, "rqfn gave info = %d\n", rq.info);
+	    err = E_DATA;
+	}
+
+	if (!err) {
+	    if (ntau == 1) {
+		/* save coeffs, residuals, etc., before computing VCV */
+		rq_transcribe_results(pmod, y, tau, rq.wp, rq.wn, RQ_STAGE_1);
+	    } else {
+		/* write coeffs for this tau value */
+		write_tbeta_block_fn(tbeta, ntau, rq.wp, p, i, 0);
+	    }
+	}
+
+	if (!err) {
+	    /* compute covariance matrix */
+	    if (opt & OPT_R) {
+		err = rq_fn_nid_VCV(pmod, y, XT, tau, &rq, se);
+	    } else {
+		err = rq_fn_iid_VCV(pmod, y, XT, tau, &rq, se);
+	    }
+	}
+
+	if (!err && ntau > 1) {
+	    /* write std errs for this tau */
+	    write_tbeta_block_fn(tbeta, ntau, se, p, i, 1);
+	}
     }
 
-    if (!err) {
-	/* save coeffs, residuals, etc., before computing VCV */
-	rq_transcribe_results(pmod, y, tau, rq.wp, rq.wn, RQ_STAGE_1);
-    }
-
-    if (!err) {
-	/* compute and add covariance matrix */
-	if (opt & OPT_R) {
-	    err = rq_fn_nid_VCV(pmod, y, XT, tau, &rq);
+    if (tbeta != NULL) {
+	/* multiple tau values */
+	if (err) {
+	    gretl_matrix_free(tbeta);
 	} else {
-	    err = rq_fn_iid_VCV(pmod, y, XT, tau, &rq);
+	    err = rq_attach_multi_results(pmod, tauvec, tbeta, 0, opt);
 	}
     }
 
     fn_info_free(&rq);
+    free(se);
 
     return err;
 }
@@ -1287,7 +1387,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     tau = get_user_tau(parm, pZ, pdinfo, &ntau, &err);
 
-    if (!err && ntau > 1) {
+    if (0 && !err && ntau > 1) {
 	/* multiple taus -> implies the "intervals" option */
 	opt |= OPT_I;
     }
@@ -1306,7 +1406,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 	    */
 	    err = rq_make_matrices(pmod, *pZ, pdinfo, &y, &X, OPT_NONE);
 	    if (!err) {
-		err = rq_fit_fn(y, X, tau->val[0], opt, pmod);
+		err = rq_fit_fn(y, X, tau, opt, pmod);
 	    }
 	    if (!err) {
 		/* for B-R the X matrix is tranposed */
@@ -1323,7 +1423,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 	    err = rq_fit_br(y, X, tau, opt, pmod);
 	} else {
 	    /* use Frisch-Newton */
-	    err = rq_fit_fn(y, X, tau->val[0], opt, pmod);
+	    err = rq_fit_fn(y, X, tau, opt, pmod);
 	}
     }
 

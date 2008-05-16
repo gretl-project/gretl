@@ -1591,7 +1591,11 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
 		x = gretl_matrix_get(V, i, j);
 		pmod->vcv[idx] = x;
 		if (i == j) {
-		    pmod->sderr[i] = sqrt(x);
+		    if (xna(x) || x < 0) {
+			pmod->sderr[i] = NADBL;
+		    } else {
+			pmod->sderr[i] = sqrt(x);
+		    }
 		}
 	    }
 	}	

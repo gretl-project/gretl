@@ -18,12 +18,12 @@ static double d_sign (doublereal *a, doublereal *b)
 
 /* Output from Public domain Ratfor, version 1.0 */
 int rqbr_(integer *m, integer *nn, integer *m5, integer *n3, 
-	integer *n4, doublereal *a, doublereal *b, doublereal *t, doublereal *
-	toler, integer *ift, doublereal *x, doublereal *e, integer *s, 
-	doublereal *wa, doublereal *wb, integer *nsol, integer *ndsol, 
-	doublereal *sol, doublereal *dsol, integer *lsol, integer *h__, 
-	doublereal *qn, doublereal *cutoff, doublereal *ci, doublereal *tnmat,
-	 doublereal *big, logical *lci1)
+	  integer *n4, doublereal *a, doublereal *b, doublereal *t, 
+	  doublereal *toler, integer *ift, doublereal *x, doublereal *e, 
+	  integer *s, doublereal *wa, doublereal *wb, integer *nsol, integer *ndsol, 
+	  doublereal *sol, doublereal *dsol, integer *lsol, integer *h__, 
+	  doublereal *qn, doublereal *cutoff, doublereal *ci, doublereal *tnmat,
+	  doublereal *big, logical *lci1)
 {
     /* System generated locals */
     integer h_dim1, h_offset, sol_dim1, sol_offset, a_dim1, a_offset, wa_dim1,

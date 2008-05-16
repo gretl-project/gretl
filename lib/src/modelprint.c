@@ -1997,7 +1997,11 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
     int slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
     int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
     int intervals = gretl_model_get_data(pmod, "coeff_intervals") != NULL;
-    int sequence = gretl_model_get_data(pmod, "rq_sequence") != NULL;
+    gretl_matrix *m;
+    int seqcols;
+
+    m = gretl_model_get_data(pmod, "rq_sequence");
+    seqcols = gretl_matrix_cols(m);
 
     if (plain_format(prn)) {
 	if (pmod->ci == MPOLS) {
@@ -2012,9 +2016,12 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	} else if (intervals) {
 	    pputs(prn, _("      VARIABLE       COEFFICIENT        LOWER   "
 			 "         UPPER\n\n"));
-	} else if (sequence) {
+	} else if (seqcols == 3) {
 	    pputs(prn, _("      VARIABLE      TAU    COEFFICIENT      "
 			 "LOWER        UPPER\n\n"));
+	} else if (seqcols == 2) {
+	    pputs(prn, _("      VARIABLE      TAU    COEFFICIENT    "
+			 "STDERROR       T STAT\n\n"));
 	} else {
 	    print_coeff_heading(use_param, prn);
 	}
@@ -2037,10 +2044,14 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("LOWER"),
 		    d, I_("UPPER"));
-	} else if (sequence) {
+	} else if (seqcols == 3) {
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, "TAU", d, I_("COEFFICIENT"), d, I_("LOWER"),
 		    d, I_("UPPER"));
+	} else if (seqcols == 2) {
+	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
+		    d, I_("T STAT"));
 	} else {
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
@@ -2061,7 +2072,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	if (intervals) {
 	    cols[2] = N_("Lower");
 	    cols[3] = N_("Upper");
-	} else if (sequence) {
+	} else if (seqcols == 3) {
 	    cols[2] = N_("tau");
 	    cols[3] = N_("Lower");
 	    cols[4] = N_("Upper");
@@ -3067,9 +3078,9 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_vector *tauvec = gretl_model_get_data(pmod, "rq_tauvec");
     gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
-    double tau, bi, blo, bhi;
+    double tau, bi, blo, bhi, se;
     char test[16];
-    int n, taulen = 0;
+    int n, bcols, taulen = 0;
     int ntau, i, j, k = 0;
 
     if (tauvec == NULL || B == NULL) {
@@ -3077,6 +3088,7 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     ntau = gretl_vector_get_length(tauvec);
+    bcols = gretl_matrix_cols(B);
 
     for (j=0; j<ntau; j++) {
 	sprintf(test, "%g", gretl_vector_get(tauvec, j));
@@ -3093,13 +3105,22 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	for (j=0; j<ntau; j++) {
 	    tau = gretl_vector_get(tauvec, j);
 	    bi  = gretl_matrix_get(B, k, 0);
-	    blo = gretl_matrix_get(B, k, 1);
-	    bhi = gretl_matrix_get(B, k, 2);
+	    if (bcols == 3) {
+		blo = gretl_matrix_get(B, k, 1);
+		bhi = gretl_matrix_get(B, k, 2);
+	    } else {
+		se = gretl_matrix_get(B, k, 1);
+	    }
 	    if (j > 0) {
 		pputs(prn, "                   ");
 	    }
-	    pprintf(prn, "%*.*f %#12.6g %#12.6g %#12.6g\n", n, taulen - 2,
-		    tau, bi, blo, bhi);
+	    if (bcols == 3) {
+		pprintf(prn, "%*.*f %#12.6g %#12.6g %#12.6g\n", n, taulen - 2,
+			tau, bi, blo, bhi);
+	    } else {
+		pprintf(prn, "%*.*f %#12.6g %#12.6g %#12.6g\n", n, taulen - 2,
+			tau, bi, se, bi / se);
+	    }
 	    k++;
 	}
 	if (i < pmod->ncoeff - 1) {
