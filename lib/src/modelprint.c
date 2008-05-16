@@ -3078,7 +3078,8 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_vector *tauvec = gretl_model_get_data(pmod, "rq_tauvec");
     gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
-    double tau, bi, blo, bhi, se;
+    double tau, bi, se = NADBL;
+    double blo = 0, bhi = 0;
     char test[16];
     int n, bcols, taulen = 0;
     int ntau, i, j, k = 0;
