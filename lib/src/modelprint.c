@@ -624,11 +624,10 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
 {
-    if (plain_format(prn)) {
-	if (gretl_model_get_int(pmod, "nonunique")) {
-	    pputs(prn, _("\nWarning: solution is probably not unique\n"));
-	}
-    }	
+    if (gretl_model_get_int(pmod, "nonunique")) {
+	pputs(prn, _("Warning: solution is probably not unique"));
+	pputc(prn, '\n');
+    }
 }
 
 static void print_f_pval_str (double pval, PRN *prn)
@@ -1927,7 +1926,11 @@ static void print_model_heading (const MODEL *pmod,
 	if (gretl_model_get_data(pmod, "droplist") != NULL) {
 	    print_model_droplist(pmod, pdinfo, prn);
 	}
-    }    
+    } 
+
+    if (plain_format(prn) && pmod->ci == LAD) {
+	maybe_print_lad_warning(pmod, prn);
+    }
 
     if (pmod->missmask == NULL && gretl_model_get_int(pmod, "wt_dummy")) { 
 	/* FIXME alt formats */
@@ -2459,7 +2462,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_ll(pmod, prn);
 	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
-	maybe_print_lad_warning(pmod, prn);
 	goto close_format;
     }
 

@@ -89,6 +89,7 @@ extern int rqbr_ (integer *n,    /* number of observations */
 /* wrapper struct for use with Barrodale-Roberts */
 
 struct br_info {
+    int warning;
     integer n, p;
     integer n5, p3, p4;
     integer nsol, ndsol;
@@ -595,6 +596,7 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
     rq->s = rq->ispace;
     rq->h = rq->s + n;
 
+    rq->warning = 0;
     rq->n = n;
     rq->p = p;
     rq->tau = tau;
@@ -652,6 +654,7 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
 #endif
 
     if (ift == 1) {
+	rq->warning = 1;
 	fprintf(stderr, "Warning: solution may be non-unique\n");
     } else if (ift == 2){ 
 	fprintf(stderr, "Premature end: conditioning problem in X?\n");
@@ -1071,6 +1074,10 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 		}
 	    }
 	}
+    }
+
+    if (!err && rq.warning) {
+	gretl_model_set_int(pmod, "nonunique", 1);
     }
 
     if (tbeta != NULL) {

@@ -5,6 +5,8 @@
 
 /* Table of constant values */
 
+#define RMAX 1000
+
 static doublereal c_b15 = 1.;
 
 static double d_sign (doublereal *a, doublereal *b)
@@ -54,7 +56,7 @@ int rqbr_(integer *m, integer *nn, integer *m5, integer *n3,
     static integer kount;
     static doublereal pivot;
 
-    integer rcount = 0, rmax = 500;
+    integer rcount = 0;
 
     /* Parameter adjustments */
     --wb;
@@ -225,7 +227,7 @@ L23058:
 	    ;
 	}
 	if (max__ <= *toler) {
-	    if (++rcount > rmax) {
+	    if (++rcount > RMAX) {
 		fprintf(stderr, "max=%g, toler=%g, rcount=%d: stopping\n", 
 			max__, *toler, rcount);
 		*ift = 2;
