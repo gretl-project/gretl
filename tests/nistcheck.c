@@ -984,6 +984,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 	"Wampler4.dat",
 	"Wampler5.dat"
     };
+    int err = 0;
 
     gretl_push_c_numeric_locale();
 
@@ -993,7 +994,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
     sprintf(datadir, "%snist", datapath);
 
-    prn = gretl_print_new_with_filename(outfile, NULL); 
+    prn = gretl_print_new_with_filename(outfile, &err); 
 
     nist_intro(prn);
 

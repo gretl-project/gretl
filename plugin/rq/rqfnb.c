@@ -1,6 +1,9 @@
 /* rqfnb.f -- translated by f2c (version 20050501) */
 
 #include "gretl_f2c.h"
+#ifdef _WIN32
+# include "blaswrap.h"
+#endif
 
 /* Table of constant values */
 

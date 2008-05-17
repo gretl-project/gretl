@@ -6566,10 +6566,10 @@
 	1994).
       </para>
       <para>
-	If the <quote>Compute confidence intervals</quote> is checked gretl
-	will calculate confidence intervals for the coefficients, in place of
-	standard errors. The <quote>robust</quote> check-box still has an
-	effect: if it is not checked, the intervals are computed on the
+	If the <quote>Compute confidence intervals</quote> option is checked
+	gretl will calculate confidence intervals for the coefficients, in
+	place of standard errors. The <quote>robust</quote> check-box still
+	has an effect: if it is not checked, the intervals are computed on the
 	assumption of IID errors; with it, gretl uses the robust estimator
 	developed by Koenker and Machado (<book>Journal of the American
 	  Statistical Association</book>, 1999).  Note that these intervals
