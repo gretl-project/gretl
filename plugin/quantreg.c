@@ -119,8 +119,8 @@ struct fn_info {
     double *rhs;
     double *d;
     double *u;
-    double *wn;
-    double *wp;
+    double *resid;
+    double *coeff;
     integer nit[3];
     integer info;
 };
@@ -689,8 +689,8 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
     rq->rhs = rq->rspace;
     rq->d   = rq->rhs + p;
     rq->u   = rq->d + n;
-    rq->wn  = rq->u + n;
-    rq->wp  = rq->wn + n10;
+    rq->resid = rq->u + n;
+    rq->coeff = rq->resid + n10;
 
     rq->n = n;
     rq->p = p;
@@ -701,7 +701,7 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
     return 0;
 }
 
-/* Initialize the tau-dependent arrays rhs and wn (rhs is
+/* Initialize the tau-dependent arrays rhs and resid (rhs is
    also X-dependent) and set other entries to 0 or 1.
 */
 
@@ -725,11 +725,11 @@ static void rq_workspace_init (const gretl_matrix *XT,
 
     for (i=0; i<n; i++) {
 	ws->d[i] = ws->u[i] = 1.0;
-	ws->wn[i] = tau;
+	ws->resid[i] = tau;
     }
 
     for (i=n; i<n10; i++) {
-	ws->wn[i] = 0.0;
+	ws->resid[i] = 0.0;
     }
 }
 
@@ -783,7 +783,7 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
     eps23 = calc_eps23;
 
     for (i=0; i<rq->n; i++) {
-	if (fabs(rq->wn[i]) < eps23) 
+	if (fabs(rq->resid[i]) < eps23) 
 	    pz++;
     }
 
@@ -819,8 +819,8 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
     /* sort the residuals by absolute magnitude */
 
     for (i=0; i<rq->n; i++) {
-	gretl_matrix_set(S0, i, 0, rq->wn[i]);
-	gretl_matrix_set(S0, i, 1, fabs(rq->wn[i]));
+	gretl_matrix_set(S0, i, 0, rq->resid[i]);
+	gretl_matrix_set(S0, i, 1, fabs(rq->resid[i]));
     }
 
     S1 = gretl_matrix_sort_by_column(S0, 1, &err);
@@ -843,14 +843,14 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
     rq_workspace_init(vx, 0.5, rq);
     rqfnb_(&vn, &vp, vx->val, vy->val, rq->rhs, 
 	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->wn, rq->wp, rq->nit, &rq->info);
+	   rq->resid, rq->coeff, rq->nit, &rq->info);
 
     if (rq->info != 0) {
 	fprintf(stderr, "rq_fn_iid_VCV: rqfnb: info = %d\n", rq->info);
 	err = E_DATA;
     } else {
 	/* scale X'X-inverse appropriately */
-	sparsity = rq->wp[1];
+	sparsity = rq->coeff[1];
 	h = sparsity * sparsity * tau * (1 - tau);
 	gretl_matrix_multiply_by_scalar(V, h); 
 	err = rq_write_variance(V, pmod, se);
@@ -908,7 +908,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
     rq_workspace_init(XT, tau + h, rq);
     rqfnb_(&n, &p, XT->val, y->val, rq->rhs, 
 	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->wn, rq->wp, rq->nit, &rq->info);
+	   rq->resid, rq->coeff, rq->nit, &rq->info);
     if (rq->info != 0) {
 	fprintf(stderr, "tau + h: info = %d\n", rq->info);
 	err = E_DATA;
@@ -917,13 +917,13 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 
     /* grab coeffs */
     for (i=0; i<p; i++) {
-	p1->val[i] = rq->wp[i];
+	p1->val[i] = rq->coeff[i];
     }
 
     rq_workspace_init(XT, tau - h, rq);
     rqfnb_(&n, &p, XT->val, y->val, rq->rhs, 
 	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->wn, rq->wp, rq->nit, &rq->info);
+	   rq->resid, rq->coeff, rq->nit, &rq->info);
     if (rq->info != 0) {
 	fprintf(stderr, "tau - h: info = %d\n", rq->info);
 	err = E_DATA;
@@ -932,7 +932,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 
     /* diff coeffs */
     for (i=0; i<p; i++) {
-	p1->val[i] -= rq->wp[i];
+	p1->val[i] -= rq->coeff[i];
     }
 
 #if QDEBUG
@@ -1118,8 +1118,8 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 		/* done: put intervals onto the model */
 		err = rq_attach_intervals(pmod, &rq, alpha, opt);
 		if (!err) {
-		    rq_transcribe_results(pmod, y, tau, rq.coeff, rq.resid, 
-					  RQ_STAGE_2);
+		    rq_transcribe_results(pmod, y, tau, rq.coeff, 
+					  rq.resid, RQ_STAGE_2);
 		}
 	    } else {
 		/* using multiple tau values */
@@ -1189,9 +1189,10 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 
 	rq_workspace_init(XT, tau, &rq);
 
-	/* get coefficients (in wp) and residuals (in wn) */
-	rqfnb_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, &rq.beta, &rq.eps, 
-	       rq.wn, rq.wp, rq.nit, &rq.info);
+	/* get coefficients and residuals */
+	rqfnb_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, 
+	       &rq.beta, &rq.eps, rq.resid, rq.coeff, 
+	       rq.nit, &rq.info);
 
 	if (rq.info != 0) {
 	    fprintf(stderr, "rqfn gave info = %d\n", rq.info);
@@ -1201,10 +1202,11 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 	if (!err) {
 	    if (ntau == 1) {
 		/* save coeffs, residuals, etc., before computing VCV */
-		rq_transcribe_results(pmod, y, tau, rq.wp, rq.wn, RQ_STAGE_1);
+		rq_transcribe_results(pmod, y, tau, rq.coeff, rq.resid, 
+				      RQ_STAGE_1);
 	    } else {
 		/* write coeffs for this tau value */
-		write_tbeta_block_fn(tbeta, ntau, rq.wp, p, i, 0);
+		write_tbeta_block_fn(tbeta, ntau, rq.coeff, p, i, 0);
 	    }
 	}
 
