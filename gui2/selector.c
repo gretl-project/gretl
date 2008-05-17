@@ -3585,7 +3585,7 @@ static void build_quantreg_radios (selector *sr)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, 
-					 _("Compute confidence intervals, 1 - alpha ="));
+					 _("Compute confidence intervals, 1 - α ="));
     g_signal_connect(G_OBJECT(b2), "toggled",
 		     G_CALLBACK(rq_ci_callback), sr);
     adj = gtk_adjustment_new(0.90, 0.70, 0.99, 0.01, 0.1, 1);
