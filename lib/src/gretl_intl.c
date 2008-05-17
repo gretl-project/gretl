@@ -332,7 +332,11 @@ char *iso_gettext (const char *msgid)
     if (iso_switch < 0) {
 	/* not yet determined */
 	cset = get_gretl_charset();
-	fprintf(stderr, "get_gretl_charset gave %s\n", cset);
+	if (cset == NULL) {
+	    fprintf(stderr, "get_gretl_charset: using UTF-8\n");
+	} else {
+	    fprintf(stderr, "get_gretl_charset gave %s\n", cset);
+	}
 	iso_switch = (cset != NULL);
     }
 
