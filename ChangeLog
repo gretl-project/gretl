@@ -73,6 +73,7 @@ version 1.7.5, in progress
 - logit/probit: add code to detect perfect classifiers
 - "tabprint" model-printing command: add --rtf option to 
   produce RTF output rather than LaTex
+- Windows build: update to Lapack version 3.1.1
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

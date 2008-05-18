@@ -111,7 +111,7 @@ process_gtk
 # auxiliary dlls
 for f in \
     libgmp-3.dll libxml2.dll readline5.dll history5.dll zlib1.dll \
-    libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
+    libblas.dll liblapack.dll libgtksourceview.dll \
     iconv.dll intl.dll libfftw3-3.dll libpng13.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f

@@ -28,7 +28,7 @@ CLI_LIBS = -lreadline.dll -lhistory.dll
 GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview -lxml2 -L$(imports) -lgtkextra-lite
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
-LAPACK_LIBS = -llapack -lblas -lf2c
+LAPACK_LIBS = -llapack -lblas
 FFTW_LIBS = -lfftw3.dll
 
 # flags/defines
@@ -294,7 +294,7 @@ $(MOFILES):
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lf2c -lm -L$(imports) -lxml2 -lz -lintl -lprob -lgmp \
+	-o $@ $^ -lg2c -lm -L$(imports) -lxml2 -lz -lintl -lprob -lgmp \
 	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
