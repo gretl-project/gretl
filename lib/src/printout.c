@@ -214,7 +214,7 @@ void print_centered (const char *s, int width, PRN *prn)
 
 void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
 {
-    double tail = 1 - cf->alpha / 2;
+    double tail = cf->alpha / 2;
     int i;
 
     if (cf->asy) {

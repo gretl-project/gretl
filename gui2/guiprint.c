@@ -1891,9 +1891,11 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
     char pt = get_local_decpoint();
+    double tail = cf->alpha / 2;
+    gchar *cstr;
     int i;
 
-    pprintf(prn, "$t(%d, .025) = %.3f$\n\n", cf->df, tcrit95(cf->df));
+    pprintf(prn, "$t(%d, %g) = %.3f$\n\n", cf->df, tail, cf->t);
 
     pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
 
@@ -1901,12 +1903,15 @@ static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 	    "\\begin{tabular}{rD{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n",
 	    pt, pt, pt, pt, pt, pt);
 
+    cstr = g_strdup_printf(I_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
+
     pprintf(prn, " %s%%\n"
 	    " & \\multicolumn{1}{c}{%s}%%\n"
 	    "  & \\multicolumn{2}{c}{%s}\\\\\n",
 	    I_("Variable"), I_("Coefficient"),
-	    /* xgettext:no-c-format */
-	    I_("95\\% confidence interval"));
+	    cstr);
+
+    g_free(cstr);
 
     pprintf(prn, " & & \\multicolumn{1}{c}{%s}%%\n"
 	    "  & \\multicolumn{1}{c}{%s}\\\\\n",
@@ -1942,10 +1947,14 @@ rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 
 static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
+    double tail = cf->alpha / 2;
+    gchar *cstr;
     int i;
 
-    pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, .025) = %.3f\\par\n\\par\n", 
-	    cf->df, tcrit95(cf->df));
+    pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, %g) = %.3f\\par\n\\par\n", 
+	    cf->df, tail, cf->t);
+
+    cstr = g_strdup_printf(I_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
 
     pputs(prn, "{" CF_ROW "\\intbl ");
     pprintf(prn, 
@@ -1954,8 +1963,9 @@ static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n", 
 	    I_("Variable"), I_("Coefficient"), 
-	    /* xgettext:no-c-format */
-	    I_("95% confidence interval"));
+	    cstr);
+
+    g_free(cstr);
 
     for (i=0; i<cf->ncoeff; i++) {
 	rtfprint_coeff_interval(cf, i, prn);
