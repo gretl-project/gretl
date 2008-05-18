@@ -119,16 +119,17 @@ static int prn_add_tempfile (PRN *prn)
 static PRN *real_gretl_print_new (PrnType ptype, 
 				  const char *fname,
 				  char *buf,
-				  int *err)
+				  int *perr)
 {
     PRN *prn = malloc(sizeof *prn);
+    int err = 0;
 
     if (prn == NULL) {
-	*err = E_ALLOC;
+	if (perr != NULL) {
+	    *perr = E_ALLOC;
+	}
 	return NULL;
     }
-
-    *err = 0;
 
 #if PRN_DEBUG
     fprintf(stderr, "real_gretl_print_new: type=%d, fname='%s', buf=%p\n",
@@ -148,13 +149,13 @@ static PRN *real_gretl_print_new (PrnType ptype,
     if (ptype == GRETL_PRINT_FILE) {
 	prn->fp = gretl_fopen(fname, "w");
 	if (prn->fp == NULL) {
-	    *err = E_FOPEN;
+	    err = E_FOPEN;
 	    free(prn);
 	    prn = NULL;
 	} 
     } else if (ptype == GRETL_PRINT_TEMPFILE) {
-	*err = prn_add_tempfile(prn);
-	if (*err) {
+	err = prn_add_tempfile(prn);
+	if (err) {
 	    free(prn);
 	    prn = NULL;
 	} else {
@@ -175,7 +176,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	    int p = pprintf(prn, "@init");
 
 	    if (p < 0) {
-		*err = E_ALLOC;
+		err = E_ALLOC;
 		free(prn);
 		prn = NULL;
 	    }
@@ -183,6 +184,10 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	    fprintf(stderr, "new prn buffer, p = %d\n", p);
 #endif
 	}
+    }
+
+    if (perr != NULL) {
+	*perr = err;
     }
 
     return prn;
@@ -209,20 +214,16 @@ static PRN *real_gretl_print_new (PrnType ptype,
 
 PRN *gretl_print_new (PrnType ptype, int *err)
 {
-    int myerr, *errp;
-
     if (ptype == GRETL_PRINT_FILE) {
 	fprintf(stderr, "gretl_print_new: needs a filename\n");
 	return NULL;
     }
 
-    errp = (err == NULL)? &myerr : err;
-
 #if PRN_DEBUG
     fprintf(stderr, "gretl_print_new() called, type = %d\n", ptype);
 #endif
 
-    return real_gretl_print_new(ptype, NULL, NULL, errp);
+    return real_gretl_print_new(ptype, NULL, NULL, err);
 }
 
 /**
@@ -294,9 +295,7 @@ PRN *gretl_print_new_with_buffer (char *buf)
     if (buf == NULL) {
 	return NULL;
     } else {
-	int err;
-
-	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, &err);
+	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL);
     }
 }
 

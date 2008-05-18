@@ -35,12 +35,9 @@
 
 static int all_done;
 
-static GtkWidget *option_int_spinbox (int *spinvar, const char *spintxt,
-				      int spinmin, int spinmax,
-				      int hcode, gpointer p);
-static GtkWidget *option_float_spinbox (double *spinvar, const char *spintxt,
-					double spinmin, double spinmax,
-					int hcode, gpointer p);
+static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
+				  int spinmin, int spinmax,
+				  int hcode, gpointer p);
 static GtkWidget *option_checkbox (int *checkvar, const char *checktxt);
 static void set_radio_opt (GtkWidget *w, int *opt);
 
@@ -2298,7 +2295,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = option_int_spinbox(p, _(pre_txt), pmin, pmax, 0, &rset->p);
+    tmp = option_spinbox(p, _(pre_txt), pmin, pmax, 0, &rset->p);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       hbox, TRUE, TRUE, 5);
@@ -3153,7 +3150,7 @@ int real_radio_dialog (const char *title, const char *label,
 	    tmp = option_checkbox(extravar, extratxt);
 	} else {
 	    /* create spinner */
-	    tmp = option_int_spinbox(extravar, extratxt, spinmin, spinmax, 0, NULL);
+	    tmp = option_spinbox(extravar, extratxt, spinmin, spinmax, 0, NULL);
 	}
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
@@ -3290,14 +3287,9 @@ int density_dialog (int vnum, double *bw)
     return ret;
 }
 
-static void option_spin_set_int (GtkWidget *w, int *ivar)
+static void option_spin_set (GtkWidget *w, int *ivar)
 {
     *ivar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
-}
-
-static void option_spin_set_float (GtkWidget *w, double *dvar)
-{
-    *dvar = gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
 }
 
 static GtkWidget *dialog_blurb_box (const char *text)
@@ -3313,9 +3305,9 @@ static GtkWidget *dialog_blurb_box (const char *text)
     return hbox;
 }
 
-static GtkWidget *option_int_spinbox (int *spinvar, const char *spintxt,
-				      int spinmin, int spinmax,
-				      int ci, gpointer p)
+static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
+				  int spinmin, int spinmax,
+				  int ci, gpointer p)
 {
     GtkWidget *hbox;
     GtkWidget *label;
@@ -3334,41 +3326,7 @@ static GtkWidget *option_int_spinbox (int *spinvar, const char *spintxt,
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
     g_signal_connect(G_OBJECT(button), "value-changed",
-		     G_CALLBACK(option_spin_set_int), spinvar);
-
-    if (p != NULL) {
-	GtkObject **pobj = (GtkObject **) p;
-
-	*pobj = adj;
-    }
-
-    g_object_set_data(G_OBJECT(hbox), "spin-button", button);
-
-    return hbox;
-}
-
-static GtkWidget *option_float_spinbox (double *spinvar, const char *spintxt,
-					double spinmin, double spinmax,
-					int ci, gpointer p)
-{
-    GtkWidget *hbox;
-    GtkWidget *label;
-    GtkWidget *button;
-    GtkObject *adj;
-    double step = .01;
-
-    hbox = gtk_hbox_new(FALSE, 5);
-
-    label = gtk_label_new(spintxt);
-    gtk_widget_show(label);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, step, step, 1);
-    button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), .01, 2);
-    gtk_widget_show(button);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-
-    g_signal_connect(G_OBJECT(button), "value-changed",
-		     G_CALLBACK(option_spin_set_float), spinvar);
+		     G_CALLBACK(option_spin_set), spinvar);
 
     if (p != NULL) {
 	GtkObject **pobj = (GtkObject **) p;
@@ -3446,7 +3404,7 @@ int checks_dialog (const char *title, const char *blurb,
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
-	tmp = option_int_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
+	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tmp, TRUE, TRUE, 5);
@@ -3496,61 +3454,6 @@ int checks_dialog (const char *title, const char *blurb,
 	gtk_widget_show(button);
     }
 
-    /* Cancel button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
-
-    /* "OK" button */
-    okb = ok_button(GTK_DIALOG(dialog)->action_area);
-    g_signal_connect(G_OBJECT(okb), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     dialog);
-    gtk_widget_grab_default(okb);
-    gtk_widget_show(okb);
-    if (spin != NULL) {
-	g_signal_connect(G_OBJECT(spin), "activate",
-			 G_CALLBACK(trigger_ok), okb);
-    }
-
-    /* Create a "Help" button if wanted */
-    if (hcode && hcode != FREQ) {
-	context_help_button(GTK_DIALOG(dialog)->action_area, hcode);
-    }
-
-    gtk_widget_show(dialog);
-
-    return ret;
-}
-
-int float_spin_dialog (const char *title, const char *blurb,
-		       double *spinvar, const char *spintxt, 
-		       double spinmin, double spinmax, 
-		       int hcode)
-{
-    GtkWidget *dialog;
-    GtkWidget *tmp, *okb;
-    GtkWidget *spin = NULL;
-    int ret = 0;
-
-    if (maybe_raise_dialog()) {
-	return -1;
-    }
-
-    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
-
-    /* create upper label if wanted */
-    if (blurb != NULL) {
-	tmp = dialog_blurb_box(blurb);
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
-			   tmp, TRUE, TRUE, 5);
-    }
-
-    tmp = option_float_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       tmp, TRUE, TRUE, 5);
-    spin = g_object_get_data(G_OBJECT(tmp), "spin-button");
-    
     /* Cancel button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 

@@ -1762,24 +1762,28 @@ static void script_index (GtkWidget *w, windata_t *vwin)
     display_files(NULL, PS_FILES, NULL);
 }
 
+#define xround(x) (((x-floor(x))>.5)? ceil(x) : floor(x))
+
 static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 {
     CoeffIntervals *cf = vwin->data;
     GtkTextBuffer *buf;
     const char *newtext;
-    double cval = 1 - cf->alpha;
+    double alpha, x = 100 * (1 - cf->alpha);
+    int cval = (int) xround(x);
     PRN *prn;
     int resp;
 
-    resp = float_spin_dialog("gretl: alpha", _("Confidence level"),
-			     &cval, "1 - α =", 
-			     0.60, 0.99, 0);
+    resp = spin_dialog("gretl: alpha", NULL,
+		       &cval, _("Confidence level, percent"),
+		       60, 99, 0);
 
     if (resp < 0 || bufopen(&prn)) {
 	return;
     }
 
-    reset_coeff_intervals(cf, 1 - cval);
+    alpha = (100.0 - cval) / 100.0;
+    reset_coeff_intervals(cf, alpha);
     text_print_model_confints(cf, prn);
     newtext = gretl_print_get_buffer(prn);
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
