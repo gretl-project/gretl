@@ -229,7 +229,9 @@ static int console_vars_changed (const char *line, int oldv, int err)
 {
     int ret = 0;
 
-    if (datainfo->v > 0 && datainfo->v != oldv) {
+    if (!strncmp(line, "open ", 5)) {
+	; /* opening a new data set doesn't count as "modifying" */
+    } else if (datainfo->v > 0 && datainfo->v != oldv) {
 	ret = 1;
     } else if (!err) {
 	if (!strncmp(line, "rename", 6) ||

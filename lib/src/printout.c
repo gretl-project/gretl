@@ -214,17 +214,18 @@ void print_centered (const char *s, int width, PRN *prn)
 
 void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
 {
+    double tail = 1 - cf->alpha / 2;
     int i;
 
     if (cf->asy) {
-	pprintf(prn, "z(.025) = %.4f\n\n", cf->t);
+	pprintf(prn, "z(%g) = %.4f\n\n", tail, cf->t);
     } else {
-	pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, cf->t);
+	pprintf(prn, "t(%d, %g) = %.3f\n\n", cf->df, tail, cf->t);
     }
 
     /* xgettext:no-c-format */
-    pputs(prn, _("      VARIABLE         COEFFICIENT      95% CONFIDENCE "
-	    "INTERVAL\n\n"));      
+    pprintf(prn, _("      VARIABLE         COEFFICIENT      %g%% CONFIDENCE "
+		   "INTERVAL\n\n"), 100 * (1 - cf->alpha));      
 
     for (i=0; i<cf->ncoeff; i++) {
 	print_coeff_interval(cf, i, prn);

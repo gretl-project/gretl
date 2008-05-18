@@ -37,6 +37,7 @@ typedef struct CoeffIntervals_ CoeffIntervals;
 struct CoeffIntervals_ {
     int asy;
     int ncoeff;
+    double alpha;
     double t;
     char **names;
     double *coeff;
@@ -200,6 +201,8 @@ void free_coeff_intervals (CoeffIntervals *cf);
 CoeffIntervals *
 gretl_model_get_coeff_intervals (const MODEL *pmod, 
 				 const DATAINFO *pdinfo);
+
+int reset_coeff_intervals (CoeffIntervals *cf, double alpha);
 
 int gretl_model_get_depvar (const MODEL *pmod);
 

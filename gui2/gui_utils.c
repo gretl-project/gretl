@@ -60,6 +60,7 @@
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
 #include "../pixmaps/mini.pin.xpm"
+#include "../pixmaps/mini.alpha.xpm"
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # include "../pixmaps/info_24.xpm"
 #endif
@@ -117,7 +118,8 @@ enum {
     FORMAT_ITEM,
     INDEX_ITEM,
     EDIT_SCRIPT_ITEM,
-    STICKIFY_ITEM
+    STICKIFY_ITEM,
+    ALPHA_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -1551,7 +1553,8 @@ void gretl_stock_icons_init (void)
 	mini_plot_xpm,
 	mini_model_xpm,
 	mini_func_xpm,
-	mini_pin_xpm
+	mini_pin_xpm,
+	mini_alpha_xpm
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -1573,7 +1576,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_SCATTER,
 	GRETL_STOCK_MODEL,
 	GRETL_STOCK_FUNC,
-	GRETL_STOCK_PIN
+	GRETL_STOCK_PIN,
+	GRETL_STOCK_ALPHA
     };
     int n = sizeof stocks / sizeof stocks[0];
 
@@ -1758,6 +1762,33 @@ static void script_index (GtkWidget *w, windata_t *vwin)
     display_files(NULL, PS_FILES, NULL);
 }
 
+static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
+{
+    CoeffIntervals *cf = vwin->data;
+    GtkTextBuffer *buf;
+    const char *newtext;
+    double cval = 1 - cf->alpha;
+    PRN *prn;
+    int resp;
+
+    resp = float_spin_dialog("gretl: alpha", _("Confidence level"),
+			     &cval, "1 - α =", 
+			     0.60, 0.99, 0);
+
+    if (resp < 0 || bufopen(&prn)) {
+	return;
+    }
+
+    reset_coeff_intervals(cf, 1 - cval);
+    text_print_model_confints(cf, prn);
+    newtext = gretl_print_get_buffer(prn);
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    gtk_text_buffer_set_text(buf, "", -1);
+    textview_set_text(vwin->w, newtext);
+    gretl_print_destroy(prn);
+}
+
 static void set_output_sticky (GtkWidget *w, windata_t *vwin)
 {
     const char *opts[] = {
@@ -1810,6 +1841,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, add_matrix_callback, ADD_MATRIX_ITEM },
     { N_("Stickiness..."), GRETL_STOCK_PIN, set_output_sticky, STICKIFY_ITEM },
+    { N_("Confidence level..."), GRETL_STOCK_ALPHA, coeffint_set_alpha, ALPHA_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }
@@ -1913,6 +1945,8 @@ static toolfunc item_get_callback (struct viewbar_item *item, windata_t *vwin,
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
 	return NULL;
     } else if (r != SCRIPT_OUT && f == STICKIFY_ITEM) {
+	return NULL;
+    } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;
     } else if (f == SAVE_ITEM) { 
 	if (!edit_ok(r) || r == SCRIPT_OUT) {

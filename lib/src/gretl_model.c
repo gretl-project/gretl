@@ -766,6 +766,33 @@ void free_coeff_intervals (CoeffIntervals *cf)
     free(cf);
 }
 
+int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
+{
+    double se, tbak = cf->t;
+    int i;
+
+    if (alpha <= 0 || alpha >= 1) {
+	return E_DATA;
+    }
+
+    if (cf->asy) {
+	cf->t = normal_cdf_inverse(1 - alpha / 2);
+    } else {
+	cf->t = student_cdf_inverse(cf->df, 1 - alpha / 2);
+    }
+
+    for (i=0; i<cf->ncoeff; i++) { 
+	if (cf->maxerr[i] > 0) {
+	    se = cf->maxerr[i] / tbak;
+	    cf->maxerr[i] = se * cf->t;
+	}
+    }
+
+    cf->alpha = alpha;
+
+    return 0;
+}
+
 /**
  * gretl_model_get_coeff_intervals:
  * @pmod: pointer to gretl model.
@@ -815,6 +842,8 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 	err = 1;
 	goto bailout;
     }    
+
+    cf->alpha = .05;
 
     if (ASYMPTOTIC_MODEL(pmod->ci)) {
 	cf->asy = 1;
