@@ -214,7 +214,8 @@ int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo);
 
 int gretl_VAR_roots_plot (GRETL_VAR *var);
 
-int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
+int confidence_ellipse_plot (gretl_matrix *V, double *b, 
+			     double tcrit, double Fcrit, double alpha,
 			     const char *iname, const char *jname);
 
 int xy_plot_with_control (const int *list, const char *literal,

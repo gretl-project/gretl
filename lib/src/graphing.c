@@ -4014,8 +4014,9 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
  * confidence_ellipse_plot:
  * @V: 2x2 covariance matrix.
  * @b: 2-vector containing point estimates
- * @t: critical t-value for 95% confidence.
- * @c: 
+ * @tcrit: critical t-value for 1 - alpha confidence.
+ * @Fcrit: critical F-value for 1 - alpha confidence.
+ * @alpha: nominal non-coverage, as decimal.
  * @iname: name of first parameter.
  * @jname: name of second parameter.
  *
@@ -4025,18 +4026,21 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
  * Returns: 0 on success, non-zero on error.
  */
 
-int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
+int confidence_ellipse_plot (gretl_matrix *V, double *b, 
+			     double tcrit, double Fcrit, double alpha, 
 			     const char *iname, const char *jname)
 {
     FILE *fp = NULL;
     double maxerr[2];
     double xcoeff[2];
     double ycoeff[2];
+    double cval = 100 * (1 - alpha);
     gretl_matrix *e = NULL;
+    gchar *title;
     int err = 0;
 
-    maxerr[0] = t * sqrt(gretl_matrix_get(V, 0, 0));
-    maxerr[1] = t * sqrt(gretl_matrix_get(V, 1, 1));
+    maxerr[0] = tcrit * sqrt(gretl_matrix_get(V, 0, 0));
+    maxerr[1] = tcrit * sqrt(gretl_matrix_get(V, 1, 1));
 
     err = gretl_invert_symmetric_matrix(V);
     if (err) {
@@ -4048,8 +4052,8 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 	return err;
     }
 
-    e->val[0] = sqrt(1.0 / e->val[0] * c);
-    e->val[1] = sqrt(1.0 / e->val[1] * c);
+    e->val[0] = sqrt(1.0 / e->val[0] * Fcrit);
+    e->val[1] = sqrt(1.0 / e->val[1] * Fcrit);
 
     xcoeff[0] = e->val[0] * gretl_matrix_get(V, 0, 0);
     xcoeff[1] = e->val[1] * gretl_matrix_get(V, 0, 1);
@@ -4064,9 +4068,11 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 	return err;
     }
 
-    fprintf(fp, "set title '%s'\n",
-	    /* xgettext:no-c-format */
-	    G_("95% confidence ellipse and 95% marginal intervals"));
+    title = g_strdup_printf(G_("%g%% confidence ellipse and %g%% marginal intervals"),
+			    cval, cval);
+    fprintf(fp, "set title '%s'\n", title);
+    g_free(title);
+
     fputs("# literal lines = 9\n", fp);
     fputs("set parametric\n", fp);
     fputs("set xzeroaxis\n", fp);

@@ -168,9 +168,9 @@ print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     if (isnan(cf->maxerr[i])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
     } else {
-	pprintf(prn, " (%#.*g, %#.*g)", 
-		GRETL_DIGITS, cf->coeff[i] - cf->maxerr[i],
-		GRETL_DIGITS, cf->coeff[i] + cf->maxerr[i]);
+	pprintf(prn, " %#12.6g %#12.6g", 
+		cf->coeff[i] - cf->maxerr[i],
+		cf->coeff[i] + cf->maxerr[i]);
     }
 
     pputc(prn, '\n');

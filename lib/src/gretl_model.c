@@ -766,6 +766,18 @@ void free_coeff_intervals (CoeffIntervals *cf)
     free(cf);
 }
 
+/**
+ * reset_coeff_intervals:
+ * @cf: pointer to confidence intervals struct.
+ * @alpha: nominal non-coverage, as decimal.
+ *
+ * Recomputes the intervals in @cf using the given value
+ * of @alpha.
+ * 
+ * Returns: 0 on success, non-zero if @alpha is out of
+ * bounds.
+ */
+
 int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
 {
     double se, tbak = cf->t;

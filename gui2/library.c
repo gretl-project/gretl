@@ -1587,27 +1587,28 @@ int do_confidence_region (selector *sr)
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
     MODEL *pmod;
-
     char *mask = NULL;
     char iname[VNAMELEN];
     char jname[VNAMELEN];
     gretl_matrix *V = NULL;
     int v[2];
     double b[2];
-    double t, kF;
+    double tcrit, Fcrit, alpha;
     int err = 0;
 
-    if (buf == NULL || sscanf(buf, "%d %d", &v[0], &v[1]) != 2) {
-	return 0;
+    if (buf == NULL || sscanf(buf, "%lf %d %d", &alpha, &v[0], &v[1]) != 3) {
+	return 1;
     }
 
     pmod = (MODEL *) vwin->data;
     if (pmod == NULL) {
+	gui_errmsg(E_DATA);
 	return 0;
     }
 
     mask = calloc(pmod->ncoeff, 1);
     if (mask == NULL) {
+	nomem();
 	return 0;
     }
 
@@ -1622,13 +1623,14 @@ int do_confidence_region (selector *sr)
     b[0] = pmod->coeff[v[0]];
     b[1] = pmod->coeff[v[1]];
 
-    t = tcrit95(pmod->dfd);
-    kF = 2.0 * snedecor_critval(2, pmod->dfd, .05);
+    tcrit = student_cdf_inverse(pmod->dfd, 1 - alpha / 2);
+    Fcrit = 2.0 * snedecor_critval(2, pmod->dfd, alpha);
 
     gretl_model_get_param_name(pmod, datainfo, v[0], iname);
     gretl_model_get_param_name(pmod, datainfo, v[1], jname);
 
-    err = confidence_ellipse_plot(V, b, t, kF, iname, jname);
+    err = confidence_ellipse_plot(V, b, tcrit, Fcrit, alpha,
+				  iname, jname);
     gui_graph_handler(err);
 
     gretl_matrix_free(V);

@@ -1648,6 +1648,18 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
     add_to_cmdlist(sr, s);
 }
 
+static void read_ellipse_alpha (selector *sr)
+{
+    if (sr->extra[0] != NULL) {
+	char s[8];
+	double cval;
+
+	cval = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
+	sprintf(s, "%g ", 1 - cval);
+	add_to_cmdlist(sr, s);
+    }
+}
+
 /* Take the stored preferred laglist for a variable (if any) and
    convert to a string specification for adding to the regression
    command line.
@@ -2016,6 +2028,11 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->code == QUANTREG) {
 	read_quantreg_extras(sr);
+	return;
+    }
+
+    if (sr->code == ELLIPSE) {
+	read_ellipse_alpha(sr);
 	return;
     }
 
@@ -3574,9 +3591,16 @@ static void rq_ci_callback (GtkWidget *w, selector *sr)
     }
 }
 
-static void build_quantreg_radios (selector *sr)
+static GtkWidget *alpha_spinner (double deflt, double minval)
 {
     GtkObject *adj;
+    
+    adj = gtk_adjustment_new(deflt, minval, 0.99, 0.01, 0.1, 1);
+    return gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+}
+
+static void build_quantreg_radios (selector *sr)
+{
     GtkWidget *b1, *b2;
     GSList *group;
 
@@ -3588,13 +3612,32 @@ static void build_quantreg_radios (selector *sr)
 					 _("Compute confidence intervals, 1 - α ="));
     g_signal_connect(G_OBJECT(b2), "toggled",
 		     G_CALLBACK(rq_ci_callback), sr);
-    adj = gtk_adjustment_new(0.90, 0.70, 0.99, 0.01, 0.1, 1);
-    sr->extra[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+    sr->extra[1] = alpha_spinner(0.90, 0.70);
     pack_switch_with_extra(b2, sr, FALSE, OPT_I, 0, sr->extra[1]);
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
+}
+
+static void build_ellipse_spinner (selector *sr)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *label;
+
+    vbox_add_hsep(sr->vbox);
+
+    label = gtk_label_new("");
+    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
+    gtk_widget_show(label);
+    label = gtk_label_new(_("Confidence level, 1 - α ="));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_widget_show(label);
+    sr->extra[0] = alpha_spinner(0.95, 0.70);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 0);
+    gtk_widget_show(sr->extra[0]);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
 }
 
 static void build_rankcorr_radios (selector *sr)
@@ -3684,7 +3727,6 @@ static void build_omit_test_radios (selector *sr)
     windata_t *vwin = (windata_t *) sr->data;
     MODEL *pmod = (MODEL *) vwin->data;
     GtkWidget *b1, *b2, *b3;
-    GtkObject *adj;
     GSList *group;
 
     vbox_add_hsep(sr->vbox);
@@ -3705,8 +3747,7 @@ static void build_omit_test_radios (selector *sr)
 	g_signal_connect(G_OBJECT(b3), "toggled",
 			 G_CALLBACK(auto_omit_callback), sr);
 
-	adj = gtk_adjustment_new(0.10, 0.01, 0.99, 0.01, 0.1, 1);
-	sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+	sr->extra[0] = alpha_spinner(0.10, 0.01);
 	pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0]);
 	gtk_widget_set_sensitive(sr->extra[0], FALSE);
 
@@ -3978,7 +4019,7 @@ build_selector_buttons (selector *sr)
 
     if (sr->code != PRINT && sr->code != SAVE_FUNCTIONS &&
 	sr->code != DEFINE_LIST && sr->code != DEFINE_MATRIX &&
-	!SAVE_DATA_ACTION(sr->code)) {
+	sr->code != ELLIPSE && !SAVE_DATA_ACTION(sr->code)) {
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
@@ -4313,8 +4354,9 @@ static char *get_topstr (int cmdnum)
     case COEFFSUM:
 	return N_("Select coefficients to sum");
     case SPEARMAN:
-    case ELLIPSE:
 	return N_("Select two variables");
+    case ELLIPSE:
+	return N_("Confidence region: select two variables");
     case PRINT:
 	return N_("Select variables to display");
     case GR_PLOT: 
@@ -4722,6 +4764,10 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     /* toggle switches for some cases */
     if (WANT_TOGGLES(ci)) {
 	build_selector_switches(sr);
+    }
+
+    if (ci == ELLIPSE) {
+	build_ellipse_spinner(sr);
     }
 
 #if 0 /* not ready */
