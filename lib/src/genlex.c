@@ -1022,6 +1022,8 @@ static void deprecation_note (parser *p)
 }
 #endif
 
+#define word_start_special(c) (c == '$' || c == '@' || c == '_')
+
 #define matrix_gen(p) (p->lh.t == MAT || p->targ == MAT)
 
 #define unary_context(p) (p->sym < F2_MAX || p->sym == COM)
@@ -1263,7 +1265,7 @@ void lex (parser *p)
 		p->sym = NUM;
 		return;
 	    } else if (islower(p->ch) || isupper(p->ch) || 
-		       p->ch == '$' || p->ch == '@') {
+		       word_start_special(p->ch)) {
 		getword(p);
 		return;
 	    } else if (p->ch == '"') {

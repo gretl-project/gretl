@@ -1443,7 +1443,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (!(opt & OPT_Q)) {
 	    printmodel(&aux, pdinfo, OPT_NONE, prn);
 	} else {
-	    pputc(prn, '\n');
+	    if (!(opt & OPT_G)) {
+		pputc(prn, '\n');
+	    }
 	    pputs(prn, _("RESET specification test"));
 	    pprintf(prn, " (%s)\n", _(mode));
 	}

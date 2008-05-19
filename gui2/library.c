@@ -2069,9 +2069,12 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
     const char *optstrs[] = {
 	N_("squares and cubes"),
 	N_("squares only"),
-	N_("cubes only")
+	N_("cubes only"),
+	N_("all variants")
     };
     gretlopt opt = OPT_S;
+    int width = 78;
+    int height = 400;
     int resp, err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -2080,7 +2083,7 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
 
     resp = radio_dialog(_("gretl: RESET test"),
 			_("RESET specification test"),
-			optstrs, 3, 0, RESET);
+			optstrs, 4, 0, RESET);
 
     if (resp < 0) {
 	/* canceled */
@@ -2093,9 +2096,24 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
 	opt |= OPT_R;
     } else if (resp == 2) {
 	opt |= OPT_C;
+    } else if (resp == 3) {
+	opt = OPT_Q | OPT_G;
     }
 
-    err = reset_test(pmod, &Z, datainfo, opt, prn);
+    if (opt & OPT_G) {
+	/* gui special: show short form of all 3 tests */
+	width = 60;
+	height = 320;
+	err = reset_test(pmod, &Z, datainfo, opt, prn);
+	if (!err) {
+	    err = reset_test(pmod, &Z, datainfo, (opt | OPT_R), prn);
+	}
+	if (!err) {
+	    err = reset_test(pmod, &Z, datainfo, (opt | OPT_C), prn);
+	}
+    } else {
+	err = reset_test(pmod, &Z, datainfo, opt, prn);
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -2104,7 +2122,7 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
 	update_model_tests(vwin);
 	gretl_command_strcpy("reset");
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, _("gretl: RESET test"), RESET, NULL); 
+	view_buffer(prn, width, height, _("gretl: RESET test"), RESET, NULL); 
     }
 }
 

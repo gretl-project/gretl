@@ -3034,6 +3034,33 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
+#define LIST_RENAME 0
+
+#if LIST_RENAME
+
+static void rename_list_var (DATAINFO *pdinfo, int v)
+{
+    if (strlen(pdinfo->varname[v]) < VNAMELEN - 1) {
+	char tmp[VNAMELEN];
+	
+	strcpy(tmp, "_");
+	strcat(tmp, pdinfo->varname[v]);
+	strcpy(pdinfo->varname[v], tmp);
+    }
+}
+
+static void restore_listvar_name (DATAINFO *pdinfo, int v)
+{
+    if (*pdinfo->varname[v] == '_') {
+	char tmp[VNAMELEN];
+	
+	strcpy(tmp, pdinfo->varname[v] + 1);
+	strcpy(pdinfo->varname[v], tmp);
+    }
+}
+
+#endif
+
 /* Given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
    and make the variables referenced in that list accessible to the
@@ -3046,7 +3073,7 @@ static int localize_list (const char *oldname, fn_param *fp,
 {
     const int *list;
     int level = fn_executing + 1;
-    int i, err;
+    int i, v, err;
 
     list = get_list_by_name(oldname);
 
@@ -3063,11 +3090,15 @@ static int localize_list (const char *oldname, fn_param *fp,
 
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
-	    if (list[i] != 0) {
-		STACK_LEVEL(pdinfo, list[i]) = level;
+	    v = list[i];
+	    if (v != 0) {
+		STACK_LEVEL(pdinfo, v) = level;
 		if (fp->flags & ARG_CONST) {
-		    set_var_const(pdinfo, list[i]);
+		    set_var_const(pdinfo, v);
 		}
+#if LIST_RENAME
+		rename_list_var(pdinfo, v);
+#endif
 	    }
 	}
     }
@@ -3359,6 +3390,9 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 	int overwrite = 0;
 
 	vi = list[i];
+#if LIST_RENAME
+	restore_listvar_name(pdinfo, vi);
+#endif
 	vname = pdinfo->varname[vi];
 	if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
 	    for (j=1; j<pdinfo->v; j++) { 
