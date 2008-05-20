@@ -624,7 +624,7 @@ static int *get_garch_list (const int *list, const double **Z,
 
     *err = 0;
 
-    /* rule out pure AR in variance (FIXME, why?) */
+    /* rule out pure AR in variance: the model is unidentified */
     if (p > 0 && q == 0) {
 	gretl_errmsg_set(_("Error in garch command"));
 	*err = E_DATA;
@@ -650,11 +650,16 @@ static int *get_garch_list (const int *list, const double **Z,
     if (glist == NULL) {
 	*err = E_ALLOC;
     } else {
-	for (i=1; i<=list[0]; i++) {
+	for (i=1; i<=4; i++) {
 	    glist[i] = list[i];
 	}
+
 	if (add0) {
-	    glist[i] = 0;
+	    glist[5] = 0;
+	}
+
+	for (i=5; i<=list[0]; i++) {
+	    glist[i+add0] = list[i];
 	}
     }
 
