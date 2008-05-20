@@ -167,7 +167,7 @@ to fill the variable \emph{series} sequentially.  It may be necessary
 to include a \texttt{smpl} command before the \texttt{data} command to
 set up the right ``window'' for the incoming data.  In addition, if
 one cannot assume that the data will be delivered in the correct order
-(tyically, chronological order), the SQL query should contain an
+(typically, chronological order), the SQL query should contain an
 appropriate \texttt{ORDER BY} clause.
 
 The optional format string is used for those cases when there is no
@@ -310,7 +310,7 @@ data inc @Qry2 --odbc
 \end{script}
 
 Example \ref{ex:odbc-1} shows two elementary queries: first we set up
-an empty quartely dataset. Then, we connect to the database by the
+an empty quarterly dataset. Then, we connect to the database by the
 \texttt{open} statement. Once the connection is established we
 retrieve, one column at a time, the data from the \texttt{Consump}
 table. In this case, no observation string is necessary because the
@@ -340,8 +340,8 @@ case.
   \label{ex:odbc-3}
 \begin{scode}
 string foo = "select year, qtr, xval from DATA \
-       where varname='STN' AND qtr=1"
-data stn_q1 obs-format="%d,%d" @foo --odbc
+       where varname='STN' AND qtr>1"
+data bar obs-format="%d,%d" @foo --odbc
 print bar --byobs
 \end{scode}
 
