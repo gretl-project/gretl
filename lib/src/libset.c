@@ -88,6 +88,7 @@ struct set_vars_ {
     int bkbp_k;                 /* Baxter-King k */
     int bkbp_p0;                /* Baxter-King periods[0] */
     int bkbp_p1;                /* Baxter-King periods[1] */
+    int rq_maxiter;             /* max iterations for quantreg, simplex */
     gretl_matrix *initvals;     /* parameter initializer */
     struct robust_opts ropts;   /* robust standard error options */
     char shelldir[MAXLEN];      /* working dir for shell commands */
@@ -126,6 +127,7 @@ struct set_vars_ {
 		       !strcmp(s, HORIZON) || \
 		       !strcmp(s, LONGDIGITS) || \
 		       !strcmp(s, LOOP_MAXITER) || \
+                       !strcmp(s, RQ_MAXITER) || \
 		       !strcmp(s, VECM_NORM) || \
 		       !strcmp(s, GRETL_DEBUG))
 
@@ -304,6 +306,7 @@ static void state_vars_copy (set_vars *sv)
     sv->horizon = state->horizon;
     sv->bootrep = state->bootrep;
     sv->loop_maxiter = state->loop_maxiter;
+    sv->rq_maxiter = state->rq_maxiter;
     sv->nls_toler = state->nls_toler;
     sv->delim = state->delim; 
     sv->longdigits = state->longdigits; 
@@ -336,6 +339,7 @@ static void state_vars_init (set_vars *sv)
     sv->bootrep = 1000;
     sv->nls_toler = NADBL;
     sv->loop_maxiter = 250;
+    sv->rq_maxiter = 1000;
     sv->delim = UNSET_INT;
     sv->longdigits = 10;
     sv->vecm_norm = NORM_PHILLIPS;
@@ -1158,6 +1162,7 @@ static int display_settings (PRN *prn)
     libset_print_double(BFGS_TOLER, prn);
     libset_print_int(BHHH_MAXITER, prn);
     libset_print_double(BHHH_TOLER, prn);
+    libset_print_int(RQ_MAXITER, prn);
     print_initvals(state->initvals, prn);
     libset_print_bool(USE_LBFGS, prn);
     libset_print_double(NLS_TOLER, prn);
@@ -1465,6 +1470,8 @@ int libset_get_int (const char *s)
 	return state->bfgs_maxiter;
     } else if (!strcmp(s, BHHH_MAXITER)) {
 	return state->bhhh_maxiter;
+    } else if (!strcmp(s, RQ_MAXITER)) {
+	return state->rq_maxiter;
     } else if (!strcmp(s, BKBP_K)) {
 	return state->bkbp_k;
     } else if (!strcmp(s, BOOTREP)) {
@@ -1507,6 +1514,9 @@ static int intvar_min_max (const char *s, int *min, int *max,
     } else if (!strcmp(s, BHHH_MAXITER)) {
 	*min = 1;
 	*var = &state->bhhh_maxiter;
+    } else if (!strcmp(s, RQ_MAXITER)) {
+	*min = 1;
+	*var = &state->rq_maxiter;
     } else if (!strcmp(s, BKBP_K)) {
 	*min = 1;
 	*var = &state->bkbp_k;

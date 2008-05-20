@@ -25,6 +25,7 @@
 #include "libgretl.h"
 #include "gretl_f2c.h"
 #include "usermat.h"
+#include "libset.h"
 
 #include <errno.h>
 
@@ -52,36 +53,28 @@ extern int rqfnb_ (integer *n,    /* number of observations */
    1-alpha confidence intervals using the rank-inversion method.
 */
 
-extern int rqbr_ (integer *n,    /* number of observations */
-		  integer *p,    /* number of parameters */
-		  integer *n5,   /* n + 5 */
-		  integer *p3,   /* p + 3 */
-		  integer *p4,   /* p + 4 */
+extern int rqbr_ (int n,         /* number of observations */
+		  int p,         /* number of parameters */
 		  double *x,     /* matrix of independent vars */
 		  double *y,     /* dependent var vector */
-		  double *tau,   /* the desired quantile */
-		  double *tol,   /* machine precision to the 2/3 */
-		  integer *ift,  /* exit code: 0 = OK */
+		  double tau,    /* the desired quantile */
+		  double tol,    /* machine precision to the 2/3 */
 		  double *coeff, /* p-vector of parameter estimates */
 		  double *resid, /* n-vector of residuals */
-		  integer *s,    /* integer work array, length n */
-		  double *wa,    /* real work array, size n5 * p4 */
+		  int *s,        /* int work array, length n */
+		  double *wa,    /* real work array, size (n+5) * (p+4) */
 		  double *wb,    /* and another, size n */
-		  integer *nsol, /* estimated (row) dim. of primal solution array,
-				    "say 3*n; minimum value = 2" */
-		  integer *ndsol, /* estimated (row) dim. of dual solution array,
-				     "say 3*n; minimum value = 2" */
-		  double *sol,   /* primal solution array, size (p + 3) * nsol */
-		  double *dsol,  /* dual solution array, size n * ndsol */
-		  integer *lsol, /* actual dimension of the solution arrays */
-		  integer *h,    /* matrix of observation indices, size p * nsol */
+		  double *sol,   /* primal solution array, size (p + 3) * 2 */
+		  double *dsol,  /* dual solution array, size n * 2 */
+		  int *h,        /* matrix of observation indices, size p * nsol */
 		  double *qn,    /* vector of residual variances from projection of 
 				    each column of x on the remaining columns */
-		  double *cutoff,  /* critical point for interval */
-		  double *ci,      /* matrix of confidence intervals, size 4 * p */
-		  double *tnmat,   /* matrix of JGPK rank-test statistics */
-		  double *big,     /* "large positive floating-point number" */
-		  logical *lci1);  /* doing confidence intervals? */
+		  double cutoff, /* critical point for interval */
+		  double *ci,    /* matrix of confidence intervals, size 4 * p */
+		  double *tnmat, /* matrix of JGPK rank-test statistics */
+		  double big,    /* "large positive floating-point number" */
+		  int rmax,      /* max iterations (added for gretl) */
+		  int ci1);      /* doing confidence intervals? */
 
 /* machine precision to the 2/3 */
 #define calc_eps23 (pow(2.22045e-16, 2/3.0))
@@ -90,9 +83,10 @@ extern int rqbr_ (integer *n,    /* number of observations */
 
 struct br_info {
     int warning;
-    integer n, p;
-    integer n5, p3, p4;
-    integer nsol, ndsol;
+    int rmax;
+    int n, p;
+    int n5, p3, p4;
+    int nsol, ndsol;
     double tau;
     double tol;
     double big;
@@ -102,8 +96,8 @@ struct br_info {
     double *wa, *wb;
     double *qn;
     double *sol, *dsol;
-    integer *ispace;
-    integer *s, *h;
+    int *ispace;
+    int *s, *h;
     gretl_matrix *ci;
     gretl_matrix *tnmat;
 };
@@ -552,7 +546,8 @@ static int make_iid_qn (const gretl_matrix *X, double *qn)
     return err;
 }
 
-/* allocate workspace to be fed to the function rqbr */
+/* allocate workspace to be fed to the function rqbr, and
+   initialize various things */
 
 static int br_info_alloc (struct br_info *rq, int n, int p,
 			  double tau, double alpha,
@@ -609,6 +604,7 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
     rq->tau = tau;
     rq->tol = calc_eps23;
     rq->big = NADBL / 100;
+    rq->rmax = libset_get_int(RQ_MAXITER);
 
     if (opt & OPT_N) {
 	/* no df correction */
@@ -631,7 +627,6 @@ static void br_info_reinit (gretl_matrix *X, struct br_info *rq)
     rq->n5 = rq->n + 5;
     rq->p3 = rq->p + 3;
     rq->p4 = rq->p + 4;
-    rq->nsol = rq->ndsol = 2;
 }
 
 /* Call Barrodale-Roberts Fortran code */
@@ -640,31 +635,31 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
 			 double tau, struct br_info *rq,
 			 int calc_ci)
 {
-    integer ift, lsol = 0;
-    logical lci1 = calc_ci;
-    int err = 0;
+    int ret, err = 0;
 
 #if QDEBUG
     fprintf(stderr, "real_br_calc: calling rqbr, calc_ci = %d\n", calc_ci);
 #endif
 
-    rqbr_(&rq->n, &rq->p, &rq->n5, &rq->p3, &rq->p4, 
-	  X->val, y->val, &tau, &rq->tol, &ift,
-	  rq->coeff, rq->resid, rq->s, rq->wa, rq->wb, 
-	  &rq->nsol, &rq->ndsol, rq->sol, rq->dsol,
-	  &lsol, rq->h, rq->qn, &rq->cut, 
-	  rq->ci->val, rq->tnmat->val, 
-	  &rq->big, &lci1);
+    ret = rqbr_(rq->n, rq->p, X->val, y->val, tau, rq->tol, 
+		rq->coeff, rq->resid, rq->s, rq->wa, rq->wb, 
+		rq->sol, rq->dsol, rq->h, rq->qn, rq->cut, 
+		rq->ci->val, rq->tnmat->val, 
+		rq->big, rq->rmax, calc_ci);
 
 #if QDEBUG
-    fprintf(stderr, "rqbr: ift = %d\n", ift);
+    fprintf(stderr, "rqbr: ift = %d\n", ret);
 #endif
 
-    if (ift == 1) {
+    if (ret == 1) {
 	rq->warning = 1;
 	fprintf(stderr, "Warning: solution may be non-unique\n");
-    } else if (ift == 2){ 
+    } else if (ret == 2){ 
 	fprintf(stderr, "Premature end: conditioning problem in X?\n");
+	err = E_NOCONV;
+    } else if (ret == 3) {
+	gretl_errmsg_sprintf("Maximum number of iterations (%d) exceeded",
+			     (int) rq->rmax);
 	err = E_NOCONV;
     }
 

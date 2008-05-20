@@ -39,7 +39,7 @@ command).\footnote{We gratefully acknowledge our borrowing from the
   core of the \texttt{quantreg} package is composed of Fortran code
   written by Roger Koenker; this is accompanied by various driver and
   auxiliary functions written in the \textsf{R} language by Koenker
-  amd Martin M\"achler.  The latter functions have been re-worked in C
+  and Martin M\"achler.  The latter functions have been re-worked in C
   for \app{gretl}.  We have added some guards against potential
   numerical problems in small samples.}
 
@@ -110,7 +110,7 @@ flagged.  Second, when a model is estimated in this mode, you can
 retrieve the confidence intervals using the accessor \verb|$coeff_ci|.
 This produces a $k \times 2$ matrix, where $k$ is the number of
 regressors.  The lower bounds are in the first column, the upper
-bounds in the second.
+bounds in the second.  See also section~\ref{sec:bigdata} below.
 
 \section{Multiple quantiles}
 
@@ -195,6 +195,58 @@ estimates overlap at all the quantiles considered.
     set.}
   \label{fig:tau2}
 \end{figure}
+
+
+\section{Large datasets}
+\label{sec:bigdata}
+
+As noted above, when you give the \verb|--intervals| option with the
+\texttt{quantreg} command, which calls for estimation of confidence
+intervals via rank inversion, \app{gretl} switches from the default
+Frisch--Newton algorithm to the Barrodale--Roberts simplex method.
+
+This is OK for moderately large datasets (up to, say, a few thousand
+observations) but on very large problems the simplex algorithm may
+become seriously bogged down.  For example, Koenker and Hallock (2001)
+present an analysis of the determinants of birth weights, using 
+198377 observations and with 15 regressors.  Generating confidence
+intervals via Barrodale--Roberts for a single value of $\tau$ took
+about half an hour on a Lenovo Thinkpad T60p with 1.83GHz Intel Core 2
+processor.
+
+If you want confidence intervals in such cases, you are advised not to
+use the \verb|--intervals| option, but to compute them using the
+method of ``plus or minus so many standard errors''.  (One
+Frisch--Newton run took about 8 seconds on the same machine, showing
+the superiority of the interior point method.)  The script below
+illustrates:
+%
+\begin{code}
+quantreg .10 y 0 xlist
+scalar crit = qnorm(.95)
+matrix ci = $coeff - crit * $stderr
+ci = ci~($coeff + crit * $stderr)
+print ci
+\end{code}
+%
+The matrix \texttt{ci} will contain the lower and upper bounds of the
+(symmetrical) 90 percent confidence intervals.
+
+To avoid a situation where \app{gretl} becomes unresponsive for a very
+long time we have set the maximum number of iterations for the
+Borrodale--Roberts algorithm to the (somewhat arbitrary) value of
+1000.  We will experiment further with this, but for the meantime if
+you really want to use this method on a large dataset, and don't mind
+waiting for the results, you can increase the limit using the
+\texttt{set} command with parameter \verb|rq_maxiter|, as in
+\begin{code}
+set rq_maxiter 5000
+\end{code}
+
+
+
+
+
 
 
 

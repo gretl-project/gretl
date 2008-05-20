@@ -1,61 +1,61 @@
-\chapter{Data import into gretl via ODBC}
+\chapter{Data import via ODBC}
 \label{chap:odbc}
 
 Since version 1.7.5, \app{gretl} provides a method for retrieving data
 from databases which support the ODBC standard. Most users
 won't be interested in this, but there may be some for whom this
 feature matters a lot: typically, those who work in an environment
-where huge data collections are available via a Data Base Management
+where huge data collections are accessible via a Data Base Management
 System (DBMS).
 
-ODBC is the \emph{de facto} standard for interacting with DBMSes. In
-the next section, we will provide some background information on how
-these systems work. What you actually need to do to have \app{gretl}
-retrieve data from a database is explained in section
-\ref{sec:odbc-syntax}.
+ODBC is the \emph{de facto} standard for interacting with such
+systems. In the next section we provide some background information on
+how ODBC works. What you actually need to do to have \app{gretl}
+retrieve data from a database is explained in
+section~\ref{sec:odbc-syntax}.
 
 \section{ODBC base concepts}
 \label{sec:odbc-base}
 
-ODBC is short for \emph{Open DataBase Connectivity} and is a group of
+ODBC is short for \emph{Open DataBase Connectivity}, a group of
 software methods that enable a \emph{client} to interact with a
 database \emph{server}. The most common operation is when the client
 fetches some data from the server. ODBC acts as an intermediate layer
 between client and server, so the client ``talks'' to ODBC rather than
-accessing the server directly (see figure \ref{fig:odbc}).
+accessing the server directly (see Figure~\ref{fig:odbc}).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.8\textwidth]{../figures/odbc}
+  \includegraphics[width=0.8\textwidth]{figures/odbc}
   \caption{Retrieving data via ODBC}
   \label{fig:odbc}
 \end{figure}
 
-For the above mechanism to work, it is necessary that on the client
-machine the relevant ODBC software is installed and working (contact
+For the above mechanism to work, it is necessary that the relevant
+ODBC software is installed and working on the client machine (contact
 your DB administrator for details). At this point, the database (or
 databases) that the server provides will be accessible to the client
-as a \emph{data source} with a specific identifier; in most cases, a
-username and a password are required to connect to the data source.
+as a \emph{data source} with a specific identifier (a Data Source Name
+or DSN); in most cases, a username and a password are required to
+connect to the data source.
 
-Once the connection is established, the user will send a \emph{query}
-to ODBC, which will contact the database manager, collect the results
-and send them back to the user. The query is almost invariably
-formulated in a special language used for the purpose, called
-\emph{SQL}\footnote{See \url{http://en.wikipedia.org/wiki/SQL}.}. We
-will not provide here an SQL tutorial: there are many SQL tutorials on
-the Net; besides, each database manager tends to support its own SQL
-dialect so for example the precise form of an SQL query may vary
-slightly if the DBMS on the other end is Oracle, MySQL, PostgreSQL or
-another.
+Once the connection is established, the user sends a \emph{query} to
+ODBC, which contacts the database manager, collects the results and
+sends them back to the user. The query is almost invariably formulated
+in a special language used for the purpose, namely SQL.\footnote{See
+  \url{http://en.wikipedia.org/wiki/SQL}.} We will not provide here an
+SQL tutorial: there are many such tutorials on the Net; besides, each
+database manager tends to support its own SQL dialect so the precise
+form of an SQL query may vary slightly if the DBMS on the other end is
+Oracle, MySQL, PostgreSQL or something else.
 
 Suffice it to say that the main statement for retrieving data is the
-\texttt{SELECT} statement: within a DBMS, data are organized in
+\texttt{SELECT} statement.  Within a DBMS, data are organized in
 \emph{tables}, which are roughly equivalent to spreadsheets. The
 \texttt{SELECT} statement returns a subset of a table, which is itself
-a table. For example, imagine that in your database you have a table
-called ``NatAccounts'', containing the data shown in table
-\ref{tab:odbc-nataccounts}.
+a table. For example, imagine that the database holds a table called
+``NatAccounts'', containing the data shown in
+Table~\ref{tab:odbc-nataccounts}.
 
 \begin{table}[htbp]
   \centering
@@ -63,14 +63,14 @@ called ``NatAccounts'', containing the data shown in table
     \hline
     year	& qtr	& gdp	 & consump	& tradebal \\ 
     \hline
-    1970	& 1	& 584763 & 344746.9	& -5891.01 \\ 
-    1970	& 2	& 597746 & 350176.9	& -7068.71 \\ 
-    1970	& 3	& 604270 & 355249.7	& -8379.27 \\ 
-    1970	& 4	& 609706 & 361794.7	& -7917.61 \\ 
-    1971	& 1	& 609597 & 362490	& -6274.3  \\ 
-    1971	& 2	& 617002 & 368313.6	& -6658.76 \\ 
-    1971	& 3	& 625536 & 372605	& -4795.89 \\ 
-    1971	& 4	& 630047 & 377033.9	& -6498.13  
+    1970	& 1	& 584763 & 344746.9	& $-$5891.01 \\ 
+    1970	& 2	& 597746 & 350176.9	& $-$7068.71 \\ 
+    1970	& 3	& 604270 & 355249.7	& $-$8379.27 \\ 
+    1970	& 4	& 609706 & 361794.7	& $-$7917.61 \\ 
+    1971	& 1	& 609597 & 362490	& $-$6274.3  \\ 
+    1971	& 2	& 617002 & 368313.6	& $-$6658.76 \\ 
+    1971	& 3	& 625536 & 372605	& $-$4795.89 \\ 
+    1971	& 4	& 630047 & 377033.9	& $-$6498.13  
   \end{tabular}
   \caption{The ``NatAccounts'' table}
   \label{tab:odbc-nataccounts}
@@ -80,7 +80,7 @@ The SQL statement
 \begin{code}
   SELECT qtr, tradebal, gdp FROM NatAccounts WHERE year=1970;
 \end{code}
-will result in the subset of the original data shown in table \ref{tab:odbc-result}.
+produces the subset of the original data shown in Table~\ref{tab:odbc-result}.
 
 \begin{table}[htbp]
   \centering
@@ -88,28 +88,27 @@ will result in the subset of the original data shown in table \ref{tab:odbc-resu
     \hline
     qtr	& tradebal & gdp    \\ 
     \hline
-    1	& -5891.01 & 584763 \\ 
-    2	& -7068.71 & 597746 \\ 
-    3	& -8379.27 & 604270 \\ 
-    4	& -7917.61 & 609706  
+    1	& $-$5891.01 & 584763 \\ 
+    2	& $-$7068.71 & 597746 \\ 
+    3	& $-$8379.27 & 604270 \\ 
+    4	& $-$7917.61 & 609706  
   \end{tabular}
   \caption{Result of a \texttt{SELECT} statement}
   \label{tab:odbc-result}
 \end{table}
 
 \app{Gretl} provides a mechanism for forwarding your query to the DBMS
-via ODBC and have the results automatically included in your currently
-open dataset.
+via ODBC and including the results in your currently open dataset.
 
 \section{Syntax}
 \label{sec:odbc-syntax}
 
 At present, ODBC import is only possible via the command line
-interface\footnote{Since designing a graphical interface for this is
+interface.\footnote{Since designing a graphical interface for this is
   conceptually simple but rather time-consuming, what we're aiming at
   is a robust and reasonably powerful implementation of the data
   transfer. Once all the issues are sorted out, we'll start
-  implementing a GUI interface.}. The two commands that gretl uses at
+  implementing a GUI interface.} The two commands that gretl uses at
 present for fetching data via an ODBC connection are \texttt{open} and
 \texttt{data}.
 
@@ -123,7 +122,7 @@ is
 \end{flushleft}
 The \texttt{user} and \texttt{password} items are optional; the effect
 of this command is to initiate an ODBC connection. It is assumed that
-the machine gretl runs on has a working ODBC client installed.
+the machine \app{gretl} runs on has a working ODBC client installed.
 
 In order to actually retrieve the data, the \texttt{data} command is
 used. Its syntax is:
@@ -141,7 +140,7 @@ where:
   cases when a ``rectangular'' organisation of the database cannot be
   assumed (more on this later);
 \item[\emph{query-string}] is the identifier for a pre-existing string
-  which must contain the SQL statement used to extract the data.
+  containing the SQL statement used to extract the data.
 \end{description}
 
 The \texttt{\emph{query-string}} will be typically created just before
@@ -162,34 +161,34 @@ column \texttt{foo} from the table \texttt{bar}.
     versions.
 \end{itemize}
 
-If the optional parameter is absent, like in the above example, the
-SQL query should return \textbf{exactly one} column of data, which is
-used to fill the variable \emph{series} sequentially. It is up to the
-user to formulate the query so that the data arrive in the right
-order. In practice, this means that the \texttt{data} statement may
-come after a \texttt{smpl} statement which sets up the right
-``window'' for the data, and the query will contain, in most cases, an
-\texttt{ORDER BY} clause to make sure that the data are sent in the
-right order (unless the table is not already indexed, of course).
+If the optional parameter is absent, as in the above example, the SQL
+query should return \textbf{exactly one} column of data, which is used
+to fill the variable \emph{series} sequentially.  It may be necessary
+to include a \texttt{smpl} command before the \texttt{data} command to
+set up the right ``window'' for the incoming data.  In addition, if
+one cannot assume that the data will be delivered in the correct order
+(tyically, chronological order), the SQL query should contain an
+appropriate \texttt{ORDER BY} clause.
 
-The format string is used for those cases when there is no certainty
-that the data from the query will come in the same order as the gretl
-dataset. This may happen in the case of missing data interspersed
-within a column, or for data that do not have a natural ordering, like
-for example cross-section data. In this case, the SQL statement should
-return a table with $n$ columns, where the first $n-1$ columns are
-used to identify which observation the figure in the $n$-th column
-belongs to. The format string is used to translate the first $n-1$
-fields into a string which matches the string \app{gretl} uses to
-identify observations in the currently open dataset. At present, $n$
-should be between 2 and 4, which should cover most, if not all, cases.
+The optional format string is used for those cases when there is no
+certainty that the data from the query will arrive in the same order
+as the \app{gretl} dataset. This may happen when missing
+values interspersed within a column, or with data that do not have a
+natural ordering, e.g.\ cross-sectional data. In this case,
+the SQL statement should return a table with $n$ columns, where the
+first $n-1$ columns are used to identify which observation the figure
+in the $n$-th column belongs to. The format string is used to
+translate the first $n-1$ fields into a string which matches the
+string \app{gretl} uses to identify observations in the currently open
+dataset. At present, $n$ should be between 2 and 4, which should cover
+most, if not all, cases.
 
 For example, consider the following fictitious case: we have a
 5-days-per-week dataset, to which we want to add the stock index for
-the Verdurian\footnote{See
-  \url{http://www.almeopedia.com/index.php/Verduria}.} market; it so
+the Verdurian market;\footnote{See
+  \url{http://www.almeopedia.com/index.php/Verduria}.} it so
 happens that in Verduria Saturdays are working days but Wednesdays are
-not. We want a column which does \textbf{not} contain data on
+not. We want a column which does \emph{not} contain data on
 Saturdays, because we wouldn't know where to put them, but at the same
 time we want to place missing values on all the Wednesdays.
 
@@ -263,7 +262,7 @@ in our variable \texttt{y}.
 \end{tabular} &
 
 \begin{tabular}{lllr}
-1970	& 1	& CAN	& -517.9085000000\\ 
+1970	& 1	& CAN	& $-$517.9085000000\\ 
 1970	& 2	& CAN	& 662.5996000000 \\ 
 1970	& 3	& CAN	& 1130.4155000000\\ 
 1970	& 4	& CAN	& 467.2508000000 \\ 
@@ -288,7 +287,7 @@ and \ref{tab:odbc-AWMexample2}):
 
 The table \texttt{Consump} is the classic ``rectangular'' dataset;
 that is, its internal organization is the same as in a spreadsheet or
-in an econometric package like \app{gretl} itself: each row is a data
+in an econometrics package like \app{gretl} itself: each row is a data
 point and each column is a variable. On the other hand, the structure
 of the \texttt{DATA} table is different: each record is one figure,
 stored in the column \texttt{xval}, and the other fields keep track of
@@ -331,7 +330,7 @@ data wln obs-format="%d:%d" @S --odbc
 In example \ref{ex:odbc-2}, on the contrary, we make use of the
 observation string, since we are drawing data from the \texttt{DATA}
 table, which is not rectangular. The SQL statement stored in the
-\texttt{S} string produces a table with three columns. The
+string \texttt{S} produces a table with three columns. The
 \texttt{ORDER BY} clause ensures that the rows will be in
 chronological order, although this is not strictly necessary in this
 case.
