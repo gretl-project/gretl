@@ -23,6 +23,7 @@
 #include "swap_bytes.h"
 #include "gretl_www.h"
 #include "libset.h"
+#include "gretl_string_table.h"
 #include "dbread.h"
 
 #include <glib.h>
@@ -1545,6 +1546,7 @@ static void ODBC_info_clear_read (void)
 {
     int i;
 
+    free(gretl_odinfo.query);
     gretl_odinfo.query = NULL;
 
     free(gretl_odinfo.x);
@@ -1866,12 +1868,58 @@ static int parse_odbc_format (char *fmt)
     return err;
 }
 
+static char *odbc_get_query (char *s, int *err)
+{
+    char *p, *query = NULL;
+
+    if (!strncmp(s, "query=", 6)) {
+	s += 6;
+    }
+
+    if (*s == '"') {
+	query = gretl_quoted_string_strdup(s, NULL);
+    } else {
+	p = get_string_by_name(s);
+	if (p != NULL) {
+	    query = gretl_strdup(p);
+	} else {
+	    query = gretl_strdup(s);
+	}
+    }
+
+    if (query == NULL) {
+	*err = E_ALLOC;
+    } else if (*query == '\0') {
+	gretl_errmsg_set(_("Expected an SQL query string"));
+	*err = E_PARSE;
+    }	
+
+    return query;
+}
+
+static int odbc_get_varname (char *s, char *vname)
+{
+    int n = gretl_varchar_spn(s);
+    int err = 0;
+
+    if (n == 0 || n > VNAMELEN - 1) {
+	gretl_errmsg_set(_("Expected a valid variable name"));
+	err = E_PARSE;
+    } else {
+	*vname = '\0';
+	strncat(vname, s, n);
+	err = check_varname(vname);
+    }
+
+    return err;
+}
+
 static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn)
 {
     void *handle = NULL;
     int (*get_data) (ODBC_info *);
-    char vname[VNAMELEN] = {0};
+    char vname[VNAMELEN];
     char *format = NULL;
     int err = 0;
 
@@ -1888,9 +1936,9 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
     line += strcspn(line, " ");
     line += strspn(line, " ");
 
-    if (sscanf(line, "%15s", vname) != 1) {
-	/* rough and ready */
-	return E_PARSE;
+    err = odbc_get_varname(line, vname);
+    if (err) {
+	return err;
     }
 
     line += strlen(vname);
@@ -1908,8 +1956,11 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	line += strspn(line, " ");
-	gretl_odinfo.query = (char *) line;
-	fprintf(stderr, "SQL query: '%s'\n", line);
+	gretl_odinfo.query = odbc_get_query(line, &err);
+    }
+
+    if (!err) {
+	fprintf(stderr, "SQL query: '%s'\n", gretl_odinfo.query);
 	gretl_error_clear();
 
 	get_data = get_plugin_function("gretl_odbc_get_data", &handle);
