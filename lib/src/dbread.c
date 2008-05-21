@@ -1872,10 +1872,6 @@ static char *odbc_get_query (char *s, int *err)
 {
     char *p, *query = NULL;
 
-    if (!strncmp(s, "query=", 6)) {
-	s += 6;
-    }
-
     if (*s == '"') {
 	query = gretl_quoted_string_strdup(s, NULL);
     } else {
