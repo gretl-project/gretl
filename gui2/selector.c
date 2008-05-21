@@ -3638,7 +3638,10 @@ static void build_ellipse_spinner (selector *sr)
     label = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
     gtk_widget_show(label);
-    label = gtk_label_new(_("Confidence level, 1 - α ="));
+    label = gtk_label_new(_("Confidence level"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_widget_show(label);
+    label = gtk_label_new("1 - α =");
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_widget_show(label);
     sr->extra[0] = alpha_spinner(0.95, 0.70);

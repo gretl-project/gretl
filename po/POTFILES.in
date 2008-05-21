@@ -151,6 +151,7 @@ plugin/oprobit.c
 plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
+plugin/quantreg.c
 plugin/range-mean.c
 plugin/stata_import.c
 plugin/stats_tables.c
