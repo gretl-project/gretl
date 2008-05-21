@@ -267,10 +267,10 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 {
     ModelTest *test = NULL;
     double pval = NADBL;
-    int verbosity = 2;
+    int asy, verbosity = 2;
     int stat_ok, i;
 
-    if (cmp->err || cmp->ci == LAD) {
+    if (cmp->err) {
 	return;
     }
 
@@ -304,15 +304,16 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	}
     }
 
+    asy = !LIMDEP(cmp->ci); /* ?? */
+
     if (!na(cmp->chisq)) {
 	pval = chisq_cdf_comp(cmp->dfn, cmp->chisq);
 	if (verbosity > 0) {
 	    pprintf(prn, "\n  %s:%s%s(%d) = %g, ",  
-		    (LIMDEP(cmp->ci))? _("Test statistic") : 
-		    _("Asymptotic test statistic"),
-		    (LIMDEP(cmp->ci))? " " : "\n    ",
+		    (asy)? _("Asymptotic test statistic") : _("Test statistic"),
+		    (asy)? "\n    " : " ",
 		    _("Chi-square"), cmp->dfn, cmp->chisq);
-	    pprintf(prn, _("with p-value = %g\n\n"), pval);
+	    pprintf(prn, _("with p-value = %g\n"), pval);
 	}
 
 	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
@@ -328,7 +329,8 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	if (verbosity > 0 && !na(cmp->F)) {
 	    /* alternate form */
 	    pval = snedecor_cdf_comp(cmp->dfn, cmp->dfd, cmp->F);
-	    pprintf(prn, "  %s: F(%d, %d) = %g, ", _("F-form"), 
+	    pputs(prn, (asy)? "    " : "  ");
+	    pprintf(prn, "%s: F(%d, %d) = %g, ", _("F-form"), 
 		    cmp->dfn, cmp->dfd, cmp->F);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
 	}	    
@@ -358,6 +360,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     }
 
     if (verbosity > 1 && cmp->score >= 0) {
+	pputc(prn, '\n');
 	pprintf(prn, _("  Of the %d model selection statistics, %d "), 
 		C_MAX, cmp->score);
 	if (cmp->score == 1) {
@@ -545,6 +548,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 {
     MODEL rep;
     const char *param = NULL;
+    char altparm[32] = {0};
     double rho = 0.0;
     int *list = *plist;
     int mc = get_model_count();
@@ -598,6 +602,19 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 		myopt |= OPT_T;
 	    }
 	}
+    } else if (orig->ci == LAD && gretl_model_get_int(orig, "rq")) {
+	double x;
+
+	x = gretl_model_get_double(orig, "tau");
+	sprintf(altparm, "%g", x);
+	if (gretl_model_get_int(orig, "rq_nid")) {
+	    myopt |= OPT_R;
+	}
+	x = gretl_model_get_double(orig, "rq_alpha");
+	if (!na(x)) {
+	    myopt |= OPT_I;
+	    set_optval_double(QUANTREG, OPT_I, x);
+	}
     }
 
     if (rep.errcode) {
@@ -626,7 +643,11 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	rep = tobit_model(list, pZ, pdinfo, NULL);
 	break;
     case LAD:
-	rep = lad(list, pZ, pdinfo);
+	if (gretl_model_get_int(orig, "rq")) {
+	    rep = quantreg(altparm, list, pZ, pdinfo, myopt, NULL);
+	} else {
+	    rep = lad(list, pZ, pdinfo);
+	}
 	break;
     case POISSON:
 	rep = poisson_model(list, pZ, pdinfo, NULL);

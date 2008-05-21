@@ -3554,7 +3554,8 @@ static void test_boot_switch (selector *sr)
 
 static void pack_switch_with_extra (GtkWidget *b, selector *sr,
 				    gboolean checked, gretlopt opt, 
-				    int child, GtkWidget *extra)
+				    int child, GtkWidget *extra,
+				    const gchar *extra_text)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     gint offset = (child)? 15 : 0;
@@ -3572,6 +3573,13 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
 
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
     gtk_widget_show(b);
+
+    if (extra_text != NULL) {
+	GtkWidget *w = gtk_label_new(extra_text);
+
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_widget_show(w);
+    }
 
     gtk_box_pack_start(GTK_BOX(hbox), extra, TRUE, TRUE, offset);
     gtk_widget_show(extra);
@@ -3609,11 +3617,11 @@ static void build_quantreg_radios (selector *sr)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, 
-					 _("Compute confidence intervals, 1 - α ="));
+					 _("Compute confidence intervals"));
     g_signal_connect(G_OBJECT(b2), "toggled",
 		     G_CALLBACK(rq_ci_callback), sr);
     sr->extra[1] = alpha_spinner(0.90, 0.70);
-    pack_switch_with_extra(b2, sr, FALSE, OPT_I, 0, sr->extra[1]);
+    pack_switch_with_extra(b2, sr, FALSE, OPT_I, 0, sr->extra[1], "1 - α =");
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
 
     sr->radios[0] = b1;
@@ -3748,7 +3756,7 @@ static void build_omit_test_radios (selector *sr)
 			 G_CALLBACK(auto_omit_callback), sr);
 
 	sr->extra[0] = alpha_spinner(0.10, 0.01);
-	pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0]);
+	pack_switch_with_extra(b3, sr, FALSE, OPT_A, 0, sr->extra[0], NULL);
 	gtk_widget_set_sensitive(sr->extra[0], FALSE);
 
 	sr->radios[2] = b3;

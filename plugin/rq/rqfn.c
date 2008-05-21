@@ -9,7 +9,7 @@ static integer c__1 = 1;
 static doublereal c_b6 = 0.;
 static doublereal mone = -1.;
 
-/* blas calls */
+/* blas/lapack calls */
 
 extern doublereal ddot_(integer *, doublereal *, integer *, doublereal *, 
 			integer *);
@@ -258,28 +258,21 @@ int rqfn_(integer *n, integer *p, doublereal *a, doublereal *
 	doublereal *eps, doublereal *wn, doublereal *wp, doublereal *aa, 
 	integer *nit, integer *info)
 {
-    integer a_dim1, a_offset, wn_dim1, wn_offset, wp_dim1, wp_offset, aa_dim1,
-	     aa_offset;
+    integer wn_dim1, wn_offset, wp_dim1, wp_offset;
 
     wn_dim1 = *n;
     wn_offset = 1 + wn_dim1;
     wn -= wn_offset;
-    aa_dim1 = *p;
-    aa_offset = 1 + aa_dim1;
-    aa -= aa_offset;
     wp_dim1 = *p;
     wp_offset = 1 + wp_dim1;
     wp -= wp_offset;
-    a_dim1 = *p;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
  
-    fna_(n, p, &a[a_offset], y, rhs, d, u, beta, eps, &wn[wn_dim1 + 1], 
+    fna_(n, p, a, y, rhs, d, u, beta, eps, &wn[wn_dim1 + 1], 
 	 &wn[(wn_dim1 << 1) + 1], &wp[wp_dim1 + 1], &wn[wn_dim1 * 3 + 1], 
 	 &wn[(wn_dim1 << 2) + 1], &wn[wn_dim1 * 5 + 1], &wn[wn_dim1 * 6 + 1], 
 	 &wp[(wp_dim1 << 1) + 1], &wn[wn_dim1 * 7 + 1], &wn[(wn_dim1 << 3) + 1], 
 	 &wn[wn_dim1 * 9 + 1], &wn[wn_dim1 * 10 + 1], &wp[wp_dim1 * 3 + 1], 
-	 &wp[(wp_dim1 << 2) + 1], &aa[aa_offset], nit, info);
+	 &wp[(wp_dim1 << 2) + 1], aa, nit, info);
 
     return 0;
 } 
