@@ -11,32 +11,34 @@ static doublereal c_b13 = -1.;
 
 /* lapack/blas functions called below */
 
-extern int dsyr_(char *, integer *, doublereal *, doublereal *, integer *, 
-		 doublereal *, integer *, ftnlen);
+extern int dsyr_(char *, integer *, doublereal *, doublereal *, 
+		 integer *, doublereal *, integer *, ftnlen);
 
 extern int dposv_(char *, integer *, integer *, doublereal *, integer *, 
 		  doublereal *, integer *, integer *, ftnlen);
 
 extern int dgemv_(char *, integer *, integer *, doublereal *, doublereal *, 
-		  integer *, doublereal *, integer *, doublereal *, doublereal *, 
-		  integer *, ftnlen);
+		  integer *, doublereal *, integer *, doublereal *, 
+		  doublereal *, integer *, ftnlen);
 
-extern int dcopy_(integer *, doublereal *, integer *, doublereal *, integer *);
-
-extern int dswap_(integer *, doublereal *, integer *, doublereal *, integer *);
-
-extern int daxpy_(integer *, doublereal *, doublereal *, integer *, doublereal *, 
+extern int dcopy_(integer *, doublereal *, integer *, doublereal *, 
 		  integer *);
 
-extern int dpotrs_(char *, integer *, integer *, doublereal *, integer *, doublereal *, 
-		   integer *, integer *, ftnlen);
+extern int dswap_(integer *, doublereal *, integer *, doublereal *, 
+		  integer *);
+
+extern int daxpy_(integer *, doublereal *, doublereal *, integer *, 
+		  doublereal *, integer *);
+
+extern int dpotrs_(char *, integer *, integer *, doublereal *, integer *, 
+		   doublereal *, integer *, integer *, ftnlen);
 
 extern doublereal ddot_(integer *, doublereal *, integer *, doublereal *, 
 			integer *);
 
-int stepy_(integer *n, integer *p, doublereal *a, 
-	   doublereal *d, doublereal *b, doublereal *ada, 
-	   integer *info)
+static int stepy_(integer *n, integer *p, doublereal *a, 
+		  doublereal *d, doublereal *b, doublereal *ada, 
+		  integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, ada_dim1, ada_offset;
@@ -48,7 +50,6 @@ int stepy_(integer *n, integer *p, doublereal *a,
     ada_dim1 = *p;
     ada_offset = 1 + ada_dim1;
     ada -= ada_offset;
-    --b;
     a_dim1 = *p;
     a_offset = 1 + a_dim1;
     a -= a_offset;
@@ -65,7 +66,7 @@ int stepy_(integer *n, integer *p, doublereal *a,
 	       p, (ftnlen)1);
     }
 
-    dposv_("U", p, &one, &ada[ada_offset], p, &b[1], p, info, (ftnlen) 1);
+    dposv_("U", p, &one, &ada[ada_offset], p, b, p, info, (ftnlen) 1);
 
     return 0;
 } /* stepy_ */
@@ -134,17 +135,13 @@ static int lpfnb_(integer *n, integer *p, doublereal *a, doublereal *c__,
     i1 = *n;
     for (i = 1; i <= i1; ++i) {
 	if ((d1 = s[i], abs(d1)) < *eps) {
-	    /* Computing MAX */
 	    d1 = s[i];
 	    z__[i] = max(d1,0.) + *eps;
-	    /* Computing MAX */
 	    d1 = -s[i];
 	    w[i] = max(d1,0.) + *eps;
 	} else {
-	    /* Computing MAX */
 	    d1 = s[i];
 	    z__[i] = max(d1,0.);
-	    /* Computing MAX */
 	    d1 = -s[i];
 	    w[i] = max(d1,0.);
 	}
@@ -162,10 +159,10 @@ L23008:
 	    dz[i] = d__[i] * ds[i];
 	}
 	dcopy_(p, &b[1], &one, &dy[1], &one);
-	dgemv_("N", p, n, &c_b13, &a[a_offset], p, &x[1], &one, &c_b4, &dy[1]
-		, &one, (ftnlen)1);
-	dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dz[1], &one, &c_b4, &dy[1]
-		, &one, (ftnlen)1);
+	dgemv_("N", p, n, &c_b13, &a[a_offset], p, &x[1], &one, &c_b4, &dy[1],
+		&one, (ftnlen)1);
+	dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dz[1], &one, &c_b4, &dy[1],
+		&one, (ftnlen)1);
 	dcopy_(p, &dy[1], &one, &rhs[1], &one);
 	stepy_(n, p, &a[a_offset], &d__[1], &dy[1], &ada[ada_offset], info);
 	if (*info != 0) {
@@ -198,10 +195,8 @@ L23008:
 		deltad = min(d1,d2);
 	    }
 	}
-	/* Computing MIN */
 	d1 = *beta * deltap;
 	deltap = min(d1,1.);
-	/* Computing MIN */
 	d1 = *beta * deltad;
 	deltad = min(d1,1.);
 	if (min(deltap,deltad) < 1.) {
@@ -214,7 +209,6 @@ L23008:
 		     ddot_(n, &ds[1], &one, &w[1], &one) + deltad * ddot_(n,
 		     &dw[1], &one, &s[1], &one) + deltap * deltad * ddot_(n,
 		     &ds[1], &one, &dw[1], &one);
-	    /* Computing 3rd power */
 	    d1 = g / mu;
 	    mu = mu * (d1 * (d1 * d1)) / (doublereal) (*n << 1);
 	    i1 = *n;
@@ -241,30 +235,24 @@ L23008:
 			i];
 		dw[i] = -w[i] + (mu - w[i] * ds[i] - dsdw) / s[i];
 		if (dx[i] < 0.) {
-		    /* Computing MIN */
 		    d1 = deltap, d2 = -x[i] / dx[i];
 		    deltap = min(d1, d2);
 		}
 		if (ds[i] < 0.) {
-		    /* Computing MIN */
 		    d1 = deltap, d2 = -s[i] / ds[i];
 		    deltap = min(d1, d2);
 		}
 		if (dz[i] < 0.) {
-		    /* Computing MIN */
 		    d1 = deltad, d2 = -z__[i] / dz[i];
 		    deltad = min(d1, d2);
 		}
 		if (dw[i] < 0.) {
-		    /* Computing MIN */
 		    d1 = deltad, d2 = -w[i] / dw[i];
 		    deltad = min(d1, d2);
 		}
 	    }
-	    /* Computing MIN */
 	    d1 = *beta * deltap;
 	    deltap = min(d1,1.);
-	    /* Computing MIN */
 	    d1 = *beta * deltad;
 	    deltad = min(d1,1.);
 	}

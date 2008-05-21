@@ -49,23 +49,6 @@ extern int rqfnb_ (integer *n,    /* number of observations */
 		   integer *nit,   /* iteration counts */
 		   integer *info); /* exit status */
 
-/* alternative version 'a' of the above */
-
-extern int rqfn_ (integer *n,    /* number of observations */
-		  integer *p,    /* number of parameters */
-		  double *a,     /* matrix of regressors */
-		  double *y,     /* dependent variable vector */
-		  double *rhs, 
-		  double *d, 
-		  double *u, 
-		  double *beta, 
-		  double *eps,    /* tolerance */
-		  double *wn,     /* work array, length n */
-		  double *wp,     /* work array, length p */
-		  double *aa,     /* extra work array, p x p */
-		  integer *nit,   /* iteration counts */
-		  integer *info); /* exit status */
-
 /* Modified simplex, a la Barrodale-Roberts: this variant lets us get
    1-alpha confidence intervals using the rank-inversion method.
 */
@@ -122,7 +105,6 @@ struct br_info {
 /* wrapper struct for use with Frisch-Newton method */
 
 struct fn_info {
-    int use_fna;
     integer n, p;
     double tau;
     double beta;
@@ -133,7 +115,6 @@ struct fn_info {
     double *u;
     double *resid;
     double *coeff;
-    double *aa;
     integer nit[3];
     integer info;
 };
@@ -681,8 +662,6 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
     int pp4, rp = p;
     size_t rsize;
 
-    rq->use_fna = (opt & OPT_A)? 1 : 0;
-
     if (p == 1 && !(opt & OPT_R)) {
 	/* just one regressor, doing "iid" standard errors:
 	   we'll need workspace for p = 2 */
@@ -691,10 +670,6 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
 
     pp4 = rp * (rp + 4);
     rsize = rp + n + n + n10 + pp4;
-
-    if (rq->use_fna) {
-	rsize += rp * rp;
-    }
 
     rq->rspace = malloc(rsize * sizeof *rq->rspace);
 
@@ -707,12 +682,6 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
     rq->u   = rq->d + n;
     rq->resid = rq->u + n;
     rq->coeff = rq->resid + n10;
-
-    if (rq->use_fna) {
-	rq->aa = rq->coeff + rp;
-    } else {
-	rq->aa = NULL;
-    }
 
     rq->n = n;
     rq->p = p;
@@ -761,15 +730,9 @@ static void rq_call_FN (integer *n, integer *p, gretl_matrix *XT,
 {
     rq_workspace_init(rq, XT, tau);
 
-    if (rq->use_fna) {
-	rqfn_(n, p, XT->val, y->val, rq->rhs, 
-	      rq->d, rq->u, &rq->beta, &rq->eps, 
-	      rq->resid, rq->coeff, rq->aa, rq->nit, &rq->info);
-    } else {
-	rqfnb_(n, p, XT->val, y->val, rq->rhs, 
-	       rq->d, rq->u, &rq->beta, &rq->eps, 
-	       rq->resid, rq->coeff, rq->nit, &rq->info);
-    }
+    rqfnb_(n, p, XT->val, y->val, rq->rhs, 
+	   rq->d, rq->u, &rq->beta, &rq->eps, 
+	   rq->resid, rq->coeff, rq->nit, &rq->info);
 }
 
 static int rq_write_variance (const gretl_matrix *V,
@@ -1401,11 +1364,6 @@ int rq_driver (const char *parm, MODEL *pmod,
 			 "only one regressor");
 	err = E_DATA;
     }
-
-#if 0
-    /* use rqfn version 'a' */
-    opt |= OPT_A;
-#endif
 
     if (!err) {
 	if ((opt & OPT_I) && ntau == 1) {
