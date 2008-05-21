@@ -80,7 +80,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	for (j = 1; j <= pp; ++j) {
 	    if (k <= pp && j != idxcf) {
 		wa[i + k * n5] = x[i + j * n];
-		++k;
+		k++;
 	    }
 	}
 	wa[i + p4 * n5] = p + i;
@@ -99,7 +99,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	wa[n3 + j * n5] = 0;
 	for (i = 1; i <= n; ++i) {
 	    aux = sgn(wa[n4 + j * n5]) * wa[i + j * n5];
-	    wa[n2 + j * n5] += aux * (1. - sgn(wa[i + p4 * n5]));
+	    wa[n2 + j * n5] += aux * (1 - sgn(wa[i + p4 * n5]));
 	    wa[n3 + j * n5] += aux * sgn(wa[i + p4 * n5]);
 	}
 	wa[n3 + j * n5] *= 2.0;
@@ -120,10 +120,9 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     for (j = 1; j <= p; ++j) {
 	wa[n1 + j * n5] = wa[n2 + j * n5] + wa[n3 + j * n5] * tau;
     }
-    if (! init) {
+    if (!init) {
 	stage = 1;
-	kr = 1;
-	kl = 1;
+	kr = kl = 1;
 	goto L30;
     }
  L23052:
@@ -164,7 +163,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     for (i = kl; i <= n; ++i) {
 	d = wa[i + in * n5];
 	if (d > tol) {
-	    ++k;
+	    k++;
 	    wb[k] = wa[i + p1 * n5] / d;
 	    s[k] = i;
 	    test = 1;
@@ -239,7 +238,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     wa[n4 + in * n5] = d;
     kount++;
     if (!stage) {
-	goto L23074;
+	goto L23055;
     }
     kl++;
     for (j = kr; j <= p4; ++j) {
@@ -249,10 +248,10 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     }
  L20:
     if (kount + kr == p1) {
-	goto L23057;
+	goto L23052;
     }
  L30:
-    dmax = -1.;
+    dmax = -1;
     for (j = kr; j <= p; ++j) {
 	if (fabs(wa[n4 + j * n5]) <= p) {
 	    d = fabs(wa[n1 + j * n5]);
@@ -268,10 +267,6 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	}
     }
     goto L23072;
- L23074:
-    goto L23055;
- L23057:
-    goto L23052;
  L23054:
     if (kr == 1) {
 	for (j = 1; j <= p; ++j) {
@@ -279,11 +274,10 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	    if (d <= tol || 2.0 - d <= tol) {
 		ift = 1;
 		wa[n2 + (pp + 1) * n5] = 0;
-		goto L80;
+		break;
 	    }
 	}
     }
- L80:
     kount = 0;
     sum = 0;
     if (!ci2) {
@@ -325,8 +319,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	for (i = 1; i <= n; ++i) {
 	    dsol[i + 2 * n] = dsol[i + n];
 	}
-    }
-    if (ci2) {
+    } else {
 	a1 = 0;
 	for (i = 1; i <= n; ++i) {
 	    a1 += x[i + idxcf * n] * (dsol[i + n] + tau - 1);
@@ -380,9 +373,9 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 		tnew = smax - tol;
 		ci[(idxcf << 2) + 2] = told + tol;
 		tnmat[(idxcf << 2) + 2] = tn;
-		if (! (tnew > -(big) + tol)) {
-		    ci[(idxcf << 2) + 2] = -(big);
-		    ci[(idxcf << 2) + 1] = -(big);
+		if (! (tnew > -big + tol)) {
+		    ci[(idxcf << 2) + 2] = -big;
+		    ci[(idxcf << 2) + 1] = -big;
 		    tnmat[(idxcf << 2) + 2] = tn;
 		    tnmat[(idxcf << 2) + 1] = tn;
 		    lup = 1;
@@ -401,18 +394,16 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	    }
 	    wa[out + p4 * n5] = -wa[out + p4 * n5];
 	    init = 1;
+	} else if (lup) {
+	    ci[(idxcf << 2) + 4] = tnew - tol;
+	    tnmat[(idxcf << 2) + 4] = tn;
+	    lup = 0;
+	    goto L70;
 	} else {
-	    if (lup) {
-		ci[(idxcf << 2) + 4] = tnew - tol;
-		tnmat[(idxcf << 2) + 4] = tn;
-		lup = 0;
-		goto L70;
-	    } else {
-		ci[(idxcf << 2) + 1] = tnew + tol;
-		tnmat[(idxcf << 2) + 1] = tn;
-		lup = 1;
-		goto L60;
-	    }
+	    ci[(idxcf << 2) + 1] = tnew + tol;
+	    tnmat[(idxcf << 2) + 1] = tn;
+	    lup = 1;
+	    goto L60;
 	}
     }
     if (iend && !ci2) {
@@ -468,12 +459,12 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	told = tnew;
 	ci[(idxcf << 2) + 3] = coeff[idxcf];
 	tnmat[(idxcf << 2) + 3] = 0;
-	goto looptop;
+    } else {
+	tnew = coeff[idxcf] - tol;
+	told = tnew;
+	ci[(idxcf << 2) + 2] = coeff[idxcf];
+	tnmat[(idxcf << 2) + 2] = 0;
     }
-    tnew = coeff[idxcf] - tol;
-    told = tnew;
-    ci[(idxcf << 2) + 2] = coeff[idxcf];
-    tnmat[(idxcf << 2) + 2] = 0;
     goto looptop;
 
  getout:

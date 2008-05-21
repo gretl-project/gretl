@@ -5,8 +5,8 @@
 /* Table of constant values */
 
 static doublereal c_b4 = 1.;
-static integer c__1 = 1;
-static doublereal c_b6 = 0.;
+static integer one = 1;
+static doublereal zero = 0.;
 static doublereal c_b13 = -1.;
 
 /* lapack/blas functions called below */
@@ -76,16 +76,16 @@ int rqfnb_(integer *n, integer *p, doublereal *a, doublereal *y,
 } /* rqfnb_ */
 
 static int stepy_(integer *n, integer *p, doublereal *a, doublereal 
-		  *d__, doublereal *b, doublereal *ada, integer *info)
+		  *d, doublereal *b, doublereal *ada, integer *info)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, ada_dim1, ada_offset, i1, i2;
+    integer a_dim1, a_offset, ada_dim1, ada_offset;
 
     /* Local variables */
     static integer i, j, k, pp;
 
     /* Parameter adjustments */
-    --d__;
+    --d;
     ada_dim1 = *p;
     ada_offset = 1 + ada_dim1;
     ada -= ada_offset;
@@ -96,20 +96,17 @@ static int stepy_(integer *n, integer *p, doublereal *a, doublereal
 
     /* Function Body */
     pp = *p * *p;
-    i1 = *p;
-    for (j = 1; j <= i1; ++j) {
-	i2 = *p;
-	for (k = 1; k <= i2; ++k) {
+    for (j = 1; j <= *p; ++j) {
+	for (k = 1; k <= *p; ++k) {
 	    ada[j + k * ada_dim1] = 0.;
 	}
     }
-    i1 = *n;
-    for (i = 1; i <= i1; ++i) {
-	dsyr_("U", p, &d__[i], &a[i * a_dim1 + 1], &c__1, &ada[ada_offset]
-		, p, (ftnlen)1);
+    for (i = 1; i <= *n; ++i) {
+	dsyr_("U", p, &d[i], &a[i * a_dim1 + 1], &one, &ada[ada_offset],
+	       p, (ftnlen)1);
     }
 
-    dposv_("U", p, &c__1, &ada[ada_offset], p, &b[1], p, info, (ftnlen) 1);
+    dposv_("U", p, &one, &ada[ada_offset], p, &b[1], p, info, (ftnlen) 1);
 
     return 0;
 } /* stepy_ */
@@ -124,7 +121,7 @@ static int lpfnb_(integer *n, integer *p, doublereal *a, doublereal *c__,
 {
     /* System generated locals */
     integer a_dim1, a_offset, ada_dim1, ada_offset, i1;
-    doublereal d__1, d__2;
+    doublereal d1, d2;
 
     /* Local variables */
     static doublereal g;
@@ -165,8 +162,8 @@ static int lpfnb_(integer *n, integer *p, doublereal *a, doublereal *c__,
     nit[2] = 0;
     nit[3] = *n;
     pp = *p * *p;
-    dgemv_("N", p, n, &c_b4, &a[a_offset], p, &c__[1], &c__1, &c_b6, &y[1], &
-	    c__1, (ftnlen)1);
+    dgemv_("N", p, n, &c_b4, &a[a_offset], p, &c__[1], &one, &zero, &y[1], &
+	    one, (ftnlen)1);
     i1 = *n;
     for (i = 1; i <= i1; ++i) {
 	d__[i] = 1.;
@@ -175,30 +172,30 @@ static int lpfnb_(integer *n, integer *p, doublereal *a, doublereal *c__,
     if (*info != 0) {
 	return 0;
     }
-    dcopy_(n, &c__[1], &c__1, &s[1], &c__1);
-    dgemv_("T", p, n, &c_b13, &a[a_offset], p, &y[1], &c__1, &c_b4, &s[1], &
-	    c__1, (ftnlen)1);
+    dcopy_(n, &c__[1], &one, &s[1], &one);
+    dgemv_("T", p, n, &c_b13, &a[a_offset], p, &y[1], &one, &c_b4, &s[1], &
+	    one, (ftnlen)1);
     i1 = *n;
     for (i = 1; i <= i1; ++i) {
-	if ((d__1 = s[i], abs(d__1)) < *eps) {
+	if ((d1 = s[i], abs(d1)) < *eps) {
 	    /* Computing MAX */
-	    d__1 = s[i];
-	    z__[i] = max(d__1,0.) + *eps;
+	    d1 = s[i];
+	    z__[i] = max(d1,0.) + *eps;
 	    /* Computing MAX */
-	    d__1 = -s[i];
-	    w[i] = max(d__1,0.) + *eps;
+	    d1 = -s[i];
+	    w[i] = max(d1,0.) + *eps;
 	} else {
 	    /* Computing MAX */
-	    d__1 = s[i];
-	    z__[i] = max(d__1,0.);
+	    d1 = s[i];
+	    z__[i] = max(d1,0.);
 	    /* Computing MAX */
-	    d__1 = -s[i];
-	    w[i] = max(d__1,0.);
+	    d1 = -s[i];
+	    w[i] = max(d1,0.);
 	}
 	s[i] = u[i] - x[i];
     }
-    gap = ddot_(n, &z__[1], &c__1, &x[1], &c__1) + ddot_(n, &w[1], &c__1, &s[
-	    1], &c__1);
+    gap = ddot_(n, &z__[1], &one, &x[1], &one) + ddot_(n, &w[1], &one, &s[
+	    1], &one);
 L23008:
     if (gap > *eps && nit[1] < 50) {
 	++nit[1];
@@ -208,18 +205,18 @@ L23008:
 	    ds[i] = z__[i] - w[i];
 	    dz[i] = d__[i] * ds[i];
 	}
-	dcopy_(p, &b[1], &c__1, &dy[1], &c__1);
-	dgemv_("N", p, n, &c_b13, &a[a_offset], p, &x[1], &c__1, &c_b4, &dy[1]
-		, &c__1, (ftnlen)1);
-	dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dz[1], &c__1, &c_b4, &dy[1]
-		, &c__1, (ftnlen)1);
-	dcopy_(p, &dy[1], &c__1, &rhs[1], &c__1);
+	dcopy_(p, &b[1], &one, &dy[1], &one);
+	dgemv_("N", p, n, &c_b13, &a[a_offset], p, &x[1], &one, &c_b4, &dy[1]
+		, &one, (ftnlen)1);
+	dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dz[1], &one, &c_b4, &dy[1]
+		, &one, (ftnlen)1);
+	dcopy_(p, &dy[1], &one, &rhs[1], &one);
 	stepy_(n, p, &a[a_offset], &d__[1], &dy[1], &ada[ada_offset], info);
 	if (*info != 0) {
 	    return 0;
 	}
-	dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &c__1, &c_b13, &ds[
-		1], &c__1, (ftnlen)1);
+	dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &one, &c_b13, &ds[
+		1], &one, (ftnlen)1);
 	deltap = 1e20;
 	deltad = 1e20;
 	i1 = *n;
@@ -229,53 +226,53 @@ L23008:
 	    dz[i] = -z__[i] * (dx[i] / x[i] + 1.);
 	    dw[i] = -w[i] * (ds[i] / s[i] + 1.);
 	    if (dx[i] < 0.) {
-		d__1 = deltap, d__2 = -x[i] / dx[i];
-		deltap = min(d__1,d__2);
+		d1 = deltap, d2 = -x[i] / dx[i];
+		deltap = min(d1,d2);
 	    }
 	    if (ds[i] < 0.) {
-		d__1 = deltap, d__2 = -s[i] / ds[i];
-		deltap = min(d__1,d__2);
+		d1 = deltap, d2 = -s[i] / ds[i];
+		deltap = min(d1,d2);
 	    }
 	    if (dz[i] < 0.) {
-		d__1 = deltad, d__2 = -z__[i] / dz[i];
-		deltad = min(d__1,d__2);
+		d1 = deltad, d2 = -z__[i] / dz[i];
+		deltad = min(d1,d2);
 	    }
 	    if (dw[i] < 0.) {
-		d__1 = deltad, d__2 = -w[i] / dw[i];
-		deltad = min(d__1,d__2);
+		d1 = deltad, d2 = -w[i] / dw[i];
+		deltad = min(d1,d2);
 	    }
 	}
 	/* Computing MIN */
-	d__1 = *beta * deltap;
-	deltap = min(d__1,1.);
+	d1 = *beta * deltap;
+	deltap = min(d1,1.);
 	/* Computing MIN */
-	d__1 = *beta * deltad;
-	deltad = min(d__1,1.);
+	d1 = *beta * deltad;
+	deltad = min(d1,1.);
 	if (min(deltap,deltad) < 1.) {
 	    ++nit[2];
-	    mu = ddot_(n, &x[1], &c__1, &z__[1], &c__1) + ddot_(n, &s[1], &
-		    c__1, &w[1], &c__1);
-	    g = mu + deltap * ddot_(n, &dx[1], &c__1, &z__[1], &c__1) + 
-		    deltad * ddot_(n, &dz[1], &c__1, &x[1], &c__1) + deltap * 
-		    deltad * ddot_(n, &dz[1], &c__1, &dx[1], &c__1) + deltap *
-		     ddot_(n, &ds[1], &c__1, &w[1], &c__1) + deltad * ddot_(n,
-		     &dw[1], &c__1, &s[1], &c__1) + deltap * deltad * ddot_(n,
-		     &ds[1], &c__1, &dw[1], &c__1);
+	    mu = ddot_(n, &x[1], &one, &z__[1], &one) + ddot_(n, &s[1], &
+		    one, &w[1], &one);
+	    g = mu + deltap * ddot_(n, &dx[1], &one, &z__[1], &one) + 
+		    deltad * ddot_(n, &dz[1], &one, &x[1], &one) + deltap * 
+		    deltad * ddot_(n, &dz[1], &one, &dx[1], &one) + deltap *
+		     ddot_(n, &ds[1], &one, &w[1], &one) + deltad * ddot_(n,
+		     &dw[1], &one, &s[1], &one) + deltap * deltad * ddot_(n,
+		     &ds[1], &one, &dw[1], &one);
 	    /* Computing 3rd power */
-	    d__1 = g / mu;
-	    mu = mu * (d__1 * (d__1 * d__1)) / (doublereal) (*n << 1);
+	    d1 = g / mu;
+	    mu = mu * (d1 * (d1 * d1)) / (doublereal) (*n << 1);
 	    i1 = *n;
 	    for (i = 1; i <= i1; ++i) {
 		dr[i] = d__[i] * (mu * (1 / s[i] - 1 / x[i]) + dx[i]
 			 * dz[i] / x[i] - ds[i] * dw[i] / s[i]);
 	    }
-	    dswap_(p, &rhs[1], &c__1, &dy[1], &c__1);
-	    dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dr[1], &c__1, &c_b4, &
-		    dy[1], &c__1, (ftnlen)1);
-	    dpotrs_("U", p, &c__1, &ada[ada_offset], p, &dy[1], p, info, (
-		    ftnlen)1);
-	    dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &c__1, &c_b6, &
-		    u[1], &c__1, (ftnlen)1);
+	    dswap_(p, &rhs[1], &one, &dy[1], &one);
+	    dgemv_("N", p, n, &c_b4, &a[a_offset], p, &dr[1], &one, &c_b4,
+		    &dy[1], &one, (ftnlen)1);
+	    dpotrs_("U", p, &one, &ada[ada_offset], p, &dy[1], p, info, 
+		    (ftnlen)1);
+	    dgemv_("T", p, n, &c_b4, &a[a_offset], p, &dy[1], &one, &zero, 
+		   &u[1], &one, (ftnlen)1);
 	    deltap = 1e20;
 	    deltad = 1e20;
 	    i1 = *n;
@@ -289,43 +286,43 @@ L23008:
 		dw[i] = -w[i] + (mu - w[i] * ds[i] - dsdw) / s[i];
 		if (dx[i] < 0.) {
 		    /* Computing MIN */
-		    d__1 = deltap, d__2 = -x[i] / dx[i];
-		    deltap = min(d__1, d__2);
+		    d1 = deltap, d2 = -x[i] / dx[i];
+		    deltap = min(d1, d2);
 		}
 		if (ds[i] < 0.) {
 		    /* Computing MIN */
-		    d__1 = deltap, d__2 = -s[i] / ds[i];
-		    deltap = min(d__1, d__2);
+		    d1 = deltap, d2 = -s[i] / ds[i];
+		    deltap = min(d1, d2);
 		}
 		if (dz[i] < 0.) {
 		    /* Computing MIN */
-		    d__1 = deltad, d__2 = -z__[i] / dz[i];
-		    deltad = min(d__1, d__2);
+		    d1 = deltad, d2 = -z__[i] / dz[i];
+		    deltad = min(d1, d2);
 		}
 		if (dw[i] < 0.) {
 		    /* Computing MIN */
-		    d__1 = deltad, d__2 = -w[i] / dw[i];
-		    deltad = min(d__1, d__2);
+		    d1 = deltad, d2 = -w[i] / dw[i];
+		    deltad = min(d1, d2);
 		}
 	    }
 	    /* Computing MIN */
-	    d__1 = *beta * deltap;
-	    deltap = min(d__1,1.);
+	    d1 = *beta * deltap;
+	    deltap = min(d1,1.);
 	    /* Computing MIN */
-	    d__1 = *beta * deltad;
-	    deltad = min(d__1,1.);
+	    d1 = *beta * deltad;
+	    deltad = min(d1,1.);
 	}
-	daxpy_(n, &deltap, &dx[1], &c__1, &x[1], &c__1);
-	daxpy_(n, &deltap, &ds[1], &c__1, &s[1], &c__1);
-	daxpy_(p, &deltad, &dy[1], &c__1, &y[1], &c__1);
-	daxpy_(n, &deltad, &dz[1], &c__1, &z__[1], &c__1);
-	daxpy_(n, &deltad, &dw[1], &c__1, &w[1], &c__1);
-	gap = ddot_(n, &z__[1], &c__1, &x[1], &c__1) + ddot_(n, &w[1], &c__1, 
-		&s[1], &c__1);
+	daxpy_(n, &deltap, &dx[1], &one, &x[1], &one);
+	daxpy_(n, &deltap, &ds[1], &one, &s[1], &one);
+	daxpy_(p, &deltad, &dy[1], &one, &y[1], &one);
+	daxpy_(n, &deltad, &dz[1], &one, &z__[1], &one);
+	daxpy_(n, &deltad, &dw[1], &one, &w[1], &one);
+	gap = ddot_(n, &z__[1], &one, &x[1], &one) + ddot_(n, &w[1], &one, 
+		&s[1], &one);
 	goto L23008;
     }
-    daxpy_(n, &c_b13, &w[1], &c__1, &z__[1], &c__1);
-    dswap_(n, &z__[1], &c__1, &x[1], &c__1);
+    daxpy_(n, &c_b13, &w[1], &one, &z__[1], &one);
+    dswap_(n, &z__[1], &one, &x[1], &one);
     return 0;
 } /* lpfnb_ */
 
