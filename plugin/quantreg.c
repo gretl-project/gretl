@@ -49,6 +49,23 @@ extern int rqfnb_ (integer *n,    /* number of observations */
 		   integer *nit,   /* iteration counts */
 		   integer *info); /* exit status */
 
+/* alternative version 'a' of the above */
+
+extern int rqfn_ (integer *n,    /* number of observations */
+		  integer *p,    /* number of parameters */
+		  double *a,     /* matrix of regressors */
+		  double *y,     /* dependent variable vector */
+		  double *rhs, 
+		  double *d, 
+		  double *u, 
+		  double *beta, 
+		  double *eps,    /* tolerance */
+		  double *wn,     /* work array, length n */
+		  double *wp,     /* work array, length p */
+		  double *aa,     /* extra work array, p x p */
+		  integer *nit,   /* iteration counts */
+		  integer *info); /* exit status */
+
 /* Modified simplex, a la Barrodale-Roberts: this variant lets us get
    1-alpha confidence intervals using the rank-inversion method.
 */
@@ -105,6 +122,7 @@ struct br_info {
 /* wrapper struct for use with Frisch-Newton method */
 
 struct fn_info {
+    int use_fna;
     integer n, p;
     double tau;
     double beta;
@@ -115,6 +133,7 @@ struct fn_info {
     double *u;
     double *resid;
     double *coeff;
+    double *aa;
     integer nit[3];
     integer info;
 };
@@ -616,20 +635,7 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
     return 0;
 }
 
-/* Fortran rqbr changes some of its arguments: we need to
-   reset these for the next round */
-
-static void br_info_reinit (gretl_matrix *X, struct br_info *rq)
-{
-    rq->n = X->rows;
-    rq->p = X->cols;
-
-    rq->n5 = rq->n + 5;
-    rq->p3 = rq->p + 3;
-    rq->p4 = rq->p + 4;
-}
-
-/* Call Barrodale-Roberts Fortran code */
+/* Call Barrodale-Roberts code */
 
 static int real_br_calc (gretl_matrix *y, gretl_matrix *X, 
 			 double tau, struct br_info *rq,
@@ -666,14 +672,29 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
     return err;
 }
 
-/* allocate workspace to be fed to the function rqfnb */
+/* allocate workspace for F-N algorithm */
 
 static int fn_info_alloc (struct fn_info *rq, int n, int p,
-			  double tau)
+			  double tau, gretlopt opt)
 {
     int n10 = n * 10;
-    int pp4 = p * (p + 4);
-    size_t rsize = p + n + n + n10 + pp4;
+    int pp4, rp = p;
+    size_t rsize;
+
+    rq->use_fna = (opt & OPT_A)? 1 : 0;
+
+    if (p == 1 && !(opt & OPT_R)) {
+	/* just one regressor, doing "iid" standard errors:
+	   we'll need workspace for p = 2 */
+	rp = 2;
+    } 
+
+    pp4 = rp * (rp + 4);
+    rsize = rp + n + n + n10 + pp4;
+
+    if (rq->use_fna) {
+	rsize += rp * rp;
+    }
 
     rq->rspace = malloc(rsize * sizeof *rq->rspace);
 
@@ -682,10 +703,16 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
     }
 
     rq->rhs = rq->rspace;
-    rq->d   = rq->rhs + p;
+    rq->d   = rq->rhs + rp;
     rq->u   = rq->d + n;
     rq->resid = rq->u + n;
     rq->coeff = rq->resid + n10;
+
+    if (rq->use_fna) {
+	rq->aa = rq->coeff + rp;
+    } else {
+	rq->aa = NULL;
+    }
 
     rq->n = n;
     rq->p = p;
@@ -700,9 +727,9 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
    also X-dependent) and set other entries to 0 or 1.
 */
 
-static void rq_workspace_init (const gretl_matrix *XT,
-			       double tau, 
-			       struct fn_info *ws)
+static void rq_workspace_init (struct fn_info *rq,
+			       const gretl_matrix *XT,
+			       double tau)
 {
     double xsum;
     int p = gretl_matrix_rows(XT);
@@ -715,16 +742,33 @@ static void rq_workspace_init (const gretl_matrix *XT,
 	for (t=0; t<n; t++) {
 	    xsum += gretl_matrix_get(XT, i, t);
 	}
-	ws->rhs[i] = tau * xsum;
+	rq->rhs[i] = tau * xsum;
     }  
 
     for (i=0; i<n; i++) {
-	ws->d[i] = ws->u[i] = 1.0;
-	ws->resid[i] = tau;
+	rq->d[i] = rq->u[i] = 1.0;
+	rq->resid[i] = tau;
     }
 
     for (i=n; i<n10; i++) {
-	ws->resid[i] = 0.0;
+	rq->resid[i] = 0.0;
+    }
+}
+
+static void rq_call_FN (integer *n, integer *p, gretl_matrix *XT,
+			gretl_matrix *y, struct fn_info *rq,
+			double tau)
+{
+    rq_workspace_init(rq, XT, tau);
+
+    if (rq->use_fna) {
+	rqfn_(n, p, XT->val, y->val, rq->rhs, 
+	      rq->d, rq->u, &rq->beta, &rq->eps, 
+	      rq->resid, rq->coeff, rq->aa, rq->nit, &rq->info);
+    } else {
+	rqfnb_(n, p, XT->val, y->val, rq->rhs, 
+	       rq->d, rq->u, &rq->beta, &rq->eps, 
+	       rq->resid, rq->coeff, rq->nit, &rq->info);
     }
 }
 
@@ -778,8 +822,9 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
     eps23 = calc_eps23;
 
     for (i=0; i<rq->n; i++) {
-	if (fabs(rq->resid[i]) < eps23) 
+	if (fabs(rq->resid[i]) < eps23) {
 	    pz++;
+	}
     }
 
 #if QDEBUG
@@ -835,13 +880,10 @@ static int rq_fn_iid_VCV (MODEL *pmod, gretl_matrix *y,
 
     /* run artificial L1 regression to get sparsity measure */
 
-    rq_workspace_init(vx, 0.5, rq);
-    rqfnb_(&vn, &vp, vx->val, vy->val, rq->rhs, 
-	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->resid, rq->coeff, rq->nit, &rq->info);
+    rq_call_FN(&vn, &vp, vx, vy, rq, 0.5);
 
     if (rq->info != 0) {
-	fprintf(stderr, "rq_fn_iid_VCV: rqfnb: info = %d\n", rq->info);
+	fprintf(stderr, "rq_fn_iid_VCV: rqfn: info = %d\n", rq->info);
 	err = E_DATA;
     } else {
 	/* scale X'X-inverse appropriately */
@@ -900,10 +942,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 	goto bailout;
     }
 	
-    rq_workspace_init(XT, tau + h, rq);
-    rqfnb_(&n, &p, XT->val, y->val, rq->rhs, 
-	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->resid, rq->coeff, rq->nit, &rq->info);
+    rq_call_FN(&n, &p, XT, y, rq, tau + h);
     if (rq->info != 0) {
 	fprintf(stderr, "tau + h: info = %d\n", rq->info);
 	err = E_DATA;
@@ -915,10 +954,7 @@ static int rq_fn_nid_VCV (MODEL *pmod, gretl_matrix *y,
 	p1->val[i] = rq->coeff[i];
     }
 
-    rq_workspace_init(XT, tau - h, rq);
-    rqfnb_(&n, &p, XT->val, y->val, rq->rhs, 
-	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->resid, rq->coeff, rq->nit, &rq->info);
+    rq_call_FN(&n, &p, XT, y, rq, tau - h);
     if (rq->info != 0) {
 	fprintf(stderr, "tau - h: info = %d\n", rq->info);
 	err = E_DATA;
@@ -1119,9 +1155,6 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 	    } else {
 		/* using multiple tau values */
 		err = write_tbeta_block_br(tbeta, ntau, rq.coeff, rq.ci, i);
-		if (!err) {
-		    br_info_reinit(X, &rq);
-		}
 	    }
 	}
     }
@@ -1162,7 +1195,7 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
     ntau = gretl_vector_get_length(tauvec);
     tau = gretl_vector_get(tauvec, 0);
 
-    err = fn_info_alloc(&rq, n, p, tau);
+    err = fn_info_alloc(&rq, n, p, tau, opt);
     if (err) {
 	return err;
     }
@@ -1182,13 +1215,8 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 	fprintf(stderr, "rq_fit_fn: i = %d, tau = %g\n", i, tau);
 #endif
 
-	rq_workspace_init(XT, tau, &rq);
-
 	/* get coefficients and residuals */
-	rqfnb_(&n, &p, XT->val, y->val, rq.rhs, rq.d, rq.u, 
-	       &rq.beta, &rq.eps, rq.resid, rq.coeff, 
-	       rq.nit, &rq.info);
-
+	rq_call_FN(&n, &p, XT, y, &rq, tau);
 	if (rq.info != 0) {
 	    fprintf(stderr, "rqfn gave info = %d\n", rq.info);
 	    err = E_DATA;
@@ -1373,6 +1401,11 @@ int rq_driver (const char *parm, MODEL *pmod,
 			 "only one regressor");
 	err = E_DATA;
     }
+
+#if 0
+    /* use rqfn version 'a' */
+    opt |= OPT_A;
+#endif
 
     if (!err) {
 	if ((opt & OPT_I) && ntau == 1) {

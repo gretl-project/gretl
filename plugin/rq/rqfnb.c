@@ -31,58 +31,17 @@ extern int daxpy_(integer *, doublereal *, doublereal *, integer *, doublereal *
 extern int dpotrs_(char *, integer *, integer *, doublereal *, integer *, doublereal *, 
 		   integer *, integer *, ftnlen);
 
-/* principal private function */
+extern doublereal ddot_(integer *, doublereal *, integer *, doublereal *, 
+			integer *);
 
-static int lpfnb_(integer *, integer *, doublereal *, 
-		  doublereal *, doublereal *, doublereal *, doublereal *, 
-		  doublereal *, doublereal *, doublereal *, doublereal *, 
-		  doublereal *, doublereal *, doublereal *, doublereal *, 
-		  doublereal *, doublereal *, doublereal *, doublereal *, 
-		  doublereal *, doublereal *, doublereal *, integer *, integer *);
-
-/* Output from Public domain Ratfor, version 1.0 */
-int rqfnb_(integer *n, integer *p, doublereal *a, doublereal *y, 
-	   doublereal *rhs, doublereal *d__, doublereal *u, doublereal *beta,
-	   doublereal *eps, doublereal *wn, doublereal *wp, integer *nit, 
+int stepy_(integer *n, integer *p, doublereal *a, 
+	   doublereal *d, doublereal *b, doublereal *ada, 
 	   integer *info)
-{
-    /* System generated locals */
-    integer a_dim1, a_offset, wn_dim1, wn_offset, wp_dim1, wp_offset;
-
-    /* Parameter adjustments */
-    wn_dim1 = *n;
-    wn_offset = 1 + wn_dim1;
-    wn -= wn_offset;
-    --u;
-    --d__;
-    --y;
-    wp_dim1 = *p;
-    wp_offset = 1 + wp_dim1;
-    wp -= wp_offset;
-    --rhs;
-    a_dim1 = *p;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
-    --nit;
-
-    /* Function Body */
-    lpfnb_(n, p, &a[a_offset], &y[1], &rhs[1], &d__[1], &u[1], beta, eps, &wn[
-	    wn_dim1 + 1], &wn[(wn_dim1 << 1) + 1], &wp[wp_dim1 + 1], &wn[
-	    wn_dim1 * 3 + 1], &wn[(wn_dim1 << 2) + 1], &wn[wn_dim1 * 5 + 1], &
-	    wn[wn_dim1 * 6 + 1], &wp[(wp_dim1 << 1) + 1], &wn[wn_dim1 * 7 + 1]
-	    , &wn[(wn_dim1 << 3) + 1], &wn[wn_dim1 * 9 + 1], &wp[wp_dim1 * 3 
-	    + 1], &wp[(wp_dim1 << 2) + 1], &nit[1], info);
-    return 0;
-} /* rqfnb_ */
-
-static int stepy_(integer *n, integer *p, doublereal *a, doublereal 
-		  *d, doublereal *b, doublereal *ada, integer *info)
 {
     /* System generated locals */
     integer a_dim1, a_offset, ada_dim1, ada_offset;
 
-    /* Local variables */
-    static integer i, j, k, pp;
+    integer i, j, k, pp;
 
     /* Parameter adjustments */
     --d;
@@ -98,7 +57,7 @@ static int stepy_(integer *n, integer *p, doublereal *a, doublereal
     pp = *p * *p;
     for (j = 1; j <= *p; ++j) {
 	for (k = 1; k <= *p; ++k) {
-	    ada[j + k * ada_dim1] = 0.;
+	    ada[j + k * ada_dim1] = 0.0;
 	}
     }
     for (i = 1; i <= *n; ++i) {
@@ -110,7 +69,6 @@ static int stepy_(integer *n, integer *p, doublereal *a, doublereal
 
     return 0;
 } /* stepy_ */
-
 
 static int lpfnb_(integer *n, integer *p, doublereal *a, doublereal *c__, 
 		  doublereal *b, doublereal *d__, doublereal *u, doublereal *beta,
@@ -127,8 +85,6 @@ static int lpfnb_(integer *n, integer *p, doublereal *a, doublereal *c__,
     static doublereal g;
     static integer i, pp;
     static doublereal mu, gap;
-    extern doublereal ddot_(integer *, doublereal *, integer *, doublereal *, 
-	    integer *);
     static doublereal dsdw, dxdz;
     static doublereal deltad, deltap;
 
@@ -326,4 +282,31 @@ L23008:
     return 0;
 } /* lpfnb_ */
 
+int rqfnb_(integer *n, integer *p, doublereal *a, doublereal *y, 
+	   doublereal *rhs, doublereal *d, doublereal *u, doublereal *beta,
+	   doublereal *eps, doublereal *wn, doublereal *wp, integer *nit, 
+	   integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, wn_dim1, wn_offset, wp_dim1, wp_offset;
 
+    /* Parameter adjustments */
+    wn_dim1 = *n;
+    wn_offset = 1 + wn_dim1;
+    wn -= wn_offset;
+    wp_dim1 = *p;
+    wp_offset = 1 + wp_dim1;
+    wp -= wp_offset;
+    a_dim1 = *p;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+
+    lpfnb_(n, p, &a[a_offset], y, rhs, d, u, beta, eps, 
+	   &wn[wn_dim1 + 1], &wn[(wn_dim1 << 1) + 1], &wp[wp_dim1 + 1], 
+	   &wn[wn_dim1 * 3 + 1], &wn[(wn_dim1 << 2) + 1], &wn[wn_dim1 * 5 + 1], 
+	   &wn[wn_dim1 * 6 + 1], &wp[(wp_dim1 << 1) + 1], &wn[wn_dim1 * 7 + 1],
+	   &wn[(wn_dim1 << 3) + 1], &wn[wn_dim1 * 9 + 1], &wp[wp_dim1 * 3 + 1], 
+	   &wp[(wp_dim1 << 2) + 1], nit, info);
+
+    return 0;
+} 

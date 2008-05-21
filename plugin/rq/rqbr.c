@@ -1,6 +1,7 @@
-/* rqbr.f -- translated by f2c (version 20061008) then
-   somewhat cleaned up by Allin Cottrell.
+/* rqbr.{r,f,c}
    Original RATFOR code by Roger Koenker.
+   Translated to C by f2c (version 20061008).
+   Somewhat cleaned up by Allin Cottrell.
 */
 
 #include <stdio.h>
@@ -16,16 +17,16 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	  double big, int rmax, int ci1)
 {
     static double d, a1, b1;
-    static int i, j, k, l;
-    static int n1, n2, n3, n4, p1, p2;
-    static int kd, kl, in, kr;
-    static double tn, dif, dmin, dmax, aux;
-    static double sum, tnt, told;
-    static char init, iend;
-    static double smax, tnew;
-    static char lup, test, stage;
-    static int idxcf, kount, out;
-    static double pivot;
+    int i, j, k, l, jj;
+    int n1, n2, n3, n4, p1, p2;
+    int kd, kl = 0, in = 0, kr = 0;
+    double tn, dif, dmin, dmax, aux;
+    double sum, tnt, told;
+    char init, iend;
+    double tnew, smax = 0;
+    char lup, stage1, test = 0;
+    int idxcf, kount, out = 0;
+    double pivot;
     int p = pp;
     int p3 = p + 3, p4 = p + 4, n5 = n + 5;
     int sdim, ci2 = 0;
@@ -107,6 +108,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     dif = 0;
     init = 0;
     if (!ci2) {
+	/* compute the p column means */
 	for (k = 1; k <= p; ++k) {
 	    wa[n5 + k * n5] = 0;
 	    for (i = 1; i <= n; ++i) {
@@ -117,16 +119,19 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     }
     kount = 0;
  L23045:
+    /* compute new marginal costs */
     for (j = 1; j <= p; ++j) {
 	wa[n1 + j * n5] = wa[n2 + j * n5] + wa[n3 + j * n5] * tau;
     }
     if (!init) {
-	stage = 1;
+	/* stage 1: determine the vector to enter the basis */
+	stage1 = 1;
 	kr = kl = 1;
 	goto L30;
     }
  L23052:
-    stage = 0;
+    /* stage 2: determine the vector to enter the basis */
+    stage1 = 0;
  L23055:
     dmax = -big;
     for (j = kr; j <= p; ++j) {
@@ -152,13 +157,15 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	goto L23054;
     }
     if (wa[n1 + in * n5] <= 0) {
+	jj = in * n5;
 	for (i = 1; i <= n4; ++i) {
-	    wa[i + in * n5] = -wa[i + in * n5];
+	    wa[i + jj] = -wa[i + jj];
 	}
-	wa[n1 + in * n5] += -2.0;
-	wa[n2 + in * n5] += -2.0;
+	wa[n1 + jj] += -2.0;
+	wa[n2 + jj] += -2.0;
     }
  L23072:
+    /* determine the vector to leave the basis */
     k = 0;
     for (i = kl; i <= n; ++i) {
 	d = wa[i + in * n5];
@@ -185,7 +192,8 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	s[j] = s[k];
 	k--;
     }
-    if (!test && stage) {
+    /* check for linear dependence in stage 1 */
+    if (!test && stage1) {
 	goto L23081;
     }
     if (!test) {
@@ -197,8 +205,8 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     }
     for (j = kr; j <= p3; ++j) {
 	d = wa[out + j * n5];
-	wa[n1 + j * n5] = wa[n1 + j * n5] - d - d;
-	wa[n2 + j * n5] = wa[n2 + j * n5] - d - d;
+	wa[n1 + j * n5] -= d + d;
+	wa[n2 + j * n5] -= d + d;
 	wa[out + j * n5] = -d;
     }
     wa[out + p4 * n5] = -wa[out + p4 * n5];
@@ -212,6 +220,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     kr++;
     goto L20;
  L10:
+    /* pivot on wa(out, in) */
     for (j = kr; j <= p3; ++j) {
 	if (j != in) {
 	    wa[out + j * n5] /= pivot;
@@ -237,9 +246,10 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     wa[out + p4 * n5] = wa[n4 + in * n5];
     wa[n4 + in * n5] = d;
     kount++;
-    if (!stage) {
+    if (!stage1) {
 	goto L23055;
     }
+    /* interchange rows in stage 1 */
     kl++;
     for (j = kr; j <= p4; ++j) {
 	d = wa[out + j * n5];
@@ -281,16 +291,17 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     kount = 0;
     sum = 0;
     if (!ci2) {
+	jj = p4 * n5;
 	for (i = 1; i <= kl - 1; ++i) {
-	    k = (int) (wa[i + p4 * n5] * sgn(wa[i + p4 * n5]));
-	    coeff[k] = wa[i + p1 * n5] * sgn(wa[i + p4 * n5]);
+	    k = (int) (wa[i + jj] * sgn(wa[i + jj]));
+	    coeff[k] = wa[i + p1 * n5] * sgn(wa[i + jj]);
 	}
     }
     for (i = 1; i <= p; ++i) {
 	kd = fabs(wa[n4 + i * n5]) - p;
 	dsol[kd + n] = wa[n1 + i * n5] / 2.0 + 1.0;
 	if (wa[n4 + i * n5] < 0) {
-	    dsol[kd + n] = 1. - dsol[kd + n];
+	    dsol[kd + n] = 1 - dsol[kd + n];
 	}
 	if (!ci2) {
 	    sum += coeff[i] * wa[n5 + i * n5];
@@ -304,7 +315,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	    dsol[kd + n] = 0;
 	}
 	if (wa[i + p4 * n5] > 0) {
-	    dsol[kd + n] = 1.;
+	    dsol[kd + n] = 1.0;
 	}
     }
     if (!ci2) {
@@ -320,30 +331,31 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 	    dsol[i + 2 * n] = dsol[i + n];
 	}
     } else {
+	/* ci2: compute next theta */
 	a1 = 0;
 	for (i = 1; i <= n; ++i) {
 	    a1 += x[i + idxcf * n] * (dsol[i + n] + tau - 1);
 	}
 	tn = a1 / sqrt(qn[idxcf] * tau * (1 - tau));
 	if (fabs(tn) < cutoff) {
+	    jj = p4 * n5;
 	    smax = (lup)? big : -big;
 	    for (i = 1; i <= kl - 1; ++i) {
-		k = (int) (wa[i + p4 * n5] * sgn(wa[i + p4 * n5]));
-		sol[k + sdim] = wa[i + p2 * n5] * sgn(wa[i + p4 * n5]);
-		sol[k + (sdim << 1)] = wa[i + p3 * n5] * 
-		    sgn(wa[i + p4 * n5]) / tnew;
+		k = (int) (wa[i + jj] * sgn(wa[i + jj]));
+		sol[k + sdim] = wa[i + p2 * n5] * sgn(wa[i + jj]);
+		sol[k + (sdim << 1)] = wa[i + p3 * n5] * sgn(wa[i + jj]) / tnew;
 	    }
 	    for (i = kl; i <= n; ++i) {
 		a1 = b1 = 0;
-		k = (int) (wa[i + p4 * n5] * sgn(wa[i + p4 * n5]) - p);
+		k = (int) (wa[i + jj] * sgn(wa[i + jj]) - p);
 		l = 1;
 		for (j = 1; j <= p; ++j) {
 		    if (j == idxcf) {
-			++l;
+			l++;
 		    }
 		    a1 += x[k + l * n] * sol[j + sdim];
 		    b1 += x[k + l * n] * sol[j + (sdim << 1)];
-		    ++l;
+		    l++;
 		}
 		tnt = (y[k] - a1) / (x[k + idxcf * n] - b1);
 		if (lup) {
@@ -357,51 +369,55 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
 		}
 	    }
 	    told = tnew;
+	    jj = idxcf << 2;
 	    if (lup) {
 		tnew = smax + tol;
-		ci[(idxcf << 2) + 3] = told - tol;
-		tnmat[(idxcf << 2) + 3] = tn;
+		ci[jj + 3] = told - tol;
+		tnmat[jj + 3] = tn;
 		if (! (tnew < big - tol)) {
-		    ci[(idxcf << 2) + 3] = big;
-		    ci[(idxcf << 2) + 4] = big;
-		    tnmat[(idxcf << 2) + 3] = tn;
-		    tnmat[(idxcf << 2) + 4] = tn;
+		    ci[jj + 3] = big;
+		    ci[jj + 4] = big;
+		    tnmat[jj + 3] = tn;
+		    tnmat[jj + 4] = tn;
 		    lup = 0;
 		    goto L70;
 		}
 	    } else {
 		tnew = smax - tol;
-		ci[(idxcf << 2) + 2] = told + tol;
-		tnmat[(idxcf << 2) + 2] = tn;
+		ci[jj + 2] = told + tol;
+		tnmat[jj + 2] = tn;
 		if (! (tnew > -big + tol)) {
-		    ci[(idxcf << 2) + 2] = -big;
-		    ci[(idxcf << 2) + 1] = -big;
-		    tnmat[(idxcf << 2) + 2] = tn;
-		    tnmat[(idxcf << 2) + 1] = tn;
+		    ci[jj + 2] = -big;
+		    ci[jj + 1] = -big;
+		    tnmat[jj + 2] = tn;
+		    tnmat[jj + 1] = tn;
 		    lup = 1;
 		    goto L60;
 		}
 	    }
+	    /* update the new marginal cost */
 	    for (i = 1; i <= n; ++i) {
 		wa[i + p3 * n5] = wa[i + p3 * n5] / told * tnew;
 		wa[i + p1 * n5] = wa[i + p2 * n5] - wa[i + p3 * n5];
 	    }
 	    for (j = kr; j <= p3; ++j) {
 		d = wa[out + j * n5];
-		wa[n1 + j * n5] = wa[n1 + j * n5] - d - d;
-		wa[n2 + j * n5] = wa[n2 + j * n5] - d - d;
+		wa[n1 + j * n5] -= d + d;
+		wa[n2 + j * n5] -= d + d;
 		wa[out + j * n5] = -d;
 	    }
 	    wa[out + p4 * n5] = -wa[out + p4 * n5];
 	    init = 1;
 	} else if (lup) {
-	    ci[(idxcf << 2) + 4] = tnew - tol;
-	    tnmat[(idxcf << 2) + 4] = tn;
+	    jj = idxcf << 2;
+	    ci[jj + 4] = tnew - tol;
+	    tnmat[jj + 4] = tn;
 	    lup = 0;
 	    goto L70;
 	} else {
-	    ci[(idxcf << 2) + 1] = tnew + tol;
-	    tnmat[(idxcf << 2) + 1] = tn;
+	    jj = idxcf << 2;
+	    ci[jj + 1] = tnew + tol;
+	    tnmat[jj + 1] = tn;
 	    lup = 1;
 	    goto L60;
 	}
@@ -426,9 +442,10 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
  L50:
     sum = 0;
     if (!ci2) {
+	jj = p4 * n5;
 	for (i = kl; i <= n; ++i) {
-	    k = (int) (wa[i + p4 * n5] * sgn(wa[i + p4 * n5]));
-	    d = wa[i + p1 * n5] * sgn(wa[i + p4 * n5]);
+	    k = (int) (wa[i + jj] * sgn(wa[i + jj]));
+	    d = wa[i + p1 * n5] * sgn(wa[i + jj]);
 	    sum += d * sgn(d) * (.5 + sgn(d) * (tau - .5));
 	    k -= p;
 	    resid[k] = d;
@@ -455,19 +472,22 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     }
  L70:
     if (lup) {
+	jj = idxcf << 2;
 	tnew = coeff[idxcf] + tol;
 	told = tnew;
-	ci[(idxcf << 2) + 3] = coeff[idxcf];
-	tnmat[(idxcf << 2) + 3] = 0;
+	ci[jj + 3] = coeff[idxcf];
+	tnmat[jj + 3] = 0;
     } else {
+	jj = idxcf << 2;
 	tnew = coeff[idxcf] - tol;
 	told = tnew;
-	ci[(idxcf << 2) + 2] = coeff[idxcf];
-	tnmat[(idxcf << 2) + 2] = 0;
+	ci[jj + 2] = coeff[idxcf];
+	tnmat[jj + 2] = 0;
     }
     goto looptop;
 
  getout:
+    /* restore the original value of dual when ci is true */
     for (i = 1; i <= n; ++i) {
 	dsol[i + n] = dsol[i + 2 * n];
     }
