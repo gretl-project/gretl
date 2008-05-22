@@ -726,7 +726,7 @@ is used. The matrix $U$, if not \texttt{null}, is used to store the
 residuals.
 
 \subsection{Reading and writing matrices from/to text files}
-\label{matrix-csv}
+\label{sec:matrix-csv}
 
 The two functions \texttt{mread} and \texttt{mwrite} can be used for
 basic matrix input/output. This can be useful to enable \app{gretl} to
@@ -770,7 +770,7 @@ widely-used programs.\footnote{Matlab users may find the Octave
     & \verb|A = reshape(fscanf(fd, "%g", r*c),c,r)';| \\
     & \verb|fclose(fd);| \\
     Ox     & \verb|decl A = loadmat("a.mat");| \\
-    R      & \verb|A = as.matrix(read.table("a.mat", skip=1))| \\
+    R      & \verb|A <- as.matrix(read.table("a.mat", skip=1))| \\
   \hline
 \end{tabular}
 \end{center}

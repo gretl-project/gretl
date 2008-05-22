@@ -230,7 +230,7 @@ where this condition is not met.
 
 
 \section{Named strings}
-\label{named-strings}
+\label{sec:named-strings}
 
 For some purposes it may be useful to save a string (that is, a
 sequence of characters) as a named variable that can be reused.
@@ -354,13 +354,14 @@ Similarly with
 Apart from any strings that the user may define, some string variables
 are defined by \app{gretl} itself.  These may be useful for people
 writing functions that include shell commands.  The built-in strings
-are as shown in Table~\ref{tab-strings}.
+are as shown in Table~\ref{tab:pred-strings}.
 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{ll}
   \texttt{gretldir} & the \app{gretl} installation directory \\
   \texttt{workdir} & user's current \app{gretl} working directory \\
+  \texttt{dotdir} & the directory \app{gretl} uses for temporary files \\
   \texttt{gnuplot} & path to, or name of, the \app{gnuplot} executable \\
   \texttt{tramo}& path to, or name of, the \app{tramo} executable \\
   \texttt{x12a} & path to, or name of, the \app{x-12-arima} executable \\
@@ -368,7 +369,7 @@ are as shown in Table~\ref{tab-strings}.
   \texttt{x12adir} & \app{x-12-arima} data directory \\
 \end{tabular}
 \caption{Built-in string variables}
-\label{tab-strings}
+\label{tab:pred-strings}
 \end{table}
 
 \subsection{Reading strings from the environment}

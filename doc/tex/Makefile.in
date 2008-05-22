@@ -39,7 +39,8 @@ TEXSRC = cli.tex \
 	comments.tex \
 	optarg.tex \
 	quantreg.tex \
-	odbc.tex
+	odbc.tex \
+	gretlR.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
 
