@@ -37,7 +37,7 @@
 
 extern int rqfnb_ (integer *n,    /* number of observations */
 		   integer *p,    /* number of parameters */
-		   double *a,     /* matrix of regressors */
+		   double *a,     /* transposed matrix of regressors */
 		   double *y,     /* dependent variable vector */
 		   double *rhs, 
 		   double *d, 
@@ -50,12 +50,12 @@ extern int rqfnb_ (integer *n,    /* number of observations */
 		   integer *info); /* exit status */
 
 /* Modified simplex, a la Barrodale-Roberts: this variant lets us get
-   1-alpha confidence intervals using the rank-inversion method.
+   confidence intervals using the rank-inversion method.
 */
 
 extern int rqbr_ (int n,         /* number of observations */
 		  int p,         /* number of parameters */
-		  double *x,     /* matrix of independent vars */
+		  double *x,     /* matrix of regressors */
 		  double *y,     /* dependent var vector */
 		  double tau,    /* the desired quantile */
 		  double tol,    /* machine precision to the 2/3 */
@@ -173,6 +173,8 @@ static double hs_bandwidth (double tau, int n, int *err)
     return h;
 }
 
+/* Compute the loglikelihood for a quantile model */
+
 static double rq_loglik (MODEL *pmod, double tau)
 {
     double R = 0.0;
@@ -244,8 +246,8 @@ static void rq_transcribe_results (MODEL *pmod,
     mle_criteria(pmod, 0);
 }
 
-/* extract the interpolated lower and upper bounds from the matrix ci
-   into a new matrix and attach this to the model for printing
+/* Extract the interpolated lower and upper bounds from the matrix ci
+   into a new matrix and attach this to the model for printing.
 */
 
 static int rq_attach_intervals (MODEL *pmod, struct br_info *rq,
@@ -359,7 +361,8 @@ static void rq_interpolate_intervals (struct br_info *rq)
 	c2j -= fabs(c1j - c2j) * (rq->cut - fabs(tn2)) / fabs(tn1 - tn2);
 
 	/* Write the (1 - alpha) intervals into rows 1 and 2 
-	   of the matrix ci */
+	   of the matrix ci.
+	*/
 
 	gretl_matrix_set(rq->ci, 2, j, c3j);
 	gretl_matrix_set(rq->ci, 1, j, c2j);
@@ -489,6 +492,11 @@ static int make_nid_qn (gretl_matrix *y, gretl_matrix *X,
     return err;
 }
 
+/* Get {X'X}^{-1}, handling both the B-R case, where the X matrix
+   has the shape you'd expect, and the F-N case, where "X" is
+   actually X-transpose.
+*/
+
 static gretl_matrix *get_XTX_inverse (const gretl_matrix *X, int *err)
 {
     int k = min(X->rows, X->cols);
@@ -546,8 +554,9 @@ static int make_iid_qn (const gretl_matrix *X, double *qn)
     return err;
 }
 
-/* allocate workspace to be fed to the function rqbr, and
-   initialize various things */
+/* Allocate workspace to be fed to the function rqbr, and
+   initialize various things.
+*/
 
 static int br_info_alloc (struct br_info *rq, int n, int p,
 			  double tau, double alpha,
@@ -1376,7 +1385,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 		err = rq_fit_fn(y, X, tau, opt, pmod);
 	    }
 	    if (!err) {
-		/* for B-R the X matrix is tranposed */
+		/* for F-N the X matrix is transposed */
 		err = rq_transpose_X(&X);
 	    }
 	} else {
