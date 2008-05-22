@@ -4438,6 +4438,27 @@ static void run_R_sync (void)
 
 #endif /* !G_OS_WIN32 */
 
+/* define an R function for passing data or matrices back to gretl */
+
+static void write_R_export_func (FILE *fp) {
+
+    fprintf(fp, "gretl_dotdir <- \"%s\"\n", paths.dotdir);
+
+    fputs("gretl_export <- function(x) {\n", fp);
+    fprintf(fp, "\tprefix <- \"%s\"\n", paths.dotdir);
+    fputs("\tsx <- substitute(x)\n", fp);
+    fputs("\tif (is.data.frame(x) || is.ts(x)) {\n", fp);
+    fputs("\t\tfname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
+    fputs("\t\twrite.csv(x, file=fname)\n", fp);
+    fputs("\t} else if (is.matrix(x)) {\n", fp);
+    fputs("\t\tfname <- paste(prefix, sx, \".mat\", sep=\"\")\n", fp);
+    fputs("\t\twrite(dim(x), fname)\n", fp);
+    fputs("\t\twrite(t(x), file=fname, ncolumns=dim(x)[2], append=TRUE)\n", fp);
+    fputs("\t}\n", fp);
+    fputs("}\n", fp);
+
+}
+
 /* write out current dataset in R format, and, if this succeeds,
    write appropriate R commands to @fp to source the data
 */
@@ -4563,6 +4584,10 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc)
     fputs("if (vnum > 2.41) library(utils)\n", fp);
     fputs("library(stats)\n", fp);
     fputs("if (vnum <= 1.89) library(ts)\n", fp);
+
+#if 1
+    write_R_export_func(fp);
+#endif
 
     /* source the commands and/or data from gretl */
 #ifdef G_OS_WIN32
