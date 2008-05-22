@@ -1,9 +1,8 @@
 \chapter{Gretl and R}
-\label{gretltex}
-
+\label{gretlR}
 
 \section{Introduction}
-\label{tex-intro}
+\label{R-intro}
 
 \app{R} is, by far, the largest free statistical
 project.\footnote{\app{R}'s homepage is at
@@ -13,8 +12,8 @@ approach focuses on usability much more than \app{R}, which instead
 aims to encompass the widest possible range of statistical procedures.
 
 As is natural in the free software ecosystem, we don't view ourselves
-as competitors to \app{R}\footnote{OK, who are we kidding? But it's
-  \emph{friendly} competition!}, but rather as projects sharing a common
+as competitors to \app{R},\footnote{OK, who are we kidding? But it's
+  \emph{friendly} competition!} but rather as projects sharing a common
 goal who should support each other whenever possible. For this reason,
 \app{gretl} provides a way to interact with \app{R} and thus enable
 users to pool the capabilities of the two packages.
@@ -22,9 +21,9 @@ users to pool the capabilities of the two packages.
 In this chapter, we will explain how to exploit \app{R}'s power from
 within \app{gretl}. It is understood that the reader has a working
 installation of \app{R} available and a basic grasp of \app{R}'s
-syntax\footnote{The main reference for \app{R} documentation is
+syntax.\footnote{The main reference for \app{R} documentation is
   \url{http://cran.r-project.org/manuals.html}; that said, \app{R}
-  tutorials abound on the Net. As always, Google is your friend.}.
+  tutorials abound on the Net. As always, Google is your friend.}
 
 
 \section{Starting an interactive \app{R} session}
@@ -46,7 +45,7 @@ datasets. Once the dataset is open, we run an OLS regression of
 \ref{tab:data4-1-gretlOLS}.
 
 \begin{table}[htbp]
-\caption{OLS regression on house prices via \app{gretl}}
+\caption{OLS house price regression via \app{gretl}}
 \label{tab:data4-1-gretlOLS}
 \begin{center}
 
@@ -254,7 +253,7 @@ the editor window used for ordinary \app{gretl} scripts, as in figure
 \ref{fig:R-edit1}. 
 
 There are two main differences: first, you get syntax highlighting for
-\app{R}'s syntax instaed of \app{gretl}'s. Second, clicking on the
+\app{R}'s syntax instead of \app{gretl}'s. Second, clicking on the
 Execute icon (the gears icon), launches an instance of \app{R} in
 which your commands are executed.  Before \app{R} is actually run, you
 are asked if you want to run \app{R} interactively or not (see Figure

@@ -4456,7 +4456,6 @@ static void write_R_export_func (FILE *fp) {
     fputs("\t\twrite(t(x), file=fname, ncolumns=dim(x)[2], append=TRUE)\n", fp);
     fputs("\t}\n", fp);
     fputs("}\n", fp);
-
 }
 
 /* write out current dataset in R format, and, if this succeeds,
