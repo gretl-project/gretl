@@ -38,8 +38,8 @@ struct search_replace {
     gchar *replace;
 };
 
-static void replace_string_callback (GtkWidget *widget, 
-				     struct search_replace *s)
+static void replace_string_setup (GtkWidget *widget, 
+				  struct search_replace *s)
 {
     s->find = 
 	gtk_editable_get_chars(GTK_EDITABLE(s->f_entry), 0, -1);
@@ -83,7 +83,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_widget_show(label);
     s->r_entry = gtk_entry_new();
     g_signal_connect(G_OBJECT(s->r_entry), "activate", 
-		     G_CALLBACK(replace_string_callback), s);
+		     G_CALLBACK(replace_string_setup), s);
 
     gtk_widget_show(s->r_entry);
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
@@ -106,7 +106,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(replace_string_callback), s);
+		     G_CALLBACK(replace_string_setup), s);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
@@ -154,6 +154,8 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     gtk_text_buffer_get_start_iter(gedit, &start);
     gtk_text_buffer_get_end_iter(gedit, &end);
 
+    /* grab full buffer for possible undo, even if we're
+       actually going to work on a selection */
     fullbuf = gtk_text_buffer_get_text(gedit, &start, &end, FALSE);
 
     if (gtk_text_buffer_get_selection_bounds(gedit, &sel_start, &sel_end)) {
@@ -199,6 +201,8 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     *modbuf = '\0';
 
     if (selected) {
+	/* copy unmodified the portion of the original buffer
+	   before the selection */
 	tmp = gtk_text_buffer_get_text(gedit, &start, &sel_start, FALSE);
 	if (tmp != NULL) {
 	    strcat(modbuf, tmp);
@@ -207,19 +211,22 @@ void text_replace (windata_t *vwin, guint u, GtkWidget *w)
     }
 
     p = buf;
-    while (*p && (size_t) (p - buf) <= fullsz) {
+    while (*p) {
 	q = strstr(p, s.find);
 	if (q != NULL) {
 	    strncat(modbuf, p, q - p);
 	    strcat(modbuf, s.replace);
 	    p = q + len;
 	} else {
+	    /* no more replacements needed */
 	    strcat(modbuf, p);
 	    break;
 	}
     }
 
     if (selected) {
+	/* copy unmodified the portion of the original buffer
+	   after the selection */
 	tmp = gtk_text_buffer_get_text(gedit, &sel_end, &end, FALSE);
 	if (tmp != NULL) {
 	    strcat(modbuf, tmp);

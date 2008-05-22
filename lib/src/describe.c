@@ -4940,19 +4940,19 @@ static int sw_w (float *x, int n, int n1, int n2, float *a,
     const float bf1 = .8378f;
     const double xx90 = .556;
     const double xx95 = .622;
-    const float small = 1e-19f;
+    const float little = 1e-19f; /* "small" is reserved on win32 */
     const float pi6 = 1.909859f;
     const float stqr = 1.047198f;
 	
     /* polynomial coefficients */
-    const float  g[2] = { -2.273f,.459f };
-    const float c3[4] = { .544f,-.39978f,.025054f,-6.714e-4f };
-    const float c4[4] = { 1.3822f,-.77857f,.062767f,-.0020322f };
-    const float c5[4] = { -1.5861f,-.31082f,-.083751f,.0038915f };
-    const float c6[3] = { -.4803f,-.082676f,.0030302f };
-    const float c7[2] = { .164f,.533f };
-    const float c8[2] = { .1736f,.315f };
-    const float c9[2] = { .256f,-.00635f };
+    const float  g[2] = { -2.273f, .459f };
+    const float c3[4] = { .544f, -.39978f, .025054f, -6.714e-4f };
+    const float c4[4] = { 1.3822f, -.77857f, .062767f, -.0020322f };
+    const float c5[4] = { -1.5861f, -.31082f, -.083751f, .0038915f };
+    const float c6[3] = { -.4803f, -.082676f, .0030302f };
+    const float c7[2] = { .164f, .533f };
+    const float c8[2] = { .1736f, .315f };
+    const float c9[2] = { .256f, -.00635f };
 	
     float r1, zbar, ssassx, gamma, range;
     float bf, ld, m, s, sa, xi, sx, xx, y, w1;
@@ -4962,7 +4962,7 @@ static int sw_w (float *x, int n, int n1, int n2, float *a,
 	
     /* Check for zero range */
     range = x[n1 - 1] - x[0];
-    if (range < small) {
+    if (range < little) {
 	fprintf(stderr, "sw_w: range is too small\n");
 	return 1;
     }
@@ -5023,7 +5023,7 @@ static int sw_w (float *x, int n, int n1, int n2, float *a,
 	gamma = poly(g, 2, an);
 	if (y >= gamma) {
 	    /* FIXME: rather use an even smaller value, or NA? */
-	    *pval = small;
+	    *pval = little;
 	    return 0;
 	}
 	y = -log(gamma - y);
@@ -5057,7 +5057,7 @@ static int sw_w (float *x, int n, int n1, int n2, float *a,
 	s *= zsd;
     }
 	
-    *pval = 1.0 - normal_cdf(((double) y - (double) m) / (double) s);
+    *pval = normal_cdf_comp(((double) y - (double) m) / (double) s);
 	
     return 0;
 }

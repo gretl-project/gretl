@@ -356,7 +356,7 @@ static double student_cdf_comp (int df, double x)
     return p;
 }
 
-static double normal_cdf_comp (double x)
+double normal_cdf_comp (double x)
 {
     double p;
 
