@@ -42,16 +42,15 @@
 
 static int missvals (const double *x, int n)
 {
-    int t, ret = 0;
+    int t;
     
     for (t=0; t<n; t++) {
 	if (na(x[t])) {
-	    ret = 1;
-	    break;
+	    return 1;
 	}
     }
 	    
-    return ret;
+    return 0;
 }
 
 /* return the number of "good" (non-missing) observations in series x;
@@ -586,9 +585,10 @@ double gretl_sst (int t1, int t2, const double *x)
 double gretl_variance (int t1, int t2, const double *x)
 {
     int t, n = t2 - t1 + 1;
-    double sumsq, xx, xbar;
+    double v, xx, xbar;
 
     if (n == 0) {
+	/* void sample */
 	return NADBL;
     }
 
@@ -597,20 +597,20 @@ double gretl_variance (int t1, int t2, const double *x)
 	return NADBL;
     }
 
-    sumsq = 0.0;
+    v = 0.0;
+    n = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
 	    xx = x[t] - xbar;
-	    sumsq += xx * xx;
-	} else {
-	    n--;
+	    v += xx * xx;
+	    n++;
 	}
     }
 
-    sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
+    v = (n > 1)? v / (n - 1) : 0.0;
 
-    return (sumsq >= 0)? sumsq : NADBL;
+    return (v >= 0)? v : NADBL;
 }
 
 /**
@@ -787,25 +787,23 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 double gretl_covar (int t1, int t2, const double *x, const double *y,
 		    int *missing)
 {
-    double sx, sy, sxy, xt, yt, xbar, ybar;
+    double sx, sy, sxy, xbar, ybar;
     int t, nn, n = t2 - t1 + 1;
 
     if (n == 0) {
+	/* void sample */
 	return NADBL;
     }
 
-    nn = n;
+    nn = 0;
     sx = sy = 0.0;
 
     for (t=t1; t<=t2; t++) {
-        xt = x[t];
-        yt = y[t];
-        if (na(xt) || na(yt)) {
-            nn--;
-            continue;
-        }
-        sx += xt;
-        sy += yt;
+        if (!na(x[t]) && !na(y[t])) {
+	    sx += x[t];
+	    sy += y[t];
+	    nn++;
+	}
     }
 
     if (nn < 2) {
@@ -817,16 +815,15 @@ double gretl_covar (int t1, int t2, const double *x, const double *y,
     sxy = 0.0;
 
     for (t=t1; t<=t2; t++) {
-        xt = x[t];
-        yt = y[t];
-        if (!na(xt) && !na(yt)) {
-	    sx = xt - xbar;
-	    sy = yt - ybar;
+        if (!na(x[t]) && !na(y[t])) {
+	    sx = x[t] - xbar;
+	    sy = y[t] - ybar;
 	    sxy = sxy + (sx * sy);
 	}
     }
 
     if (missing != NULL) {
+	/* record number of missing obs */
 	*missing = n - nn;
     }
 
@@ -855,26 +852,29 @@ double gretl_corr (int t1, int t2, const double *x, const double *y,
     double cval = 0.0;
 
     if (n == 0) {
+	/* void sample */
 	return NADBL;
     }
 
     if (gretl_isconst(t1, t2, x) || gretl_isconst(t1, t2, y)) {
+	/* correlation between any x and a constant is
+	   undefined */
 	return NADBL;
     }
 
-    nn = n;
+    nn = 0;
     sx = sy = 0.0;
 
     for (t=t1; t<=t2; t++) {
-        if (na(x[t]) || na(y[t])) {
-            nn--;
-        } else {
-	    sx += x[t];
+        if (!na(x[t]) && !na(y[t])) {
+  	    sx += x[t];
 	    sy += y[t];
+	    nn++;
 	}
     }
 
     if (nn < 2) {
+	/* zero or 1 observations: no go! */
 	return NADBL;
     }
 
@@ -902,6 +902,7 @@ double gretl_corr (int t1, int t2, const double *x, const double *y,
     }
 
     if (missing != NULL) {
+	/* record number of missing observations */
 	*missing = n - nn;
     }
 
@@ -962,10 +963,12 @@ int gretl_moments (int t1, int t2, const double *x,
     }
 
     while (na(x[t1]) && t1 <= t2) {
+	/* skip missing values at start of sample */
 	t1++;
     }
 
     if (gretl_isconst(t1, t2, x)) {
+	/* no variation in x */
 	*xbar = x[t1];
 	*std = 0.0;
 	if (allstats) {
@@ -974,6 +977,7 @@ int gretl_moments (int t1, int t2, const double *x,
 	return 1;
     }
 
+    /* get number and sum of valid observations */
     s = 0.0;
     n = 0;
     for (t=t1; t<=t2; t++) {
@@ -984,6 +988,7 @@ int gretl_moments (int t1, int t2, const double *x,
     }
 
     if (n == 0) {
+	/* no valid data */
 	*xbar = *std = NADBL;
 	if (allstats) {
 	    *skew = *kurt = 0.0;
@@ -991,28 +996,31 @@ int gretl_moments (int t1, int t2, const double *x,
 	return 1;
     }
 
+    /* calculate mean and initialize other stats */
     *xbar = s / n;
     var = 0.0;
     if (allstats) {
 	*skew = *kurt = 0.0;
     }
 
+    /* compute quantities needed for higher moments */
     s2 = s3 = s4 = 0.0;
     for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-	dev = x[t] - *xbar;
-	s2 += dev * dev;
-	if (allstats) {
-	    s3 += pow(dev, 3);
-	    s4 += pow(dev, 4);
+	if (!na(x[t])) {
+	    dev = x[t] - *xbar;
+	    s2 += dev * dev;
+	    if (allstats) {
+		s3 += pow(dev, 3);
+		s4 += pow(dev, 4);
+	    }
 	}
     }
 
+    /* variance */
     var = s2 / (n - k);
 
     if (var < 0.0) {
+	/* in principle impossible, but this is a computer */
 	*std = NADBL;
 	if (allstats) {
 	    *skew = *kurt = NADBL;
@@ -1020,18 +1028,19 @@ int gretl_moments (int t1, int t2, const double *x,
 	return 1;
     }
 
-    if (var > TINYVAR) {
+     if (var > TINYVAR) {
 	*std = sqrt(var);
     } else {
+	/* screen out minuscule variance */
 	*std = 0.0;
     }
 
     if (allstats) {
 	if (var > TINYVAR) {
-	    /* if variance is effectively zero, these should be undef'd */
 	    *skew = (s3 / n) / pow(s2 / n, 1.5);
 	    *kurt = ((s4 / n) / pow(s2 / n, 2)) - 3.0; /* excess kurtosis */
 	} else {
+	    /* if variance is effectively zero, these should be undef'd */
 	    *skew = *kurt = NADBL;
 	}
     }
@@ -1213,10 +1222,10 @@ get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
     var = s2 / n;
 
     if (var > 0.0) {
-	/* if variance is effectively zero, these should be undef'd */
 	*skew = (s3 / n) / pow(s2 / n, 1.5);
 	*kurt = ((s4 / n) / pow(s2 / n, 2));
     } else {
+	/* if variance is effectively zero, these should be undef'd */
 	*skew = *kurt = NADBL;
 	err = 1;
     }
@@ -3242,7 +3251,6 @@ pergm_print_header (const char *vname, int T, int L,
  * by @varno.
  *
  * Returns: 0 on successful completion, error code on error.
- *
  */
 
 int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo, 
@@ -3283,7 +3291,7 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    /* Chatfield (1996); Greene 4ed, p. 772 */
+    /* Chatfield (1996); William Greene, 4e, p. 772 */
     if (window) {
 	if (width <= 0) {
 	    L = auto_spectrum_order(T, opt);
@@ -3396,7 +3404,7 @@ static void printf15 (double zz, PRN *prn)
     }
 }
 
-#define LINEWID 78
+#define LINEWID 78 /* generally sane for terminals */
 
 static void center_line (char *str, PRN *prn, int dblspc)
 {
