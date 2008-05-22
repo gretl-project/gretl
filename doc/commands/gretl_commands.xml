@@ -5319,6 +5319,50 @@
 
   </command>
 
+  <command name="normtest" section="Tests"
+    label="Normality test">
+
+    <usage>
+      <arguments>
+        <argument>series</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--dhansen</flag>
+	  <effect>Doornik&ndash;Hansen test</effect>
+        </option>
+	<option>
+	  <flag>--swilk</flag>
+	  <effect>Shapiro&ndash;Wilk test</effect>
+        </option>
+	<option>
+	  <flag>--jbera</flag>
+	  <effect>Jarque&ndash;Bera test</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Carries out a test for normality for the given
+	<repl>series</repl>.  The specific test is controlled
+	by the option flags (but if no flag is given, the
+	Doornik&ndash;Hansen test is performed).  The
+	Jarque&ndash;Bera option is not recommended for small
+	samples.
+      </para>
+      <para>
+	The test statistic and its p-value may be retrieved
+	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>.
+      </para>
+    </description>
+
+  </command>
+
   <command name="nulldata" section="Dataset"
     label="Creating a blank dataset">
 

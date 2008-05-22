@@ -91,6 +91,7 @@ typedef enum {
     MODELTAB,
     MPOLS,
     NLS,
+    NORMTEST,
     NULLDATA,
     OLS,     
     OMIT,
@@ -174,6 +175,7 @@ typedef enum {
                         c == LMTEST || \
                         c == MEANTEST || \
                         c == MPOLS || \
+			c == NORMTEST || \
                         c == OMIT || \
                         c == OMITFROM || \
                         c == PCA || \

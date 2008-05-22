@@ -239,8 +239,10 @@ int gini (int vnum, const double **Z, DATAINFO *pdinfo,
 
 int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval);
 
-double gretl_swilk (int t1, int t2, const double *x);
-
-double gretl_doornik_hansen (int t1, int t2, const double *x);
+int gretl_normality_test (const char *param,
+			  const double **Z,
+			  const DATAINFO *pdinfo,
+			  gretlopt opt,
+			  PRN *prn);
 
 #endif /* DESCRIBE_H */

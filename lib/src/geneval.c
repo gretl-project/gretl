@@ -3147,12 +3147,6 @@ series_scalar_func (NODE *n, int f, parser *p)
 	case F_GINI:
 	    ret->v.xval = gretl_gini(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case F_SWILK:
-	    ret->v.xval = gretl_swilk(p->dinfo->t1, p->dinfo->t2, x);
-	    break;
-	case F_DHANSEN:
-	    ret->v.xval = gretl_doornik_hansen(p->dinfo->t1, p->dinfo->t2, x);
-	    break;
 	case F_NOBS:
 	    ret->v.xval = series_get_nobs(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
@@ -5315,8 +5309,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MAX:
     case F_MEDIAN:
     case F_GINI:
-    case F_SWILK:
-    case F_DHANSEN:
     case F_NOBS:
     case F_T1:
     case F_T2:

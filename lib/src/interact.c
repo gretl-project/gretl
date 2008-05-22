@@ -284,6 +284,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                            c == DATAMOD || \
                            c == FUNC || \
                            c == LOOP ||  \
+			   c == NORMTEST || \
                            c == NULLDATA || \
                            c == OMITFROM || \
                            c == SETMISS)
@@ -322,6 +323,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == MLE || \
                        c == MODELTAB || \
                        c == NLS || \
+		       c == NORMTEST || \
                        c == NULLDATA || \
 		       c == OPEN || \
                        c == OUTFILE || \
@@ -4491,6 +4493,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case TESTUHAT:
 	err = last_model_test_uhat(pZ, pdinfo, prn);
+	break;
+
+    case NORMTEST:
+	err = gretl_normality_test(cmd->param, (const double **) *pZ, 
+				   pdinfo, cmd->opt, prn);
 	break;
 
     case HAUSMAN:

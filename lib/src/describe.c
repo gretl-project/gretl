@@ -1183,19 +1183,12 @@ double doornik_chisq (double skew, double xkurt, int n)
 	z2 = z1*z1 + z2*z2;
     }
 
-#if 0
-    double S2, JB;
-
-    S2 = b1;
-    JB = ((double) n / 6) * (S2 + xkurt * xkurt/ 4.0);
-    fprintf(stderr, "JB = %g\n", JB);
-#endif
-
     return z2;
 }
 
 static int
-series_get_moments (int t1, int t2, const double *x, double *skew, double *xkurt,
+series_get_moments (int t1, int t2, const double *x, 
+		    double *skew, double *xkurt,
 		    int *pn)
 {
     double xbar, dev, var;
@@ -5147,25 +5140,72 @@ int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval)
     return err;
 }
 
-double gretl_swilk (int t1, int t2, const double *x)
+int gretl_normality_test (const char *param,
+			  const double **Z,
+			  const DATAINFO *pdinfo,
+			  gretlopt opt,
+			  PRN *prn)
 {
-    double W, pv;
-    int err = 0;
+    double test = NADBL;
+    double pval = NADBL;
+    int v, err;
 
-    err = shapiro_wilk(x, t1, t2, &W, &pv);
+    err = incompatible_options(opt, OPT_D | OPT_W | OPT_J);
 
-    return (err)? NADBL : pv;
-}
-
-double gretl_doornik_hansen (int t1, int t2, const double *x)
-{
-    double skew, xkurt, X2 = NADBL;
-    int n, err = 0;
-
-    err = series_get_moments(t1, t2, x, &skew, &xkurt, &n);
     if (!err) {
-	X2 = doornik_chisq(skew, xkurt, n);
+	v = varindex(pdinfo, param);
+	if (v == pdinfo->v) {
+	    err = E_UNKVAR;
+	} else if (var_is_scalar(pdinfo, v)) {
+	    sprintf(gretl_errmsg, _("variable %s is a scalar"), param);
+	    err = E_DATA;
+	}
     }
 
-    return (na(X2))? NADBL : chisq_cdf_comp(2, X2);
+    if (err) {
+	return err;
+    }
+
+    if (opt & OPT_W) {
+	err = shapiro_wilk(Z[v], pdinfo->t1, pdinfo->t2, 
+			   &test, &pval);
+    } else {
+	double skew, xkurt;
+	int n;
+
+	err = series_get_moments(pdinfo->t1, pdinfo->t2, Z[v], 
+				 &skew, &xkurt, &n);
+	if (!err) {
+	    if (opt & OPT_J) {
+		test = (n / 6.0) * (skew * skew + xkurt * xkurt/ 4.0);
+	    } else {
+		test = doornik_chisq(skew, xkurt, n);
+	    }
+	}
+
+	if (!err && xna(test)) {
+	    test = NADBL;
+	    err = E_NAN;
+	}
+
+	if (!na(test)) {
+	    pval = chisq_cdf_comp(2, test);
+	}
+    }
+
+    if (!na(test) && !na(pval)) {
+	if (!(opt & OPT_Q)) {
+	    const char *tstr = (opt & OPT_W)?
+		"Shapiro-Wilk W" :
+		(opt & OPT_J)? _("Jarque-Bera test") :
+		_("Doornik-Hansen test");
+
+	    pprintf(prn, _("Test for normality of %s:"), param);
+	    pprintf(prn, "\n %s = %g, %s %g\n", 
+		    tstr, test, _("with p-value"), pval);
+	}
+	record_test_result(test, pval, "Normality");
+    }
+    
+    return err;
 }
