@@ -4440,12 +4440,19 @@ static void run_R_sync (void)
 
 /* define an R function for passing data or matrices back to gretl */
 
-static void write_R_export_func (FILE *fp) {
+static void write_R_export_func (FILE *fp) 
+{
+    gchar *dotdir;
 
-    fprintf(fp, "gretl_dotdir <- \"%s\"\n", paths.dotdir);
+#ifdef G_OS_WIN32
+    dotdir = slash_convert(g_strdup(paths.dotdir), FROM_BACKSLASH);
+#else
+    dotdir = paths.dotdir;
+#endif
 
+    fprintf(fp, "gretl_dotdir <- \"%s\"\n", dotdir);
     fputs("gretl_export <- function(x) {\n", fp);
-    fprintf(fp, "\tprefix <- \"%s\"\n", paths.dotdir);
+    fprintf(fp, "\tprefix <- \"%s\"\n", dotdir);
     fputs("\tsx <- substitute(x)\n", fp);
     fputs("\tif (is.data.frame(x) || is.ts(x)) {\n", fp);
     fputs("\t\tfname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
@@ -4456,6 +4463,10 @@ static void write_R_export_func (FILE *fp) {
     fputs("\t\twrite(t(x), file=fname, ncolumns=dim(x)[2], append=TRUE)\n", fp);
     fputs("\t}\n", fp);
     fputs("}\n", fp);
+
+#ifdef G_OS_WIN32
+    g_free(dotdir);
+#endif
 }
 
 /* write out current dataset in R format, and, if this succeeds,
