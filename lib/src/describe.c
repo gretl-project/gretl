@@ -4926,7 +4926,7 @@ static void sw_coeff (int n, int n1, int n2, float *a)
 
 /* ALGORITHM AS R94 APPL. STATIST. (1995) vol. 44, no. 4, 547-551.
    Calculates the Shapiro-Wilk W test and its significance level,
-   Rendered into C by Marcin Blazejowski.
+   Rendered into C by Marcin Blazejowski, May 2008.
 */
 
 static int sw_w (float *x, int n, int n1, int n2, float *a, 
