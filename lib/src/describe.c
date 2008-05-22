@@ -1195,6 +1195,55 @@ double doornik_chisq (double skew, double xkurt, int n)
 }
 
 static int
+series_get_moments (int t1, int t2, const double *x, double *skew, double *xkurt,
+		    int *pn)
+{
+    double xbar, dev, var;
+    double s = 0.0;
+    double s2 = 0.0;
+    double s3 = 0.0;
+    double s4 = 0.0;
+    int i, n = 0;
+    int err = 0;
+
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    s += x[i];
+	    n++;
+	}
+    }
+
+    *pn = n;
+    if (n < 3) {
+	return E_DATA;
+    }
+    
+    xbar = s / n;
+
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    dev = x[i] - xbar;
+	    s2 += dev * dev;
+	    s3 += pow(dev, 3);
+	    s4 += pow(dev, 4);
+	}
+    }
+
+    var = s2 / n;
+
+    if (var > 0.0) {
+	*skew = (s3 / n) / pow(s2 / n, 1.5);
+	*xkurt = ((s4 / n) / pow(s2 / n, 2)) - 3.0;
+    } else {
+	/* if variance is effectively zero, these should be undef'd */
+	*skew = *xkurt = NADBL;
+	err = 1;
+    }
+
+    return err;
+}
+
+static int
 get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
 {
     int j, n = gretl_matrix_cols(M);
@@ -4788,4 +4837,335 @@ int gini (int vnum, const double **Z, DATAINFO *pdinfo,
     free(lz);
 
     return err;
+}
+
+/* Following: apparatus for Shapiro-Wilk normality test.
+   Thanks to Marcin Blazejowski for the contribution.
+*/
+
+#ifndef min
+# define min(a, b) ((a) > (b) ? (b) : (a))
+#endif
+
+static int sign (int a) 
+{
+    return (a == 0)? 0 : ((a < 0)? -1 : 1);
+}
+
+static int compare_floats (const void *a, const void *b) 
+{
+    const float *fa = (const float *) a;
+    const float *fb = (const float *) b;
+
+    return (*fa > *fb) - (*fa < *fb);
+}
+
+/* Algorithm AS 181.2 Appl. Statist. (1982) Vol. 31, No. 2
+   Calculates the algebraic polynomial of order n-1 with
+   array of coefficients cc.  Zero-order coefficient is 
+   cc(1) = cc[0]
+*/
+
+static double poly (const float *cc, int n, float x) {
+    double p, ret = cc[0]; /* preserve precision! */
+    int j;
+	
+    if (n > 1) {
+	p = x * cc[n-1];
+	for (j=n-2; j>0; j--) {
+	    p = (p + cc[j]) * x;
+	}
+	ret += p;
+    }
+	
+    return ret;
+}
+
+/* Calculate coefficients for the test */
+
+static void sw_coeff (int n, int n1, int n2, float *a) 
+{
+    const float c1[6] = { 0.f,.221157f,-.147981f,-2.07119f, 4.434685f, -2.706056f };
+    const float c2[6] = { 0.f,.042981f,-.293762f,-1.752461f,5.682633f, -3.582633f };
+    float summ2, ssumm2;
+    float a0, a1, an = (float) n;
+    float fac, an25, rsn;
+    int i, i1, nn2 = n / 2;
+	
+    if (n == 3) {
+	a[0] = sqrt(0.5);
+    } else {
+	an25 = an + .25;
+	summ2 = 0.0;
+	for (i=0; i<n2; i++) {
+	    a[i] = (float) normal_cdf_inverse((i + 1 - .375f) / an25);
+	    summ2 += a[i] * a[i];
+	}
+	summ2 *= 2.0;
+	ssumm2 = sqrt(summ2);
+	rsn = 1.0 / sqrt(an);
+	a0 = poly(c1, 6, rsn) - a[0] / ssumm2;
+
+	/* Normalize array a */
+	if (n > 5) {
+	    i1 = 2;
+	    a1 = -a[1] / ssumm2 + poly(c2, 6, rsn);
+	    fac = sqrt((summ2 - 2.0 * (a[0] * a[0]) - 2.0 * (a[1] * a[1])) /
+		       (1.0 - 2.0 * (a0 * a0) - 2.0 * (a1 * a1)));
+	    a[1] = a1;
+	} else {
+	    i1 = 1;
+	    fac = sqrt((summ2 - 2.0 * (a[0] * a[0])) / (1.0 - 2.0 * (a0 * a0)));
+	}
+	a[0] = a0;
+	for (i=i1; i<nn2; i++) {
+	    a[i] /= -fac;
+	}
+    }
+}
+
+/* ALGORITHM AS R94 APPL. STATIST. (1995) vol. 44, no. 4, 547-551.
+   Calculates the Shapiro-Wilk W test and its significance level,
+   Rendered into C by Marcin Blazejowski.
+*/
+
+static int sw_w (float *x, int n, int n1, int n2, float *a, 
+		 double *W, double *pval)
+{
+    const float z90 = 1.2816f;
+    const float z95 = 1.6449f;
+    const float z99 = 2.3263f;
+    const float zm = 1.7509f;
+    const float zss = .56268f;
+    const float bf1 = .8378f;
+    const double xx90 = .556;
+    const double xx95 = .622;
+    const float small = 1e-19f;
+    const float pi6 = 1.909859f;
+    const float stqr = 1.047198f;
+	
+    /* polynomial coefficients */
+    const float  g[2] = { -2.273f,.459f };
+    const float c3[4] = { .544f,-.39978f,.025054f,-6.714e-4f };
+    const float c4[4] = { 1.3822f,-.77857f,.062767f,-.0020322f };
+    const float c5[4] = { -1.5861f,-.31082f,-.083751f,.0038915f };
+    const float c6[3] = { -.4803f,-.082676f,.0030302f };
+    const float c7[2] = { .164f,.533f };
+    const float c8[2] = { .1736f,.315f };
+    const float c9[2] = { .256f,-.00635f };
+	
+    float r1, zbar, ssassx, gamma, range;
+    float bf, ld, m, s, sa, xi, sx, xx, y, w1;
+    float asa, ssa, z90f, sax, zfm, z95f, zsd, z99f, ssx, xsx;
+    float an = (float) n;
+    int i, j, ncens = n - n1;
+	
+    /* Check for zero range */
+    range = x[n1 - 1] - x[0];
+    if (range < small) {
+	fprintf(stderr, "sw_w: range is too small\n");
+	return 1;
+    }
+
+    /* Check for correct sort order on range-scaled X */
+    /* In fact we don't need do this, since we use qsort() from libc 
+       and we can suppose, that qsort() can sort... */
+    xx = x[0] / range;
+    sx = xx;
+    sa = -a[0];
+    j = n - 1;
+    for (i = 1; i < n1; --j) {
+	xi = x[i] / range;
+	sx += xi;
+	++i;
+	if (i != j) {
+	    sa += sign(i - j) * a[min(i,j) - 1];
+	}
+	xx = xi;
+    }
+	
+    /* Calculate W statistic as squared correlation between data and 
+       coefficients */
+    sa /= n1;
+    sx /= n1;
+    ssa = ssx = sax = 0.0;
+    j = n - 1;
+    for (i=0; i<n1; i++, j--) {
+	if (i != j) {
+	    asa = sign(i - j) * a[min(i,j)] - sa;
+	} else {
+	    asa = -sa;
+	}
+	xsx = x[i] / range - sx;
+	ssa += asa * asa;
+	ssx += xsx * xsx;
+	sax += asa * xsx;
+    }
+
+    /* W1 equals (1-W) calculated to avoid excessive rounding error
+       for W very near 1 (a potential problem in very large samples) 
+    */
+    ssassx = sqrt(ssa * ssx);
+    w1 = (ssassx - sax) * (ssassx + sax) / (ssa * ssx);
+    *W = 1 - w1;
+	
+    /* Calculate significance level for W */
+    if (n == 3) { 
+	/* exact P value */
+	*pval = pi6 * (asin(sqrt(*W)) - stqr);
+	return 0;
+    }
+
+    y = log(w1);
+    xx = log(an);
+
+    if (n <= 11) {
+	gamma = poly(g, 2, an);
+	if (y >= gamma) {
+	    /* FIXME: rather use an even smaller value, or NA? */
+	    *pval = small;
+	    return 0;
+	}
+	y = -log(gamma - y);
+	m = poly(c3, 4, an);
+	s = exp(poly(c4, 4, an));
+    } else { 
+	/* n >= 12 */
+	m = poly(c5, 4, xx);
+	s = exp(poly(c6, 3, xx));
+    }
+	
+    if (ncens > 0) { 
+	/* Censoring by proportion ncens/n.
+	   Calculate mean and sd of normal equivalent deviate of W */
+	float delta = (float) ncens / an;
+
+	ld = -log(delta);
+	bf = 1.0 + xx * bf1;
+	r1 = pow(xx90, (double) xx);
+	z90f = z90 + bf * pow(poly(c7, 2, r1), (double) ld);
+	r1 = pow(xx95, (double) xx);
+	z95f = z95 + bf * pow(poly(c8, 2, r1), (double) ld);
+	z99f = z99 + bf * pow(poly(c9, 2, xx), (double) ld);
+
+	/* Regress Z90F,...,Z99F on normal deviates Z90,...,Z99 to get
+	   pseudo-mean and pseudo-sd of z as the slope and intercept */
+	zfm = (z90f + z95f + z99f) / 3.0;
+	zsd = (z90 * (z90f - zfm) + z95 * (z95f - zfm) + z99 * (z99f - zfm)) / zss;
+	zbar = zfm - zsd * zm;
+	m += zbar * s;
+	s *= zsd;
+    }
+	
+    *pval = 1.0 - normal_cdf(((double) y - (double) m) / (double) s);
+	
+    return 0;
+}
+
+static int sw_sample_check (int n, int n1)
+{
+    int ncens = n - n1;
+    float delta, an = n;
+
+    if (n < 3 || n1 < 3) {
+	fprintf(stderr, "There is no way to run SW test for less then 3 obs\n");
+	return E_DATA;
+    }
+
+    if (ncens < 0 || (ncens > 0 && n < 20)) {
+	fprintf(stderr, "sw_w: not enough uncensored obserations\n");
+	return E_DATA;
+    }
+	
+    delta = (float) ncens / an;
+    if (delta > .8f) {
+	fprintf(stderr, "sw_w: too many censored obserations\n");
+	return E_DATA;
+    }
+
+    return 0;
+}
+
+/**
+ * shapiro_wilk:
+ * @x: data array.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @W: location to receive test statistic.
+ * @pv: location to receive p-value.
+ * 
+ * Returns: 0 on success, non-zero on failure.
+*/
+
+int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval) 
+{
+    int n1 = 0;         /* number of uncensored obs: we may make use of this later */
+    float *a = NULL;	/* array of coefficients */
+    float *xf = NULL;   /* copy of x in float format */
+    int i, t, n2, n = 0;
+    int err = 0;
+
+    *W = *pval = NADBL;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) n++;
+    }
+
+    /* for now we assume all obs are uncensored */
+    n1 = n;
+
+    err = sw_sample_check(n, n1);
+    if (err) {
+	return err;
+    }
+	
+    /* How many coeffs should be computed? */
+    n2 = fmod(n, 2.0);
+    n2 = (n2 == 0)?  n / 2 : (n - 1) / 2;
+
+    xf = malloc(n * sizeof *xf);
+    a = malloc(n2 * sizeof *a);
+
+    if (xf == NULL || a == NULL) {
+	err = E_ALLOC;
+    } else {
+	i = 0;
+	for (t=t1; t<=t2; t++) {
+	    if (!na(x[t])) {
+		xf[i++] = x[t];
+	    }
+	}
+	qsort(xf, n, sizeof *xf, compare_floats);
+	/* Main job: compute W stat and its p-value */
+	sw_coeff(n, n1, n2, a);
+	err = sw_w(xf, n, n1, n2, a, W, pval);
+    } 
+	
+    free(a);
+    free(xf);
+	
+    return err;
+}
+
+double gretl_swilk (int t1, int t2, const double *x)
+{
+    double W, pv;
+    int err = 0;
+
+    err = shapiro_wilk(x, t1, t2, &W, &pv);
+
+    return (err)? NADBL : pv;
+}
+
+double gretl_doornik_hansen (int t1, int t2, const double *x)
+{
+    double skew, xkurt, X2 = NADBL;
+    int n, err = 0;
+
+    err = series_get_moments(t1, t2, x, &skew, &xkurt, &n);
+    if (!err) {
+	X2 = doornik_chisq(skew, xkurt, n);
+    }
+
+    return (na(X2))? NADBL : chisq_cdf_comp(2, X2);
 }
