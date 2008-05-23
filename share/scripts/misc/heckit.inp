@@ -1,0 +1,22 @@
+open mroz.gdt
+
+genr EXP2 = AX^2
+genr WA2 = WA^2
+genr KIDS = (KL6+K618)>0
+
+# Greene's specification
+
+list X = const AX EXP2 WE CIT
+list Z = const WA WA2 FAMINC KIDS WE
+
+heckit WW X ; LFP Z --two-step 
+heckit WW X ; LFP Z 
+
+# Wooldridge's specification
+
+series NWINC = FAMINC - WW*WHRS
+series lww = log(WW)
+list X = const WE AX EXP2
+list Z = X NWINC WA KL6 K618
+
+heckit lww X ; LFP Z --two-step 
