@@ -442,8 +442,6 @@ fi
 
 dnl Test regex availability for supplied gtksourceview
 if test "$have_gtk" = "2.0" ; then
-     AC_DEFINE(USE_GTKSOURCEVIEW)
-     use_gtksourceview="yes"
      AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
      have_gnu_regex="yes",
      have_gnu_regex="no")
@@ -460,7 +458,6 @@ AC_SUBST(build_gui)
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_mpfr)
-AC_SUBST(use_gtksourceview)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
 AC_SUBST(have_odbc)

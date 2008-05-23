@@ -14,7 +14,6 @@ have_readline = @have_readline@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
-use_gtksourceview = @use_gtksourceview@
 
 GNOME_CFLAGS = @GNOME_CFLAGS@
 GNOME_LIBS = @GNOME_LIBS@
@@ -28,8 +27,14 @@ USE_NLS = @USE_NLS@
 INETLIB = @INETLIB@
 CARBONLIB = @CARBONLIB@
 
+# Bundled gtkextra subset
 GTK_EXTRA_CFLAGS = -I$(topsrc)/gui2/gtkextra-lite
 GTK_EXTRA_LIB = -L./gtkextra-lite -lgtkextra-lite
+
+# Bundled gtksourceview subset
+GTK_SOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
+GTK_SOURCEVIEW_LIB = -L./gtksourceview -lgtksourceview-lite
+langdir = $(prefix)/share/gretl/gtksourceview
 
 ifeq ($(CC),)
   CC = gcc
@@ -44,24 +49,19 @@ ifeq ($(LN),)
   LN = ln -sf
 endif
 
-ifeq ($(use_gtksourceview),yes)
-  GTKSOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
-  GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
-  MY_SOURCEVIEW_LIB = gtksourceview/libgtksourceview-lite.a
-  langdir = $(prefix)/share/gretl/gtksourceview
-  query_install_lang = install-lang
-endif
-
 ifeq ($(have_gnome),2.0)
-  LIBS = $(GNOME_LIBS) $(GTKSOURCEVIEW_LIBS) $(GTK_EXTRA_LIB) \
-	../lib/libgretl-1.0.la
-  GUI_CFLAGS = $(GNOME_CFLAGS) $(GTKSOURCEVIEW_CFLAGS) $(GTK_EXTRA_CFLAGS)
+  G_LIBS = $(GNOME_LIBS)
+  G_CFLAGS = $(GNOME_CFLAGS)
   query_install_gnome = install-gnome
   GNOMEDEF = -DDATADIR=\"$(gnome_prefix)/share\"
 else
-  LIBS = $(GTK_LIBS) $(GTKSOURCEVIEW_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
-  GUI_CFLAGS = $(GTK_CFLAGS) $(GTKSOURCEVIEW_CFLAGS) $(GTK_EXTRA_CFLAGS)
+  G_LIBS = $(GTK_LIBS)
+  G_CFLAGS = $(GTK_CFLAGS)
 endif
+
+LIBS = $(G_LIBS) $(GTK_SOURCEVIEW_LIB) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
+GUI_CFLAGS = $(G_CFLAGS) $(GTK_SOURCEVIEW_CFLAGS) $(GTK_EXTRA_CFLAGS)
+
 ifeq ($(USE_NLS),yes)
   datadir = @datadir@
   localedir = $(datadir)/locale
@@ -138,12 +138,13 @@ HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 
 GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
+GTKSOURCEVIEW_LITE = gtksourceview/libgtksourceview-lite.a
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE) $(MY_SOURCEVIEW_LIB) 
+$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE) $(GTKSOURCEVIEW_LITE) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
@@ -161,7 +162,7 @@ gretl.lang: mklang
 $(GTKEXTRA_LITE): 
 	make -C gtkextra-lite
 
-gtksourceview/libgtksourceview-lite.a:
+$(GTKSOURCEVIEW_LITE):
 	make -C gtksourceview
 
 .deps:
@@ -171,7 +172,7 @@ gtksourceview/libgtksourceview-lite.a:
 
 .PHONY:
 
-install: install-exec install-data $(query_install_gnome) $(query_install_lang)
+install: install-exec install-data install-lang $(query_install_gnome)
 
 install-strip: $(PROG) install-data $(query_install_gnome)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)

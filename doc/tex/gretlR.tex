@@ -8,7 +8,7 @@
 project.\footnote{\app{R}'s homepage is at
   \url{http://www.r-project.org/}.} Like \app{gretl}, it is a GNU
 project and the two have a lot in common; however, \app{gretl}'s
-approach focuses on usability much more than \app{R}, which instead
+approach focuses on ease of use much more than \app{R}, which instead
 aims to encompass the widest possible range of statistical procedures.
 
 As is natural in the free software ecosystem, we don't view ourselves
@@ -19,7 +19,7 @@ goal who should support each other whenever possible. For this reason,
 users to pool the capabilities of the two packages.
 
 In this chapter, we will explain how to exploit \app{R}'s power from
-within \app{gretl}. It is understood that the reader has a working
+within \app{gretl}. We assume that the reader has a working
 installation of \app{R} available and a basic grasp of \app{R}'s
 syntax.\footnote{The main reference for \app{R} documentation is
   \url{http://cran.r-project.org/manuals.html}; that said, \app{R}
@@ -135,7 +135,7 @@ window and type at the prompt
 \end{figure}
 
 You should see something similar to Figure
-\ref{fig:Rwind2}. Astonishingly, the estimates coincide. At this
+\ref{fig:Rwind2}. Surprise --- the estimates coincide! At this
 point, you may just close the \app{R} window or type \verb|q()| at the
 \app{R} prompt.
 
@@ -226,7 +226,7 @@ s.e.   0.0896   0.0731
 sigma^2 estimated as 0.001348:  log likelihood = 244.7,  aic = -483.4
 \end{code}
 
-Luckily, the estimates coincide again.
+Luckily, the estimates again coincide.
 
 \section{Running an \app{R} script}
 \label{sec:R-scripts}
@@ -364,7 +364,7 @@ matrices on text files (see section \ref{sec:matrix-csv}); the file
 suffix is in this case \texttt{.mat}, and to read the matrix in
 \app{gretl} you must use the \texttt{mread()} function.
 
-As an example, we take the airline data and we use them to estimate a
+As an example, we take the airline data and use them to estimate a
 structural time series model \`a la Harvey (1989). The model we will 
 use is the \emph{Basic Structural Model} (BSM), in which a time series
 is decomposed into three terms:
@@ -379,8 +379,8 @@ to hold:
   \Delta \beta_t & = & \zeta_t \\
   \Delta^s \gamma_t & = & \Delta \omega_t
 \end{eqnarray*}
-where $\Delta^s$ is the seasonal differencing operator, $(1-L^s)$ and
-$\eta_t$, $\zeta_t$ and $\omega_t$ are mututally incorrelated white
+where $\Delta^s$ is the seasonal differencing operator, $(1-L^s)$, and
+$\eta_t$, $\zeta_t$ and $\omega_t$ are mututally uncorrelated white
 noise processes. The object of the analysis is to estimate the
 variances of the noise components (which may be zero) and to recover
 estimates of the latent processes $\mu_t$ (the ``level''), $\beta_t$
@@ -392,7 +392,7 @@ import the results back into \app{gretl}. Once the \texttt{bjg}
 dataset is loaded in gretl, we pass the data to \app{R} and execute
 the following script:
 \begin{code}
-#extract the log series 
+# extract the log series 
 y <- gretldata[, "lg"]
 # estimate the model
 strmod <- StructTS(y)
@@ -433,7 +433,7 @@ Running the above in \app{R} produces
 > gretl_export(vars)
 \end{code}
 
-At this point, we can retrieve the results back into \app{gretl} by
+At this point, we can pull the results back into \app{gretl} by
 executing the following commands, either from the console or by
 creating a small script:\footnote{This example will work on Linux
   and presumably on OSX without modifications. On the Windows
@@ -443,9 +443,10 @@ creating a small script:\footnote{This example will work on Linux
 append @dotdir/compon.csv
 vars = mread("@dotdir/vars.mat")
 \end{code}
-The first command will read the estimated components from a CSV file,
-which is the format that the passing mechanism employs for series. The
-matrix \texttt{vars}, instead, is contained in the file \texttt{vars.mat}.
+The first command reads the estimated time-series components from a
+CSV file, which is the format that the passing mechanism employs for
+series. The matrix \texttt{vars} is read from the file
+\texttt{vars.mat}.
 
 \begin{figure}[htbp]
   \centering

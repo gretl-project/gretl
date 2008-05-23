@@ -37,8 +37,8 @@
 #define SUMGRMAX  1.0e-4
 
 enum {
-    FCP_FULL,
-    FCP_HESS
+    FCP_FULL, /* doing the full job of GARCH estimation */
+    FCP_HESS  /* just calculating the Hessian */
 };
 
 typedef struct fcpinfo_ fcpinfo;

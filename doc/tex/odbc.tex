@@ -157,12 +157,12 @@ rather long, it may be best to create it just before the call to
 \texttt{data}. For example:
 \begin{code}
   string SqlQry = "SELECT foo FROM bar"
-  data x @SqlQry --odbc
+  data x SqlQry --odbc
 \end{code}
 
 If the optional parameter \texttt{obs-format} is absent, as in the
-above example, the SQL query should return \textbf{exactly one} column
-of data, which is used to fill the variable \emph{series}
+above example, the SQL query should return \emph{exactly one} column
+of data, which is used to fill the variable \texttt{x}
 sequentially.  It may be necessary to include a \texttt{smpl} command
 before the \texttt{data} command to set up the right ``window'' for
 the incoming data.  In addition, if one cannot assume that the data
@@ -172,16 +172,15 @@ clause.
 
 The optional format string is used for those cases when there is no
 certainty that the data from the query will arrive in the same order
-as the \app{gretl} dataset. This may happen when missing
-values interspersed within a column, or with data that do not have a
-natural ordering, e.g.\ cross-sectional data. In this case,
-the SQL statement should return a table with $n$ columns, where the
-first $n-1$ columns are used to identify which observation the figure
-in the $n$-th column belongs to. The format string is used to
-translate the first $n-1$ fields into a string which matches the
-string \app{gretl} uses to identify observations in the currently open
-dataset. At present, $n$ should be between 2 and 4, which should cover
-most, if not all, cases.
+as the \app{gretl} dataset. This may happen when missing values are
+interspersed within a column, or with data that do not have a natural
+ordering, e.g.\ cross-sectional data. In this case, the SQL statement
+should return a table with $n$ columns, where the first $n-1$ columns
+are used to identify which observation the value in the $n$-th column
+belongs to. The format string is used to translate the first $n-1$
+fields into a string which matches the string \app{gretl} uses to
+identify observations in the currently open dataset. At present, $n$
+should be between 2 and 4, which should cover most, if not all, cases.
 
 For example, consider the following fictitious case: we have a
 5-days-per-week dataset, to which we want to add the stock index for

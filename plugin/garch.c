@@ -32,8 +32,6 @@
 #define VPARM_MAX 6            /* max number of variance parameters */
 #define GARCH_PARAM_MAX 0.999
 
-double vparm_init[VPARM_MAX];
-
 static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				const int *list)
 {
@@ -321,10 +319,11 @@ static int garch_manual_init (double *theta, int k, int p, int q,
 	    fprintf(stderr, "Number of initvals = %d, but we want %d "
 		    "values for GARCH\n", mlen, n);
 	}
+	/* initialization not done */
 	return 0;
     }
 
-    /* if we're not using FCP, the following is handled 
+    /* if we're _not_ using FCP, the following is handled 
        within the BFGS routine */
 
     if (libset_get_bool("fcp")) {
@@ -332,13 +331,11 @@ static int garch_manual_init (double *theta, int k, int p, int q,
 	int i;
 	
 	/* order: coeffs on regressors; variance params */
-
 	for (i=0; i<n; i++) {
 	    theta[i] = m->val[i];
 	}
 
 	garch_print_init(theta, k, p, q, 1, prn);
-
 	free_init_vals();
     }
 
@@ -348,7 +345,7 @@ static int garch_manual_init (double *theta, int k, int p, int q,
 static int 
 garch_driver (const int *list, double **Z, double scale,
 	      const DATAINFO *pdinfo, MODEL *pmod,
-	      PRN *prn, gretlopt opt)
+	      double *vparm, gretlopt opt, PRN *prn)
 {
     int t1 = pmod->t1, t2 = pmod->t2;
     int nc = pmod->ncoeff;
@@ -420,7 +417,7 @@ garch_driver (const int *list, double **Z, double scale,
 
 	/* initialize variance parameters */
 	for (i=0; i<p+q+1; i++) {
-	    theta[i+nc] = vparm_init[i];
+	    theta[i+nc] = vparm[i];
 	}
 
 	if (opt & OPT_V) {
@@ -513,7 +510,8 @@ add_uhat_squared (const MODEL *pmod, double scale,
 */
 
 static void
-garchpar_from_armapar (const double *armapar, int q, int p)
+garchpar_from_armapar (const double *armapar, int q, int p,
+		       double *vparm)
 {
     double x, sum_ab = 0.0;
     int ao = (p > q)? p : q;
@@ -534,14 +532,14 @@ garchpar_from_armapar (const double *armapar, int q, int p)
 	if (i<=mo) {
 	    x += armapar[p+i];
 	} 
-	vparm_init[i] = (x < 0.0) ? 0.01 : x;
-	sum_ab += vparm_init[i];
+	vparm[i] = (x < 0.0)? 0.01 : x;
+	sum_ab += vparm[i];
     }
 
     for (i=1; i<=q; i++) {
 	x = armapar[p+i];
-	vparm_init[p+i] = (x > 0.0) ? 0 : -x;
-	sum_ab += vparm_init[p+i];
+	vparm[p+i] = (x > 0.0)? 0 : -x;
+	sum_ab += vparm[p+i];
     }
 
 #if VPARM_DEBUG
@@ -550,20 +548,20 @@ garchpar_from_armapar (const double *armapar, int q, int p)
 
     if (sum_ab > GARCH_PARAM_MAX) {
 	for (i=1; i<=p+q; i++) {
-	    vparm_init[i] *= GARCH_PARAM_MAX / sum_ab;
+	    vparm[i] *= GARCH_PARAM_MAX / sum_ab;
 	}
 	sum_ab = GARCH_PARAM_MAX;
     }
 
-    vparm_init[0] = armapar[0];
+    vparm[0] = armapar[0];
 }
 
 static int 
-garch_init_by_arma (const MODEL *pmod, const int *garchlist, 
-		    double scale, double ***pZ, DATAINFO *pdinfo)
+garch_init_by_arma (const MODEL *pmod, const int *glist, 
+		    double ***pZ, DATAINFO *pdinfo,
+		    double scale, double *vparm)
 {
-    MODEL amod;
-    int q = garchlist[1], p = garchlist[2];
+    int q = glist[1], p = glist[2];
     int v = pdinfo->v;
     int *list = NULL;
     int err = 0;
@@ -578,34 +576,31 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 	return E_ALLOC;
     }
 
-    list = gretl_list_copy(garchlist);
+    list = gretl_list_copy(glist);
+
     if (list == NULL) {
 	err = E_ALLOC;
-	goto bailout;
-    }
-
-    list[1] = (q > p)? q : p;
-    list[2] = q;
-    /* dep var is squared OLS residual */
-    list[4] = v;
-
-    amod = arma(list, NULL, (const double **) *pZ, pdinfo, OPT_C, NULL);
-    if (amod.errcode) {
-	err = amod.errcode;
-	goto bailout;
     } else {
+	MODEL amod;
 	int i;
 
-	model_count_minus();
-	garchpar_from_armapar(amod.coeff, q, p);
+	list[1] = (q > p)? q : p;
+	list[2] = q;
+	/* dep var is squared OLS residual: last var added */
+	list[4] = v;
 
-	for (i=0; i<q+p+1; i++) {
-	    fprintf(stderr, "from ARMA: vparm_init[%d] = %#12.6g\n", i, 
-		    vparm_init[i]);
+	amod = arma(list, NULL, (const double **) *pZ, pdinfo, OPT_C, NULL);
+	err = amod.errcode;
+	if (!err) {
+	    model_count_minus();
+	    garchpar_from_armapar(amod.coeff, q, p, vparm);
+	    for (i=0; i<q+p+1; i++) {
+		fprintf(stderr, "from ARMA: vparm_init[%d] = %#12.6g\n", i, 
+			vparm[i]);
+	    }
 	}
+	clear_model(&amod);
     }
-
- bailout:
 
     dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo);
     free(list);
@@ -613,7 +608,14 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
     return err;
 }
 
-/* sanity/dimension check */
+/* XPOS is the list position of the first regressor (if any).
+   Note that the garch list structure is:
+
+    0 1 2   3   4  5  6 ...
+    # p q <sep> y x0 x1 ...
+
+*/
+#define XPOS 5
 
 static int *get_garch_list (const int *list, const double **Z,
 			    const DATAINFO *pdinfo, int *err)
@@ -631,34 +633,39 @@ static int *get_garch_list (const int *list, const double **Z,
 	return NULL;
     }
 
-    /* rule out excessive total GARCH terms */
+    /* rule out excessive total GARCH-iness */
     if (p + q > 5) {
 	gretl_errmsg_set(_("Error in garch command"));
 	*err = E_DATA;
 	return NULL;
     }
 
-    /* insert constant if not present */
-    for (i=4; i<=list[0]; i++) {
+    /* check for presence of constant among regressors */
+    for (i=XPOS; i<=list[0]; i++) {
 	if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
+	    /* got a constant: OK */
 	    add0 = 0;
 	    break;
 	}
     }
 
     glist = gretl_list_new(list[0] + add0);
+
     if (glist == NULL) {
 	*err = E_ALLOC;
     } else {
-	for (i=1; i<=4; i++) {
+	/* transcribe first portion of original list */
+	for (i=1; i<XPOS; i++) {
 	    glist[i] = list[i];
 	}
 
+	/* insert constant if not already present */
 	if (add0) {
-	    glist[5] = 0;
+	    glist[XPOS] = 0;
 	}
 
-	for (i=5; i<=list[0]; i++) {
+	/* transcribe original regressors, if any */
+	for (i=XPOS; i<=list[0]; i++) {
 	    glist[i+add0] = list[i];
 	}
     }
@@ -666,21 +673,24 @@ static int *get_garch_list (const int *list, const double **Z,
     return glist;
 }
 
-/* make regression list for initial OLS */
+/* make regression list for initial OLS: we skip three terms 
+   from the GARCH list, namely p, q and the separator 
+   that follows.
+*/
 
-static int *make_ols_list (const int *list)
+static int *make_ols_list (const int *list, int *err)
 {
     int *olist;
     int i;
 
-    olist = malloc((list[0] - 2) * sizeof *olist);
-    if (olist == NULL) {
-	return NULL;
-    }
+    olist = gretl_list_new(list[0] - 3);
 
-    olist[0] = list[0] - 3;
-    for (i=4; i<=list[0]; i++) {
-	olist[i-3] = list[i];
+    if (olist == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=4; i<=list[0]; i++) {
+	    olist[i-3] = list[i];
+	}
     }
 
     return olist;
@@ -722,6 +732,64 @@ static void autocorr_message (double LMF, double pvF, int order, PRN *prn)
 
 #define GARCH_SCALE_SIGMA 1
 
+#if GARCH_SCALE_SIGMA
+
+static double garch_scale_sigma (int yno, MODEL *pmod, double **Z,
+				 DATAINFO *pdinfo)
+{
+    double scale = pmod->sigma;
+    int i;
+
+    for (i=0; i<pdinfo->n; i++) {
+	if (!na(Z[yno][i])) {
+	    Z[yno][i] /= scale;
+	}
+    }
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	pmod->coeff[i] /= scale;
+    }
+
+    pmod->ess /= scale * scale;
+    pmod->sigma = 1.0;
+
+    return scale;
+}
+
+static void garch_undo_scaling (int yno, double scale, double **Z,
+				DATAINFO *pdinfo)
+{
+    int t;
+
+    if (scale != 1.0) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!na(Z[yno][t])) {
+		Z[yno][t] *= scale;
+	    }
+	}
+    }
+}
+
+#endif
+
+/* default variance parameter initialization */
+
+static void garch_vparm_init (const int *list, const MODEL *pmod,
+			      double *vparm)
+{
+    int i, q = list[1], p = list[2];
+
+    vparm[0] = pmod->sigma * pmod->sigma * 0.1;
+    if (q > 0) {
+	vparm[p+1] = 0.7;
+    }
+
+    vparm[1] = ((q == 0)? 0.9 : 0.2) / p;
+    for (i=2; i<=p; i++) {
+	vparm[i] = vparm[1];
+    }
+}
+
 /* the driver function for the plugin */
 
 MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
@@ -730,30 +798,31 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     MODEL model;
     int *list = NULL;
     int *ols_list = NULL;
+    double vparm[VPARM_MAX] = {0};
     double LMF = NADBL;
     double pvF = NADBL;
     double scale = 1.0;
-    int i, t, err, init_err, yno = 0;
+    int yno = 0;
 
     gretl_model_init(&model);
 
     list = get_garch_list(cmdlist, (const double **) *pZ,
-			  pdinfo, &err);
-    if (err) {
-	model.errcode = err;
+			  pdinfo, &model.errcode);
+    if (model.errcode != 0) {
 	return model;
     }
 
-    ols_list = make_ols_list(list);
-    if (ols_list == NULL) {
-	model.errcode = E_ALLOC;
+    ols_list = make_ols_list(list, &model.errcode);
+    if (model.errcode != 0) {
 	return model;
     }
 
     /* run initial OLS */
     model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M);
     if (model.errcode) {
-	goto bailout;
+	free(ols_list);
+	free(list);
+	return model;
     }
 
 #if 0
@@ -769,52 +838,23 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 
 #if GARCH_SCALE_SIGMA
     yno = ols_list[1];
-    scale = model.sigma;
-    for (t=0; t<pdinfo->n; t++) {
-	if (!na((*pZ)[yno][t])) {
-	    (*pZ)[yno][t] /= scale;
-	}
-    }
-    for (t=0; t<model.ncoeff; t++) {
-	model.coeff[t] /= scale;
-    }
-    model.ess /= scale * scale;
-    model.sigma = 1.0;
+    scale = garch_scale_sigma(yno, &model, *pZ, pdinfo);
 #endif 
 
-    /* default variance parameter initialization */
-    int q = list[1], p = list[2];
-
-    vparm_init[0] = model.sigma * model.sigma * 0.1;
-    if (q>0) {
-	vparm_init[p+1] = 0.7;
-    }
-    vparm_init[1] = (q==0 ? 0.9 : 0.2) / p;
-    for (i=2; i<=p; i++) {
-	vparm_init[i] = vparm_init[1];
-    }
+    /* variance parameter initialization */
+    garch_vparm_init(list, &model, vparm);
 
     if (opt & OPT_A) {
 	/* "--arma-init": try initializing params via ARMA */
-	init_err = garch_init_by_arma(&model, list, scale, 
-				      pZ, pdinfo);
+	garch_init_by_arma(&model, list, pZ, pdinfo, scale, vparm);
     }
 
-    garch_driver(list, *pZ, scale, pdinfo, &model, prn, opt); 
+    garch_driver(list, *pZ, scale, pdinfo, &model, vparm,
+		 opt, prn); 
 
-    if (scale != 1.0) {
-	/* undo scaling of dependent variable */
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!na((*pZ)[yno][t])) {
-		(*pZ)[yno][t] *= scale;
-	    }
-	}
-    }
-
- bailout:
-
-    free(ols_list);
-    free(list);
+#if GARCH_SCALE_SIGMA
+    garch_undo_scaling(yno, scale, *pZ, pdinfo);
+#endif 
 
 #if GARCH_AUTOCORR_TEST
     if (!na(LMF)) {
@@ -825,6 +865,9 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 #endif
+
+    free(ols_list);
+    free(list);
 
     return model;
 }

@@ -12,7 +12,7 @@ have_gnu_regex = @have_gnu_regex@
 ifeq ($(have_gnu_regex),no)
   REGEX_OBJ = regex.o
 else
-  REGEX_DEF = -DNATIVE_GNU_REGEX
+  REGEX_DEF = -D_GNU_SOURCE -DNATIVE_GNU_REGEX
 endif
 
 DATADIR = $(prefix)/share/gretl

@@ -827,17 +827,26 @@ Johansen's procedure \\
 \texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
 $\beta$ from Johansen's procedure \\
 \texttt{\$rho}    & autoregressive coefficients for error process \\
-\texttt{\$sigma}  & FIXME covariance matrix \\
+\texttt{\$sigma}  & residual covariance matrix$^{\dagger}$ \\
 \texttt{\$stderr} & vector of estimated standard errors \\
-\texttt{\$uhat}   & FIXME matrix of residuals \\
-\texttt{\$vcv}    & FIXME covariance matrix (see text) \\
-\texttt{\$yhat}   & FIXME matrix of fitted values 
+\texttt{\$uhat}   & matrix of residuals$^{\dagger}$ \\
+\texttt{\$vcv}    & covariance matrix of parameter estimates \\
+\texttt{\$yhat}   & matrix of fitted values$^{\dagger}$ 
 \end{tabular}
 \caption{Matrix accessors for model data}
 \label{tab:matrix-accessors}
 \end{table}
 
-If these accessors are given without any prefix, they retrieve results
+The accessors in Table~\ref{tab:matrix-accessors} marked with
+$^{\dagger}$ are specific to models that take the form of systems of
+equations: \texttt{\$sigma} gives the cross-equation residual
+covariance matrix, and \texttt{\$uhat} and \texttt{\$yhat} give the
+matrices of residuals and fitted values, respectively (one column per
+equation).  In the single-equation case, however, \texttt{\$sigma}
+gives a scalar (the standard error of the residuals), while
+\texttt{\$uhat} and \texttt{\$yhat} give series.
+
+If the accessors are given without any prefix, they retrieve results
 from the last model estimated, if any.  Alternatively, they may be
 prefixed with the name of a saved model plus a period (\texttt{.}), in
 which case they retrieve results from the specified model.  Here are
@@ -854,13 +863,8 @@ grabs the coefficient vector from model \texttt{m1}; and the third
 (which uses the mechanism of sub-matrix selection described above)
 grabs a portion of the covariance matrix from model \texttt{m1}.
 
-If the ``model'' in question is actually a system (a VAR or VECM, or
-system of simultaneous equations), \verb|$uhat| retrieves the matrix
-of residuals (one column per equation) and \verb|$vcv| gets the
-cross-equation covariance matrix; in the special case of a VAR or a
-VECM, \verb|$coeff| returns the matrix of coefficients (one column per
-equation) and \verb|$compan| returns the companion matrix.  At present
-the other accessors are not available for equation systems.
+If the model in question a VAR or VECM (only) \verb|$compan| returns
+the companion matrix.
 
 After a vector error correction model is estimated via Johansen's
 procedure, the matrices \verb|$jalpha| and \verb|$jbeta| are

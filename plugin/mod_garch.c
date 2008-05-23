@@ -201,11 +201,9 @@ static void normal_score (const garch_container *DH)
 
 static int check_nonnegative (const double *par, int ncm, int k)
 {
-    int nonzero = 1;
-    int i;
+    int nonzero = (par[ncm+1] >= 0.0);
     double sum = 0.0;
-
-    nonzero = (par[ncm+1] >= 0.0);
+    int i;
 
     for (i=ncm+2; i<k; i++) {
 	nonzero &= (par[i] >= 1.0e-12);
@@ -223,20 +221,15 @@ static int check_nonnegative (const double *par, int ncm, int k)
 static int garch_etht (const double *par, void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
-
+    double **dedq = DH->score_e;
+    double **dhdq = DH->score_h;
     int t1 = DH->t1;
     int t2 = DH->t2;
     int p = DH->p;
     int q = DH->q;
-
     int maxlag = (p > q)? p : q;
-
     int i, j, k, ret = 0;
     int ncm = DH->ncm;
-
-    double **dedq = DH->score_e;
-    double **dhdq = DH->score_h;
-
     int t, T = t2 - t1 + 1;
     double et, ht, tmp, h0 = 0.0;
     double u_var = 0.0;
