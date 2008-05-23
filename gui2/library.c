@@ -2834,7 +2834,7 @@ static int real_do_model (int action)
     double rho;
     int err = 0;
 
-#if 0
+#if 1
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 

@@ -273,7 +273,7 @@ char *comma_separate_numbers (char *s)
 
     while (*s) {
 	n = strspn(s, " ,");
-	if (n > 0 && strchr(numstart, s[n])) {
+	if (n > 0 && s[n] != '\0' && strchr(numstart, s[n])) {
 	    done = 0;
 	    for (i=0; i<n && !done; i++) {
 		if (s[i] == ',') {

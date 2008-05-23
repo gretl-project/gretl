@@ -621,7 +621,9 @@ void set_optval_double (int ci, gretlopt opt, double x)
     optval_ci = ci;
     optval_opt = opt;
     optval_double = x;
+    gretl_push_c_numeric_locale();
     sprintf(optval_str, "%g", x);
+    gretl_pop_c_numeric_locale();
 }
 
 static void unset_optval_double (void)
