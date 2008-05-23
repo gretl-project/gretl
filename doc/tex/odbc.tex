@@ -128,7 +128,7 @@ In order to actually retrieve the data, the \texttt{data} command is
 used. Its syntax is:
 \begin{flushleft}
 \texttt{%
-  data \emph{series} [obs-format=\emph{format-string}] @\emph{query-string} --odbc
+  data \emph{series} [obs-format=\emph{format-string}] \emph{query-string} --odbc
 }
 \end{flushleft}
 where:
@@ -139,36 +139,36 @@ where:
 \item[\emph{format-string}] is an optional parameter, used to handle
   cases when a ``rectangular'' organisation of the database cannot be
   assumed (more on this later);
-\item[\emph{query-string}] is the identifier for a pre-existing string
-  containing the SQL statement used to extract the data.
+\item[\emph{query-string}] is a string containing the SQL statement
+  used to extract the data.
 \end{description}
 
-The \texttt{\emph{query-string}} will be typically created just before
-the call to \texttt{data}, and could, in principle, contain any
-valid SQL statement which results in a table: a ``\texttt{;}''
-character at the end will be added automatically. For example:
-\begin{verbatim}
+The \texttt{\emph{query-string}} can, in principle, contain any valid
+SQL statement which results in a table: a ``\texttt{;}'' character at
+the end will be added automatically. This string may be specified
+directly within the command, as in
+\begin{code}
+  data x "SELECT foo FROM bar" --odbc
+\end{code}
+which will store into the gretl variable \texttt{x} the content of the
+column \texttt{foo} from the table \texttt{bar}. However, since in a
+real-life situation the string containing the SQL statement will be
+rather long, it may be best to create it just before the call to
+\texttt{data}. For example:
+\begin{code}
   string SqlQry = "SELECT foo FROM bar"
   data x @SqlQry --odbc
-\end{verbatim}
-will store into the gretl variable \texttt{x} the content of the
-column \texttt{foo} from the table \texttt{bar}.
+\end{code}
 
-\begin{itemize}
-  \item It's impossible, at the moment, to write the query string
-    directly into the \texttt{data} command (that is, without storing
-    it into a named string beforehand); this will be relaxed in future
-    versions.
-\end{itemize}
-
-If the optional parameter is absent, as in the above example, the SQL
-query should return \textbf{exactly one} column of data, which is used
-to fill the variable \emph{series} sequentially.  It may be necessary
-to include a \texttt{smpl} command before the \texttt{data} command to
-set up the right ``window'' for the incoming data.  In addition, if
-one cannot assume that the data will be delivered in the correct order
-(typically, chronological order), the SQL query should contain an
-appropriate \texttt{ORDER BY} clause.
+If the optional parameter \texttt{obs-format} is absent, as in the
+above example, the SQL query should return \textbf{exactly one} column
+of data, which is used to fill the variable \emph{series}
+sequentially.  It may be necessary to include a \texttt{smpl} command
+before the \texttt{data} command to set up the right ``window'' for
+the incoming data.  In addition, if one cannot assume that the data
+will be delivered in the correct order (typically, chronological
+order), the SQL query should contain an appropriate \texttt{ORDER BY}
+clause.
 
 The optional format string is used for those cases when there is no
 certainty that the data from the query will arrive in the same order

@@ -347,7 +347,7 @@ the above example may be rewritten more cleanly as
 
 For passing data in the opposite direction, \app{gretl} defines a
 special function that can be used in the \app{R} environment to
-automate as much as possible a mechanism which is similar to the one
+automate, as much as possible, a mechanism which is similar to the one
 seen in the previous subsection. An \app{R} object will be written as
 a temporary file in \app{gretl}'s \texttt{dotdir} directory, from
 where it can be easily retrieved from within \app{gretl}.
@@ -355,35 +355,121 @@ where it can be easily retrieved from within \app{gretl}.
 The name of this function is \texttt{gretl\_export()}, and it accepts
 one argument, the object to be exported. At present, the only objects
 that can be exported with this method are matrices, data frames and
-time-series objects.
+time-series objects. The function creates a text file whith the same
+name as the exported object in \app{gretl}'s temporary directory. Data
+frames and time-series objects are stored as CSV files, and can be
+retireved by using the \texttt{append} command. Matrices, instead, are
+stored in the special text format that \app{gretl} uses for storing
+matrices on text files (see section \ref{sec:matrix-csv}); the file
+suffix is in this case \texttt{.mat}, and to read the matrix in
+\app{gretl} you must use the \texttt{mread()} function.
 
-As an example, we take the airline example and we set things up so
-that we bring back into \app{gretl} the estimated vector of
-coefficients, its covariance matrix and the residuals. The \app{R}
-code to accomplish this is:
+As an example, we take the airline data and we use them to estimate a
+structural time series model \`a la Harvey (1989). The model we will 
+use is the \emph{Basic Structural Model} (BSM), in which a time series
+is decomposed into three terms:
+\[
+  y_t = \mu_t + \gamma_t + \varepsilon_t
+\]
+where $\mu_t$ is a trend component, $\gamma_t$ is a seasonal component
+and $\varepsilon_t$ is a noise term. In turn, the following is assumed
+to hold:
+\begin{eqnarray*}
+  \Delta \mu_t & = & \beta_{t-1} + \eta_t \\
+  \Delta \beta_t & = & \zeta_t \\
+  \Delta^s \gamma_t & = & \Delta \omega_t
+\end{eqnarray*}
+where $\Delta^s$ is the seasonal differencing operator, $(1-L^s)$ and
+$\eta_t$, $\zeta_t$ and $\omega_t$ are mututally incorrelated white
+noise processes. The object of the analysis is to estimate the
+variances of the noise components (which may be zero) and to recover
+estimates of the latent processes $\mu_t$ (the ``level''), $\beta_t$
+(the ``slope'') and $\gamma_t$.
+
+\app{Gretl} does not provide (yet) a command for estimating this class
+of models, so we will use \app{R}'s \texttt{StructTS} command and
+import the results back into \app{gretl}. Once the \texttt{bjg}
+dataset is loaded in gretl, we pass the data to \app{R} and execute
+the following script:
 \begin{code}
-lg <- gretldata[, "lg"]
-airline <- arima(lg, c(0,1,1), seasonal=c(0,1,1))
+#extract the log series 
+y <- gretldata[, "lg"]
+# estimate the model
+strmod <- StructTS(y)
+# save the fitted components
+compon <- as.ts(strmod$fitted)
+# save the estimated variances
+vars <- as.matrix(strmod$coef)
 
-ac <- as.matrix(airline$coef)
-av <- as.matrix(airline$var.coef)
-ar <- as.ts(airline$residuals)
-
-gretl_export(ac)
-gretl_export(av)
-gretl_export(ar)
+# export into gretl's temp dir
+gretl_export(compon)
+gretl_export(vars)
 \end{code}
 %$
 
-on the \app{gretl} side:
+Running the above in \app{R} produces
 \begin{code}
-ac = mread("@dotdir/ac.mat")
-av = mread("@dotdir/av.mat")
-append @dotdir/ar.csv
+> # load data from gretl
+> gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
+
+> gretldata <- ts(gretldata, start=c(1949, 1), frequency = 12)
+
+> # load script from gretl
+> #extract the log series 
+> y <- gretldata[, "lg"]
+
+> # estimate the model
+> strmod <- StructTS(y)
+
+> # save the fitted components
+> compon <- as.ts(strmod$fitted)
+
+> # save the estimated variances
+> vars <- as.matrix(strmod$coef)
+
+> # export into gretl's temp dir
+> gretl_export(compon)
+
+> gretl_export(vars)
 \end{code}
 
-\textbf{FIXME: explain this in more detail}
+At this point, we can retrieve the results back into \app{gretl} by
+executing the following commands, either from the console or by
+creating a small script:\footnote{This example will work on Linux
+  and presumably on OSX without modifications. On the Windows
+  platform, you may have to substitute the ``\texttt{/}'' character
+  with ``$\backslash$''.}
+\begin{code}
+append @dotdir/compon.csv
+vars = mread("@dotdir/vars.mat")
+\end{code}
+The first command will read the estimated components from a CSV file,
+which is the format that the passing mechanism employs for series. The
+matrix \texttt{vars}, instead, is contained in the file \texttt{vars.mat}.
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figures/BSM-output}
+  \caption{Estimated components from BSM}
+  \label{fig:BSM-output}
+\end{figure}
+
+After the above commands have been executed, three new series will
+have appeared in the \app{gretl} workspace, which are the estimates of
+the three components: by plotting them together with the original
+data, you should get a graph similar to Figure
+\ref{fig:BSM-output}. The estimates of the variances can be simply
+seen by printing the \texttt{vars} matrix, as in
+
+\begin{code}
+? print vars
+vars (4 x 1)
+
+  0.00077185 
+      0.0000 
+   0.0013969 
+      0.0000 
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
