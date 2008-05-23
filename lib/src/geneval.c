@@ -835,7 +835,14 @@ static gretl_matrix *matrix_pdist (int t, char d, double *parm,
 
 static double scalar_node_get_value (NODE *n, parser *p)
 {
-    return (n->vnum >= 0)? (*p->Z)[n->vnum][0] : n->v.xval;
+    if (n->t == NUM) {
+	return (n->vnum >= 0)? (*p->Z)[n->vnum][0] : n->v.xval;
+    } else if (scalar_matrix_node(n)) {
+	return n->v.m->val[0];
+    } else {
+	p->err = E_INVARG;
+	return NADBL;
+    }
 }
 
 /* return a node containing the evaluated result of a
@@ -882,7 +889,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
-	    if (s->t == NUM) {
+	    if (s->t == NUM || s->t == MAT) {
 		parm[i] = scalar_node_get_value(s, p);
 	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
 		pvec = s->v.xvec;
@@ -897,8 +904,8 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		if (p->err) {
 		    goto disterr;
 		}
-		if (e->t == NUM) {
-		    parm[i] = e->v.xval;
+		if (e->t == NUM || e->t == MAT) {
+		    parm[i] = scalar_node_get_value(e, p);
 		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
 		    pvec = e->v.xvec;
 		} else if (i == k && !rgen && e->t == MAT && bvec == NULL) {
