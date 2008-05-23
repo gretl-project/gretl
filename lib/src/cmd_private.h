@@ -48,6 +48,8 @@ struct ExecState_ {
     equation_system *sys;
     gretl_restriction *rset;
     GRETL_VAR *var;
+    void *prev_model;
+    GretlObjType prev_type;
     char *submask; /* record of incoming sub-sample for functions */
     int alt_model;
     int in_comment;

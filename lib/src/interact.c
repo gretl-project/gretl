@@ -5049,6 +5049,10 @@ void gretl_exec_state_init (ExecState *s,
     s->in_comment = 0;
     s->funcerr = 0;
 
+    /* save pointer to 'last model', if any */
+    s->prev_model = get_last_model(&s->prev_type);
+    gretl_object_ref(s->prev_model, s->prev_type);
+
     s->submask = NULL;
     s->callback = NULL;
 }
@@ -5057,7 +5061,10 @@ void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
-    set_as_last_model(NULL, GRETL_OBJ_NULL);
+    set_as_last_model(s->prev_model, s->prev_type);
+    gretl_object_unref(s->prev_model, s->prev_type);
+    s->prev_model = NULL;
+    s->prev_type = 0;
     free_subsample_mask(s->submask);
     s->funcerr = 0;
 }

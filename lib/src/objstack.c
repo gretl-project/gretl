@@ -267,6 +267,11 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 {
     int rc = 999;
 
+    if (ptr == NULL) {
+	/* no-op */
+	return;
+    }
+
     if (type == GRETL_OBJ_ANY) {
 	type = get_stacked_type_by_data(ptr);
     } 

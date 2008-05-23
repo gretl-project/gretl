@@ -3811,7 +3811,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_t2 = pdinfo->t2;
     int debug, indent0, started = 0;
     int i, err = 0;
- 
+
     *funcerr_msg = '\0';
 
 #if FN_DEBUG
