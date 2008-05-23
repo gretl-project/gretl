@@ -45,6 +45,10 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
     double lb;
     int i, err = 0;
 
+    if (order == 0) {
+	order = pdinfo->pd;
+    }
+
     for (i=0; i<var->neqns && !err; i++) {
 	pmod = var->models[i];
 	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);

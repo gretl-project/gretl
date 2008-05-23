@@ -53,7 +53,7 @@ struct h_container_ {
     gretl_vector *gama;		/* selection eq. parameters */
     double sigma;
     double rho;
-    double lambda;		/* rho*sigma by definiton */
+    double lambda;		/* rho*sigma by definition */
 
     gretl_matrix *vcv;		/* Variance-covariance matrix */
     gretl_matrix *VProbit;	/* 1st stage probit covariance matrix */

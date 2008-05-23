@@ -2870,6 +2870,7 @@ int lmtest_driver (const char *param,
 	if (type == GRETL_OBJ_EQN) {
 	    err = autocorr_test(ptr, k, pZ, pdinfo, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
+	    fprintf(stderr, "calling VAR test, k = %d\n", k);
 	    err = gretl_VAR_autocorrelation_test(ptr, k, pZ, pdinfo, prn);
 	} else {
 	    err = E_NOTIMP;
