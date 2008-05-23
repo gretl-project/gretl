@@ -25,7 +25,7 @@
 #include "texprint.h"
 
 /**
- * gretl_VAR_print_VCV:
+ * gretl_VAR_print_sigma:
  * @var: pointer to gretl VAR structure.
  * @prn: printing object.
  *
@@ -35,7 +35,7 @@
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn)
+int gretl_VAR_print_sigma (const GRETL_VAR *var, PRN *prn)
 {
     int err = 0;
 

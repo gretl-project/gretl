@@ -3702,6 +3702,9 @@
       </options>      
       <examples>
         <example>heckit y 0 x1 x2 ; ys 0 x3 x4</example>
+	<demos>
+	  <demo>heckit.inp</demo>
+	</demos>
       </examples>
     </usage>
 

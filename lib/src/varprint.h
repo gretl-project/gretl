@@ -20,7 +20,7 @@
 #ifndef VARPRINT_H_
 #define VARPRINT_H_
 
-int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn);
+int gretl_VAR_print_sigma (const GRETL_VAR *var, PRN *prn);
 
 int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		     PRN *prn);

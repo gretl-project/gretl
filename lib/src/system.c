@@ -2651,7 +2651,7 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
     }
 }
 
-int system_print_VCV (const equation_system *sys, PRN *prn)
+int system_print_sigma (const equation_system *sys, PRN *prn)
 {
     int tex = tex_format(prn);
     int k, df;
@@ -3756,7 +3756,7 @@ int gretl_system_print (equation_system *sys,
 	sys_print_reconstituted_models(sys, Z, pdinfo, prn);
     }
 
-    system_print_VCV(sys, prn);
+    system_print_sigma(sys, prn);
 
     if (nr == 0 && (sys->method == SYS_METHOD_FIML || 
 		    sys->method == SYS_METHOD_3SLS || 

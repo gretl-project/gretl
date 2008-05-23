@@ -3369,10 +3369,10 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
     if (code == SYS_DATA_VCV) {
 	if (var != NULL) {
 	    wtitle = g_strdup(_("gretl: VAR covariance matrix"));
-	    err = gretl_VAR_print_VCV(var, prn);
+	    err = gretl_VAR_print_sigma(var, prn);
 	} else {
 	    wtitle = g_strdup(_("gretl: system covariance matrix"));
-	    err = system_print_VCV(sys, prn);
+	    err = system_print_sigma(sys, prn);
 	}
     } else if (code == SYS_DATA_RESIDS || code == SYS_DATA_FITTED) {
 	const char *titles[] = {

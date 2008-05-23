@@ -820,31 +820,38 @@ These are set out in Table~\ref{tab:matrix-accessors}.
 \centering
 \begin{tabular}{ll}
 \texttt{\$coeff}  & vector of estimated coefficients \\
-\texttt{\$compan} & companion matrix after a VAR or VECM estimation \\
+\texttt{\$compan} & companion matrix (after VAR or VECM estimation) \\
 \texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
 \texttt{\$jbeta}  & matrix $\beta$ (cointegration vectors) from
 Johansen's procedure \\
 \texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
 $\beta$ from Johansen's procedure \\
 \texttt{\$rho}    & autoregressive coefficients for error process \\
-\texttt{\$sigma}  & residual covariance matrix$^{\dagger}$ \\
+\texttt{\$sigma}  & residual covariance matrix \\
 \texttt{\$stderr} & vector of estimated standard errors \\
-\texttt{\$uhat}   & matrix of residuals$^{\dagger}$ \\
+\texttt{\$uhat}   & matrix of residuals \\
 \texttt{\$vcv}    & covariance matrix of parameter estimates \\
-\texttt{\$yhat}   & matrix of fitted values$^{\dagger}$ 
+\texttt{\$yhat}   & matrix of fitted values 
 \end{tabular}
 \caption{Matrix accessors for model data}
 \label{tab:matrix-accessors}
 \end{table}
 
-The accessors in Table~\ref{tab:matrix-accessors} marked with
-$^{\dagger}$ are specific to models that take the form of systems of
-equations: \texttt{\$sigma} gives the cross-equation residual
-covariance matrix, and \texttt{\$uhat} and \texttt{\$yhat} give the
-matrices of residuals and fitted values, respectively (one column per
-equation).  In the single-equation case, however, \texttt{\$sigma}
-gives a scalar (the standard error of the residuals), while
-\texttt{\$uhat} and \texttt{\$yhat} give series.
+Many of the accessors in Table~\ref{tab:matrix-accessors} behave
+somewhat differently depending on the sort of model that is
+referenced, as follows:
+
+\begin{itemize}
+\item Single-equation models: \texttt{\$sigma} gets a scalar (the
+  standard error of the residuals); \texttt{\$uhat} and
+  \texttt{\$yhat} get series.
+\item All system estimators: \texttt{\$sigma} gets the cross-equation
+  residual covariance matrix, \texttt{\$uhat} gets a matrix of
+  residuals, one column per equation.  
+\item VARs and VECMs: \texttt{\$stderr} and \texttt{\$yhat} are not
+  available; \texttt{\$coeff} gets a matrix of coefficients, one
+  column per equation.
+\end{itemize}
 
 If the accessors are given without any prefix, they retrieve results
 from the last model estimated, if any.  Alternatively, they may be
