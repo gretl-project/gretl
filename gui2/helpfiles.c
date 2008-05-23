@@ -1363,8 +1363,8 @@ static int help_pos_from_string (const char *s, int *en,
     return pos;
 }
 
-gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
-		       windata_t *vwin)
+gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
+			      windata_t *vwin)
 {
     if (!window_help_is_active(vwin)) { 
 	/* command help not activated */

@@ -119,7 +119,8 @@ enum {
     INDEX_ITEM,
     EDIT_SCRIPT_ITEM,
     STICKIFY_ITEM,
-    ALPHA_ITEM
+    ALPHA_ITEM,
+    REFRESH_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -1762,6 +1763,31 @@ static void script_index (GtkWidget *w, windata_t *vwin)
     display_files(NULL, PS_FILES, NULL);
 }
 
+static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
+{
+    gchar *logfile = NULL;
+    gchar *newtext = NULL;
+    int err;
+
+    logfile = g_strdup_printf("%ssession.inp", paths.dotdir);
+    err = dump_command_stack(logfile, 0);
+
+    if (!err) {
+	err = gretl_file_get_contents(logfile, &newtext);
+    }
+
+    if (!err) {
+	GtkTextBuffer *buf;
+
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	gtk_text_buffer_set_text(buf, "", -1);
+	textview_set_text(vwin->w, newtext);
+	g_free(newtext);
+    }
+
+    g_free(logfile);
+}
+
 #define xround(x) (((x-floor(x))>.5)? ceil(x) : floor(x))
 
 static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
@@ -1838,14 +1864,15 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, script_tabs_dialog, EDIT_SCRIPT_ITEM },
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Scripts index"), GTK_STOCK_INDEX, script_index, INDEX_ITEM },
-    { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, CMD_HELP_ITEM },
+    { N_("Confidence level..."), GRETL_STOCK_ALPHA, coeffint_set_alpha, ALPHA_ITEM },
+    { N_("Refresh"), GTK_STOCK_REFRESH, cmd_log_refresh, REFRESH_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, series_view_graph, PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, add_matrix_callback, ADD_MATRIX_ITEM },
     { N_("Stickiness..."), GRETL_STOCK_PIN, set_output_sticky, STICKIFY_ITEM },
-    { N_("Confidence level..."), GRETL_STOCK_ALPHA, coeffint_set_alpha, ALPHA_ITEM },
+    { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }
@@ -1951,6 +1978,8 @@ static toolfunc item_get_callback (struct viewbar_item *item, windata_t *vwin,
     } else if (r != SCRIPT_OUT && f == STICKIFY_ITEM) {
 	return NULL;
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
+	return NULL;
+    } else if (r != VIEW_LOG && f == REFRESH_ITEM) {
 	return NULL;
     } else if (f == SAVE_ITEM) { 
 	if (!edit_ok(r) || r == SCRIPT_OUT) {
@@ -3733,7 +3762,8 @@ static void system_test_call (gpointer p, guint code, GtkWidget *w)
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
-    char title[72];
+    gchar *title = NULL;
+    gchar *cstr = NULL;
     PRN *prn;
     int order = 0;
     int err;
@@ -3764,7 +3794,8 @@ static void system_test_call (gpointer p, guint code, GtkWidget *w)
     }	
 
     if (code == SYS_AUTOCORR_TEST) {
-	strcpy(title, _("gretl: autocorrelation"));
+	title = g_strdup(_("gretl: autocorrelation"));
+	cstr = g_strdup_printf("lmtest %d --autocorr", order);
 	if (var != NULL) {
 	    err = gretl_VAR_autocorrelation_test(var, order, 
 						 &Z, datainfo, 
@@ -3773,14 +3804,16 @@ static void system_test_call (gpointer p, guint code, GtkWidget *w)
 	    err = system_autocorrelation_test(sys, order, prn);
 	}
     } else if (code == SYS_ARCH_TEST) {
-	strcpy(title, _("gretl: ARCH test"));
+	title = g_strdup(_("gretl: ARCH test"));
+	cstr = g_strdup_printf("lmtest %d --arch", order);
 	if (var != NULL) {
 	    err = gretl_VAR_arch_test(var, order, datainfo, prn);
 	} else {
 	    err = system_arch_test(sys, order, prn);
 	}
     } else if (code == SYS_NORMALITY_TEST) {
-	sprintf(title, "gretl: %s", _("Test for normality of residual"));
+	title = g_strdup_printf("gretl: %s", _("Test for normality of residual"));
+	cstr = g_strdup("testuhat");
 	if (var != NULL) {
 	    err = gretl_VAR_normality_test(var, prn);
 	} else {
@@ -3794,8 +3827,12 @@ static void system_test_call (gpointer p, guint code, GtkWidget *w)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	add_command_to_stack(cstr);
 	view_buffer(prn, 78, 400, title, PRINT, NULL); 
     }
+
+    g_free(title);
+    g_free(cstr);
 }
 
 static void VAR_roots_plot_call (gpointer p, guint u, GtkWidget *w)

@@ -448,7 +448,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     } else {
 	if (key->keyval == GDK_F1) {
 	    set_window_help_active(vwin);
-	    edit_script_help(NULL, NULL, vwin);
+	    interactive_script_help(NULL, NULL, vwin);
 	} else if (vwin->role == EDIT_SCRIPT) {    
 	    if (key->keyval == GDK_Return) {
 		ret = script_electric_enter(vwin);
@@ -522,8 +522,11 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 G_CALLBACK(script_popup_handler), 
 			 vwin);
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
-			 G_CALLBACK(edit_script_help), vwin);
-    }
+			 G_CALLBACK(interactive_script_help), vwin);
+    } else if (vwin->role == VIEW_LOG) {
+	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
+			 G_CALLBACK(interactive_script_help), vwin);
+    }	
 
     g_object_unref(cmap);
 }

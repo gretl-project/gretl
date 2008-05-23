@@ -3073,7 +3073,7 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     }
 
     if (idx == M_UHAT) {
-	src = var->E;
+	src = gretl_VAR_get_residual_matrix(var);
     } else if (idx == M_COMPAN) {
 	src = var->A;
     } else if (idx == M_COEFF) {
