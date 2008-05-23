@@ -236,7 +236,7 @@ the job is small. In some cases, however, it would be much better to
 have \app{R} execute a script prepared in advance. An obvious way to
 do this is to use the \texttt{source()} command in
 \app{R}. Alternatively, \app{gretl} offers the convenience to edit an
-\app{R} script and run it, having the current dataset preloaded
+\app{R} script and run it, having the current dataset pre-loaded
 automatically. This feature can be accessed via the ``File, Script
 Files'' menu entry. By selecting ``User file'', one can load a
 pre-existing \app{R} script; if you want to create a new script
@@ -355,10 +355,10 @@ where it can be easily retrieved from within \app{gretl}.
 The name of this function is \texttt{gretl\_export()}, and it accepts
 one argument, the object to be exported. At present, the only objects
 that can be exported with this method are matrices, data frames and
-time-series objects. The function creates a text file whith the same
+time-series objects. The function creates a text file with the same
 name as the exported object in \app{gretl}'s temporary directory. Data
 frames and time-series objects are stored as CSV files, and can be
-retireved by using the \texttt{append} command. Matrices, instead, are
+retrieved by using the \texttt{append} command. Matrices, instead, are
 stored in the special text format that \app{gretl} uses for storing
 matrices on text files (see section \ref{sec:matrix-csv}); the file
 suffix is in this case \texttt{.mat}, and to read the matrix in
@@ -377,10 +377,10 @@ to hold:
 \begin{eqnarray*}
   \Delta \mu_t & = & \beta_{t-1} + \eta_t \\
   \Delta \beta_t & = & \zeta_t \\
-  \Delta^s \gamma_t & = & \Delta \omega_t
+  \Delta_s \gamma_t & = & \Delta \omega_t
 \end{eqnarray*}
-where $\Delta^s$ is the seasonal differencing operator, $(1-L^s)$, and
-$\eta_t$, $\zeta_t$ and $\omega_t$ are mututally uncorrelated white
+where $\Delta_s$ is the seasonal differencing operator, $(1-L^s)$, and
+$\eta_t$, $\zeta_t$ and $\omega_t$ are mutually uncorrelated white
 noise processes. The object of the analysis is to estimate the
 variances of the noise components (which may be zero) and to recover
 estimates of the latent processes $\mu_t$ (the ``level''), $\beta_t$
