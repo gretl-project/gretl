@@ -5349,11 +5349,11 @@
     <description>
       <para>
 	Carries out a test for normality for the given
-	<repl>series</repl>.  The specific test is controlled
-	by the option flags (but if no flag is given, the
-	Doornik&ndash;Hansen test is performed).  The
-	Jarque&ndash;Bera option is not recommended for small
-	samples.
+	<repl>series</repl>.  The specific test is controlled by the
+	option flags (but if no flag is given, the Doornik&ndash;Hansen
+	test is performed).  Note: the Jarque&ndash;Bera test, while it is
+	easy to compute, has relatively poor small-sample properties and
+	is not recommended for purposes other than comparison.
       </para>
       <para>
 	The test statistic and its p-value may be retrieved
