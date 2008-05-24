@@ -329,7 +329,7 @@ directory. However, it may be wise for the purpose at hand to use the
 directory in which \app{gretl} stores all its temporary files, whose
 name is stored in the built-in string \texttt{dotdir} (see section
 \ref{sec:named-strings}). The value of this string is automatically
-passed to \app{R} as the string variable \texttt{gretl\_dotdir}, so
+passed to \app{R} as the string variable \texttt{gretl.dotdir}, so
 the above example may be rewritten more cleanly as
 
 \app{Gretl} side:
@@ -339,7 +339,7 @@ the above example may be rewritten more cleanly as
 \end{code}
 \app{R} side:
 \begin{code}
-  fname <- paste(gretl_dotdir, "mymatfile.mat", sep="")
+  fname <- paste(gretl.dotdir, "mymatfile.mat", sep="")
   A <- as.matrix(read.table(fname, skip=1))
 \end{code}
 
@@ -352,7 +352,7 @@ seen in the previous subsection. An \app{R} object will be written as
 a temporary file in \app{gretl}'s \texttt{dotdir} directory, from
 where it can be easily retrieved from within \app{gretl}.
 
-The name of this function is \texttt{gretl\_export()}, and it accepts
+The name of this function is \texttt{gretl.export()}, and it accepts
 one argument, the object to be exported. At present, the only objects
 that can be exported with this method are matrices, data frames and
 time-series objects. The function creates a text file with the same
@@ -402,8 +402,8 @@ compon <- as.ts(strmod$fitted)
 vars <- as.matrix(strmod$coef)
 
 # export into gretl's temp dir
-gretl_export(compon)
-gretl_export(vars)
+gretl.export(compon)
+gretl.export(vars)
 \end{code}
 %$
 
@@ -428,9 +428,9 @@ Running the above in \app{R} produces
 > vars <- as.matrix(strmod$coef)
 
 > # export into gretl's temp dir
-> gretl_export(compon)
+> gretl.export(compon)
 
-> gretl_export(vars)
+> gretl.export(vars)
 \end{code}
 
 At this point, we can pull the results back into \app{gretl} by

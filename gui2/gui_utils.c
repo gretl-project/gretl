@@ -4281,7 +4281,7 @@ static void run_R_sync (void)
     }
 
     cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
-			  "--quiet", Rterm);
+			  "--slave", Rterm);
 
     err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
 
@@ -4397,7 +4397,7 @@ static void run_R_sync (void)
     argv[1] = "--no-save";
     argv[2] = "--no-init-file";
     argv[3] = "--no-restore-data";
-    argv[4] = "--quiet";
+    argv[4] = "--slave";
     argv[5] = NULL;
 
     signal(SIGCHLD, SIG_DFL);
@@ -4450,15 +4450,26 @@ static void write_R_export_func (FILE *fp)
     dotdir = paths.dotdir;
 #endif
 
-    fprintf(fp, "gretl_dotdir <- \"%s\"\n", dotdir);
-    fputs("gretl_export <- function(x) {\n", fp);
+    fprintf(fp, "gretl.dotdir <- \"%s\"\n", dotdir);
+    fputs("gretl.export <- function(x) {\n", fp);
     fprintf(fp, "\tprefix <- \"%s\"\n", dotdir);
-    fputs("\tsx <- substitute(x)\n", fp);
-    fputs("\tif (is.data.frame(x) || is.ts(x)) {\n", fp);
-    fputs("\t\tfname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
-    fputs("\t\twrite.csv(x, file=fname)\n", fp);
+    fputs("\tsx <- as.character(substitute(x))\n", fp);
+    fputs("\tif (is.ts(x)) {\n", fp);
+    fputs("\t\tfname <- paste(prefix, sx, \".csv\", sep=\"\")\n", 
+	  fp);
+    fputs("\t\tdfx <- data.frame(x)\n", fp);
+    fputs("\t\tif (dim(dfx)[2] == 1) {\n", fp);
+    fputs("\t\t\tdfx <- as.data.frame(x);\n", fp);
+    fputs("\t\t\tcolnames(dfx) <- sx;\n", fp);
+    fputs("\t\t}\n", fp);
+    fputs("\t\twrite.csv(dfx, file=fname, row.names=F)\n", fp);
+    fputs("\t} else if (is.data.frame(x)) {\n", fp);
+    fputs("\t\tfname <- paste(prefix, sx, \".csv\", sep=\"\")\n", 
+	  fp);
+    fputs("\t\twrite.csv(x, file=fname, row.names=F)\n", fp);
     fputs("\t} else if (is.matrix(x)) {\n", fp);
-    fputs("\t\tfname <- paste(prefix, sx, \".mat\", sep=\"\")\n", fp);
+    fputs("\t\tfname <- paste(prefix, sx, \".mat\", sep=\"\")\n", 
+	  fp);
     fputs("\t\twrite(dim(x), fname)\n", fp);
     fputs("\t\twrite(t(x), file=fname, ncolumns=dim(x)[2], append=TRUE)\n", fp);
     fputs("\t}\n", fp);
