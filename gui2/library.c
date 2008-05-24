@@ -5600,29 +5600,34 @@ void set_currdir_from_filename (const char *fname)
     }
 }
 
-void do_open_script (void)
+void do_open_script (int action)
 {
-    FILE *fp;
+    FILE *fp = NULL;
 
-    fp = fopen(tryfile, "r");
+    fp = gretl_fopen(tryfile, "r");
 
     if (fp == NULL) {
 	file_read_errbox(tryfile);
-	delete_from_filelist(FILE_LIST_SESSION, tryfile);
-	delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
+	if (action == EDIT_SCRIPT) {
+	    delete_from_filelist(FILE_LIST_SESSION, tryfile);
+	    delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
+	}
 	return;
-    } else {
-	fclose(fp);
     }
-	
-    strcpy(scriptfile, tryfile);
-    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-    set_currdir_from_filename(scriptfile);
 
-    if (has_system_prefix(scriptfile, &paths, SCRIPT_SEARCH)) {
-	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
+    fclose(fp);
+
+    if (action == EDIT_SCRIPT) {
+	strcpy(scriptfile, tryfile);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	set_currdir_from_filename(scriptfile);
+	if (has_system_prefix(scriptfile, &paths, SCRIPT_SEARCH)) {
+	    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
+	} else {
+	    view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
+	}
     } else {
-	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
+	view_file(tryfile, 1, 0, 78, 370, action);
     } 
 }
 

@@ -486,7 +486,7 @@ static void
 set_script_from_filelist (gpointer p, guint i, GtkWidget *w)
 {
     strcpy(tryfile, scriptp[i]);
-    do_open_script();
+    do_open_script(EDIT_SCRIPT);
 }
 
 #ifdef G_OS_WIN32

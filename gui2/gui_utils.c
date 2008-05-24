@@ -445,52 +445,6 @@ int gretl_tempname (char *fname)
     return err;
 }
 
-int probably_native_datafile (const char *fname)
-{
-    char test[5];
-    int len = strlen(fname);
-    int ret = 0;
-
-    if (len >= 5) {
-	*test = 0;
-	strncat(test, fname + len - 4, 4);
-	lower(test);
-	if (!strcmp(test, ".gdt")) {
-	    ret = 1;
-	} 
-    }
-
-    return ret;
-}
-
-int probably_script_file (const char *fname)
-{
-    char test[5];
-    int len = strlen(fname);
-
-    if (len < 5) return 0;
-
-    *test = 0;
-    strncat(test, fname + len - 4, 4);
-    lower(test);
-
-    return !strcmp(test, ".inp");
-}
-
-int probably_session_file (const char *fname)
-{
-    char test[7];
-    int len = strlen(fname);
-
-    if (len < 7) return 0;
-
-    *test = 0;
-    strncat(test, fname + len - 6, 6);
-    lower(test);
-
-    return !strcmp(test, ".gretl");
-}
-
 static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
 {
     int i, role, mvm, vmax = 0;
@@ -1019,13 +973,10 @@ int get_imported_data (char *fname, int ftype, int append)
     int list[4] = {3, 1, 0, 0};
     int *plist = NULL;
     FILE *fp;
-    int (*ss_importer) (const char *, int *, char *,
-			double ***, DATAINFO *, 
+    int (*ss_importer) (const char *, int *, char *, double ***, DATAINFO *, 
 			gretlopt, PRN *);
-    int (*misc_importer) (const char *, 
-			  double ***, DATAINFO *, 
+    int (*misc_importer) (const char *, double ***, DATAINFO *, 
 			  gretlopt, PRN *);
-
     int err = 0;
     
     fp = gretl_fopen(fname, "r");
@@ -1262,7 +1213,7 @@ void verify_open_session (void)
 {
     if (!gretl_is_pkzip_file(tryfile)) {
 	/* not a new-style zipped session file */
-	do_open_script();
+	do_open_script(EDIT_SCRIPT);
 	return;
     }
 
@@ -2446,9 +2397,12 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
                                      r == EDIT_GP || \
 				     r == EDIT_R)
 
-#define doing_script(r) (r == EDIT_SCRIPT || \
-			 r == VIEW_SCRIPT || \
-			 r == VIEW_LOG)
+#define record_on_winstack(r) (r != EDIT_SCRIPT && \
+	                       r != EDIT_GP && \
+                               r != EDIT_R && \
+                               r != VIEW_LOG && \
+                               r != VIEW_SCRIPT && \
+                               r != CONSOLE)
 
 #define editing_script(r) (r == EDIT_SCRIPT || \
 	                   r == EDIT_GP || \
@@ -2474,7 +2428,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     /* then start building the file viewer */
     title = make_viewer_title(role, filename);
     vwin = common_viewer_new(role, (title != NULL)? title : filename, 
-			     NULL, !doing_script(role) && role != CONSOLE);
+			     NULL, record_on_winstack(role));
     g_free(title);
 
     if (vwin == NULL) {
@@ -4437,6 +4391,7 @@ static void run_R_sync (void)
     gchar *errout = NULL;
     gint status = 0;
     GError *gerr = NULL;
+    PRN *prn = NULL;
 
     argv[0] = "R";
     argv[1] = "--no-save";
@@ -4456,17 +4411,25 @@ static void run_R_sync (void)
 	g_error_free(gerr);
 	status = 1;
     } else if (status != 0) {
-	fprintf(stderr, "exit status = %d\n", status);
 	if (errout != NULL) {
-	    errbox(errout);
+	    if (*errout == '\0') {
+		errbox("R exited with status %d", status);
+	    } else if (strlen(errout) < MAXLEN) {
+		errbox(errout);
+	    } else {
+		prn = gretl_print_new_with_buffer(errout);
+		errout = NULL;
+	    }
 	}
     } else if (out != NULL) {
-	PRN *prn = gretl_print_new_with_buffer(out);
-
-	view_buffer(prn, 78, 350, _("R output"), PRINT, NULL);
+	prn = gretl_print_new_with_buffer(out);
 	out = NULL;
     } else {
 	warnbox("Got no output");
+    }
+
+    if (prn != NULL) {
+	view_buffer(prn, 78, 350, _("R output"), PRINT, NULL);
     }
 
     g_free(out);

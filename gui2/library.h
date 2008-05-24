@@ -269,7 +269,7 @@ void display_var (void);
 
 /* script- and file-related functions */
 
-void do_open_script (void);
+void do_open_script (int action);
 
 void open_info (gpointer p, guint edit, GtkWidget *w);
 

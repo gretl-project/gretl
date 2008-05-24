@@ -994,7 +994,7 @@ int main (int argc, char *argv[])
 	if (ftype == GRETL_SESSION) {
 	    do_open_session();
 	} else {
-	    do_open_script();
+	    do_open_script(EDIT_SCRIPT);
 	}
     }
 
@@ -1769,8 +1769,12 @@ mdata_handle_drag  (GtkWidget *widget,
 
     if (gretl_is_pkzip_file(tmp)) {
 	verify_open_session();
-    } else if (probably_script_file(tmp)) {
-	do_open_script();
+    } else if (has_suffix(tmp, ".inp")) {
+	do_open_script(EDIT_SCRIPT);
+    } else if (has_suffix(tmp, ".R")) {
+	do_open_script(EDIT_R);
+    } else if (has_suffix(tmp, ".plt")) {
+	do_open_script(EDIT_GP);
     } else {
 	verify_open_data(NULL, 0);
     }
@@ -1788,8 +1792,7 @@ static void auto_store (void)
 	oflag = OPT_NONE;
     }
 
-    if ((data_status & USER_DATA) && 
-	probably_native_datafile(paths.datfile)) {
+    if ((data_status & USER_DATA) && has_suffix(paths.datfile, ".gdt")) {
 	do_store(paths.datfile, oflag);
     } else {
 	file_selector(_("Save data file"), SAVE_DATA, FSEL_DATA_NONE, NULL);

@@ -26,12 +26,6 @@ void gretl_stock_icons_init (void);
 gchar *menu_translate (const gchar *path, gpointer p);
 #endif
 
-int probably_native_datafile (const char *fname);
-
-int probably_script_file (const char *fname);
-
-int probably_session_file (const char *fname);
-
 int copyfile (const char *src, const char *dest);
 
 int isdir (const char *path);

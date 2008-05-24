@@ -1067,7 +1067,7 @@ void do_open_session (void)
     } else if (status == SAVEFILE_SCRIPT) {
 	strcpy(scriptfile, sessionfile);
 	*sessionfile = '\0';
-	do_open_script();
+	do_open_script(EDIT_SCRIPT);
 	return;
     }
 
