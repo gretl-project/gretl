@@ -500,34 +500,6 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
 			      r == VIEW_SCRIPT)
 
-#ifndef USE_GTKSOURCEVIEW_2
-
-/* set up paren-matching in blue */
-
-static void set_blue_matching (GtkSourceBuffer *sbuf)
-{
-    GtkSourceTagStyle *tagstyle;
-    GdkColormap *cmap;
-    GdkColor blue;
-
-    cmap = gdk_colormap_get_system();
-    gdk_color_parse("blue", &blue);
-    gdk_colormap_alloc_color(cmap, &blue, FALSE, TRUE);
-
-    tagstyle = gtk_source_tag_style_new();
-    tagstyle->mask = GTK_SOURCE_TAG_STYLE_USE_FOREGROUND;
-    tagstyle->foreground = blue;
-    g_object_set_data_full(G_OBJECT(sbuf), "tag-style",
-			   tagstyle, 
-			   (GDestroyNotify) gtk_source_tag_style_free); 
-    gtk_source_buffer_set_bracket_match_style(sbuf, tagstyle);
-    gtk_source_buffer_set_check_brackets(sbuf, TRUE);
-
-    g_object_unref(cmap);    
-}
-
-#endif
-
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
 {
@@ -545,8 +517,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			   lm, (GDestroyNotify) g_object_unref); 
     g_object_unref(lm); 
 
-#ifndef USE_GTKSOURCEVIEW_2
-    set_blue_matching(sbuf);
+#ifdef USE_GTKSOURCEVIEW_2
+    gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
+#else
+    gtk_source_buffer_set_check_brackets(sbuf, TRUE);
 #endif
 
     vwin->w = gtk_source_view_new_with_buffer(sbuf);

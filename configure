@@ -23708,6 +23708,7 @@ Configuration:
   FFTW3 support:                          ${have_fftw3}
   Build with GTK version:                 ${have_gtk}
   Use GTK printing apparatus:             ${have_gtkprint}
+  Use installed gtksourceview:            ${have_sourceview}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}
