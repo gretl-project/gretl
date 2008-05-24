@@ -50,6 +50,9 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
+try_sourceview="yes"
+have_sourceview="no"
+bundled_sourceview="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -162,8 +165,18 @@ else
 fi,
 try_mpfr=yes)
 
+AC_ARG_WITH(gtksourceview,
+[  --with-gtksourceview   Use installed gtksourceview [[default=auto]]],
+if test "x${withval}" = "xno"
+then
+  try_sourceview=no
+else
+  try_sourceview=yes
+fi,
+try_sourceview=yes)
+
 AC_ARG_WITH(x-12-arima,
-[  --with-x-12-arima     include X-12-ARIMA support [[default=yes]]],
+[  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
 if test "$withval" = "no"
 then
   have_x12a="no"
@@ -176,7 +189,7 @@ HAVE_X12A=1)
 AC_SUBST(HAVE_X12A)
 
 AC_ARG_WITH(tramo-seats,
-[  --with-tramo-seats    include TRAMO/SEATS support [[default=yes]]],
+[  --with-tramo-seats     include TRAMO/SEATS support [[default=yes]]],
 if test "$withval" = "no"
 then
   have_tramo="no"
@@ -189,7 +202,7 @@ HAVE_TRAMO=1)
 AC_SUBST(HAVE_TRAMO)
 
 AC_ARG_WITH(audio,
-[  --with-audio    include audio graph support (experimental)],
+[  --with-audio           include audio graph support (experimental)],
 if test "$withval" = "yes"
 then
   AC_DEFINE(HAVE_AUDIO)
@@ -200,7 +213,7 @@ fi,
 have_audio=no)
 
 AC_ARG_WITH(odbc,
-[  --with-odbc    include ODBC support (experimental)],
+[  --with-odbc            include ODBC support (experimental)],
 if test "$withval" = "yes"
 then
   have_odbc=yes
@@ -440,8 +453,26 @@ if test "$have_gtk" = "2.0" ; then
     )
 fi
 
-dnl Test regex availability for supplied gtksourceview
-if test "$have_gtk" = "2.0" ; then
+dnl
+dnl Check for installed gtksourceview?
+dnl
+if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0,
+      AC_DEFINE(USE_GTKSOURCEVIEW_2)
+      have_sourceview="2.0",
+      echo "version 2.0 not found"
+    )
+    if test "$have_sourceview" != "2.0" ; then
+       PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0 >= 1.8.5,
+         have_sourceview="1.0",
+         echo "will use 1.8.5"
+         bundled_sourceview="yes"      
+       )
+    fi      
+fi
+
+dnl Test regex availability for bundled gtksourceview
+if test "$bundled_sourceview" = "yes" ; then
      AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
      have_gnu_regex="yes",
      have_gnu_regex="no")
@@ -458,6 +489,7 @@ AC_SUBST(build_gui)
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_mpfr)
+AC_SUBST(have_sourceview)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
 AC_SUBST(have_odbc)

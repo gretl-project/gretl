@@ -3278,6 +3278,9 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1 , \\\n", tmp);
     g_free(tmp);
 
+    /* numeric output coming up! */
+    gretl_push_c_numeric_locale();
+
     /* ols estimate plus (1 - alpha) band */
     tmp = g_strdup_printf(G_("OLS estimate with %g%% band"), cval);
     fprintf(fp, "%g title '%s' w lines lt 2 , \\\n", pmod->coeff[k], tmp);
@@ -3285,9 +3288,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     fprintf(fp, "%g notitle w dots lt 2 , \\\n", pmod->coeff[k] + olsband);
     fprintf(fp, "%g notitle w dots lt 2\n", pmod->coeff[k] - olsband);
 
-    gretl_push_c_numeric_locale();
-
-    /* write out the values */
+    /* write out the interval values */
 
     for (i=0, j=k*ntau; i<ntau; i++, j++) {
 	tau_i = gretl_vector_get(tau, i);

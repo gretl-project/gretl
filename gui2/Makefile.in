@@ -11,6 +11,7 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
 have_readline = @have_readline@
+have_sourceview = @have_sourceview@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
@@ -21,6 +22,8 @@ GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
+GTKSOURCEVIEW_CFLAGS = @GTKSOURCEVIEW_CFLAGS@
+GTKSOURCEVIEW_LIBS = @GTKSOURCEVIEW_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
@@ -31,10 +34,31 @@ CARBONLIB = @CARBONLIB@
 GTK_EXTRA_CFLAGS = -I$(topsrc)/gui2/gtkextra-lite
 GTK_EXTRA_LIB = -L./gtkextra-lite -lgtkextra-lite
 
-# Bundled gtksourceview subset
-GTK_SOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
-GTK_SOURCEVIEW_LIB = -L./gtksourceview -lgtksourceview-lite
-langdir = $(prefix)/share/gretl/gtksourceview
+GRETL_LANG = gretl.lang
+GNUPLOT_LANG = gnuplot.lang
+R_LANG = R.lang
+
+# Bundled gtksourceview subset?
+ifeq ($(have_sourceview),no)
+  GTKSOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
+  GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
+  langdir = $(prefix)/share/gretl/gtksourceview
+  GTKSOURCEVIEW_LITE = gtksourceview/libgtksourceview-lite.a
+  query_install_Rlang = install-Rlang
+endif
+
+ifeq ($(have_sourceview),2.0)
+  svprefix = $(shell pkg-config --variable=prefix gtksourceview-2.0)
+  langdir = $(svprefix)/share/gtksourceview-2.0/language-specs
+  LANGOPT = --lang2
+  GRETL_LANG = gretl.lang.2
+  GNUPLOT_LANG = gnuplot.lang.2
+endif
+
+ifeq ($(have_sourceview),1.0)
+  svprefix = $(shell pkg-config --variable=prefix gtksourceview-1.0)
+  langdir = $(svprefix)/share/gtksourceview-1.0/language-specs
+endif
 
 ifeq ($(CC),)
   CC = gcc
@@ -59,8 +83,8 @@ else
   G_CFLAGS = $(GTK_CFLAGS)
 endif
 
-LIBS = $(G_LIBS) $(GTK_SOURCEVIEW_LIB) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
-GUI_CFLAGS = $(G_CFLAGS) $(GTK_SOURCEVIEW_CFLAGS) $(GTK_EXTRA_CFLAGS)
+LIBS = $(G_LIBS) $(GTKSOURCEVIEW_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
+GUI_CFLAGS = $(G_CFLAGS) $(GTKSOURCEVIEW_CFLAGS) $(GTK_EXTRA_CFLAGS)
 
 ifeq ($(USE_NLS),yes)
   datadir = @datadir@
@@ -138,7 +162,6 @@ HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 
 GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
-GTKSOURCEVIEW_LITE = gtksourceview/libgtksourceview-lite.a
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
@@ -156,8 +179,8 @@ mklang: mklang.o
 mklang.o: mklang.c $(topsrc)/lib/src/options.c $(topsrc)/lib/src/genlex.c
 	$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
-gretl.lang: mklang
-	./mklang > $@
+$(GRETL_LANG): mklang
+	./mklang $(LANGOPT) > $@
 
 $(GTKEXTRA_LITE): 
 	make -C gtkextra-lite
@@ -188,15 +211,17 @@ install-exec: $(PROG) installdirs
 install-gnome: $(PROG) installdirs 
 	$(MAKE) -C ../gnome install 
 
-install-lang: gretl.lang
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
-	$(INSTALL_DATA) gretl.lang $(DESTDIR)$(langdir)
-	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(DESTDIR)$(langdir)
+install-Rlang: $(topsrc)/gui2/R.lang
 	$(INSTALL_DATA) $(topsrc)/gui2/R.lang $(DESTDIR)$(langdir)
+
+install-lang: $(GRETL_LANG) installdirs $(query_install_Rlang)
+	$(INSTALL_DATA) $(GRETL_LANG) $(DESTDIR)$(langdir)/gretl.lang
+	$(INSTALL_DATA) $(topsrc)/gui2/$(GNUPLOT_LANG) $(DESTDIR)$(langdir)/gnuplot.lang
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir) 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
 
 clean:
 	rm -f *.o $(PROG)

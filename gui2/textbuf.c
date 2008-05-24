@@ -23,7 +23,11 @@
 
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguage.h>
-#include <gtksourceview/gtksourcelanguagesmanager.h>
+#ifdef USE_GTKSOURCEVIEW_2
+# include <gtksourceview/gtksourcelanguagemanager.h>
+#else
+# include <gtksourceview/gtksourcelanguagesmanager.h>
+#endif
 
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
@@ -339,11 +343,64 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
     return 0;
 }
 
+#ifdef USE_GTKSOURCEVIEW_2
+
+static void sourceview_apply_language (windata_t *vwin)
+{
+    GtkSourceLanguageManager *lm; 
+    GtkSourceLanguage *lang = NULL;
+    const char *id = NULL;
+
+    lm = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
+
+    if (vwin->role == EDIT_GP) {
+	id = "gnuplot";
+    } else if (vwin->role == EDIT_R) {
+	id = "r";
+    } else {
+	id = "gretl";
+    }
+
+    lang = gtk_source_language_manager_get_language(lm, id);
+    if (lang == NULL) {
+	fprintf(stderr, "*** gtksourceview: lang is NULL for id='%s'\n", id);
+    } else {
+	gtk_source_buffer_set_language(vwin->sbuf, lang);
+    }
+}
+
+#else /* use gtksourceview-1.0 API */
+
+static void sourceview_apply_language (windata_t *vwin)
+{
+    GtkSourceLanguagesManager *lm; 
+    GtkSourceLanguage *lang = NULL;
+    const char *mtype = NULL;
+
+    lm = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
+
+    if (vwin->role == EDIT_GP) {
+	mtype = "application/x-gnuplot";
+    } else if (vwin->role == EDIT_R) {
+	mtype = "text/x-R";
+    } else {
+	mtype = "application/x-gretlsession";
+    }
+
+    lang = gtk_source_languages_manager_get_language_from_mime_type(lm, mtype);
+    if (lang == NULL) {
+	g_object_set(G_OBJECT(vwin->sbuf), "highlight", FALSE, NULL);
+    } else {
+	g_object_set(G_OBJECT(vwin->sbuf), "highlight", TRUE, NULL);
+	gtk_source_buffer_set_language(vwin->sbuf, lang);
+    }
+}
+
+#endif
+
 static void 
 real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
 {
-    GtkSourceLanguagesManager *manager; 
-    GtkSourceLanguage *language = NULL;
     FILE *fp = NULL;
 
     if (fname != NULL) {
@@ -353,29 +410,8 @@ real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
 	    return;
 	}
     }
-		
-    manager = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
 
-    if (vwin->role == EDIT_GP) {
-	language = 
-	    gtk_source_languages_manager_get_language_from_mime_type 
-	    (manager, "application/x-gnuplot");
-    } else if (vwin->role == EDIT_R) {
-	language = 
-	    gtk_source_languages_manager_get_language_from_mime_type 
-	    (manager, "text/x-R");
-    } else {
-	language = 
-	    gtk_source_languages_manager_get_language_from_mime_type 
-	    (manager, "application/x-gretlsession");
-    }
-
-    if (language == NULL) {
-	g_object_set(G_OBJECT(vwin->sbuf), "highlight", FALSE, NULL);
-    } else {
-	g_object_set(G_OBJECT(vwin->sbuf), "highlight", TRUE, NULL);
-	gtk_source_buffer_set_language(vwin->sbuf, language);
-    }
+    sourceview_apply_language(vwin);
 
     if (fp != NULL) {
 	source_buffer_load_file(vwin->sbuf, vwin->role, fp);
@@ -464,30 +500,21 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
 			      r == VIEW_SCRIPT)
 
-void create_source (windata_t *vwin, int hsize, int vsize, 
-		    gboolean editable)
+#ifndef USE_GTKSOURCEVIEW_2
+
+/* set up paren-matching in blue */
+
+static void set_blue_matching (GtkSourceBuffer *sbuf)
 {
-    GtkSourceLanguagesManager *lm = gtk_source_languages_manager_new();
-    GtkSourceBuffer *sbuf;
     GtkSourceTagStyle *tagstyle;
     GdkColormap *cmap;
     GdkColor blue;
-    int cw;
-
-    /* set up paren-matching in blue */
 
     cmap = gdk_colormap_get_system();
     gdk_color_parse("blue", &blue);
     gdk_colormap_alloc_color(cmap, &blue, FALSE, TRUE);
 
     tagstyle = gtk_source_tag_style_new();
-    
-    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
-    g_object_ref(lm);
-    g_object_set_data_full(G_OBJECT(sbuf), "languages-manager",
-			   lm, (GDestroyNotify) g_object_unref); 
-    g_object_unref(lm); 
-
     tagstyle->mask = GTK_SOURCE_TAG_STYLE_USE_FOREGROUND;
     tagstyle->foreground = blue;
     g_object_set_data_full(G_OBJECT(sbuf), "tag-style",
@@ -495,6 +522,32 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			   (GDestroyNotify) gtk_source_tag_style_free); 
     gtk_source_buffer_set_bracket_match_style(sbuf, tagstyle);
     gtk_source_buffer_set_check_brackets(sbuf, TRUE);
+
+    g_object_unref(cmap);    
+}
+
+#endif
+
+void create_source (windata_t *vwin, int hsize, int vsize, 
+		    gboolean editable)
+{
+#ifdef USE_GTKSOURCEVIEW_2
+    GtkSourceLanguageManager *lm = gtk_source_language_manager_new();
+#else
+    GtkSourceLanguagesManager *lm = gtk_source_languages_manager_new();
+#endif
+    GtkSourceBuffer *sbuf;
+    int cw;
+    
+    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
+    g_object_ref(lm);
+    g_object_set_data_full(G_OBJECT(sbuf), "languages-manager",
+			   lm, (GDestroyNotify) g_object_unref); 
+    g_object_unref(lm); 
+
+#ifndef USE_GTKSOURCEVIEW_2
+    set_blue_matching(sbuf);
+#endif
 
     vwin->w = gtk_source_view_new_with_buffer(sbuf);
     vwin->sbuf = sbuf;
@@ -527,8 +580,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(interactive_script_help), vwin);
     }	
-
-    g_object_unref(cmap);
 }
 
 static GtkTextTagTable *gretl_tags_new (void)

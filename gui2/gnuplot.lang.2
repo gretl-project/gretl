@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language id="gnuplot" _name="gnuplot" version="2.0" _section="Sources">
+  <metadata>
+    <property name="mimetypes">application/x-gnuplot</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="data-type" _name="Data Type" map-to="def:type"/>
+    <style id="string" _name="String" map-to="def:string"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+  </styles>
+
+  <definitions>
+    <context id="line-comment" style-ref="comment" end-at-line-end="true">
+      <start>#</start>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="string" style-ref="string" end-at-line-end="true">
+      <start>"</start>
+      <end>"</end>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="commands" style-ref="keyword">
+      <keyword>plot</keyword>
+      <keyword>set</keyword>
+    </context>
+    <context id="math-functions" style-ref="data-type">
+      <keyword>log</keyword>
+      <keyword>exp</keyword>
+      <keyword>sin</keyword>
+      <keyword>cos</keyword>
+      <keyword>tan</keyword>
+      <keyword>atan</keyword>
+    </context>
+    <context id="character-constant" style-ref="string" end-at-line-end="true">
+      <start>'</start>
+      <end>'</end>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+    <context id="gnuplot">
+      <include>
+        <context ref="line-comment"/>
+        <context ref="string"/>
+        <context ref="commands"/>
+        <context ref="math-functions"/>
+        <context ref="character-constant"/>
+      </include>
+    </context>
+  </definitions>
+</language>

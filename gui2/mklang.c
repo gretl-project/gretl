@@ -18,6 +18,18 @@ const char *special_keyword[] = {
     NULL
 };
 
+const char *gretl_data_types[] = {
+    "bool",
+    "int",
+    "scalar",
+    "series",
+    "matrix",
+    "list",
+    "null",
+    "void",
+    NULL
+};
+
 void output_emacs_block (void)
 {
     const char *s;
@@ -121,7 +133,143 @@ void output_emacs_block (void)
     puts(")\n  \"Model- and dataset-related variables.\")\n");    
 }
 
-void output_lang_file (void)
+void output_lang2_file (void)
+{
+    const char *s;
+    char **strs;
+    int nopts;
+    int i, n;
+
+    puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    puts("<language id=\"gretl\" _name=\"gretl\" version=\"2.0\" _section=\"Sources\">");
+    puts("<metadata>");
+    puts(" <property name=\"mimetypes\">application/x-gretlsession</property>");
+    puts("</metadata>");
+
+    puts("<styles>");
+    puts(" <style id=\"comment\" _name=\"Comment\" map-to=\"def:comment\"/>");
+    puts(" <style id=\"function\" _name=\"Function\" map-to=\"def:function\"/>");
+    puts(" <style id=\"data-type\" _name=\"Data Type\" map-to=\"def:type\"/>");
+    puts(" <style id=\"string\" _name=\"String\" map-to=\"def:string\"/>");
+    puts(" <style id=\"keyword\" _name=\"Keyword\" map-to=\"def:keyword\"/>");
+    puts("</styles>");
+
+    puts("<definitions>");
+    puts(" <context id=\"line-comment\" style-ref=\"comment\" end-at-line-end=\"true\">");
+    puts("  <start>#</start>");
+    puts("  <include>");
+    puts("   <context ref=\"def:escape\"/>");
+    puts("   <context ref=\"def:line-continue\"/>");
+    puts("  </include>");
+    puts(" </context>");
+    puts(" <context id=\"block-comment\" style-ref=\"comment\">");
+    puts("  <start>\\(\\*</start>");
+    puts("  <end>\\*\\)</end>");
+    puts("  <include>");
+    puts("   <context ref=\"def:escape\"/>");
+    puts("   <context ref=\"def:line-continue\"/>");
+    puts("  </include>");
+    puts(" </context>");
+    puts(" <context id=\"c-style-block-comment\" style-ref=\"comment\">");
+    puts("  <start>/\\*</start>");
+    puts("  <end>\\*/</end>");
+    puts("  <include>");
+    puts("   <context ref=\"def:escape\"/>");
+    puts("   <context ref=\"def:line-continue\"/>");
+    puts(" </include>");
+    puts(" </context>");
+    puts(" <context id=\"string\" style-ref=\"string\" end-at-line-end=\"true\">");
+    puts("  <start>\"</start>");
+    puts("  <end>\"</end>");
+    puts("  <include>");
+    puts("   <context ref=\"def:escape\"/>");
+    puts("   <context ref=\"def:line-continue\"/>");
+    puts("  </include>");
+    puts(" </context>");
+
+    /* gretl data types */
+    puts(" <context id=\"gretl-types\" style-ref=\"data-type\">");
+    for (i=0; gretl_data_types[i] != NULL; i++) {
+	printf("  <keyword>%s</keyword>\n", gretl_data_types[i]);  
+    }
+    puts(" </context>");
+
+    /* gretl commands (N.B. old case-sensitive="TRUE"?) */
+    puts(" <context id=\"commands\" style-ref=\"keyword\">");
+    for (i=1; i<NC; i++) {
+	if (strcmp(gretl_command_word(i), "matrix")) {
+	    printf("  <keyword>%s</keyword>\n", gretl_command_word(i));
+	}
+    }
+    /* plus a few specials */
+    for (i=0; special_keyword[i] != NULL; i++) {
+	printf("  <keyword>%s</keyword>\n", special_keyword[i]);
+    }
+    puts(" </context>");
+
+    /* functions in "genr" command */
+    puts(" <context id=\"genr-functions\" style-ref=\"function\">");
+    n = gen_func_count();
+    for (i=0; i<n; i++) {
+	printf("  <keyword>%s</keyword>\n", gen_func_name(i));
+    }    
+    puts(" </context>");
+
+    /* command option strings */
+    strs = get_all_option_strings(&nopts);
+    if (strs != NULL) {
+	puts(" <context id=\"options\" style-ref=\"data-type\">");
+	puts(" <prefix>--</prefix>");
+	for (i=1; i<nopts; i++) {
+	    printf("  <keyword>%s</keyword>\n", strs[i]);
+	}    
+	puts(" </context>");
+	free_strings_array(strs, nopts);
+    }
+
+    /* dollar variables */
+    puts(" <context id=\"internalvars\" style-ref=\"data-type\">");
+    puts("  <prefix>\\$</prefix>");
+    puts("  <suffix></suffix>");
+    n = model_var_count();
+    for (i=0; i<n; i++) {
+	s = model_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;
+	printf("  <keyword>%s</keyword>\n", s);
+    }
+    n = data_var_count();
+    for (i=0; i<n; i++) {
+	s = data_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;	
+	printf("  <keyword>%s</keyword>\n", s);
+    }
+    puts(" </context>");	
+    
+    puts(" <context id=\"gretl\">");
+    puts("  <include>");
+    puts("   <context ref=\"line-comment\"/>");
+    puts("   <context ref=\"block-comment\"/>");
+    puts("   <context ref=\"c-style-block-comment\"/>");
+    puts("   <context ref=\"string\"/>");
+    puts("   <context ref=\"gretl-types\"/>");
+    puts("   <context ref=\"commands\"/>");
+    puts("   <context ref=\"genr-functions\"/>");
+    puts("   <context ref=\"options\"/>");
+    puts("   <context ref=\"internalvars\"/>");
+    puts("  </include>");
+    puts(" </context>");
+    puts("</definitions>");
+
+    puts("</language>");
+}
+
+void output_lang1_file (void)
 {
     const char *s;
     char **strs;
@@ -156,22 +304,15 @@ void output_lang_file (void)
 
     /* gretl data types */
     puts("<keyword-list _name = \"Gretl-types\" style = \"Data Type\" case-sensitive=\"TRUE\">");
-    puts(" <keyword>bool</keyword>");
-    puts(" <keyword>int</keyword>");
-    puts(" <keyword>scalar</keyword>");
-    puts(" <keyword>series</keyword>");
-    puts(" <keyword>matrix</keyword>");
-    puts(" <keyword>list</keyword>");
-    puts(" <keyword>null</keyword>");
-    puts(" <keyword>void</keyword>");
+    for (i=0; gretl_data_types[i] != NULL; i++) {
+	printf(" <keyword>%s</keyword>\n", gretl_data_types[i]);  
+    }
     puts("</keyword-list>\n");
 
     /* gretl commands */
     puts("<keyword-list _name = \"Commands\" style = \"Keyword\" case-sensitive=\"TRUE\">");
     for (i=1; i<NC; i++) {
-	if (strcmp(gretl_command_word(i), "matrix")) {
-	    printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
-	}
+	printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
     }
     /* plus a few specials */
     for (i=0; special_keyword[i] != NULL; i++) {
@@ -240,8 +381,10 @@ int main (int argc, char **argv)
 {
     if (argc == 2 && !strcmp(argv[1], "--emacs")) {
 	output_emacs_block();
+    } else if (argc == 2 && !strcmp(argv[1], "--lang2")) {
+	output_lang2_file();
     } else {
-	output_lang_file();
+	output_lang1_file();
     }
 
     return 0;
