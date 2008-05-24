@@ -74,6 +74,16 @@ version 1.7.5, in progress
 - "tabprint" model-printing command: add --rtf option to 
   produce RTF output rather than LaTeX
 - Windows build: update to Lapack version 3.1.1
+- Add quantile regression ("quantreg" command)
+- Add experimental support for importing data from an
+  external database via ODBC
+- Add "normest" command to test a series for normality, with
+  options of Doornik-Hansen, Shapiro-Wilk or Jarque-Bera
+- Model window, confidence intervals for coefficients: add
+  option of changing the confidence level from the default
+  of 95 percent; and similarly for confidence ellipses
+- Add facility for writing and executing R scripts via the
+  gretl GUI      
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values
