@@ -25,6 +25,7 @@
 #include "libset.h"
 #include "gretl_panel.h"
 #include "var.h"
+#include "system.h"
 #include "missing_private.h"
 #include "matrix_extra.h"
 
@@ -2826,6 +2827,9 @@ int lmtest_driver (const char *param,
 
     if (opt & (OPT_A | OPT_H)) {
 	k = atoi(param);
+	if (k == 0) {
+	    k = pdinfo->pd;
+	}
     }
 
     testopt = (opt & OPT_Q)? OPT_Q : OPT_NONE;
@@ -2870,8 +2874,9 @@ int lmtest_driver (const char *param,
 	if (type == GRETL_OBJ_EQN) {
 	    err = autocorr_test(ptr, k, pZ, pdinfo, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    fprintf(stderr, "calling VAR test, k = %d\n", k);
 	    err = gretl_VAR_autocorrelation_test(ptr, k, pZ, pdinfo, prn);
+	} else if (type == GRETL_OBJ_SYS) {
+	    err = system_autocorrelation_test(ptr, k, prn);
 	} else {
 	    err = E_NOTIMP;
 	}
@@ -2883,6 +2888,8 @@ int lmtest_driver (const char *param,
 	    err = arch_test(ptr, k, pdinfo, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = gretl_VAR_arch_test(ptr, k, pdinfo, prn);
+	} else if (type == GRETL_OBJ_SYS) {
+	    err = system_arch_test(ptr, k, prn);
 	} else {
 	    err = E_NOTIMP;
 	}

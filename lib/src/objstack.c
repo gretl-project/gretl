@@ -1202,8 +1202,11 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	    err = 1;
 	}
     } else if (type == GRETL_OBJ_SYS) {
-	if (ci != RESTRICT && ci != TESTUHAT && ci != FCAST) {
-	    err = E_NOTIMP;
+	err = E_NOTIMP;
+	if (ci == RESTRICT || ci == TESTUHAT || ci == FCAST) {
+	    err = 0;
+	} else if (ci == LMTEST && ((opt & OPT_A) || (opt & OPT_H))) {
+	    err = 0;
 	}
     } else if (type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) ptr;
