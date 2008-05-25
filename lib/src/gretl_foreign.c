@@ -66,7 +66,7 @@ static int set_foreign_lang (const char *lang, PRN *prn)
 
 #ifdef G_OS_WIN32
 
-static int lib_run_R_sync (PRN *prn)
+static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
     gchar *Rterm, *cmd;
     int err = 0;
@@ -81,7 +81,7 @@ static int lib_run_R_sync (PRN *prn)
 
     err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
 
-    if (!err) {
+    if (!err && !(opt & OPT_Q)) {
 	gchar *Rout = g_strdup_printf("%sR.out", gretl_dot_dir());
 	FILE *fp;
 
@@ -322,13 +322,16 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
     return err;
 }
 
+/* opt should contain OPT_G (only) when called from the
+   GUI program */
+
 int write_gretl_R_files (const char *buf,
 			 const double **Z, const DATAINFO *pdinfo,
 			 gretlopt opt)
 { 
     const char *dotdir = gretl_dot_dir();
-    gchar *Rprofile, *Rsrc;
     gchar *dotcpy = g_strdup(dotdir);
+    gchar *Rprofile, *Rsrc;
     int err = 0;
 
 #ifdef G_OS_WIN32
@@ -370,6 +373,9 @@ void delete_gretl_R_files (void)
     g_free(Rprofile);
     g_free(Rsrc);
 }
+
+/* starting a "foreign" block from scratch, or adding a line
+   to an existing block */
 
 int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
 {
@@ -413,15 +419,13 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
 int foreign_execute (const double **Z, const DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn)
 {
-    int err = 0;
+    int i, err = 0;
 
-#if FDEBUG
-    int i;
-
-    for (i=0; i<foreign_n_lines; i++) {
-	pprintf(prn, "> %s\n", foreign_lines[i]);
+    if (opt & OPT_V) {
+	for (i=0; i<foreign_n_lines; i++) {
+	    pprintf(prn, "> %s\n", foreign_lines[i]);
+	}
     }
-#endif
 
     foreign_opt |= opt;
 
