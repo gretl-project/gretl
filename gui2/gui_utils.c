@@ -29,6 +29,7 @@
 #include "system.h"
 #include "matrix_extra.h"
 #include "bootstrap.h"
+#include "gretl_foreign.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -4409,7 +4410,6 @@ static void run_R_sync (void)
     if (gerr != NULL) {
 	errbox(gerr->message);
 	g_error_free(gerr);
-	status = 1;
     } else if (status != 0) {
 	if (errout != NULL) {
 	    if (*errout == '\0') {
@@ -4438,197 +4438,11 @@ static void run_R_sync (void)
 
 #endif /* !G_OS_WIN32 */
 
-/* define an R function for passing data or matrices back to gretl */
-
-static void write_R_export_func (FILE *fp) 
-{
-    gchar *dotdir;
-
-#ifdef G_OS_WIN32
-    dotdir = slash_convert(g_strdup(paths.dotdir), FROM_BACKSLASH);
-#else
-    dotdir = paths.dotdir;
-#endif
-
-    fprintf(fp, "gretl.dotdir <- \"%s\"\n", dotdir);
-    fputs("gretl.export <- function(x) {\n", fp);
-    fprintf(fp, "\tprefix <- \"%s\"\n", dotdir);
-    fputs("\tsx <- as.character(substitute(x))\n", fp);
-    fputs("\tif (is.ts(x)) {\n", fp);
-    fputs("\t\tfname <- paste(prefix, sx, \".csv\", sep=\"\")\n", 
-	  fp);
-    fputs("\t\tdfx <- data.frame(x)\n", fp);
-    fputs("\t\tif (dim(dfx)[2] == 1) {\n", fp);
-    fputs("\t\t\tdfx <- as.data.frame(x);\n", fp);
-    fputs("\t\t\tcolnames(dfx) <- sx;\n", fp);
-    fputs("\t\t}\n", fp);
-    fputs("\t\twrite.csv(dfx, file=fname, row.names=F)\n", fp);
-    fputs("\t} else if (is.data.frame(x)) {\n", fp);
-    fputs("\t\tfname <- paste(prefix, sx, \".csv\", sep=\"\")\n", 
-	  fp);
-    fputs("\t\twrite.csv(x, file=fname, row.names=F)\n", fp);
-    fputs("\t} else if (is.matrix(x)) {\n", fp);
-    fputs("\t\tfname <- paste(prefix, sx, \".mat\", sep=\"\")\n", 
-	  fp);
-    fputs("\t\twrite(dim(x), fname)\n", fp);
-    fputs("\t\twrite(t(x), file=fname, ncolumns=dim(x)[2], append=TRUE)\n", fp);
-    fputs("\t}\n", fp);
-    fputs("}\n", fp);
-
-#ifdef G_OS_WIN32
-    g_free(dotdir);
-#endif
-}
-
-/* write out current dataset in R format, and, if this succeeds,
-   write appropriate R commands to @fp to source the data
-*/
-
-static int write_data_for_R (FILE *fp)
-{
-    gchar *Rline = NULL, *Rdata = NULL;
-    int *list;
-
-    Rdata = g_strdup_printf("%sRdata.tmp", paths.dotdir);
-    Rline = g_strdup_printf("store \"%s\" -r", Rdata);
-    list = command_list_from_string(Rline);
-    g_free(Rline);
-
-    if (list == NULL ||
-	write_data(Rdata, list, (const double **) Z, datainfo, 
-		   OPT_R, NULL)) {
-	errbox(_("Write of R data file failed"));
-	g_free(Rdata);
-	return E_FOPEN;
-    }
-
-    free(list);
-
-    fputs("# load data from gretl\n", fp);
-#ifdef G_OS_WIN32
-    fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", 
-	    slash_convert(Rdata, FROM_BACKSLASH));
-#else
-    fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
-#endif
-    g_free(Rdata);
-
-    if (dataset_is_time_series(datainfo)) {
-	char *p, datestr[OBSLEN];
-	int subper = 1;
-	    
-	ntodate_full(datestr, datainfo->t1, datainfo);
-	p = strchr(datestr, ':');
-	if (p != NULL) {
-	    subper = atoi(p + 1);
-	}
-	    
-	fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
-		atoi(datestr), subper, datainfo->pd);
-    } else {
-	fputs("attach(gretldata)\n", fp);
-    }
-
-    return 0;
-}
-
-static int write_R_source_file (const char *Rsrc, const char *buf,
-				int send_data, int interactive)
-{
-    FILE *fp = gretl_fopen(Rsrc, "w");
-    int err = 0;
-
-    if (fp == NULL) {
-	file_write_errbox(Rsrc);
-	err = E_FOPEN;
-    } else {
-#ifdef G_OS_WIN32
-	if (!interactive) {
-	    gchar *Rout = g_strdup_printf("%sR.out", paths.dotdir);
-
-	    fprintf(fp, "sink(\"%s\")\n", slash_convert(Rout, FROM_BACKSLASH));
-	    g_free(Rout);
-	}
-#endif
-	if (send_data) {
-	    err = write_data_for_R(fp);
-	}
-
-	if (buf != NULL) {
-	    /* pass on the script supplied in the 'buf' argument */
-	    fputs("# load script from gretl\n", fp);
-	    fputs(buf, fp);
-	}
-
-#ifdef G_OS_WIN32
-	if (!interactive) {
-	    /* Rterm on Windows won't exit without this */
-	    fputs("q()\n", fp);
-	}
-#endif
-
-	fclose(fp);
-    }
-
-    return err;
-}
-
-/* set up for a temporary R profile, so R knows what to do */
-
-static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc)
-{
-#ifdef G_OS_WIN32
-    gchar *Rtmp;
-#endif
-    FILE *fp;
-    int err;
-
-#ifdef G_OS_WIN32
-    err = !SetEnvironmentVariable("R_PROFILE", Rprofile);
-#else
-    err = setenv("R_PROFILE", Rprofile, 1);
-#endif
-    if (err) {
-	errbox(_("Couldn't set R_PROFILE environment variable"));
-	return err;
-    }     
-
-    fp = gretl_fopen(Rprofile, "w");
-    if (fp == NULL) {
-	file_write_errbox(Rprofile);
-	return E_FOPEN;
-    }
-
-    /* profile preamble */
-    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", 
-	  fp);
-    fputs("if (vnum > 2.41) library(utils)\n", fp);
-    fputs("library(stats)\n", fp);
-    fputs("if (vnum <= 1.89) library(ts)\n", fp);
-
-#if 1
-    write_R_export_func(fp);
-#endif
-
-    /* source the commands and/or data from gretl */
-#ifdef G_OS_WIN32
-    Rtmp = slash_convert(g_strdup(Rsrc), FROM_BACKSLASH);
-    fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
-    g_free(Rtmp);
-#else    
-    fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
-#endif
-
-    fclose(fp);
-
-    return 0;
-}
-
 /* driver for starting R, either interactive or in batch mode */
 
 void start_R (const char *buf, int send_data, int interactive)
 {
-    char Rprofile[MAXLEN], Rsrc[MAXLEN];
+    gretlopt Ropt = OPT_G;
     int err;
 
     if (send_data && !data_status) {
@@ -4636,23 +4450,20 @@ void start_R (const char *buf, int send_data, int interactive)
 	return;
     }
 
-    /* organize filenames */
-    build_path(Rprofile, paths.dotdir, "gretl.Rprofile", NULL);
-    build_path(Rsrc, paths.dotdir, "Rsrc", NULL);
-
-    /* write a temporary R profile, so R knows what to do */
-    err = write_gretl_R_profile(Rprofile, Rsrc);
-    if (err) {
-	return;
+    if (interactive) {
+	Ropt |= OPT_I;
     }
 
-    /* write commands and/or data to file, to be sourced
-       by the R profile */
-    err = write_R_source_file(Rsrc, buf, send_data, interactive);
+    if (send_data) {
+	Ropt |= OPT_D;
+    }
+
+     err = write_gretl_R_files(buf, (const double **) Z,
+			      datainfo, Ropt);
 
     if (err) {
-	remove(Rprofile);
-	remove(Rsrc);
+	gui_errmsg(err);
+	delete_gretl_R_files();
     } else if (interactive) {
 #ifdef G_OS_WIN32
 	win32_start_R_async();

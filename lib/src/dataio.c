@@ -1252,8 +1252,17 @@ int write_data (const char *fname, const int *list,
 
     gretl_error_clear();
 
-    if (list == NULL || list[0] == 0) {
+    if (list != NULL && list[0] == 0) {
 	return E_ARGS;
+    }
+
+    if (list == NULL) {
+	list = full_var_list(pdinfo, &l0);
+	if (l0 == 0) {
+	    return E_ARGS;
+	} else if (list == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     l0 = list[0];

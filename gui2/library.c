@@ -372,7 +372,7 @@ int check_and_record_command (void)
 /* checks command for errors, and if OK returns an allocated
    copy of the command list */
 
-int *command_list_from_string (char *s)
+static int *command_list_from_string (char *s)
 {
     CMD mycmd;
     int *list = NULL;

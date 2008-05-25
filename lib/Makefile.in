@@ -87,6 +87,7 @@ PUBLIC_HDRS = \
 	gretl_errors.h \
 	gretl_f2c.h \
 	gretl_fft.h \
+	gretl_foreign.h \
 	gretl_func.h \
 	gretl_intl.h \
 	gretl_list.h \
@@ -158,6 +159,7 @@ SRCS = adf_kpss.c \
 	gretl_commands.c \
 	gretl_errors.c \
 	gretl_fft.c \
+	gretl_foreign.c \
 	gretl_func.c \
 	gretl_intl.c \
 	gretl_list.c \

@@ -36,6 +36,7 @@
 #include "gretl_xml.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
+#include "gretl_foreign.h"
 
 #include <glib.h>
 
@@ -308,6 +309,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == ESTIMATE || \
 	               c == EQNPRINT || \
 	               c == FCAST || \
+		       c == FOREIGN || \
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
@@ -1719,7 +1721,8 @@ static int check_datamod_command (CMD *cmd, const char *s)
 
 /* apparatus for checking that the "end" command is valid */
 
-#define COMMAND_CAN_END(c) (c == FUNC || \
+#define COMMAND_CAN_END(c) (c == FOREIGN || \
+			    c == FUNC || \
                             c == GMM || \
                             c == MLE || \
                             c == NLS || \
@@ -2199,8 +2202,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }    
 
-    /* extract "savename" for storing an object? */
-    maybe_extract_savename(line, cmd);
+    if (!cmd->context) {
+	/* extract "savename" for storing an object? */
+	maybe_extract_savename(line, cmd);
+    }
 
     /* no command here? */
     if (!get_command_word(line, cmd)) {
@@ -3201,6 +3206,8 @@ static int effective_ci (const CMD *cmd)
 	    ci = GMM;
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    ci = RESTRICT;
+	} else if (!strcmp(cmd->param, "foreign")) {
+	    ci = FOREIGN;
 	}
     }
 
@@ -4408,6 +4415,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} 
 	break;
 
+    case FOREIGN:
+	err = foreign_append_line(line, cmd->opt, prn);
+	if (!err) {
+	    gretl_cmd_set_context(cmd, cmd->ci);
+	} 
+	break;
+
     case ADD:
     case OMIT:
     plain_add_omit:
@@ -4599,6 +4613,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
+	} else if (!strcmp(cmd->param, "foreign")) {
+	    err = foreign_execute((const double **) *pZ, pdinfo, prn);
 	} else {
 	    err = 1;
 	}
@@ -4845,14 +4861,11 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 		return 1;
 	    }
 	}
-    }	
+    }
 
-    if (cmd->ci == NLS) {
-	context = NLS;
-    } else if (cmd->ci == MLE) {
-	context = MLE;
-    } else if (cmd->ci == GMM) {
-	context = GMM;
+    if (cmd->ci == NLS || cmd->ci == MLE ||
+	cmd->ci == GMM || cmd->ci == FOREIGN) {
+	context = cmd->ci;
     }
 
     if (!strcmp(line, "end loop")) {

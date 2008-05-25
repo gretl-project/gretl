@@ -158,6 +158,7 @@ LIBSRC = adf_kpss.c \
 	gretl_commands.c \
 	gretl_errors.c \
 	gretl_fft.c \
+	gretl_foreign.c \
 	gretl_func.c \
 	gretl_intl.c \
 	gretl_list.c \
