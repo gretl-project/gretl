@@ -768,7 +768,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	return err;
     } 
 
-    if (!s->in_comment) {
+    if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
 	k = saved_object_action(line, pZ, pdinfo, models, prn);
