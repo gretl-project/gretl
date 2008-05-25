@@ -140,27 +140,6 @@ int create_child_process (char *prog)
     return real_create_child_process(prog, 1);
 }
 
-gchar *R_path_from_registry (void)
-{
-    char tmp[MAX_PATH] = {0}; 
-    gchar *ret = NULL;
-    int err;
-
-    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
-
-    if (err) {
-	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
-    }
-
-    if (!err) {
-	strcat(tmp, "\\bin\\");
-	strcat(tmp, "Rterm.exe");
-	ret = g_strdup(tmp);
-    }
-
-    return ret;
-}
-
 /* try registry for path to Rgui.exe */
 
 static int Rgui_path_from_registry (void)
@@ -208,27 +187,6 @@ void win32_start_R_async (void)
     }
 
     g_free(Rline);
-}
-
-char *slash_convert (char *str, int which)
-{
-    char *p;
-
-    if (str == NULL) {
-	return NULL;
-    }
-
-    p = str;
-    while (*p) {
-	if (which == FROM_BACKSLASH) {
-	    if (*p == '\\') *p = '/';
-	} else if (which == TO_BACKSLASH) {
-	    if (*p == '/') *p = '\\';
-	}
-	p++;
-    }
-
-    return str;
 }
 
 static char *substr (char *targ, const char *src, const char *p)

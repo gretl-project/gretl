@@ -26,6 +26,11 @@
 #include <dirent.h>
 #include <windows.h>
 
+enum {
+    TO_BACKSLASH,
+    FROM_BACKSLASH
+};
+
 DIR *win32_opendir (const char *dname);
 
 int read_reg_val (HKEY tree, const char *base,
@@ -60,6 +65,8 @@ int win32_write_access (char *path);
 int win32_rename (const char *oldpath, const char *newpath);
 
 int win32_delete_dir (const char *path);
+
+char *R_path_from_registry (void);
 
 #endif /* WIN32 */
 

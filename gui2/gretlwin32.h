@@ -26,11 +26,6 @@
 #include "plotspec.h"
 
 enum {
-    TO_BACKSLASH,
-    FROM_BACKSLASH
-};
-
-enum {
     WIN32_TO_CLIPBOARD,
     WIN32_TO_PRINTER
 };
@@ -40,10 +35,6 @@ extern int use_wimp;
 int create_child_process (char *prog);
 
 void win32_start_R_async (void);
-
-gchar *R_path_from_registry (void);
-
-char *slash_convert (char *str, int which);
 
 int unmangle (const char *dosname, char *longname);
 

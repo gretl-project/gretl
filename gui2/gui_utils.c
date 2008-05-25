@@ -4272,7 +4272,8 @@ char *double_underscores (char *targ, const char *src)
 
 static void run_R_sync (void)
 {
-    gchar *Rterm, *cmd;
+    char *Rterm;
+    gchar *cmd;
     int err;
 
     Rterm = R_path_from_registry();
@@ -4296,7 +4297,7 @@ static void run_R_sync (void)
     }
 
     g_free(cmd);
-    g_free(Rterm);
+    free(Rterm);
 }
 
 #else /* some non-Windows functions follow */

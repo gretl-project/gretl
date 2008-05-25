@@ -695,3 +695,46 @@ int win32_delete_dir (const char *path)
 
     return err;
 }
+
+char *slash_convert (char *str, int which)
+{
+    char *p;
+
+    if (str == NULL) {
+	return NULL;
+    }
+
+    p = str;
+    while (*p) {
+	if (which == FROM_BACKSLASH) {
+	    if (*p == '\\') *p = '/';
+	} else if (which == TO_BACKSLASH) {
+	    if (*p == '/') *p = '\\';
+	}
+	p++;
+    }
+
+    return str;
+}
+
+char *R_path_from_registry (void)
+{
+    char tmp[MAX_PATH] = {0}; 
+    char *ret = NULL;
+    int err;
+
+    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
+
+    if (err) {
+	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
+    }
+
+    if (!err) {
+	strcat(tmp, "\\bin\\");
+	strcat(tmp, "Rterm.exe");
+	ret = gretl_strdup(tmp);
+    }
+
+    return ret;
+}
+
