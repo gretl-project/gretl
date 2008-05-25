@@ -29,6 +29,11 @@
 static char **foreign_lines;
 static int foreign_n_lines; 
 static int foreign_lang;
+static gretlopt foreign_opt;
+
+/* foreign_opt may include OPT_D to send data, OPT_Q to operate
+   quietly (don't display output from foreign program)
+*/
 
 enum {
     LANG_R = 1,
@@ -40,6 +45,7 @@ static void destroy_foreign (void)
     free_strings_array(foreign_lines, foreign_n_lines);
     foreign_lines = NULL;
     foreign_n_lines = 0;
+    foreign_opt = OPT_NONE;
 }
 
 static int set_foreign_lang (const char *lang, PRN *prn)
@@ -101,7 +107,7 @@ static int lib_run_R_sync (PRN *prn)
 
 #else
 
-static int lib_run_R_sync (PRN *prn)
+static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
     gchar *argv[6];
     gchar *out = NULL;
@@ -137,7 +143,10 @@ static int lib_run_R_sync (PRN *prn)
 	}
 	err = 1;
     } else if (out != NULL) {
-	pprintf(prn, "%s\n", out); 
+	if (!(opt & OPT_Q)) {
+	    /* with OPT_Q, don't print non-error output */
+	    pprintf(prn, "%s\n", out);
+	}
     } else {
 	pprintf(prn, "%s\n", "Got no output");
 	err = 1;
@@ -302,7 +311,7 @@ static int write_R_source_file (const char *Rsrc, const char *buf,
 
 #ifdef G_OS_WIN32
 	if (!(opt & OPT_I)) {
-	    /* Rterm on Windows won't exit without this */
+	    /* Rterm on Windows won't exit without this? */
 	    fputs("q()\n", fp);
 	}
 #endif
@@ -386,6 +395,9 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
 	} else {
 	    err = E_PARSE;
 	}
+	if (!err) {
+	    foreign_opt |= opt;
+	}
     } else {
 	err = strings_array_add(&foreign_lines, &foreign_n_lines, line);
 	if (err) {
@@ -396,10 +408,11 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
     return err;
 }
 
-int foreign_execute (const double **Z, const DATAINFO *pdinfo, PRN *prn)
+/* respond to "end foreign" [opts] */
+
+int foreign_execute (const double **Z, const DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn)
 {
-    int send_data = 1;
-    gretlopt opt = OPT_NONE;
     int err = 0;
 
 #if FDEBUG
@@ -410,18 +423,18 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo, PRN *prn)
     }
 #endif
 
+    foreign_opt |= opt;
+
     if (foreign_lang == LANG_R) {
-	if (send_data) {
-	    opt |= OPT_D;
-	}
-	err = write_gretl_R_files(NULL, Z, pdinfo, opt);
+	err = write_gretl_R_files(NULL, Z, pdinfo, foreign_opt);
 	if (err) {
 	    delete_gretl_R_files();
 	} else {
-	    lib_run_R_sync(prn);
+	    lib_run_R_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_OX) {
-	;
+	pputs(prn, "language=ox: not supported yet\n");
+	err = E_NOTIMP;
     }
     
     destroy_foreign();

@@ -22,7 +22,7 @@
 int foreign_append_line(const char *line, gretlopt opt, PRN *prn);
 
 int foreign_execute (const double **Z, const DATAINFO *pdinfo,
-		     PRN *prn);
+		     gretlopt opt, PRN *prn);
 
 int write_gretl_R_files (const char *buf,
 			 const double **Z, const DATAINFO *pdinfo,

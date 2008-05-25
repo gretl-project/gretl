@@ -4614,7 +4614,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
 	} else if (!strcmp(cmd->param, "foreign")) {
-	    err = foreign_execute((const double **) *pZ, pdinfo, prn);
+	    err = foreign_execute((const double **) *pZ, pdinfo, 
+				  cmd->opt, prn);
 	} else {
 	    err = 1;
 	}
