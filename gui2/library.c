@@ -6809,7 +6809,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	return err;
     }     
 
-    if (!s->in_comment && !!cmd->context) {
+    if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
 	k = saved_object_action(line, prn);
