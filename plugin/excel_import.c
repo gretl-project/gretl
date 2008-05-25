@@ -1332,6 +1332,38 @@ get_sheet_dimensions (wbook *book, int *totcols, int *datacols,
     return 0;
 }
 
+static int col0_is_numeric (int nrows, int row_offset, int col_offset)
+{
+    int t, tstart = 1 + row_offset;
+    int nx = 0;
+    char *test;
+
+    fprintf(stderr, "testing for all numerical values in col %d\n", 
+	    col_offset);
+
+    for (t=tstart; t<nrows; t++) {
+	test = rows[t].cells[col_offset];
+	if (!numeric_string(test)) {
+	    fprintf(stderr, " no: non-numeric cell at row %d\n", t + 1);
+	    return 0;
+	} else if (test != NULL && *test != '\0') {
+	    nx++;
+	}
+    }
+
+    return nx > 0;
+}
+
+static int alpha_cell (const char *s)
+{
+    if (s != NULL) {
+	if (*s == '"' || *s == '\'') s++;
+	return isalpha(*s);
+    }
+
+    return 0;
+}
+
 static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
 {
     const char *s = rows[1 + book->row_offset].cells[book->col_offset];
@@ -1368,6 +1400,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     DATAINFO *newinfo;
     int datacols, totcols;
     struct string_err strerr;
+    int throw_back_col0 = 0;
     char *blank_col = NULL;
     int i, t, pd = 0;
     int err = 0;
@@ -1512,8 +1545,14 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 #endif
 	    if (pd > 0) {
 		book_time_series_setup(book, newinfo, pd);
-	    }    
+	    } else if (alpha_cell(rows[r0].cells[c0])) {
+		throw_back_col0 = col0_is_numeric(nrows, r0, c0);
+	    }
 	}
+    }
+
+    if (throw_back_col0) {
+	book_unset_obs_labels(book);
     }
 
     /* create import dataset */
@@ -1521,8 +1560,6 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     if (err) {
 	goto getout;
     }
-
-    /* FIXME move the labels/dates check down here? */
 
     if (book_time_series(book)) {
 	ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);

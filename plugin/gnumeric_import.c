@@ -748,7 +748,10 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	if (pd) {
 	    sheet_time_series_setup(sheet, book, newinfo, pd);
 	    if (!book_numeric_dates(book)) {
-		rigorous_dates_check(sheet, newinfo);
+		if (rigorous_dates_check(sheet, newinfo)) {
+		    sheet->text_cols = 0;
+		    book_unset_time_series(book);
+		}
 	    }
 	}	
 

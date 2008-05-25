@@ -284,7 +284,8 @@ new_consistent_date_labels (int nrows, int row_offset, int col_offset,
 #endif
 
 static int 
-consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels)
+consistent_date_labels (int nrows, int row_offset, int col_offset, 
+			char **labels)
 {
     int t, tstart = 1 + row_offset;
     int pd = 0, pdbak = 0;
@@ -329,6 +330,10 @@ consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels
 		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
 		return 0;
 	    }
+	    if (pd == 1 && x - xbak != 1) {
+		fprintf(stderr, " no: got %g - %g = %g\n", x, xbak, x - xbak);
+		return 0;
+	    }		
 	}
 
 	pdbak = pd;

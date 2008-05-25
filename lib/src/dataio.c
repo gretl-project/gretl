@@ -24,6 +24,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "csvdata.h"
+#include "usermat.h"
 
 #include <ctype.h>
 #include <time.h>
@@ -2041,26 +2042,40 @@ static int extend_markers (DATAINFO *pdinfo, int old_n, int new_n)
     return err;
 }
 
-static int count_add_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo)
+static void merge_error (char *msg, PRN *prn)
 {
+    pputs(prn, msg);
+    strcpy(gretl_errmsg, msg);
+}
+
+static int count_new_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo,
+			   PRN *prn)
+{
+    const char *newname;
+    /* default to all new, and subtract */
     int addvars = addinfo->v - 1;
     int i, j;
 
-    for (i=1; i<addinfo->v; i++) {
-	for (j=1; j<pdinfo->v; j++) {
-	    if (!strcmp(addinfo->varname[i], pdinfo->varname[j])) {
-		if (var_is_scalar(pdinfo, j)) {
-		    addvars = -1;
-		} else {
-		    addvars--;
+    for (i=1; i<addinfo->v && addvars >= 0; i++) {
+	newname = addinfo->varname[i];
+	if (get_matrix_by_name(newname)) {
+	    merge_error("can't replace matrix with series\n", prn);
+	    addvars = -1;
+	} else if (get_string_by_name(newname)) {
+	    merge_error("can't replace string with series\n", prn);
+	    addvars = -1;
+	} else {
+	    for (j=1; j<pdinfo->v; j++) {
+		if (!strcmp(newname, pdinfo->varname[j])) {
+		    if (var_is_scalar(pdinfo, j)) {
+			addvars = -1;
+			merge_error("can't replace scalar with series\n", prn);
+		    } else {
+			addvars--;
+		    }
+		    break;
 		}
-		break;
 	    }
-	}
-	if (addvars < 0) {
-	    fprintf(stderr, "%s: can't replace scalar with vector\n",
-		    addinfo->varname[i]);
-	    break;
 	}
     }
 
@@ -2129,12 +2144,6 @@ static int compare_ranges (const DATAINFO *targ,
     }
 
     return addobs;
-}
-
-static void merge_error (char *msg, PRN *prn)
-{
-    pputs(prn, msg);
-    strcpy(gretl_errmsg, msg);
 }
 
 static int panel_expand_ok (DATAINFO *pdinfo, DATAINFO *addinfo,
@@ -2216,13 +2225,18 @@ just_append_rows (const DATAINFO *targ, const DATAINFO *src,
     }
 }
 
-static int add_ts_ok (const DATAINFO *targ, const DATAINFO *src)
+static int simple_range_match (const DATAINFO *targ, const DATAINFO *src,
+			       int *offset)
 {
     int ret = 0;
 
-    if (src->pd == 1 && src->structure == CROSS_SECTION &&
-	src->n == targ->n) {
-	ret = 1;
+    if (src->pd == 1 && src->structure == CROSS_SECTION) {
+	if (src->n == targ->n) {
+	    ret = 1;
+	} else if (src->n == targ->t2 - targ->t1 + 1) {
+	    ret = 1;
+	    *offset = targ->t1;
+	}
     }
 
     return ret;
@@ -2247,6 +2261,11 @@ static int markers_are_ints (const DATAINFO *pdinfo)
     return 1;
 }
 #endif
+
+#define simple_structure(p) (p->structure == TIME_SERIES ||		\
+			     p->structure == SPECIAL_TIME_SERIES ||	\
+			     (p->structure == CROSS_SECTION &&		\
+			      p->S == NULL))
 
 /**
  * merge_data:
@@ -2275,11 +2294,16 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
     int offset = 0;
     int err = 0;
 
-    /* first check for conformability */
+    /* first see how many new vars we have */
+    addvars = count_new_vars(pdinfo, addinfo, prn);
+    if (addvars < 0) {
+	return 1;
+    }
 
-    if (dataset_is_time_series(pdinfo) && add_ts_ok(pdinfo, addinfo)) {
-	/* we'll allow undated data to be merged with dated, sideways,
-	   provided the number of observations matches OK */
+    if (simple_structure(pdinfo) && simple_range_match(pdinfo, addinfo, &offset)) {
+	/* we'll allow undated data to be merged with x-sectional or
+	   dated, sideways, provided the number of observations
+	   matches OK */
 	addsimple = 1;
     } else if (dataset_is_panel(pdinfo) && 
 	       panel_expand_ok(pdinfo, addinfo, opt)) {
@@ -2295,7 +2319,6 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	if (!addsimple && !addpanel) {
 	    addobs = compare_ranges(pdinfo, addinfo, &offset);
 	}
-	addvars = count_add_vars(pdinfo, addinfo);
 	if (addobs <= 0 && addvars == 0) {
 	    addobs = just_append_rows(pdinfo, addinfo, &offset);
 	}

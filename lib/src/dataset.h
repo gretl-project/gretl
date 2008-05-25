@@ -50,6 +50,15 @@ typedef enum {
 } DatasetOp;
 
 /**
+ * dataset_is_cross_section:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains cross-sectional
+ * data (1) or not (0).
+ */
+#define dataset_is_cross_section(p) ((p)->structure == CROSS_SECTION)
+
+/**
  * dataset_is_time_series:
  * @p: pointer to data information struct.
  *

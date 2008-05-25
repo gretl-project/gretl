@@ -50,6 +50,7 @@ enum {
 #define book_set_debug(b)         ((b)->flags |= BOOK_DEBUG)
 
 #define book_unset_obs_labels(b)  ((b)->flags &= ~BOOK_OBS_LABELS)
+#define book_unset_time_series(b) ((b)->flags &= ~BOOK_TIME_SERIES)
 
 struct wbook_ {
     int version;
