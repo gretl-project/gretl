@@ -120,15 +120,9 @@ done
 # Uncomment if not using cairo in gnuplot
 # add_file $HOME_WIN32/misc-dll/libpdf.dll gretl/$f
 
-# extra DLLs (FIXME: remove these as soon as possible!)
-# for f in jpeg62.dll libtiff3.dll
-# do
-#     add_file $HOME_WIN32/misc-dll/$f gretl/$f
-# done
-
 # gretl lang files for gtksourceview
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
-add_file ${TOPDIR}/build/gui2/gretl.lang \
+add_file gretl.lang \
   gretl/share/gtksourceview-1.0/language-specs/gretl.lang
 add_file ${TOPDIR}/gui2/gnuplot.lang \
   gretl/share/gtksourceview-1.0/language-specs/gnuplot.lang

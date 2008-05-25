@@ -11,6 +11,7 @@ zipdir = $(topsrc)/plugin/zipunzip
 guidir = $(topsrc)/gui2
 extradir = $(guidir)/gtkextra-lite
 imports = ./import-libs
+host_builddir = $(topsrc)/build
 
 # tools
 CC = $(MGW_PREFIX)gcc -Wall -O2 -mms-bitfields -DWIN32
@@ -275,7 +276,7 @@ MOFILES = mo/de.po mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo mo/pt.mo mo/rw.m
 # targets begin
 
 all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll dlls/libgtkextra-lite.dll \
-	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES) gretl_updater.exe
+	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES) gretl.lang gretl_updater.exe
 
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lz -lmingwex -s
@@ -285,6 +286,9 @@ gretlw32.exe: $(GUIOBJ) gretlw32_res.o
 
 gretlw32_res.o: gretlw32.rc 
 	$(RC) $(RCFLAGS) $< $@
+
+gretl.lang:
+	$(host_builddir)/gui2/mklang > $@
 
 gretl_updater.exe:
 	make -C updater
