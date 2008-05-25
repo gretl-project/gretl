@@ -143,7 +143,8 @@ void output_lang2_file (void)
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     puts("<language id=\"gretl\" _name=\"gretl\" version=\"2.0\" _section=\"Sources\">");
     puts("<metadata>");
-    puts(" <property name=\"mimetypes\">application/x-gretlsession</property>");
+    puts(" <property name=\"mimetypes\">application/x-gretlscript</property>");
+    puts(" <property name=\"globs\">*.inp</property>");
     puts("</metadata>");
 
     puts("<styles>");
@@ -163,14 +164,6 @@ void output_lang2_file (void)
     puts("  </include>");
     puts(" </context>");
     puts(" <context id=\"block-comment\" style-ref=\"comment\">");
-    puts("  <start>\\(\\*</start>");
-    puts("  <end>\\*\\)</end>");
-    puts("  <include>");
-    puts("   <context ref=\"def:escape\"/>");
-    puts("   <context ref=\"def:line-continue\"/>");
-    puts("  </include>");
-    puts(" </context>");
-    puts(" <context id=\"c-style-block-comment\" style-ref=\"comment\">");
     puts("  <start>/\\*</start>");
     puts("  <end>\\*/</end>");
     puts("  <include>");
@@ -255,7 +248,6 @@ void output_lang2_file (void)
     puts("  <include>");
     puts("   <context ref=\"line-comment\"/>");
     puts("   <context ref=\"block-comment\"/>");
-    puts("   <context ref=\"c-style-block-comment\"/>");
     puts("   <context ref=\"string\"/>");
     puts("   <context ref=\"gretl-types\"/>");
     puts("   <context ref=\"commands\"/>");
@@ -279,7 +271,7 @@ void output_lang1_file (void)
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     puts("<!DOCTYPE language SYSTEM \"language.dtd\">");
     puts("<language _name=\"gretl\" version=\"1.0\" _section=\"Sources\" "
-	 "mimetypes=\"application/x-gretlsession\">\n");
+	 "mimetypes=\"application/x-gretlscript\">\n");
 
     puts("<escape-char>\\</escape-char>\n");
 
@@ -288,11 +280,6 @@ void output_lang1_file (void)
     puts("</line-comment>\n");   
 
     puts("<block-comment _name = \"Block Comment\" style = \"Comment\">");
-    puts(" <start-regex>\\(\\*</start-regex>");
-    puts(" <end-regex>\\*\\)</end-regex>");
-    puts("</block-comment>\n");
-
-    puts("<block-comment _name = \"C-style Block Comment\" style = \"Comment\">");
     puts(" <start-regex>/\\*</start-regex>");
     puts(" <end-regex>\\*/</end-regex>");
     puts("</block-comment>\n");

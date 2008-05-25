@@ -384,7 +384,7 @@ static void sourceview_apply_language (windata_t *vwin)
     } else if (vwin->role == EDIT_R) {
 	mtype = "text/x-R";
     } else {
-	mtype = "application/x-gretlsession";
+	mtype = "application/x-gretlscript";
     }
 
     lang = gtk_source_languages_manager_get_language_from_mime_type(lm, mtype);
