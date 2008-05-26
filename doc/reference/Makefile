@@ -24,7 +24,7 @@ SCAN_OPTIONS =
 
 # Header files to ignore when scanning.
 IGNORE_HFILES = \
-        f2c.h \
+        gretl_f2c.h \
 	clapack_double.h \
 	cmd_private.h \
         estim_private.h \

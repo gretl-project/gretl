@@ -26,6 +26,13 @@
 
 #include <errno.h>
 
+/**
+ * gamma_function:
+ * @x: argument.
+ *
+ * Returns: the gamma function of @x, or #NADBL on failure.
+ */
+
 double gamma_function (double x)
 {
     double ret = cephes_gamma(x);
@@ -37,6 +44,13 @@ double gamma_function (double x)
 
     return ret;
 }
+
+/**
+ * log_gamma_function:
+ * @x: argument.
+ *
+ * Returns: the log gamma function of @x, or #NADBL on failure.
+ */
 
 double log_gamma_function (double x)
 {
@@ -356,6 +370,14 @@ static double student_cdf_comp (int df, double x)
     return p;
 }
 
+/**
+ * normal_cdf_comp:
+ * @x: the cutoff point in the distribution.
+ * 
+ * Returns: the integral from @x to infinity of the standard 
+ * normal distribution, or #NADBL on failure.
+ */
+
 double normal_cdf_comp (double x)
 {
     double p;
@@ -447,6 +469,16 @@ static double student_critval (double df, double a)
 
     return x;
 }
+
+/**
+ * student_cdf_inverse:
+ * @df: degrees of freedom.
+ * @a: probability.
+ *
+ * Returns: the argument x such that the integral from 
+ * minus infinity to @x of the t(@df) density is equal to 
+ * the given probability @a, or #NADBL on failure.
+ */
 
 double student_cdf_inverse (double df, double a)
 {
@@ -774,7 +806,7 @@ double normal_cdf (double x)
  * normal_cdf_inverse:
  * @x: double-precision value.
  * 
- * Returns the argument, y, for which the area under the
+ * Returns: the argument, y, for which the area under the
  * Gaussian probability density function (integrated from
  * minus infinity to y) is equal to x, or #NADBL on failure.
  */
@@ -937,10 +969,21 @@ double bvnorm_cdf (double a, double b, double rho)
     return ret;
 }
 
-/* Control 1 : s1, s2 = shape, scale
-           2 : s1, s2 = mean, variance
-   Returns NADBL on error.
-*/
+/**
+ * gamma_cdf:
+ * @s1: first parameter.
+ * @s2: second parameter.
+ * @x: reference value.
+ * @control: see below.
+ *
+ * Calculates the value of the CDF of the gamma distribution
+ * at @x.  If @control equals 1, then it is assumed that the
+ * parameters @s1 and @s2 represent the shape and scale,
+ * respectively, otherwise it is assumed they give mean and
+ * variance.
+
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
 
 double gamma_cdf (double s1, double s2, double x, int control)
 {
@@ -964,10 +1007,21 @@ double gamma_cdf (double s1, double s2, double x, int control)
     return p;
 }
 
-/* Control 1 : s1, s2 = shape, scale
-           2 : s1, s2 = mean, variance
-   Returns NADBL on error.
-*/
+/**
+ * gamma_cdf_comp:
+ * @s1: first parameter.
+ * @s2: second parameter.
+ * @x: reference value.
+ * @control: see below.
+ *
+ * Calculates the complement of the CDF of the gamma distribution
+ * at @x.  If @control equals 1, then it is assumed that the
+ * parameters @s1 and @s2 represent the shape and scale,
+ * respectively, otherwise it is assumed they give mean and
+ * variance.
+
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
 
 double gamma_cdf_comp (double s1, double s2, double x, int control)
 {
@@ -988,6 +1042,15 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
 
     return p;
 }
+
+/**
+ * gamma_pdf:
+ * @shape: shape parameter.
+ * @scale: scale parameter.
+ * @x: reference value.
+ *
+ * Returns: the value of the gamma pdf at @x, or #NADBL on failure.
+ */
 
 double gamma_pdf (double shape, double scale, double x)
 {

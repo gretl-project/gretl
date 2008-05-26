@@ -48,7 +48,7 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn);
 
 MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		    gretlopt, PRN *prn);
+		    gretlopt opt, PRN *prn);
 
 MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	     PRN *prn);

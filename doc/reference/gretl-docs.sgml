@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
-               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
 <!ENTITY bhhh-max SYSTEM "xml/bhhh_max.xml">
 <!ENTITY calendar SYSTEM "xml/calendar.xml">
 <!ENTITY compare  SYSTEM "xml/compare.xml">
@@ -66,7 +66,7 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.6.1</releaseinfo>
+    <releaseinfo>for gretl 1.7.5</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">

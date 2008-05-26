@@ -1873,7 +1873,7 @@ gretl_matrix *xtab_to_matrix (const Xtab *tab)
 
 /**
  * free_xtab:
- * @xtab: gretl crosstab struct
+ * @tab: gretl crosstab struct.
  *
  * Frees all malloced elements of the struct, and then
  * the pointer itself.
@@ -5085,7 +5085,7 @@ static int sw_sample_check (int n, int n1)
  * @t1: starting observation.
  * @t2: ending observation.
  * @W: location to receive test statistic.
- * @pv: location to receive p-value.
+ * @pval: location to receive p-value.
  * 
  * Returns: 0 on success, non-zero on failure.
 */

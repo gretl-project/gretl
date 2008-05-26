@@ -134,7 +134,7 @@ void gretl_two_snormals (double *z1, double *z2)
  * @t1: start of the fill range.
  * @t2: end of the fill range.
  * @min: lower bound of range.
- * @min: upper bound of range.
+ * @max: upper bound of range.
  *
  * Fill the selected subset of array @a with pseudo-random drawings
  * from the uniform distribution on @min to @max, using the Mersenne

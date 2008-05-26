@@ -38,9 +38,9 @@ int gretl_normalize_path (char *path);
 
 void set_fopen_use_utf8 (void);
 
-FILE *gretl_fopen (const char *filename, const char *mode);
+FILE *gretl_fopen (const char *fname, const char *mode);
 
-gzFile gretl_gzopen (const char *filename, const char *mode);
+gzFile gretl_gzopen (const char *fname, const char *mode);
 
 int gretl_mkdir (const char *path);
 

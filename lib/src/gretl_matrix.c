@@ -6689,7 +6689,7 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
  * @m: source matrix.
  * @err: error code.
  * 
- * Returns a matrix of the same dimensions as @m, containing 
+ * Returns: a matrix of the same dimensions as @m, containing 
  * the cumulated columns of @m.
  */
 
@@ -6728,7 +6728,7 @@ gretl_matrix *gretl_matrix_cumcol (const gretl_matrix *m, int *err)
  * @missval: value to represent missing observations.
  * @err: error code.
  * 
- * Returns a matrix of the same dimensions as @m, containing 
+ * Returns: a matrix of the same dimensions as @m, containing 
  * @missval in the first row and the difference between consecutive 
  * rows of @m afterwards.
  */

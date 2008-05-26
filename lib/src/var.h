@@ -73,7 +73,7 @@ int var_max_order (const int *list, const DATAINFO *pdinfo);
 
 GRETL_VAR *gretl_VAR (int order, int *list, 
 		      const double **Z, const DATAINFO *pdinfo,
-		      gretlopt opt, PRN *prn, int *err);
+		      gretlopt opt, PRN *prn, int *errp);
 
 GRETL_VAR *gretl_VECM (int order, int rank, int *list, 
 		       const double **Z, const DATAINFO *pdinfo,

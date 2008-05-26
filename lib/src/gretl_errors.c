@@ -174,7 +174,7 @@ void gretl_errmsg_set (const char *str)
 
 /**
  * gretl_errmsg_sprintf:
- * @str: an error message.
+ * @fmt: format string.
  *
  * If %gretl_errmsg is currently blank, print a formatted
  * message into place.

@@ -59,9 +59,9 @@ struct _gretl_matrix {
  * gretl_matrix_get:
  * @m: matrix.
  * @i: row.
- * @column.
+ * @j: column.
  * 
- * Gives the @i, @j element of @m.
+ * Retrieves the @i, @j element of @m.
  */
 
 #define gretl_matrix_get(m,i,j) (m->val[(j)*m->rows+(i)])
@@ -77,10 +77,10 @@ struct _gretl_matrix {
 #define gretl_vector_get(v,i) (v->val[i])
 
 /**
- * gretl_matrix_get:
+ * gretl_matrix_set:
  * @m: matrix.
  * @i: row.
- * @column.
+ * @j: column.
  * @x: value to set.
  * 
  * Sets the @i, @j element of @m to @x.

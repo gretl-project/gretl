@@ -1484,11 +1484,10 @@ static void csv_parsing_header (const char *fname, PRN *prn)
  * @fname: name of CSV file.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
- * @fname: name of CSV file.
  * @opt: use %OPT_C to force interpretation of data colums containing
  * strings as coded values and not errors; for use of %OPT_T see
  * the help for "append".
- * @prn: gretl printing struct (can be NULL).
+ * @prn: gretl printing struct (or %NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
  * the current work space.
