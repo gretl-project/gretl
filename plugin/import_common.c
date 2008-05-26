@@ -97,8 +97,9 @@ static int pd_from_dmult (double dm)
 #define dmax(f) ((f == 1)? 366 : (f == 4)? 92 : 31)
 
 static int 
-calendar_missing_obs (int diff, int pd, double d1, BookFlag flags)
+calendar_missing_obs (double d1, double d0, int pd, BookFlag flags)
 {
+    int diff = d1 - d0;
     int mc = 0;
 
     if (pd == 52) {
@@ -117,19 +118,20 @@ calendar_missing_obs (int diff, int pd, double d1, BookFlag flags)
 	}
     } else if ((pd == 5 || pd == 6) && diff > 1) {
 	char dstr[12];
-	int wday;
+	int d, wday;
 
-	MS_excel_date_string(dstr, d1, 0, flags & BOOK_DATE_BASE_1904);
-	wday = get_day_of_week(dstr);
+	mc = diff - 1;
 
-	if (wday == 1) {
-	    if (pd == 5) {
-		mc = diff - 3;
-	    } else {
-		mc = diff - 2;
+	for (d=d0+1; d<d1; d++) {
+	    MS_excel_date_string(dstr, d, 0, flags & BOOK_DATE_BASE_1904);
+	    wday = get_day_of_week(dstr);
+	    if (wday == 0) {
+		/* Sunday: should be missing */
+		mc--;
+	    } else if (pd == 5 && wday == 6) {
+		/* Saturday: missing if 5-day data */
+		mc--;
 	    }
-	} else {
-	    mc = diff - 1;
 	}
     }
 
@@ -149,7 +151,8 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
     int tstart = 1 + row_offset;
     int ndays, nobs = nrows - tstart;
     int mc, t, pd = 0;
-    double x1, x2, dmult, diff;
+    int d1, d0, dn;
+    double dmult;
     char *test;
 
     fprintf(stderr, "check for consistent numeric dates in col %d (nobs = %d)\n", 
@@ -157,10 +160,10 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
 
     /* look at first date */
     test = cell_val(tstart, col_offset);
-    if (sscanf(test, "%lf", &x1)) {
-	MS_excel_date_string(dstr, (int) x1, 0, book_base_1904(book));
-	fprintf(stderr, "numeric date on row %d = %g (%s)\n", tstart, 
-		x1, dstr);
+    if (sscanf(test, "%d", &d0)) {
+	MS_excel_date_string(dstr, d0, 0, book_base_1904(book));
+	fprintf(stderr, "numeric date on row %d = %d (%s)\n", tstart, 
+		d0, dstr);
     } else {
 	fprintf(stderr, "failed to read starting\n");
 	return 0;
@@ -168,17 +171,17 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
 
     /* look at last date */
     test = cell_val(nrows - 1, col_offset);
-    if (sscanf(test, "%lf", &x2)) {
-	MS_excel_date_string(dstr, (int) x2, 0, book_base_1904(book));
-	fprintf(stderr, "numeric date on row %d = %g (%s)\n", nrows - 1, 
-		x2, dstr);
+    if (sscanf(test, "%d", &dn)) {
+	MS_excel_date_string(dstr, dn, 0, book_base_1904(book));
+	fprintf(stderr, "numeric date on row %d = %d (%s)\n", nrows - 1, 
+		dn, dstr);
     } else {
 	fprintf(stderr, "failed to read ending date\n");
 	return 0;
     }
 
     /* compare number of obs and calendar span of data */
-    ndays = (int) x2 - (int) x1 + 1;
+    ndays = dn - d0 + 1;
     dmult = (double) ndays / nobs;
     fprintf(stderr, "Calendar interval = %d days\n", ndays);
     fprintf(stderr, "Calendar days per observation = %g\n", dmult);
@@ -196,22 +199,21 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
     for (t=tstart; t<nrows; t++) {
 	test = cell_val(t, col_offset);
 
-	if (sscanf(test, "%lf", &x1) != 1) {
+	if (sscanf(test, "%d", &d1) != 1) {
 	    fprintf(stderr, "Problem: blank cell at row %d\n", t + 1);
 	    return 0;
 	}
 
 	if (t > tstart) {
-	    diff = x1 - x2;
-	    mc = calendar_missing_obs((int) diff, pd, x1, book->flags);
+	    mc = calendar_missing_obs(d1, d0, pd, book->flags);
 	    if (mc > 0) {
-		fprintf(stderr, "row %d: calendar gap = %g, %d values missing?\n", 
-			t, diff, mc);
+		fprintf(stderr, "row %d: calendar gap = %d, %d values missing?\n", 
+			t, d1 - d0, mc);
 		book->totmiss += mc;
 	    }
 	}
 
-	x2 = x1;
+	d0 = d1;
     }
 
     if (book->totmiss > 0) {
@@ -227,14 +229,14 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
 
 	for (t=tstart; t<nrows; t++) {
 	    test = cell_val(t, col_offset);
-	    sscanf(test, "%lf", &x1);
+	    sscanf(test, "%d", &d1);
 	    if (t > tstart) {
-		mc = calendar_missing_obs((int) (x1 - x2), pd, x1, book->flags);
+		mc = calendar_missing_obs(d1, d0, pd, book->flags);
 		for (i=0; i<mc; i++) {
 		    book->missmask[s++] = 1;
 		}
 	    }
-	    x2 = x1;
+	    d0 = d1;
 	    s++;
 	}
     }
