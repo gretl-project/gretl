@@ -224,6 +224,7 @@ void gretl_error_clear (void)
 {
     *gretl_errmsg = '\0';
     error_printed = 0;
+    errno = 0;
 }
 
 #if 0 /* not yet */

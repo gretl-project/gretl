@@ -28,7 +28,7 @@ int remove_png_term_from_plotfile_by_name (const char *fname);
 
 void display_session_graph_png (const char *pltname);
 
-void gnuplot_show_png_by_name (const char *fname);
+int gnuplot_show_png_by_name (const char *fname);
 
 void plot_label_position_click (GtkWidget *w, png_plot *plot);
 

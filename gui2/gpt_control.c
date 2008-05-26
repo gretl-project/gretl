@@ -3569,8 +3569,7 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
-static png_plot *
-gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
+static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 {
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
@@ -3587,7 +3586,7 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     plot = png_plot_new();
     if (plot == NULL) {
-	return NULL;
+	return E_ALLOC;
     }
 
     if (spec != NULL) {
@@ -3596,7 +3595,7 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	plot->spec = plotspec_new();
 	if (plot->spec == NULL) {
 	    free(plot);
-	    return NULL;
+	    return E_ALLOC;
 	}
 	strcpy(plot->spec->fname, plotfile);
     }
@@ -3770,12 +3769,12 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	plot = NULL;
     }
 
-    return plot;
+    return err;
 }
 
-void gnuplot_show_png_by_name (const char *fname)
+int gnuplot_show_png_by_name (const char *fname)
 {
-    gnuplot_show_png(fname, NULL, 0);
+    return gnuplot_show_png(fname, NULL, 0);
 }
 
 void display_session_graph_png (const char *fname) 
@@ -3798,10 +3797,12 @@ void display_session_graph_png (const char *fname)
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
 
+    if (!err) {
+	err = gnuplot_show_png(fullname, NULL, 1);
+    }
+
     if (err) {
 	gui_errmsg(err);
-    } else {
-	gnuplot_show_png(fullname, NULL, 1);
     }
 }
 

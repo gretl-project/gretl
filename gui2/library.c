@@ -152,15 +152,14 @@ void library_command_free (void)
 
 void register_graph (void)
 {
-    const char *msg;
+    int err;
 
     gretl_error_clear();
 
-    gnuplot_show_png_by_name(gretl_plotfile());
+    err = gnuplot_show_png_by_name(gretl_plotfile());
 
-    msg = gretl_errmsg_get();
-    if (msg != NULL && *msg != '\0') {
-	errbox(msg);
+    if (err) {
+	gui_errmsg(err);
     }
 }
 
