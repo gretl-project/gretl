@@ -344,6 +344,7 @@ the above example may be rewritten more cleanly as
 \end{code}
 
 \subsection{Passing data from \app{R} to \app{gretl}}
+\label{sec:Rpassing-data}
 
 For passing data in the opposite direction, \app{gretl} defines a
 special function that can be used in the \app{R} environment to
@@ -389,7 +390,7 @@ estimates of the latent processes $\mu_t$ (the ``level''), $\beta_t$
 \app{Gretl} does not provide (yet) a command for estimating this class
 of models, so we will use \app{R}'s \texttt{StructTS} command and
 import the results back into \app{gretl}. Once the \texttt{bjg}
-dataset is loaded in gretl, we pass the data to \app{R} and execute
+dataset is loaded in \app{gretl}, we pass the data to \app{R} and execute
 the following script:
 \begin{code}
 # extract the log series 
@@ -471,6 +472,96 @@ vars (4 x 1)
    0.0013969 
       0.0000 
 \end{code}
+
+\section{Interacting with \app{R} from the CLI}
+\label{sec:foreign-command}
+
+Up to now, we assumed that interaction with \app{R} was requested from
+the GUI client. In order to achieve the same effect from the command
+line interface, \app{gretl} provides the \texttt{foreign}
+command.\footnote{In future versions of \app{gretl}, this command will
+  handle interaction with other programs, not just \app{R}. For the
+  moment, its scope is somewhat specialized.}
+
+This command takes the form
+\begin{code}
+foreign language=R [--send-data] [--quiet]
+    ... R commands ...
+end foreign
+\end{code}
+and achieves the same effect as submitting the enclosed \app{R}
+command via the gui in the non-interactive mode. The
+\verb|--send-data| options allows the user to have the data present in
+the \app{gretl} session auto-loaded; the \verb|--quiet| option
+prevents the output from \app{R} from being echoed in the \app{gretl}
+output.
+
+\begin{script}[htbp]
+  \caption{Estimation of the Basic Structural Model --- simple}
+\begin{scode}
+open bjg.gdt
+
+foreign language=R --send-data
+	y <- gretldata[, "lg"]
+	strmod <- StructTS(y)
+	compon <- as.ts(strmod$fitted)
+	vars <- as.matrix(strmod$coef)
+
+	gretl.export(compon)
+	gretl.export(vars)
+end foreign
+
+append @dotdir/compon.csv
+rename level lg_level
+rename slope lg_slope
+rename sea lg_seas
+
+vars = mread("@dotdir/vars.mat")
+\end{scode}
+\label{RStructTS-simple}
+\end{script}
+
+With this proviso, replicating the example in the previous subsection
+is rather easy: basically, all it takes is encapsulating the content
+of the R script in a \texttt{foreign}\ldots\texttt{end foreign}
+block; see example \ref{RStructTS-simple}.
+
+\begin{script}[htbp]
+  \caption{Estimation of the Basic Structural Model --- via a function}
+\begin{scode}
+function RStructTS(series myseries)
+    sx = argname(myseries)
+
+    foreign language=R --send-data --quiet
+      @sx <- gretldata[, "myseries"]
+      strmod <- StructTS(@sx)
+      compon <- as.ts(strmod$fitted)
+      gretl.export(compon)
+    end foreign
+
+    append @dotdir/compon.csv
+    rename level @sx_level
+    rename slope @sx_slope
+    rename sea @sx_seas
+
+    list ret = @sx_level @sx_slope @sx_seas
+    return list ret
+end function
+
+# ------------ main -------------------------
+
+open bjg.gdt
+list X = RStructTS(lg)
+\end{scode}
+  \label{RStructTS-func}
+\end{script}
+
+The above syntax, despite being already quite useful by itself, shows
+its full power when it is used in conjunction with user-written
+functions: example \ref{RStructTS-func} shows how to define a
+\app{gretl} function that calls \app{R} internally.
+
+
 
 %%% Local Variables: 
 %%% mode: latex
