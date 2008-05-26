@@ -1025,21 +1025,26 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 
 #define getval(w,t) entry_get_numeric_value(w,t)
 
-/* call plugin function to look up part of the table of
-   critical values for the Durbin-Watson statistic
+/* call plugin function to look up the table of critical values for
+   the Durbin-Watson statistic
 */
 
-static void dw_lookup (dist_t *tab)
+static void dw_lookup_call (dist_t *tab)
 {
     void *handle = NULL;
-    void (*dw)(int, PRN *) = NULL;
+    int (*dw)(int, int, PRN *) = NULL;
     PRN *prn;
-    int n;
+    int n, k;
 
     n = getval(tab->entry[0], C_POS_INT);
     if (n < 0) {
 	return;
     }
+
+    k = getval(tab->entry[1], C_POS_INT);
+    if (k < 0) {
+	return;
+    }    
 
     dw = gui_get_plugin_function("dw_lookup", &handle);
     if (dw == NULL) {
@@ -1051,7 +1056,7 @@ static void dw_lookup (dist_t *tab)
 	return;
     }  
 
-    (*dw)(n, prn);
+    (*dw)(n, k, prn);
     close_plugin(handle);
 
     view_buffer(prn, 77, 300, _("gretl: critical values"), 
@@ -1219,7 +1224,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     
     if (d == DW_DIST) {
 	/* special: just a table look-up */
-	dw_lookup(tabs[i]);
+	dw_lookup_call(tabs[i]);
 	return;
     }
 
@@ -1964,7 +1969,9 @@ static void make_dist_tab (CalcChild *child, int i)
 	calc_entry(tbl, &rows, N_("mean"), child, i);
 	break;
     case DW_DIST:
-	calc_entry(tbl, &rows, N_("n"), child, i);
+	calc_entry(tbl, &rows, N_("sample size, n"), child, i);
+	calc_entry(tbl, &rows, N_("number of regressors\n(excluding the constant)"), 
+		   child, i);
 	break;
     default:
 	break;

@@ -83,7 +83,9 @@ version 1.7.5, in progress
   option of changing the confidence level from the default
   of 95 percent; and similarly for confidence ellipses
 - Add facility for writing and executing R scripts via the
-  gretl GUI      
+  gretl GUI
+- Durbin-Watson statistic: supply a larger table of critical
+  values (thanks to Marcin Blazejowski and Tadeusz Kufel) 
 
 3/21/2008 version 1.7.4
 - Fix for ADF-GLS test with missing values

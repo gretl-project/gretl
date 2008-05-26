@@ -191,6 +191,7 @@ make -C updater
 
 # misc files
 add_file ${TOPDIR}/plugin/data/urcdata.gz gretl/plugins/data/urcdata.gz
+add_file ${TOPDIR}/plugin/data/dwdata.gz gretl/plugins/data/dwdata.gz
 add_file gretl_website.url gretl/gretl_website.url
 add_file updater/gretl_updater.exe gretl/gretl_updater.exe
 date > gretl.stamp

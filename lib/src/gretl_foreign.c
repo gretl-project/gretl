@@ -138,14 +138,16 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	    if (*errout == '\0') {
 		pprintf(prn, "R exited with status %d", status);
 	    } else {
-		pprintf(prn, "%s\n", errout); 
+		pputs(prn, errout);
+		pputc(prn, '\n');
 	    } 
 	}
 	err = 1;
     } else if (out != NULL) {
 	if (!(opt & OPT_Q)) {
 	    /* with OPT_Q, don't print non-error output */
-	    pprintf(prn, "%s\n", out);
+	    pputs(prn, out);
+	    pputc(prn, '\n');
 	}
     } else {
 	pprintf(prn, "%s\n", "Got no output");

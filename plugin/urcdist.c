@@ -76,12 +76,9 @@ static int urcval (int niv, int itv, int nobs, double arg,
 {
     gzFile fz;
     char line[80], code[8];
-
     int urc_ret = URC_OK;
-
     int i, j, iskip, nvar;
     char datfile[FILENAME_MAX];
-
     struct {
 	double probs[URCLEN];
 	double cnorm[URCLEN];
@@ -89,7 +86,6 @@ static int urcval (int niv, int itv, int nobs, double arg,
 	double wght[URCLEN];
 	int nz, nreg, model, minsize;
     } urc;
-
     /* byte offsets into data */
     int urc_offsets[] = {
 	39,     /* urc-1 */
@@ -113,7 +109,7 @@ static int urcval (int niv, int itv, int nobs, double arg,
 
     /* Open data file */
     sprintf(datfile, "%sdata%curcdata.gz", path, SLASH);
-    fz = gzopen(datfile, "rb");
+    fz = gretl_gzopen(datfile, "rb");
     if (fz == NULL) {
 	return URC_NOT_FOUND;
     }
@@ -343,7 +339,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
     return pval;
 }
 
-static double eval_crit (double *beta, int model, int nreg, int nobs)
+static double eval_crit (double *b, int model, int nreg, int nobs)
 {
     double d, cval = 0.0;
 
@@ -351,26 +347,20 @@ static double eval_crit (double *beta, int model, int nreg, int nobs)
        response surface for specified betas and sample size. 
     */
 
-    /* Parameter adjustments */
-    --beta;
-
-    /* Function Body */
     if (nobs == 0) {
-	cval = beta[1];
+	cval = b[0];
     } else if (model == 2) {
-	d = 1. / nobs;
-	cval = beta[1] + beta[2] * d + beta[3] * (d * d);
+	d = 1.0 / nobs;
+	cval = b[0] + b[1] * d + b[2] * (d * d);
     } else if (model == 3) {
-	d = 1. / nobs;
-	cval = beta[1] + beta[2] * d + beta[3] * (d * d) 
-	    + beta[4] * (d * d * d);
+	d = 1.0 / nobs;
+	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
     } else if (model == 4) {
-	d = 1. / (nobs - nreg);
-	cval = beta[1] + beta[2] * d + beta[3] * (d * d);
+	d = 1.0 / (nobs - nreg);
+	cval = b[0] + b[1] * d + b[2] * (d * d);
     } else if (model == 5) {
-	d = 1. / (nobs - nreg);
-	cval = beta[1] + beta[2] * d + beta[3] * (d * d) 
-	    + beta[4] * (d * d * d);
+	d = 1.0 / (nobs - nreg);
+	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
     } else {
 	fputs("*** Warning! Error in input file. ***", stderr);
     }

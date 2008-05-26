@@ -171,6 +171,7 @@ ifeq ($(LIBGSF_LIBS),)
 endif
 
 URCDATA = $(topsrc)/plugin/data/urcdata.gz
+DWDATA = $(topsrc)/plugin/data/dwdata.gz
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) \
@@ -294,10 +295,11 @@ $(GRETLLIB):
 
 .PHONY: 
 
-install: $(GRETLLIB) $(PLUGINS) $(URCDATA) installdirs 
+install: $(GRETLLIB) $(PLUGINS) $(URCDATA) $(DWDATA) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(PLUGINS) $(DESTDIR)$(plugindir)
 	$(INSTALL_DATA) $(URCDATA) $(DESTDIR)$(plugindir)/data
+	$(INSTALL_DATA) $(DWDATA) $(DESTDIR)$(plugindir)/data
 
 install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
