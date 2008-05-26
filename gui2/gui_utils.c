@@ -3799,7 +3799,7 @@ static void VAR_roots_plot_call (gpointer p, guint u, GtkWidget *w)
     err = gretl_VAR_roots_plot(var);
     
     if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	register_graph();
     }
@@ -3813,7 +3813,7 @@ static void system_resid_plot_call (gpointer p, guint ci, GtkWidget *w)
     err = gretl_system_residual_plot(vwin->data, ci, datainfo);
     
     if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	register_graph();
     }
@@ -3827,7 +3827,7 @@ static void system_resid_mplot_call (gpointer p, guint ci, GtkWidget *w)
     err = gretl_system_residual_mplot(vwin->data, ci, datainfo);
     
     if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	register_graph();
     }

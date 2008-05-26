@@ -26,7 +26,7 @@ version 1.7.5, in progress
 - Add log-axis option to GUI graph editing dialog
 - GUI program: add right-click popup menus to more windows
 - Fix bugs 1929957, 1922915, 1951681, 1954428, 1954838,
-  1960861, 1969680
+  1960861, 1969680, 1972629
 - Add guard against unmatched "if" in loops, functions and
   scripts
 - Fix bug: VARs and equation systems not getting removed as

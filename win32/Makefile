@@ -314,7 +314,7 @@ dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 
 plugins/stats_tables.dll: stats_tables.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ -lz $(GRETLLIB)
 
 plugins/range-mean.dll: range-mean.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

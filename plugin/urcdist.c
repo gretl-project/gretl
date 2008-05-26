@@ -16,8 +16,6 @@
 #include "libgretl.h"
 #include "var.h"
 
-#include <zlib.h>
-
 #define URDEBUG 0
 
 #if URDEBUG
