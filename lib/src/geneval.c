@@ -1030,6 +1030,8 @@ static NODE *strings_are_equal (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+#define annual_data(p) (p->pd == 1 && p->structure == TIME_SERIES)
+
 /* try interpreting the string on the right as identifying
    an observation number */
 
@@ -1040,12 +1042,17 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
     double *x = NULL;
     int t, t1, t2;
 
-    t = dateton(r->v.str, p->dinfo);
-    if (t >= 0) {
-	yt = t + 1;
+    if (annual_data(p->dinfo)) {
+	yt = get_date_x(p->dinfo->pd, r->v.str);
     } else {
-	p->err = 1;
-	return NULL;
+	t = dateton(r->v.str, p->dinfo);
+	if (t >= 0) {
+	    yt = t + 1;
+	} else {
+	    gretl_errmsg_sprintf("%s: not a valid observation", r->v.str);
+	    p->err = 1;
+	    return NULL;
+	}
     }
 
     ret = aux_vec_node(p, p->dinfo->n);
@@ -2489,6 +2496,10 @@ static NODE *dataset_list_node (parser *p)
 static NODE *trend_node (parser *p)
 {
     NODE *ret = aux_series_node(p, 0);
+
+#if EDEBUG
+    fprintf(stderr, "trend_node called\n");
+#endif
 
     if (ret != NULL && starting(p)) {
 	p->err = gen_time(p->Z, p->dinfo, 1);
@@ -4680,7 +4691,7 @@ static double *dvar_get_series (int i, parser *p)
     case R_INDEX:
 	x = malloc(p->dinfo->n * sizeof *x);
 	if (x != NULL) {
-	    int yr = p->dinfo->structure == TIME_SERIES && p->dinfo->pd == 1;
+	    int yr = annual_data(p->dinfo);
 
 	    for (t=0; t<p->dinfo->n; t++) {
 		x[t] = (yr)? p->dinfo->sd0 + t : t + 1;
