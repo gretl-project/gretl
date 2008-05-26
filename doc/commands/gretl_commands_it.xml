@@ -441,6 +441,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa il modello stimato</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra matrice di covarianza</effect>
 	</option>
@@ -4816,6 +4820,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa il modello stimato</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
@@ -5130,6 +5138,10 @@
         <argument optional="true">derivate</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa il modello stimato</effect>
+	</option>
 	<option>
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>

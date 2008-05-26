@@ -450,6 +450,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't show estimated model</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -4845,6 +4849,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't show estimated model</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -5161,6 +5169,10 @@
         <argument optional="true">derivatives</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't show estimated model</effect>
+	</option>
 	<option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
