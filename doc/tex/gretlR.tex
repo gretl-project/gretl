@@ -30,8 +30,8 @@ acceptance in the \app{R} community: by and large, the standard method
 of working with \app{R} is by writing scripts, or by typing commands
 at the \app{R} prompt, much in the same way as one would write
 \app{gretl} scripts or work with the \app{gretl} console. In this
-chapter, the focus will be on the methods available to a \app{gretl}
-to execute \app{R} commands without leaving \app{gretl}.
+chapter, the focus will be on the methods available to execute \app{R}
+commands without leaving \app{gretl}.
 
 \section{Starting an interactive \app{R} session}
 \label{sec:R-interactive}
@@ -40,7 +40,8 @@ to execute \app{R} commands without leaving \app{gretl}.
 The easiest way to use \app{R} from \app{gretl} is to do so
 interactively: once you have your data loaded in \app{gretl}, you can
 select the menu item ``Tools, Start GNU R'' and \app{R} will be
-started, with your dataset already loaded.
+started, with your dataset automatically passed to the \app{R}
+session.
 
 \subsection{A simple example: OLS on cross-section data}
 \label{sec:R-ols-ex}
@@ -103,8 +104,8 @@ shown in figure \ref{fig:Rwind1} should appear.
   \label{fig:Rwind1}
 \end{figure}
 
-A few caveats here: the actual look of the \app{R} window may be
-somewhat different from what you see in figure \ref{fig:Rwind1}
+A few caveats are in order here: the actual look of the \app{R} window
+may be somewhat different from what you see in figure \ref{fig:Rwind1}
 (especially for Windows users), but this is immaterial. The important
 point is that you have a window where you can type commands to
 \app{R}. If the above procedure doesn't work and no \app{R} window
@@ -239,10 +240,10 @@ Luckily, the estimates again coincide.
 \section{Running an \app{R} script}
 \label{sec:R-scripts}
 
-Opening an \app{R} window and keying commands in is a convenient method when
-the job is small. In some cases, however, it would be much better to
-have \app{R} execute a script prepared in advance. An obvious way to
-do this is to use the \texttt{source()} command in
+Opening an \app{R} window and keying commands in is a convenient
+method when the job is small. In some cases, however, it would be
+preferable to have \app{R} execute a script prepared in advance. An
+obvious way to do this is to use the \texttt{source()} command in
 \app{R}. Alternatively, \app{gretl} offers the convenience to edit an
 \app{R} script and run it, having the current dataset pre-loaded
 automatically. This feature can be accessed via the ``File, Script
@@ -281,10 +282,10 @@ be executed. Once this is done, you will find yourself at the \app{R}
 prompt, where you can enter more commands.
 
 A non-interactive run, instead, will execute your script, collect the
-output at the end of the execution and present it to you in an output
-window; \app{R} will be just run in the background. If for example the
-script in Figure \ref{fig:R-edit1} is run non-interactively, a window
-similar to Figure \ref{fig:R-output1} will appear.
+output from \app{R} and present it to you in an output window; \app{R}
+will be just run in the background. If for example the script in
+Figure \ref{fig:R-edit1} is run non-interactively, a window similar to
+Figure \ref{fig:R-output1} will appear.
 
 \begin{figure}[htbp]
   \centering
@@ -369,7 +370,7 @@ name as the exported object in \app{gretl}'s temporary directory. Data
 frames and time-series objects are stored as CSV files, and can be
 retrieved by using the \texttt{append} command. Matrices, instead, are
 stored in the special text format that \app{gretl} uses for storing
-matrices on text files (see section \ref{sec:matrix-csv}); the file
+matrices in text files (see section \ref{sec:matrix-csv}); the file
 suffix is in this case \texttt{.mat}, and to read the matrix in
 \app{gretl} you must use the \texttt{mread()} function.
 
@@ -536,6 +537,8 @@ block; see example \ref{RStructTS-simple}.
   \caption{Estimation of the Basic Structural Model --- via a function}
 \begin{scode}
 function RStructTS(series myseries)
+
+    smpl ok(myseries) --restrict
     sx = argname(myseries)
 
     foreign language=R --send-data --quiet
@@ -568,13 +571,13 @@ its full power when it is used in conjunction with user-written
 functions: example \ref{RStructTS-func} shows how to define a
 \app{gretl} function that calls \app{R} internally.
 
-A note on performance here: the mechanism \app{gretl} uses to
-invoke \app{R} is far from being optimal in terms of speed. The
-overhead implied in a \texttt{foreign} block may even be in the order
-of a few seconds. One \app{R} is loaded, on the contrary, it runs at
-its full speed. Consequently, if performance is what you are after, it
-is advisable to organize your script by grouping together as many
-\app{R} operations as you can, so to have as few \texttt{foreign}
+A note on performance: the mechanism \app{gretl} uses to invoke
+\app{R} is far from being optimal in terms of speed. On some systems,
+the overhead implied in a \texttt{foreign} block may even be in the
+order of a few seconds; on the contrary, once \app{R} is loaded it
+runs at full speed. Consequently, if performance is what you are
+after, it is advisable to organize your script by grouping together as
+many \app{R} operations as you can, so to have as few \texttt{foreign}
 blocks as possible.
 
 
