@@ -428,15 +428,16 @@ static NODE *aux_scalar_node (parser *p)
     return get_aux_node(p, NUM, 0, 0);
 }
 
-static void no_data_error (void)
+static void no_data_error (parser *p)
 {
     gretl_errmsg_set(_("No dataset is in place"));
+    p->err = E_DATA;
 }
 
 static NODE *aux_vec_node (parser *p, int n)
 {
     if (p->dinfo->n == 0) {
-	no_data_error();
+	no_data_error(p);
 	return NULL;
     } else {
 	return get_aux_node(p, VEC, n, 1);
@@ -446,7 +447,7 @@ static NODE *aux_vec_node (parser *p, int n)
 static NODE *aux_series_node (parser *p, int n)
 {
     if (p->dinfo->n == 0) {
-	no_data_error();
+	no_data_error(p);
 	return NULL;
     } else {
 	return get_aux_node(p, VEC, n, 0);
@@ -456,7 +457,7 @@ static NODE *aux_series_node (parser *p, int n)
 static NODE *aux_ivec_node (parser *p, int n)
 {
     if (p->dinfo->n == 0) {
-	no_data_error();
+	no_data_error(p);
 	return NULL;
     } else {
 	return get_aux_node(p, IVEC, n, 1);
@@ -466,7 +467,7 @@ static NODE *aux_ivec_node (parser *p, int n)
 static NODE *aux_lvec_node (parser *p)
 {
     if (p->dinfo->n == 0) {
-	no_data_error();
+	no_data_error(p);
 	return NULL;
     } else {
 	return get_aux_node(p, LVEC, 0, 1);
@@ -4332,6 +4333,11 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	    nn->v.bn.n[i] = n;
 	} else {
 	    n = eval(n, p);
+	    if (n == NULL) {
+		if (!p->err) {
+		    p->err = 1;
+		}
+	    }
 	    if (p->err) {
 		break;
 	    }
@@ -6908,8 +6914,8 @@ static int gen_check_return_type (parser *p)
     }
 
     if (p->dinfo->n == 0 && r->t != MAT && r->t != NUM && r->t != STR) {
-	no_data_error();
-	return (p->err = E_DATA);
+	no_data_error(p);
+	return p->err;
     }
 
     if (!ok_return_type(r->t)) {
