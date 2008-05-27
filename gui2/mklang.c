@@ -141,7 +141,7 @@ void output_lang2_file (void)
     int i, n;
 
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    puts("<language id=\"gretl\" _name=\"gretl\" version=\"2.0\" _section=\"Sources\">");
+    puts("<language id=\"gretl\" _name=\"gretl\" version=\"2.0\" _section=\"Scripts\">");
     puts("<metadata>");
     puts(" <property name=\"mimetypes\">application/x-gretlscript</property>");
     puts(" <property name=\"globs\">*.inp</property>");
@@ -179,6 +179,12 @@ void output_lang2_file (void)
     puts("   <context ref=\"def:line-continue\"/>");
     puts("  </include>");
     puts(" </context>");
+#if 0 /* not yet */
+    puts(" <context id=\"foreign\" style-inside=\"true\" style-ref=\"comment\">");
+    puts("  <start>(?&lt;=foreign language)</start>");
+    puts("  <end>(?=end foreign)</end>");
+    puts(" </context>");
+#endif
 
     /* gretl data types */
     puts(" <context id=\"gretl-types\" style-ref=\"data-type\">");
