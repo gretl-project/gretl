@@ -218,8 +218,7 @@ static void write_R_export_func (const gchar *dotdir, FILE *fp)
     fputs("  if (is.ts(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
     fputs("    dfx <- data.frame(x)\n", fp);
-    fputs("    if (dim(dfx)[2] == 1) {\n", fp);
-    fputs("      dfx <- as.data.frame(x);\n", fp);
+    fputs("    if (ncol(dfx) == 1) {\n", fp);
     fputs("      colnames(dfx) <- sx;\n", fp);
     fputs("    }\n", fp);
     fputs("    write.csv(dfx, file=fname, row.names=F)\n", fp);
@@ -229,7 +228,7 @@ static void write_R_export_func (const gchar *dotdir, FILE *fp)
     fputs("  } else if (is.matrix(x)) {\n", fp);
     fputs("    fname <- paste(prefix, sx, \".mat\", sep=\"\")\n", fp);
     fputs("    write(dim(x), fname)\n", fp);
-    fputs("    write(t(x), file=fname, ncolumns=dim(x)[2], append=TRUE)\n", fp);
+    fputs("    write(t(x), file=fname, ncolumns=ncol(x), append=TRUE)\n", fp);
     fputs("  }\n", fp);
     fputs("}\n", fp);
 }
