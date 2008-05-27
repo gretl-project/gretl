@@ -4333,10 +4333,8 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	    nn->v.bn.n[i] = n;
 	} else {
 	    n = eval(n, p);
-	    if (n == NULL) {
-		if (!p->err) {
-		    p->err = 1;
-		}
+	    if (n == NULL && !p->err) {
+		p->err = 1;
 	    }
 	    if (p->err) {
 		break;
