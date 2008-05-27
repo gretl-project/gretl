@@ -105,9 +105,13 @@ static const int rank_sum_upper[39][3] = {
     { 118, 123, 132 }
 };
 
-/* D-W lookup apparatus: thanks to Marcin Blazejowski and Tadeusz Kufel */
+/* D-W lookup apparatus: thanks to Marcin Blazejowski and Tadeusz Kufel
+   See also http://www.stanford.edu/~clint/bench/dwcrit.htm 
+*/
 
-/* dw_row: returns the table row on which to find the appropriate DW values.
+/* dw_row: returns the row of the data table on which to find the 
+   appropriate DW values.
+
    This table runs from n = 6 to n = 2000:
    - all values are represented from 6 to 200 
    - n goes by 10s from 200 to 500
@@ -140,25 +144,19 @@ static int dw_row (int *pn)
 
 int dw_lookup (int n, int k, PRN *prn)
 {
-    char datfile[FILENAME_MAX];
     gzFile fz;
-    double dl, du;
+    char datfile[FILENAME_MAX];
+    double dl = 0, du = 0;
     int dn = n, dk = k;
-    char *s, line[300];
-    int r, c;	/* table row, column */
-    int i, j;
+    char line[282];
+    int i, r, c;
+    int err = 0;
 
-    dl = du = NADBL;
-	
     if (n < 6) {
 	pprintf(prn, "DW: n must be at least 6\n");
-	return 1;
+	return E_DATA;
     }
 	
-    if (dk > 20) {
-	dk = 20;
-    }
-
     /* Open data file */
 #ifdef WIN32
     sprintf(datfile, "%splugins\\data\\dwdata.gz", gretl_lib_path());
@@ -168,58 +166,40 @@ int dw_lookup (int n, int k, PRN *prn)
     fz = gretl_gzopen(datfile, "r");
     if (fz == NULL) {
 	pputs(prn, "Couldn't open D-W table\n");
-	return 1;
+	return E_FOPEN;
     }
 
+    if (dk > 20) dk = 20;
     r = dw_row(&dn);
-    c = 2 * dk - 2;
+    c = 14 * (dk - 1);
     i = 0;
 
     gretl_push_c_numeric_locale();
 
     while (gzgets(fz, line, sizeof line)) {
-	if (i == r) {
-	    s = line + strspn(line, " ");
-	    for (j=0; j<c; j++) {
-		s += strcspn(s, " ");
-		s += strspn(s, " ");
-	    }
-	    sscanf(s, "%lf %lf", &dl, &du);
+	if (i++ == r) {
+	    sscanf(line + c, "%lf %lf", &dl, &du);
 	    break;
 	}
-	i++;
     }
 
     gretl_pop_c_numeric_locale();
 
     gzclose(fz);
 		
-    if (dl < 0) dl = NADBL;
-    if (du < 0) du = NADBL;
-
-    if (na(dl) && na(du)) {
+    if (dl == 0 || du == 0) {
 	pprintf(prn, "No critical values available for n=%d and k=%d\n", n, k);
-	return 1;
-    } 
-
-    pprintf(prn, "%s, n = %d, k = %d\n\n",
-	    /* xgettext:no-c-format */
-	    _("5% critical values for Durbin-Watson statistic"), 
-	    dn, dk);
-
-    if (na(dl)) {
-	pprintf(prn, "  dL = %s\n", _("undefined"));
+	err = E_DATA;
     } else {
+	pprintf(prn, "%s, n = %d, k = %d\n\n",
+		/* xgettext:no-c-format */
+		_("5% critical values for Durbin-Watson statistic"), 
+		dn, dk);
 	pprintf(prn, "  dL = %6.4f\n", dl);
-    }
-
-    if (na(du)) {
-	pprintf(prn, "  dL = %s\n", _("undefined"));
-    } else {
 	pprintf(prn, "  dU = %6.4f\n", du);
     }
 	
-    return 0;
+    return err;
 }
 
 static int rank_table_row (int na, int nb)

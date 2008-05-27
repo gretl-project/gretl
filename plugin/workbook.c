@@ -464,7 +464,11 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    case BIFF_SUPBOOK:
 		break;
 	    default:
+#ifdef EDEBUG
 		fprintf(stderr, "Got unexpected BIFF token 0x%x\n", q->opcode);
+#else
+		;
+#endif
 	    }
 	    continue;
 	}
@@ -654,8 +658,9 @@ int excel_book_get_info (const char *fname, wbook *book)
     if (book->byte_offsets == NULL) return 1;
 
     for (i=0; i<book->nsheets; i++) {
-	book->sheetnames[i] = (bounds[i])->name;
-	book->byte_offsets[i] = (bounds[i])->streamStartPos;
+	book->sheetnames[i] = bounds[i]->name;
+	tailstrip(book->sheetnames[i]);
+	book->byte_offsets[i] = bounds[i]->streamStartPos;
 	g_free(bounds[i]);
     }
 

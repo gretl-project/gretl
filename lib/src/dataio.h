@@ -87,7 +87,7 @@ int get_precision (const double *x, int n, int placemax);
 
 double get_date_x (int pd, const char *obs);
 
-int write_data (const char *fname, const int *list, 
+int write_data (const char *fname, int *list, 
 		const double **Z, const DATAINFO *pdinfo, 
 	        gretlopt opt, PATHS *ppaths);
 

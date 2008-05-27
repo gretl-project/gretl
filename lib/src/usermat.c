@@ -990,7 +990,7 @@ int umatrix_set_colnames_from_string (const gretl_matrix *M,
 				      const char *s)
 {
     user_matrix *u = get_user_matrix_by_data(M);
-    int i, n, err = 0;
+    int n, err = 0;
 
     if (u == NULL) {
 	return E_UNKVAR;
@@ -1003,29 +1003,16 @@ int umatrix_set_colnames_from_string (const gretl_matrix *M,
 	    free_strings_array(u->colnames, n);
 	    u->colnames = NULL;
 	}
-    } else if (count_fields(s) != n) {
-	err = E_NONCONF;
     } else {
-	char **S = strings_array_new(n);
-	char *tmp;
+	char **S;
+	int ns;
 
+	S = gretl_string_split(s, &ns);
 	if (S == NULL) {
 	    err = E_ALLOC;
-	}
-
-	for (i=0; i<n && !err; i++) {
-	    tmp = gretl_word_strdup(s, &s);
-	    if (tmp != NULL) {
-		S[i] = gretl_strndup(tmp, 12);
-	    }
-	    if (S[i] == NULL) {
-		err = E_ALLOC;
-	    }
-	    free(tmp);
-	}
-
-	if (err) {
-	    free_strings_array(S, n);
+	} else if (ns != n) {
+	    err = E_NONCONF;
+	    free_strings_array(S, ns);
 	} else {
 	    if (u->colnames != NULL) {
 		free_strings_array(u->colnames, n);

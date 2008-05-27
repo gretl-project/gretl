@@ -887,9 +887,11 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	d = dist[0];
 	k = argc - 1;
 
+	fprintf(stderr, "d=%c, k=%d\n", d, k);
+
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
-	    if (s->t == NUM || s->t == MAT) {
+	    if (s->t == NUM || scalar_matrix_node(s)) {
 		parm[i] = scalar_node_get_value(s, p);
 	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
 		pvec = s->v.xvec;
@@ -904,7 +906,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		if (p->err) {
 		    goto disterr;
 		}
-		if (e->t == NUM || e->t == MAT) {
+		if (e->t == NUM || scalar_matrix_node(e)) {
 		    parm[i] = scalar_node_get_value(e, p);
 		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
 		    pvec = e->v.xvec;

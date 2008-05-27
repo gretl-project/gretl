@@ -1224,7 +1224,7 @@ static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
 /**
  * write_data:
  * @fname: name of file to write.
- * @list: list of variables to write.
+ * @list: list of variables to write (or %NULL to write all series).
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: option flag indicating format in which to write the data.
@@ -1237,7 +1237,7 @@ static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int write_data (const char *fname, const int *list, 
+int write_data (const char *fname, int *list, 
 		const double **Z, const DATAINFO *pdinfo, 
 		gretlopt opt, PATHS *ppaths)
 {
@@ -1249,7 +1249,9 @@ int write_data (const char *fname, const int *list,
     char delim = 0;
     FILE *fp = NULL;
     int *pmax = NULL;
+    int freelist = 0;
     double xx;
+    int err = 0;
 
     gretl_error_clear();
 
@@ -1263,6 +1265,8 @@ int write_data (const char *fname, const int *list,
 	    return E_ARGS;
 	} else if (list == NULL) {
 	    return E_ALLOC;
+	} else {
+	    freelist = 1;
 	}
     }
 
@@ -1273,20 +1277,23 @@ int write_data (const char *fname, const int *list,
     fname = gretl_maybe_switch_dir(fname);
 
     if (fmt == 0 || fmt == GRETL_FMT_GZIPPED) {
-	return gretl_write_gdt(fname, list, Z, pdinfo, 
-			       (fmt == GRETL_FMT_GZIPPED)? OPT_Z : OPT_NONE,
-			       ppaths);
+	err = gretl_write_gdt(fname, list, Z, pdinfo, 
+			      (fmt == GRETL_FMT_GZIPPED)? OPT_Z : OPT_NONE,
+			      ppaths);
+	goto write_exit;
     }
 
     if (fmt == GRETL_FMT_DB) {
-	return write_db_data(fname, list, opt, Z, pdinfo);
+	err = write_db_data(fname, list, opt, Z, pdinfo);
+	goto write_exit;
     }
 
     if (fmt == GRETL_FMT_CSV && get_csv_delim(pdinfo) == ',' && 
 	',' == pdinfo->decpoint) {
 	sprintf(gretl_errmsg, _("You can't use the same character for "
 				"the column delimiter and the decimal point"));
-	return E_DATA;
+	err = E_DATA;
+	goto write_exit;
     }
 
     strcpy(datfile, fname);
@@ -1304,18 +1311,21 @@ int write_data (const char *fname, const int *list,
 	}
 	if (writehdr(hdrfile, list, pdinfo, fmt)) {
 	    fprintf(stderr, I_("Write of header file failed"));
-	    return 1;
+	    err = E_FOPEN;
+	    goto write_exit;
 	}
 	if (writelbl(lblfile, list, pdinfo)) {
 	    fprintf(stderr, I_("Write of labels file failed"));
-	    return 1;
+	    err = E_FOPEN;
+	    goto write_exit;
 	}
     }
 
     /* open file for output */
     fp = gretl_fopen(datfile, "w");
     if (fp == NULL) {
-	return E_FOPEN;
+	err = E_FOPEN;
+	goto write_exit;
     }
 
     if (fmt == GRETL_FMT_CSV || fmt == GRETL_FMT_OCTAVE || 
@@ -1325,7 +1335,8 @@ int write_data (const char *fname, const int *list,
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) {
 	    fclose(fp);
-	    return E_ALLOC;
+	    err = E_ALLOC;
+	    goto write_exit;
 	}
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
@@ -1518,7 +1529,7 @@ int write_data (const char *fname, const int *list,
 	}
     }
 
-    if (fmt != GRETL_FMT_CSV || pdinfo->decpoint != ','){
+    if (fmt != GRETL_FMT_CSV || pdinfo->decpoint != ',') {
 	gretl_pop_c_numeric_locale();
     }
 
@@ -1530,7 +1541,13 @@ int write_data (const char *fname, const int *list,
 	fclose(fp);
     }
 
-    return 0;
+ write_exit:
+
+    if (freelist) {
+	free(list);
+    }
+
+    return err;
 }
 
 static void dataset_type_string (char *str, const DATAINFO *pdinfo)

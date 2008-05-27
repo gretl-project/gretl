@@ -383,10 +383,15 @@ static int wbook_check_params (wbook *book)
     if (book->targname != NULL) {
 	int i;
 
+	book->selected = -1;
 	for (i=0; i<book->nsheets; i++) {
 	    if (!strcmp(book->targname, book->sheetnames[i])) {
 		book->selected = i;
 	    }
+	}
+	if (book->selected < 0) {
+	    gretl_errmsg_sprintf("\"%s\": no such sheet", book->targname);
+	    return E_DATA;
 	}
     }
 
@@ -428,6 +433,7 @@ static void wbook_init (wbook *book, const int *list, char *sheetname)
 
     if (sheetname != NULL && *sheetname != '\0') {
 	book->targname = gretl_strdup(sheetname);
+	tailstrip(book->targname);
     }
 
     if (list != NULL && list[0] == 3) {

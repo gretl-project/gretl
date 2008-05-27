@@ -17,9 +17,7 @@
  * 
  */
 
-/*
-  Based on the Gnumeric excel plugin by Michael Meeks.
-*/
+/* Originally based on the Gnumeric excel plugin by Michael Meeks */
 
 #include <gtk/gtk.h>
 
@@ -410,7 +408,6 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	    /* If we don't do a rigorous check on q, as below, we
 	       may end up with zeros where there should be NAs.
 	    */ 
-
 	    if (numeric_string(q)) {
 		dprintf("taking sst[%d] '%s' to be numeric string: %s\n", idx, s, q);
 		prow->cells[col] = q;
@@ -1413,6 +1410,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
+
+    fprintf(stderr, "xls_get_data: sheetname='%s'\n", sheetname);
 
     gretl_push_c_numeric_locale();
 
