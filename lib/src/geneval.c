@@ -887,8 +887,6 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	d = dist[0];
 	k = argc - 1;
 
-	fprintf(stderr, "d=%c, k=%d\n", d, k);
-
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
 	    if (s->t == NUM || scalar_matrix_node(s)) {
@@ -5880,9 +5878,33 @@ static void printnode (const NODE *t, const parser *p)
 #define ok_matrix_op(o) (o == B_ASN || o == B_ADD || \
 			 o == B_SUB || o == B_MUL || \
 			 o == B_DIV || o == INC || \
-			 o == DEC)
+			 o == DEC || o == B_MCCAT || \
+                         o == B_MRCAT)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_string_op(o) (o == B_ASN || o == B_ADD) 
+#define matrix_only_op(o) (o == B_MCCAT || o == B_MRCAT)
+
+struct mod_assign {
+    int sym;
+    int op;
+};
+
+#if 0
+const char mod_syms = "+-*/%^&~|";
+#endif
+
+struct mod_assign m_assign[] = {
+    { '+', B_ADD },
+    { '-', B_SUB },
+    { '*', B_MUL },
+    { '/', B_DIV },
+    { '%', B_MOD},
+    { '^', B_POW },
+    { '&', B_AND },
+    { '~', B_MCCAT },
+    { '|', B_MRCAT },
+    { 0, 0}
+};
 
 /* read operator from "genr" formula: this is either
    simple assignment or something like '+=' */
@@ -5903,14 +5925,12 @@ static int get_op (char *s)
     }
 
     if (s[1] == '=') {
-	switch (s[0]) {
-	case '+': return B_ADD;
-	case '-': return B_SUB;
-	case '*': return B_MUL;
-	case '/': return B_DIV;
-	case '^': return B_POW;
-	case '&': return B_AND;
-	case '|': return B_OR;
+	int i;
+
+	for (i=0; m_assign[i].sym; i++) {
+	    if (s[0] == m_assign[i].sym) {
+		return m_assign[i].op;
+	    }
 	}
     }
 
@@ -6139,7 +6159,7 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
 	return 0;
     }
 
-    n = strcspn(s, "*/%^|~+-([= ");
+    n = strcspn(s, "+-*/%^&~|([= ");
 
     if (n > 0) {
 	if (*(s+n) == '[') {
@@ -6419,7 +6439,14 @@ static void pre_process (parser *p, int flags)
 	sprintf(gretl_errmsg, _("'%s' : not implemented for strings"), opstr);
 	p->err = E_PARSE;
 	return;
-    }    
+    } 
+
+    /* matrix concat (etc.?) only OK for matrices */
+    if (p->lh.t != MAT && matrix_only_op(p->op)) {
+	sprintf(gretl_errmsg, _("'%s' : only defined for matrices"), opstr);
+	p->err = E_PARSE;
+	return;
+    }	
 
     /* advance past operator */
     s += strlen(opstr);

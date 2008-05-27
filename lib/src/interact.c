@@ -1642,10 +1642,10 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
     int ret = 0;
 
     if (strchr(s, '=') || strstr(s, "++") || strstr(s, "--")) {
-	const char *ok = "+-*/=[";
+	const char *ok = "+-*/%^&~|=[";
 	char word[VNAMELEN];
 
-	if (sscanf(s, "%15[^[ +-*/=]", word)) {
+	if (sscanf(s, "%15[^[ +-*/%^&~|=]", word)) {
 	    s += strlen(word);
 	    while (*s == ' ') s++;
 	    if (strspn(s, ok) && check_varname(word) == 0) {
