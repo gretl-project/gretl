@@ -243,6 +243,12 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     int colmin, rowmin;
     int err = 0;
 
+    /* FIXME: the XLS importer tolerates text in the first column
+       even if the hading is not "obs"/blank, but the gnumeric
+       importer rejects such a column.  I think -- but also see
+       the FIXME note below.
+    */
+
     cols = sheet->maxcol + 1 - sheet->col_offset;
     rows = sheet->maxrow + 1 - sheet->row_offset;
 
@@ -327,6 +333,9 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 			sheet->Z[i_real][t_real] = x;
 			toprows[t_real] = leftcols[i_real] = 0;
 		    } else if (vtype == VALUE_STRING) {
+			/* FIXME: tolerate "string" values that are de facto
+			   numeric? Also string values that represent NA.
+			*/
 			if (t_real == 0) {
 			    strncat(sheet->varname[i_real], tmp, VNAMELEN - 1);
 			    sheet->colheads += 1;
@@ -337,7 +346,10 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 				err = 1;
 			    }
 			} else if (i_real == 0) {
-			    gotlabels = 1;
+			    if (!gotlabels) {
+				fprintf(stderr, "setting gotlabels\n");
+				gotlabels = 1;
+			    }
 			}
 			toprows[t_real] = leftcols[i_real] = 1;
 		    }
@@ -583,51 +595,9 @@ static int wsheet_labels_complete (wsheet *sheet)
     return ret;
 }
 
-static int rigorous_dates_check (wsheet *sheet, DATAINFO *pdinfo)
-{
-    int t, rows = sheet->maxrow + 1 - sheet->row_offset;
-    int startrow = 1 + sheet->row_offset;
-    int n, nbak = 0, err = 0;
-
-    fprintf(stderr, "Doing rigorous dates check: pd = %d, stobs = '%s'\n", 
-	    pdinfo->pd, pdinfo->stobs);
-
-    for (t=startrow; t<rows; t++) {
-	n = dateton(sheet->label[t], pdinfo);
-	if (t > startrow && n != nbak + 1) {
-	    fprintf(stderr, "problem: date[%d]='%s' (%d) but date[%d]='%s' (%d)\n",
-		    t - startrow + 1, sheet->label[t], n,
-		    t - startrow, sheet->label[t-1], nbak);
-	    err = 1;
-	    break;
-	}
-	nbak = n;
-    }    
-
-    return err;
-}
-
 static void 
 sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
 {
-    const char *s;
-
-    if (sheet->colheads == 0) {
-	s = sheet->label[0];
-    } else {
-	s = sheet->label[1];
-    }
-
-    if (book_numeric_dates(book)) {
-	int d0 = atoi(s);
-
-	MS_excel_date_string(newinfo->stobs, d0, pd, book_base_1904(book));
-    } else {
-	if (*s == '"' || *s == '\'') s++;
-	strcpy(newinfo->stobs, s);
-	colonize_obs(newinfo->stobs);
-    }
-
     newinfo->pd = pd;
     newinfo->structure = TIME_SERIES;
 
@@ -723,6 +693,8 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	int nrows = sheet->maxrow + 1 - sheet->row_offset;
 	int r0 = sheet->row_offset;
 	int i, j, t, i_sheet;
+	int ts_markers = 0;
+	char **ts_S = NULL;
 	int blank_cols = 0;
 	int pd = 0;
 
@@ -737,26 +709,25 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    }
 	}
 
-	if (book != NULL && book_numeric_dates(book)) {
-	    pd = pd_from_numeric_dates(nrows, r0, 0, sheet->label, book);
-	} else if (sheet->colheads > 0) {
-	    if (import_obs_label(sheet->label[0])) {
-		pd = consistent_date_labels(nrows, r0, 0, sheet->label);
+	newinfo->n = sheet->maxrow - sheet->row_offset + book->totmiss;
+
+	if (book_numeric_dates(book) || 
+	    (sheet->colheads > 0 && import_obs_label(sheet->label[0]))) {
+	    pd = importer_dates_check(nrows, r0, 0, book->flags, sheet->label,
+				      newinfo, prn, &err);
+	    if (pd > 0) {
+		/* got time-series info from dates/labels */
+		sheet_time_series_setup(sheet, book, newinfo, pd);
+		ts_markers = newinfo->markers;
+		ts_S = newinfo->S;
+	    } else if (!book_numeric_dates(book)) {
+		/* wrong?? */
+		sheet->text_cols = 0;
+		book_unset_obs_labels(book);
 	    }
 	}
 
-	if (pd) {
-	    sheet_time_series_setup(sheet, book, newinfo, pd);
-	    if (!book_numeric_dates(book)) {
-		if (rigorous_dates_check(sheet, newinfo)) {
-		    sheet->text_cols = 0;
-		    book_unset_time_series(book);
-		}
-	    }
-	}	
-
 	newinfo->v = sheet->maxcol + 2 - sheet->col_offset - sheet->text_cols;
-	newinfo->n = sheet->maxrow - sheet->row_offset + book->totmiss;
 	if (sheet->colheads == 0) {
 	    newinfo->n += 1;
 	}
@@ -770,8 +741,8 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	}
 
 	if (book_time_series(book)) {
-	    ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
-	    fprintf(stderr, "endobs='%s'\n", newinfo->endobs);
+	    newinfo->markers = ts_markers;
+	    newinfo->S = ts_S;
 	} else {
 	    dataset_obs_info_default(newinfo);
 	} 

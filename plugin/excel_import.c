@@ -1366,18 +1366,6 @@ static int alpha_cell (const char *s)
 
 static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
 {
-    const char *s = rows[1 + book->row_offset].cells[book->col_offset];
-
-    if (book_numeric_dates(book)) {
-	int d0 = atoi(s);
-
-	MS_excel_date_string(newinfo->stobs, d0, pd, book_base_1904(book));
-    } else {
-	if (*s == '"' || *s == '\'') s++;
-	strcpy(newinfo->stobs, s);
-	colonize_obs(newinfo->stobs);
-    }
-
     newinfo->pd = pd;
     newinfo->structure = TIME_SERIES;
 
@@ -1401,6 +1389,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     int datacols, totcols;
     struct string_err strerr;
     char *blank_col = NULL;
+    int ts_markers = 0;
+    char **ts_S = NULL;
     int r0, c0;
     int i, t, pd = 0;
     int err = 0;
@@ -1411,7 +1401,9 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	return 1;
     }
 
-    fprintf(stderr, "xls_get_data: sheetname='%s'\n", sheetname);
+    if (sheetname != NULL) {
+	fprintf(stderr, "xls_get_data: sheetname='%s'\n", sheetname);
+    }
 
     gretl_push_c_numeric_locale();
 
@@ -1524,40 +1516,25 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     r0 = book->row_offset;
     c0 = book->col_offset;
+    newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
 
-#if 0 /* not quite yet */
     if (book_numeric_dates(book) || 
 	(!book_auto_varnames(book) && import_obs_label(rows[r0].cells[c0]))) {
-	newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
-	pd = new_dates_check(nrows, book->row_offset, book->col_offset, 
-			     book, newinfo, prn, &err);
-	if (!book_numeric_dates(book) && pd <= 0 && alpha_cell(rows[r0].cells[c0]) && 
+	pd = importer_dates_check(nrows, book->row_offset, book->col_offset, 
+				  book->flags, NULL, newinfo, prn, &err);
+	if (pd > 0) {
+	    /* got time-series info from dates/labels */
+	    book_time_series_setup(book, newinfo, pd);
+	    ts_markers = newinfo->markers;
+	    ts_S = newinfo->S;
+	} else if (!book_numeric_dates(book) && alpha_cell(rows[r0].cells[c0]) && 
 	    col0_is_numeric(nrows, r0, c0)) {
 	    book_unset_obs_labels(book);
 	}
-    }
-#else
-    /* do we have a first column containing dates? */
-    if (book_numeric_dates(book)) {
-	pd = pd_from_numeric_dates(nrows, book->row_offset, book->col_offset, 
-				   NULL, book);
-    } else if (!book_auto_varnames(book) &&
-	       import_obs_label(rows[r0].cells[c0])) {
-	pd = consistent_date_labels(nrows, r0, c0, NULL);
-	if (pd <= 0 && alpha_cell(rows[r0].cells[c0]) && 
-	    col0_is_numeric(nrows, r0, c0)) {
-	    book_unset_obs_labels(book);
-	}
-    }
-#endif
-
-    if (pd > 0) {
-	book_time_series_setup(book, newinfo, pd);
     }
 
     /* dimensions of the dataset */
     newinfo->v = n_vars_from_col(book, totcols, blank_col);
-    newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
     fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 	    newinfo->v, newinfo->n);
 
@@ -1568,7 +1545,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     if (book_time_series(book)) {
-	ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
+	newinfo->markers = ts_markers;
+	newinfo->S = ts_S;
     } else {
 	dataset_obs_info_default(newinfo);
     } 

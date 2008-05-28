@@ -596,7 +596,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
 		    return -1;
 		}
 	    }
-	    pprintf(prn, "? %s - %s\n", lbl1, lbl2);
+	    pprintf(prn, "Could be %s - %s\n", lbl1, lbl2);
 	    ret = check_daily_dates(pdinfo, &pd, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {

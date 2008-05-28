@@ -601,7 +601,9 @@ int guess_daily_pd (const DATAINFO *pdinfo)
 	wdbak = wd;
     }
 
-    if (contig > 10) {
+    if (gotsat && gotsun) {
+	pd = 7;
+    } else if (contig > 10) {
 	if (gotsun) pd = 7;
 	else if (gotsat) pd = 6;
     } else if (pdinfo->n > 7) {
