@@ -1009,24 +1009,7 @@ static double getdbl (parser *p)
     return d;
 }
 
-#if 0 /* later? */
-static void deprecation_note (parser *p)
-{
-    if (p->sym == B_AND) {
-	pprintf(p->prn, "Note: the recommended form for logical "
-		"AND is '&&'\n");
-    } else if (p->sym == B_OR) {
-	pprintf(p->prn, "Note: the recommended form for logical "
-		"OR is '||'\n");
-    }
-}
-#endif
-
 #define word_start_special(c) (c == '$' || c == '@' || c == '_')
-
-#define matrix_gen(p) (p->lh.t == MAT || p->targ == MAT)
-
-#define unary_context(p) (p->sym < F2_MAX || p->sym == COM)
 
 #define lag_range_sym(p) (p->ch == 't' && *p->point == 'o' && \
 			  *(p->point + 1) == ' ')
@@ -1090,34 +1073,21 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '&': 
-#if 0 /* for later, but modified */
-	    if (unary_context(p)) {
-		p->sym = U_ADDR;
-		parser_getc(p);
-		return;
-	    }
-	    p->sym = B_AND;
 	    parser_getc(p);
 	    if (p->ch == '&') {
+		p->sym = B_AND;
 		parser_getc(p);
 	    } else {
-		deprecation_note(p);
+		p->sym = U_ADDR;
 	    }
-#else
-	    p->sym = B_AND;
-	    parser_getc(p);
-	    if (p->ch == '&') {
-		/* make "&&" equal to "&" */
-		parser_getc(p);
-	    }
-#endif
 	    return;
         case '|': 
-	    p->sym = (matrix_gen(p))? B_MRCAT : B_OR;
 	    parser_getc(p);
 	    if (p->ch == '|') {
 		p->sym = B_OR;
 		parser_getc(p);
+	    } else {
+		p->sym = B_MRCAT;
 	    }
 	    return;
         case '!': 

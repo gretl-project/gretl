@@ -571,14 +571,14 @@ its full power when it is used in conjunction with user-written
 functions: example \ref{RStructTS-func} shows how to define a
 \app{gretl} function that calls \app{R} internally.
 
-A note on performance: the mechanism \app{gretl} uses to invoke
-\app{R} is far from being optimal in terms of speed. On some systems,
-the overhead implied in a \texttt{foreign} block may even be in the
-order of a few seconds; on the contrary, once \app{R} is loaded it
-runs at full speed. Consequently, if performance is what you are
-after, it is advisable to organize your script by grouping together as
-many \app{R} operations as you can, so to have as few \texttt{foreign}
-blocks as possible.
+A note on performance: at present, when \app{R} is called from within
+\app{gretl} using a \texttt{foreign} block, the \app{R} program is
+started up on each invocation, which can be quite time consuming.  For
+maximum performance, you should organize your script so as to group
+together as many \app{R} operations as possible, hence minimizing the
+number of distinct \texttt{foreign} blocks.\footnote{In future we may
+  be able to improve on this, using calls to the \app{R} shared
+  library in place of invocations of the program.}
 
 
 %%% Local Variables: 

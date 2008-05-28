@@ -3853,7 +3853,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 		p->err = push_fn_arg(args, GRETL_TYPE_MATRIX_REF, m);
 	    } else {
-		pputs(p->prn, "Wrong type of operand for unary '&'\n");
+		pputs(p->prn, _("Wrong type of operand for unary '&'"));
+		pputc(p->prn, '\n');
 		p->err = 1;
 	    }
 	} else if (n->t == DUM) {
@@ -4334,7 +4335,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	} else {
 	    n = eval(n, p);
 	    if (n == NULL && !p->err) {
-		p->err = 1;
+		p->err = E_UNSPEC; /* "can't happen" */
 	    }
 	    if (p->err) {
 		break;
@@ -4955,13 +4956,19 @@ static void node_type_error (int ntype, int goodt, NODE *bad, parser *p)
 	nstr = getsymb(ntype, NULL);
     }
 
-    pprintf(p->prn, _("Wrong type argument for %s: should be %s"),
+    pprintf(p->prn, _("Wrong type argument for \"%s\": should be %s"),
 	    nstr, typestr(goodt));
 
     if (bad != NULL) {
 	pprintf(p->prn, ", is %s\n", typestr(bad->t));
     } else {
 	pputc(p->prn, '\n');
+    }
+
+    if (!strcmp(nstr, "&")) {
+	pputs(p->prn, "(for logical AND, please use \"&&\")\n");
+    } else if (!strcmp(nstr, "|")) {
+	pputs(p->prn, "(for logical OR, please use \"||\")\n");
     }
 
     p->err = E_TYPES;
@@ -5889,12 +5896,12 @@ static void printnode (const NODE *t, const parser *p)
 #define matrix_only_op(o) (o == B_MCCAT || o == B_MRCAT)
 
 struct mod_assign {
-    int sym;
+    int c;
     int op;
 };
 
 #if 0
-const char mod_syms = "+-*/%^&~|";
+const char mod_syms = "+-*/%^~|";
 #endif
 
 struct mod_assign m_assign[] = {
@@ -5904,7 +5911,6 @@ struct mod_assign m_assign[] = {
     { '/', B_DIV },
     { '%', B_MOD},
     { '^', B_POW },
-    { '&', B_AND },
     { '~', B_MCCAT },
     { '|', B_MRCAT },
     { 0, 0}
@@ -5931,8 +5937,8 @@ static int get_op (char *s)
     if (s[1] == '=') {
 	int i;
 
-	for (i=0; m_assign[i].sym; i++) {
-	    if (s[0] == m_assign[i].sym) {
+	for (i=0; m_assign[i].c; i++) {
+	    if (s[0] == m_assign[i].c) {
 		return m_assign[i].op;
 	    }
 	}
@@ -6163,7 +6169,7 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
 	return 0;
     }
 
-    n = strcspn(s, "+-*/%^&~|([= ");
+    n = strcspn(s, "+-*/%^~|([= ");
 
     if (n > 0) {
 	if (*(s+n) == '[') {

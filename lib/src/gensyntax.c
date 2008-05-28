@@ -252,9 +252,18 @@ static int push_bn_node (NODE *t, NODE *n)
 
 static void expected_symbol_error (int c, parser *p)
 {
+    const char *found = getsymb(p->sym, p);
+
     parser_print_input(p);
     pprintf(p->prn, _("Expected '%c' but found '%s'\n"), c, 
-	    getsymb(p->sym, p));
+	    found);
+    if (found != NULL) {
+	if (!strcmp(found, "&")) {
+	    pputs(p->prn, "(for logical AND, please use \"&&\")\n");
+	} else if (!strcmp(found, "|")) {
+	    pputs(p->prn, "(for logical OR, please use \"||\")\n");
+	}
+    }   
     p->err = 1;
 }
 
