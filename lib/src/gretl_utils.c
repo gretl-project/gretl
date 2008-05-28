@@ -1378,12 +1378,17 @@ double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 
 #ifndef WIN32
 
-static int font_not_found (const char *s)
+static int non_fatal (const char *s)
 {
-    /* "Could not find/open font when opening font X, using default" 
-       or "gnuplot_x11: Some character sets not available" */
+    /* 
+       "Could not find/open font when opening font X, using default" 
+       "gnuplot_x11: Some character sets not available" 
+       "Warning: empty y2 range..."
+    */
 
-    if (strstr(s, "using default") || strstr(s, "character sets not available")) {
+    if (strstr(s, "using default") || 
+	strstr(s, "character sets not available") ||
+	strstr(s, "Warning: empty ")) {
 	return 1;
     } else {
 	return 0;
@@ -1415,7 +1420,7 @@ int gretl_spawn (char *cmdline)
 	ret = 1;
     } else if (errout && *errout) {
 	fprintf(stderr, "stderr: '%s'\n", errout);
-	if (!font_not_found(errout)) {
+	if (!non_fatal(errout)) {
 	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg);
 	    ret = 1;
