@@ -406,8 +406,8 @@ the following script:
 y <- gretldata[, "lg"]
 # estimate the model
 strmod <- StructTS(y)
-# save the fitted components
-compon <- as.ts(strmod$fitted)
+# save the fitted components (smoothed)
+compon <- as.ts(tsSmooth(strmod))
 # save the estimated variances
 vars <- as.matrix(strmod$coef)
 
@@ -417,7 +417,8 @@ gretl.export(vars)
 \end{code}
 %$
 
-Running the above in \app{R} produces
+In this case, running the above in \app{R} produces nothing more that
+the echoing of commands:
 \begin{code}
 > # load data from gretl
 > gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
@@ -425,14 +426,14 @@ Running the above in \app{R} produces
 > gretldata <- ts(gretldata, start=c(1949, 1), frequency = 12)
 
 > # load script from gretl
-> #extract the log series 
+> # extract the log series 
 > y <- gretldata[, "lg"]
 
 > # estimate the model
 > strmod <- StructTS(y)
 
-> # save the fitted components
-> compon <- as.ts(strmod$fitted)
+> # save the fitted components (smoothed)
+> compon <- as.ts(tsSmooth(strmod))
 
 > # save the estimated variances
 > vars <- as.matrix(strmod$coef)
@@ -442,13 +443,15 @@ Running the above in \app{R} produces
 
 > gretl.export(vars)
 \end{code}
+%$
 
-At this point, we can pull the results back into \app{gretl} by
-executing the following commands, either from the console or by
-creating a small script:\footnote{This example will work on Linux
-  and presumably on OSX without modifications. On the Windows
-  platform, you may have to substitute the ``\texttt{/}'' character
-  with ``$\backslash$''.}
+However, we see from the output that the two \texttt{gretl.export()}
+commands ran without errors. Hence, we are ready to pull the results
+back into \app{gretl} by executing the following commands, either from
+the console or by creating a small script:\footnote{This example will
+  work on Linux and presumably on OSX without modifications. On the
+  Windows platform, you may have to substitute the ``\texttt{/}''
+  character with ``$\backslash$''.}
 \begin{code}
 append @dotdir/compon.csv
 vars = mread("@dotdir/vars.mat")
@@ -482,6 +485,17 @@ vars (4 x 1)
       0.0000 
 \end{code}
 
+That is,
+\begin{equation*}
+  \hat{\sigma}^2_{\eta} = 0.00077185, \quad
+  \hat{\sigma}^2_{\zeta} = 0, \quad
+  \hat{\sigma}^2_{\omega} = 0.0013969, \quad
+  \hat{\sigma}^2_{\varepsilon} = 0
+\end{equation*}
+Notice that, since $\hat{\sigma}^2_{\zeta} = 0$, the estimate for
+$\beta_t$ is constant and the level component is simply a random walk
+with a drift.
+
 \section{Interacting with \app{R} from the CLI}
 \label{sec:foreign-command}
 
@@ -511,7 +525,7 @@ open bjg.gdt
 foreign language=R --send-data
     y <- gretldata[, "lg"]
     strmod <- StructTS(y)
-    compon <- as.ts(strmod$fitted)
+    compon <- as.ts(tsSmooth(strmod))
     vars <- as.matrix(strmod$coef)
             
     gretl.export(compon)
@@ -527,6 +541,7 @@ vars = mread("@dotdir/vars.mat")
 \end{scode}
 \label{RStructTS-simple}
 \end{script}
+%$
 
 With this proviso, replicating the example in the previous subsection
 is rather easy: basically, all it takes is encapsulating the content
@@ -544,7 +559,7 @@ function RStructTS(series myseries)
     foreign language=R --send-data --quiet
         @sx <- gretldata[, "myseries"]
         strmod <- StructTS(@sx)
-        compon <- as.ts(strmod$fitted)
+        compon <- as.ts(tsSmooth(strmod))
         gretl.export(compon)
     end foreign
 
@@ -562,8 +577,8 @@ end function
 open bjg.gdt
 list X = RStructTS(lg)
 \end{scode}
-%$
-  \label{RStructTS-func}
+
+\label{RStructTS-func}
 \end{script}
 
 The above syntax, despite being already quite useful by itself, shows
