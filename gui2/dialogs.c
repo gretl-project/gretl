@@ -1945,10 +1945,23 @@ obs_spinbox (struct range_setting *rset, const char *label,
     GtkWidget *lbl;
     GtkWidget *vbox;
     GtkWidget *hbox;
-    int smin, smaj;
+    int smin; /* "step increment" */
+    int smaj; /* "page increment" */
 
     if (dataset_is_panel(datainfo)) {
+	int tmp;
+
 	smin = smaj = datainfo->pd;
+	/* below: minimal selection should be the complete time series
+	   for a single panel unit */
+	if (t1max == t2max) {
+	    tmp = t1max - datainfo->pd;
+	    t1max = (tmp < 0)? 0 : tmp;
+	}
+	if (t2min == t1min) {
+	    tmp = t2min + datainfo->pd;
+	    t2min = (tmp > datainfo->n - 1)? datainfo->n - 1 : tmp;
+	}
     } else {
 	smin = 1;
 	smaj = datainfo->pd;
@@ -1994,6 +2007,15 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	/* inter-connect the two spinners */
 	g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
 	g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
+
+	if (dataset_is_panel(datainfo)) {
+	    /* ensure that minimum separation of the spinners represents
+	       full time-series length */
+	    g_object_set_data(G_OBJECT(rset->startspin), "minsep", 
+			      GINT_TO_POINTER(datainfo->pd - 1));
+	    g_object_set_data(G_OBJECT(rset->endspin), "minsep", 
+			      GINT_TO_POINTER(datainfo->pd - 1));
+	}
     }
 
     return hbox;

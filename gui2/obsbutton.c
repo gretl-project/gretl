@@ -519,14 +519,26 @@ obs_button_at_limit (ObsButton *obs_button,
                      GtkArrowType   arrow)
 {
     ObsButton *other;
+    gpointer p;
+    int minsep = 0;
+    gdouble val;
+
+    p = g_object_get_data(G_OBJECT(obs_button), "minsep");
+    if (p != NULL) {
+	minsep = GPOINTER_TO_INT(p);
+    }
 
     other = g_object_get_data(G_OBJECT(obs_button), "startspin");
     if (other != NULL) {
-	obs_button->adjustment->lower = obs_button_get_value(other);
+	/* we're looking at the end spinner */
+	val = obs_button_get_value(other);
+	obs_button->adjustment->lower = val + minsep;
     } else {
 	other = g_object_get_data(G_OBJECT(obs_button), "endspin");
 	if (other != NULL) {
-	    obs_button->adjustment->upper = obs_button_get_value(other);
+	    /* we're looking at the start spinner */
+	    val = obs_button_get_value(other);
+	    obs_button->adjustment->upper = val - minsep;
 	}
     }
 
@@ -1055,10 +1067,11 @@ extern gboolean update_obs_label (GtkEditable *entry, gpointer data);
 static gint
 obs_button_default_output (ObsButton *obs_button)
 {
+    int ival = obs_button->adjustment->value;
     gchar buf[OBSLEN];
     gpointer data;
 
-    ntodate_full(buf, (int) obs_button->adjustment->value, obs_button->pdinfo);
+    ntodate_full(buf, ival, obs_button->pdinfo);
 
     if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (obs_button))))
 	gtk_entry_set_text (GTK_ENTRY (obs_button), buf);
