@@ -165,7 +165,7 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
 	fprintf(stderr, "numeric date on row %d = %d (%s)\n", tstart, 
 		d0, dstr);
     } else {
-	fprintf(stderr, "failed to read starting\n");
+	fprintf(stderr, "failed to read starting date\n");
 	return 0;
     }
 
@@ -246,14 +246,15 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
     return pd;
 }
 
-#if 0 /* not yet */
+#ifdef EXCEL_IMPORTER
 
 static int 
-new_consistent_date_labels (int nrows, int row_offset, int col_offset, 
-			    char **labels, DATAINFO *newinfo, 
-			    PRN *prn, int *err)
+new_dates_check (int nrows, int row_offset, int col_offset, 
+		 wbook *book, DATAINFO *newinfo, 
+		 PRN *prn, int *err)
 {
-    int i, t, tstart = 1 + row_offset;
+    int i, d, t, tstart = 1 + row_offset;
+    char dstr[12];
     char *s;
     int ret = 0;
 
@@ -270,13 +271,24 @@ new_consistent_date_labels (int nrows, int row_offset, int col_offset,
     }
 
     i = 0;
-    for (t=tstart; t<nrows; t++) {
+    for (t=tstart; t<nrows && !*err; t++) {
 	s = cell_val(t, col_offset);
 	if (*s == '"' || *s == '\'') s++;
+	if (book_numeric_dates(book)) {
+	    if (sscanf(s, "%d", &d)) {
+		MS_excel_date_string(dstr, d, 0, book_base_1904(book));
+		s = dstr;
+	    } else {
+		pprintf(prn, "Bad date on row %d: '%s'\n", t, s);
+		*err = E_DATA;
+	    }
+	}
 	strncat(newinfo->S[i++], s, OBSLEN - 1);
     }
 
-    ret = test_markers_for_dates(NULL, newinfo, NULL, prn);
+    if (!*err) {
+	ret = test_markers_for_dates(NULL, newinfo, NULL, prn);
+    }
 
     dataset_destroy_obs_markers(newinfo);
 

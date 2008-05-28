@@ -1525,6 +1525,18 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     r0 = book->row_offset;
     c0 = book->col_offset;
 
+#if 0 /* not quite yet */
+    if (book_numeric_dates(book) || 
+	(!book_auto_varnames(book) && import_obs_label(rows[r0].cells[c0]))) {
+	newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
+	pd = new_dates_check(nrows, book->row_offset, book->col_offset, 
+			     book, newinfo, prn, &err);
+	if (!book_numeric_dates(book) && pd <= 0 && alpha_cell(rows[r0].cells[c0]) && 
+	    col0_is_numeric(nrows, r0, c0)) {
+	    book_unset_obs_labels(book);
+	}
+    }
+#else
     /* do we have a first column containing dates? */
     if (book_numeric_dates(book)) {
 	pd = pd_from_numeric_dates(nrows, book->row_offset, book->col_offset, 
@@ -1537,6 +1549,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	    book_unset_obs_labels(book);
 	}
     }
+#endif
 
     if (pd > 0) {
 	book_time_series_setup(book, newinfo, pd);

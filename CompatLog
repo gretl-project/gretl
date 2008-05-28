@@ -12,6 +12,16 @@ equation covariance of the residuals.  Now $sigma is used for
 that purpose; $vcv gets the variance of the coefficients, which
 was not previously accessible.
 
+logical operators:
+
+We are now enforcing what the gretl manual has said for quite
+some time: logical OR is represented by "||" and logical AND
+by "&&".  The single "|" is now reserved for row-wise matrix
+concatenation, and the single "&" for "taking the address of"
+a variable.  Previously we tried to guess when "|" and "&" were
+intended to represent OR and AND respectively, as in the
+original gretl syntax, but no more.
+
 3/21/2008 version 1.7.4
 
 The old "multiply" command has been removed.
