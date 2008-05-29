@@ -201,17 +201,23 @@ static double biff_get_rk (const unsigned char *ptr)
 static char *convert8to7 (const char *s, int count) 
 {
     char *dest;
+    int n = strspn(s, " \t");
 
-    if (count > VNAMELEN - 1) {
-	count = VNAMELEN - 1;
+    count -= n;
+
+    if (count <= 0) {
+	dest = g_strdup("");
+    } else {
+	if (count > VNAMELEN - 1) {
+	    count = VNAMELEN - 1;
+	}
+	dest = malloc(VNAMELEN);
+	*dest = '\0';
+	s += n;
+	strncat(dest, s, count);
+	iso_to_ascii(dest);
+	tailstrip(dest);
     }
-
-    dest = malloc(VNAMELEN);
-    *dest = '\0';
-    s += strspn(s, " \t");
-    strncat(dest, s, count);
-    iso_to_ascii(dest);
-    tailstrip(dest);
 
     dprintf("convert8to7: returning '%s'\n", dest);
 
@@ -366,7 +372,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 
 	if (len == 0) {
 	    dprintf(" converting to NA\n");
-	    prow->cells[col] = g_strdup("NA");
+	    prow->cells[col] = g_strdup("-999.0");
 	    return 0;
 	}
 
