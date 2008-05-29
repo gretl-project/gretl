@@ -123,58 +123,32 @@ static void wsheet_print_info (wsheet *sheet)
 
 static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 {
-    int i, j, t;
+    int i, t;
 
 #if 1
     fprintf(stderr, "wsheet_allocate: allocating %d variables, each %d obs\n",
 	    cols, rows);
 #endif
 
-    sheet->Z = malloc(cols * sizeof *sheet->Z);
-    if (sheet->Z == NULL) return 1;
+    sheet->Z = doubles_array_new(cols, rows);
+    if (sheet->Z == NULL) {
+	return 1;
+    }
 
     for (i=0; i<cols; i++) {
-	sheet->Z[i] = malloc(rows * sizeof **sheet->Z);
-	if (sheet->Z[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(sheet->Z[j]);
-		sheet->Z[j] = NULL;
-	    }
-	    return 1;
-	}
 	for (t=0; t<rows; t++) {
 	    sheet->Z[i][t] = NADBL;
 	}
     }
 
-    sheet->varname = malloc(cols * sizeof *sheet->varname);
-    if (sheet->varname == NULL) return 1;
-
-    for (i=0; i<cols; i++) {
-	sheet->varname[i] = malloc(VNAMELEN * sizeof **sheet->varname);
-	if (sheet->varname[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(sheet->varname[j]);
-		sheet->varname[j] = NULL;
-	    }	    
-	    return 1;
-	}
-	sheet->varname[i][0] = '\0';
+    sheet->varname = strings_array_new_with_length(cols, VNAMELEN);
+    if (sheet->varname == NULL) {
+	return 1;
     }
 
-    sheet->label = malloc(rows * sizeof *sheet->label);
-    if (sheet->label == NULL) return 1;
-
-    for (t=0; t<rows; t++) {
-	sheet->label[t] = malloc(VNAMELEN * sizeof *sheet->label[t]);
-	if (sheet->label[t] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(sheet->label[j]);
-		sheet->label[j] = NULL;
-	    }	   
-	    return 1;
-	}
-	sheet->label[t][0] = '\0';
+    sheet->label = strings_array_new_with_length(rows, VNAMELEN);
+    if (sheet->label == NULL) {
+	return 1;
     }
 
     return 0;
@@ -188,7 +162,7 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
     sheet->maxrow = 0;
     sheet->maxcol = 0;
 
-    while (p) {
+    while (p != NULL) {
 	if (!xmlStrcmp(p->name, (XUC) "Cell")) {
 	    int i, j;
 
@@ -234,7 +208,10 @@ static void check_for_date_format (wsheet *sheet, const char *fmt)
 static int stray_numeric (int vtype, char *tmp, double *x)
 {
     if (vtype == VALUE_STRING) {
-	if (import_na_string(tmp)) {
+	if (string_is_blank(tmp)) {
+	    *x = NADBL;
+	    return 1;
+	} else if (import_na_string(tmp)) {
 	    *x = NADBL;
 	    return 1;
 	} else if (numeric_string(tmp)) {
@@ -251,10 +228,10 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     xmlNodePtr p = node->xmlChildrenNode;
     char *tmp;
     double x;
-    int i, t, vtype = 0;
-    char *toprows, *leftcols;
+    int vtype = 0;
     int gotlabels = 0;
     int cols, rows;
+    int i, t, r, c;
     int colmin, rowmin;
     int err = 0;
 
@@ -275,39 +252,29 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	return 1;
     }
 
-    leftcols = calloc(cols, 1);
-    toprows = calloc(rows, 1);
-
-    if (toprows == NULL || leftcols == NULL) {
-	wsheet_free(sheet);
-	return 1;
-    }
-
     colmin = sheet->col_offset;
     rowmin = sheet->row_offset;
 
     sheet->colheads = 0;
 
-    while (p && !err) {
+    while (p != NULL && !err) {
 	if (!xmlStrcmp(p->name, (XUC) "Cell")) {
-	    int i_real = 0, t_real = 0;
-
 	    x = NADBL;
-	    i = 0; t = 0;
-
+	    c = r = 0;
+	    i = t = -1;
 	    tmp = (char *) xmlGetProp(p, (XUC) "Col");
 	    if (tmp) {
-		i = atoi(tmp);
-		i_real = i - colmin;
+		c = atoi(tmp);
+		i = c - colmin;
 		free(tmp);
 	    }
 	    tmp = (char *) xmlGetProp(p, (XUC) "Row");
 	    if (tmp) {
-		t = atoi(tmp);
-		t_real = t - rowmin;
+		r = atoi(tmp);
+		t = r - rowmin;
 		free(tmp);
 	    }
-	    if (i_real >= 0 && t_real >= 0) {
+	    if (i >= 0 && t >= 0) {
 		tmp = (char *) xmlGetProp(p, (XUC) "ValueType");
 
 		if (tmp) {
@@ -317,18 +284,25 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    /* a formula perhaps? */
 		    pprintf(prn, _("Couldn't get value for col %d, row %d.\n"
 				   "Maybe there's a formula in the sheet?"),
-			    i, t);
+			    c, r);
 		    err = 1;
 		}
 
-		if (!err && (tmp = (char *) xmlNodeGetContent(p))) {
+		if (err) {
+		    break;
+		}
+
+		tmp = (char *) xmlNodeGetContent(p);
+
+		if (tmp != NULL) {
 		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
-			if (i_real == 0) {
-			    strncat(sheet->label[t_real], tmp, OBSLEN - 1);
+			if (i == 0) {
+			    /* write content of first col to labels */
+			    strncat(sheet->label[t], tmp, OBSLEN - 1);
 			}
 		    }
 
-		    if (i_real == 0 && t_real == 1 && VTYPE_IS_NUMERIC(vtype)) {
+		    if (i == 0 && t == 1 && VTYPE_IS_NUMERIC(vtype)) {
 			char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
 
 			if (fmt) {
@@ -339,31 +313,35 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 
 		    if (VTYPE_IS_NUMERIC(vtype)) {
 			x = atof(tmp);
-			sheet->Z[i_real][t_real] = x;
-			toprows[t_real] = leftcols[i_real] = 0;
-		    } else if (i_real > 0 && stray_numeric(vtype, tmp, &x)) {
-			sheet->Z[i_real][t_real] = x;
-			toprows[t_real] = leftcols[i_real] = 0;
+			sheet->Z[i][t] = x;
+		    } else if (i > 0 && stray_numeric(vtype, tmp, &x)) {
+			sheet->Z[i][t] = x;
 		    } else if (vtype == VALUE_STRING) {
-			if (t_real == 0) {
-			    strncat(sheet->varname[i_real], tmp, VNAMELEN - 1);
+			if (t == 0) {
+			    /* first row: look for varnames */
+			    strncat(sheet->varname[i], tmp, VNAMELEN - 1);
 			    sheet->colheads += 1;
-			    if (i_real == 0 && !strcmp(tmp, "obs")) {
+			    if (i == 0 && import_obs_label(tmp)) {
 				; /* keep going */
 			    } else {
-				charsub(sheet->varname[i_real], ' ', '_');
-				if (check_varname(sheet->varname[i_real])) {
+				charsub(sheet->varname[i], ' ', '_');
+				if (check_varname(sheet->varname[i])) {
 				    invalid_varname(prn);
 				    err = 1;
 				}
 			    }
-			} else if (i_real == 0) {
+			} else if (i == 0) {
+			    /* first column, not first row */
 			    if (!gotlabels) {
-				fprintf(stderr, "setting gotlabels\n");
 				gotlabels = 1;
 			    }
+			    sheet->text_cols = 1;
+			} else {
+			    pprintf(prn, _("Expected numeric data, found string:\n"
+					   "'%s' at row %d, column %d\n"), 
+				    tmp, r, c);
+			    err = 1;
 			}
-			toprows[t_real] = leftcols[i_real] = 1;
 		    }
 		    free(tmp);
 		}
@@ -377,35 +355,6 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	   probably not really a variable name */
 	sheet->colheads = 0;
     }
-
-    if (!err) {
-	for (i=0; i<cols; i++) {
-	    if (leftcols[i]) {
-		sheet->text_cols += 1;
-	    }
-	}
-
-	for (t=0; t<rows; t++) {
-	    if (toprows[t]) {
-		sheet->text_rows += 1;
-	    }
-	}
-
-	if (sheet->text_rows > 1) {
-	    pputs(prn, _("Found an extraneous row of text"));
-	    pputc(prn, '\n');
-	    err = 1;
-	}
-
-	if (sheet->text_cols > 1) {
-	    pputs(prn, _("Found an extraneous column of text"));
-	    pputc(prn, '\n');
-	    err = 1;
-	}
-    }
-
-    free(toprows);
-    free(leftcols);
 
     return err;
 }
