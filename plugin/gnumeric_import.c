@@ -231,6 +231,21 @@ static void check_for_date_format (wsheet *sheet, const char *fmt)
     }
 }
 
+static int stray_numeric (int vtype, char *tmp, double *x)
+{
+    if (vtype == VALUE_STRING) {
+	if (import_na_string(tmp)) {
+	    *x = NADBL;
+	    return 1;
+	} else if (numeric_string(tmp)) {
+	    *x = atof(tmp);
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 {
     xmlNodePtr p = node->xmlChildrenNode;
@@ -242,12 +257,6 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     int cols, rows;
     int colmin, rowmin;
     int err = 0;
-
-    /* FIXME: the XLS importer tolerates text in the first column
-       even if the hading is not "obs"/blank, but the gnumeric
-       importer rejects such a column.  I think -- but also see
-       the FIXME note below.
-    */
 
     cols = sheet->maxcol + 1 - sheet->col_offset;
     rows = sheet->maxrow + 1 - sheet->row_offset;
@@ -332,18 +341,21 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 			x = atof(tmp);
 			sheet->Z[i_real][t_real] = x;
 			toprows[t_real] = leftcols[i_real] = 0;
+		    } else if (i_real > 0 && stray_numeric(vtype, tmp, &x)) {
+			sheet->Z[i_real][t_real] = x;
+			toprows[t_real] = leftcols[i_real] = 0;
 		    } else if (vtype == VALUE_STRING) {
-			/* FIXME: tolerate "string" values that are de facto
-			   numeric? Also string values that represent NA.
-			*/
 			if (t_real == 0) {
 			    strncat(sheet->varname[i_real], tmp, VNAMELEN - 1);
 			    sheet->colheads += 1;
 			    if (i_real == 0 && !strcmp(tmp, "obs")) {
 				; /* keep going */
-			    } else if (check_varname(sheet->varname[i_real])) {
-				invalid_varname(prn);
-				err = 1;
+			    } else {
+				charsub(sheet->varname[i_real], ' ', '_');
+				if (check_varname(sheet->varname[i_real])) {
+				    invalid_varname(prn);
+				    err = 1;
+				}
 			    }
 			} else if (i_real == 0) {
 			    if (!gotlabels) {
@@ -498,6 +510,7 @@ static int wbook_record_name (char *name, wbook *book)
     book->sheetnames = sheetnames;
     book->nsheets = ns;
     book->sheetnames[ns - 1] = name;
+    tailstrip(name);
 
     return 0;
 }
