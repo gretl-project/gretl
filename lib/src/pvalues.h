@@ -94,6 +94,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn);
 
 void print_critval (char st, double *x, double c, PRN *prn);
 
+gretl_matrix *gretl_get_DW (int n, int k, int *err);
+
 #endif /* PVALUES_H */
 
 

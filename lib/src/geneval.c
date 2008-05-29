@@ -678,6 +678,9 @@ static int dist_argc (char *s, int f)
 	/* inverse cdf not supported */
 	return (f == F_INVCDF)? 0 : 
 	    (f == F_RANDGEN)? 2 : 3;
+    case 'd':
+	/* Durbin-Watson: only critical value */
+	return (f == F_CRIT)? 2 : 0;
     }
 
     return 0;
@@ -846,6 +849,41 @@ static double scalar_node_get_value (NODE *n, parser *p)
     }
 }
 
+static NODE *DW_node (NODE *r, parser *p)
+{
+    NODE *s, *e, *ret = NULL;
+    int i, parm[2] = {0};
+
+    for (i=0; i<2 && !p->err; i++) {
+	s = r->v.bn.n[i+1];
+	if (s->t == NUM || scalar_matrix_node(s)) {
+	    parm[i] = scalar_node_get_value(s, p);
+	} else {
+	    e = eval(s, p);
+	    if (!p->err) {
+		if (e->t == NUM || scalar_matrix_node(e)) {
+		    parm[i] = scalar_node_get_value(e, p);
+		} else {
+		    p->err = E_INVARG;
+		}
+	    }
+	}
+    }
+
+    if (!p->err && (parm[0] < 6 || parm[1] < 0)) {
+	p->err = E_DATA;
+    }
+
+    if (!p->err) {
+	ret = aux_matrix_node(p);
+	if (ret != NULL) {
+	    ret->v.m = gretl_get_DW(parm[0], parm[1], &p->err);
+	}
+    }
+
+    return ret;
+}
+
 /* return a node containing the evaluated result of a
    probability distriution function */
 
@@ -886,6 +924,12 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	}
 
 	d = dist[0];
+
+	/* special case, Durbin-Watson */
+	if (d == 'd') {
+	    return DW_node(r, p);
+	}
+
 	k = argc - 1;
 
 	for (i=0; i<argc && !p->err; i++) {
@@ -948,7 +992,6 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	} else {
 	    ret->v.xval = scalar_pdist(n->t, d, parm, argc, p);
 	}
-
     } else {
 	ret = aux_any_node(p);
     }

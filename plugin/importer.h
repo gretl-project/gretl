@@ -63,8 +63,6 @@ struct wbook_ {
     void *colspin, *rowspin;
     int *xf_list;
     BookFlag flags;
-    int totmiss;
-    char *missmask;
     int (*get_min_offset)();
     void *data;
 };

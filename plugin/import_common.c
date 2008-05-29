@@ -26,24 +26,26 @@ static void invalid_varname (PRN *prn)
 #ifndef ODS_IMPORTER
 
 #ifdef EXCEL_IMPORTER
-# define cell_val(t,o) (rows[t].cells[o])
+# define cell_string(i,j) (rows[i].cells[j])
 #else
-# define cell_val(t,o) (labels[t])
+# define cell_string(i,j) (labels[i])
 #endif
 
+
 static int 
-importer_dates_check (int nrows, int row_offset, int col_offset, 
+importer_dates_check (int row_offset, int col_offset, 
 		      BookFlag flags, char **labels, 
 		      DATAINFO *newinfo, PRN *prn, int *err)
 {
-    int i, d, t, tstart = 1 + row_offset;
+    int d, t;
     char dstr[12];
     char *s;
     int ret = 0;
 
-    for (t=tstart; t<nrows; t++) {
-	s = cell_val(t, col_offset);
+    for (t=0; t<newinfo->n; t++) {
+	s = cell_string(t + row_offset, col_offset);
 	if (*s == '\0') {
+	    fprintf(stderr, "importer_dates_check: got blank label\n");
 	    return 0;
 	}
     }
@@ -53,20 +55,19 @@ importer_dates_check (int nrows, int row_offset, int col_offset,
 	return 0;
     }
 
-    i = 0;
-    for (t=tstart; t<nrows && !*err; t++) {
-	s = cell_val(t, col_offset);
+    for (t=0; t<newinfo->n && !*err; t++) {
+	s = cell_string(t + row_offset, col_offset);
 	if (*s == '"' || *s == '\'') s++;
 	if (flags & BOOK_NUMERIC_DATES) {
 	    if (sscanf(s, "%d", &d)) {
 		MS_excel_date_string(dstr, d, 0, flags & BOOK_DATE_BASE_1904);
 		s = dstr;
 	    } else {
-		pprintf(prn, "Bad date on row %d: '%s'\n", t, s);
+		pprintf(prn, "Bad date on row %d: '%s'\n", t+1, s);
 		*err = E_DATA;
 	    }
 	}
-	strncat(newinfo->S[i++], s, OBSLEN - 1);
+	strncat(newinfo->S[t], s, OBSLEN - 1);
     }
 
     if (!*err) {
@@ -108,7 +109,6 @@ static void wbook_free (wbook *book)
     free(book->targname);
     free(book->byte_offsets);
     free(book->xf_list);
-    free(book->missmask);
 }
 
 static int wbook_check_params (wbook *book)
@@ -159,8 +159,6 @@ static void wbook_init (wbook *book, const int *list, char *sheetname)
     book->selected = 0;
     book->flags = 0;
     book->xf_list = NULL;
-    book->totmiss = 0;
-    book->missmask = NULL;
     book->get_min_offset = NULL;
     book->data = NULL;
 

@@ -86,7 +86,7 @@ struct _gretl_matrix {
  * Sets the @i, @j element of @m to @x.
  */
 
-#define gretl_matrix_set(m,i,j,x) (m->val[(j)*m->rows+(i)]=x)
+#define gretl_matrix_set(m,i,j,x) ((m)->val[(j)*(m)->rows+(i)]=x)
 
 /**
  * gretl_vector_set:
@@ -97,7 +97,7 @@ struct _gretl_matrix {
  * Sets element @i of @v to @x.
  */
 
-#define gretl_vector_set(v,i,x) (v->val[i]=x)
+#define gretl_vector_set(v,i,x) ((v)->val[i]=x)
 
 /**
  * gretl_matrix_cols:

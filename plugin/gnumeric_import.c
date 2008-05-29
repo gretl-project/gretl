@@ -42,6 +42,7 @@ typedef enum {
 
 static void wsheet_init (wsheet *sheet)
 {
+    sheet->col_offset = sheet->row_offset = 0;
     sheet->maxcol = sheet->maxrow = 0;
     sheet->text_cols = sheet->text_rows = 0;
     sheet->colheads = 0;
@@ -232,7 +233,6 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     int gotlabels = 0;
     int cols, rows;
     int i, t, r, c;
-    int colmin, rowmin;
     int err = 0;
 
     cols = sheet->maxcol + 1 - sheet->col_offset;
@@ -252,9 +252,6 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	return 1;
     }
 
-    colmin = sheet->col_offset;
-    rowmin = sheet->row_offset;
-
     sheet->colheads = 0;
 
     while (p != NULL && !err) {
@@ -262,89 +259,95 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	    x = NADBL;
 	    c = r = 0;
 	    i = t = -1;
+
+	    /* what column are we in? */
 	    tmp = (char *) xmlGetProp(p, (XUC) "Col");
 	    if (tmp) {
 		c = atoi(tmp);
-		i = c - colmin;
+		i = c - sheet->col_offset;
 		free(tmp);
 	    }
+
+	    /* what row are we on? */
 	    tmp = (char *) xmlGetProp(p, (XUC) "Row");
 	    if (tmp) {
 		r = atoi(tmp);
-		t = r - rowmin;
+		t = r - sheet->row_offset;
 		free(tmp);
 	    }
-	    if (i >= 0 && t >= 0) {
-		tmp = (char *) xmlGetProp(p, (XUC) "ValueType");
 
-		if (tmp) {
-		    vtype = atoi(tmp);
-		    free(tmp);
-		} else { 
-		    /* a formula perhaps? */
-		    pprintf(prn, _("Couldn't get value for col %d, row %d.\n"
-				   "Maybe there's a formula in the sheet?"),
-			    c, r);
-		    err = 1;
+	    if (i < 0 || t < 0) {
+		/* we're not in the requested reading area */
+		p = p->next;
+		continue;
+	    }
+
+	    /* check that we have a value of some type available */
+	    tmp = (char *) xmlGetProp(p, (XUC) "ValueType");
+	    if (tmp) {
+		vtype = atoi(tmp);
+		free(tmp);
+	    } else { 
+		/* a formula perhaps? */
+		pprintf(prn, _("Couldn't get value for col %d, row %d.\n"
+			       "Maybe there's a formula in the sheet?"),
+			c, r);
+		err = 1;
+		break;
+	    }
+
+	    /* get and process the actual cell content */
+	    tmp = (char *) xmlNodeGetContent(p);
+	    if (tmp != NULL) {
+		if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
+		    if (i == 0) {
+			/* first column: write content to labels */
+			strncat(sheet->label[t], tmp, OBSLEN - 1);
+		    }
 		}
 
-		if (err) {
-		    break;
+		if (i == 0 && t == 1 && VTYPE_IS_NUMERIC(vtype)) {
+		    char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
+
+		    if (fmt) {
+			check_for_date_format(sheet, fmt);
+			free(fmt);
+		    }
 		}
 
-		tmp = (char *) xmlNodeGetContent(p);
-
-		if (tmp != NULL) {
-		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
-			if (i == 0) {
-			    /* write content of first col to labels */
-			    strncat(sheet->label[t], tmp, OBSLEN - 1);
-			}
-		    }
-
-		    if (i == 0 && t == 1 && VTYPE_IS_NUMERIC(vtype)) {
-			char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
-
-			if (fmt) {
-			    check_for_date_format(sheet, fmt);
-			    free(fmt);
-			}
-		    }
-
-		    if (VTYPE_IS_NUMERIC(vtype)) {
-			x = atof(tmp);
-			sheet->Z[i][t] = x;
-		    } else if (i > 0 && stray_numeric(vtype, tmp, &x)) {
-			sheet->Z[i][t] = x;
-		    } else if (vtype == VALUE_STRING) {
-			if (t == 0) {
-			    /* first row: look for varnames */
-			    strncat(sheet->varname[i], tmp, VNAMELEN - 1);
-			    sheet->colheads += 1;
-			    if (i == 0 && import_obs_label(tmp)) {
-				; /* keep going */
-			    } else {
-				charsub(sheet->varname[i], ' ', '_');
-				if (check_varname(sheet->varname[i])) {
-				    invalid_varname(prn);
-				    err = 1;
-				}
-			    }
-			} else if (i == 0) {
-			    /* first column, not first row */
-			    if (!gotlabels) {
-				gotlabels = 1;
-			    }
-			    sheet->text_cols = 1;
+		if (VTYPE_IS_NUMERIC(vtype)) {
+		    x = atof(tmp);
+		    sheet->Z[i][t] = x;
+		} else if (i > 0 && stray_numeric(vtype, tmp, &x)) {
+		    sheet->Z[i][t] = x;
+		} else if (vtype == VALUE_STRING) {
+		    if (t == 0) {
+			/* first row: look for varnames */
+			strncat(sheet->varname[i], tmp, VNAMELEN - 1);
+			sheet->colheads += 1;
+			if (i == 0 && import_obs_label(tmp)) {
+			    ; /* keep going */
 			} else {
-			    pprintf(prn, _("Expected numeric data, found string:\n"
-					   "'%s' at row %d, column %d\n"), 
-				    tmp, r, c);
-			    err = 1;
+			    charsub(sheet->varname[i], ' ', '_');
+			    if (check_varname(sheet->varname[i])) {
+				invalid_varname(prn);
+				err = 1;
+			    }
 			}
+		    } else if (i == 0) {
+			/* first column, not first row */
+			if (!gotlabels) {
+			    gotlabels = 1;
+			}
+			sheet->text_cols = 1;
+		    } else {
+			pprintf(prn, _("Expected numeric data, found string:\n"
+				       "'%s' at row %d, column %d\n"), 
+				tmp, r, c);
+			err = 1;
 		    }
-		    free(tmp);
 		}
+		free(tmp);
 	    }
 	}
 	p = p->next;
@@ -352,7 +355,9 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 
     if (gotlabels && sheet->colheads == 1) {
 	/* rough notion here: if there's only one heading, it's
-	   probably not really a variable name */
+	   probably not really a variable name, but rather
+	   a first observation label 
+	*/
 	sheet->colheads = 0;
     }
 
@@ -405,6 +410,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 			    sheetcount++;
 			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
+				tailstrip(tmp);
 				if (!strcmp(tmp, sheet->name) &&
 				    sheetcount == sheet->ID + 1) {
 				    got_sheet = 1;
@@ -440,6 +446,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
     xmlCleanupParser();
 
     if (!got_sheet) {
+	fprintf(stderr, "'%s': couldn't find the requested sheet\n", sheet->name);
 	err = 1;
     }
 
@@ -528,13 +535,11 @@ static int wbook_get_info (const char *fname, const int *list,
 static int wsheet_setup (wsheet *sheet, wbook *book, int n)
 {
     sheet->name = gretl_strdup(book->sheetnames[n]);
-
     if (sheet->name == NULL) {
 	return 1;
     }
 
     sheet->ID = n;
-
     sheet->col_offset = book->col_offset;
     sheet->row_offset = book->row_offset;    
     
@@ -568,9 +573,38 @@ sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
     fprintf(stderr, "sd0=%g\n", newinfo->sd0);
 
     sheet->text_cols = 1;
-
     book_set_time_series(book);
     book_unset_obs_labels(book);
+}
+
+/* check that a given column doesn't contain all NAs */
+
+static int column_is_blank (wsheet *sheet, int k, int n)
+{
+    int t, s = (sheet->colheads)? 1 : 0;
+
+    for (t=0; t<n; t++) {
+	if (!na(sheet->Z[k][s++])) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+/* first column labels: are they all numeric strings? */
+
+static int labels_numeric (char **S, int n)
+{
+    int t;
+
+    for (t=0; t<n; t++) {
+	if (!numeric_string(S[t])) {
+	    return 0;
+	}
+    }  
+
+    return 1;
 }
 
 int gnumeric_get_data (const char *fname, int *list, char *sheetname,
@@ -652,9 +686,8 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
     if (err) {
 	goto getout;
     } else {
-	int nrows = sheet->maxrow + 1 - sheet->row_offset;
-	int r0 = sheet->row_offset;
-	int i, j, t, i_sheet;
+	int r0 = 1;
+	int i, j, t;
 	int ts_markers = 0;
 	char **ts_S = NULL;
 	int blank_cols = 0;
@@ -666,16 +699,14 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
 	if (sheet->colheads == 0) {
 	    book_set_auto_varnames(book);
-	    if (sheet->row_offset > 0) {
-		r0--;
-	    }
+	    r0 = 0;
 	}
 
-	newinfo->n = sheet->maxrow - sheet->row_offset + book->totmiss;
+	newinfo->n = sheet->maxrow - sheet->row_offset;
 
 	if (book_numeric_dates(book) || 
 	    (sheet->colheads > 0 && import_obs_label(sheet->label[0]))) {
-	    pd = importer_dates_check(nrows, r0, 0, book->flags, sheet->label,
+	    pd = importer_dates_check(r0, 0, book->flags, sheet->label,
 				      newinfo, prn, &err);
 	    if (pd > 0) {
 		/* got time-series info from dates/labels */
@@ -683,9 +714,10 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 		ts_markers = newinfo->markers;
 		ts_S = newinfo->S;
 	    } else if (!book_numeric_dates(book)) {
-		/* wrong?? */
-		sheet->text_cols = 0;
-		book_unset_obs_labels(book);
+		if (labels_numeric(sheet->label, newinfo->n)) {
+		    sheet->text_cols = 0;
+		    book_unset_obs_labels(book);
+		}
 	    }
 	}
 
@@ -710,39 +742,34 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	} 
 
 	j = 1;
-
 	for (i=1; i<newinfo->v; i++) {
-	    i_sheet = i - 1 + sheet->text_cols;
-	    if (sheet->colheads && *sheet->varname[i_sheet] == '\0') {
+	    int s = (sheet->colheads)? 1 : 0;
+	    int k = i - 1 + sheet->text_cols;
+
+	    if (column_is_blank(sheet, k, newinfo->n)) {
 		blank_cols++;
+		continue;
+	    } 
+
+	    if (sheet->colheads && *sheet->varname[k] != '\0') {
+		strcpy(newinfo->varname[j], sheet->varname[k]);
 	    } else {
-		int s = (sheet->colheads)? 1 : 0;
-
-		if (sheet->colheads) {
-		    strcpy(newinfo->varname[j], sheet->varname[i_sheet]);
-		} else {
-		    sprintf(newinfo->varname[j], "v%d", j);
-		}
-		for (t=0; t<newinfo->n; t++) {
-		    if (book->missmask != NULL) {
-			while (book->missmask[t]) {
-			    newZ[j][t++] = NADBL;
-			}
-		    }
-		    newZ[j][t] = sheet->Z[i_sheet][s++];
-		}
-		j++;
+		sprintf(newinfo->varname[j], "v%d", j);
 	    }
-	}
-
-	if (fix_varname_duplicates(newinfo)) {
-	    pputs(prn, _("warning: some variable names were duplicated\n"));
+	    for (t=0; t<newinfo->n; t++) {
+		newZ[j][t] = sheet->Z[k][s++];
+	    }
+	    j++;
 	}
 
 	if (blank_cols > 0) {
 	    fprintf(stderr, "Dropping %d apparently blank column(s)\n", 
 		    blank_cols);
 	    dataset_drop_last_variables(blank_cols, &newZ, newinfo);
+	}
+
+	if (fix_varname_duplicates(newinfo)) {
+	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
 	if (book_obs_labels(book) && wsheet_labels_complete(sheet)) {

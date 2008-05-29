@@ -142,18 +142,18 @@ static int dw_row (int *pn)
     return row;
 }
 
-int dw_lookup (int n, int k, PRN *prn)
+int dw_lookup (int n, int k, gretl_matrix **pm)
 {
     gzFile fz;
     char datfile[FILENAME_MAX];
     double dl = 0, du = 0;
     int dn = n, dk = k;
-    char line[282];
-    int i, r, c;
+    char buf[14];
+    int r, c;
     int err = 0;
 
     if (n < 6) {
-	pprintf(prn, "DW: n must be at least 6\n");
+	gretl_errmsg_set("DW: n must be at least 6");
 	return E_DATA;
     }
 	
@@ -165,38 +165,41 @@ int dw_lookup (int n, int k, PRN *prn)
 #endif
     fz = gretl_gzopen(datfile, "rb");
     if (fz == NULL) {
-	pputs(prn, "Couldn't open D-W table\n");
+	gretl_errmsg_set("Couldn't open D-W table");
 	return E_FOPEN;
     }
 
     if (dk > 20) dk = 20;
+    if (dn > 2000) dn = 2000;
+
     r = dw_row(&dn);
     c = 14 * (dk - 1);
-    i = 0;
+
+    gzseek(fz, (z_off_t) (r * 280 + c), SEEK_SET);
+    gzgets(fz, buf, sizeof buf);
 
     gretl_push_c_numeric_locale();
-
-    while (gzgets(fz, line, sizeof line)) {
-	if (i++ == r) {
-	    sscanf(line + c, "%lf %lf", &dl, &du);
-	    break;
-	}
-    }
-
+    sscanf(buf, "%lf %lf", &dl, &du);
     gretl_pop_c_numeric_locale();
 
     gzclose(fz);
 		
     if (dl == 0 || du == 0) {
-	pprintf(prn, "No critical values available for n=%d and k=%d\n", n, k);
+	gretl_errmsg_sprintf("No critical values available for n=%d and k=%d\n", n, k);
 	err = E_DATA;
     } else {
-	pprintf(prn, "%s, n = %d, k = %d\n\n",
-		/* xgettext:no-c-format */
-		_("5% critical values for Durbin-Watson statistic"), 
-		dn, dk);
-	pprintf(prn, "  dL = %6.4f\n", dl);
-	pprintf(prn, "  dU = %6.4f\n", du);
+	gretl_vector *v = gretl_vector_alloc(4);
+
+	if (v == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    /* fill vector with dl, du, and effective n, k */
+	    gretl_vector_set(v, 0, dl);
+	    gretl_vector_set(v, 1, du);
+	    gretl_vector_set(v, 2, (double) dn);
+	    gretl_vector_set(v, 3, (double) dk);
+	    *pm = v;
+	}
     }
 	
     return err;

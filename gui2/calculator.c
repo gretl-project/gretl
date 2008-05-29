@@ -1032,9 +1032,10 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 static void dw_lookup_call (dist_t *tab)
 {
     void *handle = NULL;
-    int (*dw)(int, int, PRN *) = NULL;
+    int (*dw)(int, int, gretl_matrix **) = NULL;
+    gretl_vector *v = NULL;
     PRN *prn;
-    int n, k;
+    int n, k, err = 0;
 
     n = getval(tab->entry[0], C_POS_INT);
     if (n < 0) {
@@ -1056,11 +1057,23 @@ static void dw_lookup_call (dist_t *tab)
 	return;
     }  
 
-    (*dw)(n, k, prn);
+    err = (*dw)(n, k, &v);
     close_plugin(handle);
 
-    view_buffer(prn, 77, 300, _("gretl: critical values"), 
-		STAT_TABLE, NULL);
+    if (!err) {
+	pprintf(prn, "%s, n = %d, k = %d\n\n",
+		/* xgettext:no-c-format */
+		_("5% critical values for Durbin-Watson statistic"), 
+		(int) gretl_vector_get(v, 2),
+		(int) gretl_vector_get(v, 3));
+	pprintf(prn, "  dL = %6.4f\n", gretl_vector_get(v, 0));
+	pprintf(prn, "  dU = %6.4f\n", gretl_vector_get(v, 1));
+	gretl_vector_free(v);
+	view_buffer(prn, 77, 300, _("gretl: critical values"), 
+		    STAT_TABLE, NULL);
+    } else {
+	gui_errmsg(err);
+    }
 }
 
 static int page_from_dist (int code, int dist)

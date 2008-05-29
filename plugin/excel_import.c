@@ -1199,7 +1199,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
     } 
 
     for (i=startcol; i<totcols; i++) { /* was i<=totcols */
-	int ts, missing = 0;
+	int ts;
 
 	if (blank_col[i]) {
 	    continue;
@@ -1223,15 +1223,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	dprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);
 
 	for (t=0; t<pdinfo->n; t++) {
-	    if (book->missmask != NULL) {
-		while (book->missmask[t]) {
-		    Z[j][t++] = NADBL;
-		    missing++;
-		}
-	    }
-
-	    ts = t + 1 + roff - missing;
-
+	    ts = t + 1 + roff;
 	    if (rows[ts].cells == NULL || i >= rows[ts].end ||
 		rows[ts].cells[i] == NULL) {
 		continue;
@@ -1516,11 +1508,11 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     r0 = book->row_offset;
     c0 = book->col_offset;
-    newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
+    newinfo->n = nrows - 1 - book->row_offset;
 
     if (book_numeric_dates(book) || 
 	(!book_auto_varnames(book) && import_obs_label(rows[r0].cells[c0]))) {
-	pd = importer_dates_check(nrows, book->row_offset, book->col_offset, 
+	pd = importer_dates_check(book->row_offset + 1, book->col_offset, 
 				  book->flags, NULL, newinfo, prn, &err);
 	if (pd > 0) {
 	    /* got time-series info from dates/labels */

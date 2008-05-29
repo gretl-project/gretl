@@ -1355,7 +1355,7 @@ double gretl_get_critval (char st, double *p)
 	x = poisson_critval(p[0], p[1]);
     } else if (st == 'W') {
 	x = weibull_critval(p[0], p[1], p[2]);
-    }
+    } 
 
     return x;
 }
@@ -1700,5 +1700,24 @@ int batch_pvalue (const char *str,
     }
 
     return err;
+}
+
+gretl_matrix *gretl_get_DW (int n, int k, int *err)
+{
+    void *handle;
+    int (*dw_lookup) (int, int, gretl_matrix **);
+    gretl_matrix *m = NULL;
+
+    dw_lookup = get_plugin_function("dw_lookup", &handle);
+
+    if (dw_lookup == NULL) {
+	*err = E_FOPEN;
+	return NULL;
+    }
+
+    *err = (*dw_lookup) (n, k, &m);
+    close_plugin(handle);
+
+    return m;
 }
 

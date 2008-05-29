@@ -1810,6 +1810,7 @@ int fix_varname_duplicates (DATAINFO *pdinfo)
     for (i=1; i<pdinfo->v; i++) {
 	for (j=i+1; j<pdinfo->v; j++) {
 	    if (!strcmp(pdinfo->varname[i], pdinfo->varname[j])) {
+		fprintf(stderr, "'%s' duplicated variable name\n", pdinfo->varname[i]);
 		dups = 1;
 		make_varname_unique(pdinfo->varname[j], j, pdinfo);
 	    }
