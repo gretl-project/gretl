@@ -25,10 +25,12 @@
                              !strcmp(s, "n.a.") || \
                              !strcmp(s, "na") || \
                              !strcmp(s, "N/A") || \
+			     !strcmp(s, "#N/A") || \
                              !strcmp(s, "NaN") || \
                              !strcmp(s, ".") || \
                              !strcmp(s, "..") || \
-                             !strncmp(s, "-999", 4))
+                             !strcmp(s, "-999") || \
+                             !strcmp(s, "-9999"))
 
 int import_obs_label (const char *s);
 

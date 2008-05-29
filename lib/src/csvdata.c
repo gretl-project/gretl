@@ -1064,7 +1064,7 @@ static int non_numeric_check (csvdata *c, PRN *prn)
 		    }
 		}
 
-		nnfrac = (nok == 0)? 1.0 : (double) nnon / nok;
+		nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
 		pprintf(prn, "variable %d (%s): non-numeric values = %d "
 			"(%.2f percent)\n", v, c->dinfo->varname[v], 
 			nnon, 100 * nnfrac);
