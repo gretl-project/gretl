@@ -372,7 +372,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 
 	if (len == 0) {
 	    dprintf(" converting to NA\n");
-	    prow->cells[col] = g_strdup("-999.0");
+	    prow->cells[col] = g_strdup("-999");
 	    return 0;
 	}
 
@@ -667,11 +667,11 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		    prow->cells[j] = g_strdup((ptr[2])? "1" : "0");
 		} else if (fcode == 0x2 || fcode == 0x3) {
 		    /* error code or empty */
-		    prow->cells[j] = g_strdup("-999.0");
+		    prow->cells[j] = g_strdup("-999");
 		} else {
 		    fprintf(stderr, "Bad formula code 0x%u\n", 
 			    (unsigned) fcode);
-		    prow->cells[j] = g_strdup("-999.0");
+		    prow->cells[j] = g_strdup("-999");
 		}
 	    } else {
 		/* floating-point */
@@ -679,7 +679,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		dprintf(" floating-point value = %g\n", val);
 		if (isnan(val)) {
 		    fprintf(stderr, "Got a NaN\n");
-		    prow->cells[j] = g_strdup("-999.0");
+		    prow->cells[j] = g_strdup("-999");
 		} else {
 		    prow->cells[j] = g_strdup_printf("%.15g", val);
 		}
@@ -1151,12 +1151,12 @@ check_data_block (wbook *book, int totcols, const char *blank_col,
 		ret = -1;
 	    } else if (rows[i].cells[j] == NULL) {
 		dprintf("data_block: rows[%d].cells[%d] = NULL\n", i, j);
-		rows[i].cells[j] = g_strdup("-999.0");
+		rows[i].cells[j] = g_strdup("-999");
 		ret = -1;
 	    } else if (IS_STRING(rows[i].cells[j])) {
 		if (missval_string(rows[i].cells[j])) {
 		    free(rows[i].cells[j]);
-		    rows[i].cells[j] = g_strdup("-999.0");
+		    rows[i].cells[j] = g_strdup("-999");
 		    ret = -1;
 		} else {
 		    err->row = i + 1;
@@ -1245,7 +1245,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 		    "= '%s'\n", j, t, i, ts, rows[ts].cells[i]);
 
 	    Z[j][t] = atof(rows[ts].cells[i]);
-	    if (Z[j][t] == -999.0) {
+	    if (Z[j][t] == -999 || Z[j][t] == -9999) {
 		Z[j][t] = NADBL;
 	    }
 	}

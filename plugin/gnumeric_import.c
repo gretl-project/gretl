@@ -745,6 +745,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	for (i=1; i<newinfo->v; i++) {
 	    int s = (sheet->colheads)? 1 : 0;
 	    int k = i - 1 + sheet->text_cols;
+	    double zkt;
 
 	    if (column_is_blank(sheet, k, newinfo->n)) {
 		blank_cols++;
@@ -757,7 +758,12 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 		sprintf(newinfo->varname[j], "v%d", j);
 	    }
 	    for (t=0; t<newinfo->n; t++) {
-		newZ[j][t] = sheet->Z[k][s++];
+		zkt = sheet->Z[k][s++];
+		if (zkt == -999 || zkt == -9999) {
+		    newZ[j][t] = NADBL;
+		} else {
+		    newZ[j][t] = zkt;
+		}
 	    }
 	    j++;
 	}
