@@ -302,6 +302,7 @@ copy_unicode_string (unsigned char *src, int remlen,
 	/* let's not mess with excessive strings */
 	return g_strdup("bigstr");
     } else if (csize == 1) {
+	dprintf("original string = '%s'\n", src + this_skip);
 	return convert8to7((char *) src + this_skip, count);
     } else { 
 	return convert16to7(src + this_skip, count);
@@ -355,6 +356,8 @@ static int row_col_err (int row, int col, PRN *prn)
 static int check_copy_string (struct sheetrow *prow, int row, int col, 
 			      int idx, const char *s)
 {
+    dprintf("inspecting sst[%d] = '%s'\n", idx, s);
+    
     if (row > 0 && col > 0) {
 	const char *numok = "0123456789 -,.";
 	int i, len = strlen(s);
@@ -362,10 +365,10 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	static int warned = 0;
 
 	if (len == 0) {
-	    dprintf("converting sst[%d] '%s' to NA\n", idx, s);
+	    dprintf(" converting to NA\n");
 	    prow->cells[col] = g_strdup("NA");
 	    return 0;
-	}	    
+	}
 
 	for (i=0; i<len; i++) {
 	    if (strchr(numok, s[i]) == NULL) {
@@ -409,7 +412,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	       may end up with zeros where there should be NAs.
 	    */ 
 	    if (numeric_string(q)) {
-		dprintf("taking sst[%d] '%s' to be numeric string: %s\n", idx, s, q);
+		dprintf(" taking '%s' to be numeric string: %s\n", s, q);
 		prow->cells[col] = q;
 		return 0;
 	    } else {
@@ -418,7 +421,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	} 
     }
 
-    dprintf("copying sst[%d] '%s' into place\n", idx, s);
+    dprintf(" copying '%s' into place as string\n", s);
     prow->cells[col] = g_strdup_printf("\"%s", s);
 
     return 0;
@@ -1174,7 +1177,8 @@ n_vars_from_col (wbook *book, int totcols, char *blank_col)
     int offset = book->col_offset;
     int i, nv = 1;
 
-    if (book_numeric_dates(book) || book_obs_labels(book)) {
+    if (book_time_series(book) || book_obs_labels(book)) {
+	/* got a first non-data column */
 	offset++;
     }
 
@@ -1194,7 +1198,7 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
     int roff = book->row_offset;
     int i, t, j = 1;
 
-    if (book_obs_labels(book) || book_numeric_dates(book)) {
+    if (book_obs_labels(book) || book_time_series(book)) {
 	startcol++;
     } 
 
