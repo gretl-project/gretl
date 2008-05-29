@@ -163,7 +163,7 @@ int dw_lookup (int n, int k, PRN *prn)
 #else
     sprintf(datfile, "%sdata/dwdata.gz", gretl_lib_path());
 #endif
-    fz = gretl_gzopen(datfile, "r");
+    fz = gretl_gzopen(datfile, "rb");
     if (fz == NULL) {
 	pputs(prn, "Couldn't open D-W table\n");
 	return E_FOPEN;
