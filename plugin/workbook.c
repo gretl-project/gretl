@@ -369,28 +369,27 @@ ms_excel_read_bof (BiffQuery *q,
 	if (ver->version >= MS_BIFF_V8) {
 	    guint32 ver = MS_OLE_GET_GUINT32 (q->data + 4);
 	    if (ver == 0x4107cd18) {
-		printf ("Excel 2000 ?\n");
+		printf("Excel 2000 ?\n");
 	    } else {
-		printf ("Excel 97 +\n");
+		printf("Excel 97 +\n");
 	    }
 	} else if (ver->version >= MS_BIFF_V7)
-	    printf ("Excel 95\n");
+	    printf("Excel 95\n");
 	else if (ver->version >= MS_BIFF_V5)
-	    printf ("Excel 5.x\n");
+	    printf("Excel 5.x\n");
 	else if (ver->version >= MS_BIFF_V4)
-	    printf ("Excel 4.x\n");
+	    printf("Excel 4.x\n");
 	else if (ver->version >= MS_BIFF_V3)
-	    printf ("Excel 3.x\n");
+	    printf("Excel 3.x\n");
 	else if (ver->version >= MS_BIFF_V2)
-	    printf ("Excel 2.x\n");
+	    printf("Excel 2.x\n");
     } else if (ver->type == MS_BIFF_TYPE_Worksheet) {
-	printf ("Got worksheet\n");
+	; /* printf ("Got worksheet\n"); */
     } else if (ver->type == MS_BIFF_TYPE_Chart) {
-	printf ("Chart.\n");
+	; /* printf ("Chart.\n"); */
     } else if (ver->type == MS_BIFF_TYPE_VBModule ||
 	       ver->type == MS_BIFF_TYPE_Macrosheet) {
-	printf ("VB Module or Macrosheet.\n");
-
+	/* printf ("VB Module or Macrosheet.\n"); */
 	while (ms_biff_query_next (q) && q->opcode != BIFF_EOF)
 	    ;
 	if (q->opcode != BIFF_EOF)

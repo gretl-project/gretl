@@ -691,6 +691,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	int ts_markers = 0;
 	char **ts_S = NULL;
 	int blank_cols = 0;
+	int missvals = 0;
 	int pd = 0;
 
 	if (sheet->text_cols > 0) {
@@ -702,7 +703,20 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    r0 = 0;
 	}
 
+	if (book_numeric_dates(book)) {
+	    puts("found calendar dates in first imported column");
+	} else if (sheet->text_cols > 0) {
+	    puts("found label strings in first imported column");
+	} else {
+	    puts("check for label strings in first imported column: not found");
+	}
+
 	newinfo->n = sheet->maxrow - sheet->row_offset;
+
+	if (!sheet->colheads) {
+	    pputs(prn, _("it seems there are no variable names\n"));
+	    newinfo->n += 1;
+	}
 
 	if (book_numeric_dates(book) || 
 	    (sheet->colheads > 0 && import_obs_label(sheet->label[0]))) {
@@ -722,10 +736,6 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	}
 
 	newinfo->v = sheet->maxcol + 2 - sheet->col_offset - sheet->text_cols;
-	if (sheet->colheads == 0) {
-	    newinfo->n += 1;
-	}
-
 	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 		newinfo->v, newinfo->n);
 
@@ -764,6 +774,9 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 		} else {
 		    newZ[j][t] = zkt;
 		}
+		if (na(newZ[j][t])) {
+		    missvals = 1;
+		}
 	    }
 	    j++;
 	}
@@ -772,6 +785,10 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    fprintf(stderr, "Dropping %d apparently blank column(s)\n", 
 		    blank_cols);
 	    dataset_drop_last_variables(blank_cols, &newZ, newinfo);
+	}
+
+	if (missvals) {
+	    pputs(prn, _("Warning: there were missing values\n"));
 	}
 
 	if (fix_varname_duplicates(newinfo)) {
