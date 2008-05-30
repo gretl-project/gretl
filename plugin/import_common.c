@@ -31,7 +31,6 @@ static void invalid_varname (PRN *prn)
 # define cell_string(i,j) (labels[i])
 #endif
 
-
 static int 
 importer_dates_check (int row_offset, int col_offset, 
 		      BookFlag flags, char **labels, 

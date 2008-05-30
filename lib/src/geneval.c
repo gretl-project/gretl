@@ -7220,7 +7220,7 @@ static void parser_reinit (parser *p, double ***pZ,
     *p->warning = '\0';
 
     /* matrix: check the LH name again */
-    if (p->targ == MAT && p->lh.m0 == NULL) {
+    if (p->targ == MAT && *p->lh.name != '\0') {
 	p->lh.m0 = get_matrix_by_name(p->lh.name);
     }
 
