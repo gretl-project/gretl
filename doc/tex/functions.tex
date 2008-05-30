@@ -523,7 +523,7 @@ list cubelist = make_cubes(xlist)
 print xlist cubelist --byobs
 labels
 \end{code}
-%
+%$
 
 Note that the \verb+return+ statement does \emph{not} cause the
 function to return (exit) at the point where it appears within the
@@ -594,11 +594,15 @@ There are several ways to load a function:
 For example, suppose you decide to package a function that returns the
 percentage change of a time series. Open a script file and type
 \begin{code}
-function pc(series y)
+function pc(series y "Series to process")
   series foo = diff(y)/y(-1)
   return series foo
 end function
 \end{code}
+In this case, we have appended a string to the function
+argument, as explained in section \ref{func-define}, so to make our
+interface more informative. This is not obligatory: if you omit the
+descriptive string, \app{gretl} will supply a predefined one.
 
 \begin{figure}[htbp]
   \centering
@@ -733,7 +737,11 @@ Go to ``File, Function files, On local machine''.  You will be shown a
 list of the installed packages, including the one you have just
 created. If you select it and click on ``Execute'' (or double-click on
 the name of the function package), a window similar to the one shown
-in figure \ref{fig:function_call} will appear.  Click ``Ok'' and the
+in figure \ref{fig:function_call} will appear.  Notice that the
+description string ``Series to process'', supplied with the function
+definition, appears to the left of the top series chooser.
+
+Click ``Ok'' and the
 series \texttt{foo} will be generated (see figure \ref{fig:iprod_pc}).
 You may have to go to ``Data, Refresh data'' in order to have your new
 variable show up in the main window variable list (or just press the
