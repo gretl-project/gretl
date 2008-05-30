@@ -65,11 +65,15 @@ The meaning of this modification is explained below (see section
 C programming language.  In addition, parameters may be modified by
 the tag \texttt{const} (again, see \ref{funscope}).
 
-Besides these required elements, the specification of a
-\texttt{scalar} or \texttt{int} parameter may include up to three
-pieces of additional information: a minimum value, a maximum, and a
-default.  These additional values should directly follow the name of
-the parameter, enclosed in square brackets and with the individual
+\subsection{Function parameters: optional refinements}
+
+Besides the required elements mentioned above, the specification of a
+function parameter may include some additional fields.
+
+For a parameter of type \texttt{scalar} or \texttt{int}, a
+\textsl{minimum}, \textsl{maximum} and \textsl{default} value may be
+specified.  These values should directly follow the name of the
+parameter, enclosed in square brackets and with the individual
 elements separated by colons.  For example, suppose we have an integer
 parameter \texttt{order} for which we wish to specify a minimum of 1,
 a maximum of 12, and a default of 4.  We can write
@@ -92,13 +96,20 @@ bool verbose[0]
 %
 
 Finally, for a parameter of any type you can append a short
-descriptive string --- this will show up as an aid to the user if the
-function is packaged (see section~\ref{sec:func-packages} below) and
-called via \app{gretl}'s graphical interface.  The string should be
-enclosed in double quotes, and inserted before the comma that precedes
-the following parameter (or the closing right parenthesis of the
-function definition, in the case of the last parameter).
+\textsl{descriptive string}.  This will show up as an aid to the user
+if the function is packaged (see section~\ref{sec:func-packages}
+below) and called via \app{gretl}'s graphical interface.  The string
+should be enclosed in double quotes, and inserted before the comma
+that precedes the following parameter (or the closing right
+parenthesis of the function definition, in the case of the last
+parameter), as illustrated in the following example.
 
+\begin{code}
+function myfun (series y "dependent variable", 
+                series x "independent variable")
+\end{code} 
+
+\subsection{Void functions}
 
 You may define a function that has no parameters (these are called
 ``routines'' in some programming languages).  In this case,  
@@ -108,40 +119,44 @@ use the keyword \texttt{void} in place of the listing of parameters:
 function myfunc2(void)
 \end{code}
 
-When a function is called, the parameters are instantiated by
-arguments given by the caller.  There are automatic checks in place to
-ensure that the number of arguments given in a function call matches
-the number of parameters, and that the types of the given arguments
-match the types specified in the definition of the function.  An error
-is flagged if either of these conditions is violated.  One
-qualification: allowance is made for omitting arguments at the end of
-the list, provided that default values are specified in the function
-definition.  To be precise, the check is that the number of arguments
-is at least equal to the number of \textit{required} parameters, and
-is no greater than the total number of parameters.
+
+\subsection{The function body}
+   
+The \textsl{function body} is composed of \app{gretl} commands, or
+calls to user-defined functions (that is, functions may be nested).  A
+function may call itself (that is, functions may be recursive). While
+the function body may contain function calls, it may not contain
+function definitions.  That is, you cannot define a function inside
+another function.  For further details, see
+section~\ref{func-details}.
+
+
+\section{Calling a function}
+\label{func-call}
+
+A user function is called by typing its name followed by zero or more
+arguments enclosed in parentheses.  If there are two or more arguments
+these should be separated by commas.  
+
+There are automatic checks in place to ensure that the number of
+arguments given in a function call matches the number of parameters,
+and that the types of the given arguments match the types specified in
+the definition of the function.  An error is flagged if either of
+these conditions is violated.  One qualification: allowance is made
+for omitting arguments at the end of the list, provided that default
+values are specified in the function definition.  To be precise, the
+check is that the number of arguments is at least equal to the number
+of \textit{required} parameters, and is no greater than the total
+number of parameters.
 
 A scalar, series or matrix argument to a function may be given either
 as the name of a pre-existing variable or as an expression which
 evaluates to a variable of the appropriate type.  Scalar arguments may
 also be given as numerical values.  List arguments must be specified
 by name.
-    
-The \textsl{function body} is composed of \app{gretl} commands, or
-calls to user-defined functions (that is, functions may be nested).  A
-function may call itself (that is, functions may be recursive). While
-the function body may contain function calls, it may not contain
-function definitions.  That is, you cannot define a function inside
-another function.
 
-
-\section{Calling a function}
-\label{func-call}
-
-A user function is called or invoked by typing its name followed by
-zero or more arguments enclosed in parentheses.  If there are two or
-more arguments these should be separated by commas.  The following
-trivial example illustrates a function call that correctly matches the
-function definition.
+The following trivial example illustrates a function call that
+correctly matches the function definition.
     
 \begin{code}
 # function definition
