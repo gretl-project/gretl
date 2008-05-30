@@ -80,7 +80,7 @@ void gretl_errmsg_set (const char *str);
 
 void gretl_errmsg_sprintf (const char *fmt, ...);
 
-void gretl_errmsg_set_from_errno (void);
+void gretl_errmsg_set_from_errno (const char *s);
 
 void gretl_error_clear (void);
 

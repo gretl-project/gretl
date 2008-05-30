@@ -3661,7 +3661,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	gretl_matrix_free(c);
 	c = NULL;
 	*err = E_DATA;
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno("gretl_matrix_dot_op");
     }
 
     return c;
@@ -3761,7 +3761,7 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
 	gretl_matrix_free(c);
 	c = NULL;
 	*err = E_DATA;
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno("gretl_matrix_complex_multdiv");
     } else if (c->cols == 2 && izero) {
 	*err = gretl_matrix_realloc(c, c->rows, 1);
 	if (*err) {

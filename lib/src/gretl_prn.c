@@ -109,7 +109,7 @@ static int prn_add_tempfile (PRN *prn)
     }
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno("prn_add_tempfile");
 	
     }
 

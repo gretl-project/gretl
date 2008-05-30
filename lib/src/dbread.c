@@ -2320,7 +2320,7 @@ static int db_delete_series (char *line, const int *list,
 	    err = rename(tmp2, src2);
 	}
 	if (err) {
-	    gretl_errmsg_set_from_errno();
+	    gretl_errmsg_set_from_errno("db_delete_series");
 	}
 #endif
     } else {

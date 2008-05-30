@@ -186,7 +186,7 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	vsprintf(gretl_errmsg, fmt, args);
+	vsnprintf(gretl_errmsg, ERRLEN, fmt, args);
 	va_end(args);
     }
 }
@@ -200,7 +200,7 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
  * append the new error info to the message.
  */
 
-void gretl_errmsg_set_from_errno (void)
+void gretl_errmsg_set_from_errno (const char *s)
 {
     char *msg = NULL;
 
@@ -210,7 +210,11 @@ void gretl_errmsg_set_from_errno (void)
     }
 
     if (msg != NULL) {
-	gretl_errmsg_set(msg);
+	if (s != NULL) {
+	    gretl_errmsg_sprintf("%s: %s", s, msg);
+	} else {
+	    gretl_errmsg_set(msg);
+	}
     }
 }
 

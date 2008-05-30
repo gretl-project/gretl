@@ -634,7 +634,7 @@ libset_numeric_string (const char *s, int *pi, double *px, int *err)
 	if (*test != '\0') {
 	    ret = 0;
 	} else if (errno == ERANGE) {
-	    gretl_errmsg_set_from_errno();
+	    gretl_errmsg_set_from_errno(s);
 	    *err = 1;
 	}
     } else {
@@ -643,7 +643,7 @@ libset_numeric_string (const char *s, int *pi, double *px, int *err)
 	if (*test != '\0') {
 	    ret = 0;
 	} else if (errno == ERANGE) {
-	    gretl_errmsg_set_from_errno();
+	    gretl_errmsg_set_from_errno(s);
 	    *err = 1;
 	} else {
 	    *pi = (int) li;

@@ -149,7 +149,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     }
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno(fname);
     }
 
     return fp;
@@ -312,7 +312,7 @@ int gretl_deltree (const char *path)
     }
 
     if (err) {
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno(path);
 	err = E_FOPEN;
     }
     
@@ -1270,7 +1270,7 @@ int set_gretl_work_dir (const char *path, PATHS *ppaths)
     test = opendir(path);
 #endif
     if (test == NULL) {
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno(path);
 	return E_FOPEN;
     } 
 

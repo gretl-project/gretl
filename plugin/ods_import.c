@@ -994,7 +994,7 @@ static int gretl_make_tempdir (char *dname)
     s = mkdtemp(dname);
 
     if (s == NULL) {
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno("gretl_make_tempdir");
 	err = E_FOPEN;
     } 
 
@@ -1257,7 +1257,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 
     /* cd to user dir */
     if (chdir(udir)) {
-	gretl_errmsg_set_from_errno();
+	gretl_errmsg_set_from_errno(udir);
 	return E_FOPEN;
     }
 
