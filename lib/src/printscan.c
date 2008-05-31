@@ -470,7 +470,7 @@ static int split_printf_line (const char *s, char *targ, int *sp,
 
     if (n == 0) {
 	/* empty format string */
-	return 0; 
+	return 0;
     }
 
     *format = gretl_strndup(p, n);
@@ -503,7 +503,6 @@ static int real_do_printf (const char *line, double ***pZ,
 			   int t)
 {
     PRN *prn = inprn;
-    char *p, *q;
     char targ[VNAMELEN];
     char *format = NULL;
     char *args = NULL;
@@ -540,21 +539,23 @@ static int real_do_printf (const char *line, double ***pZ,
     fprintf(stderr, " args = '%s'\n", args);
 #endif
 
-    p = format;
-    q = args;
+    if (format != NULL) {
+	char *p = format;
+	char *q = args;
 
-    while (*p && !err) {
-	if (*p == '%' && *(p+1) == '%') {
-	    pputc(prn, '%');
-	    p += 2;
-	} else if (*p == '%') {
-	    err = print_arg(&p, &q, pZ, pdinfo, t, prn);
-	} else if (*p == '\\') {
-	    err = printf_escape(*(p+1), prn);
-	    p += 2;
-	} else {
-	    pputc(prn, *p);
-	    p++;
+	while (*p && !err) {
+	    if (*p == '%' && *(p+1) == '%') {
+		pputc(prn, '%');
+		p += 2;
+	    } else if (*p == '%') {
+		err = print_arg(&p, &q, pZ, pdinfo, t, prn);
+	    } else if (*p == '\\') {
+		err = printf_escape(*(p+1), prn);
+		p += 2;
+	    } else {
+		pputc(prn, *p);
+		p++;
+	    }
 	}
     }
 
