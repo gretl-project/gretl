@@ -35,11 +35,11 @@ Table~\ref{tab:nonloopcmds}.
 By default, the \cmd{genr} command operates quietly in the context of
 a loop (without printing information on the variable generated).  To
 force the printing of feedback from \cmd{genr} you may specify the
-\verb+--verbose+ option to \cmd{loop}.  The \verb+--quiet+ option
+\option{verbose} option to \cmd{loop}.  The \option{quiet} option
 suppresses the usual printout of the number of iterations performed,
 which may be desirable when loops are nested.
 
-The \verb+--progressive+ option to \cmd{loop} modifies the behavior of
+The \option{progressive} option to \cmd{loop} modifies the behavior of
 the commands \cmd{print} and \cmd{store}, and certain estimation
 commands, in a manner that may be useful with Monte Carlo analyses
 (see Section \ref{loop-progressive}).
@@ -228,7 +228,7 @@ expression:
 \section{Progressive mode}
 \label{loop-progressive}
 
-If the \verb+--progressive+ option is given for a command loop,
+If the \option{progressive} option is given for a command loop,
 special behavior is invoked for certain commands, namely, \cmd{print},
 \cmd{store} and simple estimation commands.  By ``simple'' here we
 mean commands which (a) estimate a single equation (as opposed to a
@@ -325,7 +325,7 @@ in the \app{gretl} distribution under the name \verb+greene11_3.inp+;
 you can find it in \app{gretl} under the menu item ``File, Script files,
 Practice file, Greene...''.
 
-The option \verb+--print-final+ for the \cmd{ols} command arranges
+The option \option{print-final} for the \cmd{ols} command arranges
 matters so that the regression results will not be printed each time
 round the loop, but the results from the regression on the last
 iteration will be printed when the loop terminates.

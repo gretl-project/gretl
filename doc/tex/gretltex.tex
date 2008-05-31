@@ -250,10 +250,9 @@ your own \TeX\ files.
 
 As regards \emph{preview mode}, you can control the appearance of
 \app{gretl}'s output using a file named \verb+gretlpre.tex+, which
-should be placed in your \app{gretl} user directory (see the
-\emph{Gretl Command Reference}).  If such a file is found, its
-contents will be used as the ``preamble'' to the \TeX\ source.  The
-default value of the preamble is as follows:
+should be placed in your \app{gretl} user directory (see the \GCR).
+If such a file is found, its contents will be used as the ``preamble''
+to the \TeX\ source.  The default value of the preamble is as follows:
     
 \begin{code}
 \documentclass[11pt]{article}
@@ -311,7 +310,7 @@ respectively.  These options are explained in the \GCR{}.
 
 If you wish alter the appearance of \app{gretl}'s tabular output for
 models in the context of the \texttt{tabprint} command, you can
-specify a custom row format using the \verb|--format| flag.  The
+specify a custom row format using the \option{format} flag.  The
 format string must be enclosed in double quotes and must be tied to
 the flag with an equals sign.  The pattern for the format string is as
 follows.  There are four fields, representing the coefficient,

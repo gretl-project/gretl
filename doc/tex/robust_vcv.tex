@@ -99,7 +99,7 @@ the various options offered by \app{gretl} in respect of robust
 covariance matrix estimation.  The first point to notice is that
 \app{gretl} produces ``classical'' standard errors by default (in all
 cases apart from GMM estimation).  In script mode you can get robust
-standard errors by appending the \verb|--robust| flag to estimation
+standard errors by appending the \option{robust} flag to estimation
 commands.  In the GUI program the model specification dialog usually
 contains a ``Robust standard errors'' check box, along with a
 ``configure'' button that is activated when the box is checked.  The
@@ -607,7 +607,7 @@ set pcse off
 \end{code}
 %
 (Note that regardless of the \texttt{pcse} setting, the robust
-estimator is not used unless the \verb|--robust| flag is given, or the
+estimator is not used unless the \option{robust} flag is given, or the
 ``Robust'' box is checked in the GUI program.)
 
 %%% Local Variables: 

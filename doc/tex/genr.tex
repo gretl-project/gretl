@@ -45,7 +45,8 @@ One sort of specialized function in \verb+genr+ is time-series
 filtering. In addition to the usual application of lags and
 differences, \app{gretl} provides fractional differencing and two
 filters commonly used in macroeconomics for trend-cycle decomposition:
-the Hodrick--Prescott filter and the Baxter--King bandpass filter.
+the Hodrick--Prescott filter (Hodrick and Prescott, 1997) and the
+Baxter--King bandpass filter (Baxter and King, 1999).
 
 \subsection{Fractional differencing}
 \label{sec:fracdiff}
@@ -524,14 +525,14 @@ commands.
   constant and a quadratic trend.  When you wish to reference
   \verb+$test+ or \verb+$pvalue+ in connection with this command, you
   can control the variant that is recorded by using one of the flags
-  \verb+--nc+, \verb+--c+, \verb+--ct+ or \verb+--ctt+ with
+  \option{nc}, \option{c}, \option{ct} or \option{ctt} with
   \verb+adf+.
 \item By default, the \cmd{lmtest} command (which must follow an OLS
   regression) performs several diagnostic tests on the regression in
   question.  To control what is recorded in \verb+$test+ and
   \verb+$pvalue+ you should limit the test using one of the flags
-  \verb+--logs+, \verb+--autocorr+, \verb+--squares+ or
-  \verb+--white+.
+  \option{logs}, \option{autocorr}, \option{squares} or
+  \option{white}.
 \end{itemize}
 
 As an aid in working with values retrieved using \verb+$test+ and
@@ -692,7 +693,7 @@ that
 \right\}
 \]
 where $T$ is the sample size and $J$ is the Jacobian
-$\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
+$\left.\pder{g(x)}{x}\right|_{x = \theta}$.
 
 \begin{script}[htbp]
   \caption{Delta Method}
@@ -754,13 +755,13 @@ $n$-dimensional vector whose $k$-th element is $x_k = a_k + i b_k$,
 then the output of the discrete Fourier transform is a vector
 $\mathbf{f} = \mathcal{F}(\mathbf{x})$ whose $k$-th element is
 \[
-  f_k = \sum_{j=0}^{n-1} e^{-i \omega_{j,k} } x_j 
+  f_k = \sum_{j=0}^{n-1} e^{-i \omega(j,k) } x_j 
 \]
-where $\omega_{j,k} = 2 \pi i \frac{j k}{n}$. Since the transformation
+where $\omega(j,k) = 2 \pi i \frac{j k}{n}$. Since the transformation
 is invertible, the vector $\mathbf{x}$ can be recovered from
 $\mathbf{f}$ via the so-called inverse transform
 \[
-  x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega_{j,k} } f_j .
+  x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega(j,k) } f_j .
 \]
 
 The Fourier transform is used in many diverse situations

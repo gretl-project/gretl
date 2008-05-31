@@ -123,9 +123,9 @@ based on the Outer Product of the Gradient.  That is,
 \]
 where $G(\hat{\theta})$ is the $T \times k$ matrix of contributions to
 the gradient.  Two other options are available.  If the
-\verb|--hessian| flag is given, the covariance matrix is computed from
+\option{hessian} flag is given, the covariance matrix is computed from
 a numerical approximation to the Hessian at convergence.  If the
-\verb|--robust| option is selected, the quasi-ML ``sandwich''
+\option{robust} option is selected, the quasi-ML ``sandwich''
 estimator is used:
 \[
 \widehat{\mbox{Var}}_{\mbox{\scriptsize QML}}(\hat{\theta}) = H(\hat{\theta})^{-1}
@@ -510,7 +510,7 @@ contributions. Hence
 \[
   \LogLik = \sum_{t=1}^T y_t \log(\pi_t) + (1 - y_t) \log(1 - \pi_t)
 \]
-The \texttt{--verbose} switch at the end of the \texttt{end mle}
+The \option{verbose} switch at the end of the \texttt{end mle}
 statement produces a detailed account of the iterations done by the
 BFGS algorithm.
 

@@ -105,7 +105,7 @@ The AR and MA lag orders, \verb|p| and \verb|q|, can be given either as
 numbers or as pre-defined scalars. The parameter $\mu$ can be dropped
 if necessary by appending the option \cmd{--nc} (``no constant'') to
 the command. If estimation of (\ref{eq:arma-with-zconst}) is needed,
-the switch \texttt{--conditional} must be appended to the command, as
+the switch \option{conditional} must be appended to the command, as
 in 
 \begin{code}
 arma p q ; y --conditional
@@ -123,7 +123,7 @@ would estimate the following model:
   \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
 \]
 where in this instance $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
-x_{t,2} \beta_2$. Appending the \texttt{--conditional} switch, as in 
+x_{t,2} \beta_2$. Appending the \option{conditional} switch, as in 
 \begin{code}
 arma p q ; y const x1 x2 --conditional
 \end{code}
@@ -266,7 +266,7 @@ treated as in equation (\ref{eq:arma-with-x}).  The covariance matrix
 for the parameters is computed using a numerical approximation to the
 Hessian at convergence.
 
-The alternative method, invoked with the \verb|--conditional| switch,
+The alternative method, invoked with the \option{conditional} switch,
 is conditional maximum likelihood (CML), also known as ``conditional
 sum of squares'' --- see Hamilton (1994, p.\ 132).  This method was
 exemplified in the script~\ref{jack-arma}, and only a brief
@@ -337,7 +337,7 @@ and the estimation method chosen.
 \end{enumerate}
 
 To see the details of the ARMA estimation procedure, add the
-\verb|--verbose| option to the command.  This prints a notice of the
+\option{verbose} option to the command.  This prints a notice of the
 initialization method used, as well as the parameter values and
 log-likelihood at each iteration.
 
@@ -385,7 +385,7 @@ To invoke \app{X-12-ARIMA} as the estimation engine, append the flag
 arma p q ; y --x-12-arima
 \end{code}
 As with native estimation, the default is to use exact ML but there is
-the option of using conditional ML with the \verb|--conditional| flag.
+the option of using conditional ML with the \option{conditional} flag.
 However, please note that when \app{X-12-ARIMA} is used in conditional
 ML mode, the comments above regarding the variant treatments of the
 mean of the process $y_t$ \textit{do not apply}.  That is, when you
@@ -500,10 +500,10 @@ alternatives:
     \hline
     $\mu_t$ & command option \\
     \hline
-    0 & \verb|--nc| \\
-    $\mu_0$ &  \verb|--c| \\
-    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
-    $\mu_0 + \mu_1 t + \mu_1 t^2$ &  \verb|--ctt| \\
+    0 & \option{nc} \\
+    $\mu_0$ &  \option{c} \\
+    $\mu_0 + \mu_1 t$ &  \option{ct} \\
+    $\mu_0 + \mu_1 t + \mu_1 t^2$ &  \option{ctt} \\
     \hline
   \end{tabular}
 \end{center}
@@ -584,7 +584,7 @@ thought to be stationary around a deterministic trend. In this case,
 formula (\ref{eq:KPSStest}) remains unchanged, but the series $e_t$ is
 defined as the residuals from an OLS regression of $y_t$ on a constant
 and a linear trend. This second form of the test is obtained by
-appending the \verb|--trend| option to the \cmd{kpss} command:
+appending the \option{trend} option to the \cmd{kpss} command:
 \begin{code}
 kpss n y --trend
 \end{code}
@@ -710,7 +710,7 @@ any suitable probability distribution, and besides the obvious
 candidate of the normal or Gaussian distribution the $t$ distribution
 has been used in this context.  Currently \app{gretl} only handles the
 case where $\varepsilon_t$ is assumed to be Gaussian.  However, when
-the \verb|--robust| option to the \cmd{garch} command is given, the
+the \option{robust} option to the \cmd{garch} command is given, the
 estimator \app{gretl} uses for the covariance matrix can be considered
 Quasi-Maximum Likelihood even with non-normal disturbances.  See below
 for more on the options regarding the GARCH covariance matrix.
@@ -742,14 +742,14 @@ benchmark in the study of GARCH results by McCullough and Renfro
 log-likelihood, and uses a mixed-gradient algorithm, exploiting the
 information matrix in the early iterations and then switching to the
 Hessian in the neighborhood of the maximum likelihood.  (This progress
-can be observed if you append the \verb|--verbose| option to
+can be observed if you append the \option{verbose} option to
 \app{gretl}'s \cmd{garch} command.)
 
 Several options are available for computing the covariance matrix of
 the parameter estimates in connection with the \cmd{garch} command.
 At a first level, one can choose between a ``standard'' and a
 ``robust'' estimator.  By default, the Hessian is used unless the
-\verb|--robust| option is given, in which case the QML estimator is
+\option{robust} option is given, in which case the QML estimator is
 used.  A finer choice is available via the \cmd{set} command, as
 shown in Table~\ref{tab:garch-vcv}.
 

@@ -375,7 +375,7 @@ will put everything under the \verb+/usr+ tree.  Another useful option
 refers to the fact that, by default, \app{gretl} offers support for
 the \app{gnome} desktop.  If you want to suppress the
 \app{gnome}-specific features you can pass the option
-\verb+--without-gnome+ to \cmd{configure}.
+\option{without-gnome} to \cmd{configure}.
 
 In order to have the documentation built, we need to pass the relevant
 option to \texttt{configure}, as in
@@ -495,10 +495,9 @@ current version of \app{gretl} (except when the multiple-precision
 plugin is used, in which case results are given to 12 figures).  If
 you want to examine a particular value more closely, first save it
 (for example, using the \cmd{genr} command) then print it using
-\cmd{print --long} (see the \emph{Gretl Command Reference}).  This
-will show the value to 10 digits (or more, if you set the internal
-variable \texttt{longdigits} to a higher value via the \cmd{set}
-command).
+\cmd{print --long} (see the \GCR).  This will show the value to 10
+digits (or more, if you set the internal variable \texttt{longdigits}
+to a higher value via the \cmd{set} command).
 
 \chapter{Related free software}
 \label{app-advanced}

@@ -38,6 +38,12 @@ the data.  If you encounter a problem with ill-formatted data, the
 messages in this window should give you a handle on fixing the
 problem.
 
+As of version 1.7.5, \app{gretl} also offers ODBC connctivity. Be
+warned: this is a recent feature meant for somewhat advanced users; it
+may still have a few rough edges and there is no GUI interface for
+this yet. Interested readers will find more info in appendix
+\ref{chap:odbc}.
+
 For the convenience of anyone wanting to carry out more complex data
 analysis, \app{gretl} has a facility for writing out data in the
 native formats of GNU \app{R}, \app{Octave}, \app{JMulTi} and
@@ -409,8 +415,8 @@ you can use the form \verb+setobs+ \textsl{freq} \verb+1:1+
 \textsl{structure}, where \textsl{freq} is replaced by the ``block
 size'' of the data (that is, the number of periods in the case of
 stacked time series, or the number of units in the case of stacked
-cross-sections) and structure is either \verb+--stacked-time-series+
-or \verb+--stacked-cross-section+.  Two examples are given below: the
+cross-sections) and structure is either \option{stacked-time-series}
+or \option{stacked-cross-section}.  Two examples are given below: the
 first is suitable for a panel in the form of stacked time series with
 observations from 20 periods; the second for stacked cross sections
 with 5 units.
@@ -791,7 +797,7 @@ are the steps:
   zipfile.
 \end{enumerate}
 
-If you assemble such a collection, and the data are not proprietary, I
+If you assemble such a collection, and the data are not proprietary, we
 would encourage you to submit the collection for packaging as a
 \app{gretl} optional extra.
 

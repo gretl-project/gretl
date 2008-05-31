@@ -44,7 +44,7 @@ discrete z1 xlist z2
 \end{code}
 This syntax makes it possible to declare as discrete many
 variables at once, which cannot presently be done via the graphical
-interface. The switch \texttt{--reverse} reverses the declaration of a
+interface. The switch \option{reverse} reverses the declaration of a
 variable as discrete, or in other words marks it as continuous.
 For example:
 \begin{code}
@@ -226,14 +226,14 @@ Test for null hypothesis of normal distribution:
 Chi-square(2) = 1.872 with p-value 0.39211
 \end{code}
 %
-As can be seen from the sample output, a (Doornik--Hansen) test for
+As can be seen from the sample output, a Doornik-Hansen test for
 normality is computed automatically.  This test is suppressed for
 discrete variables where the number of distinct values is less than
 10.
 
-This command accepts two options: \texttt{--quiet}, to avoid
+This command accepts two options: \option{quiet}, to avoid
 generation of the histogram when invoked from the command line and
-\texttt{--gamma}, for replacing the normality test with Locke's
+\option{gamma}, for replacing the normality test with Locke's
 nonparametric test, whose null hypothesis is that the data follow a
 Gamma distribution.
 
@@ -327,12 +327,12 @@ this statistic is valid only if the expected frequency is 5 or
 greater for at least 80 percent of the cells.  If this condition is not
 met a warning is printed.
 
-Additionally, the options \texttt{--row} or \texttt{--column} options
-can be given: in this case, the output displays row or column
-percentages, respectively. 
+Additionally, the \option{row} or \option{column} options can be
+given: in this case, the output displays row or column percentages,
+respectively.
 
 If you want to cut and paste the output of \texttt{xtab} to some other
-program, e.g.\ a spreadsheet, you may want to use the \texttt{--zeros}
+program, e.g.\ a spreadsheet, you may want to use the \option{zeros}
 option; this option causes cells with zero frequency to display the
 number 0 instead of being empty.
 

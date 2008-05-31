@@ -70,20 +70,20 @@ problems.
 
 By default, standard errors are computed according to the asymptotic
 formula given by Koenker and Bassett (1978).  Alternatively, if the
-\verb|--robust| option is given, we use the sandwich estimator
+\option{robust} option is given, we use the sandwich estimator
 developed in Koenker and Zhao (1994).\footnote{These correspond to the
   \texttt{iid} and \texttt{nid} options in \textsf{R}'s
   \texttt{quantreg} package, respectively.}
 
 \section{Confidence intervals}
 
-An option \verb|--intervals| is available.  When this is given we
+An option \option{intervals} is available.  When this is given we
 print confidence intervals for the parameter estimates instead of
 standard errors.  These intervals are computed using the rank
 inversion method and in general they are asymmetrical about the point
 estimates --- that is, they are not simply ``plus or minus so many
 standard errors''.  The specifics of the calculation are inflected by
-the \verb|--robust| option: without this, the intervals are computed
+the \option{robust} option: without this, the intervals are computed
 on the assumption of IID errors (Koenker, 1994); with it, they use the
 heteroskedasticity-robust estimator developed by Koenker and Machado
 (1999).
@@ -104,7 +104,7 @@ calculation of confidence intervals.
 
 Two further details.  First, the mechanisms for generating confidence
 intervals for quantile estimates require that the model has at least
-two regressors (including the constant).  If the \verb|--intervals|
+two regressors (including the constant).  If the \option{intervals}
 option is given for a model containing only one regressor, an error is
 flagged.  Second, when a model is estimated in this mode, you can
 retrieve the confidence intervals using the accessor \verb|$coeff_ci|.
@@ -118,7 +118,7 @@ As a further option, you can give \textsl{tau} as a matrix --- either
 the name of a predefined matrix or in numerical form, as in
 \verb+{.05, .25, .5, .75, .95}+.  The given model is estimated for all
 the $\tau$ values and the results are printed in a special form, as
-shown below (in this case the \verb|--intervals| option was also
+shown below (in this case the \option{intervals} option was also
 given).
 
 {\small
@@ -200,7 +200,7 @@ estimates overlap at all the quantiles considered.
 \section{Large datasets}
 \label{sec:bigdata}
 
-As noted above, when you give the \verb|--intervals| option with the
+As noted above, when you give the \option{intervals} option with the
 \texttt{quantreg} command, which calls for estimation of confidence
 intervals via rank inversion, \app{gretl} switches from the default
 Frisch--Newton algorithm to the Barrodale--Roberts simplex method.
@@ -215,7 +215,7 @@ about half an hour on a Lenovo Thinkpad T60p with 1.83GHz Intel Core 2
 processor.
 
 If you want confidence intervals in such cases, you are advised not to
-use the \verb|--intervals| option, but to compute them using the
+use the \option{intervals} option, but to compute them using the
 method of ``plus or minus so many standard errors''.  (One
 Frisch--Newton run took about 8 seconds on the same machine, showing
 the superiority of the interior point method.)  The script below

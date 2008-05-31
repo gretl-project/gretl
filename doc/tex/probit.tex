@@ -72,7 +72,7 @@ Both the probit and logit model are estimated in \app{gretl} via
 maximum likelihood; since the score equations do not have a closed
 form solution, numerical optimization is used. However, in most cases
 this is totally transparent to the user, since usually only a few
-iterations are needed to ensure convergence. The \texttt{--verbose}
+iterations are needed to ensure convergence. The \option{verbose}
 switch can be used to track the maximization algorithm.
 
 \begin{script}[htbp]
@@ -353,7 +353,7 @@ tobit depvar indvars
 \end{code}
 
 As usual, progress of the maximization algorithm can be tracked via
-the \texttt{--verbose} switch, while \verb+$uhat+ returns the
+the \option{verbose} switch, while \verb+$uhat+ returns the
 generalized residuals. Note that in this case the generalized residual
 is defined as $\hat{u}_i = E(\varepsilon_i | y_i = 0)$ for censored
 observations, so the familiar equality $\hat{u}_i = y_i - \hat{y}_i$
@@ -440,7 +440,7 @@ censoring equation.
 
 Since in most cases maximum likelihood is the method of
 choice, by default \app{gretl} computes ML estimates. The 2-step
-Heckit estimates can be obtained by using the \texttt{--two-step}
+Heckit estimates can be obtained by using the \option{two-step}
 option. After estimation, the \verb|$uhat| accessor contains the
 generalised residuals. As in the ordinary Tobit model, the residuals
 equal th difference between actual and fitted $y_i$ only for

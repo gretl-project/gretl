@@ -363,18 +363,18 @@ following options to the \texttt{coint2} and \texttt{vecm} commands:
 \begin{center}
   \begin{tabular}{ccl}
     $\mu_t$ & \textit{option flag} & \textit{description} \\ [4pt]
-    0 & \verb|--nc| & no constant \\
-    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| & restricted
+    0 & \option{nc} & no constant \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \option{rc} & restricted
        constant \\
     $\mu_0$ &  default & unrestricted constant \\
-    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| &
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \option{crt} &
      constant + restricted trend \\
-    $\mu_0 + \mu_1 t$ &  \verb|--ct| & 
+    $\mu_0 + \mu_1 t$ &  \option{ct} & 
     constant + unrestricted trend 
   \end{tabular}
 \end{center}
 Note that for this command the above options are mutually exclusive.
-In addition, you have the option of using the \verb|--seasonal|
+In addition, you have the option of using the \option{seasonal}
 options, for augmenting $\mu_t$ with centered seasonal dummies.  In
 each case, p-values are computed via the approximations by Doornik
 (1998).
@@ -662,7 +662,7 @@ representation internally when testing the restrictions.
 If the list of restrictions that is passed to the \texttt{restrict}
 command contains more constraints than necessary to achieve
 identification, then an LR test is performed; moreover, the
-\texttt{restrict} command can be given the \verb|--full| switch, in
+\texttt{restrict} command can be given the \option{full} switch, in
 which case full estimates for the restricted system are printed
 (including the $\Gamma_i$ terms), and the system thus restricted
 becomes the ``current model'' for the purposes of further tests.  Thus
@@ -848,7 +848,7 @@ for its restricted counterpart.
 The example continues in script~\ref{brand-cassola-tab5}, where we
 perform further testing to check whether (a) the income elasticity in
 the money demand equation is 1 ($\beta_y = 1$) and (b) the Fisher
-relation is homogeneous ($\phi = 1$). Since the \verb|--full| switch
+relation is homogeneous ($\phi = 1$). Since the \option{full} switch
 was given to the initial \texttt{restrict} command, additional
 restrictions can be applied without having to repeat the previous
 ones.  (The second script contains a few \texttt{printf} commands,
@@ -1017,7 +1017,7 @@ Two maximization methods are available in \app{gretl}. The default is
 the switching algorithm set out in Boswijk and Doornik (2004).  The
 alternative is a limited-memory variant of the BFGS algorithm (LBFGS),
 using analytical derivatives.  This is invoked using the
-\verb+--lbfgs+ flag with the \texttt{restrict} command.
+\option{lbfgs} flag with the \texttt{restrict} command.
 
 The switching algorithm works by explicitly maximizing the likelihood
 at each iteration, with respect to $\hat{\phi}$, $\hat{\psi}$ and
@@ -1081,7 +1081,7 @@ the Moore--Penrose inverse of $A$.  Otherwise
 
 As mentioned above, \app{gretl} offers the option of adjusting the
 initialization using \textbf{simulated annealing}.  This is invoked by
-adding the \verb|--jitter| option to the \texttt{restrict} command.
+adding the \option{jitter} option to the \texttt{restrict} command.
 
 The basic idea is this: we start at a certain point in the parameter
 space, and for each of $n$ iterations (currently $n=4096$) we randomly
@@ -1138,7 +1138,7 @@ end restrict
 
 In this example --- from Johansen (1995) --- the cointegration rank is
 1 and there are 4 variables.  However, the model includes a restricted
-constant (the \verb|--rc| flag) so that $\beta$ has 5 elements.  The
+constant (the \option{rc} flag) so that $\beta$ has 5 elements.  The
 $\alpha$ matrix has 4 elements, one per equation.  So the matrix
 \texttt{BA} may be read as
 \[
@@ -1204,7 +1204,7 @@ estimation problem.  However, this does seem to be the case more often
 than not.  Gretl therefore performs scale removal where feasible,
 unless you
 \begin{itemize}
-\item explicitly forbid this, by giving the \verb|--no-scaling| option
+\item explicitly forbid this, by giving the \option{no-scaling} option
   flag to the restrict command; or
 \item provide a specific vector of initial values; or
 \item select the LBFGS algorithm for maximization.

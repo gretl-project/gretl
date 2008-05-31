@@ -29,7 +29,7 @@ models for panel data can be estimated in their own right.  In the
 graphical interface these options are found under the menu item
 ``Model/Panel/Fixed and random effects''.  In the command-line
 interface one uses the \cmd{panel} command, with or without the
-\verb+--random-effects+ option.
+\option{random-effects} option.
 
 This section explains the nature of these models and comments on their
 estimation via \app{gretl}.
@@ -349,7 +349,7 @@ avoids this potential problem.  The procedure is:
 By default \app{gretl} computes the Hausman test via the
 matrix-difference method (largely for comparability with other
 software), but it uses the regression method if you pass the
-option \verb+--hausman-reg+ to the \cmd{panel} command.
+option \option{hausman-reg} to the \cmd{panel} command.
 
 \subsection{Robust standard errors}
 \label{panel-robust}
