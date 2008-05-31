@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-05-21 17:24-0400\n"
-"PO-Revision-Date: 2008-05-09 10:00+0200\n"
+"PO-Revision-Date: 2008-05-31 13:51+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -366,20 +366,18 @@ msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Scartata %-16s (p-value %.3f)\n"
 
 #: lib/src/compare.c:1398 gui2/library.c:2071
-#, fuzzy
 msgid "squares only"
-msgstr "trimestrale"
+msgstr "solo quadrati"
 
 #: lib/src/compare.c:1401 gui2/library.c:2072
 msgid "cubes only"
-msgstr ""
+msgstr "solo cubi"
 
 #: lib/src/compare.c:1404 gui2/library.c:2070
 msgid "squares and cubes"
-msgstr ""
+msgstr "quadrati e cubi"
 
 #: lib/src/compare.c:1470 gui2/library.c:2085
-#, fuzzy
 msgid "RESET specification test"
 msgstr "Test RESET di specificazione"
 
@@ -1280,12 +1278,11 @@ msgstr "Campione nullo non valido"
 
 #: lib/src/dbread.c:1893
 msgid "Expected an SQL query string"
-msgstr ""
+msgstr "Era attesa una query SQL"
 
 #: lib/src/dbread.c:1906
-#, fuzzy
 msgid "Expected a valid variable name"
-msgstr "Era atteso un nome di variabile"
+msgstr "Era atteso un nome di variabile valido"
 
 #: lib/src/dbread.c:1927 lib/src/dbread.c:2049 lib/src/dbread.c:2194
 msgid "No database has been opened"
@@ -2406,19 +2403,19 @@ msgid "forecast"
 msgstr "previsione"
 
 #: lib/src/graphing.c:3253
-#, fuzzy, c-format
+#, c-format
 msgid "Coefficient on %s"
-msgstr "Coefficiente"
+msgstr "Coefficiente sy %s"
 
 #: lib/src/graphing.c:3277
 #, c-format
 msgid "Quantile estimates with %g%% band"
-msgstr ""
+msgstr "Stime quantili con banda %g%%"
 
 #: lib/src/graphing.c:3282
-#, fuzzy, c-format
+#, c-format
 msgid "OLS estimate with %g%% band"
-msgstr "Stime OLS"
+msgstr "Stima OLS con banda %g%%"
 
 #: lib/src/graphing.c:3347
 msgid "+- sqrt(h(t))"
@@ -2460,9 +2457,9 @@ msgid "VAR inverse roots in relation to the unit circle"
 msgstr "Radici inverse del VAR, in relazione al cerchio unitario"
 
 #: lib/src/graphing.c:4071
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
-msgstr "Ellisse di confidenza al 95% e intervalli marginali al 95%"
+msgstr "Ellisse di confidenza al %g%% e intervalli marginali al %g%%"
 
 #: lib/src/graphing.c:4183 lib/src/graphing.c:4184
 #, c-format
@@ -4030,11 +4027,8 @@ msgid "Sum of absolute residuals"
 msgstr "Somma dei residui assoluti"
 
 #: lib/src/modelprint.c:628
-#, fuzzy
 msgid "Warning: solution is probably not unique"
-msgstr ""
-"\n"
-"Attenzione: la soluzione probabilmente non è unica\n"
+msgstr "Attenzione: la soluzione probabilmente non è unica"
 
 #: lib/src/modelprint.c:652
 msgid "p-value for"
@@ -4328,7 +4322,7 @@ msgstr "ML Heckit"
 
 #: lib/src/modelprint.c:1031
 msgid "Quantile"
-msgstr ""
+msgstr "Quantile"
 
 #: lib/src/modelprint.c:1070 lib/src/modelprint.c:1079
 msgid "First-stage F-statistic"
@@ -4429,24 +4423,22 @@ msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Errori standard di Bollerslev-Wooldridge"
 
 #: lib/src/modelprint.c:1344
-#, fuzzy, c-format
+#, c-format
 msgid "With robust %g percent confidence intervals"
-msgstr "Intervallo di confidenza al 95 per cento"
+msgstr "Con intervalli di confidenza robusti al %g per cento"
 
 #: lib/src/modelprint.c:1347
-#, fuzzy, c-format
+#, c-format
 msgid "With %g percent confidence intervals"
-msgstr "Intervallo di confidenza al 95 per cento"
+msgstr "Con intervalli di confidenza al %g per cento"
 
 #: lib/src/modelprint.c:1352
-#, fuzzy
 msgid "Robust (sandwich) standard errors"
-msgstr "Errori standard robusti (HAC)"
+msgstr "Errori standard robusti (sandwich)"
 
 #: lib/src/modelprint.c:1354
-#, fuzzy
 msgid "Asymptotic standard errors assuming IID errors"
-msgstr "Errori standard asintotici (non affidabili)"
+msgstr "Errori standard asintotici assumendo errori IID"
 
 #: lib/src/modelprint.c:1447
 msgid "Omitted because all values were zero:"
@@ -4595,27 +4587,27 @@ msgid "(at mean)"
 msgstr "(alla media)"
 
 #: lib/src/modelprint.c:2017
-#, fuzzy
 msgid ""
 "      VARIABLE       COEFFICIENT        LOWER            UPPER\n"
 "\n"
 msgstr ""
-"      VARIABILE      COEFFICIENTE       ERRORE STD    STAT T       PENDENZA\n"
+"      VARIABILE      COEFFICIENTE       INFERIORE        SUPERIORE\n"
+"\n"
 
 #: lib/src/modelprint.c:2020
-#, fuzzy
 msgid ""
 "      VARIABLE      TAU    COEFFICIENT      LOWER        UPPER\n"
 "\n"
-msgstr "      VARIABILE        COEFFICIENTE                 ERRORE STD\n"
+msgstr ""
+"      VARIABILE     TAU    COEFFICIENTE     INFERIORE    SUPERIORE\n"
+"\n"
 
 #: lib/src/modelprint.c:2023
-#, fuzzy
 msgid ""
 "      VARIABLE      TAU    COEFFICIENT    STDERROR       T STAT\n"
 "\n"
 msgstr ""
-"      VARIABILE      COEFFICIENTE       ERRORE STD    STAT T   P-VALUE\n"
+"      VARIABILE     TAU    COEFFICIENTE   ERRORE STD     STAT T\n"
 "\n"
 
 #: lib/src/modelprint.c:2034 lib/src/modelprint.c:2037
@@ -4659,11 +4651,11 @@ msgstr "P-VALUE"
 
 #: lib/src/modelprint.c:2045 lib/src/modelprint.c:2049
 msgid "LOWER"
-msgstr ""
+msgstr "INFERIORE"
 
 #: lib/src/modelprint.c:2046 lib/src/modelprint.c:2050
 msgid "UPPER"
-msgstr ""
+msgstr "SUPERIORE"
 
 #: lib/src/modelprint.c:2065
 msgid "Parameter"
@@ -4680,16 +4672,15 @@ msgstr "Coefficiente"
 
 #: lib/src/modelprint.c:2073 lib/src/modelprint.c:2077
 msgid "Lower"
-msgstr ""
+msgstr "Inferiore"
 
 #: lib/src/modelprint.c:2074 lib/src/modelprint.c:2078
 msgid "Upper"
-msgstr ""
+msgstr "Superiore"
 
 #: lib/src/modelprint.c:2076
-#, fuzzy
 msgid "tau"
-msgstr "tab"
+msgstr "tau"
 
 #  I "\\" servono perchè la stringa finisce in un sorgente LaTeX.
 #  Il primo "\" viene rimosso automaticamente e rimane "\ " per 
@@ -5385,12 +5376,12 @@ msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
 msgstr "Questo è software libero SENZA ALCUNA GARANZIA.\n"
 
 #: lib/src/printout.c:227
-#, fuzzy, no-c-format
+#, no-c-format
 msgid ""
 "      VARIABLE         COEFFICIENT      %g%% CONFIDENCE INTERVAL\n"
 "\n"
 msgstr ""
-"      VARIABILE        COEFFICIENTE     INTERVALLO DI CONFIDENZA 95%\n"
+"      VARIABILE        COEFFICIENTE     INTERVALLO DI CONFIDENZA %g%%\n"
 "\n"
 
 #: lib/src/printout.c:244
@@ -10092,9 +10083,8 @@ msgid "/Model/Robust estimation/Least _Absolute Deviation..."
 msgstr "/Modello/Stima robusta/L_AD - Minime deviazioni assolute..."
 
 #: gui2/gretl.c:525
-#, fuzzy
 msgid "/Model/Robust estimation/_Quantile regression..."
-msgstr "/Modello/Stima robusta/SPEA_RMAN - Correlazione di rango..."
+msgstr "/Modello/Stima robusta/Regressione _Quantile..."
 
 #: gui2/gretl.c:527
 msgid "/Model/Robust estimation/_Rank correlation..."
@@ -10447,9 +10437,9 @@ msgid "95% confidence interval"
 msgstr "Intervallo di confidenza al 95%"
 
 #: gui2/guiprint.c:1906 gui2/guiprint.c:1957
-#, fuzzy, c-format
+#, c-format
 msgid "%g\\%% confidence interval"
-msgstr "Intervallo di confidenza al 95\\%"
+msgstr "Intervallo di confidenza al %g\\%%"
 
 #: gui2/guiprint.c:2164 gui2/selector.c:4926 plugin/tramo-x12a.c:184
 msgid "Save data"
@@ -10739,9 +10729,8 @@ msgid "Nothing to send"
 msgstr "Non c'è niente da inviare"
 
 #: gui2/gui_utils.c:1778
-#, fuzzy
 msgid "Confidence level, percent"
-msgstr "Intervallo di confidenza"
+msgstr "Livello di confidenza, percentuale"
 
 #: gui2/gui_utils.c:1799
 msgid "Running a script replaces text"
@@ -10826,9 +10815,8 @@ msgid "Stickiness..."
 msgstr "Modalità risultati..."
 
 #: gui2/gui_utils.c:1848
-#, fuzzy
 msgid "Confidence level..."
-msgstr "Intervallo di confidenza"
+msgstr "Livello di confidenza..."
 
 #: gui2/gui_utils.c:2015
 msgid "Send to gnuplot"
@@ -11006,9 +10994,8 @@ msgstr "%s/Per %s"
 
 #  Non documentato...
 #: gui2/gui_utils.c:3289
-#, fuzzy
 msgid "/Graphs/tau sequence"
-msgstr "/Grafici/dumsep"
+msgstr "/Grafici/sequenza tau"
 
 #: gui2/gui_utils.c:3371
 msgid "gretl: VAR covariance matrix"
@@ -11532,9 +11519,8 @@ msgid "gretl: CUSUMSQ test output"
 msgstr "gretl: risultati del test CUSUMSQ"
 
 #: gui2/library.c:2073
-#, fuzzy
 msgid "all variants"
-msgstr "variante"
+msgstr "tutte le varianti"
 
 #: gui2/library.c:2084 gui2/library.c:2125
 msgid "gretl: RESET test"
@@ -12354,14 +12340,12 @@ msgid "You must select a dependent variable"
 msgstr "Occorre scegliere una variabile dipendente"
 
 #: gui2/selector.c:1994
-#, fuzzy
 msgid "You must specify a quantile"
-msgstr "Occorre specificare un'interfaccia pubblica"
+msgstr "Occorre specificare un quantile"
 
 #: gui2/selector.c:2007
-#, fuzzy
 msgid "Invalid quantile specification"
-msgstr "Specificazione NLS non valida"
+msgstr "Specificazione del quantile non valida"
 
 #: gui2/selector.c:2045
 msgid "You must select a weight variable"
@@ -12440,9 +12424,8 @@ msgid "VAR lag selection"
 msgstr "Selezione ritardi del VAR"
 
 #: gui2/selector.c:2416
-#, fuzzy
 msgid "Quantile regression"
-msgstr "Regressione Dickey-Fuller"
+msgstr "Regressione quantile"
 
 #: gui2/selector.c:2419
 msgid "Cointegration"
@@ -12470,7 +12453,7 @@ msgstr "Lista dei ritardi AR"
 
 #: gui2/selector.c:2441
 msgid "Desired quantile(s)"
-msgstr ""
+msgstr "Quantili desiderati"
 
 #: gui2/selector.c:2445 gui2/selector.c:2474
 msgid "Y-axis variable"
@@ -12577,9 +12560,8 @@ msgid "or specific lags"
 msgstr "o ritardi specifici"
 
 #: gui2/selector.c:3371
-#, fuzzy
 msgid "Robust standard errors/intervals"
-msgstr "Errori standard robusti"
+msgstr "Errori standard / intervalli robusti"
 
 #: gui2/selector.c:3395
 msgid "configure"
@@ -12654,19 +12636,16 @@ msgid "Show lagged variables"
 msgstr "Mostra variabili ritardate"
 
 #: gui2/selector.c:3615
-#, fuzzy
 msgid "Compute standard errors"
-msgstr "Errori standard robusti"
+msgstr "Calcola errori standard"
 
 #: gui2/selector.c:3620
-#, fuzzy
 msgid "Compute confidence intervals"
-msgstr "Intervallo di confidenza"
+msgstr "Calcola intervalli di confidenza"
 
 #: gui2/selector.c:3641
-#, fuzzy
 msgid "Confidence level"
-msgstr "Intervallo di confidenza"
+msgstr "Livello di confidenza"
 
 #: gui2/selector.c:3659
 msgid "Spearman's rho"
@@ -12853,9 +12832,8 @@ msgid "Select two variables"
 msgstr "Selezionare due variabili"
 
 #: gui2/selector.c:4370
-#, fuzzy
 msgid "Confidence region: select two variables"
-msgstr "Selezionare due variabili"
+msgstr "Regione di confidenza: selezionare due variabili"
 
 #: gui2/selector.c:4372
 msgid "Select variables to display"
@@ -13712,9 +13690,8 @@ msgid "Auto-indent script"
 msgstr "Indenta automaticamente lo script"
 
 #: gui2/textbuf.c:2184
-#, fuzzy
 msgid "Toggle line numbers"
-msgstr "gretl: 5 numeri"
+msgstr "Attiva i numeri di linea"
 
 #: gui2/textutil.c:65
 msgid "gretl: replace"
