@@ -2300,6 +2300,35 @@
       </description>
     </function>
 
+    <function name="movavg" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar">p</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Computes the <argname>p</argname>-term moving average for
+	  the series
+	  <argname>x</argname>, that is the average of x(t) to x(t-p+1).
+	</para>
+	<para context="tex">
+	  Computes the <argname>p</argname>-term moving average for
+	  the series
+	  <argname>y</argname>, that is $y_t = \frac{1}{p}
+	  \sum_{i=0}^{p-1} x_{t-i}$.
+	</para>
+	<para>
+	  Note that the result is not centered. If you want a centered
+	  moving average, you can use the lead operator on the
+	  returned series. Example:
+	</para>
+	<code>
+	    tmp = movavg(x,3)
+	    y = tmp(+1)
+	</code>
+    </description>
+    </function>
+
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="string">s</fnarg>
