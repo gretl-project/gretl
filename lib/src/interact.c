@@ -235,12 +235,20 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
 
-	if (gretl_string_ends_with(line, "print")) {
-	    if (sscanf(line, "list %15s", lname)) {
-		strcpy(line, lname);
+	if (gretl_string_ends_with(line, "delete")) {
+	    if (sscanf(line, "list %15s delete", lname)) {
+		free(cmd->extra);
+		cmd->extra = gretl_strdup(lname);
+		cmd->ci = DELEET;
 	    }
-	} 
-	cmd->ci = GENR;
+	} else {
+	    if (gretl_string_ends_with(line, "print")) {
+		if (sscanf(line, "list %15s", lname)) {
+		    strcpy(line, lname);
+		}
+	    } 
+	    cmd->ci = GENR;
+	}
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
     } else if (!strcmp(s, "funcerr")) {
@@ -2224,6 +2232,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* replace simple aliases and a few specials */
     catch_command_alias(line, cmd);
 
+    /* list <listname> delete */
+    if (cmd->ci == DELEET && *cmd->extra != '\0') {
+	cmd_set_nolist(cmd);
+	return cmd->err;
+    }	
+
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
 	cmd->context = 0;
@@ -2297,7 +2311,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd_set_nolist(cmd);
 	capture_param(line, cmd, NULL, (const double **) *pZ, pdinfo);
 	return cmd->err;
-    }
+    } 
 
     /** now for a few commands which may or may not take a list **/
 
@@ -2384,7 +2398,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (cmd->ci == DELEET) {
-	if (nf == 1 && (get_matrix_by_name(rem) || get_string_by_name(rem))) {
+	if (nf == 1 && (get_matrix_by_name(rem) || 
+			get_string_by_name(rem))) {
 	    /* special for deleting a named matrix or string */
 	    cmd_param_grab_string(cmd, rem);
 	    goto cmd_exit;

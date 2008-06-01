@@ -1087,7 +1087,7 @@ void lex (parser *p)
 		p->sym = B_OR;
 		parser_getc(p);
 	    } else {
-		p->sym = B_MRCAT;
+		p->sym = B_VCAT;
 	    }
 	    return;
         case '!': 
@@ -1152,11 +1152,11 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '~':
-	    p->sym = B_MCCAT;
+	    p->sym = B_HCAT;
 	    parser_getc(p);
 	    return;
         case '`': 
-	    p->sym = B_MRCAT;
+	    p->sym = B_VCAT;
 	    parser_getc(p);
 	    return;
         case ',': 
@@ -1387,9 +1387,9 @@ const char *getsymb (int t, const parser *p)
 	return ".<";
     case B_KRON: 
 	return "**";
-    case B_MCCAT: 
+    case B_HCAT: 
 	return "~";
-    case B_MRCAT: 
+    case B_VCAT: 
     case B_LCAT:
 	return "|";
     case P_COM: 

@@ -970,7 +970,7 @@ static NODE *expr4 (parser *p)
 
     while (!p->err && (p->sym == B_ADD || p->sym == B_SUB || 
 		       p->sym == B_DOTADD || p->sym == B_DOTSUB ||
-		       p->sym == B_MCCAT || p->sym == B_MRCAT ||
+		       p->sym == B_HCAT || p->sym == B_VCAT ||
 		       p->sym == B_LCAT || p->sym == B_RANGE)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {

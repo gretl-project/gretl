@@ -880,7 +880,14 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		errmsg(err, prn);
 	    } 
 	    break;
-	}	    
+	}
+	if (get_list_by_name(cmd->extra)) {
+	    err = delete_list_by_name(cmd->extra);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}
 	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
 					    &k, prn);
 	if (err) {

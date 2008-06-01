@@ -6936,6 +6936,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    } 
 	    break;
 	}
+	if (get_list_by_name(cmd->extra)) {
+	    err = delete_list_by_name(cmd->extra);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}
 	if (dataset_locked()) {
 	    break;
 	}

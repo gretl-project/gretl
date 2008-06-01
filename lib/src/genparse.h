@@ -59,8 +59,8 @@ enum {
               B_DOTGT,
   /* 30 */    B_DOTLT,
               B_KRON,     /* Kronecker product */
-              B_MCCAT,    /* matrix column concatenation */
-              B_MRCAT,    /* matrix row concatenation */
+              B_HCAT,     /* horizontal concatenation */
+              B_VCAT,     /* vertical concatenation */
 	      B_LCAT,     /* list concatentation */
 	      OP_MAX,     /* SEPARATOR: end of binary operators */
               G_LPR,      /* grouping: left paren */

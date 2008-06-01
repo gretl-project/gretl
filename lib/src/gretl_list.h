@@ -118,6 +118,8 @@ int rename_saved_list (const char *orig, const char *new);
 
 int create_named_null_list (const char *name);
 
+int delete_list_by_name (const char *name);
+
 int destroy_saved_lists_at_level (int level);
 
 int gretl_lists_revise (const int *dlist, int dmin);

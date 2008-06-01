@@ -1201,7 +1201,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 
     if (gretl_is_null_matrix(A) ||
 	gretl_is_null_matrix(B)) {
-	if (op != B_MCCAT && op != B_MRCAT) {
+	if (op != B_HCAT && op != B_VCAT) {
 	    *err = E_NONCONF;
 	    return NULL;
 	}
@@ -1235,10 +1235,10 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    }
 	}
 	break;
-    case B_MCCAT:
+    case B_HCAT:
 	C = gretl_matrix_col_concat(A, B, err);
 	break;
-    case B_MRCAT:
+    case B_VCAT:
 	C = gretl_matrix_row_concat(A, B, err);
 	break;
     case B_MUL:
@@ -3085,6 +3085,16 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 		ret->v.str = gretl_strdup(sret);
 	    } else {
 		ret->v.str = gretl_strdup("");
+	    }
+	} else if (f == B_HCAT) {
+	    int n1 = strlen(l->v.str);
+	    int n2 = strlen(r->v.str);
+
+	    ret->v.str = malloc(n1 + n2 + 1);
+	    if (ret->v.str != NULL) {
+		*ret->v.str = '\0';
+		strcat(ret->v.str, l->v.str);
+		strcat(ret->v.str, r->v.str);
 	    }
 	} else {
 	    p->err = E_DATA;
@@ -5175,8 +5185,8 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case B_KRON:
-    case B_MCCAT:
-    case B_MRCAT:
+    case B_HCAT:
+    case B_VCAT:
     case F_QFORM:
     case F_CMULT:
     case F_CDIV:
@@ -5186,6 +5196,9 @@ static NODE *eval (NODE *t, parser *p)
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);
+	} else if (t->t == B_HCAT && l->t == STR && r->t == STR) {
+	    /* exception: string concatenation */
+	    ret = two_string_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, MAT, (l->t == MAT)? r : l, p);
 	}
@@ -5932,11 +5945,11 @@ static void printnode (const NODE *t, const parser *p)
 #define ok_matrix_op(o) (o == B_ASN || o == B_ADD || \
 			 o == B_SUB || o == B_MUL || \
 			 o == B_DIV || o == INC || \
-			 o == DEC || o == B_MCCAT || \
-                         o == B_MRCAT)
+			 o == DEC || o == B_HCAT || \
+                         o == B_VCAT)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
-#define ok_string_op(o) (o == B_ASN || o == B_ADD) 
-#define matrix_only_op(o) (o == B_MCCAT || o == B_MRCAT)
+#define ok_string_op(o) (o == B_ASN || o == B_ADD || o == B_HCAT) 
+#define matrix_only_op(o) (o == B_HCAT || o == B_VCAT)
 
 struct mod_assign {
     int c;
@@ -5954,8 +5967,8 @@ struct mod_assign m_assign[] = {
     { '/', B_DIV },
     { '%', B_MOD},
     { '^', B_POW },
-    { '~', B_MCCAT },
-    { '|', B_MRCAT },
+    { '~', B_HCAT },
+    { '|', B_VCAT },
     { 0, 0}
 };
 
@@ -6494,9 +6507,16 @@ static void pre_process (parser *p, int flags)
 	return;
     } 
 
-    /* matrix concat (etc.?) only OK for matrices */
-    if (p->lh.t != MAT && matrix_only_op(p->op)) {
+    /* vertical concat: only OK for matrices */
+    if (p->lh.t != MAT && p->op == B_VCAT) {
 	sprintf(gretl_errmsg, _("'%s' : only defined for matrices"), opstr);
+	p->err = E_PARSE;
+	return;
+    }
+
+    /* horizontal concat: only OK for matrices, strings */
+    if (p->lh.t != MAT && p->lh.t != STR && p->op == B_HCAT) {
+	sprintf(gretl_errmsg, _("'%s' : not implemented for this type"), opstr);
 	p->err = E_PARSE;
 	return;
     }	

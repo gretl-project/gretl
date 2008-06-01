@@ -578,6 +578,18 @@ int destroy_saved_lists_at_level (int level)
     return err;
 }
 
+int delete_list_by_name (const char *name)
+{
+    saved_list *sl;
+
+    sl = get_saved_list_by_name(name);
+    if (sl == NULL) {
+	return E_UNKVAR;
+    } else {
+	return destroy_saved_list(sl);
+    }
+}
+
 static int var_is_deleted (const int *dlist, int dmin, int i)
 {
     int v = dmin + i - 1;
