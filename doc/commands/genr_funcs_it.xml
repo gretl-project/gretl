@@ -297,8 +297,8 @@
     <function name="$sigma" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the standard error of the residuals (or Standard Error
-	  of Estimate) from the last model.
+	  Ritorna lo scarto quadratico medio dei residui dell'ultimo
+	  modello stimato.
 	</para>
       </description>
     </function>
@@ -309,11 +309,11 @@
       </fnargs>
       <description>
 	<para>
-	  The <lit>$stderr</lit> accessor can be used in two ways: with no
-	  arguments, it returns a column vector containing the estimated
-	  coefficients for the last model. With the optional argument, it
-	  returns a scalar, namely the estimate of the parameter called
-	  <argname>s</argname>.  
+	  L'accessore <lit>$stderr</lit> può usarsi in due modi: senza
+	  argomenti, ritorna un vettore colonna che contiene le stime
+	  dei coefficienti per l'ultimo modello stimato.  Con il
+	  parametro opzionale, ritorna uno scalare contentente la
+	  stima del parametro <argname>s</argname>.
 	  <seelist>
 	    <fncref targ="$coeff"/> 
 	    <fncref targ="$vcv"/>
@@ -2073,6 +2073,34 @@
 	  <argname>U</argname> will contain the residuals.
 	</para>
       </description>
+    </function>
+
+    <function name="movavg" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar">p</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Calcola la media mobile a <argname>p</argname> termini per
+	  la serie <argname>x</argname>, vale a dire la media delle
+	  osservazioni da x(t) a x(t-p+1).
+	</para>
+	<para context="tex">
+	  Calcola la media mobile a <argname>p</argname> termini per
+	  la serie <argname>x</argname>, vale a dire $y_t = \frac{1}{p}
+	  \sum_{i=0}^{p-1} x_{t-i}$.
+	</para>
+	<para>
+	  Il risultato è una media mobile non centrata. Se si desidera
+	  una media mobile centrata, si può usare l'operatore anticipo
+	  sulla serie risultato. Ad esempio::
+	</para>
+	<code>
+	    tmp = movavg(x,3)
+	    y = tmp(+1)
+	</code>
+    </description>
     </function>
 
     <function name="mread" section="matbuild" output="matrix">

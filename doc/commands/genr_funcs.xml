@@ -2314,7 +2314,7 @@
 	<para context="tex">
 	  Computes the <argname>p</argname>-term moving average for
 	  the series
-	  <argname>y</argname>, that is $y_t = \frac{1}{p}
+	  <argname>x</argname>, that is $y_t = \frac{1}{p}
 	  \sum_{i=0}^{p-1} x_{t-i}$.
 	</para>
 	<para>
