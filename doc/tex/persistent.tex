@@ -211,10 +211,15 @@ the omitted catgory.)  Like lags, this function returns a list even if
 the input is a single series.
 
 
-\subsection{Checking for missing values}
+\subsection{Generating series from lists}
 
-\app{Gretl} offers several functions for recognizing and handling
-missing values (see the \GCR{} for details). In this context it is
+Once a list is defined, \app{gretl} offers several functions that
+apply to the list and return a series. In most cases, these functions
+also apply to single series and behave as natural extensions when
+applied to a list, but this is not always the case.
+
+For recognizing and handling missing values, \app{Gretl} offers
+several functions (see the \GCR{} for details). In this context, it is
 worth remarking that the \texttt{ok()} function can be used with a
 list argument.  For example,
 %
@@ -228,6 +233,56 @@ observations where none of \texttt{x1}, \texttt{x2}, or
 \texttt{x3} has a missing value, and value 0 for any observations
 where this condition is not met.
 
+The functions \texttt{max}, \texttt{min}, \texttt{mean}, \texttt{sd},
+\texttt{sum} and \texttt{var} behave horizontally rather than
+vertically when their argument is a list. For instance, the following
+commands
+\begin{code}
+  list Xlist = x1 x2 x3
+  series m = mean(Xlist)
+\end{code}
+produce a series \texttt{m} whose $i$-th element is the average of
+$x_{1,i}, x_{2,i}$ and $x_{3,i}$; missing values, if any, are implicitly discarded.
+
+\begin{table}
+  \centering
+  \begin{tabular}{lllllllll}
+\hline
+	& YpcFR & YpcGE	& YpcIT	& NFR		& NGE		& NIT        \\ 
+\hline
+1997	& 114.9 & 124.6	& 119.3	& 59830.635	& 82034.771	& 56890.372  \\ 
+1998	& 115.3 & 122.7	& 120	& 60046.709	& 82047.195	& 56906.744  \\ 
+1999	& 115	& 122.4	& 117.8	& 60348.255	& 82100.243	& 56916.317  \\ 
+2000	& 115.6 & 118.8	& 117.2	& 60750.876	& 82211.508	& 56942.108  \\ 
+2001	& 116	& 116.9	& 118.1	& 61181.56	& 82349.925	& 56977.217  \\ 
+2002	& 116.3 & 115.5	& 112.2	& 61615.562	& 82488.495	& 57157.406  \\ 
+2003	& 112.1 & 116.9	& 111	& 62041.798	& 82534.176	& 57604.658  \\ 
+2004	& 110.3 & 116.6	& 106.9	& 62444.707	& 82516.26	& 58175.31   \\ 
+2005	& 112.4 & 115.1	& 105.1	& 62818.185	& 82469.422	& 58607.043  \\ 
+2006	& 111.9 & 114.2	& 103.3	& 63195.457	& 82376.451	& 58941.499  \\
+\hline
+  \end{tabular}
+  \caption{GDP per capita and population in 3 European countries (Source: Eurostat)}
+  \label{tab:EuroData}
+\end{table}
+In addition, \app{gretl} provides three functions for weighted
+operations: \texttt{wmean}, \texttt{wsd} and \texttt{wvar}. Consider
+as an illustration Table \ref{tab:EuroData}: the first three columns are GDP
+per capita for France, Germany and Italy; columns 4 to 6 contain the
+population for each country. If we want to compute an aggregate
+indicator of per capita GDP, all we have to do is
+\begin{code}
+list Ypc = YpcFR YpcGE YpcIT
+list N = NFR NGE NIT
+y = wmean(Ypc, N)
+\end{code}
+so for example
+\[
+y_{1996} = \frac{114.9 \times 59830.635	+ 124.6	\times 82034.771 +
+  119.3 \times 56890.372} {59830.635 + 82034.771 + 56890.372} = 
+  120.163
+\]
+See the \GCR\ for more details.
 
 \section{Named strings}
 \label{sec:named-strings}

@@ -225,6 +225,44 @@ simply drop all observations but one per minute and save the resulting
 data (\texttt{store foo rv} translates as ``store in the \app{gretl}
 datafile \texttt{foo.gdt} the series \texttt{rv}'').
 
+\subsection{Looping over two paired lists}
+
+\emph{Problem:} Suppose you have two lists with the same number of
+elements, and you want to apply some command to corresponding elements
+over a loop.
+
+\emph{Solution:}
+\begin{code}
+list L1 = a b c
+list L2 = x y z
+
+k1 = 1
+loop foreach i L1 --quiet
+    k2 = 1
+    loop foreach j L2 --quiet
+        if k1=k2
+            ols $i 0 $j
+        endif
+        k2++
+    end loop
+    k1++
+end loop
+\end{code}
+
+\emph{Comment:} The simplest way to achieve the result is to loop over
+all possible combinations and filter out the unneeded ones via an
+\texttt{if} condition, as above. That said, in some cases variable
+names can help. For example, if
+\begin{code}
+  list Lx = x1 x2 x3
+  list Ly = y1 y2 y3
+\end{code}
+looping over the integers is quite intuitive and certainly more elegant:
+\begin{code}
+  loop for i=1..3
+    ols y$i const x$i
+  end loop
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
