@@ -194,8 +194,8 @@ scalar alpha = 1
 scalar p = 1
 
 mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-series ax = alpha*x
-params alpha p
+  series ax = alpha*x
+  params alpha p
 end mle 
 \end{code}
 In this case, it is necessary to include the line \texttt{params alpha
@@ -225,8 +225,8 @@ scalar alpha = m/var(x)
 scalar p = m*alpha
 
 mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-series ax = alpha*x
-params alpha p
+  series ax = alpha*x
+  params alpha p
 end mle 
 \end{code}
 

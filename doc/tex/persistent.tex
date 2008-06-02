@@ -51,6 +51,15 @@ list xlist = x1 x2 x3 x4
 ols y 0 xlist
 \end{code}
 
+To get rid of a list, you can use the following syntax:
+\begin{code}
+  list xlist delete
+\end{code}
+Be careful: \texttt{delete xlist} will delete the variables contained
+in the list, so it implies data loss (which may not be what you want).
+On the other hand, \texttt{list xlist delete} will simply ``undefine''
+the \texttt{xlist} identifier and the variables will not be affected.
+
 Lists can be modified in two ways.  To \textit{redefine} an existing
 list altogether, use the same syntax as for creating a list.  For
 example
@@ -327,6 +336,12 @@ To add to the end of an existing string you can use the operator
 \begin{code}
 string s1 = "some stuff I want to "
 string s1 += "save"
+\end{code}
+or you can use the \verb|~| operator to join two or more strings, as
+in
+\begin{code}
+string s1 = "sweet"
+string s2 = "Home, " ~ s1 ~ " home."
 \end{code}
 
 The \texttt{sprintf} command is more flexible.  It works exactly as
