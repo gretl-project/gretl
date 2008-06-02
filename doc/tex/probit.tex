@@ -194,19 +194,19 @@ printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq)
 
 One curious characteristic of logit and probit models is that (quite
 paradoxically) estimation is not feasible if a model fits the data
-perfectly; this is called the \emph{pefect prediction problem}. The
+perfectly; this is called the \emph{perfect prediction problem}. The
 reason why this problem arises is easy to see by considering equation
-(\ref{eq:qr-loglik}): if there are a vector $\beta$ and a scalar $k$
-such that $z_i < k$ whenever $y_i=0$ and $z_i > k$ whenever $y_i=1$,
-the same happens for any multiple of $\beta$. Hence, $L(\beta)$ can be
-made arbitrarily close to 0 simply by choosing enormous values for
-$\beta$. As a consequence, the log-likelihood has no maximum, despite
-being bounded.
+(\ref{eq:qr-loglik}): if for some vector $\beta$ and scalar $k$ it's
+the case that $z_i < k$ whenever $y_i=0$ and $z_i > k$ whenever
+$y_i=1$, the same thing is true for any multiple of $\beta$. Hence,
+$L(\beta)$ can be made arbitrarily close to 0 simply by choosing
+enormous values for $\beta$. As a consequence, the log-likelihood has
+no maximum, despite being bounded.
 
-\app{Gretl} has a mechanism for avoiding that the algorithm iterates
-endlessly in search for a non-existing maximum. One sub-case of
-interest is when the perfect prediction problem happens because of a
-single binary explanatory variable. In this case, the offending
+\app{Gretl} has a mechanism for preventing the algorithm from
+iterating endlessly in search of a non-existent maximum. One sub-case
+of interest is when the perfect prediction problem arises because of
+a single binary explanatory variable. In this case, the offending
 variable is dropped from the model and estimation proceeds with the
 reduced specification. Nevertheless, it may happen that no single
 ``perfect classifier'' exists among the regressors, in which case
@@ -481,15 +481,15 @@ Since in most cases maximum likelihood is the method of
 choice, by default \app{gretl} computes ML estimates. The 2-step
 Heckit estimates can be obtained by using the \option{two-step}
 option. After estimation, the \verb|$uhat| accessor contains the
-generalised residuals. As in the ordinary Tobit model, the residuals
-equal th difference between actual and fitted $y_i$ only for
+generalized residuals. As in the ordinary Tobit model, the residuals
+equal the difference between actual and fitted $y_i$ only for
 uncensored observations (those for which $d_i = 1$).
 
 Example \ref{ex:heckit} shows two estimates from the dataset used in
 Mroz (1987): the first one replicates Table 22.7 in Greene
 (2003),\footnote{Note that the estimates given by \app{gretl} do not
-  coincide with those found in the printed volume: however, they match
-  those found on the errata web page for Greene's book:
+  coincide with those found in the printed volume.  They do, however,
+  match those found on the errata web page for Greene's book:
   \url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}.}
 while the second one replicates table 17.1 in Wooldridge (2002a).
 
