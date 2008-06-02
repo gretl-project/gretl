@@ -2128,3 +2128,39 @@ int x_sectional_weighted_stat (double *x, const int *list,
 	return E_DATA;
     }
 }
+
+/* writes to the series @y a linear combination of the variables given
+   in @list, using the coefficients given in the vector @b.
+*/
+
+int list_linear_combo (double *y, const int *list, 
+		       const gretl_vector *b, const double **Z, 
+		       const DATAINFO *pdinfo)
+{
+    int nb = gretl_vector_get_length(b);
+    int nl = list[0];
+    int err = 0;
+
+    if (nb != nl) {
+	err = E_DATA;
+    } else {
+	int i, t;
+	double xit, yt;
+
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    yt = 0;
+	    for (i=0; i<nl; i++) {
+		xit = Z[list[i+1]][t];
+		if (na(xit)) {
+		    yt = NADBL;
+		    break;
+		} else {
+		    yt += xit * gretl_vector_get(b, i);
+		}
+	    }
+	    y[t] = yt;
+	}
+    }
+
+    return err;
+}

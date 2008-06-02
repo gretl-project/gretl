@@ -80,4 +80,8 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo);
 int get_t_from_obs_string (const char *s, const double **Z, 
 			   const DATAINFO *pdinfo);
 
+int list_linear_combo (double *y, const int *list, 
+		       const gretl_vector *b, const double **Z, 
+		       const DATAINFO *pdinfo);
+
 #endif /* GENFUNCS_H */

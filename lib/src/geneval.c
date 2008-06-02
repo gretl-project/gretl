@@ -2746,6 +2746,27 @@ static NODE *list_to_series_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+/* arguments are list, matrix; return is series */
+
+static NODE *list_matrix_series_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	int *list = node_get_list(l, p);
+	const gretl_matrix *b = r->v.m;
+
+	if (list != NULL && !gretl_is_null_matrix(b)) {
+	    p->err = list_linear_combo(ret->v.xvec, list, b,
+				       (const double **) *p->Z, 
+				       p->dinfo);
+	}
+	free(list);
+    }
+
+    return ret;
+}
+
 static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_vec_node(p, p->dinfo->n);
@@ -5682,6 +5703,14 @@ static NODE *eval (NODE *t, parser *p)
 	/* two lists -> series */
 	if (ok_list_node(l) && ok_list_node(r)) {
 	    ret = list_list_series_func(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;	
+    case F_LINCOMB:
+	/* list + matrix -> series */
+	if (ok_list_node(l) && r->t == MAT) {
+	    ret = list_matrix_series_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}

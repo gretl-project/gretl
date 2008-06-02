@@ -1843,6 +1843,26 @@
       </description>
     </function>
 
+    <function name="lincomb" section="transforms" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="vector">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes a new series as a linear combination of the series in the
+	  list <argname>L</argname>.  The coefficients are given by the vector
+	  <argname>b</argname>, which must have length equal to the number of
+	  series in <argname>L</argname>.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="wmean"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="ljungbox" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
