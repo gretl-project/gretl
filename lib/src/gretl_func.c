@@ -3644,20 +3644,17 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static void start_fncall (ufunc *u, fnargs *args, int *debug,
-			  PRN *prn)
+static void start_fncall (ufunc *u, fnargs *args, PRN *prn)
 {
     set_executing_on(u);
     u->args = args;
     push_program_state();
 
     if (gretl_debugging_on()) {
-	*debug = 1;
 	set_gretl_echo(1);
 	set_gretl_messages(1);
 	pprintf(prn, "*** executing function %s\n", u->name);
     } else {
-	*debug = 0;
 	set_gretl_echo(0);
 	set_gretl_messages(0);
     }
@@ -3811,7 +3808,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    int debug, indent0, started = 0;
+    int indent0, started = 0;
     int i, err = 0;
 
     *funcerr_msg = '\0';
@@ -3864,7 +3861,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (!err) {
-	start_fncall(u, args, &debug, prn);
+	start_fncall(u, args, prn);
 	started = 1;
     }
 
@@ -3876,7 +3873,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	strcpy(line, u->lines[i]);
-	if (debug) {
+	if (gretl_echo_on()) {
 	    pprintf(prn, "? %s\n", line);
 	}
 

@@ -571,19 +571,33 @@ trying to define a function inside a function (see Section
 commands this will become apparent only when the function is called,
 and its commands are executed.
 
+\subsection{Debugging}
 
-\subsection{Printing of output}
-
-The usual mechanism whereby \app{gretl} echos commands, and reports on
-the creation of new variables, is suppressed by default when a
-function is being executed.  If you want to turn this on (for example,
-for the purpose of debugging function code), you can issue one or both
-of the following commands inside the function:
+The usual mechanism whereby \app{gretl} echoes commands and reports on
+the creation of new variables is by default suppressed when a function
+is being executed.  If you want more verbose output from a particular
+function you can use either or both of the following commands within
+the function:
 %
 \begin{code}
 set echo on
 set messages on
 \end{code}
+
+Alternatively, you can achieve this effect for all functions via
+the command \texttt{set debug 1}.  Usually when you set the value of a
+state variable using the \texttt{set} command, the effect applies only
+to the current level of function execution.  For instance, if you do
+\texttt{set messages on} within function \texttt{f1}, which in turn
+calls function \texttt{f2}, then messages will be printed for
+\texttt{f1} but not \texttt{f2}.  The debug variable, however, acts
+globally; all functions become verbose regardless of their level.
+
+Further, you can do \texttt{set debug 2}: in addition to command echo
+and the printing of messages, this is equivalent to setting
+\verb|max_verbose| (which produces verbose output from the BFGS
+maximizer) at all levels of function execution.
+
 
 \section{Function packages}
 \label{sec:func-packages}
@@ -610,7 +624,7 @@ For example, suppose you decide to package a function that returns the
 percentage change of a time series. Open a script file and type
 \begin{code}
 function pc(series y "Series to process")
-  series foo = diff(y)/y(-1)
+  series foo = 100 * diff(y)/y(-1)
   return series foo
 end function
 \end{code}
