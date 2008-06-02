@@ -69,11 +69,17 @@ of $\varepsilon_i$ is
 \]
 
 Both the probit and logit model are estimated in \app{gretl} via
-maximum likelihood; since the score equations do not have a closed
-form solution, numerical optimization is used. However, in most cases
-this is totally transparent to the user, since usually only a few
-iterations are needed to ensure convergence. The \option{verbose}
-switch can be used to track the maximization algorithm.
+maximum likelihood, where the log-likelihood can be written as
+\begin{equation}
+  \label{eq:qr-loglik}
+  L(\beta) = \sum_{y_i=0} \ln [ 1 - F(z_i)] + \sum_{y_i=1} \ln F(z_i),
+\end{equation}
+which is always negative, since $0 < F(\cdot) < 1$.  Since the score
+equations do not have a closed form solution, numerical optimization
+is used. However, in most cases this is totally transparent to the
+user, since usually only a few iterations are needed to ensure
+convergence. The \option{verbose} switch can be used to track the
+maximization algorithm.
 
 \begin{script}[htbp]
   \caption{Estimation of simple logit and probit models}
@@ -182,6 +188,39 @@ printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
 \end{scode}
 \end{script}
+
+\subsection{The perfect prediction problem}
+\label{sec:perfpred}
+
+One curious characteristic of logit and probit models is that (quite
+paradoxically) estimation is not feasible if a model fits the data
+perfectly; this is called the \emph{pefect prediction problem}. The
+reason why this problem arises is easy to see by considering equation
+(\ref{eq:qr-loglik}): if there are a vector $\beta$ and a scalar $k$
+such that $z_i < k$ whenever $y_i=0$ and $z_i > k$ whenever $y_i=1$,
+the same happens for any multiple of $\beta$. Hence, $L(\beta)$ can be
+made arbitrarily close to 0 simply by choosing enormous values for
+$\beta$. As a consequence, the log-likelihood has no maximum, despite
+being bounded.
+
+\app{Gretl} has a mechanism for avoiding that the algorithm iterates
+endlessly in search for a non-existing maximum. One sub-case of
+interest is when the perfect prediction problem happens because of a
+single binary explanatory variable. In this case, the offending
+variable is dropped from the model and estimation proceeds with the
+reduced specification. Nevertheless, it may happen that no single
+``perfect classifier'' exists among the regressors, in which case
+estimation is simply impossible and the algorithm stops with an
+error. This behavior is triggered during the iteration process if
+\[
+  \stackunder{i: y_i = 0}{\max z_i} \, < \,
+  \stackunder{i: y_i = 1}{\min z_i}  
+\]
+If this happens, unless your model is trivially mis-specified (like
+predicting if a country is an oil exporter on the basis of oil
+revenues), it is normally a small-sample problem: you probably just
+don't have enough data to estimate your model. You may want to drop
+some of your explanatory variables.
 
 \subsection{Ordered models}
 \label{sec:ordered}
