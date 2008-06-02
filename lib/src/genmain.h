@@ -53,12 +53,13 @@ typedef enum {
     M_BIC,        /* Bayesian info criterion */
     M_HQC,        /* Hannan-Quinn criterion */
     M_TRSQ,       /* T * R-squared, last model */
-    M_SCALAR_MAX, /* -- separator -- */
+    M_SCALAR_MAX, /* -- separator, scalars/series -- */
     M_UHAT,       /* residuals */
     M_YHAT,       /* fitted values */
     M_AHAT,       /* per-unit intercepts in panel model */
     M_H,          /* GARCH predicted variances */
-    M_SERIES_MAX, /* -- separator -- */
+    M_SAMPLE,     /* observations used in estimation */
+    M_SERIES_MAX, /* -- separator, series/matrices -- */
     M_COEFF,      /* parameter estimates */
     M_SE,         /* parameter standard errors */
     M_VCV,        /* parameter covariance matrix */

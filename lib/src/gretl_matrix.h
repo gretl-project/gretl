@@ -175,7 +175,7 @@ void clear_gretl_matrix_err (void);
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg);
 
-int gretl_matrix_is_finite (const gretl_matrix *m);
+int gretl_matrix_xna_check (const gretl_matrix *m);
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 

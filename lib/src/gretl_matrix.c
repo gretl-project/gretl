@@ -157,21 +157,22 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     return m;
 }
 
-int gretl_matrix_is_finite (const gretl_matrix *m)
+int gretl_matrix_xna_check (const gretl_matrix *m)
 {
     if (m == NULL) {
-	return 0;
+	return E_DATA;
     } else {
 	int i, n = m->rows * m->cols;
 
 	for (i=0; i<n; i++) {
 	    if (xna(m->val[i])) {
-		return 0;
+		gretl_errmsg_set(_("Matrix is not finite"));
+		return E_NAN;
 	    }
 	}
     }
 
-    return 1;
+    return 0;
 }
 
 int gretl_matrix_get_structure (const gretl_matrix *m)

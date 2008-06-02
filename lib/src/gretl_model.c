@@ -4707,17 +4707,27 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
-	if (t < pmod->t1 || t > pmod->t2) {
-	    x[t] = NADBL;
-	} else {
-	    if (idx == M_UHAT) {
-		x[t] = pmod->uhat[t];
-	    } else if (idx == M_YHAT) {
-		x[t] = pmod->yhat[t];
-	    } else if (idx == M_AHAT || idx == M_H) {
-		x[t] = mdata[t];
-	    } 
+    if (idx == M_SAMPLE) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < pmod->t1 || t > pmod->t2) {
+		x[t] = 0.0;
+	    } else {
+		x[t] = model_missing(pmod, t)? 0 : 1;
+	    }
+	}
+    } else {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < pmod->t1 || t > pmod->t2) {
+		x[t] = NADBL;
+	    } else {
+		if (idx == M_UHAT) {
+		    x[t] = pmod->uhat[t];
+		} else if (idx == M_YHAT) {
+		    x[t] = pmod->yhat[t];
+		} else if (idx == M_AHAT || idx == M_H) {
+		    x[t] = mdata[t];
+		} 
+	    }
 	}
     }
 	    

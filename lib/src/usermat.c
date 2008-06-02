@@ -122,8 +122,7 @@ static int real_user_matrix_add (gretl_matrix *M, const char *name,
 	return 0;
     }
 
-    if (!gretl_matrix_is_finite(M)) {
-	gretl_errmsg_set(_("Matrix is not finite"));
+    if (gretl_matrix_xna_check(M)) {
 	return E_NAN;
     }
 
@@ -257,8 +256,7 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 	return E_UNKVAR;
     }
 
-    if (!gretl_matrix_is_finite(M)) {
-	gretl_errmsg_set(_("Matrix is not finite"));
+    if (gretl_matrix_xna_check(M)) {
 	return E_NAN;
     }
 
@@ -1562,10 +1560,10 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 	return NULL;
     }
 
-    if (!gretl_matrix_is_finite(m)) {
+    if (gretl_matrix_xna_check(m)) {
 	*err = E_NAN;
 	return NULL;
-    }    
+    }
 
     if (rname != NULL && strcmp(rname, "null")) {
 	vecs = 1;

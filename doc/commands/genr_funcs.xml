@@ -291,6 +291,27 @@
       </description>
     </function>
 
+    <function name="$sample" section="access" output="series">
+      <description>
+	<para>
+	  Must follow estimation of a single-equation model.  Returns a dummy
+	  series with value 1 for observations used in estimation, 0 for
+	  observations within the currently defined sample range but not used
+	  (presumably because of missing values), and NA for observations
+	  outside of the current range.
+	</para>
+	<para>
+	  If you wish to compute statistics based on the sample that was
+	  used for a given model, you can do, for example: 
+	</para>
+	<code>
+	  ols y 0 xlist
+	  genr sdum = $sample
+	  smpl sdum --dummy
+	</code>
+      </description>
+    </function>
+
     <function name="$sargan" section="access" output="rvec">
       <description>
 	<para>

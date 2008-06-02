@@ -7205,9 +7205,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
 	if (!p->err && p->lh.m1 != NULL) {
 	    /* check we didn't get any infs or NaNs */
-	    if (!gretl_matrix_is_finite(p->lh.m1)) {
-		p->err = E_NAN;
-	    }
+	    p->err = gretl_matrix_xna_check(p->lh.m1);
 	}
     } else if (p->targ == LIST) {
 	edit_list(p);
