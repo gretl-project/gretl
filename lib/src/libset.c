@@ -50,7 +50,8 @@ enum {
     STATE_USE_LBFGS      = 1 << 9,  /* prefer LBFGS to BFGS? */
     STATE_SHELL_OK       = 1 << 10, /* "shell" facility is approved? */
     STATE_MAX_VERBOSE    = 1 << 11, /* verbose output from maximizer? */
-    STATE_USE_FCP        = 1 << 12  /* use FCP garch code */
+    STATE_USE_FCP        = 1 << 12, /* use FCP garch code */
+    STATE_WARN_ON        = 1 << 13  /* print numerical warning messages */
 };    
 
 /* for values that really want a non-negative integer */
@@ -96,10 +97,12 @@ struct set_vars_ {
 
 #define ECHO "echo"
 #define MESSAGES "messages"
+#define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
+                           !strcmp(s, WARNINGS) || \
                            !strcmp(s, FORCE_DECP) || \
 			   !strcmp(s, FORCE_HC) || \
 			   !strcmp(s, HALT_ON_ERR) || \
@@ -332,7 +335,7 @@ static void state_vars_init (set_vars *sv)
 #if PDEBUG
     fprintf(stderr, "state_vars_init called\n");
 #endif
-    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_HALT_ON_ERR;
+    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | STATE_HALT_ON_ERR;
     sv->seed = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
@@ -484,6 +487,12 @@ int gretl_messages_on (void)
 {
     if (check_for_state()) return 1;
     return flag_to_bool(state, STATE_MSGS_ON);
+}
+
+int gretl_warnings_on (void)
+{
+    if (check_for_state()) return 1;
+    return flag_to_bool(state, STATE_WARN_ON);
 }
 
 int gretl_debugging_on (void)
@@ -1145,6 +1154,7 @@ static int display_settings (PRN *prn)
     libset_print_int(LOOP_MAXITER, prn);
     libset_print_bool(MAX_VERBOSE, prn);
     libset_print_bool(MESSAGES, prn);
+    libset_print_bool(WARNINGS, prn);
     libset_print_int(GRETL_DEBUG, prn);
     libset_print_bool(SHELL_OK, prn);
 
@@ -1604,6 +1614,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_ECHO_ON;
     } else if (!strcmp(s, MESSAGES)) {
 	return STATE_MSGS_ON;
+    } else if (!strcmp(s, WARNINGS)) {
+	return STATE_WARN_ON;
     } else if (!strcmp(s, USE_QR)) {
 	return STATE_USE_QR;
     } else if (!strcmp(s, USE_LBFGS)) {

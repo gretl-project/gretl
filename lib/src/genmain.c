@@ -559,7 +559,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!p.err && p.warn) {
+    if (!p.err && p.warn && gretl_warnings_on()) {
 	gen_write_warning(&p, prn);
     }
 
