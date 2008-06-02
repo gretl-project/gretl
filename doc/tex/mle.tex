@@ -579,10 +579,222 @@ series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
 print tmp
 \end{code}
 
+\section{Using functions}
+\label{sec:mle-func}
+
+The \texttt{mle} command allows you to estimate models that
+\app{gretl} does not provide natively: in some cases, it may be a good
+idea to wrap up the \texttt{mle} block in a user-defined function (see
+Chapter \ref{chap:functions}), so to extend \app{gretl}'s capabilities
+in a modular and flexible way.
+
+As an example, we will take a simple case of a model that \app{gretl}
+does not provide natively yet: the zero-inflated Poisson model, or ZIP
+for short.\footnote{The actual ZIP model is in fact a bit more general
+than the one presented here. The specialized version discussed in this
+section was chosen for the sake of simplicity. For futher details, see
+Greene(2003).} In this model, we assume that we observe a mixed
+population: for some individuals, the variable $y_t$ is (conditionally
+on a vector of exogenous covariates $x_t$) distributed as a Poisson
+random variate; for some others, $y_t$ is identically 0. The trouble
+is, we do not know which category a given individual belongs to. As an
+example, consider the case when we have a sample of women and the
+variable $y_t$ is the number of children. There may be a certain
+proportion $\alpha$ of women for whom $y_t = 0$ with certainty (maybe
+out of a personal choice or physical impossibility). In this case, we
+have that the number of women for whom $y_t = 0$ include both the
+women who won't have children and those who may have children, but
+just happened not to.
+
+In formulae:
+\begin{eqnarray*}
+  P(y_t = k | x_t) & = & \alpha d_t + (1 - \alpha) 
+  \left[e^{-\mu_t} \frac{\mu_t^{y_t}}{y_t!}\right] \\
+    \mu_t & = & \exp(x_t \beta) \\
+    d_t & = & 
+    \left\{ 
+      \begin{array}{ll} 
+        1 & \mathrm{for} \quad y_t = 0 \\ 
+        0 & \mathrm{for} \quad y_t > 0 
+      \end{array}
+    \right. 
+\end{eqnarray*}
+
+Writing a \texttt{mle} block for this model is not difficult:
+\begin{code}
+mle ll = logprob
+  series xb = exp(b0 + b1 * x)
+  series d = (y=0)
+  series poiprob = exp(-xb) * xb^y / gamma(y+1)
+  series logprob = (alpha>0) && (alpha<1) ? \
+    log(alpha*d + (1-alpha)*poiprob) : NA
+  params alpha b0 b1
+end mle -v
+\end{code}
+
+However, the code above has to be modified each time we change our
+specification by, say, adding an explanatory variable. By using
+user-written functions, we can simplfy this task considerably and
+eventually be able to write something simple like
+\begin{code}
+list X = const x
+zip(y, X)
+\end{code}
+
+\begin{script}[htbp]
+  \caption{Zero-inflated Poisson Model --- user-level function}
+  \label{mle-zip-main}
+\begin{scode}
+/*
+  user-level function: estimate the model and print out
+  the results
+*/
+function zip(series y, list X)
+    matrix ret = zip_estimate(y, X)
+    matrix coef = ret[,1]
+    matrix vcv = ret[,2:cols(ret)]
+
+    printf "\nZero-inflated Poisson model:\n\n"
+    scalar c = coef[1]
+    scalar se = sqrt(vcv[1,1])
+    scalar zs = c/se
+    scalar pv = 2*pvalue(n, zs) 
+    printf "     alpha%9.4f%9.4f%8.3f%8.3f\n", c, se, zs, pv
+
+    k = 2
+    loop foreach i X -q
+        sprintf s "$i"
+        scalar c = coef[k]
+        scalar se = sqrt(vcv[k,k])
+        scalar zs = c/se
+        scalar pv = 2*pvalue(n, zs) 
+        printf "%10s%9.4f%9.4f%8.3f%8.3f\n", s, c, se, zs, pv
+        k++
+    end loop
+end function
+\end{scode}
+\end{script}
+%$
+
+Let's see how this can be done: first, we need to define a function
+called \texttt{zip()} that will take two arguments: a dependent
+variable \texttt{y} and a list of explanatory variables \texttt{X}. An
+example of such function can be seen in the example script
+\ref{mle-zip-main}. By inspecting the function code, it is rather
+obvious that the actual estimation does not happen here: rather, the
+\texttt{zip()} function merely formats and prints out the results
+coming from another user-written function, that is
+\texttt{zip\_estimate()}. 
+
+\begin{script}[htbp]
+  \caption{Zero-inflated Poisson Model --- internal functions}
+  \label{mle-zip-inc}
+\begin{scode}
+/*
+  compute the log probabilities for the plain Poisson model
+*/
+function ln_poi_prob(series y, list X, matrix beta)
+    series xb = lincomb(X, beta)
+    series ret = -exp(xb) + y*xb - lngamma(y+1)
+    return series ret
+end function  
+
+/*
+  compute the log probabilities for the zero-inflated Poisson model
+*/
+function ln_zip_prob(series y, list X, matrix beta, scalar p0)
+    # check if the probability is in [0,1]; otherwise, return NA
+    if (p0>1) || (p0<0)
+        series ret = NA
+    else
+        series ret = ln_poi_prob(y, X, beta) + ln(1-p0)
+        series ret = (y=0) ? ln(p0 + exp(ret)) : ret
+    endif
+    return series ret
+end function  
+
+/*
+  do the actual estimation (silently)
+*/
+function zip_estimate(series y, list X)
+    # initialize alpha to a "sensible" value: half the frequency
+    # of zeros in the sample
+    scalar alpha = mean(y=0)/2
+    # initialize the coeffs (we assume the first explanatory 
+    # variable is the constant here)
+    matrix coef = zeros(nelem(X), 1)
+    coef[1] = mean(y) / (1-alpha)
+    # do the actual ML estimation
+    mle ll = ln_zip_prob(y, X, coef, alpha)
+        params alpha coef
+    end mle --hessian --quiet
+    matrix ret = $coeff ~ $vcv
+    return matrix ret
+end function
+\end{scode}
+\end{script}
+%$
+
+The function \texttt{zip\_estimate()} is not meant to be executed
+directly: it just contains the number-crunching part of the job, whose
+results are then picked up by the end function \texttt{zip()}. In
+turn, \texttt{zip\_estimate()} calls other user-written functions to
+perform other tasks. The whole set of ``internal'' functions is shown
+in the panel \ref{mle-zip-inc}.
+
+All the functions shown in \ref{mle-zip-main} and \ref{mle-zip-inc} can
+be stored in a separate \texttt{inp} file and executed once, at the
+beginning of our job, by means of the \texttt{include}
+command. Assuming the name of this script file is
+\texttt{zip\_est.inp}, the following is an example script which
+\begin{itemize}
+\item includes the script file;
+\item generates a simulated dataset;
+\item performs the estimation of a ZIP model on the artificial data.
+\end{itemize}
+
+% \begin{script}[htbp]
+%   \caption{Zero-inflated Poisson Model --- example \texttt{.inp} file}
+%   \label{mle-zip-inp}
+% \begin{scode}
+\begin{code}
+set echo off
+set messages off
+
+# include the user-written functions
+include zip_est.inp
+
+# generate the artificial data
+nulldata 1000
+set seed 732237
+scalar truep = 0.2
+scalar b0 = 0.2
+scalar b1 = 0.5
+series x = normal()
+series y = (uniform()<truep) ? 0 : genpois(exp(b0 + b1*x))
+list X = const x
+
+# estimate the zero-inflated Poisson model
+zip(y, X)
+\end{code}
+% \end{scode}
+% \end{script}
+
+The results are as follows:
+
+\begin{code}
+Zero-inflated Poisson model:
+
+     alpha   0.2031   0.0238   8.531   0.000
+     const   0.2570   0.0417   6.162   0.000
+         x   0.4667   0.0321  14.527   0.000
+\end{code}
+
+A further step may then be creating a function package for accessing
+your new \texttt{zip()} function via \app{gretl}'s graphical interface. For
+details on how to do this, see section \ref{sec:func-packages}.
 
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
 %%% End: 
-
-
