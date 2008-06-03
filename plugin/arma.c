@@ -1662,6 +1662,11 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	return E_ALLOC;
     }
 
+    if (arma_least_squares(ainfo)) {
+	/* be sure to compte standard errors */
+	nlsopt &= ~OPT_C;
+    }
+
     nlspec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
 
     nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
@@ -2187,10 +2192,8 @@ static int ar_arma_init (const int *list, double *coeff,
 	}
     }
 
-    if (!err && !arma_exact_ml(ainfo) && 
-	ainfo->q == 0 && ainfo->Q == 0) {
+    if (arma_least_squares(ainfo)) {
 	/* least squares == CML */
-	set_arma_least_squares(ainfo);
 	*pmod = armod;
     } else {
 	clear_model(&armod);
@@ -2865,6 +2868,11 @@ MODEL arma_model (const int *list, const char *pqspec,
     if (err) {
 	armod.errcode = err;
 	goto bailout;
+    }
+
+    if (!(flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
+	/* model can be estimated via least squares */
+	ainfo.flags |= ARMA_LS;
     }
 
     /* second pass: try Hannan-Rissanen if suitable */
