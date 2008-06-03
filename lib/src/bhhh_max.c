@@ -594,6 +594,12 @@ int bhhh_max (LL_FUNC loglik,
 	if (bmod->errcode) {
 	    fprintf(stderr, "BHHH model error code = %d\n", bmod->errcode);
 	    err = E_NOCONV;
+	} else if (bmod->list[0] < blist[0]) {
+	    /* failed to get the full complement of coefficients */
+	    err = E_DATA;
+	}
+
+	if (err) {
 	    break;
 	}
 
