@@ -1022,6 +1022,28 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     return err;
 }
 
+#if ARMA_DEBUG
+
+static void debug_print_theta (const double *theta,
+			       const double *Theta)
+{
+    int i, k = 0;
+
+    fprintf(stderr, "kalman_arma_ll():\n");
+
+    for (i=0; i<kainfo->q; i++) {
+	if (MA_included(kainfo, i)) {
+	    fprintf(stderr, "theta[%d] = %#.12g\n", i+1, theta[k++]);
+	}
+    }
+
+    for (i=0; i<kainfo->Q; i++) {
+	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
+    }   
+}
+
+#endif
+
 static int kalman_do_ma_check = 1;
 
 static double kalman_arma_ll (const double *b, void *p)
@@ -1124,7 +1146,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
 #if ARMA_DEBUG
     fprintf(stderr, "kalman_arma_finish: doing VCV, method %s\n",
-	    (vcv != NULL)? "Hessian" : "OPG");
+	    (do_hess)? "Hessian" : "OPG");
 #endif
 
     if (!do_hess) {
@@ -1159,28 +1181,6 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
     return err;
 }
-
-#if ARMA_DEBUG
-
-static void debug_print_theta (const double *theta,
-			       const double *Theta)
-{
-    int i, k = 0;
-
-    fprintf(stderr, "kalman_arma_ll():\n");
-
-    for (i=0; i<kainfo->q; i++) {
-	if (MA_included(kainfo, i)) {
-	    fprintf(stderr, "theta[%d] = %#.12g\n", i+1, theta[k++]);
-	}
-    }
-
-    for (i=0; i<kainfo->Q; i++) {
-	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
-    }   
-}
-
-#endif
 
 static gretl_matrix *form_arma_y_vector (const int *alist, 
 					 const double **Z,
@@ -2078,7 +2078,8 @@ static void maybe_rescale_dy (struct arma_info *ainfo)
 
 static int ar_arma_init (const int *list, double *coeff, 
 			 const double **Z, const DATAINFO *pdinfo,
-			 struct arma_info *ainfo, PRN *prn)
+			 struct arma_info *ainfo, 
+			 MODEL *pmod, PRN *prn)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
     int nmixed = ainfo->np * ainfo->P;
@@ -2186,10 +2187,18 @@ static int ar_arma_init (const int *list, double *coeff,
 	}
     }
 
+    if (!err && !arma_exact_ml(ainfo) && 
+	ainfo->q == 0 && ainfo->Q == 0) {
+	/* least squares == CML */
+	set_arma_least_squares(ainfo);
+	*pmod = armod;
+    } else {
+	clear_model(&armod);
+    }
+
     /* clean up */
     free(alist);
     destroy_dataset(aZ, adinfo);
-    clear_model(&armod);
 
     return err;
 }
@@ -2645,6 +2654,55 @@ static int bhhh_arma (const int *alist, double *coeff,
     return pmod->errcode;
 }
 
+/* In the case of a pure AR model, when conditional ML
+   is called for: preserve the OLS or NLS results but
+   package them in the usual arma format.
+*/
+
+static int ls_to_arma (const int *alist, double *coeff, 
+		       const double **Z, const DATAINFO *pdinfo,
+		       struct arma_info *ainfo, MODEL *pmod,
+		       gretlopt opt, PRN *prn)
+{
+    if (pmod->full_n < pdinfo->n) {
+	/* the model series are short */
+	double *uhat, *yhat;
+	int s, t;
+
+	uhat = malloc(pdinfo->n * sizeof *uhat);
+	yhat = malloc(pdinfo->n * sizeof *yhat);
+	if (uhat == NULL || yhat == NULL) {
+	    free(uhat);
+	    free(yhat);
+	    pmod->errcode = E_ALLOC;
+	} else {
+	    for (t=0; t<pdinfo->n; t++) {
+		uhat[t] = yhat[t] = NADBL;
+	    }
+	    t = ainfo->t1;
+	    for (s=0; s<pmod->full_n; s++, t++) {
+		uhat[t] = pmod->uhat[s];
+		yhat[t] = pmod->yhat[s];
+	    }
+	    free(pmod->uhat);
+	    pmod->uhat = uhat;
+	    free(pmod->yhat);
+	    pmod->yhat = yhat;
+	}
+    }
+
+    if (!pmod->errcode) {
+	pmod->t1 = ainfo->t1;
+	pmod->t2 = ainfo->t2;
+	pmod->full_n = pdinfo->n;
+
+	write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
+	arma_model_add_roots(pmod, ainfo, pmod->coeff);
+    }
+
+    return pmod->errcode;
+}
+
 #if 0 /* not yet */
 
 static int bhhh_arma_init (const int *alist, double *coeff, 
@@ -2829,7 +2887,8 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!init_done) {
-	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
+	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, 
+			   &armod, vprn);
     }
 
     if (err) {
@@ -2837,10 +2896,9 @@ MODEL arma_model (const int *list, const char *pqspec,
 	goto bailout;
     }
 
-    if (flags & ARMA_EXACT) {
-#if 0 /* not yet */
-	bhhh_arma_init(alist, coeff, Z, pdinfo, &ainfo);
-#endif
+    if (ainfo.flags & ARMA_LS) {
+	ls_to_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
+    } else if (flags & ARMA_EXACT) {
 	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
     } else {
 	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);

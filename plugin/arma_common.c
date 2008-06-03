@@ -34,11 +34,13 @@ struct arma_info {
 #define arma_by_x12a(a)        ((a)->flags & ARMA_X12A)
 #define arma_exact_ml(a)       ((a)->flags & ARMA_EXACT)
 #define arma_using_vech(a)     ((a)->flags & ARMA_VECH)
+#define arma_least_squares(a)  ((a)->flags & ARMA_LS)
 
 #define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
 #define set_arma_is_arima(a)      ((a)->flags |= ARMA_DSPEC)
 #define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
 #define set_arma_use_vech(a)      ((a)->flags |= ARMA_VECH)
+#define set_arma_least_squares(a) ((a)->flags |= ARMA_LS)
 
 #define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
@@ -418,7 +420,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
     pmod->rsq = pmod->adjrsq = pmod->fstt = NADBL;
     pmod->tss = NADBL;
 
-    if (!arma_by_x12a(ainfo)) {
+    if (!arma_by_x12a(ainfo) && !arma_least_squares(ainfo)) {
 	mle_criteria(pmod, 1);
     }
 
