@@ -397,19 +397,23 @@ static int gen_special (const char *s, const char *line,
 
 	if (di0 == 0) {
 	    err = 1;
-	} else if (di0 == orig_v) {
-	    pputs(prn, _("Periodic dummy variables generated.\n"));
-	} else {
-	    pputs(prn, _("Periodic dummy variables already present.\n"));
+	} else { 
+	    if (gretl_messages_on()) {
+		if (di0 == orig_v) {
+		    pputs(prn, _("Periodic dummy variables generated.\n"));
+		} else {
+		    pputs(prn, _("Periodic dummy variables already present.\n"));
+		}
+	    }
 	}
     } else if (!strcmp(s, "timedum")) {
 	err = panel_dummies(pZ, pdinfo, OPT_T);
-	if (!err) {
+	if (!err && gretl_messages_on()) {
 	    pputs(prn, _("Panel dummy variables generated.\n"));
 	}
     } else if (!strcmp(s, "unitdum")) {
 	err = panel_dummies(pZ, pdinfo, OPT_NONE);
-	if (!err) {
+	if (!err && gretl_messages_on()) {
 	    pputs(prn, _("Panel dummy variables generated.\n"));
 	}
     } else if (!strcmp(s, "time")) {
