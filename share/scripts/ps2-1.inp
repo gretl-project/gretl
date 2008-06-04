@@ -1,6 +1,7 @@
-(* PS2.1 using DATA2-1, illustrating frequency distributions, Section 2.1 *)
+# PS2.1 using DATA2-1, illustrating frequency distributions, Section 2.1
+open data2-1
 help freq 
-(* Because SHAZAM and gretl have different command structures, the outputs
-don't correspond exactly *)
+# Because SHAZAM and gretl have different command structures, the outputs
+# don't correspond exactly 
 freq vsat
 freq msat
