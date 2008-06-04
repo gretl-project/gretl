@@ -29,6 +29,8 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
+#undef USE_BLAS
+
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 #define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
@@ -2751,6 +2753,40 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
     return XTX;
 }
 
+#ifdef USE_BLAS
+
+extern void _dgemm (const char *, const char *, const integer *, const integer *, 
+		    const integer *, const double *, const double *, const integer *, 
+		    const double *, const integer *, const double *, const double *, 
+		    const integer *);
+
+int gretl_blas_matrix_multiply (const gretl_matrix *a, int atr,
+				const gretl_matrix *b, int btr,
+				gretl_matrix *c, GretlMatrixMod cmod)
+{
+    char TransA = (atr)? 'T' : 'N';
+    char TransB = (btr)? 'T' : 'N';
+    integer lrows = (atr)? a->cols : a->rows;
+    integer lcols = (atr)? a->rows : a->cols;
+    integer rcols = (btr)? b->rows : b->cols;
+    double alpha = 1.0, beta = 0.0;
+
+    if (cmod == GRETL_MOD_CUMULATE) {
+	beta = 1.0;
+    } else if (cmod == GRETL_MOD_DECUMULATE) {
+	alpha = -1.0;
+	beta = 1.0;
+    }
+
+    _dgemm(&TransA, &TransB, &lrows, &rcols, &lcols, 
+	   &alpha, a->val, &a->rows, b->val, &b->rows, &beta, 
+	   c->val, &c->rows);
+
+    return 0;
+}
+
+#else
+
 #define gretl_mmult_result(c,i,j,x,m) \
     do { \
        if (m==GRETL_MOD_CUMULATE) { \
@@ -2760,8 +2796,9 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
        } else { \
 	   gretl_matrix_set(c,i,j,x); \
        } \
-    } while (0);      
-                                       
+    } while (0);    
+
+#endif  
 
 /**
  * gretl_matrix_multiply_mod:
@@ -2784,13 +2821,15 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
 			       gretl_matrix *c, GretlMatrixMod cmod)
 {
+#ifndef USE_BLAS
     register int i, j, k;
+    int aidx, bidx;
+    double x;
+#endif
     int lrows, lcols;
     int rrows, rcols;
-    int aidx, bidx;
     const int atr = (amod == GRETL_MOD_TRANSPOSE);
     const int btr = (bmod == GRETL_MOD_TRANSPOSE);
-    double x;
 
     if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b) ||
@@ -2829,6 +2868,9 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
+#ifdef USE_BLAS
+    return gretl_blas_matrix_multiply(a, atr, b, btr, c, cmod);
+#else
     /* multiplication is mildly optimized for each possible configuration */
 
     if (!atr && !btr) {
@@ -2901,6 +2943,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     }
 
     return 0;
+#endif /* cblas versus native */
 }
 
 /**

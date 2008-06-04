@@ -454,17 +454,16 @@ static int
 arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 		    struct arma_info *ainfo)
 {
-    int t0, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int an, i, v, t, t1min;
     int vstart, pmax, anymiss;
 
 #if SAMPLE_DEBUG
-    fprintf(stderr, "arma_adjust_sample: at start, t1=%d, t2=%d\n",
-	    t1, t2);
+    fprintf(stderr, "arma_adjust_sample: at start, t1=%d, t2=%d, maxlag = %d\n",
+	    t1, t2, ainfo->maxlag);
 #endif
 
     vstart = arma_list_y_position(ainfo);
-
     pmax = ainfo->p + ainfo->P * ainfo->pd;
 
     /* determine starting point for valid data, t1min */
@@ -489,23 +488,26 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     fprintf(stderr, " phase 1: t1min = %d\n", t1min);
 #endif
 
-    if (arma_by_x12a(ainfo) || arma_exact_ml(ainfo)) {
-	/* FIXME x12a in conditional mode? */
-	;
-    } else if (0) {
-	/* removed 2008/06/04, A.C. */
-	t1min += ainfo->maxlag;
-    }
-
-#if SAMPLE_DEBUG
-    fprintf(stderr, " after handling maxlag (%d): t1min = %d\n", 
-	    ainfo->maxlag, t1min);
-#endif
-
     /* if the notional starting point, t1, is before the start of
        valid data (t1min), advance t1 */
     if (t1 < t1min) {
 	t1 = t1min;
+    }
+
+    if (!arma_by_x12a(ainfo) && !arma_exact_ml(ainfo)) {
+	/* conditional ML: ensure that the sample start allows for
+	   the required lags of y */
+	int t0, ml = ainfo->maxlag;
+
+	if (t1 < ml) t1 = ml;
+	t0 = t1 - ml;
+	t1min = t1;
+	v = list[vstart];
+	for (t=t0; t<t1min; t++) {
+	    if (na(Z[v][t])) {
+		t1 = t + ml + 1;
+	    }
+	}
     }
 
     /* trim any missing obs from the end of the specified sample
@@ -527,29 +529,13 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
-    if (arma_by_x12a(ainfo) || arma_exact_ml(ainfo)) {
-	/* FIXME x12a in conditional mode? */
-	t0 = t1;
-    } else {    
-	t0 = t1 - pmax; /* is this (always) right? */
-	if (t0 < 0) {
-	    t0 = 0;
-	}
-    }
-
     /* check for missing obs within the sample range */
-    for (t=t0; t<t2; t++) {
+    for (t=t1; t<t2; t++) {
 	for (i=vstart; i<=list[0]; i++) {
-	    if (t < t1 && i > vstart) {
-		continue;
-	    }
 	    v = list[i];
 	    if (na(Z[v][t])) {
-		char msg[64];
-
-		sprintf(msg, _("Missing value encountered for "
-			       "variable %d, obs %d"), v, t + 1);
-		gretl_errmsg_set(msg);
+		gretl_errmsg_sprintf(_("Missing value encountered for "
+				       "variable %d, obs %d"), v, t + 1);
 		return 1;
 	    }
 	}
