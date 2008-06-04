@@ -434,7 +434,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 static void calc_max_lag (struct arma_info *ainfo)
 {
     int pmax = ainfo->p;
-    int dmax = ainfo->d; /* FIXME what about seasonal D? */
+    int dmax = ainfo->d;
 
     if (arma_has_seasonal(ainfo)) {
 	pmax += ainfo->P * ainfo->pd;
@@ -454,7 +454,7 @@ static int
 arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 		    struct arma_info *ainfo)
 {
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t0, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int an, i, v, t, t1min;
     int vstart, pmax, anymiss;
 
@@ -485,15 +485,25 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
+#if SAMPLE_DEBUG
+    fprintf(stderr, " phase 1: t1min = %d\n", t1min);
+#endif
+
     if (arma_by_x12a(ainfo) || arma_exact_ml(ainfo)) {
 	/* FIXME x12a in conditional mode? */
 	;
-    } else {
+    } else if (0) {
+	/* removed 2008/06/04, A.C. */
 	t1min += ainfo->maxlag;
     }
 
-    /* if the notional starting point is before the start of
-       valid data, advance it */
+#if SAMPLE_DEBUG
+    fprintf(stderr, " after handling maxlag (%d): t1min = %d\n", 
+	    ainfo->maxlag, t1min);
+#endif
+
+    /* if the notional starting point, t1, is before the start of
+       valid data (t1min), advance t1 */
     if (t1 < t1min) {
 	t1 = t1min;
     }
@@ -519,16 +529,16 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 
     if (arma_by_x12a(ainfo) || arma_exact_ml(ainfo)) {
 	/* FIXME x12a in conditional mode? */
-	t1min = t1;
+	t0 = t1;
     } else {    
-	t1min = t1 - pmax; /* wrong? */
-	if (t1min < 0) {
-	    t1min = 0;
+	t0 = t1 - pmax; /* is this (always) right? */
+	if (t0 < 0) {
+	    t0 = 0;
 	}
     }
 
     /* check for missing obs within the sample range */
-    for (t=t1min; t<t2; t++) {
+    for (t=t0; t<t2; t++) {
 	for (i=vstart; i<=list[0]; i++) {
 	    if (t < t1 && i > vstart) {
 		continue;
@@ -547,7 +557,7 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 
     an = t2 - t1 + 1;
     if (an <= ainfo->nc) {
-	return 1; 
+	return E_DF; 
     }
 
 #if SAMPLE_DEBUG
