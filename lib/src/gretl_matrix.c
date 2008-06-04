@@ -2755,7 +2755,7 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
 
 #ifdef USE_BLAS
 
-extern void _dgemm (const char *, const char *, const integer *, const integer *, 
+extern void dgemm_ (const char *, const char *, const integer *, const integer *, 
 		    const integer *, const double *, const double *, const integer *, 
 		    const double *, const integer *, const double *, const double *, 
 		    const integer *);
@@ -2778,7 +2778,7 @@ int gretl_blas_matrix_multiply (const gretl_matrix *a, int atr,
 	beta = 1.0;
     }
 
-    _dgemm(&TransA, &TransB, &lrows, &rcols, &lcols, 
+    dgemm_(&TransA, &TransB, &lrows, &rcols, &lcols, 
 	   &alpha, a->val, &a->rows, b->val, &b->rows, &beta, 
 	   c->val, &c->rows);
 
