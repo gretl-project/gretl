@@ -489,8 +489,8 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     if (t1 < t1min) {
 	t1 = t1min;
     }
-
-    if (!arma_by_x12a(ainfo) && !arma_exact_ml(ainfo)) {
+    
+    if (!arma_exact_ml(ainfo)) {
 	/* conditional ML: ensure that the sample start allows for
 	   the required lags of y */
 	int t0;

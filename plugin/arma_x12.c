@@ -223,11 +223,9 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 
     fclose(fp);
 
-    if (nobs != nefobs && nefobs > 0) {
+    if (nefobs > 0) {
 	pmod->nobs = nefobs;
-	pmod->t1 += nobs - nefobs;
-    } else {
-	pmod->nobs = nobs;
+	pmod->t1 = pmod->t2 - nefobs + 1;
     }
 
     return 0;
@@ -664,6 +662,7 @@ static int write_spc_file (const char *fname,
     FILE *fp;
     char datestr[12];
     int nfcast = 0;
+    int t1 = ainfo->t1;
     int tmax;
     int i;
 
@@ -685,7 +684,11 @@ static int write_spc_file (const char *fname,
     fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
 	    pdinfo->varname[ainfo->yno]);
 
-    make_x12a_date_string(ainfo->t1, pdinfo, datestr);
+    if (!arma_exact_ml(ainfo)) {
+	t1 -= ainfo->maxlag;
+    }
+    
+    make_x12a_date_string(t1, pdinfo, datestr);
     fprintf(fp, " start = %s\n", datestr);
 
     ylist[0] = 1;
@@ -699,7 +702,7 @@ static int write_spc_file (const char *fname,
 	/* FIXME ensure we don't print any NAs */
 
 	tmax = pdinfo->n - 1;
-	nobs = tmax - ainfo->t1 + 1;
+	nobs = tmax - ainfo->t1 + 1; /* t1? */
 	if (nobs > MAXOBS) {
 	    tmax -= nobs - MAXOBS;
 	}
@@ -713,7 +716,7 @@ static int write_spc_file (const char *fname,
 #endif
     } 
 
-    output_series_to_spc(ylist, Z, ainfo->t1, tmax, fp);
+    output_series_to_spc(ylist, Z, t1, tmax, fp);
 
     if (tmax > ainfo->t2) {
 	make_x12a_date_string(ainfo->t2, pdinfo, datestr);
@@ -733,7 +736,7 @@ static int write_spc_file (const char *fname,
 	    fprintf(fp, "%s ", pdinfo->varname[xlist[i]]);
 	}
 	fputs(")\n", fp);
-	output_series_to_spc(xlist, Z, ainfo->t1, tmax, fp);
+	output_series_to_spc(xlist, Z, t1, tmax, fp);
 	free(xlist);
     }
     fputs("}\n", fp);
@@ -808,6 +811,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     PRN *vprn = NULL;
     MODEL armod;
     struct arma_info ainfo;
+    char flags = ARMA_X12A;
 #ifdef WIN32
     char *cmd;
 #endif
@@ -820,7 +824,11 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	opt |= OPT_F;
     }
 
-    arma_info_init(&ainfo, ARMA_X12A, pqspec, pdinfo);
+    if (!(opt & OPT_C)) {
+	flags |= ARMA_EXACT;
+    }
+
+    arma_info_init(&ainfo, flags, pqspec, pdinfo);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
@@ -875,21 +883,15 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	sprintf(path, "%s%c%s", workdir, SLASH, yname); 
 	armod.t1 = ainfo.t1;
 	armod.t2 = ainfo.t2;
-	armod.nobs = armod.t2 - armod.t1 + 1;
 	populate_arma_model(&armod, alist, path, Z, pdinfo, &ainfo);
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, vprn);
 	}
 	if (!armod.errcode) {
-	    int acode = ARMA_X12A;
-
 	    if (gretl_in_gui_mode()) {
 		add_unique_output_file(&armod, path);
 	    }
-	    if (!(opt & OPT_C)) {
-		acode |= ARMA_EXACT;
-	    }
-	    gretl_model_set_int(&armod, "arma_flags", acode);
+	    gretl_model_set_int(&armod, "arma_flags", (int) flags);
 	}	
     } else {
 	armod.errcode = E_UNSPEC;
