@@ -454,32 +454,28 @@ static int
 arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 		    struct arma_info *ainfo)
 {
+    int vstart = arma_list_y_position(ainfo);
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int an, i, v, t, t1min;
-    int vstart, pmax, anymiss;
+    int anymiss;
 
 #if SAMPLE_DEBUG
     fprintf(stderr, "arma_adjust_sample: at start, t1=%d, t2=%d, maxlag = %d\n",
 	    t1, t2, ainfo->maxlag);
 #endif
 
-    vstart = arma_list_y_position(ainfo);
-    pmax = ainfo->p + ainfo->P * ainfo->pd;
-
-    /* determine starting point for valid data, t1min */
+    /* determine the starting point for valid data, t1min */
     t1min = 0;
     for (t=0; t<=pdinfo->t2; t++) {
 	anymiss = 0;
 	for (i=vstart; i<=list[0]; i++) {
-	    v = list[i];
-	    if (na(Z[v][t])) {
+	    if (na(Z[list[i]][t])) {
 		anymiss = 1;
+		t1min++;
 		break;
 	    }
 	}
-	if (anymiss) {
-	    t1min++;
-        } else {
+	if (!anymiss) {
 	    break;
 	}
     }
@@ -489,7 +485,7 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 #endif
 
     /* if the notional starting point, t1, is before the start of
-       valid data (t1min), advance t1 */
+       valid data, t1min, advance t1 */
     if (t1 < t1min) {
 	t1 = t1min;
     }
@@ -497,15 +493,17 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     if (!arma_by_x12a(ainfo) && !arma_exact_ml(ainfo)) {
 	/* conditional ML: ensure that the sample start allows for
 	   the required lags of y */
-	int t0, ml = ainfo->maxlag;
+	int t0;
 
-	if (t1 < ml) t1 = ml;
-	t0 = t1 - ml;
+	if (t1 < ainfo->maxlag) {
+	    t1 = ainfo->maxlag;
+	}
+	t0 = t1 - ainfo->maxlag;
 	t1min = t1;
 	v = list[vstart];
 	for (t=t0; t<t1min; t++) {
 	    if (na(Z[v][t])) {
-		t1 = t + ml + 1;
+		t1 = t + ainfo->maxlag + 1;
 	    }
 	}
     }
@@ -516,15 +514,13 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     for (t=pdinfo->t2; t>=t1; t--) {
 	anymiss = 0;
 	for (i=vstart; i<=list[0]; i++) {
-	    v = list[i];
-	    if (na(Z[v][t])) {
+	    if (na(Z[list[i]][t])) {
 		anymiss = 1;
+		t2--;
 		break;
 	    }
 	}
-	if (anymiss) {
-	    t2--;
-        } else {
+	if (!anymiss) {
 	    break;
 	}
     }
@@ -543,6 +539,7 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 
     an = t2 - t1 + 1;
     if (an <= ainfo->nc) {
+	/* insufficient observations */
 	return E_DF; 
     }
 
