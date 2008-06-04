@@ -386,8 +386,9 @@ static int gen_special (const char *s, const char *line,
 			double ***pZ, DATAINFO *pdinfo, 
 			PRN *prn, parser *p)
 {
+    const char *msg = NULL;
     int orig_v = pdinfo->v;
-    int msg = 0;
+    int write_label = 0;
     int err = 0;
 
     if (!strcmp(s, "markers")) {
@@ -398,39 +399,41 @@ static int gen_special (const char *s, const char *line,
 	if (di0 == 0) {
 	    err = 1;
 	} else { 
-	    if (gretl_messages_on()) {
-		if (di0 == orig_v) {
-		    pputs(prn, _("Periodic dummy variables generated.\n"));
-		} else {
-		    pputs(prn, _("Periodic dummy variables already present.\n"));
-		}
+	    if (di0 == orig_v) {
+		msg = N_("Periodic dummy variables generated.\n");
+	    } else {
+		msg = N_("Periodic dummy variables already present.\n");
 	    }
 	}
     } else if (!strcmp(s, "timedum")) {
 	err = panel_dummies(pZ, pdinfo, OPT_T);
-	if (!err && gretl_messages_on()) {
-	    pputs(prn, _("Panel dummy variables generated.\n"));
+	if (!err) {
+	    msg = N_("Panel dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "unitdum")) {
 	err = panel_dummies(pZ, pdinfo, OPT_NONE);
-	if (!err && gretl_messages_on()) {
-	    pputs(prn, _("Panel dummy variables generated.\n"));
+	if (!err) {
+	    msg = N_("Panel dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "time")) {
 	err = gen_time(pZ, pdinfo, 1);
-	msg = 1;
+	write_label = 1;
     } else if (!strcmp(s, "index")) {
 	err = gen_time(pZ, pdinfo, 0);
-	msg = 1;
+	write_label = 1;
     } else if (!strcmp(s, "unit")) {
 	err = gen_unit(pZ, pdinfo);
-	msg = 1;
+	write_label = 1;
     } else if (!strcmp(s, "weekday")) {
 	err = gen_wkday(pZ, pdinfo);
-	msg = 1;
+	write_label = 1;
     } 
 
-    if (!err && msg) {
+    if (msg != NULL && gretl_messages_on()) {
+	pputs(prn, _(msg));
+    }
+
+    if (!err && write_label) {
 	strcpy(p->lh.name, s);
 	p->lh.v = varindex(pdinfo, s);
 	p->Z = pZ;

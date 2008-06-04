@@ -698,13 +698,15 @@ static int bad_ichar (char c)
     return err;
 }
 
-static int index_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
+static int index_get_int (controller *clr, const char *s, 
+			  double ***pZ, DATAINFO *pdinfo,
 			  int *err)
 {
     int v = varindex(pdinfo, s);
     int k = 0;
 
     if (v < pdinfo->v) {
+	clr->vnum = v;
 	k = (int) (*pZ)[v][0];
     } else {
 	k = (int) generate_scalar(s, pZ, pdinfo, err);
@@ -760,7 +762,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    fprintf(stderr, "integer string: nstart = %d\n", nstart);
 #endif
 	} else {
-	    nstart = index_get_int(start, pZ, pdinfo, &err);
+	    nstart = index_get_int(&loop->init, start, pZ, pdinfo, &err);
 	}
     }
 
@@ -780,7 +782,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    fprintf(stderr, "integer string: nend = %d\n", nend);
 #endif
 	} else {
-	    nend = index_get_int(end, pZ, pdinfo, &err);
+	    nend = index_get_int(&loop->final, end, pZ, pdinfo, &err);
 	}
     }
 
@@ -1729,7 +1731,7 @@ static int loop_store_start (LOOPSET *loop, const int *list,
     
 #if LOOP_DEBUG
     fprintf(stderr, "loop_store_init: created sZ, v = %d, n = %d\n",
-	    loop->sdinfo->v, loop->sdinfo->n);
+	    loop->store.dinfo->v, loop->store.dinfo->n);
 #endif
 
     for (i=1; i<=list[0]; i++) {
