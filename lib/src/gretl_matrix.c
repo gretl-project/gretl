@@ -2795,24 +2795,25 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     const double *A = a->val;
     const double *B = b->val;
     double *C = c->val;
-    double x, alpha = 1.0, beta = 0.0;
+    double x, alpha = 1.0;
+    int beta = 0;
     int ar = a->rows;
     int br = b->rows;
     int cr = c->rows;
     int i, j, l;
 
     if (cmod == GRETL_MOD_CUMULATE) {
-	beta = 1.0;
+	beta = 1;
     } else if (cmod == GRETL_MOD_DECUMULATE) {
 	alpha = -1.0;
-	beta = 1.0;
+	beta = 1;
     }
 
     if (!btr) {
 	if (!atr) {
 	    /* Form  C := alpha*A*B + beta*C */
 	    for (j=0; j<n; j++) {
-		if (beta == 0.0) {
+		if (beta == 0) {
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
@@ -2834,10 +2835,10 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		    for (l=0; l<k; l++) {
 			x += A[i*ar+l] * B[j*br+l];
 		    }
-		    if (beta == 0.0) {
+		    if (beta == 0) {
 			C[j*cr+i] = alpha * x;
 		    } else {
-			C[j*cr+i] = alpha * x + beta * C[j*cr+i];
+			C[j*cr+i] += alpha * x;
 		    }
 		}
 	    }
@@ -2846,7 +2847,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	if (!atr) {
 	    /* Form  C := alpha*A*B' + beta*C */
 	    for (j=0; j<n; j++) {
-		if (beta == 0.0) {
+		if (beta == 0) {
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
@@ -2868,10 +2869,10 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		    for (l=0; l<k; l++) {
 			x += A[i*ar+l] * B[l*br+j];
 		    }
-		    if (beta == 0.0) {
+		    if (beta == 0) {
 			C[j*cr+i] = alpha * x;
 		    } else {
-			C[j*cr+i] = alpha * x + beta * C[j*cr+i];
+			C[j*cr+i] += alpha * x;
 		    }
 		}
 	    }
