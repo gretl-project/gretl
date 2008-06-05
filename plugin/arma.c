@@ -1639,15 +1639,11 @@ static void nls_kickstart (int b0, int by1,
 }
 
 static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
-			       int narmax, double ***pZ, DATAINFO *pdinfo) 
+			       int narmax, const double *coeff,
+			       double ***pZ, DATAINFO *pdinfo,
+			       PRN *prn) 
 {
-#if AINIT_DEBUG
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-    gretlopt nlsopt = OPT_A | OPT_V;
-#else
-    PRN *prn = NULL;
-    gretlopt nlsopt = OPT_A | OPT_C;
-#endif
+    gretlopt nlsopt = OPT_A;
     char fnstr[MAXLINE];
     char term[32];
     nlspec *spec;
@@ -1663,8 +1659,17 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     }
 
     if (arma_least_squares(ainfo)) {
-	/* be sure to compte standard errors */
-	nlsopt &= ~OPT_C;
+	/* respect verbose option */
+	if (prn != NULL) {
+	    nlsopt |= OPT_V;
+	}
+    } else {
+#if AINIT_DEBUG
+	nlsopt |= OPT_V;
+#else
+	/* don't bother with standard errors */
+	nlsopt |= OPT_C;
+#endif
     }
 
     nlspec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
@@ -1689,7 +1694,11 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     k = 1;
 
     if (ainfo->ifc) {
-	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
+	if (coeff != NULL) {
+	    (*pZ)[v][0] = coeff[0];
+	} else {
+	    (*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
+	}
 	strcpy(pdinfo->varname[v], "b0");
 	b0 = v;
 	plist[k++] = v++;
@@ -1699,7 +1708,12 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	if (AR_included(ainfo, i)) {
 	    if (by1 == 0) {
 		by1 = v;
-		(*pZ)[v][0] = 0.1;
+		if (coeff == NULL) {
+		    (*pZ)[v][0] = 0.1;
+		}
+	    }
+	    if (coeff != NULL) {
+		(*pZ)[v][0] = coeff[k-1];
 	    }
 	    sprintf(pdinfo->varname[v], "phi%d", i+1);
 	    plist[k++] = v++;
@@ -1709,13 +1723,21 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     for (i=0; i<ainfo->P; i++) {
 	if (by1 == 0) {
 	    by1 = v;
-	    (*pZ)[v][0] = 0.1;
+	    if (coeff == NULL) {
+		(*pZ)[v][0] = 0.1;
+	    }
+	}
+	if (coeff != NULL) {
+	    (*pZ)[v][0] = coeff[k-1];
 	}
 	sprintf(pdinfo->varname[v], "Phi%d", i+1);
 	plist[k++] = v++;
     }
 
     for (i=0; i<ainfo->nexo; i++) {
+	if (coeff != NULL) {
+	    (*pZ)[v][0] = coeff[k-1];
+	}
 	sprintf(pdinfo->varname[v], "b%d", i+1);
 	plist[k++] = v++;
     }
@@ -1764,7 +1786,9 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     }
 
     if (!err) {
-	nls_kickstart(b0, by1, amod, pZ, pdinfo);
+	if (coeff == NULL) {
+	    nls_kickstart(b0, by1, amod, pZ, pdinfo);
+	}
 
 #if AINIT_DEBUG
 	fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
@@ -1790,7 +1814,6 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	if (!err) {
 	    printmodel(amod, pdinfo, OPT_NONE, prn);
 	}
-	gretl_print_destroy(prn);
 #endif
     }
 
@@ -2147,10 +2170,14 @@ static int ar_arma_init (const int *list, double *coeff,
 			    Z, aZ, adinfo);
 
     if (nonlin) {
+	PRN *dprn = NULL;
+
 #if AINIT_DEBUG
 	fprintf(stderr, "arma:_init_by_ls: doing NLS\n");
+	dprn = prn;
 #endif
-	err = arma_get_nls_model(&armod, ainfo, narmax, &aZ, adinfo);
+	err = arma_get_nls_model(&armod, ainfo, narmax, NULL, &aZ, adinfo,
+				 dprn);
     } else {
 #if AINIT_DEBUG
 	printlist(alist, "'alist' in ar_arma_init (OLS)");
@@ -2192,18 +2219,97 @@ static int ar_arma_init (const int *list, double *coeff,
 	}
     }
 
-    if (arma_least_squares(ainfo)) {
-	/* least squares == CML */
-	*pmod = armod;
+    /* clean up */
+    clear_model(&armod);
+    free(alist);
+    destroy_dataset(aZ, adinfo);
+
+    return err;
+}
+
+static int arma_by_ls (const int *list, double *coeff, 
+		       const double **Z, const DATAINFO *pdinfo,
+		       struct arma_info *ainfo, 
+		       MODEL *pmod, PRN *prn)
+{
+    int an = pdinfo->t2 - ainfo->t1 + 1;
+    int nmixed = ainfo->np * ainfo->P;
+    int ptotal = ainfo->np + ainfo->P + nmixed;
+    int av = ptotal + ainfo->nexo + 2;
+    double **aZ = NULL;
+    DATAINFO *adinfo = NULL;
+    int *alist = NULL;
+    int nonlin = 0;
+
+    adinfo = create_auxiliary_dataset(&aZ, av, an);
+    if (adinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    if (ptotal > 0 && nmixed > 0) {
+	/* we'll have to use NLS */
+	nonlin = 1;
     } else {
-	clear_model(&armod);
+	/* OLS: need regression list */
+	alist = make_ar_ols_list(ainfo, av);
+    }
+
+    /* add variable names to auxiliary dataset */
+    arma_init_add_varnames(ainfo, ptotal, 0, adinfo);
+
+    /* build temporary dataset */
+    arma_init_build_dataset(ainfo, ptotal, 0, list,
+			    Z, aZ, adinfo);
+
+    if (nonlin) {
+	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, &aZ, adinfo,
+					   prn);
+    } else {
+	*pmod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
     }
 
     /* clean up */
     free(alist);
     destroy_dataset(aZ, adinfo);
 
-    return err;
+    if (!pmod->errcode && pmod->full_n < pdinfo->n) {
+	/* the model series are short */
+	double *uhat, *yhat;
+	int s, t;
+
+	uhat = malloc(pdinfo->n * sizeof *uhat);
+	yhat = malloc(pdinfo->n * sizeof *yhat);
+	if (uhat == NULL || yhat == NULL) {
+	    free(uhat);
+	    free(yhat);
+	    pmod->errcode = E_ALLOC;
+	} else {
+	    for (t=0; t<pdinfo->n; t++) {
+		uhat[t] = yhat[t] = NADBL;
+	    }
+	    t = ainfo->t1;
+	    for (s=0; s<pmod->full_n; s++, t++) {
+		uhat[t] = pmod->uhat[s];
+		yhat[t] = pmod->yhat[s];
+	    }
+	    free(pmod->uhat);
+	    pmod->uhat = uhat;
+	    free(pmod->yhat);
+	    pmod->yhat = yhat;
+	}
+    }
+
+    if (!pmod->errcode) {
+	pmod->t1 = ainfo->t1;
+	pmod->t2 = ainfo->t2;
+	pmod->full_n = pdinfo->n;
+
+	write_arma_model_stats(pmod, list, ainfo, Z, pdinfo);
+	arma_model_add_roots(pmod, ainfo, pmod->coeff);
+	gretl_model_set_int(pmod, "arma_flags", ARMA_LS);
+    }
+
+    return pmod->errcode;
 }
 
 #define MINLAGS 16
@@ -2657,101 +2763,6 @@ static int bhhh_arma (const int *alist, double *coeff,
     return pmod->errcode;
 }
 
-/* In the case of a pure AR model, when conditional ML
-   is called for: preserve the OLS or NLS results but
-   package them in the usual arma format.
-*/
-
-static int ls_to_arma (const int *alist, double *coeff, 
-		       const double **Z, const DATAINFO *pdinfo,
-		       struct arma_info *ainfo, MODEL *pmod,
-		       gretlopt opt, PRN *prn)
-{
-    if (pmod->full_n < pdinfo->n) {
-	/* the model series are short */
-	double *uhat, *yhat;
-	int s, t;
-
-	uhat = malloc(pdinfo->n * sizeof *uhat);
-	yhat = malloc(pdinfo->n * sizeof *yhat);
-	if (uhat == NULL || yhat == NULL) {
-	    free(uhat);
-	    free(yhat);
-	    pmod->errcode = E_ALLOC;
-	} else {
-	    for (t=0; t<pdinfo->n; t++) {
-		uhat[t] = yhat[t] = NADBL;
-	    }
-	    t = ainfo->t1;
-	    for (s=0; s<pmod->full_n; s++, t++) {
-		uhat[t] = pmod->uhat[s];
-		yhat[t] = pmod->yhat[s];
-	    }
-	    free(pmod->uhat);
-	    pmod->uhat = uhat;
-	    free(pmod->yhat);
-	    pmod->yhat = yhat;
-	}
-    }
-
-    if (!pmod->errcode) {
-	pmod->t1 = ainfo->t1;
-	pmod->t2 = ainfo->t2;
-	pmod->full_n = pdinfo->n;
-
-	write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
-	arma_model_add_roots(pmod, ainfo, pmod->coeff);
-    }
-
-    return pmod->errcode;
-}
-
-#if 0 /* not yet */
-
-static int bhhh_arma_init (const int *alist, double *coeff, 
-			   const double **Z, const DATAINFO *pdinfo,
-			   struct arma_info *ainfo)
-{
-    model_info *minfo = NULL;
-    const double **X = NULL;
-    int err = 0;
-
-    /* construct virtual dataset for dep var, real regressors */
-    X = make_armax_X(alist, ainfo, Z);
-    if (X == NULL) {
-	return E_ALLOC;
-    }
-
-    /* create model_info struct to feed to bhhh_max() */
-    minfo = set_up_arma_model_info(ainfo);
-    if (minfo == NULL) {
-	free(X);
-	return E_ALLOC;
-    }
-
-    /* call BHHH conditional ML function (OPG regression) */
-    err = bhhh_max(arma_ll, X, coeff, minfo, OPT_NONE, NULL);
-    
-    if (err) {
-	fprintf(stderr, "bhhh_arma_init: bhhh_max returned %d\n", err);
-	err = E_NOCONV;
-    } else {
-	double *theta = model_info_get_theta(minfo);
-	int i;
-	
-	for (i=0; i<ainfo->nc; i++) {
-	    coeff[i] = theta[i];
-	}
-    }
-
-    free(X);
-    model_info_free(minfo);
-
-    return err;
-}
-
-#endif /* not yet */
-
 /* Should we try Hannan-Rissanen initialization of ARMA
    coefficients? */
 
@@ -2772,14 +2783,12 @@ static int prefer_hr_init (struct arma_info *ainfo)
 	    ret = 0;
 	}
 
-#if 1 
 	/* not sure about this: HR catches the MA terms, but NLS
 	   handles better the AR interactions
 	*/
 	if (ainfo->p > 0 && ainfo->P > 0) {
 	    ret = 0;
 	}
-#endif
 
 	/* overlapping orders screw things up */
 	if ((ainfo->P > 0 && ainfo->p >= ainfo->pd) ||
@@ -2824,7 +2833,6 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     arma_info_init(&ainfo, flags, pqspec, pdinfo);
     gretl_model_init(&armod); 
-    gretl_model_smpl_init(&armod, pdinfo);
 
     alist = gretl_list_copy(list);
     if (alist == NULL) {
@@ -2871,11 +2879,14 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (!(flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
-	/* model can be estimated via least squares */
+	/* pure AR model can be estimated via least squares */
 	ainfo.flags |= ARMA_LS;
+	arma_by_ls(alist, (init_done)? coeff : NULL, Z, pdinfo, 
+		   &ainfo, &armod, vprn);
+	goto bailout;
     }
 
-    /* second pass: try Hannan-Rissanen if suitable */
+    /* second pass: try Hannan-Rissanen, if suitable */
     if (!init_done && prefer_hr_init(&ainfo)) {
 	err = hr_init_check(pdinfo, &ainfo);
 	if (!err) {
@@ -2904,15 +2915,17 @@ MODEL arma_model (const int *list, const char *pqspec,
 	goto bailout;
     }
 
-    if (ainfo.flags & ARMA_LS) {
-	ls_to_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
-    } else if (flags & ARMA_EXACT) {
+    if (flags & ARMA_EXACT) {
 	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
     } else {
 	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
     }
 
  bailout:
+
+    if (!armod.errcode) {
+	gretl_model_smpl_init(&armod, pdinfo);
+    }
 
     free(alist);
     free(coeff);

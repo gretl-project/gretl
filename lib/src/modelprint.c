@@ -1552,6 +1552,11 @@ static void arma_extra_info (const MODEL *pmod, PRN *prn)
 	pputs(prn, " (");
 	pputs(prn, _("exact ML"));
 	pputs(prn, ")\n");
+    } else if (acode & ARMA_LS) {
+	pputs(prn, _("Estimated using least squares"));
+	pputs(prn, " (");
+	pputs(prn, _("conditional ML"));
+	pputs(prn, ")\n");
     } else {
 	pputs(prn, _("Estimated using BHHH method"));
 	pputs(prn, " (");
@@ -2398,7 +2403,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (!plain_format(prn)) {
 	model_format_start(prn);
-    } else if (pmod->ci != NLS) {
+    } else {
 	int iters = gretl_model_get_int(pmod, "iters");
 
 	if (iters > 0) {

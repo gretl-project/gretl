@@ -721,12 +721,22 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 				  double ***pZ,
 				  DATAINFO *pdinfo,
 				  char ichar,
+				  const char *lvar, 
 				  const char *start,
 				  const char *end)
 {
     int nstart = -1, nend = -1;
     int dated = 0;
     int err;
+
+    if (lvar != NULL) {
+	if (strlen(lvar) > 1) {
+	    /* deliberately set invalid ichar */
+	    ichar = 'x';
+	} else {
+	    ichar = *lvar;
+	}
+    }
 
     err = bad_ichar(ichar);
 
@@ -1223,7 +1233,9 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 #endif
 
     if (sscanf(s, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(loop, pZ, pdinfo, ichar, op, rvar);
+	err = parse_as_indexed_loop(loop, pZ, pdinfo, ichar, NULL, op, rvar);
+    } else if (sscanf(s, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
+	err = parse_as_indexed_loop(loop, pZ, pdinfo, 0, lvar, op, rvar);
     } else if (!strncmp(s, "foreach", 7)) {
 	err = parse_as_each_loop(loop, pdinfo, s + 7);
     } else if (!strncmp(s, "for", 3)) {

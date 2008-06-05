@@ -391,8 +391,10 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 	y = Z[ainfo->yno];
     }
 
-    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
-    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
+    if (!arma_least_squares(ainfo)) {
+	pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
+	pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
+    }
 
     mean_error = pmod->ess = 0.0;
 

@@ -2133,9 +2133,7 @@ static int lm_calculate (nlspec *spec, double *fvec, double *jac,
     case 1:
     case 2:
     case 3:
-    case 4: /* is this right? */
-	pprintf(prn, _("Convergence achieved after %d iterations\n"),
-		spec->iters);
+    case 4:
 	break;
     case 5:
     case 6:
@@ -2241,8 +2239,6 @@ lm_approximate (nlspec *spec, double *fvec, double *jac, PRN *prn)
     case 2:
     case 3:
     case 4:
-	pprintf(prn, _("Convergence achieved after %d iterations\n"),
-		spec->iters);
 	break;
     case 5:
     case 6:

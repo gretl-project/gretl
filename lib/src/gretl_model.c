@@ -4295,11 +4295,22 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 
     nc = count_coeffs(p, pmask, q, qmask, P, Q, r, pmod->ifc);
 
+    if (pmod->depvar != NULL) {
+	free(pmod->depvar);
+    }
+
     pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
     if (pmod->depvar == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
     }	
+
+    if (pmod->nparams > 0 && pmod->params != NULL) {
+	for (i=0; i<pmod->nparams; i++) {
+	    free(pmod->params[i]);
+	}
+	free(pmod->params);
+    }
 
     pmod->params = strings_array_new_with_length(nc, VNAMELEN);
     if (pmod->params == NULL) {
