@@ -2760,15 +2760,13 @@ extern void dgemm_ (const char *, const char *, const integer *, const integer *
 		    const double *, const integer *, const double *, const double *, 
 		    const integer *);
 
-int gretl_blas_matrix_multiply (const gretl_matrix *a, int atr,
-				const gretl_matrix *b, int btr,
-				gretl_matrix *c, GretlMatrixMod cmod)
+static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
+			      const gretl_matrix *b, int btr,
+			      gretl_matrix *c, GretlMatrixMod cmod,
+			      int m, int n, int k)
 {
     char TransA = (atr)? 'T' : 'N';
     char TransB = (btr)? 'T' : 'N';
-    integer lrows = (atr)? a->cols : a->rows;
-    integer lcols = (atr)? a->rows : a->cols;
-    integer rcols = (btr)? b->rows : b->cols;
     double alpha = 1.0, beta = 0.0;
 
     if (cmod == GRETL_MOD_CUMULATE) {
@@ -2778,27 +2776,110 @@ int gretl_blas_matrix_multiply (const gretl_matrix *a, int atr,
 	beta = 1.0;
     }
 
-    dgemm_(&TransA, &TransB, &lrows, &rcols, &lcols, 
+    dgemm_(&TransA, &TransB, &m, &n, &k, 
 	   &alpha, a->val, &a->rows, b->val, &b->rows, &beta, 
 	   c->val, &c->rows);
-
-    return 0;
 }
 
 #else
 
-#define gretl_mmult_result(c,i,j,x,m) \
-    do { \
-       if (m==GRETL_MOD_CUMULATE) { \
-           gretl_matrix_cum(c,i,j,x); \
-       } else if (m==GRETL_MOD_DECUMULATE) { \
-           gretl_matrix_cum(c,i,j,-(x)); \
-       } else { \
-	   gretl_matrix_set(c,i,j,x); \
-       } \
-    } while (0);    
+/* below: a native C re-write of netlib BLAS dgemm.f: note that
+   for gretl's purposes we do not support values of 'beta'
+   other than 0 or 1 */
 
-#endif  
+static void gretl_dgemm (const gretl_matrix *a, int atr,
+			 const gretl_matrix *b, int btr,
+			 gretl_matrix *c, GretlMatrixMod cmod,
+			 int m, int n, int k)
+{
+    const double *A = a->val;
+    const double *B = b->val;
+    double *C = c->val;
+    double x, alpha = 1.0, beta = 0.0;
+    int ar = a->rows;
+    int br = b->rows;
+    int cr = c->rows;
+    int i, j, l;
+
+    if (cmod == GRETL_MOD_CUMULATE) {
+	beta = 1.0;
+    } else if (cmod == GRETL_MOD_DECUMULATE) {
+	alpha = -1.0;
+	beta = 1.0;
+    }
+
+    if (!btr) {
+	if (!atr) {
+	    /* Form  C := alpha*A*B + beta*C */
+	    for (j=0; j<n; j++) {
+		if (beta == 0.0) {
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] = 0.0;
+		    }
+		} 
+		for (l=0; l<k; l++) {
+		    if (B[j*br+l] != 0.0) {
+			x = alpha * B[j*br+l];
+			for (i=0; i<m; i++) {
+			    C[j*cr+i] += x * A[l*ar+i];
+			}
+		    }
+		}
+	    }
+	} else {
+	    /* Form  C := alpha*A'*B + beta*C */
+	    for (j=0; j<n; j++) {
+		for (i=0; i<m; i++) {
+		    x = 0.0;
+		    for (l=0; l<k; l++) {
+			x += A[i*ar+l] * B[j*br+l];
+		    }
+		    if (beta == 0.0) {
+			C[j*cr+i] = alpha * x;
+		    } else {
+			C[j*cr+i] = alpha * x + beta * C[j*cr+i];
+		    }
+		}
+	    }
+	} 
+    } else {
+	if (!atr) {
+	    /* Form  C := alpha*A*B' + beta*C */
+	    for (j=0; j<n; j++) {
+		if (beta == 0.0) {
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] = 0.0;
+		    }
+		} 
+		for (l=0; l<k; l++) {
+		    if (B[l*br+j] != 0.0) {
+			x = alpha * B[l*br+j];
+			for (i=0; i<m; i++) {
+			    C[j*cr+i] += x * A[l*ar+i];
+			}
+		    }
+		}
+	    }
+	} else {
+	    /* Form  C := alpha*A'*B' + beta*C */
+	    for (j=0; j<n; j++) {
+		for (i=0; i<m; i++) {
+		    x = 0.0;
+		    for (l=0; l<k; l++) {
+			x += A[i*ar+l] * B[l*br+j];
+		    }
+		    if (beta == 0.0) {
+			C[j*cr+i] = alpha * x;
+		    } else {
+			C[j*cr+i] = alpha * x + beta * C[j*cr+i];
+		    }
+		}
+	    }
+	}
+    }
+}  
+
+#endif /* BLAS versus native */
 
 /**
  * gretl_matrix_multiply_mod:
@@ -2821,15 +2902,10 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
 			       gretl_matrix *c, GretlMatrixMod cmod)
 {
-#ifndef USE_BLAS
-    register int i, j, k;
-    int aidx, bidx;
-    double x;
-#endif
-    int lrows, lcols;
-    int rrows, rcols;
     const int atr = (amod == GRETL_MOD_TRANSPOSE);
     const int btr = (bmod == GRETL_MOD_TRANSPOSE);
+    int lrows, lcols;
+    int rrows, rcols;
 
     if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b) ||
@@ -2869,81 +2945,12 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     }
 
 #ifdef USE_BLAS
-    return gretl_blas_matrix_multiply(a, atr, b, btr, c, cmod);
+    gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
 #else
-    /* multiplication is mildly optimized for each possible configuration */
-
-    if (!atr && !btr) {
-	/* AB */
-	double xa[a->cols]; /* VLA */
-	const double *xb;
-
-	for (i=0; i<a->rows; i++) {
-	    for (k=0; k<a->cols; k++) {
-		xa[k] = gretl_matrix_get(a, i, k);
-	    }
-	    xb = b->val;
-	    for (j=0; j<b->cols; j++) {
-		x = 0.0;
-		for (k=0; k<a->cols; k++) {
-		    x += xa[k] * xb[k];
-		}
-		gretl_mmult_result(c,i,j,x,cmod);
-		xb += b->rows;
-	    }
-	}
-    } else if (atr && btr) {
-	/* A'B' = (BA)' */
-	const double *xa;
-
-	for (i=0; i<b->rows; i++) {
-	    xa = a->val;
-	    for (j=0; j<a->cols; j++) {
-		x = 0.0;
-		bidx = i;
-		for (k=0; k<b->cols; k++) {
-		    x += b->val[bidx] * xa[k];
-		    bidx += b->rows;
-		}
-		gretl_mmult_result(c,j,i,x,cmod);
-		xa += a->rows;
-	    }
-	}
-    } else if (atr) {
-	/* A'B (nice) */
-	const double *xb, *xa = a->val;
-
-	for (i=0; i<a->cols; i++) {
-	    xb = b->val;
-	    for (j=0; j<b->cols; j++) {
-		x = 0.0;
-		for (k=0; k<a->rows; k++) {
-		    x += xa[k] * xb[k];
-		}
-		gretl_mmult_result(c,i,j,x,cmod);
-		xb += b->rows;
-	    }
-	    xa += a->rows;
-	}
-    } else {
-	/* AB' (awkward) */
-	for (i=0; i<lrows; i++) {
-	    for (j=0; j<rcols; j++) {
-		x = 0.0;
-		aidx = i;
-		bidx = j;
-		for (k=0; k<lcols; k++) {
-		    x += a->val[aidx] * b->val[bidx];
-		    aidx += a->rows;
-		    bidx += b->rows;
-		}
-		gretl_mmult_result(c,i,j,x,cmod);
-	    }
-	}
-    }
+    gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
+#endif
 
     return 0;
-#endif /* cblas versus native */
 }
 
 /**
