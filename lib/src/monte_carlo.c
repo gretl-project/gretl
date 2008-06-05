@@ -721,22 +721,12 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 				  double ***pZ,
 				  DATAINFO *pdinfo,
 				  char ichar,
-				  const char *lvar, 
 				  const char *start,
 				  const char *end)
 {
     int nstart = -1, nend = -1;
     int dated = 0;
-    int err = 0;
-
-    if (lvar != NULL) {
-	if (strlen(lvar) > 1) {
-	    /* deliberately set invalid ichar */
-	    ichar = 'x';
-	} else {
-	    ichar = *lvar;
-	}
-    }
+    int err;
 
     err = bad_ichar(ichar);
 
@@ -819,11 +809,6 @@ static int parse_as_count_loop (LOOPSET *loop,
 	nt = atoi(count); 
     } else { 
 	err = controller_set_var(&loop->final, loop, pdinfo, count);
-    }
-
-    if (!err && loop->final.vnum == 0 && nt <= 0) {
-	strcpy(gretl_errmsg, _("Loop count must be positive."));
-	err = E_DATA;
     }
 
     if (!err) {
@@ -1238,10 +1223,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 #endif
 
     if (sscanf(s, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(loop, pZ, pdinfo, ichar, NULL, op, rvar);
-    } else if (sscanf(s, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
-	/* FIXME disable this? */
-	err = parse_as_indexed_loop(loop, pZ, pdinfo, 0, lvar, op, rvar);
+	err = parse_as_indexed_loop(loop, pZ, pdinfo, ichar, op, rvar);
     } else if (!strncmp(s, "foreach", 7)) {
 	err = parse_as_each_loop(loop, pdinfo, s + 7);
     } else if (!strncmp(s, "for", 3)) {
@@ -1254,15 +1236,6 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	printf("parse_first_loopline: failed on '%s'\n", s);
 	strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	err = 1;
-    }
-
-    if (!err && !na(loop->init.val) && !na(loop->final.val)) {
-	int nt = loop->final.val - loop->init.val + 1;
-
-	if (loop->type != FOR_LOOP && loop->type != EACH_LOOP && nt <= 0) {
-	    strcpy(gretl_errmsg, _("Loop count missing or invalid"));
-	    err = 1;
-	}
     }
 
     return err;

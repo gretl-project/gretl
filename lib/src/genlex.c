@@ -1104,6 +1104,7 @@ void lex (parser *p)
         case '=': 
 	    parser_getc(p);
 	    if (p->ch == '=') {
+		/* allow "==" as synonym for "=" */
 		parser_getc(p);
 	    }
 	    p->sym = B_EQ;
@@ -1155,10 +1156,6 @@ void lex (parser *p)
 	    return;
         case '~':
 	    p->sym = B_HCAT;
-	    parser_getc(p);
-	    return;
-        case '`': 
-	    p->sym = B_VCAT;
 	    parser_getc(p);
 	    return;
         case ',': 
@@ -1217,7 +1214,7 @@ void lex (parser *p)
 		parser_getc(p);
 		return;
 	    } else {
-		/* not a "dot operator", back up */
+		/* not a "dot operator", so back up */
 		parser_ungetc(p);
 	    }
         default: 
