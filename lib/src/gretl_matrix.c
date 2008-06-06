@@ -2659,6 +2659,48 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
+
+#if USE_BLAS
+
+static int 
+matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
+				gretl_matrix *c, GretlMatrixMod cmod)
+{
+    char uplo = 'U';
+    char tr = (atr)? 'T' : 'N';
+    int nc = (atr)? a->cols : a->rows;
+    integer n = c->rows;
+    integer k = (atr)? a->rows : a->cols;
+    integer lda = a->rows;
+    double x, alpha = 1.0, beta = 0.0;
+    int i, j;
+
+    if (n != nc) {
+	return E_NONCONF;
+    }
+
+    if (cmod == GRETL_MOD_CUMULATE) {
+	beta = 1.0;
+    } else if (cmod == GRETL_MOD_DECUMULATE) {
+	alpha = -1.0;
+	beta = 1.0;
+    }
+
+    dsyrk_(&uplo, &tr, &n, &k, &alpha, a->val, &lda,
+	   &beta, c->val, &n);
+
+    for (i=0; i<n; i++) {
+	for (j=i+1; j<n; j++) {
+	    x = gretl_matrix_get(c, i, j);
+	    gretl_matrix_set(c, j, i, x);
+	}
+    }
+
+    return 0;
+}
+
+#else
+
 #define gretl_st_result(c,i,j,x,m) \
     do { \
        if (m==GRETL_MOD_CUMULATE) { \
@@ -2730,6 +2772,8 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     return 0;
 }
 
+#endif /* native vs BLAS */
+
 /**
  * gretl_matrix_XTX_new:
  * @X: matrix to process.
@@ -2753,12 +2797,32 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
     return XTX;
 }
 
-#ifdef USE_BLAS
+#if defined(USE_CBLAS)
 
-extern void dgemm_ (const char *, const char *, const integer *, const integer *, 
-		    const integer *, const double *, const double *, const integer *, 
-		    const double *, const integer *, const double *, const double *, 
-		    const integer *);
+#include <gsl/gsl_blas.h>
+
+static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
+			      const gretl_matrix *b, int btr,
+			      gretl_matrix *c, GretlMatrixMod cmod,
+			      int m, int n, int k)
+{
+    int TransA = (atr)? CblasTrans : CblasNoTrans;
+    int TransB = (btr)? CblasTrans : CblasNoTrans;
+    double alpha = 1.0, beta = 0.0;
+
+    if (cmod == GRETL_MOD_CUMULATE) {
+	beta = 1.0;
+    } else if (cmod == GRETL_MOD_DECUMULATE) {
+	alpha = -1.0;
+	beta = 1.0;
+    }
+
+    cblas_dgemm(CblasColMajor, TransA, TransB, m, n, k, 
+		alpha, a->val, a->rows, b->val, b->rows, beta, 
+		c->val, c->rows);
+}
+
+#elif defined(USE_BLAS)
 
 static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
 			      const gretl_matrix *b, int btr,
@@ -2945,7 +3009,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-#ifdef USE_BLAS
+#if defined(USE_BLAS) || defined(USE_CBLAS)
     gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
 #else
     gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);

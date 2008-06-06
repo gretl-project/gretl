@@ -1420,5 +1420,18 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
 	opts_len);
  
 integer izmax1_(integer *n, doublecomplex *cx, integer *incx);
+
+/* selected BLAS functions */
+
+void dgemm_ (const char *TRANSA, const char *TRANSB, 
+	     const integer *M, const integer *N, const integer *K, 
+	     const double *ALPHA, const double *A, const integer *LDA, 
+	     const double *B, const integer *LDB, 
+	     const double *BETA, double *C, const integer *LDC);
+
+void dsyrk_ (const char *UPLO, const char *TRANS, const integer *N, 
+	     const integer *K, const double *ALPHA, const double *A, 
+	     const integer *LDA, const double *BETA, double *C, 
+	     const integer *LDC);
  
 #endif /* __CLAPACK_DOUBLE_H */
