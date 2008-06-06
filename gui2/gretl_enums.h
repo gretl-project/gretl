@@ -66,6 +66,7 @@ enum extra_cmds {
     LMTEST_LOGS,
     LMTEST_SQUARES,
     LMTEST_WHITE,
+    LMTEST_WHITE_NOX,
     LMTEST_BP,
     LMTEST_BPK,
     LMTEST_BG,

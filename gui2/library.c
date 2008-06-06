@@ -1692,6 +1692,15 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
 	}
+    } else if (action == LMTEST_WHITE_NOX) {
+	gretl_command_strcpy("lmtest --white-nocross");
+	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_X, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    strcat(title, _("(heteroskedasticity)"));
+	}
     } else if (action == LMTEST_BP) {
 	gretl_command_strcpy("lmtest --breusch-pagan");
 	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_B, prn);

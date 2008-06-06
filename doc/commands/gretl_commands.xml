@@ -4353,6 +4353,10 @@
 	  <effect>heteroskedasticity, White's test</effect>
         </option>
         <option>
+	  <flag>--white-nocross</flag>
+	  <effect>heteroskedasticity, White's test (squares only)</effect>
+        </option>
+        <option>
 	  <flag>--breusch-pagan</flag>
 	  <effect>heteroskedasticity, Breusch&ndash;Pagan</effect>
         </option>
@@ -4390,14 +4394,16 @@
 
     <description context="cli">
       <para>
-	Must immediately follow an estimation command. Depending on the option
-	given, this command carries out one of the following: a Lagrange
-	Multiplier test for nonlinearity (logs or squares); White's test or
-	the Breusch&ndash;Pagan test for heteroskedasticity; the LMF test for
-	serial correlation (Kiviet, 1986); or a test for ARCH (Autoregressive
-	Conditional Heteroskedasticity; see also the <cmd>arch</cmd> command).
-	Most of the options are only available for models estimated via OLS,
-	but see below for details regarding two-stage least squares.  
+	Must immediately follow an estimation command. Depending on
+	the option given, this command carries out one of the
+	following: a Lagrange Multiplier test for nonlinearity (logs
+	or squares); White's test (with or without cross-products) or
+	the Breusch&ndash;Pagan test for heteroskedasticity; the LMF
+	test for serial correlation (Kiviet, 1986); or a test for ARCH
+	(Autoregressive Conditional Heteroskedasticity; see also
+	the <cmd>arch</cmd> command).  Most of the options are only
+	available for models estimated via OLS, but see below for
+	details regarding two-stage least squares.
       </para>
       <para>
 	The optional <lit>order</lit> argument is relevant only in case

@@ -2811,7 +2811,7 @@ int lmtest_driver (const char *param,
     }
 
     err = incompatible_options(opt, OPT_A | OPT_H | OPT_L | OPT_S |
-			       OPT_P | OPT_W);
+			       OPT_P | OPT_W | OPT_X);
     if (err) {
 	return err;
     }
@@ -2855,13 +2855,16 @@ int lmtest_driver (const char *param,
     }
 
     /* heteroskedasticity (White or Breusch-Pagan) */
-    if (!err && (opt & (OPT_W | OPT_B))) {
+    if (!err && (opt & (OPT_W | OPT_X | OPT_B))) {
 	if (type == GRETL_OBJ_EQN) {
 	    if (opt & OPT_B) {
 		testopt |= OPT_B;
 		if (opt & OPT_R) {
 		    testopt |= OPT_R;
 		}
+	    }
+	    if (opt & OPT_X) {
+		testopt |= OPT_X;
 	    }
 	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
 	} else {

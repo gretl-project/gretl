@@ -2525,7 +2525,11 @@ static void print_whites_test (double LM, int df, double pval,
 	}
 	pprintf(prn, "\n%s: LM = %f,\n", _("Test statistic"), LM);
     } else {
-	pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
+	if (opt & OPT_X) {
+	    pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity (no cross products)"));
+	} else {
+	    pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
+	}
 	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
     }
 
@@ -2803,9 +2807,13 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     /* what can we do, with the degrees of freedom available? */
     if (!BP) {
-	aux = get_whites_aux(pmod, (const double **) *pZ);
-	if (aux == AUX_NONE) {
-	    return E_DF;
+	if (opt & OPT_X) { 
+	    aux = AUX_SQ;
+	} else {
+	    aux = get_whites_aux(pmod, (const double **) *pZ);
+	    if (aux == AUX_NONE) {
+		return E_DF;
+	    }
 	}
     }
 

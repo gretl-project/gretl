@@ -269,6 +269,7 @@ static GtkItemFactoryEntry model_items[] = {
     { "/Tests/sep2", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/_Heteroskedasticity"), NULL, NULL, LMTEST_WHITE, "<Branch>", GNULL },
     { N_("/Tests/Heteroskedasticity/White's test"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
+    { N_("/Tests/Heteroskedasticity/White's test (squares only)"), NULL, do_lmtest, LMTEST_WHITE_NOX, NULL, GNULL },
     { N_("/Tests/Heteroskedasticity/Breusch-Pagan"), NULL, do_lmtest, LMTEST_BP, NULL, GNULL },
     { N_("/Tests/Heteroskedasticity/Koenker"), NULL, do_lmtest, LMTEST_BPK, NULL, GNULL },
     { N_("/Tests/_Normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
@@ -2818,6 +2819,9 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	    } else if (a == LMTEST_WHITE) {
 		a = LMTEST;
 		opt = OPT_W;
+	    } else if (a == LMTEST_WHITE_NOX) {
+		a = LMTEST;
+		opt = OPT_X;
 	    } else if (a == LMTEST_BP) {
 		a = LMTEST;
 		opt = OPT_B;
