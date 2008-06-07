@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-06-07 12:03-0400\n"
-"PO-Revision-Date: 2008-06-03 20:00+0100\n"
+"PO-Revision-Date: 2008-06-07 20:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1832,17 +1832,16 @@ msgstr "Zmienna %s jest skalarem"
 
 #: lib/src/describe.c:5200
 msgid "Jarque-Bera test"
-msgstr ""
+msgstr "Test Jarque'a-Bera"
 
 #: lib/src/describe.c:5201
-#, fuzzy
 msgid "Doornik-Hansen test"
-msgstr "Test Johansena"
+msgstr "Test Doornika-Hansena"
 
 #: lib/src/describe.c:5203
-#, fuzzy, c-format
+#, c-format
 msgid "Test for normality of %s:"
-msgstr "Test na normalno¶æ rozk³adu reszt"
+msgstr "Test na normalno¶æ rozk³adu %s:"
 
 #: lib/src/discrete.c:363
 msgid "Failed to construct Hessian matrix"
@@ -1961,10 +1960,8 @@ msgid "with Koenker robust variance estimator"
 msgstr "z odporn± wariancj± Koenkera (robust)"
 
 #: lib/src/estimate.c:2529
-#, fuzzy
 msgid "White's test for heteroskedasticity (no cross products)"
-msgstr ""
-"Test White'a na heteroskedastyczno¶æ reszt (zmienno¶æ wariancji resztowej)"
+msgstr "Test White'a na heteroskedastyczno¶æ reszt (bez iloczynów zmiennych)"
 
 #: lib/src/estimate.c:2531 lib/src/gretl_model.c:2694 lib/src/modelprint.c:900
 msgid "White's test for heteroskedasticity"
@@ -2045,7 +2042,7 @@ msgstr ""
 
 #: lib/src/geneval.c:3930
 msgid "Wrong type of operand for unary '&'"
-msgstr ""
+msgstr "B³êdny typ operatora dla znaku '&'"
 
 #: lib/src/geneval.c:4955
 #, c-format
@@ -2053,9 +2050,9 @@ msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': b³êdny argument dla %s()\n"
 
 #: lib/src/geneval.c:5033
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong type argument for \"%s\": should be %s"
-msgstr "B³êdny typ argumentu dla %s: powinnien byæ %s"
+msgstr "B³êdny typ argumentu dla \"%s\": powinnien byæ %s"
 
 #: lib/src/geneval.c:6277 lib/src/genlex.c:600 lib/src/genlex.c:657
 #: lib/src/gensyntax.c:273
@@ -2084,14 +2081,14 @@ msgid "'%s' : not implemented for strings"
 msgstr "'%s' : nie jest zaimplementowane dla ³añcuchów"
 
 #: lib/src/geneval.c:6541
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : only defined for matrices"
-msgstr "'%s' :nie jest zaimplementowane dla macierzy"
+msgstr "'%s' : zdefiniowany tylko dla macierzy"
 
 #: lib/src/geneval.c:6548
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for this type"
-msgstr "'%s' : nie jest zaimplementowane dla list"
+msgstr "'%s' : nie jest zaimplementowane dla tego typu"
 
 #: lib/src/genfuncs.c:1032
 #, c-format
@@ -4509,9 +4506,8 @@ msgid "Estimated using Kalman filter"
 msgstr "Estymacja z wykorzystaniem filtru Kalmana"
 
 #: lib/src/modelprint.c:1556
-#, fuzzy
 msgid "Estimated using least squares"
-msgstr "Iteracyjna wa¿ona MNK"
+msgstr "Estymacja z wykorzystaniem metody najmniejszych kwadratów"
 
 #: lib/src/modelprint.c:1561
 msgid "Estimated using BHHH method"
@@ -5404,9 +5400,7 @@ msgstr ""
 
 #: lib/src/printout.c:244
 msgid "Test for null hypothesis of normal distribution"
-msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny.Test "
-"Doornika-Hansena."
+msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny"
 
 #: lib/src/printout.c:251
 msgid "Test for null hypothesis of gamma distribution"
@@ -6403,7 +6397,7 @@ msgstr "Polecenie '%s' zosta³o zignorowane, nieprawid³owy system równañ\n"
 
 #: cli/gretlcli.c:824 gui2/library.c:6868
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
-msgstr "Wprowadz polecenia dla pêtli. Polecenie 'endloop' koñczy pêtlê\n"
+msgstr "Wprowad¼ polecenia dla pêtli. Polecenie 'endloop' koñczy pêtlê\n"
 
 #: cli/gretlcli.c:831
 #, c-format
@@ -6447,7 +6441,7 @@ msgstr "polecenia zapisano jako %s\n"
 #: cli/gretlcli.c:982
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr "Wprowad¿ nazwê pliku wyników (enter to koniec): "
+msgstr "Wprowad¼ nazwê pliku wyników (enter to koniec): "
 
 #: cli/gretlcli.c:990
 #, c-format
@@ -6489,7 +6483,8 @@ msgstr "O programie gretl"
 msgid "translator_credits"
 msgstr ""
 "T³umaczenie na jêzyk polski: Tadeusz Kufel i Pawe³ Kufel (UMK Toruñ)\n"
-"e-mail: tadeusz.kufel@uni.torun.pl; http://www.kufel.torun.pl"
+"e-mail: tadeusz.kufel@uni.torun.pl; http://www.kufel.torun.pl\n"
+"pomoc techniczna: marcin.blazejowski@wsb.torun.pl"
 
 #: gui2/about.c:163
 msgid "License"
@@ -6952,16 +6947,15 @@ msgid "trials"
 msgstr "liczba do¶wiadczeñ"
 
 #: gui2/calculator.c:1985
-#, fuzzy
 msgid "sample size, n"
-msgstr "liczebno¶æ próby"
+msgstr "liczeba obserwacji,   n="
 
 #: gui2/calculator.c:1986
-#, fuzzy
 msgid ""
 "number of regressors\n"
 "(excluding the constant)"
-msgstr "       Liczba zmiennych modelu (wy³±czaj±c wyraz wolny)"
+msgstr "liczba zmiennych modelu\n"
+"(bez wyrazu wolnego), k="
 
 #: gui2/calculator.c:1995
 msgid "right-tail probability"
@@ -7373,7 +7367,7 @@ msgstr "gretl: pomoc - sk³adnia poleceñ"
 
 #: gui2/callbacks.c:474
 msgid "Type a command:"
-msgstr "Wprowadz polecenie:"
+msgstr "Wprowad¼ polecenie:"
 
 #: gui2/callbacks.c:492
 msgid "Save to file"
@@ -10521,9 +10515,8 @@ msgid "/Tests/Heteroskedasticity/White's test"
 msgstr "/Testy/test heteroskedastyczno¶ci/test White'a"
 
 #: gui2/gui_utils.c:272
-#, fuzzy
 msgid "/Tests/Heteroskedasticity/White's test (squares only)"
-msgstr "/Testy/test heteroskedastyczno¶ci/test White'a"
+msgstr "/Testy/test heteroskedastyczno¶ci/test White'a (tylko kwadraty)"
 
 #: gui2/gui_utils.c:273
 msgid "/Tests/Heteroskedasticity/Breusch-Pagan"
@@ -10532,7 +10525,7 @@ msgstr "/Testy/test heteroskedastyczno¶ci/test Breuscha-Pagana"
 #: gui2/gui_utils.c:274
 msgid "/Tests/Heteroskedasticity/Koenker"
 msgstr ""
-"/Testy/test heteroskedastyczno¶ci/test Breuscha-Pagana (wariancaja Koenkera)"
+"/Testy/test heteroskedastyczno¶ci/test Breuscha-Pagana (wariancja Koenkera)"
 
 #: gui2/gui_utils.c:275
 msgid "/Tests/_Normality of residual"
@@ -10734,7 +10727,7 @@ msgstr "gretl: zapisz macierz"
 
 #: gui2/gui_utils.c:1673 gui2/ssheet.c:1229
 msgid "Enter a name"
-msgstr "Wprowadz nazwê"
+msgstr "Wprowad¼ nazwê"
 
 #: gui2/gui_utils.c:1683
 #, c-format
@@ -10811,9 +10804,8 @@ msgid "Confidence level..."
 msgstr "Poziom ufno¶ci..."
 
 #: gui2/gui_utils.c:1821
-#, fuzzy
 msgid "Refresh"
-msgstr "szeregi czasowe"
+msgstr "Od¶wie¿"
 
 #: gui2/gui_utils.c:1822
 msgid "LaTeX"
@@ -13503,7 +13495,7 @@ msgid ""
 "Enter case marker for new obs\n"
 "(max. 8 characters)"
 msgstr ""
-"Wprowadz opis przypadku dla nowej obserwacji\n"
+"Wprowad¼ opis przypadku dla nowej obserwacji\n"
 "(maksymalnie 8 znaków)"
 
 #: gui2/ssheet.c:778
@@ -13524,7 +13516,7 @@ msgstr "gretl: specyfikacja skalaru"
 
 #: gui2/ssheet.c:898
 msgid "Enter a numerical value"
-msgstr "Wprowadz warto¶æ numeryczn±"
+msgstr "Wprowad¼ warto¶æ numeryczn±"
 
 #: gui2/ssheet.c:1010
 msgid "Add Variable"
@@ -13578,7 +13570,7 @@ msgstr "Proszê najpierw dodaæ zmienn± do bazy danych"
 
 #: gui2/ssheet.c:2544
 msgid "You must give the matrix a name"
-msgstr "Wprowadz nazwê macierzy"
+msgstr "Wprowad¼ nazwê macierzy"
 
 #: gui2/ssheet.c:2576
 msgid "The matrix formula is empty"
@@ -13971,13 +13963,13 @@ msgstr ""
 "Prawdopodobnie znajduje siê formu³a w arkuszu"
 
 #: plugin/gnumeric_import.c:344
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Expected numeric data, found string:\n"
 "'%s' at row %d, column %d\n"
 msgstr ""
 "Oczekiwano danych numerycznych, znaleziono ³añcuch:\n"
-"%s\" w wierszu %d, kolumna %d\n"
+"'%s' w wierszu %d, kolumnie %d\n"
 
 #: plugin/gnumeric_import.c:391 plugin/gnumeric_import.c:502
 msgid "File of the wrong type, root node not Workbook"
@@ -14615,36 +14607,3 @@ msgstr "£añcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "Loop count must be positive."
-#~ msgstr "Liczba pêtli musi byæ dodatnia"
-
-#~ msgid "Loop count missing or invalid"
-#~ msgstr "B³±d w okre¶leniu liczby pêtli"
-
-#~ msgid "output stream"
-#~ msgstr "strumieñ wyj¶ciowy"
-
-#~ msgid "command line"
-#~ msgstr "linia poleceñ"
-
-#~ msgid "Write of R data file failed"
-#~ msgstr "B³±d zapisu pliku danych R"
-
-#~ msgid "Couldn't set R_PROFILE environment variable"
-#~ msgstr "Nieudane ustawienie zmiennej ¶rodowiskowej R_PROFILE"
-
-#~ msgid "Found an extraneous row of text"
-#~ msgstr "Znaleziono niezwi±zany wiersz z tekstem"
-
-#~ msgid "Found an extraneous column of text"
-#~ msgstr "Znaleziono niezwi±zan± kolumnê z tekstem"
-
-#~ msgid ""
-#~ "\n"
-#~ "For more comprehensive statistical tables, please consult\n"
-#~ "http://www.stanford.edu/~clint/bench/dwcrit.htm"
-#~ msgstr ""
-#~ "\n"
-#~ "Bardziej rozbudowane tablice DW znajdziesz na stronie\n"
-#~ "http://www.kufel.torun.pl/dw.xls"
