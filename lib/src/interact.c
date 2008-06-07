@@ -2208,12 +2208,14 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     cmd->opt = get_gretl_options(line, &cmd->err);
     if (cmd->err) {
 	return cmd->err;
-    }    
+    }  
 
-    if (!cmd->context) {
+    if (cmd->context) {
+	*cmd->savename = '\0';
+    } else {
 	/* extract "savename" for storing an object? */
 	maybe_extract_savename(line, cmd);
-    }
+    } 
 
     /* no command here? */
     if (!get_command_word(line, cmd)) {
@@ -3372,6 +3374,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    cmd->opt, flags & CMD_BATCH_MODE, cmd_nolist(cmd));
     fprintf(stderr, " prn=%p\n", (void *) prn);
     fprintf(stderr, " cmd->word='%s'\n", cmd->word);
+    fprintf(stderr, " cmd->savename='%s'\n", cmd->savename);
     if (!cmd_nolist(cmd)) {
 	printlist(cmd->list, "cmd->list");
     }
@@ -4968,6 +4971,7 @@ int gretl_cmd_init (CMD *cmd)
     cmd->aux = 0;
     cmd->flags = 0;
     *cmd->word = '\0';
+    *cmd->savename = '\0';
 
     cmd->list = NULL;
     cmd->param = NULL;
