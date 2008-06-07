@@ -2797,32 +2797,7 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
     return XTX;
 }
 
-#if defined(USE_CBLAS)
-
-#include <gsl/gsl_blas.h>
-
-static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
-			      const gretl_matrix *b, int btr,
-			      gretl_matrix *c, GretlMatrixMod cmod,
-			      int m, int n, int k)
-{
-    int TransA = (atr)? CblasTrans : CblasNoTrans;
-    int TransB = (btr)? CblasTrans : CblasNoTrans;
-    double alpha = 1.0, beta = 0.0;
-
-    if (cmod == GRETL_MOD_CUMULATE) {
-	beta = 1.0;
-    } else if (cmod == GRETL_MOD_DECUMULATE) {
-	alpha = -1.0;
-	beta = 1.0;
-    }
-
-    cblas_dgemm(CblasColMajor, TransA, TransB, m, n, k, 
-		alpha, a->val, a->rows, b->val, b->rows, beta, 
-		c->val, c->rows);
-}
-
-#elif defined(USE_BLAS)
+#ifdef USE_BLAS
 
 static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
 			      const gretl_matrix *b, int btr,
@@ -3009,7 +2984,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-#if defined(USE_BLAS) || defined(USE_CBLAS)
+#ifdef USE_BLAS
     gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
 #else
     gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
