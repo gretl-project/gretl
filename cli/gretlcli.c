@@ -114,9 +114,9 @@ static void gretl_abort (char *line)
     exit(EXIT_FAILURE);
 }
 
-static void noalloc (const char *str)
+static void noalloc (void)
 {
-    fprintf(stderr, _("Couldn't allocate memory for %s\n"), str);
+    fputs(stderr, _("Out of memory\n"), stderr);
     exit(EXIT_FAILURE);
 }
 
@@ -368,7 +368,7 @@ int main (int argc, char *argv[])
 
     datainfo = datainfo_new();
     if (datainfo == NULL) {
-	noalloc(_("data information"));
+	noalloc();
     }
     
     if (argc > 1) {
@@ -427,12 +427,12 @@ int main (int argc, char *argv[])
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
     if (err) {
-	noalloc(_("output stream"));
+	noalloc();
     }
 
     line = malloc(MAXLINE);
     if (line == NULL) {
-	noalloc(_("command line"));
+	noalloc();
     } 
 
     gretl_set_paths(&paths, OPT_D); /* defaults, not gui */
@@ -522,7 +522,7 @@ int main (int argc, char *argv[])
     /* allocate memory for models */
     models = allocate_working_models(2);
     if (models == NULL) {
-	noalloc("models"); 
+	noalloc(); 
     }
 
     gretl_cmd_init(&cmd);
