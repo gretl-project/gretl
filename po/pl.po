@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-06-07 12:03-0400\n"
-"PO-Revision-Date: 2008-06-07 20:00+0100\n"
+"PO-Revision-Date: 2008-06-07 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -5401,6 +5401,7 @@ msgstr ""
 #: lib/src/printout.c:244
 msgid "Test for null hypothesis of normal distribution"
 msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny"
+" Test Doornika-Hansena."
 
 #: lib/src/printout.c:251
 msgid "Test for null hypothesis of gamma distribution"
@@ -6483,8 +6484,8 @@ msgstr "O programie gretl"
 msgid "translator_credits"
 msgstr ""
 "T³umaczenie na jêzyk polski: Tadeusz Kufel i Pawe³ Kufel (UMK Toruñ)\n"
-"e-mail: tadeusz.kufel@uni.torun.pl; http://www.kufel.torun.pl\n"
-"pomoc techniczna: marcin.blazejowski@wsb.torun.pl"
+"e-mail: Tadeusz.Kufel@uni.torun.pl; http://www.kufel.torun.pl\n"
+"Linux - pomoc techniczna: Marcin.Blazejowski@wsb.torun.pl"
 
 #: gui2/about.c:163
 msgid "License"
