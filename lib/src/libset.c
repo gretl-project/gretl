@@ -99,6 +99,7 @@ struct set_vars_ {
 #define MESSAGES "messages"
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
+#define BLAS_NMK_MIN "blas_nmk_min"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
@@ -132,7 +133,8 @@ struct set_vars_ {
 		       !strcmp(s, LOOP_MAXITER) || \
                        !strcmp(s, RQ_MAXITER) || \
 		       !strcmp(s, VECM_NORM) || \
-		       !strcmp(s, GRETL_DEBUG))
+		       !strcmp(s, GRETL_DEBUG) || \
+		       !strcmp(s, BLAS_NMK_MIN))
 
 /* global state */
 set_vars *state;
@@ -664,19 +666,22 @@ libset_numeric_string (const char *s, int *pi, double *px, int *err)
     return ret;
 }
 
-/* all the libset ints/doubles are non-negative */
+static int negval_invalid (const char *var)
+{
+    return (var == NULL || strcmp(var, BLAS_NMK_MIN)); 
+}
 
-static int libset_get_scalar (const char *s, double **Z,
-			      DATAINFO *pdinfo,
+static int libset_get_scalar (const char *var, const char *arg, 
+			      double **Z, DATAINFO *pdinfo,
 			      int *pi, double *px)
 {
     double x = NADBL;
     int v, err = 0;
 
-    if (libset_numeric_string(s, pi, px, &err)) {
+    if (libset_numeric_string(arg, pi, px, &err)) {
 	if (err) {
 	    err = E_DATA;
-	} else if (pi != NULL && *pi < 0) {
+	} else if (pi != NULL && negval_invalid(var) && *pi < 0) {
 	    err = E_DATA;
 	} else if (px != NULL && *px < 0.0) {
 	    err = E_DATA;
@@ -684,10 +689,10 @@ static int libset_get_scalar (const char *s, double **Z,
 	return err;
     }
 
-    v = varindex(pdinfo, s);
+    v = varindex(pdinfo, arg);
 
     if (v >= pdinfo->v) {
-	sprintf(gretl_errmsg, "'%s': unrecognized name", s);
+	sprintf(gretl_errmsg, "'%s': unrecognized name", arg);
 	return E_UNKVAR;
     } else if (var_is_series(pdinfo, v)) {
 	return E_DATATYPE;
@@ -695,7 +700,7 @@ static int libset_get_scalar (const char *s, double **Z,
 	x = Z[v][0];
     }
 
-    if (x < 0.0) {
+    if (negval_invalid(var) && x < 0.0) {
 	return E_DATA;
     }
 
@@ -883,9 +888,9 @@ static int set_bkbp_limits (const char *s0, const char *s1,
     int p0, p1;
     int err = 0;
 
-    err = libset_get_scalar(s0, Z, pdinfo, &p0, NULL);
+    err = libset_get_scalar(NULL, s0, Z, pdinfo, &p0, NULL);
     if (!err) {
-	err = libset_get_scalar(s1, Z, pdinfo, &p1, NULL);
+	err = libset_get_scalar(NULL, s1, Z, pdinfo, &p1, NULL);
     }
 
     if (err) {
@@ -1156,6 +1161,7 @@ static int display_settings (PRN *prn)
     libset_print_bool(MESSAGES, prn);
     libset_print_bool(WARNINGS, prn);
     libset_print_int(GRETL_DEBUG, prn);
+    libset_print_int(BLAS_NMK_MIN, prn);
     libset_print_bool(SHELL_OK, prn);
 
     if (*state->shelldir) {
@@ -1346,7 +1352,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		libset_set_double(setobj, NADBL);
 		err = 0;
 	    } else {
-		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
+		err = libset_get_scalar(NULL, setarg, Z, pdinfo, NULL, &x);
 		if (!err) {
 		    err = libset_set_double(setobj, x);
 		}
@@ -1359,7 +1365,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "seed")) {
-	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    err = libset_get_scalar(NULL, setarg, Z, pdinfo, &k, NULL);
 	    if (!err) {
 		gretl_rand_set_seed((unsigned int) k);
 		if (gretl_messages_on() && !gretl_looping_quietly()) {
@@ -1374,7 +1380,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		state->horizon = UNSET_INT;
 		err = 0;
 	    } else {
-		err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+		err = libset_get_scalar(NULL, setarg, Z, pdinfo, &k, NULL);
 		if (!err) {
 		    state->horizon = k;
 		} else {
@@ -1384,7 +1390,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	} else if (coded_intvar(setobj)) {
 	    err = parse_libset_int_code(setobj, setarg);
 	} else if (libset_int(setobj)) {
-	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    err = libset_get_scalar(setobj, setarg, Z, pdinfo, &k, NULL);
 	    if (!err) {
 		err = libset_set_int(setobj, k);
 	    }
@@ -1506,6 +1512,8 @@ int libset_get_int (const char *s)
 	return state->vecm_norm;
     } else if (!strcmp(s, GRETL_DEBUG)) {
 	return gretl_debug;
+    } else if (!strcmp(s, BLAS_NMK_MIN)) {
+	return get_blas_nmk_min();
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", s);	
@@ -1575,6 +1583,11 @@ int libset_set_int (const char *s, int k)
 
     if (check_for_state()) {
 	return 1;
+    }
+
+    if (!strcmp(s, BLAS_NMK_MIN)) {
+	set_blas_nmk_min(k);
+	return 0;
     }
 
     err = intvar_min_max(s, &min, &max, &ivar);

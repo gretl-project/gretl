@@ -29,8 +29,6 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
-#undef USE_BLAS
-
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 #define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
@@ -2659,25 +2657,31 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
+static int blas_nmk_min;
 
-#if USE_BLAS
+void set_blas_nmk_min (int n)
+{
+    blas_nmk_min = n;
+}
+
+int get_blas_nmk_min (void)
+{
+    return blas_nmk_min;
+}
+
+#define USE_BLAS(nmk) (blas_nmk_min > 0 && nmk > blas_nmk_min)
 
 static int 
-matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
-				gretl_matrix *c, GretlMatrixMod cmod)
+gretl_blas_dsyrk (const gretl_matrix *a, int atr,
+		  gretl_matrix *c, GretlMatrixMod cmod)
 {
     char uplo = 'U';
     char tr = (atr)? 'T' : 'N';
-    int nc = (atr)? a->cols : a->rows;
     integer n = c->rows;
     integer k = (atr)? a->rows : a->cols;
     integer lda = a->rows;
     double x, alpha = 1.0, beta = 0.0;
     int i, j;
-
-    if (n != nc) {
-	return E_NONCONF;
-    }
 
     if (cmod == GRETL_MOD_CUMULATE) {
 	beta = 1.0;
@@ -2699,20 +2703,18 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     return 0;
 }
 
-#else
-
-#define gretl_st_result(c,i,j,x,m) \
-    do { \
-       if (m==GRETL_MOD_CUMULATE) { \
-           c->val[(j)*c->rows+(i)]+=x; \
-           if (i!=j) c->val[(i)*c->rows+(j)]+=x; \
-       } else if (m==GRETL_MOD_DECUMULATE) { \
-           c->val[(j)*c->rows+(i)]-=x; \
-           if (i!=j) c->val[(i)*c->rows+(j)]-=x; \
-       } else { \
-	   gretl_matrix_set(c,i,j,x); \
-           gretl_matrix_set(c,j,i,x); \
-       } \
+#define gretl_st_result(c,i,j,x,m)			\
+    do {						\
+	if (m==GRETL_MOD_CUMULATE) {			\
+	    c->val[(j)*c->rows+(i)]+=x;			\
+	    if (i!=j) c->val[(i)*c->rows+(j)]+=x;	\
+	} else if (m==GRETL_MOD_DECUMULATE) {		\
+	    c->val[(j)*c->rows+(i)]-=x;			\
+	    if (i!=j) c->val[(i)*c->rows+(j)]-=x;	\
+	} else {					\
+	    gretl_matrix_set(c,i,j,x);			\
+	    gretl_matrix_set(c,j,i,x);			\
+	}						\
     } while (0);      
 
 
@@ -2728,6 +2730,10 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 
     if (c->rows != nc) {
 	return E_NONCONF;
+    }
+
+    if (USE_BLAS(nc * nc * nr)) {
+	return gretl_blas_dsyrk(a, atr, c, cmod);
     }
 
     if (c->rows == 1) {
@@ -2772,8 +2778,6 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     return 0;
 }
 
-#endif /* native vs BLAS */
-
 /**
  * gretl_matrix_XTX_new:
  * @X: matrix to process.
@@ -2797,8 +2801,6 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
     return XTX;
 }
 
-#ifdef USE_BLAS
-
 static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
 			      const gretl_matrix *b, int btr,
 			      gretl_matrix *c, GretlMatrixMod cmod,
@@ -2819,8 +2821,6 @@ static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
 	   &alpha, a->val, &a->rows, b->val, &b->rows, &beta, 
 	   c->val, &c->rows);
 }
-
-#else
 
 /* below: a native C re-write of netlib BLAS dgemm.f: note that
    for gretl's purposes we do not support values of 'beta'
@@ -2850,7 +2850,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 
     if (!btr) {
 	if (!atr) {
-	    /* Form  C := alpha*A*B + beta*C */
+	    /* C := alpha*A*B + beta*C */
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
 		    for (i=0; i<m; i++) {
@@ -2867,7 +2867,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		}
 	    }
 	} else {
-	    /* Form  C := alpha*A'*B + beta*C */
+	    /* C := alpha*A'*B + beta*C */
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
 		    x = 0.0;
@@ -2884,7 +2884,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	} 
     } else {
 	if (!atr) {
-	    /* Form  C := alpha*A*B' + beta*C */
+	    /* C := alpha*A*B' + beta*C */
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
 		    for (i=0; i<m; i++) {
@@ -2901,7 +2901,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		}
 	    }
 	} else {
-	    /* Form  C := alpha*A'*B' + beta*C */
+	    /* C := alpha*A'*B' + beta*C */
 	    for (j=0; j<n; j++) {
 		for (i=0; i<m; i++) {
 		    x = 0.0;
@@ -2918,8 +2918,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	}
     }
 }  
-
-#endif /* BLAS versus native */
 
 /**
  * gretl_matrix_multiply_mod:
@@ -2984,11 +2982,11 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-#ifdef USE_BLAS
-    gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
-#else
-    gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
-#endif
+    if (USE_BLAS(lrows * rcols * lcols)) { 
+	gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
+    } else {
+	gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
+    }
 
     return 0;
 }

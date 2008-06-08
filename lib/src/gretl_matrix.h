@@ -609,4 +609,8 @@ gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 
 void lapack_mem_free (void);
 
+void set_blas_nmk_min (int n);
+
+int get_blas_nmk_min (void);
+
 #endif /* GRETL_MATRIX_H */
