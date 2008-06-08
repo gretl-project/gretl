@@ -2657,6 +2657,8 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
+#define BLAS_DEBUG 0
+
 static int blas_nmk_min;
 
 void set_blas_nmk_min (int n)
@@ -2669,7 +2671,21 @@ int get_blas_nmk_min (void)
     return blas_nmk_min;
 }
 
-#define USE_BLAS(nmk) (blas_nmk_min > 0 && nmk > blas_nmk_min)
+static int USE_BLAS (int n, int m, int k)
+{
+    if (blas_nmk_min >= 0) {
+	double nmk = (double) n * m * k;
+
+	if (nmk > (double) blas_nmk_min) {
+#if BLAS_DEBUG
+	    fprintf(stderr, "nmk = %g, using blas\n", nmk);
+#endif
+	    return 1;
+	}
+    }
+
+    return 0;
+}
 
 static int 
 gretl_blas_dsyrk (const gretl_matrix *a, int atr,
@@ -2732,7 +2748,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	return E_NONCONF;
     }
 
-    if (USE_BLAS(nc * nc * nr)) {
+    if (USE_BLAS(nc, nc, nr)) {
 	return gretl_blas_dsyrk(a, atr, c, cmod);
     }
 
@@ -2982,7 +2998,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-    if (USE_BLAS(lrows * rcols * lcols)) { 
+    if (USE_BLAS(lrows, rcols, lcols)) { 
 	gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
     } else {
 	gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
