@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-06-07 12:03-0400\n"
-"PO-Revision-Date: 2008-05-31 13:51+0200\n"
+"PO-Revision-Date: 2008-06-08 12:18+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1834,17 +1834,16 @@ msgstr "la variabile %s è uno scalare"
 
 #: lib/src/describe.c:5200
 msgid "Jarque-Bera test"
-msgstr ""
+msgstr "Test di Jarque-Bera"
 
 #: lib/src/describe.c:5201
-#, fuzzy
 msgid "Doornik-Hansen test"
-msgstr "Test di Johansen"
+msgstr "Test di Doornik-Hansen"
 
 #: lib/src/describe.c:5203
-#, fuzzy, c-format
+#, c-format
 msgid "Test for normality of %s:"
-msgstr "Test per la normalità dei residui"
+msgstr "Test per la normalità di %s:"
 
 #: lib/src/discrete.c:363
 msgid "Failed to construct Hessian matrix"
@@ -1965,9 +1964,8 @@ msgid "with Koenker robust variance estimator"
 msgstr "con stimatore della varianza robusto di Koenker"
 
 #: lib/src/estimate.c:2529
-#, fuzzy
 msgid "White's test for heteroskedasticity (no cross products)"
-msgstr "Test di White per l'eteroschedasticità"
+msgstr "Test di White per l'eteroschedasticità (senza prodotti incrociati)"
 
 #: lib/src/estimate.c:2531 lib/src/gretl_model.c:2694 lib/src/modelprint.c:900
 msgid "White's test for heteroskedasticity"
@@ -2046,7 +2044,7 @@ msgstr ""
 
 #: lib/src/geneval.c:3930
 msgid "Wrong type of operand for unary '&'"
-msgstr ""
+msgstr "Tipo di operando errato per '&'"
 
 #: lib/src/geneval.c:4955
 #, c-format
@@ -2054,9 +2052,9 @@ msgid "'%s': invalid argument for %s()\n"
 msgstr "\"%s\": argomento non valido per %s()\n"
 
 #: lib/src/geneval.c:5033
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong type argument for \"%s\": should be %s"
-msgstr "Argomento di tipo errato per %s: dovrebbe essere %s"
+msgstr "Argomento di tipo errato per \"%s\": dovrebbe essere %s"
 
 #: lib/src/geneval.c:6277 lib/src/genlex.c:600 lib/src/genlex.c:657
 #: lib/src/gensyntax.c:273
@@ -2085,14 +2083,14 @@ msgid "'%s' : not implemented for strings"
 msgstr "'%s' : non implementato per le stringhe"
 
 #: lib/src/geneval.c:6541
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : only defined for matrices"
-msgstr "'%s' : non implementato per le matrici"
+msgstr "'%s' : definito solo per le matrici"
 
 #: lib/src/geneval.c:6548
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not implemented for this type"
-msgstr "'%s' : non implementato per le liste"
+msgstr "'%s' : non implementato per questo tipo"
 
 #: lib/src/genfuncs.c:1032
 #, c-format
@@ -4518,9 +4516,8 @@ msgid "Estimated using Kalman filter"
 msgstr "Stimato usando il filtro di Kalman"
 
 #: lib/src/modelprint.c:1556
-#, fuzzy
 msgid "Estimated using least squares"
-msgstr "Minimi quadrati ponderati iterati"
+msgstr "Stimato usando i minimi quadrati"
 
 #: lib/src/modelprint.c:1561
 msgid "Estimated using BHHH method"
@@ -6970,16 +6967,16 @@ msgid "trials"
 msgstr "prove"
 
 #: gui2/calculator.c:1985
-#, fuzzy
 msgid "sample size, n"
-msgstr "Ampiezza campionaria"
+msgstr "ampiezza campionaria, n"
 
 #: gui2/calculator.c:1986
-#, fuzzy
 msgid ""
 "number of regressors\n"
 "(excluding the constant)"
-msgstr "       Numero delle variabili esplicative (esclusa la costante)"
+msgstr ""
+"numero di regressori\n"
+"(escludendo la costante)"
 
 #: gui2/calculator.c:1995
 msgid "right-tail probability"
@@ -10545,9 +10542,8 @@ msgid "/Tests/Heteroskedasticity/White's test"
 msgstr "/Test/Eteroschedasticità/Test di _White"
 
 #: gui2/gui_utils.c:272
-#, fuzzy
 msgid "/Tests/Heteroskedasticity/White's test (squares only)"
-msgstr "/Test/Eteroschedasticità/Test di _White"
+msgstr "/Test/Eteroschedasticità/Test di _White (solo quadrati)"
 
 #: gui2/gui_utils.c:273
 msgid "/Tests/Heteroskedasticity/Breusch-Pagan"
@@ -10834,9 +10830,8 @@ msgid "Confidence level..."
 msgstr "Livello di confidenza..."
 
 #: gui2/gui_utils.c:1821
-#, fuzzy
 msgid "Refresh"
-msgstr "serie"
+msgstr "Aggiorna"
 
 #: gui2/gui_utils.c:1822
 msgid "LaTeX"
@@ -14006,13 +14001,13 @@ msgstr ""
 "È possibile che il foglio contenga una formula"
 
 #: plugin/gnumeric_import.c:344
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Expected numeric data, found string:\n"
 "'%s' at row %d, column %d\n"
 msgstr ""
 "Trovata una stringa invece di dati numerici:\n"
-"%s\" alla riga %d, colonna %d\n"
+"'%s' alla riga %d, colonna %d\n"
 
 #: plugin/gnumeric_import.c:391 plugin/gnumeric_import.c:502
 msgid "File of the wrong type, root node not Workbook"
