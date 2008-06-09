@@ -1796,11 +1796,11 @@ int autocorr_test (MODEL *pmod, int order,
 	    newlist[pmod->list[0] + i] = lv;
 	    for (t=0; t<pdinfo->n; t++) {
 		s = t - i;
-		if (s > 0) {
+		if (s < 0) {
+		    (*pZ)[lv][t] = 0.0;
+		} else {
 		    ul = (*pZ)[v][s];
 		    (*pZ)[lv][t] = (na(ul))? 0.0 : ul;
-		} else {
-		    (*pZ)[lv][t] = 0.0;
 		}
 	    }
 	} 
