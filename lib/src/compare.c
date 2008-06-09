@@ -1751,9 +1751,6 @@ int autocorr_test (MODEL *pmod, int order,
 #endif
     }
 
-    /* impose original sample range */
-    impose_model_smpl(pmod, pdinfo);
-
     gretl_model_init(&aux);
 
     if (order <= 0) {
@@ -1800,9 +1797,18 @@ int autocorr_test (MODEL *pmod, int order,
 		err = E_LAGS;
 	    } else {
 		newlist[pmod->list[0] + i] = lnum;
+		for (t=0; t<pmod->t1 + order; t++) {
+		    /* lagged residuals: NA -> 0 */
+		    if (na((*pZ)[lnum][t])) {
+			(*pZ)[lnum][t] = 0.0;
+		    }
+		}
 	    }
 	}
     }
+
+    /* impose original sample range */
+    impose_model_smpl(pmod, pdinfo);
 
     /* LMF apparatus: see Kiviet, Review of Economic Studies,
        53/2, 1986, equation (5), p. 245.
@@ -1818,7 +1824,7 @@ int autocorr_test (MODEL *pmod, int order,
 	} else { 
 	    RSSxe = aux.ess;
 	}
-    } 
+    }
 
     if (!err) {
 	int dfd = aux.nobs - pmod->ncoeff - order;
