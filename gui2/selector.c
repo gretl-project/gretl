@@ -1987,7 +1987,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 static void read_quantreg_extras (selector *sr)
 {
-    GtkWidget *e = GTK_COMBO(sr->extra[0])->entry;
+    GtkWidget *e = GTK_BIN(sr->extra[0])->child;
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(e));
 	
     if (s == NULL || *s == '\0') {
@@ -2851,15 +2851,13 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
     gtk_widget_show(hbox); 
 }
 
-static GList *make_tau_list (void)
+static void make_tau_list (GtkWidget *w)
 {
-    GList *list = NULL;
+    GtkComboBox *box = GTK_COMBO_BOX(w);
 
-    list = g_list_append(list, "0.25 0.50 0.75");
-    list = g_list_append(list, ".05, .25 .50 .75, .95");
-    list = g_list_append(list, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
-
-    return list;
+    gtk_combo_box_append_text(box, "0.25 0.50 0.75");
+    gtk_combo_box_append_text(box, ".05, .25 .50 .75, .95");
+    gtk_combo_box_append_text(box, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
 } 
 
 static void build_mid_section (selector *sr, GtkWidget *right_vbox)
@@ -2888,15 +2886,9 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == QUANTREG) {
-	GList *taulist;
-
-	sr->extra[0] = gtk_combo_new();
-	taulist = make_tau_list();
-	gtk_combo_set_popdown_strings(GTK_COMBO(sr->extra[0]), taulist); 
-	g_list_free(taulist);
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(sr->extra[0])->entry), "0.5");
-	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sr->extra[0])->entry), 
-				  TRUE);
+	sr->extra[0] = gtk_combo_box_entry_new_text();
+	make_tau_list(sr->extra[0]);
+	gtk_entry_set_text(GTK_ENTRY(GTK_BIN(sr->extra[0])->child), "0.5");
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra[0]); 
