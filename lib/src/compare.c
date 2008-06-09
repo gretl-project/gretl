@@ -1770,7 +1770,7 @@ int autocorr_test (MODEL *pmod, int order,
 	for (i=2; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_series(1, pZ, pdinfo)) {
+	if (dataset_add_series(1 + order, pZ, pdinfo)) {
 	    err = E_ALLOC;
 	}
     }
@@ -1787,36 +1787,33 @@ int autocorr_test (MODEL *pmod, int order,
 	}
 	strcpy(pdinfo->varname[v], "uhat");
 	strcpy(VARLABEL(pdinfo, v), _("residual"));
-	/* then lags of same */
+	/* then order lags of same */
 	for (i=1; i<=order; i++) {
-	    int lnum;
+	    int s, lv = v + i;
+	    double ul;
 
-	    lnum = laggenr(v, i, pZ, pdinfo);
-	    if (lnum < 0) {
-		sprintf(gretl_errmsg, _("lagging uhat failed"));
-		err = E_LAGS;
-	    } else {
-		newlist[pmod->list[0] + i] = lnum;
-		for (t=0; t<pmod->t1 + order; t++) {
-		    /* lagged residuals: NA -> 0 */
-		    if (na((*pZ)[lnum][t])) {
-			(*pZ)[lnum][t] = 0.0;
-		    }
+	    sprintf(pdinfo->varname[lv], "uhat_%d", i);
+	    newlist[pmod->list[0] + i] = lv;
+	    for (t=0; t<pdinfo->n; t++) {
+		s = t - i;
+		if (s > 0) {
+		    ul = (*pZ)[v][s];
+		    (*pZ)[lv][t] = (na(ul))? 0.0 : ul;
+		} else {
+		    (*pZ)[lv][t] = 0.0;
 		}
 	    }
-	}
+	} 
     }
-
-    /* impose original sample range */
-    impose_model_smpl(pmod, pdinfo);
 
     /* LMF apparatus: see Kiviet, Review of Economic Studies,
        53/2, 1986, equation (5), p. 245.
     */
 
     if (!err) {
+	/* regression on [X~E], using original sample */
+	impose_model_smpl(pmod, pdinfo);
 	newlist[1] = v;
-	/* regression on [X~E] */
 	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
