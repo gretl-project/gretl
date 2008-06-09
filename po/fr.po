@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-06-07 12:03-0400\n"
-"PO-Revision-Date: 2008-06-09 14:14+0100\n"
+"PO-Revision-Date: 2008-06-09 14:58+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -433,13 +433,12 @@ msgstr "Eliminaiton séquentielle utilisant alpha bilatéral = %.2f"
 #: lib/src/compare.c:1084
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
-msgstr ""
+msgstr "Supprimé %-16s (p-value %.3f)\n"
 
 #: lib/src/compare.c:1399
 #: gui2/library.c:2079
-#, fuzzy
 msgid "squares only"
-msgstr "trimestriel"
+msgstr "carrés seulement"
 
 #: lib/src/compare.c:1402
 #: gui2/library.c:2080
@@ -453,9 +452,8 @@ msgstr "carrés et cubes"
 
 #: lib/src/compare.c:1471
 #: gui2/library.c:2093
-#, fuzzy
 msgid "RESET specification test"
-msgstr "Test RESET pour la spécification"
+msgstr "Test RESET de spécification"
 
 #: lib/src/compare.c:1479
 #: lib/src/compare.c:1671
@@ -837,9 +835,9 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   AVERTISSEMENT : valeur manquante pour la variable %d, observation %d\n"
 
 #: lib/src/csvdata.c:1072
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, non-numeric value\n"
-msgstr "De la variable %d, observations %d :\n"
+msgstr "ERREUR: variable %d (%s), observation %d, valeur non numérique\n"
 
 #: lib/src/csvdata.c:1190
 msgid ""
@@ -1348,9 +1346,8 @@ msgstr "SVP ouvrir un fichier de données d'abord"
 
 #: lib/src/dataset.c:1804
 #: lib/src/geneval.c:433
-#, fuzzy
 msgid "No dataset is in place"
-msgstr "Aucun fichier de base de données n'a été ouvert"
+msgstr "Aucun fichier de base de données n'est ouvert"
 
 #: lib/src/dataset.c:2486
 msgid "Generated"
@@ -1392,7 +1389,7 @@ msgstr "Le jeu de données est actuellement sous-échantillonné"
 
 #: lib/src/dataset.c:2988
 msgid "dataset restore: dataset is not resampled\n"
-msgstr ""
+msgstr "restauration de la base de données : base de données non ré-échantillonnée\n"
 
 #: lib/src/dbread.c:352
 #: lib/src/dbread.c:593
@@ -1467,12 +1464,11 @@ msgstr "Échantillon nul invalide"
 
 #: lib/src/dbread.c:1889
 msgid "Expected an SQL query string"
-msgstr ""
+msgstr "Requête SQL attendue"
 
 #: lib/src/dbread.c:1902
-#, fuzzy
 msgid "Expected a valid variable name"
-msgstr "Attendait trouver un nom de variable"
+msgstr "Nom de variable valide attendu"
 
 #: lib/src/dbread.c:1923
 #: lib/src/dbread.c:2045
@@ -2122,9 +2118,8 @@ msgid "Jarque-Bera test"
 msgstr "test de Bera-Jarque"
 
 #: lib/src/describe.c:5201
-#, fuzzy
 msgid "Doornik-Hansen test"
-msgstr "Test de Johansen"
+msgstr "Test de Doornik-Hansen"
 
 #: lib/src/describe.c:5203
 #, fuzzy, c-format
@@ -2146,9 +2141,9 @@ msgid "Iteration %d: log likelihood = %#.12g"
 msgstr "Itération %d : log de vraissemblance = %#.12g"
 
 #: lib/src/discrete.c:831
-#, fuzzy, c-format
+#, c-format
 msgid "The variable '%s' is not discrete"
-msgstr "La variable %s est un scalaire\n"
+msgstr "La variable '%s' n'est pas discrète"
 
 #: lib/src/discrete.c:999
 msgid "Illegal non-positive value of the dependent variable"
@@ -2249,9 +2244,8 @@ msgstr "Test de Pesaran-Taylor pour l'hétéroscédasticité"
 #: lib/src/estimate.c:2522
 #: lib/src/gretl_model.c:2697
 #: lib/src/modelprint.c:902
-#, fuzzy
 msgid "Breusch-Pagan test for heteroskedasticity"
-msgstr "Test de Pesaran-Taylor pour l'hétéroscédasticité"
+msgstr "Test de Breusch-Pagan pour l'hétéroscédasticité"
 
 #: lib/src/estimate.c:2524
 msgid "with Koenker robust variance estimator"
@@ -2351,7 +2345,7 @@ msgstr ""
 
 #: lib/src/geneval.c:3930
 msgid "Wrong type of operand for unary '&'"
-msgstr ""
+msgstr "Mauvais type d'opérateur pour '&' unaire"
 
 #: lib/src/geneval.c:4955
 #, c-format
@@ -2554,9 +2548,9 @@ msgid "Generated matrix %s"
 msgstr "Matrice %s générée"
 
 #: lib/src/genmain.c:78
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced list %s"
-msgstr "Liste '%s' remplacée\n"
+msgstr "Liste %s remplacée"
 
 #: lib/src/genmain.c:80
 #, c-format
@@ -2564,14 +2558,14 @@ msgid "Generated list %s"
 msgstr "Liste %s générée"
 
 #: lib/src/genmain.c:84
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced string %s"
-msgstr "Matrice %s remplacée"
+msgstr "Chaîne %s remplacée"
 
 #: lib/src/genmain.c:86
-#, fuzzy, c-format
+#, c-format
 msgid "Generated string %s"
-msgstr "Matrice %s générée"
+msgstr "Chaîne %s générée"
 
 #: lib/src/genmain.c:100
 #: lib/src/genmain.c:103
@@ -2723,9 +2717,8 @@ msgid "loess fit, d = %d, q = %g"
 msgstr "ajustement loess, d = %d, q = %g"
 
 #: lib/src/graphing.c:2230
-#, fuzzy
 msgid "time series by group"
-msgstr "série temporelle"
+msgstr "séries temporelles par groupe"
 
 #: lib/src/graphing.c:2334
 #: lib/src/plotspec.c:547
@@ -2791,9 +2784,9 @@ msgid "forecast"
 msgstr "prévision"
 
 #: lib/src/graphing.c:3253
-#, fuzzy, c-format
+#, c-format
 msgid "Coefficient on %s"
-msgstr "Coefficient"
+msgstr "Coefficient pour %s"
 
 #: lib/src/graphing.c:3277
 #, c-format
@@ -2801,9 +2794,9 @@ msgid "Quantile estimates with %g%% band"
 msgstr "Estimation du quantile avec une bande de %g%%"
 
 #: lib/src/graphing.c:3285
-#, fuzzy, c-format
+#, c-format
 msgid "OLS estimate with %g%% band"
-msgstr "Estimateurs des MCO"
+msgstr "Estimateur des MCO avec bande de %g%%"
 
 #: lib/src/graphing.c:3348
 msgid "+- sqrt(h(t))"
@@ -2837,9 +2830,8 @@ msgstr "résidus de la VAR"
 
 #: lib/src/graphing.c:3809
 #: gui2/gui_utils.c:3367
-#, fuzzy
 msgid "System residuals"
-msgstr "résidus"
+msgstr "résidus du système"
 
 #: lib/src/graphing.c:3983
 msgid "VAR inverse roots in relation to the unit circle"
@@ -2852,9 +2844,9 @@ msgstr "ellipse de confiance 95% et intervalles marginaux 95%"
 
 #: lib/src/graphing.c:4184
 #: lib/src/graphing.c:4185
-#, fuzzy, c-format
+#, c-format
 msgid "adjusted %s"
-msgstr "ajusté"
+msgstr "%s ajusté"
 
 #: lib/src/graphing.c:4247
 #: plugin/range-mean.c:66
@@ -3045,9 +3037,9 @@ msgid "'%s' is the name of a built-in function"
 msgstr "« %s » est le nom d'une série"
 
 #: lib/src/gretl_func.c:2401
-#, fuzzy, c-format
+#, c-format
 msgid "Redefining function '%s'"
-msgstr "Fonction '%s' supprimée\n"
+msgstr "Fonction '%s' redéfinie"
 
 #: lib/src/gretl_func.c:2433
 #, c-format
@@ -3103,9 +3095,8 @@ msgid "Can't do this: some vars in original model have been redefined"
 msgstr "Vous ne pouvez faire cela : quelques variables dans le modèle original ont été redéfinies"
 
 #: lib/src/gretl_matrix.c:171
-#, fuzzy
 msgid "Matrix is not finite"
-msgstr "Échec de l'inversion de la matrice"
+msgstr "Matrice non finie"
 
 #: lib/src/gretl_model.c:2658
 msgid "Test for addition of variables"
@@ -3534,7 +3525,7 @@ msgstr "%d n'est pas un numéro de variable valide"
 #: lib/src/gretl_restrict.c:864
 #, c-format
 msgid "%s: division not allowed here"
-msgstr ""
+msgstr "%s : division non permise ici "
 
 #: lib/src/gretl_restrict.c:902
 #: lib/src/gretl_restrict.c:1323
@@ -3669,9 +3660,9 @@ msgid "You cannot delete '%s'"
 msgstr "You cannot delete '%s'"
 
 #: lib/src/gretl_string_table.c:503
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted string %s"
-msgstr "Matrice %s générée"
+msgstr "Chaîne %s supprimée"
 
 #: lib/src/gretl_string_table.c:611
 #: lib/src/gretl_win32.c:549
@@ -3683,17 +3674,17 @@ msgstr "La ligne de commande n'est pas activée."
 #: lib/src/gretl_string_table.c:772
 #, c-format
 msgid "You cannot overwrite '%s'\n"
-msgstr ""
+msgstr "Vous ne pouvez écrire sur '%s'\n"
 
 #: lib/src/gretl_string_table.c:795
-#, fuzzy, c-format
+#, c-format
 msgid "Generated string %s\n"
-msgstr "Matrice %s générée"
+msgstr "Chaîne %s générée\n"
 
 #: lib/src/gretl_string_table.c:797
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced string %s\n"
-msgstr "Matrice %s remplacée"
+msgstr "Chaîne %s remplacée\n"
 
 #: lib/src/gretl_string_table.c:874
 #: lib/src/interact.c:3831
@@ -4407,9 +4398,8 @@ msgid "Adjusted $\\bar{R}^2$"
 msgstr "$\\bar{R}^2$ ajusté"
 
 #: lib/src/modelprint.c:311
-#, fuzzy
 msgid "Within R-squared"
-msgstr "R2"
+msgstr "R2 intra"
 
 #: lib/src/modelprint.c:324
 #: lib/src/modelprint.c:335
@@ -4471,9 +4461,8 @@ msgstr "HQC"
 
 #: lib/src/modelprint.c:437
 #: lib/src/modelprint.c:439
-#, fuzzy
 msgid "Smallest eigenvalue"
-msgstr "eigenvalue"
+msgstr "Eigenvalue minimale"
 
 #: lib/src/modelprint.c:448
 #: lib/src/modelprint.c:451
@@ -4515,11 +4504,8 @@ msgid "Sum of absolute residuals"
 msgstr "Somme des résidus absolus"
 
 #: lib/src/modelprint.c:628
-#, fuzzy
 msgid "Warning: solution is probably not unique"
-msgstr ""
-"\n"
-"AVERTISSEMENT : la solution n'est probablement pas unique\n"
+msgstr "Averstissement : la solution n'est probablement pas unique"
 
 #: lib/src/modelprint.c:652
 msgid "p-value for"
@@ -5108,9 +5094,9 @@ msgid "scaled %s (Koenker robust variant)"
 msgstr ""
 
 #: lib/src/modelprint.c:1781
-#, fuzzy, c-format
+#, c-format
 msgid "scaled %s"
-msgstr "échelle"
+msgstr "à l'échelle %s"
 
 #: lib/src/modelprint.c:1869
 #: lib/src/modelprint.c:1870
@@ -5267,9 +5253,8 @@ msgid "Upper"
 msgstr "Supérieur"
 
 #: lib/src/modelprint.c:2081
-#, fuzzy
 msgid "tau"
-msgstr "tabulation"
+msgstr "tau"
 
 #: lib/src/modelprint.c:2086
 msgid "Std.\\ Error"
@@ -6586,9 +6571,8 @@ msgstr ""
 "Ceci indique probablement une mauvaise spécification.\n"
 
 #: lib/src/system.c:2643
-#, fuzzy
 msgid "Hansen--Sargan over-identification test"
-msgstr "Test de sur-identification de Hansen-Sargan"
+msgstr "Test de sur-identification de Hansen--Sargan"
 
 #: lib/src/system.c:2647
 msgid "Hansen-Sargan over-identification test"
@@ -6600,9 +6584,8 @@ msgid "LR test for diagonal covariance matrix"
 msgstr "Test LR pour la matrice de covariance diagonale"
 
 #: lib/src/system.c:2691
-#, fuzzy
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr "Test Breusch-Pagan pour la matrice de covariance diagonale"
+msgstr "Test Breusch--Pagan pour la matrice de covariance diagonale"
 
 #: lib/src/system.c:2698
 msgid "Breusch-Pagan test for diagonal covariance matrix"
@@ -7381,9 +7364,9 @@ msgid "Poisson(%g)"
 msgstr "Poisson(%g)"
 
 #: gui2/calculator.c:195
-#, fuzzy, c-format
+#, c-format
 msgid "Weibull(%g, %g)"
-msgstr "N(%g, %g)"
+msgstr "Weibull(%g, %g)"
 
 #: gui2/calculator.c:401
 msgid "Standard errors"
@@ -7695,9 +7678,8 @@ msgid "trials"
 msgstr "épreuves"
 
 #: gui2/calculator.c:1985
-#, fuzzy
 msgid "sample size, n"
-msgstr "taille de l'échantillon"
+msgstr "taille de l'échantillon, n"
 
 #: gui2/calculator.c:1986
 #, fuzzy
@@ -8080,6 +8062,8 @@ msgid ""
 "Enter formula for new variable\n"
 "(or just a name, to enter data manually)"
 msgstr ""
+"Entrer la formule pour la nouvelle variable\n"
+"(ou juste le nom, pour saisir manuellement les donnée)"
 
 #: gui2/callbacks.c:426
 #: gui2/callbacks.c:431
@@ -8817,7 +8801,7 @@ msgstr "Germe pour le générateur :"
 #: gui2/dialogs.c:1829
 #, c-format
 msgid "Included groups: %d"
-msgstr ""
+msgstr "groupes inclus : %d"
 
 #: gui2/dialogs.c:1831
 #, c-format
@@ -8825,9 +8809,8 @@ msgid "Observations: %d"
 msgstr "Observations : %d"
 
 #: gui2/dialogs.c:1902
-#, fuzzy
 msgid "Panel groups"
-msgstr "modèle de panel"
+msgstr "Groupes de panel"
 
 #: gui2/dialogs.c:1909
 #: gui2/dialogs.c:2098
@@ -8901,23 +8884,20 @@ msgid "End"
 msgstr "Fin"
 
 #: gui2/dialogs.c:2330
-#, fuzzy
 msgid "error bars"
-msgstr "erreur"
+msgstr "barres d'erreur"
 
 #: gui2/dialogs.c:2331
-#, fuzzy
 msgid "low and high lines"
-msgstr "ligne de commande"
+msgstr "ligne minimales et maximales"
 
 #: gui2/dialogs.c:2332
 msgid "shaded area"
-msgstr ""
+msgstr "aire ombrée"
 
 #: gui2/dialogs.c:2355
-#, fuzzy
 msgid "Plot confidence interval using"
-msgstr "intervalle de confiance 95%"
+msgstr "Tracer l'intervalle de confiance en utilisant"
 
 #: gui2/dialogs.c:2417
 msgid "Add observations"
@@ -9626,9 +9606,8 @@ msgid "program files (*.exe)"
 msgstr "fichiers programme (*.exe)"
 
 #: gui2/fileselect.c:697
-#, fuzzy
 msgid "GNU R files (*.*)"
-msgstr "fichiers GNU R (*.R)"
+msgstr "fichiers GNU R (*.*)"
 
 #: gui2/fileselect.c:825
 msgid "File dialog box error"
@@ -9877,9 +9856,8 @@ msgid "Edit function code"
 msgstr "Editer le code de la fonction"
 
 #: gui2/fnsave.c:715
-#, fuzzy
 msgid "Save as script"
-msgstr "Sauvegarder le script de commandes"
+msgstr "Sauvegarder comme script"
 
 #: gui2/fnsave.c:724
 #, fuzzy
@@ -10139,7 +10117,7 @@ msgstr "Afficher toutes les étiquettes de données"
 
 #: gui2/gpt_dialog.c:947
 msgid "Allow anti-aliasing of lines"
-msgstr ""
+msgstr "Permettre l'anti-aliasing des lignes"
 
 #: gui2/gpt_dialog.c:975
 #: gui2/gpt_dialog.c:977
@@ -10217,9 +10195,8 @@ msgid "manual range:"
 msgstr "étendue manuelle :"
 
 #: gui2/gpt_dialog.c:1516
-#, fuzzy
 msgid "linear scale"
-msgstr "échelle logarithmique"
+msgstr "échelle linéaire"
 
 #: gui2/gpt_dialog.c:1524
 msgid "logarithmic scale, base:"
@@ -10446,19 +10423,16 @@ msgid "/File/Script files/_New script"
 msgstr "/Fichier/Script/_Nouveau script"
 
 #: gui2/gretl.c:270
-#, fuzzy
 msgid "/File/Script files/_New script/gretl script"
-msgstr "/Fichier/Script/_Nouveau script"
+msgstr "/Fichier/Script/_Nouveau script/Script gretl"
 
 #: gui2/gretl.c:271
-#, fuzzy
 msgid "/File/Script files/_New script/gnuplot script"
-msgstr "/Fichier/Script/_Nouveau script"
+msgstr "/Fichier/Script/_Nouveau script/Script gnuplot"
 
 #: gui2/gretl.c:272
-#, fuzzy
 msgid "/File/Script files/_New script/R script"
-msgstr "/Fichier/Script/_Nouveau script"
+msgstr "/Fichier/Script/_Nouveau script/Script R"
 
 #: gui2/gretl.c:276
 msgid "/File/_Session files"
@@ -10839,9 +10813,8 @@ msgid "/Sample/R_andom sub-sample..."
 msgstr "/Échantillon/Sous-échantillons _aléatoires..."
 
 #: gui2/gretl.c:447
-#, fuzzy
 msgid "/Sample/_Resample with replacement..."
-msgstr "/Échantillon/Définir l'étendue..."
+msgstr "/Échantillon/_Ré-échantillonner avec remise..."
 
 #: gui2/gretl.c:449
 msgid "/Sample/Drop all obs with _missing values"
@@ -11045,9 +11018,8 @@ msgid "/Model/Robust estimation/Least _Absolute Deviation..."
 msgstr "/Modèle/Estimation robuste/Moindre Déviations _Absolues..."
 
 #: gui2/gretl.c:525
-#, fuzzy
 msgid "/Model/Robust estimation/_Quantile regression..."
-msgstr "/Modèle/Estimation robuste/Corrélation de _Rang..."
+msgstr "/Modèle/Estimation robuste/Régression de _Quantile..."
 
 #: gui2/gretl.c:527
 msgid "/Model/Robust estimation/_Rank correlation..."
@@ -11082,9 +11054,8 @@ msgid "/Help/Command reference/_PDF"
 msgstr "/Aide/Index des commandes/_PDF"
 
 #: gui2/gretl.c:540
-#, fuzzy
 msgid "/Help/Function reference"
-msgstr "/Aide/Index des commandes"
+msgstr "/Aide/Référence des fonctions"
 
 #: gui2/gretl.c:541
 msgid "/Help/_User's guide"
@@ -11422,9 +11393,9 @@ msgstr "intervalle de confiance 95%"
 
 #: gui2/guiprint.c:1906
 #: gui2/guiprint.c:1957
-#, fuzzy, c-format
+#, c-format
 msgid "%g\\%% confidence interval"
-msgstr "intervalle de confiance 95\\%"
+msgstr "intervalle de confiance à %g\\%%"
 
 #: gui2/guiprint.c:2164
 #: gui2/selector.c:4926
@@ -11500,24 +11471,20 @@ msgid "/Tests/_Heteroskedasticity"
 msgstr "/Tests/_Hétéroscédasticité"
 
 #: gui2/gui_utils.c:271
-#, fuzzy
 msgid "/Tests/Heteroskedasticity/White's test"
-msgstr "Hétéroscédasticité (test de _White)"
+msgstr "/Tests/Hétéroscédasticité/Test de White"
 
 #: gui2/gui_utils.c:272
-#, fuzzy
 msgid "/Tests/Heteroskedasticity/White's test (squares only)"
-msgstr "Hétéroscédasticité (test de _White)"
+msgstr "/Tests/Hétéroscédasticité/Test de White (carré seulement)"
 
 #: gui2/gui_utils.c:273
-#, fuzzy
 msgid "/Tests/Heteroskedasticity/Breusch-Pagan"
-msgstr "/Tests/_Hétéroscédasticité"
+msgstr "/Tests/Hétéroscédasticité/Breusch-Pagan"
 
 #: gui2/gui_utils.c:274
-#, fuzzy
 msgid "/Tests/Heteroskedasticity/Koenker"
-msgstr "/Tests/_Hétéroscédasticité"
+msgstr "/Tests/Hétéroscédasticité/Koenker"
 
 #: gui2/gui_utils.c:275
 msgid "/Tests/_Normality of residual"
@@ -11742,9 +11709,8 @@ msgid "Nothing to send"
 msgstr "Rien à envoyer"
 
 #: gui2/gui_utils.c:1757
-#, fuzzy
 msgid "Confidence level, percent"
-msgstr "Intervalle de confiance"
+msgstr "Intervalle de confiance, pourcentage"
 
 #: gui2/gui_utils.c:1778
 msgid "Running a script replaces text"
@@ -11807,14 +11773,12 @@ msgid "Scripts index"
 msgstr "Index des scripts"
 
 #: gui2/gui_utils.c:1820
-#, fuzzy
 msgid "Confidence level..."
-msgstr "Intervalle de confiance"
+msgstr "Intervalle de confiance..."
 
 #: gui2/gui_utils.c:1821
-#, fuzzy
 msgid "Refresh"
-msgstr "séries"
+msgstr "Rafraîchir"
 
 #: gui2/gui_utils.c:1822
 msgid "LaTeX"
@@ -11834,7 +11798,7 @@ msgstr "Ajouter comme matrice..."
 
 #: gui2/gui_utils.c:1827
 msgid "Stickiness..."
-msgstr ""
+msgstr "Stickiness..."
 
 #: gui2/gui_utils.c:1828
 msgid "Help on command"
@@ -11845,23 +11809,20 @@ msgid "Send to gnuplot"
 msgstr "Envoyer à gnuplot"
 
 #: gui2/gui_utils.c:1999
-#, fuzzy
 msgid "Send to R"
-msgstr "Envoyer à gnuplot"
+msgstr "Envoyer à R"
 
 #: gui2/gui_utils.c:2155
 msgid "gretl: help"
 msgstr "gretl : aide"
 
 #: gui2/gui_utils.c:2157
-#, fuzzy
 msgid "gretl: function reference"
-msgstr "Index des commandes"
+msgstr "gretl : index des fonctions"
 
 #: gui2/gui_utils.c:2159
-#, fuzzy
 msgid "gretl: command reference"
-msgstr "Index des commandes"
+msgstr "gretl : index des commandes"
 
 #: gui2/gui_utils.c:2165
 msgid "gretl: command log"
@@ -11885,9 +11846,8 @@ msgid "gretl: edit plot commands"
 msgstr "gretl : édition des commandes de traçage"
 
 #: gui2/gui_utils.c:2183
-#, fuzzy
 msgid "gretl: edit R commands"
-msgstr "gretl : édition des commandes de traçage"
+msgstr "gretl : édition de commandes R"
 
 #: gui2/gui_utils.c:2185
 msgid "gretl: script output"
@@ -12026,23 +11986,20 @@ msgid "%s/By %s"
 msgstr "%s/Par %s"
 
 #: gui2/gui_utils.c:3277
-#, fuzzy
 msgid "/Graphs/tau sequence"
-msgstr "/Graphes/dumsep"
+msgstr "/Graphes/séquence tau"
 
 #: gui2/gui_utils.c:3359
 msgid "gretl: VAR covariance matrix"
 msgstr "gretl : matrice de covariance du modèle VAR"
 
 #: gui2/gui_utils.c:3362
-#, fuzzy
 msgid "gretl: system covariance matrix"
-msgstr "gretl : matrice de covariance du modèle VAR"
+msgstr "gretl : matrice de covariance du système"
 
 #: gui2/gui_utils.c:3368
-#, fuzzy
 msgid "System fitted values"
-msgstr "Valeurs prédites"
+msgstr "Valeurs prédites du système"
 
 #: gui2/gui_utils.c:3440
 #: gui2/gui_utils.c:3537
@@ -12235,9 +12192,8 @@ msgid "Couldn't fork"
 msgstr "Ne peut faire un fork()"
 
 #: gui2/gui_utils.c:4437
-#, fuzzy
 msgid "R output"
-msgstr "Sortie réduite"
+msgstr "Sortie R"
 
 #: gui2/helpfiles.c:78
 #: gui2/helpfiles.c:1008
@@ -12584,9 +12540,8 @@ msgid "gretl: CUSUMSQ test output"
 msgstr "gretl : résultat du test CUSUMSQ"
 
 #: gui2/library.c:2081
-#, fuzzy
 msgid "all variants"
-msgstr "variante"
+msgstr "toutes variantes"
 
 #: gui2/library.c:2092
 #: gui2/library.c:2133
@@ -12633,14 +12588,14 @@ msgid "gretl: residual dist."
 msgstr "gretl : distribution des résidus"
 
 #: gui2/library.c:3650
-#, fuzzy, c-format
+#, c-format
 msgid "range %g to %g"
-msgstr "Fixer la tolérance à %g"
+msgstr "intervalle %g à %g"
 
 #: gui2/library.c:3651
 #, c-format
 msgid "%s (n = %d, %s)"
-msgstr ""
+msgstr "%s (n = %d, %s)"
 
 #: gui2/library.c:3655
 #: gui2/library.c:3709
@@ -12835,23 +12790,20 @@ msgid "Cannot delete all of the specified variables"
 msgstr "Ne peut détruire toutes les variables spécifiées"
 
 #: gui2/library.c:4980
-#, fuzzy
 msgid "use a single graph"
-msgstr "sur un seul graphique"
+msgstr "utiliser un seul graphique"
 
 #: gui2/library.c:4981
-#, fuzzy
 msgid "multiple plots in grid"
-msgstr "traçés de dispersion multiples"
+msgstr "graphiques en grille"
 
 #: gui2/library.c:4982
 msgid "multiple plots arranged vertically"
-msgstr ""
+msgstr "tracés multiples alignés verticalement"
 
 #: gui2/library.c:4986
-#, fuzzy
 msgid "Panel time-series graph"
-msgstr "données de séries temporelles"
+msgstr "Graphique de séries temporelles en panel"
 
 #: gui2/library.c:5117
 msgid ""
@@ -12881,9 +12833,8 @@ msgid "on a single graph"
 msgstr "sur un seul graphique"
 
 #: gui2/library.c:5321
-#, fuzzy
 msgid "in separate small graphs"
-msgstr "Créer un graphique"
+msgstr "sur des graphiques séparés"
 
 #: gui2/library.c:5325
 msgid "Plot the series"
@@ -12891,23 +12842,20 @@ msgstr "Tracer les séries"
 
 #: gui2/library.c:5533
 msgid "Non-interactive (just get output)"
-msgstr ""
+msgstr "Non interactif (juste obtenir le résultat)"
 
 #: gui2/library.c:5534
-#, fuzzy
 msgid "Interactive R session"
-msgstr "Sauvegarder la session"
+msgstr "Session R interactive"
 
 #: gui2/library.c:5540
 #: gui2/library.c:5544
-#, fuzzy
 msgid "R mode"
-msgstr "modèle"
+msgstr "mode R"
 
 #: gui2/library.c:5542
-#, fuzzy
 msgid "pre-load data"
-msgstr "gretl: chargement des données"
+msgstr "pré-charger les données"
 
 #: gui2/library.c:5703
 #, c-format
@@ -12984,18 +12932,16 @@ msgid "Descending"
 msgstr "Déscendant"
 
 #: gui2/library.c:5860
-#, fuzzy
 msgid "resample dataset"
-msgstr "ouvrir un jeu de données de gretl"
+msgstr "ré-échantillonner base de données"
 
 #: gui2/library.c:5862
 msgid "Resampling with replacement"
 msgstr "Ré-échantillonage avec remise"
 
 #: gui2/library.c:5863
-#, fuzzy
 msgid "Number of cases"
-msgstr "Nombre de variables :"
+msgstr "Nombre de cas"
 
 #: gui2/library.c:5889
 msgid "OK to overwrite?"
@@ -13426,14 +13372,13 @@ msgid "Restricted"
 msgstr "Restreint"
 
 #: gui2/selector.c:1020
-#, fuzzy
 msgid "add exogenous variable"
-msgstr "Variables exogènes"
+msgstr "ajouter une variable exogène"
 
 #: gui2/selector.c:1021
 #, c-format
 msgid "Status of '%s' in VECM:"
-msgstr ""
+msgstr "Statut de '%s' dans VECM"
 
 #: gui2/selector.c:1511
 msgid "You must select an X-axis variable"
@@ -13452,14 +13397,12 @@ msgid "You must select a dependent variable"
 msgstr "Vous devez sélectionner une variable dépendante"
 
 #: gui2/selector.c:1994
-#, fuzzy
 msgid "You must specify a quantile"
-msgstr "Vous devez spécifier une interface publique"
+msgstr "Vous devez spécifier un quantile"
 
 #: gui2/selector.c:2007
-#, fuzzy
 msgid "Invalid quantile specification"
-msgstr "Spécification NLS invalide"
+msgstr "Spécification du quantile invalide"
 
 #: gui2/selector.c:2045
 msgid "You must select a weight variable"
@@ -13470,9 +13413,8 @@ msgid "You must specify a list of lags"
 msgstr "Vous devez spécifier une liste de retards"
 
 #: gui2/selector.c:2051
-#, fuzzy
 msgid "You must specify a selection variable"
-msgstr "Vous devez spécifier un ensemble de variables instrumentales"
+msgstr "Vous devez spécifier une variable de sélection"
 
 #: gui2/selector.c:2151
 msgid "You must select a Z-axis variable"
@@ -13483,9 +13425,8 @@ msgid "You must select a factor variable"
 msgstr "Vous devez sélectionner une variable facteur"
 
 #: gui2/selector.c:2155
-#, fuzzy
 msgid "You must select a control variable"
-msgstr "Vous devez sélectionner une variable facteur"
+msgstr "Vous devez sélectionner une variable de contrôle"
 
 #: gui2/selector.c:2236
 msgid "You must select two or more endogenous variables"
@@ -13540,9 +13481,8 @@ msgid "VAR lag selection"
 msgstr "Sélection du retard pour le VAR"
 
 #: gui2/selector.c:2416
-#, fuzzy
 msgid "Quantile regression"
-msgstr "Régression de Dickey-Fuller"
+msgstr "Régression de quantile"
 
 #: gui2/selector.c:2419
 msgid "Cointegration"
@@ -13561,9 +13501,8 @@ msgid "Offset variable"
 msgstr "Variable de décalage"
 
 #: gui2/selector.c:2437
-#, fuzzy
 msgid "Selection variable"
-msgstr "choissisez une variable"
+msgstr "Variable de sélection"
 
 #: gui2/selector.c:2439
 msgid "List of AR lags"
@@ -13631,9 +13570,8 @@ msgid "Factor (dummy)"
 msgstr "Facteur (variable muette)"
 
 #: gui2/selector.c:2747
-#, fuzzy
 msgid "Control variable"
-msgstr "Aucune variable obtenue"
+msgstr "Variable de contrôle"
 
 #: gui2/selector.c:2781
 msgid "Exogenous variables"
@@ -13687,14 +13625,12 @@ msgstr "Ordre MA :"
 
 #: gui2/selector.c:3204
 #: gui2/selector.c:3223
-#, fuzzy
 msgid "or specific lags"
-msgstr "retards particuliers"
+msgstr "ou retards particuliers"
 
 #: gui2/selector.c:3371
-#, fuzzy
 msgid "Robust standard errors/intervals"
-msgstr "Erreurs standard robustes"
+msgstr "Écarts types / intervalles robustes"
 
 #: gui2/selector.c:3395
 msgid "configure"
@@ -13746,9 +13682,8 @@ msgid "Show zeros explicitly"
 msgstr "Montrer les zéros"
 
 #: gui2/selector.c:3466
-#, fuzzy
 msgid "Show rankings"
-msgstr "Montrer les détails"
+msgstr "Montrer les rangs"
 
 #: gui2/selector.c:3469
 #, fuzzy
@@ -13773,19 +13708,16 @@ msgid "Show lagged variables"
 msgstr "Afficher les les variables retardées"
 
 #: gui2/selector.c:3615
-#, fuzzy
 msgid "Compute standard errors"
-msgstr "Erreurs standard robustes"
+msgstr "Calculer les écarts type "
 
 #: gui2/selector.c:3620
-#, fuzzy
 msgid "Compute confidence intervals"
-msgstr "Intervalle de confiance"
+msgstr "Calculer les intervalles de confiance"
 
 #: gui2/selector.c:3641
-#, fuzzy
 msgid "Confidence level"
-msgstr "Intervalle de confiance"
+msgstr "Seuil de confiance"
 
 #: gui2/selector.c:3659
 msgid "Spearman's rho"
@@ -13796,14 +13728,12 @@ msgid "Kendall's tau"
 msgstr "tau de Kendall"
 
 #: gui2/selector.c:3675
-#, fuzzy
 msgid "Use correlation matrix"
-msgstr "matrice de corrélation"
+msgstr "Utiliser la matrice de corrélation"
 
 #: gui2/selector.c:3679
-#, fuzzy
 msgid "Use covariance matrix"
-msgstr "Matrice de covariance"
+msgstr "Utiliser la matrice de covariance"
 
 #: gui2/selector.c:3691
 msgid "Show slopes at mean"
@@ -13834,6 +13764,8 @@ msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
 msgstr ""
+"Elimination séquentielle des variables\n"
+"à l'aide des prob. critiques :"
 
 #: gui2/selector.c:3779
 msgid "Fixed effects"
@@ -13857,9 +13789,8 @@ msgid "Maximum likelihood estimation"
 msgstr "Estimation pa maximum de vraisemblance"
 
 #: gui2/selector.c:3827
-#, fuzzy
 msgid "Plain numerical values"
-msgstr "Valeurs numériques"
+msgstr "Valeurs numériques non formatées"
 
 #: gui2/selector.c:3831
 msgid "Show row percentages"
@@ -13915,9 +13846,8 @@ msgid "factorized plot"
 msgstr "tracé factorisé"
 
 #: gui2/selector.c:4113
-#, fuzzy
 msgid "scatterplot with control"
-msgstr "test avec constante"
+msgstr "nuage de points avec contrôle"
 
 #: gui2/selector.c:4115
 msgid "functions to package"
@@ -13976,9 +13906,8 @@ msgid "Select two variables"
 msgstr "Sélectionnez deux variables"
 
 #: gui2/selector.c:4370
-#, fuzzy
 msgid "Confidence region: select two variables"
-msgstr "Sélectionnez deux variables"
+msgstr "Région de confiance : sélectionnez deux variables"
 
 #: gui2/selector.c:4372
 msgid "Select variables to display"
@@ -14208,9 +14137,9 @@ msgid "Please close this object's window first"
 msgstr "SVP fermer la fenêtre de cet objet d'abord"
 
 #: gui2/session.c:2021
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': there is already an object of this name"
-msgstr "« %s » : il y a déjà une variable portant ce nom"
+msgstr "'%s' : il y a déjà une variable portant ce nom"
 
 #: gui2/session.c:2057
 msgid "gretl: rename object"
@@ -14562,9 +14491,8 @@ msgid "gretl: graph color selection"
 msgstr "gretl : sélection de la couleur du graphique"
 
 #: gui2/settings.c:2299
-#, fuzzy
 msgid "gretl working directory"
-msgstr "gretl : répertoire de travail"
+msgstr "répertoire de travail gretl"
 
 #: gui2/settings.c:2322
 msgid "Working directory:"
@@ -14727,9 +14655,9 @@ msgid "No series to edit"
 msgstr "Pas de série à éditer"
 
 #: gui2/ssheet.c:2143
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: series %s is empty"
-msgstr "AVERTISSEMENT: des observations sont manquantes dans la série"
+msgstr "Avertissement : série %s est vide"
 
 #: gui2/ssheet.c:2305
 msgid "gretl: edit matrix"
@@ -15286,12 +15214,11 @@ msgstr "P(Chi-Square(%d) > %g) = %g\n"
 #: plugin/jrestrict.c:1242
 #, c-format
 msgid "Switching algorithm: %d iterations"
-msgstr ""
+msgstr "Switching algorithm: %d itérations"
 
 #: plugin/jrestrict.c:1244
-#, fuzzy
 msgid "user-supplied initial values"
-msgstr "Valeurs critiques"
+msgstr "Valeurs initiales indiquées par l'utilisateur"
 
 #: plugin/jrestrict.c:1821
 #, c-format
@@ -15782,19 +15709,19 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
-msgstr ""
+msgstr "Création et I/O"
 
 #: doc/commands/matfuncs.c:51
 msgid "Shape/size/arrangement"
-msgstr ""
+msgstr "Algèbre matricielle"
 
 #: doc/commands/matfuncs.c:52
 msgid "Element by element"
-msgstr ""
+msgstr "Élément par élément"
 
 #: doc/commands/matfuncs.c:53
 msgid "Matrix algebra"
-msgstr ""
+msgstr "Algèbre matricielle"
 
 #: doc/commands/matfuncs.c:54
 msgid "Statistics/transformations"
@@ -15818,7 +15745,7 @@ msgstr "Chaîne de texte"
 
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
-msgstr ""
+msgstr "Accessors"
 
 #~ msgid "Loop count must be positive."
 #~ msgstr "Compteur de boucle doit être positif."
