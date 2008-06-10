@@ -102,7 +102,7 @@ gint get_char_width (GtkWidget *widget)
     pango_context_set_font_description(pc, style->font_desc);
 
     pl = pango_layout_new(pc);
-    pango_layout_set_text(pl, "X", 1);
+    pango_layout_set_text(pl, "X", -1);
     pango_layout_get_pixel_size(pl, &width, NULL);
 
     g_object_unref(G_OBJECT(pl));
@@ -133,6 +133,9 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    if (tbuf == NULL) {
+	return NULL;
+    }
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	*sel = 1;
@@ -271,7 +274,7 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
 
-    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", 0);
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", -1);
     gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
 
     memset(fline, 0, sizeof fline);
@@ -322,7 +325,7 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
     GtkTextIter iter;   
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
-    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", 0);
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", -1);
     gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
 
     bufgets_init(buf);
