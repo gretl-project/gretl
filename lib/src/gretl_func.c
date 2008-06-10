@@ -2585,7 +2585,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     while (isspace(*s)) s++;
     len = gretl_varchar_spn(s);
     if (len == 0) {
-	sprintf(gretl_errmsg, "parameter %d: name is missing", i);
+	sprintf(gretl_errmsg, "parameter %d: name is missing", i + 1);
 	err = E_PARSE;
     } else {
 	name = gretl_strndup(s, len);

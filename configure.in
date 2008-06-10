@@ -677,7 +677,6 @@ Configuration:
   Use LaTeX for typesetting output:       ${have_latex}
   Gnu Multiple Precision support:         ${have_gmp}
   MPFR support:                           ${have_mpfr}
-  LAPACK support:                         ${have_lapack}
   FFTW3 support:                          ${have_fftw3}
   Build with GTK version:                 ${have_gtk}
   Use GTK printing apparatus:             ${have_gtkprint}
@@ -691,6 +690,8 @@ Configuration:
   TRAMO/SEATS support:                    ${have_tramo}
   Experimental audio support:             ${have_audio}
   Experimental ODBC support:              ${have_odbc}
+  LAPACK libraries:
+    ${LAPACK_LIBS}
 
 Now type '$MAKE' to build gretl.
 "
