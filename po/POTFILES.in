@@ -23,6 +23,7 @@ lib/src/graphing.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c
 lib/src/gretl_fft.c
+lib/src/gretl_foreign.c
 lib/src/gretl_func.c
 lib/src/gretl_intl.c
 lib/src/gretl_list.c
@@ -132,7 +133,6 @@ plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/heckit.c
 plugin/import_common.c
-plugin/infomat.c
 plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
