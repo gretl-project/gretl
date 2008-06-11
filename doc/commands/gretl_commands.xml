@@ -8564,7 +8564,7 @@
 	series uh1 = $uhat[,1]
       </code>
 
-      <para>
+      <para context="cli">
 	The structural-form matrices correspond to the following
 	representation of a simultaneous equations model:
 	<equation status="display"
