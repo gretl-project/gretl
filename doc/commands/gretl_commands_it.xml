@@ -618,8 +618,8 @@
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
         <option>
-         <flag>--hessian</flag>
-	 <effect>calcola la matrice di covarianza a partire dall'Hessiana</effect>
+         <flag>--opg</flag>
+	 <effect>si veda sotto</effect>
         </option>
         <option>
          <flag>--nc</flag>
@@ -734,9 +734,10 @@
 
       <para context="cli">
         Quando si usa il codice ARMA interno, le deviazioni standard sono stimate
-        col metodo del prodotto esterno del gradiente, ma se si usa l'opzione
-        <lit>--hessian</lit> viene usata l'inversa negativa dell'Hessiana (che
-        è approssimata numericamente).
+        basandosi su un'approssimazione numerica all'inversa negativa dell'Hessiana.
+        Se si usa l'opzione <lit>--opg</lit> viene invece usato il prodotto
+        esterno del gradiente. L'opzione è ignorata se si sceglie la stima con
+        <program>X-12-ARIMA</program>.
       </para>
 
       <para>
@@ -2830,16 +2831,23 @@
       </para>
 
       <para>
-        La variabile <lit>t</lit> serve da indice per le osservazioni.
-	Ad esempio, <lit>genr dum = (t=15)</lit> crea una variabile dummy
-	che vale 1 per l'osservazione 15 e 0 altrove. La variabile
-        <lit>obs</lit> è simile ma più flessibile: è possibile usarla per
-        isolare alcune osservazioni indicandole con un numero (a partire da 1),
-        una data, o un nome. Quando si usa una data o un nome dell'osservazione,
-        questi vanno racchiusi tra virgolette doppie: ad esempio
-        <lit>genr d = (obs&gt;"1986:4")</lit> o <lit>genr d = (obs="CA")</lit>.
-        L'ultima forma assume che siano state definite delle etichette per le
-        osservazioni.
+        La variabile speciale <lit>t</lit> serve da indice per le osservazioni
+        (<lit>obs</lit> è un sinonimo).  Ad esempio, <lit>genr dum =
+        (t=15)</lit> crea una variabile dummy che vale 1 per l'osservazione 15 e
+        0 altrove. È anche possibile usare questa variabile per selezionare
+        alcune osservazioni particolari secondo la data o il nome. Ad esempio
+	<lit>genr d = (obs&gt;1986:4)</lit>, <lit>genr d = (obs&gt;"2008/04/01")</lit>,
+        <lit>genr d = (obs="CA")</lit>.  Quando si usa una data o un nome
+        dell'osservazione, questi vanno racchiusi tra virgolette doppie, mentre
+        non è strettamente necessario farlo per le date trimestrali e mensili.
+      </para>
+
+      <para>
+	Nota: quando si usa <lit>t</lit> e <lit>obs</lit> con serie storiche
+        annuali, il valore corrisponde sempre all'anno dell'osservazione. Quindi
+        se si hanno dati annuali che iniziano nel 1970, l'osservazione per il
+        1980 corrisponde a <lit>t=1980</lit>, non a <lit>t=10</lit>. Con dati
+        trimestrali o mensili, invece, <lit>t=10</lit> corrisponde alla decima osservazione.
       </para>
 
       <para>
@@ -3691,6 +3699,9 @@
       </options>      
       <examples>
         <example>heckit y 0 x1 x2 ; ys 0 x3 x4</example>
+	<demos>
+	  <demo>heckit.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -4318,6 +4329,10 @@
 	  <effect>eteroschedasticità, test di White</effect>
         </option>
         <option>
+	  <flag>--white-nocross</flag>
+	  <effect>eteroschedasticità, test di White (solo quadrati)</effect>
+        </option>
+        <option>
 	  <flag>--breusch-pagan</flag>
 	  <effect>eteroschedasticità, test di Breusch&ndash;Pagan</effect>
         </option>
@@ -4357,7 +4372,8 @@
       <para>
         Deve seguire immediatamente un comando di stima. A seconda dell'opzione
         usata, il comando esegue uno dei test seguenti: test dei moltiplicatori
-        di Lagrange per la non-linearità (logaritmi o quadrati), test di White o
+        di Lagrange per la non-linearità (logaritmi o quadrati), test di White
+        (con o senza i prodotti incrociati) o
         test di Breusch&ndash;Pagan per l'eteroschedasticità, test LMF per la
         correlazione seriale (si veda Kiviet, 1986) o test per il modello ARCH
         (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
@@ -5301,6 +5317,50 @@
     </gui-access>
 
   </command>
+ 
+  <command name="normtest" section="Tests"
+    label="Test di normalità">
+
+    <usage>
+      <arguments>
+        <argument>series</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--dhansen</flag>
+	  <effect>Test Doornik&ndash;Hansen</effect>
+        </option>
+	<option>
+	  <flag>--swilk</flag>
+	  <effect>Test di Shapiro&ndash;Wilk</effect>
+        </option>
+	<option>
+	  <flag>--jbera</flag>
+	  <effect>Test di Jarque&ndash;Bera</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Non mostra i risultati</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Conduce un test di normalità per la <repl>serie</repl> specificata. Il
+        tipo di test eseguito è determinato dalle opzioni del comando (se non ne
+        viene usata alcuna, viene eseguito il test di Doornik&ndash;Hansen). Si
+        noti che il test di Jarque&ndash;Bera test, sebbene semplice da
+        calcolare, ha un'accuratezza relativamente bassa in campioni limitati,
+        quindi se ne raccomanda l'uso principalmente a scopo di confronto.
+      </para>
+      <para>
+	La statistica test e il suo p-value possono essere recuperati usando gli
+        accessori <lit>$test</lit> e <lit>$pvalue</lit>.
+      </para>
+    </description>
+
+  </command>
 
   <command name="nulldata" section="Dataset"
     label="Creazione di un dataset vuoto">
@@ -5467,6 +5527,7 @@
  	</option>
         <option>
          <flag>--auto</flag>
+	 <optparm>alpha</optparm>
          <effect>eliminazione sequenziale, si veda oltre</effect>
        </option>
         <option>
@@ -6488,21 +6549,108 @@
         <argument>variabili-indipendenti</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+        </option>
+        <option>
+	  <flag>--intervals</flag>
+	  <optparm>level</optparm>
+	  <effect>calcola gli intervalli di confidenza</effect>
+        </option>
         <option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
       </options>
+      <examples>
+	<example>quantreg 0.25 y 0 xlist</example>
+	<example>quantreg 0.5 y 0 xlist --intervals</example>
+	<example>quantreg 0.5 y 0 xlist --intervals=.95</example>
+	<example>quantreg tauvec y 0 xlist --robust</example>
+      </examples>
+	<demos>
+	  <demo>mrw_qr.inp</demo>
+	</demos>
     </usage>
 
-    <description>
+    <description context="gui">
       <para>
-	SPERIMENTALE; la sintassi non è definitiva. Per ora, <repl>tau</repl>,
-        il quantile desiderato, deve essere un numero nell'intervallo da 0.01 a
-	0.99. Scegliendo un <repl>tau</repl> di 0.5 si dovrebbero ottenere gli
-        stessi risultati del comando <cmd>lad</cmd>.
+        Regressione quantile. Per impostazione predefinita, gli errori standard
+        sono calcolati con la formula asintotica di Koenker e Bassett
+        (<book>Econometrica</book>, 1978), ma se si attiva la casella
+        <quote>robusto</quote>, verrà usata la variante robusta per
+        l'eteroschedasticità di Koenker e Zhao (<book>Journal of Nonparametric
+        Statistics</book>, 1994).
+      </para>
+      <para>
+	Se si abilita l'opzione <quote>Calcola intervalli di confidenza</quote>,
+	gretl calcolerà gli intervalli di confidenza invece degli errori
+        standard. La casella <quote>robust</quote> mantiene il suo effetto: se
+        non è selezionata, gli intervalli sono calcolati nell'ipotesi di errori
+        IID, altrimenti gretl usa lo stimatore robusto sviluppato da
+	Koenker e Machado (<book>Journal of the American
+	Statistical Association</book>, 1999).  Si noti che questi intervalli
+        non sono calcolati semplicemente aggiungendo e sottraendo un certo numero
+        di errori standard: in generale sono asimmetrici rispetto alle stime
+        puntuali dei parametri.
+      </para>	
+      <para>
+	È possibile indicare un elenco di quantili (il menù a discesa contiene
+        alcune possibilità predefinite), e in tal caso gretl calcolerà stime
+        quantili ed errori standard o intervalli di confidenza per ognuno dei
+        valori specificati.
+      </para>
+      <para>
+	Per un approfondimento, si veda la <guideref targ="chap:quantreg"/>.
       </para>
     </description>
+
+    <description context="cli">
+      <para>
+        Regressione quantile. Il primo argomento, <repl>tau</repl>, è il
+        quantile condizionale per cui si desiderano le stime. Può essere un
+        valore numerico o il nome di una variabile scalare predefinita; il
+        valore deve essere compreso nell'intervallo da 0.01 a 0.99 (in
+        alternativa, può essere indicato un vettore di valori, si veda sotto per
+        i dettagli). Gli argomenti dal secondo in poi compongono un elenco di
+        regressori sul modello di quello usato in <cmdref targ="ols"/>.
+      </para>
+      <para>
+        Senza l'opzione <lit>--intervals</lit>, vengono mostrati gli errori
+        standard per le stime quantili; questi sono calcolati con la formula
+        asintotica di Koenker e Bassett (1978), ma se si usa l'opzione
+        <lit>--robust</lit>, verrà usata la variante robusta per
+        l'eteroschedasticità di Koenker e Zhao (1994).
+      </para>
+      <para>
+        Se si usa l'opzione <lit>--intervals</lit>, gretl calcolerà gli
+        intervalli di confidenza invece degli errori standard.  Questi
+        intervalli sono calcolati col metodo dell'inversione del rango e in
+        generale sono asimmetrici rispetto alle stime puntuali dei parametri.
+        Se non si usa l'opzione <quote>--robust</quote>, gli intervalli sono
+        calcolati nell'ipotesi di errori IID (Koenker, 1994), mentre se viene
+        indicata, sono calcolati con lo stimatore robusto sviluppato da Koenker
+        e Machado (1999).
+      </para>
+      <para>
+	Per impostazione predefinita vengono prodotti intervalli di confidenza
+        al 90%. È possibile specificare un altro livello di confidenza (sotto
+        forma di frazione decimale), aggiungendolo all'opzione, come in
+	<lit>--intervals=0.95</lit>.
+      </para>
+      <para>
+        Invece di indicare <repl>tau</repl> come uno scalare, è possibile usare
+        un vettore, indicando il nome di una matrice predefinita. In questo
+        caso le stime vengono eseguite per tutti i valori di <repl>tau</repl>, e
+        i risultati mostrano la sequenza delle stime quantili per ognuno dei
+        regressori.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Stima robusta/Regressione quantile</menu-path>
+    </gui-access>
 
   </command>
 
@@ -6570,12 +6718,16 @@
       <para>
 	Va eseguito dopo la stima di un modello via OLS. Esegue il test
 	RESET di Ramsey per la specificazione del modello
-        (non-linearità), aggiungendo alla regressione il quadrato e il
+        (non-linearità), aggiungendo alla regressione il quadrato e/o il
         cubo dei valori stimati (a meno che non siano specificate le
 	opzioni <lit>--squares-only</lit> o
 	<lit>--cubes-only</lit>) e calcolando la statistica
         <math>F</math> per l'ipotesi nulla che i coefficienti dei due
         termini aggiunti siano pari a zero.
+      </para>
+      <para context="cli">
+        Vengono aggiunti sia i quadrati che i cubi, a meno che siano usate le
+        opzioni <lit>--squares-only</lit> o <lit>--cubes-only</lit>.
       </para>
     </description>
 
@@ -7355,8 +7507,15 @@
             coefficienti nei modelli GARCH.  Se si usa <lit>unset</lit>
 	    (valore predefinito), viene usata l'Hessiana, a meno di
             usare l'opzione <quote>robust</quote> col comando garch, nel
-            qual caso viene usato QML.</para>
+            qual caso viene usato QML.
+          </para>
 	</li>
+	<li>
+	  <para><lit>arma_vcv</lit>: <lit>hessian</lit> (predefinito) o
+	    <lit>op</lit> (prodotto esterno). Specifica la variante
+	    da usare per calcolare la matrice di covarianza per i modelli ARIMA.
+	  </para>
+ 	</li>
 	<li>
 	  <para><lit>force_hc</lit>: <lit>off</lit> (predefinito)
 	    o <lit>on</lit>. Lo stimatore HAC viene usato in modo predefinito con dati
