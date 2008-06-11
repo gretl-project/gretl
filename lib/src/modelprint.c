@@ -930,7 +930,11 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == WLS)  return N_("WLS"); 
     else if (ci == ARCH) return N_("WLS (ARCH)");
     else if (ci == TSLS) return N_("TSLS");
+#if 1
+    else if (ci == HSK)  return N_("WLS"); 
+#else
     else if (ci == HSK)  return N_("Heteroskedasticity-corrected");
+#endif
     else if (ci == AR)   return N_("AR");
     else if (ci == LAD)  return N_("LAD");
     else if (ci == MPOLS) return N_("High-Precision OLS");
