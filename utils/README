@@ -3,11 +3,5 @@ out of economic data that are freely available over the web, from
 economagic.com and nber.org.  See the subdirectories economagic and
 nber for details.
 
-Also provided: a script (and small patch) to automate the downloading,
-building and installation of the X-12-ARIMA program on Linux. See the
-subdir tramo_x12a.  At one time there was also a script to download and
-install TRAMO for Linux, but the Bank of Spain has removed the files that
-were required for this.
-
 Allin Cottrell
 cottrell@wfu.edu
