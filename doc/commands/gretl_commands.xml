@@ -5371,6 +5371,10 @@
 	  <effect>Jarque&ndash;Bera test</effect>
         </option>
 	<option>
+	  <flag>--lilliefors</flag>
+	  <effect>Lilliefors test</effect>
+        </option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>suppress printed output</effect>
         </option>

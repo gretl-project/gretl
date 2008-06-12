@@ -5140,6 +5140,126 @@ int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval)
     return err;
 }
 
+static double round2 (double x)
+{
+    x *= 100.0;
+    x = (x - floor(x) < 0.5)? floor(x) : ceil(x);
+    return x / 100;
+}
+
+/* Polynomial approximation to the p-value for the Lilliefors test,
+   said to be good to 2 decimal places.  See Abdi and Molin,
+   "Lilliefors/Van Soest's test of normality", in Salkind (ed.)
+   Encyclopedia of Measurement and Statistics, Sage, 2007; also
+   http://www.utd.edu/~herve/Abdi-Lillie2007-pretty.pdf
+ */
+
+static double lilliefors_pval (double L, int N)
+{
+    double b0 = 0.37872256037043;
+    double b1 = 1.30748185078790;
+    double b2 = 0.08861783849346;
+    double b1pN = b1 + N;
+    double Lm2 = 1.0 / (L * L);
+    double A, pv;
+
+    A = (-b1pN + sqrt(b1pN * b1pN - 4 * b2 * (b0 - Lm2))) / (2 * b2);
+
+    pv = -0.37782822932809 + 1.67819837908004*A 
+	- 3.02959249450445*A*A + 2.80015798142101*pow(A, 3.) 
+	- 1.39874347510845*pow(A, 4.) + 0.40466213484419*pow(A, 5.) 
+	- 0.06353440854207*pow(A, 6.) + 0.00287462087623*pow(A, 7.) 
+	+ 0.00069650013110*pow(A, 8.) - 0.00011872227037*pow(A, 9.)
+	+ 0.00000575586834*pow(A, 10.);
+
+    if (pv < 0) {
+	pv = 0;
+    } else {
+	/* round to 2 digits */
+	pv = round2(pv);
+    }
+
+    return pv;
+}
+
+int lilliefors_test (const double *x, int t1, int t2, double *L, double *pval)
+{
+    double *zx;   /* copy of x for sorting, z-scoring */
+    int i, t, n = 0;
+    int err = 0;
+
+    *L = *pval = NADBL;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) n++;
+    }
+
+    if (n < 5) {
+	/* we need more than 4 data points */
+	return E_DATA;
+    }
+
+    zx = malloc(n * sizeof *zx);
+
+    if (zx == NULL) {
+	err = E_ALLOC;
+    } else {
+	double dx, mx = 0.0, sx = 0.0;
+	double Phi, Dp = 0.0, Dm = 0.0;
+	double Dmax = 0.0;
+
+	/* compute sample mean and standard deviation plus
+	   sorted z-scores */
+
+	i = 0;
+	for (t=t1; t<=t2; t++) {
+	    if (!na(x[t])) {
+		zx[i++] = x[t];
+		mx += x[t];
+	    }
+	}
+	mx /= n;
+
+	for (t=t1; t<=t2; t++) {
+	    if (!na(x[t])) {
+		dx = x[t] - mx;
+		sx += dx * dx;
+	    }
+	}
+	sx = sqrt(sx / (n - 1));
+
+	qsort(zx, n, sizeof *zx, gretl_compare_doubles);
+
+	for (i=0; i<n; i++) {
+	    zx[i] = (zx[i] - mx) / sx;
+	}
+
+	/* The following is based on the formula given in the
+	   "nortest" package for GNU R, function lillie.test (written
+	   by Juergen Gross).  It differs from the algorithm given by
+	   Abdi and Molin (whose p-value approximation is used above).
+	   The A & M account of the statistic itself seems to be
+	   wrong: it consistently over-rejects (i.e. around 8 percent
+	   of the time for a nominal 5 percent significance level).
+	*/
+
+	for (i=0; i<n; i++) {
+	    Phi = normal_cdf(zx[i]);
+	    Dp = (double) (i+1) / n - Phi;
+	    Dm = Phi - (double) i / n;
+	    if (Dp > Dmax) Dmax = Dp;
+	    if (Dm > Dmax) Dmax = Dm;
+	}
+
+	*L = Dmax;
+	*pval = lilliefors_pval(Dmax, n);
+    } 
+	
+    free(zx);
+	
+    return err;
+}
+
 int gretl_normality_test (const char *param,
 			  const double **Z,
 			  const DATAINFO *pdinfo,
@@ -5150,7 +5270,7 @@ int gretl_normality_test (const char *param,
     double pval = NADBL;
     int v, err;
 
-    err = incompatible_options(opt, OPT_D | OPT_W | OPT_J);
+    err = incompatible_options(opt, OPT_D | OPT_W | OPT_J | OPT_L);
 
     if (!err) {
 	v = varindex(pdinfo, param);
@@ -5169,6 +5289,9 @@ int gretl_normality_test (const char *param,
     if (opt & OPT_W) {
 	err = shapiro_wilk(Z[v], pdinfo->t1, pdinfo->t2, 
 			   &test, &pval);
+    } else if (opt & OPT_L) {
+	err = lilliefors_test(Z[v], pdinfo->t1, pdinfo->t2, 
+			      &test, &pval);
     } else {
 	double skew, xkurt;
 	int n;
@@ -5195,14 +5318,18 @@ int gretl_normality_test (const char *param,
 
     if (!na(test) && !na(pval)) {
 	if (!(opt & OPT_Q)) {
-	    const char *tstr = (opt & OPT_W)?
-		"Shapiro-Wilk W" :
-		(opt & OPT_J)? _("Jarque-Bera test") :
-		_("Doornik-Hansen test");
+	    const char *tstrs[] = {
+		N_("Shapiro-Wilk W"),
+		N_("Jarque-Bera test"),
+		N_("Lilliefors test"),
+		N_("Doornik-Hansen test")
+	    };
+	    int i = (opt & OPT_W)? 0 : (opt & OPT_J)? 1 :
+		(opt & OPT_L)? 2 : 3;
 
 	    pprintf(prn, _("Test for normality of %s:"), param);
 	    pprintf(prn, "\n %s = %g, %s %g\n", 
-		    tstr, test, _("with p-value"), pval);
+		    tstrs[i], test, _("with p-value"), pval);
 	}
 	record_test_result(test, pval, "Normality");
     }
