@@ -4874,7 +4874,7 @@ static double poly (const float *cc, int n, float x) {
     return ret;
 }
 
-/* Calculate coefficients for the test */
+/* Calculate coefficients for the Shapiro-Wilk test */
 
 static void sw_coeff (int n, int n1, int n2, float *a) 
 {
