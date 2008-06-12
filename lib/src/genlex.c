@@ -601,6 +601,16 @@ static char *get_quoted_string (parser *p)
 	p->err = E_PARSE;
     }
 
+    if (!p->err) {
+	if (p->ch == '.' && parser_charpos(p, '$') == 0) {
+	    /* maybe quoted name of saved object followed by 
+	       dollar variable? */
+	    p->sym = OVAR;
+	} else {
+	    p->sym = STR;
+	}
+    }
+
     return s;
 }
 
@@ -817,6 +827,10 @@ static void word_check_next_char (const char *s, parser *p)
     } else if (p->ch == '.' && parser_charpos(p, '$') == 0) {
 	if (p->sym == UOBJ) {
 	    /* name of saved object followed by dollar variable? */
+	    p->sym = OVAR;
+	} else if (p->sym == STR) {
+	    /* maybe quoted name of saved object followed by 
+	       dollar variable? */
 	    p->sym = OVAR;
 	} else {
 	    p->err = 1;
@@ -1239,7 +1253,6 @@ void lex (parser *p)
 		return;
 	    } else if (p->ch == '"') {
 		p->idstr = get_quoted_string(p);
-		p->sym = STR;
 		return;
 	    } else {
 		parser_print_input(p);
