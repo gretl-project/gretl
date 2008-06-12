@@ -5174,6 +5174,8 @@ static double lilliefors_pval (double L, int N)
 
     if (pv < 0) {
 	pv = 0;
+    } else if (pv > 1) {
+	pv = 1;
     } else {
 	/* round to 2 digits */
 	pv = round2(pv);
@@ -5182,7 +5184,8 @@ static double lilliefors_pval (double L, int N)
     return pv;
 }
 
-int lilliefors_test (const double *x, int t1, int t2, double *L, double *pval)
+static int lilliefors_test (const double *x, int t1, int t2, 
+			    double *L, double *pval)
 {
     double *zx;   /* copy of x for sorting, z-scoring */
     int i, t, n = 0;
@@ -5260,6 +5263,62 @@ int lilliefors_test (const double *x, int t1, int t2, double *L, double *pval)
     return err;
 }
 
+static int skew_kurt_test (const double *x, int t1, int t2, 
+			   double *test, double *pval,
+			   gretlopt opt)
+{
+    double skew, xkurt;
+    int n, err = 0;
+
+    err = series_get_moments(t1, t2, x, &skew, &xkurt, &n);
+
+    if (!err) {
+	if (opt & OPT_J) {
+	    /* Jarque-Bera */
+	    *test = (n / 6.0) * (skew * skew + xkurt * xkurt/ 4.0);
+	} else {
+	    /* Doornik-Hansen */
+	    *test = doornik_chisq(skew, xkurt, n);
+	}
+    }
+
+    if (!err && xna(*test)) {
+	*test = NADBL;
+	err = E_NAN;
+    }
+
+    if (!na(*test)) {
+	*pval = chisq_cdf_comp(2, *test);
+    }
+
+    return err;
+}
+
+static void print_normality_stat (double test, double pval,
+				  gretlopt opt, PRN *prn)
+{
+    const char *tstrs[] = {
+	N_("Shapiro-Wilk W"),
+	N_("Jarque-Bera test"),
+	N_("Lilliefors test"),
+	N_("Doornik-Hansen test")
+    };
+    int i = (opt & OPT_W)? 0 : (opt & OPT_J)? 1 :
+	(opt & OPT_L)? 2 : 3;
+
+    if (na(test) || na(pval)) {
+	return;
+    }
+
+    if (opt & OPT_L) {
+	pprintf(prn, " %s = %g, %s ~= %g\n\n", 
+		tstrs[i], test, _("with p-value"), pval);
+    } else {
+	pprintf(prn, " %s = %g, %s %g\n\n", 
+		tstrs[i], test, _("with p-value"), pval);
+    }
+}
+
 int gretl_normality_test (const char *param,
 			  const double **Z,
 			  const DATAINFO *pdinfo,
@@ -5268,9 +5327,11 @@ int gretl_normality_test (const char *param,
 {
     double test = NADBL;
     double pval = NADBL;
+    double trec = NADBL;
+    double pvrec = NADBL;
     int v, err;
 
-    err = incompatible_options(opt, OPT_D | OPT_W | OPT_J | OPT_L);
+    err = incompatible_options(opt, OPT_A|OPT_D|OPT_W|OPT_J|OPT_L);
 
     if (!err) {
 	v = varindex(pdinfo, param);
@@ -5286,52 +5347,66 @@ int gretl_normality_test (const char *param,
 	return err;
     }
 
-    if (opt & OPT_W) {
-	err = shapiro_wilk(Z[v], pdinfo->t1, pdinfo->t2, 
-			   &test, &pval);
-    } else if (opt & OPT_L) {
-	err = lilliefors_test(Z[v], pdinfo->t1, pdinfo->t2, 
-			      &test, &pval);
-    } else {
-	double skew, xkurt;
-	int n;
+    if (opt & OPT_A) {
+	opt |= OPT_D | OPT_W | OPT_J | OPT_L;
+    }
 
-	err = series_get_moments(pdinfo->t1, pdinfo->t2, Z[v], 
-				 &skew, &xkurt, &n);
-	if (!err) {
-	    if (opt & OPT_J) {
-		test = (n / 6.0) * (skew * skew + xkurt * xkurt/ 4.0);
-	    } else {
-		test = doornik_chisq(skew, xkurt, n);
-	    }
-	}
-
-	if (!err && xna(test)) {
-	    test = NADBL;
-	    err = E_NAN;
-	}
-
-	if (!na(test)) {
-	    pval = chisq_cdf_comp(2, test);
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("Test for normality of %s:"), param);
+	if (opt & OPT_A) {
+	    pputs(prn, "\n\n");
+	} else {
+	    pputc(prn, '\n');
 	}
     }
 
-    if (!na(test) && !na(pval)) {
-	if (!(opt & OPT_Q)) {
-	    const char *tstrs[] = {
-		N_("Shapiro-Wilk W"),
-		N_("Jarque-Bera test"),
-		N_("Lilliefors test"),
-		N_("Doornik-Hansen test")
-	    };
-	    int i = (opt & OPT_W)? 0 : (opt & OPT_J)? 1 :
-		(opt & OPT_L)? 2 : 3;
-
-	    pprintf(prn, _("Test for normality of %s:"), param);
-	    pprintf(prn, "\n %s = %g, %s %g\n", 
-		    tstrs[i], test, _("with p-value"), pval);
+    if (opt & OPT_D) {
+	err = skew_kurt_test(Z[v], pdinfo->t1, pdinfo->t2, 
+			     &test, &pval, OPT_D);
+	if (!err && !(opt & OPT_Q)) {
+	    print_normality_stat(test, pval, OPT_D, prn);
 	}
-	record_test_result(test, pval, "Normality");
+	if (!err) {
+	    /* record Doornik-Hansen result by default */
+	    trec = test;
+	    pvrec = pval;
+	}
+    }    
+
+    if (opt & OPT_W) {
+	err = shapiro_wilk(Z[v], pdinfo->t1, pdinfo->t2, 
+			   &test, &pval);
+	if (!err && !(opt & OPT_Q)) {
+	    print_normality_stat(test, pval, OPT_W, prn);
+	}
+    } 
+
+    if (opt & OPT_L) {
+	err = lilliefors_test(Z[v], pdinfo->t1, pdinfo->t2, 
+			      &test, &pval);
+	if (!err && !(opt & OPT_Q)) {
+	    print_normality_stat(test, pval, OPT_L, prn);
+	}
+    } 
+
+    if (opt & OPT_J) {
+	err = skew_kurt_test(Z[v], pdinfo->t1, pdinfo->t2, 
+			     &test, &pval, OPT_J);
+	if (!err && !(opt & OPT_Q)) {
+	    print_normality_stat(test, pval, OPT_J, prn);
+	}
+    }
+
+    if (na(trec) && !na(test)) {
+	trec = test;
+    }
+
+    if (na(pvrec) && !na(pval)) {
+	pvrec = pval;
+    }
+
+    if (!na(trec) && !na(pvrec)) {
+	record_test_result(trec, pvrec, "Normality");
     }
     
     return err;

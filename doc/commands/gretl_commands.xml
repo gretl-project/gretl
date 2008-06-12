@@ -5367,12 +5367,16 @@
 	  <effect>Shapiro&ndash;Wilk test</effect>
         </option>
 	<option>
+	  <flag>--lillie</flag>
+	  <effect>Lilliefors test</effect>
+        </option>
+	<option>
 	  <flag>--jbera</flag>
 	  <effect>Jarque&ndash;Bera test</effect>
         </option>
 	<option>
-	  <flag>--lilliefors</flag>
-	  <effect>Lilliefors test</effect>
+	  <flag>--all</flag>
+	  <effect>do all tests</effect>
         </option>
 	<option>
 	  <flag>--quiet</flag>
@@ -5393,6 +5397,9 @@
       <para>
 	The test statistic and its p-value may be retrieved
 	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>.
+	Please note that if the <lit>--all</lit> option is given,
+	the result recorded is that from the Doornik&ndash;Hansen
+	test.
       </para>
     </description>
 
