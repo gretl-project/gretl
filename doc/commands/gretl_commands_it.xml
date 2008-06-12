@@ -8507,7 +8507,7 @@
 	series uh1 = $uhat[,1]
       </code>
 
-      <para>
+      <para context="cli">
 	Le matrici in forma strutturale corrispondono alla seguente
         rappresentazione di un modello ad equazioni simultanee:
 	<equation status="display"
