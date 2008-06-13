@@ -114,6 +114,10 @@ int prn_format (PRN *prn);
 
 char prn_delim (PRN *prn);
 
+int gretl_print_has_buffer (PRN *prn);
+
+int gretl_print_alloc (PRN *prn, size_t s);
+
 PRN *set_up_verbose_printer (gretlopt opt, PRN *prn);
 
 void close_down_verbose_printer (PRN *vprn);

@@ -1113,55 +1113,22 @@ static void fcast_print_x (double x, int n, int pmax, PRN *prn)
 
 static void printstr_long (PRN *prn, double xx, int d, int *ls)
 {
-    int lwrd;    
     char str[64];
+    int n;
 
     if (na(xx)) {
-	strcpy(str, "NA");
+	strcpy(str, "NA  ");
+	n = 4;
     } else {
-	sprintf(str, "%#.*E", d, xx);
+	sprintf(str, "%#.*E  ", d, xx);
+	n = strlen(str);
     }
-    strcat(str, "  ");
-    lwrd = strlen(str);
-    if (*ls + lwrd > 78) {
-	*ls = 0;
+    if (*ls + n > 78) {
 	pputc(prn, '\n');
+	*ls = 0;
     }
     pputs(prn, str);
-    *ls += lwrd;
-}
-
-static void printstr (PRN *prn, double xx, int *ls)
-{
-    int lwrd;
-    char str[32];
-
-    if (na(xx)) {
-	strcpy(str, "NA");
-    } else {
-	printxx(xx, str, 0);
-    }
-    strcat(str, "  ");
-    lwrd = strlen(str);
-    if (*ls + lwrd > 78) {
-	*ls = 0;
-	pputc(prn, '\n');
-    }
-    pputs(prn, str);
-    *ls += lwrd;
-}
-
-static int really_const (int t1, int t2, const double *x)
-{
-    int t;
-
-    for (t=t1+1; t<=t2; t++) {
-	if (x[t] != x[t1]) {
-	    return 0;
-	}
-    }
-
-    return 1;
+    *ls += n;
 }
 
 /* prints series z from current sample t1 to t2 */
@@ -1169,7 +1136,6 @@ static int really_const (int t1, int t2, const double *x)
 static void printz (const double *z, const DATAINFO *pdinfo, 
 		    PRN *prn, gretlopt opt)
 {
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int t, dig = 10, ls = 0;
     double xx;
 
@@ -1178,18 +1144,27 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 	opt = OPT_T;
     }
 
-    if (really_const(t1, t2, z)) {
-	if (opt & OPT_T) {
-	    printstr_long(prn, z[t1], dig, &ls);
-	} else {
-	    printstr(prn, z[t1], &ls);
-	}
-    } else for (t=t1; t<=t2; t++) {
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xx = z[t];
 	if (opt & OPT_T) {
 	    printstr_long(prn, xx, dig, &ls);
 	} else {
-	    printstr(prn, xx, &ls);
+	    char str[32];
+	    int n;
+
+	    if (na(xx)) {
+		strcpy(str, "NA  ");
+		n = 4;
+	    } else {
+		sprintf(str, "%#.*g  ", GRETL_DIGITS, xx);
+		n = strlen(str);
+	    }
+	    if (ls + n > 78) {
+		pputc(prn, '\n');
+		ls = 0;
+	    }
+	    pputs(prn, str);
+	    ls += n;
 	}
     }
 
@@ -1782,6 +1757,16 @@ int printdata (const int *list, const char *mstr,
 	/* no series left after elimination of scalars */
 	pputc(prn, '\n');
 	goto endprint;
+    }
+
+    /* how big a job do we have? */
+    if (gretl_print_has_buffer(prn)) {
+	int T = pdinfo->t2 - pdinfo->t1 + 1;
+	int nx = plist[0] * T;
+
+	if (nx > 1000) {
+	    err = gretl_print_alloc(prn, nx * 12);
+	}
     }
 
     if (!(opt & OPT_O)) { 

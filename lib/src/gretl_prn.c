@@ -24,15 +24,16 @@
 #include <glib.h>
 
 struct PRN_ {
-    FILE *fp;
-    FILE *fpaux;    
-    char *buf;
-    size_t bufsize;
-    int savepos;
-    PrnFormat format;
-    int fixed;
-    char delim;
-    char *fname;
+    FILE *fp;          /* file to which to print, or NULL */
+    FILE *fpaux;       /* auxiliary file (output redirected) */
+    char *buf;         /* buffer to which to print, or NULL */
+    size_t bufsize;    /* allocated size of buffer */
+    size_t blen;       /* string length of buffer */
+    int savepos;       /* saved poistion in stream or buffer */
+    PrnFormat format;  /* plain, TeX, RTF */
+    int fixed;         /* = 1 for fixed-size buffer */
+    char delim;        /* CSV field delimiter */
+    char *fname;       /* file name, or NULL */
 };
 
 #undef PRN_DEBUG
@@ -140,6 +141,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->fpaux = NULL;
     prn->buf = NULL;
     prn->bufsize = 0;
+    prn->blen = 0;
     prn->savepos = -1;
     prn->format = GRETL_FORMAT_TXT;
     prn->fixed = 0;
@@ -526,22 +528,24 @@ void gretl_print_toggle_doc_flag (PRN *prn)
     }
 }
 
-static int realloc_prn_buffer (PRN *prn, size_t blen)
+static int realloc_prn_buffer (PRN *prn)
 {
+    size_t newlen;
     char *tmp;
     int err = 0;
 
 #if PRN_DEBUG
     fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
-	    prn->bufsize - blen, prn->buf, 2 * prn->bufsize);
+	    prn->bufsize - prn->blen, prn->buf, 2 * prn->bufsize);
 #endif
-    prn->bufsize *= 2; 
 
-    tmp = realloc(prn->buf, prn->bufsize); 
+    newlen = prn->bufsize * 2;
+    tmp = realloc(prn->buf, newlen); 
 
     if (tmp == NULL) {
 	err = 1;
     } else {
+	prn->bufsize = newlen;
 	prn->buf = tmp;
 #if PRN_DEBUG
 	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
@@ -549,9 +553,31 @@ static int realloc_prn_buffer (PRN *prn, size_t blen)
 #endif
     }
 
-    memset(prn->buf + blen, 0, 1);
+    memset(prn->buf + prn->blen, 0, 1);
 
     return err;
+}
+
+static int pprintf_init (PRN *prn)
+{
+    int ret = 0;
+
+    prn->bufsize = 2048;
+    prn->buf = malloc(prn->bufsize);
+
+#if PRN_DEBUG
+    fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
+	    (void *) prn->buf); 
+#endif
+
+    if (prn->buf == NULL) {
+	ret = -1;
+    } else {
+	memset(prn->buf, 0, 1);
+	prn->blen = 0;
+    }
+
+    return ret;
 }
 
 /**
@@ -572,7 +598,6 @@ static int realloc_prn_buffer (PRN *prn, size_t blen)
 int pprintf (PRN *prn, const char *template, ...)
 {
     va_list args;
-    size_t blen;
     int rem, plen = 0;
 
     if (prn == NULL || prn->fixed) {
@@ -587,45 +612,33 @@ int pprintf (PRN *prn, const char *template, ...)
     }
 
     if (strncmp(template, "@init", 5) == 0) {
-	prn->bufsize = 2048;
-	prn->buf = malloc(prn->bufsize);
-#if PRN_DEBUG
-  	fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
-		(void *) prn->buf); 
-#endif
-	if (prn->buf == NULL) {
-	    return -1;
-	}
-	memset(prn->buf, 0, 1);
-	return 0;
+	return pprintf_init(prn);
     }
 
     if (prn->buf == NULL) {
 	return 0;
     }
 
-    blen = strlen(prn->buf);
-
-    if (prn->bufsize - blen < 1024) {
-	if (realloc_prn_buffer(prn, blen)) {
+    if (prn->bufsize - prn->blen < 1024) {
+	if (realloc_prn_buffer(prn)) {
 	    return -1;
 	}
     }
 
-    rem = prn->bufsize - blen - 1;
+#if PRN_DEBUG
+    fprintf(stderr, "printing at %p\n", (void *) (prn->buf + prn->blen));
+#endif
 
+    rem = prn->bufsize - prn->blen - 1;
     va_start(args, template);
-#if PRN_DEBUG
-    fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
-#endif
-    plen = vsnprintf(prn->buf + blen, rem, template, args);
+    plen = vsnprintf(prn->buf + prn->blen, rem, template, args);
     va_end(args);
-#if PRN_DEBUG
-    fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
-#endif
 
     if (plen >= rem) {
 	fputs("pprintf warning: string was truncated\n", stderr);
+	prn->blen += rem;
+    } else {
+	prn->blen += plen;
     }
 
     return plen;
@@ -642,10 +655,11 @@ int pprintf (PRN *prn, const char *template, ...)
 
 int pputs (PRN *prn, const char *s)
 {
-    size_t blen;
     int slen, bytesleft;
 
-    if (prn == NULL || prn->fixed) return 0;
+    if (prn == NULL || prn->fixed) {
+	return 0;
+    }
 
     slen = strlen(s);
 
@@ -654,17 +668,17 @@ int pputs (PRN *prn, const char *s)
 	return slen;
     }
 
-    if (prn->buf == NULL) return 0;
+    if (prn->buf == NULL) {
+	return 0;
+    }
 
-    blen = strlen(prn->buf);
+    bytesleft = prn->bufsize - prn->blen;
 
-    bytesleft = prn->bufsize - blen;
-
-    while (prn->bufsize - blen < 1024 || bytesleft <= slen) {
-	if (realloc_prn_buffer(prn, blen)) {
+    while (prn->bufsize - prn->blen < 1024 || bytesleft <= slen) {
+	if (realloc_prn_buffer(prn)) {
 	    return -1;
 	}
-	bytesleft = prn->bufsize - blen;
+	bytesleft = prn->bufsize - prn->blen;
     }	
 
 #if PRN_DEBUG
@@ -672,7 +686,8 @@ int pputs (PRN *prn, const char *s)
 	    (int) prn->bufsize, (int) blen, bytesleft, slen);
 #endif
 
-    strcpy(prn->buf + blen, s);
+    strcpy(prn->buf + prn->blen, s);
+    prn->blen += slen;
 
     return slen;
 }
@@ -688,50 +703,35 @@ int pputs (PRN *prn, const char *s)
 
 int pputc (PRN *prn, int c)
 {
-    size_t blen;
-
-    if (prn == NULL || prn->fixed) return 0;
+    if (prn == NULL || prn->fixed) {
+	return 0;
+    }
 
     if (prn->fp != NULL) {
 	fputc(c, prn->fp);
 	return 1;
     }
 
-    if (prn->buf == NULL) return 0;
+    if (prn->buf == NULL) {
+	return 0;
+    }
 
-    blen = strlen(prn->buf);
-
-    if (prn->bufsize - blen < 1024) {
-	if (realloc_prn_buffer(prn, blen)) {
+    if (prn->bufsize - prn->blen < 1024) {
+	if (realloc_prn_buffer(prn)) {
 	    return -1;
 	}
     }
 
 #if PRN_DEBUG
-    fprintf(stderr, "pputc: adding char at %p\n", (void *) (prn->buf + blen));
+    fprintf(stderr, "pputc: adding char at %p\n", (void *) (prn->buf + prn->blen));
 #endif
-    prn->buf[blen] = c;
-    prn->buf[blen + 1] = '\0';
+
+    prn->buf[prn->blen] = c;
+    prn->buf[prn->blen + 1] = '\0';
+    prn->blen += 1;
 
     return 1;
 }
-
-#if 0
-/**
- * pflush:
- * @prn: gretl printing struct.
- * 
- * Returns: the number of bytes printed, or -1 on memory allocation
- * failure.
- */
-
-void pflush (PRN *prn)
-{
-    if (prn != NULL && prn->fp != NULL) {
-	fflush(prn->fp);
-    }
-}
-#endif
 
 /**
  * gretl_prn_newline:
@@ -989,6 +989,65 @@ int prn_format (PRN *prn)
 char prn_delim (PRN *prn)
 {
     return (prn != NULL)? prn->delim : ',';
+}
+
+/**
+ * gretl_print_has_buffer:
+ * @prn: gretl printing struct.
+ * 
+ * Returns: 1 if @prn is using a buffer for printing,
+ * otherwise 0 (e.g., if a file is being used).
+ */
+
+int gretl_print_has_buffer (PRN *prn)
+{
+    return (prn != NULL && prn->buf != NULL);
+}
+
+/**
+ * gretl_print_alloc:
+ * @prn: gretl printing struct.
+ * @s: desired size in bytes.
+ *
+ * If @prn is using a buffer for printing, try to
+ * ensure that at least @s bytes are available for
+ * further printing.  May speed things up if we
+ * know there is a large amount of text to be
+ * printed.
+ * 
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_print_alloc (PRN *prn, size_t s)
+{
+    size_t rem;
+    int err = 0;
+
+    if (prn == NULL || prn->buf == NULL || prn->fixed) {
+	return E_DATA;
+    }
+
+    rem = prn->bufsize - prn->blen;
+
+    if (rem <= s) {
+	size_t newlen = prn->blen + s + 1;
+	char *tmp;
+
+	tmp = realloc(prn->buf, newlen); 
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    prn->buf = tmp;
+	    prn->bufsize = newlen;
+	    memset(prn->buf + prn->blen, 0, 1);
+#if PRN_DEBUG
+	    fprintf(stderr, "gretl_print_alloc: realloc'd prn->buf "
+		    "to %d bytes\n", newlen);
+#endif
+	}
+    }
+
+    return err;
 }
 
 /**
