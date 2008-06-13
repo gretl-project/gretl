@@ -40,6 +40,7 @@ enum {
 };
 
 #define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
+#define foreign_script_role(r) (r == EDIT_GP || r == EDIT_R)
 
 /* globals accessed in settings.c */
 int tabwidth = 4;
@@ -553,6 +554,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 vwin);
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(interactive_script_help), vwin);
+    } else if (foreign_script_role(vwin->role)) {
+	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
+			 G_CALLBACK(script_popup_handler), 
+			 vwin);
     } else if (vwin->role == VIEW_LOG) {
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(interactive_script_help), vwin);
@@ -2126,13 +2131,18 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	N_("Uncomment region"),
     };
     GtkWidget *pmenu = NULL;
+    struct textbit *tb = NULL;
     GtkWidget *item;
-    struct textbit *tb;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), NULL);
 
     /* "generic" text window menu -- we may add to this */
     pmenu = build_text_popup(vwin);
+
+    if (foreign_script_role(vwin->role)) {
+	*ptb = NULL;
+	goto line_nums;
+    }
 
     tb = vwin_get_textbit(vwin, AUTO_SELECT_LINE);
     if (tb == NULL) {
