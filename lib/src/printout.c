@@ -1759,8 +1759,8 @@ int printdata (const int *list, const char *mstr,
 	goto endprint;
     }
 
-    /* how big a job do we have? */
     if (gretl_print_has_buffer(prn)) {
+	/* how big a job do we have? */
 	int T = pdinfo->t2 - pdinfo->t1 + 1;
 	int nx = plist[0] * T;
 
