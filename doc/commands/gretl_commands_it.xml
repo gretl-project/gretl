@@ -5328,19 +5328,27 @@
       <options>
 	<option>
 	  <flag>--dhansen</flag>
-	  <effect>Test Doornik&ndash;Hansen</effect>
+	  <effect>test Doornik&ndash;Hansen</effect>
         </option>
 	<option>
 	  <flag>--swilk</flag>
-	  <effect>Test di Shapiro&ndash;Wilk</effect>
+	  <effect>test di Shapiro&ndash;Wilk</effect>
+        </option>
+        <option>
+         <flag>--lillie</flag>
+         <effect>test di Lilliefors</effect>
         </option>
 	<option>
 	  <flag>--jbera</flag>
-	  <effect>Test di Jarque&ndash;Bera</effect>
+	  <effect>test di Jarque&ndash;Bera</effect>
+        </option>
+        <option>
+         <flag>--all</flag>
+         <effect>esegue tutti i test</effect>
         </option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Non mostra i risultati</effect>
+	  <effect>non mostra i dettagli dei risultati</effect>
         </option>
       </options>
     </usage>
@@ -5356,7 +5364,9 @@
       </para>
       <para>
 	La statistica test e il suo p-value possono essere recuperati usando gli
-        accessori <lit>$test</lit> e <lit>$pvalue</lit>.
+        accessori <lit>$test</lit> e <lit>$pvalue</lit>. Se si usa l'opzione
+        <lit>--all</lit>, i risultati salvati saranno queslli del test di
+        Doornik&ndash;Hansen.
       </para>
     </description>
 
