@@ -6500,8 +6500,8 @@ msgstr "Acerca de gretl"
 #: gui2/about.c:150 gui2/about.c:153
 msgid "translator_credits"
 msgstr ""
-"Hélio Guilherme <helio.guilherme@bluebottle.com>\n"
-"Tradução de 07 de Junho de 2008."
+"Hélio Guilherme <helio_guilherme@hotmail.com>\n"
+"Tradução de 14 de Junho de 2008."
 
 #: gui2/about.c:163
 msgid "License"
