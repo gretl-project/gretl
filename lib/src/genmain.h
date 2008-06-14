@@ -78,13 +78,16 @@ typedef enum {
     M_SYSB,       /* Parameter matrix B (simultaneous systems) */
     M_FCAST,      /* last forecast generated via fcasterr */
     M_FCERR,      /* standard errors associated with M_FCAST */
-    M_COEFF_CI,   /* (assymetric) confidence intervals for coeffs */
+    M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
+    M_MATRIX_MAX, /* -- separator, matrices/lists -- */
+    M_XLIST,      /* list of regressors */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 
 #define model_data_scalar(i) (i > R_MAX && i < M_SCALAR_MAX)
 #define model_data_series(i) (i > M_SCALAR_MAX && i < M_SERIES_MAX)
-#define model_data_matrix(i) (i > M_SERIES_MAX && i < M_MAX)
+#define model_data_matrix(i) (i > M_SERIES_MAX && i < M_MATRIX_MAX)
+#define model_data_list(i)   (i > M_MATRIX_MAX && i < M_MAX)
 
 typedef struct parser_ GENERATOR;
 

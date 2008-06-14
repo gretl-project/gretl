@@ -4859,6 +4859,8 @@ static GretlType object_var_type (int idx, const char *oname)
 	vtype = GRETL_TYPE_SERIES;
     } else if (model_data_matrix(idx)) {
 	vtype = GRETL_TYPE_MATRIX;
+    } else if (model_data_list(idx)) {
+	vtype = GRETL_TYPE_LIST;
     }
     
     if (idx == M_UHAT || idx == M_YHAT || idx == M_SIGMA) {
@@ -4902,6 +4904,8 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    ret = aux_scalar_node(p);
 	} else if (vtype == GRETL_TYPE_SERIES) {
 	    ret = aux_vec_node(p, 0);
+	} else if (vtype == GRETL_TYPE_LIST) {
+	    ret = aux_lvec_node(p);
 	} else {
 	    ret = aux_matrix_node(p);
 	}
@@ -4912,6 +4916,8 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    } else if (vtype == GRETL_TYPE_SERIES) {
 		ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
 						      &p->err);
+	    } else if (vtype == GRETL_TYPE_LIST) {
+		ret->v.ivec = saved_object_get_list(oname, r->v.idnum, &p->err);
 	    } else if (mslice) {
 		/* the right-hand subnode needs more work */
 		ret->v.m = object_var_get_submatrix(oname, r, p);

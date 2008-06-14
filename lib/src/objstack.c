@@ -903,6 +903,27 @@ real_get_obj_matrix (void *p, GretlObjType type, int idx, int *err)
     return M;
 }
 
+static int *
+real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
+{
+    int *list = NULL;
+    
+    if (idx <= 0) {
+	*err = 1;
+	return list;
+    }
+
+    if (type == GRETL_OBJ_EQN && idx == M_XLIST) {
+	MODEL *pmod = (MODEL *) p;
+
+	list = gretl_model_get_x_list(pmod);
+    } else {
+	*err = E_BADSTAT;
+    }
+
+    return list;
+}
+
 static stacker genr_model;
 
 void set_genr_model (MODEL *pmod)
@@ -970,6 +991,20 @@ GretlObjType gretl_model_get_type_and_ci (const char *name,
 
 	    *ci = pmod->ci;
 	}
+    }
+
+    return ret;
+}
+
+int *saved_object_get_list (const char *oname, int idx, int *err)
+{
+    int *ret = NULL;
+    stacker *smatch;
+
+    smatch = find_smatch(oname);
+
+    if (smatch != NULL) {
+	ret = real_get_obj_list(smatch->ptr, smatch->type, idx, err);
     }
 
     return ret;
