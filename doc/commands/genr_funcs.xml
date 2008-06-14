@@ -468,6 +468,16 @@
       </description>
     </function>
 
+    <function name="$xlist" section="access" output="list">
+      <description>
+	<para>
+	  Returns the list of regressors from the last model (for
+	  single-equation models only).
+	</para>
+      </description>
+    </function>
+
+
     <function name="$yhat" section="access" output="series">
       <description>
 	<para>
