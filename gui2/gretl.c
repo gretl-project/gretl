@@ -457,6 +457,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/_Find..."), NULL, find_var, 0, "<StockItem>", GTK_STOCK_FIND },
     { N_("/Variable/_Display values"), NULL, display_var, 0, NULL, GNULL },
     { N_("/Variable/_Summary statistics"), NULL, do_menu_op, VAR_SUMMARY, NULL, GNULL },
+    { N_("/Variable/_Normality test"), NULL, do_menu_op, NORMTEST, NULL, GNULL },
     { N_("/Variable/_Frequency distribution"), NULL, do_freq_dist, 0, NULL, GNULL },
     { N_("/Variable/Frequency _plot"), NULL, do_freq_dist, 1, NULL, GNULL },
     { N_("/Variable/Estimated _density plot..."), NULL, do_kernel, 0, NULL, GNULL },

@@ -656,6 +656,11 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	action = SUMMARY;
 	vsize = 300;
 	break;
+    case NORMTEST:
+	gretl_command_sprintf("normtest %s --all", selected_varname());
+	strcat(title, _("normality test"));
+	vsize = 300;
+	break;
     default:
 	break;
     }
@@ -706,6 +711,13 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	    print_summary(obj, datainfo, prn);
 	}
 	break;
+
+    case NORMTEST:
+	err = gretl_normality_test(selected_varname(),
+				   (const double **) Z, datainfo, 
+				   OPT_A, prn);
+	action = PRINT;
+	break;
     }
 
     if (err) {
@@ -732,7 +744,7 @@ static int menu_op_wrapper (selector *sr)
 
 void do_menu_op (gpointer p, guint action, GtkWidget *w)
 {
-    if (action == VAR_SUMMARY) {
+    if (action == VAR_SUMMARY || action == NORMTEST) {
 	/* single-variable action */
 	real_do_menu_op(action, NULL, OPT_NONE);
     } else if (action == SUMMARY || action == MAHAL) {
