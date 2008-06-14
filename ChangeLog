@@ -1,4 +1,4 @@
-6/14/2008 version 1.7.5
+6/13/2008 version 1.7.5
 - max() and min() functions: extend the syntax to allow a list
   argument
 - Reading CSV data: automatically substitute '_' for illegal
@@ -1317,7 +1317,7 @@ of 1.2.9, depending on the date of the build.
 - Add facility for generating 3-D data plots
 - Add "import ASCII" data option
 
-09/09/03 version 1.1.2
+09/09/2003 version 1.1.2
 - Fix bug in time-series plot from popup menu in main window
 - Fix build problem: "make install" could fail to install the
   GUI program under some conditions (thanks to Dirk Eddelbuettel
@@ -1330,7 +1330,7 @@ of 1.2.9, depending on the date of the build.
 - Library: switch to using the Cephes gamma() code throughout,
   and delete some redundant code
 
-09/07/03 version 1.1.1
+09/07/2003 version 1.1.1
 - Graph editing: add facility to write labels onto the graph
 - Graph editing: allow removal of auto-fitted OLS line
 - Graph editing: allow choice of TrueType font if gnuplot supports
@@ -1360,7 +1360,7 @@ of 1.2.9, depending on the date of the build.
   extreme cases
 - Windows version: update to gtk 2.2.3 runtime
 
-07/23/03 version 1.1.0
+07/23/2003 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display
   names" for variables (these are shown in graphs)
 - Provide "label" command for setting the description and/or
@@ -1388,7 +1388,7 @@ of 1.2.9, depending on the date of the build.
 - Update to libtool 1.5
 - Update win32 version to gtk version 2.2.2
 
-05/26/03 version 1.0.9
+05/26/2003 version 1.0.9
 - Add non-linear least squares ("nls" command, Levenberg-
   Marquandt algorithm from minpack, with either analytical or
   numerical derivatives)
@@ -1403,7 +1403,7 @@ of 1.2.9, depending on the date of the build.
   append "{ ... }" block to gretl gnuplot command, containing
   literal gnuplot command lines, each terminated with ";")
 
-05/02/03 version 1.0.8
+05/02/2003 version 1.0.8
 - Require lapack
 - Fixes to build for Mac OS X
 - Avoid duplication of "against time" in model graph menus, when 
@@ -1436,7 +1436,7 @@ of 1.2.9, depending on the date of the build.
 - Add experimental "model table" in session icon view (not submitted
   for translation yet)
 
-04/09/03 version 1.0.7
+04/09/2003 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey
   rather than Breusch-Pagan)
 - Fix bug in display of remote database info line (Gtk-2.0 version)
@@ -1461,7 +1461,7 @@ of 1.2.9, depending on the date of the build.
 - Fix installation of bcih database so that it works on big-
   endian machines too
 
-03/16/03 version 1.0.6
+03/16/2003 version 1.0.6
 - minor adjustment to model print output formatting
 - fix for correlogram graph (was incompatible with older gnuplot)
 - fix a couple of minor gretlcli bugs
@@ -1484,11 +1484,11 @@ of 1.2.9, depending on the date of the build.
 - make correlogram and periodogram functions more robust in
   the face of weird data
 
-02/20/03 version 1.0.5
+02/20/2003 version 1.0.5
 - fix missing translations; fix build of rpm
 - add support for Gujarati textbook data files
 
-02/19/03 version 1.0.4
+02/19/2003 version 1.0.4
 - add sst() function in genr for Total Sum of Squares of a 
   variable
 - fix bug in genr: a long genr command could overflow the space
@@ -1512,7 +1512,7 @@ of 1.2.9, depending on the date of the build.
 - update libtool to 1.4.3 and autoreconf
 - raise library revision number to 4
 
-02/04/03 version 1.0.3
+02/04/2003 version 1.0.3
 - Add PNG graphs to win32 version, and standardize on PNG graphs for
   all display including graph editing
 - Add facility to identify labeled data-points in a scatter plot
@@ -1541,7 +1541,7 @@ of 1.2.9, depending on the date of the build.
 - Updates to manual
 - Raise shared library revision number to 3
 
-12/09/02 version 1.0.2
+12/09/2002 version 1.0.2
 - generalize support for X-12-ARIMA to gtk-1.2 version, and 
   win32 version (TRAMO/SEATS proving is more difficult)
 - make x-12-arima support the configure default, if the x12a
@@ -1565,7 +1565,7 @@ of 1.2.9, depending on the date of the build.
 - fix bug in invocation of GNU R under Windows (needed to
   replace "\" with "/" in paths for use by Rgui.exe)
 
-11/27/02 version 1.0.1
+11/27/2002 version 1.0.1
 - fix to configure script in re. glib-2.0
 - fix missing name of dependent var in gui mpols printout
 - remove RTF and LaTeX items from mpols copy options (not yet
@@ -1584,7 +1584,7 @@ of 1.2.9, depending on the date of the build.
 - make "sim" command available in loops (and update docs)
 - raise "revision" number of *nix library
 
-11/15/02 version 1.0
+11/15/2002 version 1.0
 - change *nix library name to libgretl-1.0
 - improve sizing of some windows
 - incorporate new translations
@@ -1592,7 +1592,7 @@ of 1.2.9, depending on the date of the build.
 - fix the stats available in connection with a LAD model
 - open the champagne (hope this is not premature!)
 
-11/06/02 version 1.0pre4 (for translators)
+11/06/2002 version 1.0pre4 (for translators)
 - fix bug in progress bar when loading large data set
 - fix bad "smpl -r" bug in gretlcli
 - add Ramsey's RESET test (command "reset")
@@ -1615,7 +1615,7 @@ of 1.2.9, depending on the date of the build.
 - make names and labels for monthly and quarterly dummies more
   descriptive
 
-10/10/02 version 1.0pre3
+10/10/2002 version 1.0pre3
 - improve accuracy of calculation of standard errors, and
   numerical accuracy on MS Windows in general
 - make gretl databases installable in user directory as well as
