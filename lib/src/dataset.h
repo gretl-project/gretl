@@ -267,7 +267,6 @@ typedef enum {
  */
 #define unset_var_const(p, i) ((p)->varinfo[i]->flags &= ~VAR_SETCONST)
 
-
 void free_Z (double **Z, DATAINFO *pdinfo);
 
 DATAINFO *datainfo_new (void);
@@ -372,6 +371,12 @@ void set_var_hidden (DATAINFO *pdinfo, int i);
 void var_set_linewidth (DATAINFO *pdinfo, int i, int w);
 
 int var_get_linewidth (const DATAINFO *pdinfo, int i);
+
+int var_is_listarg (const DATAINFO *pdinfo, int i);
+
+void var_set_listarg (const DATAINFO *pdinfo, int i);
+
+void var_unset_listarg (const DATAINFO *pdinfo, int i);
 
 int var_set_display_name (DATAINFO *pdinfo, int i,
 			  const char *s); 
