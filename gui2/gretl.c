@@ -123,7 +123,6 @@ float gui_scale;
 
 /* defaults for some options */
 int updater = FALSE;
-int want_toolbar = TRUE;
 int winsize = FALSE;
 int main_x = -1;
 int main_y = -1;
@@ -1569,8 +1568,8 @@ static GtkWidget *make_main_window (void)
 
     gtk_widget_show_all(mdata->w); 
 
-    /* create gretl toolbar? */
-    show_or_hide_toolbar(want_toolbar);
+    /* create gretl toolbar */
+    show_toolbar();
 
     if (winsize && main_x >= 0 && main_y >= 0) {
 	gtk_window_move(GTK_WINDOW(mdata->w), main_x, main_y);

@@ -82,21 +82,6 @@ Checking ``Allow shell commands'' makes it possible to invoke shell
 commands in scripts and in the \app{gretl} console (this facility is
 disabled by default for security reasons).
       
-Also under ``General'' you can select the algorithm used by
-\app{gretl} for calculating least squares estimates.  The default is
-Cholesky decomposition, which is fast, relatively economical in terms
-of memory requirements, and accurate enough for most purposes.  The
-alternative is QR decomposition, which is computationally more
-expensive and requires more temporary storage, but which is more
-accurate.  You are unlikely to need the extra accuracy of QR
-decomposition unless you are dealing with very ill-conditioned data
-and are concerned with coefficient or standard error values to more
-than 7 digits of precision.\footnote{The option of using QR
-  decomposition can also be activated by setting the environment
-  variable \verb@GRETL_USE_QR@ to any non-NULL value.
-
-}
-      
 \textbf{Databases} tab: You can select the directory in which to start
 looking for native \app{gretl} databases; the directory in which to
 start looking for RATS 4 databases; the host name of the \app{gretl}

@@ -28,8 +28,6 @@
 # include "gretlwin32.h"
 #endif
 
-static GtkWidget *toolbar_box;
-
 /* callbacks for gretl toolbar icons */
 
 static void show_calc (void)
@@ -136,11 +134,8 @@ static void make_toolbar (GtkWidget *vbox)
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-    toolbar_box = gtk_handle_box_new();
-    gtk_box_pack_start(GTK_BOX(hbox), toolbar_box, FALSE, FALSE, 0);
-
     toolbar = gtk_toolbar_new();
-    gtk_container_add(GTK_CONTAINER(toolbar_box), toolbar);
+    gtk_box_pack_start(GTK_BOX(hbox), toolbar, FALSE, FALSE, 0);
 
     for (i=0; toolbar_items[i].str != NULL; i++) {
 	image = gtk_image_new();
@@ -156,15 +151,10 @@ static void make_toolbar (GtkWidget *vbox)
 
 /* public interface */
 
-void show_or_hide_toolbar (int want_toolbar)
+void show_toolbar (void)
 {
-    if (want_toolbar && toolbar_box == NULL) {
-	GtkWidget *vbox = g_object_get_data(G_OBJECT(mdata->w), "vbox");
+    GtkWidget *vbox = g_object_get_data(G_OBJECT(mdata->w), "vbox");
 
-	make_toolbar(vbox);
-    } else if (!want_toolbar && toolbar_box != NULL) {
-	gtk_widget_destroy(toolbar_box);
-	toolbar_box = NULL;
-    }
+    make_toolbar(vbox);
 }
 

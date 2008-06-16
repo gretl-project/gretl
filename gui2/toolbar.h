@@ -1,7 +1,7 @@
 #ifndef TOOLBAR_H
 #define TOOLBAR_H
 
-void show_or_hide_toolbar (int want_toolbar);
+void show_toolbar (void);
 
 void gretl_pdf_manual (void);
 

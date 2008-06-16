@@ -459,11 +459,10 @@ values using a number of bits given by the environment variable
 \verb+GRETL_MP_BITS+ (default value 256).  
 
 The normal equations of Least Squares are by default solved via
-Cholesky decomposition, which is accurate enough for most purposes.
-In case the independent variables are found to be very highly
-collinear, \app{gretl} automatically switches to use QR decomposition;
-in addition the user has the option of making QR decomposition the
-default.  
+Cholesky decomposition, which is highly accurate provided the matrix
+of cross-products of the regressors, $X'X$, is not very ill
+conditioned.  If this problem is detected, \app{gretl} automatically
+switches to use QR decomposition.
 
 The program has been tested rather thoroughly on the statistical
 reference datasets provided by NIST (the U.S.  National Institute of

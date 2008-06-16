@@ -22,7 +22,6 @@
 #include "gretl.h"
 #include "filelists.h"
 #include "gretl_www.h"
-#include "toolbar.h"
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "menustate.h"
@@ -50,8 +49,6 @@
 #if !defined(G_OS_WIN32)
 char rcfile[MAXLEN];
 #endif
-
-extern int want_toolbar;
 
 char dbproxy[21];
 int use_proxy;
@@ -86,7 +83,6 @@ static char appfontname[MAXLEN] = "Sans 10";
 PangoFontDescription *fixed_font;
 
 static int usecwd;
-static int useqr;
 static int shellok;
 static int manpref;
 char gpcolors[32];
@@ -157,8 +153,6 @@ RCVAR rc_vars[] = {
       INVISET, MAXLEN, TAB_MAIN, NULL },
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
-      BOOLSET, 0, TAB_MAIN, NULL },
 #ifndef G_OS_WIN32
     { "winsize", N_("Remember main window size"), NULL, &winsize, 
       BOOLSET, 0, TAB_MAIN, NULL },
@@ -217,8 +211,6 @@ RCVAR rc_vars[] = {
       USERSET, 21, TAB_DBS, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
       BOOLSET, 1, TAB_DBS, NULL },
-    { "useqr", N_("Use QR decomposition"), N_("Use Cholesky decomposition"), &useqr, 
-      BOOLSET, 0, TAB_MAIN, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
       USERSET, MAXLEN, TAB_NONE, NULL },
 #if !defined(USE_GNOME)
@@ -1419,10 +1411,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     write_rc(); /* note: calls gretl_set_paths */
 
-    show_or_hide_toolbar(want_toolbar);
-
     /* register these for session using libset apparatus */
-    libset_set_bool(USE_QR, useqr);
     libset_set_bool(SHELL_OK, shellok);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
@@ -1567,7 +1556,6 @@ static int common_read_rc_setup (void)
 {
     int err = 0;
 
-    libset_set_bool(USE_QR, useqr);
     libset_set_bool(SHELL_OK, shellok);
     libset_set_bool(USE_CWD, usecwd);
     set_gp_colors();
