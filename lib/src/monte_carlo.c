@@ -967,7 +967,14 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 	if (vi < 0 || vi >= pdinfo->v) {
 	    err = E_DATA;
 	} else {
-	    loop->eachstrs[i] = gretl_strdup(pdinfo->varname[vi]);
+	    if (var_is_listarg(pdinfo, vi)) {
+		char numstr[16];
+
+		sprintf(numstr, "%d", vi);
+		loop->eachstrs[i] = gretl_strdup(numstr);
+	    } else {
+		loop->eachstrs[i] = gretl_strdup(pdinfo->varname[vi]);
+	    }
 	    if (loop->eachstrs[i] == NULL) {
 		err = E_ALLOC;
 	    }
@@ -977,8 +984,8 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
     return err;
 }
 
-/* At loop runtime, check the named list and insert the names
-   of the variables as "eachstrs"; flag an error if the list
+/* At loop runtime, check the named list and insert the names (or
+   numbers) of the variables as "eachstrs"; flag an error if the list
    has disappeared.
 */
 
@@ -1007,8 +1014,9 @@ static int loop_list_refresh (LOOPSET *loop, const DATAINFO *pdinfo)
 }
 
 /* Identify the named list, if any, but do not yet fill out the
-   variable-name strings: these will be set when the loop is
-   actually run, since the list may have changed in the meantime.
+   variable-name (or variable-number) strings: these will be set when
+   the loop is actually run, since the list may have changed in the
+   meantime.
 */
 
 static int list_loop_setup (LOOPSET *loop, char *s, int *nf)

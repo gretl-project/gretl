@@ -343,6 +343,10 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     if (fsd > 0) {
 	/* inside a function: see only vars at that level */
 	for (i=1; i<pdinfo->v; i++) { 
+	    if (var_is_listarg(pdinfo, i)) {
+		/* variable is not visible by name in context */
+		continue;
+	    }
 	    if (STACK_LEVEL(pdinfo, i) == fsd && 
 		!strcmp(pdinfo->varname[i], s)) {
 		ret = i;

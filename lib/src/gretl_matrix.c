@@ -2659,7 +2659,7 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
 #define BLAS_DEBUG 0
 
-static int blas_nmk_min = -1;
+static int blas_nmk_min = -1; 
 
 void set_blas_nmk_min (int n)
 {

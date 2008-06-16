@@ -340,7 +340,7 @@ static int rq_attach_multi_results (MODEL *pmod,
     return 0;
 }
 
-static void rq_interpolate_intervals (struct br_info *rq)
+static int rq_interpolate_intervals (struct br_info *rq)
 {
     double c1j, c2j, c3j, c4j;
     double tn1, tn2, tn3, tn4;
@@ -360,13 +360,25 @@ static void rq_interpolate_intervals (struct br_info *rq)
 	c3j += fabs(c4j - c3j) * (rq->cut - fabs(tn3)) / fabs(tn4 - tn3);
 	c2j -= fabs(c1j - c2j) * (rq->cut - fabs(tn2)) / fabs(tn1 - tn2);
 
+	/* check for garbage */
+	if (xna(c3j) || xna(c2j)) {
+	    fprintf(stderr, "rq_interpolate_intervals: coeff %d: low = %g, "
+		    "high = %g\n", j, c2j, c3j);
+	    gretl_matrix_print(rq->ci, "rq->ci");
+	    gretl_matrix_print(rq->tnmat, "rq->tnmat");
+	    gretl_errmsg_set(_("Couldn't calculate confidence intervals "
+			       "for this model"));
+	    return E_NAN;
+	}
+
 	/* Write the (1 - alpha) intervals into rows 1 and 2 
 	   of the matrix ci.
 	*/
-
 	gretl_matrix_set(rq->ci, 2, j, c3j);
 	gretl_matrix_set(rq->ci, 1, j, c2j);
     }
+
+    return 0;
 }
 
 static void bad_f_count (const gretl_matrix *f)
@@ -1022,9 +1034,6 @@ write_tbeta_block_br (gretl_matrix *tbeta, int nt, double *coeff,
     for (i=0; i<p; i++) {
 	blo = gretl_matrix_get(ci, 1, i);
 	bhi = gretl_matrix_get(ci, 2, i);
-	if (xna(blo) || xna(bhi)) {
-	    return E_NAN;
-	}
 	gretl_matrix_set(tbeta, k, 0, coeff[i]);
 	gretl_matrix_set(tbeta, k, 1, blo);
 	gretl_matrix_set(tbeta, k, 2, bhi);
@@ -1046,6 +1055,7 @@ write_tbeta_block_fn (gretl_matrix *tbeta, int nt, double *x,
 
     for (i=0; i<p; i++) {
 	if (xna(x[i])) {
+	    fprintf(stderr, "write_tbeta_block_fn: x[%d] = %g\n", i, x[i]);
 	    return E_NAN;
 	}
 	gretl_matrix_set(tbeta, k, j, x[i]);
@@ -1116,7 +1126,10 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 
 	if (!err) {
 	    /* post-process confidence intervals */
-	    rq_interpolate_intervals(&rq);
+	    err = rq_interpolate_intervals(&rq);
+	}
+
+	if (!err) {
 	    if (ntau == 1) {
 		/* done: put intervals onto the model */
 		err = rq_attach_intervals(pmod, &rq, alpha, opt);

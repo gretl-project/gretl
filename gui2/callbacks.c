@@ -148,6 +148,55 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
     return FALSE;
 }
 
+#if 0 /* not yet */
+
+struct open_data_code {
+    int c;
+    const gchar *s;
+};
+
+struct open_data_code open_data_codes[] = {
+    { OPEN_DATA,       "OpenGdt" },
+    { APPEND_DATA,     "AppendGdt" },
+    { OPEN_ASCII,      "OpenASCII" },
+    { APPEND_ASCII,    "AppendASCII" },
+    { OPEN_CSV,        "OpenCSV" },
+    { APPEND_CSV,      "AppendCSV" },
+    { OPEN_OCTAVE,     "OpenOctave" },
+    { APPEND_OCTAVE,   "AppendOctave" },
+    { OPEN_GNUMERIC,   "OpenGnumeric" },
+    { APPEND_GNUMERIC, "AppendGnumeric" },
+    { OPEN_XLS,        "OpenXLS" },
+    { APPEND_XLS,      "AppendXLS" },
+    { OPEN_WF1,        "OpenWF1" },
+    { APPEND_WF1,      "AppendWF1" },
+    { OPEN_DTA,        "OpenDTA" },
+    { APPEND_DTA,      "AppendDTA" },
+    { OPEN_JMULTI,     "OpenJMulTi" },
+    { APPEND_JMULTI,   "AppendJMulTi" },
+    { OPEN_ODS,        "OpenODS" },
+    { APPEND_ODS,      "AppendODS" },
+    { OPEN_MARKERS,    "AddMarkers" },
+    { OPEN_RATS_DB,    "RATSDB" },
+    { OPEN_PCGIVE_DB,  "PcGiveDB" },
+    { 0, NULL }
+};
+
+static int open_data_code (const gchar *s)
+{
+    int i;
+
+    for (i=0; open_data_codes[i].s != NULL; i++) {
+	if (!strcmp(s, open_data_codes[i].s)) {
+	    return open_data_codes[i].c;
+	}
+    }
+
+    return 0;
+}
+
+#endif
+
 void open_data (gpointer data, guint code, GtkWidget *widget)
 {
     if (dataset_locked()) {

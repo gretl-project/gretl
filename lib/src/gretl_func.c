@@ -3036,6 +3036,8 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
+#define PROTECT_LISTS 1
+
 /* Given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
    and make the variables referenced in that list accessible to the
@@ -3071,7 +3073,9 @@ static int localize_list (const char *oldname, fn_param *fp,
 		if (fp->flags & ARG_CONST) {
 		    set_var_const(pdinfo, v);
 		}
+#if PROTECT_LISTS
 		var_set_listarg(pdinfo, v);
+#endif
 	    }
 	}
     }
@@ -3363,7 +3367,9 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 	int overwrite = 0;
 
 	vi = list[i];
+#if PROTECT_LISTS
 	var_unset_listarg(pdinfo, vi);
+#endif
 	vname = pdinfo->varname[vi];
 	if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
 	    for (j=1; j<pdinfo->v; j++) { 

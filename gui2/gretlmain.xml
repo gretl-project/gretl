@@ -1,0 +1,267 @@
+<ui>
+  <menubar name='MenuBar'>
+    <menu action='FileMenu'>
+      <menu action='OpenData'>
+	<menuitem action='OpenGdt'/>
+	<menuitem action='OpenSampleData'/>
+	<separator/>
+	<menu action='ImportData'>
+	  <menuitem action='OpenCSV'/>
+	  <menuitem action='OpenASCII'/>
+	  <menuitem action='OpenOctave'/>
+	  <menuitem action='OpenGnumeric'/>
+	  <menuitem action='OpenXLS'/>
+	  <menuitem action='OpenODS'/>
+	  <menuitem action='OpenWF1'/>
+	  <menuitem action='OpenDTA'/>
+	  <menuitem action='OpenJMulTi'/>
+	</menu>
+      </menu>      
+      <menu action='AppendData'>
+	<menuitem action='AppendGdt'/>
+	<menuitem action='AppendCSV'/>
+	<menuitem action='AppendASCII'/>
+	<menuitem action='AppendOctave'/>
+	<menuitem action='AppendGnumeric'/>
+	<menuitem action='AppendXLS'/>
+	<menuitem action='AppendODS'/>
+	<menuitem action='AppendWF1'/>
+	<menuitem action='AppendDTA'/>
+	<menuitem action='AppendJMulTi'/>
+      </menu>
+      <menuitem action='SaveData'/>
+      <menu action='SaveDataAs'>
+	<menuitem action='SaveAsGdt'/>
+	<menuitem action='SaveAsDb'/>
+      </menu>
+      <menu action='ExportData'>
+	<menuitem action='ExportCSV'/>
+	<menuitem action='ExportR'/>
+	<menuitem action='ExportOctave'/>
+	<menuitem action='ExportJMulTi'/>
+	<menuitem action='ExportPcGive'/>
+      </menu>
+      <menuitem action='MailData'/>
+      <menuitem action='NewData'/>
+      <menuitem action='ClearData'/>
+      <separator/>
+      <menuitem action='WorkingDir'/>
+      <separator/>
+      <menu action='ScriptFiles'>
+	<menuitem action='OpenUserScript'/>
+	<menuitem action='OpenSampleScript'/>
+	<menu action='NewScript'>
+	  <menuitem action='NewGretlScript'/>
+	  <menuitem action='NewGnuplotScript'/>
+	  <menuitem action='NewRScript'/>
+	</menu>
+      </menu>
+      <menu action='SessionFiles'>
+	<menuitem action='OpenSession'/>
+	<menuitem action='SaveSession'/>
+	<menuitem action='SaveSessionAs'/>
+      </menu>
+      <menu action='Databases'>
+	<menuitem action='NativeDB'/>
+	<menuitem action='RATSDB'/>
+	<menuitem action='PcGiveDB'/>
+	<menuitem action='RemoteDB'/>
+      </menu>
+      <menu action='FunctionFiles'>
+	<menuitem action='LocalGfn'/>
+	<menuitem action='RemoteGfn'/>
+	<menuitem action='NewGfn'/>
+      </menu>
+      <separator/>
+      <menuitem action='Quit'/>
+    </menu>
+    <menu action='ToolsMenu'>
+      <menuitem action='StatsTables'/>
+      <menuitem action='PValues'/>
+      <menuitem action='DistGraphs'/>
+      <menuitem action='TestStats'/>
+      <menuitem action='NonparamTests'/>
+      <menuitem action='SetSeed'/>
+      <separator/>
+      <menuitem action='CommandLog'/>
+      <menuitem action='ShowConsole'/>
+      <menuitem action='StartR'/>
+      <separator/>
+      <menu action='SortVars'>
+	<menuitem action='SortByID'/>
+	<menuitem action='SortByName'/>
+      </menu>
+      <menu action='NistTest'>
+	<menuitem action='NistBasic'/>
+	<menuitem action='NistVerbose'/>
+	<menuitem action='NistVVerbose'/>
+      </menu>
+      <menu action='Preferences'>
+	<menuitem action='PrefsGeneral'/>
+	<menuitem action='PrefsFixedFont'/>
+      </menu>
+    </menu>
+    <menu action='DataMenu'>
+      <menuitem action='DataSelectAll'/>
+      <separator/>
+      <menuitem action='DisplayValues'/>
+      <menuitem action='EditValues'/>
+      <menuitem action='AddObs'/>
+      <menuitem action='RemoveObs'/>
+      <separator/>
+      <menuitem action='ReadInfo'/>
+      <menuitem action='EditInfo'/>
+      <menuitem action='PrintReport'/>
+      <menuitem action='AddMarkers'/>
+      <menuitem action='RemoveMarkers'/>
+      <separator/>
+      <menuitem action='DataStructure'/>
+      <menuitem action='DataCompact'/>
+      <menuitem action='DataExpand'/>
+      <menuitem action='DataTranspose'/>
+      <menuitem action='DataSort'/>
+      <separator/>
+      <menuitem action='DataRefresh'/>
+    </menu>
+    <menu action='ViewMenu'>
+      <menuitem action='IconView'/>
+      <separator/>
+      <menu action='GraphVars'>
+	<menuitem action='TSPlot'/>
+	<menuitem action='ScatterPlot'/>
+	<menuitem action='ImpulsePlot'/>
+	<menuitem action='FactorPlot'/>
+	<menuitem action='FrischPlot'/>
+	<menuitem action='BoxPlot'/>
+	<menuitem action='NotchedBox'/>
+	<menuitem action='ThreeDPlot'/>
+	<menu action='MultiPlots'>
+	  <menuitem action='MultiXY'/>
+	  <menuitem action='MultiTS'/>
+	</menu>
+      </menu>
+      <separator/>
+      <menuitem action='SummaryStats'/>
+      <menuitem action='CorrMatrix'/>
+      <menuitem action='CrossTab'/>
+      <menuitem action='PrinComp'/>
+      <menuitem action='MahalDist'/>
+      <menuitem action='CrossCorrgm'/>
+    </menu>
+    <menu action='AddMenu'>
+      <menuitem action='LOGS'/>
+      <menuitem action='SQUARES'/>
+      <menuitem action='LAGS'/>
+      <menuitem action='DIFFS'/>
+      <menuitem action='LDIFFS'/>
+      <menuitem action='SDIFFS'/>
+      <separator/>
+      <menuitem action='AddIndex'/>
+      <menuitem action='AddTime'/>
+      <separator/>
+      <menuitem action='AddRandom'/>
+      <separator/>
+      <menuitem action='AddPeriodDums'/>
+      <menuitem action='AddUnitDums'/>
+      <menuitem action='AddTimeDums'/>
+      <menuitem action='AddDiscreteDums'/>
+      <separator/>
+      <menuitem action='DefineVar'/>
+      <menuitem action='DefineMatrix'/>
+    </menu>
+    <menu action='SampleMenu'>
+      <menuitem action='SetRange'/>
+      <menuitem action='FullRange'/>
+      <separator/>
+      <menuitem action='SampleDummy'/>
+      <menuitem action='SampleRestrict'/>
+      <menuitem action='SampleRandom'/>
+      <menuitem action='SampleWReplace'/>
+      <separator/>
+      <menuitem action='DropMissing'/>
+      <menuitem action='CountMissing'/>
+      <menuitem action='SetMissing'/>
+    </menu>
+    <menu action='VariableMenu'>
+      <menuitem action='VarFind'/>
+      <menuitem action='VarDisplay'/>
+      <menuitem action='VarSummary'/>
+      <menuitem action='VarNormTest'/>
+      <menuitem action='VarFreqDist'/>
+      <menuitem action='VarFreqPlot'/>
+      <menuitem action='VarDensity'/>
+      <menuitem action='VarGini'/>
+      <menuitem action='RangeMeanPlot'/>
+      <separator/>
+      <menuitem action='VarTSPlot'/>
+      <menuitem action='VarCorrgm'/>
+      <menu action='Spectrum'>
+	<menuitem action='VarPergm'/>
+	<menuitem action='VarBartlett'/>
+      </menu>
+      <menuitem action='ADF'/>
+      <menuitem action='ADF-GLS'/>
+      <menuitem action='KPSS'/>
+      <menu action='Filter'>
+	<menuitem action='FilterMA'/>
+	<menuitem action='FilterEMA'/>
+	<menuitem action='FilterHP'/>
+	<menuitem action='FilterBK'/>
+      </menu>
+      <placeholder name="AddX12A"/>
+      <placeholder name="AddTramo"/>
+      <menuitem action='VarHurst'/>
+      <separator/>
+      <menuitem action='VarEditAttrs'/>
+      <menuitem action='VarSetMissing'/>
+      <separator/>
+      <menuitem action='VarNew'/>
+    </menu>
+    <menu action='ModelMenu'>
+      <menuitem action='OLS'/>
+      <menu action='LinearModels'>
+	<menuitem action='WLS'/>
+	<menuitem action='HSK'/>
+	<menuitem action='TSLS'/>
+	<menuitem action='MPOLS'/>
+      </menu>
+      <menu action='TSModels'>
+      </menu>
+      <menu action='PanelModels'>
+      </menu>
+      <menu action='NonlinearModels'>
+	<menuitem action='LOGIT'/>
+	<menuitem action='PROBIT'/>
+	<menuitem action='TOBIT'/>
+	<menuitem action='HECKIT'/>
+	<menuitem action='POISSON'/>
+	<menuitem action='LOGISTIC'/>
+	<menuitem action='NLS'/>
+      </menu>
+      <menu action='RobustModels'>
+	<menuitem action='LAD'/>
+	<menuitem action='QUANTREG'/>
+	<menuitem action='SPEARMAN'/>
+      </menu>
+      <menuitem action='MLE'/>
+      <menuitem action='GMM'/>
+      <menuitem action='SYSTEM'/>
+    </menu>
+    <menu action='HelpMenu' position='bot'>
+      <menu action='CommandRef'>
+	<menuitem action='TextCmdRef'/>
+	<menuitem action='PDFCmdRef'/>
+      </menu>
+      <menuitem action='FuncRef'/>
+      <menuitem action='UserGuide'/>
+      <separator/>
+      <menuitem action='UpdateCheck'/>
+      <menuitem action='About'/>
+    </menu>
+  </menubar>
+ </ui>
+
+
+
+
+
