@@ -51,6 +51,8 @@
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
 
+#define scalar_node(n) (n->t == NUM || (n->t == MAT && gretl_matrix_is_scalar(n->v.m)))
+
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
 
@@ -837,7 +839,7 @@ static gretl_matrix *matrix_pdist (int t, char d, double *parm,
     return m;
 }
 
-static double scalar_node_get_value (NODE *n, parser *p)
+static double node_get_scalar (NODE *n, parser *p)
 {
     if (n->t == NUM) {
 	return (n->vnum >= 0)? (*p->Z)[n->vnum][0] : n->v.xval;
@@ -857,12 +859,12 @@ static NODE *DW_node (NODE *r, parser *p)
     for (i=0; i<2 && !p->err; i++) {
 	s = r->v.bn.n[i+1];
 	if (s->t == NUM || scalar_matrix_node(s)) {
-	    parm[i] = scalar_node_get_value(s, p);
+	    parm[i] = node_get_scalar(s, p);
 	} else {
 	    e = eval(s, p);
 	    if (!p->err) {
 		if (e->t == NUM || scalar_matrix_node(e)) {
-		    parm[i] = scalar_node_get_value(e, p);
+		    parm[i] = node_get_scalar(e, p);
 		} else {
 		    p->err = E_INVARG;
 		}
@@ -935,7 +937,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	for (i=0; i<argc && !p->err; i++) {
 	    s = r->v.bn.n[i+1];
 	    if (s->t == NUM || scalar_matrix_node(s)) {
-		parm[i] = scalar_node_get_value(s, p);
+		parm[i] = node_get_scalar(s, p);
 	    } else if (i == k && !rgen && s->t == VEC && bmat == NULL) {
 		pvec = s->v.xvec;
 	    } else if (i == k && !rgen && s->t == MAT && bvec == NULL) {
@@ -950,7 +952,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    goto disterr;
 		}
 		if (e->t == NUM || scalar_matrix_node(e)) {
-		    parm[i] = scalar_node_get_value(e, p);
+		    parm[i] = node_get_scalar(e, p);
 		} else if (i == k && !rgen && e->t == VEC && bmat == NULL) {
 		    pvec = e->v.xvec;
 		} else if (i == k && !rgen && e->t == MAT && bvec == NULL) {
@@ -1640,7 +1642,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
     if (starting(p)) {
 	gretl_matrix *m = l->v.m;
-	int k = r->v.xval;
+	int k = node_get_scalar(r, p);
 
 	if (gretl_is_null_matrix(m)) {
 	    p->err = E_DATA;
@@ -1853,7 +1855,7 @@ static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *m = l->v.m;
-	int k = r->v.xval;
+	int k = node_get_scalar(r, p);
 
 	ret->v.m = gretl_matrix_pca(m, k, &p->err);
     }
@@ -2091,8 +2093,8 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	double xr = l->v.xval;
-	double xc = (f == F_IMAT)? l->v.xval : r->v.xval;
+	double xr = node_get_scalar(l, p);
+	double xc = (f == F_IMAT)? xr : node_get_scalar(r, p);
 	int rows, cols;
 
 	gretl_error_clear();
@@ -2447,7 +2449,7 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 	} else {
 	    switch (f) {
 	    case F_LLAG:
-		order = l->v.xval;
+		order = node_get_scalar(l, p);
 		p->err = list_laggenr(&list, order, p->Z, p->dinfo);
 		break;
 	    case F_DUMIFY:
@@ -2861,11 +2863,11 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 		vx = l->v.xvec;
 		v = 1;
 	    } else {
-		x = l->v.xval;
+		x = node_get_scalar(l, p);
 	    }
 	} else if (f == F_RUNIFORM || f == F_RNORMAL) {
-	    x = (l->t == EMPTY)? NADBL : l->v.xval;
-	    y = (r->t == EMPTY)? NADBL : r->v.xval;
+	    x = (l->t == EMPTY)? NADBL : node_get_scalar(l, p);
+	    y = (r->t == EMPTY)? NADBL : node_get_scalar(r, p);
 	} else {
 	    v = l->v.xval;
 	}
@@ -3273,13 +3275,14 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 
     if (starting(p)) {
 	gretl_matrix *tmp = NULL;
+	double rval = node_get_scalar(r, p);
 	const double *xvec;
 
 	if (l->t == MAT) {
 	    if (f == F_QUANTILE) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL) {
-		    ret->v.m = gretl_matrix_quantiles(l->v.m, r->v.xval,
+		    ret->v.m = gretl_matrix_quantiles(l->v.m, rval,
 						      &p->err);
 		}
 		return ret;
@@ -3301,11 +3304,11 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	switch (f) {
 	case F_LRVAR:
 	    ret->v.xval = gretl_long_run_variance(p->dinfo->t1, p->dinfo->t2, 
-						  xvec, (int) (r->v.xval));
+						  xvec, (int) rval);
 	    break;
 	case F_QUANTILE:
 	    ret->v.xval = gretl_quantile(p->dinfo->t1, p->dinfo->t2, xvec, 
-					 r->v.xval);
+					 rval);
 	    break;
 	default:
 	    break;
@@ -3324,19 +3327,19 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 static NODE *series_obs (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    
 
     if (ret != NULL) {
+	double rx = node_get_scalar(r, p);
 	char word[16];
 	int t;
 
-	if (r->v.xval < 0 || r->v.xval > (double) INT_MAX) {
+	if (rx < 0 || rx > (double) INT_MAX) {
 	    ret->v.xval = NADBL;
 	    return ret;
 	}
 
 	/* convert to 0-based, and allow for dates */
-	t = (int) r->v.xval;
+	t = (int) rx;
 	sprintf(word, "%d", t);
 	t = get_t_from_obs_string(word, (const double **) *p->Z, 
 				  p->dinfo);
@@ -3357,7 +3360,7 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const double *x = l->v.xvec;
-	int k = (int) r->v.xval;
+	int k = (int) node_get_scalar(r, p);
 	int t1 = p->dinfo->t1;
 	int t2 = p->dinfo->t2;
 
@@ -3374,7 +3377,7 @@ static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
     const double *x = l->v.xvec;
-    int k = (int) r->v.xval;
+    int k = (int) node_get_scalar(r, p);
     int t, t1, t2;
 
     ret = aux_vec_node(p, p->dinfo->n);
@@ -3425,7 +3428,7 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
     const double *x = l->v.xvec;
-    int k = (int) -r->v.xval;
+    int k = (int) -(node_get_scalar(r, p));
     int t, s, t1, t2;
 
     ret = aux_vec_node(p, p->dinfo->n);
@@ -3724,7 +3727,8 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     }
 
     if (p->err) {
-	pprintf(p->prn, "matrix specification is not coherent\n");
+	pprintf(p->prn, _("Matrix specification is not coherent"));
+	pputc(p->prn, '\n');
 	return NULL;
     }
 
@@ -5233,14 +5237,14 @@ static NODE *eval (NODE *t, parser *p)
     case F_MLAG:
     case F_MSORTBY:
 	/* matrix on left, scalar on right */
-	if (l->t == MAT && r->t == NUM) {
+	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; 
 	}
 	break;
     case F_LLAG:
-	if (l->t == NUM && ok_list_node(r)) {
+	if (scalar_node(l) && ok_list_node(r)) {
 	    ret = list_gen_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; 
@@ -5335,7 +5339,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, VEC, l, p);
-	} else if (r->t != NUM) {
+	} else if (!scalar_node(r)) {
 	    node_type_error(t->t, NUM, r, p);
 	} else if (t->t == LAG) {
 	    ret = series_lag(l, r, p); 
@@ -5440,7 +5444,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_QUANTILE:	
 	/* takes series and scalar arg, returns scalar */
 	if (l->t == VEC || l->t == MAT) {
-	    if (r->t == NUM) {
+	    if (scalar_node(r)) {
 		ret = series_scalar_scalar_func(l, r, t->t, p);
 	    } else {
 		node_type_error(t->t, NUM, r, p);
@@ -5452,7 +5456,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_RUNIFORM:
     case F_RNORMAL:
 	/* functions taking zero or two scalars as args */
-	if (l->t == NUM && r->t == NUM) {
+	if (scalar_node(l) && scalar_node(r)) {
 	    ret = series_fill_func(l, r, t->t, p);
 	} else if (l->t == EMPTY && r->t == EMPTY) {
 	    ret = series_fill_func(l, r, t->t, p);
@@ -5462,7 +5466,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_RPOISSON:
 	/* one arg: scalar or series */
-	if (l->t == NUM || l->t == VEC) {
+	if (scalar_node(l) || l->t == VEC) {
 	    ret = series_fill_func(l, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
@@ -5501,11 +5505,11 @@ static NODE *eval (NODE *t, parser *p)
     case F_MUNIF:
     case F_MNORM:
 	/* matrix-creation functions */
-	if (l->t != NUM || (r != NULL && r->t != NUM)) {
-	    node_type_error(t->t, NUM, NULL, p);
-	} else {
+	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
 	    ret = matrix_fill_func(l, r, t->t, p);
-	}
+	} else {
+	    node_type_error(t->t, NUM, NULL, p);
+	} 
 	break;
     case F_SUMC:
     case F_SUMR:
@@ -5600,7 +5604,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_PRINCOMP:
 	/* matrix, scalar as second arg */
-	if (l->t == MAT && r->t == NUM) {
+	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_princomp(l, r, p);
 	} else {
 	    p->err = E_TYPES;

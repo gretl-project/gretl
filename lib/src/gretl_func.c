@@ -3036,7 +3036,7 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
-#define PROTECT_LISTS 1
+#define PROTECT_LISTS 0
 
 /* Given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
