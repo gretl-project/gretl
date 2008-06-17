@@ -2,7 +2,8 @@ version 1.7.6, in progress
 - Add menu item: Variable/Normality test
 - Add $xlist accessor to get the list of regressors from the
   last model
-- Fix bug 1996156
+- Removed some redundant preferences items
+- Fix bugs 1996156, 1996161
 
 6/13/2008 version 1.7.5
 - max() and min() functions: extend the syntax to allow a list

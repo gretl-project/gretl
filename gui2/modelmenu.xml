@@ -1,0 +1,89 @@
+<ui>
+  <menubar name='MenuBar'>
+    <menu action='FileMenu'>
+      <menuitem action='SaveAs'/>
+      <menuitem action='SaveAsIcon'/>
+      <menuitem action='SaveAndClose'/>
+      <menuitem action='Print'/>
+      <menuitem action='Close'/>
+    </menu>      
+    <menu action='EditMenu'>
+      <menuitem action='Copy'/>
+    </menu>      
+    <menu action='TestsMenu'>
+      <menuitem action='Omit'/>
+      <menuitem action='Add'/>
+      <menuitem action='CoeffSum'/>
+      <menuitem action='Restrict'/>
+      <separator/>
+      <menuitem action='SquaresTest'/>
+      <menuitem action='LogsTest'/>
+      <menuitem action='RESET'/>
+      <separator/>
+      <menu action='Heterosked'>
+	<menuitem action='White'/>
+	<menuitem action='WhiteSquares'/>
+	<menuitem action='BreuschPagan'/>
+	<menuitem action='Koenker'/>
+      </menu>
+      <menuitem action='Normality'/>
+      <menuitem action='Leverage'/>
+      <menuitem action='Multicoll'/>
+      <separator/>
+      <menuitem action='Autocorr'/>
+      <menuitem action='ARCH'/>
+      <menuitem action='Chow'/>
+      <menuitem action='QLR'/>
+      <menuitem action='CUSUM'/>
+      <menuitem action='CUSUMSQ'/>
+      <separator/>
+      <menuitem action='PanelTest'/>
+    </menu>      
+    <menu action='SaveMenu'>
+      <menuitem action='Fitted'/>
+      <menuitem action='Residuals'/>
+      <menuitem action='ResidualsSq'/>
+      <menuitem action='ESS'/>
+      <menuitem action='SE'/>
+      <menuitem action='RSquared'/>
+      <menuitem action='TRSquared'/>
+      <menuitem action='AIC'/>
+      <menuitem action='BIC'/>
+      <menuitem action='HQC'/>
+      <separator/>
+      <menuitem action='NewVar'/>
+    </menu>      
+    <menu action='GraphMenu'>
+      <menu action='ResidPlot'>
+      </menu>
+      <menu action='FittedActualPlot'>
+      </menu>
+    </menu>      
+    <menu action='AnalysisMenu'>
+      <menuitem action='DisplayAFR'/>
+      <menuitem action='Forecasts'/>
+      <menuitem action='ConfIntervals'/>
+      <menuitem action='ConfEllipse'/>
+      <menuitem action='Covariance'/>
+      <menuitem action='ANOVA'/>
+      <menuitem action='Bootstrap'/>
+    </menu>      
+    <menu action='LaTeXMenu'>
+      <menu action='TeXView'>
+	<menuitem action='TabView'/>
+	<menuitem action='EqnView'/>
+      </menu>
+      <menu action='TeXCopy'>
+	<menuitem action='TabCopy'/>
+	<menuitem action='EqnCopy'/>
+      </menu>
+      <menu action='TeXSave'>
+	<menuitem action='TabSave'/>
+	<menuitem action='EqnSave'/>
+      </menu>
+      <menu action='EqnOpts'>
+      </menu>
+      <menuitem action='TabOpts'/>
+    </menu>      
+  </menubar>
+</ui>
