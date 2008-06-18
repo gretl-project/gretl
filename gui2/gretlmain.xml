@@ -1,9 +1,9 @@
 <ui>
   <menubar name='MenuBar'>
-    <menu action='FileMenu'>
+    <menu action='File'>
       <menu action='OpenData'>
 	<menuitem action='OpenGdt'/>
-	<menuitem action='OpenSampleData'/>
+	<menuitem action='DisplayDataFiles'/>
 	<separator/>
 	<menu action='ImportData'>
 	  <menuitem action='OpenCSV'/>
@@ -16,6 +16,8 @@
 	  <menuitem action='OpenDTA'/>
 	  <menuitem action='OpenJMulTi'/>
 	</menu>
+	<separator/>
+	<placeholder name='RecentData'/>
       </menu>      
       <menu action='AppendData'>
 	<menuitem action='AppendGdt'/>
@@ -48,18 +50,22 @@
       <menuitem action='WorkingDir'/>
       <separator/>
       <menu action='ScriptFiles'>
-	<menuitem action='OpenUserScript'/>
-	<menuitem action='OpenSampleScript'/>
+	<menuitem action='OpenScript'/>
+	<menuitem action='DisplayScripts'/>
 	<menu action='NewScript'>
 	  <menuitem action='NewGretlScript'/>
 	  <menuitem action='NewGnuplotScript'/>
 	  <menuitem action='NewRScript'/>
 	</menu>
+	<separator/>
+	<placeholder name='RecentScripts'/>
       </menu>
       <menu action='SessionFiles'>
 	<menuitem action='OpenSession'/>
 	<menuitem action='SaveSession'/>
 	<menuitem action='SaveSessionAs'/>
+	<separator/>
+	<placeholder name='RecentSessions'/>
       </menu>
       <menu action='Databases'>
 	<menuitem action='NativeDB'/>
@@ -75,7 +81,7 @@
       <separator/>
       <menuitem action='Quit'/>
     </menu>
-    <menu action='ToolsMenu'>
+    <menu action='Tools'>
       <menuitem action='StatsTables'/>
       <menuitem action='PValues'/>
       <menuitem action='DistGraphs'/>
@@ -101,7 +107,7 @@
 	<menuitem action='PrefsFixedFont'/>
       </menu>
     </menu>
-    <menu action='DataMenu'>
+    <menu action='Data'>
       <menuitem action='DataSelectAll'/>
       <separator/>
       <menuitem action='DisplayValues'/>
@@ -123,7 +129,7 @@
       <separator/>
       <menuitem action='DataRefresh'/>
     </menu>
-    <menu action='ViewMenu'>
+    <menu action='View'>
       <menuitem action='IconView'/>
       <separator/>
       <menu action='GraphVars'>
@@ -132,8 +138,8 @@
 	<menuitem action='ImpulsePlot'/>
 	<menuitem action='FactorPlot'/>
 	<menuitem action='FrischPlot'/>
-	<menuitem action='BoxPlot'/>
-	<menuitem action='NotchedBox'/>
+	<menuitem action='GR_BOX'/>
+	<menuitem action='GR_NBOX'/>
 	<menuitem action='ThreeDPlot'/>
 	<menu action='MultiPlots'>
 	  <menuitem action='MultiXY'/>
@@ -148,13 +154,13 @@
       <menuitem action='MahalDist'/>
       <menuitem action='CrossCorrgm'/>
     </menu>
-    <menu action='AddMenu'>
+    <menu action='Add'>
       <menuitem action='LOGS'/>
       <menuitem action='SQUARES'/>
       <menuitem action='LAGS'/>
-      <menuitem action='DIFFS'/>
-      <menuitem action='LDIFFS'/>
-      <menuitem action='SDIFFS'/>
+      <menuitem action='DIFF'/>
+      <menuitem action='LDIFF'/>
+      <menuitem action='SDIFF'/>
       <separator/>
       <menuitem action='AddIndex'/>
       <menuitem action='AddTime'/>
@@ -169,7 +175,7 @@
       <menuitem action='DefineVar'/>
       <menuitem action='DefineMatrix'/>
     </menu>
-    <menu action='SampleMenu'>
+    <menu action='Sample'>
       <menuitem action='SetRange'/>
       <menuitem action='FullRange'/>
       <separator/>
@@ -180,9 +186,9 @@
       <separator/>
       <menuitem action='DropMissing'/>
       <menuitem action='CountMissing'/>
-      <menuitem action='SetMissing'/>
+      <menuitem action='GSETMISS'/>
     </menu>
-    <menu action='VariableMenu'>
+    <menu action='Variable'>
       <menuitem action='VarFind'/>
       <menuitem action='VarDisplay'/>
       <menuitem action='VarSummary'/>
@@ -200,7 +206,7 @@
 	<menuitem action='VarBartlett'/>
       </menu>
       <menuitem action='ADF'/>
-      <menuitem action='ADF-GLS'/>
+      <menuitem action='DFGLS'/>
       <menuitem action='KPSS'/>
       <menu action='Filter'>
 	<menuitem action='FilterMA'/>
@@ -208,26 +214,22 @@
 	<menuitem action='FilterHP'/>
 	<menuitem action='FilterBK'/>
       </menu>
-      <placeholder name="AddX12A"/>
-      <placeholder name="AddTramo"/>
-      <menuitem action='VarHurst'/>
+      <placeholder action='X12A'/>
+      <placeholder action='Tramo'/>
+      <menuitem action='Hurst'/>
       <separator/>
-      <menuitem action='VarEditAttrs'/>
-      <menuitem action='VarSetMissing'/>
+      <menuitem action='EditAttrs'/>
+      <menuitem action='VSETMISS'/>
       <separator/>
-      <menuitem action='VarNew'/>
+      <menuitem action='GENR'/>
     </menu>
-    <menu action='ModelMenu'>
+    <menu action='Model'>
       <menuitem action='OLS'/>
       <menu action='LinearModels'>
 	<menuitem action='WLS'/>
 	<menuitem action='HSK'/>
 	<menuitem action='TSLS'/>
 	<menuitem action='MPOLS'/>
-      </menu>
-      <menu action='TSModels'>
-      </menu>
-      <menu action='PanelModels'>
       </menu>
       <menu action='NonlinearModels'>
 	<menuitem action='LOGIT'/>
@@ -238,6 +240,28 @@
 	<menuitem action='LOGISTIC'/>
 	<menuitem action='NLS'/>
       </menu>
+      <menu action='TSModels'>
+	<menuitem action='CORC'/>
+	<menuitem action='HILU'/>
+	<menuitem action='PWE'/>
+	<menuitem action='AR'/>
+	<menuitem action='ARMA'/>
+	<menuitem action='ARCH'/>
+	<menuitem action='GARCH'/>
+	<menuitem action='VAR'/>
+	<menuitem action='VLAGSEL'/>
+	<menuitem action='VECM'/>
+	<menu action='CointMenu'>
+	  <menuitem action='COINT'/>
+	  <menuitem action='COINT2'/>
+	</menu>
+      </menu>
+      <menu action='PanelModels'>
+	<menuitem action='PANEL'/>
+	<menuitem action='PANEL_WLS'/>
+	<menuitem action='PANEL_B'/>
+	<menuitem action='ARBOND'/>
+      </menu>
       <menu action='RobustModels'>
 	<menuitem action='LAD'/>
 	<menuitem action='QUANTREG'/>
@@ -247,7 +271,7 @@
       <menuitem action='GMM'/>
       <menuitem action='SYSTEM'/>
     </menu>
-    <menu action='HelpMenu' position='bot'>
+    <menu action='Help' position='bot'>
       <menu action='CommandRef'>
 	<menuitem action='TextCmdRef'/>
 	<menuitem action='PDFCmdRef'/>

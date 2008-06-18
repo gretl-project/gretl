@@ -2228,11 +2228,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "cmd->word = '%s'\n", cmd->word);
 #endif
 
-    /* backwards compatibility */
-    accommodate_obsolete_commands(line, cmd);
-
-    /* replace simple aliases and a few specials */
-    catch_command_alias(line, cmd);
+    if (!cmd->context) {
+	/* backwards compatibility */
+	accommodate_obsolete_commands(line, cmd);
+	/* replace simple aliases and a few specials */
+	catch_command_alias(line, cmd);
+    }
 
     /* list <listname> delete */
     if (cmd->ci == DELEET && *cmd->extra != '\0') {
