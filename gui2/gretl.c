@@ -565,9 +565,9 @@ static void gui_usage (void)
     exit(EXIT_SUCCESS);
 }
 
-static void noalloc (const char *str)
+static void noalloc (void)
 {
-    fprintf(stderr, I_("Couldn't allocate memory for %s\n"), str);
+    fputs(I_("Out of memory!\n"), stderr);
     exit(EXIT_FAILURE);
 }
 
@@ -859,13 +859,13 @@ int main (int argc, char *argv[])
     /* allocate data information struct */
     datainfo = datainfo_new();
     if (datainfo == NULL) {
-	noalloc(_("data information"));
+	noalloc();
     }
 
     /* allocate memory for models */
     models = allocate_working_models(3);
     if (models == NULL) {
-	noalloc(_("models"));
+	noalloc();
     } 
 
     library_command_init();
@@ -960,9 +960,9 @@ int main (int argc, char *argv[])
 
     /* create main window */
     if ((mdata = mymalloc(sizeof *mdata)) == NULL)
-	noalloc(_("GUI"));
+	noalloc();
     if (make_main_window() == NULL) 
-	noalloc(_("main window"));
+	noalloc();
     if (have_data()) {
 	/* redundant? */
 	set_sample_label(datainfo);

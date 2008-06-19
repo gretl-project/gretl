@@ -37,7 +37,7 @@ static const char *gretl_error_messages[] = {
     N_("Syntax error in genr formula"),                          /* E_SYNTAX */
     N_("This command won't work with the current periodicity"),  /* E_PDWRONG */
     N_("Error attempting to open file"),                         /* E_FOPEN */
-    N_("Out of memory error"),                                   /* E_ALLOC */
+    N_("Out of memory!"),                                        /* E_ALLOC */
     N_("No formula supplied in genr"),                           /* E_EQN */
     N_("Unknown variable name in command"),                      /* E_UNKVAR */
     N_("Command has insufficient arguments"),                    /* E_ARGS */

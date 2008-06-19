@@ -2448,11 +2448,11 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	pdinfo->v = 2;
 	dbv = 1;
 	if (start_new_Z(pZ, pdinfo, 0)) {
-	    strcpy(gretl_errmsg, _("Out of memory adding series"));
+	    strcpy(gretl_errmsg, _("Out of memory!"));
 	    return 1;
 	}
     } else if (new && dataset_add_series(1, pZ, pdinfo)) {
-	strcpy(gretl_errmsg, _("Out of memory adding series"));
+	strcpy(gretl_errmsg, _("Out of memory!"));
 	return 1;
     }
 
@@ -2480,7 +2480,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	}
 	xvec = compact_db_series(dbZ[1], sinfo, pdinfo->pd, method);
 	if (xvec == NULL) {
-	    strcpy(gretl_errmsg, _("Out of memory adding series"));
+	    strcpy(gretl_errmsg, _("Out of memory!"));
 	    if (new) {
 		dataset_drop_last_variables(1, pZ, pdinfo);
 	    }

@@ -1002,6 +1002,34 @@ static void add_en_help_item (windata_t *hwin, int cli)
     g_free(item.path);
 }
 
+static gchar *help_item_get_path (help_head **hds,
+				  const char *mpath,
+				  const char *headname,
+				  int i, int j, int tnum,
+				  int cli)
+{
+    gchar *path = NULL;
+    const char *hword = NULL;
+
+    if (hds[i]->topicnames != NULL) {
+	hword = hds[i]->topicnames[j];
+    } else if (tnum < NC) {
+	/* a regular gretl command */
+	hword = gretl_command_word(tnum);
+    } else if (!cli) {
+	/* a gui special item? */
+	hword = get_gui_help_string(hds[i]->pos[j]);
+    } else {
+	hword = get_compat_help_string(hds[i]->pos[j]);
+    }
+
+    if (hword != NULL) {
+	path = g_strdup_printf("%s/%s/%s", mpath, headname, hword);
+    }
+
+    return path;
+}
+
 static void add_help_topics (windata_t *hwin, int flags)
 {
     GtkItemFactoryEntry hitem;
@@ -1053,72 +1081,18 @@ static void add_help_topics (windata_t *hwin, int flags)
 	hitem.item_type = "<Branch>";
 	hitem.path = g_strdup_printf("%s/%s", mpath, headname);
 	hitem.callback = NULL; 
-
 	gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
 	g_free(hitem.path);
 
 	for (j=0; j<hds[i]->ntopics; j++) {
-	    int tnum = -1;
-	    int topic_ok = 1;
+	    int tnum = hds[i]->topics[j];
 
 	    hitem.callback_action = hds[i]->pos[j]; 
 	    hitem.item_type = NULL;
-	    hitem.path = NULL;
-
-	    tnum = hds[i]->topics[j];
-
-	    if (hds[i]->topicnames != NULL) {
-		hitem.path = 
-		    g_strdup_printf("%s/%s/%s", 
-				    mpath, headname, 
-				    hds[i]->topicnames[j]);
-#if HDEBUG
-		fprintf(stderr, "(1) Built help topic path from\n"
-			" '%s', '%s' and '%s'\n", mpath, headname,
-			hds[i]->topicnames[j]);
-#endif
-	    } else {
-		if (tnum < NC) {
-		    /* a regular gretl command */
-		    hitem.path = 
-			g_strdup_printf("%s/%s/%s", 
-					mpath, headname, 
-					gretl_command_word(tnum));
-#if HDEBUG
-		    fprintf(stderr, "(2) Built help topic path from\n"
-			    " '%s', '%s' and '%s'\n", mpath, headname,
-			    gretl_command_word(tnum));
-#endif
-		} else if (!cli) {
-		    /* a gui special item? */
-		    char *gstr = get_gui_help_string(hds[i]->pos[j]);
-
-		    if (gstr != NULL) {
-			hitem.path = 
-			    g_strdup_printf("%s/%s/%s", 
-					    mpath, headname, gstr);
-#if HDEBUG
-			fprintf(stderr, "(3) Built help topic path from\n"
-				" '%s', '%s' and '%s'\n", mpath, headname,
-				gstr);
-#endif
-		    } else {
-			topic_ok = 0;
-		    }
-		} else {
-		    char *cstr = get_compat_help_string(hds[i]->pos[j]);
-
-		    if (cstr != NULL) {
-			hitem.path = 
-			    g_strdup_printf("%s/%s/%s", 
-					    mpath, headname, cstr);
-		    } else {		    
-			topic_ok = 0;
-		    }
-		}
-	    }
-
-	    if (topic_ok) {
+	    hitem.path = help_item_get_path(hds, mpath, headname, 
+					    i, j, tnum, cli);
+					    
+	    if (hitem.path != NULL) {
 		if (en) {
 		    hitem.callback = (cli)? do_en_cli_help : do_en_gui_help; 
 		} else {

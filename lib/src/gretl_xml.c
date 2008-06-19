@@ -1401,8 +1401,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     pmax = malloc(nvars * sizeof *pmax);
     if (pmax == NULL) {
-	sprintf(gretl_errmsg, _("Out of memory"));
-	err = 1;
+	err = E_ALLOC;
 	goto cleanup;
     } 
 
@@ -1691,14 +1690,12 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    err = 1;
 	}
 	if (!err && dataset_allocate_varnames(pdinfo)) {
-	    sprintf(gretl_errmsg, _("Out of memory reading data file"));
-	    err = 1;
+	    err = E_ALLOC;
 	}
 	if (!err) {
 	    *pZ = malloc(pdinfo->v * sizeof **pZ);
 	    if (*pZ == NULL) {
-		sprintf(gretl_errmsg, _("Out of memory reading data file"));
-		err = 1;
+		err = E_ALLOC;
 	    }
 	}		
 	free(tmp);
@@ -1856,10 +1853,11 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     int n, i, t;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
+    int err = 0;
 
     tmp = xmlGetProp(node, (XUC) "count");
     if (tmp == NULL) {
-	return 1;
+	return E_DATA;
     } 
 
     if (sscanf((char *) tmp, "%d", &n) == 1) {
@@ -1868,7 +1866,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     } else {
 	sprintf(gretl_errmsg, _("Failed to parse number of observations"));
 	free(tmp);
-	return 1;
+	return E_DATA;
     }
 
     if (progress > 0) {
@@ -1882,25 +1880,24 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     if (tmp) {
 	if (!strcmp((char *) tmp, "true")) {
 	    if (dataset_allocate_obs_markers(pdinfo)) {
-		sprintf(gretl_errmsg, "Out of memory");
-		return 1;
+		return E_ALLOC;
 	    }
 	} else if (strcmp((char *) tmp, "false")) {
 	    sprintf(gretl_errmsg, _("labels attribute for observations must be "
 		    "'true' or 'false'"));
-	    return 1;
+	    return E_DATA;
 	}
 	free(tmp);
     } else {
-	return 1;
+	return E_DATA;
     }
 
     tmp = xmlGetProp(node, (XUC) "panel-info");
     if (tmp) {
 	if (!strcmp((char *) tmp, "true")) {
-	    if (dataset_allocate_panel_info(pdinfo)) {
-		sprintf(gretl_errmsg, "Out of memory");
-		return 1;
+	    err = dataset_allocate_panel_info(pdinfo);
+	    if (err) {
+		return err;
 	    }
 	    panelobs = 1;
 	} 
@@ -1919,7 +1916,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	}
 	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
 	if ((*pZ)[i] == NULL) {
-	    return 1;
+	    return E_ALLOC;
 	}
     }
 
@@ -1935,7 +1932,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 
     if (cur == NULL) {
 	sprintf(gretl_errmsg, _("Got no observations\n"));
-	return 1;
+	return E_DATA;
     }
 
     if (progress) {
@@ -1953,7 +1950,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    free(tmp);
 		} else {
 		    sprintf(gretl_errmsg, _("Case marker missing at obs %d"), t+1);
-		    return 1;
+		    return E_DATA;
 		}
 	    }
 
@@ -1972,7 +1969,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		} 
 		if (ok < 2) {
 		    sprintf(gretl_errmsg, "Panel index missing at obs %d", t+1);
-		    return 1;
+		    return E_DATA;
 		}
 		pdinfo->paninfo->unit[t] = j;
 		pdinfo->paninfo->period[t] = s;
@@ -1988,7 +1985,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		t++;
 	    } else {
 		sprintf(gretl_errmsg, _("Values missing at observation %d"), t+1);
-		return 1;
+		return E_DATA;
 	    }
 	}	    
 	cur = cur->next;
@@ -2004,10 +2001,10 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 
     if (t != pdinfo->n) {
 	sprintf(gretl_errmsg, _("Number of observations does not match declaration"));
-	return 1;
+	err = E_DATA;
     }
 
-    else return 0;
+    return err;
 }
 
 static long get_filesize (const char *fname)

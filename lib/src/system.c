@@ -772,7 +772,7 @@ system_print_F_test (const equation_system *sys,
     RvR = gretl_matrix_alloc(Rrows, Rrows);
 
     if (Rbq == NULL || RvR == NULL) {
-	pputs(prn, "Out of memory in F test\n");
+	pputs(prn, "Out of memory!\n");
 	goto bailout;
     }
 

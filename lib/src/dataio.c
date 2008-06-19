@@ -2197,8 +2197,8 @@ static int panel_append_special (int addvars,
     int err = 0;
 
     if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
-	merge_error(_("Out of memory adding data\n"), prn);
-	err = 1;
+	merge_error(_("Out of memory!\n"), prn);
+	err = E_ALLOC;
     }
 
     tsdata = ((opt & OPT_T) || addinfo->n != n);
@@ -2398,7 +2398,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (err) { 
-	    merge_error(_("Out of memory adding data\n"), prn);
+	    merge_error(_("Out of memory!\n"), prn);
 	} else {
 	    pdinfo->n = new_n;
 	    ntodate_full(pdinfo->endobs, new_n - 1, pdinfo);
@@ -2414,8 +2414,8 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	int i, t;
 
 	if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
-	    merge_error(_("Out of memory adding data\n"), prn);
-	    err = 1;
+	    merge_error(_("Out of memory!\n"), prn);
+	    err = E_ALLOC;
 	}
 
 	for (i=1; i<addinfo->v && !err; i++) {
@@ -2739,7 +2739,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     octinfo = datainfo_new();
     if (octinfo == NULL) {
-	pputs(prn, M_("Out of memory\n"));
+	pputs(prn, M_("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
     }
@@ -2748,7 +2748,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
     octinfo->v = ncols + 1;
 
     if (start_new_Z(&octZ, octinfo, 0)) {
-	pputs(prn, M_("Out of memory\n"));
+	pputs(prn, M_("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
     }  

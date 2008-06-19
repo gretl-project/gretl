@@ -116,7 +116,7 @@ static void gretl_abort (char *line)
 
 static void noalloc (void)
 {
-    fputs(_("Out of memory\n"), stderr);
+    fputs(_("Out of memory!\n"), stderr);
     exit(EXIT_FAILURE);
 }
 

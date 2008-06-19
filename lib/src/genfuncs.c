@@ -1103,7 +1103,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     }
 
     if (dataset_add_series(ndums, pZ, pdinfo)) {
-	strcpy(gretl_errmsg, _("Out of memory error"));
+	strcpy(gretl_errmsg, _("Out of memory!"));
 	return 0;
     }
 

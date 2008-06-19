@@ -7213,10 +7213,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* assignment to submatrix of original */
 	    matrix_edit(p);
 	}
+#if 0 /* changed 2008-06-18 */
 	if (!p->err && p->lh.m1 != NULL) {
 	    /* check we didn't get any infs or NaNs */
 	    p->err = gretl_matrix_xna_check(p->lh.m1);
 	}
+#endif
     } else if (p->targ == LIST) {
 	edit_list(p);
     } else if (p->targ == STR) {
