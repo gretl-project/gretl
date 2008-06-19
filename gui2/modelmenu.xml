@@ -1,16 +1,16 @@
 <ui>
   <menubar name='MenuBar'>
-    <menu action='FileMenu'>
+    <menu action='File'>
       <menuitem action='SaveAs'/>
       <menuitem action='SaveAsIcon'/>
       <menuitem action='SaveAndClose'/>
       <menuitem action='Print'/>
       <menuitem action='Close'/>
     </menu>      
-    <menu action='EditMenu'>
+    <menu action='Edit'>
       <menuitem action='Copy'/>
     </menu>      
-    <menu action='TestsMenu'>
+    <menu action='Tests'>
       <menuitem action='Omit'/>
       <menuitem action='Add'/>
       <menuitem action='CoeffSum'/>
@@ -39,7 +39,7 @@
       <separator/>
       <menuitem action='PanelTest'/>
     </menu>      
-    <menu action='SaveMenu'>
+    <menu action='Save'>
       <menuitem action='Fitted'/>
       <menuitem action='Residuals'/>
       <menuitem action='ResidualsSq'/>
@@ -53,13 +53,13 @@
       <separator/>
       <menuitem action='NewVar'/>
     </menu>      
-    <menu action='GraphMenu'>
+    <menu action='Graphs'>
       <menu action='ResidPlot'>
       </menu>
       <menu action='FittedActualPlot'>
       </menu>
     </menu>      
-    <menu action='AnalysisMenu'>
+    <menu action='Analysis'>
       <menuitem action='DisplayAFR'/>
       <menuitem action='Forecasts'/>
       <menuitem action='ConfIntervals'/>
@@ -68,7 +68,7 @@
       <menuitem action='ANOVA'/>
       <menuitem action='Bootstrap'/>
     </menu>      
-    <menu action='LaTeXMenu'>
+    <menu action='LaTeX'>
       <menu action='TeXView'>
 	<menuitem action='TabView'/>
 	<menuitem action='EqnView'/>

@@ -224,52 +224,52 @@
       <menuitem action='GENR'/>
     </menu>
     <menu action='Model'>
-      <menuitem action='OLS'/>
+      <menuitem action='ols'/>
       <menu action='LinearModels'>
-	<menuitem action='WLS'/>
-	<menuitem action='HSK'/>
-	<menuitem action='TSLS'/>
-	<menuitem action='MPOLS'/>
+	<menuitem action='wls'/>
+	<menuitem action='hsk'/>
+	<menuitem action='tsls'/>
+	<menuitem action='mpols'/>
       </menu>
       <menu action='NonlinearModels'>
-	<menuitem action='LOGIT'/>
-	<menuitem action='PROBIT'/>
-	<menuitem action='TOBIT'/>
-	<menuitem action='HECKIT'/>
-	<menuitem action='POISSON'/>
-	<menuitem action='LOGISTIC'/>
-	<menuitem action='NLS'/>
+	<menuitem action='logit'/>
+	<menuitem action='probit'/>
+	<menuitem action='tobit'/>
+	<menuitem action='heckit'/>
+	<menuitem action='poisson'/>
+	<menuitem action='logistic'/>
+	<menuitem action='nls'/>
       </menu>
       <menu action='TSModels'>
 	<menuitem action='CORC'/>
 	<menuitem action='HILU'/>
 	<menuitem action='PWE'/>
-	<menuitem action='AR'/>
-	<menuitem action='ARMA'/>
-	<menuitem action='ARCH'/>
-	<menuitem action='GARCH'/>
-	<menuitem action='VAR'/>
+	<menuitem action='ar'/>
+	<menuitem action='arima'/>
+	<menuitem action='arch'/>
+	<menuitem action='garch'/>
+	<menuitem action='var'/>
 	<menuitem action='VLAGSEL'/>
-	<menuitem action='VECM'/>
+	<menuitem action='vecm'/>
 	<menu action='CointMenu'>
-	  <menuitem action='COINT'/>
-	  <menuitem action='COINT2'/>
+	  <menuitem action='coint'/>
+	  <menuitem action='coint2'/>
 	</menu>
       </menu>
       <menu action='PanelModels'>
-	<menuitem action='PANEL'/>
+	<menuitem action='panel'/>
 	<menuitem action='PANEL_WLS'/>
 	<menuitem action='PANEL_B'/>
-	<menuitem action='ARBOND'/>
+	<menuitem action='arbond'/>
       </menu>
       <menu action='RobustModels'>
-	<menuitem action='LAD'/>
-	<menuitem action='QUANTREG'/>
-	<menuitem action='SPEARMAN'/>
+	<menuitem action='lad'/>
+	<menuitem action='quantreg'/>
+	<menuitem action='spearman'/>
       </menu>
-      <menuitem action='MLE'/>
-      <menuitem action='GMM'/>
-      <menuitem action='SYSTEM'/>
+      <menuitem action='mle'/>
+      <menuitem action='gmm'/>
+      <menuitem action='system'/>
     </menu>
     <menu action='Help' position='bot'>
       <menu action='CommandRef'>
