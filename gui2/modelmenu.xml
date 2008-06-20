@@ -11,10 +11,10 @@
       <menuitem action='Copy'/>
     </menu>      
     <menu action='Tests'>
-      <menuitem action='Omit'/>
-      <menuitem action='Add'/>
-      <menuitem action='CoeffSum'/>
-      <menuitem action='Restrict'/>
+      <menuitem action='omit'/>
+      <menuitem action='add'/>
+      <menuitem action='coeffsum'/>
+      <menuitem action='restrict'/>
       <separator/>
       <menuitem action='SquaresTest'/>
       <menuitem action='LogsTest'/>

@@ -53,9 +53,9 @@
 	<menuitem action='OpenScript'/>
 	<menuitem action='DisplayScripts'/>
 	<menu action='NewScript'>
-	  <menuitem action='NewGretlScript'/>
-	  <menuitem action='NewGnuplotScript'/>
-	  <menuitem action='NewRScript'/>
+	  <menuitem action='GretlScript'/>
+	  <menuitem action='GnuplotScript'/>
+	  <menuitem action='RScript'/>
 	</menu>
 	<separator/>
 	<placeholder name='RecentScripts'/>
@@ -104,7 +104,7 @@
       </menu>
       <menu action='Preferences'>
 	<menuitem action='PrefsGeneral'/>
-	<menuitem action='PrefsFixedFont'/>
+	<menuitem action='FixedFont'/>
       </menu>
     </menu>
     <menu action='Data'>
@@ -147,12 +147,12 @@
 	</menu>
       </menu>
       <separator/>
-      <menuitem action='SummaryStats'/>
-      <menuitem action='CorrMatrix'/>
-      <menuitem action='CrossTab'/>
-      <menuitem action='PrinComp'/>
-      <menuitem action='MahalDist'/>
-      <menuitem action='CrossCorrgm'/>
+      <menuitem action='summary'/>
+      <menuitem action='corr'/>
+      <menuitem action='xtab'/>
+      <menuitem action='pca'/>
+      <menuitem action='mahal'/>
+      <menuitem action='xcorrgm'/>
     </menu>
     <menu action='Add'>
       <menuitem action='LOGS'/>
@@ -167,21 +167,21 @@
       <separator/>
       <menuitem action='AddRandom'/>
       <separator/>
-      <menuitem action='AddPeriodDums'/>
-      <menuitem action='AddUnitDums'/>
-      <menuitem action='AddTimeDums'/>
-      <menuitem action='AddDiscreteDums'/>
+      <menuitem action='PeriodDums'/>
+      <menuitem action='UnitDums'/>
+      <menuitem action='TimeDums'/>
+      <menuitem action='DUMMIFY'/>
       <separator/>
-      <menuitem action='DefineVar'/>
-      <menuitem action='DefineMatrix'/>
+      <menuitem action='GENR'/>
+      <menuitem action='NewMatrix'/>
     </menu>
     <menu action='Sample'>
-      <menuitem action='SetRange'/>
+      <menuitem action='SMPL'/>
       <menuitem action='FullRange'/>
       <separator/>
-      <menuitem action='SampleDummy'/>
+      <menuitem action='SMPLDUM'/>
       <menuitem action='SampleRestrict'/>
-      <menuitem action='SampleRandom'/>
+      <menuitem action='SMPLRAND'/>
       <menuitem action='SampleWReplace'/>
       <separator/>
       <menuitem action='DropMissing'/>
@@ -192,24 +192,24 @@
       <menuitem action='VarFind'/>
       <menuitem action='VarDisplay'/>
       <menuitem action='VarSummary'/>
-      <menuitem action='VarNormTest'/>
-      <menuitem action='VarFreqDist'/>
-      <menuitem action='VarFreqPlot'/>
-      <menuitem action='VarDensity'/>
-      <menuitem action='VarGini'/>
-      <menuitem action='RangeMeanPlot'/>
+      <menuitem action='normtest'/>
+      <menuitem action='FreqDist'/>
+      <menuitem action='FreqPlot'/>
+      <menuitem action='Density'/>
+      <menuitem action='Gini'/>
+      <menuitem action='rmplot'/>
       <separator/>
       <menuitem action='VarTSPlot'/>
-      <menuitem action='VarCorrgm'/>
+      <menuitem action='corrgm'/>
       <menu action='Spectrum'>
-	<menuitem action='VarPergm'/>
-	<menuitem action='VarBartlett'/>
+	<menuitem action='Pergm'/>
+	<menuitem action='Bartlett'/>
       </menu>
       <menuitem action='ADF'/>
       <menuitem action='DFGLS'/>
       <menuitem action='KPSS'/>
       <menu action='Filter'>
-	<menuitem action='FilterMA'/>
+	<menuitem action='FilterSMA'/>
 	<menuitem action='FilterEMA'/>
 	<menuitem action='FilterHP'/>
 	<menuitem action='FilterBK'/>
