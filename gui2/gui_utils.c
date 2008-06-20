@@ -2152,19 +2152,26 @@ static gchar *make_viewer_title (int role, const char *fname)
 
     switch (role) {
     case GUI_HELP: 
-	title = g_strdup(_("gretl: help")); break;
+	title = g_strdup(_("gretl: help")); 
+	break;
     case FUNCS_HELP:
-	title = g_strdup(_("gretl: function reference")); break;
+	title = g_strdup(_("gretl: function reference")); 
+	break;
     case CLI_HELP:
-	title = g_strdup(_("gretl: command reference")); break;
+	title = g_strdup(_("gretl: command reference")); 
+	break;
     case GUI_HELP_EN: 
-	title = g_strdup("gretl: help"); break;
+	title = g_strdup("gretl: help"); 
+	break;
     case CLI_HELP_EN:
-	title = g_strdup("gretl: command reference"); break;
+	title = g_strdup("gretl: command reference"); 
+	break;
     case VIEW_LOG:
-	title = g_strdup(_("gretl: command log")); break;
+	title = g_strdup(_("gretl: command log")); 
+	break;
     case CONSOLE:
-	title = g_strdup(_("gretl console")); break;
+	title = g_strdup(_("gretl console")); 
+	break;
     case EDIT_SCRIPT:
     case VIEW_SCRIPT:	
     case VIEW_FILE:
@@ -2175,17 +2182,20 @@ static gchar *make_viewer_title (int role, const char *fname)
 	} 
 	break;
     case EDIT_NOTES:
-	title = g_strdup(_("gretl: session notes")); break;
+	title = g_strdup(_("gretl: session notes")); 
+	break;
     case EDIT_GP:
     case EDIT_BOX:
-	title = g_strdup(_("gretl: edit plot commands")); break;
+	title = g_strdup(_("gretl: edit plot commands")); 
+	break;
     case EDIT_R:
-	title = g_strdup(_("gretl: edit R commands")); break;
+	title = g_strdup(_("gretl: edit R commands")); 
+	break;
     case SCRIPT_OUT:
-	title = g_strdup(_("gretl: script output")); break;
+	title = g_strdup(_("gretl: script output")); 
+	break;
     case VIEW_DATA:
-	title = g_strdup(_("gretl: display data")); break;
-    default:
+	title = g_strdup(_("gretl: display data")); 
 	break;
     }
 

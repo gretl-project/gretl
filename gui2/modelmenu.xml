@@ -40,18 +40,7 @@
       <menuitem action='PanelTest'/>
     </menu>      
     <menu action='Save'>
-      <menuitem action='Fitted'/>
-      <menuitem action='Residuals'/>
-      <menuitem action='ResidualsSq'/>
-      <menuitem action='ESS'/>
-      <menuitem action='SE'/>
-      <menuitem action='RSquared'/>
-      <menuitem action='TRSquared'/>
-      <menuitem action='AIC'/>
-      <menuitem action='BIC'/>
-      <menuitem action='HQC'/>
-      <separator/>
-      <menuitem action='NewVar'/>
+      <placeholder name='SaveItems'/>
     </menu>      
     <menu action='Graphs'>
       <menu action='ResidPlot'>

@@ -1147,7 +1147,7 @@ static windata_t *make_helpwin (int flags)
 	if (!funcs && translated_helpfile && !en) {
 	    add_en_help_item(vwin, cli);
 	} 
-    }   
+    } 
 
     return vwin;
 }
@@ -1186,7 +1186,7 @@ static void real_do_help (int hcode, int pos, int flags)
     static windata_t *en_cli_hwin;
     static windata_t *funcs_hwin;
 
-    windata_t *hwin;
+    windata_t *hwin = NULL;
     int cli = (flags & HELP_CLI);
     int en = (flags & HELP_EN);
     int funcs = (flags & HELP_FUNCS);
@@ -1236,7 +1236,7 @@ static void real_do_help (int hcode, int pos, int flags)
 		    gui_hwin = hwin;
 		    phwin = &gui_hwin;
 		}
-	    }		
+	    }	
 	    g_signal_connect(G_OBJECT(hwin->w), "destroy",
 			     G_CALLBACK(nullify_hwin), phwin);
 	}

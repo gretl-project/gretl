@@ -2602,7 +2602,6 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     }
 
     gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
-
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 }
