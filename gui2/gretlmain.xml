@@ -141,10 +141,10 @@
 	<menuitem action='GR_BOX'/>
 	<menuitem action='GR_NBOX'/>
 	<menuitem action='ThreeDPlot'/>
-	<menu action='MultiPlots'>
-	  <menuitem action='MultiXY'/>
-	  <menuitem action='MultiTS'/>
-	</menu>
+      </menu>
+      <menu action='MultiPlots'>
+	<menuitem action='MultiXY'/>
+	<menuitem action='MultiTS'/>
       </menu>
       <separator/>
       <menuitem action='summary'/>
