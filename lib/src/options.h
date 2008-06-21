@@ -22,6 +22,8 @@
 
 gretlopt get_gretl_options (char *line, int *err);
 
+gretlopt opt_from_flag (unsigned char c);
+
 const char *print_flags (gretlopt oflags, int ci);
 
 const char **get_opts_for_command (int ci, int *nopt);

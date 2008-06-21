@@ -16,32 +16,25 @@
       <menuitem action='coeffsum'/>
       <menuitem action='restrict'/>
       <separator/>
-      <menuitem action='SquaresTest'/>
-      <menuitem action='LogsTest'/>
-      <menuitem action='RESET'/>
+      <menuitem action='lmtest:s'/>
+      <menuitem action='lmtest:l'/>
+      <menuitem action='reset'/>
       <separator/>
-      <menu action='Heterosked'>
-	<menuitem action='White'/>
-	<menuitem action='WhiteSquares'/>
-	<menuitem action='BreuschPagan'/>
-	<menuitem action='Koenker'/>
-      </menu>
-      <menuitem action='Normality'/>
-      <menuitem action='Leverage'/>
-      <menuitem action='Multicoll'/>
+      <menu action='Hsk'/>
+      <menuitem action='normtest'/>
+      <menuitem action='leverage'/>
+      <menuitem action='vif'/>
       <separator/>
-      <menuitem action='Autocorr'/>
-      <menuitem action='ARCH'/>
-      <menuitem action='Chow'/>
-      <menuitem action='QLR'/>
-      <menuitem action='CUSUM'/>
-      <menuitem action='CUSUMSQ'/>
+      <menuitem action='lmtest:a'/>
+      <menuitem action='lmtest:h'/>
+      <menuitem action='chow'/>
+      <menuitem action='qlrtest'/>
+      <menuitem action='cusum'/>
+      <menuitem action='cusum:r'/>
       <separator/>
-      <menuitem action='PanelTest'/>
+      <menuitem action='hausman'/>
     </menu>      
-    <menu action='Save'>
-      <placeholder name='SaveItems'/>
-    </menu>      
+    <menu action='Save'/>
     <menu action='Graphs'>
       <menu action='ResidPlot'>
       </menu>

@@ -453,7 +453,7 @@ static const char *ok_flags = "abcdefghijklmnopqrstuvwxz";
 
 #define isflag(c) (c && (strchr(ok_flags, c) != NULL))
 
-static gretlopt opt_from_flag (unsigned char c)
+gretlopt opt_from_flag (unsigned char c)
 {
     int i;
 

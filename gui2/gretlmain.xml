@@ -271,7 +271,8 @@
       <menuitem action='gmm'/>
       <menuitem action='system'/>
     </menu>
-    <menu action='Help' position='bot'>
+    <separator expand='true'/>
+    <menu action='Help'>
       <menu action='CommandRef'>
 	<menuitem action='TextCmdRef'/>
 	<menuitem action='PDFCmdRef'/>
