@@ -101,6 +101,7 @@ override LIBS += $(GDK_PIXBUF_LIBS)
 # Directories
 bindir	= $(prefix)/bin
 gretldir = $(prefix)/share/gretl
+uidir = $(prefix)/share/gretl/ui
 tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
 clisrc = $(topsrc)/cli
@@ -204,6 +205,8 @@ install-data: installdirs
 	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
 	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
 	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)
+	$(INSTALL_DATA) $(topsrc)/gui2/gretlmain.xml $(DESTDIR)$(uidir)
+	$(INSTALL_DATA) $(topsrc)/gui2/modelmenu.xml $(DESTDIR)$(uidir)
 
 install-exec: $(PROG) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
@@ -222,6 +225,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(bindir) 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(langdir)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
 
 clean:
 	rm -f *.o $(PROG)

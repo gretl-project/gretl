@@ -36,10 +36,8 @@
     </menu>      
     <menu action='Save'/>
     <menu action='Graphs'>
-      <menu action='ResidPlot'>
-      </menu>
-      <menu action='FittedActualPlot'>
-      </menu>
+      <menu action='ResidPlot'/>
+      <menu action='FittedActualPlot'/>
     </menu>      
     <menu action='Analysis'>
       <menuitem action='DisplayAFR'/>
@@ -50,22 +48,6 @@
       <menuitem action='ANOVA'/>
       <menuitem action='Bootstrap'/>
     </menu>      
-    <menu action='LaTeX'>
-      <menu action='TeXView'>
-	<menuitem action='TabView'/>
-	<menuitem action='EqnView'/>
-      </menu>
-      <menu action='TeXCopy'>
-	<menuitem action='TabCopy'/>
-	<menuitem action='EqnCopy'/>
-      </menu>
-      <menu action='TeXSave'>
-	<menuitem action='TabSave'/>
-	<menuitem action='EqnSave'/>
-      </menu>
-      <menu action='EqnOpts'>
-      </menu>
-      <menuitem action='TabOpts'/>
-    </menu>      
+    <menu action='LaTeX'/>
   </menubar>
 </ui>

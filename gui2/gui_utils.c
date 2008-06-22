@@ -363,7 +363,7 @@ static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
 #ifdef ENABLE_NLS
 gchar *menu_translate (const gchar *path, gpointer p)
 {
-    return (_(path));
+    return _(path);
 }
 #endif
 
