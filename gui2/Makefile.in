@@ -196,7 +196,7 @@ $(GTKSOURCEVIEW_LITE):
 
 .PHONY:
 
-install: install-exec install-data install-lang $(query_install_gnome)
+install: install-exec install-ui install-data install-lang $(query_install_gnome)
 
 install-strip: $(PROG) install-data $(query_install_gnome)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(DESTDIR)$(bindir)/$(PROG)
@@ -205,6 +205,8 @@ install-data: installdirs
 	$(INSTALL_PROGRAM) ../gretl_sh $(DESTDIR)$(bindir)/gretl
 	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(DESTDIR)$(gretldir)
 	$(INSTALL_DATA) $(topsrc)/COPYING $(DESTDIR)$(gretldir)
+
+install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui2/gretlmain.xml $(DESTDIR)$(uidir)
 	$(INSTALL_DATA) $(topsrc)/gui2/modelmenu.xml $(DESTDIR)$(uidir)
 

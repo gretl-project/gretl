@@ -103,18 +103,18 @@ static void show_funcs_callback (GtkWidget *w, gpointer p)
 /* end toolbar icon callbacks */
 
 struct toolbar_item {
-    const char *str;
+    const char *tip;
     const gchar *icon;
     void (*toolfunc)();
 };
 
+#if NO_EDIT_ICON
+# define GTK_STOCK_EDIT "gretl-script"
+#endif
+
 static struct toolbar_item toolbar_items[] = {
     { N_("launch calculator"), GRETL_STOCK_CALC, show_calc },
-#if NO_EDIT_ICON
-    { N_("new script"), GRETL_STOCK_SCRIPT, toolbar_new_script },
-#else
     { N_("new script"), GTK_STOCK_EDIT, toolbar_new_script },
-#endif
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, show_gretl_console },
     { N_("session icon view"), GRETL_STOCK_ICONS, go_session },
     { N_("function packages"), GRETL_STOCK_FUNC, show_funcs_callback },
@@ -125,30 +125,45 @@ static struct toolbar_item toolbar_items[] = {
     { N_("open dataset"), GTK_STOCK_OPEN, open_textbook_data }
 };
 
-#if 0 /* not yet */
-static GtkActionEntry toolbar_items[] = {
-    { "calc", GRETL_STOCK_CALC, N_("launch calculator"), show_calc },
-#if NO_EDIT_ICON
-    { "newscript", GRETL_STOCK_SCRIPT, N_("new script"), toolbar_new_script },
-#else
-    { "newscript", GTK_STOCK_EDIT, N_("new script"), toolbar_new_script },
-#endif
-    { "console", GRETL_STOCK_CONSOLE, N_("open gretl console"), 
-      show_gretl_console },
-    { "iconview", GRETL_STOCK_ICONS, N_("session icon view"), go_session },
-    { "fnpkgs", GRETL_STOCK_FUNC, N_("function packages"), show_funcs_callback },
-    { "userguide", GRETL_STOCK_PDF, N_("user's guide"), toolbar_users_guide },
-    { "cmdref", GTK_STOCK_HELP, N_("command reference"), 
-      toolbar_command_reference },
-    { "xygraph", GRETL_STOCK_SCATTER, N_("X-Y graph"), xy_graph },
-    { "ols", GRETL_STOCK_MODEL, N_("OLS model"), ols_model },
-    { "opendata", GTK_STOCK_OPEN, N_("open dataset"), open_textbook_data }
-};
-#endif
+#define NEWTOOL 0
+
+#if NEWTOOL
 
 static void make_toolbar (GtkWidget *vbox)
 {
-    GtkWidget *w, *hbox;
+    GtkWidget *hbox, *toolbar;
+    GtkToolItem *item;
+    int i, n = G_N_ELEMENTS(toolbar_items);
+
+    gretl_stock_icons_init();
+
+    toolbar = gtk_toolbar_new();
+    gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_MENU);
+    gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
+
+    for (i=0; i<n; i++) {
+	item = gtk_tool_button_new_from_stock(toolbar_items[i].icon);
+	gtk_tool_item_set_tooltip(item, get_gretl_tips(), 
+				  _(toolbar_items[i].tip),
+				  NULL);
+	g_signal_connect(item, "clicked", toolbar_items[i].toolfunc, mdata);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), item, -1);
+    }
+
+    hbox = gtk_hbox_new(FALSE, 0);
+#if 1
+    gtk_widget_set_size_request(toolbar, n * 26 + 4, -1); /* Ugh! */
+#endif
+    gtk_box_pack_start(GTK_BOX(hbox), toolbar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show_all(hbox);
+}
+
+#else
+
+static void make_toolbar (GtkWidget *vbox)
+{
+    GtkWidget *hbox;
     GtkWidget *toolbar, *image;
     int i, n = G_N_ELEMENTS(toolbar_items);
 
@@ -164,13 +179,15 @@ static void make_toolbar (GtkWidget *vbox)
 	image = gtk_image_new();
 	gtk_image_set_from_stock(GTK_IMAGE(image), toolbar_items[i].icon, 
 				 GTK_ICON_SIZE_MENU);
-        w = gtk_toolbar_append_item(GTK_TOOLBAR(toolbar),
-				    NULL, _(toolbar_items[i].str), NULL,
-				    image, toolbar_items[i].toolfunc, mdata);
+        gtk_toolbar_append_item(GTK_TOOLBAR(toolbar),
+				NULL, _(toolbar_items[i].tip), NULL,
+				image, toolbar_items[i].toolfunc, mdata);
     }
 
     gtk_widget_show_all(hbox);
 }
+
+#endif
 
 /* public interface */
 

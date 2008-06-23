@@ -49,4 +49,6 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
 int function_help_index_from_word (const char *s);
 
+GtkTooltips *get_gretl_tips (void);
+
 #endif /* HELPFILES_H */

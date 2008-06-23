@@ -1757,6 +1757,11 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
     gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
 }
 
+GtkTooltips *get_gretl_tips (void)
+{
+    return gretl_tips;
+}
+
 enum {
     EN_LETTER,
     EN_A4,

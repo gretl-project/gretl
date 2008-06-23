@@ -4699,7 +4699,7 @@ static void xvar_from_action (GtkAction *action, int *xvar)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    sscanf(s, "xvar %d", xvar);
+    sscanf(s, "%*s %d", xvar);
 }
 
 void resid_plot (GtkAction *action, gpointer p)
@@ -4727,9 +4727,6 @@ void resid_plot (GtkAction *action, gpointer p)
     }
 
     xvar_from_action(action, &xvar);
-
-    fprintf(stderr, "resid_plot: xvar = %d, vwin = %p, pdum = %d\n",
-	    xvar, (void *) vwin, pdum);
 
     origv = (pmod->dataset != NULL)? 
 	pmod->dataset->dinfo->v : datainfo->v;

@@ -3092,12 +3092,11 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     for (i=0; i<2; i++) {
 	/* plot against time/obs number */
 	if (dataset_is_time_series(datainfo)) {
-	    entry.name = "ByTime";
 	    entry.label = _("_Against time");
 	} else {
-	    entry.name = "ByObs";
 	    entry.label = _("By _observation number");
 	}
+	entry.name = (i == 0)? "r:byobs" : "f:byobs";
 	entry.callback = (i == 0)? G_CALLBACK(resid_plot) : 
 	    G_CALLBACK(fit_actual_plot);
 	vwin_menu_add_item(vwin, mpath[i], &entry);
@@ -3119,8 +3118,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    if (!strcmp(datainfo->varname[v1], "time")) {
 		continue;
 	    }
-
-	    sprintf(aname, "xvar %d", v1);
+	    sprintf(aname, "%c:xvar %d", (i == 0)? 'r' : 'f', v1);
 	    double_underscores(tmp, datainfo->varname[v1]);
 	    alabel = g_strdup_printf(_("_Against %s"), tmp);
 	    entry.name = aname;
