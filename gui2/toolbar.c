@@ -31,7 +31,7 @@
 
 /* callbacks for gretl toolbar icons */
 
-static void show_calc (void)
+static void tbar_calc (void)
 {
 #ifdef G_OS_WIN32
     create_child_process(calculator);
@@ -40,22 +40,22 @@ static void show_calc (void)
 #endif 
 }
 
-static void open_textbook_data (void)
+static void tbar_open_data (void)
 {
     display_files(TEXTBOOK_DATA, NULL);
 }
 
-static void toolbar_users_guide (void)
+static void tbar_users_guide (void)
 {
     display_pdf_help(NULL);
 }
 
-static void toolbar_command_reference (void)
+static void tbar_command_ref (void)
 {
     plain_text_cmdref(NULL);
 }
 
-static void xy_graph (void)
+static void tbar_xy_graph (void)
 {
     if (data_status) {
 	if (datainfo->v == 2) {
@@ -72,7 +72,7 @@ static void xy_graph (void)
     }
 }
 
-static void ols_model (void)
+static void tbar_model (void)
 {
     if (data_status) {
 	selection_dialog(_("gretl: specify model"), do_model, OLS, 0);
@@ -81,7 +81,7 @@ static void ols_model (void)
     }
 }
 
-static void go_session (void)
+static void tbar_iconview (void)
 {
     if (data_status) {
 	view_session();
@@ -90,12 +90,12 @@ static void go_session (void)
     }
 }
 
-static void toolbar_new_script (void)
+static void tbar_new_script (void)
 {
     do_new_script(EDIT_SCRIPT);
 }
 
-static void show_funcs_callback (GtkWidget *w, gpointer p)
+static void tbar_show_funcs (GtkWidget *w, gpointer p)
 {
     display_files(FUNC_FILES, w);
 }
@@ -113,21 +113,17 @@ struct toolbar_item {
 #endif
 
 static struct toolbar_item toolbar_items[] = {
-    { N_("launch calculator"), GRETL_STOCK_CALC, show_calc },
-    { N_("new script"), GTK_STOCK_EDIT, toolbar_new_script },
+    { N_("launch calculator"),  GRETL_STOCK_CALC,    tbar_calc },
+    { N_("new script"),         GTK_STOCK_EDIT,      tbar_new_script },
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, show_gretl_console },
-    { N_("session icon view"), GRETL_STOCK_ICONS, go_session },
-    { N_("function packages"), GRETL_STOCK_FUNC, show_funcs_callback },
-    { N_("user's guide"), GRETL_STOCK_PDF, toolbar_users_guide },
-    { N_("command reference"), GTK_STOCK_HELP, toolbar_command_reference },
-    { N_("X-Y graph"), GRETL_STOCK_SCATTER, xy_graph },
-    { N_("OLS model"), GRETL_STOCK_MODEL, ols_model },
-    { N_("open dataset"), GTK_STOCK_OPEN, open_textbook_data }
+    { N_("session icon view"),  GRETL_STOCK_ICONS,   tbar_iconview },
+    { N_("function packages"),  GRETL_STOCK_FUNC,    tbar_show_funcs },
+    { N_("user's guide"),       GRETL_STOCK_PDF,     tbar_users_guide },
+    { N_("command reference"),  GTK_STOCK_HELP,      tbar_command_ref },
+    { N_("X-Y graph"),          GRETL_STOCK_SCATTER, tbar_xy_graph },
+    { N_("OLS model"),          GRETL_STOCK_MODEL,   tbar_model },
+    { N_("open dataset"),       GTK_STOCK_OPEN,      tbar_open_data }
 };
-
-#define NEWTOOL 0
-
-#if NEWTOOL
 
 static void make_toolbar (GtkWidget *vbox)
 {
@@ -140,6 +136,7 @@ static void make_toolbar (GtkWidget *vbox)
     toolbar = gtk_toolbar_new();
     gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_MENU);
     gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
+    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar), FALSE);
 
     for (i=0; i<n; i++) {
 	item = gtk_tool_button_new_from_stock(toolbar_items[i].icon);
@@ -151,43 +148,10 @@ static void make_toolbar (GtkWidget *vbox)
     }
 
     hbox = gtk_hbox_new(FALSE, 0);
-#if 1
-    gtk_widget_set_size_request(toolbar, n * 26 + 4, -1); /* Ugh! */
-#endif
     gtk_box_pack_start(GTK_BOX(hbox), toolbar, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show_all(hbox);
 }
-
-#else
-
-static void make_toolbar (GtkWidget *vbox)
-{
-    GtkWidget *hbox;
-    GtkWidget *toolbar, *image;
-    int i, n = G_N_ELEMENTS(toolbar_items);
-
-    gretl_stock_icons_init();
-
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-
-    toolbar = gtk_toolbar_new();
-    gtk_box_pack_start(GTK_BOX(hbox), toolbar, FALSE, FALSE, 0);
-
-    for (i=0; i<n; i++) {
-	image = gtk_image_new();
-	gtk_image_set_from_stock(GTK_IMAGE(image), toolbar_items[i].icon, 
-				 GTK_ICON_SIZE_MENU);
-        gtk_toolbar_append_item(GTK_TOOLBAR(toolbar),
-				NULL, _(toolbar_items[i].tip), NULL,
-				image, toolbar_items[i].toolfunc, mdata);
-    }
-
-    gtk_widget_show_all(hbox);
-}
-
-#endif
 
 /* public interface */
 

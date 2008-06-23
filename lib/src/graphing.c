@@ -239,6 +239,7 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 	    flags |= GPT_FIT_OMIT;
 	}
 	if (opt & OPT_T) {
+	    fprintf(stderr, "setting GPT_IDX\n");
 	    flags |= GPT_IDX;
 	}
     }
@@ -1358,14 +1359,14 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
 	goto bailout;
     }
 
-    s1 = var_get_graph_name(pdinfo, gi->list[1]);
-    s2 = var_get_graph_name(pdinfo, gi->list[2]);
+    s1 = var_get_graph_name(pdinfo, yno);
+    s2 = var_get_graph_name(pdinfo, xno);
 
     sprintf(title, G_("%s versus %s (with loess fit)"), s1, s2);
     fputs("set key top left\n", fp);
     fprintf(fp, "set title \"%s\"\n", title);
-    print_axis_label('x', s1, fp);
-    print_axis_label('y', s2, fp);
+    print_axis_label('y', s1, fp);
+    print_axis_label('x', s2, fp);
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
 
     fputs("plot \\\n", fp);
@@ -1688,9 +1689,11 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     int l0 = list[0];
 
     gi->fit = PLOT_FIT_NONE;
-
     gi->flags = get_gp_flags(opt, l0, &gi->fit);
-    gi->flags |= GPT_TS; /* may be renounced later */
+
+    if (gi->fit == PLOT_FIT_NONE) {
+	gi->flags |= GPT_TS; /* may be renounced later */
+    }
 
     gi->t1 = t1;
     gi->t2 = t2;
@@ -2134,10 +2137,6 @@ int gnuplot (const int *plotlist, const char *literal,
     printlist(plotlist, "gnuplot: plotlist");
 #endif
 
-    /* below: did have "height 1 width 1 box" for win32,
-       "width 1 box" otherwise */
-    strcpy(keystr, "set key left top\n");
-
     err = gpinfo_init(&gi, opt, plotlist, literal, 
 		      pdinfo->t1, pdinfo->t2);
     if (err) {
@@ -2159,6 +2158,10 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* convenience pointer */
     list = gi.list;
+
+    /* below: did have "height 1 width 1 box" for win32,
+       "width 1 box" otherwise */
+    strcpy(keystr, "set key left top\n");
 
     if (gi.flags & GPT_IMPULSES) {
 	strcpy(withstr, "w i");

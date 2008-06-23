@@ -1827,6 +1827,17 @@ static void read_rc (void)
 
 #endif /* end of non-Windows versions of read_rc, write_rc */
 
+static int fontsel_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+    
+    if (!strcmp(s, "MenuFont")) {
+	return APP_FONT_SELECTION;
+    } else {
+	return FIXED_FONT_SELECTION;
+    }
+}
+
 /* font selection: non-Windows, gtk-2.0 version first */
 
 #ifndef G_OS_WIN32
@@ -1864,17 +1875,6 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 static void fontsel_quit (GtkWidget *w, gpointer p)
 {
     gtk_main_quit();
-}
-
-static int fontsel_code (GtkAction *action)
-{
-    const gchar *s = gtk_action_get_name(action);
-    
-    if (!strcmp(s, "MenuFont")) {
-	return APP_FONT_SELECTION;
-    } else {
-	return FIXED_FONT_SELECTION;
-    }
 }
 
 void font_selector (GtkAction *action)
@@ -1973,8 +1973,9 @@ static void fontname_to_win32 (const char *src, int fixed,
     }
 }
 
-void font_selector (gpointer data, guint which, GtkWidget *widget)
+void font_selector (GtkAction *action)
 {
+    int which = fontsel_code(action);
     CHOOSEFONT cf;            /* common dialog box structure */
     LOGFONT lf;               /* logical font structure */
     char fontname[48];

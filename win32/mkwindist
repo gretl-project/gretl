@@ -84,6 +84,7 @@ mkdir -p windist/gretl/doc
 mkdir -p windist/gretl/helpfigs
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/plugins/data
+mkdir -p windist/gretl/ui
 
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
@@ -119,6 +120,11 @@ done
 
 # Uncomment if not using cairo in gnuplot
 # add_file $HOME_WIN32/misc-dll/libpdf.dll gretl/$f
+
+# XML UI-definition files
+for f in ${TOPDIR}/gui2/*.xml ; do
+  add_file $f gretl/ui/`basename $f`
+done
 
 # gretl lang files for gtksourceview
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs

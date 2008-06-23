@@ -1540,7 +1540,6 @@ static gchar *get_main_ui (void)
 static void set_up_main_menu (void)
 {
     GtkActionGroup *actions;
-    GtkWidget *hmenu;
     gchar *main_ui = NULL;
     GError *error = NULL;
 
@@ -1571,8 +1570,14 @@ static void set_up_main_menu (void)
     g_free(main_ui);
     mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/MenuBar");
 
-    hmenu = gtk_ui_manager_get_widget(mdata->ui, "/MenuBar/Help");
-    gtk_menu_item_set_right_justified(GTK_MENU_ITEM(hmenu), TRUE);
+#ifdef HELP_ON_RIGHT
+    if (1) {
+	GtkWidget *hmenu;
+
+	hmenu = gtk_ui_manager_get_widget(mdata->ui, "/MenuBar/Help");
+	gtk_menu_item_set_right_justified(GTK_MENU_ITEM(hmenu), TRUE);
+    }
+#endif
 }
 
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo)
