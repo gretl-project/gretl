@@ -925,7 +925,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	if (err) {
-	    pputs(prn, _("gnuplot command failed\n"));
+	    errmsg(err, prn);
 	} else if (batch) {
 	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
 	}
@@ -953,7 +953,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	cli_clear_data(cmd, pZ, pdinfo, models);
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
-	    pputs(prn, _("Failed to create empty data set\n"));
+	    errmsg(err, prn);
 	} else {
 	    data_status = 1;
 	}

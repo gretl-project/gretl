@@ -7178,7 +7178,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				 gopt | cmd->opt);
 	}
 	if (err) {
-	    pputs(prn, _("gnuplot command failed\n"));
+	    errmsg(err, prn);
 	} else {
 	    if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
 		register_graph();
@@ -7222,7 +7222,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	close_session(s, pZ, pdinfo, cmd->opt);
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
-	    pprintf(prn, _("Failed to create empty data set\n"));
+	    errmsg(err, prn);
 	} else {
 	    register_data(NULLDATA_STARTED);
 	}
@@ -7236,7 +7236,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case INCLUDE:
 	err = getopenfile(line, runfile, &paths, OPT_S);
 	if (err) { 
-	    pprintf(prn, _("Run command failed\n"));
+	    errmsg(err, prn);
 	    break;
 	}
 	if (gretl_messages_on()) {

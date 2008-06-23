@@ -2127,11 +2127,15 @@ int gnuplot (const int *plotlist, const char *literal,
     char fit_line[128] = {0};
     int oddman = 0;
     int many = 0;
-    int i, err = 0;
-
     gnuplot_info gi;
+    int i, err;
 
     gretl_error_clear();
+
+    err = incompatible_options(opt, OPT_T | OPT_I | OPT_L | OPT_Q | OPT_N);
+    if (err) {
+	return err;
+    }
 
 #if GP_DEBUG
     printlist(plotlist, "gnuplot: plotlist");
