@@ -120,40 +120,10 @@ enum {
     REFRESH_ITEM
 } viewbar_flags;
 
-static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
-{
-    GList *kids;
-    GtkToolbarChild *child;
-    GtkWidget *w = NULL;
-    int wflag;
-
-    if (tb == NULL) {
-	return NULL;
-    }
-
-    kids = tb->children;
-
-    while (kids != NULL) {
-	child = kids->data;
-	if (child->type == GTK_TOOLBAR_CHILD_BUTTON) {
-	    wflag = GPOINTER_TO_INT(g_object_get_data
-				    (G_OBJECT(child->widget), "flag"));
-	    if (wflag == flag) {
-		w = child->widget;
-		break;
-	    }
-	}
-	kids = kids->next;
-    }
-
-    return w;
-}
-
 static void mark_content_changed (windata_t *vwin) 
 {
     if (vwin->active_var == 0) {
-	GtkWidget *w = get_toolbar_button_by_flag(GTK_TOOLBAR(vwin->mbar), 
-						  SAVE_ITEM);
+	GtkWidget *w = g_object_get_data(G_OBJECT(vwin->mbar), "save_button");
 
 	if (w != NULL) {
 	    gtk_widget_set_sensitive(w, TRUE);
@@ -164,16 +134,14 @@ static void mark_content_changed (windata_t *vwin)
 
 void mark_content_saved (windata_t *vwin) 
 {
-    GtkWidget *w = get_toolbar_button_by_flag(GTK_TOOLBAR(vwin->mbar), 
-					      SAVE_ITEM);
+    GtkWidget *w = g_object_get_data(G_OBJECT(vwin->mbar), "save_button");
 
     if (w != NULL) {
 	gtk_widget_set_sensitive(w, FALSE);
     }
     vwin->active_var = 0;
 
-    w = get_toolbar_button_by_flag(GTK_TOOLBAR(vwin->mbar), 
-				   SAVE_AS_ITEM);
+    w = g_object_get_data(G_OBJECT(vwin->mbar), "save_as_button");
     if (w != NULL) {
 	gtk_widget_set_sensitive(w, TRUE);
     }
@@ -1805,7 +1773,7 @@ static void set_output_sticky (GtkWidget *w, windata_t *vwin)
 typedef void (*toolfunc) (GtkWidget *w, windata_t *vwin);
 
 struct viewbar_item {
-    const char *str;
+    const char *tip;
     const gchar *icon;
     toolfunc func;
     int flag;
@@ -1838,9 +1806,10 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Stickiness..."), GRETL_STOCK_PIN, set_output_sticky, STICKIFY_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
-    { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
-    { NULL, NULL, NULL, 0 }
+    { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 }
 };
+
+static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 static int edit_script_popup_item (struct viewbar_item *item)
 {
@@ -1968,7 +1937,8 @@ static toolfunc item_get_callback (struct viewbar_item *item, windata_t *vwin,
 
 static void make_viewbar (windata_t *vwin, int text_out)
 {
-    GtkWidget *hbox, *button, *w;
+    GtkWidget *hbox;
+    GtkToolItem *button;
     toolfunc func;
     const char *tooltip;
     int sortby_ok = has_sortable_data(vwin);
@@ -1987,9 +1957,11 @@ static void make_viewbar (windata_t *vwin, int text_out)
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
     vwin->mbar = gtk_toolbar_new();
-    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    gtk_toolbar_set_icon_size(GTK_TOOLBAR(vwin->mbar), GTK_ICON_SIZE_MENU);
+    gtk_toolbar_set_style(GTK_TOOLBAR(vwin->mbar), GTK_TOOLBAR_ICONS);
+    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(vwin->mbar), FALSE);
 
-    for (i=0; viewbar_items[i].str != NULL; i++) {
+    for (i=0; i<n_viewbar_items; i++) {
 	struct viewbar_item *vitem = &viewbar_items[i];
 
 	func = item_get_callback(vitem, vwin, latex_ok, sortby_ok);
@@ -2001,7 +1973,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    set_plot_icon(vitem);
 	}
 
-	tooltip = vitem->str;
+	tooltip = vitem->tip;
 
 	if (vitem->flag == EXEC_ITEM) {
 	    if (vwin->role == EDIT_GP) {
@@ -2011,52 +1983,53 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    }
 	}
 
-	button = gtk_image_new();
-	gtk_image_set_from_stock(GTK_IMAGE(button), vitem->icon, 
-				 GTK_ICON_SIZE_MENU);
-        w = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				    NULL, _(tooltip), NULL,
-				    button, G_CALLBACK(func), vwin);
-	g_object_set_data(G_OBJECT(w), "flag", 
-			  GINT_TO_POINTER(vitem->flag));
+	button = gtk_tool_button_new_from_stock(vitem->icon);
+	gtk_tool_item_set_tooltip(button, get_gretl_tips(), 
+				  _(tooltip), NULL);
+	g_signal_connect(button, "clicked", G_CALLBACK(func), vwin);
+	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), button, -1);
 
 	if (vitem->flag == SAVE_ITEM) { 
+	    g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
 	    /* nothing to save just yet */
-	    gtk_widget_set_sensitive(w, FALSE);
-	} else if (vitem->flag == SAVE_AS_ITEM &&
-	    strstr(vwin->fname, "script_tmp")) {
-	    gtk_widget_set_sensitive(w, FALSE);
+	    gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+	} else if (vitem->flag == SAVE_AS_ITEM) {
+	    g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button", button);
+	    if (strstr(vwin->fname, "script_tmp")) {
+		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+	    }
 	}
     }
 
-    gtk_widget_show(vwin->mbar);
-    gtk_widget_show(hbox);
+    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    gtk_widget_show_all(hbox);
 }
 
 static void add_edit_items_to_viewbar (windata_t *vwin)
 {
     struct viewbar_item *vitem;
-    GtkWidget *w, *button;
+    GtkToolItem *button;
     int i, pos = 0;
 
-    for (i=0; viewbar_items[i].str != NULL; i++) {
+    for (i=0; i<n_viewbar_items; i++) {
 	vitem = &viewbar_items[i];
 	if (vitem->flag == SAVE_ITEM ||
 	    vitem->flag == EDIT_ITEM ||
 	    vitem->flag == EDIT_SCRIPT_ITEM) {
-	    button = gtk_image_new();
-	    gtk_image_set_from_stock(GTK_IMAGE(button), 
-				     vitem->icon, 
-				     GTK_ICON_SIZE_MENU);
-	    w = gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
-					NULL, _(vitem->str), NULL,
-					button, G_CALLBACK(vitem->func), 
-					vwin, pos);
-	    g_object_set_data(G_OBJECT(w), "flag", 
-			      GINT_TO_POINTER(vitem->flag));
-	    if (vitem->flag == SAVE_ITEM) { 
-		gtk_widget_set_sensitive(w, FALSE);
-	    } 
+	    button = gtk_tool_button_new_from_stock(vitem->icon);
+	    gtk_tool_item_set_tooltip(button, get_gretl_tips(), 
+				      _(vitem->tip), NULL);
+	    g_signal_connect(button, "clicked", G_CALLBACK(vitem->func), vwin);
+	    gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), button, pos);
+	    if (vitem->flag == SAVE_ITEM) {
+		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+		g_object_set_data(G_OBJECT(vwin->mbar), "save_button",
+				  button);
+	    } else if (vitem->flag == SAVE_AS_ITEM) {
+		g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button",
+				  button);
+	    }
+	    gtk_widget_show(GTK_WIDGET(button));
 	}
 	if (vitem->flag != EDIT_GP) {
 	    pos++;
@@ -2072,7 +2045,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
     GtkWidget *w;
     int i;
 
-    for (i=0; viewbar_items[i].str != NULL; i++) {
+    for (i=0; i<n_viewbar_items; i++) {
 	vitem = &viewbar_items[i];
 	if (vwin->role == EDIT_SCRIPT) {
 	    /* the script editor popup may have some special stuff
@@ -2095,7 +2068,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    } else if (func == text_undo && !text_can_undo(vwin)) {
 		continue;
 	    }
-	    w = gtk_menu_item_new_with_label(_(vitem->str));
+	    w = gtk_menu_item_new_with_label(_(vitem->tip));
 	    g_signal_connect(G_OBJECT(w), "activate",
 			     G_CALLBACK(func),
 			     vwin);
