@@ -173,8 +173,10 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
+#ifndef G_OS_WIN32 
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
+#endif
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "latex", N_("Command to compile TeX files"), NULL, latex, 

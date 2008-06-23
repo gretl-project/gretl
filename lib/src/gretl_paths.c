@@ -1392,6 +1392,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	gretl_paths.plotfile[0] = '\0';
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
+	/* not defaults: after reading from registry */
 	ensure_slash(ppaths->gretldir);
 	if (*ppaths->dotdir == '\0') {
 	    correct_blank_dotdir(ppaths);
@@ -1403,11 +1404,9 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	if (strcmp(ppaths->dotdir, ppaths->workdir)) { 
 	    err += validate_writedir(ppaths->workdir);
 	}
-#if defined(HAVE_X12A) || defined(HAVE_TRAMO)
 	if (!err) {
 	    err = set_tramo_x12a_dirs(ppaths, err);
 	}
-#endif
     }
 
     if (opt & OPT_X) {
@@ -1427,6 +1426,8 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
 	strcpy(ppaths->cli_helpfile, ppaths->helpfile);
     }
+
+    sprintf(ppaths->gnuplot, "%swgnuplot.exe", ppaths->gretldir);
 
     sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sshare\\gtksourceview-1.0"
 	    "\\language-specs", ppaths->gretldir);
@@ -1754,9 +1755,6 @@ int cli_read_rc (PATHS *paths)
 	    } else if (!strcmp(key, "usecwd")) {
 		usecwd = rc_bool(val);
 		libset_set_bool(USE_CWD, usecwd);
-	    } else if (!strcmp(key, "gnuplot")) {
-		*paths->gnuplot = '\0';
-		strncat(paths->gnuplot, val, MAXLEN - 1);
 	    } else if (!strcmp(key, "binbase")) {
 		*paths->binbase = '\0';
 		strncat(paths->binbase, val, MAXLEN - 1);

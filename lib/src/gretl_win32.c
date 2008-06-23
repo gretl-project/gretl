@@ -178,14 +178,6 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	sprintf(ppaths->dotdir, "%c:\\userdata\\gretl\\user\\", drive);
     }    
 
-    ppaths->gnuplot[0] = '\0';
-    read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, HKEY_CLASSES_ROOT,
-			       "gretl", "gnuplot", ppaths->gnuplot);
-    if (ppaths->gnuplot[0] == '\0') {
-	sprintf(ppaths->gnuplot, 
-		"%c:\\userdata\\gretl\\wgnuplot.exe", drive);
-    }
-
     ppaths->binbase[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "binbase", ppaths->binbase);
     if (ppaths->binbase[0] == '\0') {

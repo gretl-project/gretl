@@ -82,10 +82,6 @@ print "Root: HKLM; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
 # specific entries
 print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n";
-# print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-# print "\"userdir\"; ValueData: \"{code:GetDataDir}\"\n";
-print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"gnuplot\"; ValueData: \"{app}\\wgnuplot.exe\"\n";
 print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"Rcommand\"; ValueData: \"RGui.exe\"\n";
 print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
