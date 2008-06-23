@@ -6975,7 +6975,9 @@ static int script_open_append (ExecState *s, double ***pZ,
 	} else {
 	    register_data(OPENED_VIA_CLI);
 	}
-	varlist(pdinfo, prn);
+	if (!(cmd->opt & OPT_Q)) { 
+	    varlist(pdinfo, prn);
+	}
     }
 
     return err;

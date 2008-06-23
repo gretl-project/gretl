@@ -726,7 +726,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 
     data_status = 1;
 
-    if (pdinfo->v > 0 && !dbdata) {
+    if (pdinfo->v > 0 && !dbdata && !(cmd->opt & OPT_Q)) {
 	varlist(pdinfo, prn);
     }
 
