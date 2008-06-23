@@ -100,7 +100,7 @@ int doing_nls (void)
     static int called, nls;
 
     if (!called) {
-	nls = (strcmp("/File/_Open data", _("/File/_Open data")) ||
+	nls = (strcmp("_Open data", _("_Open data")) ||
 	       strcmp("Test statistic", _("Test statistic")) ||
 	       strcmp("annual", _("annual")));
 	called = 1;

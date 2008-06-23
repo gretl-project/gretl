@@ -136,6 +136,6 @@ void mdata_select_last_var (void);
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo);
 
 /* functions defined in files other than gretl.c */
-void about_dialog (gpointer data);
+void about_dialog (void);
 
 #endif /* GRETL_H */

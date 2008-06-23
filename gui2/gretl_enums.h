@@ -256,8 +256,7 @@ enum varclick_actions {
 
 enum font_selections {
     FIXED_FONT_SELECTION,
-    APP_FONT_SELECTION,
-    GRAPH_FONT_SELECTION
+    APP_FONT_SELECTION
 };
 
 enum calc_functions {

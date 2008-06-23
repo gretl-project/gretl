@@ -28,8 +28,6 @@
 #include "texprint.h"
 #include "system.h"
 
-/* find-and-replace related materials */
-
 struct search_replace {
     GtkWidget *w;
     GtkWidget *f_entry;
@@ -37,6 +35,8 @@ struct search_replace {
     gchar *find;
     gchar *replace;
 };
+
+/* Find/Replace functions */
 
 static void replace_string_setup (GtkWidget *widget, 
 				  struct search_replace *s)
@@ -125,7 +125,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_main();
 }
 
-void text_replace (windata_t *vwin, guint u, GtkWidget *w)
+void text_replace (GtkWidget *w, windata_t *vwin)
 {
     gchar *buf = NULL;
     gchar *fullbuf = NULL;
@@ -373,25 +373,40 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-void model_tex_view (gpointer data, guint fmt, GtkWidget *w)
+static int tex_format_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+    int fmt = GRETL_FORMAT_TEX;
+
+    if (strstr(s, "Eqn")) {
+	fmt |= GRETL_FORMAT_EQN;
+    }
+
+    return fmt;
+}
+
+void model_tex_view (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
+    int fmt = tex_format_code(action);
 
     special_text_handler(vwin, fmt, W_PREVIEW);
 }
 
-void model_tex_save (gpointer data, guint fmt, GtkWidget *w)
+void model_tex_save (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
+    int fmt = tex_format_code(action);
 
     special_text_handler(vwin, fmt, W_SAVE);
 }
 
-void system_tex_callback (gpointer data, guint opt, GtkWidget *w)
+void model_tex_copy (GtkAction *action, gpointer data) 
 {
     windata_t *vwin = (windata_t *) data;
+    int fmt = tex_format_code(action);
 
-    special_text_handler(vwin, GRETL_FORMAT_TEX, opt);
+    special_text_handler(vwin, fmt, W_COPY);
 }
 
 static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
@@ -478,10 +493,8 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
     }	
 }
 
-void window_copy (gpointer data, guint fmt, GtkWidget *w) 
+void window_copy (windata_t *vwin, guint fmt) 
 {
-    windata_t *vwin = (windata_t *) data;
-
     window_copy_or_save(vwin, fmt, W_COPY);
 }
 
@@ -494,7 +507,7 @@ void window_save (windata_t *vwin, guint fmt)
 
 #ifdef NATIVE_PRINTING
 
-void window_print (windata_t *vwin, guint u, GtkWidget *w) 
+void window_print (GtkAction *action, windata_t *vwin) 
 {
     char *buf, *selbuf = NULL;
     GtkTextBuffer *tbuf;

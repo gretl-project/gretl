@@ -21,7 +21,7 @@ void force_english_help (void);
 
 int options_dialog (int page, const char *varname);
 
-void font_selector (gpointer data, guint which, GtkWidget *widget);
+void font_selector (GtkAction *action);
 
 void set_fixed_font (void);
 

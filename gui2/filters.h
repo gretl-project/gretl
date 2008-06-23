@@ -20,13 +20,6 @@
 #ifndef FILTERS_H
 #define FILTERS_H
 
-enum {
-    FILTER_SMA = 1,
-    FILTER_EMA,
-    FILTER_HP,
-    FILTER_BK
-};
-
-void filter_callback (gpointer p, guint code, GtkWidget *w);
+void filter_callback (GtkAction *action);
 
 #endif /* FILTERS_H */

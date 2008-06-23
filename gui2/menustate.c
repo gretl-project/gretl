@@ -23,6 +23,7 @@
 #include "console.h"
 #include "guiprint.h"
 #include "ssheet.h"
+#include "selector.h"
 #include "menustate.h"
 
 void refresh_data (void)
@@ -33,13 +34,13 @@ void refresh_data (void)
     }
 }
 
-void flip (GtkItemFactory *ifac, const char *path, gboolean s)
+void flip (GtkUIManager *ui, const char *path, gboolean s)
 {
-    if (ifac != NULL) {
-	GtkWidget *w = gtk_item_factory_get_item(ifac, path);
+    if (ui != NULL) {
+	GtkAction *a = gtk_ui_manager_get_action(ui, path);
 
-	if (w != NULL) {
-	    gtk_widget_set_sensitive(w, s);
+	if (a != NULL) {
+	    gtk_action_set_sensitive(a, s);
 	} else {
 	    fprintf(stderr, I_("Failed to flip state of \"%s\"\n"), path);
 	}
@@ -48,13 +49,13 @@ void flip (GtkItemFactory *ifac, const char *path, gboolean s)
 
 void edit_info_state (gboolean s)
 {
-    flip(mdata->ifac, "/Data/Edit info", s);
+    flip(mdata->ui, "/MenuBar/Data/EditInfo", s);
 }
 
 void add_remove_markers_state (gboolean s)
 {
-    flip(mdata->ifac, "/Data/Add case markers...", !s);
-    flip(mdata->ifac, "/Data/Remove case markers", s);
+    flip(mdata->ui, "/MenuBar/Data/AddMarkers", !s);
+    flip(mdata->ui, "/MenuBar/Data/RemoveMarkers", s);
 }
 
 /* by using gretl_set_window_modal() we make the main
@@ -93,63 +94,38 @@ void gretl_set_window_modal (GtkWidget *w)
 
 void variable_menu_state (gboolean s)
 {
-    if (mdata == NULL || mdata->ifac == NULL) return;
+    if (mdata == NULL || mdata->ui == NULL) return;
 
-    flip(mdata->ifac, "/Variable", s);
-    flip(mdata->ifac, "/View/Cross-correlogram",  
+    flip(mdata->ui, "/MenuBar/Variable", s);
+    flip(mdata->ui, "/MenuBar/View/xcorrgm",  
 	 dataset_is_time_series(datainfo));
 }
 
 void main_menubar_state (gboolean s)
 {
-    if (mdata == NULL || mdata->ifac == NULL) return;
+    if (mdata == NULL || mdata->ui == NULL) return;
 
-    flip(mdata->ifac, "/File/Append data", s);
-    flip(mdata->ifac, "/File/Clear data set", s);
-    flip(mdata->ifac, "/File/Save data", s);
-    flip(mdata->ifac, "/File/Save data as", s);
-    flip(mdata->ifac, "/File/Export data", s);
-    flip(mdata->ifac, "/File/Send To...", s);
-    flip(mdata->ifac, "/Data", s);
-    flip(mdata->ifac, "/View", s);
-    flip(mdata->ifac, "/Add", s);
-    flip(mdata->ifac, "/Sample", s);
-    flip(mdata->ifac, "/Variable", s);
-    flip(mdata->ifac, "/Model", s);
-    flip(mdata->ifac, "/Tools/Sort variables", s);
+    flip(mdata->ui, "/MenuBar/File/AppendData", s);
+    flip(mdata->ui, "/MenuBar/File/ClearData", s);
+    flip(mdata->ui, "/MenuBar/File/SaveData", s);
+    flip(mdata->ui, "/MenuBar/File/SaveDataAs", s);
+    flip(mdata->ui, "/MenuBar/File/ExportData", s);
+    flip(mdata->ui, "/MenuBar/File/MailData", s);
+    flip(mdata->ui, "/MenuBar/Data", s);
+    flip(mdata->ui, "/MenuBar/View", s);
+    flip(mdata->ui, "/MenuBar/Add", s);
+    flip(mdata->ui, "/MenuBar/Sample", s);
+    flip(mdata->ui, "/MenuBar/Variable", s);
+    flip(mdata->ui, "/MenuBar/Model", s);
+    flip(mdata->ui, "/MenuBar/Tools/SortVars", s);
 
-    flip(mdata->ifac, "/File/New data set", !s);
+    flip(mdata->ui, "/MenuBar/File/NewData", !s);
 
     if (s) {
 	edit_info_state(!(data_status & BOOK_DATA));
 	add_remove_markers_state(datainfo->S != NULL);
     }
 }
-
-static GtkItemFactoryEntry time_series_model_items[] = {
-    { N_("/Model/Time series/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL, GNULL },
-    { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL, GNULL },
-    { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL, GNULL },
-    { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL, GNULL },
-    { N_("/Model/Time series/ARI_MA..."), NULL, model_callback, ARMA, NULL, GNULL },
-    { N_("/Model/Time series/_ARCH..."), NULL, model_callback, ARCH, NULL, GNULL },
-    { N_("/Model/Time series/_GARCH..."), NULL, model_callback, GARCH, NULL, GNULL },
-    { N_("/Model/Time series/_Vector Autoregression..."), NULL, selector_callback, VAR, NULL, GNULL },
-    { N_("/Model/Time series/VAR _lag selection..."), NULL, selector_callback, VLAGSEL, NULL, GNULL },
-    { N_("/Model/Time series/V_ECM..."), NULL, selector_callback, VECM, NULL, GNULL },
-    { N_("/Model/Time series/_Cointegration test"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Model/Time series/Cointegration test/_Engle-Granger..."), NULL, 
-      selector_callback, COINT, NULL, GNULL },
-    { N_("/Model/Time series/Cointegration test/_Johansen..."), NULL, 
-      selector_callback, COINT2, NULL, GNULL }
-};
-
-static GtkItemFactoryEntry panel_model_items[] = {
-    { N_("/Model/Panel/_Fixed or random effects..."), NULL, model_callback, PANEL, NULL, GNULL },
-    { N_("/Model/Panel/_Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL, GNULL },
-    { N_("/Model/Panel/_Between model..."), NULL, model_callback, PANEL_B, NULL, GNULL },
-    { N_("/Model/Panel/_Arellano-Bond..."), NULL, model_callback, ARBOND, NULL, GNULL },
-};
 
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \
                         (d->pd == 4 || d->pd == 12 || \
@@ -170,144 +146,114 @@ static GtkItemFactoryEntry panel_model_items[] = {
 #define x12_ts(d) ((d)->structure == TIME_SERIES && \
                    (d->pd == 4 || d->pd == 12))
 
+const gchar *ts_ui = 
+    "<ui>"
+    
+    "</ui>";
+
 void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(datainfo);
 
-    if (mdata->ifac == NULL) {
+    if (mdata->ui == NULL) {
 	return;
     }
 
     /* File menu */
-    flip(mdata->ifac, "/File/Save data as/Database...", DATASET_DB_OK(datainfo));
+    flip(mdata->ui, "/MenuBar/File/SaveDataAs/SaveAsDb", DATASET_DB_OK(datainfo));
 
     /* Plots */
-    flip(mdata->ifac, "/View/Graph specified vars/Time series plot...", sx);
-    flip(mdata->ifac, "/View/Multiple graphs/Time series...", sx);
-    flip(mdata->ifac, "/Variable/Time series plot", sx);
+    flip(mdata->ui, "/MenuBar/View/GraphVars/TSPlot", sx);
+    flip(mdata->ui, "/MenuBar/View/MultiPlots/MultiTS", sx);
+    flip(mdata->ui, "/MenuBar/Variable/VarTSPlot", sx);
 
     /* Variable menu */
-    flip(mdata->ifac, "/Variable/Correlogram", s);
-    flip(mdata->ifac, "/Variable/Spectrum", s);
-    flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
-    flip(mdata->ifac, "/Variable/ADF-GLS test", s);
-    flip(mdata->ifac, "/Variable/KPSS test", s);
-    flip(mdata->ifac, "/Variable/Filter", s);
+    flip(mdata->ui, "/MenuBar/Variable/corrgm", s);
+    flip(mdata->ui, "/MenuBar/Variable/Spectrum", s);
+    flip(mdata->ui, "/MenuBar/Variable/ADF", s);
+    flip(mdata->ui, "/MenuBar/Variable/DFGLS", s);
+    flip(mdata->ui, "/MenuBar/Variable/KPSS", s);
+    flip(mdata->ui, "/MenuBar/Variable/Filter", s);
 #ifdef HAVE_X12A
-    flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", x12_ts(datainfo));
+    flip(mdata->ui, "/MenuBar/Variable/X12A", x12_ts(datainfo));
 #endif
 #ifdef HAVE_TRAMO
-    flip(mdata->ifac, "/Variable/TRAMO analysis", tramo_ts(datainfo));
+    flip(mdata->ui, "/MenuBar/Variable/Tramo", tramo_ts(datainfo));
 #endif
-    flip(mdata->ifac, "/Variable/Hurst exponent", s);
+    flip(mdata->ui, "/MenuBar/Variable/Hurst", s);
     /* Model menu */
-    flip(mdata->ifac, "/Model/Time series", s);
+    flip(mdata->ui, "/MenuBar/Model/TSModels", s);
     /* Sample menu */
-    flip(mdata->ifac, "/Data/Compact data...", 
+    flip(mdata->ui, "/MenuBar/Data/DataCompact", 
 	 s && (COMPACTABLE(datainfo) || dated_weekly_data(datainfo)));
-    flip(mdata->ifac, "/Data/Expand data...", s && EXPANSIBLE(datainfo));
-
-    if (s) {
-	GtkWidget *w =  
-	    gtk_item_factory_get_widget(mdata->ifac, 
-					"/Model/Time series/Cochrane-Orcutt...");
-
-	if (w == NULL) {
-	    int i, n = sizeof time_series_model_items / 
-		sizeof time_series_model_items[0];
-
-	    for (i=0; i<n; i++) {
-		gtk_item_factory_create_item(mdata->ifac, 
-					     &time_series_model_items[i], 
-					     mdata, 1);
-	    }
-	}
-    }
+    flip(mdata->ui, "/MenuBar/Data/DataExpand", s && EXPANSIBLE(datainfo));
 }
 
 void panel_menu_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Add/Unit dummies", s);
-	flip(mdata->ifac, "/Add/Time dummies", s);
-	flip(mdata->ifac, "/Model/Panel", s);
-    }
-
-    if (s) {
-	GtkWidget *w =  
-	    gtk_item_factory_get_widget(mdata->ifac, 
-					"/Model/Panel/Fixed or random effects...");
-
-	if (w == NULL) {
-	    int i, n = sizeof panel_model_items / 
-		sizeof panel_model_items[0];
-
-	    for (i=0; i<n; i++) {
-		gtk_item_factory_create_item(mdata->ifac, 
-					     &panel_model_items[i], 
-					     mdata, 1);
-	    }
-	}
+    if (mdata->ui != NULL) {
+	flip(mdata->ui, "/MenuBar/Add/UnitDums", s);
+	flip(mdata->ui, "/MenuBar/Add/TimeDums", s);
+	flip(mdata->ui, "/MenuBar/Model/PanelModels", s);
     }
 }
 
 void ts_or_panel_menu_state (gboolean s)
 {
-    if (mdata->ifac == NULL) return;
+    if (mdata->ui == NULL) return;
 
-    flip(mdata->ifac, "/Data/Sort data...", !s);
+    flip(mdata->ui, "/MenuBar/Data/DataSort", !s);
 
-    flip(mdata->ifac, "/Add/Time trend", s);
-    flip(mdata->ifac, "/Add/Lags of selected variables", s);
-    flip(mdata->ifac, "/Add/First differences of selected variables", s);
-    flip(mdata->ifac, "/Add/Log differences of selected variables", s);
+    flip(mdata->ui, "/MenuBar/Add/AddTime", s);
+    flip(mdata->ui, "/MenuBar/Add/LAGS", s);
+    flip(mdata->ui, "/MenuBar/Add/DIFF", s);
+    flip(mdata->ui, "/MenuBar/Add/LDIFF", s);
 
-    flip(mdata->ifac, "/Add/Seasonal differences of selected variables",
-	 dataset_is_seasonal(datainfo));
-    flip(mdata->ifac, "/Add/Periodic dummies", 
-	 dataset_is_seasonal(datainfo));
+    s = dataset_is_seasonal(datainfo);
+    flip(mdata->ui, "/MenuBar/Add/SDIFF", s);
+    flip(mdata->ui, "/MenuBar/Add/PeriodDums", s);
 }
 
 void session_menu_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/View/Icon view", s);
-	flip(mdata->ifac, "/File/Session files/Save session", s);
-	flip(mdata->ifac, "/File/Session files/Save session as...", s);
+    if (mdata->ui != NULL) {
+	flip(mdata->ui, "/MenuBar/View/IconView", s);
+	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", s);
+	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSessionAs", s);
     }	
 }
 
 void restore_sample_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Sample/Restore full range", s);
+    if (mdata->ui != NULL) {
+	flip(mdata->ui, "/MenuBar/Sample/FullRange", s);
     }
 }
 
 void drop_obs_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Data/Remove extra observations", s);
+    if (mdata->ui != NULL) {
+	flip(mdata->ui, "/MenuBar/Data/RemoveObs", s);
     }
 }
 
 void compact_data_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Data/Compact data...", s);
+    if (mdata->ui != NULL) {
+	flip(mdata->ui, "/MenuBar/Data/DataCompact", s);
     }
 }
 
 void main_menus_enable (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/File", s);
-	flip(mdata->ifac, "/Tools", s);
-	flip(mdata->ifac, "/Data", s);
-	flip(mdata->ifac, "/View", s);
-	flip(mdata->ifac, "/Add", s);
-	flip(mdata->ifac, "/Sample", s);
-	flip(mdata->ifac, "/Model", s);
+    if (mdata->ui != NULL) {
+	flip(mdata->ui, "/MenuBar/File", s);
+	flip(mdata->ui, "/MenuBar/Tools", s);
+	flip(mdata->ui, "/MenuBar/Data", s);
+	flip(mdata->ui, "/MenuBar/View", s);
+	flip(mdata->ui, "/MenuBar/Add", s);
+	flip(mdata->ui, "/MenuBar/Sample", s);
+	flip(mdata->ui, "/MenuBar/Model", s);
     }
 }
 
@@ -319,36 +265,29 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     if (!strcmp(item, _("Display values"))) 
 	display_var();
     if (!strcmp(item, _("Descriptive statistics"))) 
-	do_menu_op(NULL, VAR_SUMMARY, NULL);
+	do_menu_op(VAR_SUMMARY, NULL, OPT_NONE);
     else if (!strcmp(item, _("Time series plot"))) 
 	do_graph_var(v);
     else if (!strcmp(item, _("Frequency distribution"))) 
-	do_freq_dist(NULL, 0, NULL);
+	do_freq_dist(0);
     else if (!strcmp(item, _("Frequency plot"))) 
-	do_freq_dist(NULL, 1, NULL);
+	do_freq_dist(1);
     else if (!strcmp(item, _("Boxplot")))
 	do_boxplot_var(v);
     else if (!strcmp(item, _("Gini coefficient")))
-	do_gini(NULL, 0, NULL);
+	do_gini();
     else if (!strcmp(item, _("Correlogram")))
-	do_corrgm(NULL, CORRGM, NULL);
-#if 0
+	do_corrgm();
     else if (!strcmp(item, _("Spectrum"))) 
-	do_pergm(NULL, 0, NULL);
-    else if (!strcmp(item, _("Spectrum (Bartlett)"))) 
-	do_pergm(NULL, 1, NULL);
-#else
-    else if (!strcmp(item, _("Spectrum"))) 
-	do_pergm(NULL, 1, NULL);
-#endif
+	do_pergm(NULL);
     else if (!strcmp(item, _("ARIMA model"))) 
-	model_callback(GINT_TO_POINTER(v), ARMA, NULL);
+	selection_dialog(_("gretl: specify model"), do_model, ARMA, v);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
-	unit_root_test(NULL, ADF, NULL);
+	unit_root_test(ADF);
     else if (!strcmp(item, _("KPSS test"))) 
-	unit_root_test(NULL, KPSS, NULL);
+	unit_root_test(KPSS);
     else if (!strcmp(item, _("Hurst exponent"))) 
-	do_hurst(NULL, 0, NULL);
+	do_hurst();
     else if (!strcmp(item, _("Edit attributes")))  
 	varinfo_dialog(v, 1);
     else if (!strcmp(item, _("Edit values")))  
@@ -358,7 +297,35 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Delete"))) 
 	delete_single_var(v);
     else if (!strcmp(item, _("Define new variable..."))) 
-	gretl_callback(NULL, GENR, NULL);
+	genr_callback();
+
+    gtk_widget_destroy(mdata->popup);
+
+    return FALSE;
+}
+
+static gint selection_popup_click (GtkWidget *w, gpointer p)
+{
+    gchar *item = (gchar *) p;
+
+    if (!strcmp(item, _("Display values"))) 
+	display_selected(); 
+    else if (!strcmp(item, _("Descriptive statistics"))) 
+	do_menu_op(SUMMARY, NULL, OPT_NONE);
+    else if (!strcmp(item, _("Correlation matrix"))) 
+	do_menu_op(CORR, NULL, OPT_NONE);
+    else if (!strcmp(item, _("Cross-correlogram"))) 
+	xcorrgm_callback();
+    else if (!strcmp(item, _("Time series plot"))) 
+	plot_from_selection(GR_PLOT);
+    else if (!strcmp(item, _("XY scatterplot"))) 
+	plot_from_selection(GR_XY);
+    else if (!strcmp(item, _("Copy to clipboard"))) 
+	csv_selected_to_clipboard();
+    else if (!strcmp(item, _("Edit values"))) 
+	show_spreadsheet(SHEET_EDIT_VARLIST);
+    else if (!strcmp(item, _("Delete"))) 
+	delete_selected_vars();
 
     gtk_widget_destroy(mdata->popup);
 
@@ -367,7 +334,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 
 GtkWidget *build_var_popup (void)
 {
-    const char *var_items[] = {
+    const char *items[] = {
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Time series plot"),
@@ -381,57 +348,28 @@ GtkWidget *build_var_popup (void)
 	N_("Delete"),
 	N_("Define new variable...")
     };
+    GtkWidget *menu;
+    GtkWidget *item;
+    int i, n = G_N_ELEMENTS(items);
 
-    GtkWidget *var_menu;
-    GtkWidget *var_item;
-    int i, n_items = sizeof var_items / sizeof var_items[0];
+    menu = gtk_menu_new();
 
-    var_menu = gtk_menu_new();
-
-    for (i=0; i<n_items; i++) {
+    for (i=0; i<n; i++) {
 	if ((i == 5 || i == 6) && !dataset_is_time_series(datainfo)) {
 	    continue;
 	}
 	if (i == 2 && !extended_ts(datainfo)) {
 	    continue;
 	}
-	var_item = gtk_menu_item_new_with_label(_(var_items[i]));
-	g_signal_connect(G_OBJECT(var_item), "activate",
+	item = gtk_menu_item_new_with_label(_(items[i]));
+	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(var_popup_click),
-			 _(var_items[i]));
-	gtk_widget_show(var_item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(var_menu), var_item);
+			 _(items[i]));
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }
 
-    return var_menu;
-}
-
-static gint selection_popup_click (GtkWidget *w, gpointer p)
-{
-    gchar *item = (gchar *) p;
-
-    if (!strcmp(item, _("Display values"))) 
-	display_selected(NULL, 0, NULL); 
-    else if (!strcmp(item, _("Descriptive statistics"))) 
-	do_menu_op(NULL, SUMMARY, NULL);
-    else if (!strcmp(item, _("Correlation matrix"))) 
-	do_menu_op(NULL, CORR, NULL);
-    else if (!strcmp(item, _("Cross-correlogram"))) 
-	xcorrgm_callback(NULL, 0, NULL);
-    else if (!strcmp(item, _("Time series plot"))) 
-	plot_from_selection(NULL, GR_PLOT, NULL);
-    else if (!strcmp(item, _("XY scatterplot"))) 
-	plot_from_selection(NULL, GR_XY, NULL);
-    else if (!strcmp(item, _("Copy to clipboard"))) 
-	csv_selected_to_clipboard();
-    else if (!strcmp(item, _("Edit values"))) 
-	show_spreadsheet(SHEET_EDIT_VARLIST);
-    else if (!strcmp(item, _("Delete"))) 
-	delete_selected_vars();
-
-    gtk_widget_destroy(mdata->popup);
-
-    return FALSE;
+    return menu;
 }
 
 GtkWidget *build_selection_popup (void)
@@ -447,14 +385,13 @@ GtkWidget *build_selection_popup (void)
 	N_("Edit values"),
 	N_("Delete")
     };
-
-    GtkWidget *sel_menu;
+    GtkWidget *menu;
     GtkWidget *item;
-    int i, n_items = sizeof items / sizeof items[0];
+    int i, n = G_N_ELEMENTS(items);
 
-    sel_menu = gtk_menu_new();
+    menu = gtk_menu_new();
 
-    for (i=0; i<n_items; i++) {
+    for (i=0; i<n; i++) {
 	if (!dataset_is_time_series(datainfo) && i == 3) {
 	    continue;
 	}
@@ -466,10 +403,10 @@ GtkWidget *build_selection_popup (void)
 			 G_CALLBACK(selection_popup_click),
 			 _(items[i]));
 	gtk_widget_show(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(sel_menu), item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }
 
-    return sel_menu;
+    return menu;
 }
 
 void clear_sample_label (void)
@@ -524,8 +461,7 @@ void set_sample_label (DATAINFO *pdinfo)
     ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
 			   dataset_is_panel(pdinfo));
 
-    flip(mdata->ifac, "/Data/Transpose data...", 
-	 !dataset_is_panel(pdinfo));
+    flip(mdata->ui, "/MenuBar/Data/DataTranspose", !dataset_is_panel(pdinfo));
 
     if (complex_subsampled() && pdinfo->t1 == 0 && 
 	pdinfo->t2 == pdinfo->n - 1 && 
@@ -580,5 +516,151 @@ void set_sample_label (DATAINFO *pdinfo)
 
     console_record_sample(datainfo);
 }
+
+void action_entry_init (GtkActionEntry *entry)
+{
+    entry->stock_id = NULL;
+    entry->accelerator = NULL;
+    entry->tooltip = NULL;
+    entry->callback = NULL;
+}
+
+int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
+		 gint n_entries, const gchar *ui_info)
+{
+    GtkActionGroup *actions;
+    GError *err = NULL;
+
+    actions = gtk_action_group_new("MyActions");
+#ifdef ENABLE_NLS
+    gtk_action_group_set_translation_domain(actions, "gretl");
+#endif
+
+    gtk_action_group_add_actions(actions, entries, n_entries, vwin);
+
+    vwin->ui = gtk_ui_manager_new();
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    if (vwin->w != NULL) {
+	gtk_window_add_accel_group(GTK_WINDOW(vwin->w), 
+				   gtk_ui_manager_get_accel_group(vwin->ui));
+    } else if (vwin->dialog != NULL) {
+	gtk_window_add_accel_group(GTK_WINDOW(vwin->dialog), 
+				   gtk_ui_manager_get_accel_group(vwin->ui));
+    }
+
+    gtk_ui_manager_add_ui_from_string(vwin->ui, ui_info, -1, &err);
+    if (err != NULL) {
+	g_message("building menus failed: %s", err->message);
+	g_error_free(err);
+    }
+
+    vwin->mbar = gtk_ui_manager_get_widget(vwin->ui, "/MenuBar");
+
+    return 0;
+}
+
+int vwin_menu_add_item (windata_t *vwin, const gchar *path, 
+			GtkActionEntry *entry)
+{
+    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+    GtkActionGroup *actions;
+
+    actions = gtk_action_group_new("AdHoc");
+#ifdef ENABLE_NLS
+    gtk_action_group_set_translation_domain(actions, "gretl");
+#endif
+
+    gtk_action_group_add_actions(actions, entry, 1, vwin);
+    gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
+			  GTK_UI_MANAGER_MENUITEM, FALSE);
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    return id;
+}
+
+int vwin_menu_add_items (windata_t *vwin, const gchar *path, 
+			 GtkActionEntry *entries, int n)
+{
+    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+    GtkActionGroup *actions;
+    int i;
+
+    actions = gtk_action_group_new("AdHoc");
+#ifdef ENABLE_NLS
+    gtk_action_group_set_translation_domain(actions, "gretl");
+#endif
+
+    gtk_action_group_add_actions(actions, entries, n, vwin);
+    for (i=0; i<n; i++) {
+	gtk_ui_manager_add_ui(vwin->ui, id, path, 
+			      entries[i].name, entries[i].name,
+			      GTK_UI_MANAGER_MENUITEM, FALSE);
+    }
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    return id;
+}
+
+int vwin_menu_add_radios (windata_t *vwin, const gchar *path, 
+			  GtkRadioActionEntry *entries, int n,
+			  int deflt, GCallback callback)
+{
+    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+    GtkActionGroup *actions;
+    int i;
+
+    actions = gtk_action_group_new("Radios");
+#ifdef ENABLE_NLS
+    gtk_action_group_set_translation_domain(actions, "gretl");
+#endif
+
+    gtk_action_group_add_radio_actions(actions, entries, n,
+				       deflt, callback,
+				       vwin);
+    for (i=0; i<n; i++) {
+	gtk_ui_manager_add_ui(vwin->ui, id, path, 
+			      entries[i].name, entries[i].name,
+			      GTK_UI_MANAGER_MENUITEM, FALSE);
+    }
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    return id;
+}
+
+int vwin_menu_add_menu (windata_t *vwin, const gchar *path, 
+			GtkActionEntry *entry)
+{
+    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+    GtkActionGroup *actions;
+
+    actions = gtk_action_group_new("NewMenu");
+#ifdef ENABLE_NLS
+    gtk_action_group_set_translation_domain(actions, "gretl");
+#endif
+
+    gtk_action_group_add_actions(actions, entry, 1, vwin);
+    gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
+			  GTK_UI_MANAGER_MENU, FALSE);
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    return id;
+}
+
+void vwin_menu_add_separator (windata_t *vwin, const gchar *path)
+{
+    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+
+    gtk_ui_manager_add_ui(vwin->ui, id, path, NULL, NULL,
+			  GTK_UI_MANAGER_SEPARATOR, FALSE);
+}
+
+
+
 
 

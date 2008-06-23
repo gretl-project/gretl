@@ -50,6 +50,7 @@ static int add_rats_db_series_list (windata_t *vwin);
 static int add_pcgive_db_series_list (windata_t *vwin);
 static dbwrapper *get_series_info (windata_t *vwin, int action);
 static int *db_get_selection_list (windata_t *vwin);
+static void gui_get_db_series (windata_t *vwin, int cmd);
 
 enum db_data_actions {
     DB_DISPLAY,
@@ -433,17 +434,17 @@ add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
 
 static void gui_display_series (GtkWidget *w, windata_t *vwin)
 {
-    gui_get_db_series(vwin, DB_DISPLAY, NULL);
+    gui_get_db_series(vwin, DB_DISPLAY);
 }
 
 static void gui_graph_series (GtkWidget *w, windata_t *vwin)
 {
-    gui_get_db_series(vwin, DB_GRAPH, NULL);
+    gui_get_db_series(vwin, DB_GRAPH);
 }
 
 static void gui_import_series (GtkWidget *w, windata_t *vwin)
 {
-    gui_get_db_series(vwin, DB_IMPORT, NULL);
+    gui_get_db_series(vwin, DB_IMPORT);
 }
 
 void sync_db_windows (void)
@@ -490,7 +491,7 @@ static void gui_delete_series (GtkWidget *w, windata_t *vwin)
 
 void import_db_series (windata_t *vwin)
 {
-    gui_get_db_series(vwin, DB_IMPORT, NULL);
+    gui_get_db_series(vwin, DB_IMPORT);
 }
 
 static int diffdate (double d1, double d0, int pd)
@@ -596,9 +597,8 @@ static DATAINFO *new_dataset_from_dbwrapper (dbwrapper *dw,
     return dinfo;
 }
 
-void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
+static void gui_get_db_series (windata_t *vwin, int cmd)
 {
-    windata_t *vwin = (windata_t *) p;
     int dbcode = vwin->role;
     DATAINFO *dbinfo = NULL;
     double **dbZ = NULL;
@@ -631,7 +631,7 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
 	    err = get_pcgive_db_data(vwin->fname, sinfo, dbZ);
 	}
 
-	if (action == DB_IMPORT && err == DB_MISSING_DATA) {
+	if (cmd == DB_IMPORT && err == DB_MISSING_DATA) {
 	    warnbox(_("Warning: series has missing observations"));
 	}
 
@@ -644,11 +644,11 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
 	strcpy(VARLABEL(dbinfo, i+1), sinfo->descrip);
     }
 
-    if (action == DB_DISPLAY) {
+    if (cmd == DB_DISPLAY) {
 	display_dbdata((const double **) dbZ, dbinfo);
-    } else if (action == DB_GRAPH) {
+    } else if (cmd == DB_GRAPH) {
 	graph_dbdata(&dbZ, dbinfo);
-    } else if (action == DB_IMPORT) { 
+    } else if (cmd == DB_IMPORT) { 
 	add_dbdata(vwin, dbZ, dbinfo, dw, &freeit);
     }
 
@@ -660,6 +660,29 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
     }
 
     dbwrapper_destroy(dw);
+}
+
+static int get_db_command (GtkAction *action)
+{
+    if (action == NULL) {
+	return DB_DISPLAY;
+    } else {
+	const gchar *s = gtk_action_get_name(action);
+
+	if (!strcmp(s, "SeriesDisplay"))
+	    return DB_DISPLAY;
+	else if (!strcmp(s, "SeriesGraph"))
+	    return DB_GRAPH;
+	if (!strcmp(s, "SeriesImport"))
+	    return DB_IMPORT;
+	else
+	    return DB_DISPLAY;
+    }
+}
+
+void db_series_callback (GtkAction *action, gpointer data)
+{
+    gui_get_db_series((windata_t *) data, get_db_command(action));
 } 
 
 static void db_view_codebook (GtkWidget *w, windata_t *vwin)
@@ -673,14 +696,9 @@ static void db_view_codebook (GtkWidget *w, windata_t *vwin)
 }
 
 static void 
-book_callback_wrapper (gpointer p, guint u, GtkWidget *w)
+book_callback_wrapper (GtkAction *action, gpointer p)
 {
-    db_view_codebook(w, p);
-}
-
-static void db_menu_find (GtkWidget *w, windata_t *vwin)
-{
-    menu_find(vwin, 1, NULL);
+    db_view_codebook(NULL, p);
 }
 
 static void build_db_popup (windata_t *vwin, int cb, int del)
@@ -705,9 +723,11 @@ static void build_db_popup (windata_t *vwin, int cb, int del)
 		       G_CALLBACK(gui_delete_series), 
 		       vwin);
     }	
+
     add_popup_item(_("Find..."), vwin->popup, 
-		   G_CALLBACK(db_menu_find), 
+		   G_CALLBACK(listbox_find), 
 		   vwin);
+
     if (cb) {
 	add_popup_item(_("Codebook"), vwin->popup, 
 		       G_CALLBACK(db_view_codebook), 
@@ -729,34 +749,49 @@ close_db_callback (windata_t *vwin, guint u, GtkWidget *w)
 
 static void set_up_db_menu (windata_t *vwin, int cb, int del)
 {
-    GtkItemFactoryEntry db_items[] = {
-	{ N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-	{ N_("/File/_Close"), NULL, close_db_callback, 0, "<StockItem>", GTK_STOCK_CLOSE },
-	{ N_("/_Series/_Display"), NULL, gui_get_db_series, DB_DISPLAY, NULL, GNULL },
-	{ N_("/_Series/_Graph"), NULL, gui_get_db_series, DB_GRAPH, NULL, GNULL },
-	{ N_("/_Series/_Import"), NULL, gui_get_db_series, DB_IMPORT, NULL, GNULL },
-	{ N_("/_Series/_Delete"), NULL, delete_series_callback, 0, NULL, GNULL },
-	{ N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
-	{ N_("/Find/_Find in window"), NULL, menu_find, 1, "<StockItem>", GTK_STOCK_FIND },
-	{ N_("/_Codebook"), NULL, NULL, 0, "<Branch>", GNULL },    
-	{ N_("/Codebook/_Open"), NULL, book_callback_wrapper, 0, "<StockItem>", 
-	  GTK_STOCK_OPEN }
+    GtkActionEntry db_items[] = {
+	{ "FileMenu", NULL, N_("_File"), NULL, NULL, NULL },
+	{ "FileClose", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_db_callback) },
+	{ "SeriesMenu", NULL, N_("_Series"), NULL, NULL, NULL },
+	{ "SeriesDisplay", NULL, N_("_Display"), NULL, NULL, G_CALLBACK(db_series_callback) },
+	{ "SeriesGraph", NULL, N_("_Graph"), NULL, NULL, G_CALLBACK(db_series_callback) },
+	{ "SeriesImport", NULL, N_("_Import"), NULL, NULL, G_CALLBACK(db_series_callback) },
+	{ "SeriesDelete", NULL, N_("_Delete"), NULL, NULL, G_CALLBACK(delete_series_callback) },
+	{ "FindMenu", NULL, N_("_Find"), NULL, NULL, NULL },
+	{ "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL, G_CALLBACK(listbox_find) },
+	{ "CodebookMenu", NULL, N_("_Codebook"), NULL, NULL, NULL },
+	{ "CodebookOpen", GTK_STOCK_OPEN, N_("_Open"), NULL, NULL, G_CALLBACK(book_callback_wrapper) },
     };
+    const gchar *db_ui = 
+	"<ui>"
+	"  <menubar name='MenuBar'>"
+	"    <menu action='FileMenu'>"
+	"      <menuitem action='FileClose'/>"
+	"    </menu>"
+	"    <menu action='SeriesMenu'>"
+	"      <menuitem action='SeriesDisplay'/>"
+	"      <menuitem action='SeriesGraph'/>"
+	"      <menuitem action='SeriesImport'/>"
+	"      <menuitem action='SeriesDelete'/>"
+	"    </menu>"
+	"    <menu action='FindMenu'>"
+	"      <menuitem action='WindowFind'/>"
+	"    </menu>"
+	"    <menu action='CodebookMenu'>"
+	"      <menuitem action='CodebookOpen'/>"
+	"    </menu>"
+	"  </menubar>"
+	"</ui>";
     gint n_items = sizeof db_items / sizeof db_items[0];
 
     if (!cb) {
 	n_items -= 2;
     }
 
-    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
-#ifdef ENABLE_NLS
-    gtk_item_factory_set_translate_func(vwin->ifac, menu_translate, NULL, NULL);
-#endif
-    gtk_item_factory_create_items(vwin->ifac, n_items, db_items, vwin);
-    vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
+    vwin_add_ui(vwin, db_items, n_items, db_ui);
 
     if (!del) {
-	flip(vwin->ifac, "/Series/Delete", FALSE);
+	flip(vwin->ui, "/Series/Delete", FALSE);
     }
 }
 

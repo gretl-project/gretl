@@ -48,6 +48,7 @@
 #include "ssheet.h"
 #include "datafiles.h"
 #include "gpt_control.h"
+#include "fileselect.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -83,23 +84,18 @@ char *storelist = NULL;
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
-				GtkItemFactoryEntry items[]);
+				GtkActionEntry *items, const gchar *ui_info);
+static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
 static void view_window_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void auto_save_script (windata_t *vwin);
 static void auto_save_plot (windata_t *vwin);
-static void add_model_dataset_items (windata_t *vwin);
-static void add_model_tex_items (windata_t *vwin);
-static void add_vars_to_plot_menu (windata_t *vwin);
-static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_x12_output_menu_item (windata_t *vwin);
-static void add_tau_plot_menu (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, windata_t *vwin);
-static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
-static void panel_heteroskedasticity_menu (windata_t *vwin);
+static void model_copy_callback (GtkAction *action, gpointer p);
 
 enum {
     SAVE_ITEM = 1,
@@ -183,7 +179,7 @@ void mark_content_saved (windata_t *vwin)
     }
 }
 
-static void close_model (gpointer data, guint close, GtkWidget *w)
+static void close_model (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
@@ -220,22 +216,18 @@ static int latex_is_ok (void)
     return latex_ok;
 }
 
-static void model_output_save_callback (gpointer p, guint u, GtkWidget *w)
+static void model_output_save (GtkAction *action, gpointer p)
 {
-    windata_t *vwin = (windata_t *) p;
-
-    copy_format_dialog(vwin, W_SAVE);    
+    copy_format_dialog((windata_t *) p, W_SAVE);    
 }
 
 static gretlopt tex_eqn_opt;
 
-static void eqn_set_show_stderrs (gpointer p, guint u, GtkWidget *w)
+static void set_tex_eqn_opt (GtkRadioAction *action)
 {
-    if (u) {
-	tex_eqn_opt = OPT_NONE;
-    } else {
-	tex_eqn_opt = OPT_T;
-    }
+    int v = gtk_radio_action_get_current_value(action);
+
+    tex_eqn_opt = (v)? OPT_T : OPT_NONE;
 }
 
 gretlopt get_tex_eqn_opt (void)
@@ -243,129 +235,178 @@ gretlopt get_tex_eqn_opt (void)
     return tex_eqn_opt;
 }
 
-static GtkItemFactoryEntry model_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, 
-      "<StockItem>", GTK_STOCK_SAVE_AS },
-    { N_("/File/Save to session as _icon"), NULL, model_add_as_icon, 
-      0, NULL, GNULL },
-    { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
-      0, NULL, GNULL },
+static GtkActionEntry model_items[] = {
+    { "File", NULL, N_("_File"), NULL, NULL, NULL },
+    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },
+    { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
+    { "SaveAndClose", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
 #ifdef NATIVE_PRINTING
-    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
+    { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
-    { N_("/File/_Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 1, "<StockItem>", GTK_STOCK_COPY },
-    { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/Tests/_Omit variables"), NULL, selector_callback, OMIT, NULL, GNULL },
-    { N_("/Tests/_Add variables"), NULL, selector_callback, ADD, NULL, GNULL },
-    { N_("/Tests/_Sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL, GNULL },
-    { N_("/Tests/_Linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
-    { "/Tests/sep1", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/Non-linearity (s_quares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL, GNULL },
-    { N_("/Tests/Non-linearity (_logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
-    { N_("/Tests/_Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
-    { "/Tests/sep2", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/_Heteroskedasticity"), NULL, NULL, LMTEST_WHITE, "<Branch>", GNULL },
-    { N_("/Tests/Heteroskedasticity/White's test"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
-    { N_("/Tests/Heteroskedasticity/White's test (squares only)"), NULL, do_lmtest, LMTEST_WHITE_NOX, NULL, GNULL },
-    { N_("/Tests/Heteroskedasticity/Breusch-Pagan"), NULL, do_lmtest, LMTEST_BP, NULL, GNULL },
-    { N_("/Tests/Heteroskedasticity/Koenker"), NULL, do_lmtest, LMTEST_BPK, NULL, GNULL },
-    { N_("/Tests/_Normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
-    { N_("/Tests/_Influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
-    { N_("/Tests/_Collinearity"), NULL, do_vif, VIF, NULL, GNULL },
-    { "/Tests/sep3", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/_Autocorrelation"), NULL, do_autocorr, LMTEST, NULL, GNULL },
-    { N_("/Tests/A_RCH"), NULL, do_arch, ARCH, NULL, GNULL },
-    { N_("/Tests/_Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
-    { N_("/Tests/_QLR test"), NULL, do_chow_cusum, QLRTEST, NULL, GNULL },
-    { N_("/Tests/_CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL, GNULL },
-    { N_("/Tests/CUSUM_SQ test"), NULL, do_chow_cusum, CUSUMSQ, NULL, GNULL },
-    { "/Tests/sep4", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/_Panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
-    { N_("/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }, 
-    { N_("/Graphs/_Residual plot"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Graphs/_Fitted, actual plot"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/_Analysis"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Analysis/_Display actual, fitted, residual"), NULL, 
-      display_fit_resid, 0, NULL, GNULL },
-    { N_("/Analysis/_Forecasts..."), NULL, 
-      gui_do_forecast, 0, NULL, GNULL },
-    { N_("/Analysis/_Confidence intervals for coefficients"), NULL, 
-      do_coeff_intervals, 0, NULL, GNULL },
-    { N_("/Analysis/Confidence _ellipse..."), NULL, 
-      selector_callback, ELLIPSE, NULL, GNULL },
-    { N_("/Analysis/Coefficient covariance _matrix"), NULL, 
-      do_outcovmx, 0, NULL, GNULL },
-    { N_("/Analysis/ANOVA"), NULL, do_anova, 0, NULL, GNULL },
-    { N_("/Analysis/Bootstrap..."), NULL, do_bootstrap, 0, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL },
+    { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
+    { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },    
+    { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) },
+    { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
+    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
+    { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
+    { "ResidPlot", NULL, N_("_Residual plot"), NULL, NULL, NULL },    
+    { "FittedActualPlot", NULL, N_("_Fitted, actual plot"), NULL, NULL, NULL },    
+    { "Analysis", NULL, N_("_Analysis"), NULL, NULL, NULL }, 
+    { "DisplayAFR", NULL, N_("_Display actual, fitted, residual"), NULL, NULL, 
+      G_CALLBACK(display_fit_resid) },    
+    { "Forecasts", NULL, N_("_Forecasts..."), NULL, NULL, G_CALLBACK(gui_do_forecast) },    
+    { "ConfIntervals", NULL, N_("_Confidence intervals for coefficients"), NULL, NULL, 
+      G_CALLBACK(do_coeff_intervals) },    
+    { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },    
+    { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },    
+    { "ANOVA", NULL, N_("ANOVA"), NULL, NULL, G_CALLBACK(do_anova) },    
+    { "Bootstrap", NULL, N_("Bootstrap..."), NULL, NULL, G_CALLBACK(do_bootstrap) }    
 };
 
-static GtkItemFactoryEntry model_tex_items[] = {
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/View/_Tabular"), NULL, model_tex_view, 
-      GRETL_FORMAT_TEX, NULL, GNULL },
-    { N_("/LaTeX/View/_Equation"), NULL, model_tex_view, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
-    { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Copy/_Tabular"), NULL, window_copy, 
-      GRETL_FORMAT_TEX, NULL, GNULL },
-    { N_("/LaTeX/Copy/_Equation"), NULL, window_copy, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
-    { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/_Tabular"), NULL, model_tex_save, 
-      GRETL_FORMAT_TEX, NULL, GNULL },
-    { N_("/LaTeX/Save/_Equation"), NULL, model_tex_save, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
-    { N_("/LaTeX/_Equation options"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Equation options/Show _standard errors"), NULL, 
-      eqn_set_show_stderrs, 1, "<RadioItem>", GNULL },
-    { N_("/LaTeX/Equation options/Show _t-ratios"), NULL, 
-      eqn_set_show_stderrs, 0, "/LaTeX/Equation options/Show standard errors", 
-      GNULL },
-    { N_("/LaTeX/_Tabular options..."), NULL, tex_format_dialog, 
-      0, NULL, GNULL }
+static GtkActionEntry model_test_items[] = {
+    { "omit", NULL, N_("_Omit variables"), NULL, NULL, G_CALLBACK(selector_callback) },
+    { "add", NULL, N_("_Add variables"), NULL, NULL, G_CALLBACK(selector_callback) },
+    { "coeffsum", NULL, N_("_Sum of coefficients"), NULL, NULL, G_CALLBACK(selector_callback) },
+    { "restrict", NULL, N_("_Linear restrictions"), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "lmtest:s", NULL, N_("Non-linearity (s_quares)"), NULL, NULL, G_CALLBACK(do_lmtest) },
+    { "lmtest:l", NULL, N_("Non-linearity (_logs)"), NULL, NULL, G_CALLBACK(do_lmtest) },
+    { "reset", NULL, N_("_Ramsey's RESET"), NULL, NULL, G_CALLBACK(do_reset) },
+    { "Hsk", NULL, N_("_Heteroskedasticity"), NULL, NULL, NULL },    
+    { "normtest", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
+    { "leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
+    { "vif", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
+    { "lmtest:a", NULL, N_("_Autocorrelation"), NULL, NULL, G_CALLBACK(do_autocorr) },
+    { "lmtest:h", NULL, N_("A_RCH"), NULL, NULL, G_CALLBACK(do_arch) },
+    { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
+    { "qlrtest", NULL, N_("_QLR test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
+    { "cusum", NULL, N_("_CUSUM test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
+    { "cusum:r", NULL, N_("CUSUM_SQ test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
+    { "hausman", NULL, N_("_Panel diagnostics"), NULL, NULL, G_CALLBACK(do_panel_tests) }
 };
 
-static GtkItemFactoryEntry sys_tex_items[] = {
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/_View"), NULL, system_tex_callback, 0, NULL, GNULL },
-    { N_("/LaTeX/_Copy"), NULL, system_tex_callback, 1, NULL, GNULL },
-    { N_("/LaTeX/_Save"), NULL, system_tex_callback, 2, NULL, GNULL }
+static GtkActionEntry base_hsk_items[] = {
+    { "White", NULL, N_("White's test"), NULL, NULL, G_CALLBACK(do_lmtest) },
+    { "WhiteSquares", NULL, N_("White's test (squares only)"), NULL, NULL, G_CALLBACK(do_lmtest) },
+    { "BreuschPagan", NULL, "Breusch-Pagan", NULL, NULL, G_CALLBACK(do_lmtest) },
+    { "Koenker", NULL, "Koenker", NULL, NULL, G_CALLBACK(do_lmtest) }
 };
 
-static GtkItemFactoryEntry system_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, "<StockItem>", 
-      GTK_STOCK_SAVE_AS },
-    { N_("/File/Save to session as _icon"), NULL, model_add_as_icon, 
-      0, NULL, GNULL },
-    { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
-      0, NULL, GNULL },
+static GtkActionEntry panel_hsk_items[] = {
+    { "White", NULL, N_("White's test"), NULL, NULL, G_CALLBACK(do_lmtest) },
+    { "Groupwise", NULL, N_("_groupwise"), NULL, NULL, G_CALLBACK(do_lmtest) }
+};
+
+const gchar *model_tex_ui = 
+    "<ui>"
+    "  <menubar name='MenuBar'>"
+    "    <menu action='LaTeX'>"
+    "      <menu action='TeXView'>"
+    "        <menuitem action='TabView'/>"
+    "        <menuitem action='EqnView'/>"
+    "      </menu>"
+    "      <menu action='TeXCopy'>"
+    "        <menuitem action='TabCopy'/>"
+    "        <menuitem action='EqnCopy'/>"
+    "      </menu>"
+    "      <menu action='TeXSave'>"
+    "        <menuitem action='TabSave'/>"
+    "        <menuitem action='EqnSave'/>"
+    "      </menu>"
+    "      <menu action='EqnOpts'>"
+    "        <menuitem action='TeXstderrs'/>"
+    "        <menuitem action='TeXtratios'/>"
+    "      </menu>"
+    "      <menuitem action='TabOpts'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+const gchar *missing_tex_ui =
+    "<ui>"
+    "  <menubar name='MenuBar'>"
+    "    <menu action='LaTeX'>"
+    "      <menuitem action='notex'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+static GtkActionEntry model_tex_items[] = {
+    { "LaTeX", NULL, N_("_LaTeX"), NULL, NULL, NULL },      
+    { "TeXView", NULL, N_("_View"), NULL, NULL, NULL },      
+    { "TabView", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_view) },      
+    { "EqnView", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_view) },      
+    { "TeXCopy", NULL, N_("_Copy"), NULL, NULL, NULL }, 
+    { "TabCopy", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_copy) },      
+    { "EqnCopy", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_copy) },      
+    { "TeXSave", NULL, N_("_Save"), NULL, NULL, NULL }, 
+    { "TabSave", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_save) },      
+    { "EqnSave", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_save) },      
+    { "EqnOpts", NULL, N_("_Equation options"), NULL, NULL, NULL }, 
+    { "TabOpts", NULL, N_("_Tabular options..."), NULL, NULL, G_CALLBACK(tex_format_dialog) }
+};
+
+static GtkRadioActionEntry tex_eqn_items[] = {
+    { "TeXstderrs", NULL, N_("Show _standard errors"), NULL, NULL, 0 },
+    { "TeXtratios", NULL, N_("Show _t-ratios"), NULL, NULL, 1 },
+};
+
+static GtkActionEntry missing_tex_items[] = {
+    { "LaTeX", NULL, N_("_LaTeX"), NULL, NULL, NULL },    
+    { "notex", NULL, "No TeX", NULL, NULL, G_CALLBACK(dummy_call) }
+};
+
+static GtkActionEntry system_items[] = {
+    { "File", NULL, N_("_File"), NULL, NULL, NULL },      
+    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },      
+    { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },      
+    { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, G_CALLBACK(model_add_as_icon) },      
 #ifdef NATIVE_PRINTING
-    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
+    { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
-    { N_("/File/_Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
+    { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
+    { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },      
+    { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) }, 
+    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
+    { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
+    { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
+    { "Analysis", NULL, N_("_Analysis"), NULL, NULL, NULL },  
+    { "Forecasts", NULL, N_("_Forecasts"), NULL, NULL, NULL },  
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
-static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
-{
-    copy_format_dialog(p, W_COPY);
-}
+static GtkActionEntry sys_tex_items[] = {
+    { "LaTeX", NULL, N_("_LaTeX"), NULL, NULL, NULL },  
+    { "TeXView", NULL, N_("_View"), NULL, NULL, G_CALLBACK(model_tex_view) },      
+    { "TeXCopy", NULL, N_("_Copy"), NULL, NULL, G_CALLBACK(model_tex_copy) },      
+    { "TeXSave", NULL, N_("_Save"), NULL, NULL, G_CALLBACK(model_tex_save) },
+};
 
-#ifdef ENABLE_NLS
-gchar *menu_translate (const gchar *path, gpointer p)
+static const gchar *sys_ui =
+    "<ui>"
+    "  <menubar name='MenuBar'>"
+    "    <menu action='File'>"
+    "      <menuitem action='SaveAs'/>"
+    "      <menuitem action='SaveAsIcon'/>"
+    "      <menuitem action='SaveAndClose'/>"
+    "      <menuitem action='Print'/>"
+    "      <menuitem action='Close'/>"
+    "    </menu>"
+    "    <menu action='Edit'>"
+    "      <menuitem action='Copy'/>"
+    "    </menu>"
+    "    <menu action='Tests'/>"
+    "    <menu action='Save'/>"
+    "    <menu action='Graphs'/>"
+    "    <menu action='Analysis'>"
+    "      <menu action='Forecasts'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+static void model_copy_callback (GtkAction *action, gpointer p)
 {
-    return _(path);
+    copy_format_dialog((windata_t *) p, W_COPY);
 }
-#endif
 
 int copyfile (const char *src, const char *dest) 
 {
@@ -740,11 +781,11 @@ static gboolean Ctrl_C (windata_t *vwin)
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 
     if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
-	window_copy(vwin, GRETL_FORMAT_SELECTION, NULL);
+	window_copy(vwin, GRETL_FORMAT_SELECTION);
     } else if (MULTI_FORMAT_ENABLED(vwin->role)) {
-	window_copy(vwin, GRETL_FORMAT_RTF, NULL);
+	window_copy(vwin, GRETL_FORMAT_RTF);
     } else {
-	window_copy(vwin, GRETL_FORMAT_TXT, NULL);
+	window_copy(vwin, GRETL_FORMAT_TXT);
     }
     return TRUE;
 #else
@@ -763,7 +804,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (mods & GDK_CONTROL_MASK) {
 	if (key->keyval == GDK_f) {
 	    /* Ctrl-F: find */
-	    text_find_callback(NULL, vwin);
+	    text_find(NULL, vwin);
 	    return TRUE;
 	} else if (key->keyval == GDK_c) {
 	    /* Ctrl-C: copy */
@@ -798,7 +839,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
     } else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
-	model_add_as_icon_and_close(vwin, GRETL_OBJ_EQN, NULL);
+	model_add_as_icon(NULL, vwin);
     } else if (key->keyval == GDK_w) {
 	if (mods & GDK_CONTROL_MASK) {
 	    gtk_widget_destroy(w);
@@ -1085,7 +1126,7 @@ int get_imported_data (char *fname, int ftype, int append)
 				   "time-series or panel interpretation?"),
 				 0);
 	    if (resp == GRETL_YES) {
-		data_structure_wizard(NULL, 0, NULL);
+		data_structure_dialog();
 	    }
 	}
     }
@@ -1093,28 +1134,10 @@ int get_imported_data (char *fname, int ftype, int append)
     return err;
 }
 
-/* cases for do_open_data: 
-   - called from dialog: user has said Yes to opening data file,
-     although a data file is already open (or user wants to append
-     data)
-   - reached without dialog, when no datafile is open yet
-*/
-
-void do_open_data (GtkWidget *w, gpointer data, int code)
+void do_open_data (windata_t *fwin, int code)
 {
     gint ftype, err = 0;
-    dialog_t *dlg = NULL;
-    windata_t *fwin = NULL;
     int append = APPENDING(code);
-
-    if (data != NULL) {    
-	if (w == NULL) { /* not coming from edit_dialog */
-	    fwin = (windata_t *) data;
-	} else {
-	    dlg = (dialog_t *) data;
-	    fwin = (windata_t *) edit_dialog_get_data(dlg);
-	}
-    }
 
     if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII ||
 	code == APPEND_ASCII) {
@@ -1173,8 +1196,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	return;
     }	
 
-    /* trash the practice files window that launched the query? */
     if (fwin != NULL) {
+	/* close the files browser window that launched the query */
 	gtk_widget_destroy(fwin->w);
     }
 
@@ -1189,7 +1212,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 /* give user choice of not opening selected datafile, if there's
    already a datafile open */
 
-void verify_open_data (gpointer userdata, int code)
+void verify_open_data (windata_t *vwin, int code)
 {
     if (dataset_locked()) {
 	return;
@@ -1205,7 +1228,7 @@ void verify_open_data (gpointer userdata, int code)
 	if (resp != GRETL_YES) return;
     } 
 
-    do_open_data(NULL, userdata, code);
+    do_open_data(vwin, code);
 }
 
 /* give user choice of not opening session file, if there's already a
@@ -1285,11 +1308,14 @@ static void view_window_save (GtkWidget *widget, windata_t *vwin)
     if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	/* special case: a newly created script */
 	if (vwin->role == EDIT_SCRIPT) {
-	    file_save(vwin, SAVE_SCRIPT, NULL);
+	    file_selector(_("Save command script"), SAVE_SCRIPT, 
+			  FSEL_DATA_MISC, vwin);
 	} else if (vwin->role == EDIT_GP) {
-	    file_save(vwin, SAVE_GP_CMDS, NULL);
+	    file_selector(_("Save gnuplot commands"), SAVE_GP_CMDS, 
+			  FSEL_DATA_MISC, vwin);
 	} else if (vwin->role == EDIT_R) {
-	    file_save(vwin, SAVE_R_CMDS, NULL);
+	    file_selector(_("Save R commands"), SAVE_R_CMDS, 
+			  FSEL_DATA_MISC, vwin);
 	}
     } else {
 	FILE *fp;
@@ -1320,7 +1346,7 @@ void windata_init (windata_t *vwin)
     vwin->w = NULL;
     vwin->status = NULL;
     vwin->popup = NULL;
-    vwin->ifac = NULL;
+    vwin->ui = NULL;
     vwin->gretl_parent = NULL;
     vwin->gretl_children = NULL;
     vwin->data = NULL;
@@ -1425,8 +1451,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	if (vwin->popup != NULL) {
 	    gtk_widget_destroy(GTK_WIDGET(vwin->popup));
 	}
-	if (vwin->ifac != NULL) {
-	    g_object_unref(G_OBJECT(vwin->ifac));
+	if (vwin->ui != NULL) {
+	    g_object_unref(G_OBJECT(vwin->ui));
 	}
 
 	/* data specific to certain windows */
@@ -1563,7 +1589,7 @@ void gretl_stock_icons_init (void)
 #ifdef NATIVE_PRINTING
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
-    window_print(vwin, 0, w);
+    window_print(NULL, vwin);
 }
 #endif
 
@@ -1600,29 +1626,14 @@ static int vwin_selection_present (gpointer p)
 static void text_copy_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin_selection_present(vwin)) {
-	window_copy(vwin, GRETL_FORMAT_SELECTION, w);
+	window_copy(vwin, GRETL_FORMAT_SELECTION);
     } else if (vwin->role == VIEW_SCALAR) {
 	scalar_to_clipboard(vwin);
     } else if (!script_role(vwin->role) && !editor_role(vwin->role)) {
 	copy_format_dialog(vwin, W_COPY);
     } else {
-	window_copy(vwin, GRETL_FORMAT_TXT, w);
+	window_copy(vwin, GRETL_FORMAT_TXT);
     }
-}
-
-static void text_paste_callback (GtkWidget *w, windata_t *vwin)
-{
-    text_paste(vwin, 0, w);
-}
-
-static void text_replace_callback (GtkWidget *w, windata_t *vwin)
-{
-    text_replace(vwin, 0, w);
-}
-
-static void text_undo_callback (GtkWidget *w, windata_t *vwin)
-{
-    text_undo(vwin, 0, w);
 }
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)
@@ -1713,7 +1724,7 @@ static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
 
 static void script_index (GtkWidget *w, windata_t *vwin)
 {
-    display_files(NULL, PS_FILES, NULL);
+    display_files(PS_FILES, NULL);
 }
 
 static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
@@ -1808,10 +1819,10 @@ static struct viewbar_item viewbar_items[] = {
 #endif
     { N_("Run"), GTK_STOCK_EXECUTE, do_run_script, EXEC_ITEM },
     { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
-    { N_("Paste"), GTK_STOCK_PASTE, text_paste_callback, EDIT_ITEM },
-    { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
-    { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
-    { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
+    { N_("Paste"), GTK_STOCK_PASTE, text_paste, EDIT_ITEM },
+    { N_("Find..."), GTK_STOCK_FIND, (toolfunc) text_find, 0 },
+    { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace, EDIT_ITEM },
+    { N_("Undo"), GTK_STOCK_UNDO, text_undo, EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_BY_ITEM },
     { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, script_tabs_dialog, EDIT_SCRIPT_ITEM },
@@ -2075,14 +2086,13 @@ GtkWidget *build_text_popup (windata_t *vwin)
 	    func = item_get_callback(vitem, vwin, 0, 0);
 	}
 	if (func != NULL) {
-	    if (func == text_paste_callback) {
+	    if (func == text_paste) {
 		GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);
 
 		if (!gtk_clipboard_wait_is_text_available(cb)) {
 		    continue;
 		}
-	    } else if (func == text_undo_callback &&
-		       !text_can_undo(vwin)) {
+	    } else if (func == text_undo && !text_can_undo(vwin)) {
 		continue;
 	    }
 	    w = gtk_menu_item_new_with_label(_(vitem->str));
@@ -2152,26 +2162,19 @@ static gchar *make_viewer_title (int role, const char *fname)
 
     switch (role) {
     case GUI_HELP: 
-	title = g_strdup(_("gretl: help")); 
-	break;
+	title = g_strdup(_("gretl: help")); break;
     case FUNCS_HELP:
-	title = g_strdup(_("gretl: function reference")); 
-	break;
+	title = g_strdup(_("gretl: function reference")); break;
     case CLI_HELP:
-	title = g_strdup(_("gretl: command reference")); 
-	break;
+	title = g_strdup(_("gretl: command reference")); break;
     case GUI_HELP_EN: 
-	title = g_strdup("gretl: help"); 
-	break;
+	title = g_strdup("gretl: help"); break;
     case CLI_HELP_EN:
-	title = g_strdup("gretl: command reference"); 
-	break;
+	title = g_strdup("gretl: command reference"); break;
     case VIEW_LOG:
-	title = g_strdup(_("gretl: command log")); 
-	break;
+	title = g_strdup(_("gretl: command log")); break;
     case CONSOLE:
-	title = g_strdup(_("gretl console")); 
-	break;
+	title = g_strdup(_("gretl console")); break;
     case EDIT_SCRIPT:
     case VIEW_SCRIPT:	
     case VIEW_FILE:
@@ -2182,20 +2185,17 @@ static gchar *make_viewer_title (int role, const char *fname)
 	} 
 	break;
     case EDIT_NOTES:
-	title = g_strdup(_("gretl: session notes")); 
-	break;
+	title = g_strdup(_("gretl: session notes")); break;
     case EDIT_GP:
     case EDIT_BOX:
-	title = g_strdup(_("gretl: edit plot commands")); 
-	break;
+	title = g_strdup(_("gretl: edit plot commands")); break;
     case EDIT_R:
-	title = g_strdup(_("gretl: edit R commands")); 
-	break;
+	title = g_strdup(_("gretl: edit R commands")); break;
     case SCRIPT_OUT:
-	title = g_strdup(_("gretl: script output")); 
-	break;
+	title = g_strdup(_("gretl: script output")); break;
     case VIEW_DATA:
-	title = g_strdup(_("gretl: display data")); 
+	title = g_strdup(_("gretl: display data")); break;
+    default:
 	break;
     }
 
@@ -2338,11 +2338,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
-	set_up_viewer_menu(vwin->dialog, vwin, system_items);
+	set_up_viewer_menu(vwin->dialog, vwin, system_items, sys_ui);
+	add_system_menu_items(vwin, role);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
-	add_system_menu_items(vwin, role);
     } else if (role == VIEW_FUNC_CODE || role == EDIT_FUNC_CODE) {
 	make_viewbar(vwin, 0);
     } else if (role != IMPORT) {
@@ -2506,7 +2506,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 }
 
 windata_t *
-view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
+view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
+		const gchar *ui_info)
 {
     windata_t *vwin;
     gchar *fbuf = NULL;
@@ -2529,7 +2530,7 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     vwin->data = fbuf;
 
     viewer_box_config(vwin);
-    set_up_viewer_menu(vwin->dialog, vwin, menu_items);
+    set_up_viewer_menu(vwin->dialog, vwin, menu_items, ui_info);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
@@ -2681,26 +2682,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     viewer_box_config(vwin);
 
-    set_up_viewer_menu(vwin->dialog, vwin, model_items);
-
-    if (pmod->ci != MLE && pmod->ci != GMM) {
-	add_vars_to_plot_menu(vwin);
-	add_model_dataset_items(vwin);
-    }
-
-    if (latex_is_ok() && !pmod->errcode && !RQ_SPECIAL_MODEL(pmod)) {
-	add_model_tex_items(vwin);
-    }    
-
-    if (pmod->ci != ARMA && pmod->ci != GARCH && 
-	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
-	pmod->ci != PANEL && pmod->ci != ARBOND) {
-	add_dummies_to_plot_menu(vwin);
-    }
-
-    if (RQ_SPECIAL_MODEL(pmod)) {
-	add_tau_plot_menu(vwin);
-    }
+    set_up_model_view_menu(vwin->dialog, vwin);
 
     g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
 		     G_CALLBACK(check_model_menu), vwin);
@@ -2763,7 +2745,8 @@ static void auto_save_script (windata_t *vwin)
     int unsaved = 0;
 
     if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
-	file_save(vwin, SAVE_SCRIPT, NULL);
+	file_selector(_("Save command script"), SAVE_SCRIPT, 
+		      FSEL_DATA_MISC, vwin);
 	strcpy(vwin->fname, scriptfile);
 	unsaved = 1;
     }
@@ -2781,99 +2764,58 @@ static void auto_save_script (windata_t *vwin)
     mark_content_saved(vwin);
 }
 
-static void model_tex_equation_state (GtkItemFactory *ifac, gboolean s)
+static void get_ci_and_opt (const gchar *s, int *ci, gretlopt *opt)
 {
-    flip(ifac, "/LaTeX/View/Equation", s);
-    flip(ifac, "/LaTeX/Save/Equation", s);
-    flip(ifac, "/LaTeX/Copy/Equation", s);
-    flip(ifac, "/LaTeX/Equation options", s);
+    char c, word[9];
+
+    sscanf(s, "%8[^:]:%c", word, &c);
+    *ci = gretl_command_number(word);
+    *opt = opt_from_flag((unsigned char) c);
 }
 
-static void copy_no_underscore (char *targ, const char *src)
+static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 {
-    while (*src) {
-	if (*src != '_') {
-	    *targ++ = *src;
-	}
-	src++;
-    }
-    *targ = 0;
-}
-
-static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
-{
-    gretlopt opt = OPT_NONE;
+    gretlopt opt;
     char path[128];
-    int i, a, ok;
+    const gchar *s;
+    int i, n, ci;
 
     if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) {
-	/* FIXME? */
-	flip(ifac, "/Tests", FALSE);
+	/* can we relax this later? */
+	flip(ui, "/MenuBar/Tests", FALSE);
 	return;
     }
 
-    for (i=0; model_items[i].path != NULL; i++) {
-	if (strstr(model_items[i].path, "Tests")) {
-	    a = model_items[i].callback_action;
+    n = G_N_ELEMENTS(model_test_items);
 
-	    if (a == 0) {
-		continue;
-	    }
-
-	    if (a == LMTEST_SQUARES) {
-		a = LMTEST;
-		opt = OPT_S;
-	    } else if (a == LMTEST_LOGS) {
-		a = LMTEST;
-		opt = OPT_L;
-	    } else if (a == LMTEST_WHITE) {
-		a = LMTEST;
-		opt = OPT_W;
-	    } else if (a == LMTEST_WHITE_NOX) {
-		a = LMTEST;
-		opt = OPT_X;
-	    } else if (a == LMTEST_BP) {
-		a = LMTEST;
-		opt = OPT_B;
-	    } else if (a == LMTEST_BPK) {
-		a = LMTEST;
-		opt = OPT_B | OPT_R;
-	    } else if (a == ARCH) {
-		a = LMTEST;
-		opt = OPT_H;
-	    } else if (a == LMTEST) { 
-		/* unqualified: autocorrelation */
-		opt = OPT_A;
-	    } else if (a == CUSUMSQ) {
-		a = CUSUM;
-	    }
-		
-	    ok = model_test_ok(a, opt, pmod, datainfo);
-	    copy_no_underscore(path, model_items[i].path);
-	    flip(ifac, path, ok);
+    for (i=0; i<n; i++) {
+	opt = OPT_NONE;
+	s = model_test_items[i].name;
+	if (strchr(s, ':')) {
+	    get_ci_and_opt(s, &ci, &opt);
+	} else {
+	    ci = gretl_command_number(s);
 	}
-    }
-
-    if (pmod->ncoeff == 1) {
-	flip(ifac, "/Analysis/Confidence ellipse...", FALSE);
+	sprintf(path, "/MenuBar/Tests/%s", s);
+	flip(ui, path, model_test_ok(ci, opt, pmod, datainfo));
     }
 }
 
-static void model_save_state (GtkItemFactory *ifac, gboolean s)
+static void model_save_state (GtkUIManager *ui, gboolean s)
 {
-    flip(ifac, "/File/Save to session as icon", s);
-    flip(ifac, "/File/Save as icon and close", s);
+    flip(ui, "/MenuBar/File/SaveAsIcon", s);
+    flip(ui, "/MenuBar/File/SaveAndClose", s);
 }
 
 static void arma_x12_menu_mod (windata_t *vwin)
 {
-    flip(vwin->ifac, "/Analysis/Coefficient covariance matrix", FALSE);
+    flip(vwin->ui, "/MenuBar/Analysis/Covariance", FALSE);
     add_x12_output_menu_item(vwin);
 }
 
 static void rq_coeff_intervals_mod (windata_t *vwin)
 {
-    flip(vwin->ifac, "/Analysis/Confidence intervals for coefficients", FALSE);
+    flip(vwin->ui, "/MenuBar/Analysis/ConfIntervals", FALSE);
 }
 
 #define intervals_model(m) (m->ci == LAD && \
@@ -2881,19 +2823,18 @@ static void rq_coeff_intervals_mod (windata_t *vwin)
 
 static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 {
-    set_tests_menu_state(vwin->ifac, pmod);
+    set_tests_menu_state(vwin->ui, pmod);
 
     /* disallow saving an already-saved model */
     if (pmod->name != NULL) {
-	model_save_state(vwin->ifac, FALSE);
+	model_save_state(vwin->ui, FALSE);
     }
 
     if (RQ_SPECIAL_MODEL(pmod)) {
-	/* relax later */
-	flip(vwin->ifac, "/Tests", FALSE);
-	flip(vwin->ifac, "/Save", FALSE);
-	flip(vwin->ifac, "/Analysis", FALSE);
-	flip(vwin->ifac, "/Graphs", FALSE);
+	/* can we relax this later? */
+	flip(vwin->ui, "/MenuBar/Tests", FALSE);
+	flip(vwin->ui, "/MenuBar/Save", FALSE);
+	flip(vwin->ui, "/MenuBar/Analysis", FALSE);
 	return;
     }
 
@@ -2902,115 +2843,105 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     }
 
     if (pmod->ci == MLE || pmod->ci == GMM) {
-	/* some of this could be relaxed later */
-	flip(vwin->ifac, "/Analysis", FALSE);
-	flip(vwin->ifac, "/Graphs", FALSE);
+	/* can we relax this later? */
+	flip(vwin->ui, "/MenuBar/Analysis", FALSE);
+	flip(vwin->ui, "/MenuBar/Graphs", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     } 
 
     if (pmod->ci == GMM) {
-	flip(vwin->ifac, "/Save", FALSE);
+	flip(vwin->ui, "/MenuBar/Save", FALSE);
     }
 
-    if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
-	panel_heteroskedasticity_menu(vwin);
+    if (pmod->ncoeff == 1) {
+	flip(vwin->ui, "/MenuBar/Analysis/ConfEllipse", FALSE);
     }
 
     if (pmod->ci == ARBOND) {
-	flip(vwin->ifac, "/Analysis/Forecasts...", FALSE);
+	flip(vwin->ui, "/MenuBar/Analysis/Forecasts", FALSE);
     }
 
     if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) ||
 	na(pmod->tss)) {
-	flip(vwin->ifac, "/Analysis/ANOVA", FALSE);
+	flip(vwin->ui, "/MenuBar/Analysis/ANOVA", FALSE);
     }
 
     if (!bootstrap_ok(pmod->ci)) {
-	flip(vwin->ifac, "/Analysis/Bootstrap...", FALSE);
+	flip(vwin->ui, "/MenuBar/Analysis/Bootstrap", FALSE);
     }
 }
+
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
-				GtkItemFactoryEntry items[])
+				GtkActionEntry *items,
+				const gchar *ui_info)
 {
-    gint n_items = 0;
+    gint n = 0;
 
-    while (items[n_items].path != NULL) n_items++;
-
-    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
-
-#ifdef ENABLE_NLS
-    gtk_item_factory_set_translate_func(vwin->ifac, menu_translate, NULL, NULL);
-#endif
-    gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
-    vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
-
-    if (vwin->data == NULL) {
-	return;
+    while (items[n].name != NULL) {
+	n++;
     }
 
-    if (vwin->role == VIEW_MODEL) { 
-	MODEL *pmod = (MODEL *) vwin->data;
+    vwin_add_ui(vwin, items, n, ui_info);
 
-	adjust_model_menu_state(vwin, pmod);
-    } else if (vwin->role == VAR || vwin->role == VECM || 
-	       vwin->role == SYSTEM) {
-	model_save_state(vwin->ifac, !is_session_model(vwin->data));
+    if (vwin->role == VAR || vwin->role == VECM || 
+	vwin->role == SYSTEM) {
+	model_save_state(vwin->ui, !is_session_model(vwin->data));
     }
 }
 
-static GtkItemFactoryEntry model_dataset_basic_items[] = {
-    { N_("/Save/_Fitted values"), NULL, 
-      fit_resid_callback, GENR_FITTED, NULL, GNULL },
-    { N_("/Save/_Residuals"), NULL, 
-      fit_resid_callback, GENR_RESID, NULL, GNULL },
-    { N_("/Save/_Squared residuals"), NULL, 
-      fit_resid_callback, GENR_RESID2, NULL, GNULL }
+static GtkActionEntry model_data_base_items[] = {
+    { "yhat", NULL, N_("_Fitted values"), NULL, NULL, 
+      G_CALLBACK(fit_resid_callback) },
+    { "uhat", NULL, N_("_Residuals"), NULL, NULL, 
+      G_CALLBACK(fit_resid_callback) },
+    { "uhat2", NULL, N_("_Squared residuals"), NULL, NULL, 
+      G_CALLBACK(fit_resid_callback) }
 };
 
-static GtkItemFactoryEntry ess_items[] = {
-    { N_("/Save/_Error sum of squares"), NULL, 
-      model_stat_callback, ESS, NULL, GNULL },
-    { N_("/Save/_Standard error of residuals"), NULL, 
-      model_stat_callback, SIGMA, NULL, GNULL }
+static GtkActionEntry ess_items[] = {
+    { "ess", NULL, N_("_Error sum of squares"), NULL, NULL, 
+      G_CALLBACK(model_stat_callback) },
+    { "se", NULL, N_("_Standard error of residuals"), NULL, NULL, 
+      G_CALLBACK(model_stat_callback) }
 }; 
 
-static GtkItemFactoryEntry r_squared_items[] = {
-    { N_("/Save/_R-squared"), NULL, 
-      model_stat_callback, R2, NULL, GNULL },
-    { N_("/Save/_T*R-squared"), NULL, 
-      model_stat_callback, TR2, NULL, GNULL }
-};   
+static GtkActionEntry r_squared_items[] = {
+    { "rsq", NULL, N_("_R-squared"), NULL, NULL, G_CALLBACK(model_stat_callback) },
+    { "trsq", NULL, N_("_T*R-squared"), NULL, NULL, G_CALLBACK(model_stat_callback) }
+}; 
 
-static GtkItemFactoryEntry lnl_data_item = {
-    N_("/Save/_Log likelihood"), NULL, 
-    model_stat_callback, LNL, NULL, GNULL 
+static GtkActionEntry lnl_data_items[] = {
+    { "lnL", NULL, N_("_Log likelihood"), NULL, NULL, 
+      G_CALLBACK(model_stat_callback) }
 };
 
-static GtkItemFactoryEntry criteria_items[] = {
-    { N_("/Save/_Akaike Information Criterion"), NULL, 
-      model_stat_callback, AIC, NULL, GNULL },
-    { N_("/Save/_Bayesian Information Criterion"), NULL, 
-      model_stat_callback, BIC, NULL, GNULL },
-    { N_("/Save/_Hannan-Quinn Information Criterion"), NULL, 
-      model_stat_callback, HQC, NULL, GNULL }
+static GtkActionEntry criteria_items[] = {
+    { "AIC", NULL, N_("_Akaike Information Criterion"), NULL, NULL, 
+      G_CALLBACK(model_stat_callback) },
+    { "BIC", NULL, N_("_Bayesian Information Criterion"), NULL, NULL, 
+      G_CALLBACK(model_stat_callback) },
+    { "HQC", NULL, N_("_Hannan-Quinn Information Criterion"), NULL, NULL, 
+      G_CALLBACK(model_stat_callback) }
 };
 
-static GtkItemFactoryEntry garch_data_item = {
-    N_("/Save/_Predicted error variance"), NULL, 
-    fit_resid_callback, GENR_H, NULL, GNULL 
+static GtkActionEntry garch_data_items[] = {
+    { "h", NULL, N_("_Predicted error variance"), NULL, NULL, 
+      G_CALLBACK(fit_resid_callback)
+    }
 };
 
-static GtkItemFactoryEntry fixed_effects_data_item = {
-    N_("/Save/Per-unit _constants"), NULL, 
-    fit_resid_callback, GENR_AHAT, NULL, GNULL 
+static GtkActionEntry fixed_effects_data_items[] = {
+    { "ahat", NULL, N_("Per-unit _constants"), NULL, NULL, 
+      G_CALLBACK(fit_resid_callback)
+    }
 };
 
-static GtkItemFactoryEntry define_var_items[] = {
-    { "/Save/sep1", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Save/Define _new variable..."), NULL, model_genr_callback,
-      MODEL_GENR, NULL, GNULL }
+static GtkActionEntry define_var_items[] = {
+    /* Under Save; Sep wanted */
+    { "NewVar", NULL, N_("Define _new variable..."), NULL, NULL,
+      G_CALLBACK(model_genr_callback) }
 };
 
 static int criteria_available (const MODEL *pmod)
@@ -3028,85 +2959,117 @@ static int criteria_available (const MODEL *pmod)
 
 static void add_model_dataset_items (windata_t *vwin)
 {
+    const gchar *path = "/MenuBar/Save";
     MODEL *pmod = vwin->data;
-    int i, n;
 
-    n = sizeof model_dataset_basic_items / 
-	sizeof model_dataset_basic_items[0];
-
-    for (i=0; i<n; i++) {
-	gtk_item_factory_create_item(vwin->ifac, &model_dataset_basic_items[i], 
-				     vwin, 1);
-    }
-
+    vwin_menu_add_items(vwin, path, model_data_base_items,
+			G_N_ELEMENTS(model_data_base_items));
+			
     if (gretl_model_get_data(pmod, "ahat") != NULL) {
-	gtk_item_factory_create_item(vwin->ifac, &fixed_effects_data_item, vwin, 1);
+	vwin_menu_add_items(vwin, path, fixed_effects_data_items,
+			    G_N_ELEMENTS(fixed_effects_data_items));
     }
 
     if (pmod->ci != GARCH) {
-	n = sizeof ess_items / sizeof ess_items[0];
-	for (i=0; i<n; i++) {
-	    gtk_item_factory_create_item(vwin->ifac, &ess_items[i], vwin, 1);
-	}
+	vwin_menu_add_items(vwin, path, ess_items,
+			    G_N_ELEMENTS(ess_items));
     }
 
     if (!ML_ESTIMATOR(pmod->ci) && pmod->ci != LAD && !na(pmod->rsq)) {
-	n = sizeof r_squared_items / sizeof r_squared_items[0];
-	for (i=0; i<n; i++) {
-	    gtk_item_factory_create_item(vwin->ifac, &r_squared_items[i], 
-					 vwin, 1);
-	}
+	vwin_menu_add_items(vwin, path, r_squared_items,
+			    G_N_ELEMENTS(r_squared_items));
     }
 
-    if (ML_ESTIMATOR(pmod->ci)) {
-	gtk_item_factory_create_item(vwin->ifac, &lnl_data_item, vwin, 1);
+    if (!na(pmod->lnL)) {
+	vwin_menu_add_items(vwin, path, lnl_data_items,
+			    G_N_ELEMENTS(lnl_data_items));
     }
 
     if (criteria_available(pmod)) {
-	n = sizeof criteria_items / sizeof criteria_items[0];
-	for (i=0; i<n; i++) {
-	    gtk_item_factory_create_item(vwin->ifac, &criteria_items[i], vwin, 1);
-	}
+	vwin_menu_add_items(vwin, path, criteria_items,
+			    G_N_ELEMENTS(criteria_items));
     }
 
     if (pmod->ci == GARCH) {
-	gtk_item_factory_create_item(vwin->ifac, &garch_data_item, vwin, 1);
+	vwin_menu_add_items(vwin, path, garch_data_items,
+			    G_N_ELEMENTS(garch_data_items));
     }
 
-    for (i=0; i<2; i++) {
-	gtk_item_factory_create_item(vwin->ifac, &define_var_items[i], 
-				     vwin, 1);
-    }
+    vwin_menu_add_separator(vwin, path);
+
+    vwin_menu_add_items(vwin, path, define_var_items,
+			G_N_ELEMENTS(define_var_items));
 }
 
 static void add_model_tex_items (windata_t *vwin)
 {
-    int i, n = sizeof model_tex_items / sizeof model_tex_items[0];
     MODEL *pmod = (MODEL *) vwin->data;
     int eqn_ok = command_ok_for_model(EQNPRINT, 0, pmod->ci);
+    GtkActionGroup *actions;
+    GError *err = NULL;
     int imod = 0;
-    GtkWidget *w;
 
-    for (i=0; i<n; i++) {
-	gtk_item_factory_create_item(vwin->ifac, &model_tex_items[i], 
-				     vwin, 1);
-    } 
+    gtk_ui_manager_add_ui_from_string(vwin->ui, model_tex_ui, -1, &err);
+    if (err != NULL) {
+	g_message("building LaTeX menu failed: %s", err->message);
+	g_error_free(err);
+	return;
+    }	
+
+    actions = gtk_action_group_new("ModelTeX");
+#ifdef ENABLE_NLS
+    gtk_action_group_set_translation_domain(actions, "gretl");
+#endif
+    gtk_action_group_add_actions(actions, model_tex_items, 
+				 G_N_ELEMENTS(model_tex_items),
+				 vwin);
+    gtk_action_group_add_radio_actions(actions, tex_eqn_items, 
+				       G_N_ELEMENTS(tex_eqn_items),
+				       (get_tex_eqn_opt() == OPT_T),
+				       G_CALLBACK(set_tex_eqn_opt),
+				       vwin);
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
 
     if (intervals_model(pmod)) {
 	eqn_ok = 0;
 	imod = 1;
     }
 
-    model_tex_equation_state(vwin->ifac, !pmod->errcode && eqn_ok);
-
-    w = gtk_item_factory_get_widget(vwin->ifac, 
-				    "/LaTeX/Equation options/Show t-ratios");
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(w),
-				   (gboolean) get_tex_eqn_opt());
+    if (!eqn_ok || pmod->errcode) {
+	flip(vwin->ui, "/MenuBar/LaTeX/View/EqnView", FALSE);
+	flip(vwin->ui, "/MenuBar/LaTeX/Save/EqnSave", FALSE);
+	flip(vwin->ui, "/MenuBar/LaTeX/Copy/EqnCopy", FALSE);
+	flip(vwin->ui, "/MenuBar/LaTeX/EqnOpts", FALSE);
+    }
 
     if (imod) {
-	flip(vwin->ifac, "/LaTeX/Tabular options...", FALSE);
+	flip(vwin->ui, "/MenuBar/LaTeX/TabOpts", FALSE);
     }
+}
+
+/* dummy placeholder, for when TeX is not supported */
+
+static void add_missing_tex_items (windata_t *vwin)
+{
+    GtkActionGroup *actions;
+    GError *err = NULL;
+
+    gtk_ui_manager_add_ui_from_string(vwin->ui, missing_tex_ui, -1, &err);
+    if (err != NULL) {
+	g_message("building menus failed: %s", err->message);
+	g_error_free(err);
+	return;
+    }	
+
+    actions = gtk_action_group_new("MissingTeX");
+    gtk_action_group_add_actions(actions, missing_tex_items, 
+				 G_N_ELEMENTS(missing_tex_items),
+				 vwin);
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    flip(vwin->ui, "/MenuBar/LaTeX", FALSE);
 }
 
 #define VNAMELEN2 32
@@ -3114,43 +3077,35 @@ static void add_model_tex_items (windata_t *vwin)
 static void add_vars_to_plot_menu (windata_t *vwin)
 {
     int i, j, varstart;
-    GtkItemFactoryEntry varitem;
+    GtkActionEntry entry;
     const gchar *mpath[] = {
-	N_("/Graphs/Residual plot"), 
-	N_("/Graphs/Fitted, actual plot")
+	N_("/MenuBar/Graphs/ResidPlot"), 
+	N_("/MenuBar/Graphs/FittedActualPlot")
     };
     MODEL *pmod = vwin->data;
-    char tmp[VNAMELEN2];
+    char tmp[VNAMELEN2], aname[16];
+    gchar *alabel;
+    int v1, v2;
 
-   varitem.accelerator = NULL; 
-   varitem.item_type = NULL;
-   varitem.callback_action = 0; 
-
+    action_entry_init(&entry);
+    
     for (i=0; i<2; i++) {
-	/* residual correlogram and spectrum */
-	if (dataset_is_time_series(datainfo) && i == 0) {
-	    varitem.path = g_strdup_printf(_("%s/_Correlogram"), mpath[i]);
-	    varitem.callback = residual_correlogram;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
-	    varitem.path = g_strdup_printf(_("%s/_Spectrum"), mpath[i]);
-	    varitem.callback = residual_periodogram;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
-	}
-
 	/* plot against time/obs number */
 	if (dataset_is_time_series(datainfo)) {
-	    varitem.path = g_strdup_printf(_("%s/_Against time"), mpath[i]);
+	    entry.name = "ByTime";
+	    entry.label = _("_Against time");
 	} else {
-	    varitem.path = g_strdup_printf(_("%s/By _observation number"), mpath[i]);
+	    entry.name = "ByObs";
+	    entry.label = _("By _observation number");
 	}
-	varitem.callback = (i==0)? resid_plot : fit_actual_plot;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
+	entry.callback = (i == 0)? G_CALLBACK(resid_plot) : 
+	    G_CALLBACK(fit_actual_plot);
+	vwin_menu_add_item(vwin, mpath[i], &entry);
 
-	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH ||
-	    pmod->ci == PANEL || pmod->ci == ARBOND) { 
+	if (pmod->ci == ARMA || pmod->ci == NLS || 
+	    pmod->ci == MLE || pmod->ci == GMM ||
+	    pmod->ci == GARCH || pmod->ci == PANEL || 
+	    pmod->ci == ARBOND) { 
 	    continue;
 	}
 
@@ -3158,119 +3113,154 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 
 	/* put the indep vars on the menu list */
 	for (j=varstart; j<=pmod->list[0]; j++) {
-	    if (pmod->list[j] == 0) continue;
-	    if (pmod->list[j] == LISTSEP) break;
-	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) {
+	    v1 = pmod->list[j];
+	    if (v1 == 0) continue;
+	    if (v1 == LISTSEP) break;
+	    if (!strcmp(datainfo->varname[v1], "time")) {
 		continue;
 	    }
 
-	    varitem.callback_action = pmod->list[j]; 
-	    double_underscores(tmp, datainfo->varname[pmod->list[j]]);
-	    varitem.path = 
-		g_strdup_printf(_("%s/_Against %s"), mpath[i], tmp);
-	    varitem.callback = (i == 0)? resid_plot : fit_actual_plot;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
+	    sprintf(aname, "xvar %d", v1);
+	    double_underscores(tmp, datainfo->varname[v1]);
+	    alabel = g_strdup_printf(_("_Against %s"), tmp);
+	    entry.name = aname;
+	    entry.label = alabel;
+	    entry.callback = (i == 0)? G_CALLBACK(resid_plot) : 
+		G_CALLBACK(fit_actual_plot);
+	    vwin_menu_add_item(vwin, mpath[i], &entry);
+	    g_free(alabel);
 	}
-
-	varitem.callback_action = 0;
-
-	/* if the model has two independent vars, offer a 3-D fitted
-	   versus actual plot */
-	if (i == 1 && pmod->ifc && pmod->ncoeff == 3) {
-	    char tmp2[VNAMELEN2];
-
-	    double_underscores(tmp, datainfo->varname[pmod->list[3]]);
-	    double_underscores(tmp2, datainfo->varname[pmod->list[4]]);
-	    varitem.path =
-		g_strdup_printf(_("%s/_Against %s and %s"),
-				mpath[i], tmp, tmp2);
-	    varitem.callback = fit_actual_splot;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
-	}	
     }
+
+    /* time series models: residual correlogram, spectrum */
+    if (dataset_is_time_series(datainfo)) {
+	vwin_menu_add_separator(vwin, "/MenuBar/Graphs");
+	entry.name = "Correlogram";
+	entry.label = _("Residual _correlogram");
+	entry.callback = G_CALLBACK(residual_correlogram);
+	vwin_menu_add_item(vwin, "/MenuBar/Graphs", &entry);
+	entry.name = "Spectrum";
+	entry.label = _("Residual _spectrum");
+	entry.callback = G_CALLBACK(residual_periodogram);
+	vwin_menu_add_item(vwin, "/MenuBar/Graphs", &entry);
+    }
+
+    /* 3-D fitted versus actual plot? */
+    if (pmod->ifc && pmod->ncoeff == 3) {
+	char tmp2[VNAMELEN2];
+
+	vwin_menu_add_separator(vwin, mpath[1]);
+	v1 = pmod->list[3];
+	v2 = pmod->list[4];
+	double_underscores(tmp, datainfo->varname[v1]);
+	double_underscores(tmp2, datainfo->varname[v2]);
+	alabel = g_strdup_printf(_("_Against %s and %s"), tmp, tmp2);	
+	entry.name = "splot";
+	entry.label = alabel;
+	entry.callback = G_CALLBACK(fit_actual_splot);
+	vwin_menu_add_item(vwin, mpath[1], &entry);
+	g_free(alabel);
+    }    
 }
 
-static void plot_dummy_call (gpointer p, guint v, GtkWidget *widget)
+static void plot_dummy_call (GtkRadioAction *action, 
+			     GtkRadioAction *current,
+			     windata_t *vwin)
 {
-    GtkCheckMenuItem *item = GTK_CHECK_MENU_ITEM(widget);
-    windata_t *vwin = (windata_t *) p;
+    vwin->active_var = gtk_radio_action_get_current_value(action);
+}
 
-    if (item->active) vwin->active_var = v; 
+static void radio_action_init (GtkRadioActionEntry *a)
+{
+    a->stock_id = NULL;
+    a->accelerator = NULL;
+    a->tooltip = NULL;
 }
 
 static void add_dummies_to_plot_menu (windata_t *vwin)
 {
-    GtkItemFactoryEntry item;
+    GtkActionEntry item;
+    GtkRadioActionEntry *items;
     MODEL *pmod = vwin->data;
-    const gchar *mpath[] = {
-	"/Graphs/dumsep", 
-	N_("/Graphs/Separation")
-    };
-    gchar *radiopath = NULL;
+    const gchar *gpath = "/MenuBar/Graphs/ResidPlot";
+    const gchar *spath = "/MenuBar/Graphs/ResidPlot/Separation";
     char tmp[VNAMELEN2];
-    int i, done_branch = 0;
+    int *dlist = NULL;
+    int i, vi, ndums;
 
-    item.path = NULL;
-    item.accelerator = NULL; 
-
-    /* put the dummy independent vars on the menu list */
+    /* make a list of dummy independent variables */
     for (i=2; i<=pmod->list[0]; i++) {
-
-	if (pmod->list[i] == LISTSEP) {
+	vi = pmod->list[i];
+	if (vi == LISTSEP) {
 	    break;
+	} else if (vi > 0 &&
+	    gretl_isdummy(datainfo->t1, datainfo->t2, Z[vi])) {
+	    gretl_list_append_term(&dlist, vi);
 	}
-
-	if (pmod->list[i] == 0 ||
-	    !gretl_isdummy(datainfo->t1, datainfo->t2, Z[pmod->list[i]])) {
-	    continue;
-	}
-
-	if (!done_branch) {
-	    /* add separator */
-	    item.callback = NULL;
-	    item.callback_action = 0;
-	    item.item_type = "<Separator>";
-	    item.path = g_strdup_printf(_("%s"), mpath[0]);
-	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	    g_free(item.path);
-
-	    /* add menu branch */
-	    item.item_type = "<Branch>";
-	    item.path = g_strdup_printf(_("%s"), mpath[1]);
-	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	    g_free(item.path);
-
-	    /* add "none" option */
-	    item.callback = plot_dummy_call;
-	    item.item_type = "<RadioItem>";
-	    item.path = g_strdup_printf(_("%s/none"), mpath[1]);
-	    radiopath = g_strdup(item.path);
-	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	    g_free(item.path);
-
-	    done_branch = 1;
-	} 
-
-	item.callback_action = pmod->list[i]; 
-	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
-	item.callback = plot_dummy_call;	    
-	item.item_type = radiopath;
-	item.path = g_strdup_printf(_("%s/By %s"), mpath[1], tmp);
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
     }
 
-    g_free(radiopath);
+    if (dlist == NULL) {
+	return;
+    }
+
+    ndums = dlist[0];
+    items = malloc((ndums + 1) * sizeof *items);
+    if (items == NULL) {
+	free(dlist);
+	return;
+    }
+
+    /* add separator */
+    vwin_menu_add_separator(vwin, gpath);
+
+    /* add menu branch */
+    action_entry_init(&item);
+    item.name = "Separation";
+    item.label = _("Separation");
+    vwin_menu_add_menu(vwin, gpath, &item);
+
+    /* configure "none" radio option */
+    radio_action_init(&items[0]);
+    items[0].name = "none";
+    items[0].label = _("none");
+    items[0].value = 0;
+
+    /* put the dummy independent vars on the menu list */
+    for (i=1; i<=dlist[0]; i++) {
+	vi = dlist[i];
+	radio_action_init(&items[i]);
+	double_underscores(tmp, datainfo->varname[vi]);
+	items[i].name = g_strdup_printf("dum %d", vi);
+	items[i].label = g_strdup_printf(_("By %s"), tmp);
+	items[i].value = vi;
+    }
+
+    vwin_menu_add_radios(vwin, spath, items, ndums + 1, 0,
+			 G_CALLBACK(plot_dummy_call));
+
+    for (i=1; i<=dlist[0]; i++) {
+	g_free((gchar *) items[i].name);
+	g_free((gchar *) items[i].label);
+    }
+
+    free(items);
+    free(dlist);
 }
 
-static void tau_plot_call (gpointer p, guint v, GtkWidget *widget)
+static void varnum_from_action (GtkAction *action, int *i)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    sscanf(s, "%*s %d", i);
+}
+
+static void tau_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int err;
+    int v, err;
 
+    varnum_from_action(action, &v);
     err = plot_tau_sequence(pmod, datainfo, v);
 
     if (err) {
@@ -3282,40 +3272,29 @@ static void tau_plot_call (gpointer p, guint v, GtkWidget *widget)
 
 static void add_tau_plot_menu (windata_t *vwin)
 {
-    GtkItemFactoryEntry item;
+    GtkActionEntry item;
     MODEL *pmod = vwin->data;
-    const gchar *mpath = N_("/Graphs/tau sequence");
-    char tmp[VNAMELEN2];
+    char tmp[VNAMELEN2], aname[16];
     int i;
 
-    flip(vwin->ifac, "/Graphs", TRUE);
-
-    gtk_item_factory_delete_item(vwin->ifac, "/Graphs/Residual plot");
-    gtk_item_factory_delete_item(vwin->ifac, "/Graphs/Fitted, actual plot");
-
-    item.accelerator = NULL; 
-    item.callback = NULL; 
-
-    /* add menu branch */
-    item.item_type = "<Branch>";
-    item.path = g_strdup_printf(_("%s"), mpath);
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
-
-    item.item_type = NULL;
-    item.callback = tau_plot_call;
+    action_entry_init(&item);
+    item.name = "TauMenu";
+    item.label = _("tau sequence");
+    vwin_menu_add_menu(vwin, "/MenuBar/Graphs", &item);
+    
+    item.callback = G_CALLBACK(tau_plot_call);
 
     /* put the independent vars on the menu list */
     for (i=2; i<=pmod->list[0]; i++) {
-	item.callback_action = i - 2; 
+	sprintf(aname, "tauseq %d", i - 2);
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
-	item.path = g_strdup_printf("%s/%s", mpath, tmp);
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+	item.name = aname;
+	item.label = tmp;
+	vwin_menu_add_item(vwin, "/MenuBar/Graphs/TauMenu", &item);
     }
 }
 
-static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
+static void x12_output_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -3338,13 +3317,114 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
     }
 }
 
+static gchar *get_model_ui (void)
+{
+    static gchar *model_ui = NULL;
+
+    if (model_ui == NULL) {
+	char fname[FILENAME_MAX];
+
+	sprintf(fname, "%s%cui%cmodelmenu.xml", paths.gretldir,
+		SLASH, SLASH);
+	gretl_file_get_contents(fname, &model_ui);
+    }
+
+    return model_ui;
+}
+
+static void 
+set_up_model_view_menu (GtkWidget *window, windata_t *vwin) 
+{
+    MODEL *pmod = (MODEL *) vwin->data;
+    GtkActionGroup *actions;
+    GError *err = NULL;
+
+    actions = gtk_action_group_new("ModelActions");
+#ifdef ENABLE_NLS
+    gtk_action_group_set_translation_domain(actions, "gretl");
+#endif
+
+    gtk_action_group_add_actions(actions, model_items, 
+				 G_N_ELEMENTS(model_items), 
+				 vwin);
+    gtk_action_group_add_actions(actions, model_test_items, 
+				 G_N_ELEMENTS(model_test_items),
+				 vwin);
+
+    vwin->ui = gtk_ui_manager_new();
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    gtk_ui_manager_add_ui_from_string(vwin->ui, get_model_ui(), -1, &err);
+    if (err != NULL) {
+	g_message("building menus failed: %s", err->message);
+	g_error_free(err);
+    }
+
+    if (pmod->ci != MLE && pmod->ci != GMM) {
+	if (RQ_SPECIAL_MODEL(pmod)) {
+	    add_tau_plot_menu(vwin);
+	} else {
+	    add_vars_to_plot_menu(vwin);
+	}
+	add_model_dataset_items(vwin);
+    }
+
+    if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
+	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
+			    panel_hsk_items, 
+			    G_N_ELEMENTS(panel_hsk_items));
+    } else if (model_test_ok(LMTEST, OPT_W, pmod, datainfo)) {
+	vwin_menu_add_items(vwin, "/MenuBar/Tests/Hsk", 
+			    base_hsk_items, 
+			    G_N_ELEMENTS(base_hsk_items));
+    }
+
+    if (latex_is_ok() && !pmod->errcode && !RQ_SPECIAL_MODEL(pmod)) {
+	add_model_tex_items(vwin);
+    } else {
+	add_missing_tex_items(vwin);
+    }
+
+    if (pmod->ci != ARMA && pmod->ci != GARCH && 
+	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
+	pmod->ci != PANEL && pmod->ci != ARBOND) {
+	add_dummies_to_plot_menu(vwin);
+    }
+
+    if (vwin->dialog != NULL) {
+	gtk_window_add_accel_group(GTK_WINDOW(vwin->dialog), 
+				   gtk_ui_manager_get_accel_group(vwin->ui));
+    }
+
+    vwin->mbar = gtk_ui_manager_get_widget(vwin->ui, "/MenuBar");
+
+    /* disable some menu items if need be */
+    adjust_model_menu_state(vwin, pmod);
+}
+
 enum {
     SYS_DATA_RESIDS,
     SYS_DATA_FITTED,
-    SYS_DATA_VCV
+    SYS_DATA_SIGMA
 };
 
-static void system_data_callback (gpointer p, guint code, GtkWidget *w)
+static int sys_data_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "uhat")) {
+	return SYS_DATA_RESIDS;
+    } else if (!strcmp(s, "yhat")) {
+	return SYS_DATA_FITTED;	
+    } else if (!strcmp(s, "sigma")) {
+	return SYS_DATA_SIGMA;
+    } else {
+	return SYS_DATA_RESIDS;
+    }
+}
+
+static void system_data_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = NULL;
@@ -3352,7 +3432,8 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
     const gretl_matrix *M = NULL;
     gchar *wtitle = NULL;
     PRN *prn;
-    int k = 0, err = 0;
+    int code, k = 0;
+    int err = 0;
 
     if (vwin->role == SYSTEM) {
 	sys = (equation_system *) vwin->data;
@@ -3364,7 +3445,9 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
 	return;
     }
 
-    if (code == SYS_DATA_VCV) {
+    code = sys_data_code(action);
+
+    if (code == SYS_DATA_SIGMA) {
 	if (var != NULL) {
 	    wtitle = g_strdup(_("gretl: VAR covariance matrix"));
 	    err = gretl_VAR_print_sigma(var, prn);
@@ -3432,18 +3515,31 @@ static void system_data_callback (gpointer p, guint code, GtkWidget *w)
     g_free(wtitle);
 }
 
-static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
+static int VAR_model_data_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "VarIrf")) {
+	return VAR_IRF;
+    } else if (!strcmp(s, "VarDecomp")) {
+	return VAR_DECOMP;
+    } else {
+	return VAR_IRF;
+    }
+}
+
+static void VAR_model_data_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = vwin->data;
     gchar *title;
     PRN *prn;
-    int h = 0;
+    int code, h = 0;
     int err;
 
-    if (var == NULL) return;
+    if (var == NULL || bufopen(&prn)) return;
 
-    if (bufopen(&prn)) return;
+    code = VAR_model_data_code(action);
 
     h = default_VAR_horizon(datainfo);
     title = g_strdup_printf("gretl: %s", 
@@ -3483,50 +3579,18 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
     g_free(title);
 }
 
-static void panel_heteroskedasticity_menu (windata_t *vwin)
-{
-    const gchar *tpath = "/Tests";
-    GtkItemFactoryEntry hitem;
-
-    gtk_item_factory_delete_item(vwin->ifac, "/Tests/Heteroskedasticity");
-
-    hitem.accelerator = NULL;
-    hitem.item_type = NULL;
-
-    hitem.callback = do_lmtest;
-    hitem.callback_action = LMTEST_WHITE;
-    hitem.path = g_strdup_printf("%s/%s", tpath, _("Heteroskedasticity (_White's test)"));
-    gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
-    g_free(hitem.path);
-
-    hitem.callback = do_lmtest;
-    hitem.callback_action =  LMTEST_GROUPWISE;
-    hitem.path = g_strdup_printf("%s/%s", tpath, ("Heteroskedasticity (_groupwise)"));
-    gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
-    g_free(hitem.path);
-}
-
 static void add_x12_output_menu_item (windata_t *vwin)
 {
-    GtkItemFactoryEntry item;
-    const gchar *mpath = "/Analysis";
+    const gchar *mpath = "/MenuBar/Analysis";
+    GtkActionEntry entry;
 
-    item.accelerator = NULL; 
-    item.callback_action = 0;
+    vwin_menu_add_separator(vwin, mpath);
 
-    /* separator */
-    item.callback = NULL;
-    item.item_type = "<Separator>";
-    item.path = g_strdup_printf("%s/%s", mpath, _("x12sep"));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
-
-    /* actual item */
-    item.callback = x12_output_callback;
-    item.item_type = NULL;
-    item.path = g_strdup_printf("%s/%s", mpath, _("View X-12-ARIMA output"));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    action_entry_init(&entry);
+    entry.name = "x12aout";
+    entry.label = _("View X-12-ARIMA output");
+    entry.callback = G_CALLBACK(x12_output_callback);
+    vwin_menu_add_item(vwin, mpath, &entry);
 }
 
 static int 
@@ -3566,16 +3630,25 @@ impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap)
     return err;
 }
 
-static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
+static void impulse_params_from_action (GtkAction *action, 
+					int *targ,
+					int *shock)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    sscanf(s, "Imp:%d:%d", targ, shock);
+}
+
+static void impulse_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int horizon, bootstrap;
-    gint targ;
+    gint shock, targ;
     const double **vZ = NULL;
     int err;
 
-    targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
+    impulse_params_from_action(action, &targ, &shock);
 
     if (impulse_response_setup(var, &horizon, &bootstrap) < 0) {
 	return;
@@ -3595,7 +3668,7 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
     }
 }
 
-static void multiple_irf_plot_call (gpointer p, guint u, GtkWidget *w)
+static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
@@ -3620,7 +3693,7 @@ static void multiple_irf_plot_call (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
+static void system_forecast_callback (GtkAction *action, gpointer p)
 {
     static gretlopt gopt = OPT_P;
     windata_t *vwin = (windata_t *) p;
@@ -3632,7 +3705,9 @@ static void system_forecast_callback (gpointer p, guint i, GtkWidget *w)
     int premax, pre_n, dyn_ok;
     int static_model = 0;
     gretlopt opt = OPT_NONE;
-    int err = 0;
+    int i, err = 0;
+
+    varnum_from_action(action, &i);
 
     if (ci == VAR || ci == VECM) {
 	var = (GRETL_VAR *) vwin->data;
@@ -3726,7 +3801,24 @@ enum {
     SYS_RESTRICT
 };
 
-static void system_test_call (gpointer p, guint code, GtkWidget *w)
+static int sys_test_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "autocorr")) {
+	return SYS_AUTOCORR_TEST;
+    } else if (!strcmp(s, "ARCH")) {
+	return SYS_ARCH_TEST;
+    } else if (!strcmp(s, "normtest")) {
+	return SYS_NORMALITY_TEST;
+    } else if (!strcmp(s, "restrict")) {
+	return SYS_RESTRICT;
+    } else {
+	return SYS_NORMALITY_TEST;
+    }
+}
+
+static void system_test_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = NULL;
@@ -3734,12 +3826,14 @@ static void system_test_call (gpointer p, guint code, GtkWidget *w)
     gchar *title = NULL;
     gchar *cstr = NULL;
     PRN *prn;
-    int order = 0;
-    int err;
+    int code, order = 0;
+    int err = 0;
 
     if (bufopen(&prn)) {
 	return;
     }
+
+    code = sys_test_code(action);
 
     if (vwin->role == SYSTEM) {
 	sys = (equation_system *) vwin->data;
@@ -3804,7 +3898,7 @@ static void system_test_call (gpointer p, guint code, GtkWidget *w)
     g_free(cstr);
 }
 
-static void VAR_roots_plot_call (gpointer p, guint u, GtkWidget *w)
+static void VAR_roots_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
@@ -3819,9 +3913,19 @@ static void VAR_roots_plot_call (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-static void system_resid_plot_call (gpointer p, guint ci, GtkWidget *w)
+static int sys_ci_from_action (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+    char cmdword[9];
+
+    sscanf(s, "%*s %8s", cmdword);
+    return gretl_command_number(cmdword);
+}
+
+static void system_resid_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
+    int ci = sys_ci_from_action(action);
     int err;
 
     err = gretl_system_residual_plot(vwin->data, ci, datainfo);
@@ -3833,9 +3937,10 @@ static void system_resid_plot_call (gpointer p, guint ci, GtkWidget *w)
     }
 }
 
-static void system_resid_mplot_call (gpointer p, guint ci, GtkWidget *w)
+static void system_resid_mplot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
+    int ci = sys_ci_from_action(action);
     int err;
 
     err = gretl_system_residual_mplot(vwin->data, ci, datainfo);
@@ -3849,16 +3954,18 @@ static void system_resid_mplot_call (gpointer p, guint ci, GtkWidget *w)
 
 static void add_system_menu_items (windata_t *vwin, int ci)
 {
-    GtkItemFactoryEntry item;
-    const gchar *tpath = N_("/Tests");
-    const gchar *gpath = N_("/Graphs");
-    const gchar *mpath = N_("/Analysis");
-    const gchar *fpath = N_("/Analysis/Forecasts");
-    const gchar *dpath = N_("/Save");
+    GtkActionEntry item;
+    const gchar *top = "/MenuBar";
+    const gchar *tests = "/MenuBar/Tests";
+    const gchar *save = "/MenuBar/Save";
+    const gchar *graphs = "/MenuBar/Graphs";
+    const gchar *analysis = "/MenuBar/Analysis";
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     int neqns, nfc, vtarg, vshock;
-    char tmp[VNAMELEN2];
+    char tmp[VNAMELEN2], istr[16];
+    char maj[64], min[32];
+    const char *cmdword;
     int i, j;
 
     if (ci == SYSTEM) {
@@ -3870,173 +3977,120 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	nfc = neqns = gretl_VAR_get_n_equations(var);
     }
 
-    item.accelerator = NULL;
-    item.callback = NULL;
-    item.callback_action = 0;
-    item.item_type = "<Branch>";
-
-    item.path = g_strdup(_("/_Tests"));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
-
-    item.path = g_strdup(_("/_Analysis"));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
-
-    item.path = g_strdup(_("/_Graphs"));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
-
-    item.path = g_strdup(_(fpath));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
-    
-    item.path = g_strdup(_(dpath));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    cmdword = gretl_command_word(ci);   
+    action_entry_init(&item);
 
     /* FIXME: the following two tests should really be multivariate */
 
-    /* univariate autocorrelation tests */
-    item.path = g_strdup_printf("%s/%s", _(tpath), 
-				_("Autocorrelation"));
-    item.callback = system_test_call;
-    item.callback_action = SYS_AUTOCORR_TEST;
-    item.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    if (dataset_is_time_series(datainfo)) {
+	/* univariate autocorrelation tests */
+	item.name = "autocorr";
+	item.label = N_("_Autocorrelation");
+	item.callback = G_CALLBACK(system_test_call);
+	vwin_menu_add_item(vwin, tests, &item);
 
-    /* univariate ARCH tests */
-    item.path = g_strdup_printf("%s/%s", _(tpath), 
-				_("ARCH"));
-    item.callback = system_test_call;
-    item.callback_action = SYS_ARCH_TEST;
-    item.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+	/* univariate ARCH tests */
+	item.name = "ARCH";
+	item.label = N_("A_RCH");
+	vwin_menu_add_item(vwin, tests, &item);
+    }
 
     /* multivariate normality test */
-    item.path = g_strdup_printf("%s/%s", _(tpath), 
-				_("Normality of residuals"));
-    item.callback = system_test_call;
-    item.callback_action = SYS_NORMALITY_TEST;
-    item.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    item.name = "normtest";
+    item.label = N_("_Normality of residuals");
+    vwin_menu_add_item(vwin, tests, &item);
 
     if (ci == VECM || ci == SYSTEM) {
 	/* linear restrictions (on cointegrating relations, for VECM) */
-	item.path = g_strdup_printf("%s/%s", _(tpath), 
-				    _("Linear restrictions"));
-	item.callback = gretl_callback;
-	item.callback_action = RESTRICT;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+	item.name = "restrict";
+	item.label = N_("Linear restrictions");
+	item.callback = G_CALLBACK(gretl_callback);
+	vwin_menu_add_item(vwin, tests, &item);
     } else if (ci == VAR) {
 	/* regular VAR: omit exogenous variables test */
-	const int *xlist;
-
-	xlist = gretl_VAR_get_exo_list(var);
-	if (xlist != NULL) {
-	    item.path = g_strdup_printf("%s/%s", _(tpath), 
-					_("Omit exogenous variables..."));
-	    item.callback = selector_callback;
-	    item.callback_action = VAROMIT;
-	    item.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	    g_free(item.path);
+	if (gretl_VAR_get_exo_list(var) != NULL) {
+	    item.name = "VarOmit";
+	    item.label = N_("Omit exogenous variables...");
+	    item.callback = G_CALLBACK(selector_callback);
+	    vwin_menu_add_item(vwin, tests, &item);
 	}	    
     }
 
+    /* Save residuals */
+    for (i=0; i<neqns; i++) {
+	sprintf(istr, "resid %d", i);
+	sprintf(maj, "%s %d", _("Residuals from equation"), i + 1);
+	item.name = istr;
+	item.label = maj;
+	item.callback = G_CALLBACK(add_system_resid);
+	vwin_menu_add_item(vwin, save, &item);
+    }
+
     /* Display residual matrix */
-    item.path = g_strdup_printf("%s/%s", _(mpath), 
-				_("Display residuals, all equations"));
-    item.callback = system_data_callback;
-    item.callback_action = SYS_DATA_RESIDS;
-    item.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    item.name = "uhat";
+    item.label = N_("Display residuals, all equations");
+    item.callback = G_CALLBACK(system_data_callback);
+    vwin_menu_add_item(vwin, analysis, &item);
 
     if (ci == SYSTEM) {
 	/* Display fitted values matrix */
-	item.path = g_strdup_printf("%s/%s", _(mpath), 
-				    _("Display fitted values, all equations"));
-	item.callback = system_data_callback;
-	item.callback_action = SYS_DATA_FITTED;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);  
+	item.name = "yhat";
+	item.label = N_("Display fitted values, all equations");
+	vwin_menu_add_item(vwin, analysis, &item);
     }  
 
     /* Display VCV matrix */
-    item.path = g_strdup_printf("%s/%s", _(mpath), 
-				_("Cross-equation covariance matrix"));
-    item.callback = system_data_callback;
-    item.callback_action = SYS_DATA_VCV;
-    item.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    item.name = "sigma";
+    item.label = N_("Cross-equation covariance matrix");
+    vwin_menu_add_item(vwin, analysis, &item);
 
     if (ci == VAR || ci == VECM) {
 	/* impulse response printout */
-	item.path = g_strdup_printf("%s/%s", _(mpath), _("Impulse responses"));
-	item.callback = VAR_model_data_callback;
-	item.callback_action = VAR_IRF;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);    
+	item.name = "VarIrf";
+	item.label = N_("Impulse responses");
+	item.callback = G_CALLBACK(VAR_model_data_callback);
+	vwin_menu_add_item(vwin, analysis, &item);
 
 	/* variance decomp printout */
-	item.path = g_strdup_printf("%s/%s", _(mpath), 
-				    _("Forecast variance decomposition"));
-	item.callback = VAR_model_data_callback;
-	item.callback_action = VAR_DECOMP;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path); 
+	item.name = "VarDecomp";
+	item.label = N_("Forecast variance decomposition");
+	vwin_menu_add_item(vwin, analysis, &item);
     }
 
     if (neqns <= 6) {
-	/* separate residual plot */
-	item.path = g_strdup_printf("%s/%s", _(gpath), _("Residual plots"));
-	item.callback = system_resid_mplot_call;
-	item.callback_action = ci;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+	/* multiple residual plots */
+	sprintf(min, "multiresid %s", cmdword);
+	item.name = min;
+	item.label = N_("Residual plots");
+	item.callback = G_CALLBACK(system_resid_mplot_call);
+	vwin_menu_add_item(vwin, graphs, &item);
     }
 
     /* combined residual plot */
-    item.path = g_strdup_printf("%s/%s", _(gpath), _("Combined residual plot"));
-    item.callback = system_resid_plot_call;
-    item.callback_action = ci;
-    item.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    sprintf(min, "comboresid %s", cmdword);
+    item.name = min;
+    item.label = N_("Combined residual plot");
+    item.callback = G_CALLBACK(system_resid_plot_call);
+    vwin_menu_add_item(vwin, graphs, &item);
 
     if (ci != SYSTEM) {
 	/* VAR inverse roots */
-	item.path = g_strdup_printf("%s/%s", _(gpath), _("VAR inverse roots"));
-	item.callback = VAR_roots_plot_call;
-	item.callback_action = 0;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+	item.name = "VarRoots";
+	item.label = N_("VAR inverse roots");
+	item.callback = G_CALLBACK(VAR_roots_plot_call);
+	vwin_menu_add_item(vwin, graphs, &item);
     }
 
     if (ci != SYSTEM && neqns <= 4) {
 	/* Multiple IRFs */
-	item.path = g_strdup_printf("%s/%s", _(gpath), _("Impulse responses (combined)"));
-	item.callback = multiple_irf_plot_call;
-	item.callback_action = 0;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+	item.name = "MultiIrf";
+	item.label = N_("Impulse responses (combined)");
+	item.callback = G_CALLBACK(multiple_irf_plot_call);
+	vwin_menu_add_item(vwin, graphs, &item);
     }
 
     for (i=0; i<nfc; i++) {
-	char maj[64], min[32];
+	char newpath[64];
 	int dv;
 
 	/* forecast items */
@@ -4046,82 +4100,60 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    dv = sys->ylist[i+1];
 	}
 	double_underscores(tmp, datainfo->varname[dv]);
-	item.path = g_strdup_printf("%s/%s", _(fpath), tmp);
-	item.callback = system_forecast_callback;
-	item.callback_action = i;
-	item.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
-
-	if (i < neqns) {
-	    /* save resids items */
-	    item.path = g_strdup_printf("%s/%s %d", _(dpath), 
-					_("Residuals from equation"), i + 1);
-	    item.callback = add_system_resid;
-	    item.callback_action = i;
-	    item.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	    g_free(item.path);
-	}
+	sprintf(istr, "fcast %d", i);
+	item.name = istr;
+	item.label = tmp;
+	item.callback = G_CALLBACK(system_forecast_callback);
+	vwin_menu_add_item(vwin, "/MenuBar/Analysis/Forecasts", &item);
 
 	if (var == NULL) {
 	    continue;
 	}
 
-	/* impulse response plots: make branch for target */
+	/* impulse response plots: make menu for target */
 	vtarg = gretl_VAR_get_variable_number(var, i);
 	double_underscores(tmp, datainfo->varname[vtarg]);
+	sprintf(istr, "targ_%d", i);
 	sprintf(maj, _("Response of %s"), tmp);
-
-	item.path = g_strdup_printf("%s/%s", _(gpath), maj);
+	item.name = istr;
+	item.label = maj;
 	item.callback = NULL;
-	item.callback_action = 0;
-	item.item_type = "<Branch>";
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
+	vwin_menu_add_menu(vwin, graphs, &item);
 
-	item.item_type = NULL;
+	/* path under which to add shocks */
+	sprintf(newpath, "/MenuBar/Graphs/targ_%d", i);
 	
 	for (j=0; j<neqns; j++) {
-	    GtkWidget *w;
-
 	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_VAR_get_variable_number(var, j);
-	    item.callback_action = j;
 	    double_underscores(tmp, datainfo->varname[vshock]);
+	    sprintf(istr, "Imp:%d:%d", i, j);
 	    sprintf(min, _("to %s"), tmp);
-
-	    item.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
-	    item.callback = impulse_plot_call;
-	    item.callback_action = j;
-	    item.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	    g_free(item.path);
-	    w = gtk_item_factory_get_widget_by_action(vwin->ifac, j);
-	    g_object_set_data(G_OBJECT(w), "targ", GINT_TO_POINTER(i));
+	    item.name = istr;
+	    item.label = min;
+	    item.callback = G_CALLBACK(impulse_plot_call);
+	    vwin_menu_add_item(vwin, newpath, &item);
 	}
     }
 
     if (ci == VECM) {
 	/* save ECs items */
 	for (i=0; i<jrank(var); i++) {
-	    item.path = g_strdup_printf("%s/%s %d", _(dpath), 
-					_("EC term"), i+1);
-	    item.callback = VECM_add_EC_data;
-	    item.callback_action = i;
-	    item.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	    g_free(item.path);
+	    sprintf(istr, "EC %d", i);
+	    sprintf(maj, "%s %d", _("EC term"), i+1);
+	    item.name = istr;
+	    item.label = maj;
+	    item.callback = G_CALLBACK(VECM_add_EC_data);
+	    vwin_menu_add_item(vwin, save, &item);
 	}
     }
 
     if (latex_is_ok()) {
-	int n = sizeof sys_tex_items / sizeof sys_tex_items[0];
+	int n = G_N_ELEMENTS(sys_tex_items);
 
-	for (i=0; i<n; i++) {
-	    gtk_item_factory_create_item(vwin->ifac, &sys_tex_items[i], 
-					 vwin, 1);
-	}
+	vwin_menu_add_menu(vwin, top, &sys_tex_items[0]);
+	vwin_menu_add_items(vwin, "/MenuBar/LaTeX",
+			    sys_tex_items + 1, n - 1);
     }
 }
 
@@ -4130,6 +4162,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 {
     windata_t *mwin = (windata_t *) data;
     MODEL *pmod = mwin->data;
+    GtkAction *action;
     gboolean s;
     int ok = 1, graphs_ok = 1;
 
@@ -4138,13 +4171,12 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }
 
     if (Z == NULL) {
-	flip(mwin->ifac, "/File/Save to session as icon", FALSE);
-	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
-	flip(mwin->ifac, "/Edit/Copy all", FALSE);
-	flip(mwin->ifac, "/Analysis", FALSE);
-	flip(mwin->ifac, "/Tests", FALSE);
-	flip(mwin->ifac, "/Graphs", FALSE);
-	flip(mwin->ifac, "/Analysis", FALSE);
+	flip(mwin->ui, "/MenuBar/File/SaveAsIcon", FALSE);
+	flip(mwin->ui, "/MenuBar/File/SaveAndClose", FALSE);
+	flip(mwin->ui, "/MenuBar/Edit/Copy", FALSE);
+	flip(mwin->ui, "/MenuBar/Tests", FALSE);
+	flip(mwin->ui, "/MenuBar/Graphs", FALSE);
+	flip(mwin->ui, "/MenuBar/Analysis", FALSE);
 	return FALSE;
     }
 
@@ -4160,21 +4192,22 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	}
     }
 
-    s = GTK_WIDGET_IS_SENSITIVE(gtk_item_factory_get_item(mwin->ifac, "/Tests"));
+    action = gtk_ui_manager_get_action(mwin->ui, "/MenuBar/Tests");
+    s = gtk_action_is_sensitive(action);
     if ((s && ok) || (!s && !ok)) {
 	/* no need to flip state */
 	return FALSE;
     }
 
-    flip(mwin->ifac, "/Tests", ok);
-    flip(mwin->ifac, "/Graphs", graphs_ok);
-    flip(mwin->ifac, "/Analysis/Display actual, fitted, residual", ok);
-    flip(mwin->ifac, "/Analysis/Forecasts...", ok);
-    flip(mwin->ifac, "/Analysis/Confidence intervals for coefficients", ok);
-    flip(mwin->ifac, "/Save/Fitted values", ok);
-    flip(mwin->ifac, "/Save/Residuals", ok);
-    flip(mwin->ifac, "/Save/Squared residuals", ok);
-    flip(mwin->ifac, "/Save/Define new variable...", ok);
+    flip(mwin->ui, "/MenuBar/Tests", ok);
+    flip(mwin->ui, "/MenuBar/Graphs", graphs_ok);
+    flip(mwin->ui, "/MenuBar/Analysis/DisplayAFR", ok);
+    flip(mwin->ui, "/MenuBar/Analysis/Forecasts", ok);
+    flip(mwin->ui, "/MenuBar/Analysis/ConfIntervals", ok);
+    flip(mwin->ui, "/MenuBar/Save/Fitted", ok);
+    flip(mwin->ui, "/MenuBar/Save/Residuals", ok);
+    flip(mwin->ui, "/MenuBar/Save/ResidualsSq", ok);
+    flip(mwin->ui, "/MenuBar/Save/NewVar", ok);
 
     if (!ok) {
 	const char *msg = gretl_errmsg_get();

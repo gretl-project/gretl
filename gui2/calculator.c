@@ -2926,7 +2926,7 @@ static int calc_help_code (int c)
     return hc;
 }
 
-void stats_calculator (gpointer data, guint code, GtkWidget *widget) 
+static void real_stats_calculator (int code, gpointer data) 
 {
     GtkWidget *tmp = NULL;
     static GtkWidget *winptr[6];
@@ -2942,14 +2942,6 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	N_("gretl: add random variable")
     };
     int i, hcode, nv = 0;
-
-    g_return_if_fail(code == CALC_PVAL || 
-		     code == CALC_DIST || 
-		     code == CALC_TEST ||
-		     code == CALC_NPTEST ||
-		     code == CALC_GRAPH ||
-		     code == CALC_GRAPH_ADD ||
-		     code == CALC_RAND);
 
     oldwin = winptr[code];
     if (oldwin != NULL) {
@@ -3034,4 +3026,43 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     }
 
     gtk_widget_show(child->dlg);
+}
+
+static int stats_calculator_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "PValues"))
+	return CALC_PVAL;
+    else if (!strcmp(s, "StatsTables"))
+	return CALC_DIST;
+    else if (!strcmp(s, "TestStats"))
+	return CALC_TEST;
+    else if (!strcmp(s, "NonparamTests"))
+	return CALC_NPTEST;
+    else if (!strcmp(s, "DistGraphs"))
+	return CALC_GRAPH;
+    else if (!strcmp(s, "AddRandom"))
+	return CALC_RAND;
+    else
+	return 0;
+}
+
+void stats_calculator (GtkAction *action, gpointer data) 
+{
+    int code = stats_calculator_code(action);
+
+    g_return_if_fail(code == CALC_PVAL || 
+		     code == CALC_DIST || 
+		     code == CALC_TEST ||
+		     code == CALC_NPTEST ||
+		     code == CALC_GRAPH ||
+		     code == CALC_RAND);
+
+    real_stats_calculator(code, data);
+}
+
+void dist_graph_add (gpointer p)
+{
+    real_stats_calculator(CALC_GRAPH_ADD, p);
 }

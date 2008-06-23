@@ -562,7 +562,7 @@ static void set_tramo_x12a_status (void)
     }
 
     if (mdata != NULL) {
-	flip(mdata->ifac, "/Variable/TRAMO analysis", ok);
+	flip(mdata->ui, "/Variable/TRAMO analysis", ok);
     }
 #endif /* TRAMO */
 
@@ -578,7 +578,7 @@ static void set_tramo_x12a_status (void)
     }
 
     if (mdata != NULL) {
-	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ok);
+	flip(mdata->ui, "/Variable/X-12-ARIMA analysis", ok);
     }    
 #endif /* X12A */
 }
@@ -1850,14 +1850,6 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 	write_rc();
     } 
 
-# ifdef PLOT_FONT_SELECTOR
-    else if (which == GRAPH_FONT_SELECTION) {
-	GtkWidget *fentry = g_object_get_data(G_OBJECT(fs), "font_entry");
-
-	gtk_entry_set_text(GTK_ENTRY(fentry), fontname);
-    }
-# endif
-
 # ifndef USE_GNOME /* gnome handles the app font */
     else if (which == APP_FONT_SELECTION) {
 	set_app_font(fontname);
@@ -1874,9 +1866,21 @@ static void fontsel_quit (GtkWidget *w, gpointer p)
     gtk_main_quit();
 }
 
-void font_selector (gpointer data, guint which, GtkWidget *widget)
+static int fontsel_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+    
+    if (!strcmp(s, "MenuFont")) {
+	return APP_FONT_SELECTION;
+    } else {
+	return FIXED_FONT_SELECTION;
+    }
+}
+
+void font_selector (GtkAction *action)
 {
     static GtkWidget *fontsel = NULL;
+    int which = fontsel_code(action);
     int filter = GTK_FONT_HACK_LATIN;
     char *title = NULL;
     const char *fontname = NULL;
@@ -1902,11 +1906,6 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 	fontname = appfontname;
     }
 # endif
-# ifdef PLOT_FONT_SELECTOR
-    else if (which == GRAPH_FONT_SELECTION) {
-	fontname = paths.pngfont;
-    }
-# endif
 
     fontsel = gtk_font_selection_hack_dialog_new(title);
     gtk_font_selection_hack_dialog_set_filter
@@ -1914,12 +1913,6 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
     gtk_font_selection_hack_dialog_set_font_name 
 	(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fontname); 
     g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
-
-# ifdef PLOT_FONT_SELECTOR
-    if (which == GRAPH_FONT_SELECTION) {
-	 g_object_set_data(G_OBJECT(fontsel), "font_entry", widget);
-    }
-# endif
 
     gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
 
@@ -2002,15 +1995,9 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
     if (which == FIXED_FONT_SELECTION) {
 	cf.Flags |= CF_FIXEDPITCHONLY;
 	fontname_to_win32(fixedfontname, 1, lf.lfFaceName, &(cf.iPointSize));
-    } 
-    else if (which == APP_FONT_SELECTION) {
+    } else if (which == APP_FONT_SELECTION) {
 	fontname_to_win32(appfontname, 0, lf.lfFaceName, &(cf.iPointSize));
     } 
-# ifdef PLOT_FONT_SELECTOR
-    else if (which == GRAPH_FONT_SELECTION) {
-	fontname_to_win32(paths.pngfont, 0, lf.lfFaceName, &(cf.iPointSize));
-    }
-# endif
 
     cf.lpLogFont = &lf;
 
@@ -2022,16 +2009,10 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 	    strcpy(fixedfontname, fontname);
 	    set_fixed_font();
 	    write_rc();
-	} 
-	else if (which == APP_FONT_SELECTION) {
+	} else if (which == APP_FONT_SELECTION) {
 	    set_app_font(fontname);
 	    write_rc();
 	}
-# ifdef PLOT_FONT_SELECTOR
-	else if (which == GRAPH_FONT_SELECTION) {
-	    gtk_entry_set_text(GTK_ENTRY(widget), fontname);
-	}
-# endif
     }
 }
 

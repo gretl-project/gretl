@@ -191,7 +191,7 @@ int viewer_char_count (windata_t *vwin)
     return gtk_text_buffer_get_char_count(tbuf);
 }
 
-void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
+void text_paste (GtkWidget *w, windata_t *vwin)
 {
     gchar *undo_buf = textview_get_text(vwin->w);
     gchar *old;
@@ -206,7 +206,7 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
 				    NULL, TRUE);
 }
 
-void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
+void text_undo (GtkWidget *w, windata_t *vwin)
 {
     gchar *old = NULL;
 
@@ -930,10 +930,11 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	GtkTextTag *tag = tagp->data;
 	gint page = object_get_int(tag, "page");
 	gint xref = object_get_int(tag, "xref");
+	gint en = GPOINTER_TO_INT(p);
 
 	if (page != 0 || xref != 0) {
 	    if (page == GUIDE_PAGE) {
-		display_pdf_help(NULL, 1, NULL);
+		display_pdf_help(NULL);
 	    } else if (page == SCRIPT_PAGE) {
 		link_open_script(tag);
 	    } else {
@@ -941,15 +942,15 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 
 		if (role == FUNCS_HELP) {
 		    if (xref) {
-			plain_text_cmdref(p, page, NULL);
+			command_help_callback(page, en); 
 		    } else {
-			genr_funcs_ref(p, page, NULL);
+			function_help_callback(page);
 		    }
 		} else {
 		    if (xref) {
-			genr_funcs_ref(p, page, NULL);
+			function_help_callback(page);
 		    } else {
-			plain_text_cmdref(p, page, NULL);
+			command_help_callback(page, en); 
 		    }
 		}
 	    }
@@ -1239,12 +1240,8 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
 {
     windata_t *hwin = (windata_t *) p;
     int action = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-    gpointer enp = NULL;
+    int en = (hwin->role == CLI_HELP_EN);
     int page = 0;
-
-    if (hwin->role == CLI_HELP_EN) {
-	enp = GINT_TO_POINTER(1);
-    }
 
     if (action == 2) {
 	page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
@@ -1252,9 +1249,9 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
     }
 
     if (hwin->role == FUNCS_HELP) {
-	genr_funcs_ref(NULL, page, NULL);
+	function_help_callback(page);
     } else {
-	plain_text_cmdref(enp, page, NULL);
+	command_help_callback(page, en);
     }
 
     return FALSE;
@@ -2602,6 +2599,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     }
 
     gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
+
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 }

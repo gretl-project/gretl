@@ -306,7 +306,7 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
 	if (mods & GDK_CONTROL_MASK) {
-	    menu_find(vwin, 1, NULL);
+	    listbox_find(NULL, vwin);
 	    return TRUE;
 	}	
     } else if (k == GDK_Home || k == GDK_End || 

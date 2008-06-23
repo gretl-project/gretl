@@ -67,7 +67,7 @@ struct _windata_t {
     GtkWidget *w;
     GtkWidget *status;
     GtkWidget *popup;
-    GtkItemFactory *ifac; 
+    GtkUIManager *ui; 
     windata_t *gretl_parent;
     windata_t **gretl_children;
     gpointer data;

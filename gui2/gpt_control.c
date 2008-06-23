@@ -2630,7 +2630,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     plot->popup = NULL;
 
     if (!strcmp(item, _("Add another curve..."))) {
-	stats_calculator(plot, CALC_GRAPH_ADD, NULL);
+	dist_graph_add(plot);
     } else if (!strcmp(item, _("Save as PNG..."))) {
 	plot->spec->termtype = GP_TERM_PNG;
         file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 

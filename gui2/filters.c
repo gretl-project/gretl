@@ -25,6 +25,13 @@
 #include "libset.h"
 
 enum {
+    FILTER_SMA = 1,
+    FILTER_EMA,
+    FILTER_HP,
+    FILTER_BK
+};
+
+enum {
     FILTER_SAVE_NONE = 0,
     FILTER_SAVE_TREND = 1 << 0,
     FILTER_SAVE_CYCLE = 1 << 1
@@ -873,19 +880,36 @@ static int calculate_filter (filter_info *finfo)
     return err;
 }
 
-void filter_callback (gpointer p, guint code, GtkWidget *w)
+static int filter_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "FilterSMA")) 
+	return FILTER_SMA;
+    else if (!strcmp(s, "FilterEMA")) 
+	return FILTER_EMA;
+    else if (!strcmp(s, "FilterHP")) 
+	return FILTER_HP;
+    else if (!strcmp(s, "FilterBK")) 
+	return FILTER_BK;
+    else
+	return FILTER_SMA;
+}
+
+void filter_callback (GtkAction *action)
 {
     filter_info finfo;
     int v = mdata_active_var();
     int t1 = datainfo->t1;
     int t2 = datainfo->t2;
-    int cancel = 0;
+    int code, cancel = 0;
     int err = 0;
 
-    if (var_is_scalar(datainfo, v)) {
-	errbox(_("This variable is a scalar"));
+    if (reject_scalar(v)) {
 	return;
     }
+
+    code = filter_code(action);
 
     err = array_adjust_t1t2(Z[v], &t1, &t2);
     if (err) {

@@ -31,34 +31,27 @@
 #include <gtk/gtkentry.h>
 #include <gtk/gtkadjustment.h>
 
-#define GTK_TYPE_OBS_BUTTON              (obs_button_get_type ())
+#define GTK_TYPE_OBS_BUTTON            (obs_button_get_type ())
 
-#define OBS_BUTTON(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_OBS_BUTTON, ObsButton))
-#define OBS_BUTTON_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_OBS_BUTTON, ObsButtonClass))
-#define GTK_IS_OBS_BUTTON(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_OBS_BUTTON))
-#define GTK_IS_OBS_BUTTON_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_OBS_BUTTON))
-#define OBS_BUTTON_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_OBS_BUTTON, ObsButtonClass))
+#define OBS_BUTTON(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_OBS_BUTTON, ObsButton))
+#define OBS_BUTTON_CLASS(klass)        (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_OBS_BUTTON, ObsButtonClass))
+#define GTK_IS_OBS_BUTTON(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_OBS_BUTTON))
+#define GTK_IS_OBS_BUTTON_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_OBS_BUTTON))
+#define OBS_BUTTON_GET_CLASS(obj)      (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_OBS_BUTTON, ObsButtonClass))
 
 #define GTK_INPUT_ERROR -1
 
-typedef struct _ObsButton	    ObsButton;
-typedef struct _ObsButtonClass  ObsButtonClass;
-
+typedef struct _ObsButton ObsButton;
+typedef struct _ObsButtonClass ObsButtonClass;
 
 struct _ObsButton
 {
     GtkEntry entry;
-  
     GtkAdjustment *adjustment;
-
     const DATAINFO *pdinfo;
-  
     GdkWindow *panel;
-  
     guint32 timer;
-  
     gdouble timer_step;
-
     guint in_child : 2;
     guint click_child : 2; /* valid: GTK_ARROW_UP=0, GTK_ARROW_DOWN=1 or 2=NONE/BOTH */
     guint button : 2;
@@ -77,20 +70,14 @@ struct _ObsButtonClass
 
     /* Action signals for keybindings, do not connect to these */
     void (*change_value) (ObsButton *obs_button,
-			  GtkScrollType  scroll);
+			  GtkScrollType scroll);
 };
 
 GType		obs_button_get_type	   (void) G_GNUC_CONST;
-
 GtkWidget*	obs_button_new		   (GtkAdjustment  *adjustment, const DATAINFO *pdinfo);
-
 gdouble		obs_button_get_value       (ObsButton  *obs_button);
-
 void		obs_button_set_value	   (ObsButton  *obs_button, 
-					    gdouble	    value);
-
+					    gdouble value);
 void            obs_button_update          (ObsButton  *obs_button);
-
-
 
 #endif /* OBS_BUTTON_H__ */

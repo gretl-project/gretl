@@ -34,7 +34,9 @@ void browser_call_func (GtkWidget *w, gpointer data);
 
 void destroy_file_collections (void);
 
-void display_files (gpointer p, guint code, GtkWidget *w);
+void show_files (GtkAction *action, gpointer p);
+
+void display_files (int code, gpointer p);
 
 gint populate_filelist (windata_t *fdata, gpointer p);
 

@@ -30,6 +30,7 @@
 #include "fnsave.h"
 #include "fncall.h"
 #include "treeutils.h"
+#include "selector.h"
 
 #include "gretl_xml.h"
 #include "gretl_func.h"
@@ -93,11 +94,11 @@ struct fpkg_response {
 #define REMOTE_ACTION(c) (c == REMOTE_DB || c == REMOTE_FUNC_FILES)
 
 static void 
-fpkg_response_init (struct fpkg_response *f, GtkWidget *w)
+fpkg_response_init (struct fpkg_response *f, gpointer p)
 {
     f->col1_width = 0;
 
-    if (w != NULL) {
+    if (p == NULL || p == mdata) {
 	/* called from main menu */
 	f->try_server = 0;
     } else {
@@ -943,7 +944,7 @@ windata_t *get_local_viewer (int remote_role)
 
 static void new_package_callback (GtkWidget *w , gpointer p)
 {
-    file_save(NULL, SAVE_FUNCTIONS, NULL);
+    data_save_selection_wrapper(SAVE_FUNCTIONS, NULL);
 }
 
 static void close_files_viewer (GtkWidget *w, windata_t *vwin)
@@ -1013,7 +1014,7 @@ static void build_db_popup (windata_t *vwin)
 			   G_CALLBACK(open_db_index), 
 			   vwin);
 	    add_popup_item(_("Find..."), vwin->popup, 
-			   G_CALLBACK(datafile_find), 
+			   G_CALLBACK(listbox_find), 
 			   vwin);
 	} else {
 	    add_popup_item(_("List series"), vwin->popup, 
@@ -1023,7 +1024,7 @@ static void build_db_popup (windata_t *vwin)
 			   G_CALLBACK(install_file_from_server), 
 			   vwin);
 	    add_popup_item(_("Find..."), vwin->popup, 
-			   G_CALLBACK(datafile_find), 
+			   G_CALLBACK(listbox_find), 
 			   vwin);
 	}
     }
@@ -1031,22 +1032,22 @@ static void build_db_popup (windata_t *vwin)
 
 static void show_server_dbs (GtkWidget *w, gpointer p)
 {
-    display_files(NULL, REMOTE_DB, NULL);
+    display_files(REMOTE_DB, p);
 }
 
 static void show_local_dbs (GtkWidget *w, gpointer p)
 {
-    display_files(NULL, NATIVE_DB, NULL);
+    display_files(NATIVE_DB, p);
 }
 
 static void show_server_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(NULL, REMOTE_FUNC_FILES, NULL);
+    display_files(REMOTE_FUNC_FILES, p);
 }
 
 static void show_local_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(NULL, FUNC_FILES, NULL);
+    display_files(FUNC_FILES, p);
 }
 
 enum {
@@ -1105,7 +1106,7 @@ static void make_filesbar (windata_t *vwin)
 	if (files_items[i].action == BTN_CLOSE) {
 	    toolfunc = close_files_viewer;
 	} else if (files_items[i].action == BTN_FIND) {
-	    toolfunc = datafile_find;
+	    toolfunc = listbox_find;
 	} else if (vwin->role == FUNC_FILES) {
 	    if (files_items[i].action == BTN_EDIT) {
 		toolfunc = browser_edit_func;
@@ -1260,11 +1261,7 @@ static void set_up_viewer_drag_target (windata_t *vwin)
 		     callback, NULL);
 }
 
-/* make a browser window to display a set of files: textbook
-   data files, practice scripts, databases...  
-*/
-
-void display_files (gpointer p, guint code, GtkWidget *w)
+void display_files (int code, gpointer p)
 {
     GtkWidget *filebox;
     windata_t *vwin;
@@ -1283,7 +1280,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     }
 
     windata_init(vwin);
-    fpkg_response_init(&fresp, w);
+    fpkg_response_init(&fresp, p);
 
     vwin->role = code;
     vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1408,8 +1405,36 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 
     if (err && code == FUNC_FILES && fresp.try_server == 1) {
 	/* no function packages on local machine */
-	display_files(p, REMOTE_FUNC_FILES, w);
+	display_files(REMOTE_FUNC_FILES, p);
     }
+}
+
+static int display_files_code (const gchar *s)
+{
+    if (!strcmp(s, "DisplayDataFiles"))
+	return TEXTBOOK_DATA;
+    if (!strcmp(s, "DisplayScripts"))
+	return PS_FILES;
+    if (!strcmp(s, "NativeDB"))
+	return NATIVE_DB;
+    if (!strcmp(s, "RemoteDB"))
+	return REMOTE_DB;
+    if (!strcmp(s, "LocalGfn"))
+	return FUNC_FILES;
+    if (!strcmp(s, "RemoteGfn"))
+	return REMOTE_FUNC_FILES;
+    return 0;
+}
+
+/* make a browser window to display a set of files: textbook
+   data files, practice scripts, databases...  
+*/
+
+void show_files (GtkAction *action, gpointer p)
+{
+    int code = display_files_code(gtk_action_get_name(action));
+
+    display_files(code, p);
 }
 
 static int get_func_info (const char *fname, const char *fndir,

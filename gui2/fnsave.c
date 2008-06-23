@@ -1210,7 +1210,7 @@ int no_user_functions_check (void)
 			       "Do you want to write a function now?"),
 			     0);
 	if (resp == GRETL_YES) {
-	    do_new_script(NULL, FUNC, NULL);
+	    do_new_script(FUNC);
 	}
     } 
 

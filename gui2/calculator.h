@@ -30,6 +30,8 @@ typedef enum {
 
 double entry_get_numeric_value (GtkWidget *w, EntryValType t);
 
-void stats_calculator (gpointer p, guint code, GtkWidget *w);
+void stats_calculator (GtkAction *action, gpointer p);
+
+void dist_graph_add (gpointer p);
 
 #endif /* CALCULATOR_H */

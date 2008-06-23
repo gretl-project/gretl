@@ -77,7 +77,7 @@ static void show_website (GtkWidget *w, gpointer p)
     }
 }
 
-void about_dialog (gpointer data) 
+void about_dialog (void) 
 {
     GtkWidget *vbox, *hbox, *label;
     GtkWidget *dialog, *image, *button;

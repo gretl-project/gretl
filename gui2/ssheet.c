@@ -64,7 +64,7 @@ typedef struct {
     GtkWidget *entry;
     GtkWidget *popup;
     GtkWidget *save;
-    GtkItemFactory *ifac;
+    GtkUIManager *ui;
     GtkCellRenderer *dumbcell;
     GtkCellRenderer *datacell;
     gchar location[64];
@@ -87,8 +87,8 @@ typedef struct {
 
 #define MATRIX_DIGITS DBL_DIG
 
-static void sheet_add_var_callback (gpointer data, guint code, GtkWidget *w);
-static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w);
+static void sheet_add_var_callback (GtkAction *action, gpointer data);
+static void sheet_add_obs_callback (GtkAction *action, gpointer data);
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet);
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width, 
 				 gboolean expand);
@@ -97,61 +97,69 @@ static int add_data_column (Spreadsheet *sheet);
 static void create_sheet_cell_renderers (Spreadsheet *sheet);
 static void set_dataset_locked (gboolean s);
 
-static void matrix_fill_callback (gpointer data, guint u, GtkWidget *w);
-static void matrix_props_callback (gpointer data, guint u, GtkWidget *w);
-static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w);
+static void matrix_fill_callback (GtkAction *action, gpointer data);
+static void matrix_props_callback (GtkAction *action, gpointer data);
+static void matrix_edit_callback (GtkAction *action, gpointer data);
 static int update_sheet_from_matrix (Spreadsheet *sheet);
 static void size_matrix_window (Spreadsheet *sheet);
 
-enum {
-    MATRIX_FILL_IDENTITY,
-    MATRIX_FILL_UNIFORM,
-    MATRIX_FILL_NORMAL
+const gchar *sheet_ui = 
+    "<ui>"
+    "  <menubar name='MenuBar'>"
+    "    <menu action='ObsMenu'>"
+    "      <menuitem action='AppendObs'/>"
+    "      <menuitem action='InsertObs'/>"
+    "    </menu>"
+    "    <menu action='VarMenu'>"
+    "      <menuitem action='VarAdd'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+static GtkActionEntry sheet_items[] = {
+    { "ObsMenu", NULL, N_("_Observation"), NULL, NULL, NULL },
+    { "AppendObs", NULL, N_("_Append obs"), NULL, NULL, G_CALLBACK(sheet_add_obs_callback) },
+    { "InsertObs", NULL, N_("_Insert obs"), NULL, NULL, G_CALLBACK(sheet_add_obs_callback) },
+    { "VarMenu", NULL, N_("_Variable"), NULL, NULL, NULL },
+    { "VarAdd", NULL, N_("_Add"), NULL, NULL, G_CALLBACK(sheet_add_var_callback) }
 };
 
-enum {
-    MATRIX_EDIT_XTX,
-    MATRIX_EDIT_TRANSPOSE,
-    MATRIX_EDIT_CHOLESKY,
-    MATRIX_EDIT_INVERT,
-    MATRIX_EDIT_MULTIPLY,
-    MATRIX_EDIT_DIVIDE
-};
+const gchar *matrix_ui = 
+    "<ui>"
+    "  <menubar name='MenuBar'>"
+    "    <menu action='Fill'>"
+    "      <menuitem action='FillIdentity'/>"
+    "      <menuitem action='FillUniform'/>"
+    "      <menuitem action='FillNormal'/>"
+    "    </menu>"
+    "    <menu action='Properties'>"
+    "      <menuitem action='PropsView'/>"
+    "    </menu>"
+    "    <menu action='Transform'>"
+    "      <menuitem action='XTX'/>"
+    "      <menuitem action='Transpose'/>"
+    "      <menuitem action='Cholesky'/>"
+    "      <menuitem action='Invert'/>"
+    "      <menuitem action='ScalarMult'/>"
+    "      <menuitem action='ScalarDiv'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
 
-static GtkItemFactoryEntry sheet_items[] = {
-    { N_("/_Observation"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Observation/_Append obs"), NULL, sheet_add_obs_callback, SHEET_AT_END, 
-      NULL, GNULL },
-    { N_("/Observation/_Insert obs"), NULL, sheet_add_obs_callback, SHEET_AT_POINT, 
-      NULL, GNULL },
-    { N_("/_Variable"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Variable/_Add"), NULL, sheet_add_var_callback, 0, NULL, GNULL }
-};
-
-static GtkItemFactoryEntry matrix_items[] = {
-    { N_("/_Fill"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Fill/_Identity matrix"), NULL, matrix_fill_callback, 
-      MATRIX_FILL_IDENTITY, NULL, GNULL },
-    { N_("/Fill/_Uniform random"), NULL, matrix_fill_callback, 
-      MATRIX_FILL_UNIFORM, NULL, GNULL },
-    { N_("/Fill/_Normal random"), NULL, matrix_fill_callback, 
-      MATRIX_FILL_NORMAL, NULL, GNULL },
-    { N_("/_Properties"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Properties/_View"), NULL, matrix_props_callback, 
-      0, NULL, GNULL },
-    { N_("/_Transform"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Transform/_X'X"), NULL, matrix_edit_callback, 
-      MATRIX_EDIT_XTX, NULL, GNULL },
-    { N_("/Transform/_Transpose"), NULL, matrix_edit_callback, 
-      MATRIX_EDIT_TRANSPOSE, NULL, GNULL },
-    { N_("/Transform/_Cholesky"), NULL, matrix_edit_callback, 
-      MATRIX_EDIT_CHOLESKY, NULL, GNULL },
-    { N_("/Transform/_Invert"), NULL, matrix_edit_callback, 
-      MATRIX_EDIT_INVERT, NULL, GNULL },
-    { N_("/Transform/_Multiply by scalar"), NULL, matrix_edit_callback, 
-      MATRIX_EDIT_MULTIPLY, NULL, GNULL },
-    { N_("/Transform/_Divide by scalar"), NULL, matrix_edit_callback, 
-      MATRIX_EDIT_DIVIDE, NULL, GNULL },
+static GtkActionEntry matrix_items[] = {
+    { "Fill", NULL, N_("_Fill"), NULL, NULL, NULL },
+    { "FillIdentity", NULL, N_("_Identity matrix"), NULL, NULL, G_CALLBACK(matrix_fill_callback) },
+    { "FillUniform", NULL, N_("_Uniform random"), NULL, NULL, G_CALLBACK(matrix_fill_callback) },
+    { "FillNormal", NULL, N_("_Normal random"), NULL, NULL, G_CALLBACK(matrix_fill_callback) },
+    { "Properties", NULL, N_("_Properties"), NULL, NULL, NULL },
+    { "PropsView", NULL, N_("_View"), NULL, NULL, G_CALLBACK(matrix_props_callback) },
+    { "Transform", NULL, N_("_Transform"), NULL, NULL, NULL },
+    { "XTX", NULL, N_("_X'X"), NULL, NULL, G_CALLBACK(matrix_edit_callback) },
+    { "Transpose", NULL, N_("_Transpose"), NULL, NULL, G_CALLBACK(matrix_edit_callback) },
+    { "Cholesky", NULL, N_("_Cholesky"), NULL, NULL, G_CALLBACK(matrix_edit_callback) },
+    { "Invert", NULL, N_("_Invert"), NULL, NULL, G_CALLBACK(matrix_edit_callback) },
+    { "ScalarMult", NULL, N_("_Multiply by scalar"), NULL, NULL, G_CALLBACK(matrix_edit_callback) },
+    { "ScalarDiv", NULL, N_("_Divide by scalar"), NULL, NULL, G_CALLBACK(matrix_edit_callback) }
 };
 
 #define sheet_is_modified(s) (s->flags & SHEET_MODIFIED)
@@ -169,19 +177,28 @@ static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
     }
 }
 
-static void disable_obs_menu (GtkItemFactory *ifac)
+static void disable_obs_menu (GtkUIManager *ui)
 {
-    GtkWidget *w = gtk_item_factory_get_item(ifac, "/Observation");
+    const gchar *path = "/MenuBar/ObsMenu";
+    GtkWidget *w = gtk_ui_manager_get_widget(ui, path);
 
-    gtk_widget_set_sensitive(w, FALSE);
+    if (w != NULL) {
+	gtk_widget_set_sensitive(w, FALSE);
+    } else {
+	fprintf(stderr, "Couldn't get widget for '%s'\n", path);
+    }
 }
 
-static void disable_insert_obs_item (GtkItemFactory *ifac)
+static void disable_insert_obs_item (GtkUIManager *ui)
 {
-    GtkWidget *w = 
-	gtk_item_factory_get_item(ifac, "/Observation/Insert obs");
+    const gchar *path = "/MenuBar/ObsMenu/InsertObs";
+    GtkWidget *w = gtk_ui_manager_get_widget(ui, path);
 
-    gtk_widget_set_sensitive(w, FALSE);
+    if (w != NULL) {
+	gtk_widget_set_sensitive(w, FALSE);
+    } else {
+	fprintf(stderr, "Couldn't get widget for '%s'\n", path);
+    }
 }
 
 static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
@@ -884,14 +901,14 @@ static void sheet_get_scalar (GtkWidget *w, dialog_t *dlg)
     }
 }
 
-static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w)
+static void matrix_edit_callback (GtkAction *action, gpointer data)
 {
+    const gchar *s = gtk_action_get_name(action);
     Spreadsheet *sheet = (Spreadsheet *) data;
     double x = NADBL;
     int err = 0;
 
-    if (u == MATRIX_EDIT_MULTIPLY ||
-	u == MATRIX_EDIT_DIVIDE) {
+    if (!strcmp(s, "ScalarMult") || !strcmp(s, "ScalarDiv")) {
 	int cancel = 0;
 
 	edit_dialog(_("gretl: specify scalar"), 
@@ -903,25 +920,18 @@ static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w)
 	}
     }
 
-    switch (u) {
-    case MATRIX_EDIT_XTX:
+    if (!strcmp(s, "XTX")) {
 	err = matrix_XTX_in_place(sheet->matrix);
-	break;
-    case MATRIX_EDIT_TRANSPOSE:
+    } else if (!strcmp(s, "Transpose")) {
 	err = matrix_transpose_in_place(sheet->matrix);
-	break;
-    case MATRIX_EDIT_CHOLESKY:
+    } else if (!strcmp(s, "Cholesky")) {
 	err = matrix_cholesky_in_place(sheet->matrix);
-	break;
-    case MATRIX_EDIT_INVERT:
+    } else if (!strcmp(s, "Invert")) {
 	err = matrix_invert_in_place(sheet->matrix);
-	break;
-    case MATRIX_EDIT_MULTIPLY:
+    } else if (!strcmp(s, "ScalarMult")) {
 	gretl_matrix_multiply_by_scalar(sheet->matrix, x);
-	break;
-    case MATRIX_EDIT_DIVIDE:
+    } else if (!strcmp(s, "ScalarDiv")) {
 	gretl_matrix_divide_by_scalar(sheet->matrix, x);
-	break;
     }
 
     if (err) {
@@ -931,51 +941,44 @@ static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w)
     }
 }
 
-static void matrix_props_callback (gpointer data, guint u, GtkWidget *w)
+static void matrix_props_callback (GtkAction *action, gpointer data)
 {
     Spreadsheet *sheet = (Spreadsheet *) data;
 
     view_matrix_properties(sheet->matrix, sheet->mname);
 }
 
-static void matrix_fill_callback (gpointer data, guint u, GtkWidget *w)
+static void matrix_fill_callback (GtkAction *action, gpointer data)
 {
+    const gchar *s = gtk_action_get_name(action);
     Spreadsheet *sheet = (Spreadsheet *) data;
     gretl_matrix *A = sheet->matrix;
     int mindim;
 
-    switch (u) {
-    case MATRIX_FILL_IDENTITY:
+    if (!strcmp(s, "FillIdentity")) {
 	mindim = (A->rows < A->cols)? A->rows : A->cols;
 	gretl_matrix_inscribe_I(A, 0, 0, mindim);
-	break;
-    case MATRIX_FILL_UNIFORM:
+    } else if (!strcmp(s, "FillUniform")) {
 	gretl_matrix_random_fill(A, D_UNIFORM);
-	break;
-    case MATRIX_FILL_NORMAL:
+    } else if (!strcmp(s, "FillNormal")) {
 	gretl_matrix_random_fill(A, D_NORMAL);
-	break;
     }
 
     update_sheet_from_matrix(sheet);
 }
 
-static void sheet_add_var_callback (gpointer data, guint u, GtkWidget *w)
+static void sheet_add_var_callback (GtkAction *action, gpointer data)
 {
     Spreadsheet *sheet = (Spreadsheet *) data;
 
     name_var_dialog(sheet);
 }
 
-static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w)
+static void sheet_add_obs_direct (Spreadsheet *sheet)
 {
-    Spreadsheet *sheet = (Spreadsheet *) data;
-
-    sheet->point = where;
-
     if (datainfo->markers) {
 	new_case_dialog(sheet);
-    } else if (where == SHEET_AT_END) {
+    } else if (sheet->point == SHEET_AT_END) {
 	int n = add_obs_dialog(NULL, 1);
 
 	if (n > 0) {
@@ -986,19 +989,35 @@ static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w)
     }
 }
 
+static void sheet_add_obs_callback (GtkAction *action, gpointer data)
+{
+    const gchar *s = gtk_action_get_name(action);
+    Spreadsheet *sheet = (Spreadsheet *) data;
+
+    if (!strcmp(s, "AppendObs")) {
+	sheet->point = SHEET_AT_END;
+    } else {
+	sheet->point = SHEET_AT_POINT;
+    }
+
+    sheet_add_obs_direct(sheet);
+}
+
 static void popup_sheet_add_obs (GtkWidget *w, Spreadsheet *sheet)
 {
-    sheet_add_obs_callback(sheet, SHEET_AT_END, NULL);
+    sheet->point = SHEET_AT_END;
+    sheet_add_obs_direct(sheet);
 }
 
 static void popup_sheet_insert_obs (GtkWidget *w, Spreadsheet *sheet)
 {
-    sheet_add_obs_callback(sheet, SHEET_AT_POINT, NULL);
+    sheet->point = SHEET_AT_POINT;
+    sheet_add_obs_direct(sheet);
 }
 
 static void popup_sheet_add_var (GtkWidget *w, Spreadsheet *sheet)
 {
-    sheet_add_var_callback(sheet, 0, NULL);
+    name_var_dialog(sheet);
 }
 
 static void build_sheet_popup (Spreadsheet *sheet)
@@ -1290,15 +1309,15 @@ static void set_ok_transforms (Spreadsheet *sheet)
     int z = gretl_is_zero_matrix(sheet->matrix);
     int s = gretl_matrix_get_structure(sheet->matrix);
 
-    flip(sheet->ifac, "/Transform/Multiply by scalar", !z);
-    flip(sheet->ifac, "/Transform/Divide by scalar", !z);
-    flip(sheet->ifac, "/Transform/X'X", 
+    flip(sheet->ui, "/Transform/Multiply by scalar", !z);
+    flip(sheet->ui, "/Transform/Divide by scalar", !z);
+    flip(sheet->ui, "/Transform/X'X", 
 	 s == 0 || (!z && s != GRETL_MATRIX_IDENTITY));
-    flip(sheet->ifac, "/Transform/Cholesky", 
+    flip(sheet->ui, "/Transform/Cholesky", 
 	 s == GRETL_MATRIX_SYMMETRIC && !z);
-    flip(sheet->ifac, "/Transform/Invert", s > 0 && !z &&
+    flip(sheet->ui, "/Transform/Invert", s > 0 && !z &&
 	 s != GRETL_MATRIX_IDENTITY);
-    flip(sheet->ifac, "/Transform/Transpose", 
+    flip(sheet->ui, "/Transform/Transpose", 
 	 s < GRETL_MATRIX_SYMMETRIC);
 }
 
@@ -2071,7 +2090,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->locator = NULL;
     sheet->entry = NULL;
     sheet->popup = NULL;
-    sheet->ifac = NULL;
+    sheet->ui = NULL;
     sheet->save = NULL;
     sheet->dumbcell = NULL;
     sheet->datacell = NULL;
@@ -2207,11 +2226,11 @@ sheet_adjust_menu_state (Spreadsheet *sheet)
     if (complex_subsampled() || datainfo->t2 < datainfo->n - 1) {
 	sheet->flags &= ~SHEET_ADD_OBS_OK;
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
-	disable_obs_menu(sheet->ifac);
+	disable_obs_menu(sheet->ui);
     } else if ((sheet->flags & SHEET_SHORT_VARLIST) ||
 	       dataset_is_panel(datainfo)) {
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
-	disable_insert_obs_item(sheet->ifac);
+	disable_insert_obs_item(sheet->ui);
     }
 }
 
@@ -2291,6 +2310,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     GtkWidget *tmp, *button_box;
     GtkWidget *scroller, *main_vbox;
     GtkWidget *status_box, *mbar;
+    GtkActionGroup *actions;
     int w, err = 0;
 
     sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -2327,23 +2347,28 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_widget_show(main_vbox);
 
     /* add menu bar */
-    sheet->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
-				       NULL);
+    sheet->ui = gtk_ui_manager_new();
+    actions = gtk_action_group_new("SheetActions");
 #ifdef ENABLE_NLS
-    gtk_item_factory_set_translate_func(sheet->ifac, menu_translate, NULL, NULL);
+    gtk_action_group_set_translation_domain(actions, "gretl");
 #endif
 
     if (sheet->matrix == NULL) {
-	gtk_item_factory_create_items(sheet->ifac, 
-				      sizeof sheet_items / sizeof sheet_items[0],
-				      sheet_items, sheet);
+	gtk_action_group_add_actions(actions, sheet_items, 
+				     sizeof sheet_items / sizeof sheet_items[0],
+				     sheet);
+	gtk_ui_manager_add_ui_from_string(sheet->ui, sheet_ui, -1, NULL);
     } else {
-	gtk_item_factory_create_items(sheet->ifac, 
-				      sizeof matrix_items / sizeof matrix_items[0],
-				      matrix_items, sheet);
+	gtk_action_group_add_actions(actions, matrix_items, 
+				     sizeof matrix_items / sizeof matrix_items[0],
+				     sheet);
+	gtk_ui_manager_add_ui_from_string(sheet->ui, matrix_ui, -1, NULL);
     }
 
-    mbar = gtk_item_factory_get_widget(sheet->ifac, "<main>");
+    gtk_ui_manager_insert_action_group(sheet->ui, actions, 0);
+    g_object_unref(actions);
+
+    mbar = gtk_ui_manager_get_widget(sheet->ui, "/MenuBar");
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, FALSE, 0);
     gtk_widget_show(mbar);
 
@@ -2975,7 +3000,7 @@ static int locked;
 static void set_dataset_locked (gboolean s)
 {
     locked = s;
-    flip(mdata->ifac, "/Sample", !s);
+    flip(mdata->ui, "/MenuBar/Sample", !s);
 }
 
 int dataset_locked (void)

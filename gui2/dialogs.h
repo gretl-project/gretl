@@ -71,7 +71,7 @@ int select_var_from_list_with_opt (const int *list,
 
 int select_var_from_list (const int *list, const char *query);
 
-void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
+void sample_range_dialog (GtkAction *action, gpointer p);
 
 void panel_structure_dialog (DATAINFO *pdinfo);
 
@@ -127,10 +127,12 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
 void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
 
-void data_structure_wizard (gpointer p, guint create, GtkWidget *w);
+void data_structure_dialog (void);
+
+void new_data_structure_dialog (void);
 
 void lmax_dialog (double *lmax, double ymax);
 
-void tex_format_dialog (gpointer p, guint u, GtkWidget *w);
+void tex_format_dialog (void);
 
 #endif /* DIALOGS_H */

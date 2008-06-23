@@ -37,32 +37,32 @@ extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
-static void doubleclick_action (windata_t *win)
+static void doubleclick_action (windata_t *vwin)
 {
-    switch (win->role) {
+    switch (vwin->role) {
     case MAINWIN:
 	display_var();
 	break;
     case TEXTBOOK_DATA:
-	browser_open_data(NULL, win);
+	browser_open_data(NULL, vwin);
 	break;
     case PS_FILES:
-	browser_open_ps(NULL, win);
+	browser_open_ps(NULL, vwin);
 	break;
     case FUNC_FILES:
-	browser_call_func(NULL, win);
+	browser_call_func(NULL, vwin);
 	break;
     case NATIVE_DB:
-	open_db_index(NULL, win); 
+	open_db_index(NULL, vwin); 
 	break;
     case REMOTE_DB:
-	open_remote_db_index(NULL, win);
+	open_remote_db_index(NULL, vwin);
 	break;
     case NATIVE_SERIES:
     case RATS_SERIES:
     case PCGIVE_SERIES:
     case REMOTE_SERIES:
-	gui_get_db_series(win, 0, NULL);
+	db_series_callback(NULL, vwin);
 	break;
     default:
 	break;
@@ -148,8 +148,6 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
     return FALSE;
 }
 
-#if 0 /* not yet */
-
 struct open_data_code {
     int c;
     const gchar *s;
@@ -195,13 +193,15 @@ static int open_data_code (const gchar *s)
     return 0;
 }
 
-#endif
-
-void open_data (gpointer data, guint code, GtkWidget *widget)
+void open_data (GtkAction *action)
 {
+    int code;
+
     if (dataset_locked()) {
 	return;
     }
+
+    code = open_data_code(gtk_action_get_name(action));
 
     switch (code) {
     case OPEN_DATA:
@@ -258,35 +258,37 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     }
 }
 
-void open_script (gpointer data, guint action, GtkWidget *widget)
+void open_script (GtkAction *action)
 {
-    if (action == OPEN_SCRIPT) {
-	file_selector(_("Open script file"), action, FSEL_DATA_NONE, NULL);
-    } else if (action == OPEN_SESSION) {
-	file_selector(_("Open session file"), action, FSEL_DATA_NONE, NULL);
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "OpenScript")) {
+	file_selector(_("Open script file"), OPEN_SCRIPT, FSEL_DATA_NONE, NULL);
+    } else if (!strcmp(s, "OpenSession")) {
+	file_selector(_("Open session file"), OPEN_SESSION, FSEL_DATA_NONE, NULL);
     }
 }
 
-void file_save (windata_t *vwin, guint file_code, GtkWidget *widget)
+void file_save (windata_t *vwin, int ci)
 {
     gretlopt opt = OPT_NONE;
     gpointer p = NULL;
 
-    switch (file_code) {
+    switch (ci) {
     case SAVE_OUTPUT:
-	file_selector(_("Save output file"), SAVE_OUTPUT, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save output file"), ci, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_CONSOLE:
-	file_selector(_("Save console output"), SAVE_CONSOLE, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save console output"), ci, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_SCRIPT:
-	file_selector(_("Save command script"), SAVE_SCRIPT, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save command script"), ci, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_DATA:
     case SAVE_DATA_AS:
     case SAVE_DBDATA:
     case SAVE_FUNCTIONS:	
-	data_save_selection_wrapper(file_code, NULL);
+	data_save_selection_wrapper(ci, NULL);
 	break;
     case EXPORT_CSV:
 	if (delimiter_dialog(&opt)) {
@@ -297,23 +299,53 @@ void file_save (windata_t *vwin, guint file_code, GtkWidget *widget)
     case EXPORT_OCTAVE:
     case EXPORT_DAT:
     case EXPORT_JM:
-	data_save_selection_wrapper(file_code, p);
+	data_save_selection_wrapper(ci, p);
 	break;
     case SAVE_TEX:
-	file_selector(_("Save LaTeX file"), file_code, FSEL_DATA_MISC, vwin->data);
+	file_selector(_("Save LaTeX file"), ci, FSEL_DATA_MISC, vwin->data);
 	break;
     case SAVE_TEXT:
-	file_selector(_("Save text"), file_code, FSEL_DATA_MISC, vwin->data);
+	file_selector(_("Save text"), ci, FSEL_DATA_MISC, vwin->data);
 	break;
     case SAVE_GP_CMDS:
-	file_selector(_("Save gnuplot commands"), file_code, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save gnuplot commands"), ci, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_R_CMDS:
-	file_selector(_("Save R commands"), file_code, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save R commands"), ci, FSEL_DATA_MISC, vwin);
 	break;
     default:
 	dummy_call();
     }
+}
+
+static int fsave_code (const gchar *s)
+{
+    if (!strcmp(s, "SaveAsGdt"))
+	return SAVE_DATA;
+    if (!strcmp(s, "SaveAsDb"))
+	return SAVE_DBDATA;
+    if (!strcmp(s, "ExportCSV"))
+	return EXPORT_CSV;
+    if (!strcmp(s, "ExportR"))
+	return EXPORT_R;
+    if (!strcmp(s, "ExportOctave"))
+	return EXPORT_OCTAVE;
+    if (!strcmp(s, "ExportPcGive"))
+	return EXPORT_DAT;
+    if (!strcmp(s, "ExportJMulTi"))
+	return EXPORT_JM;
+    if (!strcmp(s, "NewGfn"))
+	return SAVE_FUNCTIONS;
+
+    return SAVE_DATA;
+}
+
+void fsave_callback (GtkAction *action, gpointer p)
+{
+    const gchar *s = gtk_action_get_name(action);
+    int ci = fsave_code(s);
+
+    file_save(p, ci);
 }
 
 void dummy_call (void)
@@ -321,7 +353,7 @@ void dummy_call (void)
     errbox(_("Sorry, this item not yet implemented!"));
 }
 
-void print_report (gpointer data, guint unused, GtkWidget *widget)
+void print_report (GtkAction *action)
 {
     PRN *prn;
 
@@ -333,7 +365,7 @@ void print_report (gpointer data, guint unused, GtkWidget *widget)
 		DATA_REPORT, NULL);
 }
 
-void edit_header (gpointer data, guint unused, GtkWidget *widget)
+void edit_header (GtkAction *action)
 {
     if (data_status & BOOK_DATA) {
 	errbox(_("You don't have permission to do this"));
@@ -343,36 +375,91 @@ void edit_header (gpointer data, guint unused, GtkWidget *widget)
     }
 }
 
-void fit_resid_callback (gpointer data, guint code, GtkWidget *widget)
+static int model_action_code (GtkAction *action)
 {
+    const gchar *s = gtk_action_get_name(action);
+    int ci = gretl_command_number(s);
+
+    if (ci == 0) {
+	if (!strcmp(s, "CORC"))
+	    ci = CORC;
+	else if (!strcmp(s, "HILU"))
+	    ci = HILU;
+	else if (!strcmp(s, "PWE"))
+	    ci = PWE;
+	else if (!strcmp(s, "PANEL_WLS"))
+	    ci = PANEL_WLS;
+	else if (!strcmp(s, "PANEL_B"))
+	    ci = PANEL_B;
+	else if (!strcmp(s, "VLAGSEL"))
+	    ci = VLAGSEL;
+    }
+
+    return ci;
+}
+
+void fit_resid_callback (GtkAction *action, gpointer data)
+{
+    const gchar *s = gtk_action_get_name(action);
     windata_t *mydata = (windata_t *) data; 
     MODEL *pmod = mydata->data;
+    int code = GENR_RESID; 
+
+    if (!strcmp(s, "yhat")) {
+	code = GENR_FITTED;
+    } else if (!strcmp(s, "uhat")) {
+	code = GENR_RESID;
+    } else if (!strcmp(s, "uhat2")) {
+	code = GENR_RESID2;
+    } else if (!strcmp(s, "h")) {
+	code = GENR_H;
+    } else if (!strcmp(s, "ahat")) {
+	code = GENR_AHAT;
+    }
 
     add_fit_resid(pmod, code, 0);
 }
 
-void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
+void model_stat_callback (GtkAction *action, gpointer data)
 {
+    const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) data; 
     MODEL *pmod = vwin->data;
+    int code = ESS; 
 
-    add_model_stat(pmod, which);
-}
-
-void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
-{
-    int presel = 0;
-
-    if (widget == NULL && data != NULL) {
-	/* preselected dependent variable */
-	presel = GPOINTER_TO_INT(data);
+    if (!strcmp(s, "ess")) {
+	code = ESS;
+    } else if (!strcmp(s, "se")) {
+	code = SIGMA;
+    } else if (!strcmp(s, "rsq")) {
+	code = R2;
+    } else if (!strcmp(s, "trsq")) {
+	code = TR2;
+    } else if (!strcmp(s, "df")) {
+	code = DF;
+    } else if (!strcmp(s, "lnL")) {
+	code = LNL;
+    } else if (!strcmp(s, "AIC")) {
+	code = AIC;
+    } else if (!strcmp(s, "BIC")) {
+	code = BIC;
+    } else if (!strcmp(s, "HQC")) {
+	code = HQC;
     }
 
-    selection_dialog(_("gretl: specify model"), do_model, model_code,
+    add_model_stat(pmod, code);
+}
+
+void model_callback (GtkAction *action, gpointer data) 
+{
+    int code = model_action_code(action);
+    int presel = 0;   
+
+    selection_dialog(_("gretl: specify model"), do_model, code,
 		     presel);
 }
 
-void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
+void model_genr_callback (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     int cancel = 0;
@@ -383,31 +470,66 @@ void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
 		MODEL_GENR, VARCLICK_INSERT_NAME, &cancel);   
 }
 
-void selector_callback (gpointer data, guint action, GtkWidget *widget)
+static int selector_callback_code (const gchar *s)
 {
+    int ci = gretl_command_number(s);
+
+    if (ci > 0) return ci;
+
+    if (!strcmp(s, "TSPlot"))
+	return GR_PLOT;
+    if (!strcmp(s, "ScatterPlot"))
+	return GR_XY;
+    if (!strcmp(s, "ImpulsePlot"))
+	return GR_IMP;
+    if (!strcmp(s, "FactorPlot"))
+	return GR_DUMMY;
+    if (!strcmp(s, "FrischPlot"))
+	return GR_XYZ;
+    if (!strcmp(s, "ThreeDPlot"))
+	return GR_3D;
+    if (!strcmp(s, "MultiXY"))
+	return SCATTERS;
+    if (!strcmp(s, "MultiTS"))
+	return TSPLOTS;
+    if (!strcmp(s, "VLAGSEL"))
+	return VLAGSEL;
+    if (!strcmp(s, "ConfEllipse"))
+	return ELLIPSE;
+    if (!strcmp(s, "VarOmit"))
+	return VAROMIT;
+
+    return 0;
+}
+
+void selector_callback (GtkAction *action, gpointer data)
+{
+    const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) data;
     char title[64];
+    int ci;
 
-    if (action == ADD || action == OMIT || action == COEFFSUM ||
-	action == ELLIPSE) {
+    ci = selector_callback_code(s);
+
+    if (ci == ADD || ci == OMIT || ci == COEFFSUM || ci == ELLIPSE) {
 	set_window_busy(vwin);
     }
 
     strcpy(title, "gretl: ");
 
-    if (action == COINT || action == COINT2) {
-	selection_dialog(_("gretl: cointegration test"), do_coint, action, 0);
-    } else if (action == VAR || action == VECM) {
-	selection_dialog((action == VAR)? _("gretl: VAR") : _("gretl: VECM"),
-			 do_vector_model, action, 0);
-    } else if (action == VLAGSEL) {
-	selection_dialog(_("gretl: VAR lag selection"), do_vector_model, action, 0);
-    } else if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
-	       || action == SCATTERS || action == GR_3D
-	       || action == GR_XYZ) {
+    if (ci == COINT || ci == COINT2) {
+	selection_dialog(_("gretl: cointegration test"), do_coint, ci, 0);
+    } else if (ci == VAR || ci == VECM) {
+	selection_dialog((ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
+			 do_vector_model, ci, 0);
+    } else if (ci == VLAGSEL) {
+	selection_dialog(_("gretl: VAR lag selection"), do_vector_model, ci, 0);
+    } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY
+	       || ci == SCATTERS || ci == GR_3D
+	       || ci == GR_XYZ) {
 	int (*selfunc)() = NULL;
 
-	switch (action) {
+	switch (ci) {
 	case GR_XY:
 	case GR_IMP:
 	    selfunc = do_graph_from_selector;
@@ -427,37 +549,68 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	default:
 	    return;
 	}
-	selection_dialog(_("gretl: define graph"), selfunc, action, 0);
-    } else if (action == ADD || action == OMIT) {
-	simple_selection(_("gretl: model tests"), do_add_omit, action, vwin);
-    } else if (action == VAROMIT) {
-	simple_selection(_("gretl: model tests"), do_VAR_omit, action, vwin);
-    } else if (action == COEFFSUM) {
-	simple_selection(_("gretl: model tests"), do_coeff_sum, action, vwin);
-    } else if (action == ELLIPSE) {
-	simple_selection(_("gretl: model tests"), do_confidence_region, action, vwin);
-    } else if (action == GR_PLOT) {
-	simple_selection(_("gretl: define graph"), do_graph_from_selector, action, NULL);
-    } else if (action == TSPLOTS) {
-	simple_selection(_("gretl: define graph"), do_scatters, action, vwin);
-    } else if (action == SPEARMAN) {
+	selection_dialog(_("gretl: define graph"), selfunc, ci, 0);
+    } else if (ci == ADD || ci == OMIT) {
+	simple_selection(_("gretl: model tests"), do_add_omit, ci, vwin);
+    } else if (ci == VAROMIT) {
+	simple_selection(_("gretl: model tests"), do_VAR_omit, ci, vwin);
+    } else if (ci == COEFFSUM) {
+	simple_selection(_("gretl: model tests"), do_coeff_sum, ci, vwin);
+    } else if (ci == ELLIPSE) {
+	simple_selection(_("gretl: model tests"), do_confidence_region, ci, vwin);
+    } else if (ci == GR_PLOT) {
+	simple_selection(_("gretl: define graph"), do_graph_from_selector, ci, NULL);
+    } else if (ci == TSPLOTS) {
+	simple_selection(_("gretl: define graph"), do_scatters, ci, vwin);
+    } else if (ci == SPEARMAN) {
 	strcat(title, _("rank correlation"));
-	simple_selection(title, do_rankcorr, action, vwin);
+	simple_selection(title, do_rankcorr, ci, vwin);
     } else {
 	errbox("selector_callback: code was not recognized");
     }
 }
 
-void gretl_callback (gpointer data, guint action, GtkWidget *widget)
+static int gretl_callback_code (const gchar *s)
+{
+    if (!strcmp(s, "SampleRestrict")) 
+	return SMPLBOOL;
+    if (!strcmp(s, "GENR")) 
+	return GENR;
+    if (!strcmp(s, "VSETMISSV")) 
+	return VSETMISS;
+    if (!strcmp(s, "GSETMISS")) 
+	return GSETMISS;
+    if (!strcmp(s, "GR_BOX")) 
+	return GR_BOX;
+    if (!strcmp(s, "GR_NBOX")) 
+	return GR_NBOX;
+    if (!strcmp(s, "gmm")) 
+	return GMM;
+    if (!strcmp(s, "mle")) 
+	return MLE;
+    if (!strcmp(s, "nls")) 
+	return NLS;
+    if (!strcmp(s, "system")) 
+	return SYSTEM;
+    if (!strcmp(s, "restrict")) 
+	return RESTRICT;
+    if (!strcmp(s, "MINIBUF")) 
+	return MINIBUF;
+    return 0;
+}
+
+void gretl_callback (GtkAction *action, gpointer data)
 {
     const char *title = NULL;
     const char *query = NULL;
     const char *defstr = NULL;
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
-    int cancel = 0;
+    int cmd, cancel = 0;
 
-    switch (action) {
+    cmd = gretl_callback_code(gtk_action_get_name(action));
+
+    switch (cmd) {
     case SMPLBOOL:
 	title = N_("gretl: restrict sample");
 	query = N_("Enter boolean condition for selecting cases:");
@@ -529,7 +682,24 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     }
 
     edit_dialog(_(title), _(query), defstr, okfunc, data, 
-		action, varclick, &cancel);   
+		cmd, varclick, &cancel);   
+}
+
+void genr_callback (void)
+{
+    edit_dialog(_("gretl: add var"), 
+		_("Enter formula for new variable\n"
+		  "(or just a name, to enter data manually)"),
+		NULL, do_genr, NULL, 
+		GENR, VARCLICK_INSERT_NAME, NULL);   
+}
+
+void minibuf_callback (void)
+{
+    edit_dialog(_("gretl: command entry"),
+		_("Type a command:"),
+		NULL, do_minibuf, NULL, 
+		MINIBUF, VARCLICK_NONE, NULL);   
 }
 
 void file_save_callback (GtkWidget *w, windata_t *vwin)
@@ -576,10 +746,10 @@ void file_save_callback (GtkWidget *w, windata_t *vwin)
 	}
     }
 
-    file_save(vwin, u, w);
+    file_save(vwin, u);
 }
 
-void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 
+void newdata_callback (void) 
 {
     int resp, n = 50;
 
@@ -601,10 +771,10 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
 	return;
     }
 
-    data_structure_wizard(NULL, 1, NULL);
+    new_data_structure_dialog();
 }
 
-void xcorrgm_callback (gpointer p, guint v, GtkWidget *w)
+void xcorrgm_callback (void)
 {
     if (mdata_selection_count() == 2) {
 	do_xcorrgm(NULL);
@@ -617,7 +787,19 @@ void xcorrgm_callback (gpointer p, guint v, GtkWidget *w)
     }
 }
 
-void do_nistcheck (gpointer p, guint v, GtkWidget *w)
+static int nist_verbosity (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "NistVVerbose")) 
+	return 2;
+    else if (!strcmp(s, "NistVerbose")) 
+	return 1;
+    else 
+	return 0;
+}
+
+void do_nistcheck (GtkAction *action)
 {
     void *handle;
     int (*run_nist_tests)(const char *, const char *, int);
@@ -633,7 +815,7 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
     datadir = g_strdup_printf("%sdata%s", paths.gretldir, SLASHSTR);
     fname = g_strdup_printf("%snist.out", paths.dotdir);
 
-    (*run_nist_tests)(datadir, fname, (int) v);
+    (*run_nist_tests)(datadir, fname, nist_verbosity(action));
 
     close_plugin(handle);
 

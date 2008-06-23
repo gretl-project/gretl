@@ -496,14 +496,23 @@ void add_pca_data (windata_t *vwin)
     }
 }
 
-void VECM_add_EC_data (gpointer p, int j, GtkWidget *w)
+static void EC_num_from_action (GtkAction *action, int *j)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    sscanf(s, "%*s %d", j);
+}
+
+void VECM_add_EC_data (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     double *x = NULL;
     char vname[VNAMELEN];
     int id = gretl_VECM_id(var);
-    int v, t, err = 0;
+    int j, v, t, err = 0;
+
+    EC_num_from_action(action, &j);
 
     x = gretl_VECM_get_EC(var, j, (const double **) Z, 
 			  datainfo, &err);
@@ -606,7 +615,7 @@ static const char *selected_varname (void)
     return datainfo->varname[mdata_active_var()];
 }
 
-static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
+void do_menu_op (int ci, const char *liststr, gretlopt opt)
 {
     PRN *prn;
     char title[48];
@@ -616,7 +625,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 
     strcpy(title, "gretl: ");
 
-    switch (action) {
+    switch (ci) {
     case CORR:
 	gretl_command_sprintf("corr%s", liststr, print_flags(opt, CORR));
 	strcat(title, _("correlation matrix"));
@@ -624,7 +633,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
     case ALL_CORR:
 	gretl_command_strcpy("corr");
 	strcat(title, _("correlation matrix"));
-	action = CORR;
+	ci = CORR;
 	break;
     case PCA:
 	gretl_command_sprintf("pca%s", liststr, print_flags(opt, PCA));
@@ -647,13 +656,13 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
     case ALL_SUMMARY:
 	gretl_command_strcpy("summary");
 	strcat(title, _("summary statistics"));
-	action = SUMMARY;
+	ci = SUMMARY;
 	break;
     case VAR_SUMMARY:
 	gretl_command_sprintf("summary %s", selected_varname());
 	strcat(title, _("summary stats: "));
 	strcat(title, selected_varname());
-	action = SUMMARY;
+	ci = SUMMARY;
 	vsize = 300;
 	break;
     case NORMTEST:
@@ -669,14 +678,14 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	return;
     }
 
-    switch (action) {
+    switch (ci) {
 
     case CORR:
     case PCA:
 	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
-		       (action == PCA)? (opt | OPT_U) : opt, &err);
+		       (ci == PCA)? (opt | OPT_U) : opt, &err);
 	if (!err) {
-	    if (action == CORR) {
+	    if (ci == CORR) {
 		print_corrmat(obj, datainfo, prn);
 	    } else {
 		err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
@@ -692,7 +701,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	} else {
 	    err = crosstab(libcmd.list, (const double **) Z, datainfo,
 			   opt, prn);
-	    action = PRINT;
+	    ci = PRINT;
 	}
 	break;
 
@@ -716,7 +725,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	err = gretl_normality_test(selected_varname(),
 				   (const double **) Z, datainfo, 
 				   OPT_A, prn);
-	action = PRINT;
+	ci = PRINT;
 	break;
     }
 
@@ -724,41 +733,57 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, hsize, vsize, title, action, obj);
+	view_buffer(prn, hsize, vsize, title, ci, obj);
     }
 }
 
 static int menu_op_wrapper (selector *sr)
 {
     const char *buf = selector_list(sr);
-    int action = selector_code(sr);
+    int ci = selector_code(sr);
     gretlopt opt = selector_get_opts(sr);
 
     if (buf == NULL) {
 	return 1;
     } else {
-	real_do_menu_op(action, buf, opt);
+	do_menu_op(ci, buf, opt);
 	return 0;
     }
 }
 
-void do_menu_op (gpointer p, guint action, GtkWidget *w)
+static int menu_op_ci (GtkAction *action)
 {
-    if (action == VAR_SUMMARY || action == NORMTEST) {
+    const char *s = gtk_action_get_name(action);
+    int ci = gretl_command_number(s);
+
+    if (ci == 0) {
+	if (!strcmp(s, "VarSummary")) {
+	    ci = VAR_SUMMARY;
+	}
+    }
+
+    return ci;
+}
+
+void menu_op_action (GtkAction *action, gpointer p)
+{
+    int ci = menu_op_ci(action);
+
+    if (ci == VAR_SUMMARY || ci == NORMTEST) {
 	/* single-variable action */
-	real_do_menu_op(action, NULL, OPT_NONE);
-    } else if (action == SUMMARY || action == MAHAL) {
+	do_menu_op(ci, NULL, OPT_NONE);
+    } else if (ci == SUMMARY || ci == MAHAL) {
 	char *buf = main_window_selection_as_string();
 
 	if (buf != NULL) {
-	    real_do_menu_op(action, buf, OPT_NONE);
+	    do_menu_op(ci, buf, OPT_NONE);
 	    free(buf);
 	} 
     } else {
 	gchar *title;
 
-	title = g_strdup_printf("gretl: %s", gretl_command_word(action));
-	simple_selection(title, menu_op_wrapper, action, NULL);
+	title = g_strdup_printf("gretl: %s", gretl_command_word(ci));
+	simple_selection(title, menu_op_wrapper, ci, NULL);
 	g_free(title);
     } 
 }
@@ -841,7 +866,7 @@ static int ok_obs_in_series (int varno)
     return t2 - t1 + 1;
 }
 
-void unit_root_test (gpointer p, guint action, GtkWidget *w)
+void unit_root_test (int ci)
 {
     PRN *prn;
     const char *adf_opts[] = {
@@ -893,13 +918,13 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
     okT = ok_obs_in_series(v);
     omax = okT / 2;
 
-    if (action == ADF) {
+    if (ci == ADF) {
 	title = adf_title;
 	spintext = adf_spintext;
 	opts = adf_opts;
 	nchecks = 7;
 	active = adf_active;
-    } else if (action == DFGLS) {
+    } else if (ci == DFGLS) {
 	title = dfgls_title;
 	spintext = adf_spintext;
 	opts = dfgls_opts;
@@ -918,19 +943,19 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	order = omax;
     }  
 
-    if (action == ADF && datainfo->pd == 1) {
+    if (ci == ADF && datainfo->pd == 1) {
 	adf_active[4] = -1;
     }
 
     err = checks_dialog(_(title), NULL, opts, nchecks, active,
 			2, &difference,
 			&order, _(spintext),
-			0, omax, action);
+			0, omax, ci);
     if (err < 0) {
 	return;
     }
 
-    if (action == ADF) {
+    if (ci == ADF) {
 	if (active[0] == 0 &&
 	    active[1] == 0 &&
 	    active[2] == 0 &&
@@ -939,10 +964,10 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	}
     }
 
-    gretl_command_sprintf("%s %d %s", (action == KPSS)? "kpss" : "adf", order, 
+    gretl_command_sprintf("%s %d %s", (ci == KPSS)? "kpss" : "adf", order, 
 			  selected_varname());
 
-    if (action == ADF) {
+    if (ci == ADF) {
 	if (active[0]) gretl_command_strcat(" --nc");
 	if (active[1]) gretl_command_strcat(" --c");
 	if (active[2]) gretl_command_strcat(" --ct");
@@ -950,7 +975,7 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	if (active[4] > 0) gretl_command_strcat(" --seasonals");
 	if (active[5]) gretl_command_strcat(" --verbose");
 	if (active[6]) gretl_command_strcat(" --test-down");
-    } else if (action == DFGLS) {
+    } else if (ci == DFGLS) {
 	if (active[0]) gretl_command_strcat(" --ct --gls");
 	else gretl_command_strcat(" --c --gls");
     } else {
@@ -966,7 +991,7 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	return;
     }
 
-    if (action == ADF || action == DFGLS) {
+    if (ci == ADF || ci == DFGLS) {
 	err = adf_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
     } else {
 	err = kpss_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
@@ -976,8 +1001,24 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 78, 350, title, action, NULL);
+	view_buffer(prn, 78, 350, title, ci, NULL);
     }    
+}
+
+static int ur_code (const gchar *s)
+{
+    if (!strcmp(s, "DFGLS")) 
+	return DFGLS;
+    if (!strcmp(s, "KPSS")) 
+	return KPSS;
+    return ADF;
+}
+
+void ur_callback (GtkAction *action)
+{
+    int ci = ur_code(gtk_action_get_name(action));
+
+    unit_root_test(ci);
 }
 
 int do_rankcorr (selector *sr)
@@ -1084,14 +1125,14 @@ int do_xcorrgm (selector *sr)
     return err;
 }
 
-void open_info (gpointer p, guint edit, GtkWidget *w)
+void open_info (void)
 {
     if (datainfo->descrip == NULL) {
 	if (yes_no_dialog(_("gretl: add info"), 
 			  _("The data file contains no informative comments.\n"
 			    "Would you like to add some now?"), 
 			  0) == GRETL_YES) {
-	    edit_header(NULL, 0, NULL);
+	    edit_header(NULL);
 	}
     } else {
 	char *buf = g_strdup(datainfo->descrip);
@@ -1166,7 +1207,7 @@ int bool_subsample (gretlopt opt)
     return err;
 }
 
-void drop_all_missing (gpointer p, guint opt, GtkWidget *w)
+void drop_all_missing (void)
 {
     int err = bool_subsample(OPT_M);
 
@@ -1236,7 +1277,7 @@ void do_add_markers (const char *fname)
     }
 }
 
-void do_remove_markers (gpointer p, guint u, GtkWidget *w) 
+void do_remove_markers (void) 
 {
     dataset_destroy_obs_markers(datainfo);
     mark_dataset_as_modified();
@@ -1277,7 +1318,7 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-void gui_do_forecast (gpointer p, guint u, GtkWidget *w) 
+void gui_do_forecast (GtkAction *action, gpointer p) 
 {
     static gretlopt gopt = OPT_P;
     windata_t *vwin = (windata_t *) p;
@@ -1399,7 +1440,7 @@ void gui_do_forecast (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void do_bootstrap (gpointer p, guint u, GtkWidget *w) 
+void do_bootstrap (GtkAction *action, gpointer p) 
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -1679,12 +1720,37 @@ static void update_model_tests (windata_t *vwin)
     }
 }
 
-void do_lmtest (gpointer p, guint action, GtkWidget *w)
+static gretlopt lmtest_get_opt (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (strchr(s, ':')) {
+	char c, word[9];
+
+	sscanf(s, "%8[^:]:%c", word, &c);
+	return opt_from_flag((unsigned char) c);
+    } else if (!strcmp(s, "White")) {
+	return OPT_W;
+    } else if (!strcmp(s, "WhiteSquares")) {
+	return OPT_X;
+    } else if (!strcmp(s, "BreuschPagan")) {
+	return OPT_B;
+    } else if (!strcmp(s, "Koenker")) {
+	return (OPT_B | OPT_R);
+    } else if (!strcmp(s, "Groupwise")) {
+	return OPT_P;
+    } else {
+	return OPT_NONE;
+    }
+}
+
+void do_lmtest (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     PRN *prn;
     char title[64];
+    gretlopt opt = OPT_NONE;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -1693,9 +1759,11 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
 
     if (bufopen(&prn)) return;
 
+    opt = lmtest_get_opt(action);
+
     strcpy(title, _("gretl: LM test "));
 
-    if (action == LMTEST_WHITE) {
+    if (opt == OPT_W) {
 	gretl_command_strcpy("lmtest --white");
 	err = whites_test(pmod, &Z, datainfo, OPT_S, prn);
 	if (err) {
@@ -1704,7 +1772,7 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
 	}
-    } else if (action == LMTEST_WHITE_NOX) {
+    } else if (opt == OPT_X) {
 	gretl_command_strcpy("lmtest --white-nocross");
 	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_X, prn);
 	if (err) {
@@ -1713,25 +1781,20 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
 	}
-    } else if (action == LMTEST_BP) {
-	gretl_command_strcpy("lmtest --breusch-pagan");
-	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_B, prn);
+    } else if (opt & OPT_B) {
+	if (opt & OPT_R) {
+	    gretl_command_strcpy("lmtest --breusch-pagan --robust");
+	} else {
+	    gretl_command_strcpy("lmtest --breusch-pagan");
+	}
+	err = whites_test(pmod, &Z, datainfo, opt | OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
 	}
-    } else if (action == LMTEST_BPK) {
-	gretl_command_strcpy("lmtest --breusch-pagan --robust");
-	err = whites_test(pmod, &Z, datainfo, OPT_S | OPT_B | OPT_R, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    strcat(title, _("(heteroskedasticity)"));
-	}
-    } else if (action == LMTEST_GROUPWISE) {
+    } else if (opt == OPT_P) {
 	gretl_command_strcpy("lmtest --panel");
 	err = groupwise_hetero_test(pmod, &Z, datainfo, prn);
 	if (err) {
@@ -1740,10 +1803,10 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
 	} else {
 	    strcpy(title, _("gretl: groupwise heteroskedasticity"));
 	}
-    } else {
-	int aux = (action == LMTEST_SQUARES)? AUX_SQ : AUX_LOG;
+    } else if (opt & (OPT_S | OPT_L)) {
+	int aux = (opt == OPT_S)? AUX_SQ : AUX_LOG;
 
-	if (action == LMTEST_SQUARES) { 
+	if (opt == OPT_S) { 
 	    gretl_command_strcpy("lmtest --squares");
 	} else {
 	    gretl_command_strcpy("lmtest --logs");
@@ -1765,7 +1828,7 @@ void do_lmtest (gpointer p, guint action, GtkWidget *w)
     }
 }
 
-void do_panel_diagnostics (gpointer p, guint u, GtkWidget *w)
+void do_panel_tests (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -1842,7 +1905,7 @@ void add_leverage_data (windata_t *vwin)
     }
 }
 
-void do_leverage (gpointer p, guint u, GtkWidget *w)
+void do_leverage (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -1888,7 +1951,7 @@ void do_leverage (gpointer p, guint u, GtkWidget *w)
     } 
 }
 
-void do_vif (gpointer p, guint u, GtkWidget *w)
+void do_vif (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -1923,7 +1986,7 @@ void do_vif (gpointer p, guint u, GtkWidget *w)
     } 
 }
 
-static int reject_scalar (int vnum)
+int reject_scalar (int vnum)
 {
     if (var_is_scalar(datainfo, vnum)) {
 	errbox(_("variable %s is a scalar"), datainfo->varname[vnum]);
@@ -1933,7 +1996,7 @@ static int reject_scalar (int vnum)
     return 0;
 }
 
-void do_gini (gpointer p, guint u, GtkWidget *w)
+void do_gini (void)
 {
     gretlopt opt = OPT_NONE;
     PRN *prn;
@@ -1962,7 +2025,7 @@ void do_gini (gpointer p, guint u, GtkWidget *w)
     } 
 }
 
-void do_kernel (gpointer p, guint u, GtkWidget *w)
+void do_kernel (void)
 {
     void *handle;
     int (*kernel_density) (int, const double **, const DATAINFO *,
@@ -2002,12 +2065,28 @@ void do_kernel (gpointer p, guint u, GtkWidget *w)
     } 
 }
 
-void do_chow_cusum (gpointer p, guint action, GtkWidget *w)
+static int chow_cusum_ci (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "chow")) 
+	return CHOW;
+    else if (!strcmp(s, "qlrtest")) 
+	return QLRTEST;
+    else if (!strcmp(s, "cusum")) 
+	return CUSUM;
+    else if (!strcmp(s, "cusum:r")) 
+	return CUSUMSQ;
+    else
+	return CHOW;
+}
+
+void do_chow_cusum (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    int err = 0;
+    int ci, err = 0;
 
     if (pmod->ci != OLS) {
 	errbox(_("This test only implemented for OLS models"));
@@ -2018,7 +2097,9 @@ void do_chow_cusum (gpointer p, guint action, GtkWidget *w)
 	return;
     }
 
-    if (action == CHOW) {
+    ci = chow_cusum_ci(action);
+
+    if (ci == CHOW) {
 	char brkstr[OBSLEN];
 	int resp, brk = (pmod->t2 - pmod->t1) / 2;
 
@@ -2036,11 +2117,11 @@ void do_chow_cusum (gpointer p, guint action, GtkWidget *w)
 
 	ntodate(brkstr, brk, datainfo);
 	gretl_command_sprintf("chow %s", brkstr);
-    } else if (action == QLRTEST) {
+    } else if (ci == QLRTEST) {
 	gretl_command_strcpy("qlrtest");
-    } else if (action == CUSUM) {
+    } else if (ci == CUSUM) {
 	gretl_command_strcpy("cusum");
-    } else if (action == CUSUMSQ) {
+    } else if (ci == CUSUMSQ) {
 	gretl_command_strcpy("cusum --squares");
     }
 
@@ -2048,12 +2129,12 @@ void do_chow_cusum (gpointer p, guint action, GtkWidget *w)
 	return;
     }
 
-    if (action == CHOW || action == QLRTEST) {
+    if (ci == CHOW || ci == QLRTEST) {
 	err = chow_test(cmdline, pmod, &Z, datainfo, OPT_S, prn);
     } else {
 	gretlopt qopt = OPT_S;
 
-	if (action == CUSUMSQ) {
+	if (ci == CUSUMSQ) {
 	    qopt |= OPT_R;
 	}
 	err = cusum_test(pmod, &Z, datainfo, qopt, prn);
@@ -2063,25 +2144,25 @@ void do_chow_cusum (gpointer p, guint action, GtkWidget *w)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	if (action == CUSUM || action == CUSUMSQ || action == QLRTEST) {
+	if (ci == CUSUM || ci == CUSUMSQ || ci == QLRTEST) {
 	    register_graph();
 	}
 
 	update_model_tests(vwin);
 	model_command_init(pmod->ID);
 
-	view_buffer(prn, 78, 400, (action == CHOW)?
+	view_buffer(prn, 78, 400, (ci == CHOW)?
 		    _("gretl: Chow test output") : 
-		    (action == QLRTEST)?
+		    (ci == QLRTEST)?
 		    _("gretl: QLR test output") : 
-		    (action == CUSUM)?
+		    (ci == CUSUM)?
 		    _("gretl: CUSUM test output") :
 		    _("gretl: CUSUMSQ test output"),
-		    action, NULL);
+		    ci, NULL);
     }
 }
 
-void do_reset (gpointer p, guint u, GtkWidget *w)
+void do_reset (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -2146,7 +2227,7 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void do_autocorr (gpointer p, guint u, GtkWidget *w)
+void do_autocorr (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -2194,7 +2275,7 @@ void do_autocorr (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void do_arch (gpointer p, guint u, GtkWidget *w)
+void do_arch (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -3537,7 +3618,7 @@ static void normal_test (MODEL *pmod, FreqDist *freq)
     }
 }
 
-void do_resid_freq (gpointer p, guint action, GtkWidget *w)
+void do_resid_freq (GtkAction *action, gpointer p)
 {
     FreqDist *freq;
     PRN *prn;
@@ -3614,7 +3695,7 @@ series_has_negative_vals (const double *x)
     return 0;
 }
 
-void do_freq_dist (gpointer p, guint plot, GtkWidget *w)
+void do_freq_dist (int plot)
 {
     FreqDist *freq = NULL;
     gretlopt opt = OPT_NONE;
@@ -3627,8 +3708,7 @@ void do_freq_dist (gpointer p, guint plot, GtkWidget *w)
     int nbins = 0;
     int err = 0;
 
-    if (var_is_scalar(datainfo, v)) {
-	errbox(_("This variable is a scalar"));
+    if (reject_scalar(v)) {
 	return;
     }
 
@@ -3733,9 +3813,16 @@ void do_freq_dist (gpointer p, guint plot, GtkWidget *w)
     free_freq(freq);
 }
 
+void freq_callback (GtkAction *action)
+{
+    int plot = (strstr(gtk_action_get_name(action), "Plot") != NULL);
+
+    do_freq_dist(plot);
+}
+
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
-void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
+void do_tramo_x12a (GtkAction *action, gpointer p)
 {
     gint err;
     int v = mdata_active_var();
@@ -3749,6 +3836,17 @@ void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
     char fname[MAXLEN] = {0};
     char errtext[MAXLEN];
     char *prog = NULL, *workdir = NULL;
+    const gchar *code;
+    int opt;
+
+    code = gtk_action_get_name(action);
+    if (!strcmp(code, "Tramo")) {
+	opt = TRAMO;
+    } else {
+	opt = X12A;
+    }
+
+    code = gtk_action_get_name(action);
 
     if (opt == TRAMO) {
 #ifdef HAVE_TRAMO
@@ -3827,7 +3925,7 @@ void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
 
 #endif /* HAVE_TRAMO || HAVE_X12A */
 
-void do_range_mean (gpointer p, guint opt, GtkWidget *w)
+void do_range_mean (void)
 {
     gint err;
     int v = mdata_active_var();
@@ -3864,7 +3962,7 @@ void do_range_mean (gpointer p, guint opt, GtkWidget *w)
 		NULL);
 }
 
-void do_hurst (gpointer p, guint opt, GtkWidget *w)
+void do_hurst (void)
 {
     gint err;
     int v = mdata_active_var();
@@ -3950,12 +4048,12 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
     view_buffer(prn, 78, 360, title, CORRGM, NULL);
 }
 
-void do_corrgm (gpointer p, guint u, GtkWidget *w)
+void do_corrgm (void)
 {
     real_do_corrgm(&Z, datainfo, SELECTED_VAR);
 }
 
-void residual_correlogram (gpointer p, guint u, GtkWidget *w)
+void residual_correlogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -3967,7 +4065,9 @@ void residual_correlogram (gpointer p, guint u, GtkWidget *w)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, GENR_RESID, 1)) return;
+    if (add_fit_resid(pmod, GENR_RESID, 1)) {
+	return;
+    }
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {
@@ -3980,7 +4080,7 @@ void residual_correlogram (gpointer p, guint u, GtkWidget *w)
 
     real_do_corrgm(gZ, ginfo, MODEL_VAR);
 
-    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);    
+    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo); 
 }
 
 static void 
@@ -4040,12 +4140,20 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
     view_buffer(prn, 60, 400, title, PERGM, NULL);
 }
 
-void do_pergm (gpointer p, guint u, GtkWidget *w)
+void do_pergm (GtkAction *action)
 {
-    real_do_pergm(u, Z, datainfo, SELECTED_VAR);
+    int bartlett = 1;
+
+    if (action != NULL) {
+	const gchar *s = gtk_action_get_name(action);
+    
+	bartlett = (strcmp(s, "Bartlett") == 0);
+    }
+    
+    real_do_pergm(bartlett, Z, datainfo, SELECTED_VAR);
 }
 
-void residual_periodogram (gpointer p, guint u, GtkWidget *w)
+void residual_periodogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -4073,7 +4181,7 @@ void residual_periodogram (gpointer p, guint u, GtkWidget *w)
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo); 
 }
 
-void do_coeff_intervals (gpointer p, guint u, GtkWidget *w)
+void do_coeff_intervals (GtkAction *action, gpointer p)
 {
     PRN *prn;
     windata_t *vwin = (windata_t *) p;
@@ -4092,7 +4200,7 @@ void do_coeff_intervals (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void do_outcovmx (gpointer p, guint u, GtkWidget *w)
+void do_outcovmx (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -4117,7 +4225,7 @@ void do_outcovmx (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void do_anova (gpointer p, guint u, GtkWidget *w)
+void do_anova (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -4137,9 +4245,24 @@ void do_anova (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void add_dummies (gpointer p, guint u, GtkWidget *w)
+static int dummies_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "PeriodDums"))
+	return TS_DUMMIES;
+    else if (!strcmp(s, "UnitDums"))
+	return PANEL_UNIT_DUMMIES;
+    else if (!strcmp(s, "TimeDums"))
+	return PANEL_TIME_DUMMIES;
+    else
+	return 0;
+}
+
+void add_dummies (GtkAction *action)
 {
     gretlopt opt = OPT_NONE;
+    int u = dummies_code(action);
     gint err;
 
     if (u == TS_DUMMIES) {
@@ -4174,8 +4297,11 @@ void add_dummies (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void add_index (gpointer p, guint tm, GtkWidget *w)
+void add_index (GtkAction *action)
 {
+    const gchar *s = gtk_action_get_name(action);
+    int tm = !strcmp(s, "AddTime");
+
     gretl_command_strcpy((tm)? "genr time" : "genr index");
 
     if (check_and_record_command()) {
@@ -4190,7 +4316,7 @@ void add_index (gpointer p, guint tm, GtkWidget *w)
     }
 }
 
-void do_add_obs (gpointer p, guint u, GtkWidget *w)
+void do_add_obs (void)
 {
     int n = add_obs_dialog(NULL, 1);
     int err = 0;
@@ -4205,7 +4331,7 @@ void do_add_obs (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void do_remove_obs (gpointer p, guint u, GtkWidget *w)
+void do_remove_obs (void)
 {
     int drop = 0;
 
@@ -4259,10 +4385,32 @@ static int dummify_dialog (gretlopt *opt)
     return ret;
 }
 
-void add_logs_etc (gpointer p, guint action, GtkWidget *w)
+static int logs_etc_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "LOGS")) 
+	return LOGS;
+    else if (!strcmp(s, "SQUARE")) 
+	return SQUARE;
+    else if (!strcmp(s, "LAGS")) 
+	return LAGS;
+    else if (!strcmp(s, "DIFF")) 
+	return DIFF;
+    else if (!strcmp(s, "LDIFF")) 
+	return LDIFF;
+    else if (!strcmp(s, "SDIFF")) 
+	return SDIFF;
+    else if (!strcmp(s, "DUMMIFY")) 
+	return DUMMIFY;
+    else
+	return LOGS;
+}
+
+void add_logs_etc (GtkAction *action)
 {
     char *liststr;
-    int order = 0;
+    int ci, order = 0;
     int err = 0;
 
     liststr = main_window_selection_as_string();
@@ -4270,7 +4418,9 @@ void add_logs_etc (gpointer p, guint action, GtkWidget *w)
 	return;
     }
 
-    if (action == LAGS) {
+    ci = logs_etc_code(action);
+
+    if (ci == LAGS) {
 	int resp;
 
 	order = default_lag_order(datainfo);
@@ -4286,7 +4436,7 @@ void add_logs_etc (gpointer p, guint action, GtkWidget *w)
 	} else {
 	    gretl_command_sprintf("lags%s", liststr);
 	}
-    } else if (action == DUMMIFY) {
+    } else if (ci == DUMMIFY) {
 	int *list = gretl_list_from_string(liststr);
 	gretlopt opt = OPT_NONE;
 	int i, resp, quit = 0;
@@ -4314,9 +4464,9 @@ void add_logs_etc (gpointer p, guint action, GtkWidget *w)
 	    return;
 	}
 	    
-	gretl_command_sprintf("dummify%s%s", liststr, print_flags(opt, action));
+	gretl_command_sprintf("dummify%s%s", liststr, print_flags(opt, ci));
     } else {
-	gretl_command_sprintf("%s%s", gretl_command_word(action), liststr);
+	gretl_command_sprintf("%s%s", gretl_command_word(ci), liststr);
     }
 
     free(liststr);
@@ -4325,15 +4475,15 @@ void add_logs_etc (gpointer p, guint action, GtkWidget *w)
 	return;
     }
 
-    if (action == LAGS) {
+    if (ci == LAGS) {
 	err = list_laggenr(&libcmd.list, order, &Z, datainfo);
-    } else if (action == LOGS) {
+    } else if (ci == LOGS) {
 	err = list_loggenr(libcmd.list, &Z, datainfo);
-    } else if (action == SQUARE) {
+    } else if (ci == SQUARE) {
 	err = list_xpxgenr(&libcmd.list, &Z, datainfo, OPT_NONE);
-    } else if (action == DIFF || action == LDIFF || action == SDIFF) {
-	err = list_diffgenr(libcmd.list, action, &Z, datainfo);
-    } else if (action == DUMMIFY) {
+    } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
+	err = list_diffgenr(libcmd.list, ci, &Z, datainfo);
+    } else if (ci == DUMMIFY) {
 	err = list_dumgenr(&libcmd.list, &Z, datainfo, libcmd.opt);
     }
 
@@ -4405,11 +4555,13 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     return 0;
 }
 
-void add_system_resid (gpointer p, int eqnum, GtkWidget *w)
+void add_system_resid (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
-    int ci = vwin->role;
+    int eqnum, ci = vwin->role;
     int err, v;
+
+    eqnum = atoi(gtk_action_get_name(action));
 
     if (ci == VAR || ci == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
@@ -4543,7 +4695,14 @@ void add_model_stat (MODEL *pmod, int which)
        as "modified" here. (FIXME saving scalars?) */
 }
 
-void resid_plot (gpointer p, guint xvar, GtkWidget *w)
+static void xvar_from_action (GtkAction *action, int *xvar)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    sscanf(s, "xvar %d", xvar);
+}
+
+void resid_plot (GtkAction *action, gpointer p)
 {
     gretlopt opt = OPT_NONE;
     int plotlist[4];
@@ -4551,6 +4710,7 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
+    int xvar = 0;
     int yno, uhatno;
     double ***gZ;
     DATAINFO *ginfo;
@@ -4565,6 +4725,11 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 	}
 	return;
     }
+
+    xvar_from_action(action, &xvar);
+
+    fprintf(stderr, "resid_plot: xvar = %d, vwin = %p, pdum = %d\n",
+	    xvar, (void *) vwin, pdum);
 
     origv = (pmod->dataset != NULL)? 
 	pmod->dataset->dinfo->v : datainfo->v;
@@ -4607,7 +4772,7 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 	/* plot against obs index or time */
 	opt |= OPT_T;
 	if (ts) {
-	    opt |= OPT_O; /* user lines */
+	    opt |= OPT_O; /* use lines */
 	}
     } 
 
@@ -4630,13 +4795,14 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
 }
 
-void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
+void fit_actual_plot (GtkAction *action, gpointer p)
 {
     gretlopt opt = OPT_G | OPT_F;
     int plotlist[4];
     int err, origv;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
+    int xvar = 0;
     double ***gZ;
     DATAINFO *ginfo;
     char *formula;
@@ -4649,6 +4815,8 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 	gZ = &Z;
 	ginfo = datainfo;
     }
+
+    xvar_from_action(action, &xvar);
 
     formula = gretl_model_get_fitted_formula(pmod, xvar, (const double **) *gZ,
 					     ginfo);
@@ -4710,7 +4878,7 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
 }
 
-void fit_actual_splot (gpointer p, guint u, GtkWidget *w)
+void fit_actual_splot (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -4752,7 +4920,7 @@ void fit_actual_splot (gpointer p, guint u, GtkWidget *w)
 
 #define MAXDISPLAY 8192
 
-void display_selected (gpointer p, guint action, GtkWidget *w)
+void display_selected (void)
 {
     int n = datainfo->t2 - datainfo->t1 + 1;
     PRN *prn = NULL;
@@ -4800,7 +4968,7 @@ void display_selected (gpointer p, guint action, GtkWidget *w)
     free(list);
 }
 
-void display_fit_resid (gpointer p, guint code, GtkWidget *w)
+void display_fit_resid (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -5012,7 +5180,7 @@ void do_graph_var (int varnum)
 
     if (!dataset_is_time_series(datainfo) &&
 	datainfo->structure != STACKED_TIME_SERIES) {
-	do_freq_dist(NULL, 1, NULL);
+	do_freq_dist(1);
 	return;
     }
 
@@ -5031,7 +5199,7 @@ void do_graph_var (int varnum)
     gui_graph_handler(err);
 }
 
-void ts_plot_var (gpointer p, guint opt, GtkWidget *w)
+void ts_plot_callback (void)
 {
     do_graph_var(mdata_active_var());
 }
@@ -5311,7 +5479,7 @@ static int maybe_reorder_list (char *liststr)
     return 0;
 }
 
-void plot_from_selection (gpointer p, guint a, GtkWidget *w)
+void plot_from_selection (int code)
 {
     gretlopt opt = OPT_G;
     char *liststr;
@@ -5322,9 +5490,9 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
 	return;
     }
 
-    if (a == GR_XY) {
+    if (code == GR_XY) {
 	cancel = maybe_reorder_list(liststr);
-    } else if (a == GR_PLOT) {
+    } else if (code == GR_PLOT) {
 	int k = mdata_selection_count();
 
 	if (k > 1) {
@@ -5355,7 +5523,7 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
 	    gretl_command_sprintf("scatters %s --with-lines", liststr);
 	} else {
 	    gretl_command_sprintf("gnuplot%s%s", liststr, 
-				  (a == GR_PLOT)? " --time-series --with-lines" : "");
+				  (code == GR_PLOT)? " --time-series --with-lines" : "");
 	}
 
 	err = check_and_record_command();
@@ -5651,9 +5819,9 @@ void do_open_script (int action)
     } 
 }
 
-void do_new_script (gpointer p, guint u, GtkWidget *w) 
+void do_new_script (int code) 
 {
-    int action = (u == FUNC)? EDIT_SCRIPT : u;
+    int action = (code == FUNC)? EDIT_SCRIPT : code;
     char temp[MAXLEN];
     FILE *fp;
 
@@ -5663,7 +5831,7 @@ void do_new_script (gpointer p, guint u, GtkWidget *w)
 	return;
     }
 
-    if (u == FUNC) {
+    if (code == FUNC) {
 	fputs("function \n\nend function\n", fp);
     }
 
@@ -5674,6 +5842,19 @@ void do_new_script (gpointer p, guint u, GtkWidget *w)
 	view_file(scriptfile, 1, 1, 78, 370, action);
     } else {
 	view_file(temp, 1, 1, 78, 370, action);
+    }
+}
+
+void new_script_callback (GtkAction *action) 
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "GnuplotScript")) {
+	do_new_script(EDIT_GP);
+    } else if (!strcmp(s, "RScript")) {
+	do_new_script(EDIT_R);
+    } else {
+	do_new_script(EDIT_SCRIPT);
     }
 }
 
@@ -5736,8 +5917,8 @@ int dataset_is_subsampled (void)
 {
     int ret = 0;
 
-    if (mdata->ifac != NULL) {
-	GtkWidget *w = gtk_item_factory_get_item(mdata->ifac, 
+    if (mdata->ui != NULL) {
+	GtkWidget *w = gtk_ui_manager_get_widget(mdata->ui, 
 						 "/Sample/Restore full range");
 
 	if (w != NULL && GTK_IS_WIDGET(w) && GTK_WIDGET_IS_SENSITIVE(w)) {
@@ -5789,7 +5970,7 @@ int maybe_restore_full_data (int action)
     return 0;
 }
 
-void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
+void gui_transpose_data (void)
 {
     int i, resp;
 
@@ -5818,7 +5999,7 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void gui_sort_data (gpointer p, guint u, GtkWidget *w)
+void gui_sort_data (void)
 {
     int *list = NULL;
     int nv = 0;
@@ -5864,7 +6045,7 @@ void gui_sort_data (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-void gui_resample_data (gpointer p, guint u, GtkWidget *w)
+void gui_resample_data (void)
 {
     gchar *title;
     int resp, n = datainfo->n;

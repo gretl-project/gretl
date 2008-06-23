@@ -5,7 +5,7 @@ void refresh_data (void);
 
 void gretl_set_window_modal (GtkWidget *w);
 
-void flip (GtkItemFactory *ifac, const char *path, gboolean s);
+void flip (GtkUIManager *ui, const char *path, gboolean s);
 
 void edit_info_state (gboolean s);
 void add_remove_markers_state (gboolean s);
@@ -26,5 +26,25 @@ GtkWidget *build_selection_popup (void);
 
 void clear_sample_label (void);
 void set_sample_label (DATAINFO *pdinfo);
+
+void action_entry_init (GtkActionEntry *entry);
+
+int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
+		 gint n_entries, const gchar *ui_info);
+
+int vwin_menu_add_item (windata_t *vwin, const gchar *path, 
+			GtkActionEntry *entry);
+
+int vwin_menu_add_items (windata_t *vwin, const gchar *path, 
+			 GtkActionEntry *entries, int n);
+
+int vwin_menu_add_radios (windata_t *vwin, const gchar *path, 
+			  GtkRadioActionEntry *entries, int n,
+			  int deflt, GCallback callback);
+
+int vwin_menu_add_menu (windata_t *vwin, const gchar *path, 
+			GtkActionEntry *entry);
+
+void vwin_menu_add_separator (windata_t *vwin, const gchar *path);
 
 #endif /* MENUSTATE_H */

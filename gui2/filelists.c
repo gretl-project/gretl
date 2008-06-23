@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "filelists.h"
+#include "menustate.h"
 #include "libset.h"
 
 #ifdef G_OS_WIN32
@@ -40,6 +41,11 @@ static char *datap[MAXRECENT];
 static char *sessionp[MAXRECENT];
 static char *scriptp[MAXRECENT];
 static char *wdirp[MAXRECENT];
+
+/* and ui_ids for same */
+static guint data_id[MAXRECENT];
+static guint session_id[MAXRECENT];
+static guint script_id[MAXRECENT];
 
 static void real_add_files_to_menus (int ftype);
 
@@ -224,38 +230,27 @@ static char *endbit (char *dest, const char *src, int addscore)
 
 static void clear_files_list (int ftype, char **filep)
 {
-    GtkWidget *w;
-    char tmpname[MAXSTR];
-    gchar itempath[128];
-    gchar *fname;
-    const gchar *fpath[] = {
-	N_("/File/Open data"), 
-	N_("/File/Session files"),
-	N_("/File/Script files"),
-    };
+    guint *id;
     int i;
 
-    if (mdata == NULL || mdata->ifac == NULL) {
+    if (mdata == NULL || mdata->ui == NULL) {
 	return;
     }
 
-    if (ftype == FILE_LIST_WDIR) {
-	/* not displayed like the others */
+    if (ftype == FILE_LIST_DATA) {
+	id = data_id;
+    } else if (ftype == FILE_LIST_SESSION) {
+	id = session_id;
+    } else if (ftype == FILE_LIST_SCRIPT) {
+	id = script_id;
+    } else {
 	return;
     }
 
     for (i=0; i<MAXRECENT; i++) {
-	if (filep[i][0] == '\0') {
-	    continue;
+	if (filep[i][0] != '\0') {
+	    gtk_ui_manager_remove_ui(mdata->ui, id[i]);
 	}
-	endbit(tmpname, filep[i], 0);
-	fname = my_filename_to_utf8(tmpname);
-	sprintf(itempath, "%s/%d. %s", fpath[ftype], i+1, fname);
-	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
-	if (w != NULL) {
-	    gtk_item_factory_delete_item(mdata->ifac, itempath);
-	}
-	g_free(fname);
     }
 }
 
@@ -460,33 +455,31 @@ void delete_from_filelist (int filetype, const char *fname)
     filep[MAXRECENT-1][0] = '\0';
 
     add_files_to_menu(filetype);
-    /* need to save to file at this point? */
 }
 
-static void 
-set_data_from_filelist (gpointer p, guint i, GtkWidget *w)
+static void open_file_from_filelist (GtkAction *action)
 {
-    strcpy(tryfile, datap[i]);
-    if (strstr(tryfile, ".csv")) {
-	if (delimiter_dialog(NULL)) {
-	    return;
+    const gchar *s = gtk_action_get_name(action);
+    char ftype[8];
+    int i;
+
+    sscanf(s, "%s %d", ftype, &i);
+
+    if (!strcmp(ftype, "Data")) {
+	strcpy(tryfile, datap[i]);
+	if (strstr(tryfile, ".csv")) {
+	    if (delimiter_dialog(NULL)) {
+		return;
+	    }
 	}
+	verify_open_data(NULL, 0);
+    } else if (!strcmp(ftype, "Script")) {
+	strcpy(tryfile, scriptp[i]);
+	do_open_script(EDIT_SCRIPT);
+    } else if (!strcmp(ftype, "Session")) {
+	strcpy(tryfile, sessionp[i]);
+	verify_open_session();
     }
-    verify_open_data(NULL, 0);
-}
-
-static void 
-set_session_from_filelist (gpointer p, guint i, GtkWidget *w)
-{
-    strcpy(tryfile, sessionp[i]);
-    verify_open_session();
-}
-
-static void 
-set_script_from_filelist (gpointer p, guint i, GtkWidget *w)
-{
-    strcpy(tryfile, scriptp[i]);
-    do_open_script(EDIT_SCRIPT);
 }
 
 #ifdef G_OS_WIN32
@@ -519,22 +512,20 @@ void trim_homedir (char *fname)
 static void real_add_files_to_menus (int ftype)
 {
     char **filep, tmp[MAXSTR];
-    void (*callfunc)() = NULL;
-    GtkItemFactoryEntry item;
-    const gchar *msep[] = {
-	"/File/Open data/sep",
-	"/File/Session files/sep",
-	"/File/Script files/sep",
-    };
+    const char *fword;
+    guint *id;
+    GtkActionEntry entry;
     const gchar *mpath[] = {
-	N_("/File/Open data"),
-	N_("/File/Session files"),
-	N_("/File/Script files"),
+	"/MenuBar/File/OpenData/RecentData",
+	"/MenuBar/File/SessionFiles/RecentSessions",
+	"/MenuBar/File/ScriptFiles/RecentScripts"
     };
-    int jmin = 0, jmax = NFILELISTS-1;
+    gchar *aname, *alabel;
+    int jmin = 0, jmax = NFILELISTS - 1;
+    GtkWidget *w;
     int i, j;
 
-    if (mdata == NULL || mdata->ifac == NULL) {
+    if (mdata == NULL || mdata->ui == NULL) {
 	return;
     }
 
@@ -543,20 +534,24 @@ static void real_add_files_to_menus (int ftype)
 	jmax = jmin + 1;
     }
 
-    for (j=jmin; j<jmax; j++) {
-	GtkWidget *w;
+    action_entry_init(&entry);
+    entry.callback = G_CALLBACK(open_file_from_filelist);
 
+    for (j=jmin; j<jmax; j++) {
 	filep = NULL;
 
 	if (j == FILE_LIST_DATA) {
 	    filep = datap;
-	    callfunc = set_data_from_filelist;
+	    id = data_id;
+	    fword = "Data";
 	} else if (j == FILE_LIST_SESSION) {
 	    filep = sessionp;
-	    callfunc = set_session_from_filelist;
+	    id = session_id;
+	    fword = "Session";
 	} else if (j == FILE_LIST_SCRIPT) {
 	    filep = scriptp;
-	    callfunc = set_script_from_filelist;
+	    id = script_id;
+	    fword = "Script";
 	} 
 
 	/* See if there are any files to add */
@@ -565,46 +560,34 @@ static void real_add_files_to_menus (int ftype)
 	    continue;
 	}
 
-	/* is a separator already in place? */
-
-	w = gtk_item_factory_get_widget(mdata->ifac, msep[j]);
-	if (w == NULL) {
-	    item.path = g_strdup(msep[j]);
-	    item.accelerator = NULL;
-	    item.callback = NULL;
-	    item.callback_action = 0;
-	    item.item_type = "<Separator>";
-	    gtk_item_factory_create_item(mdata->ifac, &item, NULL, 1);
-	    g_free(item.path);
-	}
-
 	/* put the files under the menu separator: ensure valid UTF-8
 	   for display */
 
 	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
-	    gchar *fname;
+	    gchar *fname, *apath;
 
 	    fname = my_filename_to_utf8(filep[i]);
 
 	    if (fname == NULL) {
 		break;
 	    } else {
-		item.accelerator = NULL;
-		item.callback_action = i; 
-		item.item_type = NULL;
-		item.path = g_strdup_printf("%s/%d. %s", mpath[j],
-					    i+1, endbit(tmp, fname, 1));
-		item.callback = callfunc; 
-		gtk_item_factory_create_item(mdata->ifac, &item, NULL, 1);
-		g_free(item.path);
-		w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
+		aname = g_strdup_printf("%s %d", fword, i);
+		alabel = g_strdup_printf("%d. %s", i+1, endbit(tmp, fname, 1));
+		entry.name = aname;
+		entry.label = alabel;
+		id[i] = vwin_menu_add_item(mdata, mpath[j], &entry);
+		apath = g_strdup_printf("%s/%s", mpath[j], aname);
+		w = gtk_ui_manager_get_widget(mdata->ui, apath);
 		if (w != NULL) {
 #ifdef G_OS_WIN32
 		    trim_homedir(fname);
 #endif
 		    gretl_tooltips_add(w, fname);
-		} 
+		} 		
 		g_free(fname);
+		g_free(aname);
+		g_free(alabel);
+		g_free(apath);
 	    }
 	}
     }

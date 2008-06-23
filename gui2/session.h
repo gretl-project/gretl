@@ -31,11 +31,6 @@ enum {
 };
 
 enum {
-    SAVE_AS_IS,
-    SAVE_RENAME
-};
-
-enum {
     ADD_OBJECT_OK,
     ADD_OBJECT_REPLACE,
     ADD_OBJECT_FAIL
@@ -60,9 +55,7 @@ void add_boxplot_to_session (const char *boxtmp);
 int cli_add_graph_to_session (const char *fname, const char *gname,
 			      GretlObjType type);
 
-void model_add_as_icon (gpointer p, guint u, GtkWidget *w);
-
-void model_add_as_icon_and_close (gpointer p, guint u, GtkWidget *w);
+void model_add_as_icon (GtkAction *action, gpointer p);
 
 int maybe_add_model_to_session (void *ptr, GretlObjType type);
 
@@ -99,7 +92,7 @@ int is_session_model (void *p);
 
 void view_session (void);
 
-void save_session_callback (GtkWidget *w, guint i, gpointer data);
+void save_session_callback (GtkAction *action);
 
 int session_file_is_open (void);
 

@@ -24,20 +24,22 @@ void helpfile_init (void);
 
 void context_help (GtkWidget *widget, gpointer data);
 
-void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w);
+void command_help_callback (int cmdnum, int en);
 
-void genr_funcs_ref (gpointer p, guint fnum, GtkWidget *w);
+void function_help_callback (int fnum);
+
+void plain_text_cmdref (GtkAction *action);
+
+void genr_funcs_ref (GtkAction *action);
 
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin);
 
-void display_pdf_help (gpointer p, guint uguide, GtkWidget *w);
+void display_pdf_help (GtkAction *action);
 
-void datafile_find (GtkWidget *widget, gpointer data);
+void listbox_find (gpointer unused, gpointer data);
 
-void menu_find (gpointer data, guint dbfind, GtkWidget *widget);
-
-void text_find_callback (GtkWidget *w, windata_t *vwin);
+void text_find (gpointer unused, gpointer data);
 
 char *quoted_help_string (const char *s);
 

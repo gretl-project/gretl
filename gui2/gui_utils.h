@@ -22,10 +22,6 @@
 
 void gretl_stock_icons_init (void);
 
-#ifdef ENABLE_NLS
-gchar *menu_translate (const gchar *path, gpointer p);
-#endif
-
 int copyfile (const char *src, const char *dest);
 
 int isdir (const char *path);
@@ -48,13 +44,11 @@ void register_data (int flag);
 
 void register_startup_data (const char *fname);
 
-void do_open_data (GtkWidget *w, gpointer data, int code);
+void do_open_data (windata_t *vwin, int code);
 
-void verify_open_data (gpointer userdata, int code);
+void verify_open_data (windata_t *vwin, int code);
 
 void verify_open_session (void);
-
-void close_window (gpointer data, guint win_code, GtkWidget *widget);
 
 void windata_init (windata_t *mydata);
 
@@ -86,7 +80,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 		      int hsize, int vsize, int role);
 
 windata_t *
-view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items);
+view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
+		const gchar *ui_info);
 
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role);

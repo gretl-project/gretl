@@ -30,20 +30,20 @@ int prn_to_clipboard (PRN *prn, int copycode);
 
 void window_tex_callback (GtkWidget *w, windata_t *vwin);
 
-void model_tex_view (gpointer data, guint fmt, GtkWidget *w);
+void model_tex_view (GtkAction *action, gpointer data);
 
-void model_tex_save (gpointer data, guint fmt, GtkWidget *w);
+void model_tex_save (GtkAction *action, gpointer data);
 
-void system_tex_callback (gpointer data, guint opt, GtkWidget *w);
+void model_tex_copy (GtkAction *action, gpointer data);
 
-void window_copy (gpointer data, guint how, GtkWidget *w);
+void window_copy (windata_t *vwin, guint fmt);
 
 void window_save (windata_t *vwin, guint fmt);
 
-void text_replace (windata_t *vwin, guint u, GtkWidget *w);
+void text_replace (GtkWidget *w, windata_t *vwin);
 
 #ifdef NATIVE_PRINTING
-void window_print (windata_t *vwin, guint u, GtkWidget *w);
+void window_print (GtkAction *action, windata_t *vwin);
 #endif
 
 void system_print_buf (const gchar *buf, FILE *fp);

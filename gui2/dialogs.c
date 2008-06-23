@@ -28,6 +28,7 @@
 #include "dlgutils.h"
 #include "ssheet.h"
 #include "database.h"
+#include "selector.h"
 #include "gretl_panel.h"
 #include "texprint.h"
 
@@ -50,7 +51,7 @@ void menu_exit_check (void)
 
 static void save_data_callback (void)
 {
-    file_save(NULL, SAVE_DATA, NULL);
+    data_save_selection_wrapper(SAVE_DATA, NULL);
     if (data_status & MODIFIED_DATA)
 	data_status ^= MODIFIED_DATA;
     /* FIXME: need to do more here? */
@@ -118,20 +119,23 @@ gboolean exit_check (void)
 
     if (session_is_modified()) {
 	const char *msg;
-	guint code;
+	int as_is = 0;
 
 	if (session_file_is_open()) {
 	    msg = save_msg;
-	    code = SAVE_AS_IS;
+	    as_is = 1;
 	} else {
 	    msg = save_as_msg;
-	    code = SAVE_RENAME;
 	}
 
 	resp = yes_no_dialog("gretl", _(msg), 1);
 
 	if (resp == GRETL_YES) {
-	    save_session_callback(NULL, code, NULL);
+	    if (as_is) {
+		save_session(sessionfile);
+	    } else {
+		save_session_callback(NULL);
+	    }
 	    return TRUE; /* bodge */
 	} else if (resp == GRETL_CANCEL) {
 	    /* resp -1 = wm close */
@@ -433,7 +437,7 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
     gtk_widget_hide(finfo->dialog);
 
     if (finfo->action == W_COPY) {
-	window_copy(finfo->vwin, finfo->format, NULL);
+	window_copy(finfo->vwin, finfo->format);
     } else {
 	window_save(finfo->vwin, finfo->format);
     }
@@ -2021,12 +2025,26 @@ obs_spinbox (struct range_setting *rset, const char *label,
     return hbox;
 }
 
-void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
+static int sample_range_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "SMPLDUM"))
+	return SMPLDUM;
+    else if (!strcmp(s, "SMPLRAND"))
+	return SMPLRAND;
+    else 
+	return SMPL;
+}
+
+void sample_range_dialog (GtkAction *action, gpointer p)
 {
     struct range_setting *rset = NULL;
     GList *dumlist = NULL;
-    int thisdum = 0;
+    int u, thisdum = 0;
     GtkWidget *tempwid, *hbox;
+
+    u = sample_range_code(action);
 
     if (u == SMPLDUM) {
 	dumlist = get_dummy_list(&thisdum);
@@ -5056,7 +5074,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
    modes": it has to be stacked time series
 */
 
-void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
+static void data_structure_wizard (int create)
 {
     DATAINFO *dwinfo;
     int flags = 0;
@@ -5175,6 +5193,16 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
     }
 
     free(dwinfo);
+}
+
+void data_structure_dialog (void)
+{
+    data_structure_wizard(0);
+}
+
+void new_data_structure_dialog (void)
+{
+    data_structure_wizard(1);    
 }
 
 struct lmax_opt {
@@ -5356,7 +5384,7 @@ static char get_tex_conv (const char *s)
     return c;
 }
 
-void tex_format_dialog (gpointer p, guint u, GtkWidget *w)
+void tex_format_dialog (void)
 {
     const char *labels[] = {
 	N_("Coefficient"),

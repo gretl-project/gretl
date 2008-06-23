@@ -13,37 +13,43 @@ gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,
 gboolean listbox_drag (GtkWidget *widget, GdkEventMotion *event,
 		       gpointer data);
  
-void open_data (gpointer data, guint dir_code, GtkWidget *widget);
+void open_data (GtkAction *action);
 
-void open_script (gpointer data, guint code, GtkWidget *widget);
+void open_script (GtkAction *action);
 
-void file_save (windata_t *vwin, guint file_code, GtkWidget *widget);
+void file_save (windata_t *vwin, int ci);
+
+void fsave_callback (GtkAction *action, gpointer p);
 
 void dummy_call (void);
 
-void print_report (gpointer data, guint unused, GtkWidget *widget);
+void print_report (GtkAction *action);
 
-void edit_header (gpointer data, guint save, GtkWidget *widget);
+void edit_header (GtkAction *action);
 
-void fit_resid_callback (gpointer data, guint code, GtkWidget *widget);
+void fit_resid_callback (GtkAction *action, gpointer data);
 
-void model_stat_callback (gpointer data, guint which, GtkWidget *widget);
+void model_stat_callback (GtkAction *action, gpointer data);
 
-void model_callback (gpointer data, guint model_code, GtkWidget *widget);
+void model_callback (GtkAction *action, gpointer data);
 
-void selector_callback (gpointer data, guint action, GtkWidget *widget);
+void selector_callback (GtkAction *action, gpointer data);
 
-void gretl_callback (gpointer data, guint action, GtkWidget *widget);
+void gretl_callback (GtkAction *action, gpointer data);
 
-void model_genr_callback (gpointer data, guint u, GtkWidget *widget);
+void model_genr_callback (GtkAction *action, gpointer data);
 
 void file_save_callback (GtkWidget *w, windata_t *vwin);
 
-void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
+void newdata_callback (void);
 
-void xcorrgm_callback (gpointer p, guint v, GtkWidget *w);
+void xcorrgm_callback (void);
 
-void do_nistcheck (gpointer p, guint u, GtkWidget *w);
+void do_nistcheck (GtkAction *action);
+
+void genr_callback (void);
+
+void minibuf_callback (void);
 
 #if defined (ENABLE_MAILER) && !defined(G_OS_WIN32)
 void send_file (char *fullname);

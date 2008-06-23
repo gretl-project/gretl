@@ -262,7 +262,7 @@ void mark_session_changed (void)
     session.status = SESSION_CHANGED;
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, TRUE);
-	flip(mdata->ifac, "/File/Session files/Save session", TRUE);
+	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", TRUE);
     }
 }
 
@@ -271,7 +271,7 @@ static void mark_session_saved (void)
     session.status = SESSION_SAVED;
     if (save_item != NULL) {
 	gtk_widget_set_sensitive(save_item, FALSE);
-	flip(mdata->ifac, "/File/Session files/Save session", FALSE);
+	flip(mdata->ui, "/MenuBar/File/SessionFiles/SaveSession", FALSE);
     }
 }
 
@@ -893,7 +893,16 @@ static int model_type_from_vwin (windata_t *vwin)
     }
 }
 
-void model_add_as_icon (gpointer p, guint u, GtkWidget *w)
+static int close_on_add (GtkAction *action)
+{
+    if (action == NULL) {
+	return 1;
+    } else {
+	return (strstr(gtk_action_get_name(action), "Close") != NULL);
+    }
+}
+
+void model_add_as_icon (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     void *ptr = vwin->data;
@@ -921,17 +930,10 @@ void model_add_as_icon (gpointer p, guint u, GtkWidget *w)
     }
 
     mark_session_changed();
-}
 
-void model_add_as_icon_and_close (gpointer p, guint u, GtkWidget *w)
-{
-    windata_t *vwin = (windata_t *) p;
-
-    model_add_as_icon(p, u, w);
-
-    if (!window_is_busy(vwin)) {
+    if (close_on_add(action) && window_is_busy(vwin)) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
-    } 
+    } 	
 }
 
 static void
@@ -1298,7 +1300,7 @@ int highest_numbered_variable_in_session (void)
 
 int session_file_is_open (void)
 {
-    return session_file_open;
+    return (session_file_open && *sessionfile != '\0');
 }
 
 void gui_clear_dataset (void)
@@ -1556,9 +1558,19 @@ int save_session (char *fname)
     return err;
 }
 
-void save_session_callback (GtkWidget *w, guint code, gpointer data)
+void save_session_callback (GtkAction *action)
 {
-    if (code == SAVE_AS_IS && session_file_open && sessionfile[0]) {
+    int as_is = 0;
+
+    if (session_file_is_open() && action != NULL) {
+	const gchar *s = gtk_action_get_name(action);
+
+	if (!strcmp(s, "SaveSession")) {
+	    as_is = 1;
+	}
+    }
+
+    if (as_is) {
 	save_session(sessionfile);
     } else {
 	file_selector(_("Save session"), SAVE_SESSION, FSEL_DATA_NONE, NULL);
@@ -2429,7 +2441,7 @@ static gboolean session_view_click (GtkWidget *widget,
 	    open_matrix(obj); 
 	    break;
 	case GRETL_OBJ_INFO:
-	    open_info(NULL, 0, NULL); 
+	    open_info(); 
 	    break;
 	case GRETL_OBJ_NOTES:
 	    edit_session_notes(); 
@@ -2441,10 +2453,10 @@ static gboolean session_view_click (GtkWidget *widget,
 	    display_graph_page(); 
 	    break;
 	case GRETL_OBJ_CORR:
-	    do_menu_op(NULL, ALL_CORR, NULL); 
+	    do_menu_op(ALL_CORR, NULL, OPT_NONE); 
 	    break;
 	case GRETL_OBJ_STATS:
-	    do_menu_op(NULL, ALL_SUMMARY, NULL); 
+	    do_menu_op(ALL_SUMMARY, NULL, OPT_NONE); 
 	    break;
 	}
 	return TRUE;
@@ -2493,9 +2505,9 @@ static void info_popup_activated (GtkWidget *widget, gpointer data)
     gchar *item = (gchar *) data;
 
     if (!strcmp(item, _("View"))) {
-	open_info(NULL, 0, NULL);
+	open_info();
     } else if (!strcmp(item, _("Edit"))) { 
-	edit_header(NULL, 0, NULL);
+	edit_header(NULL);
     }
 }
 
@@ -2534,9 +2546,9 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
     if (!strcmp(item, _("Edit"))) {
 	show_spreadsheet(SHEET_EDIT_DATASET);
     } else if (!strcmp(item, _("Save..."))) {
-	file_save(mdata, SAVE_DATA, NULL);
+	file_save(mdata, SAVE_DATA);
     } else if (!strcmp(item, _("Export as CSV..."))) {
-	file_save(mdata, EXPORT_CSV, NULL);
+	file_save(mdata, EXPORT_CSV);
     } else if (!strcmp(item, _("Copy as CSV..."))) {
 	csv_to_clipboard();
     }

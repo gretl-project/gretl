@@ -477,7 +477,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	verify_open_data(NULL, action);
     } else if (APPEND_DATA_ACTION(action)) {
 	strcpy(tryfile, fname);
-	do_open_data(NULL, NULL, action);
+	do_open_data(NULL, action);
     } else if (action == OPEN_SCRIPT) {
 	filesel_open_script(fname);
     } else if (action == OPEN_SESSION) {

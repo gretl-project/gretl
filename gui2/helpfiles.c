@@ -24,6 +24,7 @@
 #include "gretl_www.h"
 #include "treeutils.h"
 #include "dlgutils.h"
+#include "menustate.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -63,7 +64,7 @@ static help_head **en_cli_heads, **en_gui_heads;
 
 static windata_t *make_helpwin (int flags);
 static void real_do_help (int hcode, int pos, int flags);
-static void en_text_cmdref (gpointer p, guint u, GtkWidget *w);
+static void en_text_cmdref (GtkAction *a);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
@@ -74,11 +75,22 @@ static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
-GtkItemFactoryEntry help_menu_items[] = {
-    { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
-    { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
+const gchar *help_ui = 
+    "<ui>"
+    " <menubar name='MenuBar'>"
+    "   <menu action='Topics'/>"
+    "   <menu action='Find'>"
+    "     <menuitem action='WindowFind'/>"
+    "   </menu>"
+    " </menubar>"
+    "</ui>";
+
+GtkActionEntry help_menu_items[] = {
+    { "Topics", NULL, N_("_Topics"), NULL, NULL, NULL },
+    { "Find", NULL, N_("_Find"), NULL, NULL, NULL },
+    { "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL,
+      G_CALLBACK(text_find) },
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 struct gui_help_item {
@@ -381,14 +393,6 @@ static int get_byte_positions (help_head **heads, int nh, int gui, FILE *fp)
 		m++;
 	    }
 
-#if HDEBUG
-	    if (i >= 0 && j >= 0) {
-		fprintf(stderr, "%s: setting heads[%d]->pos[%d] = %d\n", word, i, j, pos);
-	    } else {
-		fprintf(stderr, "%s: pos = %d\n", word, pos);
-	    }
-#endif
-
 	    if (err || m == n) {
 		break;
 	    }
@@ -514,10 +518,6 @@ static void add_topic_to_head (help_head *head, int *i, const char *word,
 	    head->topicnames[*i] = label;
 	}
 	*i += 1;
-#if HDEBUG
-	fprintf(stderr, "add_topic_to_head: topic %d: word = %s: hnum = %d\n", 
-		*i, word, hnum);
-#endif
     } else {
 	fprintf(stderr, "helpfile error: word='%s' not recognized\n", word);
 	head->ntopics -= 1;
@@ -843,29 +843,33 @@ static int help_pos_from_function_index (int fnum)
 
 /* end apparatus for genr functions help */
 
-static void do_gui_help (gpointer p, guint pos, GtkWidget *w) 
+static void do_gui_help (GtkAction *action, gpointer p) 
 {
+    int pos = atoi(gtk_action_get_name(action));
     int hcode = GPOINTER_TO_INT(p);
 
     real_do_help(hcode, pos, 0);
 }
 
-static void do_en_gui_help (gpointer p, guint pos, GtkWidget *w) 
+static void do_en_gui_help (GtkAction *action, gpointer p) 
 {
+    int pos = atoi(gtk_action_get_name(action));
     int hcode = GPOINTER_TO_INT(p);
 
     real_do_help(hcode, pos, HELP_EN);
 }
 
-static void do_cli_help (gpointer p, guint pos, GtkWidget *w) 
+static void do_cli_help (GtkAction *action, gpointer p) 
 {
+    int pos = atoi(gtk_action_get_name(action));
     int hcode = GPOINTER_TO_INT(p);
 
     real_do_help(hcode, pos, HELP_CLI);
 }
 
-static void do_en_cli_help (gpointer p, guint pos, GtkWidget *w) 
+static void do_en_cli_help (GtkAction *action, gpointer p) 
 {
+    int pos = atoi(gtk_action_get_name(action));
     int hcode = GPOINTER_TO_INT(p);
 
     real_do_help(hcode, pos, HELP_CLI | HELP_EN);
@@ -900,7 +904,6 @@ static char *get_compat_help_string (int pos)
 
     return NULL;
 }
-
 
 static int gui_pos_from_cmd (int cmd, int en)
 {
@@ -984,32 +987,26 @@ static void en_help_callback (gpointer p, int cli, GtkWidget *w)
 
 static void add_en_help_item (windata_t *hwin, int cli)
 {
-    GtkItemFactoryEntry item;
+    GtkActionEntry item;
+    const gchar *path;
 
-    item.accelerator = NULL;
+    action_entry_init(&item);
 
-    item.item_type = "<Branch>";
-    item.callback = NULL;
-    item.callback_action = 0; 
-    item.path = "/_English";
-    gtk_item_factory_create_item(hwin->ifac, &item, NULL, 1);
+    path = "/MenuBar/English";
+    item.name = item.label = "English";
+    vwin_menu_add_menu(hwin, path, &item);
 
-    item.item_type = NULL;
-    item.callback = en_help_callback; 
-    item.callback_action = cli; 
-    item.path = g_strdup_printf("/English/%s", _("Show English help"));
-    gtk_item_factory_create_item(hwin->ifac, &item, hwin, 1);
-    g_free(item.path);
+    item.name = "EnCliHelp";
+    item.label = _("Show English help");
+    item.callback = G_CALLBACK(en_help_callback); 
+    vwin_menu_add_item(hwin, "/MenuBar/English", &item);
 }
 
-static gchar *help_item_get_path (help_head **hds,
-				  const char *mpath,
-				  const char *headname,
-				  int i, int j, int tnum,
-				  int cli)
+static const gchar *help_item_get_word (help_head **hds,
+					int i, int j, int tnum,
+					int cli)
 {
-    gchar *path = NULL;
-    const char *hword = NULL;
+    const gchar *hword = NULL;
 
     if (hds[i]->topicnames != NULL) {
 	hword = hds[i]->topicnames[j];
@@ -1023,21 +1020,19 @@ static gchar *help_item_get_path (help_head **hds,
 	hword = get_compat_help_string(hds[i]->pos[j]);
     }
 
-    if (hword != NULL) {
-	path = g_strdup_printf("%s/%s/%s", mpath, headname, hword);
-    }
-
-    return path;
+    return hword;
 }
 
 static void add_help_topics (windata_t *hwin, int flags)
 {
-    GtkItemFactoryEntry hitem;
-    const gchar *mpath = N_("/_Topics");
+    GtkActionEntry hitem;
+    const gchar *mpath = "/MenuBar/Topics";
     help_head **hds = NULL;
     int en = (flags & HELP_EN);
     int cli = (flags & HELP_CLI);
     int funcs = (flags & HELP_FUNCS);
+    const gchar *hword;
+    gchar *path;
     int i, j;
 
     if (en) {
@@ -1046,22 +1041,19 @@ static void add_help_topics (windata_t *hwin, int flags)
 	hds = (cli)? cli_heads : (funcs)? NULL : gui_heads;
     }
 
-    hitem.accelerator = NULL;
+    action_entry_init(&hitem);
 
     if (cli || funcs) {
 	/* Add general index as (first) "topic" */
-	hitem.callback_action = 0; 
-	hitem.item_type = NULL;
-	hitem.path = g_strdup_printf("%s/%s", mpath, (en)? "Index" : _("Index"));
+	hitem.name = "0";
+	hitem.label = N_("Index");
 	if (funcs) {
-	    hitem.callback = genr_funcs_ref;
+	    hitem.callback = G_CALLBACK(genr_funcs_ref);
 	} else {
-	    hitem.callback = (en)? en_text_cmdref : plain_text_cmdref;
+	    hitem.callback = (en)? G_CALLBACK(en_text_cmdref) : 
+		G_CALLBACK(plain_text_cmdref);
 	}
-	gtk_item_factory_create_item(hwin->ifac, &hitem, 
-				     GINT_TO_POINTER(0), 
-				     1);
-	g_free(hitem.path);
+	vwin_menu_add_item(hwin, mpath, &hitem);
     }
 
     /* Are there any actual topics to add? */
@@ -1072,36 +1064,36 @@ static void add_help_topics (windata_t *hwin, int flags)
     /* put the topics under the menu heading */
     for (i=0; hds[i] != NULL; i++) {
 	const char *headname = (en)? hds[i]->name : _(hds[i]->name);
+	char aname[16];
 
 	if (hds[i]->ntopics == 0) {
 	    continue;
 	}
 
-	hitem.callback_action = 0; 
-	hitem.item_type = "<Branch>";
-	hitem.path = g_strdup_printf("%s/%s", mpath, headname);
-	hitem.callback = NULL; 
-	gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
-	g_free(hitem.path);
+	hitem.name = headname;
+	hitem.label = _(headname);
+	hitem.callback = NULL;
+	vwin_menu_add_menu(hwin, mpath, &hitem);
 
 	for (j=0; j<hds[i]->ntopics; j++) {
 	    int tnum = hds[i]->topics[j];
 
-	    hitem.callback_action = hds[i]->pos[j]; 
-	    hitem.item_type = NULL;
-	    hitem.path = help_item_get_path(hds, mpath, headname, 
-					    i, j, tnum, cli);
+	    hword = help_item_get_word(hds, i, j, tnum, cli);
 					    
-	    if (hitem.path != NULL) {
+	    if (hword != NULL) {
+		path = g_strdup_printf("%s/%s", mpath, headname);
+		sprintf(aname, "%d", hds[i]->pos[j]);
+		hitem.name = aname;
+		hitem.label = hword;
 		if (en) {
-		    hitem.callback = (cli)? do_en_cli_help : do_en_gui_help; 
+		    hitem.callback = (cli)? G_CALLBACK(do_en_cli_help) : 
+			G_CALLBACK(do_en_gui_help); 
 		} else {
-		    hitem.callback = (cli)? do_cli_help : do_gui_help; 
+		    hitem.callback = (cli)? G_CALLBACK(do_cli_help) : 
+			G_CALLBACK(do_gui_help); 
 		}
-		gtk_item_factory_create_item(hwin->ifac, &hitem, 
-					     GINT_TO_POINTER(tnum), 
-					     1);
-		g_free(hitem.path);
+		vwin_menu_add_item(hwin, path, &hitem);
+		g_free(path);
 	    }
 	}
     }
@@ -1139,7 +1131,7 @@ static windata_t *make_helpwin (int flags)
     }
 
     if (helpfile != NULL) {
-	vwin = view_help_file(helpfile, role, help_menu_items);
+	vwin = view_help_file(helpfile, role, help_menu_items, help_ui);
     }
 
     if (vwin != NULL) {
@@ -1147,7 +1139,7 @@ static windata_t *make_helpwin (int flags)
 	if (!funcs && translated_helpfile && !en) {
 	    add_en_help_item(vwin, cli);
 	} 
-    } 
+    }   
 
     return vwin;
 }
@@ -1186,7 +1178,7 @@ static void real_do_help (int hcode, int pos, int flags)
     static windata_t *en_cli_hwin;
     static windata_t *funcs_hwin;
 
-    windata_t *hwin = NULL;
+    windata_t *hwin;
     int cli = (flags & HELP_CLI);
     int en = (flags & HELP_EN);
     int funcs = (flags & HELP_FUNCS);
@@ -1236,7 +1228,7 @@ static void real_do_help (int hcode, int pos, int flags)
 		    gui_hwin = hwin;
 		    phwin = &gui_hwin;
 		}
-	    }	
+	    }		
 	    g_signal_connect(G_OBJECT(hwin->w), "destroy",
 			     G_CALLBACK(nullify_hwin), phwin);
 	}
@@ -1256,24 +1248,36 @@ static void real_do_help (int hcode, int pos, int flags)
 }
 
 /* called from main menu in gretl.c; also used as callback from
-   command ref index in textbuf.c
+   help window topics menu
 */
 
-void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
+void plain_text_cmdref (GtkAction *action)
 {
     /* pos = 0 gives index of commands */
-    int pos = 0;
+    const gchar *aname = NULL;
     int flags = HELP_CLI;
-    int en = 0;
-
-    if (w == NULL && p != NULL) {
-	en = GPOINTER_TO_INT(p);
+    int cmdnum = 0, pos = 0;
+ 
+    if (action != NULL) {
+	aname = gtk_action_get_name(action);
+	cmdnum = atoi(aname);
     }
 
-#if HDEBUG
-    fprintf(stderr, "plain_text_cmdref: p=%p, cmdnum=%d, w=%p\n", 
-	    (void *) p, cmdnum, (void *) w);
-#endif
+    if (cmdnum > 0) {
+	pos = cli_pos_from_cmd(cmdnum, 0);
+	if (pos < 0 && translated_helpfile == 1) {
+	    /* no translated entry: fall back on English */
+	    flags |= HELP_EN;
+	    pos = cli_pos_from_cmd(cmdnum, 1);
+	}
+    }
+
+    real_do_help(cmdnum, pos, flags);
+} 
+
+void command_help_callback (int cmdnum, int en)
+{
+    int pos = 0, flags = HELP_CLI;
 
     if (cmdnum > 0) {
 	pos = cli_pos_from_cmd(cmdnum, en);
@@ -1289,20 +1293,28 @@ void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
     }
 
     real_do_help(cmdnum, pos, flags);
-} 
+}
+
+void function_help_callback (int fnum)
+{
+    int pos = help_pos_from_function_index(fnum);
+
+    real_do_help(fnum, pos, HELP_FUNCS); 
+}
 
 /* called from main menu in gretl.c; also used as callback from
-   command ref index in textbuf.c
+   help window topics menu
 */
 
-void genr_funcs_ref (gpointer p, guint fnum, GtkWidget *w)
+void genr_funcs_ref (GtkAction *action)
 {
+    int fnum = atoi(gtk_action_get_name(action));
     int pos = help_pos_from_function_index(fnum);
 
     real_do_help(fnum, pos, HELP_FUNCS);    
 }
 
-static void en_text_cmdref (gpointer p, guint u, GtkWidget *w)
+static void en_text_cmdref (GtkAction *action)
 {
     real_do_help(0, 0, HELP_CLI | HELP_EN);
 } 
@@ -1427,23 +1439,14 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
     return FALSE;
 }
 
-void menu_find (gpointer data, guint db, GtkWidget *widget)
+void text_find (gpointer unused, gpointer data)
 {
-    if (db) {
-	find_string_dialog(find_in_listbox, data);
-    } else {
-	find_string_dialog(find_in_text, data);
-    }
+    find_string_dialog(find_in_text, data);
 }
 
-void datafile_find (GtkWidget *widget, gpointer data)
+void listbox_find (gpointer unused, gpointer data)
 {
     find_string_dialog(find_in_listbox, data);
-}
-
-void find_var (gpointer p, guint u, GtkWidget *w)
-{
-    find_string_dialog(find_in_listbox, mdata);
 }
 
 static gint close_find_dialog (GtkWidget *widget, gpointer data)
@@ -1741,11 +1744,6 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
     gtk_widget_show(find_window);
 }
 
-void text_find_callback (GtkWidget *w, windata_t *vwin)
-{
-    find_string_dialog(find_in_text, vwin);
-}
-
 static GtkTooltips *gretl_tips;
 
 void gretl_tooltips_init (void)
@@ -1870,14 +1868,17 @@ static int find_or_download_pdf (int uguide, int i, char *fullpath)
     return err;
 }
 
-void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
+void display_pdf_help (GtkAction *action)
 {
     char fname[FILENAME_MAX];
-    int pref, err = 0;
+    int err, uguide = 1;
 
-    pref = get_manpref();
+    if (action != NULL && strcmp(gtk_action_get_name(action), "UserGuide")) {
+	/* PDF command ref wanted */
+	uguide = 0;
+    }
 
-    err = find_or_download_pdf(uguide, pref, fname);
+    err = find_or_download_pdf(uguide, get_manpref(), fname);
     if (err) {
 	return;
     }
