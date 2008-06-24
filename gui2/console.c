@@ -372,7 +372,7 @@ void show_gretl_console (void)
     gretl_print_destroy(prn);
 
     vwin = view_file(fname, 1, 1, 78, 400, CONSOLE);
-    console_view = vwin->w;
+    console_view = vwin->text;
 
     g_signal_connect(G_OBJECT(console_view), "button_press_event",
 		     G_CALLBACK(console_paste_handler), NULL);

@@ -40,4 +40,11 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
 GtkTooltips *get_gretl_tips (void);
 
+GtkWidget *gretl_toolbar_new (void);
+
+GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
+				   GretlToolItem *item,
+				   gpointer data,
+				   gint pos);
+
 #endif /* TOOLBAR_H */

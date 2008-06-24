@@ -31,6 +31,8 @@
 #include "fncall.h"
 #include "treeutils.h"
 #include "selector.h"
+#include "toolbar.h"
+#include "winstack.h"
 
 #include "gretl_xml.h"
 #include "gretl_func.h"
@@ -630,7 +632,7 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     return 0;
 }
 
-static void display_datafile_info (GtkWidget *w, gpointer data)
+static void show_datafile_info (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN];
     windata_t *vwin = (windata_t *) data;
@@ -689,7 +691,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     g_free(fname);
 
     /* close the calling window */
-    gtk_widget_destroy(GTK_WIDGET(vwin->w));
+    gtk_widget_destroy(GTK_WIDGET(vwin->main));
 
     set_scriptpage(coll->title);
 
@@ -824,7 +826,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == EDIT_FN_PKG) {
 	edit_function_package(fnfile, &err);
     } else if (task == CALL_FN_PKG) {
-	call_function_package(fnfile, vwin->w, &err);
+	call_function_package(fnfile, vwin->main, &err);
     }
 
     if (!err && (task == EDIT_FN_PKG || task == CALL_FN_PKG)) {
@@ -853,14 +855,14 @@ void browser_call_func (GtkWidget *w, gpointer data)
     browser_functions_handler(vwin, CALL_FN_PKG);
 }
 
-static void display_function_info (GtkWidget *w, gpointer data)
+static void show_function_info (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
     browser_functions_handler(vwin, VIEW_FN_PKG_INFO);
 }
 
-static void display_function_code (GtkWidget *w, gpointer data)
+static void show_function_code (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
@@ -879,7 +881,7 @@ static void set_browser_status (windata_t *vwin, int status)
     int i = vwin->role - TEXTBOOK_DATA;
 
     if (status == BROWSER_BUSY) {
-	browsers[i] = vwin->w;
+	browsers[i] = vwin->main;
     } else {
 	browsers[i] = NULL;
     }
@@ -949,7 +951,7 @@ static void new_package_callback (GtkWidget *w , gpointer p)
 
 static void close_files_viewer (GtkWidget *w, windata_t *vwin)
 {
-    gtk_widget_destroy(vwin->w);
+    gtk_widget_destroy(vwin->main);
 } 
 
 static void build_datafiles_popup (windata_t *vwin)
@@ -958,7 +960,7 @@ static void build_datafiles_popup (windata_t *vwin)
 	vwin->popup = gtk_menu_new();
 
 	add_popup_item(_("Info"), vwin->popup, 
-		       G_CALLBACK(display_datafile_info), 
+		       G_CALLBACK(show_datafile_info), 
 		       vwin);
 	add_popup_item(_("Open"), vwin->popup, 
 		       G_CALLBACK(browser_open_data), 
@@ -976,10 +978,10 @@ static void build_funcfiles_popup (windata_t *vwin)
 			   G_CALLBACK(browser_edit_func), 
 			   vwin);
 	    add_popup_item(_("Info"), vwin->popup, 
-			   G_CALLBACK(display_function_info), 
+			   G_CALLBACK(show_function_info), 
 			   vwin);
 	    add_popup_item(_("View code"), vwin->popup, 
-			   G_CALLBACK(display_function_code), 
+			   G_CALLBACK(show_function_code), 
 			   vwin);
 	    add_popup_item(_("Execute"), vwin->popup, 
 			   G_CALLBACK(browser_call_func), 
@@ -1066,113 +1068,103 @@ enum {
     BTN_CLOSE
 };
 
-struct files_item {
-    const char *str;
-    int action;
-    const gchar *icon;
+static GretlToolItem files_items[] = {
+    { N_("Open"),           GTK_STOCK_OK,         NULL,                          BTN_OPEN },
+    { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },
+    { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
+    { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
+    { N_("List series"),    GTK_STOCK_INDEX,      NULL,                          BTN_INDX },
+    { N_("Install"),        GTK_STOCK_SAVE,       G_CALLBACK(install_file_from_server), BTN_INST },
+    { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func), BTN_EXEC },
+    { N_("Delete"),         GTK_STOCK_DELETE,     G_CALLBACK(browser_del_func),  BTN_DEL },
+    { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
+    { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
+    { N_("New"),            GTK_STOCK_NEW,        G_CALLBACK(new_package_callback), BTN_NEW },
+    { N_("Find..."),        GTK_STOCK_FIND,       G_CALLBACK(listbox_find),       BTN_FIND },
+    { N_("Close"),          GTK_STOCK_CLOSE,      G_CALLBACK(close_files_viewer), BTN_CLOSE }
 };
 
-static struct files_item files_items[] = {
-    { N_("Open"),           BTN_OPEN,  GTK_STOCK_OK },
-    { N_("Edit"),           BTN_EDIT,  GTK_STOCK_EDIT },
-    { N_("Info"),           BTN_INFO,  GTK_STOCK_INFO },
-    { N_("View code"),      BTN_CODE,  GTK_STOCK_PROPERTIES },
-    { N_("List series"),    BTN_INDX,  GTK_STOCK_INDEX },
-    { N_("Install"),        BTN_INST,  GTK_STOCK_SAVE },
-    { N_("Execute"),        BTN_EXEC,  GTK_STOCK_EXECUTE },
-    { N_("Delete"),         BTN_DEL,   GTK_STOCK_DELETE },
-    { N_("Look on server"), BTN_WWW,   GTK_STOCK_NETWORK },
-    { N_("Local machine"),  BTN_HOME,  GTK_STOCK_HOME },
-    { N_("New"),            BTN_NEW,   GTK_STOCK_NEW },
-    { N_("Find..."),        BTN_FIND,  GTK_STOCK_FIND },
-    { N_("Close"),          BTN_CLOSE, GTK_STOCK_CLOSE },
-    { NULL, 0, NULL }
-};
+static int n_files_items = G_N_ELEMENTS(files_items);
+
+#define common_item(f) (f == BTN_FIND || f == BTN_CLOSE)
+
+#define local_funcs_item(f) (f == BTN_EDIT || f == BTN_NEW || \
+			     f == BTN_DEL || f == BTN_CODE)
+
+static int files_item_get_callback (GretlToolItem *item, int role)
+{
+    if (common_item(item->flag)) {
+	return 1;
+    } else if (local_funcs_item(item->flag)) {
+	return (role == FUNC_FILES);
+    } else if (item->flag == BTN_INST) {
+	return (role == REMOTE_DB || role == REMOTE_FUNC_FILES);
+    } else if (item->flag == BTN_EXEC) {
+	return (role == FUNC_FILES || role == REMOTE_FUNC_FILES);
+    }
+
+    item->func = NULL;
+
+    if (item->flag == BTN_OPEN) {
+	/* open: only data files and scripts */
+	if (role == TEXTBOOK_DATA) {
+	    item->func = G_CALLBACK(browser_open_data);
+	} else if (role == PS_FILES) {
+	    item->func = G_CALLBACK(browser_open_ps);
+	} 
+    } else if (item->flag == BTN_INFO) {
+	if (role == TEXTBOOK_DATA) {
+	    item->func = G_CALLBACK(show_datafile_info);
+	} else if (role == FUNC_FILES) {
+	    item->func = G_CALLBACK(show_function_info);
+	} else if (role == REMOTE_FUNC_FILES) {
+	    item->func = G_CALLBACK(file_info_from_server);
+	} 
+    } else if (item->flag == BTN_INDX) {
+	/* index: databases only */
+	if (role == NATIVE_DB) {
+	    item->func = G_CALLBACK(open_db_index);
+	} else if (role == REMOTE_DB) {
+	    item->func = G_CALLBACK(open_remote_db_index);
+	} 
+    } else if (item->flag == BTN_WWW) {
+	if (role == FUNC_FILES) {
+	    item->func = G_CALLBACK(show_server_funcs);
+	} else if (role == NATIVE_DB) {
+	    item->func = G_CALLBACK(show_server_dbs);
+	} 
+    } else if (item->flag == BTN_HOME) {
+	/* home: show only for on-server items */
+	if (role == REMOTE_FUNC_FILES) {
+	    item->func = G_CALLBACK(show_local_funcs);	
+	} else if (role == REMOTE_DB) {
+	    item->func = G_CALLBACK(show_local_dbs);
+	} 
+    } 
+
+    return (item->func != NULL);
+}
 
 static void make_filesbar (windata_t *vwin)
 {
-    GtkWidget *hbox, *button;
+    GtkWidget *hbox;
+    GretlToolItem *item;
     int i;
 
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-    vwin->mbar = gtk_toolbar_new();
-    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    vwin->mbar = gretl_toolbar_new();
 
-    for (i=0; files_items[i].str != NULL; i++) {
-	void (*toolfunc)() = NULL;
-
-	if (files_items[i].action == BTN_CLOSE) {
-	    toolfunc = close_files_viewer;
-	} else if (files_items[i].action == BTN_FIND) {
-	    toolfunc = listbox_find;
-	} else if (vwin->role == FUNC_FILES) {
-	    if (files_items[i].action == BTN_EDIT) {
-		toolfunc = browser_edit_func;
-	    } else if (files_items[i].action == BTN_INFO) {
-		toolfunc = display_function_info;
-	    } else if (files_items[i].action == BTN_CODE) {
-		toolfunc = display_function_code;
-	    } else if (files_items[i].action == BTN_EXEC) {
-		toolfunc = browser_call_func;
-	    } else if (files_items[i].action == BTN_DEL) {
-		toolfunc = browser_del_func;
-	    } else if (files_items[i].action == BTN_NEW) {
-		toolfunc = new_package_callback;
-	    } else if (files_items[i].action == BTN_WWW) {
-		toolfunc = show_server_funcs;
-	    }
-	} else if (vwin->role == REMOTE_FUNC_FILES) {
-	    if (files_items[i].action == BTN_INFO) {
-		toolfunc = file_info_from_server;
-	    } else if (files_items[i].action == BTN_INST) {
-		toolfunc = install_file_from_server;
-	    } else if (files_items[i].action == BTN_EXEC) {
-		toolfunc = browser_call_func;
-	    } else if (files_items[i].action == BTN_HOME) {
-		toolfunc = show_local_funcs;
-	    }
-	} else if (vwin->role == NATIVE_DB) {
-	    if (files_items[i].action == BTN_INDX) {
-		toolfunc = open_db_index;
-	    } else if (files_items[i].action == BTN_WWW) {
-		toolfunc = show_server_dbs;
-	    }
-	} else if (vwin->role == REMOTE_DB) {
-	    if (files_items[i].action == BTN_INDX) {
-		toolfunc = open_remote_db_index;
-	    } else if (files_items[i].action == BTN_INST) {
-		toolfunc = install_file_from_server;
-	    } else if (files_items[i].action == BTN_HOME) {
-		toolfunc = show_local_dbs;
-	    }
-	} else if (vwin->role == TEXTBOOK_DATA) {
-	    if (files_items[i].action == BTN_OPEN) {
-		toolfunc = browser_open_data;
-	    } else if (files_items[i].action == BTN_INFO) {
-		toolfunc = display_datafile_info;
-	    }
-	} else if (vwin->role == PS_FILES) {
-	    if (files_items[i].action == BTN_OPEN) {
-		toolfunc = browser_open_ps;
-	    }
+    for (i=0; i<n_files_items; i++) {
+	item = &files_items[i];
+	if (files_item_get_callback(item, vwin->role)) {
+	    gretl_toolbar_insert(vwin->mbar, item, vwin, -1);
 	}
-
-	if (toolfunc == NULL) {
-	    continue;
-	}
-
-	button = gtk_image_new();
-	gtk_image_set_from_stock(GTK_IMAGE(button), files_items[i].icon, 
-				 GTK_ICON_SIZE_MENU);
-        gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				NULL, _(files_items[i].str), NULL,
-				button, toolfunc, vwin);
     }
 
-    gtk_widget_show(vwin->mbar);
-    gtk_widget_show(hbox);
+    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
+    gtk_widget_show_all(hbox);
 }
 
 static gchar *files_title (int code)
@@ -1222,13 +1214,13 @@ db_window_handle_drag  (GtkWidget *widget,
 
 static void  
 pkg_window_handle_drag  (GtkWidget *widget,
-			GdkDragContext *context,
-			gint x,
-			gint y,
-			GtkSelectionData *data,
-			guint info,
-			guint time,
-			gpointer p)
+			 GdkDragContext *context,
+			 gint x,
+			 gint y,
+			 GtkSelectionData *data,
+			 guint info,
+			 guint time,
+			 gpointer p)
 {
     /* handle drag of pointer from remote function package window */
     if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL && 
@@ -1274,62 +1266,37 @@ void display_files (int code, gpointer p)
 	return;
     }
 
-    vwin = mymalloc(sizeof *vwin);
-    if (vwin == NULL) {
-	return;
+    if (code == FUNC_FILES || code == NATIVE_DB) {
+	title = files_title(code);
+    } else if (code == PS_FILES) {
+	title = g_strdup(_("gretl: practice files"));
+    } else if (code == TEXTBOOK_DATA) {
+	title = g_strdup(_("gretl: data files"));
+    } else if (code == REMOTE_DB) {
+	title = g_strdup(_("gretl: databases on server"));
+    } else if (code == REMOTE_FUNC_FILES) {
+	title = g_strdup(_("gretl: function packages on server"));
     }
 
-    windata_init(vwin);
+    vwin = gretl_browser_new(code, title, 0);
+    g_free(title);
+
     fpkg_response_init(&fresp, p);
-
-    vwin->role = code;
-    vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-    g_signal_connect(G_OBJECT(vwin->w), "destroy",
+    g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(free_browser),
 		     vwin);
 
     set_browser_status(vwin, BROWSER_BUSY);
 
-    if (code == FUNC_FILES || code == NATIVE_DB) {
-	title = files_title(code);
-    }
-
-    switch (code) {
-    case PS_FILES:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), 
-			     _("gretl: practice files"));
-	break;
-    case FUNC_FILES:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), title);
-	break;
-    case TEXTBOOK_DATA:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), 
-			     _("gretl: data files"));
-	break;
-    case NATIVE_DB:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), title);
-	break;
-    case REMOTE_DB:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), 
-			     _("gretl: databases on server"));
-	gtk_widget_set_usize(vwin->w, 640, 480);
-	break;
-    case REMOTE_FUNC_FILES:
-	gtk_window_set_title(GTK_WINDOW(vwin->w), 
-			     _("gretl: function packages on server"));
-	break;
-    }
-
-    if (title != NULL) {
-	g_free(title);
+    if (code == REMOTE_DB) {
+	gtk_widget_set_usize(vwin->main, 640, 480);
     }
 
     /* set up grids */
     vwin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
-    gtk_container_add(GTK_CONTAINER(vwin->w), vwin->vbox);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
     make_filesbar(vwin);
 
@@ -1342,7 +1309,7 @@ void display_files (int code, gpointer p)
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), filebox, TRUE, TRUE, 0);
 
-    g_object_set_data(G_OBJECT(vwin->w), "vwin", vwin);
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 
     if (code == TEXTBOOK_DATA) { 
 	file_collection *coll;
@@ -1394,9 +1361,9 @@ void display_files (int code, gpointer p)
     }
 
     if (err) {
-	gtk_widget_destroy(vwin->w);
+	gtk_widget_destroy(vwin->main);
     } else {
-	gtk_widget_show_all(vwin->w); 
+	gtk_widget_show_all(vwin->main); 
 	gtk_widget_grab_focus(vwin->listbox);
 	if (code == NATIVE_DB || code == FUNC_FILES) {
 	    set_up_viewer_drag_target(vwin);

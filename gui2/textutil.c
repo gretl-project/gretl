@@ -149,7 +149,7 @@ void text_replace (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    gedit = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    gedit = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     gtk_text_buffer_get_start_iter(gedit, &start);
     gtk_text_buffer_get_end_iter(gedit, &end);
@@ -236,11 +236,11 @@ void text_replace (GtkWidget *w, windata_t *vwin)
 
     if (vwin->sbuf == NULL) {
 	/* replace copy of original buffer for "undo" */
-	tmp = g_object_steal_data(G_OBJECT(vwin->w), "undo");
+	tmp = g_object_steal_data(G_OBJECT(vwin->text), "undo");
 	if (tmp != NULL) {
 	    g_free(tmp);
 	}
-	g_object_set_data(G_OBJECT(vwin->w), "undo", fullbuf);
+	g_object_set_data(G_OBJECT(vwin->text), "undo", fullbuf);
 	fullbuf = NULL;
     } 
 
@@ -412,11 +412,11 @@ void model_tex_copy (GtkAction *action, gpointer data)
 static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 {
     GtkTextBuffer *textbuf = 
-	gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gchar *cpybuf = NULL;
 
     if (!select) {
-	cpybuf = textview_get_text(vwin->w); 
+	cpybuf = textview_get_text(vwin->text); 
     } else if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
 	GtkTextIter selstart, selend;
 
@@ -513,8 +513,8 @@ void window_print (GtkAction *action, windata_t *vwin)
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-    buf = textview_get_text(vwin->w);
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    buf = textview_get_text(vwin->text);
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);

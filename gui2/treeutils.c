@@ -208,7 +208,7 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     gboolean val;
     gint col;
 
-    col = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->w), "boolcol"));
+    col = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->main), "boolcol"));
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, col, &val, -1);
 
@@ -293,7 +293,7 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (k == GDK_q) { 
 	/* Q = quit */
 	if (vwin != mdata) {
-	    gtk_widget_destroy(vwin->w);
+	    gtk_widget_destroy(vwin->main);
 	}
 	return TRUE;
     } else if (k == GDK_f) {
@@ -409,7 +409,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     for (i=0; i<viscols; i++) {
 	if (types[i] == G_TYPE_BOOLEAN) {
 	    bool_renderer = gtk_cell_renderer_toggle_new();
-	    g_object_set_data(G_OBJECT(vwin->w), "boolcol", GINT_TO_POINTER(i));
+	    g_object_set_data(G_OBJECT(vwin->main), "boolcol", GINT_TO_POINTER(i));
 	    g_signal_connect(bool_renderer, "toggled",
 			     G_CALLBACK(bool_col_toggled), vwin);
 	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),

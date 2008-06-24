@@ -70,25 +70,25 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 
 void cursor_to_top (windata_t *vwin)
 {
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w)); 
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)); 
     GtkTextIter start;
     GtkTextMark *mark;
 
     gtk_text_buffer_get_start_iter(buf, &start);
     gtk_text_buffer_place_cursor(buf, &start);
     mark = gtk_text_buffer_create_mark(buf, NULL, &start, FALSE);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
 				 mark, 0.0, FALSE, 0, 0);
 }
 
 void cursor_to_mark (windata_t *vwin, GtkTextMark *mark)
 {
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w)); 
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)); 
     GtkTextIter iter;
 
     gtk_text_buffer_get_iter_at_mark(buf, &iter, mark);
     gtk_text_buffer_place_cursor(buf, &iter);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
 				 mark, 0.0, TRUE, 0, 0.1);
 }
 
@@ -188,21 +188,21 @@ int viewer_char_count (windata_t *vwin)
 {
     GtkTextBuffer *tbuf;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     return gtk_text_buffer_get_char_count(tbuf);
 }
 
 void text_paste (GtkWidget *w, windata_t *vwin)
 {
-    gchar *undo_buf = textview_get_text(vwin->w);
+    gchar *undo_buf = textview_get_text(vwin->text);
     gchar *old;
 
-    old = g_object_get_data(G_OBJECT(vwin->w), "undo");
+    old = g_object_get_data(G_OBJECT(vwin->text), "undo");
     g_free(old);
 
-    g_object_set_data(G_OBJECT(vwin->w), "undo", undo_buf);
+    g_object_set_data(G_OBJECT(vwin->text), "undo", undo_buf);
 
-    gtk_text_buffer_paste_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w)),
+    gtk_text_buffer_paste_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)),
 				    gtk_clipboard_get(GDK_NONE),
 				    NULL, TRUE);
 }
@@ -220,7 +220,7 @@ void text_undo (GtkWidget *w, windata_t *vwin)
 	return;
     }
     
-    old = g_object_steal_data(G_OBJECT(vwin->w), "undo");
+    old = g_object_steal_data(G_OBJECT(vwin->text), "undo");
 
     if (old == NULL) {
 	errbox(_("No undo information available"));
@@ -229,7 +229,7 @@ void text_undo (GtkWidget *w, windata_t *vwin)
 	GtkTextIter start, end;
 	GtkTextMark *ins;
 
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	ins = gtk_text_buffer_get_insert(buf);
 
 	gtk_text_buffer_get_start_iter(buf, &start);
@@ -237,7 +237,7 @@ void text_undo (GtkWidget *w, windata_t *vwin)
 	gtk_text_buffer_delete(buf, &start, &end);
 
 	gtk_text_buffer_insert(buf, &start, old, -1);
-	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
+	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
 				     ins, 0.0, TRUE, 0.1, 0.0);
 	g_free(old);
     }
@@ -248,7 +248,7 @@ int text_can_undo (windata_t *vwin)
     if (vwin->sbuf != NULL) {
 	return gtk_source_buffer_can_undo(vwin->sbuf);
     } else {
-	gchar *old = g_object_get_data(G_OBJECT(vwin->w), "undo");
+	gchar *old = g_object_get_data(G_OBJECT(vwin->text), "undo");
 
 	return old != NULL;
     }
@@ -528,39 +528,39 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_source_buffer_set_check_brackets(sbuf, TRUE);
 #endif
 
-    vwin->w = gtk_source_view_new_with_buffer(sbuf);
+    vwin->text = gtk_source_view_new_with_buffer(sbuf);
     vwin->sbuf = sbuf;
 
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->w), GTK_WRAP_NONE);
-    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vwin->w), 4);
-    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->w), 4);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->text), GTK_WRAP_NONE);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vwin->text), 4);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->text), 4);
 
-    gtk_widget_modify_font(GTK_WIDGET(vwin->w), fixed_font);
+    gtk_widget_modify_font(GTK_WIDGET(vwin->text), fixed_font);
 
-    cw = get_char_width(vwin->w);
+    cw = get_char_width(vwin->text);
     hsize *= cw;
     hsize += 48;
 
-    set_source_tabs(vwin->w, cw);
+    set_source_tabs(vwin->text, cw);
 
-    gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
+    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->text), editable);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), editable);
 
     if (gretl_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "key_press_event",
 			 G_CALLBACK(script_key_handler), vwin);
-	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button_press_event",
 			 G_CALLBACK(script_popup_handler), 
 			 vwin);
-	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button_release_event",
 			 G_CALLBACK(interactive_script_help), vwin);
     } else if (foreign_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button_press_event",
 			 G_CALLBACK(script_popup_handler), 
 			 vwin);
     } else if (vwin->role == VIEW_LOG) {
-	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button_release_event",
 			 G_CALLBACK(interactive_script_help), vwin);
     }	
 }
@@ -733,7 +733,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     char fline[MAXSTR], *chunk;
     int i = 0;
 
-    g_return_if_fail(GTK_IS_TEXT_VIEW(vwin->w));
+    g_return_if_fail(GTK_IS_TEXT_VIEW(vwin->text));
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -743,7 +743,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 
     thiscolor = nextcolor = PLAIN_TEXT;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
     memset(fline, 0, sizeof fline);
@@ -816,7 +816,7 @@ void textview_insert_from_tempfile (windata_t *vwin, PRN *prn)
     fp = gretl_print_read_tempfile(prn);
     if (fp == NULL) return;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, -1);
     memset(readbuf, 0, sizeof readbuf);
@@ -1099,7 +1099,7 @@ cmdref_visibility_notify (GtkWidget *tview,  GdkEventVisibility *e)
 
 static void maybe_connect_help_signals (windata_t *hwin, int en)
 {
-    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
+    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text), 
 						 "sigs_connected"));
 
     if (hand_cursor == NULL) {
@@ -1113,22 +1113,22 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
     if (!done) {
 	gpointer en_ptr = GINT_TO_POINTER(en);
 
-	g_signal_connect(hwin->w, "key-press-event", 
+	g_signal_connect(hwin->text, "key-press-event", 
 			 G_CALLBACK(cmdref_key_press), en_ptr);
-	g_signal_connect(hwin->w, "event-after", 
+	g_signal_connect(hwin->text, "event-after", 
 			 G_CALLBACK(cmdref_event_after), en_ptr);
-	g_signal_connect(hwin->w, "motion-notify-event", 
+	g_signal_connect(hwin->text, "motion-notify-event", 
 			 G_CALLBACK(cmdref_motion_notify), NULL);
-	g_signal_connect(hwin->w, "visibility-notify-event", 
+	g_signal_connect(hwin->text, "visibility-notify-event", 
 			 G_CALLBACK(cmdref_visibility_notify), NULL);
-	g_object_set_data(G_OBJECT(hwin->w), "sigs_connected", 
+	g_object_set_data(G_OBJECT(hwin->text), "sigs_connected", 
 			  GINT_TO_POINTER(1));
     }
 }
 
 static void maybe_set_help_tabs (windata_t *hwin)
 {
-    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
+    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text), 
 						 "tabs_set"));
 
     if (!done) {
@@ -1136,9 +1136,9 @@ static void maybe_set_help_tabs (windata_t *hwin)
 	
 	tabs = pango_tab_array_new(1, TRUE);
 	pango_tab_array_set_tab(tabs, 0, PANGO_TAB_LEFT, 50);
-	gtk_text_view_set_tabs(GTK_TEXT_VIEW(hwin->w), tabs);
+	gtk_text_view_set_tabs(GTK_TEXT_VIEW(hwin->text), tabs);
 	pango_tab_array_free(tabs);
-	g_object_set_data(G_OBJECT(hwin->w), "tabs_set", GINT_TO_POINTER(1));
+	g_object_set_data(G_OBJECT(hwin->text), "tabs_set", GINT_TO_POINTER(1));
     }
 }
 
@@ -1176,7 +1176,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 	}
     }
 
-    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), tbuf);
 
     maybe_connect_help_signals(hwin, en);
     maybe_set_help_tabs(hwin);
@@ -1231,7 +1231,7 @@ static void funcref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 	s++;
     }
 
-    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), tbuf);
 
     maybe_connect_help_signals(hwin, en);
     maybe_set_help_tabs(hwin);
@@ -1245,7 +1245,7 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
     int page = 0;
 
     if (action == 2) {
-	page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
+	page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text), 
 						 "backpage"));
     }
 
@@ -1602,7 +1602,7 @@ static void auto_indent_script (GtkWidget *w, windata_t *vwin)
     GtkTextIter start, end;
     gchar *buf;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
     buf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
@@ -1698,7 +1698,7 @@ static struct textbit *vwin_get_textbit (windata_t *vwin, int mode)
     int selected = 0;
     struct textbit *tb;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	selected = 1;
     }
@@ -1920,7 +1920,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
     gchar *chunk = NULL;
     int pos = 0, ret = 0;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	return 0;
@@ -1947,7 +1947,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 
 	*prevword = *thisword = '\0';
 
-	s = textview_get_current_line(vwin->w);
+	s = textview_get_current_line(vwin->text);
 	if (s != NULL) {
 	    sscanf(s, "%8s", thisword);
 	    g_free(s);
@@ -1993,7 +1993,7 @@ static gboolean script_electric_enter (windata_t *vwin)
 	return FALSE;
     }
 
-    s = textview_get_current_line(vwin->w);
+    s = textview_get_current_line(vwin->text);
 
     if (s == NULL) {
 	return FALSE;
@@ -2019,7 +2019,7 @@ static gboolean script_electric_enter (windata_t *vwin)
 	    return FALSE;
 	}
 
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	mark = gtk_text_buffer_get_insert(tbuf);
 	gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
 	gtk_text_iter_set_line_offset(&start, 0);
@@ -2082,7 +2082,7 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
     struct textbit *tb;
     gboolean ret = FALSE;
 
-    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), FALSE);
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), FALSE);
 
     if (smarttab && !(mods & GDK_SHIFT_MASK)) {
 	if (maybe_insert_smart_tab(vwin)) {
@@ -2114,9 +2114,9 @@ static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods)
 
 static void line_numbers_cb (GtkWidget *w, windata_t *vwin)
 {
-    int s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(vwin->w));
+    int s = gtk_source_view_get_show_line_numbers(GTK_SOURCE_VIEW(vwin->text));
 
-    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->w), !s);
+    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), !s);
 }
 
 static GtkWidget *
@@ -2132,7 +2132,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
     struct textbit *tb = NULL;
     GtkWidget *item;
 
-    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), NULL);
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->text), NULL);
 
     /* "generic" text window menu -- we may add to this */
     pmenu = build_text_popup(vwin);
@@ -2219,7 +2219,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
  line_nums:	
 
-    if (GTK_IS_SOURCE_VIEW(vwin->w)) {
+    if (GTK_IS_SOURCE_VIEW(vwin->text)) {
 	item = gtk_menu_item_new_with_label(_("Toggle line numbers"));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(line_numbers_cb),
@@ -2572,8 +2572,8 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     insert_text_with_markup(textb, &iter, buf, hwin->role);
     free(buf);
 
-    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), textb);
-    g_object_set_data(G_OBJECT(hwin->w), "backpage", 
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), textb);
+    g_object_set_data(G_OBJECT(hwin->text), "backpage", 
 		      GINT_TO_POINTER(hwin->active_var));
     maybe_connect_help_signals(hwin, en);
     cursor_to_top(hwin);
@@ -2586,7 +2586,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
 
-    vwin->w = w;
+    vwin->text = w;
 
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
@@ -2599,7 +2599,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	hsize += 48;
     }
 
-    gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
+    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);

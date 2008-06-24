@@ -2666,7 +2666,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     int maxdim = 1000;
     int canceled = 0;
 
-    dlg = gretl_dialog_new("Matrix", mdata->w, 
+    dlg = gretl_dialog_new("Matrix", mdata->main, 
 			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
     vbox = GTK_DIALOG(dlg)->vbox;
     mdlg.dlg = dlg;

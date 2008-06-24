@@ -225,7 +225,7 @@ static void series_view_print (windata_t *vwin)
     }
 
     pbuf = gretl_print_get_buffer(prn);
-    textview_set_text(vwin->w, pbuf);
+    textview_set_text(vwin->text, pbuf);
 
     gretl_print_destroy(prn);
 }
@@ -270,7 +270,7 @@ static void multi_series_view_print_sorted (windata_t *vwin)
 	gui_errmsg(err);
     } else {
 	pbuf = gretl_print_get_buffer(prn);
-	textview_set_text(vwin->w, pbuf);
+	textview_set_text(vwin->text, pbuf);
     }
 
     free(obsvec);

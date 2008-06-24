@@ -706,7 +706,7 @@ void file_save_callback (GtkWidget *w, windata_t *vwin)
 {
     guint u = 0;
 
-    if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
+    if (g_object_get_data(G_OBJECT(vwin->main), "text_out")) {
 	const char *opts[] = {
 	    N_("Save to file"),
 	    N_("Save to session as icon")

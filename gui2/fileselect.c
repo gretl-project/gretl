@@ -261,7 +261,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
 
     /* update the window title */
     title = g_strdup_printf("gretl: %s", trfname);
-    gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
+    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(trfname);
     g_free(title);
 
@@ -277,7 +277,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
     mark_vwin_content_saved(vwin);
 
     /* make the window editable */
-    if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {
+    if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text))) {
 	view_window_set_editable(vwin);
     }
 }
@@ -291,7 +291,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     gchar *trbuf;
 #endif
 
-    buf = textview_get_text(vwin->w);
+    buf = textview_get_text(vwin->text);
     if (buf == NULL) {
 	errbox("Couldn't retrieve buffer");
 	return;
@@ -899,7 +899,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     */
 
     if (parent == NULL) {
-	parent = mdata->w;
+	parent = mdata->main;
     }
 
     filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(parent), fa,

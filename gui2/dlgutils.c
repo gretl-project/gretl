@@ -26,19 +26,6 @@
 
 #include "system.h"
 
-GtkWidget *windata_get_toplevel (windata_t *vwin)
-{
-    GtkWidget *top = NULL;
-
-    if (vwin->w != NULL) {
-	top = gtk_widget_get_toplevel(vwin->w);
-    } else if (vwin->dialog != NULL) {
-	top = gtk_widget_get_toplevel(vwin->dialog);
-    }
-
-    return top;
-}
-
 void set_window_busy (windata_t *vwin)
 {
     vwin->flags |= VWIN_BUSY;
@@ -1238,13 +1225,11 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 
     /* schedule destruction */
     if (cmdcode == MODEL_GENR || cmdcode == RESTRICT) {
-	GtkWidget *w = windata_get_toplevel(okptr);
+	windata_t *vwin = (windata_t *) okptr;
 
-	if (w != NULL) {
-	    g_signal_connect(G_OBJECT(w), "destroy",
-			     G_CALLBACK(cancel_vwin_edit), 
-			     NULL);
-	}
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
+			 G_CALLBACK(cancel_vwin_edit), 
+			 NULL);
     }
 
     gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);

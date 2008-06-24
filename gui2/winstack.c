@@ -220,3 +220,78 @@ void winstack_remove (GtkWidget *w)
 {
     winstack(STACK_REMOVE, w, NULL, NULL);
 }
+
+static void windata_init (windata_t *vwin, int role, gpointer data)
+{
+    vwin->main = NULL;
+    vwin->vbox = NULL;
+    vwin->text = NULL;
+    vwin->listbox = NULL;
+    vwin->mbar = NULL;
+    vwin->status = NULL;
+    vwin->popup = NULL;
+    vwin->ui = NULL;
+    vwin->gretl_parent = NULL;
+    vwin->gretl_children = NULL;
+    vwin->data = data;
+    vwin->active_var = 0;
+    vwin->role = role;
+    vwin->n_model_tests = 0;
+    vwin->n_gretl_children = 0;
+    vwin->flags = 0;
+    vwin->fname[0] = '\0';
+    vwin->sbuf = NULL;
+}
+
+windata_t *gretl_viewer_new (int role, const gchar *title, 
+			     gpointer data, int record)
+{
+    windata_t *vwin = mymalloc(sizeof *vwin);
+
+    if (vwin == NULL) {
+	return NULL;
+    }
+
+    windata_init(vwin, role, data);
+
+    if (role == MAINWIN) {
+	return vwin;
+    }
+
+    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+
+    if (record) {
+	g_object_set_data(G_OBJECT(vwin->main), "object", data);
+	g_object_set_data(G_OBJECT(vwin->main), "role", 
+			  GINT_TO_POINTER(vwin->role));
+	winstack_add(vwin->main);
+    }
+
+    return vwin;
+}
+
+windata_t *gretl_browser_new (int role, const gchar *title, int record)
+{
+    windata_t *vwin = mymalloc(sizeof *vwin);
+
+    if (vwin == NULL) {
+	return NULL;
+    }
+
+    windata_init(vwin, role, NULL);
+
+    vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+
+    if (record) {
+	g_object_set_data(G_OBJECT(vwin->main), "object", vwin);
+	g_object_set_data(G_OBJECT(vwin->main), "role", 
+			  GINT_TO_POINTER(vwin->role));
+	winstack_add(vwin->main);
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
+			 G_CALLBACK(free_windata), vwin);
+    }	
+
+    return vwin;
+}

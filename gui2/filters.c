@@ -451,7 +451,7 @@ static int filter_dialog (filter_info *finfo)
     GtkWidget *w;
     int ret = 0;
 
-    dlg = gretl_dialog_new(_("gretl: time-series filter"), mdata->w,
+    dlg = gretl_dialog_new(_("gretl: time-series filter"), mdata->main,
 			   GRETL_DLG_BLOCK);
     finfo->dlg = dlg;
 

@@ -458,8 +458,8 @@ static void edit_session_notes (void)
 	vwin = edit_buffer(&session.notes, 80, 400, 
 			   _("gretl: session notes"),
 			   EDIT_NOTES);
-	notes_window = vwin->dialog;
-	g_signal_connect(G_OBJECT(vwin->dialog), "destroy",
+	notes_window = vwin->main;
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(gtk_widget_destroyed),
 			 &notes_window);
     } else {
@@ -614,14 +614,14 @@ void save_output_as_text_icon (windata_t *vwin)
     gchar *buf;
     int err;
 
-    buf = textview_get_text(vwin->w);
+    buf = textview_get_text(vwin->text);
     if (buf == NULL) {
 	errbox("Couldn't retrieve buffer");
 	return;
     }
 
-    if (vwin->dialog != NULL) {
-	title = gtk_window_get_title(GTK_WINDOW(vwin->dialog));
+    if (vwin->main != NULL) {
+	title = gtk_window_get_title(GTK_WINDOW(vwin->main));
     }
 
     if (title != NULL && !strncmp(title, "gretl: ", 7)) {
@@ -933,8 +933,8 @@ void model_add_as_icon (GtkAction *action, gpointer p)
 
     mark_session_changed();
 
-    if (close_on_add(action) && window_is_busy(vwin)) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
+    if (close_on_add(action) && !window_is_busy(vwin)) {
+	gtk_widget_destroy(vwin->main);
     } 	
 }
 

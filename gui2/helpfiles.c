@@ -1229,11 +1229,11 @@ static void real_do_help (int hcode, int pos, int flags)
 		    phwin = &gui_hwin;
 		}
 	    }		
-	    g_signal_connect(G_OBJECT(hwin->w), "destroy",
+	    g_signal_connect(G_OBJECT(hwin->main), "destroy",
 			     G_CALLBACK(nullify_hwin), phwin);
 	}
     } else {
-	gtk_window_present(GTK_WINDOW(gtk_widget_get_toplevel(hwin->w)));
+	gtk_window_present(GTK_WINDOW(hwin->main));
     }
 
 #if HDEBUG
@@ -1364,7 +1364,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	GtkTextBuffer *buf;
 	GtkTextIter iter;
 
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	gtk_text_buffer_get_iter_at_mark(buf, &iter,
 					 gtk_text_buffer_get_insert(buf));
 
@@ -1424,7 +1424,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	g_free(text);
 	unset_window_help_active(vwin);
-	text_set_cursor(vwin->w, 0);
+	text_set_cursor(vwin->text, 0);
 
 	if (pos <= 0) {
 	    warnbox(_("Sorry, help not found"));
@@ -1549,7 +1549,7 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 	return;
     }
 
-    found = real_find_in_text(GTK_TEXT_VIEW(vwin->w), needle, TRUE);
+    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, TRUE);
 
     if (!found) {
 	infobox(_("String was not found."));
@@ -1665,17 +1665,10 @@ static void cancel_find (GtkWidget *widget, gpointer data)
 
 static void parent_find (GtkWidget *finder, windata_t *caller)
 {
-    GtkWidget *w = NULL;
-
-    if (caller->dialog != NULL) {
-	w = caller->dialog;
-    } else if (caller->w != NULL) {
-	w = caller->w;
-    }
+    GtkWidget *w = caller->main;
 
     if (w != NULL) {
-	gtk_window_set_transient_for(GTK_WINDOW(finder),
-				     GTK_WINDOW(w));
+	gtk_window_set_transient_for(GTK_WINDOW(finder), GTK_WINDOW(w));
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(finder), TRUE);
     }
 }

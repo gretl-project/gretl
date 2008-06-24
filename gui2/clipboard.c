@@ -146,7 +146,7 @@ static void gretl_clipboard_set (int fmt)
     if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
 				      gretl_clipboard_get,
 				      gretl_clipboard_clear,
-				      G_OBJECT(mdata->w))) {
+				      G_OBJECT(mdata->main))) {
 	fprintf(stderr, "Failed to initialize clipboard\n");
     }
 }

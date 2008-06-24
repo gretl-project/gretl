@@ -613,7 +613,7 @@ void copy_format_dialog (windata_t *vwin, int action)
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) return;
 
-    dialog = gretl_dialog_new(_("gretl: select format"), vwin->dialog, 
+    dialog = gretl_dialog_new(_("gretl: select format"), vwin->main, 
 			      GRETL_DLG_BLOCK);
 
     finfo->vwin = vwin;
@@ -817,7 +817,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 	return;
     }
 
-    dialog = gretl_dialog_new(_("gretl: bootstrap analysis"), vwin->dialog, 
+    dialog = gretl_dialog_new(_("gretl: bootstrap analysis"), vwin->main, 
 			      GRETL_DLG_BLOCK);
 
     rs.dlg = dialog;

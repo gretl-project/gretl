@@ -66,7 +66,7 @@ static int modcount;
 static void increment_modal_count (GtkWidget *w)
 {
     if (modcount == 0) {
-	gtk_widget_set_sensitive(mdata->w, FALSE);
+	gtk_widget_set_sensitive(mdata->main, FALSE);
     }
 
     modcount++;
@@ -79,7 +79,7 @@ static void decrement_modal_count (GtkWidget *w, gpointer p)
     }
 
     if (modcount == 0) {
-	gtk_widget_set_sensitive(mdata->w, TRUE);
+	gtk_widget_set_sensitive(mdata->main, TRUE);
     }
 }
 
@@ -411,7 +411,7 @@ GtkWidget *build_selection_popup (void)
 
 void clear_sample_label (void)
 {
-    GtkWidget *dlabel = g_object_get_data(G_OBJECT(mdata->w), "dlabel");
+    GtkWidget *dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
 
     gtk_label_set_text(GTK_LABEL(mdata->status), "");
     gtk_label_set_text(GTK_LABEL(dlabel), _(" No datafile loaded "));
@@ -419,7 +419,7 @@ void clear_sample_label (void)
 
 void set_sample_label (DATAINFO *pdinfo)
 {
-    GtkWidget *dlabel = g_object_get_data(G_OBJECT(mdata->w), "dlabel");
+    GtkWidget *dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
     char stobs[OBSLEN], endobs[OBSLEN];
     char labeltxt[128];
     const char *pdstr;
@@ -542,13 +542,8 @@ int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
 
-    if (vwin->w != NULL) {
-	gtk_window_add_accel_group(GTK_WINDOW(vwin->w), 
-				   gtk_ui_manager_get_accel_group(vwin->ui));
-    } else if (vwin->dialog != NULL) {
-	gtk_window_add_accel_group(GTK_WINDOW(vwin->dialog), 
-				   gtk_ui_manager_get_accel_group(vwin->ui));
-    }
+    gtk_window_add_accel_group(GTK_WINDOW(vwin->main), 
+			       gtk_ui_manager_get_accel_group(vwin->ui));
 
     gtk_ui_manager_add_ui_from_string(vwin->ui, ui_info, -1, &err);
     if (err != NULL) {

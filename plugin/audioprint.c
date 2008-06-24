@@ -427,7 +427,7 @@ int read_window_text (windata_t *vwin, const DATAINFO *pdinfo,
 	GtkTextIter start, end;
 	gchar *window_text;
 
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	gtk_text_buffer_get_start_iter(tbuf, &start);
 	gtk_text_buffer_get_end_iter(tbuf, &end);
 	window_text = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);

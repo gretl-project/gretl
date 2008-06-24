@@ -39,6 +39,7 @@
 #include "filters.h"
 #include "calculator.h"
 #include "fnsave.h"
+#include "winstack.h"
 
 #include <dirent.h>
 
@@ -591,12 +592,8 @@ int main (int argc, char *argv[])
     /* create the GUI */
     gretl_tooltips_init();
     gretl_stock_icons_init();
+    make_main_window();
 
-    /* create main window */
-    if ((mdata = mymalloc(sizeof *mdata)) == NULL)
-	noalloc();
-    if (make_main_window() == NULL) 
-	noalloc();
     if (have_data()) {
 	/* redundant? */
 	set_sample_label(datainfo);
@@ -1065,7 +1062,7 @@ mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
     mainwin_width = event->width;
     mainwin_height = event->height;
 
-    gdk_window_get_root_origin(mdata->w->window, &main_x, &main_y);
+    gdk_window_get_root_origin(mdata->main->window, &main_x, &main_y);
 
     return FALSE;
 }
@@ -1111,6 +1108,11 @@ static GtkWidget *make_main_window (void)
 	G_TYPE_STRING
     };
 
+    mdata = gretl_viewer_new(MAINWIN, "gretl", NULL, 0);
+    if (mdata == NULL) {
+	noalloc();
+    }
+
     gui_scale = get_gui_scale();
 
     if (!winsize || mainwin_width <= 200 || mainwin_height <= 200) {
@@ -1120,48 +1122,40 @@ static GtkWidget *make_main_window (void)
 	scale_main_window();
     }
 
-    mdata->data = NULL;  
-    mdata->listbox = NULL;
-    mdata->popup = NULL;
-    mdata->dialog = NULL;
-    mdata->role = MAINWIN;
-
 #ifdef USE_GNOME
-    mdata->w = gnome_app_new("gretl", _("Econometrics program"));
+    mdata->main = gnome_app_new("gretl", _("Econometrics program"));
 #else
-    mdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    mdata->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
 #ifdef G_OS_WIN32
     set_up_windows_look();
 #endif
 
-    g_signal_connect(G_OBJECT(mdata->w), "configure_event",
+    g_signal_connect(G_OBJECT(mdata->main), "configure_event",
 		     G_CALLBACK(mainwin_config), NULL);
-    g_signal_connect(G_OBJECT(mdata->w), "delete_event",
+    g_signal_connect(G_OBJECT(mdata->main), "delete_event",
 		     G_CALLBACK(exit_check), NULL);
-    g_signal_connect(G_OBJECT(mdata->w), "destroy",
+    g_signal_connect(G_OBJECT(mdata->main), "destroy",
 		     G_CALLBACK(gtk_main_quit), NULL);
 
-    gtk_window_set_title(GTK_WINDOW(mdata->w), "gretl");
-    gtk_window_set_default_size(GTK_WINDOW(mdata->w), 
+    gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
+    gtk_window_set_default_size(GTK_WINDOW(mdata->main), 
 				mainwin_width, mainwin_height);
 #ifndef G_OS_WIN32
-    g_signal_connect_after(G_OBJECT(mdata->w), "realize", 
+    g_signal_connect_after(G_OBJECT(mdata->main), "realize", 
 			   G_CALLBACK(set_wm_icon), 
 			   NULL);
 #endif
 
     main_vbox = gtk_vbox_new(FALSE, 4);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 8);
-
 #ifdef USE_GNOME
-    gnome_app_set_contents(GNOME_APP(mdata->w), main_vbox);
+    gnome_app_set_contents(GNOME_APP(mdata->main), main_vbox);
 #else
-    gtk_container_add(GTK_CONTAINER(mdata->w), main_vbox);
+    gtk_container_add(GTK_CONTAINER(mdata->main), main_vbox);
 #endif
-
-    g_object_set_data(G_OBJECT(mdata->w), "vbox", main_vbox);
+    g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
 
     set_up_main_menu();
     gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
@@ -1170,7 +1164,7 @@ static GtkWidget *make_main_window (void)
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
     gtk_widget_show(dlabel);
 
-    g_object_set_data(G_OBJECT(mdata->w), "dlabel", dlabel);
+    g_object_set_data(G_OBJECT(mdata->main), "dlabel", dlabel);
 
     box = gtk_vbox_new(FALSE, 0);
     align = gtk_alignment_new(0, 0, 0, 0);
@@ -1209,13 +1203,13 @@ static GtkWidget *make_main_window (void)
     set_app_font(NULL);
 #endif
 
-    gtk_widget_show_all(mdata->w); 
+    gtk_widget_show_all(mdata->main); 
 
     /* create gretl toolbar */
     show_toolbar();
 
     if (winsize && main_x >= 0 && main_y >= 0) {
-	gtk_window_move(GTK_WINDOW(mdata->w), main_x, main_y);
+	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
 
     return main_vbox;
@@ -1557,7 +1551,7 @@ static void set_up_main_menu (void)
     gtk_ui_manager_insert_action_group(mdata->ui, actions, 0);
     g_object_unref(actions);
 
-    gtk_window_add_accel_group(GTK_WINDOW(mdata->w), 
+    gtk_window_add_accel_group(GTK_WINDOW(mdata->main), 
 			       gtk_ui_manager_get_accel_group(mdata->ui));
 
     if (!gtk_ui_manager_add_ui_from_string(mdata->ui, main_ui, -1, &error)) {

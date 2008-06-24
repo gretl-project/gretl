@@ -326,7 +326,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    xvec = expand_db_series(dbZ[v], sinfo, datainfo->pd);
 	} else if (sinfo->pd > datainfo->pd) {
 	    if (!chosen) {
-		data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
+		data_compact_dialog(vwin->main, sinfo->pd, &datainfo->pd, NULL, 
 				    &method, NULL);
 		if (method == COMPACT_NONE) {
 		    if (!overwrite) {
@@ -745,54 +745,53 @@ delete_series_callback (gpointer p, guint u, GtkWidget *w)
 static void 
 close_db_callback (windata_t *vwin, guint u, GtkWidget *w)
 {
-    gtk_widget_destroy(vwin->w);
+    gtk_widget_destroy(vwin->main);
 }
 
 static void set_up_db_menu (windata_t *vwin, int cb, int del)
 {
     GtkActionEntry db_items[] = {
-	{ "FileMenu", NULL, N_("_File"), NULL, NULL, NULL },
+	{ "File", NULL, N_("_File"), NULL, NULL, NULL },
 	{ "FileClose", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_db_callback) },
-	{ "SeriesMenu", NULL, N_("_Series"), NULL, NULL, NULL },
+	{ "Series", NULL, N_("_Series"), NULL, NULL, NULL },
 	{ "SeriesDisplay", NULL, N_("_Display"), NULL, NULL, G_CALLBACK(db_series_callback) },
 	{ "SeriesGraph", NULL, N_("_Graph"), NULL, NULL, G_CALLBACK(db_series_callback) },
 	{ "SeriesImport", NULL, N_("_Import"), NULL, NULL, G_CALLBACK(db_series_callback) },
 	{ "SeriesDelete", NULL, N_("_Delete"), NULL, NULL, G_CALLBACK(delete_series_callback) },
-	{ "FindMenu", NULL, N_("_Find"), NULL, NULL, NULL },
+	{ "Find", NULL, N_("_Find"), NULL, NULL, NULL },
 	{ "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL, G_CALLBACK(listbox_find) },
-	{ "CodebookMenu", NULL, N_("_Codebook"), NULL, NULL, NULL },
+    };
+    GtkActionEntry cb_items[] = {
+	{ "Codebook", NULL, N_("_Codebook"), NULL, NULL, NULL },
 	{ "CodebookOpen", GTK_STOCK_OPEN, N_("_Open"), NULL, NULL, G_CALLBACK(book_callback_wrapper) },
     };
     const gchar *db_ui = 
 	"<ui>"
 	"  <menubar name='MenuBar'>"
-	"    <menu action='FileMenu'>"
+	"    <menu action='File'>"
 	"      <menuitem action='FileClose'/>"
 	"    </menu>"
-	"    <menu action='SeriesMenu'>"
+	"    <menu action='Series'>"
 	"      <menuitem action='SeriesDisplay'/>"
 	"      <menuitem action='SeriesGraph'/>"
 	"      <menuitem action='SeriesImport'/>"
 	"      <menuitem action='SeriesDelete'/>"
 	"    </menu>"
-	"    <menu action='FindMenu'>"
+	"    <menu action='Find'>"
 	"      <menuitem action='WindowFind'/>"
-	"    </menu>"
-	"    <menu action='CodebookMenu'>"
-	"      <menuitem action='CodebookOpen'/>"
 	"    </menu>"
 	"  </menubar>"
 	"</ui>";
-    gint n_items = sizeof db_items / sizeof db_items[0];
 
-    if (!cb) {
-	n_items -= 2;
+    vwin_add_ui(vwin, db_items, G_N_ELEMENTS(db_items), db_ui);
+
+    if (cb) {
+	vwin_menu_add_menu(vwin, "/MenuBar", &cb_items[0]);
+	vwin_menu_add_item(vwin, "/MenuBar/Codebook", &cb_items[1]);
     }
 
-    vwin_add_ui(vwin, db_items, n_items, db_ui);
-
     if (!del) {
-	flip(vwin->ui, "/Series/Delete", FALSE);
+	flip(vwin->ui, "/MenuBar/Series/SeriesDelete", FALSE);
     }
 }
 
@@ -898,11 +897,11 @@ make_db_series_window (int action, char *fname, char *buf)
 {
     GtkWidget *listbox;
     GtkWidget *w, *main_vbox;
-    char *titlestr;
+    gchar *title;
     windata_t *vwin;
     int db_width = 700, db_height = 420;
     int cb = 0, del = 0;
-    int err = 0;
+    int record, err = 0;
 
     w = match_window_by_filename(fname);
     if (w != NULL) {
@@ -914,37 +913,25 @@ make_db_series_window (int action, char *fname, char *buf)
 	return 1;
     }
 
-    vwin = mymalloc(sizeof *vwin);
+    if (buf == NULL && strrchr(fname, SLASH) != NULL) {
+	title = strrchr(fname, SLASH) + 1;
+    } else {
+	title = fname;
+    } 
+
+    record = (action == NATIVE_SERIES);
+
+    vwin = gretl_browser_new(action, title, record);
     if (vwin == NULL) {
 	return 1;
     }
 
-    windata_init(vwin);
-    vwin->role = action;
-
-    vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
     db_width *= gui_scale;
     db_height *= gui_scale;
-    gtk_window_set_default_size(GTK_WINDOW(vwin->w), db_width, db_height);
+    gtk_window_set_default_size(GTK_WINDOW(vwin->main), db_width, db_height);
     
-    if (buf == NULL && strrchr(fname, SLASH) != NULL) {
-	titlestr = strrchr(fname, SLASH) + 1;
-    } else {
-	titlestr = fname;
-    }
-
-    gtk_window_set_title(GTK_WINDOW(vwin->w), titlestr);
-
-    if (action == NATIVE_SERIES) {
-	g_object_set_data(G_OBJECT(vwin->w), "object", vwin);
-	g_object_set_data(G_OBJECT(vwin->w), "role", 
-			  GINT_TO_POINTER(vwin->role));
-	winstack_add(vwin->w);
-	g_signal_connect(G_OBJECT(vwin->w), "destroy",
-			 G_CALLBACK(free_windata), vwin);	
-    } else {
-	g_signal_connect(G_OBJECT(vwin->w), "destroy", 
+    if (action != NATIVE_SERIES) {
+	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(destroy_db_win), vwin);
     }
 
@@ -957,7 +944,7 @@ make_db_series_window (int action, char *fname, char *buf)
     /* set up grids */
     main_vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 10);
-    gtk_container_add(GTK_CONTAINER(vwin->w), main_vbox);
+    gtk_container_add(GTK_CONTAINER(vwin->main), main_vbox);
 
     cb = db_has_codebook(fname);
     del = db_is_writable(action, fname);
@@ -992,9 +979,9 @@ make_db_series_window (int action, char *fname, char *buf)
     }
 
     if (err) {
-	gtk_widget_destroy(vwin->w);
+	gtk_widget_destroy(vwin->main);
     } else {
-	gtk_widget_show_all(vwin->w); 
+	gtk_widget_show_all(vwin->main); 
 	maybe_adjust_descrip_column(vwin);
 	db_select_first_series(vwin);
     }
@@ -1623,8 +1610,8 @@ void open_db_index (GtkWidget *w, gpointer data)
     make_db_series_window(action, dbfile, NULL); 
 
 #ifndef KEEP_BROWSER_OPEN
-    if (vwin != NULL && vwin->w != NULL && GTK_IS_WIDGET(vwin->w)) {
-	gtk_widget_destroy(GTK_WIDGET(vwin->w));
+    if (vwin != NULL && vwin->main != NULL && GTK_IS_WIDGET(vwin->main)) {
+	gtk_widget_destroy(GTK_WIDGET(vwin->main));
     }
 #endif
 }
@@ -2618,7 +2605,7 @@ void do_compact_data_set (void)
 	pmonstart = &monstart;
     }
 
-    data_compact_dialog(mdata->w, datainfo->pd, &newpd, pmonstart, 
+    data_compact_dialog(mdata->main, datainfo->pd, &newpd, pmonstart, 
 			&method, &repday);
 
     if (method == COMPACT_NONE) {
@@ -2644,7 +2631,7 @@ void do_expand_data_set (void)
 	return;
     }
 
-    data_expand_dialog(mdata->w, datainfo->pd, &newpd);
+    data_expand_dialog(mdata->main, datainfo->pd, &newpd);
     if (newpd < 0) {
 	return;
     }

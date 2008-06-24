@@ -826,7 +826,7 @@ void winprint (char *fullbuf, char *selbuf)
     g_signal_connect(op, "draw_page", G_CALLBACK(draw_text_page), &pinfo);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(mdata->w), &err);
+				  GTK_WINDOW(mdata->main), &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
 	errbox("Error printing:\n%s", err->message);
@@ -972,7 +972,7 @@ void gtk_print_graph (const char *fname)
     g_signal_connect(op, "draw_page", G_CALLBACK(draw_image), NULL);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(mdata->w), &err);
+				  GTK_WINDOW(mdata->main), &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
 	errbox("Error printing:\n%s", err->message);

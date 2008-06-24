@@ -360,7 +360,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     if (vwin != NULL) {
 	build_path(vwin->fname, paths.dotdir, "pkgedit", NULL);
 	gretl_tempname(vwin->fname);
-	g_object_set_data(G_OBJECT(vwin->w), "iface", 
+	g_object_set_data(G_OBJECT(vwin->text), "iface", 
 			  GINT_TO_POINTER(finfo->iface));
     }
 }

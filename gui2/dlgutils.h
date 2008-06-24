@@ -39,8 +39,6 @@ struct combo_opts_ {
 
 typedef struct combo_opts_ combo_opts;
 
-GtkWidget *windata_get_toplevel (windata_t *vwin);
-
 void set_window_busy (windata_t *vwin);
 
 void unset_window_busy (windata_t *vwin);

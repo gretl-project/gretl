@@ -17,7 +17,7 @@
  * 
  */
 
-/* toolbar.c: the gretl toolbar */
+/* toolbar.c: main-window toolbar, viewer window toolbars, etc. */
 
 #include "gretl.h"
 #include "console.h"
@@ -37,6 +37,7 @@
 # include "gretlwin32.h"
 #endif
 
+/* for viewer window toolbars */
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
@@ -83,21 +84,6 @@ enum {
     ALPHA_ITEM,
     REFRESH_ITEM
 } viewbar_flags;
-
-typedef void (*toolfunc) (GtkWidget *w, windata_t *vwin);
-
-struct viewbar_item {
-    const char *tip;
-    const gchar *icon;
-    toolfunc func;
-    int flag;
-};
-
-struct toolbar_item {
-    const char *tip;
-    const gchar *icon;
-    void (*toolfunc)();
-};
 
 static GtkIconFactory *gretl_stock_ifac;
 
@@ -184,7 +170,7 @@ static int vwin_selection_present (gpointer p)
     GtkTextBuffer *buf;
     int ret = 0;
 
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
 	ret = 1;
@@ -271,9 +257,9 @@ static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
     if (!err) {
 	GtkTextBuffer *buf;
 
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	gtk_text_buffer_set_text(buf, "", -1);
-	textview_set_text(vwin->w, newtext);
+	textview_set_text(vwin->text, newtext);
 	g_free(newtext);
     }
 
@@ -366,10 +352,10 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     reset_coeff_intervals(cf, alpha);
     text_print_model_confints(cf, prn);
     newtext = gretl_print_get_buffer(prn);
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     gtk_text_buffer_set_text(buf, "", -1);
-    textview_set_text(vwin->w, newtext);
+    textview_set_text(vwin->text, newtext);
     gretl_print_destroy(prn);
 }
 
@@ -394,7 +380,7 @@ static void set_output_sticky (GtkWidget *w, windata_t *vwin)
 
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
-    text_set_cursor(vwin->w, GDK_QUESTION_ARROW);
+    text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
     set_window_help_active(vwin);
 }
 
@@ -414,11 +400,11 @@ static void delete_file_viewer (GtkWidget *widget, windata_t *vwin)
     }
 
     if (!resp) {
-	gtk_widget_destroy(vwin->dialog); 
+	gtk_widget_destroy(vwin->main); 
     }
 }
 
-static int edit_script_popup_item (struct viewbar_item *item)
+static int edit_script_popup_item (GretlToolItem *item)
 {
     return !strcmp(item->icon, GTK_STOCK_COPY) ||
 	!strcmp(item->icon, GTK_STOCK_PASTE) ||
@@ -427,43 +413,43 @@ static int edit_script_popup_item (struct viewbar_item *item)
 	!strcmp(item->icon, GTK_STOCK_FIND_AND_REPLACE);
 }
 
-static void set_plot_icon (struct viewbar_item *vitem)
+static void set_plot_icon (GretlToolItem *item)
 {
     if (dataset_is_time_series(datainfo)) {
-	vitem->icon = GRETL_STOCK_TS;
+	item->icon = GRETL_STOCK_TS;
     } else {
-	vitem->icon = GRETL_STOCK_BOX;
+	item->icon = GRETL_STOCK_BOX;
     }
 }
 
-static struct viewbar_item viewbar_items[] = {
-    { N_("Save"), GTK_STOCK_SAVE, view_window_save, SAVE_ITEM },
-    { N_("Save as..."), GTK_STOCK_SAVE_AS, file_save_callback, SAVE_AS_ITEM },
+static GretlToolItem viewbar_items[] = {
+    { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(view_window_save), SAVE_ITEM },
+    { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(file_save_callback), SAVE_AS_ITEM },
 #ifdef NATIVE_PRINTING
-    { N_("Print..."), GTK_STOCK_PRINT, window_print_callback, 0 },
+    { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
 #endif
-    { N_("Run"), GTK_STOCK_EXECUTE, do_run_script, EXEC_ITEM },
-    { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
-    { N_("Paste"), GTK_STOCK_PASTE, text_paste, EDIT_ITEM },
-    { N_("Find..."), GTK_STOCK_FIND, (toolfunc) text_find, 0 },
-    { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace, EDIT_ITEM },
-    { N_("Undo"), GTK_STOCK_UNDO, text_undo, EDIT_ITEM },
-    { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
-    { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_BY_ITEM },
-    { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, script_tabs_dialog, EDIT_SCRIPT_ITEM },
-    { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
-    { N_("Scripts index"), GTK_STOCK_INDEX, script_index, INDEX_ITEM },
-    { N_("Confidence level..."), GRETL_STOCK_ALPHA, coeffint_set_alpha, ALPHA_ITEM },
-    { N_("Refresh"), GTK_STOCK_REFRESH, cmd_log_refresh, REFRESH_ITEM },
-    { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
-    { N_("Graph"), GRETL_STOCK_TS, series_view_graph, PLOT_ITEM },
-    { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
-    { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_DATA_ITEM },
-    { N_("Add as matrix..."), GTK_STOCK_ADD, add_matrix_callback, ADD_MATRIX_ITEM },
-    { N_("Stickiness..."), GRETL_STOCK_PIN, set_output_sticky, STICKIFY_ITEM },
-    { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, CMD_HELP_ITEM },
-    { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
-    { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 }
+    { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
+    { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(text_copy_callback), COPY_ITEM }, 
+    { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
+    { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), 0 },
+    { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, G_CALLBACK(text_replace), EDIT_ITEM },
+    { N_("Undo"), GTK_STOCK_UNDO, G_CALLBACK(text_undo), EDIT_ITEM },
+    { N_("Sort"), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_sort), SORT_ITEM },    
+    { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_sort_by), SORT_BY_ITEM },
+    { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, G_CALLBACK(script_tabs_dialog), EDIT_SCRIPT_ITEM },
+    { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
+    { N_("Scripts index"), GTK_STOCK_INDEX, G_CALLBACK(script_index), INDEX_ITEM },
+    { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
+    { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(cmd_log_refresh), REFRESH_ITEM },
+    { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
+    { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(series_view_graph), PLOT_ITEM },
+    { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(series_view_format_dialog), FORMAT_ITEM },
+    { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
+    { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
+    { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(set_output_sticky), STICKIFY_ITEM },
+    { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
+    { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
+    { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
 };
 
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
@@ -510,10 +496,10 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
    context.
 */
 
-static toolfunc item_get_callback (struct viewbar_item *item, windata_t *vwin, 
-				   int latex_ok, int sortby_ok)
+static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin, 
+				    int latex_ok, int sortby_ok)
 {
-    toolfunc func = item->func;
+    GCallback func = item->func;
     int f = item->flag;
     int r = vwin->role;
 
@@ -559,27 +545,54 @@ static toolfunc item_get_callback (struct viewbar_item *item, windata_t *vwin,
 	    return NULL;
 	}
 	if (r == EDIT_HEADER || r == EDIT_NOTES) {
-	    func = buf_edit_save;
+	    func = G_CALLBACK(buf_edit_save);
 	} else if (r == GR_PLOT) {
-	    func = save_plot_commands_callback;
+	    func = G_CALLBACK(save_plot_commands_callback);
 	}
     } else if (f == SAVE_AS_ITEM) {
 	if (!save_as_ok(r)) {
 	    return NULL;
 	} else if (MULTI_FORMAT_ENABLED(r) || (r == PRINT && vwin->data != NULL)) {
-	    func = multi_save_as_callback;
+	    func = G_CALLBACK(multi_save_as_callback);
 	}
     }
 
     return func;
 }
 
+GtkWidget *gretl_toolbar_new (void)
+{
+    GtkWidget *tb;
+
+    tb = gtk_toolbar_new();
+    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tb), GTK_ICON_SIZE_MENU);
+    gtk_toolbar_set_style(GTK_TOOLBAR(tb), GTK_TOOLBAR_ICONS);
+    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(tb), FALSE);
+
+    return tb;
+}
+
+GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
+				   GretlToolItem *item,
+				   gpointer data,
+				   gint pos)
+{
+    GtkToolItem *button;
+
+    button = gtk_tool_button_new_from_stock(item->icon);
+    gtk_tool_item_set_tooltip(button, get_gretl_tips(), _(item->tip), NULL);
+    g_signal_connect(button, "clicked", G_CALLBACK(item->func), data);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), button, pos);
+
+    return button;
+}
+
 void vwin_add_viewbar (windata_t *vwin, int text_out)
 {
     GtkWidget *hbox;
     GtkToolItem *button;
-    toolfunc func;
-    const char *tooltip;
+    GretlToolItem *item;
+    GCallback func;
     int sortby_ok = has_sortable_data(vwin);
     int latex_ok = latex_is_ok();
     int i;
@@ -589,50 +602,33 @@ void vwin_add_viewbar (windata_t *vwin, int text_out)
     }
 
     if (text_out || vwin->role == SCRIPT_OUT) {
-	g_object_set_data(G_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
+	g_object_set_data(G_OBJECT(vwin->main), "text_out", GINT_TO_POINTER(1));
     }
 
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-    vwin->mbar = gtk_toolbar_new();
-    gtk_toolbar_set_icon_size(GTK_TOOLBAR(vwin->mbar), GTK_ICON_SIZE_MENU);
-    gtk_toolbar_set_style(GTK_TOOLBAR(vwin->mbar), GTK_TOOLBAR_ICONS);
-    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(vwin->mbar), FALSE);
+    vwin->mbar = gretl_toolbar_new();
 
     for (i=0; i<n_viewbar_items; i++) {
-	struct viewbar_item *vitem = &viewbar_items[i];
+	item = &viewbar_items[i];
 
-	func = item_get_callback(vitem, vwin, latex_ok, sortby_ok);
+	func = item_get_callback(item, vwin, latex_ok, sortby_ok);
 	if (func == NULL) {
 	    continue;
 	}
 
-	if (vitem->flag == PLOT_ITEM) {
-	    set_plot_icon(vitem);
+	if (item->flag == PLOT_ITEM) {
+	    set_plot_icon(item);
 	}
 
-	tooltip = vitem->tip;
+	button = gretl_toolbar_insert(vwin->mbar, item, vwin, -1);
 
-	if (vitem->flag == EXEC_ITEM) {
-	    if (vwin->role == EDIT_GP) {
-		tooltip = N_("Send to gnuplot");
-	    } else if (vwin->role == EDIT_R) {
-		tooltip = N_("Send to R");
-	    }
-	}
-
-	button = gtk_tool_button_new_from_stock(vitem->icon);
-	gtk_tool_item_set_tooltip(button, get_gretl_tips(), 
-				  _(tooltip), NULL);
-	g_signal_connect(button, "clicked", G_CALLBACK(func), vwin);
-	gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), button, -1);
-
-	if (vitem->flag == SAVE_ITEM) { 
+	if (item->flag == SAVE_ITEM) { 
 	    g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
 	    /* nothing to save just yet */
 	    gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
-	} else if (vitem->flag == SAVE_AS_ITEM) {
+	} else if (item->flag == SAVE_AS_ITEM) {
 	    g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button", button);
 	    if (strstr(vwin->fname, "script_tmp")) {
 		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
@@ -646,31 +642,27 @@ void vwin_add_viewbar (windata_t *vwin, int text_out)
 
 void viewbar_add_edit_items (windata_t *vwin)
 {
-    struct viewbar_item *vitem;
+    GretlToolItem *item;
     GtkToolItem *button;
     int i, pos = 0;
 
     for (i=0; i<n_viewbar_items; i++) {
-	vitem = &viewbar_items[i];
-	if (vitem->flag == SAVE_ITEM ||
-	    vitem->flag == EDIT_ITEM ||
-	    vitem->flag == EDIT_SCRIPT_ITEM) {
-	    button = gtk_tool_button_new_from_stock(vitem->icon);
-	    gtk_tool_item_set_tooltip(button, get_gretl_tips(), 
-				      _(vitem->tip), NULL);
-	    g_signal_connect(button, "clicked", G_CALLBACK(vitem->func), vwin);
-	    gtk_toolbar_insert(GTK_TOOLBAR(vwin->mbar), button, pos);
-	    if (vitem->flag == SAVE_ITEM) {
+	item = &viewbar_items[i];
+	if (item->flag == SAVE_ITEM ||
+	    item->flag == EDIT_ITEM ||
+	    item->flag == EDIT_SCRIPT_ITEM) {
+	    button = gretl_toolbar_insert(vwin->mbar, item, vwin, pos);
+	    if (item->flag == SAVE_ITEM) {
 		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
 		g_object_set_data(G_OBJECT(vwin->mbar), "save_button",
 				  button);
-	    } else if (vitem->flag == SAVE_AS_ITEM) {
+	    } else if (item->flag == SAVE_AS_ITEM) {
 		g_object_set_data(G_OBJECT(vwin->mbar), "save_as_button",
 				  button);
 	    }
 	    gtk_widget_show(GTK_WIDGET(button));
 	}
-	if (vitem->flag != EDIT_GP) {
+	if (item->flag != EDIT_GP) {
 	    pos++;
 	}
     }
@@ -678,39 +670,37 @@ void viewbar_add_edit_items (windata_t *vwin)
 
 GtkWidget *build_text_popup (windata_t *vwin)
 {
-    struct viewbar_item *vitem;
-    toolfunc func;
+    GretlToolItem *item;
+    GCallback func;
     GtkWidget *pmenu = gtk_menu_new();
     GtkWidget *w;
     int i;
 
     for (i=0; i<n_viewbar_items; i++) {
-	vitem = &viewbar_items[i];
+	item = &viewbar_items[i];
 	if (vwin->role == EDIT_SCRIPT) {
 	    /* the script editor popup may have some special stuff
 	       added: don't clutter it up */
-	    if (edit_script_popup_item(vitem)) {
-		func = vitem->func;
+	    if (edit_script_popup_item(item)) {
+		func = item->func;
 	    } else {
 		func = NULL;
 	    }
 	} else {
-	    func = item_get_callback(vitem, vwin, 0, 0);
+	    func = item_get_callback(item, vwin, 0, 0);
 	}
-	if (func != NULL) {
-	    if (func == text_paste) {
+	if (func != G_CALLBACK(NULL)) {
+	    if (func == G_CALLBACK(text_paste)) {
 		GtkClipboard *cb = gtk_clipboard_get(GDK_NONE);
 
 		if (!gtk_clipboard_wait_is_text_available(cb)) {
 		    continue;
 		}
-	    } else if (func == text_undo && !text_can_undo(vwin)) {
+	    } else if (func == G_CALLBACK(text_undo) && !text_can_undo(vwin)) {
 		continue;
 	    }
-	    w = gtk_menu_item_new_with_label(_(vitem->tip));
-	    g_signal_connect(G_OBJECT(w), "activate",
-			     G_CALLBACK(func),
-			     vwin);
+	    w = gtk_menu_item_new_with_label(_(item->tip));
+	    g_signal_connect(G_OBJECT(w), "activate", func, vwin);
 	    gtk_widget_show(w);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
 	}
@@ -792,45 +782,36 @@ static void tbar_show_funcs (GtkWidget *w, gpointer p)
 
 /* end toolbar icon callbacks */
 
-
-
 #if NO_EDIT_ICON
 # define GTK_STOCK_EDIT "gretl-script"
 #endif
 
-static struct toolbar_item toolbar_items[] = {
-    { N_("launch calculator"),  GRETL_STOCK_CALC,    tbar_calc },
-    { N_("new script"),         GTK_STOCK_EDIT,      tbar_new_script },
-    { N_("open gretl console"), GRETL_STOCK_CONSOLE, show_gretl_console },
-    { N_("session icon view"),  GRETL_STOCK_ICONS,   tbar_iconview },
-    { N_("function packages"),  GRETL_STOCK_FUNC,    tbar_show_funcs },
-    { N_("user's guide"),       GRETL_STOCK_PDF,     tbar_users_guide },
-    { N_("command reference"),  GTK_STOCK_HELP,      tbar_command_ref },
-    { N_("X-Y graph"),          GRETL_STOCK_SCATTER, tbar_xy_graph },
-    { N_("OLS model"),          GRETL_STOCK_MODEL,   tbar_model },
-    { N_("open dataset"),       GTK_STOCK_OPEN,      tbar_open_data }
+static GretlToolItem mainbar_items[] = {
+    { N_("launch calculator"),  GRETL_STOCK_CALC,    G_CALLBACK(tbar_calc), 0 },
+    { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
+    { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(show_gretl_console), 0 },
+    { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
+    { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },
+    { N_("user's guide"),       GRETL_STOCK_PDF,     G_CALLBACK(tbar_users_guide), 0 },
+    { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
+    { N_("X-Y graph"),          GRETL_STOCK_SCATTER, G_CALLBACK(tbar_xy_graph), 0 },
+    { N_("OLS model"),          GRETL_STOCK_MODEL,   G_CALLBACK(tbar_model), 0 },
+    { N_("open dataset"),       GTK_STOCK_OPEN,      G_CALLBACK(tbar_open_data), 0 }
 };
 
 static void make_toolbar (GtkWidget *vbox)
 {
     GtkWidget *hbox, *toolbar;
-    GtkToolItem *item;
-    int i, n = G_N_ELEMENTS(toolbar_items);
+    GretlToolItem *item;
+    int i, n = G_N_ELEMENTS(mainbar_items);
 
     gretl_stock_icons_init();
 
-    toolbar = gtk_toolbar_new();
-    gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_MENU);
-    gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
-    gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar), FALSE);
+    toolbar = gretl_toolbar_new();
 
     for (i=0; i<n; i++) {
-	item = gtk_tool_button_new_from_stock(toolbar_items[i].icon);
-	gtk_tool_item_set_tooltip(item, get_gretl_tips(), 
-				  _(toolbar_items[i].tip),
-				  NULL);
-	g_signal_connect(item, "clicked", toolbar_items[i].toolfunc, mdata);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), item, -1);
+	item = &mainbar_items[i];
+	gretl_toolbar_insert(toolbar, item, mdata, -1);
     }
 
     hbox = gtk_hbox_new(FALSE, 0);
@@ -841,7 +822,7 @@ static void make_toolbar (GtkWidget *vbox)
 
 void show_toolbar (void)
 {
-    GtkWidget *vbox = g_object_get_data(G_OBJECT(mdata->w), "vbox");
+    GtkWidget *vbox = g_object_get_data(G_OBJECT(mdata->main), "vbox");
 
     make_toolbar(vbox);
 }

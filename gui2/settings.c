@@ -776,7 +776,7 @@ int options_dialog (int page, const char *varname)
 	return 0;
     }
 
-    dialog = gretl_dialog_new(_("gretl: options"), mdata->w, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("gretl: options"), mdata->main, GRETL_DLG_BLOCK);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 2);
 
@@ -2378,7 +2378,7 @@ void working_dir_dialog (void)
     }
 
     dialog = gretl_dialog_new(_("gretl: working directory"), 
-			      mdata->w, GRETL_DLG_BLOCK);
+			      mdata->main, GRETL_DLG_BLOCK);
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(gtk_widget_destroyed), 

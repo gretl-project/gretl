@@ -61,11 +61,11 @@ typedef struct _windata_t windata_t;
 #include <gtksourceview/gtksourceview.h>
 
 struct _windata_t {
-    GtkWidget *dialog;
+    GtkWidget *main;
     GtkWidget *vbox;
+    GtkWidget *text;
     GtkWidget *listbox; 
     GtkWidget *mbar;
-    GtkWidget *w;
     GtkWidget *status;
     GtkWidget *popup;
     GtkUIManager *ui; 
@@ -89,6 +89,15 @@ struct dialog_opts_ {
     gretlopt *optp;
     const gretlopt *vals;
     const char **strs;
+};
+
+typedef struct GretlToolItem_ GretlToolItem;
+
+struct GretlToolItem_ {
+    const gchar *tip;
+    const gchar *icon;
+    GCallback func;
+    int flag;
 };
 
 #define window_is_busy(w)    (w->flags & VWIN_BUSY)

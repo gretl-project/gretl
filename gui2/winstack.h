@@ -36,5 +36,11 @@ GtkWidget *match_window_by_filename (const char *fname);
 
 int highest_numbered_variable_in_winstack (void);
 
+windata_t *gretl_viewer_new (int role, const gchar *title, 
+			     gpointer data, int record);
+
+windata_t *gretl_browser_new (int role, const gchar *title,
+			      int record);
+
 #endif
 

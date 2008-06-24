@@ -76,7 +76,7 @@ static void close_model (GtkAction *action, gpointer data)
     if (window_is_busy(vwin)) {
 	maybe_raise_dialog();
     } else {
-	gtk_widget_destroy(vwin->dialog);
+	gtk_widget_destroy(vwin->main);
     }
 }
 
@@ -129,7 +129,7 @@ static GtkActionEntry model_items[] = {
     { "File", NULL, N_("_File"), NULL, NULL, NULL },
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },
     { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
-    { "SaveAndClose", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
+    { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
 #ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
@@ -439,7 +439,7 @@ void audio_render_window (windata_t *vwin, int key)
 static gboolean Ctrl_C (windata_t *vwin)
 {
 #ifdef G_OS_WIN32 
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
 	window_copy(vwin, GRETL_FORMAT_SELECTION);
@@ -460,7 +460,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     int editing;
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-    editing = gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w));
+    editing = gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->text));
 
     if (mods & GDK_CONTROL_MASK) {
 	if (key->keyval == GDK_f) {
@@ -483,7 +483,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		if (vwin->role == EDIT_SCRIPT && 
 		    (vwin->flags & VWIN_CONTENT_CHANGED)) {
 		    if (query_save_text(NULL, NULL, vwin) == FALSE) {
-			gtk_widget_destroy(vwin->dialog);
+			gtk_widget_destroy(vwin->main);
 		    }
 		} else { 
 		    gtk_widget_destroy(w);
@@ -860,7 +860,7 @@ void do_open_data (windata_t *fwin, int code)
 
     if (fwin != NULL) {
 	/* close the files browser window that launched the query */
-	gtk_widget_destroy(fwin->w);
+	gtk_widget_destroy(fwin->main);
     }
 
     if (append) {
@@ -950,7 +950,7 @@ void buf_edit_save (GtkWidget *widget, windata_t *vwin)
     char **pbuf = (char **) vwin->data;
     gchar *text;
 
-    text = textview_get_text(vwin->w);
+    text = textview_get_text(vwin->text);
 
     if (text == NULL || *text == '\0') {
 	errbox(_("Buffer is empty"));
@@ -978,7 +978,7 @@ static int update_func_code (windata_t *vwin)
     /* callback used when editing a function in the context of
        the "function package editor" */
 	
-    iface = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->w), "iface"));
+    iface = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->text), "iface"));
     err = update_function_from_script(vwin->fname, iface);
     if (err) {
 	gui_errmsg(err);
@@ -1009,7 +1009,7 @@ void view_window_save (GtkWidget *widget, windata_t *vwin)
 	    errbox(_("Can't open file for writing"));
 	    return;
 	} else {
-	    text = textview_get_text(vwin->w);
+	    text = textview_get_text(vwin->text);
 	    system_print_buf(text, fp);
 	    fclose(fp);
 	    g_free(text);
@@ -1019,28 +1019,6 @@ void view_window_save (GtkWidget *widget, windata_t *vwin)
 	    }
 	}
     }
-}
-
-void windata_init (windata_t *vwin)
-{
-    vwin->dialog = NULL;
-    vwin->vbox = NULL;
-    vwin->listbox = NULL;
-    vwin->mbar = NULL;
-    vwin->w = NULL;
-    vwin->status = NULL;
-    vwin->popup = NULL;
-    vwin->ui = NULL;
-    vwin->gretl_parent = NULL;
-    vwin->gretl_children = NULL;
-    vwin->data = NULL;
-    vwin->active_var = 0;
-    vwin->role = 0;
-    vwin->n_model_tests = 0;
-    vwin->n_gretl_children = 0;
-    vwin->flags = 0;
-    vwin->fname[0] = '\0';
-    vwin->sbuf = NULL;
 }
 
 static int vwin_add_child (windata_t *parent, windata_t *child)
@@ -1106,8 +1084,8 @@ void free_windata (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin != NULL) {
-	if (vwin->w != NULL) { 
-	    gchar *undo = g_object_steal_data(G_OBJECT(vwin->w), "undo");
+	if (vwin->text != NULL) { 
+	    gchar *undo = g_object_steal_data(G_OBJECT(vwin->text), "undo");
 	    
 	    if (undo != NULL) {
 		g_free(undo);
@@ -1183,12 +1161,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    remove(vwin->fname);
 	}
 
-	if (vwin->role == NATIVE_SERIES) {
-	    winstack_remove(vwin->w);
-	} else if (vwin->dialog != NULL) {
-	    winstack_remove(vwin->dialog);
-	}
-
+	winstack_remove(vwin->main);
 	free(vwin);
     }
 }
@@ -1298,34 +1271,9 @@ static void attach_content_changed_signal (windata_t *vwin)
 {
     GtkTextBuffer *tbuf;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     g_signal_connect(G_OBJECT(tbuf), "changed", 
 		     G_CALLBACK(content_changed), vwin);
-}
-
-static windata_t *common_viewer_new (int role, const char *title, 
-				     gpointer data, int record)
-{
-    windata_t *vwin;
-
-    vwin = mymalloc(sizeof *vwin);
-    if (vwin == NULL) return NULL;
-
-    windata_init(vwin);
-
-    vwin->role = role;
-    vwin->data = data;
-    vwin->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
-
-    if (record) {
-	g_object_set_data(G_OBJECT(vwin->dialog), "object", data);
-	g_object_set_data(G_OBJECT(vwin->dialog), "role", 
-			  GINT_TO_POINTER(vwin->role));
-	winstack_add(vwin->dialog);
-    }
-
-    return vwin;
 }
 
 static void viewer_box_config (windata_t *vwin)
@@ -1335,12 +1283,12 @@ static void viewer_box_config (windata_t *vwin)
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
 
 #ifndef G_OS_WIN32
-    g_signal_connect_after(G_OBJECT(vwin->dialog), "realize", 
+    g_signal_connect_after(G_OBJECT(vwin->main), "realize", 
 			   G_CALLBACK(set_wm_icon), 
 			   NULL);
 #endif
 
-    gtk_container_add(GTK_CONTAINER(vwin->dialog), vwin->vbox);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 }
 
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
@@ -1351,9 +1299,9 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 	if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
 	    sourceview_insert_buffer(vwin, buf);
 	} else if (vwin->role == SCRIPT_OUT) {
-	    textview_set_text_colorized(vwin->w, buf);
+	    textview_set_text_colorized(vwin->text, buf);
 	} else {
-	    textview_set_text(vwin->w, buf);
+	    textview_set_text(vwin->text, buf);
 	}
     }
 }
@@ -1365,7 +1313,7 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
     const char *newtext;
 
     newtext = gretl_print_get_buffer(prn);
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     if (sticky) {
 	/* append to previous content */
@@ -1374,20 +1322,20 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
 
 	gtk_text_buffer_get_end_iter(buf, &iter);
 	mark = gtk_text_buffer_create_mark(buf, NULL, &iter, TRUE);
-	textview_append_text_colorized(vwin->w, newtext, 1);
-	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
+	textview_append_text_colorized(vwin->text, newtext, 1);
+	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
 				     mark, 0.0, TRUE, 0, 0.05);
 	gtk_text_buffer_delete_mark(buf, mark);
     } else {
 	/* replace previous content */
 	gtk_text_buffer_set_text(buf, "", -1);
-	textview_set_text_colorized(vwin->w, newtext);
+	textview_set_text_colorized(vwin->text, newtext);
 	cursor_to_top(vwin);
     }
 
     gretl_print_destroy(prn);
 
-    gtk_window_present(GTK_WINDOW(vwin->dialog));
+    gtk_window_present(GTK_WINDOW(vwin->main));
 
     return vwin;
 }
@@ -1411,11 +1359,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 
     if (title != NULL) {
-	vwin = common_viewer_new(role, title, data, record);
+	vwin = gretl_viewer_new(role, title, data, record);
     } else {
 	gchar *tmp = make_viewer_title(role, NULL);
 
-	vwin = common_viewer_new(role, tmp, data, record);
+	vwin = gretl_viewer_new(role, tmp, data, record);
 	g_free(tmp);
     }
 
@@ -1425,7 +1373,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
-	set_up_viewer_menu(vwin->dialog, vwin, system_items, sys_ui);
+	set_up_viewer_menu(vwin->main, vwin, system_items, sys_ui);
 	add_system_menu_items(vwin, role);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
@@ -1444,11 +1392,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	create_text(vwin, hsize, vsize, FALSE);
 	if (role == PRINT || role == SCRIPT_OUT ||
 	    role == VIEW_MODELTABLE) {
-	    text_set_word_wrap(vwin->w, 0);
+	    text_set_word_wrap(vwin->text, 0);
 	}
     }
 
-    text_table_setup(vwin->vbox, vwin->w);
+    text_table_setup(vwin->vbox, vwin->text);
 
     if (role == SCRIPT_OUT && data != NULL) {
 	/* partial output window for script */
@@ -1456,12 +1404,12 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 
     /* arrange for clean-up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
 
     /* register destruction of script output viewer */
     if (role == SCRIPT_OUT) {
-	g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(nullify_script_out), &script_out);
 	script_out = vwin;
     }
@@ -1470,20 +1418,20 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     view_buffer_insert_text(vwin, prn);
     gretl_print_destroy(prn);
 
-    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->dialog);
+    gtk_widget_show(vwin->main);
 
     if (role == EDIT_FUNC_CODE) {
-	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
+	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
 	attach_content_changed_signal(vwin);
-	g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
+	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
     } 
 
-    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
 		     G_CALLBACK(text_popup_handler), vwin);
     cursor_to_top(vwin);
 
@@ -1526,8 +1474,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     /* then start building the file viewer */
     title = make_viewer_title(role, filename);
-    vwin = common_viewer_new(role, (title != NULL)? title : filename, 
-			     NULL, record_on_winstack(role));
+    vwin = gretl_viewer_new(role, (title != NULL)? title : filename, 
+			    NULL, record_on_winstack(role));
     g_free(title);
 
     if (vwin == NULL) {
@@ -1545,7 +1493,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	create_text(vwin, hsize, vsize, editable);
     }
 
-    text_table_setup(vwin->vbox, vwin->w);
+    text_table_setup(vwin->vbox, vwin->text);
 
     if (view_file_use_sourceview(role)) {
 	sourceview_insert_file(vwin, filename);
@@ -1554,18 +1502,18 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     }
 
     /* catch some special keystrokes */
-    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (editable) {
-	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
+	g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
     }
 
     /* editing script or graph: grab the "changed" signal and
        set up alert for unsaved changes on exit */
     if (editing_script(role)) {
 	attach_content_changed_signal(vwin);	
-	g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
+	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 			 G_CALLBACK(query_save_text), vwin);
     }
 
@@ -1573,21 +1521,21 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     if (del_file) {
 	gchar *fname = g_strdup(filename);
 
-	g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 			 G_CALLBACK(delete_file), (gpointer) fname);
     }
 
-    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->dialog);
+    gtk_widget_show(vwin->main);
 
-    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
     cursor_to_top(vwin);
-    gtk_widget_grab_focus(vwin->w);
+    gtk_widget_grab_focus(vwin->text);
 
     return vwin;
 }
@@ -1608,7 +1556,7 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
     }
 
     title = make_viewer_title(role, NULL);
-    vwin = common_viewer_new(role, title, NULL, 0);
+    vwin = gretl_viewer_new(role, title, NULL, 0);
     g_free(title);
 
     if (vwin == NULL) return NULL;
@@ -1617,7 +1565,7 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
     vwin->data = fbuf;
 
     viewer_box_config(vwin);
-    set_up_viewer_menu(vwin->dialog, vwin, menu_items, ui_info);
+    set_up_viewer_menu(vwin->main, vwin, menu_items, ui_info);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
@@ -1626,41 +1574,41 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
     }
 
     create_text(vwin, hsize, vsize, FALSE);
-    text_table_setup(vwin->vbox, vwin->w);
+    text_table_setup(vwin->vbox, vwin->text);
 
-    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN ||
 	vwin->role == FUNCS_HELP) {
-	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button_press_event",
 			 G_CALLBACK(help_popup_handler), 
 			 vwin);
     } else {
-	g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+	g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
 			 G_CALLBACK(text_popup_handler), vwin);
     }	
 
-    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->dialog);
+    gtk_widget_show(vwin->main);
 
-    /* make the helpfile variant discernible via vwin->w */
-    g_object_set_data(G_OBJECT(vwin->w), "role", GINT_TO_POINTER(vwin->role));
+    /* make the helpfile variant discernible via vwin->text */
+    g_object_set_data(G_OBJECT(vwin->text), "role", GINT_TO_POINTER(vwin->role));
 
-    gtk_widget_grab_focus(vwin->w);
+    gtk_widget_grab_focus(vwin->text);
 
     return vwin;
 }
 
 void view_window_set_editable (windata_t *vwin)
 {
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), TRUE);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), TRUE);
-    g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
-    g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->text), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), TRUE);
+    g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
+    g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(query_save_text), vwin);
     vwin->role = EDIT_SCRIPT;
     viewbar_add_edit_items(vwin);
@@ -1696,7 +1644,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 {
     windata_t *vwin;
 
-    vwin = common_viewer_new(role, title, pbuf, 1);
+    vwin = gretl_viewer_new(role, title, pbuf, 1);
     if (vwin == NULL) {
 	return NULL;
     }
@@ -1707,32 +1655,32 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     vwin_add_viewbar(vwin, 0);
 
     create_text(vwin, hsize, vsize, TRUE);
-    text_table_setup(vwin->vbox, vwin->w);
+    text_table_setup(vwin->vbox, vwin->text);
     
     /* insert the buffer text */
     if (*pbuf) {
 	GtkTextBuffer *tbuf = 
-	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
 	gtk_text_buffer_set_text(tbuf, *pbuf, -1);
     }
-    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
 		     G_CALLBACK(text_popup_handler), vwin);
-    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     attach_content_changed_signal(vwin);
 
     /* alert for unsaved changes on exit */
-    g_signal_connect(G_OBJECT(vwin->dialog), "delete-event",
+    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 		     G_CALLBACK(query_save_text), vwin);
 
     /* clean up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->dialog);
+    gtk_widget_show(vwin->main);
 
     cursor_to_top(vwin);
 
@@ -1759,7 +1707,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     windata_t *vwin;
     const char *buf;
 
-    vwin = common_viewer_new(VIEW_MODEL, title, pmod, 1);
+    vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
     if (vwin == NULL) {
 	return 1;
     }
@@ -1769,7 +1717,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     viewer_box_config(vwin);
 
-    set_up_model_view_menu(vwin->dialog, vwin);
+    set_up_model_view_menu(vwin->main, vwin);
 
     g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
 		     G_CALLBACK(check_model_menu), vwin);
@@ -1778,32 +1726,32 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_widget_show(vwin->mbar);
 
     create_text(vwin, hsize, vsize, FALSE);
-    text_table_setup(vwin->vbox, vwin->w);
+    text_table_setup(vwin->vbox, vwin->text);
 
     /* insert and then free the model results buffer */
     buf = gretl_print_get_buffer(prn);
-    textview_set_text(vwin->w, buf);
+    textview_set_text(vwin->text, buf);
     gretl_print_destroy(prn);
 
     /* attach shortcuts */
-    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
-    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
     /* don't allow deletion of model window when a model
        test dialog is active */
-    g_signal_connect(G_OBJECT(vwin->dialog), "delete-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(check_delete_model_window), 
 		     vwin);
 
     /* clean up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
 		     G_CALLBACK(free_windata), 
 		     vwin);
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show_all(vwin->dialog);
+    gtk_widget_show_all(vwin->main);
 
     cursor_to_top(vwin);
 
@@ -1814,7 +1762,7 @@ void auto_save_plot (windata_t *vwin)
 {
     gchar *buf;
 
-    buf = textview_get_text(vwin->w);
+    buf = textview_get_text(vwin->text);
     if (buf == NULL) {
 	return;
     }
@@ -1843,7 +1791,7 @@ static void auto_save_script (windata_t *vwin)
 	return;
     }
 
-    savestuff = textview_get_text(vwin->w);
+    savestuff = textview_get_text(vwin->text);
     fprintf(fp, "%s", savestuff);
     g_free(savestuff); 
     fclose(fp);
@@ -2476,8 +2424,8 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	add_dummies_to_plot_menu(vwin);
     }
 
-    if (vwin->dialog != NULL) {
-	gtk_window_add_accel_group(GTK_WINDOW(vwin->dialog), 
+    if (vwin->main != NULL) {
+	gtk_window_add_accel_group(GTK_WINDOW(vwin->main), 
 				   gtk_ui_manager_get_accel_group(vwin->ui));
     }
 

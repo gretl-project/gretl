@@ -46,8 +46,6 @@ void verify_open_data (windata_t *vwin, int code);
 
 void verify_open_session (void);
 
-void windata_init (windata_t *mydata);
-
 void free_windata (GtkWidget *w, gpointer data);
 
 void mark_vwin_content_saved (windata_t *vwin);

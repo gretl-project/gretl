@@ -1716,7 +1716,7 @@ static void update_model_tests (windata_t *vwin)
     MODEL *pmod = (MODEL *) vwin->data;
 
     if (pmod->ntests > vwin->n_model_tests) {
-	print_test_to_window(pmod, vwin->w);
+	print_test_to_window(pmod, vwin->text);
 	vwin->n_model_tests += 1;
     }
 }
@@ -1899,7 +1899,7 @@ void add_leverage_data (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     } else {
-	int ID = get_model_id_from_window(vwin->dialog);
+	int ID = get_model_id_from_window(vwin->main);
 
 	gretl_command_strcpy("leverage --save");
 	model_command_init(ID);
@@ -1943,7 +1943,7 @@ void do_leverage (GtkAction *action, gpointer p)
 
 	levwin = view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
 			     LEVERAGE, m); 
-	set_model_id_on_window(levwin->dialog, pmod->ID);
+	set_model_id_on_window(levwin->main, pmod->ID);
 
 	make_and_display_graph();
 
@@ -5618,7 +5618,7 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
     if (kid != NULL) {
 	const char *txt = gretl_print_get_buffer(prn);
 
-	textview_append_text_colorized(kid->w, txt, 0);
+	textview_append_text_colorized(kid->text, txt, 0);
 	gretl_print_destroy(prn);
 	return 1;
     }
@@ -5668,7 +5668,7 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 	gdk_display_sync(disp);
     }
 
-    wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->w),
+    wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
 				    GTK_TEXT_WINDOW_TEXT);
     gdk_window_set_cursor(wtxt, cursor);
     gdk_cursor_unref(cursor);
@@ -5745,9 +5745,9 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     int sel = 0;
 
     if (vwin->role == EDIT_GP || vwin->role == EDIT_GP) {
-	buf = textview_get_text(vwin->w);
+	buf = textview_get_text(vwin->text);
     } else {
-	buf = textview_get_selection_or_all(vwin->w, &sel);
+	buf = textview_get_selection_or_all(vwin->text, &sel);
     }
 
     if (buf == NULL || *buf == '\0') {
