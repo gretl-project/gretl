@@ -35,6 +35,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef G_OS_WIN32
+# include <gdk/gdkwin32.h>
+#endif
+
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
                           i == OPEN_DATA)
@@ -749,7 +753,7 @@ static int select_dirname (char *fname, char *trmsg)
 }
 
 static void win32_file_selector (const char *msg, int action, FselDataSrc src, 
-				 gpointer data) 
+				 gpointer data, GtkWidget *parent) 
 {
     OPENFILENAME of;
     int retval;
@@ -805,7 +809,11 @@ static void win32_file_selector (const char *msg, int action, FselDataSrc src,
 #else
 	of.lStructSize = sizeof of;
 #endif
-	of.hwndOwner = NULL;
+	if (parent != NULL) {
+	    of.hwndOwner = GDK_WINDOW_HWND(parent->window);
+	} else {
+	    of.hwndOwner = NULL;
+	}
 	filter = make_winfilter(action, data);
 	of.lpstrFilter = filter;
 	of.lpstrCustomFilter = NULL;
@@ -891,12 +899,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     } else {
 	fa = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
-	parent = NULL;
     }
-
-    /* FIXME: parent window below should not always be mdata->w,
-       in particular when action == SAVE_GNUPLOT
-    */
 
     if (parent == NULL) {
 	parent = mdata->main;
@@ -996,10 +999,18 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 
 void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 {
+    GtkWidget *w = NULL;
+
+    if (src == FSEL_DATA_VWIN) {
+	windata_t *vwin = (windata_t *) data;
+
+	w = vwin->main;
+    }
+
 #ifdef G_OS_WIN32
-    win32_file_selector(msg, action, src, data);
+    win32_file_selector(msg, action, src, data, w);
 #else
-    gtk_file_selector(msg, action, src, data, NULL);
+    gtk_file_selector(msg, action, src, data, w);
 #endif
 }
 
@@ -1007,7 +1018,7 @@ void file_selector_with_parent (const char *msg, int action, FselDataSrc src,
 				gpointer data, GtkWidget *w)
 {
 #ifdef G_OS_WIN32
-    win32_file_selector(msg, action, src, data);
+    win32_file_selector(msg, action, src, data, w);
 #else
     gtk_file_selector(msg, action, src, data, w);
 #endif

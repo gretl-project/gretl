@@ -276,13 +276,13 @@ void file_save (windata_t *vwin, int ci)
 
     switch (ci) {
     case SAVE_OUTPUT:
-	file_selector(_("Save output file"), ci, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save output file"), ci, FSEL_DATA_VWIN, vwin);
 	break;
     case SAVE_CONSOLE:
-	file_selector(_("Save console output"), ci, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save console output"), ci, FSEL_DATA_VWIN, vwin);
 	break;
     case SAVE_SCRIPT:
-	file_selector(_("Save command script"), ci, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save command script"), ci, FSEL_DATA_VWIN, vwin);
 	break;
     case SAVE_DATA:
     case SAVE_DATA_AS:
@@ -308,10 +308,10 @@ void file_save (windata_t *vwin, int ci)
 	file_selector(_("Save text"), ci, FSEL_DATA_MISC, vwin->data);
 	break;
     case SAVE_GP_CMDS:
-	file_selector(_("Save gnuplot commands"), ci, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save gnuplot commands"), ci, FSEL_DATA_VWIN, vwin);
 	break;
     case SAVE_R_CMDS:
-	file_selector(_("Save R commands"), ci, FSEL_DATA_MISC, vwin);
+	file_selector(_("Save R commands"), ci, FSEL_DATA_VWIN, vwin);
 	break;
     default:
 	dummy_call();

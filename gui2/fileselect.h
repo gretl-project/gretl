@@ -20,6 +20,7 @@
 typedef enum {
     FSEL_DATA_NONE = 0,
     FSEL_DATA_PRN,
+    FSEL_DATA_VWIN,
     FSEL_DATA_MISC
 } FselDataSrc;
 

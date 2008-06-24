@@ -993,13 +993,13 @@ void view_window_save (GtkWidget *widget, windata_t *vwin)
 	/* special case: a newly created script */
 	if (vwin->role == EDIT_SCRIPT) {
 	    file_selector(_("Save command script"), SAVE_SCRIPT, 
-			  FSEL_DATA_MISC, vwin);
+			  FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_GP) {
 	    file_selector(_("Save gnuplot commands"), SAVE_GP_CMDS, 
-			  FSEL_DATA_MISC, vwin);
+			  FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_R) {
 	    file_selector(_("Save R commands"), SAVE_R_CMDS, 
-			  FSEL_DATA_MISC, vwin);
+			  FSEL_DATA_VWIN, vwin);
 	}
     } else {
 	FILE *fp;
@@ -1781,7 +1781,7 @@ static void auto_save_script (windata_t *vwin)
 
     if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	file_selector(_("Save command script"), SAVE_SCRIPT, 
-		      FSEL_DATA_MISC, vwin);
+		      FSEL_DATA_VWIN, vwin);
 	strcpy(vwin->fname, scriptfile);
 	unsaved = 1;
     }

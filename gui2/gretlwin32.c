@@ -668,7 +668,7 @@ int emf_to_clipboard (char *emfname)
     HENHMETAFILE hemf, hemfclip;
     HANDLE htest;
 
-    mainw = GDK_WINDOW_HWND(mdata->w->window);
+    mainw = GDK_WINDOW_HWND(mdata->main->window);
     if (mainw == NULL) {
 	errbox("Got NULL HWND");
 	return 1;
