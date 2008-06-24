@@ -164,6 +164,46 @@ void gretl_stock_icons_init (void)
 
 /* callbacks for viewer window toolbar */
 
+void save_as_callback (GtkWidget *w, windata_t *vwin)
+{
+    guint u = 0;
+
+    if (g_object_get_data(G_OBJECT(vwin->main), "text_out")) {
+	const char *opts[] = {
+	    N_("Save to file"),
+	    N_("Save to session as icon")
+	};
+	int resp;
+
+	resp = radio_dialog(_("gretl: save text"), _("Save text"), 
+			    opts, 2, 0, 0);
+	if (resp < 0) {
+	    return;
+	} else if (resp == 1) {
+	    save_output_as_text_icon(vwin);
+	    return;
+	} else {
+	    u = SAVE_OUTPUT;
+	}
+    } else if (vwin->role == EDIT_SCRIPT ||
+	       vwin->role == VIEW_SCRIPT ||
+	       vwin->role == VIEW_LOG ||
+	       vwin->role == VIEW_FUNC_CODE) {
+	u = SAVE_SCRIPT;
+    } else if (vwin->role == EDIT_GP) {
+	u = SAVE_GP_CMDS;
+    } else if (vwin->role == EDIT_R) {
+	u = SAVE_R_CMDS;
+    } else if (vwin->role == VIEW_FILE) {
+	u = SAVE_TEXT;
+    } else {
+	dummy_call();
+	return;
+    }
+
+    file_save(vwin, u);
+}
+
 static int vwin_selection_present (gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -424,7 +464,7 @@ static void set_plot_icon (GretlToolItem *item)
 
 static GretlToolItem viewbar_items[] = {
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(view_window_save), SAVE_ITEM },
-    { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(file_save_callback), SAVE_AS_ITEM },
+    { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
 #ifdef NATIVE_PRINTING
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
 #endif

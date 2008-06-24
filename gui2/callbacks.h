@@ -39,8 +39,6 @@ void gretl_callback (GtkAction *action, gpointer data);
 
 void model_genr_callback (GtkAction *action, gpointer data);
 
-void file_save_callback (GtkWidget *w, windata_t *vwin);
-
 void newdata_callback (void);
 
 void xcorrgm_callback (void);

@@ -736,14 +736,12 @@ static void build_db_popup (windata_t *vwin, int cb, int del)
     }
 }
 
-static void 
-delete_series_callback (gpointer p, guint u, GtkWidget *w)
+static void delete_series_callback (GtkAction *action, windata_t *vwin)
 {
-    gui_delete_series(NULL, p);
+    gui_delete_series(NULL, vwin);
 }
 
-static void 
-close_db_callback (windata_t *vwin, guint u, GtkWidget *w)
+static void close_db_callback (GtkAction *action, windata_t *vwin)
 {
     gtk_widget_destroy(vwin->main);
 }

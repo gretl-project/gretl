@@ -702,53 +702,6 @@ void minibuf_callback (void)
 		MINIBUF, VARCLICK_NONE, NULL);   
 }
 
-void file_save_callback (GtkWidget *w, windata_t *vwin)
-{
-    guint u = 0;
-
-    if (g_object_get_data(G_OBJECT(vwin->main), "text_out")) {
-	const char *opts[] = {
-	    N_("Save to file"),
-	    N_("Save to session as icon")
-	};
-	int resp;
-
-	resp = radio_dialog(_("gretl: save text"), _("Save text"), 
-			    opts, 2, 0, 0);
-	if (resp < 0) {
-	    return;
-	} else if (resp == 1) {
-	    save_output_as_text_icon(vwin);
-	    return;
-	} else {
-	    u = SAVE_OUTPUT;
-	}
-    } else {
-	switch (vwin->role) {
-	case EDIT_SCRIPT:
-	case VIEW_SCRIPT:
-	case VIEW_LOG:
-	case VIEW_FUNC_CODE:
-	    u = SAVE_SCRIPT;
-	    break;
-	case EDIT_GP:
-	    u = SAVE_GP_CMDS;
-	    break;
-	case EDIT_R:
-	    u = SAVE_R_CMDS;
-	    break;
-	case VIEW_FILE:
-	    u = SAVE_TEXT;
-	    break;
-	default:
-	    errbox(_("Sorry, not yet implemented"));
-	    return;
-	}
-    }
-
-    file_save(vwin, u);
-}
-
 void newdata_callback (void) 
 {
     int resp, n = 50;
