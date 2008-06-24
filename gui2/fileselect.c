@@ -32,6 +32,9 @@
 #include "database.h"
 #include "bootstrap.h"
 
+#include <sys/stat.h>
+#include <unistd.h>
+
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
                           i == OPEN_DATA)
