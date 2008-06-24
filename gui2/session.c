@@ -35,6 +35,7 @@
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "menustate.h"
+#include "winstack.h"
 #include "lib_private.h"
 
 #include "var.h"

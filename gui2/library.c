@@ -50,6 +50,7 @@
 #include "bootstrap.h"
 #include "fileselect.h"
 #include "database.h"
+#include "winstack.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>

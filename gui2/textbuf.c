@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "textbuf.h"
 #include "gretl_func.h"
+#include "toolbar.h"
 
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguage.h>

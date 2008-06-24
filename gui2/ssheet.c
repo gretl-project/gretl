@@ -24,6 +24,7 @@
 #include "menustate.h"
 #include "selector.h"
 #include "session.h"
+#include "winstack.h"
 #include "usermat.h"
 #include "matrix_extra.h"
 

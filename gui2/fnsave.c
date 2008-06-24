@@ -23,6 +23,7 @@
 #include "textbuf.h"
 #include "fileselect.h"
 #include "gretl_www.h"
+#include "winstack.h"
 #include "fnsave.h"
 
 #ifdef G_OS_WIN32

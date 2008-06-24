@@ -54,23 +54,19 @@ void windata_init (windata_t *mydata);
 
 void free_windata (GtkWidget *w, gpointer data);
 
-void winstack_init (void);
+void mark_vwin_content_saved (windata_t *vwin);
 
-void winstack_destroy (void);
+void mark_vwin_content_changed (windata_t *vwin);
 
-void winstack_add (GtkWidget *w);
+int latex_is_ok (void);
 
-void winstack_remove (GtkWidget *w);
+gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 
-int winstack_match_data (const gpointer p);
+void auto_save_plot (windata_t *vwin);
 
-GtkWidget *match_window_by_data (const gpointer p);
+void view_window_save (GtkWidget *widget, windata_t *vwin);
 
-GtkWidget *match_window_by_filename (const char *fname);
-
-GtkWidget *build_text_popup (windata_t *vwin);
-
-void mark_content_saved (windata_t *vwin);
+void buf_edit_save (GtkWidget *widget, windata_t *vwin);
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role,
@@ -90,8 +86,6 @@ windata_t *vwin_first_child (windata_t *vwin);
 
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);
-
-int highest_numbered_variable_in_winstack (void);
 
 void view_window_set_editable (windata_t *vwin);
 

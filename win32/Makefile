@@ -249,7 +249,8 @@ GUISRC = about.c \
 	textutil.c \
 	toolbar.c \
 	treeutils.c \
-	update.c
+	update.c \
+	winstack.c
 
 GUIOBJ = $(GUISRC:.c=.o)
 

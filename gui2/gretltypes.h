@@ -49,10 +49,11 @@
 #endif
 
 enum windata_flags {
-    VWIN_HELP_ACTIVE  = 1 << 0,
-    VWIN_BUSY         = 1 << 1,
-    VWIN_DELETE_FNAME = 1 << 2,
-    VWIN_STICKY       = 1 << 3
+    VWIN_HELP_ACTIVE     = 1 << 0,
+    VWIN_BUSY            = 1 << 1,
+    VWIN_DELETE_FNAME    = 1 << 2,
+    VWIN_STICKY          = 1 << 3,
+    VWIN_CONTENT_CHANGED = 1 << 4
 };
 
 typedef struct _windata_t windata_t;

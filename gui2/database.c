@@ -26,6 +26,7 @@
 #include "gretl_www.h"
 #include "menustate.h"
 #include "treeutils.h"
+#include "winstack.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
