@@ -29,6 +29,7 @@
 #include "series_view.h"
 #include "cmdstack.h"
 #include "dlgutils.h"
+#include "toolbar.h"
 
 #include "usermat.h"
 
@@ -148,7 +149,7 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_PIN,
 	GRETL_STOCK_ALPHA
     };
-    int n = sizeof stocks / sizeof stocks[0];
+    int n = G_N_ELEMENTS(stocks);
 
     if (gretl_stock_ifac == NULL) {
 	GtkIconSource *source;
@@ -845,3 +846,22 @@ void show_toolbar (void)
     make_toolbar(vbox);
 }
 
+/* tooltips stuff */
+
+static GtkTooltips *gretl_tips;
+
+void gretl_tooltips_init (void)
+{
+    gretl_tips = gtk_tooltips_new();
+    gtk_tooltips_enable(gretl_tips); /* redundant? */
+}
+
+void gretl_tooltips_add (GtkWidget *w, const gchar *str)
+{
+    gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
+}
+
+GtkTooltips *get_gretl_tips (void)
+{
+    return gretl_tips;
+}

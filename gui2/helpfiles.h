@@ -43,12 +43,6 @@ void text_find (gpointer unused, gpointer data);
 
 char *quoted_help_string (const char *s);
 
-void gretl_tooltips_init (void);
-
-void gretl_tooltips_add (GtkWidget *w, const gchar *str);
-
 int function_help_index_from_word (const char *s);
-
-GtkTooltips *get_gretl_tips (void);
 
 #endif /* HELPFILES_H */

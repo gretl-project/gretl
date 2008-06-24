@@ -20,11 +20,7 @@
 #ifndef GUI_UTILS_H
 #define GUI_UTILS_H
 
-void gretl_stock_icons_init (void);
-
 int copyfile (const char *src, const char *dest);
-
-int isdir (const char *path);
 
 FILE *gretl_tempfile_open (char *fname);
 
@@ -98,8 +94,6 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 
 void add_popup_item (const gchar *label, GtkWidget *menu,
 		     GCallback callback, gpointer data);
-
-void get_stats_table (void);
 
 void *gui_get_plugin_function (const char *funcname, 
 			       void **phandle);

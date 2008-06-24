@@ -327,13 +327,6 @@ int copyfile (const char *src, const char *dest)
     return 0;
 }
 
-int isdir (const char *path)
-{
-    struct stat buf;
-
-    return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
-}
-
 FILE *gretl_tempfile_open (char *fname)
 {
     FILE *fp = NULL;
@@ -1965,7 +1958,6 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ui, "/MenuBar/Analysis/Bootstrap", FALSE);
     }
 }
-
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkActionEntry *items,

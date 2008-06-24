@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "filelists.h"
 #include "menustate.h"
+#include "toolbar.h"
 #include "libset.h"
 
 #ifdef G_OS_WIN32
