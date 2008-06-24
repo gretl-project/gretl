@@ -2071,9 +2071,9 @@ static void add_model_tex_items (windata_t *vwin)
     }
 
     if (!eqn_ok || pmod->errcode) {
-	flip(vwin->ui, "/MenuBar/LaTeX/View/EqnView", FALSE);
-	flip(vwin->ui, "/MenuBar/LaTeX/Save/EqnSave", FALSE);
-	flip(vwin->ui, "/MenuBar/LaTeX/Copy/EqnCopy", FALSE);
+	flip(vwin->ui, "/MenuBar/LaTeX/TeXView/EqnView", FALSE);
+	flip(vwin->ui, "/MenuBar/LaTeX/TeXCopy/EqnCopy", FALSE);
+	flip(vwin->ui, "/MenuBar/LaTeX/TeXSave/EqnSave", FALSE);
 	flip(vwin->ui, "/MenuBar/LaTeX/EqnOpts", FALSE);
     }
 
