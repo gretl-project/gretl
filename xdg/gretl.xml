@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+
+   <mime-type type="application/x-gretldata">
+     <comment>Gretl data file</comment>
+     <glob pattern="*.gdt"/>
+   </mime-type>
+
+   <mime-type type="application/x-gretlsession">
+     <comment>Gretl session file</comment>
+     <glob pattern="*.gretl"/>
+   </mime-type>
+   
+   <mime-type type="application/x-gretlscript">
+     <comment>Gretl script file</comment>
+     <glob pattern="*.inp"/>
+   </mime-type>
+    
+</mime-info>
