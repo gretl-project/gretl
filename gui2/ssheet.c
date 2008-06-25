@@ -1310,15 +1310,15 @@ static void set_ok_transforms (Spreadsheet *sheet)
     int z = gretl_is_zero_matrix(sheet->matrix);
     int s = gretl_matrix_get_structure(sheet->matrix);
 
-    flip(sheet->ui, "/Transform/Multiply by scalar", !z);
-    flip(sheet->ui, "/Transform/Divide by scalar", !z);
-    flip(sheet->ui, "/Transform/X'X", 
+    flip(sheet->ui, "/MenuBar/Transform/ScalarMult", !z);
+    flip(sheet->ui, "/MenuBar/Transform/ScalarDiv", !z);
+    flip(sheet->ui, "/MenuBar/Transform/XTX", 
 	 s == 0 || (!z && s != GRETL_MATRIX_IDENTITY));
-    flip(sheet->ui, "/Transform/Cholesky", 
+    flip(sheet->ui, "/MenuBar/Transform/Cholesky", 
 	 s == GRETL_MATRIX_SYMMETRIC && !z);
-    flip(sheet->ui, "/Transform/Invert", s > 0 && !z &&
+    flip(sheet->ui, "/MenuBar/Transform/Invert", s > 0 && !z &&
 	 s != GRETL_MATRIX_IDENTITY);
-    flip(sheet->ui, "/Transform/Transpose", 
+    flip(sheet->ui, "/MenuBar/Transform/Transpose", 
 	 s < GRETL_MATRIX_SYMMETRIC);
 }
 
