@@ -307,25 +307,34 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 static gint selection_popup_click (GtkWidget *w, gpointer p)
 {
     gchar *item = (gchar *) p;
+    int ci = 0;
 
-    if (!strcmp(item, _("Display values"))) 
+    if (!strcmp(item, _("Descriptive statistics"))) {
+	ci = SUMMARY;
+    } else if (!strcmp(item, _("Correlation matrix"))) {
+	ci = CORR;
+    }
+
+    if (ci != 0) {
+	char *buf = main_window_selection_as_string();
+	
+	do_menu_op(ci, buf, OPT_NONE);
+	free(buf);
+    } else if (!strcmp(item, _("Display values"))) { 
 	display_selected(); 
-    else if (!strcmp(item, _("Descriptive statistics"))) 
-	do_menu_op(SUMMARY, NULL, OPT_NONE);
-    else if (!strcmp(item, _("Correlation matrix"))) 
-	do_menu_op(CORR, NULL, OPT_NONE);
-    else if (!strcmp(item, _("Cross-correlogram"))) 
+    } else if (!strcmp(item, _("Cross-correlogram")))  {
 	xcorrgm_callback();
-    else if (!strcmp(item, _("Time series plot"))) 
+    } else if (!strcmp(item, _("Time series plot"))) { 
 	plot_from_selection(GR_PLOT);
-    else if (!strcmp(item, _("XY scatterplot"))) 
+    } else if (!strcmp(item, _("XY scatterplot")))  {
 	plot_from_selection(GR_XY);
-    else if (!strcmp(item, _("Copy to clipboard"))) 
+    } else if (!strcmp(item, _("Copy to clipboard"))) { 
 	csv_selected_to_clipboard();
-    else if (!strcmp(item, _("Edit values"))) 
-	show_spreadsheet(SHEET_EDIT_VARLIST);
-    else if (!strcmp(item, _("Delete"))) 
+    } else if (!strcmp(item, _("Edit values")))  {
+ 	show_spreadsheet(SHEET_EDIT_VARLIST);
+    } else if (!strcmp(item, _("Delete")))  {
 	delete_selected_vars();
+    }
 
     gtk_widget_destroy(mdata->popup);
 
