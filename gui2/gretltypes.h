@@ -61,14 +61,14 @@ typedef struct _windata_t windata_t;
 #include <gtksourceview/gtksourceview.h>
 
 struct _windata_t {
-    GtkWidget *main;
-    GtkWidget *vbox;
-    GtkWidget *text;
-    GtkWidget *listbox; 
-    GtkWidget *mbar;
-    GtkWidget *status;
-    GtkWidget *popup;
-    GtkUIManager *ui; 
+    GtkWidget *main;      /* top-level GTK window */
+    GtkWidget *vbox;      /* vbox within main */
+    GtkWidget *text;      /* text or sourceview object */
+    GtkWidget *listbox;   /* or: box containing tree or list */
+    GtkWidget *mbar;      /* menubar, or toolbar */
+    GtkWidget *status;    /* status label */
+    GtkWidget *popup;     /* popup menu */
+    GtkUIManager *ui;     /* UI definition */
     windata_t *gretl_parent;
     windata_t **gretl_children;
     gpointer data;

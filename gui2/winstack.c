@@ -260,6 +260,8 @@ windata_t *gretl_viewer_new (int role, const gchar *title,
 
     vwin->main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
+    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+		     G_CALLBACK(free_windata), vwin);
 
     if (record) {
 	g_object_set_data(G_OBJECT(vwin->main), "object", data);

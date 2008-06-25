@@ -1403,10 +1403,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	vwin_add_child((windata_t *) data, vwin);
     }
 
-    /* arrange for clean-up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-		     G_CALLBACK(free_windata), vwin);
-
     /* register destruction of script output viewer */
     if (role == SCRIPT_OUT) {
 	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
@@ -1525,9 +1521,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 			 G_CALLBACK(delete_file), (gpointer) fname);
     }
 
-    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-		     G_CALLBACK(free_windata), vwin);
-
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
@@ -1589,9 +1582,6 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
 			 G_CALLBACK(text_popup_handler), vwin);
     }	
 
-    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-		     G_CALLBACK(free_windata), vwin);
-
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
@@ -1651,7 +1641,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
     viewer_box_config(vwin); 
 
-    /* add a menu bar */
+    /* add a tool bar */
     vwin_add_viewbar(vwin, 0);
 
     create_text(vwin, hsize, vsize, TRUE);
@@ -1674,10 +1664,6 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     /* alert for unsaved changes on exit */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 		     G_CALLBACK(query_save_text), vwin);
-
-    /* clean up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-		     G_CALLBACK(free_windata), vwin);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
@@ -1743,11 +1729,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
        test dialog is active */
     g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
 		     G_CALLBACK(check_delete_model_window), 
-		     vwin);
-
-    /* clean up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->main), "destroy", 
-		     G_CALLBACK(free_windata), 
 		     vwin);
 
     gtk_widget_show(vwin->vbox);

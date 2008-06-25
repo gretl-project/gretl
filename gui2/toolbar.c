@@ -627,6 +627,12 @@ GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
     return button;
 }
 
+/* "text_out": if this argument is non-zero, it means that vwin
+   carries text output which could appropriately be saved, either
+   to file or in the form of a chunk of text to be added as a
+   session icon.
+*/
+
 void vwin_add_viewbar (windata_t *vwin, int text_out)
 {
     GtkWidget *hbox;
