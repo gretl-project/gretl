@@ -93,7 +93,9 @@ int gretl_stack_object (void *ptr, GretlObjType type);
 
 int gretl_stack_object_as (void *ptr, GretlObjType type, const char *name);
 
-void remove_model_from_stack (MODEL *pmod);
+void gretl_object_remove_from_stack (void *ptr, GretlObjType type);
+
+void remove_model_from_stack_on_exit (MODEL *pmod);
 
 int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn);
 
@@ -123,7 +125,7 @@ int gretl_object_rename (void *p, GretlObjType type, const char *oname);
 
 int gretl_object_compose_name (void *p, GretlObjType type);
 
-const char *gretl_object_get_name (void *p, GretlObjType type);
+char *gretl_object_get_name (void *p, GretlObjType type);
 
 int parse_object_command (const char *s, char *name, char **cmd);
 

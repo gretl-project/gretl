@@ -1525,15 +1525,18 @@ const char *system_short_string (const MODEL *pmod)
 
 void equation_system_set_name (equation_system *sys, const char *name)
 {
-    if (sys->name != NULL && !strcmp(sys->name, name)) {
+    if (name == sys->name) {
 	return;
     }
 
-    if (sys->name != NULL) {
-	free(sys->name);
+    if (sys->name == NULL) {
+	sys->name = malloc(MAXSAVENAME);
     }
 
-    sys->name = gretl_strdup(name);
+    if (sys->name != NULL) {
+	*sys->name = '\0';
+	strncat(sys->name, name, MAXSAVENAME - 1);
+    }
 }
 
 int system_adjust_t1t2 (equation_system *sys,

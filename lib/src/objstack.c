@@ -376,21 +376,32 @@ void *get_last_model (GretlObjType *type)
  *
  * Returns: the name of the object of type @type with
  * location @p, or %NULL if the object is not found.
+ * The return value may be ovewritten (up to
+ * MAXSAVENAME-1 characters), but must not be freed.
  */
 
-const char *gretl_object_get_name (void *p, GretlObjType type)
+char *gretl_object_get_name (void *p, GretlObjType type)
 {
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = p;
 
+	if (pmod->name == NULL) {
+	    pmod->name = calloc(MAXSAVENAME, 1);
+	}
 	return pmod->name;
     } else if (type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = p;
 
+	if (var->name == NULL) {
+	    var->name = calloc(MAXSAVENAME, 1);
+	}
 	return var->name;
     } else if (type == GRETL_OBJ_SYS) {
 	equation_system *sys = p;
 
+	if (sys->name == NULL) {
+	    sys->name = calloc(MAXSAVENAME, 1);
+	}
 	return sys->name;
     }
 
@@ -597,7 +608,7 @@ int gretl_object_rename (void *p, GretlObjType type, const char *oname)
 
 /* safety measure prior to freeing models on exit */
 
-void remove_model_from_stack (MODEL *pmod)
+void remove_model_from_stack_on_exit (MODEL *pmod)
 {
     int i;
 
@@ -615,6 +626,12 @@ void remove_model_from_stack (MODEL *pmod)
     }
 
     gretl_model_unprotect(pmod);
+}
+
+void gretl_object_remove_from_stack (void *ptr, GretlObjType type)
+{
+    gretl_object_unstack(ptr);
+    gretl_object_unref(ptr, type);
 }
 
 static int object_stack_index (const void *p)
@@ -662,7 +679,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 	return 0;
     }
 
-    if (name == NULL) {
+    if (name == NULL || *name == '\0') {
 	err = gretl_object_compose_name(p, type);
     } else {
 	err = gretl_object_rename(p, type, name);
@@ -1389,3 +1406,4 @@ void gretl_saved_objects_cleanup (void)
 	last_model.type = 0;
     }
 }
+

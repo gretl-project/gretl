@@ -164,7 +164,7 @@ static int saved_object_action (const char *line,
 	return 0;
     }
 
-    /* special: display icon view window, not applicable */
+    /* special: display icon view window, not applicable in CLI program */
     if (!strncmp(line, "iconview", 8)) {
 	return 1;
     }

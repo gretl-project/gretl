@@ -2753,11 +2753,18 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 
 void gretl_VAR_set_name (GRETL_VAR *var, const char *name)
 {
-    if (var->name != NULL) {
-	free(var->name);
+    if (name == var->name) {
+	return;
     }
 
-    var->name = gretl_strdup(name);
+    if (var->name == NULL) {
+	var->name = malloc(MAXSAVENAME);
+    } 
+
+    if (var->name != NULL) {
+	*var->name = '\0';
+	strncat(var->name, name, MAXSAVENAME - 1);
+    }
 }
 
 const char *gretl_VAR_get_name (const GRETL_VAR *var)

@@ -1067,28 +1067,30 @@ mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
     return FALSE;
 }
 
+/* scale up the main window if it seems to be too tiny in relation to
+   the screen dimensions
+*/
+
 static void scale_main_window (void)
 {
-    double wfac = 2.25;
-    double hfac = 2.10;
-    GdkScreen *s;
-    int w = 0, h = 0;
+    GdkScreen *s = gdk_screen_get_default();
 
-    s = gdk_screen_get_default();
     if (s != NULL) {
-	w = gdk_screen_get_width(s);
-	h = gdk_screen_get_height(s);
-    }
-
-    /* scale up the main window if it's too tiny
-       in relation to the screen? */
-
-    if (w > 0 && h > 0) {
-	if (mainwin_width < w / wfac) {
-	    mainwin_width = w / wfac;
-	}
+	int w = gdk_screen_get_width(s);
+	int h = gdk_screen_get_height(s);
+	double aspect = 1.25;
+	double hfac = 2.10;
+ 
 	if (mainwin_height < h / hfac) {
 	    mainwin_height = h / hfac;
+	    if ((double) w / h > 1.35) {
+		/* widescreen */
+		aspect = 1.4;
+	    }
+	    w = aspect * mainwin_height;
+	    if (mainwin_width < w) {
+		mainwin_width = w;
+	    }
 	}
     }
 }

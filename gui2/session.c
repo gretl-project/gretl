@@ -106,7 +106,7 @@ struct SESSION_TEXT_ {
 };
 
 struct SESSION_MODEL_ {
-    char name[MAXSAVENAME];
+    char *name;
     void *ptr;
     GretlObjType type;
 };
@@ -250,6 +250,7 @@ static gboolean session_view_click (GtkWidget *widget,
 				    gpointer data);
 static int real_delete_model_from_session (SESSION_MODEL *model);
 static void make_short_label_string (char *targ, const char *src);
+static gui_obj *get_gui_obj_by_data (void *finddata);
 
 static int session_graph_count;
 static int session_bplot_count;
@@ -287,12 +288,10 @@ static void free_session_text (SESSION_TEXT *text)
 
 static void free_session_model (SESSION_MODEL *mod)
 {
-    /* note: remove a reference to this model */
 #if SESSION_DEBUG
-    fprintf(stderr, "free_session_model: unref'ing ptr at %p\n", (void *) mod->ptr);
-    fprintf(stderr, " also freeing session_model at %p\n", mod);
+    fprintf(stderr, "free_session_model: ptr at %p\n", (void *) mod->ptr);
 #endif
-    gretl_object_unref(mod->ptr, mod->type);
+    gretl_object_remove_from_stack(mod->ptr, mod->type);
     free(mod);
 }
 
@@ -304,15 +303,11 @@ static SESSION_MODEL *session_model_new (void *ptr, const char *name,
     if (mod != NULL) {
 	mod->ptr = ptr;
 	mod->type = type;
-	if (name == NULL) {
-	    gretl_object_compose_name(ptr, type);
-	    name = gretl_object_get_name(ptr, type);
-	} 
-	*mod->name = 0;
-	strncat(mod->name, name, MAXSAVENAME - 1);
-
-	/* note: take care of adding a refence to model */
-	gretl_object_ref(ptr, type);
+	gretl_stack_object_as(ptr, type, name);
+	mod->name = gretl_object_get_name(ptr, type);
+	/* note: we don't add a reference here: that's handled by the
+	   mechanism in objstack.c 
+	*/
     }
 
     return mod;
@@ -1747,12 +1742,13 @@ void session_model_callback (void *ptr, int action)
     if (action == OBJ_ACTION_SHOW) {
 	display_session_model(mod);
     } else if (action == OBJ_ACTION_FREE) {
-#if SESSION_DEBUG
-	fprintf(stderr, "session_model_callback: gretl_object_unref at %p\n", 
-		(void *) ptr);
-#endif
-	/* FIXME not sure here: should we trash the icon too */
-	gretl_object_unref(ptr, mod->type);
+	gui_obj *gobj = get_gui_obj_by_data(mod);
+
+	if (gobj != NULL) {
+	    /* model icon is shown: delete it */
+	    session_delete_icon(gobj);
+	}	
+	real_delete_model_from_session(mod);
     } 
 }	
 
@@ -1912,7 +1908,7 @@ static int delete_session_object (gui_obj *obj)
 
 static void maybe_delete_session_object (gui_obj *obj)
 {
-    gpointer p;
+    gpointer p = NULL;
     gchar *msg;
 
     if (obj->sort == GRETL_OBJ_EQN || obj->sort == GRETL_OBJ_SYS || 
@@ -1924,10 +1920,10 @@ static void maybe_delete_session_object (gui_obj *obj)
 	p = obj->data;
     }
 
-    if (winstack_match_data(p)) {
-	errbox(_("Please close this object's window first"));
+    if (p != NULL && winstack_match_data(p)) {
+	warnbox(_("Please close this object's window first"));
 	return;
-    }    
+    }
 
     msg = g_strdup_printf(_("Really delete %s?"), obj->name);
 
@@ -1989,6 +1985,18 @@ static void rename_session_graph (SESSION_GRAPH *graph, const char *newname)
     }
 }
 
+static void maybe_sync_model_window_name (SESSION_MODEL *sm)
+{
+    GtkWidget *w = match_window_by_data(sm->ptr);
+
+    if (w != NULL) {
+	gchar *title = g_strdup_printf("gretl: %s", sm->name);
+
+	gtk_window_set_title(GTK_WINDOW(w), title);
+	g_free(title);
+    }
+}
+
 static int rename_session_object (gui_obj *obj, const char *newname)
 {
     int err = 0;
@@ -2003,8 +2011,7 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 	} else {
 	    sm = obj->data;
 	    gretl_object_rename(sm->ptr, sm->type, newname);
-	    sm->name[0] = '\0';
-	    strncat(sm->name, newname, MAXSAVENAME - 1);
+	    maybe_sync_model_window_name(sm);
 	}
     } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	SESSION_GRAPH *sg;

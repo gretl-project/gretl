@@ -2352,7 +2352,7 @@ void gretl_model_free_on_exit (MODEL *pmod)
     fprintf(stderr, "gretl_model_free_on_exit: pmod at %p\n", (void *) pmod);
 #endif
     if (pmod != NULL) {
-	remove_model_from_stack(pmod);
+	remove_model_from_stack_on_exit(pmod);
 	clear_model(pmod);
 	free(pmod);
     }
@@ -4560,11 +4560,18 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 
 void gretl_model_set_name (MODEL *pmod, const char *name)
 {
-    if (pmod->name != NULL) {
-	free(pmod->name);
+    if (name == pmod->name) {
+	return;
     }
 
-    pmod->name = gretl_strdup(name);
+    if (pmod->name == NULL) {
+	pmod->name = malloc(MAXSAVENAME);
+    } 
+
+    if (pmod->name != NULL) {
+	*pmod->name = '\0';
+	strncat(pmod->name, name, MAXSAVENAME - 1);
+    }
 }
 
 const char *gretl_model_get_name (const MODEL *pmod)
