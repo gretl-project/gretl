@@ -808,6 +808,7 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
     if (opt & OPT_L) {
 	flags |= P_LOOP;
     } else if (opt & OPT_S) {
+	/* context is NLS/MLE or similar */
 	flags |= P_SLAVE;
     }
 
@@ -815,6 +816,13 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 
     if (p->err == 0) {
 	gen_save_or_print(p, prn);
+    } 
+
+    if (flags & P_SLAVE) {
+	if (p->warn != 0 && p->err == 0) {
+	    /* warnings re. NAs become errors */
+	    p->err = p->warn;
+	}
     }
 
     gen_cleanup(p);

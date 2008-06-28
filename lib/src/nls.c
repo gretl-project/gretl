@@ -286,6 +286,13 @@ static int nls_auto_genr (nlspec *s, int i)
 	return s->generr;
     }
 
+#if 0
+    if (s->generr) {
+	/* ?? this is difficult: tests: mle.inp, frontier.inp */
+	return s->generr;
+    }
+#endif
+
     j = s->naux + i;
 #if NLS_DEBUG
     fprintf(stderr, " j = naux+i = %d+%d = %d: executing genr[%d]:\n", 

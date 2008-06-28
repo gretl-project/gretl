@@ -2375,13 +2375,14 @@ static double real_apply_func (double x, int f, parser *p)
     case F_LOG10:
     case F_LOG2:
 	y = log(x);
-	if (f == F_LOG10 && !errno) {
-	    y /= log(10.0);
-	} else if (f == F_LOG2 && !errno) {
-	    y /= log(2.0);
-	}
 	if (errno) {
 	    eval_warning(p, F_LOG, errno);
+	} else {	    
+	    if (f == F_LOG10) {
+		y /= log(10.0);
+	    } else if (f == F_LOG2) {
+		y /= log(2.0);
+	    }
 	}
 	return y;
     case F_EXP:
@@ -7353,7 +7354,7 @@ static void parser_init (parser *p, const char *str,
 
 void gen_save_or_print (parser *p, PRN *prn)
 {
-    if (p->err == 0) {
+    if (p->err == 0 || p->err == 36) {
 	if (p->flags & (P_DISCARD | P_PRINT)) {
 	    if (p->ret->t == MAT) {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
@@ -7582,14 +7583,6 @@ int realgen (const char *s, parser *p, double ***pZ,
     parser_free_aux_nodes(p);
 
     gen_check_errvals(p);
-
-    if (flags & P_SLAVE) {
-	/* context is NLS/MLE or similar */
-	if (p->warn != 0 && p->err == 0) {
-	    /* warnings re. NAs become errors */
-	    p->err = p->warn;
-	}
-    }
 
     return p->err;
 }
