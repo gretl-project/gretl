@@ -2094,8 +2094,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     int i, j, varstart;
     GtkActionEntry entry;
     const gchar *mpath[] = {
-	N_("/MenuBar/Graphs/ResidPlot"), 
-	N_("/MenuBar/Graphs/FittedActualPlot")
+	"/MenuBar/Graphs/ResidPlot", 
+	"/MenuBar/Graphs/FittedActualPlot"
     };
     MODEL *pmod = vwin->data;
     char tmp[VNAMELEN2], aname[16];
