@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-06-23 14:21-0400\n"
-"PO-Revision-Date: 2008-06-08 12:18+0200\n"
+"PO-Revision-Date: 2008-06-28 09:53+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1113,9 +1113,8 @@ msgstr "Variabile indice"
 #: lib/src/dataio.c:2200 lib/src/dataio.c:2401 lib/src/dataio.c:2417
 #: lib/src/dataio.c:2742 lib/src/dataio.c:2751 cli/gretlcli.c:119
 #: gui2/gretl.c:204
-#, fuzzy
 msgid "Out of memory!\n"
-msgstr "Memoria esaurita\n"
+msgstr "Memoria esaurita!\n"
 
 #: lib/src/dataio.c:2331
 msgid "Data frequency does not match\n"
@@ -1828,16 +1827,15 @@ msgstr "Stima del valore nella popolazione"
 
 #: lib/src/describe.c:5301
 msgid "Shapiro-Wilk W"
-msgstr ""
+msgstr "W di Shapiro-Wilk"
 
 #: lib/src/describe.c:5302
 msgid "Jarque-Bera test"
 msgstr "Test di Jarque-Bera"
 
 #: lib/src/describe.c:5303
-#, fuzzy
 msgid "Lilliefors test"
-msgstr "p-value per il test %s"
+msgstr "Test di Lilliefors"
 
 #: lib/src/describe.c:5304
 msgid "Doornik-Hansen test"
@@ -2043,9 +2041,8 @@ msgid "Variable number %d is out of bounds"
 msgstr "Il numero di variabile %d è fuori dai limiti"
 
 #: lib/src/geneval.c:3730
-#, fuzzy
 msgid "Matrix specification is not coherent"
-msgstr "la specificazione è adeguata"
+msgstr "La specificazione della matrice non è coerente"
 
 #: lib/src/geneval.c:3880 lib/src/geneval.c:4049
 #, c-format
@@ -7549,9 +7546,8 @@ msgid "_Close"
 msgstr "_Chiudi"
 
 #: gui2/database.c:755
-#, fuzzy
 msgid "_Series"
-msgstr "serie"
+msgstr "_Serie"
 
 #: gui2/database.c:756
 msgid "_Display"
@@ -9902,9 +9898,8 @@ msgid "_Find..."
 msgstr "Tr_ova..."
 
 #: gui2/gretl.c:1408
-#, fuzzy
 msgid "_Normality test"
-msgstr "TESTUHAT - _Normalità residui"
+msgstr "Test di _normalità"
 
 #: gui2/gretl.c:1409
 msgid "_Frequency distribution"
@@ -10590,9 +10585,8 @@ msgid "White's test (squares only)"
 msgstr "Test di _White (solo quadrati)"
 
 #: gui2/gui_utils.c:296
-#, fuzzy
 msgid "_groupwise"
-msgstr "WLS a gruppi"
+msgstr "a _gruppi"
 
 #: gui2/gui_utils.c:334 gui2/gui_utils.c:354 gui2/gui_utils.c:378
 msgid "_LaTeX"
@@ -10627,9 +10621,8 @@ msgid "Save as icon and cl_ose"
 msgstr "Salva come _icona e chiudi"
 
 #: gui2/gui_utils.c:373
-#, fuzzy
 msgid "_Forecasts"
-msgstr "Previsioni"
+msgstr "_Previsioni"
 
 #: gui2/gui_utils.c:1093
 msgid "Failed to import data"
@@ -10903,11 +10896,11 @@ msgstr "_Costanti per unità"
 
 #: gui2/gui_utils.c:3082
 msgid "/MenuBar/Graphs/ResidPlot"
-msgstr ""
+msgstr "/Menu/Grafici/Residui"
 
 #: gui2/gui_utils.c:3083
 msgid "/MenuBar/Graphs/FittedActualPlot"
-msgstr ""
+msgstr "/Menu/Grafici/Stime"
 
 #: gui2/gui_utils.c:3095
 msgid "_Against time"
@@ -10923,16 +10916,12 @@ msgid "_Against %s"
 msgstr "_Rispetto a %s"
 
 #: gui2/gui_utils.c:3137
-#, fuzzy
 msgid "Residual _correlogram"
-msgstr "Periodogramma dei residui"
+msgstr "_Correlogramma dei residui"
 
-#  I prossimi messaggi sono le spiegazioni dei nomi riservati, che vengono inseriti
-#  nel messaggio precedente; inserire anche gli articoli!
 #: gui2/gui_utils.c:3141
-#, fuzzy
 msgid "Residual _spectrum"
-msgstr "Spettro dei residui"
+msgstr "_Spettro dei residui"
 
 #: gui2/gui_utils.c:3155
 #, c-format
@@ -11011,9 +11000,8 @@ msgid "Lag order for test:"
 msgstr "Ordine di ritardi per test:"
 
 #: gui2/gui_utils.c:3998
-#, fuzzy
 msgid "_Normality of residuals"
-msgstr "TESTUHAT - _Normalità residui"
+msgstr "_Normalità dei residui"
 
 #: gui2/gui_utils.c:4004
 msgid "Linear restrictions"
@@ -11237,9 +11225,8 @@ msgid "summary stats: "
 msgstr "Statistiche descrittive: "
 
 #: gui2/library.c:670
-#, fuzzy
 msgid "normality test"
-msgstr "Test portmanteau"
+msgstr "Test di normalità"
 
 #: gui2/library.c:820
 msgid "Couldn't read cointegration order"
@@ -14123,9 +14110,8 @@ msgid "Scanning %ld fonts"
 msgstr "Lettura di %ld caratteri"
 
 #: plugin/quantreg.c:369
-#, fuzzy
 msgid "Couldn't calculate confidence intervals for this model"
-msgstr "Impossibile calcolare l'intervallo di confidenza"
+msgstr "Impossibile calcolare intervalli di confidenza per questo modello"
 
 #: plugin/range-mean.c:65
 msgid "range-mean plot for"
