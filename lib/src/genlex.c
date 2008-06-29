@@ -561,8 +561,11 @@ int genr_function_word (const char *s)
 static void undefined_symbol_error (const char *s, parser *p)
 {
     parser_print_input(p);
-    pprintf(p->prn, _("The symbol '%s' is undefined\n"), s);
-    sprintf(gretl_errmsg, _("The symbol '%s' is undefined\n"), s);
+    if (p->ch == '.') {
+	sprintf(gretl_errmsg, _("%s: no such object\n"), s);
+    } else {
+	sprintf(gretl_errmsg, _("The symbol '%s' is undefined\n"), s);
+    }
     p->err = E_UNKVAR;
 }
 

@@ -4897,6 +4897,12 @@ static NODE *object_var_node (NODE *t, parser *p)
 	int mslice = r->t == DMSL;
 	GretlType vtype;
 
+	if (oname != NULL && gretl_get_object_by_name(oname) == NULL) {
+	    gretl_errmsg_sprintf(_("%s: no such object\n"), oname);
+	    p->err = E_UNKVAR;
+	    return NULL;
+	}
+		
 	vtype = object_var_type(r->v.idnum, oname);
 
 #if EDEBUG
