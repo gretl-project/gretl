@@ -814,16 +814,16 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 
     realgen(NULL, p, pZ, pdinfo, prn, flags);
 
-    if (p->err == 0) {
-	gen_save_or_print(p, prn);
-    } 
-
     if (flags & P_SLAVE) {
 	if (p->warn != 0 && p->err == 0) {
 	    /* warnings re. NAs become errors */
 	    p->err = p->warn;
 	}
     }
+
+    if (p->err == 0) {
+	gen_save_or_print(p, prn);
+    } 
 
     gen_cleanup(p);
 

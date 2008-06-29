@@ -262,6 +262,8 @@ static int nls_auto_genr (nlspec *s, int i)
 {
     int j;
 
+    s->generr = 0;
+
 #if NLS_DEBUG
     fprintf(stderr, "nls_auto_genr: input i = %d\n", i);
 #endif
@@ -279,19 +281,15 @@ static int nls_auto_genr (nlspec *s, int i)
 	fprintf(stderr, " generating aux var %d:\n %s\n", j, s->aux[j]);
 #endif
 	s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
+	if (s->generr) {
+	    return s->generr;
+	}
     }
 
     if (i == 0 && s->nlfunc == NULL) {
 	/* we're done */
 	return s->generr;
     }
-
-#if 0
-    if (s->generr) {
-	/* ?? this is difficult: tests: mle.inp, frontier.inp */
-	return s->generr;
-    }
-#endif
 
     j = s->naux + i;
 #if NLS_DEBUG
