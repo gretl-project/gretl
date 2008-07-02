@@ -149,26 +149,42 @@ not a scalar.
 \[
   y_t = \left\{ 
     \begin{array}{ll} 
-      x_t & \mathrm{for} \quad d_t = 1 \\ 
-      z_t & \mathrm{for} \quad d_t = 0 
+      x_t & \mathrm{for} \quad d_t > a \\ 
+      z_t & \mathrm{for} \quad d_t \le a 
     \end{array}
     \right. 
 \]
 
 \emph{Solution:}
 \begin{code}
-series y = d ? x : z
+series y = (d > a) ? x : z
 \end{code}
 
 \emph{Comment:} There are several alternatives to the one presented
 above. One is a brute force solution using loops. Another one, more
-efficient but still suboptimal, would be \verb|y = d*x + (1-d)*z|.
-The ternary conditional assignment operator is not only the most
-numerically efficient way to accomplish what we want, it is also
+efficient but still suboptimal, would be 
+\begin{code}
+series y = (d>a)*x + (d<=a)*z  
+\end{code}
+However, the ternary conditional assignment operator is not only the
+most numerically efficient way to accomplish what we want, it is also
 remarkably transparent to read when one gets used to it. Some readers
 may find it helpful to note that the conditional assignment operator
 works exactly the same way as the \texttt{=IF()} function in
 spreadsheets.
+
+\subsection{Generating a time index for panel datasets}
+
+\emph{Problem:} \app{Gretl} has a \texttt{\$unit} accessor, but not
+the equivalent for time. What should I use?
+
+\emph{Solution:}
+\begin{code}
+series x = time
+\end{code}
+
+\emph{Comment:} The special construct \cmd{genr time} and its variants
+are aware of whether a dataset is a panel.
 
 \section{Neat tricks}
 \label{sec:cheat-neat}

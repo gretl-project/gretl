@@ -262,12 +262,15 @@ to $m\times T$, where $m$ is the number of units in the panel, use
 \subsection{Basic statistics by unit}
 \label{panel-stats}
 
-The functions \texttt{pmean()} and \texttt{psd()} can be used to
-generate basic descriptive statistics (mean and standard deviation)
-for a given variable, on a per-group basis.  
+\app{Gretl} contains functions which can be used to generate basic
+descriptive statistics for a given variable, on a per-unit basis;
+these are \texttt{pnobs()} (number of valid cases), \texttt{pmin()}
+and \texttt{pmax()} (minimum and maximum) and \texttt{pmean()} and
+\texttt{psd()} (mean and standard deviation).
 
-Suppose we have a panel data set comprising 8 time-series observations
-on each of $N$ units or groups.  Then the command
+As a brief illustration, suppose we have a panel data set comprising 8
+time-series observations on each of $N$ units or groups.  Then the
+command
 %
 \begin{code}
 genr pmx = pmean(x)
@@ -288,7 +291,12 @@ however, the standard deviation is recorded as 0.
 
 One particular use of \texttt{psd()} may be worth noting.  If you want
 to form a sub-sample of a panel that contains only those units for
-which the variable \varname{x} is time-varying, you can do
+which the variable \varname{x} is time-varying, you can either use 
+%
+\begin{code}
+smpl (pmin(x) < pmax(x)) --restrict
+\end{code}
+or
 %
 \begin{code}
 smpl (psd(x) > 0) --restrict
