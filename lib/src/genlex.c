@@ -180,6 +180,9 @@ struct str_table funcs[] = {
     { F_GAMMA,    "gammafun" },
     { F_LNGAMMA,  "lngamma" },
     { F_RESAMPLE, "resample" },
+    { F_PNOBS,    "pnobs" },     /* per-unit nobs in panels */
+    { F_PMIN,     "pmin" },      /* panel min */
+    { F_PMAX,     "pmax" },       /* panel max */
     { F_PMEAN,    "pmean" },     /* panel mean */
     { F_PSD,      "psd" },       /* panel std dev */
     { F_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */

@@ -3603,11 +3603,12 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_RESAMPLE:
 	    p->err = resample_series(x, y, p->dinfo); 
 	    break;
+	case F_PNOBS:
+	case F_PMIN:
+	case F_PMAX:
 	case F_PMEAN:
-	    p->err = panel_mean_series(x, y, p->dinfo); 
-	    break;
 	case F_PSD:
-	    p->err = panel_sd_series(x, y, p->dinfo); 
+	    p->err = panel_statistic(x, y, p->dinfo, f); 
 	    break;
 	case F_RANKING:
 	    p->err = rank_series(x, y, F_SORT, p->dinfo); 
@@ -5385,6 +5386,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_HPFILT:
     case F_BKFILT:
     case F_FRACDIFF:
+    case F_PNOBS:
+    case F_PMIN:
+    case F_PMAX:
     case F_PMEAN:
     case F_PSD:
     case F_RANKING:

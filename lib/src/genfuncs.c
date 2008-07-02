@@ -594,10 +594,13 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
     return err;
 }
 
-int panel_mean_series (const double *x, double *y, const DATAINFO *pdinfo)
+int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
+		     int k)
 {
     const int *unit;
+    double ret = NADBL;
     double xbar = NADBL;
+    double aux = NADBL;
     int smin = 0;
     int s, t, Ti = 0;
 
@@ -607,85 +610,127 @@ int panel_mean_series (const double *x, double *y, const DATAINFO *pdinfo)
 
     unit = pdinfo->paninfo->unit;
 
-    for (t=0; t<=pdinfo->n; t++) {
-	if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
-	    if (!na(xbar)) {
-		xbar /= Ti;
-	    }
-	    /* got a new unit (or reached the end): 
-	       ship out current mean */
-	    for (s=smin; s<t; s++) {
-		y[s] = xbar;
-	    }
-	    if (t == pdinfo->n) {
-		break;
-	    }
-	    Ti = 0;
-	    xbar = NADBL;
-	    smin = t;
-	}
-	if (!na(x[t])) {
-	    if (na(xbar)) {
-		xbar = x[t];
-	    } else {
-		xbar += x[t];
-	    }
-	    Ti++;
-	}
-    }
-
-    return 0;
-}
-
-int panel_sd_series (const double *x, double *y, const DATAINFO *pdinfo)
-{
-    const int *unit;
-    double sd, xbar = NADBL;
-    int smin = 0;
-    int s, t, Ti = 0;
-
-    if (pdinfo->paninfo == NULL) {
-	return E_DATA;
-    }
-
-    unit = pdinfo->paninfo->unit;
-
-    for (t=0; t<=pdinfo->n; t++) {
-	if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
-	    if (na(xbar)) {
-		sd = NADBL;
-	    } else if (Ti == 1) {
-		sd = 0.0;
-	    } else {
-		xbar /= Ti;
-		sd = 0.0;
+    switch (k) {
+    case F_PNOBS:
+	for (t=0; t<=pdinfo->n; t++) {
+	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
 		for (s=smin; s<t; s++) {
-		    if (!na(x[s])) {
-			sd += (x[s] - xbar) * (x[s] - xbar);
-		    }
+		    y[s] = Ti;
 		}
-		sd = sqrt(sd / (Ti - 1));
+		if (t == pdinfo->n) {
+		    break;
+		}
+		Ti = 0;
+		smin = t;
 	    }
-	    for (s=smin; s<t; s++) {
-		y[s] = sd;
+	    if (!na(x[t])) {
+		Ti++;
 	    }
-	    if (t == pdinfo->n) {
-		break;
-	    }
-	    Ti = 0;
-	    xbar = NADBL;
-	    smin = t;
 	}
-	if (!na(x[t])) {
-	    if (na(xbar)) {
-		xbar = x[t];
-	    } else {
-		xbar += x[t];
+	break;
+    case F_PMIN:
+	for (t=0; t<=pdinfo->n; t++) {
+	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+		for (s=smin; s<t; s++) {
+		    y[s] = aux;
+		}
+		if (t == pdinfo->n) {
+		    break;
+		}
+		aux = NADBL;
+		smin = t;
 	    }
-	    Ti++;
+	    if (!na(x[t])) {
+		if (na(aux) || x[t]<aux) {
+		    aux = x[t];
+		}
+	    }
 	}
+	break;
+    case F_PMAX:
+	for (t=0; t<=pdinfo->n; t++) {
+	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+		for (s=smin; s<t; s++) {
+		    y[s] = aux;
+		}
+		if (t == pdinfo->n) {
+		    break;
+		}
+		aux = NADBL;
+		smin = t;
+	    }
+	    if (!na(x[t])) {
+		if (na(aux) || x[t]>aux) {
+		    aux = x[t];
+		}
+	    }
+	}
+	break;
+    case F_PMEAN:
+	for (t=0; t<=pdinfo->n; t++) {
+	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+		if (!na(xbar)) {
+		    xbar /= Ti;
+		}
+		/* got a new unit (or reached the end): 
+		   ship out current mean */
+		for (s=smin; s<t; s++) {
+		    y[s] = xbar;
+		}
+		if (t == pdinfo->n) {
+		    break;
+		}
+		Ti = 0;
+		xbar = NADBL;
+		smin = t;
+	    }
+	    if (!na(x[t])) {
+		if (na(xbar)) {
+		    xbar = x[t];
+		} else {
+		    xbar += x[t];
+		}
+		Ti++;
+	    }
+	}
+	break;
+    case F_PSD:
+	for (t=0; t<=pdinfo->n; t++) {
+	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+		if (na(xbar)) {
+		    ret = NADBL;
+		} else if (Ti == 1) {
+		    ret = 0.0;
+		} else {
+		    xbar /= Ti;
+		    ret = sqrt((aux/Ti - xbar*xbar) * Ti/(Ti-1));
+		}
+		for (s=smin; s<t; s++) {
+		    y[s] = ret;
+		}
+		if (t == pdinfo->n) {
+		    break;
+		}
+		Ti = 0;
+		xbar = NADBL;
+		aux = NADBL;
+		smin = t;
+	    }
+	    if (!na(x[t])) {
+		if (na(xbar)) {
+		    xbar = x[t];
+		    aux = x[t]*x[t];
+		} else {
+		    xbar += x[t];
+		    aux += x[t]*x[t];
+		}
+		Ti++;
+	    }
+	}
+	break;
+    default:
+	break;
     }
-
     return 0;
 }
 
