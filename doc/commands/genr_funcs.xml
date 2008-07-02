@@ -2006,7 +2006,8 @@
 	<para>
 	  Returns the long-run variance of <argname>y</argname>,
 	  calculated using a Bartlett kernel with window size
-	  <argname>k</argname>.
+	  <argname>k</argname>. If <argname>k</argname> is
+	  negative, <lit>int(T^(1/3))</lit> is used.
 	</para>
 	<para context="tex">
 	  In formulae: 
@@ -2795,6 +2796,33 @@
       </description>
     </function>
 
+    <function name="pmax" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns the per-unit maximum for variable
+	  <argname>y</argname>.
+	</para>
+	<para context="tex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns the per-unit maximum for variable
+	  <argname>y</argname>.
+	</para>
+	<para>
+	  Missing values are skipped. 
+	  <seelist> 
+	    <fncref targ="pmin"/>
+	    <fncref targ="pmean"/>
+	    <fncref targ="pnobs"/>
+	    <fncref targ="psd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="pmean" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -2818,6 +2846,63 @@
 	<para>
 	  Missing values are skipped. 
 	  <seelist> 
+	    <fncref targ="pmax"/>
+	    <fncref targ="pmin"/>
+	    <fncref targ="pnobs"/>
+	    <fncref targ="psd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="pmin" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns the per-unit mimimum for variable
+	  <argname>y</argname>.
+	</para>
+	<para context="tex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns the per-unit minimum for variable
+	  <argname>y</argname>.
+	</para>
+	<para>
+	  Missing values are skipped. 
+	  <seelist> 
+	    <fncref targ="pmax"/>
+	    <fncref targ="pmean"/>
+	    <fncref targ="pnobs"/>
+	    <fncref targ="pmax"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="pnobs" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns for each unit the number of non-missing
+	  cases for the variable <argname>y</argname>.
+	</para>
+	<para context="tex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns for each unit the number of non-missing
+	  cases for the variable <argname>y</argname>.
+	</para>
+	<para>
+	  Missing values are skipped. 
+	  <seelist> 
+	    <fncref targ="pmax"/>
+	    <fncref targ="pmean"/>
+	    <fncref targ="pmin"/>
 	    <fncref targ="psd"/>
 	  </seelist>
 	</para>
@@ -2918,7 +3003,10 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="pmax"/>
+	    <fncref targ="pmin"/>
 	    <fncref targ="pmean"/>
+	    <fncref targ="pnobs"/>
 	  </seelist>
 	</para>
       </description>
