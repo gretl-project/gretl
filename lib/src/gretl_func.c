@@ -1958,9 +1958,10 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
     pprintf(prn, "Author: %s\n", (pkg->author)? pkg->author : "unknown");
     pprintf(prn, "Version: %s\n", (pkg->version)? pkg->version : "unknown");
     pprintf(prn, "Date: %s\n", (pkg->date)? pkg->date : "unknown");
-    pprintf(prn, "Description: %s\n", (pkg->descrip)? pkg->descrip : "none");
+    pputs(prn, "Description: ");
+    pputs(prn, (pkg->descrip)? pkg->descrip : "none");
 
-    pputc(prn, '\n');
+    pputs(prn, "\n\n");
     real_user_function_help(pkg->iface, 0, prn);
 }
 
@@ -4006,7 +4007,9 @@ static void real_user_function_help (ufunc *fun, int ci, PRN *prn)
     }
 	
     if (fun->help != NULL) {
-	pprintf(prn, "Help text:\n%s\n\n", fun->help);
+	pputs(prn, "Help text:\n");
+	pputs(prn, fun->help);
+	pprintf(prn, "\n\n");
     }
 }
 

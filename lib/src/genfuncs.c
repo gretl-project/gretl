@@ -1022,7 +1022,7 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 
 static int panel_x_offset (const DATAINFO *pdinfo, int *bad)
 {
-    char *p = strchr(pdinfo->stobs, ':');
+    const char *p = strchr(pdinfo->stobs, ':');
     int offset = 0;
 
     if (p == NULL) {
@@ -1030,6 +1030,8 @@ static int panel_x_offset (const DATAINFO *pdinfo, int *bad)
     }
 
     if (p == NULL) {
+	/* 2008-07-02: how can this happen? */
+	fprintf(stderr, "panel_x_offset: stobs = '%s' ??\n", pdinfo->stobs);
 	*bad = 1;
     } else {
 	offset = atoi(p + 1) - 1;
@@ -1278,6 +1280,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	}
     }
 
+    /* FIXME */
     offset = panel_x_offset(pdinfo, &bad);
 
     /* generate unit-based dummies, if wanted */

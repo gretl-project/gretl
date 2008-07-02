@@ -22,8 +22,15 @@
 
 #include <float.h>
 
-#define NADBL DBL_MAX
-#define na(x) ((x) == NADBL)
+#define NEW_NA 0
+
+#if NEW_NA /* not yet! */
+# define NADBL (0.0/0.0)
+# define na(x) isnan(x)
+#else
+# define NADBL DBL_MAX
+# define na(x) ((x) == NADBL)
+#endif
 
 /* xna = "extended NA", including regular NA for missing data
    as well as NaNs and infinities */
