@@ -6,6 +6,8 @@ version 1.7.6, in progress
 - Fix bugs 1996156, 1996161
 - MLE fixes
 - Function package help: ensure this is not truncated
+- Fix bug: generation of NAs when doing "genr unitdum" on a
+  sub-sampled panel dataset
 
 6/13/2008 version 1.7.5
 - max() and min() functions: extend the syntax to allow a list

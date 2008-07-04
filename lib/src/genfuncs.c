@@ -1020,26 +1020,6 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
     return err;
 }
 
-static int panel_x_offset (const DATAINFO *pdinfo, int *bad)
-{
-    const char *p = strchr(pdinfo->stobs, ':');
-    int offset = 0;
-
-    if (p == NULL) {
-	p = strchr(pdinfo->stobs, '.');
-    }
-
-    if (p == NULL) {
-	/* 2008-07-02: how can this happen? */
-	fprintf(stderr, "panel_x_offset: stobs = '%s' ??\n", pdinfo->stobs);
-	*bad = 1;
-    } else {
-	offset = atoi(p + 1) - 1;
-    }
-
-    return offset;
-}
-
 static int n_new_dummies (const DATAINFO *pdinfo,
 			  int nunits, int nperiods)
 {
@@ -1224,7 +1204,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     int ndum, nnew;
     int n_unitdum = 0;
     int n_timedum = 0;
-    int newvnum, offset, bad = 0;
+    int newvnum;
     double xx;
 
     if (opt & OPT_T) {
@@ -1280,17 +1260,12 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	}
     }
 
-    /* FIXME */
-    offset = panel_x_offset(pdinfo, &bad);
-
     /* generate unit-based dummies, if wanted */
 
     for (vi=1; vi<=n_unitdum; vi++) {
-	int dmin = (vi-1) * pdinfo->pd;
-	int dmax = vi * pdinfo->pd - offset;
+	int dmin = (vi - 1) * pdinfo->pd;
+	int dmax = vi * pdinfo->pd;
 	int dnum;
-
-	if (vi > 1) dmin -= offset;
 
 	sprintf(vname, "du_%d", vi);
 
@@ -1305,13 +1280,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 		_("unit"), vi);
 
 	for (t=0; t<pdinfo->n; t++) {
-	    if (bad) {
-		(*pZ)[dnum][t] = NADBL;
-	    } else if (t >= dmin && t < dmax) {
-		(*pZ)[dnum][t] = 1.0;
-	    } else {
-		(*pZ)[dnum][t] = 0.0;
-	    }
+	    (*pZ)[dnum][t] = (t >= dmin && t < dmax)? 1 : 0;
 	}
     }
 
