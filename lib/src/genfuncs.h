@@ -46,9 +46,8 @@ int fracdiff_series (const double *x, double *y, double d,
 int filter_series(const double *x, double *y, const DATAINFO *pdinfo, 
 		  gretl_matrix *A, gretl_matrix *C, double y0);
 
-int panel_mean_series (const double *x, double *y, const DATAINFO *pdinfo);
-
-int panel_sd_series (const double *x, double *y, const DATAINFO *pdinfo);
+int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
+		     int k);
 
 int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 	       gretlopt opt);

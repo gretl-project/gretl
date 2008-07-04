@@ -141,12 +141,6 @@ enum {
     ICON_ADD_SINGLE
 } icon_add_modes;
 
-enum {
-    SAVEFILE_SESSION,
-    SAVEFILE_SCRIPT,
-    SAVEFILE_ERROR
-} savefile_returns;
-
 static char *global_items[] = {
     N_("Save session"),
     N_("Arrange icons"),
@@ -954,20 +948,33 @@ session_name_from_session_file (char *sname, const char *fname)
 	    fname, sname);
 }
 
-static int unzip_session_file (const char *fname)
+#define NEWNAMES 1
+
+static int unzip_session_file (const char *fname, char **zdirname)
 {
-    int (*gretl_unzip_file)(const char *, GError **);
-    void *handle;
-    FILE *fp;
+    gchar *(*gretl_zipfile_get_topdir) (const char *);
+    int (*gretl_unzip_file) (const char *, GError **);
+    void *handle = NULL;
     GError *gerr = NULL;
-    int err, ret = SAVEFILE_SESSION;
+    int err = 0;
 
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	return SAVEFILE_ERROR;
+#if NEWNAMES
+    gretl_zipfile_get_topdir = gui_get_plugin_function("gretl_zipfile_get_topdir",
+						       &handle);
+    if (gretl_zipfile_get_topdir == NULL) {
+        return 1;
     }
-    fclose(fp);
 
+    *zdirname = gretl_zipfile_get_topdir(fname);
+    close_plugin(handle);
+    handle = NULL;
+
+    if (zdirname == NULL) {
+	errbox("Couldn't read session directory name");
+	return 1;
+    }
+#endif
+    
     chdir(paths.dotdir);
 
     gretl_unzip_file = gui_get_plugin_function("gretl_unzip_file", 
@@ -979,18 +986,17 @@ static int unzip_session_file (const char *fname)
     err = (*gretl_unzip_file)(fname, &gerr);
     if (gerr != NULL) {
 	fprintf(stderr, "gretl_unzip_file: '%s'\n", gerr->message);
-	ret = SAVEFILE_ERROR;
+	if (!err) {
+	    err = 1;
+	}
 	g_error_free(gerr);
     } else if (err) {
 	fprintf(stderr, "gretl_unzip_file: err = %d\n", err);
-	ret = SAVEFILE_ERROR;
     }
-
-    /* FIXME backward compat: try fallback to old-style session file */
 
     close_plugin(handle);
 
-    return ret;
+    return err;
 }
 
 static void sinfo_init (struct sample_info *sinfo)
@@ -1003,28 +1009,24 @@ static void sinfo_init (struct sample_info *sinfo)
     sinfo->resample_n = 0;
 }
 
-static int set_session_dirname (const char *sname)
+static int set_session_dirname (const char *zdirname)
 {
     char test[MAXLEN];
     FILE *fp;
     int err = 0;
 
-    sprintf(session.dirname, ".%s", sname);
+#if NEWNAMES
+    strcpy(session.dirname, zdirname);
+#else
+    sprintf(session.dirname, ".%s", zdirname);
+#endif
     sprintf(test, "%s%csession.xml", session.dirname, SLASH);
     fp = gretl_fopen(test, "r");
 
-    if (fp != NULL) {
-	fclose(fp);
+    if (fp == NULL) {
+	err = E_FOPEN;
     } else {
-	/* try without leading dot */
-	strcpy(session.dirname, sname);
-	sprintf(test, "%s%csession.xml", session.dirname, SLASH);
-	fp = gretl_fopen(test, "r");
-	if (fp != NULL) {
-	    fclose(fp);
-	} else {
-	    err = E_FOPEN;
-	}
+	fclose(fp);
     }
 
     return err;
@@ -1035,8 +1037,9 @@ void do_open_session (void)
     struct sample_info sinfo;
     char sname[MAXLEN];
     char fname[MAXLEN];
+    gchar *zdirname = NULL;
     FILE *fp;
-    int status, err = 0;
+    int err = 0;
 
     sinfo_init(&sinfo);
 
@@ -1046,7 +1049,6 @@ void do_open_session (void)
     } else {
 	file_read_errbox(tryfile);
 	delete_from_filelist(FILE_LIST_SESSION, tryfile);
-	delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
 	return;
     }
 
@@ -1057,29 +1059,31 @@ void do_open_session (void)
     fprintf(stderr, I_("\nReading session file %s\n"), sessionfile);
 
     chdir(paths.dotdir);
-    status = unzip_session_file(sessionfile);
+    err = unzip_session_file(sessionfile, &zdirname);
 
-    if (status == SAVEFILE_ERROR) {
+    if (err) {
 	/* FIXME more explicit error message */
+	g_free(zdirname);
 	file_read_errbox(sessionfile);
 	return;
-    } else if (status == SAVEFILE_SCRIPT) {
-	strcpy(scriptfile, sessionfile);
-	*sessionfile = '\0';
-	do_open_script(EDIT_SCRIPT);
-	return;
-    }
+    } 
 
     session_name_from_session_file(sname, sessionfile);
     strcpy(session.name, sname);
-    
+
+#if NEWNAMES
+    err = set_session_dirname(zdirname);
+#else    
     err = set_session_dirname(sname);
+#endif
     if (err) {
+	g_free(zdirname);
 	fprintf(stderr, "Failed on set_session_dirname\n");
 	file_read_errbox("session.xml");
 	return;
     }
 
+    g_free(zdirname);
     session_file_make_path(fname, "session.xml");
     err = read_session_xml(fname, &sinfo);
 

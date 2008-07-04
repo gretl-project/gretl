@@ -104,17 +104,21 @@ static void gretl_object_unstack (void *ptr)
     }
     
     if (pos >= 0) {
-	stacker *new_stack;
-
-	for (i=pos; i<n_obj-1; i++) {
-	    ostack[i] = ostack[i+1];
-	}
-
 	n_obj--;
+	if (n_obj == 0) {
+	    free(ostack);
+	    ostack = NULL;
+	} else {
+	    stacker *new_stack;
 
-	new_stack = realloc(ostack, (n_obj - 1) * sizeof *new_stack);
-	if (new_stack != NULL) {
-	    ostack = new_stack;
+	    for (i=pos; i<n_obj; i++) {
+		ostack[i] = ostack[i+1];
+	    }
+
+	    new_stack = realloc(ostack, n_obj * sizeof *new_stack);
+	    if (new_stack != NULL) {
+		ostack = new_stack;
+	    }
 	}
     }
 }

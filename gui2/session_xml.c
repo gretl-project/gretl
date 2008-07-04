@@ -144,6 +144,7 @@ static gpointer rebuild_session_model (const char *fname,
     gpointer ptr = NULL;
     xmlDocPtr doc;
     xmlNodePtr node;
+    char *name;
 
     *err = gretl_xml_open_doc_root(fname, 
 				   (type == GRETL_OBJ_EQN)? "gretl-model" :
@@ -169,7 +170,8 @@ static gpointer rebuild_session_model (const char *fname,
     xmlFreeDoc(doc);
 
     if (ptr != NULL) {
-	gretl_object_ref(ptr, type); /* FIXME do this later? */
+	name = gretl_object_get_name(ptr, type);
+	gretl_stack_object_as(ptr, type, name);
     }
 
     /* need to clean up on error here (also: clean up XML parser?) */

@@ -3691,6 +3691,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 {
     MODEL *pmod;
     char *buf = NULL;
+    char *modname = NULL;
     xmlNodePtr cur;
     int n, got = 0;
 
@@ -3750,7 +3751,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     gretl_xml_get_prop_as_double(node, "dw", &pmod->dw);
     gretl_xml_get_prop_as_double(node, "rho", &pmod->rho);
 
-    gretl_xml_get_prop_as_string(node, "name", &pmod->name);
+    gretl_xml_get_prop_as_string(node, "name", &modname);
     gretl_xml_get_prop_as_string(node, "depvar", &pmod->depvar);
 
     cur = node->xmlChildrenNode;
@@ -3806,6 +3807,11 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	}
 	pmod->params[np] = NULL;
 	pmod->nparams = np;
+    }
+
+    if (modname != NULL) {
+	gretl_model_set_name(pmod, modname);
+	free(modname);
     }
 
  bailout:

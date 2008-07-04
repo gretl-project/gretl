@@ -731,6 +731,7 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
     default:
 	break;
     }
+
     return 0;
 }
 

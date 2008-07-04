@@ -305,14 +305,7 @@ equation_system_new (int method, const char *name, int *err)
     }
 
     if (name != NULL) {
-	sys->name = gretl_strdup(name);
-	if (sys->name == NULL) {
-	    *err = E_ALLOC;
-	    free(sys);
-	    return NULL;
-	}
-    } else {
-	sys->name = NULL;
+	equation_system_set_name(sys, name);
     }
 
     sys->refcount = 0;
@@ -2425,11 +2418,11 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 {
     equation_system *sys;
     xmlNodePtr cur;
-    char *name;
+    char *sname;
     int method = 0;
     int i, j, got = 0;
 
-    got += gretl_xml_get_prop_as_string(node, "name", &name);
+    got += gretl_xml_get_prop_as_string(node, "name", &sname);
     got += gretl_xml_get_prop_as_int(node, "method", &method);
 
     if (got < 2) {
@@ -2437,7 +2430,7 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	return NULL;
     }     
 
-    sys = equation_system_new(method, name, err);
+    sys = equation_system_new(method, sname, err);
     if (*err) {
 	return NULL;
     }

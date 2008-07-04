@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <glib.h>
 
 #include "zipunzip.h"
@@ -57,4 +58,37 @@ int gretl_is_zipfile (const char *fname)
 
     return ret;
 }
+
+gchar *gretl_zipfile_get_topdir (const char *fname)
+{
+    zipinfo *zinfo;
+    gchar *topdir = NULL;
+
+    zinfo = zipfile_get_info(fname, 0, NULL);
+
+    if (zinfo != NULL) {
+	int i, n, gotit = 0;
+	const gchar *s;
+
+	for (i=0; i<zinfo->nfiles && !gotit; i++) {
+	    s = zinfo->fnames[i];
+	    if (s != NULL) {
+		n = strlen(s);
+		if (n > 13 && !strcmp(s + n - 11, "session.xml")) {
+		    topdir = g_strndup(s, n - 11);
+		    if (topdir != NULL) {
+			n = strlen(topdir);
+			if (topdir[n-1] == '/' || topdir[n-1] == '\\') {
+			    topdir[n-1] = '\0';
+			}
+		    }
+		}
+	    }
+	}
+	zipinfo_destroy(zinfo);
+    }
+
+    return topdir;
+}
+
 

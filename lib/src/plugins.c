@@ -193,9 +193,10 @@ struct plugin_function plugin_functions[] = {
     { "email_file",    P_MAILER },
 
     /* zip and unzip */
-    { "gretl_make_zipfile", P_ZIPFILE},
-    { "gretl_unzip_file",   P_ZIPFILE},
-    { "gretl_is_zipfile",   P_ZIPFILE},
+    { "gretl_make_zipfile",       P_ZIPFILE},
+    { "gretl_unzip_file",         P_ZIPFILE},
+    { "gretl_is_zipfile",         P_ZIPFILE},
+    { "gretl_zipfile_get_topdir", P_ZIPFILE},
 
     /* Arellano-Bond estimation */
     { "arbond_estimate",    P_ARBOND},

@@ -3445,6 +3445,7 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     GRETL_VAR *var;
     MODEL *pmod;
     xmlNodePtr cur;
+    char *vname;
     int i, n, got = 0;
 
     var = gretl_VAR_rebuilder_new();
@@ -3463,6 +3464,12 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     } 
 
     var->ci = (var->ci == 0)? VAR : VECM;
+
+    gretl_xml_get_prop_as_string(node, "name", &vname);
+    if (vname != NULL) {
+	gretl_VAR_set_name(var, vname);
+	free(vname);
+    }
 
     /* these are not show-stoppers */
     gretl_xml_get_prop_as_int(node, "detflags", &var->detflags);
