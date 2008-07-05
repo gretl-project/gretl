@@ -45,6 +45,8 @@ static void mtable_errmsg (char *msg, int gui)
     } else {
 	gretl_errmsg_set(msg);
     }
+
+    fprintf(stderr, "%s\n", msg);
 }
 
 static int real_table_n_models (void)
@@ -242,6 +244,7 @@ static int real_add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 {
     if (model_table_precheck(pmod, add_mode)) {
+	fprintf(stderr, "add_to_model_table: precheck failed\n");
 	return 1;
     }
 

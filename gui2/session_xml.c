@@ -170,6 +170,7 @@ static gpointer rebuild_session_model (const char *fname,
     xmlFreeDoc(doc);
 
     if (ptr != NULL) {
+	/* FIXME: division of labour with 'reattach_model' below?? */
 	name = gretl_object_get_name(ptr, type);
 	gretl_stack_object_as(ptr, type, name);
     }
@@ -185,19 +186,30 @@ reattach_model (void *ptr, GretlObjType type, const char *name,
 {
     int err = 0;
 
+#if 1
+    fprintf(stderr, "reattach_model: IN_GUI_SESSION = %s, IN_MODEL_TABLE= %s\n"
+	    "IN_NAMED_STACK = %s, IS_LAST_MODEL = %s\n",
+	    (flags & IN_GUI_SESSION)? "yes" : "no",
+	    (flags & IN_MODEL_TABLE)? "yes" : "no",
+	    (flags & IN_NAMED_STACK)? "yes" : "no",
+	    (flags & IS_LAST_MODEL)? "yes" : "no");
+#endif
+
     if (flags & IN_GUI_SESSION) {
 	SESSION_MODEL *smod;
 
 	smod = session_model_new(ptr, name, type);
 	if (smod == NULL) {
+	    fprintf(stderr, "error %d from session_model_new\n", err);
 	    err = E_ALLOC;
 	} else {
 	    err = session_append_model(smod);
+	    fprintf(stderr, "error %d from session_append_model\n", err);
 	}
     }
 
     if (!err && (flags & IN_MODEL_TABLE)) {
-	err = add_to_model_table(ptr, MODEL_ADD_BY_CMD, NULL);
+	add_to_model_table(ptr, MODEL_ADD_BY_CMD, NULL);
     }
 
     if (!err && (flags & IN_NAMED_STACK)) {
