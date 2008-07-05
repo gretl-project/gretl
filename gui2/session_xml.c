@@ -510,7 +510,8 @@ static int write_session_xml (const char *datname)
     FILE *fp, *fq;
     int nmodels;
     int tabmodels;
-    int i, err = 0;
+    int i, modnum;
+    int err = 0;
 
     chdir(paths.dotdir);
 
@@ -549,19 +550,21 @@ static int write_session_xml (const char *datname)
 
     fprintf(fp, " <models count=\"%d\">\n", nmodels);
 
+    modnum = 1;
+
     for (i=0; i<session.nmodels && !err; i++) {
 	int type = session.models[i]->type;
 	void *ptr = session.models[i]->ptr;
 	SavedObjectFlags sflags;
 
-	sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
-	fq = fopen(tmpname, "w");
+	sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, modnum);
+	fq = gretl_fopen(tmpname, "w");
 
 	if (fq == NULL) {
 	    file_write_errbox(tmpname);
 	    err = E_FOPEN;
 	} else {
-	    sprintf(tmpname, "model.%d", i + 1);
+	    sprintf(tmpname, "model.%d", modnum++);
 	    fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
 		    session.models[i]->name, tmpname, type);
 	    gretl_xml_header(fq);
@@ -580,13 +583,13 @@ static int write_session_xml (const char *datname)
     for (i=0; i<tabmodels && !err; i++) {
 	pmod = model_table_model_by_index(i);
 	if (!model_in_session(pmod)) {
-	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
-	    fq = fopen(tmpname, "w");
+	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, modnum);
+	    fq = gretl_fopen(tmpname, "w");
 	    if (fq == NULL) {
 		file_write_errbox(tmpname);
 		err = E_FOPEN;
 	    } else {
-		sprintf(tmpname, "model.%d", i+1);
+		sprintf(tmpname, "model.%d", modnum++);
 		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
 			(pmod->name != NULL)? pmod->name : "none", tmpname, 
 			GRETL_OBJ_EQN);

@@ -2437,9 +2437,8 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
     xmlNodePtr cur = node->xmlChildrenNode;
     int got, err = 0;
 
-    gretl_test_init(&test, 0);
-
     while (cur != NULL && !err) {
+	gretl_test_init(&test, 0);
 	got = 0;
 	got += gretl_xml_get_prop_as_int(cur, "type", &test.type);
 	got += gretl_xml_get_prop_as_uchar(cur, "teststat", &test.teststat);
@@ -2467,7 +2466,7 @@ static void serialize_test (const ModelTest *src, FILE *fp)
 {
     fprintf(fp, "<test type=\"%d\" ", src->type);
     
-    if (src->param != NULL) {
+    if (src->param != NULL && *src->param != '\0') {
 	fprintf(fp, "param=\"%s\" ", src->param);
     }
 
