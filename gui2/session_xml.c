@@ -144,7 +144,7 @@ static int rebuild_session_model (const char *fname,
     SavedObjectFlags flags = 0;
     xmlDocPtr doc;
     xmlNodePtr node;
-    int err;
+    int iflag, err;
 
     err = gretl_xml_open_doc_root(fname, 
 				  (type == GRETL_OBJ_EQN)? "gretl-model" :
@@ -155,9 +155,11 @@ static int rebuild_session_model (const char *fname,
 	return err;
     }
 
-    if (!gretl_xml_get_prop_as_int(node, "saveflags", (int *) &flags)) {
-	flags = IN_GUI_SESSION;
-    }    
+    if (gretl_xml_get_prop_as_int(node, "saveflags", &iflag)) {
+	flags = iflag;
+    } else {
+	flags = IN_GUI_SESSION | IN_NAMED_STACK;
+    }
 
     if (type == GRETL_OBJ_EQN) {
 	ptr = gretl_model_from_XML(node, doc, &err);
