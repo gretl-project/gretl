@@ -2117,6 +2117,19 @@ static int sepcount_error (int ci, int nsep)
     return err;
 }
 
+static int end_foreign (const char *s)
+{
+    if (!strncmp(s, "end ", 4)) {
+	s += 3;
+	s += strspn(s, " \t");
+	if (!strncmp(s, "foreign", 7)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* Get the first word out of line.  In general this should be a
    command word (starting with a alphabetical character), but there
    are a few special case: shell commands start with the "!"  escape;
@@ -2186,6 +2199,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->flags |= CMD_SUBST;
     } else {
 	cmd->flags &= ~CMD_SUBST;
+    }
+
+    if (cmd->context == FOREIGN && !end_foreign(line)) {
+	cmd_set_nolist(cmd);
+	cmd->ci = FOREIGN;
+	return 0;
     }
 
     compress_spaces(line);

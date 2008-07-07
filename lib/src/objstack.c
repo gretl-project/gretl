@@ -731,7 +731,9 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 
 int gretl_stack_object (void *ptr, GretlObjType type)
 {
-    return real_stack_object(ptr, type, NULL, NULL);
+    char *name = gretl_object_get_name(ptr, type);
+
+    return real_stack_object(ptr, type, name, NULL);
 }
 
 int gretl_stack_object_as (void *ptr, GretlObjType type, const char *name)

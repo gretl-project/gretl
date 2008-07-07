@@ -101,9 +101,8 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
     MODEL *cpy = NULL;
     int err = 0;
 
-    set_as_last_model(pmod, GRETL_OBJ_EQN);
-
     gretl_cmd_get_savename(name);
+
     if (*name != 0) {
 	cpy = gretl_model_copy(pmod);
 	if (cpy == NULL) {
@@ -111,6 +110,11 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
 	} else {
 	    err = finalize_model_save(cpy, GRETL_OBJ_EQN, name, prn);
 	}
+	if (!err) {
+	    set_as_last_model(cpy, GRETL_OBJ_EQN);
+	}
+    } else {
+	set_as_last_model(pmod, GRETL_OBJ_EQN);
     }
 
     return err;
@@ -125,6 +129,7 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     set_as_last_model(*pvar, GRETL_OBJ_VAR);
 
     gretl_cmd_get_savename(name);
+
     if (*name == 0) {
 	*pvar = NULL;
     } else {
@@ -142,6 +147,7 @@ int maybe_save_system (const CMD *cmd, equation_system *sys, PRN *prn)
     int err = 0;
 
     gretl_cmd_get_savename(name);
+
     if (*name != 0) {
 	err = finalize_model_save(sys, GRETL_OBJ_SYS, name, prn);
     }

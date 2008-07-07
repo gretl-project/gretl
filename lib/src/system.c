@@ -304,6 +304,8 @@ equation_system_new (int method, const char *name, int *err)
 	return NULL;
     }
 
+    sys->name = NULL;
+
     if (name != NULL) {
 	equation_system_set_name(sys, name);
     }
@@ -1397,7 +1399,7 @@ int equation_system_finalize (equation_system *sys,
 
     err = sys_check_lists(sys, pdinfo);
 
-    if (!err && sys->name != NULL) {
+    if (!err && sys->name != NULL && *sys->name != '\0') {
 	/* save the system for subsequent estimation */
 	err = gretl_stack_object_as(sys, GRETL_OBJ_SYS, sys->name);
     }

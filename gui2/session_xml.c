@@ -136,89 +136,76 @@ static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static gpointer rebuild_session_model (const char *fname, 
-				       GretlObjType type,
-				       SavedObjectFlags *flags,
-				       int *err)
+static int rebuild_session_model (const char *fname, 
+				  const char *name, 
+				  GretlObjType type)
 {
     gpointer ptr = NULL;
+    SavedObjectFlags flags = 0;
     xmlDocPtr doc;
     xmlNodePtr node;
-    char *name;
+    int err;
 
-    *err = gretl_xml_open_doc_root(fname, 
-				   (type == GRETL_OBJ_EQN)? "gretl-model" :
-				   (type == GRETL_OBJ_VAR)? "gretl-VAR" :
-				   "gretl-equation-system", &doc, &node);
-    if (*err) {
+    err = gretl_xml_open_doc_root(fname, 
+				  (type == GRETL_OBJ_EQN)? "gretl-model" :
+				  (type == GRETL_OBJ_VAR)? "gretl-VAR" :
+				  "gretl-equation-system", &doc, &node);
+    if (err) {
 	fprintf(stderr, "Failed on gretl_xml_open_doc_root\n");
-	return NULL;
+	return err;
     }
 
-    if (!gretl_xml_get_prop_as_int(node, "saveflags", (int *) flags)) {
-	*flags = IN_GUI_SESSION;
+    if (!gretl_xml_get_prop_as_int(node, "saveflags", (int *) &flags)) {
+	flags = IN_GUI_SESSION;
     }    
 
     if (type == GRETL_OBJ_EQN) {
-	ptr = gretl_model_from_XML(node, doc, err);
+	ptr = gretl_model_from_XML(node, doc, &err);
     } else if (type == GRETL_OBJ_VAR) {
-	ptr = gretl_VAR_from_XML(node, doc, err);
+	ptr = gretl_VAR_from_XML(node, doc, &err);
     } else {
-	ptr = equation_system_from_XML(node, doc, err);
+	ptr = equation_system_from_XML(node, doc, &err);
     }
 
     xmlFreeDoc(doc);
 
-    if (ptr != NULL) {
-	/* FIXME: division of labour with 'reattach_model' below?? */
-	name = gretl_object_get_name(ptr, type);
-	gretl_stack_object_as(ptr, type, name);
-    }
-
-    /* need to clean up on error here (also: clean up XML parser?) */
-
-    return ptr;
-}
-
-static int 
-reattach_model (void *ptr, GretlObjType type, const char *name, 
-		SavedObjectFlags flags)
-{
-    int err = 0;
-
+    if (!err && ptr != NULL) {
 #if 1
-    fprintf(stderr, "reattach_model: IN_GUI_SESSION = %s, IN_MODEL_TABLE= %s\n"
-	    "IN_NAMED_STACK = %s, IS_LAST_MODEL = %s\n",
-	    (flags & IN_GUI_SESSION)? "yes" : "no",
-	    (flags & IN_MODEL_TABLE)? "yes" : "no",
-	    (flags & IN_NAMED_STACK)? "yes" : "no",
-	    (flags & IS_LAST_MODEL)? "yes" : "no");
+	fprintf(stderr, "rebuild_session_model: IN_GUI_SESSION %s, IN_MODEL_TABLE %s\n"
+		" IN_NAMED_STACK %s, IS_LAST_MODEL %s\n",
+		(flags & IN_GUI_SESSION)? "yes" : "no",
+		(flags & IN_MODEL_TABLE)? "yes" : "no",
+		(flags & IN_NAMED_STACK)? "yes" : "no",
+		(flags & IS_LAST_MODEL)? "yes" : "no");
 #endif
 
-    if (flags & IN_GUI_SESSION) {
-	SESSION_MODEL *smod;
+	if (flags & IN_GUI_SESSION) {
+	    SESSION_MODEL *smod;
 
-	smod = session_model_new(ptr, name, type);
-	if (smod == NULL) {
-	    fprintf(stderr, "error %d from session_model_new\n", err);
-	    err = E_ALLOC;
-	} else {
-	    err = session_append_model(smod);
-	    fprintf(stderr, "error %d from session_append_model\n", err);
+	    smod = session_model_new(ptr, name, type);
+	    if (smod == NULL) {
+		fprintf(stderr, "error from session_model_new\n");
+		err = E_ALLOC;
+	    } else {
+		err = session_append_model(smod);
+		fprintf(stderr, "error %d from session_append_model\n", err);
+	    }
 	}
-    }
 
-    if (!err && (flags & IN_MODEL_TABLE)) {
-	add_to_model_table(ptr, MODEL_ADD_BY_CMD, NULL);
-    }
+	if (!err && (flags & IN_MODEL_TABLE)) {
+	    add_to_model_table(ptr, MODEL_ADD_BY_CMD, NULL);
+	}
 
-    if (!err && (flags & IN_NAMED_STACK)) {
-	err = gretl_stack_object(ptr, type);
-    } 
+	if (!err && (flags & IN_NAMED_STACK)) {
+	    err = gretl_stack_object(ptr, type);
+	} 
 
-    if (!err && (flags & IS_LAST_MODEL)) {
-	set_as_last_model(ptr, type);
-    }     
+	if (!err && (flags & IS_LAST_MODEL)) {
+	    set_as_last_model(ptr, type);
+	} 
+    }   
+
+    /* need to clean up on error here (also: clean up XML parser?) */
 
     return err;
 }
@@ -227,19 +214,17 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 {
     char fullname[MAXLEN];
     xmlNodePtr cur;
-    int i, err = 0;
+
+    int err = 0;
 
     /* reset prior to parsing */
     session.nmodels = 0;
 
     cur = node->xmlChildrenNode;
-    i = 0;
 
     while (cur != NULL && !err) {
-	SavedObjectFlags flags;
 	xmlChar *fname = NULL;
 	xmlChar *name = NULL;
-	gpointer ptr = NULL;
 	int type = GRETL_OBJ_EQN;
 
 	fname = xmlGetProp(cur, (XUC) "fname");
@@ -256,18 +241,11 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	    session_file_make_path(fullname, (const char *) fname);
 	    gretl_xml_get_prop_as_int(cur, "type", &type);
 	    fprintf(stderr, "model file: fname='%s', type=%d\n", fullname, type);
-	    ptr = rebuild_session_model(fullname, type, &flags, &err);
+	    err = rebuild_session_model(fullname, (const char *) name, type);
 	}
 
 	if (!err) {
-	    fprintf(stderr, "reattaching model to session\n");
-	    err = reattach_model(ptr, type, (const char *) name, flags);
-	    if (!err) {
-		model_count_plus();
-	    } else {
-		fprintf(stderr, "reattach_model: failed on %s (err = %d)\n",
-			name, err);
-	    }
+	    model_count_plus();
 	} else {
 	    fprintf(stderr, "rebuild_session_model: failed on %s (err = %d)\n",
 		    fullname, err);
@@ -277,7 +255,6 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	free(name);
 
 	cur = cur->next;
-	i++;
     }
 
 #if SESSION_DEBUG

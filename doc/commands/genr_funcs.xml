@@ -2984,7 +2984,7 @@
 	  variable <math>y</math>.  The denominator used is the sample
 	  size for each unit minus 1, unless the number of valid
 	  observations for the given unit is 1 (in which case 0 is
-	  returned) or 9 (in which case <lit>NA</lit> is returned).
+	  returned) or 0 (in which case <lit>NA</lit> is returned).
 	</para>
 	<para context="tex">
 	  Only applicable if the currently open dataset has a panel
