@@ -71,6 +71,7 @@ struct str_table dvars[] = {
     { R_NOBS,      "$nobs" },
     { R_NVARS,     "$nvars" },
     { R_PD,        "$pd" },
+    { R_DATATYPE,  "$datatype" },
     { R_TEST_STAT, "$test" },
     { R_TEST_PVAL, "$pvalue" },
     { R_TEST_LNL,  "$rlnl" },

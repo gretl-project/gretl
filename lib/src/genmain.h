@@ -28,6 +28,7 @@ typedef enum {
     R_PD,         /* periodicity of dataset */
     R_T1,         /* start of current sample range */
     R_T2,         /* end of current sample range */
+    R_DATATYPE,   /* dataset structure (x-section, time-series, panel) */
     R_DSET_MAX,   /* separator */
     R_TEST_STAT,  /* test statistic from last explicit test performed */
     R_TEST_PVAL,  /* p-value from last explicit test performed */

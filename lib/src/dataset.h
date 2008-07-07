@@ -21,6 +21,13 @@
 #define DATASET_H
 
 typedef enum {
+    DATA_NONE,
+    DATA_XSECT,
+    DATA_TS,
+    DATA_PANEL
+} DatasetStructure;
+
+typedef enum {
     NO_MARKERS = 0,
     REGULAR_MARKERS,
     DAILY_DATE_STRINGS
@@ -393,6 +400,8 @@ int dataset_op_from_string (const char *s);
 int modify_dataset (int op, const int *list, const char *s, 
 		    double ***pZ, DATAINFO *pdinfo, 
 		    PRN *prn);
+
+int dataset_get_structure (const DATAINFO *pdinfo);
 
 int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo);
 

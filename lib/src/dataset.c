@@ -3055,6 +3055,19 @@ int modify_dataset (int op, const int *list, const char *s,
     return err;
 }
 
+int dataset_get_structure (const DATAINFO *pdinfo)
+{
+    if (pdinfo == NULL || pdinfo->n == 0) {
+	return DATA_NONE;
+    } else if (dataset_is_panel(pdinfo)) {
+	return DATA_PANEL;
+    } else if (dataset_is_time_series(pdinfo)) {
+	return DATA_TS;
+    } else {
+	return DATA_XSECT;
+    }
+}
+
 /**
  * dataset_purge_missing_rows:
  * @Z: data array.

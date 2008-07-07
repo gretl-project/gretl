@@ -4752,6 +4752,8 @@ static double dvar_get_value (int i, parser *p)
 	return p->dinfo->t1 + 1;
     case R_T2:
 	return p->dinfo->t2 + 1;
+    case R_DATATYPE:
+	return dataset_get_structure(p->dinfo);
     case R_TEST_PVAL:
 	return get_last_pvalue(p->lh.label);
     case R_TEST_STAT:
