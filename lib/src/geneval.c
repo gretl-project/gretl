@@ -3012,6 +3012,41 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     return ret;
 }
 
+static double global_varindex (const DATAINFO *pdinfo, const char *s)
+{
+    if (s != NULL && *s != 0) {
+	int i;
+
+	for (i=0; i<pdinfo->v; i++) { 
+	    if (!strcmp(pdinfo->varname[i], s)) { 
+		return i;
+	    }
+	}
+    }
+
+    return NADBL;
+}
+
+static NODE *copy_series_by_number (NODE *n, parser *p)
+{
+    NODE *ret = aux_series_node(p, 0);
+
+    if (ret != NULL && starting(p)) {
+	int v = n->v.xval;
+
+	if (v >= 0 && v < p->dinfo->v && var_is_series(p->dinfo, v)) {
+	    ret->v.xvec = copyvec((*p->Z)[v], p->dinfo->n);
+	    if (ret->v.xvec == NULL) {
+		p->err = E_ALLOC;
+	    }
+	} else {
+	    p->err = E_DATA;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *string_to_int_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -3020,9 +3055,7 @@ static NODE *string_to_int_func (NODE *n, int f, parser *p)
 	const char *s = n->v.str;
 
 	if (f == F_VARNUM) {
-	    int v = varindex(p->dinfo, s);
-
-	    ret->v.xval = (v == p->dinfo->v)? NADBL : v;
+	    ret->v.xval = global_varindex(p->dinfo, s);
 	} else {
 	    p->err = E_DATA;
 	}
@@ -5763,6 +5796,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = string_to_int_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, STR, l, p);
+	}
+	break;
+    case F_VARCOPY:
+	if (l->t == NUM) {
+	    ret = copy_series_by_number(l, p);
+	} else {
+	    node_type_error(t->t, NUM, l, p);
 	}
 	break;
     case F_STRSTR:

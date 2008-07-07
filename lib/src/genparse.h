@@ -239,6 +239,7 @@ enum {
     F_STRLEN,
     F_VARNAME,
     F_VARNUM,
+    F_VARCOPY,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
