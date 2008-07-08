@@ -2362,7 +2362,7 @@ static void copy_test (ModelTest *targ, const ModelTest *src)
 {
     targ->type = src->type;
     
-    if (src->param != NULL) {
+    if (src->param != NULL && *src->param != '\0') {
 	targ->param = gretl_strdup(src->param);
     } else {
 	targ->param = NULL;
@@ -2447,7 +2447,6 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 	got += gretl_xml_get_prop_as_int(cur, "order", &test.order);
 	got += gretl_xml_get_prop_as_double(cur, "value", &test.value);
 	got += gretl_xml_get_prop_as_double(cur, "pvalue", &test.pvalue);
-	got += gretl_xml_get_prop_as_string(cur, "param", &test.param);
 	got += gretl_xml_get_prop_as_double(cur, "crit", &test.crit);
 	got += gretl_xml_get_prop_as_double(cur, "alpha", &test.alpha);
 	if (got < 7) {

@@ -28,19 +28,18 @@ static int check_graph_file (const char *fname)
 static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
-    int i = 0;
     int inpage = 0;
-    int err = 0;
+    int errs = 0;
 
     /* reset prior to parsing */
     session.ngraphs = 0;
 
     cur = node->xmlChildrenNode;
 
-    while (cur != NULL && !err) {
+    while (cur != NULL) {
 	xmlChar *name = NULL;
 	xmlChar *fname = NULL;
-	int type, ID;
+	int type, ID, err = 0;
 
 	name = xmlGetProp(cur, (XUC) "name");
 	if (name == NULL) {
@@ -76,29 +75,32 @@ static int restore_session_graphs (xmlNodePtr node)
 	    }
 	}
 
+	if (err) {
+	    errs++;
+	}
+
 	free(name);
 	free(fname);
 
 	cur = cur->next;
-	i++;
     }
 
-    return err;
+    return errs;
 }
 
 static int restore_session_texts (xmlNodePtr node, xmlDocPtr doc)
 {
     xmlNodePtr cur;
-    int i = 0;
-    int err = 0;
+    int errs = 0;
 
     session.ntexts = 0;
 
     cur = node->xmlChildrenNode;
 
-    while (cur != NULL && !err) {
+    while (cur != NULL) {
 	xmlChar *name = NULL;
 	xmlChar *buf = NULL;
+	int err = 0;
 
 	name = xmlGetProp(cur, (XUC) "name");
 	if (name == NULL) {
@@ -113,13 +115,16 @@ static int restore_session_texts (xmlNodePtr node, xmlDocPtr doc)
 	    }
 	}
 
+	if (err) {
+	    errs++;
+	}
+
 	free(name);
 
 	cur = cur->next;
-	i++;
     }
 
-    return err;
+    return errs;
 }
 
 static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
@@ -216,18 +221,18 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 {
     char fullname[MAXLEN];
     xmlNodePtr cur;
-
-    int err = 0;
+    int errs = 0;
 
     /* reset prior to parsing */
     session.nmodels = 0;
 
     cur = node->xmlChildrenNode;
 
-    while (cur != NULL && !err) {
+    while (cur != NULL) {
 	xmlChar *fname = NULL;
 	xmlChar *name = NULL;
 	int type = GRETL_OBJ_EQN;
+	int err = 0;
 
 	fname = xmlGetProp(cur, (XUC) "fname");
 	if (fname == NULL) {
@@ -251,6 +256,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	} else {
 	    fprintf(stderr, "rebuild_session_model: failed on %s (err = %d)\n",
 		    fullname, err);
+	    errs++;
 	}
 
 	free(fname);
@@ -260,10 +266,10 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
     }
 
 #if SESSION_DEBUG
-    fprintf(stderr, "restore_session_models: returning %d\n", err);
+    fprintf(stderr, "restore_session_models: %d errors\n", errs);
 #endif
 
-    return err;
+    return errs;
 }
 
 static int 
@@ -272,6 +278,10 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     xmlChar *tmp;
+    int model_errs = 0;
+    int graph_errs = 0;
+    int text_errs = 0;
+    int notes_err = 0;
     int err = 0;
 
     LIBXML_TEST_VERSION
@@ -333,7 +343,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		session.nmodels = atoi((const char *) tmp);
 		free(tmp);
 		if (session.nmodels > 0) {
-		    err = restore_session_models(cur, doc);
+		    model_errs = restore_session_models(cur, doc);
 		}		
 	    }
         } else if (!xmlStrcmp(cur->name, (XUC) "graphs")) {
@@ -342,7 +352,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		session.ngraphs = atoi((const char *) tmp);
 		free(tmp);
 		if (session.ngraphs > 0) {
-		    err = restore_session_graphs(cur);
+		    graph_errs = restore_session_graphs(cur);
 		}
 	    }	    
 	} else if (!xmlStrcmp(cur->name, (XUC) "texts")) {
@@ -351,14 +361,14 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		session.ntexts = atoi((const char *) tmp);
 		free(tmp);
 		if (session.ntexts > 0) {
-		    err = restore_session_texts(cur, doc);
+		    text_errs = restore_session_texts(cur, doc);
 		}		
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "notes")) {
 	    session.notes = 
 		(char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (session.notes == NULL) {
-		err = 1;
+		notes_err = 1;
 	    }
 	}
 	if (!err) {
@@ -369,6 +379,18 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     if (doc != NULL) {
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
+    }
+
+    if (!err) {
+	if (model_errs > 0) {
+	    errbox("%d model(s) could not be rebuilt", model_errs);
+	}
+	if (graph_errs > 0) {
+	    errbox("%d graph(s) could not be rebuilt", graph_errs);
+	}
+	if (text_errs > 0) {
+	    errbox("%d text object(s) could not be rebuilt", text_errs);
+	}    
     }
 
     return err;
