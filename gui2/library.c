@@ -4390,19 +4390,19 @@ static int logs_etc_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    if (!strcmp(s, "LOGS")) 
+    if (!strcmp(s, "logs")) 
 	return LOGS;
-    else if (!strcmp(s, "SQUARE")) 
+    else if (!strcmp(s, "square"))
 	return SQUARE;
-    else if (!strcmp(s, "LAGS")) 
+    else if (!strcmp(s, "lags")) 
 	return LAGS;
-    else if (!strcmp(s, "DIFF")) 
+    else if (!strcmp(s, "diff")) 
 	return DIFF;
-    else if (!strcmp(s, "LDIFF")) 
+    else if (!strcmp(s, "ldiff")) 
 	return LDIFF;
-    else if (!strcmp(s, "SDIFF")) 
+    else if (!strcmp(s, "sdiff")) 
 	return SDIFF;
-    else if (!strcmp(s, "DUMMIFY")) 
+    else if (!strcmp(s, "dummify")) 
 	return DUMMIFY;
     else
 	return LOGS;

@@ -28,12 +28,13 @@ static int check_graph_file (const char *fname)
 static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
-    int inpage = 0;
+    int gnum, inpage = 0;
     int errs = 0;
 
     /* reset prior to parsing */
     session.ngraphs = 0;
 
+    gnum = 1;
     cur = node->xmlChildrenNode;
 
     while (cur != NULL) {

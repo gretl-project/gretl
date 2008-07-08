@@ -155,12 +155,12 @@
       <menuitem action='xcorrgm'/>
     </menu>
     <menu action='Add'>
-      <menuitem action='LOGS'/>
-      <menuitem action='SQUARES'/>
-      <menuitem action='LAGS'/>
-      <menuitem action='DIFF'/>
-      <menuitem action='LDIFF'/>
-      <menuitem action='SDIFF'/>
+      <menuitem action='logs'/>
+      <menuitem action='square'/>
+      <menuitem action='lags'/>
+      <menuitem action='diff'/>
+      <menuitem action='ldiff'/>
+      <menuitem action='sdiff'/>
       <separator/>
       <menuitem action='AddIndex'/>
       <menuitem action='AddTime'/>
@@ -170,7 +170,7 @@
       <menuitem action='PeriodDums'/>
       <menuitem action='UnitDums'/>
       <menuitem action='TimeDums'/>
-      <menuitem action='DUMMIFY'/>
+      <menuitem action='dummify'/>
       <separator/>
       <menuitem action='GENR'/>
       <menuitem action='NewMatrix'/>

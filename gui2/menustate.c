@@ -205,12 +205,12 @@ void ts_or_panel_menu_state (gboolean s)
     flip(mdata->ui, "/MenuBar/Data/DataSort", !s);
 
     flip(mdata->ui, "/MenuBar/Add/AddTime", s);
-    flip(mdata->ui, "/MenuBar/Add/LAGS", s);
-    flip(mdata->ui, "/MenuBar/Add/DIFF", s);
-    flip(mdata->ui, "/MenuBar/Add/LDIFF", s);
+    flip(mdata->ui, "/MenuBar/Add/lags", s);
+    flip(mdata->ui, "/MenuBar/Add/diff", s);
+    flip(mdata->ui, "/MenuBar/Add/ldiff", s);
 
     s = dataset_is_seasonal(datainfo);
-    flip(mdata->ui, "/MenuBar/Add/SDIFF", s);
+    flip(mdata->ui, "/MenuBar/Add/sdiff", s);
     flip(mdata->ui, "/MenuBar/Add/PeriodDums", s);
 }
 

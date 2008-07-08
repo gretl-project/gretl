@@ -326,24 +326,21 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	    pline = get_gretl_png_term_line(ptype, flags);
 	    fprintf(ftmp, "%s\n", pline);
 	}	    
-	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
-		paths.dotdir);
+	fprintf(ftmp, "set output '%sgretltmp.png'\n", paths.dotdir);
     }
 
     /* now for the body of the plot file */
 
     if (action == ADD_PNG) {
-	int got_set_print = 0;
-
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    if (set_print_line(fline)) {
-		got_set_print = 1;
-		fputs(fline, ftmp);
+		/* skip it (portability) */
+		;
 	    } else if (!commented_term_line(fline) && !set_output_line(fline)) {
 		fputs(fline, ftmp);
 	    }
 	}
-	if (gnuplot_has_bbox() && !got_set_print) {
+	if (gnuplot_has_bbox()) {
 	    print_plot_bounding_box_request(ftmp);
 	}
     } else {

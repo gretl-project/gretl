@@ -1822,18 +1822,22 @@ static int real_delete_model_from_session (SESSION_MODEL *model)
 
 static int real_delete_text_from_session (SESSION_TEXT *junk)
 {
-    if (session.ntexts == 1) {
+    int nt = session.ntexts;
+
+    if (nt == 1) {
 	free_session_text(session.texts[0]);
+	free(session.texts);
+	session.texts = NULL;
     } else {
 	SESSION_TEXT **pptext;
 	int i, j;
 
-	pptext = mymalloc((session.ntexts - 1) * sizeof *pptext);
-	if (session.ntexts > 1 && pptext == NULL) {
+	pptext = mymalloc((nt - 1) * sizeof *pptext);
+	if (pptext == NULL) {
 	    return 1;
 	}
 	j = 0;
-	for (i=0; i<session.ntexts; i++) {
+	for (i=0; i<nt; i++) {
 	    if (session.texts[i] != junk) {
 		pptext[j++] = session.texts[i];
 	    } else {
@@ -1844,7 +1848,7 @@ static int real_delete_text_from_session (SESSION_TEXT *junk)
 	session.texts = pptext;
     }
 
-    session.ntexts -= 1;
+    session.ntexts = nt - 1;
     mark_session_changed();
 
     return 0;
@@ -1861,20 +1865,23 @@ static void remove_session_graph_file (const char *gfname)
 
 static int real_delete_graph_from_session (SESSION_GRAPH *junk)
 {
+    int ng = session.ngraphs;
     int i, j;
 
-    if (session.ngraphs == 1) {
+    if (ng == 1) {
 	remove_session_graph_file(session.graphs[0]->fname);
 	free(session.graphs[0]);
+	free(session.graphs);
+	session.graphs = NULL;	
     } else {
 	SESSION_GRAPH **ppgr;
 
-	ppgr = mymalloc((session.ngraphs - 1) * sizeof *ppgr);
-	if (session.ngraphs > 1 && ppgr == NULL) {
+	ppgr = mymalloc((ng - 1) * sizeof *ppgr);
+	if (ppgr == NULL) {
 	    return 1;
 	}
 	j = 0;
-	for (i=0; i<session.ngraphs; i++) {
+	for (i=0; i<ng; i++) {
 	    if (session.graphs[i]->ID != junk->ID) { 
 		ppgr[j++] = session.graphs[i];
 	    } else {
@@ -1886,7 +1893,7 @@ static int real_delete_graph_from_session (SESSION_GRAPH *junk)
 	session.graphs = ppgr;
     }
 
-    session.ngraphs -= 1;
+    session.ngraphs = ng - 1;
     mark_session_changed();
 
     return 0;
