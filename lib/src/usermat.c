@@ -1132,9 +1132,9 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f,
 	} else if (f == F_INV) {
 	    *err = gretl_invert_matrix(R);
 	} else if (f == F_UPPER) {
-	    *err = gretl_matrix_zero_upper(R);
-	} else if (f == F_LOWER) {
 	    *err = gretl_matrix_zero_lower(R);
+	} else if (f == F_LOWER) {
+	    *err = gretl_matrix_zero_upper(R);
 	} else {
 	    *err = E_DATA;
 	}
