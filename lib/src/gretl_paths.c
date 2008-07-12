@@ -65,7 +65,7 @@ static int add_suffix (char *fname, const char *sfx)
 /* Heuristic: filename contains non-ascii characters, and
    validates as UTF-8 */
 
-static int fname_is_utf8 (const unsigned char *s)
+int fname_is_utf8 (const unsigned char *s)
 {
     const unsigned char *p = s;
     int sevenbit = 1;
@@ -98,6 +98,18 @@ static int fopen_use_utf8;
 void set_fopen_use_utf8 (void)
 {
     fopen_use_utf8 = 1;
+}
+
+/**
+ * get_fopen_use_utf8:
+ *
+ * Returns: 1 if fienames should be in UTF-8 when passed to the C
+ * library's fopen(), otherwise 0.
+ */
+
+int get_fopen_use_utf8 (void)
+{
+    return fopen_use_utf8;
 }
 
 /**

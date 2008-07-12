@@ -300,7 +300,7 @@ real_read_zipfile (zfile *zf, int task)
 	    return ZE_FORM;
 	}
 
-	if ((z->iname = malloc(z->namelen + 1)) ==  NULL ||
+	if ((z->iname = g_malloc(z->namelen + 1)) ==  NULL ||
 	    (z->cextlen && (z->cextra = malloc(z->cextlen)) == NULL) ||
 	    (z->comlen && (z->comment = malloc(z->comlen)) == NULL)) {
 	    return ZE_MEM;

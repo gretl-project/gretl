@@ -77,13 +77,13 @@ flist *flist_expel (flist *f, int *fcount)
     }
 
     if (f->name != NULL) { 
-	free(f->name);
+	g_free(f->name);
     }
     if (f->zname != NULL) {
-	free(f->zname);
+	g_free(f->zname);
     }
     if (f->iname != NULL) {
-	free(f->iname);
+	g_free(f->iname);
     }
 
     free(f);
@@ -120,8 +120,8 @@ flist *flist_entry_new (const char *name, char *iname, char *zname,
 
 int newname (const char *name, zfile *zf)
 {
-    char *iname = NULL;    /* internal version of filename */
-    char *zname = NULL;    /* external version of filename */
+    gchar *iname = NULL;   /* internal version of filename */
+    gchar *zname = NULL;   /* external version of filename */
     flist *f = NULL;       /* where in found, or new found entry */
     zlist *z = NULL;       /* where in zlist (if found) */
 
@@ -133,7 +133,7 @@ int newname (const char *name, zfile *zf)
 
     /* check for empty internal name */
     if (*iname == '\0') {
-	free(iname);
+	g_free(iname);
 	return ZE_OK;
     }
 
@@ -152,8 +152,8 @@ int newname (const char *name, zfile *zf)
 	z->mark = MARK_ZIP;
 	z->name = g_strdup(name);
 	z->dosflag = 0;
-	free(iname);
-	free(zname);
+	g_free(iname);
+	g_free(zname);
     } else {
 	/* name not found in zipfile */
 	static struct stat zipstatb;
@@ -180,8 +180,8 @@ int newname (const char *name, zfile *zf)
 		&& zipstatb.st_ctime == statb.st_ctime)) {
 	    /* the given name is in fact the target zipfile: so 
 	       bypass it! */
-	    free(zname);
-	    free(iname);
+	    g_free(zname);
+	    g_free(iname);
 	    return ZE_OK;
 	}
 
@@ -190,8 +190,8 @@ int newname (const char *name, zfile *zf)
 
 	f = flist_entry_new(name, iname, zname, zf);
 	if (f == NULL) {
-	    free(iname);
-	    free(zname);
+	    g_free(iname);
+	    g_free(zname);
 	    return ZE_MEM;
 	}
     }

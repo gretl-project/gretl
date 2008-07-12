@@ -698,7 +698,7 @@ static int session_dir_ok (void)
 
 	errno = 0;
 
-	sprintf(session.dirname, ".gretl-%d", (int) p); /* added dot! */
+	sprintf(session.dirname, ".gretl-%d", (int) p);
 	if (chdir(paths.dotdir)) {
 	    perror("moving to user directory");
 	    ret = 0;
@@ -948,8 +948,6 @@ session_name_from_session_file (char *sname, const char *fname)
 	    fname, sname);
 }
 
-#define NEWNAMES 1
-
 static int unzip_session_file (const char *fname, char **zdirname)
 {
     gchar *(*gretl_zipfile_get_topdir) (const char *);
@@ -958,7 +956,6 @@ static int unzip_session_file (const char *fname, char **zdirname)
     GError *gerr = NULL;
     int err = 0;
 
-#if NEWNAMES
     gretl_zipfile_get_topdir = gui_get_plugin_function("gretl_zipfile_get_topdir",
 						       &handle);
     if (gretl_zipfile_get_topdir == NULL) {
@@ -973,7 +970,6 @@ static int unzip_session_file (const char *fname, char **zdirname)
 	errbox("Couldn't read session directory name");
 	return 1;
     }
-#endif
     
     chdir(paths.dotdir);
 
@@ -1015,11 +1011,7 @@ static int set_session_dirname (const char *zdirname)
     FILE *fp;
     int err = 0;
 
-#if NEWNAMES
     strcpy(session.dirname, zdirname);
-#else
-    sprintf(session.dirname, ".%s", zdirname);
-#endif
     sprintf(test, "%s%csession.xml", session.dirname, SLASH);
     fp = gretl_fopen(test, "r");
 
@@ -1071,11 +1063,7 @@ void do_open_session (void)
     session_name_from_session_file(sname, sessionfile);
     strcpy(session.name, sname);
 
-#if NEWNAMES
     err = set_session_dirname(zdirname);
-#else    
-    err = set_session_dirname(sname);
-#endif
     if (err) {
 	g_free(zdirname);
 	fprintf(stderr, "Failed on set_session_dirname\n");
@@ -1089,7 +1077,7 @@ void do_open_session (void)
 
     if (err) {
 	/* FIXME more explicit error message */
-	fprintf(stderr, "Failed on read_session_xml\n");
+	fprintf(stderr, "Failed on read_session_xml: err = %d\n", err);
 	file_read_errbox("session.xml");
 	return;
     }

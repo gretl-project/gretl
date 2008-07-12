@@ -106,12 +106,12 @@ struct zlist_ {
     guint16 lflags;               /* offset of lflags must be >= LOCHEAD */
     guint32 atx;                  /* extended attributes */
     guint32 off;                  /* offset in file */
-    char *name;                   /* File name in zip file */
+    gchar *name;                  /* File name in zip file */
+    gchar *iname;                 /* Internal file name after cleanup */
+    gchar *zname;                 /* External version of internal name */
     char *extra;                  /* Extra field (set only if ext != 0) */
     char *cextra;                 /* Extra in central (set only if cext != 0) */
     char *comment;                /* Comment (set only if com != 0) */
-    char *iname;                  /* Internal file name after cleanup */
-    char *zname;                  /* External version of internal name */
     int mark;                     /* Marker for files to operate on */
     int dosflag;                  /* Set to force MSDOS file attributes */
     zlist *nxt;                   /* Pointer to next header in list */
@@ -120,9 +120,9 @@ struct zlist_ {
 typedef struct flist_ flist;
 
 struct flist_ {
-    char *name;                   /* Raw internal file name */
-    char *iname;                  /* Internal file name after cleanup */
-    char *zname;                  /* External version of internal name */
+    gchar *name;                  /* Raw internal file name */
+    gchar *iname;                 /* Internal file name after cleanup */
+    gchar *zname;                 /* External version of internal name */
     flist **lst;                  /* Pointer to link pointing here */
     flist *nxt;                   /* Link to next name */
 };

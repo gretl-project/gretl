@@ -123,13 +123,13 @@ static void free_zfiles (zfile *zf)
 	z = zfiles->nxt;
 
 	if (zfiles->zname && zfiles->zname != zfiles->name) {
-	    free(zfiles->zname);
+	    g_free(zfiles->zname);
 	}
 	if (zfiles->name) {
-	    free(zfiles->name);
+	    g_free(zfiles->name);
 	}
 	if (zfiles->iname) {
-	    free(zfiles->iname);
+	    g_free(zfiles->iname);
 	}
 	if (zfiles->cextlen && zfiles->cextra && zfiles->cextra != zfiles->extra) {
 	    free(zfiles->cextra);
@@ -307,9 +307,9 @@ static zlist *zlist_entry_new (flist *f)
 
 static void free_zlist_entry (zlist *z)
 {
-    free(z->name);
-    free(z->iname);
-    free(z->zname);
+    g_free(z->name);
+    g_free(z->iname);
+    g_free(z->zname);
     free(z);
 }
 
@@ -751,7 +751,8 @@ int zipfile_archive_files (const char *targ, const char **filenames,
     g_return_val_if_fail(filenames != NULL, 1);
 
     return real_archive_files(targ, filenames, level, opt,
-			      ZIP_DO_ZIP, gerr);
+			      ZIP_DO_NEW, gerr);
+    /* flag was ZIP_DO_ZIP */
 }
 
 static int process_zipfile (zfile *zf, const char *targ, int task)

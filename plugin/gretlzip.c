@@ -38,7 +38,7 @@ int gretl_unzip_file (const char *fname, GError **gerr)
 int gretl_make_zipfile (const char *fname, const char *path,
 			GError **gerr)
 {
-    const char *array[2] = { path, NULL};
+    const char *array[2] = { path, NULL };
 
     return zipfile_archive_files(fname, array, 9, 
 				 ZIP_RECURSE_DIRS,

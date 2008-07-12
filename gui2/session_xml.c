@@ -25,22 +25,66 @@ static int check_graph_file (const char *fname)
     return err;
 }
 
+/* Arrange things so that when a session file is opened, any graph
+   files are numbered consecutively, starting at 1.  This avoids a
+   situation where adding a graph to an existing session results in
+   over-writing an existing graph file.  (The graph files in a saved
+   session may not be numbered consecutively if some graphs were
+   initially saved, then deleted; and it's easier to fix this on
+   opening a session file than on saving one, since on opening we're
+   constructing the graph list de novo.)
+*/
+
+static void normalize_graph_filename (char *fname, int *gnum, int *pnum)
+{
+    char s[16];
+    int i;
+
+    if (sscanf(fname, "%15[^.].%d", s, &i) == 2) {
+	char oldname[MAXLEN];
+	char newname[MAXLEN];
+	gchar *tmp = NULL;
+
+	if (!strcmp(s, "plot")) {
+	    if (i > *pnum) {
+		session_file_make_path(oldname, fname);
+		tmp = g_strdup_printf("%s.%d", s, *pnum);
+		session_file_make_path(newname, tmp);
+	    }
+	    *pnum += 1;
+	} else {
+	    if (i > *gnum) {
+		session_file_make_path(oldname, fname);
+		tmp = g_strdup_printf("%s.%d", s, *gnum);
+		session_file_make_path(newname, tmp);
+	    }
+	    *gnum += 1;
+	}
+
+	if (tmp != NULL) {
+	    rename(oldname, newname);
+	    strcpy(fname, tmp);
+	    g_free(tmp);
+	}
+    }
+}
+
 static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
-    int gnum, inpage = 0;
+    int gnum = 1, pnum = 1;
+    int inpage = 0;
     int errs = 0;
 
     /* reset prior to parsing */
     session.ngraphs = 0;
 
-    gnum = 1;
     cur = node->xmlChildrenNode;
 
     while (cur != NULL) {
 	xmlChar *name = NULL;
 	xmlChar *fname = NULL;
-	int type, ID, err = 0;
+	int type, err = 0;
 
 	name = xmlGetProp(cur, (XUC) "name");
 	if (name == NULL) {
@@ -53,11 +97,13 @@ static int restore_session_graphs (xmlNodePtr node)
 		err = 1;
 	    } else {
 		err = check_graph_file((const char *) fname);
+		if (!err) {
+		    normalize_graph_filename((char *) fname, &gnum, &pnum);
+		}
 	    } 
 	}
 
-	if (!err && (!gretl_xml_get_prop_as_int(cur, "ID", &ID) ||
-	    !gretl_xml_get_prop_as_int(cur, "type", &type))) {
+	if (!err && !gretl_xml_get_prop_as_int(cur, "type", &type)) {
 	    err = 1;
 	}
 
@@ -279,10 +325,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
     xmlChar *tmp;
-    int model_errs = 0;
-    int graph_errs = 0;
-    int text_errs = 0;
-    int notes_err = 0;
+    int object_errs = 0;
     int err = 0;
 
     LIBXML_TEST_VERSION
@@ -344,7 +387,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		session.nmodels = atoi((const char *) tmp);
 		free(tmp);
 		if (session.nmodels > 0) {
-		    model_errs = restore_session_models(cur, doc);
+		    object_errs += restore_session_models(cur, doc);
 		}		
 	    }
         } else if (!xmlStrcmp(cur->name, (XUC) "graphs")) {
@@ -353,7 +396,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		session.ngraphs = atoi((const char *) tmp);
 		free(tmp);
 		if (session.ngraphs > 0) {
-		    graph_errs = restore_session_graphs(cur);
+		    object_errs += restore_session_graphs(cur);
 		}
 	    }	    
 	} else if (!xmlStrcmp(cur->name, (XUC) "texts")) {
@@ -362,14 +405,14 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		session.ntexts = atoi((const char *) tmp);
 		free(tmp);
 		if (session.ntexts > 0) {
-		    text_errs = restore_session_texts(cur, doc);
+		    object_errs += restore_session_texts(cur, doc);
 		}		
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "notes")) {
 	    session.notes = 
 		(char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (session.notes == NULL) {
-		notes_err = 1;
+		object_errs++;
 	    }
 	}
 	if (!err) {
@@ -382,16 +425,8 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 	xmlCleanupParser();
     }
 
-    if (!err) {
-	if (model_errs > 0) {
-	    errbox("%d model(s) could not be rebuilt", model_errs);
-	}
-	if (graph_errs > 0) {
-	    errbox("%d graph(s) could not be rebuilt", graph_errs);
-	}
-	if (text_errs > 0) {
-	    errbox("%d text object(s) could not be rebuilt", text_errs);
-	}    
+    if (!err && object_errs > 0) {
+	errbox("%d session object(s) could not be rebuilt", object_errs);
     }
 
     return err;

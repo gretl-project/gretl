@@ -280,7 +280,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
     char temp[MAXLEN], fline[MAXLEN];
-    char restore_line[MAXLEN] = {0};
+    char restore_line[MAXLEN];
     GptFlags flags = 0;
 
     sprintf(temp, "%sgpttmp", paths.dotdir);
@@ -294,17 +294,17 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	fclose(ftmp);
 	return 1;
     }
+    
+    *restore_line = '\0';
 
     if (action == ADD_PNG) {
 	/* see if there's already a png term setting, possibly commented
 	   out, that can be reused */
 	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (is_png_term_line(fline)) {
+	    if (is_png_term_line(fline) && *restore_line == '\0') {
 		strcat(restore_line, fline);
-		break;
 	    } else if (commented_term_line(fline) && *restore_line == '\0') {
 		strcat(restore_line, fline + 2);
-		break;
 	    } else if (strstr(fline, "letterbox")) {
 		flags = GPT_LETTERBOX;
 	    } else if (!strncmp(fline, "plot", 4)) {
@@ -334,9 +334,14 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     if (action == ADD_PNG) {
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    if (set_print_line(fline)) {
-		/* skip it (portability) */
-		;
-	    } else if (!commented_term_line(fline) && !set_output_line(fline)) {
+		; /* skip it (portability) */
+	    } else if (is_png_term_line(fline)) {
+		; /* handled above */
+	    } else if (commented_term_line(fline)) {
+		; /* handled above */
+	    } else if (set_output_line(fline)) {
+		; /* handled above */
+	    } else {
 		fputs(fline, ftmp);
 	    }
 	}

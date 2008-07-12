@@ -38,6 +38,10 @@ int gretl_normalize_path (char *path);
 
 void set_fopen_use_utf8 (void);
 
+int get_fopen_use_utf8 (void);
+
+int fname_is_utf8 (const unsigned char *s);
+
 FILE *gretl_fopen (const char *fname, const char *mode);
 
 gzFile gretl_gzopen (const char *fname, const char *mode);
