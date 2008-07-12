@@ -995,6 +995,45 @@ static int unzip_session_file (const char *fname, char **zdirname)
     return err;
 }
 
+/* remedial action in case of mis-coded filename */
+
+static int get_session_dataname (char *fname, struct sample_info *sinfo)
+{
+    struct dirent *dirent;
+    DIR *dir;
+    FILE *fp;
+    gchar *tmp;
+    int n, err = E_FOPEN;
+
+    tmp = g_strdup(session.dirname);
+    n = strlen(tmp);
+
+    if (tmp[n-1] == '/' || tmp[n-1] == '\\') {
+	tmp[n-1] = '\0';
+    }
+
+    dir = opendir(tmp);
+
+    if (dir != NULL) {
+	while ((dirent = readdir(dir)) != NULL) {
+	    if (has_suffix(dirent->d_name, ".gdt")) {
+		session_file_make_path(fname, dirent->d_name);
+		fp = gretl_fopen(fname, "r");
+		if (fp != NULL) {
+		    fclose(fp);
+		    err = 0;
+		} 
+		break;
+	    }
+	}	
+	closedir(dir);
+    }
+
+    g_free(tmp);
+
+    return err;
+}
+
 static void sinfo_init (struct sample_info *sinfo)
 {
     strcpy(sinfo->datafile, "data.gdt");
@@ -1030,6 +1069,7 @@ void do_open_session (void)
     char sname[MAXLEN];
     char fname[MAXLEN];
     gchar *zdirname = NULL;
+    gchar *datafile = NULL;
     FILE *fp;
     int err = 0;
 
@@ -1083,14 +1123,36 @@ void do_open_session (void)
     }
 
     session_file_make_path(paths.datfile, sinfo.datafile);
-    err = gretl_read_gdt(paths.datfile, &paths, &Z, datainfo, 
-			 OPT_P, NULL);
+    fp = gretl_fopen(paths.datfile, "r");
+    if (fp != NULL) {
+	/* OK */
+	strcpy(fname, paths.datfile);
+	fclose(fp);
+    } else {
+	/* try remedial action */
+	fprintf(stderr, "'%s' : not found, trying to fix\n", paths.datfile);
+	err = get_session_dataname(fname, &sinfo);
+	if (!err) {
+	    datafile = g_strdup(paths.datfile);
+	}
+    }
+
+    if (!err) {
+	err = gretl_read_gdt(fname, &paths, &Z, datainfo, OPT_P, NULL);
+    }
+
+    if (datafile != NULL) {
+	/* re-write properly encoded filename */
+	strcpy(paths.datfile, datafile);
+	g_free(datafile);
+    }
+
     if (err) {
 	/* FIXME more explicit error message */
 	file_read_errbox(sinfo.datafile);
 	return;
     } else {
-	fprintf(stderr, "Opened session datafile '%s'\n", paths.datfile);
+	fprintf(stderr, "Opened session datafile '%s'\n", fname);
     }
 
     session_file_make_path(fname, "matrices.xml");
