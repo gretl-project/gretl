@@ -1267,9 +1267,9 @@ GtkActionEntry main_entries[] = {
     { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script) },
     { "DisplayScripts", GTK_STOCK_OPEN, N_("_Practice file..."), "", NULL, G_CALLBACK(show_files) },
     { "NewScript", GTK_STOCK_NEW, N_("_New script"), "", NULL, NULL },
-    { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(do_new_script) },
-    { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(do_new_script) },
-    { "RScript", NULL, N_("R script"), NULL, NULL, G_CALLBACK(do_new_script) },
+    { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },
+    { "RScript", NULL, N_("R script"), NULL, NULL, G_CALLBACK(new_script_callback) },
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
     { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_script) },
