@@ -39,10 +39,12 @@ int gretl_make_zipfile (const char *fname, const char *path,
 			GError **gerr)
 {
     const char *array[2] = { path, NULL };
+    int err;
 
-    return zipfile_archive_files(fname, array, 9, 
-				 ZIP_RECURSE_DIRS,
-				 gerr);
+    err = zipfile_archive_files(fname, array, 9, 
+			  ZIP_RECURSE_DIRS,
+			  gerr);
+    return err;
 }
 
 int gretl_is_zipfile (const char *fname)

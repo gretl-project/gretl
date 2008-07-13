@@ -752,7 +752,6 @@ int zipfile_archive_files (const char *targ, const char **filenames,
 
     return real_archive_files(targ, filenames, level, opt,
 			      ZIP_DO_NEW, gerr);
-    /* flag was ZIP_DO_ZIP */
 }
 
 static int process_zipfile (zfile *zf, const char *targ, int task)

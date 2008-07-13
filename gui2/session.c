@@ -1069,7 +1069,6 @@ void do_open_session (void)
     char sname[MAXLEN];
     char fname[MAXLEN];
     gchar *zdirname = NULL;
-    gchar *datafile = NULL;
     FILE *fp;
     int err = 0;
 
@@ -1124,6 +1123,7 @@ void do_open_session (void)
 
     session_file_make_path(paths.datfile, sinfo.datafile);
     fp = gretl_fopen(paths.datfile, "r");
+
     if (fp != NULL) {
 	/* OK */
 	strcpy(fname, paths.datfile);
@@ -1132,19 +1132,10 @@ void do_open_session (void)
 	/* try remedial action */
 	fprintf(stderr, "'%s' : not found, trying to fix\n", paths.datfile);
 	err = get_session_dataname(fname, &sinfo);
-	if (!err) {
-	    datafile = g_strdup(paths.datfile);
-	}
     }
 
     if (!err) {
-	err = gretl_read_gdt(fname, &paths, &Z, datainfo, OPT_P, NULL);
-    }
-
-    if (datafile != NULL) {
-	/* re-write properly encoded filename */
-	strcpy(paths.datfile, datafile);
-	g_free(datafile);
+	err = gretl_read_gdt(fname, NULL, &Z, datainfo, OPT_P, NULL);
     }
 
     if (err) {
@@ -1601,7 +1592,10 @@ int save_session (char *fname)
 	close_plugin(handle);
     }
 
-    if (!err) {
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    } else {
 	mkfilelist(FILE_LIST_SESSION, fname);
 	mark_session_saved();
     }

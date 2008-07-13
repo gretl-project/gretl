@@ -269,7 +269,7 @@ int fcopy (FILE *f, FILE *g, guint32 n);
 
 /* system.c */
 char *internal_to_external (const char *iname);
-char *external_to_internal (const char *xname, zfile *zf);
+char *external_to_internal (const char *xname, zfile *zf, GError **gerr);
 int add_filenames (const char *fname, zfile *zf);
 void time_stamp_file (const char *fname, guint32 dost);
 guint32 file_mod_time (const char *fname, guint32 *attr, long *fsize, iztimes *t,

@@ -120,14 +120,20 @@ flist *flist_entry_new (const char *name, char *iname, char *zname,
 
 int newname (const char *name, zfile *zf)
 {
+    GError *gerr = NULL;
     gchar *iname = NULL;   /* internal version of filename */
     gchar *zname = NULL;   /* external version of filename */
     flist *f = NULL;       /* where in found, or new found entry */
     zlist *z = NULL;       /* where in zlist (if found) */
 
     /* convert from given filename to internal zip filename */
-    iname = external_to_internal(name, zf);
-    if (iname == NULL) {
+    iname = external_to_internal(name, zf, &gerr);
+    if (gerr != NULL) {
+	/* This will be an encoding error, which we can probably ignore */
+	fprintf(stderr, "GError: %s\n", gerr->message);
+	g_error_free(gerr);
+	return ZE_OK;
+    } else if (iname == NULL) {
 	return ZE_MEM;
     }
 

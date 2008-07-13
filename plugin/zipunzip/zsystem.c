@@ -167,9 +167,8 @@ static char *reslash (const char *fname)
 
 #endif
 
-static gchar *gretl_filename_to_utf8 (const char *fname)
+static gchar *gretl_filename_to_utf8 (const char *fname, GError **gerr)
 {
-    GError *err = NULL;
     gsize bytes;
     gchar *ret = NULL;
 
@@ -182,16 +181,11 @@ static gchar *gretl_filename_to_utf8 (const char *fname)
 	   locale charset 
 	*/
 #ifdef WIN32
-	ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
+	ret = g_locale_to_utf8(fname, -1, NULL, &bytes, gerr);
 #else
-	ret = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
+	ret = g_filename_to_utf8(fname, -1, NULL, &bytes, gerr);
 #endif
     }
-
-    if (err) {
-	gretl_errmsg_set(err->message);
-	g_error_free(err);
-    } 
 
     return ret;
 }
@@ -199,7 +193,7 @@ static gchar *gretl_filename_to_utf8 (const char *fname)
 /* Convert the external file name to an internal zipfile name,
    returning the allocated string */
 
-char *external_to_internal (const char *name, zfile *zf)
+char *external_to_internal (const char *name, zfile *zf, GError **gerr)
 {
     const char *xname = name;
     char *iname = NULL; 
@@ -245,7 +239,7 @@ char *external_to_internal (const char *name, zfile *zf)
     }
 
     /* ensure UTF-8 for internal name */
-    iname = gretl_filename_to_utf8(t);
+    iname = gretl_filename_to_utf8(t, gerr);
 
 #if FNAME_DEBUG
     fprintf(stderr, "external_to_internal\n '%s' -> '%s'\n",
