@@ -663,6 +663,7 @@ void gretl_callback (GtkAction *action, gpointer data)
     case SYSTEM:
 	title = N_("gretl: simultaneous equations system");
 	query = N_("Specify simultaneous equations:");
+	data = NULL;
 	okfunc = do_eqn_system;
 	varclick = VARCLICK_INSERT_TEXT;
 	break;

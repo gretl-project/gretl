@@ -4562,7 +4562,7 @@ void add_system_resid (GtkAction *action, gpointer p)
     int eqnum, ci = vwin->role;
     int err, v;
 
-    eqnum = atoi(gtk_action_get_name(action));
+    sscanf(gtk_action_get_name(action), "resid %d", &eqnum);
 
     if (ci == VAR || ci == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
