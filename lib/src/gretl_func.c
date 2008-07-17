@@ -3730,6 +3730,11 @@ static int check_function_args (ufunc *u, fnargs *args,
 		   arg->type == GRETL_TYPE_MATRIX &&
 		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK */
+	} else if ((fp->type == GRETL_TYPE_SCALAR_REF ||
+		    fp->type == GRETL_TYPE_SERIES_REF ||
+		    fp->type == GRETL_TYPE_MATRIX_REF) &&
+		   (arg->type == GRETL_TYPE_NONE)) {
+	    ; /* OK */
 	} else if (fp->type != arg->type) {
 	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 
 		    i, arg_type_string(arg->type), arg_type_string(fp->type));
