@@ -94,7 +94,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 
 static void gen_write_warning (const parser *p, PRN *prn)
 {
-    if (prn != NULL && !repeating_function_exec()) {
+    if (prn != NULL) {
 	if (*p->warning != '\0') {
 	    pprintf(prn, "%s: %s\n", 
 		    p->warning, _("missing values were generated"));

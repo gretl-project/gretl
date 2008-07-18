@@ -79,17 +79,19 @@ static void free_saved_list (saved_list *sl)
 
 static saved_list *get_saved_list_by_name (const char *name)
 {
+    saved_list *sl = NULL;
     int fsd = gretl_function_depth();
     int i;
 
     for (i=0; i<n_lists; i++) {
 	if (!strcmp(name, list_stack[i]->name) && 
 	    fsd == list_stack[i]->level) {
-	    return list_stack[i];
+	    sl = list_stack[i];
+	    break;
 	}
     }
 
-    return NULL;
+    return sl;
 }
 
 /**

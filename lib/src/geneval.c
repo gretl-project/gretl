@@ -491,11 +491,6 @@ static NODE *aux_mspec_node (parser *p)
     return get_aux_node(p, MSPEC, 0, 0);
 }
 
-static NODE *aux_list_node (parser *p)
-{
-    return get_aux_node(p, LIST, 0, 0);
-}
-
 static NODE *aux_string_node (parser *p)
 {
     return get_aux_node(p, STR, 0, 0);
@@ -4004,6 +3999,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	double *Xret = NULL;
 	gretl_matrix *mret = NULL;
 	char *sret = NULL;
+	int *iret = NULL;
 	void *retp = NULL;
 
 	if (rtype == GRETL_TYPE_DOUBLE) {
@@ -4013,7 +4009,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    retp = &mret;
 	} else if (rtype == GRETL_TYPE_LIST) {
-	    retp = &sret;
+	    retp = &iret;
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    retp = &sret;
 	}
@@ -4050,12 +4046,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    ret->v.m = mret;
 		}
 	    } else if (rtype == GRETL_TYPE_LIST) {
-		ret = aux_list_node(p);
+		ret = aux_lvec_node(p);
 		if (ret != NULL) {
 		    if (is_tmp_node(ret)) {
-			free(ret->v.str);
+			free(ret->v.ivec);
 		    }
-		    ret->v.str = sret;
+		    ret->v.ivec = iret;
 		}
 	    } else if (rtype == GRETL_TYPE_STRING) {
 		ret = aux_string_node(p);

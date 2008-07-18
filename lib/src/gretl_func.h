@@ -76,8 +76,6 @@ int gretl_compiling_function (void);
 
 int gretl_function_depth (void);
 
-int repeating_function_exec (void);
-
 int gretl_start_compiling_function (const char *line, PRN *prn);
 
 int gretl_function_append_line (const char *line);
@@ -90,8 +88,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 PRN *prn);
 
 char *gretl_func_get_arg_name (const char *argvar, int *err);
-
-void set_drop_function_vars (int s);
 
 const char *get_funcerr_message (void);
 

@@ -104,8 +104,6 @@ static ufunc *current_ufun;
 static int n_pkgs;
 static fnpkg **pkgs;
 
-static int drop_function_vars = 1;
-
 static void real_user_function_help (ufunc *fun, int ci, PRN *prn);
 static void delete_ufunc_from_list (ufunc *fun);
 static fnpkg *function_package_new (const char *fname);
@@ -242,23 +240,6 @@ int push_fn_arg (fnargs *args, int type, void *p)
     }
 
     return err;
-}
-
-/* Switch to delete, or not, all the "private" variables internal to a
-   function when execution terminates.  This is used in nls.c: if a
-   user function will be called repeatedly in the context of
-   NLS/MLE/GMM we turn off deletion temporarily, which saves repeated
-   allocation/deallocation of storage for the variables.
-*/
-
-void set_drop_function_vars (int s)
-{
-    drop_function_vars = (s != 0)? 1 : 0;
-}
-
-int repeating_function_exec (void)
-{
-    return !drop_function_vars;
 }
 
 static void set_executing_on (ufunc *fun)
@@ -3416,27 +3397,6 @@ get_string_return (const char *sname, double **Z, DATAINFO *pdinfo,
     return ret;
 }
 
-static char *
-get_list_return (const char *lname, double **Z, DATAINFO *pdinfo, 
-		 int *err)
-{
-    char *ret = gretl_strdup(lname);
-
-    if (ret == NULL) {
-	*err = E_ALLOC;
-    } else {
-#if UDEBUG
-	fprintf(stderr, "get_list_return: calling unlocalize_list\n");
-#endif
-	*err = unlocalize_list(lname, Z, pdinfo);
-	if (!*err) {
-	    *err = named_list_lower_level(lname);
-	}
-    }
-
-    return ret;
-}
-
 static void 
 maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo, 
 			      char **descrip)
@@ -3474,7 +3434,11 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    *(gretl_matrix **) ret = get_matrix_return(u->retname, GET_COPY, &err);
 	} else if (rtype == GRETL_TYPE_LIST) {
-	    *(char **) ret = get_list_return(u->retname, Z, pdinfo, &err);
+	    /* note: in this case the job is finished in
+	       stop_fncall(); here we just adjust the info on the
+	       listed variables so they don't get deleted
+	    */
+	    err = unlocalize_list(u->retname, Z, pdinfo);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    *(char **) ret = get_string_return(u->retname, Z, pdinfo, &err);
 	}
@@ -3527,11 +3491,12 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
     return err;
 }
 
-static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
+static int stop_fncall (ufunc *u, int rtype, void *ret,
+			double ***pZ, DATAINFO *pdinfo,
 			int orig_v)
 {
-    int d = gretl_function_depth();
-    int anyerr = 0;
+    int i, d = gretl_function_depth();
+    int delv, anyerr = 0;
     int err = 0;
 
 #if FN_DEBUG
@@ -3540,14 +3505,6 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     u->args = NULL;
-
-    anyerr = destroy_saved_lists_at_level(d);
-    if (anyerr && !err) {
-	err = anyerr;
-#if FN_DEBUG
-	fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", d, err);
-#endif
-    }
 
     anyerr = destroy_user_matrices_at_level(d);
     if (anyerr && !err) {
@@ -3565,54 +3522,55 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 #endif
     }  
 
-    /* below: delete some or all local variables, taking care not to
+    /* below: delete variables local to the function, taking care not to
        delete any 'local' vars that have been "promoted" to caller
        level via their inclusion in a returned list
     */
 
-    if (drop_function_vars) {
-	/* delete all local variables */
-	int i, delv = 0;
-
-	for (i=orig_v; i<pdinfo->v; i++) {
-	    if (STACK_LEVEL(pdinfo, i) == d) {
-		delv++;
-	    }
+    for (i=orig_v, delv=0; i<pdinfo->v; i++) {
+	if (STACK_LEVEL(pdinfo, i) == d) {
+	    delv++;
 	}
+    }
 
-	if (delv == pdinfo->v - orig_v) {
-	    anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
-	    if (anyerr && !err) {
-		err = anyerr;
-	    }
-	} else {
-	    for (i=pdinfo->v-1; i>=orig_v; i--) {
-		if (STACK_LEVEL(pdinfo, i) == d) {
-		    anyerr = dataset_drop_variable(i, pZ, pdinfo);
-		    if (anyerr && !err) {
-			err = anyerr;
-		    }
-		} 
-	    }	    
+    if (delv == pdinfo->v - orig_v) {
+	anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
+	if (anyerr && !err) {
+	    err = anyerr;
 	}
     } else {
-	/* delete only variables copied from arguments */
-	fn_param *fp;
-	int i, v;
-
-	for (i=0; i<u->n_params && !err; i++) {
-	    fp = &u->params[i];
-	    if (gretl_scalar_type(fp->type) || fp->type == GRETL_TYPE_SERIES) {
-		v = varindex(pdinfo, fp->name);
-		if (STACK_LEVEL(pdinfo, v) == d) {
-		    anyerr = dataset_drop_variable(v, pZ, pdinfo);
-		    if (anyerr && !err) {
-			err = anyerr;
-		    }
+	for (i=pdinfo->v-1; i>=orig_v; i--) {
+	    if (STACK_LEVEL(pdinfo, i) == d) {
+		anyerr = dataset_drop_variable(i, pZ, pdinfo);
+		if (anyerr && !err) {
+		    err = anyerr;
 		}
 	    } 
-	}		
+	}	    
     }
+
+    /* direct list return: write the possibly revised list to the
+       return pointer.  Note that we can't do this earlier, because
+       the ID numbers of the variables in the return list may be
+       changed due to the deletion of function-local variables.
+    */
+    if (!err && rtype == GRETL_TYPE_LIST) {
+	int *lret = gretl_list_copy(get_list_by_name(u->retname));
+
+	if (lret != NULL) {
+	    *(int **) ret = lret;
+	} else {
+	    err = E_ALLOC;
+	}
+    }    
+
+    anyerr = destroy_saved_lists_at_level(d);
+    if (anyerr && !err) {
+	err = anyerr;
+#if FN_DEBUG
+	fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", d, err);
+#endif
+    }    
 
     pop_program_state();
     set_executing_off(u);
@@ -3925,7 +3883,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     gretl_exec_state_clear(&state);
 
     if (started) {
-	int stoperr = stop_fncall(u, pZ, pdinfo, orig_v);
+	int stoperr = stop_fncall(u, rtype, ret, pZ, pdinfo, orig_v);
 
 	if (stoperr && !err) {
 	    err = stoperr;

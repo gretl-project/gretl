@@ -146,12 +146,6 @@ static int nls_genr_setup (nlspec *s)
 	genrs[i] = NULL;
     }
 
-#if 0 
-    /* namespace problems when two or more non-nested functions
-       are called in an NLS/MLE/GMM block! */
-    set_drop_function_vars(0);
-#endif
-
     j = 0;
 
     for (i=0; i<ngen && !err; i++) {
@@ -244,10 +238,6 @@ static int nls_genr_setup (nlspec *s)
     } else {
 	s->ngenrs = ngen;
 	s->genrs = genrs;
-    }
-
-    if (err) {
-	set_drop_function_vars(1);
     }
 
     return err;
@@ -2831,8 +2821,6 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     if (nlsmod.errcode == 0 && !(opt & OPT_A)) {
 	set_model_id(&nlsmod);
     }
-
-    set_drop_function_vars(1);
 
     return nlsmod;
 }
