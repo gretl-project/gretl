@@ -2492,7 +2492,17 @@ int multi_scatters (const int *list, const double **Z,
 
     if (obs != NULL) {
 	double startdate = obs[pdinfo->t1];
-	int jump = (pdinfo->t2 - pdinfo->t1 + 1) / (2 * pdinfo->pd);
+	double enddate = obs[pdinfo->t2];
+
+	fprintf(fp, "set xrange [%g:%g]\n", 
+		floor(startdate), ceil(enddate));
+
+	int jump;
+	if (pdinfo->pd == 1) {
+	    jump = (pdinfo->t2 - pdinfo->t1 + 1) / 6;
+	} else {
+	    jump = (pdinfo->t2 - pdinfo->t1 + 1) / (4 * pdinfo->pd);
+	}
 
 	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
     } else {
