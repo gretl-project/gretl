@@ -242,8 +242,7 @@ char *external_to_internal (const char *name, zfile *zf, GError **gerr)
     iname = gretl_filename_to_utf8(t, gerr);
 
 #if FNAME_DEBUG
-    fprintf(stderr, "external_to_internal\n '%s' -> '%s'\n",
-	    xname, iname);
+    fprintf(stderr, "external_to_internal\n '%s' -> '%s'\n", xname, iname);
 #endif
 
 #ifdef WIN32
@@ -261,7 +260,7 @@ char *external_to_internal (const char *name, zfile *zf, GError **gerr)
 
 char *internal_to_external (const char *iname)
 {
-    char *xname;
+    char *xname = NULL;
 
     if (!get_fopen_use_utf8() && fname_is_utf8((unsigned char *) iname)) {
 	gsize b;
@@ -283,8 +282,7 @@ char *internal_to_external (const char *iname)
 #endif
 
 #if FNAME_DEBUG
-    fprintf(stderr, "internal_to_external\n '%s' -> '%s'\n",
-	    iname, xname);
+    fprintf(stderr, "internal_to_external\n '%s' -> '%s'\n", iname, xname);
 #endif
 
     return xname;

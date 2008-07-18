@@ -992,6 +992,8 @@ static int unzip_session_file (const char *fname, char **zdirname)
 
     close_plugin(handle);
 
+    fprintf(stderr, "unzip_session_file: returning %d\n", err);
+
     return err;
 }
 

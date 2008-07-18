@@ -86,7 +86,7 @@ static int rqcmp (const void *a, const void *b)
 		    (*(zlist **) a)->iname);
 }
 
-#if 0 /* unused */
+#if 0 /* unused at present */
 
 static guint16 makeword (const unsigned char *b)
 {

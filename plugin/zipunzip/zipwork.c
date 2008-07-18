@@ -544,6 +544,10 @@ static int make_dirs_in_path (const char *fname)
 
     errno = 0;
 
+    if (fname == NULL) {
+	err = ZE_READ;
+    }
+
     trace(2, "doing make_dirs_in_path for '%s'\n", fname);
 
     while (strchr(p, G_DIR_SEPARATOR) && !err) {
@@ -715,7 +719,7 @@ int decompress_to_file (zfile *zf, zlist *z, long offset)
     if (z->flags & 1) {
 	/* encrypted: not handled */
 	return ziperr(ZE_CRYPT, NULL);
-    }
+    } 
 
     err = make_dirs_in_path(z->zname);
     if (err) {

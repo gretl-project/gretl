@@ -3438,6 +3438,7 @@ int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo,
 static void printf15 (double zz, PRN *prn)
 {
     if (na(zz)) {
+	pputc(prn, ' ');
 	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 15), 
 		_("NA"));
     } else {
