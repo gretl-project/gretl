@@ -2650,7 +2650,7 @@ int var_get_linewidth (const DATAINFO *pdinfo, int i)
 
 int var_is_listarg (const DATAINFO *pdinfo, int i) 
 {
-    if (i > 0 && i < pdinfo->v) {
+    if (i >= 0 && i < pdinfo->v) {
 	return pdinfo->varinfo[i]->listarg != 0;
     } else {
 	return 0;
@@ -2669,7 +2669,7 @@ int var_is_listarg (const DATAINFO *pdinfo, int i)
 
 void var_set_listarg (const DATAINFO *pdinfo, int i) 
 {
-    if (i > 0 && i < pdinfo->v) {
+    if (i >= 0 && i < pdinfo->v) {
 	pdinfo->varinfo[i]->listarg += 1;
     } 
 }

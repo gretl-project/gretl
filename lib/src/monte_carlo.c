@@ -884,12 +884,12 @@ static int allocate_each_strings (LOOPSET *loop, int n)
 static int list_vars_to_strings (LOOPSET *loop, const int *list,
 				 const DATAINFO *pdinfo)
 {
-    int i, vi, n = list[0];
+    int i, vi;
     int err;
 
-    err = allocate_each_strings(loop, n);
+    err = allocate_each_strings(loop, list[0]);
 
-    for (i=0; i<n && !err; i++) {
+    for (i=0; i<list[0] && !err; i++) {
 	vi = list[i+1];
 	if (vi < 0 || vi >= pdinfo->v) {
 	    err = E_DATA;

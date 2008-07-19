@@ -2493,11 +2493,10 @@ int multi_scatters (const int *list, const double **Z,
     if (obs != NULL) {
 	double startdate = obs[pdinfo->t1];
 	double enddate = obs[pdinfo->t2];
-
-	fprintf(fp, "set xrange [%g:%g]\n", 
-		floor(startdate), ceil(enddate));
-
 	int jump;
+
+	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
+
 	if (pdinfo->pd == 1) {
 	    jump = (pdinfo->t2 - pdinfo->t1 + 1) / 6;
 	} else {

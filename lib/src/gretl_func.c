@@ -3032,7 +3032,7 @@ static int localize_list (const char *oldname, fn_param *fp,
 {
     const int *list;
     int level = fn_executing + 1;
-    int i, v, err;
+    int i, vi, err;
 
     list = get_list_by_name(oldname);
 
@@ -3049,15 +3049,15 @@ static int localize_list (const char *oldname, fn_param *fp,
 
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
-	    v = list[i];
-	    if (v != 0) {
-		STACK_LEVEL(pdinfo, v) = level;
-		if (fp->flags & ARG_CONST) {
-		    set_var_const(pdinfo, v);
-		}
+	    vi = list[i];
 #if PROTECT_LISTS
-		var_set_listarg(pdinfo, v);
+	    var_set_listarg(pdinfo, vi);
 #endif
+	    if (vi > 0) {
+		STACK_LEVEL(pdinfo, vi) = level;
+		if (fp->flags & ARG_CONST) {
+		    set_var_const(pdinfo, vi);
+		}
 	    }
 	}
     }
@@ -3689,8 +3689,8 @@ static int check_function_args (ufunc *u, fnargs *args,
 		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK */
 	} else if (fp->type != arg->type) {
-	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 
-		    i, arg_type_string(arg->type), arg_type_string(fp->type));
+	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
+		    u->name, i + 1, arg_type_string(arg->type), arg_type_string(fp->type));
 	    err = E_TYPES;
 	}
 
@@ -3698,7 +3698,8 @@ static int check_function_args (ufunc *u, fnargs *args,
 	    x = arg_get_double_val(arg, Z);
 	    if ((!na(fp->min) && x < fp->min) ||
 		(!na(fp->max) && x > fp->max)) {
-		pprintf(prn, "argv[%d]: scalar value %g out of bounds\n", i, x);
+		pprintf(prn, _("%s, argument %d: value %g is out of bounds\n"), 
+			u->name, i + 1, x);
 		err = E_INVARG;
 	    }
 	}
@@ -3708,7 +3709,7 @@ static int check_function_args (ufunc *u, fnargs *args,
 	/* do we have defaults for any empty args? */
 	fp = &u->params[i];
 	if (!(fp->flags & ARG_OPTIONAL) && na(fp->deflt)) {
-	    pprintf(prn, "%s: not enough arguments\n", u->name);
+	    pprintf(prn, _("%s: not enough arguments\n"), u->name);
 	    err = E_ARGS;
 	}
     }
