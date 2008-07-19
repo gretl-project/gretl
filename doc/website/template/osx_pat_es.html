@@ -62,9 +62,6 @@ Fink le informará de ello).  Después de cada paquete, indico la instrucción (a e
   <tr>
     <td>gnuplot</td><td><kbd>fink install gnuplot</kbd></td>
     </tr>
-  <tr>
-    <td>recode</td><td><kbd>fink install recode</kbd></td>
-    </tr>
 </table>
 
 <p>En particular, Vd. debería asegurarse de que gnuplot está actualizado (el 
@@ -123,7 +120,7 @@ output regression results in LaTeX format.
 <<
 License: GPL
 Depends: gtk+2-shlibs, libxml2-shlibs, gmp-shlibs, dlcompat-shlibs, readline-shlibs, gnuplot (>= 3.8i.0-2)
-BuildDepends: gtk+2-dev, libxml2, gmp, dlcompat-dev, readline, recode (>=3.6)
+BuildDepends: gtk+2-dev, libxml2, gmp, dlcompat-dev, readline
 Source: http://ricardo.ecn.wfu.edu/pub/gretl/%n-%v.tar.bz2
 setCFLAGS: -Wno-long-double -g -O2
 DocFiles: README COPYING NEWS INSTALL

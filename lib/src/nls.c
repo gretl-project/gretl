@@ -3183,7 +3183,7 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
  bailout:
 
     if (*err == E_NAN) {
-	fprintf(stderr, "Got E_NAN in numerical_hessian()\n");
+	gretl_errmsg_set(_("Failed to compute numerical Hessian"));
     }
 
     free(c);
