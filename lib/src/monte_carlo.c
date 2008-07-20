@@ -894,7 +894,7 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 	if (vi < 0 || vi >= pdinfo->v) {
 	    err = E_DATA;
 	} else {
-	    if (var_is_listarg(pdinfo, vi)) {
+	    if (0 && var_is_listarg(pdinfo, vi)) {
 		char numstr[16];
 
 		sprintf(numstr, "%d", vi);

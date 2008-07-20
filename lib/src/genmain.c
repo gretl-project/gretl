@@ -308,6 +308,29 @@ int gretl_reserved_word (const char *str)
     return ret;
 }
 
+static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
+{
+    char vname[VNAMELEN];
+    char lname[32];
+
+    if (sscanf(s, "%31[^.].%15s", lname, vname) == 2) {
+	int *list = get_list_by_name(lname);
+
+	if (list != NULL) {
+	    int i, vi;
+
+	    for (i=1; i<=list[0]; i++) {
+		vi = list[i];
+		if (!strcmp(vname, pdinfo->varname[vi])) {
+		    return vi;
+		}
+	    }
+	}
+    }
+
+    return pdinfo->v;
+}
+
 #define GEN_LEVEL_DEBUG 0
 
 /**
@@ -336,6 +359,10 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 
     if (!strcmp(s, "const")) {
 	return 0;
+    }
+
+    if (strchr(s, '.')) {
+	return try_for_listvar(pdinfo, s);
     }
 
     fsd = gretl_function_depth();

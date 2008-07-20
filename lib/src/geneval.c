@@ -3007,21 +3007,6 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     return ret;
 }
 
-static double global_varindex (const DATAINFO *pdinfo, const char *s)
-{
-    if (s != NULL && *s != 0) {
-	int i;
-
-	for (i=0; i<pdinfo->v; i++) { 
-	    if (!strcmp(pdinfo->varname[i], s)) { 
-		return i;
-	    }
-	}
-    }
-
-    return NADBL;
-}
-
 static NODE *copy_series_by_number (NODE *n, parser *p)
 {
     NODE *ret = aux_series_node(p, 0);
@@ -3042,15 +3027,36 @@ static NODE *copy_series_by_number (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *string_to_int_func (NODE *n, int f, parser *p)
+#if 0
+
+static double global_varindex (const DATAINFO *pdinfo, const char *s)
+{
+    if (s != NULL && *s != 0) {
+	int i;
+
+	for (i=0; i<pdinfo->v; i++) { 
+	    if (!strcmp(pdinfo->varname[i], s)) { 
+		return i;
+	    }
+	}
+    }
+
+    return NADBL;
+}
+
+#endif
+
+static NODE *varnum_node (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	const char *s = n->v.str;
-
-	if (f == F_VARNUM) {
-	    ret->v.xval = global_varindex(p->dinfo, s);
+	if (n->t == STR) {
+#if 1
+	    ret->v.xval = varindex(p->dinfo, n->v.str);
+#else
+	    ret->v.xval = global_varindex(p->dinfo, n->v.str);
+#endif
 	} else {
 	    p->err = E_DATA;
 	}
@@ -5789,7 +5795,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_VARNUM:
 	if (l->t == STR) {
-	    ret = string_to_int_func(l, t->t, p);
+	    ret = varnum_node(l, t->t, p);
 	} else {
 	    node_type_error(t->t, STR, l, p);
 	}
