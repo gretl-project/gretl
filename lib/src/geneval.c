@@ -6015,6 +6015,8 @@ static void printnode (const NODE *t, const parser *p)
 	pputc(p->prn, '(');
 	printnode(t->v.b2.r, p);
 	pputc(p->prn, ')');
+    } else if (t->t == LISTVAR) {
+	pprintf(p->prn, "%s.%s", t->v.b2.l->v.str, t->v.b2.r->v.str);
     } else if (t->t == LIST) {
 	pputs(p->prn, "LIST");
     } else if (t->t == LVEC) {

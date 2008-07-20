@@ -395,6 +395,65 @@ static NODE *base (parser *p, NODE *up)
     return t;
 }
 
+/* construct a node that contains a reference to a data series, based
+   on the name of a list (already captured in p->idstr) and the name
+   of a variable that is supposed to be in the list, which is separated
+   from the listname by '.'.
+*/
+
+static NODE *listvar_node (parser *p)
+{
+    int *list = get_list_by_name(p->idstr);
+    NODE *ret = NULL;
+    char vname[32] = {0};
+    int i, n, v, ok = 0;
+
+    if (list == NULL) {
+	p->err = E_UNKVAR;
+	return NULL;
+    }
+
+    n = gretl_varchar_spn(p->point);
+    if (n > VNAMELEN - 1) {
+	/* too long -- can't be a valid varname */
+	p->err = E_UNKVAR;
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	parser_getc(p);
+	vname[i] = p->ch;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (!strcmp(vname, p->dinfo->varname[v])) {
+	    /* found the variable */
+	    free(p->idstr);
+	    p->idstr = NULL;
+	    p->idnum = v;
+	    ret = newref(p, USERIES);
+	    if (ret == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		ok = 1;
+	    }
+	    break;
+	}
+    }
+
+    if (!ok && !p->err) {
+	p->err = E_UNKVAR;
+    }
+
+    if (!p->err) {
+	parser_getc(p);
+	lex(p);
+    }
+
+    return ret;    
+}
+
 /* Grab a string argument.  Note: we have a mechanism in genlex.c for
    retrieving arguments that take the form of quoted string literals
    or names of string variables.  The special use of this function is
@@ -827,6 +886,8 @@ static NODE *powterm (parser *p)
 	    t->v.b2.l = newstr(p, STR);
 	    get_ovar_ref(t, p);
 	}
+    } else if (p->sym == LISTVAR) {
+	t = listvar_node(p);
     } else if (p->sym == G_LPR) {
 	/* dummy root for parenthesized expressions, to facilitate
 	   taking the transpose of matrix stuff, e.g. (A*B)' */

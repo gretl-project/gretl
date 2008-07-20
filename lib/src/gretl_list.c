@@ -150,8 +150,8 @@ const char *get_list_name_by_index (int idx)
  * get_list_by_name:
  * @name: the name of the list to be found.
  *
- * Looks up @name in the stack of saved lists (if any) and
- * retrieves the associated list.
+ * Looks up @name in the stack of saved lists, at the current level
+ * of function execution, and retrieves the associated list.
  *
  * Returns: the list, or %NULL if the lookup fails. 
  */

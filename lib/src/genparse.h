@@ -99,6 +99,7 @@ enum {
 	      OVAR,	  /* object variable: variable "under" an object */
   /* 70 */    LOOPIDX,	  /* loop index variable */
 	      LIST,	  /* reference to named list */
+	      LISTVAR,    /* variable in list */
 	      STR,	  /* string */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,      /* "null" */
@@ -106,8 +107,8 @@ enum {
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
-	      VSTR,       /* string variable */
-  /* 80 */    INC,   
+  /* 80 */    VSTR,       /* string variable */
+	      INC,   
 	      DEC,
 	      QUERY,
 	      EOT,	  /* end of transmission */
@@ -330,7 +331,7 @@ enum {
                    !func2_symb(s) && s != EROOT)
 
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \
-                  s == OVAR || s == UFUN)
+                  s == OVAR || s == UFUN || s == LISTVAR)
 
 #define b3sym(s) (s == QUERY)
 

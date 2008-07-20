@@ -844,6 +844,12 @@ static void word_check_next_char (const char *s, parser *p)
 	} else {
 	    p->err = 1;
 	}	    
+    } else if (p->ch == '.' && isalpha(*p->point)) {
+	if (p->sym == LIST) {
+	    p->sym = LISTVAR;
+	} else {
+	    p->err = 1;
+	}
     }
 
     if (p->err) {
@@ -1312,6 +1318,8 @@ const char *getsymb (int t, const parser *p)
 	return "VSTR";
     } else if (t == EMPTY) {
 	return "EMPTY";
+    } else if (t == LISTVAR) {
+	return "LISTVAR";
     }
 
     if (p != NULL) {
