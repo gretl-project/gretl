@@ -2159,7 +2159,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     }
 
     /* 3-D fitted versus actual plot? */
-    if (pmod->ifc && pmod->ncoeff == 3) {
+    if (pmod->ifc && pmod->ncoeff == 3 && 
+	gretl_list_separator_position(pmod->list) > 4) {
 	char tmp2[VNAMELEN2];
 
 	vwin_menu_add_separator(vwin, mpath[1]);
