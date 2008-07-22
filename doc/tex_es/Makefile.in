@@ -28,7 +28,7 @@ WEBDIR = /home/cottrell/stats/esl/website
 
 all: $(GUIDE) $(REF)
 
-$(GUIDE): gretl-guide-es.tex links textables
+$(GUIDE): gretl-guide-es.tex links textables date.tex
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<

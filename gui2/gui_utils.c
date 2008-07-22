@@ -2091,7 +2091,6 @@ static void add_missing_tex_items (windata_t *vwin)
 
 static void add_vars_to_plot_menu (windata_t *vwin)
 {
-    int i, j, varstart;
     GtkActionEntry entry;
     const gchar *mpath[] = {
 	"/MenuBar/Graphs/ResidPlot", 
@@ -2102,6 +2101,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     gchar *alabel;
     int *xlist;
     int v1, v2;
+    int i, j;
 
     action_entry_init(&entry);
 
