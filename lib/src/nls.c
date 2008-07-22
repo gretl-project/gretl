@@ -538,14 +538,11 @@ get_params_from_nlfunc (nlspec *s, const double **Z,
 	p = f;
 	if (isalpha(*f) && *(f + 1)) { 
 	    /* find a variable name */
-	    n = gretl_varchar_spn(f);
-	    p += n;
-	    if (n > VNAMELEN - 1) {
-		/* variable name is too long */
-		return 1;
+	    err = extract_varname(name, f, &n);
+	    if (err) {
+		return err;
 	    }
-	    *name = 0;
-	    strncat(name, f, n);
+	    p += n;
 	    if (np > 0) {
 		/* right-hand side term */
 		err = maybe_add_param_to_spec(s, name, Z, pdinfo);
@@ -2353,7 +2350,7 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
 
 static void get_aux_command_word (char *word, const char *line)
 {
-    int n = gretl_varchar_spn(line);
+    int n = gretl_namechar_spn(line);
 
     *word = '\0';
 

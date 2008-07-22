@@ -1923,14 +1923,8 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 	p += strspn(p, " ");
 	if (i == 0) {
 	    /* left-hand side variable */
-	    len = gretl_varchar_spn(p);
-	    if (len == 0) {
-		*err = E_PARSE;
-	    } else if (len >= VNAMELEN) {
-		*err = E_UNKVAR;
-	    } else {
-		*vname = '\0';
-		strncat(vname, p, len);
+	    *err = extract_varname(vname, p, &len);
+	    if (!*err) {
 		v = varindex(pdinfo, vname);
 		if (v == pdinfo->v) {
 		    *err = E_UNKVAR;
@@ -1954,15 +1948,12 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 	    *err = E_PARSE;
 	} else {
 	    /* right-hand size variable (may be lag) */
-	    len = gretl_varchar_spn(p);
-	    if (len >= VNAMELEN) {
-		*err = E_UNKVAR;
-	    } else if (gotop && len == 0) {
+	    *err = extract_varname(vname, p, &len);
+	    if (!*err && gotop && len == 0) {
 		/* dangling operator */
 		*err = E_PARSE;
-	    } else {
-		*vname = '\0';
-		strncat(vname, p, len);
+	    }
+	    if (!*err) {
 		v = varindex(pdinfo, vname);
 		if (v == pdinfo->v) {
 		    *err = E_UNKVAR;
@@ -2021,8 +2012,7 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
     while (*p) {
 	p += strspn(p, " ");
 	if (i == 0) {
-	    *vname = '\0';
-	    strncat(vname, p, gretl_varchar_spn(p));
+	    extract_varname(vname, p, &len);
 	    ident->depvar = varindex(pdinfo, vname);
 	    p = strchr(p, '=') + 1;
 	    i++;
@@ -2030,9 +2020,7 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 	    ident->atoms[i-1].op = (*p == '+')? OP_PLUS : OP_MINUS;
 	    p++;
 	} else {
-	    len = gretl_varchar_spn(p);
-	    *vname = '\0';
-	    strncat(vname, p, len);
+	    extract_varname(vname, p, &len);
 	    v = varindex(pdinfo, vname);
 	    p += len;
 	    if (*p == '(') {

@@ -3007,26 +3007,6 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *copy_series_by_number (NODE *n, parser *p)
-{
-    NODE *ret = aux_series_node(p, 0);
-
-    if (ret != NULL && starting(p)) {
-	int v = n->v.xval;
-
-	if (v >= 0 && v < p->dinfo->v && var_is_series(p->dinfo, v)) {
-	    ret->v.xvec = copyvec((*p->Z)[v], p->dinfo->n);
-	    if (ret->v.xvec == NULL) {
-		p->err = E_ALLOC;
-	    }
-	} else {
-	    p->err = E_DATA;
-	}
-    }
-
-    return ret;
-}
-
 #if 0
 
 static double global_varindex (const DATAINFO *pdinfo, const char *s)
@@ -5798,13 +5778,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = varnum_node(l, t->t, p);
 	} else {
 	    node_type_error(t->t, STR, l, p);
-	}
-	break;
-    case F_VARCOPY:
-	if (l->t == NUM) {
-	    ret = copy_series_by_number(l, p);
-	} else {
-	    node_type_error(t->t, NUM, l, p);
 	}
 	break;
     case F_STRSTR:

@@ -413,7 +413,7 @@ static NODE *listvar_node (parser *p)
 	return NULL;
     }
 
-    n = gretl_varchar_spn(p->point);
+    n = gretl_namechar_spn(p->point);
     if (n > VNAMELEN - 1) {
 	/* too long -- can't be a valid varname */
 	p->err = E_UNKVAR;
@@ -888,6 +888,16 @@ static NODE *powterm (parser *p)
 	}
     } else if (p->sym == LISTVAR) {
 	t = listvar_node(p);
+	if (t != NULL && (p->sym == G_LPR || p->sym == G_LBR)) {
+	    /* list.series node may be "inflected" as lag or obs */
+	    p->sym = (p->sym == G_LPR)? LAG : OBS;
+	    t = newb2(p->sym, t, NULL);
+	    if (t != NULL) {
+		parser_ungetc(p);
+		lex(p);
+		t->v.b2.r = base(p, t);
+	    }
+	}
     } else if (p->sym == G_LPR) {
 	/* dummy root for parenthesized expressions, to facilitate
 	   taking the transpose of matrix stuff, e.g. (A*B)' */

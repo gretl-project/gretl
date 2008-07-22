@@ -422,7 +422,7 @@ static int split_printf_line (const char *s, char *targ, int *sp,
 			      char **format, char **args)
 {
     const char *p;
-    int n;
+    int n, err = 0;
 
     *sp = 0;
 
@@ -436,14 +436,14 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     if (*sp) {
 	/* need a target name */
 	s += strspn(s, " ");
-	n = gretl_varchar_spn(s);
-	if (n == 0 || n >= VNAMELEN) {
-	    return E_PARSE;
-	} else {
-	    *targ = '\0';
-	    strncat(targ, s, n);
-	    s += n;
+	err = extract_varname(targ, s, &n);
+	if (!err && n == 0) {
+	    err = E_PARSE;
 	}
+	if (err) {
+	    return err;
+	}
+	s += n;
 	/* allow comma after target */
 	s += strspn(s, " ");
 	if (*s == ',') {
@@ -1012,7 +1012,7 @@ split_scanf_line (const char *s, char **src, char **format,
 	n = get_literal_length(s);
     } else {
 	if (*s == '@') s++;
-	n = gretl_varchar_spn(s);
+	n = gretl_namechar_spn(s);
     } 
 
     if (n == 0) {

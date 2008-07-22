@@ -1895,15 +1895,14 @@ static char *odbc_get_query (char *s, int *err)
 
 static int odbc_get_varname (char *s, char *vname)
 {
-    int n = gretl_varchar_spn(s);
-    int err = 0;
+    int n, err;
 
-    if (n == 0 || n > VNAMELEN - 1) {
+    err = extract_varname(vname, s, &n);
+
+    if (err || n == 0) {
 	gretl_errmsg_set(_("Expected a valid variable name"));
 	err = E_PARSE;
     } else {
-	*vname = '\0';
-	strncat(vname, s, n);
 	err = check_varname(vname);
     }
 

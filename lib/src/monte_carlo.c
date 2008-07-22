@@ -664,7 +664,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    /* found a variable by the name of s */
 	    clr->vnum = v;
 	    clr->val = (int) Z[v][0];
-	} else if (loop->parent != NULL && strlen(s) == gretl_varchar_spn(s)) {
+	} else if (loop->parent != NULL && strlen(s) == gretl_namechar_spn(s)) {
 	    /* potentially valid varname, but unknown at present */
 	    clr->vnum = LOOP_VAL_UNDEF;
 	    *clr->vname = '\0';
@@ -820,9 +820,8 @@ test_forloop_element (char *s, LOOPSET *loop,
 	x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
     } else {
 	/* treat as regular "genr" expression */
-	len = gretl_varchar_spn(s);
-	if (len < VNAMELEN) {
-	    strncat(vname, s, len);
+	err = extract_varname(vname, s, &len);
+	if (!err) {
 	    if (i == 2) {
 		/* "increment" expression: we'll have to undo whatever
 		   the test evaluation does */
@@ -843,9 +842,7 @@ test_forloop_element (char *s, LOOPSET *loop,
 	    } else {
 		x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
 	    }	
-	} else {
-	    err = E_UNKVAR;
-	}
+	} 
     }
 
 #if LOOP_DEBUG
@@ -894,14 +891,7 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 	if (vi < 0 || vi >= pdinfo->v) {
 	    err = E_DATA;
 	} else {
-	    if (0 && var_is_listarg(pdinfo, vi)) {
-		char numstr[16];
-
-		sprintf(numstr, "%d", vi);
-		loop->eachstrs[i] = gretl_strdup(numstr);
-	    } else {
-		loop->eachstrs[i] = gretl_strdup(pdinfo->varname[vi]);
-	    }
+	    loop->eachstrs[i] = gretl_strdup(pdinfo->varname[vi]);
 	    if (loop->eachstrs[i] == NULL) {
 		err = E_ALLOC;
 	    }

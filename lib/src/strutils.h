@@ -61,7 +61,7 @@ int lastchar (char c, const char *s);
 
 int ends_with_backslash (const char *s);
 
-int gretl_varchar_spn (const char *s);
+int gretl_namechar_spn (const char *s);
 
 char *gretl_trunc (char *str, size_t n);
 

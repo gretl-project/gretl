@@ -927,7 +927,7 @@ int substitute_named_strings (char *line, int *subst)
 	    }
 	}
 	if (*s == '@' && !var_context(s, i)) {
-	    n = gretl_varchar_spn(s + 1);
+	    n = gretl_namechar_spn(s + 1);
 	    if (n > 0) {
 		if (n >= VNAMELEN) {
 		    n = VNAMELEN - 1;

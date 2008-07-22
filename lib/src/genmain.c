@@ -308,6 +308,35 @@ int gretl_reserved_word (const char *str)
     return ret;
 }
 
+/**
+ * extract_varname:
+ * @targ: target string into which to write name.
+ * @src: source string.
+ * @len: location to receive the length of the extracted portion.
+ * 
+ * Writes up to #VNAMELEN - 1 characters from @s into @vname.
+ * 
+ * Returns: 0 on success, non-zero if the number of valid varname
+ * characters in @s is greater than #VNAMELEN - 1.
+ */
+
+int extract_varname (char *targ, const char *src, int *len)
+{
+    int err = 0;
+
+    *targ = '\0';
+    *len = gretl_namechar_spn(src);
+
+    if (*len >= VNAMELEN) {
+	/* too long to be a valid variable name */
+	err = E_UNKVAR;
+    } else {
+	strncat(targ, src, *len);
+    }
+
+    return err;
+}
+
 static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 {
     char vname[VNAMELEN];

@@ -287,7 +287,6 @@ struct str_table funcs[] = {
     { F_STRLEN,   "strlen" },
     { F_VARNAME,  "varname" },
     { F_VARNUM,   "varnum" },
-    { F_VARCOPY,  "varcopy" },
     { F_COLNAMES, "colnames" },
     { F_LJUNGBOX, "ljungbox" },
     { F_MSORTBY,  "msortby" },
@@ -1419,8 +1418,9 @@ const char *getsymb (int t, const parser *p)
     case B_HCAT: 
 	return "~";
     case B_VCAT: 
-    case B_LCAT:
 	return "|";
+    case B_LCAT:
+	return " ";
     case P_COM: 
 	return ",";
     case P_DOT: 

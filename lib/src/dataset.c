@@ -2499,7 +2499,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 
 static int found_log_parent (const char *s, char *targ)
 {
-    int len = gretl_varchar_spn(s);
+    int len = gretl_namechar_spn(s);
 
     if (len < VNAMELEN && s[len] == ')') {
 	sscanf(s, "%15[^)]", targ);

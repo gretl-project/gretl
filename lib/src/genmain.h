@@ -115,6 +115,8 @@ gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);
 
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
+int extract_varname (char *targ, const char *src, int *len);
+
 int genr_fit_resid (const MODEL *pmod, 
 		    double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo);

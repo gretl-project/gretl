@@ -960,7 +960,7 @@ static int get_contiguous_lags (LAGVAR *lv,
 static int parse_lagvar (const char *s, LAGVAR *lv, 
 			 const double **Z, const DATAINFO *pdinfo)
 {
-    char l1str[16], l2str[16];
+    char l1str[16], l2str[16]; /* VNAMELEN */
     int i, err = 1;
 
     lv->v = 0;
@@ -2139,7 +2139,7 @@ static int end_foreign (const char *s)
 
 static int get_command_word (const char *line, CMD *cmd)
 {
-    int n = gretl_varchar_spn(line);
+    int n = gretl_namechar_spn(line);
     int ret = 0;
 
     if (cmd->context == RESTRICT && n == 0) {
@@ -4793,7 +4793,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
 static int could_be_varname (const char *s)
 {
-    int n = gretl_varchar_spn(s);
+    int n = gretl_namechar_spn(s);
     char word[VNAMELEN];
 
     if (n > 0 && n < VNAMELEN) {

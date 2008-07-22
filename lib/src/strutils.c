@@ -776,7 +776,7 @@ char *gretl_trunc (char *str, size_t n)
 }
 
 /**
- * gretl_varchar_spn:
+ * gretl_namechar_spn:
  * @s: the string to examine.
  *
  * Returns: the length of the intial segment of @s which
@@ -785,15 +785,15 @@ char *gretl_trunc (char *str, size_t n)
  * starting with a letter.
  */
 
-int gretl_varchar_spn (const char *s)
+int gretl_namechar_spn (const char *s)
 {
-    const char *varchars = "abcdefghijklmnopqrstuvwxyz"
+    const char *ok = "abcdefghijklmnopqrstuvwxyz"
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"0123456789_";
     int ret = 0;
 
     if (isalpha(*s)) {
-	ret = strspn(s, varchars);
+	ret = strspn(s, ok);
     }
 
     return ret;

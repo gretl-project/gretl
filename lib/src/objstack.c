@@ -1100,15 +1100,15 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
     return M;
 }
 
-static int varchar_spn_with_space (const char *s)
+static int namechar_spn_with_space (const char *s)
 {
-    const char *varchars = "abcdefghijklmnopqrstuvwxyz"
+    const char *ok = "abcdefghijklmnopqrstuvwxyz"
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"0123456789_ ";
     int ret = 0;
 
     if (isalpha(*s)) {
-	ret = strspn(s, varchars);
+	ret = strspn(s, ok);
     }
 
     return ret;
@@ -1140,9 +1140,9 @@ int parse_object_command (const char *s, char *name, char **cmd)
     }
 
     if (quoted) {
-	len = varchar_spn_with_space(s);
+	len = namechar_spn_with_space(s);
     } else {
-	len = gretl_varchar_spn(s);
+	len = gretl_namechar_spn(s);
     }
 
     if (len == 0) {
