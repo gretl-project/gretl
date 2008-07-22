@@ -1726,8 +1726,7 @@
       <description>
 	<para>
 	  Returns 1 if <argname>s</argname> is the identifier for a
-	  currently defined list. Mainly used for checking arguments
-	  passed to functions.  
+	  currently defined list, otherwise 0.
 	  <seelist>
 	    <fncref targ="isnull"/>
 	    <fncref targ="isseries"/>
@@ -1745,7 +1744,7 @@
 	<para>
 	  Returns 0 if <argname>s</argname> is the identifier for a
 	  currently defined object, be it a scalar, a series, a matrix or
-	  a list. Mainly used for checking arguments passed to functions.
+	  a list; otherwise returns 1.
 	  <seelist>
 	    <fncref targ="islist"/>
 	    <fncref targ="isseries"/>
@@ -1762,8 +1761,7 @@
       <description>
 	<para>
 	  Returns 1 if <argname>s</argname> is the identifier for a
-	  currently defined series. Mainly used for checking arguments
-	  passed to functions.  
+	  currently defined series, otherwise 0.
 	  <seelist> 
 	    <fncref targ="islist"/>
 	    <fncref targ="isnull"/>
@@ -1780,8 +1778,7 @@
       <description>
 	<para>
 	  Returns 1 if <math>s</math> is the identifier for a currently
-	  defined series. Mainly used for checking arguments passed to
-	  functions.  
+	  defined string, otherwise 0.
 	  <seelist> 
 	    <fncref targ="islist"/>
 	    <fncref targ="isnull"/>
