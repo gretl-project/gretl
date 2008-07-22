@@ -803,42 +803,42 @@ static void dwline (const MODEL *pmod, PRN *prn)
 
 static void dhline (const MODEL *pmod, PRN *prn)
 {
-    double sderr, h = 0.0;
-    int ldepvar = gretl_model_get_int(pmod, "ldepvar");
+    int ldv = gretl_model_get_int(pmod, "ldepvar");
+    double h, se = pmod->sderr[ldv - 2];
     int T = pmod->nobs - 1;
 
-    sderr = pmod->sderr[ldepvar - 2];
+    if (pmod->ess <= 0.0 || na(se) || (T * se * se) >= 1.0 ||
+	na(pmod->rho)) {
+	return;
+    }
 
-    if (pmod->ess <= 0.0 || (T * sderr * sderr) >= 1.0) return;
+    h = pmod->rho * sqrt(T/(1 - T * se * se));
 
-    h = pmod->rho * sqrt(T/(1 - T * sderr * sderr));
+    if (xna(h)) {
+	return;
+    }
 
     if (plain_format(prn)) {
-        char tmp[128];
-
-        sprintf(tmp, _("Durbin's h stat. %g"), h);
-        pprintf(prn, "  %s\n", tmp);
-
-        sprintf(tmp, _("(Using variable %d for h stat, with T' = %d)"), 
-                pmod->list[ldepvar], T);
-        pprintf(prn, "  %s\n", tmp);
-    } else if (rtf_format(prn)) {
-        char tmp[128];
-
-        sprintf(tmp, I_("Durbin's h stat. %g"), h);
-        pprintf(prn, RTFTAB "%s\n", tmp);
-
-        sprintf(tmp, I_("(Using variable %d for h stat, with T' = %d)"), 
-                pmod->list[ldepvar], T);
-        pprintf(prn, RTFTAB "%s\n", tmp);
+	pprintf(prn, "  %s = %.*g\n", _("Durbin's h"), 
+		XDIGITS(pmod), h);
+	pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
+		XDIGITS(pmod), pmod->rho);
     } else if (tex_format(prn)) {
-	char x1str[32];
+	char xstr[32];
 
-	tex_dcolumn_double(h, x1str);
+	tex_dcolumn_double(h, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Durbin's $h$"), xstr); 
+	tex_dcolumn_double(pmod->rho, xstr);
 	pprintf(prn, "%s & %s \\\\\n",
-		I_("Durbin's $h$ statistic"), x1str);
+		I_("First-order autocorrelation coeff."), xstr);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin's h"), h);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("First-order autocorrelation coeff."), 
+		pmod->rho);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin's h"), prn_delim(prn), h);
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("First-order autocorrelation coeff."), 
+		prn_delim(prn), pmod->rho);
     }
 }
 

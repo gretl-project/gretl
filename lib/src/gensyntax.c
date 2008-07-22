@@ -414,7 +414,7 @@ static NODE *listvar_node (parser *p)
     }
 
     n = gretl_namechar_spn(p->point);
-    if (n > VNAMELEN - 1) {
+    if (n >= VNAMELEN) {
 	/* too long -- can't be a valid varname */
 	p->err = E_UNKVAR;
 	return NULL;

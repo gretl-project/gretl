@@ -2087,6 +2087,14 @@ static void add_missing_tex_items (windata_t *vwin)
     flip(vwin->ui, "/MenuBar/LaTeX", FALSE);
 }
 
+static int can_do_3d_plot (const MODEL *pmod)
+{
+    return pmod->ifc && pmod->ncoeff == 3 &&
+	pmod->list != NULL && pmod->list[0] == 4 &&
+	pmod->list[3] != LISTSEP &&
+	pmod->list[4] != LISTSEP;
+}
+
 #define VNAMELEN2 32
 
 static void add_vars_to_plot_menu (windata_t *vwin)
@@ -2159,8 +2167,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     }
 
     /* 3-D fitted versus actual plot? */
-    if (pmod->ifc && pmod->ncoeff == 3 && 
-	gretl_list_separator_position(pmod->list) > 4) {
+    if (can_do_3d_plot(pmod)) {
 	char tmp2[VNAMELEN2];
 
 	vwin_menu_add_separator(vwin, mpath[1]);
