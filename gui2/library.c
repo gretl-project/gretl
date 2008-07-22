@@ -4882,6 +4882,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     double ***gZ;
     DATAINFO *ginfo;
+    int *xlist = NULL;
     int list[4];
     int err;
 
@@ -4892,14 +4893,25 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     } else {
 	gZ = &Z;
 	ginfo = datainfo;
-    }    
+    } 
 
-    /* Y, X, Z */
+    xlist = gretl_model_get_x_list(pmod);
+    if (xlist == NULL) {
+	return;
+    }
 
     list[0] = 3;
-    list[1] = pmod->list[4];
-    list[2] = pmod->list[3];
-    list[3] = pmod->list[1];
+    list[3] = gretl_model_get_depvar(pmod);
+
+    if (pmod->ifc) {
+	list[1] = xlist[3];
+	list[2] = xlist[2];
+    } else {
+	list[1] = xlist[2];
+	list[2] = xlist[1];
+    }	
+
+    free(xlist);
 
     err = gnuplot_3d(list, NULL, gZ, ginfo, GPT_GUI | GPT_FA);
 

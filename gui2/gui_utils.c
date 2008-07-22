@@ -2087,14 +2087,6 @@ static void add_missing_tex_items (windata_t *vwin)
     flip(vwin->ui, "/MenuBar/LaTeX", FALSE);
 }
 
-static int can_do_3d_plot (const MODEL *pmod)
-{
-    return pmod->ifc && pmod->ncoeff == 3 &&
-	pmod->list != NULL && pmod->list[0] == 4 &&
-	pmod->list[3] != LISTSEP &&
-	pmod->list[4] != LISTSEP;
-}
-
 #define VNAMELEN2 32
 
 static void add_vars_to_plot_menu (windata_t *vwin)
@@ -2108,9 +2100,12 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     MODEL *pmod = vwin->data;
     char tmp[VNAMELEN2], aname[16];
     gchar *alabel;
+    int *xlist;
     int v1, v2;
 
     action_entry_init(&entry);
+
+    xlist = gretl_model_get_x_list(pmod);
     
     for (i=0; i<2; i++) {
 	/* plot against time/obs number */
@@ -2124,20 +2119,36 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    G_CALLBACK(fit_actual_plot);
 	vwin_menu_add_item(vwin, mpath[i], &entry);
 
-	if (pmod->ci == ARMA || pmod->ci == NLS || 
-	    pmod->ci == MLE || pmod->ci == GMM ||
-	    pmod->ci == GARCH || pmod->ci == PANEL || 
-	    pmod->ci == ARBOND) { 
+	if (pmod->ci == NLS || 
+	    pmod->ci == MLE || 
+	    pmod->ci == GMM ||
+	    pmod->ci == PANEL) {
 	    continue;
 	}
 
-	varstart = (i == 0)? 1 : 2;
+	/* if doing resid plot, put dependent var in menu */
+	if (i == 0) {
+	    v1 = gretl_model_get_depvar(pmod);
+	    if (v1 > 0) {
+		sprintf(aname, "r:xvar %d", v1); /* FIXME */
+		double_underscores(tmp, datainfo->varname[v1]);
+		alabel = g_strdup_printf(_("_Against %s"), tmp);
+		entry.name = aname;
+		entry.label = alabel;
+		entry.callback = G_CALLBACK(resid_plot);
+		vwin_menu_add_item(vwin, mpath[0], &entry);
+		g_free(alabel);
+	    }
+	}
 
-	/* put the indep vars on the menu list */
-	for (j=varstart; j<=pmod->list[0]; j++) {
-	    v1 = pmod->list[j];
+	if (xlist == NULL) {
+	    continue;
+	}
+
+	/* put the independent  vars on the menu list */
+	for (j=1; j<=xlist[0]; j++) {
+	    v1 = xlist[j];
 	    if (v1 == 0) continue;
-	    if (v1 == LISTSEP) break;
 	    if (!strcmp(datainfo->varname[v1], "time")) {
 		continue;
 	    }
@@ -2167,21 +2178,31 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     }
 
     /* 3-D fitted versus actual plot? */
-    if (can_do_3d_plot(pmod)) {
-	char tmp2[VNAMELEN2];
+    if (xlist != NULL) {
+	v1 = v2 = 0;
+	if (pmod->ifc && xlist[0] == 3) {
+	    v1 = xlist[2];
+	    v2 = xlist[3];
+	} else if (!pmod->ifc && xlist[0] == 2) {
+	    v1 = xlist[1];
+	    v2 = xlist[2];
+	}
+	if (v1 > 0 && v2 > 0) {
+	    char tmp2[VNAMELEN2];
 
-	vwin_menu_add_separator(vwin, mpath[1]);
-	v1 = pmod->list[3];
-	v2 = pmod->list[4];
-	double_underscores(tmp, datainfo->varname[v1]);
-	double_underscores(tmp2, datainfo->varname[v2]);
-	alabel = g_strdup_printf(_("_Against %s and %s"), tmp, tmp2);	
-	entry.name = "splot";
-	entry.label = alabel;
-	entry.callback = G_CALLBACK(fit_actual_splot);
-	vwin_menu_add_item(vwin, mpath[1], &entry);
-	g_free(alabel);
-    }    
+	    vwin_menu_add_separator(vwin, mpath[1]);
+	    double_underscores(tmp, datainfo->varname[v1]);
+	    double_underscores(tmp2, datainfo->varname[v2]);
+	    alabel = g_strdup_printf(_("_Against %s and %s"), tmp, tmp2);	
+	    entry.name = "splot";
+	    entry.label = alabel;
+	    entry.callback = G_CALLBACK(fit_actual_splot);
+	    vwin_menu_add_item(vwin, mpath[1], &entry);
+	    g_free(alabel);
+	}
+    }
+
+    free(xlist);
 }
 
 static void plot_dummy_call (GtkRadioAction *action, 
