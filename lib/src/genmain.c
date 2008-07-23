@@ -340,9 +340,9 @@ int extract_varname (char *targ, const char *src, int *len)
 static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 {
     char vname[VNAMELEN];
-    char lname[32];
+    char lname[VNAMELEN];
 
-    if (sscanf(s, "%31[^.].%15s", lname, vname) == 2) {
+    if (sscanf(s, "%15[^.].%15s", lname, vname) == 2) {
 	int *list = get_list_by_name(lname);
 
 	if (list != NULL) {

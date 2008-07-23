@@ -405,7 +405,7 @@ static NODE *listvar_node (parser *p)
 {
     int *list = get_list_by_name(p->idstr);
     NODE *ret = NULL;
-    char vname[32] = {0};
+    char vname[VNAMELEN] = {0};
     int i, n, v, ok = 0;
 
     if (list == NULL) {
