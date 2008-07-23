@@ -38,7 +38,8 @@ typedef enum {
     VAR_SCALAR     = 1 << 1,
     VAR_HIDDEN     = 1 << 2,
     VAR_GENERATED  = 1 << 3,
-    VAR_SETCONST   = 1 << 4
+    VAR_SETCONST   = 1 << 4,
+    VAR_LISTARG    = 1 << 5
 } VarinfoFlags;
 
 typedef enum {
@@ -274,6 +275,34 @@ typedef enum {
  */
 #define unset_var_const(p, i) ((p)->varinfo[i]->flags &= ~VAR_SETCONST)
 
+/**
+ * var_is_listarg:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Determine whether or not a variable has been marked as
+ * belonging to a list argument to a function.
+ */
+#define var_is_listarg(p, i) ((p)->varinfo[i]->flags & VAR_LISTARG)
+
+/**
+ * set_var_listarg:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Set the "listarg" flag on the given variable.
+ */
+#define set_var_listarg(p, i) ((p)->varinfo[i]->flags |= VAR_LISTARG)
+
+/**
+ * unset_var_listarg:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Remove the "listarg" flag from the given variable.
+ */
+#define unset_var_listarg(p, i) ((p)->varinfo[i]->flags &= ~VAR_LISTARG)
+
 void free_Z (double **Z, DATAINFO *pdinfo);
 
 DATAINFO *datainfo_new (void);
@@ -378,12 +407,6 @@ void set_var_hidden (DATAINFO *pdinfo, int i);
 void var_set_linewidth (DATAINFO *pdinfo, int i, int w);
 
 int var_get_linewidth (const DATAINFO *pdinfo, int i);
-
-int var_is_listarg (const DATAINFO *pdinfo, int i);
-
-void var_set_listarg (const DATAINFO *pdinfo, int i);
-
-void var_unset_listarg (const DATAINFO *pdinfo, int i);
 
 int var_set_display_name (DATAINFO *pdinfo, int i,
 			  const char *s); 

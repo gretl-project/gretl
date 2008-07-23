@@ -30,7 +30,7 @@
 #define FN_DEBUG 0
 #define PKG_DEBUG 0
 #define EXEC_DEBUG 0
-#define UDEBUG 0
+#define UDEBUG 1
 
 typedef struct fn_param_ fn_param;
 
@@ -57,7 +57,20 @@ struct ufunc_ {
     char *retname;
     int *in_use;
     fnargs *args;
+    int *ptrvars;
+    int *listvars;
 };
+
+/* Note: the "in_use" list for a function (a temporary state variable)
+   tells us at which depth(s) of function execution a given function is
+   currently in use.  The first element gives the number of following
+   elements; the second and higher elements give the depths.  There
+   may be more than one depth since we can have a situation where
+   function foo calls function baz which in turn calls foo.
+
+   We can determine which function (if any) is currently "active" by
+   looking for the greatest entry among the "in_use" lists.
+*/
 
 struct fnpkg_ {
     int ID;
@@ -100,6 +113,7 @@ enum {
 static int n_ufuns;
 static ufunc **ufuns;
 static ufunc *current_ufun;
+static ufunc *execing_ufun;
 
 static int n_pkgs;
 static fnpkg **pkgs;
@@ -246,6 +260,7 @@ static void set_executing_on (ufunc *fun)
 {
     fn_executing++;
     gretl_list_append_term(&fun->in_use, fn_executing);
+    execing_ufun = fun;
 #if EXEC_DEBUG
     fprintf(stderr, "set_executing_on: fun = %s, fn_executing=%d\n", 
 	    fun->name, fn_executing);
@@ -280,10 +295,48 @@ static int use_list_delete_last (ufunc *fun)
     return 0;
 }
 
-static void set_executing_off (ufunc *fun)
+static void set_listargs_from_ufunc (ufunc *fun, DATAINFO *pdinfo)
+{
+    int i, v;
+
+    for (i=1; i<pdinfo->v; i++) {
+	unset_var_listarg(pdinfo, i);
+    }
+
+    if (fun != NULL && fun->listvars != NULL) {
+	for (i=1; i<=fun->listvars[0]; i++) {
+	    v = fun->listvars[i];
+#if UDEBUG
+	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
+		    v, pdinfo->varname[v]);
+#endif
+	    set_var_listarg(pdinfo, v);
+	}
+    }
+}
+
+#define ufun_maxdepth(f) ((f->in_use == NULL)? 0 : f->in_use[f->in_use[0]])
+
+static void set_executing_off (ufunc *fun, DATAINFO *pdinfo)
 {
     use_list_delete_last(fun);
     fn_executing--;
+    execing_ufun = NULL;
+
+    if (fn_executing > 0) {
+	int i, d, md = 0;
+
+	for (i=0; i<n_ufuns; i++) {
+	    d = ufun_maxdepth(ufuns[i]);
+	    if (d > md) {
+		execing_ufun = ufuns[i];
+		md = d;
+	    }
+	}
+    }
+
+    set_listargs_from_ufunc(execing_ufun, pdinfo);
+
 #if EXEC_DEBUG
     fprintf(stderr, "set_executing_off: fun=%s, fn_executing=%d\n",
 	    fun->name, fn_executing);
@@ -557,6 +610,8 @@ static ufunc *ufunc_new (void)
 
     fun->in_use = NULL;
     fun->args = NULL;
+    fun->ptrvars = NULL;
+    fun->listvars = NULL;
 
     return fun;
 }
@@ -593,6 +648,8 @@ static void clear_ufunc_data (ufunc *fun)
     
     fun->in_use = NULL;
     fun->args = NULL;
+    fun->ptrvars = NULL;
+    fun->listvars = NULL;
 }
 
 static void free_ufunc (ufunc *fun)
@@ -3018,8 +3075,6 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
-#define PROTECT_LISTS 0
-
 /* Given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
    and make the variables referenced in that list accessible to the
@@ -3027,8 +3082,8 @@ int update_function_from_script (const char *fname, int idx)
    variables in question as const.
 */
 
-static int localize_list (const char *oldname, fn_param *fp,
-			  DATAINFO *pdinfo)
+static int localize_list (ufunc *fun, const char *oldname, 
+			  fn_param *fp, DATAINFO *pdinfo)
 {
     const int *list;
     int level = fn_executing + 1;
@@ -3050,10 +3105,10 @@ static int localize_list (const char *oldname, fn_param *fp,
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-#if PROTECT_LISTS
-	    var_set_listarg(pdinfo, vi);
-#endif
 	    if (vi > 0) {
+		if (!in_gretl_list(fun->listvars, vi)) {
+		    gretl_list_append_term(&fun->listvars, vi);
+		}
 		STACK_LEVEL(pdinfo, vi) = level;
 		if (fp->flags & ARG_CONST) {
 		    set_var_const(pdinfo, vi);
@@ -3090,8 +3145,8 @@ static int localize_matrix_ref (struct fnarg *arg, const char *name)
     return 0;
 }
 
-static int localize_variable_ref (struct fnarg *arg, DATAINFO *pdinfo,
-				  const char *name)
+static int localize_variable_ref (ufunc *fun, struct fnarg *arg, 
+				  DATAINFO *pdinfo, const char *name)
 {
     int v = arg->val.idnum;
 
@@ -3102,6 +3157,12 @@ static int localize_variable_ref (struct fnarg *arg, DATAINFO *pdinfo,
 
     STACK_LEVEL(pdinfo, v) += 1;
     strcpy(pdinfo->varname[v], name);
+
+    if (var_is_series(pdinfo, v)) {
+	if (!in_gretl_list(fun->ptrvars, v)) {
+	    gretl_list_append_term(&fun->ptrvars, v);
+	}
+    }
 
     return 0;
 }
@@ -3173,14 +3234,14 @@ static int allocate_function_args (ufunc *fun,
 	    if (arg->type == GRETL_TYPE_NONE) {
 		err = create_named_null_list(fp->name);
 	    } else {
-		err = localize_list(arg->val.str, fp, pdinfo);
+		err = localize_list(fun, arg->val.str, fp, pdinfo);
 	    }
 	} else if (fp->type == GRETL_TYPE_STRING) {
 	    err = add_string_as(arg->val.str, fp->name);
 	} else if (fp->type == GRETL_TYPE_SCALAR_REF ||
 		   fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_variable_ref(arg, pdinfo, fp->name);
+		err = localize_variable_ref(fun, arg, pdinfo, fp->name);
 	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -3203,6 +3264,34 @@ static int allocate_function_args (ufunc *fun,
 	    err = create_named_null_list(fp->name);
 	}
     }
+
+    /* finalize "listvars" record */
+    if (fun->listvars != NULL) {
+	if (err) {
+	    free(fun->listvars);
+	    fun->listvars = NULL;
+	} else {
+	    int v;
+
+	    for (i=fun->listvars[0]; i>0; i--) {
+		v = fun->listvars[i];
+		if (in_gretl_list(fun->ptrvars, v)) {
+		    gretl_list_delete_at_pos(fun->listvars, i);
+		}
+	    }
+	    if (fun->listvars[0] == 0) {
+		free(fun->listvars);
+		fun->listvars = NULL;
+	    }
+	}
+    }
+
+    if (!err) {
+	set_listargs_from_ufunc(fun, pdinfo);
+    }
+
+    free(fun->ptrvars);
+    fun->ptrvars = NULL;
     
     return err;
 }
@@ -3349,9 +3438,7 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 	int overwrite = 0;
 
 	vi = list[i];
-#if PROTECT_LISTS
-	var_unset_listarg(pdinfo, vi);
-#endif
+	unset_var_listarg(pdinfo, vi);
 	vname = pdinfo->varname[vi];
 	if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
 	    for (j=1; j<pdinfo->v; j++) { 
@@ -3370,6 +3457,7 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 	    }
 	}
 	if (vi > 0 && vi < pdinfo->v) {
+	    /* FIXME nested functions */
 	    unset_var_const(pdinfo, vi);
 	}
     }
@@ -3573,7 +3661,7 @@ static int stop_fncall (ufunc *u, int rtype, void *ret,
     }    
 
     pop_program_state();
-    set_executing_off(u);
+    set_executing_off(u, pdinfo);
 
     return err;
 }
@@ -3837,7 +3925,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 		set_funcerr_message(u, state.cmd->param);
 	    }
 	    if (err) {
-		fprintf(stderr, "function_exec: breaking on error in loop\n");
+		fprintf(stderr, "function_exec: breaking on error %d in loop\n", err);
 		fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
 		break;
 	    }

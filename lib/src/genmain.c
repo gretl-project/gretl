@@ -362,6 +362,8 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 
 #define GEN_LEVEL_DEBUG 0
 
+#define PROTECT_LISTS 0
+
 /**
  * varindex:
  * @pdinfo: data information struct.
@@ -396,23 +398,16 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 
     fsd = gretl_function_depth();
 
-    if (fsd > 0) {
-	/* inside a function: see only vars at that level */
-	for (i=1; i<pdinfo->v; i++) { 
-	    if (var_is_listarg(pdinfo, i)) {
-		/* variable is not visible by name in context */
-		continue;
-	    }
-	    if (STACK_LEVEL(pdinfo, i) == fsd && 
-		!strcmp(pdinfo->varname[i], s)) {
-		ret = i;
-		break;
-	    }
-	}
-    } else {
-	/* see all vars */
-	for (i=1; i<pdinfo->v; i++) { 
-	    if (!strcmp(pdinfo->varname[i], s)) { 
+    for (i=1; i<pdinfo->v; i++) { 
+	if (fsd == 0 || fsd == STACK_LEVEL(pdinfo, i)) {
+	    if (!strcmp(pdinfo->varname[i], s)) {
+#if PROTECT_LISTS
+		if (var_is_listarg(pdinfo, i)) {
+		    /* variable is not visible by name in context */
+		    fprintf(stderr, "var %d (%s) is invisible\n", i, s);
+		    continue;
+		}
+#endif
 		ret = i;
 		break;
 	    }

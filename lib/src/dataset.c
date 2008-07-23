@@ -481,7 +481,6 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->transform = 0;
     vinfo->lag = 0;
     vinfo->compact_method = COMPACT_NONE;
-    vinfo->listarg = 0;
     vinfo->line_width = 1;
     vinfo->sorted_markers = NULL;
     vinfo->stack_level = gretl_function_depth();
@@ -509,7 +508,6 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->lag = src->lag;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
-    targ->listarg = src->listarg;
     targ->line_width = src->line_width;
     targ->sorted_markers = NULL;
 }
@@ -2636,61 +2634,6 @@ int var_get_linewidth (const DATAINFO *pdinfo, int i)
     } else {
 	return 0;
     }
-}
-
-/**
- * var_is_listarg:
- * @pdinfo: pointer to data information struct.
- * @i: index number of variable.
- *
- * Returns: 1 if, in context, the variable is made
- * available via a list argument to a user-defined
- * function, otherwise 0.
- */
-
-int var_is_listarg (const DATAINFO *pdinfo, int i) 
-{
-    if (i >= 0 && i < pdinfo->v) {
-	return pdinfo->varinfo[i]->listarg != 0;
-    } else {
-	return 0;
-    }
-}
-
-/**
- * var_set_listarg:
- * @pdinfo: pointer to data information struct.
- * @i: index number of variable.
- *
- * Record that fact that variable @i is, in context,
- * made available via a list argument to a user-defined
- * function.
- */
-
-void var_set_listarg (const DATAINFO *pdinfo, int i) 
-{
-    if (i >= 0 && i < pdinfo->v) {
-	pdinfo->varinfo[i]->listarg += 1;
-    } 
-}
-
-/**
- * var_unset_listarg:
- * @pdinfo: pointer to data information struct.
- * @i: index number of variable.
- *
- * Decrement the count which indicates whether or not,
- * in context, variable @i is made available via a list 
- * argument to a user-defined function.
- */
-
-void var_unset_listarg (const DATAINFO *pdinfo, int i) 
-{
-    if (i > 0 && i < pdinfo->v) {
-	if (pdinfo->varinfo[i]->listarg > 0) {
-	    pdinfo->varinfo[i]->listarg -= 1;
-	}
-    } 
 }
 
 int var_set_display_name (DATAINFO *pdinfo, int i,

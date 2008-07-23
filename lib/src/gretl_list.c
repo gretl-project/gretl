@@ -25,12 +25,10 @@
 
 #define LDEBUG 0
 
-#define LNAMELEN 32
-
 typedef struct saved_list_ saved_list;
 
 struct saved_list_ {
-    char name[LNAMELEN];
+    char name[VNAMELEN];
     int *list;
     int level;
 };
@@ -62,7 +60,7 @@ static saved_list *saved_list_new (const int *list, const char *name)
 	    sl = NULL;
 	} else {
 	    *sl->name = 0;
-	    strncat(sl->name, name, LNAMELEN - 1);
+	    strncat(sl->name, name, VNAMELEN - 1);
 	}
     }
 
@@ -324,7 +322,7 @@ static int real_remember_list (const int *list, const char *name,
 		}
 		if (strlen(realname) < strlen(name)) {
 		    pprintf(prn, _("Warning: the name was truncated to %d characters\n"), 
-			    LNAMELEN - 1);
+			    VNAMELEN - 1);
 		}
 	    }
 	    n_lists++;
@@ -427,7 +425,7 @@ int rename_saved_list (const char *orig, const char *new)
 	    err = destroy_saved_list(sl1);
 	}
 	*sl0->name = '\0';
-	strncat(sl0->name, new, LNAMELEN - 1);
+	strncat(sl0->name, new, VNAMELEN - 1);
     } 
 
     return err;
@@ -2302,7 +2300,7 @@ int load_user_lists_file (const char *fname)
 		if (!gretl_xml_get_prop_as_string(cur, "name", &lname)) {
 		    err = E_DATA;
 		} else {
-		    strncat(list_stack[i]->name, lname, LNAMELEN - 1);
+		    strncat(list_stack[i]->name, lname, VNAMELEN - 1);
 		    free(lname);
 		    list_stack[i]->list = 
 			gretl_xml_node_get_list(cur, doc, &err);
