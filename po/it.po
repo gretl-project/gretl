@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.7.5\n"
+"Project-Id-Version: gretl 1.7.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-07-22 15:08-0400\n"
-"PO-Revision-Date: 2008-06-28 09:53+0200\n"
+"PO-Revision-Date: 2008-07-24 22:03+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2730,17 +2730,17 @@ msgstr "Messaggi di errore da %s:\n"
 #: lib/src/gretl_func.c:3692
 #, c-format
 msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
-msgstr ""
+msgstr "%s: l'argomento %d è del tipo sbagliato (è %s, dovrebbe essere %s)\n"
 
 #: lib/src/gretl_func.c:3701
-#, fuzzy, c-format
+#, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
-msgstr "Il valore indice %d è fuori dai limiti"
+msgstr "%s, argomento %d: valore %g fuori dai limiti\n"
 
 #: lib/src/gretl_func.c:3712
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not enough arguments\n"
-msgstr "\"%s\": non è stato fornito alcun argomento\n"
+msgstr "%s: non ci sono abbastanza argomenti\n"
 
 #: lib/src/gretl_func.c:3981
 #, c-format
@@ -4131,9 +4131,8 @@ msgid "Durbin's h"
 msgstr "Valore h di Durbin"
 
 #: lib/src/modelprint.c:830
-#, fuzzy
 msgid "Durbin's $h$"
-msgstr "Valore h di Durbin"
+msgstr "$h$ di Durbin"
 
 #: lib/src/modelprint.c:881
 #, c-format
@@ -5173,9 +5172,8 @@ msgid "Tolerance = %g\n"
 msgstr "Tolleranza = %g\n"
 
 #: lib/src/nls.c:3183
-#, fuzzy
 msgid "Failed to compute numerical Hessian"
-msgstr "Impossibile calcolare il valore critico"
+msgstr "Impossibile calcolare l'Hessiana numerica"
 
 #: lib/src/nls.c:3252
 msgid ""
