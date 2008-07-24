@@ -3199,7 +3199,7 @@ static void build_arma_spinners (selector *sr)
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_p), sr);
     gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 0, 1);
-    /* free-form lags */
+    /* or free-form lags */
     sr->extra[1] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[1]), 16);
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
@@ -3219,7 +3219,7 @@ static void build_arma_spinners (selector *sr)
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_q), sr);
     gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 2, 3);
-    /* free-form lags */
+    /* or free-form lags */
     sr->extra[4] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[4]), 16);
     gtk_widget_set_sensitive(sr->extra[4], FALSE);

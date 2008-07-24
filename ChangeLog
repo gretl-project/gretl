@@ -3,8 +3,9 @@ version 1.7.6, in progress
 - Add $xlist accessor to get the list of regressors from the
   last model
 - Removed some redundant preferences items
-- Fix bugs 1996156, 1996161
+- Fix bugs 1996156, 1996161, 2017872, 2027121
 - MLE fixes
+- Fix for RTF output from GUI model table
 - Function package help: ensure this is not truncated
 - Fix bug: generation of NAs when doing "genr unitdum" on a
   sub-sampled panel dataset
