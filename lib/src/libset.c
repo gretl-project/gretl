@@ -100,6 +100,7 @@ struct set_vars_ {
 #define WARNINGS "warnings"
 #define GRETL_DEBUG "debug"
 #define BLAS_NMK_MIN "blas_nmk_min"
+#define PROTECT_LISTS "protect_lists"
 
 #define libset_boolvar(s) (!strcmp(s, ECHO) || \
                            !strcmp(s, MESSAGES) || \
@@ -114,7 +115,8 @@ struct set_vars_ {
 			   !strcmp(s, USE_QR) || \
 			   !strcmp(s, SHELL_OK) || \
 			   !strcmp(s, USE_CWD) || \
-			   !strcmp(s, USE_FCP))
+			   !strcmp(s, USE_FCP) || \
+                           !strcmp(s, PROTECT_LISTS))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -138,7 +140,8 @@ struct set_vars_ {
 
 /* global state */
 set_vars *state;
-int gretl_debug;
+static int gretl_debug;
+static int protect_lists;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -500,6 +503,11 @@ int gretl_warnings_on (void)
 int gretl_debugging_on (void)
 {
     return gretl_debug;
+}
+
+int lists_protected (void)
+{
+    return protect_lists;
 }
 
 char get_csv_delim (const DATAINFO *pdinfo)
@@ -1171,6 +1179,7 @@ static int display_settings (PRN *prn)
     }
 
     libset_print_bool(USE_CWD, prn);
+    libset_print_bool(PROTECT_LISTS, prn);
 
     libset_header(_("Numerical methods"), prn);
 
@@ -1703,6 +1712,11 @@ int libset_get_bool (const char *s)
 {
     int flag, ret = 0;
 
+    if (!strcmp(s, PROTECT_LISTS)) {
+	/* global special */
+	return protect_lists;
+    }
+
     if (!strcmp(s, MAX_VERBOSE) && gretl_debug > 1) {
 	/* strong debugging turns on max_verbose */
 	return 1;
@@ -1747,6 +1761,12 @@ void libset_set_bool (const char *s, int set)
     int flag;
 
     if (check_for_state()) {
+	return;
+    }
+
+    if (!strcmp(s, PROTECT_LISTS)) {
+	/* global special */
+	protect_lists = set;
 	return;
     }
 

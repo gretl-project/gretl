@@ -89,6 +89,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 char *gretl_func_get_arg_name (const char *argvar, int *err);
 
+int object_is_const (const char *name);
+
 const char *get_funcerr_message (void);
 
 int gretl_function_set_info (int i, const char *help);

@@ -1118,12 +1118,12 @@ int rename_var_by_id (const char *idstr, const char *vname,
 {
     int v = varnum_from_string(idstr, pdinfo);
 
-    if (v < 0) {
+    if (v < 0 || v >= pdinfo->v) {
 	return E_DATA;
     }
 
-    if (var_is_const(pdinfo, v)) {
-	return overwrite_err(pdinfo, v);
+    if (object_is_const(pdinfo->varname[v])) {
+	return overwrite_err(pdinfo->varname[v]);
     }
 
     /* should be pre-checked for validity of varname and

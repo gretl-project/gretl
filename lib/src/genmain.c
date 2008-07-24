@@ -362,8 +362,6 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 
 #define GEN_LEVEL_DEBUG 0
 
-#define PROTECT_LISTS 0
-
 /**
  * varindex:
  * @pdinfo: data information struct.
@@ -377,14 +375,10 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 int varindex (const DATAINFO *pdinfo, const char *varname)
 {
     const char *s = varname;
-    int fsd = 0;
-    int i, ret = pdinfo->v;
+    int i, fd;
+    int ret = pdinfo->v;
 
-    if (s == NULL || *s == 0) {
-	return ret;
-    }
-
-    if (isdigit(*s)) {
+    if (s == NULL || *s == 0 || isdigit(*s)) {
 	return ret;
     }
 
@@ -396,27 +390,25 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 	return try_for_listvar(pdinfo, s);
     }
 
-    fsd = gretl_function_depth();
+    fd = gretl_function_depth();
 
     for (i=1; i<pdinfo->v; i++) { 
-	if (fsd == 0 || fsd == STACK_LEVEL(pdinfo, i)) {
+	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
 	    if (!strcmp(pdinfo->varname[i], s)) {
-#if PROTECT_LISTS
-		if (var_is_listarg(pdinfo, i)) {
+		if (lists_protected() && var_is_listarg(pdinfo, i)) {
 		    /* variable is not visible by name in context */
 		    fprintf(stderr, "var %d (%s) is invisible\n", i, s);
-		    continue;
+		} else {
+		    ret = i;
+		    break;
 		}
-#endif
-		ret = i;
-		break;
 	    }
 	}
     }
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "varindex for '%s', fsd = %d: got %d (pdinfo->v = %d)\n", 
-	    s, fsd, ret, pdinfo->v);
+    fprintf(stderr, "varindex for '%s', fd = %d: got %d (pdinfo->v = %d)\n", 
+	    s, fd, ret, pdinfo->v);
 #endif 
 
     return ret;

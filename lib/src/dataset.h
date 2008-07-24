@@ -38,8 +38,7 @@ typedef enum {
     VAR_SCALAR     = 1 << 1,
     VAR_HIDDEN     = 1 << 2,
     VAR_GENERATED  = 1 << 3,
-    VAR_SETCONST   = 1 << 4,
-    VAR_LISTARG    = 1 << 5
+    VAR_LISTARG    = 1 << 4
 } VarinfoFlags;
 
 typedef enum {
@@ -248,34 +247,6 @@ typedef enum {
 #define var_is_generated(p, i) ((p)->varinfo[i]->flags & VAR_GENERATED)
 
 /**
- * var_is_const:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Determine whether or not a variable has been marked as
- * "const".
- */
-#define var_is_const(p, i) (i == 0 || ((p)->varinfo[i]->flags & VAR_SETCONST))
-
-/**
- * set_var_const:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Set the "const" flag on the given variable.
- */
-#define set_var_const(p, i) ((p)->varinfo[i]->flags |= VAR_SETCONST)
-
-/**
- * unset_var_const:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Remove the "const" flag from the given variable.
- */
-#define unset_var_const(p, i) ((p)->varinfo[i]->flags &= ~VAR_SETCONST)
-
-/**
  * var_is_listarg:
  * @p: pointer to data information struct.
  * @i: index number of variable.
@@ -377,7 +348,7 @@ int dataset_add_series_as (double *x, const char *newname,
 int dataset_copy_variable_as (int v, const char *newname,
 			      double ***pZ, DATAINFO *pdinfo);
 
-int overwrite_err (const DATAINFO *pdinfo, int v);
+int overwrite_err (const char *name);
 
 int dataset_drop_listed_variables (int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber,

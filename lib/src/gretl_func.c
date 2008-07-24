@@ -27,6 +27,8 @@
 #include "cmd_private.h"
 #include "gretl_string_table.h"
 
+#include <glib.h>
+
 #define FN_DEBUG 0
 #define PKG_DEBUG 0
 #define EXEC_DEBUG 0
@@ -44,6 +46,15 @@ struct fn_param_ {
     double max;
 };
 
+typedef struct fncall_ fncall;
+
+struct fncall_ {
+    ufunc *fun;
+    fnargs *args;
+    int *ptrvars;
+    int *listvars;
+};
+
 struct ufunc_ {
     char name[FN_NAMELEN];
     int pkgID;
@@ -55,22 +66,7 @@ struct ufunc_ {
     fn_param *params;
     int rettype;
     char *retname;
-    int *in_use;
-    fnargs *args;
-    int *ptrvars;
-    int *listvars;
 };
-
-/* Note: the "in_use" list for a function (a temporary state variable)
-   tells us at which depth(s) of function execution a given function is
-   currently in use.  The first element gives the number of following
-   elements; the second and higher elements give the depths.  There
-   may be more than one depth since we can have a situation where
-   function foo calls function baz which in turn calls foo.
-
-   We can determine which function (if any) is currently "active" by
-   looking for the greatest entry among the "in_use" lists.
-*/
 
 struct fnpkg_ {
     int ID;
@@ -88,8 +84,10 @@ struct fnpkg_ {
 };
 
 struct fnarg {
-    int type;
-    char *upname;  /* name of arg at caller level */
+    char type;
+    char flags;
+    const char *name; /* name as function param */
+    char *upname;     /* name of supplied arg at caller level */
     union {
 	int idnum;
 	double x;
@@ -113,7 +111,7 @@ enum {
 static int n_ufuns;
 static ufunc **ufuns;
 static ufunc *current_ufun;
-static ufunc *execing_ufun;
+static GList *callstack;
 
 static int n_pkgs;
 static fnpkg **pkgs;
@@ -162,6 +160,8 @@ struct fnarg *fn_arg_new (int type, void *p, int *err)
     }
 
     arg->type = type;
+    arg->flags = 0;
+    arg->name = NULL;
     arg->upname = NULL;
     
     if (type == GRETL_TYPE_NONE) {
@@ -256,46 +256,29 @@ int push_fn_arg (fnargs *args, int type, void *p)
     return err;
 }
 
-static void set_executing_on (ufunc *fun)
+static fncall *fncall_new (ufunc *fun)
 {
-    fn_executing++;
-    gretl_list_append_term(&fun->in_use, fn_executing);
-    execing_ufun = fun;
-#if EXEC_DEBUG
-    fprintf(stderr, "set_executing_on: fun = %s, fn_executing=%d\n", 
-	    fun->name, fn_executing);
-#endif
-}
+    fncall *call = malloc(sizeof *call);
 
-static int use_list_delete_last (ufunc *fun)
-{
-    if (fun->in_use == NULL || fun->in_use[0] == 0) {
-	/* shouldn't happen */
-	return E_DATA;
+    if (call != NULL) {
+	call->fun = fun;
+	call->ptrvars = NULL;
+	call->listvars = NULL;
     }
 
-    if (fun->in_use[0] == 1) {
-	free(fun->in_use);
-	fun->in_use = NULL;
-    } else {
-	int *newlist = gretl_list_new(fun->in_use[0] - 1);
-	int i;
-
-	if (newlist == NULL) {
-	    return E_ALLOC;
-	}
-
-	for (i=1; i<fun->in_use[0]; i++) {
-	    newlist[i] = fun->in_use[i];
-	}
-	free(fun->in_use);
-	fun->in_use = newlist;
-    }
-
-    return 0;
+    return call;
 }
 
-static void set_listargs_from_ufunc (ufunc *fun, DATAINFO *pdinfo)
+static void fncall_free (fncall *call)
+{
+    if (call != NULL) {
+	free(call->ptrvars);
+	free(call->listvars);
+	free(call);
+    }
+}
+
+static void set_listargs_from_call (fncall *call, DATAINFO *pdinfo)
 {
     int i, v;
 
@@ -303,9 +286,9 @@ static void set_listargs_from_ufunc (ufunc *fun, DATAINFO *pdinfo)
 	unset_var_listarg(pdinfo, i);
     }
 
-    if (fun != NULL && fun->listvars != NULL) {
-	for (i=1; i<=fun->listvars[0]; i++) {
-	    v = fun->listvars[i];
+    if (call != NULL && call->listvars != NULL) {
+	for (i=1; i<=call->listvars[0]; i++) {
+	    v = call->listvars[i];
 #if UDEBUG
 	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
 		    v, pdinfo->varname[v]);
@@ -315,32 +298,29 @@ static void set_listargs_from_ufunc (ufunc *fun, DATAINFO *pdinfo)
     }
 }
 
-#define ufun_maxdepth(f) ((f->in_use == NULL)? 0 : f->in_use[f->in_use[0]])
-
-static void set_executing_off (ufunc *fun, DATAINFO *pdinfo)
+static void set_executing_off (fncall *call, DATAINFO *pdinfo)
 {
-    use_list_delete_last(fun);
+    fncall *popcall = NULL;
+
     fn_executing--;
-    execing_ufun = NULL;
+
+    callstack = g_list_remove(callstack, call);
+#if EXEC_DEBUG
+    fprintf(stderr, "set_executing_off: removing call to %s, depth now %d\n",
+	    call->fun->name, g_list_length(callstack));
+#endif
+    fncall_free(call);
 
     if (fn_executing > 0) {
-	int i, d, md = 0;
-
-	for (i=0; i<n_ufuns; i++) {
-	    d = ufun_maxdepth(ufuns[i]);
-	    if (d > md) {
-		execing_ufun = ufuns[i];
-		md = d;
-	    }
-	}
+	GList *tmp = g_list_last(callstack);
+	
+	popcall = tmp->data;
+    } else {
+	g_list_free(callstack);
+	callstack = NULL;
     }
 
-    set_listargs_from_ufunc(execing_ufun, pdinfo);
-
-#if EXEC_DEBUG
-    fprintf(stderr, "set_executing_off: fun=%s, fn_executing=%d\n",
-	    fun->name, fn_executing);
-#endif
+    set_listargs_from_call(popcall, pdinfo);
 }
 
 /* general info accessors */
@@ -475,40 +455,49 @@ void function_names_init (void)
     fname_idx = 0;
 }
 
-int current_func_pkgID (void)
+static fncall *current_function_call (void)
 {
-    ufunc *fun;
-    int i, f0;
+    if (callstack != NULL) {
+	GList *tmp = g_list_last(callstack);
 
-    for (i=0; i<n_ufuns; i++) {
-	fun = ufuns[i];
-	if (fun->in_use != NULL) {
-	    f0 = fun->in_use[0];
-	    if (fun->in_use[f0] == fn_executing) {
-		return fun->pkgID;
-	    }
+	return tmp->data;
+    } else {
+	return NULL;
+    }
+}
+
+static ufunc *currently_called_function (void)
+{
+    fncall *call = current_function_call();
+
+    if (call != NULL) {
+	return call->fun;
+    } else {
+	return NULL;
+    }
+}
+
+static int function_in_use (ufunc *fun)
+{
+    GList *tmp = callstack;
+    fncall *call;
+
+    while (tmp != NULL) {
+	call = tmp->data;
+	if (fun == call->fun) {
+	    return 1;
 	}
+	tmp = tmp->next;
     }
 
     return 0;
 }
 
-static ufunc *currently_called_function (void)
+int current_func_pkgID (void)
 {
-    ufunc *fun;
-    int i, f0;
+    ufunc *f = currently_called_function();
 
-    for (i=0; i<n_ufuns; i++) {
-	fun = ufuns[i];
-	if (fun->in_use != NULL) {
-	    f0 = fun->in_use[0];
-	    if (fun->in_use[f0] == fn_executing) {
-		return fun;
-	    }
-	}
-    }
-
-    return NULL;
+    return (f == NULL)? 0 : f->pkgID;
 }
 
 ufunc *get_user_function_by_name (const char *name)
@@ -608,11 +597,6 @@ static ufunc *ufunc_new (void)
     fun->rettype = GRETL_TYPE_NONE;
     fun->retname = NULL;
 
-    fun->in_use = NULL;
-    fun->args = NULL;
-    fun->ptrvars = NULL;
-    fun->listvars = NULL;
-
     return fun;
 }
 
@@ -645,11 +629,6 @@ static void clear_ufunc_data (ufunc *fun)
 
     fun->rettype = GRETL_TYPE_NONE;
     fun->retname = NULL;
-    
-    fun->in_use = NULL;
-    fun->args = NULL;
-    fun->ptrvars = NULL;
-    fun->listvars = NULL;
 }
 
 static void free_ufunc (ufunc *fun)
@@ -2460,7 +2439,7 @@ static int maybe_delete_function (const char *fname, PRN *prn)
 
     if (fun == NULL) {
 	; /* no-op */
-    } else if (fun->in_use != NULL) {
+    } else if (function_in_use(fun)) {
 	sprintf(gretl_errmsg, "%s: function is in use", fname);
 	err = 1;
     } else if (fun->pkgID != 0) {
@@ -3082,7 +3061,7 @@ int update_function_from_script (const char *fname, int idx)
    variables in question as const.
 */
 
-static int localize_list (ufunc *fun, const char *oldname, 
+static int localize_list (fncall *call, const char *oldname, 
 			  fn_param *fp, DATAINFO *pdinfo)
 {
     const int *list;
@@ -3106,13 +3085,10 @@ static int localize_list (ufunc *fun, const char *oldname,
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi > 0) {
-		if (!in_gretl_list(fun->listvars, vi)) {
-		    gretl_list_append_term(&fun->listvars, vi);
+		if (!in_gretl_list(call->listvars, vi)) {
+		    gretl_list_append_term(&call->listvars, vi);
 		}
 		STACK_LEVEL(pdinfo, vi) = level;
-		if (fp->flags & ARG_CONST) {
-		    set_var_const(pdinfo, vi);
-		}
 	    }
 	}
     }
@@ -3130,7 +3106,15 @@ static void boolify_local_var (const char *vname, double **Z,
     }
 }
 
-static int localize_matrix_ref (struct fnarg *arg, const char *name)
+static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
+{
+    if ((fp->flags & ARG_CONST) || object_is_const(fp->name)) {
+	arg->name = fp->name;
+	arg->flags |= ARG_CONST;
+    }
+}
+
+static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
 {
     user_matrix *u = arg->val.um;
 
@@ -3140,13 +3124,15 @@ static int localize_matrix_ref (struct fnarg *arg, const char *name)
     }
 
     user_matrix_adjust_level(u, 1);
-    user_matrix_set_name(u, name);
+    user_matrix_set_name(u, fp->name);
+
+    maybe_set_arg_const(arg, fp);
 
     return 0;
 }
 
-static int localize_variable_ref (ufunc *fun, struct fnarg *arg, 
-				  DATAINFO *pdinfo, const char *name)
+static int localize_variable_ref (fncall *call, struct fnarg *arg, 
+				  fn_param *fp, DATAINFO *pdinfo)
 {
     int v = arg->val.idnum;
 
@@ -3156,13 +3142,15 @@ static int localize_variable_ref (ufunc *fun, struct fnarg *arg,
     } 
 
     STACK_LEVEL(pdinfo, v) += 1;
-    strcpy(pdinfo->varname[v], name);
+    strcpy(pdinfo->varname[v], fp->name);
 
     if (var_is_series(pdinfo, v)) {
-	if (!in_gretl_list(fun->ptrvars, v)) {
-	    gretl_list_append_term(&fun->ptrvars, v);
+	if (!in_gretl_list(call->ptrvars, v)) {
+	    gretl_list_append_term(&call->ptrvars, v);
 	}
     }
+
+    maybe_set_arg_const(arg, fp);
 
     return 0;
 }
@@ -3190,11 +3178,29 @@ static int add_scalar_arg_default (fn_param *param, double ***pZ,
     return dataset_add_scalar_as(x, param->name, pZ, pdinfo);
 }
 
-static int allocate_function_args (ufunc *fun,
-				   fnargs *args, 
+static void fncall_finalize_listvars (fncall *call)
+{
+    int i, v;
+
+    for (i=call->listvars[0]; i>0; i--) {
+	v = call->listvars[i];
+	if (in_gretl_list(call->ptrvars, v)) {
+	    gretl_list_delete_at_pos(call->listvars, i);
+	}
+    }
+
+    if (call->listvars[0] == 0) {
+	free(call->listvars);
+	call->listvars = NULL;
+    }
+}
+
+static int allocate_function_args (fncall *call,
 				   double ***pZ,
 				   DATAINFO *pdinfo)
 {
+    ufunc *fun = call->fun;
+    fnargs *args = call->args;
     struct fnarg *arg;
     fn_param *fp;
     int i, err = 0;
@@ -3234,18 +3240,18 @@ static int allocate_function_args (ufunc *fun,
 	    if (arg->type == GRETL_TYPE_NONE) {
 		err = create_named_null_list(fp->name);
 	    } else {
-		err = localize_list(fun, arg->val.str, fp, pdinfo);
+		err = localize_list(call, arg->val.str, fp, pdinfo);
 	    }
 	} else if (fp->type == GRETL_TYPE_STRING) {
 	    err = add_string_as(arg->val.str, fp->name);
 	} else if (fp->type == GRETL_TYPE_SCALAR_REF ||
 		   fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_variable_ref(fun, arg, pdinfo, fp->name);
+		err = localize_variable_ref(call, arg, fp, pdinfo);
 	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_matrix_ref(arg, fp->name);
+		err = localize_matrix_ref(arg, fp);
 	    }
 	}
 
@@ -3254,7 +3260,7 @@ static int allocate_function_args (ufunc *fun,
 	}
     }
 
-    /* now for any parameters withut matching arguments */
+    /* now for any parameters without matching arguments */
 
     for (i=args->argc; i<fun->n_params && !err; i++) {
 	fp = &fun->params[i];
@@ -3265,34 +3271,19 @@ static int allocate_function_args (ufunc *fun,
 	}
     }
 
-    /* finalize "listvars" record */
-    if (fun->listvars != NULL) {
+    if (call->listvars != NULL) {
 	if (err) {
-	    free(fun->listvars);
-	    fun->listvars = NULL;
+	    free(call->listvars);
+	    call->listvars = NULL;
 	} else {
-	    int v;
-
-	    for (i=fun->listvars[0]; i>0; i--) {
-		v = fun->listvars[i];
-		if (in_gretl_list(fun->ptrvars, v)) {
-		    gretl_list_delete_at_pos(fun->listvars, i);
-		}
-	    }
-	    if (fun->listvars[0] == 0) {
-		free(fun->listvars);
-		fun->listvars = NULL;
-	    }
+	    fncall_finalize_listvars(call);
 	}
     }
 
     if (!err) {
-	set_listargs_from_ufunc(fun, pdinfo);
+	set_listargs_from_call(call, pdinfo);
     }
 
-    free(fun->ptrvars);
-    fun->ptrvars = NULL;
-    
     return err;
 }
 
@@ -3456,10 +3447,6 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 		STACK_LEVEL(pdinfo, vi) = upd;
 	    }
 	}
-	if (vi > 0 && vi < pdinfo->v) {
-	    /* FIXME nested functions */
-	    unset_var_const(pdinfo, vi);
-	}
     }
 
     return 0;
@@ -3579,7 +3566,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
     return err;
 }
 
-static int stop_fncall (ufunc *u, int rtype, void *ret,
+static int stop_fncall (fncall *call, int rtype, void *ret,
 			double ***pZ, DATAINFO *pdinfo,
 			int orig_v)
 {
@@ -3589,10 +3576,10 @@ static int stop_fncall (ufunc *u, int rtype, void *ret,
 
 #if FN_DEBUG
     fprintf(stderr, "stop_fncall: terminating call to "
-	    "function '%s' at depth %d\n", u->name, d);
+	    "function '%s' at depth %d\n", call->fun->name, d);
 #endif
 
-    u->args = NULL;
+    call->args = NULL;
 
     anyerr = destroy_user_matrices_at_level(d);
     if (anyerr && !err) {
@@ -3643,7 +3630,7 @@ static int stop_fncall (ufunc *u, int rtype, void *ret,
        changed due to the deletion of function-local variables.
     */
     if (!err && rtype == GRETL_TYPE_LIST) {
-	int *lret = gretl_list_copy(get_list_by_name(u->retname));
+	int *lret = gretl_list_copy(get_list_by_name(call->fun->retname));
 
 	if (lret != NULL) {
 	    *(int **) ret = lret;
@@ -3661,25 +3648,32 @@ static int stop_fncall (ufunc *u, int rtype, void *ret,
     }    
 
     pop_program_state();
-    set_executing_off(u, pdinfo);
+    set_executing_off(call, pdinfo);
 
     return err;
 }
 
-static void start_fncall (ufunc *u, fnargs *args, PRN *prn)
+static int start_fncall (fncall *call, PRN *prn)
 {
-    set_executing_on(u);
-    u->args = args;
+    fn_executing++;
     push_program_state();
+
+    callstack = g_list_append(callstack, call);
+#if EXEC_DEBUG
+    fprintf(stderr, "start_fncall: added call to %s, depth now %d\n", 
+	    call->fun->name, g_list_length(callstack));
+#endif
 
     if (gretl_debugging_on()) {
 	set_gretl_echo(1);
 	set_gretl_messages(1);
-	pprintf(prn, "*** executing function %s\n", u->name);
+	pprintf(prn, "*** executing function %s\n", call->fun->name);
     } else {
 	set_gretl_echo(0);
 	set_gretl_messages(0);
     }
+
+    return 0;
 }
 
 static char funcerr_msg[256];
@@ -3825,6 +3819,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 PRN *prn)
 {
     ExecState state;
+    fncall *call = NULL;
     MODEL **models = NULL;
     char line[MAXLINE];
     CMD cmd;
@@ -3853,14 +3848,21 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     fprintf(stderr, "u->n_params = %d\n", u->n_params);
 #endif
 
+    call = fncall_new(u);
+    if (call == NULL) {
+	return E_ALLOC;
+    }
+
     err = check_function_args(u, args, (const double **) *pZ, pdinfo, prn);
 
     if (!err) {
-	err = allocate_function_args(u, args, pZ, pdinfo);
+	call->args = args;
+	err = allocate_function_args(call, pZ, pdinfo);
     }
 
     if (err) {
 	/* get out before allocating further storage */
+	fncall_free(call);
 	return err;
     }    
 
@@ -3884,8 +3886,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (!err) {
-	start_fncall(u, args, prn);
-	started = 1;
+	err = start_fncall(call, prn);
+	if (!err) {
+	    started = 1;
+	}
     }
 
     /* get function lines in sequence and check, parse, execute */
@@ -3967,7 +3971,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     gretl_exec_state_clear(&state);
 
     if (started) {
-	int stoperr = stop_fncall(u, rtype, ret, pZ, pdinfo, orig_v);
+	int stoperr = stop_fncall(call, rtype, ret, pZ, pdinfo, orig_v);
 
 	if (stoperr && !err) {
 	    err = stoperr;
@@ -3986,16 +3990,18 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 char *gretl_func_get_arg_name (const char *argvar, int *err)
 {
-    ufunc *u = currently_called_function();
+    fncall *call = current_function_call();
     char *ret = NULL;
 
-    if (u != NULL && u->args != NULL) {
-	int i, n = u->args->argc;
+    if (call != NULL && call->args != NULL) {
+	ufunc *u = call->fun;
+	fnargs *args = call->args;
+	int i, n = args->argc;
 
 	for (i=0; i<n; i++) {
 	    if (!strcmp(argvar, u->params[i].name)) {
-		if (u->args->arg[i]->upname != NULL) {
-		    ret = gretl_strdup(u->args->arg[i]->upname); 
+		if (args->arg[i]->upname != NULL) {
+		    ret = gretl_strdup(args->arg[i]->upname); 
 		}
 		break;
 	    }
@@ -4010,6 +4016,26 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
     }
 
     return ret;
+}
+
+int object_is_const (const char *name)
+{
+    fncall *call = current_function_call();
+
+    if (call != NULL && call->args != NULL) {
+	fnargs *args = call->args;
+	int i, n = args->argc;
+
+	for (i=0; i<n; i++) {
+	    const char *aname = args->arg[i]->name;
+
+	    if (aname != NULL && !strcmp(name, aname)) {
+		return args->arg[i]->flags & ARG_CONST;
+	    }
+	}
+    }
+
+    return 0;
 }
 
 void gretl_functions_cleanup (void)

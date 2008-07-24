@@ -1603,10 +1603,9 @@ static int vars_renumbered (const int *list, DATAINFO *pdinfo,
     return 0;
 }
 
-int overwrite_err (const DATAINFO *pdinfo, int v)
+int overwrite_err (const char *name)
 {
-    sprintf(gretl_errmsg, "The variable %s is read-only", 
-	    pdinfo->varname[v]);
+    sprintf(gretl_errmsg, "The variable %s is read-only", name);
 
     return E_DATA;
 }
@@ -1655,8 +1654,8 @@ static int real_drop_listed_vars (int *list, double ***pZ,
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0 && v < oldv) {
-	    if (var_is_const(pdinfo, v)) {
-		return overwrite_err(pdinfo, v);
+	    if (object_is_const(pdinfo->varname[v])) {
+		return overwrite_err(pdinfo->varname[v]);
 	    }
 	    if (v < delmin) {
 		delmin = v;

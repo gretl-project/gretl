@@ -6485,11 +6485,9 @@ static void pre_process (parser *p, int flags)
     }
 
     /* if pre-existing var, check for const-ness */
-    if (!newvar && (p->lh.t == NUM || p->lh.t == VEC)) {
-	if (var_is_const(p->dinfo, p->lh.v)) {
-	    p->err = overwrite_err(p->dinfo, p->lh.v);
-	    return;
-	}
+    if (!newvar && object_is_const(test)) {
+	p->err = overwrite_err(test);
+	return;
     }
 
     /* if new public variable, check name for legality */
