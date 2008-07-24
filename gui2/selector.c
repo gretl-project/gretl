@@ -2719,7 +2719,10 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     } else {
 	tmp = gtk_label_new(_("AR order:"));
 	val = 1;
-	maxlag = datainfo->pd;
+	maxlag = 10;
+	if (maxlag < datainfo->pd) {
+	    maxlag = datainfo->pd;
+	}
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
@@ -3190,12 +3193,13 @@ static void build_arma_spinners (selector *sr)
 
     lbl = gtk_label_new(_(strs[0]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 0, 1);
-    adj = gtk_adjustment_new(arma_p, 0, 4, 1, 1, 1);
+    adj = gtk_adjustment_new(arma_p, 0, 10, 1, 1, 1);
     sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[0], 1, 2, 0, 1);
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_p), sr);
     gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 0, 1);
+    /* free-form lags */
     sr->extra[1] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[1]), 16);
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
@@ -3209,12 +3213,13 @@ static void build_arma_spinners (selector *sr)
 
     lbl = gtk_label_new(_(strs[2]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
-    adj = gtk_adjustment_new(arma_q, 0, 4, 1, 1, 1);
+    adj = gtk_adjustment_new(arma_q, 0, 10, 1, 1, 1);
     sr->extra[3] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[3], 1, 2, 2, 3);
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_q), sr);
     gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 2, 3);
+    /* free-form lags */
     sr->extra[4] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[4]), 16);
     gtk_widget_set_sensitive(sr->extra[4], FALSE);
