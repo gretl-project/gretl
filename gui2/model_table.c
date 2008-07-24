@@ -1028,7 +1028,12 @@ static int rtf_print_model_table (PRN *prn)
 
     pputs(prn, "}\n\n");
 
-    pprintf(prn, "\\par \\qc %s\n", I_("Standard errors in parentheses"));
+    if (use_tstats) {
+	pprintf(prn, "\\par \\qc %s\n", I_("t-statistics in parentheses"));
+    } else {
+	pprintf(prn, "\\par \\qc %s\n", I_("Standard errors in parentheses"));
+    }
+
     pprintf(prn, "\\par \\qc %s\n", 
 	    I_("* indicates significance at the 10 percent level"));
     pprintf(prn, "\\par \\qc %s\n", 
