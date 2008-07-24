@@ -3057,8 +3057,7 @@ int update_function_from_script (const char *fname, int idx)
 /* Given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
    and make the variables referenced in that list accessible to the
-   function.  If the "const" flag is set for the parameter, mark the
-   variables in question as const.
+   function.
 */
 
 static int localize_list (fncall *call, const char *oldname, 
