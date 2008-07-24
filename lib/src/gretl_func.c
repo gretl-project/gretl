@@ -30,7 +30,7 @@
 #define FN_DEBUG 0
 #define PKG_DEBUG 0
 #define EXEC_DEBUG 0
-#define UDEBUG 1
+#define UDEBUG 0
 
 typedef struct fn_param_ fn_param;
 
