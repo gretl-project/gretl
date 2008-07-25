@@ -290,7 +290,8 @@ enum {
 enum {
     CONST_PI = 1,
     CONST_NA,
-    CONST_WIN32
+    CONST_WIN32,
+    CONST_VERSION
 };
 
 enum {

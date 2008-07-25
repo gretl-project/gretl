@@ -25,6 +25,7 @@
 #include "matrix_extra.h"
 #include "usermat.h"
 #include "gretl_fft.h"
+#include "version.h"
 
 #include <errno.h>
 
@@ -4751,6 +4752,14 @@ static NODE *eval_query (NODE *t, parser *p)
     return ret;
 }
 
+static int get_version_as_scalar (void)
+{
+    int x, y, z;
+
+    sscanf(GRETL_VERSION, "%d.%d.%d", &x, &y, &z);
+    return 1000 * x + 10 * y + z;
+}
+
 #define dvar_scalar(i) (i < R_SCALAR_MAX)
 #define dvar_series(i) (i == R_INDEX || i == R_PUNIT)
 
@@ -4779,6 +4788,14 @@ static double dvar_get_value (int i, parser *p)
 	return gretl_stopwatch();
     case R_NSCAN:
 	return n_scanned_items();
+    case R_WINDOWS:
+#ifdef WIN32
+	return 1;
+#else
+	return 0;
+#endif
+    case R_VERSION:
+	return get_version_as_scalar();
     default:
 	return NADBL;
     }

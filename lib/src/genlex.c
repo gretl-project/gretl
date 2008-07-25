@@ -82,6 +82,8 @@ struct str_table dvars[] = {
     { R_STOPWATCH, "$stopwatch" },
     { R_NSCAN,     "$nscan" },
     { R_PUNIT,     "$unit" },
+    { R_WINDOWS,   "$windows" },
+    { R_VERSION,   "$version" },
     { 0,           NULL },
 };
 

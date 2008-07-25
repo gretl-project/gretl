@@ -478,6 +478,30 @@
       </description>
     </function>
 
+    <function name="$version" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns an integer value that codes for the program version. The
+	  gretl version string takes the form <lit>x.y.z</lit> (for example,
+	  1.7.6).  The return value from this accessor is formed as
+	  <lit>1000*x + 10*y + z</lit>, so that 1.7.6 translates as 1076.
+	</para>
+      </description>
+    </function>
+
+    <function name="$windows" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns 1 if gretl is running on MS Windows, otherwise 0. By
+	  conditioning on the value of this variable you can write shell
+	  calls that are portable across different operating systems.
+	</para>
+	<para>
+	  Also see the <cmdref targ="shell"/> command.
+	</para>
+      </description>
+    </function>
+
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -486,7 +510,6 @@
 	</para>
       </description>
     </function>
-
 
     <function name="$yhat" section="access" output="series">
       <description>

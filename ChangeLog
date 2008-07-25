@@ -5,6 +5,9 @@ version 1.7.6, in progress
 - Add menu item: Variable/Normality test
 - Add $xlist accessor: gets the list of regressors from the
   last model
+- Add $version accessor: gets the gretl version
+- Add $windows accessor (1 if running on MS Windows, else 0)
+- Add $datatype accessor (see function help)
 - Remove some redundant preferences items
 - Fix bugs 1996156, 1996161, 2017872, 2027121
 - MLE fixes
@@ -13,7 +16,6 @@ version 1.7.6, in progress
 - Fix bug: incorrect generation of NAs when doing "genr unitdum" 
   on a sub-sampled panel dataset
 - Add new panel data functions: pmax, pmin, pnobs
-- Add $datatype accessor
 - Internal: recode parts of the gretl GUI to avoid dependence
   on deprecated GTK APIs
 - Several fixes for reading and writing gretl session files
