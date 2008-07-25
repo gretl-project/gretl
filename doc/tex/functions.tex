@@ -440,7 +440,7 @@ of the function and the name-space of the caller script.  For example,
 suppose we have a function that takes a list argument, and that
 defines a local variable called \texttt{y}.  Now suppose that this
 function is passed a list containing a variable named \texttt{y}.  If
-the two name-spaces were not separated we'd either get an error, or
+the two name-spaces were not separated either we'd get an error, or
 the external variable \texttt{y} would be silently over-written by the
 local one.  It is important, therefore, that list-argument variables
 should not be ``visible'' by name within functions.  To ``get hold
@@ -458,20 +458,22 @@ name of the variable.
   to use is \texttt{set protect\_lists off}.  But we recommend
   updating old functions as soon as possible.}
 
-When a named list of variables is passed to a function, the function
-is actually provided with a copy of the list.  The function may modify
-this copy (for instance, adding or removing members), but the original
-list at the leve of the caller is not modified.
+\paragraph{Constancy of list arguments} When a named list of
+variables is passed to a function, the function is actually provided
+with a copy of the list.  The function may modify this copy (for
+instance, adding or removing members), but the original list at the
+level of the caller is not modified.
 
-If a list argument to a function is optional, this should be indicated
-by appending a default value of \texttt{null}, as in
+\paragraph{Optional list arguments} If a list argument to a function is
+optional, this should be indicated by appending a default value of
+\texttt{null}, as in
 %
 \begin{code}
 function myfunc (scalar y, list X[null])
 \end{code}
 %
 In that case, if the caller gives \texttt{null} as the list argument
-(or omits the last argument) the named list \texttt{X} inside the
+(or simply omits the last argument) the named list \texttt{X} inside the
 function will be empty.  This possibility can be detected using the
 \texttt{nelem()} function, which returns 0 for an empty list.
 
