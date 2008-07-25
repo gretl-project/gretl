@@ -141,7 +141,7 @@ struct set_vars_ {
 /* global state */
 set_vars *state;
 static int gretl_debug;
-static int protect_lists;
+static int protect_lists = 1;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
