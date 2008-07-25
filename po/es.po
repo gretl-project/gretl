@@ -11001,7 +11001,7 @@ msgstr "Estimación"
 
 #: gui2/helpfiles.c:170
 msgid "Graphs"
-msgstr "_Gráficos"
+msgstr "Gráficos"
 
 #: gui2/helpfiles.c:171
 msgid "Prediction"

@@ -1,16 +1,22 @@
 version 1.7.6, in progress
+- Fix bug: revise the way that list arguments to user-defined
+  functions are handled, to avoid potential namespace 
+  collisions
 - Add menu item: Variable/Normality test
-- Add $xlist accessor to get the list of regressors from the
+- Add $xlist accessor: gets the list of regressors from the
   last model
-- Removed some redundant preferences items
+- Remove some redundant preferences items
 - Fix bugs 1996156, 1996161, 2017872, 2027121
 - MLE fixes
 - Fix for RTF output from GUI model table
 - Function package help: ensure this is not truncated
-- Fix bug: generation of NAs when doing "genr unitdum" on a
-  sub-sampled panel dataset
-- Add new panel data functions
+- Fix bug: incorrect generation of NAs when doing "genr unitdum" 
+  on a sub-sampled panel dataset
+- Add new panel data functions: pmax, pmin, pnobs
 - Add $datatype accessor
+- Internal: recode parts of the gretl GUI to avoid dependence
+  on deprecated GTK APIs
+- Several fixes for reading and writing gretl session files
 
 6/13/2008 version 1.7.5
 - max() and min() functions: extend the syntax to allow a list

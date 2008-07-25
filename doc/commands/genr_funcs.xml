@@ -76,6 +76,16 @@
       </description>
     </function>
 
+    <function name="$datatype" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns an integer value representing the sort of dataset that is
+	  currently loaded: 0 = no data; 1 = cross-sectional (undated) data; 2
+	  = time-series data; 3 = panel data.
+	</para>
+      </description>
+    </function>
+
     <function name="$df" section="access" output="scalar">
       <description>
 	<para>
@@ -2873,7 +2883,7 @@
 	    <fncref targ="pmax"/>
 	    <fncref targ="pmean"/>
 	    <fncref targ="pnobs"/>
-	    <fncref targ="pmax"/>
+	    <fncref targ="psd"/>
 	  </seelist>
 	</para>
       </description>
@@ -2898,8 +2908,8 @@
 	  Missing values are skipped. 
 	  <seelist> 
 	    <fncref targ="pmax"/>
-	    <fncref targ="pmean"/>
 	    <fncref targ="pmin"/>
+	    <fncref targ="pmean"/>
 	    <fncref targ="psd"/>
 	  </seelist>
 	</para>

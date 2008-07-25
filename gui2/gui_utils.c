@@ -1563,6 +1563,7 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
     gtk_widget_show(vwin->mbar);
 
     if (role == FUNCS_HELP) {
+	hsize = 82;
 	vsize = 500;
     }
 
