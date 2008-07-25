@@ -1377,9 +1377,9 @@ static char *get_version_string (char *s, int v)
 {
     int x, y, z;
 
-    x = v / 1000;
-    y = (v - x * 1000) / 10;
-    z = v % 10;
+    x = v / 10000;
+    y = (v - x * 10000) / 100;
+    z = v % 100;
 
     sprintf(s, "%d.%d.%d", x, y, z);
     return s;
@@ -1966,7 +1966,7 @@ static int version_number_from_string (const char *s)
     int x, y, z;
 
     sscanf(s, "%d.%d.%d", &x, &y, &z);
-    return 1000 * x + 10 * y + z;
+    return 10000 * x + 100 * y + z;
 }
 
 static void print_package_info (const fnpkg *pkg, PRN *prn)

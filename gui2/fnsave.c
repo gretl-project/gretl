@@ -92,7 +92,7 @@ function_info *finfo_new (void)
     finfo->pub = -1;
     finfo->privlist = NULL;
     finfo->dreq = 0;
-    finfo->minver = 1060;
+    finfo->minver = 10600;
 
     return finfo;
 }
@@ -512,11 +512,11 @@ static void adjust_minver (GtkWidget *w, function_info *finfo)
     get_maj_min_pl(finfo->minver, &maj, &min, &pl);
 
     if (lev == 1) {
-	finfo->minver = 1000 * val + 10 * min + pl;
+	finfo->minver = 10000 * val + 100 * min + pl;
     } else if (lev == 2) {
-	finfo->minver = 1000 * maj + 10 * val + pl;
+	finfo->minver = 10000 * maj + 100 * val + pl;
     } else if (lev == 3) {
-	finfo->minver = 1000 * maj + 10 * min + val;
+	finfo->minver = 10000 * maj + 100 * min + val;
     }
 }
 

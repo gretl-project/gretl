@@ -4757,7 +4757,7 @@ static int get_version_as_scalar (void)
     int x, y, z;
 
     sscanf(GRETL_VERSION, "%d.%d.%d", &x, &y, &z);
-    return 1000 * x + 10 * y + z;
+    return 10000 * x + 100 * y + z;
 }
 
 #define dvar_scalar(i) (i < R_SCALAR_MAX)
