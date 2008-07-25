@@ -552,44 +552,38 @@ static void print_model_table_coeffs (int namewidth, PRN *prn)
     }
 }
 
-static int any_log_lik (void)
+enum {
+    MT_LNL,
+    MT_RSQ,
+    MT_FSTAT
+};
+
+static int any_stat (int s)
 {
     int i;
 
     for (i=0; i<n_models; i++) {
-	if (table_models[i] == NULL) {
-	    continue;
-	}
-	if (!na(table_models[i]->lnL)) {
-	    return 1;
+	if (table_models[i] != NULL) {
+	    if (s == MT_LNL && !na(table_models[i]->lnL)) {
+		return 1;
+	    } else if (s == MT_RSQ && !na(table_models[i]->rsq)) {
+		return 1;
+	    } else if (s == MT_FSTAT && !na(table_models[i]->fstt)) {
+		return 1;
+	    }
 	}
     }
 
     return 0;
 }
 
-static int any_r_squared (void)
-{
-    int i;
-
-    for (i=0; i<n_models; i++) {
-	if (table_models[i] == NULL) {
-	    continue;
-	}
-	if (!na(table_models[i]->rsq)) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static void print_n_r_squared (int width0, PRN *prn, int *binary)
+static void print_equation_stats (int width0, PRN *prn, int *binary)
 {
     const MODEL *pmod;
     int same_df, any_R2, any_ll;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
+    double rsq;
     int j;
 
     if (rtf) {
@@ -626,8 +620,9 @@ static void print_n_r_squared (int width0, PRN *prn, int *binary)
     }
 
     same_df = common_df();
-    any_R2 = any_r_squared();
-    any_ll = any_log_lik();
+
+    any_R2 = any_stat(MT_RSQ);
+    any_ll = any_stat(MT_LNL);
 
     if (any_R2) {
 	/* print R^2 values */
@@ -644,7 +639,12 @@ static void print_n_r_squared (int width0, PRN *prn, int *binary)
 	for (j=0; j<n_models; j++) {
 	    pmod = table_models[j];
 	    if (pmod == NULL) continue;
-	    if (na(pmod->rsq)) {
+	    if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+		rsq = pmod->rsq;
+	    } else {
+		rsq = (same_df)? pmod->rsq : pmod->adjrsq;
+	    }
+	    if (na(rsq)) {
 		if (tex) {
 		    pputs(prn, "& ");
 		} else if (rtf) {
@@ -663,8 +663,6 @@ static void print_n_r_squared (int width0, PRN *prn, int *binary)
 		    pprintf(prn, "%#*.4g", colwidth, pmod->rsq);
 		}
 	    } else {
-		double rsq = (same_df)? pmod->rsq : pmod->adjrsq;
-
 		if (tex) {
 		    pprintf(prn, "& %.4f ", rsq);
 		} else if (rtf) {
@@ -689,7 +687,6 @@ static void print_n_r_squared (int width0, PRN *prn, int *binary)
 
     if (any_ll) {
 	/* print log-likelihoods */
-
 	if (tex) {
 	    pputs(prn, "$\\ell$");
 	} else if (rtf) {
@@ -820,7 +817,7 @@ int display_model_table (int gui)
     pputc(prn, '\n'); 
 
     print_model_table_coeffs(namelen, prn);
-    print_n_r_squared(namelen + 1, prn, &binary);
+    print_equation_stats(namelen + 1, prn, &binary);
 
     if (use_tstats) {
 	pprintf(prn, "%s\n", _("t-statistics in parentheses"));
@@ -919,7 +916,7 @@ static int tex_print_model_table (PRN *prn)
     pputs(prn, " [6pt] \n");   
 
     print_model_table_coeffs(0, prn);
-    print_n_r_squared(0, prn, &binary);
+    print_equation_stats(0, prn, &binary);
 
     pputs(prn, "\\end{longtable}\n\n");
     pputs(prn, "\\vspace{1em}\n");
@@ -1024,7 +1021,7 @@ static int rtf_print_model_table (PRN *prn)
     }
 
     print_model_table_coeffs(0, prn);
-    print_n_r_squared(0, prn, &binary);
+    print_equation_stats(0, prn, &binary);
 
     pputs(prn, "}\n\n");
 

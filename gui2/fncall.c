@@ -879,7 +879,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     char fnline[MAXLINE];
     const char *fnname;
     FuncDataReq dreq;
-    float minver;
+    int minver;
     PRN *prn = NULL;
     call_info *cinfo = NULL;
     int orig_v;

@@ -55,7 +55,7 @@ struct function_info_ {
     int *privlist;
     int iface;
     FuncDataReq dreq;
-    float minver;
+    int minver;
     int upload;
     int saveas;
 };
@@ -92,7 +92,7 @@ function_info *finfo_new (void)
     finfo->pub = -1;
     finfo->privlist = NULL;
     finfo->dreq = 0;
-    finfo->minver = 1.6;
+    finfo->minver = 1060;
 
     return finfo;
 }
@@ -496,17 +496,11 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 		     G_CALLBACK(dreq_select), finfo);
 }
 
-static void get_maj_min_pl (float minver, int *maj, int *min, int *pl)
+static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
 {
-    char vstr[5], minstr[2], plstr[2];
-
-    gretl_push_c_numeric_locale();
-    sprintf(vstr, "%.2f", (double) minver);
-    gretl_pop_c_numeric_locale();
-
-    sscanf(vstr, "%d.%1s%1s", maj, minstr, plstr);
-    *min = atoi(minstr);
-    *pl = atoi(plstr);
+    *maj = v / 1000;
+    *min = (v - *maj * 1000) / 10;
+    *pl = v % 10;
 }
 
 static void adjust_minver (GtkWidget *w, function_info *finfo)
@@ -518,11 +512,11 @@ static void adjust_minver (GtkWidget *w, function_info *finfo)
     get_maj_min_pl(finfo->minver, &maj, &min, &pl);
 
     if (lev == 1) {
-	finfo->minver = (float) val + min / 10.0 + pl / 100.0;
+	finfo->minver = 1000 * val + 10 * min + pl;
     } else if (lev == 2) {
-	finfo->minver = (float) maj + val / 10.0 + pl / 100.0;
+	finfo->minver = 1000 * maj + 10 * val + pl;
     } else if (lev == 3) {
-	finfo->minver = (float) maj + min / 10.0 + val / 100.0;
+	finfo->minver = 1000 * maj + 10 * min + val;
     }
 }
 
@@ -1039,7 +1033,7 @@ int save_user_functions (const char *fname, gpointer p)
     fprintf(stderr, "finfo->pub = %d\n", finfo->pub);
     printlist(finfo->privlist, "finfo->privlist");
     fprintf(stderr, "dreq=%d\n", finfo->dreq);
-    fprintf(stderr, "minver=%.2f\n", (double) finfo->minver);
+    fprintf(stderr, "minver=%d\n", finfo->minver);
 #endif
 		
     err = write_function_package(finfo->pkg,

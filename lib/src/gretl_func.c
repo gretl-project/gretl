@@ -76,7 +76,7 @@ struct fnpkg_ {
     char *version;
     char *date;
     char *descrip;
-    float minver;
+    int minver;
     FuncDataReq dreq;
     ufunc *iface;
     ufunc **priv;
@@ -1373,15 +1373,16 @@ void gretl_function_set_private (int i, int priv)
     }
 }
 
-static void get_version_string (float ver, char *vstr)
+static char *get_version_string (char *s, int v)
 {
-    gretl_push_c_numeric_locale();
-    sprintf(vstr, "%.2f", (double) ver);
-    gretl_pop_c_numeric_locale();
+    int x, y, z;
 
-    vstr[4] = vstr[3];
-    vstr[3] = '.';
-    vstr[5] = 0;
+    x = v / 1000;
+    y = (v - x * 1000) / 10;
+    z = v % 10;
+
+    sprintf(s, "%d.%d.%d", x, y, z);
+    return s;
 }
 
 static fnpkg *new_package_with_funcs (const char *fname, int pub, 
@@ -1431,7 +1432,7 @@ int write_function_package (fnpkg *pkg,
 			    const char *date,
 			    const char *descrip,
 			    FuncDataReq dreq,
-			    float minver)
+			    int minver)
 {
     char *pkgname;
     FILE *fp;
@@ -1493,10 +1494,9 @@ int write_function_package (fnpkg *pkg,
     }
 
     if (minver > 0) {
-	char vstr[6];
+	char vstr[8];
 
-	get_version_string(minver, vstr);
-	fprintf(fp, " minver=\"%s\"", vstr);
+	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, minver));
     }
 
     fputs(">\n", fp);
@@ -1576,7 +1576,7 @@ int function_package_get_info (const char *fname,
 			       char **date,
 			       char **descrip,
 			       FuncDataReq *dreq,
-			       float *minver)
+			       int *minver)
 {
     fnpkg *pkg = NULL;
     int pubnum = -1;
@@ -1961,12 +1961,12 @@ static int real_load_package (fnpkg *pkg)
     return err;
 }
 
-static float version_float_from_string (const char *s)
+static int version_number_from_string (const char *s)
 {
-    int maj, min, pl;
+    int x, y, z;
 
-    sscanf(s, "%d.%d.%d", &maj, &min, &pl);
-    return maj + min / 10.0 + pl / 100.0;
+    sscanf(s, "%d.%d.%d", &x, &y, &z);
+    return 1000 * x + 10 * y + z;
 }
 
 static void print_package_info (const fnpkg *pkg, PRN *prn)
@@ -2051,7 +2051,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
     }
 
     if (gretl_xml_get_prop_as_string(node, "minver", &tmp)) {
-	pkg->minver = version_float_from_string(tmp);
+	pkg->minver = version_number_from_string(tmp);
 	free(tmp);
     }
 
@@ -3287,18 +3287,18 @@ static int allocate_function_args (fncall *call,
 }
 
 int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
-			  float minver)
+			  int minver)
 {
-    static float thisver = 0.0;
+    static int thisver = 0;
 
-    if (thisver == 0.0) {
-	thisver = version_float_from_string(GRETL_VERSION);
+    if (thisver == 0) {
+	thisver = version_number_from_string(GRETL_VERSION);
     }
 
     if (minver > thisver) {
-	char vstr[6];
+	char vstr[8];
 
-	get_version_string(minver, vstr);
+	get_version_string(vstr, minver);
 	sprintf(gretl_errmsg, "This function needs gretl version %s", vstr);
 	return 1;
     }
@@ -3327,7 +3327,7 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 
 static int 
 maybe_check_function_needs (const DATAINFO *pdinfo,
-				 const ufunc *fun)
+			    const ufunc *fun)
 {
     const fnpkg *pkg = ufunc_get_parent_package(fun);
 
