@@ -314,14 +314,21 @@ function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
 end function
 \end{code}
 %
-If the caller does not care to get the \texttt{ess} value, it should
+If the caller does not care to get the \texttt{ess} value, it can
 use \texttt{null} in place of a real argument:
 %
 \begin{code}
 series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
+%
+Alternatively, trailing function arguments that have default values 
+may be omitted, so the following would also be a valid call:
+%
+\begin{code}
+series resid = get_uhat_and_ess(price, xlist)
+\end{code}
 
-Using pointers may also be useful for optimizing performance: even if
+Pointer arguments may also be useful for optimizing performance: even if
 a variable is not modified inside the function, it may be a good idea
 to pass it as a pointer if it occupies a lot of memory. Otherwise, the
 time \app{gretl} spends transcribing the value of the variable to the
@@ -354,7 +361,7 @@ function a(matrix X)
   return scalar r
 end function
 
-function b(matrix *X)
+function b(const matrix *X)
   r = rows(X)
   return scalar r
 end function
@@ -384,41 +391,77 @@ printf "Elapsed time:\n\
 %$
 \end{script}
 
+If a pointer argument is used for this sort of purpose --- and the
+object to which the pointer points is not modified by the function ---
+it is a good idea to signal this to the user by adding the
+\texttt{const} qualifier, as shown for function \texttt{b} in
+Example~\ref{ex:perf-pointers}.  When a pointer argument is qualified
+in this way, any attempt to modify the object within the function will
+generate an error.
+
 \subsection{List arguments}
 
 The use of a named list as an argument to a function gives a means of
 supplying a function with a set of variables whose number is unknown
 when the function is written --- for example, sets of regressors or
 instruments.  Within the function, the list can be passed on to
-commands such as \texttt{ols}, or it can be ``unpacked'' using a
-\texttt{foreach} loop construct.  For example, suppose you have a list
-\texttt{X} and want to calculate the standard deviation of each
-variable in the list:
+commands such as \texttt{ols}.  
+
+A list argument can also be ``unpacked'' using a \texttt{foreach} loop
+construct, but this requires some care.  For example, suppose you have
+a list \texttt{X} and want to calculate the standard deviation of each
+variable in the list.  You can do:
+%
+\begin{code}
+loop foreach i X
+   scalar sd_$i = sd(X.$i)
+end loop
+\end{code}
+
+\textit{Please note}: a special piece of syntax is needed in this
+context.  If we wanted to perform the above task on a list in a
+regular script (not inside a function), we could do
 %
 \begin{code}
 loop foreach i X
    scalar sd_$i = sd($i)
 end loop
 \end{code}
+%
+where \verb|$i| gets the name of the variable at position $i$ in the
+list, and \verb|sd($i)| gets its standard deviation.  But inside a
+function, working on a list supplied as an argument, if we want to
+reference an individual variable in the list we must use the syntax
+\textsl{listname.varname}.  Hence in the example above we write
+\verb|sd(X.$i)|.
+
+This is necessary to avoid possible collisions between the name-space
+of the function and the name-space of the caller script.  For example,
+suppose we have a function that takes a list argument, and that
+defines a local variable called \texttt{y}.  Now suppose that this
+function is passed a list containing a variable named \texttt{y}.  If
+the two name-spaces were not separated we'd either get an error, or
+the external variable \texttt{y} would be silently over-written by the
+local one.  It is important, therefore, that list-argument variables
+should not be ``visible'' by name within functions.  To ``get hold
+of'' such variables you need to use the form of identification just
+mentioned: the name of the list, followed by a dot, followed by the
+name of the variable.
+
+\tip{The treatment of list-argument variables described above is new
+  in \app{gretl} 1.7.6.  The problem it addresses is quite subtle, and
+  was discovered only recently.  Existing functions that use
+  \texttt{foreach} loops on list arguments may need to be modified.
+  For a limited time, there is a special switch available that
+  restores the old behavior: that is, it enables support for functions
+  that do not use the \textsl{listname.varname} syntax.  The command
+  to use is \texttt{set protect\_lists off}.  But we recommend
+  updating old functions as soon as possible.}
 
 When a named list of variables is passed to a function, the function
-is provided with a copy of the list.  The variables referenced in the
-list are, however, made directly accessible to the function, in a
-similar manner to the case where a scalar or series argument is passed
-in ``pointer'' form, as discussed above.  Passing a list is therefore
-another means of allowing a function to do more in the way of
-modifying data at the level of the caller than simply offering a
-return value.  If the variables will \textit{not} be modified inside
-the function, it is a good idea to flag this fact using the
-\texttt{const} modifier in the listing of parameters:
-%
-\begin{code}
-function myfunc (scalar y, const list X)
-\end{code}
-%
-When a list is marked \texttt{const}, any attempt to rename, delete
-or overwrite the original values of the variables in the list will
-generate an error.
+is actually provided with a copy of the list.  The function may modify
+this copy (for instance, adding or removing members), but the original
+list at the leve of the caller is not modified.
 
 If a list argument to a function is optional, this should be indicated
 by appending a default value of \texttt{null}, as in
@@ -428,11 +471,9 @@ function myfunc (scalar y, list X[null])
 \end{code}
 %
 In that case, if the caller gives \texttt{null} as the list argument
-then the named list \texttt{X} inside the function will be empty.
-This possibility can be detected using the \texttt{nelem()} function,
-which returns 0 for an empty list.  (This mechanism can also be used
-to check whether a named, but empty, list was supplied as an
-argument.)
+(or omits the last argument) the named list \texttt{X} inside the
+function will be empty.  This possibility can be detected using the
+\texttt{nelem()} function, which returns 0 for an empty list.
 
 \subsection{String arguments}
 
@@ -525,7 +566,7 @@ descriptive labels for variables generated in a function.
 function make_cubes (list xlist)
    list cubes = null
    loop foreach i xlist --quiet
-      series $i3 = $i^3
+      series $i3 = (xlist.$i)^3
       setinfo $i3 -d "cube of $i"
       list cubes += $i3
     end loop
