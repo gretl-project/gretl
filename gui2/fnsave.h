@@ -32,4 +32,6 @@ int no_user_functions_check (void);
 
 void get_default_package_name (char *fname, gpointer p, int mode);
 
+void update_sample_script (windata_t *vwin);
+
 #endif /* FNSAVE_H */

@@ -1363,6 +1363,8 @@ int gretl_function_get_info (int i, const char *key, char const **value)
 	    *value = pkg->descrip;
 	} else if (!strcmp(key, "sample")) {
 	    *value = pkg->sample;
+	} else if (!strcmp(key, "pkgname")) {
+	    *value = pkg->name;
 	}
     }
 
@@ -1687,6 +1689,12 @@ int function_package_get_info (const char *fname,
     return err;
 }
 
+static char *trim_sample_script (char *s)
+{
+    while (isspace(*s)) s++;
+    return tailstrip(s);
+}
+
 static void print_function_package (fnpkg *pkg, FILE *fp)
 {
     int i;
@@ -1713,7 +1721,12 @@ static void print_function_package (fnpkg *pkg, FILE *fp)
     }
 
     if (pkg->sample != NULL) {
-	gretl_xml_put_tagged_string("sample-script", pkg->sample, fp);
+	/* escapes may be needed; also perhaps trimming */
+	char *s = trim_sample_script(pkg->sample);
+
+	fputs("<sample-script>\n", fp);
+	gretl_xml_put_raw_string(s, fp);
+	fputs("\n</sample-script>\n", fp);	
     }
 
     fputs("</gretl-function-package>\n", fp);

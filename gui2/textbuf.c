@@ -503,7 +503,8 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 }
 
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
-			      r == VIEW_SCRIPT)
+			      r == VIEW_SCRIPT || \
+			      r == EDIT_FUNC_CODE)
 
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
@@ -2119,6 +2120,8 @@ static void line_numbers_cb (GtkWidget *w, windata_t *vwin)
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), !s);
 }
 
+#define editing_code(r) (r == EDIT_SCRIPT || r == EDIT_FUNC_CODE)
+
 static GtkWidget *
 build_script_popup (windata_t *vwin, struct textbit **ptb)
 {
@@ -2150,7 +2153,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     tb->commented = text_is_commented(tb->chunk);
 
-    if (tb->commented > 0 && vwin->role != EDIT_SCRIPT) {
+    if (tb->commented > 0 && !editing_code(vwin->role)) {
 	g_free(tb->chunk);
 	free(tb);
 	*ptb = NULL;
@@ -2159,7 +2162,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     *ptb = tb;
 
-    if (tb->commented <= 0) {
+    if (tb->commented <= 0 && vwin->role != EDIT_FUNC_CODE) {
 	/* we have some uncommented material: allow exec option */
 	if (tb->selected) {
 	    item = gtk_menu_item_new_with_label(_("Execute region"));
@@ -2173,7 +2176,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
-    if (vwin->role == EDIT_SCRIPT && tb->commented >= 0) {
+    if (editing_code(vwin->role) && tb->commented >= 0) {
 	/* material is either all commented or all uncommented:
 	   allow comment/uncomment option */
 	int i = (tb->selected && !tb->commented)? 2 : 
@@ -2188,7 +2191,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
-    if (vwin->role == EDIT_SCRIPT) {
+    if (editing_code(vwin->role)) {
 	if (tb->selected) {
 	    item = gtk_menu_item_new_with_label(smarttab? 
 						_("Auto-indent region") :

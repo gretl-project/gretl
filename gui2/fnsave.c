@@ -44,6 +44,7 @@ struct function_info_ {
     GtkWidget *ifsel;
     GtkWidget *codesel;
     GtkWidget *check;
+    windata_t *samplewin;
     fnpkg *pkg;
     char *fname;
     char *author;
@@ -90,6 +91,8 @@ function_info *finfo_new (void)
     finfo->saveas = 0;
     finfo->iface = -1;
 
+    finfo->samplewin = NULL;
+
     finfo->help = NULL;
     finfo->pub = -1;
     finfo->privlist = NULL;
@@ -109,6 +112,10 @@ static void finfo_free (function_info *finfo)
     free(finfo->sample);
     free(finfo->privlist);
     free(finfo->help);
+
+    if (finfo->samplewin != NULL) {
+	gtk_widget_destroy(finfo->samplewin->main);
+    }
 
     free(finfo);
 }
@@ -366,6 +373,75 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 	g_object_set_data(G_OBJECT(vwin->text), "iface", 
 			  GINT_TO_POINTER(finfo->iface));
     }
+}
+
+void update_sample_script (windata_t *vwin)
+{
+    function_info *finfo;
+
+    finfo = g_object_get_data(G_OBJECT(vwin->main), "finfo");
+
+    if (finfo != NULL) {
+	gchar *text = textview_get_text(vwin->text);
+
+	free(finfo->sample);
+	finfo->sample = gretl_strdup(text);
+	g_free(text);
+    }
+}
+
+static void
+nullify_sample_window (GtkWidget *w, function_info *finfo)
+{
+    finfo->samplewin = NULL;
+}
+
+static void sample_script_box (void)
+{
+    infobox("This package does not yet contain a sample script");
+}
+
+static void edit_sample_callback (GtkWidget *w, function_info *finfo)
+{
+    const char *pkgname = NULL;
+    gchar *title;
+    PRN *prn = NULL;
+
+    if (finfo->samplewin != NULL) {
+	gtk_window_present(GTK_WINDOW(finfo->samplewin->main));
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (finfo->pkg != NULL) {
+	gretl_function_get_info(finfo->pub, "pkgname", &pkgname);
+    } 
+
+    if (pkgname != NULL) {
+	title = g_strdup_printf("%s-sample", pkgname);
+    } else {
+	title = g_strdup("sample script");
+    }
+
+    if (finfo->sample != NULL) {
+	pputs(prn, finfo->sample);
+	pputc(prn, '\n');
+    } else {
+	sample_script_box();
+    }
+
+    finfo->samplewin = view_buffer(prn, 78, 350, title,
+				   EDIT_FUNC_CODE, finfo);
+
+    g_object_set_data(G_OBJECT(finfo->samplewin->main), "finfo",
+		      finfo);
+    g_signal_connect(G_OBJECT(finfo->samplewin->main), "destroy",
+		     G_CALLBACK(nullify_sample_window), finfo);
+
+    g_free(title);
 }
 
 static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
@@ -715,6 +791,15 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(gfn_to_script_callback), finfo);
 
+    gtk_widget_show_all(hbox);
+
+    /* edit sample script button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    button = gtk_button_new_with_label(_("Edit sample script"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(edit_sample_callback), finfo);
     gtk_widget_show_all(hbox);
 
     /* check box for upload option */

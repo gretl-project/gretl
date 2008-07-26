@@ -51,6 +51,7 @@
 #include "fileselect.h"
 #include "toolbar.h"
 #include "winstack.h"
+#include "fnsave.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -989,7 +990,11 @@ static int update_func_code (windata_t *vwin)
 
 void view_window_save (GtkWidget *widget, windata_t *vwin)
 {
-    if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
+    if (vwin->role == EDIT_FUNC_CODE && *vwin->fname == '\0') {
+	/* function package, sample script window */
+	update_sample_script(vwin);
+	mark_vwin_content_saved(vwin);
+    } else if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	/* special case: a newly created script */
 	if (vwin->role == EDIT_SCRIPT) {
 	    file_selector(_("Save command script"), SAVE_SCRIPT, 
