@@ -76,6 +76,7 @@ struct fnpkg_ {
     char *version;
     char *date;
     char *descrip;
+    char *sample; /* sample caller script */
     int minver;
     FuncDataReq dreq;
     ufunc *iface;
@@ -1360,6 +1361,8 @@ int gretl_function_get_info (int i, const char *key, char const **value)
 	    *value = pkg->date;
 	} else if (!strcmp(key, "pkgdesc")) {
 	    *value = pkg->descrip;
+	} else if (!strcmp(key, "sample")) {
+	    *value = pkg->sample;
 	}
     }
 
@@ -1431,6 +1434,7 @@ int write_function_package (fnpkg *pkg,
 			    const char *version,
 			    const char *date,
 			    const char *descrip,
+			    const char *sample,
 			    FuncDataReq dreq,
 			    int minver)
 {
@@ -1519,6 +1523,12 @@ int write_function_package (fnpkg *pkg,
 	}
     }
 
+    if (sample != NULL) {
+	fputs("<sample-script>\n", fp);
+	fputs(sample, fp);
+	fputs("</sample-script>\n", fp);
+    }
+
     fputs("</gretl-function-package>\n", fp);
     fputs("</gretl-functions>\n", fp);
 
@@ -1529,6 +1539,7 @@ int write_function_package (fnpkg *pkg,
 	pkg->version = gretl_strdup(version);
 	pkg->date = gretl_strdup(date);
 	pkg->descrip = gretl_strdup(descrip);
+	pkg->sample = gretl_strdup(sample);
     } else {
 	if (strcmp(fname, pkg->fname)) {
 	    free(pkg->fname);
@@ -1549,6 +1560,11 @@ int write_function_package (fnpkg *pkg,
 	if (strcmp(descrip, pkg->descrip)) {
 	    free(pkg->descrip);
 	    pkg->descrip = gretl_strdup(descrip);
+	}
+	if (sample != NULL && 
+	    (pkg->sample == NULL || strcmp(sample, pkg->sample))) {
+	    free(pkg->sample);
+	    pkg->sample = gretl_strdup(sample);
 	}
     } 
 
@@ -1575,6 +1591,7 @@ int function_package_get_info (const char *fname,
 			       char **version,
 			       char **date,
 			       char **descrip,
+			       char **sample,
 			       FuncDataReq *dreq,
 			       int *minver)
 {
@@ -1619,6 +1636,9 @@ int function_package_get_info (const char *fname,
     }
     if (descrip != NULL) {
 	*descrip = gretl_strdup(pkg->descrip);
+    }
+    if (sample != NULL) {
+	*sample = gretl_strdup(pkg->sample);
     }
     if (dreq != NULL) {
 	*dreq = pkg->dreq;
@@ -1690,6 +1710,10 @@ static void print_function_package (fnpkg *pkg, FILE *fp)
 	if (ufuns[i]->pkgID == pkg->ID) {
 	    write_function_xml(ufuns[i], fp);
 	}
+    }
+
+    if (pkg->sample != NULL) {
+	gretl_xml_put_tagged_string("sample-script", pkg->sample, fp);
     }
 
     fputs("</gretl-function-package>\n", fp);
@@ -1765,6 +1789,7 @@ static void function_package_free (fnpkg *pkg, int mode)
 	free(pkg->version);
 	free(pkg->date);
 	free(pkg->descrip);
+	free(pkg->sample);
 	free(pkg);
     }
 }
@@ -1883,6 +1908,7 @@ static fnpkg *function_package_new (const char *fname)
     pkg->version = NULL;
     pkg->date = NULL;
     pkg->descrip = NULL;
+    pkg->sample = NULL;
     pkg->dreq = 0;
     pkg->minver = 0;
 
@@ -1980,6 +2006,12 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
 
     pputs(prn, "\n\n");
     real_user_function_help(pkg->iface, 0, prn);
+
+    if (pkg->sample != NULL) {
+	pputs(prn, "Sample script:\n");
+	pputs(prn, pkg->sample);
+	pputc(prn, '\n');
+    }
 }
 
 static void print_package_code (const fnpkg *pkg, PRN *prn)
@@ -2069,7 +2101,10 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->date);
 	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
+	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
 	} 
+
 	cur = cur->next;
     }
 
@@ -4087,6 +4122,12 @@ static void real_user_function_help (ufunc *fun, int ci, PRN *prn)
 	pputs(prn, fun->help);
 	pprintf(prn, "\n\n");
     }
+
+    if (pkg != NULL && pkg->sample != NULL) {
+	pputs(prn, "Sample script:\n");
+	pputs(prn, pkg->sample);
+	pprintf(prn, "\n\n");
+    }	
 }
 
 int user_function_help (const char *fnname, PRN *prn)

@@ -50,6 +50,7 @@ struct function_info_ {
     char *version;
     char *date;
     char *pkgdesc;
+    char *sample;
     char *help;
     int pub;
     int *privlist;
@@ -84,6 +85,7 @@ function_info *finfo_new (void)
     finfo->version = NULL;
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
+    finfo->sample = NULL;
     finfo->upload = 0;
     finfo->saveas = 0;
     finfo->iface = -1;
@@ -104,6 +106,7 @@ static void finfo_free (function_info *finfo)
     free(finfo->version);
     free(finfo->date);
     free(finfo->pkgdesc);
+    free(finfo->sample);
     free(finfo->privlist);
     free(finfo->help);
 
@@ -1044,6 +1047,7 @@ int save_user_functions (const char *fname, gpointer p)
 				 finfo->version,
 				 finfo->date,
 				 finfo->pkgdesc,
+				 finfo->sample,
 				 finfo->dreq,
 				 finfo->minver);
 
@@ -1170,6 +1174,7 @@ void edit_function_package (const char *fname, int *loaderr)
 				    &finfo->version,
 				    &finfo->date,
 				    &finfo->pkgdesc,
+				    &finfo->sample,
 				    &finfo->dreq,
 				    &finfo->minver);
 

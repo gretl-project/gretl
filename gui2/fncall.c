@@ -918,6 +918,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 				    NULL,
 				    NULL,
 				    NULL,
+				    NULL,
 				    &dreq,
 				    &minver);
 

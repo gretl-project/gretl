@@ -61,10 +61,7 @@
          matrix | string) 'series'
 >
 
-<!ELEMENT sample_script (code)>
-<!ATTLIST sample_script
-   name CDATA #REQUIRED
-> 
+<!ELEMENT sample-script (#PCDATA)>
 
 <!ELEMENT code (#PCDATA)>
 
