@@ -1776,8 +1776,8 @@
       <description>
 	<para>
 	  Returns 0 if <argname>s</argname> is the identifier for a
-	  currently defined object, be it a scalar, a series, a matrix or
-	  a list; otherwise returns 1.
+	  currently defined object, be it a scalar, a series, a matrix,
+	  list or string; otherwise returns 1.
 	  <seelist>
 	    <fncref targ="islist"/>
 	    <fncref targ="isseries"/>

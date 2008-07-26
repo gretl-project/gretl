@@ -2627,7 +2627,9 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	}
     }
 
-    if (gretl_ref_type(type) || type == GRETL_TYPE_LIST) {
+    if (gretl_ref_type(type) || 
+	type == GRETL_TYPE_LIST ||
+	type == GRETL_TYPE_STRING) {
 	if (*s == '[') { 
 	    err = read_param_option(&s, param);
 	}
@@ -3242,7 +3244,9 @@ static int allocate_function_args (fncall *call,
 		err = localize_list(call, arg->val.str, fp, pdinfo);
 	    }
 	} else if (fp->type == GRETL_TYPE_STRING) {
-	    err = add_string_as(arg->val.str, fp->name);
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = add_string_as(arg->val.str, fp->name);
+	    }
 	} else if (fp->type == GRETL_TYPE_SCALAR_REF ||
 		   fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
