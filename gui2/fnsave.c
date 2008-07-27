@@ -396,11 +396,6 @@ nullify_sample_window (GtkWidget *w, function_info *finfo)
     finfo->samplewin = NULL;
 }
 
-static void sample_script_box (void)
-{
-    infobox("This package does not yet contain a sample script");
-}
-
 static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 {
     const char *pkgname = NULL;
@@ -410,6 +405,17 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     if (finfo->samplewin != NULL) {
 	gtk_window_present(GTK_WINDOW(finfo->samplewin->main));
 	return;
+    }
+
+    if (finfo->sample == NULL) {
+	int resp = yes_no_dialog("gretl",
+				 "This package does not yet contain a sample script.\n"
+				 "Write one now?", 
+				 0);
+
+	if (resp != GRETL_YES) {
+	    return;
+	}
     }
 
     if (bufopen(&prn)) {
@@ -429,9 +435,7 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     if (finfo->sample != NULL) {
 	pputs(prn, finfo->sample);
 	pputc(prn, '\n');
-    } else {
-	sample_script_box();
-    }
+    } 
 
     finfo->samplewin = view_buffer(prn, 78, 350, title,
 				   EDIT_FUNC_CODE, finfo);
@@ -577,8 +581,8 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 
 static void get_maj_min_pl (int v, int *maj, int *min, int *pl)
 {
-    *maj = v / 1000;
-    *min = (v - *maj * 1000) / 10;
+    *maj = v / 10000;
+    *min = (v - *maj * 10000) / 100;
     *pl = v % 10;
 }
 
@@ -1141,7 +1145,11 @@ int save_user_functions (const char *fname, gpointer p)
     } else {
 	maybe_update_func_files_window(1);
 	if (finfo->upload) {
-	    do_upload(fname);
+	    if (finfo->sample == NULL) {
+		warnbox("Please add a sample script for this package");
+	    } else {
+		do_upload(fname);
+	    }
 	}
     }
 

@@ -86,8 +86,10 @@ winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
     case STACK_DESTROY:	
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] != NULL) {
+#if 0
 		fprintf(stderr, "winstack: destroying widget at %p\n", 
 			(void *) wstack[i]);
+#endif
 		gtk_widget_destroy(wstack[i]);
 	    }
 	}
