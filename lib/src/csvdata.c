@@ -340,7 +340,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 	    } else if (nmiss > 20 * T) {
 		pprintf(prn, "Probably monthly data\n");
 		*pd = 12;
-	    } else if (nmiss > 5 * T) {
+	    } else if (nmiss > 3 * T) {
 		pprintf(prn, "Probably weekly data\n");
 		*pd = pdinfo->pd = 52;
 	    } else {
