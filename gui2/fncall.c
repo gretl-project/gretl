@@ -834,6 +834,7 @@ static int needs_quoting (call_info *cinfo, int i)
     char *s = cinfo->args[i];
 
     return (t == GRETL_TYPE_STRING && 
+	    strcmp(s, "null") && 
 	    get_string_by_name(s) == NULL &&
 	    *s != '"');
 }

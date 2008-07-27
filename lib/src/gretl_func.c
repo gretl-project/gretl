@@ -393,7 +393,9 @@ int fn_param_optional (const ufunc *fun, int i)
 
     t = fun->params[i].type;
 
-    return ((gretl_ref_type(t) || t == GRETL_TYPE_LIST) && 
+    return ((gretl_ref_type(t) || 
+	     t == GRETL_TYPE_LIST ||
+	     t == GRETL_TYPE_STRING) && 
 	    (fun->params[i].flags & ARG_OPTIONAL));
 }
 
