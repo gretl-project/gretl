@@ -3002,9 +3002,6 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
 	const char *s = p->dinfo->varname[n->vnum];
 
 	ret->v.str = gretl_func_get_arg_name(s, &p->err);
-	if (!p->err && ret->v.str == NULL) {
-	    p->err = E_ALLOC;
-	} 	
     }
 
     return ret;
@@ -6973,7 +6970,7 @@ static int edit_string (parser *p)
     }
 
     if (src == NULL) {
-	p->err = E_DATA;
+	; /* no-op -- e.g. argname() didn't get anything */
     } else if (p->op == B_ASN) {
 	p->err = save_named_string(p->lh.name, src, NULL);
     } else if (p->op == B_ADD) {

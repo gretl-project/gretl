@@ -5,13 +5,12 @@
 \label{func-define}
 
 Since version 1.3.3, \app{gretl} has contained a mechanism for
-defining functions in the context of a script.  This functionality has
-been through some changes in search of a stable and extensible
-framework.  We believe that the version present in \app{gretl} 1.6.1
-should provide a good basis for future development.
+defining functions, which may be called via the command line, in
+the context of a script, or (if packaged appropriately, see
+section~\ref{sec:func-packages}) via the program's graphical
+interface.
 
-Functions must be defined before they are called.  The syntax for
-defining a function looks like this
+The syntax for defining a function looks like this:
     
 \begin{code}
 function function-name(parameters)
@@ -480,12 +479,12 @@ function will be empty.  This possibility can be detected using the
 
 String arguments can be used, for example, to provide flexibility in
 the naming of variables created within a function.  In the following
-example the function \texttt{movavg} returns a list containing two
+example the function \texttt{mavg} returns a list containing two
 moving averages constructed from an input series, with the names of
 the newly created variables governed by the string argument.
 %
 \begin{code}
-function movavg (series y, string vname)
+function mavg (series y, string vname)
    series @vname_2 = (y+y(-1)) / 2
    series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
    list retlist = @vname_2 @vname_4
@@ -493,7 +492,7 @@ function movavg (series y, string vname)
 end function
 
 open data9-9
-list malist = movavg(nocars, "nocars")
+list malist = mavg(nocars, "nocars")
 print malist --byobs
 \end{code}
 %
@@ -501,6 +500,12 @@ The last line of the script will print two variables named
 \verb|nocars_2| and \verb|nocars_4|.  For details on the handling of
 named strings, see chapter~\ref{chap-persist}.
 
+If a string argument is considered optional, it may be given a
+\texttt{null} default value, as in
+%
+\begin{code}
+function foo (series y, string vname[null])
+\end{code}
 
 \subsection{Retrieving the names of arguments}
 
@@ -512,7 +517,7 @@ within the function whose signature is
 function somefun (series y)
 \end{code}
 %
-we have the series known as \texttt{y}.  In may be useful, however, to
+we have the series known as \texttt{y}.  It may be useful, however, to
 be able to determine the names of the variables provided as arguments.
 This can be done using the function \texttt{argname}, which takes the
 name of a function parameter as its single argument and returns a
@@ -533,13 +538,13 @@ This produces the output
 the series given as 'y' was named QNC
 \end{code}
 
-It should be noted that this will not always work: the arguments given
+Please note that this will not always work: the arguments given
 to functions may be anonymous variables, created on the fly, as in
 \texttt{somefun(log(QNC))} or \texttt{somefun(CPI/100)}.  In that case
-the \textsf{argname} function returns an empty string.  Function
+the \textsf{argname} function fails to return a string.  Function
 writers who wish to make use of this facility should check the return
 from \texttt{argname} using the \texttt{isstring()} function, which
-returns 1 for a non-empty string, 0 otherwise.
+returns 1 when given the name of a string variable, 0 otherwise.
 
 
 \subsection{Return values}
@@ -670,10 +675,10 @@ function pc(series y "Series to process")
   return series foo
 end function
 \end{code}
-In this case, we have appended a string to the function
-argument, as explained in section \ref{func-define}, so to make our
-interface more informative. This is not obligatory: if you omit the
-descriptive string, \app{gretl} will supply a predefined one.
+In this case, we have appended a string to the function argument, as
+explained in section \ref{func-define}, so as to make our interface
+more informative. This is not obligatory: if you omit the descriptive
+string, \app{gretl} will supply a predefined one.
 
 \begin{figure}[htbp]
   \centering
@@ -702,10 +707,9 @@ Start the GUI program and take a look at the ``File, Function files'' menu.
 This menu contains four items: ``On local machine'', ``On server'', ``Edit
 package'', ``New package''.
 
-Select ``New package'' (the command will return an error message,
-unless at least one user-defined function is currently loaded in
-memory --- see the previous point); in the first dialog you get to
-select:
+Select ``New package'' (the will produce an error message unless at
+least one user-defined function is currently loaded in memory --- see
+the previous point); in the first dialog you get to select:
 
 \begin{itemize}
 \item A public function to package.
@@ -722,15 +726,14 @@ part of the ``behind the scenes'' mechanism in a function package.
   \label{fig:package_editor}
 \end{figure}
 
-On clicking ``OK'' a second dialog should appear (see figure
-\ref{fig:package_editor}), where you get to enter the package
-information (currently, author, version, date, and a short
-description).  You also get to enter help text for the public
-interface.  You have a further chance to edit the code of the
-functions to be packaged, by selecting them from the drop-down
-selector and clicking on ``Edit function code''. Finally, you can
-choose to upload the package on gretl's server as soon as it is saved,
-by checking the relevant checkbox.
+On clicking ``OK'' a second dialog should appear (see
+Figure~\ref{fig:package_editor}), where you get to enter the package
+information (author, version, date, and a short description).  You
+also get to enter help text for the public interface.  You have a
+further chance to edit the code of the functions to be packaged, by
+selecting them from the drop-down selector and clicking on ``Edit
+function code''. Finally, you can choose to upload the package on
+gretl's server when it is saved, by checking the relevant box.
 
 Clicking ``OK'' in this dialog leads you to a File Save dialog.  All
 being well, this should be pointing towards a directory named
@@ -741,7 +744,7 @@ that is where the program will look in the special routine for opening
 such files (see below).
 
 Needless to say, the menu command ``File, Function files, Edit package''
-allows you to edit again a local function package.
+allows you to make changes to a local function package.
 
 \vspace{6pt}
 
@@ -772,9 +775,9 @@ you click on ``Info'' you get a window with all the information gretl
 has gleaned from the function package.  If you click on the ``View
 code'' icon in the toolbar of this new window, you get a script view
 window showing the actual function code. Now, back to the ``Function
-packages'' window, if you click on the package's name, the functions
-are loaded into gretl, ready to be called by clicking on the ``Call''
-button.
+packages'' window, if you click on the package's name, the relevant
+functions are loaded into \app{gretl}'s workspace, ready to be called
+by clicking on the ``Call'' button.
 
 After loading the function(s) from the package, open the GUI console.
 Try typing \texttt{help foo}, replacing \texttt{foo} with the name of

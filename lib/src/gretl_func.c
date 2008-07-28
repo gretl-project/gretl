@@ -4046,6 +4046,8 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
     fncall *call = current_function_call();
     char *ret = NULL;
 
+    *err = E_DATA;
+
     if (call != NULL && call->args != NULL) {
 	ufunc *u = call->fun;
 	fnargs *args = call->args;
@@ -4053,18 +4055,15 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 
 	for (i=0; i<n; i++) {
 	    if (!strcmp(argvar, u->params[i].name)) {
+		*err = 0;
 		if (args->arg[i]->upname != NULL) {
 		    ret = gretl_strdup(args->arg[i]->upname); 
+		    if (ret == NULL) {
+			*err = E_ALLOC;
+		    }
 		}
 		break;
 	    }
-	}
-    }
-
-    if (ret == NULL) {
-	ret = gretl_strdup("");
-	if (ret == NULL) {
-	    *err = E_ALLOC;
 	}
     }
 
