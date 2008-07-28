@@ -742,7 +742,7 @@ static void
 obs_button_stop_spinning (ObsButton *spin)
 {
     if (spin->timer) {
-	gtk_timeout_remove (spin->timer);
+	g_source_remove (spin->timer);
 	spin->timer = 0;
 	spin->timer_calls = 0;
 	spin->need_timer = FALSE;
@@ -770,8 +770,8 @@ start_spinning (ObsButton *spin,
     if (!spin->timer) {
 	spin->timer_step = step;
 	spin->need_timer = TRUE;
-	spin->timer = gtk_timeout_add (OBS_BUTTON_INITIAL_TIMER_DELAY, 
-				       (GtkFunction) obs_button_timer, (gpointer) spin);
+	spin->timer = g_timeout_add (OBS_BUTTON_INITIAL_TIMER_DELAY, 
+				     (GSourceFunc) obs_button_timer, (gpointer) spin);
     }
 
     obs_button_redraw (spin);
@@ -891,7 +891,7 @@ obs_button_motion_notify (GtkWidget      *widget,
     return GTK_WIDGET_CLASS (parent_class)->motion_notify_event (widget, event);
 }
 
-static gint
+static gboolean
 obs_button_timer (ObsButton *obs_button)
 {
     gboolean retval = FALSE;
@@ -906,8 +906,8 @@ obs_button_timer (ObsButton *obs_button)
 
 	if (obs_button->need_timer) {
 	    obs_button->need_timer = FALSE;
-	    obs_button->timer = gtk_timeout_add 
-		(OBS_BUTTON_TIMER_DELAY, (GtkFunction) obs_button_timer, 
+	    obs_button->timer = g_timeout_add 
+		(OBS_BUTTON_TIMER_DELAY, (GSourceFunc) obs_button_timer, 
 		 (gpointer) obs_button);
 	} else {
 	    retval = TRUE;
@@ -1146,7 +1146,11 @@ obs_button_set_adjustment (ObsButton *obs_button,
 	obs_button->adjustment = adjustment;
 	if (adjustment) {
 	    g_object_ref (adjustment);
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 10)
 	    gtk_object_sink (GTK_OBJECT (adjustment));
+#else
+	    g_object_ref_sink (GTK_OBJECT (adjustment));
+#endif
 	    g_signal_connect (adjustment, "value_changed",
 			      G_CALLBACK (obs_button_value_changed),
 			      obs_button);

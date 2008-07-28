@@ -100,4 +100,8 @@ dialog_opts *dialog_opts_new (int n, int type,
 
 void dialog_opts_free (dialog_opts *opts);
 
+void set_combo_box_strings_from_list (GtkComboBox *box, GList *list);
+
+void set_combo_box_default_text (GtkComboBox *box, const char *s);
+
 #endif /* DLGUTILS_H */

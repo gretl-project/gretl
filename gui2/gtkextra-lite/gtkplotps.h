@@ -85,13 +85,6 @@ GtkObject *gtk_plot_ps_new_with_size                   (const gchar *psname,
 							gdouble scalex,
 							gdouble scaley);
 
-void	gtk_plot_ps_construct                          (GtkPlotPS *ps,
-							const gchar *psname,
-                                                        gint orientation,
-                                                        gint epsflag,
-                                                        gint page_size,
-							gdouble scalex,
-							gdouble scaley);
 void	gtk_plot_ps_construct_with_size                (GtkPlotPS *ps,
 							const gchar *psname,
                                                         gint orientation,

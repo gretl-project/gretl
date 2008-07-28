@@ -212,15 +212,41 @@ static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
     return FALSE;
 }
 
-static gboolean update_arg (GtkEditable *entry, 
+static char *combo_box_get_trimmed_text (GtkComboBox *combo)
+{
+    gchar *s = gtk_combo_box_get_active_text(combo);
+    char *ret = NULL;
+
+    if (s != NULL && *s != '\0') {
+	while (isspace(*s)) s++;
+	if (*s != '\0') {
+	    int i, len = strlen(s);
+
+	    for (i=len-1; i>0; i--) {
+		if (!isspace(s[i])) break;
+		len--;
+	    }
+
+	    if (len > 0) {
+		ret = g_strndup(s, len);
+	    }
+	}
+    }
+
+    g_free(s);
+
+    return ret;
+}
+
+static gboolean update_arg (GtkComboBox *combo, 
 			    call_info *cinfo)
 {
     int i = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(entry), "argnum"));
+	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo), "argnum"));
     char *s;
 
     free(cinfo->args[i]);
-    s = cinfo->args[i] = entry_box_get_trimmed_text(GTK_WIDGET(entry));
+    s = cinfo->args[i] = combo_box_get_trimmed_text(combo);
 
     if (s != NULL && fn_param_type(cinfo->func, i) == GRETL_TYPE_DOUBLE) {
 	if (isdigit(*s) || *s == '-' || *s == '+' || *s == ',') {
@@ -231,11 +257,11 @@ static gboolean update_arg (GtkEditable *entry,
     return FALSE;
 }
 
-static gboolean update_return (GtkEditable *entry, 
+static gboolean update_return (GtkComboBox *combo, 
 			       call_info *cinfo)
 {
     free(cinfo->ret);
-    cinfo->ret = entry_box_get_trimmed_text(GTK_WIDGET(entry));
+    cinfo->ret = combo_box_get_trimmed_text(combo);
 
     return FALSE;
 }
@@ -317,15 +343,31 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     }
 }
 
+static int combo_list_index (const gchar *s, GList *list)
+{
+    GList *mylist = list;
+    int i = 0;
+
+    while (mylist != NULL) {
+	if (!strcmp(s, (gchar *) mylist->data)) {
+	    return i;
+	}
+	mylist = mylist->next;
+	i++;
+    }
+    
+    return -1;
+}
+
 static void update_matrix_selectors (call_info *cinfo)
 {
     GList *slist = cinfo->msels;
     GList *mlist = NULL;
-    GtkWidget *sel;
+    GtkComboBox *sel;
     const char *mname;
-    const gchar *txt;
     gchar *saved;
-    int i, nm = n_user_matrices();
+    int nm = n_user_matrices();
+    int i, old;
 
     for (i=0; i<nm; i++) {
 	mname = get_matrix_name_by_index(i);
@@ -333,17 +375,13 @@ static void update_matrix_selectors (call_info *cinfo)
     }
 
     while (slist != NULL) {
-	sel = GTK_WIDGET(slist->data);
-	saved = NULL;
-	txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(sel)->entry));
-	if (*txt != 0) {
-	    saved = g_strdup(txt);
-	}
-	gtk_combo_set_popdown_strings(GTK_COMBO(sel), mlist);
+	sel = GTK_COMBO_BOX(slist->data);
+	saved = gtk_combo_box_get_active_text(sel);
+	set_combo_box_strings_from_list(sel, mlist);
 	if (saved != NULL) {
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(sel)->entry), 
-			       saved);
-	    free(saved);
+	    old = combo_list_index(saved, mlist);
+	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
+	    g_free(saved);
 	}
 	slist = slist->next;
     }
@@ -355,11 +393,11 @@ static void update_list_selectors (call_info *cinfo)
 {
     GList *slist = cinfo->lsels;
     GList *llist = NULL;
-    GtkWidget *sel;
+    GtkComboBox *sel;
     const char *lname;
-    const gchar *txt;
     gchar *saved;
-    int i, nl = n_saved_lists();
+    int nl = n_saved_lists();
+    int i, old;
 
     for (i=0; i<nl; i++) {
 	lname = get_list_name_by_index(i);
@@ -367,17 +405,13 @@ static void update_list_selectors (call_info *cinfo)
     }
 
     while (slist != NULL) {
-	sel = GTK_WIDGET(slist->data);
-	saved = NULL;
-	txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(sel)->entry));
-	if (*txt != 0) {
-	    saved = g_strdup(txt);
-	}
-	gtk_combo_set_popdown_strings(GTK_COMBO(sel), llist);
+	sel = GTK_COMBO_BOX(slist->data);
+	saved = gtk_combo_box_get_active_text(sel);
+	set_combo_box_strings_from_list(sel, llist);
 	if (saved != NULL) {
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(sel)->entry), 
-			       saved);
-	    free(saved);
+	    old = combo_list_index(saved, llist);
+	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
+	    g_free(saved);
 	}
 	slist = slist->next;
     }
@@ -510,20 +544,21 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 {
     GList *list = NULL;
     GtkWidget *combo;
+    GtkWidget *entry;
 
-    combo = gtk_combo_new();
-    g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "argnum",
-		      GINT_TO_POINTER(i));
-    g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "cinfo", cinfo);
-    g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
+    combo = gtk_combo_box_entry_new_text();
+    entry = gtk_bin_get_child(GTK_BIN(combo));
+    g_object_set_data(G_OBJECT(entry), "cinfo", cinfo);
+    g_object_set_data(G_OBJECT(combo), "argnum", GINT_TO_POINTER(i));
+    g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_arg), cinfo);
-    gtk_entry_set_activates_default(GTK_ENTRY(GTK_COMBO(combo)->entry), 
-				    TRUE);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
     list = get_selection_list(cinfo, i, ptype, 1);
     if (list != NULL) {
-	gtk_combo_set_popdown_strings(GTK_COMBO(combo), list);
+	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
 	g_list_free(list);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     } 
 
     /* FIXME bool etc */
@@ -534,7 +569,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 	if (!na(x)) {
 	    gchar *tmp = g_strdup_printf("%g", x);
 
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), tmp);
+	    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
 	    g_free(tmp);
 	}
     }
@@ -618,8 +653,8 @@ static void function_call_dialog (call_info *cinfo)
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
 				 GTK_EXPAND, GTK_FILL, 5, 5);
 		g_signal_connect(G_OBJECT(button), "clicked", 
-				 G_CALLBACK(launch_list_maker), 
-				 GTK_COMBO(sel)->entry);
+				 G_CALLBACK(launch_list_maker),
+				 gtk_bin_get_child(GTK_BIN(sel)));
 		gtk_widget_show(button);
 	    } else if (ptype == GRETL_TYPE_MATRIX) {
 		cinfo->msels = g_list_append(cinfo->msels, sel);
@@ -673,15 +708,14 @@ static void function_call_dialog (call_info *cinfo)
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
 
-	sel = gtk_combo_new();
-	g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
+	sel = gtk_combo_box_entry_new_text();
+	g_signal_connect(G_OBJECT(sel), "changed",
 			 G_CALLBACK(update_return), cinfo);
 	list = get_selection_list(cinfo, -1, cinfo->rettype, 0);
 	if (list != NULL) {
-	    gtk_combo_set_popdown_strings(GTK_COMBO(sel), list); 
+	    set_combo_box_strings_from_list(GTK_COMBO_BOX(sel), list);
 	    g_list_free(list);
 	}
-	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sel)->entry), TRUE);
 	gtk_table_attach(GTK_TABLE(tbl), sel, 1, 2, 1, 2,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(sel);

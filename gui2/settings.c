@@ -2252,7 +2252,7 @@ int gui_set_working_dir (char *dirname)
 
 struct wdir_setter {
     GtkWidget *dialog;
-    GtkWidget *wdir_entry;
+    GtkWidget *wdir_combo;
     GtkWidget *r1, *r2;
 };
 
@@ -2260,17 +2260,15 @@ struct wdir_setter {
 
 void set_working_dir_callback (GtkWidget *w, char *path)
 {
-    GtkWidget *entry = GTK_COMBO(w)->entry;
-
-    gtk_entry_set_text(GTK_ENTRY(entry), path);
+    set_combo_box_default_text(GTK_COMBO_BOX(w), path);
 }
 
 static void wdir_browse_callback (GtkWidget *w, struct wdir_setter *wset)
 {
-    GtkWidget *entry = wset->wdir_entry;
+    GtkWidget *combo = wset->wdir_combo;
     const char *s = N_("gretl working directory");
 
-    file_selector_with_parent(_(s), SET_WDIR, FSEL_DATA_MISC, entry, 
+    file_selector_with_parent(_(s), SET_WDIR, FSEL_DATA_MISC, combo, 
 			      wset->dialog);
 }
 
@@ -2298,14 +2296,12 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     trim_slash(tmp);
  
     /* combo + browse button for current working dir */
-    w = gtk_combo_new();
+    w = gtk_combo_box_entry_new_text();
     gtk_container_add(GTK_CONTAINER(hbox), w);
-    gtk_combo_set_popdown_strings(GTK_COMBO(w), list);
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), tmp);
-    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(w)->entry), 32);
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(w)->entry), 
-			      TRUE);
-    wset->wdir_entry = w;
+    set_combo_box_strings_from_list(GTK_COMBO_BOX(w), list);
+    set_combo_box_default_text(GTK_COMBO_BOX(w), tmp);
+    gtk_entry_set_width_chars(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(w))), 32);
+    wset->wdir_combo = w;
     w = gtk_button_new_with_label(_("Browse..."));
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(wdir_browse_callback), wset);
@@ -2344,15 +2340,16 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
 static void 
 apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 { 
-    GtkWidget *entry;
     char tmp[MAXLEN];
-    const char *str;
+    gchar *str;
     int err;
 
-    entry = GTK_COMBO(wset->wdir_entry)->entry;
-    str = gtk_entry_get_text(GTK_ENTRY(entry));
+    str = gtk_combo_box_get_active_text(GTK_COMBO_BOX(wset->wdir_combo));
     *tmp = '\0';
-    strncat(tmp, str, MAXLEN - 2);
+    if (str != NULL) {
+	strncat(tmp, str, MAXLEN - 2);
+	g_free(str);
+    }
 
     err = set_gretl_work_dir(tmp, &paths);
     if (err) {

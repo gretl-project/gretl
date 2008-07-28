@@ -254,8 +254,14 @@ static gint tree_store_go_to (windata_t *vwin, int k)
 	gtk_tree_view_get_visible_rect(view, &r);
 
 	if (k == GDK_Page_Down) {
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
 	    gtk_tree_view_tree_to_widget_coords(view, r.x, r.y + r.height,
 						&wx, &wy);
+#else
+	    gtk_tree_view_convert_bin_window_to_widget_coords(view, 
+							      r.x, r.y + r.height,
+							      &wx, &wy);
+#endif
 	    gtk_tree_view_get_path_at_pos(view, wx, wy, &path, 
 					  NULL, NULL, NULL);
 	    if (path == NULL) {
@@ -265,8 +271,13 @@ static gint tree_store_go_to (windata_t *vwin, int k)
 	    gtk_tree_view_scroll_to_cell(view, path, NULL,
 					 TRUE, 0.0, 0.0);
 	} else {
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
 	    gtk_tree_view_tree_to_widget_coords(view, r.x, r.y,
 						&wx, &wy);
+#else
+	    gtk_tree_view_convert_bin_window_to_widget_coords(view, r.x, r.y,
+							      &wx, &wy);
+#endif
 	    gtk_tree_view_get_path_at_pos(view, wx, wy, &path, 
 					  NULL, NULL, NULL);
 	    gtk_tree_view_scroll_to_cell(view, path, NULL,

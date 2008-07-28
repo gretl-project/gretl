@@ -23,11 +23,6 @@
 #include <stdio.h>
 #include "gtkpsfontpango.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-
 #define GTK_PLOT_PC(obj)        GTK_CHECK_CAST (obj, gtk_plot_pc_get_type (), GtkPlotPC)
 #define GTK_TYPE_PLOT_PC   (gtk_plot_pc_get_type ())
 
@@ -38,11 +33,11 @@ extern "C" {
 /* Page size */
 
 enum{
-     GTK_PLOT_LETTER	,
-     GTK_PLOT_LEGAL	,
-     GTK_PLOT_A4	,
-     GTK_PLOT_EXECUTIVE	,
-     GTK_PLOT_CUSTOM	
+    GTK_PLOT_LETTER ,
+    GTK_PLOT_LEGAL ,
+    GTK_PLOT_A4,
+    GTK_PLOT_EXECUTIVE,
+    GTK_PLOT_CUSTOM	
 };
 
 #define GTK_PLOT_LETTER_W 	612   /* Width and Height in ps points */
@@ -60,36 +55,35 @@ enum{
 
 /* Page orientation */
 enum{
-     GTK_PLOT_PORTRAIT	,
+     GTK_PLOT_PORTRAIT,
      GTK_PLOT_LANDSCAPE	
 };
 
 /* Size units */
 enum{
-     GTK_PLOT_PSPOINTS	,
-     GTK_PLOT_MM	,
-     GTK_PLOT_CM	,
+     GTK_PLOT_PSPOINTS,
+     GTK_PLOT_MM,
+     GTK_PLOT_CM,
      GTK_PLOT_INCHES	
 };
 
-
-typedef struct _GtkPlotPC GtkPlotPC;
+typedef struct _GtkPlotPC      GtkPlotPC;
 typedef struct _GtkPlotPCClass GtkPlotPCClass;
-typedef struct _GtkPlotPoint         GtkPlotPoint;
+typedef struct _GtkPlotPoint   GtkPlotPoint;
 
 struct _GtkPlotPoint
 {
-  gdouble x, y;
+    gdouble x, y;
 };
 
 struct _GtkPlotPC
 {
-   GtkObject object;
+    GtkObject object;
 
-   gdouble width, height; /* viewport */
-   GdkColor color;
+    gdouble width, height; /* viewport */
+    GdkColor color;
 
-   gint init_count;
+    gint init_count;
 };
 
 
@@ -287,11 +281,6 @@ void  gtk_plot_pc_draw_pixmap   	                (GtkPlotPC *pc,
                                    	             	 gint height, 
                                    	             	 gdouble scale_x,
                                    	             	 gdouble scale_y); 
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
 
 #endif /* __GTK_PLOT_PC_H__ */
 

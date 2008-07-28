@@ -801,11 +801,11 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 	orient = GTK_PLOT_LANDSCAPE;
     }
 
-    ps = GTK_PLOT_PS(gtk_plot_ps_new (fname, 
-				      orient, 
-				      eps, 
-				      GTK_PLOT_LETTER, 
-				      pscale, pscale));
+    ps = GTK_PLOT_PS(gtk_plot_ps_new(fname, 
+				     orient, 
+				     eps, 
+				     GTK_PLOT_LETTER, 
+				     pscale, pscale));
 
     if (ps == NULL) return 1;
 
@@ -820,11 +820,12 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 
     gtk_psfont_init();
 
-    for (i=0; i<grp->nplots; i++)
-	gtk_area_boxplot (&grp->plots[i], 
-			  NULL, NULL, NULL, &ps->pc, 
-			  grp->height, grp->boxwidth, 
-			  grp->gmax, grp->gmin, grp->numbers);
+    for (i=0; i<grp->nplots; i++) {
+	gtk_area_boxplot(&grp->plots[i], 
+			 NULL, NULL, NULL, &ps->pc, 
+			 grp->height, grp->boxwidth, 
+			 grp->gmax, grp->gmin, grp->numbers);
+    }
     
     gtk_boxplot_yscale(grp, &ps->pc);
 

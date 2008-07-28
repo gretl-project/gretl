@@ -323,10 +323,10 @@ const char *print_today (void)
     return timestr;
 }
 
-static gboolean update_iface (GtkOptionMenu *menu, 
+static gboolean update_iface (GtkComboBox *menu, 
 			      function_info *finfo)
 {
-    int i = gtk_option_menu_get_history(menu);
+    int i = gtk_combo_box_get_active(menu);
 
     if (i == 0) {
 	finfo->iface = finfo->pub;
@@ -513,36 +513,32 @@ enum {
 
 static GtkWidget *interface_selector (function_info *finfo, int iface)
 {
-    GtkWidget *ifmenu, *menu, *tmp;
+    GtkWidget *ifmenu;
     const char *fnname;
     int i;
 
     finfo->iface = finfo->pub;
-
-    ifmenu = gtk_option_menu_new();
-    menu = gtk_menu_new();
+    ifmenu = gtk_combo_box_new_text();
 
     fnname = user_function_name_by_index(finfo->pub);
-    tmp = gtk_menu_item_new_with_label(fnname);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), fnname);
 
     if (iface == IFACE_ALL && finfo->privlist != NULL) {
 	for (i=1; i<=finfo->privlist[0]; i++) {
 	    fnname = user_function_name_by_index(finfo->privlist[i]);
-	    tmp = gtk_menu_item_new_with_label(fnname);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), fnname);
 	}
-    }	
+    }
 
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(ifmenu), menu);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(ifmenu), 0);
     gtk_widget_show_all(ifmenu);
 
     return ifmenu;
 }
 
-static void dreq_select (GtkOptionMenu *menu, function_info *finfo)
+static void dreq_select (GtkComboBox *menu, function_info *finfo)
 {
-    finfo->dreq = gtk_option_menu_get_history(menu);
+    finfo->dreq = gtk_combo_box_get_active(menu);
 }
 
 static void add_data_requirement_menu (GtkWidget *tbl, int i, 
@@ -554,21 +550,18 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 	N_("Quarterly or monthly data"),
 	N_("Panel data")
     };
-    GtkWidget *menu, *datamenu, *tmp;
+    GtkWidget *datamenu, *tmp;
     int j;
 
     tmp = gtk_label_new(_("Data requirement"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
     gtk_widget_show(tmp);
 
-    datamenu = gtk_option_menu_new();
-    menu = gtk_menu_new();
+    datamenu = gtk_combo_box_new_text();
     for (j=0; j<=FN_NEEDS_PANEL; j++) {
-	tmp = gtk_menu_item_new_with_label(_(datareq[j]));
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(datamenu), _(datareq[j]));
     }
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(datamenu), menu);
-    gtk_option_menu_set_history(GTK_OPTION_MENU(datamenu), finfo->dreq);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(datamenu), finfo->dreq);
 
     tmp = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(tmp), datamenu, FALSE, FALSE, 0);
@@ -728,7 +721,6 @@ static void finfo_dialog (function_info *finfo)
 
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 40);
-	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
 	gtk_widget_show(entry); 
 
@@ -784,7 +776,7 @@ static void finfo_dialog (function_info *finfo)
     if (finfo->privlist != NULL) {
 	finfo->codesel = interface_selector(finfo, IFACE_ALL);
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(GTK_OPTION_MENU(finfo->codesel)), "changed",
+	g_signal_connect(G_OBJECT(finfo->codesel), "changed",
 			 G_CALLBACK(update_iface), finfo);
     } else {
 	finfo->iface = finfo->pub;
@@ -813,7 +805,7 @@ static void finfo_dialog (function_info *finfo)
     /* control button area */
     hbox = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
-    gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
+    gtk_box_set_spacing(GTK_BOX(hbox), 10);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     /* Save button */
@@ -871,7 +863,6 @@ static void login_dialog (login_info *linfo)
 
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 34);
-	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
 	gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
 	if (src != NULL) {

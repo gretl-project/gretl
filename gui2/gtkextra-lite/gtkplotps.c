@@ -62,8 +62,10 @@ gtk_plot_text_get_area(const gchar *text, gint angle, GtkJustification just,
 static void gtk_plot_ps_class_init 		(GtkPlotPSClass *klass);
 static void gtk_plot_ps_init 			(GtkPlotPS *ps);
 static void gtk_plot_ps_destroy 		(GtkObject *object);
+
 /*********************************************************************/
 /* Postscript specific functions */
+
 static void pssetviewport			(GtkPlotPC *pc, 
 						 gdouble w, gdouble h); 
 static void psgsave				(GtkPlotPC *pc);
@@ -205,155 +207,155 @@ gtk_plot_ps_destroy(GtkObject *object)
   }
 }
 
-GtkObject *
-gtk_plot_ps_new                         (const gchar *psname,
-                                         gint orientation,
-                                         gint epsflag,
-                                         gint page_size,
-                                         gdouble scalex,
-					 gdouble scaley)
+static void
+gtk_plot_ps_construct (GtkPlotPS *ps,
+		       const gchar *psname,
+		       gint orientation,
+		       gint epsflag,
+		       gint page_size,
+		       gdouble scalex,
+		       gdouble scaley)
 {
-  GtkObject *object;
-  GtkPlotPS *ps;
+    gint width, height;
 
-  object = gtk_type_new(gtk_plot_ps_get_type());
+    ps->psname = g_strdup(psname);
+    ps->orientation = orientation;
+    ps->epsflag = epsflag;
+    ps->page_size = page_size;
+    ps->scalex = scalex;
+    ps->scaley = scaley;
 
-  ps = GTK_PLOT_PS(object);
-
-  gtk_plot_ps_construct(ps, psname, orientation, epsflag, page_size, scalex, scaley);
-
-  return (object);
-}
-
-void
-gtk_plot_ps_construct                   (GtkPlotPS *ps,
-					 const gchar *psname,
-                                         gint orientation,
-                                         gint epsflag,
-                                         gint page_size,
-                                         gdouble scalex,
-					 gdouble scaley)
-{
-  gint width, height;
-
-  ps->psname = g_strdup(psname);
-  ps->orientation = orientation;
-  ps->epsflag = epsflag;
-  ps->page_size = page_size;
-  ps->scalex = scalex;
-  ps->scaley = scaley;
-
-  switch (page_size){
-   case GTK_PLOT_LEGAL:
+    switch (page_size){
+    case GTK_PLOT_LEGAL:
         width = GTK_PLOT_LEGAL_W;
         height = GTK_PLOT_LEGAL_H;
         break;
-   case GTK_PLOT_A4:
+    case GTK_PLOT_A4:
         width = GTK_PLOT_A4_W;
         height = GTK_PLOT_A4_H;
         break;
-   case GTK_PLOT_EXECUTIVE:
+    case GTK_PLOT_EXECUTIVE:
         width = GTK_PLOT_EXECUTIVE_W;
         height = GTK_PLOT_EXECUTIVE_H;
         break;
-   case GTK_PLOT_LETTER:
-   default:
+    case GTK_PLOT_LETTER:
+    default:
         width = GTK_PLOT_LETTER_W;
         height = GTK_PLOT_LETTER_H;
-  }
+    }
 
-  gtk_plot_ps_set_size(ps, GTK_PLOT_PSPOINTS, width, height);
+    gtk_plot_ps_set_size(ps, GTK_PLOT_PSPOINTS, width, height);
 }
 
 GtkObject *
-gtk_plot_ps_new_with_size                       (const gchar *psname,
-                                                 gint orientation,
-                                                 gint epsflag,
-                                                 gint units,
-                                                 gdouble width, gdouble height,
-						 gdouble scalex, gdouble scaley)
+gtk_plot_ps_new (const gchar *psname,
+		 gint orientation,
+		 gint epsflag,
+		 gint page_size,
+		 gdouble scalex,
+		 gdouble scaley)
 {
-  GtkObject *object;
-  GtkPlotPS *ps;
+    GtkObject *object;
+    GtkPlotPS *ps;
 
-  object = gtk_type_new(gtk_plot_ps_get_type());
+    object = gtk_type_new(gtk_plot_ps_get_type());
 
-  ps = GTK_PLOT_PS(object);
+    ps = GTK_PLOT_PS(object);
 
-  gtk_plot_ps_construct_with_size (ps, psname, orientation, epsflag, units, width, height, scalex, scaley);
+    gtk_plot_ps_construct(ps, psname, orientation, epsflag, page_size, scalex, scaley);
 
-  return object;
+    return (object);
+}
+
+GtkObject *
+gtk_plot_ps_new_with_size (const gchar *psname,
+			   gint orientation,
+			   gint epsflag,
+			   gint units,
+			   gdouble width, gdouble height,
+			   gdouble scalex, gdouble scaley)
+{
+    GtkObject *object;
+    GtkPlotPS *ps;
+
+    object = gtk_type_new(gtk_plot_ps_get_type());
+
+    ps = GTK_PLOT_PS(object);
+
+    gtk_plot_ps_construct_with_size (ps, psname, orientation, epsflag, units, 
+				     width, height, scalex, scaley);
+
+    return object;
 }
 
 void
-gtk_plot_ps_construct_with_size                 (GtkPlotPS *ps,
-						 const gchar *psname,
-                                                 gint orientation,
-                                                 gint epsflag,
-                                                 gint units,
-                                                 gdouble width, gdouble height,
-						 gdouble scalex, gdouble scaley)
+gtk_plot_ps_construct_with_size (GtkPlotPS *ps,
+				 const gchar *psname,
+				 gint orientation,
+				 gint epsflag,
+				 gint units,
+				 gdouble width, gdouble height,
+				 gdouble scalex, gdouble scaley)
 {
-  gtk_plot_ps_construct(ps, psname, orientation, epsflag, GTK_PLOT_CUSTOM, scalex, scaley);
-
-  gtk_plot_ps_set_size(ps, units, width, height);
+    gtk_plot_ps_construct(ps, psname, orientation, epsflag, GTK_PLOT_CUSTOM, scalex, scaley);
+    gtk_plot_ps_set_size(ps, units, width, height);
 }
 
 void
-gtk_plot_ps_set_size                            (GtkPlotPS *ps,
-                                                 gint units,
-                                                 gdouble width,
-                                                 gdouble height)
+gtk_plot_ps_set_size (GtkPlotPS *ps,
+		      gint units,
+		      gdouble width,
+		      gdouble height)
 {
-  ps->units = units;
-  ps->width = width;
-  ps->height = height;
+    ps->units = units;
+    ps->width = width;
+    ps->height = height;
 
-  switch(units){
-   case GTK_PLOT_MM:
+    switch(units){
+    case GTK_PLOT_MM:
         ps->page_width = (gdouble)width * 2.835;
         ps->page_height = (gdouble)height * 2.835;
         break;
-   case GTK_PLOT_CM:
+    case GTK_PLOT_CM:
         ps->page_width = width * 28.35;
         ps->page_height = height * 28.35;
         break;
-   case GTK_PLOT_INCHES:
+    case GTK_PLOT_INCHES:
         ps->page_width = width * 72;
         ps->page_height = height * 72;
         break;
-   case GTK_PLOT_PSPOINTS:
-   default:
+    case GTK_PLOT_PSPOINTS:
+    default:
         ps->page_width = width;
         ps->page_height = height;
-   }
+    }
 
-   if(ps->orientation == GTK_PLOT_PORTRAIT)
-     gtk_plot_pc_set_viewport(GTK_PLOT_PC(ps), ps->page_width, ps->page_height);
-   else
-     gtk_plot_pc_set_viewport(GTK_PLOT_PC(ps), ps->page_height, ps->page_width);
+    if (ps->orientation == GTK_PLOT_PORTRAIT)
+	gtk_plot_pc_set_viewport(GTK_PLOT_PC(ps), ps->page_width, ps->page_height);
+    else
+	gtk_plot_pc_set_viewport(GTK_PLOT_PC(ps), ps->page_height, ps->page_width);
 }
 
 void
-gtk_plot_ps_set_scale                           (GtkPlotPS *ps,
-                                                 gdouble scalex,
-                                                 gdouble scaley)
+gtk_plot_ps_set_scale (GtkPlotPS *ps,
+		       gdouble scalex,
+		       gdouble scaley)
 {
-  ps->scalex = scalex;
-  ps->scaley = scaley; 
+    ps->scalex = scalex;
+    ps->scaley = scaley; 
 }
 
-static void pssetviewport			(GtkPlotPC *pc,
-						 gdouble w, gdouble h) 
+static void pssetviewport (GtkPlotPC *pc,
+			   gdouble w, gdouble h) 
 {
 
 }
 
-static void pssetlineattr			(GtkPlotPC *pc, 
-                                                 gfloat line_width,
-                                                 GdkLineStyle line_style,
-                                                 GdkCapStyle cap_style,
-                                                 GdkJoinStyle join_style)
+static void pssetlineattr (GtkPlotPC *pc, 
+			   gfloat line_width,
+			   GdkLineStyle line_style,
+			   GdkCapStyle cap_style,
+			   GdkJoinStyle join_style)
 {
     FILE *psout = GTK_PLOT_PS(pc)->psfile;
 
@@ -361,43 +363,42 @@ static void pssetlineattr			(GtkPlotPC *pc,
     fprintf(psout, "%d slc\n", abs(cap_style - 1));
     fprintf(psout, "%d slj\n", join_style);
 
-    if(line_style == 0)
-            fprintf(psout,"[] 0 sd\n");  /* solid line */
+    if (line_style == 0)
+	fprintf(psout,"[] 0 sd\n");  /* solid line */
 }
 
 static void 
-pssetdash(GtkPlotPC *pc,
-          gdouble offset, 
-          gdouble *values,
-          gint num_values)
+pssetdash (GtkPlotPC *pc,
+	   gdouble offset, 
+	   gdouble *values,
+	   gint num_values)
 {
     FILE *psout = GTK_PLOT_PS(pc)->psfile;
 
     switch(num_values){
-      case 0:
+    case 0:
         fprintf(psout,"[] 0 sd\n");
         break;
-      case 2:
+    case 2:
         fprintf(psout, "[%g %g] %g sd\n", values[0], values[1], offset);
         break;
-      case 4:
+    case 4:
         fprintf(psout, "[%g %g %g %g] %g sd\n", values[0], values[1],
-                                                values[2], values[3], 
-                                                offset);
+		values[2], values[3], 
+		offset);
         break;
-      case 6:
+    case 6:
         fprintf(psout, "[%g %g %g %g %g %g] %g sd\n",  values[0], values[1],
-                                                       values[2], values[3], 
-                                                       values[4], values[5], 
-                                                       offset);
+		values[2], values[3], 
+		values[4], values[5], 
+		offset);
         break;
-      default:
+    default:
         break;
     }
 }
 
-void 
-psleave(GtkPlotPC *pc)
+void psleave (GtkPlotPC *pc)
 {
     fprintf(GTK_PLOT_PS(pc)->psfile, "showpage\n");
     fprintf(GTK_PLOT_PS(pc)->psfile, "%%%%Trailer\n");
@@ -406,8 +407,7 @@ psleave(GtkPlotPC *pc)
     gretl_pop_c_numeric_locale();
 }
 
-gboolean 
-psinit						(GtkPlotPC *pc)
+gboolean psinit (GtkPlotPC *pc)
 {
     time_t now;
     FILE *psout;
@@ -421,16 +421,16 @@ psinit						(GtkPlotPC *pc)
     psout = ps->psfile;
 
     if ((psout = fopen(ps->psname, "w")) == NULL){
-       g_warning("ERROR: Cannot open file: %s", ps->psname); 
-       return FALSE;
+	g_warning("ERROR: Cannot open file: %s", ps->psname); 
+	return FALSE;
     }
 
     ps->psfile = psout;
 
-    if(ps->epsflag)
-       fprintf (psout, "%%!PS-Adobe-2.0 PCF-2.0\n");
+    if (ps->epsflag)
+	fprintf (psout, "%%!PS-Adobe-2.0 PCF-2.0\n");
     else
-       fprintf (psout, "%%!PS-Adobe-2.0\n");
+	fprintf (psout, "%%!PS-Adobe-2.0\n");
 
     fprintf (psout,
              "%%%%Title: %s\n"
@@ -441,18 +441,18 @@ psinit						(GtkPlotPC *pc)
              "GtkPlot", "3.x",
              ctime (&now));
 
-    if(ps->orientation == GTK_PLOT_PORTRAIT)
-             fprintf(psout,"%%%%Orientation: Portrait\n");
+    if (ps->orientation == GTK_PLOT_PORTRAIT)
+	fprintf(psout,"%%%%Orientation: Portrait\n");
     else
-             fprintf(psout,"%%%%Orientation: Landscape\n");
+	fprintf(psout,"%%%%Orientation: Landscape\n");
 
     if(ps->epsflag)
-          fprintf (psout,
-                   "%%%%BoundingBox: 0 0 %d %d\n"
-                   "%%%%Pages: 1\n"
-                   "%%%%EndComments\n",
-                   ps->page_width,
-                   ps->page_height);
+	fprintf (psout,
+		 "%%%%BoundingBox: 0 0 %d %d\n"
+		 "%%%%Pages: 1\n"
+		 "%%%%EndComments\n",
+		 ps->page_width,
+		 ps->page_height);
 
 
     fprintf (psout,
@@ -511,34 +511,34 @@ psinit						(GtkPlotPC *pc)
              "   savematrix setmatrix\n"
              "   end\n"
              "} def\n\n"
-    ); 
+	     ); 
   
     fprintf(psout,
-          "[ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-          "/.notdef /.notdef /space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright\n"
-          "/parenleft /parenright /asterisk /plus /comma /hyphen /period /slash /zero /one\n"
-          "/two /three /four /five /six /seven /eight /nine /colon /semicolon\n"          "/less /equal /greater /question /at /A /B /C /D /E\n"
-          "/F /G /H /I /J /K /L /M /N /O\n"
-          "/P /Q /R /S /T /U /V /W /X /Y\n"
-          "/Z /bracketleft /backslash /bracketright /asciicircum /underscore /quoteleft /a /b /c\n"
-          "/d /e /f /g /h /i /j /k /l /m\n"
-          "/n /o /p /q /r /s /t /u /v /w\n"
-          "/x /y /z /braceleft /bar /braceright /asciitilde /.notdef /.notdef /.notdef\n"
-          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-          "/space /exclamdown /cent /sterling /currency /yen /brokenbar /section /dieresis /copyright\n"
-          "/ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron /degree /plusminus /twosuperior /threesuperior\n"
-          "/acute /mu /paragraph /periodcentered /cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf\n"
-          "/threequarters /questiondown /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla\n"
-          "/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis /Eth /Ntilde\n"
-          "/Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply /Oslash /Ugrave /Uacute /Ucircumflex\n"
-          "/Udieresis /Yacute /Thorn /germandbls /agrave /aacute /acircumflex /atilde /adieresis /aring\n"
-          "/ae /ccedilla /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis\n"
-          "/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide /oslash /ugrave\n"
-          "/uacute /ucircumflex /udieresis /yacute /thorn /ydieresis] /isolatin1encoding exch def\n");
+	    "[ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	    "/.notdef /.notdef /space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright\n"
+	    "/parenleft /parenright /asterisk /plus /comma /hyphen /period /slash /zero /one\n"
+	    "/two /three /four /five /six /seven /eight /nine /colon /semicolon\n"          "/less /equal /greater /question /at /A /B /C /D /E\n"
+	    "/F /G /H /I /J /K /L /M /N /O\n"
+	    "/P /Q /R /S /T /U /V /W /X /Y\n"
+	    "/Z /bracketleft /backslash /bracketright /asciicircum /underscore /quoteleft /a /b /c\n"
+	    "/d /e /f /g /h /i /j /k /l /m\n"
+	    "/n /o /p /q /r /s /t /u /v /w\n"
+	    "/x /y /z /braceleft /bar /braceright /asciitilde /.notdef /.notdef /.notdef\n"
+	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	    "/space /exclamdown /cent /sterling /currency /yen /brokenbar /section /dieresis /copyright\n"
+	    "/ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron /degree /plusminus /twosuperior /threesuperior\n"
+	    "/acute /mu /paragraph /periodcentered /cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf\n"
+	    "/threequarters /questiondown /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla\n"
+	    "/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis /Eth /Ntilde\n"
+	    "/Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply /Oslash /Ugrave /Uacute /Ucircumflex\n"
+	    "/Udieresis /Yacute /Thorn /germandbls /agrave /aacute /acircumflex /atilde /adieresis /aring\n"
+	    "/ae /ccedilla /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis\n"
+	    "/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide /oslash /ugrave\n"
+	    "/uacute /ucircumflex /udieresis /yacute /thorn /ydieresis] /isolatin1encoding exch def\n");
  
     ps_reencode_font(psout, "Times-Roman");
     ps_reencode_font(psout, "Times-Italic");
@@ -577,15 +577,15 @@ psinit						(GtkPlotPC *pc)
     ps_reencode_font(psout, "ZapfDingbats");
    
     if(ps->orientation == GTK_PLOT_PORTRAIT)
-             fprintf(psout, "%d %d translate\n"
-                            "%g %g scale\n",
-                            0, ps->page_height,
-                            ps->scalex, -ps->scaley);
+	fprintf(psout, "%d %d translate\n"
+		"%g %g scale\n",
+		0, ps->page_height,
+		ps->scalex, -ps->scaley);
 
     if(ps->orientation == GTK_PLOT_LANDSCAPE)
-             fprintf(psout, "%g %g scale\n"
-                            "-90 rotate \n",
-                            ps->scalex, -ps->scaley);
+	fprintf(psout, "%g %g scale\n"
+		"-90 rotate \n",
+		ps->scalex, -ps->scaley);
 
     fprintf(psout,"%%%%EndProlog\n\n\n");
 
@@ -594,22 +594,22 @@ psinit						(GtkPlotPC *pc)
 
 static void ps_reencode_font(FILE *file, char *fontname)
 {
-  /* Don't reencode the Symbol font, as it doesn't work in latin1 encoding.
-   * Instead, just define Symbol-latin1 to be the same as Symbol. */
-  if (!strcmp(fontname, "Symbol"))
-    fprintf(file,
-            "/%s-latin1\n"
-            "    /%s findfont\n"
-            "definefont pop\n", fontname, fontname);
-  else
-    fprintf(file,
-            "/%s-latin1\n"
-            "    /%s findfont\n"
-            "    dup length dict begin\n"
-            "   {1 index /FID ne {def} {pop pop} ifelse} forall\n"
-            "   /Encoding isolatin1encoding def\n"
-            "    currentdict end\n"
-            "definefont pop\n", fontname, fontname);
+    /* Don't reencode the Symbol font, as it doesn't work in latin1 encoding.
+     * Instead, just define Symbol-latin1 to be the same as Symbol. */
+    if (!strcmp(fontname, "Symbol"))
+	fprintf(file,
+		"/%s-latin1\n"
+		"    /%s findfont\n"
+		"definefont pop\n", fontname, fontname);
+    else
+	fprintf(file,
+		"/%s-latin1\n"
+		"    /%s findfont\n"
+		"    dup length dict begin\n"
+		"   {1 index /FID ne {def} {pop pop} ifelse} forall\n"
+		"   /Encoding isolatin1encoding def\n"
+		"    currentdict end\n"
+		"definefont pop\n", fontname, fontname);
 }
 
 static void pssetcolor(GtkPlotPC *pc, const GdkColor *color)
@@ -625,86 +625,86 @@ static void pssetcolor(GtkPlotPC *pc, const GdkColor *color)
 static void
 psdrawpoint(GtkPlotPC *pc, gdouble x, gdouble y)
 {
-  FILE *psout = GTK_PLOT_PS(pc)->psfile;
+    FILE *psout = GTK_PLOT_PS(pc)->psfile;
 
-  fprintf(psout, "n\n");
-  fprintf(psout, "%g %g m\n", x, y);
-  fprintf(psout, "%g %g l\n", x, y);
-  fprintf(psout, "s\n");
+    fprintf(psout, "n\n");
+    fprintf(psout, "%g %g m\n", x, y);
+    fprintf(psout, "%g %g l\n", x, y);
+    fprintf(psout, "s\n");
 }
 
 static void
 psdrawlines(GtkPlotPC *pc, GtkPlotPoint *points, gint numpoints)
 {
-  gint i;
-  FILE *psout = GTK_PLOT_PS(pc)->psfile;
+    gint i;
+    FILE *psout = GTK_PLOT_PS(pc)->psfile;
  
-  fprintf(psout,"n\n");
-  fprintf(psout,"%g %g m\n", points[0].x, points[0].y);
-  for(i = 1; i < numpoints; i++)
+    fprintf(psout,"n\n");
+    fprintf(psout,"%g %g m\n", points[0].x, points[0].y);
+    for(i = 1; i < numpoints; i++)
         fprintf(psout,"%g %g l\n", points[i].x, points[i].y);
 
-  fprintf(psout,"s\n");
+    fprintf(psout,"s\n");
 }
 
 static void
 psdrawpolygon(GtkPlotPC *pc, gboolean filled, GtkPlotPoint *points, gint numpoints)
 {
-  gint i;
-  FILE *psout = GTK_PLOT_PS(pc)->psfile;
+    gint i;
+    FILE *psout = GTK_PLOT_PS(pc)->psfile;
 
-  fprintf(psout,"n\n");
-  fprintf(psout,"%g %g m\n", points[0].x, points[0].y);
-  for(i = 1; i < numpoints; i++)
-      fprintf(psout,"%g %g l\n", points[i].x, points[i].y);
+    fprintf(psout,"n\n");
+    fprintf(psout,"%g %g m\n", points[0].x, points[0].y);
+    for(i = 1; i < numpoints; i++)
+	fprintf(psout,"%g %g l\n", points[i].x, points[i].y);
 
-  if(filled)
-     fprintf(psout,"f\n");
-  else
-     fprintf(psout,"cp\n");
+    if(filled)
+	fprintf(psout,"f\n");
+    else
+	fprintf(psout,"cp\n");
 
-  fprintf(psout,"s\n");
+    fprintf(psout,"s\n");
 }
 
 static void psdrawline(GtkPlotPC *pc, gdouble x0, gdouble y0, gdouble xf, gdouble yf)
 {
-  FILE *psout = GTK_PLOT_PS(pc)->psfile;
+    FILE *psout = GTK_PLOT_PS(pc)->psfile;
 
-  fprintf(psout, "%g %g m\n", x0, y0);
-  fprintf(psout, "%g %g l\n", xf, yf);
-  fprintf(psout, "s\n");
+    fprintf(psout, "%g %g m\n", x0, y0);
+    fprintf(psout, "%g %g l\n", xf, yf);
+    fprintf(psout, "s\n");
 }
 
 static void
 psdrawrectangle(GtkPlotPC *pc, gboolean filled, 
                 gdouble x, gdouble y, gdouble width, gdouble height)
 {
-  GtkPlotPoint point[4];
+    GtkPlotPoint point[4];
 
-  point[0].x = x;
-  point[0].y = y;
-  point[1].x = x + width;
-  point[1].y = y;
-  point[2].x = x + width;
-  point[2].y = y + height;
-  point[3].x = x;
-  point[3].y = y + height;
+    point[0].x = x;
+    point[0].y = y;
+    point[1].x = x + width;
+    point[1].y = y;
+    point[2].x = x + width;
+    point[2].y = y + height;
+    point[3].x = x;
+    point[3].y = y + height;
 
-  psdrawpolygon(pc, filled, point, 4);
+    psdrawpolygon(pc, filled, point, 4);
 }
 
 static void
 psdrawcircle(GtkPlotPC *pc, gboolean filled, gdouble x, gdouble y, gdouble size)
 {
-  FILE *psout = GTK_PLOT_PS(pc)->psfile;
+    FILE *psout = GTK_PLOT_PS(pc)->psfile;
 
-  fprintf(psout,"n %g %g %g %g 0 360 ellipse\n", 
-          x, y, size / 2., size / 2.);
+    fprintf(psout,"n %g %g %g %g 0 360 ellipse\n", 
+	    x, y, size / 2., size / 2.);
 
-  if(filled)
-     fprintf(psout,"f\n");
+    if(filled)
+	fprintf(psout,"f\n");
 
-  fprintf(psout,"s\n");
+    fprintf(psout,"s\n");
 }
 
 static void
@@ -713,16 +713,16 @@ psdrawellipse(GtkPlotPC *pc,
               gdouble x, gdouble y, 
               gdouble width, gdouble height)
 {
-  FILE *psout = GTK_PLOT_PS(pc)->psfile;
+    FILE *psout = GTK_PLOT_PS(pc)->psfile;
 
-  fprintf(psout,"n %g %g %g %g 0 360 ellipse\n", 
-          x+width/2., y+height/2., 
-          width/2., height/2.);
+    fprintf(psout,"n %g %g %g %g 0 360 ellipse\n", 
+	    x+width/2., y+height/2., 
+	    width/2., height/2.);
 
-  if(filled)
-     fprintf(psout,"f\n");
+    if(filled)
+	fprintf(psout,"f\n");
 
-  fprintf(psout,"s\n");
+    fprintf(psout,"s\n");
 }
 
 static void

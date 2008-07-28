@@ -755,9 +755,9 @@ static void set_bs_save (GtkWidget *w, gretlopt *opt)
     }
 }
 
-static void bs_select_coeff (GtkWidget *w, int *p)
+static void bs_select_coeff (GtkComboBox *b, int *p)
 {
-    *p = gtk_option_menu_get_history(GTK_OPTION_MENU(w));
+    *p = gtk_combo_box_get_active(b);
 }
 
 struct replic_set {
@@ -768,8 +768,7 @@ struct replic_set {
 
 static void set_bs_replics (GtkWidget *w, struct replic_set *rs)
 {
-    GtkWidget *e = GTK_COMBO(rs->w)->entry;
-    const char *s = gtk_entry_get_text(GTK_ENTRY(e));
+    char *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(rs->w));
     char *test = NULL;
     unsigned long u;
     
@@ -781,49 +780,82 @@ static void set_bs_replics (GtkWidget *w, struct replic_set *rs)
 	*rs->B = (int) u;
 	gtk_widget_destroy(rs->dlg);
     }
+
+    g_free(s);
 }
 
-static GList *make_replics_list (void)
+static void make_replics_list (GtkWidget *w)
 {
-    GList *list = NULL;
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "100");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "1000");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "10000");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "100000");
 
-    list = g_list_append(list, "100");
-    list = g_list_append(list, "1000");
-    list = g_list_append(list, "10000");
-    list = g_list_append(list, "100000");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
+}
 
-    return list;
+static GtkWidget *bs_coeff_popdown (MODEL *pmod, int *pp)
+{
+    GtkWidget *w;
+    int *xlist = NULL;
+    int i, vi;
+
+    xlist = gretl_model_get_x_list(pmod);
+    if (xlist == NULL) {
+	return NULL;
+    }
+
+    w = gtk_combo_box_new_text();
+
+    for (i=1; i<=xlist[0]; i++) {
+	vi = xlist[i];
+	gtk_combo_box_append_text(GTK_COMBO_BOX(w), datainfo->varname[vi]);
+    }
+
+    if (pmod->ifc && pmod->ncoeff > 1) {
+	*pp = 1;
+	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
+    } else {
+	*pp = 0;
+	gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    }    
+
+    free(xlist);  
+
+    return w;
 }
 
 void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 		       gretlopt *popt, int *canceled)
 {
     MODEL *pmod = vwin->data;
-    GtkWidget *dialog, *hbox;
-    GtkWidget *popdown;
-    GtkWidget *menu;
+    GtkWidget *dialog, *hbox, *vbox;
+    GtkWidget *popdown = NULL;
     GtkWidget *button;
-    GtkWidget *vbox;
     GtkWidget *tmp;
     GSList *group = NULL;
-    GList *replist;
     gchar *tmpstr;
     struct replic_set rs;
     int htest = (pp == NULL);
-    int i;
 
     if (maybe_raise_dialog()) {
 	*canceled = 1;
 	return;
     }
 
+    if (pp != NULL) {
+	popdown = bs_coeff_popdown(pmod, pp);
+	if (popdown == NULL) {
+	    gui_errmsg(E_DATA);
+	    return;
+	}
+    }	
+
     dialog = gretl_dialog_new(_("gretl: bootstrap analysis"), vwin->main, 
 			      GRETL_DLG_BLOCK);
-
     rs.dlg = dialog;
 
     vbox = gtk_vbox_new(FALSE, 5);
-
     hbox = gtk_hbox_new(FALSE, 5);
     tmpstr = g_strdup_printf("%s:", _("Coefficient"));
     tmp = gtk_label_new(tmpstr);
@@ -838,25 +870,9 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
     /* coefficient / variable selection */
 
-    popdown = gtk_option_menu_new();
-    menu = gtk_menu_new();
-
-    for (i=2; i<=pmod->list[0]; i++) {
-	GtkWidget *child;
-	int vi = pmod->list[i];
-
-	child = gtk_menu_item_new_with_label(datainfo->varname[vi]);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-	gtk_widget_show(child);
-    }
-
     g_signal_connect(G_OBJECT(popdown), "changed",
 		     G_CALLBACK(bs_select_coeff), pp);
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(popdown), menu);
     gtk_box_pack_start(GTK_BOX(hbox), popdown, TRUE, TRUE, 5);
-    if (pmod->ifc && pmod->ncoeff > 1) {
-	gtk_option_menu_set_history(GTK_OPTION_MENU(popdown), 1);
-    }
     gtk_widget_show(popdown);
     
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
@@ -925,13 +941,10 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_widget_show(tmp);
 
     rs.B = pB;
-    rs.w = gtk_combo_new();
-    replist = make_replics_list();
-    gtk_combo_set_popdown_strings(GTK_COMBO(rs.w), replist); 
-    g_list_free(replist);
-    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rs.w)->entry), 7);
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rs.w)->entry), "1000");
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rs.w)->entry), TRUE);
+    rs.w = gtk_combo_box_entry_new_text();
+    make_replics_list(rs.w);
+    tmp = gtk_bin_get_child(GTK_BIN(rs.w));
+    gtk_entry_set_width_chars(GTK_ENTRY(tmp), 7);
     gtk_box_pack_start(GTK_BOX(hbox), rs.w, FALSE, FALSE, 5);
     gtk_widget_show(rs.w);
 
@@ -1156,7 +1169,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 
     if (vset->compaction_menu != NULL) {
 	int comp_method = 
-	    gtk_option_menu_get_history(GTK_OPTION_MENU(vset->compaction_menu));
+	    gtk_combo_box_get_active(GTK_COMBO_BOX(vset->compaction_menu));
 
 	if (comp_method != COMPACT_METHOD(datainfo, v)) {
 	    COMPACT_METHOD(datainfo, v) = comp_method;
@@ -1298,7 +1311,6 @@ void varinfo_dialog (int varnum, int full)
 		       datainfo->varname[varnum]);
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->name_entry, FALSE, FALSE, 0);
-    gtk_entry_set_editable(GTK_ENTRY(vset->name_entry), TRUE);
     gtk_widget_show(vset->name_entry); 
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
 
@@ -1392,7 +1404,6 @@ void varinfo_dialog (int varnum, int full)
 
     /* read/set compaction method? */
     if (full && series && dataset_is_time_series(datainfo)) {  
-	GtkWidget *menu;
 	int i;
 
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -1400,18 +1411,17 @@ void varinfo_dialog (int varnum, int full)
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_widget_show(tmp);
 
-	vset->compaction_menu = gtk_option_menu_new();
-	menu = gtk_menu_new();
+	vset->compaction_menu = gtk_combo_box_new_text();
+
 	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
-	    tmp = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(vset->compaction_menu), 
+				      _(comp_int_to_string(i)));
 	}
-	gtk_option_menu_set_menu(GTK_OPTION_MENU(vset->compaction_menu), menu);
-	gtk_option_menu_set_history(GTK_OPTION_MENU(vset->compaction_menu),
-				    COMPACT_METHOD(datainfo, varnum));    
-	gtk_box_pack_start(GTK_BOX(hbox), 
-			   vset->compaction_menu, FALSE, FALSE, 5);
-	gtk_widget_show_all(vset->compaction_menu); 
+	
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
+				 COMPACT_METHOD(datainfo, varnum));
+	gtk_box_pack_start(GTK_BOX(hbox), vset->compaction_menu, FALSE, FALSE, 5);
+	gtk_widget_show(vset->compaction_menu); 
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
@@ -1536,7 +1546,6 @@ void database_description_dialog (const char *binname)
 
     gtk_entry_set_text(GTK_ENTRY(entry), descrip);
     gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 0);
-    gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
     gtk_widget_show(entry); 
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
@@ -2757,9 +2766,9 @@ static const char *weekdays[] = {
     N_("Saturday")
 };
 
-gboolean select_repday (GtkOptionMenu *menu, int *repday)
+gboolean select_repday (GtkComboBox *menu, int *repday)
 {
-    int i = gtk_option_menu_get_history(menu);
+    int i = gtk_combo_box_get_active(menu);
 
     *repday = (datainfo->pd == 7)? i : i + 1;
 
@@ -2830,8 +2839,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
 
     if (dated_daily_data(datainfo) && cinfo->repday != NULL) {
-	GtkWidget *hbox, *daymenu, *menu;
-	GtkWidget *tmp;
+	GtkWidget *hbox, *daymenu;
 	int i;
 
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -2844,17 +2852,15 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 			  GINT_TO_POINTER(COMPACT_WDAY));
 	cinfo->wkday_opt = button;
 
-	daymenu = gtk_option_menu_new();
-	menu = gtk_menu_new();
+	daymenu = gtk_combo_box_new_text();
 	for (i=0; i<7; i++) {
 	    if ((i == 0 && datainfo->pd != 7) ||
 		(i == 6 && datainfo->pd == 5)) {
 		continue;
 	    }
-	    tmp = gtk_menu_item_new_with_label(_(weekdays[i]));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(daymenu), _(weekdays[i])); 
 	}
-	gtk_option_menu_set_menu(GTK_OPTION_MENU(daymenu), menu);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), 0);
 	gtk_box_pack_start(GTK_BOX(hbox), daymenu, FALSE, FALSE, 5);
 	g_signal_connect(G_OBJECT(daymenu), "changed",
 			 G_CALLBACK(select_repday), cinfo->repday);

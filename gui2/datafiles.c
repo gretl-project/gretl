@@ -1289,7 +1289,7 @@ void display_files (int code, gpointer p)
     set_browser_status(vwin, BROWSER_BUSY);
 
     if (code == REMOTE_DB) {
-	gtk_widget_set_usize(vwin->main, 640, 480);
+	gtk_window_set_default_size(GTK_WINDOW(vwin->main), 640, 480);
     }
 
     /* set up grids */

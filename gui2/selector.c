@@ -2293,11 +2293,9 @@ static void construct_cmdlist (selector *sr)
     }
 
     if ((sr->code == SCATTERS) && !sr->error) {
-	GtkWidget *m;
 	int xstate;
 
-	m = GTK_OPTION_MENU(multiplot_menu)->menu_item;
-	xstate = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(m), "x-axis-item"));
+	xstate = gtk_combo_box_get_active(GTK_COMBO_BOX(multiplot_menu));
 	if (xstate) {
 	    reverse_list(sr->cmdlist);
 	}
@@ -2448,10 +2446,9 @@ static char *extra_string (int ci)
     }
 }
 
-static gint flip_multiplot_axis (GtkMenuItem *m, GtkOptionMenu *popdown)
+static gint flip_multiplot_axis (GtkComboBox *box, gpointer p)
 {
-    gint xstate = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(m), "x-axis-item"));
+    gint xstate = gtk_combo_box_get_active(box);
 
     if (xstate) {
 	gtk_label_set_text(GTK_LABEL(multiplot_label), _("Y-axis variables"));
@@ -2464,29 +2461,20 @@ static gint flip_multiplot_axis (GtkMenuItem *m, GtkOptionMenu *popdown)
 
 static GtkWidget *multiplot_popdown (int ci)
 {
-    GtkWidget *popdown;
-    GtkWidget *menu;
-    GtkWidget *child;
+    GtkWidget *w;
 
-    popdown = gtk_option_menu_new();
-    menu = gtk_menu_new();
+    w = gtk_combo_box_new_text();
 
-    child = gtk_menu_item_new_with_label(_("Y-axis variable"));
-    g_signal_connect(G_OBJECT(child), "activate",
-		     G_CALLBACK(flip_multiplot_axis), popdown);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Y-axis variable"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("X-axis variable"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
 
-    child = gtk_menu_item_new_with_label(_("X-axis variable"));
-    g_signal_connect(G_OBJECT(child), "activate",
-		     G_CALLBACK(flip_multiplot_axis), popdown);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-    g_object_set_data(G_OBJECT(child), "x-axis-item", 
-		      GINT_TO_POINTER(1));
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
+		     G_CALLBACK(flip_multiplot_axis), NULL);
 
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(popdown), menu);
-    multiplot_menu = popdown;
+    multiplot_menu = w;
 
-    return popdown;
+    return w;
 }
 
 static GtkWidget *
@@ -3053,8 +3041,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     sr->action_area = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(sr->action_area), 
 			      GTK_BUTTONBOX_END);
-    gtk_button_box_set_spacing(GTK_BUTTON_BOX(sr->action_area),
-			       10);
+    gtk_box_set_spacing(GTK_BOX(sr->action_area), 10);
     gtk_widget_show(sr->action_area);
     gtk_box_pack_start(GTK_BOX(base), sr->action_area,
 		       FALSE, FALSE, 0);
@@ -4581,7 +4568,8 @@ static void selector_add_top_entry (selector *sr)
     hbox = gtk_hbox_new(FALSE, 0);
     label = gtk_label_new("Name for list:");
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    entry = gtk_entry_new_with_max_length(31);
+    entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
     if (lname != NULL && *lname != 0 && strcmp(lname, "null")) {
 	gtk_entry_set_text(GTK_ENTRY(entry), lname);

@@ -2115,30 +2115,28 @@ static void populate_stats (GtkWidget *w, gpointer p)
     int t, n = datainfo->t2 - datainfo->t1 + 1;
     int vx = -1, vy = -1;
     GretlOp yop = 0;
-    const gchar *buf;
+    gchar *buf = NULL;
     double x1, x2, yval;
     int err = 0;
 
-    g_return_if_fail(GTK_IS_COMBO(p));
+    g_return_if_fail(GTK_IS_COMBO_BOX(p));
     if (!GTK_WIDGET_SENSITIVE(p)) {
 	return;
-    }
+    } 
 
-    g_return_if_fail(GTK_IS_ENTRY(GTK_COMBO(p)->entry));
-    buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(p)->entry));
-    if (*buf == 0) {
+    buf = gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
+    if (buf == NULL || *buf == '\0') {
+	g_free(buf);
 	return;
     }
 
     if (pbuf != NULL) {
 	if (*pbuf != NULL && !strcmp(buf, *pbuf)) {
 	    /* no real change */
+	    g_free(buf);
 	    return;
 	}
-	if (*pbuf != NULL) {
-	    free(*pbuf);
-	    *pbuf = NULL;
-	}
+	g_free(*pbuf);
 	*pbuf = g_strdup(buf);
     }
 
@@ -2152,6 +2150,8 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	}
     }
 
+    g_free(buf);
+
     if (!err) {
 	/* scalars are not valid input in this context */
 	if (var_is_scalar(datainfo, vx) || (vy > 0 && var_is_scalar(datainfo, vy))) {
@@ -2161,6 +2161,8 @@ static void populate_stats (GtkWidget *w, gpointer p)
     }
 
     if (err) {
+	GtkWidget *entry;
+
 	/* scrub any existing stats entries */
 	entry_set_blank(test, pos);
 	entry_set_blank(test, pos + 1);
@@ -2168,7 +2170,8 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	    entry_set_blank(test, pos + 2);
 	} 
 	/* highlight error region */
-	gtk_editable_select_region(GTK_EDITABLE(GTK_COMBO(p)->entry), 0, -1);
+	entry = gtk_bin_get_child(GTK_BIN(p));
+	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
 	return;
     }
 
@@ -2235,12 +2238,11 @@ static int var_is_ok (int i, int code)
 
 static void add_vars_to_combo (GtkWidget *w, int code, int pos)
 {
-    GList *vlist = NULL;
     int i, vmin = (pos > 0)? 2 : 1;
 
     for (i=vmin; i<datainfo->v; i++) {
 	if (var_is_ok(i, code)) {
-	    vlist = g_list_append(vlist, datainfo->varname[i]);
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(w), datainfo->varname[i]);
 	}
     }
 
@@ -2248,13 +2250,13 @@ static void add_vars_to_combo (GtkWidget *w, int code, int pos)
 	/* add first variable at the end of the list */
 	for (i=1; i<datainfo->v; i++) {
 	    if (var_is_ok(i, code)) {
-		vlist = g_list_append(vlist, datainfo->varname[i]);
+		gtk_combo_box_append_text(GTK_COMBO_BOX(w), datainfo->varname[i]);
 		break;
 	    }
 	}
-    }	
+    }
 
-    gtk_combo_set_popdown_strings(GTK_COMBO(w), vlist);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
 }
 
 static void toggle_combo_ok (GtkWidget *toggle, gpointer p)
@@ -2283,16 +2285,18 @@ static void free_pbuf (GtkWidget *w, gpointer p)
 
     if (pbuf != NULL) {
 	if (*pbuf != NULL) {
-	    free(*pbuf);
+	    g_free(*pbuf);
 	}
 	free(pbuf);
 	g_object_set_data(G_OBJECT(w), "pbuf", NULL);
     }
 }
 
-static void select_child_callback (GtkList *l, GtkWidget *w, gpointer p)
+static void select_child_callback (GtkComboBox *b, gpointer p)
 {
-    populate_stats(NULL, p);
+    if (gtk_combo_box_get_active(b) >= 0) {
+	populate_stats(NULL, p);
+    }
 }
 
 static void add_test_var_selector (GtkWidget *tbl, gint *row, 
@@ -2315,13 +2319,13 @@ static void add_test_var_selector (GtkWidget *tbl, gint *row,
 			      label, 0, 1, *row - 1, *row);
     gtk_widget_show(label);
 
-    tmp = gtk_combo_new();
+    tmp = gtk_combo_box_entry_new_text();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tmp, 1, 2, *row - 1, *row);
     gtk_widget_show(tmp);
     g_object_set_data(G_OBJECT(tmp), "test", test);
     g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(i));
-    test->entry[i] = GTK_COMBO(tmp)->entry;
+    test->entry[i] = gtk_bin_get_child(GTK_BIN(tmp));
 
     pbuf = malloc(sizeof *pbuf);
     if (pbuf != NULL) {
@@ -2343,6 +2347,7 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
 			    test_t *test, int pos)
 {
     GtkWidget *button, *tmp;
+    GtkWidget *entry;
     gchar **pbuf;
 
     *rows += 1;
@@ -2352,7 +2357,7 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
 			      button, 0, 1, *rows - 1, *rows);
     gtk_widget_show(button);
 
-    tmp = gtk_combo_new();
+    tmp = gtk_combo_box_entry_new_text();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tmp, 1, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);
@@ -2374,11 +2379,11 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
 
     add_vars_to_combo(tmp, test->code, pos);
     gtk_widget_set_sensitive(tmp, FALSE);
-    gtk_combo_disable_activate(GTK_COMBO(tmp));
 
-    g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "key_press_event",
+    entry = gtk_bin_get_child(GTK_BIN(tmp));
+    g_signal_connect(G_OBJECT(GTK_ENTRY(entry)), "key_press_event",
 		     G_CALLBACK(catch_combo_key), tmp);
-    g_signal_connect(G_OBJECT(GTK_LIST(GTK_COMBO(tmp)->list)), "select-child",
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(tmp)), "changed",
 		     G_CALLBACK(select_child_callback), tmp);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(toggle_combo_ok), tmp);
@@ -2841,8 +2846,8 @@ static CalcChild *gretl_child_new (int code, gpointer p)
     child->bbox = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(child->bbox), 
 			      GTK_BUTTONBOX_END);
-    gtk_button_box_set_spacing(GTK_BUTTON_BOX(child->bbox),
-			       10);
+    gtk_box_set_spacing(GTK_BOX(child->bbox), 10);
+
     gtk_widget_show(child->bbox);
     gtk_container_add(GTK_CONTAINER(base), child->bbox);
     gtk_container_set_border_width(GTK_CONTAINER(child->bbox), 5);

@@ -612,6 +612,34 @@ GtkWidget *gretl_toolbar_new (void)
     return tb;
 }
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
+
+static GtkTooltips *gretl_tips;
+
+void gretl_tooltips_init (void)
+{
+    gretl_tips = gtk_tooltips_new();
+    gtk_tooltips_enable(gretl_tips); /* redundant? */
+}
+
+void gretl_tooltips_add (GtkWidget *w, const gchar *str)
+{
+    gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
+}
+
+#else /* new tooltips API */
+
+void gretl_tooltips_init (void)
+{
+}
+
+void gretl_tooltips_add (GtkWidget *w, const gchar *str)
+{
+    gtk_widget_set_tooltip_text(w, str);
+}
+
+#endif
+
 GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
 				   GretlToolItem *item,
 				   gpointer data,
@@ -620,7 +648,11 @@ GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
     GtkToolItem *button;
 
     button = gtk_tool_button_new_from_stock(item->icon);
-    gtk_tool_item_set_tooltip(button, get_gretl_tips(), _(item->tip), NULL);
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
+    gtk_tool_item_set_tooltip(button, gretl_tips, _(item->tip), NULL);
+#else
+    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
+#endif
     g_signal_connect(button, "clicked", G_CALLBACK(item->func), data);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), button, pos);
 
@@ -873,22 +905,3 @@ void show_toolbar (void)
     make_toolbar(vbox);
 }
 
-/* tooltips stuff */
-
-static GtkTooltips *gretl_tips;
-
-void gretl_tooltips_init (void)
-{
-    gretl_tips = gtk_tooltips_new();
-    gtk_tooltips_enable(gretl_tips); /* redundant? */
-}
-
-void gretl_tooltips_add (GtkWidget *w, const gchar *str)
-{
-    gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
-}
-
-GtkTooltips *get_gretl_tips (void)
-{
-    return gretl_tips;
-}

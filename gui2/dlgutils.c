@@ -683,9 +683,9 @@ edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
 	if (d->popup != NULL) {
 	    gtk_menu_popup(GTK_MENU(d->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
-	    gtk_signal_connect(GTK_OBJECT(d->popup), "destroy",
-			       GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
-			       &d->popup);
+	    g_signal_connect(G_OBJECT(d->popup), "destroy",
+			     G_CALLBACK(gtk_widget_destroyed), 
+			     &d->popup);
 	}
 	return TRUE;
     }
@@ -1271,4 +1271,21 @@ char *entry_box_get_trimmed_text (GtkWidget *w)
     }
 
     return ret;
+}
+
+void set_combo_box_strings_from_list (GtkComboBox *box, GList *list)
+{
+    GList *mylist = list;
+
+    while (mylist != NULL) {
+	gtk_combo_box_append_text(box, mylist->data);
+	mylist = mylist->next;
+    }
+}
+
+void set_combo_box_default_text (GtkComboBox *box, const char *s)
+{
+    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(box));
+
+    gtk_entry_set_text(GTK_ENTRY(entry), s);
 }

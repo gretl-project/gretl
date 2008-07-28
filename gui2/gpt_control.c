@@ -3219,7 +3219,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	gdk_gc_destroy(plot->invert_gc);
     }
 
-    gtk_widget_unref(plot->shell);
+    g_object_unref(plot->shell);
 
     free(plot);
 }
@@ -3647,7 +3647,7 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
     /* note need for corresponding unref */
-    gtk_widget_ref(plot->shell);
+    g_object_ref(plot->shell);
 
     gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 
     gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);

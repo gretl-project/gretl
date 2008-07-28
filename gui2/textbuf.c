@@ -1306,9 +1306,9 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 	if (hwin->popup != NULL) {
 	    gtk_menu_popup(GTK_MENU(hwin->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
-	    gtk_signal_connect(GTK_OBJECT(hwin->popup), "destroy",
-			       GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
-			       &hwin->popup);
+	    g_signal_connect(G_OBJECT(hwin->popup), "destroy",
+			     G_CALLBACK(gtk_widget_destroyed), 
+			     &hwin->popup);
 	}
 
 	return TRUE;

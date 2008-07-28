@@ -148,6 +148,23 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     }
 }
 
+static void combo_to_gp_string (GtkWidget *w, char *targ, size_t n)
+{
+    gchar *str;
+
+    *targ = '\0';
+
+    g_return_if_fail(GTK_IS_COMBO_BOX(w));
+
+    str = gtk_combo_box_get_active_text(GTK_COMBO_BOX(w));
+
+    if (str != NULL || *str != '\0') {
+	strncat(targ, str, n-1);
+    }
+
+    g_free(str);
+}
+
 static FitType fit_type_from_string (const char *s)
 {
     FitType f = PLOT_FIT_NONE;
@@ -416,8 +433,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 		} else if (!strncmp(spec->lines[i].style, "error", 5)) {
 		    oldalt = ERRORBARS;
 		}
-		entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
-				   spec->lines[i].style, 
+		combo_to_gp_string(stylecombo[i], spec->lines[i].style, 
 				   sizeof spec->lines[0].style);
 		if (oldalt == FILLEDCURVE &&
 		    !strncmp(spec->lines[i].style, "error", 5)) {
@@ -457,7 +473,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	    break;
 	}
 	spec->labels[i].just = 
-	    gtk_option_menu_get_history(GTK_OPTION_MENU(labeljust[i]));
+	    gtk_combo_box_get_active(GTK_COMBO_BOX(labeljust[i]));
     } 
 
     if (!err && border_check != NULL) {
@@ -479,7 +495,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
     }
 
     if (!err && ttfcombo != NULL && ttfspin != NULL) {
-	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry));
+	gchar *tmp = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ttfcombo));
 	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ttfspin));
 
 	if (tmp != NULL && *tmp != '\0') {
@@ -493,6 +509,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	    }
 	    set_gretl_png_font(pngfont, &paths);
 	}
+	g_free(tmp);
     }
 
     if (!err && fitcombo != NULL) {
@@ -957,7 +974,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
     /* set TT font, if gnuplot uses freetype */
     if (gnuplot_has_ttf(0)) {
-	GtkWidget *ebox, *hsep;
+	GtkWidget *ebox, *hsep, *entry;
 	GList *fontnames = NULL;
 	struct font_info *ttflist;
 	const char *default_font = NULL;
@@ -995,14 +1012,15 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
 	/* FIXME max length of font name? */
 
-	ttfcombo = gtk_combo_new();
-	gtk_entry_set_max_length(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
+	ttfcombo = gtk_combo_box_entry_new_text();
+	entry = gtk_bin_get_child(GTK_BIN(ttfcombo));
+	gtk_entry_set_max_length(GTK_ENTRY(entry), 15);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfcombo, 1, 2, 
 				  rows-1, rows);
-	gtk_combo_set_popdown_strings(GTK_COMBO(ttfcombo), fontnames); 
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), default_font);
-	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
-	g_signal_connect(G_OBJECT(GTK_COMBO(ttfcombo)->entry), "activate", 
+	set_combo_box_strings_from_list(GTK_COMBO_BOX(ttfcombo), fontnames); 
+	gtk_entry_set_text(GTK_ENTRY(entry), default_font);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 15);
+	g_signal_connect(G_OBJECT(entry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
 	gtk_widget_show(ttfcombo);
@@ -1140,7 +1158,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
 
-	stylecombo[i] = gtk_combo_new();
+	stylecombo[i] = gtk_combo_box_entry_new_text();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  stylecombo[i], 2, 3, tbl_len-1, tbl_len);
 
@@ -1148,8 +1166,8 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	   with the others */
 	if (!strcmp(spec->lines[i].style, "errorbars") &&
 	    !gnuplot_has_style_fill()) {
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
-			       spec->lines[i].style); 
+	    set_combo_box_default_text(GTK_COMBO_BOX(stylecombo[i]), 
+				       spec->lines[i].style); 
 	    gtk_widget_set_sensitive(stylecombo[i], FALSE);
 	} else if (!strcmp(spec->lines[i].style, "errorbars") ||
 		   !strcmp(spec->lines[i].style, "filledcurve")) {
@@ -1157,14 +1175,14 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
 	    altsty = g_list_append(altsty, "errorbars"); 
 	    altsty = g_list_append(altsty, "filledcurve");
-	    gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), altsty); 
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
-			       spec->lines[i].style); 
+	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), altsty);
+	    set_combo_box_default_text(GTK_COMBO_BOX(stylecombo[i]), 
+				       spec->lines[i].style); 
 	    g_list_free(altsty);
 	} else {
-	    gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), stylist); 
-	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
-			       spec->lines[i].style); 
+	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), stylist);
+	    set_combo_box_default_text(GTK_COMBO_BOX(stylecombo[i]), 
+				       spec->lines[i].style); 
 	} 
 
 	gtk_widget_show(stylecombo[i]);	
@@ -1254,7 +1272,7 @@ static void label_pos_to_entry (double *pos, GtkWidget *w)
 
 static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *label, *vbox, *tbl, *menu;
+    GtkWidget *label, *vbox, *tbl;
     int i, j, tbl_len, tbl_num, tbl_col;
     char label_text[32];
     png_plot *plot = (png_plot *) spec->ptr;
@@ -1349,17 +1367,13 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
 
-	labeljust[i] = gtk_option_menu_new();
-	menu = gtk_menu_new();
+	labeljust[i] = gtk_combo_box_new_text();
 	for (j=0; j<3; j++) {
-	    GtkWidget *item;
-
-	    item = gtk_menu_item_new_with_label(gp_justification_string(j));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(labeljust[i]),
+				      gp_justification_string(j));
 	}
-	gtk_option_menu_set_menu(GTK_OPTION_MENU(labeljust[i]), menu);	
-	gtk_option_menu_set_history(GTK_OPTION_MENU(labeljust[i]),
-				    spec->labels[i].just);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(labeljust[i]), 
+				 spec->labels[i].just);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(labeljust[i]);	
@@ -1526,12 +1540,12 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 				  tbl_len-1, tbl_len);
 	gtk_widget_show(b2);    
 
-	combo = gtk_combo_new();
-	gtk_combo_set_popdown_strings(GTK_COMBO(combo), strs); 
+	combo = gtk_combo_box_entry_new_text();
+	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), strs);
 	g_list_free(strs);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), combo, 1, 2, 
 				  tbl_len-1, tbl_len);
-	entry = GTK_COMBO(combo)->entry;
+	entry = gtk_bin_get_child(GTK_BIN(combo));
 	g_signal_connect(G_OBJECT(entry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
