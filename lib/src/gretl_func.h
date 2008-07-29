@@ -109,7 +109,7 @@ int write_function_package (fnpkg *pkg,
 			    const char *version,
 			    const char *date,
 			    const char *descrip,
-			    const char *sample,
+			    char *sample,
 			    FuncDataReq dreq,
 			    int minver);
 

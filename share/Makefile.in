@@ -68,7 +68,7 @@ install-strip: install
 
 install_datafiles:
 	for f in $(sharesrc)/data/*.gdt ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/data ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/data ; done
 	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(DESTDIR)$(gretldir)/data 
 	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(DESTDIR)$(gretldir)/data 
 	for f in $(sharesrc)/data/greene/* ; do \
@@ -109,7 +109,7 @@ install_help: $(query_make_help)
 	$(INSTALL_DATA) $(IT_CLI_GENHLP) $(DESTDIR)$(gretldir)/genrcli.hlp.it
 	$(INSTALL_DATA) $(IT_GUI_GENHLP) $(DESTDIR)$(gretldir)/genrgui.hlp.it
 	for f in $(sharesrc)/texfigs/*.png ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/helpfigs ; done
+	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/helpfigs ; done
 	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \
 	if test -f $$f ; then $(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/doc ; fi ; done
 

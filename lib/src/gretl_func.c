@@ -1419,6 +1419,12 @@ static fnpkg *new_package_with_funcs (const char *fname, int pub,
     return pkg;
 }
 
+static char *trim_script (char *s)
+{
+    while (isspace(*s)) s++;
+    return tailstrip(s);
+}
+
 /* Three cases should be distinguished below: (a) saving a totally new
    package; (b) saving changes to an existing package with no change
    to the version; and (c) saving changes to an existing package with
@@ -1438,7 +1444,7 @@ int write_function_package (fnpkg *pkg,
 			    const char *version,
 			    const char *date,
 			    const char *descrip,
-			    const char *sample,
+			    char *sample,
 			    FuncDataReq dreq,
 			    int minver)
 {
@@ -1528,9 +1534,12 @@ int write_function_package (fnpkg *pkg,
     }
 
     if (sample != NULL) {
+ 	/* escapes may be needed; also perhaps trimming */
+	char *s = trim_script(sample);
+
 	fputs("<sample-script>\n", fp);
-	fputs(sample, fp);
-	fputs("</sample-script>\n", fp);
+	gretl_xml_put_raw_string(s, fp);
+	fputs("\n</sample-script>\n", fp);	
     }
 
     fputs("</gretl-function-package>\n", fp);
@@ -1691,12 +1700,6 @@ int function_package_get_info (const char *fname,
     return err;
 }
 
-static char *trim_sample_script (char *s)
-{
-    while (isspace(*s)) s++;
-    return tailstrip(s);
-}
-
 static void print_function_package (fnpkg *pkg, FILE *fp)
 {
     int i;
@@ -1724,7 +1727,7 @@ static void print_function_package (fnpkg *pkg, FILE *fp)
 
     if (pkg->sample != NULL) {
 	/* escapes may be needed; also perhaps trimming */
-	char *s = trim_sample_script(pkg->sample);
+	char *s = trim_script(pkg->sample);
 
 	fputs("<sample-script>\n", fp);
 	gretl_xml_put_raw_string(s, fp);

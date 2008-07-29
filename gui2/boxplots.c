@@ -264,7 +264,7 @@ setup_text (GtkWidget *area, GdkPixmap *pixmap,
 			     0,               /* angle */
 			     &black, &white,  /* fore, back */
 			     FALSE,           /* transparent? */
-			     GTK_PLOT_BORDER_NONE, 0, 1, 0,
+			     PS_PLOT_BORDER_NONE, 0, 1, 0,
 			     boxfont, boxfontsize,
 			     just,
 			     text);
@@ -793,14 +793,9 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     PLOTGROUP *grp = (PLOTGROUP *) data;
     FILE *fp;
     PSPlot *ps;
-    int i, eps = 1, orient = GTK_PLOT_PORTRAIT;
+    int i, eps = 1, orient = PS_PLOT_PORTRAIT;
+    gdouble epswidth = 0, epsheight = 0;
     gdouble pscale = 0.8;
-
-    if (flag == SAVE_BOXPLOT_PS) {
-	pscale = 1.2;
-	eps = 0;
-	orient = GTK_PLOT_LANDSCAPE;
-    }
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
@@ -808,11 +803,20 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 	return E_FOPEN;
     }
 
+    if (flag == SAVE_BOXPLOT_PS) {
+	pscale = 1.2;
+	eps = 0;
+	orient = PS_PLOT_LANDSCAPE;
+	epswidth = pscale * grp->width;
+	epsheight = pscale * grp->height;
+    }
+
     ps = ps_plot_new(fname,
 		     fp, 
 		     orient, 
 		     eps, 
-		     GTK_PLOT_LETTER, 
+		     PS_PLOT_LETTER, 
+		     epswidth, epsheight,
 		     pscale, pscale);
 
     if (ps == NULL) {
@@ -821,11 +825,7 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 	return E_ALLOC;
     }
 
-    if (eps) {
-	ps_plot_set_page_size(ps, pscale * grp->width,
-			      pscale * grp->height);
-    }
-
+    gretl_push_c_numeric_locale();
     ps_plot_init(ps);
 
     for (i=0; i<grp->nplots; i++) {
@@ -838,6 +838,8 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     gtk_boxplot_yscale(grp, ps);
 
     ps_plot_finalize(ps);
+    gretl_pop_c_numeric_locale();
+    fclose(fp);
 
     return 0;
 }
@@ -1259,8 +1261,8 @@ int plot_to_xpm (const char *fname, gpointer data)
 	    "\". c black\",\n"
 	    "/* pixels */\n", grp->width, grp->height);
 
-    image = gdk_image_get (grp->pixmap, 0, 0, 
-			   grp->width, grp->height);
+    image = gdk_image_get(grp->pixmap, 0, 0, 
+			  grp->width, grp->height);
 
     white_pixel = pow(2, image->depth) - 1;
 
@@ -1268,10 +1270,9 @@ int plot_to_xpm (const char *fname, gpointer data)
 	fprintf(fp, "\"");
 	for (j=0; j<grp->width; j++) {
 	    pixel = gdk_image_get_pixel(image, j, i);
-	    if (pixel == white_pixel) fprintf(fp, " ");
-	    else fprintf(fp, ".");
+	    fputc((pixel == white_pixel)? ' ' : '.', fp);
 	}
-	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
+	fprintf(fp, "\"%s\n", (i < grp->height - 1)? "," : "};");
     }
 
     g_object_unref(G_OBJECT(image));
@@ -1325,29 +1326,22 @@ static void read_boxrc (PLOTGROUP *grp)
 		val[31] = '\0';
 		if (!strcmp(key, "max")) { 
 		    grp->gmax = atof(val);
-		}
-		else if (!strcmp(key, "min")) { 
+		} else if (!strcmp(key, "min")) { 
 		    grp->gmin = atof(val);
-		}
-		else if (!strcmp(key, "font")) { 
+		} else if (!strcmp(key, "font")) { 
 		    strncpy(boxfont, val, 63);
 		    boxfont[63] = '\0';
-		}
-		else if (!strcmp(key, "fontsize")) {
+		} else if (!strcmp(key, "fontsize")) {
 		    boxfontsize = atoi(val);
-		}
-		else if (!strcmp(key, "width") && atoi(val) > 0) {
+		} else if (!strcmp(key, "width") && atoi(val) > 0) {
 		    grp->width = atoi(val);
-		}
-		else if (!strcmp(key, "height") && atoi(val) > 0) { 
+		} else if (!strcmp(key, "height") && atoi(val) > 0) { 
 		    grp->height = atoi(val);
-		}
-		else if (!strcmp(key, "numbers") && 
+		} else if (!strcmp(key, "numbers") && 
 			 (grp->numbers = malloc(8))) {
 		    grp->numbers[0] = 0;
 		    strncat(grp->numbers, val, 7);
-		}
-		else if (!strcmp(key, "outliers") && !strcmp(val, "true")) {
+		} else if (!strcmp(key, "outliers") && !strcmp(val, "true")) {
 		    grp->show_outliers = 1;
 		}
 	    }
@@ -1688,7 +1682,9 @@ static char *boxplots_fix_parentheses (const char *line)
     }
 
     s = malloc(flen + 1);
-    if (s == NULL) return NULL;
+    if (s == NULL) {
+	return NULL;
+    }
 
     p = s;
     for (i=0; i<len; i++) {
@@ -1732,11 +1728,16 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     char *tok, *s = NULL, **bools = NULL;
     int *list = NULL;
 
-    if (!strncmp(str, "boxplots ", 9)) str += 9;
-    else if (!strncmp(str, "boxplot ", 8)) str += 8;
+    if (!strncmp(str, "boxplots ", 9)) {
+	str += 9;
+    } else if (!strncmp(str, "boxplot ", 8)) {
+	str += 8;
+    }
 
     s = boxplots_fix_parentheses(str);
-    if (s == NULL) return 1;
+    if (s == NULL) {
+	return 1;
+    }
 
     nvars = special_varcount(s);
     if (nvars == 0) {
@@ -1746,7 +1747,10 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 
     list = malloc((nvars + 1) * sizeof *list);
     bools = malloc(nvars * sizeof *bools);
+
     if (list == NULL || bools == NULL) {
+	free(list);
+	free(bools);
 	free(s);
 	return 1;
     }
@@ -1775,15 +1779,17 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    if (isdigit(tok[0])) { 
 		v = atoi(tok);
-		if (v < origv) list[++i] = v;
-		else {
+		if (v < origv) {
+		    list[++i] = v;
+		} else {
 		    errbox(_("got invalid variable number %d"), v);
 		    err = 1;
 		}
 	    } else if (isalpha(tok[0])) {
 		v = varindex(pdinfo, tok);
-		if (v < origv) list[++i] = v;
-		else {
+		if (v < origv) {
+		    list[++i] = v;
+		} else {
 		    errbox(_("got invalid varname '%s'"), tok);
 		    err = 1;
 		}
@@ -1818,10 +1824,11 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		err = 1;
 	    } else {
 		for (t=0; t<n; t++) {
-		    if ((*pZ)[k][t] == 1.0) 
+		    if ((*pZ)[k][t] == 1.0) {
 			(*pZ)[k][t] = (*pZ)[list[i]][t];
-		    else 
+		    } else { 
 			(*pZ)[k][t] = NADBL;
+		    }
 		}
 		strcpy(pdinfo->varname[k], pdinfo->varname[list[i]]);
 		list[i] = k++;

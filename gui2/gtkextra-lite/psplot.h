@@ -28,19 +28,19 @@
 #define PS_PLOT_H_
 
 enum{
-    GTK_PLOT_LETTER,
-    GTK_PLOT_A4
+    PS_PLOT_LETTER,
+    PS_PLOT_A4
 };
 
 enum{
-    GTK_PLOT_PORTRAIT,
-    GTK_PLOT_LANDSCAPE	
+    PS_PLOT_PORTRAIT,
+    PS_PLOT_LANDSCAPE	
 };
 
 enum {
-    GTK_PLOT_BORDER_NONE,
-    GTK_PLOT_BORDER_LINE,
-    GTK_PLOT_BORDER_SHADOW
+    PS_PLOT_BORDER_NONE,
+    PS_PLOT_BORDER_LINE,
+    PS_PLOT_BORDER_SHADOW
 };
 
 typedef struct _PSPlot PSPlot;
@@ -59,10 +59,10 @@ PSPlot *ps_plot_new (const gchar *fname,
 		     gint orientation,
 		     gint epsflag,
 		     gint page_size,
+		     gdouble epswidth,
+		     gdouble epsheight,
 		     gdouble scalex,
 		     gdouble scaley);
-
-void ps_plot_set_page_size (PSPlot *ps, gdouble width, gdouble height);
 
 void ps_plot_draw_line (PSPlot *ps, gdouble x0, gdouble y0, 
 			gdouble xf, gdouble yf);
