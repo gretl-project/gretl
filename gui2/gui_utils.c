@@ -1383,7 +1383,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
-    } else if (role == VIEW_FUNC_CODE || role == EDIT_FUNC_CODE) {
+    } else if (role == VIEW_FUNC_CODE || 
+	       role == EDIT_FUNC_CODE ||
+	       role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role != IMPORT) {
 	vwin_add_viewbar(vwin, 1);

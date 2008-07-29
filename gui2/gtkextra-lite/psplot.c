@@ -193,28 +193,29 @@ void ps_plot_draw_circle (PSPlot *ps, gboolean filled, gdouble x,
 	    x, y, size / 2., size / 2.);
 
     if (filled)
-	fprintf(psout,"f\n");
+	fputs("f\n", psout);
 
-    fprintf(psout,"s\n");
+    fputs("s\n", psout);
 }
 
-void ps_plot_draw_polygon (PSPlot *ps, gboolean filled, PlotPoint *points, gint numpoints)
+void ps_plot_draw_polygon (PSPlot *ps, gboolean filled, PlotPoint *points, 
+			   gint numpoints)
 {
     FILE *psout = ps->psfile;
     gint i;
 
-    fprintf(psout,"n\n");
-    fprintf(psout,"%g %g m\n", points[0].x, points[0].y);
+    fputs("n\n", psout);
+    fprintf(psout, "%g %g m\n", points[0].x, points[0].y);
 
     for (i=1; i<numpoints; i++)
 	fprintf(psout,"%g %g l\n", points[i].x, points[i].y);
 
     if (filled)
-	fprintf(psout,"f\n");
+	fputs("f\n", psout);
     else
-	fprintf(psout,"cp\n");
+	fputs("cp\n", psout);
 
-    fprintf(psout,"s\n");
+    fputs("s\n", psout);
 }
 
 void ps_plot_draw_rectangle (PSPlot *ps, gboolean filled, gdouble x, gdouble y, 

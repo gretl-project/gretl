@@ -817,6 +817,7 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 
     if (ps == NULL) {
 	fclose(fp);
+	remove(fname);
 	return E_ALLOC;
     }
 

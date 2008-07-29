@@ -642,6 +642,7 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 
 GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
 				   GretlToolItem *item,
+				   GCallback func,
 				   gpointer data,
 				   gint pos)
 {
@@ -653,7 +654,7 @@ GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
 #else
     gtk_widget_set_tooltip_text(GTK_WIDGET(button), _(item->tip));
 #endif
-    g_signal_connect(button, "clicked", G_CALLBACK(item->func), data);
+    g_signal_connect(button, "clicked", func, data);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), button, pos);
 
     return button;
@@ -700,7 +701,7 @@ void vwin_add_viewbar (windata_t *vwin, int text_out)
 	    set_plot_icon(item);
 	}
 
-	button = gretl_toolbar_insert(vwin->mbar, item, vwin, -1);
+	button = gretl_toolbar_insert(vwin->mbar, item, func, vwin, -1);
 
 	if (item->flag == SAVE_ITEM) { 
 	    g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
@@ -729,7 +730,7 @@ void viewbar_add_edit_items (windata_t *vwin)
 	if (item->flag == SAVE_ITEM ||
 	    item->flag == EDIT_ITEM ||
 	    item->flag == EDIT_SCRIPT_ITEM) {
-	    button = gretl_toolbar_insert(vwin->mbar, item, vwin, pos);
+	    button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, pos);
 	    if (item->flag == SAVE_ITEM) {
 		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
 		g_object_set_data(G_OBJECT(vwin->mbar), "save_button",
@@ -889,7 +890,7 @@ static void make_toolbar (GtkWidget *vbox)
 
     for (i=0; i<n; i++) {
 	item = &mainbar_items[i];
-	gretl_toolbar_insert(toolbar, item, mdata, -1);
+	gretl_toolbar_insert(toolbar, item, item->func, mdata, -1);
     }
 
     hbox = gtk_hbox_new(FALSE, 0);

@@ -42,6 +42,7 @@ GtkWidget *gretl_toolbar_new (void);
 
 GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
 				   GretlToolItem *item,
+				   GCallback func,
 				   gpointer data,
 				   gint pos);
 

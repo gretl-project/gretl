@@ -1159,7 +1159,7 @@ static void make_filesbar (windata_t *vwin)
     for (i=0; i<n_files_items; i++) {
 	item = &files_items[i];
 	if (files_item_get_callback(item, vwin->role)) {
-	    gretl_toolbar_insert(vwin->mbar, item, vwin, -1);
+	    gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
 	}
     }
 
