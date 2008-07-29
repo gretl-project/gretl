@@ -699,36 +699,45 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
 		     opts);
 }
 
-static void tramo_arima_callback (GtkWidget *w, gint *var)
+static void tramo_arima_callback (GtkComboBox *w, gint *var)
 {
-    GtkWidget *entry = g_object_get_data(G_OBJECT(w), "entry");
+    gint active = gtk_combo_box_get_active(w);
 
-    *var = atoi(gtk_entry_get_text(GTK_ENTRY(entry)));
+    if (active >= 0) {
+	*var = active;
+    }
 }
 
 static GtkWidget *make_labeled_combo (const gchar *label, 
 				      GtkWidget *tbl, gint row,
-				      GList *list, gint *var)
+				      gint imax, gint *var)
 {
     GtkWidget *w;
-    char numstr[2];
+    gchar *ivals[] = {
+	"0", "1", "2", "3"
+    };
+    int deflt = 0;
+    int i;
 
     w = gtk_label_new(label);
     gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_RIGHT);
     gtk_table_attach(GTK_TABLE(tbl), w, 0, 1, row, row + 1,
 		     0, 0, 0, 0);
     gtk_widget_show(w);
-    w = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(w), list); 
-    sprintf(numstr, "%d", *var);
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), numstr);
+
+    w = gtk_combo_box_entry_new_text();
+    for (i=0; i<imax; i++) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(w), ivals[i]);
+	if (atoi(ivals[i]) == *var) {
+	    deflt = i;
+	}
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), deflt);
     gtk_widget_set_size_request(w, 48, -1);
     gtk_table_attach(GTK_TABLE(tbl), w, 1, 2, row, row + 1,
 		     0, 0, 0, 0);
 
-    g_object_set_data(G_OBJECT(GTK_COMBO(w)->list), "entry", 
-		      GTK_COMBO(w)->entry);
-    g_signal_connect(G_OBJECT(GTK_COMBO(w)->list), "selection-changed",
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(tramo_arima_callback), 
 		     var);
 
@@ -738,25 +747,8 @@ static GtkWidget *make_labeled_combo (const gchar *label,
 static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
 {
     GtkWidget *tbl, *tmp;
-    int i, tbl_len = 10, row = 0;
-    GList *onelist = NULL, *twolist = NULL, *threelist = NULL;
-    gchar *intvals[] = {
-	"0", "1", "2", "3"
-    };
-
-    if (pd > 1) {
-	for (i=0; i<2; i++) {
-	    onelist = g_list_append(onelist, intvals[i]);
-	}
-    }
-    for (i=0; i<3; i++) {
-	twolist = g_list_append(twolist, intvals[i]);
-    }
-    for (i=0; i<4; i++) {
-	threelist = g_list_append(threelist, intvals[i]);
-    }
-
-    if (pd == 1) tbl_len -= 3;
+    int tbl_len = (pd == 1)? 7 : 10;
+    int row = 0;
 
     tbl = make_notebook_page_table(notebook, _("ARIMA"), tbl_len, 2);
     gtk_table_set_homogeneous(GTK_TABLE(tbl), FALSE);
@@ -774,14 +766,14 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
 
     /* difference terms */
     tmp = make_labeled_combo(_("Non-seasonal differences:"), tbl, row,
-			     twolist, &opts->d);
+			     3, &opts->d);
     row++;
     gtk_widget_show(tmp);
     opts->d_list = tmp;
 
     if (pd > 1) {
 	tmp = make_labeled_combo(_("Seasonal differences:"), tbl, row,
-				 onelist, &opts->bd);
+				 2, &opts->bd);
 	row++;
 	gtk_widget_show(tmp);
 	opts->bd_list = tmp;
@@ -797,14 +789,14 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
 
     /* AR terms */
     tmp = make_labeled_combo(_("Non-seasonal AR terms:"), tbl, row,
-			     threelist, &opts->p);
+			     4, &opts->p);
     row++;
     gtk_widget_show(tmp);
     opts->p_list = tmp;
 
     if (pd > 1) {
 	tmp = make_labeled_combo(_("Seasonal AR terms:"), tbl, row,
-				 onelist, &opts->bp);
+				 2, &opts->bp);
 	row++;
 	gtk_widget_show(tmp);
 	opts->bp_list = tmp;
@@ -820,14 +812,14 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
 
     /* MA terms */
     tmp = make_labeled_combo(_("Non-seasonal MA terms:"), tbl, row,
-			     threelist, &opts->q);
+			     4, &opts->q);
     row++;
     gtk_widget_show(tmp);
     opts->q_list = tmp;
     
     if (pd > 1) {
 	tmp = make_labeled_combo(_("Seasonal MA terms:"), tbl, row,
-				 onelist, &opts->bq);
+				 2, &opts->bq);
 	gtk_widget_show(tmp);
 	opts->bq_list = tmp;
     } else {
@@ -969,5 +961,4 @@ int print_tramo_options (tx_request *request, FILE *fp)
 
     return (opts->seats > 0);
 }
-
 

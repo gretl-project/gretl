@@ -275,6 +275,7 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     GList *list = NULL;
     struct mail_info *minfo = md->minfo;
     struct msg_info *msg = md->msg;
+    gchar *recip;
     const gchar *txt;
     int err = MAIL_OK;
     int save = 0;
@@ -282,15 +283,16 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     list = minfo->addrs;
 
     /* recipient */
-    txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(md->recip_combo)->entry));
-    if (txt != NULL && *txt != '\0') {
+    recip = gtk_combo_box_get_active_text(GTK_COMBO_BOX(md->recip_combo));
+
+    if (recip != NULL && *recip != '\0') {
 	int i = 0;
 
-	msg->recip = g_strdup(txt);
+	msg->recip = g_strdup(recip);
 	fprintf(stderr, "targ = '%s'\n", msg->recip);
 	save = 1;
 	while (list) {
-	    if (!strcmp(txt, (char *) list->data)) {
+	    if (!strcmp(recip, (char *) list->data)) {
 		if (i == 0) {
 		    /* current recipient is top of the list already */
 		    save = 0;
@@ -304,11 +306,13 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	    i++;
 	}
 	if (save) {
-	    minfo->addrs = g_list_prepend(minfo->addrs, g_strdup(txt));
+	    minfo->addrs = g_list_prepend(minfo->addrs, g_strdup(recip));
 	} 
     } else {
 	err = MAIL_NO_RECIPIENT;
     }
+
+    g_free(recip);
 
     if (!err) {
 	/* reply-to address */
@@ -524,6 +528,16 @@ static void mail_dialog_quit (GtkWidget *w, gpointer p)
     gtk_main_quit();
 }
 
+static void set_combo_strings_from_list (GtkComboBox *box, GList *list)
+{
+    GList *mylist = list;
+
+    while (mylist != NULL) {
+	gtk_combo_box_append_text(box, mylist->data);
+	mylist = mylist->next;
+    }
+}
+
 static void 
 mail_to_dialog (const char *fname, struct mail_info *minfo, 
 		struct msg_info *msg)
@@ -592,9 +606,9 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 	gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, i, i+1, GTK_FILL, GTK_FILL, 0, 0);
 
 	if (i == 0) {
-	    w = gtk_combo_new();
+	    w = gtk_combo_box_entry_new_text();
 	    if (minfo->addrs != NULL) {
-		gtk_combo_set_popdown_strings(GTK_COMBO(w), minfo->addrs);
+		set_combo_strings_from_list(GTK_COMBO_BOX(w), minfo->addrs);
 	    } 
 	} else {
 	    w = gtk_entry_new();
@@ -621,7 +635,9 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 	}
 
 	if (i == 0) {
-	    gtk_entry_set_activates_default(GTK_ENTRY(GTK_COMBO(w)->entry), TRUE);
+	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(w));
+
+	    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 	} else {
 	    gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
 	}
