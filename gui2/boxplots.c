@@ -132,22 +132,16 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
 {
     if (key->keyval == GDK_q) {
 	gtk_widget_destroy(w);
-    } else if (key->keyval == GDK_s) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, 
-		      FSEL_DATA_MISC, data);
     } else if (key->keyval == GDK_p) {  
 	six_numbers(data);
     }
+
 #ifdef G_OS_WIN32
-    else if (key->keyval == GDK_c) {  
+    if (key->keyval == GDK_c) {  
 	cb_copy_image(data);
     }
-#else
-    else if (key->keyval == GDK_c) { 
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, 
-		      FSEL_DATA_MISC, data);	
-    }
 #endif
+
     return TRUE;
 }
 
@@ -166,11 +160,11 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
 	    grp->saved = 1;
 	}
     } else if (!strcmp(item, _("Save as EPS..."))) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, 
-		      FSEL_DATA_MISC, ptr);
+        file_selector_with_parent(_("Save boxplot file"), SAVE_BOXPLOT_EPS, 
+				  FSEL_DATA_MISC, ptr, grp->window);
     } else if (!strcmp(item, _("Save as PS..."))) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_PS, 
-		      FSEL_DATA_MISC, ptr);
+        file_selector_with_parent(_("Save boxplot file"), SAVE_BOXPLOT_PS, 
+				  FSEL_DATA_MISC, ptr, grp->window);
     } else if (!strcmp(item, _("Help"))) {
 	context_help(NULL, GINT_TO_POINTER(BXPLOT));
     } else if (!strcmp(item, _("Close"))) { 
@@ -186,8 +180,8 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     }
 #else
     else if (!strcmp(item, _("Save as XPM..."))) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, 
-		      FSEL_DATA_MISC, ptr);
+        file_selector_with_parent(_("Save boxplot file"), SAVE_BOXPLOT_XPM, 
+				  FSEL_DATA_MISC, ptr, grp->window);
     }
 #endif
 
@@ -197,7 +191,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     return TRUE;
 }
 
-static GtkWidget *build_menu (PLOTGROUP *grp)
+static GtkWidget *build_boxplot_menu (PLOTGROUP *grp)
 {
     GtkWidget *menu, *item;    
     static char *items[] = {
@@ -240,8 +234,11 @@ static gint box_popup (GtkWidget *widget, GdkEventButton *event,
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
 
-    if (grp->popup) g_free(grp->popup);
-    grp->popup = build_menu(grp);
+    if (grp->popup) {
+	g_free(grp->popup);
+    }
+
+    grp->popup = build_boxplot_menu(grp);
     gtk_menu_popup(GTK_MENU(grp->popup), NULL, NULL, NULL, NULL,
 		   event->button, event->time);
     return TRUE;
