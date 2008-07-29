@@ -254,7 +254,7 @@ GUISRC = about.c \
 
 GUIOBJ = $(GUISRC:.c=.o)
 
-EXTRASRC = gtkpsfont.c gtkplotpc.c gtkplotps.c
+EXTRASRC = psplot.c gtkpsfont.c
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
 PROBSRC = bdtr.c btdtr.c chdtr.c expx2.c fdtr.c gamma.c gdtr.c \
