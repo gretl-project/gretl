@@ -1,93 +1,182 @@
 
-gtkplot.c,65
-gtk_plot_text_get_size(31,1085
-gtk_plot_text_get_area(254,8047
+gtkplotpc.c,924
+static GtkObjectClass *parent_class parent_class34,1219
+gtk_plot_pc_get_type 37,1272
+gtk_plot_pc_class_init 61,1779
+gtk_plot_pc_real_init 74,2046
+gtk_plot_pc_new	84,2213
+gboolean gtk_plot_pc_init 93,2344
+void gtk_plot_pc_leave 101,2561
+void gtk_plot_pc_set_viewport 109,2762
+void gtk_plot_pc_gsave 116,2961
+void gtk_plot_pc_grestore 121,3108
+void gtk_plot_pc_clip 126,3258
+void gtk_plot_pc_clip_mask 132,3487
+void gtk_plot_pc_set_color 140,3762
+void gtk_plot_pc_set_lineattr 147,4018
+void gtk_plot_pc_set_dash 156,4500
+void gtk_plot_pc_draw_line 164,4902
+void gtk_plot_pc_draw_lines 171,5232
+void gtk_plot_pc_draw_point 179,5595
+void gtk_plot_pc_draw_rectangle 185,5832
+void gtk_plot_pc_draw_polygon 194,6313
+void gtk_plot_pc_draw_circle 203,6756
+void gtk_plot_pc_draw_ellipse 211,7150
+void gtk_plot_pc_set_font 220,7629
+void gtk_plot_pc_draw_string 227,7893
+void  gtk_plot_pc_draw_pixmap 263,9849
 
-gtkplotpc.c,911
-static GtkObjectClass *parent_class 37,1298
-gtk_plot_pc_get_type 40,1351
-gtk_plot_pc_class_init 64,1858
-gtk_plot_pc_real_init 77,2125
-gtk_plot_pc_new	87,2292
-gboolean gtk_plot_pc_init 96,2423
-void gtk_plot_pc_leave 104,2640
-void gtk_plot_pc_set_viewport 112,2841
-void gtk_plot_pc_gsave 119,3040
-void gtk_plot_pc_grestore 124,3187
-void gtk_plot_pc_clip 129,3337
-void gtk_plot_pc_clip_mask 135,3566
-void gtk_plot_pc_set_color 143,3841
-void gtk_plot_pc_set_lineattr 150,4097
-void gtk_plot_pc_set_dash 159,4579
-void gtk_plot_pc_draw_line 167,4981
-void gtk_plot_pc_draw_lines 174,5311
-void gtk_plot_pc_draw_point 182,5674
-void gtk_plot_pc_draw_rectangle 188,5911
-void gtk_plot_pc_draw_polygon 197,6392
-void gtk_plot_pc_draw_circle 206,6835
-void gtk_plot_pc_draw_ellipse 214,7229
-void gtk_plot_pc_set_font 223,7708
-void gtk_plot_pc_draw_string 230,7972
-void  gtk_plot_pc_draw_pixmap 266,9928
+gtkplotps.c,965
+static GtkPlotPCClass *parent_class parent_class129,5014
+gtk_plot_ps_get_type 132,5067
+gtk_plot_ps_init 156,5570
+gtk_plot_ps_class_init 164,5664
+gtk_plot_ps_destroy(198,6683
+gtk_plot_ps_construct 211,6855
+gtk_plot_ps_new 251,7804
+gtk_plot_ps_new_with_size 271,8190
+gtk_plot_ps_construct_with_size 292,8651
+gtk_plot_ps_set_size 305,9013
+gtk_plot_ps_set_scale 340,9914
+static void pssetviewport 348,10058
+static void pssetlineattr 354,10135
+pssetdash 371,10569
+void psleave 401,11226
+gboolean psinit 410,11489
+static void ps_reencode_font(595,18971
+static void pssetcolor(615,19580
+psdrawpoint(626,19862
+psdrawlines(637,20104
+psdrawpolygon(651,20451
+static void psdrawline(669,20869
+psdrawrectangle(679,21125
+psdrawcircle(697,21524
+psdrawellipse(711,21818
+psoutputstring 729,22199
+psdrawstring	798,23605
+pssetfont(1138,33731
+psgsave(1153,34117
+psgrestore(1167,34287
+gtk_plot_text_get_size(1183,34491
+gtk_plot_text_get_area(1406,41460
 
-gtkplotps.c,993
-static GtkPlotPCClass *parent_class 129,5308
-static gchar *locale 130,5352
-gtk_plot_ps_get_type 133,5390
-gtk_plot_ps_init 157,5893
-gtk_plot_ps_class_init 165,5987
-gtk_plot_ps_destroy(202,7109
-gtk_plot_ps_new 215,7281
-gtk_plot_ps_construct 235,7827
-gtk_plot_ps_new_with_size 275,8891
-gtk_plot_ps_construct_with_size 295,9525
-gtk_plot_ps_set_size 309,10080
-gtk_plot_ps_set_scale 344,11122
-static void pssetviewport	352,11368
-static void pssetlineattr	358,11448
-pssetdash(375,12066
-psleave(406,13007
-psinit	417,13295
-static void ps_reencode_font(603,21230
-static void pssetcolor(623,21937
-psdrawpoint(634,22219
-psdrawlines(645,22451
-psdrawpolygon(659,22786
-static void psdrawline(677,23201
-psdrawrectangle(687,23449
-psdrawcircle(705,23828
-psdrawellipse(719,24123
-psoutputstring 737,24510
-psdrawstring	806,25927
-pssetfont(1146,36053
-psgsave(1161,36439
-psgrestore(1175,36609
-psclipmask(1191,36813
-psclip(1268,38629
-psdrawpixmap 1284,38936
-color_to_hex(1338,40515
+gtkpsfont.c,847
+#define FONTCACHE_SIZE 34,1183
+#define NUM_X11_FONTS 35,1209
+static GtkPSFont font_data[font_data37,1234
+#define NUM_FONTS 286,6010
+static GList *user_fonts;user_fonts288,6067
+static gboolean psfont_init 289,6093
+static GList *psfont_families;psfont_families290,6130
+static gint numf;291,6161
+static gint psfont_refcount 292,6179
+static const char *default_font default_font295,6237
+static const char *default_font default_font297,6285
+gtk_psfont_init(303,6395
+gtk_psfont_unref(355,7531
+gtk_psfont_get_by_name(381,7971
+gtk_psfont_get_gdkfont(401,8381
+gtk_psfont_get_font_description(435,9392
+gtk_psfont_get_psfontname(485,10816
+gtk_psfont_add_font 494,10939
+gtk_psfont_add_i18n_font 516,11539
+find_psfont(540,12272
+gtk_psfont_get_by_family(583,13155
+gtk_psfont_get_families(627,14145
+gtk_psfont_get_char_size(640,14470
 
-gtkpsfont.c,784
-#define FONTCACHE_SIZE 34,1178
-#define NUM_X11_FONTS 35,1204
-static GtkPSFont font_data[38,1230
-#define NUM_FONTS 287,5761
-static GList *user_fonts;289,5818
-static gboolean psfont_init 290,5844
-static GList *psfont_families;291,5881
-static gint numf;292,5912
-static gint psfont_refcount 293,5930
-static const char *default_font 296,5988
-static const char *default_font 298,6036
-gtk_psfont_init(304,6146
-gtk_psfont_unref(356,7282
-gtk_psfont_get_by_name(382,7722
-gtk_psfont_get_gdkfont(402,8132
-gtk_psfont_get_font_description(436,9143
-gtk_psfont_get_psfontname(486,10567
-gtk_psfont_add_font 495,10690
-gtk_psfont_add_i18n_font 517,11290
-find_psfont(541,12023
-gtk_psfont_get_by_family(584,12906
-gtk_psfont_get_families(628,13896
-gtk_psfont_get_char_size(641,14221
+psplot.c,875
+#define GTK_PLOT_LETTER_W 40,1353
+#define GTK_PLOT_LETTER_H 41,1422
+#define GTK_PLOT_A4_W	43,1454
+#define GTK_PLOT_A4_H	44,1481
+struct _PSPlot46,1509
+static void ps_plot_set_size 67,1783
+ps_plot_construct 76,1939
+PSPlot *ps_plot_new ps_plot_new107,2592
+void ps_plot_set_page_size 127,2997
+static void pssetcolor 133,3131
+static void pssetlineattr 143,3386
+static void pssetdash 159,3791
+void ps_plot_draw_line 189,4459
+void ps_plot_draw_circle 199,4692
+void ps_plot_draw_polygon 213,4978
+void ps_plot_draw_rectangle 232,5389
+static void pssetfont 249,5782
+static void psgsave 262,6158
+static void psgrestore 268,6253
+psoutputstring 277,6389
+plot_text_get_size(345,7781
+ps_plot_text_get_area(568,13580
+void ps_plot_draw_string 644,15136
+static void ps_reencode_font 981,23304
+static gboolean ps_plot_init 1001,23914
+void ps_plot_finalize 1182,30858
+
+gtkplot-lite.h,163
+#define __GTK_PLOT_H__21,885
+    GTK_PLOT_BORDER_NONE,30,1035
+    GTK_PLOT_BORDER_LINE,31,1061
+    GTK_PLOT_BORDER_SHADOW32,1087
+} GtkPlotBorderStyle;33,1114
+
+gtkplotpc.h,1004
+#define __GTK_PLOT_PC_H__21,912
+#define GTK_PLOT_PC(26,987
+#define GTK_TYPE_PLOT_PC 27,1076
+#define GTK_PLOT_PC_CLASS(29,1130
+#define GTK_IS_PLOT_PC(30,1232
+    GTK_PLOT_LETTER 36,1335
+    GTK_PLOT_LEGAL 37,1357
+    GTK_PLOT_A4,38,1378
+    GTK_PLOT_EXECUTIVE,39,1395
+    GTK_PLOT_CUSTOM	40,1419
+#define GTK_PLOT_LETTER_W 43,1444
+#define GTK_PLOT_LETTER_H 44,1513
+#define GTK_PLOT_LEGAL_W	46,1545
+#define GTK_PLOT_LEGAL_H	47,1574
+#define GTK_PLOT_A4_W	49,1605
+#define GTK_PLOT_A4_H	50,1632
+#define GTK_PLOT_EXECUTIVE_W	52,1660
+#define GTK_PLOT_EXECUTIVE_H	53,1693
+     GTK_PLOT_PORTRAIT,58,1757
+     GTK_PLOT_LANDSCAPE	59,1781
+     GTK_PLOT_PSPOINTS,64,1833
+     GTK_PLOT_MM,65,1857
+     GTK_PLOT_CM,66,1875
+     GTK_PLOT_INCHES	67,1893
+typedef struct _GtkPlotPC      GtkPlotPC;70,1919
+typedef struct _GtkPlotPCClass GtkPlotPCClass;71,1961
+typedef struct _GtkPlotPoint   GtkPlotPoint;72,2008
+struct _GtkPlotPoint74,2054
+struct _GtkPlotPC79,2099
+struct _GtkPlotPCClass90,2231
+
+gtkplotps.h,321
+#define __GTK_PLOT_PS_H__27,1085
+#define GTK_PLOT_PS(34,1171
+#define GTK_TYPE_PLOT_PS 35,1260
+#define GTK_PLOT_PS_CLASS(37,1314
+#define GTK_IS_PLOT_PS(38,1416
+typedef struct _GtkPlotPS GtkPlotPS;41,1496
+typedef struct _GtkPlotPSClass GtkPlotPSClass;42,1533
+struct _GtkPlotPS44,1581
+struct _GtkPlotPSClass66,1847
+
+gtkpsfontpango.h,106
+#define __GTK_PS_FONT_H__30,1097
+typedef struct _GtkPSFont GtkPSFont;75,2081
+struct _GtkPSFont 77,2119
+
+psplot.h,357
+#define PS_PLOT_H_28,1162
+    GTK_PLOT_LETTER,31,1188
+    GTK_PLOT_A432,1209
+    GTK_PLOT_PORTRAIT,36,1235
+    GTK_PLOT_LANDSCAPE	37,1258
+    GTK_PLOT_BORDER_NONE,41,1293
+    GTK_PLOT_BORDER_LINE,42,1319
+    GTK_PLOT_BORDER_SHADOW43,1345
+typedef struct _PSPlot PSPlot;46,1376
+typedef struct _PlotPoint PlotPoint;47,1407
+struct _PlotPoint 49,1445

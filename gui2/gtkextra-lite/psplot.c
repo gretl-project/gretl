@@ -33,9 +33,14 @@
 #include <gtk/gtk.h>
 
 #include "gretl_intl.h"
-
 #include "gtkpsfontpango.h"
 #include "psplot.h"
+
+#define GTK_PLOT_LETTER_W 	612   /* Width and Height in ps points */
+#define GTK_PLOT_LETTER_H 	792
+
+#define GTK_PLOT_A4_W		595
+#define GTK_PLOT_A4_H		842
 
 struct _PSPlot
 {
@@ -45,7 +50,6 @@ struct _PSPlot
    gint orientation;
    gint epsflag;
 
-   gint units;
    gint page_size;
    gint width, height;
 
@@ -57,45 +61,8 @@ struct _PSPlot
    gboolean gsaved;
 };
 
-typedef struct _PlotPoint PlotPoint;
-
-struct _PlotPoint
-{
-    gdouble x, y;
-};
-
-void ps_plot_set_size (PSPlot *ps,
-		       gint units,
-		       gdouble width,
-		       gdouble height)
-{
-    ps->units = units;
-    ps->width = width;
-    ps->height = height;
-
-    switch (units){
-    case GTK_PLOT_MM:
-        ps->page_width = (gdouble)width * 2.835;
-        ps->page_height = (gdouble)height * 2.835;
-        break;
-    case GTK_PLOT_CM:
-        ps->page_width = width * 28.35;
-        ps->page_height = height * 28.35;
-        break;
-    case GTK_PLOT_INCHES:
-        ps->page_width = width * 72;
-        ps->page_height = height * 72;
-        break;
-    case GTK_PLOT_PSPOINTS:
-    default:
-        ps->page_width = width;
-        ps->page_height = height;
-    }
-}
-
 static void
 ps_plot_construct (PSPlot *ps,
-		   const gchar *psname,
 		   gint orientation,
 		   gint epsflag,
 		   gint page_size,
@@ -104,25 +71,16 @@ ps_plot_construct (PSPlot *ps,
 {
     gint width, height;
 
-    ps->psname = g_strdup(psname);
     ps->orientation = orientation;
     ps->epsflag = epsflag;
     ps->page_size = page_size;
     ps->scalex = scalex;
     ps->scaley = scaley;
 
-    switch (page_size){
-    case GTK_PLOT_LEGAL:
-        width = GTK_PLOT_LEGAL_W;
-        height = GTK_PLOT_LEGAL_H;
-        break;
+    switch (page_size) {
     case GTK_PLOT_A4:
         width = GTK_PLOT_A4_W;
         height = GTK_PLOT_A4_H;
-        break;
-    case GTK_PLOT_EXECUTIVE:
-        width = GTK_PLOT_EXECUTIVE_W;
-        height = GTK_PLOT_EXECUTIVE_H;
         break;
     case GTK_PLOT_LETTER:
     default:
@@ -130,10 +88,12 @@ ps_plot_construct (PSPlot *ps,
         height = GTK_PLOT_LETTER_H;
     }
 
-    ps_plot_set_size(ps, GTK_PLOT_PSPOINTS, width, height);
+    ps->width = width;
+    ps->height = height;
 }
 
-PSPlot *ps_plot_new (const gchar *psname,
+PSPlot *ps_plot_new (const gchar *fname,
+		     FILE *fp,
 		     gint orientation,
 		     gint epsflag,
 		     gint page_size,
@@ -143,12 +103,19 @@ PSPlot *ps_plot_new (const gchar *psname,
     PSPlot *ps = malloc(sizeof *ps);
 
     if (ps != NULL) {
-	ps->psname = NULL;
+	ps->psname = g_strdup(fname);
+	ps->psfile = fp;
 	ps->gsaved = FALSE;
-	ps_plot_construct(ps, psname, orientation, epsflag, page_size, scalex, scaley);
+	ps_plot_construct(ps, orientation, epsflag, page_size, scalex, scaley);
     }
 
     return ps;
+}
+
+void ps_plot_set_page_size (PSPlot *ps, gdouble width, gdouble height)
+{
+    ps->page_width = width;
+    ps->page_height = height;
 }
 
 static void pssetcolor (PSPlot *ps, const GdkColor *color)
@@ -177,11 +144,10 @@ static void pssetlineattr (PSPlot *ps,
 	fprintf(psout,"[] 0 sd\n");  /* solid line */
 }
 
-static void 
-ps_plot_set_dash (PSPlot *ps,
-		  gdouble offset, 
-		  gdouble *values,
-		  gint num_values)
+static void pssetdash (PSPlot *ps,
+		       gdouble offset, 
+		       gdouble *values,
+		       gint num_values)
 {
     FILE *psout = ps->psfile;
 
@@ -208,7 +174,8 @@ ps_plot_set_dash (PSPlot *ps,
     }
 }
 
-void ps_plot_draw_line (PSPlot *ps, gdouble x0, gdouble y0, gdouble xf, gdouble yf)
+void ps_plot_draw_line (PSPlot *ps, gdouble x0, gdouble y0, 
+			gdouble xf, gdouble yf)
 {
     FILE *psout = ps->psfile;
 
@@ -217,7 +184,8 @@ void ps_plot_draw_line (PSPlot *ps, gdouble x0, gdouble y0, gdouble xf, gdouble 
     fprintf(psout, "s\n");
 }
 
-void ps_plot_draw_circle (PSPlot *ps, gboolean filled, gdouble x, gdouble y, gdouble size)
+void ps_plot_draw_circle (PSPlot *ps, gboolean filled, gdouble x, 
+			  gdouble y, gdouble size)
 {
     FILE *psout = ps->psfile;
 
@@ -281,18 +249,14 @@ static void pssetfont (PSPlot *ps, GtkPSFont *psfont, gint height)
 
 static void psgsave (PSPlot *ps)
 {
-    FILE *psout = ps->psfile;
-
-    fprintf(psout,"gsave\n");
+    fputs("gsave\n", ps->psfile);
     ps->gsaved = TRUE;
 }
 
 static void psgrestore (PSPlot *ps)
 {
-    FILE *psout = ps->psfile;
-
     if (ps->gsaved) {
-	fprintf(psout,"grestore\n");
+	fputs("grestore\n", ps->psfile);
 	ps->gsaved = FALSE;
     }
 }
@@ -322,7 +286,7 @@ psoutputstring (PSPlot *ps,
 	    if (curcode && curcode != code)
 		fprintf(out, "%c %s\n", end[curcode], addstring);
 	    if (curcode != code) {
-		pssetfont(pc, fonts[code], height);
+		pssetfont(ps, fonts[code], height);
 		fputc(begin[code], out);
 	    }
       
@@ -365,6 +329,306 @@ psoutputstring (PSPlot *ps,
 	fprintf(out, "%c %s\n", end[curcode], addstring);
 }
 
+static void
+plot_text_get_size(const gchar *text, gint angle, 
+		   const gchar* text_font, 
+		   gint text_height,   
+		   gint *width, gint *height,
+		   gint *ascent, gint *descent)
+{
+    GdkFont *font = NULL, *latin_font = NULL;
+    GtkPSFont *psfont, *base_psfont, *latin_psfont;
+    gint old_width, old_height;
+    gboolean italic = FALSE, bold = FALSE;
+    gint fontsize;
+    gint x, y, y0, w;
+    GList *family;
+    gint numf;
+    GdkWChar *aux, *wtext, *lastchar = NULL;
+    gint i, a, d;
+
+    gtk_psfont_get_families(&family, &numf);
+    base_psfont = psfont = gtk_psfont_get_by_name(text_font);
+    font = gtk_psfont_get_gdkfont(psfont, text_height);
+    old_width = gdk_string_width (font, text);
+    old_height = font->ascent + font->descent;
+
+    if (psfont->i18n_latinfamily) {
+	latin_psfont = gtk_psfont_get_by_family(psfont->i18n_latinfamily, italic,
+						bold);
+	latin_font = gtk_psfont_get_gdkfont(latin_psfont, text_height);
+    } else {
+	latin_font = NULL;
+	latin_psfont = NULL;
+    }
+
+
+    italic = psfont->italic;
+    bold = psfont->bold;
+    fontsize = text_height;
+  
+    x = 0;
+    y0 = y = font->ascent;
+    old_width = 0;
+
+    *ascent = font->ascent;
+    *descent = font->descent;
+
+    i = strlen(text) + 2;
+    aux = wtext = g_malloc0(sizeof(GdkWChar) * i);
+    gdk_mbstowcs(wtext, text, i - 1);
+
+    while(aux && *aux != '\0' && *aux != '\n'){
+	if(*aux == '\\'){
+	    aux++;
+	    switch(*aux){
+	    case '0': case '1': case '2': case '3':
+	    case '4': case '5': case '6': case '7': case '9':
+		psfont = gtk_psfont_get_by_family((gchar *)g_list_nth_data(family, *aux-'0'), italic, bold);
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		aux++;
+		break;
+	    case '8': case 'g':
+		psfont = gtk_psfont_get_by_family("Symbol", italic, bold);
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		aux++;
+		break;
+	    case 'B':
+		bold = TRUE;
+		psfont = gtk_psfont_get_by_family(psfont->family, italic, bold);
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		if(latin_font){
+		    gdk_font_unref(latin_font);
+		    latin_font = NULL;
+		}
+		if (psfont->i18n_latinfamily) {
+		    latin_psfont = gtk_psfont_get_by_family(psfont->i18n_latinfamily,
+							    italic, bold);
+		    latin_font = gtk_psfont_get_gdkfont(latin_psfont, fontsize);
+		}
+		aux++;
+		break;
+	    case 'i':
+		italic = TRUE;
+		psfont = gtk_psfont_get_by_family(psfont->family, italic, bold);
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		if(latin_font){
+		    gdk_font_unref(latin_font);
+		    latin_font = NULL;
+		}
+		if (psfont->i18n_latinfamily) {
+		    latin_psfont = gtk_psfont_get_by_family(psfont->i18n_latinfamily,
+							    italic, bold);
+		    latin_font = gtk_psfont_get_gdkfont(latin_psfont, fontsize);
+		}
+		aux++;
+		break;
+	    case 'S': case '^':
+		fontsize = (int)((gdouble)fontsize * 0.6 + 0.5);
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		if(latin_font){
+		    gdk_font_unref(latin_font);
+		    latin_font = NULL;
+		}
+		if (psfont->i18n_latinfamily)
+		    latin_font = gtk_psfont_get_gdkfont(latin_psfont, fontsize);
+
+		y -= font->ascent;
+		aux++;
+		break;
+	    case 's': case '_':
+		fontsize = (int)((gdouble)fontsize * 0.6 + 0.5);
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		if(latin_font){
+		    gdk_font_unref(latin_font);
+		    latin_font = NULL;
+		}
+		if (psfont->i18n_latinfamily)
+		    latin_font = gtk_psfont_get_gdkfont(latin_psfont, fontsize);
+
+		y += font->descent;
+		aux++;
+		break;
+	    case '+':
+		fontsize += 3;
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		if(latin_font){
+		    gdk_font_unref(latin_font);
+		    latin_font = NULL;
+		}
+		if (psfont->i18n_latinfamily)
+		    latin_font = gtk_psfont_get_gdkfont(latin_psfont, fontsize);
+
+		aux++;
+		break;
+	    case '-':
+		fontsize -= 3;
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, fontsize);
+		if(latin_font){
+		    gdk_font_unref(latin_font);
+		    latin_font = NULL;
+		}
+		if (psfont->i18n_latinfamily)
+		    latin_font = gtk_psfont_get_gdkfont(latin_psfont, fontsize);
+
+		aux++;
+		break;
+	    case 'N':
+		psfont = base_psfont;
+		gdk_font_unref(font);
+		font = gtk_psfont_get_gdkfont(psfont, text_height);
+		y = y0;
+		italic = psfont->italic;
+		bold = psfont->bold;
+		fontsize = text_height;
+		if(latin_font){
+		    gdk_font_unref(latin_font);
+		    latin_font = NULL;
+		}
+		if (psfont->i18n_latinfamily) {
+		    latin_psfont = gtk_psfont_get_by_family(psfont->i18n_latinfamily,
+							    italic, bold);
+		    latin_font = gtk_psfont_get_gdkfont(latin_psfont, fontsize);
+		}
+
+		aux++;
+		break;
+	    case 'b':
+		if(lastchar){
+		    gtk_psfont_get_char_size(psfont, font, latin_font, *lastchar, &w,
+					     NULL, NULL);
+		    x -= w;
+	     
+		    if (lastchar == wtext)
+			lastchar = NULL;
+		    else
+			lastchar--;
+		} else {
+		    gtk_psfont_get_char_size(psfont, font, latin_font, 'X', &w, NULL, NULL);
+		    x -= w;
+		}
+		aux++;
+		break;
+	    default:
+		if(aux && *aux != '\0' && *aux !='\n'){
+		    gtk_psfont_get_char_size(psfont, font, latin_font, *aux, &w, &a, &d);
+		    x += w;
+		    lastchar = aux;
+		    aux++;
+		}
+		break;
+	    }
+	} else {
+	    if(aux && *aux != '\0' && *aux != '\n'){
+		gtk_psfont_get_char_size(psfont, font, latin_font, *aux, &w, &a, &d);
+		x += w;
+		lastchar = aux;
+		aux++;
+		if(x > old_width) old_width = x;
+		if(y + d - y0 > *descent) *descent = y + d - y0;
+		if(y0 - y + a > *ascent) *ascent = y0 - y + a;
+	    }
+	}
+    }
+
+    old_height = *ascent + *descent;
+    *width = old_width;
+    *height = old_height;
+    if(angle == 90 || angle == 270)
+	{
+	    *width = old_height;
+	    *height = old_width;
+	}
+
+    g_free(wtext);
+    gdk_font_unref(font);
+}
+
+static void
+ps_plot_text_get_area(const gchar *text, gint angle, GtkJustification just, 
+		      const gchar *font, gint font_height,
+		      gint *x, gint *y,
+		      gint *width, gint *height)
+{
+    gint ascent, descent;
+
+    if (text == NULL) return;
+
+    plot_text_get_size(text, angle, font, 
+		       font_height, 
+		       width, height, &ascent, &descent);
+
+    *x = 0;
+    *y = 0;
+
+    switch (just) {
+    case GTK_JUSTIFY_LEFT:
+	switch (angle){
+        case 0:
+            *y -= ascent;
+            break;
+        case 90:
+            *y -= *height;
+            *x -= ascent;
+            break;
+        case 180:
+            *x -= *width;
+            *y -= descent;
+            break;
+        case 270:
+            *x -= descent;
+            break;
+	}
+	break;
+    case GTK_JUSTIFY_RIGHT:
+	switch (angle) {
+        case 0:
+            *x -= *width;
+            *y -= ascent;
+            break;
+        case 90:
+            *x -= ascent;
+            break;
+        case 180:
+            *y -= descent; 
+            break;
+        case 270:
+            *y -= *height;
+            *x -= descent; 
+            break;
+	}
+	break;
+    case GTK_JUSTIFY_CENTER:
+    default:
+	switch (angle) {
+        case 0:
+            *x -= *width / 2.;
+            *y -= ascent;
+	    break;
+        case 90:
+            *x -= ascent;
+            *y -= *height / 2.;
+	    break;
+        case 180:
+            *x -= *width / 2.;
+            *y -= descent;
+            break;
+        case 270:
+            *x -= descent;
+            *y -= *height / 2.;
+            break;
+	}
+    }
+}
+
 void ps_plot_draw_string (PSPlot *ps,
 			  gint x, gint y,
 			  gint angle,
@@ -396,7 +660,9 @@ void ps_plot_draw_string (PSPlot *ps,
     GdkWChar *curstr, *wtext, *lastchar = NULL, bkspchar[2], *aux, *xaux;
     gchar num[4];
 
-    if (text == NULL || strlen(text) == 0) return;
+    if (text == NULL || *text == '\0') {
+	return;
+    }
 
     psout = ps->psfile;
 
@@ -412,13 +678,13 @@ void ps_plot_draw_string (PSPlot *ps,
 						bold);
     }
 
-    gtk_plot_text_get_area(text, angle, justification, font, font_height,
-			   &tx, &ty, &width, &height);
+    ps_plot_text_get_area(text, angle, justification, font, font_height,
+			  &tx, &ty, &width, &height);
 
     tx += x;
     ty += y;
     if (!transparent) {
-	pssetcolor(pc, bg);
+	pssetcolor(ps, bg);
 	ps_plot_draw_rectangle(ps,
 			       TRUE,
 			       tx - border_space, ty - border_space,
@@ -426,24 +692,24 @@ void ps_plot_draw_string (PSPlot *ps,
     }
     /* border */
 
-    ps_plot_set_color(ps, fg);
+    pssetcolor(ps, fg);
     pssetdash(ps, 0, NULL, 0);
     pssetlineattr(ps, border_width, 0, 0, 0);
  
     switch (border){
     case GTK_PLOT_BORDER_SHADOW:
-	ps_plot_draw_rectangle(pc,
+	ps_plot_draw_rectangle(ps,
 			       TRUE, 
 			       tx - border_space + shadow_width,
 			       ty + height + border_space, 
 			       width + 2 * border_space, shadow_width);
-	ps_plot_draw_rectangle(pc,
+	ps_plot_draw_rectangle(ps,
 			       TRUE, 
 			       tx + width + border_space, 
 			       ty - border_space + shadow_width, 
 			       shadow_width, height + 2 * border_space);
     case GTK_PLOT_BORDER_LINE: 
-	ps_plot_draw_rectangle(pc,
+	ps_plot_draw_rectangle(ps,
 			       FALSE, 
 			       tx - border_space, ty - border_space, 
 			       width + 2*border_space, height + 2*border_space);
@@ -452,11 +718,11 @@ void ps_plot_draw_string (PSPlot *ps,
         break;
     }
 
-    gtk_plot_text_get_size(text, angle, psfont->psname, font_height, 
-			   &twidth, &theight, &tascent, &tdescent);
+    plot_text_get_size(text, angle, psfont->psname, font_height, 
+		       &twidth, &theight, &tascent, &tdescent);
 
     if (angle == 90 || angle == 270) angle = 360 - angle;
-    psgsave(pc);
+    psgsave(ps);
     fprintf(psout, "%d %d translate\n", x, y);
     fprintf(psout, "%d rotate\n", angle);
 
@@ -504,7 +770,7 @@ void ps_plot_draw_string (PSPlot *ps,
 	    break;
 	}
     } else {
-	pssetfont(pc, psfont, font_height);
+	pssetfont(ps, psfont, font_height);
     
 	switch (justification) {
 	case GTK_JUSTIFY_LEFT:
@@ -519,8 +785,8 @@ void ps_plot_draw_string (PSPlot *ps,
 	}
 	fprintf(psout, "(%s) show\n", text);
 
-	psgrestore(pc);  
-	fprintf(psout, "n\n");  
+	psgrestore(ps);  
+	fputs("n\n", psout);  
 	return;
     }
 
@@ -539,7 +805,7 @@ void ps_plot_draw_string (PSPlot *ps,
 	    case '0': case '1': case '2': case '3':
 	    case '4': case '5': case '6': case '7': case '9':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		psfont = gtk_psfont_get_by_family((gchar *)g_list_nth_data(family, *aux-'0'), italic, bold);
@@ -547,7 +813,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case '8':case 'g':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		psfont = gtk_psfont_get_by_family("Symbol", italic, bold);
@@ -555,7 +821,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case 'B':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		bold = TRUE;
@@ -591,7 +857,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case 'i':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		italic = TRUE;
@@ -602,7 +868,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case 's':case '_':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		scale = 0.6 * font_height;
@@ -612,7 +878,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case 'S':case '^':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		scale = 0.6 * font_height;
@@ -622,7 +888,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case 'N':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		psfont = base_psfont;
@@ -639,7 +905,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case 'b':
 		curstr[curcnt] = '\0';
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		bkspchar[1] = 0;
@@ -650,14 +916,14 @@ void ps_plot_draw_string (PSPlot *ps,
 		    bkspchar[0] = 'X';
 		    lastchar = NULL;
 		}
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       bkspchar,
 			       "stringwidth pop 0 exch neg exch rmoveto");
 		aux++;
 		break;
 	    case '-':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		scale -= 3;
@@ -668,7 +934,7 @@ void ps_plot_draw_string (PSPlot *ps,
 		break;
 	    case '+':
 		curstr[curcnt] = 0;
-		psoutputstring(pc, psfont, latin_psfont, (gint)scale,
+		psoutputstring(ps, psfont, latin_psfont, (gint)scale,
 			       curstr, "show");
 		curcnt = 0;
 		scale += 3;
@@ -690,9 +956,9 @@ void ps_plot_draw_string (PSPlot *ps,
     }
 
     curstr[curcnt] = 0;
-    psoutputstring(pc, psfont, latin_psfont, (gint)scale, curstr, "show");
+    psoutputstring(ps, psfont, latin_psfont, (gint)scale, curstr, "show");
 
-    psgrestore(pc);  
+    psgrestore(ps);  
     fprintf(psout, "n\n");  
 
 
@@ -720,28 +986,18 @@ static void ps_reencode_font (FILE *file, char *fontname)
 		"definefont pop\n", fontname, fontname);
 }
 
-gboolean psinit (PSPlot *ps)
+void ps_plot_init (PSPlot *ps)
 {
-    time_t now;
-    FILE *psout;
+    time_t now = time(NULL);
+    FILE *psout = ps->psfile;
 
-    now = time(NULL);
-    
     gretl_push_c_numeric_locale();
 
-    psout = ps->psfile;
-
-    if ((psout = gretl_fopen(ps->psname, "w")) == NULL) {
-	g_warning("ERROR: Cannot open file: %s", ps->psname); 
-	return FALSE;
+    if (ps->epsflag) {
+	fputs("%%!PS-Adobe-2.0 PCF-2.0\n", psout);
+    } else {
+	fputs("%%!PS-Adobe-2.0\n", psout);
     }
-
-    ps->psfile = psout;
-
-    if (ps->epsflag)
-	fprintf (psout, "%%!PS-Adobe-2.0 PCF-2.0\n");
-    else
-	fprintf (psout, "%%!PS-Adobe-2.0\n");
 
     fprintf (psout,
              "%%%%Title: %s\n"
@@ -750,106 +1006,104 @@ gboolean psinit (PSPlot *ps)
              "%%%%Magnification: 1.0000\n",
              ps->psname,
              "GtkPlot", "3.x",
-             ctime (&now));
+             ctime(&now));
 
-    if (ps->orientation == GTK_PLOT_PORTRAIT)
-	fprintf(psout,"%%%%Orientation: Portrait\n");
-    else
-	fprintf(psout,"%%%%Orientation: Landscape\n");
+    if (ps->orientation == GTK_PLOT_PORTRAIT) {
+	fputs("%%%%Orientation: Portrait\n", psout);
+    } else {
+	fputs("%%%%Orientation: Landscape\n", psout);
+    }
 
-    if(ps->epsflag)
+    if (ps->epsflag) {
 	fprintf (psout,
 		 "%%%%BoundingBox: 0 0 %d %d\n"
 		 "%%%%Pages: 1\n"
 		 "%%%%EndComments\n",
 		 ps->page_width,
 		 ps->page_height);
+    }
 
+    fputs ("/cp {closepath} bind def\n"
+	   "/c {curveto} bind def\n"
+	   "/f {fill} bind def\n"
+	   "/a {arc} bind def\n"
+	   "/ef {eofill} bind def\n"
+	   "/ex {exch} bind def\n"
+	   "/gr {grestore} bind def\n"
+	   "/gs {gsave} bind def\n"
+	   "/sa {save} bind def\n"
+	   "/rs {restore} bind def\n"
+	   "/l {lineto} bind def\n"
+	   "/m {moveto} bind def\n"
+	   "/rm {rmoveto} bind def\n"
+	   "/n {newpath} bind def\n"
+	   "/s {stroke} bind def\n"
+	   "/sh {show} bind def\n"
+	   "/slc {setlinecap} bind def\n"
+	   "/slj {setlinejoin} bind def\n"
+	   "/slw {setlinewidth} bind def\n"
+	   "/srgb {setrgbcolor} bind def\n"
+	   "/rot {rotate} bind def\n"
+	   "/sc {scale} bind def\n"
+	   "/sd {setdash} bind def\n"
+	   "/ff {findfont} bind def\n"
+	   "/sf {setfont} bind def\n"
+	   "/scf {scalefont} bind def\n"
+	   "/sw {stringwidth pop} bind def\n"
+	   "/tr {translate} bind def\n"
 
-    fprintf (psout,
-             "/cp {closepath} bind def\n"
-             "/c {curveto} bind def\n"
-             "/f {fill} bind def\n"
-             "/a {arc} bind def\n"
-             "/ef {eofill} bind def\n"
-             "/ex {exch} bind def\n"
-             "/gr {grestore} bind def\n"
-             "/gs {gsave} bind def\n"
-             "/sa {save} bind def\n"
-             "/rs {restore} bind def\n"
-             "/l {lineto} bind def\n"
-             "/m {moveto} bind def\n"
-             "/rm {rmoveto} bind def\n"
-             "/n {newpath} bind def\n"
-             "/s {stroke} bind def\n"
-             "/sh {show} bind def\n"
-             "/slc {setlinecap} bind def\n"
-             "/slj {setlinejoin} bind def\n"
-             "/slw {setlinewidth} bind def\n"
-             "/srgb {setrgbcolor} bind def\n"
-             "/rot {rotate} bind def\n"
-             "/sc {scale} bind def\n"
-             "/sd {setdash} bind def\n"
-             "/ff {findfont} bind def\n"
-             "/sf {setfont} bind def\n"
-             "/scf {scalefont} bind def\n"
-             "/sw {stringwidth pop} bind def\n"
-             "/tr {translate} bind def\n"
+	   "/JR {\n"
+	   " neg 0\n"
+	   " rmoveto\n"
+	   "} bind def\n"
 
-             "/JR {\n"
-             " neg 0\n"
-             " rmoveto\n"
-             "} bind def\n"
-
-             "/JC {\n"
-             " 2 div neg 0\n"
-             " rmoveto\n"
-             "} bind def\n"
+	   "/JC {\n"
+	   " 2 div neg 0\n"
+	   " rmoveto\n"
+	   "} bind def\n"
   
-             "\n/ellipsedict 8 dict def\n"
-             "ellipsedict /mtrx matrix put\n"
-             "/ellipse\n"
-             "{ ellipsedict begin\n"
-             "   /endangle exch def\n"
-             "   /startangle exch def\n"
-             "   /yrad exch def\n"
-             "   /xrad exch def\n"
-             "   /y exch def\n"
-             "   /x exch def"
-             "   /savematrix mtrx currentmatrix def\n"
-             "   x y tr xrad yrad sc\n"
-             "   0 0 1 startangle endangle arc\n"
-             "   savematrix setmatrix\n"
-             "   end\n"
-             "} def\n\n"
-	     ); 
+	   "\n/ellipsedict 8 dict def\n"
+	   "ellipsedict /mtrx matrix put\n"
+	   "/ellipse\n"
+	   "{ ellipsedict begin\n"
+	   "   /endangle exch def\n"
+	   "   /startangle exch def\n"
+	   "   /yrad exch def\n"
+	   "   /xrad exch def\n"
+	   "   /y exch def\n"
+	   "   /x exch def"
+	   "   /savematrix mtrx currentmatrix def\n"
+	   "   x y tr xrad yrad sc\n"
+	   "   0 0 1 startangle endangle arc\n"
+	   "   savematrix setmatrix\n"
+	   "   end\n"
+	   "} def\n\n", psout);
   
-    fprintf(psout,
-	    "[ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-	    "/.notdef /.notdef /space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright\n"
-	    "/parenleft /parenright /asterisk /plus /comma /hyphen /period /slash /zero /one\n"
-	    "/two /three /four /five /six /seven /eight /nine /colon /semicolon\n"          "/less /equal /greater /question /at /A /B /C /D /E\n"
-	    "/F /G /H /I /J /K /L /M /N /O\n"
-	    "/P /Q /R /S /T /U /V /W /X /Y\n"
-	    "/Z /bracketleft /backslash /bracketright /asciicircum /underscore /quoteleft /a /b /c\n"
-	    "/d /e /f /g /h /i /j /k /l /m\n"
-	    "/n /o /p /q /r /s /t /u /v /w\n"
-	    "/x /y /z /braceleft /bar /braceright /asciitilde /.notdef /.notdef /.notdef\n"
-	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-	    "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
-	    "/space /exclamdown /cent /sterling /currency /yen /brokenbar /section /dieresis /copyright\n"
-	    "/ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron /degree /plusminus /twosuperior /threesuperior\n"
-	    "/acute /mu /paragraph /periodcentered /cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf\n"
-	    "/threequarters /questiondown /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla\n"
-	    "/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis /Eth /Ntilde\n"
-	    "/Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply /Oslash /Ugrave /Uacute /Ucircumflex\n"
-	    "/Udieresis /Yacute /Thorn /germandbls /agrave /aacute /acircumflex /atilde /adieresis /aring\n"
-	    "/ae /ccedilla /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis\n"
-	    "/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide /oslash /ugrave\n"
-	    "/uacute /ucircumflex /udieresis /yacute /thorn /ydieresis] /isolatin1encoding exch def\n");
+    fputs("[ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	  "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	  "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	  "/.notdef /.notdef /space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright\n"
+	  "/parenleft /parenright /asterisk /plus /comma /hyphen /period /slash /zero /one\n"
+	  "/two /three /four /five /six /seven /eight /nine /colon /semicolon\n"          "/less /equal /greater /question /at /A /B /C /D /E\n"
+	  "/F /G /H /I /J /K /L /M /N /O\n"
+	  "/P /Q /R /S /T /U /V /W /X /Y\n"
+	  "/Z /bracketleft /backslash /bracketright /asciicircum /underscore /quoteleft /a /b /c\n"
+	  "/d /e /f /g /h /i /j /k /l /m\n"
+	  "/n /o /p /q /r /s /t /u /v /w\n"
+	  "/x /y /z /braceleft /bar /braceright /asciitilde /.notdef /.notdef /.notdef\n"
+	  "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	  "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	  "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+	  "/space /exclamdown /cent /sterling /currency /yen /brokenbar /section /dieresis /copyright\n"
+	  "/ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron /degree /plusminus /twosuperior /threesuperior\n"
+	  "/acute /mu /paragraph /periodcentered /cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf\n"
+	  "/threequarters /questiondown /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla\n"
+	  "/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis /Eth /Ntilde\n"
+	  "/Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply /Oslash /Ugrave /Uacute /Ucircumflex\n"
+	  "/Udieresis /Yacute /Thorn /germandbls /agrave /aacute /acircumflex /atilde /adieresis /aring\n"
+	  "/ae /ccedilla /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis\n"
+	  "/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide /oslash /ugrave\n"
+	  "/uacute /ucircumflex /udieresis /yacute /thorn /ydieresis] /isolatin1encoding exch def\n", psout);
  
     ps_reencode_font(psout, "Times-Roman");
     ps_reencode_font(psout, "Times-Italic");
@@ -898,18 +1152,23 @@ gboolean psinit (PSPlot *ps)
 		ps->scalex, -ps->scaley);
     }
 
-    fprintf(psout,"%%%%EndProlog\n\n\n");
+    fputs("%%%%EndProlog\n\n\n", psout);
 
-    return TRUE;
+    gtk_psfont_init();
 }
 
-void psleave (PSPlot *ps)
+void ps_plot_finalize (PSPlot *ps)
 {
     FILE *fp = ps->psfile;
 
-    fprintf(fp, "showpage\n");
-    fprintf(fp, "%%%%Trailer\n");
-    fprintf(fp, "%%%%EOF\n");
+    fputs("showpage\n", fp);
+    fputs("%%%%Trailer\n", fp);
+    fputs("%%%%EOF\n", fp);
     fclose(fp);
+
+    gtk_psfont_unref();
     gretl_pop_c_numeric_locale();
+
+    g_free(ps->psname);
+    free(ps);
 }

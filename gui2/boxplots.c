@@ -28,7 +28,7 @@
 # include <windows.h>
 #endif
 
-#include "gtkplot-lite.h"
+#include "psplot.h"
 
 typedef struct {
     int n;
@@ -250,24 +250,24 @@ static gint box_popup (GtkWidget *widget, GdkEventButton *event,
 
 static void
 setup_text (GtkWidget *area, GdkPixmap *pixmap,
-	    GdkGC *gc, GtkPlotPC *pc, const char *text, 
+	    GdkGC *gc, PSPlot *ps, const char *text, 
 	    double x, double y, unsigned just)
 {
-    if (pc != NULL) {
+    if (ps != NULL) {
 	GdkColor black, white;
 	
 	black.red = black.green = black.blue = 0;
 	white.red = white.green = white.blue = 65535.0;
 
-	gtk_plot_pc_draw_string (pc,
-				 x, y + 4,        /* alignment bodge */
-				 0,               /* angle */
-				 &black, &white,  /* fore, back */
-				 FALSE,           /* transparent? */
-				 GTK_PLOT_BORDER_NONE, 0, 1, 0,
-				 boxfont, boxfontsize,
-				 just,
-				 text);
+	ps_plot_draw_string (ps,
+			     x, y + 4,        /* alignment bodge */
+			     0,               /* angle */
+			     &black, &white,  /* fore, back */
+			     FALSE,           /* transparent? */
+			     GTK_PLOT_BORDER_NONE, 0, 1, 0,
+			     boxfont, boxfontsize,
+			     just,
+			     text);
     } else {
 	PangoContext *context;
 	PangoLayout *pl;
@@ -293,10 +293,10 @@ setup_text (GtkWidget *area, GdkPixmap *pixmap,
 
 static void 
 draw_line (double *points, GtkWidget *area, GdkPixmap *pixmap,
-	   GdkGC *gc, GtkPlotPC *pc)
+	   GdkGC *gc, PSPlot *ps)
 {
-    if (pc != NULL) {
-	gtk_plot_pc_draw_line(pc, points[0], points[1], points[2], points[3]); 
+    if (ps != NULL) {
+	ps_plot_draw_line(ps, points[0], points[1], points[2], points[3]); 
     } else {
 	gdk_draw_line(pixmap, gc, points[0], points[1], points[2], points[3]);
     }
@@ -305,12 +305,12 @@ draw_line (double *points, GtkWidget *area, GdkPixmap *pixmap,
 static void
 draw_outlier (double x, double y,
 	      GtkWidget *area, GdkPixmap *pixmap, 
-	      GdkGC *gc, GtkPlotPC *pc)
+	      GdkGC *gc, PSPlot *ps)
 {
     int fullcircle = 360 * 64;
 
-    if (pc != NULL) {
-	gtk_plot_pc_draw_circle(pc, FALSE, x, y, 8);
+    if (ps != NULL) {
+	ps_plot_draw_circle(ps, FALSE, x, y, 8);
     } else {
 	gdk_draw_arc(pixmap, gc, FALSE, x - 4, y - 4, 8, 8, 0, fullcircle);
     }
@@ -319,11 +319,11 @@ draw_outlier (double x, double y,
 static void 
 draw_mean (double x, double y, 
 	   GtkWidget *area, GdkPixmap *pixmap, 
-	   GdkGC *gc, GtkPlotPC *pc)
+	   GdkGC *gc, PSPlot *ps)
 {
-    if (pc != NULL) {
-	gtk_plot_pc_draw_line(pc, x - 4, y, x + 4, y);
-	gtk_plot_pc_draw_line(pc, x, y + 4, x, y - 4);
+    if (ps != NULL) {
+	ps_plot_draw_line(ps, x - 4, y, x + 4, y);
+	ps_plot_draw_line(ps, x, y + 4, x, y - 4);
     } else {
 	gdk_draw_line(pixmap, gc, x - 4, y, x + 4, y);
 	gdk_draw_line(pixmap, gc, x, y + 4, x, y - 4);
@@ -355,7 +355,7 @@ place_plots (PLOTGROUP *plotgrp)
 }
 
 static void 
-gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
+gtk_boxplot_yscale (PLOTGROUP *grp, PSPlot *ps)
 {
     double points[4];
     double top = (headroom / 2.0) * grp->height;
@@ -363,7 +363,7 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     gchar *tmp = NULL;
     GdkGC *gc = NULL;
 
-    if (pc == NULL) {
+    if (ps == NULL) {
 	gc = grp->window->style->fg_gc[GTK_STATE_NORMAL];
     }
 
@@ -371,42 +371,42 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     points[0] = points[2] = scalepos;
     points[1] = top;
     points[3] = bottom;
-    draw_line(points, grp->area, grp->pixmap, gc, pc);
+    draw_line(points, grp->area, grp->pixmap, gc, ps);
 
     /* draw backticks top and bottom */
     points[2] = points[0] - 5;
     points[1] = points[3] = top;
-    draw_line (points, grp->area, grp->pixmap, gc, pc);
+    draw_line (points, grp->area, grp->pixmap, gc, ps);
     points[1] = points[3] = bottom;
-    draw_line(points, grp->area, grp->pixmap, gc, pc);
+    draw_line(points, grp->area, grp->pixmap, gc, ps);
 
     /* draw backtick at middle */
     points[1] = points[3] = top + (bottom - top) / 2.0;
-    draw_line(points, grp->area, grp->pixmap, gc, pc);
+    draw_line(points, grp->area, grp->pixmap, gc, ps);
     
     /* mark three values on scale */
     tmp = g_strdup_printf("%.4g", grp->gmax);
     gretl_fix_exponent(tmp);
-    setup_text(grp->area, grp->pixmap, gc, pc, tmp, scalepos - 8, top, 
+    setup_text(grp->area, grp->pixmap, gc, ps, tmp, scalepos - 8, top, 
 	       GTK_JUSTIFY_RIGHT);
     g_free(tmp);
 
     tmp = g_strdup_printf("%.4g", grp->gmin);
     gretl_fix_exponent(tmp);
-    setup_text(grp->area, grp->pixmap, gc, pc, tmp, scalepos - 8, bottom, 
+    setup_text(grp->area, grp->pixmap, gc, ps, tmp, scalepos - 8, bottom, 
 	       GTK_JUSTIFY_RIGHT);
     g_free(tmp);
 
     tmp = g_strdup_printf("%.4g", (grp->gmax + grp->gmin) / 2.0);
     gretl_fix_exponent(tmp);
-    setup_text(grp->area, grp->pixmap, gc, pc, tmp, scalepos - 8, 
+    setup_text(grp->area, grp->pixmap, gc, ps, tmp, scalepos - 8, 
 	       top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
     g_free(tmp);
 }
 
 static void 
 gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
-		  GtkStyle *style, GtkPlotPC *pc,
+		  GtkStyle *style, PSPlot *ps,
 		  int height, double boxwidth, 
 		  double gmax, double gmin, char *numbers)
 {
@@ -419,7 +419,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     double nameoff = headroom / 4.0;
     GdkGC *gc = NULL;
 
-    if (pc == NULL) {
+    if (ps == NULL) {
 	gc = style->fg_gc[GTK_STATE_NORMAL];
     }
 
@@ -456,12 +456,12 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 
     if (confhi == 0.) {
 	/* no notches: draw simple inter-quartile box */
-	if (pc != NULL) { 
-	    gtk_plot_pc_draw_rectangle (pc,
-					FALSE,
-					plot->xbase, uq,
-					boxwidth,
-					lq - uq);
+	if (ps != NULL) { 
+	    ps_plot_draw_rectangle (ps,
+				    FALSE,
+				    plot->xbase, uq,
+				    boxwidth,
+				    lq - uq);
 	} else {
 	    gdk_draw_rectangle (pixmap, 
 				gc, 
@@ -473,8 +473,8 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	}
     } else { 
 	/* draw notched boxes */
-	if (pc != NULL) {
-	    GtkPlotPoint points[10];
+	if (ps != NULL) {
+	    PlotPoint points[10];
 
 	    points[0].x = points[6].x = points[7].x = points[9].x = 
 		plot->xbase;
@@ -488,10 +488,10 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	    points[8].x = plot->xbase + .10 * boxwidth;
 	    points[3].x = plot->xbase + .90 * boxwidth;
 
-	    gtk_plot_pc_draw_polygon (pc,
-				      FALSE, /* filled ? */
-				      points,
-				      10);
+	    ps_plot_draw_polygon (ps,
+				  FALSE, /* filled ? */
+				  points,
+				  10);
 	} else {
 	    GdkPoint points[10];
 
@@ -519,11 +519,11 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     points[0] = plot->xbase + ((confhi > 0.)? (0.1 * boxwidth) : 0.0);
     points[1] = points[3] = median;
     points[2] = plot->xbase + ((confhi > 0.)? (0.9 * boxwidth) : boxwidth);
-    draw_line(points, area, pixmap, gc, pc); /* was whitegc */
+    draw_line(points, area, pixmap, gc, ps); /* was whitegc */
 
     /* draw '+' at mean */
     if (!na(mean)) {
-	draw_mean(xcenter, mean, area, pixmap, gc, pc);
+	draw_mean(xcenter, mean, area, pixmap, gc, ps);
     }
 
     /* insert numerical values for median and quartiles? */
@@ -532,13 +532,13 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	double x = xcenter + .55 * boxwidth;
 
 	sprintf(numstr, numbers, plot->uq);
-	setup_text (area, pixmap, gc, pc, numstr, 
+	setup_text (area, pixmap, gc, ps, numstr, 
 		    x, uq, GTK_JUSTIFY_LEFT);
 	sprintf(numstr, numbers, plot->median);
-	setup_text (area, pixmap, gc, pc, numstr, 
+	setup_text (area, pixmap, gc, ps, numstr, 
 		    x, median, GTK_JUSTIFY_LEFT);
 	sprintf(numstr, numbers, plot->lq);
-	setup_text (area, pixmap, gc, pc, numstr, 
+	setup_text (area, pixmap, gc, ps, numstr, 
 		    x, lq, GTK_JUSTIFY_LEFT);	
     }
 
@@ -546,25 +546,25 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     points[0] = points[2] = xcenter;
     points[1] = maxval;
     points[3] = uq;
-    draw_line(points, area, pixmap, gc, pc);
+    draw_line(points, area, pixmap, gc, ps);
 
     /* plus a little crossbar */
     points[0] = xcenter - 5.0;
     points[2] = xcenter + 5.0;
     points[1] = points[3] = maxval;
-    draw_line(points, area, pixmap, gc, pc);
+    draw_line(points, area, pixmap, gc, ps);
 
     /* draw line to minimum value */
     points[0] = points[2] = xcenter;
     points[1] = lq;
     points[3] = minval;
-    draw_line(points, area, pixmap, gc, pc);
+    draw_line(points, area, pixmap, gc, ps);
 
     /* plus a little crossbar */
     points[0] = xcenter - 5.0;
     points[2] = xcenter + 5.0;
     points[1] = points[3] = minval;
-    draw_line(points, area, pixmap, gc, pc);
+    draw_line(points, area, pixmap, gc, ps);
 
     /* draw outliers, if any */
     if (plot->outliers != NULL) {
@@ -575,7 +575,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	    /* fprintf(stderr, "outlier: %g\n", plot->outliers->vals[i]); */
 	    y = ybase + (gmax - plot->outliers->vals[i]) * scale;
 	    if (y == ybak) y += 1.0;
-	    draw_outlier(xcenter, y, area, pixmap, gc, pc);
+	    draw_outlier(xcenter, y, area, pixmap, gc, ps);
 	    ybak = y;
 	}
     }
@@ -584,10 +584,10 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     if (plot->bool) {
 	nameoff = headroom / 3.5;
     }
-    setup_text(area, pixmap, gc, pc, plot->varname, xcenter, 
+    setup_text(area, pixmap, gc, ps, plot->varname, xcenter, 
 	       height * (1.0 - nameoff), GTK_JUSTIFY_CENTER);
     if (plot->bool) {
-	setup_text(area, pixmap, gc, pc, plot->bool, xcenter, 
+	setup_text(area, pixmap, gc, ps, plot->bool, xcenter, 
 		   height * (1.0 - headroom/6.0), GTK_JUSTIFY_CENTER);
     }
 }
@@ -791,7 +791,8 @@ median_interval (double *x, int n, double *low, double *high)
 int ps_print_plots (const char *fname, int flag, gpointer data) 
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
-    GtkPlotPS *ps;
+    FILE *fp;
+    PSPlot *ps;
     int i, eps = 1, orient = GTK_PLOT_PORTRAIT;
     gdouble pscale = 0.8;
 
@@ -801,38 +802,41 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 	orient = GTK_PLOT_LANDSCAPE;
     }
 
-    ps = GTK_PLOT_PS(gtk_plot_ps_new(fname, 
-				     orient, 
-				     eps, 
-				     GTK_PLOT_LETTER, 
-				     pscale, pscale));
+    fp = gretl_fopen(fname, "w");
+    if (fp == NULL) {
+	file_write_errbox(fname);
+	return E_FOPEN;
+    }
 
-    if (ps == NULL) return 1;
+    ps = ps_plot_new(fname,
+		     fp, 
+		     orient, 
+		     eps, 
+		     GTK_PLOT_LETTER, 
+		     pscale, pscale);
+
+    if (ps == NULL) {
+	fclose(fp);
+	return E_ALLOC;
+    }
 
     if (eps) {
-	ps->page_width = pscale * grp->width;
-	ps->page_height = pscale * grp->height;
+	ps_plot_set_page_size(ps, pscale * grp->width,
+			      pscale * grp->height);
     }
 
-    if (!psinit(GTK_PLOT_PC(ps))) {
-	return 1;
-    }
-
-    gtk_psfont_init();
+    ps_plot_init(ps);
 
     for (i=0; i<grp->nplots; i++) {
 	gtk_area_boxplot(&grp->plots[i], 
-			 NULL, NULL, NULL, &ps->pc, 
+			 NULL, NULL, NULL, ps, 
 			 grp->height, grp->boxwidth, 
 			 grp->gmax, grp->gmin, grp->numbers);
     }
     
-    gtk_boxplot_yscale(grp, &ps->pc);
+    gtk_boxplot_yscale(grp, ps);
 
-    psleave(GTK_PLOT_PC(ps));
-
-    gtk_object_destroy(GTK_OBJECT(ps));
-    gtk_psfont_unref();
+    ps_plot_finalize(ps);
 
     return 0;
 }

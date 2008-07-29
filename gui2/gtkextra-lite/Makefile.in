@@ -9,8 +9,8 @@ VPATH = $(topsrc)/gui2/gtkextra-lite
 
 override CFLAGS += -I$(topsrc)/gui2/gtkextra-lite $(GTK_CFLAGS) -I$(topsrc)/lib/src
 
-SRCS = gtkplotpc.c gtkplotps.c gtkpsfont.c
-HDRS = gtkplot-lite.h gtkplotpc.h gtkplotps.h gtkpsfont.h
+SRCS = psplot.c gtkpsfont.c
+HDRS = psplot.h gtkpsfontpango.h
 OBJS = $(SRCS:.c=.o)
 
 LIB = libgtkextra-lite.a

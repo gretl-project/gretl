@@ -24,27 +24,54 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef PS_PLOT_H
-#define PS_PLOT_H
+#ifndef PS_PLOT_H_
+#define PS_PLOT_H_
+
+enum{
+    GTK_PLOT_LETTER,
+    GTK_PLOT_A4
+};
+
+enum{
+    GTK_PLOT_PORTRAIT,
+    GTK_PLOT_LANDSCAPE	
+};
+
+enum {
+    GTK_PLOT_BORDER_NONE,
+    GTK_PLOT_BORDER_LINE,
+    GTK_PLOT_BORDER_SHADOW
+};
 
 typedef struct _PSPlot PSPlot;
+typedef struct _PlotPoint PlotPoint;
 
-void ps_plot_leave (PSPlot *ps);
+struct _PlotPoint {
+    gdouble x, y;
+};
 
-gboolean ps_plot_init (PSPlot *ps); 
+void ps_plot_init (PSPlot *ps);
 
-PSPlot *ps_plot_new (const gchar *psname,
+void ps_plot_finalize (PSPlot *ps); 
+
+PSPlot *ps_plot_new (const gchar *fname,
+		     FILE *fp,
 		     gint orientation,
 		     gint epsflag,
 		     gint page_size,
 		     gdouble scalex,
 		     gdouble scaley);
 
-void ps_plot_draw_line (PSPlot *ps, gdouble x0, gdouble y0, gdouble xf, gdouble yf);
+void ps_plot_set_page_size (PSPlot *ps, gdouble width, gdouble height);
 
-void ps_plot_draw_circle (PSPlot *ps, gboolean filled, gdouble x, gdouble y, gdouble size);
+void ps_plot_draw_line (PSPlot *ps, gdouble x0, gdouble y0, 
+			gdouble xf, gdouble yf);
 
-void ps_plot_draw_polygon (PSPlot *ps, gboolean filled, GtkPlotPoint *points, gint numpoints);
+void ps_plot_draw_circle (PSPlot *ps, gboolean filled, 
+			  gdouble x, gdouble y, gdouble size);
+
+void ps_plot_draw_polygon (PSPlot *ps, gboolean filled, PlotPoint *points, 
+			   gint numpoints);
 
 void ps_plot_draw_rectangle (PSPlot *ps, gboolean filled, gdouble x, gdouble y, 
 			     gdouble width, gdouble height);
