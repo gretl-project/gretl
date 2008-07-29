@@ -862,20 +862,24 @@ void set_path_callback (char *setvar, char *setting)
 
 static void browse_button_callback (GtkWidget *w, RCVAR *rc)
 {
+    GtkWidget *top = g_object_get_data(G_OBJECT(w), "parent");
     int code = SET_PROG;
 
     if (strstr(rc->description, "directory") != NULL) {
 	code = SET_DIR;
     }
 
-    file_selector(_(rc->description), code, FSEL_DATA_MISC, rc->var);
+    file_selector_with_parent(_(rc->description), code, 
+			      FSEL_DATA_MISC, rc->var, top);
 }
 
-static GtkWidget *make_path_browse_button (RCVAR *rc)
+static GtkWidget *make_path_browse_button (RCVAR *rc, GtkWidget *w)
 {
+    GtkWidget *top = gtk_widget_get_toplevel(w);
     GtkWidget *b;
 
     b = gtk_button_new_with_label(_("Browse..."));
+    g_object_set_data(G_OBJECT(b), "parent", top);
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(browse_button_callback), 
 		     rc);
@@ -1213,7 +1217,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	    if (rc->flags & BROWSER) {
 		/* add path browse button */
-		w = make_path_browse_button(rc);
+		w = make_path_browse_button(rc, notebook);
 		gtk_table_attach_defaults(GTK_TABLE(s_table), 
 					  w, 2, 3, s_len-1, s_len);
 		gtk_widget_show(w);

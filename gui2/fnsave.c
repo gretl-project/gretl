@@ -283,8 +283,8 @@ static void real_finfo_save (function_info *finfo)
     }
 
     if (finfo->saveas) {
-	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
-		      FSEL_DATA_MISC, finfo);
+	file_selector_with_parent(_("Save function package"), SAVE_FUNCTIONS, 
+				  FSEL_DATA_MISC, finfo, finfo->dlg);
     } else {
 	maybe_revise_package_name(finfo);
 	err = save_user_functions(finfo->fname, finfo);
@@ -423,8 +423,8 @@ static int maybe_open_script (function_info *finfo, char **fname)
     if (resp == GRETL_CANCEL) {
 	return GRETL_CANCEL;
     } else if (resp == GRETL_YES) {
-	file_selector_with_parent(_("Open script file"), OPEN_SCRIPT, FSEL_DATA_FNPKG, 
-				  finfo, finfo->dlg);
+	file_selector_with_parent(_("Open script file"), OPEN_SCRIPT, 
+				  FSEL_DATA_FNPKG, finfo, finfo->dlg);
 	if (finfo->openscript != NULL) {
 	    *fname = g_strdup(finfo->openscript);
 	    finfo->openscript = NULL;
@@ -518,8 +518,8 @@ static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
 	return;
     }
 
-    file_selector(_("Save function package"), SAVE_FUNCTIONS_AS, 
-		  FSEL_DATA_MISC, finfo);
+    file_selector_with_parent(_("Save function package"), SAVE_FUNCTIONS_AS, 
+			      FSEL_DATA_MISC, finfo, finfo->dlg);
 }
 
 static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
@@ -1226,6 +1226,16 @@ int save_user_functions_as_script (const char *fname, gpointer p)
     if (finfo->pub >= 0) {
 	pputc(prn, '\n');
 	gretl_function_print_code(finfo->pub, prn);
+    }
+
+    if (finfo->sample != NULL) {
+	int n = strlen(finfo->sample);
+
+	pputs(prn, "\n# sample function call\n");
+	pputs(prn, finfo->sample);
+	if (finfo->sample[n-1] != '\n') {
+	    pputc(prn, '\n');
+	}
     }
 
     gretl_print_destroy(prn);

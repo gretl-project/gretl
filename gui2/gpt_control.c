@@ -2525,25 +2525,25 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
     gpointer ptr = g_object_get_data(G_OBJECT(w), "plot");
     png_plot *plot = (png_plot *) ptr;
     GtkWidget *parent = (GTK_MENU(w->parent))->parent_menu_item;
-    gchar *parent_item = g_object_get_data(G_OBJECT(parent), "string");
+    gchar *up_item = g_object_get_data(G_OBJECT(parent), "string");
 
     if (!strcmp(item, _("monochrome"))) {
 	plot->spec->flags |= GPT_MONO;
     }
 
-    if (!strcmp(parent_item, _("Save as postscript (EPS)..."))) {
+    if (!strcmp(up_item, _("Save as postscript (EPS)..."))) {
 	plot->spec->termtype = GP_TERM_EPS;
-	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-		      FSEL_DATA_MISC, plot->spec);
-    } else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
+	file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
+				  FSEL_DATA_MISC, plot->spec, plot->shell);
+    } else if (!strcmp(up_item, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
-	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-		      FSEL_DATA_MISC, plot->spec);
+	file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
+				  FSEL_DATA_MISC, plot->spec, plot->shell);
     } 
 #ifdef G_OS_WIN32
-    else if (!strcmp(parent_item, _("Copy to clipboard"))) {
+    else if (!strcmp(up_item, _("Copy to clipboard"))) {
 	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
-    } else if (!strcmp(parent_item, _("Print"))) {
+    } else if (!strcmp(up_item, _("Print"))) {
 	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
     }    
 #endif   
@@ -2635,12 +2635,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	dist_graph_add(plot);
     } else if (!strcmp(item, _("Save as PNG..."))) {
 	plot->spec->termtype = GP_TERM_PNG;
-        file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-		      FSEL_DATA_MISC, plot->spec);
+        file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
+				  FSEL_DATA_MISC, plot->spec, plot->shell);
     } else if (!strcmp(item, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
-        file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
-		      FSEL_DATA_MISC, plot->spec);
+        file_selector_with_parent(_("Save gnuplot graph"), SAVE_GNUPLOT, 
+				  FSEL_DATA_MISC, plot->spec, plot->shell);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_to_session_callback(plot->spec);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 

@@ -1466,13 +1466,15 @@ void do_bootstrap (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
-	view_buffer(prn, 78, 300, _("gretl: bootstrap analysis"), PRINT, NULL);
+	windata_t *bootwin = view_buffer(prn, 78, 300, 
+					 _("gretl: bootstrap analysis"), 
+					 PRINT, NULL);
 	if (opt & OPT_G) {
 	    make_and_display_graph();
 	}
 	if (opt & OPT_S) {
 	    file_selector(_("Save bootstrap data to file"), SAVE_BOOT_DATA, 
-			  FSEL_DATA_NONE, NULL);
+			  FSEL_DATA_VWIN, bootwin);
 	}
     }
 }
