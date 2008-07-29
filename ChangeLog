@@ -1,4 +1,4 @@
-version 1.7.6, in progress
+7/30/2008 version 1.7.6
 - Fix bug: revise the way that list arguments to user-defined
   functions are handled, to avoid potential namespace 
   collisions
