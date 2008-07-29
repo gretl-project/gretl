@@ -163,6 +163,11 @@ HACK_SRC = gtkfontselhack.c
 HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 
+GTKEXTRA_SRC = $(topsrc)/gui2/gtkextra-lite/psplot.c \
+	$(topsrc)/gui2/gtkextra-lite/gtkpsfont.c \
+	$(topsrc)/gui2/gtkextra-lite/psplot.h \
+	$(topsrc)/gui2/gtkextra-lite/gtkpsfontpango.h
+
 GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
 
 %.o: %.c
@@ -184,7 +189,7 @@ mklang.o: mklang.c $(topsrc)/lib/src/options.c $(topsrc)/lib/src/genlex.c
 $(GRETL_LANG): mklang
 	./mklang $(LANGOPT) > $@
 
-$(GTKEXTRA_LITE): 
+$(GTKEXTRA_LITE): $(GTKEXTRA_SRC)
 	make -C gtkextra-lite
 
 $(GTKSOURCEVIEW_LITE):

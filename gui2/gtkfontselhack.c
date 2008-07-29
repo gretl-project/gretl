@@ -38,39 +38,9 @@
    into an application program 
 */
 
-#define STANDALONE 1
-
-#ifdef STANDALONE 
-#undef GTK_DISABLE_DEPRECATED
 #include "gretl.h" /* this must provide standard and GTK headers and
 		      deal with gettext */
 #include "gtkfontselhack.h"
-
-#else
-#include "gdk/gdk.h"
-#include "gdk/gdkkeysyms.h"
-
-#include "gtkfontselhack.h"
-
-#include "gtkbutton.h"
-#include "gtkcellrenderertext.h"
-#include "gtkentry.h"
-#include "gtkframe.h"
-#include "gtkhbbox.h"
-#include "gtkhbox.h"
-#include "gtklabel.h"
-#include "gtkliststore.h"
-#include "gtkrc.h"
-#include "gtksignal.h"
-#include "gtkstock.h"
-#include "gtktable.h"
-#include "gtktreeselection.h"
-#include "gtktreeview.h"
-#include "gtkvbox.h"
-#include "gtkscrolledwindow.h"
-#include "gtkintl.h"
-
-#endif /* STANDALONE */
 
 /* This is the default text shown in the preview entry, though the user
    can set it. Remember that some fonts only have capital letters. */
@@ -102,7 +72,6 @@ enum {
 enum {
     PROP_0,
     PROP_FONT_NAME,
-    PROP_FONT,
     PROP_PREVIEW_TEXT,
     PROP_FILTER
 };
@@ -159,11 +128,14 @@ static void     gtk_font_selection_hack_select_size           (GtkTreeSelection 
 static void     gtk_font_selection_hack_scroll_on_map         (GtkWidget        *w,
 							       gpointer          data);
 
+static void     gtk_font_selection_hack_screen_changed        (GtkWidget *widget,
+					                       GdkScreen *previous_screen);
+
 static void     gtk_font_selection_hack_preview_changed       (GtkWidget        *entry,
 							       GtkFontSelectionHack *fontsel);
 
 /* Misc. utility functions. */
-static void     gtk_font_selection_hack_load_font         (GtkFontSelectionHack *fs);
+static void    gtk_font_selection_hack_load_font          (GtkFontSelectionHack *fs);
 static void    gtk_font_selection_hack_update_preview     (GtkFontSelectionHack *fs);
 
 /* FontSelectionHackDialog */
@@ -174,81 +146,47 @@ static gint    gtk_font_selection_hack_dialog_on_configure (GtkWidget      *widg
 							    GdkEventConfigure *event,
 							    GtkFontSelectionHackDialog *fsd);
 
-static GtkWindowClass *font_selection_hack_parent_class = NULL;
-static GtkVBoxClass *font_selection_hack_dialog_parent_class = NULL;
-
-GtkType
-gtk_font_selection_hack_get_type (void)
-{
-  static GtkType font_selection_hack_type = 0;
-  
-  if (!font_selection_hack_type)
-    {
-      static const GtkTypeInfo fontsel_type_info =
-	{
-	  "GtkFontSelectionHack",
-	  sizeof (GtkFontSelectionHack),
-	  sizeof (GtkFontSelectionHackClass),
-	  (GtkClassInitFunc) gtk_font_selection_hack_class_init,
-	  (GtkObjectInitFunc) gtk_font_selection_hack_init,
-	  /* reserved_1 */ NULL,
-	  /* reserved_2 */ NULL,
-	  (GtkClassInitFunc) NULL,
-	};
-      
-      font_selection_hack_type = gtk_type_unique (GTK_TYPE_VBOX,
-						  &fontsel_type_info);
-    }
-  
-  return font_selection_hack_type;
-}
-
 GType
 gtk_font_filter_get_type (void)
 {
-  static GType etype = 0;
-  if (etype == 0) {
-    static const GEnumValue values[] = {
-      { GTK_FONT_HACK_NONE, "GTK_FONT_HACK_NONE", "use no font filter" },
-      { GTK_FONT_HACK_LATIN, "GTK_FONT_HACK_LATIN", "latin text fonts" },
-      { GTK_FONT_HACK_LATIN_MONO, "GTK_FONT_HACK_LATIN_MONO", "monospaced latin text fonts" },
-      { 0, NULL, NULL }
-    };
-    etype = g_enum_register_static ("GtkFontFilter", values);
-  }
-  return etype;
+    static GType etype = 0;
+    if (etype == 0) {
+	static const GEnumValue values[] = {
+	    { GTK_FONT_HACK_NONE, "GTK_FONT_HACK_NONE", "use no font filter" },
+	    { GTK_FONT_HACK_LATIN, "GTK_FONT_HACK_LATIN", "latin text fonts" },
+	    { GTK_FONT_HACK_LATIN_MONO, "GTK_FONT_HACK_LATIN_MONO", "monospaced latin text fonts" },
+	    { 0, NULL, NULL }
+	};
+	etype = g_enum_register_static("GtkFontFilter", values);
+    }
+    return etype;
 }
 
+G_DEFINE_TYPE (GtkFontSelectionHack, gtk_font_selection_hack, GTK_TYPE_VBOX)
 
 static void
 gtk_font_selection_hack_class_init (GtkFontSelectionHackClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-  
-  font_selection_hack_parent_class = gtk_type_class (GTK_TYPE_VBOX);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
   
   gobject_class->set_property = gtk_font_selection_hack_set_property;
   gobject_class->get_property = gtk_font_selection_hack_get_property;
+
+  widget_class->screen_changed = gtk_font_selection_hack_screen_changed;
    
   g_object_class_install_property (gobject_class,
                                    PROP_FONT_NAME,
-                                   g_param_spec_string ("font_name",
+                                   g_param_spec_string ("font-name",
                                                         _("Font name"),
-                                                        _("The X string that represents this font."),
+                                                        _("The X string that represents this font"),
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (gobject_class,
-				   PROP_FONT,
-				   g_param_spec_boxed ("font",
-						       _("Font"),
-						       _("The GdkFont that is currently selected."),
-						       GDK_TYPE_FONT,
-						       G_PARAM_READABLE));
-  g_object_class_install_property (gobject_class,
                                    PROP_PREVIEW_TEXT,
-                                   g_param_spec_string ("preview_text",
+                                   g_param_spec_string ("preview-text",
                                                         _("Preview text"),
-                                                        _("The text to display in order to demonstrate the selected font."),
+                                                        _("The text to display in order to demonstrate the selected font"),
                                                         PREVIEW_TEXT,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (gobject_class,
@@ -259,6 +197,7 @@ gtk_font_selection_hack_class_init (GtkFontSelectionHackClass *klass)
 							GTK_TYPE_FONT_FILTER,
 							GTK_FONT_HACK_NONE,
 							G_PARAM_READWRITE));
+
   gobject_class->finalize = gtk_font_selection_hack_finalize;
 }
 
@@ -303,9 +242,6 @@ static void gtk_font_selection_hack_get_property (GObject         *object,
     case PROP_FONT_NAME:
       g_value_set_string (value, gtk_font_selection_hack_get_font_name (fontsel));
       break;
-    case PROP_FONT:
-      g_value_set_object (value, gtk_font_selection_hack_get_font (fontsel));
-      break;
     case PROP_PREVIEW_TEXT:
       g_value_set_string (value, gtk_font_selection_hack_get_preview_text (fontsel));
       break;
@@ -342,16 +278,16 @@ gtk_font_selection_hack_init (GtkFontSelectionHack *fontsel)
   gtk_box_pack_start (GTK_BOX (fontsel), table, TRUE, TRUE, 0);
 
   fontsel->size_entry = gtk_entry_new ();
-  gtk_widget_set_usize (fontsel->size_entry, 20, -1);
+  gtk_widget_set_size_request (fontsel->size_entry, 20, -1);
   gtk_widget_show (fontsel->size_entry);
   gtk_table_attach (GTK_TABLE (table), fontsel->size_entry, 2, 3, 1, 2,
 		    GTK_FILL, 0, 0, 0);
-  gtk_signal_connect (GTK_OBJECT (fontsel->size_entry), "activate",
-		      (GtkSignalFunc) gtk_font_selection_hack_size_activate,
-		      fontsel);
-  gtk_signal_connect_after (GTK_OBJECT (fontsel->size_entry), "focus_out_event",
-			    (GtkSignalFunc) gtk_font_selection_hack_size_focus_out,
-			    fontsel);
+  g_signal_connect (G_OBJECT (fontsel->size_entry), "activate",
+		    (GCallback) gtk_font_selection_hack_size_activate,
+		    fontsel);
+  g_signal_connect_after (G_OBJECT (fontsel->size_entry), "focus_out_event",
+			  (GCallback) gtk_font_selection_hack_size_focus_out,
+			  fontsel);
   
   font_label = gtk_label_new_with_mnemonic (_("_Family:"));
   gtk_misc_set_alignment (GTK_MISC (font_label), 0.0, 0.5);
@@ -397,7 +333,7 @@ gtk_font_selection_hack_init (GtkFontSelectionHack *fontsel)
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_win), GTK_SHADOW_IN);
-  gtk_widget_set_usize (scrolled_win, FONT_LIST_WIDTH, FONT_LIST_HEIGHT);
+  gtk_widget_set_size_request (scrolled_win, FONT_LIST_WIDTH, FONT_LIST_HEIGHT);
   gtk_container_add (GTK_CONTAINER (scrolled_win), fontsel->family_list);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_win),
 				  GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
@@ -430,7 +366,7 @@ gtk_font_selection_hack_init (GtkFontSelectionHack *fontsel)
   
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_win), GTK_SHADOW_IN);
-  gtk_widget_set_usize (scrolled_win, FONT_STYLE_LIST_WIDTH, FONT_LIST_HEIGHT);
+  gtk_widget_set_size_request (scrolled_win, FONT_STYLE_LIST_WIDTH, FONT_LIST_HEIGHT);
   gtk_container_add (GTK_CONTAINER (scrolled_win), fontsel->face_list);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_win),
 				  GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
@@ -461,7 +397,7 @@ gtk_font_selection_hack_init (GtkFontSelectionHack *fontsel)
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_win), GTK_SHADOW_IN);
   gtk_container_add (GTK_CONTAINER (scrolled_win), fontsel->size_list);
-  gtk_widget_set_usize (scrolled_win, -1, FONT_LIST_HEIGHT);
+  gtk_widget_set_size_request (scrolled_win, -1, FONT_LIST_HEIGHT);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_win),
 				  GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
   gtk_widget_show (fontsel->size_list);
@@ -479,9 +415,9 @@ gtk_font_selection_hack_init (GtkFontSelectionHack *fontsel)
   g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW (fontsel->family_list)), "changed",
 		    G_CALLBACK (gtk_font_selection_hack_select_font), fontsel);
 
-  gtk_signal_connect_after (GTK_OBJECT (fontsel->family_list), "map",
-			    GTK_SIGNAL_FUNC (gtk_font_selection_hack_scroll_on_map),
-			    fontsel);
+  g_signal_connect_after (G_OBJECT (fontsel->family_list), "map",
+			  G_CALLBACK (gtk_font_selection_hack_scroll_on_map),
+			  fontsel);
   
   gtk_font_selection_hack_show_available_styles (fontsel);
   
@@ -515,10 +451,10 @@ gtk_font_selection_hack_init (GtkFontSelectionHack *fontsel)
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), fontsel->preview_entry);
   
   gtk_widget_show (fontsel->preview_entry);
-  gtk_signal_connect (GTK_OBJECT (fontsel->preview_entry), "changed",
-		      (GtkSignalFunc) gtk_font_selection_hack_preview_changed,
-		      fontsel);
-  gtk_widget_set_usize (fontsel->preview_entry, -1, INITIAL_PREVIEW_HEIGHT);
+  g_signal_connect (G_OBJECT (fontsel->preview_entry), "changed",
+		    (GCallback) gtk_font_selection_hack_preview_changed,
+		    fontsel);
+  gtk_widget_set_size_request (fontsel->preview_entry, -1, INITIAL_PREVIEW_HEIGHT);
   gtk_box_pack_start (GTK_BOX (text_box), fontsel->preview_entry,
 		      TRUE, TRUE, 0);
 
@@ -530,43 +466,52 @@ gtk_font_selection_hack_init (GtkFontSelectionHack *fontsel)
 static void
 gtk_font_selection_hack_display_fonts (GtkFontSelectionHack *fontsel)
 {
-  /* Insert the (possibly revised) list of fonts. */
-  gtk_font_selection_hack_show_available_fonts (fontsel, HACK_REGULAR);
-  gtk_font_selection_hack_show_available_styles (fontsel);
-  gtk_font_selection_hack_show_available_sizes (fontsel, TRUE);
+    /* Insert the (possibly revised) list of fonts. */
+    gtk_font_selection_hack_show_available_fonts (fontsel, HACK_REGULAR);
+    gtk_font_selection_hack_show_available_styles (fontsel);
+    gtk_font_selection_hack_show_available_sizes (fontsel, TRUE);
 }
 
 GtkWidget *
-gtk_font_selection_hack_new ()
+gtk_font_selection_hack_new (void)
 {
-  GtkFontSelectionHack *fontsel;
+    GtkFontSelectionHack *fontsel;
   
-  fontsel = gtk_type_new (GTK_TYPE_FONT_SELECTION_HACK);
+    fontsel = g_object_new (GTK_TYPE_FONT_SELECTION_HACK, NULL);
   
-  return GTK_WIDGET (fontsel);
+    return GTK_WIDGET (fontsel);
 }
 
 static void
 gtk_font_selection_hack_finalize (GObject *object)
 {
-  GtkFontSelectionHack *fontsel;
+    GtkFontSelectionHack *fontsel;
   
-  g_return_if_fail (GTK_IS_FONT_SELECTION_HACK (object));
+    g_return_if_fail (GTK_IS_FONT_SELECTION_HACK (object));
   
-  fontsel = GTK_FONT_SELECTION_HACK (object);
+    fontsel = GTK_FONT_SELECTION_HACK (object);
 
-  if (fontsel->font)
-    gdk_font_unref (fontsel->font);
-  
-  if (G_OBJECT_CLASS (font_selection_hack_parent_class)->finalize)
-    (* G_OBJECT_CLASS (font_selection_hack_parent_class)->finalize) (object);
+    (* G_OBJECT_CLASS (gtk_font_selection_hack_parent_class)->finalize) (object);
+}
+
+static void
+gtk_font_selection_hack_screen_changed (GtkWidget *widget,
+					GdkScreen *previous_screen)
+{
+    GtkFontSelectionHack *fontsel = GTK_FONT_SELECTION_HACK (widget);
+
+    if (gtk_widget_has_screen (GTK_WIDGET (fontsel))) {
+	gtk_font_selection_hack_show_available_fonts (fontsel, HACK_INIT);
+	gtk_font_selection_hack_show_available_sizes (fontsel, TRUE);
+	gtk_font_selection_hack_show_available_styles (fontsel);
+    }
 }
 
 static void
 gtk_font_selection_hack_preview_changed (GtkWidget        *entry,
 					 GtkFontSelectionHack *fontsel)
 {
-  g_object_notify (G_OBJECT (fontsel), "preview_text");
+    g_object_notify (G_OBJECT (fontsel), "preview_text");
 }
 
 static void
@@ -1033,10 +978,6 @@ gtk_font_selection_hack_select_size (GtkTreeSelection *selection,
 static void
 gtk_font_selection_hack_load_font (GtkFontSelectionHack *fontsel)
 {
-    if (fontsel->font) {
-	gdk_font_unref(fontsel->font);
-    }
-
     fontsel->font = NULL;
 
     gtk_font_selection_hack_update_preview(fontsel);
@@ -1075,7 +1016,7 @@ gtk_font_selection_hack_update_preview (GtkFontSelectionHack *fontsel)
   rc_style->font_desc = gtk_font_selection_hack_get_font_description (fontsel);
   
   gtk_widget_modify_style (preview_entry, rc_style);
-  gtk_rc_style_unref (rc_style);
+  g_object_unref (rc_style);
 
   gtk_widget_size_request (preview_entry, NULL);
   
@@ -1085,32 +1026,18 @@ gtk_font_selection_hack_update_preview (GtkFontSelectionHack *fontsel)
 		     MAX_PREVIEW_HEIGHT);
 
   if (new_height > old_requisition.height || new_height < old_requisition.height - 30)
-    gtk_widget_set_usize (preview_entry, -1, new_height);
+    gtk_widget_set_size_request (preview_entry, -1, new_height);
   
   /* This sets the preview text, if it hasn't been set already. */
   text = gtk_entry_get_text (GTK_ENTRY (preview_entry));
   if (strlen (text) == 0)
     gtk_entry_set_text (GTK_ENTRY (preview_entry), _(PREVIEW_TEXT));
-  gtk_entry_set_position (GTK_ENTRY (preview_entry), 0);
+  gtk_editable_set_position (GTK_EDITABLE (preview_entry), 0);
 }
 
 /*****************************************************************************
  * These functions are the main public interface for getting/setting the font.
  *****************************************************************************/
-
-GdkFont*
-gtk_font_selection_hack_get_font (GtkFontSelectionHack *fontsel)
-{
-    if (!fontsel->font) {
-	PangoFontDescription *font_desc = 
-	    gtk_font_selection_hack_get_font_description(fontsel);
-
-	fontsel->font = gdk_font_from_description(font_desc);
-	pango_font_description_free(font_desc);
-    }
-  
-    return fontsel->font;
-}
 
 gchar *
 gtk_font_selection_hack_get_font_name (GtkFontSelectionHack *fontsel)
@@ -1217,7 +1144,6 @@ gtk_font_selection_hack_set_font_name (GtkFontSelectionHack *fontsel,
   
   g_object_freeze_notify (G_OBJECT (fontsel));
   g_object_notify (G_OBJECT (fontsel), "font_name");
-  g_object_notify (G_OBJECT (fontsel), "font");
   g_object_thaw_notify (G_OBJECT (fontsel));
 
   pango_font_description_free (new_desc);
@@ -1262,38 +1188,45 @@ gtk_font_selection_hack_set_preview_text (GtkFontSelectionHack *fontsel,
  * GtkFontSelectionHackDialog
  *****************************************************************************/
 
-GtkType
-gtk_font_selection_hack_dialog_get_type (void)
+static void gtk_font_selection_hack_dialog_buildable_interface_init     (GtkBuildableIface *iface);
+static GObject * gtk_font_selection_hack_dialog_buildable_get_internal_child (GtkBuildable *buildable,
+									      GtkBuilder   *builder,
+									      const gchar  *childname);
+
+G_DEFINE_TYPE_WITH_CODE (GtkFontSelectionHackDialog, gtk_font_selection_hack_dialog,
+			 GTK_TYPE_DIALOG,
+			 G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
+						gtk_font_selection_hack_dialog_buildable_interface_init))
+
+static GtkBuildableIface *parent_buildable_iface;
+
+static void
+gtk_font_selection_hack_dialog_buildable_interface_init (GtkBuildableIface *iface)
 {
-    static GtkType font_selection_hack_dialog_type = 0;
-  
-    if (!font_selection_hack_dialog_type) {
-	GtkTypeInfo fontsel_diag_info = {
-	    "GtkFontSelectionHackDialog",
-	    sizeof (GtkFontSelectionHackDialog),
-	    sizeof (GtkFontSelectionHackDialogClass),
-	    (GtkClassInitFunc) gtk_font_selection_hack_dialog_class_init,
-	    (GtkObjectInitFunc) gtk_font_selection_hack_dialog_init,
-	    /* reserved_1 */ NULL,
-	    /* reserved_2 */ NULL,
-	    (GtkClassInitFunc) NULL,
-	};
-      
-	font_selection_hack_dialog_type = gtk_type_unique(GTK_TYPE_DIALOG,
-							  &fontsel_diag_info);
-    }
-  
-    return font_selection_hack_dialog_type;
+    parent_buildable_iface = g_type_interface_peek_parent (iface);
+    iface->get_internal_child = gtk_font_selection_hack_dialog_buildable_get_internal_child;
+}
+
+static GObject *
+gtk_font_selection_hack_dialog_buildable_get_internal_child (GtkBuildable *buildable,
+							     GtkBuilder   *builder,
+							     const gchar  *childname)
+{
+    if (strcmp(childname, "ok_button") == 0)
+	return G_OBJECT (GTK_FONT_SELECTION_HACK_DIALOG(buildable)->ok_button);
+    else if (strcmp(childname, "cancel_button") == 0)
+	return G_OBJECT (GTK_FONT_SELECTION_HACK_DIALOG (buildable)->cancel_button);
+    else if (strcmp(childname, "apply_button") == 0)
+	return G_OBJECT (GTK_FONT_SELECTION_HACK_DIALOG(buildable)->apply_button);
+    else if (strcmp(childname, "font_selection") == 0)
+	return G_OBJECT (GTK_FONT_SELECTION_HACK_DIALOG(buildable)->fontsel);
+
+    return parent_buildable_iface->get_internal_child (buildable, builder, childname);
 }
 
 static void
 gtk_font_selection_hack_dialog_class_init (GtkFontSelectionHackDialogClass *klass)
 {
-    GtkObjectClass *object_class;
-  
-    object_class = (GtkObjectClass*) klass;
-  
-    font_selection_hack_dialog_parent_class = gtk_type_class (GTK_TYPE_DIALOG);
 }
 
 static void
@@ -1309,12 +1242,12 @@ gtk_font_selection_hack_dialog_init (GtkFontSelectionHackDialog *fontseldiag)
   fontseldiag->auto_resize = TRUE;
   
   gtk_widget_set_events (GTK_WIDGET (fontseldiag), GDK_STRUCTURE_MASK);
-  gtk_signal_connect (GTK_OBJECT (fontseldiag), "configure_event",
-		      (GtkSignalFunc) gtk_font_selection_hack_dialog_on_configure,
-		      fontseldiag);
+  g_signal_connect (G_OBJECT (fontseldiag), "configure_event",
+		    (GCallback) gtk_font_selection_hack_dialog_on_configure,
+		    fontseldiag);
   
   gtk_container_set_border_width (GTK_CONTAINER (fontseldiag), 4);
-  gtk_window_set_policy (GTK_WINDOW (fontseldiag), FALSE, TRUE, TRUE);
+  gtk_window_set_resizable (GTK_WINDOW (fontseldiag), FALSE);
   
   fontseldiag->main_vbox = dialog->vbox;
   
@@ -1352,27 +1285,20 @@ gtk_font_selection_hack_dialog_init (GtkFontSelectionHackDialog *fontseldiag)
 GtkWidget*
 gtk_font_selection_hack_dialog_new (const gchar *title)
 {
-    GtkFontSelectionHackDialog *fontseldiag;
+  GtkFontSelectionHackDialog *fontseldiag;
   
-    fontseldiag = gtk_type_new(GTK_TYPE_FONT_SELECTION_HACK_DIALOG);
+  fontseldiag = g_object_new (GTK_TYPE_FONT_SELECTION_HACK_DIALOG, NULL);
 
-    if (title) {
-	gtk_window_set_title(GTK_WINDOW(fontseldiag), title);
-    }
+  if (title)
+    gtk_window_set_title (GTK_WINDOW (fontseldiag), title);
   
-    return GTK_WIDGET(fontseldiag);
+  return GTK_WIDGET (fontseldiag);
 }
 
 gchar*
 gtk_font_selection_hack_dialog_get_font_name (GtkFontSelectionHackDialog *fsd)
 {
     return gtk_font_selection_hack_get_font_name(GTK_FONT_SELECTION_HACK(fsd->fontsel));
-}
-
-GdkFont*
-gtk_font_selection_hack_dialog_get_font (GtkFontSelectionHackDialog *fsd)
-{
-    return gtk_font_selection_hack_get_font(GTK_FONT_SELECTION_HACK(fsd->fontsel));
 }
 
 gboolean
@@ -1423,10 +1349,10 @@ gtk_font_selection_hack_dialog_on_configure (GtkWidget *widget,
 	fsd->dialog_width = event->width;
     } else if (fsd->auto_resize && fsd->dialog_width != event->width) {
 	fsd->auto_resize = FALSE;
-	gtk_window_set_policy(GTK_WINDOW(fsd), FALSE, TRUE, FALSE);
+	gtk_window_set_resizable(GTK_WINDOW(fsd), FALSE);
     } else if (!fsd->auto_resize && fsd->dialog_width == event->width) {
 	fsd->auto_resize = TRUE;
-	gtk_window_set_policy(GTK_WINDOW(fsd), FALSE, TRUE, TRUE);
+	gtk_window_set_resizable(GTK_WINDOW(fsd), FALSE);
     }
   
     return FALSE;

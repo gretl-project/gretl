@@ -60,6 +60,7 @@ struct function_info_ {
     int minver;
     int upload;
     int saveas;
+    const char *openscript;
 };
 
 struct login_info_ {
@@ -98,6 +99,8 @@ function_info *finfo_new (void)
     finfo->privlist = NULL;
     finfo->dreq = 0;
     finfo->minver = 10600;
+
+    finfo->openscript = NULL;
 
     return finfo;
 }
@@ -396,9 +399,45 @@ nullify_sample_window (GtkWidget *w, function_info *finfo)
     finfo->samplewin = NULL;
 }
 
+void fnsave_set_script (const char *fname, gpointer p)
+{
+    function_info *finfo = (function_info *) p;
+
+    finfo->openscript = fname;
+}
+
+static int maybe_open_script (function_info *finfo, char **fname)
+{
+    int resp = yes_no_dialog("gretl",
+			     "This package does not yet contain a sample script.\n"
+			     "Add one now?", 
+			     0);
+
+    if (resp != GRETL_YES) {
+	return GRETL_CANCEL;
+    }
+	
+    resp = yes_no_dialog("gretl",
+			 "Start from an existing script?",
+			 1);
+    if (resp == GRETL_CANCEL) {
+	return GRETL_CANCEL;
+    } else if (resp == GRETL_YES) {
+	file_selector_with_parent(_("Open script file"), OPEN_SCRIPT, FSEL_DATA_FNPKG, 
+				  finfo, finfo->dlg);
+	if (finfo->openscript != NULL) {
+	    *fname = g_strdup(finfo->openscript);
+	    finfo->openscript = NULL;
+	}
+    }
+
+    return 0;
+}
+
 static void edit_sample_callback (GtkWidget *w, function_info *finfo)
 {
     const char *pkgname = NULL;
+    gchar *fname = NULL;
     gchar *title;
     PRN *prn = NULL;
 
@@ -408,17 +447,12 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     }
 
     if (finfo->sample == NULL) {
-	int resp = yes_no_dialog("gretl",
-				 "This package does not yet contain a sample script.\n"
-				 "Write one now?", 
-				 0);
-
-	if (resp != GRETL_YES) {
+	if (maybe_open_script(finfo, &fname) == GRETL_CANCEL) {
 	    return;
 	}
     }
 
-    if (bufopen(&prn)) {
+    if (finfo->sample != NULL && bufopen(&prn)) {
 	return;
     }
 
@@ -435,10 +469,29 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     if (finfo->sample != NULL) {
 	pputs(prn, finfo->sample);
 	pputc(prn, '\n');
-    } 
+    } else if (fname != NULL) {
+	gchar *tmp = NULL;
+	char *cont = NULL;
+
+	gretl_file_get_contents(fname, &tmp);
+	if (tmp != NULL) {
+	    cont = gretl_strdup(tmp);
+	    g_free(tmp);
+	}
+	if (cont != NULL) {
+	    prn = gretl_print_new_with_buffer(cont);
+	} else {
+	    bufopen(&prn);
+	}
+    }
 
     finfo->samplewin = view_buffer(prn, 78, 350, title,
 				   EDIT_FUNC_CODE, finfo);
+
+    if (fname != NULL) {
+	mark_vwin_content_changed(finfo->samplewin);
+	g_free(fname);
+    }
 
     g_object_set_data(G_OBJECT(finfo->samplewin->main), "finfo",
 		      finfo);

@@ -224,7 +224,7 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
 
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
 	gdk_window_set_cursor(plot->canvas->window, cursor);
-	gdk_cursor_destroy(cursor);
+	gdk_cursor_unref(cursor);
 	entry = g_object_get_data(G_OBJECT(w), "labelpos_entry");
 	plot->labelpos_entry = entry;
 	plot->status |= PLOT_POSITIONING;
@@ -2198,12 +2198,12 @@ static void draw_selection_rectangle (png_plot *plot,
 		       FALSE,
 		       rx, ry, rw, rh);
     /* show the modified pixmap */
-    gdk_window_copy_area(plot->canvas->window,
-			 plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
-			 0, 0,
-			 plot->pixmap,
-			 0, 0,
-			 plot->pixel_width, plot->pixel_height);
+    gdk_draw_drawable(plot->canvas->window,
+		      plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+		      plot->pixmap,
+		      0, 0,
+		      0, 0,
+		      plot->pixel_width, plot->pixel_height);
     /* draw (invert) again to erase the rectangle */
     gdk_draw_rectangle(plot->pixmap,
 		       plot->invert_gc,
@@ -2264,12 +2264,12 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     gdk_draw_layout(plot->pixmap, plot->invert_gc, x, y, pl);
 
     /* show the modified pixmap */
-    gdk_window_copy_area(plot->canvas->window,
-			 plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
-			 0, 0,
-			 plot->pixmap,
-			 0, 0,
-			 plot->pixel_width, plot->pixel_height);
+    gdk_draw_drawable(plot->canvas->window,
+		      plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+		      plot->pixmap,
+		      0, 0,
+		      0, 0,
+		      plot->pixel_width, plot->pixel_height);
 
     /* trash the pango layout */
     g_object_unref(G_OBJECT(pl));
@@ -2657,7 +2657,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
 	gdk_window_set_cursor(plot->canvas->window, cursor);
-	gdk_cursor_destroy(cursor);
+	gdk_cursor_unref(cursor);
 	plot->status |= PLOT_ZOOMING;
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
 			   _(" Drag to define zoom rectangle"));
@@ -3080,12 +3080,12 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 
     /* Refresh double buffer, then copy the "dirtied" area to
        the on-screen GdkWindow */
-    gdk_window_copy_area(widget->window,
-			 widget->style->fg_gc[GTK_STATE_NORMAL],
-			 event->area.x, event->area.y,
-			 dbuf_pixmap,
-			 event->area.x, event->area.y,
-			 event->area.width, event->area.height);
+    gdk_draw_drawable(widget->window,
+		      widget->style->fg_gc[GTK_STATE_NORMAL],
+		      dbuf_pixmap,
+		      event->area.x, event->area.y,
+		      event->area.x, event->area.y,
+		      event->area.width, event->area.height);
 }
 
 static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
@@ -3167,22 +3167,23 @@ static int render_pngfile (png_plot *plot, int view)
 	plot->format &= ~PLOT_MARKERS_UP;
     }
 
-    gdk_pixbuf_render_to_drawable(pbuf, plot->pixmap, 
-				  plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
-				  0, 0, 0, 0, width, height,
-				  GDK_RGB_DITHER_NONE, 0, 0);
+    gdk_draw_pixbuf(plot->pixmap, 
+		    plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+		    pbuf, 0, 0, 0, 0, width, height,
+		    GDK_RGB_DITHER_NONE, 0, 0);
 
     g_object_unref(pbuf);
     remove(pngname);
     
     if (view != PNG_START) { 
 	/* we're changing the view, so refresh the whole canvas */
-	gdk_window_copy_area(plot->canvas->window,
-			     plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
-			     0, 0,
-			     plot->pixmap,
-			     0, 0,
-			     plot->pixel_width, plot->pixel_height);
+	gdk_draw_drawable(plot->canvas->window,
+			  plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+			  plot->pixmap,
+			  0, 0,
+			  0, 0,
+			  plot->pixel_width, plot->pixel_height);
+
 	if (view == PNG_ZOOM) {
 	    plot->status |= PLOT_ZOOMED;
 	} else if (view == PNG_UNZOOM) {
@@ -3216,7 +3217,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     }
 
     if (plot->invert_gc != NULL) {
-	gdk_gc_destroy(plot->invert_gc);
+	g_object_unref(plot->invert_gc);
     }
 
     g_object_unref(plot->shell);

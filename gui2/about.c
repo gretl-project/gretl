@@ -67,7 +67,7 @@ static void show_link_cursor (GtkWidget *w, gpointer p)
 
     c = gdk_cursor_new(GDK_HAND2);
     gdk_window_set_cursor(w->window, c);
-    gdk_cursor_destroy(c);
+    gdk_cursor_unref(c);
 }
 
 static void show_website (GtkWidget *w, gpointer p)

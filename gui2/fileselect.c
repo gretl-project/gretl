@@ -493,7 +493,11 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	strcpy(tryfile, fname);
 	do_open_data(NULL, action);
     } else if (action == OPEN_SCRIPT) {
-	filesel_open_script(fname);
+	if (src == FSEL_DATA_FNPKG) {
+	    fnsave_set_script(fname, data);
+	} else {
+	    filesel_open_script(fname);
+	}
     } else if (action == OPEN_SESSION) {
 	filesel_open_session(fname);
     } else if (action == OPEN_MARKERS) {
@@ -530,13 +534,10 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
 	save_graph_to_file(data, fname);
-    } else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
-	int err;
-
-	err = ps_print_plots(fname, action, data);
-	if (err) {
-	    errbox(_("boxplot save failed"));
-	}
+    } else if (action == SAVE_BOXPLOT_EPS || 
+	       action == SAVE_BOXPLOT_PS ||
+	       action == SAVE_BOXPLOT_XPM) {
+	print_boxplot_group(fname, action, data);
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
     } else if (action == SAVE_FUNCTIONS) {
@@ -680,7 +681,7 @@ static struct winfilter get_filter (int action, gpointer data)
     return filt;
 }
 
-static char *make_winfilter (int action, gpointer data)
+static char *make_winfilter (int action, FselDataSrc src, gpointer data)
 {
     struct winfilter filter;
     char *ret, *p;
@@ -702,7 +703,7 @@ static char *make_winfilter (int action, gpointer data)
     p += strlen(p) + 1;
     strcpy(p, filter.pat);
 
-    if (action == OPEN_SCRIPT) {
+    if (action == OPEN_SCRIPT && src != FSEL_DATA_FNPKG) {
 	p += strlen(p) + 1;
 	strcpy(p, I_("gnuplot files (*.plt)"));
 	p += strlen(p) + 1;
@@ -814,7 +815,7 @@ static void win32_file_selector (const char *msg, int action, FselDataSrc src,
 	} else {
 	    of.hwndOwner = NULL;
 	}
-	filter = make_winfilter(action, data);
+	filter = make_winfilter(action, src, data);
 	of.lpstrFilter = filter;
 	of.lpstrCustomFilter = NULL;
 	of.nFilterIndex = 1;
@@ -929,7 +930,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	gtk_file_filter_set_name(filter, _("all files (*.*)"));
 	gtk_file_filter_add_pattern(filter, "*.*");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
-    } else if (action == OPEN_SCRIPT) {
+    } else if (action == OPEN_SCRIPT && src != FSEL_DATA_FNPKG) {
 	filter = gtk_file_filter_new();
 	gtk_file_filter_set_name(filter, _("GNU R files (*.R)"));
 	gtk_file_filter_add_pattern(filter, "*.R");

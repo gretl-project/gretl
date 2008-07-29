@@ -650,8 +650,8 @@ maximizer) at all levels of function execution.
 \label{sec:func-packages}
 
 As of \app{gretl} 1.6.0, there is a mechanism to package functions and
-make them available to other users of \app{gretl}.  This is currently
-experimental, but here is a walk-through of the process.
+make them available to other users of \app{gretl}.  Here is a
+walk-through of the process.
 
 \subsection{Load a function in memory}
 
@@ -677,7 +677,7 @@ end function
 \end{code}
 In this case, we have appended a string to the function argument, as
 explained in section \ref{func-define}, so as to make our interface
-more informative. This is not obligatory: if you omit the descriptive
+more informative.  This is not obligatory: if you omit the descriptive
 string, \app{gretl} will supply a predefined one.
 
 \begin{figure}[htbp]
@@ -687,9 +687,8 @@ string, \app{gretl} will supply a predefined one.
   \label{fig:func_check}
 \end{figure}
 
-Now run your function. You may want to make sure your function works
-properly by running a few tests. For example, you may open the console
-and type
+Now run your function. You may want to make sure it works properly by
+running a few tests. For example, you may open the console and type
 
 \begin{code}
 genr x = uniform()
@@ -698,7 +697,7 @@ print x dpcx --byobs
 \end{code}
 
 You should see something similar to figure \ref{fig:func_check}. The
-function seems to work ok. Once your function is debugged, you
+function seems to work ok.  Once your function is debugged, you
 may proceed to the next stage.
 
 \subsection{Create a package}
@@ -707,9 +706,9 @@ Start the GUI program and take a look at the ``File, Function files'' menu.
 This menu contains four items: ``On local machine'', ``On server'', ``Edit
 package'', ``New package''.
 
-Select ``New package'' (the will produce an error message unless at
+Select ``New package''.  (This will produce an error message unless at
 least one user-defined function is currently loaded in memory --- see
-the previous point); in the first dialog you get to select:
+the previous point.)  In the first dialog you get to select:
 
 \begin{itemize}
 \item A public function to package.
@@ -728,14 +727,21 @@ part of the ``behind the scenes'' mechanism in a function package.
 
 On clicking ``OK'' a second dialog should appear (see
 Figure~\ref{fig:package_editor}), where you get to enter the package
-information (author, version, date, and a short description).  You
-also get to enter help text for the public interface.  You have a
-further chance to edit the code of the functions to be packaged, by
-selecting them from the drop-down selector and clicking on ``Edit
-function code''. Finally, you can choose to upload the package on
-gretl's server when it is saved, by checking the relevant box.
+information (author, version, date, and a short description).  You can
+also enter help text for the public interface.  You have a further
+chance to edit the code of the function(s) to be packaged, by clicking
+on ``Edit function code''.  (If the package contains more than one
+function, a drop-down selector will be shown.)  And you get to add a
+sample script that exercises your package.  This will be helpful for
+potential users, and also for testing.  A sample script is required if
+you want to upload the package to the gretl server (for which a
+check-box is supplied).
 
-Clicking ``OK'' in this dialog leads you to a File Save dialog.  All
+You won't need it right now, but the button labeled ``Save as script''
+allows you to ``reverse engineer'' a function package, writing out a
+script that contains all the relevant function definitions.
+
+Clicking ``Save'' in this dialog leads you to a File Save dialog.  All
 being well, this should be pointing towards a directory named
 \texttt{functions}, either under the \app{gretl} system directory (if
 you have write permission on that) or the \app{gretl} user directory.

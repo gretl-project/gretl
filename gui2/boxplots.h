@@ -29,11 +29,7 @@ int boolean_boxplots (const char *str, double ***pZ,
 
 int retrieve_boxplot (const char *fname);
 
-int ps_print_plots (const char *fname, int flag, gpointer data);
-
-#ifndef G_OS_WIN32
-int plot_to_xpm (const char *fname, gpointer data);
-#endif
+int print_boxplot_group (const char *fname, int flag, gpointer data);
 
 const char *get_boxplots_string (void);
 

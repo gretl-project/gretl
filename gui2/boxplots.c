@@ -76,9 +76,8 @@ static int dump_boxplot (PLOTGROUP *grp);
 #ifdef G_OS_WIN32
 static int cb_copy_image (gpointer data);
 #else
-int plot_to_xpm (const char *fname, gpointer data);
+static int plot_to_xpm (const char *fname, gpointer data);
 #endif
-
 
 const char *get_boxdump_name (void)
 {
@@ -788,14 +787,13 @@ median_interval (double *x, int n, double *low, double *high)
     return err;
 }
 
-int ps_print_plots (const char *fname, int flag, gpointer data) 
+static int ps_print_plots (const char *fname, int flag, gpointer data) 
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
     FILE *fp;
     PSPlot *ps;
-    int i, eps = 1, orient = PS_PLOT_PORTRAIT;
-    gdouble epswidth = 0, epsheight = 0;
-    gdouble pscale = 0.8;
+    gdouble epswidth, epsheight, pscale;
+    int i, eps, orient;
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
@@ -803,13 +801,19 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 	return E_FOPEN;
     }
 
-    if (flag == SAVE_BOXPLOT_PS) {
-	pscale = 1.2;
-	eps = 0;
-	orient = PS_PLOT_LANDSCAPE;
+    if (flag == SAVE_BOXPLOT_EPS) {
+	eps = 1;
+	orient = PS_PLOT_PORTRAIT;
+	pscale = 0.8;
 	epswidth = pscale * grp->width;
 	epsheight = pscale * grp->height;
-    }
+    } else {
+	/* full page PS */
+	eps = 0;
+	orient = PS_PLOT_LANDSCAPE;
+	pscale = 1.2;
+	epswidth = epsheight = 0;
+    } 
 
     ps = ps_plot_new(fname,
 		     fp, 
@@ -842,6 +846,17 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     fclose(fp);
 
     return 0;
+}
+
+int print_boxplot_group (const char *fname, int flag, gpointer data)
+{
+#ifndef G_OS_WIN32
+    if (flag == SAVE_BOXPLOT_XPM) {
+	return plot_to_xpm(fname, data);
+    }
+#endif
+
+    return ps_print_plots(fname, flag, data);
 }
 
 static void real_six_numbers (BOXPLOT *plt, int offset, int do_mean,
@@ -1238,7 +1253,7 @@ static int cb_copy_image (gpointer data)
 
 #else /* end G_OS_WIN32 */
 
-int plot_to_xpm (const char *fname, gpointer data)
+static int plot_to_xpm (const char *fname, gpointer data)
 {    
     PLOTGROUP *grp = (PLOTGROUP *) data;
     GdkImage *image;

@@ -148,10 +148,6 @@ extern "C" {
   GtkWidget* gtk_font_selection_hack_new		(void);
   gchar*	   gtk_font_selection_hack_get_font_name	(GtkFontSelectionHack *fontsel);
 
-#ifndef GTK_DISABLE_DEPRECATED
-  GdkFont*   gtk_font_selection_hack_get_font		(GtkFontSelectionHack *fontsel);
-#endif /* GTK_DISABLE_DEPRECATED */
-
   gboolean              gtk_font_selection_hack_set_font_name    (GtkFontSelectionHack *fontsel,
 								  const gchar      *fontname);
   G_CONST_RETURN gchar* gtk_font_selection_hack_get_preview_text (GtkFontSelectionHack *fontsel);
@@ -177,13 +173,6 @@ extern "C" {
      to see if it has been loaded OK.
      You should g_free() the returned font name after you're done with it. */
   gchar*	 gtk_font_selection_hack_dialog_get_font_name    (GtkFontSelectionHackDialog *fsd);
-
-#ifndef GTK_DISABLE_DEPRECATED
-  /* This will return the current GdkFont, or NULL if none is selected or there
-     was a problem loading it. Remember to use gdk_font_ref/unref() if you want
-     to use the font (in a style, for example). */
-  GdkFont* gtk_font_selection_hack_dialog_get_font	    (GtkFontSelectionHackDialog *fsd);
-#endif /* GTK_DISABLE_DEPRECATED */
 
   /* This sets the currently displayed font. It should be a valid X Logical
      Font Description font name (anything else will be ignored), e.g.

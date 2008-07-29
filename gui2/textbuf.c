@@ -64,7 +64,7 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 	GdkCursor *cursor = gdk_cursor_new(cspec);
 
 	gdk_window_set_cursor(win, cursor);
-	gdk_cursor_destroy(cursor);
+	gdk_cursor_unref(cursor);
     } 
 }
 

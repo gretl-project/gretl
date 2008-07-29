@@ -69,12 +69,19 @@ PSPlot *ps_plot_new (const gchar *fname,
 		     gdouble scaley)
 {
     PSPlot *ps = malloc(sizeof *ps);
+    const char *s;
 
     if (ps == NULL) {
 	return NULL;
     }
 
-    ps->psname = g_strdup(fname);
+    s = strrchr(fname, G_DIR_SEPARATOR);
+    if (s != NULL) {
+	ps->psname = g_strdup(s + 1);
+    } else {
+	ps->psname = g_strdup(fname);
+    }
+
     ps->psfile = fp;
     ps->gsaved = FALSE;
     ps->orientation = orientation;
@@ -970,11 +977,10 @@ void ps_plot_init (PSPlot *ps)
 
     fprintf(psout,
 	    "%%%%Title: %s\n"
-	    "%%%%Creator: %s v%s Copyright (c) 1999 Adrian E. Feiguin\n"
+	    "%%%%Creator: gretl (based on Adrian E. Feiguin's GtkPlot)\n"
 	    "%%%%CreationDate: %s"
 	    "%%%%Magnification: 1.0000\n",
 	    ps->psname,
-	    "GtkPlot", "3.x",
 	    ctime(&now));
 
     if (ps->orientation == PS_PLOT_PORTRAIT) {
