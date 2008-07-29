@@ -1190,6 +1190,31 @@ gtk_font_selection_hack_set_preview_text (GtkFontSelectionHack *fontsel,
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
 /* no GtkBuildable */
+
+GtkType
+gtk_font_selection_hack_dialog_get_type (void)
+{
+    static GtkType font_selection_hack_dialog_type = 0;
+  
+    if (!font_selection_hack_dialog_type) {
+	GtkTypeInfo fontsel_diag_info = {
+	    "GtkFontSelectionHackDialog",
+	    sizeof (GtkFontSelectionHackDialog),
+	    sizeof (GtkFontSelectionHackDialogClass),
+	    (GtkClassInitFunc) gtk_font_selection_hack_dialog_class_init,
+	    (GtkObjectInitFunc) gtk_font_selection_hack_dialog_init,
+	    /* reserved_1 */ NULL,
+	    /* reserved_2 */ NULL,
+	    (GtkClassInitFunc) NULL,
+	};
+      
+	font_selection_hack_dialog_type = gtk_type_unique(GTK_TYPE_DIALOG,
+							  &fontsel_diag_info);
+    }
+  
+    return font_selection_hack_dialog_type;
+}
+
 #else
 
 static void gtk_font_selection_hack_dialog_buildable_interface_init     (GtkBuildableIface *iface);
