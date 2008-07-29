@@ -1188,6 +1188,10 @@ gtk_font_selection_hack_set_preview_text (GtkFontSelectionHack *fontsel,
  * GtkFontSelectionHackDialog
  *****************************************************************************/
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
+/* no GtkBuildable */
+#else
+
 static void gtk_font_selection_hack_dialog_buildable_interface_init     (GtkBuildableIface *iface);
 static GObject * gtk_font_selection_hack_dialog_buildable_get_internal_child (GtkBuildable *buildable,
 									      GtkBuilder   *builder,
@@ -1223,6 +1227,8 @@ gtk_font_selection_hack_dialog_buildable_get_internal_child (GtkBuildable *build
 
     return parent_buildable_iface->get_internal_child (buildable, builder, childname);
 }
+
+#endif
 
 static void
 gtk_font_selection_hack_dialog_class_init (GtkFontSelectionHackDialogClass *klass)
