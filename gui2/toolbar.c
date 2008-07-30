@@ -856,7 +856,7 @@ static void tbar_new_script (void)
 
 static void tbar_show_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(FUNC_FILES, w);
+    display_files(FUNC_FILES, mdata);
 }
 
 /* end toolbar icon callbacks */
