@@ -117,8 +117,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_INFO,
 #endif
 #if NO_EDIT_ICON
-	GRETL_STOCK_EDIT,
-	GRETL_STOCK_SCRIPT,
+	GRETL_STOCK_EDIT,    /* -> edit_24_xpm, 24 x 24 */
+	GRETL_STOCK_SCRIPT,  /* -> mini_edit_xpm, 16 x 16 */  
 #endif
 	GRETL_STOCK_TEX,
 	GRETL_STOCK_MAIL,
@@ -861,13 +861,13 @@ static void tbar_show_funcs (GtkWidget *w, gpointer p)
 
 /* end toolbar icon callbacks */
 
-#if NO_EDIT_ICON
-# define GTK_STOCK_EDIT "gretl-script"
-#endif
-
 static GretlToolItem mainbar_items[] = {
     { N_("launch calculator"),  GRETL_STOCK_CALC,    G_CALLBACK(tbar_calc), 0 },
+#if NO_EDIT_ICON
+    { N_("new script"),         GRETL_STOCK_SCRIPT,  G_CALLBACK(tbar_new_script), 0 },
+#else
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
+#endif
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(show_gretl_console), 0 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },

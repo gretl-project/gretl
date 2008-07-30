@@ -270,6 +270,26 @@ static void cancel_mail_settings (GtkWidget *w, struct mail_dialog *md)
     gtk_widget_destroy(md->dlg);
 }
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+
+static gchar *my_combo_box_get_active_text (GtkComboBox *box)
+{
+    GtkWidget *w = gtk_bin_get_child(GTK_BIN(box));
+    gchar *ret = NULL;
+
+    if (GTK_IS_ENTRY(w)) {
+	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+
+	if (s != NULL) {
+	    ret = g_strdup(s);
+	}
+    } 
+
+    return ret;
+}
+
+#endif
+
 static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 {
     GList *list = NULL;
@@ -283,7 +303,11 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     list = minfo->addrs;
 
     /* recipient */
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+    recip = my_combo_box_get_active_text(GTK_COMBO_BOX(md->recip_combo));
+#else
     recip = gtk_combo_box_get_active_text(GTK_COMBO_BOX(md->recip_combo));
+#endif
 
     if (recip != NULL && *recip != '\0') {
 	int i = 0;

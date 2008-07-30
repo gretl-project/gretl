@@ -34,6 +34,15 @@ void refresh_data (void)
     }
 }
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+
+static void gtk_action_set_sensitive (GtkAction *a, gboolean s)
+{
+    g_object_set(G_OBJECT(a), "sensitive", s, NULL);
+}
+
+#endif
+
 void flip (GtkUIManager *ui, const char *path, gboolean s)
 {
     if (ui != NULL) {
