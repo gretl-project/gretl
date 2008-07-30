@@ -2239,6 +2239,10 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 	    p->err = E_TYPES;
 	}
 
+	if (!p->err && r->flags & TRANSP_NODE) {
+	    p->err = gretl_matrix_transpose_in_place(a);
+	}
+
 	if (a != NULL) {
 	    if (0 && gretl_matrix_is_scalar(a)) {
 		/* should we automatically cast to scalar? */
@@ -5038,6 +5042,9 @@ static void transpose_matrix_result (NODE *n, parser *p)
 	    gretl_matrix_free(m);
 	}
 	n->flags |= TMP_NODE;
+    } else if (n->t == MSPEC) {
+	/* will be handled downstream */
+	n->flags |= TRANSP_NODE;
     } else {
 	p->err = E_TYPES;
     }

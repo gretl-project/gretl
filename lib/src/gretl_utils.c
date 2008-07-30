@@ -843,6 +843,7 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
 int set_obs (const char *line, double **Z, DATAINFO *pdinfo, 
 	     gretlopt opt)
 {
+    char pdstr[VNAMELEN];
     char stobs[OBSLEN];
     int structure = STRUCTURE_UNKNOWN;
     double sd0 = pdinfo->sd0;
@@ -867,9 +868,14 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 
     /* now we get down to business */
 
-    if (sscanf(line, "%*s %d %10s", &pd, stobs) != 2) {
+    if (sscanf(line, "%*s %15s %10s", pdstr, stobs) != 2) {
 	strcpy(gretl_errmsg, _("Failed to parse line as frequency, startobs"));
 	return 1;
+    }
+
+    pd = gretl_int_from_string(pdstr, (const double **) Z, pdinfo, &err);
+    if (err) {
+	return err;
     }
 
     /* truncate stobs if not a calendar date */

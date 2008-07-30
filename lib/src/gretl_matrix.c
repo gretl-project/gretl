@@ -1595,6 +1595,45 @@ int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
 }
 
 /**
+ * gretl_matrix_transpose_in_place:
+ * @m: matrix to transpose.
+ *
+ * Tranposes @m in place.
+ *
+ * Returns: 0 on success, non-zero error code otherwise.
+ */
+
+int gretl_matrix_transpose_in_place (gretl_matrix *m)
+{
+    int r = m->rows;
+    int c = m->cols;
+    int i, j, k = 0;
+    double x, *val;
+    size_t n = r * c * sizeof *val;
+
+    val = lapack_malloc(n);
+    if (val == NULL) {
+	return E_ALLOC;
+    }
+
+    memcpy(val, m->val, n);
+
+    for (j=0; j<c; j++) {
+	for (i=0; i<r; i++) {
+	    x = m->val[k++];
+	    gretl_matrix_set(m, j, i, x);
+	}
+    }
+
+    lapack_free(val);
+
+    m->rows = c;
+    m->cols = r;
+
+    return 0;
+}
+
+/**
  * gretl_matrix_transpose:
  * @targ: target matrix.
  * @src: source matrix.
