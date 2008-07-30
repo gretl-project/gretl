@@ -12,42 +12,23 @@ pdfdir = ../doc/tex
 
 INSTALL_DATA = cp -fp
 
-EN_GUI_HLP = $(sharesrc)/gretlgui.hlp
-EN_CMD_HLP = $(sharesrc)/gretlcmd.hlp
-EN_CLI_HLP = $(sharesrc)/gretlcli.hlp
-
-ES_GUI_HLP = $(sharesrc)/gretlgui.hlp.es
-ES_CMD_HLP = $(sharesrc)/gretlcmd.hlp.es
-ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
-
-IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it
-IT_CMD_HLP = $(sharesrc)/gretlcmd.hlp.it
-IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
-
-EN_CLI_GENHLP = $(sharesrc)/genrcli.hlp
-EN_GUI_GENHLP = $(sharesrc)/genrgui.hlp
-
-IT_CLI_GENHLP = $(sharesrc)/genrcli.hlp.it
-IT_GUI_GENHLP = $(sharesrc)/genrgui.hlp.it
-
 AUTO_HELPFILES = \
-	$(EN_GUI_HLP) \
-	$(EN_CMD_HLP) \
-	$(EN_CLI_HLP) \
-	$(ES_GUI_HLP) \
-	$(ES_CMD_HLP) \
-	$(ES_CLI_HLP) \
-	$(IT_GUI_HLP) \
-	$(IT_CMD_HLP) \
-	$(IT_CLI_HLP) \
-	$(EN_CLI_GENHELP) \
-	$(EN_GUI_GENHELP) \
-	$(IT_CLI_GENHELP) \
-	$(IT_GUI_GENHELP)
+	gretlgui.hlp \
+	gretlcmd.hlp \
+	gretlcli.hlp \
+	gretlgui.hlp.es \
+	gretlcmd.hlp.es \
+	gretlcli.hlp.es \
+	gretlgui.hlp.it \
+	gretlcmd.hlp.it \
+	gretlcli.hlp.it \
+	genrcli.hlp \
+	genrgui.hlp \
+	genrcli.hlp.it \
+	genrgui.hlp.it
 
 ifeq ($(build_docs),yes)
   query_make_help = help
-  query_install_help = install_help
 endif
 
 VPATH = $(sharesrc)
@@ -60,7 +41,7 @@ help:
 .PHONY :
 
 install: installdirs install_datafiles install_scripts install_functions \
-	install_help install_fonts $(query_install_help)
+	install_fonts install_help
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(DESTDIR)$(gretldir)/gretl.stamp
 	make -C bcih install
 
@@ -95,19 +76,9 @@ install_help: $(query_make_help)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/doc
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/helpfigs
-	$(INSTALL_DATA) $(EN_GUI_HLP) $(DESTDIR)$(gretldir)/gretlgui.hlp
-	$(INSTALL_DATA) $(EN_CMD_HLP) $(DESTDIR)$(gretldir)/gretlcmd.hlp
-	$(INSTALL_DATA) $(EN_CLI_HLP) $(DESTDIR)$(gretldir)/gretlcli.hlp
-	$(INSTALL_DATA) $(ES_GUI_HLP) $(DESTDIR)$(gretldir)/gretlgui.hlp.es
-	$(INSTALL_DATA) $(ES_CMD_HLP) $(DESTDIR)$(gretldir)/gretlcmd.hlp.es
-	$(INSTALL_DATA) $(ES_CLI_HLP) $(DESTDIR)$(gretldir)/gretlcli.hlp.es
-	$(INSTALL_DATA) $(IT_GUI_HLP) $(DESTDIR)$(gretldir)/gretlgui.hlp.it
-	$(INSTALL_DATA) $(IT_CMD_HLP) $(DESTDIR)$(gretldir)/gretlcmd.hlp.it
-	$(INSTALL_DATA) $(IT_CLI_HLP) $(DESTDIR)$(gretldir)/gretlcli.hlp.it
-	$(INSTALL_DATA) $(EN_CLI_GENHLP) $(DESTDIR)$(gretldir)/genrcli.hlp
-	$(INSTALL_DATA) $(EN_GUI_GENHLP) $(DESTDIR)$(gretldir)/genrgui.hlp
-	$(INSTALL_DATA) $(IT_CLI_GENHLP) $(DESTDIR)$(gretldir)/genrcli.hlp.it
-	$(INSTALL_DATA) $(IT_GUI_GENHLP) $(DESTDIR)$(gretldir)/genrgui.hlp.it
+	for f in $(AUTO_HELPFILES) ; do \
+	if test -f $(sharesrc)/$$f ; then \
+	$(INSTALL_DATA) $(sharesrc)/$$f $(DESTDIR)$(gretldir) ; fi ; done
 	for f in $(sharesrc)/texfigs/*.png ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/helpfigs ; done
 	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \

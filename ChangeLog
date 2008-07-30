@@ -18,6 +18,7 @@
 - Add new panel data functions: pmax, pmin, pnobs
 - Internal: recode parts of the gretl GUI to avoid dependence
   on deprecated GTK APIs
+- Speed-ups for loops containing genr commands
 - Several fixes for reading and writing gretl session files
 - Function packages: add facility to append a sample script
 - Enhancements for GUI function-packager

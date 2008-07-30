@@ -46,6 +46,7 @@
 # define GRETL_STOCK_EDIT "gretl-edit"
 # define GTK_STOCK_EDIT GRETL_STOCK_EDIT
 # define GRETL_STOCK_SCRIPT "gretl-script"
+# define GTK_STOCK_ABOUT NULL
 #endif
 
 enum windata_flags {

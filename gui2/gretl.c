@@ -62,7 +62,7 @@ static GtkWidget *make_main_window (void);
 
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
-static void set_up_main_menu (void);
+static int set_up_main_menu (void);
 static void start_R_callback (void);
 static void auto_store (void);
 static void restore_sample_callback (void);
@@ -1159,7 +1159,10 @@ static GtkWidget *make_main_window (void)
 #endif
     g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
 
-    set_up_main_menu();
+    if (set_up_main_menu()) {
+	exit(EXIT_FAILURE);
+    }
+
     gtk_box_pack_start(GTK_BOX(main_vbox), mdata->mbar, FALSE, TRUE, 0);
     gtk_widget_show(mdata->mbar);
 
@@ -1484,11 +1487,7 @@ GtkActionEntry main_entries[] = {
     { "FuncRef",   NULL, N_("Function reference"), NULL, NULL, G_CALLBACK(genr_funcs_ref) },
     { "UserGuide", GRETL_STOCK_PDF, N_("_User's guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
-#if GTK_MINOR_VERSION >= 6
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
-#else
-    { "About", NULL, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }  
-#endif
 };
 
 static void add_conditional_items (GtkUIManager *ui)
@@ -1526,20 +1525,23 @@ static gchar *get_main_ui (void)
     char fname[FILENAME_MAX];
     gchar *main_ui = NULL;
 
-    sprintf(fname, "%s%cui%cgretlmain.xml", paths.gretldir,
-	    SLASH, SLASH);
+    sprintf(fname, "%sui%cgretlmain.xml", paths.gretldir, SLASH);
     gretl_file_get_contents(fname, &main_ui);
 
     return main_ui;
 }
 
-static void set_up_main_menu (void)
+static int set_up_main_menu (void)
 {
     GtkActionGroup *actions;
     gchar *main_ui = NULL;
     GError *error = NULL;
 
     main_ui = get_main_ui();
+    if (main_ui == NULL) {
+	return 1;
+    }
+
     mdata->ui = gtk_ui_manager_new();
     actions = gtk_action_group_new("Actions");
 
@@ -1566,14 +1568,7 @@ static void set_up_main_menu (void)
     g_free(main_ui);
     mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/MenuBar");
 
-#ifdef HELP_ON_RIGHT
-    if (1) {
-	GtkWidget *hmenu;
-
-	hmenu = gtk_ui_manager_get_widget(mdata->ui, "/MenuBar/Help");
-	gtk_menu_item_set_right_justified(GTK_MENU_ITEM(hmenu), TRUE);
-    }
-#endif
+    return 0;
 }
 
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo)
