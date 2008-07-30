@@ -737,44 +737,42 @@ int gretl_matrix_delete_columns (gretl_matrix *X, int *list)
 
 gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
 {
-    int r, c, i, j;
-    int ret;
+    int r, c, i, j, n;
     double x;
     gretl_matrix *A = NULL;
-    FILE *f;
+    FILE *fp;
 
-    f = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
 
-    if (f == NULL) {
+    if (fp == NULL) {
 	*err = E_FOPEN;
-	return gretl_null_matrix_new();
+	return NULL;
     }
 
-    ret = fscanf(f, "%d %d\n", &r, &c);
+    n = fscanf(fp, "%d %d\n", &r, &c);
 
-    if (ret < 2 || r <= 0 || c <= 0) {
+    if (n < 2 || r <= 0 || c <= 0) {
 	*err = E_DATA;
-	A = gretl_null_matrix_new();
-    } else {
-	A = gretl_matrix_alloc(r, c);
+	fclose(fp);
+	return NULL;
     }
 
+    A = gretl_matrix_alloc(r, c);
     if (A == NULL) {
 	*err = E_ALLOC;
-    }
-
-    if (*err) {
-	fclose(f);
-	return A;
+	fclose(fp);
+	return NULL;
     }
 
     gretl_push_c_numeric_locale();
 
     for (i=0; i<r && !*err; i++) {
 	for (j=0; j<c && !*err; j++) {
-	    if (fscanf(f, "%lf", &x) != 1) {
+	    if (fscanf(fp, "%lf", &x) != 1) {
 		*err = E_DATA;
 		fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
+		gretl_matrix_free(A);
+		A = NULL;
 	    } else {
 		gretl_matrix_set(A, i, j, x);
 	    }
@@ -783,7 +781,7 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
 
     gretl_pop_c_numeric_locale();
     
-    fclose(f);
+    fclose(fp);
 
     return A;
 }
@@ -810,7 +808,7 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
 
     fname = gretl_maybe_switch_dir(fname);
 
-    fp = fopen(fname, "w");
+    fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
 	return E_FOPEN;

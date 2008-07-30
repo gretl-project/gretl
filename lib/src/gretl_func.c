@@ -986,7 +986,8 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	} else if (gretl_scalar_type(fun->params[i].type)) {
 	    print_min_max_deflt(&fun->params[i], prn);
 	} else if (gretl_ref_type(fun->params[i].type) || 
-		   fun->params[i].type == GRETL_TYPE_LIST) {
+		   fun->params[i].type == GRETL_TYPE_LIST ||
+		   fun->params[i].type == GRETL_TYPE_STRING) {
 	    print_opt_flags(&fun->params[i], prn);
 	}
 	print_param_description(&fun->params[i], prn);
@@ -2574,6 +2575,10 @@ static int read_param_option (char **ps, fn_param *param)
 {
     int err = E_PARSE;
 
+#if FN_DEBUG
+    fprintf(stderr, "read_param_option: got '%s'\n", *ps);
+#endif
+
     if (!strncmp(*ps, "[null]", 6)) {
 	param->flags |= ARG_OPTIONAL;
 	err = 0;
@@ -2642,10 +2647,15 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    strcat(tstr, " *");
 	    s++;
 	}
-	type = arg_type_from_string(tstr);
-	if (type == 0) {
-	    sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
+	if (*tstr == '\0') {
+	    sprintf(gretl_errmsg, "Expected a type identifier");
 	    err = E_PARSE;
+	} else {
+	    type = arg_type_from_string(tstr);
+	    if (type == 0) {
+		sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
+		err = E_PARSE;
+	    }
 	} 
     }
 
@@ -3014,6 +3024,36 @@ static int extract_funcname (char *name, const char *s)
     }
 }
 
+static int fndef_maybe_append_next (char *s, FILE *fp)
+{
+    int n = strlen(s);
+
+    if (s[n-1] == ',' || s[n-1] == '\\') {
+	/* definition continues? */
+	char line[MAXLINE];
+
+	if (fgets(line, sizeof line, fp) == NULL) {  
+	    return E_PARSE;
+	}
+
+	if (s[n-1] == '\\') {
+	    s[n-1] = '\0';
+	    n--;
+	}	
+
+	tailstrip(line);   
+	n += strlen(line);
+
+	if (n >= MAXLINE) {
+	    return E_DATA;
+	}
+
+	strcat(s, line);
+    }
+
+    return 0;
+}
+
 /* Called from GUI window within the package-editing apparatus: the
    content of the script-editing window is dumped to file and we're
    passed the filename, along with the index number of the function
@@ -3064,18 +3104,15 @@ int update_function_from_script (const char *fname, int idx)
 		       _("You can't change the name of a function here"));
 	    } else {
 		gotfn = 1;
-		err = parse_fn_definition(fun->name, &fun->params,
-					  &fun->n_params, s + 8, 
-					  NULL, NULL);
-		if (err) {
-		    strcpy(gretl_errmsg, _("Error compiling function"));
+		err = fndef_maybe_append_next(s, fp);
+		if (!err) {
+		    err = parse_fn_definition(fun->name, &fun->params,
+					      &fun->n_params, s + 8, 
+					      NULL, NULL);
 		}
 	    }
 	} else {
 	    err = real_function_append_line(s, fun);
-	    if (err) {
-		strcpy(gretl_errmsg, _("Error compiling function"));
-	    }
 	}
     }
 
@@ -3962,6 +3999,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 	err = maybe_exec_line(&state, pZ, pdinfo);
 	if (err) {
+	    if (*gretl_errmsg == '\0') {
+		gretl_errmsg_sprintf("error in function %s\n"
+				     "> %s", u->name, line);
+	    }
 	    fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
 	    fprintf(stderr, "> %s\n", line);
 	}

@@ -1048,6 +1048,10 @@ void call_function_package (const char *fname, GtkWidget *w,
     err = gui_exec_line(&state, &Z, datainfo);
     view_buffer(prn, 80, 400, fnname, PRINT, NULL);
 
+    if (err) {
+	gui_errmsg(err);
+    }    
+
     if (datainfo->v > orig_v) {
 	mark_dataset_as_modified();
 	populate_varlist();
