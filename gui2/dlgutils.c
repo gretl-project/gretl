@@ -1289,3 +1289,29 @@ void set_combo_box_default_text (GtkComboBox *box, const char *s)
 
     gtk_entry_set_text(GTK_ENTRY(entry), s);
 }
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+
+gchar *gtk_combo_box_get_active_text (GtkComboBox *box)
+{
+    GtkWidget *w = gtk_bin_get_child(GTK_BIN(box));
+    gchar *ret = NULL;
+
+    if (GTK_IS_ENTRY(w)) {
+	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+
+	if (s != NULL) {
+	    ret = g_strdup(s);
+	}
+    } else {
+	GtkTreeModel *model = gtk_combo_box_get_model(box);
+	GtkTreeIter iter;
+
+	gtk_combo_box_get_active_iter(box, &iter);
+	gtk_tree_model_get(model, &iter, 0, &ret, -1);
+    }
+
+    return ret;
+}
+
+#endif

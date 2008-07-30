@@ -1797,7 +1797,7 @@ static GList *get_dummy_list (int *thisdum)
 {
     GList *dumlist = NULL;
     int v = mdata_active_var();
-    int i;
+    int i, j = 0;
 
     for (i=1; i<datainfo->v; i++) {
 	if (var_is_scalar(datainfo, i)) {
@@ -1805,7 +1805,10 @@ static GList *get_dummy_list (int *thisdum)
 	}
 	if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
-	    if (i == v) *thisdum = i;
+	    if (i == v) {
+		*thisdum = j;
+	    }
+	    j++;
 	}
     }
 
