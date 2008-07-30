@@ -1,3 +1,15 @@
+7/30/2008, version 1.7.6
+
+List arguments to user-defined arguments:
+
+In the context of a "foreach" loop across such a list, the
+accessor $i still gets the name of the variable at position i 
+in the list, but the variable is not "visible" by that name
+within the function.  To get a handle on the variable (e.g.
+for use on the right-hand side of a genr command, use the
+new syntax listname.varname.  See the chapter on functions in
+the User's Guide for details.
+
 6/12/2008, version 1.7.5
 
 $sigma and $vcv accessors:
