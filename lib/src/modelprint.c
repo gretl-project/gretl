@@ -762,13 +762,15 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
 static void dwline (const MODEL *pmod, PRN *prn)
 {
-    if (na(pmod->dw)) {
+    if (na(pmod->dw) && na(pmod->rho)) {
 	return;
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
-		XDIGITS(pmod), pmod->dw);
+	if (!na(pmod->dw)) {
+	    pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
+		    XDIGITS(pmod), pmod->dw);
+	}
 	if (!na(pmod->rho)) {
 	    pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
 		    XDIGITS(pmod), pmod->rho);
@@ -776,24 +778,30 @@ static void dwline (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char xstr[32];
 
-	tex_dcolumn_double(pmod->dw, xstr);
-	pprintf(prn, "%s & %s \\\\\n",
-		I_("Durbin--Watson statistic"), xstr); 
+	if (!na(pmod->dw)) {
+	    tex_dcolumn_double(pmod->dw, xstr);
+	    pprintf(prn, "%s & %s \\\\\n",
+		    I_("Durbin--Watson statistic"), xstr); 
+	}
 	if (!na(pmod->rho)) {
 	    tex_dcolumn_double(pmod->rho, xstr);
 	    pprintf(prn, "%s & %s \\\\\n",
 		    I_("First-order autocorrelation coeff."), xstr);
 	}
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin-Watson statistic"), 
-		pmod->dw);
+	if (!na(pmod->dw)) {
+	    pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin-Watson statistic"), 
+		    pmod->dw);
+	}
 	if (!na(pmod->rho)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("First-order autocorrelation coeff."), 
 		    pmod->rho);
 	} 
     } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin-Watson statistic"), 
-		prn_delim(prn), pmod->dw);
+	if (!na(pmod->dw)) {
+	    pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin-Watson statistic"), 
+		    prn_delim(prn), pmod->dw);
+	}
 	if (!na(pmod->rho)) {
 	    pprintf(prn, "\"%s\"%c%.15g\n", I_("First-order autocorrelation coeff."), 
 		    prn_delim(prn), pmod->rho);
@@ -821,24 +829,15 @@ static void dhline (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "  %s = %.*g\n", _("Durbin's h"), 
 		XDIGITS(pmod), h);
-	pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
-		XDIGITS(pmod), pmod->rho);
     } else if (tex_format(prn)) {
 	char xstr[32];
 
 	tex_dcolumn_double(h, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("Durbin's $h$"), xstr); 
-	tex_dcolumn_double(pmod->rho, xstr);
-	pprintf(prn, "%s & %s \\\\\n",
-		I_("First-order autocorrelation coeff."), xstr);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin's h"), h);
-	pprintf(prn, RTFTAB "%s = %g\n", I_("First-order autocorrelation coeff."), 
-		pmod->rho);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin's h"), prn_delim(prn), h);
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("First-order autocorrelation coeff."), 
-		prn_delim(prn), pmod->rho);
     }
 }
 
@@ -2600,8 +2599,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	    Fline(pmod, prn);
 	}
 
-	if (pmod->ci == PANEL || 
-	    (pmod->ci == OLS && dataset_is_panel(pdinfo))) {
+	if (pmod->ci == PANEL || (pmod->ci == OLS && dataset_is_panel(pdinfo))) {
 	    dwline(pmod, prn);
 	} 
 

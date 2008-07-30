@@ -1626,10 +1626,6 @@ double dwstat (int order, MODEL *pmod, const double **Z)
 	return NADBL;
     }
 
-    if (gretl_model_get_int(pmod, "ldepvar")) {
-	return NADBL;
-    }
-
     t1 = pmod->t1 + order;
 
     if (pmod->nwt) {
