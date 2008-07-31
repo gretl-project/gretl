@@ -28,6 +28,7 @@
 #include "var.h"
 #include "objstack.h"
 #include "gretl_func.h"
+#include "gretl_scalar.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -228,6 +229,7 @@ static double controller_evaluate_expr (const char *expr,
     } else {
 	err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
 	if (!err) {
+	    /* FIXME scalar */
 	    v = (vnum > 0)? vnum : varindex(pdinfo, vname);
 	    if (v < pdinfo->v) {
 		x = (*pZ)[v][0];
@@ -659,9 +661,13 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    clr->vsign = -1;
 	    s++;
 	}
-	v = varindex(pdinfo, s);
-	if (v < pdinfo->v) {
-	    /* found a variable by the name of s */
+	if (gretl_is_scalar(s)) {
+	    clr->vnum = LOOP_VAL_UNDEF; /* FIXME scalar */
+	    *clr->vname = '\0';
+	    strncat(clr->vname, s, VNAMELEN - 1);
+	    clr->val = (int) gretl_scalar_get_value(s, NULL);
+	} else if ((v = varindex(pdinfo, s)) < pdinfo->v) {
+	    /* found a series by the name of s */
 	    clr->vnum = v;
 	    clr->val = (int) Z[v][0];
 	} else if (loop->parent != NULL && strlen(s) == gretl_namechar_spn(s)) {
@@ -837,6 +843,7 @@ test_forloop_element (char *s, LOOPSET *loop,
 			restore_delta_state(v, x0, *pZ, pdinfo);
 		    }
 		} else {
+		    /* FIXME scalar */
 		    err = E_UNKVAR;
 		}
 	    } else {
@@ -863,6 +870,7 @@ test_forloop_element (char *s, LOOPSET *loop,
 	} else {
 	    strcpy(clr->vname, vname);
 	    if (i != 1) {
+		/* FIXME scalar */
 		clr->vnum = varindex(pdinfo, vname);
 	    }
 	}	

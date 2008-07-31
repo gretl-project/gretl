@@ -25,6 +25,7 @@
 #include "matrix_extra.h"
 #include "gretl_string_table.h"
 #include "gretl_func.h"
+#include "gretl_scalar.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -697,15 +698,18 @@ static int libset_get_scalar (const char *var, const char *arg,
 	return err;
     }
 
-    v = varindex(pdinfo, arg);
-
-    if (v >= pdinfo->v) {
-	sprintf(gretl_errmsg, "'%s': unrecognized name", arg);
-	return E_UNKVAR;
-    } else if (var_is_series(pdinfo, v)) {
-	return E_DATATYPE;
+    if (gretl_is_scalar(arg)) {
+	x = gretl_scalar_get_value(arg, NULL);
     } else {
-	x = Z[v][0];
+	v = varindex(pdinfo, arg);
+	if (v >= pdinfo->v) {
+	    sprintf(gretl_errmsg, "'%s': unrecognized name", arg);
+	    return E_UNKVAR;
+	} else if (var_is_series(pdinfo, v)) {
+	    return E_DATATYPE;
+	} else {
+	    x = Z[v][0];
+	}
     }
 
     if (negval_invalid(var) && x < 0.0) {

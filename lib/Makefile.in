@@ -97,6 +97,7 @@ PUBLIC_HDRS = \
 	gretl_paths.h \
 	gretl_prn.h \
 	gretl_restrict.h \
+	gretl_scalar.h \
 	gretl_string_table.h \
 	gretl_utils.h \
 	gretl_win32.h \
@@ -169,6 +170,7 @@ SRCS = adf_kpss.c \
 	gretl_paths.c \
 	gretl_prn.c \
 	gretl_restrict.c \
+	gretl_scalar.c \
 	gretl_string_table.c \
 	gretl_utils.c \
 	gretl_www.c \

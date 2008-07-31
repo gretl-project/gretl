@@ -27,6 +27,7 @@
 #include "gretl_panel.h"
 #include "loop_private.h"
 #include "texprint.h"
+#include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "forecast.h"
 
@@ -1037,10 +1038,12 @@ int gretl_int_from_string (const char *s, const double **Z,
 
     if (*test == '\0') {
 	return n;
+    } else if (s[1] == '\0' && is_active_index_loop_char(*s)) {
+	n = loop_scalar_read(*s);
+    } else if (gretl_is_scalar(s)) {
+	n = gretl_scalar_get_value(s, NULL);
     } else if (Z == NULL || pdinfo == NULL) {
 	*err = E_DATA;
-    } else if (test[1] == '\0' && is_active_index_loop_char(*test)) {
-	n = loop_scalar_read(*s);
     } else {
 	int v = varindex(pdinfo, s);
 	double x;
@@ -1524,6 +1527,7 @@ void libgretl_session_cleanup (int mode)
     gretl_plotx(NULL);
 
     if (mode != SESSION_PRESERVE_MATRICES) {
+	destroy_user_scalars();
 	destroy_user_matrices();
     }
 }

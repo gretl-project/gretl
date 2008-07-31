@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_scalar.h"
 #include "compat.h"
 
 /*
@@ -659,12 +660,16 @@ int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 	    fprintf(stderr, "rhodiff: parmbit = '%s'\n", parmbit);
 #endif
 	    if (isalpha((unsigned char) parmbit[0])) {
-		nv = varindex(pdinfo, parmbit);
-		if (nv == v) {
-		    free(rhot);
-		    return E_UNKVAR;
+		if (gretl_is_scalar(parmbit)) {
+		    rhot[p] = gretl_scalar_get_value(parmbit, NULL);
+		} else {
+		    nv = varindex(pdinfo, parmbit);
+		    if (nv == v) {
+			free(rhot);
+			return E_UNKVAR;
+		    }
+		    rhot[p] = get_xvalue(nv, (const double **) *pZ, pdinfo);
 		}
-		rhot[p] = get_xvalue(nv, (const double **) *pZ, pdinfo);
 	    } else {
 		rhot[p] = dot_atof(parmbit);
 	    }

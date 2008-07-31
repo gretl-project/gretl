@@ -34,6 +34,7 @@
 #include "gretl_panel.h"
 #include "texprint.h"
 #include "gretl_xml.h"
+#include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
 #include "gretl_foreign.h"
@@ -925,7 +926,7 @@ static int lag_from_lstr (const char *s,
 	if (isdigit(*s)) {
 	    lag = atoi(s);
 	} else {
-	    int v = varindex(pdinfo, s);
+	    int v = varindex(pdinfo, s); /* FIXME scalar */
 
 	    if (v < pdinfo->v) {
 		lag = Z[v][0];
@@ -1187,7 +1188,7 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 	if (isdigit(*ostr)) {
 	    *order = atoi(ostr);
 	} else {
-	    v = varindex(pdinfo, ostr);
+	    v = varindex(pdinfo, ostr); /* FIXME scalar */
 	    if (v < pdinfo->v) {
 		*order = Z[v][0];
 	    }
@@ -1374,12 +1375,12 @@ static int wildcard_expand (const char *s, int *lpos,
     return ok;
 }
 
-static int matrix_name_ok (const char *s, CMD *cmd)
+static int print_name_ok (const char *s, CMD *cmd)
 {
     int ok = 0;
 
     if (cmd->ci == PRINT) {
-	if (get_matrix_by_name(s)) {
+	if (get_matrix_by_name(s) || gretl_is_scalar(s)) {
 	    cmd->extra = gretl_str_expand(&cmd->extra, s, " ");
 	    cmd->list[0] -= 1;
 	    ok = 1;
@@ -1660,7 +1661,9 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 		ret = 1;
 	    }
 	}
-    } else if (pdinfo != NULL && varindex(pdinfo, s) < pdinfo->v) {
+    } else if (gretl_is_series(s, pdinfo)) {
+	ret = 1;
+    } else if (gretl_is_scalar(s)) {
 	ret = 1;
     } else if (get_matrix_by_name(s)) {
 	ret = 1;
@@ -2086,7 +2089,7 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	ok = 1;
     } else if (truncate_varname(s, &k, pdinfo, cmd)) {
 	ok = 1;
-    } else if (cmd->ci == PRINT && matrix_name_ok(s, cmd)) {
+    } else if (cmd->ci == PRINT && print_name_ok(s, cmd)) {
 	ok = 1;
     } 
 
@@ -2860,6 +2863,8 @@ static int parse_criteria (const char *line, const double **Z,
 	return 1;
     }
 
+    /* FIXME scalar */
+
     if (isalpha((unsigned char) *essstr) && 
 	(i = varindex(pdinfo, essstr)) < pdinfo->v) {
 	ess = get_xvalue(i, Z, pdinfo);
@@ -3627,7 +3632,7 @@ static int set_var_info (const char *line, gretlopt opt,
     /* skip varname, but not following space */
     line += strcspn(line, " ");
 
-    v = varindex(pdinfo, vname);
+    v = varindex(pdinfo, vname); /* FIXME scalar */
     if (v == pdinfo->v) {
 	sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
 	return E_UNKVAR;

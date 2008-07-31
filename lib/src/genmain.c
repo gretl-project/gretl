@@ -29,6 +29,48 @@
 # define GDEBUG 0
 #endif
 
+#if NEWSCALARS
+# define settings_obs_value(p) (p->lh.obs >= 0)
+
+static void write_scalar_message (const parser *p, int oldv, PRN *prn)
+{
+    double x = gretl_scalar_get_value(p->lh.name, NULL);
+
+    if (p->flags & P_LHSCAL) {
+	pprintf(prn, _("Replaced scalar %s"), p->lh.name);
+    } else {
+	pprintf(prn, _("Generated scalar %s"), p->lh.name);
+    }
+
+    if (na(x)) {
+	pputs(prn, " = NA");
+    } else {
+	pprintf(prn, " = %g", x);
+    }
+}
+
+#else
+# define settings_obs_value(p) (var_is_series(p->dinfo, p->lh.v))
+
+static void write_scalar_message (const parser *p, int oldv, PRN *prn)
+{
+    int t = lh_obs(p);
+    double x = (*p->Z)[p->lh.v][t];
+
+    if (p->lh.v < oldv) {
+	pprintf(prn, _("Replaced scalar %s"), p->lh.name);
+    } else {
+	pprintf(prn, _("Generated scalar %s"), p->lh.name);
+    }
+    if (na(x)) {
+	pputs(prn, " = NA");
+    } else {
+	pprintf(prn, " = %g", x);
+    }
+}
+
+#endif
+
 static void gen_write_message (const parser *p, int oldv, PRN *prn)
 {
     if (prn == NULL || !gretl_messages_on()) {
@@ -36,25 +78,12 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     }
 
     if (p->targ == NUM) {
-	if (var_is_series(p->dinfo, p->lh.v)) {
+	if (settings_obs_value(p)) {
+	    /* set specific observation in series */
 	    pprintf(prn, _("Modified series %s (ID %d)"),
 		    p->lh.name, p->lh.v);
 	} else {
-	    int t = lh_obs(p);
-	    double x = (*p->Z)[p->lh.v][t];
-
-	    if (p->lh.v < oldv) {
-		pprintf(prn, _("Replaced scalar %s (ID %d)"),
-			p->lh.name, p->lh.v);
-	    } else {
-		pprintf(prn, _("Generated scalar %s (ID %d)"),
-			p->lh.name, p->lh.v);
-	    }
-	    if (na(x)) {
-		pputs(prn, " = NA");
-	    } else {
-		pprintf(prn, " = %g", x);
-	    }
+	    write_scalar_message(p, oldv, prn);
 	}
     } else if (p->targ == VEC) {
 	if (p->lh.v < oldv) {
@@ -412,6 +441,17 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 #endif 
 
     return ret;
+}
+
+int gretl_is_series (const char *name, const DATAINFO *pdinfo)
+{
+    if (pdinfo == NULL) {
+	return 0;
+    } else {
+	int v = varindex(pdinfo, name);
+
+	return (v >= 0 && v < pdinfo->v);
+    }
 }
 
 int genr_special_word (const char *s)

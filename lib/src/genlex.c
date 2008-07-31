@@ -763,6 +763,9 @@ static void look_up_word (const char *s, parser *p)
 		} else if (!strcmp(s, "time")) {
 		    p->sym = DUM;
 		    p->idnum = DUM_TREND;
+		} else if (gretl_is_scalar(s)) {
+		    p->sym = USCALAR;
+		    p->idstr = gretl_strdup(s);
 		} else if (get_matrix_by_name(s)) {
 		    p->sym = UMAT;
 		    p->idstr = gretl_strdup(s);

@@ -54,6 +54,7 @@
 
 #define scalar_node(n) (n->t == NUM || (n->t == MAT && gretl_matrix_is_scalar(n->v.m)))
 
+#define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
 
@@ -3669,6 +3670,19 @@ static NODE *apply_matrix_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+/* node holding a user-defined scalar */
+
+static NODE *uscalar_node (NODE *t, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	ret->v.xval = gretl_scalar_get_value(t->v.str, &p->err);
+    }
+
+    return ret;
+}
+
 /* node holding a user-defined matrix */
 
 static NODE *umatrix_node (NODE *t, parser *p)
@@ -5681,6 +5695,10 @@ static NODE *eval (NODE *t, parser *p)
 	/* user-defined matrix */
 	ret = umatrix_node(t, p);
 	break;
+    case USCALAR:
+	/* user-defined scalar */
+	ret = uscalar_node(t, p);
+	break;
     case VSTR:
 	/* string variable */
 	ret = string_var_node(t, p);
@@ -6289,7 +6307,8 @@ static NODE *lhs_copy_node (parser *p)
 
 static void parser_try_print (parser *p)
 {
-    if (p->lh.v == 0 && p->lh.m0 == NULL && !lhlist(p) && !lhstr(p)) {
+    if (p->lh.v == 0 && p->lh.m0 == NULL && !lhlist(p) && 
+	!lhstr(p) && !lhscalar(p)) {
 	/* varname on left is not the name of a current variable */
 	p->err = E_EQN;
     } else if (p->lh.substr != NULL) {
@@ -6483,12 +6502,16 @@ static void pre_process (parser *p, int flags)
        so, what type it is */
     p->lh.v = varindex(p->dinfo, test);
     if (p->lh.v >= p->dinfo->v) {
-	/* not a variable: try a matrix? */
+	/* not a series: try other types? */
 	p->lh.v = 0;
 	p->lh.m0 = get_matrix_by_name(test);
 	if (p->lh.m0 != NULL) {
 	    p->flags |= P_LHMAT;
 	    p->lh.t = MAT;
+	    newvar = 0;
+	} else if (gretl_is_scalar(test)) {
+	    p->flags |= P_LHSCAL;
+	    p->lh.t = NUM;
 	    newvar = 0;
 	} else if (get_list_by_name(test)) {
 	    p->flags |= P_LHLIST;
@@ -6500,6 +6523,7 @@ static void pre_process (parser *p, int flags)
 	    newvar = 0;
 	}	    
     } else if (var_is_scalar(p->dinfo, p->lh.v)) {
+	/* FIXME */
 	p->lh.t = NUM;
 	newvar = 0;
     } else if (var_is_series(p->dinfo, p->lh.v)) {
@@ -7167,6 +7191,7 @@ static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
     double **Z = NULL;
+    double x;
     int t, v;
 
     /* test for type mismatch errors */
@@ -7181,10 +7206,19 @@ static int save_generated_var (parser *p, PRN *prn)
 #endif
 
     /* allocate dataset storage, if needed */
+#if NEWSCALARS
+    if (p->targ == VEC) {
+	gen_allocate_storage(p);
+	if (p->err) {
+	    return p->err;
+	}
+    }
+#else
     gen_allocate_storage(p);
     if (p->err) {
 	return p->err;
     }
+#endif
 
     /* put the generated data into place */
     Z = *p->Z;
@@ -7192,13 +7226,32 @@ static int save_generated_var (parser *p, PRN *prn)
     
     if (p->targ == NUM) {
 	/* writing a scalar */
-	t = lh_obs(p);
-	if (r->t == NUM) {
-	    Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
-	} else if (r->t == MAT) {
-	    Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, p);
+#if !NEWSCALARS /* old style, not changed just yet */
+	if (p->lh.obs < 0) p->lh.obs = 0;
+#endif
+	if (p->lh.obs >= 0) {
+	    /* it's a specific observation in a series */
+	    t = p->lh.obs;
+	    if (r->t == NUM) {
+		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
+	    } else if (r->t == MAT) {
+		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, p);
+	    }
+	    strcpy(p->dinfo->varname[v], p->lh.name);
+	} else if (p->flags & P_LHSCAL) {
+	    /* modifying existing scalar */
+	    x = gretl_scalar_get_value(p->lh.name, &p->err);
+	    if (r->t == NUM) {
+		x = xy_calc(x, r->v.xval, p->op, p);
+	    } else {
+		x = xy_calc(x, r->v.m->val[0], p->op, p);
+	    }
+	    gretl_scalar_set_value(p->lh.name, x);
+	} else {
+	    /* a new scalar */
+	    x = (r->t == MAT)? r->v.m->val[0] : r->v.xval;
+	    p->err = gretl_scalar_add(p->lh.name, x);
 	}
-	strcpy(p->dinfo->varname[v], p->lh.name);
     } else if (p->targ == VEC) {
 	/* writing a series */
 	if (r->t == NUM) {

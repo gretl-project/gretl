@@ -18,6 +18,11 @@
  */
 
 #include "libgretl.h"
+#include "gretl_func.h"
+
+#define SDEBUG 0
+
+typedef struct gretl_scalar_ gretl_scalar;
 
 struct gretl_scalar_ {
     char name[VNAMELEN];
@@ -27,6 +32,25 @@ struct gretl_scalar_ {
 
 static gretl_scalar **scalars;
 static int n_scalars;
+
+#if SDEBUG
+
+static void print_scalars (const char *s)
+{
+    if (n_scalars == 0) {
+	fprintf(stderr, "%s: no scalars defined\n", s);
+    } else {
+	int i;
+
+	fprintf(stderr, "%s: defined scalars:\n", s);
+	for (i=0; i<n_scalars; i++) {
+	    fprintf(stderr, "%15s = %g\n", scalars[i]->name,
+		    scalars[i]->val);
+	}
+    }
+}
+
+#endif
 
 static int gretl_scalar_push (gretl_scalar *s)
 {
@@ -76,9 +100,10 @@ static int real_delete_scalar (int i)
     return err;
 }
 
+#if 0
+
 static double
-real_get_scalar_by_name (const char *name, int slevel,
-			 int *err)
+real_get_scalar_by_name (const char *name, int slevel, int *err)
 {
     int level, i;
 
@@ -100,10 +125,16 @@ real_get_scalar_by_name (const char *name, int slevel,
     return NADBL;
 }
 
+#endif
+
 int gretl_is_scalar (const char *name)
 {
     int level = gretl_function_depth();
     int i;
+
+#if SDEBUG
+    print_scalars("gretl_is_scalar");
+#endif
 
     for (i=0; i<n_scalars; i++) {
 	if (!strcmp(name, scalars[i]->name) &&
@@ -120,6 +151,10 @@ double gretl_scalar_get_value (const char *name, int *err)
     int level = gretl_function_depth();
     int i;
 
+#if SDEBUG
+    print_scalars("gretl_scalar_get_value");
+#endif
+
     for (i=0; i<n_scalars; i++) {
 	if (!strcmp(name, scalars[i]->name) &&
 	    scalars[i]->level == level) {
@@ -127,7 +162,9 @@ double gretl_scalar_get_value (const char *name, int *err)
 	}
     }
 
-    *err = E_UNKVAR;
+    if (err != NULL) {
+	*err = E_UNKVAR;
+    }
 
     return NADBL;
 }
@@ -144,11 +181,16 @@ void gretl_scalar_set_value (const char *name, double val)
 	    break;
 	}
     }
+
+#if SDEBUG
+    print_scalars("gretl_scalar_set_value");
+#endif
 }
 
 int gretl_scalar_add (const char *name, double val)
 {
     gretl_scalar *s;
+    int err;
 
     s = malloc(sizeof *s);
     if (s == NULL) {
@@ -159,7 +201,13 @@ int gretl_scalar_add (const char *name, double val)
     s->val = val;
     s->level = gretl_function_depth();
 
-    return gretl_scalar_push(s);
+    err = gretl_scalar_push(s);
+
+#if SDEBUG
+    print_scalars("gretl_scalar_add");
+#endif
+
+    return err;
 }
 
 int gretl_scalar_delete (const char *name)
@@ -175,8 +223,90 @@ int gretl_scalar_delete (const char *name)
 	}
     }
 
+#if SDEBUG
+    print_scalars("gretl_scalar_delete");
+#endif
+
     return ret;
 }
+
+#define LEV_PRIVATE -1
+
+static int levels_match (gretl_scalar *s, int lev)
+{
+    if (s->level == lev) {
+	return 1;
+    } else if (lev == LEV_PRIVATE && *s->name == '$') {
+	return 1;
+    }
+
+    return 0;
+}
+
+int destroy_user_scalars_at_level (int level)
+{
+    gretl_scalar **tmp;
+    int i, j, ns = 0;
+    int err = 0;
+
+    for (i=0; i<n_scalars; i++) {
+	if (scalars[i] == NULL) {
+	    break;
+	}
+	if (levels_match(scalars[i], level)) {
+	    free(scalars[i]);
+	    for (j=i; j<n_scalars - 1; j++) {
+		scalars[j] = scalars[j+1];
+	    }
+	    scalars[n_scalars - 1] = NULL;
+	    i--;
+	} else {
+	    ns++;
+	}
+    }
+
+    if (ns < n_scalars) {
+	n_scalars = ns;
+	if (ns == 0) {
+	    free(scalars);
+	    scalars = NULL;
+	} else {
+	    tmp = realloc(scalars, ns * sizeof *tmp);
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    } else {
+		scalars = tmp;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
+ * destroy_user_scalars:
+ *
+ * Frees all resources associated with the stack of user-
+ * defined scalars.
+ */
+
+void destroy_user_scalars (void)
+{
+    int i;
+
+    if (scalars == NULL) {
+	return;
+    }
+
+    for (i=0; i<n_scalars; i++) {
+	free(scalars[i]);
+    }
+
+    free(scalars);
+    scalars = NULL;
+    n_scalars = 0;
+}
+
 
 
 

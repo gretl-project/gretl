@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
+#include "gretl_scalar.h"
 #include "matrix_extra.h"
 
 #include <errno.h>
@@ -111,6 +112,10 @@ static double printf_get_scalar (char *s, double ***pZ,
 
     if (numeric_string(s)) {
 	return atof(s);
+    }
+
+    if (gretl_is_scalar(s)) {
+	return gretl_scalar_get_value(s, NULL);
     }
 
     v = varindex(pdinfo, s);
@@ -599,16 +604,20 @@ int do_printf (const char *line, double ***pZ,
 static int 
 sscanf_target_var (const char *vname, DATAINFO *pdinfo, int *err)
 {
-    int v = varindex(pdinfo, vname);
+    if (gretl_is_scalar(vname)) {
+	return 0;
+    } else {
+	int v = varindex(pdinfo, vname);
 
-    if (v <= 0 || v >= pdinfo->v) {
-	*err = E_UNKVAR;
-    } else if (!var_is_scalar(pdinfo, v)) {
-	strcpy(gretl_errmsg, _("sscanf: numerical target must be scalar"));
-	*err = E_DATA;
+	if (v == pdinfo->v) {
+	    *err = E_UNKVAR;
+	} else if (!var_is_scalar(pdinfo, v)) {
+	    strcpy(gretl_errmsg, _("sscanf: numerical target must be scalar"));
+	    *err = E_DATA;
+	}
+
+	return v;
     }
-
-    return v;
 }
 
 struct bracket_scan {
@@ -822,9 +831,13 @@ static int scan_scalar (const char *targ, char **psrc,
 	}
     }
 
-    if (v > 0 && !errno && endp != *psrc) {
-	Z[v][0] = (fc == 'd')? k : x;
-	*ns += 1;
+    if (!errno && endp != *psrc) {
+	if (v == 0) {
+	    gretl_scalar_set_value(targ, (fc == 'd')? k : x);
+	} else if (v > 0) {
+	    Z[v][0] = (fc == 'd')? k : x;
+	    *ns += 1;
+	}
     }
 
     *psrc = endp;

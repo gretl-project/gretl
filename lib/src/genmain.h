@@ -142,6 +142,8 @@ int print_object_var (const char *oname, const char *param,
 		      double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn);
 
+int gretl_is_series (const char *name, const DATAINFO *pdinfo);
+
 int gretl_reserved_word (const char *str);
 
 int genr_special_word (const char *s);

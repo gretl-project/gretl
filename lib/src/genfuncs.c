@@ -1029,14 +1029,14 @@ static int n_new_dummies (const DATAINFO *pdinfo,
 
     for (i=0; i<nunits; i++) {
 	sprintf(dname, "du_%d", i + 1);
-	if (varindex(pdinfo, dname) < pdinfo->v) {
+	if (gretl_is_series(dname, pdinfo)) {
 	    nnew--;
 	}
     }
 
     for (i=0; i<nperiods; i++) {
 	sprintf(dname, "dt_%d", i + 1);
-	if (varindex(pdinfo, dname) < pdinfo->v) {
+	if (gretl_is_series(dname, pdinfo)) {
 	    nnew--;
 	}
     }
@@ -1791,7 +1791,7 @@ int get_t_from_obs_string (const char *s, const double **Z,
 	    fprintf(stderr, " plain_obs_number gives t = %d\n", t);
 #endif
 	} else {
-	    int v = varindex(pdinfo, s);
+	    int v = varindex(pdinfo, s); /* FIXME scalar */
 
 	    if (v == pdinfo->v && strlen(s) == 1) {
 		t = loop_scalar_read(s[0]);
@@ -1877,7 +1877,8 @@ int check_declarations (char ***pS, parser *p)
     }
 
     for (i=0; i<n && !p->err; i++) {
-	if (varindex(p->dinfo, S[i]) < p->dinfo->v || 
+	if (gretl_is_series(S[i], p->dinfo) ||
+	    gretl_is_scalar(S[i]) ||
 	    get_matrix_by_name(S[i]) ||
 	    get_list_by_name(S[i]) ||
 	    get_string_by_name(S[i])) {

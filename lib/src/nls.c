@@ -29,6 +29,7 @@
 #include "gretl_func.h"
 #include "nlspec.h"
 #include "cmd_private.h"
+#include "gretl_scalar.h"
 
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
@@ -415,6 +416,9 @@ static int nlspec_push_param (nlspec *s, const char *name,
     if (v > 0) {
 	s->params[np].nc = 1;
 	err = push_scalar_coeff(s, Z[v][0]);
+    } else if (gretl_is_scalar(name)) {
+	s->params[np].nc = 1;
+	err = push_scalar_coeff(s, gretl_scalar_get_value(name, NULL));
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
 	int k = gretl_vector_get_length(m);
@@ -437,26 +441,29 @@ static int nlspec_push_param (nlspec *s, const char *name,
 static int 
 check_param_name (const char *name, const DATAINFO *pdinfo, int *pv)
 {
-    int v = varindex(pdinfo, name);
+    gretl_matrix *m;
 
-    if (v == 0) {
-	return E_DATA;
-    } else if (v >= pdinfo->v) {
-	gretl_matrix *m = get_matrix_by_name(name);
-	
-	if (m != NULL) {
-	    if (gretl_vector_get_length(m) > 0) {
-		*pv = 0;
-	    } else {
-		return E_DATATYPE;
-	    }
+    if (gretl_is_scalar(name)) {
+	*pv = 0;
+    } else if ((m = get_matrix_by_name(name)) != NULL) {
+	if (gretl_vector_get_length(m) > 0) {
+	    *pv = 0;
 	} else {
-	    return E_UNKVAR;
+	    return E_DATATYPE;
 	}
-    } else if (!var_is_scalar(pdinfo, v)) {
-	return E_DATATYPE;
     } else {
-	*pv = v;
+	/* FIXME scalar */
+	int v = varindex(pdinfo, name);
+
+	if (v == 0) {
+	    return E_DATA;
+	} else if (v == pdinfo->v) {
+	    return E_UNKVAR;
+	} else if (!var_is_scalar(pdinfo, v)) {
+	    return E_DATATYPE;
+	} else {
+	    *pv = v;
+	}
     }
 
     return 0;
@@ -482,16 +489,19 @@ maybe_add_param_to_spec (nlspec *s, const char *word,
 	return 0;
     }
 
-    v = varindex(pdinfo, word);
-
-    if (v < pdinfo->v) {
-	if (var_is_series(pdinfo, v)) {
-	    /* only scalars are wanted here */
-	    return 0;
-	}
+    if (gretl_is_scalar(word)) {
+	; /* should be OK */
     } else {
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), word);
-	return E_UNKVAR;
+	v = varindex(pdinfo, word);
+	if (v < pdinfo->v) {
+	    if (var_is_series(pdinfo, v)) {
+		/* only scalars are wanted here */
+		return 0;
+	    }
+	} else {
+	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), word);
+	    return E_UNKVAR;
+	}
     }
 
     /* if this term is already present in the spec, skip it */
@@ -632,6 +642,8 @@ int nlspec_add_param_list (nlspec *spec, const int *list,
     if (spec->params != NULL || np == 0) {
 	return E_DATA;
     }
+
+    /* FIXME scalar : list must not be used */
 
     for (i=0; i<np && !err; i++) {
 	v = list[i+1];

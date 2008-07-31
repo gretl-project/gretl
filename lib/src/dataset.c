@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_func.h"
+#include "gretl_scalar.h"
 #include "libset.h"
 #include "dbread.h"
 
@@ -2167,12 +2168,18 @@ static int get_stack_param_val (const char *s, const double **Z,
 	char vname[VNAMELEN];
 	int i, len = strcspn(s, " -");
 
-	if (len > VNAMELEN - 1) len = VNAMELEN - 1;
+	if (len > VNAMELEN - 1) {
+	    len = VNAMELEN - 1;
+	}
 	*vname = '\0';
 	strncat(vname, s, len);
-	i = varindex(pdinfo, vname);
-	if (i < pdinfo->v) {
-	    val = (int) Z[i][0];
+	if (gretl_is_scalar(vname)) {
+	    val = gretl_scalar_get_value(vname, NULL);
+	} else {
+	    i = varindex(pdinfo, vname);
+	    if (i < pdinfo->v) {
+		val = (int) Z[i][0];
+	    }
 	}
     }
 

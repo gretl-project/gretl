@@ -70,9 +70,15 @@ static NODE *newref (parser *p, int t)
 
     if (n != NULL) {
 	if (t == USCALAR) {
+#if NEWSCALARS
+	    n->t = t;
+	    n->v.str = p->idstr;
+	    n->vnum = NO_VNUM;
+#else
 	    n->vnum = p->idnum;
 	    n->t = NUM;
 	    n->v.xval = (*p->Z)[n->vnum][0];
+#endif
 	} else if (t == USERIES) {
 	    n->vnum = p->idnum;
 	    n->t = VEC;

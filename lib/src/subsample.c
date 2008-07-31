@@ -25,6 +25,7 @@
 #include "gretl_panel.h"
 #include "cmd_private.h"
 #include "dbread.h"
+#include "gretl_scalar.h"
 
 #define SUBDEBUG 0
 
@@ -1350,6 +1351,8 @@ static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
 
     if (integer_string(s)) {
 	k = atoi(s);
+    } else if (gretl_is_scalar(s)) {
+	k = gretl_scalar_get_value(s, NULL);
     } else {
 	int v = varindex(pdinfo, s);
 

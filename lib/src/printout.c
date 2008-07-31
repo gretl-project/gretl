@@ -25,6 +25,7 @@
 #include "forecast.h"
 #include "gretl_func.h"
 #include "matrix_extra.h"
+#include "gretl_scalar.h"
 
 #include <time.h>
 
@@ -1577,35 +1578,10 @@ static void print_varlist (const char *name, const int *list,
     }
 }
 
-static void 
-print_listed_objects (const char *s, const DATAINFO *pdinfo, PRN *prn)
-{
-    const gretl_matrix *m;
-    const int *list;
-    char *name;
-
-    while ((name = gretl_word_strdup(s, &s)) != NULL) {
-	m = get_matrix_by_name(name);
-	if (m != NULL) {
-	    gretl_matrix_print_to_prn(m, name, prn);
-	} else {
-	    list = get_list_by_name(name);
-	    if (list != NULL) {
-		print_varlist(name, list, pdinfo, prn);
-	    }
-	}
-	free(name);
-    }
-}
-
 static void print_scalar (double x, const char *vname, 
-			  gretlopt opt, int allconst,
-			  PRN *prn)
+			  gretlopt opt, PRN *prn)
 {
-    if (!allconst) {
-	pputc(prn, '\n');
-    }
-
+    pputc(prn, '\n');
     pprintf(prn, "%15s = ", vname);
 
     if (na(x)) {
@@ -1623,8 +1599,27 @@ static void print_scalar (double x, const char *vname,
 	}
     }
 
-    if (allconst) {
-	pputc(prn, '\n');
+    pputc(prn, '\n');
+}
+
+static void 
+print_listed_objects (const char *s, const DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
+{
+    const gretl_matrix *m;
+    const int *list;
+    char *name;
+
+    while ((name = gretl_word_strdup(s, &s)) != NULL) {
+	if (gretl_is_scalar(name)) {
+	    print_scalar(gretl_scalar_get_value(name, NULL), 
+			 name, opt, prn);
+	} else if ((m = get_matrix_by_name(name)) != NULL) {
+	    gretl_matrix_print_to_prn(m, name, prn);
+	} else if ((list = get_list_by_name(name)) != NULL) {
+	    print_varlist(name, list, pdinfo, prn);
+	}
+	free(name);
     }
 }
 
@@ -1737,7 +1732,7 @@ int printdata (const int *list, const char *mstr,
 	int len, v = plist[j];
 
 	if (var_is_scalar(pdinfo, v)) {
-	    print_scalar(Z[v][0], pdinfo->varname[v], opt, 0, prn);
+	    print_scalar(Z[v][0], pdinfo->varname[v], opt, prn);
 	    scalars = 1;
 	    gretl_list_delete_at_pos(plist, j);
 	    j--;
@@ -1889,7 +1884,7 @@ int printdata (const int *list, const char *mstr,
  endprint:
 
     if (mstr != NULL) {
-	print_listed_objects(mstr, pdinfo, prn);
+	print_listed_objects(mstr, pdinfo, opt, prn);
     }
 
     free(plist);

@@ -26,6 +26,7 @@
 #include "gretl_xml.h"
 #include "cmd_private.h"
 #include "gretl_string_table.h"
+#include "gretl_scalar.h"
 
 #include <glib.h>
 
@@ -3441,14 +3442,18 @@ static double
 get_scalar_return (const char *vname, double **Z, DATAINFO *pdinfo,
 		   int *err)
 {
-    int v = varindex(pdinfo, vname);
-
-    if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
-	return Z[v][0];
-    } else if (v < pdinfo->v) {
-	*err = E_TYPES;
+    if (gretl_is_scalar(vname)) {
+	return gretl_scalar_get_value(vname, NULL);
     } else {
-	*err = E_UNKVAR;
+	int v = varindex(pdinfo, vname);
+
+	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
+	    return Z[v][0];
+	} else if (v < pdinfo->v) {
+	    *err = E_TYPES;
+	} else {
+	    *err = E_UNKVAR;
+	}
     }
 
     return NADBL;
@@ -3631,6 +3636,7 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	arg = args->arg[i];
 	fp = &u->params[i];
 	if (gretl_ref_type(fp->type)) {
+	    /* FIXME scalar */
 	    if (arg->type == GRETL_TYPE_SCALAR_REF ||
 		arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
@@ -3673,6 +3679,14 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 #endif
 
     call->args = NULL;
+
+    anyerr = destroy_user_scalars_at_level(d);
+    if (anyerr && !err) {
+	err = anyerr;
+#if FN_DEBUG
+	fprintf(stderr, "destroy_user_scalars_at_level(%d): err = %d\n", d, err);
+#endif
+    }
 
     anyerr = destroy_user_matrices_at_level(d);
     if (anyerr && !err) {
