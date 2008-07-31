@@ -1019,6 +1019,7 @@ int gretl_int_from_string (const char *s, const double **Z,
 			   const DATAINFO *pdinfo, int *err)
 {
     char *test;
+    double x;
     int n = 0;
 
     if (s == NULL || *s == 0) {
@@ -1041,12 +1042,16 @@ int gretl_int_from_string (const char *s, const double **Z,
     } else if (s[1] == '\0' && is_active_index_loop_char(*s)) {
 	n = loop_scalar_read(*s);
     } else if (gretl_is_scalar(s)) {
-	n = gretl_scalar_get_value(s, NULL);
+	x = gretl_scalar_get_value(s, NULL);
+	if (na(x)) {
+	    *err = E_MISSDATA;
+	} else {
+	    n = (int) x;
+	}	
     } else if (Z == NULL || pdinfo == NULL) {
 	*err = E_DATA;
     } else {
 	int v = varindex(pdinfo, s);
-	double x;
 
 	if (v >= pdinfo->v) {
 	    *err = E_UNKVAR;

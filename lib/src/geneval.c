@@ -3012,36 +3012,13 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     return ret;
 }
 
-#if 0
-
-static double global_varindex (const DATAINFO *pdinfo, const char *s)
-{
-    if (s != NULL && *s != 0) {
-	int i;
-
-	for (i=0; i<pdinfo->v; i++) { 
-	    if (!strcmp(pdinfo->varname[i], s)) { 
-		return i;
-	    }
-	}
-    }
-
-    return NADBL;
-}
-
-#endif
-
 static NODE *varnum_node (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	if (n->t == STR) {
-#if 1
 	    ret->v.xval = varindex(p->dinfo, n->v.str);
-#else
-	    ret->v.xval = global_varindex(p->dinfo, n->v.str);
-#endif
 	} else {
 	    p->err = E_DATA;
 	}
@@ -3952,11 +3929,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 #endif
 
 	if (uvar_node(n)) {
+	    /* FIXME scalar */
 	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->vnum);
 	} else if (n->t == U_ADDR) {
 	    NODE *u = n->v.b1.b;
 
 	    if (u->t == NUM) {
+		/* FIXME scalar */
 		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->vnum);
 	    } else if (u->t == VEC) {
 		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->vnum);
@@ -6066,10 +6045,6 @@ struct mod_assign {
     int op;
 };
 
-#if 0
-const char mod_syms = "+-*/%^~|";
-#endif
-
 struct mod_assign m_assign[] = {
     { '+', B_ADD },
     { '-', B_SUB },
@@ -6290,6 +6265,7 @@ static NODE *lhs_copy_node (parser *p)
     n->vnum = NO_VNUM;
 
     if (p->targ == NUM) {
+	/* FIXME scalar */
 	n->v.xval = (*p->Z)[p->lh.v][0];
     } else if (p->targ == VEC) {
 	n->v.xvec = (*p->Z)[p->lh.v];
