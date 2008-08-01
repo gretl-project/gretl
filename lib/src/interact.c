@@ -2861,8 +2861,8 @@ static int parse_criteria (const char *line, const double **Z,
 			   const DATAINFO *pdinfo, PRN *prn)
 {
     char essstr[32], Tstr[9], kstr[9];
-    double ess;
-    int T, k;
+    double ess = NADBL;
+    int T = 0, k = 0;
     int err = 0;
     
     if (sscanf(line, "%*s %s %s %s", essstr, Tstr, kstr) != 3) {
