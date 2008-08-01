@@ -1023,6 +1023,23 @@ static const gchar *help_item_get_word (help_head **hds,
     return hword;
 }
 
+static int help_menu_add_item (windata_t *vwin, const gchar *path, 
+			       GtkActionEntry *entry)
+{
+    guint id = gtk_ui_manager_new_merge_id(vwin->ui);
+    GtkActionGroup *actions;
+
+    actions = gtk_action_group_new("AdHoc");
+
+    gtk_action_group_add_actions(actions, entry, 1, vwin);
+    gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
+			  GTK_UI_MANAGER_MENUITEM, FALSE);
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+
+    return id;
+}
+
 static void add_help_topics (windata_t *hwin, int flags)
 {
     GtkActionEntry hitem;
@@ -1092,7 +1109,7 @@ static void add_help_topics (windata_t *hwin, int flags)
 		    hitem.callback = (cli)? G_CALLBACK(do_cli_help) : 
 			G_CALLBACK(do_gui_help); 
 		}
-		vwin_menu_add_item(hwin, path, &hitem);
+		help_menu_add_item(hwin, path, &hitem);
 		g_free(path);
 	    }
 	}
