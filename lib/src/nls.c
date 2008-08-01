@@ -479,7 +479,8 @@ static int
 maybe_add_param_to_spec (nlspec *s, const char *word, 
 			 const double **Z, const DATAINFO *pdinfo)
 {
-    int i, v, err;
+    int i, v = 0;
+    int err = 0;
 
 #if NLS_DEBUG
     fprintf(stderr, "maybe_add_param: looking at '%s'\n", word);

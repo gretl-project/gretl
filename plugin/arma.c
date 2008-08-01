@@ -31,6 +31,7 @@
 
 #define ARMA_DEBUG 0
 #define AINIT_DEBUG 0
+#define NAIVE_INIT 0
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -2635,6 +2636,19 @@ static int hr_arma_init (const int *list, double *coeff,
     return err;
 }
 
+#if NAIVE_INIT
+
+static void naive_arma_init (struct arma_info *ainfo, double *b)
+{
+    int i;
+
+    for (i=0; i<ainfo->nc; i++) {
+	b[i] = 0.0001;
+    }
+}
+
+#endif
+
 static int user_arma_init (double *coeff, struct arma_info *ainfo, 
 			   char flags, int *init_done, PRN *prn)
 {
@@ -2877,6 +2891,13 @@ MODEL arma_model (const int *list, const char *pqspec,
 	armod.errcode = err;
 	goto bailout;
     }
+
+#if NAIVE_INIT
+    if (!init_done) {
+	naive_arma_init(&ainfo, coeff);
+	init_done = 1;
+    }
+#endif
 
     if (!(flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
 	/* pure AR model can be estimated via least squares */
