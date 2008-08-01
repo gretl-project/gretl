@@ -3443,7 +3443,7 @@ get_scalar_return (const char *vname, double **Z, DATAINFO *pdinfo,
 		   int *err)
 {
     if (gretl_is_scalar(vname)) {
-	return gretl_scalar_get_value(vname, NULL);
+	return gretl_scalar_get_value(vname);
     } else {
 	int v = varindex(pdinfo, vname);
 

@@ -152,7 +152,7 @@ int gretl_is_scalar (const char *name)
     return (get_scalar_pointer(name, gretl_function_depth()) != NULL);
 }
 
-double gretl_scalar_get_value (const char *name, int *err)
+double gretl_scalar_get_value (const char *name)
 {
     gretl_scalar *s;
 
@@ -161,15 +161,8 @@ double gretl_scalar_get_value (const char *name, int *err)
 #endif
 
     s = get_scalar_pointer(name, gretl_function_depth());
-    if (s != NULL) {
-	return s->val;
-    } 
 
-    if (err != NULL) {
-	*err = E_UNKVAR;
-    }
-
-    return NADBL;
+    return (s != NULL)? s->val : NADBL;
 }
 
 void gretl_scalar_set_value (const char *name, double val)

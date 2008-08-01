@@ -1352,7 +1352,7 @@ static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
     if (integer_string(s)) {
 	k = atoi(s);
     } else if (gretl_is_scalar(s)) {
-	k = gretl_scalar_get_value(s, NULL);
+	k = gretl_scalar_get_value(s);
     } else {
 	int v = varindex(pdinfo, s);
 

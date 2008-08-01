@@ -3654,7 +3654,7 @@ static NODE *uscalar_node (NODE *t, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.xval = gretl_scalar_get_value(t->v.str, &p->err);
+	ret->v.xval = gretl_scalar_get_value(t->v.str);
     }
 
     return ret;
@@ -7216,7 +7216,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    strcpy(p->dinfo->varname[v], p->lh.name);
 	} else if (p->flags & P_LHSCAL) {
 	    /* modifying existing scalar */
-	    x = gretl_scalar_get_value(p->lh.name, &p->err);
+	    x = gretl_scalar_get_value(p->lh.name);
 	    if (r->t == NUM) {
 		x = xy_calc(x, r->v.xval, p->op, p);
 	    } else {

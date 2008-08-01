@@ -46,18 +46,20 @@ enum {
 } nls_modes;
 
 struct parm_ {
-    char name[VNAMELEN];  /* name of parameter (scalar or vector) */
+    char name[VNAMELEN];  /* name of parameter */
+    int type;             /* type of parameter (scalar or vector) */
     char *deriv;          /* string representation of derivative of regression
 			     function with respect to param (or NULL) */
     int vnum;             /* ID number of scalar variable in dataset */
     int dnum;             /* ID number of variable holding the derivative */
     int nc;               /* number of individual coefficients associated
 			     with the parameter */
+    char dname[VNAMELEN]; /* name of variable holding the derivative */
     gretl_matrix *vec;    /* pointer to vector parameter */
     gretl_matrix *dmat;   /* pointer to matrix derivative */
 };
 
-#define scalar_param(s,i) (s->params[i].vnum > 0)
+#define scalar_param(s,i) (s->params[i].type == GRETL_TYPE_DOUBLE)
 #define matrix_deriv(s,i) (s->params[i].dmat != NULL)
 
 /* file-scope global variables */
@@ -150,6 +152,8 @@ static int nls_genr_setup (nlspec *s)
     j = 0;
 
     for (i=0; i<ngen && !err; i++) {
+	char *dname = NULL;
+
 	if (i < s->naux) {
 	    /* auxiliary variables */
 	    strcpy(formula, s->aux[i]);
@@ -162,12 +166,15 @@ static int nls_genr_setup (nlspec *s)
 	    }
 	} else {
 	    /* derivatives/gradients */
+	    sprintf(s->params[j].dname, "$nl_x%d", i);
 	    if (scalar_param(s, j)) {
-		sprintf(formula, "$nl_x%d = %s", i, s->params[j].deriv);
+		sprintf(formula, "%s = %s", s->params[j].dname, 
+			s->params[j].deriv);
 	    } else {
-		sprintf(formula, "matrix $nl_x%d = %s", i, 
+		sprintf(formula, "matrix %s = %s",  s->params[j].dname,
 			s->params[j].deriv);
 	    }
+	    dname = s->params[j].dname;
 	    j++;
 	}
 	
@@ -200,7 +207,7 @@ static int nls_genr_setup (nlspec *s)
 	if (v == 0 && m == NULL) {
 	    if (genr_is_print(genrs[i])) {
 		continue;
-	    } else {
+	    } else if (dname == NULL || !gretl_is_scalar(dname)) {
 		fprintf(stderr, "nls_genr_setup: bad type: %s\n", formula);
 		err = E_TYPES;
 		break;
@@ -388,7 +395,7 @@ static int nlspec_push_param (nlspec *s, const char *name,
 			      int v, const double **Z,
 			      char *deriv)
 {
-    parm *params;
+    parm *params, *p;
     int np = s->nparam;
     int err;
     
@@ -397,28 +404,30 @@ static int nlspec_push_param (nlspec *s, const char *name,
 	return E_ALLOC;
     }
 
-    params[np].name[0] = '\0';
-    strncat(params[np].name, name, VNAMELEN - 1);
-    params[np].deriv = deriv;
-    params[np].vnum = v;
-    params[np].dnum = 0;
-    params[np].nc = 0;
-    params[np].vec = NULL;
-    params[np].dmat = NULL;
+    p = &params[np];
+
+    p->name[0] = '\0';
+    strncat(p->name, name, VNAMELEN - 1);
+    p->type = GRETL_TYPE_DOUBLE;
+    p->deriv = deriv;
+    p->vnum = v;
+    p->dnum = 0;
+    p->nc = 1;
+    p->dname[0] = '\0';
+    p->vec = NULL;
+    p->dmat = NULL;
 
 #if NLS_DEBUG
-    fprintf(stderr, "added param[%d] = '%s' (v = %d)\n", np, params[np].name, v);
+    fprintf(stderr, "added param[%d] = '%s' (v = %d)\n", np, p->name, v);
 #endif
 
     s->params = params;
     s->nparam = np + 1;
 
-    if (v > 0) {
-	s->params[np].nc = 1;
+    if (gretl_is_scalar(name)) {
+	err = push_scalar_coeff(s, gretl_scalar_get_value(name));
+    } else if (v > 0) {
 	err = push_scalar_coeff(s, Z[v][0]);
-    } else if (gretl_is_scalar(name)) {
-	s->params[np].nc = 1;
-	err = push_scalar_coeff(s, gretl_scalar_get_value(name, NULL));
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
 	int k = gretl_vector_get_length(m);
@@ -427,8 +436,9 @@ static int nlspec_push_param (nlspec *s, const char *name,
 	fprintf(stderr, "vector param: m = %p, k = %d\n", (void *) m, k);
 #endif
 
-	s->params[np].vec = m;
-	s->params[np].nc = k;
+	p->type = GRETL_TYPE_MATRIX;
+	p->vec = m;
+	p->nc = k;
 	err = push_vec_coeffs(s, m, k);
 	if (!err) {
 	    s->nvec += 1;
@@ -620,6 +630,8 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
     return err;
 }
 
+#define NEW_SCALARS 0
+
 /**
  * nlspec_add_param_list:
  * @spec: nls specification.
@@ -645,6 +657,14 @@ int nlspec_add_param_list (nlspec *spec, int np, double *vals,
 
     /* FIXME scalar */
 
+#if NEW_SCALARS
+    for (i=0; i<np && !err; i++) {
+	err = gretl_scalar_add(names[i], vals[i]);
+	if (!err) {
+	    err = nlspec_push_param(spec, names[i], 0, NULL, NULL);
+	}
+    }
+#else
     if (1) {
 	/* old-style, for now */
 	int v = pdinfo->v;
@@ -658,6 +678,7 @@ int nlspec_add_param_list (nlspec *spec, int np, double *vals,
 	    v++;
 	}
     }
+#endif
 
     if (err) {
 	nlspec_destroy_arrays(spec);
@@ -679,7 +700,11 @@ int update_coeff_values (const double *b, nlspec *s)
     for (i=0; i<s->nparam; i++) {
 	p = &s->params[i];
 	if (scalar_param(s, i)) {
-	    Z[p->vnum][0] = b[k++];
+	    if (gretl_is_scalar(p->name)) {
+		gretl_scalar_set_value(p->name, b[k++]);
+	    } else {
+		Z[p->vnum][0] = b[k++];
+	    }
 	} else {
 	    gretl_matrix *m = get_matrix_by_name(p->name);
 
@@ -2329,7 +2354,7 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     }
 
 #if NLS_DEBUG
-    if (!err) {
+    if (!err && v > 0) {
 	fprintf(stderr, "add_param_with_deriv: '%s'\n"
 		" set vnum = %d, initial value = %.14g\n", dstr, 
 		v, Z[v][0]);

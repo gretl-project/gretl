@@ -34,7 +34,7 @@
 
 static void write_scalar_message (const parser *p, int oldv, PRN *prn)
 {
-    double x = gretl_scalar_get_value(p->lh.name, NULL);
+    double x = gretl_scalar_get_value(p->lh.name);
 
     if (p->flags & P_LHSCAL) {
 	pprintf(prn, _("Replaced scalar %s"), p->lh.name);

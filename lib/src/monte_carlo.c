@@ -665,7 +665,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    clr->vnum = LOOP_VAL_UNDEF; /* FIXME scalar */
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
-	    clr->val = (int) gretl_scalar_get_value(s, NULL);
+	    clr->val = (int) gretl_scalar_get_value(s);
 	} else if ((v = varindex(pdinfo, s)) < pdinfo->v) {
 	    /* found a series by the name of s */
 	    clr->vnum = v;

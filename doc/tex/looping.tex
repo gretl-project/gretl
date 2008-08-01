@@ -5,7 +5,7 @@
 \label{loop-intro}
 
 The command \cmd{loop} opens a special mode in which \app{gretl}
-accepts a block of commands to be repeated one or more times.  This
+accepts a block of commands to be repeated zero or more times.  This
 feature may be useful for, among other things, Monte Carlo simulations,
 bootstrapping of test statistics and iterative estimation procedures.
 The general form of a loop is:
@@ -62,14 +62,13 @@ expression and provide some examples of use of loops.
 The simplest form of loop control is a direct specification of the
 number of times the loop should be repeated.  We refer to this as a
 ``count loop''.  The number of repetitions may be a numerical
-constant, as in \verb+loop 1000+, or may be read from a variable, as
-in \verb+loop replics+.
+constant, as in \verb+loop 1000+, or may be read from a scalar
+variable, as in \verb+loop replics+.
 
 In the case where the loop count is given by a variable, say
-\verb+replics+, in concept \verb+replics+ is an integer scalar.  If it
-is in fact a series, its first value is read.  If the value is not
-integral, it is converted to an integer by truncation.  Note that
-\verb+replics+ is evaluated only once, when the loop is initially
+\verb+replics+, in concept \verb+replics+ is an integer; if the value
+is not integral, it is converted to an integer by truncation.  Note
+that \verb+replics+ is evaluated only once, when the loop is initially
 compiled.
       
 
@@ -77,10 +76,7 @@ compiled.
 \label{loop-while}
 
 A second sort of control expression takes the form of the keyword
-\cmd{while} followed by an inequality: the left-hand term should be
-the name of a predefined variable; the right-hand side may be either a
-numerical constant or the name of another predefined variable.  For
-example, 
+\cmd{while} followed by a boolean expression.  For example,
 %
 \begin{code}
 loop while essdiff > .00001
@@ -91,9 +87,6 @@ the specified condition evaluates as true and (b) the number of
 iterations does not exceed the value of the internal variable
 \verb|loop_maxiter|.  By default this equals 250, but you can specify
 a different value via the \cmd{set} command (see the \GCR).
-
-If the right-hand term of the inequality is a variable, it is
-evaluated at the top of the loop at each iteration.
 
 \subsection{Index loop}
 \label{loop-index}
@@ -126,7 +119,7 @@ discrete Z8
 v8 = values(Z8)
 n = rows(v8)
 n = rows(v8)
-loop for i=1..n
+loop i=1..n
   scalar xi = v8[$i]
   smpl (Z8=xi) --restrict --replace
   printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \

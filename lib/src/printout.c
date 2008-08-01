@@ -1612,7 +1612,7 @@ print_listed_objects (const char *s, const DATAINFO *pdinfo,
 
     while ((name = gretl_word_strdup(s, &s)) != NULL) {
 	if (gretl_is_scalar(name)) {
-	    print_scalar(gretl_scalar_get_value(name, NULL), 
+	    print_scalar(gretl_scalar_get_value(name), 
 			 name, opt, prn);
 	} else if ((m = get_matrix_by_name(name)) != NULL) {
 	    gretl_matrix_print_to_prn(m, name, prn);

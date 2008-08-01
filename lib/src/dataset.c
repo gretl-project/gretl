@@ -2174,7 +2174,7 @@ static int get_stack_param_val (const char *s, const double **Z,
 	*vname = '\0';
 	strncat(vname, s, len);
 	if (gretl_is_scalar(vname)) {
-	    val = gretl_scalar_get_value(vname, NULL);
+	    val = gretl_scalar_get_value(vname);
 	} else {
 	    i = varindex(pdinfo, vname);
 	    if (i < pdinfo->v) {

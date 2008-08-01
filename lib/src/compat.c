@@ -662,7 +662,7 @@ int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 #endif
 	    if (isalpha((unsigned char) parmbit[0])) {
 		if (gretl_is_scalar(parmbit)) {
-		    rhot[p] = gretl_scalar_get_value(parmbit, NULL);
+		    rhot[p] = gretl_scalar_get_value(parmbit);
 		} else {
 		    nv = varindex(pdinfo, parmbit);
 		    if (nv == v) {

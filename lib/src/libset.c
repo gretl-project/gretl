@@ -699,7 +699,7 @@ static int libset_get_scalar (const char *var, const char *arg,
     }
 
     if (gretl_is_scalar(arg)) {
-	x = gretl_scalar_get_value(arg, NULL);
+	x = gretl_scalar_get_value(arg);
     } else {
 	v = varindex(pdinfo, arg);
 	if (v >= pdinfo->v) {

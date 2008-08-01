@@ -1042,7 +1042,7 @@ int gretl_int_from_string (const char *s, const double **Z,
     } else if (s[1] == '\0' && is_active_index_loop_char(*s)) {
 	n = loop_scalar_read(*s);
     } else if (gretl_is_scalar(s)) {
-	x = gretl_scalar_get_value(s, NULL);
+	x = gretl_scalar_get_value(s);
 	if (na(x)) {
 	    *err = E_MISSDATA;
 	} else {

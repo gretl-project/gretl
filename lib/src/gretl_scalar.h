@@ -22,7 +22,7 @@
 
 int gretl_is_scalar (const char *name);
 
-double gretl_scalar_get_value (const char *name, int *err);
+double gretl_scalar_get_value (const char *name);
 
 void gretl_scalar_set_value (const char *name, double val);
 

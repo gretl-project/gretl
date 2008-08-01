@@ -115,7 +115,7 @@ static double printf_get_scalar (char *s, double ***pZ,
     }
 
     if (gretl_is_scalar(s)) {
-	return gretl_scalar_get_value(s, NULL);
+	return gretl_scalar_get_value(s);
     }
 
     v = varindex(pdinfo, s);

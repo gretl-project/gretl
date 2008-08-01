@@ -28,12 +28,12 @@ WEBDIR = /home/cottrell/stats/esl/website
 
 all: $(GUIDE) $(REF)
 
-$(GUIDE): gretl-guide-es.tex links textables date.tex
+$(GUIDE): gretl-guide-es.tex links date.tex
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-es.tex links cmdtex topiclist
+$(REF): gretl-ref-es.tex links cmdtex topiclist date.tex
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -58,10 +58,13 @@ cmdtex:
 topiclist:
 	make -C ../commands topiclist_es
 
-textables:
-	make -C ../commands textables
+textables_es:
+	make -C ../commands textables_es
 
-onepass: gretl-guide-es.tex links textables
+date.tex:
+	LANG=es_ES date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
+
+onepass: gretl-guide-es.tex links
 	pdflatex gretl-guide-es
 
 refpass: gretl-ref-es.tex links cmdtex topiclist
@@ -73,7 +76,7 @@ install: $(GUIDE) $(REF)
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
-	rm -f ../commands/textables ../commands/topiclist_es 
+	rm -f ../commands/textables_es ../commands/topiclist_es 
 	rm -f ../commands/cmdtex_es 
 
 distclean: clean
