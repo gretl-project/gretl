@@ -812,6 +812,7 @@ static int arma_maybe_rewrite (char *s, CMD *cmd)
     free(cmd->extra);
     cmd->extra = gretl_strdup(orig);
 
+    free(cmd->param);
     cmd->param = malloc(strlen(s) + 1);
     if (cmd->param == NULL) {
 	cmd->err = E_ALLOC;

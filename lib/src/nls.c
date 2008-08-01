@@ -623,35 +623,39 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
 /**
  * nlspec_add_param_list:
  * @spec: nls specification.
- * @list: list of variables by ID number.
- * @Z: data array.
- * @pdinfo: information on dataset.
+ * @np: number of parameters.
+ * @vals: array of initial parameter values.
+ * @names: array of parameter names.
  *
- * Adds to @spec a list of (scalar) parameters to be estimated, as
- * given in @list.  For an example of use see arma.c in the
- * gretl plugin directory.
+ * Adds to @spec a list of (scalar) parameters to be estimated.
+ * For an example of use see arma.c in the gretl plugin directory.
  *
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int nlspec_add_param_list (nlspec *spec, const int *list,
-			   const double **Z, const DATAINFO *pdinfo)
+int nlspec_add_param_list (nlspec *spec, int np, double *vals,
+			   char **names, double ***pZ,
+			   DATAINFO *pdinfo)
 {
-    int i, v, np = list[0];
-    int err = 0;
+    int i, err = 0;
 
     if (spec->params != NULL || np == 0) {
 	return E_DATA;
     }
 
-    /* FIXME scalar : list must not be used */
+    /* FIXME scalar */
 
-    for (i=0; i<np && !err; i++) {
-	v = list[i+1];
-	if (v > 0 && v < pdinfo->v && var_is_scalar(pdinfo, v)) {
-	    err = nlspec_push_param(spec, pdinfo->varname[v], v, Z, NULL);
-	} else {
-	    err = E_DATA;
+    if (1) {
+	/* old-style, for now */
+	int v = pdinfo->v;
+
+	err = dataset_add_scalars(np, pZ, pdinfo); 
+	for (i=0; i<np && !err; i++) {
+	    (*pZ)[v][0] = vals[i];
+	    strcpy(pdinfo->varname[v], names[i]);
+	    err = nlspec_push_param(spec, pdinfo->varname[v], v, 
+				    (const double **) *pZ, NULL);
+	    v++;
 	}
     }
 
@@ -662,64 +666,38 @@ int nlspec_add_param_list (nlspec *spec, const int *list,
     return err;
 }
 
-/* return the address in the dataset, or in a user matrix, that
-   holds the "external" value of a given coefficient */
+/* update the 'external' values of scalars or matrices using
+   the values produced by the optimizer.
+*/
 
-static double *coeff_address (nlspec *s, int i)
+int update_coeff_values (const double *b, nlspec *s)
 {
     double **Z = *(s->Z);
-    int j, k, pos = 0;
+    int i, j, k = 0;
+    parm *p;
 
-    if (s->nvec == 0) {
-	/* the mapping is simple */
-	return &(Z[s->params[i].vnum][0]);
-    }
-
-    for (j=0; j<s->nparam; j++) {
-	if (scalar_param(s, j)) {
-	    if (i == pos) {
-		return &(Z[s->params[j].vnum][0]);
-	    }
-	    pos++;
+    for (i=0; i<s->nparam; i++) {
+	p = &s->params[i];
+	if (scalar_param(s, i)) {
+	    Z[p->vnum][0] = b[k++];
 	} else {
-	    gretl_matrix *m = get_matrix_by_name(s->params[j].name);
+	    gretl_matrix *m = get_matrix_by_name(p->name);
 
-	    if (m != s->params[j].vec) {
-		fprintf(stderr, "*** coeff_address: by name, '%s' is at %p; "
-			"stored addr = %p\n", s->params[j].name,
-			(void *) m, (void *) s->params[j].vec);
-		s->params[j].vec = m;
+	    if (m == NULL) {
+		fprintf(stderr, "Couldn't find location for coeff %d\n", k);
+		return E_DATA;
+	    } else {
+		if (m != p->vec) {
+		    fprintf(stderr, "*** coeff_address: by name, '%s' is at %p; "
+			    "stored addr = %p\n", p->name,
+			    (void *) m, (void *) p->vec);
+		    p->vec = m;
+		}
+		for (j=0; j<p->nc; j++) {
+		    gretl_vector_set(m, j, b[k++]);
+		}
 	    }
-
-	    k = s->params[j].nc;
-	    if (i >= pos && i < pos + k) {
-		return &(s->params[j].vec->val[i - pos]);
-	    }
-	    pos += k;
 	}
-    }
-
-    fprintf(stderr, "Couldn't find location for coeff %d\n", i);
-	
-    return NULL;
-}
-
-int update_coeff_values (const double *x, nlspec *s)
-{
-    double *d;
-    int i;
-
-    /* write the values produced by the optimizer into the dataset */
-
-    for (i=0; i<s->ncoeff; i++) {
-	d = coeff_address(s, i);
-	if (d == NULL) {
-	    return 1;
-	}
-	*d = x[i];
-#if NLS_DEBUG
-	fprintf(stderr, "update params: revised coeff[%d] = %.14g\n", i, x[i]);
-#endif
     }
 
     return 0;

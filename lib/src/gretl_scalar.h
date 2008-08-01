@@ -34,4 +34,8 @@ int destroy_user_scalars_at_level (int level);
 
 void destroy_user_scalars (void);
 
+void set_auxiliary_scalars (void);
+
+void unset_auxiliary_scalars (void);
+
 #endif /* GRETL_SCALAR_H */

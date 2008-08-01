@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_func.h"
+#include "gretl_scalar.h"
 
 #define SDEBUG 0
 
@@ -32,6 +33,7 @@ struct gretl_scalar_ {
 
 static gretl_scalar **scalars;
 static int n_scalars;
+static int scalar_imin;
 
 #if SDEBUG
 
@@ -51,6 +53,20 @@ static void print_scalars (const char *s)
 }
 
 #endif
+
+static gretl_scalar *get_scalar_pointer (const char *s, int level)
+{
+    int i;
+
+    for (i=scalar_imin; i<n_scalars; i++) {
+	if (!strcmp(s, scalars[i]->name) &&
+	    scalars[i]->level == level) {
+	    return scalars[i];
+	}
+    }
+
+    return NULL;
+}
 
 static int gretl_scalar_push (gretl_scalar *s)
 {
@@ -129,38 +145,25 @@ real_get_scalar_by_name (const char *name, int slevel, int *err)
 
 int gretl_is_scalar (const char *name)
 {
-    int level = gretl_function_depth();
-    int i;
-
 #if SDEBUG
     print_scalars("gretl_is_scalar");
 #endif
 
-    for (i=0; i<n_scalars; i++) {
-	if (!strcmp(name, scalars[i]->name) &&
-	    scalars[i]->level == level) {
-	    return 1;
-	}
-    }
-
-    return 0;
+    return (get_scalar_pointer(name, gretl_function_depth()) != NULL);
 }
 
 double gretl_scalar_get_value (const char *name, int *err)
 {
-    int level = gretl_function_depth();
-    int i;
+    gretl_scalar *s;
 
 #if SDEBUG
     print_scalars("gretl_scalar_get_value");
 #endif
 
-    for (i=0; i<n_scalars; i++) {
-	if (!strcmp(name, scalars[i]->name) &&
-	    scalars[i]->level == level) {
-	    return scalars[i]->val;
-	}
-    }
+    s = get_scalar_pointer(name, gretl_function_depth());
+    if (s != NULL) {
+	return s->val;
+    } 
 
     if (err != NULL) {
 	*err = E_UNKVAR;
@@ -171,15 +174,11 @@ double gretl_scalar_get_value (const char *name, int *err)
 
 void gretl_scalar_set_value (const char *name, double val)
 {
-    int level = gretl_function_depth();
-    int i;
+    gretl_scalar *s;
 
-    for (i=0; i<n_scalars; i++) {
-	if (!strcmp(name, scalars[i]->name) &&
-	    scalars[i]->level == level) {
-	    scalars[i]->val = val;
-	    break;
-	}
+    s = get_scalar_pointer(name, gretl_function_depth());
+    if (s != NULL) {
+	s->val = val;
     }
 
 #if SDEBUG
@@ -215,7 +214,7 @@ int gretl_scalar_delete (const char *name)
     int level = gretl_function_depth();
     int i, ret = E_UNKVAR;
 
-    for (i=0; i<n_scalars; i++) {
+    for (i=scalar_imin; i<n_scalars; i++) {
 	if (!strcmp(name, scalars[i]->name) &&
 	    scalars[i]->level == level) {
 	    ret = real_delete_scalar(i);
@@ -228,6 +227,39 @@ int gretl_scalar_delete (const char *name)
 #endif
 
     return ret;
+}
+
+/* "auxiliary scalars": this apparatus is used when we want to do
+   "private" NLS estimation (e.g. in ARMA initialization).  It ensures
+   that the scalar NLS parameters don't collide with the public scalar
+   namespace.
+*/
+
+void set_auxiliary_scalars (void)
+{
+    scalar_imin = n_scalars;
+}
+
+void unset_auxiliary_scalars (void)
+{
+    if (scalar_imin == 0) {
+	destroy_user_scalars();
+    } else {
+	gretl_scalar **tmp;
+	int i;
+    
+	for (i=scalar_imin; i<n_scalars; i++) {
+	    free(scalars[i]);
+	}
+
+	tmp = realloc(scalars, scalar_imin * sizeof *tmp);
+	if (tmp != NULL) {
+	    scalars = tmp;
+	}
+    }
+
+    n_scalars = scalar_imin;
+    scalar_imin = 0;
 }
 
 #define LEV_PRIVATE -1
@@ -249,7 +281,7 @@ int destroy_user_scalars_at_level (int level)
     int i, j, ns = 0;
     int err = 0;
 
-    for (i=0; i<n_scalars; i++) {
+    for (i=scalar_imin; i<n_scalars; i++) {
 	if (scalars[i] == NULL) {
 	    break;
 	}

@@ -31,7 +31,6 @@
 
 #define ARMA_DEBUG 0
 #define AINIT_DEBUG 0
-#define NAIVE_INIT 0
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -1608,9 +1607,9 @@ static int y_Xb_at_lag (char *spec, struct arma_info *ainfo,
     return err;
 }
 
-static void nls_kickstart (int b0, int by1, 
-			   MODEL *pmod, double ***pZ, 
-			   DATAINFO *pdinfo)
+static void nls_kickstart (MODEL *pmod, double ***pZ, 
+			   DATAINFO *pdinfo,
+			   double *b0, double *by1)
 {
     int list[4];
 
@@ -1629,10 +1628,10 @@ static void nls_kickstart (int b0, int by1,
 
     if (!pmod->errcode) {
 	if (b0 != 0) {
-	    (*pZ)[b0][0] = pmod->coeff[0];
-	    (*pZ)[by1][0] = pmod->coeff[1];
+	    *b0 = pmod->coeff[0];
+	    *by1 = pmod->coeff[1];
 	} else {
-	    (*pZ)[by1][0] = pmod->coeff[0];
+	    *by1 = pmod->coeff[0];
 	}
     }
 
@@ -1648,9 +1647,9 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     char fnstr[MAXLINE];
     char term[32];
     nlspec *spec;
-    int *plist = NULL;
-    int v, oldv = pdinfo->v;
-    int b0 = 0, by1 = 0;
+    double *parms = NULL;
+    char **pnames = NULL;
+    double *b0 = NULL, *by1 = NULL;
     int nparam, lag;
     int i, j, k, err = 0;
 
@@ -1677,70 +1676,70 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
 
-    plist = gretl_list_new(nparam);
-    if (plist == NULL) {
+    parms = malloc(nparam * sizeof *parms);
+    if (parms == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }
+    }	
 
-    err = dataset_add_scalars(nparam, pZ, pdinfo); 
-    if (err) {
+    pnames = strings_array_new_with_length(nparam, VNAMELEN);
+    if (pnames == NULL) {
+	err = E_ALLOC;
 	goto bailout;
     }
 
     /* make names for the parameters; construct the param list;
        and do some rudimentary fall-back initialization */
 
-    v = oldv;
-    k = 1;
+    for (i=0; i<nparam; i++) {
+	parms[i] = 0.0;
+    }
+
+    k = 0;
 
     if (ainfo->ifc) {
 	if (coeff != NULL) {
-	    (*pZ)[v][0] = coeff[0];
+	    parms[k] = coeff[k];
 	} else {
-	    (*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
+	    parms[k] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
 	}
-	strcpy(pdinfo->varname[v], "b0");
-	b0 = v;
-	plist[k++] = v++;
+	b0 = &parms[k];
+	strcpy(pnames[k++], "b0");
     }
 
     for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
-	    if (by1 == 0) {
-		by1 = v;
+	    if (by1 == NULL) {
+		by1 = &parms[k];
 		if (coeff == NULL) {
-		    (*pZ)[v][0] = 0.1;
+		    parms[k] = 0.1;
 		}
 	    }
 	    if (coeff != NULL) {
-		(*pZ)[v][0] = coeff[k-1];
+		parms[k] = coeff[k];
 	    }
-	    sprintf(pdinfo->varname[v], "phi%d", i+1);
-	    plist[k++] = v++;
+	    sprintf(pnames[k++], "phi%d", i+1);
 	}
     }
 
     for (i=0; i<ainfo->P; i++) {
-	if (by1 == 0) {
-	    by1 = v;
+	if (by1 == NULL) {
+	    by1 = &parms[k];
 	    if (coeff == NULL) {
-		(*pZ)[v][0] = 0.1;
+		parms[k] = 0.1;
 	    }
 	}
 	if (coeff != NULL) {
-	    (*pZ)[v][0] = coeff[k-1];
+	    parms[k] = coeff[k];
 	}
-	sprintf(pdinfo->varname[v], "Phi%d", i+1);
-	plist[k++] = v++;
+	sprintf(pnames[k++], "Phi%d", i+1);
     }
 
     for (i=0; i<ainfo->nexo; i++) {
 	if (coeff != NULL) {
-	    (*pZ)[v][0] = coeff[k-1];
+	    parms[k] = coeff[k];
 	}
-	sprintf(pdinfo->varname[v], "b%d", i+1);
-	plist[k++] = v++;
+	sprintf(pnames[k++], "b%d", i+1);
     }
 
     /* construct NLS specification */
@@ -1788,24 +1787,23 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     if (!err) {
 	if (coeff == NULL) {
-	    nls_kickstart(b0, by1, amod, pZ, pdinfo);
+	    nls_kickstart(amod, pZ, pdinfo, b0, by1);
 	}
 
 #if AINIT_DEBUG
 	fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
-	for (i=0; i<plist[0]; i++) {
-	    fprintf(stderr, "initial NLS b[%d] = %g\n",
-		    i, (*pZ)[oldv+i][0]);
+	for (i=0; i<nparam; i++) {
+	    fprintf(stderr, "initial NLS b[%d] = %g (%s)\n",
+		    i, parms[i], pnames[i]);
 	}
-	printlist(plist, "NLS param list");
 #endif
 
 	err = nlspec_set_regression_function(spec, fnstr, pdinfo);
     }
 
     if (!err) {
-	err = nlspec_add_param_list(spec, plist, (const double **) *pZ,
-				    pdinfo);
+	err = nlspec_add_param_list(spec, nparam, parms, pnames,
+				    pZ, pdinfo);
     }
 
     if (!err) {
@@ -1821,7 +1819,8 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
  bailout:
 
     nlspec_destroy(spec);
-    free(plist);
+    free(parms);
+    free_strings_array(pnames, nparam);
 
     return err;
 }
@@ -2636,19 +2635,6 @@ static int hr_arma_init (const int *list, double *coeff,
     return err;
 }
 
-#if NAIVE_INIT
-
-static void naive_arma_init (struct arma_info *ainfo, double *b)
-{
-    int i;
-
-    for (i=0; i<ainfo->nc; i++) {
-	b[i] = 0.0001;
-    }
-}
-
-#endif
-
 static int user_arma_init (double *coeff, struct arma_info *ainfo, 
 			   char flags, int *init_done, PRN *prn)
 {
@@ -2891,13 +2877,6 @@ MODEL arma_model (const int *list, const char *pqspec,
 	armod.errcode = err;
 	goto bailout;
     }
-
-#if NAIVE_INIT
-    if (!init_done) {
-	naive_arma_init(&ainfo, coeff);
-	init_done = 1;
-    }
-#endif
 
     if (!(flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
 	/* pure AR model can be estimated via least squares */

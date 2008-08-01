@@ -43,8 +43,9 @@ nlspec_add_param_with_deriv (nlspec *spec,
 			     const double **Z, 
 			     const DATAINFO *pdinfo);
 
-int nlspec_add_param_list (nlspec *spec, const int *list,
-			   const double **Z, const DATAINFO *pdinfo);
+int nlspec_add_param_list (nlspec *spec, int np, double *vals,
+			   char **names, double ***pZ,
+			   DATAINFO *pdinfo);
 
 int 
 nlspec_set_regression_function (nlspec *spec, 
