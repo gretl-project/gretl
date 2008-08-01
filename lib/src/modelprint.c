@@ -1568,6 +1568,47 @@ static void arma_extra_info (const MODEL *pmod, PRN *prn)
     }	
 }
 
+static void godfrey_test_string (int ci, int order, int utf, PRN *prn)
+{
+    pputc(prn, '\n');
+
+    if (ci == TSLS) {
+	if (utf) { 
+	    if (order > 1) {
+		pprintf(prn, _("Godfrey (1994) test for autocorrelation up to order %d"), 
+			order);
+	    } else {
+		pputs(prn, _("Godfrey (1994) test for first-order autocorrelation"));
+	    }
+	} else {
+	    if (order > 1) {
+		pprintf(prn, I_("Godfrey (1994) test for autocorrelation up to order %d"), 
+			order);
+	    } else {
+		pputs(prn, I_("Godfrey (1994) test for first-order autocorrelation"));
+	    }
+	} 
+    } else {
+	if (utf) { 
+	    if (order > 1) {
+		pprintf(prn, _("Breusch-Godfrey test for autocorrelation up to order %d"), 
+			order);
+	    } else {
+		pputs(prn, _("Breusch-Godfrey test for first-order autocorrelation"));
+	    }
+	} else {
+	    if (order > 1) {
+		pprintf(prn, I_("Breusch-Godfrey test for autocorrelation up to order %d"), 
+			order);
+	    } else {
+		pputs(prn, I_("Breusch-Godfrey test for first-order autocorrelation"));
+	    }
+	} 
+    }
+
+    pputc(prn, '\n');
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -1612,34 +1653,14 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     case AUX_AR:
 	order = gretl_model_get_int(pmod, "BG_order");
-	if (pmod->ci == TSLS) {
-	    if (utf) { 	
-		pprintf(prn, "\n%s ", _("Godfrey (1994) test for"));
-	    } else {
-		pprintf(prn, "\n%s ", I_("Godfrey (1994) test for"));
-	    } 
-	} else {
-	    if (utf) { 	
-		pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
-	    } else {
-		pprintf(prn, "\n%s ", I_("Breusch-Godfrey test for"));
-	    } 
-	}
-	if (order > 1) {
-	    pprintf(prn, "%s %d\n", (utf)? _("autocorrelation up to order") :
-		    I_("autocorrelation up to order"), 
-		    order);
-	} else {
-	    pprintf(prn, "%s\n", (utf)? _("first-order autocorrelation") :
-		    I_("first-order autocorrelation"));
-	}
+	godfrey_test_string(pmod->ci, order, utf, prn);
 	break;	
     case AUX_ARCH:
 	order = gretl_model_get_int(pmod, "arch_order");
-	pprintf(prn, "\n%s %d\n", 
-		(utf)? _("Test for ARCH of order") : 
-		I_("Test for ARCH of order"), 
-		order);
+	pputc(prn, '\n');
+	pprintf(prn, (utf)? _("Test for ARCH of order %d") :
+		I_("Test for ARCH of order %d"), order);
+	pputc(prn, '\n');
 	break;	
     case AUX_SYS:
 	pprintf(prn, "%s %d: ", 

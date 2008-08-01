@@ -218,11 +218,12 @@ static int graphyzx (const double *y1, const double *y2, const double *x,
     /* print out the 2-dimensional picture matrix */
 
     if (y2name == NULL) {
-	pprintf(prn, "%14s\n", yname);
+	pprintf(prn, "  %s\n", yname);
     } else {
-	pprintf(prn, _("%7co stands for %s and x stands for %s (+ means they "
-		"are equal)\n\n%9s, %s\n"), ' ', 
-		yname, y2name, yname, y2name);
+	pputs(prn, "  ");
+	pprintf(prn, _("'o' stands for %s and 'x' stands for %s (+ means they "
+		       "are equal)"), yname, y2name);
+	pprintf(prn, "\n\n  %s, %s\n", yname, y2name);
     }
 
     for (i=nrows; i>=0; i--) {
@@ -235,7 +236,7 @@ static int graphyzx (const double *y1, const double *y2, const double *x,
 	    bufspace(13, prn);
 	}
 	for (j=0; j<=ncols+1; j++) {
-	    pprintf(prn, "%c", p[i][j]);
+	    pputc(prn, p[i][j]);
 	}
 	pputc(prn, '\n');
     }
