@@ -81,8 +81,6 @@ char **gretl_string_split (const char *s, int *n);
 
 char *gretl_str_expand (char **orig, const char *add, const char *sep);
 
-double gretl_double_from_string (const char *s, const char **ptr);
-
 char *charsub (char *str, char find, char repl);
 
 char *comma_separate_numbers (char *s);

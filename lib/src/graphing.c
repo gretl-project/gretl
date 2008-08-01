@@ -270,13 +270,6 @@ static void printvars (FILE *fp, int t, const int *list, const double **Z,
     double xt;
     int i;
 
-    if (x == NULL && list[0] == 2) {
-	/* skip missing obs for simple scatterplot */
-	if (na(Z[list[1]][t]) || na(Z[list[2]][t])) {
-	    return;
-	}
-    }
-
     if (x != NULL) {
 	xt = x[t] + offset;
 	fprintf(fp, "%.8g ", xt);
@@ -1628,6 +1621,19 @@ maybe_print_panel_jot (int t, const DATAINFO *pdinfo, FILE *fp)
     }
 }
 
+static int all_graph_data_missing (const int *list, int t, const double **Z)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (!na(Z[list[i]][t])) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 static void
 print_gp_data (gnuplot_info *gi, const double **Z, 
 	       const DATAINFO *pdinfo)
@@ -1661,6 +1667,10 @@ print_gp_data (gnuplot_info *gi, const double **Z,
 	for (t=gi->t1; t<=gi->t2; t++) {
 	    const char *label = NULL;
 	    char obs[OBSLEN];
+
+	    if (gi->x == NULL && all_graph_data_missing(gi->list, t, Z)) {
+		continue;
+	    }
 
 	    if (!(gi->flags & GPT_TS) && i == 1) {
 		if (pdinfo->markers) {

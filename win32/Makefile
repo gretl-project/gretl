@@ -169,6 +169,7 @@ LIBSRC = adf_kpss.c \
 	gretl_paths.c \
 	gretl_prn.c \
 	gretl_restrict.c \
+	gretl_scalar.c \
 	gretl_string_table.c \
 	gretl_utils.c \
 	gretl_win32.c \

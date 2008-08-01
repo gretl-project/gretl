@@ -711,52 +711,6 @@ char **gretl_string_split (const char *s, int *n)
 }
 
 /**
- * gretl_double_from_string:
- * @s: the source string.
- * @ptr: location to receive end of field pointer, or %NULL.
- *
- * Tries to parse the first 'word' found in @s as a 
- * floating-point number, and returns either the number or
- * #NADBL on failure.  If the parsing was successful and if
- * @ptr is not %NULL, on exit it points at the next position 
- * in @s after the just-parsed numeric portion.
- *
- * Returns: floating-point value or #NADBL.
- */
-
-double gretl_double_from_string (const char *s, const char **ptr)
-{
-    double x = NADBL;
-
-    if (s == NULL) {
-	if (ptr != NULL) {
-	    *ptr = NULL;
-	}
-    } else if (*s == '\0') {
-	if (ptr != NULL) {
-	    *ptr = s;
-	}
-    } else {
-	int n = strspn(s, " ");
-
-	s += n;
-	n = strcspn(s, " ");
-	if (n <= 31) {
-	    if (sscanf(s, "%lf", &x) != 1) {
-		x = NADBL;
-		n = 0;
-	    } 
-	}
-
-	if (n > 0 && ptr != NULL) {
-	    *ptr = s + n;
-	}
-    }
-
-    return x;
-}
-
-/**
  * gretl_trunc:
  * @str: the string to truncate.
  * @n: the desired length of the truncated string.

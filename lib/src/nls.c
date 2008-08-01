@@ -1031,6 +1031,20 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 		    gi = *(++G) + offset;
 		}
 	    }
+	} else if (gretl_is_scalar(spec->params[j].dname)) {
+	    /* transcribe from scalar var to array g */
+	    x = gretl_scalar_get_value(spec->params[j].dname);
+	    for (t=0; t<T; t++) {
+		gi[t] = (spec->ci == MLE)? x : -x;
+	    }
+	    if (j < spec->nparam - 1) {
+		/* advance the writing position */
+		if (g != NULL) {
+		    gi += T;
+		} else {
+		    gi = *(++G) + offset;
+		}
+	    }	    
 	} else {
 	    /* derivative is scalar or series */
 	    int s, ser, v = spec->params[j].dnum;
@@ -1055,7 +1069,6 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 			t, v, s, gi[t]);
 #endif
 	    }
-
 	    if (j < spec->nparam - 1) {
 		/* advance the writing position */
 		if (g != NULL) {

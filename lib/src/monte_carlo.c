@@ -224,7 +224,7 @@ static double controller_evaluate_expr (const char *expr,
 
     gretl_error_clear();
 
-    if (!strcmp(vname, "iftest")) {
+    if (!strcmp(vname, "iftest") || gretl_is_scalar(vname)) {
 	x = generate_scalar(expr, pZ, pdinfo, &err);
     } else {
 	err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
@@ -272,6 +272,8 @@ loop_controller_get_value (controller *clr, double ***pZ, DATAINFO *pdinfo)
     } else if (clr->vnum > 0) {
 	ret = (*pZ)[clr->vnum][0] * clr->vsign;
 	clr->val = ret;
+    } else if (gretl_is_scalar(clr->vname)) {
+	ret = clr->val = gretl_scalar_get_value(clr->vname);
     } else {
 	ret = clr->val;
     } 
@@ -594,6 +596,8 @@ static int parse_as_while_loop (LOOPSET *loop,
     expr = gretl_strdup(s);
     x = controller_evaluate_expr(expr, "iftest", 0, pZ, pdinfo);
 
+    /* FIXME nested loops: all elements of expression may not be defined yet? */
+
     if (na(x)) {
 	err = E_DATA;
 	free(expr);
@@ -666,6 +670,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
 	    clr->val = (int) gretl_scalar_get_value(s);
+	    fprintf(stderr, "lim: %s -> %g\n", clr->vname, clr->val);
 	} else if ((v = varindex(pdinfo, s)) < pdinfo->v) {
 	    /* found a series by the name of s */
 	    clr->vnum = v;
@@ -779,6 +784,8 @@ static double *save_delta_state (int v, double **Z, DATAINFO *pdinfo)
 {
     double *x0;
     int i, n;
+    
+    
 
     n = (var_is_series(pdinfo, v))? pdinfo->n : 1;
 
@@ -831,20 +838,26 @@ test_forloop_element (char *s, LOOPSET *loop,
 	    if (i == 2) {
 		/* "increment" expression: we'll have to undo whatever
 		   the test evaluation does */
-		int v = varindex(pdinfo, vname);
+		if (gretl_is_scalar(vname)) {
+		    double x0 = gretl_scalar_get_value(vname);
 
-		if (v < pdinfo->v) {
-		    double *x0 = save_delta_state(v, *pZ, pdinfo);
-
-		    if (x0 == NULL) {
-			err = E_ALLOC;
-		    } else {
-			x = controller_evaluate_expr(s, vname, v, pZ, pdinfo);
-			restore_delta_state(v, x0, *pZ, pdinfo);
-		    }
+		    x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
+		    gretl_scalar_set_value(vname, x0);
 		} else {
-		    /* FIXME scalar */
-		    err = E_UNKVAR;
+		    int v = varindex(pdinfo, vname);
+
+		    if (v < pdinfo->v) {
+			double *x0 = save_delta_state(v, *pZ, pdinfo);
+
+			if (x0 == NULL) {
+			    err = E_ALLOC;
+			} else {
+			    x = controller_evaluate_expr(s, vname, v, pZ, pdinfo);
+			    restore_delta_state(v, x0, *pZ, pdinfo);
+			}
+		    } else {
+			err = E_UNKVAR;
+		    }
 		}
 	    } else {
 		x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
@@ -2470,16 +2483,19 @@ static int extend_loop_dataset (LOOP_STORE *lstore)
 
 static int clr_attach_var (controller *clr, const DATAINFO *pdinfo)
 {
-    int v = varindex(pdinfo, clr->vname);
     int err = 0;
 
-    if (v >= pdinfo->v) {
-	sprintf(gretl_errmsg, 
-		_("Undefined variable '%s' in loop condition."), clr->vname);
-	err = 1;
-    } else {
-	clr->vnum = v;
-    } 
+    if (!gretl_is_scalar(clr->vname)) {
+	int v = varindex(pdinfo, clr->vname);
+
+	if (v >= pdinfo->v) {
+	    sprintf(gretl_errmsg, 
+		    _("Undefined variable '%s' in loop condition."), clr->vname);
+	    err = 1;
+	} else {
+	    clr->vnum = v;
+	} 
+    }
 
     return err;
 }
@@ -2548,7 +2564,7 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
     err = connect_loop_control_vars(loop, pdinfo);
 
     if (!err) {
-	if (loop->init.vnum > 0) {
+	if (loop->init.vname[0] != '\0' || loop->init.vnum > 0) {
 	    loop_initval(loop, pZ, pdinfo);
 	} 
 

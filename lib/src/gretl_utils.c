@@ -1001,6 +1001,65 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 }
 
 /**
+ * gretl_double_from_string:
+ * @s: string to examine.
+ * @err: location to receive error code.
+ * 
+ * If @s is a valid string representation of a double,
+ * return that integer, otherwise if @s is the name of a
+ * scalar variable, return the value of that variable,
+ * otherwise set the content of @err to a non-zero value.
+ *
+ * Returns: double value.
+ */
+
+double gretl_double_from_string (const char *s, const double **Z,
+				 const DATAINFO *pdinfo, int *err)
+{
+    char *test;
+    double x;
+
+    if (s == NULL || *s == 0) {
+	*err = E_DATA;
+	return NADBL;
+    }
+
+    errno = 0;
+
+    x = strtod(s, &test);
+
+    if (errno == ERANGE) {
+	*err = E_DATA;
+	errno = 0;
+	return NADBL;
+    }
+
+    if (*test == '\0') {
+	return x;
+    }
+
+    x = NADBL;
+
+    if (gretl_is_scalar(s)) {
+	x = gretl_scalar_get_value(s);
+    } else if (Z == NULL || pdinfo == NULL) {
+	*err = E_DATA;
+    } else {
+	int v = varindex(pdinfo, s);
+
+	if (v == pdinfo->v) {
+	    *err = E_UNKVAR;
+	} else if (var_is_series(pdinfo, v)) {
+	    *err = E_TYPES;
+	} else {
+	    x = Z[v][0];
+	} 
+    }
+
+    return x;    
+}
+
+/**
  * gretl_int_from_string:
  * @s: string to examine.
  * @Z: data array.

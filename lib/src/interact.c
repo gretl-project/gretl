@@ -926,8 +926,10 @@ static int lag_from_lstr (const char *s,
     if (!*err) {
 	if (isdigit(*s)) {
 	    lag = atoi(s);
+	} else if (gretl_is_scalar(s)) {
+	    lag = gretl_scalar_get_value(s);
 	} else {
-	    int v = varindex(pdinfo, s); /* FIXME scalar */
+	    int v = varindex(pdinfo, s);
 
 	    if (v < pdinfo->v) {
 		lag = Z[v][0];
@@ -1188,8 +1190,10 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 	sscanf(s, "%15[^ ,;]", ostr);
 	if (isdigit(*ostr)) {
 	    *order = atoi(ostr);
+	} else if (gretl_is_scalar(ostr)) {
+	    *order = gretl_scalar_get_value(ostr);
 	} else {
-	    v = varindex(pdinfo, ostr); /* FIXME scalar */
+	    v = varindex(pdinfo, ostr);
 	    if (v < pdinfo->v) {
 		*order = Z[v][0];
 	    }
@@ -2856,61 +2860,44 @@ int cli_help (const char *cmdword, PATHS *paths, gretlopt opt, PRN *prn)
 static int parse_criteria (const char *line, const double **Z,
 			   const DATAINFO *pdinfo, PRN *prn)
 {
+    char essstr[32], Tstr[9], kstr[9];
     double ess;
-    int i, T, k;
-    char cmd[9], essstr[32], Tstr[9], kstr[9];
+    int T, k;
+    int err = 0;
     
-    if (sscanf(line, "%s %s %s %s", cmd, essstr, Tstr, kstr) != 4) {
-	return 1;
+    if (sscanf(line, "%*s %s %s %s", essstr, Tstr, kstr) != 3) {
+	err = E_PARSE;
     }
 
-    /* FIXME scalar */
-
-    if (isalpha((unsigned char) *essstr) && 
-	(i = varindex(pdinfo, essstr)) < pdinfo->v) {
-	ess = get_xvalue(i, Z, pdinfo);
-    } else if (isdigit(*essstr)) {
-	ess = atof(essstr);
-    } else {
-	return 1;
+    if (!err) {
+	ess = gretl_double_from_string(essstr, Z, pdinfo, &err);
+	if (!err && ess < 0) {
+	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "ess");
+	    err = E_DATA;
+	}
     }
 
-    if (ess < 0) {
-	pputs(prn, _("ess: negative value is out of bounds.\n"));
-	return 1;
+    if (!err) {
+	T = gretl_int_from_string(Tstr, Z, pdinfo, &err);
+	if (!err && T < 0) {
+	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "T");
+	    err = E_DATA;
+	}
     }
 
-    if (isalpha((unsigned char) *Tstr) &&
-	(i = varindex(pdinfo, Tstr)) < pdinfo->v) { 
-	T = (int) get_xvalue(i, Z, pdinfo);
-    } else if (isdigit(*Tstr)) {
-	T = atoi(Tstr);
-    } else {
-	return 1;
+    if (!err) {
+	k = gretl_int_from_string(kstr, Z, pdinfo, &err);
+	if (!err && k < 0) {
+	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "k");
+	    err = E_DATA;
+	}
     }
 
-    if (T < 0) {
-	pputs(prn, _("T: negative value is out of bounds.\n"));
-	return 1;
+    if (!err) {
+	gretl_print_criteria(ess, T, k, prn);
     }
 
-    if (isalpha((unsigned char) *kstr) &&
-	(i = varindex(pdinfo, kstr)) < pdinfo->v) {
-	k = (int) get_xvalue(i, Z, pdinfo);
-    } else if (isdigit(*kstr)) {
-	k = atoi(kstr);
-    } else {
-	return 1;
-    }
-
-    if (k < 0) {
-	pputs(prn, _("k: negative value is out of bounds.\n"));
-	return 1;
-    }   
- 
-    gretl_print_criteria(ess, T, k, prn);
-
-    return 0;
+    return err;
 }
 
 /**
