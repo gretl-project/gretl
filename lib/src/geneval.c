@@ -2552,7 +2552,7 @@ static NODE *trend_node (parser *p)
     if (ret != NULL && starting(p)) {
 	p->err = gen_time(p->Z, p->dinfo, 1);
 	if (!p->err) {
-	    ret->vnum = varindex(p->dinfo, "time");
+	    ret->vnum = series_index(p->dinfo, "time");
 	    ret->v.xvec = (*p->Z)[ret->vnum];
 	}
     }
@@ -2628,8 +2628,6 @@ static int *node_get_list (NODE *n, parser *p)
 	v = (n->t == VEC)? n->vnum : n->v.xval;
 	if (v < 0 || v >= p->dinfo->v) {
 	    p->err = E_UNKVAR;
-	} else if (var_is_scalar(p->dinfo, v)) {
-	    p->err = E_TYPES;
 	} else {
 	    list = gretl_list_new(1);
 	    if (list == NULL) {
@@ -2800,8 +2798,6 @@ static NODE *list_ok_func (NODE *n, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
-	int allbad = 0;
-	int nseries = 0;
 	int i, v, t;
 	double x;
 
@@ -2810,34 +2806,16 @@ static NODE *list_ok_func (NODE *n, parser *p)
 	    return ret;
 	}
 
-	for (i=1; i<=list[0]; i++) {
-	    v = list[i];
-	    if (var_is_scalar(p->dinfo, v)) {
-		if (na((*p->Z)[v][0])) {
-		    allbad = 1;
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    x = 1;
+	    for (i=1; i<=list[0]; i++) {
+		v = list[i];
+		if (na((*p->Z)[v][t])) {
+		    x = 0;
 		    break;
 		}
-	    } else {
-		nseries++;
 	    }
-	}
-
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    if (allbad) {
-		ret->v.xvec[t] = 0;
-	    } else if (nseries == 0) {
-		ret->v.xvec[t] = 1;
-	    } else {
-		x = 1;
-		for (i=1; i<=list[0]; i++) {
-		    v = list[i];
-		    if (var_is_series(p->dinfo, v) && na((*p->Z)[v][t])) {
-			x = 0;
-			break;
-		    }
-		}
-		ret->v.xvec[t] = x;
-	    }
+	    ret->v.xvec[t] = x;
 	}
 
 	free(list);
@@ -2957,13 +2935,9 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	ret->v.xval = NADBL;
 	if (f == F_ISSERIES) {
-	    int v = varindex(p->dinfo, s);
+	    int v = series_index(p->dinfo, s);
 
-	    if (v < p->dinfo->v) {
-		ret->v.xval = var_is_series(p->dinfo, v);
-	    } else {
-		ret->v.xval = 0;
-	    }
+	    ret->v.xval = (v < p->dinfo->v);
 	} else if (f == F_ISLIST || f == F_LISTLEN) {
 	    int *list = get_list_by_name(s);
 
@@ -2976,7 +2950,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    ret->v.xval = string_is_defined(s);
 	} else if (f == F_ISNULL) {
 	    ret->v.xval = 1;
-	    if (varindex(p->dinfo, s) < p->dinfo->v) {
+	    /* FIXME scalar */
+	    if (series_index(p->dinfo, s) < p->dinfo->v) {
 		ret->v.xval = 0.0;
 	    } else if (get_matrix_by_name(s)) {
 		ret->v.xval = 0.0;
@@ -3018,7 +2993,7 @@ static NODE *varnum_node (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (n->t == STR) {
-	    ret->v.xval = varindex(p->dinfo, n->v.str);
+	    ret->v.xval = series_index(p->dinfo, n->v.str);
 	} else {
 	    p->err = E_DATA;
 	}
@@ -3770,29 +3745,16 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 static int *full_series_list (const DATAINFO *pdinfo, int *err)
 {
     int *list = NULL;
-    int i, j, n = 0;
 
-    for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    n++;
-	}
-    }
-
-    if (n == 0) {
+    if (pdinfo->v < 2) {
 	*err = E_DATA;
 	return NULL;
-    }
+    }	
 
-    list = gretl_list_new(n);
+    list = gretl_consecutive_list_new(1, pdinfo->v - 1);
     if (list == NULL) {
 	*err = E_ALLOC;
 	return NULL;
-    }
-
-    for (i=1, j=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    list[j++] = i;
-	}
     }
 
     return list;
@@ -5063,9 +5025,6 @@ static void reattach_data_series (NODE *n, parser *p)
     if (v >= p->dinfo->v) {
 	fprintf(stderr, "VEC node, ID = %d but p->dinfo->v = %d\n", v, p->dinfo->v);
 	p->err = E_DATA;
-    } else if (var_is_scalar(p->dinfo, v)) {
-	fprintf(stderr, "VEC node, ID = %d but var %d is a scalar?\n", v, v);
-	p->err = E_DATA;
     } else {
 	n->v.xvec = (*p->Z)[v];
     }
@@ -6224,12 +6183,10 @@ static void do_decl (parser *p)
 		} else {
 		    p->err = user_matrix_add(m, S[i]);
 		}
-	    } else if (p->targ == NUM || p->targ == VEC) {
-		if (p->targ == NUM) {
-		    p->err = dataset_add_scalar(p->Z, p->dinfo);
-		} else if (p->targ == VEC) {
-		    p->err = dataset_add_series(1, p->Z, p->dinfo);
-		}
+	    } else if (p->targ == NUM) {
+		p->err = gretl_scalar_add(S[i], NADBL);
+	    } else if (p->targ == VEC) {
+		p->err = dataset_add_series(1, p->Z, p->dinfo);
 		if (!p->err) {
 		    v = p->dinfo->v - 1;
 		    strcpy(p->dinfo->varname[v], S[i]);
@@ -6476,8 +6433,11 @@ static void pre_process (parser *p, int flags)
 
     /* find out if the LHS var already exists, and if
        so, what type it is */
-    p->lh.v = varindex(p->dinfo, test);
-    if (p->lh.v >= p->dinfo->v) {
+    p->lh.v = series_index(p->dinfo, test);
+    if (p->lh.v < p->dinfo->v) {
+	p->lh.t = VEC;
+	newvar = 0;
+    } else {	
 	/* not a series: try other types? */
 	p->lh.v = 0;
 	p->lh.m0 = get_matrix_by_name(test);
@@ -6498,14 +6458,7 @@ static void pre_process (parser *p, int flags)
 	    p->lh.t = STR;
 	    newvar = 0;
 	}	    
-    } else if (var_is_scalar(p->dinfo, p->lh.v)) {
-	/* FIXME */
-	p->lh.t = NUM;
-	newvar = 0;
-    } else if (var_is_series(p->dinfo, p->lh.v)) {
-	p->lh.t = VEC;
-	newvar = 0;
-    }
+    } 
 
     /* if pre-existing var, check for const-ness */
     if (!newvar && object_is_const(test)) {
@@ -7135,16 +7088,7 @@ static int gen_check_return_type (parser *p)
 
 static int gen_allocate_storage (parser *p)
 {
-    if (p->targ == NUM && p->lh.v == 0) {
-	p->err = dataset_add_scalar(p->Z, p->dinfo);
-	if (!p->err) {
-	    p->lh.v = p->dinfo->v - 1;
-#if EDEBUG
-	    fprintf(stderr, "gen_allocate_storage: added scalar #%d (%s)\n",
-		    p->lh.v, p->lh.name);
-#endif
-	}
-    } else if (p->targ == VEC && p->lh.v == 0) {
+    if (p->lh.v == 0) {
 	p->err = dataset_add_series(1, p->Z, p->dinfo);
 	if (!p->err) {
 	    int t;
@@ -7182,19 +7126,12 @@ static int save_generated_var (parser *p, PRN *prn)
 #endif
 
     /* allocate dataset storage, if needed */
-#if NEWSCALARS
     if (p->targ == VEC) {
 	gen_allocate_storage(p);
 	if (p->err) {
 	    return p->err;
 	}
     }
-#else
-    gen_allocate_storage(p);
-    if (p->err) {
-	return p->err;
-    }
-#endif
 
     /* put the generated data into place */
     Z = *p->Z;
@@ -7202,9 +7139,6 @@ static int save_generated_var (parser *p, PRN *prn)
     
     if (p->targ == NUM) {
 	/* writing a scalar */
-#if !NEWSCALARS /* old style, not changed just yet */
-	if (p->lh.obs < 0) p->lh.obs = 0;
-#endif
 	if (p->lh.obs >= 0) {
 	    /* it's a specific observation in a series */
 	    t = p->lh.obs;

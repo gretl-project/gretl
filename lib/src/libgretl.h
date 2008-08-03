@@ -260,7 +260,7 @@ struct VARINFO_ {
     int transform;
     int lag;
     char compact_method;
-    char stack_level;
+    char stack_level; /* FIXME should be int? */
     char line_width;
     char **sorted_markers;
 };

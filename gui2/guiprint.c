@@ -2008,12 +2008,8 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     }
 
     for (i=1; i<=l0; i++) {
-	if (var_is_series(datainfo, list[i])) {
-	    pmax[i-1] = get_precision(&Z[list[i]][datainfo->t1], 
-				      tsamp, 8);
-	} else {
-	    pmax[i-1] = SCALAR_DIGITS;
-	}
+	pmax[i-1] = get_precision(&Z[list[i]][datainfo->t1], 
+				  tsamp, 8);
     }	
 
     if (datainfo->decpoint != ',') {
@@ -2035,8 +2031,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
 	csv_obs_to_prn(t, datainfo, prn);
 	for (i=1; i<=l0; i++) { 
-	    xx = (var_is_series(datainfo, list[i]))? 
-		Z[list[i]][t] : Z[list[i]][0];
+	    xx = Z[list[i]][t];
 	    if (na(xx)) {
 		pputs(prn, "NA");
 	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {

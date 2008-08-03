@@ -818,11 +818,6 @@ int set_miss (const int *list, const char *param, double **Z,
 	}
     } else {
 	for (i=1; i<=list[0]; i++) {
-	    if (var_is_scalar(pdinfo, list[i])) {
-		pprintf(prn, _("The variable %s is a scalar\n"), 
-			pdinfo->varname[list[i]]);
-		continue;
-	    }
 	    count = real_setmiss(missval, list[i], Z, pdinfo);
 	    if (count) { 
 		pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
@@ -859,7 +854,7 @@ double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo)
     for (t=0; t<pdinfo->n; t++) {
 	missrow = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!var_is_scalar(pdinfo, i) && !na(Z[i][t])) {
+	    if (!na(Z[i][t])) {
 		missrow = 0;
 		break;
 	    }

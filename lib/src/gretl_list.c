@@ -761,10 +761,9 @@ int *gretl_consecutive_list_new (int lmin, int lmax)
 	return NULL;
     }
 
-    list = malloc((n + 1) * sizeof *list);
+    list = gretl_list_new(n);
 
     if (list != NULL) {
-	list[0] = n;
 	for (i=0; i<n; i++) {
 	    list[i+1] = lmin + i;
 	}
@@ -2093,7 +2092,7 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
     int *list = NULL;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i) &&
+	if (!var_is_hidden(pdinfo, i) &&
 	    STACK_LEVEL(pdinfo, i) == fsd) {
 	    nv++;
 	}
@@ -2110,7 +2109,7 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
     if (list != NULL) {
 	j = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i) &&
+	    if (!var_is_hidden(pdinfo, i) &&
 		STACK_LEVEL(pdinfo, i) == fsd) {
 		list[j++] = i;
 	    }
@@ -2221,7 +2220,7 @@ int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err)
 		    *err = E_PARSE;
 		}
 	    } else {
-		v = varindex(pdinfo, test);
+		v = series_index(pdinfo, test);
 		if (v < pdinfo->v) {
 		    list = gretl_list_append_term(&list, v);
 		} else {

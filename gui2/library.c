@@ -45,6 +45,7 @@
 #include "gretl_panel.h"
 #include "usermat.h"
 #include "matrix_extra.h"
+#include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "texprint.h"
 #include "bootstrap.h"
@@ -1991,11 +1992,7 @@ void do_vif (GtkAction *action, gpointer p)
 
 int reject_scalar (int vnum)
 {
-    if (var_is_scalar(datainfo, vnum)) {
-	errbox(_("variable %s is a scalar"), datainfo->varname[vnum]);
-	return 1;
-    }
-
+    /* FIXME redundant */
     return 0;
 }
 
@@ -3499,9 +3496,6 @@ static int real_do_setmiss (double missval, int varno)
     }
 
     for (i=start; i<end; i++) {
-	if (var_is_scalar(datainfo, i)) {
-	    continue;
-	}
 	for (t=0; t<datainfo->n; t++) {
 	    if (Z[i][t] == missval) {
 		Z[i][t] = NADBL;
@@ -3549,12 +3543,6 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
 
     buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
-
-    if (var_is_scalar(datainfo, v)) {
-	close_dialog(dlg);
-	errbox(_("This variable is a scalar"));
-	return;
-    }
 
     if ((err = check_atof(buf))) {
 	gui_errmsg(err);
@@ -3865,11 +3853,6 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 #else
 	return;
 #endif
-    }
-
-    if (var_is_scalar(datainfo, v)) {
-	errbox(_("Can't do this analysis on a scalar"));
-	return;
     }
 
     if (opt != TRAMO) {
@@ -4445,8 +4428,7 @@ void add_logs_etc (GtkAction *action)
 	int i, resp, quit = 0;
 
 	for (i=1; i<=list[0]; i++) {
-	    if (!var_is_series(datainfo, list[i]) ||
-		!var_is_discrete(datainfo, list[i])) {
+	    if (!var_is_discrete(datainfo, list[i])) {
 		err++; 
 	    }
 	}
@@ -4601,96 +4583,94 @@ void add_system_resid (GtkAction *action, gpointer p)
 void add_model_stat (MODEL *pmod, int which)
 {
     char vname[VNAMELEN], vlabel[MAXLABEL];
+    char realname[VNAMELEN];
     char statname[8];
-    int i, n;
-
-    if (dataset_add_scalar(&Z, datainfo)) {
-	nomem();
-	return;
-    }
-
-    i = datainfo->v - 1;
-    n = datainfo->n;
+    double val = NADBL;
+    int i = 0;
 
     switch (which) {
     case ESS:
 	sprintf(vname, "ess_%d", pmod->ID);
 	sprintf(vlabel, _("error sum of squares from model %d"), 
 		pmod->ID);
-	Z[i][0] = pmod->ess;
+	val = pmod->ess;
 	strcpy(statname, "$ess");
 	break;
     case R2:
 	sprintf(vname, "r2_%d", pmod->ID);
 	sprintf(vlabel, _("R-squared from model %d"), pmod->ID);
-	Z[i][0] = pmod->rsq;
+	val = pmod->rsq;
 	strcpy(statname, "$rsq");
 	break;
     case TR2:
 	sprintf(vname, "trsq%d", pmod->ID);
 	sprintf(vlabel, _("T*R-squared from model %d"), pmod->ID);
-	Z[i][0] = pmod->nobs * pmod->rsq;
+	val = pmod->nobs * pmod->rsq;
 	strcpy(statname, "$trsq");
 	break;
     case DF:
 	sprintf(vname, "df_%d", pmod->ID);
 	sprintf(vlabel, _("degrees of freedom from model %d"), 
 		pmod->ID);
-	Z[i][0] = (double) pmod->dfd;
+	val = (double) pmod->dfd;
 	strcpy(statname, "$df");
 	break;
     case SIGMA:
 	sprintf(vname, "sgma_%d", pmod->ID);
 	sprintf(vlabel, _("std err of residuals from model %d"), 
 		pmod->ID);
-	Z[i][0] = pmod->sigma;
+	val = pmod->sigma;
 	strcpy(statname, "$sigma");
 	break;
     case LNL:
 	sprintf(vname, "lnl_%d", pmod->ID);
 	sprintf(vlabel, _("log likelihood from model %d"), 
 		pmod->ID);
-	Z[i][0] = pmod->lnL;
+	val = pmod->lnL;
 	strcpy(statname, "$lnl");
 	break;	
     case AIC:
 	sprintf(vname, "aic_%d", pmod->ID);
 	sprintf(vlabel, _("Akaike Information Criterion from model %d"), 
 		pmod->ID);
-	Z[i][0] = pmod->criterion[C_AIC];
+	val = pmod->criterion[C_AIC];
 	strcpy(statname, "$aic");
 	break;
     case BIC:
 	sprintf(vname, "bic_%d", pmod->ID);
 	sprintf(vlabel, _("Bayesian Information Criterion from model %d"), 
 		pmod->ID);
-	Z[i][0] = pmod->criterion[C_BIC];
+	val = pmod->criterion[C_BIC];
 	strcpy(statname, "$bic");
 	break;
     case HQC:
 	sprintf(vname, "hqc_%d", pmod->ID);
 	sprintf(vlabel, _("Hannan-Quinn Information Criterion from model %d"), 
 		pmod->ID);
-	Z[i][0] = pmod->criterion[C_HQC];
+	val = pmod->criterion[C_HQC];
 	strcpy(statname, "$hqc");
 	break;
     }
 
+#if 0 /* FIXME scalar */
     strcpy(datainfo->varname[i], make_varname_unique(vname, i, datainfo));
     strcpy(VARLABEL(datainfo, i), vlabel);
 
     /* give the user a chance to choose a different name */
     varinfo_dialog(i, 0);
+#else
+    strcpy(realname, make_varname_unique(vname, i, datainfo)); 
+#endif
 
-    if (*datainfo->varname[i] == '\0') {
+    if (*realname == '\0') {
 	/* the user canceled */
-	dataset_drop_last_variables(1, &Z, datainfo);
 	return;
     }
 
-    gretl_command_sprintf("genr %s = %s", datainfo->varname[i], statname);
+    gretl_scalar_add(realname, val);
 
-    populate_varlist();
+    gretl_command_sprintf("scalar %s = %s", realname, statname);
+
     model_command_init(pmod->ID);
 
     /* note: since this is a scalar, which will not be saved by
@@ -5582,10 +5562,7 @@ void display_var (void)
     list[0] = 1;
     list[1] = v;
 
-    if (var_is_scalar(datainfo, v)) {
-	vec = 0;
-	height = 140;
-    } else if (all_missing(v)) {
+    if (all_missing(v)) {
 	return;
     }
 
@@ -5984,14 +5961,7 @@ int maybe_restore_full_data (int action)
 
 void gui_transpose_data (void)
 {
-    int i, resp;
-
-    for (i=1; i<datainfo->v; i++) {
-	if (var_is_scalar(datainfo, i)) {
-	    errbox(_("Dataset contains scalars, can't transpose"));
-	    return;
-	}
-    }
+    int resp;
 
     resp = yes_no_dialog(_("gretl: transpose data"), 
 			 _("Transposing means that each variable becomes interpreted\n"
@@ -6133,8 +6103,7 @@ static int set_auto_overwrite (const char *fname, gretlopt opt,
 		int i, nv = 0;
 
 		for (i=1; i<datainfo->v; i++) {
-		    if (var_is_series(datainfo, i) && 
-			!var_is_hidden(datainfo, i)) {
+		    if (!var_is_hidden(datainfo, i)) {
 			nv++;
 		    }
 		}
@@ -7225,8 +7194,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (dataset_locked()) {
 	    break;
 	}
-	k = gretl_int_from_string(cmd->param, (const double **) *pZ, 
-				  pdinfo, &err);
+	k = gretl_int_from_string(cmd->param, &err);
 	if (!err && k < 2) {
 	    err = 1;
 	}

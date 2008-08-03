@@ -204,15 +204,7 @@ static void disable_insert_obs_item (GtkUIManager *ui)
 
 static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
 {
-    int ret = 0;
-
-    if (var_is_scalar(pdinfo, i)) {
-	ret = 1;
-    } else if (var_is_hidden(pdinfo, i)) {
-	ret = 1;
-    }
-
-    return ret;
+    return var_is_hidden(pdinfo, i);
 }
 
 static char *single_underscores (char *targ, const char *src)
@@ -2057,19 +2049,10 @@ static int sheet_list_empty (Spreadsheet *sheet)
     if (sheet->varlist == NULL) {
 	free(sheet);
 	ret = 1;
-    } else {
-	int i, ns = 0;
-
-	for (i=1; i<=sheet->varlist[0]; i++) {
-	    if (var_is_series(datainfo, sheet->varlist[i])) {
-		ns++;
-	    }
-	}
-	if (ns == 0) {
-	    free(sheet->varlist);
-	    free(sheet);
-	    ret = 1;
-	}
+    } else if (sheet->varlist[0] == 0) {
+	free(sheet->varlist);
+	free(sheet);
+	ret = 1;
     }
 
     if (ret) {

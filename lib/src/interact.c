@@ -929,13 +929,7 @@ static int lag_from_lstr (const char *s,
 	} else if (gretl_is_scalar(s)) {
 	    lag = gretl_scalar_get_value(s);
 	} else {
-	    int v = varindex(pdinfo, s);
-
-	    if (v < pdinfo->v) {
-		lag = Z[v][0];
-	    } else {
-		*err = 1;
-	    }
+	    *err = 1;
 	}
     }
 
@@ -977,7 +971,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	return err;
     }
 
-    lv->v = varindex(pdinfo, lv->vname);
+    lv->v = series_index(pdinfo, lv->vname);
     if (lv->v == 0 || lv->v >= pdinfo->v) {
 	return err;
     }
@@ -1193,13 +1187,11 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 	} else if (gretl_is_scalar(ostr)) {
 	    *order = gretl_scalar_get_value(ostr);
 	} else {
-	    v = varindex(pdinfo, ostr);
-	    if (v < pdinfo->v) {
-		*order = Z[v][0];
-	    }
+	    /* FIXME error condition */
+	    ;
 	}
 	sscanf(s + len + 1, "%31[^ )]", word);
-	v = varindex(pdinfo, word);
+	v = series_index(pdinfo, word);
 	if (v < pdinfo->v) {
 	    *vnum = v;
 	} else {
@@ -1254,7 +1246,7 @@ static int auto_transform_ok (const char *s, int *lpos,
 		if (gotlist != NULL) {
 		    genlist = gretl_list_copy(gotlist);
 		} else {
-		    vnum = varindex(pdinfo, param);
+		    vnum = series_index(pdinfo, param);
 		    if (vnum == pdinfo->v) {
 			vnum = 0;
 		    }
@@ -1322,7 +1314,7 @@ static int add_time_ok (const char *s, int *lpos,
 	} else {
 	    cmd->err = gen_time(pZ, pdinfo, 1);
 	    if (!cmd->err) {
-		cmd->list[*lpos] = varindex(pdinfo, "time");
+		cmd->list[*lpos] = series_index(pdinfo, "time");
 		*lpos += 1;
 		ok = 1; /* handled */
 	    }
@@ -1343,7 +1335,7 @@ static int truncate_varname (const char *s, int *k, const DATAINFO *pdinfo,
 
 	*test = 0;
 	strncat(test, s, 8);
-	if ((v = varindex(pdinfo, test)) < pdinfo->v) {
+	if ((v = series_index(pdinfo, test)) < pdinfo->v) {
 	    cmd->list[*k] = v;
 	    *k += 1;
 	    ok = 1;
@@ -1421,14 +1413,14 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 	}
     } else {
 	/* we're given the name of a variable? */
-	vtarg = varindex(pdinfo, targ);
+	vtarg = series_index(pdinfo, targ);
 	if (vtarg >= pdinfo->v) {
 	    cmd->err = E_UNKVAR;
 	    return;
 	}
     } 
 
-    vtest = varindex(pdinfo, newname);
+    vtest = series_index(pdinfo, newname);
     if (vtest < pdinfo->v && vtest != vtarg) {
 	sprintf(gretl_errmsg, _("'%s': there is already a variable "
 				"of this name"), newname);
@@ -1854,9 +1846,7 @@ static int capture_param (const char *s, CMD *cmd,
 #endif
 
 	if (REQUIRES_ORDER(cmd->ci)) {
-	    cmd->order = gretl_int_from_string(cmd->param,
-					       Z, pdinfo, 
-					       &cmd->err);
+	    cmd->order = gretl_int_from_string(cmd->param, &cmd->err);
 	}
     }
 
@@ -1997,8 +1987,7 @@ static int process_cmd_extra (CMD *cmd, const double **Z,
 			      const DATAINFO *pdinfo)
 {
     if (cmd->ci == VECM) {
-	cmd->aux = gretl_int_from_string(cmd->extra, Z, pdinfo, 
-					 &cmd->err);
+	cmd->aux = gretl_int_from_string(cmd->extra, &cmd->err);
     }
 
     return cmd->err;
@@ -2058,13 +2047,12 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 #endif
 
     if (ints_ok) {
-	v = gretl_int_from_string(s, (const double **) *pZ,
-				  pdinfo, &cmd->err);
+	v = gretl_int_from_string(s, &cmd->err);
 	if (!cmd->err) {
 	    cmd->list[k++] = v;
 	    ok = 1;
 	}
-    } else if ((v = varindex(pdinfo, s)) < pdinfo->v) {
+    } else if ((v = series_index(pdinfo, s)) < pdinfo->v) {
 	cmd->list[k++] = v;
 	ok = 1;
     } else if ((xlist = get_list_by_name(s)) != NULL) {
@@ -2583,6 +2571,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 
+#if 0
 	/* check for bad scalars */
 	if (cmd->list[k-1] != LISTSEP) {
 	    if (!ints_ok && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
@@ -2593,6 +2582,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		}
 	    }
 	}
+#endif
 
 	/* advance for next read */
 	pos += strlen(s) + 1;
@@ -2870,7 +2860,7 @@ static int parse_criteria (const char *line, const double **Z,
     }
 
     if (!err) {
-	ess = gretl_double_from_string(essstr, Z, pdinfo, &err);
+	ess = gretl_double_from_string(essstr, &err);
 	if (!err && ess < 0) {
 	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "ess");
 	    err = E_DATA;
@@ -2878,7 +2868,7 @@ static int parse_criteria (const char *line, const double **Z,
     }
 
     if (!err) {
-	T = gretl_int_from_string(Tstr, Z, pdinfo, &err);
+	T = gretl_int_from_string(Tstr, &err);
 	if (!err && T < 0) {
 	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "T");
 	    err = E_DATA;
@@ -2886,7 +2876,7 @@ static int parse_criteria (const char *line, const double **Z,
     }
 
     if (!err) {
-	k = gretl_int_from_string(kstr, Z, pdinfo, &err);
+	k = gretl_int_from_string(kstr, &err);
 	if (!err && k < 0) {
 	    pprintf(prn, _("%s: negative value is out of bounds.\n"), "k");
 	    err = E_DATA;
@@ -3620,7 +3610,7 @@ static int set_var_info (const char *line, gretlopt opt,
     /* skip varname, but not following space */
     line += strcspn(line, " ");
 
-    v = varindex(pdinfo, vname); /* FIXME scalar */
+    v = series_index(pdinfo, vname);
     if (v == pdinfo->v) {
 	sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
 	return E_UNKVAR;

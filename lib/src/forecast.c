@@ -2269,7 +2269,7 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
     int oldv = pdinfo->v;
     int v, err = 0;
 
-    v = varindex(pdinfo, vname);
+    v = series_index(pdinfo, vname);
 
     if (v == pdinfo->v) {
 	/* new variable */

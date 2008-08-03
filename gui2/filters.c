@@ -707,7 +707,7 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
 {
     const char *vname = (i == FILTER_SAVE_TREND)? finfo->save1 :
 	finfo->save2;
-    int v = varindex(datainfo, vname);
+    int v = series_index(datainfo, vname);
     int err = 0;
 
     if (v == datainfo->v) {
@@ -715,7 +715,6 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
     } else {
 	free(Z[v]);
 	Z[v] = x;
-	set_var_scalar(datainfo, v, 0);
 	set_var_discrete(datainfo, v, 0);
     }
 

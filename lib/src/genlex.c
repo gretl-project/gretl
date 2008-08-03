@@ -756,10 +756,9 @@ static void look_up_word (const char *s, parser *p)
 	    if (p->idnum > 0) {
 		p->sym = DUM;
 	    } else {
-		p->idnum = varindex(p->dinfo, s);
+		p->idnum = series_index(p->dinfo, s);
 		if (p->idnum < p->dinfo->v) {
-		    p->sym = (var_is_scalar(p->dinfo, p->idnum))?
-			USCALAR : USERIES;
+		    p->sym = USERIES;
 		} else if (!strcmp(s, "time")) {
 		    p->sym = DUM;
 		    p->idnum = DUM_TREND;

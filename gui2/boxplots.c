@@ -1798,7 +1798,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		    err = 1;
 		}
 	    } else if (isalpha(tok[0])) {
-		v = varindex(pdinfo, tok);
+		v = series_index(pdinfo, tok);
 		if (v < origv) {
 		    list[++i] = v;
 		} else {

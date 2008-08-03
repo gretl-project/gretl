@@ -27,6 +27,7 @@
 #include "libset.h"
 #include "kalman.h"
 #include "matrix_extra.h"
+#include "gretl_scalar.h"
 #include "../cephes/libprob.h"
 
 #define ARMA_DEBUG 0
@@ -1802,18 +1803,20 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     }
 
     if (!err) {
+	set_auxiliary_scalars();
 	err = nlspec_add_param_list(spec, nparam, parms, pnames,
 				    pZ, pdinfo);
-    }
 
-    if (!err) {
-	*amod = model_from_nlspec(spec, pZ, pdinfo, nlsopt, prn);
-	err = amod->errcode;
-#if AINIT_DEBUG
 	if (!err) {
-	    printmodel(amod, pdinfo, OPT_NONE, prn);
-	}
+	    *amod = model_from_nlspec(spec, pZ, pdinfo, nlsopt, prn);
+	    err = amod->errcode;
+#if AINIT_DEBUG
+	    if (!err) {
+		printmodel(amod, pdinfo, OPT_NONE, prn);
+	    }
 #endif
+	}
+	unset_auxiliary_scalars();
     }
 
  bailout:

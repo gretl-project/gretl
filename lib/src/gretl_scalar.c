@@ -202,6 +202,29 @@ int gretl_scalar_add (const char *name, double val)
     return err;
 }
 
+int gretl_scalar_add_as_arg (const char *name, double val)
+{
+    gretl_scalar *s;
+    int err;
+
+    s = malloc(sizeof *s);
+    if (s == NULL) {
+	return E_ALLOC;
+    }
+
+    strcpy(s->name, name);
+    s->val = val;
+    s->level = gretl_function_depth() + 1;
+
+    err = gretl_scalar_push(s);
+
+#if SDEBUG
+    print_scalars("gretl_scalar_add_as");
+#endif
+
+    return err;
+}
+
 int gretl_scalar_delete (const char *name)
 {
     int level = gretl_function_depth();

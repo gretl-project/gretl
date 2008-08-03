@@ -1110,7 +1110,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 
     for (vi=0; vi<ndums; vi++) {
 	make_dummy_name_and_label(vi + 1, pdinfo, center, vname, vlabel);
-	di = varindex(pdinfo, vname);
+	di = series_index(pdinfo, vname);
 	if (di >= pdinfo->v || strcmp(vlabel, VARLABEL(pdinfo, di))) {
 	    nnew++;
 	} else if (vi == 0) {
@@ -1243,7 +1243,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
 	sprintf(vname, "dt_%d", vi);
 
-	dnum = varindex(pdinfo, vname);
+	dnum = series_index(pdinfo, vname);
 	if (dnum >= orig_v) {
 	    dnum = newvnum++;
 	}
@@ -1270,7 +1270,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
 	sprintf(vname, "du_%d", vi);
 
-	dnum = varindex(pdinfo, vname);
+	dnum = series_index(pdinfo, vname);
 	if (dnum >= orig_v) {
 	    dnum = newvnum++;
 	}	
@@ -1310,7 +1310,7 @@ int gen_unit (double ***pZ, DATAINFO *pdinfo)
 	return 1;
     }
 
-    i = varindex(pdinfo, "unit");
+    i = series_index(pdinfo, "unit");
 
     if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
@@ -1390,7 +1390,7 @@ int gen_time (double ***pZ, DATAINFO *pdinfo, int tm)
 {
     int i, t;
 
-    i = varindex(pdinfo, (tm)? "time" : "index");
+    i = series_index(pdinfo, (tm)? "time" : "index");
 
     if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
@@ -1438,7 +1438,7 @@ int gen_wkday (double ***pZ, DATAINFO *pdinfo)
 	return E_PDWRONG;
     }
 
-    i = varindex(pdinfo, "weekday");
+    i = series_index(pdinfo, "weekday");
 
     if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
@@ -1791,17 +1791,12 @@ int get_t_from_obs_string (const char *s, const double **Z,
 	    fprintf(stderr, " plain_obs_number gives t = %d\n", t);
 #endif
 	} else {
-	    int v = varindex(pdinfo, s); /* FIXME scalar */
-
-	    if (v == pdinfo->v && strlen(s) == 1) {
+	    if (gretl_is_scalar(s)) {
+		t = gretl_scalar_get_value(s);
+	    } else if (strlen(s) == 1) {
 		t = loop_scalar_read(s[0]);
 #if OBS_DEBUG
 		fprintf(stderr, " loop_scalar_read gave t = %d\n", t);
-#endif
-	    } else if (v < pdinfo->v) {
-		t = (int) Z[v][0];
-#if OBS_DEBUG
-		fprintf(stderr, " based on var %d: t = %d\n", v, t);
 #endif
 	    }
 

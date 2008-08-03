@@ -685,7 +685,7 @@ static int libset_get_scalar (const char *var, const char *arg,
 			      int *pi, double *px)
 {
     double x = NADBL;
-    int v, err = 0;
+    int err = 0;
 
     if (libset_numeric_string(arg, pi, px, &err)) {
 	if (err) {
@@ -701,15 +701,8 @@ static int libset_get_scalar (const char *var, const char *arg,
     if (gretl_is_scalar(arg)) {
 	x = gretl_scalar_get_value(arg);
     } else {
-	v = varindex(pdinfo, arg);
-	if (v >= pdinfo->v) {
-	    sprintf(gretl_errmsg, "'%s': unrecognized name", arg);
-	    return E_UNKVAR;
-	} else if (var_is_series(pdinfo, v)) {
-	    return E_DATATYPE;
-	} else {
-	    x = Z[v][0];
-	}
+	sprintf(gretl_errmsg, "'%s': not a scalar", arg);
+	return E_UNKVAR;
     }
 
     if (negval_invalid(var) && x < 0.0) {
@@ -873,7 +866,7 @@ static int set_line_width (const char *s0, const char *s1,
     if (isdigit((unsigned char) *s0)) {
 	v = atoi(s0);
     } else {
-	v = varindex(pdinfo, s0);
+	v = series_index(pdinfo, s0);
     }
 
     if (v < 1 || v >= pdinfo->v) {

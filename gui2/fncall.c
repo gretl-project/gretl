@@ -283,19 +283,15 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 	list = g_list_append(list, "");
     }
 
-    if (series_arg(type) || scalar_arg(type)) {
+    if (scalar_arg(type)) {
+	/* FIXME scalar */
+    } else if (series_arg(type)) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (var_is_hidden(datainfo, i)) {
-		continue;
-	    }
-	    if ((series_arg(type) && var_is_series(datainfo, i)) ||
-		(scalar_arg(type) && var_is_scalar(datainfo, i))) {
+	    if (!var_is_hidden(datainfo, i)) {
 		list = g_list_append(list, (gpointer) datainfo->varname[i]);
 	    } 
 	}
-	if (type == GRETL_TYPE_SERIES) {
-	    list = g_list_append(list, (gpointer) datainfo->varname[0]);
-	}
+	list = g_list_append(list, (gpointer) datainfo->varname[0]);
     } else if (type == GRETL_TYPE_LIST) {
 	int nl = n_saved_lists();
 

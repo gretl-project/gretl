@@ -667,7 +667,7 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     /* how many vars are wanted, and new? */
     for (i=1; i<=varlist[0]; i++) {
 	if (request->opt[varlist[i]].save && 
-	    varindex(pdinfo, tmpinfo->varname[i]) == pdinfo->v) {
+	    series_index(pdinfo, tmpinfo->varname[i]) == pdinfo->v) {
 	    addvars++;
 	}
     }
@@ -681,7 +681,7 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 
     for (i=1; i<=varlist[0]; i++) {
 	if (request->opt[varlist[i]].save) {
-	    v = varindex(pdinfo, tmpinfo->varname[i]);
+	    v = series_index(pdinfo, tmpinfo->varname[i]);
 	    if (v < pdinfo->v) {
 		copy_variable(*pZ, pdinfo, v, tmpZ, tmpinfo, i);
 	    } else {
@@ -758,13 +758,6 @@ int write_tx_data (char *fname, int varnum,
     DATAINFO *tmpinfo;
 
     *errmsg = 0;
-
-    /* sanity check */
-    if (var_is_scalar(pdinfo, varnum)) {
-	sprintf(errmsg, "%s %s", pdinfo->varname[varnum], 
-		_("is a scalar"));
-	return 1;
-    }
 
     /* figure out which program we're using */
     if (strstr(prog, "tramo") != NULL) {

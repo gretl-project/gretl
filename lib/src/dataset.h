@@ -35,10 +35,9 @@ typedef enum {
 
 typedef enum {
     VAR_DISCRETE   = 1 << 0,
-    VAR_SCALAR     = 1 << 1,
-    VAR_HIDDEN     = 1 << 2,
-    VAR_GENERATED  = 1 << 3,
-    VAR_LISTARG    = 1 << 4
+    VAR_HIDDEN     = 1 << 1,
+    VAR_GENERATED  = 1 << 2,
+    VAR_LISTARG    = 1 << 3
 } VarinfoFlags;
 
 typedef enum {
@@ -209,25 +208,6 @@ typedef enum {
 #define var_is_discrete(p, i) ((p)->varinfo[i]->flags & VAR_DISCRETE)
 
 /**
- * var_is_scalar:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Determine whether or not a variable is a scalar.
- */
-#define var_is_scalar(p, i) ((p)->varinfo[i]->flags & VAR_SCALAR)
-
-/**
- * var_is_series:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Determine whether or not a variable is a series (as opposed
- * to a scalar).
- */
-#define var_is_series(p, i) (!((p)->varinfo[i]->flags & VAR_SCALAR))
-
-/**
  * var_is_hidden:
  * @p: pointer to data information struct.
  * @i: index number of variable.
@@ -334,13 +314,6 @@ int dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_allocated_series (double *x, double ***pZ, 
 				  DATAINFO *pdinfo);
-
-int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo);
-
-int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
-
-int dataset_add_scalar_as (double x, const char *newname,
-			   double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_series_as (double *x, const char *newname,
 			   double ***pZ, DATAINFO *pdinfo);

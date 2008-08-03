@@ -1026,16 +1026,14 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     bign = pdinfo->n + newobs;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    x = realloc((*pZ)[i], bign * sizeof *x);
-	    if (x == NULL) {
-		return E_ALLOC;
-	    }
-	    (*pZ)[i] = x;
-	    for (t=pdinfo->n; t<bign; t++) {
-		(*pZ)[i][t] = (i == 0)? 1.0 : NADBL;
-	    }	    
+	x = realloc((*pZ)[i], bign * sizeof *x);
+	if (x == NULL) {
+	    return E_ALLOC;
 	}
+	(*pZ)[i] = x;
+	for (t=pdinfo->n; t<bign; t++) {
+	    (*pZ)[i][t] = (i == 0)? 1.0 : NADBL;
+	}	    
     }
     
     if (pdinfo->markers && pdinfo->S != NULL) {
@@ -1102,13 +1100,11 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
     newn = pdinfo->n - n;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    x = realloc((*pZ)[i], newn * sizeof *x);
-	    if (x == NULL) {
-		return E_ALLOC;
-	    }
-	    (*pZ)[i] = x;
+	x = realloc((*pZ)[i], newn * sizeof *x);
+	if (x == NULL) {
+	    return E_ALLOC;
 	}
+	(*pZ)[i] = x;
     }
     
     if (pdinfo->markers && pdinfo->S != NULL) {
@@ -1159,9 +1155,7 @@ int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo)
 
 	mvsize = rem * sizeof **Z;
 	for (i=0; i<pdinfo->v; i++) {
-	    if (var_is_series(pdinfo, i)) {
-		memmove(Z[i], Z[i] + head, mvsize);
-	    }
+	    memmove(Z[i], Z[i] + head, mvsize);
 	}
 
 	if (pdinfo->markers && pdinfo->S != NULL) {
@@ -1336,117 +1330,6 @@ dataset_add_allocated_series (double *x, double ***pZ, DATAINFO *pdinfo)
 }
 
 /**
- * dataset_add_scalars:
- * @n: number of scalars to add.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
- *
- * Allocates space for @n new scalar members of the dataset.
- * The added variables are initialized to zero.
- *
- * Returns: 0 on success, %E_ALLOC on error.
- */
-
-int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo)
-{
-    double **newZ;
-    int v = pdinfo->v;
-    int i, err = 0;
-
-    if (v == 0) {
-	pdinfo->n = pdinfo->v = 1;
-	err = start_new_Z(pZ, pdinfo, 0);
-	if (err) {
-	    pdinfo->n = pdinfo->v = 0;
-	    return err;
-	}
-	v = 1;
-    }
-
-    newZ = realloc(*pZ, (v + n) * sizeof *newZ);  
-
-    if (newZ == NULL) {
-	err = E_ALLOC;
-    } else {
-	*pZ = newZ;
-    }
-
-    if (!err) {
-	for (i=0; i<n; i++) {
-	    newZ[v+i] = NULL;
-	}
-	for (i=0; i<n; i++) {
-	    newZ[v+i] = malloc(sizeof **newZ);
-	    if (newZ[v+i] == NULL) {
-		err = E_ALLOC;
-		break;
-	    }
-	    newZ[v+i][0] = 0.0;
-	}
-    }
-
-    if (!err) {
-	err = dataset_expand_varinfo(n, pdinfo);
-    }
-
-    if (!err) {
-	for (i=0; i<n; i++) {
-	    set_var_scalar(pdinfo, v + i, 1);
-	}
-    }
-
-    return err;
-}
-
-/**
- * dataset_add_scalar:
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
- *
- * Allocates space for a new scalar member of the dataset.
- * The added variable is initialized to zero.
- *
- * Returns: 0 on success, %E_ALLOC on error.
- */
-
-int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
-{
-    return dataset_add_scalars(1, pZ, pdinfo);
-}
-
-/**
- * dataset_add_scalar_as:
- * @x: scalar value.
- * @newname: name to give the new variable.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
- *
- * Adds to the dataset a new scalar with name @newname and
- * value given by @x.  The new variable is added at one
- * level "deeper" (in terms of function execution) than the
- * current level.  This is for use with user-defined functions.
- *
- * Returns: 0 on success, %E_ALLOC on error.
- */
-
-int dataset_add_scalar_as (double x, const char *newname,
-			   double ***pZ, DATAINFO *pdinfo)
-{
-    int v, err = 0;
-
-    err = dataset_add_scalar(pZ, pdinfo);
-
-    if (!err) {
-	v = pdinfo->v - 1;
-	(*pZ)[v][0] = x;
-	strcpy(pdinfo->varname[v], newname);
-	STACK_LEVEL(pdinfo, v) += 1;
-    }
-
-    return err;
-}
-
-/**
  * dataset_add_series_as:
  * @x: array to be added.
  * @newname: name to give the new variable.
@@ -1513,25 +1396,17 @@ int dataset_copy_variable_as (int v, const char *newname,
 {
     int t, err;
 
-    if (var_is_series(pdinfo, v)) {
-	err = real_add_series(1, NULL, pZ, pdinfo);
-    } else {
-	err = dataset_add_scalar(pZ, pdinfo);
-    }
+    err = real_add_series(1, NULL, pZ, pdinfo);
 
     if (!err) {
 	int vnew = pdinfo->v - 1;
 
-	if (var_is_series(pdinfo, v)) {
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[vnew][t] = (*pZ)[v][t];
-	    }
-	} else {
-	    (*pZ)[vnew][0] = (*pZ)[v][0];
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[vnew][t] = (*pZ)[v][t];
 	}
 	strcpy(pdinfo->varname[vnew], newname);
 	STACK_LEVEL(pdinfo, vnew) += 1;
-	 /* FIXME other varinfo stuff?? */
+	/* FIXME other varinfo stuff?? */
     }
 
     return err;
@@ -1954,7 +1829,7 @@ int dataset_sort_by (int v, double **Z, DATAINFO *pdinfo, gretlopt opt)
     int i, t;
     int err = 0;
 
-    if (v < 1 || v >= pdinfo->v || var_is_scalar(pdinfo, v)) {
+    if (v < 1 || v >= pdinfo->v) {
 	return E_DATA;
     }
 
@@ -1990,9 +1865,6 @@ int dataset_sort_by (int v, double **Z, DATAINFO *pdinfo, gretlopt opt)
     }
 
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    continue;
-	}
 	for (t=0; t<pdinfo->n; t++) {
 	    x[t] = Z[i][sv[t].obsnum];
 	}
@@ -2038,12 +1910,12 @@ static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    v = varindex(pdinfo, vname);
+    v = series_index(pdinfo, vname);
     if (v == pdinfo->v) {
 	return E_UNKVAR;
     }
 
-    if (v < 1 || var_is_scalar(pdinfo, v)) {
+    if (v < 1) {
 	return E_DATA;
     }
     
@@ -2176,7 +2048,7 @@ static int get_stack_param_val (const char *s, const double **Z,
 	if (gretl_is_scalar(vname)) {
 	    val = gretl_scalar_get_value(vname);
 	} else {
-	    i = varindex(pdinfo, vname);
+	    i = series_index(pdinfo, vname);
 	    if (i < pdinfo->v) {
 		val = (int) Z[i][0];
 	    }
@@ -2300,7 +2172,7 @@ int dataset_stack_variables (const char *vname, const char *line,
     /* end of active portion of line */
     *p = '\0';
 
-    genv = varindex(pdinfo, vname);
+    genv = series_index(pdinfo, vname);
 
     /* do we have a range of vars? */
     sprintf(format, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
@@ -2309,8 +2181,8 @@ int dataset_stack_variables (const char *vname, const char *line,
 	    v1 = atoi(vn1);
 	    v2 = atoi(vn2);
 	} else {
-	    v1 = varindex(pdinfo, vn1);
-	    v2 = varindex(pdinfo, vn2);
+	    v1 = series_index(pdinfo, vn1);
+	    v2 = series_index(pdinfo, vn2);
 	}
 	if (v1 >= 0 && v2 > v1 && v2 < pdinfo->v) {
 	    nv = v2 - v1 + 1;
@@ -2343,7 +2215,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 	    if (isdigit(*p)) {
 		v1 = atoi(p);
 	    } else {
-		v1 = varindex(pdinfo, p);
+		v1 = series_index(pdinfo, p);
 	    }
 	    if (v1 < 0 || v1 >= pdinfo->v) {
 		err = E_UNKVAR;
@@ -2393,11 +2265,8 @@ int dataset_stack_variables (const char *vname, const char *line,
 
 	    j = (vnum == NULL)? i + v1 : vnum[i];
 
-	    if (var_is_series(pdinfo, j)) {
-		ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
-	    } else {
-		ok = 1;
-	    }
+	    ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
+
 	    if (ok > maxok) {
 		maxok = ok;
 	    }
@@ -2450,11 +2319,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 	}
 
 	for (t=offset; t<tmax; t++) {
-	    if (var_is_series(pdinfo, j)) {
-		bigx[bigt] = (*pZ)[j][t];
-	    } else {
-		bigx[bigt] = (*pZ)[j][0];
-	    }
+	    bigx[bigt] = (*pZ)[j][t];
 	    if (pdinfo->S != NULL && bigt != t) {
 		strcpy(pdinfo->S[bigt], pdinfo->S[t]);
 	    }
@@ -2565,27 +2430,6 @@ void set_var_discrete (DATAINFO *pdinfo, int i, int s)
 	    pdinfo->varinfo[i]->flags |= VAR_DISCRETE;
 	} else {
 	    pdinfo->varinfo[i]->flags &= ~VAR_DISCRETE;
-	}
-    }
-}
-
-/**
- * set_var_scalar:
- * @pdinfo: pointer to data information struct.
- * @i: index number of variable.
- * @s: non-zero to mark variable as a scalar, zero to 
- * mark as not scalar (i.e. a series).
- *
- * Mark a variable as being a scalar or not.
- */
-
-void set_var_scalar (DATAINFO *pdinfo, int i, int s) 
-{
-    if (i > 0 && i < pdinfo->v) {
-	if (s) {
-	    pdinfo->varinfo[i]->flags |= VAR_SCALAR;
-	} else {
-	    pdinfo->varinfo[i]->flags &= ~VAR_SCALAR;
 	}
     }
 }
@@ -2736,7 +2580,7 @@ static int dataset_int_param (const char **ps, int op,
     sscanf(s, "%31s", test);
     *ps += strlen(test);
 
-    k = gretl_int_from_string(test, (const double **) Z, pdinfo, err);
+    k = gretl_int_from_string(test, err);
     if (*err) {
 	return 0;
     }
@@ -2843,17 +2687,10 @@ int dataset_resample (int n, unsigned int seed,
 
     j = 0;
     for (i=0; i<pdinfo->v && !err; i++) {
-	if (i > 0 && var_is_scalar(pdinfo, i)) {
-	    RZ[j] = malloc(sizeof **RZ);
-	    if (RZ[j] != NULL) {
-		RZ[j][0] = (*pZ)[i][0];
-	    }
-	} else {
-	    RZ[j] = malloc(n * sizeof **RZ);
-	    if (RZ[j] != NULL && i == 0) {
-		for (t=0; t<n; t++) {
-		    RZ[j][t] = 1.0;
-		}
+	RZ[j] = malloc(n * sizeof **RZ);
+	if (RZ[j] != NULL && i == 0) {
+	    for (t=0; t<n; t++) {
+		RZ[j][t] = 1.0;
 	    }
 	}
 	if (RZ[j] == NULL) {
@@ -2881,9 +2718,7 @@ int dataset_resample (int n, unsigned int seed,
 	s = gretl_rand_int_max(T) + pdinfo->t1;
 	j = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_series(pdinfo, i)) {
-		RZ[j][t] = (*pZ)[i][s];
-	    } 
+	    RZ[j][t] = (*pZ)[i][s];
 	    j++;
 	}
 	if (S != NULL) {
@@ -3043,7 +2878,7 @@ int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo)
     for (t=0; t<pdinfo->n; t++) {
 	missrow = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!var_is_scalar(pdinfo, i) && !na(Z[i][t])) {
+	    if (!na(Z[i][t])) {
 		missrow = 0;
 		break;
 	    }
@@ -3076,7 +2911,7 @@ int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo)
     for (t=0; t<pdinfo->n; t++) {
 	missrow = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!var_is_scalar(pdinfo, i) && !na(Z[i][t])) {
+	    if (!na(Z[i][t])) {
 		missrow = 0;
 		break;
 	    }
@@ -3084,9 +2919,7 @@ int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo)
 	if (missrow) {
 	    sz = (pdinfo->n - t) * sizeof **Z;
 	    for (i=1; i<pdinfo->v; i++) {
-		if (!var_is_scalar(pdinfo, i)) {
-		    memmove(Z[i] + t, Z[i] + t + 1, sz);
-		}
+		memmove(Z[i] + t, Z[i] + t + 1, sz);
 	    }
 	    if (pdinfo->S != NULL) {
 		free(pdinfo->S[t]);
@@ -3100,13 +2933,11 @@ int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo)
     new_n = pdinfo->n - totmiss;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (!var_is_scalar(pdinfo, i)) {
-	    Zi = realloc(Z[i], new_n * sizeof *Zi);
-	    if (Zi == NULL) {
-		err = E_ALLOC;
-	    } else {
-		Z[i] = Zi;
-	    }
+	Zi = realloc(Z[i], new_n * sizeof *Zi);
+	if (Zi == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    Z[i] = Zi;
 	}
     }
 

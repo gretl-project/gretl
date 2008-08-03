@@ -354,7 +354,7 @@ static int selector_get_depvar_number (selector *sr)
 	    if (sr->code == SAVE_FUNCTIONS) {
 		ynum = user_function_index_by_name(s);
 	    } else {
-		ynum = varindex(datainfo, s);
+		ynum = series_index(datainfo, s);
 		if (ynum == datainfo->v) {
 		    ynum = -1;
 		}
@@ -2904,17 +2904,6 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     vbox_add_hsep(right_vbox);
 }
 
-static int screen_scalar (int i, int c)
-{
-    if ((MODEL_CODE(c) || VEC_CODE(c) || GRAPH_CODE(c) || 
-	 c == LAGS || c == DIFF || c == LDIFF)
-	&& var_is_scalar(datainfo, i)) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 static void selector_init (selector *sr, guint code, const char *title,
 			   gpointer p, int (*callback)())
 {
@@ -4061,8 +4050,6 @@ static int list_show_var (int v, int code, int show_lags)
 	ret = 0;
     } else if (var_is_hidden(datainfo, v)) {
 	ret = 0;
-    } else if (screen_scalar(v, code)) {
-	ret = 0;
     } else if (!show_lags && is_standard_lag(v, datainfo, NULL)) {
 	lags_hidden = 1;
 	ret = 0;
@@ -4425,7 +4412,6 @@ static int add_omit_list (gpointer p, selector *sr)
 
 	    for (i=0; i<datainfo->v; i++) {
 		if (!in_gretl_list(xlist, i) && i != dv &&
-		    !var_is_scalar(datainfo, i) && 
 		    !var_is_hidden(datainfo, i)) {
 		    gtk_list_store_append(store, &iter);
 		    gtk_list_store_set(store, &iter, 

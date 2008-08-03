@@ -28,6 +28,8 @@ void gretl_scalar_set_value (const char *name, double val);
 
 int gretl_scalar_add (const char *name, double val);
 
+int gretl_scalar_add_as_arg (const char *name, double val);
+
 int gretl_scalar_delete (const char *name);
 
 int destroy_user_scalars_at_level (int level);

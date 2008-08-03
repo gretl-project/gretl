@@ -94,8 +94,6 @@ static int series_view_allocate (series_view *sview)
     if (sview->npoints != 0) {
 	/* already allocated */
 	return 0;
-    } else if (var_is_scalar(datainfo, sview->varnum)) {
-	return 0;
     } else {
 	int t, tp, T = datainfo->t2 - datainfo->t1 + 1;
 	int v = sview->varnum;
@@ -196,7 +194,7 @@ static void series_view_print (windata_t *vwin)
 	
     /* print formatted data to buffer */
 
-    if (var_is_series(datainfo, sview->varnum)) {
+    if (1) { /* FIXME scalars */
 	pprintf(prn, "\n%*s ", obslen, _("Obs"));
 	pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
 	for (t=0; t<sview->npoints; t++) {
@@ -471,22 +469,10 @@ int has_sortable_data (windata_t *vwin)
 multi_series_view *multi_series_view_new (const int *list)
 {
     multi_series_view *mview = NULL;
-    int i, err = 0;
 
     if (list == NULL) {
-	err = 1;
-    } else {
-	for (i=1; i<=list[0]; i++) {
-	    if (var_is_scalar(datainfo, list[i])) {
-		err = 1;
-		break;
-	    }
-	} 
-    }
-
-    if (err) {
 	return NULL;
-    }
+    } 
 
     mview = malloc(sizeof *mview);
 

@@ -5335,13 +5335,10 @@ int gretl_normality_test (const char *param,
     err = incompatible_options(opt, OPT_A|OPT_D|OPT_W|OPT_J|OPT_L);
 
     if (!err) {
-	v = varindex(pdinfo, param);
+	v = series_index(pdinfo, param);
 	if (v == pdinfo->v) {
 	    err = E_UNKVAR;
-	} else if (var_is_scalar(pdinfo, v)) {
-	    sprintf(gretl_errmsg, _("variable %s is a scalar"), param);
-	    err = E_DATA;
-	}
+	} 
     }
 
     if (err) {

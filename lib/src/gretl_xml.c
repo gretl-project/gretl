@@ -1426,11 +1426,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     for (i=1; i<=nvars; i++) {
 	v = savenum(list, i);
-	if (var_is_series(pdinfo, v)) {
-	    pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
-	} else {
-	    pmax[i-1] = GRETL_SCALAR_DIGITS;
-	}
+	pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
     }
 
     ntodate_full(startdate, pdinfo->t1, pdinfo);
@@ -1504,17 +1500,6 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    gzprintf(fz, "<variable name=\"%s\"", xmlbuf);
 	} else {
 	    fprintf(fp, "<variable name=\"%s\"", xmlbuf);
-	}
-
-	if (var_is_scalar(pdinfo, v) && !na(Z[v][0])) {
-	    if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		sprintf(numstr, "\n role=\"scalar\" value=\"%.12g\"",
-			Z[v][0]);
-	    } else {
-		sprintf(numstr, "\n role=\"scalar\" value=\"%.*f\"",
-			pmax[i-1], Z[v][0]);
-	    }
-	    alt_puts(numstr, fp, fz);
 	}
 
 	if (*VARLABEL(pdinfo, v)) {
@@ -1629,9 +1614,6 @@ int gretl_write_gdt (const char *fname, const int *list,
 	alt_puts(">", fp, fz);
 	for (i=1; i<=nvars; i++) {
 	    v = savenum(list, i);
-	    if (var_is_scalar(pdinfo, v)) {
-		continue;
-	    }
 	    if (na(Z[v][t])) {
 		strcpy(numstr, "NA ");
 	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -1771,6 +1753,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
+#if 0 /* FIXME old datafiles? */
 		if (!strcmp((char *) tmp, "scalar")) {
 		    char *val = (char *) xmlGetProp(cur, (XUC) "value");
 		    
@@ -1783,6 +1766,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 			set_var_scalar(pdinfo, i, 1);
 		    }
 		}
+#endif
 		free(tmp);
 	    }
 	    i++;
@@ -1807,9 +1791,6 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     gretl_error_clear();
 
     for (i=1; i<pdinfo->v && !err; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    continue;
-	}
 	s = strpbrk(s, "01234567890+-NA");
 	if (s == NULL) {
 	    fprintf(stderr, "i = %d: s == NULL in process_values()\n", i);
@@ -1911,9 +1892,6 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     pdinfo->t2 = pdinfo->n - 1;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    continue;
-	}
 	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
 	if ((*pZ)[i] == NULL) {
 	    return E_ALLOC;
@@ -2168,7 +2146,7 @@ static int lag_from_label (int v, const DATAINFO *pdinfo, int *lag)
     int pv = 0;
 
     if (sscanf(test, "= %15[^(](t %c %d)", vname, &pm, lag) == 3) {
-	pv = varindex(pdinfo, vname);
+	pv = series_index(pdinfo, vname);
 	pv = (pv < pdinfo->v)? pv : 0;
     }
 
@@ -2184,7 +2162,7 @@ static int dummy_child_from_label (int v, const DATAINFO *pdinfo)
 
     if (sscanf(test, _("dummy for %s = %lf"), vname, &val) == 2 ||
 	sscanf(test, "dummy for %s = %lf", vname, &val) == 2) {
-	pv = varindex(pdinfo, vname);
+	pv = series_index(pdinfo, vname);
 	pv = (pv < pdinfo->v)? pv : 0;
     }
 

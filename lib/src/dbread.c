@@ -2056,7 +2056,7 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	series_info_init(&sinfo);
 
 	/* see if the series is already in the dataset */
-	v = varindex(pdinfo, series);
+	v = series_index(pdinfo, series);
 	if (v < pdinfo->v && method == COMPACT_NONE) {
 	    this_var_method = COMPACT_METHOD(pdinfo, v);
 	}
@@ -2996,10 +2996,8 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 
     for (i=1; i<pdinfo->v; i++) {
 	/* initialize all series, first obs */
-	if (var_is_series(pdinfo, i)) {
-	    mZ[i][0] = NADBL;
-	    mn[i] = 0;
-	}
+	mZ[i][0] = NADBL;
+	mn[i] = 0;
     }    
 
     for (s=0; s<pdinfo->n; s++) {
@@ -3009,15 +3007,13 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 	if (monbak > 0 && mon != monbak) {
 	    /* new month: finalize the previous one */
 	    for (i=1; i<pdinfo->v; i++) {
-		if (var_is_series(pdinfo, i)) {
-		    if (method == COMPACT_EOP) {
-			if (s > 0) {
-			    mZ[i][t] = Z[i][s-1];
-			}
-		    } else if (method == COMPACT_AVG) {
-			if (mn[i] > 0) {
-			    mZ[i][t] /= (double) mn[i];
-			}
+		if (method == COMPACT_EOP) {
+		    if (s > 0) {
+			mZ[i][t] = Z[i][s-1];
+		    }
+		} else if (method == COMPACT_AVG) {
+		    if (mn[i] > 0) {
+			mZ[i][t] /= (double) mn[i];
 		    }
 		}
 	    }
@@ -3026,42 +3022,38 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 		t++;
 		for (i=1; i<pdinfo->v; i++) {
 		    /* initialize all series, current obs */
-		    if (var_is_series(pdinfo, i)) {
-			if (method == COMPACT_SOP) {
-			    mZ[i][t] = Z[i][s];
-			} else {
-			    mZ[i][t] = NADBL;
-			}
-			mn[i] = 0;
+		    if (method == COMPACT_SOP) {
+			mZ[i][t] = Z[i][s];
+		    } else {
+			mZ[i][t] = NADBL;
 		    }
-		}  		
+		    mn[i] = 0;
+		}
 	    }
 	} 
 
 	/* cumulate non-missing weekly observations? */
 	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_series(pdinfo, i)) {
-		if (method == COMPACT_SOP) {
-		    ; /* handled above */
-		} else if (method == COMPACT_EOP) {
+	    if (method == COMPACT_SOP) {
+		; /* handled above */
+	    } else if (method == COMPACT_EOP) {
+		mZ[i][t] = Z[i][s];
+	    } else if (!na(Z[i][s])) {
+		if (na(mZ[i][t])) {
 		    mZ[i][t] = Z[i][s];
-		} else if (!na(Z[i][s])) {
-		    if (na(mZ[i][t])) {
-			mZ[i][t] = Z[i][s];
-		    } else {
-			mZ[i][t] += Z[i][s];
-		    }
-		    mn[i] += 1;
+		} else {
+		    mZ[i][t] += Z[i][s];
 		}
-		if (mon == monbak && s == pdinfo->n - 1) {
-		    /* reached the end: ship out last obs */
-		    if (method == COMPACT_EOP) {
-			mZ[i][t] = NADBL;
-		    } else if (method == COMPACT_AVG && mn[i] > 0) {
-			mZ[i][t] /= (double) mn[i];
-		    }
-		}		    
+		mn[i] += 1;
 	    }
+	    if (mon == monbak && s == pdinfo->n - 1) {
+		/* reached the end: ship out last obs */
+		if (method == COMPACT_EOP) {
+		    mZ[i][t] = NADBL;
+		} else if (method == COMPACT_AVG && mn[i] > 0) {
+		    mZ[i][t] /= (double) mn[i];
+		}
+	    }		    
 	}
 	monbak = mon;
     }
@@ -3127,7 +3119,6 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
     DATAINFO minfo;
     int startyr = 1, endyr;
     int startmon = 1, endmon;
-    double *x;
     int nseries = 0;
     int i, err = 0;
 
@@ -3143,19 +3134,8 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 	return err;
     }
 
-    /* handle scalars */
     for (i=1; i<pdinfo->v && !err; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    x = realloc(mZ[i], sizeof *x);
-	    if (x == NULL) {
-		err = E_ALLOC;
-	    } else {
-		mZ[i] = x;
-		mZ[i][0] = (*pZ)[i][0];
-	    }
-	} else {
-	    nseries++;
-	}
+	nseries++; /* FIXME redundant */
     }
 
     /* compact series */
@@ -3203,7 +3183,7 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 	if (wday == repday) {
 	    ok = 0;
 	    for (i=1; i<pdinfo->v; i++) {
-		if (var_is_series(pdinfo, i) && !na(Z[i][t])) {
+		if (!na(Z[i][t])) {
 		    ok = 1;
 		    break;
 		}
@@ -3235,10 +3215,7 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 	double *tmp;
 	int s = 0;
 
-	if (i > 0 && var_is_scalar(pdinfo, i)) {
-	    continue;
-	}
-	if (i > 0) {
+	if (i > 0) { /* FIXME i iteration */
 	    for (t=0; t<pdinfo->n; t++) {
 		ntodate_full(obs, t, pdinfo);
 		wday = get_day_of_week(obs);
@@ -3293,10 +3270,6 @@ static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<pdinfo->v && !err; i++) {
 	    CompactMethod method;
 	    double *x;
-
-	    if (i > 0 && var_is_scalar(pdinfo, i)) {
-		continue;
-	    }
 
 	    method = COMPACT_METHOD(pdinfo, i);
 	    if (method == COMPACT_NONE) {
@@ -3536,35 +3509,33 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 
     /* compact the individual data series */
     for (i=0; i<pdinfo->v && err == 0; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    CompactMethod this_method = default_method;
-	    int startskip = min_startskip;
-	    double *x;
+	CompactMethod this_method = default_method;
+	int startskip = min_startskip;
+	double *x;
 
-	    if (!all_same) {
-		if (COMPACT_METHOD(pdinfo, i) != COMPACT_NONE) {
-		    this_method = COMPACT_METHOD(pdinfo, i);
-		}
-
-		startskip = compfac - (startmin % compfac) + 1;
-		startskip = startskip % compfac;
-		if (this_method == COMPACT_EOP) {
-		    if (startskip > 0) {
-			startskip--;
-		    } else {
-			startskip = compfac - 1;
-		    }
-		}
+	if (!all_same) {
+	    if (COMPACT_METHOD(pdinfo, i) != COMPACT_NONE) {
+		this_method = COMPACT_METHOD(pdinfo, i);
 	    }
 
-	    x = compact_series((*pZ)[i], i, pdinfo->n, oldn, startskip, 
-			       min_startskip, compfac, this_method);
-	    if (x == NULL) {
-		err = E_ALLOC;
-	    } else {
-		free((*pZ)[i]);
-		(*pZ)[i] = x;
+	    startskip = compfac - (startmin % compfac) + 1;
+	    startskip = startskip % compfac;
+	    if (this_method == COMPACT_EOP) {
+		if (startskip > 0) {
+		    startskip--;
+		} else {
+		    startskip = compfac - 1;
+		}
 	    }
+	}
+
+	x = compact_series((*pZ)[i], i, pdinfo->n, oldn, startskip, 
+			   min_startskip, compfac, this_method);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    free((*pZ)[i]);
+	    (*pZ)[i] = x;
 	}
     }
 
@@ -3619,9 +3590,6 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
     }
 
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    continue;
-	}
 	for (t=0; t<oldn; t++) {
 	    x[t] = (*pZ)[i][t];
 	}

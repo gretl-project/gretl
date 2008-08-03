@@ -1446,7 +1446,7 @@ static void np_test (GtkWidget *w, test_t *test)
     int err = 0;
 
     var1 = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
-    v1 = varindex(datainfo, var1);
+    v1 = series_index(datainfo, var1);
 
     if (v1 == datainfo->v) {
 	gui_errmsg(E_UNKVAR);
@@ -1455,7 +1455,7 @@ static void np_test (GtkWidget *w, test_t *test)
 
     if (test->code == NP_DIFF) {
 	var2 = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	v2 = varindex(datainfo, var2);
+	v2 = series_index(datainfo, var2);
 	if (v2 == datainfo->v) {
 	    gui_errmsg(E_UNKVAR);
 	    return;
@@ -2020,7 +2020,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     if (sscanf(str, "%15s", test) != 1) {
 	err = 1;
     } else {
-	*vx = varindex(datainfo, test);
+	*vx = series_index(datainfo, test);
 	if (*vx >= datainfo->v) {
 	    gui_errmsg(E_UNKVAR);
 	    err = 1;
@@ -2064,7 +2064,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 	if (sscanf(p, "%15s", test) != 1) {
 	    err = 1;
 	} else {
-	    *vy = varindex(datainfo, test);
+	    *vy = series_index(datainfo, test);
 	    if (*vy >= datainfo->v) {
 		gui_errmsg(E_UNKVAR);
 		err = 1;
@@ -2144,21 +2144,13 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	/* e.g. "cholest (gender = 1)" */
 	err = get_restriction_vxy(buf, &vx, &vy, &yop, &yval);
     } else {
-	vx = varindex(datainfo, buf);
+	vx = series_index(datainfo, buf);
 	if (vx >= datainfo->v) {
 	    err = 1;
 	}
     }
 
     g_free(buf);
-
-    if (!err) {
-	/* scalars are not valid input in this context */
-	if (var_is_scalar(datainfo, vx) || (vy > 0 && var_is_scalar(datainfo, vy))) {
-	    warnbox(_("Invalid entry"));
-	    err = 1;
-	}
-    }
 
     if (err) {
 	GtkWidget *entry;
@@ -2225,8 +2217,6 @@ static int var_is_ok (int i, int code)
     int ret = 1;
 
     if (var_is_hidden(datainfo, i)) {
-	ret = 0;
-    } else if (var_is_scalar(datainfo, i)) {
 	ret = 0;
     } else if ((code == ONE_PROPN || code == TWO_PROPNS) &&
 	       !gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
@@ -2448,7 +2438,7 @@ static int n_ok_series (void)
 
     if (datainfo != NULL) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (var_is_series(datainfo, i) && !var_is_hidden(datainfo, i)) {
+	    if (!var_is_hidden(datainfo, i)) {
 		nv++;
 	    }
 	}
@@ -2463,8 +2453,7 @@ static int n_ok_dummies (void)
 
     if (datainfo != NULL) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (var_is_series(datainfo, i) && 
-		!var_is_hidden(datainfo, i) &&
+	    if (!var_is_hidden(datainfo, i) &&
 		gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 		nv++;
 	    }

@@ -300,7 +300,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	}
 
 	/* is there already a var of this name? */
-	dbv = varindex(datainfo, sinfo->varname);
+	dbv = series_index(datainfo, sinfo->varname);
 	if (dbv < datainfo->v) {
 	    if (dw->nv == 1) {
 		resp = yes_no_dialog ("gretl",                      

@@ -230,7 +230,7 @@ static double controller_evaluate_expr (const char *expr,
 	err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
 	if (!err) {
 	    /* FIXME scalar */
-	    v = (vnum > 0)? vnum : varindex(pdinfo, vname);
+	    v = (vnum > 0)? vnum : series_index(pdinfo, vname);
 	    if (v < pdinfo->v) {
 		x = (*pZ)[v][0];
 	    } else {
@@ -670,8 +670,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
 	    clr->val = (int) gretl_scalar_get_value(s);
-	    fprintf(stderr, "lim: %s -> %g\n", clr->vname, clr->val);
-	} else if ((v = varindex(pdinfo, s)) < pdinfo->v) {
+	} else if ((v = series_index(pdinfo, s)) < pdinfo->v) {
 	    /* found a series by the name of s */
 	    clr->vnum = v;
 	    clr->val = (int) Z[v][0];
@@ -783,15 +782,12 @@ static int parse_as_count_loop (LOOPSET *loop,
 static double *save_delta_state (int v, double **Z, DATAINFO *pdinfo)
 {
     double *x0;
-    int i, n;
+    int i;
     
-    
+    x0 = malloc(pdinfo->n * sizeof *x0);
 
-    n = (var_is_series(pdinfo, v))? pdinfo->n : 1;
-
-    x0 = malloc(n * sizeof *x0);
     if (x0 != NULL) {
-	for (i=0; i<n; i++) {
+	for (i=0; i<pdinfo->n; i++) {
 	    x0[i] = Z[v][i];
 	}
     }
@@ -802,11 +798,9 @@ static double *save_delta_state (int v, double **Z, DATAINFO *pdinfo)
 static void 
 restore_delta_state (int v, double *x0, double **Z, DATAINFO *pdinfo)
 {
-    int i, n;
+    int i;
 
-    n = (var_is_series(pdinfo, v))? pdinfo->n : 1;
-
-    for (i=0; i<n; i++) {
+    for (i=0; i<pdinfo->n; i++) {
 	Z[v][i] = x0[i];
     }
 
@@ -844,7 +838,7 @@ test_forloop_element (char *s, LOOPSET *loop,
 		    x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
 		    gretl_scalar_set_value(vname, x0);
 		} else {
-		    int v = varindex(pdinfo, vname);
+		    int v = series_index(pdinfo, vname);
 
 		    if (v < pdinfo->v) {
 			double *x0 = save_delta_state(v, *pZ, pdinfo);
@@ -884,7 +878,7 @@ test_forloop_element (char *s, LOOPSET *loop,
 	    strcpy(clr->vname, vname);
 	    if (i != 1) {
 		/* FIXME scalar */
-		clr->vnum = varindex(pdinfo, vname);
+		clr->vnum = series_index(pdinfo, vname);
 	    }
 	}	
     }	
@@ -993,8 +987,8 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
     if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
 	err = E_PARSE;
     } else {
-	v1 = varindex(pdinfo, vn1);
-	v2 = varindex(pdinfo, vn2);
+	v1 = series_index(pdinfo, vn1);
+	v2 = series_index(pdinfo, vn2);
 
 	if (v1 < 0 || v2 < 0 || v1 >= pdinfo->v || v2 >= pdinfo->v) {
 	    err = 1;
@@ -1715,11 +1709,15 @@ static int loop_store_update (LOOPSET *loop, int lno,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
+#if 1 /* FIXME storing scalars */
+	loop->store.Z[i][t] = Z[vi][pdinfo->t1];
+#else
 	if (var_is_series(pdinfo, vi)) { 
 	    loop->store.Z[i][t] = Z[vi][pdinfo->t1];
 	} else {
 	    loop->store.Z[i][t] = Z[vi][0];
 	}
+#endif
     }
 
     loop->store.n += 1;
@@ -1904,8 +1902,10 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 }
 
 /* Update the LOOP_PRINT struct lprn using the current values from the
-   variables in list.  If this is the fist use we ned to do some
+   variables in list.  If this is the fist use we need to do some
    allocation first.
+
+   FIXME scalars
 */
 
 static int loop_print_update (LOOP_PRINT *lprn,
@@ -1932,7 +1932,11 @@ static int loop_print_update (LOOP_PRINT *lprn,
     
     for (j=0; j<list[0]; j++) {
 	vj = list[j+1];
+#if 1
+	t = pdinfo->t1;
+#else
 	t = (var_is_series(pdinfo, vj))? pdinfo->t1 : 0;
+#endif
 #ifdef ENABLE_GMP
 	mpf_set_d(m, Z[vj][t]); 
 	mpf_add(lprn->sum[j], lprn->sum[j], m);
@@ -2486,7 +2490,7 @@ static int clr_attach_var (controller *clr, const DATAINFO *pdinfo)
     int err = 0;
 
     if (!gretl_is_scalar(clr->vname)) {
-	int v = varindex(pdinfo, clr->vname);
+	int v = series_index(pdinfo, clr->vname);
 
 	if (v >= pdinfo->v) {
 	    sprintf(gretl_errmsg, 

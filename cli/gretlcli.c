@@ -941,8 +941,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case NULLDATA:
-	k = gretl_int_from_string(cmd->param, (const double **) *pZ, 
-				  pdinfo, &err);
+	k = gretl_int_from_string(cmd->param, &err);
 	if (!err && k < 2) {
 	    err = 1;
 	}

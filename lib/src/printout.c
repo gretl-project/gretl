@@ -1676,7 +1676,6 @@ int printdata (const int *list, const char *mstr,
     int pause = gretl_get_text_pause();
     int j, v, v1, v2, jc, nvjc, lineno, ncol;
     int screenvar = 0;
-    int scalars = 0;
     int sortvar = 0;
     int maxlen = 0, bplen = 13;
     int *plist = NULL;
@@ -1726,30 +1725,8 @@ int printdata (const int *list, const char *mstr,
 
     lineno = 1;
 
-    /* screen out any scalars and print them first */
-
-    for (j=1; j<=plist[0]; j++) {
-	int len, v = plist[j];
-
-	if (var_is_scalar(pdinfo, v)) {
-	    print_scalar(Z[v][0], pdinfo->varname[v], opt, prn);
-	    scalars = 1;
-	    gretl_list_delete_at_pos(plist, j);
-	    j--;
-	} else {
-	    len = strlen(pdinfo->varname[v]);
-	    if (len > maxlen) {
-		maxlen = len;
-	    }
-	}
-    }
-    
-    if (scalars) {
-	pputc(prn, '\n');
-    }
-
     if (plist[0] == 0) {
-	/* no series left after elimination of scalars */
+	/* no series */
 	pputc(prn, '\n');
 	goto endprint;
     }
@@ -1930,9 +1907,9 @@ int print_data_sorted (const int *list, const int *obsvec,
 	return E_DATA;
     }
 
-    /* ...with no scalars or bad variable numbers */
+    /* ...with no bad variable numbers */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] >= pdinfo->v || var_is_scalar(pdinfo, list[i])) {
+	if (list[i] >= pdinfo->v) {
 	    return E_DATA;
 	}
     }

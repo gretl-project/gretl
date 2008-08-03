@@ -2556,7 +2556,7 @@ add_dummies_to_list (const int *list, DATAINFO *pdinfo, int **pbiglist)
     j = list[0] + 1;
     for (i=2; i<=pdinfo->pd; i++) {
 	sprintf(dname, "dt_%d", i);
-	v = varindex(pdinfo, dname);
+	v = series_index(pdinfo, dname);
 	if (v == pdinfo->v) {
 	    err = E_DATA;
 	    break;
@@ -3473,9 +3473,6 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 
     /* copy the data series across in transformed order */
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    continue;
-	}
 	for (t=0; t<pdinfo->n; t++) {
 	    /* transcribe to tmp in original order */
 	    tmp[t] = Z[i][t];
@@ -3742,14 +3739,12 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
 	  compare_obs);
 
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    for (t=0; t<n; t++) {
-		tmp[t] = Z[i][t];
-	    }
-	    for (t=0; t<n; t++) {
-		Z[i][t] = tmp[s.points[t].obsnum];
-	    }
-	}	
+	for (t=0; t<n; t++) {
+	    tmp[t] = Z[i][t];
+	}
+	for (t=0; t<n; t++) {
+	    Z[i][t] = tmp[s.points[t].obsnum];
+	}
     }
 
     if (S != NULL) {
@@ -3833,28 +3828,19 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     char **S = NULL;
     int *nuid = NULL;
     int *ntid = NULL;
-    int n_scalars = 0;
     int n_orig = pdinfo->n;
     int t2_orig = pdinfo->t2;
     int i, j, s, t;
     int err = 0;
-
-    for (i=1; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    n_scalars++;
-	}
-    }
 
     err = normalize_uid_tid(tid, nperiods, (const double **) Z,
 			    pdinfo, uv, tv, &nuid, &ntid);
 
     if (!err) {
 	/* allocate temporary storage, skipping any scalars */
-	pdinfo->v -= n_scalars;
 	pdinfo->n = nunits * nperiods;
 	pdinfo->t2 = pdinfo->n - 1;
 	err = allocate_Z(&bigZ, pdinfo);
-	pdinfo->v += n_scalars;
     }
 
     if (!err && pdinfo->S != NULL && ustrs) {
@@ -3873,9 +3859,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	    j = 1;
 	    s = nuid[t] * nperiods + ntid[t];
 	    for (i=1; i<pdinfo->v; i++) {
-		if (var_is_series(pdinfo, i)) {
-		    bigZ[j++][s] = Z[i][t];
-		}
+		bigZ[j++][s] = Z[i][t];
 	    }
 	    if (S != NULL) {
 		strcpy(S[s], pdinfo->S[t]);
@@ -3898,9 +3882,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	    } else if (i == tv) {
 		btv = j;
 	    }
-	    if (var_is_series(pdinfo, i)) {
-		j++;
-	    }
+	    j++;
 	}
 
 	/* complete the index info in slots uv and tv */
@@ -3916,10 +3898,8 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 
 	/* swap the padded arrays into Z */
 	for (i=0, j=0; i<pdinfo->v; i++) {
-	    if (var_is_series(pdinfo, i)) {
-		free(Z[i]);
-		Z[i] = bigZ[j++];
-	    }
+	    free(Z[i]);
+	    Z[i] = bigZ[j++];
 	}
 
 	free(bigZ);
@@ -3983,25 +3963,22 @@ static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
 	return E_PARSE;
     }
 
-    *uv = varindex(pdinfo, uvname);
+    *uv = series_index(pdinfo, uvname);
     if (*uv == pdinfo->v) {
+	/* FIXME "not a series" */
 	sprintf(gretl_errmsg, _("Unknown variable '%s'"), uvname);
 	err = E_UNKVAR;
-    } else if (!var_is_series(pdinfo, *uv)) {
-	err = E_DATATYPE;
-    }
+    } 
 
     if (err) {
 	return err;
     }
 
-    *tv = varindex(pdinfo, tvname);
+    *tv = series_index(pdinfo, tvname);
     if (*tv == pdinfo->v) {
 	sprintf(gretl_errmsg, _("Unknown variable '%s'"), tvname);
 	err = E_UNKVAR;
-    } else if (!var_is_series(pdinfo, *tv)) {
-	err = E_DATATYPE;
-    }
+    } 
 
     return err;
 }
@@ -4166,8 +4143,8 @@ static int find_time_var (const DATAINFO *pdinfo)
     int i, v;
 
     for (i=0; tnames[i] != NULL; i++) {
-	v = varindex(pdinfo, tnames[i]);
-	if (v < pdinfo->v && var_is_series(pdinfo, v)) {
+	v = series_index(pdinfo, tnames[i]);
+	if (v < pdinfo->v) {
 	    return v;
 	}
     }

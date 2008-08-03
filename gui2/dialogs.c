@@ -1238,7 +1238,7 @@ static const char *comp_int_to_string (int i)
 
 static int formula_ok (int v)
 {
-    if (!var_is_scalar(datainfo, v) && var_is_generated(datainfo, v)) {
+    if (var_is_generated(datainfo, v)) {
 	const char *s = VARLABEL(datainfo, v);
 	int n = strlen(s);
 
@@ -1268,7 +1268,6 @@ void varinfo_dialog (int varnum, int full)
     GtkWidget *tmp, *hbox;
     struct varinfo_settings *vset;
     unsigned char flags;
-    int series;
 
     if (maybe_raise_dialog()) {
 	return;
@@ -1283,7 +1282,6 @@ void varinfo_dialog (int varnum, int full)
 	flags = GRETL_DLG_MODAL | GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
     }
 
-    series = var_is_series(datainfo, varnum);
     vset->varnum = varnum;
     vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
 
@@ -1354,32 +1352,8 @@ void varinfo_dialog (int varnum, int full)
        likely?  On this assumption we'll focus that widget */
     gtk_widget_grab_focus(vset->label_entry);
 
-    /* set value? (scalars only) */
-    if (full && !series) {
-	char numstr[32];
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_label_new (_("Value:"));
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	gtk_widget_show(tmp);
-
-	vset->value_entry = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(vset->value_entry), 32);
-	gtk_entry_set_width_chars(GTK_ENTRY(vset->value_entry), 20);
-	sprintf(numstr, "%.16g", Z[varnum][0]);
-	gtk_entry_set_text(GTK_ENTRY(vset->value_entry), numstr);
-	gtk_box_pack_start(GTK_BOX(hbox), 
-			   vset->value_entry, FALSE, FALSE, 5);
-	gtk_widget_show(vset->value_entry); 
-	gtk_entry_set_activates_default(GTK_ENTRY(vset->value_entry), TRUE);
-
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
-	gtk_widget_show(hbox); 
-    }	
-
     /* read/set display name? */
-    if (full && series) {
+    if (full) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new (_("Display name (shown in graphs):"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -1403,7 +1377,7 @@ void varinfo_dialog (int varnum, int full)
     }
 
     /* read/set compaction method? */
-    if (full && series && dataset_is_time_series(datainfo)) {  
+    if (full && dataset_is_time_series(datainfo)) {  
 	int i;
 
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -1429,7 +1403,7 @@ void varinfo_dialog (int varnum, int full)
     }
 
     /* graph line width */
-    if (full && series && dataset_is_time_series(datainfo)) {  
+    if (full && dataset_is_time_series(datainfo)) {  
 	int w;
 
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -1452,8 +1426,8 @@ void varinfo_dialog (int varnum, int full)
     }    
 
     /* mark variable as discrete or not? */
-    if (full && series && (var_is_discrete(datainfo, varnum) ||
-			   gretl_isint(0, datainfo->n - 1, Z[varnum]))) {
+    if (full && (var_is_discrete(datainfo, varnum) ||
+		 gretl_isint(0, datainfo->n - 1, Z[varnum]))) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	vset->check = gtk_check_button_new_with_label(_("Treat this variable "
 							"as discrete"));
@@ -1800,9 +1774,6 @@ static GList *get_dummy_list (int *thisdum)
     int i, j = 0;
 
     for (i=1; i<datainfo->v; i++) {
-	if (var_is_scalar(datainfo, i)) {
-	    continue;
-	}
 	if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
 	    if (i == v) {
@@ -1824,7 +1795,7 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	gchar *vname = gtk_combo_box_get_active_text(box);
 
 	if (vname != NULL) {
-	    int v = varindex(datainfo, vname);
+	    int v = series_index(datainfo, vname);
 
 	    if (v < datainfo->v) {
 		n = gretl_isdummy(0, datainfo->n - 1, Z[v]);
@@ -2487,7 +2458,7 @@ static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
     gchar *vname;
 
     vname = gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
-    *selvar = varindex(datainfo, vname);
+    *selvar = series_index(datainfo, vname);
     g_free(vname);
 }
 
@@ -4625,9 +4596,6 @@ static GList *panelvars_list (void)
     int i, t, ok;
 
     for (i=1; i<datainfo->v; i++) {
-	if (var_is_scalar(datainfo, i)) {
-	    continue;
-	}
 	ok = 1;
 	for (t=datainfo->t1; t<=datainfo->t2; t++) {
 	    if (na(Z[i][t]) || Z[i][t] < 0) {
@@ -4652,7 +4620,7 @@ static gboolean update_panel_var (GtkWidget *box, DATAINFO *dwinfo)
 {
     gchar *vname = gtk_combo_box_get_active_text(GTK_COMBO_BOX(box));
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(box), "index"));
-    int v = varindex(datainfo, vname);
+    int v = series_index(datainfo, vname);
 
     /* note: borrowing t1, t2 here to record index var IDs ! */
 

@@ -25,7 +25,6 @@
 #include "gretl_scalar.h"
 
 #define GENDEBUG 0
-#define NEWSCALARS 0 /* scalars not part of Z array */
 
 /* operators, types, punctuation */
 

@@ -122,11 +122,6 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
     int t, m = 0;
     double xx;
 
-    if (var_is_scalar(pdinfo, i)) {
-	px[0] = Z[i][0];
-	return 1;
-    }
-    
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xx = Z[i][t];
 	if (na(xx)) {
@@ -874,7 +869,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 	return 1;
     }
 
-    pd = gretl_int_from_string(pdstr, (const double **) Z, pdinfo, &err);
+    pd = gretl_int_from_string(pdstr, &err);
     if (err) {
 	return err;
     }
@@ -1013,8 +1008,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
  * Returns: double value.
  */
 
-double gretl_double_from_string (const char *s, const double **Z,
-				 const DATAINFO *pdinfo, int *err)
+double gretl_double_from_string (const char *s, int *err)
 {
     char *test;
     double x;
@@ -1038,23 +1032,12 @@ double gretl_double_from_string (const char *s, const double **Z,
 	return x;
     }
 
-    x = NADBL;
-
     if (gretl_is_scalar(s)) {
 	x = gretl_scalar_get_value(s);
-    } else if (Z == NULL || pdinfo == NULL) {
-	*err = E_DATA;
     } else {
-	int v = varindex(pdinfo, s);
-
-	if (v == pdinfo->v) {
-	    *err = E_UNKVAR;
-	} else if (var_is_series(pdinfo, v)) {
-	    *err = E_TYPES;
-	} else {
-	    x = Z[v][0];
-	} 
-    }
+	*err = E_DATA;
+	x = NADBL;
+    } 
 
     return x;    
 }
@@ -1062,8 +1045,6 @@ double gretl_double_from_string (const char *s, const double **Z,
 /**
  * gretl_int_from_string:
  * @s: string to examine.
- * @Z: data array.
- * @pdinfo: data information struct.
  * @err: location to receive error code.
  * 
  * If @s is a valid string representation of an integer,
@@ -1074,8 +1055,7 @@ double gretl_double_from_string (const char *s, const double **Z,
  * Returns: integer value.
  */
 
-int gretl_int_from_string (const char *s, const double **Z, 
-			   const DATAINFO *pdinfo, int *err)
+int gretl_int_from_string (const char *s, int *err)
 {
     char *test;
     double x;
@@ -1107,24 +1087,9 @@ int gretl_int_from_string (const char *s, const double **Z,
 	} else {
 	    n = (int) x;
 	}	
-    } else if (Z == NULL || pdinfo == NULL) {
-	*err = E_DATA;
     } else {
-	int v = varindex(pdinfo, s);
-
-	if (v >= pdinfo->v) {
-	    *err = E_UNKVAR;
-	} else if (var_is_series(pdinfo, v)) {
-	    *err = E_TYPES;
-	} else {
-	    x = Z[v][0];
-	    if (na(x)) {
-		*err = E_MISSDATA;
-	    } else {
-		n = (int) x;
-	    }
-	} 
-    }
+	*err = E_DATA;
+    } 
 
     return n;    
 }
@@ -1442,11 +1407,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
 double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 {
-    if (var_is_series(pdinfo, i)) {
-	return Z[i][pdinfo->t1];
-    } else {
-	return Z[i][0];
-    }	
+    return Z[i][pdinfo->t1];
 }
 
 #ifndef WIN32

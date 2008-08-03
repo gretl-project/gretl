@@ -1340,11 +1340,7 @@ int write_data (const char *fname, int *list,
 	}
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
-	    if (var_is_series(pdinfo, v)) {
-		pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
-	    } else {
-		pmax[i-1] = GRETL_SCALAR_DIGITS;
-	    }
+	    pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
 	}	
     }
 
@@ -1363,13 +1359,9 @@ int write_data (const char *fname, int *list,
 		if (na(Z[v][t])) {
 		    fprintf(fp, "-999 ");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.12g ", 
-			    (var_is_series(pdinfo, v))? 
-			    Z[v][t] : Z[v][0]);
+		    fprintf(fp, "%.12g ", Z[v][t]);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], 
-			    (var_is_series(pdinfo, v))? 
-			    Z[v][t] : Z[v][0]);
+		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]);
 		}
 	    }
 	    fputc('\n', fp);
@@ -1425,7 +1417,7 @@ int write_data (const char *fname, int *list,
 	    }
 	    for (i=1; i<=l0; i++) { 
 		v = list[i];
-		xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
+		xx = Z[v][t];
 		if (na(xx)) {
 		    fprintf(fp, "NA");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -1450,9 +1442,7 @@ int write_data (const char *fname, int *list,
 		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.12g ", Z[v][t]);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], 
-			    (var_is_series(pdinfo, v))? 
-			    Z[v][t] : Z[v][0]);
+		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]); 
 		}
 	    }
 	    fputc('\n', fp);
@@ -1479,7 +1469,7 @@ int write_data (const char *fname, int *list,
 
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		v = list[i];
-		xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
+		xx = Z[v][t];
 		if (na(xx)) {
 		    fprintf(fp, "-9999.99");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -1520,9 +1510,7 @@ int write_data (const char *fname, int *list,
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.12g ", Z[v][t]);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], 
-			    (var_is_series(pdinfo, v))? 
-			    Z[v][t] : Z[v][0]);
+		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]);
 		}
 	    }
 	    fputc('\n', fp);
@@ -1664,7 +1652,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 	    sprintf(gretl_errmsg, _("Bad data label in %s"), lblfile); 
             break;
         }
-	v = varindex(pdinfo, varname);
+	v = series_index(pdinfo, varname);
 	if (v < pdinfo->v) {
 	    p = line + strlen(varname);
 	    p += strspn(p, " \t");
@@ -2083,14 +2071,9 @@ static int count_new_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo,
 	    addvars = -1;
 	} else {
 	    for (j=1; j<pdinfo->v; j++) {
+		/* FIXME collision with scalar, matrix names */
 		if (!strcmp(newname, pdinfo->varname[j])) {
-		    if (var_is_scalar(pdinfo, j)) {
-			addvars = -1;
-			merge_error("can't replace scalar with series\n", prn);
-		    } else {
-			addvars--;
-		    }
-		    break;
+		    addvars--;
 		}
 	    }
 	}
@@ -2204,7 +2187,7 @@ static int panel_append_special (int addvars,
     tsdata = ((opt & OPT_T) || addinfo->n != n);
 
     for (i=1; i<addinfo->v && !err; i++) {
-	int v = varindex(pdinfo, addinfo->varname[i]);
+	int v = series_index(pdinfo, addinfo->varname[i]);
 
 	if (v >= k) {
 	    /* a new variable */
@@ -2377,10 +2360,6 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<pdinfo->v && !err; i++) {
 	    double *x;
 
-	    if (var_is_scalar(pdinfo, i)) {
-		continue;
-	    }
-
 	    x = realloc((*pZ)[i], new_n * sizeof *x);
 	    if (x == NULL) {
 		err = 1;
@@ -2419,7 +2398,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	}
 
 	for (i=1; i<addinfo->v && !err; i++) {
-	    int v = varindex(pdinfo, addinfo->varname[i]);
+	    int v = series_index(pdinfo, addinfo->varname[i]);
 	    int newvar = 0;
 
 	    if (v >= k) {
@@ -3231,13 +3210,6 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
     int k = pdinfo->n + 1;
     int T = pdinfo->v - 1;
     int i, t;
-
-    for (i=1; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    strcpy(gretl_errmsg, _("Dataset contains scalars, can't transpose"));
-	    return E_DATA;
-	}
-    }
 
     tinfo = create_new_dataset(&tZ, k, T, 0);
     if (tinfo == NULL) {

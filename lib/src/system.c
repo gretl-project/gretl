@@ -1331,7 +1331,7 @@ static int sys_check_lists (equation_system *sys, DATAINFO *pdinfo)
 	lag = pdinfo->varinfo[vj]->lag;
 	if (lag > 0) {
 	    vname = pdinfo->varinfo[vj]->parent;
-	    src = varindex(pdinfo, vname);
+	    src = series_index(pdinfo, vname);
 	    if (in_gretl_list(sys->ylist, src)) {
 		err = add_predet_to_sys(sys, pdinfo, vj, src, lag);
 		gretl_list_delete_at_pos(xplist, j--);
@@ -1925,7 +1925,7 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 	    /* left-hand side variable */
 	    *err = extract_varname(vname, p, &len);
 	    if (!*err) {
-		v = varindex(pdinfo, vname);
+		v = series_index(pdinfo, vname);
 		if (v == pdinfo->v) {
 		    *err = E_UNKVAR;
 		} else {
@@ -1954,7 +1954,7 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 		*err = E_PARSE;
 	    }
 	    if (!*err) {
-		v = varindex(pdinfo, vname);
+		v = series_index(pdinfo, vname);
 		if (v == pdinfo->v) {
 		    *err = E_UNKVAR;
 		} else {
@@ -2013,7 +2013,7 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 	p += strspn(p, " ");
 	if (i == 0) {
 	    extract_varname(vname, p, &len);
-	    ident->depvar = varindex(pdinfo, vname);
+	    ident->depvar = series_index(pdinfo, vname);
 	    p = strchr(p, '=') + 1;
 	    i++;
 	} else if (*p == '+' || *p == '-') {
@@ -2021,7 +2021,7 @@ parse_identity (const char *str, double ***pZ, DATAINFO *pdinfo, int *err)
 	    p++;
 	} else {
 	    extract_varname(vname, p, &len);
-	    v = varindex(pdinfo, vname);
+	    v = series_index(pdinfo, vname);
 	    p += len;
 	    if (*p == '(') {
 		lag = strtol(p + 1, &test, 10);

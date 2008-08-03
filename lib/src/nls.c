@@ -61,6 +61,7 @@ struct parm_ {
 
 #define scalar_param(s,i) (s->params[i].type == GRETL_TYPE_DOUBLE)
 #define matrix_deriv(s,i) (s->params[i].dmat != NULL)
+#define scalar_deriv(s,i) (gretl_is_scalar(s->params[i].dname))
 
 /* file-scope global variables */
 
@@ -462,18 +463,13 @@ check_param_name (const char *name, const DATAINFO *pdinfo, int *pv)
 	    return E_DATATYPE;
 	}
     } else {
-	/* FIXME scalar */
-	int v = varindex(pdinfo, name);
+	int v = series_index(pdinfo, name);
 
-	if (v == 0) {
-	    return E_DATA;
-	} else if (v == pdinfo->v) {
-	    return E_UNKVAR;
-	} else if (!var_is_scalar(pdinfo, v)) {
+	if (v < pdinfo->v) {
 	    return E_DATATYPE;
 	} else {
-	    *pv = v;
-	}
+	    return E_UNKVAR;
+	} 
     }
 
     return 0;
@@ -489,30 +485,16 @@ static int
 maybe_add_param_to_spec (nlspec *s, const char *word, 
 			 const double **Z, const DATAINFO *pdinfo)
 {
-    int i, v = 0;
-    int err = 0;
+    int i, err = 0;
 
 #if NLS_DEBUG
     fprintf(stderr, "maybe_add_param: looking at '%s'\n", word);
 #endif
 
-    if (function_from_string(word) || const_lookup(word)) {
-	return 0;
-    }
+    /* FIXME ? ref back to CVS? */
 
-    if (gretl_is_scalar(word)) {
-	; /* should be OK */
-    } else {
-	v = varindex(pdinfo, word);
-	if (v < pdinfo->v) {
-	    if (var_is_series(pdinfo, v)) {
-		/* only scalars are wanted here */
-		return 0;
-	    }
-	} else {
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), word);
-	    return E_UNKVAR;
-	}
+    if (!gretl_is_scalar(word)) {
+	return 0; /* ?? */
     }
 
     /* if this term is already present in the spec, skip it */
@@ -526,7 +508,7 @@ maybe_add_param_to_spec (nlspec *s, const char *word,
     fprintf(stderr, "maybe_add_param: adding '%s'\n", word);
 #endif
 
-    err = nlspec_push_param(s, word, v, Z, NULL);
+    err = nlspec_push_param(s, word, 0, Z, NULL);
 
     return err;
 }
@@ -630,8 +612,6 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
     return err;
 }
 
-#define NEW_SCALARS 0
-
 /**
  * nlspec_add_param_list:
  * @spec: nls specification.
@@ -655,30 +635,12 @@ int nlspec_add_param_list (nlspec *spec, int np, double *vals,
 	return E_DATA;
     }
 
-    /* FIXME scalar */
-
-#if NEW_SCALARS
     for (i=0; i<np && !err; i++) {
 	err = gretl_scalar_add(names[i], vals[i]);
 	if (!err) {
 	    err = nlspec_push_param(spec, names[i], 0, NULL, NULL);
 	}
     }
-#else
-    if (1) {
-	/* old-style, for now */
-	int v = pdinfo->v;
-
-	err = dataset_add_scalars(np, pZ, pdinfo); 
-	for (i=0; i<np && !err; i++) {
-	    (*pZ)[v][0] = vals[i];
-	    strcpy(pdinfo->varname[v], names[i]);
-	    err = nlspec_push_param(spec, pdinfo->varname[v], v, 
-				    (const double **) *pZ, NULL);
-	    v++;
-	}
-    }
-#endif
 
     if (err) {
 	nlspec_destroy_arrays(spec);
@@ -1031,7 +993,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 		    gi = *(++G) + offset;
 		}
 	    }
-	} else if (gretl_is_scalar(spec->params[j].dname)) {
+	} else if (scalar_deriv(spec, j)) {
 	    /* transcribe from scalar var to array g */
 	    x = gretl_scalar_get_value(spec->params[j].dname);
 	    for (t=0; t<T; t++) {
@@ -1046,14 +1008,13 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 		}
 	    }	    
 	} else {
-	    /* derivative is scalar or series */
-	    int s, ser, v = spec->params[j].dnum;
+	    /* derivative is series */
+	    int s, v = spec->params[j].dnum;
 
 	    if (v == 0) {
 		/* FIXME? */
 		v = spec->params[j].dnum = spec->dinfo->v - 1;
 	    }
-	    ser = var_is_series(spec->dinfo, v);
 
 #if NLS_DEBUG
 	    fprintf(stderr, "param[%d]: dnum = %d, series = %d\n", j, v, ser);
@@ -1061,7 +1022,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 
 	    /* transcribe from dataset to array g */
 	    for (t=0; t<T; t++) {
-		s = (ser)? (t + spec->t1) : 0;
+		s = t + spec->t1;
 		x = (*spec->Z)[v][s];
 		gi[t] = (spec->ci == MLE)? x : -x;
 #if NLS_DEBUG > 1
@@ -1092,7 +1053,6 @@ static int get_mle_gradient (double *b, double *g, int n,
     nlspec *spec = (nlspec *) p;
     gretl_matrix *m;
     double x;
-    int t1, t2;
     int i, j, k, t;
     int err = 0;
 
@@ -1136,24 +1096,25 @@ static int get_mle_gradient (double *b, double *g, int n,
 #endif
 		i++;
 	    }
+	} else if (scalar_deriv(spec, j)) {
+	    x = gretl_scalar_get_value(spec->params[j].dname);
+	    if (na(x)) {
+		fprintf(stderr, "NA in gradient calculation\n");
+		err = 1;
+	    } else {
+		g[i] = x;
+	    }
 	} else {
-	    /* derivative may be series or scalar */
+	    /* derivative must be series */
 	    int v = spec->params[j].dnum;
 
 #if ML_DEBUG > 1
 	    fprintf(stderr, "param[%d], dnum = %d\n", j, v);
 #endif
 
-	    if (var_is_series(spec->dinfo, v)) {
-		t1 = spec->t1;
-		t2 = spec->t2;
-	    } else {
-		t1 = t2 = 0;
-	    }
-
 	    g[i] = 0.0;
 
-	    for (t=t1; t<=t2; t++) {
+	    for (t=spec->t1; t<=spec->t2; t++) {
 		x = (*spec->Z)[v][t];
 #if ML_DEBUG > 1
 		fprintf(stderr, "s->Z[%d][%d] = %g\n", v, t, x);
@@ -1377,15 +1338,16 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 		    }
 		    j++;
 		}
+	    } else if (scalar_deriv(spec, i)) {
+		x = gretl_scalar_get_value(spec->params[i].dname);
+		for (t=0; t<T; t++) {
+		    gretl_matrix_set(G, j, t, x);
+		}
+		j++;
 	    } else {
 		v = spec->params[i].dnum;
-		if (var_is_scalar(spec->dinfo, v)) {
-		    x = (*spec->Z)[v][0];
-		}
 		for (t=0; t<T; t++) {
-		    if (var_is_series(spec->dinfo, v)) {
-			x = (*spec->Z)[v][t + spec->t1];
-		    }
+		    x = (*spec->Z)[v][t + spec->t1];
 		    gretl_matrix_set(G, j, t, x);
 		}
 		j++;
@@ -2515,7 +2477,7 @@ nlspec_set_regression_function (nlspec *spec, const char *fnstr,
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), fnstr);
 	err =  E_PARSE;
     } else if (spec->ci == NLS) {
-	spec->dv = varindex(pdinfo, vname);
+	spec->dv = series_index(pdinfo, vname);
 	if (spec->dv == pdinfo->v) {
 	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
 	    err = E_UNKVAR;

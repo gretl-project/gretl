@@ -88,11 +88,9 @@ int gretl_compare_ints (const void *a, const void *b);
 
 void printlist (const int *list, const char *msg);
 
-double gretl_double_from_string (const char *s, const double **Z, 
-				 const DATAINFO *pdinfo, int *err);
+double gretl_double_from_string (const char *s, int *err);
 
-int gretl_int_from_string (const char *s, const double **Z, 
-			   const DATAINFO *pdinfo, int *err);
+int gretl_int_from_string (const char *s, int *err);
 
 int positive_int_from_string (const char *s);
 

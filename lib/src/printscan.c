@@ -111,22 +111,20 @@ static double printf_get_scalar (char *s, double ***pZ,
 #endif
 
     if (numeric_string(s)) {
-	return atof(s);
-    }
-
-    if (gretl_is_scalar(s)) {
-	return gretl_scalar_get_value(s);
-    }
-
-    v = varindex(pdinfo, s);
-
-    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
-	char genstr[32];
-
-	sprintf(genstr, "%s[%d]", s, t + 1);
-	x = generate_scalar(genstr, pZ, pdinfo, err);
+	x = atof(s);
+    } else if (gretl_is_scalar(s)) {
+	x = gretl_scalar_get_value(s);
     } else {
-	x = generate_scalar(s, pZ, pdinfo, err);
+	v = series_index(pdinfo, s);
+
+	if (v < pdinfo->v) {
+	    char genstr[32];
+
+	    sprintf(genstr, "%s[%d]", s, t + 1);
+	    x = generate_scalar(genstr, pZ, pdinfo, err);
+	} else {
+	    x = generate_scalar(s, pZ, pdinfo, err);
+	}
     }
 
 #if PSDEBUG
@@ -607,16 +605,9 @@ sscanf_target_var (const char *vname, DATAINFO *pdinfo, int *err)
     if (gretl_is_scalar(vname)) {
 	return 0;
     } else {
-	int v = varindex(pdinfo, vname);
-
-	if (v == pdinfo->v) {
-	    *err = E_UNKVAR;
-	} else if (!var_is_scalar(pdinfo, v)) {
-	    strcpy(gretl_errmsg, _("sscanf: numerical target must be scalar"));
-	    *err = E_DATA;
-	}
-
-	return v;
+	strcpy(gretl_errmsg, _("sscanf: numerical target must be scalar"));
+	*err = E_DATA;
+	return 0;
     }
 }
 

@@ -29,7 +29,6 @@
 # define GDEBUG 0
 #endif
 
-#if NEWSCALARS
 # define settings_obs_value(p) (p->lh.obs >= 0)
 
 static void write_scalar_message (const parser *p, int oldv, PRN *prn)
@@ -48,28 +47,6 @@ static void write_scalar_message (const parser *p, int oldv, PRN *prn)
 	pprintf(prn, " = %g", x);
     }
 }
-
-#else
-# define settings_obs_value(p) (var_is_series(p->dinfo, p->lh.v))
-
-static void write_scalar_message (const parser *p, int oldv, PRN *prn)
-{
-    int t = lh_obs(p);
-    double x = (*p->Z)[p->lh.v][t];
-
-    if (p->lh.v < oldv) {
-	pprintf(prn, _("Replaced scalar %s"), p->lh.name);
-    } else {
-	pprintf(prn, _("Generated scalar %s"), p->lh.name);
-    }
-    if (na(x)) {
-	pputs(prn, " = NA");
-    } else {
-	pprintf(prn, " = %g", x);
-    }
-}
-
-#endif
 
 static void gen_write_message (const parser *p, int oldv, PRN *prn)
 {
@@ -159,7 +136,7 @@ static int maybe_record_lag_info (parser *p)
     if (sscanf(s, "%15[^ ()](%d)", vname, &lag) == 2) {
 	s = strchr(s, ')');
 	if (s != NULL && string_is_blank(s + 1)) {
-	    int pv = varindex(p->dinfo, vname);
+	    int pv = series_index(p->dinfo, vname);
 
 	    if (pv < p->dinfo->v) {
 		strcpy(p->dinfo->varinfo[p->lh.v]->parent, 
@@ -392,7 +369,7 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 #define GEN_LEVEL_DEBUG 0
 
 /**
- * varindex:
+ * series_index:
  * @pdinfo: data information struct.
  * @varname: name of variable to test.
  *
@@ -401,7 +378,7 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
  * that name.
  */
 
-int varindex (const DATAINFO *pdinfo, const char *varname)
+int series_index (const DATAINFO *pdinfo, const char *varname)
 {
     const char *s = varname;
     int i, fd;
@@ -436,7 +413,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     }
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "varindex for '%s', fd = %d: got %d (pdinfo->v = %d)\n", 
+    fprintf(stderr, "series_index for '%s', fd = %d: got %d (pdinfo->v = %d)\n", 
 	    s, fd, ret, pdinfo->v);
 #endif 
 
@@ -448,7 +425,7 @@ int gretl_is_series (const char *name, const DATAINFO *pdinfo)
     if (pdinfo == NULL) {
 	return 0;
     } else {
-	int v = varindex(pdinfo, name);
+	int v = series_index(pdinfo, name);
 
 	return (v >= 0 && v < pdinfo->v);
     }
@@ -522,7 +499,7 @@ static int gen_special (const char *s, const char *line,
 
     if (!err && write_label) {
 	strcpy(p->lh.name, s);
-	p->lh.v = varindex(pdinfo, s);
+	p->lh.v = series_index(pdinfo, s);
 	p->Z = pZ;
 	p->dinfo = pdinfo;
 	p->targ = VEC;

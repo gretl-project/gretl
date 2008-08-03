@@ -172,13 +172,11 @@ static int add_single_obs (double ***pZ, DATAINFO *pdinfo)
     int i, err = 0;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    x = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof *x);
-	    if (x != NULL) {
-		(*pZ)[i] = x;
-	    } else {
-		return 1;
-	    }
+	x = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof *x);
+	if (x != NULL) {
+	    (*pZ)[i] = x;
+	} else {
+	    return 1;
 	}
     }
 
@@ -187,9 +185,7 @@ static int add_single_obs (double ***pZ, DATAINFO *pdinfo)
     (*pZ)[0][pdinfo->n - 1] = 1.0;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    (*pZ)[i][pdinfo->n - 1] = NADBL;
-	}
+	(*pZ)[i][pdinfo->n - 1] = NADBL;
     }
 
     if (pdinfo->S != NULL) {

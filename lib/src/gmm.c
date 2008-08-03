@@ -116,7 +116,7 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 			int rhs, int *err)
 {
     int *list = NULL;
-    int v = varindex(pdinfo, name);
+    int v = series_index(pdinfo, name);
 
 #if GMM_DEBUG
     fprintf(stderr, "oc_get_type: looking at '%s' (v = %d, pdinfo->v = %d)\n", 
@@ -125,12 +125,7 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 
     /* try for a series first */
     if (v >= 0 && v < pdinfo->v) {
-	if (var_is_scalar(pdinfo, v)) {
-	    *err = E_TYPES;
-	    return GRETL_TYPE_NONE;
-	} else {
-	    return GRETL_TYPE_SERIES;
-	}
+	return GRETL_TYPE_SERIES;
     }
 
     /* then a matrix */
@@ -147,10 +142,7 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 	    if (list[j] < 0 || list[j] >= pdinfo->v) {
 		*err = E_DATA;
 		return GRETL_TYPE_NONE;
-	    } else if (var_is_scalar(pdinfo, list[j])) {
-		*err = E_TYPES;
-		return GRETL_TYPE_NONE;
-	    }
+	    } 
 	}
 	return GRETL_TYPE_LIST;
     }
@@ -432,7 +424,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    }
 	}	
     } else if (ltype == GRETL_TYPE_SERIES) {
-	v = varindex(pdinfo, lname);
+	v = series_index(pdinfo, lname);
 	e = gretl_column_vector_alloc(s->nobs);
 	if (e == NULL) {
 	    err = E_ALLOC;
@@ -488,7 +480,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	}
     } else {
 	/* name of single series */
-	v = varindex(pdinfo, rname);
+	v = series_index(pdinfo, rname);
 	k = 1;
 	M = gretl_column_vector_alloc(s->nobs);
 	if (M == NULL) {

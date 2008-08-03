@@ -160,7 +160,7 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
     int pv = 0, ret = 0;
 
     if (pdinfo->varinfo[v]->transform == LAGS) {
-	pv = varindex(pdinfo, pdinfo->varinfo[v]->parent);
+	pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
 	pv = (pv < pdinfo->v)? pv : 0;
     }
 
@@ -180,14 +180,14 @@ int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
     int i = 0, ret = 0;
 
     if (pdinfo->varinfo[v]->transform == DUMMIFY) {
-	pv = varindex(pdinfo, pdinfo->varinfo[v]->parent);
+	pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
     } else if (!strncmp(pdinfo->varname[v], "dt_", 3)) {
 	if (sscanf(pdinfo->varname[v] + 3, "%d", &i) && i > 1) {
-	    pv = varindex(pdinfo, "dt_1");
+	    pv = series_index(pdinfo, "dt_1");
 	}
     } else if (!strncmp(pdinfo->varname[v], "du_", 3)) {
 	if (sscanf(pdinfo->varname[v] + 3, "%d", &i) && i > 1) {
-	    pv = varindex(pdinfo, "du_1");
+	    pv = series_index(pdinfo, "du_1");
 	}
     }	
 
@@ -328,7 +328,7 @@ static int get_log (int v, double *logvec, const double **Z,
     int t, err = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2 && !err; t++) {
-	xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
+	xx = Z[v][t];
 	if (na(xx) || xx <= 0.0) {
 	    logvec[t] = NADBL;
 	} else {
@@ -390,8 +390,8 @@ static int get_xpx (int vi, int vj, double *xvec, const double **Z,
     int t;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xit = (var_is_series(pdinfo, vi))? Z[vi][t] : Z[vi][0];
-	xjt = (var_is_series(pdinfo, vj))? Z[vj][t] : Z[vj][0];
+	xit = Z[vi][t];
+	xjt = Z[vj][t];
 	if (na(xit) || na(xjt)) {
 	    xvec[t] = NADBL;
 	} else {
@@ -411,7 +411,7 @@ static int get_inverse (int v, double *xvec, const double **Z,
     int t;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xt = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
+	xt = Z[v][t];
 	if (na(xt) || xt == 0.0) {
 	    xvec[t] = NADBL;
 	} else {
@@ -639,7 +639,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	} else {
 	    make_transform_varname(vname, srcname, ci, aux, len);
 	}
-	vno = varindex(pdinfo, vname);
+	vno = series_index(pdinfo, vname);
 
 	err = check_add_transform(vno, vx, vname, label, pdinfo, pZ, origv);
 	if (err != VAR_EXISTS_OK && err != VAR_ADDED_OK) {
@@ -685,10 +685,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 {
     int lno;
 
-    if (var_is_scalar(pdinfo, v)) {
-	sprintf(gretl_errmsg, _("variable %s is a scalar"), pdinfo->varname[v]);
-	lno = -1;
-    } else if (lag > pdinfo->n || -lag > pdinfo->n) {
+    if (lag > pdinfo->n || -lag > pdinfo->n) {
 	sprintf(gretl_errmsg, _("Invalid lag order %d"), lag);
 	lno = -1;
     } else if (lag == 0) {
@@ -815,10 +812,6 @@ int invgenr (int v, double ***pZ, DATAINFO *pdinfo)
 
 int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
 {
-    if (var_is_scalar(pdinfo, v)) {
-	return -1;
-    }
-
     if (ci != DIFF && ci != LDIFF && ci != SDIFF) {
 	return -1;
     }
@@ -1010,24 +1003,19 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
 	ok = 1;
 
 	if (f == LOGS || f == SQUARE) {
-	    if (v == 0 || var_is_scalar(pdinfo, v)) {
+	    if (v == 0) { /* FIXME?? */
 		ok = 1; 
 	    }
 	    if (gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {
 		ok = 0;
 	    }
 	} else if (f == LAGS) {
-	    if (v == 0 || var_is_scalar(pdinfo, v)) {
-		ok = 0;
-	    }
-	} else if (f == DIFF || f == LDIFF || f == SDIFF || 
-		   f == ORTHDEV) {
-	    if (var_is_scalar(pdinfo, v)) {
+	    if (v == 0) {
 		ok = 0;
 	    }
 	} else if (f == DUMMIFY) {
 	    ok = 0; /* reverse burden of proof */
-	    if (v > 0 && var_is_series(pdinfo, v)) {
+	    if (v > 0) {
 		if (var_is_discrete(pdinfo, v)) {
 		    /* pre-approved */
 		    ok = 1;
@@ -1055,9 +1043,9 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
 	    for (i=0; i<longnames && !herr; i++) {
 		for (j=i+1; j<longnames && !herr; j++) {
 		    if (!strncmp(S[i], S[j], maxc)) {
-			v = varindex(pdinfo, S[i]);
+			v = series_index(pdinfo, S[i]);
 			herr = make_mangled_name(v, S[i], maxc);
-			v = varindex(pdinfo, S[j]);
+			v = series_index(pdinfo, S[j]);
 			herr += make_mangled_name(v, S[j], maxc);
 		    }
 		}
@@ -1122,7 +1110,7 @@ static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (v > 0 && var_is_series(pdinfo, v)) {
+	if (v > 0) {
 	    nl += order;
 	}
     }
@@ -1568,10 +1556,9 @@ int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt)
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (v == 0 || var_is_scalar(pdinfo, v)) {
-	    continue;
+	if (v > 0) {
+	    set_var_discrete(pdinfo, v, disc);
 	}
-	set_var_discrete(pdinfo, v, disc);
     }
 
     return err;
@@ -1582,7 +1569,7 @@ int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
     int idx, t, v = pdinfo->v;
     double x;
 
-    idx = varindex(pdinfo, (square)? "timesq" : "time");
+    idx = series_index(pdinfo, (square)? "timesq" : "time");
 
     if (idx < v) {
 	return idx;

@@ -295,30 +295,12 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 
 static int resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
 {
-    int newv = fullinfo->v;
-    double **newZ = NULL;
-    int drop = 0;
+    int drop = pdinfo->v - fullinfo->v;
     int i, j, err = 0;
 
-    /* carry back values of pre-existing scalars */
-
-    for (i=1; i<fullinfo->v && i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    fullZ[i][0] = (*RZ)[i][0];
-	} 
-    }
-
-    /* figure how many scalars and how many series have been added */
-
-    for (i=fullinfo->v; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    newv++;
-	} else {
-	    drop++;
-	}
-    }
-
     /* if new series have been added, drop them all */
+
+    /* FIXME efficiency */
 
     if (drop > 0) {
 	int *list = gretl_list_new(drop);
@@ -328,9 +310,7 @@ static int resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
 	} else {
 	    j = 1;
 	    for (i=fullinfo->v; i<pdinfo->v; i++) {
-		if (var_is_series(pdinfo, i)) {
-		    list[j++] = i;
-		}
+		list[j++] = i;
 	    }	    
 	}
 	
@@ -338,34 +318,6 @@ static int resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
 	    err = dataset_drop_listed_variables(list, RZ, pdinfo, NULL, NULL);
 	    free(list);
 	}
-    }
-
-    /* if new scalars have been added, add them to fullZ */
-
-    if (!err && newv > fullinfo->v) {
-	newZ = realloc(fullZ, newv * sizeof *fullZ);
-	if (newZ == NULL) {
-	    newv = fullinfo->v;
-	    err = E_ALLOC;
-	} else {
-	    fullZ = newZ;
-	    j = fullinfo->v;
-	    for (i=fullinfo->v; i<pdinfo->v && !err; i++) {
-		if (var_is_scalar(pdinfo, i)) {
-		    fullZ[j] = malloc(sizeof **newZ);
-		    if (fullZ[j] == NULL) {
-			err = E_ALLOC;
-		    } else {
-			fullZ[j][0] = (*RZ)[i][0];
-			j++;
-		    }
-		}
-	    }
-	}
-    }
-
-    if (!err) {
-	fullinfo->v = newv;
     }
 
     return err;
@@ -387,16 +339,12 @@ update_full_data_values (const double **subZ, const DATAINFO *pdinfo)
 
     for (i=1; i<fullinfo->v && i<pdinfo->v; i++) {
 	s = 0;
-	if (var_is_scalar(pdinfo, i)) {
-	    fullZ[i][0] = subZ[i][0];
-	} else {
-	    for (t=0; t<fullinfo->n; t++) {
-		if (pdinfo->submask[t] == 1) {
-		    fullZ[i][t] = subZ[i][s++];
-		} else if (pdinfo->submask[t] == 'p') {
-		    /* skip panel padding (?) */
-		    s++;
-		}
+	for (t=0; t<fullinfo->n; t++) {
+	    if (pdinfo->submask[t] == 1) {
+		fullZ[i][t] = subZ[i][s++];
+	    } else if (pdinfo->submask[t] == 'p') {
+		/* skip panel padding (?) */
+		s++;
 	    }
 	}
     }
@@ -460,15 +408,11 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     fullZ = newZ;
 
     for (i=V0; i<pdinfo->v && !err; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    fullZ[i] = malloc(N * sizeof **newZ);
-	} else {
 #if SUBDEBUG
-	    fprintf(stderr, " new var %d (%s) is a scalar\n", i, 
-		    pdinfo->varname[i]);
+	fprintf(stderr, " new var %d (%s) is a scalar\n", i, 
+		pdinfo->varname[i]);
 #endif
-	    fullZ[i] = malloc(sizeof **newZ);
-	}
+	fullZ[i] = malloc(sizeof **newZ);
 	if (fullZ[i] == NULL) {
 	    err = E_ALLOC;
 	}
@@ -484,13 +428,9 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 #endif
 
     for (i=V0; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    fullZ[i][0] = Z[i][0]; 
-	} else {
-	    s = 0;
-	    for (t=0; t<N; t++) {
-		fullZ[i][t] = (pdinfo->submask[t])? Z[i][s++] : NADBL;
-	    }
+	s = 0;
+	for (t=0; t<N; t++) {
+	    fullZ[i][t] = (pdinfo->submask[t])? Z[i][s++] : NADBL;
 	}
     }
 
@@ -652,7 +592,7 @@ make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    mask[t] = 1;
 	    for (i=1; i<=list[0]; i++) {
 		vi = list[i];
-		if (var_is_series(pdinfo, vi) && na(Z[vi][t])) {
+		if (na(Z[vi][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -663,7 +603,7 @@ make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
 	for (t=0; t<pdinfo->n; t++) {
 	    mask[t] = 1;
 	    for (i=1; i<pdinfo->v; i++) {
-		if (var_is_series(pdinfo, i) && na(Z[i][t])) {
+		if (na(Z[i][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -720,7 +660,7 @@ static int mask_from_dummy (const char *s, const double **Z, const DATAINFO *pdi
     int dnum, err = 0;
 
     sscanf(s, "%15s", dname);
-    dnum = varindex(pdinfo, dname);
+    dnum = series_index(pdinfo, dname);
 
     if (dnum == pdinfo->v) {
 	sprintf(gretl_errmsg, _("Variable '%s' not defined"), dname);
@@ -939,20 +879,16 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 
     /* copy data values */
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    st = 0;
-	    for (t=0; t<pdinfo->n; t++) {
-		if (mask == NULL) {
-		    subZ[i][st++] = Z[i][t];
-		} else if (mask[t] == 1) {
-		    subZ[i][st++] = Z[i][t];
-		} else if (mask[t] == 'p') {
-		    /* panel padding */
-		    subZ[i][st++] = NADBL;
-		}
+	st = 0;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (mask == NULL) {
+		subZ[i][st++] = Z[i][t];
+	    } else if (mask[t] == 1) {
+		subZ[i][st++] = Z[i][t];
+	    } else if (mask[t] == 'p') {
+		/* panel padding */
+		subZ[i][st++] = NADBL;
 	    }
-	} else {
-	    subZ[i][0] = Z[i][0];
 	}
     }
 
@@ -1347,20 +1283,14 @@ static int panel_round (const DATAINFO *pdinfo, int t, int code)
 static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
 			 int *err)
 {
-    int k = 0;
+    int k;
 
     if (integer_string(s)) {
 	k = atoi(s);
     } else if (gretl_is_scalar(s)) {
 	k = gretl_scalar_get_value(s);
     } else {
-	int v = varindex(pdinfo, s);
-
-	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
-	    k = (int) (*pZ)[v][0];
-	} else {
-	    k = (int) generate_scalar(s, pZ, pdinfo, err);
-	}
+	k = (int) generate_scalar(s, pZ, pdinfo, err);
     }
 
     return k;
@@ -1499,7 +1429,7 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_hidden(pdinfo, i) || var_is_scalar(pdinfo, i)) {
+	    if (var_is_hidden(pdinfo, i)) {
 		continue;
 	    }
 	    if (na((*pZ)[i][t])) {

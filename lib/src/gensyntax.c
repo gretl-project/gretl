@@ -69,23 +69,14 @@ static NODE *newref (parser *p, int t)
 #endif
 
     if (n != NULL) {
-	if (t == USCALAR) {
-#if NEWSCALARS
-	    n->t = t;
-	    n->v.str = p->idstr;
-	    n->vnum = NO_VNUM;
-#else
-	    n->vnum = p->idnum;
-	    n->t = NUM;
-	    n->v.xval = (*p->Z)[n->vnum][0];
-#endif
-	} else if (t == USERIES) {
+	if (t == USERIES) {
 	    n->vnum = p->idnum;
 	    n->t = VEC;
 	    n->v.xvec = (*p->Z)[n->vnum];
 	} else {
 	    n->t = t;
-	    if (t == UMAT || t == UOBJ || t == LOOPIDX || t == LIST) {
+	    if (t == USCALAR || t == UMAT || t == UOBJ || 
+		t == LOOPIDX || t == LIST) {
 		n->v.str = p->idstr;
 	    } else {
 		n->v.idnum = p->idnum;

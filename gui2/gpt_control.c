@@ -1713,7 +1713,9 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 
 static int plot_ols_var_ok (const char *vname, int v)
 {
-    int vi = varindex(datainfo, vname);
+    int vi = series_index(datainfo, vname);
+
+    /* FIXME WTF?? */
 
     if (vi <= datainfo->v && !strcmp(datainfo->varname[vi], vname)) {
 	return 1;

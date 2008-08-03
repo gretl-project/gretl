@@ -626,10 +626,11 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 {
-    int i, j, maxlag, p, t, t1, nv;
+    int i, j, maxlag, p, t, t1;
     int v = pdinfo->v, n = pdinfo->n;
     char parmbit[VNAMELEN];
     double *rhot;
+    int err = 0;
 
 #ifdef RHODEBUG
     fprintf(stderr, "rhodiff: param = '%s'\n", param);
@@ -660,19 +661,9 @@ int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 #ifdef RHODEBUG
 	    fprintf(stderr, "rhodiff: parmbit = '%s'\n", parmbit);
 #endif
-	    if (isalpha((unsigned char) parmbit[0])) {
-		if (gretl_is_scalar(parmbit)) {
-		    rhot[p] = gretl_scalar_get_value(parmbit);
-		} else {
-		    nv = varindex(pdinfo, parmbit);
-		    if (nv == v) {
-			free(rhot);
-			return E_UNKVAR;
-		    }
-		    rhot[p] = get_xvalue(nv, (const double **) *pZ, pdinfo);
-		}
-	    } else {
-		rhot[p] = dot_atof(parmbit);
+	    rhot[p] = gretl_double_from_string(parmbit, &err);
+	    if (err) {
+		return err;
 	    }
 	    p++;
 	}

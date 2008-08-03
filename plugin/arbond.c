@@ -2198,7 +2198,7 @@ static int parse_diag_info (const char *s, struct diag_info *d,
 	if (m2 == 0) {
 	    m2 = 99;
 	}
-	v = varindex(pdinfo, vname);
+	v = series_index(pdinfo, vname);
 	if (v == pdinfo->v) {
 	    err = E_UNKVAR;
 	} else if (m1 < 0 || m2 < m1) {

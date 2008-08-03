@@ -115,7 +115,7 @@ const char *genr_get_formula (const GENERATOR *genr);
 
 gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);
 
-int varindex (const DATAINFO *pdinfo, const char *varname);
+int series_index (const DATAINFO *pdinfo, const char *varname);
 
 int extract_varname (char *targ, const char *src, int *len);
 

@@ -304,11 +304,13 @@ static int vnum_from_data_command (const char *s)
 
     if (!strncmp(s, "genr", 4)) {
 	offset = 5;
-    } 
+    }
+
+    /* FIXME scalars */
 
     if (sscanf(s + offset, format, vname)) {
-	v = varindex(datainfo, vname);
-	if (v > datainfo->v - 1) {
+	v = series_index(datainfo, vname);
+	if (v == datainfo->v) {
 	    v = 0;
 	}
     }
