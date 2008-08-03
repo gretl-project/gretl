@@ -48,7 +48,8 @@
 			 n->t == MAT || n->t == EMPTY || \
 			 (n->t == VEC && n->vnum >= 0))
 
-#define uvar_node(n) ((n->t == NUM || n->t == VEC) && n->vnum >= 0)
+#define uscalar_node(n) (n->t == NUM && n->vnum >= 0)
+#define useries_node(n) (n->t == VEC && n->vnum >= 0)
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
 
@@ -839,7 +840,11 @@ static gretl_matrix *matrix_pdist (int t, char d, double *parm,
 static double node_get_scalar (NODE *n, parser *p)
 {
     if (n->t == NUM) {
-	return (n->vnum >= 0)? (*p->Z)[n->vnum][0] : n->v.xval;
+	if (n->vnum >= 0) {
+	    return gretl_scalar_get_value_by_index(n->vnum);
+	} else {
+	    return n->v.xval;
+	}
     } else if (scalar_matrix_node(n)) {
 	return n->v.m->val[0];
     } else {
@@ -2935,9 +2940,9 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	ret->v.xval = NADBL;
 	if (f == F_ISSERIES) {
-	    int v = series_index(p->dinfo, s);
-
-	    ret->v.xval = (v < p->dinfo->v);
+	    ret->v.xval = gretl_is_series(s, p->dinfo);
+	} else if (f == F_ISSCALAR) {
+	    ret->v.xval = gretl_is_scalar(s);
 	} else if (f == F_ISLIST || f == F_LISTLEN) {
 	    int *list = get_list_by_name(s);
 
@@ -2950,8 +2955,9 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    ret->v.xval = string_is_defined(s);
 	} else if (f == F_ISNULL) {
 	    ret->v.xval = 1;
-	    /* FIXME scalar */
-	    if (series_index(p->dinfo, s) < p->dinfo->v) {
+	    if (gretl_is_series(s, p->dinfo)) {
+		ret->v.xval = 0.0;
+	    } else if (gretl_is_scalar(s)) {
 		ret->v.xval = 0.0;
 	    } else if (get_matrix_by_name(s)) {
 		ret->v.xval = 0.0;
@@ -2979,9 +2985,19 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	const char *s = p->dinfo->varname[n->vnum];
+	const char *s = NULL;
 
-	ret->v.str = gretl_func_get_arg_name(s, &p->err);
+	if (n->t == VEC) {
+	    s = p->dinfo->varname[n->vnum];
+	} else if (n->t == NUM) {
+	    s = gretl_scalar_get_name(n->vnum);
+	}
+
+	if (s == NULL) {
+	    p->err = E_DATA;
+	} else {
+	    ret->v.str = gretl_func_get_arg_name(s, &p->err);
+	}
     }
 
     return ret;
@@ -3624,12 +3640,13 @@ static NODE *apply_matrix_func (NODE *n, int f, parser *p)
 
 /* node holding a user-defined scalar */
 
-static NODE *uscalar_node (NODE *t, parser *p)
+static NODE *get_uscalar_node (NODE *t, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	ret->v.xval = gretl_scalar_get_value(t->v.str);
+	ret->vnum = gretl_scalar_get_index(t->v.str, &p->err);
     }
 
     return ret;
@@ -3637,7 +3654,7 @@ static NODE *uscalar_node (NODE *t, parser *p)
 
 /* node holding a user-defined matrix */
 
-static NODE *umatrix_node (NODE *t, parser *p)
+static NODE *get_umatrix_node (NODE *t, parser *p)
 {
     NODE *ret = matrix_pointer_node(p);
 
@@ -3869,8 +3886,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* evaluate the function arguments */
 
     for (i=0; i<m && !p->err; i++) {
-	if (uvar_node(r->v.bn.n[i])) {
+	if (useries_node(r->v.bn.n[i])) {
 	    /* let dataset variables through "as is" */
+	    n = r->v.bn.n[i];
+	} else if (uscalar_node(r->v.bn.n[i])) {
+	    /* let predefined scalars through "as is" */
 	    n = r->v.bn.n[i];
 	} else {
 	    n = eval(r->v.bn.n[i], p);
@@ -3890,14 +3910,14 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
 #endif
 
-	if (uvar_node(n)) {
-	    /* FIXME scalar */
-	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->vnum);
+	if (useries_node(n)) {
+	    p->err = push_fn_arg(args, GRETL_TYPE_USERIES, &n->vnum);
+	} else if (uscalar_node(n)) {
+	    p->err = push_fn_arg(args, GRETL_TYPE_USCALAR, &n->vnum);
 	} else if (n->t == U_ADDR) {
 	    NODE *u = n->v.b1.b;
 
 	    if (u->t == NUM) {
-		/* FIXME scalar */
 		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->vnum);
 	    } else if (u->t == VEC) {
 		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->vnum);
@@ -5631,11 +5651,11 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case UMAT:
 	/* user-defined matrix */
-	ret = umatrix_node(t, p);
+	ret = get_umatrix_node(t, p);
 	break;
     case USCALAR:
 	/* user-defined scalar */
-	ret = uscalar_node(t, p);
+	ret = get_uscalar_node(t, p);
 	break;
     case VSTR:
 	/* string variable */
@@ -5663,6 +5683,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_OBSNUM:
     case F_ISSERIES:
+    case F_ISSCALAR:
     case F_ISLIST:
     case F_ISSTRING:
     case F_ISNULL:
@@ -5738,7 +5759,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BACKTICK:
 	if (l->t == STR) {
 	    ret = single_string_func(l, t->t, p);
-	} else if (t->t == F_ARGNAME && uvar_node(l)) {
+	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {
 	    ret = argname_from_uvar(l, p);
 	} else {
 	    node_type_error(t->t, STR, l, p);
@@ -5886,8 +5907,10 @@ static void printnode (const NODE *t, const parser *p)
 {  
     if (t == NULL) {
 	pputs(p->prn, "NULL"); 
-    } else if (uvar_node(t)) {
+    } else if (useries_node(t)) {
 	pprintf(p->prn, "%s", p->dinfo->varname[t->vnum]);
+    } else if (uscalar_node(t)) {
+	pprintf(p->prn, "%s", gretl_scalar_get_name(t->vnum));
     } else if (t->t == NUM) {
 	if (na(t->v.xval)) {
 	    pputs(p->prn, "NA");
@@ -6150,10 +6173,12 @@ static void process_lhs_substr (parser *p)
 #if EDEBUG
 static void parser_print_result (parser *p, PRN *prn)
 {
-    if (p->targ == NUM || p->targ == VEC) {
+    if (p->targ == VEC) {
 	int list[2] = { 1, p->lh.v };
 
 	printdata(list, NULL, (const double **) *p->Z, p->dinfo, OPT_NONE, prn);
+    } else if (p->targ == NUM) {
+	printdata(NULL, p->lh.name, (const double **) *p->Z, p->dinfo, OPT_NONE, prn);
     } else if (p->targ == MAT) {
 	gretl_matrix_print_to_prn(p->lh.m1, p->lh.name, prn);
     }
@@ -6222,8 +6247,7 @@ static NODE *lhs_copy_node (parser *p)
     n->vnum = NO_VNUM;
 
     if (p->targ == NUM) {
-	/* FIXME scalar */
-	n->v.xval = (*p->Z)[p->lh.v][0];
+	n->v.xval = gretl_scalar_get_value(p->lh.name);
     } else if (p->targ == VEC) {
 	n->v.xvec = (*p->Z)[p->lh.v];
     } else {
@@ -6344,7 +6368,7 @@ static void pre_process (parser *p, int flags)
     const char *s = p->input;
     char test[GENSTRLEN];
     char opstr[3] = {0};
-    int newvar = 1;
+    int v, newvar = 1;
 
     while (isspace(*s)) s++;
 
@@ -6433,32 +6457,27 @@ static void pre_process (parser *p, int flags)
 
     /* find out if the LHS var already exists, and if
        so, what type it is */
-    p->lh.v = series_index(p->dinfo, test);
-    if (p->lh.v < p->dinfo->v) {
+    if ((v = series_index(p->dinfo, test)) < p->dinfo->v) {
+	p->lh.v = v;
 	p->lh.t = VEC;
 	newvar = 0;
-    } else {	
-	/* not a series: try other types? */
-	p->lh.v = 0;
-	p->lh.m0 = get_matrix_by_name(test);
-	if (p->lh.m0 != NULL) {
-	    p->flags |= P_LHMAT;
-	    p->lh.t = MAT;
-	    newvar = 0;
-	} else if (gretl_is_scalar(test)) {
-	    p->flags |= P_LHSCAL;
-	    p->lh.t = NUM;
-	    newvar = 0;
-	} else if (get_list_by_name(test)) {
-	    p->flags |= P_LHLIST;
-	    p->lh.t = LIST;
-	    newvar = 0;
-	} else if (get_string_by_name(test)) {
-	    p->flags |= P_LHSTR;
-	    p->lh.t = STR;
-	    newvar = 0;
-	}	    
-    } 
+    } else if ((p->lh.m0 = get_matrix_by_name(test)) != NULL) {
+	p->flags |= P_LHMAT;
+	p->lh.t = MAT;
+	newvar = 0;
+    } else if (gretl_is_scalar(test)) {
+	p->flags |= P_LHSCAL;
+	p->lh.t = NUM;
+	newvar = 0;
+    } else if (get_list_by_name(test)) {
+	p->flags |= P_LHLIST;
+	p->lh.t = LIST;
+	newvar = 0;
+    } else if (get_string_by_name(test)) {
+	p->flags |= P_LHSTR;
+	p->lh.t = STR;
+	newvar = 0;
+    }	    
 
     /* if pre-existing var, check for const-ness */
     if (!newvar && object_is_const(test)) {
@@ -7140,7 +7159,7 @@ static int save_generated_var (parser *p, PRN *prn)
     if (p->targ == NUM) {
 	/* writing a scalar */
 	if (p->lh.obs >= 0) {
-	    /* it's a specific observation in a series */
+	    /* target is actually a specific observation in a series */
 	    t = p->lh.obs;
 	    if (r->t == NUM) {
 		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
@@ -7275,6 +7294,10 @@ static void parser_reinit (parser *p, double ***pZ,
 	p->flags |= P_SLAVE;
     }
 
+    if (saveflags & P_LHSCAL) {
+	p->flags |= P_LHSCAL;
+    }
+
     p->Z = pZ;
     p->dinfo = dinfo;
     p->prn = prn;
@@ -7295,6 +7318,13 @@ static void parser_reinit (parser *p, double ***pZ,
     /* matrix: check the LH name again */
     if (p->targ == MAT && *p->lh.name != '\0') {
 	p->lh.m0 = get_matrix_by_name(p->lh.name);
+    }
+
+    /* scalar, ditto */
+    if (p->targ == NUM && *p->lh.name != '\0' &&
+	!(p->flags & P_LHSCAL) && 
+	gretl_is_scalar(p->lh.name)) {
+	p->flags |= P_LHSCAL;
     }
 
     /* LHS spec: make sure it's up to date */

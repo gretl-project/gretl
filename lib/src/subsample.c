@@ -293,31 +293,13 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     return err;
 }
 
-static int resample_update_dataset (double ***RZ, DATAINFO *pdinfo)
+static int resample_trim_dataset (double ***RZ, DATAINFO *pdinfo)
 {
     int drop = pdinfo->v - fullinfo->v;
-    int i, j, err = 0;
-
-    /* if new series have been added, drop them all */
-
-    /* FIXME efficiency */
+    int err = 0;
 
     if (drop > 0) {
-	int *list = gretl_list_new(drop);
-
-	if (list == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    j = 1;
-	    for (i=fullinfo->v; i<pdinfo->v; i++) {
-		list[j++] = i;
-	    }	    
-	}
-	
-	if (list != NULL) {
-	    err = dataset_drop_listed_variables(list, RZ, pdinfo, NULL, NULL);
-	    free(list);
-	}
+	err = dataset_drop_last_variables(drop, RZ, pdinfo);
     }
 
     return err;
@@ -518,7 +500,7 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 
     if (pdinfo->submask == RESAMPLED) {
 	/* not regular subsample but resampled dataset */
-	resample_update_dataset(pZ, pdinfo);
+	resample_trim_dataset(pZ, pdinfo);
     } else {
 	/* update values for pre-existing series, which may have been
 	   modified via genr etc */

@@ -22,6 +22,12 @@
 
 int gretl_is_scalar (const char *name);
 
+int gretl_scalar_get_index (const char *name, int *err);
+
+const char *gretl_scalar_get_name (int i);
+
+double gretl_scalar_get_value_by_index (int i);
+
 double gretl_scalar_get_value (const char *name);
 
 void gretl_scalar_set_value (const char *name, double val);
@@ -29,6 +35,10 @@ void gretl_scalar_set_value (const char *name, double val);
 int gretl_scalar_add (const char *name, double val);
 
 int gretl_scalar_add_as_arg (const char *name, double val);
+
+int gretl_scalar_set_local_name (int i, const char *name);
+
+int gretl_scalar_restore_name (int i, const char *name);
 
 int gretl_scalar_delete (const char *name);
 

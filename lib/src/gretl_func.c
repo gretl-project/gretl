@@ -179,8 +179,9 @@ struct fnarg *fn_arg_new (int type, void *p, int *err)
 	arg->val.str = (char *) p;
     } else if (type == GRETL_TYPE_SCALAR_REF ||
 	       type == GRETL_TYPE_SERIES_REF ||
-	       type == GRETL_TYPE_UVAR) {
-	arg->val.idnum = * (int *) p;
+	       type == GRETL_TYPE_USCALAR ||
+	       type == GRETL_TYPE_USERIES) {
+	       arg->val.idnum = * (int *) p;
     } else if (type == GRETL_TYPE_MATRIX_REF) {
 	arg->val.um = (user_matrix *) p;
     } else {
@@ -3222,8 +3223,29 @@ static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
     return 0;
 }
 
-static int localize_variable_ref (fncall *call, struct fnarg *arg, 
-				  fn_param *fp, DATAINFO *pdinfo)
+static int localize_scalar_ref (fncall *call, struct fnarg *arg, 
+				fn_param *fp, DATAINFO *pdinfo)
+{
+    int i = arg->val.idnum;
+    const char *s = gretl_scalar_get_name(i);
+
+    if (s == NULL) {
+	return E_DATA;
+    } 
+
+    arg->upname = gretl_strdup(s);
+    if (arg->upname == NULL) {
+	return E_ALLOC;
+    } 
+
+    gretl_scalar_set_local_name(i, fp->name);
+    maybe_set_arg_const(arg, fp);
+
+    return 0;
+}
+
+static int localize_series_ref (fncall *call, struct fnarg *arg, 
+				fn_param *fp, DATAINFO *pdinfo)
 {
     int v = arg->val.idnum;
 
@@ -3235,17 +3257,9 @@ static int localize_variable_ref (fncall *call, struct fnarg *arg,
     STACK_LEVEL(pdinfo, v) += 1;
     strcpy(pdinfo->varname[v], fp->name);
 
-#if 1 /* FIXME scalars */
     if (!in_gretl_list(call->ptrvars, v)) {
 	gretl_list_append_term(&call->ptrvars, v);
     }
-#else
-    if (var_is_series(pdinfo, v)) {
-	if (!in_gretl_list(call->ptrvars, v)) {
-	    gretl_list_append_term(&call->ptrvars, v);
-	}
-    }
-#endif
 
     maybe_set_arg_const(arg, fp);
 
@@ -3306,9 +3320,10 @@ static int allocate_function_args (fncall *call,
 	fp = &fun->params[i];
 
 	if (gretl_scalar_type(fp->type)) {
-	    if (arg->type == GRETL_TYPE_UVAR) {
-		err = dataset_copy_variable_as(arg->val.idnum, fp->name,
-					       pZ, pdinfo);
+	    if (arg->type == GRETL_TYPE_USCALAR) {
+		double x = gretl_scalar_get_value_by_index(arg->val.idnum);
+
+		err = gretl_scalar_add_as_arg(fp->name, x);
 	    } else if (arg->type == GRETL_TYPE_NONE) {
 		err = add_scalar_arg_default(fp);
 	    } else if (arg->type == GRETL_TYPE_MATRIX) {
@@ -3321,7 +3336,7 @@ static int allocate_function_args (fncall *call,
 		boolify_local_var(fp->name);
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    if (arg->type == GRETL_TYPE_UVAR) {
+	    if (arg->type == GRETL_TYPE_USERIES) {
 		err = dataset_copy_variable_as(arg->val.idnum, fp->name,
 					       pZ, pdinfo);
 	    } else {
@@ -3340,10 +3355,13 @@ static int allocate_function_args (fncall *call,
 	    if (arg->type != GRETL_TYPE_NONE) {
 		err = add_string_as(arg->val.str, fp->name);
 	    }
-	} else if (fp->type == GRETL_TYPE_SCALAR_REF ||
-		   fp->type == GRETL_TYPE_SERIES_REF) {
+	} else if (fp->type == GRETL_TYPE_SCALAR_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_variable_ref(call, arg, fp, pdinfo);
+		err = localize_scalar_ref(call, arg, fp, pdinfo);
+	    }
+	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = localize_series_ref(call, arg, fp, pdinfo);
 	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -3351,9 +3369,13 @@ static int allocate_function_args (fncall *call,
 	    }
 	}
 
-	if (arg->type == GRETL_TYPE_UVAR && !err) {
-	    arg->upname = gretl_strdup(pdinfo->varname[arg->val.idnum]);
-	}
+	if (!err) {
+	    if (arg->type == GRETL_TYPE_USERIES) {
+		arg->upname = gretl_strdup(pdinfo->varname[arg->val.idnum]);
+	    } else if (arg->type == GRETL_TYPE_USCALAR) {
+		arg->upname = gretl_strdup(gretl_scalar_get_name(arg->val.idnum));
+	    }	
+	}	
     }
 
     /* now for any parameters without matching arguments */
@@ -3626,13 +3648,13 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
 	arg = args->arg[i];
 	fp = &u->params[i];
 	if (gretl_ref_type(fp->type)) {
-	    /* FIXME scalar */
-	    if (arg->type == GRETL_TYPE_SCALAR_REF ||
-		arg->type == GRETL_TYPE_SERIES_REF) {
+	    if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
 		STACK_LEVEL(pdinfo, v) -= 1;
 		strcpy(pdinfo->varname[v], arg->upname);
+	    } else if (arg->type == GRETL_TYPE_SCALAR_REF) {
+		gretl_scalar_restore_name(arg->val.idnum, arg->upname);
 	    } else if (arg->type == GRETL_TYPE_MATRIX_REF) {
 		user_matrix *u = arg->val.um;
 
@@ -3801,41 +3823,12 @@ static void func_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
-static int uvar_scalar (struct fnarg *arg, const DATAINFO *pdinfo)
+static double arg_get_double_val (struct fnarg *arg)
 {
-    if (arg->type == GRETL_TYPE_UVAR) {
-	int v = arg->val.idnum;
-
-#if 0 /* FIXME scalar */
-	if (v >= 0 && v < pdinfo->v) {
-	    return var_is_scalar(pdinfo, v);
-	}
-#endif
-    }
-
-    return 0;
-}
-
-static int uvar_series (struct fnarg *arg, const DATAINFO *pdinfo)
-{
-    if (arg->type == GRETL_TYPE_UVAR) {
-	int v = arg->val.idnum;
-
-	if (v >= 0 && v < pdinfo->v) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static double arg_get_double_val (struct fnarg *arg,
-				  const double **Z)
-{
-    if (gretl_scalar_type(arg->type)) {
+    if (arg->type == GRETL_TYPE_USCALAR) {
+	return gretl_scalar_get_value_by_index(arg->val.idnum);
+    } else if (gretl_scalar_type(arg->type)) {
 	return arg->val.x;
-    } else if (arg->type == GRETL_TYPE_UVAR) {
-	return Z[arg->val.idnum][0];
     } else if (arg->type == GRETL_TYPE_MATRIX) {
 	return arg->val.m->val[0];
     } else {
@@ -3861,9 +3854,9 @@ static int check_function_args (ufunc *u, fnargs *args,
 	    ; /* this is OK */
 	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
 	    ; /* OK */
-	} else if (gretl_scalar_type(fp->type) && uvar_scalar(arg, pdinfo)) {
+	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_USCALAR) {
 	    ; /* OK */
-	} else if (fp->type == GRETL_TYPE_SERIES && uvar_series(arg, pdinfo)) {
+	} else if (fp->type == GRETL_TYPE_SERIES && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK */
 	} else if (gretl_scalar_type(fp->type) && 
 		   arg->type == GRETL_TYPE_MATRIX &&
@@ -3876,7 +3869,7 @@ static int check_function_args (ufunc *u, fnargs *args,
 	}
 
 	if (!err && fp->type == GRETL_TYPE_DOUBLE) {
-	    x = arg_get_double_val(arg, Z);
+	    x = arg_get_double_val(arg);
 	    if ((!na(fp->min) && x < fp->min) ||
 		(!na(fp->max) && x > fp->max)) {
 		pprintf(prn, _("%s, argument %d: value %g is out of bounds\n"), 

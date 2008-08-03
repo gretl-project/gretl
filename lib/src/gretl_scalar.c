@@ -59,8 +59,8 @@ static gretl_scalar *get_scalar_pointer (const char *s, int level)
     int i;
 
     for (i=scalar_imin; i<n_scalars; i++) {
-	if (!strcmp(s, scalars[i]->name) &&
-	    scalars[i]->level == level) {
+	if (scalars[i]->level == level &&
+	    !strcmp(s, scalars[i]->name)) {
 	    return scalars[i];
 	}
     }
@@ -130,8 +130,8 @@ real_get_scalar_by_name (const char *name, int slevel, int *err)
     }
 
     for (i=0; i<n_scalars; i++) {
-	if (!strcmp(name, scalars[i]->name) &&
-	    scalars[i]->level == level) {
+	if (scalars[i]->level == level && 
+	    !strcmp(name, scalars[i]->name)) {
 	    return scalars[i]->val;
 	}
     }
@@ -150,6 +150,45 @@ int gretl_is_scalar (const char *name)
 #endif
 
     return (get_scalar_pointer(name, gretl_function_depth()) != NULL);
+}
+
+int gretl_scalar_get_index (const char *name, int *err)
+{
+    int level = gretl_function_depth();
+    int i;
+
+#if SDEBUG
+    print_scalars("gretl_scalar_get_index");
+#endif
+
+    for (i=0; i<n_scalars; i++) {
+	if (level == scalars[i]->level &&
+	    !strcmp(name, scalars[i]->name)) {
+	    return i;
+	}
+    }
+
+    *err = E_NOTSCALAR;
+
+    return -1;
+}
+
+const char *gretl_scalar_get_name (int i)
+{
+    if (i >= 0 && i < n_scalars) {
+	return scalars[i]->name;
+    } else {
+	return NULL;
+    }
+}
+
+double gretl_scalar_get_value_by_index (int i)
+{
+    if (i >= 0 && i < n_scalars) {
+	return scalars[i]->val;
+    } else {
+	return NADBL;
+    }
 }
 
 double gretl_scalar_get_value (const char *name)
@@ -181,8 +220,19 @@ void gretl_scalar_set_value (const char *name, double val)
 
 int gretl_scalar_add (const char *name, double val)
 {
+    int level = gretl_function_depth();
     gretl_scalar *s;
     int err;
+
+#if 1
+    s = get_scalar_pointer(name, level);
+    if (s != NULL) {
+	fprintf(stderr, "*** gretl_scalar_add: there's already a '%s' at level %d (%.15g)\n", 
+		name, s->level, s->val);
+	s->val = val;
+	return 0;
+    }
+#endif    
 
     s = malloc(sizeof *s);
     if (s == NULL) {
@@ -225,14 +275,38 @@ int gretl_scalar_add_as_arg (const char *name, double val)
     return err;
 }
 
+int gretl_scalar_set_local_name (int i, const char *name)
+{
+    if (i >= 0 && i < n_scalars) {
+	scalars[i]->name[0] = '\0';
+	strncat(scalars[i]->name, name, VNAMELEN - 1);
+	scalars[i]->level += 1;
+	return 0;
+    } else {
+	return E_DATA;
+    }
+}
+
+int gretl_scalar_restore_name (int i, const char *name)
+{
+    if (i >= 0 && i < n_scalars) {
+	scalars[i]->name[0] = '\0';
+	strncat(scalars[i]->name, name, VNAMELEN - 1);
+	scalars[i]->level -= 1;
+	return 0;
+    } else {
+	return E_DATA;
+    }
+}
+
 int gretl_scalar_delete (const char *name)
 {
     int level = gretl_function_depth();
     int i, ret = E_UNKVAR;
 
     for (i=scalar_imin; i<n_scalars; i++) {
-	if (!strcmp(name, scalars[i]->name) &&
-	    scalars[i]->level == level) {
+	if (scalars[i]->level == level && 
+	    !strcmp(name, scalars[i]->name)) {
 	    ret = real_delete_scalar(i);
 	    break;
 	}

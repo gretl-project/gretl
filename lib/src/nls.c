@@ -50,7 +50,6 @@ struct parm_ {
     int type;             /* type of parameter (scalar or vector) */
     char *deriv;          /* string representation of derivative of regression
 			     function with respect to param (or NULL) */
-    int vnum;             /* ID number of scalar variable in dataset */
     int dnum;             /* ID number of variable holding the derivative */
     int nc;               /* number of individual coefficients associated
 			     with the parameter */
@@ -206,9 +205,10 @@ static int nls_genr_setup (nlspec *s)
 	m = genr_get_output_matrix(genrs[i]);
 
 	if (v == 0 && m == NULL) {
+	    /* not a series, not a matrix: should be scalar */
 	    if (genr_is_print(genrs[i])) {
 		continue;
-	    } else if (dname == NULL || !gretl_is_scalar(dname)) {
+	    } else if (i >= s->naux && (dname == NULL || !gretl_is_scalar(dname))) {
 		fprintf(stderr, "nls_genr_setup: bad type: %s\n", formula);
 		err = E_TYPES;
 		break;
@@ -392,9 +392,7 @@ static int push_scalar_coeff (nlspec *s, double x)
     return 0;
 }
 
-static int nlspec_push_param (nlspec *s, const char *name,
-			      int v, const double **Z,
-			      char *deriv)
+static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
 {
     parm *params, *p;
     int np = s->nparam;
@@ -411,7 +409,6 @@ static int nlspec_push_param (nlspec *s, const char *name,
     strncat(p->name, name, VNAMELEN - 1);
     p->type = GRETL_TYPE_DOUBLE;
     p->deriv = deriv;
-    p->vnum = v;
     p->dnum = 0;
     p->nc = 1;
     p->dname[0] = '\0';
@@ -427,8 +424,6 @@ static int nlspec_push_param (nlspec *s, const char *name,
 
     if (gretl_is_scalar(name)) {
 	err = push_scalar_coeff(s, gretl_scalar_get_value(name));
-    } else if (v > 0) {
-	err = push_scalar_coeff(s, Z[v][0]);
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
 	int k = gretl_vector_get_length(m);
@@ -449,30 +444,19 @@ static int nlspec_push_param (nlspec *s, const char *name,
     return err;
 }
 
-static int 
-check_param_name (const char *name, const DATAINFO *pdinfo, int *pv)
+static int check_param_name (const char *name)
 {
-    gretl_matrix *m;
-
     if (gretl_is_scalar(name)) {
-	*pv = 0;
-    } else if ((m = get_matrix_by_name(name)) != NULL) {
-	if (gretl_vector_get_length(m) > 0) {
-	    *pv = 0;
-	} else {
-	    return E_DATATYPE;
-	}
+	return 0;
     } else {
-	int v = series_index(pdinfo, name);
+	gretl_matrix *m = get_matrix_by_name(name);
 
-	if (v < pdinfo->v) {
+	if (gretl_vector_get_length(m) == 0) {
 	    return E_DATATYPE;
 	} else {
-	    return E_UNKVAR;
-	} 
+	    return 0;
+	}
     }
-
-    return 0;
 }
 
 /* Scrutinize word and see if it's a new scalar that should be added
@@ -481,9 +465,7 @@ check_param_name (const char *name, const DATAINFO *pdinfo, int *pv)
    if no "deriv" or "params" lines have been provided.
 */
 
-static int 
-maybe_add_param_to_spec (nlspec *s, const char *word, 
-			 const double **Z, const DATAINFO *pdinfo)
+static int maybe_add_param_to_spec (nlspec *s, const char *word)
 {
     int i, err = 0;
 
@@ -508,7 +490,7 @@ maybe_add_param_to_spec (nlspec *s, const char *word,
     fprintf(stderr, "maybe_add_param: adding '%s'\n", word);
 #endif
 
-    err = nlspec_push_param(s, word, 0, Z, NULL);
+    err = nlspec_push_param(s, word, NULL);
 
     return err;
 }
@@ -519,9 +501,7 @@ maybe_add_param_to_spec (nlspec *s, const char *word,
    line.
 */
 
-static int 
-get_params_from_nlfunc (nlspec *s, const double **Z,
-			const DATAINFO *pdinfo)
+static int get_params_from_nlfunc (nlspec *s)
 {
     const char *f = s->nlfunc;
     const char *p;
@@ -548,7 +528,7 @@ get_params_from_nlfunc (nlspec *s, const double **Z,
 	    p += n;
 	    if (np > 0) {
 		/* right-hand side term */
-		err = maybe_add_param_to_spec(s, name, Z, pdinfo);
+		err = maybe_add_param_to_spec(s, name);
 	    }
 	    np++;
 	} else {
@@ -576,7 +556,7 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
 			     const double **Z, const DATAINFO *pdinfo)
 {
     int i, nf = count_fields(str);
-    int v, err = 0;
+    int err = 0;
 
     if (s->params != NULL || nf == 0) {
 	return E_DATA;
@@ -592,14 +572,12 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
 
 	if (name == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    err = check_param_name(name);
 	}
 
 	if (!err) {
-	    err = check_param_name(name, pdinfo, &v);
-	}
-
-	if (!err) {
-	    err = nlspec_push_param(s, name, v, Z, NULL);
+	    err = nlspec_push_param(s, name, NULL);
 	}
 
 	free(name);
@@ -638,7 +616,7 @@ int nlspec_add_param_list (nlspec *spec, int np, double *vals,
     for (i=0; i<np && !err; i++) {
 	err = gretl_scalar_add(names[i], vals[i]);
 	if (!err) {
-	    err = nlspec_push_param(spec, names[i], 0, NULL, NULL);
+	    err = nlspec_push_param(spec, names[i], NULL);
 	}
     }
 
@@ -655,18 +633,13 @@ int nlspec_add_param_list (nlspec *spec, int np, double *vals,
 
 int update_coeff_values (const double *b, nlspec *s)
 {
-    double **Z = *(s->Z);
     int i, j, k = 0;
     parm *p;
 
     for (i=0; i<s->nparam; i++) {
 	p = &s->params[i];
 	if (scalar_param(s, i)) {
-	    if (gretl_is_scalar(p->name)) {
-		gretl_scalar_set_value(p->name, b[k++]);
-	    } else {
-		Z[p->vnum][0] = b[k++];
-	    }
+	    gretl_scalar_set_value(p->name, b[k++]);
 	} else {
 	    gretl_matrix *m = get_matrix_by_name(p->name);
 
@@ -2294,7 +2267,7 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     const char *p = dstr;
     char *name = NULL;
     char *deriv = NULL;
-    int v, err = 0;
+    int err = 0;
 
     if (spec->ci == GMM) {
 	strcpy(gretl_errmsg, _("Analytical derivatives cannot be used with GMM"));
@@ -2312,10 +2285,10 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
 	return E_PARSE;
     }
 
-    err = check_param_name(name, pdinfo, &v);
+    err = check_param_name(name);
     
     if (!err) {
-	err = nlspec_push_param(spec, name, v, Z, deriv);
+	err = nlspec_push_param(spec, name, deriv);
 	if (err) {
 	    free(deriv);
 	    deriv = NULL;
@@ -2327,14 +2300,6 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     if (!err) {
 	spec->mode = ANALYTIC_DERIVS;
     }
-
-#if NLS_DEBUG
-    if (!err && v > 0) {
-	fprintf(stderr, "add_param_with_deriv: '%s'\n"
-		" set vnum = %d, initial value = %.14g\n", dstr, 
-		v, Z[v][0]);
-    }
-#endif
 
     return err;
 }
@@ -2694,7 +2659,7 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 
     if (spec->mode == NUMERIC_DERIVS && spec->nparam == 0 &&
 	spec->ci != GMM) {
-	err = get_params_from_nlfunc(spec, (const double **) *pZ, pdinfo);
+	err = get_params_from_nlfunc(spec);
 	if (err) {
 	    if (err == 1) {
 		nlsmod.errcode = E_PARSE;
@@ -3739,8 +3704,7 @@ static double user_get_criterion (const double *b, void *p)
 {
     umax *u = (umax *) p;
     double x = NADBL;
-    int i, v;
-    int err;
+    int i, t, err;
 
     for (i=0; i<u->ncoeff; i++) {
 	u->b->val[i] = b[i];
@@ -3752,15 +3716,18 @@ static double user_get_criterion (const double *b, void *p)
 	return NADBL;
     }
 
-    v = genr_get_output_varnum(u->g);
-    if (v > 0) {
-	x = (*u->Z)[v][0];
-    } else {
+    t = genr_get_output_type(u->g);
+
+    if (t == GRETL_TYPE_DOUBLE) {
+	x = genr_get_output_scalar(u->g);
+    } else if (t == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = genr_get_output_matrix(u->g);
 
 	if (m != NULL && m->rows == 1 && m->cols == 1) {
 	    x = m->val[0];
 	}
+    } else {
+	err = E_TYPES;
     }
 
     u->x_out = x;

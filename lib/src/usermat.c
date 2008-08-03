@@ -217,8 +217,8 @@ real_get_matrix_by_name (const char *name, int slevel)
     }
 
     for (i=0; i<n_matrices; i++) {
-	if (!strcmp(name, matrices[i]->name) &&
-	    matrices[i]->level == level) {
+	if (matrices[i]->level == level && 
+	    !strcmp(name, matrices[i]->name)) {
 	    return matrices[i]->M;
 	}
     }
@@ -232,8 +232,8 @@ user_matrix *get_user_matrix_by_name (const char *name)
     int i;
 
     for (i=0; i<n_matrices; i++) {
-	if (!strcmp(name, matrices[i]->name) &&
-	    matrices[i]->level == level) {
+	if (matrices[i]->level == level && 
+	    !strcmp(name, matrices[i]->name)) {
 	    return matrices[i];
 	}
     }

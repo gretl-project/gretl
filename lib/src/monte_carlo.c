@@ -1661,18 +1661,17 @@ static int loop_store_start (LOOPSET *loop, const int *list,
 	    loop->store.dinfo->v, loop->store.dinfo->n);
 #endif
 
-    for (i=1; i<=list[0]; i++) {
-	int vi = list[i];
-	char *p;
+    for (i=1; i<=list[0] && !err; i++) {
+	const char *s = gretl_scalar_get_name(list[i]);
 
-	strcpy(loop->store.dinfo->varname[i], pdinfo->varname[vi]);
-	strcpy(VARLABEL(loop->store.dinfo, i), VARLABEL(pdinfo, vi));
-	if ((p = strstr(VARLABEL(loop->store.dinfo, i), "(scalar)"))) {
-	    *p = 0;
+	if (s == NULL) {
+	    err = E_DATA;
+	} else {
+	    strcpy(loop->store.dinfo->varname[i], s);
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static int loop_store_update (LOOPSET *loop, int lno,
@@ -1680,8 +1679,7 @@ static int loop_store_update (LOOPSET *loop, int lno,
 			      const double **Z, DATAINFO *pdinfo,
 			      gretlopt opt)
 {
-    int i, vi, t;
-    int err = 0;
+    int i, t, err = 0;
 
     if (loop->store.loopline >= 0 && loop->store.loopline != lno) {
 	strcpy(gretl_errmsg, "Only one 'store' command is allowed in a "
@@ -1698,7 +1696,6 @@ static int loop_store_update (LOOPSET *loop, int lno,
     }
 
     loop->store.loopline = lno;
-
     t = loop->store.n;
 
     if (t >= loop->store.dinfo->n) {
@@ -1708,16 +1705,7 @@ static int loop_store_update (LOOPSET *loop, int lno,
     }
 
     for (i=1; i<=list[0]; i++) {
-	vi = list[i];
-#if 1 /* FIXME storing scalars */
-	loop->store.Z[i][t] = Z[vi][pdinfo->t1];
-#else
-	if (var_is_series(pdinfo, vi)) { 
-	    loop->store.Z[i][t] = Z[vi][pdinfo->t1];
-	} else {
-	    loop->store.Z[i][t] = Z[vi][0];
-	}
-#endif
+	loop->store.Z[i][t] = gretl_scalar_get_value_by_index(list[i]);
     }
 
     loop->store.n += 1;
@@ -1904,8 +1892,6 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 /* Update the LOOP_PRINT struct lprn using the current values from the
    variables in list.  If this is the fist use we need to do some
    allocation first.
-
-   FIXME scalars
 */
 
 static int loop_print_update (LOOP_PRINT *lprn,
@@ -1915,7 +1901,8 @@ static int loop_print_update (LOOP_PRINT *lprn,
 #ifdef ENABLE_GMP
     mpf_t m;
 #endif
-    int j, vj, t;
+    int j, vj;
+    double x;
     int err = 0;
 
     if (lprn->list == NULL) {
@@ -1932,24 +1919,20 @@ static int loop_print_update (LOOP_PRINT *lprn,
     
     for (j=0; j<list[0]; j++) {
 	vj = list[j+1];
-#if 1
-	t = pdinfo->t1;
-#else
-	t = (var_is_series(pdinfo, vj))? pdinfo->t1 : 0;
-#endif
+	x = gretl_scalar_get_value_by_index(vj);
 #ifdef ENABLE_GMP
-	mpf_set_d(m, Z[vj][t]); 
+	mpf_set_d(m, x); 
 	mpf_add(lprn->sum[j], lprn->sum[j], m);
 	mpf_mul(m, m, m);
 	mpf_add(lprn->ssq[j], lprn->ssq[j], m);
 #else
-	lprn->sum[j] += Z[vj][t];
-	lprn->ssq[j] += Z[vj][t] * Z[vj][t];
+	lprn->sum[j] += x;
+	lprn->ssq[j] += x * x;
 #endif
-	if (!na(lprn->xbak[j]) && realdiff(Z[vj][t], lprn->xbak[j])) {
+	if (!na(lprn->xbak[j]) && realdiff(x, lprn->xbak[j])) {
 	    lprn->diff[j] = 1;
 	}
-	lprn->xbak[j] = Z[vj][t];
+	lprn->xbak[j] = x;
     }
 
 #ifdef ENABLE_GMP
@@ -2236,6 +2219,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
 {
     bigval mean, m, sd;
     int i, vi, n;
+    const char *s;
 
     if (lprn == NULL) {
 	return;
@@ -2254,6 +2238,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
     
     for (i=0; i<lprn->list[0]; i++) {
 	vi = lprn->list[i+1];
+	s = gretl_scalar_get_name(vi);
 	mpf_div_ui(mean, lprn->sum[i], (unsigned long) n);
 	if (lprn->diff[i] == 0) {
 	    mpf_set_d(sd, 0.0);
@@ -2268,7 +2253,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
 		mpf_set_d(sd, 0.0);
 	    }
 	}
-	pprintf(prn, "%*s", VNAMELEN - 1, pdinfo->varname[vi]);
+	pprintf(prn, "%*s", VNAMELEN - 1, s);
 	pprintf(prn, "%#14g %#14g\n", mpf_get_d(mean), mpf_get_d(sd));
     }
 
@@ -2278,6 +2263,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
 #else
     for (i=0; i<lprn->list[0]; i++) {
 	vi = lprn->list[i+1];
+	s = gretl_scalar_get_name(vi);
 	mean = lprn->sum[i] / n;
 	if (lprn->diff[i] == 0) {
 	    sd = 0.0;
@@ -2285,7 +2271,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
 	    m = (lprn->ssq[i] - n * mean * mean) / n;
 	    sd = (m < 0)? 0 : sqrt((double) m);
 	}
-	pprintf(prn, "%*s", VNAMELEN - 1, pdinfo->varname[vi]);
+	pprintf(prn, "%*s", VNAMELEN - 1, s);
 	pprintf(prn, "%#14g %#14g\n", (double) mean, (double) sd);
     }
 #endif
@@ -2843,6 +2829,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    /* We already have the "ci" index recorded, but here
 	       we do some further parsing. 
 	    */
+	    if (loop_is_progressive(loop)) {
+		cmd->flags |= CMD_PROG;
+	    }
 	    err = parse_command_line(line, cmd, pZ, pdinfo);
 
 	    if (cmd->ci < 0) {

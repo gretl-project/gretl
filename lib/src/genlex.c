@@ -253,6 +253,7 @@ struct str_table funcs[] = {
     { F_BFGSMAX,  "BFGSmax" },
     { F_OBSNUM,   "obsnum" },
     { F_ISSERIES, "isseries" },
+    { F_ISSCALAR, "isscalar" },
     { F_ISLIST,   "islist" },
     { F_ISSTRING, "isstring" },
     { F_ISNULL,   "isnull" },

@@ -202,6 +202,7 @@ enum {
     F_RANK, 
     F_OBSNUM,
     F_ISSERIES,
+    F_ISSCALAR,
     F_ISLIST,	 
     F_ISSTRING,
     F_ISNULL,
@@ -338,7 +339,7 @@ enum {
 
 #define bnsym(s) (s == MDEF || s == FARGS)
 
-#define freestr(s) (s == STR || s == UMAT || s == UOBJ || \
+#define freestr(s) (s == STR || s == USCALAR || s == UMAT || s == UOBJ || \
                     s == LOOPIDX || s == LIST || s == VSTR)
 
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
@@ -476,7 +477,6 @@ struct parser_ {
 #define starting(p) (p->flags & P_START)
 #define autoreg(p) (p->flags & P_AUTOREG)
 #define simple_ufun_call(p) (p->flags & P_UFUN)
-#define lh_obs(p) ((p->lh.obs > 0)? p->lh.obs : 0)
 
 int parser_getc (parser *p);
 void parser_ungetc (parser *p);

@@ -400,10 +400,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                                   c == STORE || \
                                   c == SUMMARY)
 
-#define SCALARS_OK_IN_LIST(c) (c == DELEET || \
-                               c == PRINT || \
-                               c == STORE)
-
 #define MODIFIES_LIST(c) (c == DIFF || \
 			  c == DUMMIFY || \
 			  c == LDIFF || \
@@ -2034,6 +2030,10 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
     return ok;
 }
 
+#define make_scalars_list(c) ((c->flags & CMD_PROG) && \
+                              (cmd->ci == PRINT || \
+			       cmd->ci == STORE))
+
 static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 				   double ***pZ, DATAINFO *pdinfo, 
 				   CMD *cmd)
@@ -2046,7 +2046,12 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     fprintf(stderr, "parse_alpha_list_field: s = '%s'\n", s);
 #endif
 
-    if (ints_ok) {
+    if (make_scalars_list(cmd)) {
+	v = gretl_scalar_get_index(s, &cmd->err);
+	if (!cmd->err) {
+	    cmd->list[k++] = v;
+	}
+    } else if (ints_ok) {
 	v = gretl_int_from_string(s, &cmd->err);
 	if (!cmd->err) {
 	    cmd->list[k++] = v;
@@ -2570,19 +2575,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    }
 	    break;
 	}
-
-#if 0
-	/* check for bad scalars */
-	if (cmd->list[k-1] != LISTSEP) {
-	    if (!ints_ok && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
-		if (var_is_scalar(pdinfo, cmd->list[k-1])) {
-		    cmd->err = 1;
-		    sprintf(gretl_errmsg, _("variable %s is a scalar"), s);
-		    break;
-		}
-	    }
-	}
-#endif
 
 	/* advance for next read */
 	pos += strlen(s) + 1;

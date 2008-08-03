@@ -927,6 +927,23 @@ int genr_get_loopline (parser *p)
     }
 }
 
+int genr_get_output_type (const parser *p)
+{
+    int t = GRETL_TYPE_NONE;
+
+    if (!p->err) {
+	if (p->targ == NUM) {
+	    t = GRETL_TYPE_DOUBLE;
+	} else if (p->targ == VEC) {
+	    t = GRETL_TYPE_SERIES;
+	} else if (p->targ == MAT) {
+	    t = GRETL_TYPE_MATRIX;
+	} 
+    }
+
+    return t;
+}
+
 int genr_get_output_varnum (const parser *p)
 {
     return p->lh.v;
@@ -938,6 +955,15 @@ gretl_matrix *genr_get_output_matrix (const parser *p)
 	return p->lh.m1;
     } else {
 	return NULL;
+    }
+}
+
+double genr_get_output_scalar (const parser *p)
+{
+    if (p->targ == NUM) {
+	return gretl_scalar_get_value(p->lh.name);
+    } else {
+	return NADBL;
     }
 }
 

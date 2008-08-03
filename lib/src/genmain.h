@@ -109,9 +109,13 @@ void genr_set_loopline (GENERATOR *genr, int i);
 
 int genr_get_loopline (GENERATOR *genr);
 
+const char *genr_get_formula (const GENERATOR *genr);
+
+int genr_get_output_type (const GENERATOR *genr);
+
 int genr_get_output_varnum (const GENERATOR *genr);
 
-const char *genr_get_formula (const GENERATOR *genr);
+double genr_get_output_scalar (const GENERATOR *genr);
 
 gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);
 
