@@ -156,8 +156,8 @@ static void gen_write_label (parser *p, int oldv)
     const char *src = "";
     size_t len = 0;
 
-    if (p->targ != NUM && p->targ != VEC) {
-	/* not relevant for matrices, lists */
+    if (p->targ != VEC) {
+	/* this is relevant only for series */
 	return;
     }
 
