@@ -47,6 +47,15 @@ struct fn_param_ {
     double max;
 };
 
+typedef struct obsinfo_ obsinfo;
+
+struct obsinfo_ {
+    int structure;
+    int pd;
+    char changed;
+    char stobs[OBSLEN];
+};
+
 typedef struct fncall_ fncall;
 
 struct fncall_ {
@@ -54,6 +63,7 @@ struct fncall_ {
     fnargs *args;
     int *ptrvars;
     int *listvars;
+    obsinfo obs;
 };
 
 struct ufunc_ {
@@ -3677,6 +3687,34 @@ function_assign_returns (ufunc *u, fnargs *args, int rtype,
     return err;
 }
 
+static void record_obs_info (obsinfo *o, DATAINFO *pdinfo)
+{
+    o->structure = pdinfo->structure;
+    o->pd = pdinfo->pd;
+    strcpy(o->stobs, pdinfo->stobs);
+    o->changed = 0;
+}
+
+static int restore_obs_info (obsinfo *o, double **Z, DATAINFO *pdinfo)
+{
+    char line[128];
+    gretlopt opt = OPT_NONE;
+
+    if (o->structure == CROSS_SECTION) {
+	opt = OPT_X;
+    } else if (o->structure == TIME_SERIES) {
+	opt = OPT_T;
+    } else if (o->structure == STACKED_TIME_SERIES) {
+	opt = OPT_S;
+    } else if (o->structure == SPECIAL_TIME_SERIES) {
+	opt = OPT_N;
+    } 
+
+    sprintf(line, "setobs %d %s", o->pd, o->stobs);
+
+    return set_obs(line, Z, pdinfo, opt);
+}
+
 static int stop_fncall (fncall *call, int rtype, void *ret,
 			double ***pZ, DATAINFO *pdinfo,
 			int orig_v)
@@ -3767,12 +3805,15 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     }    
 
     pop_program_state();
+    if (call->obs.changed) {
+	restore_obs_info(&call->obs, *pZ, pdinfo);
+    }
     set_executing_off(call, pdinfo);
 
     return err;
 }
 
-static int start_fncall (fncall *call, PRN *prn)
+static int start_fncall (fncall *call, DATAINFO *pdinfo, PRN *prn)
 {
     fn_executing++;
     push_program_state();
@@ -3782,6 +3823,8 @@ static int start_fncall (fncall *call, PRN *prn)
     fprintf(stderr, "start_fncall: added call to %s, depth now %d\n", 
 	    call->fun->name, g_list_length(callstack));
 #endif
+
+    record_obs_info(&call->obs, pdinfo);
 
     if (gretl_debugging_on()) {
 	set_gretl_echo(1);
@@ -3978,7 +4021,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (!err) {
-	err = start_fncall(call, prn);
+	err = start_fncall(call, pdinfo, prn);
 	if (!err) {
 	    started = 1;
 	}
@@ -4013,6 +4056,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #endif
 	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
 	    set_funcerr_message(u, state.cmd->param);
+	}
+
+	if (state.cmd->ci == SETOBS) {
+	    /* set flag for reverting on exit */
+	    call->obs.changed = 1;
 	}
 
 	if (gretl_execute_loop()) { 

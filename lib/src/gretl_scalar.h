@@ -48,7 +48,7 @@ void destroy_user_scalars (void);
 
 void print_scalar_by_name (const char *name, gretlopt opt, PRN *prn);
 
-void print_scalars (gretlopt opt, PRN *prn);
+void print_all_scalars (gretlopt opt, PRN *prn);
 
 void set_auxiliary_scalars (void);
 
