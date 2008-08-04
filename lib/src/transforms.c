@@ -1465,7 +1465,7 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	double xt;
 
 	n = 0;
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    xt = (*pZ)[vi][t];
 	    if (!na(xt)) {
 		x[n++] = xt;
