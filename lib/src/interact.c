@@ -2043,13 +2043,15 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     int ok = 0;
 
 #if CMD_DEBUG
-    fprintf(stderr, "parse_alpha_list_field: s = '%s'\n", s);
+    fprintf(stderr, "parse_alpha_list_field: s = '%s', ci = %d (%s)\n", 
+	    s, cmd->ci, cmd->word);
 #endif
 
     if (make_scalars_list(cmd)) {
 	v = gretl_scalar_get_index(s, &cmd->err);
 	if (!cmd->err) {
 	    cmd->list[k++] = v;
+	    ok = 1;
 	}
     } else if (ints_ok) {
 	v = gretl_int_from_string(s, &cmd->err);
