@@ -1373,7 +1373,8 @@ static int print_name_ok (const char *s, CMD *cmd)
     int ok = 0;
 
     if (cmd->ci == PRINT) {
-	if (get_matrix_by_name(s) || gretl_is_scalar(s)) {
+	if (get_matrix_by_name(s) || gretl_is_scalar(s) || 
+	    !strcmp(s, "scalars")) {
 	    cmd->extra = gretl_str_expand(&cmd->extra, s, " ");
 	    cmd->list[0] -= 1;
 	    ok = 1;
@@ -2423,7 +2424,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (cmd->ci == DELEET) {
-	if (nf == 1 && (get_matrix_by_name(rem) || 
+	if (nf == 1 && (gretl_is_scalar(rem) ||
+			get_matrix_by_name(rem) || 
 			get_string_by_name(rem))) {
 	    /* special for deleting a named matrix or string */
 	    cmd_param_grab_string(cmd, rem);

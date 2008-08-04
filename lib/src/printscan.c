@@ -827,8 +827,8 @@ static int scan_scalar (const char *targ, char **psrc,
 	    gretl_scalar_set_value(targ, (fc == 'd')? k : x);
 	} else if (v > 0) {
 	    Z[v][0] = (fc == 'd')? k : x;
-	    *ns += 1;
 	}
+	*ns += 1;
     }
 
     *psrc = endp;

@@ -61,11 +61,6 @@ enum loop_types {
     EACH_LOOP
 };
 
-enum loop_val_codes {
-    LOOP_VAL_BAD = 0,
-    LOOP_VAL_UNDEF = -9999
-};
-
 #define DEFAULT_NOBS 512
 
 #define indexed_loop(l) (l->type == INDEX_LOOP || \
@@ -212,103 +207,105 @@ int gretl_execute_loop (void)
     return loop_execute;
 }
 
-static double controller_evaluate_expr (const char *expr, 
-					const char *vname,
-					double ***pZ,
-					DATAINFO *pdinfo)
+/* get a value from a loop "limit" element, either a specified
+   scalar variable or a numeric constant */
+
+static double 
+controller_get_value (controller *clr, double ***pZ, DATAINFO *pdinfo)
 {
     double x = NADBL;
-    int err = 0;
 
-    gretl_error_clear();
-
-    if (!strcmp(vname, "iftest")) {
-	x = generate_scalar(expr, pZ, pdinfo, &err);
+    if (clr->vname[0] != '\0') {
+	if (gretl_is_scalar(clr->vname)) {
+	    x = gretl_scalar_get_value(clr->vname) * clr->vsign;
+	} else {
+	   gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
+	} 
     } else {
-	err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
-	if (!err) {
-	    if (gretl_is_scalar(vname)) {
-		x = gretl_scalar_get_value(vname);
-	    } else {
-		err = 1;
-	    }
-	}
-    }
-
-    if (!err && na(x)) {
-	err = 1;
+	/* numerical constant? */
+	x = clr->val;
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "controller_evaluate_expr: expr='%s', x=%g, err=%d\n", 
-	    expr, x, err);
+    fprintf(stderr, "controller_get_value: vname='%s', returning %g\n", 
+	    clr->vname, x);
 #endif
-
-    if (err) {
-	gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
-			     expr);
-    }
 
     return x;
 }
 
-/* get a value from a loop controller element, either via a
-   "genr"-type expression, or from a specified scalar variable, or
-   from a numeric constant */
-
-static double 
-loop_controller_get_value (controller *clr, double ***pZ, DATAINFO *pdinfo)
+static double loop_get_initval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
-    double ret = NADBL;
-
-    if (clr->expr != NULL) {
-	ret = controller_evaluate_expr(clr->expr, clr->vname, pZ, pdinfo);
-	clr->val = ret;
-    } else if (gretl_is_scalar(clr->vname)) {
-	ret = clr->val = gretl_scalar_get_value(clr->vname) * clr->vsign;
-    } else {
-	ret = clr->val;
-    } 
-
 #if LOOP_DEBUG
-    fprintf(stderr, "loop_controller_get_value: returning %g\n", ret);
+    fprintf(stderr, "getting loop initval...\n");
 #endif
+    return controller_get_value(&loop->init, pZ, pdinfo);
+}
+
+static double loop_get_finalval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
+{
+#if LOOP_DEBUG
+    fprintf(stderr, "getting loop finalval...\n");
+#endif
+    return controller_get_value(&loop->final, pZ, pdinfo);
+}
+
+/* apply initialization in case of for-loop */
+
+static void
+forloop_init (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, int *err)
+{
+    const char *expr = loop->init.expr;
+
+    if (expr != NULL) {
+	*err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
+	if (*err) {
+	    gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
+				 expr);
+	}
+    }
+}
+
+/* evaluate boolean condition in for-loop or while-loop */
+
+static int 
+loop_testval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, int *err)
+{
+    const char *expr = loop->test.expr;
+    int ret = 1;
+
+    if (expr != NULL) {
+	double x = generate_scalar(expr, pZ, pdinfo, err);
+
+	if (!*err && na(x)) {
+	    *err = E_DATA;
+	    ret = 0;
+	} else {
+	    ret = x;
+	}
+	if (*err) {
+	    gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
+				 expr);
+	}
+    }
 
     return ret;
 }
 
-static double loop_initval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
-{
-#if LOOP_DEBUG
-    fprintf(stderr, "getting loop_initval...\n");
-#endif
-    return loop_controller_get_value(&loop->init, pZ, pdinfo);
-}
+/* evaluate third expression in for-loop, if any */
 
-static double loop_finalval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
+static void 
+loop_delta (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, int *err)
 {
-#if LOOP_DEBUG
-    fprintf(stderr, "getting loop_finalval...\n");
-#endif
-    return loop_controller_get_value(&loop->final, pZ, pdinfo);
-}
+    const char *expr = loop->delta.expr;
 
-static double loop_testval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
-{
-#if LOOP_DEBUG
-    fprintf(stderr, "getting loop_testval...\n");
-#endif
-    return loop_controller_get_value(&loop->test, pZ, pdinfo);
-}
-
-static double loop_delta (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
-{
-    double x = loop_controller_get_value(&loop->delta, pZ, pdinfo);
-
-#if LOOP_DEBUG
-    fprintf(stderr, "loop_incrval, returning %g\n", x);
-#endif
-    return x;
+    if (expr != NULL) {
+	*err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
+	if (*err) {
+	    gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
+				 expr);
+	}
+    }
 }
 
 static gretlopt get_loop_opts (ExecState *s, int *err)
@@ -580,32 +577,21 @@ static int parse_as_while_loop (LOOPSET *loop,
 				double ***pZ, DATAINFO *pdinfo,
 				const char *s)
 {
-    char *expr = NULL;
-    double x = NADBL;
-    int err = 0;
-
-    expr = gretl_strdup(s);
-    x = controller_evaluate_expr(expr, "iftest", pZ, pdinfo);
-
-    /* FIXME nested loops: all elements of expression may not be defined yet? */
-
-    if (na(x)) {
-	err = E_DATA;
-	free(expr);
-    }
-
-    if (!err) {
-	loop->test.expr = expr;
-	strcpy(loop->test.vname, "iftest");
-	loop->type = WHILE_LOOP;
-    }
-
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_as_while_loop: cond = '%s', x = %g, err = %d\n", 
-	    s, x, err);
+    fprintf(stderr, "parse_as_while_loop: cond = '%s'\n", s);
 #endif
 
-    return err;
+    if (s == NULL || *s == '\0') {
+	return E_PARSE;
+    }
+
+    loop->type = WHILE_LOOP;
+    loop->test.expr = gretl_strdup(s);
+    if (loop->test.expr == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
 }
 
 static const char *ichars = "ijklmpqrs"; 
@@ -763,63 +749,43 @@ static int parse_as_count_loop (LOOPSET *loop,
 }
 
 static int 
-test_forloop_element (char *s, LOOPSET *loop,
-		      double ***pZ, DATAINFO *pdinfo,
-		      int i)
+set_forloop_element (char *s, LOOPSET *loop,
+		     double ***pZ, DATAINFO *pdinfo,
+		     int i)
 {
-    char vname[VNAMELEN] = {0};
-    double x = NADBL;
+    controller *clr = (i == 0)? &loop->init :
+	(i == 1)? &loop->test : &loop->delta;
     int len, err = 0;
 
-    if (s == NULL) {
-	/* FIXME: allow empty "for" fields? */
-	return E_PARSE;
-    }
-
-    if (i == 1) {
-	/* middle term: Boolean test */
-	strcpy(vname, "iftest");
-	x = controller_evaluate_expr(s, vname, pZ, pdinfo);
-    } else {
-	/* treat as regular "genr" expression */
-	err = extract_varname(vname, s, &len);
-	if (!err) {
-	    if (i == 2) {
-		/* "increment" expression: we'll have to undo whatever
-		   the test evaluation does */
-		if (gretl_is_scalar(vname)) {
-		    double x0 = gretl_scalar_get_value(vname);
-
-		    x = controller_evaluate_expr(s, vname, pZ, pdinfo);
-		    gretl_scalar_set_value(vname, x0);
-		} else {
-		    err = E_DATA;
-		}
-	    } else {
-		x = controller_evaluate_expr(s, vname, pZ, pdinfo);
-	    }	
-	} 
-    }
-
 #if LOOP_DEBUG
-    fprintf(stderr, "test_forloop_element: i=%d: '%s', x = %g\n", i, s, x);
+    fprintf(stderr, "set_forloop_element: i=%d: '%s'\n", i, s);
 #endif
 
-    if (na(x)) {
-	err = 1;
+    if (s == NULL) {
+	/* an empty "for" field */
+	if (i == 1) {
+	    /* test is implicitly always true */
+	    clr->val = 1;
+	} else {
+	    /* no-op */
+	    clr->val = 0;
+	}
+	return 0;
     }
 
-    if (!err) {
-	controller *clr = (i == 0)? &loop->init :
-	    (i == 1)? &loop->test : &loop->delta;
+    clr->expr = gretl_strdup(s);
+    if (clr->expr == NULL) {
+	err = E_ALLOC;
+    }
 
-	clr->expr = gretl_strdup(s);
-	if (clr->expr == NULL) {
-	    err = 1;
-	} else {
-	    strcpy(clr->vname, vname);
-	}	
-    }	
+    if (!err && i == 0) {
+	/* initialization: look for varname for possible substitution */
+	err = extract_varname(clr->vname, s, &len);
+    } 
+
+#if LOOP_DEBUG
+    fprintf(stderr, " expr='%s', vname='%s'\n", clr->expr, clr->vname);
+#endif
 
     return err;
 }
@@ -836,6 +802,10 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 {
     int i, vi;
     int err;
+
+#if LOOP_DEBUG
+    fprintf(stderr, "list_vars_to_strings: adding %d strings\n", list[0]);
+#endif
 
     err = allocate_each_strings(loop, list[0]);
 
@@ -898,6 +868,10 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     tailstrip(s);
 
     list = get_list_by_name(s);
+
+#if LOOP_DEBUG
+    printlist(list, "list, in list_loop_setup");
+#endif
 
     if (list == NULL) {
 	err = E_UNKVAR;
@@ -1078,7 +1052,7 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
 	    /* split terms separated by ';' */
 	    for (i=0; i<3 && !err; i++) {
 		forbits[i] = strtok((i == 0)? forstr : NULL, ";");
-		err = test_forloop_element(forbits[i], loop, 
+		err = set_forloop_element(forbits[i], loop, 
 					   pZ, pdinfo, i);
 	    }
 	    free(forstr);
@@ -1235,6 +1209,7 @@ static int loop_count_too_high (LOOPSET *loop)
  * @loop: pointer to loop commands struct.
  * @pZ: pointer to data array.
  * @pdinfo: data information struct.
+ * @err: location to receive error code.
  *
  * Check whether a looping condition is still satisfied.
  *
@@ -1242,7 +1217,7 @@ static int loop_count_too_high (LOOPSET *loop)
  */
 
 static int 
-loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
+loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, int *err)
 {
     int ok = 0;
 
@@ -1252,7 +1227,7 @@ loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 	ok = 0;
     } else if (loop->type == COUNT_LOOP || indexed_loop(loop)) {
 #if LOOP_DEBUG
-	fprintf(stderr, "** COUNT_LOOP: iter = %d, itermax = %d\n",
+	fprintf(stderr, "** count or indexed loop: iter = %d, itermax = %d\n",
 		loop->iter, loop->itermax);
 #endif
 	/* simple count loop or indexed loop */
@@ -1260,17 +1235,17 @@ loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 	    ok = 1;
 	}
     } else {
-	/* more complex forms of control... */
+	/* more complex forms of control (for, while) */
 	if (loop_count_too_high(loop)) {
 	    /* safeguard against infinite loops */
 	    ok = 0;
 	} else if (loop->type == FOR_LOOP) {
 	    if (loop->iter > 0) {
-		loop_delta(loop, pZ, pdinfo);
+		loop_delta(loop, pZ, pdinfo, err);
 	    }
-	    ok = loop_testval(loop, pZ, pdinfo);
+	    ok = loop_testval(loop, pZ, pdinfo, err);
 	} else if (loop->type == WHILE_LOOP) {
-	    ok = loop_testval(loop, pZ, pdinfo);
+	    ok = loop_testval(loop, pZ, pdinfo, err);
 	}
     }
 
@@ -2310,8 +2285,10 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 			int *subst)
 {
     char targ[VNAMELEN + 3] = {0};
-    char *p;
+    char ins[32];
+    char *p, *pins;
     int targlen;
+    double forval = 0;
     int idx = 0;
     int err = 0;
 
@@ -2320,6 +2297,10 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 #endif
 
     if (loop->type == FOR_LOOP) {
+	if (!gretl_is_scalar(loop->init.vname)) {
+	    /* nothing to substitute */
+	    return 0;
+	} 
 	sprintf(targ, "$%s", loop->init.vname);
 	targlen = strlen(targ);
     } else if (indexed_loop(loop)) {
@@ -2332,15 +2313,31 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
     }
 
 #if SUBST_DEBUG
-    fprintf(stderr, " target = '%s'\n", targ);
+    fprintf(stderr, " target = '%s', idx = %d\n", targ, idx);
 #endif
 
-    while ((p = strstr(str, targ)) != NULL) {
-	char ins[32];
-	char *pins = ins;
-	char *q;
+    if (strstr(str, targ) == NULL) {
+	/* nothing to be done */
+	return 0;
+    }
 
-	q = malloc(strlen(p));
+    pins = ins;
+
+    /* prepare substitute */
+    if (loop->type == FOR_LOOP) {
+	forval = gretl_scalar_get_value(loop->init.vname);
+	/* the rest is handled below */
+    } else if (loop->type == INDEX_LOOP) {
+	sprintf(ins, "%d", idx);
+    } else if (loop->type == DATED_LOOP) {
+	ntodate(ins, idx, pdinfo);
+    } else if (loop->type == EACH_LOOP) {
+	pins = loop->eachstrs[idx - 1];
+    }  
+
+    while ((p = strstr(str, targ)) != NULL) {
+	char *q = malloc(strlen(p));
+
 	if (q == NULL) {
 	    err = 1;
 	    break;
@@ -2349,7 +2346,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	strcpy(q, p + targlen);
 
 	if (loop->type == FOR_LOOP) {
-	    sprintf(ins, "%g", gretl_scalar_get_value(loop->init.vname));
+	    sprintf(ins, "%g", forval);
 	    if (p - str > 0 && *(p - 1) == '[' && *(p + targlen) == ']') {
 		/* got an obs-type string, on the pattern [$lvar] */
 		int t = dateton(ins, pdinfo);
@@ -2359,12 +2356,6 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 		}
 		sprintf(ins, "%d", t);
 	    } 
-	} else if (loop->type == INDEX_LOOP) {
-	    sprintf(ins, "%d", idx);
-	} else if (loop->type == DATED_LOOP) {
-	    ntodate(ins, idx, pdinfo);
-	} else if (loop->type == EACH_LOOP) {
-	    pins = loop->eachstrs[idx - 1];
 	} 
 
 	strcpy(p, pins);
@@ -2407,51 +2398,6 @@ static int extend_loop_dataset (LOOP_STORE *lstore)
     return 0;
 }
 
-static int clr_attach_var (controller *clr)
-{
-    if (*clr->vname && !gretl_is_scalar(clr->vname)) {
-	if (!strcmp(clr->vname, "iftest")) {
-	    ; /* OK */
-	} else {
-	    sprintf(gretl_errmsg, _("%s: not a scalar"), clr->vname);
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-/* Connect up any loop control variables that were undefined at
-   compile time, and flag an error if any are still undefined
-   at run time.
-*/
-
-static int 
-connect_loop_control_vars (LOOPSET *loop, const DATAINFO *pdinfo)
-{
-    int err;
-
-    err = clr_attach_var(&loop->init);
-
-    if (!err) {
-	err = clr_attach_var(&loop->test);
-    }
-
-    if (!err) {
-	err = clr_attach_var(&loop->delta);
-    }
-
-    if (!err) {
-	err = clr_attach_var(&loop->final);
-    }
-
-    if (!err && is_list_loop(loop)) {
-	loop_list_refresh(loop, pdinfo);
-    }
-
-    return err;
-}
-
 static void progressive_loop_zero (LOOPSET *loop)
 {
     int i;
@@ -2476,31 +2422,31 @@ static void progressive_loop_zero (LOOPSET *loop)
 static int 
 top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
-    int err;
+    int err = 0;
 
     loop->iter = 0;
 
-    err = connect_loop_control_vars(loop, pdinfo);
+    if (is_list_loop(loop)) {
+	err = loop_list_refresh(loop, pdinfo);
+    } else if (loop->type == INDEX_LOOP) {
+	loop->init.val = loop_get_initval(loop, pZ, pdinfo);
+    } else if (loop->type == FOR_LOOP) {
+	forloop_init(loop, pZ, pdinfo, &err);
+    }
 
-    if (!err) {
-	if (loop->init.vname[0] != '\0') {
-	    loop_initval(loop, pZ, pdinfo);
-	} 
+    if (!err && (loop->type == COUNT_LOOP || indexed_loop(loop))) {
+	double maxval = loop_get_finalval(loop, pZ, pdinfo);
 
-	if (loop->type == COUNT_LOOP || indexed_loop(loop)) {
-	    double maxval = loop_finalval(loop, pZ, pdinfo);
-
-	    if (na(loop->init.val) || na(maxval)) {
-		err = 1;
-	    } else {
-		loop->itermax = maxval - loop->init.val + 1;
+	if (na(loop->init.val) || na(maxval)) {
+	    err = 1;
+	} else {
+	    loop->itermax = maxval - loop->init.val + 1;
 #if LOOP_DEBUG
-		fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
-			maxval, loop->init.val, loop->itermax);
+	    fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
+		    maxval, loop->init.val, loop->itermax);
 #endif
-	    }
 	}
-    } 
+    }
 
     if (!err) {
 	if (indexed_loop(loop)) {
@@ -2728,7 +2674,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     err = top_of_loop(loop, pZ, pdinfo);
     
-    while (!err && loop_condition(loop, pZ, pdinfo)) {
+    while (!err && loop_condition(loop, pZ, pdinfo, &err)) {
 #if LOOP_DEBUG
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif

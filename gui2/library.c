@@ -7113,13 +7113,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    } 
 	    break;
 	}
-	if (get_string_by_name(cmd->param)) {
-	    err = delete_saved_string(cmd->param, prn);
+	if (*cmd->param != '\0') {
+	    err = gretl_delete_var_by_name(cmd->param, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    } 
 	    break;
-	}
+	}	    
 	if (get_list_by_name(cmd->extra)) {
 	    err = delete_list_by_name(cmd->extra);
 	    if (err) {

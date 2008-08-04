@@ -119,6 +119,8 @@ double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
 
 int gretl_copy_file (const char *src, const char *dest);
 
+int gretl_delete_var_by_name (const char *s, PRN *prn);
+
 #ifndef WIN32
 int gretl_spawn (char *cmdline);
 #endif

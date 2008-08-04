@@ -40,11 +40,15 @@ int gretl_scalar_set_local_name (int i, const char *name);
 
 int gretl_scalar_restore_name (int i, const char *name);
 
-int gretl_scalar_delete (const char *name);
+int gretl_scalar_delete (const char *name, PRN *prn);
 
 int destroy_user_scalars_at_level (int level);
 
 void destroy_user_scalars (void);
+
+void print_scalar_by_name (const char *name, gretlopt opt, PRN *prn);
+
+void print_scalars (gretlopt opt, PRN *prn);
 
 void set_auxiliary_scalars (void);
 

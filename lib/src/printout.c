@@ -1578,30 +1578,6 @@ static void print_varlist (const char *name, const int *list,
     }
 }
 
-static void print_scalar (double x, const char *vname, 
-			  gretlopt opt, PRN *prn)
-{
-    pputc(prn, '\n');
-    pprintf(prn, "%15s = ", vname);
-
-    if (na(x)) {
-	pputs(prn, "NA");
-    } else {
-	if (x >= 0.0) {
-	    pputc(prn, ' ');
-	}
-	if (opt & OPT_L) {
-	    pprintf(prn, "%#.*E", libset_get_int(LONGDIGITS), x);
-	} else if (opt & OPT_T) {
-	    pprintf(prn, "%#.10E", x);
-	} else {
-	    pprintf(prn, "%#.6g", x);
-	}
-    }
-
-    pputc(prn, '\n');
-}
-
 static void 
 print_listed_objects (const char *s, const DATAINFO *pdinfo, 
 		      gretlopt opt, PRN *prn)
@@ -1612,13 +1588,15 @@ print_listed_objects (const char *s, const DATAINFO *pdinfo,
 
     while ((name = gretl_word_strdup(s, &s)) != NULL) {
 	if (gretl_is_scalar(name)) {
-	    print_scalar(gretl_scalar_get_value(name), 
-			 name, opt, prn);
+	    print_scalar_by_name(name, opt, prn);
 	} else if ((m = get_matrix_by_name(name)) != NULL) {
 	    gretl_matrix_print_to_prn(m, name, prn);
 	} else if ((list = get_list_by_name(name)) != NULL) {
 	    print_varlist(name, list, pdinfo, prn);
+	} else if (!strcmp(name, "scalars")) {
+	    print_all_scalars(opt, prn);
 	}
+	    
 	free(name);
     }
 }

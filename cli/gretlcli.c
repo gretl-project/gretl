@@ -860,44 +860,23 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     switch (cmd->ci) {
 
     case DELEET:
+	k = 0;
 	if (cmd->opt & OPT_D) {
 	    err = db_delete_series_by_name(cmd->param, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
-	}
-	if (get_matrix_by_name(cmd->param)) {
-	    err = user_matrix_destroy_by_name(cmd->param, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
-	}
-	if (get_string_by_name(cmd->param)) {
-	    err = delete_saved_string(cmd->param, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
-	}
-	if (get_list_by_name(cmd->extra)) {
+	} else if (*cmd->param != '\0') {
+	    err = gretl_delete_var_by_name(cmd->param, prn);
+	} else if (get_list_by_name(cmd->extra)) {
 	    err = delete_list_by_name(cmd->extra);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
-	}
-	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
+	} else {
+	    err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
 					    &k, prn);
+	}
 	if (err) {
 	    errmsg(err, prn);
-	} else {
-	    if (k) {
-		pputs(prn, _("Take note: variables have been renumbered"));
-		pputc(prn, '\n');
-		maybe_list_vars(pdinfo, prn);
-	    }
+	} else if (k) {
+	    pputs(prn, _("Take note: variables have been renumbered"));
+	    pputc(prn, '\n');
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 

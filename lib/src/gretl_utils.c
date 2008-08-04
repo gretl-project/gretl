@@ -1515,6 +1515,23 @@ int gretl_copy_file (const char *src, const char *dest)
     return 0;
 }  
 
+int gretl_delete_var_by_name (const char *s, PRN *prn)
+{
+    int err;
+
+    if (gretl_is_scalar(s)) {
+	err = gretl_scalar_delete(s, prn);
+    } else if (get_matrix_by_name(s)) {
+	err = user_matrix_destroy_by_name(s, prn);
+    } else if (get_string_by_name(s)) {
+	err = delete_saved_string(s, prn);
+    } else {
+	err = E_UNKVAR;
+    }
+
+    return err;
+}
+
 /* timer */  
 
 static clock_t tim0;
