@@ -470,6 +470,7 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
     gretl_error_clear();
 
     if (!complex_subsampled()) {
+	/* FIXME inside a function? */
 	if (pdinfo->t1 != 0 || pdinfo->t2 != pdinfo->n - 1) {
 	    pdinfo->t1 = 0;
 	    pdinfo->t2 = pdinfo->n - 1;
