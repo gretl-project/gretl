@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-01 09:34-0400\n"
-"PO-Revision-Date: 2008-07-24 22:03+0200\n"
+"PO-Revision-Date: 2008-08-04 11:08+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -588,12 +588,9 @@ msgstr ""
 "per ogni unità cross section"
 
 #: lib/src/compat.c:224
-#, fuzzy, c-format
+#, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"%7co sta per %s e x sta per %s (+ significa che sono uguali)\n"
-"\n"
-"%9s, %s\n"
+msgstr "'o' sta per %s e 'x' sta per %s ('+' significa che sono uguali)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -2214,14 +2211,14 @@ msgid "Invalid character '%c'\n"
 msgstr "Carattere non valido \"%c\"\n"
 
 #: lib/src/genmain.c:40 lib/src/genmain.c:61
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced scalar %s"
-msgstr "Sostituito lo scalare %s (ID %d)"
+msgstr "Sostituito lo scalare %s"
 
 #: lib/src/genmain.c:42 lib/src/genmain.c:63
-#, fuzzy, c-format
+#, c-format
 msgid "Generated scalar %s"
-msgstr "Generato lo scalare %s (ID %d)"
+msgstr "Generato lo scalare %s"
 
 #: lib/src/genmain.c:83
 #, c-format
@@ -4525,29 +4522,27 @@ msgid "Estimated using BHHH method"
 msgstr "Stimato usando il metodo BHHH"
 
 #: lib/src/modelprint.c:1578 lib/src/modelprint.c:1585
-#, fuzzy, c-format
+#, c-format
 msgid "Godfrey (1994) test for autocorrelation up to order %d"
-msgstr "Test LM per l'autocorrelazione fino all'ordine %s"
+msgstr "Test di Godfrey (1994) per l'autocorrelazione fino all'ordine %d"
 
 #: lib/src/modelprint.c:1581 lib/src/modelprint.c:1588
-#, fuzzy
 msgid "Godfrey (1994) test for first-order autocorrelation"
-msgstr "Autocorrelazione del prim'ordine"
+msgstr "Test di Godfrey (1994) per l'autocorrelazione del prim'ordine"
 
 #: lib/src/modelprint.c:1594 lib/src/modelprint.c:1601
-#, fuzzy, c-format
+#, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr "Test LM per l'autocorrelazione fino all'ordine %s"
+msgstr "Test di Breusch-Godfrey per l'autocorrelazione fino all'ordine %d"
 
 #: lib/src/modelprint.c:1597 lib/src/modelprint.c:1604
-#, fuzzy
 msgid "Breusch-Godfrey test for first-order autocorrelation"
-msgstr "Autocorrelazione del prim'ordine"
+msgstr "Test di Breusch-Godfrey per l'autocorrelazione del prim'ordine"
 
 #: lib/src/modelprint.c:1661 lib/src/modelprint.c:1662
-#, fuzzy, c-format
+#, c-format
 msgid "Test for ARCH of order %d"
-msgstr "Test per ARCH di ordine %s"
+msgstr "Test per ARCH di ordine %d"
 
 #: lib/src/modelprint.c:1667 lib/src/modelprint.c:1671
 #: lib/src/modelprint.c:1675 lib/src/system.c:3801 lib/src/system.c:3821
@@ -8969,9 +8964,8 @@ msgid "Save as script"
 msgstr "Salva come script"
 
 #: gui2/fnsave.c:848
-#, fuzzy
 msgid "Edit sample script"
-msgstr "Impossibile aprire lo script"
+msgstr "Modifica script di esempio"
 
 #: gui2/fnsave.c:856
 msgid "Upload package to server on save"
@@ -10242,18 +10236,16 @@ msgid "Font name"
 msgstr "Nome del carattere"
 
 #: gui2/gtkfontselhack.c:182
-#, fuzzy
 msgid "The X string that represents this font"
-msgstr "La stringa X che rappresenta questo carattere."
+msgstr "La stringa X che rappresenta questo carattere"
 
 #: gui2/gtkfontselhack.c:188
 msgid "Preview text"
 msgstr "Anteprima testo"
 
 #: gui2/gtkfontselhack.c:189
-#, fuzzy
 msgid "The text to display in order to demonstrate the selected font"
-msgstr "Il testo da usare per una dimostrazione del carattere selezionato."
+msgstr "Il testo da usare per una dimostrazione del carattere selezionato"
 
 #: gui2/gtkfontselhack.c:195
 msgid "Filter"
