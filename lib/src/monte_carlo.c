@@ -37,7 +37,7 @@
 #define SUBST_DEBUG 0
 #define IDX_DEBUG 0
 
-#define GENCOMPILE 0
+#define GENCOMPILE 1
 
 #if LOOP_DEBUG
 # undef ENABLE_GMP
@@ -117,7 +117,6 @@ enum loop_flags {
 
 struct controller_ {
     double val;
-    int vnum;
     char vname[VNAMELEN];
     int vsign;
     char *expr;
@@ -215,24 +214,21 @@ int gretl_execute_loop (void)
 
 static double controller_evaluate_expr (const char *expr, 
 					const char *vname,
-					int vnum,
 					double ***pZ,
 					DATAINFO *pdinfo)
 {
     double x = NADBL;
-    int v, err = 0;
+    int err = 0;
 
     gretl_error_clear();
 
-    if (!strcmp(vname, "iftest") || gretl_is_scalar(vname)) {
+    if (!strcmp(vname, "iftest")) {
 	x = generate_scalar(expr, pZ, pdinfo, &err);
     } else {
 	err = generate(expr, pZ, pdinfo, OPT_Q, NULL);
 	if (!err) {
-	    /* FIXME scalar */
-	    v = (vnum > 0)? vnum : series_index(pdinfo, vname);
-	    if (v < pdinfo->v) {
-		x = (*pZ)[v][0];
+	    if (gretl_is_scalar(vname)) {
+		x = gretl_scalar_get_value(vname);
 	    } else {
 		err = 1;
 	    }
@@ -266,21 +262,16 @@ loop_controller_get_value (controller *clr, double ***pZ, DATAINFO *pdinfo)
     double ret = NADBL;
 
     if (clr->expr != NULL) {
-	ret = controller_evaluate_expr(clr->expr, clr->vname, clr->vnum,
-				       pZ, pdinfo);
-	clr->val = ret;
-    } else if (clr->vnum > 0) {
-	ret = (*pZ)[clr->vnum][0] * clr->vsign;
+	ret = controller_evaluate_expr(clr->expr, clr->vname, pZ, pdinfo);
 	clr->val = ret;
     } else if (gretl_is_scalar(clr->vname)) {
-	ret = clr->val = gretl_scalar_get_value(clr->vname);
+	ret = clr->val = gretl_scalar_get_value(clr->vname) * clr->vsign;
     } else {
 	ret = clr->val;
     } 
 
 #if LOOP_DEBUG
-    fprintf(stderr, "loop_controller_get_value: vnum = %d, returning %g\n", 
-	    clr->vnum, ret);
+    fprintf(stderr, "loop_controller_get_value: returning %g\n", ret);
 #endif
 
     return ret;
@@ -594,7 +585,7 @@ static int parse_as_while_loop (LOOPSET *loop,
     int err = 0;
 
     expr = gretl_strdup(s);
-    x = controller_evaluate_expr(expr, "iftest", 0, pZ, pdinfo);
+    x = controller_evaluate_expr(expr, "iftest", pZ, pdinfo);
 
     /* FIXME nested loops: all elements of expression may not be defined yet? */
 
@@ -666,17 +657,14 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    s++;
 	}
 	if (gretl_is_scalar(s)) {
-	    clr->vnum = LOOP_VAL_UNDEF; /* FIXME scalar */
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
 	    clr->val = (int) gretl_scalar_get_value(s);
 	} else if ((v = series_index(pdinfo, s)) < pdinfo->v) {
 	    /* found a series by the name of s */
-	    clr->vnum = v;
-	    clr->val = (int) Z[v][0];
+	    gretl_errmsg_sprintf(_("'%s': not a scalar"), s);
 	} else if (loop->parent != NULL && strlen(s) == gretl_namechar_spn(s)) {
 	    /* potentially valid varname, but unknown at present */
-	    clr->vnum = LOOP_VAL_UNDEF;
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
 	} else {
@@ -767,44 +755,11 @@ static int parse_as_count_loop (LOOPSET *loop,
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_as_count_loop: init.val=%g, final.val=%g, "
-	    "final.vnum=%d\n", loop->init.val, loop->final.val,
-	    loop->final.vnum);
+    fprintf(stderr, "parse_as_count_loop: init.val=%g, final.val=%g\n",
+	    loop->init.val, loop->final.val);
 #endif
 
     return err;
-}
-
-/* before testing the "delta" element in a putative "for" loop, save
-   the state of the variable in question so we can restore it after
-   running the test */
-
-static double *save_delta_state (int v, double **Z, DATAINFO *pdinfo)
-{
-    double *x0;
-    int i;
-    
-    x0 = malloc(pdinfo->n * sizeof *x0);
-
-    if (x0 != NULL) {
-	for (i=0; i<pdinfo->n; i++) {
-	    x0[i] = Z[v][i];
-	}
-    }
-
-    return x0;
-}
-
-static void 
-restore_delta_state (int v, double *x0, double **Z, DATAINFO *pdinfo)
-{
-    int i;
-
-    for (i=0; i<pdinfo->n; i++) {
-	Z[v][i] = x0[i];
-    }
-
-    free(x0);
 }
 
 static int 
@@ -824,7 +779,7 @@ test_forloop_element (char *s, LOOPSET *loop,
     if (i == 1) {
 	/* middle term: Boolean test */
 	strcpy(vname, "iftest");
-	x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
+	x = controller_evaluate_expr(s, vname, pZ, pdinfo);
     } else {
 	/* treat as regular "genr" expression */
 	err = extract_varname(vname, s, &len);
@@ -835,26 +790,13 @@ test_forloop_element (char *s, LOOPSET *loop,
 		if (gretl_is_scalar(vname)) {
 		    double x0 = gretl_scalar_get_value(vname);
 
-		    x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
+		    x = controller_evaluate_expr(s, vname, pZ, pdinfo);
 		    gretl_scalar_set_value(vname, x0);
 		} else {
-		    int v = series_index(pdinfo, vname);
-
-		    if (v < pdinfo->v) {
-			double *x0 = save_delta_state(v, *pZ, pdinfo);
-
-			if (x0 == NULL) {
-			    err = E_ALLOC;
-			} else {
-			    x = controller_evaluate_expr(s, vname, v, pZ, pdinfo);
-			    restore_delta_state(v, x0, *pZ, pdinfo);
-			}
-		    } else {
-			err = E_UNKVAR;
-		    }
+		    err = E_DATA;
 		}
 	    } else {
-		x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
+		x = controller_evaluate_expr(s, vname, pZ, pdinfo);
 	    }	
 	} 
     }
@@ -876,10 +818,6 @@ test_forloop_element (char *s, LOOPSET *loop,
 	    err = 1;
 	} else {
 	    strcpy(clr->vname, vname);
-	    if (i != 1) {
-		/* FIXME scalar */
-		clr->vnum = series_index(pdinfo, vname);
-	    }
 	}	
     }	
 
@@ -1342,7 +1280,6 @@ loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 static void controller_init (controller *clr)
 {
     clr->val = NADBL;
-    clr->vnum = 0;
     clr->vname[0] = 0;
     clr->vsign = 1;
     clr->expr = NULL;
@@ -2383,7 +2320,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 #endif
 
     if (loop->type == FOR_LOOP) {
-	sprintf(targ, "$%s", pdinfo->varname[loop->init.vnum]);
+	sprintf(targ, "$%s", loop->init.vname);
 	targlen = strlen(targ);
     } else if (indexed_loop(loop)) {
 	targ[0] = '$';
@@ -2412,8 +2349,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	strcpy(q, p + targlen);
 
 	if (loop->type == FOR_LOOP) {
-	    sprintf(ins, "%g", Z[loop->init.vnum][0]); /* scalar */
-
+	    sprintf(ins, "%g", gretl_scalar_get_value(loop->init.vname));
 	    if (p - str > 0 && *(p - 1) == '[' && *(p + targlen) == ']') {
 		/* got an obs-type string, on the pattern [$lvar] */
 		int t = dateton(ins, pdinfo);
@@ -2471,23 +2407,18 @@ static int extend_loop_dataset (LOOP_STORE *lstore)
     return 0;
 }
 
-static int clr_attach_var (controller *clr, const DATAINFO *pdinfo)
+static int clr_attach_var (controller *clr)
 {
-    int err = 0;
-
-    if (!gretl_is_scalar(clr->vname)) {
-	int v = series_index(pdinfo, clr->vname);
-
-	if (v >= pdinfo->v) {
-	    sprintf(gretl_errmsg, 
-		    _("Undefined variable '%s' in loop condition."), clr->vname);
-	    err = 1;
+    if (*clr->vname && !gretl_is_scalar(clr->vname)) {
+	if (!strcmp(clr->vname, "iftest")) {
+	    ; /* OK */
 	} else {
-	    clr->vnum = v;
-	} 
+	    sprintf(gretl_errmsg, _("%s: not a scalar"), clr->vname);
+	    return 1;
+	}
     }
 
-    return err;
+    return 0;
 }
 
 /* Connect up any loop control variables that were undefined at
@@ -2498,22 +2429,20 @@ static int clr_attach_var (controller *clr, const DATAINFO *pdinfo)
 static int 
 connect_loop_control_vars (LOOPSET *loop, const DATAINFO *pdinfo)
 {
-    int err = 0;
+    int err;
 
-    if (loop->init.vnum == LOOP_VAL_UNDEF) {
-	err = clr_attach_var(&loop->init, pdinfo);
+    err = clr_attach_var(&loop->init);
+
+    if (!err) {
+	err = clr_attach_var(&loop->test);
     }
 
-    if (!err && loop->test.vnum == LOOP_VAL_UNDEF) {
-	err = clr_attach_var(&loop->test, pdinfo);
+    if (!err) {
+	err = clr_attach_var(&loop->delta);
     }
 
-    if (!err && loop->delta.vnum == LOOP_VAL_UNDEF) {
-	err = clr_attach_var(&loop->delta, pdinfo);
-    }
-
-    if (!err && loop->final.vnum == LOOP_VAL_UNDEF) {
-	err = clr_attach_var(&loop->final, pdinfo);
+    if (!err) {
+	err = clr_attach_var(&loop->final);
     }
 
     if (!err && is_list_loop(loop)) {
@@ -2554,7 +2483,7 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
     err = connect_loop_control_vars(loop, pdinfo);
 
     if (!err) {
-	if (loop->init.vname[0] != '\0' || loop->init.vnum > 0) {
+	if (loop->init.vname[0] != '\0') {
 	    loop_initval(loop, pZ, pdinfo);
 	} 
 

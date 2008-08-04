@@ -3917,7 +3917,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (n->t == U_ADDR) {
 	    NODE *u = n->v.b1.b;
 
-	    if (u->t == NUM) {
+	    if (u->t == USCALAR) {
+		int v = gretl_scalar_get_index(u->v.str, &p->err);
+		
+		if (!p->err) {
+		    p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &v);
+		}
+	    } else if (u->t == NUM) {
 		p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->vnum);
 	    } else if (u->t == VEC) {
 		p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->vnum);
@@ -3928,6 +3934,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    } else {
 		pputs(p->prn, _("Wrong type of operand for unary '&'"));
 		pputc(p->prn, '\n');
+		fprintf(stderr, "bad type %d\n", u->t);
 		p->err = 1;
 	    }
 	} else if (n->t == DUM) {
@@ -5127,11 +5134,11 @@ static NODE *eval (NODE *t, parser *p)
     case U_ADDR:
     case LVEC:
 	if (t->t == NUM && t->vnum > 0) {
-	    t->v.xval = (*p->Z)[t->vnum][0];
+	    t->v.xval = gretl_scalar_get_value_by_index(t->vnum);
 	} else if (t->t == VEC && t->vnum > 0 && (p->flags & P_EXEC)) {
 	    reattach_data_series(t, p);
-	}
-	/* terminal symbol: pass on through */
+	} 
+	/* otherwise, terminal symbol: pass on through */
 	ret = t;
 	break;
     case LIST:
