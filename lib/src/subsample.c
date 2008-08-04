@@ -390,11 +390,7 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     fullZ = newZ;
 
     for (i=V0; i<pdinfo->v && !err; i++) {
-#if SUBDEBUG
-	fprintf(stderr, " new var %d (%s) is a scalar\n", i, 
-		pdinfo->varname[i]);
-#endif
-	fullZ[i] = malloc(sizeof **newZ);
+	fullZ[i] = malloc(N * sizeof **newZ);
 	if (fullZ[i] == NULL) {
 	    err = E_ALLOC;
 	}
