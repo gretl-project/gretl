@@ -4580,98 +4580,97 @@ void add_system_resid (GtkAction *action, gpointer p)
     mark_dataset_as_modified();
 }
 
-void add_model_stat (MODEL *pmod, int which)
+static void set_model_stat_name (GtkWidget *widget, dialog_t *dlg)
 {
-    char vname[VNAMELEN], vlabel[MAXLABEL];
-    char realname[VNAMELEN];
-    char statname[8];
-    double val = NADBL;
-    int i = 0;
+    char *vname = (char *) edit_dialog_get_data(dlg);
+    const gchar *s = edit_dialog_get_text(dlg);
 
-    switch (which) {
-    case ESS:
-	sprintf(vname, "ess_%d", pmod->ID);
-	sprintf(vlabel, _("error sum of squares from model %d"), 
-		pmod->ID);
-	val = pmod->ess;
-	strcpy(statname, "$ess");
-	break;
-    case R2:
-	sprintf(vname, "r2_%d", pmod->ID);
-	sprintf(vlabel, _("R-squared from model %d"), pmod->ID);
-	val = pmod->rsq;
-	strcpy(statname, "$rsq");
-	break;
-    case TR2:
-	sprintf(vname, "trsq%d", pmod->ID);
-	sprintf(vlabel, _("T*R-squared from model %d"), pmod->ID);
-	val = pmod->nobs * pmod->rsq;
-	strcpy(statname, "$trsq");
-	break;
-    case DF:
-	sprintf(vname, "df_%d", pmod->ID);
-	sprintf(vlabel, _("degrees of freedom from model %d"), 
-		pmod->ID);
-	val = (double) pmod->dfd;
-	strcpy(statname, "$df");
-	break;
-    case SIGMA:
-	sprintf(vname, "sgma_%d", pmod->ID);
-	sprintf(vlabel, _("std err of residuals from model %d"), 
-		pmod->ID);
-	val = pmod->sigma;
-	strcpy(statname, "$sigma");
-	break;
-    case LNL:
-	sprintf(vname, "lnl_%d", pmod->ID);
-	sprintf(vlabel, _("log likelihood from model %d"), 
-		pmod->ID);
-	val = pmod->lnL;
-	strcpy(statname, "$lnl");
-	break;	
-    case AIC:
-	sprintf(vname, "aic_%d", pmod->ID);
-	sprintf(vlabel, _("Akaike Information Criterion from model %d"), 
-		pmod->ID);
-	val = pmod->criterion[C_AIC];
-	strcpy(statname, "$aic");
-	break;
-    case BIC:
-	sprintf(vname, "bic_%d", pmod->ID);
-	sprintf(vlabel, _("Bayesian Information Criterion from model %d"), 
-		pmod->ID);
-	val = pmod->criterion[C_BIC];
-	strcpy(statname, "$bic");
-	break;
-    case HQC:
-	sprintf(vname, "hqc_%d", pmod->ID);
-	sprintf(vlabel, _("Hannan-Quinn Information Criterion from model %d"), 
-		pmod->ID);
-	val = pmod->criterion[C_HQC];
-	strcpy(statname, "$hqc");
-	break;
-    }
-
-#if 0 /* FIXME scalar */
-    strcpy(datainfo->varname[i], make_varname_unique(vname, i, datainfo));
-    strcpy(VARLABEL(datainfo, i), vlabel);
-
-    /* give the user a chance to choose a different name */
-    varinfo_dialog(i, 0);
-#else
-    strcpy(realname, make_varname_unique(vname, i, datainfo)); 
-#endif
-
-    if (*realname == '\0') {
-	/* the user canceled */
+    if (s == NULL || validate_varname(s)) {
 	return;
     }
 
-    gretl_scalar_add(realname, val);
+    strcpy(vname, s);
+    close_dialog(dlg);
+}
 
-    gretl_command_sprintf("scalar %s = %s", realname, statname);
+void add_model_stat (MODEL *pmod, int which)
+{
+    char vname[VNAMELEN];
+    double val = NADBL;
+    const char *descrip = NULL;
+    const char *statname = NULL;
+    gchar *blurb;
+    int cancel = 0;
 
-    model_command_init(pmod->ID);
+    switch (which) {
+    case ESS:
+	descrip = N_("error sum of squares"); 
+	val = pmod->ess;
+	statname = "$ess";
+	break;
+    case R2:
+	descrip = N_("R-squared");
+	val = pmod->rsq;
+	statname = "$rsq";
+	break;
+    case TR2:
+	descrip = N_("T*R-squared");
+	val = pmod->nobs * pmod->rsq;
+	statname = "$trsq";
+	break;
+    case DF:
+	descrip = N_("degrees of freedom"); 
+	val = (double) pmod->dfd;
+	statname = "$df";
+	break;
+    case SIGMA:
+	descrip = N_("standard error of residuals"); 
+	val = pmod->sigma;
+	statname = "$sigma";
+	break;
+    case LNL:
+	descrip = N_("log likelihood");
+	val = pmod->lnL;
+	statname = "$lnl";
+	break;	
+    case AIC:
+	descrip = N_("Akaike Information Criterion"); 
+	val = pmod->criterion[C_AIC];
+	statname = "$aic";
+	break;
+    case BIC:
+	descrip = N_("Bayesian Information Criterion"); 
+	val = pmod->criterion[C_BIC];
+	statname = "$bic";
+	break;
+    case HQC:
+	descrip = N_("Hannan-Quinn Information Criterion"); 
+	val = pmod->criterion[C_HQC];
+	statname = "$hqc";
+	break;
+    default:
+	dummy_call();
+	return;
+    }
+
+    sprintf(vname, "%s_%d", statname + 1, pmod->ID);
+
+    blurb = g_strdup_printf("Statistic from model %d\n"
+			    "%s (value = %g)\n" 
+			    "Name (max. 15 characters):",
+			    pmod->ID, descrip, val);
+
+    edit_dialog (_("gretl: add scalar"),
+		 blurb, vname, set_model_stat_name, vname, 
+		 0, VARCLICK_NONE, &cancel);
+
+    g_free(blurb);
+
+    if (!cancel) {
+	gretl_scalar_add(vname, val);
+	gretl_command_sprintf("scalar %s = %s", vname, statname);
+	model_command_init(pmod->ID);
+    }
 
     /* note: since this is a scalar, which will not be saved by
        default on File/Save data, we will not mark the data set

@@ -1132,7 +1132,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     } else {
 	if (info != NULL) {
 	    w = gtk_label_new(info);
-	    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+	    /* GTK_JUSTIFY_CENTER? */
+	    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_LEFT);
 	    gtk_box_pack_start(GTK_BOX(top_vbox), w, TRUE, TRUE, 5);
 	    gtk_widget_show(w);
 	}
