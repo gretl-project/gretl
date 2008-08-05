@@ -761,7 +761,7 @@ set_forloop_element (char *s, LOOPSET *loop,
     fprintf(stderr, "set_forloop_element: i=%d: '%s'\n", i, s);
 #endif
 
-    if (s == NULL) {
+    if (s == NULL || *s == '\0') {
 	/* an empty "for" field */
 	if (i == 1) {
 	    /* test is implicitly always true */
@@ -1024,40 +1024,56 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 static int 
 parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
 {
-    char *forstr = NULL;
-    char *forbits[3];
-    char *p = strchr(s, '(');
-    int i, len, err = 0;
+    char *tmp, *q;
+    int i, j, len;
+    int sc = 0;
+    int err = 0;
 
-    if (p == NULL) {
-	err = 1;
-    } else {
-	len = strcspn(p, ")");
-	if (len < 4) {
-	    err = E_PARSE;
-	} else if ((forstr = malloc(len + 1)) == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    i = 0;
-	    /* make compressed copy of string */
-	    p++;
-	    while (*p) {
-		if (*p == ')') break;
-		if (*p != ' ') {
-		    forstr[i++] = *p;
-		}
-		p++;
-	    }
-	    forstr[i] = '\0';
-	    /* split terms separated by ';' */
-	    for (i=0; i<3 && !err; i++) {
-		forbits[i] = strtok((i == 0)? forstr : NULL, ";");
-		err = set_forloop_element(forbits[i], loop, 
-					   pZ, pdinfo, i);
-	    }
-	    free(forstr);
-	}
+    s += strcspn(s, "(");
+    if (*s != '(') {
+	return E_PARSE;
     }
+
+    s++;
+    q = strrchr(s, ')');
+    if (q == NULL) {
+	return E_PARSE;
+    }
+
+    len = q - s;
+    if (len < 2) { /* minimal OK string is ";;" */
+	return E_PARSE;
+    }
+
+    tmp = malloc(len + 1);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    for (j=0; j<3 && s!=q && !err; j++) {
+	/* make a compressed copy of field j */
+	i = 0;
+	while (s != q) {
+	    if (*s == ';') {
+		sc++;
+		s++;
+		break; /* onto next field */
+	    }
+	    if (*s != ' ') {
+		tmp[i++] = *s;
+	    }
+	    s++;
+	}
+	tmp[i] = '\0';
+	err = set_forloop_element(tmp, loop, pZ, pdinfo, j);
+    }  
+
+    if (!err && (sc != 2 || s != q)) {
+	/* must have two semi-colons; must have reached righmost ')' */
+	err = E_PARSE;
+    }
+
+    free(tmp);
 
     if (!err) {
 	loop->type = FOR_LOOP;

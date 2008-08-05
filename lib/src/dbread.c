@@ -2556,14 +2556,12 @@ static double *compact_series (const double *src, int i, int n, int oldn,
 #endif
 
     x = malloc(n * sizeof *x);
-    if (x == NULL) return NULL;
-
-    for (t=0; t<n; t++) {
-	x[t] = (i == 0)? 1.0 : NADBL;
+    if (x == NULL) {
+	return NULL;
     }
 
-    if (i == 0) {
-	return x;
+    for (t=0; t<n; t++) {
+	x[t] = NADBL;
     }
 
     idx = startskip;
@@ -2646,13 +2644,8 @@ daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i,
     int sopt, eopt;
 
     x = malloc(nm * sizeof *x);
-    if (x == NULL) return NULL;
-
-    if (i == 0) {
-	for (t=0; t<nm; t++) {
-	    x[t] = 1.0;
-	}
-	return x;
+    if (x == NULL) {
+	return NULL;
     }
 
     if (offset < 0) {
@@ -3119,8 +3112,7 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
     DATAINFO minfo;
     int startyr = 1, endyr;
     int startmon = 1, endmon;
-    int nseries = 0;
-    int i, err = 0;
+    int err = 0;
 
     minfo.n = weeks_to_months_check(pdinfo, &startyr, &endyr, &startmon, &endmon);
     fprintf(stderr, "Weekly data: found %d months\n", minfo.n);
@@ -3134,12 +3126,8 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 	return err;
     }
 
-    for (i=1; i<pdinfo->v && !err; i++) {
-	nseries++; /* FIXME redundant */
-    }
-
     /* compact series */
-    if (!err && nseries > 0) {
+    if (!err && pdinfo->v > 1) {
 	err = weeks_to_months_exec(mZ, (const double **) *pZ, pdinfo, method);
     }
 
@@ -3161,6 +3149,18 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static int shorten_the_constant (double **Z, int n)
+{
+    double *tmp = realloc(Z[0], n * sizeof **Z);
+
+    if (tmp == NULL) {
+	return E_ALLOC;
+    } else {
+	Z[0] = tmp;
+	return 0;
+    }
+}
+
 /* conversion to weekly using a "representative day", e.g. use
    each Wednesday value.  repday is 0-based on Sunday.
 */
@@ -3171,6 +3171,7 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
     int y1, m1, d1;
     char obs[OBSLEN];
     double *x = NULL;
+    double *tmp;
     int n = 0, n_ok = 0;
     int wday, ok;
     int i, t, err = 0;
@@ -3211,17 +3212,16 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
+    err = shorten_the_constant(Z, n);
+
     for (i=1; i<pdinfo->v && !err; i++) {
-	double *tmp;
 	int s = 0;
 
-	if (i > 0) { /* FIXME i iteration */
-	    for (t=0; t<pdinfo->n; t++) {
-		ntodate_full(obs, t, pdinfo);
-		wday = get_day_of_week(obs);
-		if (wday == repday) {
-		    x[s++] = Z[i][t];
-		}
+	for (t=0; t<pdinfo->n; t++) {
+	    ntodate_full(obs, t, pdinfo);
+	    wday = get_day_of_week(obs);
+	    if (wday == repday) {
+		x[s++] = Z[i][t];
 	    }
 	}
 	tmp = realloc(Z[i], n * sizeof **Z);
@@ -3230,7 +3230,7 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 	} else {
 	    Z[i] = tmp;
 	    for (t=0; t<n; t++) { 
-		Z[i][t] = (i == 0)? 1.0 : x[t];
+		Z[i][t] = x[t];
 	    }
 	}
     }
@@ -3253,11 +3253,13 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
     return err;
 }
 
-static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
+static int daily_dataset_to_monthly (double **Z, DATAINFO *pdinfo,
 				     CompactMethod default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
     int offset, any_eop;
+    CompactMethod method;
+    double *x;
     int i, err = 0;
 
     nm = get_n_ok_months(pdinfo, default_method, &startyr, &startmon,
@@ -3265,26 +3267,25 @@ static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 
     if (nm <= 0) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
-	err = 1;
-    } else {
-	for (i=0; i<pdinfo->v && !err; i++) {
-	    CompactMethod method;
-	    double *x;
+	return E_DATA;
+    }
 
-	    method = COMPACT_METHOD(pdinfo, i);
-	    if (method == COMPACT_NONE) {
-		method = default_method;
-	    }
+    err = shorten_the_constant(Z, nm);
 
-	    x = daily_series_to_monthly((*pZ)[i], pdinfo, i, nm,
-					startyr, startmon, 
-					offset, any_eop, method);
-	    if (x == NULL) {
-		err = E_ALLOC;
-	    } else {
-		free((*pZ)[i]);
-		(*pZ)[i] = x;
-	    }
+    for (i=1; i<pdinfo->v && !err; i++) {
+	method = COMPACT_METHOD(pdinfo, i);
+	if (method == COMPACT_NONE) {
+	    method = default_method;
+	}
+
+	x = daily_series_to_monthly(Z[i], pdinfo, i, nm,
+				    startyr, startmon, 
+				    offset, any_eop, method);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    free(Z[i]);
+	    Z[i] = x;
 	}
     }
 
@@ -3403,6 +3404,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 		      int repday)
 {
     int newn, oldn = pdinfo->n, oldpd = pdinfo->pd;
+    double **Z = *pZ;
     int compfac;
     int startmaj, startmin;
     int endmaj, endmin;
@@ -3432,10 +3434,10 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     if (newpd == 52 && oldpd >= 5 && oldpd <= 7 && 
 	default_method == COMPACT_WDAY) {
 	/* daily to weekly, using "representative day" */
-	return daily_dataset_to_weekly(*pZ, pdinfo, repday);
+	return daily_dataset_to_weekly(Z, pdinfo, repday);
     } else if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {
 	/* daily to monthly: special */
-	return daily_dataset_to_monthly(pZ, pdinfo, default_method);
+	return daily_dataset_to_monthly(Z, pdinfo, default_method);
     } else if (oldpd >= 5 && oldpd <= 7) {
 	/* daily to weekly */
 	compfac = oldpd;
@@ -3507,8 +3509,10 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	dataset_destroy_obs_markers(pdinfo);
     }
 
+    err = shorten_the_constant(Z, pdinfo->n);
+
     /* compact the individual data series */
-    for (i=0; i<pdinfo->v && err == 0; i++) {
+    for (i=1; i<pdinfo->v && !err; i++) {
 	CompactMethod this_method = default_method;
 	int startskip = min_startskip;
 	double *x;
@@ -3529,13 +3533,13 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	    }
 	}
 
-	x = compact_series((*pZ)[i], i, pdinfo->n, oldn, startskip, 
+	x = compact_series(Z[i], i, pdinfo->n, oldn, startskip, 
 			   min_startskip, compfac, this_method);
 	if (x == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    free((*pZ)[i]);
-	    (*pZ)[i] = x;
+	    free(Z[i]);
+	    Z[i] = x;
 	}
     }
 
