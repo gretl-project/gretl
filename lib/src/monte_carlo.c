@@ -1021,6 +1021,8 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     return err;
 }
 
+/* try to parse out (expr1; expr2; expr3) */
+
 static int 
 parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
 {
