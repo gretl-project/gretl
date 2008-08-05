@@ -262,9 +262,7 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
     fputs("library(stats)\n", fp);
     fputs("if (vnum <= 1.89) library(ts)\n", fp);
 
-#if 1
     write_R_export_func(dotdir, fp);
-#endif
 
     /* source the commands and/or data from gretl */
     fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
