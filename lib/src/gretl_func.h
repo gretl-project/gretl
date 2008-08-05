@@ -91,6 +91,8 @@ char *gretl_func_get_arg_name (const char *argvar, int *err);
 
 int object_is_const (const char *name);
 
+void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2);
+
 const char *get_funcerr_message (void);
 
 int gretl_function_set_info (int i, const char *help);

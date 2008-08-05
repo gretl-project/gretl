@@ -26,6 +26,8 @@
 # include <signal.h>
 #endif
 
+#define USE_DASH_F 0
+
 static char **foreign_lines;
 static int foreign_n_lines; 
 static int foreign_lang;
@@ -109,7 +111,12 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
+#if USE_DASH_F
+    gchar *Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir());
+    gchar *argv[8];
+#else
     gchar *argv[6];
+#endif
     gchar *out = NULL;
     gchar *errout = NULL;
     gint status = 0;
@@ -121,7 +128,14 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     argv[2] = "--no-init-file";
     argv[3] = "--no-restore-data";
     argv[4] = "--slave";
+
+#if USE_DASH_F
+    argv[5] = "-f";
+    argv[6] = Rsrc;
+    argv[7] = NULL;
+#else
     argv[5] = NULL;
+#endif
 
     signal(SIGCHLD, SIG_DFL);
 
@@ -156,6 +170,9 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
     g_free(out);
     g_free(errout);
+#if USE_DASH_F
+    g_free(Rsrc);
+#endif
 
     return err;
 }
@@ -236,7 +253,7 @@ static void write_R_export_func (const gchar *dotdir, FILE *fp)
 /* set up for a temporary R profile, so R knows what to do */
 
 static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
-				  const gchar *dotdir)
+				  const gchar *dotdir, gretlopt opt)
 {
     FILE *fp;
     int err;
@@ -264,8 +281,14 @@ static int write_gretl_R_profile (const char *Rprofile, const char *Rsrc,
 
     write_R_export_func(dotdir, fp);
 
-    /* source the commands and/or data from gretl */
+#if USE_DASH_F
+    if (opt & OPT_I) {
+	/* source the commands and/or data from gretl */
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
+    }
+#else
     fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rsrc);
+#endif
 
     fclose(fp);
 
@@ -342,7 +365,7 @@ int write_gretl_R_files (const char *buf,
     Rsrc = g_strdup_printf("%sRsrc", dotcpy);
     
     /* first write a temporary R profile, so R knows what to do */
-    err = write_gretl_R_profile(Rprofile, Rsrc, dotcpy);
+    err = write_gretl_R_profile(Rprofile, Rsrc, dotcpy, opt);
     if (err) {
 	return err;
     }

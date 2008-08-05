@@ -144,6 +144,11 @@ real_get_scalar_by_name (const char *name, int slevel, int *err)
 
 #endif
 
+int n_saved_scalars (void)
+{
+    return n_scalars;
+}
+
 int gretl_is_scalar (const char *name)
 {
 #if SDEBUG

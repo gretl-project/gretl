@@ -20,6 +20,8 @@
 #ifndef GRETL_SCALAR_H
 #define GRETL_SCALAR_H
 
+int n_saved_scalars (void);
+
 int gretl_is_scalar (const char *name);
 
 int gretl_scalar_get_index (const char *name, int *err);

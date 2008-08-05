@@ -52,6 +52,7 @@ typedef struct obsinfo_ obsinfo;
 struct obsinfo_ {
     int structure;
     int pd;
+    int t1, t2;
     char changed;
     char stobs[OBSLEN];
 };
@@ -3691,6 +3692,8 @@ static void record_obs_info (obsinfo *o, DATAINFO *pdinfo)
 {
     o->structure = pdinfo->structure;
     o->pd = pdinfo->pd;
+    o->t1 = pdinfo->t1;
+    o->t2 = pdinfo->t2;
     strcpy(o->stobs, pdinfo->stobs);
     o->changed = 0;
 }
@@ -4179,6 +4182,19 @@ int object_is_const (const char *name)
     }
 
     return 0;
+}
+
+void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2)
+{
+    fncall *call = current_function_call();
+
+    if (call != NULL) {
+	*t1 = call->obs.t1;
+	*t2 = call->obs.t2;
+    } else {
+	*t1 = 0;
+	*t2 = pdinfo->n - 1;
+    }
 }
 
 void gretl_functions_cleanup (void)

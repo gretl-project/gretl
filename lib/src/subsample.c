@@ -470,14 +470,23 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
     gretl_error_clear();
 
     if (!complex_subsampled()) {
-	/* FIXME inside a function? */
-	if (pdinfo->t1 != 0 || pdinfo->t2 != pdinfo->n - 1) {
-	    pdinfo->t1 = 0;
-	    pdinfo->t2 = pdinfo->n - 1;
-#if SUBDEBUG
-	    fprintf(stderr, "restore_full_sample: reset t1 and t2\n");
-#endif
+	int t1min, t2max;
+
+	if (state == NULL) {
+	    /* not inside a function */
+	    t1min = 0;
+	    t2max = pdinfo->n - 1;
+	} else {
+	    /* don't go outside the bounds set on entry to
+	       a function */
+	    sample_range_get_extrema(pdinfo, &t1min, &t2max);
 	}
+
+	pdinfo->t1 = t1min;
+	pdinfo->t2 = t2max;
+#if SUBDEBUG
+	fprintf(stderr, "restore_full_sample: just set t1 and t2\n");
+#endif
 	return 0;
     }
 
@@ -1317,6 +1326,7 @@ static int get_sample_limit (char *s, double ***pZ, DATAINFO *pdinfo,
 int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 {
     int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
+    int tmin = 0, tmax = 0;
     char newstart[OBSLEN], newstop[OBSLEN];
 
     gretl_error_clear();
@@ -1344,6 +1354,8 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 	/* no-op, just print the current sample */
 	return 0;
     }
+
+    sample_range_get_extrema(pdinfo, &tmin, &tmax);
 	
     if (nf == 1) {
 	if (sscanf(line, "%10s", newstart) != 1) {
@@ -1351,7 +1363,7 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 	    return 1;
 	} else {
 	    new_t1 = get_sample_limit(newstart, pZ, pdinfo, SMPL_T1);
-	    if (new_t1 < 0 || new_t1 >= pdinfo->n) {
+	    if (new_t1 < tmin || new_t1 > tmax) {
 		strcpy(gretl_errmsg, _("error in new starting obs"));
 		return 1;
 	    }
@@ -1369,7 +1381,7 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     if (strcmp(newstart, ";")) {
 	new_t1 = get_sample_limit(newstart, pZ, pdinfo, SMPL_T1);
-	if (new_t1 < 0 || new_t1 >= pdinfo->n) {
+	if (new_t1 < tmin || new_t1 > tmax) {
 	    strcpy(gretl_errmsg, _("error in new starting obs"));
 	    return 1;
 	}	
@@ -1377,13 +1389,13 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     if (strcmp(newstop, ";")) {
 	new_t2 = get_sample_limit(newstop, pZ, pdinfo, SMPL_T2);
-	if (new_t2 < 0 || new_t2 >= pdinfo->n) {
+	if (new_t2 < tmin || new_t2 > tmax) {
 	    strcpy(gretl_errmsg, _("error in new ending obs"));
 	    return 1;
 	}
     }
 
-    if (new_t1 < 0 || new_t1 > new_t2) {
+    if (new_t1 < tmin || new_t1 > new_t2) {
 	strcpy(gretl_errmsg, _("Invalid null sample"));
 	return 1;
     }

@@ -1,6 +1,12 @@
 version 1.7.7, in progress
 - Revamp of internal handling of scalar variables
+- The --preserve option to the "nulldata" and "open" commands
+  now preserves existing scalars as well as matrices
 - Windows package: update to GTK+ 2.12.11 and friends
+- Inside functions: restrict the smpl command within the
+  bounds set on entry to the function
+- setobs command: if used inside a function, revert the
+  effects on exit
 
 7/30/2008 version 1.7.6
 - Fix bug: revise the way that list arguments to user-defined

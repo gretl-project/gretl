@@ -3557,7 +3557,7 @@ void start_R (const char *buf, int send_data, int interactive)
     }
 
      err = write_gretl_R_files(buf, (const double **) Z,
-			      datainfo, Ropt);
+			       datainfo, Ropt);
 
     if (err) {
 	gui_errmsg(err);

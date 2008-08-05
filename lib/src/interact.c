@@ -4679,6 +4679,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = s->funcerr = 1;
 	break;
 
+    case DELEET:
+	pputs(prn, _("You cannot delete variables in this context\n"));
+	err = 1;
+	break;
+
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
 		       "in libgretl\n"), cmd->word);

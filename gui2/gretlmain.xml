@@ -112,6 +112,7 @@
       <separator/>
       <menuitem action='DisplayValues'/>
       <menuitem action='EditValues'/>
+      <menuitem action='EditScalars'/>
       <menuitem action='AddObs'/>
       <menuitem action='RemoveObs'/>
       <separator/>

@@ -24,10 +24,13 @@ typedef enum {
     SHEET_EDIT_VARLIST,
     SHEET_EDIT_DATASET,
     SHEET_NEW_DATASET,
-    SHEET_EDIT_MATRIX
+    SHEET_EDIT_MATRIX,
+    SHEET_EDIT_SCALARS
 } SheetCmd;
 
 void show_spreadsheet (SheetCmd c);
+
+void edit_scalars (void);
 
 void gui_new_matrix (void);
 
