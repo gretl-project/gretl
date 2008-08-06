@@ -1376,7 +1376,7 @@ static void get_random (GtkWidget *w, CalcChild *child)
     if (vname == NULL || *vname == '\0') {
 	warnbox(_("You must give a name for the variable"));
 	return;
-    } else if (validate_varname(vname)) {
+    } else if (gui_validate_varname(vname, GRETL_TYPE_SERIES)) {
 	return;
     }
 

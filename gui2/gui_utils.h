@@ -83,7 +83,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
 void view_window_set_editable (windata_t *vwin);
 
-int validate_varname (const char *varname);
+int gui_validate_varname (const char *varname, GretlType t);
 
 gretlopt get_tex_eqn_opt (void);
 

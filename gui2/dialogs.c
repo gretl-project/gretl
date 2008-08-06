@@ -3933,7 +3933,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
 
     buf = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || validate_varname(buf)) {
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_SERIES)) {
 	return;
     }
 

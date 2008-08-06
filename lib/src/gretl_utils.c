@@ -1142,33 +1142,30 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 }
 
 /**
- * rename_var_by_id:
- * @idstr: string representation of the ID number of the
- * variable to be renamed.
- * @vname: new name to give the variable.
+ * gretl_type_from_name:
+ * @s: the name to check.
  * @pdinfo: dataset information.
  * 
- * Returns: 0 on sucess, %E_DATA on error.
+ * Returns: non-zero if @s is the name of an existing
+ * series, matrix, scalar, list or string variable,
+ * otherwise 0.
  */
 
-int rename_var_by_id (const char *idstr, const char *vname, 
-		      DATAINFO *pdinfo)
+GretlType gretl_type_from_name (const char *s, const DATAINFO *pdinfo)
 {
-    int v = varnum_from_string(idstr, pdinfo);
-
-    if (v < 0 || v >= pdinfo->v) {
-	return E_DATA;
+    if (gretl_is_series(s, pdinfo)) {
+	return GRETL_TYPE_SERIES;
+    } else if (get_matrix_by_name(s) != NULL) {
+	return GRETL_TYPE_MATRIX;
+    } else if (gretl_is_scalar(s)) {
+	return GRETL_TYPE_DOUBLE;
+    } else if (get_list_by_name(s)) {
+	return GRETL_TYPE_LIST;
+    } else if (get_string_by_name(s)) {
+	return GRETL_TYPE_STRING;
+    } else {
+	return GRETL_TYPE_NONE;
     }
-
-    if (object_is_const(pdinfo->varname[v])) {
-	return overwrite_err(pdinfo->varname[v]);
-    }
-
-    /* should be pre-checked for validity of varname and
-       non-duplication (see interact.c under RENAME)
-    */
-
-    return dataset_rename_variable(pdinfo, v, vname);
 }
 
 /**

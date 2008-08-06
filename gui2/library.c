@@ -3564,10 +3564,15 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
 
 int do_rename_variable (int v, const char *newname, int full)
 {
-    int err = check_varname(newname);
+    int err;
 
+    if (gretl_is_series(newname, datainfo)) {
+	errbox(_("A series named %s already exists"), newname);
+	return 1;
+    }
+
+    err = gui_validate_varname(newname, GRETL_TYPE_SERIES);
     if (err) {
-	gui_errmsg(err);
 	return err;
     }
 
@@ -4585,7 +4590,7 @@ static void set_model_stat_name (GtkWidget *widget, dialog_t *dlg)
     char *vname = (char *) edit_dialog_get_data(dlg);
     const gchar *s = edit_dialog_get_text(dlg);
 
-    if (s == NULL || validate_varname(s)) {
+    if (s == NULL || gui_validate_varname(s, GRETL_TYPE_DOUBLE)) {
 	return;
     }
 

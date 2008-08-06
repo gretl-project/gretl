@@ -1,5 +1,5 @@
 \chapter{Gretl and R}
-\label{gretlR}
+\label{chap:gretlR}
 
 \section{Introduction}
 \label{R-intro}
@@ -22,8 +22,8 @@ In this chapter, we will explain how to exploit \app{R}'s power from
 within \app{gretl}. We assume that the reader has a working
 installation of \app{R} available and a basic grasp of \app{R}'s
 syntax.\footnote{The main reference for \app{R} documentation is
-  \url{http://cran.r-project.org/manuals.html}; that said, \app{R}
-  tutorials abound on the Net. As always, Google is your friend.}
+  \url{http://cran.r-project.org/manuals.html}.  In addition, \app{R}
+  tutorials abound on the Net; as always, Google is your friend.}
 
 Despite several valiant attempts, no graphical shell has gained wide
 acceptance in the \app{R} community: by and large, the standard method
@@ -36,22 +36,19 @@ commands without leaving \app{gretl}.
 \section{Starting an interactive \app{R} session}
 \label{sec:R-interactive}
 
-
-The easiest way to use \app{R} from \app{gretl} is to do so
-interactively: once you have your data loaded in \app{gretl}, you can
-select the menu item ``Tools, Start GNU R'' and \app{R} will be
-started, with your dataset automatically passed to the \app{R}
-session.
+The easiest way to use \app{R} from \app{gretl} is in interactive
+mode.  Once you have your data loaded in \app{gretl}, you can select
+the menu item ``Tools, Start GNU R'' and an interactive \app{R}
+session will be started, with your dataset automatically pre-loaded.
 
 \subsection{A simple example: OLS on cross-section data}
 \label{sec:R-ols-ex}
 
-For this example, we use the dataset \texttt{data4-1} from the
-Ramanathan textbook, which is part of \app{gretl}'s sample
-datasets. Once the dataset is open, we run an OLS regression of
-\texttt{price} on \texttt{sqft}, \texttt{bedrms} and
-\texttt{baths}. Part of the results \app{gretl} gives are shown in Table
-\ref{tab:data4-1-gretlOLS}.
+For this example we use Ramanathan's dataset \texttt{data4-1}, one of
+the sample files supplied with \app{gretl}.  We first run, in
+\app{gretl}, an OLS regression of \texttt{price} on \texttt{sqft},
+\texttt{bedrms} and \texttt{baths}.  The basic results are shown in
+Table \ref{tab:data4-1-gretlOLS}.
 
 \begin{table}[htbp]
 \caption{OLS house price regression via \app{gretl}}
@@ -104,16 +101,15 @@ shown in figure \ref{fig:Rwind1} should appear.
   \label{fig:Rwind1}
 \end{figure}
 
-A few caveats are in order here: the actual look of the \app{R} window
-may be somewhat different from what you see in figure \ref{fig:Rwind1}
-(especially for Windows users), but this is immaterial. The important
-point is that you have a window where you can type commands to
-\app{R}. If the above procedure doesn't work and no \app{R} window
-opens, it means that \app{gretl} was unable to launch \app{R}: you
-should ensure that \app{R} is installed and working on your system and
-that \app{gretl} knows where it is. The relevant settings can be found
-by selecting the ``Tools, Preferences, General'' menu entry, under the
-``Programs'' tab.
+The actual look of the \app{R} window may be somewhat different from
+what you see in Figure~\ref{fig:Rwind1} (especially for Windows
+users), but this is immaterial. The important point is that you have a
+window where you can type commands to \app{R}. If the above procedure
+doesn't work and no \app{R} window opens, it means that \app{gretl}
+was unable to launch \app{R}.  You should ensure that \app{R} is
+installed and working on your system and that \app{gretl} knows where
+it is. The relevant settings can be found by selecting the ``Tools,
+Preferences, General'' menu entry, under the ``Programs'' tab.
 
 Assuming \app{R} was launched successfully, you will notice that two
 commands have been executed automatically:
@@ -121,15 +117,14 @@ commands have been executed automatically:
   gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
   attach(gretldata)
 \end{code}
-These commands make it so that our dataset is already loaded into the
-\app{R} workspace as a \emph{data frame} and can be used
-immediately. In \app{R} parlance, a data frame is one of the ways
-\app{R} uses to store data. The advantage of using a data frame is
-that the subsequent \texttt{attach()} command ensures that the
+These commands have the effect of loading our dataset into the \app{R}
+workspace in the form of a \emph{data frame} (one of several forms in
+which \app{R} can store data). Use of a data frame enables the
+subsequent \texttt{attach()} command, which sets things up so that the
 variable names defined in the \app{gretl} workspace are available as
-valid identifiers in the \app{R} session.
+valid identifiers within \app{R}.
 
-In order to replicate \app{gretl}'s OLS estimation, select the \app{R}
+In order to replicate \app{gretl}'s OLS estimation, go into the \app{R}
 window and type at the prompt
 \begin{code}
   model <- lm(price ~ sqft + bedrms + baths)
@@ -143,15 +138,14 @@ window and type at the prompt
   \label{fig:Rwind2}
 \end{figure}
 
-You should see something similar to Figure
-\ref{fig:Rwind2}. Surprise --- the estimates coincide! At this
-point, you may just close the \app{R} window or type \verb|q()| at the
-\app{R} prompt.
+You should see something similar to Figure~\ref{fig:Rwind2}. Surprise
+--- the estimates coincide! To get out, just close the \app{R} window
+or type \verb|q()| at the \app{R} prompt.
 
 \subsection{Time series data}
 \label{sec:R-ols-arma}
 
-Let us now turn to a similar example which uses time series data: we
+We now turn to an example which uses time series data: we
 will compare \app{gretl}'s and \app{R}'s estimates of Box and Jenkins'
 immortal ``airline'' model. The data are contained in the \texttt{bjg}
 sample dataset. The following \app{gretl} code
@@ -198,27 +192,26 @@ Akaike information criterion & -483.39
 \end{center}
 \end{table}
 
-When we open an \app{R} session as described in the previous
-subsection, the data-passing mechanism is slightly different: since
-our data were defined in \app{gretl} as a time-series dataset, the
-\app{R} object we use for transferring the data is a
-\emph{time-series} object, or \emph{ts} for short. The \app{R}
-commands that read the data from \app{gretl} are in this case
+If we now open an \app{R} session as described in the previous
+subsection, the data-passing mechanism is slightly different.  The
+\app{R} commands that read the data from \app{gretl} are in this case
 \begin{code}
 # load data from gretl
 gretldata <- read.table("/home/jack/.gretl/Rdata.tmp", header=TRUE)
 gretldata <- ts(gretldata, start=c(1949, 1), frequency = 12)
 \end{code}
 
-This mechanism makes it possible to retain in \app{R} some useful
-information, such as the periodicity of the data and the sample
-limits, but comes at the price that the names of individual series, as
-defined in the \app{gretl} dataset, are not valid identifiers. In
-order to extract the variable \texttt{lg}, one needs to use the syntax
+Since our data were defined in \app{gretl} as time series, we use an
+\app{R} \emph{time-series} object (\emph{ts} for short) for the
+transfer.  In this way we can retain in \app{R} useful information
+such as the periodicity of the data and the sample limits.  The
+downside is that the names of individual series, as defined in
+\app{gretl}, are not valid identifiers. In order to extract the
+variable \texttt{lg}, one needs to use the syntax
 \verb|lg <- gretldata[, "lg"]|.
 
-In practice, ARIMA estimation can be carried out by issuing the
-following two \app{R} commands:
+ARIMA estimation can be carried out by issuing the following two
+\app{R} commands:
 \begin{code}
 lg <- gretldata[, "lg"]
 arima(lg, c(0,1,1), seasonal=c(0,1,1))
@@ -235,19 +228,19 @@ s.e.   0.0896   0.0731
 sigma^2 estimated as 0.001348:  log likelihood = 244.7,  aic = -483.4
 \end{code}
 
-Luckily, the estimates again coincide.
+Happily, the estimates again coincide.
 
 \section{Running an \app{R} script}
 \label{sec:R-scripts}
 
-Opening an \app{R} window and keying commands in is a convenient
+Opening an \app{R} window and keying in commands is a convenient
 method when the job is small. In some cases, however, it would be
-preferable to have \app{R} execute a script prepared in advance. An
-obvious way to do this is to use the \texttt{source()} command in
-\app{R}. Alternatively, \app{gretl} offers the convenience to edit an
+preferable to have \app{R} execute a script prepared in advance. 
+One way to do this is via the \texttt{source()} command in
+\app{R}.  Alternatively, \app{gretl} offers the facility to edit an
 \app{R} script and run it, having the current dataset pre-loaded
 automatically. This feature can be accessed via the ``File, Script
-Files'' menu entry. By selecting ``User file'', one can load a
+Files'' menu entry.  By selecting ``User file'', one can load a
 pre-existing \app{R} script; if you want to create a new script
 instead, select the ``New script, R script'' menu entry.
 
@@ -257,16 +250,16 @@ instead, select the ``New script, R script'' menu entry.
   \caption{Editing window for \app{R} scripts}
   \label{fig:R-edit1}
 \end{figure}
-In either case, you will be presented with a window very similar to
-the editor window used for ordinary \app{gretl} scripts, as in figure
-\ref{fig:R-edit1}. 
+In either case, you are presented with a window very similar to
+the editor window used for ordinary \app{gretl} scripts, as in
+Figure~\ref{fig:R-edit1}.
 
-There are two main differences: first, you get syntax highlighting for
+There are two main differences.  First, you get syntax highlighting for
 \app{R}'s syntax instead of \app{gretl}'s. Second, clicking on the
-Execute icon (the gears icon), launches an instance of \app{R} in
+Execute button (the gears icon), launches an instance of \app{R} in
 which your commands are executed.  Before \app{R} is actually run, you
-are asked if you want to run \app{R} interactively or not (see Figure
-\ref{fig:R-exec-mode}).
+are asked if you want to run \app{R} interactively or not (see
+Figure~\ref{fig:R-exec-mode}).
 
 \begin{figure}[htbp]
   \centering
@@ -277,29 +270,32 @@ are asked if you want to run \app{R} interactively or not (see Figure
 
 An interactive run opens an \app{R} instance similar to the one seen
 in the previous section: your data will be pre-loaded (if the
-``pre-load data'' tick is on, as is by default) and your commands will
+``pre-load data'' box is checked) and your commands will
 be executed. Once this is done, you will find yourself at the \app{R}
 prompt, where you can enter more commands.
 
-A non-interactive run, instead, will execute your script, collect the
+A non-interactive run, on the other hand, will execute your script, collect the
 output from \app{R} and present it to you in an output window; \app{R}
-will be just run in the background. If for example the script in
-Figure \ref{fig:R-edit1} is run non-interactively, a window similar to
-Figure \ref{fig:R-output1} will appear.
+will be run in the background. If, for example, the script in
+Figure~\ref{fig:R-edit1} is run non-interactively, a window similar to
+Figure~\ref{fig:R-output1} will appear.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.7]{figures/R-output1}
-  \caption{Editing window for \app{R} scripts}
+  \caption{Output from a non-interactive \app{R} run}
   \label{fig:R-output1}
 \end{figure}
 
 \section{Taking stuff back and forth}
 \label{sec:R-passing-data}
 
-So far, data passing has been limited to passing series from
-\app{gretl} to \app{R}. In order to achieve a satisfactory degree of
-interoperability, more is needed.
+As regards the passing of data between the two programs, so far we
+have only considered passing series from \app{gretl} to \app{R}. In
+order to achieve a satisfactory degree of interoperability, more is
+needed.  In the following sub-sections we see how matrices can be
+exchanged, and how data can be passed from \app{R} back to
+\app{gretl}.
 
 \subsection{Passing matrices from \app{gretl} to \app{R}}
 
@@ -327,19 +323,19 @@ In order to retrieve this matrix from \app{R}, all you have to do is
   A <- as.matrix(read.table("mymatfile.mat", skip=1))
 \end{code}
 
-It should be noted that although in principle the filename you choose
-can be any valid filename, a couple of conventions may prove
-useful. First, you may want to use an informative file suffix such as
-``\texttt{.mat}'', but this is a matter of taste. More importantly,
-the exact location of the file created by \texttt{mwrite} could be an
-issue. By default, if no path is specified in the file name,
-\app{gretl} stores matrix files in the current work
-directory. However, it may be wise for the purpose at hand to use the
-directory in which \app{gretl} stores all its temporary files, whose
-name is stored in the built-in string \texttt{dotdir} (see section
-\ref{sec:named-strings}). The value of this string is automatically
-passed to \app{R} as the string variable \texttt{gretl.dotdir}, so
-the above example may be rewritten more cleanly as
+Although in principle you can give your matrix file any valid
+filename, a couple of conventions may prove useful. First, you may
+want to use an informative file suffix such as ``\texttt{.mat}'', but
+this is a matter of taste. More importantly, the exact location of the
+file created by \texttt{mwrite} could be an issue. By default, if no
+path is specified in the file name, \app{gretl} stores matrix files in
+the current work directory. However, it may be wise for the purpose at
+hand to use the directory in which \app{gretl} stores all its
+temporary files, whose name is stored in the built-in string
+\texttt{dotdir} (see section \ref{sec:named-strings}). The value of
+this string is automatically passed to \app{R} as the string variable
+\texttt{gretl.dotdir}, so the above example may be rewritten more
+cleanly as
 
 \app{Gretl} side:
 \begin{code}
@@ -356,21 +352,20 @@ the above example may be rewritten more cleanly as
 \label{sec:Rpassing-data}
 
 For passing data in the opposite direction, \app{gretl} defines a
-special function that can be used in the \app{R} environment to
-automate, as much as possible, a mechanism which is similar to the one
-seen in the previous subsection. An \app{R} object will be written as
-a temporary file in \app{gretl}'s \texttt{dotdir} directory, from
-where it can be easily retrieved from within \app{gretl}.
+special function that can be used in the \app{R} environment. An
+\app{R} object will be written as a temporary file in \app{gretl}'s
+\texttt{dotdir} directory, from where it can be easily retrieved from
+within \app{gretl}.
 
 The name of this function is \texttt{gretl.export()}, and it accepts
-one argument, the object to be exported. At present, the only objects
-that can be exported with this method are matrices, data frames and
-time-series objects. The function creates a text file with the same
-name as the exported object in \app{gretl}'s temporary directory. Data
-frames and time-series objects are stored as CSV files, and can be
-retrieved by using the \texttt{append} command. Matrices, instead, are
-stored in the special text format that \app{gretl} uses for storing
-matrices in text files (see section \ref{sec:matrix-csv}); the file
+one argument, the object to be exported. At present, the objects that
+can be exported with this method are matrices, data frames and
+time-series objects. The function creates a text file, with the same
+name as the exported object, in \app{gretl}'s temporary
+directory. Data frames and time-series objects are stored as CSV
+files, and can be retrieved by using \app{gretl}'s \texttt{append}
+command.  Matrices are stored in a special text format that is
+understood by \app{gretl} (see section~\ref{sec:matrix-csv}); the file
 suffix is in this case \texttt{.mat}, and to read the matrix in
 \app{gretl} you must use the \texttt{mread()} function.
 
@@ -469,10 +464,10 @@ series. The matrix \texttt{vars} is read from the file
 \end{figure}
 
 After the above commands have been executed, three new series will
-have appeared in the \app{gretl} workspace, which are the estimates of
-the three components: by plotting them together with the original
-data, you should get a graph similar to Figure
-\ref{fig:BSM-output}. The estimates of the variances can be simply
+have appeared in the \app{gretl} workspace, namely the estimates of
+the three components; by plotting them together with the original
+data, you should get a graph similar to
+Figure~\ref{fig:BSM-output}. The estimates of the variances can be
 seen by printing the \texttt{vars} matrix, as in
 
 \begin{code}
@@ -496,15 +491,18 @@ Notice that, since $\hat{\sigma}^2_{\zeta} = 0$, the estimate for
 $\beta_t$ is constant and the level component is simply a random walk
 with a drift.
 
-\section{Interacting with \app{R} from the CLI}
+\section{Interacting with \app{R} from the command line}
 \label{sec:foreign-command}
 
-Up to now, we assumed that interaction with \app{R} was requested from
-the GUI client. In order to do the same from the command
-line interface, \app{gretl} provides the \texttt{foreign}
-command.\footnote{In future versions of \app{gretl}, this command will
-  handle interaction with other programs, not just \app{R}. For the
-  moment, its scope is somewhat specialized.} This command takes the form
+Up to this point we have spoken only of interaction with \app{R} via
+the GUI program. In order to do the same from the command line
+interface, \app{gretl} provides the \texttt{foreign} command. This
+enables you to embed non-native commands within a \app{gretl}
+script.\footnote{In future this facility may be extended to handle
+  interaction with other programs, but for the present only \app{R}
+  commands are accepted.} 
+
+A ``foreign'' block takes the form
 \begin{code}
 foreign language=R [--send-data] [--quiet]
     ... R commands ...
@@ -512,10 +510,10 @@ end foreign
 \end{code}
 and achieves the same effect as submitting the enclosed \app{R}
 commands via the GUI in the non-interactive mode (see
-\ref{sec:R-scripts} above). The \option{send-data} options allows the
-user to have the data present in the \app{gretl} session auto-loaded;
-the \option{quiet} option prevents the output from \app{R} from being
-echoed in the \app{gretl} output.
+section~\ref{sec:R-scripts} above). The \option{send-data} option
+arranges for auto-loading of the data present in the \app{gretl}
+session.  The \option{quiet} option prevents the output from \app{R}
+from being echoed in the \app{gretl} output.
 
 \begin{script}[htbp]
   \caption{Estimation of the Basic Structural Model --- simple}
@@ -543,9 +541,9 @@ vars = mread("@dotdir/vars.mat")
 \end{script}
 %$
 
-With this proviso, replicating the example in the previous subsection
+Using this method, replicating the example in the previous subsection
 is rather easy: basically, all it takes is encapsulating the content
-of the R script in a \texttt{foreign}\ldots\texttt{end foreign}
+of the \app{R} script in a \texttt{foreign}\ldots\texttt{end foreign}
 block; see example \ref{RStructTS-simple}.
 
 \begin{script}[htbp]
@@ -583,7 +581,7 @@ list X = RStructTS(lg)
 
 The above syntax, despite being already quite useful by itself, shows
 its full power when it is used in conjunction with user-written
-functions: example \ref{RStructTS-func} shows how to define a
+functions.  Example~\ref{RStructTS-func} shows how to define a
 \app{gretl} function that calls \app{R} internally.
 
 A note on performance: at present, when \app{R} is called from within

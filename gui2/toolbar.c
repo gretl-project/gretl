@@ -311,7 +311,9 @@ static void matrix_savename (GtkWidget *w, dialog_t *dlg)
     char *newname = (char *) edit_dialog_get_data(dlg);
     const gchar *buf = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || validate_varname(buf)) return;
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_MATRIX)) {
+	return;
+    }
 
     *newname = 0;
     strncat(newname, buf, VNAMELEN - 1);

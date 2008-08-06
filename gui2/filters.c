@@ -268,7 +268,7 @@ static int varname_error (filter_info *finfo, int i)
     if (*s == 0) {
 	errbox(_("Variable name is missing"));
 	return 1;
-    } else if (validate_varname(s)) {
+    } else if (gui_validate_varname(s, GRETL_TYPE_SERIES)) {
 	return 1;
     } else if (i == 2 && (finfo->save_opt & FILTER_SAVE_TREND)) {
 	if (!strcmp(s, finfo->save1)) {

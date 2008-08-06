@@ -725,11 +725,17 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 static void name_new_var (GtkWidget *widget, dialog_t *dlg) 
 {
     Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
+    GretlType t;
     const gchar *buf;
     char varname[VNAMELEN];
 
+    t = (sheet->cmd == SHEET_EDIT_SCALARS)? GRETL_TYPE_DOUBLE :
+	GRETL_TYPE_SERIES;
+
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL || validate_varname(buf)) return;
+    if (buf == NULL || gui_validate_varname(buf, t)) {
+	return;
+    }
 
     *varname = 0;
     strncat(varname, buf, VNAMELEN - 1);
@@ -765,8 +771,7 @@ static void name_var_dialog (Spreadsheet *sheet)
 		 _("Enter name for new variable\n"
 		   "(max. 15 characters)"),
 		 NULL, name_new_var, sheet, 
-		 0, VARCLICK_NONE, 
-		 (sheet->cmd == SHEET_EDIT_SCALARS)? NULL : &cancel);
+		 0, VARCLICK_NONE, &cancel);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
@@ -787,7 +792,7 @@ static void name_matrix_col (GtkWidget *widget, dialog_t *dlg)
     char tmp[13], colname[24];
 
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL || validate_varname(buf)) {
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_NONE)) {
 	return;
     }
 
@@ -1274,24 +1279,14 @@ static void matrix_new_name (GtkWidget *w, dialog_t *dlg)
     char *newname = (char *) edit_dialog_get_data(dlg);
     const gchar *buf = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || validate_varname(buf)) return;
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_MATRIX)) {
+	return;
+    }
 
     *newname = 0;
     strncat(newname, buf, VNAMELEN - 1);
 
     close_dialog(dlg);
-}
-
-static int matrix_overwrite_check (const char *name)
-{
-    gchar *msg = g_strdup_printf(_("A matrix named %s already exists\n" 
-				   "OK to overwrite it?"), name);
-    int resp;
-
-    resp = yes_no_dialog("gretl", msg, 0);
-    g_free(msg);
-
-    return resp;
 }
 
 static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
@@ -1308,11 +1303,6 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
 	gretl_matrix *m;
 	user_matrix *u;
 	gchar *tmp;
-
-	if (get_matrix_by_name(newname) != NULL &&
-	    matrix_overwrite_check(newname) == GRETL_NO) {
-	    return;
-	}
 
 	m = gretl_matrix_copy(sheet->matrix);
 	add_or_replace_user_matrix(m, newname);
@@ -2687,7 +2677,9 @@ static void start_scalars (GtkWidget *w, dialog_t *dlg)
     char varname[VNAMELEN];
  
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL || validate_varname(buf)) return;
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_DOUBLE)) {
+	return;
+    }
 
     *varname = 0;
     strncat(varname, buf, VNAMELEN - 1);
@@ -2706,11 +2698,13 @@ static void maybe_add_scalar (void)
 			 0);
 
     if (resp == GRETL_YES) {
+	int cancel = 0;
+
 	edit_dialog (_("gretl: name variable"), 
 		     _("Enter name for new variable\n"
 		       "(max. 15 characters)"),
 		     NULL, start_scalars, NULL, 
-		     0, VARCLICK_NONE, NULL);
+		     0, VARCLICK_NONE, &cancel);
     }
 }
 
@@ -2781,9 +2775,8 @@ static void spin_call (GtkWidget *s, int *n)
 
 static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 {
-    gretl_matrix *m = NULL;
     const char *etxt;
-    int err = 0;
+    int err;
 
     etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->nentry));
 
@@ -2792,16 +2785,8 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	return;
     }
 
-    m = get_matrix_by_name(etxt);
-
-    if (!gretl_is_null_matrix(m) &&  
-	matrix_overwrite_check(etxt) == GRETL_NO) {
-	return;
-    }
-
-    err = check_varname(etxt);
+    err = gui_validate_varname(etxt, GRETL_TYPE_MATRIX);
     if (err) {
-	gui_errmsg(err);
 	return;
     }
 

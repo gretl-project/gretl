@@ -1494,22 +1494,40 @@ static int vars_renumbered (const int *list, DATAINFO *pdinfo,
     return 0;
 }
 
-int dataset_rename_variable (DATAINFO *pdinfo, int v, 
-			      const char *name)
+int overwrite_err (const char *name)
 {
+    sprintf(gretl_errmsg, "The variable %s is read-only", name);
+
+    return E_DATA;
+}
+
+/**
+ * rename_var_by_id:
+ * @idstr: string representation of the ID number of the
+ * variable to be renamed.
+ * @vname: new name to give the variable.
+ * @pdinfo: dataset information.
+ * 
+ * Returns: 0 on sucess, %E_DATA on error.
+ */
+
+int dataset_rename_variable (DATAINFO *pdinfo, int v, 
+			     const char *name)
+{
+    if (v < 0 || v >= pdinfo->v) {
+	return E_DATA;
+    }
+
+    if (object_is_const(pdinfo->varname[v])) {
+	return overwrite_err(pdinfo->varname[v]);
+    }
+
     if (strcmp(pdinfo->varname[v], name)) {
 	strcpy(pdinfo->varname[v], name);
 	dataset_changed = 1;
     }
 
     return 0;
-}
-
-int overwrite_err (const char *name)
-{
-    sprintf(gretl_errmsg, "The variable %s is read-only", name);
-
-    return E_DATA;
 }
 
 static int real_drop_listed_vars (int *list, double ***pZ, 

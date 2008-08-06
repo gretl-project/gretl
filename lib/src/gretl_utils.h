@@ -96,8 +96,7 @@ int positive_int_from_string (const char *s);
 
 int varnum_from_string (const char *str, DATAINFO *pdinfo);
 
-int rename_var_by_id (const char *idstr, const char *vname, 
-		      DATAINFO *pdinfo);
+GretlType gretl_type_from_name (const char *s, const DATAINFO *pdinfo);
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo);

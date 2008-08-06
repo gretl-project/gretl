@@ -2496,6 +2496,44 @@
 
   </command>
 
+  <command name="foreign" section="Programming" 
+    label="Non-native script" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>language-spec</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--send-data</flag>
+	  <effect>pre-load the current dataset</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress output from foreign program</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+     <para>
+	This command opens a special mode in which commands to be executed by
+	another program are accepted.  You exit this mode with <lit>end
+	  foreign</lit>; at this point the stacked commands are executed.
+      </para>
+      <para>
+	At present the only <quote>foreign</quote> program supported in this
+	way is GNU R, and the <repl>language-spec</repl> argument must be set
+	to <lit>language=R</lit>.  In future other programs may be
+	supported.
+      </para>
+      <para>
+	See <guideref targ="chap:gretlR"/> for details and examples.
+      </para>
+    </description>
+
+  </command>
+
   <command name="freq" section="Statistics" label="Frequency distribution">
 
     <usage>
@@ -4661,35 +4699,31 @@
         <example>loop 1000</example>
 	<example>loop 1000 --progressive</example>
         <example>loop while essdiff > .00001</example>
-        <example>loop for i=1991..2000</example>
+        <example>loop i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
+	<example>loop foreach i xlist</example>
       </examples>
     </usage>
 
     <description>
-      <para>The parameter <repl quote="true">control</repl> must take
-	one of four forms, as shown in the examples: an integer number
-	of times to repeat the commands within the loop;
-	<quote><lit>while</lit></quote> plus a numerical condition;
-	<quote><lit>for</lit></quote> plus a range of values for the
-	internal index variable <lit>i</lit>; or
-	<quote><lit>for</lit></quote> plus three expressions in
-	parentheses, separated by semicolons.  In the last form the
-	left-hand expression initializes a variable, the middle
-	expression sets a condition for iteration to continue, and the
-	right-hand expression sets an increment or decrement to be
-	applied at the start of the second and subsequent iterations.
-	(This is a restricted form of the <lit>for</lit> statement in
-	the C programming language.)
-      </para>
-
-      <para>This command opens a special mode in which the program
+      <para>
+	This command opens a special mode in which the program
 	accepts commands to be executed repeatedly.  You exit the mode
 	of entering loop commands with <cmd>endloop</cmd>: at this
 	point the stacked commands are executed.
       </para>
-
-      <para>See <guideref targ="chap:looping"/> for further details and
+      <para>
+	The parameter <repl quote="true">control</repl> may take any of
+	five forms, as shown in the examples: an integer number of times to
+	repeat the commands within the loop; <quote><lit>while</lit></quote>
+	plus a boolean condition; a range of values for an integer index
+	variable; <quote><lit>for</lit></quote> plus three expressions in
+	parentheses, separated by semicolons (which emulates the
+	<lit>for</lit> statement in the C programming language); or
+	<quote><lit>foreach</lit></quote> plus an index variable and a list.
+      </para>
+      <para>
+	See <guideref targ="chap:looping"/> for further details and
 	examples.  The effect of the <lit>--progressive</lit> option
 	(which is designed for use in Monte Carlo simulations) is
 	explained there. Not all gretl commands may be used within

@@ -3270,9 +3270,41 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     return FALSE;
 }
 
-int validate_varname (const char *varname)
+static gchar *exists_string (const char *name, GretlType t)
 {
-    int i, n = strlen(varname);
+    gchar *s = NULL;
+
+    if (t == GRETL_TYPE_SERIES) {
+	s = g_strdup_printf(_("A series named %s already exists"), name);
+    } else if (t == GRETL_TYPE_MATRIX) {
+	s = g_strdup_printf(_("A matrix named %s already exists"), name);
+    } else if (t == GRETL_TYPE_DOUBLE) {
+	s = g_strdup_printf(_("A scalar named %s already exists"), name);
+    } else if (t == GRETL_TYPE_LIST) {
+	s = g_strdup_printf(_("A list named %s already exists"), name);
+    } else if (t == GRETL_TYPE_STRING) {
+	s = g_strdup_printf(_("A string named %s already exists"), name);
+    }
+
+    return s;
+}
+
+static int object_overwrite_ok (const char *name, GretlType t)
+{
+    gchar *info = exists_string(name, t);
+    gchar *msg = g_strdup_printf("%s\n%s", info, _("OK to overwrite it?"));
+    int resp;
+
+    resp = yes_no_dialog("gretl", msg, 0);
+    g_free(info);
+    g_free(msg);
+
+    return (resp == GRETL_YES);
+}	    
+
+int gui_validate_varname (const char *name, GretlType t)
+{
+    int i, n = strlen(name);
     char namebit[VNAMELEN];
     unsigned char c;
     int err = 0;
@@ -3280,18 +3312,18 @@ int validate_varname (const char *varname)
     *namebit = 0;
     
     if (n > VNAMELEN - 1) {
-	strncat(namebit, varname, VNAMELEN - 1);
+	strncat(namebit, name, VNAMELEN - 1);
 	errbox(_("Variable name %s... is too long\n"
 		 "(the max is %d characters)"), namebit,
 	       VNAMELEN - 1);
 	err = 1;
-    } else if (!(isalpha(*varname))) {
+    } else if (!(isalpha(*name))) {
 	errbox(_("First char of name ('%c') is bad\n"
-		 "(first must be alphabetical)"), *varname);
+		 "(first must be alphabetical)"), *name);
 	err = 1;
     } else {
 	for (i=1; i<n && !err; i++) {
-	    c = (unsigned char) varname[i];
+	    c = (unsigned char) name[i];
 	
 	    if ((!(isalpha(c)) && !(isdigit(c)) && c != '_') || c > 127) {
 		errbox(_("Name contains an illegal char (in place %d)\n"
@@ -3300,6 +3332,25 @@ int validate_varname (const char *varname)
 	    }
 	}
     }
+
+    if (!err && t != GRETL_TYPE_NONE) {
+	/* check for collisions */
+	GretlType t0 = gretl_type_from_name(name, datainfo);
+
+	if (t0 != GRETL_TYPE_NONE) {
+	    if (t == t0) {
+		err = !object_overwrite_ok(name, t);
+	    } else {
+		/* won't work */
+		gchar *msg = exists_string(name, t0);
+		
+		errbox(msg);
+		g_free(msg);
+		err = 1;
+	    }
+	}
+    }
+	
 
     return err;
 }

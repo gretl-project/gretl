@@ -1395,9 +1395,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     line += strlen(cmd->word);
 
     if (sscanf(line, "%15s %15s", targ, newname) != 2) {
-	cmd->err = E_DATA;
-	sprintf(gretl_errmsg, "rename: %s", 
-		_("requires a variable number and a new name"));
+	cmd->err = E_PARSE;
 	return;
     }
 
@@ -1418,29 +1416,37 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     } 
 
     vtest = series_index(pdinfo, newname);
-    if (vtest < pdinfo->v && vtest != vtarg) {
-	sprintf(gretl_errmsg, _("'%s': there is already a variable "
-				"of this name"), newname);
+    if (vtest == vtarg) {
+	; /* no-op */
+    } else if (vtest < pdinfo->v) {
+	sprintf(gretl_errmsg, _("A series named %s already exists"), newname);
 	cmd->err = E_DATA;
 	return;
     }
 
-    if (check_varname(newname)) {
-	cmd->err = E_DATA;
-	return;
+    if (vtest != vtarg) {
+	if (check_varname(newname)) {
+	    cmd->err = E_DATA;
+	    return;
+	}
+	if (gretl_type_from_name(newname, pdinfo)) {
+	    cmd->err = E_TYPES;
+	    return;
+	}
     }
 
+    /* write newname into cmd->param */
     free(cmd->param);
     cmd->param = gretl_strdup(newname);
-    if (cmd->param == NULL) {
-	cmd->err = E_ALLOC;
-	return;
-    }
 
+    /* write target ID into cmd->extra */
     sprintf(numstr, "%d", vtarg);
-
     free(cmd->extra);
     cmd->extra = gretl_strdup(numstr);
+
+    if (cmd->param == NULL || cmd->extra) {
+	cmd->err = E_ALLOC;
+    }
 }
 
 static void parse_outfile_cmd (char *s, CMD *cmd)
@@ -4177,7 +4183,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case RENAME:
-	err = rename_var_by_id(cmd->extra, cmd->param, pdinfo);
+	err = dataset_rename_variable(pdinfo, atoi(cmd->extra), cmd->param);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}

@@ -29,6 +29,7 @@
 #define USE_DASH_F 0
 
 static char **foreign_lines;
+static int foreign_started;
 static int foreign_n_lines; 
 static int foreign_lang;
 static gretlopt foreign_opt;
@@ -46,6 +47,7 @@ static void destroy_foreign (void)
 {
     free_strings_array(foreign_lines, foreign_n_lines);
     foreign_lines = NULL;
+    foreign_started = 0;
     foreign_n_lines = 0;
     foreign_opt = OPT_NONE;
 }
@@ -396,18 +398,13 @@ void delete_gretl_R_files (void)
     g_free(Rsrc);
 }
 
-/* starting a "foreign" block from scratch, or adding a line
-   to an existing block */
-
-int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
+static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 {
-    int err = 0;
+    int err;
 
-    if (string_is_blank(line)) {
-	return 0;
-    }
+    foreign_opt = OPT_NONE;
 
-    if (foreign_n_lines == 0 && !strncmp(line, "foreign ", 8)) {
+    if (!strncmp(line, "foreign ", 8)) {
 	char lang[16];
 
 	line += 8;
@@ -423,10 +420,37 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
 	} else {
 	    err = E_PARSE;
 	}
+    } else {
+	/* we'll default to R for now */
+	foreign_lang = LANG_R;
+    }
+
+    if (!err) {
+	foreign_opt = opt;
+    }
+
+    return err;
+}
+
+/* starting a "foreign" block from scratch, or adding a line
+   to an existing block */
+
+int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
+{
+    int err = 0;
+
+    if (string_is_blank(line)) {
+	return 0;
+    }
+
+    if (!foreign_started) {
+	/* starting from scratch */
+	err = foreign_block_init(line, opt, prn);
 	if (!err) {
-	    foreign_opt |= opt;
+	    foreign_started = 1;
 	}
     } else {
+	/* appending */
 	err = strings_array_add(&foreign_lines, &foreign_n_lines, line);
 	if (err) {
 	    destroy_foreign();
