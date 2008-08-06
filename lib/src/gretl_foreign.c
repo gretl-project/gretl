@@ -400,7 +400,7 @@ void delete_gretl_R_files (void)
 
 static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
 {
-    int err;
+    int err = 0;
 
     foreign_opt = OPT_NONE;
 
