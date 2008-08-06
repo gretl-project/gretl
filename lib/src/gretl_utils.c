@@ -1168,9 +1168,7 @@ int rename_var_by_id (const char *idstr, const char *vname,
        non-duplication (see interact.c under RENAME)
     */
 
-    strcpy(pdinfo->varname[v], vname);
-
-    return 0;
+    return dataset_rename_variable(pdinfo, v, vname);
 }
 
 /**

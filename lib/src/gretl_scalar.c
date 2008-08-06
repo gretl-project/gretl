@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 #include "libset.h"
+#include "gretl_xml.h"
 #include "gretl_scalar.h"
 
 #define SDEBUG 0
@@ -498,7 +499,21 @@ void destroy_user_scalars (void)
     n_scalars = 0;
 }
 
+void write_scalars_to_file (FILE *fp)
+{
+    int i;
 
+    gretl_xml_header(fp);
+    fputs("<gretl-scalars>\n", fp);
 
+    gretl_push_c_numeric_locale();
 
+    for (i=0; i<n_scalars; i++) {
+	fprintf(fp, " <gretl-scalar name=\"%s\" value=\"%.15g\"/>\n", 
+		scalars[i]->name, scalars[i]->val);
+    }
 
+    gretl_pop_c_numeric_locale();
+
+    fputs("</gretl-scalars>\n", fp);
+}

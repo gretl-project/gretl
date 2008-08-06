@@ -48,6 +48,7 @@
 #include "modelspec.h"
 #include "matrix_extra.h"
 #include "cmd_private.h"
+#include "gretl_scalar.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1150,6 +1151,9 @@ void do_open_session (void)
 
     session_file_make_path(fname, "matrices.xml");
     err = maybe_read_matrix_file(fname);
+
+    session_file_make_path(fname, "scalars.xml");
+    err = maybe_read_scalars_file(fname);
 
     session_file_make_path(fname, "functions.xml");
     err = maybe_read_functions_file(fname);

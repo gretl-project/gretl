@@ -25,6 +25,21 @@
 
 #define DDEBUG 0
 
+static int dataset_changed;
+
+int check_dataset_is_changed (void)
+{
+    int ret = dataset_changed;
+
+    dataset_changed = 0;
+    return ret;
+}
+
+void set_dataset_is_changed (void)
+{
+    dataset_changed = 1;
+}
+
 /**
  * free_Z:
  * @Z: data matrix.
@@ -1479,6 +1494,17 @@ static int vars_renumbered (const int *list, DATAINFO *pdinfo,
     return 0;
 }
 
+int dataset_rename_variable (DATAINFO *pdinfo, int v, 
+			      const char *name)
+{
+    if (strcmp(pdinfo->varname[v], name)) {
+	strcpy(pdinfo->varname[v], name);
+	dataset_changed = 1;
+    }
+
+    return 0;
+}
+
 int overwrite_err (const char *name)
 {
     sprintf(gretl_errmsg, "The variable %s is read-only", name);
@@ -2426,10 +2452,14 @@ int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
 void set_var_discrete (DATAINFO *pdinfo, int i, int s) 
 {
     if (i > 0 && i < pdinfo->v) {
-	if (s) {
+	int flags = pdinfo->varinfo[i]->flags;
+
+	if (s && !(flags & VAR_DISCRETE)) {
 	    pdinfo->varinfo[i]->flags |= VAR_DISCRETE;
-	} else {
+	    dataset_changed = 1;
+	} else if (!s && (flags & VAR_DISCRETE)) {
 	    pdinfo->varinfo[i]->flags &= ~VAR_DISCRETE;
+	    dataset_changed = 1;
 	}
     }
 }
@@ -2486,13 +2516,30 @@ int var_get_linewidth (const DATAINFO *pdinfo, int i)
     }
 }
 
+int var_set_description (DATAINFO *pdinfo, int i,
+			 const char *s) 
+{
+    char *targ = pdinfo->varinfo[i]->label;
+
+    if (strcmp(targ, s)) {
+	*targ = 0;
+	strncat(targ, s, MAXLABEL - 1);
+	dataset_changed = 1;
+    }
+
+    return 0;
+}
+
 int var_set_display_name (DATAINFO *pdinfo, int i,
 			  const char *s) 
 {
     char *targ = pdinfo->varinfo[i]->display_name;
 
-    *targ = 0;
-    strncat(targ, s, MAXDISP - 1);
+    if (strcmp(targ, s)) {
+	*targ = 0;
+	strncat(targ, s, MAXDISP - 1);
+	dataset_changed = 1;
+    }
 
     return 0;
 }

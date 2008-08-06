@@ -22,6 +22,7 @@
 #include "gretl_panel.h"
 #include "gretl_func.h"
 #include "usermat.h"
+#include "gretl_scalar.h"
 #include "dbread.h"
 
 #include <sys/types.h>
@@ -2516,6 +2517,44 @@ int load_user_matrix_file (const char *fname)
 		free(colnames);
 		free(name);
 	    }
+	}
+	cur = cur->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return err;
+}
+
+int load_user_scalars_file (const char *fname) 
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    char *name, *val;
+    int err = 0;
+
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-scalars", &doc, &cur);
+    if (err) {
+	return err;
+    }
+
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-scalar")) {
+	    name = (char *) xmlGetProp(cur, (XUC) "name");
+	    val = (char *) xmlGetProp(cur, (XUC) "value");
+	    if (name == NULL || val == NULL) {
+		err = 1;
+	    } else {
+		err = gretl_scalar_add(name, dot_atof(val));
+	    }
+	    free(name);
+	    free(val);
 	}
 	cur = cur->next;
     }

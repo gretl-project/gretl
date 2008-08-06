@@ -1540,6 +1540,13 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
+    if (n_saved_scalars() == 0) {
+	/* starting from scratch */
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, sheet->mname, 1, "", -1);
+	return 0;
+    }
+
     /* insert variable names and values */
 
     for (i=0; i<sheet->datarows; i++) {
@@ -1553,8 +1560,6 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, vname, 1, val, -1);
     }
-
-    sheet->orig_main_v = sheet->datarows;
 
     return 0;
 }
@@ -2674,7 +2679,42 @@ void show_spreadsheet (SheetCmd c)
     real_show_spreadsheet(&sheet, c, 0);
 }
 
-void edit_scalars (void) 
+static void real_edit_scalars (const char *vname);
+
+static void start_scalars (GtkWidget *w, dialog_t *dlg) 
+{
+    const gchar *buf;
+    char varname[VNAMELEN];
+ 
+    buf = edit_dialog_get_text(dlg);
+    if (buf == NULL || validate_varname(buf)) return;
+
+    *varname = 0;
+    strncat(varname, buf, VNAMELEN - 1);
+
+    close_dialog(dlg);
+    real_edit_scalars(varname);
+}
+
+static void maybe_add_scalar (void)
+{
+    int resp;
+
+    resp = yes_no_dialog(_("gretl: scalars"),
+			 _("No scalar variable are currently defined.\n"
+			   "Add one now?"),
+			 0);
+
+    if (resp == GRETL_YES) {
+	edit_dialog (_("gretl: name variable"), 
+		     _("Enter name for new variable\n"
+		       "(max. 15 characters)"),
+		     NULL, start_scalars, NULL, 
+		     0, VARCLICK_NONE, NULL);
+    }
+}
+
+static void real_edit_scalars (const char *vname) 
 {
     static Spreadsheet *sheet; 
     int ns;
@@ -2684,9 +2724,14 @@ void edit_scalars (void)
 	return;
     }
 
-    ns = n_saved_scalars();
+    if (vname != NULL) {
+	ns = 1;
+    } else {
+	ns = n_saved_scalars();
+    }
+
     if (ns == 0) {
-	warnbox("No scalars are defined");
+	maybe_add_scalar();
 	return;
     }
 
@@ -2695,10 +2740,19 @@ void edit_scalars (void)
 	return;
     }
 
-    sheet->datarows = n_saved_scalars();
+    sheet->datarows = ns;
     sheet->datacols = 1;
 
+    if (vname != NULL) {
+	strcpy(sheet->mname, vname);
+    }
+
     real_show_spreadsheet(&sheet, SHEET_EDIT_SCALARS, 0);
+}
+
+void edit_scalars (void) 
+{
+    real_edit_scalars(NULL);
 }
 
 struct gui_matrix_spec {

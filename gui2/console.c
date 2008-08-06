@@ -225,34 +225,12 @@ int console_sample_changed (const DATAINFO *pdinfo)
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
-static int console_vars_changed (const char *line, int oldv, int err)
-{
-    int ret = 0;
-
-    if (!strncmp(line, "open ", 5)) {
-	; /* opening a new data set doesn't count as "modifying" */
-    } else if (datainfo->v > 0 && datainfo->v != oldv) {
-	ret = 1;
-    } else if (!err) {
-	if (!strncmp(line, "rename", 6) ||
-	    !strncmp(line, "setinfo", 7) ||
-	    !strncmp(line, "genr", 4) ||
-	    !strncmp(line, "series", 6) ||
-	    !strncmp(line, "scalar", 6)) {
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
 /* callback from Enter key in gretl console */
 
 static void console_exec (void)
 {
     GtkTextBuffer *buf;
     GtkTextIter start, end;
-    int oldv = datainfo->v;
     char execline[MAXLINE];
     int coding = 0;
     int err = 0;
@@ -333,7 +311,7 @@ static void console_exec (void)
     console_scroll_to_end(buf, &start);
 
     /* update variable listing in main window if needed */
-    if (console_vars_changed(execline, oldv, err)) {
+    if (check_dataset_is_changed()) {
 	mark_dataset_as_modified();
 	populate_varlist();
     }

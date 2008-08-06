@@ -3589,7 +3589,7 @@ static int set_var_info (const char *line, gretlopt opt,
 			 DATAINFO *pdinfo, PRN *prn)
 {
     char *p, vname[VNAMELEN];
-    int v, setstuff = 0;
+    int v;
 
     if (pdinfo->varinfo == NULL) {
 	return 1;
@@ -3620,15 +3620,12 @@ static int set_var_info (const char *line, gretlopt opt,
 
     p = get_flag_field(line, 'd');
     if (p != NULL) {
-	setstuff = 1;
-	*VARLABEL(pdinfo, v) = 0;
-	strncat(VARLABEL(pdinfo, v), p, MAXLABEL - 1);
+	var_set_description(pdinfo, v, p);
 	free(p);
     }
 
     p = get_flag_field(line, 'n');
     if (p != NULL) {
-	setstuff = 1;
 	var_set_display_name(pdinfo, v, p);
 	free(p);
     } 

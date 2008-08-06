@@ -122,6 +122,8 @@ char *gretl_get_gdt_description (const char *fname);
 
 int load_user_matrix_file (const char *fname);
 
+int load_user_scalars_file (const char *fname);
+
 int load_user_XML_file (const char *fname);
 
 #endif /* GRETL_XML_H */

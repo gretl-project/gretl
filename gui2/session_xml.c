@@ -447,6 +447,21 @@ static int maybe_read_matrix_file (const char *fname)
     return load_user_matrix_file(fname);
 }
 
+static int maybe_read_scalars_file (const char *fname) 
+{
+    FILE *fp;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	/* nothing to be read */
+	return 0;
+    }
+
+    fclose(fp);
+
+    return load_user_scalars_file(fname);
+}
+
 static int maybe_read_functions_file (const char *fname) 
 {
     FILE *fp;
@@ -530,6 +545,27 @@ static int maybe_write_matrix_file (void)
     }
 
     write_matrices_to_file(fp);
+    fclose(fp);
+
+    return 0;
+}
+
+static int maybe_write_scalars_file (void)
+{
+    char fullname[MAXLEN];
+    FILE *fp;
+
+    if (n_saved_scalars() == 0) {
+	return 0;
+    }
+
+    session_file_make_path(fullname, "scalars.xml");
+    fp = gretl_fopen(fullname, "w");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    write_scalars_to_file(fp);
     fclose(fp);
 
     return 0;
@@ -691,6 +727,7 @@ static int write_session_xml (const char *datname)
     fclose(fp);
 
     maybe_write_matrix_file();
+    maybe_write_scalars_file();
     maybe_write_function_file();
     maybe_write_lists_file();
 

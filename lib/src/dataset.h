@@ -323,6 +323,9 @@ int dataset_copy_variable_as (int v, const char *newname,
 
 int overwrite_err (const char *name);
 
+int dataset_rename_variable (DATAINFO *pdinfo, int v, 
+			     const char *name);
+
 int dataset_drop_listed_variables (int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber,
 				   PRN *prn);
@@ -355,6 +358,9 @@ int var_get_linewidth (const DATAINFO *pdinfo, int i);
 int var_set_display_name (DATAINFO *pdinfo, int i,
 			  const char *s); 
 
+int var_set_description (DATAINFO *pdinfo, int i,
+			 const char *s); 
+
 const char *var_get_graph_name (const DATAINFO *pdinfo, int i);
 
 unsigned int get_resampling_seed (void);
@@ -371,5 +377,9 @@ int modify_dataset (int op, const int *list, const char *s,
 int dataset_get_structure (const DATAINFO *pdinfo);
 
 int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo);
+
+int check_dataset_is_changed (void);
+
+void set_dataset_is_changed (void);
 
 #endif /* DATASET_H */

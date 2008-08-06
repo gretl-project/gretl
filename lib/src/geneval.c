@@ -7174,6 +7174,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, p);
 	    }
 	    strcpy(p->dinfo->varname[v], p->lh.name);
+	    set_dataset_is_changed();
 	} else if (p->flags & P_LHSCAL) {
 	    /* modifying existing scalar */
 	    x = gretl_scalar_get_value(p->lh.name);
@@ -7206,6 +7207,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    for (t=t1; t<=p->dinfo->t2; t++) {
 		Z[v][t] = xy_calc(Z[v][t], x[t], p->op, p);
 	    }
+	    set_dataset_is_changed();
 	} else if (r->t == MAT) {
 	    const gretl_matrix *m = r->v.m;
 	    int s, k = gretl_vector_get_length(m);
