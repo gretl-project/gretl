@@ -458,6 +458,8 @@ static void set_source_tabs (GtkWidget *w, int cw)
 		   k == GDK_ISO_Left_Tab || \
 		   k == GDK_KP_Tab)
 
+#define script_editing(r) (r == EDIT_SCRIPT || r == EDIT_FUNC_CODE)
+
 /* Special keystrokes in script window: Ctrl-Return sends the current
    line for execution; Ctrl-R sends the whole script for execution
    (i.e. is the keyboard equivalent of the "execute" icon).
@@ -490,7 +492,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	if (key->keyval == GDK_F1) {
 	    set_window_help_active(vwin);
 	    interactive_script_help(NULL, NULL, vwin);
-	} else if (vwin->role == EDIT_SCRIPT) {    
+	} else if (script_editing(vwin->role)) {    
 	    if (key->keyval == GDK_Return) {
 		ret = script_electric_enter(vwin);
 	    } else if (tabkey(key->keyval)) {
