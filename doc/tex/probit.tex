@@ -263,12 +263,12 @@ probit pctstck const choice age educ female black married finc25 finc35 \
 \end{script}
 
 In order to apply these models, the dependent variable must be marked
-as discrete and its lowest value must be 0. Example \ref{ex:oprobit}
-reproduces the estimation given in chap. 15 of Wooldridge (2002a). Note
-that \app{gretl} does not provide a separate command for ordered
-models: the \texttt{logit} and \texttt{probit} commands automatically
-estimate the ordered version if the dependent variable is not binary
-(provided it has already been marked as discrete).
+as discrete. Example \ref{ex:oprobit} reproduces the estimation given
+in chapter 15 of Wooldridge (2002a). Note that \app{gretl} does not
+provide a separate command for ordered models: the \texttt{logit} and
+\texttt{probit} commands automatically estimate the ordered version if
+the dependent variable is not binary (provided it has already been
+marked as discrete).
 
 After estimating ordered models, the \verb+$uhat+ accessor yields
 generalized residuals as in binary models; additionally, the

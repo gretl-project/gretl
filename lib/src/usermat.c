@@ -488,35 +488,6 @@ int copy_matrix_as (const gretl_matrix *m, const char *new)
     return err;
 }
 
-/**
- * user_matrix_set_name_and_level:
- * @m: matrix to be reconfigured.
- * @name: new name to be given to matrix.
- * @level: function execution level to be assigned to matrix.
- *
- * If matrix @m is found on the stack of saved matrices, change
- * its name to @newname and change its level to @level.
- *
- * Returns: 0 on success, 1 if the matrix is not found.
- */
-
-int user_matrix_set_name_and_level (const gretl_matrix *M, char *name, 
-				    int level)
-{
-    user_matrix *u = get_user_matrix_by_data(M);
-    int err = 0;
-
-    if (u == NULL) {
-	err = 1;
-    } else {
-	*u->name = '\0';
-	strncat(u->name, name, VNAMELEN - 1);
-	u->level = level;
-    }
-
-    return err;
-}
-
 static int *mspec_to_list (int type, union msel *sel, int n,
 			   int *err)
 {

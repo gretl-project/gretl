@@ -32,8 +32,7 @@ struct op_container_ {
     int *y;           /* dependent variable */
     double **Z;       /* data */
     int *list;
-    int m;            /* min of y */
-    int M;            /* max of y */
+    int M;            /* max of (possibly normalized) y */
     int t1;           /* beginning of sample */
     int t2;           /* end of sample */
     int nobs;         /* number of observations */
@@ -85,12 +84,12 @@ static void op_container_destroy (op_container *OC)
     free(OC);
 }
 
-static op_container *op_container_new (int type, int nx,
+static op_container *op_container_new (int type, int ndum,
 				       double **Z, MODEL *pmod,  
 				       gretlopt opt)
 {
     op_container *OC;
-    int i, t, vy;
+    int i, t, vy = pmod->list[1];
     int nobs = pmod->nobs;
 
     OC = malloc(sizeof *OC);
@@ -106,12 +105,8 @@ static op_container *op_container_new (int type, int nx,
     OC->t2 = pmod->t2;
     OC->nobs = nobs;
     OC->k = pmod->ncoeff;
-
-    vy = pmod->list[1];
-    OC->m = (int) gretl_min(OC->t1, OC->t2, Z[vy]);
-    OC->M = (int) gretl_max(OC->t1, OC->t2, Z[vy]);
-    OC->M -= OC->m;
-    OC->nx = nx;
+    OC->M = ndum + 1;
+    OC->nx = OC->k - ndum;
 
     OC->opt = opt;
 
@@ -125,7 +120,8 @@ static op_container *op_container_new (int type, int nx,
     OC->y = malloc(nobs * sizeof *OC->y);
     OC->ndx = malloc(nobs * sizeof *OC->ndx);
     OC->dP = malloc(nobs * sizeof *OC->dP);
-    OC->list = gretl_list_new(1 + nx);
+
+    OC->list = gretl_list_new(1 + OC->nx);
     OC->G = doubles_array_new(OC->k, nobs);
     OC->g = malloc(OC->k * sizeof *OC->g);
 
@@ -139,22 +135,21 @@ static op_container *op_container_new (int type, int nx,
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    OC->y[i++] = (int) Z[vy][t] - OC->m;
+	    OC->y[i++] = (int) Z[vy][t];
 	}
     }
 
 #if ODEBUG
     fprintf(stderr, "nobs = %d\n", OC->nobs);
     fprintf(stderr, "t1-t2 = %d-%d\n", OC->t1, OC->t2);
-    fprintf(stderr, "m = %d, M = %d\n", OC->m, OC->M);
     fprintf(stderr, "k = %d\n", OC->k);
     fprintf(stderr, "nx = %d\n", OC->nx);
-    fprintf(stderr, "Max(y) = %d\n", OC->M);
+    fprintf(stderr, "Max(y) = M = %d\n", OC->M);
 #endif
 
     OC->list[1] = vy;
-    for (i=1; i<=nx; i++) {
-	OC->list[i+1] = pmod->list[i+1];
+    for (i=0; i<OC->nx; i++) {
+	OC->list[i+2] = pmod->list[i+2];
     }
 
 #if ODEBUG
@@ -316,6 +311,7 @@ static double op_loglik (const double *theta, void *ptr)
 	}
 	x = 0.0;
 	for (i=0; i<OC->nx; i++) {
+	    /* the independent variables */
 	    v = OC->list[i+2];
 	    x -= theta[i] * OC->Z[v][t];
 	}
@@ -489,15 +485,13 @@ static int get_pred (op_container *OC, const MODEL *pmod,
 
 static double gen_resid (const double *theta, op_container *OC, int t) 
 {
-    double ndxt, m0, m1, ystar0, f0, f1;
-    double ret, dP, ystar1 = 0.0;
+    double m0, m1, ystar0, f0, f1;
+    double ret, ystar1 = 0.0;
+    int ndxt = OC->ndx[t];
+    int dP = OC->dP[t];
     int M = OC->M;
     int nx = OC->nx;
-    int yt;
-
-    dP = OC->dP[t];
-    yt = OC->y[t];
-    ndxt = OC->ndx[t];
+    int yt = OC->y[t];
 
     if (yt == 0) {
 	ystar1 = ndxt;
@@ -655,7 +649,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 
 /* Main ordered estimation function */
 
-static int do_ordered (int ci, int nx, 
+static int do_ordered (int ci, int ndum, 
 		       double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		       gretlopt opt, PRN *prn)
 {
@@ -678,7 +672,7 @@ static int do_ordered (int ci, int nx,
 	opt &= ~OPT_R;
     }
 
-    OC = op_container_new(ci, nx, Z, pmod, opt);
+    OC = op_container_new(ci, ndum, Z, pmod, opt);
     if (OC == NULL) {
 	return E_ALLOC;
     }
@@ -695,14 +689,6 @@ static int do_ordered (int ci, int nx,
 	theta[i] = pmod->coeff[i];
 #if ODEBUG
 	fprintf(stderr, "x: init'd theta[%d] = ols[%d] = %g\n", i, i, theta[i]);
-#endif
-    }
-
-    if (OC->m != 0) {
-	/* minimum value is non-zero */
-	theta[0] -= OC->m;
-#if ODEBUG
-	fprintf(stderr, "OC->m = %g, revised theta[0] = %g\n", OC->m, theta[0]);
 #endif
     }
 
@@ -767,7 +753,8 @@ struct sorter {
 
 /* We want to ensure that the values of the dependent variable
    actually used in the analysis (after dropping any bad
-   observations) form a series of consecutive integers.
+   observations) form a zero-based series of consecutive 
+   integers.
 */
 
 static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
@@ -803,6 +790,17 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
 
     qsort(s, n, sizeof *s, gretl_compare_doubles);
 
+    /* normalize to minimum zero */
+    if (s[0].x != 0) {
+	double ymin = s[0].x;
+
+	for (i=0; i<n && s[i].x == ymin; i++) {
+	    s[i].x = 0.0;
+	}
+	fixit = 1;
+    }
+
+    /* ensure that the sorted values increase by one */
     for (i=1; i<n; i++) {
 	if (s[i].x != s[i-1].x) {
 	    double nexty = s[i-1].x + 1;
@@ -918,8 +916,8 @@ static int list_has_const (const int *list)
     return 0;
 }
 
-/* the driver function for the plugin: note, if prn is non-NULL,
-   the verbose option has been selected
+/* the driver function for the plugin: note, prn is non-NULL
+   only if the verbose option has been selected
 */
 
 MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
@@ -965,7 +963,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 					     &orig_y);
 
     if (!model.errcode && orig_y != NULL) {
-	/* we modified the dependent variable: re-initialize */
+	/* we modified the dependent variable: re-initialize (?) */
 	clear_model(&model);
 	model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
 	if (model.errcode) {
@@ -976,9 +974,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {
-	int nx = model.ncoeff - ndum;
-
-	model.errcode = do_ordered(ci, nx, *pZ, pdinfo, &model, opt, prn);
+	model.errcode = do_ordered(ci, ndum, *pZ, pdinfo, &model, opt, prn);
     }
 
  bailout:

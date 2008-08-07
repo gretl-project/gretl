@@ -46,6 +46,8 @@ int gretl_scalar_delete (const char *name, PRN *prn);
 
 int destroy_user_scalars_at_level (int level);
 
+void destroy_private_scalars (void);
+
 void destroy_user_scalars (void);
 
 void print_scalar_by_name (const char *name, gretlopt opt, PRN *prn);

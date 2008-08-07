@@ -476,6 +476,18 @@ int destroy_user_scalars_at_level (int level)
 }
 
 /**
+ * destroy_private_scalars:
+ *
+ * Gets rid of private or "interval" scalars whose
+ * names begin with '$'.
+ */
+
+void destroy_private_scalars (void)
+{
+    destroy_user_scalars_at_level(LEV_PRIVATE);
+}
+
+/**
  * destroy_user_scalars:
  *
  * Frees all resources associated with the stack of user-

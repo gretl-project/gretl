@@ -2767,6 +2767,8 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	destroy_private_matrices();
     }
 
+    destroy_private_scalars();
+
     clear_nlspec(spec);
 
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
