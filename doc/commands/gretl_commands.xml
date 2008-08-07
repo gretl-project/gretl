@@ -2501,7 +2501,7 @@
 
     <usage>
       <arguments>
-        <argument>language-spec</argument>
+        <argument optional="true">language-spec</argument>
       </arguments>
       <options>
 	<option>
@@ -2523,9 +2523,9 @@
       </para>
       <para>
 	At present the only <quote>foreign</quote> program supported in this
-	way is GNU R, and the <repl>language-spec</repl> argument must be set
-	to <lit>language=R</lit>.  In future other programs may be
-	supported.
+	way is GNU R, and the only acceptable <repl>language-spec</repl> is
+	<lit>language=R</lit> (which is implicit, and may be omitted).  In
+	future other programs may be supported.
       </para>
       <para>
 	See <guideref targ="chap:gretlR"/> for details and examples.

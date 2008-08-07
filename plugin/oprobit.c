@@ -760,11 +760,25 @@ static int do_ordered (int ci, int nx,
     return err;
 }
 
-static int check_ordered_depvar (MODEL *pmod, double **Z)
+struct sorter {
+    double x;
+    int t;
+};
+
+/* We want to ensure that the values of the dependent variable
+   actually used in the analysis (after dropping any bad
+   observations) form a series of consecutive integers.
+*/
+
+static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
+				     const DATAINFO *pdinfo,
+				     double **orig_y)
 {
+    struct sorter *s = NULL;
     double *sy = NULL;
     int dv = pmod->list[1];
     int i, t, n = 0;
+    int fixit = 0;
     int err = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -773,82 +787,109 @@ static int check_ordered_depvar (MODEL *pmod, double **Z)
 	}
     }
 
-    sy = malloc(n * sizeof *sy);
-    if (sy == NULL) {
+    s = malloc(n * sizeof *s);
+    if (s == NULL) {
 	return E_ALLOC;
     }
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    sy[i++] = Z[dv][t];
+	    s[i].x = Z[dv][t];
+	    s[i].t = t;
+	    i++;
 	}
     }
 
-    qsort(sy, n, sizeof *sy, gretl_compare_doubles);
+    qsort(s, n, sizeof *s, gretl_compare_doubles);
 
     for (i=1; i<n; i++) {
-	if (sy[i] != sy[i-1] && sy[i] != sy[i-1] + 1) {
-	    gretl_errmsg_sprintf("The dependent variable does not form "
-				 "a set of consecutive ranks:\nthe "
-				 "value %g is missing.", sy[i-1] + 1);
-	    err = E_DATA;
-	    break;
+	if (s[i].x != s[i-1].x) {
+	    double nexty = s[i-1].x + 1;
+
+	    if (s[i].x != nexty) {
+		double bady = s[i].x;
+
+		while (i < n && s[i].x == bady) {
+		    s[i++].x = nexty;
+		}
+		i--; /* compensate for outer i++ */
+		fixit = 1;
+	    } 
+	} 
+    }
+
+    if (fixit) {
+	sy = copyvec(Z[dv], pdinfo->n);
+	if (sy == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		sy[s[i].t] = s[i].x;
+	    }
+	    /* back up the original dep. var and replace it */
+	    *orig_y = Z[dv];
+	    Z[dv] = sy;
 	}
     }
 
-    free(sy);
+    free(s);
 
     return err;
 }
 
-/* the driver function for the plugin: note, if prn is non-NULL,
-   the verbose option has been selected
-*/
-
-MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
-			gretlopt opt, PRN *prn) 
+static void restore_depvar (double **Z, double *y, int v)
 {
-    MODEL model;
-    int *biglist = NULL;
-    int *dumlist = NULL;
-    int i, k, nv, nx;
+    free(Z[v]);
+    Z[v] = y;
+}
 
-    /* let's just check that OLS works on this model */
-    model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);   
-    if (!model.errcode && !model.ifc) {
-	/* we assume the base regression has an intercept included */
-	model.errcode = E_NOCONST;
-    }
+static int *make_dummies_list (const int *list, 
+			       double ***pZ, DATAINFO *pdinfo,
+			       int *err)
+{
+    int *dumlist = gretl_list_new(1);
 
-    if (model.errcode) {
-	return model;
-    } 
-
-    nx = model.ncoeff;
-    clear_model(&model);
-
-    dumlist = gretl_list_new(1);
     if (dumlist == NULL) {
-	model.errcode = E_ALLOC;
-	return model;
+	*err = E_ALLOC;
+    } else {
+	dumlist[1] = list[1];
+
+	/* OPT_F -> drop first value */
+	*err = list_dumgenr(&dumlist, pZ, pdinfo, OPT_F);
+	if (*err) {
+	    free(dumlist);
+	    dumlist = NULL;
+	}
     }
 
-    dumlist[1] = list[1];
+    return dumlist;
+}
 
-    model.errcode = list_dumgenr(&dumlist, pZ, pdinfo, OPT_F);
-    if (model.errcode) {
-	free(dumlist);
-	return model;
+static int *make_big_list (const int *list, double ***pZ,
+			   DATAINFO *pdinfo, int *ndum,
+			   int *err)
+{
+    int *dumlist;
+    int *biglist;
+    int i, k, nv;
+
+    dumlist = make_dummies_list(list, pZ, pdinfo, err);
+    if (dumlist == NULL) {
+	return NULL;
     }
 
-    /* we drop 2 dummies, not just the first one */
-    nv = list[0] + dumlist[0] - 1;
+    /* In dumlist, the first value will have been dropped
+       automatically, but we want to drop the second one too.
+    */
+    *ndum = dumlist[0] - 1;
+    nv = list[0] + *ndum;
 
     biglist = gretl_list_new(nv);
     if (biglist == NULL) {
-	model.errcode = E_ALLOC;
-	goto bailout;
+	free(dumlist);
+	*err = E_ALLOC;
+	return NULL;
     }
 
     k = 1;
@@ -859,8 +900,54 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	biglist[k++] = dumlist[i];
     }
 
-    /* run OLS with added dummies */
-    model = lsq(biglist, pZ, pdinfo, OLS, OPT_A | OPT_Z);
+    free(dumlist);
+
+    return biglist;
+}
+
+static int list_has_const (const int *list)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/* the driver function for the plugin: note, if prn is non-NULL,
+   the verbose option has been selected
+*/
+
+MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
+			gretlopt opt, PRN *prn) 
+{
+    MODEL model;
+    double *orig_y = NULL;
+    int *biglist = NULL;
+    int ndum = 0;
+
+    gretl_model_init(&model);
+
+    /* check for obligatory constant in incoming list */
+    if (!list_has_const(list)) {
+	model.errcode = E_NOCONST;
+	return model;
+    }
+
+    /* construct augmented regression list, including
+       dummies for the level of the dependent variable
+    */
+    biglist = make_big_list(list, pZ, pdinfo, &ndum, &model.errcode);
+    if (model.errcode) {
+	return model;
+    }
+
+    /* run initial OLS, with dummies added */
+    model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
 	fprintf(stderr, "ordered_estimate: initial OLS failed\n");
 	goto bailout;
@@ -871,16 +958,35 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     printmodel(&model, pdinfo, OPT_S, errprn);
 #endif
 
-    model.errcode = check_ordered_depvar(&model, *pZ);
+    /* after accounting for any missing observations, check that
+       the dependent variable is OK 
+    */
+    model.errcode = maybe_fix_ordered_depvar(&model, *pZ, pdinfo,
+					     &orig_y);
+
+    if (!model.errcode && orig_y != NULL) {
+	/* we modified the dependent variable: re-initialize */
+	clear_model(&model);
+	model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
+	if (model.errcode) {
+	    fprintf(stderr, "ordered_estimate: secondary OLS failed\n");
+	    goto bailout;
+	}
+    }
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {
+	int nx = model.ncoeff - ndum;
+
 	model.errcode = do_ordered(ci, nx, *pZ, pdinfo, &model, opt, prn);
     }
 
  bailout:
 
-    free(dumlist);
+    if (orig_y != NULL) {
+	restore_depvar(*pZ, orig_y, list[1]);
+    }
+
     free(biglist);
 
     return model;
