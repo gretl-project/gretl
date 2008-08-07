@@ -462,12 +462,11 @@ void model_callback (GtkAction *action, gpointer data)
 void model_genr_callback (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
-    int cancel = 0;
 
     edit_dialog(_("gretl: add var"), 
 		_("Enter formula for new variable:"),
 		"", do_model_genr, vwin, 
-		MODEL_GENR, VARCLICK_INSERT_NAME, &cancel);   
+		MODEL_GENR, VARCLICK_INSERT_NAME, NULL);   
 }
 
 static int selector_callback_code (const gchar *s)

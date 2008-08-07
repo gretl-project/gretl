@@ -767,22 +767,22 @@ static void name_var_dialog (Spreadsheet *sheet)
 {
     int cancel = 0;
     
-    edit_dialog (_("gretl: name variable"), 
-		 _("Enter name for new variable\n"
-		   "(max. 15 characters)"),
-		 NULL, name_new_var, sheet, 
-		 0, VARCLICK_NONE, &cancel);
+    edit_dialog(_("gretl: name variable"), 
+		_("Enter name for new variable\n"
+		  "(max. 15 characters)"),
+		NULL, name_new_var, sheet, 
+		0, VARCLICK_NONE, &cancel);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
 {
     int cancel = 0;
 
-    edit_dialog (_("gretl: case marker"), 
-		 _("Enter case marker for new obs\n"
-		   "(max. 8 characters)"),
-		 NULL, name_new_obs, sheet, 
-		 0, VARCLICK_NONE, &cancel);
+    edit_dialog(_("gretl: case marker"), 
+		_("Enter case marker for new obs\n"
+		  "(max. 8 characters)"),
+		NULL, name_new_obs, sheet, 
+		0, VARCLICK_NONE, &cancel);
 }
 
 static void name_matrix_col (GtkWidget *widget, dialog_t *dlg) 
@@ -817,12 +817,12 @@ static void name_column_dialog (GtkTreeViewColumn *col, gpointer p)
 {
     int cancel = 0;
 
-    edit_dialog (_("gretl: name column"), 
-		 _("Enter name for column\n"
-		   "(max. 12 characters)"),
-		 gtk_tree_view_column_get_title(col),
-		 name_matrix_col, col, 
-		 0, VARCLICK_NONE, &cancel);
+    edit_dialog(_("gretl: name column"), 
+		_("Enter name for column\n"
+		  "(max. 12 characters)"),
+		gtk_tree_view_column_get_title(col),
+		name_matrix_col, col, 
+		0, VARCLICK_NONE, &cancel);
 }
 
 static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
@@ -2700,11 +2700,11 @@ static void maybe_add_scalar (void)
     if (resp == GRETL_YES) {
 	int cancel = 0;
 
-	edit_dialog (_("gretl: name variable"), 
-		     _("Enter name for new variable\n"
-		       "(max. 15 characters)"),
-		     NULL, start_scalars, NULL, 
-		     0, VARCLICK_NONE, &cancel);
+	edit_dialog(_("gretl: name variable"), 
+		    _("Enter name for new variable\n"
+		      "(max. 15 characters)"),
+		    NULL, start_scalars, NULL, 
+		    0, VARCLICK_NONE, &cancel);
     }
 }
 

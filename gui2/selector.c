@@ -3275,7 +3275,7 @@ static void pack_switch (GtkWidget *b, selector *sr,
 static void call_iters_dialog (GtkWidget *w, selector *sr)
 {
     iterinfo iinfo;
-    int canceled = 0;
+    int cancel = 0;
 
     iinfo.ci = sr->code;
 
@@ -3298,9 +3298,9 @@ static void call_iters_dialog (GtkWidget *w, selector *sr)
 		&iinfo,
 		ITERATIONS,
 		VARCLICK_NONE,
-		&canceled);
+		&cancel);
 
-    if (!canceled) {
+    if (!cancel) {
 	fprintf(stderr, "iters=%d, tol=%g\n", iinfo.maxiters,
 		iinfo.tol);
 	/* FIXME check and set values */

@@ -3953,7 +3953,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
 
 static void maybe_start_editing (void)
 {
-    int canceled = 0;
+    int cancel = 0;
     int resp;
 
     resp = yes_no_dialog(_("gretl: new dataset"), 
@@ -3966,10 +3966,10 @@ static void maybe_start_editing (void)
 		      "(max. 15 characters)"),
 		    NULL, prep_spreadsheet, NULL, 
 		    CREATE_DATASET, VARCLICK_NONE, 
-		    &canceled);
+		    &cancel);
     } 
 
-    if (resp == GRETL_NO || canceled) {
+    if (resp == GRETL_NO || cancel) {
 	/* accept the default blank dataset */
 	register_data(NULLDATA_STARTED);
     }	

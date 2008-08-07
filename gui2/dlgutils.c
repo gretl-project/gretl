@@ -1199,10 +1199,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	gtk_widget_show(w);  
     }    
 
-    /* "Cancel" button? */
-    if (canceled != NULL) {
-	cancel_delete_button(button_box, d->dialog, canceled);
-    }
+    /* "Cancel" button */
+    cancel_delete_button(button_box, d->dialog, canceled);
 
     /* "OK" button */
     w = ok_button(button_box);

@@ -2136,11 +2136,11 @@ static void rename_object_callback (GtkWidget *widget, dialog_t *dlg)
 
 static void rename_object_dialog (gui_obj *obj) 
 {
-    edit_dialog (_("gretl: rename object"), 
-		 _("Enter new name\n"
-		   "(max. 31 characters)"),
-		 obj->name, rename_object_callback, obj, 
-		 0, VARCLICK_NONE, NULL);
+    edit_dialog(_("gretl: rename object"), 
+		_("Enter new name\n"
+		  "(max. 31 characters)"),
+		obj->name, rename_object_callback, obj, 
+		0, VARCLICK_NONE, NULL);
 }
 
 void delete_text_from_session (void *p)
