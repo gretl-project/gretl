@@ -759,7 +759,7 @@ struct sorter {
 
 static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
 				     const DATAINFO *pdinfo,
-				     double **orig_y)
+				     double **orig_y, int *ndum)
 {
     struct sorter *s = NULL;
     double *sy = NULL;
@@ -800,7 +800,7 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
 	fixit = 1;
     }
 
-    /* ensure that the sorted values increase by one */
+    /* ensure that the sorted values increase by steps of one */
     for (i=1; i<n; i++) {
 	if (s[i].x != s[i-1].x) {
 	    double nexty = s[i-1].x + 1;
@@ -817,6 +817,11 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
 	} 
     }
 
+    /* the number of dummies actually used will equal the
+       max of normalized y minus 1
+    */
+    *ndum = (int) s[n-1].x - 1;
+
     if (fixit) {
 	sy = copyvec(Z[dv], pdinfo->n);
 	if (sy == NULL) {
@@ -825,7 +830,8 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
 	    for (i=0; i<n; i++) {
 		sy[s[i].t] = s[i].x;
 	    }
-	    /* back up the original dep. var and replace it */
+	    /* back up the original dep. var and replace it for
+	       the duration of the ordered analysis */
 	    *orig_y = Z[dv];
 	    Z[dv] = sy;
 	}
@@ -865,8 +871,7 @@ static int *make_dummies_list (const int *list,
 }
 
 static int *make_big_list (const int *list, double ***pZ,
-			   DATAINFO *pdinfo, int *ndum,
-			   int *err)
+			   DATAINFO *pdinfo, int *err)
 {
     int *dumlist;
     int *biglist;
@@ -878,10 +883,10 @@ static int *make_big_list (const int *list, double ***pZ,
     }
 
     /* In dumlist, the first value will have been dropped
-       automatically, but we want to drop the second one too.
+       automatically, but we want to drop the second one too,
+       hence the minus 1 below
     */
-    *ndum = dumlist[0] - 1;
-    nv = list[0] + *ndum;
+    nv = list[0] + dumlist[0] - 1;
 
     biglist = gretl_list_new(nv);
     if (biglist == NULL) {
@@ -939,7 +944,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* construct augmented regression list, including
        dummies for the level of the dependent variable
     */
-    biglist = make_big_list(list, pZ, pdinfo, &ndum, &model.errcode);
+    biglist = make_big_list(list, pZ, pdinfo, &model.errcode);
     if (model.errcode) {
 	return model;
     }
@@ -948,7 +953,8 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
 	fprintf(stderr, "ordered_estimate: initial OLS failed\n");
-	goto bailout;
+	free(biglist);
+	return model;
     }
 
 #if ODEBUG > 1
@@ -960,7 +966,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
        the dependent variable is OK 
     */
     model.errcode = maybe_fix_ordered_depvar(&model, *pZ, pdinfo,
-					     &orig_y);
+					     &orig_y, &ndum);
 
     if (!model.errcode && orig_y != NULL) {
 	/* we modified the dependent variable: re-initialize (?) */
@@ -968,7 +974,6 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
 	if (model.errcode) {
 	    fprintf(stderr, "ordered_estimate: secondary OLS failed\n");
-	    goto bailout;
 	}
     }
 
@@ -976,8 +981,6 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     if (!model.errcode) {
 	model.errcode = do_ordered(ci, ndum, *pZ, pdinfo, &model, opt, prn);
     }
-
- bailout:
 
     if (orig_y != NULL) {
 	restore_depvar(*pZ, orig_y, list[1]);
