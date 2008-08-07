@@ -1327,7 +1327,6 @@ GtkActionEntry main_entries[] = {
     { "DataSelectAll", NULL, N_("Select _all"), "<control>A", NULL, G_CALLBACK(mdata_select_all) },
     { "DisplayValues", NULL, N_("_Display values"), NULL, NULL, G_CALLBACK(display_selected) },
     { "EditValues", NULL, N_("_Edit values"), NULL, NULL, G_CALLBACK(spreadsheet_edit) },
-    { "EditScalars", NULL, N_("_Edit scalars"), NULL, NULL, G_CALLBACK(edit_scalars) },
     { "AddObs", NULL, N_("_Add observations..."), NULL, NULL, G_CALLBACK(do_add_obs) },
     { "RemoveObs", NULL, N_("_Remove extra observations"), NULL, NULL, G_CALLBACK(do_remove_obs) },
     { "ReadInfo", NULL, N_("_Read info"), NULL, NULL, G_CALLBACK(open_info) },
@@ -1341,6 +1340,7 @@ GtkActionEntry main_entries[] = {
     { "DataTranspose", NULL, N_("_Transpose data..."), NULL, NULL, G_CALLBACK(gui_transpose_data) },
     { "DataSort", NULL, N_("_Sort data..."), NULL, NULL, G_CALLBACK(gui_sort_data) },
     { "DataRefresh", NULL, N_("_Refresh window"), NULL, NULL, G_CALLBACK(refresh_data) },
+    { "EditScalars", NULL, N_("_Scalars..."), NULL, NULL, G_CALLBACK(edit_scalars) },
 
     /* View */
     { "View", NULL, N_("_View"), NULL, NULL, NULL },

@@ -929,6 +929,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 			gretlopt opt, PRN *prn) 
 {
     MODEL model;
+    int orig_v = pdinfo->v;
     double *orig_y = NULL;
     int *biglist = NULL;
     int ndum = 0;
@@ -987,6 +988,11 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     }
 
     free(biglist);
+
+    if (pdinfo->v > orig_v) {
+	/* clean up any added dummies */
+	dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    }
 
     return model;
 }
