@@ -760,6 +760,48 @@ static int do_ordered (int ci, int nx,
     return err;
 }
 
+static int check_ordered_depvar (MODEL *pmod, double **Z)
+{
+    double *sy = NULL;
+    int dv = pmod->list[1];
+    int i, t, n = 0;
+    int err = 0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    n++;
+	}
+    }
+
+    sy = malloc(n * sizeof *sy);
+    if (sy == NULL) {
+	return E_ALLOC;
+    }
+
+    i = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    sy[i++] = Z[dv][t];
+	}
+    }
+
+    qsort(sy, n, sizeof *sy, gretl_compare_doubles);
+
+    for (i=1; i<n; i++) {
+	if (sy[i] != sy[i-1] && sy[i] != sy[i-1] + 1) {
+	    gretl_errmsg_sprintf("The dependent variable does not form "
+				 "a set of consecutive ranks:\nthe "
+				 "value %g is missing.", sy[i-1] + 1);
+	    err = E_DATA;
+	    break;
+	}
+    }
+
+    free(sy);
+
+    return err;
+}
+
 /* the driver function for the plugin: note, if prn is non-NULL,
    the verbose option has been selected
 */
@@ -828,6 +870,8 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, "oprobit_estimate: initial OLS\n");
     printmodel(&model, pdinfo, OPT_S, errprn);
 #endif
+
+    model.errcode = check_ordered_depvar(&model, *pZ);
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {

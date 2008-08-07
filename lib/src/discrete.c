@@ -868,7 +868,9 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
     } else if (ordered_model_ok(*pZ, pdinfo, yv)) {
-	return ordered_model(list, ci, pZ, pdinfo, opt, prn);
+	PRN *oprn = (opt & OPT_V)? prn : NULL;
+
+	return ordered_model(list, ci, pZ, pdinfo, opt, oprn);
     } else {
 	MODEL dmod;
 
