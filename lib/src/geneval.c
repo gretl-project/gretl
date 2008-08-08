@@ -5342,7 +5342,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
-	} else if (l->t == LIST || l->t == LVEC) {
+	} else if (ok_list_node(l)) {
 	    ret = list_ok_func(l, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
