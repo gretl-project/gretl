@@ -31,7 +31,7 @@ struct op_container_ {
     gretlopt opt;     /* option flags */
     int *y;           /* dependent variable */
     double **Z;       /* data */
-    int *list;
+    int *list; 
     int M;            /* max of (possibly normalized) y */
     int t1;           /* beginning of sample */
     int t2;           /* end of sample */
@@ -139,20 +139,17 @@ static op_container *op_container_new (int type, int ndum,
 	}
     }
 
-#if ODEBUG
-    fprintf(stderr, "nobs = %d\n", OC->nobs);
-    fprintf(stderr, "t1-t2 = %d-%d\n", OC->t1, OC->t2);
-    fprintf(stderr, "k = %d\n", OC->k);
-    fprintf(stderr, "nx = %d\n", OC->nx);
-    fprintf(stderr, "Max(y) = M = %d\n", OC->M);
-#endif
-
     OC->list[1] = vy;
     for (i=0; i<OC->nx; i++) {
 	OC->list[i+2] = pmod->list[i+2];
     }
 
 #if ODEBUG
+    fprintf(stderr, "nobs = %d\n", OC->nobs);
+    fprintf(stderr, "t1-t2 = %d-%d\n", OC->t1, OC->t2);
+    fprintf(stderr, "k = %d\n", OC->k);
+    fprintf(stderr, "nx = %d\n", OC->nx);
+    fprintf(stderr, "Max(y) = M = %d\n", OC->M);
     printlist(OC->list, "list, in op_container_new");
 #endif
 
@@ -763,10 +760,16 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
 {
     struct sorter *s = NULL;
     double *sy = NULL;
+    double nexty, bady;
     int dv = pmod->list[1];
     int i, t, n = 0;
     int fixit = 0;
     int err = 0;
+
+    /* make a copy of the observations on the dep. var. that
+       were actually used in the initial OLS, recording
+       the observation numbers, then sort
+    */
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
@@ -803,11 +806,9 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
     /* ensure that the sorted values increase by steps of one */
     for (i=1; i<n; i++) {
 	if (s[i].x != s[i-1].x) {
-	    double nexty = s[i-1].x + 1;
-
+	    nexty = s[i-1].x + 1;
 	    if (s[i].x != nexty) {
-		double bady = s[i].x;
-
+		bady = s[i].x;
 		while (i < n && s[i].x == bady) {
 		    s[i++].x = nexty;
 		}
@@ -823,6 +824,7 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
     *ndum = (int) s[n-1].x - 1;
 
     if (fixit) {
+	/* the dependent var needs transforming */
 	sy = copyvec(Z[dv], pdinfo->n);
 	if (sy == NULL) {
 	    err = E_ALLOC;
@@ -835,6 +837,12 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
 	    *orig_y = Z[dv];
 	    Z[dv] = sy;
 	}
+    }
+
+    if (fixit) {
+	fputs("oprobit: using normalized y\n", stderr);
+    } else {
+	fputs("oprobit: using original y\n", stderr);
     }
 
     free(s);
@@ -970,7 +978,8 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 					     &orig_y, &ndum);
 
     if (!model.errcode && orig_y != NULL) {
-	/* we modified the dependent variable: re-initialize (?) */
+	/* we transformed the dependent variable: re-initialize 
+	   (or is this redundant?) */
 	clear_model(&model);
 	model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
 	if (model.errcode) {
@@ -983,14 +992,15 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	model.errcode = do_ordered(ci, ndum, *pZ, pdinfo, &model, opt, prn);
     }
 
+    free(biglist);
+
     if (orig_y != NULL) {
+	/* if we messed with the dependent var, put the original back */
 	restore_depvar(*pZ, orig_y, list[1]);
     }
 
-    free(biglist);
-
     if (pdinfo->v > orig_v) {
-	/* clean up any added dummies */
+	/* clean up any automatically-added dummies */
 	dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
     }
 
