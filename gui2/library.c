@@ -5912,7 +5912,7 @@ int dataset_is_subsampled (void)
 
     if (mdata->ui != NULL) {
 	GtkWidget *w = gtk_ui_manager_get_widget(mdata->ui, 
-						 "/Sample/Restore full range");
+						 "/MenuBar/Sample/FullRange");
 
 	if (w != NULL && GTK_IS_WIDGET(w) && GTK_WIDGET_IS_SENSITIVE(w)) {
 	    ret = 1;

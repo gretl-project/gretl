@@ -10,6 +10,11 @@ version 1.7.7, in progress
 - ordered probit/logit: fix for the case where the dependent
   variable does not form a continuous integer sequence
 - string-editing dialogs: ensure we have a cancel button
+- Saving data when the dataset is currently sub-sampled: 
+  fix breakage whereby the option to restore the full dataset
+  was not shown
+- Naming variables: put in place more stringent checking to
+  avoid name collisions across series, scalars, matrices, etc.
 
 7/30/2008 version 1.7.6
 - Fix bug: revise the way that list arguments to user-defined
