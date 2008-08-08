@@ -118,33 +118,6 @@ static int real_delete_scalar (int i)
     return err;
 }
 
-#if 0
-
-static double
-real_get_scalar_by_name (const char *name, int slevel, int *err)
-{
-    int level, i;
-
-    if (slevel == LEVEL_AUTO) {
-	level = gretl_function_depth();
-    } else {
-	level = slevel;
-    }
-
-    for (i=0; i<n_scalars; i++) {
-	if (scalars[i]->level == level && 
-	    !strcmp(name, scalars[i]->name)) {
-	    return scalars[i]->val;
-	}
-    }
-
-    *err = E_UNKVAR;
-
-    return NADBL;
-}
-
-#endif
-
 int n_saved_scalars (void)
 {
     return n_scalars;
@@ -435,6 +408,16 @@ static int levels_match (gretl_scalar *s, int lev)
     return 0;
 }
 
+/**
+ * destroy_user_scalars_at_level.
+ * @level: depth of function execution.
+ *
+ * Deletes any saved scalars at a particular level of function
+ * execution; used on exiting a user-defined function.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int destroy_user_scalars_at_level (int level)
 {
     gretl_scalar **tmp;
@@ -478,7 +461,7 @@ int destroy_user_scalars_at_level (int level)
 /**
  * destroy_private_scalars:
  *
- * Gets rid of private or "interval" scalars whose
+ * Gets rid of private or "internal" scalars whose
  * names begin with '$'.
  */
 
@@ -510,6 +493,14 @@ void destroy_user_scalars (void)
     scalars = NULL;
     n_scalars = 0;
 }
+
+/**
+ * write_scalars_to_file:
+ * @fp: stream to which to write.
+ *
+ * Prints information on any saved scalars as XML, for use
+ * when saving a gretl session.
+ */
 
 void write_scalars_to_file (FILE *fp)
 {

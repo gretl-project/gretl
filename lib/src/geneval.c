@@ -3009,7 +3009,9 @@ static NODE *varnum_node (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (n->t == STR) {
-	    ret->v.xval = series_index(p->dinfo, n->v.str);
+	    int v = series_index(p->dinfo, n->v.str);
+
+	    ret->v.xval = (v < p->dinfo->v)? v : NADBL;
 	} else {
 	    p->err = E_DATA;
 	}
@@ -5340,7 +5342,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
-	} else if (l->t == LIST) {
+	} else if (l->t == LIST || l->t == LVEC) {
 	    ret = list_ok_func(l, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
