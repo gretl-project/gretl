@@ -91,12 +91,7 @@ double gretl_one_snormal (void)
 
 #define MOD_POLAR 1
 
-/**
- * gretl_two_snormals:
- *
- */
-
-void gretl_two_snormals (double *z1, double *z2) 
+static void gretl_two_snormals (double *z1, double *z2) 
 {
     double x, y, z;
 
@@ -196,9 +191,14 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 
 void gretl_rand_normal (double *a, int t1, int t2) 
 {
-#ifndef OLD_NORMAL
-    double z1, z2;
     int t;
+
+#ifdef OLD_NORMAL
+    for (t=t1; t<=t2; t++) {
+	a[t] = gretl_one_snormal();
+    }
+#else
+    double z1, z2;
 
     for (t=t1; t<=t2; t++) {
 	gretl_two_snormals(&z1, &z2);
@@ -206,12 +206,6 @@ void gretl_rand_normal (double *a, int t1, int t2)
 	if (t < t2) {
 	    a[++t] = z2;
 	}
-    }
-#else
-    int t;
-    
-    for (t=t1; t<=t2; t++) {
-	a[t] = gretl_one_snormal();
     }
 #endif
 }
