@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-04 13:49-0400\n"
-"PO-Revision-Date: 2008-08-04 11:08+0200\n"
+"PO-Revision-Date: 2008-08-09 09:55+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -3711,9 +3711,9 @@ msgid "%s: sorry, no help available.\n"
 msgstr "%s: spiacente, aiuto non disponibile.\n"
 
 #: lib/src/interact.c:2861 lib/src/interact.c:2869 lib/src/interact.c:2877
-#, fuzzy, c-format
+#, c-format
 msgid "%s: negative value is out of bounds.\n"
-msgstr "ess: un valore negativo è fuori dai limiti.\n"
+msgstr "%s: un valore negativo è fuori dai limiti.\n"
 
 #: lib/src/interact.c:3644
 msgid "Listing labels for variables:\n"
@@ -4979,9 +4979,9 @@ msgstr ""
 "stimato il modello di riferimento\n"
 
 #: lib/src/monte_carlo.c:222 lib/src/monte_carlo.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a scalar"
-msgstr "'%s' non è una matrice o uno scalare"
+msgstr "'%s': non è uno scalare"
 
 #: lib/src/monte_carlo.c:263 lib/src/monte_carlo.c:287
 #: lib/src/monte_carlo.c:305
@@ -11456,52 +11456,44 @@ msgid "No discrete variables were selected"
 msgstr "Non è stata selezionata alcuna variabile discreta"
 
 #: gui2/library.c:4607
-#, fuzzy
 msgid "error sum of squares"
-msgstr "_Somma dei quadrati degli errori"
+msgstr "somma dei quadrati degli errori"
 
 #: gui2/library.c:4612 gui2/model_table.c:635
 msgid "R-squared"
 msgstr "R-quadro"
 
 #: gui2/library.c:4617
-#, fuzzy
 msgid "T*R-squared"
-msgstr "_T*R-quadro"
+msgstr "T*R-quadro"
 
 #: gui2/library.c:4622
-#, fuzzy
 msgid "degrees of freedom"
-msgstr "Gradi di libertà"
+msgstr "gradi di libertà"
 
 #: gui2/library.c:4627
-#, fuzzy
 msgid "standard error of residuals"
-msgstr "Errore standard dei residui"
+msgstr "errore standard dei residui"
 
 #: gui2/library.c:4632
-#, fuzzy
 msgid "log likelihood"
-msgstr "Log-verosimiglianza"
+msgstr "log-verosimiglianza"
 
 #: gui2/library.c:4637
 msgid "Akaike Information Criterion"
 msgstr "Criterio di informazione di Akaike"
 
 #: gui2/library.c:4642
-#, fuzzy
 msgid "Bayesian Information Criterion"
-msgstr "Criterio di Informazione _Bayesiano"
+msgstr "Criterio di Informazione Bayesiano"
 
 #: gui2/library.c:4647
-#, fuzzy
 msgid "Hannan-Quinn Information Criterion"
-msgstr "Criterio di Informazione di _Hannan-Quinn"
+msgstr "Criterio di Informazione di Hannan-Quinn"
 
 #: gui2/library.c:4663
-#, fuzzy
 msgid "gretl: add scalar"
-msgstr "gretl: aggiungi variabile"
+msgstr "gretl: aggiungi scalare"
 
 #: gui2/library.c:5034
 msgid "Can't delete a variable when in sub-sample mode\n"
