@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.6rc1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-04 13:49-0400\n"
-"PO-Revision-Date: 2008-07-28 12:00+0100\n"
+"PO-Revision-Date: 2008-08-09 02:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -435,7 +435,7 @@ msgstr "Testy autokorelacji"
 
 #: lib/src/compare.c:1847 lib/src/gretl_panel.c:3403
 msgid "Alternative statistic"
-msgstr "Alternatywna statystyka"
+msgstr "Statystyka testu"
 
 #: lib/src/compare.c:1922
 msgid "dummy variable for Chow test"
@@ -589,12 +589,9 @@ msgstr ""
 "tak± sam± liczbê obserwacji."
 
 #: lib/src/compat.c:224
-#, fuzzy, c-format
+#, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"%7co dla %s i x dla %s (+ oznacza t± sam± warto¶æ)\n"
-"\n"
-"%9s, %s\n"
+msgstr "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -2199,14 +2196,14 @@ msgid "Invalid character '%c'\n"
 msgstr "B³êdny znak '%c'\n"
 
 #: lib/src/genmain.c:39
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced scalar %s"
-msgstr "Zamieniono skalar %s (ID %d)"
+msgstr "Zamieniono skalar %s"
 
 #: lib/src/genmain.c:41
-#, fuzzy, c-format
+#, c-format
 msgid "Generated scalar %s"
-msgstr "Wygenerowano skalar %s (ID %d)"
+msgstr "Wygenerowano skalar %s"
 
 #: lib/src/genmain.c:60
 #, c-format
@@ -3699,9 +3696,9 @@ msgid "%s: sorry, no help available.\n"
 msgstr "%s: sorry, brak pomocy.\n"
 
 #: lib/src/interact.c:2861 lib/src/interact.c:2869 lib/src/interact.c:2877
-#, fuzzy, c-format
+#, c-format
 msgid "%s: negative value is out of bounds.\n"
-msgstr "ess: ujemna warto¶æ jest poza dopuszczaln± granic±.\n"
+msgstr "%s: ujemna warto¶æ jest poza dopuszczaln± granic±.\n"
 
 #: lib/src/interact.c:3644
 msgid "Listing labels for variables:\n"
@@ -4488,29 +4485,27 @@ msgid "Estimated using BHHH method"
 msgstr "Estymacja z wykorzystaniem metody BHHH"
 
 #: lib/src/modelprint.c:1578 lib/src/modelprint.c:1585
-#, fuzzy, c-format
+#, c-format
 msgid "Godfrey (1994) test for autocorrelation up to order %d"
-msgstr "Test LM na autokorelacjê rzêdu %s"
+msgstr "Test Godfreya (1994) na autokorelacjê rzêdu %d"
 
 #: lib/src/modelprint.c:1581 lib/src/modelprint.c:1588
-#, fuzzy
 msgid "Godfrey (1994) test for first-order autocorrelation"
-msgstr "autokorelacja rzêdu pierwszego"
+msgstr "Test Godfreya (1994) na autokorelacjê rzêdu pierwszego"
 
 #: lib/src/modelprint.c:1594 lib/src/modelprint.c:1601
-#, fuzzy, c-format
+#, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr "Test LM na autokorelacjê rzêdu %s"
+msgstr "Test Breuscha-Godfreya na autokorelacjê do rzêdu %d"
 
 #: lib/src/modelprint.c:1597 lib/src/modelprint.c:1604
-#, fuzzy
 msgid "Breusch-Godfrey test for first-order autocorrelation"
-msgstr "autokorelacja rzêdu pierwszego"
+msgstr "Test Breuscha-Godfreya na autokorelacjê rzêdu pierwszego"
 
 #: lib/src/modelprint.c:1661 lib/src/modelprint.c:1662
-#, fuzzy, c-format
+#, c-format
 msgid "Test for ARCH of order %d"
-msgstr "Test ARCH dla rzêdu opó¼nienia %s"
+msgstr "Test ARCH dla rzêdu opó¼nienia %d"
 
 #: lib/src/modelprint.c:1667 lib/src/modelprint.c:1671
 #: lib/src/modelprint.c:1675 lib/src/system.c:3801 lib/src/system.c:3821
@@ -4965,9 +4960,9 @@ msgstr ""
 "wykorzystywanego w estymacji modelu\n"
 
 #: lib/src/monte_carlo.c:222 lib/src/monte_carlo.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a scalar"
-msgstr "jest skalarem"
+msgstr "%s': nie jest skalarem"
 
 #: lib/src/monte_carlo.c:263 lib/src/monte_carlo.c:287
 #: lib/src/monte_carlo.c:305
@@ -6945,7 +6940,7 @@ msgstr "liczba do¶wiadczeñ"
 
 #: gui2/calculator.c:1985
 msgid "sample size, n"
-msgstr "liczeba obserwacji,  n="
+msgstr "liczba obserwacji,  n="
 
 #: gui2/calculator.c:1986
 msgid ""
@@ -8919,9 +8914,8 @@ msgid "Save as script"
 msgstr "Zapisz jako polecenia skryptowe"
 
 #: gui2/fnsave.c:848
-#, fuzzy
 msgid "Edit sample script"
-msgstr "liczebno¶æ próby"
+msgstr "Edycja skryptu"
 
 #: gui2/fnsave.c:856
 msgid "Upload package to server on save"
@@ -10188,18 +10182,16 @@ msgid "Font name"
 msgstr "Nazwa czcionki"
 
 #: gui2/gtkfontselhack.c:182
-#, fuzzy
 msgid "The X string that represents this font"
-msgstr "£añcuch X reprezentuje t± czcionkê."
+msgstr "£añcuch X reprezentuje t± czcionkê"
 
 #: gui2/gtkfontselhack.c:188
 msgid "Preview text"
 msgstr "Podgl±d tekstu"
 
 #: gui2/gtkfontselhack.c:189
-#, fuzzy
 msgid "The text to display in order to demonstrate the selected font"
-msgstr "Pokazany tekst jest przyk³adem wybranej czcionki."
+msgstr "Pokazany tekst jest przyk³adem wybranej czcionki"
 
 #: gui2/gtkfontselhack.c:195
 msgid "Filter"
@@ -11425,51 +11417,42 @@ msgid "No discrete variables were selected"
 msgstr "Brak wyselekcjonowanych dyskretnych zmiennych"
 
 #: gui2/library.c:4607
-#, fuzzy
 msgid "error sum of squares"
-msgstr "_wariancjê resztow±"
+msgstr "suma kwadratów reszt"
 
 #: gui2/library.c:4612 gui2/model_table.c:635
 msgid "R-squared"
 msgstr "R-kwadrat"
 
 #: gui2/library.c:4617
-#, fuzzy
 msgid "T*R-squared"
-msgstr "T*R-kwadra_t"
+msgstr "T*R-kwadrat"
 
 #: gui2/library.c:4622
-#, fuzzy
 msgid "degrees of freedom"
 msgstr "Stopnie swobody"
 
 #: gui2/library.c:4627
-#, fuzzy
 msgid "standard error of residuals"
-msgstr "B³±d standardowy reszt"
+msgstr "b³±d standardowy reszt"
 
 #: gui2/library.c:4632
-#, fuzzy
 msgid "log likelihood"
 msgstr "logarytm wiarygodno¶ci"
 
 #: gui2/library.c:4637
-#, fuzzy
 msgid "Akaike Information Criterion"
-msgstr "Kryterium Informacyjne _Akaike'a"
+msgstr "Kryterium Informacyjne Akaike'a"
 
 #: gui2/library.c:4642
-#, fuzzy
 msgid "Bayesian Information Criterion"
-msgstr "_Bayesowskie Kryterium Informacyjne"
+msgstr "Bayesowskie Kryterium Informacyjne"
 
 #: gui2/library.c:4647
-#, fuzzy
 msgid "Hannan-Quinn Information Criterion"
 msgstr "Kryterium Informacyjne Hannana-Quinna"
 
 #: gui2/library.c:4663
-#, fuzzy
 msgid "gretl: add scalar"
 msgstr "gretl: definiowanie nowej zmiennej"
 
@@ -14345,76 +14328,3 @@ msgstr "£añcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#, fuzzy
-#~ msgid "Argument is not a scalar"
-#~ msgstr "jest skalarem"
-
-#, fuzzy
-#~ msgid "%s: not a scalar"
-#~ msgstr "jest skalarem"
-
-#~ msgid "Dataset contains scalars, can't transpose"
-#~ msgstr ""
-#~ "Baza danych zawiera skalary, transpozycja danych nie jest mo¿liwa do "
-#~ "wykonania"
-
-#~ msgid "variable %s is a scalar"
-#~ msgstr "Zmienna %s jest skalarem"
-
-#~ msgid "T: negative value is out of bounds.\n"
-#~ msgstr "T: ujemna warto¶æ jest poza dopuszczaln± granic±.\n"
-
-#~ msgid "k: negative value is out of bounds.\n"
-#~ msgstr "k: ujemna warto¶æ jest poza dopuszczaln± granic±.\n"
-
-#~ msgid "The variable %s is a scalar\n"
-#~ msgstr "Zmienna %s jest skalarem\n"
-
-#~ msgid "Value:"
-#~ msgstr "Warto¶æ:"
-
-#~ msgid "This variable is a scalar"
-#~ msgstr "Ta zmienna jest skalarem"
-
-#~ msgid "Can't do this analysis on a scalar"
-#~ msgstr "Niemo¿liwa analiza dla skalara"
-
-#~ msgid "error sum of squares from model %d"
-#~ msgstr "Suma kwadratów reszt z modelu %d"
-
-#~ msgid "R-squared from model %d"
-#~ msgstr "R-kwadrat z modelu %d"
-
-#~ msgid "T*R-squared from model %d"
-#~ msgstr "T*R-kwadrat z modelu %d"
-
-#~ msgid "degrees of freedom from model %d"
-#~ msgstr "Stopnie swobody modelu = %d"
-
-#~ msgid "std err of residuals from model %d"
-#~ msgstr "B³±d standardowy reszt modelu %d"
-
-#~ msgid "log likelihood from model %d"
-#~ msgstr "logarytm wiarygodno¶ci z modelu %d"
-
-#~ msgid "Akaike Information Criterion from model %d"
-#~ msgstr "Kryterium informacyjne Akaike'a dla modelu %d"
-
-#~ msgid "Bayesian Information Criterion from model %d"
-#~ msgstr "Bayesowskie kryterium informacyjne dla modelu %d"
-
-#~ msgid "Hannan-Quinn Information Criterion from model %d"
-#~ msgstr "Kryterium informacyjne Hannana-Quinna dla modelu %d"
-
-#~ msgid "Error compiling function"
-#~ msgstr "B³±d w kompilacji funkcji"
-
-#~ msgid "boxplot save failed"
-#~ msgstr "B³±d w zapisie wykresu boxplot"
-
-#~ msgid "Font"
-#~ msgstr "Czcionka"
-
-#~ msgid "The GdkFont that is currently selected."
-#~ msgstr "Czcionka GdkFont jest wybrana."
