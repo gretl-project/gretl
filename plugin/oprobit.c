@@ -23,6 +23,7 @@
 #define ODEBUG 0
 
 #define OPROBIT_TOL 1.0e-12
+#define STATA_STYLE 0
 
 typedef struct op_container_ op_container;
 
@@ -105,7 +106,11 @@ static op_container *op_container_new (int type, int ndum,
     OC->t2 = pmod->t2;
     OC->nobs = nobs;
     OC->k = pmod->ncoeff;
+#if STATA_STYLE
+    OC->M = ndum;
+#else
     OC->M = ndum + 1;
+#endif
     OC->nx = OC->k - ndum;
 
     OC->opt = opt;
@@ -184,6 +189,19 @@ static int compute_probs (const double *theta, op_container *OC)
 
 	yt = OC->y[s];
 
+#if STATA_STYLE
+	if (yt == 0) {
+	    m0 = theta[nx];
+	    ystar1 = OC->ndx[s] + m0;
+	} else {
+	    m0 = theta[nx + yt - 1];
+	    ystar0 = OC->ndx[s] + m0;
+	    if (yt < M) {
+		m1 = theta[nx + yt];
+		ystar1 = OC->ndx[s] + m1;
+	    }
+	} 
+#else
 	if (yt == 0) {
 	    ystar1 = OC->ndx[s];
 	} else if (yt == 1) {
@@ -198,6 +216,7 @@ static int compute_probs (const double *theta, op_container *OC)
 		ystar1 = OC->ndx[s] + m1;
 	    }
 	} 
+#endif
 
 #if ODEBUG > 1
 	fprintf(stderr, "t:%4d/%d s=%d y=%d, ndx = %10.6f, ystar0 = %9.7f, ystar1 = %9.7f\n", 
@@ -249,6 +268,16 @@ static int compute_probs (const double *theta, op_container *OC)
 
 	    for (i=nx; i<OC->k; i++) {
 		OC->G[i][s] = 0.0;
+#if STATA_STYLE
+		if (i == nx + yt - 1) {
+		    OC->G[i][s] = -mills0;
+		    OC->g[i] += OC->G[i][s];
+		}
+		if (i == nx + yt) {
+		    OC->G[i][s] = mills1;
+		    OC->g[i] += OC->G[i][s];
+		}
+#else
 		if (i == nx + yt - 2) {
 		    OC->G[i][s] = -mills0;
 		    OC->g[i] += OC->G[i][s];
@@ -257,6 +286,7 @@ static int compute_probs (const double *theta, op_container *OC)
 		    OC->G[i][s] = mills1;
 		    OC->g[i] += OC->G[i][s];
 		}
+#endif
 	    }
 	}
 
@@ -270,13 +300,15 @@ static int compute_probs (const double *theta, op_container *OC)
 static int bad_cutpoints (const double *theta, const op_container *OC)
 {
     int i;
-    
+
+#if !STATA_STYLE    
     if (theta[OC->nx] <= 0.0) {
 #if ODEBUG
 	fprintf(stderr, "theta[%d] non-positive!\n", OC->nx);
 #endif
 	return 1;
     }
+#endif
     
     for (i=OC->nx+1; i<OC->k; i++) {
 	if (theta[i] <= theta[i-1]) {
@@ -482,14 +514,29 @@ static int get_pred (op_container *OC, const MODEL *pmod,
 
 static double gen_resid (const double *theta, op_container *OC, int t) 
 {
-    double m0, m1, ystar0, f0, f1;
-    double ret, ystar1 = 0.0;
-    int ndxt = OC->ndx[t];
-    int dP = OC->dP[t];
+    double ndxt, m0, m1, ystar0, f0, f1;
+    double ret, dP, ystar1 = 0.0;
     int M = OC->M;
     int nx = OC->nx;
-    int yt = OC->y[t];
+    int yt;
 
+    dP = OC->dP[t];
+    yt = OC->y[t];
+    ndxt = OC->ndx[t];
+
+#if STATA_STYLE
+    if (yt == 0) {
+	m0 = theta[nx];
+	ystar1 = ndxt + m0;
+    } else {
+	m0 = theta[nx + yt - 1];
+	ystar0 = ndxt + m0;
+	if (yt < M) {
+	    m1 = theta[nx + yt];
+	    ystar1 = ndxt + m1;
+	}
+    } 
+#else
     if (yt == 0) {
 	ystar1 = ndxt;
     } else if (yt == 1) {
@@ -504,6 +551,7 @@ static double gen_resid (const double *theta, op_container *OC, int t)
 	    ystar1 = ndxt + m1;
 	}
     } 
+#endif
 
     if (ystar1 < 6.0 || OC->type == LOGIT || 1) {
 	f0 = (yt == 0)? 0.0 : densfunc(ystar0, OC->type) / dP;
@@ -545,9 +593,6 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 
     for (i=0; i<npar; i++) {
 	pmod->coeff[i] = theta[i];
-#if ODEBUG > 1
-	fprintf(stderr,"theta[%d] = %12.8f\n", i, theta[i]);
-#endif
     }
 
     if (OC->opt & OPT_R) {
@@ -568,7 +613,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	    x += theta[i] * OC->Z[v][t];
 	}
 
-	/* X\hat{beta} */
+	/* yhat = X\hat{beta} */
 	pmod->yhat[t] = x;
 	pred = get_pred(OC, pmod, x); /* should we do anything with this? */
 	/* compute generalized residual */
@@ -821,7 +866,11 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
     /* the number of dummies actually used will equal the
        max of normalized y minus 1
     */
+#if STATA_STYLE
+    *ndum = (int) s[n-1].x;
+#else
     *ndum = (int) s[n-1].x - 1;
+#endif
 
     if (fixit) {
 	/* the dependent var needs transforming */
@@ -894,7 +943,11 @@ static int *make_big_list (const int *list, double ***pZ,
        automatically, but we want to drop the second one too,
        hence the minus 1 below
     */
+#if STATA_STYLE
+    nv = list[0] + dumlist[0];
+#else
     nv = list[0] + dumlist[0] - 1;
+#endif
 
     biglist = gretl_list_new(nv);
     if (biglist == NULL) {
@@ -907,9 +960,15 @@ static int *make_big_list (const int *list, double ***pZ,
     for (i=1; i<=list[0]; i++) {
 	biglist[k++] = list[i];
     }
+#if STATA_STYLE
+    for (i=1; i<=dumlist[0]; i++) {
+	biglist[k++] = dumlist[i];
+    }
+#else
     for (i=2; i<=dumlist[0]; i++) {
 	biglist[k++] = dumlist[i];
     }
+#endif
 
     free(dumlist);
 
@@ -921,9 +980,16 @@ static int list_has_const (const int *list)
     int i;
 
     for (i=2; i<=list[0]; i++) {
+#if STATA_STYLE
+	if (list[i] == 0) {
+	    gretl_list_delete_at_pos(list, i);
+	    return 1;
+	}
+#else
 	if (list[i] == 0) {
 	    return 1;
 	}
+#endif
     }
 
     return 0;
@@ -966,9 +1032,9 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
-#if ODEBUG > 1
+#if ODEBUG
     pprintf(prn, "oprobit_estimate: initial OLS\n");
-    printmodel(&model, pdinfo, OPT_S, errprn);
+    printmodel(&model, pdinfo, OPT_S, prn);
 #endif
 
     /* after accounting for any missing observations, check that
