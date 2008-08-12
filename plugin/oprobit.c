@@ -38,6 +38,7 @@ struct op_container_ {
     int nobs;         /* number of observations */
     int nx;           /* number of explanatory variables */
     int k;            /* total number of parameters */
+    double *theta;    /* real parameter estimates */
     double *ndx;      /* index variable */
     double *dP;       /* probabilities */
     MODEL *pmod;      /* model struct, initially containing OLS */
@@ -80,6 +81,7 @@ static void op_container_destroy (op_container *OC)
     free(OC->list);
     doubles_array_free(OC->G, OC->k);
     free(OC->g);
+    free(OC->theta);
 
     free(OC);
 }
@@ -124,10 +126,12 @@ static op_container *op_container_new (int type, int ndum,
     OC->list = gretl_list_new(1 + OC->nx);
     OC->G = doubles_array_new(OC->k, nobs);
     OC->g = malloc(OC->k * sizeof *OC->g);
+    OC->theta = malloc(OC->k * sizeof *OC->theta);
 
     if (OC->y == NULL || OC->ndx == NULL || 
 	OC->dP == NULL || OC->list == NULL ||
-	OC->G == NULL || OC->g == NULL) {
+	OC->G == NULL || OC->g == NULL ||
+	OC->theta == NULL) {
 	op_container_destroy(OC);
 	return NULL;
     }
@@ -270,6 +274,41 @@ static int compute_probs (const double *theta, op_container *OC)
     return 0;
 }
 
+#define USE_LOGDIFF 0
+
+#if USE_LOGDIFF
+
+static void get_real_theta (op_container *OC, const double *theta)
+{
+    int i;
+
+    for (i=0; i<=OC->nx; i++) {
+	OC->theta[i] = theta[i];
+    }
+
+    for (i=OC->nx+1; i<OC->k; i++) {
+	OC->theta[i] = exp(theta[i]) + OC->theta[i-1];
+#if ODEBUG > 1
+	fprintf(stderr, "BFGS theta[%d] = %g -> theta = %g\n", i, theta[i], OC->theta[i]);
+#endif
+    }
+}
+
+static void make_BFGS_theta (op_container *OC, double *theta)
+{
+    int i;
+
+    for (i=0; i<=OC->nx; i++) {
+	theta[i] = OC->theta[i];
+    }
+
+    for (i=OC->nx+1; i<OC->k; i++) {
+	theta[i] = log(OC->theta[i] - OC->theta[i-1]);
+    }
+}
+
+#else
+
 static int bad_cutpoints (const double *theta, const op_container *OC)
 {
     int i;
@@ -286,16 +325,22 @@ static int bad_cutpoints (const double *theta, const op_container *OC)
     return 0;
 }
 
+#endif /* switch on USE_LOGDIFF */
+
 static double op_loglik (const double *theta, void *ptr)
 {
     op_container *OC = (op_container *) ptr;
     double x, ll = 0.0;
     int err;
     int i, s, t, v;
-    
+
+#if USE_LOGDIFF
+    get_real_theta(OC, theta);
+#else
     if (bad_cutpoints(theta, OC)) {
 	return NADBL;
     }
+#endif
 
     s = 0;
     for (t=OC->t1; t<=OC->t2; t++) {
@@ -306,15 +351,15 @@ static double op_loglik (const double *theta, void *ptr)
 	for (i=0; i<OC->nx; i++) {
 	    /* the independent variables */
 	    v = OC->list[i+2];
-	    x -= theta[i] * OC->Z[v][t];
+	    x -= OC->theta[i] * OC->Z[v][t];
 	}
 	OC->ndx[s++] = x;
-#if ODEBUG > 1
+#if ODEBUG > 2
 	fprintf(stderr, "t = %d, s = %d, x = %g\n", t, s, x);
 #endif
     }
     
-    err = compute_probs(theta, OC);
+    err = compute_probs(OC->theta, OC);
     if (err) {
 	ll = NADBL;
     } else {
@@ -444,7 +489,7 @@ static int get_pred (op_container *OC, const MODEL *pmod,
     return pred;
 }
 
-static double gen_resid (const double *theta, op_container *OC, int t) 
+static double gen_resid (op_container *OC, const double *theta, int t) 
 {
     double ndxt, m0, m1, ystar0, f0, f1;
     double ret, dP, ystar1 = 0.0;
@@ -529,7 +574,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	pmod->yhat[t] = x;
 	pred = get_pred(OC, pmod, x); /* should we do anything with this? */
 	/* compute generalized residual */
-	pmod->uhat[t] = gen_resid(theta, OC, s++);
+	pmod->uhat[t] = gen_resid(OC, OC->theta, s++);
     }
 
     pmod->lnL = op_loglik(theta, OC);
@@ -562,7 +607,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
     }
 
     /* hessian from analytical score */
-    *err = ihess_from_ascore(OC, theta, V);
+    *err = ihess_from_ascore(OC, OC->theta, V);
 
     if (!*err && (OC->opt & OPT_R)) {
 	gretl_matrix *GG = NULL;
@@ -576,7 +621,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	if (GG == NULL || Vr == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    *err = opg_from_ascore(OC, theta, GG);
+	    *err = opg_from_ascore(OC, OC->theta, GG);
 	    if (!*err) {
 #if ODEBUG > 1
 		gretl_matrix_print(GG, "OPG matrix");
@@ -647,22 +692,33 @@ static int do_ordered (int ci, int ndum,
 
     npar = OC->k;
 
+#if USE_LOGDIFF
     theta = malloc(npar * sizeof *theta);
     if (theta == NULL) {
 	op_container_destroy(OC);
 	return E_ALLOC;
     }
+#else
+    theta = OC->theta;
+#endif
 
     for (i=0; i<OC->nx; i++) {
-	theta[i] = 0.0001;
+	OC->theta[i] = 0.0001;
     }
 
     p = 0.0;
     for (i=OC->nx, j=0; i<npar; i++, j++) {
-	theta[i] = naive_prob(pmod, Z, j, &p);
+	OC->theta[i] = naive_prob(pmod, Z, j, &p);
     }
 
+#if USE_LOGDIFF
+    make_BFGS_theta(OC, theta);
+#endif
+
 #if ODEBUG
+    for (i=0; i<npar; i++) {
+	fprintf(stderr, "theta[%d]: 'real' = %g, BFGS = %g\n", i, OC->theta[i], theta[i]);
+    }
     fprintf(stderr, "\ninitial loglikelihood = %.12g\n", 
 	    op_loglik(theta, OC));
 #endif
@@ -690,7 +746,9 @@ static int do_ordered (int ci, int ndum,
 
  bailout:
 
+#if USE_LOGDIFF
     free(theta);
+#endif
     gretl_matrix_free(V);
     op_container_destroy(OC);
 

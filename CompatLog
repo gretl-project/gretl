@@ -6,7 +6,7 @@ by William Greene as previously.  That is, we don't estimate a
 generic constant, but report n-1 cut points, where n is the
 number of response levels.
 
-7/30/2008, version 1.7.6
+7/30/2008 version 1.7.6
 
 List arguments to user-defined arguments:
 
@@ -18,7 +18,7 @@ for use on the right-hand side of a genr command), use the
 new syntax listname.varname.  See the chapter on functions in
 the User's Guide for details.
 
-6/12/2008, version 1.7.5
+6/12/2008 version 1.7.5
 
 $sigma and $vcv accessors:
 
