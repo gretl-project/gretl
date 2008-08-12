@@ -589,7 +589,7 @@ static struct winfilter get_gp_filter (int ttype)
 	{ N_("PNG files (*.png)"), "*.png" },
 	{ N_("Windows metafiles (*.emf)"), "*.emf" },
 	{ N_("gnuplot files (*.plt)"), "*.plt" },
-	{ N_("all files (*.*)"), "*.*" }
+	{ N_("all files (*.*)"), "*" }
     };
 
     if (ttype == GP_TERM_EPS) 
@@ -658,7 +658,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ SET_PROG,         { N_("program files (*.exe)"), "*.exe" }}
     };
     static struct winfilter default_filter = {
-	N_("all files (*.*)"), "*.*" 
+	N_("all files (*.*)"), "*" 
     };
     struct winfilter filt;
     int i;
@@ -718,7 +718,7 @@ static char *make_winfilter (int action, FselDataSrc src, gpointer data)
 	p += strlen(p) + 1;
 	strcpy(p, I_("all files (*.*)"));
 	p += strlen(p) + 1;
-	strcpy(p, "*.*");
+	strcpy(p, "*");
     }
 
     return ret;
@@ -928,7 +928,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     if (action == OPEN_ASCII || action == APPEND_ASCII) {
 	filter = gtk_file_filter_new();
 	gtk_file_filter_set_name(filter, _("all files (*.*)"));
-	gtk_file_filter_add_pattern(filter, "*.*");
+	gtk_file_filter_add_pattern(filter, "*");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
     } else if (action == OPEN_SCRIPT && src != FSEL_DATA_FNPKG) {
 	filter = gtk_file_filter_new();
