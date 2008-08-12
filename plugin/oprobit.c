@@ -28,7 +28,7 @@
 typedef struct op_container_ op_container;
 
 struct op_container_ {
-    int type;         /* model type */
+    int type;         /* model type (probit or logit) */
     gretlopt opt;     /* option flags */
     int *y;           /* dependent variable */
     double **Z;       /* data */
@@ -161,20 +161,71 @@ static op_container *op_container_new (int type, int ndum,
     return OC;
 }
 
+static int compute_score (op_container *OC, int yt, 
+			  double ystar0, double ystar1,
+			  double dP, int t, int s)
+{
+    double mills0;
+    double mills1;
+    double dm;
+    int M = OC->M;
+    int i, v;
+
+    if (ystar1 < 6.0 || OC->type == LOGIT) {
+	mills0 = (yt == 0)? 0.0 : densfunc(ystar0, OC->type) / dP;
+	mills1 = (yt == M)? 0.0 : densfunc(ystar1, OC->type) / dP;
+    } else { 
+	/* L'Hopital-based approximation */
+	mills0 = (yt == 0)? 0.0 : -ystar0;
+	mills1 = (yt == M)? 0.0 : -ystar1;
+    }
+
+    dm = mills1 - mills0;
+
+    for (i=0; i<OC->nx; i++) {
+	v = OC->list[i+2];
+	OC->G[i][s] = -dm * OC->Z[v][t];
+	OC->g[i] += OC->G[i][s];
+    }
+
+    for (i=OC->nx; i<OC->k; i++) {
+	OC->G[i][s] = 0.0;
+#if STATA_STYLE
+	if (i == OC->nx + yt - 1) {
+	    OC->G[i][s] = -mills0;
+	    OC->g[i] += OC->G[i][s];
+	}
+	if (i == OC->nx + yt) {
+	    OC->G[i][s] = mills1;
+	    OC->g[i] += OC->G[i][s];
+	}
+#else
+	if (i == OC->nx + yt - 2) {
+	    OC->G[i][s] = -mills0;
+	    OC->g[i] += OC->G[i][s];
+	}
+	if (i == OC->nx + yt - 1) {
+	    OC->G[i][s] = mills1;
+	    OC->g[i] += OC->G[i][s];
+	}
+#endif
+    }
+
+    return 0;
+}
+
 static int compute_probs (const double *theta, op_container *OC)
 {
     double m0, m1, ystar0 = 0.0, ystar1 = 0.0;
     int M = OC->M;
     int nx = OC->nx;
     double P0, P1, h, adj, dP;
-    int i, t, s, yt, v;
+    int i, t, s, yt;
     int type = OC->type;
 
-    if (OC->opt & OPT_A) {
-	/* analytical score */
-	for (i=0; i<OC->k; i++) {
-	    OC->g[i] = 0.0;
-	}
+    /* initialize analytical score */
+    for (i=0; i<OC->k; i++) {
+	OC->g[i] = 0.0;
     }
 
     s = 0;
@@ -244,54 +295,9 @@ static int compute_probs (const double *theta, op_container *OC)
 	    return 1;
 	} 
 
-	if (OC->opt & OPT_A) {
-	    double mills0;
-	    double mills1;
-	    double dm;
-
-	    if (ystar1 < 6.0 || OC->type == LOGIT) {
-		mills0 = (yt == 0)? 0.0 : densfunc(ystar0, type) / dP;
-		mills1 = (yt == M)? 0.0 : densfunc(ystar1, type) / dP;
-	    } else { 
-		/* L'Hopital-based approximation */
-		mills0 = (yt == 0)? 0.0 : -ystar0;
-		mills1 = (yt == M)? 0.0 : -ystar1;
-	    }
-
-	    dm = mills1 - mills0;
-
-	    for (i=0; i<nx; i++) {
-		v = OC->list[i+2];
-		OC->G[i][s] = -dm * OC->Z[v][t];
-		OC->g[i] += OC->G[i][s];
-	    }
-
-	    for (i=nx; i<OC->k; i++) {
-		OC->G[i][s] = 0.0;
-#if STATA_STYLE
-		if (i == nx + yt - 1) {
-		    OC->G[i][s] = -mills0;
-		    OC->g[i] += OC->G[i][s];
-		}
-		if (i == nx + yt) {
-		    OC->G[i][s] = mills1;
-		    OC->g[i] += OC->G[i][s];
-		}
-#else
-		if (i == nx + yt - 2) {
-		    OC->G[i][s] = -mills0;
-		    OC->g[i] += OC->G[i][s];
-		}
-		if (i == nx + yt - 1) {
-		    OC->G[i][s] = mills1;
-		    OC->g[i] += OC->G[i][s];
-		}
-#endif
-	    }
-	}
+	compute_score(OC, yt, ystar0, ystar1, dP, t, s);
 
 	s++;
-
     }
 
     return 0;
@@ -461,38 +467,6 @@ static int ihess_from_ascore (op_container *OC, double *theta, gretl_matrix *inH
     return err;
 }
 
-static int 
-numerical_ihess (op_container *OC, double *theta, gretl_matrix *invH)
-{
-    double vij, *V;
-    int i, j, k, npar = OC->k;
-    int err = 0;
-
-    if (invH == NULL) {
-	return E_ALLOC;
-    }
-
-    V = numerical_hessian(theta, npar, op_loglik, OC, &err);
-    if (V == NULL) {
-	return err;
-    }
-
-    k = 0;
-    for (i=0; i<npar; i++) {
-	for (j=i; j<npar; j++) {
-	    vij = V[k++];
-	    gretl_matrix_set(invH, i, j, vij);
-	    if (i != j) {
-		gretl_matrix_set(invH, j, i, vij);
-	    }
-	}
-    }
-
-    free(V);
-
-    return 0;
-}
-
 static int get_pred (op_container *OC, const MODEL *pmod,
 		     double Xb)
 {
@@ -647,13 +621,8 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	return NULL;
     }
 
-    if (OC->opt & OPT_A) {
-	/* hessian from analytical score */
-	*err = ihess_from_ascore(OC, theta, V);
-    } else {
-	/* numerical hessian */
-	*err = numerical_ihess(OC, theta, V);
-    }
+    /* hessian from analytical score */
+    *err = ihess_from_ascore(OC, theta, V);
 
     if (!*err && (OC->opt & OPT_R)) {
 	gretl_matrix *GG = NULL;
@@ -732,14 +701,6 @@ static int do_ordered (int ci, int ndum,
     int fncount = 0;
     int grcount = 0;
 
-    /* set analytical score option... */
-    opt |= OPT_A;
-
-    /* ...but if not analytical, remove robust option */
-    if (!(opt & OPT_A)) {
-	opt &= ~OPT_R;
-    }
-
     OC = op_container_new(ci, ndum, Z, pmod, opt);
     if (OC == NULL) {
 	return E_ALLOC;
@@ -792,8 +753,7 @@ static int do_ordered (int ci, int ndum,
 
     err = BFGS_max(theta, npar, maxit, OPROBIT_TOL, 
 		   &fncount, &grcount, op_loglik, C_LOGLIK,
-		   (OC->opt & OPT_A)? op_score : NULL, 
-		   OC, (prn != NULL)? OPT_V : OPT_NONE,
+		   op_score, OC, (prn != NULL)? OPT_V : OPT_NONE,
 		   prn);
 
     if (err) {
@@ -961,11 +921,22 @@ static int *make_dummies_list (const int *list,
 	}
     }
 
+#if !STATA_STYLE
+    /* we're including a constant, so we need to drop an extra
+       dummy, in addition to the one dropped by list_dumgenr
+       with the OPT_F option 
+    */
+    if (dumlist != NULL) {
+	gretl_list_delete_at_pos(dumlist, 1);
+    }
+#endif
+
     return dumlist;
 }
 
 static int *make_big_list (const int *list, double ***pZ,
-			   DATAINFO *pdinfo, int *err)
+			   DATAINFO *pdinfo, int **pdumlist,
+			   int *err)
 {
     int *dumlist;
     int *biglist;
@@ -976,15 +947,7 @@ static int *make_big_list (const int *list, double ***pZ,
 	return NULL;
     }
 
-    /* In dumlist, the first value will have been dropped
-       automatically, but we want to drop the second one too,
-       hence the minus 1 below
-    */
-#if STATA_STYLE
     nv = list[0] + dumlist[0];
-#else
-    nv = list[0] + dumlist[0] - 1;
-#endif
 
     biglist = gretl_list_new(nv);
     if (biglist == NULL) {
@@ -997,36 +960,56 @@ static int *make_big_list (const int *list, double ***pZ,
     for (i=1; i<=list[0]; i++) {
 	biglist[k++] = list[i];
     }
-#if STATA_STYLE
     for (i=1; i<=dumlist[0]; i++) {
 	biglist[k++] = dumlist[i];
     }
-#else
-    for (i=2; i<=dumlist[0]; i++) {
-	biglist[k++] = dumlist[i];
-    }
-#endif
 
-    free(dumlist);
+    *pdumlist = dumlist;
 
     return biglist;
 }
+
+#if STATA_STYLE
+
+static void list_purge_const (int *list)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    gretl_list_delete_at_pos(list, i);
+	    return;
+	}
+    }
+}
+
+#else
 
 static int list_has_const (const int *list)
 {
     int i;
 
     for (i=2; i<=list[0]; i++) {
-#if STATA_STYLE
-	if (list[i] == 0) {
-	    gretl_list_delete_at_pos(list, i);
-	    return 1;
-	}
-#else
 	if (list[i] == 0) {
 	    return 1;
 	}
+    }
+
+    return 0;
+}
+
 #endif
+
+static int check_for_missing_dummies (MODEL *pmod, int *dlist)
+{
+    int i, dv;
+
+    for (i=1; i<=dlist[0]; i++) {
+	dv = dlist[i];
+	if (!in_gretl_list(pmod->list, dv)) {
+	    fprintf(stderr, "check for missing dummies: var %d is gone!\n", dv);
+	    return E_SINGULAR;
+	}
     }
 
     return 0;
@@ -1036,27 +1019,33 @@ static int list_has_const (const int *list)
    only if the verbose option has been selected
 */
 
-MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
+MODEL ordered_estimate (int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 			gretlopt opt, PRN *prn) 
 {
     MODEL model;
     int orig_v = pdinfo->v;
     double *orig_y = NULL;
     int *biglist = NULL;
+    int *dumlist = NULL;
     int ndum = 0;
 
     gretl_model_init(&model);
 
+#if STATA_STYLE
+    /* remove the constant from the incoming list, if present */
+    list_purge_const(list);
+#else
     /* check for obligatory constant in incoming list */
     if (!list_has_const(list)) {
 	model.errcode = E_NOCONST;
 	return model;
     }
+#endif
 
     /* construct augmented regression list, including
        dummies for the level of the dependent variable
     */
-    biglist = make_big_list(list, pZ, pdinfo, &model.errcode);
+    biglist = make_big_list(list, pZ, pdinfo, &dumlist, &model.errcode);
     if (model.errcode) {
 	return model;
     }
@@ -1065,20 +1054,32 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
 	fprintf(stderr, "ordered_estimate: initial OLS failed\n");
+	free(dumlist);
 	free(biglist);
 	return model;
     }
 
 #if ODEBUG
-    pprintf(prn, "oprobit_estimate: initial OLS\n");
-    printmodel(&model, pdinfo, OPT_NONE, prn);
+    pprintf(prn, "ordered_estimate: initial OLS\n");
+    printmodel(&model, pdinfo, OPT_S, prn);
 #endif
 
-    /* after accounting for any missing observations, check that
-       the dependent variable is OK 
-    */
-    model.errcode = maybe_fix_ordered_depvar(&model, *pZ, pdinfo,
-					     &orig_y, &ndum);
+    if (model.list[0] < biglist[0]) {
+	/* One or more regressors were dropped in OLS, most likely due
+	   to collinearity.  We can accept the dropping of
+	   user-selected regressors, but all the added dummies must be
+	   retained, so we'd better investigate.
+	*/
+	model.errcode = check_for_missing_dummies(&model, dumlist);
+    }
+	
+    if (!model.errcode) {
+	/* after accounting for any missing observations, check that
+	   the dependent variable is acceptable 
+	*/
+	model.errcode = maybe_fix_ordered_depvar(&model, *pZ, pdinfo,
+						 &orig_y, &ndum);
+    }
 
 #if !STATA_STYLE
     if (!model.errcode && orig_y != NULL) {
@@ -1097,6 +1098,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	model.errcode = do_ordered(ci, ndum, *pZ, pdinfo, &model, opt, prn);
     }
 
+    free(dumlist);
     free(biglist);
 
     if (orig_y != NULL) {

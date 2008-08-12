@@ -317,12 +317,12 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     return err;
 }
 
-static MODEL ordered_model (const int *list, int ci, double ***pZ, 
+static MODEL ordered_model (int *list, int ci, double ***pZ, 
 			    DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     MODEL omod;
     void *handle;
-    MODEL (* ordered_estimate) (const int *, int, double ***, DATAINFO *, 
+    MODEL (* ordered_estimate) (int *, int, double ***, DATAINFO *, 
 				gretlopt, PRN *);
 
     gretl_error_clear();
@@ -860,7 +860,7 @@ ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
 		    int ci, gretlopt opt, PRN *prn)
 {
     int yv = list[1];
