@@ -278,6 +278,17 @@ static int compute_probs (const double *theta, op_container *OC)
 
 #if USE_LOGDIFF
 
+/* Below: an attempt to get around the non-increasing cut point issue
+   by construction: the 2nd and higher cut points are represented to
+   BFGS in the form of the log-difference from the previous cut point.
+   Sadly, I can't get this to work properly: it's apparently OK for
+   the first few iterations then it gets stuck.
+
+   Note that if we're _not_ doing this monkey business, there's no
+   need for conversion of theta, and the "theta" pointer is just set
+   equal to OC->theta (in do_ordered(), further below).
+*/
+
 static void get_real_theta (op_container *OC, const double *theta)
 {
     int i;
@@ -287,6 +298,7 @@ static void get_real_theta (op_container *OC, const double *theta)
     }
 
     for (i=OC->nx+1; i<OC->k; i++) {
+	/* retrieve cut point 2 and higher from log-difference form */
 	OC->theta[i] = exp(theta[i]) + OC->theta[i-1];
 #if ODEBUG > 1
 	fprintf(stderr, "BFGS theta[%d] = %g -> theta = %g\n", i, theta[i], OC->theta[i]);
@@ -303,6 +315,7 @@ static void make_BFGS_theta (op_container *OC, double *theta)
     }
 
     for (i=OC->nx+1; i<OC->k; i++) {
+	/* convert cut point 2 and higher to log-difference form */
 	theta[i] = log(OC->theta[i] - OC->theta[i-1]);
     }
 }
@@ -325,7 +338,7 @@ static int bad_cutpoints (const double *theta, const op_container *OC)
     return 0;
 }
 
-#endif /* switch on USE_LOGDIFF */
+#endif /* USE_LOGDIFF, or not */
 
 static double op_loglik (const double *theta, void *ptr)
 {
@@ -384,9 +397,18 @@ static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     op_container *OC = (op_container *) ptr;
     int i;
 
+#if USE_LOGDIFF
+    for (i=0; i<=OC->nx; i++) {
+	s[i] = OC->g[i];
+    }    
+    for (i=OC->nx+1; i<npar; i++) {
+	s[i] = OC->g[i] * exp(theta[i]); /* jacobian wanted? */
+    } 
+#else
     for (i=0; i<npar; i++) {
 	s[i] = OC->g[i];
     }
+#endif
 
     return 1;
 }
