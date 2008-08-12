@@ -23,7 +23,6 @@
 #define ODEBUG 0
 
 #define OPROBIT_TOL 1.0e-12
-#define STATA_STYLE 0
 
 typedef struct op_container_ op_container;
 
@@ -106,11 +105,7 @@ static op_container *op_container_new (int type, int ndum,
     OC->t2 = pmod->t2;
     OC->nobs = nobs;
     OC->k = pmod->ncoeff;
-#if STATA_STYLE
     OC->M = ndum;
-#else
-    OC->M = ndum + 1;
-#endif
     OC->nx = OC->k - ndum;
 
     OC->opt = opt;
@@ -190,7 +185,6 @@ static int compute_score (op_container *OC, int yt,
 
     for (i=OC->nx; i<OC->k; i++) {
 	OC->G[i][s] = 0.0;
-#if STATA_STYLE
 	if (i == OC->nx + yt - 1) {
 	    OC->G[i][s] = -mills0;
 	    OC->g[i] += OC->G[i][s];
@@ -199,16 +193,6 @@ static int compute_score (op_container *OC, int yt,
 	    OC->G[i][s] = mills1;
 	    OC->g[i] += OC->G[i][s];
 	}
-#else
-	if (i == OC->nx + yt - 2) {
-	    OC->G[i][s] = -mills0;
-	    OC->g[i] += OC->G[i][s];
-	}
-	if (i == OC->nx + yt - 1) {
-	    OC->G[i][s] = mills1;
-	    OC->g[i] += OC->G[i][s];
-	}
-#endif
     }
 
     return 0;
@@ -240,7 +224,6 @@ static int compute_probs (const double *theta, op_container *OC)
 
 	yt = OC->y[s];
 
-#if STATA_STYLE
 	if (yt == 0) {
 	    m0 = theta[nx];
 	    ystar1 = OC->ndx[s] + m0;
@@ -252,22 +235,6 @@ static int compute_probs (const double *theta, op_container *OC)
 		ystar1 = OC->ndx[s] + m1;
 	    }
 	} 
-#else
-	if (yt == 0) {
-	    ystar1 = OC->ndx[s];
-	} else if (yt == 1) {
-	    m1 = theta[nx];
-	    ystar0 = OC->ndx[s];
-	    ystar1 = OC->ndx[s] + m1;
-	} else {
-	    m0 = theta[nx + yt - 2];
-	    ystar0 = OC->ndx[s] + m0;
-	    if (yt < M) {
-		m1 = theta[nx + yt - 1];
-		ystar1 = OC->ndx[s] + m1;
-	    }
-	} 
-#endif
 
 #if ODEBUG > 1
 	fprintf(stderr, "t:%4d/%d s=%d y=%d, ndx = %10.6f, ystar0 = %9.7f, ystar1 = %9.7f\n", 
@@ -307,15 +274,6 @@ static int bad_cutpoints (const double *theta, const op_container *OC)
 {
     int i;
 
-#if !STATA_STYLE    
-    if (theta[OC->nx] <= 0.0) {
-#if ODEBUG
-	fprintf(stderr, "theta[%d] non-positive!\n", OC->nx);
-#endif
-	return 1;
-    }
-#endif
-    
     for (i=OC->nx+1; i<OC->k; i++) {
 	if (theta[i] <= theta[i-1]) {
 #if ODEBUG
@@ -498,7 +456,6 @@ static double gen_resid (const double *theta, op_container *OC, int t)
     yt = OC->y[t];
     ndxt = OC->ndx[t];
 
-#if STATA_STYLE
     if (yt == 0) {
 	m0 = theta[nx];
 	ystar1 = ndxt + m0;
@@ -510,22 +467,6 @@ static double gen_resid (const double *theta, op_container *OC, int t)
 	    ystar1 = ndxt + m1;
 	}
     } 
-#else
-    if (yt == 0) {
-	ystar1 = ndxt;
-    } else if (yt == 1) {
-	m1 = theta[nx];
-	ystar0 = ndxt;
-	ystar1 = ndxt + m1;
-    } else {
-	m0 = theta[nx + yt - 2];
-	ystar0 = ndxt + m0;
-	if (yt < M) {
-	    m1 = theta[nx + yt - 1];
-	    ystar1 = ndxt + m1;
-	}
-    } 
-#endif
 
     if (ystar1 < 6.0 || OC->type == LOGIT || 1) {
 	f0 = (yt == 0)? 0.0 : densfunc(ystar0, OC->type) / dP;
@@ -550,9 +491,6 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     double x;
     int i, k, s, t, v;
 
-    pmod->t1 = OC->t1;
-    pmod->t2 = OC->t2;
-    pmod->nobs = OC->nobs;
     pmod->ci = OC->type;
     gretl_model_set_int(pmod, "ordered", 1);
 
@@ -608,6 +546,8 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	    sprintf(pmod->params[i], "cut%d", k++);
 	}
     }
+
+    gretl_model_set_coeff_separator(pmod, NULL, nx);
 }
 
 static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
@@ -659,7 +599,11 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
     return V;
 }
 
-#if STATA_STYLE
+/* initialize the cut-points by counting the occurrences of each value
+   of the (normalized) dependent variable, finding the sample
+   proportion (cumulating as we go), and taking the inverse of the
+   normal CDF
+*/
 
 static double naive_prob (MODEL *pmod, double **Z, int j,
 			  double *p)
@@ -678,8 +622,6 @@ static double naive_prob (MODEL *pmod, double **Z, int j,
     return normal_cdf_inverse(*p);
 }
 
-#endif
-
 /* Main ordered estimation function */
 
 static int do_ordered (int ci, int ndum, 
@@ -687,13 +629,10 @@ static int do_ordered (int ci, int ndum,
 		       gretlopt opt, PRN *prn)
 {
     op_container *OC;
-    int i, npar;
+    int i, j, npar;
     gretl_matrix *V = NULL;
     double *theta = NULL;
-#if STATA_STYLE
-    int j = 0;
-    double p = 0;
-#endif
+    double p;
     int err;
 
     /* BFGS apparatus */
@@ -714,37 +653,14 @@ static int do_ordered (int ci, int ndum,
 	return E_ALLOC;
     }
 
-#if STATA_STYLE
     for (i=0; i<OC->nx; i++) {
 	theta[i] = 0.0001;
     }
-    for (i=OC->nx; i<npar; i++) {
-	theta[i] = naive_prob(pmod, Z, j++, &p);
-    }
-#else
 
-    for (i=0; i<OC->nx; i++) {
-	theta[i] = pmod->coeff[i];
-# if ODEBUG
-	fprintf(stderr, "x: init'd theta[%d] = ols[%d] = %g\n", i, i, theta[i]);
-# endif
+    p = 0.0;
+    for (i=OC->nx, j=0; i<npar; i++, j++) {
+	theta[i] = naive_prob(pmod, Z, j, &p);
     }
-
-    /* 
-       the following is very heuristic, has no sound theoretical 
-       justification but seems to work in practice. So much
-       for the Scientific Method (TM) !!!
-    */
- 
-    for (i=OC->nx; i<npar; i++) {
-	theta[i] = 0.5 * pmod->coeff[i];
-# if ODEBUG
-	fprintf(stderr, "cuts: ols[%d] = %g -> theta[%d] = %g\n", 
-		i, pmod->coeff[i], i, theta[i]);
-# endif
-    }
-
-#endif /* STATA_STYLE */
 
 #if ODEBUG
     fprintf(stderr, "\ninitial loglikelihood = %.12g\n", 
@@ -760,10 +676,6 @@ static int do_ordered (int ci, int ndum,
 	goto bailout;
     } else {
 	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
-    }
-
-    for (i=0; i<npar; i++) {
-	pmod->coeff[i] = theta[i];
     }
 
     V = oprobit_vcv(OC, theta, &err);
@@ -861,13 +773,9 @@ static int maybe_fix_ordered_depvar (MODEL *pmod, double **Z,
     }
 
     /* the number of dummies actually used will equal the
-       max of normalized y minus 1
+       max of normalized y
     */
-#if STATA_STYLE
     *ndum = (int) s[n-1].x;
-#else
-    *ndum = (int) s[n-1].x - 1;
-#endif
 
     if (fixit) {
 	/* the dependent var needs transforming */
@@ -921,16 +829,6 @@ static int *make_dummies_list (const int *list,
 	}
     }
 
-#if !STATA_STYLE
-    /* we're including a constant, so we need to drop an extra
-       dummy, in addition to the one dropped by list_dumgenr
-       with the OPT_F option 
-    */
-    if (dumlist != NULL) {
-	gretl_list_delete_at_pos(dumlist, 1);
-    }
-#endif
-
     return dumlist;
 }
 
@@ -969,8 +867,6 @@ static int *make_big_list (const int *list, double ***pZ,
     return biglist;
 }
 
-#if STATA_STYLE
-
 static void list_purge_const (int *list)
 {
     int i;
@@ -982,23 +878,6 @@ static void list_purge_const (int *list)
 	}
     }
 }
-
-#else
-
-static int list_has_const (const int *list)
-{
-    int i;
-
-    for (i=2; i<=list[0]; i++) {
-	if (list[i] == 0) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-#endif
 
 static int check_for_missing_dummies (MODEL *pmod, int *dlist)
 {
@@ -1031,16 +910,8 @@ MODEL ordered_estimate (int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&model);
 
-#if STATA_STYLE
     /* remove the constant from the incoming list, if present */
     list_purge_const(list);
-#else
-    /* check for obligatory constant in incoming list */
-    if (!list_has_const(list)) {
-	model.errcode = E_NOCONST;
-	return model;
-    }
-#endif
 
     /* construct augmented regression list, including
        dummies for the level of the dependent variable
@@ -1080,18 +951,6 @@ MODEL ordered_estimate (int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	model.errcode = maybe_fix_ordered_depvar(&model, *pZ, pdinfo,
 						 &orig_y, &ndum);
     }
-
-#if !STATA_STYLE
-    if (!model.errcode && orig_y != NULL) {
-	/* we transformed the dependent variable: re-initialize 
-	   (or is this redundant?) */
-	clear_model(&model);
-	model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
-	if (model.errcode) {
-	    fprintf(stderr, "ordered_estimate: secondary OLS failed\n");
-	}
-    }
-#endif
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {

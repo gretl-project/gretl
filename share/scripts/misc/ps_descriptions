@@ -22,6 +22,7 @@
 "ooballot","Ordered probit","corruption and ISO voting"
 "oprobit","Ordered probit and logit","happiness and age"
 "penngrow","Nerlove dynamic panel model","cross-country"
+"pensions","Wooldridge ordered probit","asset allocations"
 "perron97","Unit-root testing with breaks","Nelson-Plosser data"
 "restrict","Parameter restrictions","private school enrollment"
 "sw_ch12","Augmented Dickey-Fuller test","inflation & unemployment"

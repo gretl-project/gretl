@@ -1,0 +1,62 @@
+/*
+  Replicate the results in Wooldridge, Econometric Analysis of
+  Cross Section and Panel Data, section 15.10, using pension-
+  plan data from Papke (AER, 1998).
+
+  The dependent variable, pctstck (percent stocks), codes the 
+  asset allocation responses of "mostly bonds", "mixed" and 
+  "mostly stocks" as {0, 50, 100}.
+
+  The independent variable of interest is "choice", a dummy
+  indicating whether individuals are able to choose their own
+  asset allocations.
+*/
+
+open pension.gdt
+
+# demographic characteristics of participant
+list DEMOG = age educ female black married
+# dummies coding for income level
+list INCOME = finc25 finc35 finc50 finc75 finc100 finc101
+
+# Papke's OLS approach
+ols pctstck const choice DEMOG INCOME wealth89 prftshr
+# save the OLS choice coefficient 
+choice_ols = $coeff(choice)
+
+# estimate ordered probit
+probit pctstck choice DEMOG INCOME wealth89 prftshr
+
+k = $ncoeff
+matrix b = $coeff[1:k-2]
+a1 = $coeff[k-1]
+a2 = $coeff[k]
+
+/* 
+   Wooldridge illustrates the 'choice' effect in the ordered
+   probit by reference to a single, non-black male aged 60, 
+   with 13.5 years of education, income in the range $50K - $75K
+   and wealth of $200K, participating in a plan with profit
+   sharing.
+*/
+matrix X = {60, 13.5, 0, 0, 0, 0, 0, 0, 1, 0, 0, 200, 1}
+
+# with 'choice' = 0
+scalar Xb = (0 ~ X) * b
+P0 = cdf(N, a1 - Xb)
+P50 = cdf(N, a2 - Xb) - P0
+P100 = 1 - cdf(N, a2 - Xb)
+E0 = 50 * P50 + 100 * P100
+
+# with 'choice' = 1
+Xb = (1 ~ X) * b
+P0 = cdf(N, a1 - Xb)
+P50 = cdf(N, a2 - Xb) - P0
+P100 = 1 - cdf(N, a2 - Xb)
+E1 = 50 * P50 + 100 * P100
+
+printf "\nWith choice, E(y) = %.2f, without E(y) = %.2f\n", E1, E0
+printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
+  choice_ols
+
+
