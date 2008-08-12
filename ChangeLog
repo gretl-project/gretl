@@ -8,7 +8,9 @@ version 1.7.7, in progress
 - setobs command: if used inside a function, revert the
   effects on exit
 - ordered probit/logit: fix for the case where the dependent
-  variable does not form a continuous integer sequence
+  variable does not form a continuous integer sequence; 
+  fix reporting of information criteria; switch to the mode
+  of presentation of cut-points used by Stata and R
 - string-editing dialogs: ensure we have a cancel button
 - Saving data when the dataset is currently sub-sampled: 
   fix breakage whereby the option to restore the full dataset

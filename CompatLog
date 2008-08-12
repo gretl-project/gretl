@@ -1,3 +1,11 @@
+version 1.7.7, in progress
+
+Ordered probit and logit: the presentation of the cut-points in
+ordered response models is now that used by Stata and R, not
+by William Greene as previously.  That is, we don't estimate a
+generic constant, but report n-1 cut points, where n is the
+number of response levels.
+
 7/30/2008, version 1.7.6
 
 List arguments to user-defined arguments:
