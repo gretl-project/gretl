@@ -32,7 +32,7 @@ struct op_container_ {
     gretlopt opt;     /* option flags */
     int *y;           /* dependent variable */
     double **Z;       /* data */
-    int *list; 
+    int *list;        /* dependent var plus regular regressors */
     int M;            /* max of (possibly normalized) y */
     int t1;           /* beginning of sample */
     int t2;           /* end of sample */
@@ -621,6 +621,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     pmod->lnL = op_loglik(theta, OC);
+    mle_criteria(pmod, 0);
 
     gretl_model_allocate_params(pmod, npar);
 
@@ -689,6 +690,27 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
     return V;
 }
 
+#if STATA_STYLE
+
+static double naive_prob (MODEL *pmod, double **Z, int j,
+			  double *p)
+{
+    const double *y = Z[pmod->list[1]];
+    int t, nj = 0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t]) && y[t] == j) {
+	    nj++;
+	}
+    }
+
+    *p += (double) nj / pmod->nobs;
+
+    return normal_cdf_inverse(*p);
+}
+
+#endif
+
 /* Main ordered estimation function */
 
 static int do_ordered (int ci, int ndum, 
@@ -699,6 +721,10 @@ static int do_ordered (int ci, int ndum,
     int i, npar;
     gretl_matrix *V = NULL;
     double *theta = NULL;
+#if STATA_STYLE
+    int j = 0;
+    double p = 0;
+#endif
     int err;
 
     /* BFGS apparatus */
@@ -727,11 +753,20 @@ static int do_ordered (int ci, int ndum,
 	return E_ALLOC;
     }
 
+#if STATA_STYLE
+    for (i=0; i<OC->nx; i++) {
+	theta[i] = 0.0001;
+    }
+    for (i=OC->nx; i<npar; i++) {
+	theta[i] = naive_prob(pmod, Z, j++, &p);
+    }
+#else
+
     for (i=0; i<OC->nx; i++) {
 	theta[i] = pmod->coeff[i];
-#if ODEBUG
+# if ODEBUG
 	fprintf(stderr, "x: init'd theta[%d] = ols[%d] = %g\n", i, i, theta[i]);
-#endif
+# endif
     }
 
     /* 
@@ -742,11 +777,13 @@ static int do_ordered (int ci, int ndum,
  
     for (i=OC->nx; i<npar; i++) {
 	theta[i] = 0.5 * pmod->coeff[i];
-#if ODEBUG
+# if ODEBUG
 	fprintf(stderr, "cuts: ols[%d] = %g -> theta[%d] = %g\n", 
 		i, pmod->coeff[i], i, theta[i]);
-#endif
+# endif
     }
+
+#endif /* STATA_STYLE */
 
 #if ODEBUG
     fprintf(stderr, "\ninitial loglikelihood = %.12g\n", 
@@ -1034,7 +1071,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
 #if ODEBUG
     pprintf(prn, "oprobit_estimate: initial OLS\n");
-    printmodel(&model, pdinfo, OPT_S, prn);
+    printmodel(&model, pdinfo, OPT_NONE, prn);
 #endif
 
     /* after accounting for any missing observations, check that
@@ -1043,6 +1080,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     model.errcode = maybe_fix_ordered_depvar(&model, *pZ, pdinfo,
 					     &orig_y, &ndum);
 
+#if !STATA_STYLE
     if (!model.errcode && orig_y != NULL) {
 	/* we transformed the dependent variable: re-initialize 
 	   (or is this redundant?) */
@@ -1052,6 +1090,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	    fprintf(stderr, "ordered_estimate: secondary OLS failed\n");
 	}
     }
+#endif
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {
