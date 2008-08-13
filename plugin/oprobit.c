@@ -569,7 +569,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     int npar = OC->k;
     int nx = OC->nx;
     double x;
-    int i, k, s, t, v;
+    int i, s, t, v;
 
     pmod->ci = OC->type;
 
@@ -622,11 +622,12 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 
     if (pmod->errcode == 0) {
 	for (i=0; i<nx; i++) {
-	    strcpy(pmod->params[i], pdinfo->varname[OC->list[i+2]]);
+	    v = OC->list[i+2];
+	    strcpy(pmod->params[i], pdinfo->varname[v]);
 	}
-	k = 1;
+	s = 1;
 	for (i=nx; i<npar; i++) {
-	    sprintf(pmod->params[i], "cut%d", k++);
+	    sprintf(pmod->params[i], "cut%d", s++);
 	}
     }
 
@@ -686,10 +687,10 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
     return V;
 }
 
-/* initialize the cut-points by counting the occurrences of each value
+/* Initialize the cut-points by counting the occurrences of each value
    of the (normalized) dependent variable, finding the sample
    proportion (cumulating as we go), and taking the inverse of the
-   normal CDF
+   normal CDF.  It may well be possible to do better than this.
 */
 
 static double naive_prob (MODEL *pmod, double **Z, int j,
