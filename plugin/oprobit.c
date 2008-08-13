@@ -22,6 +22,8 @@
 
 #define ODEBUG 0
 
+#define USE_LOGDIFF 0 
+
 #define OPROBIT_TOL 1.0e-12
 
 typedef struct op_container_ op_container;
@@ -274,15 +276,13 @@ static int compute_probs (const double *theta, op_container *OC)
     return 0;
 }
 
-#define USE_LOGDIFF 0
-
 #if USE_LOGDIFF
 
 /* Below: an attempt to get around the non-increasing cut point issue
    by construction: the 2nd and higher cut points are represented to
    BFGS in the form of the log-difference from the previous cut point.
-   Sadly, I can't get this to work properly: it's apparently OK for
-   the first few iterations then it gets stuck.
+   This produces faster convergence in some cases, but needs more
+   testing.
 
    Note that if we're _not_ doing this monkey business, there's no
    need for conversion of theta, and the "theta" pointer is just set
@@ -292,6 +292,10 @@ static int compute_probs (const double *theta, op_container *OC)
 static void get_real_theta (op_container *OC, const double *theta)
 {
     int i;
+
+    if (theta == OC->theta) {
+	return;
+    }
 
     for (i=0; i<=OC->nx; i++) {
 	OC->theta[i] = theta[i];
@@ -348,6 +352,7 @@ static double op_loglik (const double *theta, void *ptr)
     int i, s, t, v;
 
 #if USE_LOGDIFF
+    /* bad cut points not possible */
     get_real_theta(OC, theta);
 #else
     if (bad_cutpoints(theta, OC)) {
@@ -397,16 +402,21 @@ static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     op_container *OC = (op_container *) ptr;
     int i;
 
-#if USE_LOGDIFF
-    for (i=0; i<=OC->nx; i++) {
-	s[i] = OC->g[i];
-    }    
-    for (i=OC->nx+1; i<npar; i++) {
-	s[i] = OC->g[i] * exp(theta[i]); /* jacobian wanted? */
-    } 
-#else
     for (i=0; i<npar; i++) {
 	s[i] = OC->g[i];
+    }
+
+#if USE_LOGDIFF
+    for (i=OC->nx; i<npar; i++) {
+	int j;
+
+	for (j=i+1; j<npar; j++) {
+	    /* add effects of changes in subsequent cut points */
+	    s[i] += OC->g[j];
+	}
+	if (i > OC->nx) {
+	    s[i] *= exp(theta[i]); /* apply jacobian */
+	}
     }
 #endif
 
@@ -488,6 +498,9 @@ static int ihess_from_ascore (op_container *OC, double *theta, gretl_matrix *inH
 #endif
 
     err = gretl_invert_symmetric_matrix(inH);
+    if (err) {
+	fprintf(stderr, "ihess_from_ascore: failed to invert numerical Hessian\n");
+    }
 
     return err;
 }
@@ -551,7 +564,7 @@ static double gen_resid (op_container *OC, const double *theta, int t)
 
 static void fill_model (MODEL *pmod, const DATAINFO *pdinfo, 
 			op_container *OC, double *theta, 
-			gretl_matrix *V)
+			gretl_matrix *V, int fnc, int grc)
 {
     int npar = OC->k;
     int nx = OC->nx;
@@ -559,7 +572,10 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     int i, k, s, t, v;
 
     pmod->ci = OC->type;
+
     gretl_model_set_int(pmod, "ordered", 1);
+    gretl_model_set_int(pmod, "fncount", fnc);
+    gretl_model_set_int(pmod, "grcount", grc);
 
     pmod->ncoeff = npar;
 
@@ -629,7 +645,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
     }
 
     /* hessian from analytical score */
-    *err = ihess_from_ascore(OC, OC->theta, V);
+    *err = ihess_from_ascore(OC, theta, V);
 
     if (!*err && (OC->opt & OPT_R)) {
 	gretl_matrix *GG = NULL;
@@ -643,7 +659,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	if (GG == NULL || Vr == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    *err = opg_from_ascore(OC, OC->theta, GG);
+	    *err = opg_from_ascore(OC, theta, GG);
 	    if (!*err) {
 #if ODEBUG > 1
 		gretl_matrix_print(GG, "OPG matrix");
@@ -662,6 +678,10 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	gretl_matrix_free(V);
 	V = NULL;
     }
+
+#if ODEBUG > 1
+    gretl_matrix_print(V, "Covariance matrix");
+#endif
 
     return V;
 }
@@ -715,12 +735,14 @@ static int do_ordered (int ci, int ndum,
     npar = OC->k;
 
 #if USE_LOGDIFF
+    /* we need a distinct theta to pass to BFGS */
     theta = malloc(npar * sizeof *theta);
     if (theta == NULL) {
 	op_container_destroy(OC);
 	return E_ALLOC;
     }
 #else
+    /* we only need one 'theta' */
     theta = OC->theta;
 #endif
 
@@ -756,14 +778,14 @@ static int do_ordered (int ci, int ndum,
 	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
     }
 
-    V = oprobit_vcv(OC, theta, &err);
-
-#if ODEBUG > 1
-    gretl_matrix_print(V, "Covariance matrix");
+#if USE_LOGDIFF
+    get_real_theta(OC, theta);
 #endif
 
+    V = oprobit_vcv(OC, OC->theta, &err);
+
     if (!err) {
-	fill_model(pmod, pdinfo, OC, theta, V);
+	fill_model(pmod, pdinfo, OC, OC->theta, V, fncount, grcount);
     }
 
  bailout:
