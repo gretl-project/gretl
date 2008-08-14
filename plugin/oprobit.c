@@ -22,7 +22,7 @@
 
 #define ODEBUG 0
 
-#define USE_LOGDIFF 0 
+#define USE_LOGDIFF 1
 
 #define OPROBIT_TOL 1.0e-12
 
@@ -278,11 +278,11 @@ static int compute_probs (const double *theta, op_container *OC)
 
 #if USE_LOGDIFF
 
-/* Below: an attempt to get around the non-increasing cut point issue
-   by construction: the 2nd and higher cut points are represented to
-   BFGS in the form of the log-difference from the previous cut point.
-   This produces faster convergence in some cases, but needs more
-   testing.
+/* Below: a method for getting around the "non-increasing cut point"
+   issue by construction: the 2nd and higher cut points are
+   represented to BFGS in the form of the log-difference from the
+   previous cut point.  This produces faster convergence in some
+   cases.  Could do with some more testing.
 
    Note that if we're _not_ doing this monkey business, there's no
    need for conversion of theta, and the "theta" pointer is just set
@@ -1016,8 +1016,8 @@ MODEL ordered_estimate (int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* remove the constant from the incoming list, if present */
     list_purge_const(list);
 
-    /* construct augmented regression list, including
-       dummies for the level of the dependent variable
+    /* construct augmented regression list, including dummies 
+       for the level of the dependent variable
     */
     biglist = make_big_list(list, pZ, pdinfo, &dumlist, &model.errcode);
     if (model.errcode) {
