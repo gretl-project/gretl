@@ -410,8 +410,9 @@ void gretl_xml_put_matrix (const gretl_matrix *m, const char *name,
 	fprintf(fp, "<gretl-matrix rows=\"%d\" cols=\"%d\">\n", 
 		m->rows, m->cols);
     } else {
-	fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\">\n", 
-		name, m->rows, m->cols);
+	fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\" "
+		"t1=\"%d\" t2=\"%d\">\n", 
+		name, m->rows, m->cols, m->t1, m->t2);
     }
 
     for (i=0; i<m->rows; i++) {
@@ -1022,6 +1023,7 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
     const char *p;
     double x;
     int rows, cols;
+    int t1 = 0, t2 = 0;
     int i, j;
 
     tmp = xmlGetProp(node, (XUC) "rows");
@@ -1055,6 +1057,18 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
     if (rows <= 0 || cols <= 0) {
 	*err = E_DATA;
 	return NULL;
+    }
+
+    tmp = xmlGetProp(node, (XUC) "t1");
+    if (tmp != NULL) {
+	t1 = atoi((char *) tmp);
+	free(tmp);
+    }
+
+    tmp = xmlGetProp(node, (XUC) "t2");
+    if (tmp != NULL) {
+	t2 = atoi((char *) tmp);
+	free(tmp);
     }
 
     if (colnames != NULL) {
@@ -1095,6 +1109,9 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
     if (*err) {
 	gretl_matrix_free(m);
 	m = NULL;
+    } else {
+	m->t1 = t1;
+	m->t2 = t2;
     }
 
     return m;

@@ -3386,6 +3386,7 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     MODEL *pmod;
     double x;
     int gotA = (var->A != NULL);
+    int gotX = (var->X != NULL);
     int gotV = (var->vcv != NULL);
     int j, i;
     int err = 0;
@@ -3432,6 +3433,10 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
 	*/
 	VAR_write_A_matrix(var);
     }
+
+    if (!err && !gotX) {
+	fprintf(stderr, "Can't we rebuild VAR->X somehow?\n");
+    }    
 
     if (!err && !gotV) {
 	VAR_write_vcv_matrix(var);
@@ -3514,6 +3519,10 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	    } else {
 		if (!strcmp(mname, "A")) {
 		    var->A = gretl_xml_get_matrix(cur, doc, err);
+		} else if (!strcmp(mname, "X")) {
+		    var->X = gretl_xml_get_matrix(cur, doc, err);
+		} else if (!strcmp(mname, "Y")) {
+		    var->Y = gretl_xml_get_matrix(cur, doc, err);
 		}
 		free(mname);
 	    }
@@ -3635,6 +3644,12 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     if (var->Ivals != NULL) {
 	gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, fp);
     }
+
+    if (var->X != NULL && var->Y != NULL) {
+	/* could be fiddly to reconstruct, needed for IRF bootstrap */
+	gretl_xml_put_matrix(var->X, "X", fp);
+	gretl_xml_put_matrix(var->Y, "Y", fp);
+    }   
 
     if (var->ci == VECM) {
 	/* this is hard to reconstruct for VECMs */

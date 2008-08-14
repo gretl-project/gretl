@@ -838,6 +838,11 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	return NULL;
     }
 
+    if (var->X == NULL || var->Y == NULL) {
+	strcpy(gretl_errmsg, "X and/or Y matrix missing, can't do this");
+	return NULL;
+    }
+
 #if BDEBUG
     fprintf(stderr, "\n*** irf_bootstrap() called\n");
 #endif
