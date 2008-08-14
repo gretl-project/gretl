@@ -264,7 +264,7 @@
     <description>
       <para>
         Apre un file di dati e aggiunge il suo contenuto al dataset
-        corrente, se i nuovi dati sono compatibili. Il programma cerca
+        attuale, se i nuovi dati sono compatibili. Il programma cerca
         di riconoscere il formato del file di dati (interno, testo semplice,
         CSV, Gnumeric, Excel, ecc.).
       </para>
@@ -797,7 +797,7 @@
             capitolo 5 di <book>Economic Theory and Methods</book> (ETM) di
             Davidson e MacKinnon: ad ogni replicazione bootstrap, viene
             calcolato un rapporto
-	    <math>t</math> come (a) la differenza tra la stima corrente
+	    <math>t</math> come (a) la differenza tra la stima attuale
             del coefficiente e quella di riferimento, divisa per (b) l'errore
             standard di riferimento. Quindi l'intervallo di confidenza viene
             calcolato usando i quantili di questo rapporto t, come spiegato in
@@ -1730,7 +1730,7 @@
       <para>
 	<lit>resample</lit>: costruisce un nuovo dataset attraverso un
         campionamento causale, con reimmissione, delle righe del dataset
-        corrente. È richiesto un argomento, ossia il numero di righe da
+        attuale. È richiesto un argomento, ossia il numero di righe da
         includere, che può essere minore, uguale o maggiore del numero di
         osservazioni nei dati originali. Il dataset originale può essere
         recuperato usando il comando <lit>smpl full</lit>.  
@@ -2478,6 +2478,45 @@
     <gui-access>
       <menu-path>Finestra del modello, /Analisi/Previsioni</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="foreign" section="Programming"
+    label="Script esterni" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">linguaggio</argument>
+      </arguments>
+      <options>
+       <option>
+         <flag>--send-data</flag>
+         <effect>pre-carica il dataset attuale</effect>
+       </option>
+       <option>
+         <flag>--quiet</flag>
+         <effect>sopprime l'output dal programma esterno</effect>
+       </option>
+      </options>
+    </usage>
+
+    <description>
+     <para>
+       Questo comando apre una modalità speciale, in cui vengono accettati
+       comandi che verranno eseguiti da un programma esterno.
+       Con il comando <lit>end foreign</lit> si esce da questa modalità e i comandi
+       verranno eseguiti.
+      </para>
+      <para>
+       Al momento, l'unico programma esterno compatibile con questa modalità è
+       GNU R, e l'unico argomento <repl>linguaggio</repl> accettabile è
+       <lit>language=R</lit> (che è il valore predefinito, e può essere omesso).
+       In futuro potranno essere supportati altri programmi.
+      </para>
+      <para>
+       Si veda la <guideref targ="chap:gretlR"/> per dettagli ed esempi.
+      </para>
+    </description>
 
   </command>
 
@@ -4638,39 +4677,38 @@
         <example>loop 1000</example>
 	<example>loop 1000 --progressive</example>
         <example>loop while essdiff > .00001</example>
-        <example>loop for i=1991..2000</example>
+        <example>loop i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
+        <example>loop foreach i xlist</example>
       </examples>
     </usage>
 
     <description>
+      <para>
+        Questo comando apre una modalità speciale, in cui il programma accetta
+        comandi da eseguire più volte.  Si esce dalla modalità loop con
+        l'istruzione <cmd>endloop</cmd>: solo a questo punto i comandi indicati
+        vengono eseguiti.
+      </para>
       <para>Il parametro <repl quote="true">controllo</repl> deve
-        assumere uno dei quattro valori mostrati negli esempi: un numero di
-        volte per cui ripetere i comandi all'interno del loop, oppure
-	<quote><lit>while</lit></quote> seguito da una condizione
-        numerica, oppure <quote><lit>for</lit></quote> seguito da un
-        intervallo di valori per la variabile interna <lit>i</lit> che
-        funge da indice, o ancora <quote><lit>for</lit></quote> seguito
-        da tre espressioni tra parentesi separate da punti e virgola.
-        Nell'ultima forma, l'espressione a sinistra inizializza una
-        variabile, quella centrale imposta la condizione perché l'iterazione
-        continui, e l'ultima espressione imposta un incremento o un decremento
-        da applicare all'inizio della seconda iterazione e di quelle successive
- 	(si tratta di una forma ristretta dell'istruzione <lit>for</lit> nel
-        linguaggio di programmazione C).
+        assumere uno dei cinque valori mostrati negli esempi: un numero di volte
+        per cui ripetere i comandi all'interno del loop;
+        <quote><lit>while</lit></quote> seguito da una condizione numerica;
+        un intervallo di valori per una variabile indice;
+        <quote><lit>for</lit></quote> seguito
+        da tre espressioni tra parentesi, separate da punti e virgola
+        (in modo simile all'istruzione <lit>for</lit> nel
+        linguaggio di programmazione C); infine, 
+	<quote><lit>foreach</lit></quote> seguito da una variabile indice e una
+        lista.
       </para>
-
-      <para>Questo comando apre una modalità speciale, in cui il
-        programma accetta comandi da eseguire più volte.  Si esce dalla modalità
-        loop con l'istruzione <cmd>endloop</cmd>: solo a questo punto i comandi
-        indicati vengono eseguiti.
+      <para>
+        Si veda la <guideref targ="chap:looping"/> per altri dettagli ed esempi,
+        oltre che per la spiegazione dell'opzione <lit>--progressive</lit> (che
+        è destinata ad essere usata nelle simulazioni Monte Carlo) e per
+        l'elenco dei comandi di gretl che possono essere usati all'interno di un
+        loop.
       </para>
-
-      <para>Non tutti i comandi di gretl possono essere usati all'interno di un
-        loop: i comandi disponibili in questo contesto sono elencati nella
-        <guideref targ="chap:looping"/>, che contiene anche altri dettagli, esempi e
-        la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
-      ad essere usata nelle simulazioni Monte Carlo).</para>
     </description>
 
   </command>
@@ -4753,7 +4791,7 @@
         nomi di paesi o città, o altri codici), che possono essere
         lunghe fino a 8 caratteri. Il file deve contenere un marcatore
         per riga e devono esserci tanti marcatori quante sono le
-        osservazioni nel dataset corrente. Se queste condizioni sono
+        osservazioni nel dataset attuale. Se queste condizioni sono
         rispettate e se il file specificato esiste, i marcatori verranno
         aggiunti al dataset e saranno visibili scegliendo <quote>Mostra valori</quote>
         dal menù Dati di gretl.</para>
@@ -7385,7 +7423,7 @@
 	</li>
 	<li>
 	  <para><lit>shelldir</lit>: <repl>percorso</repl>. Imposta la directory
-           di lavoro corrente per i comandi shell.
+           di lavoro attuale per i comandi shell.
          </para>
 	</li>
 	<li>
@@ -9282,7 +9320,7 @@
       <para>
        Se si è abituati ad avviare gretl da un terminale testuale invece che da
        un menù o icona, può essere utile l'opzione che permette di usare la
-       directory corrente (determinata dalla shell) al momento dell'avvio del
+       directory attuale (determinata dalla shell) al momento dell'avvio del
        programma.
       </para>
     </description>
