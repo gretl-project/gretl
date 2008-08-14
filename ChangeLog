@@ -17,6 +17,8 @@ version 1.7.7, in progress
   was not shown
 - Naming variables: put in place more stringent checking to
   avoid name collisions across series, scalars, matrices, etc.
+- VARs in saved sessions: ensure that we save the information
+  needed for subsequent bootstrap analyses
 
 7/30/2008 version 1.7.6
 - Fix bug: revise the way that list arguments to user-defined
