@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "gretl_string_table.h"
 #include "gretl_www.h"
+#include "texprint.h"
 
 #include <unistd.h>
 
@@ -1454,6 +1455,8 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	shelldir_init(ppaths->workdir);
     }
 
+    set_gretl_tex_preamble();
+
     return err;
 }
 
@@ -1588,6 +1591,8 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	shelldir_init(ppaths->workdir);
     }
 #endif
+
+    set_gretl_tex_preamble();
 
     return err;
 }

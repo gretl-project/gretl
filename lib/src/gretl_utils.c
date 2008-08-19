@@ -26,7 +26,6 @@
 #include "usermat.h"
 #include "gretl_panel.h"
 #include "loop_private.h"
-#include "texprint.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "forecast.h"
@@ -1553,7 +1552,6 @@ void libgretl_init (void)
     libset_init();
     gretl_rand_init();
     gretl_stopwatch_init();
-    set_gretl_tex_preamble(); 
 }
 
 void libgretl_session_cleanup (int mode)

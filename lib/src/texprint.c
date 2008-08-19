@@ -964,28 +964,25 @@ static const char *get_gretltex_local (void)
 
 void set_gretl_tex_preamble (void)
 {
+    char test[MAXLEN];
     FILE *fp;
-    const char *gretltex = "gretlpre.tex";
-#ifdef ENABLE_NLS
-    const char *localtex = get_gretltex_local();
 
+#ifdef ENABLE_NLS
     /* first choice: localized preamble file */
-    sprintf(tex_preamble_file, "%s%s", gretl_work_dir(), localtex);
-    fp = gretl_fopen(tex_preamble_file, "r");
-    if (fp == NULL) {
-	tex_preamble_file[0] = '\0';
-    } else {
+    sprintf(test, "%s%s", gretl_work_dir(), get_gretltex_local());
+    fp = gretl_fopen(test, "r");
+    if (fp != NULL) {
+	strcpy(tex_preamble_file, test);
 	fclose(fp);
 	return;
     }    
 #endif
 
     /* preamble file on disk */
-    sprintf(tex_preamble_file, "%s%s", gretl_work_dir(), gretltex);
-    fp = gretl_fopen(tex_preamble_file, "r");
-    if (fp == NULL) {
-	tex_preamble_file[0] = '\0';
-    } else {
+    sprintf(test, "%sgretlpre.tex", gretl_work_dir());
+    fp = gretl_fopen(test, "r");
+    if (fp != NULL) {
+	strcpy(tex_preamble_file, test);
 	fclose(fp);
     }
 }
