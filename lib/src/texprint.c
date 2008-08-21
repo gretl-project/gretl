@@ -972,6 +972,7 @@ void set_gretl_tex_preamble (void)
     sprintf(test, "%s%s", gretl_work_dir(), get_gretltex_local());
     fp = gretl_fopen(test, "r");
     if (fp != NULL) {
+	fprintf(stderr, "Found localized LaTeX preamble: %s\n", test);
 	strcpy(tex_preamble_file, test);
 	fclose(fp);
 	return;
@@ -982,6 +983,7 @@ void set_gretl_tex_preamble (void)
     sprintf(test, "%sgretlpre.tex", gretl_work_dir());
     fp = gretl_fopen(test, "r");
     if (fp != NULL) {
+	fprintf(stderr, "Found customized LaTeX preamble: %s\n", test);
 	strcpy(tex_preamble_file, test);
 	fclose(fp);
     }
