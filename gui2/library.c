@@ -6370,6 +6370,21 @@ static int spawn_latex (char *texsrc)
 	errbox(error->message);
 	g_error_free(error);
 	ret = LATEX_EXEC_FAILED;
+    } else if (status != 0) {
+	if (errout && *errout) {
+	    errbox(errout);
+	} else {
+	    gchar *errmsg;
+
+	    errmsg = g_strdup_printf("%s\n%s", 
+				     _("Failed to process TeX file"),
+				     sout);
+	    errbox(errmsg);
+	    g_free(errmsg);
+	}
+	ret = LATEX_ERROR;
+    }	   
+#if 0 
     } else if (errout && *errout) {
 	errbox(errout);
 	ret = LATEX_ERROR;
@@ -6383,6 +6398,7 @@ static int spawn_latex (char *texsrc)
 	g_free(errmsg);
 	ret = LATEX_ERROR;
     }
+#endif
 
     if (errout != NULL) g_free(errout);
     if (sout != NULL) g_free(sout);
