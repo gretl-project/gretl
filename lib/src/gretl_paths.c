@@ -31,6 +31,7 @@
 # include <windows.h>
 #else
 # include <sys/stat.h>
+# include <sys/types.h>
 # include <dirent.h>
 # include <errno.h>
 #endif
@@ -1465,22 +1466,59 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 static void check_gretldir (PATHS *ppaths)
 {
     char *epath = getenv("GRETL_HOME");
+    char buf[FILENAME_MAX];
+    FILE *fp;
+    int gotit = 0;
 
     ensure_slash(ppaths->gretldir);
 
     if (epath != NULL && strcmp(epath, ppaths->gretldir)) {
-	/* which one is right? */
-	char test[FILENAME_MAX];
-	FILE *fp;
-
-	sprintf(test, "%sCOPYING", epath);
-	fp = gretl_fopen(test, "r");
+	/* environment vs rc file: is the env version OK? */
+	sprintf(buf, "%sCOPYING", epath);
+	fp = gretl_fopen(buf, "r");
 	if (fp != NULL) {
+	    fclose(fp);
 	    *ppaths->gretldir = '\0';
 	    strncat(ppaths->gretldir, epath, MAXLEN - 2);
 	    ensure_slash(ppaths->gretldir);
-	    fclose(fp);
+	    gotit = 1;
 	}
+    } else {
+	/* no env setting: check what the rc file says */
+	sprintf(buf, "%sCOPYING", ppaths->gretldir);
+	fp = gretl_fopen(buf, "r");
+	if (fp != NULL) {
+	    fclose(fp);
+	    gotit = 1;
+	}
+    }	
+
+    if (!gotit) {
+	/* we're messed up; try to recover */
+	gchar *proc_exe;
+	const char *s;
+	pid_t pid;
+	ssize_t nr;
+
+	pid = getpid();
+	proc_exe = g_strdup_printf("/proc/%d/exe", pid);
+	nr = readlink(proc_exe, buf, FILENAME_MAX - 1);
+	if (nr > 0) {
+	    buf[nr] = '\0';
+	    fprintf(stderr, "gretl is process %d, '%s'\n", (int) pid, buf);
+	    /* should be something like /foo/bar/bin/gretl; we
+	       want the /foo/bar bit to append to
+	    */
+	    s = strstr(buf, "bin/gretl");
+	    if (s != NULL) {
+		*ppaths->gretldir = '\0';
+		strncat(ppaths->gretldir, buf, s - buf);
+		strcat(ppaths->gretldir, "share/gretl/");
+		fprintf(stderr, "gretldir is really '%s'?\n", 
+			ppaths->gretldir);
+	    }
+	}
+	g_free(proc_exe);
     }
 }
 

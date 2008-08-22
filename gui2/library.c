@@ -6383,15 +6383,18 @@ static int spawn_latex (char *texsrc)
 	    g_free(errmsg);
 	}
 	ret = LATEX_ERROR;
-    }	
+    } else if (errout && *errout) {
+	fputs("spawn_latex: found stuff on stderr:\n", stderr);
+	fputs(errout, stderr);
+    }
 
     /* change above, 2008-08-22: before we flagged a LATEX_ERROR
        if we saw anything on standard error, regardless of the
        exit status 
     */
 
-    if (errout != NULL) g_free(errout);
-    if (sout != NULL) g_free(sout);
+    g_free(errout);
+    g_free(sout);
 
     return ret;
 }
