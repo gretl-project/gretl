@@ -35,6 +35,10 @@ export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.3"
 export "GDFONTPATH=$TOP/fonts:/usr/X11R6/lib/X11/fonts/TTF"
 # default font for gnuplot PNG
 export "GNUPLOT_DEFAULT_GDFONT=$TOP/fonts/Vera.ttf"
+# we don't support the 'aqua' terminal type
+if [ "$GNUTERM" = "aqua" ] ; then
+   export GNUTERM=x11
+fi
 
 export "PATH=$CWD:$PATH"
 
