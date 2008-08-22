@@ -6383,22 +6383,12 @@ static int spawn_latex (char *texsrc)
 	    g_free(errmsg);
 	}
 	ret = LATEX_ERROR;
-    }	   
-#if 0 
-    } else if (errout && *errout) {
-	errbox(errout);
-	ret = LATEX_ERROR;
-    } else if (status != 0) {
-	gchar *errmsg;
+    }	
 
-	errmsg = g_strdup_printf("%s\n%s", 
-				 _("Failed to process TeX file"),
-				 sout);
-	errbox(errmsg);
-	g_free(errmsg);
-	ret = LATEX_ERROR;
-    }
-#endif
+    /* change above, 2008-08-22: before we flagged a LATEX_ERROR
+       if we saw anything on standard error, regardless of the
+       exit status 
+    */
 
     if (errout != NULL) g_free(errout);
     if (sout != NULL) g_free(sout);
