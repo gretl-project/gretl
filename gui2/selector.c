@@ -3010,7 +3010,9 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 		     G_CALLBACK(destroy_selector), 
-		     sr); 
+		     sr);
+    g_signal_connect(G_OBJECT(sr->dlg), "key_press_event", 
+		     G_CALLBACK(esc_kills_window), NULL);
 
     /* create equivalent of gtkdialog structure */
     base = gtk_vbox_new(FALSE, 5);
@@ -4690,7 +4692,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     /* middle: vertical holder for push/pull buttons */
     button_vbox = gtk_vbox_new(TRUE, 0);
 
-    sr->add_button = gtk_button_new_with_label(_("Select ->"));
+    sr->add_button = gtk_button_new_with_label(_("Add ->"));
     gtk_box_pack_start(GTK_BOX(button_vbox), sr->add_button, TRUE, FALSE, 0);
     g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
 		     G_CALLBACK(add_to_rvars1_callback), sr);

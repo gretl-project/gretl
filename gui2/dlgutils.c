@@ -359,6 +359,17 @@ static void cancel_on_delete (GtkDialog *d, int resp, int *c)
     }
 }
 
+gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
+			   gpointer unused)
+{
+    if (key->keyval == GDK_Escape) { 
+        gtk_widget_destroy(w);
+	return TRUE;
+    } 
+
+    return FALSE;
+}
+
 static dialog_t *
 dialog_data_new (gpointer p, gint code, const char *title,
 		 int *canceled)
@@ -392,6 +403,8 @@ dialog_data_new (gpointer p, gint code, const char *title,
 
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 
 		     G_CALLBACK(destroy_dialog_data), d);
+    g_signal_connect(G_OBJECT(d->dialog), "key_press_event", 
+		     G_CALLBACK(esc_kills_window), NULL);
 
     return d;
 }

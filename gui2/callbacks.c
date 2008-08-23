@@ -253,7 +253,8 @@ void open_data (GtkAction *action)
 	file_selector(_("gretl: open database"), code, FSEL_DATA_NONE, NULL);
 	break;
     default:
-	errbox("Unrecognized data code");
+	fprintf(stderr, "open_data: unrecognized action '%s'\n",
+		gtk_action_get_name(action));
 	break;
     }
 }
@@ -677,7 +678,8 @@ void gretl_callback (GtkAction *action, gpointer data)
 	okfunc = do_minibuf;
 	break;	
     default:
-	errbox("Bug: unrecognized action code in gretl_callback");
+	fprintf(stderr, "gretl_callback: unrecognized action '%s'\n", 
+	       gtk_action_get_name(action));
 	return;
     }
 

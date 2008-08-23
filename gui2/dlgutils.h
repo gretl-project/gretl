@@ -68,6 +68,9 @@ GtkWidget *next_button (GtkWidget *hbox);
 
 GtkWidget *back_button (GtkWidget *hbox);
 
+gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
+			   gpointer unused);
+
 void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
 		  guint hlpcode, guint varclick,
