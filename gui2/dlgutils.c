@@ -364,10 +364,10 @@ gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
 {
     if (key->keyval == GDK_Escape) { 
         gtk_widget_destroy(w);
-	return TRUE;
-    } 
-
-    return FALSE;
+	return TRUE; /* handled! */
+    } else {
+	return FALSE;
+    }
 }
 
 static dialog_t *
