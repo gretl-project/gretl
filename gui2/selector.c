@@ -2759,6 +2759,48 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
     }
 }
 
+static gboolean accept_right_arrow (GtkWidget *w, GdkEventKey *key,
+				    gpointer p)
+{
+    if (key->keyval == GDK_Right) { 
+        gtk_button_clicked(GTK_BUTTON(p));
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
+static GtkWidget *add_button (selector *sr, GtkWidget *box)
+{
+    GtkWidget *w = gtk_button_new_with_label(_("Add ->"));
+
+    g_signal_connect(G_OBJECT(sr->dlg), "key_press_event", 
+		     G_CALLBACK(accept_right_arrow), w);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
+    return w;
+}
+
+static gboolean accept_left_arrow (GtkWidget *w, GdkEventKey *key,
+				   gpointer p)
+{
+    if (key->keyval == GDK_Left) { 
+        gtk_button_clicked(GTK_BUTTON(p));
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
+static GtkWidget *remove_button (selector *sr, GtkWidget *box)
+{
+    GtkWidget *w = gtk_button_new_with_label(_("<- Remove"));
+
+    g_signal_connect(G_OBJECT(sr->dlg), "key_press_event", 
+		     G_CALLBACK(accept_left_arrow), w);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
+    return w;
+}
+
 static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 {
     GtkTreeModel *mod;
@@ -2784,13 +2826,11 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
     hbox = gtk_hbox_new(FALSE, 5);
     bvbox = gtk_vbox_new(TRUE, 0);
 
-    tmp = gtk_button_new_with_label(_("Add ->"));
-    gtk_box_pack_start(GTK_BOX(bvbox), tmp, TRUE, FALSE, 0);
+    tmp = add_button(sr, bvbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(add_to_rvars2_callback), sr);
     
-    remove = gtk_button_new_with_label(_("<- Remove"));
-    gtk_box_pack_start(GTK_BOX(bvbox), remove, TRUE, FALSE, 0);
+    remove = remove_button(sr, bvbox);
 
     /* this may need more work (VECM?) */
     if (sr->code == VAR || sr->code == VLAGSEL) {
@@ -4127,13 +4167,11 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     /* push/pull buttons first, in their own little vbox */
     bvbox = gtk_vbox_new(TRUE, 0);
 
-    tmp = gtk_button_new_with_label (_("Add ->"));
-    gtk_box_pack_start(GTK_BOX(bvbox), tmp, TRUE, FALSE, 0);
+    tmp = add_button(sr, bvbox);
     g_signal_connect (G_OBJECT(tmp), "clicked", 
 		      G_CALLBACK(add_to_rvars1_callback), sr);
     
-    remove = gtk_button_new_with_label (_("<- Remove"));
-    gtk_box_pack_start(GTK_BOX(bvbox), remove, TRUE, FALSE, 0);
+    remove = remove_button(sr, bvbox);
 
     if (sr->code == ARMA) {
 	sr->lags_button = gtk_button_new_with_label(_("lags..."));
@@ -4692,8 +4730,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     /* middle: vertical holder for push/pull buttons */
     button_vbox = gtk_vbox_new(TRUE, 0);
 
-    sr->add_button = gtk_button_new_with_label(_("Add ->"));
-    gtk_box_pack_start(GTK_BOX(button_vbox), sr->add_button, TRUE, FALSE, 0);
+    sr->add_button = add_button(sr, button_vbox);
     g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
 		     G_CALLBACK(add_to_rvars1_callback), sr);
 
@@ -4704,8 +4741,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 			  G_CALLBACK(add_all_to_rvars1_callback), sr);
     }
     
-    sr->remove_button = gtk_button_new_with_label(_("<- Remove"));
-    gtk_box_pack_start(GTK_BOX(button_vbox), sr->remove_button, TRUE, FALSE, 0);
+    sr->remove_button = remove_button(sr, button_vbox);
 
     gtk_box_pack_start(GTK_BOX(big_hbox), button_vbox, TRUE, TRUE, 0);
     gtk_widget_show_all(button_vbox);
