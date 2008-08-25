@@ -21,9 +21,9 @@
 #define GRETL_VERSION_H
 
 #define LIBGRETL_CURRENT   0
-#define LIBGRETL_REVISION  46
+#define LIBGRETL_REVISION  47
 #define LIBGRETL_AGE       0
 
-#define GRETL_VERSION "1.7.6cvs"
+#define GRETL_VERSION "1.7.7"
 
 #endif

@@ -242,19 +242,23 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 {
     const char *plainrsq[] = {
 	N_("Unadjusted R-squared"),
-	N_("Uncentered R-squared")
+	N_("Uncentered R-squared"),
+	N_("Centered R-squared")
     };
     const char *texrsq[] = {
 	N_("Unadjusted $R^2$"),
-	N_("Uncentered $R^2$")
+	N_("Uncentered $R^2$"),
+	N_("Centered $R^2$")
     };
     const char *rtfrsq[] = {
 	N_("Unadjusted R{\\super 2}"),
-	N_("Uncentered R{\\super 2}")
+	N_("Uncentered R{\\super 2}"),
+	N_("Centered R{\\super 2}")
     };
     int ridx = 0;
     int adjr2 = 1;
     int fdig;
+    double cR2;
 
     if (na(pmod->rsq)) {
 	return;
@@ -272,6 +276,8 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	ridx = 1;
     }
 
+    cR2 = gretl_model_get_double(pmod, "centered-R2");
+
     fdig = FDIGITS(pmod);
 
     if (plain_format(prn)) { 
@@ -280,12 +286,18 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "  %s = %.*f\n", _("Adjusted R-squared"),  
 		    fdig, pmod->adjrsq);
 	}
+	if (!na(cR2)) {
+	    pprintf(prn, "  %s = %.*f\n", _(plainrsq[2]), fdig, cR2);
+	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.*f\n", I_(rtfrsq[ridx]), fdig, pmod->rsq);
 	if (adjr2) {
 	    pprintf(prn, RTFTAB "%s = %.*f\n", I_("Adjusted R{\\super 2}"),  
 		    fdig, pmod->adjrsq);
-	}	
+	}
+	if (!na(cR2)) {
+	    pprintf(prn, RTFTAB "%s = %.*f\n", I_(rtfrsq[2]), fdig, cR2);
+	}
     } else if (tex_format(prn)) {  
 	char r2[32];
 
@@ -295,12 +307,20 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
 	}
+	if (!na(cR2)) {
+	    tex_dcolumn_double(cR2, r2);
+	    pprintf(prn, "%s & %s \\\\\n", I_(texrsq[2]), r2);
+	}
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15f\n", I_(plainrsq[ridx]), 
 		prn_delim(prn), pmod->rsq);
 	if (adjr2) {
 	    pprintf(prn, "\"%s\"%c%.15f\n", I_("Adjusted R-squared"),  
 		    prn_delim(prn), pmod->adjrsq);
+	}
+	if (!na(cR2)) {
+	    pprintf(prn, "\"%s\"%c%.15f\n", I_(plainrsq[2]), 
+		    prn_delim(prn), cR2);
 	}
     }	
 

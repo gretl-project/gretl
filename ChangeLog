@@ -27,7 +27,11 @@ version 1.7.7, in progress
 - Determining the main gretl directory: try to handle the
   case where the user has a stale ~/.gretl2rc file
 - Minor OS X fixes
-- Respect keyboard "Esc" as dialog "Cancel" more consistently  
+- Respect keyboard "Esc" as dialog "Cancel" more consistently 
+- Variable selection dialogs: allow use of right and left
+  arrow keys to activate the "Add" and "Remove" buttons
+- Linear models without a constant: print the centered R^2 as
+  well as the uncentered 
 
 7/30/2008 version 1.7.6
 - Fix bug: revise the way that list arguments to user-defined

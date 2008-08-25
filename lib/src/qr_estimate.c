@@ -48,6 +48,7 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
     int pwe = gretl_model_get_int(pmod, "pwe");
     double y0 = 0.0, ymean = 0.0;
     double x, tss = 0.0;
+    double ctss = 0.0;
     int t;
 
     if (*ifc == 0) {
@@ -59,18 +60,16 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
     if (pmod->rho != 0.0) {
 	double ry, d;
 
-	if (*ifc) {
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		ry = y[t];
-		if (t == pmod->t1 && pwe) {
-		    ry *= sqrt(1.0 - pmod->rho * pmod->rho);
-		} else {
-		    ry -= pmod->rho * y[t-1];
-		}
-		ymean += ry;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    ry = y[t];
+	    if (t == pmod->t1 && pwe) {
+		ry *= sqrt(1.0 - pmod->rho * pmod->rho);
+	    } else {
+		ry -= pmod->rho * y[t-1];
 	    }
-	    ymean /= pmod->nobs;
+	    ymean += ry;
 	}
+	ymean /= pmod->nobs;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    ry = y[t];
@@ -85,17 +84,20 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
 		*yconst = 0;
 	    }
 	    d = ry - ymean;
-	    tss += d * d;
+	    if (*ifc) {
+		tss += d * d;
+	    } else {
+		tss += ry * ry;
+		ctss += d * d;
+	    }
 	}
     } else {
-	if (*ifc) {
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		if (!na(pmod->yhat[t])) {
-		    ymean += y[t];
-		}
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->yhat[t])) {
+		ymean += y[t];
 	    }
-	    ymean /= pmod->nobs;
 	}
+	ymean /= pmod->nobs;
 
 	y0 = y[pmod->t1];
 
@@ -105,10 +107,21 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
 		    *yconst = 0;
 		}
 		x = y[t] - ymean;
-		tss += x * x;
+		if (*ifc) {
+		    tss += x * x;
+		} else {
+		    tss += y[t] * y[t];
+		    ctss += x * x;
+		}
 	    }
 	}
     } 
+
+    if (!*ifc && ctss > 0) {
+	double cR2 = 1 - (pmod->ess / ctss);
+
+	gretl_model_set_double(pmod, "centered-R2", cR2);
+    }
 
     return tss;
 }

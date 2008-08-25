@@ -11,7 +11,7 @@ export "GRETL_STARTDIR=$STARTDIR"
 CWD="`(cd \"\`dirname \\\"$0\\\"\`\"; echo $PWD)`"
 TOP="`dirname \"$CWD\"`"
 
-echo "TOP=$TOP" > ~/where
+# echo "TOP=$TOP" > ~/where
 
 if [ -f ~/.profile ] ; then
   . ~/.profile

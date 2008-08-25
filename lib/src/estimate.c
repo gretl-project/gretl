@@ -1229,7 +1229,13 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 		    den += y[t] * y[t];
 		}
 	    }
-	    pmod->rsq = 1 - pmod->ess / den; /* NIST method */
+
+	    /* make the centered R^2 available for output */
+	    gretl_model_set_double(pmod, "centered-R2", pmod->rsq);
+
+	    /* but make the "official" figure the uncentered R^2,
+	       as per NIST, R, Stata, SPSS... */
+	    pmod->rsq = 1 - pmod->ess / den;
 	    pmod->adjrsq = 
 		1.0 - ((1.0 - pmod->rsq) * (pmod->nobs - 1.0) / pmod->dfd);
 	} 
