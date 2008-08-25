@@ -22,6 +22,16 @@
 #ifndef MODELPRINT_H
 #define MODELPRINT_H
 
+typedef struct coeff_fmt_ coeff_fmt;
+
+struct coeff_fmt_ {
+    int namelen;
+    int blmax;
+    int brmax;
+    int slmax;
+    int srmax;
+};
+
 typedef struct model_coeff_ model_coeff;
 
 struct model_coeff_ {
@@ -35,6 +45,7 @@ struct model_coeff_ {
     int show_pval;
     int df_pval;
     char name[32];
+    coeff_fmt *fmt;
 };
 
 enum {

@@ -651,6 +651,33 @@ static void cut_extra_zero (char *numstr, int digits)
     }
 }
 
+/* below: targ should be 36 bytes long */
+
+void gretl_sprint_fullwidth_double (double x, int digits, char *targ)
+{
+    char decpoint = '.';
+    int n;
+
+#ifdef ENABLE_NLS
+    decpoint = get_local_decpoint();
+#endif
+
+    /* let's not print non-zero values for numbers smaller than
+       machine zero */
+    x = screen_zero(x);
+
+    sprintf(targ, "%#.*G", digits, x);
+
+    gretl_fix_exponent(targ);
+
+    n = strlen(targ) - 1;
+    if (targ[n] == decpoint) {
+	targ[n] = 0;
+    }
+
+    cut_extra_zero(targ, digits);
+}
+
 /* The following function formats a double in such a way that the
    decimal point will be printed in the same position for all
    numbers printed this way.  The total width of the number
