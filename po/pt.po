@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-25 11:14-0400\n"
-"PO-Revision-Date: 2008-06-26 00:25+0100\n"
+"PO-Revision-Date: 2008-08-25 12:20-0400\n"
 "Last-Translator: Hélio Guilherme <helio.guilherme@bluebottle.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -585,11 +585,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, fuzzy, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"%7co pode ser descrito como %s e x pode ser descrito como %s (+ significa "
-"que são iguais)\n"
-"\n"
-"%9s, %s\n"
+msgstr "'o' pode ser descrito como %s e 'x' pode ser descrito como %s (+ significa que são iguais)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -2189,14 +2185,14 @@ msgid "Invalid character '%c'\n"
 msgstr "Caractere '%c' inválido\n"
 
 #: lib/src/genmain.c:39
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced scalar %s"
-msgstr "Substituiu-se o escalar %s (ID %d)"
+msgstr "Substituiu-se o escalar %s"
 
 #: lib/src/genmain.c:41
-#, fuzzy, c-format
+#, c-format
 msgid "Generated scalar %s"
-msgstr "Gerou-se o escalar %s (ID %d)"
+msgstr "Gerou-se o escalar %s"
 
 #: lib/src/genmain.c:60
 #, c-format
@@ -3590,11 +3586,9 @@ msgid "generation of lag variable failed"
 msgstr "falhou gerar a variável de desfasamento"
 
 #: lib/src/interact.c:1422 gui2/gui_utils.c:3278 gui2/library.c:3570
-#, fuzzy, c-format
+#, c-format
 msgid "A series named %s already exists"
-msgstr ""
-"Já existe uma matriz com o nome %s.\n"
-"Está bem escrever por cima?"
+msgstr "Já existe uma matriz com o nome %s"
 
 #: lib/src/interact.c:1562
 #, c-format
@@ -3702,9 +3696,9 @@ msgid "%s: sorry, no help available.\n"
 msgstr "%s: infelizmente não há ajuda disponível.\n"
 
 #: lib/src/interact.c:2867 lib/src/interact.c:2875 lib/src/interact.c:2883
-#, fuzzy, c-format
+#, c-format
 msgid "%s: negative value is out of bounds.\n"
-msgstr "ess: valor negativo fora dos limites.\n"
+msgstr "%s: valor negativo fora dos limites.\n"
 
 #: lib/src/interact.c:3647
 msgid "Listing labels for variables:\n"
@@ -3935,9 +3929,8 @@ msgid "Uncentered R-squared"
 msgstr "R-quadrado não-centrado"
 
 #: lib/src/modelprint.c:246
-#, fuzzy
 msgid "Centered R-squared"
-msgstr "R-quadrado não-centrado"
+msgstr "R-quadrado centrado"
 
 #: lib/src/modelprint.c:249
 msgid "Unadjusted $R^2$"
@@ -3948,9 +3941,8 @@ msgid "Uncentered $R^2$"
 msgstr "$R^2$ não-centrado"
 
 #: lib/src/modelprint.c:251
-#, fuzzy
 msgid "Centered $R^2$"
-msgstr "$R^2$ não-centrado"
+msgstr "$R^2$ centrado"
 
 #: lib/src/modelprint.c:254
 msgid "Unadjusted R{\\super 2}"
@@ -3961,9 +3953,8 @@ msgid "Uncentered R{\\super 2}"
 msgstr "R{\\super 2} não-centrado"
 
 #: lib/src/modelprint.c:256
-#, fuzzy
 msgid "Centered R{\\super 2}"
-msgstr "R{\\super 2} não-centrado"
+msgstr "R{\\super 2} centrado"
 
 #: lib/src/modelprint.c:286 lib/src/modelprint.c:318
 msgid "Adjusted R-squared"
@@ -4111,9 +4102,8 @@ msgid "Durbin's h"
 msgstr "h de Durbin"
 
 #: lib/src/modelprint.c:856
-#, fuzzy
 msgid "Durbin's $h$"
-msgstr "h de Durbin"
+msgstr "$h$ de Durbin"
 
 #: lib/src/modelprint.c:900
 #, c-format
@@ -4992,9 +4982,9 @@ msgstr ""
 "a partir do qual o modelo de referência foi estimado\n"
 
 #: lib/src/monte_carlo.c:222 lib/src/monte_carlo.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a scalar"
-msgstr "é um escalar"
+msgstr "'%s': não é um escalar"
 
 #: lib/src/monte_carlo.c:263 lib/src/monte_carlo.c:287
 #: lib/src/monte_carlo.c:305
@@ -9712,9 +9702,8 @@ msgid "_Refresh window"
 msgstr "_Reescrever a janela"
 
 #: gui2/gretl.c:1343
-#, fuzzy
 msgid "_Scalars..."
-msgstr "_Guardar como..."
+msgstr "_Escalares..."
 
 #: gui2/gretl.c:1346 gui2/gui_utils.c:226 gui2/gui_utils.c:270
 #: gui2/ssheet.c:160
@@ -10236,18 +10225,16 @@ msgid "Font name"
 msgstr "Nome da fonte"
 
 #: gui2/gtkfontselhack.c:182
-#, fuzzy
 msgid "The X string that represents this font"
-msgstr "O texto X que representa esta fonte."
+msgstr "O texto X que representa esta fonte"
 
 #: gui2/gtkfontselhack.c:188
 msgid "Preview text"
 msgstr "Antever o texto"
 
 #: gui2/gtkfontselhack.c:189
-#, fuzzy
 msgid "The text to display in order to demonstrate the selected font"
-msgstr "O texto em antevisão de modo a demonstrar a fonte seleccionada."
+msgstr "O texto em antevisão de modo a demonstrar a fonte seleccionada"
 
 #: gui2/gtkfontselhack.c:195
 msgid "Filter"
@@ -10934,35 +10921,26 @@ msgid "EC term"
 msgstr "Termo EC"
 
 #: gui2/gui_utils.c:3280
-#, fuzzy, c-format
+#, c-format
 msgid "A matrix named %s already exists"
-msgstr ""
-"Já existe uma matriz com o nome %s.\n"
-"Está bem escrever por cima?"
+msgstr "Já existe uma matriz com o nome %s"
 
 #: gui2/gui_utils.c:3282
-#, fuzzy, c-format
+#, c-format
 msgid "A scalar named %s already exists"
-msgstr ""
-"Já existe uma matriz com o nome %s.\n"
-"Está bem escrever por cima?"
+msgstr "Já existe um escalar com o nome %s"
 
 #: gui2/gui_utils.c:3284
-#, fuzzy, c-format
+#, c-format
 msgid "A list named %s already exists"
-msgstr ""
-"Já existe uma matriz com o nome %s.\n"
-"Está bem escrever por cima?"
+msgstr "Já existe uma lista com o nome %s"
 
 #: gui2/gui_utils.c:3286
 #, fuzzy, c-format
 msgid "A string named %s already exists"
-msgstr ""
-"Já existe uma matriz com o nome %s.\n"
-"Está bem escrever por cima?"
+msgstr "Já existe uma XXX com o nome %s."
 
 #: gui2/gui_utils.c:3295
-#, fuzzy
 msgid "OK to overwrite it?"
 msgstr "Confirma escrever por cima?"
 
@@ -11498,48 +11476,40 @@ msgid "No discrete variables were selected"
 msgstr "Não foi seleccionada nenhuma variável discreta"
 
 #: gui2/library.c:4612
-#, fuzzy
 msgid "error sum of squares"
-msgstr "_Erro da soma de quadrados"
+msgstr "Erro da soma de quadrados"
 
 #: gui2/library.c:4617 gui2/model_table.c:635
 msgid "R-squared"
 msgstr "R-quadrado"
 
 #: gui2/library.c:4622
-#, fuzzy
 msgid "T*R-squared"
-msgstr "_T*R-Quadrado"
+msgstr "T*R-Quadrado"
 
 #: gui2/library.c:4627
-#, fuzzy
 msgid "degrees of freedom"
 msgstr "Graus de liberdade"
 
 #: gui2/library.c:4632
-#, fuzzy
 msgid "standard error of residuals"
 msgstr "Erro padrão dos resíduos"
 
 #: gui2/library.c:4637
-#, fuzzy
 msgid "log likelihood"
 msgstr "logaritmo da verosimilhança"
 
 #: gui2/library.c:4642
-#, fuzzy
 msgid "Akaike Information Criterion"
-msgstr "Critério de Informação de _Akaike"
+msgstr "Critério de Informação de Akaike"
 
 #: gui2/library.c:4647
-#, fuzzy
 msgid "Bayesian Information Criterion"
-msgstr "Critério de Informação de _Bayes"
+msgstr "Critério de Informação de Bayes"
 
 #: gui2/library.c:4652
-#, fuzzy
 msgid "Hannan-Quinn Information Criterion"
-msgstr "Critério de Informação de _Hannan-Quinn"
+msgstr "Critério de Informação de Hannan-Quinn"
 
 #: gui2/library.c:4668
 #, fuzzy

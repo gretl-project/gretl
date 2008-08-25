@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-25 11:14-0400\n"
-"PO-Revision-Date: 2008-07-29 19:47+0100\n"
+"PO-Revision-Date: 2008-08-25 12:27-0400\n"
 "Last-Translator: Sven Schreiber <svetosch --- gmx  ... net>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -584,12 +584,9 @@ msgstr ""
 "Querschnittseinheit haben"
 
 #: lib/src/compat.c:224
-#, fuzzy, c-format
+#, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"%7co steht für %s und x steht für %s (+ bedeutet Gleichheit)\n"
-"\n"
-"%9s, %s\n"
+msgstr "'o' steht für %s und 'x' steht für %s (+ bedeutet Gleichheit)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -2184,14 +2181,14 @@ msgid "Invalid character '%c'\n"
 msgstr "Ungültiges Zeichen '%c'\n"
 
 #: lib/src/genmain.c:39
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced scalar %s"
-msgstr "Ersetzte Skalar %s (ID %d)"
+msgstr "Ersetzte Skalar %s"
 
 #: lib/src/genmain.c:41
-#, fuzzy, c-format
+#, c-format
 msgid "Generated scalar %s"
-msgstr "Erzeugte Skalar %s (ID %d)"
+msgstr "Erzeugte Skalar %s"
 
 #: lib/src/genmain.c:60
 #, c-format
@@ -3577,11 +3574,9 @@ msgid "generation of lag variable failed"
 msgstr "Generieren der Lag-Variable schlug fehl"
 
 #: lib/src/interact.c:1422 gui2/gui_utils.c:3278 gui2/library.c:3570
-#, fuzzy, c-format
+#, c-format
 msgid "A series named %s already exists"
-msgstr ""
-"Es existiert bereits eine Matrix mit Namen %s.\n"
-"Überschreiben OK?"
+msgstr "Es existiert bereits eine Reihe mit Namen %s"
 
 #: lib/src/interact.c:1562
 #, c-format
@@ -3688,9 +3683,9 @@ msgid "%s: sorry, no help available.\n"
 msgstr "%s: keine Hilfe verfügbar.\n"
 
 #: lib/src/interact.c:2867 lib/src/interact.c:2875 lib/src/interact.c:2883
-#, fuzzy, c-format
+#, c-format
 msgid "%s: negative value is out of bounds.\n"
-msgstr "RQS: negativer Wert außerhalb der Grenzen.\n"
+msgstr "%s: negativer Wert außerhalb der Grenzen.\n"
 
 #: lib/src/interact.c:3647
 msgid "Listing labels for variables:\n"
@@ -3917,9 +3912,8 @@ msgid "Uncentered R-squared"
 msgstr "Unzentriertes R-Quadrat"
 
 #: lib/src/modelprint.c:246
-#, fuzzy
 msgid "Centered R-squared"
-msgstr "Unzentriertes R-Quadrat"
+msgstr "Zentriertes R-Quadrat"
 
 #: lib/src/modelprint.c:249
 msgid "Unadjusted $R^2$"
@@ -3930,9 +3924,8 @@ msgid "Uncentered $R^2$"
 msgstr "Unzentriertes $R^2$"
 
 #: lib/src/modelprint.c:251
-#, fuzzy
 msgid "Centered $R^2$"
-msgstr "Unzentriertes $R^2$"
+msgstr "Zentriertes $R^2$"
 
 #: lib/src/modelprint.c:254
 msgid "Unadjusted R{\\super 2}"
@@ -3943,9 +3936,8 @@ msgid "Uncentered R{\\super 2}"
 msgstr "Unzentriertes R{\\super 2}"
 
 #: lib/src/modelprint.c:256
-#, fuzzy
 msgid "Centered R{\\super 2}"
-msgstr "Unzentriertes R{\\super 2}"
+msgstr "Zentriertes R{\\super 2}"
 
 #: lib/src/modelprint.c:286 lib/src/modelprint.c:318
 msgid "Adjusted R-squared"
@@ -4514,9 +4506,9 @@ msgid "Breusch-Godfrey test for first-order autocorrelation"
 msgstr "Autokorrelation erster Ordnung"
 
 #: lib/src/modelprint.c:1681 lib/src/modelprint.c:1682
-#, fuzzy, c-format
+#, c-format
 msgid "Test for ARCH of order %d"
-msgstr "Test auf ARCH der Ordnung %s"
+msgstr "Test auf ARCH der Ordnung %d"
 
 #: lib/src/modelprint.c:1687 lib/src/modelprint.c:1691
 #: lib/src/modelprint.c:1695 lib/src/system.c:3801 lib/src/system.c:3821
@@ -4964,9 +4956,9 @@ msgstr ""
 " derjenige des Referenzmodells\n"
 
 #: lib/src/monte_carlo.c:222 lib/src/monte_carlo.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a scalar"
-msgstr "ist ein Skalar"
+msgstr "'%s': kein Skalar"
 
 #: lib/src/monte_carlo.c:263 lib/src/monte_carlo.c:287
 #: lib/src/monte_carlo.c:305
@@ -9669,7 +9661,7 @@ msgstr "_Fenster aktualisieren"
 #: gui2/gretl.c:1343
 #, fuzzy
 msgid "_Scalars..."
-msgstr "Speichern unter..."
+msgstr "_Skalare..."
 
 #: gui2/gretl.c:1346 gui2/gui_utils.c:226 gui2/gui_utils.c:270
 #: gui2/ssheet.c:160
@@ -10191,20 +10183,16 @@ msgid "Font name"
 msgstr "Schriftartenname"
 
 #: gui2/gtkfontselhack.c:182
-#, fuzzy
 msgid "The X string that represents this font"
-msgstr "Die diesen Font repräsentierende X Zeichenkette."
+msgstr "Die diesen Font repräsentierende X Zeichenkette"
 
 #: gui2/gtkfontselhack.c:188
 msgid "Preview text"
 msgstr "Vorschautext"
 
 #: gui2/gtkfontselhack.c:189
-#, fuzzy
 msgid "The text to display in order to demonstrate the selected font"
-msgstr ""
-"Der Text, der angezeigt werden soll, um die ausgewählte Schriftart zu "
-"demonstrieren."
+msgstr "Der Text, der angezeigt werden soll, um die ausgewählte Schriftart zu demonstrieren"
 
 #: gui2/gtkfontselhack.c:195
 msgid "Filter"
@@ -10893,35 +10881,26 @@ msgid "EC term"
 msgstr "FK-Term"
 
 #: gui2/gui_utils.c:3280
-#, fuzzy, c-format
+#, c-format
 msgid "A matrix named %s already exists"
-msgstr ""
-"Es existiert bereits eine Matrix mit Namen %s.\n"
-"Überschreiben OK?"
+msgstr "Es existiert bereits eine Matrix mit Namen %s"
 
 #: gui2/gui_utils.c:3282
-#, fuzzy, c-format
+#, c-format
 msgid "A scalar named %s already exists"
-msgstr ""
-"Es existiert bereits eine Matrix mit Namen %s.\n"
-"Überschreiben OK?"
+msgstr "Es existiert bereits ein Skalar mit Namen %s"
 
 #: gui2/gui_utils.c:3284
-#, fuzzy, c-format
+#, c-format
 msgid "A list named %s already exists"
-msgstr ""
-"Es existiert bereits eine Matrix mit Namen %s.\n"
-"Überschreiben OK?"
+msgstr "Es existiert bereits eine Liste mit Namen %s"
 
 #: gui2/gui_utils.c:3286
-#, fuzzy, c-format
+#, c-format
 msgid "A string named %s already exists"
-msgstr ""
-"Es existiert bereits eine Matrix mit Namen %s.\n"
-"Überschreiben OK?"
+msgstr "Es existiert bereits eine Zeichenkette mit Namen %s"
 
 #: gui2/gui_utils.c:3295
-#, fuzzy
 msgid "OK to overwrite it?"
 msgstr "Überschreiben OK?"
 
@@ -11461,48 +11440,40 @@ msgid "No discrete variables were selected"
 msgstr "Keine diskreten Variablen ausgewählt"
 
 #: gui2/library.c:4612
-#, fuzzy
 msgid "error sum of squares"
-msgstr "Residuenquadrat_summe"
+msgstr "Residuenquadratsumme"
 
 #: gui2/library.c:4617 gui2/model_table.c:635
 msgid "R-squared"
 msgstr "R-Quadrat"
 
 #: gui2/library.c:4622
-#, fuzzy
 msgid "T*R-squared"
-msgstr "_T*R-Quadrat"
+msgstr "T*R-Quadrat"
 
 #: gui2/library.c:4627
-#, fuzzy
 msgid "degrees of freedom"
 msgstr "Freiheitsgrade"
 
 #: gui2/library.c:4632
-#, fuzzy
 msgid "standard error of residuals"
 msgstr "Standardfehler der Residuen"
 
 #: gui2/library.c:4637
-#, fuzzy
 msgid "log likelihood"
 msgstr "Log-Likelihood"
 
 #: gui2/library.c:4642
-#, fuzzy
 msgid "Akaike Information Criterion"
-msgstr "_Akaike Informations-Kriterium"
+msgstr "Akaike Informations-Kriterium"
 
 #: gui2/library.c:4647
-#, fuzzy
 msgid "Bayesian Information Criterion"
-msgstr "_Bayesianisches Informationskriterium"
+msgstr "Bayesianisches Informationskriterium"
 
 #: gui2/library.c:4652
-#, fuzzy
 msgid "Hannan-Quinn Information Criterion"
-msgstr "_Hannan-Quinn-Informationskriterium"
+msgstr "Hannan-Quinn-Informationskriterium"
 
 #: gui2/library.c:4668
 #, fuzzy
