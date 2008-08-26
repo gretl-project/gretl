@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.7.6\n"
+"Project-Id-Version: gretl 1.7.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-25 11:14-0400\n"
-"PO-Revision-Date: 2008-08-25 11:22-0400\n"
+"PO-Revision-Date: 2008-08-26 16:01+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -3806,9 +3806,8 @@ msgid "Infinite loop detected in script\n"
 msgstr "Ciclo infinito rilevato nello script\n"
 
 #: lib/src/interact.c:4686
-#, fuzzy
 msgid "You cannot delete variables in this context\n"
-msgstr "Impossibile cancellare %s; la variabile è in uso"
+msgstr "Non è possibile cancellare variabili in questo contesto\n"
 
 #: lib/src/interact.c:4691
 #, c-format
@@ -13267,6 +13266,8 @@ msgid ""
 "No scalar variable are currently defined.\n"
 "Add one now?"
 msgstr ""
+"Al momento non è definita alcuna variabile scalare.\n"
+"Aggiungerne una ora?"
 
 #: gui2/ssheet.c:2784
 msgid "You must give the matrix a name"
