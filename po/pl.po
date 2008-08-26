@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.7.6rc1
+# Polish translation for gretl-1.7.7
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
@@ -6,14 +6,14 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.7.6rc1\n"
+"Project-Id-Version: gretl-1.7.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-25 11:14-0400\n"
-"PO-Revision-Date: 2008-08-25 12:25-0400\n"
+"PO-Revision-Date: 2008-08-26 17:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
@@ -153,7 +153,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Hipoteza zerowa: proces stacjonarny; test KPSS dla zm. %s %s\n"
+"Hipoteza zerowa: proces stacjonarny; test KPSS dla zmiennej %s %s\n"
 "\n"
 
 #: lib/src/adf_kpss.c:861
@@ -209,8 +209,7 @@ msgstr ""
 "\n"
 "Kointegracja występuje, jeżeli każdy wykorzystywany proces jest I(1),\n"
 "tzn. hipoteza zerowa o pierwiastku jednostkowym nie jest odrzucana oraz\n"
-"proces resztowy(uhat) z równania kointegrującego nie jest zintegrowany I"
-"(0),\n"
+"proces resztowy(uhat) z równania kointegrującego nie jest zintegrowany I(0),\n"
 "tzn. hipoteza zerowa o pierwiastku jednostkowym jest odrzucana.\n"
 
 #: lib/src/bootstrap.c:408
@@ -269,8 +268,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych są równe "
-"zero\n"
+"  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych są równe zero\n"
 "\n"
 
 #: lib/src/compare.c:314 lib/src/gretl_model.c:2969
@@ -450,8 +448,7 @@ msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
-"Test ilorazu wiarygodności Quandta na występowanie załamania "
-"strukturalnego,\n"
+"Test ilorazu wiarygodności Quandta na występowanie załamania strukturalnego,\n"
 "w nieokreślonym momencie, z 15 procentowym błędem oceny"
 
 #: lib/src/compare.c:2038
@@ -536,7 +533,7 @@ msgstr ""
 #: lib/src/compare.c:2483
 msgid "CUSUMSQ test for stability of parameters"
 msgstr ""
-"Test CUSUMSQ (Cumulated sum of square residual) na stabilność parametrów "
+"Test CUSUMSQ (CUmulated SUM of SQuare residual) na stabilność parametrów "
 "modelu"
 
 #: lib/src/compare.c:2500
@@ -545,7 +542,7 @@ msgstr "Skumulowana suma przeskalowanych kwadratów reszt"
 
 #: lib/src/compare.c:2504
 msgid "CUSUM test for stability of parameters"
-msgstr "Test CUSUM (Cumulated sum of residual) na stabilność parametrów modelu"
+msgstr "Test CUSUM (CUmulated SUM of residual) na stabilność parametrów modelu"
 
 #: lib/src/compare.c:2505
 #, c-format
@@ -672,7 +669,7 @@ msgstr "   etykieta nie może zawierać daty\n"
 
 #: lib/src/csvdata.c:756
 msgid "trying to parse row labels as dates...\n"
-msgstr "próba potraktowania etykiety wiersza jako daty...\n"
+msgstr "potraktowano etykiety wiersza jako daty...\n"
 
 #: lib/src/csvdata.c:769
 msgid "   definitely not a four-digit year\n"
@@ -731,8 +728,7 @@ msgstr ""
 "\n"
 "Wyjaśnienie:\n"
 "- Pierwszy wiersz pliku CSV powinien zawierać nazwy zmiennych.\n"
-"- Pierwsza kolumna opcjonalnie zawiera daty lub 'etykiety': w takim "
-"przypadku\n"
+"- Pierwsza kolumna powinna zawierać daty lub 'etykiety': w takim przypadku\n"
 "  pierwsze pole nazw powino zawierać 'obs' lub 'date', albo pozostać puste.\n"
 "- Pamiętaj, aby plik danych CSV tworzył regularną tablicę danych.\n"
 
@@ -828,7 +824,7 @@ msgstr ""
 #: plugin/excel_import.c:1560 plugin/gnumeric_import.c:795
 #: plugin/jmulti_import.c:381 plugin/stata_import.c:714
 msgid "warning: some variable names were duplicated\n"
-msgstr "Uwaga: kilka zmiennych na zduplikowane nazwy\n"
+msgstr "Uwaga: kilka zmiennych ma zduplikowane nazwy\n"
 
 #: lib/src/csvdata.c:1697 plugin/eviews_import.c:301
 #: plugin/eviews_import.c:316 plugin/excel_import.c:1402
@@ -1187,7 +1183,7 @@ msgstr "Zamieniono"
 
 #: lib/src/dataset.c:2401
 msgid "series"
-msgstr "szeregi czasowe"
+msgstr "Serie danych"
 
 #: lib/src/dataset.c:2584 gui2/library.c:4330
 msgid "The data set is currently sub-sampled.\n"
@@ -3630,7 +3626,7 @@ msgstr "ciąg znaków '%s' jest błędnym poleceniem"
 #: lib/src/interact.c:2635
 #, c-format
 msgid "var number %d duplicated in the command list."
-msgstr "Numer zmiennej %d jest zduplikowany w poleceniu."
+msgstr "zmienna %d jest zduplikowana w poleceniu."
 
 #: lib/src/interact.c:2702 lib/src/interact.c:2812
 #, c-format
@@ -3792,9 +3788,8 @@ msgid "Infinite loop detected in script\n"
 msgstr "Wykryto nieskończoną pętlę w skrypcie\n"
 
 #: lib/src/interact.c:4686
-#, fuzzy
 msgid "You cannot delete variables in this context\n"
-msgstr "Niemożliwe usunięcie wykorzystywanej zmiennej %s"
+msgstr "Niemożliwe usunięcie wykorzystywanej zmiennej\n"
 
 #: lib/src/interact.c:4691
 #, c-format
@@ -5415,7 +5410,7 @@ msgstr ""
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
 "Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. Test "
-"Doornika-Hansena."
+"Doornika-Hansena (1994)"
 
 #: lib/src/printout.c:252
 msgid "Test for null hypothesis of gamma distribution"
@@ -9676,9 +9671,8 @@ msgid "_Refresh window"
 msgstr "_Odśwież okno danych"
 
 #: gui2/gretl.c:1343
-#, fuzzy
 msgid "_Scalars..."
-msgstr "_Zapisz jako..."
+msgstr "Definiowanie s_kalarów..."
 
 #: gui2/gretl.c:1346 gui2/gui_utils.c:226 gui2/gui_utils.c:270
 #: gui2/ssheet.c:160
@@ -10910,18 +10904,14 @@ msgid "A scalar named %s already exists"
 msgstr "Skalar o tej nazwie %s już istnieje"
 
 #: gui2/gui_utils.c:3284
-#, fuzzy, c-format
+#, c-format
 msgid "A list named %s already exists"
-msgstr ""
-"Macierz o tej nazwie %s już istnieje.\n"
-"Czy nadpiać istniejącą macierz?"
+msgstr "Istnieje już lista o nazwie %s"
 
 #: gui2/gui_utils.c:3286
-#, fuzzy, c-format
+#, c-format
 msgid "A string named %s already exists"
-msgstr ""
-"Macierz o tej nazwie %s już istnieje.\n"
-"Czy nadpiać istniejącą macierz?"
+msgstr "Istnieje już łańcuch o nazwie %s"
 
 #: gui2/gui_utils.c:3295
 msgid "OK to overwrite it?"
@@ -13205,9 +13195,8 @@ msgid "gretl: edit matrix"
 msgstr "gretl: edycja macierzy"
 
 #: gui2/ssheet.c:2498
-#, fuzzy
 msgid "gretl: edit scalars"
-msgstr "gretl: definiowanie nowej zmiennej"
+msgstr "gretl: edycja skalarów"
 
 #: gui2/ssheet.c:2500
 msgid "gretl: edit data"
@@ -13218,15 +13207,15 @@ msgid "Please add a variable to the dataset first"
 msgstr "Proszę najpierw dodać zmienną do bazy danych"
 
 #: gui2/ssheet.c:2695
-#, fuzzy
 msgid "gretl: scalars"
-msgstr "gretl: definiowanie nowej zmiennej"
+msgstr "gretl: definiowanie skalarów"
 
 #: gui2/ssheet.c:2696
 msgid ""
 "No scalar variable are currently defined.\n"
 "Add one now?"
-msgstr ""
+msgstr "Brak zdefiniowanych skalarów.\n"
+"Czy chcesz dodać teraz?"
 
 #: gui2/ssheet.c:2784
 msgid "You must give the matrix a name"
@@ -14373,15 +14362,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "requires a variable number and a new name"
-#~ msgstr "wymagane są numer zmiennej i nowa nazwa"
-
-#~ msgid "'%s': there is already a variable of this name"
-#~ msgstr "'%s': jest już nazwą zmiennej"
-
-#~ msgid "Select ->"
-#~ msgstr "Wybór ->"
-
-#~ msgid "Sorry, can't edit more than 1600 rows"
-#~ msgstr "Sorry, niemożliwa edycja powyżej 1600 wierszy"
