@@ -2435,6 +2435,8 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	goto bailout;
     } 
 
+    gretl_xml_get_prop_as_int(node, "order", &sys->order);
+
     sys->lists = malloc(sys->neqns * sizeof sys->lists);
     if (sys->lists == NULL) {
 	*err = E_ALLOC;
@@ -2505,8 +2507,8 @@ int equation_system_serialize (equation_system *sys,
     fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",  
 	    (sys->name != NULL)? sys->name : "none", flags, sys->method);
 
-    fprintf(fp, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\">\n",
-	    sys->neqns, sys->nidents, (int) sys->flags);
+    fprintf(fp, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\" order=\"%d\">\n",
+	    sys->neqns, sys->nidents, (int) sys->flags, sys->order);
 
     for (i=0; i<sys->neqns; i++) {
 	gretl_xml_put_tagged_list("eqnlist", sys->lists[i], fp);

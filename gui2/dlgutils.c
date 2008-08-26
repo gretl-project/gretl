@@ -529,7 +529,7 @@ static void dialog_table_setup (dialog_t *dlg, int hsize)
 {
     GtkWidget *sw;
 
-    sw = gtk_scrolled_window_new (NULL, NULL);
+    sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_widget_set_size_request(sw, hsize, 200);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
 		       sw, TRUE, TRUE, FALSE);
@@ -981,12 +981,12 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
 	}
     }
 
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), method);
-
     g_object_set_data(G_OBJECT(w), "bt", bt);
     g_object_set_data(G_OBJECT(w), "bv", bv);
     g_signal_connect(G_OBJECT(w), "changed",
 		     G_CALLBACK(set_sys_method), d);
+
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), method);
 
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
     gtk_widget_show(w);  
@@ -1007,6 +1007,7 @@ static void dlg_display_sys (dialog_t *d)
     d->edit = dlg_text_edit_new(&hsize, FALSE);
     dialog_table_setup(d, hsize);
     dlg_text_set_from_sys(sys, d); 
+    gretl_dialog_set_resizeable(d->dialog, TRUE);
 }
 
 static void raise_and_focus_dialog (GtkEditable *editable, gpointer p)
@@ -1128,6 +1129,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 
 	d->edit = dlg_text_edit_new(&hsize, TRUE);
 	dialog_table_setup(d, hsize);
+	gretl_dialog_set_resizeable(d->dialog, TRUE);
 
 	/* insert previous text, if any and if the command
 	   is the same as previously -- or insert skeleton
