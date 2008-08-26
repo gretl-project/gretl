@@ -4113,6 +4113,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = list_diffgenr(listcpy, cmd->ci, pZ, pdinfo);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
+	    set_dataset_is_changed();
 	}
 	break;
 
@@ -4120,6 +4121,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = list_orthdev(listcpy, pZ, pdinfo);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
+	    set_dataset_is_changed();
 	}
 	break;
 
@@ -4127,6 +4129,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = list_dumgenr(&listcpy, pZ, pdinfo, cmd->opt);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
+	    set_dataset_is_changed();
 	}
 	break;
 
@@ -4135,6 +4138,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = list_laggenr(&listcpy, order, pZ, pdinfo); 
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
+	    set_dataset_is_changed();
 	}
 	break;
 
@@ -4142,6 +4146,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = list_loggenr(listcpy, pZ, pdinfo);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
+	    set_dataset_is_changed();
 	}
 	break;
 
@@ -4149,6 +4154,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = list_xpxgenr(&listcpy, pZ, pdinfo, cmd->opt);
 	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
+	    set_dataset_is_changed();
 	}
 	break;
 

@@ -32,6 +32,8 @@ version 1.7.7, in progress
   arrow keys to activate the "Add" and "Remove" buttons
 - Linear models without a constant: print the centered R^2 as
   well as the uncentered 
+- Fix for reading native data files containing auto-generated
+  lags: re-establish the lag info correctly
 
 7/30/2008 version 1.7.6
 - Fix bug: revise the way that list arguments to user-defined
