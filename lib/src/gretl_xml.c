@@ -1752,7 +1752,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "lag");
 	    if (tmp != NULL) {
-		pdinfo->varinfo[i]->transform = atoi((char *) tmp); 
+		pdinfo->varinfo[i]->lag = atoi((char *) tmp); 
 		free(tmp);
 	    }
 
