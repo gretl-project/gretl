@@ -693,7 +693,10 @@ Configuration:
   LAPACK libraries:
     ${LAPACK_LIBS}
 
-Now type '$MAKE' to build gretl.
-"
+Now type '$MAKE' to build gretl."
+  if test "${build_docs}" = "yes" ; then
+    echo "You can also do 'make pdfdocs' to build the PDF documentation."
+  fi
+  echo
 fi
 
