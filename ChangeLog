@@ -1,4 +1,4 @@
-version 1.7.7, in progress
+8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables
 - The --preserve option to the "nulldata" and "open" commands
   now preserves existing scalars as well as matrices

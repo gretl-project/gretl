@@ -2189,19 +2189,25 @@ static int dummy_child_from_label (int v, const DATAINFO *pdinfo)
 
 static void record_transform_info (double **Z, DATAINFO *pdinfo, double version)
 {
+    VARINFO *vinfo;
     int i, p, pv;
 
     for (i=1; i<pdinfo->v; i++) {
+	vinfo = pdinfo->varinfo[i];
+	if (vinfo->transform == LAGS) {
+	    /* already handled */
+	    continue;
+	}
 	pv = lag_from_label(i, pdinfo, &p);
 	if (pv > 0) {
-	    strcpy(pdinfo->varinfo[i]->parent, pdinfo->varname[pv]);
-	    pdinfo->varinfo[i]->transform = LAGS;
-	    pdinfo->varinfo[i]->lag = p;
+	    strcpy(vinfo->parent, pdinfo->varname[pv]);
+	    vinfo->transform = LAGS;
+	    vinfo->lag = p;
 	} else if (version < 1.1) {
 	    pv = dummy_child_from_label(i, pdinfo);
 	    if (pv > 0) {
-		strcpy(pdinfo->varinfo[i]->parent, pdinfo->varname[pv]);
-		pdinfo->varinfo[i]->transform = DUMMIFY;
+		strcpy(vinfo->parent, pdinfo->varname[pv]);
+		vinfo->transform = DUMMIFY;
 	    }
 	}
     }
