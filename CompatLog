@@ -1,4 +1,4 @@
-version 1.7.7, in progress
+8/28/2008 version 1.7.7
 
 Ordered probit and logit: the presentation of the cut-points in
 ordered response models is now that used by Stata and R, not

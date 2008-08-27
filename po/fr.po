@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-08-25 11:14-0400\n"
-"PO-Revision-Date: 2008-08-25 11:55-0400\n"
+"PO-Revision-Date: 2008-08-27 12:37-0400\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2712,14 +2712,14 @@ msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
 msgstr ""
 
 #: lib/src/gretl_func.c:3921
-#, fuzzy, c-format
+#, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
-msgstr "Valeur de l'indice %d hors limites"
+msgstr "%s, argument %d : valeur %g hors limites\n"
 
 #: lib/src/gretl_func.c:3932
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not enough arguments\n"
-msgstr "'%s' : aucun argument indiqué\n"
+msgstr "'%s' : trop peu d'arguments\n"
 
 #: lib/src/gretl_func.c:4260
 #, c-format
@@ -3806,9 +3806,8 @@ msgid "Infinite loop detected in script\n"
 msgstr "Boucle infinie détectée dans le script\n"
 
 #: lib/src/interact.c:4686
-#, fuzzy
 msgid "You cannot delete variables in this context\n"
-msgstr "Ne peut détruire %s ; la variable est utilisée"
+msgstr "Ne peut détruire les variables dans ce contexte\n"
 
 #: lib/src/interact.c:4691
 #, c-format
@@ -4512,29 +4511,27 @@ msgid "Estimated using BHHH method"
 msgstr "Estimé à l'aide la méthode BHHH"
 
 #: lib/src/modelprint.c:1598 lib/src/modelprint.c:1605
-#, fuzzy, c-format
+#, c-format
 msgid "Godfrey (1994) test for autocorrelation up to order %d"
-msgstr "Test LM d'autocorrélation jusqu'à l'ordre de %s"
+msgstr "Test de Godfrey (1994) d'autocorrélation jusqu'à l'ordre de %d"
 
 #: lib/src/modelprint.c:1601 lib/src/modelprint.c:1608
-#, fuzzy
 msgid "Godfrey (1994) test for first-order autocorrelation"
-msgstr "autocorrélation de premier ordre"
+msgstr "Test de Godfrey (1994) d'autocorrélation de premier ordre"
 
 #: lib/src/modelprint.c:1614 lib/src/modelprint.c:1621
-#, fuzzy, c-format
+#, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr "Test LM d'autocorrélation jusqu'à l'ordre de %s"
+msgstr "Test de Breusch-Godfrey d'autocorrélation jusqu'à l'ordre de %d"
 
 #: lib/src/modelprint.c:1617 lib/src/modelprint.c:1624
-#, fuzzy
 msgid "Breusch-Godfrey test for first-order autocorrelation"
-msgstr "autocorrélation de premier ordre"
+msgstr "Test de Breusch-Godfrey d'autocorrélation de premier ordre"
 
 #: lib/src/modelprint.c:1681 lib/src/modelprint.c:1682
-#, fuzzy, c-format
+#, c-format
 msgid "Test for ARCH of order %d"
-msgstr "Test pour ARCH d'ordre %s"
+msgstr "Test pour ARCH d'ordre %d"
 
 #: lib/src/modelprint.c:1687 lib/src/modelprint.c:1691
 #: lib/src/modelprint.c:1695 lib/src/system.c:3801 lib/src/system.c:3821
@@ -5183,9 +5180,8 @@ msgid "Tolerance = %g\n"
 msgstr "Tolérance = %g\n"
 
 #: lib/src/nls.c:3141
-#, fuzzy
 msgid "Failed to compute numerical Hessian"
-msgstr "Échec de calcul de la valeur critique"
+msgstr "Échec de calcul de la matrice hessiene"
 
 #: lib/src/nls.c:3210
 msgid ""
