@@ -1,4 +1,7 @@
-SUBDIRS = tex tex_it tex_es
+# Note: tex_es was included below: it can be reinstated
+# if the Spanish TeX files are updated at some point
+
+SUBDIRS = tex tex_it 
 
 .PHONY : subdirs $(SUBDIRS) clean install 
 
@@ -8,11 +11,9 @@ $(SUBDIRS):
 	make -C $@
 
 clean:
-	make -C tex clean
-	make -C tex_it clean
-	make -C tex_es clean
+	for d in $(SUBDIRS) ; do \
+	make -C $$d clean ; done
 
 install: 
-	make -C tex install
-	make -C tex_it install
-	make -C tex_es install
+	for d in $(SUBDIRS) ; do \
+	make -C $$d install ; done

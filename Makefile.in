@@ -11,6 +11,7 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 have_gtk = @have_gtk@
 build_po = @build_po@
+build_doc = @build_docs@
 
 ifeq ($(CC),)
   CC = gcc
@@ -22,6 +23,10 @@ endif
 
 ifeq ($(build_po),yes)
   PODIR = po
+endif
+
+ifeq ($(build_doc),yes)
+  DOCDIR = doc
 endif
 
 INSTALL_PROGRAM = ${INSTALL} -m 755
@@ -41,6 +46,9 @@ subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@
+
+pdfdocs:
+	$(MAKE) -C $(DOCDIR)
 
 clean:
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done

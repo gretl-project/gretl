@@ -31,7 +31,7 @@
 
 #undef XML_DEBUG
 
-#define GRETLDATA_VERSION "1.1"
+#define GRETLDATA_VERSION "1.2"
 
 #ifdef WIN32
 # include <glib.h>
@@ -2187,7 +2187,7 @@ static int dummy_child_from_label (int v, const DATAINFO *pdinfo)
     return pv;
 }
 
-static void record_transform_info (double **Z, DATAINFO *pdinfo)
+static void record_transform_info (double **Z, DATAINFO *pdinfo, double version)
 {
     int i, p, pv;
 
@@ -2197,7 +2197,7 @@ static void record_transform_info (double **Z, DATAINFO *pdinfo)
 	    strcpy(pdinfo->varinfo[i]->parent, pdinfo->varname[pv]);
 	    pdinfo->varinfo[i]->transform = LAGS;
 	    pdinfo->varinfo[i]->lag = p;
-	} else {
+	} else if (version < 1.1) {
 	    pv = dummy_child_from_label(i, pdinfo);
 	    if (pv > 0) {
 		strcpy(pdinfo->varinfo[i]->parent, pdinfo->varname[pv]);
@@ -2399,8 +2399,8 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 	}
     }
 
-    if (!err && gdtversion < 1.1) {
-	record_transform_info(*pZ, pdinfo);
+    if (!err && gdtversion < 1.2) {
+	record_transform_info(*pZ, pdinfo, gdtversion);
     }
 
     if (err && tmpdinfo != NULL) {
