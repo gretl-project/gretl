@@ -323,12 +323,12 @@ void nls_init (void)
     real_nls_init();
 }
 
-static void force_language (int f)
+void force_language (int lang)
 {
-    if (f == ENGLISH) {
+    if (lang == ENGLISH) {
 	putenv("LANGUAGE=english");
 	setlocale(LC_ALL, "C");
-    } else if (f == BASQUE) {
+    } else if (lang == BASQUE) {
 # ifdef G_OS_WIN32
 	setlocale(LC_ALL, "eu");
 # else
@@ -337,17 +337,17 @@ static void force_language (int f)
     }
 
 # ifdef G_OS_WIN32
-    if (f == ENGLISH) {
+    if (lang == ENGLISH) {
 	SetEnvironmentVariable("LC_ALL", "C");
 	putenv("LC_ALL=C");
 	textdomain("none");
-    } else if (f == BASQUE) {
+    } else if (lang == BASQUE) {
 	SetEnvironmentVariable("LC_ALL", "eu");
 	putenv("LC_ALL=eu");
     }
 # endif
 
-    if (f == ENGLISH) {
+    if (lang == ENGLISH) {
 	force_english_help();
     }
 }

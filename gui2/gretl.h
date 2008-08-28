@@ -135,6 +135,10 @@ void clear_varlist (GtkWidget *widget);
 void mdata_select_last_var (void);
 int gui_restore_sample (double ***pZ, DATAINFO *pdinfo);
 
+#ifdef ENABLE_NLS
+void force_language (int lang);
+#endif
+
 /* functions defined in files other than gretl.c */
 void about_dialog (void);
 

@@ -90,6 +90,7 @@ static char datapage[24];
 static char scriptpage[24];
 
 static int hc_by_default;
+static int langpref;
 static char hc_xsect[5] = "HC1";
 static char hc_tseri[5] = "HAC";
 static char hc_panel[9] = "Arellano";
@@ -171,6 +172,10 @@ RCVAR rc_vars[] = {
 #endif
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
       BOOLSET, 0, TAB_MAIN, NULL },
+#ifdef ENABLE_NLS
+    { "langpref", N_("Language preference"), NULL, &langpref, 
+      RADIOSET | INTSET, 0, TAB_MAIN, NULL },
+#endif
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd, 
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
 #ifndef G_OS_WIN32 
@@ -902,6 +907,11 @@ static const char **get_radio_setting_strings (void *var, int *n)
         N_("Italian"),
 	N_("Spanish")
     };
+    static const char *lang_strs[] = {
+        N_("Use local language if possible"),
+        N_("Use English"),
+	N_("Use Basque")
+    };
     const char **strs = NULL;
 
     *n = 0;
@@ -912,6 +922,9 @@ static const char **get_radio_setting_strings (void *var, int *n)
 #if HIDE_SPANISH_MANUAL
 	*n -= 1;
 #endif
+    } else if (var == &langpref) {
+	strs = lang_strs;
+	*n = sizeof lang_strs / sizeof lang_strs[0];
     }
 
     return strs;
@@ -972,6 +985,10 @@ static void radio_change_value (GtkWidget *w, int *v)
 {
     if (GTK_TOGGLE_BUTTON(w)->active) {
 	gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+
+	if (v == &langpref) {
+	    takes_effect_on_restart();
+	}
 	*v = i;
     }
 }
@@ -980,11 +997,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
     GtkWidget *box, *w = NULL;
-    int s_len = 1, b_len = 0, b_col = 0;
+    int s_len = 1, b_len = 0;
+    int s_cols, b_cols = 0;
+    int b_col = 0;
     int n_str = 0;
     int n_bool = 0;
     int n_browse = 0;
-    int s_cols;
     RCVAR *rc;
     int i;
    
@@ -1018,9 +1036,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_box_pack_start(GTK_BOX(box), s_table, FALSE, FALSE, 0);
 	gtk_widget_show(s_table);
     }
-    
+
     if (n_bool > 0) {
-	b_table = gtk_table_new(1, 2, FALSE);
+	b_cols = 2;
+	b_table = gtk_table_new(1, b_cols, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
 	gtk_box_pack_start(GTK_BOX(box), b_table, FALSE, FALSE, 10);
@@ -1153,7 +1172,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	    rc->widget = gtk_combo_box_new_text();
 	    gtk_table_attach(GTK_TABLE(s_table), rc->widget, 
-			     1, 2, s_len-1, s_len,
+			     1, 2, s_len - 1, s_len,
 			     0, 0, 0, 0);
 	    strs = get_list_setting_strings(rc->var, &nopt);
 	    for (j=0; j<nopt; j++) {
@@ -1167,14 +1186,28 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_widget_show(rc->widget);
 	} else if (rc->flags & RADIOSET) {
 	    int nopt, j, rcval = *(int *) (rc->var);
+	    int rcol;
 	    GtkWidget *b;
 	    GSList *group = NULL;
 	    const char **strs;
 
+	    if (b_len > 0) {
+		/* there are buttons above: add a separator and
+		   make this section full-width */
+		rcol = b_cols;
+		b_len++;
+		w = gtk_hseparator_new();
+		gtk_table_attach_defaults(GTK_TABLE(b_table), w, 
+					  0, rcol, b_len - 1, b_len);  
+		gtk_widget_show(w);
+	    } else {
+		rcol = b_col + 1;
+	    }
+
 	    b_len++;
 	    b = gtk_label_new(_(rc->description));
 	    gtk_table_attach_defaults(GTK_TABLE(b_table), b, 
-				      b_col, b_col + 1, 
+				      b_col, rcol, 
 				      b_len - 1, b_len);
 	    gtk_widget_show(b);
 
@@ -1185,16 +1218,16 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_table_resize(GTK_TABLE(b_table), b_len, 2);
 		b = gtk_radio_button_new_with_label(group, _(strs[j]));
 		gtk_table_attach_defaults(GTK_TABLE(b_table), b, 
-					  b_col, b_col + 1, 
+					  b_col, rcol, 
 					  b_len - 1, b_len);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), j == rcval);
 		g_object_set_data(G_OBJECT(b), "action", 
 				  GINT_TO_POINTER(j));
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), j == rcval);
+		gtk_widget_show(b);
+		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
 		g_signal_connect(G_OBJECT(b), "clicked",
 				 G_CALLBACK(radio_change_value),
 				 rc->var);
-		gtk_widget_show(b);
-		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
 	    }
 	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
@@ -1211,7 +1244,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	    rc->widget = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
-				      rc->widget, 1, 2, s_len-1, s_len);
+				      rc->widget, 1, 2, s_len - 1, s_len);
 	    gtk_entry_set_text(GTK_ENTRY(rc->widget), strvar);
 	    gtk_widget_show(rc->widget);
 
@@ -1219,7 +1252,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		/* add path browse button */
 		w = make_path_browse_button(rc, notebook);
 		gtk_table_attach_defaults(GTK_TABLE(s_table), 
-					  w, 2, 3, s_len-1, s_len);
+					  w, 2, 3, s_len - 1, s_len);
 		gtk_widget_show(w);
 	    }
 
@@ -1586,6 +1619,9 @@ static int common_read_rc_setup (void)
 
 # ifdef ENABLE_NLS
     set_lcnumeric();
+    if (langpref > 0) {
+	force_language(langpref);
+    }
 # endif
 
     return err;
