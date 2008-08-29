@@ -1615,7 +1615,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
     return 0;
 }
 
-static gint get_string_width (const gchar *str)
+gint get_string_width (const gchar *str)
 {
     gint width;
 

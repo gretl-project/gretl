@@ -38,4 +38,6 @@ void edit_user_matrix_by_name (const char *name);
 
 int dataset_locked (void);
 
+gint get_string_width (const gchar *str);
+
 #endif /* SSHEET_H */

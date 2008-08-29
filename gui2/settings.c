@@ -27,6 +27,7 @@
 #include "menustate.h"
 #include "session.h"
 #include "textbuf.h"
+#include "ssheet.h"
 
 #include "libset.h"
 #include "version.h"
@@ -1159,13 +1160,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	} else if (rc->flags & LISTSET) {
 	    char *strvar = (char *) rc->var;
 	    const char **strs;
-	    int j, nopt, active = 0;
+	    int j, ww, nopt, active = 0;
 
 	    s_len++;
 
 	    gtk_table_resize(GTK_TABLE(s_table), s_len, s_cols);
 	    w = gtk_label_new(_(rc->description));
-	    gtk_misc_set_alignment(GTK_MISC(w), 0.75, 0.5);
+	    gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
 				      w, 0, 1, s_len - 1, s_len);
 	    gtk_widget_show(w);
@@ -1183,6 +1184,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		}
 	    }
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
+	    ww = get_string_width("XXArellanoXXXXX");
+	    gtk_widget_set_size_request(rc->widget, ww, -1);
 	    gtk_widget_show(rc->widget);
 	} else if (rc->flags & RADIOSET) {
 	    int nopt, j, rcval = *(int *) (rc->var);
