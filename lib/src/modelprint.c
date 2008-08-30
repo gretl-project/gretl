@@ -3303,21 +3303,31 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
 	N_("coefficient"), 
 	N_("std. error"), 
 	N_("t-ratio"),
-	N_("p-value")
+	N_("p-value"),
+	N_("slope at mean")
     };
     const double *b = pmod->coeff;
     const double *se = pmod->sderr;
+    double *slopes = NULL;
     char **names = NULL;
+    const char *head;
+    const char *sepstr = NULL;
+    int seppos = -1;
     int lmax[4] = {0};
     int rmax[4] = {0};
     int w[4], addoff[4] = {0};
     int hlen, offset, pad;
     double tval, pval;
     int n, d, nc = pmod->ncoeff;
+    int show_slope, adfnum = -1;
     int namelen = 0;
     int colsep = 2;
     int i, j;
     int err = 0;
+
+    if (pmod->ci == PANEL) {
+	nc = pmod->list[0] - 1;
+    }
 
     vals = allocate_printvals(nc, 4);
     if (vals == NULL) {
@@ -3328,6 +3338,20 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
     if (names == NULL) {
 	err = E_ALLOC;
 	goto bailout;
+    }
+
+    show_slope = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
+    if (show_slope) {
+	slopes = gretl_model_get_data(pmod, "slopes");
+    }
+
+    if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
+	adfnum = gretl_model_get_int(pmod, "dfnum");
+    }
+
+    gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
+    if (seppos == -1 && pmod->ci == GARCH) {
+	seppos = pmod->list[0] - 4;
     }
 
     for (i=0; i<nc; i++) {
@@ -3344,18 +3368,39 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
 	    tval = pval = NADBL;
 	} else {
 	    tval = b[i] / se[i];
-	    pval = coeff_pval(pmod->ci, tval, pmod->dfd);
+	    if (slopes != NULL) {
+		/* last column: actually slope at mean */
+		pval = (pmod->list[i+2] == 0)? 0 : slopes[i];
+	    } else if (i == adfnum) {
+		/* special Dickey-Fuller p-value */
+		pval = gretl_model_get_double(pmod, "dfpval");
+	    } else {
+		/* regular p-value */
+		pval = coeff_pval(pmod->ci, tval, pmod->dfd);
+	    } 
 	}
 	for (j=0; j<4; j++) {
 	    if (j < 2) {
+		/* coeff, standard error */
 		d = GRETL_DIGITS;
 		vals[i][j].x = (j==0)? b[i] : se[i];
+	    } else if (j == 2) {
+		/* t-ratio */
+		d = 4;
+		vals[i][j].x = tval;
 	    } else {
-		d = (j==2)? 4 : -4;
-		vals[i][j].x = (j==2)? tval : pval;
+		/* p-value of slope */
+		d = (show_slope)? 6 : -4;
+		vals[i][j].x = pval;
 	    }
-	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
-	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+	    if (show_slope && j == 3 && pmod->list[i+2] == 0) {
+		/* don't show 'slope' for constant */
+		vals[i][j].s[0] = '\0';
+		vals[i][j].lw = vals[i][j].rw = 0;
+	    } else {
+		gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
+		get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+	    }
 	}
     }
 
@@ -3367,7 +3412,12 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
 
     for (j=0; j<4; j++) {
 	w[j] = lmax[j] + rmax[j];
-	hlen = strlen(headings[j]);
+	if (j == 3 && show_slope) {
+	    head = _(headings[j+1]);
+	} else {
+	    head = _(headings[j]);
+	}
+	hlen = strlen(head);
 	if (hlen > w[j]) {
 	    addoff[j] = (hlen - w[j]) / 2;
 	    w[j] = hlen;
@@ -3387,10 +3437,15 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
 
     bufspace(namelen + 2 + colsep, prn);
     for (j=0; j<4; j++) {
-	hlen = strlen(headings[j]);
+	if (j == 3 && show_slope) {
+	    head = _(headings[j+1]);
+	} else {
+	    head = _(headings[j]);
+	}
+	hlen = strlen(head);
 	offset = (w[j] - hlen) / 2;
 	pad = w[j] - hlen - offset;
-	print_padded(headings[j], offset, pad, prn);
+	print_padded(head, offset, pad, prn);
 	if (j < 3) {
 	    bufspace(colsep, prn);
 	}
@@ -3412,6 +3467,9 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
     /* print row values */
 
     for (i=0; i<nc; i++) {
+	if (i == seppos) {
+	    print_coeff_separator(sepstr, prn);
+	}
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);
 	for (j=0; j<4; j++) {
@@ -3421,7 +3479,7 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
 	    print_padded(vij->s, offset, pad, prn);
 	    if (j < 3) {
 		bufspace(colsep, prn);
-	    } else if (!na(vij->x)) {
+	    } else if (!show_slope && !na(vij->x)) {
 		pval = vij->x;
 		if (pval < 0.01) {
 		    pputs(prn, " ***");
@@ -3464,8 +3522,8 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
 #if TRYIT
-    if (pmod->ci == OLS) {
-	/* FIXME: extend this to estimators other than OLS */
+    if (pmod->ci != LAD && pmod->ci != MPOLS && pmod->ci != ARCH) {
+	/* FIXME: extend this to other estimators */
 	return plain_print_coeffs(pmod, pdinfo, prn);
     }
 #endif
