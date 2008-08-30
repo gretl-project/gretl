@@ -628,14 +628,14 @@ static int *get_garch_list (const int *list, const double **Z,
 
     /* rule out pure AR in variance: the model is unidentified */
     if (p > 0 && q == 0) {
-	gretl_errmsg_set(_("Error in garch command"));
+	gretl_errmsg_set(_("GARCH: p > 0 and q = 0: the model is unidentified"));
 	*err = E_DATA;
 	return NULL;
     }
 
     /* rule out excessive total GARCH-iness */
     if (p + q > 5) {
-	gretl_errmsg_set(_("Error in garch command"));
+	gretl_errmsg_set(_("GARCH: p + q must be less than 6"));
 	*err = E_DATA;
 	return NULL;
     }

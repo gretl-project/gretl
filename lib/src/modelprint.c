@@ -3130,8 +3130,9 @@ void print_arch_coeffs (const double *a, const double *se,
     int i;
 
     if (aux) {
-	pprintf(prn, "\n%s %d\n\n", _("Test for ARCH of order"),
-		order);
+	pputc(prn, '\n');
+	pprintf(prn, _("Test for ARCH of order %d"), order);
+	pputs(prn, "\n\n");
 	pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
 		     "      T STAT   P-VALUE\n\n"));
     } else {
@@ -3295,7 +3296,182 @@ static struct printval **allocate_printvals (int n, int m)
     return vals;
 }
 
-static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo, 
+static int get_arch_data (const MODEL *pmod, double **pb,
+			  double **pse, int *pk)
+{
+    double *ab = gretl_model_get_data(pmod, "arch_coeff");
+    double *ase = gretl_model_get_data(pmod, "arch_sderr");
+    int order = gretl_model_get_int(pmod, "arch_order");
+    double *b, *se;
+    int err = 0;
+
+    if (ab != NULL && ase != NULL && order > 0) {
+	int i, k = order + 1;
+
+	b = malloc((pmod->ncoeff + k) * sizeof *b);
+	se = malloc((pmod->ncoeff + k) * sizeof *se);
+
+	if (b == NULL || se == NULL) {
+	    free(b);
+	    free(se);
+	    return E_ALLOC;
+	}
+
+	for (i=0; i<pmod->ncoeff; i++) {
+	    b[i] = pmod->coeff[i];
+	    se[i] = pmod->sderr[i];
+	}
+
+	for (i=0; i<k; i++) {
+	    b[pmod->ncoeff + i] = ab[i];
+	    se[pmod->ncoeff + i] = ase[i];
+	}
+
+	*pb = b;
+	*pse = se;
+	*pk = k;
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int plain_print_mp_coeffs (const MODEL *pmod, 
+				  const DATAINFO *pdinfo, 
+				  PRN *prn)
+{
+    struct printval **vals, *vij;
+    const char *headings[] = { 
+	N_("coefficient"), 
+	N_("std. error") 
+    };
+    const double *b = pmod->coeff;
+    const double *se = pmod->sderr;
+    char **names = NULL;
+    const char *head;
+    int lmax[2] = {0};
+    int rmax[2] = {0};
+    int w[2], addoff[2] = {0};
+    int hlen, offset, pad;
+    int n, d, nc = pmod->ncoeff;
+    int namelen = 0;
+    int colsep = 2;
+    int i, j;
+    int err = 0;
+
+    vals = allocate_printvals(nc, 2);
+    if (vals == NULL) {
+	return E_ALLOC;
+    }
+
+    names = strings_array_new_with_length(nc, 32);
+    if (names == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<nc; i++) {
+	if (xna(b[i])) {
+	    err = E_NAN;
+	    goto bailout;
+	}
+	gretl_model_get_param_name(pmod, pdinfo, i, names[i]);
+	n = strlen(names[i]);
+	if (n > namelen) {
+	    namelen = n;
+	}
+	for (j=0; j<2; j++) {
+	    d = GRETL_MP_DIGITS;
+	    vals[i][j].x = (j==0)? b[i] : se[i];
+	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
+	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+	}
+    }
+
+    if (namelen < 8) {
+	namelen = 8;
+    }
+
+    /* figure appropriate column separation */
+
+    for (j=0; j<2; j++) {
+	w[j] = lmax[j] + rmax[j];
+	head = _(headings[j]);
+	hlen = strlen(head);
+	if (hlen > w[j]) {
+	    addoff[j] = (hlen - w[j]) / 2;
+	    w[j] = hlen;
+	}
+    }	
+
+    n = namelen + 2 * colsep;
+    for (j=0; j<2; j++) {
+	n += w[j];
+    }   
+    n = 68 - (n + 2);
+    if (n > 2) {
+	colsep = 3;
+    }
+
+    /* print headings */
+
+    bufspace(namelen + 2 + colsep, prn);
+    for (j=0; j<2; j++) {
+	head = _(headings[j]);
+	hlen = strlen(head);
+	offset = (w[j] - hlen) / 2;
+	pad = w[j] - hlen - offset;
+	print_padded(head, offset, pad, prn);
+	if (j < 3) {
+	    bufspace(colsep, prn);
+	}
+    }
+
+    /* separator row */
+
+    pputc(prn, '\n');
+    bufspace(2, prn);
+    n = namelen + 2 * colsep;
+    for (j=0; j<2; j++) {
+	n += w[j];
+    }
+    for (j=0; j<n; j++) {
+	pputc(prn, '-');
+    }
+    pputc(prn, '\n');
+
+    /* print row values */
+
+    for (i=0; i<nc; i++) {
+	pprintf(prn, "  %-*s", namelen, names[i]);
+	bufspace(colsep, prn);
+	for (j=0; j<2; j++) {
+	    vij = &vals[i][j];
+	    offset = lmax[j] - vij->lw + addoff[j];
+	    pad = w[j] - (lmax[j] + vij->rw + addoff[j]);
+	    print_padded(vij->s, offset, pad, prn);
+	    if (j == 0) {
+		bufspace(colsep, prn);
+	    } 
+	}
+	pputc(prn, '\n');
+    }
+
+ bailout:
+
+    for (i=0; i<nc; i++) {
+	free(vals[i]);
+    }
+    free(vals);
+
+    free_strings_array(names, nc);
+
+    return err;
+}
+
+static int plain_print_coeffs (const MODEL *pmod, 
+			       const DATAINFO *pdinfo, 
 			       PRN *prn)
 {
     struct printval **vals, *vij;
@@ -3312,6 +3488,8 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
     char **names = NULL;
     const char *head;
     const char *sepstr = NULL;
+    double *arch_b = NULL;
+    double *arch_se = NULL;
     int seppos = -1;
     int lmax[4] = {0};
     int rmax[4] = {0};
@@ -3327,6 +3505,16 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if (pmod->ci == PANEL) {
 	nc = pmod->list[0] - 1;
+    } else if (pmod->ci == ARCH) {
+	int k;
+
+	err = get_arch_data(pmod, &arch_b, &arch_se, &k);
+	if (err) {
+	    return err;
+	}
+	b = arch_b;
+	se = arch_se;
+	nc += k;
     }
 
     vals = allocate_printvals(nc, 4);
@@ -3350,8 +3538,12 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
-    if (seppos == -1 && pmod->ci == GARCH) {
-	seppos = pmod->list[0] - 4;
+    if (seppos == -1) {
+	if (pmod->ci == GARCH) {
+	    seppos = pmod->list[0] - 4;
+	} else if (pmod->ci == ARCH) {
+	    seppos = pmod->ncoeff;
+	}
     }
 
     for (i=0; i<nc; i++) {
@@ -3501,6 +3693,8 @@ static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo,
     free(vals);
 
     free_strings_array(names, nc);
+    free(arch_b);
+    free(arch_se);
 
     return err;
 }
@@ -3522,9 +3716,13 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
 #if TRYIT
-    if (pmod->ci != LAD && pmod->ci != MPOLS && pmod->ci != ARCH) {
-	/* FIXME: extend this to other estimators */
-	return plain_print_coeffs(pmod, pdinfo, prn);
+    if (plain_format(prn)) {
+	if (pmod->ci == MPOLS) {
+	    return plain_print_mp_coeffs(pmod, pdinfo, prn);
+	} else if (pmod->ci != LAD){
+	    /* FIXME rq output */
+	    return plain_print_coeffs(pmod, pdinfo, prn);
+	}
     }
 #endif
 
