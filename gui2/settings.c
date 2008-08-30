@@ -1184,6 +1184,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		}
 	    }
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(rc->widget), active);
+	    /* this will need generalizing if we add another LISTSET
+	       variable */
 	    ww = get_string_width("XXArellanoXXXXX");
 	    gtk_widget_set_size_request(rc->widget, ww, -1);
 	    gtk_widget_show(rc->widget);

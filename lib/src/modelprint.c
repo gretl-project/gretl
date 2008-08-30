@@ -2916,8 +2916,6 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
     return gotnan;
 }
 
-#define NEW_COEFF_FMT 0
-
 static void plain_print_coeff (const model_coeff *mc, PRN *prn)
 {
     int namewid = 15;
@@ -3232,17 +3230,21 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-#if NEW_COEFF_FMT /* not yet */
+#define TRYIT 1
 
-/* nl and nr are, respectively, the number of characters to the
-   left and to the right of the decimal point in the number 
-   with string representation s
-*/
+#if TRYIT
 
-static void get_number_dims (const char *s, int *lmax, int *rmax)
+struct printval {
+    char s[36];
+    int lw, rw;
+    double x;
+};
+
+static void get_number_dims (struct printval *v, int *lmax, int *rmax)
 {
+    const char *s = v->s;
     const char *p;
-    int i, n, nr, nl;
+    int i, n;
 
     while (*s == ' ') s++;
     n = strlen(s);
@@ -3250,25 +3252,199 @@ static void get_number_dims (const char *s, int *lmax, int *rmax)
 	n--;
     }
 
-    p = strchr(s, active_decpoint());
+    p = strchr(s, '.');
 
     if (p == NULL) {
-	nl = n;
-	nr = 0;
+	v->lw = n;
+	v->rw = 0;
     } else {
-	nl = p - s;
-	nr = strlen(s) - nl;
+	v->lw = p - s;
+	v->rw = strlen(s) - v->lw;
     }
 
-    if (nl > *lmax) *lmax = nl;
-    if (nr > *rmax) *rmax = nr;
+    if (v->lw > *lmax) *lmax = v->lw;
+    if (v->rw > *rmax) *rmax = v->rw;
 }
 
-static void coeff_fmt_init (coeff_fmt *f)
+static void print_padded (const char *s, int offset, int pad,
+			  PRN *prn)
 {
-    f->namelen = 0;
-    f->blmax = f->brmax = 0;
-    f->slmax = f->srmax = 0;
+    bufspace(offset, prn);
+    pputs(prn, s);
+    bufspace(pad, prn);
+}
+
+static struct printval **allocate_printvals (int n, int m)
+{
+    struct printval **vals;
+    int i, j;
+
+    vals = malloc(n * sizeof *vals);
+
+    for (i=0; i<n && vals != NULL; i++) {
+	vals[i] = malloc(m * sizeof **vals);
+	if (vals[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(vals[j]);
+	    }
+	    free(vals);
+	    vals = NULL;
+	}
+    }
+
+    return vals;
+}
+
+static int plain_print_coeffs (const MODEL *pmod, const DATAINFO *pdinfo, 
+			       PRN *prn)
+{
+    struct printval **vals, *vij;
+    const char *headings[] = { 
+	N_("coefficient"), 
+	N_("std. error"), 
+	N_("t-ratio"),
+	N_("p-value")
+    };
+    const double *b = pmod->coeff;
+    const double *se = pmod->sderr;
+    char **names = NULL;
+    int lmax[4] = {0};
+    int rmax[4] = {0};
+    int w[4], addoff[4] = {0};
+    int hlen, offset, pad;
+    double tval, pval;
+    int n, d, nc = pmod->ncoeff;
+    int namelen = 0;
+    int colsep = 2;
+    int i, j;
+    int err = 0;
+
+    vals = allocate_printvals(nc, 4);
+    if (vals == NULL) {
+	return E_ALLOC;
+    }
+
+    names = strings_array_new_with_length(nc, 32);
+    if (names == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<nc; i++) {
+	if (xna(b[i])) {
+	    err = E_NAN;
+	    goto bailout;
+	}
+	gretl_model_get_param_name(pmod, pdinfo, i, names[i]);
+	n = strlen(names[i]);
+	if (n > namelen) {
+	    namelen = n;
+	}
+	if (na(se[i]) || se[i] <= 0) {
+	    tval = pval = NADBL;
+	} else {
+	    tval = b[i] / se[i];
+	    pval = coeff_pval(pmod->ci, tval, pmod->dfd);
+	}
+	for (j=0; j<4; j++) {
+	    if (j < 2) {
+		d = GRETL_DIGITS;
+		vals[i][j].x = (j==0)? b[i] : se[i];
+	    } else {
+		d = (j==2)? 4 : -4;
+		vals[i][j].x = (j==2)? tval : pval;
+	    }
+	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
+	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+	}
+    }
+
+    if (namelen < 8) {
+	namelen = 8;
+    }
+
+    /* figure appropriate column separation */
+
+    for (j=0; j<4; j++) {
+	w[j] = lmax[j] + rmax[j];
+	hlen = strlen(headings[j]);
+	if (hlen > w[j]) {
+	    addoff[j] = (hlen - w[j]) / 2;
+	    w[j] = hlen;
+	}
+    }	
+
+    n = namelen + 4 * colsep;
+    for (j=0; j<4; j++) {
+	n += w[j];
+    }   
+    n = 68 - (n + 2);
+    if (n > 4) {
+	colsep = 3;
+    }
+
+    /* print headings */
+
+    bufspace(namelen + 2 + colsep, prn);
+    for (j=0; j<4; j++) {
+	hlen = strlen(headings[j]);
+	offset = (w[j] - hlen) / 2;
+	pad = w[j] - hlen - offset;
+	print_padded(headings[j], offset, pad, prn);
+	if (j < 3) {
+	    bufspace(colsep, prn);
+	}
+    }
+
+    /* separator row */
+
+    pputc(prn, '\n');
+    bufspace(2, prn);
+    n = namelen + 4 * colsep;
+    for (j=0; j<4; j++) {
+	n += w[j];
+    }
+    for (j=0; j<n; j++) {
+	pputc(prn, '-');
+    }
+    pputc(prn, '\n');
+
+    /* print row values */
+
+    for (i=0; i<nc; i++) {
+	pprintf(prn, "  %-*s", namelen, names[i]);
+	bufspace(colsep, prn);
+	for (j=0; j<4; j++) {
+	    vij = &vals[i][j];
+	    offset = lmax[j] - vij->lw + addoff[j];
+	    pad = w[j] - (lmax[j] + vij->rw + addoff[j]);
+	    print_padded(vij->s, offset, pad, prn);
+	    if (j < 3) {
+		bufspace(colsep, prn);
+	    } else if (!na(vij->x)) {
+		pval = vij->x;
+		if (pval < 0.01) {
+		    pputs(prn, " ***");
+		} else if (pval < 0.05) {
+		    pputs(prn, " **");
+		} else if (pval < 0.10) {
+		    pputs(prn, " *");
+		}
+	    }	
+	}
+	pputc(prn, '\n');
+    }
+
+ bailout:
+
+    for (i=0; i<nc; i++) {
+	free(vals[i]);
+    }
+    free(vals);
+
+    free_strings_array(names, nc);
+
+    return err;
 }
 
 #endif
@@ -3280,15 +3456,19 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     const char *sepstr = NULL;
     int seppos = -1;
     model_coeff mc;
-#if NEW_COEFF_FMT
-    coeff_fmt cfmt;
-#endif
     int nc = pmod->ncoeff;
     int i, err = 0, gotnan = 0;
 
     if (gretl_model_get_data(pmod, "rq_sequence") != NULL) {
 	return print_rq_sequence(pmod, pdinfo, prn);
     }
+
+#if TRYIT
+    if (pmod->ci == OLS) {
+	/* FIXME: extend this to estimators other than OLS */
+	return plain_print_coeffs(pmod, pdinfo, prn);
+    }
+#endif
 
     if (pmod->ci == PANEL) {
 	nc = pmod->list[0] - 1;
@@ -3304,32 +3484,7 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (plain_format(prn)) {
-#if NEW_COEFF_FMT
-	char tmp[36];
-	int n;
-
-	coeff_fmt_init(&cfmt);
-
-	for (i=0; i<nc; i++) {
-	    err = prepare_model_coeff(pmod, pdinfo, i, &mc, prn);
-	    if (err) {
-		gotnan = 1;
-		break;
-	    }
-	    gretl_sprint_fullwidth_double(mc.b, GRETL_DIGITS, tmp);
-	    get_number_dims(tmp, &cfmt.blmax, &cfmt.brmax);
-	    gretl_sprint_fullwidth_double(mc.se, GRETL_DIGITS, tmp);
-	    get_number_dims(tmp, &cfmt.slmax, &cfmt.srmax);
-	    n = strlen(mc.name);
-	    if (n > cfmt.namelen) {
-		cfmt.namelen = n;
-	    }
-	}
-
-	plain_coeff_table_start(pmod, prn, 15 - cfmt.namelen);
-#else
 	plain_coeff_table_start(pmod, prn, 0);
-#endif
     }
 
     for (i=0; i<nc; i++) {
@@ -3351,12 +3506,6 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    mc.hi = gretl_matrix_get(intervals, i, 1);
 	    mc.show_pval = 0;
 	}
-
-#if NEW_COEFF_FMT
-	if (plain_format(prn)) {
-	    mc.fmt = &cfmt;
-	}
-#endif
 
 	print_coeff(&mc, prn);
     }

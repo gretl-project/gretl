@@ -658,15 +658,30 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ)
     char decpoint = '.';
     int n;
 
+    if (na(x)) {
+	strcpy(targ, "NA");
+	return;
+    }
+
 #ifdef ENABLE_NLS
     decpoint = get_local_decpoint();
 #endif
 
-    /* let's not print non-zero values for numbers smaller than
-       machine zero */
-    x = screen_zero(x);
+    if (digits == -4) {
+	if (x < .0001) {
+	    sprintf(targ, "%#.3G", x);
+	    digits = 3;
+	} else {
+	    sprintf(targ, "%.4f", x);
+	    return;
+	}
+    } else {
+	/* let's not print non-zero values for numbers smaller than
+	   machine zero */
+	x = screen_zero(x);
 
-    sprintf(targ, "%#.*G", digits, x);
+	sprintf(targ, "%#.*G", digits, x);
+    }
 
     gretl_fix_exponent(targ);
 
