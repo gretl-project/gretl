@@ -1444,7 +1444,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     free(cmd->extra);
     cmd->extra = gretl_strdup(numstr);
 
-    if (cmd->param == NULL || cmd->extra) {
+    if (cmd->param == NULL || cmd->extra == NULL) {
 	cmd->err = E_ALLOC;
     }
 }

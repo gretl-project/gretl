@@ -3564,7 +3564,7 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
 
 int do_rename_variable (int v, const char *newname, int full)
 {
-    int err;
+    int err = 0;
 
     if (gretl_is_series(newname, datainfo)) {
 	errbox(_("A series named %s already exists"), newname);
