@@ -3231,7 +3231,7 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-#define TRYIT 1
+#define TRYIT 0
 
 #if TRYIT
 

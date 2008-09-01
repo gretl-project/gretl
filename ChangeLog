@@ -2,6 +2,7 @@ version 1.7.8, in progress
 - Add a language-switching option to the gretl GUI (under
   Preferences/General)
 - Improve formatting of HCCME options pane
+- Fix breakage in "rename" command (renaming series)
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables
