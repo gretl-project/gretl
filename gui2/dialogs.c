@@ -1013,34 +1013,44 @@ struct varinfo_settings {
     int full;
 };
 
+static int got_var_row (int v, gchar *s)
+{
+    int ret = (v == atoi(s));
+
+    g_free(s);
+    return ret;
+}
+
 static void show_varinfo_changes (int v) 
 {
     GtkTreeModel *model;
-    GtkTreeIter iter;
+    GtkTreeIter top, kid, *iptr = NULL;
     gchar *idstr = NULL;
-    int i;
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
 
-    gtk_tree_model_get_iter_first(model, &iter);
+    gtk_tree_model_get_iter_first(model, &top);
 
-    for (i=1; i<datainfo->v; i++) {
-	gtk_tree_model_iter_next(model, &iter);
-	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
-	if (v == atoi(idstr)) {
-	    break;
+    while (iptr == NULL && gtk_tree_model_iter_next(model, &top)) {
+	gtk_tree_model_get(model, &top, 0, &idstr, -1);
+	if (got_var_row(v, idstr)) {
+	    iptr = &top;
+	} else if (gtk_tree_model_iter_children(model, &kid, &top)) {
+	    do {
+		gtk_tree_model_get(model, &kid, 0, &idstr, -1);
+		if (got_var_row(v, idstr)) {
+		    iptr = &kid;
+		    break;
+		}
+	    } while (gtk_tree_model_iter_next(model, &kid));
 	}
-	g_free(idstr); 
-	idstr = NULL;
     }
 
-    if (idstr != NULL) {
-        gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 
-                           0, idstr, 
+    if (iptr != NULL) {
+        gtk_tree_store_set(GTK_TREE_STORE(model), iptr, 
                            1, datainfo->varname[v],
                            2, VARLABEL(datainfo, v),
                            -1);
-	g_free(idstr);
     }
 }
 
@@ -1195,7 +1205,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	    set_var_discrete(datainfo, v, discrete);
 	    disc_changed = 1;
 	}
-    }    
+    }   
 
     if (vset->full) {
 	if (changed) {
