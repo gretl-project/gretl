@@ -576,7 +576,7 @@ static int gretl_callback_code (const gchar *s)
 	return SMPLBOOL;
     if (!strcmp(s, "GENR")) 
 	return GENR;
-    if (!strcmp(s, "VSETMISSV")) 
+    if (!strcmp(s, "VSETMISS")) 
 	return VSETMISS;
     if (!strcmp(s, "GSETMISS")) 
 	return GSETMISS;
