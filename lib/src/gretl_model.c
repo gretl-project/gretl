@@ -4075,7 +4075,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_time_series(pdinfo)) {
 	/* time-series-only tests */
-	if (ci == CHOW || ci == CUSUM || ci == QLRTEST || 
+	if (ci == CUSUM || ci == QLRTEST || 
 	    (ci == LMTEST && (opt & (OPT_H | OPT_A)))) {
 	    ok = 0;
 	}

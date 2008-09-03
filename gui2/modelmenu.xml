@@ -24,10 +24,10 @@
       <menuitem action='normtest'/>
       <menuitem action='leverage'/>
       <menuitem action='vif'/>
+      <menuitem action='chow'/>
       <separator/>
       <menuitem action='lmtest:a'/>
       <menuitem action='lmtest:h'/>
-      <menuitem action='chow'/>
       <menuitem action='qlrtest'/>
       <menuitem action='cusum'/>
       <menuitem action='cusum:r'/>
