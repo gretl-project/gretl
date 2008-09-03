@@ -3336,14 +3336,26 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
     if (V != NULL) {
 	int i, k = order + 1;
 	double *se = malloc(k * sizeof *se);
+	char **names;
 
-	if (se != NULL) {
+	names = strings_array_new_with_length(k, 16);
+
+	if (se != NULL && names != NULL) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Test for ARCH of order %d"), order);
+	    pputs(prn, "\n\n");
+
 	    for (i=0; i<k; i++) {
 		se[i] = sqrt(gretl_matrix_get(V, i, i));
+		sprintf(names[i], "alpha(%d)", i);
 	    }
-	    print_arch_coeffs(b->val, se, T, order, prn, AUX_ARCH);
-	    free(se);
+
+	    plain_print_aux_coeffs(b->val, se, (const char **) names, 
+				   k, T - k, ARCH, prn);
 	}
+
+	free(se);
+	free_strings_array(names, k);
     }
 
     if (test != NULL) {

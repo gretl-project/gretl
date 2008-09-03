@@ -71,4 +71,10 @@ void print_coeff (const model_coeff *mc, PRN *prn);
 void print_arch_coeffs (const double *a, const double *se,
 			int T, int order, PRN *prn, int aux);
 
+int plain_print_aux_coeffs (const double *b,
+			    const double *se,
+			    const char **names,
+			    int nc, int df, int ci,
+			    PRN *prn);
+
 #endif /* MODELPRINT_H */

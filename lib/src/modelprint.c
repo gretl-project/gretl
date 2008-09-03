@@ -26,6 +26,8 @@
 
 #include <glib.h>
 
+#define TRYIT 0
+
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || \
                        a == AUX_AR || a == AUX_VAR || a == AUX_HET_1 || \
 		       a == AUX_BP)
@@ -2119,32 +2121,32 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	char d = prn_delim(prn);
 
 	if (pmod->ci == MPOLS) {
-	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"\n",
-		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"));
+	    pprintf(prn, "%c\"%s\"%c\"%s\"\n",
+		    d, I_("coefficient"), d, I_("std. error"));
 	} else if (slopes) {
-	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
-		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
-		    d, I_("T STAT"), d, I_("SLOPE at mean"));
+	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    d, I_("coefficient"), d, I_("std. error"),
+		    d, I_("t-ratio"), d, I_("slope at mean"));
 	} else if (use_param) {
-	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
-		    I_("PARAMETER"), d, I_("ESTIMATE"), d, I_("STDERROR"),
-		    d, I_("T STAT"), d, I_("P-VALUE"));
+	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    d, I_("estimate"), d, I_("std. error"),
+		    d, I_("t-ratio"), d, I_("p-value"));
 	} else if (intervals) {
-	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
-		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("LOWER"),
-		    d, I_("UPPER"));
+	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    d, I_("coefficient"), d, I_("lower"),
+		    d, I_("upper"));
 	} else if (seqcols == 3) {
-	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
-		    I_("VARIABLE"), d, "TAU", d, I_("COEFFICIENT"), d, I_("LOWER"),
-		    d, I_("UPPER"));
+	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    d, "tau", d, I_("coefficient"), d, I_("lower"),
+		    d, I_("upper"));
 	} else if (seqcols == 2) {
-	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
-		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
-		    d, I_("T STAT"));
+	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    d, I_("coefficient"), d, I_("std. error"),
+		    d, I_("t-ratio"));
 	} else {
-	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
-		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
-		    d, I_("T STAT"), d, I_("P-VALUE"));
+	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    d, I_("coefficient"), d, I_("std. error"),
+		    d, I_("t-ratio"), d, I_("p-value"));
 	}	
     } else {
 	const char *cols[6] = { NULL };
@@ -3129,6 +3131,27 @@ void print_arch_coeffs (const double *a, const double *se,
     model_coeff mc;
     int i;
 
+#if TRYIT
+    if (plain_format(prn)) {
+	int i, k = order + 1;
+	char **names;
+
+	pputc(prn, '\n');
+	pprintf(prn, _("Test for ARCH of order %d"), order);
+	pputs(prn, "\n\n");
+
+	names = strings_array_new_with_length(k, 16);
+	if (names != NULL) {
+	    for (i=0; i<k; i++) {
+		sprintf(names[i], "alpha(%d)", i);
+	    }
+	    plain_print_aux_coeffs(a, se, (const char **) names, k, T - k, ARCH, prn);
+	    free_strings_array(names, k);
+	}
+	return;
+    }
+#endif
+
     if (aux) {
 	pputc(prn, '\n');
 	pprintf(prn, _("Test for ARCH of order %d"), order);
@@ -3231,10 +3254,6 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-#define TRYIT 0
-
-#if TRYIT
-
 struct printval {
     char s[36];
     int lw, rw;
@@ -3267,12 +3286,26 @@ static void get_number_dims (struct printval *v, int *lmax, int *rmax)
     if (v->rw > *rmax) *rmax = v->rw;
 }
 
-static void print_padded (const char *s, int offset, int pad,
-			  PRN *prn)
+static void print_padded_head (const char *s, int w, PRN *prn)
 {
+    int hlen = strlen(s);
+    int offset = (w - hlen) / 2;
+    int pad = w - hlen - offset;
+
     bufspace(offset, prn);
     pputs(prn, s);
-    bufspace(pad, prn);
+    bufspace(pad, prn);    
+}
+
+static void print_padded_value (struct printval *val, int w, 
+				int lmax, int addoff, PRN *prn)
+{
+    int offset = lmax - val->lw + addoff;
+    int pad = w - (lmax + val->rw + addoff);
+
+    bufspace(offset, prn);
+    pputs(prn, val->s);
+    bufspace(pad, prn);    
 }
 
 static struct printval **allocate_printvals (int n, int m)
@@ -3337,11 +3370,174 @@ static int get_arch_data (const MODEL *pmod, double **pb,
     return err;
 }
 
+static void figure_colsep (int namelen, int ncols, int *w,
+			   int *colsep)
+{
+    int j, n = namelen + ncols * *colsep;
+
+    for (j=0; j<ncols; j++) {
+	n += w[j];
+    }   
+    n = 68 - (n + 2);
+    if (n > ncols) {
+	*colsep += 1;
+    }
+}
+
+static void print_sep_row (int namelen, int ncols, int *w,
+			   int colsep, PRN *prn)
+{
+    int j, n;
+
+    pputc(prn, '\n');
+    bufspace(2, prn);
+    n = namelen + ncols * colsep;
+    for (j=0; j<ncols; j++) {
+	n += w[j];
+    }
+    for (j=0; j<n; j++) {
+	pputc(prn, '-');
+    }
+    pputc(prn, '\n');
+}
+
+static void put_asts (double pv, PRN *prn)
+{
+    if (pv < 0.01) {
+	pputs(prn, " ***");
+    } else if (pv < 0.05) {
+	pputs(prn, " **");
+    } else if (pv < 0.10) {
+	pputs(prn, " *");
+    }
+}
+
+int plain_print_aux_coeffs (const double *b,
+			    const double *se,
+			    const char **names,
+			    int nc, int df, int ci,
+			    PRN *prn)
+{
+    struct printval **vals, *vij;
+    const char *headings[] = { 
+	N_("coefficient"), 
+	N_("std. error"), 
+	N_("t-ratio"),
+	N_("p-value")
+    };
+    const char *head;
+    int lmax[4] = {0};
+    int rmax[4] = {0};
+    int w[4], addoff[4] = {0};
+    int hlen;
+    double tval, pval;
+    int namelen = 0;
+    int colsep = 2;
+    int n, d, i, j;
+    int err = 0;
+
+    vals = allocate_printvals(nc, 4);
+    if (vals == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<nc; i++) {
+	if (xna(b[i])) {
+	    err = E_NAN;
+	    goto bailout;
+	}
+	n = strlen(names[i]);
+	if (n > namelen) {
+	    namelen = n;
+	}
+	if (na(se[i]) || se[i] <= 0) {
+	    tval = pval = NADBL;
+	} else {
+	    tval = b[i] / se[i];
+	    pval = coeff_pval(ci, tval, df);
+	}
+	for (j=0; j<4; j++) {
+	    if (j < 2) {
+		/* coeff, standard error */
+		d = GRETL_DIGITS;
+		vals[i][j].x = (j==0)? b[i] : se[i];
+	    } else if (j == 2) {
+		/* t-ratio */
+		d = 4;
+		vals[i][j].x = tval;
+	    } else {
+		/* p-value */
+		d = -4;
+		vals[i][j].x = pval;
+	    }
+	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
+	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+	}
+    }
+
+    if (namelen < 8) {
+	namelen = 8;
+    }
+
+    /* figure appropriate column separation */
+
+    for (j=0; j<4; j++) {
+	w[j] = lmax[j] + rmax[j];
+	head = _(headings[j]);
+	hlen = strlen(head);
+	if (hlen > w[j]) {
+	    addoff[j] = (hlen - w[j]) / 2;
+	    w[j] = hlen;
+	}
+    }
+
+    figure_colsep(namelen, 4, w, &colsep);
+
+    /* print headings */
+
+    bufspace(namelen + 2 + colsep, prn);
+    for (j=0; j<4; j++) {
+	print_padded_head(_(headings[j]), w[j], prn);
+	if (j < 3) {
+	    bufspace(colsep, prn);
+	}
+    }
+
+    /* separator row */
+    print_sep_row(namelen, 4, w, colsep, prn);
+
+    /* print row values */
+
+    for (i=0; i<nc; i++) {
+	pprintf(prn, "  %-*s", namelen, names[i]);
+	bufspace(colsep, prn);
+	for (j=0; j<4; j++) {
+	    vij = &vals[i][j];
+	    print_padded_value(vij, w[j], lmax[j], addoff[j], prn);
+	    if (j < 3) {
+		bufspace(colsep, prn);
+	    } else if (!na(vij->x)) {
+		put_asts(vij->x, prn);
+	    }	
+	}
+	pputc(prn, '\n');
+    }
+
+ bailout:
+
+    for (i=0; i<nc; i++) {
+	free(vals[i]);
+    }
+    free(vals);
+
+    return err;
+}
+
 static int plain_print_mp_coeffs (const MODEL *pmod, 
 				  const DATAINFO *pdinfo, 
 				  PRN *prn)
 {
-    struct printval **vals, *vij;
+    struct printval **vals;
     const char *headings[] = { 
 	N_("coefficient"), 
 	N_("std. error") 
@@ -3353,7 +3549,7 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
     int lmax[2] = {0};
     int rmax[2] = {0};
     int w[2], addoff[2] = {0};
-    int hlen, offset, pad;
+    int hlen;
     int n, d, nc = pmod->ncoeff;
     int namelen = 0;
     int colsep = 2;
@@ -3403,43 +3599,22 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
 	    addoff[j] = (hlen - w[j]) / 2;
 	    w[j] = hlen;
 	}
-    }	
-
-    n = namelen + 2 * colsep;
-    for (j=0; j<2; j++) {
-	n += w[j];
-    }   
-    n = 68 - (n + 2);
-    if (n > 2) {
-	colsep = 3;
     }
+
+    figure_colsep(namelen, 2, w, &colsep);
 
     /* print headings */
 
     bufspace(namelen + 2 + colsep, prn);
     for (j=0; j<2; j++) {
-	head = _(headings[j]);
-	hlen = strlen(head);
-	offset = (w[j] - hlen) / 2;
-	pad = w[j] - hlen - offset;
-	print_padded(head, offset, pad, prn);
+	print_padded_head(_(headings[j]), w[j], prn);
 	if (j < 3) {
 	    bufspace(colsep, prn);
 	}
     }
 
     /* separator row */
-
-    pputc(prn, '\n');
-    bufspace(2, prn);
-    n = namelen + 2 * colsep;
-    for (j=0; j<2; j++) {
-	n += w[j];
-    }
-    for (j=0; j<n; j++) {
-	pputc(prn, '-');
-    }
-    pputc(prn, '\n');
+    print_sep_row(namelen, 2, w, colsep, prn);
 
     /* print row values */
 
@@ -3447,10 +3622,7 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);
 	for (j=0; j<2; j++) {
-	    vij = &vals[i][j];
-	    offset = lmax[j] - vij->lw + addoff[j];
-	    pad = w[j] - (lmax[j] + vij->rw + addoff[j]);
-	    print_padded(vij->s, offset, pad, prn);
+	    print_padded_value(&vals[i][j], w[j], lmax[j], addoff[j], prn);
 	    if (j == 0) {
 		bufspace(colsep, prn);
 	    } 
@@ -3494,7 +3666,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     int lmax[4] = {0};
     int rmax[4] = {0};
     int w[4], addoff[4] = {0};
-    int hlen, offset, pad;
+    int hlen;
     double tval, pval;
     int n, d, nc = pmod->ncoeff;
     int show_slope, adfnum = -1;
@@ -3581,7 +3753,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 		d = 4;
 		vals[i][j].x = tval;
 	    } else {
-		/* p-value of slope */
+		/* p-value or slope */
 		d = (show_slope)? 6 : -4;
 		vals[i][j].x = pval;
 	    }
@@ -3614,16 +3786,9 @@ static int plain_print_coeffs (const MODEL *pmod,
 	    addoff[j] = (hlen - w[j]) / 2;
 	    w[j] = hlen;
 	}
-    }	
-
-    n = namelen + 4 * colsep;
-    for (j=0; j<4; j++) {
-	n += w[j];
-    }   
-    n = 68 - (n + 2);
-    if (n > 4) {
-	colsep = 3;
     }
+
+    figure_colsep(namelen, 4, w, &colsep);
 
     /* print headings */
 
@@ -3634,27 +3799,14 @@ static int plain_print_coeffs (const MODEL *pmod,
 	} else {
 	    head = _(headings[j]);
 	}
-	hlen = strlen(head);
-	offset = (w[j] - hlen) / 2;
-	pad = w[j] - hlen - offset;
-	print_padded(head, offset, pad, prn);
+	print_padded_head(head, w[j], prn);
 	if (j < 3) {
 	    bufspace(colsep, prn);
 	}
     }
 
     /* separator row */
-
-    pputc(prn, '\n');
-    bufspace(2, prn);
-    n = namelen + 4 * colsep;
-    for (j=0; j<4; j++) {
-	n += w[j];
-    }
-    for (j=0; j<n; j++) {
-	pputc(prn, '-');
-    }
-    pputc(prn, '\n');
+    print_sep_row(namelen, 4, w, colsep, prn);
 
     /* print row values */
 
@@ -3666,20 +3818,11 @@ static int plain_print_coeffs (const MODEL *pmod,
 	bufspace(colsep, prn);
 	for (j=0; j<4; j++) {
 	    vij = &vals[i][j];
-	    offset = lmax[j] - vij->lw + addoff[j];
-	    pad = w[j] - (lmax[j] + vij->rw + addoff[j]);
-	    print_padded(vij->s, offset, pad, prn);
+	    print_padded_value(vij, w[j], lmax[j], addoff[j], prn);
 	    if (j < 3) {
 		bufspace(colsep, prn);
 	    } else if (!show_slope && !na(vij->x)) {
-		pval = vij->x;
-		if (pval < 0.01) {
-		    pputs(prn, " ***");
-		} else if (pval < 0.05) {
-		    pputs(prn, " **");
-		} else if (pval < 0.10) {
-		    pputs(prn, " *");
-		}
+		put_asts(vij->x, prn);
 	    }	
 	}
 	pputc(prn, '\n');
@@ -3698,8 +3841,6 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     return err;
 }
-
-#endif
 
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
