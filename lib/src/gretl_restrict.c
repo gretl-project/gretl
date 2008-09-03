@@ -1658,45 +1658,6 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
     return rset;
 }
 
-static int 
-print_restricted_coeff (const MODEL *pmod, int i,
-			double coeff, double sderr, int k,
-			const DATAINFO *pdinfo, 
-			PRN *prn)
-{
-    model_coeff mc;
-    int gotnan = 0;
-
-    model_coeff_init(&mc);
-
-    if (xna(coeff)) {
-	gotnan = 1;
-    }
-
-    mc.b = coeff;
-    mc.se = sderr;
-
-    if (!xna(coeff) && !xna(sderr) && sderr > 0) {
-	mc.tval = coeff / sderr;
-	mc.pval = coeff_pval(pmod->ci, mc.tval, pmod->dfd + k);
-    }
-
-    gretl_model_get_param_name(pmod, pdinfo, i, mc.name);
-
-    print_coeff(&mc, prn);
-
-    return gotnan;
-}
-
-static void coeff_header (const MODEL *pmod, PRN *prn)
-{
-    int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
-
-    print_coeff_heading(use_param, prn);
-}
-
-#if 1
-
 static int print_restricted_estimates (MODEL *pmod,
 				       const DATAINFO *pdinfo,
 				       gretl_matrix *vb,
@@ -1741,8 +1702,6 @@ static int print_restricted_estimates (MODEL *pmod,
 
     return 0;
 }
-
-#endif
 
 /* generate full restricted estimates: this function is used
    only for single-equation models, estimated via OLS */
@@ -1806,28 +1765,10 @@ do_restricted_estimates (gretl_restriction *rset,
     err = gretl_matrix_restricted_ols(y, X, rset->R, rset->q, 
 				      b, S, NULL, &s2);
 
-#if 1
     if (!err) {
 	print_restricted_estimates(pmod, pdinfo, b, S, s2,
 				   k, rset->k, prn);
     }
-#else
-    if (!err) {
-	double v, coeff, se;
-
-	pprintf(prn, "%s:\n\n", _("Restricted estimates"));
-	coeff_header(pmod, prn);
-	for (i=0; i<k; i++) {
-	    coeff = gretl_vector_get(b, i);
-	    v = gretl_matrix_get(S, i, i);
-	    se = (v > 1.0e-16)? sqrt(v) : 0.0;
-	    print_restricted_coeff(pmod, i, coeff, se, rset->k, pdinfo, prn);
-	}
-	pputc(prn, '\n');
-	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
-		GRETL_DIGITS, sqrt(s2));
-    } 
-#endif
 
  bailout:
     
