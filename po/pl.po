@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.7.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 13:34-0400\n"
+"POT-Creation-Date: 2008-09-04 14:51-0400\n"
 "PO-Revision-Date: 2008-09-04 13:42-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -3211,8 +3211,7 @@ msgstr "Za dużo restrykcji (maksymalnie %d)"
 msgid "Restricted estimates"
 msgstr "Estymacja z ograniczeniami"
 
-#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
-#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/gretl_restrict.c:1697
 msgid "Standard error of residuals"
 msgstr "Błąd standardowy reszt"
 
@@ -3910,6 +3909,12 @@ msgstr "Bezwarunkowa wariancja błędu modelu"
 #: lib/src/modelprint.c:644 lib/src/modelprint.c:651
 msgid "Sum of squared residuals"
 msgstr "Suma  kwadratów  reszt"
+
+#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
+#: lib/src/modelprint.c:198
+#, fuzzy
+msgid "Standard error of the regression"
+msgstr "Błąd standardowy reszt"
 
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222
 #: lib/src/modelprint.c:224 lib/src/printout.c:2280

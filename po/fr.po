@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 13:34-0400\n"
+"POT-Creation-Date: 2008-09-04 14:51-0400\n"
 "PO-Revision-Date: 2008-09-04 13:40-0400\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -3222,8 +3222,7 @@ msgstr "Trop de restrictions (maximum est de %d)"
 msgid "Restricted estimates"
 msgstr "Estimations contraintes"
 
-#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
-#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/gretl_restrict.c:1697
 msgid "Standard error of residuals"
 msgstr "Erreur standard des résidus"
 
@@ -3925,6 +3924,12 @@ msgstr "Variance non conditionnelle des erreurs"
 #: lib/src/modelprint.c:644 lib/src/modelprint.c:651
 msgid "Sum of squared residuals"
 msgstr "Somme des carrés des résidus"
+
+#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
+#: lib/src/modelprint.c:198
+#, fuzzy
+msgid "Standard error of the regression"
+msgstr "Erreur standard des résidus"
 
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222
 #: lib/src/modelprint.c:224 lib/src/printout.c:2280

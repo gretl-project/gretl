@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 13:34-0400\n"
+"POT-Creation-Date: 2008-09-04 14:51-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3027,8 +3027,7 @@ msgstr ""
 msgid "Restricted estimates"
 msgstr ""
 
-#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
-#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/gretl_restrict.c:1697
 msgid "Standard error of residuals"
 msgstr ""
 
@@ -3701,6 +3700,11 @@ msgstr ""
 #: lib/src/modelprint.c:196 lib/src/modelprint.c:633 lib/src/modelprint.c:639
 #: lib/src/modelprint.c:644 lib/src/modelprint.c:651
 msgid "Sum of squared residuals"
+msgstr ""
+
+#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
+#: lib/src/modelprint.c:198
+msgid "Standard error of the regression"
 msgstr ""
 
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222

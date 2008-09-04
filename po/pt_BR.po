@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 13:34-0400\n"
+"POT-Creation-Date: 2008-09-04 14:51-0400\n"
 "PO-Revision-Date: 2008-08-31 13:28+0100\n"
 "Last-Translator: Hélio Guilherme <helio.guilherme@bluebottle.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
@@ -3215,8 +3215,7 @@ msgstr "Demasiadas restrições (o máximo é %d)"
 msgid "Restricted estimates"
 msgstr "Estimativas restringidas"
 
-#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
-#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/gretl_restrict.c:1697
 msgid "Standard error of residuals"
 msgstr "Erro padrão dos resíduos"
 
@@ -3921,6 +3920,12 @@ msgstr "Variância do erro incondicional"
 #: lib/src/modelprint.c:644 lib/src/modelprint.c:651
 msgid "Sum of squared residuals"
 msgstr "Soma dos resíduos quadrados"
+
+#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
+#: lib/src/modelprint.c:198
+#, fuzzy
+msgid "Standard error of the regression"
+msgstr "Erro padrão dos resíduos"
 
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222
 #: lib/src/modelprint.c:224 lib/src/printout.c:2280

@@ -177,12 +177,12 @@ real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
     if (plain_format(prn)) {    
 	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
 		XDIGITS(pmod), ess);
-	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
+	pprintf(prn, "  %s = %.*g\n", _("Standard error of the regression"), 
 		XDIGITS(pmod), sigma);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
 		ess);
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of residuals"), 
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of the regression"), 
 		sigma);
     } else if (tex_format(prn)) {
 	char x1str[32], x2str[32];
@@ -191,11 +191,11 @@ real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
 	tex_dcolumn_double(sigma, x2str);
 	pprintf(prn, "%s & %s \\\\\n%s ($\\hat{\\sigma}$) & %s \\\\\n",
 		I_("Sum of squared residuals"), x1str,
-		I_("Standard error of residuals"), x2str);
+		I_("Standard error of the regression"), x2str);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of squared residuals"), 
 		prn_delim(prn), ess);
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Standard error of residuals"), 
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Standard error of the regression"), 
 		prn_delim(prn), sigma);
     }	
 

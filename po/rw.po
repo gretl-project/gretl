@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 13:34-0400\n"
+"POT-Creation-Date: 2008-09-04 14:51-0400\n"
 "PO-Revision-Date: 2005-04-04 10:55-0700\n"
 "Last-Translator: Steven Michael Murphy <murf@e-tools.com>\n"
 "Language-Team: Kinyarwanda <translation-team-rw@lists.sourceforge.net>\n"
@@ -3343,8 +3343,7 @@ msgstr "Amabwiriza Kinini ni"
 msgid "Restricted estimates"
 msgstr "%sni a"
 
-#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
-#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/gretl_restrict.c:1697
 #, fuzzy
 msgid "Standard error of residuals"
 msgstr "Ikosa Bya"
@@ -4078,6 +4077,12 @@ msgstr "Ikosa Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
 #, fuzzy
 msgid "Sum of squared residuals"
 msgstr "Bya"
+
+#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
+#: lib/src/modelprint.c:198
+#, fuzzy
+msgid "Standard error of the regression"
+msgstr "Ikosa Bya"
 
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222
 #: lib/src/modelprint.c:224 lib/src/printout.c:2280

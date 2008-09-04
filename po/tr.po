@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 13:34-0400\n"
+"POT-Creation-Date: 2008-09-04 14:51-0400\n"
 "PO-Revision-Date: 2007-01-05 11:09-0500\n"
 "Last-Translator: Özgür İşgören <yol_gezer18@yahoo.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
@@ -3547,8 +3547,7 @@ msgstr ""
 msgid "Restricted estimates"
 msgstr "%s bir değişmezdir "
 
-#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
-#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/gretl_restrict.c:1697
 #, fuzzy
 msgid "Standard error of residuals"
 msgstr "kalıntılar için standart hata"
@@ -4311,6 +4310,12 @@ msgstr "Hata değişintisi alınamıyor "
 #, fuzzy
 msgid "Sum of squared residuals"
 msgstr "Kareli kalıntıların toplamı"
+
+#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
+#: lib/src/modelprint.c:198
+#, fuzzy
+msgid "Standard error of the regression"
+msgstr "kalıntılar için standart hata"
 
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222
 #: lib/src/modelprint.c:224 lib/src/printout.c:2280
