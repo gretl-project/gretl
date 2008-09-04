@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 14:51-0400\n"
+"POT-Creation-Date: 2008-09-04 15:30-0400\n"
 "PO-Revision-Date: 2008-09-04 13:35-0400\n"
 "Last-Translator: Sven Schreiber <svetosch --- gmx  ... net>\n"
 "Language-Team: German\n"
@@ -419,7 +419,7 @@ msgstr "Autokorrelation erster Ordnung"
 
 #: lib/src/compare.c:1596 lib/src/compare.c:1789 lib/src/graphing.c:2282
 #: lib/src/graphing.c:2291 lib/src/graphing.c:2358 lib/src/graphing.c:3374
-#: lib/src/gretl_panel.c:3252 lib/src/printout.c:1087 gui2/guiprint.c:1538
+#: lib/src/gretl_panel.c:3252 lib/src/printout.c:1088 gui2/guiprint.c:1538
 #: gui2/guiprint.c:1594 gui2/library.c:4746 plugin/leverage.c:462
 msgid "residual"
 msgstr "Residuum"
@@ -2384,7 +2384,7 @@ msgstr "links"
 msgid "actual"
 msgstr "tatsächlich"
 
-#: lib/src/graphing.c:2365 lib/src/graphing.c:2368 lib/src/printout.c:1086
+#: lib/src/graphing.c:2365 lib/src/graphing.c:2368 lib/src/printout.c:1087
 #: gui2/guiprint.c:1538 gui2/guiprint.c:1594
 msgid "fitted"
 msgstr "angepasst"
@@ -2420,7 +2420,7 @@ msgstr "Skalierte Frequenz"
 msgid "95 percent confidence interval"
 msgstr "95-Prozent-Konfidenzintervall"
 
-#: lib/src/graphing.c:3144 lib/src/graphing.c:3151 lib/src/printout.c:1086
+#: lib/src/graphing.c:3144 lib/src/graphing.c:3151 lib/src/printout.c:1087
 msgid "forecast"
 msgstr "Prognose"
 
@@ -3203,8 +3203,11 @@ msgstr "Zu viele Restriktionen (Maximum ist %d)"
 msgid "Restricted estimates"
 msgstr "Restringierte Schätzungen"
 
-#: lib/src/gretl_restrict.c:1697
-msgid "Standard error of residuals"
+#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
+#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/printout.c:1078
+#, fuzzy
+msgid "Standard error of the regression"
 msgstr "Standardfehler der Residuen"
 
 #: lib/src/gretl_restrict.c:1802
@@ -3901,14 +3904,8 @@ msgstr "Unbedingte Varianz der Fehler"
 msgid "Sum of squared residuals"
 msgstr "Summe der quadrierten Residuen"
 
-#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
-#: lib/src/modelprint.c:198
-#, fuzzy
-msgid "Standard error of the regression"
-msgstr "Standardfehler der Residuen"
-
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222
-#: lib/src/modelprint.c:224 lib/src/printout.c:2280
+#: lib/src/modelprint.c:224 lib/src/printout.c:2281
 msgid "GMM criterion"
 msgstr "GMM Kriterium"
 
@@ -4706,7 +4703,7 @@ msgstr "Statistiken basieren auf rho-differenzierten Daten"
 
 #: lib/src/modelprint.c:2343 lib/src/modelprint.c:2353
 #: lib/src/modelprint.c:2359 lib/src/modelprint.c:4337
-#: lib/src/modelprint.c:4371 lib/src/modelprint.c:4406 lib/src/printout.c:2279
+#: lib/src/modelprint.c:4371 lib/src/modelprint.c:4406 lib/src/printout.c:2280
 #: lib/src/system.c:3721 lib/src/system.c:3728 lib/src/texprint.c:877
 #: lib/src/varprint.c:1063 lib/src/varprint.c:1072
 msgid "Log-likelihood"
@@ -5103,7 +5100,7 @@ msgstr ""
 msgid "stopped after %d iterations\n"
 msgstr "gestoppt nach %d Iterationen\n"
 
-#: lib/src/nonparam.c:249 lib/src/printout.c:1082 gui2/guiprint.c:1671
+#: lib/src/nonparam.c:249 lib/src/printout.c:1083 gui2/guiprint.c:1671
 #: gui2/guiprint.c:1724 gui2/guiprint.c:1783 gui2/guiprint.c:1819
 #: gui2/series_view.c:198
 msgid "Obs"
@@ -5493,74 +5490,69 @@ msgstr ""
 msgid "Model estimation range: %s - %s"
 msgstr "Modell-Schätzbereich: %s - %s "
 
-#: lib/src/printout.c:1078
-#, c-format
-msgid "Standard error of residuals = %g\n"
-msgstr "Standardfehler der Residuen = %g\n"
-
-#: lib/src/printout.c:1087
+#: lib/src/printout.c:1088
 msgid "error"
 msgstr "Fehler"
 
-#: lib/src/printout.c:1517
+#: lib/src/printout.c:1518
 #, c-format
 msgid "Listing %d variables:\n"
 msgstr "Liste %d Variablen auf:\n"
 
-#: lib/src/printout.c:1602
+#: lib/src/printout.c:1603
 msgid "list is empty"
 msgstr "Liste ist leer"
 
-#: lib/src/printout.c:1771
+#: lib/src/printout.c:1772
 #, c-format
 msgid "Varname: %s\n"
 msgstr "Varname: %s\n"
 
-#: lib/src/printout.c:2067
+#: lib/src/printout.c:2068
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr "Anm.: * zeigt Residuum außerhalb von 2.5 Standardfehlern an\n"
 
-#: lib/src/printout.c:2073
+#: lib/src/printout.c:2074
 msgid "Mean Squared Error"
 msgstr "Mittlerer quadratischer Fehler"
 
-#: lib/src/printout.c:2074
+#: lib/src/printout.c:2075
 msgid "Root Mean Squared Error"
 msgstr "Wurzel d. mittl. quad. Fehlers"
 
-#: lib/src/printout.c:2075
+#: lib/src/printout.c:2076
 msgid "Mean Absolute Error"
 msgstr "Mittlerer absoluter Fehler"
 
-#: lib/src/printout.c:2134
+#: lib/src/printout.c:2135
 #, c-format
 msgid " For 95%% confidence intervals, z(.025) = %.2f\n"
 msgstr "Für 95%%-Konfidenzintervalle, z(.025) = %.2f\n"
 
-#: lib/src/printout.c:2137
+#: lib/src/printout.c:2138
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr "Für 95%%-Konfidenzintervalle, t(%d, .025) = %.3f\n"
 
-#: lib/src/printout.c:2144 gui2/guiprint.c:1671 gui2/guiprint.c:1725
+#: lib/src/printout.c:2145 gui2/guiprint.c:1671 gui2/guiprint.c:1725
 #: gui2/guiprint.c:1783 gui2/guiprint.c:1819
 msgid "prediction"
 msgstr "Prognose"
 
-#: lib/src/printout.c:2147
+#: lib/src/printout.c:2148
 msgid " std. error"
 msgstr " Std.-fehler"
 
-#: lib/src/printout.c:2148
+#: lib/src/printout.c:2149
 #, c-format
 msgid "   95%% confidence interval\n"
 msgstr "   95%%-Konfidenzintervall\n"
 
-#: lib/src/printout.c:2281
+#: lib/src/printout.c:2282
 msgid "Criterion"
 msgstr "Kriterium"
 
-#: lib/src/printout.c:2291
+#: lib/src/printout.c:2292
 msgid ""
 "\n"
 "--- FINAL VALUES: \n"
@@ -5568,20 +5560,20 @@ msgstr ""
 "\n"
 "--- ENDWERTE: \n"
 
-#: lib/src/printout.c:2293
+#: lib/src/printout.c:2294
 msgid "Iteration"
 msgstr "Iteration"
 
-#: lib/src/printout.c:2303
+#: lib/src/printout.c:2304
 #, c-format
 msgid " (steplength = %g)"
 msgstr " (Schrittweite = %g)"
 
-#: lib/src/printout.c:2308
+#: lib/src/printout.c:2309
 msgid "Parameters: "
 msgstr "Parameter: "
 
-#: lib/src/printout.c:2314
+#: lib/src/printout.c:2315
 msgid "Gradients:  "
 msgstr "Gradienten:  "
 
@@ -14297,6 +14289,12 @@ msgstr "Zeichenketten"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Zugriffsvariablen"
+
+#~ msgid "Standard error of residuals"
+#~ msgstr "Standardfehler der Residuen"
+
+#~ msgid "Standard error of residuals = %g\n"
+#~ msgstr "Standardfehler der Residuen = %g\n"
 
 #~ msgid "Parameter"
 #~ msgstr "Parameter"

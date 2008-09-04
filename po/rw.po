@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-04 14:51-0400\n"
+"POT-Creation-Date: 2008-09-04 15:30-0400\n"
 "PO-Revision-Date: 2005-04-04 10:55-0700\n"
 "Last-Translator: Steven Michael Murphy <murf@e-tools.com>\n"
 "Language-Team: Kinyarwanda <translation-team-rw@lists.sourceforge.net>\n"
@@ -434,7 +434,7 @@ msgstr "Itangira Itondekanya"
 
 #: lib/src/compare.c:1596 lib/src/compare.c:1789 lib/src/graphing.c:2282
 #: lib/src/graphing.c:2291 lib/src/graphing.c:2358 lib/src/graphing.c:3374
-#: lib/src/gretl_panel.c:3252 lib/src/printout.c:1087 gui2/guiprint.c:1538
+#: lib/src/gretl_panel.c:3252 lib/src/printout.c:1088 gui2/guiprint.c:1538
 #: gui2/guiprint.c:1594 gui2/library.c:4746 plugin/leverage.c:462
 msgid "residual"
 msgstr ""
@@ -2463,7 +2463,7 @@ msgstr "ibumoso"
 msgid "actual"
 msgstr ""
 
-#: lib/src/graphing.c:2365 lib/src/graphing.c:2368 lib/src/printout.c:1086
+#: lib/src/graphing.c:2365 lib/src/graphing.c:2368 lib/src/printout.c:1087
 #: gui2/guiprint.c:1538 gui2/guiprint.c:1594
 msgid "fitted"
 msgstr ""
@@ -2502,7 +2502,7 @@ msgstr "Gipimye Ubwisubire"
 msgid "95 percent confidence interval"
 msgstr "Ku ijana UKWIYIZERA Intera"
 
-#: lib/src/graphing.c:3144 lib/src/graphing.c:3151 lib/src/printout.c:1086
+#: lib/src/graphing.c:3144 lib/src/graphing.c:3151 lib/src/printout.c:1087
 #, fuzzy
 msgid "forecast"
 msgstr "Bya"
@@ -3343,9 +3343,11 @@ msgstr "Amabwiriza Kinini ni"
 msgid "Restricted estimates"
 msgstr "%sni a"
 
-#: lib/src/gretl_restrict.c:1697
+#: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:180
+#: lib/src/modelprint.c:185 lib/src/modelprint.c:194 lib/src/modelprint.c:198
+#: lib/src/printout.c:1078
 #, fuzzy
-msgid "Standard error of residuals"
+msgid "Standard error of the regression"
 msgstr "Ikosa Bya"
 
 #: lib/src/gretl_restrict.c:1802
@@ -4078,14 +4080,8 @@ msgstr "Ikosa Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
 msgid "Sum of squared residuals"
 msgstr "Bya"
 
-#: lib/src/modelprint.c:180 lib/src/modelprint.c:185 lib/src/modelprint.c:194
-#: lib/src/modelprint.c:198
-#, fuzzy
-msgid "Standard error of the regression"
-msgstr "Ikosa Bya"
-
 #: lib/src/modelprint.c:211 lib/src/modelprint.c:214 lib/src/modelprint.c:222
-#: lib/src/modelprint.c:224 lib/src/printout.c:2280
+#: lib/src/modelprint.c:224 lib/src/printout.c:2281
 #, fuzzy
 msgid "GMM criterion"
 msgstr "Itangira"
@@ -4964,7 +4960,7 @@ msgstr "ku i ro Ibyatanzwe"
 
 #: lib/src/modelprint.c:2343 lib/src/modelprint.c:2353
 #: lib/src/modelprint.c:2359 lib/src/modelprint.c:4337
-#: lib/src/modelprint.c:4371 lib/src/modelprint.c:4406 lib/src/printout.c:2279
+#: lib/src/modelprint.c:4371 lib/src/modelprint.c:4406 lib/src/printout.c:2280
 #: lib/src/system.c:3721 lib/src/system.c:3728 lib/src/texprint.c:877
 #: lib/src/varprint.c:1063 lib/src/varprint.c:1072
 msgid "Log-likelihood"
@@ -5381,7 +5377,7 @@ msgstr ""
 msgid "stopped after %d iterations\n"
 msgstr "Nyuma"
 
-#: lib/src/nonparam.c:249 lib/src/printout.c:1082 gui2/guiprint.c:1671
+#: lib/src/nonparam.c:249 lib/src/printout.c:1083 gui2/guiprint.c:1671
 #: gui2/guiprint.c:1724 gui2/guiprint.c:1783 gui2/guiprint.c:1819
 #: gui2/series_view.c:198
 msgid "Obs"
@@ -5772,101 +5768,96 @@ msgstr ""
 msgid "Model estimation range: %s - %s"
 msgstr "Urutonde"
 
-#: lib/src/printout.c:1078
-#, fuzzy, c-format
-msgid "Standard error of residuals = %g\n"
-msgstr "Ikosa Bya"
-
-#: lib/src/printout.c:1087
+#: lib/src/printout.c:1088
 #, fuzzy
 msgid "error"
 msgstr "STD."
 
-#: lib/src/printout.c:1517
+#: lib/src/printout.c:1518
 #, fuzzy, c-format
 msgid "Listing %d variables:\n"
 msgstr "Ibihinduka"
 
-#: lib/src/printout.c:1602
+#: lib/src/printout.c:1603
 #, fuzzy
 msgid "list is empty"
 msgstr "ni ubusa"
 
-#: lib/src/printout.c:1771
+#: lib/src/printout.c:1772
 #, c-format
 msgid "Varname: %s\n"
 msgstr ""
 
-#: lib/src/printout.c:2067
+#: lib/src/printout.c:2068
 #, fuzzy
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr "a in Bya 2. 5 Bisanzwe"
 
-#: lib/src/printout.c:2073
+#: lib/src/printout.c:2074
 #, fuzzy
 msgid "Mean Squared Error"
 msgstr "Ikosa"
 
-#: lib/src/printout.c:2074
+#: lib/src/printout.c:2075
 #, fuzzy
 msgid "Root Mean Squared Error"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/printout.c:2075
+#: lib/src/printout.c:2076
 msgid "Mean Absolute Error"
 msgstr ""
 
-#: lib/src/printout.c:2134
+#: lib/src/printout.c:2135
 #, fuzzy, c-format
 msgid " For 95%% confidence intervals, z(.025) = %.2f\n"
 msgstr "UKWIYIZERA T"
 
-#: lib/src/printout.c:2137
+#: lib/src/printout.c:2138
 #, fuzzy, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr "UKWIYIZERA T"
 
-#: lib/src/printout.c:2144 gui2/guiprint.c:1671 gui2/guiprint.c:1725
+#: lib/src/printout.c:2145 gui2/guiprint.c:1671 gui2/guiprint.c:1725
 #: gui2/guiprint.c:1783 gui2/guiprint.c:1819
 msgid "prediction"
 msgstr ""
 
-#: lib/src/printout.c:2147
+#: lib/src/printout.c:2148
 #, fuzzy
 msgid " std. error"
 msgstr "STD."
 
-#: lib/src/printout.c:2148
+#: lib/src/printout.c:2149
 #, fuzzy, c-format
 msgid "   95%% confidence interval\n"
 msgstr "UKWIYIZERA"
 
-#: lib/src/printout.c:2281
+#: lib/src/printout.c:2282
 #, fuzzy
 msgid "Criterion"
 msgstr "Itangira"
 
-#: lib/src/printout.c:2291
+#: lib/src/printout.c:2292
 msgid ""
 "\n"
 "--- FINAL VALUES: \n"
 msgstr ""
 
-#: lib/src/printout.c:2293
+#: lib/src/printout.c:2294
 #, fuzzy
 msgid "Iteration"
 msgstr "Itangira"
 
-#: lib/src/printout.c:2303
+#: lib/src/printout.c:2304
 #, fuzzy, c-format
 msgid " (steplength = %g)"
 msgstr "Intera Uburebure"
 
-#: lib/src/printout.c:2308
+#: lib/src/printout.c:2309
 msgid "Parameters: "
 msgstr ""
 
-#: lib/src/printout.c:2314
+#: lib/src/printout.c:2315
 msgid "Gradients:  "
 msgstr ""
 
@@ -15784,6 +15775,14 @@ msgstr "Muyunguruzi"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
+
+#, fuzzy
+#~ msgid "Standard error of residuals"
+#~ msgstr "Ikosa Bya"
+
+#, fuzzy
+#~ msgid "Standard error of residuals = %g\n"
+#~ msgstr "Ikosa Bya"
 
 #, fuzzy
 #~ msgid "$t$-statistic"

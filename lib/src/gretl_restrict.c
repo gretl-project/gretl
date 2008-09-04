@@ -1694,7 +1694,7 @@ static int print_restricted_estimates (MODEL *pmod,
 			   pmod->ci, prn);
 
     pputc(prn, '\n');
-    pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
+    pprintf(prn, "  %s = %.*g\n", _("Standard error of the regression"), 
 	    GRETL_DIGITS, sqrt(s2));
     
     free_strings_array(names, nc);

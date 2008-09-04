@@ -6,6 +6,8 @@ version 1.7.8, in progress
 - Fix bug 2089048
 - Enable Chow test for non-time series datasets
 - Revise formatting style for model output
+- Change the label "standard error of residuals" to
+  "standard error of the regression"
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables

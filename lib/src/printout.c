@@ -1075,7 +1075,8 @@ static void fit_resid_head (const FITRESID *fr,
 	pputc(prn, '\n');
 
 	if (!na(fr->sigma)) {
-	    pprintf(prn, _("Standard error of residuals = %g\n"), fr->sigma);
+	    pprintf(prn, "%s = %.*g\n", _("Standard error of the regression"), 
+		    GRETL_DIGITS, fr->sigma);
 	}
     }
     
