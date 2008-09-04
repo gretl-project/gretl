@@ -870,6 +870,8 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
+    free(vlist);
+
     return winfo;
 }
 

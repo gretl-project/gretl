@@ -631,7 +631,6 @@ void tex_custom_coeff_table_start (const char **cols, PRN *prn)
 
 void tex_coeff_table_start (const char **cols, int binary, PRN *prn)
 {
-
     char pt;
 
     if (use_custom) {

@@ -653,6 +653,18 @@ static void make_cname (const char *orig, char *cname)
     }
 }
 
+static void plain_ar_coeff_name (char *targ, const MODEL *pmod, int i)
+{
+    int k = i - pmod->ncoeff;
+
+    if (pmod->arinfo != NULL && pmod->arinfo->arlist != NULL &&
+	k >= 0 && k < pmod->arinfo->arlist[0]) {
+	sprintf(targ, "u_%d", pmod->arinfo->arlist[k+1]);
+    } else {
+	strcpy(targ, "unknown");
+    }
+}
+
 /**
  * gretl_model_get_param_name:
  * @pmod: pointer to model.
@@ -691,6 +703,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	} else if ((pmod->ci == PROBIT || pmod->ci == LOGIT ||
 		    pmod->ci == HECKIT) && pmod->params != NULL) {
 	    k = i;
+	} else if (pmod->ci == AR && i >= pmod->ncoeff) {
+	    plain_ar_coeff_name(targ, pmod, i);
 	} else if (pmod->ci == ARCH && i >= pmod->ncoeff) {
 	    sprintf(targ, "alpha(%d)", i - pmod->ncoeff);
 	} else if (pmod->list == NULL || j > pmod->list[0]) {
