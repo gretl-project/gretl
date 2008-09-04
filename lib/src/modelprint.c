@@ -3597,7 +3597,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     int rmax[4] = {0};
     int w[4], addoff[4] = {0};
     int hlen;
-    double tval, pval;
+    double tval, pval = 0.0;
     int n, d, nc = pmod->ncoeff;
     int show_slope, adfnum = -1;
     int intervals = 0;
