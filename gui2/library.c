@@ -5831,11 +5831,10 @@ void do_new_script (int code)
     fclose(fp);
 
     if (action == EDIT_SCRIPT) {
-	strcpy(scriptfile, temp); /* ?? */
-	view_file(scriptfile, 1, 1, 78, 370, action);
-    } else {
-	view_file(temp, 1, 1, 78, 370, action);
+	strcpy(scriptfile, temp);
     }
+    
+    view_file(temp, 1, 1, 78, 370, action);
 }
 
 void new_script_callback (GtkAction *action) 
