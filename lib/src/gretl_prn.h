@@ -64,6 +64,8 @@ const char *gretl_print_get_trimmed_buffer (PRN *prn);
 
 char *gretl_print_steal_buffer (PRN *prn);
 
+void gretl_print_get_size (PRN *prn, int *width, int *height);
+
 FILE *gretl_print_read_tempfile (PRN *prn);
 
 int gretl_print_stop_tempfile_read (PRN *prn, FILE *fp);

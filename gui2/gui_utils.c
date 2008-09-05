@@ -1700,6 +1700,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 {
     windata_t *vwin;
     const char *buf;
+    int w, h;
 
     vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
     if (vwin == NULL) {
@@ -1718,6 +1719,11 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
+
+    gretl_print_get_size(prn, &w, &h);
+    if (w < hsize) {
+	hsize = w;
+    }
 
     create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->text);

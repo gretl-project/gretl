@@ -354,13 +354,67 @@ const char *gretl_print_get_buffer (PRN *prn)
 
 const char *gretl_print_get_trimmed_buffer (PRN *prn)
 {
-    const char *buf = (prn != NULL)? prn->buf : NULL;
+    char *buf = (prn != NULL)? prn->buf : NULL;
 
-    if (buf != NULL && *buf == '\n') {
-	buf++;
+    if (buf != NULL) {
+	int i, n;
+
+	if (*buf == '\n') {
+	    buf++;
+	}
+	n = strlen(buf);
+	for (i=n-1; i>0; i--) {
+	    if (buf[i] == '\n' && buf[i-1] == '\n') {
+		buf[i] = '\0';
+	    } else {
+		break;
+	    }
+	}
     }
 
     return buf;
+}
+
+/**
+ * gretl_print_get_size:
+ * @prn: printing struct.
+ * @width: location to receive width, or %NULL.
+ * @height: location to receive height, or %NULL.
+ * 
+ * If @prn has a non-null buffer attached, provide
+ * the width and/or height of the buffer, the width in
+ * characters and the height in lines.
+ */
+
+void gretl_print_get_size (PRN *prn, int *width, int *height)
+{
+    int w = 0, h = 0;
+
+    if (prn != NULL && prn->buf != NULL) {
+	const char *s = prn->buf;
+	int lw = 0;
+
+	while (*s) {
+	    if (*s == '\n') {
+		h++;
+		if (lw > 0) {
+		    w = lw;
+		}
+		lw = 0;
+	    } else {
+		lw++;
+	    }
+	    s++;
+	}
+    }
+
+    if (width != NULL) {
+	*width = w;
+    }
+
+    if (height != NULL) {
+	*height = h;
+    }    
 }
 
 /**
