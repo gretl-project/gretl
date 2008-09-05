@@ -1937,7 +1937,9 @@ void font_selector (GtkAction *action)
 # endif
 
     if (fontsel != NULL) {
-	if (!GTK_WIDGET_VISIBLE(fontsel)) gtk_widget_show (fontsel);
+	if (!GTK_WIDGET_VISIBLE(fontsel)) {
+	    gtk_widget_show(fontsel);
+	}
         gdk_window_raise(fontsel->window);
         return;
     }
@@ -1946,7 +1948,8 @@ void font_selector (GtkAction *action)
 	title = _("Font for gretl output windows");
 	filter = GTK_FONT_HACK_LATIN_MONO;
 	fontname = fixedfontname;
-    }
+    } 
+
 # ifndef USE_GNOME
     else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
@@ -1956,29 +1959,29 @@ void font_selector (GtkAction *action)
 
     fontsel = gtk_font_selection_hack_dialog_new(title);
     gtk_font_selection_hack_dialog_set_filter
-	(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), filter);
+	(GTK_FONT_SELECTION_HACK_DIALOG(fontsel), filter);
     gtk_font_selection_hack_dialog_set_font_name 
-	(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fontname); 
+	(GTK_FONT_SELECTION_HACK_DIALOG(fontsel), fontname); 
     g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
 
-    gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
+    gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
 
-    g_signal_connect (G_OBJECT(fontsel), "destroy",
-		      G_CALLBACK(gtk_widget_destroyed),
-		      &fontsel);
-    g_signal_connect (G_OBJECT(fontsel), "destroy",
-		      G_CALLBACK(fontsel_quit),
-		      NULL);
-    g_signal_connect (G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->ok_button),
-		      "clicked", 
-		      G_CALLBACK(font_selection_ok),
-		      fontsel);
+    g_signal_connect(G_OBJECT(fontsel), "destroy",
+		     G_CALLBACK(gtk_widget_destroyed),
+		     &fontsel);
+    g_signal_connect(G_OBJECT(fontsel), "destroy",
+		     G_CALLBACK(fontsel_quit),
+		     NULL);
+    g_signal_connect(G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->ok_button),
+		     "clicked", 
+		     G_CALLBACK(font_selection_ok),
+		     fontsel);
     g_signal_connect(G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->cancel_button),
 		     "clicked", 
 		     G_CALLBACK(delete_widget),
 		     fontsel);
 
-    gtk_widget_show (fontsel);
+    gtk_widget_show(fontsel);
 
     gtk_main();
 }
@@ -2060,7 +2063,7 @@ void font_selector (GtkAction *action)
 	} else if (which == APP_FONT_SELECTION) {
 	    set_app_font(fontname);
 	    write_rc();
-	}
+	} 	    
     }
 }
 

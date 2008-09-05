@@ -82,6 +82,10 @@ const gchar *help_ui =
     "   <menu action='Find'>"
     "     <menuitem action='WindowFind'/>"
     "   </menu>"
+    "   <menu action='Zoom'>"
+    "     <menuitem action='ZoomIn'/>"
+    "     <menuitem action='ZoomOut'/>"
+    "   </menu>"
     " </menubar>"
     "</ui>";
 
@@ -90,6 +94,11 @@ GtkActionEntry help_menu_items[] = {
     { "Find", NULL, N_("_Find"), NULL, NULL, NULL },
     { "WindowFind", GTK_STOCK_FIND, N_("_Find in window"), NULL, NULL,
       G_CALLBACK(text_find) },
+    { "Zoom", NULL, N_("_Text"), NULL, NULL, NULL },
+    { "ZoomIn", GTK_STOCK_ZOOM_IN, N_("_Larger"), NULL, NULL,
+      G_CALLBACK(text_zoom) },
+    { "ZoomOut", GTK_STOCK_ZOOM_OUT, N_("_Smaller"), NULL, NULL,
+      G_CALLBACK(text_zoom) },
     { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 

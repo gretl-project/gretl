@@ -568,6 +568,33 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     }	
 }
 
+void text_zoom (GtkAction *action, gpointer data)
+{
+    const gchar *s = gtk_action_get_name(action);
+    windata_t *vwin = (windata_t *) data;
+    GtkTextBuffer *tbuf;
+    GtkTextTagTable *table;
+    static PangoFontDescription *hpf;
+    static gint fsize;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    table = gtk_text_buffer_get_tag_table(tbuf);
+
+    if (hpf == NULL) {
+	hpf = pango_font_description_copy(fixed_font);
+	fsize = pango_font_description_get_size(hpf) / PANGO_SCALE;
+    }
+
+    if (!strcmp(s, "ZoomIn")) {
+	fsize++;
+    } else if (!strcmp(s, "ZoomOut")) {
+	fsize--;
+    } 
+
+    pango_font_description_set_size(hpf, fsize * PANGO_SCALE);
+    gtk_widget_modify_font(vwin->text, hpf);
+}
+
 static GtkTextTagTable *gretl_tags_new (void)
 {
     GtkTextTagTable *table;
@@ -606,6 +633,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     g_object_set(tag, "family", "sans",
 		 "style", PANGO_STYLE_ITALIC, 
 		 NULL);
+
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("superscript");

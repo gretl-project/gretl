@@ -341,6 +341,29 @@ const char *gretl_print_get_buffer (PRN *prn)
 }
 
 /**
+ * gretl_print_get_trimmed_buffer:
+ * @prn: printing struct.
+ * 
+ * Obtain a pointer to the buffer associated
+ * with @prn, if any.  This pointer must not be
+ * modified in any way.  An opening newline
+ * is skipped.
+ *
+ * Returns: the buffer, or %NULL on failure.
+ */
+
+const char *gretl_print_get_trimmed_buffer (PRN *prn)
+{
+    const char *buf = (prn != NULL)? prn->buf : NULL;
+
+    if (buf != NULL && *buf == '\n') {
+	buf++;
+    }
+
+    return buf;
+}
+
+/**
  * gretl_print_steal_buffer:
  * @prn: printing struct.
  * 

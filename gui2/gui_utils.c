@@ -1723,7 +1723,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert and then free the model results buffer */
-    buf = gretl_print_get_buffer(prn);
+    buf = gretl_print_get_trimmed_buffer(prn);
     textview_set_text(vwin->text, buf);
     gretl_print_destroy(prn);
 

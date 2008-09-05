@@ -23,7 +23,8 @@
 #define help_role(r) (r == CLI_HELP || \
                       r == GUI_HELP || \
                       r == CLI_HELP_EN || \
-                      r == GUI_HELP_EN)
+                      r == GUI_HELP_EN || \
+                      r == FUNCS_HELP)
 
 extern int tabwidth;
 extern int smarttab;
@@ -56,6 +57,8 @@ void text_paste (GtkWidget *w, windata_t *vwin);
 void text_undo (GtkWidget *w, windata_t *vwin);
 
 int text_can_undo (windata_t *vwin);
+
+void text_zoom (GtkAction *action, gpointer data);
 
 void textview_set_text_colorized (GtkWidget *view, const char *buf);
 
