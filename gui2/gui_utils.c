@@ -1721,9 +1721,11 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_widget_show(vwin->mbar);
 
     gretl_print_get_size(prn, &w, &h);
+#if 0
     if (w < hsize) {
 	hsize = w;
     }
+#endif
 
     create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
