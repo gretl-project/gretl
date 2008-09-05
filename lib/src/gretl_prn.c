@@ -397,7 +397,7 @@ void gretl_print_get_size (PRN *prn, int *width, int *height)
 	while (*s) {
 	    if (*s == '\n') {
 		h++;
-		if (lw > 0) {
+		if (lw > w) {
 		    w = lw;
 		}
 		lw = 0;

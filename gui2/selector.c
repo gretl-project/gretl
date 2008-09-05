@@ -2678,9 +2678,9 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
 	
 	if (i == 0) {
-	    adj = gtk_adjustment_new(lag, minlag, maxlag, 1, 1, 1);
+	    adj = gtk_adjustment_new(lag, minlag, maxlag, 1, 1, 0);
 	} else {
-	    adj = gtk_adjustment_new(1, 1, 10, 1, 1, 1);
+	    adj = gtk_adjustment_new(1, 1, 10, 1, 1, 0);
 	}
 
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
@@ -2716,7 +2716,7 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-    adj = gtk_adjustment_new(val, 1, maxlag, 1, 1, 1);
+    adj = gtk_adjustment_new(val, 1, maxlag, 1, 1, 0);
 
     sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
@@ -3137,7 +3137,7 @@ static void build_garch_spinners (selector *sr)
 	tmp = gtk_label_new(_(strs[i]));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	val = (i==0)? garch_p : garch_q;
-	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 1);
+	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 0);
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
     }
@@ -3211,7 +3211,7 @@ static void build_arma_spinners (selector *sr)
 
     lbl = gtk_label_new(_(strs[0]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 0, 1);
-    adj = gtk_adjustment_new(arma_p, 0, 10, 1, 1, 1);
+    adj = gtk_adjustment_new(arma_p, 0, 10, 1, 1, 0);
     sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[0], 1, 2, 0, 1);
     chk = gtk_check_button_new_with_label(_("or specific lags"));
@@ -3225,13 +3225,13 @@ static void build_arma_spinners (selector *sr)
 
     lbl = gtk_label_new(_(strs[1]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 1, 2);
-    adj = gtk_adjustment_new(arima_d, 0, 2, 1, 1, 1);
+    adj = gtk_adjustment_new(arima_d, 0, 2, 1, 1, 0);
     sr->extra[2] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[2], 1, 2, 1, 2);
 
     lbl = gtk_label_new(_(strs[2]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
-    adj = gtk_adjustment_new(arma_q, 0, 10, 1, 1, 1);
+    adj = gtk_adjustment_new(arma_q, 0, 10, 1, 1, 0);
     sr->extra[3] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[3], 1, 2, 2, 3);
     chk = gtk_check_button_new_with_label(_("or specific lags"));
@@ -3260,7 +3260,7 @@ static void build_arma_spinners (selector *sr)
 	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
 	    val = (i==0)? arma_P : (i==1)? arima_D : arma_Q;
 	    vmax = (i == 1)? 2 : 4;
-	    adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 1);
+	    adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 0);
 	    sr->extra[j] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[j++], FALSE, FALSE, 5);
 	}
@@ -3618,7 +3618,7 @@ static GtkWidget *alpha_spinner (double deflt, double minval)
 {
     GtkObject *adj;
     
-    adj = gtk_adjustment_new(deflt, minval, 0.99, 0.01, 0.1, 1);
+    adj = gtk_adjustment_new(deflt, minval, 0.99, 0.01, 0.1, 0);
     return gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
 }
 

@@ -523,7 +523,7 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
     GtkObject *adj;
     GtkWidget *spin;
 
-    adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 1);
+    adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 0);
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     g_object_set_data(G_OBJECT(spin), "argnum", GINT_TO_POINTER(i));
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);

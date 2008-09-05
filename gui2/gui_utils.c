@@ -1299,7 +1299,7 @@ static void viewer_box_config (windata_t *vwin)
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     if (prn != NULL) {
-	const char *buf = gretl_print_get_buffer(prn);
+	const char *buf = gretl_print_get_trimmed_buffer(prn);
 
 	if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
 	    sourceview_insert_buffer(vwin, buf);
@@ -1358,6 +1358,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     static windata_t *script_out;
     windata_t *vwin;
     int record = (role != SCRIPT_OUT);
+    int w, h;
 
     if (role == SCRIPT_OUT && script_out != NULL) {
 	return reuse_script_out(script_out, prn);
@@ -1389,6 +1390,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	vwin_add_viewbar(vwin, 0);
     } else if (role != IMPORT) {
 	vwin_add_viewbar(vwin, 1);
+    }
+
+    gretl_print_get_size(prn, &w, &h);
+    if (w > 0 && w + 2 < hsize) {
+	hsize = w + 2;
     }
 
     if (role == VIEW_FUNC_CODE) {
@@ -1721,11 +1727,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_widget_show(vwin->mbar);
 
     gretl_print_get_size(prn, &w, &h);
-#if 0
-    if (w < hsize) {
-	hsize = w;
+    if (w + 2 < hsize) {
+	hsize = w + 2;
     }
-#endif
 
     create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->text);

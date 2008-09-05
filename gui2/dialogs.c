@@ -1905,7 +1905,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
     vbox = gtk_vbox_new(FALSE, 5);
     lbl = gtk_label_new(_("Start:"));
     gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
-    rset->adj1 = gtk_adjustment_new(dinfo.t1, 0, dinfo.n - 1, 1, 1, 1);
+    rset->adj1 = gtk_adjustment_new(dinfo.t1, 0, dinfo.n - 1, 1, 1, 0);
     rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &dinfo);
     gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1914,7 +1914,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
     vbox = gtk_vbox_new(FALSE, 5);
     lbl = gtk_label_new(_("End:"));
     gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
-    rset->adj2 = gtk_adjustment_new(dinfo.t2, 0, dinfo.n - 1, 1, 1, 1);
+    rset->adj2 = gtk_adjustment_new(dinfo.t2, 0, dinfo.n - 1, 1, 1, 0);
     rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &dinfo);
     gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1984,7 +1984,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	lbl = gtk_label_new(t1str);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     }
-    rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, smin, smaj, 1);
+    rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, smin, smaj, 0);
     rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), datainfo);
     gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1996,7 +1996,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	    lbl = gtk_label_new(t2str);
 	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	}
-	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, smin, smaj, 1);
+	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, smin, smaj, 0);
 	rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), datainfo);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -2092,7 +2092,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
 	adj = gtk_adjustment_new(default_randsize(), 
 				 1, datainfo->n - 1,
-				 1, 1, 1);
+				 1, 1, 0);
 	rset->startspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->startspin, FALSE, FALSE, 5);
 
@@ -3350,7 +3350,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     label = gtk_label_new(spintxt);
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, step, step, 1);
+    adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, step, step, 0);
     button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
@@ -3681,12 +3681,12 @@ int freq_dialog (const char *title, const char *blurb,
 	}
 
 	if (i == 0) {
-	    adj = gtk_adjustment_new(*nbins, 3, nbmax, 2, 2, 1);
+	    adj = gtk_adjustment_new(*nbins, 3, nbmax, 2, 2, 0);
 	    dig = 0;
 	} else if (i == 1) {
-	    adj = gtk_adjustment_new(*f0, f0min, f0max, f0step, 10.0 * f0step, 1);
+	    adj = gtk_adjustment_new(*f0, f0min, f0max, f0step, 10.0 * f0step, 0);
 	} else {
-	    adj = gtk_adjustment_new(*fwid, wmin, wmax, wstep, 10.0 * wstep, 1);
+	    adj = gtk_adjustment_new(*fwid, wmin, wmax, wstep, 10.0 * wstep, 0);
 	}
 	
 	finfo.spin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, dig);
@@ -4778,7 +4778,7 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
 
     /* appropriate step size? */
     adj = gtk_adjustment_new(spinstart, spinmin, spinmax,
-			     1, 10, 1);
+			     1, 10, 0);
     if (step == DW_TS_FREQUENCY) {
 	g_signal_connect(G_OBJECT(adj), "value-changed", 
 			 G_CALLBACK(dw_set_custom_frequency), dwinfo);
@@ -5440,7 +5440,7 @@ void tex_format_dialog (void)
 	/* spinner for precision */
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new(_("Show"));
-	tf.adj[i] = gtk_adjustment_new(p, 0, 15, 1, 1, 1);
+	tf.adj[i] = gtk_adjustment_new(p, 0, 15, 1, 1, 0);
 	tf.spin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(tf.adj[i]), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), tf.spin[i], FALSE, FALSE, 5);
