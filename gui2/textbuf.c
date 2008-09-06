@@ -92,12 +92,14 @@ void cursor_to_mark (windata_t *vwin, GtkTextMark *mark)
 				 mark, 0.0, TRUE, 0, 0.1);
 }
 
-gint get_char_width (GtkWidget *widget)
+static void get_char_width_and_height (GtkWidget *widget,
+				       int *width,
+				       int *height)
 {
     PangoLayout *pl;
     PangoContext *pc;
     GtkRcStyle *style;
-    int width;
+    int w = 0, h = 0;
 
     pc = gtk_widget_get_pango_context(widget);
     style = gtk_widget_get_modifier_style(widget);
@@ -105,31 +107,24 @@ gint get_char_width (GtkWidget *widget)
 
     pl = pango_layout_new(pc);
     pango_layout_set_text(pl, "X", -1);
-    pango_layout_get_pixel_size(pl, &width, NULL);
-
+    pango_layout_get_pixel_size(pl, &w, &h);
     g_object_unref(G_OBJECT(pl));
 
-    return width;
+    if (width != NULL) {
+	*width = w;
+    }
+
+    if (height != NULL) {
+	*height = h;
+    }
 }
 
-static gint get_line_height (GtkWidget *widget)
+gint get_char_width (GtkWidget *widget)
 {
-    PangoLayout *pl;
-    PangoContext *pc;
-    GtkRcStyle *style;
-    int h;
+    int width;
 
-    pc = gtk_widget_get_pango_context(widget);
-    style = gtk_widget_get_modifier_style(widget);
-    pango_context_set_font_description(pc, style->font_desc);
-
-    pl = pango_layout_new(pc);
-    pango_layout_set_text(pl, "X", -1);
-    pango_layout_get_pixel_size(pl, NULL, &h);
-
-    g_object_unref(G_OBJECT(pl));
-
-    return h;
+    get_char_width_and_height(widget, &width, NULL);
+    return width;
 }
 
 gchar *textview_get_text (GtkWidget *view)
@@ -2662,17 +2657,23 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 
     gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
 
-    if (hsize > 0) {
-	hsize *= get_char_width(w);
-	hsize += 48;
-    }
+    if (hsize > 0 || nlines > 0) {
+	int px, py;
 
-    if (nlines > 0) {
-	double v1 = (nlines + 2) * get_line_height(w);
-	int sv = get_screen_height();
+	get_char_width_and_height(w, &px, &py);
 
-	if (v1 > vsize / 1.2 && v1 < vsize * 1.2 && v1 <= .9 * sv) {
-	    vsize = v1;
+	if (hsize > 0) {
+	    hsize *= px;
+	    hsize += 48;
+	}
+
+	if (nlines > 0) {
+	    double v1 = (nlines + 2) * py;
+	    int sv = get_screen_height();
+
+	    if (v1 > vsize / 1.2 && v1 < vsize * 1.2 && v1 <= .9 * sv) {
+		vsize = v1;
+	    }
 	}
     }
 
