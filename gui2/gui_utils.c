@@ -1358,7 +1358,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     static windata_t *script_out;
     windata_t *vwin;
     int record = (role != SCRIPT_OUT);
-    int w, h;
+    int w, nlines;
 
     if (role == SCRIPT_OUT && script_out != NULL) {
 	return reuse_script_out(script_out, prn);
@@ -1392,7 +1392,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	vwin_add_viewbar(vwin, 1);
     }
 
-    gretl_print_get_size(prn, &w, &h);
+    gretl_print_get_size(prn, &w, &nlines);
     if (w > 0 && w + 2 < hsize) {
 	hsize = w + 2;
     }
@@ -1402,7 +1402,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     } else if (role == EDIT_FUNC_CODE) {
 	create_source(vwin, hsize, vsize, TRUE);
     } else {
-	create_text(vwin, hsize, vsize, FALSE);
+	create_text(vwin, hsize, vsize, nlines, FALSE);
 	if (role == PRINT || role == SCRIPT_OUT ||
 	    role == VIEW_MODELTABLE) {
 	    text_set_word_wrap(vwin->text, 0);
@@ -1499,7 +1499,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     if (view_file_use_sourceview(role)) {
 	create_source(vwin, hsize, vsize, editable);
     } else {
-	create_text(vwin, hsize, vsize, editable);
+	create_text(vwin, hsize, vsize, 0, editable);
     }
 
     text_table_setup(vwin->vbox, vwin->text);
@@ -1580,7 +1580,7 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
 	vsize = 500;
     }
 
-    create_text(vwin, hsize, vsize, FALSE);
+    create_text(vwin, hsize, vsize, 0, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
     g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
@@ -1658,7 +1658,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     /* add a tool bar */
     vwin_add_viewbar(vwin, 0);
 
-    create_text(vwin, hsize, vsize, TRUE);
+    create_text(vwin, hsize, vsize, 0, TRUE);
     text_table_setup(vwin->vbox, vwin->text);
     
     /* insert the buffer text */
@@ -1706,7 +1706,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 {
     windata_t *vwin;
     const char *buf;
-    int w, h;
+    int w, nlines;
 
     vwin = gretl_viewer_new(VIEW_MODEL, title, pmod, 1);
     if (vwin == NULL) {
@@ -1726,12 +1726,12 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
-    gretl_print_get_size(prn, &w, &h);
+    gretl_print_get_size(prn, &w, &nlines);
     if (w + 2 < hsize) {
 	hsize = w + 2;
     }
 
-    create_text(vwin, hsize, vsize, FALSE);
+    create_text(vwin, hsize, vsize, nlines, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert and then free the model results buffer */

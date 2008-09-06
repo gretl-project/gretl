@@ -112,6 +112,26 @@ gint get_char_width (GtkWidget *widget)
     return width;
 }
 
+static gint get_line_height (GtkWidget *widget)
+{
+    PangoLayout *pl;
+    PangoContext *pc;
+    GtkRcStyle *style;
+    int h;
+
+    pc = gtk_widget_get_pango_context(widget);
+    style = gtk_widget_get_modifier_style(widget);
+    pango_context_set_font_description(pc, style->font_desc);
+
+    pl = pango_layout_new(pc);
+    pango_layout_set_text(pl, "X", -1);
+    pango_layout_get_pixel_size(pl, NULL, &h);
+
+    g_object_unref(G_OBJECT(pl));
+
+    return h;
+}
+
 gchar *textview_get_text (GtkWidget *view)
 {
     GtkTextBuffer *tbuf;
@@ -2613,8 +2633,23 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     hwin->active_var = hcode;
 }
 
+static int get_screen_height (void)
+{
+    static int screen_height;
+
+    if (screen_height == 0) {
+	GdkScreen *s = gdk_screen_get_default();
+
+	if (s != NULL) {
+	    screen_height = gdk_screen_get_height(s);
+	}
+    }
+
+    return screen_height;
+}
+
 void create_text (windata_t *vwin, int hsize, int vsize, 
-		  gboolean editable)
+		  int nlines, gboolean editable)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
@@ -2632,8 +2667,16 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	hsize += 48;
     }
 
-    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
+    if (nlines > 0) {
+	double v1 = (nlines + 2) * get_line_height(w);
+	int sv = get_screen_height();
 
+	if (v1 > vsize / 1.2 && v1 < vsize * 1.2 && v1 <= .9 * sv) {
+	    vsize = v1;
+	}
+    }
+
+    gtk_window_set_default_size(GTK_WINDOW(vwin->main), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 }
