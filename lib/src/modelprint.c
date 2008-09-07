@@ -98,6 +98,20 @@ static void plain_print_double (char *s, int d, double x, PRN *prn)
     }
 }
 
+static void plain_print_double_f (char *s, int d, double x, PRN *prn)
+{
+    if (x < 0 && gretl_print_supports_utf(prn)) {
+	char tmp[32];
+
+	*s = '\0';
+	strcat(s, "−"); /* U+2212: minus */
+	sprintf(tmp, "%.*f", d, -x);
+	strcat(s, tmp);
+    } else {
+	sprintf(s, "%.*f", d, x);
+    }
+}
+
 static void print_y_median (const MODEL *pmod, PRN *prn)
 {
     double m = gretl_model_get_double(pmod, "ymedian");
@@ -312,8 +326,10 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) { 
 	pprintf(prn, "  %s = %.*f\n", _(plainrsq[ridx]), fdig, pmod->rsq);
 	if (adjr2) {
-	    pprintf(prn, "  %s = %.*f\n", _("Adjusted R-squared"),  
-		    fdig, pmod->adjrsq);
+	    char r2[32];
+
+	    plain_print_double_f(r2, fdig, pmod->adjrsq, prn);
+	    pprintf(prn, "  %s = %s\n", _("Adjusted R-squared"), r2);
 	}
 	if (!na(cR2)) {
 	    pprintf(prn, "  %s = %.*f\n", _(plainrsq[2]), fdig, cR2);
