@@ -613,7 +613,7 @@ static void print_var_smpl (int v, const double **Z,
  * when using scientific notation, e.g. "1.45E-002".  This function
  * checks for this and cuts it out if need be.
  *
- * Returns: the fixed numeric string.
+ * Returns: the corrected numeric string.
  */
 
 char *gretl_fix_exponent (char *s)
@@ -628,7 +628,7 @@ char *gretl_fix_exponent (char *s)
     }
 
     n = strlen(s);
-    if (s[n-1] == '.') {
+    if (s[n-1] == '.' || s[n-1] == ',') {
 	s[n-1] = 0;
     }
 
@@ -653,7 +653,8 @@ static void cut_extra_zero (char *numstr, int digits)
 
 /* below: targ should be 36 bytes long */
 
-void gretl_sprint_fullwidth_double (double x, int digits, char *targ)
+void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
+				    PRN *prn)
 {
     char decpoint = '.';
     int n;
@@ -679,7 +680,6 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ)
 	/* let's not print non-zero values for numbers smaller than
 	   machine zero */
 	x = screen_zero(x);
-
 	sprintf(targ, "%#.*G", digits, x);
     }
 
@@ -691,6 +691,15 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ)
     }
 
     cut_extra_zero(targ, digits);
+
+    if (*targ == '-' && gretl_print_supports_utf(prn)) {
+	char tmp[36];
+
+	strcpy(tmp, targ + 1);
+	*targ = '\0';
+	strcat(targ, "−"); /* U+2212: minus */
+	strcat(targ, tmp);
+    }
 }
 
 /* The following function formats a double in such a way that the

@@ -70,6 +70,7 @@
 #include "model_table.h"
 #include "cmdstack.h"
 #include "filelists.h"
+#include "gtkfontselhack.h"
 
 #define CMD_DEBUG 0
 
@@ -271,12 +272,19 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
 
 gint bufopen (PRN **pprn)
 {
+    static int utf_font = -1;
     int err = 0;
+
+    if (utf_font < 0) {
+	utf_font = font_has_minus(fixed_font);
+    }
 
     *pprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (err) {
 	gui_errmsg(err);
+    } else if (utf_font > 0) {
+	gretl_print_set_utf_flag(*pprn);
     }
 
     return err;

@@ -33,11 +33,6 @@
  * Modified to allow filtering of fonts for gretl, Allin Cottrell, 2002
  */
 
-/* By "STANDALONE" I mean that this file is not compiled along with the
-   rest of the GTK library, but as a separate object module for linking
-   into an application program 
-*/
-
 #include "gretl.h" /* this must provide standard and GTK headers and
 		      deal with gettext */
 #include "gtkfontselhack.h"

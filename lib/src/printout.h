@@ -86,7 +86,7 @@ void print_iter_info (int iter, double crit, int type, int k,
 
 void text_print_vmatrix (VMatrix *vmat, PRN *prn);
 
-void gretl_sprint_fullwidth_double (double x, int digits, char *targ);
+void gretl_sprint_fullwidth_double (double x, int digits, char *targ, PRN *prn);
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
 

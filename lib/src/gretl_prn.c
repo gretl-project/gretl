@@ -29,7 +29,7 @@ struct PRN_ {
     char *buf;         /* buffer to which to print, or NULL */
     size_t bufsize;    /* allocated size of buffer */
     size_t blen;       /* string length of buffer */
-    int savepos;       /* saved poistion in stream or buffer */
+    int savepos;       /* saved position in stream or buffer */
     PrnFormat format;  /* plain, TeX, RTF */
     int fixed;         /* = 1 for fixed-size buffer */
     char delim;        /* CSV field delimiter */
@@ -592,7 +592,7 @@ void gretl_print_set_delim (PRN *prn, char delim)
 }
 
 /**
- * gretl_print_unset_doc_format:
+ * gretl_print_toggle_doc_flag:
  * @prn: printing struct.
  * 
  * Toggles the %GRETL_FORMAT_DOC flag on @prn.
@@ -602,6 +602,36 @@ void gretl_print_toggle_doc_flag (PRN *prn)
 {
     if (prn != NULL) {
 	prn->format ^= GRETL_FORMAT_DOC;
+    }
+}
+
+/**
+ * gretl_print_set_utf_flag:
+ * @prn: printing struct.
+ * 
+ * Sets the %GRETL_FORMAT_UTF flag on @prn.
+ */
+
+void gretl_print_set_utf_flag (PRN *prn)
+{
+    if (prn != NULL) {
+	prn->format |= GRETL_FORMAT_UTF;
+    }
+}
+
+/**
+ * gretl_print_supports_utf:
+ * @prn: printing struct.
+ * 
+ * Returns: 1 if @prn supports UTF-8 characters, else 0.
+ */
+
+int gretl_print_supports_utf (PRN *prn)
+{
+    if (prn != NULL) {
+	return (prn->format & GRETL_FORMAT_UTF)? 1 : 0;
+    } else {
+	return 0;
     }
 }
 
@@ -959,7 +989,7 @@ int print_end_redirection (PRN *prn)
 
 int plain_format (PRN *prn)
 {
-    return (prn != NULL && prn->format == GRETL_FORMAT_TXT);
+    return (prn != NULL && (prn->format & GRETL_FORMAT_TXT));
 }
 
 /**

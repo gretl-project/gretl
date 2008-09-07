@@ -196,6 +196,7 @@ extern "C" {
   void   gtk_font_selection_hack_dialog_set_filter (GtkFontSelectionHackDialog *fsd,
 						    GtkFontFilterType      filter);
 
+  int font_has_minus (PangoFontDescription *desc);
 
 #ifdef __cplusplus
 }

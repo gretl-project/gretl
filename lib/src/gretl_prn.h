@@ -39,7 +39,8 @@ typedef enum {
     GRETL_FORMAT_CSV       = 1 << 7,
     GRETL_FORMAT_TAB       = 1 << 8,
     GRETL_FORMAT_MODELTAB  = 1 << 9,
-    GRETL_FORMAT_LANDSCAPE = 1 << 10
+    GRETL_FORMAT_LANDSCAPE = 1 << 10,
+    GRETL_FORMAT_UTF       = 1 << 11
 } PrnFormat;
 
 /* functions follow */
@@ -79,6 +80,10 @@ char *gretl_print_get_chunk (PRN *prn);
 void gretl_print_set_format (PRN *prn, PrnFormat format);
 
 void gretl_print_toggle_doc_flag (PRN *prn);
+
+void gretl_print_set_utf_flag (PRN *prn);
+
+int gretl_print_supports_utf (PRN *prn);
 
 void gretl_print_set_delim (PRN *prn, char delim);
 

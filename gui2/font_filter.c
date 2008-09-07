@@ -77,13 +77,55 @@ static int get_font_characteristics (PangoFontDescription *desc)
 		ret |= MONO_FONT;
 	    }
 	}
-    } 
+    }
+
+    pango_coverage_unref(coverage);
 
 #if FDEBUG
     fprintf(stderr, " latin %s, monospaced %s\n",
 	    (ret & LATIN_FONT)? "yes" : "no",
 	    (ret & MONO_FONT)? "yes" : "no");
 #endif
+
+    return ret;
+}
+
+int font_has_minus (PangoFontDescription *desc)
+{
+    GtkWidget *widget;
+    PangoContext *context = NULL;
+    PangoLayout *layout = NULL;
+    PangoLanguage *lang = NULL;
+    PangoCoverage *coverage = NULL;
+    PangoFont *pfont = NULL;
+    int ret = 0;
+
+    widget = gtk_label_new(NULL);  
+    context = gtk_widget_get_pango_context(widget); 
+
+    if (context == NULL) {
+	gtk_widget_destroy(widget);
+	return 0;
+    }    
+
+    layout = pango_layout_new(context); 
+    lang = pango_language_from_string("eng");
+
+    if (layout != NULL && lang != NULL) {
+	pfont = pango_context_load_font(context, desc);
+	if (pfont != NULL) {
+	    coverage = pango_font_get_coverage(pfont, lang);
+	    if (coverage != NULL) {
+		/* U+2212 = minus sign */
+		ret = (pango_coverage_get(coverage, 0x2212) == PANGO_COVERAGE_EXACT);
+	    }
+	}
+    } 
+
+    pango_coverage_unref(coverage);
+    g_object_unref(G_OBJECT(layout));
+    g_object_unref(G_OBJECT(context));
+    gtk_widget_destroy(widget);    
 
     return ret;
 }

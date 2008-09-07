@@ -84,6 +84,20 @@ static int char_len (const char *s)
     }
 }
 
+static void plain_print_double (char *s, int d, double x, PRN *prn)
+{
+    if (x < 0 && gretl_print_supports_utf(prn)) {
+	char tmp[32];
+
+	*s = '\0';
+	strcat(s, "−"); /* U+2212: minus */
+	sprintf(tmp, "%.*g", d, -x);
+	strcat(s, tmp);
+    } else {
+	sprintf(s, "%.*g", d, x);
+    }
+}
+
 static void print_y_median (const MODEL *pmod, PRN *prn)
 {
     double m = gretl_model_get_double(pmod, "ymedian");
@@ -93,13 +107,15 @@ static void print_y_median (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Median of dependent variable"), 
-		XDIGITS(pmod), m);
-    } else if (tex_format(prn)) {
-	char s[32];
+	char mstr[32];
 
-	tex_dcolumn_double(m, s);
-	pprintf(prn, "%s & %s \\\\\n", I_("Median of dependent variable"), s);
+	plain_print_double(mstr, XDIGITS(pmod), m, prn);
+	pprintf(prn, "  %s = %s\n", _("Median of dependent variable"), mstr);
+    } else if (tex_format(prn)) {
+	char mstr[32];
+
+	tex_dcolumn_double(m, mstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Median of dependent variable"), mstr);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Median of dependent variable"), m);
     } else if (csv_format(prn)) {
@@ -119,8 +135,10 @@ static void depvarstats (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Mean of dependent variable"), 
-		XDIGITS(pmod), pmod->ybar);
+	char mstr[32];
+
+	plain_print_double(mstr, XDIGITS(pmod), pmod->ybar, prn);
+	pprintf(prn, "  %s = %s\n", _("Mean of dependent variable"), mstr);
 	pprintf(prn, "  %s = %.*g\n", _("Standard deviation of dep. var."), 
 		XDIGITS(pmod), pmod->sdy);
     } else if (tex_format(prn)) {
@@ -407,6 +425,7 @@ static const char *hqc_abbrev = N_("HQC");
 static void info_stats_lines (const MODEL *pmod, PRN *prn)
 {
     const double *crit = pmod->criterion;
+    char cval[32];
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR ||
@@ -420,19 +439,17 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) { 
-	pprintf(prn, "  %s (%s) = %.*g\n", _(aic_str), _(aic_abbrev),
-		XDIGITS(pmod), crit[C_AIC]);
-	pprintf(prn, "  %s (%s) = %.*g\n", _(bic_str), _(bic_abbrev),
-		XDIGITS(pmod), crit[C_BIC]);
-	pprintf(prn, "  %s (%s) = %.*g\n", _(hqc_str), _(hqc_abbrev),
-		XDIGITS(pmod), crit[C_HQC]);
+	plain_print_double(cval, XDIGITS(pmod), crit[C_AIC], prn);
+	pprintf(prn, "  %s (%s) = %s\n", _(aic_str), _(aic_abbrev), cval);
+	plain_print_double(cval, XDIGITS(pmod), crit[C_BIC], prn);
+	pprintf(prn, "  %s (%s) = %s\n", _(bic_str), _(bic_abbrev), cval);
+	plain_print_double(cval, XDIGITS(pmod), crit[C_HQC], prn);
+	pprintf(prn, "  %s (%s) = %s\n", _(hqc_str), _(hqc_abbrev), cval);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(aic_str), crit[C_AIC]);
 	pprintf(prn, RTFTAB "%s = %g\n", I_(bic_str), crit[C_BIC]);
 	pprintf(prn, RTFTAB "%s = %g\n", I_(hqc_str), crit[C_HQC]);
     } else if (tex_format(prn)) {  
-	char cval[32];
-
 	tex_dcolumn_double(crit[C_AIC], cval);
 	pprintf(prn, "%s & %s \\\\\n", I_(aic_str), cval);
 	tex_dcolumn_double(crit[C_BIC], cval);
@@ -803,8 +820,11 @@ static void dwline (const MODEL *pmod, PRN *prn)
 		    XDIGITS(pmod), pmod->dw);
 	}
 	if (!na(pmod->rho)) {
-	    pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
-		    XDIGITS(pmod), pmod->rho);
+	    char xstr[32];
+
+	    plain_print_double(xstr, XDIGITS(pmod), pmod->rho, prn);
+	    pprintf(prn, "  %s = %s\n", _("First-order autocorrelation coeff."), 
+		    xstr);
 	}
     } else if (tex_format(prn)) {
 	char xstr[32];
@@ -2338,16 +2358,19 @@ static void print_ll (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) {
+	char xstr[32];
 	double jll;
 
-	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), lldig, pmod->lnL);
+	plain_print_double(xstr, lldig, pmod->lnL, prn);
+	pprintf(prn, "  %s = %s\n", _("Log-likelihood"), xstr);
 	jll = gretl_model_get_double(pmod, "jll");
 	if (!na(jll)) {
 	    char jllstr[64];
 
 	    sprintf(jllstr, _("Log-likelihood for %s"), 
 		    (const char *) gretl_model_get_data(pmod, "log-parent"));
-	    pprintf(prn, "  (%s = %.*g)\n", jllstr, lldig, jll);
+	    plain_print_double(xstr, lldig, jll, prn);
+	    pprintf(prn, "  (%s = %.*g)\n", jllstr, xstr);
 	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,
@@ -3121,8 +3144,9 @@ struct printval {
 
 static void get_number_dims (struct printval *v, int *lmax, int *rmax)
 {
+    char tmp[36];
     const char *s = v->s;
-    const char *p;
+    char *p;
     int i, n;
 
     while (*s == ' ') s++;
@@ -3131,17 +3155,22 @@ static void get_number_dims (struct printval *v, int *lmax, int *rmax)
 	n--;
     }
 
-    p = strchr(s, '.');
+    *tmp = '\0';
+    strncat(tmp, s, n);
+
+    p = strchr(tmp, '.');
     if (p == NULL) {
-	p = strchr(s, ',');
+	p = strchr(tmp, ',');
     }
 
     if (p == NULL) {
-	v->lw = n;
+	v->lw = char_len(tmp);
 	v->rw = 0;
     } else {
-	v->lw = p - s;
-	v->rw = strlen(s) - v->lw;
+	n = char_len(tmp);
+	*p = '\0';
+	v->lw = char_len(tmp);
+	v->rw = n - v->lw;
     }
 
     if (v->lw > *lmax) *lmax = v->lw;
@@ -3378,7 +3407,7 @@ int plain_print_aux_coeffs (const double *b,
 		d = -4;
 		vals[i][j].x = pval;
 	    }
-	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
+	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
 	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
 	}
     }
@@ -3488,7 +3517,7 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
 	for (j=0; j<2; j++) {
 	    d = GRETL_MP_DIGITS;
 	    vals[i][j].x = (j==0)? b[i] : se[i];
-	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
+	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
 	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
 	}
     }
@@ -3750,7 +3779,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 		vals[i][j].s[0] = '\0';
 		vals[i][j].lw = vals[i][j].rw = 0;
 	    } else {
-		gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s);
+		gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
 		get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
 	    }
 	}
