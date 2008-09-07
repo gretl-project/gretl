@@ -1889,12 +1889,12 @@ static int fontsel_code (GtkAction *action)
 
 #ifndef G_OS_WIN32
 
-static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
+static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 {
     guint which = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fs), "which"));
     gchar *fontname;
 
-    fontname = gtk_font_selection_hack_dialog_get_font_name(fs);
+    fontname = gtk_fontsel_hack_dialog_get_font_name(fs);
 
     if (*fontname == 0) {
 	g_free(fontname);
@@ -1957,11 +1957,11 @@ void font_selector (GtkAction *action)
     }
 # endif
 
-    fontsel = gtk_font_selection_hack_dialog_new(title);
-    gtk_font_selection_hack_dialog_set_filter
-	(GTK_FONT_SELECTION_HACK_DIALOG(fontsel), filter);
-    gtk_font_selection_hack_dialog_set_font_name 
-	(GTK_FONT_SELECTION_HACK_DIALOG(fontsel), fontname); 
+    fontsel = gtk_fontsel_hack_dialog_new(title);
+    gtk_fontsel_hack_dialog_set_filter
+	(GTK_FONTSEL_HACK_DIALOG(fontsel), filter);
+    gtk_fontsel_hack_dialog_set_font_name 
+	(GTK_FONTSEL_HACK_DIALOG(fontsel), fontname); 
     g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
 
     gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
@@ -1972,11 +1972,11 @@ void font_selector (GtkAction *action)
     g_signal_connect(G_OBJECT(fontsel), "destroy",
 		     G_CALLBACK(fontsel_quit),
 		     NULL);
-    g_signal_connect(G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->ok_button),
+    g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_ok_button(fontsel)),
 		     "clicked", 
 		     G_CALLBACK(font_selection_ok),
 		     fontsel);
-    g_signal_connect(G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->cancel_button),
+    g_signal_connect(G_OBJECT(gtk_fontsel_hack_dialog_cancel_button(fontsel)),
 		     "clicked", 
 		     G_CALLBACK(delete_widget),
 		     fontsel);

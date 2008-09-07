@@ -52,6 +52,7 @@
 #include "fileselect.h"
 #include "database.h"
 #include "winstack.h"
+#include "guiprint.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -70,7 +71,6 @@
 #include "model_table.h"
 #include "cmdstack.h"
 #include "filelists.h"
-#include "gtkfontselhack.h"
 
 #define CMD_DEBUG 0
 
@@ -270,22 +270,38 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
     return err;
 }
 
-gint bufopen (PRN **pprn)
+#ifndef G_OS_WIN32
+
+static void maybe_set_utf_flag (PRN *prn)
 {
     static int utf_font = -1;
-    int err = 0;
 
     if (utf_font < 0) {
 	utf_font = font_has_minus(fixed_font);
     }
 
+    if (utf_font > 0) {
+	gretl_print_set_utf_flag(prn);
+    }
+}
+
+#endif
+
+gint bufopen (PRN **pprn)
+{
+    int err = 0;
+
     *pprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (err) {
 	gui_errmsg(err);
-    } else if (utf_font > 0) {
-	gretl_print_set_utf_flag(*pprn);
+    } 
+
+#ifndef G_OS_WIN32
+    if (!err) {
+	maybe_set_utf_flag(*pprn);
     }
+#endif
 
     return err;
 }
