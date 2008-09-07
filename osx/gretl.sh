@@ -17,13 +17,9 @@ if [ -f ~/.profile ] ; then
   . ~/.profile
 fi  
 
-# create a suitable pixbuf loaders file 
-
-
 export "GRETL_HOME=$TOP/share/gretl/"
 export "GTKSOURCEVIEW_LANGUAGE_DIR=$TOP/share/gretl/gtksourceview"
 export "GTK_EXE_TOP=$TOP"
-# export "GDK_PIXBUF_MODULE_FILE=$TOP/etc/gtk-2.0/gdk-pixbuf.loaders"
 export "PANGO_RC_FILE=$TOP/etc/pangorc"
 export "GTK_IM_MODULE_FILE=$TOP/etc/gtk-2.0/gtk.immodules"
 export "DYLD_LIBRARY_PATH=$TOP/lib"
@@ -31,9 +27,9 @@ export "DYLD_LIBRARY_PATH=$TOP/lib"
 # export "XDG_DATA_HOME=$TOP/share"
 
 # create a suitable pixbuf-loaders file 
-mkdir -p ~/.gretl/etc
-cat $TOP/etc/gtk-2.0/gdk-pixbuf.loaders | sed s+'\.\.'+$TOP+ > ~/.gretl/etc/gdk-pixbuf.loaders
-export "GDK_PIXBUF_MODULE_FILE=~/.gretl/etc/gdk-pixbuf.loaders"
+mkdir -p $HOME/.gretl/etc
+cat $TOP/etc/gtk-2.0/gdk-pixbuf.loaders | sed s+'\.\.'+$TOP+ > $HOME/.gretl/etc/gdk-pixbuf.loaders
+export "GDK_PIXBUF_MODULE_FILE=$HOME/.gretl/etc/gdk-pixbuf.loaders"
 
 # location of gnuplot help file
 export "GNUHELP=$TOP/share/gnuplot/4.3/gnuplot.gih"
