@@ -1699,7 +1699,7 @@ static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
 {
     if (w != NULL) {
 	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-	GtkTextIter iter;
+	GtkTextIter iter, ibak;
 	const char *txt;
 	PRN *prn;
 
@@ -1707,8 +1707,18 @@ static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
 
 	gretl_model_print_last_test(pmod, prn);
 	txt = gretl_print_get_buffer(prn);
-
 	gtk_text_buffer_get_end_iter(buf, &iter);
+
+	ibak = iter;
+	if (gtk_text_iter_backward_chars(&ibak, 2)) {
+	    gchar *tmp = gtk_text_buffer_get_text(buf, &ibak, &iter, FALSE);
+
+	    if (strcmp(tmp, "\n\n")) {
+		gtk_text_buffer_insert(buf, &iter, "\n", -1);
+	    }
+	    g_free(tmp);
+	}
+
 	gtk_text_buffer_insert(buf, &iter, txt, -1);
 	gretl_print_destroy(prn);
     }

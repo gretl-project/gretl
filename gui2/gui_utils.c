@@ -1393,9 +1393,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 
     gretl_print_get_size(prn, &w, &nlines);
-    if (w > 0 && w + 2 < hsize) {
+#if 1
+    if (role != SCRIPT_OUT && w > 0 && w + 2 < hsize) {
 	hsize = w + 2;
     }
+#endif
 
     if (role == VIEW_FUNC_CODE) {
 	create_source(vwin, hsize, vsize, FALSE);

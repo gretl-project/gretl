@@ -3447,27 +3447,13 @@ static void printf15 (double zz, PRN *prn)
     }
 }
 
-#define LINEWID 78 /* generally sane for terminals */
-
-static void center_line (char *str, PRN *prn, int dblspc)
+static void output_line (char *str, PRN *prn, int dblspc)
 {
-    size_t len = strlen(str);
-
-    if (LINEWID > len) {
-	size_t i, pad = (LINEWID - len) / 2;
-	char cstr[84];
-
-	for (i=0; i<pad; i++) cstr[i] = ' ';
-	strcpy(cstr + i, str);
-	if (dblspc) {
-	    strcat(cstr, "\n");
-	}
-	pprintf(prn, "%s\n", cstr);
+    pputs(prn, str);
+    if (dblspc) {
+	pputs(prn, "\n\n");
     } else {
-	if (dblspc) {
-	    strcat(str, "\n");
-	}
-	pprintf(prn, "%s\n", str);
+	pputc(prn, '\n');
     }
 }
 
@@ -3482,11 +3468,11 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 
     sprintf(tmp, _("%s, using the observations %s - %s"), str, date1, date2);
-    center_line(tmp, prn, 0);
+    output_line(tmp, prn, 0);
 
     if (missing) {
 	strcpy(tmp, _("(missing values were skipped)"));
-	center_line(tmp, prn, 1);
+	output_line(tmp, prn, 1);
     }
 }
 
@@ -3516,7 +3502,7 @@ static void print_summary_single (const Summary *s, int j,
     prhdr(_("Summary Statistics"), pdinfo, SUMMARY, 0, prn);
     sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
 	    pdinfo->varname[s->list[j+1]], s->n);
-    center_line(tmp, prn, 1);
+    output_line(tmp, prn, 1);
 
     vals[0] = s->mean[j];
     vals[1] = s->median[j];
@@ -4193,18 +4179,18 @@ void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
 
 	sprintf(tmp, _("%s, using the observations %s - %s"), 
 		_("Correlation Coefficients"), date1, date2);
-	center_line(tmp, prn, 0);
+	output_line(tmp, prn, 0);
 
 	if (corr->missing) {
 	    strcpy(tmp, _("(missing values were skipped)"));
-	    center_line(tmp, prn, 1);
+	    output_line(tmp, prn, 1);
 	}	
 
 	if (corr->n > 0) {
 	    sprintf(tmp, _("5%% critical value (two-tailed) = "
 			   "%.4f for n = %d"), rhocrit95(corr->n), 
 		    corr->n);
-	    center_line(tmp, prn, 1);
+	    output_line(tmp, prn, 1);
 	}
 
 	text_print_vmatrix(corr, prn);

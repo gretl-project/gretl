@@ -8,6 +8,7 @@ version 1.7.8, in progress
 - Revise formatting style for model output
 - Change the label "standard error of residuals" to
   "standard error of the regression"
+- Allow users to change the text size in help windows
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables
