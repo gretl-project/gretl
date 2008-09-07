@@ -11,7 +11,7 @@ export "GRETL_STARTDIR=$STARTDIR"
 CWD="`(cd \"\`dirname \\\"$0\\\"\`\"; echo $PWD)`"
 TOP="`dirname \"$CWD\"`"
 
-# echo "TOP=$TOP" > ~/where
+echo "TOP=$TOP" > ~/where
 
 if [ -f ~/.profile ] ; then
   . ~/.profile
@@ -30,9 +30,9 @@ export "DYLD_LIBRARY_PATH=$TOP/lib"
 # export "XDG_DATA_DIRS=$TOP/share"
 # export "XDG_DATA_HOME=$TOP/share"
 
-# create a suitable pixbuf loaders file 
+# create a suitable pixbuf-loaders file 
 mkdir -p ~/.gretl/etc
-cat $TOP/etc/gtk-2.0/gdk-pixbuf.loaders | sed +'\.\.'+$TOP+ > ~/.gretl/etc/gdk-pixbuf.loaders
+cat $TOP/etc/gtk-2.0/gdk-pixbuf.loaders | sed s+'\.\.'+$TOP+ > ~/.gretl/etc/gdk-pixbuf.loaders
 export "GDK_PIXBUF_MODULE_FILE=~/.gretl/etc/gdk-pixbuf.loaders"
 
 # location of gnuplot help file
