@@ -11,7 +11,7 @@ export "GRETL_STARTDIR=$STARTDIR"
 CWD="`(cd \"\`dirname \\\"$0\\\"\`\"; echo $PWD)`"
 TOP="`dirname \"$CWD\"`"
 
-echo "TOP=$TOP" > ~/where
+# echo "TOP=$TOP" > ~/where
 
 if [ -f ~/.profile ] ; then
   . ~/.profile
@@ -39,7 +39,7 @@ export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.3"
 export "GDFONTPATH=$TOP/fonts:/usr/X11R6/lib/X11/fonts/TTF"
 # default font for gnuplot PNG
 export "GNUPLOT_DEFAULT_GDFONT=$TOP/fonts/Vera.ttf"
-# we don't support the 'aqua' terminal type
+# we do not support the 'aqua' terminal type
 if [ "$GNUTERM" = "aqua" ] ; then
    export GNUTERM=x11
 fi
