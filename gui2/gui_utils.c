@@ -2383,67 +2383,62 @@ static void x12_output_callback (GtkAction *action, gpointer p)
     }
 }
 
-static gchar *get_model_ui (void)
-{
-    const gchar *ui =  
-	"<ui>"
-	" <menubar name='MenuBar'>"
-	"  <menu action='File'>"
-	"   <menuitem action='SaveAs'/>"
-	"   <menuitem action='SaveAsIcon'/>"
-	"   <menuitem action='SaveAndClose'/>"
+static const gchar *model_ui =
+    "<ui>"
+    " <menubar name='MenuBar'>"
+    "  <menu action='File'>"
+    "   <menuitem action='SaveAs'/>"
+    "   <menuitem action='SaveAsIcon'/>"
+    "   <menuitem action='SaveAndClose'/>"
 #ifdef NATIVE_PRINTING
-	"   <menuitem action='Print'/>"
+    "   <menuitem action='Print'/>"
 #endif
-	"   <menuitem action='Close'/>"
-	"  </menu>"    
-	"  <menu action='Edit'>"
-	"   <menuitem action='Copy'/>"
-	"  </menu> "     
-	"  <menu action='Tests'>"
-	"   <menuitem action='omit'/>"
-	"   <menuitem action='add'/>"
-	"   <menuitem action='coeffsum'/>"
-	"   <menuitem action='restrict'/>"
-	"   <separator/>"
-	"   <menuitem action='lmtest:s'/>"
-	"   <menuitem action='lmtest:l'/>"
-	"   <menuitem action='reset'/>"
-	"   <separator/>"
-	"   <menu action='Hsk'/>"
-	"   <menuitem action='normtest'/>"
-	"   <menuitem action='leverage'/>"
-	"   <menuitem action='vif'/>"
-	"   <menuitem action='chow'/>"
-	"   <separator/>"
-	"   <menuitem action='lmtest:a'/>"
-	"   <menuitem action='lmtest:h'/>"
-	"   <menuitem action='qlrtest'/>"
-	"   <menuitem action='cusum'/>"
-	"   <menuitem action='cusum:r'/>"
-	"   <separator/>"
-	"   <menuitem action='hausman'/>"
-	"  </menu>"      
-	"  <menu action='Save'/>"
-	"  <menu action='Graphs'>"
-	"   <menu action='ResidPlot'/>"
-	"   <menu action='FittedActualPlot'/>"
-	"  </menu>"    
-	"  <menu action='Analysis'>"
-	"   <menuitem action='DisplayAFR'/>"
-	"   <menuitem action='Forecasts'/>"
-	"   <menuitem action='ConfIntervals'/>"
-	"   <menuitem action='ConfEllipse'/>"
-	"   <menuitem action='Covariance'/>"
-	"   <menuitem action='ANOVA'/>"
-	"   <menuitem action='Bootstrap'/>"
-	"  </menu>"     
-	"  <menu action='LaTeX'/>"
-	" </menubar>"
-	"</ui>";
-
-    return ui;
-}
+    "   <menuitem action='Close'/>"
+    "  </menu>"    
+    "  <menu action='Edit'>"
+    "   <menuitem action='Copy'/>"
+    "  </menu> "     
+    "  <menu action='Tests'>"
+    "   <menuitem action='omit'/>"
+    "   <menuitem action='add'/>"
+    "   <menuitem action='coeffsum'/>"
+    "   <menuitem action='restrict'/>"
+    "   <separator/>"
+    "   <menuitem action='lmtest:s'/>"
+    "   <menuitem action='lmtest:l'/>"
+    "   <menuitem action='reset'/>"
+    "   <separator/>"
+    "   <menu action='Hsk'/>"
+    "   <menuitem action='normtest'/>"
+    "   <menuitem action='leverage'/>"
+    "   <menuitem action='vif'/>"
+    "   <menuitem action='chow'/>"
+    "   <separator/>"
+    "   <menuitem action='lmtest:a'/>"
+    "   <menuitem action='lmtest:h'/>"
+    "   <menuitem action='qlrtest'/>"
+    "   <menuitem action='cusum'/>"
+    "   <menuitem action='cusum:r'/>"
+    "   <separator/>"
+    "   <menuitem action='hausman'/>"
+    "  </menu>"      
+    "  <menu action='Save'/>"
+    "  <menu action='Graphs'>"
+    "   <menu action='ResidPlot'/>"
+    "   <menu action='FittedActualPlot'/>"
+    "  </menu>"    
+    "  <menu action='Analysis'>"
+    "   <menuitem action='DisplayAFR'/>"
+    "   <menuitem action='Forecasts'/>"
+    "   <menuitem action='ConfIntervals'/>"
+    "   <menuitem action='ConfEllipse'/>"
+    "   <menuitem action='Covariance'/>"
+    "   <menuitem action='ANOVA'/>"
+    "   <menuitem action='Bootstrap'/>"
+    "  </menu>"     
+    "  <menu action='LaTeX'/>"
+    " </menubar>"
+    "</ui>";
 
 static void 
 set_up_model_view_menu (GtkWidget *window, windata_t *vwin) 
@@ -2468,7 +2463,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
 
-    gtk_ui_manager_add_ui_from_string(vwin->ui, get_model_ui(), -1, &err);
+    gtk_ui_manager_add_ui_from_string(vwin->ui, model_ui, -1, &err);
     if (err != NULL) {
 	g_message("building menus failed: %s", err->message);
 	g_error_free(err);
