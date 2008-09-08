@@ -622,6 +622,11 @@ int gretl_lists_revise (const int *dlist, int dmin)
     int lmax = 0;
     int i, j, k;
 
+#if 0
+    fprintf(stderr, "gretl_lists_revise: dlist = %p, dmin = %d\n", 
+	    (void *) dlist, dmin);
+#endif
+
     if (dlist != NULL) {
 	/* determine lowest deleted ID */
 	dmin = dlist[1];
@@ -667,11 +672,11 @@ int gretl_lists_revise (const int *dlist, int dmin)
     /* use mapping to revise saved lists */
     for (j=0; j<n_lists; j++) {
 	list = list_stack[j]->list;
-	for (i=1; i<=list[0]; i++) {
+	for (i=list[0]; i>0; i--) {
 	    k = list[i] - dmin + 1;
 	    if (k >= 1) {
 		if (maplist[k] == -1) {
-		    gretl_list_delete_at_pos(list, i--);
+		    gretl_list_delete_at_pos(list, i);
 		} else {
 		    list[i] = maplist[k];
 		}

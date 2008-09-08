@@ -3540,6 +3540,7 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 #if UDEBUG
     fprintf(stderr, "unlocalize_list: '%s', function depth = %d\n", lname, d);
     printlist(list, lname);
+    fprintf(stderr, "pdinfo = %p, pdinfo->v = %d\n", (void *) pdinfo, pdinfo->v);
 #endif	    
 
     if (list == NULL) {
@@ -3553,6 +3554,10 @@ static int unlocalize_list (const char *lname, double **Z, DATAINFO *pdinfo)
 	unset_var_listarg(pdinfo, vi);
 	vname = pdinfo->varname[vi];
 	if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
+#if UDEBUG
+	    fprintf(stderr, "unlocalize_list: looking at var %d, '%s'\n",
+		    vi, vname);
+#endif
 	    for (j=1; j<pdinfo->v; j++) { 
 		if (STACK_LEVEL(pdinfo, j) == upd && 
 		    !strcmp(pdinfo->varname[j], vname)) {
@@ -3728,7 +3733,8 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
 #if FN_DEBUG
     fprintf(stderr, "stop_fncall: terminating call to "
-	    "function '%s' at depth %d\n", call->fun->name, d);
+	    "function '%s' at depth %d, pdinfo->v = %d\n", 
+	    call->fun->name, d, pdinfo->v);
 #endif
 
     call->args = NULL;
@@ -3768,20 +3774,23 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	}
     }
 
-    if (delv == pdinfo->v - orig_v) {
-	anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
-	if (anyerr && !err) {
-	    err = anyerr;
-	}
-    } else {
-	for (i=pdinfo->v-1; i>=orig_v; i--) {
-	    if (STACK_LEVEL(pdinfo, i) == d) {
-		anyerr = dataset_drop_variable(i, pZ, pdinfo);
-		if (anyerr && !err) {
-		    err = anyerr;
-		}
-	    } 
-	}	    
+    if (delv > 0) {
+	if (delv == pdinfo->v - orig_v) {
+	    /* deleting all added variables */
+	    anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
+	    if (anyerr && !err) {
+		err = anyerr;
+	    }
+	} else {
+	    for (i=pdinfo->v-1; i>=orig_v; i--) {
+		if (STACK_LEVEL(pdinfo, i) == d) {
+		    anyerr = dataset_drop_variable(i, pZ, pdinfo);
+		    if (anyerr && !err) {
+			err = anyerr;
+		    }
+		} 
+	    }
+	}    
     }
 
     /* direct list return: write the possibly revised list to the
@@ -3970,7 +3979,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     *funcerr_msg = '\0';
 
 #if FN_DEBUG
-    fprintf(stderr, "gretl_function_exec: starting\n");
+    fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
 #endif
 
     err = maybe_check_function_needs(pdinfo, u);
@@ -4087,7 +4096,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
 #if UDEBUG
-    fprintf(stderr, "gretl_function_exec: finished main exec, err = %d\n", err);
+    fprintf(stderr, "gretl_function_exec: %s: finished main exec, err = %d, pdinfo->v = %d\n", 
+	    u->name, err, pdinfo->v);
 #endif
 
     /* restore the sample that was in place on entry */

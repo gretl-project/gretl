@@ -237,6 +237,7 @@ relink_to_full_dataset (double ***pZ, DATAINFO *pdinfo)
 #if SUBDEBUG
     fprintf(stderr, "relink_to_full_dataset: fullZ = %p, fullinfo = %p\n",
 	    (void *) fullZ, (void *) fullinfo);
+    fprintf(stderr, "fullinfo->v = %d\n", fullinfo->v);
 #endif
 
     fullZ = NULL;
@@ -251,6 +252,19 @@ relink_to_full_dataset (double ***pZ, DATAINFO *pdinfo)
 
 static void sync_dataset_elements (const DATAINFO *pdinfo)
 {
+    if (fullinfo->v > pdinfo->v) {
+	int i;
+
+#if SUBDEBUG
+	fprintf(stderr, "*** sync_dataset_elements: fullinfo->v = %d but pdinfo->v = %d\n",
+		fullinfo->v, pdinfo->v);
+#endif
+	for (i=pdinfo->v; i<fullinfo->v; i++) {
+	    free(fullZ[i]);
+	    fullZ[i] = NULL;
+	}
+	fullinfo->v = pdinfo->v;
+    }
     fullinfo->varname = pdinfo->varname;
     fullinfo->varinfo = pdinfo->varinfo;
     fullinfo->descrip = pdinfo->descrip;
@@ -485,7 +499,8 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 	pdinfo->t1 = t1min;
 	pdinfo->t2 = t2max;
 #if SUBDEBUG
-	fprintf(stderr, "restore_full_sample: just set t1 and t2\n");
+	fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
+		t1min, t2max);
 #endif
 	return 0;
     }
@@ -544,9 +559,21 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 
     relink_to_full_dataset(pZ, pdinfo);
 
-    if (!err && state != NULL && state->submask != NULL) {
+    if (!err && state != NULL) {
 	/* "full" really means, relative to the original state */
-	err = restrict_sample_from_mask(state->submask, pZ, pdinfo);
+	if (state->submask != NULL) {
+	    err = restrict_sample_from_mask(state->submask, pZ, pdinfo);
+	} else {
+	    int t1min, t2max;
+
+	    sample_range_get_extrema(pdinfo, &t1min, &t2max);
+	    if (pdinfo->t1 < t1min) {
+		pdinfo->t1 = t1min;
+	    }
+	    if (pdinfo->t2 > t2max) {
+		pdinfo->t2 = t2max;
+	    }
+	}
     }
 
     return err;

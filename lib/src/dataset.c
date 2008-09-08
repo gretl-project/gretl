@@ -1989,6 +1989,11 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 
     newv = pdinfo->v - delvars;
 
+#if 0
+    fprintf(stderr, "*** dataset_drop_last_variables: dropping %d, newv = %d\n",
+	    delvars, newv);
+#endif
+
     if (newv < 1) {
 	fprintf(stderr, "dataset_drop_last_vars: pdinfo->v = %d, delvars = %d "
 		" -> newv = %d\n (pdinfo = %p)\n", pdinfo->v, delvars,
@@ -2030,7 +2035,7 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	    }
 	    err = shrink_dataset_to_size(fZ, fdinfo, newv, DROP_SPECIAL);
 	    reset_full_Z(fZ);
-	}
+	} 
     }
 
     return err;

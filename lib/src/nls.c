@@ -2633,7 +2633,7 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     int i, t, err = 0;
 
 #if NLS_DEBUG
-    fprintf(stderr, "real_nls: starting\n");
+    fprintf(stderr, "real_nls: starting, pdinfo->v = %d\n", origv);
 #endif
 
     gretl_model_init(&nlsmod);
@@ -2770,6 +2770,11 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     destroy_private_scalars();
 
     clear_nlspec(spec);
+
+#if NLS_DEBUG
+    fprintf(stderr, "real_nls: finishing, dropping %d series\n",
+	    pdinfo->v - origv);
+#endif
 
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 
