@@ -279,7 +279,9 @@ static const gchar *sys_ui =
     "      <menuitem action='SaveAs'/>"
     "      <menuitem action='SaveAsIcon'/>"
     "      <menuitem action='SaveAndClose'/>"
+#ifdef NATIVE_PRINTING
     "      <menuitem action='Print'/>"
+#endif
     "      <menuitem action='Close'/>"
     "    </menu>"
     "    <menu action='Edit'>"
@@ -2383,17 +2385,64 @@ static void x12_output_callback (GtkAction *action, gpointer p)
 
 static gchar *get_model_ui (void)
 {
-    static gchar *model_ui = NULL;
+    const gchar *ui =  
+	"<ui>"
+	" <menubar name='MenuBar'>"
+	"  <menu action='File'>"
+	"   <menuitem action='SaveAs'/>"
+	"   <menuitem action='SaveAsIcon'/>"
+	"   <menuitem action='SaveAndClose'/>"
+#ifdef NATIVE_PRINTING
+	"   <menuitem action='Print'/>"
+#endif
+	"   <menuitem action='Close'/>"
+	"  </menu>"    
+	"  <menu action='Edit'>"
+	"   <menuitem action='Copy'/>"
+	"  </menu> "     
+	"  <menu action='Tests'>"
+	"   <menuitem action='omit'/>"
+	"   <menuitem action='add'/>"
+	"   <menuitem action='coeffsum'/>"
+	"   <menuitem action='restrict'/>"
+	"   <separator/>"
+	"   <menuitem action='lmtest:s'/>"
+	"   <menuitem action='lmtest:l'/>"
+	"   <menuitem action='reset'/>"
+	"   <separator/>"
+	"   <menu action='Hsk'/>"
+	"   <menuitem action='normtest'/>"
+	"   <menuitem action='leverage'/>"
+	"   <menuitem action='vif'/>"
+	"   <menuitem action='chow'/>"
+	"   <separator/>"
+	"   <menuitem action='lmtest:a'/>"
+	"   <menuitem action='lmtest:h'/>"
+	"   <menuitem action='qlrtest'/>"
+	"   <menuitem action='cusum'/>"
+	"   <menuitem action='cusum:r'/>"
+	"   <separator/>"
+	"   <menuitem action='hausman'/>"
+	"  </menu>"      
+	"  <menu action='Save'/>"
+	"  <menu action='Graphs'>"
+	"   <menu action='ResidPlot'/>"
+	"   <menu action='FittedActualPlot'/>"
+	"  </menu>"    
+	"  <menu action='Analysis'>"
+	"   <menuitem action='DisplayAFR'/>"
+	"   <menuitem action='Forecasts'/>"
+	"   <menuitem action='ConfIntervals'/>"
+	"   <menuitem action='ConfEllipse'/>"
+	"   <menuitem action='Covariance'/>"
+	"   <menuitem action='ANOVA'/>"
+	"   <menuitem action='Bootstrap'/>"
+	"  </menu>"     
+	"  <menu action='LaTeX'/>"
+	" </menubar>"
+	"</ui>";
 
-    if (model_ui == NULL) {
-	char fname[FILENAME_MAX];
-
-	sprintf(fname, "%s%cui%cmodelmenu.xml", paths.gretldir,
-		SLASH, SLASH);
-	gretl_file_get_contents(fname, &model_ui);
-    }
-
-    return model_ui;
+    return ui;
 }
 
 static void 

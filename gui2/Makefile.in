@@ -214,7 +214,6 @@ install-data: installdirs
 
 install-ui: installdirs
 	$(INSTALL_DATA) $(topsrc)/gui2/gretlmain.xml $(DESTDIR)$(uidir)
-	$(INSTALL_DATA) $(topsrc)/gui2/modelmenu.xml $(DESTDIR)$(uidir)
 
 install-exec: $(PROG) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(DESTDIR)$(bindir)/$(PROG)
