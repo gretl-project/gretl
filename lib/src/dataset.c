@@ -24,6 +24,7 @@
 #include "dbread.h"
 
 #define DDEBUG 0
+#define FULLDEBUG 0
 
 static int dataset_changed;
 
@@ -1966,8 +1967,6 @@ static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
     return dataset_sort_by(v, Z, pdinfo, opt);
 }
 
-#define FULLDEBUG 0
-
 /**
  * dataset_drop_last_variables:
  * @delvars: number of variables to be dropped.
@@ -2041,7 +2040,8 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 
 	if (newv < fdinfo->v) { 
 #if FULLDEBUG
-	    fprintf(stderr, "prior fdinfo->v = %d: shrinking fullZ to %d vars\n", v, newv);
+	    fprintf(stderr, "prior fdinfo->v = %d: shrinking fullZ to %d vars\n", 
+		    fdinfo->v, newv);
 #endif
 	    for (i=newv; i<fdinfo->v; i++) {
 		free((*fZ)[i]);
