@@ -3654,13 +3654,18 @@ static void sorter_fill_points (sorter *s, const double **Z,
 
 static int compare_obs (const void *a, const void *b)
 {
-    const s_point *pa = (const s_point *) a;
-    const s_point *pb = (const s_point *) b;
+    s_point *pa = (s_point *) a;
+    s_point *pb = (s_point *) b;
     int ret;
 
     ret = (pa->val1 > pb->val1) - (pa->val1 < pb->val1);
     if (ret == 0) {
 	ret = (pa->val2 > pb->val2) - (pa->val2 < pb->val2);
+    }
+
+    if (ret == 0) {
+	/* mark an error: got a duplicated value */
+	pa->obsnum = pb->obsnum = -1;
     }
 
     return ret;
@@ -3703,6 +3708,21 @@ static int compose_panel_indices (DATAINFO *pdinfo, int T,
     return err;
 }
 
+static int check_indices (sorter *s, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (s->points[i].obsnum < 0) {
+	    sprintf(gretl_errmsg, "unit %g, period %g: duplicated observation",
+		    s->points[i].val1, s->points[i].val2);
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
 static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
 			       int uv, int tv, int *ustrs)
 {
@@ -3711,6 +3731,7 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
     double *tmp = NULL;
     int i, t;
     sorter s;
+    int err = 0;
 
     tmp = malloc(n * sizeof *tmp);
     if (tmp == NULL) {
@@ -3740,6 +3761,11 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
     qsort((void *) s.points, (size_t) n, sizeof s.points[0], 
 	  compare_obs);
 
+    err = check_indices(&s, n);
+    if (err) {
+	goto bailout;
+    }
+
     for (i=1; i<pdinfo->v; i++) {
 	for (t=0; t<n; t++) {
 	    tmp[t] = Z[i][t];
@@ -3767,12 +3793,14 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
 	    }
 	}
 	free_strings_array(S, n);
-    }	
+    }
+
+ bailout:	
 
     free(s.points);
     free(tmp);
 
-    return 0;
+    return err;
 }
 
 /* Given the variables coding for panel unit and time period,
