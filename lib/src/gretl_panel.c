@@ -3839,7 +3839,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 			    pdinfo, uv, tv, &nuid, &ntid);
 
     if (!err) {
-	/* allocate temporary storage, skipping any scalars */
+	/* allocate temporary storage */
 	pdinfo->n = nunits * nperiods;
 	pdinfo->t2 = pdinfo->n - 1;
 	err = allocate_Z(&bigZ, pdinfo);
