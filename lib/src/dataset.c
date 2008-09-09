@@ -1966,6 +1966,8 @@ static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
     return dataset_sort_by(v, Z, pdinfo, opt);
 }
 
+#define FULLDEBUG 0
+
 /**
  * dataset_drop_last_variables:
  * @delvars: number of variables to be dropped.
@@ -1989,7 +1991,7 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 
     newv = pdinfo->v - delvars;
 
-#if 0
+#if FULLDEBUG
     fprintf(stderr, "*** dataset_drop_last_variables: dropping %d, newv = %d\n",
 	    delvars, newv);
 #endif
@@ -2000,6 +2002,13 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 		newv, (void *) pdinfo);
 	return E_DATA;
     }
+
+#if FULLDEBUG
+    for (i=0; i<pdinfo->v; i++) {
+	fprintf(stderr, "var %d (%s, level %d) %s\n", i, pdinfo->varname[i],
+		STACK_LEVEL(pdinfo, i), (i >= newv)? "deleting" : "");
+    }
+#endif
 
     for (i=newv; i<pdinfo->v; i++) {
 	free(pdinfo->varname[i]);
@@ -2028,7 +2037,10 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	   subsetted dataset were not present in the full version.
 	*/
 
-	if (fdinfo->v == v) {
+	if (fdinfo->v == v) { 
+#if FULLDEBUG
+	    fprintf(stderr, "fdinfo->v = v = %d: shrinking fullZ to %d vars\n", v, newv);
+#endif
 	    for (i=newv; i<fdinfo->v; i++) {
 		free((*fZ)[i]);
 		(*fZ)[i] = NULL;
@@ -2036,6 +2048,12 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	    err = shrink_dataset_to_size(fZ, fdinfo, newv, DROP_SPECIAL);
 	    reset_full_Z(fZ);
 	} 
+#if FULLDEBUG
+	else {
+	    fprintf(stderr, "NOT shrinking fullZ: v = %d, fdinfo->v = %d\n",
+		    v, fdinfo->v);
+	}
+#endif
     }
 
     return err;

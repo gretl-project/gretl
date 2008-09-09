@@ -2681,7 +2681,7 @@
 	orders in the conditional variance equation:
 	<equation status="display"
 	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
-	  \sum_{j=1}^p \beta_i h_{t-j}\]"
+	  \sum_{j=1}^p \beta_j h_{t-j}\]"
 	  ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i)^2 + sum(j=1 to p) b(j)*h(t-j)"
 	  graphic="garch_h"/>
       </para>

@@ -28,6 +28,7 @@
 #include "gretl_scalar.h"
 
 #define SUBDEBUG 0
+#define FULLDEBUG 0
 
 /*
   The purpose of the static pointers below: When the user subsamples
@@ -255,9 +256,10 @@ static void sync_dataset_elements (const DATAINFO *pdinfo)
     if (fullinfo->v > pdinfo->v) {
 	int i;
 
-#if SUBDEBUG
+#if FULLDEBUG
 	fprintf(stderr, "*** sync_dataset_elements: fullinfo->v = %d but pdinfo->v = %d\n",
 		fullinfo->v, pdinfo->v);
+	fprintf(stderr, " deleting the last %d element(s) of fullZ\n", fullinfo->v - pdinfo->v);
 #endif
 	for (i=pdinfo->v; i<fullinfo->v; i++) {
 	    free(fullZ[i]);
@@ -404,6 +406,10 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     fullZ = newZ;
 
     for (i=V0; i<pdinfo->v && !err; i++) {
+#if FULLDEBUG
+	fprintf(stderr, "adding to full: var %d (%s, level %d)\n",
+		i, pdinfo->varname[i], STACK_LEVEL(pdinfo, i));
+#endif
 	fullZ[i] = malloc(N * sizeof **newZ);
 	if (fullZ[i] == NULL) {
 	    err = E_ALLOC;
