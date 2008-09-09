@@ -2180,6 +2180,10 @@ int font_has_minus (PangoFontDescription *desc)
     PangoFont *pfont = NULL;
     int ret = 0;
 
+    if (desc == NULL) {
+	return -1;
+    }
+
     widget = gtk_label_new(NULL);  
     context = gtk_widget_get_pango_context(widget); 
 
