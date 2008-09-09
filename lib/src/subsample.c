@@ -511,7 +511,7 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 	return 0;
     }
 
-#if SUBDEBUG
+#if FULLDEBUG || SUBDEBUG
     fprintf(stderr, "\nrestore_full_sample: pZ=%p, *pZ=%p, pdinfo=%p\n",
 	    (void *) pZ, (void *) *pZ, (void *) pdinfo);
 #endif
@@ -1210,7 +1210,7 @@ int restrict_sample (const char *line, const int *list,
 
     gretl_error_clear();
 
-#if SUBDEBUG
+#if FULLDEBUG || SUBDEBUG
     fprintf(stderr, "\nrestrict_sample: '%s'\n", line);
     fprintf(stderr, " pdinfo=%p, pZ=%p, *pZ=%p, state=%p\n", 
 	    (void *) pdinfo, (void *) pZ, (void *) *pZ,

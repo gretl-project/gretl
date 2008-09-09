@@ -1982,14 +1982,12 @@ static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 {
-    int newv, v = pdinfo->v;
+    int newv = pdinfo->v - delvars;
     int i, err = 0;
 
     if (delvars <= 0) {
 	return 0;
     }
-
-    newv = pdinfo->v - delvars;
 
 #if FULLDEBUG
     fprintf(stderr, "*** dataset_drop_last_variables: dropping %d, newv = %d\n",
@@ -2027,19 +2025,23 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	double ***fZ = fetch_full_Z();
 	DATAINFO *fdinfo = fetch_full_datainfo();
 
-	/* The following is required for the special case of undoing
-	   sub-sampling inside a function, when the dataset is already
-	   subsampled on entry to the function.  Note that we actually
-	   _do_ something here only if the number of variables in the
-	   full dataset equals that in the subsetted dataset (before
-	   the deletions in the latter).  Therefore, specifically, we
-	   do _not_ do anything if the vars deleted (above) from the
-	   subsetted dataset were not present in the full version.
+	/* 
+	   Context: we're deleting @delvars variables at the end of Z,
+	   leaving @newv variables.  The dataset is currently
+	   subsampled.
+
+	   Question: should we delete any variables at the end of
+	   fullZ to keep the two arrays in sync?
+
+	   If @newv < fdinfo->v, this must mean that at least some of
+	   the extra vars we're deleting from the current sub-sampled
+	   Z have already been synced to fullZ, so we should do the
+	   deletion from fullZ.
 	*/
 
-	if (fdinfo->v == v) { 
+	if (newv < fdinfo->v) { 
 #if FULLDEBUG
-	    fprintf(stderr, "fdinfo->v = v = %d: shrinking fullZ to %d vars\n", v, newv);
+	    fprintf(stderr, "prior fdinfo->v = %d: shrinking fullZ to %d vars\n", v, newv);
 #endif
 	    for (i=newv; i<fdinfo->v; i++) {
 		free((*fZ)[i]);
@@ -2048,12 +2050,6 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	    err = shrink_dataset_to_size(fZ, fdinfo, newv, DROP_SPECIAL);
 	    reset_full_Z(fZ);
 	} 
-#if FULLDEBUG
-	else {
-	    fprintf(stderr, "NOT shrinking fullZ: v = %d, fdinfo->v = %d\n",
-		    v, fdinfo->v);
-	}
-#endif
     }
 
     return err;

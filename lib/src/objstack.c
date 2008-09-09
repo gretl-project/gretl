@@ -1364,9 +1364,9 @@ int check_variable_deletion_list (int *list, const DATAINFO *pdinfo)
 
     vsave = highest_numbered_var_in_saved_object(pdinfo);
 
-    for (i=1; i<=list[0]; i++) {
+    for (i=list[0]; i>0; i--) {
 	if (list[i] <= vsave) {
-	    gretl_list_delete_at_pos(list, i--);
+	    gretl_list_delete_at_pos(list, i);
 	    pruned = 1;
 	}
     }
