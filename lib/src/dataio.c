@@ -3014,7 +3014,6 @@ int gretl_is_pkzip_file (const char *fname)
  * detect_filetype:
  * @fname: name of file to examine.
  * @ppaths: path information struct.
- * @prn: gretl printing struct.
  * 
  * Attempt to determine the type of a file to be opened in gretl:
  * data file (of various formats), or command script.
@@ -3022,7 +3021,7 @@ int gretl_is_pkzip_file (const char *fname)
  * Returns: integer code indicating the type of file.
  */
 
-GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
+GretlFileType detect_filetype (char *fname, PATHS *ppaths)
 {
     int i, c, ftype = GRETL_NATIVE_DATA;
     char teststr[5];

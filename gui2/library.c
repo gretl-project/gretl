@@ -5902,30 +5902,34 @@ void maybe_display_string_table (void)
     }
 }
 
-void do_open_csv_octave (char *fname, int ftype, int append)
+int do_open_csv_octave (char *fname, int ftype, int append)
 {
     PRN *prn;
-    char buf[32];
+    char title[32];
     char dtype[8];
     int err;
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) return 1;
 
     if (ftype == GRETL_OCTAVE) {
 	err = import_other(fname, ftype, &Z, datainfo, OPT_NONE, prn);
 	strcpy(dtype, "Octave");
     } else {
-	err = import_csv(fname, &Z, datainfo, OPT_NONE, prn); 
+	err = import_csv(fname, &Z, datainfo, OPT_NONE, prn);
 	strcpy(dtype, "CSV");
     }
 
-    sprintf(buf, _("gretl: import %s data"), dtype);
-
-    view_buffer(prn, 78, 350, buf, IMPORT, NULL); 
+    if (err == E_FOPEN) {
+	errbox(_("Couldn't open %s"), fname);
+	gretl_print_destroy(prn);
+    } else {
+	sprintf(title, _("gretl: import %s data"), dtype);
+	view_buffer(prn, 78, 350, title, IMPORT, NULL); 
+    }
 
     if (err) {
 	delete_from_filelist(FILE_LIST_DATA, fname);
-	return;
+	return err;
     }
 
     maybe_display_string_table();
@@ -5937,6 +5941,8 @@ void do_open_csv_octave (char *fname, int ftype, int append)
 	strcpy(paths.datfile, fname);
 	register_data(DATAFILE_OPENED);
     }
+
+    return 0;
 }
 
 int dataset_is_subsampled (void)
@@ -6932,7 +6938,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     } else if (cmd->opt & OPT_O) {
 	ftype = GRETL_ODBC;
     } else {
-	ftype = detect_filetype(datfile, &paths, prn);
+	ftype = detect_filetype(datfile, &paths);
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||

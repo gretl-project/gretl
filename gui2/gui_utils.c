@@ -823,11 +823,7 @@ void do_open_data (windata_t *fwin, int code)
 	ftype = GRETL_JMULTI;
     } else {
 	/* no filetype specified: have to guess */
-	PRN *prn;	
-
-	if (bufopen(&prn)) return;
-	ftype = detect_filetype(tryfile, &paths, prn);
-	gretl_print_destroy(prn);
+	ftype = detect_filetype(tryfile, &paths);
     }
 
     /* destroy the current data set, etc., unless we're explicitly appending */
@@ -837,6 +833,7 @@ void do_open_data (windata_t *fwin, int code)
 
     if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
 	do_open_csv_octave(tryfile, ftype, append);
+	return;
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
 	get_imported_data(tryfile, ftype, append);
 	return;

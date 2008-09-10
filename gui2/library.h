@@ -283,7 +283,7 @@ void do_new_script (int code);
 
 void new_script_callback (GtkAction *action);
 
-void do_open_csv_octave (char *fname, int ftype, int append);
+int do_open_csv_octave (char *fname, int ftype, int append);
 
 int do_store (char *mydatfile, gretlopt oflag);
 
