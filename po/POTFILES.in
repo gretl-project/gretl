@@ -33,6 +33,7 @@ lib/src/gretl_panel.c
 lib/src/gretl_paths.c
 lib/src/gretl_prn.c
 lib/src/gretl_restrict.c
+lib/src/gretl_scalar.c
 lib/src/gretl_string_table.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
@@ -88,7 +89,6 @@ gui2/fileselect.c
 gui2/filters.c
 gui2/fncall.c
 gui2/fnsave.c
-gui2/font_filter.c
 gui2/gpt_control.c
 gui2/gpt_dialog.c
 gui2/graph_page.c
@@ -117,6 +117,7 @@ gui2/textutil.c
 gui2/toolbar.c
 gui2/treeutils.c
 gui2/update.c
+gui2/winstack.c
 plugin/arbond.c
 plugin/arma.c
 plugin/arma_common.c

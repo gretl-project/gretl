@@ -3714,7 +3714,8 @@ static int check_indices (sorter *s, int n)
 
     for (i=0; i<n; i++) {
 	if (s->points[i].obsnum < 0) {
-	    sprintf(gretl_errmsg, "Error: unit %g, period %g: duplicated observation",
+	    sprintf(gretl_errmsg, 
+		    _("Error: unit %g, period %g: duplicated observation"),
 		    s->points[i].val1, s->points[i].val2);
 	    return E_DATA;
 	}

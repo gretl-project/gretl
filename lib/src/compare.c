@@ -2072,7 +2072,7 @@ static void QLR_print_result (MODEL *pmod,
 static double robust_chow_test (MODEL *pmod, const int *list,
 				int *err)
 {
-    double F = NADBL;
+    double test = NADBL;
     int *tlist;
 
     tlist = gretl_list_diff_new(pmod->list, list, 2);
@@ -2080,27 +2080,34 @@ static double robust_chow_test (MODEL *pmod, const int *list,
     if (tlist == NULL) {
 	*err = E_ALLOC;
     } else {
-	F = robust_omit_F(tlist, pmod);
+	test = robust_omit_F(tlist, pmod);
+	if (!na(test)) {
+	    test *= tlist[0]; /* chi-square form */
+	}
 	free(tlist);
     }
 
-    return F;
+    return test;
 }
 
 static void save_chow_test (MODEL *pmod, char *chowdate,
-			    double F, double pval,
+			    double test, double pval,
 			    int dfn, int dfd)
 {
-    ModelTest *test = model_test_new(GRETL_TEST_CHOW);
+    ModelTest *mt = model_test_new(GRETL_TEST_CHOW);
 
-    if (test != NULL) {
-	model_test_set_teststat(test, GRETL_STAT_F);
-	model_test_set_param(test, chowdate);
-	model_test_set_value(test, F);
-	model_test_set_pvalue(test, pval);
-	model_test_set_dfn(test, dfn);
-	model_test_set_dfd(test, dfd);
-	maybe_add_test_to_model(pmod, test);
+    if (mt != NULL) {
+	if (dfd == 0) {
+	    model_test_set_teststat(mt, GRETL_STAT_WALD_CHISQ);
+	} else {
+	    model_test_set_teststat(mt, GRETL_STAT_F);
+	}
+	model_test_set_param(mt, chowdate);
+	model_test_set_value(mt, test);
+	model_test_set_pvalue(mt, pval);
+	model_test_set_dfn(mt, dfn);
+	model_test_set_dfd(mt, dfd);
+	maybe_add_test_to_model(pmod, mt);
     }	  
 }
 
@@ -2127,7 +2134,6 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     int origv = pdinfo->v;
     char chowdate[OBSLEN];
     MODEL chow_mod;
-    double F;
     int QLR = 0;
     int split, smax;
     int err = 0;
@@ -2165,7 +2171,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
     if (QLR) {
 	/* Quandt likelihood ratio */
-	double Fmax = 0.0;
+	double F, Fmax = 0.0;
 	double *Ft = NULL;
 	int dfn = 0, dfd = 0;
 	int tmax = 0;
@@ -2230,29 +2236,43 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    err = chow_mod.errcode;
 	    errmsg(err, prn);
 	} else {
+	    int dfd = (robust)? 0 : chow_mod.dfd;
 	    int dfn = chow_mod.ncoeff - pmod->ncoeff;
-	    double pval;
+	    double test, pval;
 
-	    chow_mod.aux = AUX_CHOW;
-	    printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
+	    if (!(opt & OPT_Q)) {
+		chow_mod.aux = AUX_CHOW;
+		printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
+	    }
 
 	    if (robust) {
-		F = robust_chow_test(&chow_mod, pmod->list, &err);
+		test = robust_chow_test(&chow_mod, pmod->list, &err);
 	    } else {
-		F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
+		test = (pmod->ess - chow_mod.ess) * dfd / 
 		    (chow_mod.ess * dfn);
 	    }
 
-	    if (!na(F)) {
-		pval = snedecor_cdf_comp(dfn, chow_mod.dfd, F);
-		pprintf(prn, _("\nChow test for structural break at observation %s:\n"
-			       "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
-			dfn, chow_mod.dfd, F, pval);
-		if (opt & OPT_S) {
-		    save_chow_test(pmod, chowdate, F, pval, dfn, chow_mod.dfd);
+	    if (!na(test)) {
+		if (opt & OPT_Q) {
+		    pputc(prn, '\n');
 		}
-		record_test_result(F, pval, "Chow");
-	    }
+		pprintf(prn, _("Chow test for structural break at observation %s"),
+			       chowdate); 
+		pputc(prn, '\n');
+		if (robust) {
+		    pval = chisq_cdf_comp(dfn, test);
+		    pprintf(prn, "  %s(%d) = %g %s %.4f\n\n", _("Chi-square"),
+			    dfn, test, _("with p-value"), pval);
+		} else {
+		    pval = snedecor_cdf_comp(dfn, dfd, test);
+		    pprintf(prn, "  F(%d, %d) = %g %s %.4f\n\n", 
+			    dfn, chow_mod.dfd, test, _("with p-value"), pval);
+		}
+		if (opt & OPT_S) {
+		    save_chow_test(pmod, chowdate, test, pval, dfn, dfd);
+		}
+		record_test_result(test, pval, "Chow");
+	    } 
 	}
 	clear_model(&chow_mod);
     }

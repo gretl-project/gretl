@@ -4525,7 +4525,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == RESET) {
 	    err = reset_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == CHOW || cmd->ci == QLRTEST) {
-	    err = chow_test(line, models[0], pZ, pdinfo, OPT_NONE, prn);
+	    err = chow_test(line, models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == VIF) { 
 	    err = vif_test(models[0], pZ, pdinfo, prn);
 	} 
