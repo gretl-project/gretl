@@ -2261,12 +2261,15 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		pputc(prn, '\n');
 		if (robust) {
 		    pval = chisq_cdf_comp(dfn, test);
-		    pprintf(prn, "  %s(%d) = %g %s %.4f\n\n", _("Chi-square"),
+		    pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
 			    dfn, test, _("with p-value"), pval);
+		    pprintf(prn, "  %s: F(%d, %d) = %g %s %.4f\n\n", _("F-form"), 
+			    dfn, chow_mod.dfd, test / dfn, _("with p-value"),
+			    snedecor_cdf_comp(dfn, chow_mod.dfd, test / dfn));
 		} else {
 		    pval = snedecor_cdf_comp(dfn, dfd, test);
 		    pprintf(prn, "  F(%d, %d) = %g %s %.4f\n\n", 
-			    dfn, chow_mod.dfd, test, _("with p-value"), pval);
+			    dfn, dfd, test, _("with p-value"), pval);
 		}
 		if (opt & OPT_S) {
 		    save_chow_test(pmod, chowdate, test, pval, dfn, dfd);

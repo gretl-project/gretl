@@ -916,6 +916,12 @@
       <arguments>
         <argument>obs</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print estimates for augmented model</effect>
+	</option>
+      </options>
       <examples>
         <example>chow 25</example>
         <example>chow 1988:1</example>
@@ -929,16 +935,21 @@
       </para>
 
       <para>
-	Must follow an OLS regression.  Creates a dummy variable which
-	equals 1 from the split point specified by <repl>obs</repl> to
-	the end of the sample, 0 otherwise, and also creates
-	interaction terms between this dummy and the original
-	independent variables.  An augmented regression is run
-	including these terms and an <math>F</math> statistic is
-	calculated, taking the augmented regression as the
-	unrestricted and the original as restricted.  This statistic
-	is appropriate for testing the null hypothesis of no
-	structural break at the given split point.
+	Must follow an OLS regression.  Provides a test for the null
+	hypothesis of no structural break at the given split point. The
+	procedure is to create a dummy variable which equals 1 from the
+	split point specified by <repl>obs</repl> to the end of the
+	sample, 0 otherwise, and also interaction terms between this dummy
+	and the original regressors.  An augmented regression is run
+	including these terms.
+      </para>
+      <para>
+	By default an <math>F</math> statistic is calculated, taking the
+	augmented regression as the unrestricted model and the original as
+	the restricted.  But if the original model used a robust estimator
+	for the covariance matrix, the test statistic is a Wald chi-square
+	value based on a robust estimator of the covariance matrix for the
+	augmented regression.
       </para>
     </description>
 
