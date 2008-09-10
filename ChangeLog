@@ -9,6 +9,13 @@ version 1.7.8, in progress
 - Change the label "standard error of residuals" to
   "standard error of the regression"
 - Allow users to change the text size in help windows
+- Fix two more bugs in connection with user-defined
+  functions in the context of a sub-sampled dataset
+- Fix bug: with the --panel-vars option to the
+  "setobs" command, check more carefully the validity 
+  of the supposed unit and time-period index variables
+- Chow test: perform a robust version if the original
+  model was estimated using an HCCME
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables

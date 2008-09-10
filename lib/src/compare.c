@@ -2069,6 +2069,24 @@ static void QLR_print_result (MODEL *pmod,
     }
 }
 
+static double robust_chow_test (MODEL *pmod, const int *list,
+				int *err)
+{
+    double F = NADBL;
+    int *tlist;
+
+    tlist = gretl_list_diff_new(pmod->list, list, 2);
+
+    if (tlist == NULL) {
+	*err = E_ALLOC;
+    } else {
+	F = robust_omit_F(tlist, pmod);
+	free(tlist);
+    }
+
+    return F;
+}
+
 static void save_chow_test (MODEL *pmod, char *chowdate,
 			    double F, double pval,
 			    int dfn, int dfd)
@@ -2138,15 +2156,14 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	if (split <= 0 || split >= pdinfo->n) { 
 	    strcpy(gretl_errmsg, _("Invalid sample split for Chow test"));
 	    err = E_DATA;
+	    goto bailout;
 	}
 	smax = split;
     }
 
-    if (!err) {
-	chowlist = make_chow_list(pmod, pZ, pdinfo, split, &err);
-    }
+    chowlist = make_chow_list(pmod, pZ, pdinfo, split, &err);
 
-    if (!err && QLR) {
+    if (QLR) {
 	/* Quandt likelihood ratio */
 	double Fmax = 0.0;
 	double *Ft = NULL;
@@ -2198,10 +2215,16 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	if (Ft != NULL) {
 	    free(Ft);
 	}
+    } else {
+	/* regular (or robust) Chow test */
+	int robust = gretl_model_get_int(pmod, "robust");
+	gretlopt lsqopt = OPT_A;
 
-    } else if (!err) {
-	/* regular Chow test */
-	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A);
+	if (robust) {
+	    lsqopt |= OPT_R;
+	}
+
+	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, lsqopt);
 
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
@@ -2212,21 +2235,29 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
 	    chow_mod.aux = AUX_CHOW;
 	    printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
-	    F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
-		(chow_mod.ess * dfn);
-	    pval = snedecor_cdf_comp(dfn, chow_mod.dfd, F);
-	    pprintf(prn, _("\nChow test for structural break at observation %s:\n"
-		    "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
-		    dfn, chow_mod.dfd, F, pval);
-	    
-	    if (opt & OPT_S) {
-		save_chow_test(pmod, chowdate, F, pval, dfn, chow_mod.dfd);
+
+	    if (robust) {
+		F = robust_chow_test(&chow_mod, pmod->list, &err);
+	    } else {
+		F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
+		    (chow_mod.ess * dfn);
 	    }
 
-	    record_test_result(F, pval, "Chow");
+	    if (!na(F)) {
+		pval = snedecor_cdf_comp(dfn, chow_mod.dfd, F);
+		pprintf(prn, _("\nChow test for structural break at observation %s:\n"
+			       "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
+			dfn, chow_mod.dfd, F, pval);
+		if (opt & OPT_S) {
+		    save_chow_test(pmod, chowdate, F, pval, dfn, chow_mod.dfd);
+		}
+		record_test_result(F, pval, "Chow");
+	    }
 	}
 	clear_model(&chow_mod);
     }
+
+ bailout:
 
     /* clean up extra variables */
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
