@@ -512,6 +512,21 @@ int get_date_order (int f0, int fn)
     }
 }
 
+static void retransform_daily_dates (DATAINFO *pdinfo)
+{
+    int t, y, m, d;
+
+    /* we apparently guessed wrongly at MMDDYYYY, so
+       put the dates back as they were for another try,
+       at DDMMYYYY.
+    */
+
+    for (t=0; t<pdinfo->n; t++) {
+	sscanf(pdinfo->S[t], "%d/%d/%d", &y, &d, &m);
+	sprintf(pdinfo->S[t], "%d/%d/%d", d, m, y);
+    }
+}
+
 static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
 {
     int t, yr, mon, day;
@@ -520,13 +535,13 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
 
     for (t=0; t<pdinfo->n && !err; t++) {
 	if (dorder == YYYYMMDD) {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", 
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-.]%d%1[/-.]%d", 
 			  &yr, sep1, &mon, sep2, &day);
 	} else if (dorder == DDMMYYYY) {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", 
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-.]%d%1[/-.]%d", 
 			  &day, sep1, &mon, sep2, &yr);
 	} else {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", 
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-.]%d%1[/-.]%d", 
 			  &mon, sep1, &day, sep2, &yr);
 	}
 	if (sret == 5) {
@@ -547,13 +562,17 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
     char sep1[2], sep2[2];
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
+    int dorder = 0;
 
-    if (sscanf(lbl1, "%d%1[/-]%d%1[/-]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
-	sscanf(lbl2, "%d%1[/-]%d%1[/-]%d", &d2[0], sep1, &d2[1], sep2, &d2[2]) == 5) {
+    if (sscanf(lbl1, "%d%1[/-.]%d%1[/-.]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
+	sscanf(lbl2, "%d%1[/-.]%d%1[/-.]%d", &d2[0], sep1, &d2[1], sep2, &d2[2]) == 5) {
 	int yr1, mon1, day1;
 	int yr2, mon2, day2;
-	int dorder = get_date_order(d1[0], d2[0]);
 	int pd, ret = 0;
+
+	dorder = get_date_order(d1[0], d2[0]);
+
+    tryagain:
 
 	if (dorder == YYYYMMDD) {
 	    pputs(prn, "Trying date order YYYYMMDD\n");
@@ -598,6 +617,11 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
 		if (pd == 52) {
 		    if (csv_weekly_data(pZ, pdinfo)) {
 			ret = 52;
+		    } else if (dorder == MMDDYYYY) {
+			/* maybe we guessed wrong */
+			retransform_daily_dates(pdinfo);
+			dorder = DDMMYYYY;
+			goto tryagain;
 		    } else {
 			ret = -1;
 		    }

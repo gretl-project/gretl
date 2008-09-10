@@ -16,6 +16,9 @@ version 1.7.8, in progress
   of the supposed unit and time-period index variables
 - Chow test: perform a robust version if the original
   model was estimated using an HCCME
+- OS X package: fix for the problem whereby GTK could
+  lose track of its image-loading modules
+- CSV data: improve recognition of daily dates
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables
