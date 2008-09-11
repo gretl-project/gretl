@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.7.7\n"
+"Project-Id-Version: gretl 1.7.8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-09 21:30-0400\n"
-"PO-Revision-Date: 2008-09-04 13:34-0400\n"
+"PO-Revision-Date: 2008-09-11 21:35+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -3106,7 +3106,7 @@ msgstr "iterazione"
 #: lib/src/gretl_panel.c:3718
 #, c-format
 msgid "Error: unit %g, period %g: duplicated observation"
-msgstr ""
+msgstr "Errore: unità %g, periodo %g: osservazione duplicata"
 
 #: lib/src/gretl_paths.c:1242
 msgid "User directory is not set"
@@ -3220,9 +3220,8 @@ msgstr "Stime vincolate"
 #: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:212
 #: lib/src/modelprint.c:217 lib/src/modelprint.c:226 lib/src/modelprint.c:230
 #: lib/src/printout.c:1087
-#, fuzzy
 msgid "Standard error of the regression"
-msgstr "Errore standard dei residui"
+msgstr "Errore standard della regressione"
 
 #: lib/src/gretl_restrict.c:1802
 msgid "Robust chi^2"
@@ -3262,9 +3261,9 @@ msgid "sum"
 msgstr "somma"
 
 #: lib/src/gretl_scalar.c:300
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted scalar %s"
-msgstr "Generato lo scalare %s"
+msgstr "Eliminato lo scalare %s"
 
 #: lib/src/gretl_string_table.c:181
 #, c-format
@@ -10920,19 +10919,16 @@ msgid "_Topics"
 msgstr "_Sommario"
 
 #: gui2/helpfiles.c:97
-#, fuzzy
 msgid "_Text"
-msgstr "_Test"
+msgstr "_Testo"
 
 #: gui2/helpfiles.c:98
-#, fuzzy
 msgid "_Larger"
-msgstr "Ordine dei ritardi"
+msgstr "_Ingrandisci"
 
 #: gui2/helpfiles.c:100
-#, fuzzy
 msgid "_Smaller"
-msgstr "_Campione"
+msgstr "_Riduci"
 
 #: gui2/helpfiles.c:177
 msgid "Dataset"
@@ -12987,11 +12983,11 @@ msgstr "Spagnolo"
 
 #: gui2/settings.c:912
 msgid "Use local language if possible"
-msgstr ""
+msgstr "Usa la lingua locale se possibile"
 
 #: gui2/settings.c:913
 msgid "Use English"
-msgstr "Usa Inglese"
+msgstr "Usa la lingua inglese"
 
 #: gui2/settings.c:914
 msgid "Use Basque"
@@ -13711,11 +13707,11 @@ msgstr "Esponente di Hurst stimato"
 
 #: plugin/garch.c:631
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"
-msgstr ""
+msgstr "GARCH: p > 0 e q = 0: il modello non è identificato"
 
 #: plugin/garch.c:638
 msgid "GARCH: p + q must be less than 6"
-msgstr ""
+msgstr "GARCH: p + q deve essere minore di 6"
 
 #: plugin/gnumeric_import.c:292
 #, c-format
