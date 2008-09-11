@@ -157,13 +157,17 @@ static gretlopt pca_flag_dialog (void)
     return OPT_NONE;
 }
 
+#define PCA_COLS 7
+
 static void pca_print (VMatrix *cmat, gretl_matrix *E,
 		       gretl_matrix *C, PRN *prn)
 {
     double cum, esum;
     char pcname[8];
+    int nl, namelen = 8;
     int n = cmat->dim;
-    int i, j, cols;
+    int done, todo;
+    int i, j;
 
     pprintf(prn, "%s\n\n", _("Principal Components Analysis"));
 
@@ -189,39 +193,45 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 	cum += E->val[i] / esum;
 	pprintf(prn, "%5d%13.4f%13.4f%13.4f\n", i + 1,
 		E->val[i], E->val[i] / esum, cum);
+	nl = strlen(cmat->names[i]);
+	if (nl > namelen) {
+	    namelen = nl;
+	}
     }
     pputc(prn, '\n');
 
     pprintf(prn, "%s\n\n", _("Eigenvectors (component loadings)"));
 
-    cols = n;
-    while (cols > 0) {
-	int imax = n - cols + 7;
-	int jmin = cols - 7;
-	int colsdone = 0;
+    nl = g_utf8_strlen(_("Variable"), -1);
+    if (nl > namelen) {
+	namelen = nl;
+    }
 
-	imax = (imax < n)? imax : n;
-	jmin = (jmin > 0)? jmin : 0;
+    done = 0;
+    todo = n;
 
-	pprintf(prn, "%-16s", _("Variable"));
+    while (todo > 0) {
+	int ncols = (todo > PCA_COLS)? PCA_COLS : todo; 
 
-	for (i=n-cols; i<imax; i++) {
-	    sprintf(pcname, "PC%d", i + 1);
+	pprintf(prn, "%-*s", namelen + 1, _("Variable"));
+
+	for (j=0; j<ncols; j++) {
+	    sprintf(pcname, "PC%d", done + j + 1);
 	    pprintf(prn, "%9s", pcname);
-	    colsdone++;
 	}
 	pputc(prn, '\n');
 
 	for (i=0; i<n; i++) {
-	    pprintf(prn, "%-16s", cmat->names[i]);
-	    for (j=jmin; j<cols; j++) {
-		pprintf(prn, "%9.3f", gretl_matrix_get(C, i, j));
+	    pprintf(prn, "%-*s", namelen + 1, cmat->names[i]);
+	    for (j=0; j<ncols; j++) {
+		pprintf(prn, "%9.3f", gretl_matrix_get(C, i, done + j));
 	    }
 	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
 
-	cols -= colsdone;
+	todo -= ncols;
+	done += ncols;
     }
 }
 

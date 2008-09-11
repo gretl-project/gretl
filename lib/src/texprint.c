@@ -984,6 +984,8 @@ void set_gretl_tex_preamble (void)
 	strcpy(tex_preamble_file, test);
 	fclose(fp);
     }
+
+    gretl_error_clear();
 }
 
 static void landscape_modify_line (char *line)

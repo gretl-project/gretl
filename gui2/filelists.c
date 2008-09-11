@@ -348,7 +348,7 @@ void mkfilelist (int filetype, char *fname)
 {
     char *tmp[MAXRECENT-1];
     char **filep;
-    int i, match = -1;
+    int i, pos = -1;
 
 #if FDEBUG
     fprintf(stderr, "mkfilelist: type=%d, fname='%s'\n", 
@@ -365,13 +365,16 @@ void mkfilelist (int filetype, char *fname)
     /* see if this file is already on the list */
     for (i=0; i<MAXRECENT; i++) {
         if (!fnamecmp(filep[i], fname)) {
-            match = i;
+            pos = i;
+#if FDEBUG
+	    fprintf(stderr, "file already on list at pos %d\n", i);
+#endif
             break;
         }
     }
 
-    if (match == 0) {
-	/* file is on top: no change in list */
+    if (pos == 0) {
+	/* file is on top: no change is needed */
 	return; 
     }
 
@@ -384,25 +387,27 @@ void mkfilelist (int filetype, char *fname)
     }
 
     /* copy fname into array, if not already present */
-    if (match == -1) {
+    if (pos == -1) {
+	/* look for an empty slot */
         for (i=1; i<MAXRECENT; i++) {
             if (filep[i][0] == '\0') {
                 strcpy(filep[i], fname);
-                match = i;
+                pos = i;
                 break;
 	    }
-	    if (match == -1) {
-		match = MAXRECENT - 1;
-		strcpy(filep[match], fname);
-	    }
+	}
+	if (pos == -1) {
+	    /* no empty slot available */
+	    pos = MAXRECENT - 1;
+	    strcpy(filep[pos], fname);
 	}
     } 
 
-    /* set first pointer to new file */
-    filep[0] = filep[match];
+    /* set first pointer to newest file */
+    filep[0] = filep[pos];
 
-    /* rearrange other pointers */
-    for (i=1; i<=match; i++) {
+    /* and rearrange the other pointers */
+    for (i=1; i<=pos; i++) {
 	filep[i] = tmp[i-1];
     }
 

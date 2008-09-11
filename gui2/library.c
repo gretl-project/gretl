@@ -5902,49 +5902,6 @@ void maybe_display_string_table (void)
     }
 }
 
-int do_open_csv_octave (char *fname, int ftype, int append)
-{
-    PRN *prn;
-    char title[32];
-    char dtype[8];
-    int err;
-
-    if (bufopen(&prn)) return 1;
-
-    if (ftype == GRETL_OCTAVE) {
-	err = import_other(fname, ftype, &Z, datainfo, OPT_NONE, prn);
-	strcpy(dtype, "Octave");
-    } else {
-	err = import_csv(fname, &Z, datainfo, OPT_NONE, prn);
-	strcpy(dtype, "CSV");
-    }
-
-    if (err == E_FOPEN) {
-	errbox(_("Couldn't open %s"), fname);
-	gretl_print_destroy(prn);
-    } else {
-	sprintf(title, _("gretl: import %s data"), dtype);
-	view_buffer(prn, 78, 350, title, IMPORT, NULL); 
-    }
-
-    if (err) {
-	delete_from_filelist(FILE_LIST_DATA, fname);
-	return err;
-    }
-
-    maybe_display_string_table();
-    data_status |= IMPORT_DATA;
-
-    if (append) {
-	register_data(DATA_APPENDED);
-    } else {
-	strcpy(paths.datfile, fname);
-	register_data(DATAFILE_OPENED);
-    }
-
-    return 0;
-}
-
 int dataset_is_subsampled (void)
 {
     int ret = 0;

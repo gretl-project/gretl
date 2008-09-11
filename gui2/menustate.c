@@ -437,10 +437,16 @@ void clear_sample_label (void)
 
 void set_sample_label (DATAINFO *pdinfo)
 {
-    GtkWidget *dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
+    GtkWidget *dlabel;
     char stobs[OBSLEN], endobs[OBSLEN];
     char labeltxt[128];
     const char *pdstr;
+
+    if (mdata == NULL) {
+	return;
+    }
+
+    dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
 
     ntodate(stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);

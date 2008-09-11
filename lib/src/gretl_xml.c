@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #undef XML_DEBUG
 
@@ -2007,9 +2008,12 @@ static long get_filesize (const char *fname)
 {
     struct stat buf;
 
+    errno = 0;
+
     if (stat(fname, &buf) == 0) {
         return buf.st_size;
     } else {
+	gretl_errmsg_set_from_errno(NULL);
         return -1;
     }
 }
@@ -2255,6 +2259,21 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
 
     gretl_error_clear();
 
+    /* COMPAT: Do not generate nodes for formatting spaces */
+    LIBXML_TEST_VERSION
+	xmlKeepBlanksDefault(0);
+
+    fsz = get_filesize(fname);
+
+    if (fsz < 0) {
+	return E_FOPEN;
+    } else if (fsz > 100000) {
+	fprintf(stderr, "%s %ld bytes %s...\n", 
+		(is_gzipped(fname))? I_("Uncompressing") : I_("Reading"),
+		fsz, I_("of data"));
+	if (opt & OPT_P) progress = fsz;
+    }
+
 #ifdef ENABLE_NLS
     check_for_console(prn);
 #endif
@@ -2263,18 +2282,6 @@ int gretl_read_gdt (char *fname, PATHS *ppaths,
     if (tmpdinfo == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }
-
-    /* COMPAT: Do not generate nodes for formatting spaces */
-    LIBXML_TEST_VERSION
-	xmlKeepBlanksDefault(0);
-
-    fsz = get_filesize(fname);
-    if (fsz > 100000) {
-	fprintf(stderr, "%s %ld bytes %s...\n", 
-		(is_gzipped(fname))? I_("Uncompressing") : I_("Reading"),
-		fsz, I_("of data"));
-	if (opt & OPT_P) progress = fsz;
     }
 
     doc = gretl_xmlParseFile(fname);

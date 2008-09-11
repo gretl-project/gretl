@@ -3854,18 +3854,30 @@ void warnbox (const char *template, ...)
 
 void file_read_errbox (const char *fname)
 {
-    gchar *uname = my_filename_to_utf8(fname);
+    const char *msg = gretl_errmsg_get();
 
-    errbox(_("Couldn't open %s"), uname);
-    g_free(uname);
+    if (*msg != '\0') {
+	errbox(msg);
+    } else {
+	gchar *uname = my_filename_to_utf8(fname);
+
+	errbox(_("Couldn't open %s"), uname);
+	g_free(uname);
+    }
 }
 
 void file_write_errbox (const char *fname)
 {
-    gchar *uname = my_filename_to_utf8(fname);
+    const char *msg = gretl_errmsg_get();
 
-    errbox(_("Couldn't write to %s"), uname);
-    g_free(uname);
+    if (*msg != '\0') {
+	errbox(msg);
+    } else {
+	gchar *uname = my_filename_to_utf8(fname);
+
+	errbox(_("Couldn't write to %s"), uname);
+	g_free(uname);
+    }
 }
 
 /* --------------  Dataset structure "wizard" ---------------- */

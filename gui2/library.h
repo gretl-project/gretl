@@ -283,8 +283,6 @@ void do_new_script (int code);
 
 void new_script_callback (GtkAction *action);
 
-int do_open_csv_octave (char *fname, int ftype, int append);
-
 int do_store (char *mydatfile, gretlopt oflag);
 
 void view_latex (PRN *prn);

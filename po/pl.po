@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.7.7
+# Polish translation for gretl-1.7.8
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
@@ -6,10 +6,10 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.7.7\n"
+"Project-Id-Version: gretl-1.7.8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-09 21:30-0400\n"
-"PO-Revision-Date: 2008-09-04 13:42-0400\n"
+"PO-Revision-Date: 2008-09-11 09:43-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -446,15 +446,14 @@ msgstr "zmienna zero-jedynkowa dla testu Chowa"
 
 #: lib/src/compare.c:1994
 msgid "Chow F-test for break"
-msgstr "Test F - Chowa na załamanie strukturalne"
+msgstr "Test F - Chowa na zmiany strukturalne"
 
 #: lib/src/compare.c:2035
 msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
-"Test ilorazu wiarygodności Quandta na występowanie załamania "
-"strukturalnego,\n"
+"Test ilorazu wiarygodności Quandta na występowanie załamania strukturalnego,\n"
 "w nieokreślonym momencie, z 15 procentowym błędem oceny"
 
 #: lib/src/compare.c:2038
@@ -501,7 +500,7 @@ msgstr "Błędny podział próby dla testu Chowa"
 #: lib/src/compare.c:2259 lib/src/gretl_model.c:2681
 #, c-format
 msgid "Chow test for structural break at observation %s"
-msgstr "Test Chowa na występowanie załamania strukturalnego w momencie %s"
+msgstr "Test Chowa na zmiany strukturalne przy podziale próby w obserwacji %s"
 
 #: lib/src/compare.c:2397
 msgid "Observation"
@@ -2775,7 +2774,7 @@ msgstr "brak autokorelacji składnika losowego"
 
 #: lib/src/gretl_model.c:2682 lib/src/gretl_model.c:2688
 msgid "no structural break"
-msgstr "brak załamania strukturalnego"
+msgstr "brak zmian strukturalnych"
 
 #: lib/src/gretl_model.c:2684
 msgid "CUSUM test for parameter stability"
@@ -2923,8 +2922,7 @@ msgid ""
 msgstr ""
 "                         Oszacowane losowe efekty\n"
 "           allows for a unit-specific component to the error term\n"
-"(współczynniki, błędy stand. w nawiasach, wartość p w nawiasach "
-"kwadratowych)\n"
+"(współczynniki, błędy stand. w nawiasach, wartość p w nawiasach kwadratowych)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:1306
@@ -2933,10 +2931,9 @@ msgid ""
 "allows for differing intercepts by cross-sectional unit\n"
 "slope standard errors in parentheses, p-values in brackets\n"
 msgstr ""
-"                          Oszacowane ustalone efekty\n"
-"  uwzględniające zróżnicowanie wyrazu wolnego według jednostek w przekroju,\n"
-"(współczynniki, błędy stand. w nawiasach, wartość p w nawiasach "
-"kwadratowych).\n"
+"                 Oszacowane ustalone efekty (nielosowe efekty)\n"
+"uwzględniające zróżnicowanie wyrazu wolnego według jednostek w przekroju,\n"
+"(współczynniki, błędy stand. w nawiasach, wartość p w nawiasach kwadratowych).\n"
 
 #: lib/src/gretl_panel.c:1319
 #, c-format
@@ -2963,8 +2960,7 @@ msgid ""
 "\n"
 msgstr ""
 "(Niska wartość p oznacza odrzucenie hipotezy H0, że model panelowy MNK jest\n"
-" poprawny, wobec hipotezy H1, że model o ustalonych efektach jest "
-"właściwszy.)\n"
+" poprawny, wobec hipotezy H1, że model o ustalonych efektach jest właściwszy.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:1388 lib/src/gretl_restrict.c:1928
@@ -3095,7 +3091,7 @@ msgstr "iteracja"
 #: lib/src/gretl_panel.c:3718
 #, c-format
 msgid "Error: unit %g, period %g: duplicated observation"
-msgstr ""
+msgstr "Błąd: jednostka %g, okres %g: obserwacja zduplikowana"
 
 #: lib/src/gretl_paths.c:1242
 msgid "User directory is not set"
@@ -3207,7 +3203,6 @@ msgstr "Estymacja z ograniczeniami"
 #: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:212
 #: lib/src/modelprint.c:217 lib/src/modelprint.c:226 lib/src/modelprint.c:230
 #: lib/src/printout.c:1087
-#, fuzzy
 msgid "Standard error of the regression"
 msgstr "Błąd standardowy reszt"
 
@@ -3249,9 +3244,9 @@ msgid "sum"
 msgstr "suma"
 
 #: lib/src/gretl_scalar.c:300
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted scalar %s"
-msgstr "Wygenerowano skalar %s"
+msgstr "Usunięto skalar %s"
 
 #: lib/src/gretl_string_table.c:181
 #, c-format
@@ -4966,8 +4961,7 @@ msgid ""
 msgstr ""
 "                 średnia dla    odch. stand.    średnia dla    odch. stand.\n"
 "                estymowanych    estymowanych    estymowanych   estymowanych\n"
-"     Zmienna   współczynników  współczynników   błędów stand.  błędów "
-"stand.\n"
+"     Zmienna   współczynników  współczynników   błędów stand.  błędów stand.\n"
 "\n"
 
 #: lib/src/monte_carlo.c:2162
@@ -5345,9 +5339,7 @@ msgstr ""
 
 #: lib/src/printout.c:245
 msgid "Test for null hypothesis of normal distribution"
-msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. Test "
-"Doornika-Hansena (1994)- transformowana skośność i kurtoza"
+msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny"
 
 #: lib/src/printout.c:252
 msgid "Test for null hypothesis of gamma distribution"
@@ -10429,7 +10421,7 @@ msgstr "ocena wpływowych obserwacji"
 
 #: gui2/gui_utils.c:168
 msgid "_Chow test"
-msgstr "test stabilności Chowa"
+msgstr "test zmian strukturalnych Chowa"
 
 #: gui2/gui_utils.c:169
 msgid "_Collinearity"
@@ -10884,19 +10876,16 @@ msgid "_Topics"
 msgstr "_Tematy"
 
 #: gui2/helpfiles.c:97
-#, fuzzy
 msgid "_Text"
-msgstr "_Testy"
+msgstr "_Tekst"
 
 #: gui2/helpfiles.c:98
-#, fuzzy
 msgid "_Larger"
-msgstr "Rząd opóźnienia:"
+msgstr "_Większy"
 
 #: gui2/helpfiles.c:100
-#, fuzzy
 msgid "_Smaller"
-msgstr "P_róba"
+msgstr "_Mniejszy"
 
 #: gui2/helpfiles.c:177
 msgid "Dataset"
@@ -12800,9 +12789,8 @@ msgid "Allow shell commands"
 msgstr "Dopuszcza polecenia powłoki shell"
 
 #: gui2/settings.c:177
-#, fuzzy
 msgid "Language preference"
-msgstr "Manual w formacie PDF"
+msgstr "Wybór języka dla GUI"
 
 #: gui2/settings.c:180
 msgid "Set working directory from shell"
@@ -12942,15 +12930,13 @@ msgstr "Hiszpański"
 
 #: gui2/settings.c:912
 msgid "Use local language if possible"
-msgstr ""
+msgstr "użyj wersji zgodnej z językiem systemu operacyjnego"
 
 #: gui2/settings.c:913
-#, fuzzy
 msgid "Use English"
-msgstr "Wykorzystaj linie"
+msgstr "użyj wersji angielskiej"
 
 #: gui2/settings.c:914
-#, fuzzy
 msgid "Use Basque"
 msgstr "użyj wersji baskijskiej"
 
@@ -13664,11 +13650,11 @@ msgstr "Oszacowany wykładnik Hursta"
 
 #: plugin/garch.c:631
 msgid "GARCH: p > 0 and q = 0: the model is unidentified"
-msgstr ""
+msgstr "GARCH: jeli p>0 oraz q=0, to model jest źle okrelony"
 
 #: plugin/garch.c:638
 msgid "GARCH: p + q must be less than 6"
-msgstr ""
+msgstr "GARCH: p+q musi być mniejsze od 6"
 
 #: plugin/gnumeric_import.c:292
 #, c-format
@@ -14324,118 +14310,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#, fuzzy
-#~ msgid "Chow test for structural break at observation %s:"
-#~ msgstr "Test Chowa na występowanie załamania strukturalnego w momencie %s"
-
-#~ msgid ""
-#~ "\n"
-#~ "Chow test for structural break at observation %s:\n"
-#~ "  F(%d, %d) = %f with p-value %f\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Test Chowa na występowanie załamania strukturalnego w momencie %s:\n"
-#~ "  F(%d, %d) = %f  z wartością p = %f\n"
-#~ "\n"
-
-#~ msgid "Standard error of residuals"
-#~ msgstr "Błąd standardowy reszt"
-
-#~ msgid "Standard error of residuals = %g\n"
-#~ msgstr "Błąd standardowy reszt = %g\n"
-
-#~ msgid "Parameter"
-#~ msgstr "Parametr"
-
-#~ msgid "$t$-statistic"
-#~ msgstr "Statystyka $t$"
-
-#~ msgid "t-statistic"
-#~ msgstr "Statystyka t"
-
-#~ msgid "Estimates of the AR coefficients"
-#~ msgstr "Estymacja współczynników AR"
-
-#~ msgid ""
-#~ "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      Zmienna      Współczynnik     Błąd stand.   Statystyka t  Wartość "
-#~ "p\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      Parametr     Ocena parametru   Błąd stand.  Statystyka t  Wartość "
-#~ "p\n"
-#~ "\n"
-
-#~ msgid "      VARIABLE            COEFFICIENT                  STDERROR\n"
-#~ msgstr "      Zmienna             Współczynnik          Błąd standardowy\n"
-
-#~ msgid ""
-#~ "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
-#~ msgstr ""
-#~ "      Zmienna      Współczynnik     Błąd stand.     Stat t  Efekt "
-#~ "krańcowy\n"
-
-#~ msgid ""
-#~ "      VARIABLE       COEFFICIENT        LOWER            UPPER\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      ZMIENNA        WSPÓŁCZYNNIK       DOLNA            GÓRNA\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "      VARIABLE      TAU    COEFFICIENT      LOWER        UPPER\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      ZMIENNA       TAU    WSPÓŁCZYNNIK     DOLNA        GÓRNA\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "      VARIABLE      TAU    COEFFICIENT    STDERROR       T STAT\n"
-#~ "\n"
-#~ msgstr ""
-#~ "      ZMIENNA       TAU    WSPÓŁCZYNNIK   BŁĄD STAND.   STATYSTYKA t\n"
-#~ "\n"
-
-#~ msgid "(at mean)"
-#~ msgstr "(dla średnich)"
-
-#~ msgid "VARIABLE"
-#~ msgstr "ZMIENNA"
-
-#~ msgid "COEFFICIENT"
-#~ msgstr "WSPÓŁCZYNNIK"
-
-#~ msgid "STDERROR"
-#~ msgstr "BŁĄD STAND."
-
-#~ msgid "T STAT"
-#~ msgstr "STAT. T"
-
-#~ msgid "SLOPE at mean"
-#~ msgstr "EFEKT KRAŃCOWY dla średnich"
-
-#~ msgid "PARAMETER"
-#~ msgstr "PARAMETR"
-
-#~ msgid "ESTIMATE"
-#~ msgstr "ESTYMATOR"
-
-#~ msgid "P-VALUE"
-#~ msgstr "WARTOŚĆ P"
-
-#~ msgid "LOWER"
-#~ msgstr "DOLNY"
-
-#~ msgid "UPPER"
-#~ msgstr "GÓRNY"
-
-#~ msgid "Error in garch command"
-#~ msgstr "Błąd w poleceniu GARCH"

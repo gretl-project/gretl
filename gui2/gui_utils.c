@@ -630,27 +630,28 @@ static void real_register_data (int flag, const char *user_fname,
     }
 
     /* sync main window with datafile */
-    populate_varlist();
-    set_sample_label(datainfo);
-    main_menubar_state(TRUE);
-    session_menu_state(TRUE);
+    if (mdata != NULL) {
+	populate_varlist();
+	set_sample_label(datainfo);
+	main_menubar_state(TRUE);
+	session_menu_state(TRUE);
+    }
 
     /* Record the opening of the data file in the GUI recent files
        list and command log; note that we don't do this if the file
        was opened via script or console, or if it was opened as a
        side effect of re-opening a saved session.
     */
-    if (flag == DATAFILE_OPENED) {
+    if (mdata != NULL && flag == DATAFILE_OPENED) {
 	gui_record_data_opening(user_fname, list);
     } 
 
-    if (1) { /* FIXME! */
+    if (mdata != NULL) {
 	/* focus the data window */
 	gtk_widget_grab_focus(mdata->listbox);
+	/* invalidate "remove extra obs" menu item */
+	drop_obs_state(FALSE);
     }
-
-    /* invalidate "remove extra obs" menu item */
-    drop_obs_state(FALSE);
 }
 
 void register_data (int flag)
@@ -663,15 +664,58 @@ void register_startup_data (const char *fname)
     real_register_data(DATAFILE_OPENED, fname, NULL);
 }
 
-#define APPENDING(action) (action == APPEND_DATA || \
-                           action == APPEND_CSV || \
-                           action == APPEND_GNUMERIC || \
-                           action == APPEND_XLS || \
-                           action == APPEND_ODS || \
-                           action == APPEND_ASCII || \
-                           action == APPEND_WF1 || \
-                           action == APPEND_DTA || \
-                           action == APPEND_JMULTI)
+static void finalize_data_open (const char *fname, int ftype,
+				int import, int append, 
+				const int *plist)
+{
+    if (import) {
+	if (ftype == GRETL_CSV || ftype == GRETL_DTA) {
+	    maybe_display_string_table();
+	}
+	data_status |= IMPORT_DATA;
+    }
+
+    if (append) {
+	register_data(DATA_APPENDED);
+    } else {
+	if (fname != paths.datfile) {
+	    strcpy(paths.datfile, fname);
+	}
+	real_register_data(DATAFILE_OPENED, NULL, plist);
+    }  
+
+    if (import && !dataset_is_time_series(datainfo) && 
+	!dataset_is_panel(datainfo) && mdata != NULL) {
+	int resp;
+
+	resp = yes_no_dialog(_("gretl: open data"),
+			     _("The imported data have been interpreted as undated\n"
+			       "(cross-sectional).  Do you want to give the data a\n"
+			       "time-series or panel interpretation?"),
+			     0);
+	if (resp == GRETL_YES) {
+	    data_structure_dialog();
+	}
+    }    
+}
+
+static int datafile_missing (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+    int err = 0;
+
+    if (fp == NULL) {
+	delete_from_filelist(FILE_LIST_DATA, fname);
+	file_read_errbox(fname);
+	err = E_FOPEN;
+    } else {
+	fclose(fp);
+    }
+
+    return err;
+}
+
+/* below: get data of a sort that requires an import plugin */
 
 int get_imported_data (char *fname, int ftype, int append)
 {
@@ -680,20 +724,14 @@ int get_imported_data (char *fname, int ftype, int append)
     const char *errbuf;
     int list[4] = {3, 1, 0, 0};
     int *plist = NULL;
-    FILE *fp;
     int (*ss_importer) (const char *, int *, char *, double ***, DATAINFO *, 
 			gretlopt, PRN *);
     int (*misc_importer) (const char *, double ***, DATAINFO *, 
 			  gretlopt, PRN *);
     int err = 0;
-    
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	delete_from_filelist(FILE_LIST_DATA, fname);
-	file_read_errbox(fname);
-	return 1;
-    } else {
-	fclose(fp);
+
+    if (datafile_missing(fname)) {
+	return E_FOPEN;
     }
 
     ss_importer = NULL;
@@ -757,52 +795,111 @@ int get_imported_data (char *fname, int ftype, int append)
 	} else {
 	    errbox(_("Failed to import data"));
 	}
-	gretl_print_destroy(errprn);
 	delete_from_filelist(FILE_LIST_DATA, fname);
-	return 1;
-    } else {
-	if (errbuf != NULL && *errbuf != '\0') {
-	    infobox(errbuf);
-	}
-	if (ftype == GRETL_DTA) {
-	    maybe_display_string_table();
-	}
+    } else if (errbuf != NULL && *errbuf != '\0') {
+	infobox(errbuf);
     }
 
     gretl_print_destroy(errprn);
 
-    if (append) {
-	register_data(DATA_APPENDED);
-    } else {
-	data_status |= IMPORT_DATA;
-	if (fname != paths.datfile) {
-	    strcpy(paths.datfile, fname);
-	}
-	if (mdata != NULL) {
-	    real_register_data(DATAFILE_OPENED, NULL, plist);
-	}
-	if (!dataset_is_time_series(datainfo) && 
-	    !dataset_is_panel(datainfo) && mdata != NULL) {
-	    int resp;
-
-	    resp = yes_no_dialog(_("gretl: open data"),
-				 _("The imported data have been interpreted as undated\n"
-				   "(cross-sectional).  Do you want to give the data a\n"
-				   "time-series or panel interpretation?"),
-				 0);
-	    if (resp == GRETL_YES) {
-		data_structure_dialog();
-	    }
-	}
+    if (!err) {
+	finalize_data_open(fname, ftype, 1, append, plist);
     }
 
     return err;
 }
 
+/* get "CSV" (or more generally, ASCII) data or GNU octave data:
+   plugin is not required
+*/
+
+static int get_csv_data (char *fname, int ftype, int append)
+{
+    PRN *prn;
+    gchar *title;
+    int err = 0;
+
+    if (datafile_missing(fname)) {
+	return E_FOPEN;
+    }
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
+    if (ftype == GRETL_OCTAVE) {
+	err = import_other(fname, ftype, &Z, datainfo, OPT_NONE, prn);
+	title = g_strdup_printf(_("gretl: import %s data"), "Octave");
+    } else {
+	err = import_csv(fname, &Z, datainfo, OPT_NONE, prn);
+	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
+    }
+
+    /* show details regarding the import */
+    view_buffer(prn, 78, 350, title, IMPORT, NULL); 
+    g_free(title);
+
+    if (err) {
+	delete_from_filelist(FILE_LIST_DATA, fname);
+    } else {
+	finalize_data_open(fname, ftype, 1, append, NULL);
+    }
+
+    return err;
+}
+
+static int get_native_data (char *fname, int ftype, int append, 
+			    windata_t *fwin)
+{
+    /* we'll send any output to stderr */
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    int err;
+
+    if (ftype == GRETL_XML_DATA) {
+	err = gretl_read_gdt(fname, &paths, &Z, datainfo, 
+			     OPT_P, prn);
+    } else {
+	err = gretl_get_data(fname, &paths, &Z, datainfo, 
+			     OPT_NONE, prn);
+    }
+
+    gretl_print_destroy(prn);
+
+    if (fwin != NULL) {
+	/* close the files browser window that launched the query */
+	gtk_widget_destroy(fwin->main);
+    }    
+
+    if (err) {
+	if (err == E_FOPEN) {
+	    file_read_errbox(tryfile);
+	} else {
+	    gui_errmsg(err);
+	}
+	delete_from_filelist(FILE_LIST_DATA, fname);
+    } else {
+	finalize_data_open(fname, ftype, 0, append, NULL);
+    } 
+
+    return err;
+}
+
+#define APPENDING(action) (action == APPEND_DATA || \
+                           action == APPEND_CSV || \
+                           action == APPEND_GNUMERIC || \
+                           action == APPEND_XLS || \
+                           action == APPEND_ODS || \
+                           action == APPEND_ASCII || \
+                           action == APPEND_WF1 || \
+                           action == APPEND_DTA || \
+                           action == APPEND_JMULTI)
+
 void do_open_data (windata_t *fwin, int code)
 {
-    gint ftype, err = 0;
     int append = APPENDING(code);
+    gint ftype;
+
+    gretl_error_clear();
 
     if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII ||
 	code == APPEND_ASCII) {
@@ -828,47 +925,16 @@ void do_open_data (windata_t *fwin, int code)
 
     /* destroy the current data set, etc., unless we're explicitly appending */
     if (!append) {
-	close_session(NULL, &Z, datainfo, OPT_NONE); /* FIXME opt */
+	close_session(NULL, &Z, datainfo, OPT_NONE); /* FIXME opt? */
     }
 
     if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
-	do_open_csv_octave(tryfile, ftype, append);
-	return;
+	get_csv_data(tryfile, ftype, append);
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
 	get_imported_data(tryfile, ftype, append);
-	return;
     } else { 
-	/* native data */
-	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-
-	if (ftype == GRETL_XML_DATA) {
-	    err = gretl_read_gdt(tryfile, &paths, &Z, datainfo, 
-				 OPT_P, errprn);
-	} else {
-	    err = gretl_get_data(tryfile, &paths, &Z, datainfo, 
-				 OPT_NONE, errprn);
-	}
-
-	gretl_print_destroy(errprn);
+	get_native_data(tryfile, ftype, append, fwin);
     }
-
-    if (err) {
-	gui_errmsg(err);
-	delete_from_filelist(FILE_LIST_DATA, tryfile);
-	return;
-    }	
-
-    if (fwin != NULL) {
-	/* close the files browser window that launched the query */
-	gtk_widget_destroy(fwin->main);
-    }
-
-    if (append) {
-	register_data(DATA_APPENDED);
-    } else {
-	strcpy(paths.datfile, tryfile);
-	register_data(DATAFILE_OPENED);
-    } 
 }
 
 /* give user choice of not opening selected datafile, if there's
