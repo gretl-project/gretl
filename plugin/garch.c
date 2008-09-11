@@ -48,13 +48,8 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	return;
     }
 
-    strcpy(pmod->params[0], pdinfo->varname[0]);
-
-    j = 1;
     for (i=0; i<r; i++) {
-	if (pmod->list[5+i] > 0) {
-	    strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);
-	}
+	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);
     }
 
     strcpy(pmod->params[j++], "alpha(0)");
@@ -96,7 +91,7 @@ write_garch_stats (MODEL *pmod, const int *list,
 		   const double **Z, const DATAINFO *pdinfo,
 		   double *theta, gretl_matrix *V, double scale,
 		   const double *e, const double *h, 
-		   int npar, int nc, int pad, PRN *prn)
+		   int npar, int nc, int pad, int ifc, PRN *prn)
 {
     int err = 0;
     double *coeff, *sderr, *vcv, *garch_h;
@@ -163,7 +158,7 @@ write_garch_stats (MODEL *pmod, const int *list,
     mle_criteria(pmod, 1);
 
     pmod->ci = GARCH;
-    pmod->ifc = 1;
+    pmod->ifc = ifc;
     
     add_garch_varnames(pmod, pdinfo, list);
 
@@ -345,7 +340,8 @@ static int garch_manual_init (double *theta, int k, int p, int q,
 static int 
 garch_driver (const int *list, double **Z, double scale,
 	      const DATAINFO *pdinfo, MODEL *pmod,
-	      double *vparm, gretlopt opt, PRN *prn)
+	      double *vparm, int ifc, gretlopt opt, 
+	      PRN *prn)
 {
     int t1 = pmod->t1, t2 = pmod->t2;
     int nc = pmod->ncoeff;
@@ -425,14 +421,14 @@ garch_driver (const int *list, double **Z, double scale,
 	}
     }
 
-    if (libset_get_bool("fcp")) {
+    if (libset_get_bool(USE_FCP)) {
 	err = garch_estimate(y, (const double **) X,
 			     t1 + pad, t2 + pad, bign, nc, 
 			     p, q, theta, V, e, e2, h,
 			     scale, &ll, &iters, vopt, prn);
     } else {
 	err = garch_estimate_mod(y, (const double **) X,
-				 t1 + pad, t2 + pad, bign, nc, 
+				 t1 + pad, t2 + pad, bign, nc, ifc,
 				 p, q, theta, V, e, e2, h, 
 				 scale, &ll, &fnc, &grc, vopt, prn);
     }
@@ -443,7 +439,7 @@ garch_driver (const int *list, double **Z, double scale,
 	pmod->lnL = ll;
 	write_garch_stats(pmod, list, (const double **) Z, pdinfo, 
 			  theta, V, scale, e, h, npar, nc, pad,
-			  prn);
+			  ifc, prn);
 	if (iters > 0) {
 	    gretl_model_set_int(pmod, "iters", iters);
 	} else if (fnc > 0) {
@@ -618,7 +614,8 @@ garch_init_by_arma (const MODEL *pmod, const int *glist,
 #define XPOS 5
 
 static int *get_garch_list (const int *list, const double **Z,
-			    const DATAINFO *pdinfo, int *err)
+			    const DATAINFO *pdinfo, 
+			    gretlopt opt, int *ifc, int *err)
 {
     int *glist = NULL;
     int i, p = list[1], q = list[2];
@@ -645,9 +642,20 @@ static int *get_garch_list (const int *list, const double **Z,
 	if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
 	    /* got a constant: OK */
 	    add0 = 0;
+	    *ifc = 1;
 	    break;
 	}
     }
+
+    if (add0) {
+	if (opt & OPT_N) {
+	    /* --nc option: don't auto-add a constant */
+	    add0 = 0;
+	    *ifc = 0;
+	} else {
+	    *ifc = 1;
+	}
+    } 
 
     glist = gretl_list_new(list[0] + add0);
 
@@ -671,29 +679,6 @@ static int *get_garch_list (const int *list, const double **Z,
     }
 
     return glist;
-}
-
-/* make regression list for initial OLS: we skip three terms 
-   from the GARCH list, namely p, q and the separator 
-   that follows.
-*/
-
-static int *make_ols_list (const int *list, int *err)
-{
-    int *olist;
-    int i;
-
-    olist = gretl_list_new(list[0] - 3);
-
-    if (olist == NULL) {
-	*err = E_ALLOC;
-    } else {
-	for (i=4; i<=list[0]; i++) {
-	    olist[i-3] = list[i];
-	}
-    }
-
-    return olist;
 }
 
 #define GARCH_AUTOCORR_TEST 1
@@ -774,12 +759,12 @@ static void garch_undo_scaling (int yno, double scale, double **Z,
 
 /* default variance parameter initialization */
 
-static void garch_vparm_init (const int *list, const MODEL *pmod,
+static void garch_vparm_init (const int *list, double sigma,
 			      double *vparm)
 {
     int i, q = list[1], p = list[2];
 
-    vparm[0] = pmod->sigma * pmod->sigma * 0.1;
+    vparm[0] = sigma * sigma * 0.1;
     if (q > 0) {
 	vparm[p+1] = 0.7;
     }
@@ -790,6 +775,58 @@ static void garch_vparm_init (const int *list, const MODEL *pmod,
     }
 }
 
+/* make regression list for initial OLS: we skip three terms 
+   from the GARCH list, namely p, q and the separator 
+   that follows.
+*/
+
+static int *make_ols_list (const int *list, int *err)
+{
+    int *olist;
+    int i;
+
+    olist = gretl_list_new(list[0] - 3);
+
+    if (olist == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=4; i<=list[0]; i++) {
+	    olist[i-3] = list[i];
+	}
+    }
+
+    return olist;
+}
+
+static MODEL garch_run_ols (const int *list, double ***pZ,
+			    DATAINFO *pdinfo, PRN *prn)
+{
+    int *ols_list;
+    MODEL model;
+    int err = 0;
+
+    ols_list = make_ols_list(list, &err);
+    if (err) {
+	gretl_model_init(&model);
+	model.errcode = err;
+	return model;
+    }
+
+    model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M | OPT_U);
+
+#if 0
+    fprintf(stderr, "errcode=%d, ess=%g, sigma=%g\n",
+	    model.errcode, model.ess, model.sigma);
+    if (!model.errcode) {
+	printmodel(&model, pdinfo, OPT_NONE, prn);
+    }
+#endif
+
+    free(ols_list);
+
+    return model;
+}
+
 /* the driver function for the plugin */
 
 MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
@@ -797,37 +834,27 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL model;
     int *list = NULL;
-    int *ols_list = NULL;
     double vparm[VPARM_MAX] = {0};
     double LMF = NADBL;
     double pvF = NADBL;
     double scale = 1.0;
-    int yno = 0;
-
-    gretl_model_init(&model);
+    int ifc, yno = 0;
+    int err = 0;
 
     list = get_garch_list(cmdlist, (const double **) *pZ,
-			  pdinfo, &model.errcode);
-    if (model.errcode != 0) {
-	return model;
-    }
-
-    ols_list = make_ols_list(list, &model.errcode);
-    if (model.errcode != 0) {
+			  pdinfo, opt, &ifc, &err);
+    if (err) {
+	gretl_model_init(&model);
+	model.errcode = err;
 	return model;
     }
 
     /* run initial OLS */
-    model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    model = garch_run_ols(list, pZ, pdinfo, prn);
     if (model.errcode) {
-	free(ols_list);
 	free(list);
 	return model;
     }
-
-#if 0
-    printmodel(&model, pdinfo, OPT_NONE, prn);
-#endif
 
 #if GARCH_AUTOCORR_TEST
     /* pretest the residuals for autocorrelation */
@@ -837,12 +864,12 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 #endif
 
 #if GARCH_SCALE_SIGMA
-    yno = ols_list[1];
+    yno = list[4];
     scale = garch_scale_sigma(yno, &model, *pZ, pdinfo);
 #endif 
 
     /* variance parameter initialization */
-    garch_vparm_init(list, &model, vparm);
+    garch_vparm_init(list, model.sigma, vparm);
 
     if (opt & OPT_A) {
 	/* "--arma-init": try initializing params via ARMA */
@@ -850,7 +877,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     garch_driver(list, *pZ, scale, pdinfo, &model, vparm,
-		 opt, prn); 
+		 ifc, opt, prn); 
 
 #if GARCH_SCALE_SIGMA
     garch_undo_scaling(yno, scale, *pZ, pdinfo);
@@ -866,7 +893,6 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 #endif
 
-    free(ols_list);
     free(list);
 
     return model;

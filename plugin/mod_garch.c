@@ -49,6 +49,7 @@ struct garch_container_ {
     int t2;              /* end of sample */
     int nobs;            /* number of observations */
     int ncm;             /* number of regressors (constant excluded) */
+    int ifc;             /* is constant included? (1/0) */
     int p;               /* GARCH p */
     int q;               /* GARCH q */
     int k;               /* total number of parameters */
@@ -113,7 +114,7 @@ static int allocate_eh_derivs (garch_container *DH)
 
 static garch_container *
 garch_container_new (const double *y, const double **X, 
-		     int t1, int t2, int nobs, int nc,
+		     int t1, int t2, int nobs, int nc, int ifc,
 		     int p, int q, int init_method, 
 		     double *e, double *e2, double *h, 
 		     double scale, int analytical)
@@ -129,7 +130,8 @@ garch_container_new (const double *y, const double **X,
     DH->t1 = t1;
     DH->t2 = t2;
     DH->nobs = nobs;
-    DH->ncm = nc - 1;
+    DH->ncm = nc - ifc;
+    DH->ifc = ifc;
     DH->p = p;
     DH->q = q;
     DH->init = init_method;
@@ -199,13 +201,13 @@ static void normal_score (const garch_container *DH)
 
 /* Compute the GARCH quantities */
 
-static int check_nonnegative (const double *par, int ncm, int k)
+static int check_nonnegative (const double *par, int ncm, int ifc, int k)
 {
-    int nonzero = (par[ncm+1] >= 0.0);
+    int nonzero = (par[ncm+ifc] >= 0.0);
     double sum = 0.0;
     int i;
 
-    for (i=ncm+2; i<k; i++) {
+    for (i=ncm+1+ifc; i<k; i++) {
 	nonzero &= (par[i] >= 1.0e-12);
 	sum += par[i];
 	if (!nonzero) {
@@ -230,6 +232,7 @@ static int garch_etht (const double *par, void *ptr)
     int maxlag = (p > q)? p : q;
     int i, j, k, ret = 0;
     int ncm = DH->ncm;
+    int ifc = DH->ifc;
     int t, T = t2 - t1 + 1;
     double et, ht, tmp, h0 = 0.0;
     double u_var = 0.0;
@@ -237,7 +240,7 @@ static int garch_etht (const double *par, void *ptr)
     /* check for nonnegative params */
 
     if (DH->boundcheck) {
-	ret = !check_nonnegative(par, ncm, DH->k);
+	ret = !check_nonnegative(par, ncm, ifc, DH->k);
 	if (ret) {
 	    return E_DATA;
 	}
@@ -250,10 +253,13 @@ static int garch_etht (const double *par, void *ptr)
 	if (t < t1) {
 	    et = 0.0;
 	} else {
-	    et = DH->y[t] - par[0];
+	    et = DH->y[t];
+	    if (ifc) {
+		et -= par[0];
+	    }
 	    if (DH->X != NULL) {
-		for (i=1; i<=ncm; i++) {
-		    et -= DH->X[i][t]*par[i];
+		for (i=ifc; i<ncm+ifc; i++) {
+		    et -= DH->X[i][t] * par[i];
 		}
 	    }
 	    DH->e[t] = et;
@@ -281,10 +287,10 @@ static int garch_etht (const double *par, void *ptr)
 	break;
     case INIT_VAR_THEO:
 	tmp = 1.0;
-	for (i=ncm+2; i<DH->k; i++) {
+	for (i=ncm+1+ifc; i<DH->k; i++) {
 	    tmp -= par[i];
 	}
-	u_var = par[ncm+1] / tmp;
+	u_var = par[ncm+ifc] / tmp;
 	h0 = u_var;
 	break;
     }
@@ -307,6 +313,7 @@ static int garch_etht (const double *par, void *ptr)
 	    break;
 
 	case INIT_VAR_RESID:
+	    /* FIXME needs mod for case of no constant? */
 	    dh0 = 0.0;
 	    for (t=t1; t<=t2; t++) {
 		dh0 -= DH->e[t];
@@ -326,7 +333,7 @@ static int garch_etht (const double *par, void *ptr)
 	    }
 	    
 	    for (t=t1-maxlag; t<t1; t++) {
-		for (i=ncm+1; i<DH->k; i++) {
+		for (i=ncm+ifc; i<DH->k; i++) {
 		    dhdq[i][t] = 0.0;
 		}
 	    }
@@ -335,17 +342,17 @@ static int garch_etht (const double *par, void *ptr)
 	    
 	case INIT_VAR_THEO:
 	    for (t=t1-maxlag; t<t1; t++) {
-		for (i=0; i<=ncm; i++) {
+		for (i=0; i<ncm+ifc; i++) {
 		    dhdq[i][t] = 0.0;
 		}
 	    }
-	    dh0 = u_var / par[ncm+1];
+	    dh0 = u_var / par[ncm+ifc];
 	    for (t=t1-maxlag; t<t1; t++) {
-		dhdq[ncm+1][t] = dh0;
+		dhdq[ncm+ifc][t] = dh0;
 	    }
 	    dh0 *= u_var;
 	    for (t=t1-maxlag; t<t1; t++) {
-		for (i=ncm+2; i<DH->k; i++) {
+		for (i=ncm+1+ifc; i<DH->k; i++) {
 		    dhdq[i][t] = dh0;
 		}
 	    }
@@ -357,36 +364,38 @@ static int garch_etht (const double *par, void *ptr)
     /* in-sample loop */
 
     for (t=t1; t<=t2; t++) {
-	ht = par[ncm+1];
+	ht = par[ncm+ifc];
 
 	for (i=1; i<=q; i++) {
-	    ht += DH->e2[t-i] * par[ncm+i+1];
+	    ht += DH->e2[t-i] * par[ncm+i+ifc];
 	}
 
 	for (i=1; i<=p; i++) {
-	    ht += DH->h[t-i] * par[ncm+i+q+1];
+	    ht += DH->h[t-i] * par[ncm+i+q+ifc];
 	}
 	
 	DH->h[t] = ht;
 	    
 	if (DH->ascore) {
-	    
-	    /* constant */
-	    dedq[0][t] = -1.0;
-	    k = ncm+1;
-	    dhdq[0][t] = 0.0;
-	    for (i=1; i<=q; i++) {
-		if (t - q < t1 && DH->init == INIT_VAR_RESID) {
-		    dhdq[0][t] += par[k+i] * dhdq[0][t1-1];
-		} else {	
-		    dhdq[0][t] += 2.0 * par[k+i] * DH->e[t-i] * dedq[0][t-i];
+
+	    if (ifc) {
+		/* constant */
+		dedq[0][t] = -1.0;
+		k = ncm + 1;
+		dhdq[0][t] = 0.0;
+		for (i=1; i<=q; i++) {
+		    if (t - q < t1 && DH->init == INIT_VAR_RESID) {
+			dhdq[0][t] += par[k+i] * dhdq[0][t1-1];
+		    } else {	
+			dhdq[0][t] += 2.0 * par[k+i] * DH->e[t-i] * dedq[0][t-i];
+		    }
 		}
 	    }
 	    
 	    /* regressors */
-	    for (i=1; i<=ncm; i++) {
+	    for (i=ifc; i<ncm+ifc; i++) {
 		dedq[i][t] = -(DH->X[i][t]);
-		k = ncm+1;
+		k = ncm + ifc;
 		dhdq[i][t] = 0.0;
 		for (j=1; j<=q; j++) {
 		    if (t - q < t1 && DH->init == INIT_VAR_RESID) { 
@@ -399,16 +408,16 @@ static int garch_etht (const double *par, void *ptr)
 	    }
 	    
 	    /* garch params: omega */
-	    dedq[ncm+1][t] = 0.0;
-	    dhdq[ncm+1][t] = 1.0;
+	    dedq[ncm+ifc][t] = 0.0;
+	    dhdq[ncm+ifc][t] = 1.0;
 	    if (t - p < t1 && DH->init == INIT_VAR_THEO) {
 		for (i=1; i<=p; i++) {
-		    dhdq[ncm+1][t] += par[ncm+1+i] * dhdq[ncm+1][t1-1];
+		    dhdq[ncm+ifc][t] += par[ncm+ifc+i] * dhdq[ncm+ifc][t1-1];
 		}
 	    }
 	    
 	    /* garch params: alphas */
-	    k = ncm + 2;
+	    k = ncm + 1 + ifc;
 	    for (i=1; i<=q; i++) {
 		dedq[k][t] = 0.0;
 		dhdq[k][t] = DH->e2[t-i];
@@ -421,7 +430,7 @@ static int garch_etht (const double *par, void *ptr)
 	    }
 	    
 	    /* garch params: betas */
-	    k = ncm + p + 2;
+	    k = ncm + p + 1 + ifc;
 	    for (i=1; i<=p; i++) {
 		dedq[k][t] = 0.0;
 		dhdq[k][t] = DH->h[t-i];
@@ -435,7 +444,7 @@ static int garch_etht (const double *par, void *ptr)
 	    
 	    /* "real" recursive part */
 	    for (i=0; i<DH->k; i++) {
-		k = ncm + p + 2;
+		k = ncm + p + 1 + ifc;
 		for (j=1; j<=p; j++) {
 		    dhdq[i][t] += par[k++] * dhdq[i][t-j];
 		}
@@ -460,8 +469,8 @@ static int garch_etht (const double *par, void *ptr)
 	fprintf(stderr, " %8.4f", DH->e[t]);
 	fprintf(stderr, " %8.4f", DH->e2[t]);
 	fprintf(stderr, " %8.4f", DH->h[t]);
-	fprintf(stderr, " %12.8f", dedq[ncm+2][t]);
-	fprintf(stderr, " %12.8f", dhdq[ncm+2][t]);
+	fprintf(stderr, " %12.8f", dedq[ncm+1+ifc][t]);
+	fprintf(stderr, " %12.8f", dhdq[ncm+1+ifc][t]);
 	fputc('\n', stderr);
     }
 #endif
@@ -533,6 +542,8 @@ static gretl_matrix *garch_iinfo (garch_container *DH, int *err)
     gretl_matrix *info;
     double **tmp_info;
     double tmpi, tmpj, tmpx1, tmpx2, x;
+    int ifc = DH->ifc;
+    int ncm = DH->ncm;
     int i, j, t;
 
     info = gretl_matrix_alloc(DH->k, DH->k);
@@ -555,21 +566,21 @@ static gretl_matrix *garch_iinfo (garch_container *DH, int *err)
     }
 
     for (t=DH->t1; t<=DH->t2; t++) {
-	for (i=0; i<=DH->ncm; i++) {
+	for (i=0; i<ncm+ifc; i++) {
 	    tmpi = DH->score_h[i][t] / DH->h[t];
-	    tmpx1 = (i==0)? 2.0 : 2.0*(DH->X[i][t]);
+	    tmpx1 = (i==0 && ifc)? 2.0 : 2.0*(DH->X[i][t]);
 	    tmpx1 /= DH->h[t];
 	    for (j=0; j<=i; j++) {
 		tmpj = DH->score_h[j][t] / DH->h[t];
-		tmpx2 = (j==0)? 1.0 : 1.0*(DH->X[j][t]);
+		tmpx2 = (j==0 && ifc)? 1.0 : DH->X[j][t];
 		x = tmpx1 * tmpx2 + tmpi * tmpj;
 		tmp_info[i][j] += x;
 	    }
 	}
 
-	for (i=DH->ncm+1; i<DH->k; i++) {
+	for (i=ncm+ifc; i<DH->k; i++) {
 	    tmpi = DH->score_h[i][t] / DH->h[t];
-	    for (j=DH->ncm+1; j<=i; j++) {
+	    for (j=ncm+ifc; j<=i; j++) {
 		tmpj = DH->score_h[j][t] / DH->h[t];
 		x = tmpi * tmpj;
 		tmp_info[i][j] += x;
@@ -579,9 +590,9 @@ static gretl_matrix *garch_iinfo (garch_container *DH, int *err)
 
     for (i=0; i<DH->k; i++) {
 	for (j=0; j<=i; j++) {
-	    gretl_matrix_set(info, i, j, 0.5*tmp_info[i][j]);
+	    gretl_matrix_set(info, i, j, 0.5 * tmp_info[i][j]);
 	    if (j < i) {
-		gretl_matrix_set(info, j, i, 0.5*tmp_info[i][j]);
+		gretl_matrix_set(info, j, i, 0.5 * tmp_info[i][j]);
 	    }
 	}
     }
@@ -665,7 +676,7 @@ garch_ihess (garch_container *DH, double *theta, int *err)
     gretl_matrix *H;
 
     H = garch_analytical_hessian(DH->y, DH->X, DH->t1, DH->t2, DH->nobs, 
-				 DH->ncm + 1, DH->p, DH->q, theta, DH->e, 
+				 DH->ncm + DH->ifc, DH->p, DH->q, theta, DH->e, 
 				 DH->e2, DH->h, DH->scale, err);
 
     return H;
@@ -817,6 +828,7 @@ static void test_score (garch_container *DH, double *theta)
    t2:    end of sample
    nobs:  total number of observations in y, X
    nc:    number of columns in X
+   ifc:   = 1 if constant included in mean equation, else 0
    p:     number of 'beta' variance params
    q:     number of 'alpha' variance params (excluding the constant)
    theta: full parameter vector, pre-initialized; on output, the
@@ -836,7 +848,7 @@ static void test_score (garch_container *DH, double *theta)
 */
 
 int garch_estimate_mod (const double *y, const double **X,
-			int t1, int t2, int nobs, int nc,
+			int t1, int t2, int nobs, int nc, int ifc,
 			int p, int q, double *theta,  gretl_matrix *V,
 			double *e, double *e2, double *h,
 			double scale, double *pll, 
@@ -852,7 +864,7 @@ int garch_estimate_mod (const double *y, const double **X,
     int maxit = 10000;
     double reltol = 1.0e-13;
 
-    DH = garch_container_new(y, X, t1, t2, nobs, nc, p, q, 
+    DH = garch_container_new(y, X, t1, t2, nobs, nc, ifc, p, q, 
 			     INIT_VAR_RESID, e, e2, h, 
 			     scale, analytical);
 

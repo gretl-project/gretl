@@ -669,6 +669,52 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     return pmod->errcode;
 }
 
+static int gretl_null_regress (MODEL *pmod, const double **Z)
+{
+    double yt;
+    int t;
+
+    if (pmod->yhat == NULL) {
+	pmod->yhat = malloc(pmod->full_n * sizeof *pmod->yhat);
+    } 
+
+    if (pmod->uhat == NULL) {
+	pmod->uhat = malloc(pmod->full_n * sizeof *pmod->uhat);
+    }
+
+    if (pmod->yhat == NULL || pmod->uhat == NULL) {
+	pmod->errcode = E_ALLOC;
+	return pmod->errcode;
+    }
+
+    pmod->nobs = 0;
+    pmod->ifc = 0;
+    pmod->ess = 0.0;
+    pmod->rsq = pmod->adjrsq = 0.0;
+
+    for (t=0; t<pmod->full_n; t++) {
+	yt = Z[pmod->list[1]][t];
+	if (t < pmod->t1 || t > pmod->t2 || na(yt)) {
+	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
+	} else {
+	    pmod->uhat[t] = yt;
+	    pmod->yhat[t] = 0.0;
+	    pmod->ess += yt * yt;
+	    pmod->nobs += 1;
+	}
+    }
+
+    if (pmod->ess == 0) {
+	pmod->sigma = 0.0;
+    } else if (pmod->nobs > 1) {
+	pmod->sigma = sqrt(pmod->ess / (pmod->nobs - 1));
+    } else {
+	pmod->errcode = E_DATA;
+    }
+
+    return pmod->errcode;
+}
+
 /* limited freeing of elements before passing a model
    on for QR estimation in the case of singularity 
 */
@@ -698,6 +744,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int jackknife = 0;
     int use_qr = libset_get_bool(USE_QR);
     int pwe = (opt & OPT_P);
+    int nullmod = 0;
     int yno, i;
 
     gretl_error_clear();
@@ -725,7 +772,10 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
-    if (list[0] == 1 || pdinfo->v == 1) {
+    if (list[0] == 1 && ci == OLS && (opt & OPT_U)) {
+	/* null model OK */
+	nullmod = 1;
+    } else if (list[0] == 1 || pdinfo->v == 1) {
 	fprintf(stderr, "E_DATA: lsq: list[0] = %d, pdinfo->v = %d\n",
 		list[0], pdinfo->v);
 	mdl.errcode = E_DATA;
@@ -851,7 +901,9 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	jackknife = 1;
     }
 
-    if (!jackknife && ((opt & OPT_R) || use_qr)) { 
+    if (nullmod) {
+	gretl_null_regress(&mdl, (const double **) *pZ);
+    } else if (!jackknife && ((opt & OPT_R) || use_qr)) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
     } else {

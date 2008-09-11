@@ -3739,7 +3739,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
     if (seppos == -1) {
-	if (pmod->ci == GARCH) {
+	if (pmod->ci == GARCH && pmod->ifc) {
 	    seppos = pmod->list[0] - 4;
 	} else if (pmod->ci == AR || pmod->ci == ARCH) {
 	    seppos = pmod->ncoeff;
@@ -3878,7 +3878,9 @@ static int plain_print_coeffs (const MODEL *pmod,
 static int 
 plain_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
-    if (gretl_model_get_data(pmod, "rq_sequence") != NULL) {
+    if (pmod->ncoeff == 0) {
+	return 0;
+    } else if (gretl_model_get_data(pmod, "rq_sequence") != NULL) {
 	return print_rq_sequence(pmod, pdinfo, prn);
     } else if (pmod->ci == MPOLS) {
 	return plain_print_mp_coeffs(pmod, pdinfo, prn);
@@ -3964,7 +3966,7 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
-    if (seppos == -1 && pmod->ci == GARCH) {
+    if (seppos == -1 && pmod->ci == GARCH && pmod->ifc) {
 	seppos = pmod->list[0] - 4;
     }
 

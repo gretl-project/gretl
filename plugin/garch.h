@@ -16,7 +16,7 @@ garch_analytical_hessian (const double *y, const double **X,
 			  double scale, int *err);
 
 int garch_estimate_mod (const double *y, const double **X,
-			int t1, int t2, int nobs, int nc,
+			int t1, int t2, int nobs, int nc, int ifc,
 			int p, int q, double *theta,  gretl_matrix *V,
 			double *e, double *e2, double *h,
 			double scale, double *pll, 
