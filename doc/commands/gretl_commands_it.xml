@@ -919,6 +919,12 @@
       <arguments>
         <argument>osservazione</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra le stime del modello aumentato</effect>
+	</option>
+      </options>
       <examples>
         <example>chow 25</example>
         <example>chow 1988:1</example>
@@ -930,16 +936,22 @@
        (o una data, se il dataset lo consente).</para>
 
       <para>
-	Va eseguito dopo una regressione OLS. Crea una variabile
-        dummy che vale 1 a partire dal punto di rottura specificato da
-	<repl>osservazione</repl> fino alla fine del campione, 0 altrove; inoltre
-        crea dei termini di interazione tra questa dummy e le variabili
-        indipendenti originali, stima una regressione che include
-        questi termini e calcola una statistica <math>F</math>,
+	Va eseguito dopo una regressione OLS e fornisce un test per 
+        l'ipotesi nulla che non esista un break strutturale del modello
+        in corrispondenza del punto di rottura specificato. La procedura
+        consiste nel creare una variabile dummy che vale 1 a partire dal punto
+        di rottura specificato da <repl>osservazione</repl> fino alla fine del
+        campione, 0 altrove; inoltre vengono creati dei termini di interazione
+        tra questa dummy e i regressori originali.  Viene quindi stimata una
+        regressione che include questi termini.
+      </para>
+      <para>
+        Per impostazione predefinita viene calcolata una statistica <math>F</math>,
         prendendo la regressione aumentata come non vincolata e la regressione
-        originale come vincolata. La statistica è appropriata per testare
-        l'ipotesi nulla che non esista un break strutturale in corrispondenza
-        del punto di rottura specificato.
+        originale come vincolata. Se il modello originale usa uno stimatore
+        robusto per la matrice di covarianza, come statistica test viene usato
+        un valore chi-quadro di Wald, basato su uno stimatore robusto della
+        matrice di covarianza della regressione aumentata.
       </para>
     </description>
 
@@ -2643,6 +2655,14 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
+         <option>
+	  <flag>--nc</flag>
+	  <effect>non include una costante</effect>
+        </option>
+        <option>
+	  <flag>--fcp</flag>
+	  <effect>usa l'algoritmo di Fiorentini, Calzolari e Panattoni</effect>
+        </option>
         <option>
 	  <flag>--arma-init</flag>
 	  <effect>parametri di varianza iniziale da ARMA</effect>
@@ -2665,9 +2685,20 @@
         condizionale.
 	<equation status="display"
 	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
-	  \sum_{j=1}^p \beta_i h_{t-j}\]"
+	  \sum_{j=1}^p \beta_j h_{t-j}\]"
 	  ascii="h(t) = a(0) + somma(per i da 1 a q) a(i)*u(t-i)^2 + somma( per j da 1 a p) b(j)*h(t-j)"
 	  graphic="garch_h"/>
+      </para>
+      <para context="cli">
+	Il parametro <repl>p</repl> rappresenta quinsi l'ordine generalizzato
+	(o <quote>AR</quote>), mentre <repl>q</repl> rappresenta il consueto
+        ordine ARCH (o <quote>MA</quote>). Se <repl>p</repl> è diverso da zero,
+	anche <repl>q</repl> deve essere diverso da zero, altrimenti il modello
+        non è identificato. Comunque, è possibile stimare un modello ARCH
+        consueto impostando <repl>q</repl> a un valore positivo e <repl>p</repl>
+        a zero. La somma di <repl>p</repl> e <repl>q</repl> non deve superare 5.
+        Si noti che nell'equazione della media viene automaticamente inclusa una
+        costante, a meno che non si usi l'opzione <lit>--nc</lit>.
       </para>
 
       <para context="gui">
@@ -2680,27 +2711,41 @@
 	\beta_i h_{t-j}\]" ascii="h(t) = a(0) + somma (i da 1 a q) a(i)*u(t-i) +
 	somma(j da 1 a p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
-
-      <para>L'algoritmo GARCH usato da gretl è in pratica quello di
-        Fiorentini, Calzolari e Panattoni (1996), usato per gentile
-        concessione del Professor Fiorentini.</para>
-
-      <para context="cli">Sono disponibili varie stime della
-	matrice di covarianza dei coefficienti. Il metodo predefinito
-        è quello dell'Hessiana; se si indica l'opzione <lit>--robust</lit>
-	viene usata la matrice di covarianza QML (White).
-	Altre possibilità (ad es. la matrice di informazione, o lo
-        stimatore di Bollerslev&ndash;Wooldridge) possono essere specificate
-        con il comando <cmdref targ="set"/>.
+      <para context="gui">
+	Il parametro <repl>p</repl> rappresenta quinsi l'ordine generalizzato
+	(o <quote>AR</quote>), mentre <repl>q</repl> rappresenta il consueto
+        ordine ARCH (o <quote>MA</quote>). Se <repl>p</repl> è diverso da zero,
+	anche <repl>q</repl> deve essere diverso da zero, altrimenti il modello
+        non è identificato. Comunque, è possibile stimare un modello ARCH
+        consueto impostando <repl>q</repl> a un valore positivo e <repl>p</repl>
+        a zero. La somma di <repl>p</repl> e <repl>q</repl> non deve superare 5.
       </para>
 
-      <para context="gui">Sono disponibili varie stime della matrice di
-        covarianza dei coefficienti. Il metodo predefinito è quello
-        dell'Hessiana, a meno di non selezionare la casella <quote>Errori
-        standard robusti</quote>, nel qual caso viene usata la matrice di 
-        covarianza QML (White). Altre possibilità (ad es. la matrice di
-        informazione, o lo stimatore di Bollerslev&ndash;Wooldridge) possono
+      <para>
+        Per impostazione predefinita, i modelli GARCH vengono stimati usando il
+        codice nativo gretl, ma è anche possibile usare l'algoritmo di
+        Fiorentini, Calzolari e Panattoni (1996). Il primo usa il massimizzatore
+        BFGS, mentre il secondo usa la matrice di informazione per massimizzare
+        la verosimiglianza, con un raffinamento usando l'Hessiana.
+      </para>
+
+      <para context="cli">
+        Sono disponibili varie stime della matrice di covarianza dei
+        coefficienti. Il metodo predefinito è quello dell'Hessiana, a meno che
+        non si usi l'opzione <lit>--robust</lit>, nel qual caso viene usata la
+        matrice di covarianza QML (White).  Altre possibilità (ad es. la matrice
+        di informazione, o lo stimatore di Bollerslev&ndash;Wooldridge) possono
         essere specificate con il comando <cmdref targ="set"/>.
+      </para>
+
+      <para context="gui">
+        Sono disponibili varie stime della matrice di covarianza dei
+        coefficienti. Il metodo predefinito è quello dell'Hessiana, a meno di
+        non selezionare la casella <quote>Errori standard robusti</quote>, nel
+        qual caso viene usata la matrice di covarianza QML (White). Altre
+        possibilità (ad es. la matrice di informazione, o lo stimatore di
+        Bollerslev&ndash;Wooldridge) possono essere specificate con il comando
+        <cmdref targ="set"/>.
       </para>
 
       <para context="gui">La varianza condizionale stimata, insieme ai residui e
@@ -2709,7 +2754,6 @@
         finestra del modello.
       </para>
 
-      
       <para context="cli">
 	In modalità predefinita, le stime dei parametri di varianza sono
 	inizializzate usando la varianza dell'errore non condizionale, ottenuta
@@ -7470,7 +7514,8 @@
             usata da <cmd>mle</cmd>, <cmd>gmm</cmd> e altri stimatori.
             Se non si raggiunge la convergenza nel numero specificato di
             iterazioni, il programma produce un messaggio di errore. Il valore
-            predefinito è 500.
+            predefinito dipende dal contesto, ma tipicamente è nell'ordine delle
+            500 iterazioni.
 	  </para>
 	</li>	  
 	<li>	  
