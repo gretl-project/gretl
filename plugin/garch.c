@@ -540,7 +540,7 @@ garchpar_from_armapar (const double *armapar, int q, int p,
 
     for (i=1; i<=q; i++) {
 	x = armapar[p+i];
-	vparm[p+i] = (x > 0.0)? 0 : -x;
+	vparm[p+i] = (x > 0.0)? 0.0001 : -x;
 	sum_ab += vparm[p+i];
     }
 
@@ -563,7 +563,7 @@ garch_init_by_arma (const MODEL *pmod, const int *glist,
 		    double ***pZ, DATAINFO *pdinfo,
 		    double scale, double *vparm)
 {
-    int q = glist[1], p = glist[2];
+    int p = glist[1], q = glist[2];
     int v = pdinfo->v;
     int *list = NULL;
     int err = 0;
@@ -595,7 +595,7 @@ garch_init_by_arma (const MODEL *pmod, const int *glist,
 	err = amod.errcode;
 	if (!err) {
 	    model_count_minus();
-	    garchpar_from_armapar(amod.coeff, q, p, vparm);
+	    garchpar_from_armapar(amod.coeff, p, q, vparm);
 	    for (i=0; i<q+p+1; i++) {
 		fprintf(stderr, "from ARMA: vparm_init[%d] = %#12.6g\n", i, 
 			vparm[i]);
