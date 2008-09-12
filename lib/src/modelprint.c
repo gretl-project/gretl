@@ -2386,7 +2386,7 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 	    sprintf(jllstr, _("Log-likelihood for %s"), 
 		    (const char *) gretl_model_get_data(pmod, "log-parent"));
 	    plain_print_double(xstr, lldig, jll, prn);
-	    pprintf(prn, "  (%s = %.*g)\n", jllstr, xstr);
+	    pprintf(prn, "  (%s = %s)\n", jllstr, xstr);
 	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,
