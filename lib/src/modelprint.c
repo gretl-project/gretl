@@ -3739,7 +3739,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
     if (seppos == -1) {
-	if (pmod->ci == GARCH && pmod->ifc) {
+	if (pmod->ci == GARCH && pmod->list[0] > 4) {
 	    seppos = pmod->list[0] - 4;
 	} else if (pmod->ci == AR || pmod->ci == ARCH) {
 	    seppos = pmod->ncoeff;
@@ -3966,7 +3966,7 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
-    if (seppos == -1 && pmod->ci == GARCH && pmod->ifc) {
+    if (seppos == -1 && pmod->ci == GARCH && pmod->list[0] > 4) {
 	seppos = pmod->list[0] - 4;
     }
 

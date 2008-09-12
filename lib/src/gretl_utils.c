@@ -412,7 +412,7 @@ int gretl_is_oprobit_ok (int t1, int t2, const double *x)
  * @pdinfo: dataset information. 
  * 
  * Check whether variable Z[v] equals 1 over the sample
- * range given in @pdinfo, (aside from any missing values).
+ * range given in @pdinfo (aside from any missing values).
  *
  * Returns: 1 if so, otherwise 0.
  */
@@ -1234,8 +1234,11 @@ double **doubles_array_new (int m, int n)
     double **X;
     int i;
 
-    X = malloc(m * sizeof *X);
+    if (m == 0) {
+	return NULL;
+    }
 
+    X = malloc(m * sizeof *X);
     if (X == NULL) {
 	return X;
     }
@@ -1244,12 +1247,14 @@ double **doubles_array_new (int m, int n)
 	X[i] = NULL;
     }
 
-    for (i=0; i<m; i++) {
-	X[i] = malloc(n * sizeof **X);
-	if (X[i] == NULL) {
-	    doubles_array_free(X, m);
-	    X = NULL;
-	    break;
+    if (n > 0) {
+	for (i=0; i<m; i++) {
+	    X[i] = malloc(n * sizeof **X);
+	    if (X[i] == NULL) {
+		doubles_array_free(X, m);
+		X = NULL;
+		break;
+	    }
 	}
     }
 

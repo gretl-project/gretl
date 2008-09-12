@@ -1795,6 +1795,7 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     gint rvar, lag;
     gchar *rvstr;
     int added = 0;
+    int gotconst = 0;
     int i, j = 1;
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars1));
@@ -1803,6 +1804,9 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     for (i=0; i<rows; i++) {
 
 	gtk_tree_model_get(model, &iter, 0, &rvar, 1, &lag, -1);
+	if (rvar == 0) {
+	    gotconst = 1;
+	}
 
 	if (is_lag_dummy(rvar, lag, context)) {
 	    gtk_tree_model_iter_next(model, &iter);
@@ -1833,6 +1837,10 @@ static void get_rvars1_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_iter_next(model, &iter);
     }
+
+    if (sr->code == GARCH && !gotconst) {
+	sr->opts |= OPT_N;
+    } 
 
     if (sr->code == ARMA && added && !(sr->opts & OPT_N)) {
 	/* add const explicitly */
@@ -2175,7 +2183,7 @@ static void selector_cancel_unavailable_options (selector *sr)
 /* main function for building a command list from information stored
    in the various selector widgets */
 
-static void construct_cmdlist (selector *sr)
+static void compose_cmdlist (selector *sr)
 {
     gint rows = 0, realrows = 0;
     char endbit[12] = {0};
@@ -3499,7 +3507,7 @@ static void build_selector_switches (selector *sr)
 
     if (sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Use Fiorentini et al algorithm"));
-	pack_switch(tmp, sr, libset_get_bool("fcp"), FALSE, OPT_F, 0);
+	pack_switch(tmp, sr, libset_get_bool(USE_FCP), FALSE, OPT_F, 0);
     }
 } 
 
@@ -4027,7 +4035,7 @@ static void lag_selector_button (selector *sr)
 
 static void selector_doit (GtkWidget *w, selector *sr)
 {
-    construct_cmdlist(sr);
+    compose_cmdlist(sr);
 
     if (sr->error == 0) {
 	int err = sr->callback(sr);

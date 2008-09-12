@@ -2671,6 +2671,14 @@
 	  <effect>print covariance matrix</effect>
         </option>
         <option>
+	  <flag>--nc</flag>
+	  <effect>do not include a constant</effect>
+        </option>
+        <option>
+	  <flag>--fcp</flag>
+	  <effect>use Fiorentini, Calzolari, Panattoni algorithm</effect>
+        </option>
+        <option>
 	  <flag>--arma-init</flag>
 	  <effect>initial variance parameters from ARMA</effect>
         </option>
@@ -2696,6 +2704,17 @@
 	  ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i)^2 + sum(j=1 to p) b(j)*h(t-j)"
 	  graphic="garch_h"/>
       </para>
+      <para context="cli">
+	The parameter <repl>p</repl> therefore represents the Generalized
+	(or <quote>AR</quote>) order, while <repl>q</repl> represents the
+	regular ARCH (or <quote>MA</quote>) order.  If <repl>p</repl> is
+	non-zero, <repl>q</repl> must also be non-zero otherwise the model
+	is unidentified.  However, you can estimate a regular ARCH model
+	by setting <repl>q</repl> to a positive value and <repl>p</repl>
+	to zero.  The sum of <repl>p</repl> and <repl>q</repl> must be no
+	greater than 5.  Note that a constant is automatically included in
+	the mean equation unless the <lit>--nc</lit> option is given.
+      </para>
 
       <para context="gui">
 	Estimates a GARCH model (GARCH = Generalized Autoregressive
@@ -2709,26 +2728,31 @@
 	sum(j=1 to p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
 
-      <para>The gretl GARCH algorithm is basically that of Fiorentini,
-	Calzolari and Panattoni (1996), used by kind permission of
-	Professor Fiorentini.</para>
-
-      <para context="cli">Several variant estimates of the coefficient
-	covariance matrix are available with this command.  By
-	default, the Hessian is used unless the <lit>--robust</lit>
-	option is given, in which case the QML (White) covariance
-	matrix is used.  Other possibilities (&eg; the information
-	matrix, or the Bollerslev&ndash;Wooldridge estimator) can be
-	specified using the <cmdref targ="set"/> command.
+      <para>
+	By default native gretl code is used in estimation of GARCH
+	models, but you also have the option of using the algorithm of
+	Fiorentini, Calzolari and Panattoni (1996).  The former uses the
+	BFGS maximizer while the latter uses the information matrix to
+	maximize the likelihood, with fine-tuning via the Hessian.
       </para>
 
-      <para context="gui">Several variant estimates of the coefficient
-	covariance matrix are available with this command.  By
-	default, the Hessian is used unless the <quote>Robust standard
-	  errors</quote> box is checked, in which case the QML (White)
+      <para context="cli">
+	Several variant estimators of the covariance matrix are available
+	with this command.  By default, the Hessian is used unless the
+	<lit>--robust</lit> option is given, in which case the QML (White)
 	covariance matrix is used.  Other possibilities (&eg; the
-	information matrix, or the Bollerslev&ndash;Wooldridge
-	estimator) can be specified using the <cmdref targ="set"/>
+	information matrix, or the Bollerslev&ndash;Wooldridge estimator)
+	can be specified using the <cmdref targ="set"/> command.
+      </para>
+
+      <para context="gui">
+	Several variant estimates of the coefficient covariance matrix are
+	available with this command.  By default, the Hessian is used
+	unless the <quote>Robust standard errors</quote> box is checked,
+	in which case the QML (White) covariance matrix is used.  Other
+	possibilities (&eg; the information matrix, or the
+	Bollerslev&ndash;Wooldridge estimator) can be specified using the
+	<cmdref targ="set"/>
 	command.
       </para>
 

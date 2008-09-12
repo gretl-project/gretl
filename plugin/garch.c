@@ -48,6 +48,7 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	return;
     }
 
+    j = 0;
     for (i=0; i<r; i++) {
 	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);
     }
@@ -78,7 +79,7 @@ static void rescale_results (double *theta, gretl_matrix *V,
     for (i=0; i<npar; i++) {
 	sfi = (i < nc)? scale : (i == nc)? sc2 : 1.0;
 	for (j=0; j<=i; j++) {
-	    sf = (j < nc)? scale*sfi : (j == nc)? sc2*sfi : sfi;
+	    sf = (j < nc)? scale * sfi : (j == nc)? sc2 * sfi : sfi;
 	    vij = gretl_matrix_get(V, i, j) * sf;
 	    gretl_matrix_set(V, i, j, vij);
 	    gretl_matrix_set(V, j, i, vij);
@@ -201,15 +202,18 @@ static int make_garch_dataset (const int *list, double **Z,
 	*py = y;
     } 
 
-    if (pad) {
-	X = doubles_array_new(nx, bign);
-    } else {
-	X = malloc(nx * sizeof *X);
-    }
+    if (nx > 0) {
+	if (pad) {
+	    X = doubles_array_new(nx, bign);
+	} else {
+	    X = malloc(nx * sizeof *X);
+	}
 
-    if (X == NULL) {
-	free(y);
-	return E_ALLOC;
+	if (X == NULL) {
+	    free(y);
+	    *py = NULL;
+	    return E_ALLOC;
+	}
     }
 
     if (pad > 0) {
@@ -421,21 +425,19 @@ garch_driver (const int *list, double **Z, double scale,
 	}
     }
 
-    if (libset_get_bool(USE_FCP)) {
+    if ((opt & OPT_F) || libset_get_bool(USE_FCP)) {
 	err = garch_estimate(y, (const double **) X,
 			     t1 + pad, t2 + pad, bign, nc, 
 			     p, q, theta, V, e, e2, h,
 			     scale, &ll, &iters, vopt, prn);
     } else {
 	err = garch_estimate_mod(y, (const double **) X,
-				 t1 + pad, t2 + pad, bign, nc, ifc,
+				 t1 + pad, t2 + pad, bign, nc, 
 				 p, q, theta, V, e, e2, h, 
 				 scale, &ll, &fnc, &grc, vopt, prn);
     }
 
-    if (err != 0) {
-	pmod->errcode = err;
-    } else {
+    if (!err) {
 	pmod->lnL = ll;
 	write_garch_stats(pmod, list, (const double **) Z, pdinfo, 
 			  theta, V, scale, e, h, npar, nc, pad,
@@ -462,6 +464,10 @@ garch_driver (const int *list, double **Z, double scale,
 	doubles_array_free(X, nc);
     } else {
 	free(X);
+    }
+
+    if (err && !pmod->errcode) {
+	pmod->errcode = err;
     }
 
     return err;
@@ -619,7 +625,8 @@ static int *get_garch_list (const int *list, const double **Z,
 {
     int *glist = NULL;
     int i, p = list[1], q = list[2];
-    int add0 = 1;
+    int cpos = 0;
+    int add0 = 0;
 
     *err = 0;
 
@@ -639,42 +646,43 @@ static int *get_garch_list (const int *list, const double **Z,
 
     /* check for presence of constant among regressors */
     for (i=XPOS; i<=list[0]; i++) {
-	if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
-	    /* got a constant: OK */
-	    add0 = 0;
-	    *ifc = 1;
+	if (list[i] == 0) {
+	    /* got the constant: OK */
+	    cpos = i;
 	    break;
 	}
     }
 
-    if (add0) {
-	if (opt & OPT_N) {
-	    /* --nc option: don't auto-add a constant */
-	    add0 = 0;
-	    *ifc = 0;
-	} else {
-	    *ifc = 1;
-	}
+    /* OPT_N means don't auto-add a constant */
+    if (cpos == 0 && !(opt & OPT_N)) {
+	add0 = 1;
     } 
+
+    *ifc = (cpos > 0 || add0);
 
     glist = gretl_list_new(list[0] + add0);
 
     if (glist == NULL) {
 	*err = E_ALLOC;
     } else {
+	int j = 1;
+
 	/* transcribe first portion of original list */
 	for (i=1; i<XPOS; i++) {
-	    glist[i] = list[i];
+	    glist[j++] = list[i];
 	}
 
-	/* insert constant if not already present */
-	if (add0) {
-	    glist[XPOS] = 0;
-	}
+	if (add0 || (cpos > 0 && cpos != XPOS)) {
+	    /* insert constant here if not already present,
+	       or if originally placed later */ 
+	    glist[j++] = 0;
+	} 
 
-	/* transcribe original regressors, if any */
+	/* transcribe the original regressors, if any */
 	for (i=XPOS; i<=list[0]; i++) {
-	    glist[i+add0] = list[i];
+	    if (i == XPOS || list[i] != 0) {
+		glist[j++] = list[i];
+	    }
 	}
     }
 
@@ -897,4 +905,3 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 
     return model;
 }
-

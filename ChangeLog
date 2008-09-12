@@ -22,6 +22,9 @@ version 1.7.8, in progress
 - PCA: fix column-order of components in printout for the
   case of n > 7
 - Small fixes for opening of datafiles in GUI
+- GARCH: add --nc option to suppress the constant in the
+  mean equation; add --fcp option to use Fiorentini et al
+  code; expand and update help entry
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables
