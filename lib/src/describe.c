@@ -3244,6 +3244,10 @@ static int pergm_graph (const char *vname,
     fputs("'\n", fp);
 
     fprintf(fp, "set xrange [0:%d]\n", roundup_mod(T, 0.5));
+    if (!(opt & OPT_L)) {
+	fprintf(fp, "set yrange [0:%g]\n", 1.2*gretl_max(0, T/2, x));
+    }
+
     fputs("plot '-' using 1:2 w lines\n", fp);
 
     gretl_push_c_numeric_locale();
