@@ -1434,7 +1434,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     int full_grcount = 0;
     double itol = 1.0e-12, icrit = 1;
     double *oldcoeff = NULL;
-    int maxit = libset_get_int(BFGS_MAXITER);
+    int maxit = 500;
     gretlopt iopt = s->opt;
     int outer_iters = 0;
     int outer_max = 1;

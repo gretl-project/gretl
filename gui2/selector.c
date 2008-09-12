@@ -1839,11 +1839,13 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     }
 
     if (sr->code == GARCH && !gotconst) {
+	/* if the user has deliberately removed the constant,
+	   don't put it back in */
 	sr->opts |= OPT_N;
     } 
 
     if (sr->code == ARMA && added && !(sr->opts & OPT_N)) {
-	/* add const explicitly */
+	/* add const explicitly unless forbidden */
 	add_to_cmdlist(sr, " 0");
     }
 }
@@ -3128,6 +3130,27 @@ static void robust_config_button (GtkWidget *w, GtkWidget *b)
     }
 }
 
+static void garch_spin_check (GtkSpinButton *b, selector *sr)
+{
+    int p = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
+    int q = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[1]));
+    int i = (GTK_WIDGET(b) == sr->extra[1])? 1 : 0;
+
+    if (p + q > 5) {
+	/* limit p + q to 5 */
+	if (i == 0) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[1]),
+				      (gdouble) --q);
+	} else {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[0]),
+				      (gdouble) --p);
+	}
+    } else if (p > 0 && q == 0) {
+	/* rule out pure AR in variance */
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[1]), 1);
+    }
+}
+
 static void build_garch_spinners (selector *sr)
 {
     GtkWidget *tmp, *hbox;
@@ -3148,6 +3171,8 @@ static void build_garch_spinners (selector *sr)
 	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 0);
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+	g_signal_connect(GTK_SPIN_BUTTON(sr->extra[i]), "value-changed",
+			 G_CALLBACK(garch_spin_check), sr);
     }
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);

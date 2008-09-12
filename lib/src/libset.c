@@ -354,7 +354,7 @@ static void state_vars_init (set_vars *sv)
     sv->vecm_norm = NORM_PHILLIPS;
     sv->initvals = NULL;
 
-    sv->bfgs_maxiter = 500;
+    sv->bfgs_maxiter = -1;
     sv->bfgs_toler = NADBL;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;

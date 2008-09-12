@@ -2025,7 +2025,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     if (!err) {
 	BFGS_GRAD_FUNC gradfun = (s->mode == ANALYTIC_DERIVS)?
 	    get_mle_gradient : NULL;
-	int maxit = libset_get_int(BFGS_MAXITER);
+	int maxit = 500;
 
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
@@ -3228,6 +3228,8 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
     umaxit = libset_get_int(BFGS_MAXITER);
     if (umaxit > 0) {
 	*maxit = umaxit;
+    } else if (*maxit < 0) {
+	*maxit = 500;
     }
     
     utol = libset_get_double(BFGS_TOLER);
@@ -3783,7 +3785,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
     umax u;
     double ret = NADBL;
     gretlopt opt = OPT_NONE;
-    int maxit;
+    int maxit = 500;
     int fcount = 0, gcount = 0;
     double tol;
 
@@ -3802,7 +3804,6 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 	return NADBL;
     }
 
-    maxit = libset_get_int(BFGS_MAXITER);
     tol = libset_get_double(BFGS_TOLER);
 
     if (libset_get_bool(MAX_VERBOSE)) {

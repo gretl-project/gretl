@@ -2727,6 +2727,16 @@
 	\beta_i h_{t-j}\]" ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i) +
 	sum(j=1 to p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
+      <para context="gui">
+	The parameter <repl>p</repl> therefore represents the Generalized
+	(or <quote>AR</quote>) order, while <repl>q</repl> represents the
+	regular ARCH (or <quote>MA</quote>) order.  If <repl>p</repl> is
+	non-zero, <repl>q</repl> must also be non-zero otherwise the model
+	is unidentified.  However, you can estimate a regular ARCH model
+	by setting <repl>q</repl> to a positive value and <repl>p</repl>
+	to zero.  The sum of <repl>p</repl> and <repl>q</repl> must be no
+	greater than 5.
+      </para>
 
       <para>
 	By default native gretl code is used in estimation of GARCH
@@ -7574,7 +7584,8 @@
 	    <cmd>mle</cmd>, <cmd>gmm</cmd> and several specific
 	    estimators. If convergence is not achieved in the specified
 	    number of iterations, the program returns an error. The
-	    default is 500.
+	    default value depends on the context, but is typically
+	    of the order of 500.
 	  </para>
 	</li>	  
 	<li>	  
