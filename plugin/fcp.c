@@ -360,6 +360,20 @@ static double garch_ll (fcpinfo *f)
 	ll -= 0.5 * log(hts) + 0.5 * f->e2[t] / f->h[t] + LN_SQRT_2_PI;
     }
 
+#if 0
+    if (1) {
+	double v = 7;
+	double tll = log_gamma_function(0.5*(v+1)-1) - 0.5*log(M_PI*(v-2)) 
+	    - log_gamma_function(0.5*v-1);
+	
+	for (t=t1; t<=t2; t++) {
+	    hts = f->h[t] * scale2;
+	    tll -= 0.5*log(hts) + .5*(v+1) * log(1 + f->e2[t]/((v-2)*f->h[t]));
+	}
+	fprintf(stderr, "norm ll = %g, t(7) ll = %g\n", ll, tll);
+    }
+#endif
+
     return ll;
 } 
 

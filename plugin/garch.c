@@ -294,10 +294,10 @@ static void garch_print_init (const double *theta, int k,
     pputs(prn, "\n Variance parameters:\n");
 
     pprintf(prn, "  alpha[0] = %g\n", theta[j++]);
-    for (i=0; i<p; i++) {
+    for (i=0; i<q; i++) {
 	pprintf(prn, "  alpha[%d] = %g\n", i+1, theta[j++]);
     }
-    for (i=0; i<q; i++) {
+    for (i=0; i<p; i++) {
 	pprintf(prn, "   beta[%d] = %g\n", i, theta[j++]);
     }
 
@@ -771,16 +771,24 @@ static void garch_vparm_init (const int *list, double sigma,
 			      double *vparm)
 {
     int i, q = list[1], p = list[2];
+    double den = 1.0;
+    double tmp = (q>0) ? 0.2 : 0.8;
 
-    vparm[0] = sigma * sigma * 0.1;
+    if (p > 0) {
+	for (i=1; i<=p; i++) {
+	    vparm[i] = tmp / p;
+	    den -= vparm[i];
+	}
+    }
+
     if (q > 0) {
-	vparm[p+1] = 0.7;
+	for (i=p+1; i<=p+q; i++) {
+	    vparm[i] = 0.7 / q;
+	    den -= vparm[i];
+	}
     }
 
-    vparm[1] = ((q == 0)? 0.9 : 0.2) / p;
-    for (i=2; i<=p; i++) {
-	vparm[i] = vparm[1];
-    }
+    vparm[0] = sigma * sigma * den;
 }
 
 /* make regression list for initial OLS: we skip three terms 

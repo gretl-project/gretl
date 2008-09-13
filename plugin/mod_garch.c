@@ -367,7 +367,7 @@ static int garch_etht (const double *par, garch_container *DH)
 	}
 	    
 	/* garch params: betas */
-	k = ncm + p + 1;
+	k = ncm + q + 1;
 	for (i=1; i<=p; i++) {
 	    dedq[k][t] = 0.0;
 	    dhdq[k][t] = DH->h[t-i];
@@ -381,7 +381,7 @@ static int garch_etht (const double *par, garch_container *DH)
 	    
 	/* "real" recursive part */
 	for (i=0; i<DH->k; i++) {
-	    k = ncm + p + 1;
+	    k = ncm + q + 1;
 	    for (j=1; j<=p; j++) {
 		dhdq[i][t] += par[k++] * dhdq[i][t-j];
 	    }
