@@ -82,6 +82,20 @@ static void free_scalar (int i)
     scalars[i] = NULL;
 }
 
+static int reallocate_scalars (int n)
+{
+    gretl_scalar **tmp;
+
+    tmp = realloc(scalars, n * sizeof *tmp);
+
+    if (tmp == NULL) {
+	return E_ALLOC;
+    } else {
+	scalars = tmp;
+	return 0;
+    }
+}
+
 static gretl_scalar *get_scalar_pointer (const char *s, int level)
 {
     int i;
@@ -98,16 +112,13 @@ static gretl_scalar *get_scalar_pointer (const char *s, int level)
 
 static int gretl_scalar_push (gretl_scalar *s)
 {
-    gretl_scalar **tmp;
     int n = n_scalars + 1;
 
-    tmp = realloc(scalars, n * sizeof *tmp);
-    if (tmp == NULL) {
+    if (reallocate_scalars(n)) {
 	free(s);
 	return E_ALLOC;
     }
 
-    scalars = tmp;
     scalars[n-1] = s;
     set_n_scalars(n);
 
@@ -124,17 +135,14 @@ static int real_delete_scalar (int i)
     if (n == 0) {
 	set_n_scalars(0);
     } else {
-	gretl_scalar **tmp;
 	int j;
 
 	for (j=i; j<n; j++) {
 	    scalars[j] = scalars[j+1];
 	}
-	tmp = realloc(scalars, n * sizeof *tmp);
-	if (tmp == NULL) {
+	if (reallocate_scalars(n)) {
 	    err = E_ALLOC;
 	} else {
-	    scalars = tmp;
 	    set_n_scalars(n);
 	}
     }
@@ -410,17 +418,13 @@ void unset_auxiliary_scalars (void)
     if (scalar_imin == 0) {
 	destroy_user_scalars();
     } else {
-	gretl_scalar **tmp;
 	int i;
     
 	for (i=scalar_imin; i<n_scalars; i++) {
 	    free_scalar(i);
 	}
 
-	tmp = realloc(scalars, scalar_imin * sizeof *tmp);
-	if (tmp != NULL) {
-	    scalars = tmp;
-	}
+	reallocate_scalars(scalar_imin);
     }
 
     set_n_scalars(scalar_imin);
@@ -452,7 +456,6 @@ static int levels_match (gretl_scalar *s, int lev)
 
 int destroy_user_scalars_at_level (int level)
 {
-    gretl_scalar **tmp;
     int ns = n_scalars;
     int smax = ns - 1;
     int i, j;
@@ -476,12 +479,7 @@ int destroy_user_scalars_at_level (int level)
     if (ns < n_scalars) {
 	set_n_scalars(ns);
 	if (ns > 0) {
-	    tmp = realloc(scalars, ns * sizeof *tmp);
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    } else {
-		scalars = tmp;
-	    }
+	    err = reallocate_scalars(ns);
 	}
     }
 
