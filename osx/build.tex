@@ -17,7 +17,7 @@
 
 \begin{center}
   {\Large \textbf{Building a gretl disk image for OS X}}\\[6pt]
-Allin Cottrell, 23 February 2008
+Allin Cottrell, September 2008
 \end{center}
 
 \section{Objective}
@@ -208,9 +208,9 @@ gretl configuration process.  This may not be necessary if a version
 of gnuplot that supports PNG output is already in your path.
 
 After doing \texttt{make} and \texttt{make install} we run a script
-named postinst to clear out unnecessary files and add a few extra
-things needed for OS X.  This is also in the \texttt{osx} subdir of
-the source.
+named \texttt{postinst} to clear out unnecessary files and add a few
+extra things needed for OS X.  This is also in the \texttt{osx} subdir
+of the source.
 
 \begin{code}
 #!/bin/sh
@@ -229,11 +229,14 @@ rm -rf $PREFIX/lib/pkgconfig
 rm -f $PREFIX/lib/*.la
 rm -f $PREFIX/lib/gretl-gtk2/*.la
 rm -rf $PREFIX/share/emacs
+rm -rf $PREFIX/share/texmf-local
 
 install -m 644 osx/README.pdf $TOPDIR
 install -m 755 osx/gretl.sh $PREFIX/bin/gretl
+install -m 755 osx/script $PREFIX
 # uncomment for a PPC build:
 # install -m 755 osx/Gretl.ppc $TOPDIR/Gretl.app/Contents/MacOS/Gretl
+
 \end{code}
 
 If you're making a PPC build of gretl then you need to remove the
