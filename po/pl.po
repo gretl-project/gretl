@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-09 21:30-0400\n"
-"PO-Revision-Date: 2008-09-11 09:43-0400\n"
+"PO-Revision-Date: 2008-09-13 20:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -5339,7 +5339,7 @@ msgstr ""
 
 #: lib/src/printout.c:245
 msgid "Test for null hypothesis of normal distribution"
-msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny"
+msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny.      Test Doornika-Hansena (1994)- transformowana skośność i kurtoza."
 
 #: lib/src/printout.c:252
 msgid "Test for null hypothesis of gamma distribution"
