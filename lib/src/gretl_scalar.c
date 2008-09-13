@@ -56,6 +56,32 @@ static void debug_print_scalars (const char *s)
 
 #endif
 
+static void set_n_scalars (int n)
+{
+#if SDEBUG
+    fprintf(stderr, "n_scalars: %d -> %d\n", n_scalars, n);
+#endif   
+
+    n_scalars = n;
+
+    if (n_scalars == 0) {
+	free(scalars);
+	scalars = NULL;
+    }
+}
+
+static void free_scalar (int i)
+{
+#if SDEBUG
+    fprintf(stderr, "n_scalars = %d, freeing scalars[%d]: ", n_scalars, i);
+    fprintf(stderr, "'%s' = %g, level %d\n", scalars[i]->name, 
+	    scalars[i]->val, scalars[i]->level);
+#endif    
+
+    free(scalars[i]);
+    scalars[i] = NULL;
+}
+
 static gretl_scalar *get_scalar_pointer (const char *s, int level)
 {
     int i;
@@ -83,7 +109,7 @@ static int gretl_scalar_push (gretl_scalar *s)
 
     scalars = tmp;
     scalars[n-1] = s;
-    n_scalars++;
+    set_n_scalars(n);
 
     return 0;
 }
@@ -93,12 +119,10 @@ static int real_delete_scalar (int i)
     int n = n_scalars - 1;
     int err = 0;
 
-    free(scalars[i]);
+    free_scalar(i);
 
     if (n == 0) {
-	free(scalars);
-	scalars = NULL;
-	n_scalars = 0;
+	set_n_scalars(0);
     } else {
 	gretl_scalar **tmp;
 	int j;
@@ -111,7 +135,7 @@ static int real_delete_scalar (int i)
 	    err = E_ALLOC;
 	} else {
 	    scalars = tmp;
-	    n_scalars = n;
+	    set_n_scalars(n);
 	}
     }
 
@@ -370,11 +394,19 @@ void print_all_scalars (gretlopt opt, PRN *prn)
 
 void set_auxiliary_scalars (void)
 {
+#if SDEBUG
+    fprintf(stderr, "set_auxiliary_scalars: imin = %d\n", n_scalars);
+#endif
     scalar_imin = n_scalars;
 }
 
 void unset_auxiliary_scalars (void)
 {
+#if SDEBUG
+    fprintf(stderr, "unset_auxiliary_scalars: imin = %d, n_scalars = %d\n", 
+	    scalar_imin, n_scalars);
+#endif
+
     if (scalar_imin == 0) {
 	destroy_user_scalars();
     } else {
@@ -382,7 +414,7 @@ void unset_auxiliary_scalars (void)
 	int i;
     
 	for (i=scalar_imin; i<n_scalars; i++) {
-	    free(scalars[i]);
+	    free_scalar(i);
 	}
 
 	tmp = realloc(scalars, scalar_imin * sizeof *tmp);
@@ -391,7 +423,7 @@ void unset_auxiliary_scalars (void)
 	}
     }
 
-    n_scalars = scalar_imin;
+    set_n_scalars(scalar_imin);
     scalar_imin = 0;
 }
 
@@ -421,31 +453,29 @@ static int levels_match (gretl_scalar *s, int lev)
 int destroy_user_scalars_at_level (int level)
 {
     gretl_scalar **tmp;
-    int i, j, ns = 0;
+    int ns = n_scalars;
+    int smax = ns - 1;
+    int i, j;
     int err = 0;
 
-    for (i=scalar_imin; i<n_scalars; i++) {
-	if (scalars[i] == NULL) {
-	    break;
-	}
+#if SDEBUG
+    fprintf(stderr, "destroy_user_scalars_at_level: level = %d\n", level);
+#endif
+
+    for (i=smax; i>=scalar_imin; i--) {
 	if (levels_match(scalars[i], level)) {
-	    free(scalars[i]);
-	    for (j=i; j<n_scalars - 1; j++) {
+	    free_scalar(i);
+	    for (j=i; j<smax; j++) {
 		scalars[j] = scalars[j+1];
 	    }
-	    scalars[n_scalars - 1] = NULL;
-	    i--;
-	} else {
-	    ns++;
-	}
+	    scalars[smax] = NULL;
+	    ns--;
+	} 
     }
 
     if (ns < n_scalars) {
-	n_scalars = ns;
-	if (ns == 0) {
-	    free(scalars);
-	    scalars = NULL;
-	} else {
+	set_n_scalars(ns);
+	if (ns > 0) {
 	    tmp = realloc(scalars, ns * sizeof *tmp);
 	    if (tmp == NULL) {
 		err = E_ALLOC;
@@ -485,13 +515,16 @@ void destroy_user_scalars (void)
 	return;
     }
 
+#if SDEBUG
+    fprintf(stderr, "destroy_user_scalars: scalars = %p, n_scalars = %d\n", 
+	    (void *) scalars, n_scalars);
+#endif
+
     for (i=0; i<n_scalars; i++) {
-	free(scalars[i]);
+	free_scalar(i);
     }
 
-    free(scalars);
-    scalars = NULL;
-    n_scalars = 0;
+    set_n_scalars(0);
 }
 
 /**

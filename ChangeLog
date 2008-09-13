@@ -26,6 +26,8 @@
   mean equation; add --fcp option to use Fiorentini et al
   code; expand and update help entry
 - Periodogram graph: always base y-axis at zero
+- Seasonal ARMA: fix for bad handling of automatically
+  added scalars
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables
