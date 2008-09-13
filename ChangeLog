@@ -20,11 +20,12 @@ version 1.7.8, in progress
   lose track of its image-loading modules
 - CSV data: improve recognition of daily dates
 - PCA: fix column-order of components in printout for the
-  case of n > 7
+  case of more than 7 components
 - Small fixes for opening of datafiles in GUI
 - GARCH: add --nc option to suppress the constant in the
   mean equation; add --fcp option to use Fiorentini et al
   code; expand and update help entry
+- Periodogram graph: always base y-axis at zero
 
 8/28/2008 version 1.7.7
 - Revamp of internal handling of scalar variables
