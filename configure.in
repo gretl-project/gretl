@@ -439,7 +439,9 @@ if test "$build_gui" = "yes" ; then
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0",
-      have_gtk="no"      
+      have_gtk="no"
+      build_gui="no"
+      echo "GTK not found"     
     )
 fi
 
