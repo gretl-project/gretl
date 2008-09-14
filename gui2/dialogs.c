@@ -3888,7 +3888,7 @@ void file_write_errbox (const char *fname)
 # define USE_ASSISTANT 0 /* not ready yet */
 #endif
 
-#define DWDEBUG 0
+#define DWDEBUG 1
 
 #define PD_SPECIAL -1
 
@@ -3896,7 +3896,7 @@ void file_write_errbox (const char *fname)
                         p->structure == STACKED_TIME_SERIES)
 
 enum {
-    DW_SET_TYPE,
+    DW_SET_TYPE = 0,
     DW_TS_FREQUENCY,
     DW_WEEKLY_SELECT,
     DW_STARTING_OBS,
@@ -4152,6 +4152,10 @@ datawiz_make_changes (DATAINFO *dwinfo, int flags)
 
     err = set_obs(setline, Z, datainfo, opt);
 
+#if DWDEBUG
+    fprintf(stderr, "set_obs returned %d\n", err);
+#endif
+
  finalize:
 
     if (!err && delmiss) {
@@ -4172,6 +4176,10 @@ datawiz_make_changes (DATAINFO *dwinfo, int flags)
 	}
 	mark_dataset_as_modified();
     }
+
+#if DWDEBUG
+    fprintf(stderr, "datawiz_make_changes: returning %d\n", err);
+#endif
 
     return err;
 }
@@ -4284,16 +4292,20 @@ static const char *datawiz_radio_strings (int wizcode, int i)
     return "";
 }  
 
-struct dw_opts {
+typedef struct dw_opts_ dw_opts;
+
+struct dw_opts_ {
+    int flags;
     int nopts;
     int deflt;
     int prime;
     int *setvar;
     int *extra;
     GtkWidget *spinner;
+    GList *vlist;
 };
 
-static void datawiz_set_radio_opt (GtkWidget *w, struct dw_opts *opts)
+static void datawiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
 {
     int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
@@ -4323,11 +4335,6 @@ static void datawiz_set_radio_opt (GtkWidget *w, struct dw_opts *opts)
 #endif
 
     *opts->setvar = val;
-}
-
-static void set_back_code (GtkWidget *w, int *ret)
-{
-    *ret = DW_BACK;
 }
 
 struct ts_pd {
@@ -4644,6 +4651,10 @@ static GList *panelvars_list (void)
 	vlist = NULL;
     }
 
+#if DWDEBUG
+    fprintf(stderr, "panelvars_list: returning %p\n", (void *) vlist);
+#endif
+
     return vlist;
 }
 
@@ -4660,6 +4671,11 @@ static gboolean update_panel_var (GtkWidget *box, DATAINFO *dwinfo)
     } else {
 	dwinfo->t2 = v;
     }
+
+#if DWDEBUG
+    fprintf(stderr, "update_panel_var: 't1' = %d, 't2' = %d\n",
+	    dwinfo->t1, dwinfo->t2);
+#endif
 
     g_free(vname);
 
@@ -4737,6 +4753,17 @@ static GtkWidget *dwiz_combo (GList *vlist, DATAINFO *dwinfo)
 
     panelvar_candidates(vlist, &uidx, &tidx);
 
+    if (uidx >= 0 && tidx >= 0) {
+	/* borrowing! */
+	dwinfo->t1 = uidx + 1;
+	dwinfo->t2 = tidx + 1;
+    }
+
+#if DWDEBUG
+    fprintf(stderr, "dwiz_combo: uidx = %d, tidx = %d\n",
+	    uidx, tidx);
+#endif
+
     table = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
@@ -4757,7 +4784,7 @@ static GtkWidget *dwiz_combo (GList *vlist, DATAINFO *dwinfo)
 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), (i == 0)? uidx : tidx);
 	g_object_set_data(G_OBJECT(combo), "index", GINT_TO_POINTER(i));
-	g_signal_connect(G_OBJECT(combo), "destroy",
+	g_signal_connect(G_OBJECT(combo), "changed",
 			 G_CALLBACK(update_panel_var), dwinfo);
     }
 
@@ -4864,7 +4891,7 @@ static void reactivate_main_menus (GtkWidget *w, gpointer p)
     main_menus_enable(TRUE);
 }
 
-static void set_up_dw_opts (struct dw_opts *opts, int step,
+static void set_up_dw_opts (dw_opts *opts, int step,
 			    DATAINFO *dwinfo)
 {
     opts->setvar = NULL;
@@ -4895,7 +4922,7 @@ static void set_up_dw_opts (struct dw_opts *opts, int step,
 }
 
 static void dwiz_build_radios (int step, DATAINFO *dwinfo, 
-			       struct dw_opts *opts, 
+			       dw_opts *opts, 
 			       GtkWidget *vbox)
 {
     GSList *group = NULL;
@@ -4969,25 +4996,31 @@ static void dwiz_make_spinner (int step, DATAINFO *dwinfo,
     gtk_widget_show(hbox);
 }
 
-static void dwiz_panelvars_selector (GList *vlist, DATAINFO *dwinfo,
+static void dwiz_panelvars_selector (dw_opts *opts,
+				     DATAINFO *dwinfo,
 				     GtkWidget *vbox)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-    GtkWidget *table = dwiz_combo(vlist, dwinfo);
+    GtkWidget *table = dwiz_combo(opts->vlist, dwinfo);
 
     gtk_box_pack_start(GTK_BOX(hbox), table, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
-    g_list_free(vlist);
 }
 
-static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
+#if !USE_ASSISTANT
+
+static void set_back_code (GtkWidget *w, int *ret)
 {
-    struct dw_opts opts;
+    *ret = DW_BACK;
+}
+
+static int datawiz_dialog (int step, DATAINFO *dwinfo, 
+			   dw_opts *opts)
+{
     GtkWidget *dialog;
-    GtkWidget *tempwid;
+    GtkWidget *w;
     GtkWidget *vbox;
-    GList *vlist = NULL;
     int ret = DW_FORWARD;
 
 #if DWDEBUG
@@ -5000,8 +5033,10 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
     }
 
     if (step == DW_PANEL_VARS) {
-	vlist = panelvars_list();
-	if (vlist == NULL) {
+	if (opt->vlist == NULL) {
+	    opts->vlist = panelvars_list();
+	}
+	if (opts->vlist == NULL) {
 	    errbox(_("The data set contains no suitable index variables"));
 	    return DW_BACK;
 	}
@@ -5013,18 +5048,18 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
 		     G_CALLBACK(reactivate_main_menus), NULL);
     vbox = GTK_DIALOG(dialog)->vbox;
 
-    set_up_dw_opts(&opts, step, dwinfo);
+    set_up_dw_opts(opts, step, dwinfo);
 
     /* top label */
     if (step != DW_STARTING_OBS && step != DW_PANEL_SIZE) {
-	tempwid = gtk_label_new(_(wizcode_string(step)));
-	gtk_box_pack_start(GTK_BOX(vbox), tempwid, TRUE, TRUE, 5);
-	gtk_widget_show(tempwid);
+	w = gtk_label_new(_(wizcode_string(step)));
+	gtk_box_pack_start(GTK_BOX(vbox), w, TRUE, TRUE, 5);
+	gtk_widget_show(w);
     }
 
     /* radio options? */
-    if (opts.nopts > 0) {
-	dwiz_build_radios(step, dwinfo, &opts, vbox);
+    if (opts->nopts > 0) {
+	dwiz_build_radios(step, dwinfo, opts, vbox);
     }
 
     /* spinner to select starting obs (time series), or number of
@@ -5040,23 +5075,23 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
     */
     if (step == DW_STARTING_OBS && Z != NULL &&
 	dataset_is_daily(dwinfo)) {
-	maybe_add_missobs_purger(vbox, flags);
+	maybe_add_missobs_purger(vbox, &opts->flags);
     }
 
     /* panel: selectors for unit and time index variables? */
     if (step == DW_PANEL_VARS) {
-	dwiz_panelvars_selector(vlist, dwinfo, vbox);
+	dwiz_panelvars_selector(opts, dwinfo, vbox);
     }	
 
     /* confirming? */
     if (step == DW_CONFIRM) {
 	char ctxt[512];
 
-	make_confirmation_text(ctxt, dwinfo, flags);
-	tempwid = gtk_label_new(ctxt);
-	gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
-	gtk_box_pack_start(GTK_BOX(vbox), tempwid, TRUE, TRUE, 5);
-	gtk_widget_show(tempwid);
+	make_confirmation_text(ctxt, dwinfo, &opts->flags);
+	w = gtk_label_new(ctxt);
+	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+	gtk_box_pack_start(GTK_BOX(vbox), w, TRUE, TRUE, 5);
+	gtk_widget_show(w);
     }  
 
     /* "Cancel" button */
@@ -5064,27 +5099,27 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
 
     /* Create a "Back" button? */
     if (step > DW_SET_TYPE) {
-	tempwid = back_button(GTK_DIALOG(dialog)->action_area);
-	g_signal_connect(G_OBJECT(tempwid), "clicked", 
+	w = back_button(GTK_DIALOG(dialog)->action_area);
+	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(set_back_code), 
 			 &ret);
-	g_signal_connect(G_OBJECT(tempwid), "clicked", 
+	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(delete_widget), 
 			 dialog);
-	gtk_widget_show(tempwid);  
+	gtk_widget_show(w);  
     }  
 
     /* Create the "Next" or "OK" button */
     if (step == DW_CONFIRM) {
-	tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
+	w = ok_button(GTK_DIALOG(dialog)->action_area);
     } else {
-	tempwid = next_button(GTK_DIALOG(dialog)->action_area);
+	w = next_button(GTK_DIALOG(dialog)->action_area);
     }
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+    g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    gtk_widget_grab_default(w);
+    gtk_widget_show(w);
 
     if (step == DW_PANEL_MODE) {
 	context_help_button(GTK_DIALOG(dialog)->action_area, PANEL_MODE);
@@ -5095,6 +5130,8 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
 
     return ret;
 }
+
+#endif
 
 /* Take the user through a series of dialogs to define the
    structure of the data set.  If "create" is non-zero we're
@@ -5107,8 +5144,14 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo, int *flags)
 */
 
 static int dw_compute_step (int step, int ret, DATAINFO *dwinfo, 
-			    int create)
+			    dw_opts *opts)
 {
+    int create = opts->flags & DWIZ_CREATE;
+
+#if DWDEBUG
+    fprintf(stderr, "dw_compute_step: incoming step = %d\n", step);
+#endif
+
     switch (ret) {
 
     case DW_CANCEL:
@@ -5156,7 +5199,7 @@ static int dw_compute_step (int step, int ret, DATAINFO *dwinfo,
 	    }
 	} else if (step == DW_PANEL_VARS) {
 	    if (process_panel_vars(dwinfo)) {
-		step = DW_PANEL_VARS; /* or just quit? */
+		step = DW_PANEL_VARS;
 	    } else {
 		step = DW_CONFIRM;
 	    }
@@ -5194,20 +5237,19 @@ static int dw_compute_step (int step, int ret, DATAINFO *dwinfo,
 	break;
     }
 
+#if DWDEBUG
+    fprintf(stderr, "dw_compute_step: returning step = %d\n", step);
+#endif
+
     return step;
 }
 
 #if USE_ASSISTANT
 
-static void remove_child (GtkWidget *w, gpointer p)
-{
-    gtk_widget_destroy(w);
-}
-
 static void clear_dwiz_page (GtkWidget *page)
 {
     gtk_container_foreach(GTK_CONTAINER(page),
-			  (GtkCallback) remove_child,
+			  (GtkCallback) gtk_widget_destroy,
 			  NULL);
 }
 
@@ -5215,35 +5257,18 @@ static void wizard_prepare (GtkAssistant *wiz, GtkWidget *page,
 			    DATAINFO *dwinfo)
 {
     int step = gtk_assistant_get_current_page(wiz);
-    GList *vlist = NULL;
-    int flags = 0; /* FIXME */
-
+    dw_opts *opts = g_object_get_data(G_OBJECT(wiz), "opts");
+    int err = 0;
+    
     fprintf(stderr, "Got Prepare, step = %d\n", step);
-
-    if (step == DW_CONFIRM && known_panel(dwinfo) &&
-	test_for_unbalanced(dwinfo)) {
-	gtk_assistant_set_current_page(wiz, step - 1);
-	return;
-    }
-
-    if (step == DW_PANEL_VARS) {
-	vlist = panelvars_list();
-	if (vlist == NULL) {
-	    errbox(_("The data set contains no suitable index variables"));
-	    gtk_assistant_set_current_page(wiz, step - 1);
-	    return;
-	}
-    }
 
     if (step == DW_CONFIRM) {
 	GtkWidget *w = g_object_get_data(G_OBJECT(page), "label");
 	char ctxt[512];
 
-	make_confirmation_text(ctxt, dwinfo, &flags);
+	make_confirmation_text(ctxt, dwinfo, &opts->flags);
 	gtk_label_set_text(GTK_LABEL(w), ctxt);
     } else {
-	struct dw_opts *opts = g_object_get_data(G_OBJECT(wiz), "opts");
-
 	set_up_dw_opts(opts, step, dwinfo);
 	clear_dwiz_page(page);
 
@@ -5255,54 +5280,82 @@ static void wizard_prepare (GtkAssistant *wiz, GtkWidget *page,
 	    dwiz_make_spinner(step, dwinfo, page);
 	} else if (step == DW_STARTING_OBS) {
 	    if (Z != NULL && dataset_is_daily(dwinfo)) {
-		maybe_add_missobs_purger(page, flags);
+		maybe_add_missobs_purger(page, &opts->flags);
 	    }
 	} else if (step == DW_PANEL_VARS) {
-	    /* panel: selectors for unit and time index variables */
-	    dwiz_panelvars_selector(vlist, dwinfo, page);
+	    if (opts->vlist == NULL) {
+		opts->vlist = panelvars_list();
+	    }
+	    if (opts->vlist == NULL) {
+		errbox(_("The data set contains no suitable index variables"));
+		err = 1;
+	    } else {
+		dwiz_panelvars_selector(opts, dwinfo, page);
+	    }
 	}
     }
 
     gtk_assistant_set_page_complete(GTK_ASSISTANT(wiz),
-				    page, TRUE);
+				    page, !err);
+}
+
+static void dwiz_finalize (GtkAssistant *wiz, DATAINFO *dwinfo,
+			   int cancel)
+{
+    dw_opts *opts = g_object_get_data(G_OBJECT(wiz), "opts");
+
+    if (!cancel && !all_done) {
+	datawiz_make_changes(dwinfo, opts->flags);
+    } else if (cancel && !all_done && (opts->flags & DWIZ_CREATE)) {
+	gui_clear_dataset();
+    }
+
+    gtk_widget_destroy(GTK_WIDGET(wiz));
 }
 
 static void wizard_cancel (GtkAssistant *wiz, DATAINFO *dwinfo)
 {
-    fprintf(stderr, "Got Cancel\n");
-    gtk_widget_destroy(GTK_WIDGET(wiz));
+    dwiz_finalize(wiz, dwinfo, 1);
 }
 
 static void wizard_apply (GtkAssistant *wiz, DATAINFO *dwinfo)
 {
-    fprintf(stderr, "Got Apply\n");
-}
-
-static void wizard_close (GtkAssistant *wiz, DATAINFO *dwinfo)
-{
-    fprintf(stderr, "Got Close\n");
-    gtk_widget_destroy(GTK_WIDGET(wiz));
+    fprintf(stderr, "Apply\n");
+    dwiz_finalize(wiz, dwinfo, 0);
 }
 
 static gint dwiz_set_next_page (gint oldpage, GtkAssistant *wiz)
 {
     DATAINFO *dwinfo = g_object_get_data(G_OBJECT(wiz), "dwinfo");
-    int create = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(wiz), "create"));
-    
-    return dw_compute_step(oldpage, DW_FORWARD, dwinfo, create);
+    dw_opts *opts = g_object_get_data(G_OBJECT(wiz), "opts");
+
+    if (oldpage == DW_CONFIRM) {
+	return 0;
+    } else {
+	return dw_compute_step(oldpage, DW_FORWARD, dwinfo, opts);
+    }
 }
 
-static void dwiz_fill_page (GtkWidget *page, int step, 
-			    DATAINFO *dwinfo,
-			    struct dw_opts *opts)
+static void dwiz_confirm_label (GtkWidget *page)
 {
-    if (step == DW_CONFIRM) {
-	GtkWidget *label = gtk_label_new("");
+    GtkWidget *label = gtk_label_new("");
 
-	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-	gtk_box_pack_start(GTK_BOX(page), label, TRUE, TRUE, 5);
-	g_object_set_data(G_OBJECT(page), "label", label);
+    gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+    gtk_box_pack_start(GTK_BOX(page), label, TRUE, TRUE, 5);
+    g_object_set_data(G_OBJECT(page), "label", label);
+}
+
+static void free_dwinfo (GtkWidget *w, DATAINFO *dwinfo)
+{
+    free(dwinfo);
+}
+
+static void free_dw_opts (GtkWidget *w, dw_opts *opts)
+{
+    if (opts->vlist != NULL) {
+	g_list_free(opts->vlist);
     }
+    free(opts);
 }
 
 static void data_structure_wizard (int create)
@@ -5310,9 +5363,8 @@ static void data_structure_wizard (int create)
     GtkWidget *wiz;
     GtkWidget *page;
     DATAINFO *dwinfo;
-    struct dw_opts *opts = NULL;
-    int flags = 0;
-    int i, pmax = 8;
+    dw_opts *opts;
+    int i;
 
     dwinfo = datainfo_new();
     if (dwinfo == NULL) {
@@ -5327,34 +5379,44 @@ static void data_structure_wizard (int create)
 	return;
     }
 
-    if (create) {
-	flags |= DWIZ_CREATE;
-    }
+    opts->flags = (create)? DWIZ_CREATE : 0;
+    opts->vlist = NULL;
 
     /* copy current relevant info */
     dwinfo_init(dwinfo);
 
     wiz = gtk_assistant_new();
+    gtk_window_set_title(GTK_WINDOW(wiz), _("Data structure wizard"));
 
-    g_object_set_data(G_OBJECT(wiz), "create", GINT_TO_POINTER(create));
     g_object_set_data(G_OBJECT(wiz), "dwinfo", dwinfo);
     g_object_set_data(G_OBJECT(wiz), "opts", opts);
 
-    for (i=0; i<pmax; i++) {
+    g_signal_connect(G_OBJECT(wiz), "destroy", 
+		     G_CALLBACK(free_dwinfo), 
+		     dwinfo);
+    g_signal_connect(G_OBJECT(wiz), "destroy", 
+		     G_CALLBACK(free_dw_opts), 
+		     opts);
+    g_signal_connect(G_OBJECT(wiz), "destroy", 
+		     G_CALLBACK(reactivate_main_menus), 
+		     NULL);
+
+    for (i=0; i<=DW_CONFIRM; i++) {
 	GtkAssistantPageType ptype;
 	const gchar *title;
 
 	page = gtk_vbox_new(FALSE, 5);
 	gtk_assistant_append_page(GTK_ASSISTANT(wiz), page);
 	ptype = (i == 0)? GTK_ASSISTANT_PAGE_INTRO :
-	    (i == pmax - 1)? GTK_ASSISTANT_PAGE_CONFIRM :
+	    (i == DW_CONFIRM)? GTK_ASSISTANT_PAGE_CONFIRM :
+	    (i == DW_PANEL_VARS)? GTK_ASSISTANT_PAGE_PROGRESS :
 	    GTK_ASSISTANT_PAGE_CONTENT;
 	gtk_assistant_set_page_type(GTK_ASSISTANT(wiz), page, ptype);
-	if (i != DW_STARTING_OBS && i != DW_PANEL_SIZE) {
-	    title = _(wizcode_string(i));
-	    gtk_assistant_set_page_title(GTK_ASSISTANT(wiz), page, title);
+	title = _(wizcode_string(i));
+	gtk_assistant_set_page_title(GTK_ASSISTANT(wiz), page, title);
+	if (i == DW_CONFIRM) {
+	    dwiz_confirm_label(page);
 	}
-	dwiz_fill_page(page, i, dwinfo, opts);
     }
 
     gtk_assistant_set_forward_page_func(GTK_ASSISTANT(wiz),
@@ -5370,21 +5432,18 @@ static void data_structure_wizard (int create)
     g_signal_connect(GTK_ASSISTANT(wiz), "apply",
 		     G_CALLBACK(wizard_apply),
 		     dwinfo);
-    g_signal_connect(GTK_ASSISTANT(wiz), "close",
-		     G_CALLBACK(wizard_close),
-		     dwinfo);
 
+    main_menus_enable(FALSE);
+    gtk_window_set_position(GTK_WINDOW(wiz), GTK_WIN_POS_MOUSE);
     gtk_widget_show_all(wiz);
-
-    fprintf(stderr, "Got here!\n");
 }
 
 #else
 
 static void data_structure_wizard (int create)
 {
+    dw_opts opts;
     DATAINFO *dwinfo;
-    int flags = 0;
     int step = DW_SET_TYPE;
     int ret = DW_CANCEL;
 
@@ -5394,20 +5453,19 @@ static void data_structure_wizard (int create)
 	return;
     }
 
-    if (create) {
-	flags |= DWIZ_CREATE;
-    }
+    opts.flags = (create)? DWIZ_CREATE : 0;
+    opts.vlist = NULL;
 
     /* copy current relevant info */
     dwinfo_init(dwinfo);
 
     while (step != DW_DONE && !all_done) {
-	ret = datawiz_dialog(step, dwinfo, &flags);
-	step = dw_compute_step(step, ret, dwinfo, create);
+	ret = datawiz_dialog(step, dwinfo, &opts);
+	step = dw_compute_step(step, ret, dwinfo, &opts);
     }
 
     if (ret != DW_CANCEL && !all_done) {
-	datawiz_make_changes(dwinfo, flags);
+	datawiz_make_changes(dwinfo, opts.flags);
     }
 
     if (ret == DW_CANCEL && !all_done && create) {
@@ -5415,6 +5473,9 @@ static void data_structure_wizard (int create)
     }
 
     free(dwinfo);
+    if (opts.vlist != NULL) {
+	g_list_free(opts.vlist);
+    }
 }
 
 #endif

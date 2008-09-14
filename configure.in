@@ -507,7 +507,7 @@ if test ${have_gtk} = "2.0" ; then
 	pixbuf_failed="yes"
    )
 fi
-if test ${pixbuf_failed} = "yes" ; then
+if test "${pixbuf_failed}" = "yes" ; then
     echo "* gretl wants but did not find the gdk-pixbuf library for PNG graphs."
     exit
 fi

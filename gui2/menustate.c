@@ -262,6 +262,7 @@ void main_menus_enable (gboolean s)
 	flip(mdata->ui, "/MenuBar/View", s);
 	flip(mdata->ui, "/MenuBar/Add", s);
 	flip(mdata->ui, "/MenuBar/Sample", s);
+	flip(mdata->ui, "/MenuBar/Variable", s);
 	flip(mdata->ui, "/MenuBar/Model", s);
     }
 }
