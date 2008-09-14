@@ -5033,7 +5033,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo,
     }
 
     if (step == DW_PANEL_VARS) {
-	if (opt->vlist == NULL) {
+	if (opts->vlist == NULL) {
 	    opts->vlist = panelvars_list();
 	}
 	if (opts->vlist == NULL) {
