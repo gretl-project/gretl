@@ -52,6 +52,7 @@
 #include "toolbar.h"
 #include "winstack.h"
 #include "fnsave.h"
+#include "datawiz.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>

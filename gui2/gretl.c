@@ -40,6 +40,7 @@
 #include "calculator.h"
 #include "fnsave.h"
 #include "winstack.h"
+#include "datawiz.h"
 
 #include <dirent.h>
 

@@ -31,6 +31,7 @@
 #include "fileselect.h"
 #include "ssheet.h"
 #include "treeutils.h"
+#include "datawiz.h"
 
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id;

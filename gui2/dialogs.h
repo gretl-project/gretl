@@ -125,14 +125,10 @@ int freq_dialog (const char *title, const char *blurb,
 void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 		       gretlopt *popt, int *cancelled);
 
-void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
-
-void data_structure_dialog (void);
-
-void new_data_structure_dialog (void);
-
 void lmax_dialog (double *lmax, double ymax);
 
 void tex_format_dialog (void);
+
+int gretl_all_done (void);
 
 #endif /* DIALOGS_H */

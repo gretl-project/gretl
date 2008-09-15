@@ -220,6 +220,7 @@ GUISRC = about.c \
 	console.c \
 	database.c \
 	datafiles.c \
+	datawiz.c \
 	dialogs.c \
 	dlgutils.c \
 	filelists.c \
