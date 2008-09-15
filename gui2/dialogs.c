@@ -3888,7 +3888,7 @@ void file_write_errbox (const char *fname)
 # define USE_ASSISTANT 0 /* not ready yet */
 #endif
 
-#define DWDEBUG 1
+#define DWDEBUG 0
 
 #define PD_SPECIAL -1
 
