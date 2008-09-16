@@ -3942,7 +3942,9 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     if (pdinfo->S != NULL) {
 	/* expand the obs (unit) marker strings appropriately */
 	if (S == NULL) {
-	    dataset_destroy_obs_markers(pdinfo);
+	    free_strings_array(pdinfo->S, n_orig);
+	    pdinfo->S = NULL;
+	    pdinfo->markers = NO_MARKERS;
 	} else {
 	    char si[OBSLEN];
 
