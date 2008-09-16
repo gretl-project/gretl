@@ -113,56 +113,52 @@ static GtkEntryClass *parent_class = NULL;
 
 #define NO_ARROW 2
 
-GType
-obs_button_get_type (void)
+GType obs_button_get_type (void)
 {
-  static GType obs_button_type = 0;
+    static GType obs_button_type = 0;
 
-  if (!obs_button_type)
-    {
-      static const GTypeInfo obs_button_info =
-      {
-	sizeof (ObsButtonClass),
-	NULL,		/* base_init */
-	NULL,		/* base_finalize */
-	(GClassInitFunc) obs_button_class_init,
-	NULL,		/* class_finalize */
-	NULL,		/* class_data */
-	sizeof (ObsButton),
-	0,		/* n_preallocs */
-	(GInstanceInitFunc) obs_button_init,
-	NULL
-      };
+    if (!obs_button_type) {
+	static const GTypeInfo obs_button_info = {
+	    sizeof (ObsButtonClass),
+	    NULL,		/* base_init */
+	    NULL,		/* base_finalize */
+	    (GClassInitFunc) obs_button_class_init,
+	    NULL,		/* class_finalize */
+	    NULL,		/* class_data */
+	    sizeof (ObsButton),
+	    0,		/* n_preallocs */
+	    (GInstanceInitFunc) obs_button_init,
+	    NULL
+	};
 
-      static const GInterfaceInfo editable_info =
-      {
-	(GInterfaceInitFunc) obs_button_editable_init, /* interface_init */
-	NULL, /* interface_finalize */
-	NULL  /* interface_data */
-      };
+	static const GInterfaceInfo editable_info = {
+	    (GInterfaceInitFunc) obs_button_editable_init, /* interface_init */
+	    NULL, /* interface_finalize */
+	    NULL  /* interface_data */
+	};
 
-      obs_button_type =
-	g_type_register_static (GTK_TYPE_ENTRY, "ObsButton",
-				&obs_button_info, 0);
+	obs_button_type =
+	    g_type_register_static(GTK_TYPE_ENTRY, "ObsButton",
+				   &obs_button_info, 0);
 
-      g_type_add_interface_static (obs_button_type,
-				   GTK_TYPE_EDITABLE,
-				   &editable_info);
+	g_type_add_interface_static(obs_button_type,
+				    GTK_TYPE_EDITABLE,
+				    &editable_info);
     }
-  return obs_button_type;
+    return obs_button_type;
 }
 
 static void
 obs_button_class_init (ObsButtonClass *class)
 {
-  GObjectClass     *gobject_class = G_OBJECT_CLASS (class);
+  GObjectClass     *gobject_class = G_OBJECT_CLASS(class);
   GtkObjectClass   *object_class;
   GtkWidgetClass   *widget_class;
   GtkEntryClass    *entry_class;
 
-  object_class   = (GtkObjectClass*)   class;
-  widget_class   = (GtkWidgetClass*)   class;
-  entry_class    = (GtkEntryClass*)    class;
+  object_class = (GtkObjectClass*)   class;
+  widget_class = (GtkWidgetClass*)   class;
+  entry_class  = (GtkEntryClass*)    class;
 
   parent_class = g_type_class_peek_parent (class);
 
@@ -227,10 +223,10 @@ obs_button_set_property (GObject      *object,
 			 const GValue *value,
 			 GParamSpec   *pspec)
 {
-    ObsButton *obs_button = OBS_BUTTON (object);
+    ObsButton *obs_button = OBS_BUTTON(object);
 
     if (prop_id == PROP_VALUE) {
-	obs_button_set_value (obs_button, g_value_get_double (value));
+	obs_button_set_value(obs_button, g_value_get_double(value));
     }
 }
 
@@ -267,34 +263,34 @@ obs_button_init (ObsButton *obs_button)
 static void
 obs_button_finalize (GObject *object)
 {
-    obs_button_set_adjustment (OBS_BUTTON (object), NULL);
+    obs_button_set_adjustment(OBS_BUTTON(object), NULL);
   
-    G_OBJECT_CLASS (parent_class)->finalize (object);
+    G_OBJECT_CLASS(parent_class)->finalize(object);
 }
 
 static void
 obs_button_destroy (GtkObject *object)
 {
-    obs_button_stop_spinning (OBS_BUTTON (object));
+    obs_button_stop_spinning(OBS_BUTTON(object));
   
-    GTK_OBJECT_CLASS (parent_class)->destroy (object);
+    GTK_OBJECT_CLASS(parent_class)->destroy(object);
 }
 
 static void
 obs_button_map (GtkWidget *widget)
 {
-    if (GTK_WIDGET_REALIZED (widget) && !GTK_WIDGET_MAPPED (widget)) {
-	GTK_WIDGET_CLASS (parent_class)->map (widget);
-	gdk_window_show (OBS_BUTTON (widget)->panel);
+    if (GTK_WIDGET_REALIZED(widget) && !GTK_WIDGET_MAPPED(widget)) {
+	GTK_WIDGET_CLASS(parent_class)->map(widget);
+	gdk_window_show(OBS_BUTTON(widget)->panel);
     }
 }
 
 static void
 obs_button_unmap (GtkWidget *widget)
 {
-    if (GTK_WIDGET_MAPPED (widget)) {
-	gdk_window_hide (OBS_BUTTON (widget)->panel);
-	GTK_WIDGET_CLASS (parent_class)->unmap (widget);
+    if (GTK_WIDGET_MAPPED(widget)) {
+	gdk_window_hide(OBS_BUTTON(widget)->panel);
+	GTK_WIDGET_CLASS(parent_class)->unmap(widget);
     }
 }
 
@@ -307,22 +303,22 @@ obs_button_realize (GtkWidget *widget)
     guint real_width;
     gint arrow_size;
 
-    obs_button = OBS_BUTTON (widget);
-    arrow_size = obs_button_get_arrow_size (obs_button);
+    obs_button = OBS_BUTTON(widget);
+    arrow_size = obs_button_get_arrow_size(obs_button);
 
     real_width = widget->allocation.width;
     widget->allocation.width -= arrow_size + 2 * widget->style->xthickness;
-    gtk_widget_set_events (widget, gtk_widget_get_events (widget) |
-			   GDK_KEY_RELEASE_MASK);
-    GTK_WIDGET_CLASS (parent_class)->realize (widget);
+    gtk_widget_set_events(widget, gtk_widget_get_events(widget) |
+			  GDK_KEY_RELEASE_MASK);
+    GTK_WIDGET_CLASS(parent_class)->realize(widget);
 
     widget->allocation.width = real_width;
   
     attributes.window_type = GDK_WINDOW_CHILD;
     attributes.wclass = GDK_INPUT_OUTPUT;
-    attributes.visual = gtk_widget_get_visual (widget);
-    attributes.colormap = gtk_widget_get_colormap (widget);
-    attributes.event_mask = gtk_widget_get_events (widget);
+    attributes.visual = gtk_widget_get_visual(widget);
+    attributes.colormap = gtk_widget_get_colormap(widget);
+    attributes.event_mask = gtk_widget_get_events(widget);
     attributes.event_mask |= GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK 
 	| GDK_BUTTON_RELEASE_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_ENTER_NOTIFY_MASK 
 	| GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK;
@@ -337,27 +333,27 @@ obs_button_realize (GtkWidget *widget)
     attributes.width = arrow_size + 2 * widget->style->xthickness;
     attributes.height = widget->requisition.height;
   
-    obs_button->panel = gdk_window_new (gtk_widget_get_parent_window (widget), 
-					&attributes, attributes_mask);
-    gdk_window_set_user_data (obs_button->panel, widget);
+    obs_button->panel = gdk_window_new(gtk_widget_get_parent_window(widget), 
+				       &attributes, attributes_mask);
+    gdk_window_set_user_data(obs_button->panel, widget);
 
-    gtk_style_set_background (widget->style, obs_button->panel, GTK_STATE_NORMAL);
+    gtk_style_set_background(widget->style, obs_button->panel, GTK_STATE_NORMAL);
 
-    obs_button_default_output (obs_button);
+    obs_button_default_output(obs_button);
 
-    gtk_widget_queue_resize (GTK_WIDGET (obs_button));
+    gtk_widget_queue_resize(GTK_WIDGET(obs_button));
 }
 
 static void
 obs_button_unrealize (GtkWidget *widget)
 {
-    ObsButton *spin = OBS_BUTTON (widget);
+    ObsButton *spin = OBS_BUTTON(widget);
 
-    GTK_WIDGET_CLASS (parent_class)->unrealize (widget);
+    GTK_WIDGET_CLASS(parent_class)->unrealize(widget);
 
     if (spin->panel) {
-	gdk_window_set_user_data (spin->panel, NULL);
-	gdk_window_destroy (spin->panel);
+	gdk_window_set_user_data(spin->panel, NULL);
+	gdk_window_destroy(spin->panel);
 	spin->panel = NULL;
     }
 }
@@ -1051,7 +1047,7 @@ obs_button_real_spin (ObsButton *obs_button,
 
 static gint
 obs_button_default_input (ObsButton *obs_button,
-			  gdouble       *new_val)
+			  gdouble *new_val)
 {
     *new_val = dateton(gtk_entry_get_text(GTK_ENTRY (obs_button)), 
 		       obs_button->pdinfo);
@@ -1096,16 +1092,16 @@ obs_button_new (GtkAdjustment *adjustment, const DATAINFO *pdinfo)
     ObsButton *spin;
 
     if (adjustment)
-	g_return_val_if_fail (GTK_IS_ADJUSTMENT (adjustment), NULL);
+	g_return_val_if_fail(GTK_IS_ADJUSTMENT(adjustment), NULL);
 
-    spin = g_object_new (GTK_TYPE_OBS_BUTTON, NULL);
+    spin = g_object_new(GTK_TYPE_OBS_BUTTON, NULL);
 
     spin->pdinfo = pdinfo;
 
-    obs_button_set_adjustment (spin, adjustment);
-    gtk_adjustment_value_changed (adjustment);
+    obs_button_set_adjustment(spin, adjustment);
+    gtk_adjustment_value_changed(adjustment);
 
-    return GTK_WIDGET (spin);
+    return GTK_WIDGET(spin);
 }
 
 /* Callback used when the spin button's adjustment changes.  We need to redraw
@@ -1117,7 +1113,7 @@ adjustment_changed_cb (GtkAdjustment *adjustment, gpointer data)
     ObsButton *obs_button = OBS_BUTTON (data);
 
     obs_button->timer_step = obs_button->adjustment->step_increment;
-    gtk_widget_queue_resize (GTK_WIDGET (obs_button));
+    gtk_widget_queue_resize(GTK_WIDGET(obs_button));
 }
 
 /**
@@ -1193,7 +1189,7 @@ obs_button_set_value (ObsButton *obs_button,
 {
     g_return_if_fail (GTK_IS_OBS_BUTTON (obs_button));
 
-    if (fabs (value - obs_button->adjustment->value) > EPSILON) {
+    if (fabs(value - obs_button->adjustment->value) > EPSILON) {
 	gtk_adjustment_set_value (obs_button->adjustment, value);
     } else {
 	obs_button_default_output (obs_button);
@@ -1234,9 +1230,9 @@ obs_button_update (ObsButton *obs_button)
     gint error = 0;
     gint return_val;
 
-    g_return_if_fail (GTK_IS_OBS_BUTTON (obs_button));
+    g_return_if_fail(GTK_IS_OBS_BUTTON(obs_button));
 
-    return_val = obs_button_default_input (obs_button, &val);
+    return_val = obs_button_default_input(obs_button, &val);
     error = (return_val == GTK_INPUT_ERROR);
     
     obs_button_redraw (obs_button);
@@ -1247,9 +1243,9 @@ obs_button_update (ObsButton *obs_button)
 	val = obs_button->adjustment->upper;
 
     if (fabs(val - obs_button->adjustment->value) > EPSILON) {
-	gtk_adjustment_set_value (obs_button->adjustment, val);
+	gtk_adjustment_set_value(obs_button->adjustment, val);
     } else {
-	obs_button_default_output (obs_button);
+	obs_button_default_output(obs_button);
     }
 }
 
@@ -1258,14 +1254,14 @@ obs_button_redraw (ObsButton *obs_button)
 {
     GtkWidget *widget;
 
-    widget = GTK_WIDGET (obs_button);
+    widget = GTK_WIDGET(obs_button);
 
-    if (GTK_WIDGET_DRAWABLE (widget)) {
-	gtk_widget_queue_draw (widget);
+    if (GTK_WIDGET_DRAWABLE(widget)) {
+	gtk_widget_queue_draw(widget);
 
 	/* We must invalidate the panel window ourselves, because it
 	 * is not a child of widget->window
 	 */
-	gdk_window_invalidate_rect (obs_button->panel, NULL, TRUE);
+	gdk_window_invalidate_rect(obs_button->panel, NULL, TRUE);
     }
 }        

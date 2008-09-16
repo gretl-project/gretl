@@ -1,4 +1,5 @@
 version 1.7.9, in progress
+- Revamp the data structure "wizard"
 
 9/14/2008 version 1.7.8
 - Add a language-switching option to the gretl GUI (under

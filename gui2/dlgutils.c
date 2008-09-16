@@ -293,6 +293,8 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     
     if (flags & GRETL_DLG_MODAL) {
 	gretl_set_window_modal(d);
+    } else if (flags & GRETL_DLG_QUASI_MODAL) {
+	gretl_set_window_quasi_modal(d);
     }
 
     if (!(flags & GRETL_DLG_RESIZE)) {

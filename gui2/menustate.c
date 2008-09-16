@@ -101,6 +101,14 @@ void gretl_set_window_modal (GtkWidget *w)
 		     NULL);
 }
 
+void gretl_set_window_quasi_modal (GtkWidget *w)
+{
+    increment_modal_count(w);
+    g_signal_connect(G_OBJECT(w), "destroy", 
+		     G_CALLBACK(decrement_modal_count),
+		     NULL);
+}
+
 void variable_menu_state (gboolean s)
 {
     if (mdata == NULL || mdata->ui == NULL) return;

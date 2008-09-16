@@ -4,6 +4,7 @@
 void refresh_data (void);
 
 void gretl_set_window_modal (GtkWidget *w);
+void gretl_set_window_quasi_modal (GtkWidget *w);
 
 void flip (GtkUIManager *ui, const char *path, gboolean s);
 

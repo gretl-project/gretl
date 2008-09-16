@@ -21,9 +21,10 @@
 #define DLGUTILS_H
 
 enum {
-    GRETL_DLG_MODAL  = 1 << 0,
-    GRETL_DLG_BLOCK  = 1 << 1,
-    GRETL_DLG_RESIZE = 1 << 2
+    GRETL_DLG_MODAL       = 1 << 0,
+    GRETL_DLG_BLOCK       = 1 << 1,
+    GRETL_DLG_RESIZE      = 1 << 2,
+    GRETL_DLG_QUASI_MODAL = 1 << 3,
 };
 
 enum {
