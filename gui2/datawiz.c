@@ -691,7 +691,7 @@ static int default_panel_size (dw_opts *opts, DATAINFO *dwinfo)
 {
     int sz = opts->plf;
 
-    if (dwinfo->pd > 1) {
+    if (dwinfo->pd > 1 && dwinfo->n % dwinfo->pd == 0) {
 	if (dwinfo->structure == STACKED_TIME_SERIES) {
 	    sz = dwinfo->n / dwinfo->pd;
 	} else {
