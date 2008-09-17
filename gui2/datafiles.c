@@ -137,11 +137,11 @@ static int recognized_collection (file_collection *coll)
     const file_collection recognized_data[] = {
 	{ "wooldridge", "jw_descriptions", "Wooldridge", COLL_DATA, NULL },
 	{ "gujarati", "dg_descriptions", "Gujarati", COLL_DATA, NULL },
-	{ "pwt56", "descriptions", "Penn World Table", COLL_DATA, NULL },
+	{ "pwt56", "descriptions", "PWT 56", COLL_DATA, NULL },
 	{ NULL, NULL, NULL, COLL_DATA, NULL }
     }; 
     const file_collection recognized_ps[] = {
-	{ "pwt56", "ps_descriptions", "Penn World Table", COLL_PS, NULL },
+	{ "pwt56", "ps_descriptions", "PWT 56", COLL_PS, NULL },
 	{ NULL, NULL, NULL, COLL_PS, NULL }
     }; 
     int i;
@@ -1840,6 +1840,10 @@ static GtkWidget *files_notebook (windata_t *vwin, int code)
     g_signal_connect(G_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
 		     G_CALLBACK(switch_file_page_callback),
 		     vwin);
+
+    if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook)) > 5) {
+	gtk_notebook_popup_enable(GTK_NOTEBOOK(notebook));
+    }
 
     gtk_widget_show(notebook);
 
