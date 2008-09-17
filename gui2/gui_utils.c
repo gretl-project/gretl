@@ -512,11 +512,15 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    return TRUE;
 	}	
     }
+
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-    else if (key->keyval == GDK_a) {
-	audio_render_window(vwin, AUDIO_TEXT);
-    } else if (key->keyval == GDK_x) {
-	stop_talking();
+    /* respond to 'a' and 'x', but not if Alt-modified */
+    else if (!(mods & GDK_MOD1_MASK)) {
+	if (key->keyval == GDK_a) {
+	    audio_render_window(vwin, AUDIO_TEXT);
+	} else if (key->keyval == GDK_x) {
+	    stop_talking();
+	}
     }
 #endif
 

@@ -27,11 +27,7 @@
 #ifndef OBS_BUTTON_H__
 #define OBS_BUTTON_H__
 
-#include <gdk/gdk.h>
-#include <gtk/gtkentry.h>
-#include <gtk/gtkadjustment.h>
-
-#define GTK_TYPE_OBS_BUTTON            (obs_button_get_type ())
+#define GTK_TYPE_OBS_BUTTON            (obs_button_get_type())
 
 #define OBS_BUTTON(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_OBS_BUTTON, ObsButton))
 #define OBS_BUTTON_CLASS(klass)        (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_OBS_BUTTON, ObsButtonClass))
@@ -44,40 +40,10 @@
 typedef struct _ObsButton ObsButton;
 typedef struct _ObsButtonClass ObsButtonClass;
 
-struct _ObsButton
-{
-    GtkEntry entry;
-    GtkAdjustment *adjustment;
-    const DATAINFO *pdinfo;
-    GdkWindow *panel;
-    guint32 timer;
-    gdouble timer_step;
-    guint in_child : 2;
-    guint click_child : 2; /* valid: GTK_ARROW_UP=0, GTK_ARROW_DOWN=1 or 2=NONE/BOTH */
-    guint button : 2;
-    guint need_timer : 1;
-    guint timer_calls : 3;
-};
-
-struct _ObsButtonClass
-{
-    GtkEntryClass parent_class;
-
-    gint (*input)  (ObsButton *obs_button,
-		    gdouble       *new_value);
-    gint (*output) (ObsButton *obs_button);
-    void (*value_changed) (ObsButton *obs_button);
-
-    /* Action signals for keybindings, do not connect to these */
-    void (*change_value) (ObsButton *obs_button,
-			  GtkScrollType scroll);
-};
-
 GType		obs_button_get_type	   (void) G_GNUC_CONST;
 GtkWidget*	obs_button_new		   (GtkAdjustment *adjustment, const DATAINFO *pdinfo);
 gdouble		obs_button_get_value       (ObsButton *obs_button);
-void		obs_button_set_value	   (ObsButton *obs_button, 
-					    gdouble value);
+void		obs_button_set_value	   (ObsButton *obs_button, gdouble value);
 void            obs_button_update          (ObsButton *obs_button);
 
 #endif /* OBS_BUTTON_H__ */

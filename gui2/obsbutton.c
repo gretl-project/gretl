@@ -24,8 +24,12 @@
 
 #include "gretl.h"
 
-#include "obsbutton.h"
+#include <gdk/gdk.h>
+#include <gtk/gtkentry.h>
+#include <gtk/gtkadjustment.h>
 #include <gtk/gtkmain.h>
+
+#include "obsbutton.h"
 
 #define MIN_OBS_BUTTON_WIDTH              30
 #define OBS_BUTTON_INITIAL_TIMER_DELAY    200
@@ -37,6 +41,35 @@
 enum {
   PROP_0,
   PROP_VALUE
+};
+
+struct _ObsButton
+{
+    GtkEntry entry;
+    GtkAdjustment *adjustment;
+    const DATAINFO *pdinfo;
+    GdkWindow *panel;
+    guint32 timer;
+    gdouble timer_step;
+    guint in_child : 2;
+    guint click_child : 2; /* valid: GTK_ARROW_UP=0, GTK_ARROW_DOWN=1 or 2=NONE/BOTH */
+    guint button : 2;
+    guint need_timer : 1;
+    guint timer_calls : 3;
+};
+
+struct _ObsButtonClass
+{
+    GtkEntryClass parent_class;
+
+    gint (*input)  (ObsButton *obs_button,
+		    gdouble       *new_value);
+    gint (*output) (ObsButton *obs_button);
+    void (*value_changed) (ObsButton *obs_button);
+
+    /* Action signals for keybindings, do not connect to these */
+    void (*change_value) (ObsButton *obs_button,
+			  GtkScrollType scroll);
 };
 
 static void obs_button_class_init     (ObsButtonClass *klass);
@@ -383,29 +416,29 @@ obs_button_size_request (GtkWidget      *widget,
 	gboolean interior_focus;
 	gint focus_width;
 
-	gtk_widget_style_get (widget,
-			      "interior-focus", &interior_focus,
-			      "focus-line-width", &focus_width,
-			      NULL);
+	gtk_widget_style_get(widget,
+			     "interior-focus", &interior_focus,
+			     "focus-line-width", &focus_width,
+			     NULL);
 
-	context = gtk_widget_get_pango_context (widget);
-	metrics = pango_context_get_metrics (context,
-					     widget->style->font_desc,
-					     pango_context_get_language (context));
+	context = gtk_widget_get_pango_context(widget);
+	metrics = pango_context_get_metrics(context,
+					    widget->style->font_desc,
+					    pango_context_get_language(context));
 
-	digit_width = pango_font_metrics_get_approximate_digit_width (metrics);
+	digit_width = pango_font_metrics_get_approximate_digit_width(metrics);
 	digit_width = PANGO_SCALE *
 	    ((digit_width + PANGO_SCALE - 1) / PANGO_SCALE);
 
-	pango_font_metrics_unref (metrics);
+	pango_font_metrics_unref(metrics);
       
 	/* Get max of MIN_OBS_BUTTON_WIDTH, size of upper, size of lower */
       
 	width = MIN_OBS_BUTTON_WIDTH;
 	max_string_len = OBSLEN;
 	string_len = strlen(obs_button->pdinfo->endobs) + 1;
-	w = PANGO_PIXELS (MIN (string_len, max_string_len) * digit_width);
-	width = MAX (width, w);
+	w = PANGO_PIXELS(MIN(string_len, max_string_len) * digit_width);
+	width = MAX(width, w);
       
 	requisition->width = width + /* INNER_BORDER */ 2 * 2;
 	if (!interior_focus)
@@ -425,11 +458,11 @@ obs_button_size_allocate (GtkWidget     *widget,
     gint arrow_size;
     gint panel_width;
 
-    g_return_if_fail (GTK_IS_OBS_BUTTON (widget));
-    g_return_if_fail (allocation != NULL);
+    g_return_if_fail(GTK_IS_OBS_BUTTON(widget));
+    g_return_if_fail(allocation != NULL);
 
-    spin = OBS_BUTTON (widget);
-    arrow_size = obs_button_get_arrow_size (spin);
+    spin = OBS_BUTTON(widget);
+    arrow_size = obs_button_get_arrow_size(spin);
     panel_width = arrow_size + 2 * widget->style->xthickness;
   
     widget->allocation = *allocation;
@@ -437,7 +470,7 @@ obs_button_size_allocate (GtkWidget     *widget,
     entry_allocation = *allocation;
     entry_allocation.width -= panel_width;
 
-    if (gtk_widget_get_direction (widget) == GTK_TEXT_DIR_RTL) {
+    if (gtk_widget_get_direction(widget) == GTK_TEXT_DIR_RTL) {
 	entry_allocation.x += panel_width;
 	panel_allocation.x = allocation->x;
     } else {
@@ -445,22 +478,22 @@ obs_button_size_allocate (GtkWidget     *widget,
     }
 
     panel_allocation.width = panel_width;
-    panel_allocation.height = MIN (widget->requisition.height, allocation->height);
+    panel_allocation.height = MIN(widget->requisition.height, allocation->height);
 
     panel_allocation.y = allocation->y + (allocation->height -
 					  panel_allocation.height) / 2;
 
-    GTK_WIDGET_CLASS (parent_class)->size_allocate (widget, &entry_allocation);
+    GTK_WIDGET_CLASS(parent_class)->size_allocate(widget, &entry_allocation);
 
-    if (GTK_WIDGET_REALIZED (widget)) {
-	gdk_window_move_resize (OBS_BUTTON (widget)->panel, 
-				panel_allocation.x,
-				panel_allocation.y,
-				panel_allocation.width,
-				panel_allocation.height); 
+    if (GTK_WIDGET_REALIZED(widget)) {
+	gdk_window_move_resize(OBS_BUTTON(widget)->panel, 
+			       panel_allocation.x,
+			       panel_allocation.y,
+			       panel_allocation.width,
+			       panel_allocation.height); 
     }
 
-    obs_button_redraw (spin);
+    obs_button_redraw(spin);
 }
 
 static gint
@@ -469,17 +502,17 @@ obs_button_expose (GtkWidget      *widget,
 {
     ObsButton *spin;
 
-    g_return_val_if_fail (GTK_IS_OBS_BUTTON (widget), FALSE);
-    g_return_val_if_fail (event != NULL, FALSE);
+    g_return_val_if_fail(GTK_IS_OBS_BUTTON(widget), FALSE);
+    g_return_val_if_fail(event != NULL, FALSE);
 
-    spin = OBS_BUTTON (widget);
+    spin = OBS_BUTTON(widget);
 
-    if (GTK_WIDGET_DRAWABLE (widget)) {
+    if (GTK_WIDGET_DRAWABLE(widget)) {
 	GtkShadowType shadow_type;
 	GdkRectangle rect;
 
 	if (event->window != spin->panel)
-	    GTK_WIDGET_CLASS (parent_class)->expose_event (widget, event);
+	    GTK_WIDGET_CLASS(parent_class)->expose_event(widget, event);
 
 	/* we redraw the panel even if it wasn't exposed. This is
 	 * because spin->panel is not a child window of widget->window,
@@ -488,23 +521,23 @@ obs_button_expose (GtkWidget      *widget,
 	rect.x = 0;
 	rect.y = 0;
 
-	gdk_drawable_get_size (spin->panel, &rect.width, &rect.height);
+	gdk_drawable_get_size(spin->panel, &rect.width, &rect.height);
 
-	shadow_type = obs_button_get_shadow_type (spin);
+	shadow_type = obs_button_get_shadow_type(spin);
       
-	gdk_window_begin_paint_rect (spin->panel, &rect);      
+	gdk_window_begin_paint_rect(spin->panel, &rect);      
 
 	if (shadow_type != GTK_SHADOW_NONE) {
-	    gtk_paint_box (widget->style, spin->panel,
-			   GTK_STATE_NORMAL, shadow_type,
-			   NULL, widget, "spinbutton",
-			   rect.x, rect.y, rect.width, rect.height);
+	    gtk_paint_box(widget->style, spin->panel,
+			  GTK_STATE_NORMAL, shadow_type,
+			  NULL, widget, "spinbutton",
+			  rect.x, rect.y, rect.width, rect.height);
 	}
 
-	obs_button_draw_arrow (spin, GTK_ARROW_UP);
-	obs_button_draw_arrow (spin, GTK_ARROW_DOWN);
+	obs_button_draw_arrow(spin, GTK_ARROW_UP);
+	obs_button_draw_arrow(spin, GTK_ARROW_DOWN);
 
-	gdk_window_end_paint (spin->panel);
+	gdk_window_end_paint(spin->panel);
     }
   
     return FALSE;
@@ -589,8 +622,7 @@ obs_button_draw_arrow (ObsButton *obs_button,
 	    if (obs_button->click_child == arrow_type) {
 		state_type = GTK_STATE_ACTIVE;
 		shadow_type = GTK_SHADOW_IN;
-	    }
-	    else {
+	    } else {
 		if (obs_button->in_child == arrow_type &&
 		    obs_button->click_child == NO_ARROW) {
 		    state_type = GTK_STATE_PRELIGHT;
@@ -647,13 +679,13 @@ static gint
 obs_button_enter_notify (GtkWidget        *widget,
 			 GdkEventCrossing *event)
 {
-    ObsButton *spin = OBS_BUTTON (widget);
+    ObsButton *spin = OBS_BUTTON(widget);
 
     if (event->window == spin->panel) {
 	gint x;
 	gint y;
 
-	gdk_window_get_pointer (spin->panel, &x, &y, NULL);
+	gdk_window_get_pointer(spin->panel, &x, &y, NULL);
 
 	if (y <= widget->requisition.height / 2)
 	    spin->in_child = GTK_ARROW_UP;
@@ -670,7 +702,7 @@ static gint
 obs_button_leave_notify (GtkWidget        *widget,
 			 GdkEventCrossing *event)
 {
-    ObsButton *spin = OBS_BUTTON (widget);
+    ObsButton *spin = OBS_BUTTON(widget);
 
     spin->in_child = NO_ARROW;
     obs_button_redraw (spin);
@@ -682,21 +714,21 @@ static gint
 obs_button_focus_out (GtkWidget     *widget,
 		      GdkEventFocus *event)
 {
-    if (GTK_ENTRY (widget)->editable)
-	obs_button_update (OBS_BUTTON (widget));
+    if (GTK_ENTRY(widget)->editable)
+	obs_button_update(OBS_BUTTON(widget));
 
-    return GTK_WIDGET_CLASS (parent_class)->focus_out_event (widget, event);
+    return GTK_WIDGET_CLASS(parent_class)->focus_out_event(widget, event);
 }
 
 static void
 obs_button_grab_notify (GtkWidget *widget,
 			gboolean   was_grabbed)
 {
-    ObsButton *spin = OBS_BUTTON (widget);
+    ObsButton *spin = OBS_BUTTON(widget);
 
     if (!was_grabbed) {
-	obs_button_stop_spinning (spin);
-	obs_button_redraw (spin);
+	obs_button_stop_spinning(spin);
+	obs_button_redraw(spin);
     }
 }
 
@@ -704,11 +736,11 @@ static void
 obs_button_state_changed (GtkWidget    *widget,
 			  GtkStateType  previous_state)
 {
-    ObsButton *spin = OBS_BUTTON (widget);
+    ObsButton *spin = OBS_BUTTON(widget);
 
-    if (!GTK_WIDGET_IS_SENSITIVE (widget)) {
-	obs_button_stop_spinning (spin);    
-	obs_button_redraw (spin);
+    if (!GTK_WIDGET_IS_SENSITIVE(widget)) {
+	obs_button_stop_spinning(spin);    
+	obs_button_redraw(spin);
     }
 }
 
@@ -919,13 +951,13 @@ static void
 obs_button_value_changed (GtkAdjustment *adjustment,
 			  ObsButton *obs_button)
 {
-    g_return_if_fail (GTK_IS_ADJUSTMENT (adjustment));
+    g_return_if_fail(GTK_IS_ADJUSTMENT(adjustment));
 
-    obs_button_default_output (obs_button);
+    obs_button_default_output(obs_button);
 
-    obs_button_redraw (obs_button);
+    obs_button_redraw(obs_button);
   
-    g_object_notify (G_OBJECT (obs_button), "value");
+    g_object_notify(G_OBJECT(obs_button), "value");
 }
 
 static void
@@ -990,7 +1022,7 @@ static gint
 obs_button_key_release (GtkWidget   *widget,
 			GdkEventKey *event)
 {
-    ObsButton *spin = OBS_BUTTON (widget);
+    ObsButton *spin = OBS_BUTTON(widget);
 
     /* We only get a release at the end of a key repeat run, so reset the timer_step */
     spin->timer_step = spin->adjustment->step_increment;
@@ -1003,10 +1035,10 @@ static void
 obs_button_activate (GtkEntry *entry)
 {
     if (entry->editable)
-	obs_button_update (OBS_BUTTON (entry));
+	obs_button_update(OBS_BUTTON(entry));
 
     /* Chain up so that entry->activates_default is honored */
-    parent_class->activate (entry);
+    parent_class->activate(entry);
 }
 
 static void
@@ -1015,10 +1047,10 @@ obs_button_insert_text (GtkEditable *editable,
 			gint         new_text_length,
 			gint        *position)
 {
-    GtkEditableClass *parent_editable_iface = g_type_interface_peek (parent_class, GTK_TYPE_EDITABLE);
+    GtkEditableClass *parent_editable_iface = g_type_interface_peek(parent_class, GTK_TYPE_EDITABLE);
  
-    parent_editable_iface->insert_text (editable, new_text,
-					new_text_length, position);
+    parent_editable_iface->insert_text(editable, new_text,
+				       new_text_length, position);
 }
 
 static void
@@ -1033,10 +1065,9 @@ obs_button_real_spin (ObsButton *obs_button,
     new_value = adj->value + increment;
 
     if (increment > 0) {
-	new_value = MIN (new_value, adj->upper);
-    }
-    else if (increment < 0) {
-	new_value = MAX (new_value, adj->lower);
+	new_value = MIN(new_value, adj->upper);
+    } else if (increment < 0) {
+	new_value = MAX(new_value, adj->lower);
     }
 
     if (fabs (new_value - adj->value) > EPSILON)
@@ -1069,8 +1100,8 @@ obs_button_default_output (ObsButton *obs_button)
 
     ntodate_full(buf, ival, obs_button->pdinfo);
 
-    if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (obs_button))))
-	gtk_entry_set_text (GTK_ENTRY (obs_button), buf);
+    if (strcmp(buf, gtk_entry_get_text(GTK_ENTRY(obs_button))))
+	gtk_entry_set_text(GTK_ENTRY(obs_button), buf);
 
     data = g_object_get_data(G_OBJECT(obs_button), "rset");
     if (data != NULL) {
@@ -1110,7 +1141,7 @@ obs_button_new (GtkAdjustment *adjustment, const DATAINFO *pdinfo)
 static void
 adjustment_changed_cb (GtkAdjustment *adjustment, gpointer data)
 {
-    ObsButton *obs_button = OBS_BUTTON (data);
+    ObsButton *obs_button = OBS_BUTTON(data);
 
     obs_button->timer_step = obs_button->adjustment->step_increment;
     gtk_widget_queue_resize(GTK_WIDGET(obs_button));
@@ -1212,7 +1243,7 @@ obs_button_get_shadow_type (ObsButton *spin_button)
 {
     GtkShadowType rc_shadow_type;
 
-    gtk_widget_style_get (GTK_WIDGET (spin_button), "shadow_type", &rc_shadow_type, NULL);
+    gtk_widget_style_get(GTK_WIDGET(spin_button), "shadow_type", &rc_shadow_type, NULL);
 
     return rc_shadow_type;
 }
@@ -1235,7 +1266,7 @@ obs_button_update (ObsButton *obs_button)
     return_val = obs_button_default_input(obs_button, &val);
     error = (return_val == GTK_INPUT_ERROR);
     
-    obs_button_redraw (obs_button);
+    obs_button_redraw(obs_button);
 
     if (val < obs_button->adjustment->lower)
 	val = obs_button->adjustment->lower;

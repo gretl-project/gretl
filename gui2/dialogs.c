@@ -1912,6 +1912,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
     gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     rset->adj1 = gtk_adjustment_new(dinfo.t1, 0, dinfo.n - 1, 1, 1, 0);
     rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &dinfo);
+    gtk_entry_set_activates_default(GTK_ENTRY(rset->startspin), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -1921,6 +1922,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
     gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     rset->adj2 = gtk_adjustment_new(dinfo.t2, 0, dinfo.n - 1, 1, 1, 0);
     rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &dinfo);
+    gtk_entry_set_activates_default(GTK_ENTRY(rset->endspin), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -1991,6 +1993,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
     }
     rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, smin, smaj, 0);
     rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), datainfo);
+    gtk_entry_set_activates_default(GTK_ENTRY(rset->startspin), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -2003,6 +2006,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	}
 	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, smin, smaj, 0);
 	rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), datainfo);
+	gtk_entry_set_activates_default(GTK_ENTRY(rset->endspin), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -2040,7 +2044,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     struct range_setting *rset = NULL;
     GList *dumlist = NULL;
     int u, thisdum = 0;
-    GtkWidget *tempwid, *hbox;
+    GtkWidget *w, *hbox;
 
     u = sample_range_code(action);
 
@@ -2062,9 +2066,9 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     if (u == SMPLDUM) {
 	GList *dlist;
 
-	tempwid = gtk_label_new(_("Name of dummy variable to use:"));
+	w = gtk_label_new(_("Name of dummy variable to use:"));
 	hbox = gtk_hbox_new(TRUE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
 
@@ -2093,12 +2097,13 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 				 datainfo->n - 1);
 
 	/* spinner for number of obs */
-	tempwid = gtk_label_new(labtxt);
-	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
+	w = gtk_label_new(labtxt);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	adj = gtk_adjustment_new(default_randsize(), 
 				 1, datainfo->n - 1,
 				 1, 1, 0);
 	rset->startspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	gtk_entry_set_activates_default(GTK_ENTRY(rset->startspin), TRUE);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->startspin, FALSE, FALSE, 5);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
@@ -2139,10 +2144,10 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, NULL);
 
     /* "OK" button */
-    tempwid = ok_button(GTK_DIALOG(rset->dlg)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
+    w = ok_button(GTK_DIALOG(rset->dlg)->action_area);
+    g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(set_sample_from_dialog), rset);
-    gtk_widget_grab_default(tempwid);
+    gtk_widget_grab_default(w);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
@@ -3357,6 +3362,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, step, step, 0);
     button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_entry_set_activates_default(GTK_ENTRY(button), TRUE);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
@@ -3401,11 +3407,6 @@ static void set_checks_opt (GtkWidget *w, int *active)
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "optnum"));
 
     active[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
-}
-
-static void trigger_ok (GtkWidget *w, GtkWidget *b)
-{
-    gtk_widget_activate(b);
 }
 
 /* general purpose dialog offering check-button options and/or
@@ -3499,10 +3500,6 @@ int checks_dialog (const char *title, const char *blurb,
 		     dialog);
     gtk_widget_grab_default(okb);
     gtk_widget_show(okb);
-    if (spin != NULL) {
-	g_signal_connect(G_OBJECT(spin), "activate",
-			 G_CALLBACK(trigger_ok), okb);
-    }
 
     /* Create a "Help" button if wanted */
     if (hcode && hcode != FREQ) {

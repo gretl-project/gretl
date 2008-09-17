@@ -694,10 +694,12 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-    if (key->keyval == GDK_a) {
-	audio_render_window(vwin, AUDIO_LISTBOX);
-    } else if (key->keyval == GDK_x && !(mods & GDK_MOD1_MASK)) {
-	stop_talking();
+    if (!(mods & GDK_MOD1_MASK)) {
+	if (key->keyval == GDK_a) {
+	    audio_render_window(vwin, AUDIO_LISTBOX);
+	} else if (key->keyval == GDK_x) {
+	    stop_talking();
+	}
     }
 #endif
 

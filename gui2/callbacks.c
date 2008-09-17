@@ -713,9 +713,9 @@ void newdata_callback (void)
 	return;
     }
 
-    resp = spin_dialog (_("gretl: create data set"), NULL, &n, 
-			_("Number of observations:"), 
-			2, 100000, 0);
+    resp = spin_dialog(_("gretl: create data set"), NULL, &n, 
+		       _("Number of observations:"), 
+		       2, 100000, 0);
 
     if (resp < 0) {
 	/* canceled */
