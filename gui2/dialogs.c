@@ -1600,10 +1600,9 @@ void rand_seed_dialog (void)
 		     G_CALLBACK(record_seed), &dseed);
     
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show_all(hbox);
-
-    /* FIXME activates default */
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 5);
 
@@ -2451,6 +2450,7 @@ int add_obs_dialog (const char *blurb, int addmin)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
     ainfo.spin = gtk_spin_button_new_with_range(addmin, addmax, step);
+    gtk_entry_set_activates_default(GTK_ENTRY(ainfo.spin), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), ainfo.spin, TRUE, TRUE, 5);
     
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ainfo.dlg)->vbox), 
@@ -3302,6 +3302,7 @@ int density_dialog (int vnum, double *bw)
 
     tempwid = gtk_spin_button_new_with_range(0.25, 4.0, .05);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tempwid), 1.0);
+    gtk_entry_set_activates_default(GTK_ENTRY(tempwid), TRUE);
     g_signal_connect(G_OBJECT(tempwid), "value-changed", 
 		     G_CALLBACK(bw_set), 
 		     bw); 
@@ -3692,6 +3693,7 @@ int freq_dialog (const char *title, const char *blurb,
 	}
 	
 	finfo.spin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, dig);
+	gtk_entry_set_activates_default(GTK_ENTRY(finfo.spin[i]), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), finfo.spin[i], 1, 2, i, i+1);
 	g_object_set_data(G_OBJECT(finfo.spin[i]), "snum",
 			  GINT_TO_POINTER(i));
