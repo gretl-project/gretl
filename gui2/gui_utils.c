@@ -413,8 +413,8 @@ void stop_talking (void)
 
 void audio_render_window (windata_t *vwin, int key)
 {
-    void *handle;
     int (*read_window_text) (windata_t *, const DATAINFO *, int (*)());
+    void *handle;
 
     if (vwin == NULL) {
 	stop_talking();

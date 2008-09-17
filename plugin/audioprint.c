@@ -12,7 +12,7 @@ static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
 
-    pprintf(prn, "Variable %d, %s.\n", pmod->list[i+2], varname);
+    pprintf(prn, "Variable %s.\n", varname);
 
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
@@ -34,7 +34,8 @@ static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	tval = pmod->coeff[i] / pmod->sderr[i];
 	pval = coeff_pval(pmod->ci, tval, pmod->dfd);
 	pprintf(prn, "P-value %.3g.\n", pval);
-    } else { /* zero standard error */
+    } else { 
+	/* zero standard error */
 	pputs(prn, "Standard error is zero.\n");
     }
 
