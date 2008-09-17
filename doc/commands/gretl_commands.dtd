@@ -49,7 +49,7 @@
 <!ELEMENT demos        (demo)+>
 <!ELEMENT altforms     (altform)+>
 <!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
-<!ELEMENT gui-access   (menu-path, other-access?)>
+<!ELEMENT gui-access   (menu-path*, other-access?)>
 
 <!ELEMENT argpunct (#PCDATA)>
 <!ELEMENT argument (#PCDATA)>
@@ -66,13 +66,14 @@
 
 <!ELEMENT altform (#PCDATA | repl | lit)*>
 
-<!ELEMENT option   (flag?, effect?, note?, optparm?)>
+<!ELEMENT option   (flag?, optparm?, effect?, note?)>
 
 <!ELEMENT example  (#PCDATA)>
 <!ELEMENT demo     (#PCDATA)>
 <!ELEMENT flag     (#PCDATA)>
 <!ELEMENT effect   (#PCDATA)>
 <!ELEMENT optparm  (#PCDATA)>
+<!ELEMENT note     (#PCDATA)>
 
 <!ELEMENT menu-path    (#PCDATA)>
 <!ELEMENT other-access (#PCDATA)>

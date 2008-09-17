@@ -382,6 +382,12 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="emphasis">
+  <xsl:text>&lt;@itl="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="cmd">
   <xsl:text>&lt;@lit="</xsl:text>
   <xsl:apply-templates/>

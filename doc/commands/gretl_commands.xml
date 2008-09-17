@@ -6088,32 +6088,33 @@
 	data set contains variables that represent the panel structure.
       </para>
       <para>
-	Stacked time series: Let there be <repl>N</repl> cross-sectional
-	units in the data set, and let <repl>T</repl> = the number of
-	time-series observations per unit.  By selecting this option you
-	are telling gretl that the data set is currently composed of
+	<emphasis>Stacked time series</emphasis>: Let there be <repl>N</repl>
+	cross-sectional units in the data set, and let <repl>T</repl> = the
+	number of time-series observations per unit.  By selecting this option
+	you are telling gretl that the data set is currently composed of
 	<repl>N</repl> consecutive blocks of <repl>T</repl> time-series
-	observations, one for each cross-sectional unit.  The next step
-	will be to specify the value of <repl>N</repl>.
+	observations, one for each cross-sectional unit.  The next step will
+	be to specify the value of <repl>N</repl>.
       </para>
       <para>
-	Stacked cross sections: You are telling gretl that the data set is
-	currently composed of <repl>T</repl> consecutive blocks of N
-	cross-sectional observations, one for each time period.  The next
-	step, again, will be to specify the value of <repl>N</repl>.
+	<emphasis>Stacked cross sections</emphasis>: You are telling gretl
+	that the data set is currently composed of <repl>T</repl> consecutive
+	blocks of <repl>N</repl> cross-sectional observations, one for each
+	time period. The next step, again, will be to specify the value of
+	<repl>N</repl>.
       </para>
       <para>
 	If the total number of observations in the current dataset is
 	prime, the above options are not available.
       </para>
       <para>
-	Use index variables: You are saying that the data set is currently
-	organized any old way (it doesn't matter how), but that it
-	contains two variables that index the cross-sectional units and
-	the time periods respectively.  The next step will be to select
+	<emphasis>Use index variables</emphasis>: You are saying that the data
+	set is currently organized any old way (it doesn't matter how), but
+	that it contains two variables that index the cross-sectional units
+	and the time periods respectively.  The next step will be to select
 	those two variables.  Panel index variables must have nothing but
-	non-negative integer values, with no missing values.  If there are
-	no such variables in the dataset this option is not available.
+	non-negative integer values, with no missing values.  If there are no
+	such variables in the dataset this option is not available.
       </para>
     </description>
 
@@ -6724,10 +6725,10 @@
 	<example>quantreg 0.5 y 0 xlist --intervals</example>
 	<example>quantreg 0.5 y 0 xlist --intervals=.95</example>
 	<example>quantreg tauvec y 0 xlist --robust</example>
-      </examples>
 	<demos>
 	  <demo>mrw_qr.inp</demo>
 	</demos>
+      </examples>
     </usage>
 
     <description context="gui">
