@@ -43,6 +43,8 @@
 #define time_series(p) (p->structure == TIME_SERIES || \
                         p->structure == SPECIAL_TIME_SERIES)
 
+/* identifiers for steps in the process of setting
+   dataset structure */
 enum {
     DW_SET_TYPE = 0,
     DW_TS_FREQUENCY,
@@ -59,6 +61,7 @@ enum {
     DW_BACK    = 1
 };
 
+/* flags that may be set on the dataset options structure */
 enum {
     DW_CREATE     = 1 << 0,
     DW_DROPMISS   = 1 << 1,
@@ -74,7 +77,7 @@ enum {
 typedef struct dw_opts_ dw_opts;
 
 struct dw_opts_ {
-    int flags;          /* state bitflags */
+    int flags;          /* state bit-flags */
     int n_radios;       /* number of radio-button options */
     int deflt;          /* default setting for current radio variable */ 
     int plf;            /* panel: least factor > 1 of # of observations */
@@ -244,6 +247,8 @@ static void maybe_unrestrict_dataset (void)
     }
 }
 
+/* respond to the "Apply" button in the wizard */
+
 static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts)
 {
     char setline[32];
@@ -407,18 +412,21 @@ static const char *ts_frequency_string (int pd)
     return N_("Non-standard frequency");
 }
 
-static int radio_default (DATAINFO *dwinfo, int code)
+/* For a step that involves a radio-button choice, figure
+   out the default value */
+
+static int dwiz_radio_default (DATAINFO *dwinfo, int step)
 {
     int deflt = 1;
 
 #if DWDEBUG
-    fprintf(stderr, "radio_default: code=%d, dwinfo->pd=%d, dwinfo->structure=%d\n", 
-	    code, dwinfo->pd, dwinfo->structure);
+    fprintf(stderr, "radio_default: step=%d, dwinfo->pd=%d, dwinfo->structure=%d\n", 
+	    step, dwinfo->pd, dwinfo->structure);
 #endif
 
-    if (code == DW_SET_TYPE) {
+    if (step == DW_SET_TYPE) {
 	deflt = dwinfo->structure;
-    } else if (code == DW_TS_FREQUENCY) {
+    } else if (step == DW_TS_FREQUENCY) {
 	if (dwinfo->structure == SPECIAL_TIME_SERIES) {
 	    deflt = PD_SPECIAL;
 	} else if (dwinfo->pd == 4 || dwinfo->pd == 5 || 
@@ -427,9 +435,9 @@ static int radio_default (DATAINFO *dwinfo, int code)
 		   dwinfo->pd == 52) {
 	    deflt = dwinfo->pd;
 	} 
-    } else if (code == DW_WEEKLY_SELECT) {
+    } else if (step == DW_WEEKLY_SELECT) {
 	deflt = dwinfo->v;
-    } else if (code == DW_PANEL_MODE) { 
+    } else if (step == DW_PANEL_MODE) { 
 	deflt = dwinfo->structure;
     }
 
@@ -439,6 +447,10 @@ static int radio_default (DATAINFO *dwinfo, int code)
 
     return deflt;
 }
+
+/* For step @step of the process, figure out the value that
+   should be set by clicking radio button i.
+*/
 
 static int dwiz_i_to_setval (DATAINFO *dwinfo, int step, int i)
 {
@@ -459,13 +471,17 @@ static int dwiz_i_to_setval (DATAINFO *dwinfo, int step, int i)
     return setval;
 }
 
-static const char *dwiz_radio_strings (int wizcode, int i)
+/* For step @step of the process, figure out the label that
+   should be shown alongside radio button i.
+*/
+
+static const char *dwiz_radio_strings (int step, int i)
 {
-    if (wizcode == DW_SET_TYPE) {
+    if (step == DW_SET_TYPE) {
 	if (i == 0) return N_("Cross-sectional");
 	if (i == 1) return N_("Time series");
 	if (i == 2) return N_("Panel");
-    } else if (wizcode == DW_WEEKLY_SELECT) {
+    } else if (step == DW_WEEKLY_SELECT) {
 	if (i == 0) return N_("Monday");
 	if (i == 1) return N_("Tuesday");
 	if (i == 2) return N_("Wednesday");
@@ -474,9 +490,9 @@ static const char *dwiz_radio_strings (int wizcode, int i)
 	if (i == 5) return N_("Saturday");
 	if (i == 6) return N_("Sunday");
 	if (i == 7) return N_("None (don't use dates)");
-    } else if (wizcode == DW_TS_FREQUENCY) {
+    } else if (step == DW_TS_FREQUENCY) {
 	return ts_info[i].label;
-    } else if (wizcode == DW_PANEL_MODE) {
+    } else if (step == DW_PANEL_MODE) {
 	return pan_info[i].label;
     }
 
@@ -741,6 +757,11 @@ static int translate_panel_vars (dw_opts *opts, int *uv, int *tv)
     return err;
 }
 
+/* Given two user-selected variables that supposedly represent the
+   panel unit and period respectively, check that the selection makes
+   sense. 
+*/
+
 static int process_panel_vars (DATAINFO *dwinfo, dw_opts *opts)
 {
     int n = datainfo->n;
@@ -759,6 +780,7 @@ static int process_panel_vars (DATAINFO *dwinfo, dw_opts *opts)
     }
 
     if (uv == tv) {
+	/* "can't happen" */
 	errbox(_("The unit and time index variables must be distinct"));
 	return E_DATA;
     }
@@ -777,6 +799,21 @@ static int process_panel_vars (DATAINFO *dwinfo, dw_opts *opts)
 
 	qsort(tid, n, sizeof *tid, gretl_compare_doubles);
 	nperiods = count_distinct_values(tid, n);
+
+	/* heuristic: if a variable represents either the panel
+	   unit or period, it must have at least two distinct
+	   values, and must have fewer values than the total
+	   number of observations.  Further, the product of
+	   the number of distinct values for the unit and time
+	   variables must be at least equal to the number of
+	   observations, otherwise there will be duplicated
+	   rows (i.e. more than one row claiming to represent
+	   unit i, period t, for some i, t).
+
+	   Note that the product (nunits * nperiods) may be
+	   _greater_ than total n: this may mean that we have
+	   some implicit missing observations.
+	*/
 
 	if (nunits == 1 || nperiods == 1 || 
 	    nunits == n || nperiods == n ||
@@ -798,7 +835,8 @@ static int process_panel_vars (DATAINFO *dwinfo, dw_opts *opts)
 
 /* Try to assemble a list of at least two potential panel index
    variables.  These variables must have nothing but non-negative
-   integer values.
+   integer values, and they must have at least two distinct values
+   (i.e. cannot be constants).
 */
 
 static int panelvars_list_ok (dw_opts *opts)
@@ -822,7 +860,10 @@ static int panelvars_list_ok (dw_opts *opts)
 	    }
 	}
 	if (ok) {
-	   vlist = g_list_append(vlist, datainfo->varname[i]); 
+	    ok = !gretl_isconst(datainfo->t1, datainfo->t2, Z[i]);
+	}
+	if (ok) {
+	    vlist = g_list_append(vlist, datainfo->varname[i]); 
 	}
     }
 
@@ -843,6 +884,13 @@ static int panelvars_list_ok (dw_opts *opts)
 
     return !err;
 }
+
+/* Check whether or not it's feasible to offer a panel interpretation
+   of the current dataset.  This is impossible if the total number of
+   observations is prime (cannot be factored as n * T) and the dataset
+   contains no variables that might plausibly represent panel unit and
+   period respectively.
+*/
 
 static int panel_possible (dw_opts *opts)
 {
@@ -867,6 +915,11 @@ static int panel_possible (dw_opts *opts)
     return ok;
 }
 
+/* callback from combo: update the panel unit or time variable,
+   building in a guard against selecting the same variable in
+   both roles
+*/
+
 static gboolean update_panel_var (GtkWidget *box, dw_opts *opts)
 {
     gint v = gtk_combo_box_get_active(GTK_COMBO_BOX(box));
@@ -883,7 +936,7 @@ static gboolean update_panel_var (GtkWidget *box, dw_opts *opts)
 	gint v2 = gtk_combo_box_get_active(GTK_COMBO_BOX(other));
 
 	if (v == v2) {
-	    /* remove the conflict */
+	    /* we have a conflict: fix it */
 	    if (v > 0) {
 		gtk_combo_box_set_active(GTK_COMBO_BOX(other), 0);
 	    } else {
@@ -900,8 +953,8 @@ static gboolean update_panel_var (GtkWidget *box, dw_opts *opts)
     return FALSE;
 }
 
-/* Try to find the most likely candidates for the unit (uidx) and time
-   (tidx) index variables, given a list of variables that might
+/* Try to find the most likely candidates for the unit (uid) and time
+   (tid) index variables, given a list of variables that might
    perhaps be acceptable.
 */
 
@@ -1000,6 +1053,7 @@ static GtkWidget *dwiz_combo (GList *vlist, dw_opts *opts)
 			 G_CALLBACK(update_panel_var), opts);
     }
 
+    /* cross-connect the selectors */
     g_object_set_data(G_OBJECT(combo[0]), "other", combo[1]);
     g_object_set_data(G_OBJECT(combo[1]), "other", combo[0]);
 
@@ -1078,6 +1132,12 @@ static void dwiz_startobs_spinner (DATAINFO *dwinfo,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox);
 }
+
+/* Panel: callback for setting the number of cross-sectional units, n,
+   and the number of time periods, T, via spin buttons.  We allow the
+   user to vary either n or T, subject to the constraint that n * T
+   equals the total number of observations.
+*/
 
 static void dw_set_panel_dims (GtkSpinButton *w, DATAINFO *dwinfo)
 {
@@ -1236,6 +1296,12 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, int *flags)
     }
 }
 
+/* Calculate the options set-up for a given step of the wizard
+   process: How many radio-button options should we show (if any)?
+   What variable are we setting?  What should be the default value for
+   this variable?
+*/
+
 static void set_up_dw_opts (dw_opts *opts, int step,
 			    DATAINFO *dwinfo)
 {
@@ -1244,7 +1310,7 @@ static void set_up_dw_opts (dw_opts *opts, int step,
     opts->spinner = NULL;
     opts->n_radios = 0;
 
-    opts->deflt = radio_default(dwinfo, step);
+    opts->deflt = dwiz_radio_default(dwinfo, step);
 
     if (step == DW_SET_TYPE) {
 	if (opts->flags & DW_NO_PANEL) {
@@ -1572,12 +1638,16 @@ static void dwiz_finalize (GtkWidget *dlg, DATAINFO *dwinfo,
     gtk_widget_destroy(dlg);
 }
 
+/* callback for the Cancel button */
+
 static void dwiz_cancel (GtkWidget *b, DATAINFO *dwinfo)
 {
     GtkWidget *dlg = g_object_get_data(G_OBJECT(b), "dlg");
 
     dwiz_finalize(dlg, dwinfo, 1);
 }
+
+/* callback for the Apply button */
 
 static void dwiz_apply (GtkWidget *b, DATAINFO *dwinfo)
 {
@@ -1738,7 +1808,7 @@ static dw_opts *dw_opts_new (int create)
 }
 
 /* The main driver for the "wizard".  If "create" is non-zero that
-   means we're setting the structure for a newly created dataset;
+   means we're setting the structure for a newly created dataset,
    otherwise we're modifying the structure of an existing dataset.
 */
 
@@ -1821,10 +1891,6 @@ static void data_structure_wizard (int create)
 /* Take the user through a series of dialogs to define the structure
    of the data set, either when creating a new data set or by way of
    restructuring an existing data set.
-
-   If the wizard is being used to configure a new blank dataset,
-   making it a panel is an option but there is no choice of "panel
-   modes": it has to be stacked time series
 */
 
 void data_structure_dialog (void)
