@@ -6044,23 +6044,31 @@
         rappresentano la struttura panel.
       </para>
       <para>
-        Pila di serie storiche: date N unità cross section nel dataset e T
-        osservazioni temporali per ogni unità, selezionando questa opzione si
-        dice a gretl che il dataset attuale è composto da N blocchi consecutivi
-        di T osservazioni ciascuno. Il passo successivo consiste nello
-        specificare il valore di N.
+        <emphasis>Pila di serie storiche</emphasis>: date <repl>N </repl> unità
+        cross section nel dataset e <repl>T</repl> osservazioni temporali per
+        ogni unità, selezionando questa opzione si indica a gretl che il dataset
+        attuale è composto da <repl>N</repl> blocchi consecutivi di
+        <repl>T</repl> osservazioni ciascuno. Il passo successivo consiste nello
+        specificare il valore di <repl>N</repl>.
       </para>
       <para>
-        Pila di dati cross section: si indica a gretl che il dataset è composto
-        da T blocchi consecutivi di N osservazioni cross section ciascuno.
-        observations, one for each time period.  Il passo successivo consiste
-        nello specificare il valore di N.
+        <emphasis>Pila di dati cross section</emphasis>: si indica a gretl che
+        il dataset è composto da <repl>T</repl> blocchi consecutivi di
+        <repl>N</repl> osservazioni cross section ciascuno, uno per per ogni
+        periodo. Il passo successivo consiste nello specificare il
+        valore di <repl>N</repl>.
       </para>
       <para>
-	Usa variabili indice: si indica che il dataset è organizzato in modo
+        Se il numero di osservazioni del dataset è un numero primo, le due
+        opzioni precedenti non sono disponibili.
+      </para>
+      <para>
+	<emphasis>Usa variabili indice</emphasis>: si indica che il dataset è organizzato in modo
         qualsiasi, ma contiene due variabili che indicizzano le unità cross
         section e quelle temporali. Il passo successivo consiste nell'indicare
-        queste due variabili, che devono essere strettamente positive.
+        queste due variabili. Le variabili indice per i panel possono assumere solo valori
+        interi e non negativi e non devono avere valori mancanti. Se il dataset
+        non contiene variabili di questo tipo, questa opzione non è disponibile.
        </para>
      </description>
  
@@ -6660,10 +6668,10 @@
 	<example>quantreg 0.5 y 0 xlist --intervals</example>
 	<example>quantreg 0.5 y 0 xlist --intervals=.95</example>
 	<example>quantreg tauvec y 0 xlist --robust</example>
-      </examples>
 	<demos>
 	  <demo>mrw_qr.inp</demo>
 	</demos>
+      </examples>
     </usage>
 
     <description context="gui">
