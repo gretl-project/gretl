@@ -1,6 +1,6 @@
 version 1.7.9, in progress
 - Revamp the data structure "wizard"
-- Fix bug 2102478
+- Fix bugs 2102478, 2116172
 - Periodogram graph: fix bug for case where the locale
   decimal separator is not '.'
 
