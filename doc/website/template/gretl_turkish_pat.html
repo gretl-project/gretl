@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+<META name="description" 
+      content="gretl anasayfas??, the Gnu Regression, Econometrics 
+               and Time-series Library">
+<META name="keywords" 
+      content="ekonometri, ??zg??r yaz??l??m, GNU, istatistik, istatistiksel ????z??mleme,
+               linux, win32, a????k kaynak, ??cretsiz ekonometri yaz??l??m??">
+<META name="generator" content="GNU Emacs">
+<meta http-equiv="Content-Type" content="text/html; charset=utf8">
+</head>
+<body>
+
+<table>
+  <tr>
+    <td width="30%" valign="top">
+	<table border=0 cellspacing=8 cellpadding=0>
+	  <tr><td><img alt="gretl image" src="./images/gretl-image.png"></td></tr>
+	  <tr><td>&nbsp;</td></tr>
+	  <tr><td class="menu-item"><a href="./gretl_espanol.html">??spanyolca i??in</a></td></tr>
+	  <tr><td class="menu-item"><a href="./gretl_italiano.html">??talyanca i??in</a></td></tr>
+	  <tr><td class="menu-item"><a href="./gretl_portugues.html">Portekizce i??in</a></td></tr>
+	  <tr><td class="menu-item"><a href="http://www.kufel.torun.pl/">Leh??e gretl sitesi</a></td></tr>
+	  <tr><td class="menu-item"><a href="#dl">??ndirin</a></td></tr>
+	  <tr><td class="menu-item"><a href="./win32">Windows s??r??m??</a></td></tr>
+	  <tr><td class="menu-item"><a href="./osx.html">Mac OS X s??r??m??</a></td></tr>
+	  <tr><td class="menu-item"><a href="./gretl_data.html">gretl i??in veriler</a></td></tr>
+	  <tr><td class="menu-item"><a href="#man">gretl rehberi</a></td></tr>
+	  <tr><td class="menu-item"><a href="#use">gretl kullan??c??s?? m??s??n??z?</a></td></tr>
+	  <tr><td class="menu-item"><a href="#contrib">gretl'a katk??da bulunma</a></td></tr>
+	  <tr><td class="menu-item"><a href="./tour/index.html">gretl toplulu??u</a></td></tr>
+	  <tr><td class="menu-item"><a href="./x12a/x12a.html">gretl ve X-12-ARIMA</a></td></tr>
+	  <tr><td class="menu-item"><a href="./tramo/tramo-seats.html">gretl ve TRAMO/SEATS</a></td></tr>
+	  <tr><td class="menu-item"><a href="./gretl_and_R.html">gretl ve GNU R</a></td></tr>
+	  <tr><td class="menu-item"><a href="./shots/shots.html">Ba??ka ekran g??r??nt??leri</a></td></tr>
+	  <tr><td class="menu-item"><a href="./nist/index.html">Say??sal kesinlik</a></td></tr>
+	  <tr><td class="menu-item"><a href="http://sourceforge.net/projects/gretl/">SourceForge proje sayfas??</a></td></tr>
+	  <tr><td class="menu-item"><a href="./ChangeLog.html">S??r??m notlar??</a></td></tr>
+	  <tr><td class="menu-item"><a href="#cvs">CVS kaynak kodlar??</a></td></tr>
+	  <tr><td class="menu-item"><a href="./API/">Libgretl API belgeleri</a></td></tr>
+	  <tr><td class="menu-item"><a href="./lists.html">Eposta listeleri</a></td></tr>
+	  <tr><td class="menu-item"><a href="http://gretlwiki.econ.univpm.it/wiki/index.php">gretl vikisi</a></td></tr>
+	  <tr><td class="menu-item"><a href="#ack">Te??ekk??rler</a></td></tr>
+	  <tr><td>&nbsp;</td></tr>
+	  <tr><td class="menu-item"><i>En yeni s??r??m: 
+<a href="http://sourceforge.net/project/showfiles.php?group_id=36234&amp;package_id=28605">VERSION</a><br>SHORTDATE</i></td></tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+  <td><a href="./gretl_screen.html"><img src="./images/gretl_thumb.png" 
+	alt="ekran g??r??nt??s?? - b??y??tmek i??in t??klay??n??z"></a></td></tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+  <td class="menu-item"><i>Gretl Internet sa??lay??c??s??:</i></td></tr>
+  <tr><td><a href="http://sourceforge.net">
+<IMG src="http://sourceforge.net/sflogo.php?group_id=36234&amp;type=2"
+      width="125" height="37" border="0" alt="SourceForge Logo"></a></td></tr>
+
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+<td><p>
+      <a href="http://www.gnu.org/copyleft/gpl.html">
+      <img style="border:0;width:88px;height:31px"
+          src="./images/gplv3.png"
+          alt="GPL v3"></a>
+    </p></td>
+</tr>
+<tr><td>&nbsp;</td></tr>
+<tr>
+<td><p>
+      <a href="http://validator.w3.org/check?uri=referer">
+       <img border="border:0;width:88px;height:31px"
+          src="http://www.w3.org/Icons/valid-html40"
+          alt="Valid HTML 4.0!"></a>
+    </p></td>
+</tr>
+<tr>
+<td><p>
+ <a href="http://jigsaw.w3.org/css-validator/">
+  <img style="border:0;width:88px;height:31px"
+       src="http://jigsaw.w3.org/css-validator/images/vcss" 
+       alt="Valid CSS!">
+  </a>
+ </p>
+ </td>
+ </tr>
+
+    </table>
+      </td>
+
+<!-- begin right-hand-column -->
+
+<td width="70%">
+
+    <center>
+     <h1>Gnu Regression, Econometrics and Time-series Library</h1>
+    </center>
+
+    <center>
+      <img alt="gretl metni" src="./images/gretl-text.png">
+    </center>
+
+<p>C programlama dili ile yaz??lmakta olan, ??apraz-platform bir ekonometrik ????z??mleme yaz??l??m paketidir.  ??zg??r ve a????k kaynakl??d??r. Program??, <a href="http://www.gnu.org">??zg??r Yaz??l??m Vakf??</a> taraf??ndan yay??nlanm???? olan GNU Genel Kamu Lisans?? (<a href="http://www.gnu.org/copyleft/gpl.html">GPL</a>) ??artlar?? alt??nda tekrar da????tabilir veya ??zerinde de??i??iklik yapabilirsiniz.</p>
+
+<h2><a name="feat">??zellikler</a></h2>
+
+<ul>
+
+<li><p class="in-list">Kolay, sezgisel arabirim (Art??k ??ngilizce yan??nda Frans??zca,
+  ??talyanca, ??spanyolca, Leh??e, Almanca, Bask ve Portekizce)</p></li>
+
+<li><p class="in-list">Geni?? tahminci se??ene??i: en k??????k kareler, en??ok olabilirlik,
+GMM; tek denklem ve sistem y??ntemleri</p></li>
+
+<li><p class="in-list">Zaman dizileri y??ntemleri: ARMA, GARCH, VAR ve VECM, 
+birim-k??k ve e??t??mlevleme s??namalar??, vs.</p></li>
+
+<li><p class="in-list">Model ????kt??lar??n?? LaTeX ??izelge veya denklem bi??iminde alma</p></li>
+
+<li><p class="in-list">B??t??nle??ik betik dili: komutlar?? grafik arabirimi veya betikler yolu ile girme se??ene??i</p></li>
+
+<li><p class="in-list">Monte Carlo benzetimleri ve yinelemeli tahmin i??lemleri i??in komut d??ng?? yap??s??</p></li>
+
+<li><p class="in-list">Gnuplot ??izimlerine ince-ayar yapmak i??in GUI y??neticisi</p></li>
+
+<li><p class="in-list">??leri veri ????z??mleme i??in <a href="./gretl_and_R.html">GNU R</a> ba??lant??s??</p></li>
+
+</ul>
+
+<h2><a name="formats">Veri bi??imleri</a></h2>
+
+<p>Desteklenen bi??imler: kendi XML veri dosyalar??; Virg??l ile ayr??lm???? de??erler; Excel, Gnumeric ve Open D??k??man ??al????ma sayfalar??; Stata <tt>.dta</tt> dosyalar??; Eviews i??dosyalar??; JMulTi veri dosyalar??; ??zel bi??im ikili veritabanlar??  (farkl?? veri s??kl??klar?? ve dizi uzunluklar?? destekli), RATS 4 veritabanlar?? ve PC-Give veritabanlar??. Programa ekli ??rnek ABD makro veritaban??.  Ayr??ca <a href="./gretl_data.html">gretl veri sayfas??</a>'na bak??n??z.</p>
+
+<h2><a name="dl">??ndirin</a></h2>
+
+<TABLE cellpadding="2">
+<TR>
+<TD><p class="in-cell">G??ncel kaynak kodu paketi</p></TD>
+<TD><p class="in-cell"><a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.tar.bz2">gretl-VERSION.tar.bz2</a>
+(c. 4Mb)</p></TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Modern Linux sistemleri i??in genel ikili rpm</p></TD> 
+<TD><p class="in-cell"><a 
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-1gtk2.i586.rpm">gretl-VERSION-1gtk2.i586.rpm</a></p>
+</TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Eski Linux s??r??mleri i??in rpm (RHEL 4'te derlenmi??)</p></TD> 
+<TD><p class="in-cell"><a 
+href="http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION-1RHEL.i586.rpm">gretl-VERSION-1RHEL.i586.rpm</a></p>
+</TD>
+</TR>
+<TR>
+<TD><p class="in-cell"><a href="http://www.debian.org">Debian GNU/Linux</a> paket bak??m?? Dirk Eddelbuettel taraf??ndan sa??lanmaktad??r</p></TD>
+<TD><p class="in-cell"><a href="http://packages.debian.org/gretl">packages.debian.org</a>; ayr??ca bak??n??z
+<a href="http://packages.qa.debian.org/g/gretl.html">packages.qa.debian.org</a></p></TD>
+</TR>
+<TR><TD></TD><TD></TD></TR>
+</TABLE>
+
+<p>??ster kaynaktan derlemek, isterse de ??nceden derlenmi?? ikiliyi y??klemek i??in, <a href="./depend.html">gretl'??n ba????ml??l??klar??</a>'na g??z atmak isteyebilir veya gereksinim duyabilirsiniz.</p>
+
+<p>Gretl'??n MS Windows s??r??m??ne <a href="./win32/">buradan</a>, Mac OS X s??r??m??ne ise <a href="./osx.html">buradan</a> ula??abilirsiniz.</p>
+
+<p>Gretl i??in Linux ??zerinde X-12-ARIMA ve TRAMO/SEATS zaman-dizisi ????z??mleme programlar?? a??a????daki ??ekilde bulunmaktad??r.</p>
+
+<TABLE cellpadding="2">
+<TR>
+<TD><p class="in-cell">X-12-ARIMA ikili RPM dosyas??</p></TD>
+<TD><p class="in-cell"><a
+href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.3-1.i586.rpm">x12a-0.3-1.i586.rpm</a></p>
+</TD>
+</TR>
+<TR>
+<TD><p class="in-cell">TRAMO/SEATS ikili RPM dosyas??</p></TD>
+<TD><p class="in-cell"><a
+href="http://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats-98-2.i586.rpm">tramo-seats-98-2.i586.rpm</a></p>
+</TD>
+</TR>
+<TR>
+<TD><p class="in-cell">X-12-ARIMA Debian paketi</p></TD>
+<TD>
+<p class="in-cell">
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_0.2.10-2_i386.deb">x12a_0.2.10-2_i386.deb</a>
+</p></TD>
+</TR>
+<TR>
+<TD><p class="in-cell">TRAMO/SEATS debian paketi</p></TD>
+<TD>
+<p class="in-cell">
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats_98-2_i386.deb">tramo-seats_98-2_i386.deb</a></p>
+</TD>
+</TR>
+<TR><TD></TD><TD></TD></TR>
+</TABLE>
+
+<p>??izim olu??turmak i??in gretl gnuplot'tan yararlan??r.  Gnuplotun 4.2.3 nolu en yeni resmi s??r??m?? (Mart 2008 tarihli), 
+<a href="http://www.gnuplot.info/">www.gnuplot.info</a> adresinde bulunmaktad??r.
+</p>
+
+<h2><a name="man">Belgeler</a></h2>
+
+<p>
+The gretl manual comes in two PDF files, a <i>User's Guide</i> and a <i>Command
+Reference</i>.  English versions of these, formatted for U.S. letter-size paper,
+are included in the gretl source package and binary distributions.  Gretl will
+access the other available versions -- namely English (A4 paper), Italian and
+Spanish -- on demand, via the Internet.  You can also find the manual files 
+<a href="http://ricardo.ecn.wfu.edu/pub//gretl/manual/">here</a>.</p>
+
+<p>If you don't have the software to read PDF files you can download it from <a
+	    href="http://www.adobe.com/products/acrobat/readstep2.html">the
+	    Adobe website</a>.</p>
+
+<h2><a name="use">Gretl kullan??c??s?? m??s??n??z?</a></h2>
+
+<p>If so you may wish to join the 
+<a href="http://lists.wfu.edu/mailman/listinfo/gretl-users">gretl-users mailing list</a>.
+This is a moderate-volume list where people request and offer help, discuss
+new features and so on.</p>
+
+<p>You can submit
+<a href="http://sourceforge.net/tracker/?group_id=36234&amp;atid=416803">bug reports</a>
+and
+<a href="http://sourceforge.net/tracker/?group_id=36234&amp;atid=416806">feature requests</a>
+using the SourceForge Tracker system.</p>
+
+<h2><a name="contrib">Gretl'a katk??da bulunmak</a></h2>
+
+      <p>
+      Gretl'a katk?? olarak sa??lamak istedi??iniz fikir veya kod mu var? E??er ??yleyse, sizden mesaj almaktan b??y??k mutluluk duyar??z. Bunun i??in <a href="http://lists.wfu.edu/mailman/listinfo/gretl-devel">gretl-devel eposta listesine</a> (olduk??a d??????k hacimlidir) kat??labilirsiniz.</p>
+
+      <p>Gretl'a katk?? olarak verilebilecek kod i??in tek gereksinim, sizin bunu <a href="http://www.gnu.org/copyleft/gpl.html">GNU Genel Kamu Lisans??</a> (GPL) alt??nda sa??lama konusunda istekli olman??z, yani, kayna???? ??zg??r b??rakma konusunda rahat olman??zd??r.
+      </p>
+
+    <p>     Yukar??da s??z edildi??i gibi, gretl (??o??unlukla) ??zg??r, a????k-kaynakl?? yaz??l??m d??nyas??ndaki en yayg??n dil olan C programlama dili ile yaz??lm????t??r. Ancak, herkes C ile yazma konusunda yeterli de??ildir. O halde bilmelisiniz ki bu durum kod veya ????z??m yolu katk??s??nda bulunmak i??in bir engel olu??turmak zorunda de??ildir. E??er ilgin?? bir ekonometrik g??revi ba??aran iyi belirtilmi?? bir ????z??m yolu sa??layabilirseniz, bizler b??y??k olas??l??kla bunu aray??zlendirebilir veya a????r?? zorluk ya??amadan C dilinde yeniden yazabiliriz. Fortran veya C++ kodu; Ox, Gauss, Octave, Matlab veya R gibi y??ksek-seviye dizey i??leme dillerinde yaz??lm???? kodlar; ve hatta s??zde-kod, yani belli bir programlama dilinde olmay??p, ad??m ad??m, a????k bir ??ekilde g??sterilmi?? ????z??m yollar??, olas??l??klar aras??ndad??r.
+    </p>
+
+
+<h2><a name="cvs">CVS eri??imi ve tarama</a></h2>
+
+<p>Gretl'??n en son kaynak koduna CVS yolu ile eri??im i??in l??tfen SourceForge'da bulunan <a href="http://sourceforge.net/projects/gretl/">gretl proje sayfas??</a>'na bak??n??z. Gretl CVS repositosunu <a href="http://gretl.cvs.sourceforge.net/gretl/gretl">buradan</a> tarayabilirsiniz.</p>
+
+<h2><a name="ack">Te??ekk??rler</a></h2>
+
+<p>??ncelikle, gretl'??n geli??tirilmesinde ba??lang???? noktas?? olan "ESL" ekonometri kodlar??n??n kayna????n?? a??an California, San Diego ??niversitesi Emeritus profes??r?? Ramu Ramanathan'a te??ekk??rler. Profes??r Ramanathan, <a href="http://econ.ucsd.edu/~rramanat/embook5.htm"> <i>Introductory Econometrics</i></a> (Dryden, ??u an 5inci bask??da) yazar??d??r. Ramu, ayr??ca gretl'??n geli??tirilmesi s??recinde ??ok yard??mc?? bir ele??tirmen olmu??tur.</p>
+
+<p>Gretl'??n geli??mesinde yararl?? hata raporlar?? ve ??neriler g??ndermi?? olan bir ??ok ki??i bulunuyor. Bunun i??in ??zellikle Ignacio D??az-Emparanza, Tadeusz Kufel, Pawel Kufel, Dirk Eddelbuettel, Sven Schreiber ve Andreas Rosenblad'a te??ekk??r bor??luyuz. Gretl'??n say??sal keskinli??ini g??zden ge??irme ve raporlama konusunda A. Talha YALTA yard??mc?? bir rol ??stlenmektedir.</p>
+
+<p>Gretl'?? farkl?? dillere ??evirmeye y??nelik ??al????malar??ndan dolay?? Ignacio D??az-Emparanza, Susan Orbe, Michel Robitaille, Florent Bresson, Cristian Rigamonti, Tadeusz ve Pawel Kufel, Markus Hahn, Sven Schreiber ve H??lio Guilherme'ye ??ok te??ekk??rler.</p>
+
+<p>Kitab??ndaki ilgin?? ??rneklere ili??kin baz?? veri setlerinin gretl paketine dahil edilmesine izin verdi??i i??in <a
+href="http://vig.prenhall.com/catalog/academic/product/0,1144,0130661899,00.html"><i>Econometric
+Analysis</i></a> yazar?? William Greene'ye te??ekk??rler.</p>
+
+<p>Bir??ok konudaki uzman tavsiyeleri i??in comp.lang.c ve gtk-app-devel-list@gnome.org'daki iyi insanlara te??ekk??rler. ??zg??r yaz??l??m??n geli??mesi ve yayg??nla??mas?? i??in g??stermi?? oldu??u onca emek ve daha ??zel olarak gretl'?? bir GNU program?? olarak edinmeyi kabul etti??i i??in, ??zg??r Yaz??l??m Vakf??'ndan Richard Stallman'a te??ekk??rler.</p>
+
+<hr noshade>
+
+<p>Allin Cottrell, Wake Forest University</p>
+<p>Riccardo "Jack" Lucchetti, Universit?? Politecnica delle Marche</p>
+<p>Son g??ncelleme: LONGDATE
+</p>
+
+</td>
+</tr>
+</table>
+
+</body>
