@@ -35,7 +35,8 @@ const char *lang_names[] = {
     "en_US",
     "es_ES",
     "it_IT",
-    "pt_PT"
+    "pt_PT",
+    "tr_TR"
 };
 
 struct lang_strings_t {
@@ -402,6 +403,8 @@ int copy_substitute (const char *fsrc, const char *ftarg,
 	lang = IT;
     } else if (strstr(fsrc, "portu") || strstr(fsrc, "_pt")) {
 	lang = PT;
+    } else if (strstr(fsrc, "turk") || strstr(fsrc, "_tr")) {
+	lang = TR;
     } else {
 	lang = EN;
     }
@@ -450,6 +453,9 @@ int process_templates (char *verstr)
 	{ "gretl_portugues_pat.html", "gretl_portugues.html" },
 	{ "win32_pat_pt.html",        "win32/index_pt.html" },
 	{ "osx_pat_pt.html",          "osx_pt.html" },
+	{ "gretl_turkish_pat.html",   "gretl_turkish.html" },
+	{ "win32_pat_tr.html",        "win32/index_tr.html" },
+	{ "osx_pat_tr.html",          "osx_tr.html" },
 	{ NULL, NULL }
     };
     struct from_to *ptr = templates;
