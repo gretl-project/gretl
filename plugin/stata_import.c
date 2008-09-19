@@ -34,23 +34,18 @@
 #include "gretl_string_table.h"
 #include "swap_bytes.h"
 
-enum {
-    CN_TYPE_BIG = 1,
-    CN_TYPE_LITTLE,
-};
-
 #ifdef WORDS_BIGENDIAN
-# define CN_TYPE_NATIVE CN_TYPE_BIG
+# define HOST_ENDIAN G_BIG_ENDIAN
 #else
-# define CN_TYPE_NATIVE CN_TYPE_LITTLE
+# define HOST_ENDIAN G_LITTLE_ENDIAN
 #endif
 
 /* Stata versions */
-#define VERSION_5 0x69
-#define VERSION_6 'l'
-#define VERSION_7 0x6e
-#define VERSION_7SE 111
-#define VERSION_8 113
+#define VERSION_5   0x69
+#define VERSION_6     'l'
+#define VERSION_7   0x6e
+#define VERSION_7SE  111
+#define VERSION_8    113
 
 /* Stata format constants */
 #define STATA_STRINGOFFSET 0x7f
@@ -68,22 +63,34 @@ enum {
 #define STATA_SE_INT      252
 #define STATA_SE_BYTE     251
 
-/* Stata missing value codes */
-#define STATA_FLOAT_NA  pow(2.0, 127)
-#define STATA_DOUBLE_NA pow(2.0, 1023)
-#define STATA_LONG_NA   2147483647
-#define STATA_LONG_MAX  2147483620
-#define STATA_INT_NA    32767
-#define STATA_INT_MAX   32740
+/* see http://www.stata.com/help.cgi?dta */
+#define STATA_FLOAT_MAX  1.701e+38
+#define STATA_DOUBLE_MAX 8.988e+307
+#define STATA_LONG_MAX   2147483620
+#define STATA_INT_MAX    32740
+
+/* values from R's stataread.c -- these were labeled "*NA" */
+#if 0
+# define STATA_FLOAT_CUT  pow(2.0, 127)
+# define STATA_DOUBLE_CUT pow(2.0, 1023)
+# define STATA_LONG_CUT   2147483647
+#endif
+#define STATA_INT_CUT    32767
+
+/* Stata missing value codes: see http://www.stata.com/help.cgi?dta */
+#define STATA_FLOAT_NA(x)  (x > STATA_FLOAT_MAX)
+#define STATA_DOUBLE_NA(x) (x > STATA_DOUBLE_MAX)
+#define STATA_LONG_NA(i)   (i > STATA_LONG_MAX)
+#define STATA_INT_NA(i)    (i > STATA_INT_MAX)
 
 #define STATA_BYTE_NA(b,v) ((v<8 && b==127) || b>=101)
 
 #define NA_INT -999
 
 /* it's convenient to have these as file-scope globals */
-int stata_version;
-int stata_endian;
-int swapends;
+static int stata_version;
+static int stata_endian;
+static int swapends;
 
 static void bin_error (int *err)
 {
@@ -99,12 +106,14 @@ static int stata_read_long (FILE *fp, int naok, int *err)
 
     if (fread(&i, sizeof i, 1, fp) != 1) {
 	bin_error(err);
+	return NA_INT;
     }
+
     if (swapends) {
 	reverse_int(i);
     }
 
-    return ((i > STATA_LONG_MAX) & !naok ? NA_INT : i);
+    return (STATA_LONG_NA(i) & !naok)? NA_INT : i;
 }
 
 static int stata_read_signed_byte (FILE *fp, int naok, int *err)
@@ -152,17 +161,18 @@ static int stata_read_int (FILE *fp, int naok, int *err)
     first = stata_read_byte(fp, err);
     second = stata_read_byte(fp, err);
 
-    if (stata_endian == CN_TYPE_BIG) {
+    if (stata_endian == G_BIG_ENDIAN) {
 	s = (first << 8) | second;
     } else {
 	s = (second << 8) | first;
     }
 
-    if (s > STATA_INT_NA) {
+    if (s > STATA_INT_CUT) { 
+	/* ?? */
 	s -= 65536;
     }
 
-    return ((s > STATA_INT_MAX) & !naok)? NA_INT : s;
+    return (STATA_INT_NA(s) && !naok)? NA_INT : s;
 }
 
 static double stata_read_double (FILE *fp, int *err)
@@ -172,11 +182,12 @@ static double stata_read_double (FILE *fp, int *err)
     if (fread(&d, sizeof d, 1, fp) != 1) {
 	bin_error(err);
     }
+
     if (swapends) {
 	reverse_double(d);
     }
 
-    return (d == STATA_DOUBLE_NA)? NADBL : d;
+    return (STATA_DOUBLE_NA(d))? NADBL : d;
 }
 
 static double stata_read_float (FILE *fp, int *err)
@@ -186,11 +197,12 @@ static double stata_read_float (FILE *fp, int *err)
     if (fread(&f, sizeof f, 1, fp) != 1) {
 	bin_error(err);
     }
+
     if (swapends) {
 	reverse_float(f);
     }
 
-    return (f == STATA_FLOAT_NA)? NADBL : (double) f;
+    return (STATA_FLOAT_NA(f))? NADBL : (double) f;
 }
 
 static void stata_read_string (FILE *fp, int nc, char *buf, int *err)
@@ -204,6 +216,8 @@ static int
 stata_get_version_and_namelen (unsigned char u, int *vnamelen)
 {
     int err = 0;
+
+    /* a negative value of stata_version indicates "SE" */
 
     switch (u) {
     case VERSION_5:
@@ -231,6 +245,13 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
     }
 
     return err;
+}
+
+static int stata_get_endianness (FILE *fp, int *err)
+{
+    int i = (int) stata_read_byte(fp, err);
+
+    return (i == 0x01)? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
 }
 
 #define stata_type_float(t)  ((stata_version > 0 && t == STATA_FLOAT) || t == STATA_SE_FLOAT)
@@ -635,8 +656,8 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     printf("Stata file version %d\n", abs(stata_version));
 
     /* these are file-scope globals */
-    stata_endian = (int) stata_read_byte(fp, &err);
-    swapends = stata_endian != CN_TYPE_NATIVE;
+    stata_endian = stata_get_endianness(fp, &err);
+    swapends = stata_endian != HOST_ENDIAN;
 
     stata_read_byte(fp, &err);              /* filetype -- junk */
     stata_read_byte(fp, &err);              /* padding */
@@ -648,6 +669,7 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     }
 
     if (!err) {
+	printf("endianness: %s\n", (stata_endian == G_BIG_ENDIAN)? "big" : "little");
 	printf("number of variables = %d\n", *nvar);
 	printf("number of observations = %d\n", *nobs);
 	printf("length of varnames = %d\n", *namelen);

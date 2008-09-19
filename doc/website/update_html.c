@@ -26,7 +26,8 @@ enum {
     EN,
     ES,
     IT,
-    PT
+    PT,
+    TR
 };
 
 char substfile[FILENAME_MAX];
