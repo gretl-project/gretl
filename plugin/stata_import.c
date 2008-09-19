@@ -56,23 +56,25 @@ enum {
 #define STATA_STRINGOFFSET 0x7f
 #define STATA_FLOAT    'f'
 #define STATA_DOUBLE   'd'
-#define STATA_INT      'l'
-#define STATA_SHORTINT 'i'
+#define STATA_LONG     'l'
+#define STATA_INT      'i'
 #define STATA_BYTE     'b'
 
 /* Stata SE format constants */
 #define STATA_SE_STRINGOFFSET 0
 #define STATA_SE_FLOAT    254
 #define STATA_SE_DOUBLE   255
-#define STATA_SE_INT      253
-#define STATA_SE_SHORTINT 252
+#define STATA_SE_LONG     253
+#define STATA_SE_INT      252
 #define STATA_SE_BYTE     251
 
 /* Stata missing value codes */
-#define STATA_FLOAT_NA pow(2.0, 127)
+#define STATA_FLOAT_NA  pow(2.0, 127)
 #define STATA_DOUBLE_NA pow(2.0, 1023)
-#define STATA_INT_NA 2147483647
-#define STATA_SHORTINT_NA 32767
+#define STATA_LONG_NA   2147483647
+#define STATA_LONG_MAX  2147483620
+#define STATA_INT_NA    32767
+#define STATA_INT_MAX   32740
 
 #define STATA_BYTE_NA(b,v) ((v<8 && b==127) || b>=101)
 
@@ -89,7 +91,9 @@ static void bin_error (int *err)
     *err = 1;
 }
 
-static int read_int (FILE *fp, int naok, int *err)
+/* actually an int (4-byte signed int) */
+
+static int stata_read_long (FILE *fp, int naok, int *err)
 {
     int i;
 
@@ -100,10 +104,10 @@ static int read_int (FILE *fp, int naok, int *err)
 	reverse_int(i);
     }
 
-    return ((i == STATA_INT_NA) & !naok ? NA_INT : i);
+    return ((i > STATA_LONG_MAX) & !naok ? NA_INT : i);
 }
 
-static int read_signed_byte (FILE *fp, int naok, int *err)
+static int stata_read_signed_byte (FILE *fp, int naok, int *err)
 { 
     signed char b;
     int ret;
@@ -126,7 +130,7 @@ static int read_signed_byte (FILE *fp, int naok, int *err)
     return ret;
 }
 
-static int read_byte (FILE *fp, int *err)
+static int stata_read_byte (FILE *fp, int *err)
 { 
     unsigned char u;
 
@@ -138,13 +142,15 @@ static int read_byte (FILE *fp, int *err)
     return (int) u;
 }
 
-static int read_short (FILE *fp, int naok, int *err)
+/* actually a short (2-byte signed int) */
+
+static int stata_read_int (FILE *fp, int naok, int *err)
 {
     unsigned first, second;
     int s;
 	
-    first = read_byte(fp, err);
-    second = read_byte(fp, err);
+    first = stata_read_byte(fp, err);
+    second = stata_read_byte(fp, err);
 
     if (stata_endian == CN_TYPE_BIG) {
 	s = (first << 8) | second;
@@ -152,14 +158,14 @@ static int read_short (FILE *fp, int naok, int *err)
 	s = (second << 8) | first;
     }
 
-    if (s > STATA_SHORTINT_NA) {
+    if (s > STATA_INT_NA) {
 	s -= 65536;
     }
 
-    return ((s == STATA_SHORTINT_NA) & !naok)? NA_INT : s;
+    return ((s > STATA_INT_MAX) & !naok)? NA_INT : s;
 }
 
-static double read_double (FILE *fp, int *err)
+static double stata_read_double (FILE *fp, int *err)
 {
     double d;
 
@@ -173,7 +179,7 @@ static double read_double (FILE *fp, int *err)
     return (d == STATA_DOUBLE_NA)? NADBL : d;
 }
 
-static double read_float (FILE *fp, int *err)
+static double stata_read_float (FILE *fp, int *err)
 {
     float f;
 
@@ -187,7 +193,7 @@ static double read_float (FILE *fp, int *err)
     return (f == STATA_FLOAT_NA)? NADBL : (double) f;
 }
 
-static void read_string (FILE *fp, int nc, char *buf, int *err)
+static void stata_read_string (FILE *fp, int nc, char *buf, int *err)
 {
     if (fread(buf, 1, nc, fp) != nc) {
 	bin_error(err);
@@ -195,7 +201,7 @@ static void read_string (FILE *fp, int nc, char *buf, int *err)
 }
 
 static int 
-get_version_and_namelen (unsigned char u, int *vnamelen)
+stata_get_version_and_namelen (unsigned char u, int *vnamelen)
 {
     int err = 0;
 
@@ -229,8 +235,8 @@ get_version_and_namelen (unsigned char u, int *vnamelen)
 
 #define stata_type_float(t)  ((stata_version > 0 && t == STATA_FLOAT) || t == STATA_SE_FLOAT)
 #define stata_type_double(t) ((stata_version > 0 && t == STATA_DOUBLE) || t == STATA_SE_DOUBLE)
+#define stata_type_long(t)   ((stata_version > 0 && t == STATA_LONG) || t == STATA_SE_LONG)
 #define stata_type_int(t)    ((stata_version > 0 && t == STATA_INT) || t == STATA_SE_INT)
-#define stata_type_short(t)  ((stata_version > 0 && t == STATA_SHORTINT) || t == STATA_SE_SHORTINT)
 #define stata_type_byte(t)   ((stata_version > 0 && t == STATA_BYTE) || t == STATA_SE_BYTE)
 #define stata_type_string(t) ((stata_version > 0 && t >= STATA_STRINGOFFSET) || t <= 244)
 
@@ -241,17 +247,19 @@ static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
     *nsv = 0;
 
     for (i=0; i<nvar && !err; i++) {
-   	unsigned char u = read_byte(fp, &err);
+   	unsigned char u = stata_read_byte(fp, &err);
 
 	types[i] = u;
 	if (stata_type_float(u) || stata_type_double(u)) {
-	    printf("variable %d: float type\n", i);
-	} else if (stata_type_int(u) ||
-		   stata_type_short(u) ||
-		   stata_type_byte(u)) {
-	    printf("variable %d: int type\n", i);
+	    printf("variable %d: float type\n", i+1);
+	} else if (stata_type_long(u)) {
+	    printf("variable %d: long type\n", i+1);
+	} else if (stata_type_int(u)) {
+	    printf("variable %d: int type\n", i+1);
+	} else if (stata_type_byte(u)) {
+	    printf("variable %d: byte type\n", i+1);
 	} else if (stata_type_string(u)) {
-	    printf("variable %d: string type\n", i);
+	    printf("variable %d: string type\n", i+1);
 	    *nsv += 1;
 	} else {
 	    fputs(_("unknown data type"), stderr);
@@ -281,8 +289,8 @@ dta_make_string_table (int *types, int nvar, int ncols)
     for (i=0; i<nvar && j<=list[0]; i++) {
 	if (!stata_type_float(types[i]) &&
 	    !stata_type_double(types[i]) &&
+	    !stata_type_long(types[i]) &&
 	    !stata_type_int(types[i]) &&
-	    !stata_type_short(types[i]) &&
 	    !stata_type_byte(types[i])) {
 	    list[j++] = i + 1;
 	}
@@ -387,7 +395,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     char *txt = NULL; 
     int *off = NULL;
     int err = 0;
-    
+
     labellen = (stata_version == 5)? 32 : 81;
     soffset = (stata_version > 0)? STATA_STRINGOFFSET : STATA_SE_STRINGOFFSET;
     *nvread = nvar;
@@ -395,11 +403,11 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     printf("Max length of labels = %d\n", labellen);
 
     /* data label - zero terminated string */
-    read_string(fp, labellen, datalabel, &err);
+    stata_read_string(fp, labellen, datalabel, &err);
     printf("datalabel: '%s'\n", datalabel);
 
     /* file creation time - zero terminated string */
-    read_string(fp, 18, c18, &err);  
+    stata_read_string(fp, 18, c18, &err);  
     printf("timestamp: '%s'\n", c18);
 
     if (*datalabel != '\0' || *c18 != '\0') {
@@ -428,7 +436,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* names */
     for (i=0; i<nvar && !err; i++) {
-        read_string(fp, namelen + 1, aname, &err);
+        stata_read_string(fp, namelen + 1, aname, &err);
 	printf("variable %d: name = '%s'\n", i+1, aname);
 	if (check_varname(aname) && try_fix_varname(aname)) {
 	    err = 1;
@@ -439,12 +447,12 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* sortlist -- not relevant */
     for (i=0; i<2*(nvar+1) && !err; i++) {
-        read_byte(fp, &err);
+        stata_read_byte(fp, &err);
     }
     
     /* format list (use it to identify date variables?) */
     for (i=0; i<nvar && !err; i++){
-        read_string(fp, 12, c18, &err);
+        stata_read_string(fp, 12, c18, &err);
 	if (*c18 != '\0' && c18[strlen(c18)-1] != 'g') {
 	    printf("variable %d: format = '%s'\n", i+1, c18);
 	    if (!strcmp(c18, "%tm")) {
@@ -463,7 +471,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     /* "value labels": these are stored as the names of label formats, 
        which are themselves stored later in the file. */
     for (i=0; i<nvar && !err; i++) {
-        read_string(fp, namelen + 1, aname, &err);
+        stata_read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0') {
 	    printf("variable %d: \"value label\" = '%s'\n", i+1, aname);
 	}
@@ -471,7 +479,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* variable descriptive labels */
     for (i=0; i<nvar && !err; i++) {
-	read_string(fp, labellen, datalabel, &err);
+	stata_read_string(fp, labellen, datalabel, &err);
 	if (*datalabel != '\0') {
 	    printf("variable %d: label = '%s'\n", i+1, datalabel);
 	    if (!g_utf8_validate(datalabel, -1, NULL)) {
@@ -491,20 +499,20 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* variable 'characteristics' -- not handled */
     if (!err) {
-	while (read_byte(fp, &err)) {
+	while (stata_read_byte(fp, &err)) {
 	    if (abs(stata_version) >= 7) { /* manual is wrong here */
-		clen = read_int(fp, 1, &err);
+		clen = stata_read_long(fp, 1, &err);
 	    } else {
-		clen = read_short(fp, 1, &err);
+		clen = stata_read_int(fp, 1, &err);
 	    }
 	    for (i=0; i<clen; i++) {
-		read_signed_byte(fp, 1, &err);
+		stata_read_signed_byte(fp, 1, &err);
 	    }
 	}
 	if (abs(stata_version) >= 7) {
-	    clen = read_int(fp, 1, &err);
+	    clen = stata_read_long(fp, 1, &err);
 	} else {
-	    clen = read_short(fp, 1, &err);
+	    clen = stata_read_int(fp, 1, &err);
 	}
 	if (clen != 0) {
 	    fputs(_("something strange in the file\n"
@@ -521,21 +529,21 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	    Z[v][t] = NADBL; 
 
 	    if (stata_type_float(types[i])) {
-		Z[v][t] = read_float(fp, &err);
+		Z[v][t] = stata_read_float(fp, &err);
 	    } else if (stata_type_double(types[i])) {
-		Z[v][t] = read_double(fp, &err);
-	    } else if (stata_type_int(types[i])) {
-		ix = read_int(fp, 0, &err);
+		Z[v][t] = stata_read_double(fp, &err);
+	    } else if (stata_type_long(types[i])) {
+		ix = stata_read_long(fp, 0, &err);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
-	    } else if (stata_type_short(types[i])) {
-		ix = read_short(fp, 0, &err);
+	    } else if (stata_type_int(types[i])) {
+		ix = stata_read_int(fp, 0, &err);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_byte(types[i])) {
-		ix = read_signed_byte(fp, 0, &err);
+		ix = stata_read_signed_byte(fp, 0, &err);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else {
 		clen = types[i] - soffset;
-		read_string(fp, clen, strbuf, &err);
+		stata_read_string(fp, clen, strbuf, &err);
 		strbuf[clen] = 0;
 #if 0
 		printf("Z[%d][%d] = '%s'\n", v, t, strbuf);
@@ -568,32 +576,32 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		break;
 	    }
 
-	    read_string(fp, namelen + 1, aname, &err);
+	    stata_read_string(fp, namelen + 1, aname, &err);
 	    printf("variable %d: \"aname\" = '%s'\n", i, aname);
 
 	    /* padding */
-	    read_byte(fp, &err);
-	    read_byte(fp, &err);
-	    read_byte(fp, &err);
+	    stata_read_byte(fp, &err);
+	    stata_read_byte(fp, &err);
+	    stata_read_byte(fp, &err);
 
-	    nlabels = read_int(fp, 1, &err);
-	    totlen = read_int(fp, 1, &err);
+	    nlabels = stata_read_long(fp, 1, &err);
+	    totlen = stata_read_long(fp, 1, &err);
 
 	    off = malloc(nlabels * sizeof *off);
 
 	    for (i=0; i<nlabels && !err; i++) {
-		off[i] = read_int(fp, 1, &err);
+		off[i] = stata_read_long(fp, 1, &err);
 		printf("label offset %d = %d\n", i, off[i]);
 	    }
 
 	    for (i=0; i<nlabels && !err; i++) {
-		double lev = (double) read_int(fp, 0, &err);
+		double lev = (double) stata_read_long(fp, 0, &err);
 
 		printf("level %d = %g\n", i, lev);
 	    }
 
 	    txt = calloc(totlen, 1);
-	    read_string(fp, totlen, txt, &err);
+	    stata_read_string(fp, totlen, txt, &err);
 	    for (i=0; i<nlabels; i++) {
 		printf("label %d = '%s'\n", i, txt + off[i]);
 	    }
@@ -613,10 +621,10 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     unsigned char u;
     int err = 0;
     
-    u = read_byte(fp, &err);   /* release version */
+    u = stata_read_byte(fp, &err);   /* release version */
 
     if (!err) {
-	err = get_version_and_namelen(u, namelen);
+	err = stata_get_version_and_namelen(u, namelen);
     }
 
     if (err) {
@@ -627,13 +635,13 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     printf("Stata file version %d\n", abs(stata_version));
 
     /* these are file-scope globals */
-    stata_endian = (int) read_byte(fp, &err);
+    stata_endian = (int) stata_read_byte(fp, &err);
     swapends = stata_endian != CN_TYPE_NATIVE;
 
-    read_byte(fp, &err);              /* filetype -- junk */
-    read_byte(fp, &err);              /* padding */
-    *nvar = read_short(fp, 1, &err);  /* number of variables */
-    *nobs = read_int(fp, 1, &err);    /* number of observations */
+    stata_read_byte(fp, &err);              /* filetype -- junk */
+    stata_read_byte(fp, &err);              /* padding */
+    *nvar = stata_read_int(fp, 1, &err);    /* number of variables */
+    *nobs = stata_read_long(fp, 1, &err);   /* number of observations */
 
     if (!err && (*nvar <= 0 || *nobs <= 0)) {
 	err = 1;
