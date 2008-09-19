@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>OS X için gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="./css-gretl.html">
+</head>
+
+<body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl ana sayfası</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>Mac OS X sürümü</h2>
+</center>
+
+<h2>Önceden-hazırlanmış disk kalıbı</h2>
+
+<p>Intel üzerinde gretl'ı OS X'e kurmanın kolay yolu, eğer işinize yararsa, disk kalıbını edinmektir: <a
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.dmg">gretl-VERSION.dmg</a>
+(yaklaşık 12MB). Kalıbı masaüstünüze indirin, açmak için üzerine çift tıklayın, sonra, içinde bulacağınız Gretl dizinini (gerçekte tam adı Gretl.app'tır) kurulum için uygun bir yere (örneğin Uygulamalar dizininize) sürükleyin.</p>
+
+<p>Bu, OS X v10.4.11 için denenmiştir. Disk kalıbı, yazı tiplerinin düzgün gözükmemesi durumunda ne yapılması gerektiğine yönelik bir öneri de içeren <a href="./README.pdf">README.pdf</a>'te kısaca belgelenmiştir. OS X üzerinde çalışmayan bir gretl için hata ayıklaması yapmak için lütfen şunu deneyin: bir X11 uçbirimi açın, <kbd>Gretl.app</kbd> dizinine (paketi kurduğunuz yer) geçin (<kbd>cd</kbd>), buradan <kbd>Contents/Resources/bin</kbd> dizinine geçin ve</p>
+
+<pre>
+./gretl
+</pre>
+
+<p>komutunu çalıştırın. Bu size neyin hatalı olduğu konusunda biraz bilgi verebilir.</p>
+
+<p><i>Lütfen dikkat</i>: bu paket Apple X11'ine (X Window sisteminin Mac uyarlaması) bağımlıdır. Bu da OS X kurulum DVD'lerinde bulunmaktadır.</p>
+
+<p><i>Ayrıca dikkat</i>: Yukarıda söz edildiği gibi, şu anki disk kalıbı <b>Intel</b> Mac'ler içindir. Gretl'ın güncel bir paketini PPC mimarisi için hazırlayacak bir gönüllüye gereksinim duyuyoruz. Bu arada, PPC mimarisi için elde <a href="http://downloads.sourceforge.net/gretl/gretl-1.6.5.dmg">gretl 1.6.5 sürümü</a> bulunmaktadır.</p>
+
+<h2>Almaşık yöntem: Fink ile derlemek</h2>
+
+<p>Eğer önceden-hazırlanmış kalıp işinize yaramazsa veya derleme üzerinde daha fazla denetim isterseniz, gretl'ı kendiniz kaynaktan derleyebilirsiniz. Bu, Apple X11'i ve Unix yöntemleri konusunda belli bir derece bilgiye ek olarak, <a href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a> bağlantısında bulunan Fink sistemini gerektirmektedir.</p>
+
+<p>Gretl'ı kurmak ve çalıştırmak için, temel Fink kurulumu yanında aşağıdaki Fink paketlerinin de hazır ve düzgün olmalarını (bazıları zaten kurulu ve güncel olabilir ki öyleyse Fink bunu söyleyecektir) sağlamanız gerekecektir. Her bir paketin yanında bu işi yapacak komut (Xterm yani Mac uçbirim komut satırında girilmek üzere) gösterilmiştir:</p>
+
+<table cellspacing=8>
+  <tr>
+    <td><p class="in-cell">system-xfree86</p></td>
+    <td><kbd>fink install system-xfree86</kbd></td>
+    </tr>
+  <tr>
+    <td><p class="in-cell">gtk+2</p></td>
+    <td><kbd>fink install gtk+2</kbd></td>
+    </tr>
+  <tr>
+    <td><p class="in-cell">gtk+2-dev</p></td>
+    <td><kbd>fink install gtk+2-dev</kbd></td>
+    </tr>
+  <tr>    
+    <td><p class="in-cell">libxml2</p></td>
+    <td><kbd>fink install libxml2</kbd></td>
+    </tr>
+  <tr>
+    <td><p class="in-cell">gnuplot</p></td>
+    <td><kbd>fink install gnuplot</kbd></td>
+    </tr>
+  <tr>
+    <td><p class="in-cell">fftw3</p></td>
+    <td><kbd>fink install fftw3</kbd></td>
+    </tr>
+</table>
+
+<p>Özellikle gnuplot'un güncel (gretl ile çalışabilmesi için paket no'su en az 4.0 olmalıdır) olduğunu kesinleştirmelisiniz.</p>
+
+<p>Bir ara şu da gerekiyordu ama artık gereksiz olabilir:</p>
+
+<table cellspacing=8>
+  <tr>
+    <td><p class="in-cell">dlcompat</p></td><td>
+    <kbd>fink install dlcompat</kbd></td>
+    </tr>
+  <tr>
+    <td><p class="in-cell">dlcompat-dev</p></td>
+    <td><kbd>fink install dlcompat-dev</kbd></td>
+    </tr>
+</table>
+
+
+<h2>Çevre değişkenleri</h2>
+
+<p>Gretl'ı Fink kullanarak derlemek için, gretl <kbd>configure</kbd> betiğini çalıştırmadan önce, <i>çevre</i>'nin doğru kurulmuş olduğunu kesinleştirmeniz gerekir. Bu, bir kaç çevre değişkenini ayarlamak demek olup, tam olarak nasıl yapılacağı kabuğunuzun tcsh veya bash'ten (OS X'de Panther'den önce tcsh öntanımlıydı, ama sanırız Panther altında bash öntanımlı bulunmaktadır) hangisi olduğuna bağlıdır. Aşağıdaki komutları tek tek çalıştırabilir, veya (daha iyisi) bunları ev (sanırız) dizininizdeki  <kbd>.tcshrc</kbd> veya <kbd>.bashrc</kbd> kabuk açılış dosyalarına koyabilirsiniz.</p>
+
+<p>tcsh uyarlaması:</p>
+
+<pre>
+setenv CFLAGS -I/sw/include
+setenv LDFLAGS -L/sw/lib
+setenv CXXFLAGS $CFLAGS
+setenv CPPFLAGS $CXXFLAGS
+setenv ACLOCAL_FLAGS "-I/sw/share/aclocal"
+setenv PKG_CONFIG_PATH "/sw/lib/pkgconfig"
+</pre>
+
+<p>bash uyarlaması:</p>
+
+<pre>
+export CFLAGS=-I/sw/include
+export LDFLAGS=-L/sw/lib
+export CXXFLAGS=$CFLAGS
+export CPPFLAGS=$CXXFLAGS
+export ACLOCAL_FLAGS="-I/sw/share/aclocal"
+export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
+</pre>
+
+<p>Ayrıca Fink tarafından sağlanan <kbd>init.sh</kbd>'yi kaynak aldığınızdan emin olmalısınız:</p>
+
+<pre>
+source /sw/bin/init.sh
+</pre>
+
+<p><a href="http://fink.sourceforge.net/faq/usage-general.php">Fink SSS</a>'ye (İngilizce) bakmak isteyebilirsiniz.</p>
+
+<h2>Configure ve build işlemleri</h2>
+
+<p>OS X, Apple X11, Fink ve gerekli Fink paketlerinin doğru sürümleri elinizde olduğunda ve çevreyi doğru şekilde ayarladığınızda, gretl'ı kurmanın epey basit olması gerekir. Çok geçmeden bir gretl Fink paketi hazırlayabilmeyi umuyoruz, ama şimdilik kaynaktan kurmanız gerekiyor. Burada anlatıldığı gibi:</p>
+
+<ol>
+<li><p class-"in-list">Kaynak paketini indirin:<br>
+
+   <kbd>curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2</kbd>
+    </p></li>
+
+<li><p class-"in-list">Kaynağı açın:<br>
+
+   <kbd>tar xvfj gretl-VERSION.tar.bz2</kbd>
+    </p></li>
+
+<li><p class-"in-list">Gretl kaynak dizinine gidin:<br> 
+
+   <kbd>cd gretl-VERSION</kbd></p></li>
+
+<li><p class-"in-list">Kaynak kod paketini ayarlayın:<br>
+
+   <kbd>./configure --prefix=/sw --disable-png-comments</kbd></p></li>
+
+<li><p class-"in-list">Gretl'ı inşa etmek için <kbd>make</kbd> yazın.  Bu işlem biraz zaman alır.</p></li>
+
+<li><p class-"in-list">Gretl' kurmak için <kbd>sudo make install</kbd> yazın.</p></li>
+</ol>
+
+<p>Yardımcı olacaksa, tümü bir kabuk betiği biçiminde işte burada:</p>
+
+<pre>
+#!/bin/sh
+# initialize fink
+. /sw/bin/init.sh
+# set up the compilation environment
+export CFLAGS="-O2 -I/sw/include"
+export LDFLAGS=-L/sw/lib
+export CXXFLAGS=$CFLAGS
+export CPPFLAGS=$CXXFLAGS
+export ACLOCAL_FLAGS="-I/sw/share/aclocal"
+export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
+# download the gretl source
+curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2
+# unpack the source archive
+tar xvfj gretl-VERSION.tar.bz2
+# move into the gretl source directory
+cd gretl-VERSION
+# configure the build
+./configure --prefix=/sw
+# make the program
+make
+# install gretl (root password needed)
+sudo make install
+</pre>
+  
+
+<p>Artık bir xterm komut satırında (Apple X11'ini başlatarak çalıştırılan) "gretl" yazarak gretl'ı çalıştırabilmeniz gerekir.</p>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+ 

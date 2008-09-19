@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<html>
+<head><title>Windows için gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+</head>
+
+<body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl ana sayfası</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>MS Windows sürümü</h2>
+</center>
+
+<h2>İndirmek</h2>
+
+<p>Windows için gretl, çalıştırılabilir bir sıkıştırılmış dosya içinde gelmektedir: <a
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a> (SHORTDATE, yaklaşık 9MB). Bunu indirip başlatmanız yeterlidir: size programı yüklemek istediğiniz konum sorulacaktır (öntanımlı olarak <kbd>c:\Program Dosyaları\gretl</kbd>). Çoğunlukla Windows XP için sınanmış olsa da, programın tüm NT-tabanlı Windows sürümlerinde (yani, NT4, 2000, XP veya Vista) sorunsuzca çalışması gerekir.</p>
+
+<p>Yukarıdaki bağlantı, son resmi sürüm içindir. Diğer bir olanak, Wake Forest Üniversitesi'nden gretl'ın şu anki "görüntüsünü" indirmektir: <a href="http://ricardo.ecn.wfu.edu/pub/gretl/gretl_install.exe">gretl_install.exe</a>. Bunun biraz daha güncel olması olasıdır: zaman zaman hata düzeltmeleri ve zaman zaman da yeni hatalar! içerir. İngilizce dışındaki dillerin çevirileri eksik olabilir. Görüntüde ne yenilikler olduğunu görmek için <a href="../ChangeLog.html">değişiklik tutanağı</a>'na (günlük biçiminde devam eden) bir bakınız.</p>
+
+<p>Gretl'ı, Windows'un eski sürümlerinde çalıştırmak için programın <a href="http://downloads.sourceforge.net/gretl/gretl-1.6.5.exe">1.6.5 sürümü</a>'nü (Windows 98 veya üstü) kullanabilirsiniz.</p>
+
+<p>Yüklemek isteyebileceğiniz seçimlik ekler:</p>
+
+<center>
+<table cellpadding="4">
+
+<tr>
+<td><p>X-12-ARIMA (mevsimsel düzeltme, ARIMA modelleri)</p></td>
+<td><p><a
+href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS (mevsimsel düzeltme, ARIMA modelleri)</p></td>
+<td><p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a></p></td>
+</tr>
+
+<tr>
+ <td><p>Wooldridge, <a href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
+  Econometrics</i></a> veri setleri</p>
+ </td>
+ <td><p><a 
+   href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Gujarati,
+  <a href="http://www.mhhe.com/economics/gujarati4/"><i>Basic Econometrics</i></a> veri setleri</p>
+ </td>
+ <td><p><a 
+   href="http://ricardo.ecn.wfu.edu/pub/gretl/gujarati_data.exe">gujarati_data.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Stock ve Watson,
+  <a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to Econometrics</i></a> veri setleri + betikler</p>
+ </td>
+ <td><p><a 
+   href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.exe">stock_watson.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Davidson ve MacKinnon, 
+  <a href="http://www.econ.queensu.ca/ETM/"><i>Econometric Theory and Methods</i></a> veri setleri</p> 
+ </td>
+ <td><p><a 
+  href="http://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a></p>
+ </td>
+</tr>
+</table>
+</center>
+
+<p>Yukarıdakilerin tümü kendini kuran programlardır. Ek parçaları kurmadan önce gretl'ı kurmanız gereklidir.</p>
+
+<p>Çalıştırılabilir dosyalar, GNU/Linux altında <a href="http://www.mingw.org/">mingw32</a> ve <a href="http://www.gtk.org/download-windows.html">GTK for Windows</a> (Tor Lillqvist'e teşekkürler!) kullanılarak çapraz-derlenmiştir. Ücretsiz kurulum programı, <a href="http://www.jrsoftware.org/">Jordan Russell</a> tarafından sağlanmıştır.</p>
+
+<h2>Çoklu dil desteği</h2>
+
+<p>Gretl, İngilizce yanında Fransızca, İtalyanca, İspanyolca, Almanca, Bask, Portekizce ve Lehçe'yi desteklemektedir. Genelde gretl'ın yerel dilde gözükmesi için özel bir şey yapmak gerekmemelidir: program tüm çeviri setleri ile birlikte gelir ve bunlar bilgisayarın dil ayarları temelinde otomatik olarak kullanılır. Ancak, bazı durumlarda beklenen etkiyi elde etmek için dil ayarlarını düzeltmek gerekebilir. Dil ayarları, Windows denetim masasından değiştirilebilir. Eğer bu işinize yaramazsa, şu gözden geçirmeyi yapabilirsiniz:</p>
+
+<ul>
+
+<li>
+<p>Bir Windows konsolu (zaman zaman yanlışlıkla "DOS penceresi" de denilen) açın.</p>
+</li>
+
+<li><p><kbd>cd</kbd> komutu ile gretl'ın yüklü olduğu dizine geçin. Örnek:</p>
+
+<pre>
+cd c:\userdata\gretl
+</pre>
+
+<p>ve Enter tuşuna basın.<p>
+</li>
+
+<li>
+<p>"<kbd>set LANG=</kbd>" ve ardından dilinize ait iki harflik dil kodunu yazın. Örneğin, eğer diliniz İtalyanca ise</p>
+
+<pre>
+set LANG=it
+</pre>
+
+<p>yazın ve Enter'a basın.  (Fransızca için <kbd>fr</kbd>, İspanyolca için
+<kbd>es</kbd>, Lehçe için <kbd>pl</kbd> ve Almanca için <kbd>de</kbd>.)
+</p>
+</li>  
+
+<li><p>Daha sonra gretl'ı konsoldan başlatmak için şunu yazın:</p>
+
+<pre>
+gretlw32.exe
+</pre>
+<p>ve Enter'a basın.</p>
+</li>
+
+</ul>
+
+<p>Eğer destekleniyorsa, gretl seçilen dilde çalışacaktır. Eğer gretl'ın doğru dilde açılmasını bu şekilde sağlayabiliyorsanız, Windows denetim masasında doğru dilin seçilmesi ile de aynı etkinin elde edilebilmesi gerekir.</p>
+
+<h2>Gretl'ı güncellemek</h2>
+
+<p>Gretl'ın var olan bir kurulumunu güncellerken, başta, gretl ana dizininde bulacağınız <kbd>unins000.exe</kbd> kaldırma programını çalıştırmak iyi bir fikirdir. Bu, eskimiş DLL dosyaları veya Windows Kayıt Kütüğü girdileri kaynaklı tuhaf davranışlar elde etmenizi önler. Kaldırma programının, <kbd>gretl/user</kbd> dizininde oluşturmuş olduğunuz dosyalara dokunmayacağına, ancak Seçenekler menüsünde yapmış olduğunuz özelleştirmeleri sileceğine ve programın yeni sürümünü başlattığınızda bunları yeniden saptamanız gerekeceğine dikkat ediniz.</p>
+
+<h2>Gretl'ı ağ üzerinde çalıştırmak</h2>
+
+<p>Gretl'ın Windows sürümünü, bir bilgisayar laboratuvarında olduğu gibi yerel bir ağ üzerinde çalıştırmak isteyen kişiler için bir tavsiye sayfası <a href="./gretl_network.html">burada</a> bulunmaktadır.</p>
+
+<h2>Gretl'ı Windows altında derlemek</h2>
+
+<p>Gretl'ı Windows için kendiniz derlemek isterseniz, gretl kaynak paketini indirin (en yenisini <a
+href="http://sourceforge.net/projects/gretl/">burada</a> bulabilirsiniz) ve <kbd>win32</kbd> alt-dizinine bir göz gezdirin. Burada Windows sürümü için bir <kbd>Make</kbd> dosyası bulacaksınız: gerçekte gretl'ı Linux üzerinde çapraz-derlemek için tasarlanmış olsa da, bu dosyayı Windows'a uyarlamak, özellikle de mingw32 derleyicisini kullanıyorsanız, çok zor olmasa gerektir.</p>
+
+</body>
+</html>
+
+
+
+
