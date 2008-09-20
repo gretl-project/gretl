@@ -130,8 +130,7 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.es
 	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.es 
- 
-        ./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_pt.xml && \
+	./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_pt.xml && \
 	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.pt
 	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_pt.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.pt
@@ -148,7 +147,7 @@ $(GENSTAMP): xsltrans reflow $(FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow < tmp.txt > $(SHAREDIR)/genrcli.hlp.it
 	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs_it.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp.it
-        ./xsltrans --funcs --plain $(CMDSDIR)/genr_funcs_pt.xml && \
+	./xsltrans --funcs --plain $(CMDSDIR)/genr_funcs_pt.xml && \
 	./reflow < tmp.txt > $(SHAREDIR)/genrcli.hlp.pt
 	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs_pt.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp.pt
@@ -281,7 +280,7 @@ help-all: $(HLPSTAMP) $(GENSTAMP)
 check: validate 
 	-./validate $(CMDSDIR)/gretl_commands.xml
 	-./validate $(CMDSDIR)/gretl_commands_it.xml
-        -./validate $(CMDSDIR)/gretl_commands_pt.xml
+	-./validate $(CMDSDIR)/gretl_commands_pt.xml
 
 docclean:
 	 rm -f *.txt *.xml
