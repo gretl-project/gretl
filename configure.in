@@ -32,19 +32,19 @@ dnl
 dnl Variables controlling the gretl build
 dnl
 build_gui="yes"
-build_docs="no"
+build_docs="yes"
 use_lucida="no"
 build_po="no"
-have_pkgconfig="no"
-have_readline="no"
+have_pkgconfig="yes"
+have_readline="yes"
 new_readline="no"
 have_zlib="no"
 have_gtk="no"
 have_gtkprint="no"
-have_gnome="no"
+have_gnome="yes"
 have_gmp="no"
 have_mpfr="no"
-have_lapack="no"
+have_lapack="yes"
 have_fftw3="no"
 seek_inet_addr="no"
 have_tramo="yes"
@@ -629,6 +629,7 @@ if test "${build_docs}" = "yes" ; then
     doc/tex/Makefile
     doc/tex_it/Makefile
     doc/tex_es/Makefile
+    doc/tex_pt/Makefile
   ])
 fi
 
