@@ -1,3 +1,9 @@
+version 1.7.9, in progress
+
+The "values" function no longer automatically truncates its 
+argument (series or vector) to integer.  To get the old 
+behavior for an argument x you should do values(int(x)).
+
 8/28/2008 version 1.7.7
 
 Ordered probit and logit: the presentation of the cut-points in

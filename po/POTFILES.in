@@ -82,6 +82,7 @@ gui2/cmdstack.c
 gui2/console.c
 gui2/database.c
 gui2/datafiles.c
+gui2/datawiz.c
 gui2/dialogs.c
 gui2/dlgutils.c
 gui2/filelists.c

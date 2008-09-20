@@ -531,7 +531,7 @@ static int *mspec_to_list (int type, union msel *sel, int n,
     }
 
     if (ns <= 0) {
-	strcpy(gretl_errmsg, _("Invalid non-positive range")); 
+	strcpy(gretl_errmsg, _("Range is non-positive!")); 
 	*err = 1;
 	return NULL;
     }
