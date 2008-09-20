@@ -2278,11 +2278,12 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	if (l->t == NUM && r->t == NUM) {
+	if (l->t == NUM && (r->t == NUM || r->t == EMPTY)) {
 	    ret = aux_ivec_node(p, 2);
 	    if (ret != NULL) {
 		ret->v.ivec[0] = (int) l->v.xval;
-		ret->v.ivec[1] = (int) r->v.xval;
+		ret->v.ivec[1] = (r->t == NUM)? 
+		    (int) r->v.xval : MSEL_MAX;
 	    }
 	} else {
 	    p->err = E_TYPES;

@@ -20,6 +20,8 @@
 #ifndef USERMAT_H_
 #define USERMAT_H_
 
+#define MSEL_MAX -999
+
 enum {
     SEL_RANGE,
     SEL_MATRIX,

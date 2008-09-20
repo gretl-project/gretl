@@ -488,6 +488,25 @@ int copy_matrix_as (const gretl_matrix *m, const char *new)
     return err;
 }
 
+static int msel_out_of_bounds (int *range, int n)
+{
+    int *bad = NULL;
+
+    if (range[0] < 1 || range[0] > n) {
+	bad = &range[0];
+    } else if (range[1] < 1 || range[1] > n) {
+	bad = &range[1];
+    }
+
+    if (bad != NULL) {
+	sprintf(gretl_errmsg, _("Index value %d is out of bounds"), 
+		*bad);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static int *mspec_to_list (int type, union msel *sel, int n,
 			   int *err)
 {
@@ -499,13 +518,21 @@ static int *mspec_to_list (int type, union msel *sel, int n,
     }
 
     if (type == SEL_RANGE) {
+	if (sel->range[1] == MSEL_MAX) {
+	    sel->range[1] = n;
+	}
+	if (msel_out_of_bounds(sel->range, n)) {
+	    *err = 1;
+	    return NULL;
+	}
 	ns = sel->range[1] - sel->range[0] + 1;
     } else {
 	ns = gretl_vector_get_length(sel->m);
     }
 
     if (ns <= 0) {
-	*err = E_DATA;
+	strcpy(gretl_errmsg, _("Invalid non-positive range")); 
+	*err = 1;
 	return NULL;
     }
 

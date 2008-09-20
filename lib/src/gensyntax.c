@@ -664,10 +664,15 @@ static void get_slice_parts (NODE *t, parser *p)
 	    t->v.b2.l = expr(p);
 	}
 	if (p->sym == P_COL) {
-	    /* need second part of colon-separated range */
+	    /* second part of colon-separated range */
 	    t->v.b2.l = newb2(SUBSL, t->v.b2.l, NULL);
 	    lex(p);
-	    t->v.b2.l->v.b2.r = expr(p);
+	    if (p->sym == P_COM || p->sym == G_RBR) {
+		/* reached end: second part implicitly empty */
+		t->v.b2.l->v.b2.r = newempty(EMPTY);
+	    } else {
+		t->v.b2.l->v.b2.r = expr(p);
+	    }
 	}
 	if (p->sym == G_RBR) {
 	    /* no comma, no second arg string: may be OK */
@@ -685,10 +690,15 @@ static void get_slice_parts (NODE *t, parser *p)
 		t->v.b2.r = expr(p);
 	    }
 	    if (p->sym == P_COL) {
-		/* need second part of colon-separated range */
+		/* second part of colon-separated range */
 		t->v.b2.r = newb2(SUBSL, t->v.b2.r, NULL);
 		lex(p);
-		t->v.b2.r->v.b2.r = expr(p);
+		if (p->sym == G_RBR) {
+		    /* reached end: second part implicitly empty */
+		    t->v.b2.r->v.b2.r = newempty(EMPTY);
+		} else {
+		    t->v.b2.r->v.b2.r = expr(p);
+		}
 	    }
 	    if (p->sym == G_RBR) {
 		if (p->ch == '\'') {
