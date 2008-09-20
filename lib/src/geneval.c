@@ -461,12 +461,9 @@ static NODE *aux_series_node (parser *p, int n)
 
 static NODE *aux_ivec_node (parser *p, int n)
 {
-    if (p->dinfo->n == 0) {
-	no_data_error(p);
-	return NULL;
-    } else {
-	return get_aux_node(p, IVEC, n, 1);
-    }
+    /* Note 2008-9-19: this used to give an error 
+       on no dataset present */
+    return get_aux_node(p, IVEC, n, 1);
 }
 
 static NODE *aux_lvec_node (parser *p)
