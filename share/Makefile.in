@@ -22,10 +22,15 @@ AUTO_HELPFILES = \
 	gretlgui.hlp.it \
 	gretlcmd.hlp.it \
 	gretlcli.hlp.it \
+	gretlgui.hlp.pt \
+	gretlcmd.hlp.pt \
+	gretlcli.hlp.pt \
 	genrcli.hlp \
 	genrgui.hlp \
 	genrcli.hlp.it \
-	genrgui.hlp.it
+	genrgui.hlp.it \
+        genrcli.hlp.pt \
+	genrgui.hlp.pt
 
 ifeq ($(build_docs),yes)
   query_make_help = help
