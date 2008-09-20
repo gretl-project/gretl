@@ -1,7 +1,7 @@
 # Note: tex_es was included below: it can be reinstated
 # if the Spanish TeX files are updated at some point
 
-SUBDIRS = tex tex_it 
+SUBDIRS = tex tex_it tex_pt 
 
 .PHONY : subdirs $(SUBDIRS) clean install 
 
