@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<localization language="pt">
+
+ <gentext          key="args" text="Argumentos: "/>
+ <gentext           key="arg" text="Argumento:  "/>
+ <gentext      key="altforms" text="Variantes:  "/>
+ <gentext          key="opts" text="Opções:     "/>
+ <gentext           key="opt" text="Opção:      "/>
+ <gentext      key="examples" text="Exemplos:   "/>
+ <gentext       key="example" text="Exemplo:    "/>
+ <gentext     key="guidebook" text="guia de utilização do gretl"/>
+ <gentext      key="menupath" text="Caminho de Menu:    "/>
+ <gentext   key="otheraccess" text="Acesso alternativo: "/>
+ <gentext key="scriptcommand" text="Comando:    "/>
+ <gentext key="or" text=" ou "/>
+ <gentext key="Seealso" text="Ver também"/>
+ 
+</localization>
