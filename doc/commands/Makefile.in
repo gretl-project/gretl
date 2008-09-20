@@ -32,6 +32,7 @@ SHAREDIR = $(topsrc)/share
 CMDDTD = $(CMDSDIR)/gretl_commands.dtd
 CMDSRC = $(CMDSDIR)/gretl_commands.xml \
 	$(CMDSDIR)/gretl_commands_es.xml \
+        $(CMDSDIR)/gretl_commands_pt.xml \
 	$(CMDSDIR)/gretl_commands_it.xml
 
 FNCDTD = $(CMDSDIR)/genr_funcs.dtd
@@ -44,7 +45,7 @@ HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 TEXXSL = $(CMDSDIR)/gretltex.xsl
 
 XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
-  $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_it.xml
+  $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_pt.xml $(CMDSDIR)/hlpstrs_it.xml
 
 EQNLIST = $(CMDSDIR)/eqn_list.xml
 EQNXSL = $(CMDSDIR)/equations.xsl
@@ -128,7 +129,14 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.es
 	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_es.xml && \
-	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.es
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.es 
+ 
+        ./xsltrans --cmds --plain $(CMDSDIR)/gretl_commands_pt.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/gretlcli.hlp.pt
+	./xsltrans --cmds --pango $(CMDSDIR)/gretl_commands_pt.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlcmd.hlp.pt
+	./xsltrans --gui --pango $(CMDSDIR)/gretl_commands_pt.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/gretlgui.hlp.pt 
 	touch $@
 
 $(GENSTAMP): xsltrans reflow $(FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) 
@@ -140,6 +148,10 @@ $(GENSTAMP): xsltrans reflow $(FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow < tmp.txt > $(SHAREDIR)/genrcli.hlp.it
 	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs_it.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp.it
+        ./xsltrans --funcs --plain $(CMDSDIR)/genr_funcs_pt.xml && \
+	./reflow < tmp.txt > $(SHAREDIR)/genrcli.hlp.pt
+	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs_pt.xml && \
+	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp.pt
 	touch $@
 
 .PHONY: test
@@ -173,6 +185,15 @@ textables_es: tables matfuncs $(CMDSDIR)/genr_funcs_es.xml
 	LANG=es_ES ./matfuncs $(CMDSDIR)/genr_funcs_es.xml > ../tex_es/matfuncs.tex && \
 	touch $@
 
+textables_pt: tables matfuncs $(CMDSDIR)/genr_funcs_pt.xml
+	./tables --constants > ../tex_pt/tabconstants.tex
+	./tables --internals > ../tex_pt/tabinternals.tex
+	./tables --functions > ../tex_pt/tabfunctions.tex
+	./tables --loopcmds > ../tex_pt/tabloopcmds.tex
+	./tables --nonloopcmds > ../tex_pt/tabnonloopcmds.tex
+	LANG=pt_PT ./matfuncs $(CMDSDIR)/genr_funcs_pt.xml > ../tex_pt/matfuncs.tex && \
+	touch $@
+
 functex: xsltrans reflow $(FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
 	cat $(CMDSDIR)/genr_funcs.xml | grep -v DOCTYPE | \
@@ -187,6 +208,14 @@ functex_it: xsltrans reflow $(FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
 	grep -v 'xml version' >> tmp.xml && \
 	./xsltrans --funcs --tex tmp.xml --docdir=$(CMDSDIR) && \
 	./reflow < tmp.txt > ../tex_it/funcbody.tex
+	touch $@
+
+functex_pt: xsltrans reflow $(FNCSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/genr_funcs_pt.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --funcs --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < tmp.txt > ../tex_pt/funcbody.tex
 	touch $@
 
 cmdtex: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
@@ -216,6 +245,15 @@ cmdtex_es: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
 	rm tmp.xml
 	touch $@
 
+cmdtex_pt: xsltrans reflow $(CMDSRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS)
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/gretl_commands_pt.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --cmds --tex tmp.xml --docdir=$(CMDSDIR) && \
+	./reflow < tmp.txt > ../tex_pt/refbody.tex && \
+	rm tmp.xml
+	touch $@
+
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
 	LANG=en_US ./topiclist $(CMDSDIR)/gretl_commands.xml > ../tex/cmdtopics.tex && \
 	touch $@
@@ -226,6 +264,10 @@ topiclist_it: topiclist $(CMDSDIR)/gretl_commands_it.xml
 
 topiclist_es: topiclist $(CMDSDIR)/gretl_commands_es.xml
 	LANG=es_ES ./topiclist $(CMDSDIR)/gretl_commands_es.xml > ../tex_es/cmdtopics.tex && \
+	touch $@ 
+
+topiclist_pt: topiclist $(CMDSDIR)/gretl_commands_pt.xml
+	LANG=pt_PT ./topiclist $(CMDSDIR)/gretl_commands_pt.xml > ../tex_pt/cmdtopics.tex && \
 	touch $@ 
 
 # test validity of skeleton.xml, and ability of xsltrans
@@ -239,6 +281,7 @@ help-all: $(HLPSTAMP) $(GENSTAMP)
 check: validate 
 	-./validate $(CMDSDIR)/gretl_commands.xml
 	-./validate $(CMDSDIR)/gretl_commands_it.xml
+        -./validate $(CMDSDIR)/gretl_commands_pt.xml
 
 docclean:
 	 rm -f *.txt *.xml
