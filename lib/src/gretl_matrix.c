@@ -8667,8 +8667,9 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 				   int *err)
 {
     gretl_matrix *v = NULL;
-    int *sorted = NULL;
-    int i, k, m, last;
+    double *sorted = NULL;
+    double last;
+    int i, k, m;
 
     sorted = malloc(n * sizeof *sorted);
     if (sorted == NULL) {
@@ -8679,7 +8680,7 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
     k = 0;
     for (i=0; i<n; i++) {
 	if (!na(x[i])) {
-	    sorted[k++] = (int) x[i];
+	    sorted[k++] = x[i];
 	}
     }
 
@@ -8688,8 +8689,8 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 	goto bailout;
     }
 	
-    qsort(sorted, k, sizeof *sorted, gretl_compare_ints); 
-    m = count_distinct_int_values(sorted, k);
+    qsort(sorted, k, sizeof *sorted, gretl_compare_doubles); 
+    m = count_distinct_values(sorted, k);
 
     v = gretl_column_vector_alloc(m);
     if (v == NULL) {

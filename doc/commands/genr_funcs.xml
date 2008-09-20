@@ -3869,11 +3869,9 @@
       <description>
 	<para>
 	  Returns a vector containing the distinct elements of
-	  <argname>x</argname> sorted in ascending order. Note: because of
-	  its typical usage, <argname>x</argname> is assumed to contain
-	  integer values only. If not, the fractional part is truncated,
-	  so <lit>values(x)</lit> is always identical to
-	  <lit>values(int(x))</lit>.
+	  <argname>x</argname> sorted in ascending order.  If you wish to
+	  truncate the values to integers before applying this function,
+	  use the expression <lit>values(int(x))</lit>.
 	</para>
 	<para>
 	  <seelist>
