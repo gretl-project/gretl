@@ -3,9 +3,11 @@
 <!ENTITY en SYSTEM "hlpstrs_en.xml">
 <!ENTITY es SYSTEM "hlpstrs_es.xml">
 <!ENTITY it SYSTEM "hlpstrs_it.xml">
+<!ENTITY pt SYSTEM "hlpstrs_pt.xml">
 ]>
 <internationalization>
 &en;
 &es;
 &it;
+&pt;
 </internationalization>
