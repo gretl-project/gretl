@@ -32,20 +32,19 @@ button.  In either case a script window will open (see Figure
 
 The toolbar at the top of the script window offers the following
 functions (left to right): (1) Save the file; (2) Save the file under
-a specified name; (3) Print the file (under Windows or the gnome
-desktop only); (4) Execute the commands in the file; (5) Copy selected
-text; (6) Paste the selected text; (7) Find and replace text; (8) Undo
-the last Paste or Replace action; (9) Help (if you place the cursor in
-a command word and press the question mark you will get help on that
-command); (10) Close the window.  
+a specified name; (3) Print the file (this option is not available on
+all platforms); (4) Execute the commands in the file; (5) Copy
+selected text; (6) Paste the selected text; (7) Find and replace text;
+(8) Undo the last Paste or Replace action; (9) Help (if you place the
+cursor in a command word and press the question mark you will get help
+on that command); (10) Close the window.
 
-When you execute the script, all output is directed to a single
-window, where it can be edited, saved or copied to the clipboard.  You
-can launch the script by clicking on the Execute icon or by pressing
-Ctrl-r.  To learn more about the possibilities of scripting, take a
-look at the \app{gretl} Help item ``Command reference,'' or start up
-the command-line program \app{gretlcli} and consult its help, or
-consult the \GCR.
+When you execute the script, by clicking on the Execute icon or by
+pressing Ctrl-r, all output is directed to a single window, where it
+can be edited, saved or copied to the clipboard.  To learn more about
+the possibilities of scripting, take a look at the \app{gretl} Help
+item ``Command reference,'' or start up the command-line program
+\app{gretlcli} and consult its help, or consult the \GCR.
 
 If you run the script when part of it is highlighted, \app{gretl} will
 only run that portion. Moreover, if you want to run just the current
@@ -58,16 +57,22 @@ line, you can do so by pressing Ctrl-Enter.\footnote{This feature is
   allows you to have several script windows open at the same time, you
   may want to keep your scripts tidy and reasonably small.}
 
-In addition, the \app{gretl} package includes over 70 ``practice''
-scripts.  Most of these relate to Ramanathan (2002), but they may also
-be used as a free-standing introduction to scripting in \app{gretl}
-and to various points of econometric theory.  You can explore the
-practice files under ``File, Script files, Practice file'' There
-you will find a listing of the files along with a brief description of
-the points they illustrate and the data they employ.  Open any file
-and run it to see the output.  Note that long commands in a script can
-be broken over two or more lines, using backslash as a continuation
-character.
+Clicking the right mouse button in the script editor window produces a
+pop-up menu.  This gives you the option of executing either the line
+on which the cursor is located, or the selected region of the script
+if there's a selection in place.  If the script is editable, this menu
+also gives the option of adding or removing comment markers from the
+start of the line or lines.
+
+The \app{gretl} package includes over 70 ``practice'' scripts.  Most
+of these relate to Ramanathan (2002), but they may also be used as a
+free-standing introduction to scripting in \app{gretl} and to various
+points of econometric theory.  You can explore the practice files
+under ``File, Script files, Practice file'' There you will find a
+listing of the files along with a brief description of the points they
+illustrate and the data they employ.  Open any file and run it to see
+the output.  Note that long commands in a script can be broken over
+two or more lines, using backslash as a continuation character.
 
 You can, if you wish, use the GUI controls and the scripting approach
 in tandem, exploiting each method where it offers greater convenience.
@@ -89,6 +94,31 @@ Here are two suggestions.
   revisit the data at a later point, open and rerun the
   ``preparatory'' script first.
 \end{itemize}
+
+\subsection{Scripts and data files}
+
+One common way of doing econometric research with \app{gretl} is as
+follows: compose a script; execute the script; inspect the output;
+modify the script; run it again --- with the last three steps repeated
+as many times as necessary.  In this context, note that when you open
+a data file this clears out most of \app{gretl}'s internal state.
+It's therefore probably a good idea to have your script start with an
+\texttt{open} command: the data file will be re-opened each time, and
+you can be confident you're getting ``fresh'' results.
+
+One further point should be noted.  When you go to open a new data
+file via the graphical interface, you are always prompted: opening a
+new data file will lose any unsaved work, do you really want to do
+this?  When you execute a script that opens a data file, however, you
+are \textit{not} prompted.  The assumption is that in this case you're
+not going to lose any work, because the work is embodied in the script
+itself (and it would be annoying to be prompted at each iteration of
+the work cycle described above).   
+
+This means you should be careful if you've done work using the
+graphical interface and then decide to run a script: the current data
+file will be replaced without any questions asked, and it's your
+responsibility to save any changes to your data first.
 
 
 \section{Saving script objects}

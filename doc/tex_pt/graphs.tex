@@ -78,31 +78,25 @@ labels''.
 
 If you know something about \app{gnuplot} and wish to get finer
 control over the appearance of a graph than is available via the
-graphical controller (``Edit'' option), you have two further options.
+graphical controller (``Edit'' option), here's what to do.  In the
+graph display window, right-click and choose ``Save to session as
+icon''.  Then open the icon view window --- either via the menu item
+View/Icon view, or by clicking the ``session icon view'' button on the
+main-window toolbar.  You should see an icon representing your graph.
+Right-click on that and select ``Edit plot commands'' from the pop-up
+menu.  This opens an editing window with the actual gnuplot commands
+displayed. You can edit these commands and either save them for future
+processing or send them to gnuplot, using the Execute (cogwheel)
+button on the toolbar in the plot commands editing window.
 
-\begin{itemize}
-\item Once the graph is saved as a session icon, you can right-click
-  on its icon for a further pop-up menu.  One of the options here is
-  ``Edit plot commands'', which opens an editing window with the
-  actual gnuplot commands displayed. You can edit these commands and
-  either save them for future processing or send them to gnuplot (with
-  the Execute icon on the toolbar in the plot commands editing
-  window).
-\item Another way to save the plot commands (or to save the displayed
-  plot in formats other than EPS or PNG) is to use ``Edit'' item on a
-  graph's pop-up menu to invoke the graphical controller, then click
-  on the ``Output to file'' tab in the controller.  You are then
-  presented with a drop-down menu of formats in which to save the
-  graph.
-\end{itemize}
+To find out more about \app{gnuplot} visit
+\href{http://www.gnuplot.info/}{www.gnuplot.info}. This site has
+documentation for the current version of the program in various
+formats.  
 
-To find out more about \app{gnuplot} see the
-\href{http://ricardo.ecn.wfu.edu/gnuplot.html}{online manual} or
-\href{http://www.gnuplot.info/}{www.gnuplot.info}.
-
-See also the entry for \cmd{gnuplot} in the \emph{Gretl Command
-  Reference} --- and the \cmd{graph} and \cmd{plot} commands for
-``quick and dirty'' ASCII graphs.
+See also the entry for \cmd{gnuplot} in the \GCR\ --- and the
+\cmd{graph} and \cmd{plot} commands for ``quick and dirty'' ASCII
+graphs.
 
 \begin{figure}[htbp]
   \begin{center}
@@ -123,37 +117,39 @@ These plots (after Tukey and Chambers) display the distribution
 of a variable. The central box encloses the middle 50 percent of the
 data, i.e.\ it is bounded by the first and third quartiles.  The
 ``whiskers'' extend to the minimum and maximum values.  A line is
-drawn across the box at the median.
+drawn across the box at the median and a ``\texttt{+}'' sign
+identifies the mean.
 
 In the case of notched boxes, the notch shows the limits of an
-approximate 90 percent confidence interval.  This is obtained by the
-bootstrap method, which can take a while if the data series is very
-long.
+approximate 90 percent confidence interval for the median.  This is
+obtained by the bootstrap method, which can take a while if the data
+series is very long.
 
 Clicking the mouse in the boxplots window brings up a menu which
 enables you to save the plots as encapsulated postscript (EPS) or as a
 full-page postscript file.  Under the X window system you can also
 save the window as an XPM file; under MS Windows you can copy it to
 the clipboard as a bitmap.  The menu also gives you the option of
-opening a summary window which displays five-number summaries
-(minimum, first quartile, median, third quartile, maximum), plus a
+opening a summary window which displays six-number summaries (mean,
+minimum, first quartile, median, third quartile, maximum), plus a
 confidence interval for the median if the ``notched'' option was
-chosen.  
+chosen.
 
 Some details of gretl's boxplots can be controlled via a (plain text)
-file named \verb+.boxplotrc+ which is looked for, in turn, in the
-current working directory, the user's home directory (corresponding to
-the environment variable HOME) and the gretl user directory (which is
-displayed and may be changed under the ``Tools, Preferences, General''
-menu).  Options that can be set in this way are the font to use when
-producing postscript output (must be a valid generic postscript font
-name; the default is Helvetica), the size of the font in points (also
-for postscript output; default is 12), the minimum and maximum for the
-y-axis range, the width and height of the plot in pixels (default, 560
-x 448), whether numerical values should be printed for the quartiles
-and median (default, don't print them), and whether outliers (points
-lying beyond 1.5 times the interquartile range from the central box)
-should be indicated separately (default, no).  Here is an example:
+file named \verb+.boxplotrc+ (or alternatively \verb+plotconfig.txt+)
+which is looked for, in turn, in the current working directory, the
+user's home directory (corresponding to the environment variable HOME)
+and the gretl user directory (which is displayed and may be changed
+under the ``Tools, Preferences, General'' menu).  Options that can be
+set in this way are the font to use when producing postscript output
+(must be a valid generic postscript font name; the default is
+Helvetica), the size of the font in points (also for postscript
+output; default is 12), the minimum and maximum for the y-axis range,
+the width and height of the plot in pixels (default, 560 $\times$ 448),
+whether numerical values should be printed for the quartiles and
+median (default, don't print them), and whether outliers (points lying
+beyond 1.5 times the interquartile range from the central box) should
+be indicated separately (default, no).  Here is an example:
 
 \begin{code}
 font = Times-Roman
@@ -167,11 +163,12 @@ outliers = true
 \end{code}
 
 On the second to last line, the value associated with \verb+numbers+
-is a ``printf'' format string as in the C programming language; if
-specified, this controls the printing of the median and quartiles next
-to the boxplot, if no \verb+numbers+ entry is given these values are
-not printed.  In the example, the values will be printed to a width of
-3 digits, with 2 digits of precision following the decimal point.
+is a format string as in the \texttt{printf} command (see the \GCR);
+if specified, this controls the printing of the median and quartiles
+next to the boxplot, if no \verb+numbers+ entry is given these values
+are not printed.  In the example, the values will be printed to a
+width of 3 digits, with 2 digits of precision following the decimal
+point.
 
 Not all of the options need be specified, and the order doesn't
 matter.  Lines not matching the pattern ``key = value'' are ignored,

@@ -190,7 +190,11 @@ end gmm
 
 We feed \app{gretl} the necessary ingredients for GMM estimation
 in a command block, starting with \texttt{gmm} and ending with
-\texttt{end gmm}. Three elements are compulsory within a \texttt{gmm}
+\texttt{end gmm}. After the \texttt{end gmm} statement two mutually
+exclusive options can be specified: \option{two-step} or
+\option{iterate}, whose meaning should be obvious.
+
+Three elements are compulsory within a \texttt{gmm}
 block:
 \begin{enumerate}
 \item one or more \texttt{orthog} statements
@@ -217,15 +221,19 @@ must be updated in the process of iterative estimation), while the
 term on the right is a constant function of the data.
 
 The \texttt{weights} statement is used to specify the initial
-weighting matrix and its syntax is straightforward.  The
-\texttt{params} statement specifies the parameters with respect to
+weighting matrix and its syntax is straightforward.  Note, however,
+that when more than one step is required that matrix will contain the
+\emph{final} weight matrix, which most likely will be different from
+its initial value.
+
+The \texttt{params} statement specifies the parameters with respect to
 which the GMM criterion should be minimized; it follows the same logic
 and rules as in the \texttt{mle} and \texttt{nls} commands.
 
 The minimum is found through numerical minimization via BFGS (see
-section~\ref{genr-numerical} and chapter~\ref{chap:mle}).  The
+section~\ref{sec:genr-numerical} and chapter~\ref{chap:mle}).  The
 progress of the optimization procedure can be observed by appending
-the \verb|--verbose| switch to the \texttt{end gmm} line.  (In this
+the \option{verbose} switch to the \texttt{end gmm} line.  (In this
 example GMM estimation is clearly a rather silly thing to do, since a
 closed form solution is easily given by OLS.)
 
@@ -259,7 +267,7 @@ instruments and one endogenous variable the model is over-identified
 and therefore the weights matrix will influence the solution.  Partial
 output from this script is shown in~\ref{gmm-tsls-out}.  The estimated
 standard errors from GMM are robust by default; if we supply the
-\verb|--robust| option to the \texttt{tsls} command we get identical
+\option{robust} option to the \texttt{tsls} command we get identical
 results.\footnote{The data file used in this example is available in
   the Stock and Watson package for \app{gretl}.  See
   \url{http://gretl.sourceforge.net/gretl_data.html}.}

@@ -1,6 +1,7 @@
 \documentclass[oneside]{book}
 \usepackage[T1]{fontenc}
 \usepackage{url,verbatim,fancyvrb,appendix}
+%% \usepackage{mathtime}
 \usepackage{pifont}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
@@ -9,6 +10,7 @@
 \usepackage[compat2,a4paper,hmargin=1.1in,top=.5in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 \usepackage{dcolumn,amsmath}
+%% \usepackage{dcolumn,amsmath,array}
 
 %% \pdfimageresolution=120
 \hypersetup{pdftitle={Manual de Utilização do Gretl},
@@ -27,6 +29,8 @@
 \newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
 \newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
 \newcommand{\convp}{\stackrel{\mathrm{p}}{\longrightarrow}}
+\newcommand{\convd}{\stackrel{\mathrm{d}}{\longrightarrow}}
+\renewcommand{\vec}[1]{{\rm vec}(#1)}
 % -------------------------------------------------------------------------
 %\includeonly{gmm}
 \begin{document}

@@ -25,6 +25,36 @@ setobs 20 9:1 --special
 difference) or estimation methods like seasonal ARIMA will work as
 expected.
 
+\subsection{Help, my data are backwards!}
+
+\emph{Problem:} Gretl expects time series data to be in chronological
+order (most recent observation last), but you have imported
+third-party data that are in reverse order (most recent first).
+
+\emph{Solution:}
+\begin{code}
+setobs 1 1 --cross-section
+genr sortkey = -obs
+dataset sortby sortkey
+setobs 1 1950 --time-series
+\end{code}
+
+\emph{Comment:} The first line is required only if the data currently
+have a time series interpretation: it removes that interpretation,
+because (for fairly obvious reasons) the \texttt{dataset sortby}
+operation is not allowed for time series data.  The following two
+lines reverse the data, using the negative of the built-in index
+variable \texttt{obs}.  The last line is just illustrative: it
+establishes the data as annual time series, starting in 1950.
+
+If you have a dataset that is mostly the right way round, but a
+particular variable is wrong, you can reverse that variable as
+follows:
+\begin{code}
+genr x = sortby(-obs, x)
+\end{code}
+
+
 \subsection{Dropping missing observations selectively}
 
 \emph{Problem:} You have a dataset with many variables and want to
@@ -32,12 +62,14 @@ restrict the sample to those observations for which there are no
 missing observations for the variables \texttt{x1}, \texttt{x2} and
 \texttt{x3}.
 
+\begin{samepage}
 \emph{Solution:}
 \begin{code}
 list X = x1 x2 x3
 genr sel = ok(X)
 smpl sel --restrict
 \end{code}
+\end{samepage}
 
 \emph{Comment:} You can now save the file via a \texttt{store} command
 to preserve a subsampled version of the dataset.
@@ -117,26 +149,42 @@ not a scalar.
 \[
   y_t = \left\{ 
     \begin{array}{ll} 
-      x_t & \mathrm{for} \quad d_t = 1 \\ 
-      z_t & \mathrm{for} \quad d_t = 0 
+      x_t & \mathrm{for} \quad d_t > a \\ 
+      z_t & \mathrm{for} \quad d_t \le a 
     \end{array}
     \right. 
 \]
 
 \emph{Solution:}
 \begin{code}
-series y = d ? x : z
+series y = (d > a) ? x : z
 \end{code}
 
 \emph{Comment:} There are several alternatives to the one presented
 above. One is a brute force solution using loops. Another one, more
-efficient but still suboptimal, would be \verb|y = d*x + (1-d)*z|.
-The ternary conditional assignment operator is not only the most
-numerically efficient way to accomplish what we want, it is also
+efficient but still suboptimal, would be 
+\begin{code}
+series y = (d>a)*x + (d<=a)*z  
+\end{code}
+However, the ternary conditional assignment operator is not only the
+most numerically efficient way to accomplish what we want, it is also
 remarkably transparent to read when one gets used to it. Some readers
 may find it helpful to note that the conditional assignment operator
 works exactly the same way as the \texttt{=IF()} function in
 spreadsheets.
+
+\subsection{Generating a time index for panel datasets}
+
+\emph{Problem:} \app{Gretl} has a \texttt{\$unit} accessor, but not
+the equivalent for time. What should I use?
+
+\emph{Solution:}
+\begin{code}
+series x = time
+\end{code}
+
+\emph{Comment:} The special construct \cmd{genr time} and its variants
+are aware of whether a dataset is a panel.
 
 \section{Neat tricks}
 \label{sec:cheat-neat}
@@ -193,6 +241,44 @@ simply drop all observations but one per minute and save the resulting
 data (\texttt{store foo rv} translates as ``store in the \app{gretl}
 datafile \texttt{foo.gdt} the series \texttt{rv}'').
 
+\subsection{Looping over two paired lists}
+
+\emph{Problem:} Suppose you have two lists with the same number of
+elements, and you want to apply some command to corresponding elements
+over a loop.
+
+\emph{Solution:}
+\begin{code}
+list L1 = a b c
+list L2 = x y z
+
+k1 = 1
+loop foreach i L1 --quiet
+    k2 = 1
+    loop foreach j L2 --quiet
+        if k1=k2
+            ols $i 0 $j
+        endif
+        k2++
+    end loop
+    k1++
+end loop
+\end{code}
+
+\emph{Comment:} The simplest way to achieve the result is to loop over
+all possible combinations and filter out the unneeded ones via an
+\texttt{if} condition, as above. That said, in some cases variable
+names can help. For example, if
+\begin{code}
+  list Lx = x1 x2 x3
+  list Ly = y1 y2 y3
+\end{code}
+looping over the integers is quite intuitive and certainly more elegant:
+\begin{code}
+  loop for i=1..3
+    ols y$i const x$i
+  end loop
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex

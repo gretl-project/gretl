@@ -29,7 +29,7 @@ models for panel data can be estimated in their own right.  In the
 graphical interface these options are found under the menu item
 ``Model/Panel/Fixed and random effects''.  In the command-line
 interface one uses the \cmd{panel} command, with or without the
-\verb+--random-effects+ option.
+\option{random-effects} option.
 
 This section explains the nature of these models and comments on their
 estimation via \app{gretl}.
@@ -291,20 +291,20 @@ When you estimate using \textsl{random effects}, the Breusch--Pagan
 and Hausman tests are presented automatically.  
 
 The Breusch--Pagan test is the counterpart to the $F$-test mentioned
-above.  The null hypothesis is that the variance of $v_i$ equals zero;
-if this hypothesis is not rejected, then again we conclude that the
-simple pooled model is adequate.
+above.  The null hypothesis is that the variance of $v_i$ in
+equation (\ref{eq:RE}) equals zero; if this hypothesis is not rejected,
+then again we conclude that the simple pooled model is adequate.
 
 The Hausman test probes the consistency of the GLS estimates.  The
-null hypothesis is that these estimates are consistent, that is, that
-the requirement of orthogonality of the $v_i$ and the $X_i$ is
+null hypothesis is that these estimates are consistent --- that is,
+that the requirement of orthogonality of the $v_i$ and the $X_i$ is
 satisfied.  The test is based on a measure, $H$, of the ``distance''
 between the fixed-effects and random-effects estimates, constructed
 such that under the null it follows the $\chi^2$ distribution with
 degrees of freedom equal to the number of time-varying regressors in
-the matrix $X$.  If the value of $H$ is ``large'' this suggests
-that the random effects estimator is not consistent and the
-fixed-effects model is preferable.
+the matrix $X$.  If the value of $H$ is ``large'' this suggests that
+the random effects estimator is not consistent and the fixed-effects
+model is preferable.
 
 There are two ways of calculating $H$, the matrix-difference method
 and the regression method.  The procedure for the matrix-difference
@@ -349,7 +349,7 @@ avoids this potential problem.  The procedure is:
 By default \app{gretl} computes the Hausman test via the
 matrix-difference method (largely for comparability with other
 software), but it uses the regression method if you pass the
-option \verb+--hausman-reg+ to the \cmd{panel} command.
+option \option{hausman-reg} to the \cmd{panel} command.
 
 \subsection{Robust standard errors}
 \label{panel-robust}
@@ -450,12 +450,79 @@ efficient: it does not make the fullest use of the available
 instruments for $\Delta y_{i,t-1}$, nor does it take into account the
 differenced structure of the error $\eta_{it}$.  It is improved upon
 by the methods of Arellano and Bond (1991) and Blundell and Bond
-(1998).  There is provisional support for the Arellano--Bond method in
-current gretl --- please see the documentation for the \cmd{arbond}
-command.
+(1998).  
 
+\app{Gretl} implements natively the Arellano--Bond estimator.  The
+rationale behind it is, strictly speaking, that of a GMM estimator,
+but it can be illustrated briefly as follows (see Arellano (2003) for
+a comprehensive exposition). Consider again equation
+(\ref{eq:fe-dyn}): if for each individual we have observations
+dated from 1 to $T$, we may write the following system:
+\begin{eqnarray}
+  \label{eq:arbond3}
+  \Delta y_{i,3} & = & \Delta X_{i,3}\beta + \rho \Delta y_{i,2} +
+  \eta_{i,3} \\
+  \label{eq:arbond4}
+  \Delta y_{i,4} & = & \Delta X_{i,4}\beta + \rho \Delta y_{i,4} +
+  \eta_{i,4} \\
+  \label{eq:arbondT}
+  \notag \vdots \\
+  \Delta y_{i,T} & = & \Delta X_{i,T}\beta + \rho \Delta y_{i,T} +
+  \eta_{i,T} 
+\end{eqnarray}
+Following the same logic as for the Anderson--Hsiao estimator, we see
+that the only possible instrument for $\Delta y_{i,2}$ in equation
+(\ref{eq:arbond3}) is $y_{i,1}$, but for equation (\ref{eq:arbond4})
+we can use \emph{both} $y_{i,1}$ and $y_{i,2}$ as instruments for
+$\Delta y_{i,3}$, thereby gaining efficiency. Likewise, for the final
+period $T$ we can use as instruments all values of $y_{i,t}$ up to $t
+= T-2$. The Arellano--Bond technique estimates the above
+system, with an increasing number of instruments for each equation.
 
-\section{Illustration: the Penn World Table}
+Estimation is typically carried out in two steps: in step 1 the
+parameters are estimated on the assumption that the covariance matrix
+of the $\eta_{i,t}$ terms is proportional to
+\[
+\left[
+  \begin{array}{rrrrr}
+    2 & -1 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 & \cdots & 0 \\
+    0 & -1 & 2 & \cdots & 0 \\
+    & \vdots & & \ddots & \vdots \\
+    0 & 0 & 0 & \cdots & 2 \\
+  \end{array}
+\right] 
+\]
+as should be the case if the disturbances in the original model
+$u_{i,t}$ were homoskedastic and uncorrelated. This yields a
+consistent, but not necessarily efficient, estimator.
+
+Step 2 uses the parameters estimated in step 1 to compute an estimate
+of the covariance of the $\eta_{i,t}$, and re-estimates the parameters
+based on that. This procedure has the double effect of handling
+heteroskedasticity and/or serial correlation, plus producing
+estimators that are asymptotically efficient.
+
+One-step estimators have sometimes been preferred on the grounds that
+they are more robust.  Moreover, computing the covariance matrix of the
+2-step estimator via the standard GMM formulae has been shown to
+produce grossly biased results in finite samples. \app{Gretl},
+however, implements the finite-sample correction devised by Windmeijer
+(2005), so standard errors for the 2-step estimator can be considered
+relatively accurate.
+
+By default, \app{gretl}'s \cmd{arbond} command estimates the parameters in
+\[
+  A(L) y_{i,t} = X_{i,t}\beta + v_i + u_{i,t} 
+\]
+via the 1-step procedure.  The dependent variable is automatically
+differenced (but note that the right-hand side variables are not
+automatically differenced), and all available instruments are used.
+However, these choices (plus some others) can be overridden: please
+see the documentation for the \cmd{arbond} command in the \GCR{} and
+the \texttt{arbond91} example file supplied with \app{gretl}.
+
+\section{Panel illustration: the Penn World Table}
 \label{PWT}
 
 The Penn World Table (homepage at

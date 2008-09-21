@@ -45,7 +45,8 @@ One sort of specialized function in \verb+genr+ is time-series
 filtering. In addition to the usual application of lags and
 differences, \app{gretl} provides fractional differencing and two
 filters commonly used in macroeconomics for trend-cycle decomposition:
-the Hodrick--Prescott filter and the Baxter--King bandpass filter.
+the Hodrick--Prescott filter (Hodrick and Prescott, 1997) and the
+Baxter--King bandpass filter (Baxter and King, 1999).
 
 \subsection{Fractional differencing}
 \label{sec:fracdiff}
@@ -86,7 +87,7 @@ genr Y = fracdiff(X,0.5)
 \end{code}
 
 \subsection{The Hodrick--Prescott filter}
-\label{hodrick-prescott}
+\label{sec:hodrick-prescott}
 
 This filter is accessed using the \verb+hpfilt()+ function, which
 takes one argument, the name of the variable to be processed.
@@ -131,7 +132,7 @@ is reasonable for quarterly data.  The default value in \app{gretl} is
 
 
 \subsection{The Baxter and King filter}
-\label{baxter-king}
+\label{sec:baxter-king}
 
 This filter is accessed using the \verb+bkfilt()+ function, which
 again takes the name of the variable to be processed as its single
@@ -261,12 +262,15 @@ to $m\times T$, where $m$ is the number of units in the panel, use
 \subsection{Basic statistics by unit}
 \label{panel-stats}
 
-The functions \texttt{pmean()} and \texttt{psd()} can be used to
-generate basic descriptive statistics (mean and standard deviation)
-for a given variable, on a per-group basis.  
+\app{Gretl} contains functions which can be used to generate basic
+descriptive statistics for a given variable, on a per-unit basis;
+these are \texttt{pnobs()} (number of valid cases), \texttt{pmin()}
+and \texttt{pmax()} (minimum and maximum) and \texttt{pmean()} and
+\texttt{psd()} (mean and standard deviation).
 
-Suppose we have a panel data set comprising 8 time-series observations
-on each of $N$ units or groups.  Then the command
+As a brief illustration, suppose we have a panel data set comprising 8
+time-series observations on each of $N$ units or groups.  Then the
+command
 %
 \begin{code}
 genr pmx = pmean(x)
@@ -287,7 +291,12 @@ however, the standard deviation is recorded as 0.
 
 One particular use of \texttt{psd()} may be worth noting.  If you want
 to form a sub-sample of a panel that contains only those units for
-which the variable \varname{x} is time-varying, you can do
+which the variable \varname{x} is time-varying, you can either use 
+%
+\begin{code}
+smpl (pmin(x) < pmax(x)) --restrict
+\end{code}
+or
 %
 \begin{code}
 smpl (psd(x) > 0) --restrict
@@ -305,7 +314,7 @@ Chapter~\ref{datafiles}.
 
 
 \section{Resampling and bootstrapping}
-\label{genr-resample}
+\label{sec:genr-resample}
 
 Another specialized function is the resampling, with replacement, of a
 series.  Given an original data series \varname{x}, the command
@@ -362,10 +371,11 @@ loop replics --quiet
 endloop      
 printf "proportion of cases with |t| > 2.5 = %g\n", tcount / replics
 \end{scode}
+%$
 \end{script}
 
 \section{Cumulative densities and p-values}
-\label{genr-cdf}
+\label{sec:genr-cdf}
 
 The two functions \cmd{cdf} and \cmd{pvalue} provide complementary
 means of examining values from several probability distributions: the
@@ -433,7 +443,7 @@ while values very close to 1 cannot.
 
 
 \section{Handling missing values}
-\label{genr-missing}
+\label{sec:genr-missing}
 
 Four special functions are available for the handling of missing
 values.  The boolean function \verb+missing()+ takes the name of a
@@ -474,7 +484,7 @@ multiplication by zero: zero times a missing value produces zero
     
 
 \section{Retrieving internal variables}
-\label{genr-internal}
+\label{sec:genr-internal}
 
 The \verb+genr+ command provides a means of retrieving various values
 calculated by the program in the course of estimating models or
@@ -523,14 +533,14 @@ commands.
   constant and a quadratic trend.  When you wish to reference
   \verb+$test+ or \verb+$pvalue+ in connection with this command, you
   can control the variant that is recorded by using one of the flags
-  \verb+--nc+, \verb+--c+, \verb+--ct+ or \verb+--ctt+ with
+  \option{nc}, \option{c}, \option{ct} or \option{ctt} with
   \verb+adf+.
 \item By default, the \cmd{lmtest} command (which must follow an OLS
   regression) performs several diagnostic tests on the regression in
   question.  To control what is recorded in \verb+$test+ and
   \verb+$pvalue+ you should limit the test using one of the flags
-  \verb+--logs+, \verb+--autocorr+, \verb+--squares+ or
-  \verb+--white+.
+  \option{logs}, \option{autocorr}, \option{squares} or
+  \option{white}.
 \end{itemize}
 
 As an aid in working with values retrieved using \verb+$test+ and
@@ -557,10 +567,10 @@ Generated scalar pv (ID 13) = 0.363844
 ? label pv    
   pv=Dickey-Fuller pvalue (scalar)
 \end{code}
+%$
 
-
-\section{Numerical maximization}
-\label{genr-numerical}
+\section{Numerical procedures}
+\label{sec:genr-numerical}
 
 Two special functions are available to aid in the construction of
 special-purpose estimators, namely \texttt{BFGSmax} (the BFGS
@@ -568,21 +578,22 @@ maximizer, discussed in Chapter~\ref{chap:mle}) and \texttt{fdjac},
 which produces a forward-difference approximation to the Jacobian.
 
 \subsection{The BFGS maximizer}
+\label{sec:BFGSmax}
 
-The \texttt{BFGSmax} function takes two arguments: a vector holding the
-initial values of a set of parameters, and a string specifying a call
-to a function that calculates the (scalar) criterion to be maximized,
-given the current parameter values and any other relevant data.  If
-the object is in fact minimization, this function should return the
-negative of the criterion.  On successful completion, \texttt{BFGSmax}
-returns the maximized value of the criterion and the matrix given via
-the first argument holds the parameter values which produce the
-maximum.  Here is an example:
+The \texttt{BFGSmax} function takes two arguments: a vector holding
+the initial values of a set of parameters, and a call to a function
+that calculates the (scalar) criterion to be maximized, given the
+current parameter values and any other relevant data.  If the object
+is in fact minimization, this function should return the negative of
+the criterion.  On successful completion, \texttt{BFGSmax} returns the
+maximized value of the criterion and the matrix given via the first
+argument holds the parameter values which produce the maximum.  Here
+is an example:
 %
 \begin{code}
 matrix X = { dataset }
 matrix theta = { 1, 100 }'
-scalar J = BFGSmax(theta, "ObjFunc(&theta, &X)")
+scalar J = BFGSmax(theta, ObjFunc(&theta, &X))
 \end{code}
 %
 It is assumed here that \texttt{ObjFunc} is a user-defined function
@@ -594,6 +605,28 @@ function ObjFunc (matrix *theta, matrix *X)
   return scalar val
 end function
 \end{code}
+
+\begin{script}[htbp]
+  \caption{Finding the minimum of the Rosenbrock function}
+  \label{rosenbrock}
+\begin{scode}
+function Rosenbrock(matrix *param)
+  scalar x = param[1]
+  scalar y = param[2]
+  scalar f = -(1-x)^2 - 100 * (y - x^2)^2
+  return scalar f 
+end function
+
+nulldata 10
+
+matrix theta = { 0 , 0 }
+
+set max_verbose 1
+M = BFGSmax(theta, Rosenbrock(&theta))
+
+print theta
+\end{scode}
+\end{script}
 
 The operation of the BFGS maximizer can be adjusted using the
 \texttt{set} variables \verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
@@ -615,43 +648,20 @@ The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
 discovers the minimum using \texttt{BFGSmax} (giving a verbose account
 of progress).  
 
-\begin{script}[htbp]
-  \caption{Finding the minimum of the Rosenbrock function}
-  \label{rosenbrock}
-\begin{scode}
-function Rosenbrock(matrix *param)
-  scalar x = param[1]
-  scalar y = param[2]
-  scalar f = -(1-x)^2 - 100 * (y - x^2)^2
-  return scalar f 
-end function
+\subsection{Computing a Jacobian}
+\label{sec:fdjac}
 
-nulldata 10
+\app{Gretl} offers the possibility of differentiating numerically a
+user-defined function via the \texttt{fdjac} function. 
 
-matrix theta = { 0 , 0 }
-
-set max_verbose 1
-M = BFGSmax(theta, "Rosenbrock(&theta)")
-
-print theta
-\end{scode}
-\end{script}
-
-\subsection{Computing the Jacobian}
-
-To construct a covariance matrix for estimates produced via
-\verb+BFGS_max+, you may wish to calculate a numerical approximation
-to the relevant Jacobian.
-
-The \texttt{fdjac} function again takes two arguments: an $n \times 1$
-matrix holding initial parameter values and a string specifying a call
-to a function that calculates and returns an $m \times 1$ matrix ($n
-\leq m$), given the current parameter values and any other relevant
-data.  On successful completion it returns an $m \times n$ matrix
-holding the Jacobian.  For example,
+This function again takes two arguments: an $n \times 1$ matrix
+holding initial parameter values and a function call that calculates
+and returns an $m \times 1$ matrix, given the current parameter values
+and any other relevant data.  On successful completion it returns an
+$m \times n$ matrix holding the Jacobian.  For example,
 %
 \begin{code}
-matrix Jac = fdjac(theta, "SumOC(&theta, &X)")
+matrix Jac = fdjac(theta, SumOC(&theta, &X))
 \end{code}
 where we assume that \texttt{SumOC} is a user-defined function with
 the following structure:
@@ -663,6 +673,87 @@ function SumOC (matrix *theta, matrix *X)
 end function
 \end{code}
 
+This may come in handy in several cases: for example, if you use
+\texttt{BFGSmax} to estimate a model, you may wish to calculate a
+numerical approximation to the relevant Jacobian to construct a
+covariance matrix for your estimates.
+
+Another example is the delta method: if you have a consistent
+estimator of a vector of parameters $\hat{\theta}$, and a consistent
+estimate of its covariance matrix $\Sigma$, you may need to compute
+estimates for a nonlinear continuous transformation $\psi =
+g(\theta)$. In this case, a standard result in asymptotic theory is
+that
+\[
+\left\{
+    \begin{array}{c}
+      \hat{\theta} \convp \theta \\ 
+      \sqrt{T} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
+    \end{array}
+\right\}
+    \Longrightarrow
+\left\{
+    \begin{array}{c}
+      \hat{\psi} = g(\hat{\theta}) \convp \psi = g(\theta) \\ 
+      \sqrt{T} \left( \hat{\psi} - \psi \right) \convd N(0, J
+      \Sigma J')
+    \end{array}
+\right\}
+\]
+where $T$ is the sample size and $J$ is the Jacobian
+$\left.\pder{g(x)}{x}\right|_{x = \theta}$.
+
+\begin{script}[htbp]
+  \caption{Delta Method}
+  \label{delta-method}
+\begin{scode}
+function MPC(matrix *param, matrix *Y)
+  beta = param[2]
+  gamma = param[3]
+  y = Y[1]
+  matrix ret = beta*gamma*y^(gamma-1)
+  return matrix ret
+end function
+
+# William Greene, Econometric Analysis, 5e, Chapter 9
+set echo off
+set messages off
+open greene5_1.gdt
+
+# Use OLS to initialize the parameters
+ols realcons 0 realdpi --quiet
+genr a = $coeff(0)
+genr b = $coeff(realdpi)
+genr g = 1.0
+
+# Run NLS with analytical derivatives
+nls realcons = a + b * (realdpi^g)
+  deriv a = 1
+  deriv b = realdpi^g
+  deriv g = b * realdpi^g * log(realdpi)
+end nls
+
+matrix Y = realdpi[2000:4]
+matrix theta = $coeff
+matrix V = $vcv
+
+mpc = MPC(&theta, &Y)
+matrix Jac = fdjac(theta, MPC(&theta, &Y))
+Sigma = qform(Jac, V)
+
+printf "\nmpc = %g, std.err = %g\n", mpc, sqrt(Sigma)
+scalar teststat = (mpc-1)/sqrt(Sigma)
+printf "\nTest for MPC = 1: %g (p-value = %g)\n", \
+	teststat, pvalue(n,abs(teststat))
+\end{scode}
+\end{script}
+
+Script \ref{delta-method} exemplifies such a case: the example is
+taken from Greene (2003), section 9.3.1. The slight differences
+between the results reported in the original source and what
+\app{gretl} returns are due to the fact that the Jacobian is computed
+numerically, rather than analytically as in the book.
+
 \section{The discrete Fourier transform}
 \label{sec:genr-fft}
 
@@ -672,13 +763,13 @@ $n$-dimensional vector whose $k$-th element is $x_k = a_k + i b_k$,
 then the output of the discrete Fourier transform is a vector
 $\mathbf{f} = \mathcal{F}(\mathbf{x})$ whose $k$-th element is
 \[
-  f_k = \sum_{j=0}^{n-1} e^{-i \omega_{j,k} } x_j 
+  f_k = \sum_{j=0}^{n-1} e^{-i \omega(j,k) } x_j 
 \]
-where $\omega_{j,k} = 2 \pi i \frac{j k}{n}$. Since the transformation
+where $\omega(j,k) = 2 \pi i \frac{j k}{n}$. Since the transformation
 is invertible, the vector $\mathbf{x}$ can be recovered from
 $\mathbf{f}$ via the so-called inverse transform
 \[
-  x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega_{j,k} } f_j .
+  x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega(j,k) } f_j .
 \]
 
 The Fourier transform is used in many diverse situations

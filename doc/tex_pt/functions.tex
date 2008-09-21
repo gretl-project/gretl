@@ -5,13 +5,12 @@
 \label{func-define}
 
 Since version 1.3.3, \app{gretl} has contained a mechanism for
-defining functions in the context of a script.  This functionality has
-been through some changes in search of a stable and extensible
-framework.  We believe that the version present in \app{gretl} 1.6.1
-should provide a good basis for future development.
+defining functions, which may be called via the command line, in
+the context of a script, or (if packaged appropriately, see
+section~\ref{sec:func-packages}) via the program's graphical
+interface.
 
-Functions must be defined before they are called.  The syntax for
-defining a function looks like this
+The syntax for defining a function looks like this:
     
 \begin{code}
 function function-name(parameters)
@@ -39,7 +38,8 @@ below.
 \texttt{scalar} & scalar variable \\
 \texttt{series} & data series \\
 \texttt{list}   & named list of series \\
-\texttt{matrix} & named matrix or vector 
+\texttt{matrix} & named matrix or vector \\
+\texttt{string} & named string or string literal 
 \end{tabular}
 \end{center}
 
@@ -51,9 +51,9 @@ within the function.  An example follows:
 function myfunc(series y, list xvars, bool verbose)
 \end{code}
 
-Each of the type-specifiers, with the exception of \texttt{list}, may
-be modified by prepending an asterisk to the associated parameter
-name, as in
+Each of the type-specifiers, with the exception of \texttt{list} and
+\texttt{string}, may be modified by prepending an asterisk to the
+associated parameter name, as in
 %    
 \begin{code}
 function myfunc(series *y, scalar *b)
@@ -61,17 +61,20 @@ function myfunc(series *y, scalar *b)
 
 The meaning of this modification is explained below (see section
 \ref{funscope}); it is related to the use of pointer arguments in the
-C programming language.  In addition, parameters may be modified by
-the tag \texttt{const} (again, see \ref{funscope}).
+C programming language.
 
-Besides these required elements, the specification of a
-\texttt{scalar} parameter may include up to three pieces of additional
-information: a minimum value, a maximum, and a default.  These
-additional values should directly follow the name of the parameter,
-enclosed in square brackets and with the individual elements separated
-by colons.  For example, suppose we have an integer parameter
-\texttt{order} for which we wish to specify a minimum of 1, a maximum
-of 12, and a default of 4.  We can write
+\subsection{Function parameters: optional refinements}
+
+Besides the required elements mentioned above, the specification of a
+function parameter may include some additional fields.
+
+For a parameter of type \texttt{scalar} or \texttt{int}, a
+\textsl{minimum}, \textsl{maximum} and \textsl{default} value may be
+specified.  These values should directly follow the name of the
+parameter, enclosed in square brackets and with the individual
+elements separated by colons.  For example, suppose we have an integer
+parameter \texttt{order} for which we wish to specify a minimum of 1,
+a maximum of 12, and a default of 4.  We can write
 %    
 \begin{code}
 int order[1:12:4]
@@ -90,6 +93,22 @@ bool verbose[0]
 \end{code} 
 %
 
+Finally, for a parameter of any type you can append a short
+\textsl{descriptive string}.  This will show up as an aid to the user
+if the function is packaged (see section~\ref{sec:func-packages}
+below) and called via \app{gretl}'s graphical interface.  The string
+should be enclosed in double quotes, and inserted before the comma
+that precedes the following parameter (or the closing right
+parenthesis of the function definition, in the case of the last
+parameter), as illustrated in the following example.
+
+\begin{code}
+function myfun (series y "dependent variable", 
+                series x "independent variable")
+\end{code} 
+
+\subsection{Void functions}
+
 You may define a function that has no parameters (these are called
 ``routines'' in some programming languages).  In this case,  
 use the keyword \texttt{void} in place of the listing of parameters:
@@ -98,40 +117,44 @@ use the keyword \texttt{void} in place of the listing of parameters:
 function myfunc2(void)
 \end{code}
 
-When a function is called, the parameters are instantiated by
-arguments given by the caller.  There are automatic checks in place to
-ensure that the number of arguments given in a function call matches
-the number of parameters, and that the types of the given arguments
-match the types specified in the definition of the function.  An error
-is flagged if either of these conditions is violated.  One
-qualification: allowance is made for omitting arguments at the end of
-the list, provided that default values are specified in the function
-definition.  To be precise, the check is that the number of arguments
-is at least equal to the number of \textit{required} parameters, and
-is no greater than the total number of parameters.
+
+\subsection{The function body}
+   
+The \textsl{function body} is composed of \app{gretl} commands, or
+calls to user-defined functions (that is, function calls may be
+nested).  A function may call itself (that is, functions may be
+recursive). While the function body may contain function calls, it may
+not contain function definitions.  That is, you cannot define a
+function inside another function.  For further details, see
+section~\ref{func-details}.
+
+
+\section{Calling a function}
+\label{func-call}
+
+A user function is called by typing its name followed by zero or more
+arguments enclosed in parentheses.  If there are two or more arguments
+these should be separated by commas.  
+
+There are automatic checks in place to ensure that the number of
+arguments given in a function call matches the number of parameters,
+and that the types of the given arguments match the types specified in
+the definition of the function.  An error is flagged if either of
+these conditions is violated.  One qualification: allowance is made
+for omitting arguments at the end of the list, provided that default
+values are specified in the function definition.  To be precise, the
+check is that the number of arguments is at least equal to the number
+of \textit{required} parameters, and is no greater than the total
+number of parameters.
 
 A scalar, series or matrix argument to a function may be given either
 as the name of a pre-existing variable or as an expression which
 evaluates to a variable of the appropriate type.  Scalar arguments may
 also be given as numerical values.  List arguments must be specified
 by name.
-    
-The \textsl{function body} is composed of \app{gretl} commands, or
-calls to user-defined functions (that is, functions may be nested).  A
-function may call itself (that is, functions may be recursive). While
-the function body may contain function calls, it may not contain
-function definitions.  That is, you cannot define a function inside
-another function.
 
-
-\section{Calling a function}
-\label{func-call}
-
-A user function is called or invoked by typing its name followed by
-zero or more arguments enclosed in parentheses.  If there are two or
-more arguments these should be separated by commas.  The following
-trivial example illustrates a function call that correctly matches the
-function definition.
+The following trivial example illustrates a function call that
+correctly matches the function definition.
     
 \begin{code}
 # function definition
@@ -154,7 +177,7 @@ that while the function offers the variable \verb+myess+ as a return
 value, it is ignored by the caller in this instance.  (As a side note
 here, if you want a function to calculate some value having to do with
 a regression, but are not interested in the full results of the
-regression, you may wish to use the \verb+--quiet+ flag with the
+regression, you may wish to use the \option{quiet} flag with the
 estimation command as shown above.)
     
 A second example shows how to write a function call that assigns
@@ -174,32 +197,73 @@ list xlist = 2 3 4
 series resid = get_uhat(price, xlist)
 \end{code}
 
+\section{Deleting a function}
+\label{func-del}
+
+If you have defined a function and subsequently wish to clear it out
+of memory, you can do so using the keywords \texttt{delete} or
+\texttt{clear}, as in
+
+\begin{code}
+function myfunc delete
+function get_uhat clear
+\end{code}
+
+Note, however, that if \texttt{myfunc} is already a defined function,
+providing a new definition automatically overwrites the previous one,
+so it should rarely be necessary to delete functions explicitly.
+
 \section{Function programming details}
 \label{func-details}
 
-\subsection{Scope of variables}
+\subsection{Variables versus pointers}
 \label{funscope}
 
-All variables created within a function are local to that function,
-and are destroyed when the function exits, unless they are made
-available as return values and these values are ``picked up'' or
-assigned by the caller.
+Series, scalar, and matrix arguments to functions can be passed in two
+ways: ``as they are'', or as pointers. For example, consider the
+following:
+\begin{code}
+function triple1(series x)
+  series ret = 3*x
+  return series ret
+end function
+  
+function triple2(series *x)
+  series ret = 3*x
+  return series ret
+end function
+\end{code}
+
+These two functions are nearly identical (and yield the same result);
+the only difference is that you need to feed a series into
+\texttt{triple1}, as in \texttt{triple1(myseries)}, while
+\texttt{triple2} must be supplied a \emph{pointer} to a series, as in
+\texttt{triple2(\&myseries)}. 
+
+Why make the distinction, then? There are two main reasons for doing
+so: modularity and performance.
+
+By modularity we mean the insulation of a function from the rest of
+the script which calls it.  One of the many benefits of this approach
+is that your functions are easily reusable in other contexts.  To
+achieve modularity, \emph{variables created within a function are
+  local to that function, and are destroyed when the function exits},
+unless they are made available as return values and these values are
+``picked up'' or assigned by the caller.
     
-Functions do not have access to variables in ``outer scope'' (that is,
-variables that exist in the script from which the function is called)
-except insofar as these are explicitly passed to the function as
-arguments.  
+In addition, functions do not have access to variables in ``outer
+scope'' (that is, variables that exist in the script from which the
+function is called) except insofar as these are explicitly passed to
+the function as arguments.
 
 By default, when a variable is passed to a function as an argument,
 what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
-modified by whatever goes on inside the function.  There is, however,
-a mechanism for allowing a function and its caller to ``cooperate''
-such that an outer variable can be modified by the function.  In
-effect, this allows a function to ``return'' more than one value
-(although only one variable can be returned directly --- see below).
-The method is (at least superficially) similar to the passing of the
-address of a variable in the C programming language.  The parameter in
+modified by whatever goes on inside the function.  But the use of
+pointers allows a function and its caller to ``cooperate'' such that
+an outer variable can be modified by the function.  In effect, this
+allows a function to ``return'' more than one value (although only one
+variable can be returned directly --- see below).  The parameter in
 question is marked with a prefix of \texttt{*} in the function
 definition, and the corresponding argument is marked with the
 complementary prefix \verb+&+ in the caller.  For example,
@@ -248,12 +312,90 @@ function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
 end function
 \end{code}
 %
-If the caller does not care to get the \texttt{ess} value, it should
+If the caller does not care to get the \texttt{ess} value, it can
 use \texttt{null} in place of a real argument:
 %
 \begin{code}
 series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
+%
+Alternatively, trailing function arguments that have default values 
+may be omitted, so the following would also be a valid call:
+%
+\begin{code}
+series resid = get_uhat_and_ess(price, xlist)
+\end{code}
+
+Pointer arguments may also be useful for optimizing performance: even if
+a variable is not modified inside the function, it may be a good idea
+to pass it as a pointer if it occupies a lot of memory. Otherwise, the
+time \app{gretl} spends transcribing the value of the variable to the
+local copy may be non-negligible, compared to the time the function
+spends doing the job it was written for.
+
+Example \ref{ex:perf-pointers} takes this to the extreme.  We define
+two functions which return the number of rows of a matrix (a pretty
+fast operation).  One function gets a matrix as argument, the other
+one a pointer to a matrix.  The two functions are evaluated on a
+matrix with 2000 rows and 2000 columns; on a typical system,
+floating-point numbers take 8 bytes of memory, so the space occupied
+by the matrix is roughly 32 megabytes.
+
+Running the code in example \ref{ex:perf-pointers} will produce output
+similar to the following (the actual numbers depend on the
+machine you're running the example on):
+\begin{code}
+Elapsed time: 
+	without pointers (copy) = 3.66 seconds,
+	with pointers (no copy) = 0.01 seconds.
+\end{code}
+
+\begin{script}[htbp]
+  \caption{Performance comparison: values versus pointer}
+  \label{ex:perf-pointers}
+  \begin{scode}
+function a(matrix X)
+  r = rows(X)
+  return scalar r
+end function
+
+function b(const matrix *X)
+  r = rows(X)
+  return scalar r
+end function
+
+nulldata 10
+set echo off
+set messages off
+X = zeros(2000,2000)
+r = 0
+
+set stopwatch
+loop 100
+  r = a(X)
+end loop
+fa = $stopwatch
+
+set stopwatch
+loop 100
+  r = b(&X)
+end loop
+fb = $stopwatch
+
+printf "Elapsed time:\n\
+\twithout pointers (copy) = %g seconds,\n\
+\twith pointers (no copy) = %g seconds.\n", fa, fb 
+\end{scode}
+%$
+\end{script}
+
+If a pointer argument is used for this sort of purpose --- and the
+object to which the pointer points is not modified by the function ---
+it is a good idea to signal this to the user by adding the
+\texttt{const} qualifier, as shown for function \texttt{b} in
+Example~\ref{ex:perf-pointers}.  When a pointer argument is qualified
+in this way, any attempt to modify the object within the function will
+generate an error.
 
 \subsection{List arguments}
 
@@ -261,59 +403,159 @@ The use of a named list as an argument to a function gives a means of
 supplying a function with a set of variables whose number is unknown
 when the function is written --- for example, sets of regressors or
 instruments.  Within the function, the list can be passed on to
-commands such as \texttt{ols}, or it can be ``unpacked'' using a
-\texttt{foreach} loop construct.  For example, suppose you have a list
-\texttt{X} and want to calculate the standard deviation of each
-variable in the list:
+commands such as \texttt{ols}.  
+
+A list argument can also be ``unpacked'' using a \texttt{foreach} loop
+construct, but this requires some care.  For example, suppose you have
+a list \texttt{X} and want to calculate the standard deviation of each
+variable in the list.  You can do:
+%
+\begin{code}
+loop foreach i X
+   scalar sd_$i = sd(X.$i)
+end loop
+\end{code}
+
+\textit{Please note}: a special piece of syntax is needed in this
+context.  If we wanted to perform the above task on a list in a
+regular script (not inside a function), we could do
 %
 \begin{code}
 loop foreach i X
    scalar sd_$i = sd($i)
 end loop
 \end{code}
-
-When a named list of variables is passed to a function, the function
-is provided with a copy of the list.  The variables referenced in the
-list are, however, made directly accessible to the function, in a
-similar manner to the case where a scalar or series argument is passed
-in ``pointer'' form, as discussed above.  Passing a list is therefore
-another means of allowing a function to do more in the way of
-modifying data at the level of the caller than simply offering a
-return value.  If the variables will \textit{not} be modified inside
-the function, it is a good idea to flag this fact using the
-\texttt{const} modifier in the listing of parameters:
 %
-\begin{code}
-function myfunc (scalar y, const list X)
-\end{code}
-%
-When a list is marked \texttt{const}, any attempt to rename, delete
-or overwrite the original values of the variables in the list will
-generate an error.
+where \verb|$i| gets the name of the variable at position $i$ in the
+list, and \verb|sd($i)| gets its standard deviation.  But inside a
+function, working on a list supplied as an argument, if we want to
+reference an individual variable in the list we must use the syntax
+\textsl{listname.varname}.  Hence in the example above we write
+\verb|sd(X.$i)|.
 
-If a list argument to a function is optional, this should be indicated
-by appending a default value of \texttt{null}, as in
+This is necessary to avoid possible collisions between the name-space
+of the function and the name-space of the caller script.  For example,
+suppose we have a function that takes a list argument, and that
+defines a local variable called \texttt{y}.  Now suppose that this
+function is passed a list containing a variable named \texttt{y}.  If
+the two name-spaces were not separated either we'd get an error, or
+the external variable \texttt{y} would be silently over-written by the
+local one.  It is important, therefore, that list-argument variables
+should not be ``visible'' by name within functions.  To ``get hold
+of'' such variables you need to use the form of identification just
+mentioned: the name of the list, followed by a dot, followed by the
+name of the variable.
+
+\tip{The treatment of list-argument variables described above is new
+  in \app{gretl} 1.7.6.  The problem it addresses is quite subtle, and
+  was discovered only recently.  Existing functions that use
+  \texttt{foreach} loops on list arguments may need to be modified.
+  For a limited time, there is a special switch available that
+  restores the old behavior: that is, it enables support for functions
+  that do not use the \textsl{listname.varname} syntax.  The command
+  to use is \texttt{set protect\_lists off}.  But we recommend
+  updating old functions as soon as possible.}
+
+\paragraph{Constancy of list arguments} When a named list of
+variables is passed to a function, the function is actually provided
+with a copy of the list.  The function may modify this copy (for
+instance, adding or removing members), but the original list at the
+level of the caller is not modified.
+
+\paragraph{Optional list arguments} If a list argument to a function is
+optional, this should be indicated by appending a default value of
+\texttt{null}, as in
 %
 \begin{code}
 function myfunc (scalar y, list X[null])
 \end{code}
 %
 In that case, if the caller gives \texttt{null} as the list argument
-then the named list \texttt{X} inside the function will be empty.
-This possibility can be detected using the \texttt{nelem()} function,
-which returns 0 for an empty list.  (This mechanism can also be used
-to check whether a named, but empty, list was supplied as an
-argument.)
+(or simply omits the last argument) the named list \texttt{X} inside the
+function will be empty.  This possibility can be detected using the
+\texttt{nelem()} function, which returns 0 for an empty list.
+
+\subsection{String arguments}
+
+String arguments can be used, for example, to provide flexibility in
+the naming of variables created within a function.  In the following
+example the function \texttt{mavg} returns a list containing two
+moving averages constructed from an input series, with the names of
+the newly created variables governed by the string argument.
+%
+\begin{code}
+function mavg (series y, string vname)
+   series @vname_2 = (y+y(-1)) / 2
+   series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
+   list retlist = @vname_2 @vname_4
+   return list retlist
+end function
+
+open data9-9
+list malist = mavg(nocars, "nocars")
+print malist --byobs
+\end{code}
+%
+The last line of the script will print two variables named
+\verb|nocars_2| and \verb|nocars_4|.  For details on the handling of
+named strings, see chapter~\ref{chap-persist}.
+
+If a string argument is considered optional, it may be given a
+\texttt{null} default value, as in
+%
+\begin{code}
+function foo (series y, string vname[null])
+\end{code}
+
+\subsection{Retrieving the names of arguments}
+
+The variables given as arguments to a function are known inside the
+function by the names of the corresponding parameters.  For example,
+within the function whose signature is
+%
+\begin{code}
+function somefun (series y)
+\end{code}
+%
+we have the series known as \texttt{y}.  It may be useful, however, to
+be able to determine the names of the variables provided as arguments.
+This can be done using the function \texttt{argname}, which takes the
+name of a function parameter as its single argument and returns a
+string.  Here is a simple illustration:
+%
+\begin{code}
+function namefun (series y)
+  printf "the series given as 'y' was named %s\n", argname(y)
+end function
+
+open data9-7
+namefun(QNC)
+\end{code}
+%
+This produces the output
+%
+\begin{code}
+the series given as 'y' was named QNC
+\end{code}
+
+Please note that this will not always work: the arguments given
+to functions may be anonymous variables, created on the fly, as in
+\texttt{somefun(log(QNC))} or \texttt{somefun(CPI/100)}.  In that case
+the \textsf{argname} function fails to return a string.  Function
+writers who wish to make use of this facility should check the return
+from \texttt{argname} using the \texttt{isstring()} function, which
+returns 1 when given the name of a string variable, 0 otherwise.
+
 
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
-they can return a single variable --- a scalar, series, list or
-matrix.  The return value, if any, is specified via a statement within
-the function body beginning with the keyword \verb+return+, followed
-by a type specifier and the name of a variable (as in the listing of
-parameters).  There can be only one such statement.  An example of a
-valid return statement is shown below:
+they can return a single variable --- a scalar, series, list, matrix
+or string.  The return value, if any, is specified via a statement
+within the function body beginning with the keyword \verb+return+,
+followed by a type specifier and the name of a variable (as in the
+listing of parameters).  There can be only one such statement.  An
+example of a valid return statement is shown below:
 %    
 \begin{code}
 return scalar SSR
@@ -330,7 +572,7 @@ descriptive labels for variables generated in a function.
 function make_cubes (list xlist)
    list cubes = null
    loop foreach i xlist --quiet
-      series $i3 = $i^3
+      series $i3 = (xlist.$i)^3
       setinfo $i3 -d "cube of $i"
       list cubes += $i3
     end loop
@@ -343,7 +585,7 @@ list cubelist = make_cubes(xlist)
 print xlist cubelist --byobs
 labels
 \end{code}
-%
+%$
 
 Note that the \verb+return+ statement does \emph{not} cause the
 function to return (exit) at the point where it appears within the
@@ -376,26 +618,40 @@ trying to define a function inside a function (see Section
 commands this will become apparent only when the function is called,
 and its commands are executed.
 
+\subsection{Debugging}
 
-\subsection{Printing of output}
-
-The usual mechanism whereby \app{gretl} echos commands, and reports on
-the creation of new variables, is suppressed by default when a
-function is being executed.  If you want to turn this on (for example,
-for the purpose of debugging function code), you can issue one or both
-of the following commands inside the function:
+The usual mechanism whereby \app{gretl} echoes commands and reports on
+the creation of new variables is by default suppressed when a function
+is being executed.  If you want more verbose output from a particular
+function you can use either or both of the following commands within
+the function:
 %
 \begin{code}
 set echo on
 set messages on
 \end{code}
 
+Alternatively, you can achieve this effect for all functions via
+the command \texttt{set debug 1}.  Usually when you set the value of a
+state variable using the \texttt{set} command, the effect applies only
+to the current level of function execution.  For instance, if you do
+\texttt{set messages on} within function \texttt{f1}, which in turn
+calls function \texttt{f2}, then messages will be printed for
+\texttt{f1} but not \texttt{f2}.  The debug variable, however, acts
+globally; all functions become verbose regardless of their level.
+
+Further, you can do \texttt{set debug 2}: in addition to command echo
+and the printing of messages, this is equivalent to setting
+\verb|max_verbose| (which produces verbose output from the BFGS
+maximizer) at all levels of function execution.
+
+
 \section{Function packages}
 \label{sec:func-packages}
 
 As of \app{gretl} 1.6.0, there is a mechanism to package functions and
-make them available to other users of \app{gretl}.  This is currently
-experimental, but here is a walk-through of the process.
+make them available to other users of \app{gretl}.  Here is a
+walk-through of the process.
 
 \subsection{Load a function in memory}
 
@@ -414,11 +670,15 @@ There are several ways to load a function:
 For example, suppose you decide to package a function that returns the
 percentage change of a time series. Open a script file and type
 \begin{code}
-function pc(series y)
-  series foo = diff(y)/y(-1)
+function pc(series y "Series to process")
+  series foo = 100 * diff(y)/y(-1)
   return series foo
 end function
 \end{code}
+In this case, we have appended a string to the function argument, as
+explained in section \ref{func-define}, so as to make our interface
+more informative.  This is not obligatory: if you omit the descriptive
+string, \app{gretl} will supply a predefined one.
 
 \begin{figure}[htbp]
   \centering
@@ -427,9 +687,8 @@ end function
   \label{fig:func_check}
 \end{figure}
 
-Now run your function. You may want to make sure your function works
-properly by running a few tests. For example, you may open the console
-and type
+Now run your function. You may want to make sure it works properly by
+running a few tests. For example, you may open the console and type
 
 \begin{code}
 genr x = uniform()
@@ -438,7 +697,7 @@ print x dpcx --byobs
 \end{code}
 
 You should see something similar to figure \ref{fig:func_check}. The
-function seems to work ok. Once your function is debugged, you
+function seems to work ok.  Once your function is debugged, you
 may proceed to the next stage.
 
 \subsection{Create a package}
@@ -447,10 +706,9 @@ Start the GUI program and take a look at the ``File, Function files'' menu.
 This menu contains four items: ``On local machine'', ``On server'', ``Edit
 package'', ``New package''.
 
-Select ``New package'' (the command will return an error message,
-unless at least one user-defined function is currently loaded in
-memory --- see the previous point); in the first dialog you get to
-select:
+Select ``New package''.  (This will produce an error message unless at
+least one user-defined function is currently loaded in memory --- see
+the previous point.)  In the first dialog you get to select:
 
 \begin{itemize}
 \item A public function to package.
@@ -467,17 +725,23 @@ part of the ``behind the scenes'' mechanism in a function package.
   \label{fig:package_editor}
 \end{figure}
 
-On clicking ``OK'' a second dialog should appear (see figure
-\ref{fig:package_editor}), where you get to enter the package
-information (currently, author, version, date, and a short
-description).  You also get to enter help text for the public
-interface.  You have a further chance to edit the code of the
-functions to be packaged, by selecting them from the drop-down
-selector and clicking on ``Edit function code''. Finally, you can
-choose to upload the package on gretl's server as soon as it is saved,
-by checking the relevant checkbox.
+On clicking ``OK'' a second dialog should appear (see
+Figure~\ref{fig:package_editor}), where you get to enter the package
+information (author, version, date, and a short description).  You can
+also enter help text for the public interface.  You have a further
+chance to edit the code of the function(s) to be packaged, by clicking
+on ``Edit function code''.  (If the package contains more than one
+function, a drop-down selector will be shown.)  And you get to add a
+sample script that exercises your package.  This will be helpful for
+potential users, and also for testing.  A sample script is required if
+you want to upload the package to the gretl server (for which a
+check-box is supplied).
 
-Clicking ``OK'' in this dialog leads you to a File Save dialog.  All
+You won't need it right now, but the button labeled ``Save as script''
+allows you to ``reverse engineer'' a function package, writing out a
+script that contains all the relevant function definitions.
+
+Clicking ``Save'' in this dialog leads you to a File Save dialog.  All
 being well, this should be pointing towards a directory named
 \texttt{functions}, either under the \app{gretl} system directory (if
 you have write permission on that) or the \app{gretl} user directory.
@@ -486,7 +750,7 @@ that is where the program will look in the special routine for opening
 such files (see below).
 
 Needless to say, the menu command ``File, Function files, Edit package''
-allows you to edit again a local function package.
+allows you to make changes to a local function package.
 
 \vspace{6pt}
 
@@ -517,9 +781,9 @@ you click on ``Info'' you get a window with all the information gretl
 has gleaned from the function package.  If you click on the ``View
 code'' icon in the toolbar of this new window, you get a script view
 window showing the actual function code. Now, back to the ``Function
-packages'' window, if you click on the package's name, the functions
-are loaded into gretl, ready to be called by clicking on the ``Call''
-button.
+packages'' window, if you click on the package's name, the relevant
+functions are loaded into \app{gretl}'s workspace, ready to be called
+by clicking on the ``Call'' button.
 
 After loading the function(s) from the package, open the GUI console.
 Try typing \texttt{help foo}, replacing \texttt{foo} with the name of
@@ -553,7 +817,11 @@ Go to ``File, Function files, On local machine''.  You will be shown a
 list of the installed packages, including the one you have just
 created. If you select it and click on ``Execute'' (or double-click on
 the name of the function package), a window similar to the one shown
-in figure \ref{fig:function_call} will appear.  Click ``Ok'' and the
+in figure \ref{fig:function_call} will appear.  Notice that the
+description string ``Series to process'', supplied with the function
+definition, appears to the left of the top series chooser.
+
+Click ``Ok'' and the
 series \texttt{foo} will be generated (see figure \ref{fig:iprod_pc}).
 You may have to go to ``Data, Refresh data'' in order to have your new
 variable show up in the main window variable list (or just press the
