@@ -270,10 +270,11 @@
 
     <description>
       <para>
-	Determina estimativas para os parâmetros usando o procedimento 
-	iteractivo e generalizado de Cochrane&ndash;Orcutt (ver a Secção
-        9.5 de Ramanathan, 2002). A iteração termina quando os erros das
-        somas de quadrados sucessivos não difiram em mais que 0,005 porcento 
+	Determina estimativas para os parâmetros usando o
+        procedimento iteractivo e generalizado de 
+        Cochrane&ndash;Orcutt (ver a Secção 9.5 de Ramanathan, 
+        2002). A iteração termina quando os erros das somas de 
+        quadrados sucessivos não difiram em mais que 0,005 porcento 
         ou após 20 iterações.</para>
 
       <para context="gui">
@@ -302,6 +303,74 @@
 
     <gui-access>
       <menu-path>/Modelo/Série temporal/Estimação autoregressiva</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="ar1" section="Estimation" label="AR(1) estimation">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--hilu</flag>
+	  <effect>use Hildreth&ndash;Lu procedure</effect>
+	</option>
+	<option>
+	  <flag>--pwe</flag>
+	  <effect>use Prais&ndash;Winsten estimator</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--no-corc</flag>
+	  <effect>do not fine-tune results with Cochrane-Orcutt</effect>
+	</option>
+      </options>
+      <examples>
+        <example>ar1 1 0 2 4 6 7</example>
+	<example>ar1 y 0 xlist --hilu --no-corc</example>
+	<example>ar1 y 0 xlist --pwe</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Computes feasible GLS estimates for a model in which the error term is
+	assumed to follow a first-order autoregressive process.
+      </para>
+      <para>
+	The default method is the Cochrane&ndash;Orcutt iterative procedure
+	(see, for example, Section 9.4 of Ramanathan, 2002). Iteration is
+	terminated when successive estimates of the autocorrelation
+	coefficient do not differ by more than 0.001 or after 20 iterations.
+      </para>
+      <para>
+	If the <lit>--hilu</lit> option is given, the Hildreth&ndash;Lu search
+	procedure is used.  The results are then fine-tuned using the
+	Cochrane&ndash;Orcutt method, unless the <lit>--no-corc</lit> flag is
+	specified.  (The latter option is ignored if <lit>--hilu</lit>
+	is not specified.)
+      </para>
+      <para>
+	If the <lit>--pwe</lit> option is given, the Prais&ndash;Winsten
+	estimator is used.  This involves an an iteration similar to
+	Cochrane&ndash;Orcutt; the difference is that while
+	Cochrane&ndash;Orcutt discards the first observation,
+	Prais&ndash;Winsten makes use of it. See, for example, Chapter 13 of
+	Greene's <book>Econometric Analysis</book> (2000) for details.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Time series/Cochrane-Orcutt</menu-path>
+      <menu-path>/Model/Time series/Hildreth-Lu</menu-path>
+      <menu-path>/Model/Time series/Prais-Winsten</menu-path>
     </gui-access>
 
   </command>
@@ -613,7 +682,7 @@
 
   </command>
 
-<command name="bootstrap" section="Tests" label="Bootstrap options"
+  <command name="bootstrap" section="Tests" label="Bootstrap options"
     context="gui">
 
     <description>
@@ -868,13 +937,12 @@
 
     <description>
       <para context="cli">
-	O teste de cointegração Engle&ndash;Granger.  O procedimento
-        por omissão é: (1) efectuar testes de Dickey&ndash;Fuller (DF)
-        segundo a hipótese nula de que cada variável listada tem uma
-        raiz unitária; (2) estima a regressão de cointegração; e (3) 
-        executar um teste DF sobre os resíduos da regressão de 
-        cointegração. Se for dada a opção <lit>--skip-df</lit>, o passo
-        (1) é omitido.
+	O teste de cointegração Engle&ndash;Granger.  O procedimento 
+        por omissão é: (1) efectuar testes de Dickey&ndash;Fuller (DF) 
+        segundo a hipótese nula de que cada variável listada tem uma raiz 
+        unitária; (2) estima a regressão de cointegração; e (3)executar um 
+        teste DF sobre os resíduos da regressão de cointegração. Se for 
+        dada a opção <lit>--skip-df</lit>, o passo (1) é omitido.
       </para>
       <para context="cli">
 	Se a ordem de 'lag' especificada é positiva, todos os testes
@@ -1110,6 +1178,29 @@
    <gui-access>
       <menu-path>/Dados/Compactar Dados</menu-path>
     </gui-access>
+  </command>
+
+  <command name="controlled" section="Graphs" context="gui"
+    label="Scatterplot with control">
+
+    <description>
+      <para>
+	This command requires the selection of three variables, one for the X
+	axis, one for the Y axis, and one for which you wish to control (call
+	it Z).  The plot shows adjusted Y against adjusted X, where the
+	adjusted version of the variable is the residual from an OLS
+	regression on Z.  
+      </para>
+      <para>
+	Example: You have data on wages, experience and education level
+	for a sample of people.  You wish to plot wages against education,
+	controlling for experience.  In that case you select wages for
+	the Y axis, education for the X axis, and experience as the control.
+	The plot shows wages against education, with both variables
+	<quote>purged</quote> of the effect of experience.
+      </para>
+    </description>
+
   </command>
 
   <command name="copy-formats" section="Utilities" context="gui"
@@ -1400,7 +1491,8 @@
     </gui-access>
 
   </command>
-<command name="dataset" section="Dataset" 
+
+  <command name="dataset" section="Dataset" 
     label="Manipulate the dataset" context="cli">
 
     <usage>
@@ -1489,6 +1581,20 @@
 
   </command>
 
+  <command name="datasort" section="Dataset" context="gui"
+    label="Sorting data">
+
+    <description>
+      <para>
+	The selected variable is used as a sort key for the entire
+	data set.  The observations on all variables are
+	re-ordered by increasing value of the key variable, or by
+	decreasing value if you select the <quote>Descending</quote>
+	option.
+      </para>
+    </description>
+  </command>
+
   <command name="delete" section="Dataset" 
     label="Delete variables" context="cli">
 
@@ -1562,6 +1668,32 @@
     </description>
 
   </command>  
+
+  <command name="dfgls" section="Tests" context="gui"
+    label="The ADF-GLS test">
+
+    <description>
+      <para>
+	The ADF-GLS test is a variant of the Dickey&ndash;Fuller
+	test for a unit root, for the case where the variable
+	to be tested is assumed to have a non-zero mean or to
+	exhibit a linear trend.  The difference is that 
+	the de-meaning or de-trending of the variable is done
+	using the GLS procedure suggested by Elliott, Rothenberg
+	and Stock (1996).  This gives a test of greater power than
+	the standard Dickey&ndash;Fuller approach.
+      </para>
+      <para>
+	See also the <cmdref targ="adf"/> command and the <lit>--gls</lit>
+	option.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/ADF-GLS test</menu-path>
+    </gui-access>
+
+  </command>
 
   <command name="dialog" section="Estimation" context="gui"
     label="Model dialog box">
@@ -1792,6 +1924,13 @@
 
   </command>
 
+  <command name="elif" section="Programming" label="Flow control" context="cli">
+
+    <description><para>See <cmdref targ="if"/>.</para>
+    </description>
+
+  </command>
+
   <command name="else" section="Programming" context="cli">
 
     <description><para>See <cmdref targ="if"/>.</para>
@@ -1811,7 +1950,7 @@
 
   </command>
 
-  <command name="endif" section="Programming" context="cli">
+  <command name="endif" section="Programming" label="Flow control" context="cli">
 
     <description><para>See <cmdref targ="if"/>.</para>
     </description>
@@ -2199,6 +2338,44 @@
 	regression.  In the case of time-series models, also pops up a
 	graph of fitted and actual values of the dependent variable
 	against time.
+      </para>
+    </description>
+
+  </command>
+ 
+  <command name="foreign" section="Programming" 
+    label="Non-native script" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">language-spec</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--send-data</flag>
+	  <effect>pre-load the current dataset</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress output from foreign program</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+     <para>
+	This command opens a special mode in which commands to be executed by
+	another program are accepted.  You exit this mode with <lit>end
+	  foreign</lit>; at this point the stacked commands are executed.
+      </para>
+      <para>
+	At present the only <quote>foreign</quote> program supported in this
+	way is GNU R, and the only acceptable <repl>language-spec</repl> is
+	<lit>language=R</lit> (which is implicit, and may be omitted).  In
+	future other programs may be supported.
+      </para>
+      <para>
+	See <guideref targ="chap:gretlR"/> for details and examples.
       </para>
     </description>
 
@@ -3074,7 +3251,7 @@
     </description>
   </command>
 
- <command name="gmm" section="Estimation" label="GMM estimation">
+  <command name="gmm" section="Estimation" label="GMM estimation">
 
     <usage>
       <options>
@@ -3460,7 +3637,8 @@
 
     </description>
   </command>
- <command name="gui-htest-np" section="Tests" context="gui"
+
+  <command name="gui-htest-np" section="Tests" context="gui"
     label="Nonparametric tests">
 
     <description>
@@ -3635,7 +3813,8 @@
     </description>
 
   </command>
-<command name="heckit" section="Estimation" context="cli"
+
+  <command name="heckit" section="Estimation" context="cli"
     label="Heckman selection model">
 
     <usage>
@@ -3691,6 +3870,7 @@
     </gui-access>
 
   </command>
+
   <command name="help" section="Utilities" 
     label="Help on commands" context="cli">
 
@@ -3854,23 +4034,45 @@
 
   </command>
 
-  <command name="if" section="Programming" context="cli">
+  <command name="if" section="Programming" label="Flow control" context="cli">
 
     <description>
-      <para>Flow control for command execution.  The syntax is:</para>
+      <para>Flow control for command execution.  Three sorts of
+	construction are supported, as follows.
+      </para>
+      <pre>
+	<lit># simple form</lit>&par;
+	<lit>if</lit> <repl>condition</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands</repl>&par;
+	<lit>endif</lit>
+      </pre>
 
       <pre>
+	<lit># two branches</lit>&par;
 	<lit>if</lit> <repl>condition</repl>&par;
-	<lit>  </lit> <repl>commands1</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands1</repl>&par;
 	<lit>else</lit>&par;
-	<lit>  </lit> <repl>commands2</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands2</repl>&par;
 	<lit>endif</lit>
-      </pre>	
+      </pre>
 
-      <para><repl quote="true">condition</repl> must be a Boolean expression, for
-	the syntax of which see <cmdref targ="genr"/>.  The
-	<cmd>else</cmd> block is optional; <lit>if</lit> &hellip;
-	<lit>endif</lit> blocks may be nested.</para>
+      <pre>
+	<lit># three or more branches</lit>&par;
+	<lit>if</lit> <repl>condition1</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands1</repl>&par;
+	<lit>elif</lit> <repl>condition2</repl>&par;
+	<lit> </lit><lit> </lit> <repl>commands2</repl>&par;
+	<lit>else</lit>&par;
+	<lit> </lit><lit> </lit> <repl>commands3</repl>&par;
+	<lit>endif</lit>
+      </pre>
+
+      <para>
+	<repl quote="true">condition</repl> must be a Boolean expression, for
+	the syntax of which see <cmdref targ="genr"/>.  More than one
+	<cmd>elif</cmd> block may be included.  In addition, <lit>if</lit>
+	&hellip; <lit>endif</lit> blocks may be nested.
+      </para>
     </description>
 
   </command>
@@ -3933,6 +4135,9 @@
 	and 0.975 quantiles for the responses are found and plotted along with
 	the point estimates.
       </para>
+      <para>
+	The bootstrap option is not currently available for restricted VECMs.
+      </para>
 
     </description>
 
@@ -3942,8 +4147,8 @@
 
     <usage>
       <arguments>
-        <argument>ordem</argument>
-        <argument>nome-de-variável</argument>
+        <argument>order</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
 	<option>
@@ -3952,15 +4157,15 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>mostrar resultados da regressão</effect>
+	  <effect>print regression results</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>não mostrar resultados da regressão</effect>
+	  <effect>suppress printing of results</effect>
 	</option>
 	<option>
 	  <flag>--difference</flag>
-	  <effect>usar a primeira diferença da variável</effect>
+	  <effect>use first difference of variable</effect>
 	</option>
       </options>
       <examples>
@@ -3982,9 +4187,9 @@
 
       <para context="cli">
 	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and Shin,
-	1992) for stationarity of the specified variable (or its first
-	difference, if the <lit>--difference</lit> option is selected).
-	The null hypothesis is that the variable in question is
+	1992) for stationarity, for each of the specified variables (or
+	their first difference, if the <lit>--difference</lit> option is
+	selected). The null hypothesis is that the variable in question is
 	stationary, either around a level or, if the <lit>--trend</lit>
 	option is given, around a deterministic linear trend.  
       </para>
@@ -4008,7 +4213,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variável/KPSS test</menu-path>
+      <menu-path>/Variable/KPSS test</menu-path>
     </gui-access>
 
   </command>
@@ -4031,13 +4236,13 @@
 
     <usage>
       <arguments>
-        <argument>variável-dependente</argument>
-        <argument>variáveis-independentes</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--vcv</flag>
-	  <effect>mostrar matriz de covariância</effect>
+	  <effect>print covariance matrix</effect>
         </option>
       </options>
     </usage>
@@ -4069,8 +4274,8 @@
 
     <usage>
       <altforms>
-        <altform><lit>lags</lit> <repl>lista-de-variáveis</repl></altform>
-	<altform><lit>lags</lit> <repl>order</repl> <lit>;</lit> <repl>lista-de-variáveis</repl></altform>
+        <altform><lit>lags</lit> <repl>varlist</repl></altform>
+	<altform><lit>lags</lit> <repl>order</repl> <lit>;</lit> <repl>varlist</repl></altform>
       </altforms>
       <examples>
 	<example>lags x y</example>
@@ -4081,7 +4286,7 @@
     <description>
       <para>
 	Creates new variables which are lagged values of each of the variables in
-	<repl>lista-de-variáveis</repl>.  By default the number of lagged variables equals the
+	<repl>varlist</repl>.  By default the number of lagged variables equals the
 	periodicity of the data. For example, if the periodicity is 4 (quarterly),
 	the command <cmd>lags x</cmd> creates
       </para>
@@ -4089,7 +4294,8 @@
 	x_1 = x(t-1)
 	x_2 = x(t-2)
 	x_3 = x(t-3)
-	x_4 = x(t-4)</code>
+	x_4 = x(t-4)
+      </code>
       <para>
 	The number of lags created can be controlled by the optional
 	first parameter.
@@ -4150,20 +4356,21 @@
 
     <usage>
       <arguments>
-        <argument>lista-de-variáveis</argument>
+        <argument>varlist</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
 	The first difference of the natural log of each variable in
-	<repl>lista-de-variáveis</repl> is obtained and the result stored in a
+	<repl>varlist</repl> is obtained and the result stored in a
 	new variable with the prefix <lit>ld_</lit>.  Thus <cmd>ldiff
 	  x y</cmd> creates the new variables
       </para>
       <code>
 	ld_x = log(x) - log(x(-1))
-	ld_y = log(y) - log(y(-1))</code>
+	ld_y = log(y) - log(y(-1))
+      </code>
     </description>
 
     <gui-access>
@@ -4187,19 +4394,19 @@
     <description>
       <para>
 	Must immediately follow an <cmd>ols</cmd> command. Calculates
-	the leverage (<mathvar>h</mathvar>, which must lie in the
+	the leverage (<math>h</math>, which must lie in the
 	range 0 to 1) for each data point in the sample on which the
 	previous model was estimated.  Displays the residual
-	(<mathvar>u</mathvar>) for each observation along with its
+	(<math>u</math>) for each observation along with its
 	leverage and a measure of its influence on the estimates, 
 	  <equation status="inline" 
 	  tex="$uh/(1 - h)$"
 	  ascii="u*h/(1-h)"
 	  graphic="influence"/>. <quote>Leverage points</quote> for
-	which the value of <mathvar>h</mathvar> exceeds
-	2<mathvar>k</mathvar>/<mathvar>n</mathvar> (where
-	<mathvar>k</mathvar> is the number of parameters being
-	estimated and <mathvar>n</mathvar> is the sample size) are
+	which the value of <math>h</math> exceeds
+	2<math>k</math>/<math>n</math> (where
+	<math>k</math> is the number of parameters being
+	estimated and <math>n</math> is the sample size) are
 	flagged with an asterisk.  For details on the concepts of
 	leverage and influence see Davidson and MacKinnon (1993,
 	Chapter 2).
@@ -4220,10 +4427,10 @@
       <para>
 	Briefly, a <quote>predicted residual</quote> is the difference
 	between the observed value of the dependent variable at
-	observation <mathvar>t</mathvar>, and the fitted value for
-	observation <mathvar>t</mathvar> obtained from a regression in
+	observation <math>t</math>, and the fitted value for
+	observation <math>t</math> obtained from a regression in
 	which that observation is omitted (or a dummy variable with
-	value 1 for observation <mathvar>t</mathvar> alone has been
+	value 1 for observation <math>t</math> alone has been
 	added); the studentized residual is obtained by dividing the
 	predicted residual by its standard error.
       </para>
@@ -4240,12 +4447,12 @@
     </description>
 
     <gui-access>
-      <menu-path>Janela do modelo, /Testes/Influential observations</menu-path>
+      <menu-path>Model window, /Tests/Influential observations</menu-path>
     </gui-access>
 
   </command>
 
-    <command name="lmtest" section="Tests" label="LM tests">
+  <command name="lmtest" section="Tests" label="LM tests">
 
     <usage>
       <arguments>
@@ -5256,6 +5463,65 @@
 
   </command>
 
+  <command name="normtest" section="Tests"
+    label="Normality test">
+
+    <usage>
+      <arguments>
+        <argument>series</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--dhansen</flag>
+	  <effect>Doornik&ndash;Hansen test</effect>
+        </option>
+	<option>
+	  <flag>--swilk</flag>
+	  <effect>Shapiro&ndash;Wilk test</effect>
+        </option>
+	<option>
+	  <flag>--lillie</flag>
+	  <effect>Lilliefors test</effect>
+        </option>
+	<option>
+	  <flag>--jbera</flag>
+	  <effect>Jarque&ndash;Bera test</effect>
+        </option>
+	<option>
+	  <flag>--all</flag>
+	  <effect>do all tests</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printed output</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Carries out a test for normality for the given
+	<repl>series</repl>.  The specific test is controlled by the
+	option flags (but if no flag is given, the Doornik&ndash;Hansen
+	test is performed).  Note: the Doornik&ndash;Hansen and
+	Shapiro&ndash;Wilk tests are recommended over the others, on
+	account of their superior small-sample properties.
+      </para>
+      <para>
+	The test statistic and its p-value may be retrieved
+	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>.
+	Please note that if the <lit>--all</lit> option is given,
+	the result recorded is that from the Doornik&ndash;Hansen
+	test.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Normality test</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="nulldata" section="Dataset"
     label="Creating a blank dataset">
 
@@ -5595,6 +5861,34 @@
       <menu-path>/Ficheiro/Open data</menu-path>
       <other-access>Drag a data file into gretl (MS Windows or Gnome)</other-access>
     </gui-access>
+
+  </command>
+
+  <command name="orthdev" section="Transformations" 
+    label="Orthogonal deviations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Applicable with panel data only. A series of forward orthogonal
+	deviations is obtained for each variable in <repl>varlist</repl> and
+	stored in a new variable with the prefix <lit>o_</lit>. Thus
+	<cmd>orthdev x y</cmd> creates the new variables <lit>o_x</lit> and
+	<lit>o_y</lit>.
+      </para>
+      <para>
+	The values are stored one step ahead of their true temporal location
+	(that is, <lit>o_x</lit> at observation <math>t</math> holds the
+	deviation that, strictly speaking, belongs at <math>t</math> &minus;
+	1).  This is for compatibility with first differences: one loses the
+	first observation in each time series, not the last.
+      </para>
+    </description>
 
   </command>
 
@@ -6335,6 +6629,122 @@
 
     <gui-access>
       <menu-path>Janela do modelo, /Testes/Teste QLR test</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="quantreg" section="Estimation" 
+    label="Quantile regression">
+
+    <usage>
+      <arguments>
+	<argument>tau</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+        <option>
+	  <flag>--intervals</flag>
+	  <optparm>level</optparm>
+	  <effect>compute confidence intervals</effect>
+        </option>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+      </options>
+      <examples>
+	<example>quantreg 0.25 y 0 xlist</example>
+	<example>quantreg 0.5 y 0 xlist --intervals</example>
+	<example>quantreg 0.5 y 0 xlist --intervals=.95</example>
+	<example>quantreg tauvec y 0 xlist --robust</example>
+	<demos>
+	  <demo>mrw_qr.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description context="gui">
+      <para>
+	Quantile regression.  By default standard errors are computed
+	according to the asymptotic formula given by Koenker and Bassett
+	(<book>Econometrica</book>, 1978), but if the <quote>robust</quote>
+	box is checked we use the heteroskedasticity-robust variant from
+	Koenker and Zhao (<book>Journal of Nonparametric Statistics</book>,
+	1994).
+      </para>
+      <para>
+	If the <quote>Compute confidence intervals</quote> option is checked
+	gretl will calculate confidence intervals for the coefficients, in
+	place of standard errors. The <quote>robust</quote> check-box still
+	has an effect: if it is not checked, the intervals are computed on the
+	assumption of IID errors; with it, gretl uses the robust estimator
+	developed by Koenker and Machado (<book>Journal of the American
+	  Statistical Association</book>, 1999).  Note that these intervals
+	are not just <quote>plus or minus so many standard errors</quote>; in
+	general, they are asymmetrical about the point estimates of the
+	coefficients.  
+      </para>	
+      <para>
+	You may give a list of quantiles (see the drop-down list for some
+	pre-defined possibilities).  In that case gretl will calculate
+	quantile estimates and either standard errors or confidence intervals
+	for each of the specified values.
+      </para>
+      <para>
+	To Follow up on the references given above, please see
+	<guideref targ="chap:quantreg"/>.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	Quantile regression.  The first argument, <repl>tau</repl>, is the
+	conditional quantile for which estimates are wanted.  It may be given
+	either as a numerical value or as the name of a pre-defined scalar
+	variable; the value must be in the range 0.01 to 0.99. (Alternatively,
+	a vector of values may be given for <repl>tau</repl>; see below for
+	details.) The second and subsequent arguments compose a regression
+	list on the same pattern as <cmdref targ="ols"/>.
+      </para>
+      <para>
+	Without the <lit>--intervals</lit> option, standard errors are printed
+	for the quantile estimates.  By default, these are computed according
+	to the asymptotic formula given by Koenker and Bassett (1978), but if
+	the <lit>--robust</lit> option is given, standard errors that are
+	robust with respect to heteroskedasticity are calculated using the
+	method of Koenker and Zhao (1994).
+      </para>
+      <para>
+	When the <lit>--intervals</lit> option is chosen, confidence intervals
+	are given for the parameter estimates instead of standard errors.
+	These intervals are computed using the rank inversion method, and in
+	general they are asymmetrical about the point estimates.  The specifics
+	of the calculation are inflected by the <lit>--robust</lit> option:
+	without this, the intervals are computed on the assumption of IID
+	errors (Koenker, 1994); with it, they use the robust estimator
+	developed by Koenker and Machado (1999).
+      </para>
+      <para>
+	By default, 90 percent confidence intervals are produced.  You can
+	change this by appending a confidence level (expressed as a decimal
+	fraction) to the intervals option, as in <lit>--intervals=0.95</lit>.
+      </para>
+      <para>
+	Vector-valued <repl>tau</repl>:  instead of supplying a scalar, you
+	may give the name of a pre-defined matrix.  In this case estimates are
+	computed for all the given <repl>tau</repl> values and the results are
+	printed in a special format, showing the sequence of quantile
+	estimates for each regressor in turn.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Robust estimation/Quantile regression</menu-path>
     </gui-access>
 
   </command>
@@ -7478,7 +7888,7 @@
 
   </command>
 
-<command name="sprintf" section="Printing" 
+  <command name="sprintf" section="Printing" 
     label="Printing to a string" context="cli">
 
     <usage>
@@ -7531,6 +7941,106 @@
     <gui-access>
       <menu-path>/Add/Squares of selected variables</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="sscanf" section="Programming" 
+    label="Scanning a string" context="cli">
+
+    <usage>
+      <arguments>
+	<argument>source</argument>
+	<argpunct>, </argpunct>
+        <argument>format</argument>
+	<argpunct>, </argpunct>
+        <argument>args</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Scans the string <repl>source</repl> under the control of
+	<repl>format</repl>, assigning zero or more values to the
+	given <repl>args</repl>. This is a simplifed version of the
+	<lit>sscanf</lit> function in the C programming language.
+      </para>
+      <para>
+	<repl>source</repl> may be either a literal string, enclosed in double
+	quotes, or the name of a predefined string variable.
+	<repl>format</repl> is defined similarly to the format string in
+	<cmdref targ="printf"/> (more on this below). <repl>args</repl> should
+	be a comma-separated list containing the names of pre-defined
+	variables: these are the targets of conversion from
+	<repl>source</repl>.  (For those used to C: one can prefix the names
+	of numerical variables with <lit>&amp;</lit> but this is not
+	required.)
+      </para>
+      <para>
+	Literal	text in <repl>format</repl> is matched against
+	<repl>source</repl>.  Conversion specifiers start with
+	<lit>%</lit>, and recognized conversions include <lit>%f</lit>,
+	<lit>%g</lit> or <lit>%lf</lit> for floating-point numbers;
+	<lit>%d</lit> for integers; <lit>%s</lit> for strings; and
+	<lit>%m</lit> for matrices.  You may insert a positive integer
+	after the percent sign: this sets the maximum number of characters
+	to read for the given conversion (or the maximum number of rows in
+	the case of matrix conversion). Alternatively, you can insert a
+	literal <lit>*</lit> after the percent to suppress the conversion
+	(thereby skipping any characters that would otherwise have been
+	converted for the given type).  For example, <lit>%3d</lit>
+	converts the next 3 characters in <repl>source</repl> to an
+	integer, if possible; <lit>%*g</lit> skips as many characters in
+	<repl>source</repl> as could be converted to a single
+	floating-point number.
+      </para>
+      <para>
+	Matrix conversion works thus: the scanner reads a line of input
+	and counts the (space- or tab-separated) number of numeric fields.
+	This defines the number of columns in the matrix.  By default,
+	reading then proceeds for as many lines (rows) as contain the same
+	number of numeric columns, but the maximum number of rows to read
+	can be limited as described above.
+      </para>
+      <para>
+	In addition to <lit>%s</lit> conversion for strings, a simplified
+	version of the C format
+	<lit>%</lit><repl>N</repl><lit>[</lit><repl>chars</repl><lit>]</lit> 
+	is available.  In this format <repl>N</repl> is the maximum number
+	of characters to read and <repl>chars</repl> is a set of
+	acceptable characters, enclosed in square brackets: reading stops
+	if <repl>N</repl> is reached or if a character not in
+	<repl>chars</repl> is encountered. The function of
+	<repl>chars</repl> can be reversed by giving a circumflex,
+	<lit>^</lit>, as the first character; in that case reading stops
+	if a character in the given set is found.  (Unlike C, the hyphen
+	does not play a special role in the <repl>chars</repl> set.)
+      </para>
+      <para>
+	If the source string does not (fully) match the format, the number
+	of conversions may fall short of the number of arguments given.
+	This is not in itself an error so far as gretl is concerned.
+	However, you may wish to check the number of conversions
+	performed; this is given by the built-in scalar variable
+	<lit>$nscan</lit>, whose value is refreshed every time
+	<lit>sscanf</lit> is called.  The number of conversions is also
+	printed, in interactive use.
+      </para>
+      <para>
+	Some examples follow:
+      </para>
+      <code>
+	scalar x
+	scalar y
+	sscanf "123456", "%3d%3d", x, y
+
+	sprintf S "1 2 3 4\n5 6 7 8"
+	S
+	matrix m
+	sscanf S, "%m", m
+	print m
+      </code>
+
+    </description>
 
   </command>
 
@@ -7640,7 +8150,7 @@
 
   </command>
 
-<command name="string" section="Utilities" context="cli">
+  <command name="string" section="Utilities" context="cli">
     
     <usage>
       <arguments>
@@ -7943,6 +8453,28 @@
 
     <gui-access>
       <menu-path>/Model/Nonlinear models/Tobit</menu-path>
+    </gui-access>
+
+  </command>
+  
+  <command name="transpos" section="Dataset" label="Transpose data"
+    context="gui">
+
+    <description>
+      <para>
+	Transposes the current data set.  That is, each observation
+	(row) in the current data set will be treated as a variable
+	(column), and each variable as an observation.  This command
+	may be useful if data have been read from some external source 
+	in which the rows of the data table represent variables.
+      </para>
+      <para>
+	See also <cmdref targ="dataset"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Transpose data</menu-path>
     </gui-access>
 
   </command>
@@ -8470,6 +9002,47 @@
 
     <gui-access>
       <menu-path>/Model/Other linear models/Weighted Least Squares</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="working-dir" section="Utilities" label="Working directory"
+    context="gui">
+
+    <description>
+      <para>
+	The <quote>working directory</quote> is where gretl looks
+	by default when reading or writing data files or scripts
+	via the file Open and Save dialogs.
+      </para>
+      <para>
+	In addition the working directory is the default location for
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    reading files via the script commands <lit>append</lit>,
+	    <lit>open</lit>, <lit>run</lit> and <lit>include</lit>; and
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    writing files via the commands <lit>eqnprint</lit>,
+	    <lit>tabprint</lit>, <lit>gnuplot</lit>, <lit>outfile</lit>
+	    and <lit>store</lit>.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	The option of having gretl use the current directory (as
+	determined via the shell) at start-up may be useful to people who
+	are in the habit of launching gretl from a command prompt rather
+	than a menu or icon.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Working directory</menu-path>
     </gui-access>
 
   </command>
