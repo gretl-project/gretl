@@ -1028,6 +1028,7 @@ void set_tex_use_utf (int s)
 
 void gretl_tex_preamble (PRN *prn, int fmt)
 {
+    char* lang = getenv("LANG");
     FILE *fp = NULL;
     int userfile = 0;
 
@@ -1071,6 +1072,9 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n");
 	} else {
 	    pputs(prn, "\\usepackage[latin1]{inputenc}\n");
+	}
+	if (lang != NULL && !strncmp(lang, "ru", 2)) {
+	    pputs(prn, "\\usepackage[russian]{babel}\n");
 	}
 #endif
 	if (fmt & GRETL_FORMAT_EQN) {

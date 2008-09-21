@@ -262,6 +262,7 @@ int iso_latin_version (void)
     if (gretl_cset_maj == 8859 &&
 	(gretl_cset_min == 1 || 
 	 gretl_cset_min == 2 ||
+	 gretl_cset_min == 5 ||
 	 gretl_cset_min == 9 ||
 	 gretl_cset_min == 15)) {
 	return gretl_cset_min;
@@ -272,16 +273,20 @@ int iso_latin_version (void)
 	return 1;
     } else if (gretl_cpage == 1250) {
 	return 2;
+    } else if (gretl_cpage == 1251) {
+	return 5;
     } else if (gretl_cpage == 1254) {
 	return 9;
     }
 # endif
 
-    /* Polish, Turkish: UTF-8 locale? */
+    /* Polish, Russian, Turkish: UTF-8 locale? */
     lang = getenv("LANG");
     if (lang != NULL) {
 	if (!strncmp(lang, "pl", 2)) {
 	    return 2;
+	} else if (!strncmp(lang, "ru", 2)) {
+	    return 5;
 	} else if (!strncmp(lang, "tr", 2)) {
 	    return 9;
 	}
@@ -648,6 +653,8 @@ static char *get_gp_encoding_set (char *s, int targ)
 	strcpy(s, "ISO-8859-");
 	if (latin == 2) {
 	    strcat(s, "2");
+	} else if (latin == 5) {
+	    strcat(s, "5");
 	} else if (latin == 9) {
 	    strcat(s, "9");
 	} else if (latin == 15) {
@@ -660,6 +667,8 @@ static char *get_gp_encoding_set (char *s, int targ)
 	strcpy(s, "CP125");
 	if (latin == 2) {
 	    strcat(s, "0");
+	} else if (latin == 5) {
+	    strcat(s, "1");
 	} else if (latin == 9) {
 	    strcat(s, "4");
 	} else {
