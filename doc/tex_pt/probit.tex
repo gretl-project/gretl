@@ -1,0 +1,446 @@
+\chapter{Discrete and censored dependent variables}
+\label{chap:discr-models}
+
+\section{Logit and probit models}
+\label{sec:logit-probit}
+
+It often happens that one wants to specify and estimate a model in
+which the dependent variable is not continuous, but discrete. A
+typical example is a model in which the dependent variable is the
+occupational status of an individual (1 = employed, 0 = unemployed). A
+convenient way of formalizing this situation is to consider the
+variable $y_i$ as a Bernoulli random variable and analyze its
+distribution conditional on the explanatory variables $x_i$.  That is,
+%
+\begin{equation}
+  \label{eq:qr-Bernoulli}
+  y_i \left\{ 
+    \begin{array}{ll} 
+      1 & P_i \\ 0 & 1 - P_i 
+    \end{array}
+    \right.
+\end{equation}
+%
+where $P_i = P(y_i = 1 | x_i) $ is a given function of the explanatory
+variables $x_i$.
+
+In most cases, the function $P_i$ is a cumulative distribution
+function $F$, applied to a linear combination of the $x_i$s. In the
+probit model, the normal cdf is used, while the logit model employs
+the logistic function $\Lambda()$. Therefore, we have
+%
+\begin{eqnarray}
+  \label{eq:qr-link}
+  \textrm{probit} & \qquad & P_i = F(z_i) = \Phi(z_i)  \\
+  \textrm{logit}  & \qquad & P_i = F(z_i) = \Lambda(z_i) = \frac{1}{1 + e^{-z_i}} \\
+  & &z_i = \sum_{j=1}^k x_{ij} \beta_j
+\end{eqnarray}
+%
+where $z_i$ is commonly known as the \emph{index} function. Note that
+in this case the coefficients $\beta_j$ cannot be interpreted as the
+partial derivatives of $E(y_i | x_i)$ with respect to
+$x_{ij}$.  However, for a given value of $x_i$ it is possible to
+compute the vector of ``slopes'', that is
+\[
+  \mathrm{slope}_j(\bar{x}) = \left. \pder{F(z)}{x_j} \right|_{z =
+    \bar{z}}
+\]
+\app{Gretl} automatically computes the slopes, setting each
+explanatory variable at its sample mean.
+
+Another, equivalent way of thinking about this model is in terms of
+an unobserved variable $y^*_i$ which can be described thus:
+%
+\begin{equation}
+  \label{eq:qr-latent}
+  y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i = z_i  +
+  \varepsilon_i 
+\end{equation}
+%
+We observe $y_i = 1$ whenever $y^*_i > 0$ and $y_i = 0$ otherwise. If
+$\varepsilon_i$ is assumed to be normal, then we have the probit
+model. The logit model arises if we assume that the density function
+of $\varepsilon_i$ is
+%
+\[
+  \lambda(\varepsilon_i) =
+  \pder{\Lambda(\varepsilon_i)}{\varepsilon_i} =
+  \frac{e^{-\varepsilon_i}}{(1 + e^{-\varepsilon_i})^2}
+\]
+
+Both the probit and logit model are estimated in \app{gretl} via
+maximum likelihood; since the score equations do not have a closed
+form solution, numerical optimization is used. However, in most cases
+this is totally transparent to the user, since usually only a few
+iterations are needed to ensure convergence. The \texttt{--verbose}
+switch can be used to track the maximization algorithm.
+
+\begin{script}[htbp]
+  \caption{Estimation of simple logit and probit models}
+  \label{simple-QR}
+\begin{scode}
+open greene19_1
+
+logit GRADE const GPA TUCE PSI
+probit GRADE const GPA TUCE PSI
+\end{scode}
+\end{script}
+
+As an example, we reproduce the results given in Greene (2000),
+chapter 21, where the effectiveness of a program for teaching
+economics is evaluated by the improvements of students' grades.
+Running the code in example \ref{simple-QR} gives the following output:
+\begin{code}
+
+Model 1: Logit estimates using the 32 observations 1-32
+Dependent variable: GRADE
+
+      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE
+                                                                  (at mean)
+  const               -13.0213           4.93132      -2.641
+  GPA                   2.82611          1.26294       2.238      0.533859   
+  TUCE                  0.0951577        0.141554      0.672      0.0179755  
+  PSI                   2.37869          1.06456       2.234      0.449339   
+
+  Mean of GRADE = 0.344
+  Number of cases 'correctly predicted' = 26 (81.2%)
+  f(beta'x) at mean of independent vars = 0.189
+  McFadden's pseudo-R-squared = 0.374038
+  Log-likelihood = -12.8896
+  Likelihood ratio test: Chi-square(3) = 15.4042 (p-value 0.001502)
+  Akaike information criterion (AIC) = 33.7793
+  Schwarz Bayesian criterion (BIC) = 39.6422
+  Hannan-Quinn criterion (HQC) = 35.7227
+
+           Predicted
+             0    1
+  Actual 0  18    3
+         1   3    8
+
+Model 2: Probit estimates using the 32 observations 1-32
+Dependent variable: GRADE
+
+      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE
+                                                                  (at mean)
+  const                -7.45232          2.54247      -2.931
+  GPA                   1.62581          0.693883      2.343      0.533347   
+  TUCE                  0.0517288        0.0838903     0.617      0.0169697  
+  PSI                   1.42633          0.595038      2.397      0.467908   
+
+  Mean of GRADE = 0.344
+  Number of cases 'correctly predicted' = 26 (81.2%)
+  f(beta'x) at mean of independent vars = 0.328
+  McFadden's pseudo-R-squared = 0.377478
+  Log-likelihood = -12.8188
+  Likelihood ratio test: Chi-square(3) = 15.5459 (p-value 0.001405)
+  Akaike information criterion (AIC) = 33.6376
+  Schwarz Bayesian criterion (BIC) = 39.5006
+  Hannan-Quinn criterion (HQC) = 35.581
+
+           Predicted
+             0    1
+  Actual 0  18    3
+         1   3    8
+
+\end{code}
+
+In this context, the \verb+$uhat+ accessor function takes a
+special meaning: it returns generalized residuals as defined in
+Gourieroux \textit{et al} (1987), which can be interpreted as unbiased
+estimators of the latent disturbances $\varepsilon_t$. These are
+defined as
+%
+\begin{equation}
+  \label{eq:QR-genres}
+  u_i = \left\{
+    \begin{array}{ll}
+      y_i - \hat{P}_i & \textrm{for the logit model} \\
+      y_i\cdot \frac{\phi(\hat{z}_i)}{\Phi(\hat{z}_i)} - 
+      ( 1 - y_i ) \cdot \frac{\phi(\hat{z}_i)}{1 - \Phi(\hat{z}_i)}
+      & \textrm{for the probit model} \\
+    \end{array}
+    \right.
+\end{equation}
+
+Among other uses, generalized residuals are often used for diagnostic
+purposes.  For example, it is very easy to set up an omitted variables
+test equivalent to the familiar LM test in the context of a linear
+regression; example \ref{QR-add} shows how to perform a variable
+addition test.
+
+\begin{script}[htbp]
+  \caption{Variable addition test in a probit model}
+  \label{QR-add}
+\begin{scode}
+open greene19_1
+
+probit GRADE const GPA PSI
+series u = $uhat 
+%$
+ols u const GPA PSI TUCE -q
+printf "Variable addition test for TUCE:\n"
+printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
+\end{scode}
+\end{script}
+
+\subsection{Ordered models}
+\label{sec:ordered}
+
+These models are simple variations of ordinary logit/probit models,
+and are usually applied in case the dependent variable is a discrete
+and ordered measurement, not necessarily quantitative. For example,
+this sort of model can be applied when the dependent variable is a
+qualitative assessment like ``Good'', ``Average'' and ``Bad''.
+Assuming we have $p$ categories, the probability that individual $i$
+falls in the $j$-th category is given by
+%
+\begin{equation}
+  \label{eq:QR-ordered}
+  P(y_i = j | x_i) = \left\{
+    \begin{array}{ll}
+      F(z_i + \mu_0) & \textrm{for } j = 0 \\
+      F(z_i + \mu_j) -  F(z_i + \mu_{j-1}) & \textrm{for } 0 < j < p \\
+      1 -  F(z_i + \mu_{p-1}) & \textrm{for } j = p 
+    \end{array}
+    \right.
+\end{equation}
+%
+The unknown parameters $\mu_j$ are called the ``cutoff
+points'' and are estimated together with the $\beta$s. For
+identification purposes, $\mu_0$ is assumed to be 0. In terms of the
+unobserved variable $y^*_i$, the model can be equivalently cast as
+$P(y_i = j | x_i) = P(\mu_{j-1} \le y^*_i < \mu_j)$. 
+
+\begin{script}[htbp]
+  \caption{Ordered probit model}
+  \label{ex:oprobit}
+\begin{scode}
+open pension.gdt
+series pctstck = pctstck/50
+discrete pctstck
+probit pctstck const choice age educ female black married finc25 finc35 \
+  finc50 finc75 finc100 finc101 wealth89 prftshr
+\end{scode}
+\end{script}
+
+In order to apply these models, the dependent variable must be marked
+as discrete and its lowest value must be 0. Example \ref{ex:oprobit}
+reproduces the estimation given in chap. 15 of Wooldridge (2002a). Note
+that \app{gretl} does not provide a separate command for ordered
+models: the \texttt{logit} and \texttt{probit} commands automatically
+estimate the ordered version if the dependent variable is not binary
+(provided it has already been marked as discrete).
+
+After estimating ordered models, the \verb+$uhat+ accessor yields
+generalized residuals as in binary models; additionally, the
+\verb+$yhat+ accessor function returns $\hat{z}_i$, so it is
+possible to compute an unbiased estimator of the latent variable
+$y^*_i$ simply by adding the two together.
+
+\subsection{Multinomial logit}
+\label{sec:mlogit}
+
+When the dependent variable is not binary and does not have a natural
+ordering, \emph{multinomial} models are used. \app{Gretl} does not
+provide a native implementation of these yet, but simple models can be
+handled via the \texttt{mle} command (see chapter \ref{chap:mle}). We
+give here an example of a multinomial logit model.  Let the dependent
+variable, $y_i$, take on integer values $0,1,\dots p$.  The
+probability that $y_i = k$ is given by
+\[
+  P(y_i = k |  x_i) = \frac{\exp(x_i \beta_k)}{\sum_{j=0}^p \exp(x_i \beta_j)}
+\]
+For the purpose of identification one of the outcomes must be taken as
+the ``baseline''; it is usually assumed that $\beta_0 = 0$, in which case
+\[
+  P(y_i = k |  x_i) = \frac{\exp(x_i \beta_k)}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} 
+\]
+and
+\[
+  P(y_i = 0 |  x_i) = \frac{1}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} .
+\]
+
+Example~\ref{ex:mlogit} reproduces Table 15.2 in Wooldridge (2002a),
+based on data on career choice from Keane and Wolpin (1997).  The
+dependent variable is the occupational status of an individual (0 = in
+school; 1 = not in school and not working; 2 = working), and the
+explanatory variables are education and work experience (linear and
+square) plus a ``black'' binary variable.  The full data set is a
+panel; here the analysis is confined to a cross-section for 1987.  For
+explanations of the matrix methods employed in the script, see
+chapter~\ref{chap:matrices}.
+
+\begin{script}[htbp]
+  \caption{Multinomial logit}
+  \label{ex:mlogit}
+\begin{scode}
+function mlogitlogprobs(series y, matrix X, matrix theta)
+
+  scalar n = max(y)
+  scalar k = cols(X)
+  matrix b = mshape(theta,k,n)
+
+  matrix tmp = X*b
+  series ret = -ln(1 + sumr(exp(tmp)))
+
+  loop for i=1..n --quiet
+    series x = tmp[,i]
+    ret += (y=$i) ? x : 0 
+  end loop
+
+  return series ret
+
+end function
+
+open Keane.gdt
+status = status-1 # dep. var. must be 0-based
+smpl (year=87 & ok(status)) --restrict
+
+matrix X = { educ exper expersq black const }
+scalar k = cols(X)
+matrix theta = zeros(2*k, 1)
+
+mle loglik = mlogitlogprobs(status,X,theta)
+  params theta
+end mle --verbose --hessian
+\end{scode}
+%$
+\end{script}
+
+
+\section{The Tobit model}
+\label{sec:tobit}
+
+The Tobit model is used when the dependent variable of a model is
+\emph{censored}.\footnote{We assume here that censoring occurs from
+  below at 0. Censoring from above, or at a point different from zero,
+  can be rather easily handled by re-defining the dependent variable
+  appropriately. The more general case of two-sided censoring is not
+  handled by \app{gretl} via a native command yet, but it is possible
+  to estimate such models using the \texttt{mle} command (see chapter
+  \ref{chap:mle}).}  
+Assume a latent variable $y^*_i$ can be described
+as
+%
+\[
+  y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i ,
+\]
+%
+where $\varepsilon_i \sim N(0,\sigma^2)$. If $y^*_i$ were observable,
+the model's parameters could be estimated via ordinary least squares.
+On the contrary, suppose that we observe $y_i$, defined as
+%
+\begin{equation}
+  \label{eq:tobit}
+  y_i \left\{ 
+    \begin{array}{ll} 
+      y^*_i & \mathrm{for} \quad y^*_i > 0 \\ 
+      0 & \mathrm{for} \quad y^*_i \le 0 
+    \end{array}
+    \right. 
+\end{equation}
+%
+In this case, regressing $y_i$ on the $x_i$s does not yield
+consistent estimates of the parameters $\beta$, because the
+conditional mean $E(y_i|x_i)$ is not equal to $\sum_{j=1}^k x_{ij}
+\beta_j$.  It can be shown that restricting the sample to non-zero
+observations would not yield consistent estimates either. The solution
+is to estimate the parameters via maximum likelihood. The syntax is
+simply
+%
+\begin{code}
+tobit depvar indvars
+\end{code}
+
+As usual, progress of the maximization algorithm can be tracked via
+the \texttt{--verbose} switch, while \verb+$uhat+ returns the
+generalized residuals.
+
+An important difference between the Tobit estimator and OLS is that
+the consequences of non-normality of the disturbance term are much
+more severe: non-normality implies inconsistency for the Tobit
+estimator. For this reason, the output for the tobit model includes
+the Chesher--Irish (1987) test for normality by default.
+
+\subsection{Generalized Tobit model}
+\label{sec:heckit}
+
+In the so-called ``Tobit II'' model, there are two latent variables:
+%
+\begin{eqnarray}
+  \label{eq:heckit1}
+  y^*_i & = & \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i \\
+  \label{eq:heckit2}
+  s^*_i & = & \sum_{j=1}^p z_{ij} \gamma_j + \eta_i 
+\end{eqnarray}
+%
+and the observation rule is given by
+%
+\begin{equation}
+  \label{eq:tobitII}
+  y_i \left\{ 
+    \begin{array}{ll} 
+      y^*_i & \mathrm{for} \quad s^*_i > 0 \\ 
+      0 & \mathrm{for} \quad s^*_i \le 0 
+    \end{array}
+    \right. 
+\end{equation}
+
+One of the most popular applications of this model in econometrics is
+a wage equation coupled with a labor force participation equation: we
+only observe the wage for the employed. If $y^*_i$ and $s^*_i$ were
+(conditionally) independent, there would be no reason not to use OLS
+for estimating equation (\ref{eq:heckit1}); otherwise, OLS does not
+yield consistent estimates of the parameters $\beta_j$.
+
+A widely used estimator is the so-called \emph{Heckit} estimator,
+named after Heckman (1979). The procedure can be briefly outlined as
+follows: first, a probit model is fit on equation (\ref{eq:heckit2});
+next, the generalized residuals are inserted in equation
+(\ref{eq:heckit1}) to correct for the effect of sample selection.
+
+Example \ref{ex:heckit} shows two estimates from the dataset used in
+Mroz (1987): the first one replicates Table 22.7 in Greene (2003),
+while the second one replicates table 17.1 in Wooldridge (2002a). Note
+that the \texttt{heckit.inp} script (provided with \app{gretl} as an
+example script) is invoked.
+
+\begin{script}[htbp]
+  \caption{Heckit model}
+  \label{ex:heckit}
+\begin{scode}
+open mroz.gdt
+include heckit.inp
+
+genr EXP2 = AX^2
+genr WA2 = WA^2
+genr KIDS = (KL6+K618)>0
+
+# Greene's specification
+
+list X = const AX EXP2 WE CIT
+list Z = const WA WA2 FAMINC KIDS WE
+
+heckit(WW,X,LFP,Z)
+
+# Wooldridge's specification
+
+series NWINC = FAMINC - WW*WHRS
+series lww = log(WW)
+list X = const WE AX EXP2
+list Z = X NWINC WA KL6 K618
+
+heckit(lww,X,LFP,Z)
+\end{scode}
+\end{script}
+
+% \section{Count data}
+% \label{sec:poisson}
+
+% also include example script for negative binomial (done in Verbeek
+% example files).
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

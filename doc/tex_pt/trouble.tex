@@ -1,0 +1,59 @@
+\chapter{Troubleshooting gretl}
+\label{trouble}
+
+\section{Bug reports}
+\label{trouble-bugs}
+
+Bug reports are welcome. Hopefully, you are unlikely to find bugs in
+the actual calculations done by \app{gretl} (although this statement
+does not constitute any sort of warranty). You may, however, come
+across bugs or oddities in the behavior of the graphical interface.
+Please remember that the usefulness of bug reports is greatly enhanced
+if you can be as specific as possible: what \emph{exactly} went wrong,
+under what conditions, and on what operating system?  If you saw an
+error message, what precisely did it say?
+
+\section{Auxiliary programs}
+\label{trouble-programs}
+
+As mentioned above, \app{gretl} calls some other programs to
+accomplish certain tasks (gnuplot for graphing, {\LaTeX} for
+high-quality typesetting of regression output, GNU R).  If something
+goes wrong with such external links, it is not always easy for
+\app{gretl} to produce an informative error message.  If such a link
+fails when accessed from the \app{gretl} graphical interface, you may
+be able to get more information by starting \app{gretl} from the
+command prompt rather than via a desktop menu entry or icon.  On the X
+window system, start gretl from the shell prompt in an \app{xterm}; on
+MS Windows, start the program \cmd{gretlw32.exe} from a console window
+or ``DOS box'' using the \verb|-g| or \verb|--debug| option flag.
+Additional error messages may be displayed on the terminal window.
+
+Also please note that for most external calls, \app{gretl} assumes
+that the programs in question are available in your ``path'' --- that
+is, that they can be invoked simply via the name of the program,
+without supplying the program's full location.\footnote{The exception
+  to this rule is the invocation of gnuplot under MS Windows, where a
+  full path to the program is given.}  Thus if a given program fails,
+try the experiment of typing the program name at the command prompt,
+as shown below.
+
+\begin{center}
+  \begin{tabular}{llll}
+    & \textit{Graphing} & \textit{Typesetting} & \textit{GNU R}\\
+    X window system & gnuplot & latex, xdvi & R\\
+    MS Windows & wgnuplot.exe & pdflatex & RGui.exe\\
+  \end{tabular}
+\end{center}
+
+If the program fails to start from the prompt, it's not a \app{gretl}
+issue but rather that the program's home directory is not in your
+path, or the program is not installed (properly).  For details on
+modifying your path please see the documentation or online help for
+your operating system or shell.
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

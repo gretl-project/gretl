@@ -1,0 +1,1248 @@
+\chapter{Matrix manipulation}
+\label{chap:matrices}
+
+\section{Introduction}
+\label{matrix-intro}
+
+Since version 1.5.1, gretl has offered the facility of creating and
+manipulating user-defined matrices.  There are a few changes in this
+respect in version 1.6.1.
+
+\section{Creating matrices}
+\label{matrix-create}
+
+Matrices can be created using any of these methods:
+
+\begin{enumerate}
+\item By direct specification of the scalar values that compose the
+  matrix, in numerical form, by reference to pre-existing
+  scalar variables, or using computed values.
+\item By providing a list of data series.
+\item By providing a \textit{named list} of series.
+\item Using a formula of the same general type that is used
+  with the \texttt{genr} command, whereby a new matrix is defined
+  in terms of existing matrices and/or scalars, or via some
+  special functions.
+\end{enumerate}
+
+To specify a matrix \textit{directly in terms of scalars}, the syntax
+is, for example:
+
+\begin{code}
+matrix A = { 1, 2, 3 ; 4, 5, 6 }
+\end{code}
+
+The matrix is defined by rows; the elements on each row are separated
+by commas and the rows are separated by semi-colons.  The whole
+expression must be wrapped in braces.  Spaces within the braces are
+not significant.  The above expression defines a $2\times3$ matrix.
+Each element should be a numerical value, the name of a scalar
+variable, or an expression that evaluates to a scalar.  Directly after
+the closing brace you can append a single quote (\texttt{'}) to obtain
+the transpose.
+
+To specify a matrix \textit{in terms of data series} the syntax is,
+for example,
+%
+\begin{code}
+matrix A = { x1, x2, x3 }
+\end{code}
+%
+where the names of the variables are separated by commas.  Besides
+names of existing variables, you can use expressions that evaluate to
+a series.  For example, given a series \texttt{x} you could do
+%
+\begin{code}
+matrix A = { x, x^2 }
+\end{code}
+%
+Each variable occupies a column (and there can only be one variable
+per column).  You cannot use the semi-colon as a row separator in this
+case: if you want the series arranged in rows, append the transpose
+symbol.  The range of data values included in the matrix depends on
+the current setting of the sample range.
+
+Please note: while gretl's built-in statistical functions are
+capable of handling missing values, the matrix arithmetic functions
+are not.  \emph{When you build a matrix from series that include missing
+values, observations for which at least one series has a missing value
+are skipped}.  
+
+Instead of giving an explicit list of variables, you may instead
+provide the \textit{name of a saved list} (see
+Chapter~\ref{chap-persist}), as in
+%
+\begin{code}
+list xlist = x1 x2 x3
+matrix A = { xlist }
+\end{code}
+%
+When you provide a named list, the data series are by default placed
+in columns, as is natural in an econometric context: if you want them
+in rows, append the transpose symbol.
+
+As a special case of constructing a matrix from a list of variables,
+you can say
+%
+\begin{code}
+matrix A = { dataset }
+\end{code}
+%
+This builds a matrix using all the series in the current dataset,
+apart from the constant (variable 0).  When this dummy list is used, it
+must be the sole element in the matrix definition \texttt{\{...\}}.  You
+can, however, create a matrix that includes the constant along with
+all other variables using column-wise concatenation (see below), as in
+%
+\begin{code}
+matrix A = {const}~{dataset}
+\end{code}
+%
+
+You can create new matrices, or replace existing matrices, by means of
+various transformations just as with scalars and data series.  The
+relevant mechanisms are discussed in the next several sections.
+
+\tip{Names of matrices must satisfy the same requirements as names of
+  gretl variables in general: the name can be no longer than 15
+  characters, must start with a letter, and must be composed of
+  nothing but letters, numbers and the underscore character.}
+
+\section{Selecting sub-matrices}
+\label{matrix-sub}
+
+You can select sub-matrices of a given matrix using the syntax
+
+\texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
+
+where \textsl{rows} can take any of these forms:
+
+\begin{center}
+\begin{tabular}{ll}
+empty & selects all rows \\
+a single integer & selects the single specified row \\
+two integers separated by a colon & selects a range of rows \\
+the name of a matrix & selects the specified rows \\
+\end{tabular}
+\end{center}
+
+With regard to the second option, the integer value can be given
+numerically, as the name of an existing scalar variable, or as an
+expression that evaluates to a scalar.  With the last option, the
+index matrix given in the \textsl{rows} field must be either $p\times
+1$ or $1\times p$, and should contain integer values in the range 1 to
+$n$, where $n$ is the number of rows in the matrix from which the
+selection is to be made.
+
+The \textsl{cols} specification works in the same way, \textit{mutatis
+  mutandis}.  Here are some examples.
+%
+\begin{code}
+matrix B = A[1,]
+matrix B = A[2:3,3:5]
+matrix B = A[2,2]
+matrix idx = { 1, 2, 6 }
+matrix B = A[idx,]
+\end{code}
+%
+The first example selects row 1 from matrix \texttt{A}; the second
+selects a $2\times 3$ submatrix; the third selects a scalar; and
+the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
+
+In addition there is a pre-defined index specification, \texttt{diag},
+which selects the principal diagonal of a square matrix, as in
+\texttt{B[diag]}, where \texttt{B} is square.
+
+You can use selections of this sort on either the right-hand side of
+a matrix-generating formula or the left.  Here is an example of use of
+a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
+$3\times 3$ matrix $A$:
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix B = A[1:2,2:3]
+\end{code}
+%
+And here are examples of selection on the left.  The second line below
+writes a $2\times 2$ identity matrix into the bottom right corner of the
+$3\times 3$ matrix $A$.  The fourth line replaces the diagonal of $A$ 
+with 1s.
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix A[2:3,2:3] = I(2)
+matrix d = { 1, 1, 1 }
+matrix A[diag] = d
+\end{code}
+
+\section{Matrix operators}
+\label{matrix-op}
+
+The following binary operators are available for matrices:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{+}  & addition \\
+\texttt{-}  & subtraction \\
+\texttt{*}  & ordinary matrix multiplication \\
+\texttt{'}  & pre-multiplication by transpose \\
+\texttt{/}  & matrix ``division'' (see below) \\
+\texttt{.*} & element-wise multiplication \\
+\texttt{./} & element-wise division \\
+\verb+.^+   & element-wise exponentiation \\
+\verb+~+    & column-wise concatenation \\
+\verb+|+    & row-wise concatenation \\
+\texttt{**} & Kronecker product \\
+\texttt{=}  & test for equality 
+\end{tabular}
+\end{center}
+
+Here are explanations of the less obvious cases. 
+
+For matrix addition and subtraction, in general the two matrices have
+to be of the same dimensions but an exception to this rule is granted
+if one of the operands is a $1\times 1$ matrix or scalar.  The scalar
+is implicitly promoted to the status of a matrix of the correct
+dimensions, all of whose elements are equal to the given scalar value.
+For example, if $A$ is an $m \times n$ matrix and $k$ a scalar, then
+the commands
+%
+\begin{code}
+matrix C = A + k
+matrix D = A - k
+\end{code}
+%
+both produce $m \times n$ matrices, with elements $c_{ij} = 
+a_{ij} + k$ and $d_{ij} = a_{ij} - k$ respectively.
+
+By ``pre-multiplication by transpose'' we mean, for example, that 
+%
+\begin{code}
+matrix C = X'Y
+\end{code}
+%
+produces the product of $X$-transpose and $Y$.  In effect, 
+the expression \texttt{X'Y} is shorthand for \texttt{X'*Y}
+(which is also valid).
+
+In matrix ``division'', $A/B$ is algebraically equivalent to
+$B^{-1}A$ (pre-multiplication by the inverse of the ``divisor'').
+Therefore the following two expressions are equivalent in principle:
+%
+\begin{code}
+matrix C = A / B
+matrix C = inv(B) * A
+\end{code}
+%
+where \texttt{inv} is the matrix inversion function (see below for
+more on matrix functions).  The first form, however, may be more
+accurate than the second; the solution is obtained via LU
+decomposition, without the explicit calculation of the inverse.
+
+In \textit{element-wise multiplication} if we write
+%
+\begin{code}
+matrix C = A .* B
+\end{code}
+% 
+then the result depends on the dimensions of $A$ and $B$.  Let $A$ be
+an $m \times n$ matrix and let $B$ be $p \times q$.  
+%
+\begin{itemize}
+\item If $m=p$ and $n=q$ then $C$ is $m\times n$ with $c_{ij} = a_{ij}
+  \times b_{ij}$.  This is known as the \emph{Hadamard product}.
+\item Otherwise, if $m=1$ and $n=q$, or $n=1$ and $m=p$, then $C$ is
+  $p\times q$ with $c_{ij} = a_k \times b_{ij}$, where $k=j$ if $m=1$
+  else $k=i$.
+\item Otherwise, if $p=1$ and $n=q$, or $q=1$ and $m=p$, then $C$ is
+  $m\times n$ with $c_{ij} = a_{ij} \times b_k$, where $k=j$ if $p=1$
+  else $k=i$.
+\item If none of the above conditions are satisfied the product is
+  undefined and an error is flagged.
+\end{itemize}
+For example, if $A$ is a row vector with the same number of
+columns of $B$, then the columns of $C$ are the columns of $B$
+multiplied by the corresponding element of $A$.  Note that this
+convention makes it unnecessary, in most cases, to use diagonal
+matrices to perform transformations by means of ordinary matrix
+multiplication: if $Y = XV$, where $V$ is diagonal, it is
+computationally much more convenient to obtain $Y$ via the
+instruction
+%
+\begin{code}
+matrix Y = X .* v
+\end{code}
+%
+where \texttt{v} is a row vector containing the diagonal of $V$.
+
+Element-wise division and element-wise exponentiation work in a manner
+exactly analogous to element-wise multiplication: simply replace
+$\times$ by $\div$, or the exponentation operation, in the account
+given for multiplication.
+
+In \textit{column-wise concatenation} of an $m\times n$ matrix $A$ and
+an $m\times p$ matrix $B$, the result is an $m\times (n+p)$ matrix.
+That is,
+%
+\begin{code}
+matrix C = A ~ B
+\end{code}
+% 
+produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
+
+\textit{Row-wise concatenation} of an $m\times n$ matrix $A$ and
+an $p\times n$ matrix $B$ produces an $(m+p) \times n$ matrix.
+That is,
+%
+\begin{code}
+matrix C = A | B
+\end{code}
+% 
+produces $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
+
+\section{Matrix--scalar operators}
+\label{matrix-scalar-op}
+
+For matrix $A$ and scalar $k$, the operators shown in
+Table~\ref{tab:matrix-scalar-ops} are available.  (Addition and
+subtraction were discussed in section~\ref{matrix-op} but we include
+them in the table for completeness.)  In addition, for square $A$ and
+integer $k \geq 0$, \verb|B = A^k| produces a matrix $B$ which is $A$
+raised to the power $k$.  (Note that the operator \texttt{**} cannot
+be used in place of \verb|^| for this purpose because in a matrix
+context it is reserved for the Kronecker product.)
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll}
+\textit{Expression} & \textit{Effect} \\[4pt]
+\texttt{matrix B = A * k} & $b_{ij} = k a_{ij}$ \\
+\texttt{matrix B = A / k} & $b_{ij} = a_{ij} / k$ \\
+\texttt{matrix B = k / A} & $b_{ij} = k / a_{ij}$ \\
+\texttt{matrix B = A + k} & $b_{ij} = a_{ij} + k$ \\
+\texttt{matrix B = A - k} & $b_{ij} = a_{ij} - k$ \\
+\texttt{matrix B = k - A} & $b_{ij} = k - a_{ij}$ \\
+\texttt{matrix B = A \% k} & $b_{ij} = a_{ij} \mbox{ modulo } k$ \\
+\end{tabular}
+\caption{Matrix--scalar operators}
+\label{tab:matrix-scalar-ops}
+\end{table}
+
+
+\section{Matrix functions}
+\label{matrix-func}
+
+\newlength{\cwid}
+\setlength{\cwid}{0.1\textwidth}
+
+\begin{table}[htbp]
+\centering
+\textbf{Creation}
+\hrulefill
+
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
+\texttt{I}         &
+\texttt{mnormal}   &
+\texttt{muniform}  &
+\texttt{ones}      &
+\texttt{seq}       &
+\texttt{zeros}     
+\end{tabular}      
+
+\textbf{Shape/size}
+\hrulefill
+
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
+\texttt{cols}      &
+\texttt{diag}      &
+\texttt{dsort}     &
+\texttt{mlag}      &
+\texttt{mshape}    &
+\texttt{rows}      \\
+\texttt{sort}      &
+\texttt{transp}    &
+\texttt{unvech}    &
+\texttt{vec}       &
+\texttt{vech}      
+\end{tabular}      
+
+\textbf{Element by element}
+\hrulefill
+
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
+\texttt{abs}       &
+\texttt{atan}      &
+\texttt{cnorm}     &
+\texttt{cos}       &
+\texttt{dnorm}     &
+\texttt{exp}       \\
+\texttt{gamma}     &
+\texttt{int}       &
+\texttt{lngamma}   &
+\texttt{log}       &
+\texttt{qnorm}     &
+\texttt{sin}       \\
+\texttt{sqrt}      &
+\texttt{tan}       
+\end{tabular}      
+
+\textbf{Matrix algebra}
+\hrulefill
+
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
+\texttt{cholesky}  &
+\texttt{det}       &
+\texttt{eigengen}  &
+\texttt{eigensym}  &
+\texttt{fft}       &
+\texttt{ffti}      \\
+\texttt{infnorm}   &
+\texttt{inv}       &
+\texttt{ldet}      &
+\texttt{mexp}      &
+\texttt{nullspace} &
+\texttt{onenorm}   \\
+\texttt{qform}     &
+\texttt{qrdecomp}  &
+\texttt{rank}      &
+\texttt{rcond}     &
+\texttt{svd}       &
+\texttt{tr}        \\
+\texttt{cmult}      
+\end{tabular}      
+
+\textbf{Statistical}
+\hrulefill
+
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
+\texttt{cdemean}   &
+\texttt{imaxc}     &
+\texttt{imaxr}     &
+\texttt{iminc}     &
+\texttt{iminr}     &
+\texttt{mcorr}     \\
+\texttt{mcov}      &
+\texttt{maxc}      &   
+\texttt{maxr}      &
+\texttt{meanc}     &
+\texttt{meanr}     &
+\texttt{minc}      \\   
+\texttt{minr}      &
+\texttt{princomp}  &
+\texttt{sumc}      &
+\texttt{sumr}      &
+\texttt{values}    &
+\end{tabular}      
+\caption{Table of matrix functions by category}
+\label{tab:matrix_funcs_cat}
+\end{table}
+
+Table \ref{tab:matrix_funcs_cat} lists the matrix functions that
+\app{gretl} provides (an alphabetized version of the table is
+provided at the end of this chapter as Table~\ref{tab:matrix_funcs}).
+The following functions are available for \textit{element-by-element
+  transformations} of matrices: \texttt{log}, \texttt{exp},
+\texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
+\texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
+\texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.  These functions
+have the effects documented in relation to the \texttt{genr} command.
+For example, if a matrix \texttt{A} is already defined, then
+%
+\begin{code}
+matrix B = sqrt(A)
+\end{code}
+%
+generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
+functions require a single matrix as argument, or an expression which
+evaluates to a single matrix.
+
+Note that to find the ``matrix square root'' you need the
+\texttt{cholesky} function (see below); moreover, the \texttt{exp}
+function computes the exponential element by element, and therefore
+does \emph{not} return the matrix exponential unless the matrix is
+diagonal --- to get the matrix exponential, use \texttt{mexp}.
+  
+The functions \texttt{sort}, \texttt{dsort} and \texttt{values}
+are available for matrices as well as data series.  In the matrix case
+the argument to these functions must be a vector ($p \times 1$ or
+$1\times p$).  For \texttt{sort} and \texttt{dsort} the return value
+is a vector containing the elements of the input vector sorted in
+ascending (\texttt{sort}) or descending (\texttt{dsort}) order of
+magnitude.  For \texttt{values} the return is a vector containing the
+distinct values in the input vector, sorted in ascending order.
+
+Several matrix-specific functions are available.  These functions fall
+into five categories:
+%
+\begin{enumerate}
+\item Those taking a single matrix as argument and returning a scalar.
+\item Those taking a single matrix as argument (plus in some cases an
+  additional parameter) and returning a matrix.
+\item Those taking one or two dimensions as arguments and
+  returning a matrix.
+\item Those taking two matrices as arguments and returning a matrix.
+\item Those taking one or more matrices as arguments and returning one
+  or more matrices.
+\end{enumerate}
+%
+These sets of functions are discussed in turn below.
+
+\subsection{Matrix to scalar functions}
+\label{matrix-to-scalar}
+
+The functions which take a single matrix as argument and return a
+scalar are:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{rows} & number of rows \\
+\texttt{cols} & number of columns \\
+\texttt{rank} & rank \\
+\texttt{det} & determinant \\
+\texttt{ldet} & log-determinant \\
+\texttt{tr} & trace \\
+\texttt{onenorm} & 1-norm \\
+\texttt{infnorm} & infinity-norm \\
+\texttt{rcond} & reciprocal condition number
+\end{tabular}
+\end{center}
+
+The single matrix argument to these functions may be given as the name
+of an existing matrix or as an expression that evaluates to a single
+matrix.  Note that the functions \texttt{det}, \texttt{ldet} and
+\texttt{tr} require a square matrix as input.  The \texttt{rank}
+function is computed via the QR decomposition.
+
+The functions \texttt{onenorm} and \texttt{infnorm} return,
+respectively, the 1-norm and the infinity-norm of a matrix.  The
+former is the maximum across the columns of the matrix of the sums of
+the absolute values of the column elements, while the latter is the
+maximum across the rows of the matrix of the sums of the absolute
+values of the row elements.  The function \texttt{rcond} returns the
+reciprocal condition number for a symmetric, positive definite matrix.
+
+\subsection{Matrix to matrix functions}
+\label{matrix-to-matrix}
+
+The functions which take a single matrix as argument and return a
+matrix are:
+
+\begin{center}
+\begin{tabular}{llcll}
+\texttt{sumc}    & sum by column & &
+\texttt{sumr}    & sum by row \\
+\texttt{meanc}   & mean by column & &
+\texttt{meanr}   & mean by row \\
+\texttt{mcov}    & covariance matrix & &
+\texttt{mcorr}   & correlation matrix \\
+\texttt{mexp}    & matrix exponential & &
+\texttt{inv}     & inverse \\
+\texttt{cholesky} & Cholesky decomposition & &
+\texttt{diag}    & extract principal diagonal \\
+\texttt{transp}  & transpose & &
+\texttt{cdemean} & subtract column means \\ 
+\texttt{vec}     & elements as column vector & &
+\texttt{vech}    & vectorize lower triangle \\
+\texttt{unvech}  & undo \texttt{vech} & &
+\texttt{mlag}    & matrix lag or lead \\
+\texttt{nullspace} & right nullspace & &
+\texttt{princomp} & principal components \\
+\texttt{maxc}      & column maxima (values) & &
+\texttt{maxr}      & row maxima (values) \\
+\texttt{imaxc}     & column maxima (indices) & &
+\texttt{imaxr}     & row maxima (indices) \\
+\texttt{minc}      & column minima (values) & &
+\texttt{minr}      & row minima (values) \\
+\texttt{iminc}     & column minima (indices) & &
+\texttt{iminr}     & row minima (indices) \\
+\texttt{fft}       & discrete Fourier transform & &
+\texttt{ffti}      & discrete inverse Fourier transform 
+\end{tabular}
+\end{center}
+
+As with the previous set of functions, the argument may be given as
+the name of an existing matrix or as an expression that evaluates to a
+single matrix.
+
+For an $m \times n$ matrix $A$, \texttt{sumc(A)} returns a row vector
+holding the $n$ column sums, and \texttt{sumr(A)} returns a column
+vector with the $m$ row sums.  \texttt{meanc(A)} returns a row vector
+with the $n$ column means, and \texttt{meanr(A)} a column vector with
+the $m$ row means.
+
+Also for an $m \times n$ matrix $A$, the \texttt{max} and \texttt{min}
+family of functions return either an $m \times 1$ matrix (the
+\texttt{r} variants, which select the extremum of each row) or a $1
+\times n$ matrix (the \texttt{c} variants, which select the column
+extrema).  The \texttt{max} vectors contain the values of the row or
+column maxima while the \texttt{min} ones hold the row or column
+minima.  The variants with an \texttt{i} prefix (e.g.\ \texttt{imaxc})
+return not the values but the (1-based) indices of the respective
+maxima or minima.
+
+For a $T \times k$ matrix $A$, \texttt{mcov(A)} and \texttt{mcorr(A)}
+both return $k \times k$ symmetric matrices, in the first case
+containing the variances (on the diagonal) and covariances of the
+variables in the columns of $A$, and in the second, containing the
+correlations of the variables.
+
+For an $n \times n$ matrix $A$, \texttt{mexp(A)} returns an $n \times
+n$ matrix holding the matrix exponential,
+\[
+e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!} = \frac{I}{0!} + \frac{A}{1!}
+ + \frac{A^2}{2!} + \frac{A^3}{3!} + \cdots
+\]
+(This series is sure to converge.)
+
+The \texttt{cholesky} function computes the Cholesky decomposition $L$
+of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower
+triangular (has zeros above the diagonal).  
+
+The \texttt{diag} function returns the principal diagonal of an
+$n\times n$ matrix $A$ as a column vector --- that is, an
+$n$-vector $v$ such that $v_i = a_{ii}$.
+
+The \texttt{cdemean} function applied to an $m \times n$ matrix $A$
+returns an $m \times n$ matrix $B$ such that $b_{ij} = a_{ij} -
+\bar{A}_j$, where $\bar{A}_j$ denotes the mean of column $j$ of $A$.  
+
+The \texttt{vec} function applied to an $m \times n$ matrix $A$
+returns a column vector of length $mn$ formed by stacking the columns
+of $A$.  
+
+The \texttt{vech} function applied to an $n \times n$ matrix $A$
+returns a column vector of length $n(n+1)/2$ formed by stacking the
+elements of the lower triangle of $A$, column by column.  Note that
+$A$ must be square; for the operation to make sense $A$ should also
+be symmetric.  The \texttt{unvech} function performs the inverse
+operation, producing a symmetric matrix.
+
+The \texttt{mlag} function requires two arguments, a matrix and a
+scalar lag order, $m$.  Applied to an $T \times k$ matrix $A$, this
+function returns a $T \times k$ matrix $B$ such that
+%
+\[
+  b_{ij} = \left\{ 
+    \begin{array}{ll} 
+      a_{i-m,j} & 1 \leq i - m \leq T \\ 
+      0 & \mbox{otherwise}
+    \end{array}
+    \right.
+\]
+%
+That is, the columns of $B$ are lagged versions of the columns of $A$,
+with missing values replaced by zeros.  The order $m$ may be negative
+to generate leads instead of lags.
+
+The \texttt{nullspace} function yields $X$, the right null space of a
+matrix $A$ (it is assumed that A has full row rank): $X$ satisfies $A
+\cdot X = 0$.
+
+The function \texttt{princomp} requires two arguments, a $T \times k$
+matrix $X$ and a scalar $p$, $0 < p \leq k$.  It is assumed that $X$
+contains $T$ observations on each of $k$ variables (series).  The
+return value is a $T \times p$ matrix $P$ containing the first $p$
+principal components of $X$.  The elements of $P$ are computed as
+\[
+P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i
+\]
+where $Z_{ti}$ is the standardized value of variable $i$ at
+observation $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, and
+$v^{(j)}$ is the $j$th eigenvector of the correlation matrix of the
+$X_i$s, with the eigenvectors ordered by decreasing value of the
+corresponding eigenvalues.
+
+The functions \texttt{fft} and \texttt{ffti} return the real discrete
+Fourier transform and its inverse, respectively. if \texttt{X} is an $n
+\times k$ matrix, then \texttt{fft(X)} is an $n \times 2k$ matrix
+containing the real part of the transform in the odd columns and the
+complex part in the even ones. Conversely, \texttt{ffti} takes a $n
+\times 2k$ argument and yields an $n \times k$ result. See section
+\ref{sec:genr-fft} for some examples.
+
+\subsection{Matrix filling functions}
+\label{matrix-fill}
+
+The functions taking one or two integers as arguments and returning
+a matrix are:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{I(}\textsl{n}\texttt{)} & $n\times n$ identity matrix \\
+\texttt{zeros(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} & 
+   $m\times n$ zero matrix \\
+\texttt{ones(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+   $m\times n$ matrix filled with 1s \\
+\texttt{muniform(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+   $m\times n$ matrix filled with uniform random values \\
+\texttt{mnormal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+   $m\times n$ matrix filled with normal random values \\
+\texttt{seq(}\textsl{a}\texttt{,}\textsl{b}\texttt{)} &
+   row vector containing the numbers from $a$ to $b$
+\end{tabular}
+\end{center}
+
+The dimensions $m$ and $n$ --- or in the case of \texttt{seq}, the
+limits $a$ and $b$ --- may be given numerically, by reference to
+pre-existing scalar variables, or as expressions that evaluate to
+scalars.
+
+The \texttt{muniform} and \texttt{mnormal} matrix functions fill the
+matrix with drawings from the uniform (0--1) distribution and the
+standard normal distribution respectively.
+
+The \texttt{seq} function generates a sequence of integers from $a$
+to $b$ inclusive, increasing if $a<b$ or decreasing if $a>b$.
+
+\subsection{Matrix reshaping}
+\label{matrix-mshape}
+
+A matrix can also be created by re-arranging the elements of a
+pre-existing matrix. This is accomplished via the \texttt{mshape}
+function. It takes three arguments: the input matrix, $A$, and the
+rows and columns of the target matrix, $r$ and $c$ respectively.
+Elements are read from $A$ and written to the target in column-major
+order.  If $A$ contains fewer elements than $n = r \times c$, they are
+repeated cyclically; if $A$ has more elements, only the first $n$ are
+used.
+
+For example:
+\begin{code}
+matrix a = mnormal(2,3)
+a
+matrix b = mshape(a,3,1)
+b
+matrix b = mshape(a,5,2)
+b
+\end{code}
+produces
+\begin{code}
+?   a
+a
+
+      1.2323      0.99714     -0.39078
+     0.54363      0.43928     -0.48467
+
+?   matrix b = mshape(a,3,1)
+Generated matrix b
+?   b
+b
+
+      1.2323
+     0.54363
+     0.99714
+
+?   matrix b = mshape(a,5,2)
+Replaced matrix b
+?   b
+b
+
+      1.2323     -0.48467
+     0.54363       1.2323
+     0.99714      0.54363
+     0.43928      0.99714
+    -0.39078      0.43928
+\end{code}
+
+\subsection{Single-return two-matrix functions}
+\label{matrix-two}
+
+The function \texttt{qform} constructs a quadratic form in a matrix
+$A$ and a conformable symmetric matrix $X$.  The command
+%
+\begin{code}
+B = qform(A, X)
+\end{code}
+%
+calculates $B = A X A^{\prime}$.  This is computed more efficiently than
+the alternative command \texttt{B = A*X*A'}.  In addition, the result
+is symmetric by construction.
+
+The function \texttt{cmult} computes the complex product of two input
+matrices, $A$ and $B$, representing complex numbers.  These matrices
+must have the same number of rows, $n$, and either one or two columns.
+The first column contains the real part and the second (if present)
+the imaginary part.  The return value is an $n \times 2$ matrix, or,
+if the product has no imaginary part, an $n$-vector.
+
+
+\subsection{Multiple-return matrix functions}
+\label{matrix-multiples}
+
+The functions that take one or more matrices as arguments and compute
+one or more matrices are:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{qrdecomp} & QR decomposition \\
+\texttt{eigensym} & Eigen-analysis of symmetric matrix \\
+\texttt{eigengen} & Eigen-analysis of general matrix \\
+\texttt{svd}      & Singular value decomposition (SVD) 
+\end{tabular}
+\end{center}
+
+The syntax for all but the last of these functions is of the form
+%
+\begin{code}
+matrix B = func(A, &C)
+\end{code}
+%
+while for \texttt{svd} it is
+%
+\begin{code}
+matrix B = func(A, &C, &D)
+\end{code}
+%
+The first argument, \texttt{A}, represents the input data, that is,
+the matrix whose decomposition or analysis is required.
+
+The second argument (and in the case of \texttt{svd}, the third) must
+be either the name of an existing matrix preceded by \verb+&+ (to
+indicate the ``address'' of the matrix in question), in which case an
+auxiliary result is written to that matrix, or the keyword
+\texttt{null}, in which case the auxiliary result is not produced, or
+is discarded.
+
+In case a non-null second argument is given, the specified matrix will
+be over-written with the auxiliary result.  (It is not required that
+the existing matrix be of the right dimensions to receive the result.)
+
+The \texttt{qrdecomp} function computes the QR decomposition of an $m
+\times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
+orthogonal matrix and $R$ is an $n \times n$ upper triangular matrix.
+The matrix $Q$ is returned directly, while $R$ can be retrieved via
+the second argument.  Here are two examples:
+%
+\begin{code}
+matrix R
+matrix Q = qrdecomp(M, &R)
+matrix Q = qrdecomp(M, null)
+\end{code}
+%
+In the first example, the triangular $R$ is saved as \texttt{R}; in
+the second, $R$ is discarded.  The first line above shows an example
+of a ``simple declaration'' of a matrix: \texttt{R} is
+declared to be a matrix variable but is not given any explicit value.
+In this case the variable is initialized as a $1\times 1$ matrix whose
+single element equals zero.
+
+The function \texttt{eigensym} computes the eigenvalues, and
+optionally the right eigenvectors, of a symmetric $n \times n$ matrix.
+The eigenvalues are returned directly in a column vector of length
+$n$; if the eigenvectors are required, they are returned in an $n
+\times n$ matrix.  For example:
+%
+\begin{code}
+matrix V
+matrix E = eigensym(M, &V)
+matrix E = eigensym(M, null)
+\end{code}
+%
+In the first case \texttt{E} holds the eigenvalues of \texttt{M} and
+\texttt{V} holds the eigenvectors.  In the second, \texttt{E} holds
+the eigenvalues but the eigenvectors are not computed.
+
+The function \texttt{eigengen} computes the eigenvalues, and
+optionally the eigenvectors, of a general $n \times n$ matrix.  The
+eigenvalues are returned directly in an $n \times 2$ matrix, the first
+column holding the real components and the second column the imaginary
+components.  
+
+If the eigenvectors are required (that is, if the second argument to
+\texttt{eigengen} is not \texttt{null}), they are returned in an $n
+\times n$ matrix. The column arrangement of this matrix is somewhat
+non-trivial: the eigenvectors are stored in the same order as the
+eigenvalues, but the real eigenvectors occupy one column, whereas
+complex eigenvectors take two (the real part comes first); the total
+number of columns is still $n$, because the conjugate eigenvector is
+skipped. Example \ref{cmplx-evecs} provides a (hopefully) clarifying
+example.
+
+\begin{script}[htbp]
+  \caption{Complex eigenvalues and eigenvectors}
+  \label{cmplx-evecs}
+\begin{scode}
+set seed 34756
+
+matrix v
+A = mnormal(3,3)
+
+/* do the eigen-analysis */
+l = eigengen(A,&v)
+/* eigenvalue 1 is real, 2 and 3 are complex conjugates */
+print l
+print v
+
+/* 
+  column 1 contains the first eigenvector (real)
+*/
+
+B = A*v[,1]
+c = l[1,1] * v[,1]
+/* B should equal c */
+print B
+print c
+
+
+/* 
+  columns 2:3 contain the real and imaginary parts
+  of eigenvector 2
+*/
+
+B = A*v[,2:3]
+c = cmult(ones(3,1)*(l[2,]),v[,2:3])
+/* B should equal c */
+print B
+print c
+\end{scode}
+\end{script}
+
+The function \texttt{svd} computes all or part of the singular value
+decomposition of the real $m \times n$ matrix $A$.  The decomposition
+is
+\[
+A = U \Sigma V'
+\]
+where $\Sigma$ is an $m \times n$ matrix which is zero except for its
+$k = \mbox{min}(m, n)$ diagonal elements, $U$ is an $m \times m$
+orthogonal matrix, and $V$ is an $n \times n$ orthogonal matrix.  The
+diagonal elements of $\Sigma$ are the singular values of $A$; they are
+real and non-negative, and are returned in descending order.  The
+first $\mbox{min}(m, n)$ columns of $U$ and $V$ are the left and right
+singular vectors of $A$.
+
+The \texttt{svd} function returns the singular values, in a vector of
+length $k$.  The left and/or right singular vectors may be obtained by
+supplying non-null values for the second and/or third arguments
+respectively.  For example:
+%
+\begin{code}
+matrix s = svd(A, &U, &V)
+matrix s = svd(A, null, null)
+matrix s = svd(A, null, &V)
+\end{code}
+%
+In the first case both sets of singular vectors are obtained, in the
+second case only the singular values are obtained; and in the third,
+the right singular vectors are obtained but $U$ is not computed.
+\emph{Please note}: when the third argument is non-null, it is
+actually $V'$ that is provided.
+
+
+\section{Matrix accessors}
+\label{matrix-accessors}
+
+In addition to the matrix functions discussed above,
+various ``accessor'' strings allow you to create copies of internal
+matrices associated with models previously estimated:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{\$coeff}  & vector of estimated coefficients \\
+\texttt{\$stderr} & vector of estimated standard errors \\
+\texttt{\$uhat}   & vector of residuals \\
+\texttt{\$yhat}   & vector of fitted values \\
+\texttt{\$vcv}    & covariance matrix (see below) \\
+\texttt{\$rho}    & autoregressive coefficients for error process \\
+\texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
+\texttt{\$jbeta}  & matrix $\beta$ (cointegration vectors) from
+Johansen's procedure \\
+\texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
+$\beta$ from Johansen's procedure
+\end{tabular}
+\end{center}
+
+If these accessors are given without any prefix, they retrieve results
+from the last model estimated, if any.  Alternatively, they may be
+prefixed with the name of a saved model plus a period (\texttt{.}), in
+which case they retrieve results from the specified model.  Here are
+some examples:
+%
+\begin{code}
+matrix u = $uhat
+matrix b = m1.$coeff
+matrix v2 = m1.$vcv[1:2,1:2]
+\end{code}
+%
+The first command grabs the residuals from the last model; the second
+grabs the coefficient vector from model \texttt{m1}; and the third
+(which uses the mechanism of sub-matrix selection described above)
+grabs a portion of the covariance matrix from model \texttt{m1}.
+
+If the ``model'' in question is actually a system (a VAR or VECM, or
+system of simultaneous equations), \verb|$uhat| retrieves the
+matrix of residuals (one column per equation) and \verb|$vcv| gets
+the cross-equation covariance matrix; in the special case of a VAR or
+a VECM, \verb|$coeff| returns the companion matrix. At present the
+other accessors are not available for equation systems.
+
+After a vector error correction model is estimated via Johansen's
+procedure, the matrices \verb|$jalpha| and \verb|$jbeta| are
+also available. These have a number of columns equal to the chosen
+cointegration rank; therefore, the product
+\begin{code}
+matrix Pi = $jalpha * $jbeta'
+\end{code}
+returns the reduced-rank estimate of $A(1)$. Since $\beta$ is
+automatically identified via the Phillips normalization (see section
+\ref{sec:johansen-ident}), its unrestricted elements do have a proper
+covariance matrix, which can be retrieved through the
+\verb|$jvbeta| accessor.
+
+\section{Namespace issues}
+\label{matrix-namespace}
+
+Matrices share a common namespace with data series and scalar
+variables.  In other words, no two objects of any of these types can
+have the same name.  It is an error to attempt to change the type of
+an existing variable, for example:
+%
+\begin{code}
+scalar x = 3
+matrix x = ones(2,2) # wrong!
+\end{code}
+%
+It is possible, however, to delete or rename an existing variable then
+reuse the name for a variable of a different type:
+\begin{code}
+scalar x = 3
+delete x
+matrix x = ones(2,2) # OK
+\end{code}
+
+
+\section{Creating a data series from a matrix}
+\label{matrix-create-series}
+
+Section~\ref{matrix-create} above describes how to create a matrix
+from a data series or set of series.  You may sometimes wish to go in
+the opposite direction, that is, to copy values from a matrix 
+into a regular data series.  The syntax for this operation is
+%
+\begin{textcode}
+series \textsl{sname} = \textsl{mspec}
+\end{textcode}
+%
+where \ttsl{sname} is the name of the series to create and
+\ttsl{mspec} is the name of the matrix to copy from, possibly followed
+by a matrix selection expression.  Here are two examples.
+%
+\begin{code}
+series s = x
+series u1 = U[,1]
+\end{code}
+%
+It is assumed that \texttt{x} and \texttt{U} are pre-existing
+matrices.  In the second example the series \texttt{u1} is formed from
+the first column of the matrix \texttt{U}.
+
+For this operation to work, the matrix (or matrix selection) must be a
+vector with length equal to either the full length of the current
+dataset, $n$, or the length of the current sample range, $n^{\prime}$.
+If $n^{\prime} < n$ then only $n^{\prime}$ elements are drawn from the
+matrix; if the matrix or selection comprises $n$ elements, the
+$n^{\prime}$ values starting at element $t_1$ are used, where $t_1$
+represents the starting observation of the sample range.  Any values
+in the series that are not assigned from the matrix are set to the
+missing code.
+
+
+\section{Matrices and lists}
+\label{matrix-and-list}
+
+To facilitate the manipulation of named lists of variables (see
+Chapter~\ref{chap-persist}), it is possible to convert between
+matrices and lists.  In section~\ref{matrix-create} above we mentioned
+the facility for creating a matrix from a list of variables, as in
+%
+\begin{code}
+matrix M = { listname }
+\end{code}
+%
+That formulation, with the name of the list enclosed in braces, builds
+a matrix whose columns hold the variables referenced in the list.
+What we are now describing is a different matter: if we say
+%
+\begin{code}
+matrix M = listname
+\end{code}
+%
+(without the braces), we get a row vector whose elements are
+the ID numbers of the variables in the list.  This special case
+of matrix generation cannot be embedded in a compound
+expression.  The syntax must be as shown above, namely simple
+assignment of a list to a matrix.
+
+To go in the other direction, you can include a matrix on the
+right-hand side of an expression that defines a list, as in
+%
+\begin{code}
+list Xl = M
+\end{code}
+%
+where \texttt{M} is a matrix.  The matrix must be suitable for
+conversion; that is, it must be a row or column vector containing
+non-negative whole-number values, none of which exceeds the highest ID
+number of a variable (series or scalar) in the current dataset.
+
+Example~\ref{normalize-list} illustrates the use of this sort of
+conversion to ``normalize'' a list, moving the constant (variable 0)
+to first position.
+
+\begin{script}[htbp]
+  \caption{Manipulating a list}
+  \label{normalize-list}
+\begin{scode}
+function normalize_list (matrix *x)
+  # If the matrix (representing a list) contains var 0,
+  # but not in first position, move it to first position
+
+  if (x[1] != 0)
+     scalar k = cols(x)
+     loop for (i=2; i<=k; i++) --quiet
+        if (x[i] = 0)
+            x[i] = x[1]
+            x[1] = 0
+            break
+         endif
+     end loop
+  end if
+end function
+
+open data9-7
+list Xl = 2 3 0 4
+matrix x = Xl
+normalize_list(&x)
+list Xl = x
+\end{scode}
+\end{script}
+
+
+\section{Deleting a matrix}
+\label{matrix-delete}
+
+To delete a matrix, just write
+%
+\begin{code}
+delete M
+\end{code}
+%
+where \texttt{M} is the name of the matrix to be deleted.
+
+\section{Printing a matrix}
+
+To print a matrix, you can simply give the name of the matrix in
+question on a line by itself, or you can use the \cmd{print} command:
+%
+\begin{code}
+matrix M = mnormal(100,2)
+M
+print M
+\end{code}
+
+\section{Example: OLS using matrices}
+\label{matrix-example}
+
+Example \ref{matrixOLS} shows how matrix methods can be used to
+replicate gretl's built-in OLS functionality.
+
+\begin{script}[htbp]
+  \caption{OLS via matrix methods}
+  \label{matrixOLS}
+\begin{scode}
+open data4-1
+matrix X = { const, sqft }
+matrix y = { price }
+matrix b = inv(X'X) * X'y
+printf "estimated coefficient vector\n"
+b
+matrix u = y - X*b
+scalar SSR = u'u
+scalar s2 = SSR / (rows(X) - rows(b))
+matrix V = s2 * inv(X'X)
+V
+matrix se = sqrt(diag(V))
+printf "estimated standard errors\n"
+se
+# compare with built-in function
+ols price const sqft --vcv
+\end{scode}
+\end{script}
+%$
+\clearpage
+
+\begin{table}[p]
+\centering
+\begin{tabular}{llllll}
+\texttt{abs}       &
+\texttt{atan}      &
+\texttt{cdemean}   &
+\texttt{cholesky}  &
+\texttt{cmult}     &
+\texttt{cnorm}     \\
+\texttt{cols}      &
+\texttt{cos}       &
+\texttt{det}       &
+\texttt{diag}      &
+\texttt{dnorm}     &
+\texttt{dsort}     \\
+\texttt{eigengen}  &
+\texttt{eigensym}  &
+\texttt{exp}       &
+\texttt{fft}       &
+\texttt{ffti}      &
+\texttt{gamma}     \\
+\texttt{I}         &
+\texttt{imaxc}     &
+\texttt{imaxr}     &
+\texttt{iminc}     &
+\texttt{iminr}     &
+\texttt{infnorm}   \\
+\texttt{int}       &
+\texttt{inv}       &
+\texttt{ldet}      &
+\texttt{lngamma}   &
+\texttt{log}       &
+\texttt{mcorr}     \\
+\texttt{mcov}      &
+\texttt{maxc}      &   
+\texttt{maxr}      &
+\texttt{meanc}     &
+\texttt{meanr}     &
+\texttt{mexp}      \\
+\texttt{minc}      &  
+\texttt{minr}      &
+\texttt{mlag}      &
+\texttt{mnormal}   &
+\texttt{mshape}    &
+\texttt{muniform}  \\
+\texttt{nullspace} &
+\texttt{onenorm}   &
+\texttt{ones}      &
+\texttt{princomp}  &
+\texttt{qform}     &
+\texttt{qnorm}     \\
+\texttt{qrdecomp}  &
+\texttt{rank}      &
+\texttt{rcond}     &
+\texttt{rows}      &
+\texttt{seq}       &
+\texttt{sin}       \\
+\texttt{sort}      &
+\texttt{sqrt}      &
+\texttt{sumc}      &
+\texttt{sumr}      &
+\texttt{svd}       &
+\texttt{tan}       \\
+\texttt{tr}        &
+\texttt{transp}    &
+\texttt{unvech}    &
+\texttt{values}    &
+\texttt{vec}       &
+\texttt{vech}      \\
+\texttt{zeros}     
+\end{tabular}      
+\caption{Alphabetical listing of matrix functions}
+\label{tab:matrix_funcs}
+\end{table}
+

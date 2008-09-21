@@ -1,0 +1,249 @@
+\select@language {portuges}
+\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}
+\contentsline {section}{\numberline {1.1}Features at a glance}{1}{section.1.1}
+\contentsline {section}{\numberline {1.2}Acknowledgements}{1}{section.1.2}
+\contentsline {section}{\numberline {1.3}Installing the programs}{2}{section.1.3}
+\contentsline {subsection}{Linux}{2}{section*.2}
+\contentsline {subsection}{MS Windows}{2}{section*.3}
+\contentsline {subsection}{Updating}{2}{section*.4}
+\contentsline {part}{I\hspace {1em}Uso do programa}{4}{part.1}
+\contentsline {chapter}{\numberline {2}Getting started}{5}{chapter.2}
+\contentsline {section}{\numberline {2.1}Let's run a regression}{5}{section.2.1}
+\contentsline {section}{\numberline {2.2}Estimation output}{7}{section.2.2}
+\contentsline {section}{\numberline {2.3}The main window menus}{7}{section.2.3}
+\contentsline {section}{\numberline {2.4}Keyboard shortcuts}{10}{section.2.4}
+\contentsline {section}{\numberline {2.5}The gretl toolbar}{11}{section.2.5}
+\contentsline {chapter}{\numberline {3}Modes of working}{12}{chapter.3}
+\contentsline {section}{\numberline {3.1}Command scripts}{12}{section.3.1}
+\contentsline {section}{\numberline {3.2}Saving script objects}{13}{section.3.2}
+\contentsline {section}{\numberline {3.3}The gretl console}{14}{section.3.3}
+\contentsline {section}{\numberline {3.4}The Session concept}{14}{section.3.4}
+\contentsline {subsection}{The model table}{15}{section*.5}
+\contentsline {subsection}{The graph page}{15}{section*.6}
+\contentsline {subsection}{Saving and re-opening sessions}{16}{section*.7}
+\contentsline {chapter}{\numberline {4}Data files}{17}{chapter.4}
+\contentsline {section}{\numberline {4.1}Native format}{17}{section.4.1}
+\contentsline {section}{\numberline {4.2}Other data file formats}{17}{section.4.2}
+\contentsline {section}{\numberline {4.3}Binary databases}{17}{section.4.3}
+\contentsline {subsection}{Online access to databases}{17}{section*.8}
+\contentsline {subsection}{RATS 4 databases}{18}{section*.9}
+\contentsline {section}{\numberline {4.4}Creating a data file from scratch}{18}{section.4.4}
+\contentsline {subsection}{Common points on imported data}{18}{section*.10}
+\contentsline {subsection}{Appending imported data}{19}{section*.11}
+\contentsline {subsection}{Using the built-in spreadsheet}{19}{section*.12}
+\contentsline {subsection}{Selecting from a database}{19}{section*.13}
+\contentsline {subsection}{Creating a gretl data file independently}{20}{section*.14}
+\contentsline {section}{\numberline {4.5}Structuring a dataset}{20}{section.4.5}
+\contentsline {subsection}{Cross sectional data}{20}{section*.15}
+\contentsline {subsection}{Time series data}{20}{section*.16}
+\contentsline {subsection}{Panel data}{21}{section*.17}
+\contentsline {subsubsection}{Panel data arranged by variable}{22}{section*.18}
+\contentsline {subsubsection}{Panel data marker strings}{23}{section*.19}
+\contentsline {section}{\numberline {4.6}Missing data values}{23}{section.4.6}
+\contentsline {section}{\numberline {4.7}Maximum size of data sets}{24}{section.4.7}
+\contentsline {section}{\numberline {4.8}Data file collections}{25}{section.4.8}
+\contentsline {chapter}{\numberline {5}Special functions in genr}{27}{chapter.5}
+\contentsline {section}{\numberline {5.1}Introduction}{27}{section.5.1}
+\contentsline {section}{\numberline {5.2}Long-run variance}{27}{section.5.2}
+\contentsline {section}{\numberline {5.3}Time-series filters}{27}{section.5.3}
+\contentsline {subsection}{Fractional differencing}{27}{section*.20}
+\contentsline {subsection}{The Hodrick--Prescott filter}{28}{section*.21}
+\contentsline {subsection}{The Baxter and King filter}{28}{section*.22}
+\contentsline {section}{\numberline {5.4}Panel data specifics}{29}{section.5.4}
+\contentsline {subsection}{Dummy variables}{29}{section*.23}
+\contentsline {subsection}{Lags, differences, trends}{30}{section*.24}
+\contentsline {subsection}{Basic statistics by unit}{30}{section*.25}
+\contentsline {subsection}{Special functions for data manipulation}{30}{section*.26}
+\contentsline {section}{\numberline {5.5}Resampling and bootstrapping}{30}{section.5.5}
+\contentsline {section}{\numberline {5.6}Cumulative densities and p-values}{31}{section.5.6}
+\contentsline {section}{\numberline {5.7}Handling missing values}{32}{section.5.7}
+\contentsline {section}{\numberline {5.8}Retrieving internal variables}{32}{section.5.8}
+\contentsline {section}{\numberline {5.9}Numerical maximization}{33}{section.5.9}
+\contentsline {subsection}{The BFGS maximizer}{34}{section*.27}
+\contentsline {subsection}{Computing the Jacobian}{34}{section*.28}
+\contentsline {section}{\numberline {5.10}The discrete Fourier transform}{35}{section.5.10}
+\contentsline {chapter}{\numberline {6}Sub-sampling a dataset}{38}{chapter.6}
+\contentsline {section}{\numberline {6.1}Introduction}{38}{section.6.1}
+\contentsline {section}{\numberline {6.2}Setting the sample}{38}{section.6.2}
+\contentsline {section}{\numberline {6.3}Restricting the sample}{39}{section.6.3}
+\contentsline {section}{\numberline {6.4}Random sampling}{40}{section.6.4}
+\contentsline {section}{\numberline {6.5}The Sample menu items}{40}{section.6.5}
+\contentsline {chapter}{\numberline {7}Graphs and plots}{41}{chapter.7}
+\contentsline {section}{\numberline {7.1}Gnuplot graphs}{41}{section.7.1}
+\contentsline {subsection}{Displaying data labels}{41}{section*.29}
+\contentsline {subsection}{Advanced options}{42}{section*.30}
+\contentsline {section}{\numberline {7.2}Boxplots}{42}{section.7.2}
+\contentsline {chapter}{\numberline {8}Discrete variables}{44}{chapter.8}
+\contentsline {section}{\numberline {8.1}Declaring variables as discrete}{44}{section.8.1}
+\contentsline {section}{\numberline {8.2}Commands for discrete variables}{45}{section.8.2}
+\contentsline {subsection}{The \texttt {dummify} command}{45}{section*.31}
+\contentsline {subsection}{The \texttt {freq} command}{45}{section*.32}
+\contentsline {subsection}{The \texttt {xtab} command}{47}{section*.33}
+\contentsline {chapter}{\numberline {9}Loop constructs}{49}{chapter.9}
+\contentsline {section}{\numberline {9.1}Introduction}{49}{section.9.1}
+\contentsline {section}{\numberline {9.2}Loop control variants}{50}{section.9.2}
+\contentsline {subsection}{Count loop}{50}{section*.34}
+\contentsline {subsection}{While loop}{50}{section*.35}
+\contentsline {subsection}{Index loop}{50}{section*.36}
+\contentsline {subsection}{For each loop}{51}{section*.37}
+\contentsline {subsection}{For loop}{51}{section*.38}
+\contentsline {section}{\numberline {9.3}Progressive mode}{51}{section.9.3}
+\contentsline {section}{\numberline {9.4}Loop examples}{52}{section.9.4}
+\contentsline {subsection}{Monte Carlo example}{52}{section*.39}
+\contentsline {subsection}{Iterated least squares}{52}{section*.40}
+\contentsline {subsection}{Indexed loop examples}{53}{section*.41}
+\contentsline {chapter}{\numberline {10}User-defined functions}{56}{chapter.10}
+\contentsline {section}{\numberline {10.1}Defining a function}{56}{section.10.1}
+\contentsline {section}{\numberline {10.2}Calling a function}{57}{section.10.2}
+\contentsline {section}{\numberline {10.3}Function programming details}{58}{section.10.3}
+\contentsline {subsection}{Scope of variables}{58}{section*.42}
+\contentsline {subsection}{List arguments}{59}{section*.43}
+\contentsline {subsection}{Return values}{59}{section*.44}
+\contentsline {subsection}{Error checking}{60}{section*.45}
+\contentsline {subsection}{Printing of output}{60}{section*.46}
+\contentsline {section}{\numberline {10.4}Function packages}{60}{section.10.4}
+\contentsline {subsection}{Load a function in memory}{60}{section*.47}
+\contentsline {subsection}{Create a package}{61}{section*.48}
+\contentsline {subsection}{Load a package}{62}{section*.49}
+\contentsline {chapter}{\numberline {11}Named lists and strings}{64}{chapter.11}
+\contentsline {section}{\numberline {11.1}Named lists}{64}{section.11.1}
+\contentsline {subsection}{Creating and modifying named lists}{64}{section*.50}
+\contentsline {subsection}{Querying a list}{64}{section*.51}
+\contentsline {subsection}{Generating lists of transformed variables}{65}{section*.52}
+\contentsline {subsection}{Checking for missing values}{66}{section*.53}
+\contentsline {section}{\numberline {11.2}Named strings}{66}{section.11.2}
+\contentsline {subsection}{Built-in strings}{67}{section*.54}
+\contentsline {subsection}{Reading strings from the environment}{67}{section*.55}
+\contentsline {chapter}{\numberline {12}Matrix manipulation}{69}{chapter.12}
+\contentsline {section}{\numberline {12.1}Introduction}{69}{section.12.1}
+\contentsline {section}{\numberline {12.2}Creating matrices}{69}{section.12.2}
+\contentsline {section}{\numberline {12.3}Selecting sub-matrices}{70}{section.12.3}
+\contentsline {section}{\numberline {12.4}Matrix operators}{71}{section.12.4}
+\contentsline {section}{\numberline {12.5}Matrix--scalar operators}{72}{section.12.5}
+\contentsline {section}{\numberline {12.6}Matrix functions}{72}{section.12.6}
+\contentsline {subsection}{Matrix to scalar functions}{74}{section*.56}
+\contentsline {subsection}{Matrix to matrix functions}{74}{section*.57}
+\contentsline {subsection}{Matrix filling functions}{76}{section*.58}
+\contentsline {subsection}{Matrix reshaping}{76}{section*.59}
+\contentsline {subsection}{Single-return two-matrix functions}{77}{section*.60}
+\contentsline {subsection}{Multiple-return matrix functions}{77}{section*.61}
+\contentsline {section}{\numberline {12.7}Matrix accessors}{78}{section.12.7}
+\contentsline {section}{\numberline {12.8}Namespace issues}{80}{section.12.8}
+\contentsline {section}{\numberline {12.9}Creating a data series from a matrix}{80}{section.12.9}
+\contentsline {section}{\numberline {12.10}Matrices and lists}{81}{section.12.10}
+\contentsline {section}{\numberline {12.11}Deleting a matrix}{81}{section.12.11}
+\contentsline {section}{\numberline {12.12}Printing a matrix}{82}{section.12.12}
+\contentsline {section}{\numberline {12.13}Example: OLS using matrices}{82}{section.12.13}
+\contentsline {chapter}{\numberline {13}Cheat sheet}{84}{chapter.13}
+\contentsline {section}{\numberline {13.1}Dataset handling}{84}{section.13.1}
+\contentsline {subsection}{``Weird'' periodicities}{84}{section*.62}
+\contentsline {subsection}{Dropping missing observations selectively}{84}{section*.63}
+\contentsline {subsection}{``By'' operations}{84}{section*.64}
+\contentsline {section}{\numberline {13.2}Creating/modifying variables}{85}{section.13.2}
+\contentsline {subsection}{Generating a dummy variable for a specific observation}{85}{section*.65}
+\contentsline {subsection}{Generating an ARMA(1,1)}{85}{section*.66}
+\contentsline {subsection}{Conditional assignment}{85}{section*.67}
+\contentsline {section}{\numberline {13.3}Neat tricks}{86}{section.13.3}
+\contentsline {subsection}{Interaction dummies}{86}{section*.68}
+\contentsline {subsection}{Realized volatility}{86}{section*.69}
+\contentsline {part}{II\hspace {1em}M\'etodos econom\'etricos}{87}{part.2}
+\contentsline {chapter}{\numberline {14}Robust covariance matrix estimation}{88}{chapter.14}
+\contentsline {section}{\numberline {14.1}Introduction}{88}{section.14.1}
+\contentsline {section}{\numberline {14.2}Cross-sectional data and the HCCME}{89}{section.14.2}
+\contentsline {section}{\numberline {14.3}Time series data and HAC covariance matrices}{90}{section.14.3}
+\contentsline {subsection}{Selecting the HAC bandwidth}{92}{section*.70}
+\contentsline {subsection}{Prewhitening and data-based bandwidth selection}{93}{section*.71}
+\contentsline {section}{\numberline {14.4}Special issues with panel data}{94}{section.14.4}
+\contentsline {chapter}{\numberline {15}Panel data}{95}{chapter.15}
+\contentsline {section}{\numberline {15.1}Estimation of panel models}{95}{section.15.1}
+\contentsline {subsection}{Pooled Ordinary Least Squares}{95}{section*.72}
+\contentsline {subsection}{The fixed and random effects models}{95}{section*.73}
+\contentsline {subsection}{Choice of estimator}{97}{section*.74}
+\contentsline {subsection}{Testing panel models}{98}{section*.75}
+\contentsline {subsection}{Robust standard errors}{99}{section*.76}
+\contentsline {section}{\numberline {15.2}Dynamic panel models}{99}{section.15.2}
+\contentsline {section}{\numberline {15.3}Illustration: the Penn World Table}{100}{section.15.3}
+\contentsline {chapter}{\numberline {16}Nonlinear least squares}{102}{chapter.16}
+\contentsline {section}{\numberline {16.1}Introduction and examples}{102}{section.16.1}
+\contentsline {section}{\numberline {16.2}Initializing the parameters}{102}{section.16.2}
+\contentsline {section}{\numberline {16.3}NLS dialog window}{103}{section.16.3}
+\contentsline {section}{\numberline {16.4}Analytical and numerical derivatives}{103}{section.16.4}
+\contentsline {section}{\numberline {16.5}Controlling termination}{103}{section.16.5}
+\contentsline {section}{\numberline {16.6}Details on the code}{104}{section.16.6}
+\contentsline {section}{\numberline {16.7}Numerical accuracy}{104}{section.16.7}
+\contentsline {chapter}{\numberline {17}Maximum likelihood estimation}{106}{chapter.17}
+\contentsline {section}{\numberline {17.1}Generic ML estimation with gretl}{106}{section.17.1}
+\contentsline {subsection}{Covariance matrix and standard errors}{107}{section*.77}
+\contentsline {section}{\numberline {17.2}Gamma estimation}{107}{section.17.2}
+\contentsline {section}{\numberline {17.3}Stochastic frontier cost function}{109}{section.17.3}
+\contentsline {section}{\numberline {17.4}GARCH models}{110}{section.17.4}
+\contentsline {section}{\numberline {17.5}Analytical derivatives}{112}{section.17.5}
+\contentsline {section}{\numberline {17.6}Debugging ML scripts}{113}{section.17.6}
+\contentsline {chapter}{\numberline {18}GMM estimation}{114}{chapter.18}
+\contentsline {section}{\numberline {18.1}Introduction and terminology}{114}{section.18.1}
+\contentsline {section}{\numberline {18.2}OLS as GMM}{115}{section.18.2}
+\contentsline {section}{\numberline {18.3}TSLS as GMM}{117}{section.18.3}
+\contentsline {section}{\numberline {18.4}Covariance matrix options}{117}{section.18.4}
+\contentsline {section}{\numberline {18.5}A real example: the Consumption Based Asset Pricing Model}{118}{section.18.5}
+\contentsline {section}{\numberline {18.6}Caveats}{120}{section.18.6}
+\contentsline {chapter}{\numberline {19}Model selection criteria}{123}{chapter.19}
+\contentsline {section}{\numberline {19.1}Introduction}{123}{section.19.1}
+\contentsline {section}{\numberline {19.2}Information criteria}{123}{section.19.2}
+\contentsline {chapter}{\numberline {20}Time series models}{125}{chapter.20}
+\contentsline {section}{\numberline {20.1}ARIMA models}{125}{section.20.1}
+\contentsline {subsection}{Representation and syntax}{125}{section*.78}
+\contentsline {subsection}{Mean terms}{125}{section*.79}
+\contentsline {subsection}{Seasonal models}{126}{section*.80}
+\contentsline {subsection}{Differencing and ARIMA}{127}{section*.81}
+\contentsline {subsection}{Estimation}{127}{section*.82}
+\contentsline {subsection}{Convergence and initialization}{128}{section*.83}
+\contentsline {subsection}{Estimation via X-12-ARIMA}{128}{section*.84}
+\contentsline {subsection}{Forecasting}{129}{section*.85}
+\contentsline {subsection}{Limitations}{129}{section*.86}
+\contentsline {section}{\numberline {20.2}Unit root tests}{129}{section.20.2}
+\contentsline {subsection}{The ADF test}{129}{section*.87}
+\contentsline {subsection}{The KPSS test}{130}{section*.88}
+\contentsline {subsection}{The Johansen tests}{131}{section*.89}
+\contentsline {section}{\numberline {20.3}ARCH and GARCH}{131}{section.20.3}
+\contentsline {subsection}{GARCH}{132}{section*.90}
+\contentsline {subsection}{GARCH estimation}{132}{section*.91}
+\contentsline {section}{\numberline {20.4}Cointegration and Vector Error Correction Models}{134}{section.20.4}
+\contentsline {subsection}{Vector Error Correction Models as representation of a cointegrated system}{134}{section*.92}
+\contentsline {subsection}{The Johansen cointegration test}{135}{section*.93}
+\contentsline {subsection}{Identification of the cointegration vectors}{137}{section*.94}
+\contentsline {chapter}{\numberline {21}Discrete and censored dependent variables}{139}{chapter.21}
+\contentsline {section}{\numberline {21.1}Logit and probit models}{139}{section.21.1}
+\contentsline {subsection}{Ordered models}{141}{section*.95}
+\contentsline {subsection}{Multinomial logit}{142}{section*.96}
+\contentsline {section}{\numberline {21.2}The Tobit model}{142}{section.21.2}
+\contentsline {subsection}{Generalized Tobit model}{143}{section*.97}
+\contentsline {part}{III\hspace {1em}Detalhes t\'ecnicos}{145}{part.3}
+\contentsline {chapter}{\numberline {22}Gretl and T\kern -.1667em\lower .5ex\hbox {E}\kern -.125emX\spacefactor \@m }{146}{chapter.22}
+\contentsline {section}{\numberline {22.1}Introduction}{146}{section.22.1}
+\contentsline {section}{\numberline {22.2}T\kern -.1667em\lower .5ex\hbox {E}\kern -.125emX\spacefactor \@m -related menu items}{146}{section.22.2}
+\contentsline {subsection}{The model window}{146}{section*.98}
+\contentsline {subsection}{Other windows}{148}{section*.99}
+\contentsline {section}{\numberline {22.3}Fine-tuning typeset output}{148}{section.22.3}
+\contentsline {subsection}{Previewing in the GUI}{148}{section*.100}
+\contentsline {subsection}{Command-line options}{149}{section*.101}
+\contentsline {subsection}{Further editing}{150}{section*.102}
+\contentsline {section}{\numberline {22.4}Character encodings}{150}{section.22.4}
+\contentsline {section}{\numberline {22.5}Installing and learning T\kern -.1667em\lower .5ex\hbox {E}\kern -.125emX\spacefactor \@m }{150}{section.22.5}
+\contentsline {chapter}{\numberline {23}Troubleshooting gretl}{152}{chapter.23}
+\contentsline {section}{\numberline {23.1}Bug reports}{152}{section.23.1}
+\contentsline {section}{\numberline {23.2}Auxiliary programs}{152}{section.23.2}
+\contentsline {chapter}{\numberline {24}O interface de linha de comandos (CLI)}{153}{chapter.24}
+\contentsline {section}{\numberline {24.1}Gretl em modo de consola}{153}{section.24.1}
+\contentsline {section}{\numberline {24.2}A sintaxe CLI}{153}{section.24.2}
+\contentsline {part}{IV\hspace {1em}Ap\^endices}{154}{part.4}
+\contentsline {chapter}{\numberline {A}Data file details}{155}{Apêndice.a.A}
+\contentsline {section}{\numberline {A.1}Basic native format}{155}{section.a.A.1}
+\contentsline {section}{\numberline {A.2}Traditional ESL format}{155}{section.a.A.2}
+\contentsline {section}{\numberline {A.3}Binary database details}{156}{section.a.A.3}
+\contentsline {chapter}{\numberline {B}Building \textsf {gretl}}{158}{Apêndice.a.B}
+\contentsline {section}{\numberline {B.1}Requirements}{158}{section.a.B.1}
+\contentsline {section}{\numberline {B.2}Build instructions: a step-by-step example}{158}{section.a.B.2}
+\contentsline {chapter}{\numberline {C}Numerical accuracy}{161}{Apêndice.a.C}
+\contentsline {chapter}{\numberline {D}Related free software}{162}{Apêndice.a.D}
+\contentsline {chapter}{\numberline {E}Listing of URLs}{163}{Apêndice.a.E}
+\contentsline {chapter}{Bibliografia}{164}{chapter*.103}

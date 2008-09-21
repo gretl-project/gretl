@@ -1,0 +1,1097 @@
+\chapter{Time series models}
+\label{chap:timeser}
+
+\section{ARIMA models}
+\label{arma-estimation}
+
+\subsection{Representation and syntax}
+\label{arma-repr}
+
+The \cmd{arma} command performs estimation of AutoRegressive,
+Integrated, Moving Average (ARIMA) models.  These are models that can
+be written in the form
+\begin{equation}
+  \label{eq:plain-0-arma}
+  \phi(L) y_t = \theta(L) \epsilon_t
+\end{equation}
+where $\phi(L)$, and $\theta(L)$ are polynomials in the lag operator,
+$L$, defined such that $L^n x_t = x_{t-n}$, and $\epsilon_t$ is a
+white noise process. The exact content of $y_t$, of the AR polynomial
+$\phi()$, and of the MA polynomial $\theta()$, will be explained in the
+following.
+
+\subsection{Mean terms}
+\label{sec:arma-nonzeromean}
+
+The process $y_t$ as written in equation (\ref{eq:plain-0-arma}) has,
+without further qualifications, mean zero. If the model is to be
+applied to real data, it is necessary to include some term to handle
+the possibility that $y_t$ has non-zero mean. There are two possible
+ways to represent processes with nonzero mean: one is to define $\mu_t$
+as the \emph{unconditional} mean of $y_t$, namely the central value of
+its marginal distribution. Therefore, the series $\tilde{y}_t = y_t -
+\mu_t$ has mean 0, and the model (\ref{eq:plain-0-arma}) applies to
+$\tilde{y}_t$. In practice, assuming that $\mu_t$ is a linear function
+of some observable variables $x_t$, the model becomes
+\begin{equation}
+  \label{eq:arma-with-x}
+  \phi(L) (y_t - x_t \beta) = \theta(L) \epsilon_t
+\end{equation}
+This is sometimes known as a ``regression model with ARMA errors'';
+its structure may be more apparent if we represent it using two
+equations:
+\begin{eqnarray*}
+  y_t & = & x_t \beta + u_t \\
+  \phi(L) u_t & = & \theta(L) \epsilon_t
+\end{eqnarray*}
+
+The model just presented is also sometimes known as ``ARMAX'' (ARMA +
+eXogenous variables).  It seems to us, however, that this label is
+more appropriately applied to a different model: another way to
+include a mean term in (\ref{eq:plain-0-arma}) is to base the
+representation on the \emph{conditional} mean of $y_t$, that is the
+central value of the distribution of $y_t$ \emph{given its own past}.
+Assuming, again, that this can be represented as a linear combination
+of some observable variables $z_t$, the model would expand to
+\begin{equation}
+  \label{eq:arma-with-z}
+  \phi(L) y_t = z_t \gamma + \theta(L) \epsilon_t
+\end{equation}
+The formulation (\ref{eq:arma-with-z}) has the advantage that $\gamma$
+can be immediately interpreted as the vector of marginal effects of
+the $z_t$ variables on the conditional mean of $y_t$.  And by adding
+lags of $z_t$ to this specification one can estimate \emph{Transfer
+  Function models} (which generalize ARMA by adding the effects of
+exogenous variable distributed across time).
+
+\app{Gretl} provides a way to estimate both forms. Models written as
+in (\ref{eq:arma-with-x}) are estimated by maximum likelihood; models
+written as in (\ref{eq:arma-with-z}) are estimated by conditional
+maximum likelihood. (For more on these options see the section on
+``Estimation'' below.)  
+
+In the special case when $x_t = z_t = 1$ (that is, the models include
+a constant but no exogenous variables) the two specifications discussed
+above reduce to
+\begin{equation}
+  \phi(L) (y_t - \mu) = \theta(L) \epsilon_t
+  \label{eq:arma-with-xconst} 
+\end{equation}
+and
+\begin{equation}
+  \phi(L) y_t = \alpha + \theta(L) \epsilon_t
+  \label{eq:arma-with-zconst}
+\end{equation}
+respectively.  These formulations are essentially equivalent, but if
+they represent one and the same process $\mu$ and $\alpha$ are, fairly
+obviously, not numerically identical; rather
+\[
+\alpha = \left(1 - \phi_1 - \ldots - \phi_p\right) \mu
+\]
+
+The \app{gretl} syntax for estimating (\ref{eq:arma-with-xconst}) is simply
+\begin{code}
+arma p q ; y
+\end{code}
+The AR and MA lag orders, \verb|p| and \verb|q|, can be given either as
+numbers or as pre-defined scalars. The parameter $\mu$ can be dropped
+if necessary by appending the option \cmd{--nc} (``no constant'') to
+the command. If estimation of (\ref{eq:arma-with-zconst}) is needed,
+the switch \texttt{--conditional} must be appended to the command, as
+in 
+\begin{code}
+arma p q ; y --conditional
+\end{code}
+
+Generalizing this principle to the estimation of
+(\ref{eq:arma-with-x}) or (\ref{eq:arma-with-z}), you get that
+\begin{code}
+arma p q ; y const x1 x2
+\end{code}
+would estimate the following model:
+\[
+  y_t - x_t \beta = \phi_1 \left(y_{t-1} - x_{t-1} \beta \right) + \ldots + 
+   \phi_p \left( y_{t-p} - x_{t-p} \beta \right) + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
+\]
+where in this instance $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
+x_{t,2} \beta_2$. Appending the \texttt{--conditional} switch, as in 
+\begin{code}
+arma p q ; y const x1 x2 --conditional
+\end{code}
+would estimate the following model:
+\[
+  y_t = x_t \gamma + \phi_1 y_{t-1} + \ldots +  \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
+\]
+
+Ideally, the issue broached above could be made moot by writing a more
+general specification that nests the alternatives; that is
+\begin{equation}
+ \label{armax-general}
+  \phi(L) \left(y_t - x_t \beta\right) = z_t \gamma  + \theta(L) \epsilon_t ;
+\end{equation}
+we would like to generalize the \cmd{arma} command so that
+the user could specify, for any estimation method, whether certain
+exogenous variables should be treated as $x_t$s or $z_t$s, but we're
+not yet at that point (and neither are most other software packages).
+
+\subsection{Seasonal models}
+
+A more flexible lag structure is desirable when analyzing time series
+that display strong seasonal patterns. Model (\ref{eq:plain-0-arma})
+can be expanded to
+\begin{equation}
+  \label{eq:seasonal-arma}
+  \phi(L) \Phi(L^s) y_t = \theta(L) \Theta(L^s) \epsilon_t .
+\end{equation}
+For such cases, a fuller form of the syntax is available, namely,
+\begin{code}
+arma p q ; P Q ; y
+\end{code}
+where \texttt{p} and \texttt{q} represent the non-seasonal AR and MA
+orders, and \texttt{P} and \texttt{Q} the seasonal orders.  For
+example,
+\begin{code}
+arma 1 1 ; 1 1 ; y
+\end{code}
+would be used to estimate the following model:
+\[
+  (1 -\phi L)(1 -\Phi L^s) (y_t - \mu) = (1 + \theta L)(1 + \Theta L^s) \epsilon_t
+\]
+If $y_t$ is a quarterly series (and therefore $s=4$), the above
+equation can be written more explicitly as
+\[
+y_t - \mu = \phi (y_{t-1} - \mu) + \Phi (y_{t-4} - \mu) - (\phi
+  \cdot \Phi) (y_{t-5} - \mu) + \epsilon_t + \theta \epsilon_{t-1} + \Theta
+  \epsilon_{t-4} + (\theta \cdot \Theta) \epsilon_{t-5}
+\]
+Such a model is known as a ``multiplicative seasonal ARMA model''.
+
+\subsection{Differencing and ARIMA}
+
+The above discussion presupposes that the time series $y_t$ has
+already been subjected to all the transformations deemed necessary for
+ensuring stationarity (see also section \ref{sec:uroot}). Differencing
+is the most common of these transformations, and \app{gretl} provides
+a mechanism to include this step into the \cmd{arma} command: the
+syntax
+\begin{code}
+arma p d q ; y 
+\end{code}
+would estimate an ARMA$(p,q)$ model on $\Delta^d y_t$. It is
+functionally equivalent to 
+\begin{code}
+series tmp = y
+loop for i=1..d
+  tmp = diff(tmp)
+end loop
+arma p q ; tmp 
+\end{code}
+except with regard to forecasting after estimation (see below).
+
+When the series $y_t$ is differenced before performing the analysis
+the model is known as ARIMA (``I'' for Integrated); for this reason,
+\app{gretl} provides the \cmd{arima} command as an alias for
+\cmd{arma}.
+
+Seasonal differencing is handled similarly, with the syntax
+\begin{code}
+arma p d q ; P D Q ; y 
+\end{code}
+where \texttt{D} is the order for seasonal differencing.  Thus, the
+command
+\begin{code}
+arma 1 0 0 ; 1 1 1 ; y 
+\end{code}
+would produce the same parameter estimates as
+\begin{code}
+genr dsy = sdiff(y)
+arma 1 0 ; 1 1 ; dsy 
+\end{code}
+where we use the \texttt{sdiff} function to create a seasonal
+difference (e.g.\ for quarterly data, $y_t - y_{t-4}$).
+
+\subsection{Estimation}
+\label{arma-est}
+
+The default estimation method for ARMA models is exact maximum
+likelihood estimation (under the assumption that the error term is
+normally distributed), using the Kalman filter in conjunction with the
+BFGS maximization algorithm.  The gradient of the log-likelihood with
+respect to the parameter estimates is approximated numerically.  This
+method produces results that are directly comparable with many other
+software packages.  The constant, and any exogenous variables, are
+treated as in equation (\ref{eq:arma-with-x}).  The covariance matrix
+for the parameters is computed using a numerical approximation to the
+Hessian at convergence.
+
+The alternative method, invoked with the \verb|--conditional| switch,
+is conditional maximum likelihood (CML), also known as ``conditional
+sum of squares'' --- see Hamilton (1994, p.\ 132).  This method was
+exemplified in the script~\ref{jack-arma}, and only a brief
+description will be given here.  Given a sample of size $T$, the CML
+method minimizes the sum of squared one-step-ahead prediction errors
+generated by the model for the observations $t_0, \ldots, T$.  The
+starting point $t_0$ depends on the orders of the AR polynomials in
+the model.  The numerical maximization method used is BHHH, and the
+covariance matrix is computed using a Gauss--Newton regression.
+
+The CML method is nearly equivalent to maximum likelihood under the
+hypothesis of normality; the difference is that the first $(t_0 - 1)$
+observations are considered fixed and only enter the likelihood
+function as conditioning variables. As a consequence, the two methods
+are asymptotically equivalent under standard conditions --- except for
+the fact, discussed above, that our CML implementation treats the
+constant and exogenous variables as per equation (\ref{eq:arma-with-z}).
+
+The two methods can be compared as in the following example
+\begin{code}
+open data10-1
+arma 1 1 ; r
+arma 1 1 ; r --conditional
+\end{code}
+which produces the estimates shown in Table~\ref{tab:ml-cml}.  As you
+can see, the estimates of $\phi$ and $\theta$ are quite similar.  The
+reported constants differ widely, as expected --- see the discussion
+following equations (\ref{eq:arma-with-xconst}) and
+(\ref{eq:arma-with-zconst}).  However, dividing the CML constant by
+$1-\phi$ we get 7.38, which is not far from the ML estimate of 6.93.
+
+\begin{table}[htbp]
+\caption{ML and CML estimates}
+\label{tab:ml-cml}
+\begin{center}
+  \begin{tabular}{crrrr}
+    \hline
+    Parameter & \multicolumn{2}{c}{ML} &
+    \multicolumn{2}{c}{CML} \\
+    \hline 
+    $\mu$ & 6.93042 & (0.673202) & 1.07322 & (0.488661) \\
+    $\phi$ & 0.855360 & (0.0512026) & 0.852772 & (0.0450252) \\
+    $\theta$ & 0.588056 & (0.0809769) & 0.591838 & (0.0456662) \\
+    \hline
+  \end{tabular}
+\end{center}
+\end{table}
+
+\subsection{Convergence and initialization}
+
+The numerical methods used to maximize the likelihood for ARMA models
+are not guaranteed to converge.  Whether or not convergence is
+achieved, and whether or not the true maximum of the likelihood
+function is attained, may depend on the starting values for the
+parameters.  \app{Gretl} employs one of the following two
+initialization mechanisms, depending on the specification of the model
+and the estimation method chosen.
+
+\begin{enumerate}
+\item Estimate a pure AR model by Least Squares (nonlinear least
+  squares if the model requires it, otherwise OLS).  Set the AR
+  parameter values based on this regression and set the MA
+  parameters to a small positive value (0.0001).
+\item The Hannan--Rissanen method: First estimate an autoregressive
+  model by OLS and save the residuals.  Then in a second OLS pass add
+  appropriate lags of the first-round residuals to the model, to
+  obtain estimates of the MA parameters.
+\end{enumerate}
+
+To see the details of the ARMA estimation procedure, add the
+\verb|--verbose| option to the command.  This prints a notice of the
+initialization method used, as well as the parameter values and
+log-likelihood at each iteration.
+
+Besides the build-in initialization mechanisms, the user has the
+option of specifying a set of starting values manually.  This is done
+via the \cmd{set} command: the first argument should be the keyword
+\texttt{initvals} and the second should be the name of a pre-specified
+matrix containing starting values.  For example
+\begin{code}
+matrix start = { 0, 0.85, 0.34 }
+set initvals start
+arma 1 1 ; y
+\end{code}
+The specified matrix should have just as many parameters as the model:
+in the example above there are three parameters, since the model
+implicitly includes a constant.  The constant, if present, is always
+given first; otherwise the order in which the parameters are
+expected is the same as the order of specification in the \cmd{arma}
+or \cmd{arima} command.  In the example the constant is set to zero,
+$\phi_1$ to 0.85, and $\theta_1$ to 0.34.
+
+You can get \app{gretl} to revert to automatic initialization via
+the command \cmd{set initvals auto}.
+
+\subsection{Estimation via X-12-ARIMA}
+
+As an alternative to estimating ARMA models using ``native'' code,
+\app{gretl} offers the option of using the external program
+\app{X-12-ARIMA}.  This is the seasonal adjustment software produced
+and maintained by the U.S. Census Bureau; it is used for all official
+seasonal adjustments at the Bureau.
+
+\app{Gretl} includes a module which interfaces with \app{X-12-ARIMA}:
+it translates \cmd{arma} commands using the syntax outlined above into
+a form recognized by \app{X-12-ARIMA}, executes the program, and
+retrieves the results for viewing and further analysis within
+\app{gretl}.  To use this facility you have to install
+\app{X-12-ARIMA} separately.  Packages for both MS Windows and
+GNU/Linux are available from the \app{gretl} website,
+\url{http://gretl.sourceforge.net/}.
+
+To invoke \app{X-12-ARIMA} as the estimation engine, append the flag
+\verb|--x-12-arima|, as in
+\begin{code}
+arma p q ; y --x-12-arima
+\end{code}
+As with native estimation, the default is to use exact ML but there is
+the option of using conditional ML with the \verb|--conditional| flag.
+However, please note that when \app{X-12-ARIMA} is used in conditional
+ML mode, the comments above regarding the variant treatments of the
+mean of the process $y_t$ \textit{do not apply}.  That is, when you
+use \app{X-12-ARIMA} the model that is estimated is
+(\ref{eq:arma-with-x}), regardless of whether estimation is by exact
+ML or conditional ML.
+
+
+\subsection{Forecasting}
+\label{arma-fcast}
+
+ARMA models are often used for forecasting purposes.  The
+autoregressive component, in particular, offers the possibility of
+forecasting a process ``out of sample'' over a substantial time
+horizon.
+
+\app{Gretl} supports forecasting on the basis of ARMA models using the
+method set out by Box and Jenkins (1976).\footnote{See in particular
+  their ``Program 4'' on p.\ 505ff.}  The Box and Jenkins algorithm
+produces a set of integrated AR coefficients which take into account
+any differencing of the dependent variable (seasonal and/or
+non-seasonal) in the ARIMA context, thus making it possible to
+generate a forecast for the level of the original variable.  By
+contrast, if you first difference a series manually and then apply
+ARMA to the differenced series, forecasts will be for the differenced
+series, not the level.  This point is illustrated
+in Example~\ref{arima-fcast-script}.  The parameter estimates are identical
+for the two models.  The forecasts differ but are mutually consistent:
+the variable \texttt{fcdiff} emulates the ARMA forecast (static,
+one step ahead within the sample range, and dynamic out of sample).
+
+\begin{script}[htbp]
+  \caption{ARIMA forecasting}
+  \label{arima-fcast-script}
+\begin{scode}
+open greene18_2.gdt
+# log of quarterly U.S. nominal GNP, 1950:1 to 1983:4
+genr y = log(Y)
+# and its first difference
+genr dy = diff(y)
+# reserve 2 years for out-of-sample forecast
+smpl ; 1981:4
+# Estimate using ARIMA
+arima 1 1 1 ; y 
+# forecast over full period
+smpl --full
+fcast fc1
+# Return to sub-sample and run ARMA on the first difference of y
+smpl ; 1981:4
+arma 1 1 ; dy
+smpl --full
+fcast fc2
+genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
+# compare the forecasts over the later period
+smpl 1981:1 1983:4
+print y fc1 fc2 fcdiff --byobs
+\end{scode}
+The output from the last command is:
+%
+\begin{code}
+                  y          fc1          fc2       fcdiff
+1981:1      7.964086     7.940930      0.02668      0.02668
+1981:2      7.978654     7.997576      0.03349      0.03349
+1981:3      8.009463     7.997503      0.01885      0.01885
+1981:4      8.015625     8.033695      0.02423      0.02423
+1982:1      8.014997     8.029698      0.01407      0.01407
+1982:2      8.026562     8.046037      0.01634      0.01634
+1982:3      8.032717     8.063636      0.01760      0.01760
+1982:4      8.042249     8.081935      0.01830      0.01830
+1983:1      8.062685     8.100623      0.01869      0.01869
+1983:2      8.091627     8.119528      0.01891      0.01891
+1983:3      8.115700     8.138554      0.01903      0.01903
+1983:4      8.140811     8.157646      0.01909      0.01909
+\end{code}
+\end{script}
+
+
+\subsection{Limitations}
+
+The structure of \app{gretl}'s \cmd{arma} command does not allow you
+to specify models with gaps in the lag structure, other than via the
+seasonal specification discussed above.  For example, if you have a
+monthly time series, you cannot estimate an ARMA model with AR terms
+(or MA terms) at just lags 1, 3 and 5.
+
+At a pinch, you could circumvent this limitation in respect of the AR
+part of the specification by the trick of including lags of the
+dependent variable in the list of ``exogenous'' variables.  For
+example, the following command
+\begin{code}
+arma 0 0 ; 0 1 ; y const y(-2)
+\end{code}
+on a quarterly series would estimate the parameters of the model
+\[
+  y_t - \mu = \phi \left(y_{t-2} - \mu\right) + \epsilon_t + \Theta \epsilon_{t-4}
+\]
+However, this workaround is not really recommended: it should deliver
+correct estimates, but will break the existing mechanism for
+forecasting.
+
+\section{Unit root tests}
+\label{sec:uroot}
+
+\subsection{The ADF test}
+\label{sec:ADFtest}
+
+The ADF (Augmented Dickey-Fuller) test is, as implemented in
+\app{gretl}, the $t$-statistic on $\varphi$ in the following regression:
+\begin{equation}
+  \label{eq:ADFtest}
+  \Delta y_t = \mu_t + \varphi y_{t-1} + \sum_{i=1}^p \gamma_i \Delta
+  y_{t-i} + \epsilon_t .
+\end{equation}
+
+This test statistic is probably the best-known and most widely used
+unit root test. It is a one-sided test whose null hypothesis is
+$\varphi = 0$ versus the alternative $\varphi < 0$. Under the null,
+$y_t$ must be differenced at least once to achieve stationarity;
+under the alternative, $y_t$ is already stationary and no differencing
+is required. Hence, large negative values of the test statistic lead
+to the rejection of the null.
+
+One peculiar aspect of this test is that its limit distribution is
+non-standard under the null hypothesis: moreover, the shape of the
+distribution, and consequently the critical values for the test,
+depends on the form of the $\mu_t$ term.  A full analysis of the
+various cases is inappropriate here: Hamilton (1994) contains an
+excellent discussion, but any recent time series textbook covers
+this topic. Suffice it to say that \app{gretl} allows the user to
+choose the specification for $\mu_t$ among four different
+alternatives:
+
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & command option \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0$ &  \verb|--c| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    $\mu_0 + \mu_1 t + \mu_1 t^2$ &  \verb|--ctt| \\
+    \hline
+  \end{tabular}
+\end{center}
+
+These options are not mutually exclusive; when they are used together
+the statistic will be reported separately for each case.  By default,
+\app{gretl} uses by default the combination \verb|--c --ct --ctt|. For
+each case, approximate p-values are calculated by means of the
+algorithm developed in MacKinnon (1996).
+
+The \app{gretl} command used to perform the test is \cmd{adf}; for example
+\begin{code}
+adf 4 x1 --c --ct
+\end{code}
+would compute the test statistic as the t-statistic for $\varphi$ in
+equation \ref{eq:ADFtest} with $p=4$ in the two cases $\mu_t = \mu_0$
+and $\mu_t = \mu_0 + \mu_1 t$.
+
+The number of lags ($p$ in equation \ref{eq:ADFtest}) should be chosen
+as to ensure that (\ref{eq:ADFtest}) is a parametrization flexible
+enough to represent adequately the short-run persistence of $\Delta
+y_t$. Setting $p$ too low results in size distortions in the test,
+whereas setting $p$ too high would lead to low power. As a convenience
+to the user, the parameter $p$ can be automatically determined.
+Setting $p$ to a negative number triggers a sequential procedure that
+starts with $p$ lags and decrements $p$ until the $t$-statistic for
+the parameter $\gamma_p$ exceeds 1.645 in absolute value.
+
+\subsection{The KPSS test}
+\label{sec:KPSStest}
+
+The KPSS test (Kwiatkowski, Phillips, Schmidt and Shin, 1992) is a
+unit root test in which the null hypothesis is opposite to that in the
+ADF test: under the null, the series in question is stationary; the
+alternative is that the series is $I(1)$.
+
+The basic intuition behind this test statistic is very simple: if
+$y_t$ can be written as $y_t = \mu + u_t$, where $u_t$ is some
+zero-mean stationary process, then not only does the sample average of
+the $y_t$'s provide a consistent estimator of $\mu$, but the long-run
+variance of $u_t$ is a well-defined, finite number. Neither of these
+properties hold under the alternative.
+
+The test itself is based on the following statistic:
+\begin{equation}
+  \label{eq:KPSStest}
+  \eta = \frac{\sum_{i=1}^T S_t^2 }{ T^2 \bar{\sigma}^2 }
+\end{equation}
+where $S_t = \sum_{s=1}^t e_s$ and $\bar{\sigma}^2$ is an estimate of
+the long-run variance of $e_t = (y_t - \bar{y})$. Under the null, this
+statistic has a well-defined (nonstandard) asymptotic distribution,
+which is free of nuisance parameters and has been tabulated by
+simulation. Under the alternative, the statistic diverges.
+
+As a consequence, it is possible to construct a one-sided test based
+on $\eta$, where $H_0$ is rejected if $\eta$ is bigger than the
+appropriate critical value; \app{gretl} provides the 90\%, 95\%,
+97.5\% and 99\% quantiles.
+
+Usage example:
+\begin{code}
+kpss m y
+\end{code}
+where \verb|m| is an integer representing the bandwidth or window
+size used in the formula for estimating the long run variance:
+\[
+  \bar{\sigma}^2 = \sum_{i=-m}^m \left( 1 - \frac{|i|}{m+1} \right) \hat{\gamma}_i
+\]
+The $\hat{\gamma}_i$ terms denote the empirical autocovariances of
+$e_t$ from order $-m$ through $m$.  For this estimator to be
+consistent, $m$ must be large enough to accommodate the short-run
+persistence of $e_t$, but not too large compared to the sample size
+$T$.  In the GUI interface of \app{gretl}, this value defaults to the
+integer part of $4 \left( \frac{T}{100} \right)^{1/4}$.
+
+The above concept can be generalized to the case where $y_t$ is
+thought to be stationary around a deterministic trend. In this case,
+formula (\ref{eq:KPSStest}) remains unchanged, but the series $e_t$ is
+defined as the residuals from an OLS regression of $y_t$ on a constant
+and a linear trend. This second form of the test is obtained by
+appending the \verb|--trend| option to the \cmd{kpss} command:
+\begin{code}
+kpss n y --trend
+\end{code}
+Note that in this case the asymptotic distribution of the test is
+different and the critical values reported by \app{gretl} differ
+accordingly.
+
+
+\subsection{The Johansen tests}
+\label{sec:Joh-test}
+
+Strictly speaking, these are tests for cointegration. However, they
+can be used as multivariate unit-root tests since they are the
+multivariate generalization of the ADF test. See section
+\ref{sec:VECM-rep} for more details.
+
+\section{ARCH and GARCH}
+\label{sec:arch-garch}
+
+Heteroskedasticity means a non-constant variance of the error term in
+a regression model.  Autoregressive Conditional Heteroskedasticity
+(ARCH) is a phenomenon specific to time series models, whereby the
+variance of the error displays autoregressive behavior; for instance,
+the time series exhibits successive periods where the error variance
+is relatively large, and successive periods where it is relatively
+small.  This sort of behavior is reckoned to be quite common in asset
+markets: an unsettling piece of news can lead to a period of increased
+volatility in the market.
+
+An ARCH error process of order $q$ can be represented as
+\[
+u_t = \sigma_t \varepsilon_t; \qquad
+\sigma^2_t \equiv {\rm E}(u^2_t|\Omega_{t-1}) = 
+\alpha_0 + \sum_{i=1}^q \alpha_i u^2_{t-i}
+\]
+where the $\varepsilon_t$s are independently and identically
+distributed (iid) with mean zero and variance 1, and where $\sigma_t$
+is taken to be the positive square root of $\sigma^2_t$.
+$\Omega_{t-1}$ denotes the information set as of time $t-1$ and
+$\sigma^2_t$ is the conditional variance: that is, the
+variance conditional on information dated $t-1$ and earlier.
+
+It is important to notice the difference between ARCH and an ordinary
+autoregressive error process.  The simplest (first-order) case of the
+latter can be written as
+\[
+u_t = \rho u_{t-1} + \varepsilon_t; \qquad -1 < \rho < 1
+\]
+where the $\varepsilon_t$s are independently and identically
+distributed with mean zero and variance $\sigma^2$.  With an
+AR(1) error, if $\rho$ is positive then a positive value of $u_t$ will
+tend to be followed, with probability greater than 0.5, by a positive
+$u_{t+1}$.  With an ARCH error process, a disturbance $u_t$ of large
+absolute value will tend to be followed by further large absolute
+values, but with no presumption that the successive values will be of
+the same sign.  ARCH in asset prices is a ``stylized fact'' and is
+consistent with market efficiency; on the other hand autoregressive
+behavior of asset prices would violate market efficiency.
+
+One can test for ARCH of order $q$ in the following
+way:
+\begin{enumerate}
+\item Estimate the model of interest via OLS and save the squared
+  residuals, $\hat{u}^2_t$.
+\item Perform an auxiliary regression in which the current squared
+  residual is regressed on a constant and $q$ lags of itself.
+\item Find the $TR^2$ value (sample size times unadjusted $R^2$) for
+  the auxiliary regression.
+\item Refer the $TR^2$ value to the $\chi^2$ distribution with $q$
+  degrees of freedom, and if the p-value is ``small enough'' reject
+  the null hypothesis of homoskedasticity in favor of the alternative
+  of ARCH($q$).
+\end{enumerate}
+
+This test is implemented in \app{gretl} via the \cmd{arch} command.
+This command may be issued following the estimation of a time-series
+model by OLS, or by selection from the ``Tests'' menu in the model
+window (again, following OLS estimation).  The result of the test is
+reported and if the $TR^2$ from the auxiliary regression has a p-value
+less than 0.10, ARCH estimates are also reported.  These estimates
+take the form of Generalized Least Squares (GLS), specifically
+weighted least squares, using weights that are inversely proportional
+to the predicted variances of the disturbances, $\hat{\sigma}_t$,
+derived from the auxiliary regression.
+
+In addition, the ARCH test is available after estimating a vector
+autoregression (VAR).  In this case, however, there is no provision to
+re-estimate the model via GLS.
+
+\subsection{GARCH}
+\label{subsec:garch}
+
+The simple ARCH($q$) process is useful for introducing the general
+concept of conditional heteroskedasticity in time series, but it has
+been found to be insufficient in empirical work.  The dynamics of the
+error variance permitted by ARCH($q$) are not rich enough to represent 
+the patterns found in financial data.  The generalized ARCH or GARCH
+model is now more widely used.  
+
+The representation of the variance of a process in the GARCH model is
+somewhat (but not exactly) analogous to the ARMA representation of the
+level of a time series.  The variance at time $t$ is allowed
+to depend on both past values of the variance and past values of the
+realized squared disturbance, as shown in the following system
+of equations:
+\begin{eqnarray}
+  \label{eq:garch-meaneq}
+  y_t &  = & X_t \beta + u_t \\
+  \label{eq:garch-epseq}
+  u_t &  = & \sigma_t \varepsilon_t \\
+  \label{eq:garch-vareq}
+  \sigma^2_t & = & \alpha_0 + \sum_{i=1}^q \alpha_i u^2_{t-i} +
+	  \sum_{j=1}^p \delta_i \sigma^2_{t-j}
+\end{eqnarray}
+As above, $\varepsilon_t$ is an iid sequence with unit variance.
+$X_t$ is a matrix of regressors (or in the simplest case,
+just a vector of 1s allowing for a non-zero mean of $y_t$).  Note that
+if $p=0$, GARCH collapses to ARCH($q$): the generalization is embodied
+in the $\delta_i$ terms that multiply previous values of the error
+variance.
+
+In principle the underlying innovation, $\varepsilon_t$, could follow
+any suitable probability distribution, and besides the obvious
+candidate of the normal or Gaussian distribution the $t$ distribution
+has been used in this context.  Currently \app{gretl} only handles the
+case where $\varepsilon_t$ is assumed to be Gaussian.  However, when
+the \verb|--robust| option to the \cmd{garch} command is given, the
+estimator \app{gretl} uses for the covariance matrix can be considered
+Quasi-Maximum Likelihood even with non-normal disturbances.  See below
+for more on the options regarding the GARCH covariance matrix.
+
+Example:
+\begin{code}
+garch p q ; y const x
+\end{code}
+where \verb|p| $\ge 0$ and \verb|q| $>0$ denote the respective lag
+orders as shown in equation (\ref{eq:garch-vareq}).  These values
+can be supplied in numerical form or as the names of pre-defined
+scalar variables.
+
+\subsection{GARCH estimation}
+\label{subsec:garch-est}
+
+Estimation of the parameters of a GARCH model is by no means a
+straightforward task.  (Consider equation~\ref{eq:garch-vareq}: the
+conditional variance at any point in time, $\sigma^2_t$, depends on
+the conditional variance in earlier periods, but $\sigma^2_t$ is not
+observed, and must be inferred by some sort of Maximum Likelihood
+procedure.)  \app{Gretl} uses the method proposed by Fiorentini,
+Calzolari and Panattoni (1996),\footnote{The algorithm is based on
+  Fortran code deposited in the archive of the \textit{Journal of
+    Applied Econometrics} by the authors, and is used by kind
+  permission of Professor Fiorentini.}  which was adopted as a
+benchmark in the study of GARCH results by McCullough and Renfro
+(1998).  It employs analytical first and second derivatives of the
+log-likelihood, and uses a mixed-gradient algorithm, exploiting the
+information matrix in the early iterations and then switching to the
+Hessian in the neighborhood of the maximum likelihood.  (This progress
+can be observed if you append the \verb|--verbose| option to
+\app{gretl}'s \cmd{garch} command.)
+
+Several options are available for computing the covariance matrix of
+the parameter estimates in connection with the \cmd{garch} command.
+At a first level, one can choose between a ``standard'' and a
+``robust'' estimator.  By default, the Hessian is used unless the
+\verb|--robust| option is given, in which case the QML estimator is
+used.  A finer choice is available via the \cmd{set} command, as
+shown in Table~\ref{tab:garch-vcv}.
+
+\begin{table}[htbp]
+\caption{Options for the GARCH covariance matrix}
+\label{tab:garch-vcv}
+\begin{center}
+\begin{tabular}{ll}
+\multicolumn{1}{c}{\textit{command}} &
+\multicolumn{1}{c}{\textit{effect}} \\ [4pt]
+\texttt{set garch\_vcv hessian} & Use the Hessian \\
+\texttt{set garch\_vcv im} & Use the Information Matrix \\
+\texttt{set garch\_vcv op} & Use the Outer Product of the Gradient \\
+\texttt{set garch\_vcv qml} & QML estimator \\
+\texttt{set garch\_vcv bw} & Bollerslev--Wooldridge ``sandwich'' estimator
+\end{tabular}
+\end{center}
+\end{table}
+
+It is not uncommon, when one estimates a GARCH model for an arbitrary
+time series, to find that the iterative calculation of the estimates
+fails to converge.  For the GARCH model to make sense, there are
+strong restrictions on the admissible parameter values, and it is not
+always the case that there exists a set of values inside the
+admissible parameter space for which the likelihood is maximized.  
+
+The restrictions in question can be explained by reference to the
+simplest (and much the most common) instance of the GARCH model, where
+$p = q = 1$.  In the GARCH(1, 1) model the conditional variance is
+\begin{equation}
+\label{eq:condvar}
+\sigma^2_t = \alpha_0 + \alpha_1 u^2_{t-1} + \delta_1 \sigma^2_{t-1}
+\end{equation}
+Taking the unconditional expectation of (\ref{eq:condvar}) we get
+\[
+\sigma^2 = \alpha_0 + \alpha_1 \sigma^2 + \delta_1 \sigma^2
+\]
+so that
+\[
+\sigma^2 = \frac{\alpha_0}{1 - \alpha_1 - \delta_1}
+\]
+For this unconditional variance to exist, we require that $\alpha_1 +
+\delta_1 < 1$, and for it to be positive we require that $\alpha_0 > 0$.
+
+A common reason for non-convergence of GARCH estimates (that is, a
+common reason for the non-existence of $\alpha_i$ and $\delta_i$ values
+that satisfy the above requirements and at the same time maximize the
+likelihood of the data) is misspecification of the model.  It is
+important to realize that GARCH, in itself, allows \textit{only} for
+time-varying volatility in the data.  If the \textit{mean} of the
+series in question is not constant, or if the error process is not
+only heteroskedastic but also autoregressive, it is necessary to take
+this into account when formulating an appropriate model.  For example,
+it may be necessary to take the first difference of the variable in
+question and/or to add suitable regressors, $X_t$, as in
+(\ref{eq:garch-meaneq}).
+
+\section{Cointegration and Vector Error Correction Models}
+\label{vecm-explanation}
+
+\subsection{Vector Error Correction Models as representation of a
+  cointegrated system}
+\label{sec:VECM-rep}
+
+Consider a VAR of order $p$ with a deterministic part given by $\mu_t$
+(typically, a polynomial in time). Then, it is possible to write the $n$-variate
+process $y_t$ as 
+\[
+  y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
+  \epsilon_t ;
+\]
+however, this model can be re-cast in a form more suitable to analyze
+the phenomenon of cointegration. Since $y_t = y_{t-1} - \Delta y_t$
+and $y_{t-i} = y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots +
+\Delta y_{t-i+1}$, the \emph{Vector Error Correction} form of the
+previous model is given by
+\begin{equation}
+  \label{eq:Joh-tests}
+  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^p \Gamma_i \Delta
+  y_{t-i} + \epsilon_t ,
+\end{equation}
+where $\Pi = \sum_{i=1}^p A_i$ and $\Gamma_k = -\sum_{i=k}^p A_i$.
+
+If the rank of $\Pi$ is 0, the processes are all I(1); if the rank of
+$\Pi$ is full, the processes are all I(0); in between, $\Pi$ can be
+written as $\alpha \beta'$ and you have cointegration.
+
+The rank of $\Pi$ is investigated by computing the eigenvalues of a
+closely related matrix (call it $M$) whose rank is the same as $\Pi$:
+however, $M$ is by construction symmetric and positive semidefinite.
+As a consequence, all its eigenvalues are real and non-negative; tests
+on the rank of $\Pi$ can therefore be carried out by testing how many
+eigenvalues of $M$ are 0.
+
+If all the eigenvalues are significantly different from 0, then all the
+processes are stationary. If, on the contrary, there is at least one
+zero eigenvalue, then the $y_t$ process is integrated, although some
+linear combination $\beta'y_t$ might be stationary. On the other
+extreme, if no eigenvalues are significantly different from 0, then not
+only the process $y_t$ is non-stationary, but the same holds for any
+linear combination $\beta'y_t$; in other words, no cointegration
+occurs.
+
+The two Johansen tests are the ``$\lambda$-max'' test, for hypotheses
+on individual eigenvalues, and the ``trace'' test, for joint
+hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
+tests.  
+
+As in the ADF test, the asymptotic distribution of the tests varies
+with the deterministic kernel $\mu_t$ one includes in the VAR.
+\app{gretl} provides the following options (for a short discussion of
+the meaning of the five options, see section \ref{sec:johansen-test} below):
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & command option \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
+    $\mu_0$ &  default \\
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    \hline
+  \end{tabular}
+\end{center}
+Note that for this command the above options are mutually exclusive.
+In addition, you have the option of using the \verb|--seasonal|
+options, for augmenting $\mu_t$ with centered seasonal dummies.  In
+each case, p-values are computed via the approximations by Doornik
+(1998).
+
+The following code uses the \cmd{denmark} database, supplied with
+\app{gretl}, to replicate Johansen's example found in his 1995 book.
+%
+\begin{code}
+open denmark
+coint2 2 LRM LRY IBO IDE --rc --seasonal
+\end{code}
+%
+In this case, the vector $y_t$ in equation (\ref{eq:Joh-tests})
+comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
+\cmd{IDE}. The number of lags equals $p$ in (\ref{eq:Joh-tests}) plus
+one. Part of the output is reported below:
+
+\begin{center}
+\begin{code}
+Johansen test:
+Number of equations = 4
+Lag order = 2
+Estimation period: 1974:3 - 1987:3 (T = 53)
+
+Case 2: Restricted constant
+Rank Eigenvalue Trace test p-value   Lmax test  p-value
+   0    0.43317     49.144 [0.1284]     30.087 [0.0286]
+   1    0.17758     19.057 [0.7833]     10.362 [0.8017]
+   2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
+   3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
+\end{code}
+\end{center}
+
+Since both the trace and $\lambda$-max accept the null hypothesis that
+the smallest eigenvalue is in fact 0, we may conclude that the series
+are in fact non-stationary. However, some linear combination may be
+$I(0)$, as indicated by the rejection of the $\lambda$-max of the
+hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
+clear-cut evidence for this).
+
+\subsection{The Johansen cointegration test}
+\label{sec:johansen-test}
+
+The Johansen test for cointegration is used to establish the rank of
+$\beta$; in other words, how many cointegration vectors the system
+has.  This test has to take into account what hypotheses one is
+willing to make on the deterministic terms, which leads to the famous
+``five cases.'' A full and general illustration of the five cases
+requires a fair amount of matrix algebra, but an intuitive
+understanding of the issue can be gained by means of a simple example.
+    
+Consider a series $x_t$ which behaves as follows
+%      
+\[ x_t = m + x_{t-1} + \varepsilon_t \] 
+%
+where $m$ is a real number and $\varepsilon_t$ is a white noise
+process. As is easy to show, $x_t$ is a random walk which fluctuates
+around a deterministic trend with slope $m$. In the special case $m$ =
+0, the deterministic trend disappears and $x_t$ is a pure random walk.
+    
+Consider now another process $y_t$, defined by
+%      
+\[ y_t = k + x_t + u_t \] 
+%
+where, again, $k$ is a real number and $u_t$ is a white noise process.
+Since $u_t$ is stationary by definition, $x_t$ and $y_t$ cointegrate:
+that is, their difference
+%      
+\[ z_t = y_t - x_t = k + u_t \]
+%	
+is a stationary process. For $k$ = 0, $z_t$ is simple zero-mean white
+noise, whereas for $k$ $\ne$ 0 the process $z_t$ is white noise with a
+non-zero mean.
+  
+After some simple substitutions, the two equations above can be
+represented jointly as a VAR(1) system
+%      
+\[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
+  \begin{array}{c} k + m \\ m \end{array} \right] + \left[
+  \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
+  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
+  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
+\right] \]
+%	
+or in VECM form
+%      
+\begin{eqnarray*}
+  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
+  \left[  \begin{array}{rr} 1 & -1 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+  \mu_0 + \alpha \beta^{\prime} \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
+  \mu_0 + \alpha z_{t-1} + \eta_t ,
+\end{eqnarray*}
+%	
+where $\beta$ is the cointegration vector and $\alpha$ is the
+``loadings'' or ``adjustments'' vector.
+     
+We are now in a position to consider three possible cases:
+    
+\begin{enumerate}
+\item $m$ $\ne$ 0: In this case $x_t$ is trended, as we just saw; it
+  follows that $y_t$ also follows a linear trend because on average it
+  keeps at a distance $k$ from $x_t$. The vector
+  $\mu_0$ is unrestricted.  This case is the default
+  for gretl's \cmd{vecm} command.
+	
+\item $m$ = 0 and $k$ $\ne$ 0: In this case, $x_t$ is not trended and
+  as a consequence neither is $y_t$. However, the mean distance
+  between $y_t$ and $x_t$ is non-zero. The vector
+  $\mu_0$ is given by
+%	  
+  \[
+  \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
+  \]
+%	    
+  which is not null and therefore the VECM shown above does have a
+  constant term. The constant, however, is subject to the restriction
+  that its second element must be 0. More generally,
+  $\mu_0$ is a multiple of the vector $\alpha$. Note
+  that the VECM could also be written as
+%	  
+  \[
+  \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
+  = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
+    \begin{array}{rrr} 1 & -1 & -k \end{array} \right] \left[
+    \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] +
+  \left[ \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t
+    \end{array} \right]
+  \]
+%	   
+  which incorporates the intercept into the cointegration vector. This
+  is known as the ``restricted constant'' case; it may be specified in
+  gretl's \cmd{vecm} command using the option flag \verb+--rc+.
+	
+\item $m$ = 0 and $k$ = 0: This case is the most restrictive: clearly,
+  neither $x_t$ nor $y_t$ are trended, and the mean distance between
+  them is zero. The vector $\mu_0$ is also 0, which
+  explains why this case is referred to as ``no constant.''  This case
+  is specified using the option flag \verb+--nc+ with \cmd{vecm}.
+	
+\end{enumerate}
+
+In most cases, the choice between the three possibilities is based on
+a mix of empirical observation and economic reasoning. If the
+variables under consideration seem to follow a linear trend then we
+should not place any restriction on the intercept. Otherwise, the
+question arises of whether it makes sense to specify a cointegration
+relationship which includes a non-zero intercept. One example where
+this is appropriate is the relationship between two interest rates:
+generally these are not trended, but the VAR might still have an
+intercept because the difference between the two (the ``interest rate
+spread'') might be stationary around a non-zero mean (for example,
+because of a risk or liquidity premium).
+    
+The previous example can be generalized in three directions:
+    
+\begin{enumerate}
+\item If a VAR of order greater than 1 is considered, the algebra gets
+  more convoluted but the conclusions are identical.
+\item If the VAR includes more than two endogenous variables the
+  cointegration rank $r$ can be greater than 1. In this case, $\alpha$
+  is a matrix with $r$ columns, and the case with restricted constant
+  entails the restriction that $\mu_0$ should be some
+  linear combination of the columns of $\alpha$.
+\item If a linear trend is included in the model, the deterministic
+  part of the VAR becomes $\mu_0 + \mu_1 t$. The reasoning is
+  practically the same as above except that the focus now centers on
+  $\mu_1$ rather than $\mu_0$.  The counterpart to the ``restricted
+  constant'' case discussed above is a ``restricted trend'' case, such
+  that the cointegration relationships include a trend but the first
+  differences of the variables in question do not.  In the case of an
+  unrestricted trend, the trend appears in both the cointegration
+  relationships and the first differences, which corresponds to the
+  presence of a quadratic trend in the variables themselves (in
+  levels).  These two cases are specified by the option flags
+  \verb+--crt+ and \verb+--ct+, respectively, with the \cmd{vecm}
+  command.
+\end{enumerate}
+
+\subsection{Identification of the cointegration vectors}
+\label{sec:johansen-ident}
+
+\textbf{FIXME: this is but a stub}
+
+Maximum likelihood estimation of $\beta$ can be shown to be equivalent
+to solving an eigenvector problem. In practice, if the cointegration
+rank is known to be $r$, the $n \times r$ matrix $\beta$ is estimated
+as the solution to the following matrix equation:
+\[
+  M \beta = \beta \langle \lambda \rangle
+\]
+where $\langle \lambda \rangle$ is a diagonal matrix containing the
+eigenvalues. Notice, however, that if all columns of $\beta$ are
+cointegration vectors, then any arbitrary linear combinations of those
+is a cointegration vector too. This means that the matrix $\beta$ is
+under-identified. As a consequence, its elements do not have a proper
+covariance matrix, but this difficulty can be circumvented by imposing
+an appropriate number of restrictions. The method \app{gretl} uses is
+known as the ``Phillips normalization''. The starting point is writing
+$\beta$ in partitioned form as in
+\[
+  \beta = \left[
+    \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
+    \right] ,
+\]
+where $\beta_1$ is an $r \times r$ matrix and  $\beta_2$ is $(n-r)
+\times r$. Assuming that $\beta_1$ has full rank, $\beta$ can be
+post-multiplied by $\beta_1^{-1}$, giving
+\[
+  \hat{\beta} = \left[
+    \begin{array}{c} I \\ \beta_2 \beta_1^{-1}  \end{array}
+    \right] =
+    \left[
+    \begin{array}{c} I \\ \hat{\beta_2} \end{array}
+  \right]  ,
+\]
+
+The coefficients that \app{gretl} produces are $\hat{\beta}$, with
+$\hat{\beta_2}$ known as the matrix of unrestricted coefficients.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

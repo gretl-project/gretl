@@ -1,0 +1,507 @@
+\chapter{Panel data}
+\label{chap-panel}
+
+\section{Estimation of panel models}
+
+\subsection{Pooled Ordinary Least Squares}
+\label{pooled-est}
+
+The simplest estimator for panel data is pooled OLS.  In most cases
+this is unlikely to be adequate, but it provides a baseline for
+comparison with more complex estimators.
+
+If you estimate a model on panel data using OLS an additional test
+item becomes available.  In the GUI model window this is the item
+``panel diagnostics'' under the \textsf{Tests} menu; the script
+counterpart is the \cmd{hausman} command.
+
+To take advantage of this test, you should specify a model without any
+dummy variables representing cross-sectional units.  The test compares
+pooled OLS against the principal alternatives, the fixed effects and
+random effects models.  These alternatives are explained in the
+following section.
+
+\subsection{The fixed and random effects models}
+\label{panel-est}
+
+In \app{gretl} version 1.6.0 and higher, the fixed and random effects
+models for panel data can be estimated in their own right.  In the
+graphical interface these options are found under the menu item
+``Model/Panel/Fixed and random effects''.  In the command-line
+interface one uses the \cmd{panel} command, with or without the
+\verb+--random-effects+ option.
+
+This section explains the nature of these models and comments on their
+estimation via \app{gretl}.
+
+The pooled OLS specification may be written as 
+\begin{equation}
+\label{eq:pooled}
+y_{it} = X_{it}\beta + u_{it}
+\end{equation}
+where $y_{it}$ is the observation on the dependent variable for
+cross-sectional unit $i$ in period $t$, $X_{it}$ is a $1\times k$
+vector of independent variables observed for unit $i$ in period $t$,
+$\beta$ is a $k\times 1$ vector of parameters, and $u_{it}$ is an error
+or disturbance term specific to unit $i$ in period $t$.
+
+The fixed and random effects models have in common that they decompose
+the unitary pooled error term, $u_{it}$.  For the \textsl{fixed effects}
+model we write $u_{it} = \alpha_i + \varepsilon_{it}$, yielding
+\begin{equation}
+\label{eq:FE}
+y_{it} = X_{it}\beta + \alpha_i + \varepsilon_{it}
+\end{equation}
+That is, we decompose $u_{it}$ into a unit-specific and time-invariant
+component, $\alpha_i$, and an observation-specific error,
+$\varepsilon_{it}$.\footnote{It is possible to break a third component
+  out of $u_{it}$, namely $w_t$, a shock that is time-specific but
+  common to all the units in a given period.  In the interest of
+  simplicity we do not pursue that option here.}  The $\alpha_i$s are
+then treated as fixed parameters (in effect, unit-specific
+$y$-intercepts), which are to be estimated.  This can be done by
+including a dummy variable for each cross-sectional unit (and
+suppressing the global constant).  This is sometimes called the Least
+Squares Dummy Variables (LSDV) method.  Alternatively, one can subtract
+the group mean from each of variables and estimate a model without a
+constant.  In the latter case the dependent variable may be written as
+\[
+\tilde{y}_{it} = y_{it} - \bar{y}_i
+\]
+The ``group mean'', $\bar{y}_i$, is defined as
+\[
+\bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{it}
+\]
+where $T_i$ is the number of observations for unit $i$.  An exactly
+analogous formulation applies to the independent variables.  Given
+parameter estimates, $\hat{\beta}$, obtained using such de-meaned data
+we can recover estimates of the $\alpha_i$s using
+\[
+\hat{\alpha}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} 
+   \left(y_{it} - X_{it}\hat{\beta}\right)
+\]
+
+These two methods (LSDV, and using de-meaned data) are numerically
+equivalent. \app{Gretl} takes the approach of de-meaning the data.  If
+you have a small number of cross-sectional units, a large number of
+time-series observations per unit, and a large number of regressors,
+it is more economical in terms of computer memory to use LSDV.  If 
+need be you can easily implement this manually.  For example,
+%
+\begin{code}
+genr unitdum
+ols y x du_*
+\end{code}
+%
+(See Chapter~\ref{chap-genr} for details on \texttt{unitdum}).
+
+The $\hat{\alpha}_i$ estimates are not printed as part of the standard
+model output in \app{gretl} (there may be a large number of these, and
+typically they are not of much inherent interest).  However you can
+retrieve them after estimation of the fixed effects model if you
+wish.  In the graphical interface, go to the ``Save'' menu in the
+model window and select ``per-unit constants''.  In command-line mode,
+you can do \texttt{genr} \textsl{newname} = \verb+$ahat+, where
+\textsl{newname} is the name you want to give the series. 
+
+For the \textsl{random effects} model we write $u_{it} = v_i +
+\varepsilon_{it}$, so the model becomes
+\begin{equation}
+\label{eq:RE}
+y_{it} = X_{it}\beta + v_i + \varepsilon_{it}
+\end{equation}
+In contrast to the fixed effects model, the $v_i$s are not treated as
+fixed parameters, but as random drawings from a given probability
+distribution.
+
+The celebrated Gauss--Markov theorem, according to which OLS is the
+best linear unbiased estimator (BLUE), depends on the assumption that
+the error term is independently and identically distributed (IID).  In
+the panel context, the IID assumption means that $E(u_{it}^2)$, in
+relation to equation~\ref{eq:pooled}, equals a constant, $\sigma^2_u$,
+for all $i$ and $t$, while the covariance $E(u_{is} u_{it})$ equals
+zero for all $s \neq t$ and the covariance $E(u_{jt} u_{it})$ equals
+zero for all $j \neq i$.
+
+If these assumptions are not met --- and they are unlikely to be met
+in the context of panel data --- OLS is not the most efficient
+estimator.  Greater efficiency may be gained using generalized least
+squares (GLS), taking into account the covariance structure of the
+error term.  
+
+Consider observations on a given unit $i$ at two different times
+$s$ and $t$. From the hypotheses above it can be worked out that
+$\mbox{Var}(u_{is}) = \mbox{Var}(u_{it}) = \sigma^2_{v} +
+\sigma^2_{\varepsilon}$, while the covariance between $u_{is}$ and
+$u_{it}$ is given by $E(u_{is}u_{it}) = \sigma^2_{v}$.
+
+In matrix notation, we may group all the $T_i$ observations for unit
+$i$ into the vector $\mathbf{y}_i$ and write it as
+\begin{equation}
+\label{eq:REvec}
+\mathbf{y}_{i} = \mathbf{X}_{i} \beta + \mathbf{u}_i
+\end{equation}
+The vector $\mathbf{u}_i$, which includes all the disturbances for
+individual $i$, has a variance--covariance matrix given by
+\begin{equation}
+\label{eq:CovMatUnitI}
+  \mbox{Var}(\mathbf{u}_i) = \Sigma_i = \sigma^2_{\varepsilon} I + \sigma^2_{v} J
+\end{equation}
+where $J$ is a square matrix with all elements equal to 1. It can be
+shown that the matrix
+\[
+  K_i = I - \frac{\theta}{T_i} J,
+\]
+where $\theta = 1 -
+\sqrt{\frac{\sigma^2_{\varepsilon}}{\sigma^2_{\varepsilon} + T_i
+    \sigma^2_{v}}}$, has the property
+\[
+  K_i \Sigma K_i' = \sigma^2_{\varepsilon} I
+\]
+It follows that the transformed system
+\begin{equation}
+\label{eq:REGLS}
+K_i \mathbf{y}_{i} = K_i \mathbf{X}_{i} \beta + K_i \mathbf{u}_i
+\end{equation}
+satisfies the Gauss--Markov conditions, and OLS estimation of
+(\ref{eq:REGLS}) provides efficient inference. But since 
+\[
+  K_i \mathbf{y}_{i} = \mathbf{y}_{i} - \theta \bar{\mathbf{y}}_{i}
+\]
+GLS estimation is equivalent to OLS using ``quasi-demeaned''
+variables; that is, variables from which we subtract a fraction
+$\theta$ of their average. Notice that for $\sigma^2_{\varepsilon} \to
+0$, $\theta \to 1$, while for $\sigma^2_{v} \to 0$, $\theta \to 0$.
+This means that if all the variance is attributable to the individual
+effects, then the fixed effects estimator is optimal; if, on the other
+hand, individual effects are negligible, then pooled OLS turns out,
+unsurprisingly, to be the optimal estimator.
+
+To implement the GLS approach we need to calculate $\theta$, which in
+turn requires estimates of the variances $\sigma^2_{\varepsilon}$ and
+$\sigma^2_v$.  (These are often referred to as the ``within'' and
+``between'' variances respectively, since the former refers to
+variation within each cross-sectional unit and the latter to variation
+between the units).  Several means of estimating these magnitudes have
+been suggested in the literature (see Baltagi, 1995); \app{gretl} uses
+the method of Swamy and Arora (1972): $\sigma^2_\varepsilon$ is
+estimated by the residual variance from the fixed effects model, and
+the sum $\sigma^2_\varepsilon + T_i \sigma^2_v$ is estimated as $T_i$
+times the residual variance from the ``between'' estimator,
+\[
+\bar{y}_i = \bar{X}_i \beta + e_i
+\]
+The latter regression is implemented by constructing a data set
+consisting of the group means of all the relevant variables.
+
+
+\subsection{Choice of estimator}
+\label{panel-choice}
+
+Which panel method should one use, fixed effects or random effects?
+
+One way of answering this question is in relation to the nature of the
+data set.  If the panel comprises observations on a fixed and
+relatively small set of units of interest (say, the member states of
+the European Union), there is a presumption in favor of fixed effects.
+If it comprises observations on a large number of randomly selected
+individuals (as in many epidemiological and other longitudinal
+studies), there is a presumption in favor of random effects.
+
+Besides this general heuristic, however, various statistical
+issues must be taken into account.
+
+\begin{enumerate}
+
+\item Some panel data sets contain variables whose values are specific
+  to the cross-sectional unit but which do not vary over time.  If you
+  want to include such variables in the model, the fixed effects
+  option is simply not available.  When the fixed effects approach is
+  implemented using dummy variables, the problem is that the
+  time-invariant variables are perfectly collinear with the per-unit
+  dummies.  When using the approach of subtracting the group means,
+  the issue is that after de-meaning these variables are nothing but
+  zeros.
+\item A somewhat analogous prohibition applies to the random effects
+  estimator.  This estimator is in effect a matrix-weighted average of
+  pooled OLS and the ``between'' estimator.  Suppose we have
+  observations on $n$ units or individuals and there are $k$
+  independent variables of interest.  If $k>n$, the ``between''
+  estimator is undefined --- since we have only $n$ effective
+  observations --- and hence so is the random effects estimator.
+\end{enumerate}
+
+If one does not fall foul of one or other of the prohibitions
+mentioned above, the choice between fixed effects and random effects
+may be expressed in terms of the two econometric \textit{desiderata},
+efficiency and consistency.  
+
+From a purely statistical viewpoint, we could say that there is a
+tradeoff between robustness and efficiency. In the fixed effects
+approach, we do not make any hypotheses on the ``group effects'' (that
+is, the time-invariant differences in mean between the groups) beyond
+the fact that they exist --- and that can be tested; see below. As a
+consequence, once these effects are swept out by taking deviations
+from the group means, the remaining parameters can be estimated.
+
+On the other hand, the random effects approach attempts to model the
+group effects as drawings from a probability distribution instead of
+removing them. This requires that individual effects are representable
+as a legitimate part of the disturbance term, that is, zero-mean
+random variables, uncorrelated with the regressors.
+
+As a consequence, the fixed-effects estimator ``always works'', but at
+the cost of not being able to estimate the effect of time-invariant
+regressors.  The richer hypothesis set of the random-effects estimator
+ensures that parameters for time-invariant regressors can be
+estimated, and that estimation of the parameters for time-varying
+regressors is carried out more efficiently.  These advantages, though,
+are tied to the validity of the additional hypotheses. If, for
+example, there is reason to think that individual effects may be
+correlated with some of the explanatory variables, then the
+random-effects estimator would be inconsistent, while fixed-effects
+estimates would still be valid.  It is precisely on this principle
+that the Hausman test is built (see below): if the fixed- and
+random-effects estimates agree, to within the usual statistical margin
+of error, there is no reason to think the additional hypotheses
+invalid, and as a consequence, no reason \textit{not} to use the more
+efficient RE estimator.
+
+\subsection{Testing panel models}
+\label{panel-tests}
+
+If you estimate a fixed effects or random effects model in the
+graphical interface, you may notice that the number of items available
+under the ``Tests'' menu in the model window is relatively limited.
+Panel models carry certain complications that make it difficult to
+implement all of the tests one expects to see for models estimated on
+straight time-series or cross-sectional data.  
+
+Nonetheless, various panel-specific tests are printed along with the
+parameter estimates as a matter of course, as follows.
+
+When you estimate a model using \textsl{fixed effects}, you
+automatically get an $F$-test for the null hypothesis that the
+cross-sectional units all have a common intercept.  That is to say
+that all the $\alpha_i$s are equal, in which case the pooled model
+(\ref{eq:pooled}), with a column of 1s included in the $X$ matrix, is
+adequate.
+
+When you estimate using \textsl{random effects}, the Breusch--Pagan
+and Hausman tests are presented automatically.  
+
+The Breusch--Pagan test is the counterpart to the $F$-test mentioned
+above.  The null hypothesis is that the variance of $v_i$ equals zero;
+if this hypothesis is not rejected, then again we conclude that the
+simple pooled model is adequate.
+
+The Hausman test probes the consistency of the GLS estimates.  The
+null hypothesis is that these estimates are consistent, that is, that
+the requirement of orthogonality of the $v_i$ and the $X_i$ is
+satisfied.  The test is based on a measure, $H$, of the ``distance''
+between the fixed-effects and random-effects estimates, constructed
+such that under the null it follows the $\chi^2$ distribution with
+degrees of freedom equal to the number of time-varying regressors in
+the matrix $X$.  If the value of $H$ is ``large'' this suggests
+that the random effects estimator is not consistent and the
+fixed-effects model is preferable.
+
+There are two ways of calculating $H$, the matrix-difference method
+and the regression method.  The procedure for the matrix-difference
+method is this:
+\begin{itemize}
+\item Collect the fixed-effects estimates in a vector
+  $\tilde{\beta}$ and the corresponding random-effects estimates in
+  $\hat{\beta}$, then form the difference vector $(\tilde{\beta} -
+  \hat{\beta})$. 
+\item Form the covariance matrix of the difference vector as
+  $\mbox{Var}(\tilde{\beta} - \hat{\beta}) = \mbox{Var}(\tilde{\beta})
+  - \mbox{Var}(\hat{\beta}) = \Psi$, where $\mbox{Var}(\tilde{\beta})$
+  and $\mbox{Var}(\hat{\beta})$ are estimated by the sample variance
+  matrices of the fixed- and random-effects models
+  respectively.\footnote{Hausman (1978) showed that the covariance of
+    the difference takes this simple form when $\hat{\beta}$ is an
+    efficient estimator and $\tilde{\beta}$ is inefficient.}
+\item Compute $H = \left(\tilde{\beta} - \hat{\beta}\right)' \Psi^{-1}
+   \left(\tilde{\beta} - \hat{\beta}\right)$.
+\end{itemize}
+
+Given the relative efficiencies of $\tilde{\beta}$ and $\hat{\beta}$,
+the matrix $\Psi$ ``should be'' positive definite, in which case $H$ is
+positive, but in finite samples this is not guaranteed and of course
+a negative $\chi^2$ value is not admissible.  The regression method
+avoids this potential problem.  The procedure is:
+\begin{itemize}
+\item Treat the random-effects model as the restricted model, and
+  record its sum of squared residuals as SSR$_r$.
+\item Estimate via OLS an unrestricted model in which the dependent
+  variable is quasi-demeaned $y$ and the regressors include both
+  quasi-demeaned $X$ (as in the RE model) and the de-meaned variants
+  of all the time-varying variables (i.e.\ the fixed-effects
+  regressors); record the sum of squared residuals from this model
+  as SSR$_u$.
+\item Compute $H = n \left(\mbox{SSR}_r - \mbox{SSR}_u\right) /
+  \mbox{SSR}_u$, where $n$ is the total number of observations used.
+  On this variant $H$ cannot be negative, since adding additional
+  regressors to the RE model cannot raise the SSR.
+\end{itemize}
+
+By default \app{gretl} computes the Hausman test via the
+matrix-difference method (largely for comparability with other
+software), but it uses the regression method if you pass the
+option \verb+--hausman-reg+ to the \cmd{panel} command.
+
+\subsection{Robust standard errors}
+\label{panel-robust}
+
+For most estimators, \app{gretl} offers the option of computing an
+estimate of the covariance matrix that is robust with respect to
+heteroskedasticity and/or autocorrelation (and hence also robust
+standard errors).  In the case of panel data, robust covariance matrix
+estimators are available for the pooled and fixed effects model but
+not currently for random effects.  Please see
+section~\ref{sec:vcv-panel} for details.
+
+
+\section{Dynamic panel models}
+\label{panel-dyn}
+
+Special problems arise when a lag of the dependent variable is
+included among the regressors in a panel model.  Consider a dynamic
+variant of the pooled model (\ref{eq:pooled}):
+\begin{equation}
+\label{eq:pooled-dyn}
+y_{it} = X_{it}\beta + \rho y_{it-1} + u_{it}
+\end{equation}
+First, if the error $u_{it}$ includes a group effect, $v_i$, then
+$y_{it-1}$ is bound to be correlated with the error, since the value
+of $v_i$ affects $y_i$ at all $t$.  That means that OLS applied to
+(\ref{eq:pooled-dyn}) will be inconsistent as well as inefficient.
+The fixed-effects model sweeps out the group effects and so overcomes
+this particular problem, but a subtler issue remains, which applies to
+both fixed and random effects estimation.  Consider the de-meaned
+representation of fixed effects, as applied to the dynamic model,
+\[
+\tilde{y}_{it} = \tilde{X}_{it}\beta + \rho \tilde{y}_{i,t-1} 
+  + \varepsilon_{it}
+\]
+where $\tilde{y}_{it} = y_{it} - \bar{y}_i$ and $\varepsilon_{it} =
+u_{it} - \bar{u}_i$ (or $u_{it} - \alpha_i$, using the notation of
+equation~\ref{eq:FE}).  The trouble is that $\tilde{y}_{i,t-1}$ will be
+correlated with $\varepsilon_{it}$ via the group mean, $\bar{y}_i$.
+The disturbance $\varepsilon_{it}$ influences $y_{it}$ directly, which
+influences $\bar{y}_i$, which, by construction, affects the value of
+$\tilde{y}_{it}$ for all $t$.  The same issue arises in relation to
+the quasi-demeaning used for random effects.  Estimators which ignore
+this correlation will be consistent only as $T \to \infty$ (in which
+case the marginal effect of $\varepsilon_{it}$ on the group mean of 
+$y$ tends to vanish).  
+
+One strategy for handling this problem, and producing consistent
+estimates of $\beta$ and $\rho$, was proposed by Anderson and Hsiao
+(1981).  Instead of de-meaning the data, they suggest taking the first
+difference of (\ref{eq:pooled-dyn}), an alternative tactic for
+sweeping out the group effects:
+\begin{equation}
+\label{eq:fe-dyn}
+\Delta y_{it} = \Delta X_{it}\beta + \rho \Delta y_{i,t-1} 
+  + \eta_{it}
+\end{equation}
+where $\eta_{it} = \Delta u_{it} = \Delta(v_i + \varepsilon_{it}) =
+\varepsilon_{it} - \varepsilon_{i,t-1}$.  We're not in the clear yet,
+given the structure of the error $\eta_{it}$: the disturbance
+$\varepsilon_{i,t-1}$ is an influence on both $\eta_{it}$ and $\Delta
+y_{i,t-1} = y_{it} - y_{i,t-1}$.  The next step is then to find an
+instrument for the ``contaminated'' $\Delta y_{i,t-1}$. Anderson and
+Hsiao suggest using either $y_{i,t-2}$ or $\Delta y_{i,t-2}$, both of
+which will be uncorrelated with $\eta_{it}$ provided that the
+underlying errors, $\varepsilon_{it}$, are not themselves serially
+correlated.
+
+The Anderson--Hsiao estimator is not provided as a built-in function
+in \app{gretl}, since \app{gretl}'s sensible handling of lags and
+differences for panel data makes it a simple application of regression
+with instrumental variables --- see Example~\ref{anderson-hsiao},
+which is based on a study of country growth rates by Nerlove
+(1999).\footnote{Also see Clint Cummins' benchmarks page,
+  \url{http://www.stanford.edu/~clint/bench/}.}
+ 
+\begin{script}[htbp]
+  \caption{The Anderson--Hsiao estimator for a dynamic panel model}
+  \label{anderson-hsiao}
+\begin{scode}
+# Penn World Table data as used by Nerlove
+open penngrow.gdt
+# Fixed effects (for comparison)
+panel Y 0 Y(-1) X
+# Random effects (for comparison)
+panel Y 0 Y(-1) X --random-effects
+# take differences of all variables
+diff Y X
+# Anderson-Hsiao, using Y(-2) as instrument
+tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
+# Anderson-Hsiao, using d_Y(-2) as instrument
+tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
+\end{scode}
+\end{script}
+
+Although the Anderson--Hsiao estimator is consistent, it is not most
+efficient: it does not make the fullest use of the available
+instruments for $\Delta y_{i,t-1}$, nor does it take into account the
+differenced structure of the error $\eta_{it}$.  It is improved upon
+by the methods of Arellano and Bond (1991) and Blundell and Bond
+(1998).  There is provisional support for the Arellano--Bond method in
+current gretl --- please see the documentation for the \cmd{arbond}
+command.
+
+
+\section{Illustration: the Penn World Table}
+\label{PWT}
+
+The Penn World Table (homepage at
+\href{http://pwt.econ.upenn.edu/}{pwt.econ.upenn.edu}) is a rich
+macroeconomic panel dataset, spanning 152 countries over the years
+1950--1992.  The data are available in \app{gretl} format; please see
+the \app{gretl}
+\href{http://gretl.sourceforge.net/gretl_data.html}{data site} (this
+is a free download, although it is not included in the main
+\app{gretl} package).
+
+Example \ref{examp-pwt} opens \verb+pwt56_60_89.gdt+, a subset
+of the PWT containing data on 120 countries, 1960--89, for 20
+variables, with no missing observations (the full data set, which is
+also supplied in the pwt package for \app{gretl}, has many missing
+observations). Total growth of real GDP, 1960--89, is calculated for
+each country and regressed against the 1960 level of real GDP, to see
+if there is evidence for ``convergence'' (i.e.\ faster growth on the
+part of countries starting from a low base).
+
+\begin{script}[htbp]
+  \caption{Use of the Penn World Table}
+  \label{examp-pwt}
+\begin{scode}
+open pwt56_60_89.gdt 
+# for 1989 (the last obs), lag 29 gives 1960, the first obs 
+genr gdp60 = RGDPL(-29) 
+# find total growth of real GDP over 30 years
+genr gdpgro = (RGDPL - gdp60)/gdp60
+# restrict the sample to a 1989 cross-section 
+smpl --restrict YEAR=1989 
+# convergence: did countries with a lower base grow faster?  
+ols gdpgro const gdp60 
+# result: No! Try an inverse relationship?
+genr gdp60inv = 1/gdp60 
+ols gdpgro const gdp60inv 
+# no again.  Try treating Africa as special? 
+genr afdum = (CCODE = 1)
+genr afslope = afdum * gdp60 
+ols gdpgro const afdum gdp60 afslope 
+\end{scode}
+\end{script}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

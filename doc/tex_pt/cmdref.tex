@@ -1,0 +1,60 @@
+\chapter{Gretl commands}
+\label{cmdref}
+
+\section{Introduction}
+\label{cmd-intro}
+
+The commands defined below may be executed interactively in the
+command-line client program or in the console window of the GUI
+program.  They may also be placed in a ``script'' or batch file for
+non-interactive execution.
+    
+The following notational conventions are used below:
+    
+\begin{itemize}
+
+\item A \texttt{typewriter font} is used for material that you would
+  type directly, and also for internal names of variables.
+
+\item Terms in a \textsl{slanted font} are place-holders: you should
+  substitute some specific replacement.  For example, you might type
+  \texttt{income} in place of the generic \textsl{xvar}.
+
+\item The construction \texttt{[} \textsl{arg} \texttt{]} means that
+  the argument \textsl{arg} is optional: you may supply it or not (but
+  in any case don't type the brackets).
+
+\item The phrase ``estimation command'' means a command that generates
+  estimates for a given model, for example \cmd{ols}, \cmd{ar} or
+  \cmd{wls}.
+
+\end{itemize}
+
+In general, each line of a command script should contain one and only
+one complete \app{gretl} command.  There are, however, two means of
+continuing a long command from one line of input to another.  First,
+if the last non-space character on a line is a backslash, this is
+taken as an indication that the command is continued on the following
+line.  In addition, if the comma is a valid character in a given
+command (for instance, as a separator between function arguments, or
+as punctuation in the commands \texttt{printf} and \texttt{sscanf})
+then a trailing comma also indicates continuation.  To emphasize the
+point: a backslash may be inserted ``arbitrarily'' to indicate
+continuation, but a comma works in this capacity only if it is
+syntactically valid as part of the command.
+
+\section{Commands}
+\label{cmd-cmd}
+
+%% auto-generated from XML base, gretl_commands.xml
+\input{refbody}
+
+\section{Commands by topic}
+\label{cmd-topics}
+
+The following sections show the available commands grouped by topic.
+
+%% auto-generated from gretl sources
+\input{cmdtopics}
+
+

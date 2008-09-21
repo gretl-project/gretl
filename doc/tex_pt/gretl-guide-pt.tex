@@ -1,0 +1,152 @@
+\documentclass[oneside]{book}
+\usepackage{url,verbatim,fancyvrb,appendix}
+%%\usepackage{dcolumn,amsmath,array} % placed here before lucidabr
+%%\usepackage{lucidabr} % optional
+\usepackage{mathtime}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage{color,gretl}
+\usepackage[portuges]{babel}
+\usepackage[compat2,letterpaper,hmargin=1.1in,top=.5in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath,array}
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={Manual de Utilização do Gretl},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+% ------------- custom commands -------------------------------------------
+\newcommand{\LogLik}{\ensuremath\ell}
+\newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
+\newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
+\newcommand{\convp}{\stackrel{\mathrm{p}}{\longrightarrow}}
+% -------------------------------------------------------------------------
+%\includeonly{gmm}
+\begin{document}
+
+\renewcommand{\scriptname}{Exemplo}
+\renewcommand{\GCR}{\textit{Manual dos Comandos do Gretl}}
+\renewcommand{\GUG}{\textit{Manual de Utilização do Gretl}}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{Manual de Utilização do Gretl}{titlepage}
+
+\gtitle{Manual de Utilização do Gretl}
+
+\gsubtitle{Gnu Regression, Econometrics and Time-series}
+
+{\large \sffamily 
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest university\\
+
+\vspace{20pt}
+Riccardo ``Jack'' Lucchetti\\
+Dipartimento di Economia\\
+Università Politecnica delle Marche\\
+
+\vspace{20pt}
+Hélio Guilherme\\
+Tradução Portuguesa\\
+\vspace{20pt}
+Maio de 2007}
+
+\end{center}
+\clearpage
+
+%% end titlepage, start license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{Licença}{license}
+
+\vspace*{2in}
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the \emph{GNU Free Documentation License}, Version
+1.1 or any later version published by the Free Software Foundation
+(see \url{http://www.gnu.org/licenses/fdl.html}).\\
+
+\vspace{20pt}
+A cópia, distribuição e/ou modificação deste documento é permitida de
+acordo com os termos da \emph{Licença de Documentação Livre GNU},
+Versão 1.1 ou qualquer versão posterior publicada pela Free Software
+Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
+
+\clearpage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Índice}{contents}
+
+\pagenumbering{roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+
+\include{introduction}
+
+\part{Uso do programa}
+
+\include{starting}
+\include{modes}
+\include{datafiles}
+\include{genr}
+\include{sampling}
+\include{graphs}
+\include{discrete}
+\include{looping}
+\include{functions}
+\include{persistent}
+\include{matrices}
+\include{cheatsheet}
+
+\part{Métodos econométricos}
+
+\include{robust_vcv}
+\include{panel}
+\include{nls}
+\include{mle}
+\include{gmm}
+\include{criteria}
+\include{timeseries}
+\include{probit}
+
+\part{Detalhes técnicos}
+
+\include{gretltex}
+\include{trouble}
+\include{cli}
+
+\part{Apêndices}
+
+\begin{appendices}
+\include{appendices}
+\end{appendices}
+
+\clearpage
+
+\include{biblio}
+
+\end{document}

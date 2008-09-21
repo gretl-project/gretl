@@ -1,0 +1,67 @@
+\chapter{O interface de linha de comandos (CLI)}
+\label{cli}
+
+\section{Gretl em modo de consola}
+\label{cli-console}
+
+A aplicação \app{gretl} inclui o programa de linha de comandos \app{gretlcli}.
+Em Linux pode ser iniciado a partir de uma janela de terminal (xterm,
+rxvt, ou semelhante), ou de uma consola de texto.  No MS Windows pode ser 
+executado numa janela de linha de comandos (algumas vezes incorrectamente
+chamada de ``janela MS DOS'').
+\app{gretlcli} tem o seu próprio ficheiro de ajuda, que pode ser acedido
+escrevendo o comando ``help'' no interface CLI. Pode ser executado em modo de
+sequência de comandos, enviando os resultados directamente para um ficheiro
+(ver também o \GCR).
+    
+Se \app{gretlcli} tiver sido ligado no momento da compilação à biblioteca de
+programas \app{readline} (o que acontece sempre no caso da versão MS Windows;
+ver também Apêndice~\ref{app-build}), é possível repetir e editar as linhas
+de comandos, e também completar comandos automaticamente.  Você pode usar as
+teclas seta-Acima e seta-Abaixo para percorrer os comandos anteriormente
+executados.  Numa dada linha de comando, você pode usar as setas para mover o
+cursor, em conjunto com as combinações de teclas do editor Emacs.\footnote{Na realidade, as combinações de  teclas referidas abaixo são apenas as definidas por omissão; elas poderão ser personalizadas por si.
+  Ver o \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{manual
+    do readline}.} As mais comuns são:
+%    
+\begin{center}
+  \begin{tabular}{cl}
+    \textit{Combinação} & \multicolumn{1}{c}{\textit{Efeito}}\\
+    \verb+Ctrl-a+ & ir para o início da linha\\
+    \verb+Ctrl-e+ & ir para o fim da linha\\
+    \verb+Ctrl-d+ & apagar o caracter à direita\\
+  \end{tabular}
+\end{center}
+%
+onde ``\verb+Ctrl-a+'' significa premir a tecla ``\verb+a+'' ao mesmo tempo
+que a tecla ``\verb+Ctrl+'' é premida.  Assim, se você quiser alterar algo no
+início de um comando, você \emph{não} precisa de apagar caracter a caracter
+na linha toda.  Basta saltar para o início e acrescentar ou apagar caracteres.
+Se você escrever as primeiras letras de um comando e pressionar a tecla Tab, o
+sistema \app{readline} vai tentar completar o comando por você.  Se houver uma
+única possibilidade, o comando é automaticamente completado.  Se houver mais
+que uma, pressionando Tab uma segunda vez faz aparecer uma lista.
+
+\section{A sintaxe CLI}
+\label{cli-syntax}
+
+Provavelmente o modo mais produtivo para análises intensivas com o
+\app{gretlcli} é em modo de sequência de comandos (não-interactivo), no qual o
+programa lê e processa um ficheiro de sequência de comandos, e envia a saída
+para um ficheiro.  Por exemplo
+\begin{code}
+gretlcli -b ficheirodecomandos > ficheiroderesultados
+\end{code}
+
+O \textsl{ficheirodecomandos} é tratado como um argumento de programa; ele
+deve especificar um ficheiro para ser usado internamente, usando a sintaxe
+\cmd{open ficheirodedados}.  Não esquecer a opção \texttt{-b}
+(\textit{batch}=lote), de outro modo o programa ficará a aguardar comandos do
+utilizador após a execução da sequência de comandos.
+
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-pt"
+%%% End: 
+

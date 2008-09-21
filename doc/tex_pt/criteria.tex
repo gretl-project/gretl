@@ -1,0 +1,174 @@
+\chapter{Model selection criteria}
+\label{select-criteria}
+
+\section{Introduction}
+\label{select-intro}
+
+In some contexts the econometrician chooses between alternative models
+based on a formal hypothesis test.  For example, one might choose a
+more general model over a more restricted one if the restriction in
+question can be formulated as a testable null hypothesis, and the null
+is rejected on an appropriate test.
+
+In other contexts one sometimes seeks a criterion for model selection
+that somehow measures the balance between goodness of fit or
+likelihood, on the one hand, and parsimony on the other.  The
+balancing is necessary because the addition of extra variables to a
+model cannot reduce the degree of fit or likelihood, and is very
+likely to increase it somewhat even if the additional variables are
+not truly relevant to the data-generating process.
+
+The best known such criterion, for linear models estimated via least
+squares, is the adjusted $R^2$,
+%
+\[
+\bar{R}^2 = 1 - \frac{{\rm SSR} / (n-k)}{{\rm TSS} / (n-1)}
+\]
+%
+where $n$ is the number of observations in the sample, $k$ denotes the
+number of parameters estimated, and SSR and TSS denote the sum of
+squared residuals and the total sum of squares for the dependent
+variable, respectively.  Compared to the ordinary coefficient of
+determination or unadjusted $R^2$,
+%
+\[
+R^2 = 1 - \frac{{\rm SSR}}{{\rm TSS}}
+\]
+%
+the ``adjusted'' calculation penalizes the inclusion of additional
+parameters, other things equal.  
+
+\section{Information criteria}
+\label{select-aic}
+
+A more general criterion in a similar spirit is Akaike's (1974)
+``Information Criterion'' (AIC).  The original formulation of this
+measure is
+%
+\begin{equation}
+\label{aic-orig}
+{\rm AIC} = -2 \ell(\hat{\theta}) + 2k
+\end{equation}
+%
+where $\ell(\hat{\theta})$ represents the maximum loglikelihood as a
+function of the vector of parameter estimates, $\hat{\theta}$, and $k$
+(as above) denotes the number of ``independently adjusted parameters
+within the model.''  In this formulation, with AIC negatively related
+to the likelihood and positively related to the number of parameters,
+the researcher seeks the minimum AIC.
+
+The AIC can be confusing, in that several variants of the calculation
+are ``in circulation.''  For example, Davidson and MacKinnon (2004)
+present a simplified version,
+%
+\[
+{\rm AIC} = \ell(\hat{\theta}) - k
+\]
+%
+which is just $-2$ times the original: in this case, obviously, one
+wants to maximize AIC.
+
+In the case of models estimated by least squares, the loglikelihood
+can be written as
+%
+\begin{equation}
+\label{ols-loglik}
+\ell(\hat{\theta}) = -\frac{n}{2}(1 + \log 2\pi - \log n)
+ - \frac{n}{2} \log {\rm SSR}
+\end{equation}
+%
+Substituting (\ref{ols-loglik}) into (\ref{aic-orig}) we get
+%
+\[
+{\rm AIC} = n(1 + \log 2\pi - \log n) + n\log {\rm SSR} + 2k
+\]
+%
+which can also be written as
+%
+\begin{equation}
+\label{full-aic-alt}
+{\rm AIC} = n\log \left( \frac{\rm SSR}{n} \right) + 2k + 
+  n(1 + \log 2\pi)
+\end{equation}
+%
+
+Some authors simplify the formula for the case of models estimated
+via least squares.  For instance, William Greene writes
+%
+\begin{equation}
+\label{aic-greene}
+{\rm AIC} = \log \left( \frac{\rm SSR}{n} \right) + \frac{2k}{n}
+\end{equation}
+%
+This variant can be derived from (\ref{full-aic-alt}) by dividing
+through by $n$ and subtracting the constant $1 + \log 2\pi$.  That is,
+writing AIC$_G$ for the version given by Greene, we have
+%
+\[
+{\rm AIC}_G = \frac{1}{n} {\rm AIC} - (1 + \log 2\pi)
+\]
+%
+
+Finally, Ramanathan gives a further variant:
+%
+\[
+{\rm AIC}_R = \left( \frac{\rm SSR}{n} \right) e^{2k/n}
+\]
+%
+which is the exponential of the one given by Greene.  
+
+Gretl began by using the Ramanathan variant, but since version 1.3.1
+the program has used the original Akaike formula (\ref{aic-orig}), and
+more specifically (\ref{full-aic-alt}) for models estimated via least
+squares.
+
+\vspace{1ex}
+
+Although the Akaike criterion is designed to favor parsimony, arguably
+it does not go far enough in that direction.  For instance, if we have
+two nested models with $k-1$ and $k$ parameters respectively, and if
+the null hypothesis that parameter $k$ equals 0 is true, in large
+samples the AIC will nonetheless tend to select the less parsimonious
+model about 16 percent of the time (see Davidson and MacKinnon, 2004,
+chapter 15).
+
+An alternative to the AIC which avoids this problem is the Schwarz
+(1978) ``Bayesian information criterion'' (BIC).  The BIC can be
+written (in line with Akaike's formulation of the AIC) as
+%
+\[
+{\rm BIC} = -2 \ell(\hat{\theta}) + k \log n
+\]
+The multiplication of $k$ by $\log n$ in the BIC means that the
+penalty for adding extra parameters grows with the sample size.  This
+ensures that, asymptotically, one will not select a larger model over
+a correctly specified parsimonious model.
+
+A further alternative to AIC, which again tends to select more
+parsimonious models than AIC, is the Hannan--Quinn criterion or HQC
+(Hannan and Quinn, 1979).  Written consistently with the formulations
+above, this is
+%
+\[
+{\rm HQC} = -2 \ell(\hat{\theta}) + 2k \log \log n
+\]
+%
+The Hannan--Quinn calculation is based on the law of the iterated
+logarithm (note that the last term is the log of the log of the sample
+size).  The authors argue that their procedure provides a ``strongly
+consistent estimation procedure for the order of an autoregression'',
+and that ``compared to other strongly consistent procedures this
+procedure will underestimate the order to a lesser degree.''
+
+\vspace{1ex}
+
+Gretl reports the AIC, BIC and HQC (calculated as explained above) for
+most sorts of models.  The key point in interpreting these values is
+to know whether they are calculated such that smaller values are
+better, or such that larger values are better.  In gretl, smaller
+values are better: one wants to minimize the chosen criterion.
+
+
+
+
+

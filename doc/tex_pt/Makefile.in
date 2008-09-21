@@ -1,0 +1,102 @@
+topsrc = @top_srcdir@
+docsrc = $(topsrc)/doc
+
+GUIDE = gretl-guide-pt.pdf
+REF = gretl-ref-pt.pdf
+
+TEXSRC = cli.tex \
+	criteria.tex \
+	graphs.tex \
+	modes.tex \
+	persistent.tex \
+	sampling.tex \
+	trouble.tex \
+	looping.tex \
+	starting.tex \
+	discrete.tex \
+	appendices.tex \
+	matrices.tex \
+	introduction.tex \
+	datafiles.tex \
+	robust_vcv.tex \
+	panel.tex \
+	genr.tex \
+	biblio.tex \
+	mle.tex \
+	gmm.tex \
+	probit.tex \
+	nls.tex \
+	timeseries.tex \
+	vecm.tex \
+	functions.tex \
+	gretltex.tex \
+	cheatsheet.tex \
+	reftables.tex \
+	cmdref.tex \
+	funcref.tex \
+	comments.tex \
+	optarg.tex \
+	quantreg.tex \
+	odbc.tex \
+	gretlR.tex
+
+WEBDIR = /home/helio/gretl/website
+
+all: $(GUIDE) $(REF)
+
+$(GUIDE): gretl-guide-pt.tex links textables_pt date.tex
+	pdflatex $<
+	pdflatex $<
+	pdflatex $<
+
+$(REF): gretl-ref-pt.tex links cmdtex functex topiclist date.tex
+	pdflatex $<
+	pdflatex $<
+	pdflatex $<
+
+gretl-guide-pt.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_pt/$@ . ; fi
+
+gretl-ref-pt.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_pt/$@ . ; fi
+
+.PHONY : links cmdtex functex textables_pt onepass refpass topiclist install clean
+
+links:
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
+	rm -f figures && ln -s $(docsrc)/figures_pt ./figures
+	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
+
+cmdtex:
+	make -C ../commands cmdtex_pt
+
+topiclist:
+	make -C ../commands topiclist_pt
+
+textables_pt:
+	make -C ../commands textables_pt
+
+functex:
+	make -C ../commands functex_pt
+
+date.tex:
+	LANG=pt_PT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
+
+onepass: gretl-guide-pt.tex links textables_pt
+	pdflatex gretl-guide-pt
+
+refpass: gretl-ref-pt.tex links cmdtex functex topiclist
+	pdflatex gretl-ref-pt
+
+install: $(GUIDE) $(REF)
+	cp $(GUIDE) $(REF) $(WEBDIR)
+
+clean:
+	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
+	rm -f refbody.tex funcbody.tex cmdtopics.tex
+	rm -f ../commands/textables_pt ../commands/topiclist_pt 
+	rm -f ../commands/cmdtex_pt ../commands/functex_pt
+
+distclean: clean
+	rm -rf CVS

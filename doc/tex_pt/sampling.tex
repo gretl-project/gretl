@@ -1,0 +1,211 @@
+\chapter{Sub-sampling a dataset}
+\label{sampling}
+
+\section{Introduction}
+\label{sample-intro}
+
+Some subtle issues can arise here.  This chapter attempts to explain
+the issues.
+
+A sub-sample may be defined in relation to a full data set in two
+different ways: we will refer to these as ``setting'' the sample and
+``restricting'' the sample respectively.
+
+\section{Setting the sample}
+\label{sample-set}
+
+By ``setting'' the sample we mean defining a sub-sample simply by
+means of adjusting the starting and/or ending point of the current
+sample range.  This is likely to be most relevant for time-series
+data.  For example, one has quarterly data from 1960:1 to 2003:4, and
+one wants to run a regression using only data from the 1970s.  A
+suitable command is then
+
+\begin{code}
+smpl 1970:1 1979:4
+\end{code}
+
+Or one wishes to set aside a block of observations at the end of the
+data period for out-of-sample forecasting.  In that case one might do
+
+\begin{code}
+smpl ; 2000:4
+\end{code}
+
+where the semicolon is shorthand for ``leave the starting observation
+unchanged''.  (The semicolon may also be used in place of the second
+parameter, to mean that the ending observation should be unchanged.)
+By ``unchanged'' here, we mean unchanged relative to the last
+\verb+smpl+ setting, or relative to the full dataset if no sub-sample
+has been defined up to this point. For example, after
+
+\begin{code}
+smpl 1970:1 2003:4
+smpl ; 2000:4
+\end{code}
+
+the sample range will be 1970:1 to 2000:4.  
+
+An incremental or relative form of setting the sample range is also
+supported.  In this case a relative offset should be given, in the
+form of a signed integer (or a semicolon to indicate no change), for
+both the starting and ending point. For example
+
+\begin{code}
+smpl +1 ;
+\end{code}
+
+will advance the starting observation by one while preserving the
+ending observation, and
+
+\begin{code}
+smpl +2 -1
+\end{code}
+
+will both advance the starting observation by two and retard the
+ending observation by one.
+
+An important feature of ``setting'' the sample as described above is
+that it necessarily results in the selection of a subset of
+observations that are contiguous in the full dataset. The structure of
+the dataset is therefore unaffected (for example, if it is a quarterly
+time series before setting the sample, it remains a quarterly time
+series afterwards).
+
+\section{Restricting the sample}
+\label{sample-restrict}
+
+By ``restricting'' the sample we mean selecting observations on the
+basis of some Boolean (logical) criterion, or by means of a random
+number generator.  This is likely to be most relevant for
+cross-sectional or panel data.
+
+Suppose we have data on a cross-section of individuals, recording
+their gender, income and other characteristics.  We wish to select for
+analysis only the women.  If we have a \verb+gender+ dummy variable
+with value 1 for men and 0 for women we could do
+%      
+\begin{code}
+smpl gender=0 --restrict
+\end{code}
+%
+to this effect.  Or suppose we want to restrict the sample to
+respondents with incomes over \$50,000.  Then we could use
+%
+\begin{code}
+smpl income>50000 --restrict
+\end{code}
+
+A question arises here.  If we issue the two commands above in
+sequence, what do we end up with in our sub-sample: all cases with
+income over 50000, or just women with income over 50000? By default,
+in a gretl script, the answer is the latter: women with income over
+50000.  The second restriction augments the first, or in other words
+the final restriction is the logical product of the new restriction
+and any restriction that is already in place.  If you want a new
+restriction to replace any existing restrictions you can first
+recreate the full dataset using
+%
+\begin{code}
+smpl --full
+\end{code}
+%
+Alternatively, you can add the \verb+replace+ option to the
+\verb+smpl+ command:
+%
+\begin{code}
+smpl income>50000 --restrict --replace
+\end{code}
+
+This option has the effect of automatically re-establishing the full
+dataset before applying the new restriction.
+
+Unlike a simple ``setting'' of the sample, ``restricting'' the sample
+may result in selection of non-contiguous observations from the full
+data set.  It may also change the structure of the data set.
+
+This can be seen in the case of panel data.  Say we have a panel of
+five firms (indexed by the variable \verb+firm+) observed in each of
+several years (identified by the variable \verb+year+).  Then the
+restriction
+%
+\begin{code}
+smpl year=1995 --restrict
+\end{code}
+%
+produces a dataset that is not a panel, but a cross-section for the
+year 1995.  Similarly
+%
+\begin{code}
+smpl firm=3 --restrict
+\end{code}
+%
+produces a time-series dataset for firm number 3.
+
+For these reasons (possible non-contiguity in the observations,
+possible change in the structure of the data), gretl acts differently
+when you ``restrict'' the sample as opposed to simply ``setting'' it.
+In the case of setting, the program merely records the starting and
+ending observations and uses these as parameters to the various
+commands calling for the estimation of models, the computation of
+statistics, and so on. In the case of restriction, the program makes a
+reduced copy of the dataset and by default treats this reduced copy as
+a simple, undated cross-section.\footnote{With one exception: if you
+  start with a balanced panel dataset and the restriction is such that
+  it preserves a balanced panel --- for example, it results in the
+  deletion of all the observations for one cross-sectional unit ---
+  then the reduced dataset is still, by default, treated as a panel.}
+
+If you wish to re-impose a time-series or panel interpretation of the
+reduced dataset you can do so using the \cmd{setobs} command, or the
+GUI menu item ``Data, Dataset structure''.
+
+The fact that ``restricting'' the sample results in the creation of a
+reduced copy of the original dataset may raise an issue when the
+dataset is very large (say, several thousands of observations).  With
+such a dataset in memory, the creation of a copy may lead to a
+situation where the computer runs low on memory for calculating
+regression results.  You can work around this as follows:
+
+\begin{enumerate}
+\item Open the full data set, and impose the sample restriction.
+\item Save a copy of the reduced data set to disk.
+\item Close the full dataset and open the reduced one.
+\item Proceed with your analysis.
+\end{enumerate}
+
+\section{Random sampling}
+\label{sample-random}
+
+With very large datasets (or perhaps to study the properties of an
+estimator) you may wish to draw a random sample from the full dataset.
+This can be done using, for example,
+%
+\begin{code}
+smpl 100 --random
+\end{code}
+%
+to select 100 cases.  If you want the sample to be reproducible, you
+should set the seed for the random number generator first, using
+\cmd{set}.  This sort of sampling falls under the ``restriction''
+category: a reduced copy of the dataset is made.
+
+\section{The Sample menu items}
+\label{sample-menu}
+
+The discussion above has focused on the script command \cmd{smpl}. You
+can also use the items under the \textsf{Sample} menu in the GUI
+program to select a sub-sample.
+
+The menu items work in the same way as the corresponding \verb+smpl+
+variants.  When you use the item ``Sample, Restrict based on
+criterion'', and the dataset is already sub-sampled, you are given the
+option of preserving or replacing the current restriction.  Replacing
+the current restriction means, in effect, invoking the \verb+replace+
+option described above (Section~\ref{sample-restrict}).
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

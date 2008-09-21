@@ -1,0 +1,99 @@
+\documentclass[oneside]{book}
+\usepackage{url,verbatim,fancyvrb,color,gretl,appendix}
+\usepackage{array,longtable}
+%\usepackage{lucidabr} % optional
+\usepackage{mathtime}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+%% \usepackage[pdftex]{thumbpdf}
+\usepackage[portuges]{babel}
+\usepackage[compat2,a4paper,hmargin=1.1in,top=.5in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={Manual dos Comandos do Gretl},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            plainpages=false
+}
+
+\renewcommand{\GUG}{\textit{Manual de Utilização do Gretl}}
+
+\begin{document}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{Manual dos Comandos do Gretl}{titlepage}
+
+\gtitle{Manual dos Comandos do Gretl}
+
+\gsubtitle{Gnu Regression, Econometrics and Time-series Library}
+
+{\large \sffamily 
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest university
+}
+
+\vspace{20pt}
+
+{\large \sffamily 
+Hélio Guilherme\\
+Tradução Portuguesa\\
+}
+
+\vspace{20pt}
+
+{\large \sffamily Maio de 2007}
+
+\end{center}
+\clearpage
+
+%% end titlepage, begin license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{Licença}{license}
+
+\vspace*{2in}
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the \emph{GNU Free Documentation License}, Version
+1.1 or any later version published by the Free Software Foundation
+(see \url{http://www.gnu.org/licenses/fdl.html}).\\
+
+\vspace{20pt}
+A cópia, distribuição e/ou modificação deste documento é permitida de
+acordo com os termos da \emph{Licença de Documentação Livre GNU},
+Versão 1.1 ou qualquer versão posterior publicada pela Free Software
+Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
+
+\clearpage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Índice}{contents}
+
+\pagenumbering{roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+
+\include{refbody}
+\include{reftables}
+
+\end{document}

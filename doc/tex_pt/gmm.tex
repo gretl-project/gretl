@@ -1,0 +1,612 @@
+\chapter{GMM estimation}
+\label{chap:gmm}
+
+\section{Introduction and terminology}
+\label{sec:gmm-intro}
+
+The Generalized Method of Moments (GMM) is a very powerful and general
+estimation method, which encompasses practically all the parametric
+estimation techniques used in econometrics. It was introduced in
+Hansen (1982) and Hansen and Singleton (1982); an excellent and
+thorough treatment is given in Davidson and MacKinnon (1993), chapter
+17.
+
+The basic principle on which GMM is built is rather straightforward.
+Suppose we wish to estimate a scalar parameter $\theta$ based on
+a sample $x_1, x_2, \ldots, x_T$.  Let $\theta_0$ indicate the ``true''
+value of $\theta$. Theoretical considerations (either of statistical
+or economic nature) may suggest that a relationship like the following
+holds:
+\begin{equation}
+  \label{eq:simple}
+  E \left[ x_t - g(\theta) \right] = 0 \Leftrightarrow \theta =
+  \theta_0 ,
+\end{equation}
+with $g(\cdot)$ a continuous and invertible function. That is to say,
+there exists a function of the data and the parameter, with the
+property that it has expectation zero if and only if it is evaluated
+at the true parameter value.  For example, economic models with
+rational expectations lead to expressions like (\ref{eq:simple}) quite
+naturally.
+
+If the sampling model for the $x_t$s is such that some version of the
+Law of Large Numbers holds, then
+\[
+  \bar{X} = \frac{1}{T} \sum_{t=1}^T x_t \convp g(\theta_0) ;
+\]
+hence, since $g(\cdot)$ is invertible, the statistic
+\[
+  \hat{\theta} = g^{-1}(\bar{X}) \convp \theta_0 ,
+\]
+so $\hat{\theta}$ is a consistent estimator of $\theta$. A different
+way to obtain the same outcome is to choose, as an estimator of
+$\theta$, the value that minimizes the objective function
+\begin{equation}
+  \label{eq:obj-simple}
+  F(\theta) = \left[ \frac{1}{T} \sum_{t=1}^T (x_t  - g(\theta)) \right]^2 =
+  \left[ \bar{X} - g(\theta) \right]^2 ;
+\end{equation}
+the minimum is trivially reached at $\hat{\theta} = g^{-1}(\bar{X})$,
+since the expression in square brackets equals 0.
+
+The above reasoning can be generalized as follows: suppose $\theta$ is
+an $n$-vector and we have $m$ relations like
+\begin{equation}
+  \label{eq:general}
+  E \left[ f_i(x_t, \theta) \right] = 0 \quad\textrm{for\ } i=1 \ldots
+  m ,
+\end{equation}
+where $E[\cdot]$ is a conditional expectation on a set of $p$
+variables $z_t$, called the \emph{instruments}. In the above simple
+example, $m=1$ and $f(x_t, \theta) = x_t - g(\theta)$, and the only
+instrument used is $z_t = 1$. Then, it must also be true that
+\begin{equation}
+  \label{eq:oc}
+  E \left[ f_i(x_t, \theta) \cdot z_{j,t} \right] = E \left[ f_{i,j,t}(\theta) \right] = 
+  0 \quad\textrm{for\ } i=1 \ldots
+  m \quad\textrm{and \ } j=1 \ldots p;
+\end{equation}
+equation (\ref{eq:oc}) is known as an \emph{orthogonality condition},
+or \emph{moment condition}. The GMM estimator is defined as the
+minimum of the quadratic form
+\begin{equation}
+  \label{eq:obj-general}
+  F(\theta, W) = \bar{\mathbf{f}}' W \bar{\mathbf{f}},
+\end{equation}
+where $\bar{\mathbf{f}}$ is a $(1 \times m\cdot p)$ vector holding the
+average of the orthogonality conditions and $W$ is some symmetric,
+positive definite matrix, known as the \emph{weights} matrix. A
+necessary condition for the minimum to exist is the order condition $n
+\le m \cdot p$. 
+
+The statistic
+\begin{equation}
+  \label{eq:gmmestimator}
+  \hat{\theta} = \stackunder{\theta}{\mathrm{Argmin}} F(\theta, W)
+\end{equation}
+is a consistent estimator of $\theta$ whatever the choice of $W$.
+However, to achieve maximum asymptotic efficiency $W$ must be
+proportional to the inverse of the long-run covariance matrix of the
+orthogonality conditions; if $W$ is not known, a consistent estimator
+will suffice.
+
+These considerations lead to the following empirical strategy:
+\begin{enumerate}
+\item Choose a positive definite $W$ and compute the
+  \emph{one-step} GMM estimator $\hat{\theta}_1$. Customary choices
+  for $W$ are $I_{m\cdot p}$ or $I_{m} \otimes (Z'Z)^{-1}$.
+\item Use $\hat{\theta}_1$ to estimate $V(f_{i,j,t}(\theta))$ and use its
+  inverse as the weights matrix. The resulting estimator
+  $\hat{\theta}_2$ is called the \emph{two-step} estimator.
+\item Re-estimate $V(f_{i,j,t}(\theta))$ by means of $\hat{\theta}_2$ and
+  obtain $\hat{\theta}_3$; iterate until convergence. Asymptotically,
+  these extra steps are unnecessary, since the two-step estimator is
+  consistent and efficient; however, the iterated estimator often has
+  better small-sample properties and should be independent of the
+  choice of $W$ made at step 1. 
+\end{enumerate}
+
+In the special case when the number of parameters $n$ is equal to the
+total number of orthogonality conditions $m \cdot p$, the GMM
+estimator $\hat{\theta}$ is the same for any choice of the weights
+matrix $W$, so the first step is sufficient; in this case, the
+objective function is 0 at the minimum. 
+
+If, on the contrary, $n < m \cdot p$, the second step (or successive
+iterations) is needed to achieve efficiency, and the estimator so
+obtained can be very different, in finite samples, from the one-step
+estimator. Moreover, the value of the objective function at the
+minimum, suitably scaled by the number of observations, yields
+\emph{Hansen's J statistic}; this statistic can be interpreted as a
+test statistic that has a $\chi^2$ distribution with $m \cdot p -n $
+degrees of freedom under the null hypothesis of correct specification.
+See Davidson and MacKinnon (1993), section 17.6 for details.
+
+In the following sections we will show how these ideas are
+implemented in \app{gretl} through some examples.
+
+\section{OLS as GMM}
+\label{sec:gmm-ols}
+
+It is instructive to start with a somewhat contrived example: consider
+the linear model $y_t = x_t \beta + u_t$.  Although most of us
+are used to read it as the sum of a hazily defined ``systematic part''
+plus an equally hazy ``disturbance'', a more rigorous interpretation
+of this familiar expression comes from the \emph{hypothesis} that the
+conditional mean $E(y_t|x_t)$ is linear and the \emph{definition} of
+$u_t$ as $y_t - E(y_t|x_t)$.
+
+From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
+The following orthogonality condition is therefore available:
+\begin{equation}
+  \label{eq:oc-ols}
+  E \left[ f(\beta) \right] = 0 ,
+\end{equation}
+where $f(\beta) = (y_t - x_t \beta) x_t$. The definitions given in the
+previous section therefore specialize here to:
+\begin{itemize}
+\item $\theta$ is $\beta$;
+\item the instrument is $x_t$;
+\item $f_{i,j,t}(\theta)$ is $(y_t - x_t \beta) x_t = u_t
+  x_t$; the orthogonality condition is interpretable as the
+  requirement that the regressors should be uncorrelated with the
+  disturbances;
+\item $W$ can be any symmetric positive definite matrix, since
+  the number of parameters equals the number of orthogonality
+  conditions. Let's say we choose $I$.
+\item The function $F(\theta, W)$ is in this case
+  \[
+    F(\theta, W) = \left[ \frac{1}{T} \sum_{t=1}^T (\hat{u}_t x_t) \right]^2
+  \]
+  and it is easy to see why OLS and GMM coincide here: the GMM
+  objective function has the same minimizer as the objective function
+  of OLS, the residual sum of squares. Note, however, that the two
+  functions are not equal to one another: at the minimum, $F(\theta,
+  W) = 0$ while the minimized sum of squared residuals is zero only in
+  the special case of a perfect linear fit.
+\end{itemize}
+
+The code snippet contained in Example~\ref{gmm-ols-ex} uses
+\app{gretl}'s \texttt{gmm} command to make the above operational.
+
+\begin{script}[htbp]
+  \caption{OLS via GMM}
+  \label{gmm-ols-ex}
+\begin{code}
+/* initialize stuff */
+series e = 0
+scalar beta = 0
+matrix V = I(1)
+
+/* proceed with estimation */
+gmm 
+  series e = y - x*beta
+  orthog e ; x
+  weights V
+  params beta
+end gmm
+\end{code}
+\end{script}
+
+We feed \app{gretl} the necessary ingredients for GMM estimation
+in a command block, starting with \texttt{gmm} and ending with
+\texttt{end gmm}. Three elements are compulsory within a \texttt{gmm}
+block:
+\begin{enumerate}
+\item one or more \texttt{orthog} statements
+\item one \texttt{weights} statement
+\item one \texttt{params} statement
+\end{enumerate}
+The three elements should be given in the stated order.
+
+The \texttt{orthog} statements are used to specify the orthogonality
+conditions.  They must follow the syntax
+\begin{code}
+  orthog x ; Z
+\end{code}
+where \texttt{x} may be a series, matrix or list of series and
+\texttt{Z} may also be a series, matrix or list. In
+example~\ref{gmm-ols-ex}, the series \texttt{e} holds the
+``residuals'' and the series \texttt{x} holds the regressor.  If
+\texttt{x} had been a list (a matrix), the \texttt{orthog} statement
+would have generated one orthogonality condition for each element
+(column) of \texttt{x}.  Note the structure of the orthogonality
+condition: it is assumed that the term to the left of the semicolon
+represents a quantity that depends on the estimated parameters (and so
+must be updated in the process of iterative estimation), while the
+term on the right is a constant function of the data.
+
+The \texttt{weights} statement is used to specify the initial
+weighting matrix and its syntax is straightforward.  The
+\texttt{params} statement specifies the parameters with respect to
+which the GMM criterion should be minimized; it follows the same logic
+and rules as in the \texttt{mle} and \texttt{nls} commands.
+
+The minimum is found through numerical minimization via BFGS (see
+section~\ref{genr-numerical} and chapter~\ref{chap:mle}).  The
+progress of the optimization procedure can be observed by appending
+the \verb|--verbose| switch to the \texttt{end gmm} line.  (In this
+example GMM estimation is clearly a rather silly thing to do, since a
+closed form solution is easily given by OLS.)
+
+\section{TSLS as GMM}
+\label{sec:gmm-tsls}
+
+Moving closer to the proper domain of GMM, we now consider two-stage
+least squares (TSLS) as a case of GMM.  
+
+TSLS is employed in the case where one wishes to estimate a linear
+model of the form $y_t = X_t \beta + u_t$, but where one or more of
+the variables in the matrix $X$ are potentially endogenous ---
+correlated with the error term, $u$.  We proceed by identifying a set
+of instruments, $Z_t$, which are explanatory for the endogenous
+variables in $X$ but which are plausibly uncorrelated with $u$.  The
+classic two-stage procedure is (1) regress the endogenous elements of
+$X$ on $Z$; then (2) estimate the equation of interest, with the
+endogenous elements of $X$ replaced by their fitted values from (1).
+
+An alternative perspective is given by GMM.  We define the residual
+$\hat{u}_t$ as $y_t - X_t \hat{\beta}$, as usual.  But instead of
+relying on $E(u|X) = 0$ as in OLS, we base estimation on the condition
+$E(u|Z) = 0$.  In this case it is natural to base the initial
+weighting matrix on the covariance matrix of the instruments.
+Example~\ref{gmm-tsls-ex} presents a model from Stock and Watson's
+\textit{Introduction to Econometrics}.  The demand for cigarettes is
+modeled as a linear function of the logs of price and income; income
+is treated as exogenous while price is taken to be endogenous and two
+measures of tax are used as instruments.  Since we have two
+instruments and one endogenous variable the model is over-identified
+and therefore the weights matrix will influence the solution.  Partial
+output from this script is shown in~\ref{gmm-tsls-out}.  The estimated
+standard errors from GMM are robust by default; if we supply the
+\verb|--robust| option to the \texttt{tsls} command we get identical
+results.\footnote{The data file used in this example is available in
+  the Stock and Watson package for \app{gretl}.  See
+  \url{http://gretl.sourceforge.net/gretl_data.html}.}
+
+\begin{script}[htbp]
+  \caption{TSLS via GMM}
+  \label{gmm-tsls-ex}
+\begin{scode}
+open cig_ch10.gdt
+# real avg price including sales tax
+genr ravgprs = avgprs / cpi
+# real avg cig-specific tax
+genr rtax = tax / cpi
+# real average total tax
+genr rtaxs = taxs / cpi
+# real average sales tax
+genr rtaxso = rtaxs - rtax
+# logs of consumption, price, income
+genr lpackpc = log(packpc)
+genr lravgprs = log(ravgprs)
+genr perinc = income / (pop*cpi)
+genr lperinc = log(perinc)
+# restrict sample to 1995 observations
+smpl --restrict year=1995
+# Equation (10.16) by tsls
+list xlist = const lravgprs lperinc
+list zlist = const rtaxso rtax lperinc
+tsls lpackpc xlist ; zlist --robust
+
+# setup for gmm
+matrix Z = { zlist }
+matrix W = inv(Z'Z)
+series e = 0
+scalar b0 = 1
+scalar b1 = 1
+scalar b2 = 1
+
+gmm e = lpackpc - b0 - b1*lravgprs - b2*lperinc
+  orthog e ; Z
+  weights W
+  params b0 b1 b2
+end gmm 
+\end{scode}
+\end{script}
+
+\begin{script}[htbp]
+  \caption{TSLS via GMM: partial output}
+  \label{gmm-tsls-out}
+\begin{code}
+Model 1: TSLS estimates using the 48 observations 1-48
+Dependent variable: lpackpc
+Instruments: rtaxso rtax 
+Heteroskedasticity-robust standard errors, variant HC0
+
+      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE
+
+  const                 9.89496          0.928758     10.654  <0.00001 ***
+  lravgprs             -1.27742          0.241684     -5.286  <0.00001 ***
+  lperinc               0.280405         0.245828      1.141   0.25401
+
+Model 2: 1-step GMM estimates using the 48 observations 1-48
+e = lpackpc - b0 - b1*lravgprs - b2*lperinc
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  b0                    9.89496          0.928758     10.654  <0.00001 ***
+  b1                   -1.27742          0.241684     -5.286  <0.00001 ***
+  b2                    0.280405         0.245828      1.141   0.25401
+
+  GMM criterion = 0.0110046
+\end{code}
+\end{script}
+
+\section{Covariance matrix options}
+\label{sec:gmm-vcv}
+
+The covariance matrix of the estimated parameters depends on the
+choice of $W$ through
+\begin{equation}
+  \label{eq:gmmest-vcv}
+    \hat{\Sigma} = (J'WJ)^{-1} J'W\Omega W J (J'WJ)^{-1}
+\end{equation}
+where $J$ is a Jacobian term
+\[
+  J_{ij} = \pder{\bar{f}_i}{\theta_j}
+\]
+and $\Omega$ is the long-run covariance matrix of the orthogonality
+conditions. 
+
+\app{Gretl} computes $J$ by numeric differentiation (there is no
+provision for specifying a user-supplied analytical expression for $J$
+at the moment). As for $\Omega$, a consistent estimate is needed. The
+simplest choice is the sample covariance matrix of the $f_t$s:
+\begin{equation}
+  \label{eq:gmm-hcvar}
+    \hat{\Omega}_0(\theta) = \frac{1}{T} \sum_{t=1}^T f_t(\theta) f_t(\theta)'
+\end{equation}
+
+This estimator is robust with respect to heteroskedasticity, but not
+with respect to autocorrelation.  A heteroskedasticity- and
+autocorrelation-consistent (HAC) variant can be obtained using the
+Bartlett kernel or similar.  A univariate version of this is used in
+the context of the \texttt{lrvar()} function --- see equation
+(\ref{eq:scalar-lrvar}).  The multivariate version is set out in
+equation (\ref{eq:gmm-hacvar}).
+
+\begin{equation}
+  \label{eq:gmm-hacvar}
+    \hat{\Omega}_k(\theta) = \frac{1}{T} 
+    \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i f_t(\theta) f_{t-i}(\theta)'  \right] ,
+\end{equation}
+
+\app{Gretl} computes the HAC covariance matrix by default when a GMM
+model is estimated on time series data.  You can control the kernel
+and the bandwidth (that is, the value of $k$ in \ref{eq:gmm-hacvar})
+using the \texttt{set} command.  See chapter~\ref{chap-robust-vcv} for
+further discussion of HAC estimation.  You can also ask \app{gretl}
+\emph{not} to use the HAC version by saying
+%
+\begin{code}
+set force_hc on
+\end{code}
+%
+
+
+\section{A real example: the Consumption Based Asset Pricing Model}
+\label{sec:gmm-CBAPM}
+
+To illustrate \app{gretl}'s implementation of GMM, we will replicate
+the example given in chapter 3 of Hall (2005). The model to estimate
+is a classic application of GMM, and provides an example of a case
+when orthogonality conditions do not stem from statistical
+considerations, but rather from economic theory.
+
+A rational individual who must allocate his income between consumption
+and investment in a financial asset must in fact choose the consumption
+path of his whole lifetime, since investment translates into future
+consumption. It can be shown that an optimal consumption path should
+satisfy the following condition:
+\begin{equation}
+  \label{eq:gmm-CBAPM}
+  p U'(c_t) = \delta^k E\left[ r_{t+k} U'(c_{t+k}) | \mathcal{F}_t
+  \right] ,
+\end{equation}
+where $p$ is the asset price, $U(\cdot)$ is the individual's utility
+function, $\delta$ is the individual's subjective discount rate and
+$r_{t+k}$ is the asset's rate of return between time $t$ and time
+$t+k$. $\mathcal{F}_t$ is the \emph{information set} at time $t$;
+equation (\ref{eq:gmm-CBAPM}) says that the utility ``lost'' at time
+$t$ by purchasing the asset instead of consumption goods must be
+matched by a corresponding increase in the (discounted) future utility
+of the consumption financed by the asset's return. Since the future is
+uncertain, the individual considers his expectation, conditional on
+what is known at the time when the choice is made.
+
+We have said nothing about the nature of the asset, so equation
+(\ref{eq:gmm-CBAPM}) should hold whatever asset we consider; hence, it
+is possible to build a system of equations like (\ref{eq:gmm-CBAPM})
+for each asset whose price we observe.
+
+If we are willing to believe that
+\begin{itemize}
+\item the economy as a whole can be represented as a single gigantic
+  and immortal representative individual, and
+\item the function $U(x) = \frac{x^{\alpha} - 1 }{\alpha}$ is a
+  faithful representation of the individual's preferences,
+\end{itemize}
+then, setting $k=1$, equation (\ref{eq:gmm-CBAPM}) implies the
+following for any asset $j$:
+\begin{equation}
+  \label{eq:gmm-CBAPM-est}
+  E\left[ \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} \bigg| \mathcal{F}_t \right] = 1 ,
+\end{equation}
+where $C_t$ is aggregate consumption and $\alpha$ and $\delta$ are the
+risk aversion and discount rate of the representative individual. In
+this case, it is easy to see that the ``deep'' parameters $\alpha$ and
+$\delta$ can be estimated via GMM by using
+\[
+  e_t = \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} - 1
+\]
+as the moment condition, while any variable known at time $t$ may serve as
+an instrument.
+
+
+\begin{script}[htbp]
+  \caption{Estimation of the Consumption Based Asset Pricing Model}
+  \label{gmm-CBAPM-script}
+\begin{scode}
+open hall.gdt
+set force_hc on
+
+scalar alpha = 0.5
+scalar delta = 0.5
+series e = 0
+
+list inst = const consrat(-1) consrat(-2) ewr(-1) ewr(-2)
+
+matrix V0 = 100000*I(nelem(inst))
+matrix Z = { inst }
+matrix V1 = $nobs*inv(Z'Z)
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm --iterate
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm --iterate
+\end{scode}
+%$
+\end{script}
+
+\begin{script}[htbp]
+  \caption{Estimation of the Consumption Based Asset Pricing Model ---
+  output}
+  \label{gmm-CBAPM-out}
+\begin{scode}
+Model 1: 1-step GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                -3.14475          6.84439      -0.459   0.64590
+  d                     0.999215         0.0121044    82.549  <0.00001 ***
+
+  GMM criterion = 2778.08
+
+Model 2: 1-step GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                 0.398194         2.26359       0.176   0.86036
+  d                     0.993180         0.00439367  226.048  <0.00001 ***
+
+  GMM criterion = 14.247
+
+Model 3: Iterated GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                -0.344325         2.21458      -0.155   0.87644
+  d                     0.991566         0.00423620  234.070  <0.00001 ***
+
+  GMM criterion = 5491.78
+  J test: Chi-square(3) = 11.8103 (p-value 0.0081)
+
+Model 4: Iterated GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                -0.344315         2.21359      -0.156   0.87639
+  d                     0.991566         0.00423469  234.153  <0.00001 ***
+
+  GMM criterion = 5491.78
+  J test: Chi-square(3) = 11.8103 (p-value 0.0081)
+\end{scode}
+\end{script}
+
+In the example code given in \ref{gmm-CBAPM-script}, we replicate
+selected portions of table 3.7 in Hall (2005).  The variable
+\texttt{consrat} is defined as the ratio of monthly consecutive real
+per capita consumption (services and nondurables) for the US, and
+\texttt{ewr} is the return--price ratio of a fictitious asset
+constructed by averaging all the stocks in the NYSE.  The instrument
+set contains the constant and two lags of each variable.
+
+The command \texttt{set force\_hc on} on the second line of the script
+has the sole purpose of replicating the given example: as mentioned
+above, it forces \app{gretl} to compute the long-run variance of the
+orthogonality conditions according to equation (\ref{eq:gmm-hcvar})
+rather than (\ref{eq:gmm-hacvar}).
+
+We run \texttt{gmm} four times: one-step estimation for each of two
+initial weights matrices, then iterative estimation starting from each
+set of initial weights.  Since the number of orthogonality conditions
+(5) is greater than the number of estimated parameters (2), the choice
+of intial weights should make a difference, and indeed we see fairly
+substantial differences between the one-step estimates (Models 1 and
+2).  On the other hand, iteration reduces these differences almost to
+the vanishing point (Models 3 and 4). 
+
+Part of the output is given in \ref{gmm-CBAPM-out}.  It should be
+noted that the $J$ test leads to a rejection of the hypothesis of
+correct specification.  This is perhaps not surprising given the
+heroic assumptions required to move from the microeconomic principle
+in equation (\ref{eq:gmm-CBAPM}) to the aggregate system that is
+actually estimated.
+
+
+\section{Caveats}
+\label{sec:gmm-caveat}
+
+A few words of warning are in order: despite its ingenuity, GMM is
+possibly the most fragile estimation method in econometrics. The
+number of non-obvious choices one has to make when using GMM is high,
+and in finite samples each of these can have dramatic consequences on
+the eventual output. Some of the factors that may affect the results
+are:
+\begin{enumerate}
+\item Orthogonality conditions can be written in more than one way:
+  for example, if $E(x_t - \mu) = 0$, then $E(x_t/\mu - 1) =
+  0$ holds too. It is possible that a different specification of the
+  moment conditions leads to different results.
+\item As with all other numerical optimization algorithms, weird
+  things may happen when the objective function is nearly flat in some
+  directions or has multiple minima. BFGS is usually quite good, but
+  there is no guarantee that it always delivers a sensible solution,
+  if one at all.
+\item The 1-step and, to a lesser extent, the 2-step estimators may be
+  sensitive to apparently trivial details, like the re-scaling of the
+  instruments. Different choices for the initial weights matrix can
+  also have noticeable consequences.
+\item With time-series data, there is no hard rule on the appropriate
+  number of lags to use when computing the long-run covariance matrix
+  (see section \ref{sec:gmm-vcv}). Our advice is to go by trial and
+  error, since results may be greatly influenced by a poor choice.
+  Future versions of \app{gretl} will include more options on
+  covariance matrix estimation.
+\end{enumerate}
+
+One of the consequences of this state of things is that replicating
+various well-known published studies may be extremely difficult. Any
+non-trivial result is virtually impossible to reproduce unless all
+details of the estimation procedure are carefully recorded. 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

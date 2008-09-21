@@ -1,0 +1,342 @@
+\chapter{Discrete variables}
+\label{chap:discrete}
+
+When a variable can take only a finite, typically small, number of
+values, then the variable is said to be \emph{discrete}. Some
+\app{gretl} commands act in a slightly different way when applied to
+discrete variables; moreover, \app{gretl} provides a few commands that
+only apply to discrete variables.  Specifically, the \texttt{dummify}
+and \texttt{xtab} commands (see below) are available only for discrete
+variables, while the \texttt{freq} (frequency distribution) command
+produces different output for discrete variables.
+
+
+\section{Declaring variables as discrete}
+\label{discr-declare}
+
+\app{Gretl} uses a simple heuristic to judge whether a given variable
+should be treated as discrete, but you also have the option of
+explicitly marking a variable as discrete, in which case the heuristic
+check is bypassed.
+
+The heuristic is as follows: First, are all the values of the variable
+``reasonably round'', where this is taken to mean that they are all
+integer multiples of 0.25?  If this criterion is met, we then ask
+whether the variable takes on a ``fairly small'' set of distinct
+values, where ``fairly small'' is defined as less than or equal to 8.
+If both conditions are satisfied, the variable is automatically
+considered discrete.
+
+To mark a variable as discrete you have two options.
+\begin{enumerate}
+\item From the graphical interface, select ``Variable, Edit
+  Attributes'' from the menu. A dialog box will appear and, if the
+  variable seems suitable, you will see a tick box labeled ``Treat
+  this variable as discrete''.  This dialog box can also be invoked
+  via the context menu (right-click on a variable) or by pressing the
+  F2 key.
+\item From the command-line interface, via the \texttt{discrete}
+  command. The command takes one or more arguments, which can be
+  either variables or list of variables. For example:
+\begin{code}
+list xlist = x1 x2 x3
+discrete z1 xlist z2
+\end{code}
+This syntax makes it possible to declare as discrete many
+variables at once, which cannot presently be done via the graphical
+interface. The switch \texttt{--reverse} reverses the declaration of a
+variable as discrete, or in other words marks it as continuous.
+For example:
+\begin{code}
+discrete foo
+# now foo is discrete
+discrete foo --reverse
+# now foo is continuous
+\end{code}
+\end{enumerate}
+
+The command-line variant is more powerful, in that you can mark a
+variable as discrete even if it does not seem to be suitable for
+this treatment.
+
+Note that marking a variable as discrete does not affect its content.
+It is the user's responsibility to make sure that marking a variable
+as discrete is a sensible thing to do.  Note that if you want to
+recode a continuous variable into classes, you can use the
+\texttt{genr} command and its arithmetic functions, as in the
+following example:
+\begin{code}
+nulldata 100
+# generate a variable with mean 2 and variance 1
+genr x = normal() + 2
+# split into 4 classes
+genr z = (x>0) + (x>2) + (x>4)
+# now declare z as discrete
+discrete z
+\end{code}
+
+Once a variable is marked as discrete, this setting is remembered when
+you save the file.
+
+\section{Commands for discrete variables}
+\label{discr-commands}
+
+\subsection{The \texttt{dummify} command}
+\label{discr-dummify}
+
+The \texttt{dummify} command takes as argument a series $x$ and creates
+dummy variables for each distinct value present in $x$, which must
+have already been declared as discrete.  Example:
+\begin{code}
+open greene22_2
+discrete Z5 # mark Z5 as discrete
+dummify Z5
+\end{code}
+
+The effect of the above command is to generate 5 new dummy variables,
+labeled \texttt{DZ5\_1} through \texttt{DZ5\_5}, which correspond to
+the different values in \texttt{Z5}. Hence, the variable
+\texttt{DZ5\_4} is 1 if \texttt{Z5} equals 4 and 0 otherwise. This
+functionality is also available through the graphical interface by
+selecting the menu item ``Add, Dummies for selected discrete variables''.
+
+The \texttt{dummify} command can also be used with the following
+syntax:
+\begin{code}
+list dlist = dummify(x)
+\end{code}
+This not only creates the dummy variables, but also a named list (see
+section~\ref{named-lists}) that can be used afterwards. The
+following example computes summary statistics for the variable \texttt{Y} for
+each value of \texttt{Z5}:
+\begin{code}
+open greene22_2
+discrete Z5 # mark Z5 as discrete
+list foo = dummify(Z5)
+loop foreach i foo
+  smpl $i --restrict --replace
+  summary Y
+end loop
+smpl full
+\end{code}
+% $
+
+Since \texttt{dummify} generates a list, it can be used directly
+in commands that call for a list as input, such as \texttt{ols}.  For
+example:
+\begin{code}
+open greene22_2
+discrete Z5 # mark Z5 as discrete
+ols Y 0 dummify(Z5)
+\end{code}
+
+\subsection{The \texttt{freq} command}
+\label{discr-freq}
+
+The \texttt{freq} command displays absolute and relative frequencies
+for a given variable. The way frequencies are counted depends on
+whether the variable is continuous or discrete.  This command is also
+available via the graphical interface by selecting the ``Variable,
+Frequency distribution'' menu entry.
+
+For discrete variables, frequencies are counted for each distinct
+value that the variable takes. For continuous variables, values are
+grouped into ``bins'' and then the frequencies are counted for each
+bin. The number of bins, by default, is computed as a function of the
+number of valid observations in the currently selected sample via the
+rule shown in Table~\ref{tab:bins}. However, when the command is
+invoked through the menu item ``Variable, Frequency Plot'', this
+default can be overridden by the user.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{cc}
+\hline
+  Observations & Bins \\
+\hline
+  $8 \le n < 16$ & 5 \\
+  $16 \le n < 50 $ & 7 \\
+  $50 \le n \le 850 $ & $\lceil \sqrt{n} \rceil$  \\
+  $n > 850 $ & 29 \\
+\hline
+\end{tabular}
+\caption{Number of bins for various sample sizes}
+\label{tab:bins}
+\end{table}
+
+For example, the following code
+%
+\begin{code}
+open greene19_1
+freq TUCE
+discrete TUCE # mark TUCE as discrete
+freq TUCE
+\end{code}
+%
+yields
+%
+\begin{code}
+Read datafile /usr/local/share/gretl/data/greene/greene19_1.gdt
+periodicity: 1, maxobs: 32,
+observations range: 1-32
+
+Listing 5 variables:
+  0) const    1) GPA      2) TUCE     3) PSI      4) GRADE  
+
+? freq TUCE
+
+Frequency distribution for TUCE, obs 1-32
+number of bins = 7, mean = 21.9375, sd = 3.90151
+
+       interval          midpt   frequency    rel.     cum.
+
+          <  13.417     12.000        1      3.12%    3.12% *
+    13.417 - 16.250     14.833        1      3.12%    6.25% *
+    16.250 - 19.083     17.667        6     18.75%   25.00% ******
+    19.083 - 21.917     20.500        6     18.75%   43.75% ******
+    21.917 - 24.750     23.333        9     28.12%   71.88% **********
+    24.750 - 27.583     26.167        7     21.88%   93.75% *******
+          >= 27.583     29.000        2      6.25%  100.00% **
+
+Test for null hypothesis of normal distribution:
+Chi-square(2) = 1.872 with p-value 0.39211
+? discrete TUCE # mark TUCE as discrete
+? freq TUCE
+
+Frequency distribution for TUCE, obs 1-32
+
+          frequency    rel.     cum.
+
+  12           1      3.12%    3.12% *
+  14           1      3.12%    6.25% *
+  17           3      9.38%   15.62% ***
+  19           3      9.38%   25.00% ***
+  20           2      6.25%   31.25% **
+  21           4     12.50%   43.75% ****
+  22           2      6.25%   50.00% **
+  23           4     12.50%   62.50% ****
+  24           3      9.38%   71.88% ***
+  25           4     12.50%   84.38% ****
+  26           2      6.25%   90.62% **
+  27           1      3.12%   93.75% *
+  28           1      3.12%   96.88% *
+  29           1      3.12%  100.00% *
+
+Test for null hypothesis of normal distribution:
+Chi-square(2) = 1.872 with p-value 0.39211
+\end{code}
+%
+As can be seen from the sample output, a (Doornik--Hansen) test for
+normality is computed automatically.  This test is suppressed for
+discrete variables where the number of distinct values is less than
+10.
+
+This command accepts two options: \texttt{--quiet}, to avoid
+generation of the histogram when invoked from the command line and
+\texttt{--gamma}, for replacing the normality test with Locke's
+nonparametric test, whose null hypothesis is that the data follow a
+Gamma distribution.
+
+If the distinct values of a discrete variable need to be saved, the
+\texttt{values()} matrix construct can be used (see chapter
+\ref{chap:matrices}).
+
+\subsection{The \texttt{xtab} command}
+\label{discr-xtab}
+
+The \texttt{xtab} command cab be invoked in either of the following
+ways.  First,
+%
+\begin{code}
+xtab ylist ; xlist
+\end{code}
+%
+where \texttt{ylist} and \texttt{xlist} are lists of discrete
+variables.  This produces cross-tabulations (two-way frequencies) of
+each of the variables in \texttt{ylist} (by row) against each of the
+variables in \texttt{xlist} (by column).  Or second,
+%
+\begin{code}
+xtab xlist
+\end{code}
+%
+In the second case a full set of cross-tabulations is generated; that
+is, each variable in \texttt{xlist} is tabulated against each other
+variable in the list.  In the graphical interface, this command is
+represented by the ``Cross Tabulation'' item under the View menu,
+which is active if at least two variables are selected.
+
+Here is an example of use:
+%
+\begin{code}
+open greene22_2
+discrete Z* # mark Z1-Z8 as discrete
+xtab Z1 Z4 ; Z5 Z6
+\end{code}
+which produces
+\begin{code}
+Cross-tabulation of Z1 (rows) against Z5 (columns)
+
+       [   1][   2][   3][   4][   5]  TOT.
+  
+[   0]    20    91    75    93    36    315
+[   1]    28    73    54    97    34    286
+
+TOTAL     48   164   129   190    70    601
+
+Pearson chi-square test = 5.48233 (4 df, p-value = 0.241287)
+
+Cross-tabulation of Z1 (rows) against Z6 (columns)
+
+       [   9][  12][  14][  16][  17][  18][  20]  TOT.
+  
+[   0]     4    36   106    70    52    45     2    315
+[   1]     3     8    48    45    37    67    78    286
+
+TOTAL      7    44   154   115    89   112    80    601
+
+Pearson chi-square test = 123.177 (6 df, p-value = 3.50375e-24)
+
+Cross-tabulation of Z4 (rows) against Z5 (columns)
+
+       [   1][   2][   3][   4][   5]  TOT.
+  
+[   0]    17    60    35    45    14    171
+[   1]    31   104    94   145    56    430
+
+TOTAL     48   164   129   190    70    601
+
+Pearson chi-square test = 11.1615 (4 df, p-value = 0.0248074)
+
+Cross-tabulation of Z4 (rows) against Z6 (columns)
+
+       [   9][  12][  14][  16][  17][  18][  20]  TOT.
+  
+[   0]     1     8    39    47    30    32    14    171
+[   1]     6    36   115    68    59    80    66    430
+
+TOTAL      7    44   154   115    89   112    80    601
+
+Pearson chi-square test = 18.3426 (6 df, p-value = 0.0054306)
+\end{code}
+
+Pearson's $\chi^2$ test for independence is automatically displayed,
+provided that all cells have expected frequencies under independence
+greater than $10^{-7}$.  However, a common rule of thumb states that
+this statistic is valid only if the expected frequency is 5 or
+greater for at least 80 percent of the cells.  If this condition is not
+met a warning is printed.
+
+Additionally, the options \texttt{--row} or \texttt{--column} options
+can be given: in this case, the output displays row or column
+percentages, respectively. 
+
+If you want to cut and paste the output of \texttt{xtab} to some other
+program, e.g.\ a spreadsheet, you may want to use the \texttt{--zeros}
+option; this option causes cells with zero frequency to display the
+number 0 instead of being empty.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

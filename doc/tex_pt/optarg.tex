@@ -1,0 +1,220 @@
+\chapter{Options, arguments and path-searching}
+\label{optarg}
+
+\section{Invoking gretl}
+\label{optarg1}
+
+\cmd{gretl} (under MS Windows, \cmd{gretlw32.exe})\footnote{On Linux,
+  a ``wrapper'' script named \texttt{gretl} is installed.  This script
+  checks whether the \texttt{DISPLAY} environment variable is set; if
+  so, it launches the GUI program, \verb@gretl_x11@, and if not it
+  launches the command-line program, \texttt{gretlcli}}.
+
+--- Opens the program and waits for user input.
+      
+\cmd{gretl} \textsl{datafile}
+      
+--- Starts the program with the specified datafile in its
+workspace. The data file may be in any of several formats (see the
+\emph{Gretl User's Guide}); the program will try to detect the format
+of the file and treat it appropriately. See also Section
+\ref{path-search} below for path-searching behavior.
+      
+\cmd{gretl --help} (or \cmd{gretl -h})
+      
+--- Print a brief summary of usage and exit.
+      
+\cmd{gretl --version} (or \cmd{gretl -v})
+      
+--- Print version identification for the program and exit.
+      
+\cmd{gretl --english} (or \cmd{gretl -e})
+      
+--- Force use of English instead of translation.
+      
+\cmd{gretl --run} \textsl{scriptfile} (or \cmd{gretl -r}
+\textsl{scriptfile})
+      
+--- Start the program and open a window displaying the specified
+script file, ready to run.  See Section \ref{path-search} below for
+path-searching behavior.
+      
+\cmd{gretl --db} \textsl{database} (or \cmd{gretl -d}
+\textsl{database})
+
+--- Start the program and open a window displaying the specified
+database.  If the database files (the \texttt{.bin} file and its
+accompanying \texttt{.idx} file) are not in the default system
+database directory, you must specify the full path.  See also the
+\emph{Gretl User's Guide} for details on databases.
+      
+\cmd{gretl --dump} (or \cmd{gretl -c})
+      
+--- Dump the program's configuration information to a plain text file
+(the name of the file is printed on standard output).  May be useful
+for trouble-shooting.
+      
+\cmd{gretlw32 --debug} (or \cmd{gretlw32 -g})
+
+--- (MS Windows only) Open a console window to display any messages
+sent to the ``standard output'' or ``standard error'' streams.  Such
+messages are not usually visible on Windows; this may be useful for
+trouble-shooting.
+      
+\section{Preferences dialog}
+\label{guiprefs}
+
+Various things in \app{gretl} are configurable under the ``Tools,
+Preferences'' menu.  Separate menu items are devoted to the choice of
+the monospaced font to be used in \app{gretl} screen output, and, on
+some platforms, the font used for menus and other messages.  The other
+options are organized under five tabs, as follows.
+      
+\textbf{General}: Here you can configure the base directory for
+\app{gretl}'s shared files. In addition there are several check
+boxes. Checking ``Tell me about gretl updates'' makes \app{gretl}
+attempt to query the update server at start-up. If your native
+language setting is not English and the local decimal point character
+is not the period (``\texttt{.}''), unchecking ``Use locale setting
+for decimal point'' will make \app{gretl} use the period regardless.
+Checking ``Allow shell commands'' makes it possible to invoke shell
+commands in scripts and in the \app{gretl} console (this facility is
+disabled by default for security reasons).
+      
+\textbf{Databases} tab: You can select the directory in which to start
+looking for native \app{gretl} databases; the directory in which to
+start looking for RATS 4 databases; the host name of the \app{gretl}
+database server to access; and the IP number and port number of the
+HTTP proxy server to use when contacting the database server (if
+you're behind a firewall).
+      
+\textbf{Programs} tab: You can specify the names or paths to various
+third-party programs that may called by \app{gretl} under certain
+conditions. Note that the item ``Command to compile {\TeX} files'' can
+be set to either latex or pdflatex; if latex is selected, {\TeX}
+output will be previewed in DVI format; if pdflatex is selected, the
+preview will be in PDF format.
+      
+\textbf{HCCME} tab: Set preferences regarding robust covariance matrix
+estimation.  See the \emph{Gretl User's Guide} for details.
+      
+\textbf{Manuals} tab: Select your preferred language for the full
+\app{gretl} documentation in PDF format (currently only English and
+Italian are supported).  When using the English documentation you can
+also choose between US letter paper and A4 paper.
+      
+Settings chosen via the Preferences dialog are stored from one gretl
+session to the next.  Under MS Windows they are stored in the Windows
+registry; on other platforms they are stored in a plain text file
+named \texttt{.gretlrc} in the user's home directory.
+      
+\section{Invoking gretlcli}
+\label{optarg2}
+
+\cmd{gretlcli}
+
+--- Opens the program and waits for user input.
+      
+\cmd{gretlcli} \textsl{datafile}
+
+--- Starts the program with the specified datafile in its
+workspace. The data file may be in any format supported by \app{gretl}
+(see the \emph{Gretl User's Guide} for details). The program will try
+to detect the format of the file and treat it appropriately. See also
+Section \ref{path-search} for path-searching behavior.
+
+\cmd{gretlcli --help} (or \cmd{gretlcli -h})
+
+--- Prints a brief summary of usage.
+
+\cmd{gretlcli --version} (or \cmd{gretlcli -v})
+
+--- Prints version identification for the program.
+
+\cmd{gretlcli --english} (or \cmd{gretlcli -e})
+
+--- Force use of English instead of translation.
+
+\cmd{gretlcli --run} \textsl{scriptfile} (or \cmd{gretlcli -r}
+\textsl{scriptfile})
+
+--- Execute the commands in \textsl{scriptfile} then hand over input
+to the command line.  See Section \ref{path-search} for path-searching
+behavior.
+
+\cmd{gretlcli --batch} \textsl{scriptfile} (or \cmd{gretlcli -b}
+\textsl{scriptfile})
+
+--- Execute the commands in \textsl{scriptfile} then exit.  When using
+this option you will probably want to redirect output to a file. See
+Section \ref{path-search} for path-searching behavior.
+
+When using the \cmd{--run} and \cmd{--batch} options, the script file
+in question must call for a data file to be opened. This can be done
+using the \cmd{open} command within the script.
+      
+\section{Path searching}
+\label{path-search}
+
+When the name of a data file or script file is supplied to \app{gretl}
+or \app{gretlcli} on the command line, the file is looked for as
+follows:
+
+\begin{enumerate}
+\item ``As is''.  That is, in the current working directory or, if a
+  full path is specified, at the specified location.
+\item In the user's gretl directory (see Table \ref{tab-path} for the
+  default values; note that \texttt{PERSONAL} is a placeholder that is
+  expanded by Windows in a user- and language-specific way, typically
+  involving ``My Documents'' on English-language systems).
+\item In any immediate sub-directory of the user's gretl directory.
+\item In the case of a data file, search continues with the main
+  \app{gretl} data directory. In the case of a script file, the search
+  proceeds to the system script directory.  See Table \ref{tab-path}
+  for the default settings.  (\texttt{PREFIX} denotes the base
+  directory chosen at the time \app{gretl} is installed.)
+\item In the case of data files the search then proceeds to all
+  immediate sub-directories of the main data directory.
+\end{enumerate}
+
+\begin{table}[htbp]
+  \caption{Default path settings}
+  \label{tab-path}
+  \begin{center}
+    \begin{tabular}{lll}
+      \textit{ } & \textit{Linux} & \textit{MS Windows} \\ [4pt]
+      User directory & \texttt{\$HOME/gretl} & 
+        \verb@PERSONAL\gretl@ \\
+      System data directory & \texttt{PREFIX/share/gretl/data} & 
+        \verb@PREFIX\gretl\data@ \\
+      System script directory & \texttt{PREFIX/share/gretl/scripts} & 
+        \verb@PREFIX\gretl\scripts@ \\
+    \end{tabular}
+  \end{center}
+\end{table}
+
+Thus it is not necessary to specify the full path for a data or script
+file unless you wish to override the automatic searching
+mechanism. (This also applies within \app{gretlcli}, when you supply a
+filename as an argument to the \cmd{open} or \cmd{run} commands.)
+
+When a command script contains an instruction to open a data file, the
+search order for the data file is as stated above, except that the
+directory containing the script is also searched, immediately after
+trying to find the data file ``as is''.
+      
+
+\subsection{MS Windows}
+\label{MS-behave}
+
+Under MS Windows configuration information for \app{gretl} and
+\app{gretlcli} is stored in the Windows registry. A suitable set of
+registry entries is created when \app{gretl} is first installed, and
+the settings can be changed under \app{gretl}'s ``Tools, Preferences''
+menu. In case anyone needs to make manual adjustments to this
+information, the entries can be found (using the standard Windows
+program \app{regedit.exe}) under \verb@Software\gretl@ in
+\verb@HKEY_LOCAL_MACHINE@ (the main \app{gretl} directory and the
+paths to various auxiliary programs) and \verb@HKEY_CURRENT_USER@ (all
+other configurable variables).
+

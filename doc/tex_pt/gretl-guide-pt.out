@@ -1,0 +1,150 @@
+\BOOKMARK [1][-]{titlepage.1}{Manual de Utiliza\347\343o do Gretl}{}
+\BOOKMARK [1][-]{license.1}{Licen\347a}{}
+\BOOKMARK [1][-]{contents.1}{\315ndice}{}
+\BOOKMARK [0][-]{chapter.1}{1 Introduction}{}
+\BOOKMARK [1][-]{section.1.1}{1.1 Features at a glance}{chapter.1}
+\BOOKMARK [1][-]{section.1.2}{1.2 Acknowledgements}{chapter.1}
+\BOOKMARK [1][-]{section.1.3}{1.3 Installing the programs}{chapter.1}
+\BOOKMARK [-1][-]{part.1}{I Uso do programa}{}
+\BOOKMARK [0][-]{chapter.2}{2 Getting started}{part.1}
+\BOOKMARK [1][-]{section.2.1}{2.1 Let's run a regression}{chapter.2}
+\BOOKMARK [1][-]{section.2.2}{2.2 Estimation output}{chapter.2}
+\BOOKMARK [1][-]{section.2.3}{2.3 The main window menus}{chapter.2}
+\BOOKMARK [1][-]{section.2.4}{2.4 Keyboard shortcuts}{chapter.2}
+\BOOKMARK [1][-]{section.2.5}{2.5 The gretl toolbar}{chapter.2}
+\BOOKMARK [0][-]{chapter.3}{3 Modes of working}{part.1}
+\BOOKMARK [1][-]{section.3.1}{3.1 Command scripts}{chapter.3}
+\BOOKMARK [1][-]{section.3.2}{3.2 Saving script objects}{chapter.3}
+\BOOKMARK [1][-]{section.3.3}{3.3 The gretl console}{chapter.3}
+\BOOKMARK [1][-]{section.3.4}{3.4 The Session concept}{chapter.3}
+\BOOKMARK [0][-]{chapter.4}{4 Data files}{part.1}
+\BOOKMARK [1][-]{section.4.1}{4.1 Native format}{chapter.4}
+\BOOKMARK [1][-]{section.4.2}{4.2 Other data file formats}{chapter.4}
+\BOOKMARK [1][-]{section.4.3}{4.3 Binary databases}{chapter.4}
+\BOOKMARK [1][-]{section.4.4}{4.4 Creating a data file from scratch}{chapter.4}
+\BOOKMARK [1][-]{section.4.5}{4.5 Structuring a dataset}{chapter.4}
+\BOOKMARK [1][-]{section.4.6}{4.6 Missing data values}{chapter.4}
+\BOOKMARK [1][-]{section.4.7}{4.7 Maximum size of data sets}{chapter.4}
+\BOOKMARK [1][-]{section.4.8}{4.8 Data file collections}{chapter.4}
+\BOOKMARK [0][-]{chapter.5}{5 Special functions in genr}{part.1}
+\BOOKMARK [1][-]{section.5.1}{5.1 Introduction}{chapter.5}
+\BOOKMARK [1][-]{section.5.2}{5.2 Long-run variance}{chapter.5}
+\BOOKMARK [1][-]{section.5.3}{5.3 Time-series filters}{chapter.5}
+\BOOKMARK [1][-]{section.5.4}{5.4 Panel data specifics}{chapter.5}
+\BOOKMARK [1][-]{section.5.5}{5.5 Resampling and bootstrapping}{chapter.5}
+\BOOKMARK [1][-]{section.5.6}{5.6 Cumulative densities and p-values}{chapter.5}
+\BOOKMARK [1][-]{section.5.7}{5.7 Handling missing values}{chapter.5}
+\BOOKMARK [1][-]{section.5.8}{5.8 Retrieving internal variables}{chapter.5}
+\BOOKMARK [1][-]{section.5.9}{5.9 Numerical maximization}{chapter.5}
+\BOOKMARK [1][-]{section.5.10}{5.10 The discrete Fourier transform}{chapter.5}
+\BOOKMARK [0][-]{chapter.6}{6 Sub-sampling a dataset}{part.1}
+\BOOKMARK [1][-]{section.6.1}{6.1 Introduction}{chapter.6}
+\BOOKMARK [1][-]{section.6.2}{6.2 Setting the sample}{chapter.6}
+\BOOKMARK [1][-]{section.6.3}{6.3 Restricting the sample}{chapter.6}
+\BOOKMARK [1][-]{section.6.4}{6.4 Random sampling}{chapter.6}
+\BOOKMARK [1][-]{section.6.5}{6.5 The Sample menu items}{chapter.6}
+\BOOKMARK [0][-]{chapter.7}{7 Graphs and plots}{part.1}
+\BOOKMARK [1][-]{section.7.1}{7.1 Gnuplot graphs}{chapter.7}
+\BOOKMARK [1][-]{section.7.2}{7.2 Boxplots}{chapter.7}
+\BOOKMARK [0][-]{chapter.8}{8 Discrete variables}{part.1}
+\BOOKMARK [1][-]{section.8.1}{8.1 Declaring variables as discrete}{chapter.8}
+\BOOKMARK [1][-]{section.8.2}{8.2 Commands for discrete variables}{chapter.8}
+\BOOKMARK [0][-]{chapter.9}{9 Loop constructs}{part.1}
+\BOOKMARK [1][-]{section.9.1}{9.1 Introduction}{chapter.9}
+\BOOKMARK [1][-]{section.9.2}{9.2 Loop control variants}{chapter.9}
+\BOOKMARK [1][-]{section.9.3}{9.3 Progressive mode}{chapter.9}
+\BOOKMARK [1][-]{section.9.4}{9.4 Loop examples}{chapter.9}
+\BOOKMARK [0][-]{chapter.10}{10 User-defined functions}{part.1}
+\BOOKMARK [1][-]{section.10.1}{10.1 Defining a function}{chapter.10}
+\BOOKMARK [1][-]{section.10.2}{10.2 Calling a function}{chapter.10}
+\BOOKMARK [1][-]{section.10.3}{10.3 Function programming details}{chapter.10}
+\BOOKMARK [1][-]{section.10.4}{10.4 Function packages}{chapter.10}
+\BOOKMARK [0][-]{chapter.11}{11 Named lists and strings}{part.1}
+\BOOKMARK [1][-]{section.11.1}{11.1 Named lists}{chapter.11}
+\BOOKMARK [1][-]{section.11.2}{11.2 Named strings}{chapter.11}
+\BOOKMARK [0][-]{chapter.12}{12 Matrix manipulation}{part.1}
+\BOOKMARK [1][-]{section.12.1}{12.1 Introduction}{chapter.12}
+\BOOKMARK [1][-]{section.12.2}{12.2 Creating matrices}{chapter.12}
+\BOOKMARK [1][-]{section.12.3}{12.3 Selecting sub-matrices}{chapter.12}
+\BOOKMARK [1][-]{section.12.4}{12.4 Matrix operators}{chapter.12}
+\BOOKMARK [1][-]{section.12.5}{12.5 Matrix--scalar operators}{chapter.12}
+\BOOKMARK [1][-]{section.12.6}{12.6 Matrix functions}{chapter.12}
+\BOOKMARK [1][-]{section.12.7}{12.7 Matrix accessors}{chapter.12}
+\BOOKMARK [1][-]{section.12.8}{12.8 Namespace issues}{chapter.12}
+\BOOKMARK [1][-]{section.12.9}{12.9 Creating a data series from a matrix}{chapter.12}
+\BOOKMARK [1][-]{section.12.10}{12.10 Matrices and lists}{chapter.12}
+\BOOKMARK [1][-]{section.12.11}{12.11 Deleting a matrix}{chapter.12}
+\BOOKMARK [1][-]{section.12.12}{12.12 Printing a matrix}{chapter.12}
+\BOOKMARK [1][-]{section.12.13}{12.13 Example: OLS using matrices}{chapter.12}
+\BOOKMARK [0][-]{chapter.13}{13 Cheat sheet}{part.1}
+\BOOKMARK [1][-]{section.13.1}{13.1 Dataset handling}{chapter.13}
+\BOOKMARK [1][-]{section.13.2}{13.2 Creating/modifying variables}{chapter.13}
+\BOOKMARK [1][-]{section.13.3}{13.3 Neat tricks}{chapter.13}
+\BOOKMARK [-1][-]{part.2}{II M\351todos econom\351tricos}{}
+\BOOKMARK [0][-]{chapter.14}{14 Robust covariance matrix estimation}{part.2}
+\BOOKMARK [1][-]{section.14.1}{14.1 Introduction}{chapter.14}
+\BOOKMARK [1][-]{section.14.2}{14.2 Cross-sectional data and the HCCME}{chapter.14}
+\BOOKMARK [1][-]{section.14.3}{14.3 Time series data and HAC covariance matrices}{chapter.14}
+\BOOKMARK [1][-]{section.14.4}{14.4 Special issues with panel data}{chapter.14}
+\BOOKMARK [0][-]{chapter.15}{15 Panel data}{part.2}
+\BOOKMARK [1][-]{section.15.1}{15.1 Estimation of panel models}{chapter.15}
+\BOOKMARK [1][-]{section.15.2}{15.2 Dynamic panel models}{chapter.15}
+\BOOKMARK [1][-]{section.15.3}{15.3 Illustration: the Penn World Table}{chapter.15}
+\BOOKMARK [0][-]{chapter.16}{16 Nonlinear least squares}{part.2}
+\BOOKMARK [1][-]{section.16.1}{16.1 Introduction and examples}{chapter.16}
+\BOOKMARK [1][-]{section.16.2}{16.2 Initializing the parameters}{chapter.16}
+\BOOKMARK [1][-]{section.16.3}{16.3 NLS dialog window}{chapter.16}
+\BOOKMARK [1][-]{section.16.4}{16.4 Analytical and numerical derivatives}{chapter.16}
+\BOOKMARK [1][-]{section.16.5}{16.5 Controlling termination}{chapter.16}
+\BOOKMARK [1][-]{section.16.6}{16.6 Details on the code}{chapter.16}
+\BOOKMARK [1][-]{section.16.7}{16.7 Numerical accuracy}{chapter.16}
+\BOOKMARK [0][-]{chapter.17}{17 Maximum likelihood estimation}{part.2}
+\BOOKMARK [1][-]{section.17.1}{17.1 Generic ML estimation with gretl}{chapter.17}
+\BOOKMARK [1][-]{section.17.2}{17.2 Gamma estimation}{chapter.17}
+\BOOKMARK [1][-]{section.17.3}{17.3 Stochastic frontier cost function}{chapter.17}
+\BOOKMARK [1][-]{section.17.4}{17.4 GARCH models}{chapter.17}
+\BOOKMARK [1][-]{section.17.5}{17.5 Analytical derivatives}{chapter.17}
+\BOOKMARK [1][-]{section.17.6}{17.6 Debugging ML scripts}{chapter.17}
+\BOOKMARK [0][-]{chapter.18}{18 GMM estimation}{part.2}
+\BOOKMARK [1][-]{section.18.1}{18.1 Introduction and terminology}{chapter.18}
+\BOOKMARK [1][-]{section.18.2}{18.2 OLS as GMM}{chapter.18}
+\BOOKMARK [1][-]{section.18.3}{18.3 TSLS as GMM}{chapter.18}
+\BOOKMARK [1][-]{section.18.4}{18.4 Covariance matrix options}{chapter.18}
+\BOOKMARK [1][-]{section.18.5}{18.5 A real example: the Consumption Based Asset Pricing Model}{chapter.18}
+\BOOKMARK [1][-]{section.18.6}{18.6 Caveats}{chapter.18}
+\BOOKMARK [0][-]{chapter.19}{19 Model selection criteria}{part.2}
+\BOOKMARK [1][-]{section.19.1}{19.1 Introduction}{chapter.19}
+\BOOKMARK [1][-]{section.19.2}{19.2 Information criteria}{chapter.19}
+\BOOKMARK [0][-]{chapter.20}{20 Time series models}{part.2}
+\BOOKMARK [1][-]{section.20.1}{20.1 ARIMA models}{chapter.20}
+\BOOKMARK [1][-]{section.20.2}{20.2 Unit root tests}{chapter.20}
+\BOOKMARK [1][-]{section.20.3}{20.3 ARCH and GARCH}{chapter.20}
+\BOOKMARK [1][-]{section.20.4}{20.4 Cointegration and Vector Error Correction Models}{chapter.20}
+\BOOKMARK [0][-]{chapter.21}{21 Discrete and censored dependent variables}{part.2}
+\BOOKMARK [1][-]{section.21.1}{21.1 Logit and probit models}{chapter.21}
+\BOOKMARK [1][-]{section.21.2}{21.2 The Tobit model}{chapter.21}
+\BOOKMARK [-1][-]{part.3}{III Detalhes t\351cnicos}{}
+\BOOKMARK [0][-]{chapter.22}{22 Gretl and TeX}{part.3}
+\BOOKMARK [1][-]{section.22.1}{22.1 Introduction}{chapter.22}
+\BOOKMARK [1][-]{section.22.2}{22.2 TeX-related menu items}{chapter.22}
+\BOOKMARK [1][-]{section.22.3}{22.3 Fine-tuning typeset output}{chapter.22}
+\BOOKMARK [1][-]{section.22.4}{22.4 Character encodings}{chapter.22}
+\BOOKMARK [1][-]{section.22.5}{22.5 Installing and learning TeX}{chapter.22}
+\BOOKMARK [0][-]{chapter.23}{23 Troubleshooting gretl}{part.3}
+\BOOKMARK [1][-]{section.23.1}{23.1 Bug reports}{chapter.23}
+\BOOKMARK [1][-]{section.23.2}{23.2 Auxiliary programs}{chapter.23}
+\BOOKMARK [0][-]{chapter.24}{24 O interface de linha de comandos \(CLI\)}{part.3}
+\BOOKMARK [1][-]{section.24.1}{24.1 Gretl em modo de consola}{chapter.24}
+\BOOKMARK [1][-]{section.24.2}{24.2 A sintaxe CLI}{chapter.24}
+\BOOKMARK [-1][-]{part.4}{IV Ap\352ndices}{}
+\BOOKMARK [0][-]{Apêndice.a.A}{A Data file details}{part.4}
+\BOOKMARK [1][-]{section.a.A.1}{A.1 Basic native format}{Apêndice.a.A}
+\BOOKMARK [1][-]{section.a.A.2}{A.2 Traditional ESL format}{Apêndice.a.A}
+\BOOKMARK [1][-]{section.a.A.3}{A.3 Binary database details}{Apêndice.a.A}
+\BOOKMARK [0][-]{Apêndice.a.B}{B Building gretl}{part.4}
+\BOOKMARK [1][-]{section.a.B.1}{B.1 Requirements}{Apêndice.a.B}
+\BOOKMARK [1][-]{section.a.B.2}{B.2 Build instructions: a step-by-step example}{Apêndice.a.B}
+\BOOKMARK [0][-]{Apêndice.a.C}{C Numerical accuracy}{part.4}
+\BOOKMARK [0][-]{Apêndice.a.D}{D Related free software}{part.4}
+\BOOKMARK [0][-]{Apêndice.a.E}{E Listing of URLs}{part.4}
+\BOOKMARK [0][-]{chapter*.103}{Bibliografia}{part.4}
