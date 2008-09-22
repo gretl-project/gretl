@@ -1233,39 +1233,6 @@
     </gui-access>
   </command>
 
-  <command name="corc" section="Estimation" label="Estimação Cochrane-Orcutt">
-
-    <usage>
-      <arguments>
-        <argument>variável-dependente</argument>
-        <argument>variáveis-independentes</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostrar matriz de covariância</effect>
-	</option>
-      </options>
-      <examples>
-        <example>corc 1 0 2 4 6 7</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Calcula estimativas dos parâmetros usando o procedimento iterado de 
-        Cochrane&ndash;Orcutt (ver na Secção 9.4 de Ramanathan, 2002).  As
-        iterações terminam quando estimativas sucessivas do coeficiente de
-        autocorrelação diferem menos que 0,001 ou após 20 iterações.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelo/Série temporal/Cochrane-Orcutt</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="corr" section="Statistics" 
     label="Coeficientes de correlação" context="cli">
 
@@ -2248,101 +2215,6 @@
 
   </command>
 
-  <command name="fcasterr" section="Prediction"
-    label="Forecasts with confidence intervals">
-
-    <usage>
-      <arguments>
-        <argument>startobs</argument>
-        <argument>endobs</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--plot</flag>
-	  <effect>display graph</effect>
-        </option>
-        <option>
-	  <flag>--dynamic</flag>
-	  <effect>create dynamic forecast</effect>
-        </option>
-        <option>
-	  <flag>--static</flag>
-	  <effect>create static forecast</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	After estimating a model you can use this command to print out
-	fitted values over the specified observation range, along with
-	(depending on the nature of the model and the available data)
-	estimated standard errors of those predictions and 95 percent
-	confidence intervals.
-      </para>  
-
-      <para>
-	The choice between a static and a dynamic forecast applies
-	only in the case of dynamic models, with an autoregressive
-	error process or including one or more lagged values of the
-	dependent variable as regressors.  Static forecasts are one
-	step ahead, based on realized values from the previous period,
-	while dynamic forecasts employ the chain rule of forecasting.
-	For example, if a forecast for <mathvar>y</mathvar> in 2008
-	requires as input a value of <mathvar>y</mathvar> for 2007, a
-	static forecast is impossible without actual data for 2007.  A
-	dynamic forecast for 2008 is possible if a prior forecast can
-	be substituted for <mathvar>y</mathvar> in 2007.
-      </para>
-
-      <para>
-	The default is to give a static forecast for any portion of
-	the forecast range that lies with the sample range over which
-	the model was estimated, and a dynamic forecast (if relevant)
-	out of sample.  The <lit>dynamic</lit> option requests a
-	dynamic forecast from the earliest possible date, and the
-	<lit>static</lit> option requests a static forecast even out
-	of sample.  
-      </para>
-
-      <para>
-	The nature of the forecast standard errors (if available)
-	depends on the nature of the model and the forecast.  For
-	static linear models standard errors are computed using
-	the method outlined by Davidson and MacKinnon (2004); they
-	incorporate both uncertainty due to the error process and
-	parameter uncertainty (summarized in the covariance matrix of
-	the parameter estimates).  For dynamic models, forecast
-	standard errors are computed only in the case of a dynamic
-	forecast, and they do not incorporate parameter uncertainty.
-	For nonlinear models, forecast standard errors are not
-	presently available.
-      </para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>Janela do modelo, /Analysis/Forecasts</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="fit" section="Prediction" 
-    label="Generate fitted values" context="cli">
-
-    <description>
-      <para>
-	A shortcut to <cmdref targ="fcast"/>. Must follow an estimation
-	command.  Generates fitted values, in a series called
-	<lit>autofit</lit>, for the current sample, based on the last
-	regression.  In the case of time-series models, also pops up a
-	graph of fitted and actual values of the dependent variable
-	against time.
-      </para>
-    </description>
-
-  </command>
- 
   <command name="foreign" section="Programming" 
     label="Non-native script" context="cli">
 
@@ -3888,46 +3760,7 @@
     </gui-access>
 
   </command>
-
-  <command name="hilu" section="Estimation" label="Hildreth-Lu estimation">
-
-    <usage>
-      <arguments>
-        <argument>variável-dependente</argument>
-        <argument>variáveis-independentes</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostrar matriz de covariância</effect>
-	</option>
-	<option>
-	  <flag>--no-corc</flag>
-	  <effect>do not fine-tune results with Cochrane-Orcutt</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>Computes parameter estimates for the specified model using
-	the Hildreth&ndash;Lu search procedure.  The results are
-	fine-tuned using the Cochrane&ndash;Orcutt iterative method,
-	unless the <lit>--no-corc</lit> flag is specified.
-      </para>
-      <para>
-	This procedure is designed to correct for serial correlation
-	of the error term.  The error sum of squares of the
-	transformed model is graphed against the value of rho from
-	&minus;0.99 to 0.99.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelo/Série temporal/Hildreth-Lu</menu-path>
-    </gui-access>
-
-  </command>
-
+ 
   <command name="hsk" section="Estimation"
     label="Heteroskedasticity-corrected estimates">
 
@@ -5259,45 +5092,6 @@
 
   </command>
 
-  <command name="multiply" section="Transformations" 
-    label="Multiply variables" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>x</argument>
-        <argument>suffix</argument>
-        <argument>lista-de-variáveis</argument>
-      </arguments>
-      <examples>
-        <example>multiply invpop pc 3 4 5 6</example>
-        <example>multiply 1000 big x1 x2 x3</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	The variables in <repl>lista-de-variáveis</repl> (referenced by name or
-	number) are multiplied by <repl>x</repl>, which may be either
-	a numerical value or the name of a variable already defined.
-	The products are named with the specified <repl>suffix</repl>
-	(maximum 3 characters). The original variable names are
-	truncated first if need be. For instance, suppose you want to
-	create per capita versions of certain variables, and you have
-	the variable <lit>pop</lit> (population).  A suitable set of
-	commands is then:</para>
-      <code>
-	genr invpop = 1/pop
-	multiply invpop pc income</code>
-
-      <para>which will create <lit>incomepc</lit> as the product of
-	<lit>income</lit> and <lit>invpop</lit>, and
-	<lit>expendpc</lit> as <lit>expend</lit> times
-	<lit>invpop</lit>.
-      </para>
-    </description>
-
-  </command>
-
   <command name="nls" section="Estimation"
     label="Nonlinear Least Squares">
 
@@ -6561,43 +6355,6 @@
 
     <gui-access>
       <menu-path>/Tools/P-value finder</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="pwe" section="Estimation" label="Prais-Winsten estimator">
-
-    <usage>
-      <arguments>
-        <argument>variável-dependente</argument>
-        <argument>variáveis-independentes</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostrar matriz de covariância</effect>
-	</option>
-      </options>
-      <examples>
-        <example>pwe 1 0 2 4 6 7</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Computes parameter estimates using the Prais&ndash;Winsten
-	procedure, an implementation of feasible GLS which is designed
-	to handle first-order autocorrelation of the error term.  The
-	procedure is iterated, as with <cmdref targ="corc"/>; the
-	difference is that while Cochrane&ndash;Orcutt discards the
-	first observation, Prais&ndash;Winsten makes use of it. See,
-	for example, Chapter 13 of Greene's <book>Econometric
-	  Analysis</book> (2000) for details.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelo/Série temporal/Prais-Winsten</menu-path>
     </gui-access>
 
   </command>
@@ -8150,42 +7907,6 @@
 
   </command>
 
-  <command name="string" section="Utilities" context="cli">
-    
-    <usage>
-      <arguments>
-        <argument>stringvar</argument>
-	<argpunct>= </argpunct>
-	<argument>expression</argument>
-      </arguments>
-      <examples>
-	<example>string mystr = "P-value: "</example>
-	<example>string homedir = getenv("HOME")</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Saves a string named <repl>stringvar</repl>.  The
-	<repl>expression</repl> can take the following forms: a literal
-	string, enclosed in double quotes; a series of such strings,
-	separated by spaces (these strings will be concatenated); or
-	a call to the <lit>getenv</lit> function to retrieve a string
-	from the program's environment.
-      </para>
-      <para>
-	After defining a string variable in this way, the variable can be
-	printed using its name preceded by <lit>@</lit>, as in
-      </para>
-      <code>
-	print "mystr = @mystr"
-      </code>
-      <para>
-	See also <cmdref targ="printf"/>,  <cmdref targ="sprintf"/>.
-      </para>
-    </description>
-
-  </command>
   <command name="summary" section="Statistics" 
     label="Descriptive statistics" context="cli">
 
