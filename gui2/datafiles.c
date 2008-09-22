@@ -1173,7 +1173,10 @@ static gchar *files_title (int code)
     gchar *ret = NULL;
 
     if (*hname == '\0') {
-#if GTK_MINOR_VERSION >= 8
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8
+	/* no g_get_host_name() */
+	strcpy(hname, _("local machine"));
+#else
 	const gchar *s = g_get_host_name();
 
 	if (s != NULL && strlen(s) < 48) {
@@ -1181,8 +1184,6 @@ static gchar *files_title (int code)
 	} else {
 	    strcpy(hname, _("local machine"));
 	}
-#else
-	strcpy(hname, _("local machine"));
 #endif
     }
 

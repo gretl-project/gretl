@@ -101,9 +101,9 @@ for f in plugins/*.dll ; do
 done
 
 # gretl translations
-for lang in de es eu fr it ja pl ru rw tr pt pt_BR ; do
+LANGS=`cat LINGUAS | grep -v ^#`
+for lang in $LANGS ; do
    mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
-   mkdir -p windist/gretl/lib/locale/${lang}/LC_MESSAGES
 done
 
 # GTK directories and runtime files
@@ -190,7 +190,7 @@ add_file ${TOPDIR}/share/bcih/fedstl.idx gretl/db/fedstl.idx
 
 # translations (make sure they're up to date first)
 make -C mo
-for lang in de es eu fr it ja pl ru rw tr pt pt_BR ; do
+for lang in $LANGS ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
 done
 

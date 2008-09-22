@@ -395,12 +395,6 @@ int main (int argc, char *argv[])
     nls_init();
 #endif  
 
-#ifdef G_OS_WIN32
-# if GTK_MINOR_VERSION < 6
-    putenv("G_FILENAME_ENCODING=@locale");
-# endif
-#endif     
-
     *tryfile = '\0';
     *scriptfile = '\0';
     *paths.datfile = '\0';

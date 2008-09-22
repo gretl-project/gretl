@@ -99,7 +99,7 @@ gchar *my_filename_to_utf8 (const char *fname)
 	   a native Windows file dialog will be in the
 	   locale charset 
 	*/
-#if defined(G_OS_WIN32) && GTK_MINOR_VERSION >= 6
+#ifdef G_OS_WIN32
 	ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
 #else
 	ret = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);

@@ -1308,6 +1308,7 @@ static void set_lcnumeric (void)
 	    { "pl", "Polish" },
 	    { "de", "German" },
 	    { "pt", "Portuguese" },
+	    { "ru", "Russian" },
 	    { NULL, NULL }
 	};
 	char *lang = getenv("LANG");
