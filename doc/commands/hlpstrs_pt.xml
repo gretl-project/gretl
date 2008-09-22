@@ -14,5 +14,32 @@
  <gentext key="scriptcommand" text="Comando:    "/>
  <gentext key="or" text=" ou "/>
  <gentext key="Seealso" text="Ver também"/>
+ <gentext key="anyfloat"      text="escalar, série ou matriz"/>
+ <gentext key="series-or-vec" text="série ou vector"/>
+ <gentext key="series-or-mat" text="série ou matrice"/>
+ <gentext key="scalar-or-series" text="escalar ou série"/>
+ <gentext key="series-or-list" text="série ou lista"/>
+ <gentext key="anyfloat-or-list" text="escalar, série, matriz ou lista"/>
+ <gentext key="list-or-string" text="lista ou texto"/>
+ <gentext key="asinput"       text="o mesmo tipo que o argumento"/>
+ <gentext key="scalar"        text="escalar"/>
+ <gentext key="pscalar"       text="escalar entre 0 e 1"/>
+ <gentext key="séries"        text="série"/>
+ <gentext key="vector"        text="vector"/>
+ <gentext key="matrix"        text="matriz"/>
+ <gentext key="smatrix"       text="matriz quadrada"/>
+ <gentext key="symmat"        text="matriz simétrica"/>
+ <gentext key="matrixref"     text="referência a matriz"/>
+ <gentext key="cvec"          text="vector coluna"/>
+ <gentext key="rvec"          text="vector linha"/>
+ <gentext key="list"          text="lista"/>
+ <gentext key="string"        text="texto"/>
+ <gentext key="char"          text="caractere"/>
+ <gentext key="coeffname"     text="nome do coeficiente"/>
+ <gentext key="sslist"        text="escalar, série ou lista"/>
+ <gentext key="smlist"        text="série, matriz ou lista"/>
+ <gentext key="optional"      text="opcional"/>
+ <gentext key="seebelow"      text="ver abaixo"/>
+ <gentext key="chapter"       text="Capítulo"/>
  
 </localization>

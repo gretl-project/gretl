@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="ISO-8859-15" ?>
+<?xml version="1.0" encoding="ISO-8859-1" ?>
 <!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
 <funcref language="portuguese">
 
-  <funclist name="Accessors" ref="accessors">
+  <funclist name="Acessores" ref="accessors">
 
     <function name="$ahat" section="access" output="series">
       <description>
@@ -521,7 +521,7 @@
 
   </funclist>
 
-  <funclist name="Functions proper" ref="functions">
+  <funclist name="Funções" ref="functions">
 
     <function name="abs" section="math" output="asinput">
       <fnargs>
