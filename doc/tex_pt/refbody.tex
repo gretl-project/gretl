@@ -135,10 +135,11 @@ Opção:       & \verb|--vcv| (mostrar matriz de covariância) \\
 Exemplo:     & \texttt{ar 1 3 4 ; y 0 x1 x2 x3} \\ 
 \end{tabular}
 
-	Determina estimativas para os parâmetros usando o procedimento 
-	iteractivo e generalizado de Cochrane--Orcutt (ver a Secção
-        9.5 de Ramanathan, 2002). A iteração termina quando os erros das
-        somas de quadrados sucessivos não difiram em mais que 0,005 porcento 
+	Determina estimativas para os parâmetros usando o
+        procedimento iteractivo e generalizado de 
+        Cochrane--Orcutt (ver a Secção 9.5 de Ramanathan, 
+        2002). A iteração termina quando os erros das somas de 
+        quadrados sucessivos não difiram em mais que 0,005 porcento 
         ou após 20 iterações.
 
 	\textsl{'lags'} é uma lista de 'lags' nos 
@@ -147,6 +148,47 @@ Exemplo:     & \texttt{ar 1 3 4 ; y 0 x1 x2 x3} \\
 	\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} + e_t\]
 
 Caminho de Menu:    /Modelo/Série temporal/Estimação autoregressiva
+
+\subsection{ar1}
+\hypertarget{cmd-ar1}{}
+
+\begin{tabular}{ll}
+Argumentos:  & \textsl{depvar} \textsl{indepvars} \\
+Opções:      & \verb|--hilu| (use Hildreth--Lu procedure) \\
+ & \verb|--pwe| (use Prais--Winsten estimator) \\
+ & \verb|--vcv| (print covariance matrix) \\
+ & \verb|--no-corc| (do not fine-tune results with Cochrane-Orcutt) \\
+Exemplos:    & \texttt{ar1 1 0 2 4 6 7} \\ 
+ & \verb@ar1 y 0 xlist --hilu --no-corc@ \\ 
+ & \verb@ar1 y 0 xlist --pwe@ \\ 
+\end{tabular}
+
+	Computes feasible GLS estimates for a model in which the error term is
+	assumed to follow a first-order autoregressive process.
+
+	The default method is the Cochrane--Orcutt iterative procedure
+	(see, for example, Section 9.4 of Ramanathan, 2002). Iteration is
+	terminated when successive estimates of the autocorrelation
+	coefficient do not differ by more than 0.001 or after 20 iterations.
+
+	If the \verb@--hilu@ option is given, the Hildreth--Lu search
+	procedure is used.  The results are then fine-tuned using the
+	Cochrane--Orcutt method, unless the \verb@--no-corc@ flag is
+	specified.  (The latter option is ignored if \verb@--hilu@
+	is not specified.)
+
+	If the \verb@--pwe@ option is given, the Prais--Winsten
+	estimator is used.  This involves an an iteration similar to
+	Cochrane--Orcutt; the difference is that while
+	Cochrane--Orcutt discards the first observation,
+	Prais--Winsten makes use of it. See, for example, Chapter 13 of
+	Greene's \emph{Econometric Analysis} (2000) for details.
+
+Caminho de Menu:    /Model/Time series/Cochrane-Orcutt
+
+Caminho de Menu:    /Model/Time series/Hildreth-Lu
+
+Caminho de Menu:    /Model/Time series/Prais-Winsten
 
 \subsection{arbond}
 \hypertarget{cmd-arbond}{}
@@ -427,13 +469,12 @@ Exemplos:    & \texttt{coint 4 y x1 x2} \\
  & \verb@coint 0 y x1 x2 --ct --skip-df@ \\ 
 \end{tabular}
 
-	O teste de cointegração Engle--Granger.  O procedimento
-        por omissão é: (1) efectuar testes de Dickey--Fuller (DF)
-        segundo a hipótese nula de que cada variável listada tem uma
-        raiz unitária; (2) estima a regressão de cointegração; e (3) 
-        executar um teste DF sobre os resíduos da regressão de 
-        cointegração. Se for dada a opção \verb@--skip-df@, o passo
-        (1) é omitido.
+	O teste de cointegração Engle--Granger.  O procedimento 
+        por omissão é: (1) efectuar testes de Dickey--Fuller (DF) 
+        segundo a hipótese nula de que cada variável listada tem uma raiz 
+        unitária; (2) estima a regressão de cointegração; e (3)executar um 
+        teste DF sobre os resíduos da regressão de cointegração. Se for 
+        dada a opção \verb@--skip-df@, o passo (1) é omitido.
 
 	Se a ordem de 'lag' especificada é positiva, todos os testes
 	Dickey--Fuller usam essa ordem.  Se a ordem for antecedida
@@ -513,22 +554,6 @@ Exemplos:    & \texttt{coint2 2 y x} \\
 	Ver também o comando \hyperlink{cmd-vecm}{vecm}.
 
 Caminho de Menu:    /Modelo/Série temporal/Testes de Cointegração/Johansen
-
-\subsection{corc}
-\hypertarget{cmd-corc}{}
-
-\begin{tabular}{ll}
-Argumentos:  & \textsl{variável-dependente} \textsl{variáveis-independentes} \\
-Opção:       & \verb|--vcv| (mostrar matriz de covariância) \\
-Exemplo:     & \texttt{corc 1 0 2 4 6 7} \\ 
-\end{tabular}
-
-	Calcula estimativas dos parâmetros usando o procedimento iterado de 
-        Cochrane--Orcutt (ver na Secção 9.4 de Ramanathan, 2002).  As
-        iterações terminam quando estimativas sucessivas do coeficiente de
-        autocorrelação diferem menos que 0,001 ou após 20 iterações.
-
-Caminho de Menu:    /Modelo/Série temporal/Cochrane-Orcutt
 
 \subsection{corr}
 \hypertarget{cmd-corr}{}
@@ -911,6 +936,10 @@ Opções:      & \verb|--drop-first| (omit lowest value from encoding) \\
 	ols y dummify(x)
       \end{code}
 
+\subsection{elif}
+\hypertarget{cmd-elif}{}
+See \hyperlink{cmd-if}{if}.
+
 \subsection{else}
 \hypertarget{cmd-else}{}
 See \hyperlink{cmd-if}{if}.
@@ -1048,65 +1077,24 @@ Exemplos:    & \texttt{fcast 1997:1 2001:4 f1} \\
 
 Caminho de Menu:    Janela do modelo, /Analysis/Forecasts
 
-\subsection{fcasterr}
-\hypertarget{cmd-fcasterr}{}
+\subsection{foreign}
+\hypertarget{cmd-foreign}{}
 
 \begin{tabular}{ll}
-Argumentos:  & \textsl{startobs} \textsl{endobs} \\
-Opções:      & \verb|--plot| (display graph) \\
- & \verb|--dynamic| (create dynamic forecast) \\
- & \verb|--static| (create static forecast) \\
+Argumento:   & \texttt{[} \textsl{language-spec} \texttt{]} \\
+Opções:      & \verb|--send-data| (pre-load the current dataset) \\
+ & \verb|--quiet| (suppress output from foreign program) \\
 \end{tabular}
 
-	After estimating a model you can use this command to print out
-	fitted values over the specified observation range, along with
-	(depending on the nature of the model and the available data)
-	estimated standard errors of those predictions and 95 percent
-	confidence intervals.
+	This command opens a special mode in which commands to be executed by
+	another program are accepted.  You exit this mode with \texttt{end	  foreign}; at this point the stacked commands are executed.
 
-	The choice between a static and a dynamic forecast applies
-	only in the case of dynamic models, with an autoregressive
-	error process or including one or more lagged values of the
-	dependent variable as regressors.  Static forecasts are one
-	step ahead, based on realized values from the previous period,
-	while dynamic forecasts employ the chain rule of forecasting.
-	For example, if a forecast for y in 2008
-	requires as input a value of y for 2007, a
-	static forecast is impossible without actual data for 2007.  A
-	dynamic forecast for 2008 is possible if a prior forecast can
-	be substituted for y in 2007.
+	At present the only ``foreign'' program supported in this
+	way is GNU R, and the only acceptable \textsl{language-spec} is
+	\texttt{language=R} (which is implicit, and may be omitted).  In
+	future other programs may be supported.
 
-	The default is to give a static forecast for any portion of
-	the forecast range that lies with the sample range over which
-	the model was estimated, and a dynamic forecast (if relevant)
-	out of sample.  The \texttt{dynamic} option requests a
-	dynamic forecast from the earliest possible date, and the
-	\texttt{static} option requests a static forecast even out
-	of sample.  
-
-	The nature of the forecast standard errors (if available)
-	depends on the nature of the model and the forecast.  For
-	static linear models standard errors are computed using
-	the method outlined by Davidson and MacKinnon (2004); they
-	incorporate both uncertainty due to the error process and
-	parameter uncertainty (summarized in the covariance matrix of
-	the parameter estimates).  For dynamic models, forecast
-	standard errors are computed only in the case of a dynamic
-	forecast, and they do not incorporate parameter uncertainty.
-	For nonlinear models, forecast standard errors are not
-	presently available.
-
-Caminho de Menu:    Janela do modelo, /Analysis/Forecasts
-
-\subsection{fit}
-\hypertarget{cmd-fit}{}
-
-	A shortcut to \hyperlink{cmd-fcast}{fcast}. Must follow an estimation
-	command.  Generates fitted values, in a series called
-	\texttt{autofit}, for the current sample, based on the last
-	regression.  In the case of time-series models, also pops up a
-	graph of fitted and actual values of the dependent variable
-	against time.
+	See \GUG{} for details and examples.
 
 \subsection{freq}
 \hypertarget{cmd-freq}{}
@@ -1848,27 +1836,6 @@ Caminho de Menu:    /Model/Nonlinear models/Heckit
 
 Caminho de Menu:    /Help
 
-\subsection{hilu}
-\hypertarget{cmd-hilu}{}
-
-\begin{tabular}{ll}
-Argumentos:  & \textsl{variável-dependente} \textsl{variáveis-independentes} \\
-Opções:      & \verb|--vcv| (mostrar matriz de covariância) \\
- & \verb|--no-corc| (do not fine-tune results with Cochrane-Orcutt) \\
-\end{tabular}
-
-Computes parameter estimates for the specified model using
-	the Hildreth--Lu search procedure.  The results are
-	fine-tuned using the Cochrane--Orcutt iterative method,
-	unless the \verb@--no-corc@ flag is specified.
-
-	This procedure is designed to correct for serial correlation
-	of the error term.  The error sum of squares of the
-	transformed model is graphed against the value of rho from
-	$-$0.99 to 0.99.
-
-Caminho de Menu:    /Modelo/Série temporal/Hildreth-Lu
-
 \subsection{hsk}
 \hypertarget{cmd-hsk}{}
 
@@ -1938,20 +1905,40 @@ Caminho de Menu:    /Variável/Hurst exponent
 
 \subsection{if}
 \hypertarget{cmd-if}{}
-Flow control for command execution.  The syntax is:
+Flow control for command execution.  Three sorts of
+	construction are supported, as follows.
 
 \begin{raggedright}
+	\verb@# simple form@\\
 	\texttt{if} \textsl{condition}\\
-	\texttt{  } \textsl{commands1}\\
-	\texttt{else}\\
-	\texttt{  } \textsl{commands2}\\
+	\texttt{ }\texttt{ } \textsl{commands}\\
 	\texttt{endif}
       \end{raggedright}
 
-\textsl{condition} must be a Boolean expression, for
-	the syntax of which see \hyperlink{cmd-genr}{genr}.  The
-	else block is optional; \texttt{if} \dots{}
-	\texttt{endif} blocks may be nested.
+\begin{raggedright}
+	\verb@# two branches@\\
+	\texttt{if} \textsl{condition}\\
+	\texttt{ }\texttt{ } \textsl{commands1}\\
+	\texttt{else}\\
+	\texttt{ }\texttt{ } \textsl{commands2}\\
+	\texttt{endif}
+      \end{raggedright}
+
+\begin{raggedright}
+	\verb@# three or more branches@\\
+	\texttt{if} \textsl{condition1}\\
+	\texttt{ }\texttt{ } \textsl{commands1}\\
+	\texttt{elif} \textsl{condition2}\\
+	\texttt{ }\texttt{ } \textsl{commands2}\\
+	\texttt{else}\\
+	\texttt{ }\texttt{ } \textsl{commands3}\\
+	\texttt{endif}
+      \end{raggedright}
+
+	\textsl{condition} must be a Boolean expression, for
+	the syntax of which see \hyperlink{cmd-genr}{genr}.  More than one
+	elif block may be included.  In addition, \texttt{if}
+	\dots{} \texttt{endif} blocks may be nested.
 
 \subsection{include}
 \hypertarget{cmd-include}{}
@@ -1983,19 +1970,19 @@ Acesso alternativo: Data browser windows
 \hypertarget{cmd-kpss}{}
 
 \begin{tabular}{ll}
-Argumentos:  & \textsl{ordem} \textsl{nome-de-variável} \\
+Argumentos:  & \textsl{order} \textsl{varlist} \\
 Opções:      & \verb|--trend| (include a trend) \\
- & \verb|--verbose| (mostrar resultados da regressão) \\
- & \verb|--quiet| (não mostrar resultados da regressão) \\
- & \verb|--difference| (usar a primeira diferença da variável) \\
+ & \verb|--verbose| (print regression results) \\
+ & \verb|--quiet| (suppress printing of results) \\
+ & \verb|--difference| (use first difference of variable) \\
 Exemplos:    & \texttt{kpss 8 y} \\ 
  & \verb@kpss 4 x1 --trend@ \\ 
 \end{tabular}
 
 	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and Shin,
-	1992) for stationarity of the specified variable (or its first
-	difference, if the \verb@--difference@ option is selected).
-	The null hypothesis is that the variable in question is
+	1992) for stationarity, for each of the specified variables (or
+	their first difference, if the \verb@--difference@ option is
+	selected). The null hypothesis is that the variable in question is
 	stationary, either around a level or, if the \verb@--trend@
 	option is given, around a deterministic linear trend.  
 
@@ -2005,7 +1992,7 @@ Exemplos:    & \texttt{kpss 8 y} \\
 	along with the estimated variance of the random walk component
 	of the variable.
 
-Caminho de Menu:    /Variável/KPSS test
+Caminho de Menu:    /Variable/KPSS test
 
 \subsection{labels}
 \hypertarget{cmd-labels}{}
@@ -2018,8 +2005,8 @@ Caminho de Menu:    /Variável/KPSS test
 \hypertarget{cmd-lad}{}
 
 \begin{tabular}{ll}
-Argumentos:  & \textsl{variável-dependente} \textsl{variáveis-independentes} \\
-Opção:       & \verb|--vcv| (mostrar matriz de covariância) \\
+Argumentos:  & \textsl{depvar} \textsl{indepvars} \\
+Opção:       & \verb|--vcv| (print covariance matrix) \\
 \end{tabular}
 
 	Calculates a regression that minimizes the sum of the absolute
@@ -2039,14 +2026,14 @@ Caminho de Menu:    /Model/Robust estimation/Least Absolute Deviation
 \hypertarget{cmd-lags}{}
 
 \begin{tabular}{ll}
-Variantes:   & \texttt{lags} \textsl{lista-de-variáveis}\\
- & \texttt{lags} \textsl{order} \texttt{;} \textsl{lista-de-variáveis}\\
+Variantes:   & \texttt{lags} \textsl{varlist}\\
+ & \texttt{lags} \textsl{order} \texttt{;} \textsl{varlist}\\
 Exemplos:    & \texttt{lags x y} \\ 
  & \texttt{lags 12 ; x y} \\ 
 \end{tabular}
 
 	Creates new variables which are lagged values of each of the variables in
-	\textsl{lista-de-variáveis}.  By default the number of lagged variables equals the
+	\textsl{varlist}.  By default the number of lagged variables equals the
 	periodicity of the data. For example, if the periodicity is 4 (quarterly),
 	the command lags x creates
 
@@ -2055,7 +2042,7 @@ Exemplos:    & \texttt{lags x y} \\
 	x_2 = x(t-2)
 	x_3 = x(t-3)
 	x_4 = x(t-4)
-\end{code}
+      \end{code}
 
 	The number of lags created can be controlled by the optional
 	first parameter.
@@ -2066,18 +2053,18 @@ Caminho de Menu:    /Add/Lags of selected variables
 \hypertarget{cmd-ldiff}{}
 
 \begin{tabular}{ll}
-Argumento:   & \textsl{lista-de-variáveis} \\
+Argumento:   & \textsl{varlist} \\
 \end{tabular}
 
 	The first difference of the natural log of each variable in
-	\textsl{lista-de-variáveis} is obtained and the result stored in a
+	\textsl{varlist} is obtained and the result stored in a
 	new variable with the prefix \verb@ld_@.  Thus ldiff
 	  x y creates the new variables
 
 \begin{code}
 	ld_x = log(x) - log(x(-1))
 	ld_y = log(y) - log(y(-1))
-\end{code}
+      \end{code}
 Caminho de Menu:    /Add/Log differences of selected variables
 
 \subsection{leverage}
@@ -2088,16 +2075,16 @@ Opção:       & \verb|--save| (save variables) \\
 \end{tabular}
 
 	Must immediately follow an ols command. Calculates
-	the leverage (h, which must lie in the
+	the leverage (\ensuremath{h}, which must lie in the
 	range 0 to 1) for each data point in the sample on which the
 	previous model was estimated.  Displays the residual
-	(u) for each observation along with its
+	(\ensuremath{u}) for each observation along with its
 	leverage and a measure of its influence on the estimates, 
 	  $uh/(1 - h)$. ``Leverage points'' for
-	which the value of h exceeds
-	2k/n (where
-	k is the number of parameters being
-	estimated and n is the sample size) are
+	which the value of \ensuremath{h} exceeds
+	2\ensuremath{k}/\ensuremath{n} (where
+	\ensuremath{k} is the number of parameters being
+	estimated and \ensuremath{n} is the sample size) are
 	flagged with an asterisk.  For details on the concepts of
 	leverage and influence see Davidson and MacKinnon (1993,
 	Chapter 2).
@@ -2112,10 +2099,10 @@ Opção:       & \verb|--save| (save variables) \\
 
 	Briefly, a ``predicted residual'' is the difference
 	between the observed value of the dependent variable at
-	observation t, and the fitted value for
-	observation t obtained from a regression in
+	observation \ensuremath{t}, and the fitted value for
+	observation \ensuremath{t} obtained from a regression in
 	which that observation is omitted (or a dummy variable with
-	value 1 for observation t alone has been
+	value 1 for observation \ensuremath{t} alone has been
 	added); the studentized residual is obtained by dividing the
 	predicted residual by its standard error.
 
@@ -2123,7 +2110,7 @@ If the \verb@--save@ flag is given with
 	this command, then the leverage, influence and DFFITS values
 	are added to the current data set.
 
-Caminho de Menu:    Janela do modelo, /Testes/Influential observations
+Caminho de Menu:    Model window, /Tests/Influential observations
 
 \subsection{lmtest}
 \hypertarget{cmd-lmtest}{}
@@ -2499,34 +2486,6 @@ Opções:      & \verb|--vcv| (mostrar matriz de covariância) \\
       \end{code}
 Caminho de Menu:    /Model/Other linear models/High precision OLS
 
-\subsection{multiply}
-\hypertarget{cmd-multiply}{}
-
-\begin{tabular}{ll}
-Argumentos:  & \textsl{x} \textsl{suffix} \textsl{lista-de-variáveis} \\
-Exemplos:    & \texttt{multiply invpop pc 3 4 5 6} \\ 
- & \texttt{multiply 1000 big x1 x2 x3} \\ 
-\end{tabular}
-
-	The variables in \textsl{lista-de-variáveis} (referenced by name or
-	number) are multiplied by \textsl{x}, which may be either
-	a numerical value or the name of a variable already defined.
-	The products are named with the specified \textsl{suffix}
-	(maximum 3 characters). The original variable names are
-	truncated first if need be. For instance, suppose you want to
-	create per capita versions of certain variables, and you have
-	the variable \texttt{pop} (population).  A suitable set of
-	commands is then:
-
-\begin{code}
-	genr invpop = 1/pop
-	multiply invpop pc income
-\end{code}
-which will create \texttt{incomepc} as the product of
-	\texttt{income} and \texttt{invpop}, and
-	\texttt{expendpc} as \texttt{expend} times
-	\texttt{invpop}.
-
 \subsection{nls}
 \hypertarget{cmd-nls}{}
 
@@ -2605,6 +2564,34 @@ For further details on NLS estimation please see
 	\GUG{}.
 
 Caminho de Menu:    /Model/Nonlinear models/Nonlinear Least Squares
+
+\subsection{normtest}
+\hypertarget{cmd-normtest}{}
+
+\begin{tabular}{ll}
+Argumento:   & \textsl{series} \\
+Opções:      & \verb|--dhansen| (Doornik--Hansen test) \\
+ & \verb|--swilk| (Shapiro--Wilk test) \\
+ & \verb|--lillie| (Lilliefors test) \\
+ & \verb|--jbera| (Jarque--Bera test) \\
+ & \verb|--all| (do all tests) \\
+ & \verb|--quiet| (suppress printed output) \\
+\end{tabular}
+
+	Carries out a test for normality for the given
+	\textsl{series}.  The specific test is controlled by the
+	option flags (but if no flag is given, the Doornik--Hansen
+	test is performed).  Note: the Doornik--Hansen and
+	Shapiro--Wilk tests are recommended over the others, on
+	account of their superior small-sample properties.
+
+	The test statistic and its p-value may be retrieved
+	using the accessors \verb@$test@ and \verb@$pvalue@.
+	Please note that if the \verb@--all@ option is given,
+	the result recorded is that from the Doornik--Hansen
+	test.
+
+Caminho de Menu:    /Variable/Normality test
 
 \subsection{nulldata}
 \hypertarget{cmd-nulldata}{}
@@ -2781,6 +2768,25 @@ Exemplos:    & \texttt{open data4-1} \\
 Caminho de Menu:    /Ficheiro/Open data
 
 Acesso alternativo: Drag a data file into gretl (MS Windows or Gnome)
+
+\subsection{orthdev}
+\hypertarget{cmd-orthdev}{}
+
+\begin{tabular}{ll}
+Argumento:   & \textsl{varlist} \\
+\end{tabular}
+
+	Applicable with panel data only. A series of forward orthogonal
+	deviations is obtained for each variable in \textsl{varlist} and
+	stored in a new variable with the prefix \verb@o_@. Thus
+	orthdev x y creates the new variables \verb@o_x@ and
+	\verb@o_y@.
+
+	The values are stored one step ahead of their true temporal location
+	(that is, \verb@o_x@ at observation \ensuremath{t} holds the
+	deviation that, strictly speaking, belongs at \ensuremath{t} $-$
+	1).  This is for compatibility with first differences: one loses the
+	first observation in each time series, not the last.
 
 \subsection{outfile}
 \hypertarget{cmd-outfile}{}
@@ -3146,26 +3152,6 @@ Exemplos:    & \texttt{pvalue z zscore} \\
 
 Caminho de Menu:    /Tools/P-value finder
 
-\subsection{pwe}
-\hypertarget{cmd-pwe}{}
-
-\begin{tabular}{ll}
-Argumentos:  & \textsl{variável-dependente} \textsl{variáveis-independentes} \\
-Opção:       & \verb|--vcv| (mostrar matriz de covariância) \\
-Exemplo:     & \texttt{pwe 1 0 2 4 6 7} \\ 
-\end{tabular}
-
-	Computes parameter estimates using the Prais--Winsten
-	procedure, an implementation of feasible GLS which is designed
-	to handle first-order autocorrelation of the error term.  The
-	procedure is iterated, as with \hyperlink{cmd-corc}{corc}; the
-	difference is that while Cochrane--Orcutt discards the
-	first observation, Prais--Winsten makes use of it. See,
-	for example, Chapter 13 of Greene's \emph{Econometric
-	  Analysis} (2000) for details.
-
-Caminho de Menu:    /Modelo/Série temporal/Prais-Winsten
-
 \subsection{qlrtest}
 \hypertarget{cmd-qlrtest}{}
 
@@ -3186,6 +3172,57 @@ Caminho de Menu:    /Modelo/Série temporal/Prais-Winsten
 	multiple breaks or a slow drifting of the parameters). 
 
 Caminho de Menu:    Janela do modelo, /Testes/Teste QLR test
+
+\subsection{quantreg}
+\hypertarget{cmd-quantreg}{}
+
+\begin{tabular}{ll}
+Argumentos:  & \textsl{tau} \textsl{depvar} \textsl{indepvars} \\
+Opções:      & \verb|--robust| (robust standard errors) \\
+ & \verb|--intervals|\texttt{[}=\textsl{level}\texttt{]} (compute confidence intervals) \\
+ & \verb|--vcv| (print covariance matrix) \\
+Exemplos:    & \texttt{quantreg 0.25 y 0 xlist} \\ 
+ & \verb@quantreg 0.5 y 0 xlist --intervals@ \\ 
+ & \verb@quantreg 0.5 y 0 xlist --intervals=.95@ \\ 
+ & \verb@quantreg tauvec y 0 xlist --robust@ \\ 
+ & Ver também\verb@mrw_qr.inp@
+\end{tabular}
+
+	Quantile regression.  The first argument, \textsl{tau}, is the
+	conditional quantile for which estimates are wanted.  It may be given
+	either as a numerical value or as the name of a pre-defined scalar
+	variable; the value must be in the range 0.01 to 0.99. (Alternatively,
+	a vector of values may be given for \textsl{tau}; see below for
+	details.) The second and subsequent arguments compose a regression
+	list on the same pattern as \hyperlink{cmd-ols}{ols}.
+
+	Without the \verb@--intervals@ option, standard errors are printed
+	for the quantile estimates.  By default, these are computed according
+	to the asymptotic formula given by Koenker and Bassett (1978), but if
+	the \verb@--robust@ option is given, standard errors that are
+	robust with respect to heteroskedasticity are calculated using the
+	method of Koenker and Zhao (1994).
+
+	When the \verb@--intervals@ option is chosen, confidence intervals
+	are given for the parameter estimates instead of standard errors.
+	These intervals are computed using the rank inversion method, and in
+	general they are asymmetrical about the point estimates.  The specifics
+	of the calculation are inflected by the \verb@--robust@ option:
+	without this, the intervals are computed on the assumption of IID
+	errors (Koenker, 1994); with it, they use the robust estimator
+	developed by Koenker and Machado (1999).
+
+	By default, 90 percent confidence intervals are produced.  You can
+	change this by appending a confidence level (expressed as a decimal
+	fraction) to the intervals option, as in \verb@--intervals=0.95@.
+
+	Vector-valued \textsl{tau}:  instead of supplying a scalar, you
+	may give the name of a pre-defined matrix.  In this case estimates are
+	computed for all the given \textsl{tau} values and the results are
+	printed in a special format, showing the sequence of quantile
+	estimates for each regressor in turn.
+
+Caminho de Menu:    /Model/Robust estimation/Quantile regression
 
 \subsection{quit}
 \hypertarget{cmd-quit}{}
@@ -3844,6 +3881,88 @@ Opção:       & \verb|--cross| (generate cross-products as well as squares) \\
 
 Caminho de Menu:    /Add/Squares of selected variables
 
+\subsection{sscanf}
+\hypertarget{cmd-sscanf}{}
+
+\begin{tabular}{ll}
+Argumentos:  & \textsl{source} \texttt{, }\textsl{format} \texttt{, }\textsl{args} \\
+\end{tabular}
+
+	Scans the string \textsl{source} under the control of
+	\textsl{format}, assigning zero or more values to the
+	given \textsl{args}. This is a simplifed version of the
+	\texttt{sscanf} function in the C programming language.
+
+	\textsl{source} may be either a literal string, enclosed in double
+	quotes, or the name of a predefined string variable.
+	\textsl{format} is defined similarly to the format string in
+	\hyperlink{cmd-printf}{printf} (more on this below). \textsl{args} should
+	be a comma-separated list containing the names of pre-defined
+	variables: these are the targets of conversion from
+	\textsl{source}.  (For those used to C: one can prefix the names
+	of numerical variables with \verb@&@ but this is not
+	required.)
+
+	Literal	text in \textsl{format} is matched against
+	\textsl{source}.  Conversion specifiers start with
+	\verb@%@, and recognized conversions include \verb@%f@,
+	\verb@%g@ or \verb@%lf@ for floating-point numbers;
+	\verb@%d@ for integers; \verb@%s@ for strings; and
+	\verb@%m@ for matrices.  You may insert a positive integer
+	after the percent sign: this sets the maximum number of characters
+	to read for the given conversion (or the maximum number of rows in
+	the case of matrix conversion). Alternatively, you can insert a
+	literal \texttt{*} after the percent to suppress the conversion
+	(thereby skipping any characters that would otherwise have been
+	converted for the given type).  For example, \verb@%3d@
+	converts the next 3 characters in \textsl{source} to an
+	integer, if possible; \verb@%*g@ skips as many characters in
+	\textsl{source} as could be converted to a single
+	floating-point number.
+
+	Matrix conversion works thus: the scanner reads a line of input
+	and counts the (space- or tab-separated) number of numeric fields.
+	This defines the number of columns in the matrix.  By default,
+	reading then proceeds for as many lines (rows) as contain the same
+	number of numeric columns, but the maximum number of rows to read
+	can be limited as described above.
+
+	In addition to \verb@%s@ conversion for strings, a simplified
+	version of the C format
+	\verb@%@\textsl{N}\texttt{[}\textsl{chars}\texttt{]} 
+	is available.  In this format \textsl{N} is the maximum number
+	of characters to read and \textsl{chars} is a set of
+	acceptable characters, enclosed in square brackets: reading stops
+	if \textsl{N} is reached or if a character not in
+	\textsl{chars} is encountered. The function of
+	\textsl{chars} can be reversed by giving a circumflex,
+	\verb@^@, as the first character; in that case reading stops
+	if a character in the given set is found.  (Unlike C, the hyphen
+	does not play a special role in the \textsl{chars} set.)
+
+	If the source string does not (fully) match the format, the number
+	of conversions may fall short of the number of arguments given.
+	This is not in itself an error so far as gretl is concerned.
+	However, you may wish to check the number of conversions
+	performed; this is given by the built-in scalar variable
+	\verb@$nscan@, whose value is refreshed every time
+	\texttt{sscanf} is called.  The number of conversions is also
+	printed, in interactive use.
+
+	Some examples follow:
+
+\begin{code}
+	scalar x
+	scalar y
+	sscanf "123456", "%3d%3d", x, y
+
+	sprintf S "1 2 3 4\n5 6 7 8"
+	S
+	matrix m
+	sscanf S, "%m", m
+	print m
+      \end{code}
+
 \subsection{store}
 \hypertarget{cmd-store}{}
 
@@ -3900,31 +4019,6 @@ Opções:      & \verb|--csv| (use CSV format) \\
 	replaces the variable of the same name in the original dataset.
 
 Caminho de Menu:    /Ficheiro/Save data; /File/Export data
-
-\subsection{string}
-\hypertarget{cmd-string}{}
-
-\begin{tabular}{ll}
-Argumentos:  & \textsl{stringvar} \texttt{= }\textsl{expression} \\
-Exemplos:    & \texttt{string mystr = "P-value: "} \\ 
- & \texttt{string homedir = getenv("HOME")} \\ 
-\end{tabular}
-
-	Saves a string named \textsl{stringvar}.  The
-	\textsl{expression} can take the following forms: a literal
-	string, enclosed in double quotes; a series of such strings,
-	separated by spaces (these strings will be concatenated); or
-	a call to the \texttt{getenv} function to retrieve a string
-	from the program's environment.
-
-	After defining a string variable in this way, the variable can be
-	printed using its name preceded by \texttt{@}, as in
-
-\begin{code}
-	print "mystr = @mystr"
-      \end{code}
-
-	See also \hyperlink{cmd-printf}{printf},  \hyperlink{cmd-sprintf}{sprintf}.
 
 \subsection{summary}
 \hypertarget{cmd-summary}{}

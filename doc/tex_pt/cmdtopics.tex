@@ -4,34 +4,37 @@
 {\small
 \begin{longtable}{lp{2in}lp{2in}}
 \cmd{\hyperlink{cmd-ar}{ar}} & Estimação autoregressiva & 
-\cmd{\hyperlink{cmd-arbond}{arbond}} & Modelos de painel dinâmico \\
+\cmd{\hyperlink{cmd-ar1}{ar1}} & AR(1) estimation \\
 
-\cmd{\hyperlink{cmd-arima}{arima}} & Modelo ARMA & 
-\cmd{\hyperlink{cmd-equation}{equation}} & Define equation within a system \\
+\cmd{\hyperlink{cmd-arbond}{arbond}} & Modelos de painel dinâmico & 
+\cmd{\hyperlink{cmd-arima}{arima}} & Modelo ARMA \\
 
-\cmd{\hyperlink{cmd-estimate}{estimate}} & Estimate system of equations & 
-\cmd{\hyperlink{cmd-garch}{garch}} & GARCH model \\
+\cmd{\hyperlink{cmd-equation}{equation}} & Define equation within a system & 
+\cmd{\hyperlink{cmd-estimate}{estimate}} & Estimate system of equations \\
 
-\cmd{\hyperlink{cmd-gmm}{gmm}} & GMM estimation & 
-\cmd{\hyperlink{cmd-hccm}{hccm}} & HCCM estimation \\
+\cmd{\hyperlink{cmd-garch}{garch}} & GARCH model & 
+\cmd{\hyperlink{cmd-gmm}{gmm}} & GMM estimation \\
 
-\cmd{\hyperlink{cmd-heckit}{heckit}} & Heckman selection model & 
-\cmd{\hyperlink{cmd-hsk}{hsk}} & Heteroskedasticity-corrected estimates \\
+\cmd{\hyperlink{cmd-hccm}{hccm}} & HCCM estimation & 
+\cmd{\hyperlink{cmd-heckit}{heckit}} & Heckman selection model \\
 
-\cmd{\hyperlink{cmd-lad}{lad}} & Least Absolute Deviation estimation & 
-\cmd{\hyperlink{cmd-logistic}{logistic}} & Logistic regression \\
+\cmd{\hyperlink{cmd-hsk}{hsk}} & Heteroskedasticity-corrected estimates & 
+\cmd{\hyperlink{cmd-lad}{lad}} & Least Absolute Deviation estimation \\
 
-\cmd{\hyperlink{cmd-logit}{logit}} & Logit regression & 
-\cmd{\hyperlink{cmd-mle}{mle}} & Maximum likelihood estimation \\
+\cmd{\hyperlink{cmd-logistic}{logistic}} & Logistic regression & 
+\cmd{\hyperlink{cmd-logit}{logit}} & Logit regression \\
 
-\cmd{\hyperlink{cmd-mpols}{mpols}} & Multiple-precision OLS & 
-\cmd{\hyperlink{cmd-nls}{nls}} & Nonlinear Least Squares \\
+\cmd{\hyperlink{cmd-mle}{mle}} & Maximum likelihood estimation & 
+\cmd{\hyperlink{cmd-mpols}{mpols}} & Multiple-precision OLS \\
 
-\cmd{\hyperlink{cmd-ols}{ols}} & Ordinary Least Squares & 
-\cmd{\hyperlink{cmd-panel}{panel}} & Panel models \\
+\cmd{\hyperlink{cmd-nls}{nls}} & Nonlinear Least Squares & 
+\cmd{\hyperlink{cmd-ols}{ols}} & Ordinary Least Squares \\
 
-\cmd{\hyperlink{cmd-poisson}{poisson}} & Poisson estimation & 
-\cmd{\hyperlink{cmd-probit}{probit}} & Probit model \\
+\cmd{\hyperlink{cmd-panel}{panel}} & Panel models & 
+\cmd{\hyperlink{cmd-poisson}{poisson}} & Poisson estimation \\
+
+\cmd{\hyperlink{cmd-probit}{probit}} & Probit model & 
+\cmd{\hyperlink{cmd-quantreg}{quantreg}} & Quantile regression \\
 
 \cmd{\hyperlink{cmd-system}{system}} & Systems of equations & 
 \cmd{\hyperlink{cmd-tobit}{tobit}} & Tobit model \\
@@ -71,18 +74,19 @@
 \cmd{\hyperlink{cmd-lmtest}{lmtest}} & LM tests & 
 \cmd{\hyperlink{cmd-meantest}{meantest}} & Difference of means \\
 
-\cmd{\hyperlink{cmd-omit}{omit}} & Omit variables & 
-\cmd{\hyperlink{cmd-qlrtest}{qlrtest}} & Quandt likelihood ratio test \\
+\cmd{\hyperlink{cmd-normtest}{normtest}} & Normality test & 
+\cmd{\hyperlink{cmd-omit}{omit}} & Omit variables \\
 
-\cmd{\hyperlink{cmd-reset}{reset}} & Ramsey's RESET & 
-\cmd{\hyperlink{cmd-restrict}{restrict}} & Linear restrictions \\
+\cmd{\hyperlink{cmd-qlrtest}{qlrtest}} & Quandt likelihood ratio test & 
+\cmd{\hyperlink{cmd-reset}{reset}} & Ramsey's RESET \\
 
-\cmd{\hyperlink{cmd-runs}{runs}} & Runs test & 
-\cmd{\hyperlink{cmd-testuhat}{testuhat}} & Normality of residual \\
+\cmd{\hyperlink{cmd-restrict}{restrict}} & Linear restrictions & 
+\cmd{\hyperlink{cmd-runs}{runs}} & Runs test \\
 
-\cmd{\hyperlink{cmd-vartest}{vartest}} & Difference of variances & 
-\cmd{\hyperlink{cmd-vif}{vif}} & Variance Inflation Factors \\
+\cmd{\hyperlink{cmd-testuhat}{testuhat}} & Normality of residual & 
+\cmd{\hyperlink{cmd-vartest}{vartest}} & Difference of variances \\
 
+\cmd{\hyperlink{cmd-vif}{vif}} & Variance Inflation Factors & 
 \end{longtable}
 }
 
@@ -100,10 +104,12 @@
 \cmd{\hyperlink{cmd-ldiff}{ldiff}} & Log-differences & 
 \cmd{\hyperlink{cmd-logs}{logs}} & Create logs \\
 
-\cmd{\hyperlink{cmd-rhodiff}{rhodiff}} & Quasi-differencing & 
-\cmd{\hyperlink{cmd-sdiff}{sdiff}} & Seasonal differencing \\
+\cmd{\hyperlink{cmd-orthdev}{orthdev}} & Orthogonal deviations & 
+\cmd{\hyperlink{cmd-rhodiff}{rhodiff}} & Quasi-differencing \\
 
-\cmd{\hyperlink{cmd-square}{square}} & Create squares of variables & 
+\cmd{\hyperlink{cmd-sdiff}{sdiff}} & Seasonal differencing & 
+\cmd{\hyperlink{cmd-square}{square}} & Create squares of variables \\
+
 \end{longtable}
 }
 
@@ -212,21 +218,26 @@
 {\small
 \begin{longtable}{lp{2in}lp{2in}}
 \cmd{\hyperlink{cmd-break}{break}} & Sair de um ciclo & 
-\cmd{\hyperlink{cmd-else}{else}} &  \\
+\cmd{\hyperlink{cmd-elif}{elif}} & Flow control \\
 
-\cmd{\hyperlink{cmd-end}{end}} & End block of commands & 
-\cmd{\hyperlink{cmd-endif}{endif}} &  \\
+\cmd{\hyperlink{cmd-else}{else}} &  & 
+\cmd{\hyperlink{cmd-end}{end}} & End block of commands \\
 
-\cmd{\hyperlink{cmd-endloop}{endloop}} & End a command loop & 
+\cmd{\hyperlink{cmd-endif}{endif}} & Flow control & 
+\cmd{\hyperlink{cmd-endloop}{endloop}} & End a command loop \\
+
+\cmd{\hyperlink{cmd-foreign}{foreign}} & Non-native script & 
 \cmd{\hyperlink{cmd-function}{function}} & Define a function \\
 
-\cmd{\hyperlink{cmd-if}{if}} &  & 
+\cmd{\hyperlink{cmd-if}{if}} & Flow control & 
 \cmd{\hyperlink{cmd-include}{include}} & Include function definitions \\
 
 \cmd{\hyperlink{cmd-loop}{loop}} & Start a command loop & 
 \cmd{\hyperlink{cmd-run}{run}} & Execute a script \\
 
 \cmd{\hyperlink{cmd-set}{set}} & Set program parameters & 
+\cmd{\hyperlink{cmd-sscanf}{sscanf}} & Scanning a string \\
+
 \end{longtable}
 }
 
