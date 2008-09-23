@@ -339,7 +339,7 @@ static int files_query (char **getbuf, time_t filedate)
     read_proxy_info(&use_proxy, dbproxy);
 #endif
 
-    gretl_www_init(RICARDO, dbproxy, use_proxy);
+    gretl_www_init(GRETLHOST, dbproxy, use_proxy);
 
     return get_update_info(getbuf, filedate, QUERY_SILENT); 
 }
@@ -353,9 +353,9 @@ static int get_remote_file (const char *fname)
     read_proxy_info(&use_proxy, dbproxy);
 #endif
 
-    gretl_www_init(RICARDO, dbproxy, use_proxy);
+    gretl_www_init(GRETLHOST, dbproxy, use_proxy);
 
-    return retrieve_url(RICARDO, GRAB_FILE, fname, NULL, SAVE_TO_FILE, 
+    return retrieve_url(GRETLHOST, GRAB_FILE, fname, NULL, SAVE_TO_FILE, 
 			fname, NULL);
 }
 

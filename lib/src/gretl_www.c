@@ -62,11 +62,11 @@ extern int errno;
 extern int h_errno;
 #endif
 
-#define RICARDO   "ricardo.ecn.wfu.edu"
-#define DATACGI   "/gretl/cgi-bin/gretldata.cgi"
-#define UPDATECGI "/gretl/cgi-bin/gretl_update.cgi"
-#define MPATH     "/pub/gretl/manual/PDF/"
-#define DBHLEN    64
+#define GRETLHOST  "ricardo.ecn.wfu.edu"
+#define DATACGI    "/gretl/cgi-bin/gretldata.cgi"
+#define UPDATECGI  "/gretl/cgi-bin/gretl_update.cgi"
+#define MPATH      "/pub/gretl/manual/PDF/"
+#define DBHLEN     64
 
 static int wproxy;
 static char dbhost[DBHLEN] = "ricardo.ecn.wfu.edu";
@@ -249,7 +249,8 @@ struct urlinfo_ {
     const char *upload;      /* content of file to upload */
     int upsize;              /* size of the above */
     char agent[32];          /* to communicate gretl version */
-    char host[32];           /* host, in IP form */
+    char hostname[64];       /* name of host */
+    char host[32];           /* host IP address */
     char errbuf[80];
     FILE *fp;                /* for saving content locally */
 };
@@ -283,34 +284,39 @@ struct rbuf {
 /* Some status code validation macros: */
 #define H_20X(x)        (((x) >= 200) && ((x) < 300))
 #define H_PARTIAL(x)    ((x) == HTTP_STATUS_PARTIAL_CONTENTS)
-#define H_REDIRECTED(x) (((x) == HTTP_STATUS_MOVED_PERMANENTLY)	\
-			 || ((x) == HTTP_STATUS_MOVED_TEMPORARILY))
+#define H_REDIRECTED(x) ((x) == HTTP_STATUS_MOVED_PERMANENTLY          \
+                         || (x) == HTTP_STATUS_MOVED_TEMPORARILY       \
+                         || (x) == HTTP_STATUS_SEE_OTHER               \
+                         || (x) == HTTP_STATUS_TEMPORARY_REDIRECT)
 
 /* HTTP/1.0 status codes from RFC1945, provided for reference.  */
 /* Successful 2xx.  */
-#define HTTP_STATUS_OK			200
-#define HTTP_STATUS_CREATED		201
-#define HTTP_STATUS_ACCEPTED		202
-#define HTTP_STATUS_NO_CONTENT		204
-#define HTTP_STATUS_PARTIAL_CONTENTS	206
+#define HTTP_STATUS_OK                    200
+#define HTTP_STATUS_CREATED               201
+#define HTTP_STATUS_ACCEPTED              202
+#define HTTP_STATUS_NO_CONTENT            204
+#define HTTP_STATUS_PARTIAL_CONTENTS      206
 
 /* Redirection 3xx.  */
-#define HTTP_STATUS_MULTIPLE_CHOICES	300
-#define HTTP_STATUS_MOVED_PERMANENTLY	301
-#define HTTP_STATUS_MOVED_TEMPORARILY	302
-#define HTTP_STATUS_NOT_MODIFIED	304
+#define HTTP_STATUS_MULTIPLE_CHOICES      300
+#define HTTP_STATUS_MOVED_PERMANENTLY     301
+#define HTTP_STATUS_MOVED_TEMPORARILY     302
+#define HTTP_STATUS_SEE_OTHER             303 /* from HTTP/1.1 */
+#define HTTP_STATUS_NOT_MODIFIED          304
+#define HTTP_STATUS_TEMPORARY_REDIRECT    307 /* from HTTP/1.1 */
 
 /* Client error 4xx.  */
-#define HTTP_STATUS_BAD_REQUEST		400
-#define HTTP_STATUS_UNAUTHORIZED	401
-#define HTTP_STATUS_FORBIDDEN		403
-#define HTTP_STATUS_NOT_FOUND		404
+#define HTTP_STATUS_BAD_REQUEST           400
+#define HTTP_STATUS_UNAUTHORIZED          401
+#define HTTP_STATUS_FORBIDDEN             403
+#define HTTP_STATUS_NOT_FOUND             404
+#define HTTP_STATUS_RANGE_NOT_SATISFIABLE 416
 
 /* Server errors 5xx.  */
-#define HTTP_STATUS_INTERNAL		500
-#define HTTP_STATUS_NOT_IMPLEMENTED	501
-#define HTTP_STATUS_BAD_GATEWAY		502
-#define HTTP_STATUS_UNAVAILABLE		503
+#define HTTP_STATUS_INTERNAL              500
+#define HTTP_STATUS_NOT_IMPLEMENTED       501
+#define HTTP_STATUS_BAD_GATEWAY           502
+#define HTTP_STATUS_UNAVAILABLE           503
 
 enum {
     HG_OK, 
@@ -346,19 +352,22 @@ static char *w_strdup (const char *src)
     return targ;
 }
 
-static int get_host_ip (char *h_ip, const char *h_name)
+static int get_host_ip (urlinfo *u, const char *h_name)
 {
     struct hostent *h_ent = gethostbyname(h_name);
 
     if (h_ent == NULL) {
-	*h_ip = '\0';
+	*u->host = '\0';
 #ifndef WIN32
 	herror(NULL);
 #endif
 	return 1;
     }
 
-    sprintf(h_ip, "%d.%d.%d.%d", 
+    *u->hostname = '\0';
+    strncat(u->hostname, h_name, 63);
+
+    sprintf(u->host, "%d.%d.%d.%d", 
 	   (unsigned char) h_ent->h_addr[0], 
 	   (unsigned char) h_ent->h_addr[1], 
 	   (unsigned char) h_ent->h_addr[2],
@@ -682,6 +691,7 @@ static int http_process_type (const char *hdr, void *arg)
   (x).newloc = (x).remote_time = (x).error = NULL;	\
 } while (0)
 
+#if 0
 static int numdigit (long a)
 {
     int res = 1;
@@ -689,6 +699,7 @@ static int numdigit (long a)
     while ((a /= 10) != 0) ++res;
     return res;
 }
+#endif
 
 static char *herrmsg (int error)
 {
@@ -855,9 +866,15 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 
     cmd = (u->upload != NULL)? "POST" : "GET";
 
+#if 1
+    rlen = strlen(cmd) + strlen(u->path) + strlen(u->agent) +
+	strlen(u->hostname) + strlen(HTTP_ACCEPT) +
+	64;
+#else
     rlen = strlen(cmd) + strlen(u->path) + strlen(u->agent) +
 	strlen(u->host) + numdigit(u->port) + strlen(HTTP_ACCEPT) +
 	64;
+#endif
 
     if (u->upload != NULL) {
 	posthead = malloc(96);
@@ -881,6 +898,21 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 	return NOTENOUGHMEM;
     }
 
+#if 1 /* changed 2008-09-23: use host name here, not IP:port */
+    if (u->params != NULL && u->upload == NULL) {
+	sprintf(request, "%s %s?%s HTTP/1.0\r\n"
+		"User-Agent: %s\r\n"
+		"Host: %s\r\n"
+		"Accept: %s\r\n",
+		cmd, u->path, u->params, u->agent, u->hostname, HTTP_ACCEPT);
+    } else {
+	sprintf(request, "%s %s HTTP/1.0\r\n"
+		"User-Agent: %s\r\n"
+		"Host: %s\r\n"
+		"Accept: %s\r\n",
+		cmd, u->path, u->agent, u->hostname, HTTP_ACCEPT);
+    }
+#else
     if (u->params != NULL && u->upload == NULL) {
 	sprintf(request, "%s %s?%s HTTP/1.0\r\n"
 		"User-Agent: %s\r\n"
@@ -894,6 +926,7 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 		"Accept: %s\r\n",
 		cmd, u->path, u->agent, u->host, u->port, HTTP_ACCEPT);
     }
+#endif
 
     if (posthead != NULL) {
 	strcat(request, posthead);
@@ -903,7 +936,7 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
     strcat(request, "\r\n");
 
 #if WDEBUG > 1
-    fprintf(stderr, "Request:\n%s", request);
+    fprintf(stderr, "---request begin---\n%s---request end---", request);
 #endif
 
     /* Send the request to server */
@@ -917,6 +950,10 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 	fprintf(stderr, "Failed to write to socket\n");
 #endif
 	return WRITEFAILED;
+    } else {
+#if WDEBUG > 1
+	fprintf(stderr, "HTTP request sent, awaiting response...\n");
+#endif
     }
 
     if (u->upload != NULL) {
@@ -971,6 +1008,12 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 	    return HERR;
 	}
 
+#if WDEBUG
+	if (hdr != NULL) {
+	    fprintf(stderr, "%s\n", hdr);
+	}
+#endif
+
 	/* Check for status line */
 	if (hcount == 1) {
 	    const char *error;
@@ -993,7 +1036,7 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 	    goto done_header;
 	}
 
-#if WDEBUG
+#if WDEBUG > 8
 	fprintf(stderr, "hs->error: '%s'\n", hs->error);
 #endif
 
@@ -1059,11 +1102,11 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
     }
 
     /* 20x responses are counted among successful by default */
-    if (H_20X (statcode)) {
+    if (H_20X(statcode)) {
 	*dt |= RETROKF;
     }
 
-    if (type && !strncasecmp (type, TEXTHTML_S, strlen (TEXTHTML_S))) {
+    if (type && !strncasecmp(type, TEXTHTML_S, strlen(TEXTHTML_S))) {
 	*dt |= TEXTHTML;
     } else {
 	/* We don't assume text/html by default */
@@ -1073,12 +1116,18 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
     hs->contlen = contlen;
 
     /* Return if redirected */
-    if (H_REDIRECTED (statcode) || statcode == HTTP_STATUS_MULTIPLE_CHOICES) {
+    if (H_REDIRECTED(statcode) || statcode == HTTP_STATUS_MULTIPLE_CHOICES) {
 	if (statcode == HTTP_STATUS_MULTIPLE_CHOICES && !hs->newloc) {
 	    *dt |= RETROKF;
 	} else {
+	    if (hs->newloc) {
+		fprintf(stderr, "hs->newloc = '%s'\n", hs->newloc);
+	    }
 	    close(sock);
 	    free(type);
+#if WDEBUG
+	    fprintf(stderr, "real_get_http: returning NEWLOCATION\n");
+#endif
 	    return NEWLOCATION;
 	}
     }
@@ -1530,7 +1579,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	}
     }
 
-    err = get_host_ip(u->host, host);
+    err = get_host_ip(u, host);
     if (err) {
 	urlinfo_destroy(u, 0);
 	return err;
@@ -1563,6 +1612,9 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
     }
 
     if (getbuf != NULL) {
+#if WDEBUG > 2
+	fprintf(stderr, "getbuf = '%s\n", u->getbuf);
+#endif
 	*getbuf = u->getbuf;
     }    
 
@@ -1665,7 +1717,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 	return E_ALLOC;
     }
 
-    err = get_host_ip(u->host, RICARDO);
+    err = get_host_ip(u, GRETLHOST);
     if (err) {
 	free(u->getbuf);
 	urlinfo_destroy(u, 0);
@@ -1743,7 +1795,7 @@ int upload_function_package (const char *login, const char *pass,
     u->upload = buf;
     u->upsize = strlen(buf) + 1;
 
-    err = get_host_ip(u->host, RICARDO);
+    err = get_host_ip(u, GRETLHOST);
     if (err) {
 	urlinfo_destroy(u, 0);
 	return E_ALLOC;
@@ -1774,7 +1826,7 @@ int list_remote_dbs (char **getbuf)
 
 int list_remote_function_packages (char **getbuf)
 {
-    return retrieve_url (RICARDO, LIST_FUNCS, NULL, NULL, SAVE_TO_BUFFER, 
+    return retrieve_url (GRETLHOST, LIST_FUNCS, NULL, NULL, SAVE_TO_BUFFER, 
 			 NULL, getbuf);
 }
 
@@ -1816,7 +1868,7 @@ int check_remote_db (const char *dbname)
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname)
 {
-    return retrieve_url (RICARDO, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
+    return retrieve_url (GRETLHOST, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL);
 }
 
@@ -1831,7 +1883,7 @@ int retrieve_remote_db_data (const char *dbname,
 
 int retrieve_manfile (const char *fname, const char *localname)
 {
-    return retrieve_url (RICARDO, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
+    return retrieve_url (GRETLHOST, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
 			 localname, NULL);
 }
 

@@ -883,7 +883,7 @@ static void finfo_dialog (function_info *finfo)
 
 static void web_get_login (GtkWidget *w, gpointer p)
 {
-    browser_open("http://ricardo.ecn.wfu.edu/gretl/apply/");
+    browser_open("http://gretl.ecn.wfu.edu/apply/");
 }
 
 static void login_dialog (login_info *linfo)
@@ -935,7 +935,7 @@ static void login_dialog (login_info *linfo)
 
     hbox = label_hbox(GTK_DIALOG(linfo->dlg)->vbox, 
 		      _("If you don't have a login to the gretl server\n"
-			"please see http://ricardo.ecn.wfu.edu/gretl/apply/.\n"
+			"please see http://gretl.ecn.wfu.edu/apply/.\n"
 			"The 'Website' button below should open this page\n"
 			"in your web browser."));
     gtk_widget_show(hbox);
