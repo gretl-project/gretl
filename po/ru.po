@@ -11,9 +11,9 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-20 09:39-0400\n"
-"PO-Revision-Date: 2008-09-20 20:27+0300\n"
+"PO-Revision-Date: 2008-09-24 01:48+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
-"Language-Team: Russian <en@li.org>\n"
+"Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -309,7 +309,7 @@ msgstr "Хи-квадрат"
 #: lib/src/gretl_restrict.c:2211
 #, c-format
 msgid "with p-value = %g\n"
-msgstr ""
+msgstr "Р-значение = %g\n"
 
 #: lib/src/compare.c:320 lib/src/compare.c:347
 msgid "omit"
@@ -321,7 +321,7 @@ msgstr ""
 
 #: lib/src/compare.c:334 lib/src/compare.c:2266
 msgid "F-form"
-msgstr ""
+msgstr "F-статистика"
 
 #: lib/src/compare.c:342 lib/src/gretl_restrict.c:1809
 msgid "Robust F"
@@ -330,17 +330,19 @@ msgstr ""
 #: lib/src/compare.c:365
 #, c-format
 msgid "  Of the %d model selection statistics, %d "
-msgstr ""
+msgstr " Из %d статистик для выбора модели, %d "
 
 #: lib/src/compare.c:368
 msgid "has improved.\n"
-msgstr ""
+msgstr "была подтверждена.\n"
 
 #: lib/src/compare.c:370
 msgid ""
 "have improved.\n"
 "\n"
 msgstr ""
+"были подтверждены.\n"
+"\n"
 
 #: lib/src/compare.c:726
 msgid "Non-linearity test (squared terms)"
@@ -356,6 +358,8 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %g) = %g\n"
 "\n"
 msgstr ""
+"p-значение = prob(Chi-square(%d) > %g) = %g\n"
+"\n"
 
 #: lib/src/compare.c:789
 msgid "non-linearity"
@@ -364,12 +368,12 @@ msgstr ""
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
-msgstr ""
+msgstr " Исключена переменная %-16s (p-значение %.3f)\n"
 
 #: lib/src/compare.c:1399 gui2/library.c:2206
 msgid "squares only"
@@ -406,7 +410,7 @@ msgstr "Тест Рамсея (RESET)"
 #: lib/src/system.c:2682 lib/src/system.c:2688 lib/src/system.c:3808
 #: lib/src/vartest.c:60
 msgid "with p-value"
-msgstr ""
+msgstr "р-значение"
 
 #: lib/src/compare.c:1509
 msgid "Godfrey (1994) test for"
@@ -2482,11 +2486,11 @@ msgstr "Синтаксическая ошибка в командной стро
 
 #: lib/src/gretl_errors.c:47
 msgid "No independent variables left after omissions"
-msgstr "Не осталось независимых переменных после отбрасывания"
+msgstr "После исключения не осталось ни одной независимой переменной"
 
 #: lib/src/gretl_errors.c:48
 msgid "No independent variables were omitted"
-msgstr "Ни одна независимая переменная не была отброшена"
+msgstr "Ни одна независимая переменная не была исключена"
 
 #: lib/src/gretl_errors.c:49
 msgid "No new independent variables were added"
@@ -2669,11 +2673,11 @@ msgstr "Матрица не является конечной"
 
 #: lib/src/gretl_model.c:2672
 msgid "Test for addition of variables"
-msgstr ""
+msgstr "Тест на пропущенные переменные"
 
 #: lib/src/gretl_model.c:2673 lib/src/gretl_model.c:2700
 msgid "parameters are zero for the variables"
-msgstr "параметры являются нулями для переменных"
+msgstr "параметры регрессии нулевые для следующих переменных"
 
 #: lib/src/gretl_model.c:2675
 #, c-format
@@ -2735,11 +2739,11 @@ msgstr "ошибки распределены по нормальному зак
 
 #: lib/src/gretl_model.c:2699
 msgid "Test for omission of variables"
-msgstr "Тест на нехватку переменных"
+msgstr "Тест на избыточные переменные"
 
 #: lib/src/gretl_model.c:2702
 msgid "RESET test for specification"
-msgstr ""
+msgstr "Тест Рамсея (RESET)"
 
 #: lib/src/gretl_model.c:2703
 msgid "specification is adequate"
@@ -3068,7 +3072,7 @@ msgstr ""
 
 #: lib/src/gretl_restrict.c:1141
 msgid "Restriction"
-msgstr ""
+msgstr "Ограничения"
 
 #: lib/src/gretl_restrict.c:1336
 #, c-format
@@ -3082,7 +3086,7 @@ msgstr "Слишком много ограничений (максимум %d)"
 
 #: lib/src/gretl_restrict.c:1685
 msgid "Restricted estimates"
-msgstr ""
+msgstr "Оценка с учетом ограничений"
 
 #: lib/src/gretl_restrict.c:1697 lib/src/modelprint.c:212
 #: lib/src/modelprint.c:217 lib/src/modelprint.c:226 lib/src/modelprint.c:230
@@ -3965,16 +3969,16 @@ msgstr "Статистика Дарбина--Ватсона"
 
 #: lib/src/modelprint.c:897 lib/src/modelprint.c:905 lib/src/modelprint.c:907
 msgid "Durbin's h"
-msgstr ""
+msgstr "h-статистика Дарбина"
 
 #: lib/src/modelprint.c:903
 msgid "Durbin's $h$"
-msgstr ""
+msgstr "$h$-статистика Дарбина"
 
 #: lib/src/modelprint.c:947
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:950
 #, c-format
@@ -4023,7 +4027,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:985
 msgid "Auxiliary regression for RESET specification test"
-msgstr ""
+msgstr "Вспомогательная регрессия для теста Рамсея"
 
 #: lib/src/modelprint.c:987
 msgid "Groupwise heteroskedasticity"
@@ -4528,7 +4532,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:2141
 msgid "Std.\\ Error"
-msgstr "Ст.\\ Ошибка"
+msgstr "Ст.\\ ошибка"
 
 #: lib/src/modelprint.c:2142
 msgid "$t$-ratio"
@@ -5541,7 +5545,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1052
 msgid "No observations were dropped!"
-msgstr "Никакие наблюдения не были отброшены!"
+msgstr "Никакие наблюдения не были исключены!"
 
 #: lib/src/subsample.c:1400 lib/src/subsample.c:1418
 msgid "error in new starting obs"
@@ -6016,7 +6020,7 @@ msgstr "Сравнение информационных критериев"
 #: lib/src/varprint.c:1231 lib/src/varprint.c:1235
 #, c-format
 msgid "Lag order %*d"
-msgstr ""
+msgstr "Лаг порядка %*d"
 
 #: lib/src/vartest.c:276
 #, c-format
@@ -6111,7 +6115,7 @@ msgstr ""
 
 #: cli/gretlcli.c:877 gui2/library.c:5146 gui2/library.c:7150
 msgid "Take note: variables have been renumbered"
-msgstr ""
+msgstr "Внимание! Нумерация переменных была изменена!"
 
 #: cli/gretlcli.c:889
 msgid ""
@@ -6196,7 +6200,7 @@ msgstr ""
 #: gui2/boxplots.c:156 gui2/boxplots.c:199 gui2/gpt_control.c:2646
 #: gui2/gpt_control.c:2741 gui2/toolbar.c:174
 msgid "Save to session as icon"
-msgstr ""
+msgstr "Сохранить в текущей сессии"
 
 #: gui2/boxplots.c:162 gui2/boxplots.c:200
 msgid "Save as EPS..."
@@ -6826,7 +6830,7 @@ msgstr "gretl: добавление случайной переменной"
 
 #: gui2/calculator.c:2958 gui2/selector.c:4849 gui2/selector.c:4852
 msgid "No suitable data are available"
-msgstr ""
+msgstr "Подходящие данные отсутствуют"
 
 #: gui2/callbacks.c:212
 msgid "Open data file"
@@ -6960,11 +6964,11 @@ msgstr ""
 #: gui2/callbacks.c:555 gui2/callbacks.c:557 gui2/callbacks.c:559
 #: gui2/callbacks.c:561
 msgid "gretl: model tests"
-msgstr ""
+msgstr "gretl: тестирование моделей"
 
 #: gui2/callbacks.c:567 gui2/library.c:1083
 msgid "rank correlation"
-msgstr ""
+msgstr "ранговая корреляция"
 
 #: gui2/callbacks.c:616
 msgid "gretl: restrict sample"
@@ -7002,7 +7006,7 @@ msgstr ""
 
 #: gui2/callbacks.c:653
 msgid "gretl: maximum likelihood"
-msgstr ""
+msgstr "gretl: максимальное правдоподобие"
 
 #: gui2/callbacks.c:654
 msgid "MLE: Specify function, and derivatives if possible:"
@@ -7010,7 +7014,7 @@ msgstr ""
 
 #: gui2/callbacks.c:659
 msgid "gretl: nonlinear least squares"
-msgstr ""
+msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:660
 msgid "NLS: Specify function, and derivatives if possible:"
@@ -7026,11 +7030,11 @@ msgstr "Задайте одновременные уравнения:"
 
 #: gui2/callbacks.c:672
 msgid "gretl: linear restrictions"
-msgstr ""
+msgstr "gretl: линейные ограничения"
 
 #: gui2/callbacks.c:673
 msgid "Specify restrictions:"
-msgstr ""
+msgstr "Введите ограничения:"
 
 #: gui2/callbacks.c:677 gui2/callbacks.c:702
 msgid "gretl: command entry"
@@ -7554,7 +7558,7 @@ msgstr ""
 
 #: gui2/datawiz.c:481
 msgid "Cross-sectional"
-msgstr "Пространственные данные"
+msgstr "Перекрестные данные"
 
 #: gui2/datawiz.c:483 gui2/menustate.c:487
 msgid "Panel"
@@ -8119,7 +8123,7 @@ msgstr "Стандартный формат"
 
 #: gui2/dialogs.c:4095
 msgid "Custom format"
-msgstr ""
+msgstr "Пользовательский стандарт"
 
 #: gui2/dialogs.c:4134 gui2/series_view.c:536
 msgid "Show"
@@ -8127,11 +8131,11 @@ msgstr "Показать"
 
 #: gui2/dialogs.c:4142 gui2/series_view.c:561
 msgid "decimal places"
-msgstr ""
+msgstr "десятичных знаков"
 
 #: gui2/dialogs.c:4145 gui2/series_view.c:548
 msgid "significant figures"
-msgstr ""
+msgstr "ненулевых знаков"
 
 #: gui2/dlgutils.c:647
 msgid "Add equation"
@@ -8175,7 +8179,7 @@ msgstr "Робастные стандартные ошибки"
 
 #: gui2/dlgutils.c:855 gui2/selector.c:3591
 msgid "Use bootstrap"
-msgstr ""
+msgstr "Использовать бутстреп"
 
 #: gui2/dlgutils.c:859
 msgid "Show full restricted estimates"
@@ -8191,7 +8195,7 @@ msgstr ""
 
 #: gui2/dlgutils.c:1125
 msgid "(Please refer to Help for guidance)"
-msgstr ""
+msgstr "(Пожалуйста, обратитесь к справке для инструкций)"
 
 #: gui2/fileselect.c:187
 msgid ""
@@ -8647,7 +8651,7 @@ msgstr "Невозможно получить доступ к информаци
 
 #: gui2/gpt_control.c:2532 gui2/gpt_control.c:2701 gui2/graph_page.c:596
 msgid "monochrome"
-msgstr ""
+msgstr "черно-белый"
 
 #: gui2/gpt_control.c:2536 gui2/gpt_control.c:2733
 msgid "Save as postscript (EPS)..."
@@ -8656,7 +8660,7 @@ msgstr "Сохранить как файл postscript (EPS)..."
 #: gui2/gpt_control.c:2538 gui2/gpt_control.c:2542 gui2/gpt_control.c:2640
 #: gui2/gpt_control.c:2644
 msgid "Save gnuplot graph"
-msgstr ""
+msgstr "Сохранить график gnuplot"
 
 #: gui2/gpt_control.c:2540 gui2/gpt_control.c:2730 gui2/gpt_control.c:2736
 msgid "Save as Windows metafile (EMF)..."
@@ -8680,11 +8684,11 @@ msgstr ""
 
 #: gui2/gpt_control.c:2638 gui2/gpt_control.c:2732
 msgid "Save as PNG..."
-msgstr ""
+msgstr "Сохранить как PNG..."
 
 #: gui2/gpt_control.c:2642 gui2/gpt_control.c:2734
 msgid "Save as PDF..."
-msgstr ""
+msgstr "Сохранить как PDF..."
 
 #: gui2/gpt_control.c:2652 gui2/gpt_control.c:2742
 msgid "Freeze data labels"
@@ -8704,7 +8708,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:2667 gui2/gpt_control.c:2760
 msgid "Restore full view"
-msgstr ""
+msgstr "Восстановить исходный масштаб"
 
 #: gui2/gpt_control.c:2671 gui2/gpt_control.c:2746 gui2/toolbar.c:471
 msgid "Print..."
@@ -8724,7 +8728,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:2700 gui2/graph_page.c:595
 msgid "color"
-msgstr "цвет"
+msgstr "цветной"
 
 #: gui2/gpt_control.c:3159
 msgid "Malformed PNG file for graph"
@@ -8732,11 +8736,11 @@ msgstr ""
 
 #: gui2/gpt_control.c:3655
 msgid "gretl: gnuplot graph"
-msgstr ""
+msgstr "gretl: график gnuplot"
 
 #: gui2/gpt_control.c:3723
 msgid " Click on graph for pop-up menu"
-msgstr ""
+msgstr " Нажмите кнопку мыши на графике для вызова меню"
 
 #: gui2/gpt_dialog.c:75
 msgid "Title of plot"
@@ -10094,11 +10098,11 @@ msgstr "Бутстреп..."
 
 #: gui2/gui_utils.c:159
 msgid "_Omit variables"
-msgstr "_Пропущенные переменные"
+msgstr "_Избыточные переменные"
 
 #: gui2/gui_utils.c:160
 msgid "_Add variables"
-msgstr "_Добавить переменные"
+msgstr "_Пропущенные переменные"
 
 #: gui2/gui_utils.c:161
 msgid "_Sum of coefficients"
@@ -10190,19 +10194,19 @@ msgstr "_Уравнение"
 
 #: gui2/gui_utils.c:236
 msgid "_Equation options"
-msgstr ""
+msgstr "_Параметры уравнения"
 
 #: gui2/gui_utils.c:237
 msgid "_Tabular options..."
-msgstr ""
+msgstr "Параметры т_аблицы..."
 
 #: gui2/gui_utils.c:241
 msgid "Show _standard errors"
-msgstr ""
+msgstr "Показывать _стандартные ошибки"
 
 #: gui2/gui_utils.c:242
 msgid "Show _t-ratios"
-msgstr ""
+msgstr "Показывать t-статистики"
 
 #: gui2/gui_utils.c:265
 msgid "_Forecasts"
@@ -10210,7 +10214,7 @@ msgstr "_Прогнозы"
 
 #: gui2/gui_utils.c:696 gui2/gui_utils.c:956 gui2/library.c:6910
 msgid "gretl: open data"
-msgstr ""
+msgstr "gretl: открытие данных"
 
 #: gui2/gui_utils.c:697
 msgid ""
@@ -10839,7 +10843,7 @@ msgstr "gretl: модель %d"
 
 #: gui2/library.c:1619
 msgid "gretl: Wald omit test"
-msgstr ""
+msgstr "gretl: Тест Вальда на избыточные переменные"
 
 #: gui2/library.c:1658 gui2/library.c:3240
 msgid "gretl: vector autoregression"
@@ -10907,7 +10911,7 @@ msgstr ""
 
 #: gui2/library.c:2208
 msgid "all variants"
-msgstr ""
+msgstr "все варианты"
 
 #: gui2/library.c:2219 gui2/library.c:2260
 msgid "gretl: RESET test"
@@ -11046,7 +11050,7 @@ msgstr "gretl: удаление наблюдений"
 
 #: gui2/library.c:4390
 msgid "There are no extra observations to drop"
-msgstr "Нет дополнительных наблюдений для отбрасывания"
+msgstr "Нет дополнительных наблюдений для исключения"
 
 #: gui2/library.c:4398
 msgid "Encode all values"
@@ -11954,17 +11958,19 @@ msgstr ""
 
 #: gui2/selector.c:3793
 msgid "Estimate reduced model"
-msgstr ""
+msgstr "Оценка сокращенной модели"
 
 #: gui2/selector.c:3798
 msgid "Wald test, based on covariance matrix"
-msgstr ""
+msgstr "Тест Вальда (Wald), основанный на матрице ковариаций"
 
 #: gui2/selector.c:3804
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
 msgstr ""
+"Последовательное исключение переменных\n"
+"с использованием двухстороннего р-значения:"
 
 #: gui2/selector.c:3827
 msgid "Fixed effects"
@@ -12088,15 +12094,15 @@ msgstr ""
 
 #: gui2/selector.c:4405
 msgid "Select variables to add"
-msgstr ""
+msgstr "Выберите пропущенные переменные"
 
 #: gui2/selector.c:4408
 msgid "Select variables to omit"
-msgstr ""
+msgstr "Выберите избыточные переменные"
 
 #: gui2/selector.c:4410
 msgid "Select coefficients to sum"
-msgstr ""
+msgstr "Выберите коэффициенты для суммирования"
 
 #: gui2/selector.c:4412
 msgid "Select two variables"
@@ -12164,27 +12170,27 @@ msgstr ""
 
 #: gui2/selector.c:5284
 msgid "lag order"
-msgstr ""
+msgstr "Лаговые переменные"
 
 #: gui2/selector.c:5305
 msgid "lags"
-msgstr ""
+msgstr "Диапазон"
 
 #: gui2/selector.c:5309
 msgid "or"
-msgstr ""
+msgstr "или"
 
 #: gui2/selector.c:5311
 msgid "specific lags"
-msgstr ""
+msgstr "Перечислить"
 
 #: gui2/selector.c:5322
 msgid "Lags of dependent variable"
-msgstr ""
+msgstr "Лаги зависимой переменной"
 
 #: gui2/selector.c:5348
 msgid "to"
-msgstr ""
+msgstr "-"
 
 #: gui2/series_view.c:365
 msgid "Variable to sort by"
