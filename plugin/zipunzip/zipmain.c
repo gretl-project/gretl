@@ -313,6 +313,30 @@ static void free_zlist_entry (zlist *z)
     free(z);
 }
 
+static int gretl_file_test (const gchar *fname, GFileTest test)
+{
+#ifdef G_OS_WIN32
+    int ret = 0;
+
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gchar *altname;
+	gsize bytes;
+
+	altname = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
+	if (altname != NULL) {
+	    ret = g_file_test(altname, test);
+	    g_free(altname);
+	}
+    } else {
+	ret = g_file_test(fname, test);
+    }
+
+    return ret;
+#else
+    return g_file_test(fname, test);
+#endif
+}
+
 static int zipfile_write_check (zfile *zf, int task, int *attr)
 {
     FILE *fp = NULL;
@@ -329,7 +353,7 @@ static int zipfile_write_check (zfile *zf, int task, int *attr)
     if (task == ZIP_DO_NEW) {
 	/* overwriting: don't destroy the original archive until we're
 	   fairly confident we have a good replacement */
-	if (g_file_test(zf->fname, G_FILE_TEST_EXISTS)) {
+	if (gretl_file_test(zf->fname, G_FILE_TEST_EXISTS)) {
 	    fmode = "r+";
 	}
     } else if (zfiles != NULL || zf->zstart != 0) {
@@ -508,7 +532,7 @@ static int real_archive_files (const char *targ, const char **filenames,
     /* assemble list of filenames to be added/updated */
     k = 0;
     for (i=0; filenames[i] != NULL; i++) {
-	if (!g_file_test(filenames[i], G_FILE_TEST_EXISTS)) {
+	if (!gretl_file_test(filenames[i], G_FILE_TEST_EXISTS)) {
 	    err = ziperr(ZE_OPEN, "file '%s' was not found", filenames[i]);
 	    goto bailout;
 	}
