@@ -3276,7 +3276,7 @@
 	  <effect>plot against time</effect>
         </option>
         <option>
-	  <flag>--suppress-fit</flag>
+	  <flag>--suppress-fitted</flag>
 	  <effect>don't show fitted line</effect>
         </option>
         <option>

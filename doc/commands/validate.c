@@ -65,7 +65,10 @@ process_option_flag (xmlDocPtr doc, xmlNodePtr node, command *cmd, int i)
 {
     xmlNodePtr cur;
 
+    cmd->opts[i] = NULL;
+
     cur = node->xmlChildrenNode;
+
     while (cur != NULL) {  
         if (!xmlStrcmp(cur->name, (UTF) "flag")) {
 	    cmd->opts[i] = (char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
@@ -82,6 +85,7 @@ process_option_list (xmlDocPtr doc, xmlNodePtr node, command *cmd)
     int nopts;
 
     cur = node->xmlChildrenNode;
+
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (UTF) "option")) {
 	    nopts = cmd->nopts + 1;
@@ -310,6 +314,9 @@ option_lists_match (const char *cmdword, const char **libopts, int libn,
     int i, j;
 
     for (i=0; i<refn; i++) {
+	if (refopts[i] == NULL || *refopts[i] == '\0') {
+	    continue;
+	}
 	match = 0;
 	for (j=0; j<libn; j++) {
 	    if (!strcmp(libopts[j], refopts[i] + 2)) {
@@ -325,7 +332,7 @@ option_lists_match (const char *cmdword, const char **libopts, int libn,
     for (i=0; i<libn; i++) {
 	match = 0;
 	for (j=0; j<refn; j++) {
-	    if (!strcmp(libopts[i], refopts[j] + 2)) {
+	    if (refopts[j] != NULL && !strcmp(libopts[i], refopts[j] + 2)) {
 		match = 1;
 		break;
 	    }
@@ -448,6 +455,11 @@ static int check_commands (const char *fname, cmdlist *clist)
 	/* Get the string associated with each command index
 	   number, from libgretl */
 	cmdword = gretl_command_word(i);
+
+	if (*cmdword == '\0') {
+	    printf("* command index = %d, no command word found\n", i);
+	    continue;
+	}
 
 	/* check against XML reference list */
 	if (!word_in_ref(cmdword, clist)) {
