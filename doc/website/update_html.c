@@ -20,7 +20,7 @@
 #define HTMLLEN 1024
 #define BUFFER_SIZE 4096
 
-#define NLANGS 4
+#define NLANGS 5
 
 enum {
     EN,
@@ -217,6 +217,7 @@ int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 	err = 1;
     } else {
 	if (fgets(line, sizeof line, fp) == NULL) {
+	    fprintf(stderr, "syscmd_to_string: failed\n");
 	    err = 1;
 	} else {
 	    strcpy(targ, line);
