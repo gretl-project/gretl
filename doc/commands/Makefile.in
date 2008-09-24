@@ -283,7 +283,7 @@ check: validate
 	-./validate $(CMDSDIR)/gretl_commands_pt.xml
 
 docclean:
-	 rm -f *.txt *.xml
+	 rm -f *.txt
 
 clean: docclean
 	rm -f xsltrans skeleton reflow validate tables topiclist *.o
