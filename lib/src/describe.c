@@ -3712,7 +3712,7 @@ static Summary *summary_new (const int *list)
  * @Z: data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @errlocation to receive error code.
+ * @err: location to receive error code.
  *
  * Calculates descriptive summary statistics for the specified variables.
  *
