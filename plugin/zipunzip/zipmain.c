@@ -316,22 +316,20 @@ static void free_zlist_entry (zlist *z)
 static int gretl_file_test (const gchar *fname, GFileTest test)
 {
 #ifdef G_OS_WIN32
-    int ret = 0;
-
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gchar *altname;
 	gsize bytes;
+	int ret = 0;
 
 	altname = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
 	if (altname != NULL) {
 	    ret = g_file_test(altname, test);
 	    g_free(altname);
 	}
+	return ret;
     } else {
-	ret = g_file_test(fname, test);
+	return g_file_test(fname, test);
     }
-
-    return ret;
 #else
     return g_file_test(fname, test);
 #endif
