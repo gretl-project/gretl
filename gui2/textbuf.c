@@ -924,10 +924,12 @@ static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 {
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
+    int gfr = 0;
     gchar tagname[32];
 
     if (page == GFR_PAGE) {
 	strcpy(tagname, "tag:gfr");
+	gfr = 1;
 	page = 0;
     } else {
 	sprintf(tagname, "xtag:p%d", page);
@@ -936,7 +938,8 @@ static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
     tag = gtk_text_tag_table_lookup(tab, tagname);
 
     if (tag == NULL) {
-	if (page == GFR_PAGE) {
+	/* the required tag is not already in the table */
+	if (gfr) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", "sans", NULL);
 	} else if (indent != NULL) {

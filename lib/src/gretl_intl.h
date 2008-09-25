@@ -32,8 +32,6 @@ int get_local_decpoint (void);
 
 char *iso_to_ascii (char *s);
 
-char *get_month_name (char *mname, int m);
-
 #ifdef ENABLE_NLS
 
 char *gp_gettext (const char *msgid);

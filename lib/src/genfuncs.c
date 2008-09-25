@@ -1056,23 +1056,10 @@ make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
 	strcpy(vlabel, "uncentered periodic dummy");
     } else if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
 	sprintf(vname, "dq%d", vi);
-	sprintf(vlabel, 
-		_("= 1 if quarter = %d, 0 otherwise"), vi);
+	sprintf(vlabel, _("= 1 if quarter = %d, 0 otherwise"), vi);
     } else if (pdinfo->pd == 12 && pdinfo->structure == TIME_SERIES) {
-#if 1
-	/* the original code here causes problems with Russian, and
-	   will cause problems with other languages that don't use
-	   the Roman character set */
 	sprintf(vname, "dm%d", vi);
-	sprintf(vlabel, 
-		_("= 1 if month = %d, 0 otherwise"), vi);
-#else	
-	char mname[8];
-
-	get_month_name(mname, vi);
-	sprintf(vname, "d%s", mname);
-	sprintf(vlabel, _("= 1 if month is %s, 0 otherwise"), mname);
-#endif
+	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), vi);
     } else {
 	char dumstr[8] = "dummy_";
 	char numstr[8];

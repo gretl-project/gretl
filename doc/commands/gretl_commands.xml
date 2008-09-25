@@ -2911,10 +2911,13 @@
 	<li>
 	  <para>
 	    <cmd>genr dummy</cmd> creates dummy variables up to the periodicity
-	    of the data.  For example, in the case of quarterly data
-	    (periodicity 4), the program creates <lit>dummy_1</lit> = 1 for
-	    first quarter and 0 in other quarters, <lit>dummy_2</lit> = 1 for
-	    the second quarter and 0 in other quarters, and so on.
+	    of the data.  In the case of quarterly data
+	    (periodicity 4), the program creates <lit>dq1</lit> = 1 for
+	    first quarter and 0 in other quarters, <lit>dq2</lit> = 1 for
+	    the second quarter and 0 in other quarters, and so on.  With
+	    monthly data the dummies are named <lit>dm1</lit>, <lit>dm2</lit>,
+	    and so on.  With other frequencies the names are
+	    <lit>dummy_1</lit>, <lit>dummy_2</lit>, etc.
 	  </para>
 	</li>
 	<li>

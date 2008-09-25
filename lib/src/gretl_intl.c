@@ -602,27 +602,6 @@ char *iso_to_ascii (char *s)
     return real_iso_to_ascii(s, 1);
 }
 
-char *get_month_name (char *mname, int m)
-{
-    struct tm mt;
-
-    mt.tm_sec = 0;
-    mt.tm_min = 0;
-    mt.tm_hour = 0;
-    mt.tm_mday = 1;
-    mt.tm_mon = m - 1;
-    mt.tm_year = 100;
-
-    strftime(mname, 7, "%b", &mt);
-    *mname = tolower(*mname);
-
-#ifdef ENABLE_NLS
-    real_iso_to_ascii(mname, gretl_cset_min);
-#endif
-
-    return mname;
-}
-
 #ifdef ENABLE_NLS
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len)

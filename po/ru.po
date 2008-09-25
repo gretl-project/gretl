@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-20 09:39-0400\n"
+"POT-Creation-Date: 2008-09-25 11:38-0400\n"
 "PO-Revision-Date: 2008-09-24 01:48+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -368,7 +368,8 @@ msgstr ""
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr ""
+"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -684,7 +685,8 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid ""
+"   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
@@ -894,7 +896,7 @@ msgstr "Запрещенный символ %d в строке даты"
 msgid "Date strings inconsistent"
 msgstr "Строки дат несостоятельны"
 
-#: lib/src/dataio.c:763 lib/src/genfuncs.c:1819
+#: lib/src/dataio.c:763 lib/src/genfuncs.c:1815
 #, c-format
 msgid "Observation number out of bounds"
 msgstr "Номер наблюдения превышает установленные границы"
@@ -1210,7 +1212,7 @@ msgstr "Не найдено удовлетворительных рядов"
 
 #: lib/src/dbread.c:1070 lib/src/dbread.c:1122 lib/src/dbread.c:1137
 #: lib/src/dbread.c:2089 lib/src/dbread.c:2450 lib/src/dbread.c:2454
-#: lib/src/dbread.c:2482 lib/src/genfuncs.c:1134 lib/src/gretl_errors.c:40
+#: lib/src/dbread.c:2482 lib/src/genfuncs.c:1130 lib/src/gretl_errors.c:40
 #: lib/src/gretl_restrict.c:1540 lib/src/gretl_restrict.c:1566
 #: lib/src/gretl_restrict.c:1589 lib/src/monte_carlo.c:1167
 #: lib/src/monte_carlo.c:1907 lib/src/monte_carlo.c:1914 gui2/gui_utils.c:534
@@ -1294,7 +1296,8 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr ""
+"Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -2008,81 +2011,81 @@ msgstr "'%s' : определено только для матриц"
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : нельзя применить к этому типа"
 
-#: lib/src/genfuncs.c:1060
+#: lib/src/genfuncs.c:1059
 #, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
 msgstr "= 1 если %d-й квартал, 0 в противном случае"
 
-#: lib/src/genfuncs.c:1066
-#, c-format
-msgid "= 1 if month is %s, 0 otherwise"
+#: lib/src/genfuncs.c:1062
+#, fuzzy, c-format
+msgid "= 1 if month = %d, 0 otherwise"
 msgstr "= 1 если месяц = %s, 0 в противном случае"
 
-#: lib/src/genfuncs.c:1076
+#: lib/src/genfuncs.c:1072
 #, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
 msgstr "%s = 1 если %d-й период, 0 в противном случае"
 
-#: lib/src/genfuncs.c:1107 lib/src/gretl_errors.c:38
+#: lib/src/genfuncs.c:1103 lib/src/gretl_errors.c:38
 msgid "This command won't work with the current periodicity"
 msgstr "Эта команда не может работать с данной периодичностью"
 
-#: lib/src/genfuncs.c:1253 lib/src/genfuncs.c:1280
+#: lib/src/genfuncs.c:1249 lib/src/genfuncs.c:1276
 #, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
 msgstr ""
 
-#: lib/src/genfuncs.c:1254 lib/src/varprint.c:151 lib/src/varprint.c:153
+#: lib/src/genfuncs.c:1250 lib/src/varprint.c:151 lib/src/varprint.c:153
 #: lib/src/varprint.c:155
 msgid "period"
 msgstr "период"
 
-#: lib/src/genfuncs.c:1281
+#: lib/src/genfuncs.c:1277
 msgid "unit"
 msgstr ""
 
-#: lib/src/genfuncs.c:1320
+#: lib/src/genfuncs.c:1316
 msgid "cross-sectional unit index"
 msgstr ""
 
-#: lib/src/genfuncs.c:1401 lib/src/transforms.c:1592
+#: lib/src/genfuncs.c:1397 lib/src/transforms.c:1592
 msgid "time trend variable"
 msgstr "переменная тренда"
 
-#: lib/src/genfuncs.c:1404
+#: lib/src/genfuncs.c:1400
 msgid "data index variable"
 msgstr ""
 
-#: lib/src/genfuncs.c:1448
+#: lib/src/genfuncs.c:1444
 msgid "day of week (1 = Monday)"
 msgstr "день недели (1 = Понедельник)"
 
-#: lib/src/genfuncs.c:1650
+#: lib/src/genfuncs.c:1646
 #, c-format
 msgid "residual from model %d"
 msgstr "ошибки из модели %d"
 
-#: lib/src/genfuncs.c:1656
+#: lib/src/genfuncs.c:1652
 #, c-format
 msgid "fitted value from model %d"
 msgstr "Рассчетное значение из модели %d"
 
-#: lib/src/genfuncs.c:1663
+#: lib/src/genfuncs.c:1659
 #, c-format
 msgid "squared residual from model %d"
 msgstr "квадраты ошибок из модели %d"
 
-#: lib/src/genfuncs.c:1674
+#: lib/src/genfuncs.c:1670
 #, c-format
 msgid "fitted variance from model %d"
 msgstr "Дисперсия рассчетной переменной из модели %d"
 
-#: lib/src/genfuncs.c:1681
+#: lib/src/genfuncs.c:1677
 #, c-format
 msgid "per-unit constants from model %d"
 msgstr ""
 
-#: lib/src/genfuncs.c:1889
+#: lib/src/genfuncs.c:1885
 msgid "Invalid declaration"
 msgstr "Неверное объявление"
 
@@ -2637,7 +2640,7 @@ msgstr "%s: недостаточно аргументов\n"
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" не определена.\n"
 
-#: lib/src/gretl_intl.c:103 gui2/gretl.c:1229
+#: lib/src/gretl_intl.c:103 gui2/gretl.c:1223
 msgid "_Open data"
 msgstr "_Открыть"
 
@@ -3282,33 +3285,33 @@ msgstr "Логарифмическое правдоподобие для тес�
 msgid "Couldn't open registry\n"
 msgstr ""
 
-#: lib/src/gretl_www.c:700
+#: lib/src/gretl_www.c:711
 msgid "Host not found"
 msgstr "Хост не найден"
 
-#: lib/src/gretl_www.c:702
+#: lib/src/gretl_www.c:713
 msgid "Unknown error"
 msgstr "Неизвестная ошибка"
 
-#: lib/src/gretl_www.c:982
+#: lib/src/gretl_www.c:1025
 msgid "No data received"
 msgstr "Данные не были получены"
 
-#: lib/src/gretl_www.c:984
+#: lib/src/gretl_www.c:1027
 msgid "Malformed status line"
 msgstr ""
 
-#: lib/src/gretl_www.c:989
+#: lib/src/gretl_www.c:1032
 msgid "(no description)"
 msgstr "(нет описания)"
 
-#: lib/src/gretl_www.c:1597
+#: lib/src/gretl_www.c:1649
 msgid ""
 "Failed to parse HTTP proxy:\n"
 "format must be ipnumber:port"
 msgstr ""
 
-#: lib/src/gretl_www.c:1606
+#: lib/src/gretl_www.c:1658
 msgid "HTTP proxy: first field must be an IP number"
 msgstr ""
 
@@ -3978,7 +3981,8 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:947
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr ""
+"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:950
 #, c-format
@@ -4384,7 +4388,8 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1661 lib/src/modelprint.c:1668
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr "Тест Бреуша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr ""
+"Тест Бреуша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1664 lib/src/modelprint.c:1671
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5001,7 +5006,8 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid ""
+"Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5153,7 +5159,8 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid ""
+"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr ""
 
 #: lib/src/printout.c:99
@@ -5568,7 +5575,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid ""
+"Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -5732,7 +5740,7 @@ msgstr ""
 msgid "Cointegrating vectors"
 msgstr ""
 
-#: lib/src/texprint.c:766 lib/src/texprint.c:822 lib/src/texprint.c:1340
+#: lib/src/texprint.c:766 lib/src/texprint.c:822 lib/src/texprint.c:1344
 #: lib/src/varprint.c:633 lib/src/varprint.c:689 gui2/model_table.c:1130
 #: plugin/jrestrict.c:2779 plugin/jrestrict.c:2812
 msgid "standard errors in parentheses"
@@ -5746,7 +5754,7 @@ msgstr ""
 msgid "Determinant of covariance matrix"
 msgstr ""
 
-#: lib/src/texprint.c:1339 gui2/model_table.c:925
+#: lib/src/texprint.c:1343 gui2/model_table.c:925
 msgid "$t$-statistics in parentheses"
 msgstr ""
 
@@ -7064,7 +7072,7 @@ msgstr ""
 msgid "Please give the current dataset a name"
 msgstr "Пожалуйста задайте имя текущего набра данных"
 
-#: gui2/cmdstack.c:414 gui2/gretl.c:1770 gui2/selector.c:4927
+#: gui2/cmdstack.c:414 gui2/gretl.c:1764 gui2/selector.c:4927
 msgid "Save data file"
 msgstr "Сохранить"
 
@@ -7175,7 +7183,7 @@ msgstr "Найти..."
 msgid "Codebook"
 msgstr ""
 
-#: gui2/database.c:752 gui2/gretl.c:1228 gui2/gui_utils.c:131
+#: gui2/database.c:752 gui2/gretl.c:1222 gui2/gui_utils.c:131
 #: gui2/gui_utils.c:251
 msgid "_File"
 msgstr "_Файл"
@@ -7196,7 +7204,7 @@ msgstr "_Показать значения"
 msgid "_Graph"
 msgstr "_График"
 
-#: gui2/database.c:757 gui2/gretl.c:1232
+#: gui2/database.c:757 gui2/gretl.c:1226
 msgid "_Import"
 msgstr "_Импорт"
 
@@ -7220,7 +7228,7 @@ msgstr ""
 msgid "_Open"
 msgstr "_Открыть"
 
-#: gui2/database.c:964 gui2/datafiles.c:1341
+#: gui2/database.c:964 gui2/datafiles.c:1342
 msgid "Network status: OK"
 msgstr "Статус сетевого соединения: ОК"
 
@@ -7347,41 +7355,41 @@ msgstr "Посмотреть на сервере"
 msgid "Local machine"
 msgstr "Локальные пакеты функций"
 
-#: gui2/datafiles.c:1182 gui2/datafiles.c:1185
+#: gui2/datafiles.c:1178 gui2/datafiles.c:1185
 msgid "local machine"
 msgstr "локальный компьютер"
 
-#: gui2/datafiles.c:1190
+#: gui2/datafiles.c:1191
 #, c-format
 msgid "gretl: databases on %s"
 msgstr "gretl: базы данных на %s"
 
-#: gui2/datafiles.c:1192
+#: gui2/datafiles.c:1193
 #, c-format
 msgid "gretl: function packages on %s"
 msgstr "gretl: пакеты функций на %s"
 
-#: gui2/datafiles.c:1272
+#: gui2/datafiles.c:1273
 msgid "gretl: practice files"
 msgstr ""
 
-#: gui2/datafiles.c:1274
+#: gui2/datafiles.c:1275
 msgid "gretl: data files"
 msgstr "gretl: файлы данных"
 
-#: gui2/datafiles.c:1276
+#: gui2/datafiles.c:1277
 msgid "gretl: databases on server"
 msgstr ""
 
-#: gui2/datafiles.c:1278
+#: gui2/datafiles.c:1279
 msgid "gretl: function packages on server"
 msgstr "gretl: пакеты функций на сервере gretl"
 
-#: gui2/datafiles.c:1565 gui2/fnsave.c:1355
+#: gui2/datafiles.c:1566 gui2/fnsave.c:1355
 msgid "gretl: function packages"
 msgstr "gretl: пакеты функций"
 
-#: gui2/datafiles.c:1566
+#: gui2/datafiles.c:1567
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Do you want to take a look on the gretl server?"
@@ -7389,52 +7397,52 @@ msgstr ""
 "Пакеты функций gretl на локальном компьютере не обнаружены.\n"
 "Хотите загрузить пакеты с сервера gretl?"
 
-#: gui2/datafiles.c:1573
+#: gui2/datafiles.c:1574
 msgid "No gretl function packages were found on this computer."
 msgstr "Пакеты функций gretl на локальном компьютере не обнаружены."
 
-#: gui2/datafiles.c:1654
+#: gui2/datafiles.c:1655
 msgid "File"
 msgstr "Файл"
 
-#: gui2/datafiles.c:1655 gui2/datafiles.c:1674 gui2/datafiles.c:1680
+#: gui2/datafiles.c:1656 gui2/datafiles.c:1675 gui2/datafiles.c:1681
 #: gui2/session.c:2837
 msgid "Summary"
 msgstr "Описание"
 
-#: gui2/datafiles.c:1658
+#: gui2/datafiles.c:1659
 msgid "Script"
 msgstr "Скрипт"
 
-#: gui2/datafiles.c:1659
+#: gui2/datafiles.c:1660
 msgid "Topic"
 msgstr "Тема"
 
-#: gui2/datafiles.c:1660
+#: gui2/datafiles.c:1661
 msgid "Data"
 msgstr "Данные"
 
-#: gui2/datafiles.c:1663 gui2/datafiles.c:1667
+#: gui2/datafiles.c:1664 gui2/datafiles.c:1668
 msgid "Database"
 msgstr "База данных"
 
-#: gui2/datafiles.c:1664 gui2/datafiles.c:1668
+#: gui2/datafiles.c:1665 gui2/datafiles.c:1669
 msgid "Source"
 msgstr "Источник"
 
-#: gui2/datafiles.c:1669 gui2/datafiles.c:1681
+#: gui2/datafiles.c:1670 gui2/datafiles.c:1682
 msgid "Local status"
 msgstr ""
 
-#: gui2/datafiles.c:1672 gui2/datafiles.c:1678
+#: gui2/datafiles.c:1673 gui2/datafiles.c:1679
 msgid "Package"
 msgstr "Пакет"
 
-#: gui2/datafiles.c:1673 gui2/datafiles.c:1679 gui2/fnsave.c:734
+#: gui2/datafiles.c:1674 gui2/datafiles.c:1680 gui2/fnsave.c:734
 msgid "Version"
 msgstr "Версия"
 
-#: gui2/datafiles.c:1675
+#: gui2/datafiles.c:1676
 msgid "Loaded?"
 msgstr "Загружен?"
 
@@ -8609,7 +8617,7 @@ msgstr "Пароль"
 #: gui2/fnsave.c:937
 msgid ""
 "If you don't have a login to the gretl server\n"
-"please see http://ricardo.ecn.wfu.edu/gretl/apply/.\n"
+"please see http://gretl.ecn.wfu.edu/apply/.\n"
 "The 'Website' button below should open this page\n"
 "in your web browser."
 msgstr ""
@@ -8968,832 +8976,832 @@ msgstr "Скрипт '%s' не найден\n"
 msgid "%s found\n"
 msgstr ""
 
-#: gui2/gretl.c:415
+#: gui2/gretl.c:409
 msgid "The GNOME 2.0 econometrics package"
 msgstr "Эконометрический пакет для GNOME 2.0"
 
-#: gui2/gretl.c:1106
+#: gui2/gretl.c:1100
 msgid "ID #"
 msgstr "№"
 
-#: gui2/gretl.c:1107
+#: gui2/gretl.c:1101
 msgid "Variable name"
 msgstr "Название переменной"
 
-#: gui2/gretl.c:1108
+#: gui2/gretl.c:1102
 msgid "Descriptive label"
 msgstr "Описание"
 
-#: gui2/gretl.c:1131
+#: gui2/gretl.c:1125
 msgid "Econometrics program"
 msgstr "Эконометрическая программа"
 
-#: gui2/gretl.c:1172 gui2/menustate.c:444
+#: gui2/gretl.c:1166 gui2/menustate.c:444
 msgid " No datafile loaded "
 msgstr "Данные не загружены"
 
-#: gui2/gretl.c:1230 gui2/gretl.c:1273
+#: gui2/gretl.c:1224 gui2/gretl.c:1267
 msgid "_User file..."
 msgstr "_Пользовательские..."
 
-#: gui2/gretl.c:1231
+#: gui2/gretl.c:1225
 msgid "_Sample file..."
 msgstr "_Примеры..."
 
-#: gui2/gretl.c:1233 gui2/gretl.c:1245 gui2/gretl.c:1261
+#: gui2/gretl.c:1227 gui2/gretl.c:1239 gui2/gretl.c:1255
 msgid "_CSV..."
 msgstr "_CSV..."
 
-#: gui2/gretl.c:1234 gui2/gretl.c:1246
+#: gui2/gretl.c:1228 gui2/gretl.c:1240
 msgid "_ASCII..."
 msgstr "_ASCII..."
 
-#: gui2/gretl.c:1235 gui2/gretl.c:1247 gui2/gretl.c:1263
+#: gui2/gretl.c:1229 gui2/gretl.c:1241 gui2/gretl.c:1257
 msgid "_Octave..."
 msgstr "_Octave..."
 
-#: gui2/gretl.c:1236 gui2/gretl.c:1248
+#: gui2/gretl.c:1230 gui2/gretl.c:1242
 msgid "_Gnumeric..."
 msgstr "_Gnumeric..."
 
-#: gui2/gretl.c:1237 gui2/gretl.c:1249
+#: gui2/gretl.c:1231 gui2/gretl.c:1243
 msgid "_Excel..."
 msgstr "_Excel..."
 
-#: gui2/gretl.c:1238 gui2/gretl.c:1250
+#: gui2/gretl.c:1232 gui2/gretl.c:1244
 msgid "_Open Document..."
 msgstr "Файлы _OpenOffice..."
 
-#: gui2/gretl.c:1239 gui2/gretl.c:1251
+#: gui2/gretl.c:1233 gui2/gretl.c:1245
 msgid "_Eviews..."
 msgstr "_Eviews..."
 
-#: gui2/gretl.c:1240 gui2/gretl.c:1252
+#: gui2/gretl.c:1234 gui2/gretl.c:1246
 msgid "_Stata..."
 msgstr "_Stata..."
 
-#: gui2/gretl.c:1241 gui2/gretl.c:1253 gui2/gretl.c:1264
+#: gui2/gretl.c:1235 gui2/gretl.c:1247 gui2/gretl.c:1258
 msgid "_JMulTi..."
 msgstr "_JMulTi..."
 
-#: gui2/gretl.c:1243
+#: gui2/gretl.c:1237
 msgid "_Append data"
 msgstr "_Добавить"
 
-#: gui2/gretl.c:1244 gui2/gretl.c:1257
+#: gui2/gretl.c:1238 gui2/gretl.c:1251
 msgid "_Standard format..."
 msgstr "_Файл gretl..."
 
-#: gui2/gretl.c:1255
+#: gui2/gretl.c:1249
 msgid "_Save data"
 msgstr "_Сохранить"
 
-#: gui2/gretl.c:1256
+#: gui2/gretl.c:1250
 msgid "Save data _as"
 msgstr "Сохранить _как"
 
-#: gui2/gretl.c:1258
+#: gui2/gretl.c:1252
 msgid "_Database..."
 msgstr "_Базу данных..."
 
-#: gui2/gretl.c:1260
+#: gui2/gretl.c:1254
 msgid "_Export data"
 msgstr "_Экспорт"
 
-#: gui2/gretl.c:1262
+#: gui2/gretl.c:1256
 msgid "GNU _R..."
 msgstr "GNU _R..."
 
-#: gui2/gretl.c:1265 gui2/gretl.c:1290
+#: gui2/gretl.c:1259 gui2/gretl.c:1284
 msgid "_PcGive..."
 msgstr "_PcGive..."
 
-#: gui2/gretl.c:1267 gui2/toolbar.c:482
+#: gui2/gretl.c:1261 gui2/toolbar.c:482
 msgid "Send To..."
 msgstr "Отправить..."
 
-#: gui2/gretl.c:1268
+#: gui2/gretl.c:1262
 msgid "_New data set"
 msgstr "_Создать"
 
-#: gui2/gretl.c:1269
+#: gui2/gretl.c:1263
 msgid "C_lear data set"
 msgstr "_Закрыть"
 
-#: gui2/gretl.c:1270
+#: gui2/gretl.c:1264
 msgid "_Working directory..."
 msgstr "_Рабочая папка..."
 
-#: gui2/gretl.c:1272
+#: gui2/gretl.c:1266
 msgid "_Script files"
 msgstr "_Скрипты"
 
-#: gui2/gretl.c:1274
+#: gui2/gretl.c:1268
 msgid "_Practice file..."
 msgstr "_Примеры..."
 
-#: gui2/gretl.c:1275
+#: gui2/gretl.c:1269
 msgid "_New script"
 msgstr "_Новый скрипт"
 
-#: gui2/gretl.c:1276
+#: gui2/gretl.c:1270
 msgid "gretl script"
 msgstr "Скрипт для gretl (*.inp)"
 
-#: gui2/gretl.c:1277
+#: gui2/gretl.c:1271
 msgid "gnuplot script"
 msgstr "Скрипт для gnuplot (*.plt)"
 
-#: gui2/gretl.c:1278
+#: gui2/gretl.c:1272
 msgid "R script"
 msgstr "Скрипт для R"
 
-#: gui2/gretl.c:1280
+#: gui2/gretl.c:1274
 msgid "_Session files"
 msgstr "С_ессии"
 
-#: gui2/gretl.c:1281
+#: gui2/gretl.c:1275
 msgid "_Open session..."
 msgstr "_Открыть сессию"
 
-#: gui2/gretl.c:1282
+#: gui2/gretl.c:1276
 msgid "_Save session"
 msgstr "_Сохранить сессию"
 
-#: gui2/gretl.c:1284
+#: gui2/gretl.c:1278
 msgid "Save session _as..."
 msgstr "Сохранить сессию _как..."
 
-#: gui2/gretl.c:1287
+#: gui2/gretl.c:1281
 msgid "_Databases"
 msgstr "_Базы данных"
 
-#: gui2/gretl.c:1288
+#: gui2/gretl.c:1282
 msgid "_Gretl native..."
 msgstr "В формате _gretl..."
 
-#: gui2/gretl.c:1289
+#: gui2/gretl.c:1283
 msgid "_RATS 4..."
 msgstr "_RATS 4..."
 
-#: gui2/gretl.c:1291
+#: gui2/gretl.c:1285
 msgid "On database _server..."
 msgstr "На _сервере баз данных..."
 
-#: gui2/gretl.c:1293
+#: gui2/gretl.c:1287
 msgid "_Function files"
 msgstr "_Функции"
 
-#: gui2/gretl.c:1294
+#: gui2/gretl.c:1288
 msgid "On _local machine..."
 msgstr "На _локальном компьютере..."
 
-#: gui2/gretl.c:1295
+#: gui2/gretl.c:1289
 msgid "On _server..."
 msgstr "На _сервере..."
 
-#: gui2/gretl.c:1296
+#: gui2/gretl.c:1290
 msgid "_New package"
 msgstr "_Новый пакет"
 
-#: gui2/gretl.c:1298
+#: gui2/gretl.c:1292
 msgid "E_xit"
 msgstr "_Выход"
 
-#: gui2/gretl.c:1301
+#: gui2/gretl.c:1295
 msgid "_Tools"
 msgstr "_Инструменты"
 
-#: gui2/gretl.c:1302
+#: gui2/gretl.c:1296
 msgid "_Statistical tables"
 msgstr "_Статистические таблицы"
 
-#: gui2/gretl.c:1303
+#: gui2/gretl.c:1297
 msgid "_P-value finder"
 msgstr "_Поиск P-значения"
 
-#: gui2/gretl.c:1304
+#: gui2/gretl.c:1298
 msgid "_Distribution graphs"
 msgstr "_Графики распределений"
 
-#: gui2/gretl.c:1305
+#: gui2/gretl.c:1299
 msgid "_Test statistic calculator"
 msgstr "_Проверка гипотез"
 
-#: gui2/gretl.c:1306
+#: gui2/gretl.c:1300
 msgid "_Nonparametric tests"
 msgstr "_Непараметрические тесты"
 
-#: gui2/gretl.c:1307
+#: gui2/gretl.c:1301
 msgid "_Seed for random numbers"
 msgstr "_Инициализация датчика случайных чисел"
 
-#: gui2/gretl.c:1308
+#: gui2/gretl.c:1302
 msgid "_Command log"
 msgstr "_История команд"
 
-#: gui2/gretl.c:1309
+#: gui2/gretl.c:1303
 msgid "_Gretl console"
 msgstr "_Консоль"
 
-#: gui2/gretl.c:1310
+#: gui2/gretl.c:1304
 msgid "Start GNU _R"
 msgstr "Запустить GNU _R"
 
-#: gui2/gretl.c:1311
+#: gui2/gretl.c:1305
 msgid "_Sort variables"
 msgstr "_Сортировать переменные"
 
-#: gui2/gretl.c:1312
+#: gui2/gretl.c:1306
 msgid "By _ID number"
 msgstr "По _номеру переменной"
 
-#: gui2/gretl.c:1313
+#: gui2/gretl.c:1307
 msgid "By _name"
 msgstr "По _имени переменной"
 
-#: gui2/gretl.c:1314
+#: gui2/gretl.c:1308
 msgid "_NIST test suite"
 msgstr "NIST тесты"
 
-#: gui2/gretl.c:1315
+#: gui2/gretl.c:1309
 msgid "_Basic"
 msgstr "_Базовые"
 
-#: gui2/gretl.c:1316
+#: gui2/gretl.c:1310
 msgid "_Verbose"
 msgstr "_Подробные"
 
-#: gui2/gretl.c:1317
+#: gui2/gretl.c:1311
 msgid "V_ery verbose"
 msgstr "_Очень подробные"
 
-#: gui2/gretl.c:1318
+#: gui2/gretl.c:1312
 msgid "_Preferences"
 msgstr "_Настройки"
 
-#: gui2/gretl.c:1319
+#: gui2/gretl.c:1313
 msgid "_General..."
 msgstr "_Общие..."
 
-#: gui2/gretl.c:1321
+#: gui2/gretl.c:1315
 msgid "_Fixed font..."
 msgstr "_Пропорциональный шрифт..."
 
-#: gui2/gretl.c:1324 gui2/gretl.c:1502
+#: gui2/gretl.c:1318 gui2/gretl.c:1496
 msgid "_Menu font..."
 msgstr "_Шрифт для меню..."
 
-#: gui2/gretl.c:1329
+#: gui2/gretl.c:1323
 msgid "_Data"
 msgstr "_Данные"
 
-#: gui2/gretl.c:1330
+#: gui2/gretl.c:1324
 msgid "Select _all"
 msgstr "Выделить _все"
 
-#: gui2/gretl.c:1331 gui2/gretl.c:1409
+#: gui2/gretl.c:1325 gui2/gretl.c:1403
 msgid "_Display values"
 msgstr "_Показать значения"
 
-#: gui2/gretl.c:1332
+#: gui2/gretl.c:1326
 msgid "_Edit values"
 msgstr "_Изменить значения"
 
-#: gui2/gretl.c:1333
+#: gui2/gretl.c:1327
 msgid "_Add observations..."
 msgstr "_Добавить наблюдения..."
 
-#: gui2/gretl.c:1334
+#: gui2/gretl.c:1328
 msgid "_Remove extra observations"
 msgstr "_Удалить лишние наблюдения"
 
-#: gui2/gretl.c:1335
+#: gui2/gretl.c:1329
 msgid "_Read info"
 msgstr "Показать _описание"
 
-#: gui2/gretl.c:1336
+#: gui2/gretl.c:1330
 msgid "Edit _info"
 msgstr "Изменить о_писание"
 
-#: gui2/gretl.c:1337
+#: gui2/gretl.c:1331
 msgid "_Print description"
 msgstr "_Печатать отчет"
 
-#: gui2/gretl.c:1338
+#: gui2/gretl.c:1332
 msgid "Add _case markers..."
 msgstr "Добавить _маркеры..."
 
-#: gui2/gretl.c:1339
+#: gui2/gretl.c:1333
 msgid "Remove case _markers"
 msgstr "Удалить м_аркеры"
 
-#: gui2/gretl.c:1340
+#: gui2/gretl.c:1334
 msgid "Dataset _structure..."
 msgstr "_Структура данных..."
 
-#: gui2/gretl.c:1341
+#: gui2/gretl.c:1335
 msgid "_Compact data..."
 msgstr "С_низить частоту временного ряда..."
 
-#: gui2/gretl.c:1342
+#: gui2/gretl.c:1336
 msgid "_Expand data..."
 msgstr "_Увеличить частоту временного ряда..."
 
-#: gui2/gretl.c:1343
+#: gui2/gretl.c:1337
 msgid "_Transpose data..."
 msgstr "_Транспонировать данные..."
 
-#: gui2/gretl.c:1344
+#: gui2/gretl.c:1338
 msgid "_Sort data..."
 msgstr "_Сортировать данные..."
 
-#: gui2/gretl.c:1345
+#: gui2/gretl.c:1339
 msgid "_Refresh window"
 msgstr "_Обновить окно"
 
-#: gui2/gretl.c:1346
+#: gui2/gretl.c:1340
 msgid "_Scalars..."
 msgstr "_Скалярные величины..."
 
-#: gui2/gretl.c:1349 gui2/gui_utils.c:227 gui2/gui_utils.c:271
+#: gui2/gretl.c:1343 gui2/gui_utils.c:227 gui2/gui_utils.c:271
 #: gui2/ssheet.c:160
 msgid "_View"
 msgstr "_Вид"
 
-#: gui2/gretl.c:1350
+#: gui2/gretl.c:1344
 msgid "_Icon view"
 msgstr "_Сессия"
 
-#: gui2/gretl.c:1351
+#: gui2/gretl.c:1345
 msgid "_Graph specified vars"
 msgstr "_График"
 
-#: gui2/gretl.c:1352
+#: gui2/gretl.c:1346
 msgid "_Time series plot..."
 msgstr "График _временного ряда..."
 
-#: gui2/gretl.c:1353
+#: gui2/gretl.c:1347
 msgid "X-Y _scatter..."
 msgstr "_Разброс X-Y"
 
-#: gui2/gretl.c:1354
+#: gui2/gretl.c:1348
 msgid "X-Y with _impulses..."
 msgstr "Разброс X-Y с _импульсами..."
 
-#: gui2/gretl.c:1355
+#: gui2/gretl.c:1349
 msgid "X-Y with _factor separation..."
 msgstr "Разброс X-Y с _разделением факторов..."
 
-#: gui2/gretl.c:1356
+#: gui2/gretl.c:1350
 msgid "X-Y with _control..."
 msgstr "Разброс X-Y с _инструментальной переменной..."
 
-#: gui2/gretl.c:1357
+#: gui2/gretl.c:1351
 msgid "_Boxplots..."
 msgstr "_Коробчатая диаграмма..."
 
-#: gui2/gretl.c:1358
+#: gui2/gretl.c:1352
 msgid "_Notched boxplots..."
 msgstr "Коробчатая диаграмма с _меткой"
 
-#: gui2/gretl.c:1359
+#: gui2/gretl.c:1353
 msgid "_3D plot..."
 msgstr "_3D график..."
 
-#: gui2/gretl.c:1360
+#: gui2/gretl.c:1354
 msgid "_Multiple graphs"
 msgstr "_Несколько графиков"
 
-#: gui2/gretl.c:1361
+#: gui2/gretl.c:1355
 msgid "X-Y _scatters..."
 msgstr "_Разброс X-Y..."
 
-#: gui2/gretl.c:1362
+#: gui2/gretl.c:1356
 msgid "_Time series..."
 msgstr "_Временные ряды..."
 
-#: gui2/gretl.c:1363 gui2/gretl.c:1410
+#: gui2/gretl.c:1357 gui2/gretl.c:1404
 msgid "_Summary statistics"
 msgstr "_Описательная статистика"
 
-#: gui2/gretl.c:1364
+#: gui2/gretl.c:1358
 msgid "_Correlation matrix"
 msgstr "Корреляционная _матрица"
 
-#: gui2/gretl.c:1365
+#: gui2/gretl.c:1359
 msgid "Cross _Tabulation"
 msgstr "Кросс _табуляция"
 
-#: gui2/gretl.c:1366
+#: gui2/gretl.c:1360
 msgid "_Principal components"
 msgstr "_Главные компоненты"
 
-#: gui2/gretl.c:1367
+#: gui2/gretl.c:1361
 msgid "_Mahalanobis distances"
 msgstr "_Метрика Махаланобиса (Mahalanobis)"
 
-#: gui2/gretl.c:1368
+#: gui2/gretl.c:1362
 msgid "C_ross-correlogram"
 msgstr "_Кросс-коррелограмма"
 
-#: gui2/gretl.c:1371 gui2/ssheet.c:129
+#: gui2/gretl.c:1365 gui2/ssheet.c:129
 msgid "_Add"
 msgstr "_Добавить"
 
-#: gui2/gretl.c:1372
+#: gui2/gretl.c:1366
 msgid "_Logs of selected variables"
 msgstr "_Логарифмы выделенных переменных"
 
-#: gui2/gretl.c:1373
+#: gui2/gretl.c:1367
 msgid "_Squares of selected variables"
 msgstr "_Квадраты выделенных переменных"
 
-#: gui2/gretl.c:1374
+#: gui2/gretl.c:1368
 msgid "_Lags of selected variables"
 msgstr "Л_аги для выделенных переменных"
 
-#: gui2/gretl.c:1375
+#: gui2/gretl.c:1369
 msgid "_First differences of selected variables"
 msgstr "_Первые разности для выделенных переменных"
 
-#: gui2/gretl.c:1377
+#: gui2/gretl.c:1371
 msgid "_Log differences of selected variables"
 msgstr "Первую разность л_огарифмов выделенных переменных"
 
-#: gui2/gretl.c:1379
+#: gui2/gretl.c:1373
 msgid "_Seasonal differences of selected variables"
 msgstr "_Сезонную разность для выделенных переменных"
 
-#: gui2/gretl.c:1381
+#: gui2/gretl.c:1375
 msgid "_Index variable"
 msgstr "_Индексную переменную"
 
-#: gui2/gretl.c:1382
+#: gui2/gretl.c:1376
 msgid "_Time trend"
 msgstr "_Временной тренд"
 
-#: gui2/gretl.c:1383
+#: gui2/gretl.c:1377
 msgid "_Random variable..."
 msgstr "_Случайную переменную..."
 
-#: gui2/gretl.c:1384
+#: gui2/gretl.c:1378
 msgid "_Periodic dummies"
 msgstr "_Фиктивные переменные для периодов"
 
-#: gui2/gretl.c:1385
+#: gui2/gretl.c:1379
 msgid "_Unit dummies"
 msgstr "_Единичные фиктивные переменные (панельные данные)"
 
-#: gui2/gretl.c:1386
+#: gui2/gretl.c:1380
 msgid "_Time dummies"
 msgstr "_Временные фиктивные переменные (панельные данные)"
 
-#: gui2/gretl.c:1387
+#: gui2/gretl.c:1381
 msgid "Dummies for selected _discrete variables"
 msgstr "Фиктивные переменные для выделенных _дискретных переменных"
 
-#: gui2/gretl.c:1389
+#: gui2/gretl.c:1383
 msgid "_Define matrix..."
 msgstr "_Матрицу..."
 
-#: gui2/gretl.c:1392
+#: gui2/gretl.c:1386
 msgid "_Sample"
 msgstr "_Выборка"
 
-#: gui2/gretl.c:1393
+#: gui2/gretl.c:1387
 msgid "_Set range..."
 msgstr "_Установить диапазон..."
 
-#: gui2/gretl.c:1394
+#: gui2/gretl.c:1388
 msgid "_Restore full range"
 msgstr "_Восстановить полный диапазон"
 
-#: gui2/gretl.c:1395
+#: gui2/gretl.c:1389
 msgid "_Define, based on dummy..."
 msgstr "_Изменить на основе фиктивной переменной..."
 
-#: gui2/gretl.c:1396
+#: gui2/gretl.c:1390
 msgid "_Restrict, based on criterion..."
 msgstr "_Изменить на основе критерия..."
 
-#: gui2/gretl.c:1398
+#: gui2/gretl.c:1392
 msgid "R_andom sub-sample..."
 msgstr "_Случайная выборка..."
 
-#: gui2/gretl.c:1399
+#: gui2/gretl.c:1393
 msgid "_Resample with replacement..."
 msgstr "_Изменить с заменой..."
 
-#: gui2/gretl.c:1401
+#: gui2/gretl.c:1395
 msgid "Drop all obs with _missing values"
 msgstr "Исключить наблюдения с _пропусками"
 
-#: gui2/gretl.c:1403
+#: gui2/gretl.c:1397
 msgid "_Count missing values"
 msgstr "_Подсчитать пропуски"
 
-#: gui2/gretl.c:1404 gui2/gretl.c:1438
+#: gui2/gretl.c:1398 gui2/gretl.c:1432
 msgid "Set missing _value code..."
 msgstr "_Заменить на пропуски..."
 
-#: gui2/gretl.c:1407 gui2/ssheet.c:128
+#: gui2/gretl.c:1401 gui2/ssheet.c:128
 msgid "_Variable"
 msgstr "_Переменная"
 
-#: gui2/gretl.c:1408
+#: gui2/gretl.c:1402
 msgid "_Find..."
 msgstr "_Найти..."
 
-#: gui2/gretl.c:1411
+#: gui2/gretl.c:1405
 msgid "_Normality test"
 msgstr "Тест на _нормальное распределение"
 
-#: gui2/gretl.c:1412
+#: gui2/gretl.c:1406
 msgid "_Frequency distribution"
 msgstr "_Частотная таблица"
 
-#: gui2/gretl.c:1413
+#: gui2/gretl.c:1407
 msgid "Frequency _plot"
 msgstr "_График частот"
 
-#: gui2/gretl.c:1414
+#: gui2/gretl.c:1408
 msgid "Estimated _density plot..."
 msgstr "График оценочной _плотности распределения..."
 
-#: gui2/gretl.c:1415
+#: gui2/gretl.c:1409
 msgid "_Gini coefficient"
 msgstr "_Коэффициент Джини"
 
-#: gui2/gretl.c:1416
+#: gui2/gretl.c:1410
 msgid "_Range-mean graph"
 msgstr "График _разброс-среднее"
 
-#: gui2/gretl.c:1417
+#: gui2/gretl.c:1411
 msgid "_Time series plot"
 msgstr "График _временного ряда"
 
-#: gui2/gretl.c:1418
+#: gui2/gretl.c:1412
 msgid "_Correlogram"
 msgstr "_Коррелограмма"
 
-#: gui2/gretl.c:1419
+#: gui2/gretl.c:1413
 msgid "_Spectrum"
 msgstr "_Спектр"
 
-#: gui2/gretl.c:1420
+#: gui2/gretl.c:1414
 msgid "Sample _periodogram"
 msgstr "_Выборочная периодограмма"
 
-#: gui2/gretl.c:1421
+#: gui2/gretl.c:1415
 msgid "_Bartlett lag window"
 msgstr "_Лаговое окно Бартлета (Bartlett lag window)"
 
-#: gui2/gretl.c:1422
+#: gui2/gretl.c:1416
 msgid "_Augmented Dickey-Fuller test"
 msgstr "_Расширенный тест Дики-Фуллера (ADF-тест)"
 
-#: gui2/gretl.c:1423
+#: gui2/gretl.c:1417
 msgid "ADF-GLS test"
 msgstr "ADF-_GLS тест"
 
-#: gui2/gretl.c:1424
+#: gui2/gretl.c:1418
 msgid "_KPSS test"
 msgstr "_KPSS тест"
 
-#: gui2/gretl.c:1425
+#: gui2/gretl.c:1419
 msgid "_Filter"
 msgstr "_Фильтр"
 
-#: gui2/gretl.c:1426
+#: gui2/gretl.c:1420
 msgid "_Simple moving average"
 msgstr "_Простое скользящее среднее"
 
-#: gui2/gretl.c:1427
+#: gui2/gretl.c:1421
 msgid "_Exponential moving average"
 msgstr "_Экспоненциальное скользящее среднее"
 
-#: gui2/gretl.c:1428
+#: gui2/gretl.c:1422
 msgid "_Hodrick-Prescott"
 msgstr "_Годрика-Прескотта"
 
-#: gui2/gretl.c:1429
+#: gui2/gretl.c:1423
 msgid "_Baxter-King"
 msgstr "_Бакстера-Кинга"
 
-#: gui2/gretl.c:1431 gui2/gretl.c:1511
+#: gui2/gretl.c:1425 gui2/gretl.c:1505
 msgid "_X-12-ARIMA analysis"
 msgstr "_X-12-ARIMA анализ"
 
-#: gui2/gretl.c:1434 gui2/gretl.c:1520
+#: gui2/gretl.c:1428 gui2/gretl.c:1514
 msgid "_TRAMO analysis"
 msgstr "_TRAMO анализ"
 
-#: gui2/gretl.c:1436
+#: gui2/gretl.c:1430
 msgid "_Hurst exponent"
 msgstr "Экспонента Хёрста (Hurst)"
 
-#: gui2/gretl.c:1437
+#: gui2/gretl.c:1431
 msgid "_Edit attributes"
 msgstr "_Изменить свойства"
 
-#: gui2/gretl.c:1439 gui2/gui_utils.c:2050
+#: gui2/gretl.c:1433 gui2/gui_utils.c:2050
 msgid "Define _new variable..."
 msgstr "_Добавить новую переменную..."
 
-#: gui2/gretl.c:1442
+#: gui2/gretl.c:1436
 msgid "_Model"
 msgstr "_Модель"
 
-#: gui2/gretl.c:1443
+#: gui2/gretl.c:1437
 msgid "_Ordinary Least Squares..."
 msgstr "_Метод наименьших квадратов (МНК)..."
 
-#: gui2/gretl.c:1444
+#: gui2/gretl.c:1438
 msgid "Other _linear models"
 msgstr "_Другие линейные модели"
 
-#: gui2/gretl.c:1445
+#: gui2/gretl.c:1439
 msgid "_Weighted Least Squares..."
 msgstr "_Взвешенный МНК..."
 
-#: gui2/gretl.c:1446
+#: gui2/gretl.c:1440
 msgid "H_eteroskedasticity corrected..."
 msgstr "С _коррекцией гетероскедастичности..."
 
-#: gui2/gretl.c:1447
+#: gui2/gretl.c:1441
 msgid "_Two-Stage Least Squares..."
 msgstr "_Двухшаговый МНК..."
 
-#: gui2/gretl.c:1449
+#: gui2/gretl.c:1443
 msgid "High _precision OLS..."
 msgstr "МНК с высокой _точностью..."
 
-#: gui2/gretl.c:1451
+#: gui2/gretl.c:1445
 msgid "_Time series"
 msgstr "_Временные ряды"
 
-#: gui2/gretl.c:1452
+#: gui2/gretl.c:1446
 msgid "_Cochrane-Orcutt..."
 msgstr "_Кохрана-Оркута (Cochrane-Orcutt)..."
 
-#: gui2/gretl.c:1453
+#: gui2/gretl.c:1447
 msgid "_Hildreth-Lu..."
 msgstr "_Хилдрета-Лу (Hildreth-Lu)..."
 
-#: gui2/gretl.c:1454
+#: gui2/gretl.c:1448
 msgid "_Prais-Winsten..."
 msgstr "_Прейза-Винстена (Prais-Winsten)..."
 
-#: gui2/gretl.c:1455
+#: gui2/gretl.c:1449
 msgid "_Autoregressive estimation..."
 msgstr "_Авторегрессия..."
 
-#: gui2/gretl.c:1456
+#: gui2/gretl.c:1450
 msgid "ARI_MA..."
 msgstr "Авторегрессия интегрированного скользящего среднего (ARI_MA)..."
 
-#: gui2/gretl.c:1457
+#: gui2/gretl.c:1451
 msgid "_ARCH..."
 msgstr "Авторегрессия с условной гетероскедастичностью (_ARCH)..."
 
-#: gui2/gretl.c:1458
+#: gui2/gretl.c:1452
 msgid "_GARCH..."
 msgstr "Обобщенный ARCH (_GARCH)..."
 
-#: gui2/gretl.c:1459
+#: gui2/gretl.c:1453
 msgid "_Vector Autoregression..."
 msgstr "_Векторная авторегрессия (VAR)..."
 
-#: gui2/gretl.c:1460
+#: gui2/gretl.c:1454
 msgid "VAR _lag selection..."
 msgstr "Векторная авторегрессия с _лагом..."
 
-#: gui2/gretl.c:1461
+#: gui2/gretl.c:1455
 msgid "V_ECM..."
 msgstr "Векторная модель коррекции ошибок (V_ECM)..."
 
-#: gui2/gretl.c:1462
+#: gui2/gretl.c:1456
 msgid "_Cointegration test"
 msgstr "_Коинтеграция"
 
-#: gui2/gretl.c:1463
+#: gui2/gretl.c:1457
 msgid "_Engle-Granger..."
 msgstr "_Энгла-Грэнджера..."
 
-#: gui2/gretl.c:1464
+#: gui2/gretl.c:1458
 msgid "_Johansen..."
 msgstr "_Йохансена..."
 
-#: gui2/gretl.c:1465
+#: gui2/gretl.c:1459
 msgid "_Panel"
 msgstr "_Панельные модели"
 
-#: gui2/gretl.c:1466
+#: gui2/gretl.c:1460
 msgid "_Fixed or random effects..."
 msgstr "_Модель фиксированных или случайных эффектов..."
 
-#: gui2/gretl.c:1467
+#: gui2/gretl.c:1461
 msgid "_Weighted least squares..."
 msgstr "_Групповой взвешенный МНК..."
 
-#: gui2/gretl.c:1468
+#: gui2/gretl.c:1462
 msgid "_Between model..."
 msgstr "_Межгрупповая модель..."
 
-#: gui2/gretl.c:1469
+#: gui2/gretl.c:1463
 msgid "_Arellano-Bond..."
 msgstr "_Динамическая модель Ареллано-Бонда (Arellano-Bond)..."
 
-#: gui2/gretl.c:1470
+#: gui2/gretl.c:1464
 msgid "_Nonlinear models"
 msgstr "_Нелинейные модели"
 
-#: gui2/gretl.c:1471
+#: gui2/gretl.c:1465
 msgid "_Logit..."
 msgstr "_Логит..."
 
-#: gui2/gretl.c:1472
+#: gui2/gretl.c:1466
 msgid "_Probit..."
 msgstr "_Пробит..."
 
-#: gui2/gretl.c:1473
+#: gui2/gretl.c:1467
 msgid "To_bit..."
 msgstr "_Тобит..."
 
-#: gui2/gretl.c:1474
+#: gui2/gretl.c:1468
 msgid "_Heckit..."
 msgstr "Модель Хекмана (_Heckit)..."
 
-#: gui2/gretl.c:1475
+#: gui2/gretl.c:1469
 msgid "Poi_sson..."
 msgstr "Модель Пуассона..."
 
-#: gui2/gretl.c:1476
+#: gui2/gretl.c:1470
 msgid "Lo_gistic..."
 msgstr "Ло_гистическая..."
 
-#: gui2/gretl.c:1477
+#: gui2/gretl.c:1471
 msgid "_Nonlinear Least Squares..."
 msgstr "_Нелинейный МНК..."
 
-#: gui2/gretl.c:1478
+#: gui2/gretl.c:1472
 msgid "_Robust estimation"
 msgstr "_Робастные оценки"
 
-#: gui2/gretl.c:1479
+#: gui2/gretl.c:1473
 msgid "Least _Absolute Deviation..."
 msgstr "Наименьшие _абсолютные отклонения..."
 
-#: gui2/gretl.c:1480
+#: gui2/gretl.c:1474
 msgid "_Quantile regression..."
 msgstr "_Квантильная регрессия..."
 
-#: gui2/gretl.c:1481
+#: gui2/gretl.c:1475
 msgid "_Rank correlation..."
 msgstr "_Ранговая корреляция..."
 
-#: gui2/gretl.c:1482
+#: gui2/gretl.c:1476
 msgid "_Maximum likelihood..."
 msgstr "_Максимальное правдоподобие..."
 
-#: gui2/gretl.c:1483
+#: gui2/gretl.c:1477
 msgid "_GMM..."
 msgstr "Обобщенный метод моментов (_GMM)..."
 
-#: gui2/gretl.c:1484
+#: gui2/gretl.c:1478
 msgid "_Simultaneous equations..."
 msgstr "_Система уравнений..."
 
-#: gui2/gretl.c:1487
+#: gui2/gretl.c:1481
 msgid "_Help"
 msgstr "_Справка"
 
-#: gui2/gretl.c:1488
+#: gui2/gretl.c:1482
 msgid "_Command reference"
 msgstr "Справка по _командам"
 
-#: gui2/gretl.c:1489
+#: gui2/gretl.c:1483
 msgid "Plain _text"
 msgstr "В _текстовом файле"
 
-#: gui2/gretl.c:1490
+#: gui2/gretl.c:1484
 msgid "_PDF"
 msgstr "В формате _PDF"
 
-#: gui2/gretl.c:1491
+#: gui2/gretl.c:1485
 msgid "Function reference"
 msgstr "Справка по функциям"
 
-#: gui2/gretl.c:1492
+#: gui2/gretl.c:1486
 msgid "_User's guide"
 msgstr "_Руководство пользователя"
 
-#: gui2/gretl.c:1493
+#: gui2/gretl.c:1487
 msgid "Check for _updates"
 msgstr "Поиск _обновлений"
 
-#: gui2/gretl.c:1494
+#: gui2/gretl.c:1488
 msgid "_About gretl"
 msgstr "_О программе"
 
@@ -10656,7 +10664,7 @@ msgstr "genrgui.hlp"
 msgid "Show English help"
 msgstr "Показать справку на английском языке"
 
-#: gui2/helpfiles.c:1075 gui2/textbuf.c:1310
+#: gui2/helpfiles.c:1075 gui2/textbuf.c:1313
 msgid "Index"
 msgstr "Индекс"
 
@@ -11436,7 +11444,8 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid "Can't add model to table -- this model has a different dependent variable"
+msgid ""
+"Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -12587,7 +12596,7 @@ msgstr ""
 msgid "gretl: options"
 msgstr ""
 
-#: gui2/settings.c:887 gui2/settings.c:2353
+#: gui2/settings.c:887 gui2/settings.c:2354
 msgid "Browse..."
 msgstr "Обзор..."
 
@@ -12643,43 +12652,43 @@ msgstr ""
 msgid "Manuals"
 msgstr "Справка"
 
-#: gui2/settings.c:1948
+#: gui2/settings.c:1949
 msgid "Font for gretl output windows"
 msgstr ""
 
-#: gui2/settings.c:1955
+#: gui2/settings.c:1956
 msgid "Font for menus and labels"
 msgstr ""
 
-#: gui2/settings.c:2171
+#: gui2/settings.c:2172
 msgid "Select color"
 msgstr "Выбрать цвет"
 
-#: gui2/settings.c:2218
+#: gui2/settings.c:2219
 msgid "gretl: graph color selection"
 msgstr ""
 
-#: gui2/settings.c:2317
+#: gui2/settings.c:2318
 msgid "gretl working directory"
 msgstr ""
 
-#: gui2/settings.c:2340
+#: gui2/settings.c:2341
 msgid "Working directory:"
 msgstr "Рабочая папка:"
 
-#: gui2/settings.c:2362
+#: gui2/settings.c:2363
 msgid "On start-up, gretl should use:"
 msgstr ""
 
-#: gui2/settings.c:2369
+#: gui2/settings.c:2370
 msgid "the directory selected above"
 msgstr ""
 
-#: gui2/settings.c:2377
+#: gui2/settings.c:2378
 msgid "the current directory as determined via the shell"
 msgstr ""
 
-#: gui2/settings.c:2425
+#: gui2/settings.c:2426
 msgid "gretl: working directory"
 msgstr ""
 
@@ -12893,71 +12902,71 @@ msgstr ""
 msgid "No undo information available"
 msgstr ""
 
-#: gui2/textbuf.c:1193
+#: gui2/textbuf.c:1196
 msgid "Gretl Command Reference"
 msgstr "Справка по командам gretl"
 
-#: gui2/textbuf.c:1233
+#: gui2/textbuf.c:1236
 msgid "Gretl Function Reference"
 msgstr "Справка по функциям gretl"
 
-#: gui2/textbuf.c:1311
+#: gui2/textbuf.c:1314
 msgid "Back"
 msgstr "Назад"
 
-#: gui2/textbuf.c:1710
+#: gui2/textbuf.c:1713
 msgid "gretl: configure tabs"
 msgstr "gretl: настройка табуляции"
 
-#: gui2/textbuf.c:1711
+#: gui2/textbuf.c:1714
 msgid "Spaces per tab"
 msgstr "Количество пробелов на знак табуляции"
 
-#: gui2/textbuf.c:1712
+#: gui2/textbuf.c:1715
 msgid "Use \"smart\" tabs"
 msgstr "Использовать \"смарт\"-табуляцию"
 
-#: gui2/textbuf.c:2174
+#: gui2/textbuf.c:2177
 msgid "Comment line"
 msgstr "Закомментировать строку"
 
-#: gui2/textbuf.c:2175
+#: gui2/textbuf.c:2178
 msgid "Uncomment line"
 msgstr "Снять комментарий со строки"
 
-#: gui2/textbuf.c:2176
+#: gui2/textbuf.c:2179
 msgid "Comment region"
 msgstr "Закоментировать выделение"
 
-#: gui2/textbuf.c:2177
+#: gui2/textbuf.c:2180
 msgid "Uncomment region"
 msgstr "Снять комментарии с выделения"
 
-#: gui2/textbuf.c:2213
+#: gui2/textbuf.c:2216
 msgid "Execute region"
 msgstr "Исполнить выделенное"
 
-#: gui2/textbuf.c:2215
+#: gui2/textbuf.c:2218
 msgid "Execute line"
 msgstr "Исполнить строку"
 
-#: gui2/textbuf.c:2242
+#: gui2/textbuf.c:2245
 msgid "Auto-indent region"
 msgstr "Автоматическое выравнивание в выделенном"
 
-#: gui2/textbuf.c:2243
+#: gui2/textbuf.c:2246
 msgid "Indent region"
 msgstr "Выравнять строки в выделенном"
 
-#: gui2/textbuf.c:2252
+#: gui2/textbuf.c:2255
 msgid "Unindent region"
 msgstr "Отменить выравнивание строк в выделенном"
 
-#: gui2/textbuf.c:2260
+#: gui2/textbuf.c:2263
 msgid "Auto-indent script"
 msgstr "Автоматическое выравнивание в скрипте"
 
-#: gui2/textbuf.c:2271
+#: gui2/textbuf.c:2274
 msgid "Toggle line numbers"
 msgstr "Показать номера строк"
 
@@ -13957,4 +13966,3 @@ msgstr "Строки"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
-

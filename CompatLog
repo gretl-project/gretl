@@ -4,6 +4,13 @@ The "values" function no longer automatically truncates its
 argument (series or vector) to integer.  To get the old 
 behavior for an argument x you should do values(int(x)).
 
+Generation of monthly dummy variables: these dummies are
+now named "dm1", "dm2", ... , "dm12".  Previously we tried
+to use 3-letter abbreviations for the names of the months in
+the current locale, but this is too error-prone given
+different possible character encodings and (new) support
+for languages that do not use the Roman character set.
+
 8/28/2008 version 1.7.7
 
 Ordered probit and logit: the presentation of the cut-points in
