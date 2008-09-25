@@ -1407,29 +1407,10 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 
 #define DUMDEBUG 0
 
-/**
- * list_dumgenr:
- * @plist: pointer to list of variables to process; on exit
- * the list holds the ID numbers of the generated dummies.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- * @opt: can be %OPT_F to drop the first value, %OPT_L to drop
- * the last, or %OPT_NONE.
- *
- * For each of the variables given in the list to which @plist
- * points, generates and adds to the data set k dummy variables 
- * coding for the k distinct values of the variable in question.
- * All these variables must have already been marked as discrete.
- * If the %OPT_F or %OPT_L option is given, either the first or
- * the last value of each variable is taken as the "base" and is
- * not given a dummy encoding (that is, only k - 1 dummies are
- * added for each variable).
- *
- * Returns: 0 on success, error code on error.
-*/
+#define skip_j (x, xs) (!na(xs) && (xs == x))
 
-int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt)
+static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
+			      double oddval, gretlopt opt)
 {
     int origv = pdinfo->v;
     int *list = *plist;
@@ -1456,7 +1437,7 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-     startlen = get_starting_length(list, pdinfo, 3);
+    startlen = get_starting_length(list, pdinfo, 3);
 
     for (i=1; i<=list[0] && !err; i++) {
 	int vi = list[i];
@@ -1492,22 +1473,24 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "variable %d has %d distinct values\n", vi, nuniq);
 	if (opt & OPT_F) fprintf(stderr, "skipping lowest value\n");
 	if (opt & OPT_L) fprintf(stderr, "skipping highest value\n");
-	fprintf(stderr, "jmin = %d, jmax = %d\n", jmin, jmax);
+	fprintf(stderr, "jskip = %d\n", jskip);
 #endif
 
 	for (j=jmin; j<jmax && !err; j++) {
-	    tnum = get_transform(DUMMIFY, vi, j+1, x[j], pZ, pdinfo, 
-				 startlen, origv);
+	    if (x[j] != oddval) {
+		tnum = get_transform(DUMMIFY, vi, j+1, x[j], pZ, pdinfo, 
+				     startlen, origv);
 #if DUMDEBUG   
-	    fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);
+		fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);
 #endif
-	    if (tnum > 0) {
-		tmplist = gretl_list_append_term(&tmplist, tnum);
-		if (tmplist == NULL) {
-		    err = E_ALLOC;
-		} 
-	    } else {
-		err = E_DATA;
+		if (tnum > 0) {
+		    tmplist = gretl_list_append_term(&tmplist, tnum);
+		    if (tmplist == NULL) {
+			err = E_ALLOC;
+		    } 
+		} else {
+		    err = E_DATA;
+		}
 	    }
 	}
     }
@@ -1534,6 +1517,58 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     destroy_mangled_names();
 
     return err;
+}
+
+/**
+ * list_dumgenr:
+ * @plist: pointer to list of variables to process; on exit
+ * the list holds the ID numbers of the generated dummies.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @opt: can be %OPT_F to drop the first value, %OPT_L to drop
+ * the last, or %OPT_NONE.
+ *
+ * For each of the variables given in the list to which @plist
+ * points, generates and adds to the data set k dummy variables 
+ * coding for the k distinct values of the variable in question.
+ * All these variables must have already been marked as discrete.
+ * If the %OPT_F or %OPT_L option is given, either the first or
+ * the last value of each variable is taken as the "base" and is
+ * not given a dummy encoding (that is, only k - 1 dummies are
+ * added for each variable).
+ *
+ * Returns: 0 on success, error code on error.
+*/
+
+int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
+		  gretlopt opt)
+{
+    return real_list_dumgenr(plist, pZ, pdinfo, NADBL, opt);
+}
+
+/**
+ * dumgenr_with_oddval:
+ * @plist: pointer to list of variables to process; on exit
+ * the list holds the ID numbers of the generated dummies.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @oddval: value which should be skipped when encoding the
+ * input values as dummies.
+ *
+ * For each of the variables given in the list to which @plist
+ * points, generates and adds to the data set k dummy variables 
+ * coding for the k distinct values of the variable in question.
+ * All these variables must have already been marked as discrete.
+ * if @oddval is not #NADBL, it is treated as the omitted
+ * category and only k - 1 dummies are added for each variable).
+ *
+ * Returns: 0 on success, error code on error.
+*/
+
+int dumgenr_with_oddval (int **plist, double ***pZ, DATAINFO *pdinfo,
+			 double oddval)
+{
+    return real_list_dumgenr(plist, pZ, pdinfo, oddval, OPT_NONE);
 }
 
 /**

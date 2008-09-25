@@ -987,5 +987,12 @@ void genr_unset_na_check (parser *p)
     p->flags &= ~P_NATEST;
 }
 
+void genr_relink_to_dataset (parser *p, double ***pZ,
+			     DATAINFO *pdinfo)
+{
+    p->Z = pZ;
+    p->dinfo = pdinfo;
+}
+
 
 

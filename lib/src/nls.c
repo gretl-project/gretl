@@ -292,9 +292,10 @@ static int nls_auto_genr (nlspec *s, int i)
 
     j = s->naux + i;
 #if NLS_DEBUG
-    fprintf(stderr, " j = naux+i = %d+%d = %d: executing genr[%d]:\n", 
-	    s->naux, i, j, j);
+    fprintf(stderr, " j = naux+i = %d+%d = %d: executing genr[%d] at %p:\n", 
+	    s->naux, i, j, j, (void *) s->genrs[j]);
     fprintf(stderr, " %s\n", genr_get_formula(s->genrs[j]));
+    fprintf(stderr, " Z[%d] = %p\n", s->dinfo->v-1, (void *) (*s->Z)[s->dinfo->v-1]);
 #endif
     s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
 
@@ -416,7 +417,7 @@ static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
     p->dmat = NULL;
 
 #if NLS_DEBUG
-    fprintf(stderr, "added param[%d] = '%s' (v = %d)\n", np, p->name, v);
+    fprintf(stderr, "added param[%d] = '%s'\n", np, p->name);
 #endif
 
     s->params = params;
@@ -663,6 +664,62 @@ int update_coeff_values (const double *b, nlspec *s)
     return 0;
 }
 
+#if 0 /* not ready! */
+
+static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
+{
+    DATAINFO *dinfo = NULL;
+    double **Z = NULL;
+    double **origZ = *spec->Z;
+    int nvar = spec->dinfo->v;
+    int nobs = 0;
+    int i, t, s;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(origZ[spec->lhv][t])) {
+	    nobs++;
+	}
+    }
+
+    if (nobs < spec->ncoeff) {
+	return E_DF;
+    }
+
+    dinfo = create_auxiliary_dataset(&Z, nvar, nobs);
+    if (dinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<nvar; i++) {
+	strcpy(dinfo->varname[i], spec->dinfo->varname[i]);
+	s = 0;
+	for (t=t1; t<=t2; t++) {
+	    if (!na(origZ[spec->lhv][t])) {
+		Z[i][s++] = origZ[i][t];
+	    }
+	}
+    }
+
+    spec->Z = &Z;
+    spec->dinfo = dinfo;
+    spec->t1 = 0;
+    spec->t2 = nobs - 1;
+    spec->nobs = nobs;
+
+    if (spec->genrs != NULL) {
+	for (i=0; i<spec->ngenrs; i++) {
+	    genr_relink_to_dataset(spec->genrs[i], spec->Z, spec->dinfo);
+	}
+    }    
+
+    fprintf(stderr, "s->t1 = %d, s->t2 = %d, s->nobs = %d, nvar = %d\n",
+	    spec->t1, spec->t2, spec->nobs, nvar);
+
+    return 0;
+}
+
+#endif
+
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
    (possibly reduced) sample range.  For this purpose we generate the
@@ -725,7 +782,11 @@ static int nl_missval_check (nlspec *s)
 	if (na((*s->Z)[v][t])) {
 	    fprintf(stderr, "  after setting t1=%d, t2=%d, "
 		    "got NA for var %d at obs %d\n", t1, t2, v, t);
+#if 0
+	    return nls_make_trimmed_dataset(s, t1, t2);
+#else
 	    return E_MISSDATA;
+#endif
 	}
     }  
 
@@ -740,7 +801,7 @@ static int nl_missval_check (nlspec *s)
 	    s->t1, s->t2, s->nobs);
 #endif
 
-    return 0;
+    return err;
 }
 
 /* the next two functions are used in the context of BFGS */
@@ -990,7 +1051,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 	    }
 
 #if NLS_DEBUG
-	    fprintf(stderr, "param[%d]: dnum = %d, series = %d\n", j, v, ser);
+	    fprintf(stderr, "param[%d]: dnum = %d\n", j, v);
 #endif
 
 	    /* transcribe from dataset to array g */
@@ -1536,9 +1597,8 @@ print_GNR_dataset (const int *list, double **gZ, DATAINFO *gdinfo)
    which is why we make the artificial dataset, gZ, full length.
 */
 
-static MODEL GNR (double *uhat, double *jac, nlspec *spec,
-		  double ***pZ, const DATAINFO *pdinfo, 
-		  PRN *prn)
+static MODEL GNR (double *uhat, double *jac, nlspec *spec, 
+		  const double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     double **gZ = NULL;
     DATAINFO *gdinfo;
@@ -1550,6 +1610,14 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
     int iters = spec->iters;
     int perfect = 0;
     int err = 0;
+
+#if NLS_DEBUG
+    fprintf(stderr, "GNR: T = %d\n", T);
+    v = pdinfo->v;
+    fprintf(stderr, "dinfo->v = %d\n", v);
+    fprintf(stderr, "Z = %p\n", (void *) Z);
+    fprintf(stderr, "Z[%d] = %p\n", v-1, (void *) Z[v-1]);
+#endif
 
     if (gretl_iszero(0, spec->nobs - 1, uhat)) {
 	pputs(prn, _("Perfect fit achieved\n"));
@@ -1573,11 +1641,6 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
     gdinfo->t1 = spec->t1;
     gdinfo->t2 = spec->t2;
 
-#if 0
-    fprintf(stderr, "pdinfo->n = %d, gdinfo->t1 = %d, gdinfo->t2 = %d\n",
-	    pdinfo->n, gdinfo->t1, gdinfo->t2);
-#endif
-    
     glist = gretl_list_new(spec->ncoeff + 1);
 
     if (glist == NULL) {
@@ -1617,6 +1680,10 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 		gZ[v][t] = NADBL;
 	    }
 	}
+#if NLS_DEBUG
+	fprintf(stderr, "GNR: calling get_nls_derivs\n");
+	fprintf(stderr, "Z[%d] = %p\n", pdinfo->v-1, (void *) Z[pdinfo->v-1]);
+#endif
 	get_nls_derivs(spec->nparam, T, spec->t1, NULL, gZ + 2, spec);
     } else {
 	for (i=0; i<spec->ncoeff; i++) {
@@ -1664,7 +1731,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 
     if (gnr.errcode == 0) {
 	gnr.ci = spec->ci;
-	add_stats_to_model(&gnr, spec, (const double **) *pZ);
+	add_stats_to_model(&gnr, spec, Z);
 	if (add_nls_std_errs_to_model(&gnr)) {
 	    gnr.errcode = E_ALLOC;
 	}
@@ -1674,8 +1741,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	ls_criteria(&gnr);
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
-	add_fit_resid_to_model(&gnr, spec, uhat, (const double **) *pZ, 
-			       perfect);
+	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);
 	gnr.list[1] = spec->dv;
 
 	/* set relevant data on model to be shipped out */
@@ -1834,6 +1900,7 @@ static void clear_nlspec (nlspec *spec)
     spec->grcount = 0;
 
     spec->t1 = spec->t2 = 0;
+    spec->real_t1 = spec->real_t2 = 0;
     spec->nobs = 0;
 
     spec->Z = NULL;
@@ -1844,6 +1911,9 @@ static void clear_nlspec (nlspec *spec)
 	oc_set_destroy(spec->oc);
 	spec->oc = NULL;
     }
+
+    free(spec->mask);
+    spec->mask = NULL;
 }
 
 /* 
@@ -2743,7 +2813,7 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		/* Use Gauss-Newton Regression for covariance matrix,
 		   standard errors */
-		nlsmod = GNR(fvec, jac, spec, pZ, pdinfo, prn);
+		nlsmod = GNR(fvec, jac, spec, (const double **) *pZ, pdinfo, prn);
 	    }
 	} else {
 	    make_nl_model(&nlsmod, spec, pdinfo);
@@ -2882,8 +2952,8 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->fncount = 0;
     spec->grcount = 0;
 
-    spec->t1 = pdinfo->t1;
-    spec->t2 = pdinfo->t2;
+    spec->t1 = spec->real_t1 = pdinfo->t1;
+    spec->t2 = spec->real_t2 = pdinfo->t2;
     spec->nobs = spec->t2 - spec->t1 + 1;
 
     spec->Z = NULL;
@@ -2891,6 +2961,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->prn = NULL;
 
     spec->oc = NULL;
+    spec->mask = NULL;
 
     return spec;
 }

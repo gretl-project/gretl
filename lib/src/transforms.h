@@ -53,6 +53,9 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt);
 
+int dumgenr_with_oddval (int **plist, double ***pZ, DATAINFO *pdinfo,
+			 double oddval);
+
 int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt);
 
 int gettrend (double ***pZ, DATAINFO *pdinfo, int square);

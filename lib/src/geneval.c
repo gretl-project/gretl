@@ -2428,6 +2428,49 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+/* argument is series; value returned is list */
+
+static NODE *dummify_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = NULL;
+	double oddval = NADBL;
+
+	if (r->t != EMPTY) {
+	    if (r->t != NUM) {
+		p->err = E_TYPES;
+		return ret;
+	    } else {
+		oddval = r->v.xval;
+	    }
+	} 
+
+	if (l->t == VEC) {
+	    list = gretl_list_new(1);
+	    list[1] = l->vnum;
+	} else if (l->t == LVEC) {
+	    list = gretl_list_copy(l->v.ivec);
+	} else {
+	    list = gretl_list_copy(get_list_by_name(l->v.str));
+	}
+
+	if (list == NULL) {
+	    p->err = E_ALLOC;
+	} else if (list[0] > 1) {
+	    gretl_errmsg_set("dummify(): first argument should be a single variable");
+	    free(list);
+	    p->err = E_DATA;
+	} else {
+	    p->err = dumgenr_with_oddval(&list, p->Z, p->dinfo, oddval);
+	    ret->v.ivec = list;
+	}
+    }
+
+    return ret;
+}
+
 /* argument is series or list; value returned is list in either
    case */
 
@@ -2456,9 +2499,6 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 	    case F_LLAG:
 		order = node_get_scalar(l, p);
 		p->err = list_laggenr(&list, order, p->Z, p->dinfo);
-		break;
-	    case F_DUMIFY:
-		p->err = list_dumgenr(&list, p->Z, p->dinfo, OPT_F);
 		break;
 	    case F_ODEV:
 		p->err = list_orthdev(list, p->Z, p->dinfo);
@@ -5315,9 +5355,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_DUMIFY:
-	/* series or list argument */ 
+	/* series argument wanted */ 
 	if (ok_list_node(l)) {
-	    ret = list_gen_func(l, NULL, t->t, p);
+	    ret = dummify_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}

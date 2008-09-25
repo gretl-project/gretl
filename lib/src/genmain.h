@@ -160,6 +160,9 @@ void genr_set_na_check (GENERATOR *genr);
 
 void genr_unset_na_check (GENERATOR *genr);
 
+void genr_relink_to_dataset (GENERATOR *genr, double ***pZ,
+			     DATAINFO *pdinfo);
+
 int function_from_string (const char *s);
 
 int is_gretl_function_call (const char *s);

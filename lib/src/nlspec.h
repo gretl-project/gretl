@@ -51,6 +51,8 @@ struct _nlspec {
     int grcount;        /* number of gradient evaluations (ML, GMM) */
     int t1;             /* starting observation */
     int t2;             /* ending observation */
+    int real_t1;        /* real starting observation (if sub-sampled) */
+    int real_t2;        /* real ending observation (if sub-sampled) */
     int nobs;           /* number of observations used */
     double crit;        /* criterion (minimand or maximand) */
     double tol;         /* tolerance for stopping iteration */
@@ -65,6 +67,7 @@ struct _nlspec {
     DATAINFO *dinfo;    /* pointer to dataset info */
     PRN *prn;           /* printing aparatus */
     ocset *oc;          /* orthogonality info (GMM) */
+    char *mask;         /* mask for included observations */
 };
 
 void nlspec_destroy_arrays (nlspec *s);

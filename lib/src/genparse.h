@@ -232,7 +232,6 @@ enum {
     F_LOWER,
     F_MREAD,
     F_POLROOTS,
-    F_DUMIFY,
     F_XPX,
     F_GETENV,
     F_ARGNAME,
@@ -245,6 +244,7 @@ enum {
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
+    F_DUMIFY,
     F_SORTBY,
     F_RUNIFORM,
     F_RNORMAL,

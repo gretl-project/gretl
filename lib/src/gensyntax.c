@@ -811,7 +811,7 @@ static NODE *powterm (parser *p)
     int sym = p->sym == B_SUB ? U_NEG : 
 	p->sym == B_ADD ? U_POS :
 	p->sym;
-    int opt = 0;
+    int opt = OPT_NONE;
     NODE *t;
 
     if (p->err) {
@@ -827,6 +827,8 @@ static NODE *powterm (parser *p)
 	opt = BOTH_OPT;
     } else if (sym == F_FDJAC || sym == F_BFGSMAX) {
 	opt = RIGHT_STR;
+    } else if (sym == F_DUMIFY) {
+	opt = RIGHT_OPT;
     }
 
     if (unary_op(sym)) {
