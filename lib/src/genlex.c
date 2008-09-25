@@ -1329,8 +1329,10 @@ const char *getsymb (int t, const parser *p)
     if (p != NULL) {
 	if (t == NUM) {
 	    return fromdbl(p->xval); 
-	} else if (t == USCALAR || t == USERIES) {
+	} else if (t == USERIES) {
 	    return p->dinfo->varname[p->idnum];
+	} else if (t == USCALAR) {
+	    return p->idstr;
 	} else if (t == UMAT || t == UOBJ ||
 		   t == LOOPIDX) {
 	    return p->idstr;

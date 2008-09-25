@@ -806,7 +806,11 @@ static void get_ovar_ref (NODE *t, parser *p)
 }
 
 static NODE *powterm (parser *p)
-{  
+{ 
+    /* watch out for unary operators */
+    int sym = p->sym == B_SUB ? U_NEG : 
+	p->sym == B_ADD ? U_POS :
+	p->sym;
     int opt = 0;
     NODE *t;
 
@@ -819,20 +823,30 @@ static NODE *powterm (parser *p)
 	    p->sym, p->ch? p->ch : '0', p->ch);
 #endif
 
-    if (p->sym == F_RUNIFORM || p->sym == F_RNORMAL) {
+    if (sym == F_RUNIFORM || sym == F_RNORMAL) {
 	opt = BOTH_OPT;
-    } else if (p->sym == F_FDJAC || p->sym == F_BFGSMAX) {
+    } else if (sym == F_FDJAC || sym == F_BFGSMAX) {
 	opt = RIGHT_STR;
     }
 
-    if (func2_symb(p->sym)) {
-	t = newb2(p->sym, NULL, NULL);
+    if (unary_op(sym)) {
+	if (p->ch == 0) {
+	    context_error(0, p);
+	    return NULL;
+	}
+        t = newb1(sym, NULL);
+        if (t != NULL) {
+            lex(p);
+            t->v.b1.b = powterm(p);
+        }
+    } else if (func2_symb(sym)) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    get_args(t, p, opt);
 	}
-    } else if (string0_func(p->sym)) {
-	t = newb1(p->sym, NULL);
+    } else if (string0_func(sym)) {
+	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
@@ -841,33 +855,33 @@ static NODE *powterm (parser *p)
 		get_multi_args(t->v.b1.b, p);
 	    }
 	}	
-    } else if (string_arg_func(p->sym)) {
-	t = newb1(p->sym, NULL);
+    } else if (string_arg_func(sym)) {
+	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = get_string_arg(p);
 	}	
-    } else if (func1_symb(p->sym)) {
-	t = newb1(p->sym, NULL);
+    } else if (func1_symb(sym)) {
+	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = base(p, t);
 	}
-    } else if (p->sym == LAG || p->sym == OBS) {
-	t = newb2(p->sym, NULL, NULL);
+    } else if (sym == LAG || sym == OBS) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, USERIES); 
 	    lex(p);
 	    t->v.b2.r = base(p, t);
 	}
-    } else if (func2_symb(p->sym)) {
-	t = newb2(p->sym, NULL, NULL);
+    } else if (func2_symb(sym)) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    get_args(t, p, opt);
 	}
-    } else if (p->sym == MSL || p->sym == DMSL) {
-	t = newb2(p->sym, NULL, NULL);
+    } else if (sym == MSL || sym == DMSL) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    if (p->sym == MSL) {
 		t->v.b2.l = newstr(p, STR);
@@ -880,20 +894,20 @@ static NODE *powterm (parser *p)
 		get_slice_parts(t->v.b2.r, p);
 	    }
 	}
-    } else if (p->sym == DMSTR) {
-	t = newb2(p->sym, NULL, NULL);
+    } else if (sym == DMSTR) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
 	    t->v.b2.r = get_string_arg(p);
 	}
-    } else if (p->sym == OVAR) {
-	t = newb2(p->sym, NULL, NULL);
+    } else if (sym == OVAR) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newstr(p, STR);
 	    get_ovar_ref(t, p);
 	}
-    } else if (p->sym == LISTVAR) {
+    } else if (sym == LISTVAR) {
 	t = listvar_node(p);
 	if (t != NULL && (p->sym == G_LPR || p->sym == G_LBR)) {
 	    /* list.series node may be "inflected" as lag or obs */
@@ -905,14 +919,14 @@ static NODE *powterm (parser *p)
 		t->v.b2.r = base(p, t);
 	    }
 	}
-    } else if (p->sym == G_LPR) {
+    } else if (sym == G_LPR) {
 	/* dummy root for parenthesized expressions, to facilitate
 	   taking the transpose of matrix stuff, e.g. (A*B)' */
 	t = newb1(EROOT, NULL);
 	if (t != NULL) {
 	    t->v.b1.b = base(p, t);
 	}
-    } else if (p->sym == G_LCB) {
+    } else if (sym == G_LCB) {
 	/* explicit matrix definition, possibly followed by
 	   a "subslice" specification */
 	int sub = 0;
@@ -931,8 +945,8 @@ static NODE *powterm (parser *p)
 		}		
 	    }
 	}
-    } else if (p->sym == UFUN) {
-	t = newb2(p->sym, NULL, NULL);
+    } else if (sym == UFUN) {
+	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newstr(p, STR);
 	    lex(p);
@@ -941,8 +955,8 @@ static NODE *powterm (parser *p)
 		get_multi_args(t->v.b2.r, p);
 	    }
 	}
-    } else if (funcn_symb(p->sym)) {
-	t = newb1(p->sym, NULL);
+    } else if (funcn_symb(sym)) {
+	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
@@ -950,8 +964,8 @@ static NODE *powterm (parser *p)
 		get_multi_args(t->v.b1.b, p);
 	    }
 	}
-    } else if (p->sym == STR || p->sym == VSTR) {
-	t = newstr(p, p->sym);
+    } else if (sym == STR || sym == VSTR) {
+	t = newstr(p, sym);
 	lex(p);
     } else {
 	t = base(p, NULL);
@@ -968,7 +982,6 @@ static NODE *factor (parser *p)
 {  
     int sym = p->sym == B_SUB ? U_NEG : 
 	p->sym == B_ADD ? U_POS : 
-	p->sym == B_AND ? U_ADDR :
 	p->sym;
     NODE *t;
 
