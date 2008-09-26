@@ -4,20 +4,20 @@ ols Q const P HS SHC OC L PL
 # Above command estimates Model A. Now generate monthly dummies   
 genr dummy
 # estimate Model B with monthly dummies   
-ols Q const P HS SHC OC L PL dfeb dmar dapr dmay djun \
- djul daug dsep doct dnov ddec  
+ols Q const P HS SHC OC L PL dm2 dm3 dm4 dm5 dm6 \
+ dm7 dm8 dm9 dm10 dm11 dm12  
 # reset sample range to the first period only   
 smpl 1983.01 1986.06
 # Next estimate Model C   
-ols Q const P HS SHC OC dfeb dmar dapr dmay djun \
- djul daug dsep doct dnov ddec  
+ols Q const P HS SHC OC dm2 dm3 dm4 dm5 dm6 \
+ dm7 dm8 dm9 dm10 dm11 dm12 
 # omit variables with highest p-values, a few at a time   
-omit dfeb dmar  
+omit dm2 dm3 
 omit HS  
-omit daug dsep  
-omit doct dnov  
-omit dapr  
-omit dmay djul  
+omit dm8 dm9 
+omit dm10 dm11  
+omit dm4 
+omit dm5 dm7  
 # This is Model D, the final model with all significant coefficients   
 omit ddec  
 # obtain predicted values for the loss and post loss periods   
