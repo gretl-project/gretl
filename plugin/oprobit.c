@@ -562,7 +562,8 @@ static double gen_resid (op_container *OC, const double *theta, int t)
     return ret;
 } 
 
-static void fill_model (MODEL *pmod, const DATAINFO *pdinfo, 
+static void fill_model (MODEL *pmod, const int *list,
+			const DATAINFO *pdinfo, 
 			op_container *OC, double *theta, 
 			gretl_matrix *V, int fnc, int grc)
 {
@@ -631,7 +632,16 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	}
     }
 
-    gretl_model_set_coeff_separator(pmod, NULL, nx);
+    /* trim the model list */
+    for (i=pmod->list[0]; i>1; i--) {
+	if (!in_gretl_list(list, pmod->list[i])) {
+	    gretl_list_delete_at_pos(pmod->list, i);
+	}
+    }
+
+    if (nx > 0) {
+	gretl_model_set_coeff_separator(pmod, NULL, nx);
+    }
 }
 
 static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
@@ -713,7 +723,8 @@ static double naive_prob (MODEL *pmod, double **Z, int j,
 /* Main ordered estimation function */
 
 static int do_ordered (int ci, int ndum, 
-		       double **Z, DATAINFO *pdinfo, MODEL *pmod,
+		       double **Z, DATAINFO *pdinfo, 
+		       MODEL *pmod, const int *list, 
 		       gretlopt opt, PRN *prn)
 {
     op_container *OC;
@@ -786,7 +797,7 @@ static int do_ordered (int ci, int ndum,
     V = oprobit_vcv(OC, OC->theta, &err);
 
     if (!err) {
-	fill_model(pmod, pdinfo, OC, OC->theta, V, fncount, grcount);
+	fill_model(pmod, list, pdinfo, OC, OC->theta, V, fncount, grcount);
     }
 
  bailout:
@@ -1057,7 +1068,8 @@ MODEL ordered_estimate (int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {
-	model.errcode = do_ordered(ci, ndum, *pZ, pdinfo, &model, opt, prn);
+	model.errcode = do_ordered(ci, ndum, *pZ, pdinfo, &model, list, 
+				   opt, prn);
     }
 
     free(dumlist);

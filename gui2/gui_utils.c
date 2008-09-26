@@ -2237,10 +2237,12 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    continue;
 	}
 
-	/* put the independent  vars on the menu list */
+	/* put the independent vars on the menu list */
 	for (j=1; j<=xlist[0]; j++) {
 	    v1 = xlist[j];
-	    if (v1 == 0) continue;
+	    if (v1 == 0) {
+		continue;
+	    }
 	    if (!strcmp(datainfo->varname[v1], "time")) {
 		continue;
 	    }

@@ -877,35 +877,6 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
     return filter;
 }
 
-#if 0
-
-static void gtk_file_selector_dummy (void) 
-{
-    GtkWidget *dialog;
-
-    dialog = 
-	gtk_file_chooser_dialog_new("Open File",
-				    NULL,
-				    GTK_FILE_CHOOSER_ACTION_OPEN,
-				    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				    GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				    NULL);
-
-    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-	gchar *filename;
-
-	filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-	fprintf(stderr, "got filename '%s'\n", filename);
-	g_free(filename);
-    }
-
-    fprintf(stderr, "destroying dialog\n");
-    gtk_widget_destroy(dialog);
-    fprintf(stderr, "dialog destroyed\n");
-}
-
-#endif
-
 static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
@@ -1024,9 +995,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	g_free(fname);
     } 
 
-    fprintf(stderr, "Calling gtk_widget_destroy on filesel\n");
     gtk_widget_destroy(filesel);
-    fprintf(stderr, "Done gtk_widget_destroy on filesel\n");
 }
 
 #endif /* end of non-MS Windows code */
@@ -1044,11 +1013,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 #ifdef G_OS_WIN32
     win32_file_selector(msg, action, src, data, w);
 #else
-# if 0
-    gtk_file_selector_dummy();
-# else
     gtk_file_selector(msg, action, src, data, w);
-# endif
 #endif
 }
 
@@ -1058,10 +1023,6 @@ void file_selector_with_parent (const char *msg, int action, FselDataSrc src,
 #ifdef G_OS_WIN32
     win32_file_selector(msg, action, src, data, w);
 #else
-# if 0
-    gtk_file_selector_dummy();
-# else
     gtk_file_selector(msg, action, src, data, w);
-# endif
 #endif
 }

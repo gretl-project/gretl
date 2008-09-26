@@ -1431,6 +1431,17 @@ const char *gretl_model_get_depvar_name (const MODEL *pmod,
     return pdinfo->varname[dv];
 }
 
+static int ordered_model (const MODEL *pmod)
+{
+    if (pmod->ci == PROBIT || pmod->ci == LOGIT) {
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * gretl_model_get_x_list:
  * @pmod: pointer to gretl model.
@@ -1510,7 +1521,15 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		    list[i] = pmod->list[i + 1];
 		}
 	    }
-	}	    
+	}
+    } else if (ordered_model(pmod)) {
+	nx = pmod->list[0] - 1;
+	list = gretl_list_new(nx);
+	if (list != NULL) {
+	    for (i=1; i<=list[0]; i++) {
+		list[i] = pmod->list[i + 1];
+	    }
+	}	
     } else if (pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM) {
 	nx = pmod->ncoeff;
 	list = gretl_list_new(nx);
