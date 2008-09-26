@@ -3,13 +3,17 @@ version 1.7.9, in progress
 - Fix bugs 2102478, 2116172, 2118506 
 - Periodogram graph: fix bug for case where the locale
   decimal separator is not '.'
-- Add Russian translation
+- Add Russian translation, Turkish translation
 - Small GUI fixes
 - Modifications to web-downloader for new server settings
 - Fix for non-ascii file names in session files on MS
   Windows
 - genr: fix for unary minus in exponentiation (e.g. x^-.5)
 - nls: fix R^2 printout
+- dummify function: accept a second argument (see the help
+  for details)
+- ordered probit/logit: fix bug with displaying these 
+  models in the GUI model window
 
 9/14/2008 version 1.7.8
 - Add a language-switching option to the gretl GUI (under

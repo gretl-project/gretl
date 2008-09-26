@@ -632,7 +632,8 @@ static void fill_model (MODEL *pmod, const int *list,
 	}
     }
 
-    /* trim the model list */
+    /* trim the model list: remove references to the 'cut'
+       dummy variables */
     for (i=pmod->list[0]; i>1; i--) {
 	if (!in_gretl_list(list, pmod->list[i])) {
 	    gretl_list_delete_at_pos(pmod->list, i);

@@ -19,7 +19,7 @@ omit dm10 dm11
 omit dm4 
 omit dm5 dm7  
 # This is Model D, the final model with all significant coefficients   
-omit ddec  
+omit dm12 
 # obtain predicted values for the loss and post loss periods   
 fcast 1986.07 1990.05 Qhat 
 # reset sample range to the second and third periods   

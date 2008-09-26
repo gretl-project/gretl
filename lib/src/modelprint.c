@@ -529,6 +529,10 @@ static void print_arbond_AR_test (double z, int order, PRN *prn)
 {
     double pv = normal_pvalue_2(z);
 
+    if (na(pv)) {
+	return;
+    }
+
     pputs(prn, "  ");
 
     if (plain_format(prn)) {
@@ -581,6 +585,10 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     }
 
     pv = chisq_cdf_comp(df, x);
+
+    if (na(pv)) {
+	return;
+    }
 
     if (tex_format(prn)) {
 	pprintf(prn, "%s: ", I_(texstrs[j]));
