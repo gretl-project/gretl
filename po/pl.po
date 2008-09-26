@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.7.8
+# Polish translation for gretl-1.7.9
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
@@ -6,10 +6,10 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.7.8\n"
+"Project-Id-Version: gretl-1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-25 11:38-0400\n"
-"PO-Revision-Date: 2008-09-20 09:49-0400\n"
+"PO-Revision-Date: 2008-09-25 23:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -211,8 +211,7 @@ msgstr ""
 "\n"
 "Kointegracja występuje, jeżeli każdy wykorzystywany proces jest I(1),\n"
 "tzn. hipoteza zerowa o pierwiastku jednostkowym nie jest odrzucana oraz\n"
-"proces resztowy(uhat) z równania kointegrującego nie jest zintegrowany I"
-"(0),\n"
+"proces resztowy(uhat) z równania kointegrującego nie jest zintegrowany I(0),\n"
 "tzn. hipoteza zerowa o pierwiastku jednostkowym jest odrzucana.\n"
 
 #: lib/src/bootstrap.c:408
@@ -271,8 +270,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych są równe "
-"zero\n"
+"  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych są równe zero\n"
 "\n"
 
 #: lib/src/compare.c:314 lib/src/gretl_model.c:2985
@@ -453,8 +451,7 @@ msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
-"Test ilorazu wiarygodności Quandta na występowanie załamania "
-"strukturalnego,\n"
+"Test ilorazu wiarygodności Quandta na występowanie załamania strukturalnego\n"
 "w nieokreślonym momencie, z 15 procentowym błędem oceny"
 
 #: lib/src/compare.c:2038
@@ -1493,8 +1490,7 @@ msgstr ""
 
 #: lib/src/describe.c:3325
 msgid "Missing values within sample -- can't do periodogram"
-msgstr ""
-"Brak danych wewnątrz okresu próby -- niemożliwe wyznaczenie periodogramu"
+msgstr "Brak danych wewnątrz okresu próby -- niemożliwe wyznaczenie periodogramu"
 
 #: lib/src/describe.c:3331
 msgid "Insufficient observations for periodogram"
@@ -1651,9 +1647,7 @@ msgstr "t(%d) = %g, przy dwustronym obszarze krytycznym p = %.4f\n"
 #: lib/src/describe.c:4156 lib/src/describe.c:4194 gui2/guiprint.c:1290
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
-msgstr ""
-"Wartość krytyczna (przy dwustronnym 5%% obszarze krytycznym) = %.4f dla n = %"
-"d"
+msgstr "Wartość krytyczna (przy dwustronnym 5%% obszarze krytycznym) = %.4f dla n = %d"
 
 #: lib/src/describe.c:4185
 msgid "Correlation Coefficients"
@@ -1946,8 +1940,7 @@ msgstr "Test White'a na heteroskedastyczność reszt (bez iloczynów zmiennych)"
 
 #: lib/src/estimate.c:2589 lib/src/gretl_model.c:2708 lib/src/modelprint.c:966
 msgid "White's test for heteroskedasticity"
-msgstr ""
-"Test White'a na heteroskedastyczność reszt (zmienność wariancji resztowej)"
+msgstr "Test White'a na heteroskedastyczność reszt (zmienność wariancji resztowej)"
 
 #: lib/src/estimate.c:2746
 msgid "HET_1"
@@ -1968,8 +1961,7 @@ msgstr "ITER             ESS           % ZMIANA"
 
 #: lib/src/estimate.c:3372
 msgid "Test for ARCH of order"
-msgstr ""
-"Test efektu ARCH (AutoRegressive Conditional Heteroscedasticity) rzędu:"
+msgstr "Test efektu ARCH (AutoRegressive Conditional Heteroscedasticity) rzędu:"
 
 #: lib/src/estimate.c:3397 lib/src/modelprint.c:1728 lib/src/modelprint.c:1729
 #, c-format
@@ -2091,9 +2083,9 @@ msgid "= 1 if quarter = %d, 0 otherwise"
 msgstr "= 1 dla kwartału = %d, 0 pozostałe"
 
 #: lib/src/genfuncs.c:1062
-#, fuzzy, c-format
+#, c-format
 msgid "= 1 if month = %d, 0 otherwise"
-msgstr "= 1 dla miesiąca %s, 0 pozostałe"
+msgstr "= 1 dla miesiąca %d, 0 pozostałe"
 
 #: lib/src/genfuncs.c:1072
 #, c-format
@@ -2740,8 +2732,7 @@ msgstr "Zmiennej %d nie ma na liście zmiennych"
 
 #: lib/src/gretl_list.c:1764
 msgid "Can't do this: some vars in original model have been redefined"
-msgstr ""
-"Nie można tego wykonać: niektóre zmienne modelu należałoby przedefiniować"
+msgstr "Nie można tego wykonać: niektóre zmienne modelu należałoby przedefiniować"
 
 #: lib/src/gretl_matrix.c:169
 msgid "Matrix is not finite"
@@ -2891,8 +2882,7 @@ msgstr "Nie możliwe odzyskanie reszt (uhat): dane uległy zmianie"
 
 #: lib/src/gretl_model.c:4712
 msgid "Can't retrieve yhat: data set has changed"
-msgstr ""
-"Nie możliwe odzyskanie wartości wyrównanych (yhat): dane uległy zmianie"
+msgstr "Nie możliwe odzyskanie wartości wyrównanych (yhat): dane uległy zmianie"
 
 #: lib/src/gretl_model.c:4714
 msgid "Can't retrieve ht: data set has changed"
@@ -2933,10 +2923,9 @@ msgid ""
 "allows for differing intercepts by cross-sectional unit\n"
 "slope standard errors in parentheses, p-values in brackets\n"
 msgstr ""
-"                 Oszacowane ustalone efekty (nielosowe efekty)\n"
+"              Oszacowane ustalone efekty (nielosowe efekty)\n"
 "uwzględniające zróżnicowanie wyrazu wolnego według jednostek w przekroju,\n"
-"(współczynniki, błędy stand. w nawiasach, wartość p w nawiasach "
-"kwadratowych).\n"
+"(współczynniki, błędy stand. w nawiasach, wartość p w nawiasach kwadratowych).\n"
 
 #: lib/src/gretl_panel.c:1319
 #, c-format
@@ -3044,8 +3033,7 @@ msgid ""
 "\n"
 msgstr ""
 "(Niska wartość p oznacza odrzucenie hipotezy H0, że model panelowy MNK jest\n"
-" poprawny, wobec hipotezy H1, że model o losowych efektach jest "
-"właściwszy.)\n"
+" poprawny, wobec hipotezy H1, że model o losowych efektach jest właściwszy.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2251
@@ -3747,8 +3735,7 @@ msgstr "Niedopasowany \"%s\""
 
 #: lib/src/interact.c:4053
 msgid "You can't end a loop here, you haven't started one\n"
-msgstr ""
-"Niemożliwe zamknięcie pętli, ponieważ jeszcze nie została ona otwarta\n"
+msgstr "Niemożliwe zamknięcie pętli, ponieważ jeszcze nie została ona otwarta\n"
 
 #: lib/src/interact.c:4174
 msgid "This command requires one variable.\n"
@@ -4112,13 +4099,11 @@ msgstr "Wyłączając stałą, największa wartość p jest dla zmiennej %d (%s)
 
 #: lib/src/modelprint.c:960
 msgid "Auxiliary regression for non-linearity test (squared terms)"
-msgstr ""
-"Pomocnicze równanie regresji dla testu nieliniowści (kwadraty zmiennych)"
+msgstr "Pomocnicze równanie regresji dla testu nieliniowści (kwadraty zmiennych)"
 
 #: lib/src/modelprint.c:963
 msgid "Auxiliary regression for non-linearity test (log terms)"
-msgstr ""
-"Pomocnicze równanie regresji dla testu nieliniowści (logarytmy zmiennych)"
+msgstr "Pomocnicze równanie regresji dla testu nieliniowści (logarytmy zmiennych)"
 
 #: lib/src/modelprint.c:972
 msgid "Augmented regression for Chow test"
@@ -4879,8 +4864,7 @@ msgstr "Dane są podpróbą, a model oszacowano nie dla tego zakresu danych\n"
 
 #: lib/src/modelspec.c:231 lib/src/modelspec.c:232
 msgid "model is subsampled, dataset is not\n"
-msgstr ""
-"Model wyznaczono dla podpróby, a dane aktualnie posiadają odmienny zakres\n"
+msgstr "Model wyznaczono dla podpróby, a dane aktualnie posiadają odmienny zakres\n"
 
 #: lib/src/modelspec.c:239
 msgid "model and dataset subsamples not the same\n"
@@ -5344,9 +5328,7 @@ msgstr ""
 
 #: lib/src/printout.c:245
 msgid "Test for null hypothesis of normal distribution"
-msgstr ""
-"Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny.      Test "
-"Doornika-Hansena (1994)- transformowana skośność i kurtoza."
+msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozkład normalny. Test Doornika-Hansena (1994)- transformowana skośność i kurtoza"
 
 #: lib/src/printout.c:252
 msgid "Test for null hypothesis of gamma distribution"
@@ -5516,9 +5498,7 @@ msgstr "Nazwa zmiennej: %s\n"
 
 #: lib/src/printout.c:2077
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
-msgstr ""
-"Objaśnienie: * oznacza resztę przekraczajacą 2.5 raza błąd standardowy "
-"reszt\n"
+msgstr "Objaśnienie: * oznacza resztę przekraczajacą 2.5 raza błąd standardowy reszt\n"
 
 #: lib/src/printout.c:2083
 msgid "Mean Squared Error"
@@ -5901,8 +5881,7 @@ msgstr "Test Hansena-Sargana nadmiernej identyfikacji"
 
 #: lib/src/system.c:2662 lib/src/system.c:2667
 msgid "LR test for diagonal covariance matrix"
-msgstr ""
-"Test ilorazu wiarygodności dla diagonalnych elementów macierzy kowariancji"
+msgstr "Test ilorazu wiarygodności dla diagonalnych elementów macierzy kowariancji"
 
 #: lib/src/system.c:2679
 msgid "Breusch--Pagan test for diagonal covariance matrix"
@@ -7719,13 +7698,12 @@ msgid "Panel data organization"
 msgstr "Organizacja danych panelowych"
 
 #: gui2/datawiz.c:100
-#, fuzzy
 msgid "Panel structure"
-msgstr "_Struktura danych..."
+msgstr "_Struktura panelu"
 
 #: gui2/datawiz.c:101
 msgid "Panel index variables"
-msgstr "Indeksy struktury panelu"
+msgstr "Zmienne indeksujące strukturę panelu"
 
 #: gui2/datawiz.c:102
 msgid "Confirm dataset structure"
@@ -7814,9 +7792,8 @@ msgid "Use index variables"
 msgstr "Wykorzystaj indeksy jednostek i czasu"
 
 #: gui2/datawiz.c:412
-#, fuzzy
 msgid "Non-standard frequency"
-msgstr "skala częstości"
+msgstr "Niestandardowa okresowość"
 
 #: gui2/datawiz.c:481
 msgid "Cross-sectional"
@@ -7903,7 +7880,7 @@ msgstr "Wybrane indeksy jednostek i czasu nie reprezentują struktury panelu"
 
 #: gui2/datawiz.c:912
 msgid "This dataset cannot be interpreted as a panel"
-msgstr ""
+msgstr "Dane nie mogą być interpretowane jako panelowe"
 
 #: gui2/datawiz.c:1016
 msgid "Unit or group index variable"
@@ -7915,12 +7892,11 @@ msgstr "Indeks zmiennej czasu"
 
 #: gui2/datawiz.c:1218
 msgid "Number of cross-sectional units"
-msgstr "Liczba przekrojów w jednosce"
+msgstr "Liczba przekrojów w jednosce czasu"
 
 #: gui2/datawiz.c:1219
-#, fuzzy
 msgid "Number of time periods"
-msgstr "Liczba wierszy:"
+msgstr "Liczba jednostek czasu w panelu"
 
 #: gui2/datawiz.c:1286
 msgid "purge missing observations"
@@ -8876,7 +8852,6 @@ msgid "Password"
 msgstr "Hasło"
 
 #: gui2/fnsave.c:937
-#, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/apply/.\n"
@@ -8884,7 +8859,7 @@ msgid ""
 "in your web browser."
 msgstr ""
 "Jeśli nie masz loginu na serwerze gretla, proszę\n"
-"zobacz stronę http://ricardo.ecn.wfu.edu/gretl/apply/.\n"
+"zobacz stronę http://gretl.ecn.wfu.edu/apply/.\n"
 "Przycisk 'Website' otwiera tą stronę do przeglądania.\n"
 " "
 
@@ -10259,8 +10234,7 @@ msgstr ""
 
 #: gui2/guiprint.c:1624
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr ""
-"Objaśnienie: * oznacza reszty przekraczające 2.5 razy błąd standardowy reszt"
+msgstr "Objaśnienie: * oznacza reszty przekraczające 2.5 razy błąd standardowy reszt"
 
 #: gui2/guiprint.c:1698
 #, c-format
@@ -10898,7 +10872,7 @@ msgstr "_Tematy"
 
 #: gui2/helpfiles.c:97
 msgid "_Text"
-msgstr "_Tekst"
+msgstr "_Rozmiar tekstu"
 
 #: gui2/helpfiles.c:98
 msgid "_Larger"
@@ -11045,7 +11019,7 @@ msgstr "z wyrazem wolnym, trendem liniowym i trendem kwadratowym"
 
 #: gui2/library.c:903
 msgid "include seasonal dummies"
-msgstr "Włącz sezonowe zmienne 0-1"
+msgstr "Włącz periodyczne zmienne 0-1"
 
 #: gui2/library.c:904 gui2/library.c:916
 msgid "show regression results"
@@ -12197,7 +12171,7 @@ msgstr "Pokaż detale dla regresji"
 
 #: gui2/selector.c:3489
 msgid "Include seasonal dummies"
-msgstr "Włącz sezonowe zmienne 0-1"
+msgstr "Włącz periodyczne zmienne 0-1"
 
 #: gui2/selector.c:3497
 msgid "Fine-tune using Cochrane-Orcutt"
@@ -12309,7 +12283,7 @@ msgstr ""
 
 #: gui2/selector.c:3827
 msgid "Fixed effects"
-msgstr "Ustalone efekty"
+msgstr "Ustalone efekty (nielosowe)"
 
 #: gui2/selector.c:3831
 msgid "Random effects"
@@ -12575,7 +12549,7 @@ msgstr "Zapisz jako TEX..."
 
 #: gui2/session.c:180 gui2/session.c:2648
 msgid "Edit plot commands"
-msgstr "Edycja "
+msgstr "Edycja opcji wykresu"
 
 #: gui2/session.c:187 gui2/session.c:2618
 msgid "Save..."
@@ -13587,7 +13561,7 @@ msgid ""
 "%s\" at row %d, column %d\n"
 msgstr ""
 "Oczekiwano danych numerycznych, znaleziono łańcuch:\n"
-"%s\" w wierszu %d, kolumna %d\n"
+"%s\" w wierszu %d, kolumnie %d\n"
 
 #: plugin/fcp.c:246
 msgid " (using Hessian)"
@@ -13875,8 +13849,7 @@ msgstr "'*' oznacza dźwigniową obserwację (leverage point), h(i)>2(k+1)/n"
 
 #: plugin/leverage.c:538
 msgid "No leverage points were found"
-msgstr ""
-"Nie znaleziono dźwigniowych obserwacji (leverage points), h(i)<2(k+1)/n"
+msgstr "Nie znaleziono dźwigniowych obserwacji (leverage points), h(i)<2(k+1)/n"
 
 #: plugin/mailer.c:570
 msgid "To:"
@@ -13984,8 +13957,7 @@ msgstr "Wektory wartości własnych (ładunki składowej)"
 
 #: plugin/poisson.c:381
 msgid "poisson: the dependent variable must be count data"
-msgstr ""
-"Poisson: zmienna zależna musi być licznikiem zdarzeń (liczby naturalne)"
+msgstr "Poisson: zmienna zależna musi być licznikiem zdarzeń (liczby naturalne)"
 
 #: plugin/progress_bar.c:65
 msgid "gretl: loading data"
@@ -14266,16 +14238,14 @@ msgstr "Minimalna możliwa wartość = 1.0"
 
 #: plugin/vif.c:256
 msgid "Values > 10.0 may indicate a collinearity problem"
-msgstr ""
-"Wartości > 10.0 mogą wskazywać na problem współliniowości-rozdęcia wariancji"
+msgstr "Wartości > 10.0 mogą wskazywać na problem współliniowości-rozdęcia wariancji"
 
 #: plugin/vif.c:268
 msgid ""
 "VIF(j) = 1/(1 - R(j)^2), where R(j) is the multiple correlation coefficient\n"
 "between variable j and the other independent variables"
 msgstr ""
-"VIF(j) = 1/(1 - R(j)^2), gdzie R(j) jest współczynnikiem korelacji "
-"wielorakiej\n"
+"VIF(j) = 1/(1 - R(j)^2), gdzie R(j) jest współczynnikiem korelacji wielorakiej\n"
 "pomiędzy zmienną 'j' a pozostałymi zmiennymi niezależnymi modelu."
 
 #: plugin/workbook.c:546
@@ -14284,8 +14254,7 @@ msgstr "Ochrona hasłem arkusza nie jest obsługiwana."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"To nie jest plik 'OLE' -- prawdopodobnie zbyt stara wersja pliku dla gretla\n"
+msgstr "To nie jest plik 'OLE' -- prawdopodobnie zbyt stara wersja pliku dla gretla\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14330,10 +14299,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#, fuzzy
-#~ msgid "Invalid non-positive range"
-#~ msgstr "Rangi są niedodatnie!"
-
-#~ msgid "time-series data"
-#~ msgstr "szeregi czasowe"

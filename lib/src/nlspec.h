@@ -67,7 +67,7 @@ struct _nlspec {
     DATAINFO *dinfo;    /* pointer to dataset info */
     PRN *prn;           /* printing aparatus */
     ocset *oc;          /* orthogonality info (GMM) */
-    char *mask;         /* mask for included observations */
+    char *missmask;     /* mask for missing observations */
 };
 
 void nlspec_destroy_arrays (nlspec *s);

@@ -987,11 +987,9 @@ void genr_unset_na_check (parser *p)
     p->flags &= ~P_NATEST;
 }
 
-void genr_relink_to_dataset (parser *p, double ***pZ,
-			     DATAINFO *pdinfo)
+int genr_get_series_max (parser *p)
 {
-    p->Z = pZ;
-    p->dinfo = pdinfo;
+    return 0;
 }
 
 

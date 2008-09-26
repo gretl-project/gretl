@@ -664,19 +664,29 @@ int update_coeff_values (const double *b, nlspec *s)
     return 0;
 }
 
-#if 0 /* not ready! */
+#if 1 /* not ready! */
 
 static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 {
     DATAINFO *dinfo = NULL;
-    double **Z = NULL;
+    double ***pZ = NULL;
     double **origZ = *spec->Z;
     int nvar = spec->dinfo->v;
     int nobs = 0;
     int i, t, s;
 
+    spec->missmask = malloc(spec->dinfo->n + 1);
+    if (spec->missmask == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->missmask[spec->dinfo->n] = '\0';
+    memset(spec->missmask, '0', spec->dinfo->n);
+
     for (t=t1; t<=t2; t++) {
-	if (!na(origZ[spec->lhv][t])) {
+	if (na(origZ[spec->lhv][t])) {
+	    spec->missmask[t] = '1';
+	} else {
 	    nobs++;
 	}
     }
@@ -685,7 +695,12 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 	return E_DF;
     }
 
-    dinfo = create_auxiliary_dataset(&Z, nvar, nobs);
+    pZ = malloc(sizeof *pZ);
+    if (pZ == NULL) {
+	return E_ALLOC;
+    }
+
+    dinfo = create_auxiliary_dataset(pZ, nvar, nobs);
     if (dinfo == NULL) {
 	return E_ALLOC;
     }
@@ -695,25 +710,24 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 	s = 0;
 	for (t=t1; t<=t2; t++) {
 	    if (!na(origZ[spec->lhv][t])) {
-		Z[i][s++] = origZ[i][t];
+		(*pZ)[i][s++] = origZ[i][t];
 	    }
 	}
     }
 
-    spec->Z = &Z;
+    spec->real_t1 = t1;
+    spec->real_t2 = t2;
+
+    spec->Z = pZ;
     spec->dinfo = dinfo;
     spec->t1 = 0;
     spec->t2 = nobs - 1;
     spec->nobs = nobs;
 
-    if (spec->genrs != NULL) {
-	for (i=0; i<spec->ngenrs; i++) {
-	    genr_relink_to_dataset(spec->genrs[i], spec->Z, spec->dinfo);
-	}
-    }    
-
+#if 0
     fprintf(stderr, "s->t1 = %d, s->t2 = %d, s->nobs = %d, nvar = %d\n",
 	    spec->t1, spec->t2, spec->nobs, nvar);
+#endif
 
     return 0;
 }
@@ -782,7 +796,7 @@ static int nl_missval_check (nlspec *s)
 	if (na((*s->Z)[v][t])) {
 	    fprintf(stderr, "  after setting t1=%d, t2=%d, "
 		    "got NA for var %d at obs %d\n", t1, t2, v, t);
-#if 0
+#if 1
 	    return nls_make_trimmed_dataset(s, t1, t2);
 #else
 	    return E_MISSDATA;
@@ -792,8 +806,8 @@ static int nl_missval_check (nlspec *s)
 
  nl_miss_exit:
 
-    s->t1 = t1;
-    s->t2 = t2;
+    s->t1 = s->real_t1 = t1;
+    s->t2 = s->real_t2 = t2;
     s->nobs = t2 - t1 + 1;
 
 #if NLS_DEBUG
@@ -1179,7 +1193,7 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec,
 {
     int dv = spec->dv;
     double d, tss;
-    int t;
+    int s, t;
 
     pmod->ess = spec->crit;
     pmod->sigma = sqrt(pmod->ess / (pmod->nobs - spec->ncoeff));
@@ -1187,11 +1201,13 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec,
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, Z[dv]);
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, Z[dv]);
 
+    s = (spec->missmask != NULL)? 0 : pmod->t1;
+
     tss = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	d = Z[dv][t] - pmod->ybar;
+	d = Z[dv][s++] - pmod->ybar;
 	tss += d * d;
-    }  
+    } 
 
     if (tss == 0.0) {
 	pmod->rsq = NADBL;
@@ -1623,7 +1639,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	pputs(prn, _("Perfect fit achieved\n"));
 	perfect = 1;
 	for (t=0; t<spec->nobs; t++) {
-	    uhat[t] = 1.0;
+	    uhat[t] = 1.0; /* ?? */
 	}
 	spec->crit = 0.0;
     }
@@ -1912,8 +1928,8 @@ static void clear_nlspec (nlspec *spec)
 	spec->oc = NULL;
     }
 
-    free(spec->mask);
-    spec->mask = NULL;
+    free(spec->missmask);
+    spec->missmask = NULL;
 }
 
 /* 
@@ -2690,6 +2706,57 @@ static int check_spec_requirements (nlspec *spec)
     return 0;
 }
 
+/* remedial treatment for an NLS model estimated using
+   a trimmed dataset, to avoid missing observations
+*/
+
+static int nls_model_fix_sample (MODEL *pmod,
+				 nlspec *spec, 
+				 DATAINFO *pdinfo)
+{
+    double *uhat = NULL;
+    double *yhat = NULL;
+    int s, t;
+
+    uhat = malloc(pdinfo->n * sizeof *uhat);
+    yhat = malloc(pdinfo->n * sizeof *yhat);
+
+    if (uhat == NULL || yhat == NULL) {
+	free(uhat);
+	free(yhat);
+	return E_ALLOC;
+    }
+
+    s = 0;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < spec->real_t1 || t > spec->real_t2) {
+	    uhat[t] = yhat[t] = NADBL;
+	} else if (spec->missmask[t] == '1') {
+	    uhat[t] = yhat[t] = NADBL;
+	} else {
+	    uhat[t] = pmod->uhat[s];
+	    yhat[t] = pmod->yhat[s];
+	    s++;
+	}
+    }
+
+    free(pmod->uhat);
+    pmod->uhat = uhat;
+
+    free(pmod->yhat);
+    pmod->yhat = yhat;
+
+    pmod->full_n = pdinfo->n;
+    pmod->t1 = spec->real_t1;
+    pmod->t2 = spec->real_t2;
+
+    pmod->missmask = spec->missmask;
+    spec->missmask = NULL;
+
+    return 0;
+}
+
 /* static function providing the real content for the two public
    wrapper functions below */
 
@@ -2813,7 +2880,8 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		/* Use Gauss-Newton Regression for covariance matrix,
 		   standard errors */
-		nlsmod = GNR(fvec, jac, spec, (const double **) *pZ, pdinfo, prn);
+		nlsmod = GNR(fvec, jac, spec, (const double **) *spec->Z, 
+			     spec->dinfo, prn);
 	    }
 	} else {
 	    make_nl_model(&nlsmod, spec, pdinfo);
@@ -2838,6 +2906,14 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     destroy_private_scalars();
+
+    if (spec->Z != pZ) {
+	if (!nlsmod.errcode) {
+	    nls_model_fix_sample(&nlsmod, spec, pdinfo);
+	}
+	destroy_dataset(*spec->Z, spec->dinfo);
+	free(spec->Z);
+    }
 
     clear_nlspec(spec);
 
@@ -2961,7 +3037,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->prn = NULL;
 
     spec->oc = NULL;
-    spec->mask = NULL;
+    spec->missmask = NULL;
 
     return spec;
 }

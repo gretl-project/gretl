@@ -51,7 +51,7 @@
 #define XPX_DEBUG 0
 
 static void regress (MODEL *pmod, double *xpy, const double **Z, 
-		     double rho);
+		     double rho, gretlopt opt);
 static int cholbeta (MODEL *pmod, double *xpy,  double *rss);
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
@@ -663,7 +663,7 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     fputc('\n', stderr);
 #endif
 
-    regress(pmod, xpy, Z, rho);
+    regress(pmod, xpy, Z, rho, opt);
     free(xpy);
 
     return pmod->errcode;
@@ -1313,7 +1313,7 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 */
 
 static void regress (MODEL *pmod, double *xpy, const double **Z, 
-		     double rho)
+		     double rho, gretlopt opt)
 {
     int v, yno = pmod->list[1];
     int ifc = pmod->ifc;
@@ -1373,10 +1373,13 @@ static void regress (MODEL *pmod, double *xpy, const double **Z,
     hatvar(pmod, n, Z); 
     if (pmod->errcode) return;
 
-    if (pmod->tss > 0.0) {
-	compute_r_squared(pmod, Z[yno], &ifc);
-    } else if (pmod->tss == 0.0) {
-	uncentered_r_squared(pmod, Z[yno]);
+    if (!(opt & OPT_A)) {
+	/* changed 2008-09-25 */
+	if (pmod->tss > 0.0) {
+	    compute_r_squared(pmod, Z[yno], &ifc);
+	} else if (pmod->tss == 0.0) {
+	    uncentered_r_squared(pmod, Z[yno]);
+	}
     }
 
 #if 0
