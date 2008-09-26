@@ -1402,7 +1402,7 @@ void varinfo_dialog (int varnum, int full)
 
 	vset->compaction_menu = gtk_combo_box_new_text();
 
-	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
+	for (i=COMPACT_NONE; i<COMPACT_WDAY; i++) {
 	    gtk_combo_box_append_text(GTK_COMBO_BOX(vset->compaction_menu), 
 				      _(comp_int_to_string(i)));
 	}
