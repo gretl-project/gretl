@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Gretl için veriler</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="./css-gretl.html">
+</head>
+
+<body>
+<p>[<a href="./index.html">gretl ana sayfası</a>]</p>
+
+<center>
+<h1>Veri ve betik derlemeleri</h1>
+</center>
+
+<p>Eğer gretl'ı ders verme bağlamında kullanıyorsanız, dersiniz ile belirgin biçimde ilişkili betik ve veri dosyalarını öğrencilerin rahatça tarayabilecekleri ve erişebilecekleri bir biçimde toplamak ilginizi çekebilir. Bu, gretl 1.2.1 ve üzerinde desteklenmektedir.</p>
+
+<p>Öyle bir düzenleme yapabilirsiniz ki, gretl kullanıcısı "Dosya, Verileri Aç" seçeneğine veya gretl araç çubuğundaki dizin simgesine tıkladığında, seçenekler arasında özel bir veri dosya derlemesi de ortaya çıksın.</p>
+
+<p>Benzer şekilde, kullanıcı "Dosya, İşlev dosyaları, Uygulama dosyaları" menü maddesini seçtiğinde ortaya özel bir betik derlemesi çıkarttırabilirsiniz.</p>
+
+<p>Gretl, yukarıda sözü geçen menü maddelerine erişildiğinde, geçerli dosya derlemeleri için şu yerlerde arama yapar: gretl "sistem" <kbd>data</kbd> dizini, gretl sistem <kbd>script</kbd> dizini, gretl kullanıcı dizini ve bunların birinci derece alt-dizinleri. Bilgi için, bu dizinlerin özgün değerleri şöyledir:</p>
+
+<center>
+<table>
+<tr><th>konum</th><th>Linux öntanımı</th><th>Windows öntanımı</th></tr>
+<tr><td><p>system data dizini</p></td>
+  <td><kbd>/usr/share/gretl/data</kbd></td>
+    <td><kbd>c:\userdata\gretl\data</kbd></tr>
+<tr><td><p>system script dizini</p></td>
+  <td><kbd>/usr/share/gretl/scripts</kbd></td>
+    <td><kbd>c:\userdata\gretl\scripts</kbd></tr>
+<tr><td><p>user dizini</p></td>
+  <td><kbd>/home/me/gretl</kbd></td>
+    <td><kbd>c:\userdata\gretl\user</kbd></tr>
+</table>
+</center>
+
+<p>Geçerli tüm derlemeler seçim pencerelerine eklenecektir. O halde geçerli bir dosya derlemesi nelerden oluşur? Bu, ya gretl XML biçimindeki bir veri dosyaları setinden (<kbd>.gdt</kbd> son ekli), veya gretl komutları içeren bir betik dosyaları setinden (<kbd>.inp</kbd> son ekli) meydana gelir ki her iki durumda da yanlarında bir "baş dosya" veya katalog eşlik eder. Şu anki gretl dağıtımı, örneğin gretl <kbd>data</kbd> dizini içindeki "misc" alt dizinide yer alan <kbd>descriptions</kbd> betimleme dosyası veya gretl <kbd>scripts</kbd> dizini içindeki "misc" alt dizinide yer alan <kbd>ps_descriptions</kbd> betimleme dosyası gibi bir kaç örnek katalog dosyası içermektedir.</p>
+
+<p>Eğer kendi derlemelerinizi ekliyorsanız, veri kataloglarını "descriptions" ve betik kataloglarını da "ps_descriptions" şeklinde adlandırmanızı öneriyoruz. Her iki durumda da dosyalar kendi belirgin alt dizinlerine (ilgili veri veya betik dosyaları ile birlikte) yerleştirilmelidir (örnek: <kbd>/usr/share/gretl/data/verilerim</kbd> veya <kbd>c:\userdata\gretl\data\verilerim</kbd>).</p>
+
+<p>Betimleme dosyalarının (düz metin) yapısı basittir. Örneğin, gretl "misc" veri kataloğunun ilk birkaç satırı şöyledir:</p>
+
+<pre>
+ # Gretl: various illustrative datafiles
+ "arma","artificial data for ARMA script example"
+ "ects_nls","Nonlinear least squares example"
+ "hamilton","Prices and exchange rate, U.S. and Italy"
+</pre>
+
+<p> Sayı işareti ile başlaması gereken ilk satır, ilk olarak bu örnekte "Gretl" olan ve veri tarama penceresinde bu derlemenin etiketi olarak gözükecek kısa bir isim, bunu izleyen bir iki nokta üstüste ve bunu izleyen seçimlik bir derlemenin kısa betimlemesini içerir.</p>
+
+<p>İzleyen satırlar, virgül ile ayrılan ve çift tırnak işaretleri arasında iki öğe içermektedir. İlk olarak bir veri dosyası adı (burada .gdt son ekini bırakın) ve ikinci olarak da o veri dosyası içeriğinin kısa bir betimlemesi. Derlemedeki her bir veri dosyası için böyle bir satır olmalıdır.</p>
+
+<p>Betik katalog dosyasının görünüşü, dosya satırlarında üç alan olması dışında çok benzerdir: bir dosya adı (<kbd>.inp</kbd> son eki olmadan), betikte gösterilen ekonometrik işlemin kısa bir betimlemesi, ve kullanılan veri türüne ilişkin kısa bir bilgi. Yine, gretl "misc" betiğinin ilk birkaç satırı şöyledir:</p>
+
+<pre>
+ # Gretl: various sample scripts
+ "arma.inp","ARMA modeling","artificial data"
+ "ects_nls","Nonlinear least squares (Davidson)","artificial data"
+ "leverage","Influential observations","artificial data"
+ "longley","Multicollinearity","US employment"
+</pre>
+
+<p>Kendi veri derlemenizi gretl'a tanıtmak isterseniz, izlenecek adımlar şunlardır:</p>
+
+<ol>
+<li><p>Verileri uygun şekilde biraraya getirin.</p>
+
+<li><p>Verileri gretl biçimine dönüştürün ve .gdt dosyaları olarak kaydedin. Verileri dönüştürmenin büyük olasılıkla en kolay yolu, düz metin, CSV veya bir hesap tablosu (MS Excel veya Gnumeric) biçiminden gretl'da içe aktarmak ve daha sonra gdt olarak kaydetmektir. Değişkenler için birer betimleme ("Değişken, Nitelikleri düzenle" menü maddesi) ve verilerin kaynağına ilişkin bir bilgi ("Veriler, Veri bilgisini düzenle" menü maddesi) eklemek isteyebilirsiniz.</p>
+
+<li><p>Bir metin düzenleyici kullanarak derleme için bir "betimleme" dosyası yazın.</p>
+
+<li><p>Veri dosyalarını artı betimleme dosyasını gretl <kbd>data</kbd> dizinine (veya kullanıcı dizinine) ait bir alt dizinine koyun.</p>
+</ol>
+
+<p>Eğer böyle bir derleme oluşturursanız, ve veriler tescilli değilse, derlemeyi gretl için bir "seçimlik ek" olarak paketlenmek üzere göndermeniz konusunda sizi yüreklendirmek isteriz.</p>
+
+<hr noshade>
+<p><address>Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a>, July, 2004.</address></p>
+<p><address>Çeviren: A. Talha Yalta <a href="mailto:cottrell@wfu.edu">&lt;yalta@etu.edu.tr&gt;</a>, 2008.</address></p>
+</body>
+</html>
+
+
+
+
+
+
