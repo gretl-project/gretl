@@ -1,0 +1,655 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML
+><HEAD
+><TITLE
+>Gretl'ın doğruluğunun değerlendirilmesi: NIST veri setleri</TITLE
+
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.74b"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="../css-basic.html"><META
+http-equiv="Content-Type"
+CONTENT="text/html; charset=utf-8"></HEAD
+><BODY
+CLASS="article"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="ARTICLE"
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="title"
+><A
+NAME="nistdoc"
+>Gretl'ın doğruluğunun değerlendirilmesi: NIST veri setleri</A
+></H1
+><H3
+CLASS="author"
+><A
+NAME="AEN4"
+>Allin Cottrell</A
+></H3
+><DIV
+CLASS="affiliation"
+><SPAN
+CLASS="orgdiv"
+>Department of Economics<BR></SPAN
+><SPAN
+CLASS="orgdiv"
+>Wake Forest University<BR></SPAN
+
+>Çeviren: A. Talha Yalta, TOBB Ekonomi ve Teknoloji Üniversitesi<BR></SPAN
+
+></DIV
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>İçindekiler</B
+></DT
+><DT
+>1. <A
+HREF="#AEN14"
+>Gretl hakkında</A
+></DT
+><DT
+>2. <A
+HREF="#AEN18"
+>NIST başvuru veri setleri</A
+></DT
+><DT
+>3. <A
+HREF="#AEN38"
+>Gretl'ın başarımı</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="section"
+><H1
+CLASS="section"
+><A
+NAME="AEN14"
+>1. Gretl hakkında</A
+></H1
+><P
+>Gretl, açık kaynaklı, çapraz-platform bir ekonometri programıdır. Gelişimine <A
+HREF="http://gretl.sourceforge.net"
+TARGET="_top"
+>sourceforge</A
+> ev sahipliği yapmaktadır.</P
+></DIV
+><DIV
+CLASS="section"
+><H1
+CLASS="section"
+><A
+NAME="AEN18"
+>2. NIST başvuru veri setleri</A
+></H1
+><P
+>&#13; A.B.D. Ulusal Standartlar ve Teknoloji Enstitüsü (NIST) bir istatistiksel başvuru veri seti takımı yayınlamıştır. Bu projenin amacı, <SPAN
+CLASS="QUOTE"
+>"istatistiksel yazılımların tarafsız değerlendirmesine olanak sağlayacak tasdikli hesaplama sonuçlarına sahip başvuru veri setleri sağlayarak istatistiksel yazılımların doğruluğunu iyileştirmek"tir</SPAN
+>.</P
+><P
+>Mayıs 2000 tarihi ile, proje Internet sitesi şu adreste bulunabilir:</P
+><P
+><A
+HREF="http://www.nist.gov/itl/div898/strd/general/main.html"
+TARGET="_top"
+>&#13;	<TT
+CLASS="literal"
+>http://www.nist.gov/itl/div898/strd/general/main.html</TT
+></A
+></P
+><P
+>veri setleri ise şuradadır:</P
+><P
+><A
+HREF="http://www.nist.gov/itl/div898/strd/general/dataarchive.html"
+TARGET="_top"
+> 
+	<TT
+CLASS="literal"
+>http://www.nist.gov/itl/div898/strd/general/dataarchive.html</TT
+></A
+></P
+><P
+><TT
+CLASS="application"
+>Gretl</TT
+>'ı sınamak için, Doğrusal Bağlanım ve Tekdeğişkenli Özet İstatistikler'e ilişkin veri setlerinden yararlandık (diğerleri VARÇÖZ ve doğrusal-dışı bağlanım ile ilgilidirler).</P
+><P
+>Tasdikli hesaplama sonuçlarına ilişkin olarak, <SPAN
+CLASS="QUOTE"
+>"Tasdikleme Yöntem &#38;
+	Tanımları"</SPAN
+> başlıklı NIST metninden alıntı yapalım: (vurgular eklenmiştir):</P
+><A
+NAME="AEN34"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>Tüm veri setleri için, önişlemci ve Bailey FORTRAN altyordam paketi (1995, NETLIB'den edinilebilir) kullanılarak çoklu kesinlikli hesaplamalar (500 basamağa kadar doğru) yapılmıştır. Veriler tamamen çoklu kesinlikli sayılar olarak okutulmuş ve tüm hesaplamalar bu çok yüksek kesinlikle yapılmıştır. Sonuçlar çoklu kesinlikli olarak çıkartılmış, ve ancak bundan sonra onbeş anlamlı basamağa yuvarlanmıştır.<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Bu çoklu kesinlikli sonuçlar bir ülküleştirmedir. Hesaplamalar yuvarlama veya diğer hatalar olmadan yapılırsa neyin elde edileceğini göstermektedirler.</I
+
+></SPAN
+> Türüne özgü her sayısal çözümyolu (yani çoklu kesinlikle gerçekleştirilmemiş), sayısal hatalılıklar getirecek ve buradaki tasdikli değerlerden biraz farklı sonuçlar üretecektir.</P
+
+></BLOCKQUOTE
+><P
+>Sıradan istatistiksel paketlerden elde edilen sonuçların NIST'in çoklu kesinlikli karşılaştırma değeleriyle tamamen uyuşmasını beklememek gerekir. Ancak bu karşılaştırma, korkunç hata ve farklılıklar için çok yararlı bir sınama sağlamaktadır.</P
+
+></DIV
+><DIV
+CLASS="section"
+><H1
+CLASS="section"
+><A
+NAME="AEN38"
+>3. Gretl'ın başarımı</A
+></H1
+><P
+>Aşağıda yer alan <A
+HREF="#tab-linreg"
+>Çizelge 1</A
+>, hem gretl'ın normal bağlanım aracı, hem de Gnu Çoklu Kesinlik (GMP) kütüphanesini temel alan gretl eklentisi başarımlarını göstermektedir. Gretl sütunundaki
+<SPAN
+CLASS="QUOTE"
+>"enaz doğru anlamlı basamak"</SPAN
+> değeri, her model için, gretl'ın o model ile ilişkili çeşitli istatistik sonuçları (bağlanım katsayıları ve ölçünlü hatalar, artık kareler toplamı, artık ölçünlü hataları,
+    <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+> istatistiği ve <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>R</I
+></SPAN
+><SUP
+>2</SUP
+>), NIST'in tasdik ettiği değerler ile karşılaştırıldığında ortaya çıkan en az sayıdaki doğru anlamlı basamakları göstermektedir. GMP eklentisi sütunu yalnızca gretl sonuçlarının tüm istatistikler için en az 12 anlamlı basamak için doğru olup olmadığını kaydetmektedir. Bu sınamalar için gretl, -O2 eniyileştirme bayrağı ile birlikte gcc 2.95.3 kullanılarak ve glibc-2.2.5'e karşı bağlanarak derlenmiş ve Pentium III işlemcili bir IBM ThinkPad üzerinde çalıştırılmıştır.</P
+
+><DIV
+CLASS="table"
+><A
+NAME="tab-linreg"
+></A
+><P
+><B
+>Çizelge 1. NIST doğrusal bağlanım sınamaları</B
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Veri seti</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Model</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Gretl (enaz doğru anlamlı basamak)</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>GMP eklentisi (enaz 12 basamak için doğru mu?)</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Norris</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yalın doğrusal bağlanım</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Pontius</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Kareli</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>8</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>NoInt1</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yalın bağlanım, sabit terim yok</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9 (ama metne bakınız)</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>NoInt2</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yalın bağlanım, sabit terim yok</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9 (ama metne bakınız)</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Filip</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>10. derece çokterimli</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>0 (metne bakınız)</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Longley</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Çoklu bağlanım, altı bağımsız değişken</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>8</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler1</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5. derece çokterimli</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler2</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5. derece çokterimli</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler3</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5. derece çokterimli</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler4</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5. derece çokterimli</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler5</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5. derece çokterimli</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Evet</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>Çizelgede görülebileceği gibi,
+      <TT
+CLASS="application"
+>gretl</TT
+> tasdikli sonuçları izleme konusunda iyi bir iş çıkartmaktadır. Modelin
+      <DIV
+CLASS="informalequation"
+><A
+NAME="AEN115"
+></A
+><P
+></P
+><IMG
+SRC="figures/poly.png"
+ALT="
+	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
+	  +\beta_{10}x^{10}_t+\epsilon\]
+	"><P
+></P
+></DIV
+>olduğu <TT
+CLASS="filename"
+>Filip</TT
+> veri setinde,
+      <TT
+CLASS="application"
+>gretl</TT
+> yüksek derece bir çoklueşdoğrusallıktan dolayı tahmin üretmeyi reddetmektedir (yaygın ticari ekonometri programı <I
+CLASS="citetitle"
+>Eviews
+	3.1</I
+> de bu bağlanımda takılmaktadır).  Bunun dışında, program tüm durumlarda doğru katsayı tahminleri üretmektedir.</P
+><P
+><TT
+CLASS="filename"
+>NoInt1</TT
+> ve
+      <TT
+CLASS="filename"
+>NoInt2</TT
+> veri setleri için, bağlanımda sabit olmadığı zaman belirleme katsayısı
+<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>R</I
+></SPAN
+><SUP
+>2</SUP
+>'nin hesaplanması üzerinde yöntembilimsel bir anlaşmazlık bulunmaktadır. Bu durumda, NIST değeri
+      <DIV
+CLASS="informalequation"
+><A
+NAME="AEN126"
+></A
+><P
+></P
+><IMG
+SRC="figures/nistr2.png"
+ALT=" 
+	\[R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}\] 
+      "><P
+></P
+></DIV
+>iken, 
+<TT
+CLASS="application"
+>gretl</TT
+>, bağımlı değişkenin gerçek ve yakıştırılmış değerleri arasındaki ilintinin karesini vermektedir. İstatistikçiler arasında
+<SPAN
+CLASS="QUOTE"
+>"doğru"</SPAN
+> formül üzerinde evrensel bir anlaşma bulunmamaktadır (örnek olarak, bakınız Ramanathan, 2002, pp. 163&#8211;4). Yine, 
+<I
+CLASS="citetitle"
+>Eviews
+	3.1</I
+> farklı bir değer üretmektedir (<TT
+CLASS="filename"
+>NoInt</TT
+> sınama dosyaları için eksi değerli). Bu bağlanımlar için, NIST tarafından tercih edilen değer</P
+><P
+><TT
+CLASS="command"
+> genr r2alt = 1 - $ess/sum(y * y)
+    </TT
+></P
+><P
+>komutu kullanılarak elde edilmiştir ve böylece elde edilen sayılar, 
+<TT
+CLASS="application"
+>gretl</TT
+>'ın kesinlik düzeyinde, tasdikli değerler ile anlaşma halindedirler.</P
+><P
+>&#13;      Tekdeğişkenli özet istatistikler ile ilgili olarak, NIST tarafından verilmiş tasdikli değerler örneklem ortalaması, örneklem ölçünlü sapması ve örneklem gecikme-1 özilinti katsayısı için olanlardır. NIST, bu sonuncu istatistik ile ilgili olarak 
+<SPAN
+CLASS="QUOTE"
+>"birkaç tanımı olabilir"</SPAN
+> hatırlatmasında bulunmuştur. <TT
+CLASS="application"
+>gretl</TT
+>, 
+<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+><SUB
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+></SUB
+>
+      ve
+      <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+><SUB
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>&#8722;1</SUB
+> arasındaki ilinti katsayısını verirken, tasdikli değer
+      <DIV
+CLASS="informalequation"
+><A
+NAME="AEN138"
+></A
+><P
+></P
+><IMG
+SRC="figures/nistr1.png"
+ALT="
+	  \[r_1=\frac{\sum^T_{t=2}(y_t-\bar{y})(y_{t-1}-\bar{y})} 
+                     {\sum^T_{t=1}(y_t - \bar{y})^2}\]
+	"><P
+></P
+></DIV
+>şeklinde hesaplanmıştır. Karşılaştırma amacı ile, NIST değeri 
+<TT
+CLASS="application"
+>gretl</TT
+>'da şu şekilde bulunmuştur:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;      genr y1 = y(-1) 
+      genr ybar = mean(y) 
+      genr devy = y - ybar genr
+      devy1 = y1 - ybar 
+      genr ssy = sum(devy * devy) 
+      smpl 2 ; 
+      genr ssyy1 = sum(devy * devy1) 
+      genr rnist = ssyy1 / ssy</PRE
+></TD
+></TR
+></TABLE
+><P
+>Daha sonra, 
+<TT
+CLASS="varname"
+>rnist</TT
+> değeri tasdikli değer ile karşılaştırılmıştır.</P
+><P
+>Bu değişiklik ile, tüm veri setleri (<TT
+CLASS="filename"
+>PiDigits</TT
+>, <TT
+CLASS="filename"
+>Lottery</TT
+>,
+      <TT
+CLASS="filename"
+>Lew</TT
+>, <TT
+CLASS="filename"
+>Mavro</TT
+>,
+      <TT
+CLASS="filename"
+>Michelso</TT
+>, <TT
+CLASS="filename"
+>NumAcc1</TT
+>,
+      <TT
+CLASS="filename"
+>NumAcc2</TT
+>, <TT
+CLASS="filename"
+>NumAcc3</TT
+> ve
+      <TT
+CLASS="filename"
+>NumAcc4</TT
+>) için tüm özet istatistikler, (<TT
+CLASS="application"
+>gretl</TT
+> tarafından verilen kesinlikte) uyuşmuşlardır.</P
+></DIV
+></DIV
+></BODY
+></HTML
+>
