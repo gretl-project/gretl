@@ -1008,6 +1008,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  *   %OPT_Z (internal use) suppress the automatic elimination of 
  *      perfectly collinear variables.
  *   %OPT_X: compute "variance matrix" as just (X'X)^{-1}
+ *   %OPT_B: don't compute R^2.
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
@@ -1373,7 +1374,7 @@ static void regress (MODEL *pmod, double *xpy, const double **Z,
     hatvar(pmod, n, Z); 
     if (pmod->errcode) return;
 
-    if (!(opt & OPT_A)) {
+    if (!(opt & OPT_B)) {
 	/* changed 2008-09-25 */
 	if (pmod->tss > 0.0) {
 	    compute_r_squared(pmod, Z[yno], &ifc);

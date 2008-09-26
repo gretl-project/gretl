@@ -724,7 +724,7 @@ static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
     spec->t2 = nobs - 1;
     spec->nobs = nobs;
 
-#if 0
+#if NLS_DEBUG
     fprintf(stderr, "s->t1 = %d, s->t2 = %d, s->nobs = %d, nvar = %d\n",
 	    spec->t1, spec->t2, spec->nobs, nvar);
 #endif
@@ -1719,7 +1719,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
     print_GNR_dataset(glist, gZ, gdinfo);
 #endif
 
-    lsqopt = OPT_A;
+    lsqopt = OPT_A | OPT_B; /* OPT_B: don't calculate R^2 */
     if (spec->opt & OPT_R) {
 	/* robust variance matrix, if wanted */
 	lsqopt |= OPT_R;

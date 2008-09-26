@@ -989,6 +989,7 @@ void genr_unset_na_check (parser *p)
 
 int genr_get_series_max (parser *p)
 {
+    /* dummy: to be added later */
     return 0;
 }
 
