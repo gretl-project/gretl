@@ -877,6 +877,35 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
     return filter;
 }
 
+#if 0
+
+static void gtk_file_selector_dummy (void) 
+{
+    GtkWidget *dialog;
+
+    dialog = 
+	gtk_file_chooser_dialog_new("Open File",
+				    NULL,
+				    GTK_FILE_CHOOSER_ACTION_OPEN,
+				    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				    GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+				    NULL);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+	gchar *filename;
+
+	filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	fprintf(stderr, "got filename '%s'\n", filename);
+	g_free(filename);
+    }
+
+    fprintf(stderr, "destroying dialog\n");
+    gtk_widget_destroy(dialog);
+    fprintf(stderr, "dialog destroyed\n");
+}
+
+#endif
+
 static void gtk_file_selector (const char *msg, int action, FselDataSrc src, 
 			       gpointer data, GtkWidget *parent) 
 {
@@ -885,6 +914,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
     GtkFileFilter *filter;
     GtkFileChooserAction fa;
     const gchar *okstr;
+    gint response;
 
     set_startdir(startdir, action);
 
@@ -939,7 +969,7 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 	gtk_file_filter_set_name(filter, _("gnuplot files (*.plt)"));
 	gtk_file_filter_add_pattern(filter, "*.plt");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
-    }    
+    } 
 
     /* FIXME session dir */
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
@@ -984,16 +1014,19 @@ static void gtk_file_selector (const char *msg, int action, FselDataSrc src,
 					  fname);
     } 
 
-    if (gtk_dialog_run(GTK_DIALOG(filesel)) == GTK_RESPONSE_ACCEPT) {
-	char *fname;
+    response = gtk_dialog_run(GTK_DIALOG(filesel));
 
+    if (response == GTK_RESPONSE_ACCEPT) {
+	gchar *fname;
+	
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
-	gtk_widget_destroy(filesel);
 	file_selector_process_result(fname, action, src, data);
 	g_free(fname);
-    } else {
-	gtk_widget_destroy(filesel);
-    }
+    } 
+
+    fprintf(stderr, "Calling gtk_widget_destroy on filesel\n");
+    gtk_widget_destroy(filesel);
+    fprintf(stderr, "Done gtk_widget_destroy on filesel\n");
 }
 
 #endif /* end of non-MS Windows code */
@@ -1011,7 +1044,11 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 #ifdef G_OS_WIN32
     win32_file_selector(msg, action, src, data, w);
 #else
+# if 0
+    gtk_file_selector_dummy();
+# else
     gtk_file_selector(msg, action, src, data, w);
+# endif
 #endif
 }
 
@@ -1021,6 +1058,10 @@ void file_selector_with_parent (const char *msg, int action, FselDataSrc src,
 #ifdef G_OS_WIN32
     win32_file_selector(msg, action, src, data, w);
 #else
+# if 0
+    gtk_file_selector_dummy();
+# else
     gtk_file_selector(msg, action, src, data, w);
+# endif
 #endif
 }

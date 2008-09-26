@@ -2458,8 +2458,12 @@ static NODE *dummify_func (NODE *l, NODE *r, int f, parser *p)
 
 	if (list == NULL) {
 	    p->err = E_ALLOC;
+	} else if (r->t == EMPTY) {
+	    /* got just one argument */
+	    p->err = list_dumgenr(&list, p->Z, p->dinfo, OPT_F);
+	    ret->v.ivec = list;
 	} else if (list[0] > 1) {
-	    gretl_errmsg_set("dummify(): first argument should be a single variable");
+	    gretl_errmsg_set("dummify(x, y): first argument should be a single variable");
 	    free(list);
 	    p->err = E_DATA;
 	} else {

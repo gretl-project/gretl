@@ -1136,14 +1136,22 @@
 
     <function name="dummify" section="transforms" output="list">
       <fnargs>
-	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg optional="true" type="scalar">omitval</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>x</argname> should be a discrete series, or
-	  list of such series.  This function creates a set of dummy variables
-	  coding for the distinct values in the series; the smallest value is
-	  taken as the omitted category and is not explicitly represented.
+	  The argument <argname>x</argname> should be a discrete series. This
+	  function creates a set of dummy variables coding for the distinct
+	  values in the series.  By default the smallest value is taken as the
+	  omitted category and is not explicitly represented.
+	</para>
+	<para>
+	  The optional second argument represents the value of
+	  <argname>x</argname> which should be treated as the omitted
+	  category. The effect when a single argument is given is equivalent
+	  to <lit>dummify(x, min(x))</lit>.  To produce a full set of dummies,
+	  with no omitted category, use <lit>dummify(x, NA)</lit>.
 	</para>
 	<para> 
 	  The generated variables are automatically named according to

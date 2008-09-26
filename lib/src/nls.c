@@ -664,7 +664,9 @@ int update_coeff_values (const double *b, nlspec *s)
     return 0;
 }
 
-#if 1 /* not ready! */
+#define NLS_SKIP_MISSING 1
+
+#if NLS_SKIP_MISSING
 
 static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
 {
@@ -796,7 +798,7 @@ static int nl_missval_check (nlspec *s)
 	if (na((*s->Z)[v][t])) {
 	    fprintf(stderr, "  after setting t1=%d, t2=%d, "
 		    "got NA for var %d at obs %d\n", t1, t2, v, t);
-#if 1
+#if NLS_SKIP_MISSING
 	    return nls_make_trimmed_dataset(s, t1, t2);
 #else
 	    return E_MISSDATA;
@@ -1639,7 +1641,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	pputs(prn, _("Perfect fit achieved\n"));
 	perfect = 1;
 	for (t=0; t<spec->nobs; t++) {
-	    uhat[t] = 1.0; /* ?? */
+	    uhat[t] = 1.0; /* will be adjusted later */
 	}
 	spec->crit = 0.0;
     }
