@@ -2,7 +2,6 @@
 <html> <head>
 <title>Gretl için veriler</title>
 <LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <body>
@@ -19,8 +18,8 @@
   <td align=left>
      <font face="sans-serif" size="-1">
       <p><a href="#db">gretl veritabanları</a>
-      <p><a href="#jw">kitap verisetleri</a>
-      <p><a href="#df">büyük veridosyaları</a>
+      <p><a href="#jw">kitap veri setleri</a>
+      <p><a href="#df">büyük veri dosyaları</a>
       <p><a href="#custom">özel veri derlemeleri</a>
       <p><a href="#perl">veri araçları</a>
       </font> 
@@ -32,7 +31,7 @@
 
 <p>Gretl dilinde bir <b>veritabanı</b>, karışık sıklık ve gözlem aralığında olabilen (genellikle geniş) bir dizi derlemesidir. Veriler, tek-kesinlikli kayan-nokta olarak, ikili biçimde saklanır. Böyle dosyalara gretl'ın <kbd>Dosya/Veritabanları</kbd> menüsü üzerinden erişir ve buradan seçtiğiniz dizileri gretl çalışma alanına aktarabilirsiniz. Gretl veritabanları <kbd>.bin</kbd> dosya adı son ekine sahiptir ve bunlara diziler ile ilgili bilgi içeren (<kbd>.idx</kbd> son ekli) bir dizin dosyası eşlik eder.</p>
 
-<p>Diğer taraftan, gretl <b>veridosyası</b> sıklık ve gözlem aralığı bakımından tektürel (bazı değişkenlerin bazı gözlemlerinde eksik değer olabilse de) bir dizi derlemesidir. Böyle bir dosya doğrudan gretl çalışma alanına okutulabilir. Gretl veri dosyaları türüne özgü olarak <kbd>.gdt</kbd> son eki alırlar; öntanımlı olarak, <a href="./gretldata.dtd">gretldata.dtd</a>'de verilen Döküman Tür Tanımı (DTT) uyumlu XML biçimindedirler.</p>
+<p>Diğer taraftan, bir gretl <b>veri dosyası</b> sıklık ve gözlem aralığı bakımından tektürel (bazı değişkenlerin bazı gözlemlerinde eksik değer olabilse de) bir dizi derlemesidir. Böyle bir dosya doğrudan gretl çalışma alanına okutulabilir. Gretl veri dosyaları türüne özgü olarak <kbd>.gdt</kbd> son eki alırlar; öntanımlı olarak, <a href="./gretldata.dtd">gretldata.dtd</a>'de verilen Döküman Tür Tanımı (DTD) uyumlu XML biçimindedirler.</p>
 
 <p>Daha fazla ayrıntı için, lütfen <a href="http://ricardo.ecn.wfu.edu/pub/gretl/manual/">gretl belgeleri</a>'ne bakınız.</p>
 
@@ -40,7 +39,7 @@
 
 <p>Gretl dağıtımı bir örnek veritabanı içerir: St. Louis Merkez Bankası'ndan bir ABD makroekonomik zaman dizileri derlemesi. Ücretsiz indirme veya çevrimiçi erişim için <a href="http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_DBS">birkaç veritabanı daha</a> bulunmaktadır. Gretl 0.40 ve üzeri ile bu ek veritabanlarına <kbd>Dosya/Veritabanları/Veritabanı sunucusu</kbd> menü maddesi üzerinden ulaşabildiğinize (Internet bağlantınız olması koşuluyla) dikkat ediniz.</p>
 
-<h2><a name="jw">2. Kitap verisetleri</a></h2>
+<h2><a name="jw">2. Kitap veri setleri</a></h2>
 
 <p>Ramu Ramanathan'ın <a href="http://econ.ucsd.edu/~rramanat/embook5.htm"><i>Introductory Econometrics 
 with Applications</i></a> veri setleri ve tekrarlayıcı betikleri ve William Greene'nin <a href="http://pages.stern.nyu.edu/~wgreene/Text/econometricanalysis.htm"><i>Econometric
@@ -48,7 +47,7 @@ Analysis</i></a> seçilmiş verileri, gretl temel paketi ile sağlanmaktadır. B
 
 <p><i>Wooldridge</i>: Gretl, Jeffrey Wooldridge ders kitabı <a
 href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
-Econometrics: A Modern Approach</i></a> için destek vermektedir. Veri setleri, Windows kurulum dosyası, <a href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a>, veya sıkıştırılmış arşiv, <a href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.tar.gz">wooldridge_data.tar.gz</a> olarak bulunmaktadır. 4üncü baskıdaki yeni veri dosyaları kapsanmaktadır.</p>
+Econometrics: A Modern Approach</i></a> için destek vermektedir. Veri setleri, Windows kurulum dosyası, <a href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a>, veya sıkıştırılmış arşiv, <a href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.tar.gz">wooldridge_data.tar.gz</a> olarak bulunmaktadır. Dördüncü baskıdaki yeni veri dosyaları kapsanmaktadır.</p>
 
 <p><i>Gujarati</i>: Gretl, Damodar Gujarati'nin
 <a href="http://www.mhhe.com/economics/gujarati4/"><i>Basic Econometrics</i></a> veri setlerini desteklemektedir. Ayrıntılar için lütfen <a href="./gujarati/index.html">buraya</a> bakınız.</p>
@@ -71,7 +70,7 @@ for Principles of Econometrics</i>.
 
 <p>Kendini-kuran Windows programları ile ilgili olarak, bunları masaüstünüze indirip kurulum dosyası simgesine çift tıklamanız yeterlidir. (Veri setleri bir kez kurulduktan sonra bu dosyayı silebilirsiniz.)</p>
 
-<p>Gzip ile sıkıştırılmış arşiv dosyaları gretl "share" dizini içine açılmalıdır. Örneğin, eğer gretl <kbd>/usr</kbd> altına kurulysa, Stock ve Watson veri ve betiklerini şu şekilde (yetkili kullanıcı olarak) kurabilirsiniz:</p>
+<p>Gzip ile sıkıştırılmış arşiv dosyaları, gretl "share" dizini içine açılmalıdır. Örneğin, eğer gretl <kbd>/usr</kbd> altına kurulysa, Stock ve Watson veri ve betiklerini şu şekilde (yetkili kullanıcı olarak) kurabilirsiniz:</p>
 
 <pre>
 cd /usr/share/gretl
@@ -125,11 +124,11 @@ rm stock_watson.tar.gz
 
 <ul>
 
-<li><p><kbd>pwt56.gdt</kbd>: PWT56'nın tümü. Bu veriseti birçok eksik gözlem içermektedir.</p></li>
+<li><p><kbd>pwt56.gdt</kbd>: PWT56'nın tümü. Bu veri seti birçok eksik gözlem içermektedir.</p></li>
 
-<li><p><kbd>pwt56_60_89.gdt</kbd>: 1960-89 arası 30 yıl için 120 ülkeye ait 20 değişken içeren bir panel veri seti. Bu verisetinde eksik gözlem bulunmamaktadır.</p></li>
+<li><p><kbd>pwt56_60_89.gdt</kbd>: 1960-89 arası 30 yıl için 120 ülkeye ait 20 değişken içeren bir panel veri seti. Bu veri setinde eksik gözlem bulunmamaktadır.</p></li>
 
-<li><p><kbd>pwt56_1985.gdt</kbd>: 1985 yılı için diğer yıllardan daha fazla veriler bulunuyor. Bu yüzden, bu yıl için 156 ülkenin tümünü kapsayan saf bir kesit veridosyası hazırlamış bulunuyoruz. Bu dosyada bazı eksik değerler bulunmakta ancak kesitte bunlarla başa çıkmak bir panel veri seti yapısındaki kadar zor olmayacaktır.</p></li>
+<li><p><kbd>pwt56_1985.gdt</kbd>: 1985 yılı için diğer yıllardan daha fazla veriler bulunuyor. Bu yüzden, bu yıl için 156 ülkenin tümünü kapsayan saf bir kesit veri dosyası hazırlamış bulunuyoruz. Bu dosyada bazı eksik değerler bulunmakta ancak kesitte bunlarla başa çıkmak bir panel veri seti yapısındaki kadar zor olmayacaktır.</p></li>
 
 </ul>
 
@@ -143,14 +142,11 @@ rm stock_watson.tar.gz
 
 <h2><a name="perl">5. Veri araçları</a></h2>
 
-<p>Önceden paketlenmiş verisetleri sunmanın yanı sıra, gretl Internet'te bulunan verileri kullanarak veritabanları hazırlamak için kullanılabilecek bazı betikler ile birlikte gelmektedir. Bunlar, gretl kaynak paketi (gretl <a href="./index.html">ana sayfası</a>'na bakınız) içindeki <kbd>utils</kbd> alt dizininde bulunabilir. Betikleri çalıştırmak için bilgisayarınızda Perl'in kurulu olması ve Internet'e bağlı olmanız gereklidir.</p>
+<p>Önceden paketlenmiş veri setleri sunmanın yanı sıra, gretl Internet'te bulunan verileri kullanarak veritabanları hazırlamak için kullanılabilecek bazı betikler ile birlikte gelmektedir. Bunlar, gretl kaynak paketi (gretl <a href="./index.html">ana sayfası</a>'na bakınız) içindeki <kbd>utils</kbd> alt dizininde bulunabilir. Betikleri çalıştırmak için bilgisayarınızda Perl'in kurulu olması ve Internet'e bağlı olmanız gereklidir.</p>
 
 <hr noshade>
 
-<p>
-<address>
-Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
-</p>
-
+<p><address>Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address></p>
+<p><address>Çeviren: A. Talha Yalta <a href="mailto:cottrell@wfu.edu">&lt;yalta@etu.edu.tr&gt;</a>, 2008.</address></p>
 </body>
 </html>

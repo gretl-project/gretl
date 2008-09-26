@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>gretl ve X-12-ARIMA</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="../index.html">gretl ana sayfası</a>]
+
+<center>
+<h1>gretl ve X-12-ARIMA</h1>
+</center>
+
+<p>X-12-ARIMA, şu an A.B.D. Sayım Bürosu'nun mevsimsel düzeltme için kullanılmakta olduğu programdır. Bu programın Internet ana sayfası <a href="http://www.census.gov/srd/www/x12a/">www.census.gov</a> adresindedir. Belge ve detaylar için lütfen oraya başvurunuz.</p>
+
+<p>Eğer X-12-ARIMA'yı gretl'da kullanmak üzere <b>GNU/Linux</b> altında kurmayı arzularsanız, şunları yapabilirsiniz:</p>
+
+<ul>
+<li><p>Kaynağı kendiniz derlemek, ki bu durumda <kbd>x12arima.sh</kbd> kabuk betiğini çalıştırmanızı öneririz. Gretl kaynak paketi ile sağlanan bu betiği ayrıca <a href="x12arima.sh.txt">görebilir</a> veya buradan <a href="./x12arima.sh">indirebilirsiniz</a>. Bu betik, gerekli dosyaları indirir, Linux altında derleme için gerekli birkaç ufak düzeltmeyi yapar, programı derler (bunun için GNU Fortran derleyicisi <kbd>g77</kbd> gerekmektedir), ve istediğiniz bir konuma kurar.</p></li>
+<li><p>İkili rpm paketi <a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a>'yi kurmak (bu paket Red Hat Linux 7.3 üzerinde inşa edilmiştir).</p></li>
+</ul>
+
+<p>Eğer X-12-ARIMA'yı gretl ile <b>Windows</b> üzerinde kullanmayı arzularsanız, <a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a> kurulum dosyasını indirmeniz ve çalıştırmanız gerekir. Size bir kurulum dizini sorulacaktır ki bu, öntanımlı olarak <kbd>c:\userdata\x12arima</kbd>'dır. Bu paket, win32 konsol biçimindeki <kbd>x12a.exe</kbd> programı yanında PDF biçiminde belge ve örnekler içermektedir. X-12-ARIMA'yı bu şekilde dağıtma izni verdiği için A.B.D. Sayım Bürosu, İstatistiksel Araştırma Bölümü'nden Brian Monsell'e teşekkür borçluyuz.</p>
+
+<p>TRAMO/SEATS desteği gretl 1.0.2 sürümü ile birlikte yenidir ve şu an için oldukça sınırlıdır, ancak bu özelliğe ilgi olursa büyük olasılıkla daha fazla geliştirilmeye çalışılacaktır. Aşağıdaki resimler şu an için neler yapabileceğinizi göstermektedir.</p>
+
+<p>Uygun bir veri seti (yani mevsimsel zaman dizisi içeren) açtıktan sonra, gretl ana penceresinde bir değişken seçin ve Değişken menüsüne gidin. "X-12-ARIMA çözümlemesi"ni seçin.</p>
+
+<center>
+<IMG SRC="x12a-menu.png" ALT="Variable menu">
+</center>
+
+<p>Size, X-12-ARIMA tarafından oluşturulan dizilerden en çok üç tanesini kaydetme (şu anki gretl veri seti içine) seçeneği veren bir iletişim kutusu göreceksiniz. Bu diziler, girdi dizisinin mevsimsel düzeltilmiş sürümü, dizinin tahmin edilen eğilim/döngü bileşeni, ve tahmin edilen "düzensiz" bileşendir. Bu noktada, bu dizilerin bir çiziminin gösterilip gösterilmeyeceğini de seçebilirsiniz.</p>
+
+<center>
+<IMG SRC="x12a-dialog.png" ALT="Dialog box">
+</center>
+
+<p>Eğer çizimi göstermeyi seçerseniz, şöyle bir şey görmeniz gerekir:</p>
+
+<center>
+<IMG SRC="x12a-graph.png" ALT="x12a graph">
+</center>
+
+<p>Çıktı dizilerini kaydetme ve çizimlerini görüntüleme yanında, X-12-ARIMA çözümlemesinin tam çıktısını da göreceksiniz. Aşağıda bundan bir alıntı gösterilmektedir.</p>
+
+<center>
+<IMG SRC="x12a-output.png" ALT="x12a output">
+</center>
+
+<p>&nbsp;</p>
+<hr>
+ 
+
+</body>
+
+
+
+

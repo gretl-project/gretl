@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>gretl ve TRAMO/SEATS</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="../index.html">gretl ana sayfası</a>]
+
+<center>
+<h1>gretl ve TRAMO/SEATS</h1>
+</center>
+
+<p>TRAMO, "Time series Regression with ARIMA noise, Missing values and Outliers" anlamına gelirken, SEATS de "Signal Extraction in ARIMA Time Series" anlamına gelmektedir. Genellikle birlikte kullanılan bu programlar, Victor Gómez ve Agustín Maravall tarafından İspanya Merkez Bankası'nda geliştirilmişlerdir.</p>
+
+<p>Bu programların Internet ana sayfası <a href="http://www.bde.es/servicio/software/econome.htm">www.bde.es</a> adresindedir. Orada verilmiş olan betimlemeden alıntı yapacak olursak: "Bu programlar temel olarak aylık veya daha düşük sıklıklı zaman dizilerini hedeflemektedirler. Uzman bir çözümlemecinin gereksinimlerini karşılamak üzere yapılandırılmış olsalar da, tamamen otomatik bir şekilde de güvenle kullanılabilirler. Temel uygulamaları yordama, mevsimsel düzeltme, eğilim-döngü tahmini, bileşik öncü gösterge düzenlemesi, içdeğerbiçim, dışadüşen bulma ve düzeltme, özel etki tahmini ve veri kalite denetimidir."</p>
+
+<p>TRAMO/SEATS'i gretl'da kullanmak üzere <b>GNU/Linux</b> altında kurmak için lütfen <a href="http://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats-98-1.i386.rpm">tramo-seats-98-1.i386.rpm</a> ikili rpm dosyasını kullanınız. (Programların kaynak kodları özgür değil, ancak yazarlar bu sürümü hazırlayabilmemiz için bize kaynağa erişim sağlama nezaketi göstermiş bulunuyorlar.)</p>
+
+<p>Eğer TRAMO/SEATS'i gretl ile <b>Windows</b> üzerinde kullanmayı arzularsanız, <a href="http://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a> kurulum dosyasını indirmeniz ve çalıştırmanız gerekir. Size bir kurulum dizini sorulacaktır ki bu, öntanımlı olarak <kbd>c:\userdata\tramo</kbd>'dur. Bu paket, win32 konsol biçimindeki <kbd>tramo.exe</kbd> ve <kbd>seats.exe</kbd> programları yanında PDF biçiminde belge ve örnekler içermektedir. Tramo ve seats'i bu şekilde dağıtma izni verdiği için Gianluca Caporello'ya teşekkür borçluyuz.</p>
+
+<p>TRAMO/SEATS desteği gretl 1.0.3 sürümü ile birlikte yenidir ve şu an için oldukça sınırlıdır, ancak bu özelliğe ilgi olursa büyük olasılıkla daha fazla geliştirilmeye çalışılacaktır. Aşağıdaki resimler şu an için neler yapabileceğinizi göstermektedir.</p>
+
+<p>Uygun bir veri seti (yani mevsimsel zaman dizisi içeren) açtıktan sonra, gretl ana penceresinde bir değişken seçin ve Değişken menüsüne gidin. "Tramo çözümlemesi"ni seçin.</p>
+
+<center>
+<IMG SRC="tramo-menu.png" ALT="Variable menu">
+</center>
+
+<p>Size, SEATS tarafından oluşturulan dizilerden en çok üç tanesini kaydetme (şu anki gretl veri seti içine) seçeneği veren bir iletişim kutusu göreceksiniz. Bu diziler, girdi dizisinin mevsimsel düzeltilmiş sürümü, dizinin tahmin edilen eğilim/döngü bileşeni, ve tahmin edilen "düzensiz" bileşendir. Bu noktada, bu dizilerin bir çiziminin gösterilip gösterilmeyeceğini de seçebilirsiniz.</p>
+
+<center>
+<IMG SRC="tramo-dialog.png" ALT="Dialog box">
+</center>
+
+<p>Eğer çizimi göstermeyi seçerseniz, şöyle bir şey görmeniz gerekir:</p>
+
+<center>
+<IMG SRC="tramo-graph.png" ALT="tramo graph">
+</center>
+
+<p>Çıktı dizilerini kaydetme ve çizimlerini görüntüleme yanında, SEATS çözümlemesinin tam çıktısını da göreceksiniz. Aşağıda bundan bir alıntı gösterilmektedir.</p>
+
+<center>
+<IMG SRC="tramo-output.png" ALT="tramo output">
+</center>
+
+<p>&nbsp;</p>
+<hr>
+ 
+
+</body>
+
+
+
+
