@@ -5124,7 +5124,7 @@
     <description context="gui">
 
       <para>Performs Nonlinear Least Squares (NLS) estimation using a
-	modified version of the Levenberg&ndash;Marquandt algorithm. You
+	modified version of the Levenberg&ndash;Marquardt algorithm. You
 	must supply a function specification; it is recommended but not
 	required that you also supply expressions for the derivatives of
 	this function with respect to each of the parameters if possible.
@@ -5179,7 +5179,7 @@
 
       <para>
 	Performs Nonlinear Least Squares (NLS) estimation using a modified
-	version of the Levenberg&ndash;Marquandt algorithm.  You must
+	version of the Levenberg&ndash;Marquardt algorithm.  You must
 	supply a function specification.  The parameters of this function
 	must be declared and given starting values (using the
 	<cmd>genr</cmd> command) prior to estimation.  Optionally, you may

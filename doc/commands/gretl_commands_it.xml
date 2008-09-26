@@ -5265,7 +5265,7 @@
       <para>
         Esegue una stima con minimi quadrati non-lineari (NLS:
         Nonlinear Least Squares) usando una versione modificata
-        dell'algoritmo di Levenberg&ndash;Marquandt. Occorre fornire una
+        dell'algoritmo di Levenberg&ndash;Marquardt. Occorre fornire una
         specificazione di funzione e si raccomanda di specificare anche le
         espressioni per le derivate di questa funzione rispetto a ognuno
         dei parametri, se possibile. Se non si indicano le derivate, occorre
@@ -5325,7 +5325,7 @@
       <para>
         Esegue una stima con minimi quadrati non-lineari (NLS: Nonlinear Least
         Squares) usando una versione modificata dell'algoritmo di
-        Levenberg&ndash;Marquandt. Occorre fornire una specificazione di
+        Levenberg&ndash;Marquardt. Occorre fornire una specificazione di
         funzione e dichiarare i parametri della funzione (usando il comando
         <cmd>genr</cmd>) prima della stima.  Opzionalmente, è anche possibile
         specificare le espressioni per le derivate della funzione rispetto a

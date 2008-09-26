@@ -5,7 +5,7 @@
 \label{nls-intro}
 
 \app{Gretl} supports nonlinear least squares (NLS) using a variant of
-the Levenberg--Marquandt algorithm.  The user must supply a
+the Levenberg--Marquardt algorithm.  The user must supply a
 specification of the regression function; prior to giving this
 specification the parameters to be estimated must be ``declared'' and
 given initial values.  Optionally, the user may supply analytical
@@ -159,12 +159,12 @@ following \app{minpack} functions are called:
 
 \begin{center}
   \begin{tabular}{ll}
-    \verb+lmder+ & Levenberg--Marquandt algorithm with analytical
+    \verb+lmder+ & Levenberg--Marquardt algorithm with analytical
     derivatives
     \\
     \verb+chkder+ & Check the supplied analytical derivatives
     \\
-    \verb+lmdif+ & Levenberg--Marquandt algorithm with numerical
+    \verb+lmdif+ & Levenberg--Marquardt algorithm with numerical
     derivatives
     \\
     \verb+fdjac2+ & Compute final approximate Jacobian when using
@@ -175,7 +175,7 @@ following \app{minpack} functions are called:
   \end{tabular}
 \end{center}
 
-On successful completion of the Levenberg--Marquandt iteration, a
+On successful completion of the Levenberg--Marquardt iteration, a
 Gauss--Newton regression is used to calculate the covariance matrix
 for the parameter estimates.  If the \option{robust} flag is given a
 robust variant is computed.  The documentation for the \cmd{set}
@@ -211,7 +211,7 @@ Out of the 54 runs, \app{gretl} failed to produce a solution
 in 4 cases when using analytical derivatives, and in 5 cases when
 using numeric approximation. Of the four failures in analytical
 derivatives mode, two were due to non-convergence of the
-Levenberg--Marquandt algorithm after the maximum number of iterations
+Levenberg--Marquardt algorithm after the maximum number of iterations
 (on \verb+MGH09+ and \verb+Bennett5+, both described by NIST as of
 ``Higher difficulty'') and two were due to generation of range errors
 (out-of-bounds floating point values) when computing the Jacobian (on

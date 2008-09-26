@@ -2827,7 +2827,7 @@
 
       <para>Desarrolla la estimación por Mínimos Cuadrados No Lineales (NLS)
 	utilizando una versión modificada del algoritmo de
-	Levenberg&ndash;Marquandt. Usted debe suministrar la especificación de
+	Levenberg&ndash;Marquardt. Usted debe suministrar la especificación de
 	una función; también se recomienda que, si es posible,  suministre las
 	expresiones de las derivadas de la función con respecto a cada uno de
 	los parámetros.
@@ -2883,7 +2883,7 @@
 
       <para>
         Desarrolla la estimación por Mínimos Cuadrados No Lineales (NLS)
-	utilizando una versión modificada del algoritmo de Levenberg-Marquandt.
+	utilizando una versión modificada del algoritmo de Levenberg-Marquardt.
 	El usuario debe suministrar la especificación de una función. Los
 	parámetros de esta función deben ser declarados antes y hay que
 	asignarles unos valores iniciales (usando la instrucción

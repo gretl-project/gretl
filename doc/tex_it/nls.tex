@@ -7,7 +7,7 @@
 
 \app{gretl} supporta i minimi quadrati non
 lineari (NLS - nonlinear least squares), usando una variante
-dell'algoritmo Levenberg--Marquandt.  L'utente deve fornire la
+dell'algoritmo Levenberg--Marquardt.  L'utente deve fornire la
 specificazione della funzione di regressione, e, prima ancora di fare
 questo, occorre ``dichiarare'' i parametri da stimare e fornire dei
 valori iniziali. È anche possibile indicare analiticamente delle
@@ -167,13 +167,13 @@ sono usate le seguenti funzioni \app{minpack}:
 \begin{center}
   \begin{tabular}{ll}
     \verb+lmder+ & 
-    Algoritmo Levenberg--Marquandt con derivate analitiche
+    Algoritmo Levenberg--Marquardt con derivate analitiche
     \\
     \verb+chkder+ & 
     Controllo delle derivate analitiche fornite
     \\
     \verb+lmdif+ & 
-    Algoritmo Levenberg--Marquandt con derivate numeriche
+    Algoritmo Levenberg--Marquardt con derivate numeriche
     \\
     \verb+fdjac2+ & 
     Calcolo del Jacobiano approssimato finale se si usano le derivate 
@@ -185,7 +185,7 @@ sono usate le seguenti funzioni \app{minpack}:
   \end{tabular}
 \end{center}
 
-In caso di successo nell'iterazione Levenberg--Marquandt, viene usata
+In caso di successo nell'iterazione Levenberg--Marquardt, viene usata
 una regressione Gauss--Newton per calcolare la matrice di covarianza
 per le stime dei parametri. Se si usa l'opzione \verb|--robust|, viene
 calcolata una variante robusta. La documentazione del comando \cmd{set}
@@ -219,7 +219,7 @@ Sulle 54 stime, \app{gretl} non riesce a produrre una soluzione in 4
 casi, se vengono usate le derivate analitiche, e in 5 casi se vengono
 usate le approssimazioni numeriche. Dei quattro fallimenti in modalità
 derivate analitiche, due sono dovuti alla non convergenza
-dell'algoritmo Levenberg--Marquandt dopo il numero massimo di
+dell'algoritmo Levenberg--Marquardt dopo il numero massimo di
 iterazioni (su \verb+MGH09+ e \verb+Bennett5+, entrambi descritti dal
 NIST come di ``alta difficoltà'') e due sono dovuti ad errori di
 intervallo (valori in virgola mobile al di fuori dei limiti) occorsi
