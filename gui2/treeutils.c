@@ -175,6 +175,10 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
     GtkTreePath *path;
     gint row = 0;
 
+    if (datainfo == NULL || datainfo->n == 0) {
+	return TRUE;
+    }
+
     if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path, 
 				      NULL, NULL, NULL)) {
 	row = tree_path_get_row_number(path);

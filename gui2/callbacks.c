@@ -42,7 +42,9 @@ static void doubleclick_action (windata_t *vwin)
 {
     switch (vwin->role) {
     case MAINWIN:
-	display_var();
+	if (datainfo != NULL && datainfo->n > 0) {
+	    display_var();
+	}
 	break;
     case TEXTBOOK_DATA:
 	browser_open_data(NULL, vwin);
