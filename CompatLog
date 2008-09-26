@@ -21,7 +21,7 @@ number of response levels.
 
 7/30/2008 version 1.7.6
 
-List arguments to user-defined arguments:
+List arguments to user-defined functions:
 
 In the context of a "foreach" loop across such a list, the
 accessor $i still gets the name of the variable at position i 
