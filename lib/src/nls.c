@@ -2718,36 +2718,47 @@ static int nls_model_fix_sample (MODEL *pmod,
 {
     double *uhat = NULL;
     double *yhat = NULL;
-    int s, t;
 
-    uhat = malloc(pdinfo->n * sizeof *uhat);
-    yhat = malloc(pdinfo->n * sizeof *yhat);
-
-    if (uhat == NULL || yhat == NULL) {
-	free(uhat);
-	free(yhat);
-	return E_ALLOC;
-    }
-
-    s = 0;
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (t < spec->real_t1 || t > spec->real_t2) {
-	    uhat[t] = yhat[t] = NADBL;
-	} else if (spec->missmask[t] == '1') {
-	    uhat[t] = yhat[t] = NADBL;
-	} else {
-	    uhat[t] = pmod->uhat[s];
-	    yhat[t] = pmod->yhat[s];
-	    s++;
+    if (pmod->uhat != NULL) {
+	uhat = malloc(pdinfo->n * sizeof *uhat);
+	if (uhat == NULL) {
+	    return E_ALLOC;
 	}
     }
 
-    free(pmod->uhat);
-    pmod->uhat = uhat;
+    if (pmod->yhat != NULL) {
+	yhat = malloc(pdinfo->n * sizeof *yhat);
+	if (yhat == NULL) {
+	    free(uhat);
+	    return E_ALLOC;
+	}
+    }    
 
-    free(pmod->yhat);
-    pmod->yhat = yhat;
+    if (uhat != NULL || yhat != NULL) {
+	int t, s = 0;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < spec->real_t1 || t > spec->real_t2 ||
+		spec->missmask[t] == '1') {
+		if (uhat != NULL) uhat[t] = NADBL;
+		if (yhat != NULL) yhat[t] = NADBL;
+	    } else {
+		if (uhat != NULL) uhat[t] = pmod->uhat[s];
+		if (yhat != NULL) yhat[t] = pmod->yhat[s];
+		s++;
+	    }
+	}
+
+	if (uhat != NULL) {
+	    free(pmod->uhat);
+	    pmod->uhat = uhat;
+	}
+
+	if (yhat != NULL) {
+	    free(pmod->yhat);
+	    pmod->yhat = yhat;
+	}
+    }
 
     pmod->full_n = pdinfo->n;
     pmod->t1 = spec->real_t1;
