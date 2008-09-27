@@ -664,7 +664,7 @@ int update_coeff_values (const double *b, nlspec *s)
     return 0;
 }
 
-#define NLS_SKIP_MISSING 1
+#define NLS_SKIP_MISSING 0 /* not properly tested yet */
 
 #if NLS_SKIP_MISSING
 
