@@ -283,6 +283,12 @@ static int h_container_fill (h_container *HC, const int *Xl,
     HC->kmain = olsmod->ncoeff - 1;
     HC->ksel = probmod->ncoeff;
 
+    if (HC->kmain < 1) {
+	/* FIXME? */
+	gretl_errmsg_set(_("No regression function has been specified"));
+	return E_DATA;
+    }
+
     HC->beta = gretl_column_vector_alloc(HC->kmain);
     if (HC->beta == NULL) {
 	return E_ALLOC;
