@@ -151,8 +151,8 @@ static GtkActionEntry model_items[] = {
       G_CALLBACK(do_coeff_intervals) },    
     { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },    
     { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },    
-    { "ANOVA", NULL, N_("ANOVA"), NULL, NULL, G_CALLBACK(do_anova) },    
-    { "Bootstrap", NULL, N_("Bootstrap..."), NULL, NULL, G_CALLBACK(do_bootstrap) }    
+    { "ANOVA", NULL, N_("_ANOVA"), NULL, NULL, G_CALLBACK(do_anova) },    
+    { "Bootstrap", NULL, N_("_Bootstrap..."), NULL, NULL, G_CALLBACK(do_bootstrap) }    
 };
 
 static GtkActionEntry model_test_items[] = {
