@@ -1,34 +1,26 @@
 # #-#-#-#-#  ru.po (ru)  #-#-#-#-#
 # Alexander B. Gedranovich <gedranovich@gmail.com>, 2008.
+# moradan, 2008
 # translation of ru.po to Russian
-# #-#-#-#-#  ru.po (ru)  #-#-#-#-#
-# #-#-#-#-#  ru-moradan.po (ru-moradan)  #-#-#-#-#
-# #-#-#-#-#  ru-moradan-02.po (ru(moradan#02))  #-#-#-#-#
-# #-#-#-#-#  ru.po (ru)  #-#-#-#-#
-# #-#-#-#-#  ru-moradan.po (ru-moradan)  #-#-#-#-#
 msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-27 11:21-0400\n"
-"PO-Revision-Date: 2008-09-27 11:33-0400\n"
+"PO-Revision-Date: 2008-09-27 22:25+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"#-#-#-#-#  ru.po (ru)  #-#-#-#-#\n"
-"#-#-#-#-#  ru.po (ru)  #-#-#-#-#\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"#-#-#-#-#  ru-moradan.po (ru-moradan)  #-#-#-#-#\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"#-#-#-#-#  ru-moradan-02.po (ru(moradan#02))  #-#-#-#-#\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
@@ -346,11 +338,11 @@ msgstr ""
 
 #: lib/src/compare.c:726
 msgid "Non-linearity test (squared terms)"
-msgstr ""
+msgstr "Тест на нелинейность (квадраты)"
 
 #: lib/src/compare.c:728
 msgid "Non-linearity test (log terms)"
-msgstr ""
+msgstr "Тест на нелинейность (логарифмы)"
 
 #: lib/src/compare.c:772
 #, c-format
@@ -358,18 +350,17 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %g) = %g\n"
 "\n"
 msgstr ""
-"p-значение = prob(Chi-square(%d) > %g) = %g\n"
+"P-значение = prob(Хи-квадрат(%d) > %g) = %g\n"
 "\n"
 
 #: lib/src/compare.c:789
 msgid "non-linearity"
-msgstr ""
+msgstr "нелинейность"
 
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -685,8 +676,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
@@ -1296,8 +1286,7 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -1844,10 +1833,13 @@ msgid ""
 "Performing iterative calculation of rho...\n"
 "\n"
 msgstr ""
+"\n"
+"Итеративное вычисление параметра rho...\n"
+"\n"
 
 #: lib/src/estimate.c:2065
 msgid "                 ITER       RHO        ESS"
-msgstr ""
+msgstr "               Итерация       RHO        ESS"
 
 #: lib/src/estimate.c:2110
 #, c-format
@@ -1855,14 +1847,16 @@ msgid ""
 "                final %11.5f\n"
 "\n"
 msgstr ""
+"                итог  %11.5f\n"
+"\n"
 
 #: lib/src/estimate.c:2574 lib/src/gretl_model.c:2751 lib/src/modelprint.c:978
 msgid "Pesaran-Taylor test for heteroskedasticity"
-msgstr "Песарана-Тейлора (Pesaran-Taylor) тест на гетероскедастичность"
+msgstr "Тест Песарана-Тейлора (Pesaran-Taylor) на гетероскедастичность"
 
 #: lib/src/estimate.c:2584 lib/src/gretl_model.c:2730 lib/src/modelprint.c:976
 msgid "Breusch-Pagan test for heteroskedasticity"
-msgstr "Брэуша-Пагана (Breusch-Pagan) тест на гетероскедастичность"
+msgstr "Тест Бриша-Пэгана (Breusch-Pagan) на гетероскедастичность"
 
 #: lib/src/estimate.c:2586
 msgid "with Koenker robust variance estimator"
@@ -1886,7 +1880,7 @@ msgstr ""
 
 #: lib/src/estimate.c:3079
 msgid "Generalized Cochrane-Orcutt estimation"
-msgstr "Обобщенная оценка Кохрейна-Оркатта (Cochrane-Orcutt)"
+msgstr "Обобщенная оценка Кохрана-Оркатта (Cochrane-Orcutt)"
 
 #: lib/src/estimate.c:3082
 #, no-c-format
@@ -1917,7 +1911,7 @@ msgid ""
 "Please select a smaller sample."
 msgstr ""
 "X-12-ARIMA не может обработать более 720 наблюдений.\n"
-"Выберете меньшую выборку."
+"Выберите меньшую выборку."
 
 #: lib/src/estimate.c:4255
 msgid "This test is only available for panel data"
@@ -2341,7 +2335,7 @@ msgstr ""
 
 #: lib/src/graphing.c:2960
 msgid "Density"
-msgstr ""
+msgstr "Плотность"
 
 #: lib/src/graphing.c:2962
 msgid "Relative frequency"
@@ -2349,7 +2343,7 @@ msgstr "Относительная частота"
 
 #: lib/src/graphing.c:3138 lib/src/graphing.c:3155 lib/src/graphing.c:3159
 msgid "95 percent confidence interval"
-msgstr ""
+msgstr "95% доверительный интервал"
 
 #: lib/src/graphing.c:3144 lib/src/graphing.c:3151 lib/src/printout.c:1096
 msgid "forecast"
@@ -2726,7 +2720,7 @@ msgstr ""
 
 #: lib/src/gretl_model.c:2712
 msgid "Non-linearity test (logs)"
-msgstr ""
+msgstr "Тест на нелинейность (логарифмы)"
 
 #: lib/src/gretl_model.c:2713 lib/src/gretl_model.c:2725
 msgid "relationship is linear"
@@ -2754,7 +2748,7 @@ msgstr "спецификация адекватна"
 
 #: lib/src/gretl_model.c:2724
 msgid "Non-linearity test (squares)"
-msgstr ""
+msgstr "Тест на нелинейность (квадраты)"
 
 #: lib/src/gretl_model.c:2728 lib/src/gretl_model.c:2731
 #: lib/src/gretl_model.c:2752
@@ -3981,8 +3975,7 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:955
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:958
 #, c-format
@@ -3991,11 +3984,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:968
 msgid "Auxiliary regression for non-linearity test (squared terms)"
-msgstr ""
+msgstr "Вспомогательная регрессия для теста на нелинейность (квадраты)"
 
 #: lib/src/modelprint.c:971
 msgid "Auxiliary regression for non-linearity test (log terms)"
-msgstr ""
+msgstr "Вспомогательная регрессия для теста на нелинейность (логарифмы)"
 
 #: lib/src/modelprint.c:980
 msgid "Augmented regression for Chow test"
@@ -4137,11 +4130,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:1043
 msgid "Cochrane--Orcutt"
-msgstr ""
+msgstr "Кохрана--Оркатта (Cochrane--Orcutt)"
 
 #: lib/src/modelprint.c:1044 gui2/selector.c:2378
 msgid "Cochrane-Orcutt"
-msgstr ""
+msgstr "Кохрана-Оркатта (Cochrane-Orcutt)"
 
 #: lib/src/modelprint.c:1048
 msgid "ARMAX"
@@ -4230,7 +4223,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1233 gui2/gpt_dialog.c:82 gui2/gui_utils.c:2361
 msgid "none"
-msgstr ""
+msgstr "нет"
 
 #: lib/src/modelprint.c:1246 lib/src/modelprint.c:1248
 #: lib/src/modelprint.c:1250
@@ -4388,8 +4381,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1669 lib/src/modelprint.c:1676
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бреуша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бреуша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1672 lib/src/modelprint.c:1679
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -4583,7 +4575,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:2289
 msgid "Statistics based on the rho-differenced data"
-msgstr ""
+msgstr "Статистика, основанная на последней итерации вычисления параметра rho"
 
 #: lib/src/modelprint.c:2389 lib/src/modelprint.c:2400
 #: lib/src/modelprint.c:2406 lib/src/modelprint.c:4400
@@ -5011,8 +5003,7 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5164,8 +5155,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr ""
 
 #: lib/src/printout.c:99
@@ -5580,8 +5570,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -6607,11 +6596,11 @@ msgstr ""
 
 #: gui2/calculator.c:1951 gui2/gpt_dialog.c:1470
 msgid "minimum"
-msgstr ""
+msgstr "Минимум"
 
 #: gui2/calculator.c:1953 gui2/gpt_dialog.c:1487
 msgid "maximum"
-msgstr ""
+msgstr "Максимум"
 
 #: gui2/calculator.c:1959 gui2/calculator.c:2636
 msgid "std. deviation"
@@ -8643,7 +8632,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:232
 msgid " Click to set label position"
-msgstr ""
+msgstr " Щелкните для указания положения метки"
 
 #: gui2/gpt_control.c:1052
 msgid "Gnuplot error creating graph"
@@ -8664,7 +8653,7 @@ msgstr "Невозможно получить доступ к информаци
 
 #: gui2/gpt_control.c:2532 gui2/gpt_control.c:2701 gui2/graph_page.c:596
 msgid "monochrome"
-msgstr "черно-белый"
+msgstr "Черно-белый"
 
 #: gui2/gpt_control.c:2536 gui2/gpt_control.c:2733
 msgid "Save as postscript (EPS)..."
@@ -8705,11 +8694,11 @@ msgstr "Сохранить как PDF..."
 
 #: gui2/gpt_control.c:2652 gui2/gpt_control.c:2742
 msgid "Freeze data labels"
-msgstr ""
+msgstr "Зафиксировать метки данных"
 
 #: gui2/gpt_control.c:2655 gui2/gpt_control.c:2743
 msgid "Clear data labels"
-msgstr ""
+msgstr "Очистить метки данных"
 
 #: gui2/gpt_control.c:2657 gui2/gpt_control.c:2744
 msgid "Zoom..."
@@ -8733,7 +8722,7 @@ msgstr "Показать PDF"
 
 #: gui2/gpt_control.c:2677 gui2/gpt_control.c:2752
 msgid "OLS estimates"
-msgstr ""
+msgstr "МНК оценка"
 
 #: gui2/gpt_control.c:2681 gui2/gpt_control.c:2753
 msgid "Numerical values"
@@ -8741,7 +8730,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:2700 gui2/graph_page.c:595
 msgid "color"
-msgstr "цветной"
+msgstr "Цветной"
 
 #: gui2/gpt_control.c:3159
 msgid "Malformed PNG file for graph"
@@ -8777,7 +8766,7 @@ msgstr "обратная: y = a + b*(1/x)"
 
 #: gui2/gpt_dialog.c:86
 msgid "loess (locally weighted fit)"
-msgstr ""
+msgstr "loess (взвешенная локальная регрессия)"
 
 #: gui2/gpt_dialog.c:311
 msgid "Invalid label position, must be X Y"
@@ -8794,117 +8783,117 @@ msgstr "Цвет %d"
 
 #: gui2/gpt_dialog.c:758
 msgid "Reset to default"
-msgstr ""
+msgstr "По умолчанию"
 
 #: gui2/gpt_dialog.c:834
 msgid "Main"
-msgstr ""
+msgstr "Общие"
 
 #: gui2/gpt_dialog.c:872
 msgid "key position"
-msgstr ""
+msgstr "Положение легенды"
 
 #: gui2/gpt_dialog.c:893
 msgid "fitted line"
-msgstr ""
+msgstr "Линия подгонки"
 
 #: gui2/gpt_dialog.c:916
 msgid "Show full border"
-msgstr ""
+msgstr "Показывать все границы"
 
 #: gui2/gpt_dialog.c:928
 msgid "Use only one y axis"
-msgstr ""
+msgstr "Использовать только одну ось Y"
 
 #: gui2/gpt_dialog.c:942
 msgid "Show all data labels"
-msgstr ""
+msgstr "Показывать подписи всех данных"
 
 #: gui2/gpt_dialog.c:964
 msgid "Allow anti-aliasing of lines"
-msgstr ""
+msgstr "Сглаживать линии"
 
 #: gui2/gpt_dialog.c:992 gui2/gpt_dialog.c:994
 msgid "None"
-msgstr ""
+msgstr "Нет"
 
 #: gui2/gpt_dialog.c:1006
 msgid "TrueType font"
-msgstr ""
+msgstr "TrueType шрифт"
 
 #: gui2/gpt_dialog.c:1096
 msgid "Lines"
-msgstr ""
+msgstr "Линии"
 
 #: gui2/gpt_dialog.c:1124
 #, c-format
 msgid "line %d: "
-msgstr ""
+msgstr "Линия %d: "
 
 #: gui2/gpt_dialog.c:1131
 msgid "legend"
-msgstr ""
+msgstr "Легенда"
 
 #: gui2/gpt_dialog.c:1155
 msgid "type"
-msgstr ""
+msgstr "Тип"
 
 #: gui2/gpt_dialog.c:1217
 msgid "y axis"
-msgstr ""
+msgstr "Ось y"
 
 #: gui2/gpt_dialog.c:1236
 msgid "line width"
-msgstr ""
+msgstr "Толщина линии"
 
 #: gui2/gpt_dialog.c:1280
 msgid "Labels"
-msgstr ""
+msgstr "Метки"
 
 #: gui2/gpt_dialog.c:1295
 #, c-format
 msgid "label %d: "
-msgstr ""
+msgstr "Метка %d: "
 
 #: gui2/gpt_dialog.c:1302
 msgid "text"
-msgstr "текст"
+msgstr "Текст"
 
 #: gui2/gpt_dialog.c:1323
 msgid "position (X Y)"
-msgstr ""
+msgstr "Положение (X Y)"
 
 #: gui2/gpt_dialog.c:1364
 msgid "justification"
-msgstr ""
+msgstr "Выравнивание"
 
 #: gui2/gpt_dialog.c:1392
 msgid "X-axis"
-msgstr ""
+msgstr "Ось Х"
 
 #: gui2/gpt_dialog.c:1394
 msgid "Y-axis"
-msgstr ""
+msgstr "Ось Y"
 
 #: gui2/gpt_dialog.c:1396
 msgid "Y2-axis"
-msgstr ""
+msgstr "Ось Y2"
 
 #: gui2/gpt_dialog.c:1447
 msgid "auto axis range"
-msgstr ""
+msgstr "Автоматическая шкала"
 
 #: gui2/gpt_dialog.c:1460
 msgid "manual range:"
-msgstr ""
+msgstr "Установить вручную:"
 
 #: gui2/gpt_dialog.c:1530
 msgid "linear scale"
-msgstr "линейная шкала"
+msgstr "Линейная шкала"
 
 #: gui2/gpt_dialog.c:1538
 msgid "logarithmic scale, base:"
-msgstr ""
+msgstr "Логарифмическая шкала, основание:"
 
 #: gui2/gpt_dialog.c:1630
 msgid ""
@@ -8914,7 +8903,7 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:1649
 msgid "gretl plot controls"
-msgstr ""
+msgstr "gretl: настройки графика"
 
 #: gui2/graph_page.c:272
 msgid "The graph page is full"
@@ -9648,7 +9637,7 @@ msgstr "_Временные ряды"
 
 #: gui2/gretl.c:1446
 msgid "_Cochrane-Orcutt..."
-msgstr "_Кохрана-Оркута (Cochrane-Orcutt)..."
+msgstr "_Кохрана-Оркатта (Cochrane-Orcutt)..."
 
 #: gui2/gretl.c:1447
 msgid "_Hildreth-Lu..."
@@ -10095,11 +10084,11 @@ msgstr "_Доверительные интервалы для коэффицие
 
 #: gui2/gui_utils.c:152
 msgid "Confidence _ellipse..."
-msgstr ""
+msgstr "Доверительный _эллипс..."
 
 #: gui2/gui_utils.c:153
 msgid "Coefficient covariance _matrix"
-msgstr ""
+msgstr "_Матрица коэффициентов ковариации"
 
 #: gui2/gui_utils.c:154
 msgid "_ANOVA"
@@ -10127,15 +10116,15 @@ msgstr "_Линейные ограничения"
 
 #: gui2/gui_utils.c:163
 msgid "Non-linearity (s_quares)"
-msgstr ""
+msgstr "Нелинейность (_квадраты)"
 
 #: gui2/gui_utils.c:164
 msgid "Non-linearity (_logs)"
-msgstr ""
+msgstr "Нелинейность (_логарифмы)"
 
 #: gui2/gui_utils.c:165
 msgid "_Ramsey's RESET"
-msgstr "Тест _Рамсея"
+msgstr "Тест _Рамсея (RESET)"
 
 #: gui2/gui_utils.c:166
 msgid "_Heteroskedasticity"
@@ -10876,7 +10865,7 @@ msgstr ""
 
 #: gui2/library.c:1858
 msgid "(non-linearity)"
-msgstr ""
+msgstr "(нелинейность)"
 
 #: gui2/library.c:1886
 msgid "gretl: panel model diagnostics"
@@ -11453,8 +11442,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -12675,7 +12663,7 @@ msgstr "Выбрать цвет"
 
 #: gui2/settings.c:2219
 msgid "gretl: graph color selection"
-msgstr ""
+msgstr "gretl: выбор цвета для графика"
 
 #: gui2/settings.c:2318
 msgid "gretl working directory"
@@ -13975,3 +13963,4 @@ msgstr "Строки"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
+
