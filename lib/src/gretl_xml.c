@@ -1982,21 +1982,32 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		t++;
 	    } else {
 		sprintf(gretl_errmsg, _("Values missing at observation %d"), t+1);
-		return E_DATA;
+		err = E_DATA;
+		goto bailout;
 	    }
-	}	    
+	}	   
+ 
 	cur = cur->next;
+
+	if (cur != NULL && t == pdinfo->n) {
+	    /* got too many observations */
+	    t = pdinfo->n + 1;
+	    goto bailout;
+	}
+
 	if (progress && t > 0 && t % 50 == 0) {
 	    (*show_progress) (50L, (long) pdinfo->n, SP_NONE);
 	}
     }
+
+ bailout:
 
     if (progress) {
 	(*show_progress)(0L, (long) pdinfo->n, SP_FINISH);
 	close_plugin(handle);
     }
 
-    if (t != pdinfo->n) {
+    if (!err && t != pdinfo->n) {
 	sprintf(gretl_errmsg, _("Number of observations does not match declaration"));
 	err = E_DATA;
     }

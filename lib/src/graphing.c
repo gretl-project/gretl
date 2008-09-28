@@ -1497,6 +1497,70 @@ static int get_fitted_line (gnuplot_info *gi,
     return err;
 }
 
+/* Find the minimum and maximum x-axis values and construct the gnuplot
+   x-range.  We have to be a bit careful here to include only values
+   that will actually display on the plot, i.e. x-values that are
+   accompanied by at least one non-missing y-axis value.
+*/
+
+static void 
+print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
+{
+    int vx, k, dk = -1;
+    const double *x;
+
+    if (gi->flags & GPT_DUMMY) {
+	dk = list[0];
+	k = dk - 1;
+    } else {
+	k = list[0];
+    }
+
+    vx = list[k];
+    x = Z[vx];
+    
+    if (gretl_isdummy(gi->t1, gi->t2, x)) {
+	fputs("set xrange [-1:2]\n", gi->fp);	
+	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gi->fp);
+	gi->xrange = 3;
+    } else {
+	double xmin, xmin0 = NADBL;
+	double xmax = NADBL;
+	int t, i, vy, obs_ok;
+
+	for (t=gi->t1; t<=gi->t2; t++) {
+	    obs_ok = 0;
+	    if (!na(x[t]) && (dk < 0 || !na(Z[dk][t]))) {
+		for (i=1; i<k; i++) {
+		    vy = list[i];
+		    if (!na(Z[vy][t])) {
+			/* got x obs and at least one y obs */
+			obs_ok = 1;
+			break;
+		    }
+		}
+	    }
+	    if (obs_ok) {
+		if (na(xmin0) || x[t] < xmin0) {
+		    xmin0 = x[t];
+		}
+		if (na(xmax) || x[t] > xmax) {
+		    xmax = x[t];
+		}
+	    }
+	}
+		    
+	gi->xrange = xmax - xmin0;
+	xmin = xmin0 - gi->xrange * .025;
+	if (xmin0 >= 0.0 && xmin < 0.0) {
+	    xmin = 0.0;
+	}
+	xmax += gi->xrange * .025;
+	fprintf(gi->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
+	gi->xrange = xmax - xmin;
+    }
+}
+
 static void 
 print_x_range (gnuplot_info *gi, const double *x)
 {
@@ -2311,10 +2375,7 @@ int gnuplot (const int *plotlist, const char *literal,
     if (gi.x != NULL) {
 	print_x_range(&gi, gi.x);
     } else {
-	int k = list[0];
-	int v = (gi.flags & GPT_DUMMY)? list[k - 1] : list[k];
-
-	print_x_range(&gi, Z[v]);
+	print_x_range_from_list(&gi, Z, list);
     }
 
     if (gi.flags & GPT_Y2AXIS) { 
