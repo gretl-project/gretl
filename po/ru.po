@@ -1,13 +1,13 @@
 # #-#-#-#-#  ru.po (ru)  #-#-#-#-#
 # Alexander B. Gedranovich <gedranovich@gmail.com>, 2008.
-# moradan, 2008
+# moradan, 2008.
 # translation of ru.po to Russian
 msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-27 11:21-0400\n"
-"PO-Revision-Date: 2008-09-27 22:25+0300\n"
+"POT-Creation-Date: 2008-09-28 22:41+0300\n"
+"PO-Revision-Date: 2008-09-28 22:32+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -360,7 +360,8 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr ""
+"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -410,7 +411,7 @@ msgstr "Тест Годфри (1994) для"
 
 #: lib/src/compare.c:1511
 msgid "Breusch-Godfrey test for"
-msgstr "Тест Бриша-Пэгана для"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) для"
 
 #: lib/src/compare.c:1515
 msgid "autocorrelation up to order"
@@ -425,7 +426,7 @@ msgstr "автокорреляция 1-го порядка"
 #: lib/src/gretl_panel.c:3252 lib/src/printout.c:1097 gui2/guiprint.c:1538
 #: gui2/guiprint.c:1594 gui2/library.c:4780 plugin/leverage.c:462
 msgid "residual"
-msgstr "остаток"
+msgstr "Остатки"
 
 #: lib/src/compare.c:1611
 #, c-format
@@ -676,7 +677,8 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid ""
+"   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
@@ -826,7 +828,7 @@ msgid ""
 "(first must be alphabetical)"
 msgstr ""
 "Первый символ имени переменной ('%c') не подходит\n"
-"(первый должен быть алфавитным)"
+"(первый должен быть латинским символом)"
 
 #: lib/src/dataio.c:403
 #, c-format
@@ -844,7 +846,7 @@ msgid ""
 "(first must be alphabetical)"
 msgstr ""
 "Первый символ имени переменной (0x%x) не подходит\n"
-"(первый должен быть алфавитным)"
+"(первый должен быть латинским символом)"
 
 #: lib/src/dataio.c:413
 #, c-format
@@ -1286,7 +1288,8 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr ""
+"Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -1305,19 +1308,19 @@ msgstr "лаг"
 
 #: lib/src/describe.c:2470
 msgid "Residual ACF"
-msgstr ""
+msgstr "Остатки ACF"
 
 #: lib/src/describe.c:2472
 msgid "ACF for"
-msgstr ""
+msgstr "ACF для"
 
 #: lib/src/describe.c:2488
 msgid "Residual PACF"
-msgstr ""
+msgstr "Остатки PACF"
 
 #: lib/src/describe.c:2490
 msgid "PACF for"
-msgstr ""
+msgstr "PACF для"
 
 #: lib/src/describe.c:2529 gui2/menustate.c:297 gui2/menustate.c:370
 msgid "Correlogram"
@@ -1342,25 +1345,25 @@ msgstr "Автокорреляционная функция для %s"
 
 #: lib/src/describe.c:2647
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
-msgstr ""
+msgstr "  Лаг      ACF          PACF         Q-стат. [p-значение]"
 
 #: lib/src/describe.c:2728
 #, c-format
 msgid "Correlations of %s and lagged %s"
-msgstr "Корреляции %s и %s сдвинутого на различные лаги"
+msgstr "Корреляции между %s и %s с лагом"
 
 #: lib/src/describe.c:2768 gui2/menustate.c:343 gui2/menustate.c:408
 msgid "Cross-correlogram"
-msgstr ""
+msgstr "Кросс-коррелограмма"
 
 #: lib/src/describe.c:2870
 #, c-format
 msgid "Cross-correlation function for %s and %s"
-msgstr ""
+msgstr "Кросс-корреляция для %s и %s"
 
 #: lib/src/describe.c:2873
 msgid "  LAG      XCF"
-msgstr ""
+msgstr "  ЛАГ      XCF"
 
 #: lib/src/describe.c:2944
 msgid "GPH test for fractional integration"
@@ -1415,7 +1418,7 @@ msgstr "логарифмическая шкала"
 
 #: lib/src/describe.c:3272
 msgid "Residual periodogram"
-msgstr ""
+msgstr "Периодограмма остатков"
 
 #: lib/src/describe.c:3274
 #, c-format
@@ -1423,6 +1426,8 @@ msgid ""
 "\n"
 "Periodogram for %s\n"
 msgstr ""
+"\n"
+"Периодограмма для %s\n"
 
 #: lib/src/describe.c:3277 lib/src/describe.c:4317 lib/src/describe.c:4319
 #: lib/src/describe.c:4397 lib/src/describe.c:4399 lib/src/describe.c:4807
@@ -1528,7 +1533,7 @@ msgstr "Описательная статистика"
 #: lib/src/describe.c:3507
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
-msgstr ""
+msgstr "для переменной '%s' (%d действительных наблюдений)"
 
 #: lib/src/describe.c:3595 lib/src/describe.c:3620 gui2/calculator.c:2306
 #: gui2/guiprint.c:1066 gui2/guiprint.c:1089 gui2/guiprint.c:1161
@@ -1581,11 +1586,13 @@ msgid ""
 "Under the null hypothesis of no correlation:\n"
 " "
 msgstr ""
+"Нулевая гипотеза: корреляция отсутствует:\n"
+" "
 
 #: lib/src/describe.c:4152 lib/src/nonparam.c:325
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
-msgstr ""
+msgstr "t(%d) = %g, двухстороннее р-значение %.4f\n"
 
 #: lib/src/describe.c:4156 lib/src/describe.c:4194 gui2/guiprint.c:1290
 #, c-format
@@ -1598,11 +1605,11 @@ msgstr "Коэффициенты корреляции"
 
 #: lib/src/describe.c:4281 lib/src/describe.c:4367
 msgid "Sample range has no valid observations."
-msgstr ""
+msgstr "В выбранном диапазоне нет подходящих наблюдений."
 
 #: lib/src/describe.c:4287 lib/src/describe.c:4373
 msgid "Sample range has only one observation."
-msgstr ""
+msgstr "В выбранном диапазоне только одно наблюдение."
 
 #: lib/src/describe.c:4314
 #, c-format
@@ -1688,7 +1695,7 @@ msgstr "разница вариаций"
 #: lib/src/describe.c:4494 gui2/library.c:480 gui2/library.c:671
 #, c-format
 msgid "Mahalanobis distances"
-msgstr ""
+msgstr "расстояния Махаланобиса"
 
 #: lib/src/describe.c:4537
 msgid "Covariance matrix"
@@ -1700,7 +1707,7 @@ msgstr "Обратная матрица ковариаций"
 
 #: lib/src/describe.c:4559
 msgid "Mahalanobis distances from the centroid"
-msgstr ""
+msgstr "Расстояния Махаланобиса (Mahalanobis) от центра тяжести"
 
 #: lib/src/describe.c:4560
 msgid "using the variables:"
@@ -1782,7 +1789,7 @@ msgstr "Неподходящее значение для максимума за
 
 #: lib/src/discrete.c:1264
 msgid "Fisher's Exact Test"
-msgstr ""
+msgstr "Точный тест Фишера (Fisher)"
 
 #: lib/src/estimate.c:138 plugin/mp_ols.c:1051
 #, c-format
@@ -1791,7 +1798,7 @@ msgstr ""
 
 #: lib/src/estimate.c:573
 msgid "Weight variable is all zeros, aborting regression"
-msgstr "Весовая переменная состоит из нулей, построение регрессия отменено"
+msgstr "Весовая переменная состоит из нулей, построение регрессии отменено"
 
 #: lib/src/estimate.c:575
 msgid "Weight variable contains negative values"
@@ -2257,17 +2264,17 @@ msgstr "ст. отклонение"
 #: lib/src/graphing.c:1189 gui2/gpt_dialog.c:221
 #, c-format
 msgid "%s versus %s (with least squares fit)"
-msgstr ""
+msgstr "%s от %s (с подбором по МНК)"
 
 #: lib/src/graphing.c:1192 gui2/gpt_dialog.c:227
 #, c-format
 msgid "%s versus %s (with inverse fit)"
-msgstr ""
+msgstr "%s от %s (с подбором обратной зависимости)"
 
 #: lib/src/graphing.c:1195 gui2/gpt_dialog.c:224
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
-msgstr ""
+msgstr "%s от %s (с подбором квадратичной зависимости)"
 
 #: lib/src/graphing.c:1201
 #, c-format
@@ -2287,24 +2294,24 @@ msgstr "Наблюдаемые и рассчетные %s от %s"
 #: lib/src/graphing.c:1358 gui2/gpt_dialog.c:230
 #, c-format
 msgid "%s versus %s (with loess fit)"
-msgstr ""
+msgstr "%s от %s (с подбором локальной регрессии)"
 
 #: lib/src/graphing.c:1367 lib/src/plotspec.c:673
 #, c-format
 msgid "loess fit, d = %d, q = %g"
-msgstr ""
+msgstr "локальная регрессия, d = %d, q = %g"
 
 #: lib/src/graphing.c:2247
 msgid "time series by group"
 msgstr ""
 
-#: lib/src/graphing.c:2351 lib/src/plotspec.c:547 gui2/gpt_dialog.c:661
+#: lib/src/graphing.c:2351 lib/src/plotspec.c:547 gui2/gpt_dialog.c:662
 msgid "right"
-msgstr ""
+msgstr "вправо"
 
-#: lib/src/graphing.c:2351 lib/src/plotspec.c:545 gui2/gpt_dialog.c:656
+#: lib/src/graphing.c:2351 lib/src/plotspec.c:545 gui2/gpt_dialog.c:657
 msgid "left"
-msgstr ""
+msgstr "влево"
 
 #: lib/src/graphing.c:2364 lib/src/graphing.c:2369
 msgid "actual"
@@ -2418,7 +2425,7 @@ msgstr ""
 
 #: lib/src/gretl_errors.c:29
 msgid "Data error"
-msgstr ""
+msgstr "Ошибка в данных"
 
 #: lib/src/gretl_errors.c:30
 msgid "Exact or near collinearity encountered"
@@ -2467,7 +2474,7 @@ msgstr "Неизвестное имя переменной в команде"
 
 #: lib/src/gretl_errors.c:43
 msgid "Command has insufficient arguments"
-msgstr "Команда имеет неудовлетворительные аргументы"
+msgstr "Команда имеет неверные аргументы"
 
 #: lib/src/gretl_errors.c:44
 msgid "This command is implemented only for OLS models"
@@ -3975,7 +3982,8 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:955
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr ""
+"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:958
 #, c-format
@@ -4223,7 +4231,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1233 gui2/gpt_dialog.c:82 gui2/gui_utils.c:2361
 msgid "none"
-msgstr "нет"
+msgstr "Нет"
 
 #: lib/src/modelprint.c:1246 lib/src/modelprint.c:1248
 #: lib/src/modelprint.c:1250
@@ -4381,11 +4389,12 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1669 lib/src/modelprint.c:1676
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr "Тест Бреуша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr ""
+"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1672 lib/src/modelprint.c:1679
 msgid "Breusch-Godfrey test for first-order autocorrelation"
-msgstr "Тест Бреуша-Годфри (Breusch-Godfrey) на автокорреляцию первого порядка"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию первого порядка"
 
 #: lib/src/modelprint.c:1742 lib/src/modelprint.c:1746
 #: lib/src/modelprint.c:1750 lib/src/system.c:3803 lib/src/system.c:3823
@@ -4595,12 +4604,12 @@ msgstr "Логарифмическое правдоподобие для %s"
 msgid "Convergence achieved after %d iterations\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2482 lib/src/nls.c:3967
+#: lib/src/modelprint.c:2482 lib/src/nls.c:3978
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2483 lib/src/nls.c:3968
+#: lib/src/modelprint.c:2483 lib/src/nls.c:3979
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr ""
@@ -4924,39 +4933,39 @@ msgstr ""
 msgid "No parameters have been specified"
 msgstr ""
 
-#: lib/src/nls.c:2787
+#: lib/src/nls.c:2798
 msgid "No function has been specified"
 msgstr "Функция не была определена"
 
-#: lib/src/nls.c:2856
+#: lib/src/nls.c:2867
 msgid "Using numerical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:2857
+#: lib/src/nls.c:2868
 msgid "Using analytical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:2875
+#: lib/src/nls.c:2886
 #, c-format
 msgid "Tolerance = %g\n"
 msgstr ""
 
-#: lib/src/nls.c:3295
+#: lib/src/nls.c:3306
 msgid "Failed to compute numerical Hessian"
 msgstr ""
 
-#: lib/src/nls.c:3364
+#: lib/src/nls.c:3375
 msgid ""
 "\n"
 "\n"
 "*** User-specified starting values:\n"
 msgstr ""
 
-#: lib/src/nls.c:3429
+#: lib/src/nls.c:3440
 msgid "BFGS: initial value of objective function is not finite"
 msgstr ""
 
-#: lib/src/nls.c:3603
+#: lib/src/nls.c:3614
 #, c-format
 msgid "stopped after %d iterations\n"
 msgstr ""
@@ -5003,7 +5012,8 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid ""
+"Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5155,21 +5165,24 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
+msgid ""
+"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
 msgstr ""
+"Это свободное программное обеспечение, распространяемое АБСОЛЮТНО БЕЗ "
+"НИКАКИХ ГАРАНТИЙ"
 
 #: lib/src/printout.c:119
 #, c-format
 msgid "gretl: gui client for gretl version %s,\n"
-msgstr ""
+msgstr "gretl: оконный клиент дли gretl, версия %s,\n"
 
 #: lib/src/printout.c:120
 msgid "Copyright Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
+msgstr "Копирайт Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:121
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
@@ -5225,20 +5238,20 @@ msgstr ""
 #: lib/src/printout.c:442
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
+msgstr "Таблица сопряженности %s (строки) и %s (столбцы)"
 
 #: lib/src/printout.c:450
 msgid "TOT."
-msgstr ""
+msgstr "Всего"
 
 #: lib/src/printout.c:497
 msgid "TOTAL  "
-msgstr ""
+msgstr "Всего  "
 
 #: lib/src/printout.c:512
 #, c-format
 msgid "%d missing values"
-msgstr ""
+msgstr "%d пропущенные значения"
 
 #: lib/src/printout.c:517
 #, c-format
@@ -5246,11 +5259,13 @@ msgid ""
 "Pearson chi-square test not computed: some expected frequencies were less\n"
 "than %g\n"
 msgstr ""
+"Не удалось рассчитать Хи-квадрат: некоторые частоты были меньше\n"
+"чем %g\n"
 
 #: lib/src/printout.c:525
 #, c-format
 msgid "Pearson chi-square test = %g (%d df, p-value = %g)"
-msgstr ""
+msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = %g)"
 
 #: lib/src/printout.c:555 lib/src/printout.c:563
 #, c-format
@@ -5570,7 +5585,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid ""
+"Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -6240,7 +6256,7 @@ msgstr ""
 
 #: gui2/boxplots.c:614 gui2/callbacks.c:642
 msgid "gretl: boxplots"
-msgstr ""
+msgstr "gretl: коробчатая диаграмма"
 
 #: gui2/boxplots.c:952 gui2/boxplots.c:955 gui2/boxplots.c:967
 msgid "median"
@@ -6363,7 +6379,7 @@ msgstr "Стандартные ошибки"
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:212
 #: gui2/filters.c:696 gui2/gpt_control.c:961
 msgid "gnuplot command failed"
-msgstr ""
+msgstr "команда для gnuplot не выполнена"
 
 #: gui2/calculator.c:958
 msgid "Incomplete entry"
@@ -6594,11 +6610,11 @@ msgstr ""
 msgid " DW "
 msgstr ""
 
-#: gui2/calculator.c:1951 gui2/gpt_dialog.c:1470
+#: gui2/calculator.c:1951 gui2/gpt_dialog.c:1471
 msgid "minimum"
 msgstr "Минимум"
 
-#: gui2/calculator.c:1953 gui2/gpt_dialog.c:1487
+#: gui2/calculator.c:1953 gui2/gpt_dialog.c:1488
 msgid "maximum"
 msgstr "Максимум"
 
@@ -6618,7 +6634,7 @@ msgstr ""
 msgid "shape"
 msgstr ""
 
-#: gui2/calculator.c:1975 gui2/gpt_dialog.c:1197
+#: gui2/calculator.c:1975 gui2/gpt_dialog.c:1198
 msgid "scale"
 msgstr ""
 
@@ -6908,7 +6924,7 @@ msgstr "Сохранить текст"
 
 #: gui2/callbacks.c:315 gui2/gui_utils.c:1073
 msgid "Save gnuplot commands"
-msgstr ""
+msgstr "Сохранить команды gnuplot"
 
 #: gui2/callbacks.c:318 gui2/gui_utils.c:1076
 msgid "Save R commands"
@@ -6961,7 +6977,7 @@ msgstr ""
 #: gui2/callbacks.c:555 gui2/callbacks.c:565 gui2/callbacks.c:567
 #: gui2/library.c:5196 gui2/library.c:5535 gui2/toolbar.c:827
 msgid "gretl: define graph"
-msgstr ""
+msgstr "gretl: график"
 
 #: gui2/callbacks.c:557 gui2/callbacks.c:559 gui2/callbacks.c:561
 #: gui2/callbacks.c:563
@@ -6996,7 +7012,7 @@ msgstr ""
 
 #: gui2/callbacks.c:643
 msgid "Specify variables to plot:"
-msgstr ""
+msgstr "Укажите переменные для графика:"
 
 #: gui2/callbacks.c:649
 msgid "gretl: GMM"
@@ -7060,7 +7076,7 @@ msgstr "Невозможно создать пустой набор данных
 
 #: gui2/callbacks.c:743 gui2/library.c:1115
 msgid "cross-correlogram"
-msgstr ""
+msgstr "кросс-коррелограмма"
 
 #: gui2/cmdstack.c:413
 msgid "Please give the current dataset a name"
@@ -7493,7 +7509,7 @@ msgid ""
 "Enter name for first variable\n"
 "(max. 15 characters)"
 msgstr ""
-"Введите имя для первой переменной\n"
+"Введите название первой переменной\n"
 "(максимум 15 символов)"
 
 #: gui2/datawiz.c:290 gui2/ssheet.c:1330
@@ -7813,7 +7829,7 @@ msgstr "Формула:"
 
 #: gui2/dialogs.c:1301
 msgid "gretl: variable attributes"
-msgstr ""
+msgstr "gretl: свойства переменной"
 
 #: gui2/dialogs.c:1316
 msgid "Name of variable:"
@@ -8641,7 +8657,7 @@ msgstr "Ошибка приложения Gnuplot при создании гра
 #: gui2/gpt_control.c:1415 gui2/gpt_control.c:1450 gui2/gpt_control.c:1456
 #: gui2/gpt_control.c:2011
 msgid "Failed to parse gnuplot file"
-msgstr ""
+msgstr "Ошибка при обработке файла gnuplot"
 
 #: gui2/gpt_control.c:1957
 msgid "Plot file is corrupted"
@@ -8772,136 +8788,136 @@ msgstr "loess (взвешенная локальная регрессия)"
 msgid "Invalid label position, must be X Y"
 msgstr ""
 
-#: gui2/gpt_dialog.c:728
+#: gui2/gpt_dialog.c:729
 msgid "Fill color"
 msgstr "Заливка"
 
-#: gui2/gpt_dialog.c:730
+#: gui2/gpt_dialog.c:731
 #, c-format
 msgid "Color %d"
 msgstr "Цвет %d"
 
-#: gui2/gpt_dialog.c:758
+#: gui2/gpt_dialog.c:759
 msgid "Reset to default"
 msgstr "По умолчанию"
 
-#: gui2/gpt_dialog.c:834
+#: gui2/gpt_dialog.c:835
 msgid "Main"
 msgstr "Общие"
 
-#: gui2/gpt_dialog.c:872
+#: gui2/gpt_dialog.c:873
 msgid "key position"
 msgstr "Положение легенды"
 
-#: gui2/gpt_dialog.c:893
+#: gui2/gpt_dialog.c:894
 msgid "fitted line"
 msgstr "Линия подгонки"
 
-#: gui2/gpt_dialog.c:916
+#: gui2/gpt_dialog.c:917
 msgid "Show full border"
 msgstr "Показывать все границы"
 
-#: gui2/gpt_dialog.c:928
+#: gui2/gpt_dialog.c:929
 msgid "Use only one y axis"
 msgstr "Использовать только одну ось Y"
 
-#: gui2/gpt_dialog.c:942
+#: gui2/gpt_dialog.c:943
 msgid "Show all data labels"
 msgstr "Показывать подписи всех данных"
 
-#: gui2/gpt_dialog.c:964
+#: gui2/gpt_dialog.c:965
 msgid "Allow anti-aliasing of lines"
 msgstr "Сглаживать линии"
 
-#: gui2/gpt_dialog.c:992 gui2/gpt_dialog.c:994
+#: gui2/gpt_dialog.c:993 gui2/gpt_dialog.c:995
 msgid "None"
 msgstr "Нет"
 
-#: gui2/gpt_dialog.c:1006
+#: gui2/gpt_dialog.c:1007
 msgid "TrueType font"
 msgstr "TrueType шрифт"
 
-#: gui2/gpt_dialog.c:1096
+#: gui2/gpt_dialog.c:1097
 msgid "Lines"
 msgstr "Линии"
 
-#: gui2/gpt_dialog.c:1124
+#: gui2/gpt_dialog.c:1125
 #, c-format
 msgid "line %d: "
 msgstr "Линия %d: "
 
-#: gui2/gpt_dialog.c:1131
+#: gui2/gpt_dialog.c:1132
 msgid "legend"
 msgstr "Легенда"
 
-#: gui2/gpt_dialog.c:1155
+#: gui2/gpt_dialog.c:1156
 msgid "type"
 msgstr "Тип"
 
-#: gui2/gpt_dialog.c:1217
+#: gui2/gpt_dialog.c:1218
 msgid "y axis"
 msgstr "Ось y"
 
-#: gui2/gpt_dialog.c:1236
+#: gui2/gpt_dialog.c:1237
 msgid "line width"
 msgstr "Толщина линии"
 
-#: gui2/gpt_dialog.c:1280
+#: gui2/gpt_dialog.c:1281
 msgid "Labels"
 msgstr "Метки"
 
-#: gui2/gpt_dialog.c:1295
+#: gui2/gpt_dialog.c:1296
 #, c-format
 msgid "label %d: "
 msgstr "Метка %d: "
 
-#: gui2/gpt_dialog.c:1302
+#: gui2/gpt_dialog.c:1303
 msgid "text"
 msgstr "Текст"
 
-#: gui2/gpt_dialog.c:1323
+#: gui2/gpt_dialog.c:1324
 msgid "position (X Y)"
 msgstr "Положение (X Y)"
 
-#: gui2/gpt_dialog.c:1364
+#: gui2/gpt_dialog.c:1365
 msgid "justification"
 msgstr "Выравнивание"
 
-#: gui2/gpt_dialog.c:1392
+#: gui2/gpt_dialog.c:1393
 msgid "X-axis"
 msgstr "Ось Х"
 
-#: gui2/gpt_dialog.c:1394
+#: gui2/gpt_dialog.c:1395
 msgid "Y-axis"
 msgstr "Ось Y"
 
-#: gui2/gpt_dialog.c:1396
+#: gui2/gpt_dialog.c:1397
 msgid "Y2-axis"
 msgstr "Ось Y2"
 
-#: gui2/gpt_dialog.c:1447
+#: gui2/gpt_dialog.c:1448
 msgid "auto axis range"
 msgstr "Автоматическая шкала"
 
-#: gui2/gpt_dialog.c:1460
+#: gui2/gpt_dialog.c:1461
 msgid "manual range:"
 msgstr "Установить вручную:"
 
-#: gui2/gpt_dialog.c:1530
+#: gui2/gpt_dialog.c:1531
 msgid "linear scale"
 msgstr "Линейная шкала"
 
-#: gui2/gpt_dialog.c:1538
+#: gui2/gpt_dialog.c:1539
 msgid "logarithmic scale, base:"
 msgstr "Логарифмическая шкала, основание:"
 
-#: gui2/gpt_dialog.c:1630
+#: gui2/gpt_dialog.c:1631
 msgid ""
 "You can only have one plot controller open\n"
 "at any given time"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1649
+#: gui2/gpt_dialog.c:1650
 msgid "gretl plot controls"
 msgstr "gretl: настройки графика"
 
@@ -9349,7 +9365,7 @@ msgstr "Разброс X-Y с _разделением факторов..."
 
 #: gui2/gretl.c:1350
 msgid "X-Y with _control..."
-msgstr "Разброс X-Y с _инструментальной переменной..."
+msgstr "Разброс X-Y с _управляемой переменной..."
 
 #: gui2/gretl.c:1351
 msgid "_Boxplots..."
@@ -9385,7 +9401,7 @@ msgstr "Корреляционная _матрица"
 
 #: gui2/gretl.c:1359
 msgid "Cross _Tabulation"
-msgstr "Кросс _табуляция"
+msgstr "Таблица _сопряженности"
 
 #: gui2/gretl.c:1360
 msgid "_Principal components"
@@ -9393,7 +9409,7 @@ msgstr "_Главные компоненты"
 
 #: gui2/gretl.c:1361
 msgid "_Mahalanobis distances"
-msgstr "_Метрика Махаланобиса (Mahalanobis)"
+msgstr "Расстояния _Махаланобиса (Mahalanobis)"
 
 #: gui2/gretl.c:1362
 msgid "C_ross-correlogram"
@@ -9934,21 +9950,21 @@ msgstr "Эксцесс"
 #: gui2/guiprint.c:1284
 #, c-format
 msgid "Correlation coefficients, using the observations %s - %s"
-msgstr ""
+msgstr "Коэффициенты корреляции, наблюдения %s  - %s"
 
 #: gui2/guiprint.c:1295 gui2/guiprint.c:1389
 msgid "Coefficient covariance matrix"
-msgstr ""
+msgstr "Матрица коэффициентов корреляции"
 
 #: gui2/guiprint.c:1377
 #, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
-msgstr ""
+msgstr "Коэффициенты корреляции, наблюдения %s--%s"
 
 #: gui2/guiprint.c:1384
 #, c-format
 msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr ""
+msgstr "5\\%% критические значения (двухсторонние) = %.4f для n = %d"
 
 #: gui2/guiprint.c:1477 gui2/guiprint.c:1495
 msgid "Model estimation range:"
@@ -9957,7 +9973,7 @@ msgstr ""
 #: gui2/guiprint.c:1480 gui2/guiprint.c:1498
 #, c-format
 msgid "Standard error of residuals = %g"
-msgstr ""
+msgstr "Стандартная ошибка остатков = %g"
 
 #: gui2/guiprint.c:1567
 msgid ""
@@ -10370,7 +10386,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:2205
 msgid "_Against time"
-msgstr ""
+msgstr "В зависимости от _времени"
 
 #: gui2/gui_utils.c:2207
 msgid "By _observation number"
@@ -10379,7 +10395,7 @@ msgstr "По _номеру наблюдения"
 #: gui2/gui_utils.c:2227 gui2/gui_utils.c:2251
 #, c-format
 msgid "_Against %s"
-msgstr ""
+msgstr "В _зависимости от %s"
 
 #: gui2/gui_utils.c:2265
 msgid "Residual _correlogram"
@@ -10392,16 +10408,16 @@ msgstr ""
 #: gui2/gui_utils.c:2290
 #, c-format
 msgid "_Against %s and %s"
-msgstr ""
+msgstr "В зависимости от %s и %s"
 
 #: gui2/gui_utils.c:2355
 msgid "Separation"
-msgstr "Разделение"
+msgstr "Уровни"
 
 #: gui2/gui_utils.c:2370
 #, c-format
 msgid "By %s"
-msgstr ""
+msgstr "По %s"
 
 #: gui2/gui_utils.c:2418
 msgid "tau sequence"
@@ -10566,7 +10582,7 @@ msgid ""
 "(first must be alphabetical)"
 msgstr ""
 "Первый символ имени переменной ('%c') не подходит\n"
-"(первый должен быть алфавитным)"
+"(первый должен быть латинским символом)"
 
 #: gui2/gui_utils.c:3457
 #, c-format
@@ -10714,7 +10730,7 @@ msgstr "главные компоненты"
 
 #: gui2/library.c:675
 msgid "cross tabulation"
-msgstr ""
+msgstr "таблица сопряженности"
 
 #: gui2/library.c:680 gui2/library.c:684
 msgid "summary statistics"
@@ -11001,7 +11017,7 @@ msgstr "коррелограмма"
 
 #: gui2/library.c:4044
 msgid "Maximum lag:"
-msgstr ""
+msgstr "Максимальный лаг:"
 
 #: gui2/library.c:4126
 msgid "gretl: periodogram"
@@ -11171,7 +11187,7 @@ msgstr ""
 
 #: gui2/library.c:5360
 msgid "You must supply three variables"
-msgstr ""
+msgstr "Вы должны указать три переменные"
 
 #: gui2/library.c:5431
 msgid "Couldn't find xterm or rxvt"
@@ -11179,7 +11195,7 @@ msgstr ""
 
 #: gui2/library.c:5478 gui2/selector.c:2479 gui2/selector.c:2542
 msgid "X-axis variable"
-msgstr ""
+msgstr "Ось X"
 
 #: gui2/library.c:5530
 msgid "on a single graph"
@@ -11388,7 +11404,7 @@ msgstr "Корреляционная матрица"
 
 #: gui2/menustate.c:347 gui2/menustate.c:410 gui2/selector.c:4149
 msgid "XY scatterplot"
-msgstr ""
+msgstr "График разброса X-Y"
 
 #: gui2/menustate.c:480
 msgid "Daily"
@@ -11396,7 +11412,7 @@ msgstr "Ежедневные данные"
 
 #: gui2/menustate.c:484
 msgid "Unknown"
-msgstr ""
+msgstr "Неизвестная структура данных"
 
 #: gui2/menustate.c:489
 msgid "Undated"
@@ -11442,7 +11458,8 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid "Can't add model to table -- this model has a different dependent variable"
+msgid ""
+"Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11648,19 +11665,19 @@ msgstr "Вы должны выбрать переменную для оси Z"
 
 #: gui2/selector.c:2163
 msgid "You must select a factor variable"
-msgstr ""
+msgstr "Вы должны выбрать факторную переменную"
 
 #: gui2/selector.c:2165
 msgid "You must select a control variable"
-msgstr ""
+msgstr "Вы должны выбрать управляемую переменную"
 
 #: gui2/selector.c:2246
 msgid "You must select two or more endogenous variables"
-msgstr ""
+msgstr "Вы должны выбрать одну или две эндогенные переменные"
 
 #: gui2/selector.c:2284
 msgid "You must specify a set of instrumental variables"
-msgstr ""
+msgstr "Вы должны указать набор инструментальных переменных"
 
 #: gui2/selector.c:2287
 msgid "You must specify regressors for the selection equation"
@@ -11740,15 +11757,15 @@ msgstr ""
 
 #: gui2/selector.c:2453 gui2/selector.c:2478
 msgid "Y-axis variable"
-msgstr ""
+msgstr "Ось Y"
 
 #: gui2/selector.c:2464 gui2/selector.c:4186
 msgid "Y-axis variables"
-msgstr ""
+msgstr "Ось Y"
 
 #: gui2/selector.c:2466 gui2/selector.c:4188
 msgid "X-axis variables"
-msgstr ""
+msgstr "Ось X"
 
 #: gui2/selector.c:2511
 msgid "Choose->"
@@ -11784,7 +11801,7 @@ msgstr ""
 
 #: gui2/selector.c:2744
 msgid "Z-axis variable"
-msgstr ""
+msgstr "Ось Z"
 
 #: gui2/selector.c:2746
 msgid "Factor (dummy)"
@@ -11792,7 +11809,7 @@ msgstr ""
 
 #: gui2/selector.c:2748
 msgid "Control variable"
-msgstr ""
+msgstr "Управляемая переменная"
 
 #: gui2/selector.c:2785
 msgid "Add ->"
@@ -11892,7 +11909,7 @@ msgstr ""
 
 #: gui2/selector.c:3511
 msgid "Show zeros explicitly"
-msgstr ""
+msgstr "Показывать нулевые значения"
 
 #: gui2/selector.c:3514
 msgid "Show rankings"
@@ -11900,7 +11917,7 @@ msgstr ""
 
 #: gui2/selector.c:3517
 msgid "Ensure uniform sample size"
-msgstr ""
+msgstr "Обеспечить одинаковый размер выборки"
 
 #: gui2/selector.c:3523
 msgid "Parameter covariance matrix via Hessian"
@@ -11916,15 +11933,15 @@ msgstr ""
 
 #: gui2/selector.c:3563
 msgid "Show lagged variables"
-msgstr ""
+msgstr "Показать лаги"
 
 #: gui2/selector.c:3663
 msgid "Compute standard errors"
-msgstr ""
+msgstr "Вычислить стандартные ошибки"
 
 #: gui2/selector.c:3668
 msgid "Compute confidence intervals"
-msgstr ""
+msgstr "Вычислить доверительные интервалы"
 
 #: gui2/selector.c:3689
 msgid "Confidence level"
@@ -11940,11 +11957,11 @@ msgstr ""
 
 #: gui2/selector.c:3723
 msgid "Use correlation matrix"
-msgstr ""
+msgstr "Использовать матрицу корреляций"
 
 #: gui2/selector.c:3727
 msgid "Use covariance matrix"
-msgstr ""
+msgstr "Использовать матрицу ковариаций"
 
 #: gui2/selector.c:3739
 msgid "Show slopes at mean"
@@ -11956,11 +11973,11 @@ msgstr ""
 
 #: gui2/selector.c:3755
 msgid "Use points"
-msgstr ""
+msgstr "Точки"
 
 #: gui2/selector.c:3759
 msgid "Use lines"
-msgstr ""
+msgstr "Линии"
 
 #: gui2/selector.c:3793
 msgid "Estimate reduced model"
@@ -12000,15 +12017,15 @@ msgstr ""
 
 #: gui2/selector.c:3875
 msgid "Plain numerical values"
-msgstr ""
+msgstr "Числовые данные"
 
 #: gui2/selector.c:3879
 msgid "Show row percentages"
-msgstr ""
+msgstr "Проценты по строкам"
 
 #: gui2/selector.c:3883
 msgid "Show column percentages"
-msgstr ""
+msgstr "Проценты по столбцам"
 
 #: gui2/selector.c:3900 gui2/selector.c:3912
 msgid "Exact Maximum Likelihood"
@@ -12040,7 +12057,7 @@ msgstr ""
 
 #: gui2/selector.c:4151
 msgid "plot with impulses"
-msgstr ""
+msgstr "график с импульсами"
 
 #: gui2/selector.c:4153
 msgid "3D plot"
@@ -12048,15 +12065,15 @@ msgstr "3D график"
 
 #: gui2/selector.c:4155
 msgid "multiple scatterplots"
-msgstr ""
+msgstr "несколько графиков разброса"
 
 #: gui2/selector.c:4157
 msgid "factorized plot"
-msgstr ""
+msgstr "график с разделением факторов"
 
 #: gui2/selector.c:4159
 msgid "scatterplot with control"
-msgstr ""
+msgstr "график с управляемой переменной"
 
 #: gui2/selector.c:4161
 msgid "functions to package"
@@ -12124,7 +12141,7 @@ msgstr ""
 
 #: gui2/selector.c:4420
 msgid "Select variables to plot"
-msgstr ""
+msgstr "Выберите переменные для графика"
 
 #: gui2/selector.c:4428
 msgid "Select variables to save"
@@ -12487,7 +12504,7 @@ msgstr ""
 
 #: gui2/settings.c:183
 msgid "Command to launch gnuplot"
-msgstr ""
+msgstr "Команда для запуска gnuplot"
 
 #: gui2/settings.c:186
 msgid "Command to launch GNU R"
@@ -12559,7 +12576,7 @@ msgstr ""
 
 #: gui2/settings.c:234
 msgid "Gnuplot colors"
-msgstr ""
+msgstr "Цвета для gnuplot"
 
 #: gui2/settings.c:248
 msgid "Use robust covariance matrix by default"
@@ -12801,11 +12818,11 @@ msgstr ""
 
 #: gui2/ssheet.c:1297 gui2/toolbar.c:335
 msgid "gretl: save matrix"
-msgstr ""
+msgstr "gretl: сохранение матрицы"
 
 #: gui2/ssheet.c:1298 gui2/toolbar.c:336
 msgid "Enter a name"
-msgstr ""
+msgstr "Введите название:"
 
 #: gui2/ssheet.c:2178
 msgid "No series to edit"
@@ -12818,7 +12835,7 @@ msgstr ""
 
 #: gui2/ssheet.c:2495
 msgid "gretl: edit matrix"
-msgstr ""
+msgstr "gretl: редактирование матрицы"
 
 #: gui2/ssheet.c:2498
 msgid "gretl: edit scalars"
@@ -13006,7 +13023,7 @@ msgstr "Сохранить в файл"
 
 #: gui2/toolbar.c:178
 msgid "gretl: save text"
-msgstr ""
+msgstr "gretl: сохранение текста"
 
 #: gui2/toolbar.c:246
 msgid "Nothing to send"
@@ -13015,7 +13032,7 @@ msgstr ""
 #: gui2/toolbar.c:346
 #, c-format
 msgid "Saved matrix as %s"
-msgstr ""
+msgstr "Матрица сохранена как %s"
 
 #: gui2/toolbar.c:386
 msgid "Confidence level, percent"
@@ -13083,11 +13100,11 @@ msgstr ""
 
 #: gui2/toolbar.c:489
 msgid "Add to dataset..."
-msgstr ""
+msgstr "Добавить в набор данных..."
 
 #: gui2/toolbar.c:490
 msgid "Add as matrix..."
-msgstr ""
+msgstr "Добавить как матрицу..."
 
 #: gui2/toolbar.c:491
 msgid "Stickiness..."
@@ -13498,7 +13515,7 @@ msgstr ""
 
 #: plugin/leverage.c:114 plugin/pca.c:95
 msgid "Variables to save:"
-msgstr ""
+msgstr "Переменные для сохранения:"
 
 #: plugin/leverage.c:121 plugin/leverage.c:238 plugin/leverage.c:463
 msgid "leverage"
@@ -13522,35 +13539,35 @@ msgstr ""
 
 #: plugin/mailer.c:570
 msgid "To:"
-msgstr ""
+msgstr "Кому:"
 
 #: plugin/mailer.c:571
 msgid "Reply-To:"
-msgstr ""
+msgstr "Обратный адрес:"
 
 #: plugin/mailer.c:572
 msgid "Subject:"
-msgstr ""
+msgstr "Тема:"
 
 #: plugin/mailer.c:573
 msgid "Note:"
-msgstr ""
+msgstr "Замечания:"
 
 #: plugin/mailer.c:596
 msgid "gretl: send mail"
-msgstr ""
+msgstr "gretl: почта"
 
 #: plugin/mailer.c:608
 msgid "Message"
-msgstr ""
+msgstr "Сообщение"
 
 #: plugin/mailer.c:685
 msgid "Append signature"
-msgstr ""
+msgstr "Добавить подпись"
 
 #: plugin/mailer.c:697
 msgid "Mail setup"
-msgstr ""
+msgstr "Настройка почты"
 
 #: plugin/mailer.c:705
 msgid "SMTP server:"
@@ -13562,19 +13579,19 @@ msgstr "порт:"
 
 #: plugin/mailer.c:761
 msgid "POP server:"
-msgstr ""
+msgstr "POP сервер:"
 
 #: plugin/mailer.c:762
 msgid "Username:"
-msgstr ""
+msgstr "Логин:"
 
 #: plugin/mailer.c:763
 msgid "Password:"
-msgstr ""
+msgstr "Пароль:"
 
 #: plugin/mailer.c:779
 msgid "gretl: POP info"
-msgstr ""
+msgstr "gretl: информация о POP"
 
 #: plugin/mp_ols.c:136
 #, c-format
@@ -13584,7 +13601,7 @@ msgstr ""
 #: plugin/mp_ols.c:1262
 #, c-format
 msgid "Error sum of squares is not >= 0"
-msgstr ""
+msgstr "Сумма квадратов ошибок больше нуля"
 
 #: plugin/ods_import.c:409
 #, c-format
@@ -13598,31 +13615,31 @@ msgstr ""
 
 #: plugin/pca.c:103
 msgid "Components with eigenvalues > mean"
-msgstr ""
+msgstr "Компоненты с собственными значениями больше среднего"
 
 #: plugin/pca.c:113
 msgid "All components"
-msgstr ""
+msgstr "Все компоненты"
 
 #: plugin/pca.c:172
 msgid "Principal Components Analysis"
-msgstr ""
+msgstr "Анализ главных компонент"
 
 #: plugin/pca.c:175
 msgid "Eigenanalysis of the Correlation Matrix"
-msgstr ""
+msgstr "Собственные значения для матрицы корреляций"
 
 #: plugin/pca.c:177
 msgid "Eigenanalysis of the Covariance Matrix"
-msgstr ""
+msgstr "Собственные значения для матрицы ковариаций"
 
 #: plugin/pca.c:180
 msgid "Component  Eigenvalue  Proportion   Cumulative\n"
-msgstr ""
+msgstr "Компонента  Собс. знач.  Доля   Интегральная\n"
 
 #: plugin/pca.c:203
 msgid "Eigenvectors (component loadings)"
-msgstr ""
+msgstr "Собственные векторы (нагрузка на компоненты)"
 
 #: plugin/poisson.c:381
 msgid "poisson: the dependent variable must be count data"
@@ -13630,32 +13647,32 @@ msgstr ""
 
 #: plugin/progress_bar.c:65
 msgid "gretl: loading data"
-msgstr ""
+msgstr "gretl: загрузка данных"
 
 #: plugin/progress_bar.c:67
 msgid "gretl: storing data"
-msgstr ""
+msgstr "gretl: сохранение данных"
 
 #: plugin/progress_bar.c:69
 msgid "gretl: scanning fonts"
-msgstr ""
+msgstr "gretl: поиск шрифтов"
 
 #: plugin/progress_bar.c:141
 msgid "Retrieving"
-msgstr ""
+msgstr "Получение"
 
 #: plugin/progress_bar.c:144
 msgid "Storing"
-msgstr ""
+msgstr "Сохранение"
 
 #: plugin/progress_bar.c:147
 #, c-format
 msgid "Scanning %ld fonts"
-msgstr ""
+msgstr "Поиск %ld шрифтов"
 
 #: plugin/quantreg.c:369
 msgid "Couldn't calculate confidence intervals for this model"
-msgstr ""
+msgstr "Невозможно рассчитать доверительные интервалы для данной модели"
 
 #: plugin/range-mean.c:65
 msgid "range-mean plot for"
@@ -13963,4 +13980,3 @@ msgstr "Строки"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
-
