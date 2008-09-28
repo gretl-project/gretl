@@ -7,6 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-09-20 09:39-0400\n"
+"PO-Revision-Date: 2008-09-28 23:28+0300\n"
 "POT-Creation-Date: 2008-09-27 11:21-0400\n"
 "PO-Revision-Date: 2008-09-27 11:31-0400\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
@@ -234,11 +236,11 @@ msgstr "%d çoğaltmaya dayalı"
 
 #: lib/src/bootstrap.c:448
 msgid "using resampled residuals"
-msgstr "yeniden örneklenmiş artıklar kullanılarak"
+msgstr "yeniden örneklenmiş artıklar kullanıldı"
 
 #: lib/src/bootstrap.c:450
 msgid "with simulated normal errors"
-msgstr "benzetilmiş normal hatalar kullanılarak"
+msgstr "benzetilmiş normal hatalar kullanıldı"
 
 #: lib/src/bootstrap.c:455
 msgid "recognized lagged dependent variable"
@@ -577,8 +579,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -668,8 +669,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:845 lib/src/dataio.c:2604
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:864 lib/src/dataio.c:2615
 msgid "Data file is empty\n"
@@ -690,10 +690,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1014
 #, c-format
@@ -1317,8 +1315,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
@@ -1346,7 +1343,7 @@ msgstr "Artık Öİİ"
 
 #: lib/src/describe.c:2472
 msgid "ACF for"
-msgstr "Öİİ şuna:"
+msgstr "Öİİ - değişken:"
 
 #: lib/src/describe.c:2488
 msgid "Residual PACF"
@@ -1354,7 +1351,7 @@ msgstr "Artık KÖİİ"
 
 #: lib/src/describe.c:2490
 msgid "PACF for"
-msgstr "KÖİİ şuna:"
+msgstr "KÖİİ - değişken:"
 
 #: lib/src/describe.c:2529 gui2/menustate.c:297 gui2/menustate.c:370
 msgid "Correlogram"
@@ -1439,7 +1436,7 @@ msgstr "Artık izgesi"
 #: lib/src/describe.c:3228
 #, c-format
 msgid "Spectrum of %s"
-msgstr "%s izgesi"
+msgstr "%s Değişkeni İzgesi"
 
 #: lib/src/describe.c:3234
 #, c-format
@@ -1475,7 +1472,7 @@ msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr ""
-"%d uzunluklu Bartlett gecikme penceresi kullanılarak\n"
+"%d uzunluklu Bartlett gecikme penceresi kullanıldı\n"
 "\n"
 
 #: lib/src/describe.c:3325
@@ -1500,7 +1497,7 @@ msgid ""
 " omega  scaled frequency  periods  log spectral density\n"
 "\n"
 msgstr ""
-" omega  ölçekli sıklık  dönemler  log izgesel yoğunluk\n"
+" omega   ölçekli sıklık   dönemler   log izgesel yoğunluk\n"
 "\n"
 
 #: lib/src/describe.c:3416
@@ -1560,11 +1557,11 @@ msgstr "Basıklık"
 
 #: lib/src/describe.c:3499
 msgid "Within s.d."
-msgstr "s.s. içinde"
+msgstr "s.s. içi"
 
 #: lib/src/describe.c:3500
 msgid "Between s.d."
-msgstr "s.s. arasında"
+msgstr "s.s. arası"
 
 #: lib/src/describe.c:3506 lib/src/describe.c:3593
 msgid "Summary Statistics"
@@ -2358,7 +2355,7 @@ msgstr "loess yakıştırma, d = %d, q = %g"
 
 #: lib/src/graphing.c:2247
 msgid "time series by group"
-msgstr "kümeye göre zaman dizisi"
+msgstr "kümelere göre zaman dizisi"
 
 #: lib/src/graphing.c:2351 lib/src/plotspec.c:547 gui2/gpt_dialog.c:661
 msgid "right"
@@ -2437,8 +2434,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3647
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
 
 #: lib/src/graphing.c:3652
 #, c-format
@@ -2913,7 +2909,7 @@ msgid ""
 "slope standard errors in parentheses, p-values in brackets\n"
 msgstr ""
 "Sabit etkiler tahmin edicisi\n"
-"kesitsel birime göre farklılık gösteren sabit terimlere izin verir\n"
+"kesit birime göre farklılık gösteren sabit terimlere izin verir\n"
 "eğim ölçünlü hataları parantez, p-değerleri köşeli ayraç içerisinde\n"
 
 #: lib/src/gretl_panel.c:1319
@@ -2932,7 +2928,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:1326
 msgid "Joint significance of differing group means:\n"
-msgstr "Küme ortalamaları farklılığının birleşik anlamlılığı:\n"
+msgstr "Farklı küme ortalamalarının birleşik anlamlılığı:\n"
 
 #: lib/src/gretl_panel.c:1330
 msgid ""
@@ -2998,7 +2994,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Kesit birimleri için karma SEK artıklar ortalamaları:\n"
+"Kesit birimler için karma SEK artık ortalamaları:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2214
@@ -3126,8 +3122,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -3944,7 +3939,7 @@ msgstr "Düzeltilmiş $\\bar{R}^2$"
 
 #: lib/src/modelprint.c:376
 msgid "Within R-squared"
-msgstr "R-kare içinde"
+msgstr "R-kare içi"
 
 #: lib/src/modelprint.c:389 lib/src/modelprint.c:400
 msgid "McFadden's pseudo-R-squared"
@@ -4157,7 +4152,7 @@ msgstr "2AEK (2SLS)"
 
 #: lib/src/modelprint.c:1010
 msgid "Heteroskedasticity-corrected"
-msgstr "çoktürelserpilim-düzeltme"
+msgstr "çoktürelserpilim-düzeltmeli bağlanım"
 
 #: lib/src/modelprint.c:1012 lib/src/modelprint.c:4170
 msgid "AR"
@@ -4173,11 +4168,11 @@ msgstr "yüksek-kesinlikli SEK"
 
 #: lib/src/modelprint.c:1015 lib/src/modelprint.c:1099 gui2/selector.c:2386
 msgid "Probit"
-msgstr "Olabirim"
+msgstr "olabirim"
 
 #: lib/src/modelprint.c:1016 lib/src/modelprint.c:1093 gui2/selector.c:2384
 msgid "Logit"
-msgstr "Logbirim"
+msgstr "logbirim"
 
 #: lib/src/modelprint.c:1017 gui2/selector.c:2388
 msgid "Tobit"
@@ -4205,7 +4200,7 @@ msgstr "GBY (GMM)"
 
 #: lib/src/modelprint.c:1023 gui2/selector.c:2392
 msgid "Logistic"
-msgstr "Lojistik"
+msgstr "lojistik"
 
 #: lib/src/modelprint.c:1024 gui2/selector.c:2414
 msgid "GARCH"
@@ -4297,11 +4292,11 @@ msgstr "1-adımlı GBY (GMM)"
 
 #: lib/src/modelprint.c:1091
 msgid "Ordered Logit"
-msgstr "sıralı Logbirim"
+msgstr "sıralı logbirim"
 
 #: lib/src/modelprint.c:1097
 msgid "Ordered Probit"
-msgstr "sıralı Olabirim"
+msgstr "sıralı olabirim"
 
 #: lib/src/modelprint.c:1103
 msgid "Two-step Heckit"
@@ -4313,7 +4308,7 @@ msgstr "EO Heckbirim"
 
 #: lib/src/modelprint.c:1109
 msgid "Quantile"
-msgstr "Kantil"
+msgstr "kantil"
 
 #: lib/src/modelprint.c:1148 lib/src/modelprint.c:1157
 msgid "First-stage F-statistic"
@@ -4556,7 +4551,7 @@ msgstr "ölçekli %s"
 
 #: lib/src/modelprint.c:1968 lib/src/modelprint.c:1969
 msgid "Allowing for groupwise heteroskedasticity"
-msgstr "Kümeli çoktürelserpilim göz önüne alınarak"
+msgstr "Kümeli çoktürelserpilim göz önüne alındı"
 
 #: lib/src/modelprint.c:1971 lib/src/modelprint.c:1972
 msgid "Weights based on per-unit error variances"
@@ -5050,11 +5045,11 @@ msgstr "Belirtilmiş bir işlev yok"
 
 #: lib/src/nls.c:2856
 msgid "Using numerical derivatives\n"
-msgstr "Sayısal türevler kullanılarak\n"
+msgstr "Sayısal türevler kullanıldı\n"
 
 #: lib/src/nls.c:2857
 msgid "Using analytical derivatives\n"
-msgstr "Çözümsel türevler kullanılarak\n"
+msgstr "Çözümsel türevler kullanıldı\n"
 
 #: lib/src/nls.c:2875
 #, c-format
@@ -5077,7 +5072,7 @@ msgstr ""
 
 #: lib/src/nls.c:3429
 msgid "BFGS: initial value of objective function is not finite"
-msgstr ""
+msgstr "BFGS: hedef işlev başlangıç değeri sonlu değil"
 
 #: lib/src/nls.c:3603
 #, c-format
@@ -5128,10 +5123,8 @@ msgid "not significant at the 10% level\n"
 msgstr "%% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
 
 #: lib/src/nonparam.c:761
 msgid ""
@@ -5160,8 +5153,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:809
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:813
 #, c-format
@@ -5289,10 +5281,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5344,7 +5334,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"          sıklık       görece   top.\n"
+"          sıklık       görece   yığın\n"
 "\n"
 
 #: lib/src/printout.c:327
@@ -5359,7 +5349,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"        aralık         ortanokta   sıklık   görece   top.\n"
+"        aralık         ortanokta   sıklık   görece   yığın\n"
 "\n"
 
 #: lib/src/printout.c:412
@@ -5369,8 +5359,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:442
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:450
 msgid "TOT."
@@ -5520,7 +5509,7 @@ msgstr " %% 95 güven aralıkları için, t(%d, .025) = %.3f\n"
 #: lib/src/printout.c:2154 gui2/guiprint.c:1671 gui2/guiprint.c:1725
 #: gui2/guiprint.c:1783 gui2/guiprint.c:1819
 msgid "prediction"
-msgstr "kestirim"
+msgstr "yordama"
 
 #: lib/src/printout.c:2157
 msgid " std. error"
@@ -5727,7 +5716,7 @@ msgstr "yeni bitiş gözleminde hata"
 
 #: lib/src/subsample.c:1476 lib/src/subsample.c:1482 lib/src/subsample.c:1499
 msgid "missing values"
-msgstr "eksik değerler"
+msgstr "eksik değer"
 
 #: lib/src/subsample.c:1488
 #, c-format
@@ -5740,10 +5729,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinden %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/system.c:81
 msgid "SUR"
@@ -6016,7 +6003,7 @@ msgstr "Birinci farklarda YÖB sistemi"
 
 #: lib/src/var.c:2091
 msgid "System with levels as dependent variable"
-msgstr "Sistem, düzey bağımlı değişkeni ile"
+msgstr "Sistem (düzey bağımlı değişkeni ile)"
 
 #: lib/src/var.c:2099
 msgid "Cross-products"
@@ -6344,8 +6331,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:960
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:968
 #, c-format
@@ -6704,8 +6690,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7425,7 +7410,7 @@ msgstr "_Göster"
 
 #: gui2/database.c:756
 msgid "_Graph"
-msgstr "Çi_z"
+msgstr "_Çiz"
 
 #: gui2/database.c:757 gui2/gretl.c:1226
 msgid "_Import"
@@ -7433,7 +7418,7 @@ msgstr "_İçe aktar"
 
 #: gui2/database.c:758
 msgid "_Delete"
-msgstr "S_il"
+msgstr "_Sil"
 
 #: gui2/database.c:759 gui2/helpfiles.c:94
 msgid "_Find"
@@ -7934,7 +7919,7 @@ msgstr "veri sütün ayraçı:"
 
 #: gui2/dialogs.c:299 gui2/dialogs.c:376
 msgid "comma (,)"
-msgstr "virgül (,)"
+msgstr "virgül"
 
 #: gui2/dialogs.c:311
 msgid "space"
@@ -7954,11 +7939,11 @@ msgstr "ondalık ayraç simgesi:"
 
 #: gui2/dialogs.c:362
 msgid "period (.)"
-msgstr "nokta (.)"
+msgstr "nokta"
 
 #: gui2/dialogs.c:391
 msgid "include observations column"
-msgstr "gözlemler sütununu ekle"
+msgstr "gözlem (obs) sütununu ekle"
 
 #: gui2/dialogs.c:544
 msgid "Tab separated"
@@ -8058,7 +8043,7 @@ msgstr "Betimleme:"
 
 #: gui2/dialogs.c:1373
 msgid "Display name (shown in graphs):"
-msgstr "Gösterilen ad (çizimlerde):"
+msgstr "Gösterilecek ad (çizimlerde):"
 
 #: gui2/dialogs.c:1399
 msgid "Compaction method (for reducing frequency):"
@@ -8177,7 +8162,7 @@ msgstr "hata çubukları"
 
 #: gui2/dialogs.c:2351
 msgid "low and high lines"
-msgstr "düşük ve yüksek çizgileri"
+msgstr "düşük / yüksek çizgileri"
 
 #: gui2/dialogs.c:2352
 msgid "shaded area"
@@ -8648,7 +8633,7 @@ msgstr "Ortalama gözlem sayısı:"
 
 #: gui2/filters.c:482
 msgid "Centered"
-msgstr "Ortalanmış"
+msgstr "Ortala"
 
 #: gui2/filters.c:493
 msgid "Weight on current observation:"
@@ -9576,7 +9561,7 @@ msgstr "_Sayıllar..."
 #: gui2/gretl.c:1343 gui2/gui_utils.c:227 gui2/gui_utils.c:271
 #: gui2/ssheet.c:160
 msgid "_View"
-msgstr "_Görünüm"
+msgstr "_Göster"
 
 #: gui2/gretl.c:1344
 msgid "_Icon view"
@@ -10333,7 +10318,7 @@ msgstr "_Çözümleme"
 
 #: gui2/gui_utils.c:147
 msgid "_Display actual, fitted, residual"
-msgstr "_Asıl, yakıştırılan, artığı göster"
+msgstr "_Asıl, yakıştırılan ve artıklar"
 
 #: gui2/gui_utils.c:149
 msgid "_Forecasts..."
@@ -11733,8 +11718,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Üzgünüm, 2AEK modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:192
@@ -11759,7 +11743,7 @@ msgstr "EO (ML)"
 
 #: gui2/model_table.c:373
 msgid "Within"
-msgstr "İçinde"
+msgstr "İçi"
 
 #: gui2/model_table.c:375
 msgid "GLS"
@@ -11767,7 +11751,7 @@ msgstr "GEK (GLS)"
 
 #: gui2/model_table.c:377
 msgid "Between"
-msgstr "Arasında"
+msgstr "Arası"
 
 #: gui2/model_table.c:381
 msgid "HILU"
@@ -11843,8 +11827,7 @@ msgstr "Logbirim ve olabirim için, McFadden sözde-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1068
 msgid "No model is available"
@@ -12407,7 +12390,7 @@ msgstr "İki değişken seçiniz"
 
 #: gui2/selector.c:4414
 msgid "Confidence region: select two variables"
-msgstr "Güven bölgesi: iki değişken seçiniz"
+msgstr "Güven elipsi: iki değişken seçiniz"
 
 #: gui2/selector.c:4416
 msgid "Select variables to display"
@@ -13555,7 +13538,7 @@ msgstr ""
 
 #: plugin/fcp.c:246
 msgid " (using Hessian)"
-msgstr "(Hessegil kullanılarak)"
+msgstr " (Hessegil kullanılarak)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
@@ -13765,7 +13748,7 @@ msgstr "Kısıtlamasız log-olabilirlik (lr) = %.8g\n"
 #: plugin/johansen.c:1613 plugin/jrestrict.c:1842
 #, c-format
 msgid "Allowing for prior restriction, df = %d\n"
-msgstr "Önceki kısıtlama göz önüne alınarak, sd = %d\n"
+msgstr "Önceki kısıtlama  (sd = %d) göz önüne alındı\n"
 
 #: plugin/johansen.c:1615 plugin/jrestrict.c:2770
 #, c-format
@@ -13939,7 +13922,7 @@ msgstr "Kovaryans dizeyinin özdeğer çözümlemesi"
 
 #: plugin/pca.c:180
 msgid "Component  Eigenvalue  Proportion   Cumulative\n"
-msgstr " Bileşen    Özdeğer      Orantı       Toplam\n"
+msgstr " Bileşen    Özdeğer      Orantı       Yığınlı\n"
 
 #: plugin/pca.c:203
 msgid "Eigenvectors (component loadings)"
@@ -14001,7 +13984,7 @@ msgid ""
 "using %d sub-samples of size %d\n"
 "\n"
 msgstr ""
-"%2$d boyutunda %1$d altörneklem kullanılarak\n"
+"%2$d boyutunda %1$d altörneklem kullanıldı\n"
 "\n"
 
 #: plugin/range-mean.c:193
@@ -14244,8 +14227,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14290,3 +14272,4 @@ msgstr "Dizgiler"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Erişiciler"
+
