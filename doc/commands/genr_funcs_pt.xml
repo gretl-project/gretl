@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0"?>
 <!DOCTYPE funcref SYSTEM "genr_funcs.dtd">
 
-<funcref language="portuguese">
+<funcref language="english">
 
   <funclist name="Acessores" ref="accessors">
 
@@ -521,7 +521,7 @@
 
   </funclist>
 
-  <funclist name="Funções" ref="functions">
+  <funclist name="Funcoes" ref="functions">
 
     <function name="abs" section="math" output="asinput">
       <fnargs>
