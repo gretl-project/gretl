@@ -1041,7 +1041,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pause = gretl_get_text_pause();
 	pprintf(prn, "\n%s\n", Vstr);
 	pprintf(prn, _("%s estimates, observations %s-%s (T = %d)"),
-		(vecm)? ("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
+		(vecm)? _("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
 	if (vecm) {
 	    print_vecm_header_info(var, &lldone, prn);
 	}

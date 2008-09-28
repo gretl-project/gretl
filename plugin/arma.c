@@ -2216,9 +2216,11 @@ static int ar_arma_init (const int *list, double *coeff,
 
     if (!err && prn != NULL) {
 	if (nonlin) {
-	    pputs(prn, "\narma initialization: using nonlinear AR model\n\n");
+	    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
+		    _("using nonlinear AR model"));
 	} else {
-	    pputs(prn, "\narma initialization: using linear AR model\n\n");
+	    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
+		    _("using linear AR model"));
 	}
     }
 

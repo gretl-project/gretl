@@ -2763,10 +2763,12 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (err) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
-	    random_effects(&pan, (const double **) *pZ, pdinfo, 
-			   (const double **) gZ, ginfo, prn);
-	    save_breusch_pagan_result(&pan);
-	    finalize_hausman_test(&pan, prn);
+	    err = random_effects(&pan, (const double **) *pZ, pdinfo, 
+				 (const double **) gZ, ginfo, prn);
+	    if (!err) {
+		save_breusch_pagan_result(&pan);
+		finalize_hausman_test(&pan, prn);
+	    }
 	}
 
 	if (ginfo != NULL) {
