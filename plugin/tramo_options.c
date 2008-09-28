@@ -682,7 +682,7 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
 
     /* spinner for manual critical value */
     adj = gtk_adjustment_new((opts->va == 0.0)? 3.3 : opts->va, 
-			     2.1, 6.0, 0.1, 1.0, 1.0);
+			     2.1, 6.0, 0.1, 1.0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.1, 1);
     opts->va_spinner = tmp;
     gtk_table_attach(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1,
@@ -713,7 +713,7 @@ static GtkWidget *arima_spinner (const gchar *label,
 		     0, 0, 0, 0);
     gtk_widget_show(w);
 
-    adj = gtk_adjustment_new(*var, 0, imax, 1, 1, 1);
+    adj = gtk_adjustment_new(*var, 0, imax, 1, 1, 0);
     w = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach(GTK_TABLE(tbl), w, 1, 2, row, row + 1,
 		     0, 0, 0, 0);
