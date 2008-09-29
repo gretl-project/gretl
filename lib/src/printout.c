@@ -526,8 +526,8 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 		pearson, df, chisq_cdf_comp(df, pearson));
 	pputc(prn, '\n');
 	if (n5p < 0.80) {
-	    pputs(prn, "Warning: Less than of 80% of cells had expected "
-		  "values of 5 or greater.\n");
+	    pputs(prn, _("Warning: Less than of 80% of cells had expected "
+			 "values of 5 or greater.\n"));
 	}
     }
 

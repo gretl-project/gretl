@@ -266,7 +266,8 @@ enum calc_functions {
     CALC_NPTEST,
     CALC_GRAPH,
     CALC_GRAPH_ADD,
-    CALC_RAND
+    CALC_RAND,
+    CALC_MAX
 };
 
 enum auto_dummies {

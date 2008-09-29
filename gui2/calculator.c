@@ -2923,7 +2923,7 @@ static int calc_help_code (int c)
 static void real_stats_calculator (int code, gpointer data) 
 {
     GtkWidget *tmp = NULL;
-    static GtkWidget *winptr[6];
+    static GtkWidget *winptr[CALC_MAX];
     GtkWidget *oldwin;
     CalcChild *child;
     const char *calc_titles[] = {
