@@ -2589,7 +2589,7 @@ int print_user_model (gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn)
 
     pputc(prn, '\n');
 
-    err = plain_print_aux_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
+    plain_print_aux_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
 
     for (i=0; i<nadd; i++) {
 	double x = gretl_matrix_get(adds, i, 0);

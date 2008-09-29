@@ -1,6 +1,8 @@
 version 1.7.10, in progress
 - Fix bug: crash in "Add random variable" dialog
 - Translation fixes
+- Add new command: "modprint"
+- Remove obsolete command: "rhodiff"
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
