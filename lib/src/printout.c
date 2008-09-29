@@ -2626,7 +2626,8 @@ int do_modprint (const char *line, PRN *prn)
 
     for (i=0; i<4 && !err; i++) {
 	tmp[i] = strtok((i==0)? s : NULL, " ");
-	if (tmp[i] == NULL) {
+	if (tmp[i] == NULL && (i<3)) { 
+	    /* 3rd argument is optional */
 	    err = E_PARSE;
 	}
     }
