@@ -2626,7 +2626,7 @@ int do_modprint (const char *line, PRN *prn)
 
     for (i=0; i<4 && !err; i++) {
 	tmp[i] = strtok((i==0)? s : NULL, " ");
-	if (tmp[i] == NULL && (i<3)) { 
+	if (tmp[i] == NULL && (i < 3)) { 
 	    /* 3rd argument is optional */
 	    err = E_PARSE;
 	}
@@ -2640,7 +2640,7 @@ int do_modprint (const char *line, PRN *prn)
 	}
     }
 
-    if (!err && tmp[3] != '\0') {
+    if (!err && tmp[3] != NULL && *tmp[3] != '\0') {
 	addstats = get_matrix_by_name(tmp[3]);
 	if (addstats == NULL) {
 	    err = E_DATA;
