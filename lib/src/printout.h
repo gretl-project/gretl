@@ -112,4 +112,4 @@ void scroll_pause (void);
 
 int scroll_pause_or_quit (void);
 
-int print_user_model(gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn);
+int do_modprint (const char *line, PRN *prn);
