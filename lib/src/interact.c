@@ -181,7 +181,7 @@ static int filter_comments (char *s, CMD *cmd)
     return filt;
 }
 
-static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
+static int get_lags_param (char *s, CMD *cmd)
 {
     int k = haschar(';', s);
     int ret = 0;
@@ -294,6 +294,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                            c == DATAMOD || \
                            c == FUNC || \
                            c == LOOP ||  \
+			   c == MODPRINT || \
 			   c == NORMTEST || \
                            c == NULLDATA || \
                            c == OMITFROM || \
@@ -333,6 +334,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == LOOP || \
                        c == MLE || \
                        c == MODELTAB || \
+                       c == MODPRINT || \
                        c == NLS || \
 		       c == NORMTEST || \
                        c == NULLDATA || \
@@ -2441,16 +2443,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* specials where there's something that goes into "param",
        before the first semicolon */
-    if (cmd->ci == RHODIFF || cmd->ci == LAGS) {
-	if (get_rhodiff_or_lags_param(rem, cmd)) {
+    if (cmd->ci == LAGS) {
+	if (get_lags_param(rem, cmd)) {
 	    strcpy(line, rem);
 	    linelen = strlen(line);
 	    nf = count_fields(line);
 	    pos = 0;
-	} else if (cmd->ci == RHODIFF) {
-	    /* rhodiff: param field is not optional */
-	    cmd->err = E_ARGS;
-	    goto cmd_exit;
 	} else {
 	    /* lags: param is optional */
 	    *rem = '\0';
@@ -3261,9 +3259,7 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 
     nsep = n_separators(cmd->list);
 
-    if (cmd->ci == RHODIFF) {
-	*plen += pprintf(prn, " %s;", cmd->param);
-    } else if (cmd->ci == LAGS) {
+    if (cmd->ci == LAGS) {
 	if (cmd->param[0] != '\0') {
 	    *plen += pprintf(prn, " %s;", cmd->param);
 	}
@@ -4237,13 +4233,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = batch_pvalue(line, pZ, pdinfo, prn);
 	break;
 
-    case RHODIFF:
-	err = rhodiff(cmd->param, cmd->list, pZ, pdinfo);
-	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
-	}
-	break;
-
     case SUMMARY:
 	err = list_summary(cmd->list, (const double **) *pZ, pdinfo, prn);
 	break; 
@@ -4691,6 +4680,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case DELEET:
 	pputs(prn, _("You cannot delete variables in this context\n"));
 	err = 1;
+	break;
+
+    case MODPRINT:
+	err = do_modprint(line, prn);
 	break;
 
     default:

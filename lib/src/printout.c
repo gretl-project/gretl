@@ -26,6 +26,8 @@
 #include "gretl_func.h"
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
+#include "usermat.h"
+#include "gretl_string_table.h"
 
 #include <time.h>
 
@@ -2548,4 +2550,107 @@ void bufgets_init (const char *buf)
 void bufgets_finalize (const char *buf)
 {
     bufgets(NULL, 1, buf);
+}
+
+/**
+ * print_user_model:
+ * @cs: gretl_matrix.
+ * @adds: gretl_matrix.
+ * @s: string
+ *
+ * Prints out to prn the coefficient table and optional additional statistics
+ * for a model estimated "by hand". Mainly useful for user-written functions.
+ */
+
+int print_user_model (gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn)
+{
+    int ncoef = gretl_matrix_rows(cs);
+    int nadd = (adds == NULL)? 0 : gretl_matrix_rows(adds);
+    int ntot = ncoef + nadd;
+    char **names = NULL;
+    const double *b, *se;
+    int i, err = 0;
+
+    names = malloc(ntot * sizeof *names);
+    if (names == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<ntot && !err; i++) {
+	names[i] = strtok((i==0)? s : NULL, ",");
+	if (names[i] == NULL) {
+	    free(names);
+	    return E_DATA;
+	}
+    }
+
+    b = cs->val;
+    se = b + ncoef;
+
+    pputc(prn, '\n');
+
+    err = plain_print_aux_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
+
+    for (i=0; i<nadd; i++) {
+	double x = gretl_matrix_get(adds, i, 0);
+
+	if (i == 0) {
+	    pputc(prn, '\n');
+	}
+	pprintf(prn, "  %s = %g\n", names[ncoef+i], x);
+    }
+
+    pputc(prn, '\n');
+
+    free(names);
+
+    return err;
+}
+
+int do_modprint (const char *line, PRN *prn)
+{
+    gretl_matrix *coef_se = NULL;
+    gretl_matrix *addstats = NULL;
+    char *parnames = NULL;
+    char **tmp;
+    char s[MAXLEN];
+    int i, err = 0;
+
+    tmp = malloc(4 * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    *s = '\0';
+    strncat(s, line, MAXLEN - 1);
+
+    for (i=0; i<4 && !err; i++) {
+	tmp[i] = strtok((i==0)? s : NULL, " ");
+	if (tmp[i] == NULL) {
+	    err = E_PARSE;
+	}
+    }
+
+    if (!err) {
+	parnames = get_string_by_name(tmp[1]);
+	coef_se = get_matrix_by_name(tmp[2]);
+	if (parnames == NULL || coef_se == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err && tmp[3] != '\0') {
+	addstats = get_matrix_by_name(tmp[3]);
+	if (addstats == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	err = print_user_model(coef_se, addstats, parnames, prn);
+    }
+
+    free(tmp);
+
+    return err;
 }

@@ -7115,40 +7115,6 @@
 
   </command>
 
-  <command name="rhodiff" section="Transformations" 
-    label="Quasi-differencing" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>rholist</argument>
-        <argument separated="true">varlist</argument>
-      </arguments>
-      <examples>
-        <example>rhodiff .65 ; 2 3 4</example>
-        <example>rhodiff r1 r2 ; x1 x2 x3</example>	
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Creates rho-differenced counterparts of the variables (given
-	by number or by name) in <repl>varlist</repl> and adds them to
-	the data set, using the suffix <lit>#</lit> for the new
-	variables. Given variable <lit>v1</lit> in
-	<repl>varlist</repl>, and entries <lit>r1</lit> and
-	<lit>r2</lit> in <repl>rholist</repl>, the new variable
-      </para>
-      <code>
-	v1# = v1 - r1*v1(-1) - r2*v1(-2)
-      </code>
-      <para>
-	is created. The <repl>rholist</repl> entries can be given as numerical
-	values or as the names of variables previously defined.
-      </para>
-    </description>
-
-  </command>
-
   <command name="rmplot" section="Graphs"
     label="Range-mean plot">
 

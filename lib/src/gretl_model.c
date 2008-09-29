@@ -4247,7 +4247,7 @@ double coeff_pval (int ci, double x, int df)
     double p = NADBL;
 
     if (!xna(x)) {
-	if (ASYMPTOTIC_MODEL(ci)) {
+	if (ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
 	    p = normal_pvalue_2(x);
 	} else {
 	    p = student_pvalue_2(df, x);

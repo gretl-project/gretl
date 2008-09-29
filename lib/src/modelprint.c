@@ -3402,6 +3402,10 @@ int plain_print_aux_coeffs (const double *b,
 	return E_ALLOC;
     }
 
+    if (ci == MODPRINT) {
+	headings[2] = N_("z-stat");
+    }
+
     for (i=0; i<nc; i++) {
 	if (xna(b[i])) {
 	    err = E_NAN;
