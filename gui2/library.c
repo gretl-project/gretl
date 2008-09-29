@@ -1319,7 +1319,7 @@ int out_of_sample_info (int add_ok, int *t2)
     int err = 0;
 
     if (add_ok) {
-	int n = add_obs_dialog(can_add, 0);
+	int n = add_obs_dialog(_(can_add), 0);
 
 	if (n < 0) {
 	    err = 1;

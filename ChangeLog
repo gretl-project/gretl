@@ -1,3 +1,7 @@
+version 1.7.10, in progress
+- Fix bug: crash in "Add random variable" dialog
+- Translation fixes
+
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
 - Fix bugs 2102478, 2116172, 2118506 
