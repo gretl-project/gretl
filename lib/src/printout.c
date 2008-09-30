@@ -2622,7 +2622,7 @@ int print_user_model (gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn)
  * third element, the name of a vector containing p additional statistics.
  * If this argument is supplied, then argument (2) should contain k + p
  * comma-separated strings, the additional p strings to be associated
- * with the additional statistics.
+ * with the additional statistics. FIXME order of args.
  *
  * Returns: 0 on success, non-zero on failure.
  */
