@@ -2564,6 +2564,7 @@ static int print_user_model (const gretl_matrix *cs,
     const double *b, *se;
     int i, err = 0;
 
+    /* copy the user-defined string 's' before applying strtok */
     tmp = gretl_strdup(s);
     if (tmp == NULL) {
 	return E_ALLOC;

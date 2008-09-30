@@ -3116,20 +3116,25 @@ static NODE *list_to_string_func (NODE *n, int f, parser *p)
 		ret->v.str = gretl_strdup("");
 	    } else {
 		int i, vi;
-		char *s;
+		char *s = NULL;
 
-		s = gretl_strdup(p->dinfo->varname[list[1]]);
-
-		for (i=2; i<=list[0] && s != NULL; i++) {
+		for (i=1; i<=list[0]; i++) {
 		    vi = list[i];
 		    if (vi >= 0 && vi < p->dinfo->v) {
-			gretl_str_expand(&s, p->dinfo->varname[vi], ",");
+			s = gretl_str_expand(&s, p->dinfo->varname[vi], ",");
+			if (s == NULL) {
+			    break;
+			}
 		    }
 		}
 		ret->v.str = s;
 	    }
 	} else {
 	    p->err = E_DATA;
+	}
+
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
 	}
 
 	free(list);
