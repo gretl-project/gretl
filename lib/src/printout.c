@@ -2620,11 +2620,11 @@ static int print_user_model (const gretl_matrix *cs,
  * The string @line must contain, in order: (1) the name of a k x 2 matrix
  * containing k coefficients and k associated standard errors and (2) the
  * name of a string containing at least k comma-separated names for
- * the coefficients.  Optionally, @line may contain a
- * third element, the name of a vector containing p additional statistics.
+ * the coefficients.  Optionally, @line may contain a third element, the 
+ * name of a vector containing p additional statistics.
  * If this argument is supplied, then argument (2) should contain k + p
  * comma-separated strings, the additional p strings to be associated
- * with the additional statistics. FIXME order of args.
+ * with the additional statistics. 
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -2655,9 +2655,9 @@ int do_modprint (const char *line, PRN *prn)
     }
 
     if (!err) {
-	parnames = get_string_by_name(tmp[1]);
-	coef_se = get_matrix_by_name(tmp[2]);
-	if (parnames == NULL || coef_se == NULL) {
+	coef_se = get_matrix_by_name(tmp[1]);
+	parnames = get_string_by_name(tmp[2]);
+	if (coef_se == NULL || parnames == NULL) {
 	    err = E_DATA;
 	}
     }
