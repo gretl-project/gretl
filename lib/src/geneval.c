@@ -3098,6 +3098,46 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static NODE *list_to_string_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = node_get_list(n, p);
+
+	if (list == NULL) {
+	    p->err = E_ALLOC;
+	    return ret;
+	}
+
+	if (f == F_VARNAME) {
+	    if (list[0] == 0) {
+		/* empty list -> empty string */
+		ret->v.str = gretl_strdup("");
+	    } else {
+		int i, vi;
+		char *s;
+
+		s = gretl_strdup(p->dinfo->varname[list[1]]);
+
+		for (i=2; i<=list[0] && s != NULL; i++) {
+		    vi = list[i];
+		    if (vi >= 0 && vi < p->dinfo->v) {
+			gretl_str_expand(&s, p->dinfo->varname[vi], ",");
+		    }
+		}
+		ret->v.str = s;
+	    }
+	} else {
+	    p->err = E_DATA;
+	}
+
+	free(list);
+    }
+	
+    return ret;
+}
+
 static NODE *single_string_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -5817,9 +5857,17 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_OBSLABEL:
+	if (l->t == NUM || l->t == MAT) {
+	    ret = int_to_string_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, NUM, l, p);
+	}
+	break;
     case F_VARNAME:
 	if (l->t == NUM || l->t == MAT) {
 	    ret = int_to_string_func(l, t->t, p);
+	} else if (l->t == LIST) {
+	    ret = list_to_string_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, NUM, l, p);
 	}
