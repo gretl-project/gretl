@@ -3921,13 +3921,18 @@
 
     <function name="varname" section="strings" output="string">
       <fnargs>
-	<fnarg type="scalar">i</fnarg>
+	<fnarg type="scalar-or-list">v</fnarg>
       </fnargs>     
       <description>
 	<para>
-	  Returns the name of the variable with ID number
-	  <argname>i</argname>, or generates an error if there is no such
-	  variable.
+	  If given a scalar argument, returns the name of the variable with ID
+	  number <argname>v</argname>, or generates an error if there is no
+	  such variable.
+	</para>
+	<para>
+	  If given a list argument, returns a string containing the names of
+	  the variables in the list, separated by commas.  If the supplied
+	  list is empty, so is the returned string.
 	</para>
       </description>
     </function>

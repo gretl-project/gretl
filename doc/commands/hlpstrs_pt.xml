@@ -18,6 +18,7 @@
  <gentext key="series-or-vec" text="série ou vector"/>
  <gentext key="series-or-mat" text="série ou matrice"/>
  <gentext key="scalar-or-series" text="escalar ou série"/>
+ <gentext key="scalar-or-list" text="escalar ou lista"/>
  <gentext key="series-or-list" text="série ou lista"/>
  <gentext key="anyfloat-or-list" text="escalar, série, matriz ou lista"/>
  <gentext key="list-or-string" text="lista ou texto"/>

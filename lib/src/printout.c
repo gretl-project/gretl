@@ -2607,6 +2607,26 @@ int print_user_model (gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn)
     return err;
 }
 
+/**
+ * do_modprint:
+ * @line: command line.
+ * @prn: gretl printer.
+ *
+ * Prints to @prn the coefficient table and optional additional statistics
+ * for a model estimated "by hand". Mainly useful for user-written functions.
+ * 
+ * The string @line must contain, in order: (1) the name of a k x 2 matrix
+ * containing k coefficients and k associated standard errors and (2) the
+ * name of a string containing at least k comma-separated names for
+ * the coefficients.  Optionally, @line may contain a
+ * third element, the name of a vector containing p additional statistics.
+ * If this argument is supplied, then argument (2) should contain k + p
+ * comma-separated strings, the additional p strings to be associated
+ * with the additional statistics.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
 int do_modprint (const char *line, PRN *prn)
 {
     gretl_matrix *coef_se = NULL;
@@ -2625,7 +2645,7 @@ int do_modprint (const char *line, PRN *prn)
     strncat(s, line, MAXLEN - 1);
 
     for (i=0; i<4 && !err; i++) {
-	tmp[i] = strtok((i==0)? s : NULL, " ");
+	tmp[i] = strtok((i == 0)? s : NULL, " ");
 	if (tmp[i] == NULL && (i < 3)) { 
 	    /* 3rd argument is optional */
 	    err = E_PARSE;

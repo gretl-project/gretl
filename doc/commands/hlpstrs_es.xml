@@ -19,6 +19,7 @@
  <gentext key="series-or-vec" text="series or vector"/>
  <gentext key="series-or-mat" text="series or matrix"/>
  <gentext key="scalar-or-series" text="scalar or series"/>
+ <gentext key="scalar-or-list" text="scalar or list"/>
  <gentext key="asinput"       text="same type as input"/>
  <gentext key="scalar"        text="scalar"/>
  <gentext key="series"        text="series"/>

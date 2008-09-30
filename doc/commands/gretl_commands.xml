@@ -5196,6 +5196,42 @@
 
   </command>
 
+  <command name="modprint" section="Printing"
+    label="Print a user-defined model" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>coeffmat</argument>
+        <argument>names</argument>
+	<argument optional="true">addstats</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Prints the coefficient table and optional additional statistics for a
+	model estimated <quote>by hand</quote>. Mainly useful for user-written
+	functions.
+      </para>
+      <para>
+	The argument <repl>coeffmat</repl> should be a <math>k</math> by 2
+	matrix containing <math>k</math> coefficients and <math>k</math>
+	associated standard errors, and <repl>names</repl> should be a string
+	containing at least <math>k</math> comma-separated names for the
+	coefficients.
+      </para>
+      <para>
+	The optional argument <repl>addstats</repl> is a vector containing
+	<math>p</math> additional statistics to be printed under the
+	coefficient table.  If this argument is given, then <repl>names</repl>
+	should contain <math>k + p</math> comma-separated strings, the
+	additional <math>p</math> strings to be associated with the additional
+	statistics.
+      </para>
+    </description>
+
+  </command>
+
   <command name="mpols" section="Estimation"
     label="Multiple-precision OLS">
 
