@@ -2552,34 +2552,34 @@ void bufgets_finalize (const char *buf)
     bufgets(NULL, 1, buf);
 }
 
-/**
- * print_user_model:
- * @cs: gretl_matrix.
- * @adds: gretl_matrix.
- * @s: string
- *
- * Prints out to prn the coefficient table and optional additional statistics
- * for a model estimated "by hand". Mainly useful for user-written functions.
- */
-
-int print_user_model (gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn)
+static int print_user_model (const gretl_matrix *cs, 
+			     const gretl_matrix *adds, 
+			     const char *s, PRN *prn)
 {
     int ncoef = gretl_matrix_rows(cs);
-    int nadd = (adds == NULL)? 0 : gretl_matrix_rows(adds);
+    int nadd = gretl_vector_get_length(adds);
     int ntot = ncoef + nadd;
     char **names = NULL;
+    char *tmp;
     const double *b, *se;
     int i, err = 0;
 
+    tmp = gretl_strdup(s);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
     names = malloc(ntot * sizeof *names);
     if (names == NULL) {
+	free(tmp);
 	return E_ALLOC;
     }
 
     for (i=0; i<ntot && !err; i++) {
-	names[i] = strtok((i==0)? s : NULL, ",");
+	names[i] = strtok((i == 0)? tmp : NULL, ",");
 	if (names[i] == NULL) {
 	    free(names);
+	    gretl_errmsg_sprintf(_("modprint: expected %d names"), ntot);
 	    return E_DATA;
 	}
     }
@@ -2592,7 +2592,7 @@ int print_user_model (gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn)
     plain_print_aux_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
 
     for (i=0; i<nadd; i++) {
-	double x = gretl_matrix_get(adds, i, 0);
+	double x = gretl_vector_get(adds, i);
 
 	if (i == 0) {
 	    pputc(prn, '\n');
@@ -2603,6 +2603,7 @@ int print_user_model (gretl_matrix *cs, gretl_matrix *adds, char *s, PRN *prn)
     pputc(prn, '\n');
 
     free(names);
+    free(tmp);
 
     return err;
 }
@@ -2658,6 +2659,11 @@ int do_modprint (const char *line, PRN *prn)
 	if (parnames == NULL || coef_se == NULL) {
 	    err = E_DATA;
 	}
+    }
+
+    if (!err && gretl_matrix_cols(coef_se) != 2) {
+	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
+	err = E_DATA;
     }
 
     if (!err && tmp[3] != NULL && *tmp[3] != '\0') {
