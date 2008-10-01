@@ -295,8 +295,8 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 static int studentized_residuals (const MODEL *pmod, double ***pZ, 
 				  DATAINFO *pdinfo, gretl_matrix *S)
 {
-    double *dum = NULL;
-    int *slist = NULL;
+    double *dum;
+    int *slist;
     MODEL smod;  
     int orig_v = pdinfo->v;
     int err = 0;
@@ -309,7 +309,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
     }
 
     /* allocate regression list */
-    slist = malloc((pmod->list[0] + 2) * sizeof *slist);
+    slist = gretl_list_new(pmod->list[0] + 1);
     if (slist == NULL) {
 	free(dum);
 	return E_ALLOC;
@@ -326,10 +326,10 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	dum[t] = 0.0;
     }
 
-    slist[0] = pmod->list[0] + 1;
     for (i=1; i<=pmod->list[0]; i++) {
 	slist[i] = pmod->list[i];
     }
+
     slist[slist[0]] = pdinfo->v - 1; /* last var added */  
     k = slist[0] - 2;
 
@@ -338,7 +338,9 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 
 	if (model_missing(pmod, t)) {
 	    gretl_matrix_set(S, ts, 2, NADBL);
-	    dum[t-1] = 0.0;
+	    if (t > 0) {
+		dum[t-1] = 0.0;
+	    }
 	    continue;
 	}	
 	dum[t] = 1.0;
