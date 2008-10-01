@@ -223,7 +223,7 @@ const gchar *missing_tex_ui =
     "</ui>";
 
 static GtkActionEntry model_tex_items[] = {
-    { "LaTeX", NULL, N_("_LaTeX"), NULL, NULL, NULL },      
+    { "LaTeX",   NULL, N_("_LaTeX"), NULL, NULL, NULL },      
     { "TeXView", NULL, N_("_View"), NULL, NULL, NULL },      
     { "TabView", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_view) },      
     { "EqnView", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_view) },      
@@ -251,7 +251,7 @@ static GtkActionEntry system_items[] = {
     { "File", NULL, N_("_File"), NULL, NULL, NULL },      
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },      
     { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },      
-    { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, G_CALLBACK(model_add_as_icon) },      
+    { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
 #ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
@@ -3382,9 +3382,9 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(mwin->ui, "/MenuBar/Analysis/DisplayAFR", ok);
     flip(mwin->ui, "/MenuBar/Analysis/Forecasts", ok);
     flip(mwin->ui, "/MenuBar/Analysis/ConfIntervals", ok);
-    flip(mwin->ui, "/MenuBar/Save/Fitted", ok);
-    flip(mwin->ui, "/MenuBar/Save/Residuals", ok);
-    flip(mwin->ui, "/MenuBar/Save/ResidualsSq", ok);
+    flip(mwin->ui, "/MenuBar/Save/yhat", ok);
+    flip(mwin->ui, "/MenuBar/Save/uhat", ok);
+    flip(mwin->ui, "/MenuBar/Save/uhat2", ok);
     flip(mwin->ui, "/MenuBar/Save/NewVar", ok);
 
     if (!ok) {
