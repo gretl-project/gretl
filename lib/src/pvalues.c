@@ -699,6 +699,50 @@ static double Binv (double p, double q)
     return f;
 }    
 
+static double snedecor_pdf_array (int v1, int v2, double *x, int n)
+{
+    int i, err = 0;
+
+    errno = 0;
+
+    if (v1 > 0 && v2 > 0) {
+	double xm = v1, xn = v2;
+	double vr = xm / xn;
+	double x1 = Binv(0.5*xm, 0.5*xn);
+	double x2 = pow(vr, 0.5*xm);
+	double x3, x4;
+
+	if (errno) {
+	    err = E_NAN;
+	} else {
+	    for (i=0; i<n; i++) {
+		if (!na(x[i])) {
+		    errno = 0;
+		    x3 = pow(x[i], 0.5*xm - 1.0);
+		    x4 = pow(1.0 + vr * x[i], 0.5 * (xm+xn));
+		    x[i] = x1 * x2 * x3 / x4;
+		    if (errno) {
+			x[i] = NADBL;
+		    }
+		}
+	    }
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    errno = 0;
+
+    return err;
+}
+
+
 static double snedecor_pdf (int m, int n, double x)
 {
     double fx = NADBL;
@@ -718,6 +762,48 @@ static double snedecor_pdf (int m, int n, double x)
     }
 
     return fx;
+}
+
+static int chisq_pdf_array (int m, double *x, int n)
+{
+    int i, err = 0;
+
+    errno = 0;
+
+    if (m > 0) {
+	double m2 = m / 2.0;
+	double x1 = pow(.5, m2);
+	double x2 = gamma_function(m2);
+	double x3, x4;
+
+	if (errno) {
+	    err = E_NAN;
+	} else {
+	    for (i=0; i<n; i++) {
+		if (!na(x[i])) {
+		    errno = 0;
+		    x3 = pow(x[i], m2 - 1.0);
+		    x4 = exp(-x[i] / 2.0);
+		    x[i] = (x1/x2) * x3 * x4;
+		    if (errno) {
+			x[i] = NADBL;
+		    }
+		}
+	    }
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    errno = 0;
+
+    return err;
 }
 
 static double chisq_pdf (int m, double x)
@@ -752,7 +838,7 @@ static int student_pdf_array (double m, double *x, int n)
 	double x3 = 0.5 * (m + 1.0);
 	double x2;
 
-	if (errno || na(x1)) {
+	if (errno) {
 	    err = E_NAN;
 	} else {
 	    for (i=0; i<n; i++) {
@@ -766,6 +852,8 @@ static int student_pdf_array (double m, double *x, int n)
 		}
 	    }
 	}
+    } else {
+	err = E_DATA;
     }
 
     if (err) {
@@ -884,6 +972,26 @@ double normal_critval (double a)
     } 
 
     return z;
+}
+
+static int normal_pdf_array (double *x, int n)
+{
+    double s = 1.0 / sqrt(M_2PI);
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (!na(x[i])) {
+	    errno = 0;
+	    x[i] = s * exp(-0.5 * x[i] * x[i]);
+	    if (errno) {
+		x[i] = NADBL;
+	    }
+	}
+    }
+
+    errno = 0;
+
+    return 0;
 }
 
 /**
@@ -1450,10 +1558,15 @@ int gretl_fill_pdf_array (char st, double *p, double *x, int n)
 {
     int err = E_DATA;
 
-    /* FIXME implement for other cases */
-    if (st == 't') {
+    if (st == 'z') {
+	err = normal_pdf_array(x, n);
+    } else if (st == 't') {
 	err = student_pdf_array(p[0], x, n);
-    } 
+    } else if (st == 'X') {
+	err = chisq_pdf_array(p[0], x, n);
+    } else if (st == 'F') {
+	err = snedecor_pdf_array((int) p[0], (int) p[1], x, n);
+    }
 
     return err;
 }

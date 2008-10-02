@@ -755,6 +755,8 @@ static double scalar_pdist (int t, char d, double *parm,
     return x;
 }
 
+#define pdf_array_ok(c) (c == 'z' || c == 't' || c == 'X' || c == 'F')
+
 static double *series_pdist (int t, char d, double *parm,
 			     double *pvec, double *bvec,
 			     int np, parser *p)
@@ -768,7 +770,7 @@ static double *series_pdist (int t, char d, double *parm,
 	return NULL;
     }
 
-    if (d == 't' && bvec == NULL && pvec != NULL) {
+    if (pdf_array_ok(d) && bvec == NULL && pvec != NULL) {
 	/* trial implementation of faster code */
 	int n = p->dinfo->t2 - p->dinfo->t1 + 1;
 
