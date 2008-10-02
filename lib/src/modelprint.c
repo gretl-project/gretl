@@ -4694,7 +4694,11 @@ static int print_user_model (const gretl_matrix *cs,
     } else if (opt & OPT_R) {
 	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
     } else if (opt & OPT_T) {
-	gretl_print_set_format(prn, GRETL_FORMAT_TEX);
+	if (opt & OPT_O) {
+	    gretl_print_set_format(prn, GRETL_FORMAT_TEX | GRETL_FORMAT_DOC);
+	} else {
+	    gretl_print_set_format(prn, GRETL_FORMAT_TEX);
+	}
     }
 
     if (!plain_format(prn)) {
@@ -4708,11 +4712,11 @@ static int print_user_model (const gretl_matrix *cs,
 				nadd, prn);
     }
 
-    if (opt & OPT_R) {
-	pputs(prn, "}\n");
+    if (plain_format(prn)) {
+	pputc(prn, '\n'); 
+    } else {
+	model_format_end(prn);
     }
-
-    pputc(prn, '\n'); 
 
     free(names);
     free(tmp);
@@ -4724,7 +4728,8 @@ static int print_user_model (const gretl_matrix *cs,
  * do_modprint:
  * @line: command line.
  * @opt: may contain %OPT_C for CSV, %OPT_R for RTF, or %OPT_T 
- * to use TeX format.
+ * to use TeX format.  If %OPT_T is given, then %OPT_O calls for
+ * a complete LaTeX document, otherwise %OPT_O is ignored.
  * @prn: gretl printer.
  *
  * Prints to @prn the coefficient table and optional additional statistics

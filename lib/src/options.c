@@ -199,6 +199,7 @@ struct gretl_option gretl_opts[] = {
     { MLE,      OPT_R, "robust" },
     { MLE,      OPT_V, "verbose" },
     { MODPRINT, OPT_C, "csv" },
+    { MODPRINT, OPT_O, "complete" },
     { MODPRINT, OPT_R, "rtf" },
     { MODPRINT, OPT_T, "tex" },
     { MPOLS,    OPT_O, "vcv" },
