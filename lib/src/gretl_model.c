@@ -460,6 +460,10 @@ void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
 {
     int i;
 
+    if (pmod == NULL) {
+	return NULL;
+    }
+
     for (i=0; i<pmod->n_data_items; i++) {
 	if (!strcmp(key, pmod->data_items[i]->key)) {
 	    if (sz != NULL) {
@@ -498,6 +502,10 @@ int gretl_model_get_int (const MODEL *pmod, const char *key)
     int *valp = NULL;
     int i;
 
+    if (pmod == NULL) {
+	return 0;
+    }
+
     for (i=0; i<pmod->n_data_items; i++) {
 	if (pmod->data_items[i]->type != GRETL_TYPE_INT) {
 	    continue;
@@ -525,6 +533,10 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     double *valp = NULL;
     int i;
 
+    if (pmod == NULL) {
+	return NADBL;
+    }
+
     for (i=0; i<pmod->n_data_items; i++) {
 	if (pmod->data_items[i]->type != GRETL_TYPE_DOUBLE) {
 	    continue;
@@ -551,6 +563,10 @@ int *gretl_model_get_list (const MODEL *pmod, const char *key)
 {
     int *list = NULL;
     int i;
+
+    if (pmod == NULL) {
+	return NULL;
+    }
 
     for (i=0; i<pmod->n_data_items; i++) {
 	if (pmod->data_items[i]->type != GRETL_TYPE_LIST) {

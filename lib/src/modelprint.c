@@ -23,6 +23,8 @@
 #include "libset.h"
 #include "system.h"
 #include "texprint.h"
+#include "usermat.h"
+#include "gretl_string_table.h"
 
 #include <glib.h>
 
@@ -136,6 +138,40 @@ static void print_y_median (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Median of dependent variable"), 
 		prn_delim(prn), m);
     }	
+}
+
+static void print_model_stats_table (const double *stats, 
+				     const char **names, 
+				     int ns, PRN *prn)
+{
+    char tmp1[32], tmp2[32];
+    int i;
+
+    if (plain_format(prn)) {
+	pputc(prn, '\n');
+    } else if (tex_format(prn)) {
+	pputs(prn, "\\medskip\n\n");
+	pputs(prn, "\\begin{tabular}{lD{.}{.}{-1}}\n");
+    }
+
+    for (i=0; i<ns; i++) {
+	if (plain_format(prn)) {
+	    plain_print_double(tmp1, GRETL_DIGITS, stats[i], prn);
+	    pprintf(prn, "  %s = %s\n", names[i], tmp1);
+	} else if (tex_format(prn)) {
+	    tex_escape_special(tmp1, names[i]);
+	    tex_dcolumn_double(stats[i], tmp2);
+	    pprintf(prn, "%s & %s \\\\\n", tmp1, tmp2);
+	} else if (rtf_format(prn)) {
+	    pprintf(prn, RTFTAB "%s = %g\n", names[i], stats[i]);
+	} else if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"%c%.15g\n", names[i], prn_delim(prn), stats[i]);
+	}
+    }	
+
+    if (tex_format(prn)) {
+	pputs(prn, "\\end{tabular}");
+    }
 }
 
 static void depvarstats (const MODEL *pmod, PRN *prn)
@@ -2088,31 +2124,46 @@ static void model_format_start (PRN *prn)
 /* below: this is used when we're doing something other than a plain
    text print of a model */
 
-static void alt_print_coeff_table_start (const MODEL *pmod, PRN *prn)
+static void alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
 {
-    int use_param = nonlin_model(pmod);
-    int slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
-    int intervals = gretl_model_get_data(pmod, "coeff_intervals") != NULL;
-    gretl_matrix *m;
-    int seqcols;
+    const char *tlabel;
+    int use_param = 0;
+    int slopes = 0;
+    int intervals = 0;
+    int seqcols = 0;
+    int mp = 0;
 
-    m = gretl_model_get_data(pmod, "rq_sequence");
-    seqcols = gretl_matrix_cols(m);
+    if (ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
+	tlabel = (tex_format(prn))? N_("$z$-stat") : N_("z-stat");
+    } else {
+	tlabel = (tex_format(prn))? N_("$t$-ratio") : N_("t-ratio");
+    }
+
+    if (pmod != NULL) {
+	gretl_matrix *m;
+
+	use_param = nonlin_model(pmod);
+	slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
+	intervals = gretl_model_get_data(pmod, "coeff_intervals") != NULL;
+	m = gretl_model_get_data(pmod, "rq_sequence");
+	seqcols = gretl_matrix_cols(m);
+	mp = (pmod->ci == MPOLS);
+    }
 
     if (csv_format(prn)) {
 	char d = prn_delim(prn);
 
-	if (pmod->ci == MPOLS) {
+	if (mp) {
 	    pprintf(prn, "%c\"%s\"%c\"%s\"\n",
 		    d, I_("coefficient"), d, I_("std. error"));
 	} else if (slopes) {
 	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    d, I_("coefficient"), d, I_("std. error"),
-		    d, I_("t-ratio"), d, I_("slope at mean"));
+		    d, I_(tlabel), d, I_("slope at mean"));
 	} else if (use_param) {
 	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    d, I_("estimate"), d, I_("std. error"),
-		    d, I_("t-ratio"), d, I_("p-value"));
+		    d, I_(tlabel), d, I_("p-value"));
 	} else if (intervals) {
 	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    d, I_("coefficient"), d, I_("lower"),
@@ -2124,11 +2175,11 @@ static void alt_print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	} else if (seqcols == 2) {
 	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    d, I_("coefficient"), d, I_("std. error"),
-		    d, I_("t-ratio"));
+		    d, I_(tlabel));
 	} else {
 	    pprintf(prn, "%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    d, I_("coefficient"), d, I_("std. error"),
-		    d, I_("t-ratio"), d, I_("p-value"));
+		    d, I_(tlabel), d, I_("p-value"));
 	}	
     } else {
 	const char *cols[6] = { NULL };
@@ -2145,18 +2196,18 @@ static void alt_print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	    cols[3] = N_("Lower");
 	    cols[4] = N_("Upper");
 	} else {
-	    if (tex_format(prn)) {
-		cols[2] = N_("Std.\\ Error");
-		cols[3] = N_("$t$-ratio");
-	    } else {
-		cols[2] = N_("Std. Error");
-		cols[3] = N_("t-ratio");
-	    }
+	    cols[2] = (tex_format(prn))? N_("Std.\\ Error") : N_("Std. Error");
+	    cols[3] = tlabel;
 	    cols[4] = (slopes)? N_("Slope") : N_("p-value");
 	}
 
 	if (tex_format(prn)) {
-	    tex_coeff_table_start(cols, slopes, prn);
+	    gretlopt tabopt = (ci == MODPRINT)? OPT_U : OPT_NONE;
+
+	    if (slopes) {
+		tabopt |= OPT_B; /* "binary" */
+	    }
+	    tex_coeff_table_start(cols, tabopt, prn);
 	    return;
 	}   
 
@@ -3373,11 +3424,52 @@ static void put_asts (double pv, PRN *prn)
     }
 }
 
-int plain_print_aux_coeffs (const double *b,
-			    const double *se,
-			    const char **names,
-			    int nc, int df, int ci,
-			    PRN *prn)
+static int alt_print_aux_coeffs (const double *b, const double *se,
+				 const char **names, int nc, int df, 
+				 int ci, PRN *prn)
+{
+    model_coeff mc;
+    int i;
+
+    for (i=0; i<nc; i++) {
+	if (xna(b[i])) {
+	    return E_NAN;
+	}
+    }
+
+    alt_print_coeff_table_start(NULL, ci, prn);
+
+    model_coeff_init(&mc);
+
+    /* print row values */
+    for (i=0; i<nc; i++) {
+	mc.b = b[i];
+	mc.se = se[i];
+	if (na(se[i]) || se[i] <= 0) {
+	    mc.tval = mc.pval = NADBL;
+	} else {
+	    mc.tval = b[i] / se[i];
+	    mc.pval = coeff_pval(ci, mc.tval, df);
+	}
+	if (tex_format(prn)) {
+	    tex_escape_special(mc.name, names[i]);
+	} else {
+	    *mc.name = '\0';
+	    strncat(mc.name, names[i], MC_NAMELEN - 1);
+	}
+	alt_print_coeff(&mc, prn);
+    }
+
+    print_coeff_table_end(NULL, prn);
+
+    return 0;
+}
+
+static int plain_print_aux_coeffs (const double *b,
+				   const double *se,
+				   const char **names,
+				   int nc, int df, int ci,
+				   PRN *prn)
 {
     struct printval **vals, *vij;
     const char *headings[] = { 
@@ -3496,6 +3588,23 @@ int plain_print_aux_coeffs (const double *b,
     free(vals);
 
     return err;
+}
+
+/* Called by external functions that want to print a coefficient
+   table that does not reside in a MODEL.
+*/
+
+int print_coeffs (const double *b,
+		  const double *se,
+		  const char **names,
+		  int nc, int df, int ci,
+		  PRN *prn)
+{
+    if (plain_format(prn)) {
+	return plain_print_aux_coeffs(b, se, names, nc, df, ci, prn);
+    } else {
+	return alt_print_aux_coeffs(b, se, names, nc, df, ci, prn);
+    }
 }
 
 static int plain_print_mp_coeffs (const MODEL *pmod, 
@@ -3971,7 +4080,7 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
 
-    alt_print_coeff_table_start(pmod, prn);
+    alt_print_coeff_table_start(pmod, pmod->ci, prn);
 
     if (pmod->ci == PANEL) {
 	nc = pmod->list[0] - 1;
@@ -4535,3 +4644,160 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 
     return 0;
 }
+
+static int print_user_model (const gretl_matrix *cs, 
+			     const gretl_matrix *adds, 
+			     const char *s, gretlopt opt,
+			     PRN *prn)
+{
+    int ncoef = gretl_matrix_rows(cs);
+    int nadd = gretl_vector_get_length(adds);
+    int ntot = ncoef + nadd;
+    char **names = NULL;
+    char *tmp;
+    const double *b, *se;
+    int i, err = 0;
+
+    /* copy the user-defined string 's' before applying strtok */
+    tmp = gretl_strdup(s);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    names = malloc(ntot * sizeof *names);
+    if (names == NULL) {
+	free(tmp);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<ntot && !err; i++) {
+	names[i] = strtok((i == 0)? tmp : NULL, ",");
+	if (names[i] == NULL) {
+	    free(names);
+	    gretl_errmsg_sprintf(_("modprint: expected %d names"), ntot);
+	    return E_DATA;
+	}
+    }
+
+    b = cs->val;
+    se = b + ncoef;
+
+    pputc(prn, '\n');
+
+    if (opt & OPT_C) {
+	gretl_print_set_format(prn, GRETL_FORMAT_CSV);
+	if (active_decpoint() == ',') {
+	    gretl_print_set_delim(prn, '\t');
+	} else {
+	    gretl_print_set_delim(prn, ',');
+	}
+    } else if (opt & OPT_R) {
+	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
+    } else if (opt & OPT_T) {
+	gretl_print_set_format(prn, GRETL_FORMAT_TEX);
+    }
+
+    if (!plain_format(prn)) {
+	model_format_start(prn);
+    }
+
+    print_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
+
+    if (nadd > 0) {
+	print_model_stats_table(adds->val, (const char **) names + ncoef, 
+				nadd, prn);
+    }
+
+    if (opt & OPT_R) {
+	pputs(prn, "}\n");
+    }
+
+    pputc(prn, '\n'); 
+
+    free(names);
+    free(tmp);
+
+    return err;
+}
+
+/**
+ * do_modprint:
+ * @line: command line.
+ * @opt: may contain %OPT_C for CSV, %OPT_R for RTF, or %OPT_T 
+ * to use TeX format.
+ * @prn: gretl printer.
+ *
+ * Prints to @prn the coefficient table and optional additional statistics
+ * for a model estimated "by hand". Mainly useful for user-written functions.
+ * 
+ * The string @line must contain, in order: (1) the name of a k x 2 matrix
+ * containing k coefficients and k associated standard errors and (2) the
+ * name of a string containing at least k comma-separated names for
+ * the coefficients.  Optionally, @line may contain a third element, the 
+ * name of a vector containing p additional statistics.  If this argument 
+ * is supplied, then argument (2) should contain k + p comma-separated 
+ * names, the additional p names to be associated with the additional 
+ * statistics. 
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int do_modprint (const char *line, gretlopt opt, PRN *prn)
+{
+    gretl_matrix *coef_se = NULL;
+    gretl_matrix *addstats = NULL;
+    char *parnames = NULL;
+    char **tmp;
+    char s[MAXLEN];
+    int i, err = 0;
+
+    err = incompatible_options(opt, OPT_C | OPT_R | OPT_T);
+    if (err) {
+	return err;
+    }
+
+    tmp = malloc(4 * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    *s = '\0';
+    strncat(s, line, MAXLEN - 1);
+
+    for (i=0; i<4 && !err; i++) {
+	tmp[i] = strtok((i == 0)? s : NULL, " ");
+	if (tmp[i] == NULL && (i < 3)) { 
+	    /* 3rd argument is optional */
+	    err = E_PARSE;
+	}
+    }
+
+    if (!err) {
+	coef_se = get_matrix_by_name(tmp[1]);
+	parnames = get_string_by_name(tmp[2]);
+	if (coef_se == NULL || parnames == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err && gretl_matrix_cols(coef_se) != 2) {
+	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
+	err = E_DATA;
+    }
+
+    if (!err && tmp[3] != NULL && *tmp[3] != '\0') {
+	addstats = get_matrix_by_name(tmp[3]);
+	if (addstats == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	err = print_user_model(coef_se, addstats, parnames, opt, prn);
+    }
+
+    free(tmp);
+
+    return err;
+}
+

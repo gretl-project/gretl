@@ -4683,7 +4683,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case MODPRINT:
-	err = do_modprint(line, prn);
+	err = do_modprint(line, cmd->opt, prn);
 	break;
 
     default:

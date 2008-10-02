@@ -111,5 +111,3 @@ void bufgets_finalize (const char *buf);
 void scroll_pause (void);
 
 int scroll_pause_or_quit (void);
-
-int do_modprint (const char *line, PRN *prn);

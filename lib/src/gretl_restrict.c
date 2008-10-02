@@ -1690,8 +1690,8 @@ static int print_restricted_estimates (MODEL *pmod,
 	gretl_model_get_param_name(pmod, pdinfo, i, names[i]);
     }
 
-    plain_print_aux_coeffs(b, se, (const char **) names, nc, pmod->dfd + rk, 
-			   pmod->ci, prn);
+    print_coeffs(b, se, (const char **) names, nc, pmod->dfd + rk, 
+		 pmod->ci, prn);
 
     pputc(prn, '\n');
     pprintf(prn, "  %s = %.*g\n", _("Standard error of the regression"), 

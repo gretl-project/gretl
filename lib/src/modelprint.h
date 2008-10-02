@@ -22,6 +22,8 @@
 #ifndef MODELPRINT_H
 #define MODELPRINT_H
 
+#define MC_NAMELEN 32
+
 typedef struct model_coeff_ model_coeff;
 
 struct model_coeff_ {
@@ -34,7 +36,7 @@ struct model_coeff_ {
     double hi;
     int show_pval;
     int df_pval;
-    char name[32];
+    char name[MC_NAMELEN];
 };
 
 int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
@@ -46,10 +48,12 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn);
 
 int ols_print_anova (const MODEL *pmod, PRN *prn);
 
-int plain_print_aux_coeffs (const double *b,
-			    const double *se,
-			    const char **names,
-			    int nc, int df, int ci,
-			    PRN *prn);
+int print_coeffs (const double *b,
+		  const double *se,
+		  const char **names,
+		  int nc, int df, int ci,
+		  PRN *prn);
+
+int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
 #endif /* MODELPRINT_H */

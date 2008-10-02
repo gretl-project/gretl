@@ -26,7 +26,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn);
 
-void tex_coeff_table_start (const char **cols, int binary, PRN *prn);
+void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn);
 
 void tex_coeff_table_end (PRN *prn);
 
@@ -48,6 +48,8 @@ int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname,
 	      gretlopt opt);
 
 char *tex_escape (char *targ, const char *src);
+
+char *tex_escape_special (char *targ, const char *src);
 
 void tex_dcolumn_double (double x, char *numstr);
 

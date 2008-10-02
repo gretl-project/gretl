@@ -3406,8 +3406,8 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 		sprintf(names[i], "alpha(%d)", i);
 	    }
 
-	    plain_print_aux_coeffs(b->val, se, (const char **) names, 
-				   k, T - k, ARCH, prn);
+	    print_coeffs(b->val, se, (const char **) names, 
+			 k, T - k, ARCH, prn);
 	}
 
 	free(se);

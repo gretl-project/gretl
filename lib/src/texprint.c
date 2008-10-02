@@ -136,6 +136,33 @@ char *tex_float_string (double x, int prec, char *targ)
     return targ;
 }
 
+static const char *tex_greek_var (const char *s)
+{
+    if (!strcmp(s, "alpha")) {
+	return "\\alpha";
+    } else if (!strcmp(s, "beta")) {
+	return "\\beta";
+    } else if (!strcmp(s, "gamma")) {
+	return "\\gamma";
+    } else if (!strcmp(s, "delta")) {
+	return "\\delta";
+    } else if (!strcmp(s, "epsilon")) {
+	return "\\epsilon";
+    } else if (!strcmp(s, "chi")) {
+	return "\\chi";
+    } else if (!strcmp(s, "pi")) {
+	return "\\pi";
+    } else if (!strcmp(s, "phi")) {
+	return "\\phi";
+    } else if (!strcmp(s, "psi")) {
+	return "\\psi";
+    } else if (!strcmp(s, "lambda")) {
+	return "\\lambda";
+    }
+
+    return NULL;
+}
+
 /**
  * tex_escape:
  * @targ: target string (must be pre-allocated)
@@ -167,6 +194,77 @@ char *tex_escape (char *targ, const char *src)
     *targ = '\0';
 
     return p;
+}
+
+static int tex_math_pname (char *targ, const char *s)
+{
+    char base[16];
+    char op[2];
+    char mod[8];
+    int n;
+
+    n = sscanf(s, "%15[^_^]%1[_^]%7s", base, op, mod);
+
+    if (n == 3 && (*mod == '{' || isdigit(*mod))) {
+	const char *tgreek = tex_greek_var(base);
+	const char *tbase = (tgreek != NULL)? tgreek : base;
+
+	if (*mod == '{') {
+	    sprintf(targ, "$%s%s%s$", tbase, op, mod);
+	} else {
+	    sprintf(targ, "$%s%s{%s}$", tbase, op, mod);
+	}
+	return 1;
+    }
+
+    return 0;
+}
+
+/**
+ * tex_escape_special:
+ * @targ: target string (must be pre-allocated)
+ * @src: source string.
+ *
+ * Copies from @src to @targ, escaping characters in @src that are 
+ * special to TeX (by inserting a leading backslash).  Unlike
+ * tex_escape(), this function does not mess with '$' in the
+ * source string, and it attempts to handle greek letters
+ * correctly.
+ * 
+ * Returns: the transformed copy of the string.
+ */
+
+char *tex_escape_special (char *targ, const char *src)
+{
+    const char *tgreek;
+    char *p = targ;
+
+    if (strchr(src, '$')) {
+	/* don't mess with it */
+	strcpy(targ, src);
+	return targ;
+    }
+
+    tgreek = tex_greek_var(src);
+
+    if (tgreek != NULL) {
+	sprintf(targ, "$%s$", tgreek);
+    } else if (tex_math_pname(targ, src)) {
+	; /* handled */
+    } else {
+	/* regular escape routine */
+	while (*src) {
+	    if (*src == '&' || *src == '_' || 
+		*src == '%' || *src == '#') {
+		*p++ = '\\';
+	    }
+	    *p++ = *src++;
+	}
+
+	*p = '\0';
+    }
+
+    return targ;
 }
 
 #define UPPER_F_LIMIT (pow(10, GRETL_DIGITS))
@@ -234,23 +332,15 @@ static void tex_make_cname (char *cname, const char *src)
 
 static int tex_greek_param (char *targ, const char *src)
 {
-    *targ = 0;
+    const char *tgreek = tex_greek_var(src);
 
-    if (!strcmp(src, "alpha")) {
-	strcpy(targ, "$\\alpha$");
-    } else if (!strcmp(src, "beta")) {
-	strcpy(targ, "$\\beta$");
-    } else if (!strcmp(src, "gamma")) {
-	strcpy(targ, "$\\gamma$");
-    } else if (!strcmp(src, "delta")) {
-	strcpy(targ, "$\\delta$");
-    } else if (!strcmp(src, "pi")) {
-	strcpy(targ, "$\\pi$");
-    } else if (!strcmp(src, "lambda")) {
-	strcpy(targ, "$\\lambda$");
+    if (tgreek != NULL) {
+	sprintf(targ, "$%s$", tgreek);
+	return 1;
+    } else {
+	*targ = '\0';
+	return 0;
     }
-
-    return (*targ != 0);
 }
 
 static void tex_arbond_coeff_name (char *targ, const char *src,
@@ -572,7 +662,8 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
     }	
 }
 
-void tex_custom_coeff_table_start (const char **cols, PRN *prn)
+static void 
+tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 {
     int i, ncols = 0;
 
@@ -580,11 +671,15 @@ void tex_custom_coeff_table_start (const char **cols, PRN *prn)
 	if (colspec[i][0]) ncols++;
     }
 
-    pputs(prn, "\\vspace{1em}\n\n"
-	  "\\begin{tabular}{l");
+    if (!(opt & OPT_U)) {
+	/* not user-defined model */
+	pputs(prn, "\\vspace{1em}\n\n");
+    }
+
+    pputs(prn, "\\begin{tabular}{l");
 
     for (i=0; i<ncols; i++) {
-	pputs(prn, "r");
+	pputc(prn, 'r');
     }
 
     pputs(prn, "}\n");
@@ -629,22 +724,27 @@ void tex_custom_coeff_table_start (const char **cols, PRN *prn)
     pputs(prn, " \\\\\n");
 }
 
-void tex_coeff_table_start (const char **cols, int binary, PRN *prn)
+void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 {
+    int binary = (opt & OPT_B);
     char pt;
 
     if (use_custom) {
-	tex_custom_coeff_table_start(cols, prn);
+	tex_custom_coeff_table_start(cols, opt, prn);
 	return;
     }
+
+    if (!(opt & OPT_U)) {
+	/* not a user-defined model */
+	pputs(prn, "\\vspace{1em}\n\n");
+    }
+
+    pputs(prn, "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}\n");
 
     pt = get_local_decpoint();
 
     if (cols[4] == NULL) {
-	pprintf(prn, "\\vspace{1em}\n\n"
-		"\\begin{tabular*}{\\textwidth}"
-		"{@{\\extracolsep{\\fill}}\n"
-		"l%% col 1: varname\n"
+	pprintf(prn, "l%% col 1: varname\n"
 		"  D{%c}{%c}{-1}%% col 2: coeff\n"
 		"    D{%c}{%c}{-1}%% col 3\n"
 		"      D{%c}{%c}{-1}}%% col 4\n"
@@ -655,10 +755,7 @@ void tex_coeff_table_start (const char **cols, int binary, PRN *prn)
 		pt, pt, pt, pt, pt, pt, 
 		I_(cols[0]), I_(cols[1]), I_(cols[2]), I_(cols[3]));
     } else {
-	pprintf(prn, "\\vspace{1em}\n\n"
-		"\\begin{tabular*}{\\textwidth}"
-		"{@{\\extracolsep{\\fill}}\n"
-		"l%% col 1: varname\n"
+	pprintf(prn, "l%% col 1: varname\n"
 		"  D{%c}{%c}{-1}%% col 2: coeff\n"
 		"    D{%c}{%c}{-1}%% col 3: sderr\n"
 		"      D{%c}{%c}{-1}%% col 4: t-stat\n"
