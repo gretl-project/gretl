@@ -76,6 +76,8 @@ double gretl_get_pvalue (char st, const double *p);
 
 double gretl_get_pdf (char st, double *p);
 
+int gretl_fill_pdf_array (char st, double *p, double *x, int n);
+
 double gretl_get_cdf (char st, double *p);
 
 double gretl_get_cdf_inverse (char st, double *p);

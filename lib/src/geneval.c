@@ -768,8 +768,26 @@ static double *series_pdist (int t, char d, double *parm,
 	return NULL;
     }
 
+    if (d == 't' && bvec == NULL && pvec != NULL) {
+	/* trial implementation of faster code */
+	int n = p->dinfo->t2 - p->dinfo->t1 + 1;
+
+	for (s=0; s<p->dinfo->n; s++) {
+	    if (s < p->dinfo->t1 || s > p->dinfo->t2) {
+		xvec[s] = NADBL;
+	    } else {
+		xvec[s] = pvec[s];
+	    }
+	}
+
+	gretl_fill_pdf_array(d, parm, xvec + p->dinfo->t1, n);
+	
+	return xvec;
+    }
+
     for (s=0; s<p->dinfo->n; s++) {
-	if (s < p->dinfo->t1 || s > p->dinfo->t2 || pvec[s] == NADBL) {
+	if (s < p->dinfo->t1 || s > p->dinfo->t2 || 
+	    (pvec != NULL && pvec[s] == NADBL)) {
 	    xvec[s] = NADBL;
 	} else {
 	    if (pvec != NULL) {

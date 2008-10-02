@@ -741,6 +741,44 @@ static double chisq_pdf (int m, double x)
     return fx;
 }
 
+static int student_pdf_array (double m, double *x, int n)
+{
+    int i, err = 0;
+
+    errno = 0;
+
+    if (m > 0 && !na(m)) {
+	double x1 = Binv(0.5 * m, 0.5) / sqrt(m);
+	double x3 = 0.5 * (m + 1.0);
+	double x2;
+
+	if (errno || na(x1)) {
+	    err = E_NAN;
+	} else {
+	    for (i=0; i<n; i++) {
+		if (!na(x[i])) {
+		    errno = 0;
+		    x2 = m / (m + x[i] * x[i]);
+		    x[i] = x1 * pow(x2, x3);
+		    if (errno) {
+			x[i] = NADBL;
+		    }
+		}
+	    }
+	}
+    }
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    errno = 0;
+
+    return err;
+}
+
 static double student_pdf (double m, double x)
 {
     double fx = NADBL;
@@ -1406,6 +1444,18 @@ double gretl_get_pdf (char st, double *p)
     }
 
     return x;
+}
+
+int gretl_fill_pdf_array (char st, double *p, double *x, int n)
+{
+    int err = E_DATA;
+
+    /* FIXME implement for other cases */
+    if (st == 't') {
+	err = student_pdf_array(p[0], x, n);
+    } 
+
+    return err;
 }
 
 double gretl_get_pvalue (char st, const double *p)
