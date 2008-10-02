@@ -699,7 +699,7 @@ static double Binv (double p, double q)
     return f;
 }    
 
-static double snedecor_pdf_array (int v1, int v2, double *x, int n)
+static int snedecor_pdf_array (int v1, int v2, double *x, int n)
 {
     int i, err = 0;
 
@@ -716,7 +716,7 @@ static double snedecor_pdf_array (int v1, int v2, double *x, int n)
 	    err = E_NAN;
 	} else {
 	    for (i=0; i<n; i++) {
-		if (!na(x[i])) {
+		if (!na(x[i]) && x[i] > 0) {
 		    errno = 0;
 		    x3 = pow(x[i], 0.5*xm - 1.0);
 		    x4 = pow(1.0 + vr * x[i], 0.5 * (xm+xn));
@@ -724,6 +724,8 @@ static double snedecor_pdf_array (int v1, int v2, double *x, int n)
 		    if (errno) {
 			x[i] = NADBL;
 		    }
+		} else {
+		    x[i] = NADBL;
 		}
 	    }
 	}
@@ -745,23 +747,9 @@ static double snedecor_pdf_array (int v1, int v2, double *x, int n)
 
 static double snedecor_pdf (int m, int n, double x)
 {
-    double fx = NADBL;
+    snedecor_pdf_array(m, n, &x, 1);
 
-    errno = 0;
-
-    if (m > 0 && n > 0 && x > 0) {
-	double xm = m, xn = n;
-	double x1 = Binv(0.5*xm, 0.5*xn);
-	double x2 = pow(xm / xn, 0.5*xm);
-	double x3 = pow(x, 0.5*xm - 1.0);
-	double x4 = pow(1.0 + xm/xn * x, 0.5 * (xm+xn));
-
-	if (!errno && !na(x1)) {
-	    fx = x1 * x2 * x3 / x4;
-	}
-    }
-
-    return fx;
+    return x;
 }
 
 static int chisq_pdf_array (int m, double *x, int n)
@@ -780,7 +768,7 @@ static int chisq_pdf_array (int m, double *x, int n)
 	    err = E_NAN;
 	} else {
 	    for (i=0; i<n; i++) {
-		if (!na(x[i])) {
+		if (!na(x[i]) && x[i] > 0) {
 		    errno = 0;
 		    x3 = pow(x[i], m2 - 1.0);
 		    x4 = exp(-x[i] / 2.0);
@@ -788,6 +776,8 @@ static int chisq_pdf_array (int m, double *x, int n)
 		    if (errno) {
 			x[i] = NADBL;
 		    }
+		} else {
+		    x[i] = NADBL;
 		}
 	    }
 	}
@@ -808,23 +798,9 @@ static int chisq_pdf_array (int m, double *x, int n)
 
 static double chisq_pdf (int m, double x)
 {
-    double fx = NADBL;
+    chisq_pdf_array(m, &x, 1);
 
-    errno = 0;
-
-    if (m > 0 && x >= 0) {
-	double m2 = m / 2.0;
-	double x1 = pow(.5, m2);
-	double x2 = gamma_function(m2);
-	double x3 = pow(x, m2 - 1.0);
-	double x4 = exp(-x / 2.0);
-
-	if (!errno && !na(x2)) {
-	    fx = (x1/x2) * x3 * x4;
-	}
-    }
-
-    return fx;
+    return x;
 }
 
 static int student_pdf_array (double m, double *x, int n)
@@ -869,44 +845,60 @@ static int student_pdf_array (double m, double *x, int n)
 
 static double student_pdf (double m, double x)
 {
-    double fx = NADBL;
+    student_pdf_array(m, &x, 1);
 
-    errno = 0;
-
-    if (m > 0) {
-	double x1 = Binv(0.5 * m, 0.5) / sqrt(m);
-	double x2 = m / (m + x * x);
-	double x3 = 0.5 * (m + 1.0);
-
-	if (!errno && !na(x1)) {
-	    fx = x1 * pow(x2, x3);
-	    if (errno) {
-		fx = NADBL;
-	    }
-	}
-    }
-
-    return fx;
+    return x;
 }
 
-static double weibull_pdf (double k, double l, double x)
+static int weibull_pdf_array (double k, double l, 
+			      double *x, int n)
 {
-    double fx = NADBL;
+    int i, err = 0;
 
     errno = 0;
 
     if (k > 0 && l > 0 && x >= 0) {
 	double x1 = k / l;
-	double x2 = pow(x / l, k - 1.0);
-	double x3 = pow(x / l, k);
-	double x4 = exp(-x3);
+	double x2, x3, x4;
 
-	if (!errno) {
-	    fx = x1 * x2 * x4;
+	if (errno) {
+	    err = E_NAN;
+	} else {
+	    for (i=0; i<n; i++) {
+		if (!na(x[i]) && x[i] >= 0) {
+		    errno = 0;
+		    x2 = pow(x[i] / l, k - 1.0);
+		    x3 = pow(x[i] / l, k);
+		    x4 = exp(-x3);
+		    x[i] = x1 * x2 * x4;
+		    if (errno) {
+			x[i] = NADBL;
+		    }
+		} else {
+		    x[i] = NADBL;
+		}
+	    }
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
 	}
     }
 
-    return fx;
+    errno = 0;
+
+    return err;
+}
+
+static double weibull_pdf (double k, double l, double x)
+{
+    weibull_pdf_array(k, l, &x, 1);
+
+    return x;
 }
 
 /**
@@ -1189,6 +1181,50 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
     return p;
 }
 
+static int gamma_pdf_array (double shape, double scale, 
+			    double *x, int n)
+{
+    int i, err = 0;
+
+    errno = 0;
+
+    if (!na(shape) && shape > 0 && !na(scale) && scale > 0) {
+	double x1, x2;
+	double x3 = pow(scale, shape);
+	double x4 = gamma_function(shape);
+
+	if (errno || na(x4)) {
+	    err = E_NAN;
+	} else {
+	    for (i=0; i<n; i++) {
+		if (!na(x[i]) && x[i] > 0) {
+		    errno = 0;
+		    x1 = pow(x[i], shape - 1.0);
+		    x2 = exp(-x[i]/scale);
+		    x[i] = x1 * x2 / (x3 * x4);
+		    if (errno) {
+			x[i] = NADBL;
+		    }
+		} else {
+		    x[i] = NADBL;
+		}
+	    }
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    errno = 0;
+
+    return err;
+}
+
 /**
  * gamma_pdf:
  * @shape: shape parameter.
@@ -1200,22 +1236,9 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
 
 double gamma_pdf (double shape, double scale, double x)
 {
-    double p = NADBL;
+    gamma_pdf_array(shape, scale, &x, 1);
 
-    errno = 0;
-
-    if (shape > 0 && scale > 0 && x > 0) {
-	double x1 = pow(x, shape - 1.0);
-	double x2 = exp(-x/scale);
-	double x3 = pow(scale, shape);
-	double x4 = gamma_function(shape);
-
-	if (!errno && !na(x4)) {
-	    p = x1 * x2 / (x3 * x4);
-	}
-    }
-
-    return p;
+    return x;
 }
 
 /**
@@ -1566,6 +1589,10 @@ int gretl_fill_pdf_array (char st, double *p, double *x, int n)
 	err = chisq_pdf_array(p[0], x, n);
     } else if (st == 'F') {
 	err = snedecor_pdf_array((int) p[0], (int) p[1], x, n);
+    } else if (st == 'G') {
+	err = gamma_pdf_array(p[0], p[1], x, n); 
+    } else if (st == 'W') {
+	err = weibull_pdf_array(p[0], p[1], x, n);
     }
 
     return err;

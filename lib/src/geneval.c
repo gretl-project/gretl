@@ -755,8 +755,6 @@ static double scalar_pdist (int t, char d, double *parm,
     return x;
 }
 
-#define pdf_array_ok(c) (c == 'z' || c == 't' || c == 'X' || c == 'F')
-
 static double *series_pdist (int t, char d, double *parm,
 			     double *pvec, double *bvec,
 			     int np, parser *p)
@@ -770,8 +768,7 @@ static double *series_pdist (int t, char d, double *parm,
 	return NULL;
     }
 
-    if (pdf_array_ok(d) && bvec == NULL && pvec != NULL) {
-	/* trial implementation of faster code */
+    if (bvec == NULL && pvec != NULL) {
 	int n = p->dinfo->t2 - p->dinfo->t1 + 1;
 
 	for (s=0; s<p->dinfo->n; s++) {
@@ -783,22 +780,20 @@ static double *series_pdist (int t, char d, double *parm,
 	}
 
 	gretl_fill_pdf_array(d, parm, xvec + p->dinfo->t1, n);
-	
-	return xvec;
-    }
-
-    for (s=0; s<p->dinfo->n; s++) {
-	if (s < p->dinfo->t1 || s > p->dinfo->t2 || 
-	    (pvec != NULL && pvec[s] == NADBL)) {
-	    xvec[s] = NADBL;
-	} else {
-	    if (pvec != NULL) {
-		parm[np-1] = pvec[s];
+    } else {
+	for (s=0; s<p->dinfo->n; s++) {
+	    if (s < p->dinfo->t1 || s > p->dinfo->t2 || 
+		(pvec != NULL && pvec[s] == NADBL)) {
+		xvec[s] = NADBL;
+	    } else {
+		if (pvec != NULL) {
+		    parm[np-1] = pvec[s];
+		}
+		if (bvec != NULL) {
+		    parm[np-2] = bvec[s];
+		}
+		xvec[s] = scalar_pdist(t, d, parm, np, p);
 	    }
-	    if (bvec != NULL) {
-		parm[np-2] = bvec[s];
-	    }
-	    xvec[s] = scalar_pdist(t, d, parm, np, p);
 	}
     }
 
