@@ -867,8 +867,9 @@ static int weibull_pdf_array (double k, double l,
 	    for (i=0; i<n; i++) {
 		if (!na(x[i]) && x[i] >= 0) {
 		    errno = 0;
-		    x2 = pow(x[i] / l, k - 1.0);
-		    x3 = pow(x[i] / l, k);
+		    x3 = x[i] / l;
+		    x2 = pow(x3, k - 1.0);
+		    x3 *= x2;
 		    x4 = exp(-x3);
 		    x[i] = x1 * x2 * x4;
 		    if (errno) {
