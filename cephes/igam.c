@@ -87,24 +87,28 @@ Copyright 1985, 1987, 2000 by Stephen L. Moshier
 static double big = 4.503599627370496e15;
 static double biginv =  2.22044604925031308085e-16;
 
-double igamc (double  a, double x )
+double igamc (double  a, double x)
 {
     double ans, ax, c, yc, r, t, y, z;
     double pk, pkm1, pkm2, qk, qkm1, qkm2;
 
-    if ((x <= 0) || ( a <= 0))
+    if (x <= 0 || a <= 0) {
 	return 1.0;
+    }
 
-    if ((x < 1.0) || (x < a))
+    if (x < 1.0 || x < a) {
 	return 1.0 - igam(a,x);
+    }
 
     ax = a * log(x) - x - lgam(a);
+
     if (ax < -MAXLOG) {
 #if 0
 	mtherr("igamc", CEPHES_UNDERFLOW);
 #endif
 	return 0.0;
     }
+
     ax = exp(ax);
 
     /* continued fraction */
@@ -126,7 +130,7 @@ double igamc (double  a, double x )
 	qk = qkm1 * z  -  qkm2 * yc;
 	if (qk != 0) {
 	    r = pk/qk;
-	    t = fabs( (ans - r)/r );
+	    t = fabs((ans - r)/r);
 	    ans = r;
 	} else {
 	    t = 1.0;
@@ -160,11 +164,13 @@ double igam (double a, double x)
 {
     double ans, ax, c, r;
 
-    if ((x <= 0) || ( a <= 0))
+    if (x <= 0 || a <= 0) {
 	return 0.0;
+    }
 
-    if ((x > 1.0) && (x > a ))
+    if (x > 1.0 && x > a) {
 	return 1.0 - igamc(a,x);
+    }
 
     /* Compute x**a * exp(-x) / gamma(a) */
     ax = a * log(x) - x - lgam(a);
@@ -172,6 +178,7 @@ double igam (double a, double x)
 	mtherr("igam", CEPHES_UNDERFLOW);
 	return 0.0;
     }
+
     ax = exp(ax);
 
     /* power series */

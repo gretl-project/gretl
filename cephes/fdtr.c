@@ -166,7 +166,7 @@ double fdtrc (int ia, int ib, double x)
 {
     double a, b, w;
 
-    if ((ia < 1) || (ib < 1) || (x < 0.0)) {
+    if (ia < 1 || ib < 1 || x < 0.0) {
 	mtherr("fdtrc", CEPHES_DOMAIN);
 	return 0.0;
     }
@@ -182,7 +182,7 @@ double fdtr (int ia, int ib, double x)
 {
     double a, b, w;
 
-    if ((ia < 1) || (ib < 1) || (x < 0.0)) {
+    if (ia < 1 || ib < 1 || x < 0.0) {
 	mtherr("fdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
@@ -199,7 +199,7 @@ double fdtri (int ia, int ib, double y)
 {
     double a, b, w, x;
 
-    if ((ia < 1) || (ib < 1) || (y <= 0.0) || (y > 1.0)) {
+    if (ia < 1 || ib < 1 || y <= 0.0 || y > 1.0) {
 	mtherr("fdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
@@ -207,7 +207,7 @@ double fdtri (int ia, int ib, double y)
     a = ia;
     b = ib;
 
-    /* Compute probability for x = 0.5.  */
+    /* Compute probability for x = 0.5 */
     w = incbet(0.5*b, 0.5*a, 0.5);
     
     /* If that is greater than y, then the solution w < .5.

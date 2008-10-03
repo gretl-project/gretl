@@ -187,7 +187,7 @@ static void launch_gnuplot_interactive (void)
     create_child_process(gpline);
     g_free(gpline);
 # else
-    char term[8];
+    char term[16];
     char plotfile[MAXLEN];
 
     strcpy(plotfile, gretl_plotfile());
@@ -196,14 +196,34 @@ static void launch_gnuplot_interactive (void)
 	return;
     } else {
 	GError *error = NULL;
-	gchar *argv[] = { 
-	    term, "+sb", "+ls", 
-	    "-geometry", "40x4",
-	    "-title", "gnuplot: type q to quit",
-	    "-e", paths.gnuplot, plotfile, "-",
-	    NULL 
-	};
+	gchar *argv[12] = { NULL };
 	int ok;
+
+	argv[0] = term;
+
+	if (strstr(term, "gnome")) {
+	    /* gnome-terminal */
+	    argv[1] = "--geometry=40x4";
+	    argv[2] = "--title=\"gnuplot: type q to quit\"";
+	    argv[3] = "-x";
+	    argv[4] = paths.gnuplot;
+	    argv[5] = plotfile;
+	    argv[6] = "-";
+	    argv[7] = NULL;
+	} else {	    
+	    /* xterm, rxvt, kterm */
+	    argv[1] = "+sb";
+	    argv[2] = "+ls";
+	    argv[3] = "-geometry";
+	    argv[4] = "40x4";
+	    argv[5] = "-title";
+	    argv[6] = "gnuplot: type q to quit";
+	    argv[7] = "-e";
+	    argv[8] = paths.gnuplot;
+	    argv[9] = plotfile;
+	    argv[10] = "-";
+	    argv[11] = NULL;
+	} 
 
 	ok = g_spawn_async(NULL, /* working dir */
 			   argv,
@@ -5412,23 +5432,26 @@ int do_graph_from_selector (selector *sr)
 
 static int get_terminal (char *s)
 {
+    const gchar *terms[] = {
+	"xterm",
+	"rxvt",
+	"gnome-terminal",
+	"kterm",
+	NULL
+    };
     gchar *test;
+    int i;
 
-    test = g_find_program_in_path("xterm");
-    if (test != NULL) {
-	g_free(test);
-	strcpy(s, "xterm");
-	return 0;
+    for (i=0; terms[i] != NULL; i++) {
+	test = g_find_program_in_path(terms[i]);
+	if (test != NULL) {
+	    g_free(test);
+	    strcpy(s, terms[i]);
+	    return 0;
+	}
     }
 
-    test = g_find_program_in_path("rxvt");
-    if (test != NULL) {
-	g_free(test);
-	strcpy(s, "rxvt");
-	return 0;
-    }
-
-    errbox(_("Couldn't find xterm or rxvt"));
+    errbox(_("Couldn't find a usable terminal program"));
     return 1;
 }
 

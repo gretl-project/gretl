@@ -84,7 +84,7 @@ double incbet (double  aa, double bb, double xx)
 	goto domerr;
     }
 
-    if ((xx <= 0.0) || (xx >= 1.0)) {
+    if (xx <= 0.0 || xx >= 1.0) {
 	if (xx == 0.0) {
 	    return 0.0;
 	}
@@ -98,7 +98,7 @@ double incbet (double  aa, double bb, double xx)
 
     flag = 0;
 
-    if ((bb * xx) <= 1.0 && xx <= 0.95) {
+    if (bb * xx <= 1.0 && xx <= 0.95) {
 	t = pseries(aa, bb, xx);
 	goto done;
     }
