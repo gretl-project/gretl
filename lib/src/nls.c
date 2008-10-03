@@ -2807,6 +2807,11 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     spec->dinfo = pdinfo;
     spec->prn = prn;
 
+    if (opt & OPT_N) {
+	/* ignore any analytical derivs */
+	spec->mode = NUMERIC_DERIVS;
+    }
+
     if (spec->mode == NUMERIC_DERIVS && spec->nparam == 0 &&
 	spec->ci != GMM) {
 	err = get_params_from_nlfunc(spec);
