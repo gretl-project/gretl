@@ -857,7 +857,7 @@ static int weibull_pdf_array (double k, double l,
 
     errno = 0;
 
-    if (k > 0 && l > 0 && x >= 0) {
+    if (!na(k) && k > 0 && !na(l) && l > 0) {
 	double x1 = k / l;
 	double x2, x3, x4;
 
