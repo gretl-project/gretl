@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-28 22:41+0300\n"
-"PO-Revision-Date: 2008-09-28 22:32+0300\n"
+"POT-Creation-Date: 2008-09-27 11:21-0400\n"
+"PO-Revision-Date: 2008-10-05 03:09+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -360,8 +360,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -677,8 +676,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
@@ -1288,8 +1286,7 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -1396,7 +1393,7 @@ msgstr "периоды"
 
 #: lib/src/describe.c:3219
 msgid "scaled frequency"
-msgstr ""
+msgstr "масштабированная частота"
 
 #: lib/src/describe.c:3226
 msgid "Residual spectrum"
@@ -1926,7 +1923,7 @@ msgstr "Этот тест доступен только для панельны�
 
 #: lib/src/forecast.c:2293
 msgid "predicted values"
-msgstr "рассчетные значения"
+msgstr "расчетные значения"
 
 #: lib/src/forecast.c:2296 lib/src/genmain.c:67
 #, c-format
@@ -2279,17 +2276,17 @@ msgstr "%s от %s (с подбором квадратичной зависим�
 #: lib/src/graphing.c:1201
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
-msgstr "Ошибки регрессии (= наблюдаемые - рассчетные %s)"
+msgstr "Ошибки регрессии (= наблюдаемые - расчетные %s)"
 
 #: lib/src/graphing.c:1206 lib/src/graphing.c:1210
 #, c-format
 msgid "Actual and fitted %s"
-msgstr "Наблюдаемые и рассчетные %s"
+msgstr "Наблюдаемые и расчетные %s"
 
 #: lib/src/graphing.c:1212
 #, c-format
 msgid "Actual and fitted %s versus %s"
-msgstr "Наблюдаемые и рассчетные %s от %s"
+msgstr "Наблюдаемые и расчетные %s от %s"
 
 #: lib/src/graphing.c:1358 gui2/gpt_dialog.c:230
 #, c-format
@@ -2305,11 +2302,11 @@ msgstr "локальная регрессия, d = %d, q = %g"
 msgid "time series by group"
 msgstr ""
 
-#: lib/src/graphing.c:2351 lib/src/plotspec.c:547 gui2/gpt_dialog.c:662
+#: lib/src/graphing.c:2351 lib/src/plotspec.c:547 gui2/gpt_dialog.c:661
 msgid "right"
 msgstr "вправо"
 
-#: lib/src/graphing.c:2351 lib/src/plotspec.c:545 gui2/gpt_dialog.c:657
+#: lib/src/graphing.c:2351 lib/src/plotspec.c:545 gui2/gpt_dialog.c:656
 msgid "left"
 msgstr "влево"
 
@@ -2320,7 +2317,7 @@ msgstr "наблюдаемые"
 #: lib/src/graphing.c:2365 lib/src/graphing.c:2368 lib/src/printout.c:1096
 #: gui2/guiprint.c:1538 gui2/guiprint.c:1594
 msgid "fitted"
-msgstr "рассчетные"
+msgstr "расчетные"
 
 #: lib/src/graphing.c:2906
 msgid "Test statistic for normality"
@@ -2329,7 +2326,7 @@ msgstr "Тест на нормальность"
 #: lib/src/graphing.c:2908
 #, c-format
 msgid "Chi-squared(2) = %.3f pvalue = %.5f"
-msgstr ""
+msgstr "Хи-квадрат(2) = %.3f p-значение = %.5f"
 
 #: lib/src/graphing.c:2929
 msgid "Test statistic for gamma"
@@ -2554,11 +2551,11 @@ msgstr "Пропущеные значения учтены"
 
 #: lib/src/gretl_errors.c:63
 msgid "Not a Number in calculation"
-msgstr "Не число в рассчете"
+msgstr "В расчетах присутствуют нечисловые данные!"
 
 #: lib/src/gretl_errors.c:64
 msgid "Matrices not conformable for operation"
-msgstr "Матрицы не соответствуют для операции"
+msgstr "Матрицы не подходят для данной операции"
 
 #: lib/src/gretl_errors.c:65
 msgid "Data types not conformable for operation"
@@ -3861,7 +3858,7 @@ msgstr ""
 #: lib/src/modelprint.c:416 lib/src/modelprint.c:419 lib/src/modelprint.c:425
 #: lib/src/modelprint.c:427
 msgid "Explained sum of squares"
-msgstr ""
+msgstr "Объясненная сумма квадратов"
 
 #: lib/src/modelprint.c:432
 msgid "Akaike information criterion"
@@ -3982,8 +3979,7 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:955
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:958
 #, c-format
@@ -4389,8 +4385,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1669 lib/src/modelprint.c:1676
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1672 lib/src/modelprint.c:1679
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -4420,16 +4415,16 @@ msgstr ""
 #: lib/src/modelprint.c:1803
 #, c-format
 msgid "%s estimates using %d observations from %s%s%s"
-msgstr ""
+msgstr "Для %s оценки использовано %d наблюдений %s%s%s"
 
 #: lib/src/modelprint.c:1810 lib/src/modelprint.c:1811
 msgid "Missing or incomplete observations dropped"
-msgstr ""
+msgstr "Исключено пропущенных или неполных наблюдений"
 
 #: lib/src/modelprint.c:1831 lib/src/modelprint.c:1832
 #, c-format
 msgid "%s estimates using %d observations"
-msgstr ""
+msgstr "Для %s оценки использовано %d наблюдений"
 
 #: lib/src/modelprint.c:1837 lib/src/modelprint.c:1838
 #, c-format
@@ -4454,7 +4449,7 @@ msgstr ""
 #: lib/src/modelprint.c:1880
 #, c-format
 msgid "scaled %s"
-msgstr ""
+msgstr "масштабированное %s"
 
 #: lib/src/modelprint.c:1968 lib/src/modelprint.c:1969
 msgid "Allowing for groupwise heteroskedasticity"
@@ -4604,12 +4599,12 @@ msgstr "Логарифмическое правдоподобие для %s"
 msgid "Convergence achieved after %d iterations\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2482 lib/src/nls.c:3978
+#: lib/src/modelprint.c:2482 lib/src/nls.c:3967
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2483 lib/src/nls.c:3979
+#: lib/src/modelprint.c:2483 lib/src/nls.c:3968
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr ""
@@ -4933,39 +4928,39 @@ msgstr ""
 msgid "No parameters have been specified"
 msgstr ""
 
-#: lib/src/nls.c:2798
+#: lib/src/nls.c:2787
 msgid "No function has been specified"
 msgstr "Функция не была определена"
 
-#: lib/src/nls.c:2867
+#: lib/src/nls.c:2856
 msgid "Using numerical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:2868
+#: lib/src/nls.c:2857
 msgid "Using analytical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:2886
+#: lib/src/nls.c:2875
 #, c-format
 msgid "Tolerance = %g\n"
 msgstr ""
 
-#: lib/src/nls.c:3306
+#: lib/src/nls.c:3295
 msgid "Failed to compute numerical Hessian"
 msgstr ""
 
-#: lib/src/nls.c:3375
+#: lib/src/nls.c:3364
 msgid ""
 "\n"
 "\n"
 "*** User-specified starting values:\n"
 msgstr ""
 
-#: lib/src/nls.c:3440
+#: lib/src/nls.c:3429
 msgid "BFGS: initial value of objective function is not finite"
 msgstr ""
 
-#: lib/src/nls.c:3614
+#: lib/src/nls.c:3603
 #, c-format
 msgid "stopped after %d iterations\n"
 msgstr ""
@@ -5012,8 +5007,7 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5165,8 +5159,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
@@ -5585,8 +5578,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -6610,11 +6602,11 @@ msgstr ""
 msgid " DW "
 msgstr ""
 
-#: gui2/calculator.c:1951 gui2/gpt_dialog.c:1471
+#: gui2/calculator.c:1951 gui2/gpt_dialog.c:1470
 msgid "minimum"
 msgstr "Минимум"
 
-#: gui2/calculator.c:1953 gui2/gpt_dialog.c:1488
+#: gui2/calculator.c:1953 gui2/gpt_dialog.c:1487
 msgid "maximum"
 msgstr "Максимум"
 
@@ -6634,7 +6626,7 @@ msgstr ""
 msgid "shape"
 msgstr ""
 
-#: gui2/calculator.c:1975 gui2/gpt_dialog.c:1198
+#: gui2/calculator.c:1975 gui2/gpt_dialog.c:1197
 msgid "scale"
 msgstr ""
 
@@ -7865,11 +7857,11 @@ msgstr "описание:"
 
 #: gui2/dialogs.c:1588
 msgid "gretl: seed for random numbers"
-msgstr ""
+msgstr "gretl: инициализация датчика случайных чисел"
 
 #: gui2/dialogs.c:1593
 msgid "Seed for generator:"
-msgstr ""
+msgstr "Инициализировать датчик:"
 
 #: gui2/dialogs.c:1830
 #, c-format
@@ -8788,136 +8780,136 @@ msgstr "loess (взвешенная локальная регрессия)"
 msgid "Invalid label position, must be X Y"
 msgstr ""
 
-#: gui2/gpt_dialog.c:729
+#: gui2/gpt_dialog.c:728
 msgid "Fill color"
 msgstr "Заливка"
 
-#: gui2/gpt_dialog.c:731
+#: gui2/gpt_dialog.c:730
 #, c-format
 msgid "Color %d"
 msgstr "Цвет %d"
 
-#: gui2/gpt_dialog.c:759
+#: gui2/gpt_dialog.c:758
 msgid "Reset to default"
 msgstr "По умолчанию"
 
-#: gui2/gpt_dialog.c:835
+#: gui2/gpt_dialog.c:834
 msgid "Main"
 msgstr "Общие"
 
-#: gui2/gpt_dialog.c:873
+#: gui2/gpt_dialog.c:872
 msgid "key position"
 msgstr "Положение легенды"
 
-#: gui2/gpt_dialog.c:894
+#: gui2/gpt_dialog.c:893
 msgid "fitted line"
 msgstr "Линия подгонки"
 
-#: gui2/gpt_dialog.c:917
+#: gui2/gpt_dialog.c:916
 msgid "Show full border"
 msgstr "Показывать все границы"
 
-#: gui2/gpt_dialog.c:929
+#: gui2/gpt_dialog.c:928
 msgid "Use only one y axis"
 msgstr "Использовать только одну ось Y"
 
-#: gui2/gpt_dialog.c:943
+#: gui2/gpt_dialog.c:942
 msgid "Show all data labels"
 msgstr "Показывать подписи всех данных"
 
-#: gui2/gpt_dialog.c:965
+#: gui2/gpt_dialog.c:964
 msgid "Allow anti-aliasing of lines"
 msgstr "Сглаживать линии"
 
-#: gui2/gpt_dialog.c:993 gui2/gpt_dialog.c:995
+#: gui2/gpt_dialog.c:992 gui2/gpt_dialog.c:994
 msgid "None"
 msgstr "Нет"
 
-#: gui2/gpt_dialog.c:1007
+#: gui2/gpt_dialog.c:1006
 msgid "TrueType font"
 msgstr "TrueType шрифт"
 
-#: gui2/gpt_dialog.c:1097
+#: gui2/gpt_dialog.c:1096
 msgid "Lines"
 msgstr "Линии"
 
-#: gui2/gpt_dialog.c:1125
+#: gui2/gpt_dialog.c:1124
 #, c-format
 msgid "line %d: "
 msgstr "Линия %d: "
 
-#: gui2/gpt_dialog.c:1132
+#: gui2/gpt_dialog.c:1131
 msgid "legend"
 msgstr "Легенда"
 
-#: gui2/gpt_dialog.c:1156
+#: gui2/gpt_dialog.c:1155
 msgid "type"
 msgstr "Тип"
 
-#: gui2/gpt_dialog.c:1218
+#: gui2/gpt_dialog.c:1217
 msgid "y axis"
 msgstr "Ось y"
 
-#: gui2/gpt_dialog.c:1237
+#: gui2/gpt_dialog.c:1236
 msgid "line width"
 msgstr "Толщина линии"
 
-#: gui2/gpt_dialog.c:1281
+#: gui2/gpt_dialog.c:1280
 msgid "Labels"
 msgstr "Метки"
 
-#: gui2/gpt_dialog.c:1296
+#: gui2/gpt_dialog.c:1295
 #, c-format
 msgid "label %d: "
 msgstr "Метка %d: "
 
-#: gui2/gpt_dialog.c:1303
+#: gui2/gpt_dialog.c:1302
 msgid "text"
 msgstr "Текст"
 
-#: gui2/gpt_dialog.c:1324
+#: gui2/gpt_dialog.c:1323
 msgid "position (X Y)"
 msgstr "Положение (X Y)"
 
-#: gui2/gpt_dialog.c:1365
+#: gui2/gpt_dialog.c:1364
 msgid "justification"
 msgstr "Выравнивание"
 
-#: gui2/gpt_dialog.c:1393
+#: gui2/gpt_dialog.c:1392
 msgid "X-axis"
 msgstr "Ось Х"
 
-#: gui2/gpt_dialog.c:1395
+#: gui2/gpt_dialog.c:1394
 msgid "Y-axis"
 msgstr "Ось Y"
 
-#: gui2/gpt_dialog.c:1397
+#: gui2/gpt_dialog.c:1396
 msgid "Y2-axis"
 msgstr "Ось Y2"
 
-#: gui2/gpt_dialog.c:1448
+#: gui2/gpt_dialog.c:1447
 msgid "auto axis range"
 msgstr "Автоматическая шкала"
 
-#: gui2/gpt_dialog.c:1461
+#: gui2/gpt_dialog.c:1460
 msgid "manual range:"
 msgstr "Установить вручную:"
 
-#: gui2/gpt_dialog.c:1531
+#: gui2/gpt_dialog.c:1530
 msgid "linear scale"
 msgstr "Линейная шкала"
 
-#: gui2/gpt_dialog.c:1539
+#: gui2/gpt_dialog.c:1538
 msgid "logarithmic scale, base:"
 msgstr "Логарифмическая шкала, основание:"
 
-#: gui2/gpt_dialog.c:1631
+#: gui2/gpt_dialog.c:1630
 msgid ""
 "You can only have one plot controller open\n"
 "at any given time"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1650
+#: gui2/gpt_dialog.c:1649
 msgid "gretl plot controls"
 msgstr "gretl: настройки графика"
 
@@ -11458,8 +11450,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -12464,27 +12455,27 @@ msgstr ""
 
 #: gui2/settings.c:152
 msgid "Main gretl directory"
-msgstr ""
+msgstr "Главный каталог gretl"
 
 #: gui2/settings.c:154
 msgid "User's gretl directory"
-msgstr ""
+msgstr "Пользовательский каталог gretl"
 
 #: gui2/settings.c:156
 msgid "Tell me about gretl updates"
-msgstr ""
+msgstr "Сообщать об обновлениях"
 
 #: gui2/settings.c:159
 msgid "Remember main window size"
-msgstr ""
+msgstr "Запоминать размер главного окна"
 
 #: gui2/settings.c:163
 msgid "Use locale setting for decimal point"
-msgstr ""
+msgstr "Использовать локальный десятичный разделитель"
 
 #: gui2/settings.c:167
 msgid "Emulate Windows look"
-msgstr ""
+msgstr "Эмулировать внешний вид Windows"
 
 #: gui2/settings.c:171
 msgid "Web browser"
@@ -12492,7 +12483,7 @@ msgstr "Браузер"
 
 #: gui2/settings.c:174
 msgid "Allow shell commands"
-msgstr ""
+msgstr "Разрешить команды shell"
 
 #: gui2/settings.c:177
 msgid "Language preference"
@@ -12504,31 +12495,31 @@ msgstr ""
 
 #: gui2/settings.c:183
 msgid "Command to launch gnuplot"
-msgstr "Команда для запуска gnuplot"
+msgstr "Запуск gnuplot"
 
 #: gui2/settings.c:186
 msgid "Command to launch GNU R"
-msgstr ""
+msgstr "Запуск GNU R"
 
 #: gui2/settings.c:188
 msgid "Command to compile TeX files"
-msgstr ""
+msgstr "Компилирование файлов TeX"
 
 #: gui2/settings.c:190
 msgid "Command to view DVI files"
-msgstr ""
+msgstr "Просмотр файлов DVI"
 
 #: gui2/settings.c:193
 msgid "Command to view postscript files"
-msgstr ""
+msgstr "Просмотр файлов Postscript"
 
 #: gui2/settings.c:195
 msgid "Command to view PDF files"
-msgstr ""
+msgstr "Просмотр файлов PDF"
 
 #: gui2/settings.c:199
 msgid "Program to play MIDI files"
-msgstr ""
+msgstr "Проигрывание файлов MIDI"
 
 #: gui2/settings.c:202
 msgid "Calculator"
@@ -12536,43 +12527,43 @@ msgstr "Калькулятор"
 
 #: gui2/settings.c:205
 msgid "path to x12arima"
-msgstr ""
+msgstr "Путь к x12arima"
 
 #: gui2/settings.c:209
 msgid "path to tramo"
-msgstr ""
+msgstr "Путь к tramo"
 
 #: gui2/settings.c:212
 msgid "gretl database directory"
-msgstr ""
+msgstr "Каталог для баз данных gretl"
 
 #: gui2/settings.c:214
 msgid "RATS data directory"
-msgstr ""
+msgstr "Каталог данных RATS"
 
 #: gui2/settings.c:216
 msgid "Database server name"
-msgstr ""
+msgstr "Сервер баз данных"
 
 #: gui2/settings.c:218
 msgid "HTTP proxy (ipnumber:port)"
-msgstr ""
+msgstr "HTTP прокси-сервер (IP-адрес:порт)"
 
 #: gui2/settings.c:220
 msgid "Use HTTP proxy"
-msgstr ""
+msgstr "Использовать HTTP прокси-сервер"
 
 #: gui2/settings.c:222
 msgid "Fixed font"
-msgstr ""
+msgstr "Пропорциональный шрифт"
 
 #: gui2/settings.c:225
 msgid "Menu font"
-msgstr ""
+msgstr "Шрифт для меню"
 
 #: gui2/settings.c:232
 msgid "PNG graph font"
-msgstr ""
+msgstr "Шрифт для графиков PNG"
 
 #: gui2/settings.c:234
 msgid "Gnuplot colors"
@@ -12580,35 +12571,35 @@ msgstr "Цвета для gnuplot"
 
 #: gui2/settings.c:248
 msgid "Use robust covariance matrix by default"
-msgstr ""
+msgstr "Использовать робастную оценку матрицы ковариации по умолчанию"
 
 #: gui2/settings.c:250
 msgid "For cross-sectional data"
-msgstr ""
+msgstr "Для перекрестных данных"
 
 #: gui2/settings.c:252
 msgid "For time-series data"
-msgstr ""
+msgstr "Для временных рядов"
 
 #: gui2/settings.c:254
 msgid "For panel data"
-msgstr ""
+msgstr "Для панельных данных"
 
 #: gui2/settings.c:256
 msgid "For GARCH estimation"
-msgstr ""
+msgstr "Для моделей GARCH"
 
 #: gui2/settings.c:258
 msgid "PDF manual preference"
-msgstr ""
+msgstr "Файл справки PDF"
 
 #: gui2/settings.c:730
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
-msgstr ""
+msgstr "Вы запускаете gretl с правами администратора. Хотите продолжить?"
 
 #: gui2/settings.c:785
 msgid "gretl: options"
-msgstr ""
+msgstr "gretl: настройки"
 
 #: gui2/settings.c:887 gui2/settings.c:2354
 msgid "Browse..."
@@ -12616,23 +12607,23 @@ msgstr "Обзор..."
 
 #: gui2/settings.c:897
 msgid "This change will take effect when you restart gretl"
-msgstr ""
+msgstr "Изменения вступят в силу после перезапуска gretl"
 
 #: gui2/settings.c:906
 msgid "English (US letter paper)"
-msgstr ""
+msgstr "Английский язык (формат US letter)"
 
 #: gui2/settings.c:907
 msgid "English (A4 paper)"
-msgstr ""
+msgstr "Английский язык (формат А4)"
 
 #: gui2/settings.c:908
 msgid "Italian"
-msgstr ""
+msgstr "Итальянский язык"
 
 #: gui2/settings.c:909
 msgid "Spanish"
-msgstr ""
+msgstr "Испанский язык"
 
 #: gui2/settings.c:912
 msgid "Use local language if possible"
@@ -12640,11 +12631,11 @@ msgstr "Использовать локальные языковые настр�
 
 #: gui2/settings.c:913
 msgid "Use English"
-msgstr ""
+msgstr "Use English"
 
 #: gui2/settings.c:914
 msgid "Use Basque"
-msgstr ""
+msgstr "Use Basque"
 
 #: gui2/settings.c:1015 plugin/tramo_options.c:341
 msgid "General"
@@ -12660,7 +12651,7 @@ msgstr "Программы"
 
 #: gui2/settings.c:1021
 msgid "HCCME"
-msgstr ""
+msgstr "Робастные оценки"
 
 #: gui2/settings.c:1023
 msgid "Manuals"
@@ -12668,11 +12659,11 @@ msgstr "Справка"
 
 #: gui2/settings.c:1949
 msgid "Font for gretl output windows"
-msgstr ""
+msgstr "Шрифт для вывода результатов gretl"
 
 #: gui2/settings.c:1956
 msgid "Font for menus and labels"
-msgstr ""
+msgstr "Шрифт для меню и меток"
 
 #: gui2/settings.c:2172
 msgid "Select color"
@@ -12684,27 +12675,27 @@ msgstr "gretl: выбор цвета для графика"
 
 #: gui2/settings.c:2318
 msgid "gretl working directory"
-msgstr ""
+msgstr "Рабочий каталог gretl"
 
 #: gui2/settings.c:2341
 msgid "Working directory:"
-msgstr "Рабочая папка:"
+msgstr "Рабочий каталог:"
 
 #: gui2/settings.c:2363
 msgid "On start-up, gretl should use:"
-msgstr ""
+msgstr "При запуске gretl использовать:"
 
 #: gui2/settings.c:2370
 msgid "the directory selected above"
-msgstr ""
+msgstr "Указанный выше каталог"
 
 #: gui2/settings.c:2378
 msgid "the current directory as determined via the shell"
-msgstr ""
+msgstr "Текущий каталог (определяется из командной строки)"
 
 #: gui2/settings.c:2426
 msgid "gretl: working directory"
-msgstr ""
+msgstr "gretl: рабочий каталог"
 
 #: gui2/ssheet.c:125
 msgid "_Observation"
@@ -13980,3 +13971,4 @@ msgstr "Строки"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
+
