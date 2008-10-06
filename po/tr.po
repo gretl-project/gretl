@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-20 09:39-0400\n"
-"PO-Revision-Date: 2008-09-29 14:20+0300\n"
+"PO-Revision-Date: 2008-10-03 23:28+0300\n"
 "POT-Creation-Date: 2008-09-27 11:21-0400\n"
 "PO-Revision-Date: 2008-09-27 11:31-0400\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
@@ -807,7 +807,7 @@ msgid ""
 "treating these as undated data\n"
 "\n"
 msgstr ""
-"tarihlendirilmemiş veriler olarak işlem yapılıyor\n"
+"tarihlendirmesiz veriler olarak ele alınıyor\n"
 "\n"
 
 #: lib/src/csvdata.c:1701 plugin/eviews_import.c:334
@@ -1376,7 +1376,7 @@ msgstr "%s için özilinti işlevi"
 
 #: lib/src/describe.c:2647
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
-msgstr " GECIK     Öİİ          KÖİİ         Q-ist. [p-değeri]"
+msgstr " GECİK     Öİİ          KÖİİ         Q-ist. [p-değeri]"
 
 #: lib/src/describe.c:2728
 #, c-format
@@ -1394,7 +1394,7 @@ msgstr "%s ve %s için çapraz-ilinti işlevi"
 
 #: lib/src/describe.c:2873
 msgid "  LAG      XCF"
-msgstr " GECİK     XCF"
+msgstr "  GECİK    XCF"
 
 #: lib/src/describe.c:2944
 msgid "GPH test for fractional integration"
@@ -1497,7 +1497,7 @@ msgid ""
 " omega  scaled frequency  periods  log spectral density\n"
 "\n"
 msgstr ""
-" omega   ölçekli sıklık   dönemler   log izgesel yoğunluk\n"
+" omega   ölçekli sıklık    dönem     log izgesel yoğunluk\n"
 "\n"
 
 #: lib/src/describe.c:3416
@@ -1505,7 +1505,7 @@ msgid ""
 " omega  scaled frequency  periods  spectral density\n"
 "\n"
 msgstr ""
-" omega  ölçekli sıklık  dönemler  izgesel yoğunluk\n"
+" omega   ölçekli sıklık    dönem    izgesel yoğunluk\n"
 "\n"
 
 #: lib/src/describe.c:3446 lib/src/describe.c:3447 lib/src/printout.c:886
@@ -1557,11 +1557,11 @@ msgstr "Basıklık"
 
 #: lib/src/describe.c:3499
 msgid "Within s.d."
-msgstr "s.s. içi"
+msgstr "ö.s. içi"
 
 #: lib/src/describe.c:3500
 msgid "Between s.d."
-msgstr "s.s. arası"
+msgstr "ö.s. arası"
 
 #: lib/src/describe.c:3506 lib/src/describe.c:3593
 msgid "Summary Statistics"
@@ -1584,7 +1584,7 @@ msgid ""
 "      MEAN           MEDIAN           MIN             MAX\n"
 "\n"
 msgstr ""
-"      ORT.           ORTANCA          ENAZ            ENÇOK\n"
+"      ORT.           ORTANCA          ENAZ           ENÇOK\n"
 "\n"
 
 #: lib/src/describe.c:3621
@@ -1592,7 +1592,7 @@ msgid ""
 "      S.D.            C.V.            SKEW          EXCSKURT\n"
 "\n"
 msgstr ""
-"      S.S.            D.K.            ÇARP          BASIKLIK\n"
+"      Ö.S.            D.K.            ÇARP          BASIKLIK\n"
 "\n"
 
 #: lib/src/describe.c:3754
@@ -3872,7 +3872,7 @@ msgstr "Bağımlı değişken ölçünlü sapması"
 
 #: lib/src/modelprint.c:165
 msgid "S.D. of dependent variable"
-msgstr "Bağımlı değişken için S.S."
+msgstr "Bağımlı değişken için Ö.S."
 
 #: lib/src/modelprint.c:181
 msgid "Unconditional error variance"
@@ -5083,7 +5083,7 @@ msgstr "%d yinelemeden sonra durduruldu\n"
 #: gui2/guiprint.c:1724 gui2/guiprint.c:1783 gui2/guiprint.c:1819
 #: gui2/series_view.c:198
 msgid "Obs"
-msgstr "Gözlem"
+msgstr "Göz"
 
 #: lib/src/nonparam.c:250 lib/src/nonparam.c:251
 msgid "rank"
@@ -6657,7 +6657,7 @@ msgid ""
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
 "Örneklem 1:\n"
-" n = %d, ort. = %g, s.s. = %g\n"
+" n = %d, ort. = %g, ö.s. = %g\n"
 
 #: gui2/calculator.c:1601 gui2/calculator.c:1612
 #, c-format
@@ -6676,7 +6676,7 @@ msgid ""
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
 "Örneklem 2:\n"
-" n = %d, ort. = %g, s.s. = %g\n"
+" n = %d, ort. = %g, ö.s. = %g\n"
 
 #: gui2/calculator.c:1655
 #, c-format
@@ -10470,7 +10470,7 @@ msgid ""
 "(cross-sectional).  Do you want to give the data a\n"
 "time-series or panel interpretation?"
 msgstr ""
-"İçe aktarılan veriler tarihlendirilmemiş (kesit) olarak\n"
+"İçe aktarılan veriler tarihlendirmesiz (kesit) olarak\n"
 "yorumlandı. Verilere bir zaman dizisi veya panel\n"
 "yorumu vermek ister misiniz?"
 
@@ -11676,12 +11676,12 @@ msgstr "Bilinmeyen"
 
 #: gui2/menustate.c:489
 msgid "Undated"
-msgstr "Tarihlendirilmemiş"
+msgstr "Tarihlendirmesiz"
 
 #: gui2/menustate.c:502
 #, c-format
 msgid "Undated: Full range n = %d; current sample n = %d"
-msgstr "Tarihlendirilmemiş: Tam aralık n = %d; şu anki örneklem n = %d"
+msgstr "Tarihlendirmesiz: Tam aralık n = %d; şu anki örneklem n = %d"
 
 #: gui2/menustate.c:505
 #, c-format
