@@ -5684,8 +5684,8 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
 
 static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 {
+    static GdkCursor *busy_cursor;
     GdkDisplay *disp;
-    GdkCursor *cursor;
     GdkWindow *wcurr = NULL;
     GdkWindow *wtxt;
     gpointer vp = NULL;
@@ -5711,19 +5711,21 @@ static void real_do_run_script (windata_t *vwin, gchar *buf, int sel)
 	code = SCRIPT_EXEC;
     } 
 
-    cursor = gdk_cursor_new(GDK_WATCH);
+    if (busy_cursor == NULL) {
+	busy_cursor = gdk_cursor_new(GDK_WATCH);
+    }
 
     disp = gdk_display_get_default();
     if (disp != NULL) {
 	wcurr = gdk_display_get_window_at_pointer(disp, &x, &y);
-	gdk_window_set_cursor(wcurr, cursor);
-	gdk_display_sync(disp);
+	gdk_window_set_cursor(wcurr, busy_cursor);
     }
 
     wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
 				    GTK_TEXT_WINDOW_TEXT);
-    gdk_window_set_cursor(wtxt, cursor);
-    gdk_cursor_unref(cursor);
+    gdk_window_set_cursor(wtxt, busy_cursor);
+
+    gdk_flush();
 
     err = execute_script(NULL, buf, prn, code);
 
