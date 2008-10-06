@@ -916,6 +916,9 @@ double normal_cdf (double x)
 
     if (get_cephes_errno()) {
 	y = NADBL;
+    } else if (y == 1.0) {
+	/* do we want to do this? */
+	y = 0.9999999999999999;
     }
 
     return y;

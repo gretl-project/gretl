@@ -1121,7 +1121,8 @@ static int get_mle_gradient (double *b, double *g, int n,
 	}
 
 #if ML_DEBUG
-	fprintf(stderr, "param[%d]: done nls_calculate_deriv\n", j);
+	fprintf(stderr, "mle: param %d (%s): done nls_calculate_deriv\n", 
+		j, spec->params[j].name);
 #endif
 
 	if (matrix_deriv(spec, j)) {
