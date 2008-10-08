@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-27 11:21-0400\n"
-"PO-Revision-Date: 2008-10-05 03:09+0300\n"
+"PO-Revision-Date: 2008-10-09 01:22+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1397,7 +1397,7 @@ msgstr "масштабированная частота"
 
 #: lib/src/describe.c:3226
 msgid "Residual spectrum"
-msgstr ""
+msgstr "Спектр остатков"
 
 #: lib/src/describe.c:3228
 #, c-format
@@ -1872,7 +1872,7 @@ msgstr ""
 
 #: lib/src/estimate.c:2593 lib/src/gretl_model.c:2727 lib/src/modelprint.c:974
 msgid "White's test for heteroskedasticity"
-msgstr "Тест Уайта (White) на гетероскедастичность"
+msgstr "Тест Вайта (White) на гетероскедастичность"
 
 #: lib/src/estimate.c:2750
 msgid "HET_1"
@@ -4280,11 +4280,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:1353 lib/src/modelprint.c:1359
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:1354 lib/src/modelprint.c:1360
 msgid "variant"
-msgstr ""
+msgstr "вариант"
 
 #: lib/src/modelprint.c:1381
 msgid "Standard errors based on Hessian"
@@ -4461,7 +4461,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1984 lib/src/modelprint.c:1994
 msgid "Variable used as weight"
-msgstr ""
+msgstr "Весовая переменная"
 
 #: lib/src/modelprint.c:2042 lib/src/modelprint.c:2043
 msgid "Weight var is a dummy variable, effective obs ="
@@ -4571,11 +4571,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:2263
 msgid "Statistics based on the weighted data"
-msgstr ""
+msgstr "Статистика, полученная по взвешенным данным"
 
 #: lib/src/modelprint.c:2276
 msgid "Statistics based on the original data"
-msgstr ""
+msgstr "Статистика, полученная по исходным данным"
 
 #: lib/src/modelprint.c:2289
 msgid "Statistics based on the rho-differenced data"
@@ -5623,7 +5623,7 @@ msgstr ""
 
 #: lib/src/system.c:98
 msgid "Weighted Least Squares"
-msgstr ""
+msgstr "Взвешенный МНК"
 
 #: lib/src/system.c:102
 msgid "No system of equations has been defined"
@@ -10072,7 +10072,7 @@ msgstr "_График остатков"
 
 #: gui2/gui_utils.c:145
 msgid "_Fitted, actual plot"
-msgstr ""
+msgstr "График наблюдаемых и расчетных значений"
 
 #: gui2/gui_utils.c:146 gui2/gui_utils.c:264
 msgid "_Analysis"
@@ -11017,7 +11017,7 @@ msgstr "gretl: периодограмма"
 
 #: gui2/library.c:4131
 msgid "Bandwidth:"
-msgstr ""
+msgstr "Ширина окна:"
 
 #: gui2/library.c:4223
 msgid "gretl: coefficient confidence intervals"
@@ -11700,7 +11700,7 @@ msgstr ""
 
 #: gui2/selector.c:2404
 msgid "Weighted least squares"
-msgstr ""
+msgstr "Взвешенный МНК"
 
 #: gui2/selector.c:2406
 msgid "Two-stage least squares"
@@ -11728,7 +11728,7 @@ msgstr ""
 
 #: gui2/selector.c:2441
 msgid "Weight variable"
-msgstr ""
+msgstr "Весовая переменная"
 
 #: gui2/selector.c:2443
 msgid "Offset variable"
