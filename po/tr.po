@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-20 09:39-0400\n"
-"PO-Revision-Date: 2008-10-03 23:28+0300\n"
+"PO-Revision-Date: 2008-10-09 12:21+0300\n"
 "POT-Creation-Date: 2008-09-27 11:21-0400\n"
 "PO-Revision-Date: 2008-09-27 11:31-0400\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
@@ -10029,7 +10029,7 @@ msgstr "_İşlev başvuru belgesi"
 
 #: gui2/gretl.c:1486
 msgid "_User's guide"
-msgstr "Kullanıcı _rehberi"
+msgstr "_Kullanım kılavuzu"
 
 #: gui2/gretl.c:1487
 msgid "Check for _updates"
@@ -13405,7 +13405,7 @@ msgstr "işlev paketleri"
 
 #: gui2/toolbar.c:876
 msgid "user's guide"
-msgstr "kullanıcı rehberi"
+msgstr "kullanım kılavuzu"
 
 #: gui2/toolbar.c:877
 msgid "command reference"
