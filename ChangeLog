@@ -8,6 +8,7 @@ version 1.7.10, in progress
 - New option --numeric for the nls and mle commands,
   to force the use of numerical derivatives
 - Small graphing and GUI fixes
+- MS Windows: fix for opening graphs in old session files
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"

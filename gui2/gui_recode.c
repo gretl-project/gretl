@@ -249,6 +249,7 @@ int maybe_recode_gp_file_to_utf8 (const char *fname)
     fclose(fout);
 
     if (recoded) {
+	fprintf(stderr, "recoded old graph file\n");
 	err = copyfile(trname, fname);
     }
 

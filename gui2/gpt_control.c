@@ -275,6 +275,18 @@ static int is_png_term_line (const char *s)
     return !strncmp(s, "set term png", 12);
 }
 
+#ifdef G_OS_WIN32
+
+static void check_win32_png_spec (char *s)
+{
+    if (!strncmp("set term png ", s, 13)) {
+	/* should now be pngcairo */
+	*s = '\0';
+    }
+}
+
+#endif	
+
 static int 
 add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 {
@@ -313,6 +325,12 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	}
 
 	rewind(fsrc);
+
+#ifdef G_OS_WIN32
+	/* check for obsolete png term specification (as may be found
+	   in an old session file) */
+	check_win32_png_spec(restore_line);
+#endif	
 
 	if (*restore_line) {
 	    fputs(restore_line, ftmp);
@@ -3801,6 +3819,11 @@ void display_session_graph_png (const char *fname)
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fullname);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
+
+    if (err) {
+	/* display the bad graph file */
+	view_file(fullname, 0, 0, 78, 350, VIEW_FILE);
+    }
 
     if (!err) {
 	err = gnuplot_show_png(fullname, NULL, 1);

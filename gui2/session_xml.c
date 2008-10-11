@@ -19,6 +19,7 @@ static int check_graph_file (const char *fname)
 	err = 1;
     } else {
 	fclose(fp);
+	fprintf(stderr, "Opened '%s' OK\n", fullname);
 	err = maybe_recode_gp_file_to_utf8(fullname);
     }
 
@@ -81,6 +82,8 @@ static int restore_session_graphs (xmlNodePtr node)
 
     cur = node->xmlChildrenNode;
 
+    fprintf(stderr, "Doing restore_session_graphs\n");
+
     while (cur != NULL) {
 	xmlChar *name = NULL;
 	xmlChar *fname = NULL;
@@ -96,6 +99,7 @@ static int restore_session_graphs (xmlNodePtr node)
 	    if (fname == NULL) {
 		err = 1;
 	    } else {
+		fprintf(stderr, "checking '%s'\n", name);
 		err = check_graph_file((const char *) fname);
 		if (!err) {
 		    normalize_graph_filename((char *) fname, &gnum, &pnum);
