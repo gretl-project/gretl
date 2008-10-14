@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-20 09:39-0400\n"
-"PO-Revision-Date: 2008-10-13 17:46+0300\n"
+"PO-Revision-Date: 2008-10-14 10:48+0300\n"
 "POT-Creation-Date: 2008-09-27 11:21-0400\n"
 "PO-Revision-Date: 2008-09-27 11:31-0400\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
@@ -2900,7 +2900,7 @@ msgid ""
 msgstr ""
 "                  Rassal etkiler tahmin edicisi\n"
 "       hata teriminde birime özel bir bileşene izin verir\n"
-"(ölçünlü hatalar parantez, p-değerleri köşeli ayraç içerisinde)\n"
+"(ölçünlü hatalar parantez, p-değerleri köşeli ayraç içerisindedir)\n"
 
 #: lib/src/gretl_panel.c:1306
 msgid ""
@@ -2910,7 +2910,7 @@ msgid ""
 msgstr ""
 "Sabit etkiler tahmin edicisi\n"
 "kesit birime göre farklılık gösteren sabit terimlere izin verir\n"
-"eğim ölçünlü hataları parantez, p-değerleri köşeli ayraç içerisinde\n"
+"eğim ölçünlü hataları parantez, p-değerleri köşeli ayraç içerisindedir\n"
 
 #: lib/src/gretl_panel.c:1319
 #, c-format
@@ -5899,7 +5899,7 @@ msgstr "Eştümlevleyen yöneyler"
 #: lib/src/varprint.c:633 lib/src/varprint.c:689 gui2/model_table.c:1130
 #: plugin/jrestrict.c:2779 plugin/jrestrict.c:2812
 msgid "standard errors in parentheses"
-msgstr "ölçünlü hatalar parantez içerisinde"
+msgstr "ölçünlü hatalar parantez içerisindedir"
 
 #: lib/src/texprint.c:820
 msgid "Adjustment vectors"
@@ -5911,7 +5911,7 @@ msgstr "kovaryans dizey belirleyeni"
 
 #: lib/src/texprint.c:1343 gui2/model_table.c:925
 msgid "$t$-statistics in parentheses"
-msgstr "$t$-istatistikleri parantez içerisinde"
+msgstr "$t$-istatistikleri parantez içerisindedir"
 
 #: lib/src/transforms.c:134
 #, c-format
@@ -11799,11 +11799,11 @@ msgstr "Model %d"
 
 #: gui2/model_table.c:823 gui2/model_table.c:1029 gui2/model_table.c:1131
 msgid "t-statistics in parentheses"
-msgstr "t-istatistikleri parantez içerisinde"
+msgstr "t-istatistikleri parantez içerisindedir"
 
 #: gui2/model_table.c:825 gui2/model_table.c:927 gui2/model_table.c:1031
 msgid "Standard errors in parentheses"
-msgstr "Ölçünlü hatalar parantez içerisinde"
+msgstr "Ölçünlü hatalar parantez içerisindedir"
 
 #: gui2/model_table.c:828 gui2/model_table.c:931 gui2/model_table.c:1035
 msgid "* indicates significance at the 10 percent level"
