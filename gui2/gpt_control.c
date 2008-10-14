@@ -759,6 +759,8 @@ static int revise_plot_file (GPT_SPEC *spec,
     if (non_ascii_gp_file(fpin)) {
 	/* plot contains UTF-8 strings */
 	if (!term_uses_utf8(ttype)) {
+	    /* FIXME display pdf */
+	    fprintf(stderr, "non-UTF-8 terminal\n");
 	    latin = iso_latin_version();
 	    maybe_print_gp_encoding(ttype, latin, fpout);
 	} else if (gnuplot_has_utf8()) {
