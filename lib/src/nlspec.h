@@ -30,7 +30,9 @@ struct _nlspec {
     int mode;           /* derivatives: numeric or analytic */
     gretlopt opt;       /* can include OPT_V for verbose output; if ci = MLE
 			   can also include OPT_H (Hessian) or OPT_R (QML)
-			   to control the estimator of the variance matrix 
+			   to control the estimator of the variance matrix;
+			   new: can also include OPT_N to force use of 
+			   numerical derivatives.
 			*/
     int dv;             /* ID number of dependent variable (NLS) */
     char lhname[VNAMELEN]; /* name of LHS var in criterion function */
