@@ -9,6 +9,7 @@ version 1.7.10, in progress
   to force the use of numerical derivatives
 - Small graphing and GUI fixes
 - MS Windows: fix for opening graphs in old session files
+- Graphs: "display PDF" option: fix possible encoding issue
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
