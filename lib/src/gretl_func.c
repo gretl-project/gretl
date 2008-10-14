@@ -2483,7 +2483,9 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
     } else {
 	for (i=0; i<n_ufuns; i++) {
 	    if (!strcmp(fname, ufuns[i]->name)) {
-		pprintf(prn, _("Redefining function '%s'"), fname);
+		if (libset_get_bool(VERBOSE_INCLUDE)) {
+		    pprintf(prn, _("Redefining function '%s'"), fname);
+		}
 		pputc(prn, '\n');
 		if (pfun != NULL) {
 		    clear_ufunc_data(ufuns[i]);

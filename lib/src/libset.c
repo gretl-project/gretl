@@ -39,20 +39,21 @@ enum {
 };
 
 enum {
-    STATE_USE_CWD        = 1 << 0,  /* store: use current dir as default */
-    STATE_ECHO_ON        = 1 << 1,  /* echoing commands or not */
-    STATE_MSGS_ON        = 1 << 2,  /* emitting non-error messages or not */
-    STATE_FORCE_DECPOINT = 1 << 3,  /* override locale decimal separator */
-    STATE_USE_PCSE       = 1 << 4,  /* Beck-Katz panel-corrected std errs */
-    STATE_USE_QR         = 1 << 5,  /* QR decomposition is OLS default */
-    STATE_PREWHITEN      = 1 << 6,  /* HAC pre-whitening? */
-    STATE_FORCE_HC       = 1 << 7,  /* don't use HAC for time series */
-    STATE_HALT_ON_ERR    = 1 << 8,  /* errors fatal in batch mode */
-    STATE_USE_LBFGS      = 1 << 9,  /* prefer LBFGS to BFGS? */
-    STATE_SHELL_OK       = 1 << 10, /* "shell" facility is approved? */
-    STATE_MAX_VERBOSE    = 1 << 11, /* verbose output from maximizer? */
-    STATE_USE_FCP        = 1 << 12, /* use FCP garch code */
-    STATE_WARN_ON        = 1 << 13  /* print numerical warning messages */
+    STATE_USE_CWD         = 1 << 0,  /* store: use current dir as default */
+    STATE_ECHO_ON         = 1 << 1,  /* echoing commands or not */
+    STATE_MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
+    STATE_FORCE_DECPOINT  = 1 << 3,  /* override locale decimal separator */
+    STATE_USE_PCSE        = 1 << 4,  /* Beck-Katz panel-corrected std errs */
+    STATE_USE_QR          = 1 << 5,  /* QR decomposition is OLS default */
+    STATE_PREWHITEN       = 1 << 6,  /* HAC pre-whitening? */
+    STATE_FORCE_HC        = 1 << 7,  /* don't use HAC for time series */
+    STATE_HALT_ON_ERR     = 1 << 8,  /* errors fatal in batch mode */
+    STATE_USE_LBFGS       = 1 << 9,  /* prefer LBFGS to BFGS? */
+    STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
+    STATE_MAX_VERBOSE     = 1 << 11, /* verbose output from maximizer? */
+    STATE_USE_FCP         = 1 << 12, /* use FCP garch code */
+    STATE_WARN_ON         = 1 << 13,  /* print numerical warning messages */
+    STATE_VERBOSE_INCLUDE = 1 << 14  /* verbose include */
 };    
 
 /* for values that really want a non-negative integer */
@@ -117,7 +118,8 @@ struct set_vars_ {
 			   !strcmp(s, SHELL_OK) || \
 			   !strcmp(s, USE_CWD) || \
 			   !strcmp(s, USE_FCP) || \
-                           !strcmp(s, PROTECT_LISTS))
+                           !strcmp(s, PROTECT_LISTS) || \
+                           !strcmp(s, VERBOSE_INCLUDE))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -1177,6 +1179,7 @@ static int display_settings (PRN *prn)
 
     libset_print_bool(USE_CWD, prn);
     libset_print_bool(PROTECT_LISTS, prn);
+    libset_print_bool(VERBOSE_INCLUDE, prn);
 
     libset_header(_("Numerical methods"), prn);
 
@@ -1657,6 +1660,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_PREWHITEN;
     } else if (!strcmp(s, PCSE)) {
 	return STATE_USE_PCSE;
+    } else if (!strcmp(s, VERBOSE_INCLUDE)) {
+	return STATE_VERBOSE_INCLUDE;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	

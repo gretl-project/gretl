@@ -7277,7 +7277,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		script_code = SCRIPT_EXEC;
 	    }
 	    if (cmd->ci == INCLUDE) {
-		pprintf(prn, _("%s opened OK\n"), runfile);
+		if (libset_get_bool(VERBOSE_INCLUDE)) {
+		    pprintf(prn, _("%s opened OK\n"), runfile);
+		}
 		script_code |= INCLUDE_EXEC;
 	    }
 	    err = execute_script(runfile, NULL, prn, script_code);

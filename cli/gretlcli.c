@@ -1012,7 +1012,9 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    fb = pop_input_file();
 	} else {
 	    strcpy(s->runfile, runfile);
-	    fprintf(stderr, _("%s opened OK\n"), runfile);
+	    if (libset_get_bool(VERBOSE_INCLUDE)) {
+		pprintf(prn, _("%s opened OK\n"), runfile);
+	    }
 	    if (cmd->ci == INCLUDE) {
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    } else {
