@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-09-20 09:39-0400\n"
-"PO-Revision-Date: 2008-10-15 08:49+0300\n"
+"PO-Revision-Date: 2008-10-15 17:24+0300\n"
 "POT-Creation-Date: 2008-09-27 11:21-0400\n"
 "PO-Revision-Date: 2008-09-27 11:31-0400\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
@@ -9577,7 +9577,7 @@ msgstr "Zaman _dizisi çizimi..."
 
 #: gui2/gretl.c:1347
 msgid "X-Y _scatter..."
-msgstr "X-Y _serpinti çizimi..."
+msgstr "X-Y _serpilme çizimi..."
 
 #: gui2/gretl.c:1348
 msgid "X-Y with _impulses..."
@@ -9609,7 +9609,7 @@ msgstr "_Çoklu çizimler"
 
 #: gui2/gretl.c:1355
 msgid "X-Y _scatters..."
-msgstr "X-Y _serpinti çizimi..."
+msgstr "X-Y _serpilme çizimi..."
 
 #: gui2/gretl.c:1356
 msgid "_Time series..."
@@ -11664,7 +11664,7 @@ msgstr "İlinti dizeyi"
 
 #: gui2/menustate.c:347 gui2/menustate.c:410 gui2/selector.c:4149
 msgid "XY scatterplot"
-msgstr "X-Y serpinti çizimi"
+msgstr "X-Y serpilme çizimi"
 
 #: gui2/menustate.c:480
 msgid "Daily"
@@ -12322,7 +12322,7 @@ msgstr "3B çizim"
 
 #: gui2/selector.c:4155
 msgid "multiple scatterplots"
-msgstr "Çoklu serpinti çizimi"
+msgstr "Çoklu serpilme çizimleri"
 
 #: gui2/selector.c:4157
 msgid "factorized plot"
@@ -12330,7 +12330,7 @@ msgstr "Ayrıştırılmış çizim"
 
 #: gui2/selector.c:4159
 msgid "scatterplot with control"
-msgstr "denetimli serpinti çizimi"
+msgstr "denetimli serpilme çizimi"
 
 #: gui2/selector.c:4161
 msgid "functions to package"
