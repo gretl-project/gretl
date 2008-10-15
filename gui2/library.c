@@ -5437,6 +5437,7 @@ static int get_terminal (char *s)
 	"rxvt",
 	"gnome-terminal",
 	"kterm",
+	"urxvt",
 	NULL
     };
     gchar *test;

@@ -1299,7 +1299,7 @@ struct langname {
 
 static void set_lcnumeric (void)
 {
-    if (lcnumeric) {
+    if (lcnumeric && langpref != ENGLISH) {
 	struct langname names[] = {
 	    { "es", "Spanish" },
 	    { "eu", "Basque" },
@@ -1345,7 +1345,7 @@ static void set_lcnumeric (void)
 
 static void set_lcnumeric (void)
 {
-    if (lcnumeric) {
+    if (lcnumeric && langpref != ENGLISH) {
 	char *lang = getenv("LANG");
 	char *set = NULL;
 
@@ -1627,7 +1627,7 @@ static int common_read_rc_setup (void)
     set_lcnumeric();
     if (langpref > 0) {
 	force_language(langpref);
-    }
+    } 
 # endif
 
     return err;
