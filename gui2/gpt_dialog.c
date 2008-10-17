@@ -1061,6 +1061,174 @@ static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)
     set_keyspec_sensitivity(spec);
 }
 
+struct new_line_info_ {
+    GtkWidget *dlg;
+    GtkWidget *formula_entry;
+    GtkWidget *title_entry;
+    GtkWidget *style_combo;
+    GtkWidget *width_spin;
+    GPT_SPEC *spec;
+};
+
+typedef struct new_line_info_ new_line_info;
+
+static void gpt_tab_new_line (new_line_info *nlinfo) 
+{
+    GtkWidget *label, *tbl;
+    GtkWidget *vbox, *hbox;
+    int tbl_len, tbl_num, tbl_col;
+    char label_text[32];
+    GList *stylist = NULL;
+
+    stylist = g_list_append(stylist, "lines");
+    stylist = g_list_append(stylist, "points");
+    stylist = g_list_append(stylist, "linespoints"); 
+
+    vbox = GTK_DIALOG(nlinfo->dlg)->vbox;
+
+    tbl_len = 1;
+    tbl = gp_dialog_table(tbl_len, 3, vbox);
+    gtk_widget_show(tbl);
+   
+    tbl_num = tbl_col = 0;
+
+    /* identifier and formula text */
+    tbl_len++;
+    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+    sprintf(label_text, _("line %d: "), gui_nlines + 1);
+    label = gtk_label_new(label_text);
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 0, 1, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
+
+    label = gtk_label_new(_("formula"));
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 1, 2, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
+
+    nlinfo->formula_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(nlinfo->formula_entry), "");
+    gtk_entry_set_width_chars(GTK_ENTRY(nlinfo->formula_entry), 32);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      nlinfo->formula_entry, 2, 3, tbl_len-1, tbl_len);
+    /* "activate" signal? */
+    gtk_widget_show(nlinfo->formula_entry);
+
+    /* key or legend text */
+    tbl_len++;
+    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+
+    label = gtk_label_new(_("legend"));
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 1, 2, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
+
+    nlinfo->title_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(nlinfo->title_entry), "");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      nlinfo->title_entry, 2, 3, tbl_len-1, tbl_len);
+    /* "activate" signal? */
+    gtk_widget_show(nlinfo->title_entry);
+
+    /* line type or style */
+    tbl_len++;
+    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+    label = gtk_label_new(_("type"));
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 1, 2, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
+
+    nlinfo->style_combo = gtk_combo_box_entry_new_text();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      nlinfo->style_combo, 2, 3, tbl_len-1, tbl_len);
+    set_combo_box_strings_from_list(GTK_COMBO_BOX(nlinfo->style_combo), stylist);
+    set_combo_box_default_text(GTK_COMBO_BOX(nlinfo->style_combo), "lines");
+    gtk_widget_show(nlinfo->style_combo);	
+
+    /* line-width adjustment */
+    tbl_len++;
+    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+    label = gtk_label_new(_("line width"));
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 1, 2, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    nlinfo->width_spin = gtk_spin_button_new_with_range(1, 6, 1);
+    /* "activate" signal? */
+    gtk_box_pack_start(GTK_BOX(hbox), nlinfo->width_spin, FALSE, FALSE, 0);
+    gtk_widget_show(nlinfo->width_spin);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
+			      tbl_len-1, tbl_len);
+    gtk_widget_show(hbox);
+
+    g_list_free(stylist);
+}
+
+static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
+{
+    const gchar *s;
+    gchar *style;
+    gint lw;
+
+    fprintf(stderr, "Got real_add_line\n");
+    s = gtk_entry_get_text(GTK_ENTRY(nlinfo->formula_entry));
+    fprintf(stderr, "formula = '%s'\n", s);
+    s = gtk_entry_get_text(GTK_ENTRY(nlinfo->title_entry));
+    fprintf(stderr, "title = '%s'\n", s);
+    style = gtk_combo_box_get_active_text(GTK_COMBO_BOX(nlinfo->style_combo));
+    fprintf(stderr, "style = '%s'\n", style);
+    g_free(style);
+    lw = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(nlinfo->width_spin));    
+    fprintf(stderr, "line width = %d\n", lw);
+
+    /* OK, now actually do something with this info */
+    
+    gtk_widget_destroy(nlinfo->dlg);
+}
+
+static void add_line_callback (GtkWidget *w, GPT_SPEC *spec)
+{
+    new_line_info *nlinfo;
+    GtkWidget *hbox;
+    GtkWidget *button;
+
+    nlinfo = mymalloc(sizeof *nlinfo);
+    if (nlinfo == NULL) {
+	return;
+    }
+
+    nlinfo->spec = spec;
+
+    nlinfo->dlg = gretl_dialog_new(_("Add line"), gpt_control, GRETL_DLG_BLOCK);
+
+    gpt_tab_new_line(nlinfo);
+
+    hbox = GTK_DIALOG(nlinfo->dlg)->action_area;
+
+    button = cancel_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(delete_widget), nlinfo->dlg);
+    gtk_widget_show(button);
+
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(real_add_line), nlinfo);
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);
+
+    context_help_button(hbox, 0); /* FIXME help code */
+
+    gtk_widget_show(nlinfo->dlg);
+
+    free(nlinfo);
+}
+
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *label, *tbl;
@@ -1256,6 +1424,23 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(hbox);
     }
 
+#if 0 /* not ready yet */
+    /* button for adding a line */
+    if (1) {
+	GtkWidget *button;
+
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	button = gtk_button_new_with_label(_("Add line..."));
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(add_line_callback), 
+			 spec);
+	gtk_widget_show(button);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
+				  tbl_len-1, tbl_len);
+    }
+#endif
+
     g_list_free(stylist);
 }
 
@@ -1350,7 +1535,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	    icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
 	    image = gtk_image_new_from_pixbuf(icon);
 	    gtk_widget_set_size_request(button, 32, 26);
-	    gtk_container_add (GTK_CONTAINER(button), image);
+	    gtk_container_add(GTK_CONTAINER(button), image);
 	    gtk_container_add(GTK_CONTAINER(hbox), button);
 	    gtk_widget_show_all(button);
 	}
