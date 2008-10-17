@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-15 18:14-0400\n"
-"PO-Revision-Date: 2008-10-09 01:22+0300\n"
+"PO-Revision-Date: 2008-10-18 00:38+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -153,7 +153,7 @@ msgstr "Критические значения"
 
 #: lib/src/adf_kpss.c:854
 msgid "Robust estimate of variance"
-msgstr ""
+msgstr "Робастная оценка дисперсии"
 
 #: lib/src/adf_kpss.c:855
 msgid "Sum of squares of cumulated residuals"
@@ -360,8 +360,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -447,7 +446,7 @@ msgstr "фиктивная переменная для теста Чоу"
 
 #: lib/src/compare.c:1994
 msgid "Chow F-test for break"
-msgstr ""
+msgstr "F-статистика для теста Чоу"
 
 #: lib/src/compare.c:2035
 msgid ""
@@ -492,12 +491,12 @@ msgstr ""
 
 #: lib/src/compare.c:2163
 msgid "Invalid sample split for Chow test"
-msgstr ""
+msgstr "Недопостимое наблюдение для разделения выборки в тесте Чоу"
 
 #: lib/src/compare.c:2259 lib/src/gretl_model.c:2716
 #, c-format
 msgid "Chow test for structural break at observation %s"
-msgstr ""
+msgstr "Тест Чоу для структурных изменений в точке %s"
 
 #: lib/src/compare.c:2400
 msgid "Observation"
@@ -672,8 +671,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
@@ -1283,8 +1281,7 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -1762,12 +1759,12 @@ msgstr "Не получилось построить матрицу Хессиа
 #: lib/src/discrete.c:510
 #, c-format
 msgid "Iteration %d: log likelihood = NA"
-msgstr ""
+msgstr "Итерация %d: логарифмическое правдоподобие = NA"
 
 #: lib/src/discrete.c:512
 #, c-format
 msgid "Iteration %d: log likelihood = %#.12g"
-msgstr ""
+msgstr "Итерация %d: логарифмическое правдоподобие = %#.12g"
 
 #: lib/src/discrete.c:831
 #, c-format
@@ -2976,7 +2973,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:3148 plugin/poisson.c:327
 msgid "iteration"
-msgstr ""
+msgstr "Итерация"
 
 #: lib/src/gretl_panel.c:3720
 #, c-format
@@ -3980,8 +3977,7 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:991
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:994
 #, c-format
@@ -3998,7 +3994,7 @@ msgstr "Вспомогательная регрессия для теста на
 
 #: lib/src/modelprint.c:1016
 msgid "Augmented regression for Chow test"
-msgstr ""
+msgstr "Расширенная регрессия для теста Чоу"
 
 #: lib/src/modelprint.c:1018
 msgid "Cointegrating regression -- "
@@ -4196,11 +4192,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:1127
 msgid "Ordered Logit"
-msgstr ""
+msgstr "Упорядоченный логит"
 
 #: lib/src/modelprint.c:1133
 msgid "Ordered Probit"
-msgstr ""
+msgstr "Упорядоченный пробит"
 
 #: lib/src/modelprint.c:1139
 msgid "Two-step Heckit"
@@ -4282,8 +4278,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1389 lib/src/modelprint.c:1395
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:1390 lib/src/modelprint.c:1396
 msgid "variant"
@@ -4388,8 +4383,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1705 lib/src/modelprint.c:1712
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1708 lib/src/modelprint.c:1715
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -4612,12 +4606,12 @@ msgstr ""
 #: lib/src/modelprint.c:2533 lib/src/nls.c:3984
 #, c-format
 msgid "Function evaluations: %d\n"
-msgstr ""
+msgstr "Оценок функции: %d\n"
 
 #: lib/src/modelprint.c:2534 lib/src/nls.c:3985
 #, c-format
 msgid "Evaluations of gradient: %d\n"
-msgstr ""
+msgstr "Оценок градиента: %d\n"
 
 #: lib/src/modelprint.c:3768
 msgid "Sum of AR coefficients"
@@ -4988,7 +4982,7 @@ msgstr ""
 #: gui2/guiprint.c:1724 gui2/guiprint.c:1783 gui2/guiprint.c:1819
 #: gui2/series_view.c:198
 msgid "Obs"
-msgstr ""
+msgstr "Наблюдения"
 
 #: lib/src/nonparam.c:250 lib/src/nonparam.c:251
 msgid "rank"
@@ -5026,8 +5020,7 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5179,8 +5172,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
@@ -5283,8 +5275,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:529
 #, c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:555 lib/src/printout.c:563
@@ -5412,30 +5403,32 @@ msgstr ""
 
 #: lib/src/printout.c:2291
 msgid "Criterion"
-msgstr ""
+msgstr "Критерий"
 
 #: lib/src/printout.c:2301
 msgid ""
 "\n"
 "--- FINAL VALUES: \n"
 msgstr ""
+"\n"
+"--- ОКОНЧАТЕЛЬНЫЕ ЗНАЧЕНИЯ: \n"
 
 #: lib/src/printout.c:2303
 msgid "Iteration"
-msgstr ""
+msgstr "Итерация"
 
 #: lib/src/printout.c:2313
 #, c-format
 msgid " (steplength = %g)"
-msgstr ""
+msgstr " (шаг = %g)"
 
 #: lib/src/printout.c:2318 plugin/fcp.c:249
 msgid "Parameters: "
-msgstr ""
+msgstr "Параметры: "
 
 #: lib/src/printout.c:2324 plugin/fcp.c:262
 msgid "Gradients:  "
-msgstr ""
+msgstr "Градиенты:  "
 
 #: lib/src/printscan.c:608
 msgid "sscanf: numerical target must be scalar"
@@ -5448,7 +5441,7 @@ msgstr "%s: не является строковой переменной"
 
 #: lib/src/pvalues.c:1438 gui2/calculator.c:1207
 msgid "Standard normal distribution"
-msgstr ""
+msgstr "Стандартное нормальное распределение"
 
 #: lib/src/pvalues.c:1445
 #, c-format
@@ -5458,7 +5451,7 @@ msgstr "Хи-квадрат(%g)"
 #: lib/src/pvalues.c:1469 gui2/calculator.c:1214
 #, c-format
 msgid "right-tail probability = %g"
-msgstr ""
+msgstr "правосторонняя вероятность = %g"
 
 #: lib/src/pvalues.c:1471 gui2/calculator.c:1216
 #, c-format
@@ -5468,12 +5461,12 @@ msgstr ""
 #: lib/src/pvalues.c:1474 gui2/calculator.c:1219
 #, c-format
 msgid "two-tailed probability = %g"
-msgstr ""
+msgstr "двухсторонняя вероятность = %g"
 
 #: lib/src/pvalues.c:1477 gui2/calculator.c:1222
 #, c-format
 msgid "Critical value = %g"
-msgstr ""
+msgstr "Критическое значение = %g"
 
 #: lib/src/pvalues.c:1696
 #, c-format
@@ -5525,13 +5518,13 @@ msgstr ""
 #: lib/src/pvalues.c:1790 lib/src/pvalues.c:1806
 #, c-format
 msgid " Prob(x <= %d) = %g\n"
-msgstr ""
+msgstr " Prob(x <= %d) = %g\n"
 
 #: lib/src/pvalues.c:1791 lib/src/pvalues.c:1794 lib/src/pvalues.c:1807
 #: lib/src/pvalues.c:1810
 #, c-format
 msgid " Prob(x = %d) = %g\n"
-msgstr ""
+msgstr " Prob(x = %d) = %g\n"
 
 #: lib/src/pvalues.c:1801
 #, c-format
@@ -5605,8 +5598,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -7060,7 +7052,7 @@ msgstr ""
 
 #: gui2/callbacks.c:667 gui2/library.c:2739
 msgid "gretl: simultaneous equations system"
-msgstr ""
+msgstr "gretl: система одновременных уравнений"
 
 #: gui2/callbacks.c:668
 msgid "Specify simultaneous equations:"
@@ -8209,7 +8201,7 @@ msgstr ""
 
 #: gui2/dlgutils.c:847 gui2/selector.c:3475
 msgid "Show details of iterations"
-msgstr ""
+msgstr "Показать отчет об итерациях"
 
 #: gui2/dlgutils.c:851 gui2/selector.c:3421
 msgid "Robust standard errors"
@@ -10423,7 +10415,7 @@ msgstr "_Коррелограмма остатков"
 
 #: gui2/gui_utils.c:2269
 msgid "Residual _spectrum"
-msgstr ""
+msgstr "_Спектр остатков"
 
 #: gui2/gui_utils.c:2290
 #, c-format
@@ -10929,11 +10921,11 @@ msgstr "gretl: тест Чоу"
 
 #: gui2/library.c:2162
 msgid "Observation at which to split the sample:"
-msgstr ""
+msgstr "Номер наблюдения для разделения выборки:"
 
 #: gui2/library.c:2209
 msgid "gretl: Chow test output"
-msgstr ""
+msgstr "gretl: результаты теста Чоу"
 
 #: gui2/library.c:2211
 msgid "gretl: QLR test output"
@@ -11387,7 +11379,7 @@ msgstr ""
 
 #: gui2/menustate.c:299 gui2/menustate.c:371
 msgid "Spectrum"
-msgstr ""
+msgstr "Спектр"
 
 #: gui2/menustate.c:301
 msgid "ARIMA model"
@@ -11478,8 +11470,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11985,11 +11976,11 @@ msgstr "Использовать матрицу ковариаций"
 
 #: gui2/selector.c:3739
 msgid "Show slopes at mean"
-msgstr ""
+msgstr "Показывать серединный угловой коэффициент"
 
 #: gui2/selector.c:3743
 msgid "Show p-values"
-msgstr ""
+msgstr "Показывать р-значения"
 
 #: gui2/selector.c:3755
 msgid "Use points"
@@ -12245,7 +12236,7 @@ msgstr ""
 
 #: gui2/series_view.c:529
 msgid "Select data format"
-msgstr ""
+msgstr "Формат данных:"
 
 #: gui2/session.c:146 gui2/session.c:1627 gui2/session.c:2556
 #: gui2/session.c:2564 gui2/session.c:2917
@@ -13088,11 +13079,11 @@ msgstr "Отменить"
 
 #: gui2/toolbar.c:479
 msgid "Sort"
-msgstr ""
+msgstr "Сортировать"
 
 #: gui2/toolbar.c:480
 msgid "Sort by..."
-msgstr ""
+msgstr "Сортировать по..."
 
 #: gui2/toolbar.c:481
 msgid "Configure tabs..."
@@ -13116,7 +13107,7 @@ msgstr "LaTeX"
 
 #: gui2/toolbar.c:488
 msgid "Reformat..."
-msgstr ""
+msgstr "Изменить формат..."
 
 #: gui2/toolbar.c:489
 msgid "Add to dataset..."
@@ -13211,14 +13202,12 @@ msgid "ARMA initialization"
 msgstr ""
 
 #: plugin/arma.c:2220
-#, fuzzy
 msgid "using nonlinear AR model"
-msgstr "_Нелинейные модели"
+msgstr ""
 
 #: plugin/arma.c:2223
-#, fuzzy
 msgid "using linear AR model"
-msgstr "_Нелинейные модели"
+msgstr ""
 
 #: plugin/arma_common.c:698 plugin/arma_common.c:785
 msgid "Error in arma command"
@@ -13268,7 +13257,7 @@ msgstr ""
 
 #: plugin/excel_import.c:1456
 msgid "Failed to process Excel file"
-msgstr ""
+msgstr "Ошибка при обработке файла Excel"
 
 #: plugin/excel_import.c:1470 plugin/gnumeric_import.c:242
 msgid "Starting row is out of bounds.\n"
@@ -13299,7 +13288,7 @@ msgstr ""
 
 #: plugin/fiml.c:892
 msgid "Gradients at last iteration"
-msgstr ""
+msgstr "Градиенты на последней итерации"
 
 #: plugin/fractals.c:40
 msgid "Rescaled-range plot for"
@@ -13348,7 +13337,7 @@ msgstr ""
 
 #: plugin/fractals.c:252
 msgid "Regression results"
-msgstr ""
+msgstr "Результаты регрессии"
 
 #: plugin/fractals.c:253
 msgid "coeff"
@@ -13419,7 +13408,7 @@ msgstr ""
 
 #: plugin/import_common.c:402
 msgid "gretl: spreadsheet import"
-msgstr ""
+msgstr "gretl: импорт рабочей книги"
 
 #: plugin/import_common.c:413
 msgid "Start import at:"
@@ -14014,3 +14003,4 @@ msgstr "Строки"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
+
