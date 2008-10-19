@@ -20,16 +20,26 @@
 #ifndef PLOTSPEC_H
 #define PLOTSPEC_H
 
+#define GP_MAXFORMULA 128
+#define GP_MAXSTYLE    16
+#define GP_MAXSCALE     8
+
+typedef enum {
+    GP_LINE_AUTOFIT  = 1 << 0,
+    GP_LINE_SUPPRESS = 1 << 1
+} gp_line_flags;
+
 typedef struct {
-    int varnum;            /* ID number of variable to plot */
-    char title[MAXTITLE];  /* key or legend title */
-    char formula[128];     /* expression to plot (rather than data) */
-    char style[16];        /* lines, points, etc. */
-    char scale[8];         /* string representation of scale factor */
-    int yaxis;             /* 1 for left, 2 for right */
-    int type;              /* 1, 2, ... (color) */
-    int width;             /* default 1, could be bigger */
-    int ncols;             /* number of data columns (0 for formula) */
+    int varnum;                    /* ID number of variable to plot */
+    char title[MAXTITLE];          /* key or legend title */
+    char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
+    char style[GP_MAXSTYLE];       /* lines, points, etc. */
+    char scale[GP_MAXSCALE];       /* string representation of scale factor */
+    char yaxis;                    /* 1 for left, 2 for right */
+    int type;                      /* 1, 2, ... (color) */
+    int width;                     /* default 1, could be bigger */
+    char ncols;                    /* number of data columns (0 for formula) */
+    char flags;                    /* additional options */
 } GPT_LINE;
 
 #define PLOT_LABEL_TEXT_LEN 31

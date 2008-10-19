@@ -159,6 +159,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].type = 0;
     lines[n].width = 1;
     lines[n].ncols = 0;
+    lines[n].flags = 0;
 
     return 0;
 }
@@ -364,6 +365,19 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     gretl_pop_c_numeric_locale();
 }
 
+static int more_lines (const GPT_SPEC *spec, int i, int skipline)
+{
+    if (i == spec->n_lines - 1) {
+	/* at last line */
+	return 0;
+    } else if (i == spec->n_lines - 2 && i + 1 == skipline) {
+	/* at penultimate line, but last is hidden */
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
                      s->fit == PLOT_FIT_QUADRATIC || \
                      s->fit == PLOT_FIT_INVERSE || \
@@ -375,15 +389,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     int png = get_png_output(spec);
     int mono = (spec->flags & GPT_MONO);
     int started_data_lines = 0;
-    int n_lines = spec->n_lines;
     double et, yt;
     double *x[4];
     int any_y2 = 0;
+    int skipline = -1;
     int miss = 0;
-
-    if (spec->flags & GPT_FIT_HIDDEN) {
-	n_lines--;
-    }
 
     if (spec->pd > 0) {
 	fprintf(fp, "# timeseries %d", spec->pd);
@@ -506,16 +516,39 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     fputs("plot \\\n", fp);
 
-    for (i=0; i<n_lines; i++) {
+    if (spec->flags & GPT_FIT_HIDDEN) {
+	/* which line should we skip? */
+	for (i=0; i<spec->n_lines; i++) {
+	    /* the first line that uses a formula? (FIXME loess?) */
+	    if (spec->lines[i].formula[0] != '\0') {
+		skipline = i;
+		break;
+	    }
+	}
+    }    
+
+    for (i=0; i<spec->n_lines; i++) {
+	if (i == skipline) {
+	    continue;
+	}
 	if ((spec->flags & GPT_Y2AXIS) && spec->lines[i].yaxis != 1) {
 	    any_y2 = 1;
 	    break;
 	}
     }
 
-    for (i=0; i<n_lines; i++) {
+    for (i=0; i<spec->n_lines; i++) {
+	if (i == skipline) {
+	    if (i < spec->n_lines - 1) {
+		continue;
+	    } else {
+		break;
+	    }
+	}
 
-	if (strcmp(spec->lines[i].scale, "NA")) {
+	if (!strcmp(spec->lines[i].scale, "NA")) {
+	    fprintf(fp, "%s ", spec->lines[i].formula); 
+	} else {
 	    if (!strcmp(spec->lines[i].scale, "1.0")) {
 		fputs("'-' using 1", fp);
 		if (spec->lines[i].ncols == 2) {
@@ -530,9 +563,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 		fprintf(fp, "'-' using 1:($2*%s) ", 
 			spec->lines[i].scale);
 	    }
-	} else {
-	    fprintf(fp, "%s ", spec->lines[i].formula); 
-	}
+	} 
 
 	if ((spec->flags & GPT_Y2AXIS) && spec->lines[i].yaxis != 1) {
 	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
@@ -559,11 +590,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, " lw %d", spec->lines[i].width);
 	}
 
-	if (i == n_lines - 1) {
-	    fputc('\n', fp);
-	} else {
+	if (more_lines(spec, i, skipline)) {
 	    fputs(", \\\n", fp);
-	}
+	} else {
+	    fputc('\n', fp);
+	} 
     } 
 
     miss = 0;
@@ -576,6 +607,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	int j;
 
 	if (spec->lines[i].ncols == 0) {
+	    /* no data to print */
 	    continue;
 	}
 

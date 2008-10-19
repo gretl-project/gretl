@@ -106,6 +106,7 @@ enum extra_cmds {
     HILU,
     PWE,
     AFR, /* actual, fitted, residual */
+    GPT_ADDLINE,
     GUI_CMD_MAX
 };
 

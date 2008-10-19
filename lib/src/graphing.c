@@ -1455,7 +1455,7 @@ static int get_fitted_line (gnuplot_info *gi,
 		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
 			(c[1] > 0)? '+' : '-', fabs(c[1]));
 		gretl_push_c_numeric_locale();
-		sprintf(targ, "%g + %g*x title '%s' w lines\n", 
+		sprintf(targ, "%g + %g*x title '%s' w lines # autofit\n", 
 			c[0], c[1], title);
 		gretl_pop_c_numeric_locale();
 		gi->fit = PLOT_FIT_OLS;
@@ -1464,14 +1464,14 @@ static int get_fitted_line (gnuplot_info *gi,
 	    sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
 		    (c[1] > 0)? '+' : '-', fabs(c[1]));
 	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%g + %g*x title '%s' w lines\n", 
+	    sprintf(targ, "%g + %g*x title '%s' w lines # autofit\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
 	    sprintf(title, "Y = %#.3g %c %#.3g/X", c[0],
 		    (c[1] > 0)? '+' : '-', fabs(c[1]));
 	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%g + %g/x title '%s' w lines\n", 
+	    sprintf(targ, "%g + %g/x title '%s' w lines # autofit\n", 
 		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
@@ -1479,7 +1479,7 @@ static int get_fitted_line (gnuplot_info *gi,
 		    (c[1] > 0)? '+' : '-', fabs(c[1]),
 		    (c[2] > 0)? '+' : '-', fabs(c[2])),
 	    gretl_push_c_numeric_locale();
-	    sprintf(targ, "%g + %g*x + %g*x**2 title '%s' w lines\n", 
+	    sprintf(targ, "%g + %g*x + %g*x**2 title '%s' w lines # autofit\n", 
 		    c[0], c[1], c[2], title);
 	    gretl_pop_c_numeric_locale();
 	}
