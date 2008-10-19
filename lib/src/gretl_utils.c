@@ -1417,11 +1417,13 @@ static int non_fatal (const char *s)
        "Could not find/open font when opening font X, using default" 
        "gnuplot_x11: Some character sets not available" 
        "Warning: empty y2 range..."
+       pango warning for, e.g., FreeSans font w/o GPOS table
     */
 
     if (strstr(s, "using default") || 
 	strstr(s, "character sets not available") ||
-	strstr(s, "Warning: empty ")) {
+	strstr(s, "Warning: empty ") ||
+	strstr(s, "Pango-WARNING")) {
 	return 1;
     } else {
 	return 0;
