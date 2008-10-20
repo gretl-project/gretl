@@ -2371,7 +2371,7 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
     gtk_widget_set_sensitive(tmp, FALSE);
 
     entry = gtk_bin_get_child(GTK_BIN(tmp));
-    g_signal_connect(G_OBJECT(GTK_ENTRY(entry)), "key_press_event",
+    g_signal_connect(G_OBJECT(GTK_ENTRY(entry)), "key-press-event",
 		     G_CALLBACK(catch_combo_key), tmp);
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(tmp)), "changed",
 		     G_CALLBACK(select_child_callback), tmp);

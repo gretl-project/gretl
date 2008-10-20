@@ -352,11 +352,11 @@ void show_gretl_console (void)
     vwin = view_file(fname, 1, 1, 78, 400, CONSOLE);
     console_view = vwin->text;
 
-    g_signal_connect(G_OBJECT(console_view), "button_press_event",
+    g_signal_connect(G_OBJECT(console_view), "button-press-event",
 		     G_CALLBACK(console_paste_handler), NULL);
-    g_signal_connect(G_OBJECT(console_view), "button_release_event",
+    g_signal_connect(G_OBJECT(console_view), "button-release-event",
 		     G_CALLBACK(console_mouse_handler), NULL);
-    g_signal_connect(G_OBJECT(console_view), "key_press_event",
+    g_signal_connect(G_OBJECT(console_view), "key-press-event",
 		     G_CALLBACK(console_key_handler), NULL);
     g_signal_connect(G_OBJECT(console_view), "destroy",
 		     G_CALLBACK(gretl_console_free), NULL);

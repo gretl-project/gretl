@@ -1499,7 +1499,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     view_buffer_insert_text(vwin, prn);
     gretl_print_destroy(prn);
 
-    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
@@ -1512,7 +1512,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 			 G_CALLBACK(query_save_text), vwin);
     } 
 
-    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
     cursor_to_top(vwin);
 
@@ -1583,7 +1583,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     }
 
     /* catch some special keystrokes */
-    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (editable) {
@@ -1609,7 +1609,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
-    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
     cursor_to_top(vwin);
@@ -1655,16 +1655,16 @@ view_help_file (const char *filename, int role, GtkActionEntry *menu_items,
     create_text(vwin, hsize, vsize, 0, FALSE);
     text_table_setup(vwin->vbox, vwin->text);
 
-    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN ||
 	vwin->role == FUNCS_HELP) {
-	g_signal_connect(G_OBJECT(vwin->text), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(help_popup_handler), 
 			 vwin);
     } else {
-	g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 			 G_CALLBACK(text_popup_handler), vwin);
     }	
 
@@ -1740,9 +1740,9 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
 	gtk_text_buffer_set_text(tbuf, *pbuf, -1);
     }
-    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
-    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     attach_content_changed_signal(vwin);
@@ -1792,7 +1792,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     set_up_model_view_menu(vwin->main, vwin);
 
-    g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
 		     G_CALLBACK(check_model_menu), vwin);
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
@@ -1812,9 +1812,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gretl_print_destroy(prn);
 
     /* attach shortcuts */
-    g_signal_connect(G_OBJECT(vwin->main), "key_press_event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
-    g_signal_connect(G_OBJECT(vwin->text), "button_press_event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
 
     /* don't allow deletion of model window when a model

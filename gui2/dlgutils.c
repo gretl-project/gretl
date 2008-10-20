@@ -389,7 +389,7 @@ dialog_data_new (gpointer p, gint code, const char *title,
     d->popup = NULL;
 
     if (canceled != NULL) {
-	g_signal_connect(G_OBJECT(d->dialog), "delete_event",
+	g_signal_connect(G_OBJECT(d->dialog), "delete-event",
 			 G_CALLBACK(cancel_on_delete), 
 			 canceled);
 	d->blocking = 1;
@@ -405,7 +405,7 @@ dialog_data_new (gpointer p, gint code, const char *title,
 
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 
 		     G_CALLBACK(destroy_dialog_data), d);
-    g_signal_connect(G_OBJECT(d->dialog), "key_press_event", 
+    g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 
     return d;
@@ -1143,7 +1143,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	}
 
 	if (cmdcode != RESTRICT && cmdcode != GMM) {
-	    g_signal_connect(G_OBJECT(d->edit), "button_press_event", 
+	    g_signal_connect(G_OBJECT(d->edit), "button-press-event", 
 			     G_CALLBACK(edit_dialog_popup_handler), d);
 	}
     } else {

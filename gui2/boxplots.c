@@ -623,16 +623,16 @@ make_area (PLOTGROUP *grp)
     
     gtk_widget_set_sensitive(grp->area, TRUE);
 
-    g_signal_connect(G_OBJECT(grp->area), "configure_event",
+    g_signal_connect(G_OBJECT(grp->area), "configure-event",
 		     G_CALLBACK(configure_event), grp);
 
-    g_signal_connect(G_OBJECT(grp->area), "expose_event",
+    g_signal_connect(G_OBJECT(grp->area), "expose-event",
 		     G_CALLBACK(expose_event), grp);
 
-    g_signal_connect(G_OBJECT(grp->area), "button_press_event", 
+    g_signal_connect(G_OBJECT(grp->area), "button-press-event", 
 		     G_CALLBACK(box_popup), grp);
 
-    g_signal_connect(G_OBJECT(grp->window), "key_press_event", 
+    g_signal_connect(G_OBJECT(grp->window), "key-press-event", 
 		     G_CALLBACK(box_key_handler), grp);
 
     g_signal_connect(G_OBJECT(grp->window), "destroy",

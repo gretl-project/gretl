@@ -1178,7 +1178,7 @@ obs_button_set_adjustment (ObsButton *obs_button,
 #else
 	    g_object_ref_sink (GTK_OBJECT (adjustment));
 #endif
-	    g_signal_connect (adjustment, "value_changed",
+	    g_signal_connect (adjustment, "value-changed",
 			      G_CALLBACK (obs_button_value_changed),
 			      obs_button);
 	    g_signal_connect (adjustment, "changed",

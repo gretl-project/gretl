@@ -470,7 +470,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 					       NULL, NULL);
 	gtk_widget_set_events(view, GDK_POINTER_MOTION_MASK 
 			      | GDK_POINTER_MOTION_HINT_MASK);
-        g_signal_connect(G_OBJECT(view), "motion_notify_event",
+        g_signal_connect(G_OBJECT(view), "motion-notify-event",
 			 G_CALLBACK(listbox_drag), NULL);
     } else if (db_series_window(vwin)) {
 	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
@@ -484,10 +484,10 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 			 vwin);
     }
 
-    g_signal_connect(G_OBJECT(view), "key_press_event",
+    g_signal_connect(G_OBJECT(view), "key-press-event",
 		     G_CALLBACK(catch_listbox_key),
 		     vwin);
-    g_signal_connect(G_OBJECT(view), "button_press_event",
+    g_signal_connect(G_OBJECT(view), "button-press-event",
 		     G_CALLBACK(listbox_double_click),
 		     vwin);
 

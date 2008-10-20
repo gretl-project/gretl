@@ -2750,7 +2750,7 @@ static void session_drag_setup (gui_obj *obj)
                        targ, 1,
                        GDK_ACTION_COPY);
 
-    g_signal_connect (G_OBJECT(w), "drag_data_received",
+    g_signal_connect (G_OBJECT(w), "drag-data-received",
                       G_CALLBACK(session_data_received),
                       NULL);
 }
@@ -2769,7 +2769,7 @@ static void graph_drag_connect (GtkWidget *w, SESSION_GRAPH *graph)
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
                         &gretl_drag_targets[GRETL_GRAPH_FILE],
                         1, GDK_ACTION_COPY);
-    g_signal_connect(G_OBJECT(w), "drag_data_get",
+    g_signal_connect(G_OBJECT(w), "drag-data-get",
                      G_CALLBACK(drag_graph), graph);
 }
 
@@ -2787,7 +2787,7 @@ static void model_drag_connect (GtkWidget *w, SESSION_MODEL *mod)
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
                         &gretl_drag_targets[GRETL_MODEL_PTR],
                         1, GDK_ACTION_COPY);
-    g_signal_connect(G_OBJECT(w), "drag_data_get",
+    g_signal_connect(G_OBJECT(w), "drag-data-get",
                      G_CALLBACK(drag_model), mod);
 }
 
@@ -3039,7 +3039,7 @@ static void iconview_connect_signals (GtkWidget *iconview)
 {
     g_signal_connect(G_OBJECT(iconview), "destroy",
 		     G_CALLBACK(session_view_free), NULL);
-    g_signal_connect(G_OBJECT(iconview), "key_press_event",
+    g_signal_connect(G_OBJECT(iconview), "key-press-event",
 		     G_CALLBACK(catch_iconview_key), NULL);
     g_signal_connect(G_OBJECT(iconview), "configure-event",
 		     G_CALLBACK(iconview_resize_callback), NULL);
@@ -3080,7 +3080,7 @@ void view_session (void)
     gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    g_signal_connect(G_OBJECT(scroller), "button_press_event",
+    g_signal_connect(G_OBJECT(scroller), "button-press-event",
 		     G_CALLBACK(session_view_click), NULL);
 
     gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
@@ -3143,11 +3143,11 @@ static void create_gobj_icon (gui_obj *obj, const char **xpm)
     g_object_ref(obj->icon);
     g_object_ref(obj->label);
 
-    g_signal_connect(G_OBJECT(obj->icon), "button_press_event",
+    g_signal_connect(G_OBJECT(obj->icon), "button-press-event",
 		     G_CALLBACK(session_view_click), obj);
-    g_signal_connect(G_OBJECT(obj->icon), "enter_notify_event",
+    g_signal_connect(G_OBJECT(obj->icon), "enter-notify-event",
 		     G_CALLBACK(icon_entered), obj);
-    g_signal_connect(G_OBJECT(obj->icon), "leave_notify_event",
+    g_signal_connect(G_OBJECT(obj->icon), "leave-notify-event",
 		     G_CALLBACK(icon_left), obj);
 }
 

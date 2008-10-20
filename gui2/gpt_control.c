@@ -3680,7 +3680,7 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     g_signal_connect(G_OBJECT(plot->shell), "destroy",
 		     G_CALLBACK(destroy_png_plot), plot);
-    g_signal_connect(G_OBJECT(plot->shell), "key_press_event", 
+    g_signal_connect(G_OBJECT(plot->shell), "key-press-event", 
 		     G_CALLBACK(plot_key_handler), plot);
 
     /* box to hold canvas */
@@ -3711,9 +3711,9 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     GTK_WIDGET_SET_FLAGS(plot->canvas, GTK_CAN_FOCUS);
 
-    g_signal_connect(G_OBJECT(plot->canvas), "button_press_event", 
+    g_signal_connect(G_OBJECT(plot->canvas), "button-press-event", 
 		     G_CALLBACK(plot_button_press), plot);
-    g_signal_connect(G_OBJECT(plot->canvas), "button_release_event", 
+    g_signal_connect(G_OBJECT(plot->canvas), "button-release-event", 
 		     G_CALLBACK(plot_button_release), plot);
 
     /* create the contents of the status area */
@@ -3744,7 +3744,7 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     }
     
     if (plot_has_xrange(plot)) {
-	g_signal_connect(G_OBJECT(plot->canvas), "motion_notify_event",
+	g_signal_connect(G_OBJECT(plot->canvas), "motion-notify-event",
 			 G_CALLBACK(motion_notify_event), plot);
     }
 
@@ -3785,7 +3785,7 @@ static int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     plot->pixmap = gdk_pixmap_new(plot->shell->window, 
 				  plot->pixel_width, plot->pixel_height, 
 				  -1);
-    g_signal_connect(G_OBJECT(plot->canvas), "expose_event",
+    g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
 		     G_CALLBACK(plot_expose), plot->pixmap);
 
     err = render_pngfile(plot, PNG_START);

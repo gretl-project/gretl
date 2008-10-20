@@ -1761,7 +1761,7 @@ static void cell_edit_start (GtkCellRenderer *r,
 #if 1 /* produces "random" broken behaviour */
 	sheet->entry = GTK_WIDGET(ed);
 #endif
-	g_signal_connect(G_OBJECT(ed), "key_press_event",
+	g_signal_connect(G_OBJECT(ed), "key-press-event",
 			 G_CALLBACK(catch_sheet_edit_key), sheet);
 	g_signal_connect(GTK_OBJECT(ed), "destroy",
 			 G_CALLBACK(nullify_sheet_entry), sheet);
@@ -2512,7 +2512,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(gtk_main_quit), NULL);
     }
-    g_signal_connect(G_OBJECT(sheet->win), "delete_event",
+    g_signal_connect(G_OBJECT(sheet->win), "delete-event",
 		     G_CALLBACK(sheet_delete_event), sheet);
 
     main_vbox = gtk_vbox_new(FALSE, 5);
@@ -2615,7 +2615,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	gtk_widget_show(tmp);
     }
 
-    g_signal_connect(G_OBJECT(sheet->view), "button_press_event",
+    g_signal_connect(G_OBJECT(sheet->view), "button-press-event",
 		     G_CALLBACK(catch_spreadsheet_click),
 		     sheet);
 

@@ -1250,7 +1250,7 @@ static void set_up_viewer_drag_target (windata_t *vwin)
 		      &gretl_drag_targets[i], 1,
 		      GDK_ACTION_COPY);
 
-    g_signal_connect(G_OBJECT(vwin->listbox), "drag_data_received",
+    g_signal_connect(G_OBJECT(vwin->listbox), "drag-data-received",
 		     callback, NULL);
 }
 
@@ -1317,19 +1317,19 @@ void display_files (int code, gpointer p)
 
 	build_datafiles_popup(vwin);
 	while ((coll = pop_data_collection())) {
-	    g_signal_connect(G_OBJECT(coll->page), "button_press_event",
+	    g_signal_connect(G_OBJECT(coll->page), "button-press-event",
 			     G_CALLBACK(popup_menu_handler), 
 			     vwin->popup);
 	}
 	reset_data_stack();
     } else if (code == FUNC_FILES || code == REMOTE_FUNC_FILES) {
 	build_funcfiles_popup(vwin);
-	g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 			 G_CALLBACK(popup_menu_handler), 
 			 vwin->popup);
     } else if (code == NATIVE_DB || code == REMOTE_DB) {
 	build_db_popup(vwin);
-	g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 			 G_CALLBACK(popup_menu_handler), 
 			 vwin->popup);
     }	

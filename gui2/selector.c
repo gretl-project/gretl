@@ -606,31 +606,31 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 
     gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
-    g_signal_connect(G_OBJECT(view), "motion_notify_event",
+    g_signal_connect(G_OBJECT(view), "motion-notify-event",
 		     G_CALLBACK(listbox_drag), NULL);
 
     if (locus == SR_LVARS) { 
 	/* left-hand box with the selectable vars */
-	g_signal_connect(G_OBJECT(view), "button_press_event",
+	g_signal_connect(G_OBJECT(view), "button-press-event",
 			 G_CALLBACK(lvars_right_click),
 			 sr);
-	g_signal_connect(G_OBJECT(view), "button_press_event",
+	g_signal_connect(G_OBJECT(view), "button-press-event",
 			 G_CALLBACK(set_active_var),
 			 sr);
-	g_signal_connect(G_OBJECT(view), "button_press_event",
+	g_signal_connect(G_OBJECT(view), "button-press-event",
 			 G_CALLBACK(dblclick_lvars_row),
 			 sr);
     } else if (locus == SR_RVARS1 || locus == SR_RVARS2) { 
 	/* lists of selected items */
-	g_signal_connect(G_OBJECT(view), "button_press_event",
+	g_signal_connect(G_OBJECT(view), "button-press-event",
 			 G_CALLBACK(set_active_var),
 			 NULL);
 	if (flagcol) {
-	    g_signal_connect(G_OBJECT(view), "button_press_event",
+	    g_signal_connect(G_OBJECT(view), "button-press-event",
 			     G_CALLBACK(listvar_flagcol_click),
 			     view);
 	} else {
-	    g_signal_connect(G_OBJECT(view), "button_press_event",
+	    g_signal_connect(G_OBJECT(view), "button-press-event",
 			     G_CALLBACK(listvar_special_click),
 			     view);
 	}
@@ -2784,7 +2784,7 @@ static GtkWidget *add_button (selector *sr, GtkWidget *box)
 {
     GtkWidget *w = gtk_button_new_with_label(_("Add ->"));
 
-    g_signal_connect(G_OBJECT(sr->dlg), "key_press_event", 
+    g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
 		     G_CALLBACK(accept_right_arrow), w);
     gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
     return w;
@@ -2805,7 +2805,7 @@ static GtkWidget *remove_button (selector *sr, GtkWidget *box)
 {
     GtkWidget *w = gtk_button_new_with_label(_("<- Remove"));
 
-    g_signal_connect(G_OBJECT(sr->dlg), "key_press_event", 
+    g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
 		     G_CALLBACK(accept_left_arrow), w);
     gtk_box_pack_start(GTK_BOX(box), w, TRUE, FALSE, 0);
     return w;
@@ -3061,7 +3061,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 		     G_CALLBACK(destroy_selector), 
 		     sr);
-    g_signal_connect(G_OBJECT(sr->dlg), "key_press_event", 
+    g_signal_connect(G_OBJECT(sr->dlg), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
 
     /* create equivalent of gtkdialog structure */

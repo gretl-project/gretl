@@ -918,13 +918,13 @@ void populate_varlist (void)
     }
 
     if (!click_connected) {
-	g_signal_connect(G_OBJECT(mdata->listbox), "button_press_event",
+	g_signal_connect(G_OBJECT(mdata->listbox), "button-press-event",
 			 G_CALLBACK(main_popup_handler), 
 			 mdata);
-	g_signal_connect(G_OBJECT(mdata->listbox), "button_press_event",
+	g_signal_connect(G_OBJECT(mdata->listbox), "button-press-event",
 			 G_CALLBACK(main_varclick),
 			 mdata);
-	g_signal_connect(G_OBJECT(mdata->listbox), "key_press_event",
+	g_signal_connect(G_OBJECT(mdata->listbox), "key-press-event",
 			 G_CALLBACK(catch_mdata_key),
 			 mdata);
 	click_connected = 1;
@@ -1131,9 +1131,9 @@ static GtkWidget *make_main_window (void)
     set_up_windows_look();
 #endif
 
-    g_signal_connect(G_OBJECT(mdata->main), "configure_event",
+    g_signal_connect(G_OBJECT(mdata->main), "configure-event",
 		     G_CALLBACK(mainwin_config), NULL);
-    g_signal_connect(G_OBJECT(mdata->main), "delete_event",
+    g_signal_connect(G_OBJECT(mdata->main), "delete-event",
 		     G_CALLBACK(exit_check), NULL);
     g_signal_connect(G_OBJECT(mdata->main), "destroy",
 		     G_CALLBACK(gtk_main_quit), NULL);
@@ -1182,7 +1182,7 @@ static GtkWidget *make_main_window (void)
 		      gretl_drag_targets, 2,
 		      GDK_ACTION_COPY);
 
-    g_signal_connect(G_OBJECT(mdata->listbox), "drag_data_received",
+    g_signal_connect(G_OBJECT(mdata->listbox), "drag-data-received",
 		     G_CALLBACK(mdata_handle_drag),
 		     NULL);
 

@@ -566,19 +566,19 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->text), editable);
 
     if (gretl_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(vwin->text), "key_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(script_key_handler), vwin);
-	g_signal_connect(G_OBJECT(vwin->text), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(script_popup_handler), 
 			 vwin);
-	g_signal_connect(G_OBJECT(vwin->text), "button_release_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     } else if (foreign_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(vwin->text), "button_press_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(script_popup_handler), 
 			 vwin);
     } else if (vwin->role == VIEW_LOG) {
-	g_signal_connect(G_OBJECT(vwin->text), "button_release_event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     }	
 }

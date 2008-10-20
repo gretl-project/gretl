@@ -822,8 +822,8 @@ void winprint (char *fullbuf, char *selbuf)
 
     job_set_n_pages(op, &pinfo); 
 
-    g_signal_connect(op, "begin_print", G_CALLBACK(begin_text_print), &pinfo);
-    g_signal_connect(op, "draw_page", G_CALLBACK(draw_text_page), &pinfo);
+    g_signal_connect(op, "begin-print", G_CALLBACK(begin_text_print), &pinfo);
+    g_signal_connect(op, "draw-page", G_CALLBACK(draw_text_page), &pinfo);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
 				  GTK_WINDOW(mdata->main), &err);
@@ -968,8 +968,8 @@ void gtk_print_graph (const char *fname)
     gtk_print_operation_set_use_full_page(op, TRUE);
     gtk_print_operation_set_unit(op, GTK_UNIT_POINTS);
 
-    g_signal_connect(op, "begin_print", G_CALLBACK(begin_image_print), pngname);
-    g_signal_connect(op, "draw_page", G_CALLBACK(draw_image), NULL);
+    g_signal_connect(op, "begin-print", G_CALLBACK(begin_image_print), pngname);
+    g_signal_connect(op, "draw-page", G_CALLBACK(draw_image), NULL);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
 				  GTK_WINDOW(mdata->main), &err);

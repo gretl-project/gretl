@@ -536,7 +536,7 @@ void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     tmp = gtk_label_new(_("Show"));
     adj = gtk_adjustment_new(sview->digits, 1, 10, 1, 1, 0);
     sview->digit_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-    g_signal_connect (adj, "value_changed",
+    g_signal_connect (adj, "value-changed",
 		      G_CALLBACK(series_view_get_figures), sview);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), sview->digit_spin, FALSE, FALSE, 5);

@@ -1089,9 +1089,15 @@ static void gpt_tab_new_line (new_line_info *nlinfo)
     char label_text[32];
 
     vbox = GTK_DIALOG(nlinfo->dlg)->vbox;
+    hbox = gtk_hbox_new(FALSE, 5);
 
     tbl_len = 1;
-    tbl = gp_dialog_table(tbl_len, 3, vbox);
+    tbl = gtk_table_new(tbl_len, 3, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
     gtk_widget_show(tbl);
    
     tbl_num = tbl_col = 0;
@@ -1167,7 +1173,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 
     s = gtk_entry_get_text(GTK_ENTRY(nlinfo->formula_entry));
     if (s == NULL || *s == '\0') {
-	errbox(_("No formula given"));
+	errbox(_("No formula was given"));
 	return;
     }
 

@@ -337,7 +337,7 @@ gtk_fontsel_hack_init (GtkFontselHack *fontsel)
     fontsel->size = 12 * PANGO_SCALE;
     fontsel->filter = GTK_FONT_HACK_NONE;
   
-    /* Create the table of font, style & size. */
+    /* Create the table of font, style & size */
     table = gtk_table_new (3, 3, FALSE);
     gtk_widget_show (table);
     gtk_table_set_col_spacings (GTK_TABLE (table), 8);
@@ -351,7 +351,7 @@ gtk_fontsel_hack_init (GtkFontselHack *fontsel)
     g_signal_connect (G_OBJECT (fontsel->size_entry), "activate",
 		      (GCallback) gtk_fontsel_hack_size_activate,
 		      fontsel);
-    g_signal_connect_after (G_OBJECT (fontsel->size_entry), "focus_out_event",
+    g_signal_connect_after (G_OBJECT (fontsel->size_entry), "focus-out-event",
 			    (GCallback) gtk_fontsel_hack_size_focus_out,
 			    fontsel);
   
@@ -1506,7 +1506,7 @@ gtk_fontsel_hack_dialog_init (GtkFontselHackDialog *fontseldiag)
     fontseldiag->auto_resize = TRUE;
   
     gtk_widget_set_events (GTK_WIDGET (fontseldiag), GDK_STRUCTURE_MASK);
-    g_signal_connect (G_OBJECT (fontseldiag), "configure_event",
+    g_signal_connect (G_OBJECT (fontseldiag), "configure-event",
 		      (GCallback) gtk_fontsel_hack_dialog_on_configure,
 		      fontseldiag);
   

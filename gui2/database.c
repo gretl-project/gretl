@@ -1043,7 +1043,7 @@ static void db_drag_connect (windata_t *vwin, int i)
 			&gretl_drag_targets[i],
 			1, GDK_ACTION_COPY);
 
-    g_signal_connect(G_OBJECT(vwin->listbox), "drag_data_get",
+    g_signal_connect(G_OBJECT(vwin->listbox), "drag-data-get",
 		     G_CALLBACK(do_db_drag),
 		     vwin);
 }
@@ -1363,7 +1363,7 @@ static GtkWidget *database_window (windata_t *vwin)
 
     box = gtk_vbox_new(FALSE, 0);
     vwin_add_list_box(vwin, GTK_BOX(box), 4, TRUE, types, titles, 0);
-    g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
+    g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 		     G_CALLBACK(popup_menu_handler), 
 		     vwin->popup);
     gtk_widget_show(box);
