@@ -3530,8 +3530,10 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	if (dlg != NULL) {
 	    close_dialog(dlg);
 	}
-	populate_varlist();
-	mark_dataset_as_modified();
+	if (genr_get_last_output_type() == GRETL_TYPE_SERIES) {
+	    populate_varlist();
+	    mark_dataset_as_modified();
+	}
     }
 
     gretl_print_destroy(prn);

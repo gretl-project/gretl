@@ -27,6 +27,8 @@
 #include "forecast.h"
 #include "texprint.h"
 
+#include "gretl_scalar.h"
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include "gretlwin32.h"
@@ -1983,9 +1985,41 @@ void special_print_confints (const CoeffIntervals *cf, PRN *prn)
     }
 }
 
-/* copy data to buffer in CSV format and place on clipboard */
+int scalars_to_prn (PRN *prn)
+{
+    const char *sname;
+    double sval;
+    int i, n = n_saved_scalars();
 
-#define SCALAR_DIGITS 12
+    if (datainfo->delim == ',' && ',' == datainfo->decpoint) {
+	errbox(_("You can't use the same character for "
+		 "the column delimiter and the decimal point"));
+	return 1;
+    }
+
+    if (datainfo->decpoint != ',') {
+	gretl_push_c_numeric_locale();
+    }
+
+
+    for (i=0; i<n; i++) {
+	sname = gretl_scalar_get_name(i);
+	sval = gretl_scalar_get_value_by_index(i);
+	if (na(sval)) {
+	    pprintf(prn, "%s%cNA\n", sname, datainfo->delim);
+	} else {
+	    pprintf(prn, "%s%c%.15g\n", sname, datainfo->delim, sval);
+	}
+    }
+
+    if (datainfo->decpoint != ',') {
+	gretl_pop_c_numeric_locale();
+    }
+
+    return 0;
+}
+
+/* copy data to buffer in CSV format and place on clipboard */
 
 static int data_to_buf_as_csv (const int *list, PRN *prn)
 {
@@ -2110,6 +2144,34 @@ int csv_selected_to_clipboard (void)
 	err = real_csv_to_clipboard(list);
 	free(list);
     }
+
+    return err;
+}
+
+int scalars_to_clipboard_as_csv (void)
+{
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (n_saved_scalars() == 0) {
+	warnbox(_("No scalar variable are currently defined"));
+	return 0;
+    }
+
+    if (delimiter_dialog(NULL)) {
+	return 0;
+    }
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
+    err = scalars_to_prn(prn);
+    if (!err) {
+	prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+    }
+
+    gretl_print_destroy(prn);
 
     return err;
 }

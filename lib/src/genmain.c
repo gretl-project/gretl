@@ -575,6 +575,13 @@ static int is_gen_special (const char *s, char *spec, const char **rem)
     return 0;
 }
 
+static int genr_last_type;
+
+int genr_get_last_output_type (void)
+{
+    return genr_last_type;
+}
+
 #define gen_verbose(f) (!(f & P_PRINT) && \
                         !(f & P_DISCARD) && \
                         !(f & P_PRIVATE) && \
@@ -633,6 +640,8 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     if (!p.err && p.warn && gretl_warnings_on()) {
 	gen_write_warning(&p, prn);
     }
+
+    genr_last_type = genr_get_output_type(&p);
 
     gen_cleanup(&p);
 

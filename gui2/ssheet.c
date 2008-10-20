@@ -66,6 +66,7 @@ typedef struct {
     GtkWidget *entry;
     GtkWidget *popup;
     GtkWidget *save;
+    GtkWidget *apply;
     GtkUIManager *ui;
     GtkCellRenderer *dumbcell;
     GtkCellRenderer *datacell;
@@ -179,6 +180,8 @@ static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
 
     if (sheet->save != NULL) {
 	gtk_widget_set_sensitive(sheet->save, s);
+    } else if (sheet->apply != NULL) {
+	gtk_widget_set_sensitive(sheet->apply, s);
     }
 }
 
@@ -477,6 +480,21 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
     g_free(old_text);
 }
 
+static int scalar_try_genr (gchar **ps)
+{
+    double x;
+    int err = 0;
+
+    x = generate_scalar(*ps + 1, &Z, datainfo, &err);
+
+    if (!err) {
+	g_free(*ps);
+	*ps = g_strdup_printf("%.*g", DBL_DIG, x);
+    }
+
+    return err;
+}
+
 static void sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
 			       const gchar *user_text,
@@ -495,11 +513,15 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
 	new_text = g_strdup("");
     } else {
 	new_text = g_strdup(user_text);
-	if (sheet->flags & SHEET_USE_COMMA) {
-	    /* accept point also: convert to locale */
-	    charsub(new_text, '.', ',');
+	if (*new_text == '=' && sheet->cmd == SHEET_EDIT_SCALARS) {
+	    err = scalar_try_genr(&new_text);
+	} else {
+	    if (sheet->flags & SHEET_USE_COMMA) {
+		/* accept point also: convert to locale */
+		charsub(new_text, '.', ',');
+	    }
+	    err = check_atof(new_text);
 	}
-	err = check_atof(new_text);
 	if (err) {
 	    errbox(gretl_errmsg_get());
 	    g_free(new_text);
@@ -769,6 +791,17 @@ static void name_var_dialog (Spreadsheet *sheet)
     
     edit_dialog(_("gretl: name variable"), 
 		_("Enter name for new variable\n"
+		  "(max. 15 characters)"),
+		NULL, name_new_var, sheet, 
+		0, VARCLICK_NONE, &cancel);
+}
+
+static void name_scalar_dialog (Spreadsheet *sheet) 
+{
+    int cancel = 0;
+    
+    edit_dialog(_("gretl: name scalar"), 
+		_("Enter name for new scalar\n"
 		  "(max. 15 characters)"),
 		NULL, name_new_var, sheet, 
 		0, VARCLICK_NONE, &cancel);
@@ -1045,15 +1078,27 @@ static void popup_sheet_add_var (GtkWidget *w, Spreadsheet *sheet)
     name_var_dialog(sheet);
 }
 
+static void popup_sheet_add_scalar (GtkWidget *w, Spreadsheet *sheet)
+{
+    name_scalar_dialog(sheet);
+}
+
 static void build_sheet_popup (Spreadsheet *sheet)
 {
     if (sheet->popup != NULL) return;
 
     sheet->popup = gtk_menu_new();
 
-    add_popup_item(_("Add Variable"), sheet->popup, 
-		   G_CALLBACK(popup_sheet_add_var),
-		   sheet);
+    if (sheet->cmd == SHEET_EDIT_SCALARS) {
+	add_popup_item(_("Add..."), 
+		       sheet->popup, 
+		       G_CALLBACK(popup_sheet_add_scalar),
+		       sheet);
+    } else {
+	add_popup_item(_("Add Variable"), sheet->popup, 
+		       G_CALLBACK(popup_sheet_add_var),
+		       sheet);
+    }
 
     if (sheet->flags & SHEET_ADD_OBS_OK) {
 	add_popup_item(_("Add Observation"), sheet->popup,
@@ -1733,9 +1778,13 @@ catch_sheet_edit_key (GtkWidget *view, GdkEventKey *key,
 	    return TRUE;
 	}
     } else if (key->keyval == GDK_Return) {
+#if CELLDEBUG
 	fprintf(stderr, "catch_edit_key: GDK_Return\n");
+#endif
     } else if (key->keyval == GDK_Down) {
+#if CELLDEBUG
 	fprintf(stderr, "catch_edit_key: GDK_Down\n");
+#endif
     }
 
     return FALSE;
@@ -2195,6 +2244,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->popup = NULL;
     sheet->ui = NULL;
     sheet->save = NULL;
+    sheet->apply = NULL;
     sheet->dumbcell = NULL;
     sheet->datacell = NULL;
     sheet->datacols = sheet->datarows = 0;
@@ -2605,6 +2655,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(get_data_from_sheet), sheet);
 	gtk_widget_show(tmp);
+	sheet->apply = tmp;
+	gtk_widget_set_sensitive(sheet->apply, FALSE);
 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
@@ -2677,6 +2729,7 @@ static void start_scalars (GtkWidget *w, dialog_t *dlg)
     char varname[VNAMELEN];
  
     buf = edit_dialog_get_text(dlg);
+
     if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_DOUBLE)) {
 	return;
     }
@@ -2700,8 +2753,8 @@ static void maybe_add_scalar (void)
     if (resp == GRETL_YES) {
 	int cancel = 0;
 
-	edit_dialog(_("gretl: name variable"), 
-		    _("Enter name for new variable\n"
+	edit_dialog(_("gretl: name scalar"), 
+		    _("Enter name for new scalar\n"
 		      "(max. 15 characters)"),
 		    NULL, start_scalars, NULL, 
 		    0, VARCLICK_NONE, &cancel);

@@ -58,6 +58,8 @@ int csv_selected_to_clipboard (void);
 
 int csv_copy_listed_vars (windata_t *vwin, int fmt, int action);
 
+int scalars_to_clipboard_as_csv (void);
+
 int font_has_minus (PangoFontDescription *desc);
 
 #endif /* GUIPRINT_H */

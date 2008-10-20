@@ -189,6 +189,11 @@ static char *dataset_items[] = {
     N_("Copy as CSV...")
 };
 
+static char *scalars_items[] = {
+    N_("Edit"),
+    N_("Copy as CSV...")
+};
+
 static char *info_items[] = {
     N_("View"),
     N_("Edit"),
@@ -218,6 +223,7 @@ static GtkWidget *graph_popup;
 static GtkWidget *graph_page_popup;
 static GtkWidget *boxplot_popup;
 static GtkWidget *data_popup;
+static GtkWidget *scalars_popup;
 static GtkWidget *info_popup;
 static GtkWidget *matrix_popup;
 static GtkWidget *save_item;
@@ -235,6 +241,7 @@ static void session_build_popups (void);
 static void global_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
+static void scalars_popup_activated (GtkWidget *widget, gpointer data);
 static void info_popup_activated (GtkWidget *widget, gpointer data);
 static void matrix_popup_activated (GtkWidget *widget, gpointer data);
 static void session_delete_icon (gui_obj *obj);
@@ -2339,12 +2346,13 @@ static void add_all_icons (void)
     set_matrix_add_callback(add_user_matrix_callback);
 
     if (data_status) {
-	session_add_icon(NULL, GRETL_OBJ_INFO,   ICON_ADD_BATCH);  /* data info */
-	session_add_icon(NULL, GRETL_OBJ_DSET,   ICON_ADD_BATCH);  /* data file */
-	session_add_icon(NULL, GRETL_OBJ_NOTES,  ICON_ADD_BATCH);  /* session notes */
-	session_add_icon(NULL, GRETL_OBJ_STATS,  ICON_ADD_BATCH);  /* summary stats */
-	session_add_icon(NULL, GRETL_OBJ_CORR,   ICON_ADD_BATCH);  /* correlation matrix */
-	session_add_icon(NULL, GRETL_OBJ_MODTAB, ICON_ADD_BATCH);  /* model table */
+	session_add_icon(NULL, GRETL_OBJ_INFO,    ICON_ADD_BATCH);  /* data info */
+	session_add_icon(NULL, GRETL_OBJ_DSET,    ICON_ADD_BATCH);  /* data file */
+	session_add_icon(NULL, GRETL_OBJ_SCALARS, ICON_ADD_BATCH);  /* scalars */
+	session_add_icon(NULL, GRETL_OBJ_NOTES,   ICON_ADD_BATCH);  /* session notes */
+	session_add_icon(NULL, GRETL_OBJ_STATS,   ICON_ADD_BATCH);  /* summary stats */
+	session_add_icon(NULL, GRETL_OBJ_CORR,    ICON_ADD_BATCH);  /* correlation matrix */
+	session_add_icon(NULL, GRETL_OBJ_MODTAB,  ICON_ADD_BATCH);  /* model table */
 	if (show_graph_page) {
 	    session_add_icon(NULL, GRETL_OBJ_GPAGE, ICON_ADD_BATCH); /* graph page */
 	}
@@ -2440,6 +2448,9 @@ static void object_popup_show (gui_obj *obj, GdkEventButton *event)
     case GRETL_OBJ_DSET: 
 	w = data_popup; 
 	break;
+    case GRETL_OBJ_SCALARS: 
+	w = scalars_popup; 
+	break;
     case GRETL_OBJ_INFO: 
 	w = info_popup; 
 	break;
@@ -2507,6 +2518,9 @@ static gboolean session_view_click (GtkWidget *widget,
 	case GRETL_OBJ_DSET:
 	    show_spreadsheet(SHEET_EDIT_DATASET); 
 	    break;
+	case GRETL_OBJ_SCALARS:
+	    edit_scalars();
+	    break;
 	case GRETL_OBJ_MATRIX:
 	    open_matrix(obj); 
 	    break;
@@ -2540,7 +2554,7 @@ static gboolean session_view_click (GtkWidget *widget,
 	    obj->sort == GRETL_OBJ_INFO || obj->sort == GRETL_OBJ_GPAGE ||
 	    obj->sort == GRETL_OBJ_PLOT || obj->sort == GRETL_OBJ_MODTAB ||
 	    obj->sort == GRETL_OBJ_VAR  || obj->sort == GRETL_OBJ_SYS ||
-	    obj->sort == GRETL_OBJ_MATRIX) {
+	    obj->sort == GRETL_OBJ_MATRIX || obj->sort == GRETL_OBJ_SCALARS) {
 	    object_popup_show(obj, (GdkEventButton *) event);
 	}
 	return TRUE;
@@ -2621,6 +2635,17 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
 	file_save(mdata, EXPORT_CSV);
     } else if (!strcmp(item, _("Copy as CSV..."))) {
 	csv_to_clipboard();
+    }
+}
+
+static void scalars_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (!strcmp(item, _("Edit"))) {
+	edit_scalars();
+    } else if (!strcmp(item, _("Copy as CSV..."))) {
+	scalars_to_clipboard_as_csv();
     }
 }
 
@@ -2824,6 +2849,9 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     case GRETL_OBJ_DSET:
 	name = g_strdup(_("Data set"));
 	break;
+    case GRETL_OBJ_SCALARS:
+	name = g_strdup(_("Scalars"));
+	break;
     case GRETL_OBJ_INFO:
 	name = g_strdup(_("Data info"));
 	break;
@@ -2995,6 +3023,15 @@ static void session_build_popups (void)
 	    create_popup_item(data_popup, 
 			      _(dataset_items[i]), 
 			      data_popup_activated);	    
+	}
+    }
+
+    if (scalars_popup == NULL) {
+	scalars_popup = gtk_menu_new();
+	for (i=0; i<sizeof scalars_items / sizeof scalars_items[0]; i++) {
+	    create_popup_item(scalars_popup, 
+			      _(scalars_items[i]), 
+			      scalars_popup_activated);	    
 	}
     }
 
@@ -3172,6 +3209,7 @@ static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
     case GRETL_OBJ_PLOT:    xpm = boxplot_xpm;     break;
     case GRETL_OBJ_GRAPH:   xpm = gnuplot_xpm;     break;
     case GRETL_OBJ_DSET:    xpm = dot_sc_xpm;      break;
+    case GRETL_OBJ_SCALARS: xpm = dot_sc_xpm;      break;
     case GRETL_OBJ_INFO:    xpm = xfm_info_xpm;    break;
     case GRETL_OBJ_TEXT:
     case GRETL_OBJ_NOTES:   xpm = text_xpm;        break;

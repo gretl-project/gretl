@@ -12,6 +12,9 @@ version 1.7.10, in progress
 - Graphs: "display PDF" option: fix possible encoding issue
 - GUI graph controller: new facility to add a line, defined
   via a formula, to an existing graph
+- Scalars: make these accessible via the icon view window;
+  enable copying to clipboard as CSV; enable entry of a 
+  formula (starting with "=") in scalar-editing window
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
