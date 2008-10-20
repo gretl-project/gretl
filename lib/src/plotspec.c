@@ -391,8 +391,8 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     int started_data_lines = 0;
     double et, yt;
     double *x[4];
-    int any_y2 = 0;
     int skipline = -1;
+    int any_y2 = 0;
     int miss = 0;
 
     if (spec->pd > 0) {
@@ -514,18 +514,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	print_data_labels(spec, fp);
     }
 
-    fputs("plot \\\n", fp);
-
     if (spec->flags & GPT_FIT_HIDDEN) {
-	/* which line should we skip? */
-	for (i=0; i<spec->n_lines; i++) {
-	    /* the first line that uses a formula? (FIXME loess?) */
-	    if (spec->lines[i].formula[0] != '\0') {
-		skipline = i;
-		break;
-	    }
-	}
-    }    
+	skipline = 2;
+    }
+
+    fputs("plot \\\n", fp);
 
     for (i=0; i<spec->n_lines; i++) {
 	if (i == skipline) {

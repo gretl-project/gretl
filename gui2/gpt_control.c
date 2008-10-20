@@ -1701,9 +1701,6 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 		grab_fit_coeffs(spec, spec->lines[i].formula);
 	    }
 	}
-	if (strstr(s, "# autofit") != NULL) {
-	    spec->lines[i].flags |= GP_LINE_AUTOFIT;
-	}
     }
 
     if (strstr(s, "axes x1y2")) {

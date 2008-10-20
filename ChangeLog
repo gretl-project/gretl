@@ -10,6 +10,8 @@ version 1.7.10, in progress
 - Various small graphing and GUI fixes
 - MS Windows: fix for opening graphs in old session files
 - Graphs: "display PDF" option: fix possible encoding issue
+- GUI graph controller: new facility to add a line, defined
+  via a formula, to an existing graph
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"

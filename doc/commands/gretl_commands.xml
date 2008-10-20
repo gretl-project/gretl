@@ -87,6 +87,30 @@
 
   </command>
 
+  <command name="addline" section="Graphs" label="Add line to graph"
+    context="gui">
+
+    <description>
+      <para>
+	This dialog box gives you the chance to add a line, defined via a
+	formula, to a graph.  The formula must be an expression acceptable
+	to gnuplot.  Use <lit>x</lit> to denote the value of the variable
+	on the x-axis, and note that gnuplot uses <lit>**</lit> for
+	exponentiation (raising to a power).  Examples:
+      </para>
+      <code>
+	10+0.35*x
+	100+5.3*x-0.12*x**2
+	sin(x)
+	exp(sqrt(pi*x))
+      </code>
+      <para>
+	In the <quote>legend</quote> box you may enter a title for the
+	line, which will appear in the key or legend.  This is optional.
+      </para>
+    </description>
+  </command>
+
   <command name="adf" section="Tests" label="Augmented Dickey-Fuller test">
 
     <usage>
