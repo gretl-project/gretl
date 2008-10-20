@@ -515,7 +515,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     if (spec->flags & GPT_FIT_HIDDEN) {
-	skipline = 2;
+	skipline = 1;
     }
 
     fputs("plot \\\n", fp);
