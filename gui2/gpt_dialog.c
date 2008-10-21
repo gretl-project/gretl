@@ -429,6 +429,8 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
     }
 
     if (!err) {   
+	int ldp = get_local_decpoint();
+
 	for (i=0; i<gui_nlines; i++) {
 	    if (stylecombo[i] != NULL) {
 		int oldalt = 0;
@@ -455,10 +457,14 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 				   spec->lines[i].title, 
 				   sizeof spec->lines[0].title);
 	    }
-	    if (lineformula[i] != NULL) {
+	    if (lineformula[i] != NULL && GTK_WIDGET_IS_SENSITIVE(lineformula[i])) {
 		entry_to_gp_string(lineformula[i], 
 				   spec->lines[i].formula, 
 				   sizeof spec->lines[0].formula);
+		if (ldp == ',') {
+		    /* bodge */
+		    charsub(spec->lines[i].formula, ',', '.');
+		}
 	    }
 	    if (linescale[i] != NULL) {
 		entry_to_gp_string(linescale[i], 
@@ -522,7 +528,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	g_free(tmp);
     }
 
-    if (!err && fitcombo != NULL) {
+    if (!err && fitcombo != NULL && GTK_WIDGET_IS_SENSITIVE(fitcombo)) {
 	fittype_from_combo(GTK_COMBO_BOX(fitcombo), spec);
     }
 
@@ -1204,6 +1210,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 	nomem();
 	spec->n_lines -= 1;
     } else {
+	/* re-fill the "lines" notebook page */
 	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
 	gpt_tab_lines(notebook, spec, pgnum);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
@@ -1259,7 +1266,7 @@ static void add_line_callback (GtkWidget *w, GPT_SPEC *spec)
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 {
     GtkWidget *label, *tbl;
-    GtkWidget *vbox, *hbox;
+    GtkWidget *vbox, *hbox, *sep;
     GtkWidget *button, *page;
     int i, tbl_len, tbl_num, tbl_col;
     char label_text[32];
@@ -1327,6 +1334,35 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
     for (i=0; i<gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 
+	if (line->formula[0] != '\0') {
+	    /* the line has a formula */
+	    tbl_len++;
+	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+
+	    label = gtk_label_new(_("formula"));
+	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      label, 1, 2, tbl_len-1, tbl_len);
+	    gtk_widget_show(label);
+
+	    lineformula[i] = gtk_entry_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  lineformula[i], 2, 3, tbl_len-1, tbl_len);
+	    strip_lr(line->formula);
+	    gp_string_to_entry(lineformula[i], line->formula);
+	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
+		/* fitted formula: not editable */
+		gtk_widget_set_sensitive(lineformula[i], FALSE);
+	    } else {
+		g_signal_connect(G_OBJECT(lineformula[i]), "activate", 
+				 G_CALLBACK(apply_gpt_changes), 
+				 spec);
+	    }
+	    gtk_widget_show(lineformula[i]);
+	    linescale[i] = NULL;
+	    yaxiscombo[i] = NULL;
+	}
+
 	/* identifier and key or legend text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -1357,36 +1393,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_widget_show(linetitle[i]);
 
 	if (line->formula[0] != '\0') {
-	    /* the line has a formula */
-	    tbl_len++;
-	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-
-	    label = gtk_label_new(_("formula"));
-	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      label, 1, 2, tbl_len-1, tbl_len);
-	    gtk_widget_show(label);
-
-	    lineformula[i] = gtk_entry_new();
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  lineformula[i], 2, 3, tbl_len-1, tbl_len);
-	    strip_lr(line->formula);
-	    gp_string_to_entry(lineformula[i], line->formula);
-	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
-		/* fitted formula: not editable */
-		gtk_widget_set_sensitive(lineformula[i], FALSE);
-	    } else {
-		g_signal_connect(G_OBJECT(lineformula[i]), "activate", 
-				 G_CALLBACK(apply_gpt_changes), 
-				 spec);
-	    }
-	    gtk_widget_show(lineformula[i]);
-	    linescale[i] = NULL;
-	    yaxiscombo[i] = NULL;
 	    goto line_width_adj;
 	}
 
-	/* line type or style */
+	/* line type or style (lines, points, etc.) */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	label = gtk_label_new(_("type"));
@@ -1492,6 +1502,14 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
 				  tbl_len-1, tbl_len);
 	gtk_widget_show(hbox);
+
+	/* separator */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	sep = gtk_hseparator_new();
+	gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, 
+				  tbl_len-1, tbl_len);
+	gtk_widget_show(sep);
     }
 
     /* button for adding a line (formula) */
