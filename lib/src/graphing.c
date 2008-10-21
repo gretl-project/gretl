@@ -653,6 +653,9 @@ static const gretlRGB default_color[N_GP_COLORS] = {
     { 0xff, 0x00, 0x00 },
     { 0x00, 0x00, 0xff },
     { 0x00, 0xcc, 0x00 }, /* full-intensity green is not very legible */
+    { 0xbf, 0x25, 0xb2 },
+    { 0x8f, 0xaa, 0xb3 },
+    { 0xff, 0xa5, 0x00 },
     { 0x5f, 0x6b, 0x84 }  /* color for box fill */
 };
 
@@ -660,6 +663,9 @@ static gretlRGB user_color[N_GP_COLORS] = {
     { 0xff, 0x00, 0x00 },
     { 0x00, 0x00, 0xff },
     { 0x00, 0xcc, 0x00 },
+    { 0xbf, 0x25, 0xb2 },
+    { 0x8f, 0xaa, 0xb3 },
+    { 0xff, 0xa5, 0x00 },
     { 0x5f, 0x6b, 0x84 }
 };
 
@@ -675,11 +681,19 @@ void print_rgb_hash (char *s, const gretlRGB *color)
 
 void print_palette_string (char *s)
 {
-    sprintf(s, "x%02x%02x%02x x%02x%02x%02x x%02x%02x%02x x%02x%02x%02x",
-	    user_color[0].r, user_color[0].g, user_color[0].b,
-	    user_color[1].r, user_color[1].g, user_color[1].b,
-	    user_color[2].r, user_color[2].g, user_color[2].b,
-	    user_color[3].r, user_color[3].g, user_color[3].b);
+    char colstr[8];
+    int i;
+
+    *s = '\0';
+
+    for (i=0; i<N_GP_COLORS; i++) {
+	sprintf(colstr, "x%02x%02x%02x", user_color[i].r, user_color[i].g, 
+		user_color[i].b);
+	strcat(s, colstr);
+	if (i < N_GP_COLORS - 1) {
+	    strcat(s, " ");
+	}
+    }
 }
 
 const gretlRGB *get_graph_color (int i)

@@ -461,7 +461,7 @@ get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	if (mono) {
 	    strcpy(termstr, "set term postscript eps mono"); 
 	} else {
-	    strcpy(termstr, "set term postscript eps color");
+	    strcpy(termstr, "set term postscript eps color solid");
 	} 
     } else if (spec->termtype == GP_TERM_PDF) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {

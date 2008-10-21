@@ -733,11 +733,29 @@ static void table_add_row (GtkWidget *tbl, int *rows, int cols)
 static void add_color_selector (int i, GtkWidget *tbl, int *rows,
 				GtkWidget *notebook)
 {
+    static int r0;
+    int collen = (N_GP_COLORS - 1) / 2;
     GtkWidget *button, *hbox;
     GtkWidget *label;
+    int row, cmin, cmax;
     char str[32];
 
-    table_add_row(tbl, rows, TAB_MAIN_COLS);
+    if (i == 0) {
+	/* get baseline table row for color selectors */
+	r0 = *rows;
+    }
+
+    if (i < collen || i == BOXCOLOR) {
+	table_add_row(tbl, rows, TAB_MAIN_COLS);
+	cmin = 0;
+	cmax = 1;
+	row = *rows;
+    } else {
+	/* place selector to the right */
+	row = r0 + 1 + i - collen;
+	cmin = 1;
+	cmax = 2;
+    }
 
     hbox = gtk_hbox_new(FALSE, 2);
 
@@ -748,22 +766,18 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     }
 
     label = gtk_label_new(str);
-    gtk_container_add(GTK_CONTAINER(hbox), label);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 1, 
-			      *rows - 1, *rows);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_widget_show(label);
-    gtk_widget_show(hbox);
 
-    hbox = gtk_hbox_new(FALSE, 2);
     button = color_patch_button(i);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, 
-			      *rows - 1, *rows);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_widget_show_all(button);
+
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, cmin, cmax, 
+			      row - 1, row);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(graph_color_selector), 
 		     GINT_TO_POINTER(i));
-
-    gtk_widget_show_all(button);
     gtk_widget_show(hbox);
 
     sprintf(str, "color-button%d", i);
