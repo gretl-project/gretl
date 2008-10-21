@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-20 15:35-0400\n"
-"PO-Revision-Date: 2008-09-27 11:31-0400\n"
+"PO-Revision-Date: 2008-10-21 10:20+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -577,8 +577,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -663,8 +662,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:845 lib/src/dataio.c:2604
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:864 lib/src/dataio.c:2615
 msgid "Data file is empty\n"
@@ -685,10 +683,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1014
 #, c-format
@@ -1312,8 +1308,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
@@ -2435,8 +2430,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3708
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
 
 #: lib/src/graphing.c:3713
 #, c-format
@@ -3124,8 +3118,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -4570,11 +4563,11 @@ msgstr "Ağırlık bir kukla değişken, etkili gözlemler şunlar:"
 
 #: lib/src/modelprint.c:2137
 msgid "$z$-stat"
-msgstr ""
+msgstr "$z$-ist"
 
 #: lib/src/modelprint.c:2137 lib/src/modelprint.c:3498
 msgid "z-stat"
-msgstr ""
+msgstr "z-ist."
 
 #: lib/src/modelprint.c:2139
 msgid "$t$-ratio"
@@ -4858,11 +4851,11 @@ msgstr "Toplam"
 #: lib/src/modelprint.c:4677
 #, c-format
 msgid "modprint: expected %d names"
-msgstr ""
+msgstr "modprint: %d ad bekleniyordu"
 
 #: lib/src/modelprint.c:4789
 msgid "modprint: the first matrix argument must have 2 columns"
-msgstr ""
+msgstr "modprint: ilk dizey argümanı 2 sütuna sahip olmalıdır"
 
 #: lib/src/modelspec.c:223 lib/src/modelspec.c:224
 msgid "dataset is subsampled, model is not\n"
@@ -5141,10 +5134,8 @@ msgid "not significant at the 10% level\n"
 msgstr "%% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
 
 #: lib/src/nonparam.c:761
 msgid ""
@@ -5173,8 +5164,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:809
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:813
 #, c-format
@@ -5302,10 +5292,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5382,8 +5370,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:442
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:450
 msgid "TOT."
@@ -5414,9 +5401,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:529
 #, c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin %% 80% of 'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:555 lib/src/printout.c:563
 #, c-format
@@ -5759,10 +5745,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/system.c:81
 msgid "SUR"
@@ -6363,8 +6347,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:960
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:968
 #, c-format
@@ -6723,8 +6706,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -9089,9 +9071,8 @@ msgid "line %d: "
 msgstr "Çizgi %d: "
 
 #: gui2/gpt_dialog.c:1115 gui2/gpt_dialog.c:1364
-#, fuzzy
 msgid "formula"
-msgstr "Formül:"
+msgstr "formül"
 
 #: gui2/gpt_dialog.c:1133 gui2/gpt_dialog.c:1340
 msgid "legend"
@@ -9102,14 +9083,12 @@ msgid "line width"
 msgstr "çizgi genişliği"
 
 #: gui2/gpt_dialog.c:1176
-#, fuzzy
 msgid "No formula was given"
-msgstr "genr için sağlanmış bir formül yok"
+msgstr "Sağlanmış bir formül yok"
 
 #: gui2/gpt_dialog.c:1235
-#, fuzzy
 msgid "Add line"
-msgstr "yakıştırılan çizgi"
+msgstr "Çizgi ekle"
 
 #: gui2/gpt_dialog.c:1294
 msgid "Lines"
@@ -9125,7 +9104,7 @@ msgstr "y ekseni"
 
 #: gui2/gpt_dialog.c:1500
 msgid "Add line..."
-msgstr ""
+msgstr "Çizgi ekle..."
 
 #: gui2/gpt_dialog.c:1530
 msgid "Labels"
@@ -10317,11 +10296,8 @@ msgid "%g\\%% confidence interval"
 msgstr "\\%% %g güven aralığı"
 
 #: gui2/guiprint.c:2157
-#, fuzzy
 msgid "No scalar variable are currently defined"
-msgstr ""
-"Tanımlı bir sayıl değişken yok.\n"
-"Şimdi eklemek ister misiniz?"
+msgstr "Şu an tanımlanmış bir sayıl değişken yok"
 
 #: gui2/guiprint.c:2221 gui2/selector.c:4968 plugin/tramo-x12a.c:184
 msgid "Save data"
@@ -11500,9 +11476,8 @@ msgid "You must supply three variables"
 msgstr "Üç değişken sağlamalısınız"
 
 #: gui2/library.c:5457
-#, fuzzy
 msgid "Couldn't find a usable terminal program"
-msgstr "Uygun yuva sürücüsü bulunamadı\n"
+msgstr "Uygun bir uçbirim programı bulunamadı"
 
 #: gui2/library.c:5504 gui2/selector.c:2479 gui2/selector.c:2542
 msgid "X-axis variable"
@@ -11780,8 +11755,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Üzgünüm, 2AEK modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:192
@@ -11890,8 +11864,7 @@ msgstr "Logbirim ve olabirim için, McFadden sözde-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1068
 msgid "No model is available"
@@ -12675,9 +12648,8 @@ msgid "Data set"
 msgstr "Veri seti"
 
 #: gui2/session.c:2853
-#, fuzzy
 msgid "Scalars"
-msgstr "_Sayıllar..."
+msgstr "Sayıllar"
 
 #: gui2/session.c:2856
 msgid "Data info"
@@ -13106,17 +13078,15 @@ msgstr ""
 "(ençok 15 harf)"
 
 #: gui2/ssheet.c:803 gui2/ssheet.c:2756
-#, fuzzy
 msgid "gretl: name scalar"
-msgstr "gretl: sayıl ekle"
+msgstr "gretl: sayıl tanımla"
 
 #: gui2/ssheet.c:804 gui2/ssheet.c:2757
-#, fuzzy
 msgid ""
 "Enter name for new scalar\n"
 "(max. 15 characters)"
 msgstr ""
-"Yeni değişkene ad giriniz\n"
+"Yeni sayıl için ad giriniz\n"
 "(ençok 15 harf)"
 
 #: gui2/ssheet.c:814
@@ -13152,9 +13122,8 @@ msgid "Enter a numerical value"
 msgstr "Sayısal bir değer giriniz"
 
 #: gui2/ssheet.c:1093
-#, fuzzy
 msgid "Add..."
-msgstr "Bul..."
+msgstr "Ekle..."
 
 #: gui2/ssheet.c:1098
 msgid "Add Variable"
@@ -13556,17 +13525,15 @@ msgstr "Yeni dosya yok"
 
 #: plugin/arma.c:2219 plugin/arma.c:2222
 msgid "ARMA initialization"
-msgstr ""
+msgstr "ÖBHO ilklendirmesi"
 
 #: plugin/arma.c:2220
-#, fuzzy
 msgid "using nonlinear AR model"
-msgstr "Doğrusal-_dışı modeller"
+msgstr "doğrusal-dışı ÖB modeli kullanıldı"
 
 #: plugin/arma.c:2223
-#, fuzzy
 msgid "using linear AR model"
-msgstr "Doğrusal-_dışı modeller"
+msgstr "doğrusal ÖB modeli kullanıldı"
 
 #: plugin/arma_common.c:698 plugin/arma_common.c:785
 msgid "Error in arma command"
@@ -14330,8 +14297,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14377,8 +14343,3 @@ msgstr "Dizgiler"
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#~ msgid "= rho-differenced %s"
-#~ msgstr "= rho farkı alınmış %s"
-
-#~ msgid "Couldn't find xterm or rxvt"
-#~ msgstr "xterm veya rxvt bulunamadı"
