@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-21 10:39-0400\n"
-"PO-Revision-Date: 2008-10-18 00:38+0300\n"
+"PO-Revision-Date: 2008-10-22 04:08+0300\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -360,8 +360,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -672,8 +671,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
@@ -1283,8 +1281,7 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -3980,8 +3977,7 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:991
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:994
 #, c-format
@@ -4282,8 +4278,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1389 lib/src/modelprint.c:1395
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:1390 lib/src/modelprint.c:1396
 msgid "variant"
@@ -4303,7 +4298,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1426
 msgid "QML standard errors"
-msgstr ""
+msgstr "Стандартные ошибки - QML"
 
 #: lib/src/modelprint.c:1430
 msgid "Bollerslev--Wooldridge standard errors"
@@ -4388,8 +4383,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1705 lib/src/modelprint.c:1712
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1708 lib/src/modelprint.c:1715
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5026,8 +5020,7 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5179,8 +5172,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
@@ -5283,8 +5275,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
@@ -5607,8 +5598,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -8764,7 +8754,7 @@ msgstr "МНК оценка"
 
 #: gui2/gpt_control.c:2701 gui2/gpt_control.c:2773
 msgid "Numerical values"
-msgstr ""
+msgstr "Численные значения"
 
 #: gui2/gpt_control.c:2720 gui2/graph_page.c:595
 msgid "color"
@@ -8808,7 +8798,7 @@ msgstr "loess (взвешенная локальная регрессия)"
 
 #: gui2/gpt_dialog.c:316
 msgid "Invalid label position, must be X Y"
-msgstr ""
+msgstr "Неверное положение метки, должны быть координаты X Y"
 
 #: gui2/gpt_dialog.c:745
 msgid "Fill color"
@@ -8865,9 +8855,8 @@ msgid "line %d: "
 msgstr "Линия %d: "
 
 #: gui2/gpt_dialog.c:1121 gui2/gpt_dialog.c:1342
-#, fuzzy
 msgid "formula"
-msgstr "Формула:"
+msgstr "формула"
 
 #: gui2/gpt_dialog.c:1139 gui2/gpt_dialog.c:1376
 msgid "legend"
@@ -8879,12 +8868,11 @@ msgstr "Толщина линии"
 
 #: gui2/gpt_dialog.c:1182
 msgid "No formula was given"
-msgstr ""
+msgstr "Формула не была задана"
 
 #: gui2/gpt_dialog.c:1242
-#, fuzzy
 msgid "Add line"
-msgstr "Линия подгонки"
+msgstr "Добавить линию"
 
 #: gui2/gpt_dialog.c:1301
 msgid "Lines"
@@ -8900,7 +8888,7 @@ msgstr "Ось y"
 
 #: gui2/gpt_dialog.c:1518
 msgid "Add line..."
-msgstr ""
+msgstr "Добавить линию..."
 
 #: gui2/gpt_dialog.c:1548
 msgid "Labels"
@@ -10073,9 +10061,8 @@ msgid "%g\\%% confidence interval"
 msgstr "%g\\%% доверительный интервал"
 
 #: gui2/guiprint.c:2157
-#, fuzzy
 msgid "No scalar variable are currently defined"
-msgstr "Не были выбраны "
+msgstr ""
 
 #: gui2/guiprint.c:2221 gui2/selector.c:4968 plugin/tramo-x12a.c:184
 msgid "Save data"
@@ -11503,8 +11490,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -12397,9 +12383,8 @@ msgid "Data set"
 msgstr "Данные"
 
 #: gui2/session.c:2853
-#, fuzzy
 msgid "Scalars"
-msgstr "_Скалярные величины..."
+msgstr "Скалярные величины"
 
 #: gui2/session.c:2856
 msgid "Data info"
@@ -12824,17 +12809,15 @@ msgid ""
 msgstr ""
 
 #: gui2/ssheet.c:803 gui2/ssheet.c:2756
-#, fuzzy
 msgid "gretl: name scalar"
-msgstr "gretl: добавить скалярную величину"
+msgstr "gretl: назвать скалярную величину"
 
 #: gui2/ssheet.c:804 gui2/ssheet.c:2757
-#, fuzzy
 msgid ""
 "Enter name for new scalar\n"
 "(max. 15 characters)"
 msgstr ""
-"Введите название первой переменной\n"
+"Введите название новой скалярной переменной\n"
 "(максимум 15 символов)"
 
 #: gui2/ssheet.c:814
@@ -12866,21 +12849,20 @@ msgid "Enter a numerical value"
 msgstr ""
 
 #: gui2/ssheet.c:1093
-#, fuzzy
 msgid "Add..."
-msgstr "Найти..."
+msgstr "Добавить..."
 
 #: gui2/ssheet.c:1098
 msgid "Add Variable"
-msgstr ""
+msgstr "Добавить переменную"
 
 #: gui2/ssheet.c:1104
 msgid "Add Observation"
-msgstr ""
+msgstr "Добавить наблюдение"
 
 #: gui2/ssheet.c:1110
 msgid "Insert Observation"
-msgstr ""
+msgstr "Вставить наблюдение"
 
 #: gui2/ssheet.c:1315 gui2/ssheet.c:2317
 msgid "Warning: there were missing observations"
@@ -12931,7 +12913,7 @@ msgstr ""
 
 #: gui2/ssheet.c:2837
 msgid "You must give the matrix a name"
-msgstr ""
+msgstr "Необходимо назвать матрицу"
 
 #: gui2/ssheet.c:2861
 msgid "The matrix formula is empty"
@@ -12955,11 +12937,11 @@ msgstr ""
 
 #: gui2/ssheet.c:2982
 msgid "Number of rows:"
-msgstr ""
+msgstr "Количество строк:"
 
 #: gui2/ssheet.c:2991
 msgid "Number of columns:"
-msgstr ""
+msgstr "Количество столбцов:"
 
 #: gui2/ssheet.c:3000
 msgid "Initial fill value:"
@@ -12976,7 +12958,7 @@ msgstr ""
 #: gui2/ssheet.c:3248
 #, c-format
 msgid "Couldn't open '%s'"
-msgstr ""
+msgstr "Невозможно открыть '%s'"
 
 #: gui2/ssheet.c:3269
 msgid "You can't do this while editing the dataset"
@@ -13106,7 +13088,7 @@ msgstr "Матрица сохранена как %s"
 
 #: gui2/toolbar.c:386
 msgid "Confidence level, percent"
-msgstr ""
+msgstr "Доверительный уровень, проценты"
 
 #: gui2/toolbar.c:407
 msgid "Running a script replaces text"
@@ -13154,7 +13136,7 @@ msgstr ""
 
 #: gui2/toolbar.c:484
 msgid "Confidence level..."
-msgstr ""
+msgstr "Доверительный уровень..."
 
 #: gui2/toolbar.c:485
 msgid "Refresh"
@@ -13239,6 +13221,8 @@ msgid ""
 "New files are available from the gretl web site\n"
 "http://gretl.sourceforge.net/"
 msgstr ""
+"Новые файлы доступны на веб-сайте gretl\n"
+"http://gretl.sourceforge.net/"
 
 #: gui2/update.c:141
 msgid ""
@@ -13299,7 +13283,7 @@ msgstr ""
 
 #: plugin/excel_import.c:1288 plugin/excel_import.c:1327
 msgid "No data found.\n"
-msgstr ""
+msgstr "Данные не найдены.\n"
 
 #: plugin/excel_import.c:1415 plugin/gnumeric_import.c:635
 msgid "Failed to get workbook info"
@@ -13405,12 +13389,12 @@ msgstr "коэфф."
 #: plugin/fractals.c:254
 #, c-format
 msgid "Intercept %12.6g   %g\n"
-msgstr ""
+msgstr "Константа %12.6g   %g\n"
 
 #: plugin/fractals.c:255
 #, c-format
 msgid "Slope     %12.6g   %g\n"
-msgstr ""
+msgstr "Угл. коэф.     %12.6g   %g\n"
 
 #: plugin/fractals.c:257
 msgid "Estimated Hurst exponent"
@@ -13444,7 +13428,7 @@ msgstr ""
 
 #: plugin/gnumeric_import.c:675
 msgid "error in wsheet_setup()"
-msgstr ""
+msgstr "ошибка в wsheet_setup()"
 
 #: plugin/heckit.c:654
 msgid "Selection equation"
@@ -13455,6 +13439,8 @@ msgid ""
 "\n"
 "Please rename this variable and try again"
 msgstr ""
+"\n"
+"Задайте новое имя для данной переменной и повторите попытку"
 
 #: plugin/import_common.c:247 plugin/import_common.c:252
 #, c-format
@@ -13463,7 +13449,7 @@ msgstr ""
 
 #: plugin/import_common.c:380
 msgid "Sheet to import:"
-msgstr ""
+msgstr "Лист для импорта:"
 
 #: plugin/import_common.c:402
 msgid "gretl: spreadsheet import"
@@ -13475,11 +13461,11 @@ msgstr ""
 
 #: plugin/import_common.c:420
 msgid "column:"
-msgstr ""
+msgstr "столбец:"
 
 #: plugin/import_common.c:432
 msgid "row:"
-msgstr ""
+msgstr "строка:"
 
 #: plugin/import_common.c:457
 msgid "Produce debugging output"
@@ -13579,7 +13565,7 @@ msgstr ""
 
 #: plugin/jrestrict.c:2756
 msgid "loglikelihood"
-msgstr ""
+msgstr "лог. правдоподобие"
 
 #: plugin/kernel.c:132
 #, c-format
@@ -14062,3 +14048,4 @@ msgstr "Строки"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
+
