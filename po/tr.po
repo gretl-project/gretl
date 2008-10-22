@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-21 10:39-0400\n"
-"PO-Revision-Date: 2008-10-21 10:20+0300\n"
+"PO-Revision-Date: 2008-10-22 08:50+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -577,8 +577,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -663,8 +662,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:845 lib/src/dataio.c:2604
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:864 lib/src/dataio.c:2615
 msgid "Data file is empty\n"
@@ -685,10 +683,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1014
 #, c-format
@@ -1312,8 +1308,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
@@ -2435,8 +2430,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3708
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
 
 #: lib/src/graphing.c:3713
 #, c-format
@@ -3124,8 +3118,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -4263,7 +4256,7 @@ msgstr "GEK (GLS) rassal-etki"
 
 #: lib/src/modelprint.c:1098
 msgid "Maximum Likelihood"
-msgstr "ençok olabilirlik"
+msgstr "en yüksek olabilirlik"
 
 #: lib/src/modelprint.c:1103
 msgid "Between-groups"
@@ -5141,10 +5134,8 @@ msgid "not significant at the 10% level\n"
 msgstr "%% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
 
 #: lib/src/nonparam.c:761
 msgid ""
@@ -5173,8 +5164,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:809
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:813
 #, c-format
@@ -5302,10 +5292,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5382,8 +5370,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:442
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:450
 msgid "TOT."
@@ -5414,10 +5401,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
-"Uyarı: Hücrelerin %% 80% of 'den azının beklenen değeri 5 veya daha yüksek.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin %% 80'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
 #, c-format
@@ -5760,10 +5745,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/system.c:81
 msgid "SUR"
@@ -5787,27 +5770,27 @@ msgstr "Görünürde İlişkisiz Bağlanımlar"
 
 #: lib/src/system.c:93
 msgid "Three-Stage Least Squares"
-msgstr "Üç-Aşamalı En Küçük Kareler"
+msgstr "Üç-Aşamalı En küçük Kareler"
 
 #: lib/src/system.c:94
 msgid "Full Information Maximum Likelihood"
-msgstr "Tam Bilgi Ençok Olabilirlik"
+msgstr "Tam Bilgi En yüksek Olabilirlik"
 
 #: lib/src/system.c:95
 msgid "Limited Information Maximum Likelihood"
-msgstr "Sınırlı Bilgi Ençok Olabilirlik"
+msgstr "Sınırlı Bilgi En yüksek Olabilirlik"
 
 #: lib/src/system.c:96
 msgid "Ordinary Least Squares"
-msgstr "Sıradan En Küçük Kareler"
+msgstr "Sıradan En küçük Kareler"
 
 #: lib/src/system.c:97
 msgid "Two-Stage Least Squares"
-msgstr "İki-Aşamalı En Küçük Kareler"
+msgstr "İki-Aşamalı En küçük Kareler"
 
 #: lib/src/system.c:98
 msgid "Weighted Least Squares"
-msgstr "Ağırlıklı En Küçük Kareler"
+msgstr "Ağırlıklı En küçük Kareler"
 
 #: lib/src/system.c:102
 msgid "No system of equations has been defined"
@@ -6172,7 +6155,7 @@ msgstr "%s tahminleri, gözlemler %s--%s ($T=%d$)"
 
 #: lib/src/varprint.c:1026 lib/src/varprint.c:1035 lib/src/varprint.c:1044
 msgid "Maximum likelihood"
-msgstr "Ençok olabilirlik"
+msgstr "En yüksek olabilirlik"
 
 #: lib/src/varprint.c:1034 lib/src/varprint.c:1043
 #, c-format
@@ -6364,8 +6347,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:960
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:968
 #, c-format
@@ -6724,8 +6706,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7251,7 +7232,7 @@ msgstr "GBY: İşlevi ve dikeysellik koşullarını belirtiniz:"
 
 #: gui2/callbacks.c:655
 msgid "gretl: maximum likelihood"
-msgstr "gretl: ençok olabilirlik"
+msgstr "gretl: en yüksek olabilirlik"
 
 #: gui2/callbacks.c:656
 msgid "MLE: Specify function, and derivatives if possible:"
@@ -7330,7 +7311,7 @@ msgid ""
 "gretl console: type 'help' for a list of commands\n"
 "? "
 msgstr ""
-"gretl console: type 'help' for a list of commands\n"
+"gretl uçbirimi: komut listesi için 'help' yazınız\n"
 "? "
 
 #: gui2/database.c:92
@@ -9901,7 +9882,7 @@ msgstr "_Model"
 
 #: gui2/gretl.c:1437
 msgid "_Ordinary Least Squares..."
-msgstr "_Sıradan En Küçük Kareler"
+msgstr "_Sıradan En küçük Kareler"
 
 #: gui2/gretl.c:1438
 msgid "Other _linear models"
@@ -9909,7 +9890,7 @@ msgstr "Di_ğer doğrusal modeller"
 
 #: gui2/gretl.c:1439
 msgid "_Weighted Least Squares..."
-msgstr "_Ağırlıklı En Küçük Kareler"
+msgstr "_Ağırlıklı En küçük Kareler"
 
 #: gui2/gretl.c:1440
 msgid "H_eteroskedasticity corrected..."
@@ -9917,7 +9898,7 @@ msgstr "_Çoktürelserpilim düzeltmeli..."
 
 #: gui2/gretl.c:1441
 msgid "_Two-Stage Least Squares..."
-msgstr "_İki Aşamalı En Küçük Kareler..."
+msgstr "_İki Aşamalı En küçük Kareler..."
 
 #: gui2/gretl.c:1443
 msgid "High _precision OLS..."
@@ -9989,7 +9970,7 @@ msgstr "_Sabit veya rassal etkiler..."
 
 #: gui2/gretl.c:1461
 msgid "_Weighted least squares..."
-msgstr "_Ağırlıklı En Küçük Kareler..."
+msgstr "_Ağırlıklı En küçük Kareler..."
 
 #: gui2/gretl.c:1462
 msgid "_Between model..."
@@ -10037,7 +10018,7 @@ msgstr "Sağla_m tahmin"
 
 #: gui2/gretl.c:1473
 msgid "Least _Absolute Deviation..."
-msgstr "_En Küçük Mutlak Sapma..."
+msgstr "_En küçük Mutlak Sapma..."
 
 #: gui2/gretl.c:1474
 msgid "_Quantile regression..."
@@ -10049,7 +10030,7 @@ msgstr "_Sıra ilintisi..."
 
 #: gui2/gretl.c:1476
 msgid "_Maximum likelihood..."
-msgstr "Ençok _olabilirlik"
+msgstr "En yüksek _olabilirlik"
 
 #: gui2/gretl.c:1477
 msgid "_GMM..."
@@ -11774,8 +11755,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Üzgünüm, 2AEK modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:192
@@ -11884,8 +11864,7 @@ msgstr "Logbirim ve olabirim için, McFadden sözde-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1068
 msgid "No model is available"
@@ -12328,7 +12307,7 @@ msgstr "2-adımlı tahmin"
 
 #: gui2/selector.c:3859
 msgid "Maximum likelihood estimation"
-msgstr "Ençok Olabilirlik tahmini"
+msgstr "En yüksek olabilirlik tahmini"
 
 #: gui2/selector.c:3875
 msgid "Plain numerical values"
@@ -12344,11 +12323,11 @@ msgstr "Sütun yüzdelerini göster"
 
 #: gui2/selector.c:3900 gui2/selector.c:3912
 msgid "Exact Maximum Likelihood"
-msgstr "Tam Ençok Olabilirlik"
+msgstr "Tam En yüksek Olabilirlik"
 
 #: gui2/selector.c:3913
 msgid "Conditional Maximum Likelihood"
-msgstr "Koşullu Ençok Olabilirlik"
+msgstr "Koşullu En yüksek Olabilirlik"
 
 #: gui2/selector.c:3976
 msgid "No constant"
@@ -14318,8 +14297,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14364,3 +14342,4 @@ msgstr "Dizgiler"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Erişiciler"
+
