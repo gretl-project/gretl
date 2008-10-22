@@ -1212,6 +1212,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     strcpy(line->style, "lines");
     line->type = spec->n_lines; /* assign next line style */
     strcpy(line->scale, "NA");  /* mark as a non-data line */
+    line->flags = GP_LINE_USER;
 
     line->width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(nlinfo->width_spin));  
 
@@ -1348,8 +1349,8 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
     for (i=0; i<gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 
-	if (line->formula[0] != '\0') {
-	    /* the line has a formula */
+	if (line->formula[0] != '\0' || (line->flags & GP_LINE_USER)) {
+	    /* the line has a formula (or is user-defined) */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 

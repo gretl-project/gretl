@@ -365,16 +365,27 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     gretl_pop_c_numeric_locale();
 }
 
+static int blank_user_line (const GPT_SPEC *spec, int i)
+{
+    return ((spec->lines[i].flags & GP_LINE_USER) && 
+	    spec->lines[i].formula[0] == '\0');
+
+}
+
 static int more_lines (const GPT_SPEC *spec, int i, int skipline)
 {
     if (i == spec->n_lines - 1) {
 	/* at last line */
 	return 0;
-    } else if (i == spec->n_lines - 2 && i + 1 == skipline) {
-	/* at penultimate line, but last is hidden */
-	return 0;
     } else {
-	return 1;
+	int j;
+
+	for (j=i+1; j<spec->n_lines; j++) {
+	    if (j != skipline && !blank_user_line(spec, j)) {
+		return 1;
+	    }
+	}
+	return 0;
     }
 }
 
@@ -521,7 +532,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     fputs("plot \\\n", fp);
 
     for (i=0; i<spec->n_lines; i++) {
-	if (i == skipline) {
+	if (i == skipline || blank_user_line(spec, i)) {
 	    continue;
 	}
 	if ((spec->flags & GPT_Y2AXIS) && spec->lines[i].yaxis != 1) {
@@ -531,7 +542,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     for (i=0; i<spec->n_lines; i++) {
-	if (i == skipline) {
+	if (i == skipline || blank_user_line(spec, i)) {
 	    if (i < spec->n_lines - 1) {
 		continue;
 	    } else {

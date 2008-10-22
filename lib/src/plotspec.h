@@ -24,6 +24,10 @@
 #define GP_MAXSTYLE    16
 #define GP_MAXSCALE     8
 
+typedef enum {
+    GP_LINE_USER = 1 << 0
+} gp_line_flags;
+
 typedef struct {
     int varnum;                    /* ID number of variable to plot */
     char title[MAXTITLE];          /* key or legend title */

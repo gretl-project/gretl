@@ -588,7 +588,7 @@ static int real_add_new_series (Spreadsheet *sheet, const char *varname)
     }
 
 #if SSDEBUG
-    fprintf(stderr, "real_add_new_var, after add_data_column: sheet->totcols=%d\n", 
+    fprintf(stderr, "real_add_new_series, after add_data_column: sheet->totcols=%d\n", 
 	    sheet->totcols);
 #endif
 
@@ -603,7 +603,8 @@ static int real_add_new_series (Spreadsheet *sheet, const char *varname)
     return 0;
 }
 
-static int real_add_new_scalar (Spreadsheet *sheet, const char *vname)
+static int real_add_new_scalar (Spreadsheet *sheet, const char *vname,
+				double val)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkListStore *store;
@@ -611,7 +612,15 @@ static int real_add_new_scalar (Spreadsheet *sheet, const char *vname)
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_list_store_append(store, &iter);
-    gtk_list_store_set(store, &iter, 0, vname, 1, "", -1);
+    if (na(val)) {
+	gtk_list_store_set(store, &iter, 0, vname, 1, "", -1);
+    } else {
+	gchar *numstr;
+
+	numstr = g_strdup_printf("%.*g", DBL_DIG, val);
+	gtk_list_store_set(store, &iter, 0, vname, 1, numstr, -1);
+	g_free(numstr);
+    }
 
     sheet->datarows += 1;
     spreadsheet_scroll_to_foot(sheet, sheet->datarows - 1, 1);
@@ -619,15 +628,6 @@ static int real_add_new_scalar (Spreadsheet *sheet, const char *vname)
     sheet_set_modified(sheet, TRUE);
 
     return 0;
-}
-
-static int real_add_new_var (Spreadsheet *sheet, const char *varname)
-{
-    if (sheet->cmd == SHEET_EDIT_SCALARS) {
-	return real_add_new_scalar(sheet, varname);
-    } else {
-	return real_add_new_series(sheet, varname);
-    }
 }
 
 static void 
@@ -744,18 +744,66 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
     sheet_set_modified(sheet, TRUE);
 }
 
+static void add_new_scalar (GtkWidget *widget, dialog_t *dlg) 
+{
+    Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
+    const gchar *buf;
+    gchar *vname = NULL;
+    gchar *expr = NULL;
+    char varname[VNAMELEN];
+    double val = NADBL;
+    int err = 0;
+
+    buf = edit_dialog_get_text(dlg);
+
+    if (buf == NULL || *buf == '\0') {
+	return;
+    }
+
+    if (strchr(buf, '=')) {
+	gchar *p, *tmp = g_strdup(buf);
+
+	p = strchr(tmp, '=');
+	*p = '\0';
+	tailstrip(tmp);
+	vname = g_strdup(tmp);
+	expr = g_strdup(p + 1);
+	g_free(tmp);
+
+	if (gui_validate_varname(vname, GRETL_TYPE_DOUBLE)) {
+	    err = 1;
+	} else {
+	    *varname = 0;
+	    strncat(varname, vname, VNAMELEN - 1);
+	    val = generate_scalar(expr, &Z, datainfo, &err);
+	}
+    } else if (gui_validate_varname(buf, GRETL_TYPE_DOUBLE)) {
+	return;
+    } else {
+	*varname = 0;
+	strncat(varname, buf, VNAMELEN - 1);
+    }
+
+    g_free(vname);
+    g_free(expr);
+
+    if (!err) {
+	close_dialog(dlg);
+	if (real_add_new_scalar(sheet, varname, val)) {
+	    nomem();
+	}
+    }
+}
+
 static void name_new_var (GtkWidget *widget, dialog_t *dlg) 
 {
     Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
-    GretlType t;
     const gchar *buf;
     char varname[VNAMELEN];
 
-    t = (sheet->cmd == SHEET_EDIT_SCALARS)? GRETL_TYPE_DOUBLE :
-	GRETL_TYPE_SERIES;
-
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL || gui_validate_varname(buf, t)) {
+
+    if (buf == NULL || gui_validate_varname(buf, GRETL_TYPE_SERIES)) {
 	return;
     }
 
@@ -764,7 +812,7 @@ static void name_new_var (GtkWidget *widget, dialog_t *dlg)
 
     close_dialog(dlg);
 
-    if (real_add_new_var(sheet, varname)) {
+    if (real_add_new_series(sheet, varname)) {
 	nomem();
     }
 }
@@ -796,14 +844,14 @@ static void name_var_dialog (Spreadsheet *sheet)
 		0, VARCLICK_NONE, &cancel);
 }
 
-static void name_scalar_dialog (Spreadsheet *sheet) 
+static void new_scalar_dialog (Spreadsheet *sheet) 
 {
     int cancel = 0;
     
-    edit_dialog(_("gretl: name scalar"), 
-		_("Enter name for new scalar\n"
-		  "(max. 15 characters)"),
-		NULL, name_new_var, sheet, 
+    edit_dialog(_("gretl: scalar"), 
+		_("Enter name, or name=value,\n"
+		  "for new scalar"),
+		NULL, add_new_scalar, sheet, 
 		0, VARCLICK_NONE, &cancel);
 }
 
@@ -1080,7 +1128,7 @@ static void popup_sheet_add_var (GtkWidget *w, Spreadsheet *sheet)
 
 static void popup_sheet_add_scalar (GtkWidget *w, Spreadsheet *sheet)
 {
-    name_scalar_dialog(sheet);
+    new_scalar_dialog(sheet);
 }
 
 static void build_sheet_popup (Spreadsheet *sheet)
