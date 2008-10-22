@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-21 10:39-0400\n"
-"PO-Revision-Date: 2008-10-22 08:50+0300\n"
+"PO-Revision-Date: 2008-10-22 15:33+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3057,7 +3057,7 @@ msgstr ""
 
 #: lib/src/gretl_panel.c:3096
 msgid "Can't produce ML estimates: some units have only one observation"
-msgstr "EO tahminleri üretilemedi: Bazı birimlerin yalnız bir gözlemi var"
+msgstr "EYO tahminleri üretilemedi: Bazı birimlerin yalnız bir gözlemi var"
 
 #: lib/src/gretl_panel.c:3148 plugin/poisson.c:327
 msgid "iteration"
@@ -4188,7 +4188,7 @@ msgstr "DDEK (NLS)"
 
 #: lib/src/modelprint.c:1057
 msgid "ML"
-msgstr "EO (ML)"
+msgstr "EYO (ML)"
 
 #: lib/src/modelprint.c:1058
 msgid "GMM"
@@ -4300,7 +4300,7 @@ msgstr "iki-adımlı Heckbirim"
 
 #: lib/src/modelprint.c:1141
 msgid "ML Heckit"
-msgstr "EO Heckbirim"
+msgstr "EYO Heckbirim"
 
 #: lib/src/modelprint.c:1145
 msgid "Quantile"
@@ -4394,7 +4394,7 @@ msgstr "Dış Çarpanlar Dizeyi'ne dayalı ölçünlü hatalar"
 
 #: lib/src/modelprint.c:1426
 msgid "QML standard errors"
-msgstr "BEO (QML) ölçünlü hataları"
+msgstr "BEYO (QML) ölçünlü hataları"
 
 #: lib/src/modelprint.c:1430
 msgid "Bollerslev--Wooldridge standard errors"
@@ -4448,12 +4448,12 @@ msgstr "X-12-ARIMA kullanılarak tahmin edildi"
 
 #: lib/src/modelprint.c:1662 lib/src/modelprint.c:1667
 msgid "exact ML"
-msgstr "tam EO"
+msgstr "tam EYO"
 
 #: lib/src/modelprint.c:1662 lib/src/modelprint.c:1672
 #: lib/src/modelprint.c:1677
 msgid "conditional ML"
-msgstr "koşullu EO"
+msgstr "koşullu EYO"
 
 #: lib/src/modelprint.c:1665
 msgid "Estimated using Kalman filter"
@@ -5758,11 +5758,11 @@ msgstr "3AEK"
 
 #: lib/src/system.c:83
 msgid "FIML"
-msgstr "TBEO"
+msgstr "TBEYO"
 
 #: lib/src/system.c:84
 msgid "LIML"
-msgstr "SBEO"
+msgstr "SBEYO"
 
 #: lib/src/system.c:92
 msgid "Seemingly Unrelated Regressions"
@@ -7236,7 +7236,7 @@ msgstr "gretl: en yüksek olabilirlik"
 
 #: gui2/callbacks.c:656
 msgid "MLE: Specify function, and derivatives if possible:"
-msgstr "EO: İşlevi ve eğer olanaklı ise türevlerini belirtiniz:"
+msgstr "EYO: İşlevi ve eğer olanaklı ise türevlerini belirtiniz:"
 
 #: gui2/callbacks.c:661
 msgid "gretl: nonlinear least squares"
@@ -11776,7 +11776,7 @@ msgstr "ÖBKÇ (ARCH)"
 
 #: gui2/model_table.c:367
 msgid "MLE"
-msgstr "EO (ML)"
+msgstr "EYO (ML)"
 
 #: gui2/model_table.c:373
 msgid "Within"
