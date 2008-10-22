@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-21 10:39-0400\n"
-"PO-Revision-Date: 2008-10-22 15:33+0300\n"
+"PO-Revision-Date: 2008-10-22 15:44+0300\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -6776,7 +6776,7 @@ msgstr ""
 
 #: gui2/calculator.c:1922
 msgid "uniform"
-msgstr "tekdüze"
+msgstr "tekbiçim"
 
 #: gui2/calculator.c:1923
 msgid "normal"
@@ -12211,7 +12211,7 @@ msgstr "Sıralamaları göster"
 
 #: gui2/selector.c:3517
 msgid "Ensure uniform sample size"
-msgstr "Tekdüze örneklem büyüklüğü sağla"
+msgstr "Tekbiçim örneklem büyüklüğü sağla"
 
 #: gui2/selector.c:3523
 msgid "Parameter covariance matrix via Hessian"
@@ -13031,7 +13031,7 @@ msgstr "_Birim dizey"
 
 #: gui2/ssheet.c:158
 msgid "_Uniform random"
-msgstr "_Tekdüze rassal"
+msgstr "_Tekbiçim rassal"
 
 #: gui2/ssheet.c:159
 msgid "_Normal random"
