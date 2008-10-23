@@ -1158,10 +1158,11 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
     gretl_push_c_numeric_locale();
 
     for (i=0; i<spec->n_lines && !err; i++) {
+	int ncols = spec->lines[i].ncols;
 	int okobs = spec->nobs;
 	int offset = 1;
 
-	if (spec->lines[i].ncols == 0) {
+	if (ncols == 0) {
 	    continue;
 	}
 
@@ -1186,15 +1187,15 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	    }
 
 	    nf = 0;
-	    if (spec->lines[i].ncols == 4) {
+	    if (ncols == 4) {
 		nf = sscanf(s, "%31s %31s %31s %31s", test[0], test[1], test[2], test[3]);
-	    } else if (spec->lines[i].ncols == 3) {
+	    } else if (ncols == 3) {
 		nf = sscanf(s, "%31s %31s %31s", test[0], test[1], test[2]);
-	    } else if (spec->lines[i].ncols == 2) {
+	    } else if (ncols == 2) {
 		nf = sscanf(s, "%31s %31s", test[0], test[1]);
 	    }
 
-	    if (nf != spec->lines[i].ncols) {
+	    if (nf != ncols) {
 		err = 1;
 	    }
 
@@ -1224,7 +1225,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	fgets(s, sizeof s, fp);
 
 	/* shift 'y' writing location */
-	x[1] += (spec->lines[i].ncols - 1) * spec->nobs;
+	x[1] += (ncols - 1) * spec->nobs;
     }
 
     gretl_pop_c_numeric_locale();
@@ -1660,6 +1661,7 @@ static void grab_line_title (char *targ, const char *src)
 
 static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 {
+    GPT_LINE *line;
     const char *p;
     int i, err;
 
@@ -1669,61 +1671,62 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
     }
 
     i = spec->n_lines - 1;
+    line = &spec->lines[i];
 
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;
 	if (strstr(p, "1:2:3:4")) {
-	    spec->lines[i].ncols = 4;
+	    line->ncols = 4;
 	} else if (strstr(p, "1:2:3")) {
-	    spec->lines[i].ncols = 3;
+	    line->ncols = 3;
 	} else if ((p = strstr(s, "($2*"))) {
-	    sscanf(p + 4, "%7[^)]", spec->lines[i].scale);
-	    spec->lines[i].ncols = 2;
+	    sscanf(p + 4, "%7[^)]", line->scale);
+	    line->ncols = 2;
 	} else {
-	    spec->lines[i].ncols = 2;
+	    line->ncols = 2;
 	}
-	if (spec->lines[i].scale[0] == '\0') {
-	    strcpy(spec->lines[i].scale, "1.0");
+	if (line->scale[0] == '\0') {
+	    strcpy(line->scale, "1.0");
 	}
     } else {
 	/* absence of "using" means the line plots a formula, not a
 	   set of data columns */
-	strcpy(spec->lines[i].scale, "NA");
+	strcpy(line->scale, "NA");
 	/* get the formula: it runs up to "title" or "notitle" */
 	p = strstr(s, " title");
 	if (p == NULL) {
 	    p = strstr(s, " notitle");
 	}
 	if (p != NULL) {
-	    strncat(spec->lines[i].formula, s, p - s);
+	    strncat(line->formula, s, p - s);
 	    if (i == 1 && spec->flags & GPT_AUTO_FIT) {
-		grab_fit_coeffs(spec, spec->lines[i].formula);
+		grab_fit_coeffs(spec, line->formula);
 	    }
 	}
     }
 
     if (strstr(s, "axes x1y2")) {
-	spec->lines[i].yaxis = 2;
+	line->yaxis = 2;
     } 
 
     if ((p = strstr(s, " title "))) {
-	grab_line_title(spec->lines[i].title, p + 7);
+	grab_line_title(line->title, p + 7);
     }
 
     if ((p = strstr(s, " w "))) {
-	sscanf(p + 3, "%15[^, ]", spec->lines[i].style);
+	sscanf(p + 3, "%15[^, ]", line->style);
     } 
 
     if ((p = strstr(s, " lt "))) {
-	sscanf(p + 4, "%d", &spec->lines[i].type);
+	sscanf(p + 4, "%d", &line->type);
     } 
 
     if ((p = strstr(s, " lw "))) {
-	sscanf(p + 4, "%d", &spec->lines[i].width);
+	sscanf(p + 4, "%d", &line->width);
     } 
 
-    if (spec->lines[i].ncols == 0 && spec->lines[i].formula[0] == '\0') {
+    if (line->ncols == 0 && line->formula[0] == '\0') {
 	/* got neither data column spec nor formula */
 	err = 1;
     }
@@ -1851,6 +1854,41 @@ static int uneditable_get_markers (GPT_SPEC *spec, FILE *fp, int *polar)
     return err;
 }
 
+/* Parse special comment to get the 0-based index numbers of
+   any user-defined lines that have been added to the plot.
+   The comment looks like:
+
+   # %d user-defined lines: %d %d ...
+*/
+
+static int *get_user_lines_list (const char *s)
+{
+    int *list = NULL;
+    char id[6];
+    int i, n = 0;
+
+    sscanf(s, "# %d", &n);
+
+    if (n > 0) {
+	s = strchr(s, ':');
+	if (s != NULL) {
+	    list = gretl_list_new(n);
+	    if (list != NULL) {
+		s++;
+		for (i=0; i < n && *s != '\0'; i++) {
+		    s++;
+		    if (sscanf(s, "%5[^ ]", id)) {
+			list[i+1] = atoi(id);
+			s += strlen(id);
+		    }
+		}
+	    }
+	}
+    }
+
+    return list;
+}
+
 static FitType recognize_fit_string (const char *s)
 {
     if (strstr(s, "OLS")) {
@@ -1879,6 +1917,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     int do_markers = 0;
     int datacols = 0;
     int reglist[4] = {0};
+    int *uservec = NULL;
     char gpline[MAXLEN];
     char *got = NULL;
     FILE *fp;
@@ -1989,6 +2028,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    continue;
 	}
 
+	if (strstr(gpline, "user-defined")) {
+	    uservec = get_user_lines_list(gpline);
+	    continue;
+	}
+
 	if (strstr(gpline, "printing data labels")) {
 	    spec->flags |= GPT_ALL_MARKERS;
 	    continue;
@@ -2059,6 +2103,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     /* determine total number of required data columns */
     for (i=0; i<spec->n_lines; i++) {
+	if (uservec != NULL && in_gretl_list(uservec, i)) {
+	    spec->lines[i].flags |= GP_LINE_USER;
+	}
 	if (spec->lines[i].ncols == 0) {
 	    continue;
 	}
@@ -2086,6 +2133,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
  plot_bailout:
 
     fclose(fp);
+    free(uservec);
 
     return err;
 }

@@ -135,7 +135,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     }
 
     if (info != TARGET_UTF8_STRING) {
-	/* need to rmove any UTF-8 minuses? */
+	/* need to remove any UTF-8 minuses? */
 	str = minus_check(str);
     }
 
@@ -201,16 +201,22 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	/* recode (only) if needed */
 	clipboard_buf = my_locale_from_utf8(buf);
     } else if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
-	/* RTF: ensure that's we're not in UTF-8 */
-	gchar *trbuf = utf8_to_cp(buf);
+	/* RTF: ensure that we're not in UTF-8 */
+	if (string_is_utf8((const unsigned char *) buf)) {
+	    gchar *trbuf = utf8_to_cp(buf);
 
-	if (trbuf != NULL) {
-	    if (fmt == GRETL_FORMAT_RTF_TXT) {
-		clipboard_buf = dosify_buffer(trbuf, fmt);
-	    } else {
-		clipboard_buf = gretl_strdup(trbuf);
+	    if (trbuf != NULL) {
+		if (fmt == GRETL_FORMAT_RTF_TXT) {
+		    clipboard_buf = dosify_buffer(trbuf, fmt);
+		} else {
+		    clipboard_buf = gretl_strdup(trbuf);
+		}
+		g_free(trbuf);
 	    }
-	    g_free(trbuf);
+	} else if (fmt == GRETL_FORMAT_RTF_TXT) {
+	    clipboard_buf = dosify_buffer(buf, fmt);
+	} else {
+	    clipboard_buf = gretl_strdup(buf);
 	}
     } else {
 	/* TeX, CSV */

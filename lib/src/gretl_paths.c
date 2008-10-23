@@ -67,7 +67,7 @@ static int add_suffix (char *fname, const char *sfx)
 /* Heuristic: filename contains non-ascii characters, and
    validates as UTF-8 */
 
-int fname_is_utf8 (const unsigned char *s)
+int string_is_utf8 (const unsigned char *s)
 {
     const unsigned char *p = s;
     int sevenbit = 1;
@@ -139,7 +139,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	/* opening for reading */
 	fp = fopen(fname, mode);
 	if (fp == NULL && !fopen_use_utf8 && 
-	    fname_is_utf8((unsigned char *) fname)) {
+	    string_is_utf8((unsigned char *) fname)) {
 	    int save_errno = errno;
 
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
@@ -151,7 +151,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	}
     } else {
 	/* opening for appending/writing */
-	if (!fopen_use_utf8 && fname_is_utf8((unsigned char *) fname)) {
+	if (!fopen_use_utf8 && string_is_utf8((unsigned char *) fname)) {
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	    if (fconv != NULL) {
 		fp = fopen(fconv, mode);
@@ -192,7 +192,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 	/* opening for reading */
 	fz = gzopen(fname, mode);
 	if (fz == NULL && !fopen_use_utf8 && 
-	    fname_is_utf8((unsigned char *) fname)) {
+	    string_is_utf8((unsigned char *) fname)) {
 	    int save_errno = errno;
 
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
@@ -204,7 +204,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 	}
     } else {
 	/* opening for writing */
-	if (!fopen_use_utf8 && fname_is_utf8((unsigned char *) fname)) {
+	if (!fopen_use_utf8 && string_is_utf8((unsigned char *) fname)) {
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	    if (fconv != NULL) {
 		fz = gzopen(fconv, mode);

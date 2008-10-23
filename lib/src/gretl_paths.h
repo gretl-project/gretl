@@ -40,7 +40,7 @@ void set_fopen_use_utf8 (void);
 
 int get_fopen_use_utf8 (void);
 
-int fname_is_utf8 (const unsigned char *s);
+int string_is_utf8 (const unsigned char *s);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
 

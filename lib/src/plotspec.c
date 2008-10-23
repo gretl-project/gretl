@@ -372,6 +372,27 @@ static int blank_user_line (const GPT_SPEC *spec, int i)
 
 }
 
+static void print_user_lines_info (const GPT_SPEC *spec, FILE *fp)
+{
+    int i, n = 0;
+
+    for (i=0; i<spec->n_lines; i++) {
+	if (spec->lines[i].flags & GP_LINE_USER) {
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	fprintf(fp, "# %d user-defined lines: ", n);
+	for (i=0; i<spec->n_lines; i++) {
+	    if (spec->lines[i].flags & GP_LINE_USER) {
+		fprintf(fp, "%d ", i);
+	    }
+	}
+	fputc('\n', fp);
+    }
+}
+
 static int more_lines (const GPT_SPEC *spec, int i, int skipline)
 {
     if (i == spec->n_lines - 1) {
@@ -509,6 +530,8 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	print_auto_fit_string(spec->fit, fp);
     }
 
+    print_user_lines_info(spec, fp);
+
     if ((spec->code == PLOT_FREQ_SIMPLE ||
 	 spec->code == PLOT_FREQ_NORMAL ||
 	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
@@ -542,6 +565,8 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     for (i=0; i<spec->n_lines; i++) {
+	GPT_LINE *line = &spec->lines[i];
+
 	if (i == skipline || blank_user_line(spec, i)) {
 	    if (i < spec->n_lines - 1) {
 		continue;
@@ -550,33 +575,32 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	if (!strcmp(spec->lines[i].scale, "NA")) {
-	    fprintf(fp, "%s ", spec->lines[i].formula); 
+	if (!strcmp(line->scale, "NA")) {
+	    fprintf(fp, "%s ", line->formula); 
 	} else {
-	    if (!strcmp(spec->lines[i].scale, "1.0")) {
+	    if (!strcmp(line->scale, "1.0")) {
 		fputs("'-' using 1", fp);
-		if (spec->lines[i].ncols == 2) {
+		if (line->ncols == 2) {
 		    fputs(":($2)", fp);
 		} else {
-		    for (k=2; k<=spec->lines[i].ncols; k++) {
+		    for (k=2; k<=line->ncols; k++) {
 			fprintf(fp, ":%d", k);
 		    }
 		}
 		fputc(' ', fp);
 	    } else {
-		fprintf(fp, "'-' using 1:($2*%s) ", 
-			spec->lines[i].scale);
+		fprintf(fp, "'-' using 1:($2*%s) ", line->scale);
 	    }
 	} 
 
-	if ((spec->flags & GPT_Y2AXIS) && spec->lines[i].yaxis != 1) {
-	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
+	if ((spec->flags & GPT_Y2AXIS) && line->yaxis != 1) {
+	    fprintf(fp, "axes x1y%d ", line->yaxis);
 	}
 
-	fprintf(fp, "title \"%s", spec->lines[i].title);
+	fprintf(fp, "title \"%s", line->title);
 
 	if (any_y2) {
-	    if (spec->lines[i].yaxis == 1) {
+	    if (line->yaxis == 1) {
 		fprintf(fp, " (%s)\" ", G_("left"));
 	    } else {
 		fprintf(fp, " (%s)\" ", G_("right"));
@@ -585,20 +609,21 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fputs("\" ", fp);
 	}
 
-	fprintf(fp, "w %s", spec->lines[i].style);
+	fprintf(fp, "w %s", line->style);
 
-	if (spec->lines[i].type != 0) {
-	    fprintf(fp, " lt %d", spec->lines[i].type);
+	if (line->type != 0) {
+	    fprintf(fp, " lt %d", line->type);
 	}
-	if (spec->lines[i].width != 1) {
-	    fprintf(fp, " lw %d", spec->lines[i].width);
+
+	if (line->width != 1) {
+	    fprintf(fp, " lw %d", line->width);
 	}
 
 	if (more_lines(spec, i, skipline)) {
-	    fputs(", \\\n", fp);
-	} else {
-	    fputc('\n', fp);
+	    fputs(", \\", fp);
 	} 
+
+	fputc('\n', fp);
     } 
 
     miss = 0;
@@ -608,9 +633,9 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     gretl_push_c_numeric_locale();
 
     for (i=0; i<spec->n_lines; i++) { 
-	int j;
+	int j, ncols = spec->lines[i].ncols;
 
-	if (spec->lines[i].ncols == 0) {
+	if (ncols == 0) {
 	    /* no data to print */
 	    continue;
 	}
@@ -656,7 +681,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    } 
 
 	    /* print y-axis value(s) */
-	    for (j=1; j<spec->lines[i].ncols; j++) {
+	    for (j=1; j<ncols; j++) {
 		if (na(x[j][t])) {
 		    fputs("? ", fp);
 		    miss = 1;
@@ -674,7 +699,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
 	fputs("e\n", fp);
 
-	x[1] += (spec->lines[i].ncols - 1) * spec->nobs;
+	x[1] += (ncols - 1) * spec->nobs;
     }
 
     gretl_pop_c_numeric_locale();
