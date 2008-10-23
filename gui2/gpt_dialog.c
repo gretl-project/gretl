@@ -429,8 +429,6 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
     }
 
     if (!err) {   
-	int ldp = get_local_decpoint();
-
 	for (i=0; i<gui_nlines; i++) {
 	    if (stylecombo[i] != NULL) {
 		int oldalt = 0;
@@ -461,10 +459,6 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 		entry_to_gp_string(lineformula[i], 
 				   spec->lines[i].formula, 
 				   sizeof spec->lines[0].formula);
-		if (ldp == ',') {
-		    /* bodge */
-		    charsub(spec->lines[i].formula, ',', '.');
-		}
 	    }
 	    if (linescale[i] != NULL) {
 		entry_to_gp_string(linescale[i], 
@@ -1527,16 +1521,18 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_widget_show(sep);
     }
 
-    /* button for adding a line (formula) */
-    tbl_len++;
-    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-    button = gtk_button_new_with_label(_("Add line..."));
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(add_line_callback), 
-		     spec);
-    gtk_widget_show(button);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
-			      tbl_len-1, tbl_len);
+    if (spec->code == PLOT_REGULAR) {
+	/* button for adding a line (formula) */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	button = gtk_button_new_with_label(_("Add line..."));
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(add_line_callback), 
+			 spec);
+	gtk_widget_show(button);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
+				  tbl_len-1, tbl_len);
+    }
 
     g_list_free(stylist);
 }

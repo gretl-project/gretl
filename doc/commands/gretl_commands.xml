@@ -92,11 +92,12 @@
 
     <description>
       <para>
-	This dialog box allows you to add a line, defined via a formula, to a
-	graph.  The formula must be an expression acceptable to gnuplot.  Use
-	<lit>x</lit> to denote the value of the variable on the x-axis, and
-	note that gnuplot uses <lit>**</lit> for exponentiation (raising to a
-	power).  Examples:
+	This dialog box allows you to add a line, defined via a formula,
+	to a graph.  The formula must be an expression acceptable to
+	gnuplot.  Use <lit>x</lit> to denote the value of the variable on
+	the x-axis.  Please note that gnuplot uses <lit>**</lit> for
+	exponentiation (raising to a power), and that the decimal
+	character must be given as <lit>.</lit>.  Examples:
       </para>
       <code>
 	10+0.35*x
