@@ -23,12 +23,14 @@
 static gchar *clipboard_buf; 
 
 GtkTargetEntry basic_targets[] = {
+    { "UTF8_STRING",     0, TARGET_UTF8_STRING },
     { "STRING",          0, TARGET_STRING },
     { "TEXT",            0, TARGET_TEXT }, 
     { "COMPOUND_TEXT",   0, TARGET_COMPOUND_TEXT }
 };
 
 GtkTargetEntry full_targets[] = {
+    { "UTF8_STRING",     0, TARGET_UTF8_STRING },
     { "STRING",          0, TARGET_STRING },
     { "TEXT",            0, TARGET_TEXT }, 
     { "COMPOUND_TEXT",   0, TARGET_COMPOUND_TEXT },
@@ -68,17 +70,56 @@ int buf_to_clipboard (const char *buf)
     return err;
 }
 
+#define UTF_MINUS(u,i) (u[i] == 0xE2 && u[i+1] == 0x88 && u[i+2] == 0x92)
+
+static gchar *minus_check (gchar *s)
+{
+    guchar *u = (guchar *) s;
+    gchar *ret = s;
+    int i, n = strlen(s);
+    int got_minus = 0;
+
+    for (i=0; i<n-3; i++) {
+	if (UTF_MINUS(u, i)) {
+	    got_minus = 1;
+	    break;
+	}
+    }
+
+    if (got_minus) {
+	/* convert U+2212 into plain ASCII dash */
+	int j = 0;
+
+	ret = calloc(n, 1);
+	if (ret != NULL) {
+	    for (i=0; i<n; i++) {
+		if (i < n - 3 && UTF_MINUS(u, i)) {
+		    ret[j++] = '-';
+		    i += 2;
+		} else {
+		    ret[j++] = u[i];
+		}
+	    }
+	} else {
+	    ret = s;
+	}
+    } 
+
+    return ret;
+}
+
 static void gretl_clipboard_get (GtkClipboard *clip,
 				 GtkSelectionData *selection_data,
 				 guint info,
 				 gpointer p)
 {
-    gchar *str;
-    gint length;
+    gchar *str = clipboard_buf; /* global */
 
 #if CLIPDEBUG
     fprintf(stderr, "info = %d\n", (int) info);
-    if (info == TARGET_STRING) {
+    if (info == TARGET_UTF8_STRING) {
+	fprintf(stderr, " = TARGET_UTF8_STRING\n");
+    } else if (info == TARGET_STRING) {
 	fprintf(stderr, " = TARGET_STRING\n");
     } else if (info == TARGET_TEXT) {
 	fprintf(stderr, " = TARGET_STRING\n");
@@ -87,36 +128,29 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     } else if (info == TARGET_RTF) {
 	fprintf(stderr, " = TARGET_RTF\n");
     }
-#endif    
+#endif   
 
-    str = clipboard_buf; /* global */
-    if (str == NULL) {
+    if (str == NULL || *str == '\0') {
 	return;
     }
 
-    length = strlen(str);
+    if (info != TARGET_UTF8_STRING) {
+	/* need to rmove any UTF-8 minuses? */
+	str = minus_check(str);
+    }
 
-    if (info == TARGET_STRING || info == TARGET_RTF) {
-	gtk_selection_data_set (selection_data,
-				GDK_SELECTION_TYPE_STRING,
-				8 * sizeof(gchar), 
-				(guchar *) str, 
-				length);
-    } else if (info == TARGET_TEXT || info == TARGET_COMPOUND_TEXT) {
-	guchar *text;
-	gchar c;
-	GdkAtom seltype;
-	gint format;
-	gint new_length;
+    if (info == TARGET_RTF) {
+	gtk_selection_data_set(selection_data,
+			       GDK_SELECTION_TYPE_STRING,
+			       8 * sizeof(gchar), 
+			       (guchar *) str, 
+			       strlen(str));
+    } else {
+	gtk_selection_data_set_text(selection_data, str, -1);
+    }
 
-	c = str[length];
-	str[length] = '\0';
-	gdk_string_to_compound_text(str, &seltype, &format, 
-				    &text, &new_length);
-	gtk_selection_data_set(selection_data, seltype, format, 
-			       text, new_length);
-	gdk_free_compound_text(text);
-	str[length] = c;
+    if (str != clipboard_buf) {
+	g_free(str);
     }
 }
 
@@ -163,42 +197,36 @@ int prn_to_clipboard (PRN *prn, int fmt)
     gretl_clipboard_free();
 
 #ifdef ENABLE_NLS
-    if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) { 
-	/* need to convert from utf8 */
-	gchar *trbuf = my_locale_from_utf8(buf);
+    if (fmt == GRETL_FORMAT_TXT) {
+	/* recode (only) if needed */
+	clipboard_buf = my_locale_from_utf8(buf);
+    } else if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
+	/* RTF: ensure that's we're not in UTF-8 */
+	gchar *trbuf = utf8_to_cp(buf);
 
-	if (trbuf == NULL) {
-	    err = 1;
-	} else if (fmt == GRETL_FORMAT_TXT) {
-	    clipboard_buf = gretl_strdup(trbuf);
-	    if (clipboard_buf == NULL) {
-		err = 1;
-	    }
-	} else if (fmt == GRETL_FORMAT_RTF_TXT) {
-	    clipboard_buf = dosify_buffer(trbuf, fmt);
-	    if (clipboard_buf == NULL) {
-		err = 1;
-	    }
-	}
 	if (trbuf != NULL) {
+	    if (fmt == GRETL_FORMAT_RTF_TXT) {
+		clipboard_buf = dosify_buffer(trbuf, fmt);
+	    } else {
+		clipboard_buf = gretl_strdup(trbuf);
+	    }
 	    g_free(trbuf);
 	}
-    } else { 
-	/* copying TeX, RTF or CSV */
+    } else {
+	/* TeX, CSV */
 	clipboard_buf = gretl_strdup(buf);
-	err = (clipboard_buf == NULL);
     }
 #else
     if (fmt == GRETL_FORMAT_RTF_TXT) { 
 	clipboard_buf = dosify_buffer(buf, fmt);
-	err = (clipboard_buf == NULL);
     } else { 
 	clipboard_buf = gretl_strdup(buf);
-	err = (clipboard_buf == NULL);
     }
 #endif
 
-    if (!err) {
+    if (clipboard_buf == NULL) {
+	err = 1;
+    } else {
 	gretl_clipboard_set(fmt);
     }
 

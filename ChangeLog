@@ -16,6 +16,8 @@ version 1.7.10, in progress
 - Scalars: make these accessible via the icon view window;
   enable copying to clipboard as CSV; enable entry of a 
   formula (starting with "=") in scalar-editing window
+- Fix encoding issue when copying to clipboard as plain
+  text or RTF
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"

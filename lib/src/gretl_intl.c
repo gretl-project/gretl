@@ -681,7 +681,7 @@ char *utf8_to_latin (const char *s)
     return ret;
 }
 
-/* convert from UTF-8 to Windows codepage, for EMF graphs */
+/* convert from UTF-8 to Windows codepage, e.g. for EMF graphs */
 
 char *utf8_to_cp (const char *s)
 {

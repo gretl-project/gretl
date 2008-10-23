@@ -208,6 +208,7 @@ enum stat_codes {
 };
 
 enum clipstuff {
+    TARGET_UTF8_STRING,
     TARGET_STRING,
     TARGET_TEXT,
     TARGET_COMPOUND_TEXT,
