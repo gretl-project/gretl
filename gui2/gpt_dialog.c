@@ -390,15 +390,17 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
     } 
 
     for (i=0; i<gui_nlines; i++) {
-	spec->lines[i].yaxis = 1;
+	GPT_LINE *line = &spec->lines[i];
+
+	line->yaxis = 1;
 	if (!suppress_y2 && yaxiscombo[i] != NULL) {
 	    gchar *s = 
 		gtk_combo_box_get_active_text(GTK_COMBO_BOX(yaxiscombo[i]));
 
 	    if (!strcmp(s, "right")) {
-		spec->lines[i].yaxis = 2;	
+		line->yaxis = 2;	
 	    }
-	    if (spec->lines[i].yaxis == 2) {
+	    if (line->yaxis == 2) {
 		spec->flags |= GPT_Y2AXIS;
 	    }
 	    g_free(s);
@@ -430,43 +432,45 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 
     if (!err) {   
 	for (i=0; i<gui_nlines; i++) {
+	    GPT_LINE *line = &spec->lines[i];
+
 	    if (stylecombo[i] != NULL) {
 		int oldalt = 0;
 
-		if (!strncmp(spec->lines[i].style, "filled", 6)) {
+		if (!strncmp(line->style, "filled", 6)) {
 		    oldalt = FILLEDCURVE;
-		} else if (!strncmp(spec->lines[i].style, "error", 5)) {
+		} else if (!strncmp(line->style, "error", 5)) {
 		    oldalt = ERRORBARS;
 		}
-		combo_to_gp_string(stylecombo[i], spec->lines[i].style, 
+		combo_to_gp_string(stylecombo[i], line->style, 
 				   sizeof spec->lines[0].style);
 		if (oldalt == FILLEDCURVE &&
-		    !strncmp(spec->lines[i].style, "error", 5)) {
+		    !strncmp(line->style, "error", 5)) {
 		    spec->flags |= GPT_ERR_SWITCH;
 		    spec->flags &= ~GPT_FILL_SWITCH;
 		} else if (oldalt == ERRORBARS &&
-			   !strncmp(spec->lines[i].style, "filled", 6)) {
+			   !strncmp(line->style, "filled", 6)) {
 		    spec->flags |= GPT_FILL_SWITCH;
 		    spec->flags &= ~GPT_ERR_SWITCH;
 		}
 	    }
 	    if (linetitle[i] != NULL) {
 		entry_to_gp_string(linetitle[i], 
-				   spec->lines[i].title, 
+				   line->title, 
 				   sizeof spec->lines[0].title);
 	    }
 	    if (lineformula[i] != NULL && GTK_WIDGET_IS_SENSITIVE(lineformula[i])) {
 		entry_to_gp_string(lineformula[i], 
-				   spec->lines[i].formula, 
+				   line->formula, 
 				   sizeof spec->lines[0].formula);
 	    }
 	    if (linescale[i] != NULL) {
 		entry_to_gp_string(linescale[i], 
-				   spec->lines[i].scale, 
+				   line->scale, 
 				   sizeof spec->lines[0].scale);
 	    }
 	    if (linewidth[i] != NULL) {
-		spec->lines[i].width = 
+		line->width = 
 		    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(linewidth[i]));
 	    }
 	}
@@ -1272,13 +1276,70 @@ static void add_line_callback (GtkWidget *w, GPT_SPEC *spec)
     free(nlinfo);
 }
 
+static void remove_line (GtkWidget *w, GPT_SPEC *spec)
+{
+    GtkWidget *notebook;
+    int i, pgnum;
+
+    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "linenum"));
+    plotspec_delete_line(spec, i);
+    gui_nlines -= 1;
+
+    notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
+    pgnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(notebook), "lines_page"));
+
+    /* re-fill the "lines" notebook page */
+    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
+    gpt_tab_lines(notebook, spec, pgnum);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
+}
+
+static void line_remove_button (GtkWidget *tbl, int row, 
+				GPT_SPEC *spec, int i)
+{
+    GtkWidget *button; 
+
+    button = gtk_button_new_with_label("Remove");
+    g_object_set_data(G_OBJECT(button), "linenum",
+		      GINT_TO_POINTER(i));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(remove_line), spec);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      button, 0, 1, row - 1, row);
+    gtk_widget_show(button);
+}
+
+static void print_line_label (GtkWidget *tbl, int row, int i)
+{
+    char label_text[32];
+    GtkWidget *label; 
+
+    sprintf(label_text, _("line %d: "), i);
+    label = gtk_label_new(label_text);
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 0, 1, row - 1, row);
+    gtk_widget_show(label);
+}
+
+static void print_field_label (GtkWidget *tbl, int row,
+			       const gchar *text)
+{
+    GtkWidget *label; 
+
+    label = gtk_label_new(text);
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 1, 2, row - 1, row);
+    gtk_widget_show(label);
+}
+
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 {
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox, *sep;
     GtkWidget *button, *page;
     int i, tbl_len, tbl_num, tbl_col;
-    char label_text[32];
     GList *stylist = NULL;
     int do_scale_axis = 0;
     int pgnum = -1;
@@ -1342,17 +1403,17 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 
     for (i=0; i<gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
+	int label_done = 0;
 
 	if (line->formula[0] != '\0' || (line->flags & GP_LINE_USER)) {
 	    /* the line has a formula (or is user-defined) */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 
-	    label = gtk_label_new(_("formula"));
-	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      label, 1, 2, tbl_len-1, tbl_len);
-	    gtk_widget_show(label);
+	    print_line_label(tbl, tbl_len, i + 1);
+	    label_done = 1;
+
+	    print_field_label(tbl, tbl_len, _("formula"));
 
 	    lineformula[i] = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1360,7 +1421,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    strip_lr(line->formula);
 	    gp_string_to_entry(lineformula[i], line->formula);
 	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
-		/* fitted formula: not editable */
+		/* fitted formula: not GUI-editable */
 		gtk_widget_set_sensitive(lineformula[i], FALSE);
 	    } else {
 		g_signal_connect(G_OBJECT(lineformula[i]), "activate", 
@@ -1368,6 +1429,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 				 spec);
 	    }
 	    gtk_widget_show(lineformula[i]);
+
 	    linescale[i] = NULL;
 	    yaxiscombo[i] = NULL;
 	}
@@ -1375,18 +1437,16 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	/* identifier and key or legend text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	sprintf(label_text, _("line %d: "), i + 1);
-	label = gtk_label_new(label_text);
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 0, 1, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
 
-	label = gtk_label_new(_("legend"));
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
+	if (!label_done) {
+	    print_line_label(tbl, tbl_len, i + 1);
+	}
+
+	if (line->flags & GP_LINE_USER) {
+	    line_remove_button(tbl, tbl_len, spec, i);
+	}
+
+	print_field_label(tbl, tbl_len, _("legend"));
 
 	linetitle[i] = gtk_entry_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1450,11 +1510,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    /* scale factor for data? */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	    label = gtk_label_new(_("scale"));
-	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      label, 1, 2, tbl_len-1, tbl_len);
-	    gtk_widget_show(label);
+	    print_field_label(tbl, tbl_len, _("scale"));
 
 	    linescale[i] = gtk_entry_new();
 	    gtk_entry_set_max_length(GTK_ENTRY(linescale[i]), 6);
@@ -1470,11 +1526,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    /* use left or right y axis? */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	    label = gtk_label_new(_("y axis"));
-	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      label, 1, 2, tbl_len-1, tbl_len);
-	    gtk_widget_show(label);
+	    print_field_label(tbl, tbl_len, _("y axis"));
 
 	    yaxiscombo[i] = gtk_combo_box_new_text();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1491,11 +1543,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	/* line-width adjustment */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	label = gtk_label_new(_("line width"));
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
+	print_field_label(tbl, tbl_len, _("line width"));
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
@@ -1578,11 +1626,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 				  label, 0, 1, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
 
-	label = gtk_label_new(_("text"));
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
+	print_field_label(tbl, tbl_len, _("text"));
 
 	labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
@@ -1597,13 +1641,9 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 	/* label placement */
 	tbl_len++;
-
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	label = gtk_label_new(_("position (X Y)"));
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
+
+	print_field_label(tbl, tbl_len, _("position (X Y)"));
 
 	/* holder for entry and button */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -1640,11 +1680,8 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	/* label justification */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	label = gtk_label_new(_("justification"));
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
+
+	print_field_label(tbl, tbl_len, _("justification"));
 
 	labeljust[i] = gtk_combo_box_new_text();
 	for (j=0; j<3; j++) {

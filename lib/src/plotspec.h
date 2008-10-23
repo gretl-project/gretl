@@ -99,6 +99,8 @@ void plotspec_label_init (GPT_LABEL *lbl);
 
 int plotspec_add_line (GPT_SPEC *spec);
 
+int plotspec_delete_line (GPT_SPEC *spec, int i);
+
 int plotspec_print (const GPT_SPEC *spec, FILE *fp);
 
 int plotspec_add_fit (GPT_SPEC *spec, FitType f);

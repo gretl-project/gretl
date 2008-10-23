@@ -164,6 +164,40 @@ int plotspec_add_line (GPT_SPEC *spec)
     return 0;
 }
 
+int plotspec_delete_line (GPT_SPEC *spec, int i)
+{
+    GPT_LINE *lines = spec->lines;
+    int j, n = spec->n_lines;
+
+    if (i < 0 || i >= n) {
+	return E_DATA;
+    }
+
+    for (j=i; j<n-1; j++) {
+	lines[j].varnum = lines[j+1].varnum;
+	strcpy(lines[j].title, lines[j+1].title);
+	strcpy(lines[j].formula, lines[j+1].formula);
+	strcpy(lines[j].style, lines[j+1].style);
+	strcpy(lines[j].scale, lines[j+1].scale);
+	lines[j].yaxis = lines[j+1].yaxis;
+	lines[j].type  = lines[j+1].type;
+	lines[j].width = lines[j+1].width;
+	lines[j].ncols = lines[j+1].ncols;
+	lines[j].flags = lines[j+1].flags;
+    }
+
+    spec->n_lines -= 1;
+
+    lines = realloc(spec->lines, (n - 1) * sizeof *lines);
+    if (lines == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->lines = lines;
+
+    return 0;
+}
+
 static char *escape_quotes (const char *s)
 {
     if (strchr(s, '"') == NULL) {
