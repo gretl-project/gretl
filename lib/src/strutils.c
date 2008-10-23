@@ -923,8 +923,8 @@ int get_base (char *targ, const char *src, char c)
 /**
  * top_n_tail:
  * @str: the string to process.
- * @maxlen: 
- * @err: location to receive error code, or %NULL
+ * @maxlen: maximum length of string, including NUL termination.
+ * @err: location to receive error code, or %NULL.
  *
  * Drop leading space and trailing space and newline from string,
  * then replace a trailing backslash (if any) with a space.
