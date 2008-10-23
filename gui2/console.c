@@ -240,7 +240,7 @@ static void console_exec (void)
     start = end;
     gtk_text_iter_set_line_offset(&start, 2);
 
-    top_n_tail(cbuf, NULL);
+    top_n_tail(cbuf, 0, NULL);
 
     if (console_prn == NULL && bufopen(&console_prn)) {
 	g_free(cbuf);

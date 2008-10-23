@@ -489,14 +489,6 @@ gchar *edit_dialog_special_get_text (dialog_t *dlg)
 
     if (buf == NULL) {
 	gtk_widget_destroy(dlg->dialog);
-    } else if (*buf != '\0') {
-	/* ensure newline termination */
-	int n = strlen(buf);
-
-	if (buf[n-1] != '\n') {
-	    buf = g_realloc(buf, n + 2);
-	    buf[n] = '\n';
-	}
     }
 
     set_edit_save_buf(buf, dlg->code);

@@ -2425,7 +2425,7 @@ record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 	if (string_is_blank(cmdline)) {
 	    continue;
 	}
-	top_n_tail(cmdline, NULL);
+	top_n_tail(cmdline, sizeof cmdline, NULL);
 	model_command_init(pmod->ID);
     }
 
@@ -2481,7 +2481,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	    continue;
 	}
 
-	top_n_tail(bufline, NULL);
+	top_n_tail(bufline, MAXLINE, NULL);
 
 	if (!strcmp(bufline, "end restrict")) {
 	    got_end_line = 1;
@@ -2585,7 +2585,7 @@ record_sys_commands_from_buf (const gchar *buf, const char *startline,
 	if (!strncmp(bufline, "system", 6)) {
 	    add_command_to_stack(startline);
 	} else {
-	    top_n_tail(bufline, NULL);
+	    top_n_tail(bufline, MAXLINE, NULL);
 	    add_command_to_stack(bufline);
 	}
     }
@@ -2660,7 +2660,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    continue;
 	}
 
-	top_n_tail(bufline, NULL);
+	top_n_tail(bufline, MAXLINE, NULL);
 
 	if (!strcmp(bufline, "end system")) {
 	    got_end_line = 1;
@@ -2844,7 +2844,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	    continue;
 	}
 
-	cont = top_n_tail(bufline, &err);
+	cont = top_n_tail(bufline, sizeof bufline, &err);
 	if (!err) {
 	    len = strlen(bufline) + strlen(realline);
 	    if (len > MAXLINE - 1) {
@@ -6801,7 +6801,7 @@ static int execute_script (const char *runfile, const char *buf,
 
 	    if (!exec_err) {
 		if (!state.in_comment) {
-		    contd = top_n_tail(line, &exec_err);
+		    contd = top_n_tail(line, sizeof line, &exec_err);
 		    while (contd && !state.in_comment && !exec_err) {
 			/* handle continued lines */
 			gui_get_input_line(tmp, fb, buf, &exec_err);
@@ -6814,7 +6814,7 @@ static int execute_script (const char *runfile, const char *buf,
 				compress_spaces(line);
 			    }
 			}
-			contd = top_n_tail(line, &exec_err);
+			contd = top_n_tail(line, sizeof line, &exec_err);
 		    }
 		} else {
 		    tailstrip(line);

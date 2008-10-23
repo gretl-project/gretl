@@ -3821,7 +3821,7 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
 	return 0;
     }
 
-    while (top_n_tail(line, &err)) {
+    while (top_n_tail(line, MAXLINE, &err)) {
 	if (err) {
 	    break;
 	}

@@ -280,7 +280,7 @@ static int maybe_get_input_line_continuation (char *line)
 	return 0;
     }
 
-    contd = top_n_tail(line, &err);
+    contd = top_n_tail(line, MAXLINE, &err);
 
     while (contd && !err) {
 	*tmp = '\0';
@@ -305,7 +305,7 @@ static int maybe_get_input_line_continuation (char *line)
 		compress_spaces(line);
 	    }
 	}
-	contd = top_n_tail(line, &err);
+	contd = top_n_tail(line, MAXLINE, &err);
     }
 
     return err;
@@ -959,7 +959,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
 	printf(_("type a filename to store output (enter to quit): "));
 	get_a_filename(outfile);
-	top_n_tail(outfile, NULL);
+	top_n_tail(outfile, 0, NULL);
 
 	if (*outfile != 0 && *outfile != '\n' && *outfile != '\r' 
 	    && strcmp(outfile, "q")) {

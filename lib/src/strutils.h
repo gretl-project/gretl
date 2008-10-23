@@ -99,7 +99,7 @@ int get_base (char *targ, const char *src, char c);
 
 int equation_get_lhs_and_rhs (const char *s, char **plh, char **prh);
 
-int top_n_tail (char *str, int *err);
+int top_n_tail (char *str, size_t maxlen, int *err);
 
 char *tailstrip (char *str);
 
