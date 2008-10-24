@@ -949,80 +949,6 @@ static int six_numbers (gpointer data)
     return 0;
 }
 
-#if 0 /* not ready just yet */
-
-static int gnuplot_do_boxplot (PLOTGROUP *grp, const int *list,
-			       const DATAINFO *pdinfo)
-{
-    FILE *fp;
-    BOXPLOT *bp;
-    int n = grp->nplots;
-    double loff, ymax;
-    int i, err = 0;
-
-    err = gnuplot_init(PLOT_BOXPLOTS, &fp);
-    if (err) {
-	return err;
-    }
-
-    fprintf(fp, "set xrange[0:%d]\n", n + 1);
-    fputs("set ytics nomirror\n"
-	  "set noxtics\n"
-	  "set border 2\n"
-	  "set bmargin 3\n", fp);
-
-    ymax = grp->plots[0].max;
-
-    for (i=1; i<n; i++) {
-	if (grp->plots[i].max > ymax) {
-	    ymax = grp->plots[i].max;
-	}
-    }
-
-    loff = -ymax / 25;
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<n; i++) {
-	fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-		pdinfo->varname[list[i+1]], i+1, loff);
-    }
-
-    fprintf(fp, "set boxwidth %g absolute\n", 1.0 / (n + 2));
-
-    fputs("plot \\\n", fp);
-    fputs("'-' using 1:3:2:5:4 with candlesticks lt 2 lw 2 "
-	  "notitle whiskerbars 0.5, \\\n", fp);
-    fputs("'-' using 1:2:2:2:2 with candlesticks lt -1 notitle, \\\n", fp);
-    fputs("'-' using 1:2 with points pt 1 notitle\n", fp);
-
-    for (i=0; i<n; i++) {
-	bp = &grp->plots[i];
-	fprintf(fp, "%d %g %g %g %g\n", i+1, bp->min, bp->lq, bp->uq, bp->max);
-    }
-    fputs("e\n", fp);
-
-    for (i=0; i<n; i++) {
-	bp = &grp->plots[i];
-	fprintf(fp, "%d %g\n", i+1, bp->median);
-    }
-    fputs("e\n", fp);
-
-    for (i=0; i<n; i++) {
-	bp = &grp->plots[i];
-	fprintf(fp, "%d %g\n", i+1, bp->mean);
-    }
-    fputs("e\n", fp);
-
-    gretl_pop_c_numeric_locale();
-    
-    fclose(fp);
-
-    return gnuplot_make_graph();
-}
-
-#endif
-
 static void read_boxrc (PLOTGROUP *grp);
 
 int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo, 
@@ -1102,16 +1028,6 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	    plotgrp->plots[i].bool = NULL;
 	}
     }
-
-#if 0 /* not ready */
-    err = gnuplot_do_boxplot(plotgrp, list, pdinfo);
-    if (!err) {
-	register_graph();
-	free(plotgrp->plots);
-	free(plotgrp);
-	return 0;
-    }
-#endif
 
     plotgrp->height = height;
     plotgrp->width = width;
