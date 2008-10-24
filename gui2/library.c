@@ -5260,7 +5260,9 @@ void do_boxplot_var (int varnum)
 {
     int err = 0;
 
-    if (varnum < 0) return;
+    if (varnum < 0) {
+	return;
+    }
 
     gretl_command_sprintf("boxplot %s", datainfo->varname[varnum]);
 
@@ -5268,9 +5270,12 @@ void do_boxplot_var (int varnum)
 	return;
     }
     
-    err = boxplots(libcmd.list, NULL, &Z, datainfo, OPT_NONE);
+    err = boxplots(libcmd.list, &Z, datainfo, OPT_NONE);
+
     if (err) {
 	gui_errmsg(err);
+    } else {
+	register_graph();
     }
 }
 
@@ -5306,7 +5311,9 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
     gretlopt opt;
     int err;
 
-    if (buf == NULL) return;
+    if (buf == NULL || *buf == '\0') {
+	return;
+    }
 
     opt = (action == GR_NBOX)? OPT_O : OPT_NONE;
 
@@ -5319,13 +5326,14 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
 	if (check_and_record_command()) {
 	    return;
 	}
-	err = boxplots(libcmd.list, NULL, &Z, datainfo, opt);
+	err = boxplots(libcmd.list, &Z, datainfo, opt);
     }
 
     if (err) {
 	gui_errmsg(err);
     } else {
 	close_dialog(dlg);
+	register_graph();
     }
 }
 
@@ -7114,17 +7122,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     switch (cmd->ci) {
 
-    case BXPLOT:
-	if (cmd_nolist(cmd)) { 
-	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
-	} else {
-	    err = boxplots(cmd->list, NULL, pZ, pdinfo, cmd->opt | OPT_B);
-	}
-	if (!err) {
-	    err = maybe_save_graph(cmd, NULL, GRETL_OBJ_PLOT, prn);
-	}
-	break;
-
     case DATA:
 	err = db_get_series(line, pZ, pdinfo, cmd->opt, prn);
         if (!err) { 
@@ -7180,6 +7177,25 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		maybe_list_vars(pdinfo, prn);
 	    }
 	    maybe_clear_selector(cmd->list);
+	}
+	break;
+
+    case BXPLOT:
+	if (cmd_nolist(cmd)) { 
+	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
+	} else {
+	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt | OPT_B);
+	}
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    if (s->flags == CONSOLE_EXEC && *cmd->savename == '\0') {
+		register_graph();
+	    } else if (gopt & OPT_B) {
+		pprintf(prn, _("wrote %s\n"), gretl_plotfile());
+	    }
+	    err = maybe_save_graph(cmd, gretl_plotfile(),
+				   GRETL_OBJ_PLOT, prn);
 	}
 	break;
 

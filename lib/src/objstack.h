@@ -20,6 +20,11 @@
 #ifndef OBJSTACK_H
 #define OBJSTACK_H
 
+/* Note the following enumerarion may be added to, but the
+   existing entries up to GRETL_OBJ_SCALARS must not be
+   moved.
+*/
+
 typedef enum {
     GRETL_OBJ_NULL,
     GRETL_OBJ_EQN,

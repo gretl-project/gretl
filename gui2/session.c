@@ -22,7 +22,6 @@
 #include "gretl.h"
 #include "session.h"
 #include "selector.h"
-#include "boxplots.h"
 #include "ssheet.h"
 #include "plotspec.h"
 #include "gpt_control.h"
@@ -221,7 +220,6 @@ static GtkWidget *model_table_popup;
 static GtkWidget *generic_popup;
 static GtkWidget *graph_popup;
 static GtkWidget *graph_page_popup;
-static GtkWidget *boxplot_popup;
 static GtkWidget *data_popup;
 static GtkWidget *scalars_popup;
 static GtkWidget *info_popup;
@@ -246,7 +244,6 @@ static void info_popup_activated (GtkWidget *widget, gpointer data);
 static void matrix_popup_activated (GtkWidget *widget, gpointer data);
 static void session_delete_icon (gui_obj *obj);
 static void open_gui_graph (gui_obj *obj);
-static void open_boxplot (gui_obj *obj);
 static gboolean session_view_click (GtkWidget *widget, 
 				    GdkEventButton *event,
 				    gpointer data);
@@ -718,13 +715,13 @@ static int session_dir_ok (void)
     return ret;
 }
 
-int add_graph_to_session (char *fname, char *fullname)
+int add_graph_to_session (char *fname, char *fullname, int type)
 {
     char shortname[MAXSAVENAME];
     char graphname[MAXSAVENAME];
     int err = 0;
 
-    if (Z == NULL) {
+    if (type != GRETL_OBJ_PLOT && Z == NULL) {
 	/* we may be called via the "stats calculator" when
 	   there's no dataset yet */
 	err = open_nulldata(&Z, datainfo, 0, 10, NULL);
@@ -744,9 +741,15 @@ int add_graph_to_session (char *fname, char *fullname)
 
     chdir(paths.dotdir);
 
-    sprintf(shortname, "graph.%d", session_graph_count + 1);
-    session_file_make_path(fullname, shortname);
-    sprintf(graphname, "%s %d", _("Graph"), session_graph_count + 1);
+    if (type == GRETL_OBJ_PLOT) {
+	sprintf(shortname, "plot.%d", session_bplot_count + 1);
+	session_file_make_path(fullname, shortname);
+	sprintf(graphname, "%s %d", _("Boxplot"), session_bplot_count + 1);
+    } else {
+	sprintf(shortname, "graph.%d", session_graph_count + 1);
+	session_file_make_path(fullname, shortname);
+	sprintf(graphname, "%s %d", _("Graph"), session_graph_count + 1);
+    }
 
     /* move temporary plot file to permanent */
     if (copyfile(fname, fullname)) {
@@ -756,38 +759,12 @@ int add_graph_to_session (char *fname, char *fullname)
     remove(fname);
     strcpy(fname, shortname);
 
-    err = real_add_graph_to_session(shortname, graphname, GRETL_OBJ_GRAPH);
+    err = real_add_graph_to_session(shortname, graphname, type);
     if (err == ADD_OBJECT_FAIL) {
 	err = 1;
     }
 
     return err;
-}
-
-void add_boxplot_to_session (const char *boxtmp)
-{
-    char fname[MAXSAVENAME];
-    char grname[MAXSAVENAME];
-    char grpath[MAXLEN];
-
-    errno = 0;
-
-    if (!session_dir_ok()) {
-	errbox(_("Failed to copy graph file"));
-	return;
-    }
-
-    chdir(paths.dotdir);
-
-    sprintf(fname, "plot.%d", session_bplot_count + 1);
-    session_file_make_path(grpath, fname);
-    sprintf(grname, "%s %d", _("Boxplot"), session_bplot_count + 1);
-
-    if (copyfile(boxtmp, grpath)) {
-	return;
-    } 
-
-    real_add_graph_to_session(fname, grname, GRETL_OBJ_PLOT);
 }
 
 int cli_add_graph_to_session (const char *fname, const char *gname,
@@ -1670,6 +1647,8 @@ static gchar *graph_str (SESSION_GRAPH *graph)
     session_file_make_path(tmp, graph->fname);
     fp = gretl_fopen(tmp, "r");
 
+    /* FIXME boxplots */
+
     if (fp != NULL) {
 	char line[128], title[64];
 	char xlabel[24], ylabel[24];
@@ -1692,6 +1671,7 @@ static gchar *graph_str (SESSION_GRAPH *graph)
 
 #ifdef ENABLE_NLS
 	if (gottitle) {
+	    /* FIXME? encoding */
 	    buf = my_locale_to_utf8(title);
 	} else if (gotxy == 2) {
 	    char *s = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
@@ -1713,35 +1693,6 @@ static gchar *graph_str (SESSION_GRAPH *graph)
     }
 
     return buf;
-}
-
-static char *boxplot_str (SESSION_GRAPH *graph)
-{
-    FILE *fp;
-    char *str = NULL;
-
-    fp = gretl_fopen(graph->fname, "r");
-
-    if (fp != NULL) {
-	char vname[VNAMELEN], line[48];
-
-	str = malloc(MAXLEN);
-	if (str == NULL) {
-	    return NULL;
-	}
-	*str = '\0';
-
-	while (fgets(line, 47, fp) && strlen(str) < MAXLEN-48) {
-	    chopstr(line);
-	    if (sscanf(line, "%*d varname = %15s", vname) == 1) { 
-		strcat(str, strchr(line, '=') + 2);
-		strcat(str, " ");
-	    }
-	}
-	fclose(fp);
-    }
-
-    return str;
 }
 
 static int maybe_raise_object_window (gpointer p)
@@ -1812,15 +1763,6 @@ void session_model_callback (void *ptr, int action)
 	real_delete_model_from_session(mod);
     } 
 }	
-
-static void open_boxplot (gui_obj *obj)
-{
-    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
-    char tmp[MAXLEN];
-
-    session_file_make_path(tmp, graph->fname);
-    retrieve_boxplot(tmp);
-}
 
 static void open_matrix (gui_obj *obj)
 {
@@ -2440,10 +2382,8 @@ static void object_popup_show (gui_obj *obj, GdkEventButton *event)
 	w = generic_popup; 
 	break;
     case GRETL_OBJ_GRAPH: 
-	w = graph_popup; 
-	break;
     case GRETL_OBJ_PLOT: 
-	w = boxplot_popup; 
+	w = graph_popup; 
 	break;
     case GRETL_OBJ_DSET: 
 	w = data_popup; 
@@ -2506,10 +2446,8 @@ static gboolean session_view_click (GtkWidget *widget,
 	case GRETL_OBJ_SYS:
 	    display_session_model(obj->data); 
 	    break;
-	case GRETL_OBJ_PLOT:
-	    open_boxplot(obj); 
-	    break;
 	case GRETL_OBJ_GRAPH:
+	case GRETL_OBJ_PLOT:
 	    open_gui_graph(obj); 
 	    break;
 	case GRETL_OBJ_TEXT:
@@ -2665,11 +2603,10 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    display_model_table_wrapper();
 	} else if (obj->sort == GRETL_OBJ_GPAGE) {
 	    display_graph_page();
-	} else if (obj->sort == GRETL_OBJ_GRAPH) {
+	} else if (obj->sort == GRETL_OBJ_GRAPH || 
+		   obj->sort == GRETL_OBJ_PLOT) {
 	    open_gui_graph(obj);
-	} else if (obj->sort == GRETL_OBJ_PLOT) {
-	    open_boxplot(obj);
-	}
+	} 
     } else if (!strcmp(item, _("Edit plot commands"))) {
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
@@ -2906,11 +2843,10 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	    MODEL *pmod = (MODEL *) mod->ptr;
 
 	    str = model_cmd_str(pmod);
-	} else if (sort == GRETL_OBJ_GRAPH) {
+	} else if (sort == GRETL_OBJ_GRAPH ||
+		   sort == GRETL_OBJ_PLOT) {
 	    str = graph_str(graph);
-	} else if (sort == GRETL_OBJ_PLOT) {
-	    str = boxplot_str(graph);
-	}
+	} 
 	if (str != NULL) {
 	    gretl_tooltips_add(GTK_WIDGET(obj->icon), str);
 	    free(str);
@@ -3003,16 +2939,6 @@ static void session_build_popups (void)
 	for (i=0; i<sizeof graph_page_items / sizeof graph_page_items[0]; i++) {
 	    create_popup_item(graph_page_popup, 
 			      _(graph_page_items[i]), 
-			      object_popup_activated);
-	}
-    }
-
-    if (boxplot_popup == NULL) {
-	boxplot_popup = gtk_menu_new();
-	for (i=0; i<sizeof graph_items / sizeof graph_items[0]; i++) {
-	    if (strstr(graph_items[i], "GUI")) continue;
-	    create_popup_item(boxplot_popup, 
-			      _(graph_items[i]), 
 			      object_popup_activated);
 	}
     }

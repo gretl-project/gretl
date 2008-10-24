@@ -69,6 +69,7 @@ PUBLIC_HDRS = \
 	adf_kpss.h \
 	bhhh_max.h \
 	bootstrap.h \
+	boxplots.h \
 	calendar.h \
 	compare.h \
 	compat.h \
@@ -138,6 +139,7 @@ PUBLIC_HDRS = \
 SRCS = adf_kpss.c \
 	bhhh_max.c \
 	bootstrap.c \
+	boxplots.c \
 	calendar.c \
 	compare.c \
 	compat.c \

@@ -1,9 +1,0 @@
-The source files here are based on Adrian E. Feiguin's GtkExtra,
-CVS version for GTK-2.0 as of late July, 2002.
-
-A lot that is not needed for gretl has been cut out.
-
-The web site for this widget set is:
-
-http://gtkextra.sourceforge.net/
-

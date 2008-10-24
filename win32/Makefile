@@ -137,6 +137,7 @@ PLUGINS = plugins/stats_tables.dll \
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
 	bootstrap.c \
+	boxplots.c \
 	calendar.c \
 	compare.c \
 	compat.c \
@@ -213,7 +214,6 @@ CLISRC = gretlcli.c complete.c
 CLIOBJ = $(CLISRC:.c=.o)
 
 GUISRC = about.c \
-	boxplots.c \
 	calculator.c \
 	callbacks.c \
 	cmdstack.c \

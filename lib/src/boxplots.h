@@ -20,11 +20,12 @@
 #ifndef BOXPLOTS_H
 #define BOXPLOTS_H
 
-int boxplots (int *list, char **bools, 
-	      double ***pZ, const DATAINFO *pdinfo, 
+int boxplots (int *list, double ***pZ, const DATAINFO *pdinfo, 
 	      gretlopt opt);
 
 int boolean_boxplots (const char *str, double ***pZ, 
 		      DATAINFO *pdinfo, gretlopt opt);
+
+int gnuplot_from_boxplot (const char *fname);
 
 #endif /* BOXPLOTS_H */

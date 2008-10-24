@@ -26,7 +26,6 @@
 #include "datafiles.h"
 #include "textbuf.h"
 #include "textutil.h"
-#include "boxplots.h"
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "ssheet.h"
@@ -600,6 +599,11 @@ static int gretl_callback_code (const gchar *s)
     if (!strcmp(s, "MINIBUF")) 
 	return MINIBUF;
     return 0;
+}
+
+static const char *get_boxplots_string (void)
+{
+    return ""; /* FIXME */
 }
 
 void gretl_callback (GtkAction *action, gpointer data)

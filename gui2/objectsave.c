@@ -22,7 +22,6 @@
 #include "gretl.h"
 #include "session.h"
 #include "gpt_control.h"
-#include "boxplots.h"
 #include "objectsave.h"
 
 #include "cmd_private.h"
@@ -160,10 +159,6 @@ int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type,
 {
     char gname[MAXSAVENAME];
     int ret, err = 0;
-
-    if (type == GRETL_OBJ_PLOT && fname == NULL) {
-	fname = get_boxdump_name();
-    }
 
     gretl_cmd_get_savename(gname);
     if (*gname == 0) {

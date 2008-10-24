@@ -4,8 +4,18 @@
 */
 
 #include "usermat.h"
+#include "boxplots.h"
 
-static int check_graph_file (const char *fname)
+static int maybe_convert_old_boxplot (const char *fname)
+{
+    int err;
+
+    return gnuplot_from_boxplot(fname);
+    
+    
+}
+
+static int check_graph_file (const char *fname, int type)
 {
     char fullname[MAXLEN];
     FILE *fp;
@@ -18,9 +28,19 @@ static int check_graph_file (const char *fname)
 	file_read_errbox(fname);
 	err = 1;
     } else {
-	fclose(fp);
 	fprintf(stderr, "Opened '%s' OK\n", fullname);
-	err = maybe_recode_gp_file_to_utf8(fullname);
+	if (type == GRETL_OBJ_PLOT) {
+	    char line[32] = {0};
+
+	    fgets(line, sizeof line, fp);
+	    fclose(fp);
+	    if (!strncmp(line, "# boxplot generated", 19)) {
+		err = maybe_convert_old_boxplot(fullname);
+	    }
+	} else {
+	    fclose(fp);
+	    err = maybe_recode_gp_file_to_utf8(fullname);
+	}
     }
 
     return err;
@@ -85,6 +105,7 @@ static int restore_session_graphs (xmlNodePtr node)
     fprintf(stderr, "Doing restore_session_graphs\n");
 
     while (cur != NULL) {
+	SESSION_GRAPH *sg;
 	xmlChar *name = NULL;
 	xmlChar *fname = NULL;
 	int type, err = 0;
@@ -94,26 +115,24 @@ static int restore_session_graphs (xmlNodePtr node)
 	    err = 1;
 	}
 
+	if (!err && !gretl_xml_get_prop_as_int(cur, "type", &type)) {
+	    err = 1;
+	}
+
 	if (!err) {
 	    fname = xmlGetProp(cur, (XUC) "fname");
 	    if (fname == NULL) {
 		err = 1;
 	    } else {
 		fprintf(stderr, "checking '%s'\n", name);
-		err = check_graph_file((const char *) fname);
+		err = check_graph_file((const char *) fname, type);
 		if (!err) {
 		    normalize_graph_filename((char *) fname, &gnum, &pnum);
 		}
 	    } 
 	}
 
-	if (!err && !gretl_xml_get_prop_as_int(cur, "type", &type)) {
-	    err = 1;
-	}
-
 	if (!err) {
-	    SESSION_GRAPH *sg;
-
 	    sg = session_append_graph((const char *) name,
 				      (const char *) fname,
 				      type);

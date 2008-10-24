@@ -2682,9 +2682,12 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 static void add_to_session_callback (GPT_SPEC *spec)
 {
     char fullname[MAXLEN] = {0};
-    int err;
+    int err, type;
 
-    err = add_graph_to_session(spec->fname, fullname);
+    type = (spec->code == PLOT_BOXPLOTS)? GRETL_OBJ_PLOT :
+	GRETL_OBJ_GRAPH;
+
+    err = add_graph_to_session(spec->fname, fullname, type);
 
     if (!err) {
 	remove_png_term_from_plotfile(fullname, spec);

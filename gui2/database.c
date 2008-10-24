@@ -201,16 +201,14 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbinfo)
     }
 
     if (dbinfo->structure == CROSS_SECTION) {
-	err = boxplots(list, NULL, dbZ, dbinfo, 0);
-	if (err) {
-	    errbox(_("boxplot command failed"));
-	}
+	err = boxplots(list, dbZ, dbinfo, OPT_NONE);
     } else {
 	err = gnuplot(list, NULL, (const double **) *dbZ, dbinfo,
 		      OPT_G | OPT_O | OPT_T);
-	if (err) {
-	    errbox(_("gnuplot command failed"));
-	}
+    }
+
+    if (err) {
+	errbox(_("gnuplot command failed"));
     }
 
     if (!err) {

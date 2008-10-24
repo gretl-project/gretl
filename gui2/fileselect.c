@@ -21,7 +21,6 @@
    the native MS file selector under MS Windows */
 
 #include "gretl.h"
-#include "boxplots.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "textbuf.h"
@@ -65,10 +64,7 @@
                                i == APPEND_JMULTI || \
                                i == APPEND_ODS)
 
-#define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
-                              i == SAVE_BOXPLOT_EPS || \
-                              i == SAVE_BOXPLOT_PS || \
-                              i == SAVE_BOXPLOT_XPM)
+#define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT)
 
 #define EXPORT_ACTION(a,s) ((a == EXPORT_OCTAVE || \
                              a == EXPORT_R || \
@@ -97,9 +93,6 @@ static struct extmap action_map[] = {
     { SAVE_SESSION,      ".gretl" },
     { SAVE_GP_CMDS,      ".plt" },
     { SAVE_R_CMDS,       ".R" },
-    { SAVE_BOXPLOT_EPS,  ".eps" },
-    { SAVE_BOXPLOT_PS,   ".ps" },
-    { SAVE_BOXPLOT_XPM,  ".xpm" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
@@ -534,10 +527,6 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
 	save_graph_to_file(data, fname);
-    } else if (action == SAVE_BOXPLOT_EPS || 
-	       action == SAVE_BOXPLOT_PS ||
-	       action == SAVE_BOXPLOT_XPM) {
-	print_boxplot_group(fname, action, data);
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
     } else if (action == SAVE_FUNCTIONS) {
@@ -619,8 +608,6 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ SAVE_FUNCTIONS_AS,{ N_("gretl script files (*.inp)"), "*.inp" }},
 	{ SAVE_CONSOLE,     { N_("gretl command files (*.inp)"), "*.inp" }},
 	{ SAVE_SESSION,     { N_("session files (*.gretl)"), "*.gretl" }},
-	{ SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
-	{ SAVE_BOXPLOT_PS,  { N_("postscript files (*.ps)"), "*.ps" }},
 	{ SAVE_GP_CMDS,     { N_("gnuplot files (*.plt)"), "*.plt" }},
 	{ SAVE_R_CMDS,      { N_("GNU R files (*.R)"), "*.R" }},
 	{ SAVE_FUNCTIONS,   { N_("gretl function files (*.gfn)"), "*.gfn" }},
