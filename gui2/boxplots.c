@@ -648,10 +648,6 @@ make_area (PLOTGROUP *grp)
     return grp->window;
 }
 
-#define NEWQUANT 1
-
-#if NEWQUANT
-
 static void quartiles (double *x, const int n, BOXPLOT *box)
 {
     double p[3] = {0.25, 0.5, 0.75};
@@ -662,32 +658,6 @@ static void quartiles (double *x, const int n, BOXPLOT *box)
     box->median = p[1];
     box->uq = p[2];
 }
-
-#else
-
-static double 
-quartiles (const double *x, const int n, BOXPLOT *box)
-{
-    int n2 = n / 2;
-    double xx;
-
-    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
-
-    if (box != NULL) {
-	box->median = xx;
-	if (n % 2) {
-	    box->lq = quartiles(x, n2 + 1, NULL);
-	    box->uq = quartiles(x + n2, n2 + 1, NULL);
-	} else {
-	    box->lq = quartiles(x, n2, NULL);
-	    box->uq = quartiles(x + n2, n2, NULL);
-	}
-    }
-
-    return xx;
-}
-
-#endif
 
 static int 
 add_outliers (const double *x, const int n, BOXPLOT *box)
@@ -979,6 +949,80 @@ static int six_numbers (gpointer data)
     return 0;
 }
 
+#if 0 /* not ready just yet */
+
+static int gnuplot_do_boxplot (PLOTGROUP *grp, const int *list,
+			       const DATAINFO *pdinfo)
+{
+    FILE *fp;
+    BOXPLOT *bp;
+    int n = grp->nplots;
+    double loff, ymax;
+    int i, err = 0;
+
+    err = gnuplot_init(PLOT_BOXPLOTS, &fp);
+    if (err) {
+	return err;
+    }
+
+    fprintf(fp, "set xrange[0:%d]\n", n + 1);
+    fputs("set ytics nomirror\n"
+	  "set noxtics\n"
+	  "set border 2\n"
+	  "set bmargin 3\n", fp);
+
+    ymax = grp->plots[0].max;
+
+    for (i=1; i<n; i++) {
+	if (grp->plots[i].max > ymax) {
+	    ymax = grp->plots[i].max;
+	}
+    }
+
+    loff = -ymax / 25;
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<n; i++) {
+	fprintf(fp, "set label \"%s\" at %d,%g center\n", 
+		pdinfo->varname[list[i+1]], i+1, loff);
+    }
+
+    fprintf(fp, "set boxwidth %g absolute\n", 1.0 / (n + 2));
+
+    fputs("plot \\\n", fp);
+    fputs("'-' using 1:3:2:5:4 with candlesticks lt 2 lw 2 "
+	  "notitle whiskerbars 0.5, \\\n", fp);
+    fputs("'-' using 1:2:2:2:2 with candlesticks lt -1 notitle, \\\n", fp);
+    fputs("'-' using 1:2 with points pt 1 notitle\n", fp);
+
+    for (i=0; i<n; i++) {
+	bp = &grp->plots[i];
+	fprintf(fp, "%d %g %g %g %g\n", i+1, bp->min, bp->lq, bp->uq, bp->max);
+    }
+    fputs("e\n", fp);
+
+    for (i=0; i<n; i++) {
+	bp = &grp->plots[i];
+	fprintf(fp, "%d %g\n", i+1, bp->median);
+    }
+    fputs("e\n", fp);
+
+    for (i=0; i<n; i++) {
+	bp = &grp->plots[i];
+	fprintf(fp, "%d %g\n", i+1, bp->mean);
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+    
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
+#endif
+
 static void read_boxrc (PLOTGROUP *grp);
 
 int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo, 
@@ -988,6 +1032,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     double *x;
     PLOTGROUP *plotgrp;
     int width = 576, height = 448;
+    int err = 0;
 
     x = mymalloc(n * sizeof *x);
     if (x == NULL) {
@@ -1058,6 +1103,16 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	}
     }
 
+#if 0 /* not ready */
+    err = gnuplot_do_boxplot(plotgrp, list, pdinfo);
+    if (!err) {
+	register_graph();
+	free(plotgrp->plots);
+	free(plotgrp);
+	return 0;
+    }
+#endif
+
     plotgrp->height = height;
     plotgrp->width = width;
     plotgrp->numbers = NULL;
@@ -1100,7 +1155,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	dump_boxplot(plotgrp);
     }
     
-    return 0;
+    return err;
 }
 
 /* copy functions */

@@ -97,7 +97,7 @@
 	gnuplot.  Use <lit>x</lit> to denote the value of the variable on
 	the x-axis.  Please note that gnuplot uses <lit>**</lit> for
 	exponentiation (raising to a power), and that the decimal
-	character must be given as <lit>.</lit>.  Examples:
+	character must be given as <quote>.</quote>.  Examples:
       </para>
       <code>
 	10+0.35*x

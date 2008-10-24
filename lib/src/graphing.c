@@ -106,6 +106,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BI_GRAPH,       "double time-series plot" },
     { PLOT_MANY_TS,        "multiple timeseries" },
     { PLOT_RQ_TAU,         "tau sequence plot" },
+    { PLOT_BOXPLOTS,       "boxplots" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -1134,7 +1135,7 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
  * If we're in GUI mode: writes a unique temporary filename into
  * the internal variable #gretl_plotfile; opens plotfile for writing 
  * as @fpp; and writes initial lines into the output file to select 
- * the PNG terminal type, and direct gnuplot's ouput to a temporary
+ * the PNG terminal type, and direct gnuplot's output to a temporary
  * file in the gretl user directory.  
  *
  * If not in GUI mode, opens as @fpp the file %gpttmp.plt in the
@@ -1153,7 +1154,7 @@ int gnuplot_init (PlotType ptype, FILE **fpp)
 /**
  * gnuplot_make_graph:
  *
- * Executes gnuplot, passing as an argument the gretl plotfile.
+ * Executes gnuplot.
  *
  * Returns: the return value from the system command.
  */
