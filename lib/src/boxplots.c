@@ -668,6 +668,7 @@ int gnuplot_from_boxplot (const char *fname)
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
+	fprintf(stderr, "Couldn't open %s\n", fname);
 	return E_FOPEN;
     }
 

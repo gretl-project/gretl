@@ -6,15 +6,6 @@
 #include "usermat.h"
 #include "boxplots.h"
 
-static int maybe_convert_old_boxplot (const char *fname)
-{
-    int err;
-
-    return gnuplot_from_boxplot(fname);
-    
-    
-}
-
 static int check_graph_file (const char *fname, int type)
 {
     char fullname[MAXLEN];
@@ -35,7 +26,12 @@ static int check_graph_file (const char *fname, int type)
 	    fgets(line, sizeof line, fp);
 	    fclose(fp);
 	    if (!strncmp(line, "# boxplot generated", 19)) {
-		err = maybe_convert_old_boxplot(fullname);
+		err = gnuplot_from_boxplot(fullname);
+		if (err) {
+		    fprintf(stderr, "Failed to convert old boxplot file\n");
+		} else {
+		    fprintf(stderr, "Converted old boxplot file OK\n");
+		}
 	    }
 	} else {
 	    fclose(fp);

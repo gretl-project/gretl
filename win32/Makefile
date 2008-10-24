@@ -9,7 +9,6 @@ libsrcdir  = $(topsrc)/lib/src
 plugindir = $(topsrc)/plugin
 zipdir = $(topsrc)/plugin/zipunzip
 guidir = $(topsrc)/gui2
-extradir = $(guidir)/gtkextra-lite
 imports = ./import-libs
 host_builddir = $(topsrc)/build
 
@@ -26,14 +25,14 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
 CLI_LIBS = -lreadline.dll -lhistory.dll
-GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview -lxml2 -L$(imports) -lgtkextra-lite
+GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview -lxml2 -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas
 FFTW_LIBS = -lfftw3.dll
 
 # flags/defines
-CFLAGS = -I. -I$(libsrcdir) -I$(extradir) -I$(plugindir) -I$(guidir) \
+CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \
   -I$(XML2_INC) -I$(zipdir) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
@@ -43,13 +42,12 @@ vpath %.c $(topsrc)/cephes
 vpath %.c $(topsrc)/minpack
 vpath %.c $(topsrc)/cli
 vpath %.c $(guidir)
-vpath %.c $(extradir)
 vpath %.c $(plugindir)
 vpath %.c $(plugindir)/libole2
 vpath %.c $(plugindir)/zipunzip
 vpath %.c $(plugindir)/rq
 vpath %.c $(topsrc)/tests
-vpath %.h $(libsrcdir):$(topsrc)/cli:$(guidir):$(extradir):$(plugindir):.
+vpath %.h $(libsrcdir):$(topsrc)/cli:$(guidir):$(plugindir):.
 vpath %.h $(topsrc)/cephes:..
 vpath %.rc $(topsrc)/win32
 
@@ -256,9 +254,6 @@ GUISRC = about.c \
 
 GUIOBJ = $(GUISRC:.c=.o)
 
-EXTRASRC = psplot.c gtkpsfont.c
-EXTRAOBJ = $(EXTRASRC:.c=.o)
-
 PROBSRC = bdtr.c btdtr.c chdtr.c expx2.c fdtr.c gamma.c gdtr.c \
 	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
 	stdtr.c unity.c polevl.c polrt.c const.c
@@ -278,7 +273,7 @@ MOFILES = mo/de.po mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo mo/pt.mo mo/ru.m
 
 # targets begin
 
-all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll dlls/libgtkextra-lite.dll \
+all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll \
 	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES) gretl.lang gretl_updater.exe
 
 gretlcli.exe: $(CLIOBJ)
@@ -309,11 +304,6 @@ dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libprob.def --implib $(imports)/libprob.a \
 	-o $@ $^ 
-
-dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
-	$(DLLWRAP) $(DLLWRAP_FLAGS) \
-	--output-def libgtkextra-lite.def --implib $(imports)/libgtkextra-lite.a \
-	-o $@ $^ $(GTKLIBS) $(GRETLLIB)
 
 plugins/stats_tables.dll: stats_tables.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
@@ -478,7 +468,7 @@ buildstamp:
 clean:
 	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
-	rm -f dlls/libgtkextra-lite.dll $(imports)/*.a $(imports)/libgtkextra-lite.def
+	rm -f $(imports)/*.a 
 	rm -f gretl.stamp build.h
 	rm -f windist/MANIFEST windist/gretl.iss 
 	rm -rf windist/gretl windist/gnuplot windist/Output

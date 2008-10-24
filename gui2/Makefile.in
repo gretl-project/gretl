@@ -30,10 +30,6 @@ USE_NLS = @USE_NLS@
 INETLIB = @INETLIB@
 CARBONLIB = @CARBONLIB@
 
-# Bundled gtkextra subset
-GTK_EXTRA_CFLAGS = -I$(topsrc)/gui2/gtkextra-lite
-GTK_EXTRA_LIB = -L./gtkextra-lite -lgtkextra-lite
-
 GRETL_LANG = gretl.lang
 GNUPLOT_LANG = gnuplot.lang
 R_LANG = R.lang
@@ -83,8 +79,8 @@ else
   G_CFLAGS = $(GTK_CFLAGS)
 endif
 
-LIBS = $(G_LIBS) $(GTKSOURCEVIEW_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
-GUI_CFLAGS = $(G_CFLAGS) $(GTKSOURCEVIEW_CFLAGS) $(GTK_EXTRA_CFLAGS)
+LIBS = $(G_LIBS) $(GTKSOURCEVIEW_LIBS) ../lib/libgretl-1.0.la
+GUI_CFLAGS = $(G_CFLAGS) $(GTKSOURCEVIEW_CFLAGS)
 
 ifeq ($(USE_NLS),yes)
   datadir = @datadir@
@@ -163,18 +159,11 @@ HACK_SRC = gtkfontselhack.c
 HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 
-GTKEXTRA_SRC = $(topsrc)/gui2/gtkextra-lite/psplot.c \
-	$(topsrc)/gui2/gtkextra-lite/gtkpsfont.c \
-	$(topsrc)/gui2/gtkextra-lite/psplot.h \
-	$(topsrc)/gui2/gtkextra-lite/gtkpsfontpango.h
-
-GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
-
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE) $(GTKSOURCEVIEW_LITE) 
+$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
@@ -188,9 +177,6 @@ mklang.o: mklang.c $(topsrc)/lib/src/options.c $(topsrc)/lib/src/genlex.c
 
 $(GRETL_LANG): mklang
 	./mklang $(LANGOPT) > $@
-
-$(GTKEXTRA_LITE): $(GTKEXTRA_SRC)
-	make -C gtkextra-lite
 
 $(GTKSOURCEVIEW_LITE):
 	make -C gtksourceview
@@ -237,7 +223,6 @@ installdirs:
 clean:
 	rm -f *.o $(PROG)
 	rm -rf .libs .deps
-	make -C gtkextra-lite clean
 	make -C gtksourceview clean
 
 distclean: clean

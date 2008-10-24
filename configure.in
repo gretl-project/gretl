@@ -605,7 +605,6 @@ gretl-config
 gretl.pc 
 gui2/Makefile
 gui2/debug
-gui2/gtkextra-lite/Makefile
 gui2/gtksourceview/Makefile
 gnome/Makefile
 gnome/gretl.keys 
