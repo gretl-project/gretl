@@ -48,6 +48,78 @@ typedef struct {
     BOXPLOT *plots;
 } PLOTGROUP;
 
+static void quartiles (double *x, const int n, BOXPLOT *box)
+{
+    double p[3] = {0.25, 0.5, 0.75};
+
+    gretl_array_quantiles(x, n, p, 3);
+
+    box->lq = p[0];
+    box->median = p[1];
+    box->uq = p[2];
+}
+
+#define ITERS 560
+#define CONFIDENCE 0.90
+
+/* obtain bootstrap estimate of 90% confidence interval
+   for the sample median of data series x; return low and
+   high values in 'low' and 'high' */
+
+static int 
+median_interval (double *x, int n, double *low, double *high)
+{
+    double *medians, *samp;
+    double p[2];
+    int i, j, t;
+    int err;
+
+    medians = malloc(ITERS * sizeof *medians);
+    if (medians == NULL) return 1;
+
+    samp = malloc(n * sizeof *samp);
+    if (samp == NULL) {
+	free(medians);
+	return 1;
+    }
+
+    for (i=0; i<ITERS; i++) {
+	/* sample with replacement from x */
+	for (j=0; j<n; j++) {
+	    t = gretl_rand_int_max(n);
+	    samp[j] = x[t];
+	}
+	/* find the median of the sample */
+	medians[i] = gretl_array_quantile(samp, n, 0.5);
+    }
+
+    p[0] = (1.0 - CONFIDENCE) / 2.0;
+    p[1] = 1.0 - p[0];
+
+    err = gretl_array_quantiles(medians, ITERS, p, 2);
+
+    *low = p[0];
+    *high = p[1];
+
+    free(samp);
+    free(medians);
+
+    return err;
+}
+
+static int special_varcount (const char *s)
+{
+    int n = 0;
+    char test[36];
+
+    while (sscanf(s, "%35s", test) == 1) {
+	if (*test != '(') n++;
+	s += strspn(s, " ");
+	s += strlen(test);
+    }
+    return n;
+}
+
 static void destroy_boxplots (PLOTGROUP *grp)
 {
     int i;
@@ -139,25 +211,23 @@ int boxplots (int *list, char **bools,
     int i, j, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
     PLOTGROUP *plotgrp;
-    int width = 576, height = 448;
     int err = 0;
 
-    x = mymalloc(n * sizeof *x);
+    x = malloc(n * sizeof *x);
     if (x == NULL) {
 	return E_ALLOC;
     }
 
-    plotgrp = mymalloc(sizeof *plotgrp);
+    plotgrp = malloc(sizeof *plotgrp);
     if (plotgrp == NULL) {
 	free(x);
 	return E_ALLOC;
     }
 
-    plotgrp->saved = 0;
     plotgrp->show_outliers = 0;
 
     plotgrp->nplots = list[0];
-    plotgrp->plots = mymalloc(plotgrp->nplots * sizeof *plotgrp->plots);
+    plotgrp->plots = malloc(plotgrp->nplots * sizeof *plotgrp->plots);
     if (plotgrp->plots == NULL) {
 	free(plotgrp);
 	free(x);
@@ -167,8 +237,6 @@ int boxplots (int *list, char **bools,
     for (i=0, j=0; i<plotgrp->nplots; i++, j++) {
 	n = ztox(list[i+1], x, (const double **) *pZ, pdinfo);
 	if (n < 2) {
-	    errbox(_("Dropping %s: insufficient observations"),
-		   pdinfo->varname[list[i+1]]);
 	    gretl_list_delete_at_pos(list, i+1);
 	    if (list[0] == 0) {
 		free(plotgrp->plots);
@@ -194,7 +262,6 @@ int boxplots (int *list, char **bools,
 	    /* notched boxplots wanted */
 	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
 				&plotgrp->plots[i].conf[1])) {
-		errbox(_("Couldn't obtain confidence interval"));
 		plotgrp->plots[i].conf[0] = 
 		    plotgrp->plots[i].conf[1] = NADBL;
 	    }
@@ -289,14 +356,14 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    list = malloc((nvars + 1) * sizeof *list);
+    list = gretl_list_new(nvars);
     bools = malloc(nvars * sizeof *bools);
 
     if (list == NULL || bools == NULL) {
 	free(list);
 	free(bools);
 	free(s);
-	return 1;
+	return E_ALLOC;
     }
 
     for (i=0; i<nvars; i++) {
@@ -307,9 +374,11 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     i = 0;
     nbool = 0;
 
+#if 0
     /* record the command string */
     *boxplots_string = '\0';
     strncat(boxplots_string, s, BPSTRLEN - 1);
+#endif
 
     while (!err && (tok = strtok((i)? NULL : s, " "))) {
 	if (tok[0] == '(') {
@@ -326,7 +395,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		if (v < origv) {
 		    list[++i] = v;
 		} else {
-		    errbox(_("got invalid variable number %d"), v);
+		    gretl_errmsg_sprintf(_("got invalid variable number %d"), v);
 		    err = 1;
 		}
 	    } else if (isalpha(tok[0])) {
@@ -334,50 +403,51 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		if (v < origv) {
 		    list[++i] = v;
 		} else {
-		    errbox(_("got invalid varname '%s'"), tok);
+		    gretl_errmsg_sprintf(_("got invalid varname '%s'"), tok);
 		    err = 1;
 		}
 	    } else {
-		errbox(_("got invalid field '%s'"), tok);
+		gretl_errmsg_sprintf(_("got invalid field '%s'"), tok);
 		err = 1; 
 	    }
 	}
     }
 
+    /* FIXME if err */
+
     /* now we add nbool new variables, with ID numbers origv,
        origv + 1, and so on.  These are the original variables
        that have boolean conditions attached, masked by those
-       conditions */
+       conditions 
+    */
 
     k = origv;
     nbool = 0;
-    for (i=1; i<=list[0] && !err; i++) {
-	if (bools[i-1] != NULL) {
-	    char formula[80];
-	    int t;
-	    
-	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
-	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
-	    if (err) {
-		char *msg = 
-		    g_strdup_printf(_("boxplots: generation of dummy variable failed\n%s"), 
-				    gretl_errmsg_get());
 
-		errbox(msg);
-		g_free(msg);
-		err = 1;
-	    } else {
-		for (t=0; t<n; t++) {
-		    if ((*pZ)[k][t] == 1.0) {
-			(*pZ)[k][t] = (*pZ)[list[i]][t];
-		    } else { 
-			(*pZ)[k][t] = NADBL;
-		    }
+    for (i=1; i<=list[0] && !err; i++) {
+	char formula[80];
+	int t;
+	
+	if (bools[i-1] == NULL) {
+	    continue;
+	}
+	sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
+	err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	if (err) {
+	    gretl_errmsg_sprintf(_("boxplots: generation of dummy variable failed\n%s"),
+				 gretl_errmsg_get());
+	    err = 1;
+	} else {
+	    for (t=0; t<n; t++) {
+		if ((*pZ)[k][t] == 1.0) {
+		    (*pZ)[k][t] = (*pZ)[list[i]][t];
+		} else { 
+		    (*pZ)[k][t] = NADBL;
 		}
-		strcpy(pdinfo->varname[k], pdinfo->varname[list[i]]);
-		list[i] = k++;
-		nbool++;
 	    }
+	    strcpy(pdinfo->varname[k], pdinfo->varname[list[i]]);
+	    list[i] = k++;
+	    nbool++;
 	}
     }
 
