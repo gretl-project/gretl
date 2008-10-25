@@ -46,9 +46,20 @@ typedef struct {
     int show_mean;
     int do_notches;
     int show_outliers;
+    int n_bools;
     char *numbers;
     BOXPLOT *plots;
+    double gmin, gmax;
 } PLOTGROUP;
+
+#define BPSTRLEN 128
+
+static char boxplots_string[BPSTRLEN];
+
+const char *get_last_boxplots_string (void)
+{
+    return boxplots_string;
+}
 
 static void quartiles (double *x, const int n, BOXPLOT *box)
 {
@@ -176,19 +187,21 @@ static PLOTGROUP *plotgroup_new (int nplots)
 	grp->show_mean = 0;
 	grp->do_notches = 0;
 	grp->show_outliers = 0;
+	grp->n_bools = 0;
+	grp->gmax = grp->gmin = 0.0;
     }
 
     return grp;
 }
 
-/* FIXME notches and outliers */
+/* FIXME outliers */
 
 static int write_gnuplot_boxplot (PLOTGROUP *grp)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
     int n = grp->nplots;
-    double loff, ymax;
+    double loff;
     int i, err = 0;
 
     err = gnuplot_init(PLOT_BOXPLOTS, &fp);
@@ -202,35 +215,31 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 	  "set border 2\n"
 	  "set bmargin 3\n", fp);
 
-    ymax = grp->plots[0].max;
-
-    for (i=1; i<n; i++) {
-	if (grp->plots[i].max > ymax) {
-	    ymax = grp->plots[i].max;
-	}
-    }
-
-    loff = -ymax / 25;
+    loff = -(grp->gmax - grp->gmin) / 25;
 
     gretl_push_c_numeric_locale();
 
     for (i=0; i<n; i++) {
-	/* FIXME "bools" */
 	fprintf(fp, "set label \"%s\" at %d,%g center\n", 
 		grp->plots[i].varname, i+1, loff);
+	if (grp->plots[i].bool != NULL) {
+	    /* FIXME positioning? */
+	    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
+		    grp->plots[i].bool, i+1, loff * 2);
+	}
     }
 
     fprintf(fp, "set boxwidth %g absolute\n", 1.0 / (n + 2));
 
     fputs("plot \\\n", fp);
-    /* the quartiles and limits */
+    /* the quartiles and extrema */
     fputs("'-' using 1:3:2:5:4 w candlesticks lt 2 lw 2 "
 	  "notitle whiskerbars 0.5, \\\n", fp);
     /* the median */
     fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
 
     if (grp->show_mean || grp->do_notches) {
-	/* continue plot array */
+	/* continue plot lines array */
 	fputs(", \\\n", fp);
     } else {
 	fputc('\n', fp);
@@ -245,7 +254,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle\n", fp);
     }
 
-    /* data for quartiles and limits */
+    /* data for quartiles and extrema */
     for (i=0; i<n; i++) {
 	bp = &grp->plots[i];
 	fprintf(fp, "%d %g %g %g %g\n", i+1, bp->min, bp->lq, bp->uq, bp->max);
@@ -267,12 +276,13 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 	}
 	fputs("e\n", fp);
     } else if (grp->do_notches) {
-	/* data for lower and upper median bounds */
+	/* data for lower median bound */
 	for (i=0; i<n; i++) {
 	    bp = &grp->plots[i];
 	    fprintf(fp, "%d %g\n", i+1, bp->conf[0]);
 	}
 	fputs("e\n", fp);
+	/* data for upper median bound */
 	for (i=0; i<n; i++) {
 	    bp = &grp->plots[i];
 	    fprintf(fp, "%d %g\n", i+1, bp->conf[1]);
@@ -352,6 +362,14 @@ static int real_boxplots (int *list, char **bools,
 	quartiles(x, n, &grp->plots[i]);
 	plot->n = n;
 
+	if (i == 0 || plot->min < grp->gmin) {
+	    grp->gmin = plot->min;
+	}
+
+	if (i == 0 || plot->max > grp->gmax) {
+	    grp->gmax = plot->max;
+	}
+
 	if (grp->do_notches) {
 	    if (median_interval(x, n, &plot->conf[0], &plot->conf[1])) {
 		plot->conf[0] = plot->conf[1] = NADBL;
@@ -361,8 +379,11 @@ static int real_boxplots (int *list, char **bools,
 
 	strcpy(plot->varname, pdinfo->varname[vi]);
 
-	if (bools) { 
+	if (bools != NULL) { 
 	    plot->bool = bools[j];
+	    if (plot->bool != NULL) {
+		grp->n_bools += 1;
+	    }
 	} 
     }
 
@@ -434,10 +455,13 @@ static char *boxplots_fix_parentheses (const char *line)
 int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo, 
 		      gretlopt opt)
 {
-    int i, k, v, nvars, nbool, err = 0;
-    int n = pdinfo->n, origv = pdinfo->v;
-    char *tok, *s = NULL, **bools = NULL;
+    int i, k, v, nvars, nbool;
+    int n = pdinfo->n;
+    int origv = pdinfo->v;
+    char *tok, *s = NULL;
+    char **bools = NULL;
     int *list = NULL;
+    int err = 0;
 
     if (!strncmp(str, "boxplots ", 9)) {
 	str += 9;
@@ -474,17 +498,14 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     i = 0;
     nbool = 0;
 
-#if 0
     /* record the command string */
     *boxplots_string = '\0';
     strncat(boxplots_string, s, BPSTRLEN - 1);
-#endif
 
     while (!err && (tok = strtok((i)? NULL : s, " "))) {
 	if (tok[0] == '(') {
 	    if (i) {
-		bools[i-1] = malloc(strlen(tok) + 1);
-		strcpy(bools[i-1], tok);
+		bools[i-1] = gretl_strdup(tok);
 		nbool++;
 	    } else {
 		err = E_DATA;
@@ -653,7 +674,10 @@ static void get_bool_from_line (const char *line, BOXPLOT *plt)
     }
 }
 
-/* convert old-style boxplot file to gnuplot command file */
+/* Convert an old-style gretl boxplot file to a gnuplot command file:
+   we use this when opening an old gretl session file that contains
+   boxplots.
+*/
 
 int gnuplot_from_boxplot (const char *fname)
 {
@@ -663,6 +687,7 @@ int gnuplot_from_boxplot (const char *fname)
     PLOTGROUP *grp = NULL;
     BOXPLOT *plt = NULL;
     char line[80], numstr[24];
+    double gmax, gmin;
     int nplots = 0;
     int err = 0;
 
@@ -677,7 +702,10 @@ int gnuplot_from_boxplot (const char *fname)
 	    err = E_DATA;
 	} else if (i == 2 && sscanf(line, "numbers = %7s", numstr) != 1) {
 	    err = E_DATA;
-	} 
+	} else if (i == 5 && sscanf(line, "gmax gmin = %lf %lf", 
+				    &gmax, &gmin) != 2) {
+	    err = E_DATA;
+	}
     }
 
     if (!err) {
@@ -695,6 +723,8 @@ int gnuplot_from_boxplot (const char *fname)
 	grp->numbers = gretl_strdup(numstr);
     }
 
+    grp->gmax = gmax;
+    grp->gmin = gmin;
     grp->show_mean = 1;
     grp->do_notches = 1;
 

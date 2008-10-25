@@ -32,6 +32,8 @@
 #include "treeutils.h"
 #include "datawiz.h"
 
+#include "boxplots.h"
+
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
@@ -601,11 +603,6 @@ static int gretl_callback_code (const gchar *s)
     return 0;
 }
 
-static const char *get_boxplots_string (void)
-{
-    return ""; /* FIXME */
-}
-
 void gretl_callback (GtkAction *action, gpointer data)
 {
     const char *title = NULL;
@@ -647,7 +644,7 @@ void gretl_callback (GtkAction *action, gpointer data)
 	query = N_("Specify variables to plot:");
 	okfunc = do_box_graph;
 	varclick = VARCLICK_INSERT_NAME;
-	defstr = get_boxplots_string();
+	defstr = get_last_boxplots_string();
 	break;
     case GMM:
 	title = N_("gretl: GMM");

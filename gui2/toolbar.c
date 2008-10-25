@@ -506,14 +506,12 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
                     r == EDIT_NOTES || \
                     r == EDIT_FUNC_CODE || \
 	            r == EDIT_GP || \
-                    r == EDIT_BOX || \
 		    r == EDIT_R || \
                     r == SCRIPT_OUT)
 
 #define save_as_ok(r) (r != EDIT_HEADER && \
 	               r != EDIT_NOTES && \
 	               r != EDIT_FUNC_CODE && \
-		       r != EDIT_BOX && \
 		       r != VIEW_SCALAR)
 
 #define help_ok(r) (r == LEVERAGE || \

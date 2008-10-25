@@ -395,6 +395,8 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
 
     if (spec->boxwidth > 0 && spec->boxwidth < 1) {
 	fprintf(fp, "set boxwidth %.3f\n", (double) spec->boxwidth);
+    } else if (spec->boxwidth < 0 && spec->boxwidth > -1) {
+	fprintf(fp, "set boxwidth %.3f absolute\n", (double) spec->boxwidth);
     }
 
     gretl_pop_c_numeric_locale();
@@ -615,7 +617,10 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	} else {
 	    if (!strcmp(line->scale, "1.0")) {
 		fputs("'-' using 1", fp);
-		if (line->ncols == 2) {
+		if (line->ncols == 5) {
+		    /* Note: candlesticks, hard-wired! */
+		    fputs(":3:2:5:4", fp);
+		} else if (line->ncols == 2) {
 		    fputs(":($2)", fp);
 		} else {
 		    for (k=2; k<=line->ncols; k++) {

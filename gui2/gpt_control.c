@@ -1498,8 +1498,10 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
     } else if (!strcmp(variable, "mxtics")) { 
 	safecpy(spec->mxtics, value, 3);
     } else if (!strcmp(variable, "boxwidth")) {
-	/* FIXME qualifier */
 	spec->boxwidth = (float) atof(value);
+	if (strstr(s, "absolute")) {
+	    spec->boxwidth = -spec->boxwidth;
+	}
     } else if (!strcmp(variable, "samples")) {
 	spec->samples = atoi(value);
     } 
@@ -1686,16 +1688,13 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	return err;
     }
 
-    fprintf(stderr, "here, 1\n");
-
     i = spec->n_lines - 1;
     line = &spec->lines[i];
 
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;
-	if (colon_count(p) > 3) {
-	    /* candlesticks? ignore the data (FIXME) */
+	if (strstr(p, "1:3:2:5:4")) {
 	    line->ncols = 5;
 	} else if (strstr(p, "1:2:3:4")) {
 	    line->ncols = 4;
@@ -1727,8 +1726,6 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	    }
 	}
     }
-
-    fprintf(stderr, "here, 2\n");
 
     if (strstr(s, "axes x1y2")) {
 	line->yaxis = 2;

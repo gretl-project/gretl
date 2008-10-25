@@ -1322,7 +1322,6 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_NOTES:
 	title = g_strdup(_("gretl: session notes")); break;
     case EDIT_GP:
-    case EDIT_BOX:
 	title = g_strdup(_("gretl: edit plot commands")); break;
     case EDIT_R:
 	title = g_strdup(_("gretl: edit R commands")); break;
@@ -1534,8 +1533,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 #define editing_script(r) (r == EDIT_SCRIPT || \
 	                   r == EDIT_GP || \
-                           r == EDIT_R || \
-                           r == EDIT_BOX)
+                           r == EDIT_R)
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
