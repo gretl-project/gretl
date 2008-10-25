@@ -215,7 +215,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 	  "set border 2\n"
 	  "set bmargin 3\n", fp);
 
-    loff = -(grp->gmax - grp->gmin) / 25;
+    loff = grp->gmin - (grp->gmax - grp->gmin) / 20;
 
     gretl_push_c_numeric_locale();
 
