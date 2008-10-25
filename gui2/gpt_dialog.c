@@ -492,9 +492,11 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 
     if (!err && border_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(border_check)->active) {
-	    spec->flags &= ~GPT_MINIMAL_BORDER;
+	    /* full border */
+	    spec->border = GP_BORDER_DEFAULT;
 	} else {
-	    spec->flags |= GPT_MINIMAL_BORDER;
+	    /* left and bottom only */
+	    spec->border = 3;
 	}
     } 
 
@@ -938,21 +940,21 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	fitcombo = NULL;
     }
 
-    /* give option of removing top & right border */
+    border_check = y2_check = NULL;
+
+    /* give option of removing/adding top & right border? */
     if (!(spec->flags & GPT_Y2AXIS)) { 
-	y2_check = NULL;
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	border_check = gtk_check_button_new_with_label(_("Show full border"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  border_check, 0, TAB_MAIN_COLS, 
-				  rows-1, rows);
-	if (!(spec->flags & GPT_MINIMAL_BORDER)) {
+	if (spec->border == GP_BORDER_DEFAULT || spec->border == 3) {
+	    table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	    border_check = gtk_check_button_new_with_label(_("Show full border"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      border_check, 0, TAB_MAIN_COLS, 
+				      rows-1, rows);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(border_check),
-					 TRUE);
-	}	
-	gtk_widget_show(border_check);
+					 spec->border == GP_BORDER_DEFAULT);
+	    gtk_widget_show(border_check);
+	}
     } else {
-	border_check = NULL;
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	y2_check = gtk_check_button_new_with_label(_("Use only one y axis"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -964,6 +966,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			 G_CALLBACK(toggle_axis_selection), spec);
 	gtk_widget_show(y2_check);
     }
+
+    markers_check = NULL;
 
     /* give option of showing all case markers */
     if (spec->flags & GPT_ALL_MARKERS_OK) { 
@@ -977,9 +981,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 					 TRUE);
 	}	
 	gtk_widget_show(markers_check);
-    } else {
-	markers_check = NULL;
-    }
+    } 
 
     if (show_aa_check < 0) {
 	show_aa_check = (gnuplot_png_terminal() == GP_PNG_GD2);

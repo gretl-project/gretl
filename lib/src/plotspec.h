@@ -24,8 +24,11 @@
 #define GP_MAXSTYLE    16
 #define GP_MAXSCALE     8
 
+#define GP_BORDER_DEFAULT (-1)
+
 typedef enum {
-    GP_LINE_USER = 1 << 0
+    GP_LINE_USER    = 1 << 0,
+    GP_LINE_BOXDATA = 1 << 1
 } gp_line_flags;
 
 typedef struct {
@@ -39,6 +42,7 @@ typedef struct {
     int ptype;                     /* point type */
     int width;                     /* default 1, could be bigger */
     char ncols;                    /* number of data columns (0 for formula) */
+    float whiskwidth;              /* whiskerbar width (boxplots) */
     char flags;                    /* additional options */
 } GPT_LINE;
 
@@ -76,6 +80,8 @@ typedef struct {
     int termtype;              /* gnuplot "terminal" code */
     int n_lines;               /* number of lines */
     int samples;               /* number of samples for parametric plots */
+    int border;                /* gnuplot border code */
+    int bmargin;               /* bottom margin */
     float boxwidth;            /* when using box style for frequency plots */
     GPT_LINE *lines;           /* details on individual lines */
     char **literal;            /* additional commands */

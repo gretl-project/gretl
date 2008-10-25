@@ -94,6 +94,8 @@ GPT_SPEC *plotspec_new (void)
     spec->pd = 0;
     spec->boxwidth = 0;
     spec->samples = 0;
+    spec->border = GP_BORDER_DEFAULT;
+    spec->bmargin = 0;
 
     spec->termtype = GP_TERM_NONE;
 
@@ -160,6 +162,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].ptype = 0;
     lines[n].width = 1;
     lines[n].ncols = 0;
+    lines[n].whiskwidth = 0;
     lines[n].flags = 0;
 
     return 0;
@@ -182,8 +185,10 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
 	strcpy(lines[j].scale, lines[j+1].scale);
 	lines[j].yaxis = lines[j+1].yaxis;
 	lines[j].type  = lines[j+1].type;
+	lines[j].ptype  = lines[j+1].ptype;
 	lines[j].width = lines[j+1].width;
 	lines[j].ncols = lines[j+1].ncols;
+	lines[j].whiskwidth = lines[j+1].whiskwidth;
 	lines[j].flags = lines[j+1].flags;
     }
 
@@ -396,7 +401,7 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     if (spec->boxwidth > 0 && spec->boxwidth < 1) {
 	fprintf(fp, "set boxwidth %.3f\n", (double) spec->boxwidth);
     } else if (spec->boxwidth < 0 && spec->boxwidth > -1) {
-	fprintf(fp, "set boxwidth %.3f absolute\n", (double) spec->boxwidth);
+	fprintf(fp, "set boxwidth %g absolute\n", (double) -spec->boxwidth);
     }
 
     gretl_pop_c_numeric_locale();
@@ -459,7 +464,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     int mono = (spec->flags & GPT_MONO);
     int started_data_lines = 0;
     double et, yt;
-    double *x[4];
+    double *x[5];
     int skipline = -1;
     int any_y2 = 0;
     int miss = 0;
@@ -525,24 +530,36 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     print_plot_ranges_etc(spec, fp);
 
     /* customized xtics? */
-    if (!string_is_blank(spec->xtics)) {
-	fprintf(fp, "set xtics %s\n", spec->xtics);
-    }
-    if (!string_is_blank(spec->mxtics)) {
-	fprintf(fp, "set mxtics %s\n", spec->mxtics);
+    if (!strcmp(spec->xtics, "none")) {
+	fputs("set noxtics\n", fp);
+    } else {
+	if (!string_is_blank(spec->xtics)) {
+	    fprintf(fp, "set xtics %s\n", spec->xtics);
+	}
+	if (!string_is_blank(spec->mxtics)) {
+	    fprintf(fp, "set mxtics %s\n", spec->mxtics);
+	}
     }
 
     if (spec->flags & GPT_Y2AXIS) {
 	/* using two y axes */
 	fputs("set ytics nomirror\n", fp);
 	fputs("set y2tics\n", fp);
-    } else if (spec->flags & GPT_MINIMAL_BORDER) {
-	/* suppressing part of border */
-	fputs("set border 3\n", fp);
+    } else if (spec->border != GP_BORDER_DEFAULT) {
+	/* suppressing all or part of border */
+	if (spec->border == 0) {
+	    fputs("unset border\n", fp);
+	} else {
+	    fprintf(fp, "set border %d\n", spec->border);
+	}
 	if (string_is_blank(spec->xtics)) {
 	    fputs("set xtics nomirror\n", fp);
 	}
 	fputs("set ytics nomirror\n", fp);
+    }
+
+    if (spec->bmargin > 0) {
+	fprintf(fp, "set bmargin %d\n", spec->bmargin);
     }
 
     /* in case of plots that are editable (see gui client), it is
@@ -601,6 +618,8 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	}
     }
 
+    gretl_push_c_numeric_locale();
+
     for (i=0; i<spec->n_lines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 
@@ -621,7 +640,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 		    /* Note: candlesticks, hard-wired! */
 		    fputs(":3:2:5:4", fp);
 		} else if (line->ncols == 2) {
-		    fputs(":($2)", fp);
+		    if (line->flags & GP_LINE_BOXDATA) {
+			fputs(":2:2:2:2", fp);
+		    } else {
+			fputs(":($2)", fp);
+		    }
 		} else {
 		    for (k=2; k<=line->ncols; k++) {
 			fprintf(fp, ":%d", k);
@@ -663,6 +686,10 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, " lw %d", line->width);
 	}
 
+	if (line->whiskwidth > 0) {
+	    fprintf(fp, " whiskerbars %g", line->whiskwidth);
+	}
+
 	if (more_lines(spec, i, skipline)) {
 	    fputs(", \\", fp);
 	} 
@@ -673,8 +700,6 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     miss = 0;
 
     /* supply the data to gnuplot inline */
-
-    gretl_push_c_numeric_locale();
 
     for (i=0; i<spec->n_lines; i++) { 
 	int j, ncols = spec->lines[i].ncols;
@@ -693,6 +718,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
 	x[2] = x[1] + spec->nobs;
 	x[3] = x[2] + spec->nobs;
+	x[4] = x[3] + spec->nobs;
 
 	for (t=0; t<spec->nobs; t++) {
 	    /* print x-axis value */

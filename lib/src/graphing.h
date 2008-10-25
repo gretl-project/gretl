@@ -43,17 +43,16 @@ typedef enum {
     GPT_Y2AXIS         = 1 << 13, /* plot has second y-axis */
     GPT_AUTO_FIT       = 1 << 14, /* automatic (OLS) fitted line was added */
     GPT_FIT_HIDDEN     = 1 << 15, /* autofit line calculated, but suppressed */
-    GPT_MINIMAL_BORDER = 1 << 16, /* omitting top and right borders */
-    GPT_PNG_OUTPUT     = 1 << 17, /* output is to PNG file */
-    GPT_ALL_MARKERS    = 1 << 18, /* all observation markers displayed */
-    GPT_ALL_MARKERS_OK = 1 << 19, /* OK to show all observation markers */
-    GPT_LETTERBOX      = 1 << 20, /* special format for time series graphs */
-    GPT_PARAMETRIC     = 1 << 21, /* gnuplot should be in parametric mode */
-    GPT_XZEROAXIS      = 1 << 22, /* show x = 0 line */
-    GPT_YZEROAXIS      = 1 << 23, /* show y = 0 line */
-    GPT_FILL_SWITCH    = 1 << 24, /* switching from errorbars to fill */
-    GPT_ERR_SWITCH     = 1 << 25, /* switching from fill to errorbars */
-    GPT_MONO           = 1 << 26  /* monochrome output */
+    GPT_PNG_OUTPUT     = 1 << 16, /* output is to PNG file */
+    GPT_ALL_MARKERS    = 1 << 17, /* all observation markers displayed */
+    GPT_ALL_MARKERS_OK = 1 << 18, /* OK to show all observation markers */
+    GPT_LETTERBOX      = 1 << 19, /* special format for time series graphs */
+    GPT_PARAMETRIC     = 1 << 20, /* gnuplot should be in parametric mode */
+    GPT_XZEROAXIS      = 1 << 21, /* show x = 0 line */
+    GPT_YZEROAXIS      = 1 << 22, /* show y = 0 line */
+    GPT_FILL_SWITCH    = 1 << 23, /* switching from errorbars to fill */
+    GPT_ERR_SWITCH     = 1 << 24, /* switching from fill to errorbars */
+    GPT_MONO           = 1 << 25  /* monochrome output */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;

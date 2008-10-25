@@ -1131,8 +1131,7 @@ static int get_gpt_marker (const char *line, char *label)
                       p == PLOT_BI_GRAPH || \
                       p == PLOT_VAR_ROOTS || \
 		      p == PLOT_ELLIPSE || \
-		      p == PLOT_RQ_TAU || \
-		      p == PLOT_BOXPLOTS)
+		      p == PLOT_RQ_TAU)
 
 /* graphs where we don't attempt to find data coordinates */
 
@@ -1148,8 +1147,8 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 {
     char s[MAXLEN];
     char *got;
-    double *x[4] = { NULL };
-    char test[4][32];
+    double *x[5] = { NULL };
+    char test[5][32];
     int started_data_lines = 0;
     int i, j, t;
     int err = 0;
@@ -1167,6 +1166,10 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	    continue;
 	}
 
+#if GPDEBUG
+	fprintf(stderr, "reading data, line %d\n", i);
+#endif
+
 	if (!started_data_lines) {
 	    offset = 0;
 	    x[0] = spec->data;
@@ -1175,7 +1178,8 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	} 
 
 	x[2] = x[1] + spec->nobs;
-	x[3] = x[2] + spec->nobs;	
+	x[3] = x[2] + spec->nobs;
+	x[4] = x[3] + spec->nobs;
 
 	for (t=0; t<spec->nobs; t++) {
 	    int missing = 0;
@@ -1188,7 +1192,10 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	    }
 
 	    nf = 0;
-	    if (ncols == 4) {
+	    if (ncols == 5) {
+		nf = sscanf(s, "%31s %31s %31s %31s %31s", test[0], test[1], test[2], 
+			    test[3], test[4]);
+	    } else if (ncols == 4) {
 		nf = sscanf(s, "%31s %31s %31s %31s", test[0], test[1], test[2], test[3]);
 	    } else if (ncols == 3) {
 		nf = sscanf(s, "%31s %31s %31s", test[0], test[1], test[2]);
@@ -1423,87 +1430,108 @@ static int catch_value (char *targ, const char *src, int maxlen)
 
 static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 {
-    char variable[16] = {0};
-    char value[MAXLEN] = {0};
+    char key[16] = {0};
+    char val[MAXLEN] = {0};
 
     if (strstr(s, "encoding") != NULL) {
-#if 0
+#if GPDEBUG
 	fprintf(stderr, "Got encoding: '%s'\n", s);
 #endif
 	return 0;
     }
 
-    if (sscanf(s + 4, "%11s", variable) != 1) {
+    if (!strncmp(s, "style line", 10)) {
+	/* not handled at present */
+	return 0;
+    }
+
+    if (sscanf(s + 4, "%11s", key) != 1) {
 	errbox(_("Failed to parse gnuplot file"));
 	fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	return 1;
     }
 
-    if (!strcmp(variable, "y2tics")) {
+#if GPDEBUG
+    fprintf(stderr, "parse_gp_set_line: key = '%s'\n", key);
+#endif
+
+    /* first, settings that don't require a parameter */
+
+    if (!strcmp(key, "y2tics")) {
 	spec->flags |= GPT_Y2AXIS;
 	return 0;
-    } else if (!strcmp(variable, "border 3")) {
-	spec->flags |= GPT_MINIMAL_BORDER;
-	return 0;
-    } else if (!strcmp(variable, "parametric")) {
+    } else if (!strcmp(key, "parametric")) {
 	spec->flags |= GPT_PARAMETRIC;
 	return 0;
-    } else if (!strcmp(variable, "xzeroaxis")) {
+    } else if (!strcmp(key, "xzeroaxis")) {
 	spec->flags |= GPT_XZEROAXIS;
 	return 0;
-    } else if (!strcmp(variable, "yzeroaxis")) {
+    } else if (!strcmp(key, "yzeroaxis")) {
 	spec->flags |= GPT_YZEROAXIS;
 	return 0;
-    } else if (!strcmp(variable, "nokey")) {
+    } else if (!strcmp(key, "noxtics")) {
+	strcpy(spec->xtics, "none");
+	return 0;
+    } else if (!strcmp(key, "nokey")) {
 	strcpy(spec->keyspec, "none");
 	return 0;
-    } else if (!strcmp(variable, "label")) {
+    } else if (!strcmp(key, "label")) {
 	parse_label_line(spec, s, *labelno);
 	*labelno += 1;
 	return 0;
     }
 
-    if (!catch_value(value, s + 4 + strlen(variable), MAXLEN)) {
+    /* now catch value for settings that need a parameter */
+
+    if (!catch_value(val, s + 4 + strlen(key), MAXLEN)) {
 	return 0;
     }
 
-    if (strstr(variable, "range")) {
-	if (read_plotspec_range(variable, value, spec)) {
+#if GPDEBUG
+    fprintf(stderr, " value = '%s'\n", val);
+#endif
+
+    if (strstr(key, "range")) {
+	if (read_plotspec_range(key, val, spec)) {
 	    errbox(_("Failed to parse gnuplot file"));
 	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	    return 1;
 	}
-    } else if (!strcmp(variable, "logscale")) {
-	if (read_plot_logscale(value, spec)) {
+    } else if (!strcmp(key, "logscale")) {
+	if (read_plot_logscale(val, spec)) {
 	    errbox(_("Failed to parse gnuplot file"));
 	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	    return 1;
 	}	
-    } else if (!strcmp(variable, "title")) {
-	strcpy(spec->titles[0], value);
-    } else if (!strcmp(variable, "xlabel")) {
-	strcpy(spec->titles[1], value);
+    } else if (!strcmp(key, "title")) {
+	strcpy(spec->titles[0], val);
+    } else if (!strcmp(key, "xlabel")) {
+	strcpy(spec->titles[1], val);
 	*spec->xvarname = '\0';
-	strncat(spec->xvarname, value, MAXDISP-1);
-    } else if (!strcmp(variable, "ylabel")) {
-	strcpy(spec->titles[2], value);
+	strncat(spec->xvarname, val, MAXDISP-1);
+    } else if (!strcmp(key, "ylabel")) {
+	strcpy(spec->titles[2], val);
 	*spec->yvarname = '\0';
-	strncat(spec->yvarname, value, MAXDISP-1);
-    } else if (!strcmp(variable, "y2label")) {
-	strcpy(spec->titles[3], value);
-    } else if (!strcmp(variable, "key")) {
-	strcpy(spec->keyspec, value);
-    } else if (!strcmp(variable, "xtics")) { 
-	safecpy(spec->xtics, value, 15);
-    } else if (!strcmp(variable, "mxtics")) { 
-	safecpy(spec->mxtics, value, 3);
-    } else if (!strcmp(variable, "boxwidth")) {
-	spec->boxwidth = (float) atof(value);
+	strncat(spec->yvarname, val, MAXDISP-1);
+    } else if (!strcmp(key, "y2label")) {
+	strcpy(spec->titles[3], val);
+    } else if (!strcmp(key, "key")) {
+	strcpy(spec->keyspec, val);
+    } else if (!strcmp(key, "xtics")) { 
+	safecpy(spec->xtics, val, 15);
+    } else if (!strcmp(key, "mxtics")) { 
+	safecpy(spec->mxtics, val, 3);
+    } else if (!strcmp(key, "border")) {
+	spec->border = atoi(val);
+    } else if (!strcmp(key, "bmargin")) {
+	spec->bmargin = atoi(val);
+    } else if (!strcmp(key, "boxwidth")) {
+	spec->boxwidth = (float) atof(val);
 	if (strstr(s, "absolute")) {
 	    spec->boxwidth = -spec->boxwidth;
 	}
-    } else if (!strcmp(variable, "samples")) {
-	spec->samples = atoi(value);
+    } else if (!strcmp(key, "samples")) {
+	spec->samples = atoi(val);
     } 
 
     return 0;
@@ -1657,20 +1685,6 @@ static void grab_line_title (char *targ, const char *src)
     sscanf(src + 1, fmt, targ);
 }
 
-static int colon_count (const char *s)
-{
-    int n = 0;
-
-    while (*s) {
-	if (*s == ':' && isdigit(*(s+1))) {
-	    n++;
-	}
-	s++;
-    }
-
-    return n;
-}
-
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
   
@@ -1696,6 +1710,9 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	p += 7;
 	if (strstr(p, "1:3:2:5:4")) {
 	    line->ncols = 5;
+	} else if (strstr(p, "1:2:2:2:2")) {
+	    line->ncols = 2;
+	    line->flags |= GP_LINE_BOXDATA;
 	} else if (strstr(p, "1:2:3:4")) {
 	    line->ncols = 4;
 	} else if (strstr(p, "1:2:3")) {
@@ -1749,6 +1766,13 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 
     if ((p = strstr(s, " lw "))) {
 	sscanf(p + 4, "%d", &line->width);
+    } 
+
+    if ((p = strstr(s, " whiskerbars "))) {
+	double ww;
+
+	sscanf(p + 13, "%lf", &ww);
+	line->whiskwidth = (float) ww;
     } 
 
     if (line->ncols == 0 && line->formula[0] == '\0') {
@@ -2022,7 +2046,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	} else if (!strncmp(gpline, "# boxplots", 10)) {
 	    continue;
 	}
-		
 
 	if (sscanf(gpline, "# X = '%15[^\']' (%d)", vname, &v) == 2) {
 	    if (plot_ols_var_ok(vname, v)) {

@@ -209,7 +209,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 	return err;
     }
 
-    fprintf(fp, "set xrange[0:%d]\n", n + 1);
+    fprintf(fp, "set xrange [0:%d]\n", n + 1);
     fputs("set ytics nomirror\n"
 	  "set noxtics\n"
 	  "set border 2\n"
