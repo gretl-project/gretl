@@ -114,6 +114,270 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
     }
 } 
 
+/* graph color selection apparatus */
+
+#define XPMROWS 19
+#define XPMCOLS 17
+
+#define scale_round(v) ((v) * 255.0 / 65535.0)
+
+GtkWidget *get_image_for_color (const gretlRGB *color)
+{
+    static char **xpm = NULL;
+    GdkPixbuf *icon;
+    GtkWidget *image;
+    char colstr[8] = {0};
+    int i;
+
+    if (color == NULL) {
+	return NULL;
+    }
+
+    if (xpm == NULL) {
+	xpm = strings_array_new_with_length(XPMROWS, XPMCOLS);
+	if (xpm != NULL) {
+	    for (i=0; i<XPMROWS; i++) {
+		if (i == 0) {
+		    strcpy(xpm[i], "16 16 2 1");
+		} else if (i == 1) {
+		    strcpy(xpm[i], "X      c #000000");
+		} else if (i == 2) {
+		    strcpy(xpm[i], ".      c #000000");
+		} else if (i == 3 || i == XPMROWS - 1) {
+		    strcpy(xpm[i], "................");
+		} else {
+		    strcpy(xpm[i], ".XXXXXXXXXXXXXX.");
+		}
+	    }
+	}
+    }
+
+    if (xpm == NULL) {
+	return NULL;
+    }
+
+    print_rgb_hash(colstr, color);
+
+    for (i=0; i<6; i++) {
+	xpm[1][10+i] = colstr[i+1];
+    }    
+
+    icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
+    image = gtk_image_new_from_pixbuf(icon);
+    
+    return image;
+}
+
+static void color_select_callback (GtkWidget *button, GtkWidget *w)
+{
+    GtkWidget *csel;
+    GtkWidget *color_button, *image;
+    GdkColor gcolor;
+    gpointer data;
+    gretlRGB rgb;
+    gint i;
+
+    color_button = g_object_get_data(G_OBJECT(w), "color_button");
+    csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
+
+    gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+
+    rgb.r = (unsigned char) (scale_round(gcolor.red));
+    rgb.g = (unsigned char) (scale_round(gcolor.green));
+    rgb.b = (unsigned char) (scale_round(gcolor.blue));
+
+    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
+    data = g_object_get_data(G_OBJECT(color_button), "plotspec");
+    
+    if (data != NULL) {
+	gretlRGB *prgb = malloc(sizeof *prgb);
+
+	if (prgb != NULL) {
+	    prgb->r = rgb.r;
+	    prgb->g = rgb.g;
+	    prgb->b = rgb.b;
+	    g_object_set_data_full(G_OBJECT(color_button), "rgb",
+				   prgb, free);
+	}
+    } else {
+	set_graph_palette(i, rgb);
+	update_persistent_graph_colors();
+    } 
+
+    /* update the "image" widget */
+    image = g_object_get_data(G_OBJECT(color_button), "image");
+    gtk_widget_destroy(image);
+    image = get_image_for_color(&rgb);
+    gtk_widget_show(image);
+    gtk_container_add(GTK_CONTAINER(color_button), image);
+    g_object_set_data(G_OBJECT(color_button), "image", image);
+  
+    gtk_widget_destroy(w);
+}
+
+static void color_cancel (GtkWidget *button, GtkWidget *w)
+{
+    gtk_widget_destroy(w);
+}
+
+/* reset color patch button after selecting the option to
+   restore the default plot colors */
+
+static void color_patch_button_reset (GtkWidget *button, int cnum)
+{
+    GtkWidget *image;
+
+    image = g_object_get_data(G_OBJECT(button), "image");
+    gtk_widget_destroy(image);
+    image = get_image_for_color(get_graph_color(cnum));
+    gtk_widget_show(image);
+    gtk_container_add(GTK_CONTAINER(button), image);
+    g_object_set_data(G_OBJECT(button), "image", image);
+
+    if (cnum == BOXCOLOR || cnum == BOXCOLOR - 1) {
+	update_persistent_graph_colors();
+    }
+}
+
+static void graph_color_selector (GtkWidget *w, gpointer p)
+{
+    GPT_SPEC *spec;
+    GtkWidget *cdlg;
+    GtkWidget *button;
+    gint i = GPOINTER_TO_INT(p);
+    char colstr[8];
+    GdkColor gcolor;
+
+    spec = g_object_get_data(G_OBJECT(w), "plotspec");
+
+    if (spec != NULL && spec->lines[i].rgb[0] != '\0') {
+	strcpy(colstr, spec->lines[i].rgb);
+    } else {
+	const gretlRGB *rgb = get_graph_color(i);
+
+	if (rgb == NULL) {
+	    fprintf(stderr, "graph_color_selector: got NULL rgb\n");
+	    return;
+	}
+	print_rgb_hash(colstr, rgb);
+    }
+
+    gdk_color_parse(colstr, &gcolor);
+
+    cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
+
+    g_object_set_data(G_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
+    g_object_set_data(G_OBJECT(cdlg), "color_button", w);
+
+    gtk_color_selection_set_current_color(GTK_COLOR_SELECTION
+					  (GTK_COLOR_SELECTION_DIALOG(cdlg)->colorsel),
+					  &gcolor);					  
+
+    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(color_select_callback), cdlg);
+
+    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->cancel_button;
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(color_cancel), cdlg);
+
+    gtk_widget_show(cdlg);
+    gtk_window_set_modal(GTK_WINDOW(cdlg), TRUE);
+}
+
+static GtkWidget *color_patch_button (int i)
+{
+    GtkWidget *image, *button;
+
+    image = get_image_for_color(get_graph_color(i));
+
+    if (image == NULL) {
+	button = gtk_button_new_with_label(_("Select color"));
+    } else {
+	button = gtk_button_new();
+	gtk_container_add(GTK_CONTAINER(button), image);
+	g_object_set_data(G_OBJECT(button), "image", image);
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(graph_color_selector), 
+			 GINT_TO_POINTER(i));
+    }	
+
+    return button;
+}
+
+static int style_from_line_number (GPT_SPEC *spec, int i)
+{
+    int j, lt = spec->lines[i].type;
+
+    if (lt > 0) {
+	j = lt - 1;
+    } else if (lt == LT_NONE) {
+	j = i;
+    } else {
+	j = LT_NONE;
+    }
+
+    return j;
+}
+
+static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
+{
+    GtkWidget *image, *button;
+    int j = style_from_line_number(spec, i);
+
+    if (j == LT_NONE) {
+	return NULL;
+    }
+
+    if (spec->lines[j].rgb[0] != '\0') {
+	gretlRGB color;
+
+	gretl_rgb_get(&color, spec->lines[j].rgb); 
+	image = get_image_for_color(&color);
+	fprintf(stderr, "Got specific color from lines[%d]\n", j);
+    } else {
+	image = get_image_for_color(get_graph_color(j));
+	fprintf(stderr, "Got color from index %d\n", j);
+    }
+
+    if (image == NULL) {
+	/* failsafe -- shouldn't happen */
+	button = gtk_button_new_with_label(_("Select color"));
+    } else {
+	button = gtk_button_new();
+	gtk_container_add(GTK_CONTAINER(button), image);
+	g_object_set_data(G_OBJECT(button), "image", image);
+	g_object_set_data(G_OBJECT(button), "plotspec", spec);
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(graph_color_selector), 
+			 GINT_TO_POINTER(j));
+    }	
+
+    return button;
+}
+
+static void maybe_apply_line_color (GtkWidget *w, GPT_SPEC *spec,
+				    int i)
+{
+    gretlRGB *rgb = NULL;
+    GtkWidget *cb;
+    int j;
+
+    cb = g_object_get_data(G_OBJECT(w), "colorsel");
+
+    if (cb != NULL) {
+	rgb = g_object_get_data(G_OBJECT(cb), "rgb");
+    }
+
+    if (rgb != NULL) {
+	j = style_from_line_number(spec, i);
+	print_rgb_hash(spec->lines[j].rgb, rgb);
+	fprintf(stderr, "Applied color %s to style %d\n", spec->lines[j].rgb, j);
+    }
+}
+
+/* end graph color selection apparatus */
+
 static void flip_manual_range (GtkWidget *widget, gpointer data)
 {
     gint i = GPOINTER_TO_INT(data);
@@ -472,6 +736,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	    if (linewidth[i] != NULL) {
 		line->width = 
 		    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(linewidth[i]));
+		maybe_apply_line_color(linewidth[i], spec, i);
 	    }
 	}
     }
@@ -772,12 +1037,8 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     button = color_patch_button(i);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_widget_show_all(button);
-
     gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, cmin, cmax, 
 			      row - 1, row);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(graph_color_selector), 
-		     GINT_TO_POINTER(i));
     gtk_widget_show(hbox);
 
     sprintf(str, "color-button%d", i);
@@ -1336,6 +1597,8 @@ static void print_field_label (GtkWidget *tbl, int row,
     gtk_widget_show(label);
 }
 
+
+
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 {
     GtkWidget *label, *tbl;
@@ -1564,6 +1827,19 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_widget_show(linewidth[i]);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
 				  tbl_len-1, tbl_len);
+	/* line color adjustment */
+	if (i < 6) {
+	    button = line_color_button(spec, i);
+	    if (button != NULL) {
+		label = gtk_label_new(_("color"));
+		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+		gtk_widget_show(label);
+		gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+		g_object_set_data(G_OBJECT(linewidth[i]), "colorsel",
+				  button);
+		gtk_widget_show_all(button);
+	    }
+	}
 	gtk_widget_show(hbox);
 
 	/* separator */

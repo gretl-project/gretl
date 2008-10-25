@@ -25,11 +25,14 @@
 #define GP_MAXSCALE     8
 
 #define GP_BORDER_DEFAULT (-1)
+#define LT_NONE (-2)
 
 typedef enum {
     GP_LINE_USER    = 1 << 0,
     GP_LINE_BOXDATA = 1 << 1
 } gp_line_flags;
+
+/* information about a line within a gnuplot graph */
 
 typedef struct {
     int varnum;                    /* ID number of variable to plot */
@@ -37,8 +40,9 @@ typedef struct {
     char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
     char style[GP_MAXSTYLE];       /* lines, points, etc. */
     char scale[GP_MAXSCALE];       /* string representation of scale factor */
+    char rgb[8];                   /* rgb color specification */
     char yaxis;                    /* 1 for left, 2 for right */
-    int type;                      /* 1, 2, ... (color) */
+    int type;                      /* 1, 2, ... (style) */
     int ptype;                     /* point type */
     int width;                     /* default 1, could be bigger */
     char ncols;                    /* number of data columns (0 for formula) */
@@ -59,6 +63,8 @@ typedef struct {
     double pos[2];
     int just;
 } GPT_LABEL;
+
+/* "global" information concerning a gnuplot graph specification */
 
 typedef struct {
     FILE *fp;

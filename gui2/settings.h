@@ -25,6 +25,8 @@ void font_selector (GtkAction *action);
 
 void set_fixed_font (void);
 
+void update_persistent_graph_colors (void);
+
 #ifndef USE_GNOME
 
 void set_app_font (const char *fontname);
@@ -32,12 +34,6 @@ void set_app_font (const char *fontname);
 const char *get_app_fontname (void);
 
 #endif
-
-void graph_color_selector (GtkWidget *w, gpointer p);
-
-GtkWidget *color_patch_button (int cnum);
-
-void color_patch_button_reset (GtkWidget *button, int cnum);
 
 void get_default_dir (char *s, int action);
 

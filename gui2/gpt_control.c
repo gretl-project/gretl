@@ -159,6 +159,15 @@ struct png_bounds_t {
     double ymax;
 };
 
+typedef struct linestyle_ linestyle;
+
+struct linestyle_ {
+    char rgb[8];
+    int type;
+};
+
+#define MAX_STYLES 6
+
 static int get_png_bounds_info (png_bounds *bounds);
 
 #define PLOTSPEC_DETAILS_IN_MEMORY(s)  (s->data != NULL)
@@ -1428,7 +1437,8 @@ static int catch_value (char *targ, const char *src, int maxlen)
     return (*targ != '\0');
 }
 
-static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
+static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno,
+			      linestyle *styles)
 {
     char key[16] = {0};
     char val[MAXLEN] = {0};
@@ -1440,8 +1450,16 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	return 0;
     }
 
-    if (!strncmp(s, "style line", 10)) {
-	/* not handled at present */
+    if (!strncmp(s, "set style line", 14)) {
+	/* e.g. set style line 1 lc rgb "#ff0000 lt 6" */
+	int n, idx = 0, lt = LT_NONE;
+	char rgb[8];
+
+	n = sscanf(s + 14, " %d lc rgb \"%7s\" lt %d", &idx, rgb, &lt);
+	if (n >= 2 && idx > 0 && idx <= MAX_STYLES) {
+	    strcpy(styles[idx-1].rgb, rgb);
+	    styles[idx-1].type = (n == 3)? lt : LT_NONE;
+	}	    
 	return 0;
     }
 
@@ -1957,6 +1975,12 @@ static FitType recognize_fit_string (const char *s)
     }
 }
 
+static void linestyle_init (linestyle *ls)
+{
+    ls->rgb[0] = '\0';
+    ls->type = LT_NONE;
+}
+
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && c != PLOT_PROB_DIST)
 
 /* Read plotspec struct from gnuplot command file.  This is _not_ a
@@ -1966,6 +1990,7 @@ static FitType recognize_fit_string (const char *s)
 
 static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 {
+    linestyle styles[MAX_STYLES];
     int i, done, labelno;
     int do_markers = 0;
     int datacols = 0;
@@ -2018,6 +2043,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	}
 	fclose(fp);
 	return 0;
+    }
+
+    for (i=0; i<MAX_STYLES; i++) {
+	linestyle_init(&styles[i]);
     }
 
     rewind(fp);
@@ -2103,7 +2132,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    break;
 	}
 
-	if (parse_gp_set_line(spec, gpline, &labelno)) {
+	if (parse_gp_set_line(spec, gpline, &labelno, styles)) {
 	    err = 1;
 	    goto plot_bailout;
 	}
@@ -2160,10 +2189,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	goto plot_bailout;
     }
 
-    /* determine total number of required data columns */
+    /* determine total number of required data columns, etc. */
     for (i=0; i<spec->n_lines; i++) {
 	if (uservec != NULL && in_gretl_list(uservec, i)) {
 	    spec->lines[i].flags |= GP_LINE_USER;
+	}
+	if (i < MAX_STYLES) {
+	    strcpy(spec->lines[i].rgb, styles[i].rgb);
+	    if (styles[i].type != LT_NONE) {
+		spec->lines[i].type = styles[i].type;
+	    }
+	    fprintf(stderr, "line %d: rgb %s, type %d\n",
+		    i, spec->lines[i].rgb, spec->lines[i].type);
 	}
 	if (spec->lines[i].ncols == 0) {
 	    continue;

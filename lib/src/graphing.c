@@ -680,6 +680,21 @@ void print_rgb_hash (char *s, const gretlRGB *color)
     sprintf(s, "#%02x%02x%02x", color->r, color->g, color->b);
 }
 
+void gretl_rgb_get (gretlRGB *color, const char *s)
+{
+    int n, r, g, b;
+
+    n = sscanf(s, "#%2x%2x%2x", &r, &g, &b);
+
+    if (n == 3) {
+	color->r = r;
+	color->g = g;
+	color->b = b;
+    } else {
+	color->r = color->g = color->b = 0;
+    }
+}
+
 void print_palette_string (char *s)
 {
     char colstr[8];

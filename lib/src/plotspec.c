@@ -157,8 +157,9 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].formula[0] = 0;
     lines[n].style[0] = 0;
     lines[n].scale[0] = 0;
+    lines[n].rgb[0] = 0;
     lines[n].yaxis = 1;
-    lines[n].type = 0;
+    lines[n].type = LT_NONE;
     lines[n].ptype = 0;
     lines[n].width = 1;
     lines[n].ncols = 0;
@@ -183,6 +184,7 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
 	strcpy(lines[j].formula, lines[j+1].formula);
 	strcpy(lines[j].style, lines[j+1].style);
 	strcpy(lines[j].scale, lines[j+1].scale);
+	strcpy(lines[j].rgb, lines[j+1].rgb);
 	lines[j].yaxis = lines[j+1].yaxis;
 	lines[j].type  = lines[j+1].type;
 	lines[j].ptype  = lines[j+1].ptype;
@@ -452,6 +454,58 @@ static int more_lines (const GPT_SPEC *spec, int i, int skipline)
     }
 }
 
+static void print_linestyle (const GPT_SPEC *spec, int i, FILE *fp)
+{
+    GPT_LINE *line;
+    int done = 0;
+
+    fprintf(fp, "set style line %d ", i+1);
+
+    if (i < spec->n_lines) {
+	line = &spec->lines[i];
+	if (*line->rgb != '\0' && line->type != LT_NONE) {
+	    fprintf(fp, "lc rgb \"%s\" lt %d\n", line->rgb, line->type);
+	    done = 1;
+	} else if (*line->rgb != '\0') {
+	    fprintf(fp, "lc rgb \"%s\"\n", line->rgb);
+	    done = 1;
+	}
+    }
+
+    if (!done) {
+	const gretlRGB *color = get_graph_color(i);
+	char cstr[8];
+
+	print_rgb_hash(cstr, color);
+	fprintf(fp, "lc rgb \"%s\"\n", cstr);
+    }
+}
+
+static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
+{
+    char cstr[8];
+    int i;
+    
+    if (frequency_plot_code(spec->code)) {
+	const gretlRGB *color = get_graph_color(BOXCOLOR);
+
+	print_rgb_hash(cstr, color);
+	fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
+	fputs("set style line 2 lc rgb \"#000000\"\n", fp);
+    } else if (spec->code == PLOT_RQ_TAU) {
+	fputs("set style line 1 lc rgb \"#000000\"\n", fp);
+	for (i=1; i<BOXCOLOR; i++) {
+	    print_linestyle(spec, i, fp);
+	}
+    } else {
+	for (i=0; i<BOXCOLOR; i++) {
+	    print_linestyle(spec, i, fp);
+	}
+    }
+
+    fputs("set style increment user\n", fp);
+}
+
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
                      s->fit == PLOT_FIT_QUADRATIC || \
                      s->fit == PLOT_FIT_INVERSE || \
@@ -479,7 +533,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     if (!mono && gnuplot_has_rgb()) {
-	write_plot_line_styles(spec->code, fp);
+	write_styles_from_plotspec(spec, fp);
     }
 
     if (!string_is_blank(spec->titles[0])) {
@@ -637,10 +691,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    if (!strcmp(line->scale, "1.0")) {
 		fputs("'-' using 1", fp);
 		if (line->ncols == 5) {
-		    /* Note: candlesticks, hard-wired! */
+		    /* Note: boxplot candlesticks, hard-wired! */
 		    fputs(":3:2:5:4", fp);
 		} else if (line->ncols == 2) {
 		    if (line->flags & GP_LINE_BOXDATA) {
+			/* boxplot median, hard-wired */
 			fputs(":2:2:2:2", fp);
 		    } else {
 			fputs(":($2)", fp);
@@ -660,21 +715,24 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "axes x1y%d ", line->yaxis);
 	}
 
-	fprintf(fp, "title \"%s", line->title);
-
-	if (any_y2) {
-	    if (line->yaxis == 1) {
-		fprintf(fp, " (%s)\" ", G_("left"));
-	    } else {
-		fprintf(fp, " (%s)\" ", G_("right"));
-	    }
+	if (*line->title == '\0') {
+	    fputs("notitle ", fp);
 	} else {
-	    fputs("\" ", fp);
+	    fprintf(fp, "title \"%s", line->title);
+	    if (any_y2) {
+		if (line->yaxis == 1) {
+		    fprintf(fp, " (%s)\" ", G_("left"));
+		} else {
+		    fprintf(fp, " (%s)\" ", G_("right"));
+		}
+	    } else {
+		fputs("\" ", fp);
+	    }
 	}
 
 	fprintf(fp, "w %s", line->style);
 
-	if (line->type != 0) {
+	if (line->type != LT_NONE) {
 	    fprintf(fp, " lt %d", line->type);
 	}
 

@@ -252,6 +252,8 @@ void graph_palette_reset (int i);
 
 void print_rgb_hash (char *s, const gretlRGB *color);
 
+void gretl_rgb_get (gretlRGB *color, const char *s);
+
 void print_palette_string (char *s);
 
 const gretlRGB *get_graph_color (int i);
