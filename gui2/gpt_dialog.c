@@ -1465,6 +1465,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    goto line_width_adj;
 	}
 
+	if (!strcmp(line->style, "candlesticks")) {
+	    goto line_width_adj;
+	}
+
 	/* line type or style (lines, points, etc.) */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);

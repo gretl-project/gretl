@@ -224,10 +224,10 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 
     fputs("plot \\\n", fp);
     /* the quartiles and limits */
-    fputs("'-' using 1:3:2:5:4 with candlesticks lt 2 lw 2 "
+    fputs("'-' using 1:3:2:5:4 w candlesticks lt 2 lw 2 "
 	  "notitle whiskerbars 0.5, \\\n", fp);
     /* the median */
-    fputs("'-' using 1:2:2:2:2 with candlesticks lt -1 notitle", fp);
+    fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
 
     if (grp->show_mean || grp->do_notches) {
 	/* continue plot array */
@@ -238,11 +238,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 
     if (grp->show_mean) {
 	/* plot the mean as point */
-	fputs("'-' using 1:2 with points pt 1 notitle\n", fp);
+	fputs("'-' using 1:2 w points pt 1 notitle\n", fp);
     } else if (grp->do_notches) {
 	/* upper and lower bounds of median interval */
-	fputs("'-' using 1:2:2:2:2 with candlesticks lt 0 notitle, \\\n", fp);
-	fputs("'-' using 1:2:2:2:2 with candlesticks lt 0 notitle\n", fp);
+	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle, \\\n", fp);
+	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle\n", fp);
     }
 
     /* data for quartiles and limits */

@@ -36,6 +36,7 @@ typedef struct {
     char scale[GP_MAXSCALE];       /* string representation of scale factor */
     char yaxis;                    /* 1 for left, 2 for right */
     int type;                      /* 1, 2, ... (color) */
+    int ptype;                     /* point type */
     int width;                     /* default 1, could be bigger */
     char ncols;                    /* number of data columns (0 for formula) */
     char flags;                    /* additional options */

@@ -157,6 +157,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].scale[0] = 0;
     lines[n].yaxis = 1;
     lines[n].type = 0;
+    lines[n].ptype = 0;
     lines[n].width = 1;
     lines[n].ncols = 0;
     lines[n].flags = 0;
@@ -647,6 +648,10 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
 	if (line->type != 0) {
 	    fprintf(fp, " lt %d", line->type);
+	}
+
+	if (line->ptype != 0) {
+	    fprintf(fp, " pt %d", line->ptype);
 	}
 
 	if (line->width != 1) {

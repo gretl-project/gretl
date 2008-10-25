@@ -538,7 +538,7 @@ static void maybe_recolor_line (char *s, int lnum)
 	print_rgb_hash(cstr, color);
 
 #if GPDEBUG
-	fprintf(stderr, "lnum=%d, cstr='%s', rgb=%d\n", lnum, cstr, rgb);
+	fprintf(stderr, "lnum=%d, cstr='%s'\n", lnum, cstr);
 	fprintf(stderr, "s='%s'\n", s);
 #endif
     
@@ -1498,6 +1498,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
     } else if (!strcmp(variable, "mxtics")) { 
 	safecpy(spec->mxtics, value, 3);
     } else if (!strcmp(variable, "boxwidth")) {
+	/* FIXME qualifier */
 	spec->boxwidth = (float) atof(value);
     } else if (!strcmp(variable, "samples")) {
 	spec->samples = atoi(value);
@@ -1654,6 +1655,20 @@ static void grab_line_title (char *targ, const char *src)
     sscanf(src + 1, fmt, targ);
 }
 
+static int colon_count (const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (*s == ':' && isdigit(*(s+1))) {
+	    n++;
+	}
+	s++;
+    }
+
+    return n;
+}
+
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
   
@@ -1671,13 +1686,18 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	return err;
     }
 
+    fprintf(stderr, "here, 1\n");
+
     i = spec->n_lines - 1;
     line = &spec->lines[i];
 
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
 	p += 7;
-	if (strstr(p, "1:2:3:4")) {
+	if (colon_count(p) > 3) {
+	    /* candlesticks? ignore the data (FIXME) */
+	    line->ncols = 5;
+	} else if (strstr(p, "1:2:3:4")) {
 	    line->ncols = 4;
 	} else if (strstr(p, "1:2:3")) {
 	    line->ncols = 3;
@@ -1692,7 +1712,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	}
     } else {
 	/* absence of "using" means the line plots a formula, not a
-	   set of data columns */
+	   set of data columns 
+	*/
 	strcpy(line->scale, "NA");
 	/* get the formula: it runs up to "title" or "notitle" */
 	p = strstr(s, " title");
@@ -1706,6 +1727,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	    }
 	}
     }
+
+    fprintf(stderr, "here, 2\n");
 
     if (strstr(s, "axes x1y2")) {
 	line->yaxis = 2;
@@ -1721,7 +1744,11 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 
     if ((p = strstr(s, " lt "))) {
 	sscanf(p + 4, "%d", &line->type);
-    } 
+    }
+
+    if ((p = strstr(s, " pt "))) {
+	sscanf(p + 4, "%d", &line->ptype);
+    }
 
     if ((p = strstr(s, " lw "))) {
 	sscanf(p + 4, "%d", &line->width);
@@ -1731,6 +1758,10 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	/* got neither data column spec nor formula */
 	err = 1;
     }
+
+#if GPDEBUG
+    fprintf(stderr, "parse_gp_line_line, returning %d\n", err);
+#endif
 
     return err;
 }
@@ -1991,7 +2022,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    }
 	    spec->flags |= GPT_TS;
 	    continue;
-	}	    
+	} else if (!strncmp(gpline, "# boxplots", 10)) {
+	    continue;
+	}
+		
 
 	if (sscanf(gpline, "# X = '%15[^\']' (%d)", vname, &v) == 2) {
 	    if (plot_ols_var_ok(vname, v)) {
@@ -2089,6 +2123,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	       the plot command */
 	    done = 1;
 	} 
+
+#if GPDEBUG
+	fprintf(stderr, "calling parse_gp_line_line\n");
+#endif
 
 	err = parse_gp_line_line(gpline, spec);
 
