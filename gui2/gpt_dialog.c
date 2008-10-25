@@ -334,10 +334,8 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 
 	gretl_rgb_get(&color, spec->lines[j].rgb); 
 	image = get_image_for_color(&color);
-	fprintf(stderr, "Got specific color from lines[%d]\n", j);
     } else {
 	image = get_image_for_color(get_graph_color(j));
-	fprintf(stderr, "Got color from index %d\n", j);
     }
 
     if (image == NULL) {
@@ -372,7 +370,6 @@ static void maybe_apply_line_color (GtkWidget *w, GPT_SPEC *spec,
     if (rgb != NULL) {
 	j = style_from_line_number(spec, i);
 	print_rgb_hash(spec->lines[j].rgb, rgb);
-	fprintf(stderr, "Applied color %s to style %d\n", spec->lines[j].rgb, j);
     }
 }
 
@@ -995,8 +992,8 @@ static void table_add_row (GtkWidget *tbl, int *rows, int cols)
     gtk_table_resize(GTK_TABLE(tbl), *rows, cols);    
 }
 
-static void add_color_selector (int i, GtkWidget *tbl, int *rows,
-				GtkWidget *notebook)
+static void add_color_selector (int i, GtkWidget *tbl, int cols,
+				int *rows, GtkWidget *notebook)
 {
     static int r0;
     int collen = (N_GP_COLORS - 1) / 2;
@@ -1011,7 +1008,7 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     }
 
     if (i < collen || i == BOXCOLOR) {
-	table_add_row(tbl, rows, TAB_MAIN_COLS);
+	table_add_row(tbl, rows, cols);
 	cmin = 0;
 	cmax = 1;
 	row = *rows;
@@ -1329,7 +1326,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	ttfspin = NULL;
     }
 
-    if (gnuplot_png_terminal() != GP_PNG_OLD) {
+    if (gnuplot_png_terminal() != GP_PNG_OLD && 
+	frequency_plot_code(spec->code)) {
 	GtkWidget *hsep = gtk_hseparator_new();
 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
@@ -1337,13 +1335,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 				  rows - 1, rows);  
 	gtk_widget_show(hsep);
 
-	if (frequency_plot_code(spec->code)) {
-	    add_color_selector(BOXCOLOR, tbl, &rows, notebook);
-	} else {
-	    for (i=0; i<BOXCOLOR; i++) {
-		add_color_selector(i, tbl, &rows, notebook);
-	    }
-	}
+	add_color_selector(BOXCOLOR, tbl, TAB_MAIN_COLS, &rows, 
+			   notebook);
     }
 }
 
@@ -1572,12 +1565,28 @@ static void line_remove_button (GtkWidget *tbl, int row,
     gtk_widget_show(button);
 }
 
-static void print_line_label (GtkWidget *tbl, int row, int i)
+static void print_line_label (GtkWidget *tbl, int row, GPT_SPEC *spec, 
+			      int i)
 {
     char label_text[32];
     GtkWidget *label; 
 
-    sprintf(label_text, _("line %d: "), i);
+    if (spec->code == PLOT_BOXPLOTS) {
+	if (i == 0) {
+	    sprintf(label_text, "%s: ", _("quartiles"));
+	} else if (i == 1) {
+	    sprintf(label_text, "%s: ", _("median"));
+	} else if (i == 2 && spec->n_lines == 3) {
+	    sprintf(label_text, "%s: ", _("mean"));
+	} else if (i == 2) {
+	    sprintf(label_text, "%s: ", _("lower bound"));
+	} else if (i == 3) {
+	    sprintf(label_text, "%s: ", _("upper bound"));
+	}
+    } else {
+	sprintf(label_text, _("line %d: "), i+1);
+    }
+
     label = gtk_label_new(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1596,8 +1605,6 @@ static void print_field_label (GtkWidget *tbl, int row,
 			      label, 1, 2, row - 1, row);
     gtk_widget_show(label);
 }
-
-
 
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 {
@@ -1675,7 +1682,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 
-	    print_line_label(tbl, tbl_len, i + 1);
+	    print_line_label(tbl, tbl_len, spec, i);
 	    label_done = 1;
 
 	    print_field_label(tbl, tbl_len, _("formula"));
@@ -1704,7 +1711,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 
 	if (!label_done) {
-	    print_line_label(tbl, tbl_len, i + 1);
+	    print_line_label(tbl, tbl_len, spec, i);
 	}
 
 	if (line->flags & GP_LINE_USER) {
@@ -2030,7 +2037,9 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	}
     } 
 
-    if (spec->code != PLOT_REGULAR) return;
+    if (spec->code != PLOT_REGULAR) {
+	return;
+    }
 
     axis_range[axis].ID = axis;
 
@@ -2165,6 +2174,26 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	g_signal_connect(G_OBJECT(b2), "clicked", G_CALLBACK(enable_lbase), 
 			 entry);
     }
+}
+
+static void gpt_tab_palette (GtkWidget *notebook) 
+{
+    GtkWidget *vbox, *label, *tbl;
+    int i, rows = 1;
+
+    vbox = gp_page_vbox(notebook, _("Palette"));
+    tbl = gp_dialog_table(1, 2, vbox);
+
+    label = gtk_label_new("These colors will be used unless overridden\n"
+			  "by graph-specific choices\n");
+    gtk_table_attach(GTK_TABLE(tbl), label, 0, 2, 0, 1, 0, 0, 0, 0);
+    gtk_widget_show(label);
+
+    for (i=0; i<BOXCOLOR; i++) {
+	add_color_selector(i, tbl, 2, &rows, notebook);
+    }
+
+    gtk_widget_show(tbl);
 }
 
 void close_gnuplot_dialog (GtkWidget *w, gpointer p)
@@ -2316,6 +2345,10 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     }
 
     gpt_tab_labels(notebook, spec); 
+
+    if (!frequency_plot_code(spec->code)) {
+	gpt_tab_palette(notebook);
+    }
 
     hbox = GTK_DIALOG(gpt_control)->action_area;
 

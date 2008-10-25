@@ -2196,11 +2196,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	}
 	if (i < MAX_STYLES) {
 	    strcpy(spec->lines[i].rgb, styles[i].rgb);
-	    if (styles[i].type != LT_NONE) {
-		spec->lines[i].type = styles[i].type;
-	    }
-	    fprintf(stderr, "line %d: rgb %s, type %d\n",
-		    i, spec->lines[i].rgb, spec->lines[i].type);
 	}
 	if (spec->lines[i].ncols == 0) {
 	    continue;
