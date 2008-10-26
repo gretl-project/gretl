@@ -105,10 +105,6 @@
 	sin(x)
 	exp(sqrt(pi*x))
       </code>
-      <para>
-	In the <quote>legend</quote> box you may enter a title for the
-	line, which will appear in the key or legend.  This is optional.
-      </para>
     </description>
   </command>
 

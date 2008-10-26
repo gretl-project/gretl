@@ -1348,8 +1348,6 @@ static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)
 struct new_line_info_ {
     GtkWidget *dlg;
     GtkWidget *formula_entry;
-    GtkWidget *title_entry;
-    GtkWidget *width_spin;
     GPT_SPEC *spec;
 };
 
@@ -1399,41 +1397,6 @@ static void gpt_tab_new_line (new_line_info *nlinfo)
 			      nlinfo->formula_entry, 2, 3, tbl_len-1, tbl_len);
     gtk_entry_set_activates_default(GTK_ENTRY(nlinfo->formula_entry), TRUE);
     gtk_widget_show(nlinfo->formula_entry);
-
-    /* key or legend text */
-    tbl_len++;
-    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-
-    label = gtk_label_new(_("legend"));
-    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      label, 1, 2, tbl_len-1, tbl_len);
-    gtk_widget_show(label);
-
-    nlinfo->title_entry = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(nlinfo->title_entry), "");
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      nlinfo->title_entry, 2, 3, tbl_len-1, tbl_len);
-    gtk_entry_set_activates_default(GTK_ENTRY(nlinfo->title_entry), TRUE);
-    gtk_widget_show(nlinfo->title_entry);
-
-    /* line-width adjustment */
-    tbl_len++;
-    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-    label = gtk_label_new(_("line width"));
-    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      label, 1, 2, tbl_len-1, tbl_len);
-    gtk_widget_show(label);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    nlinfo->width_spin = gtk_spin_button_new_with_range(1, 6, 1);
-    gtk_entry_set_activates_default(GTK_ENTRY(nlinfo->width_spin), TRUE);
-    gtk_box_pack_start(GTK_BOX(hbox), nlinfo->width_spin, FALSE, FALSE, 0);
-    gtk_widget_show(nlinfo->width_spin);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
-			      tbl_len-1, tbl_len);
-    gtk_widget_show(hbox);
 }
 
 static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
@@ -1461,14 +1424,11 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     line = &spec->lines[spec->n_lines - 1];
 
     entry_to_gp_string(nlinfo->formula_entry, line->formula, GP_MAXFORMULA);
-    entry_to_gp_string(nlinfo->title_entry, line->title, MAXTITLE);
 
     strcpy(line->style, "lines");
     line->type = spec->n_lines; /* assign next line style */
     strcpy(line->scale, "NA");  /* mark as a non-data line */
     line->flags = GP_LINE_USER;
-
-    line->width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(nlinfo->width_spin));  
 
     notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
     pgnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(notebook), "lines_page"));
@@ -1835,7 +1795,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
 				  tbl_len-1, tbl_len);
 	/* line color adjustment */
-	if (i < 6) {
+	if (i < 6 && !frequency_plot_code(spec->code)) {
 	    button = line_color_button(spec, i);
 	    if (button != NULL) {
 		label = gtk_label_new(_("color"));
@@ -2344,7 +2304,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_tab_lines(notebook, spec, 0);
     }
 
-    gpt_tab_labels(notebook, spec); 
+    gpt_tab_labels(notebook, spec);
 
     if (!frequency_plot_code(spec->code)) {
 	gpt_tab_palette(notebook);
