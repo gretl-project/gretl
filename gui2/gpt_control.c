@@ -2057,6 +2057,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	char vname[VNAMELEN];
 	int v;
 
+#if GPDEBUG
+	fprintf(stderr, "gpline: '%s'\n", gpline);
+#endif
+
 	if (!strncmp(gpline, "# timeseries", 12)) {
 	    if (sscanf(gpline, "# timeseries %d", &spec->pd)) {
 		*plot_pd = spec->pd;

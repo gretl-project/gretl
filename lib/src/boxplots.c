@@ -72,6 +72,126 @@ static void quartiles (double *x, const int n, BOXPLOT *box)
     box->uq = p[2];
 }
 
+#if 0
+
+static void real_six_numbers (BOXPLOT *plt, int offset, int do_mean,
+			      FILE *fp)
+{
+    if (plt->bool != NULL) {
+	fprintf(fp, "# %s\n %-*s", plt->varname, offset - 1, plt->bool);
+    } else {
+	fprintf(fp, "# %-*s", offset, plt->varname);
+    }
+
+    if (do_mean) {
+	fprintf(fp, "%9.5g", plt->mean);
+    }
+
+    fprintf(fp, "%9.5g%9.5g%9.5g%9.5g%9.5g", plt->min, 
+	    plt->lq, plt->median, plt->uq, plt->max);
+
+    if (plt->n > 0) {
+	fprintf(fp, "  (n=%d)\n", plt->n);
+    } else {
+	fputc('\n', fp);
+    }
+}
+
+static void 
+five_numbers_with_interval (BOXPLOT *plt, int offset, FILE *fp)
+{
+    char tmp[32];
+
+    sprintf(tmp, "%.5g - %.5g", plt->conf[0], plt->conf[1]);
+
+    if (plt->bool != NULL) {
+	fprintf(fp, "# %s\n %-*s", plt->varname, offset - 1, plt->bool);
+    } else {
+	fprintf(fp, "# %-*s", offset, plt->varname);
+    }
+	    
+    fprintf(fp, "%8.5g%10.5g%10.5g%17s%10.5g%10.5g\n",
+	    plt->min, plt->lq, plt->median,
+	    tmp, plt->uq, plt->max);
+}
+
+static int has_mean (PLOTGROUP *grp)
+{
+    int i;
+
+    for (i=0; i<grp->nplots; i++) {
+	if (na(grp->plots[i].mean)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static int get_format_offset (PLOTGROUP *grp)
+{
+    int L = 6;
+    int i, n;
+
+    for (i=0; i<grp->nplots; i++) {
+	if (grp->plots[i].bool != NULL) {
+	    n = strlen(grp->plots[i].bool);
+	} else {
+	    n = strlen(grp->plots[i].varname);
+	}
+	if (n > L) {
+	    L = n;
+	}	    
+    }
+
+    return L + 2;
+}
+
+static int six_numbers (PLOTGROUP *grp, FILE *fp) 
+{
+    int offset;
+    int i;
+
+    offset = get_format_offset(grp);
+
+    if (na(grp->plots[0].conf[0])) { 
+	/* no confidence intervals */
+	int do_mean = has_mean(grp);
+
+	fprintf(fp, "# %s\n# \n", _("Numerical summary"));
+
+	if (do_mean) {
+	    fprintf(fp, "# %*s%9s%9s%9s%9s%9s\n", offset + 9, _("mean"),
+		    "min", "Q1", _("median"), "Q3", "max");
+	} else {
+	    fprintf(fp, "# %*s%10s%10s%10s%10s\n", offset + 10,
+		    "min", "Q1", _("median"), "Q3", "max");
+	}	    
+
+	for (i=0; i<grp->nplots; i++) {
+	    real_six_numbers(&grp->plots[i], offset, do_mean, fp);
+	}
+    } else { 
+	/* with confidence intervals */
+	fprintf(fp, "# %s\n\n", _("Numerical summary with bootstrapped confidence "
+				"interval for median"));	 
+
+	fprintf(fp, "# %*s%10s%10s%17s%10s%10s\n",
+		offset + 8, "min", "Q1", _("median"), 
+		/* xgettext:no-c-format */
+		_("(90% interval)"), 
+		"Q3", "max");
+
+	for (i=0; i<grp->nplots; i++) {
+	    five_numbers_with_interval(&grp->plots[i], offset, fp);
+	}
+    }
+
+    return 0;
+}
+
+#endif
+
 #define ITERS 560
 #define CONFIDENCE 0.90
 
@@ -194,6 +314,33 @@ static PLOTGROUP *plotgroup_new (int nplots)
     return grp;
 }
 
+static int test_for_bool (PLOTGROUP *grp)
+{
+    int i;
+
+    for (i=0; i<grp->nplots; i++) {
+	if (grp->plots[i].bool != NULL) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static void get_box_y_range (PLOTGROUP *grp, double gyrange,
+			     double *ymin, double *ymax)
+{
+    if (grp->gmin >= 0 && grp->gmin < 0.05 &&
+	grp->gmax <= 1 && grp->gmax > 0.95) {
+	/* proportions? */
+	*ymin = 0.0;
+	*ymax = 1.0;
+    } else {
+	*ymin = grp->gmin - 0.04 * gyrange;
+	*ymax = grp->gmax + 0.04 * gyrange;
+    }
+}
+
 /* FIXME outliers */
 
 static int write_gnuplot_boxplot (PLOTGROUP *grp)
@@ -201,7 +348,9 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
     FILE *fp = NULL;
     BOXPLOT *bp;
     int n = grp->nplots;
-    double loff;
+    double lpos, h, gyrange;
+    double ymin, ymax;
+    int anybool = test_for_bool(grp);
     int i, err = 0;
 
     err = gnuplot_init(PLOT_BOXPLOTS, &fp);
@@ -209,23 +358,31 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp)
 	return err;
     }
 
-    fprintf(fp, "set xrange [0:%d]\n", n + 1);
-    fputs("set ytics nomirror\n"
-	  "set noxtics\n"
-	  "set border 2\n"
-	  "set bmargin 3\n", fp);
+    gyrange = grp->gmax - grp->gmin;
+    h = gyrange / 20;
+    lpos = grp->gmin - h;
+    get_box_y_range(grp, gyrange, &ymin, &ymax);
 
-    loff = grp->gmin - (grp->gmax - grp->gmin) / 20;
+#if 0
+    six_numbers(grp, fp);
+#endif
 
     gretl_push_c_numeric_locale();
 
+    fprintf(fp, "set xrange [0:%d]\n", n + 1);
+    fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
+    fputs("set ytics nomirror\n"
+	  "set noxtics\n"
+	  "set border 2\n", fp);
+    fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3); 
+
     for (i=0; i<n; i++) {
 	fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-		grp->plots[i].varname, i+1, loff);
+		grp->plots[i].varname, i+1, lpos);
 	if (grp->plots[i].bool != NULL) {
 	    /* FIXME positioning? */
 	    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-		    grp->plots[i].bool, i+1, loff * 2);
+		    grp->plots[i].bool, i+1, lpos - .8 * h);
 	}
     }
 
