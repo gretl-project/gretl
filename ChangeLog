@@ -18,6 +18,7 @@ version 1.7.10, in progress
   formula (starting with "=") in scalar-editing window
 - Fix encoding issue when copying to clipboard as plain
   text or RTF
+- Boxplots: hand the production of these over to gnuplot
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
