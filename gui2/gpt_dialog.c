@@ -28,6 +28,7 @@
 #include "calculator.h"
 
 #include "../pixmaps/mouse.xpm"
+#include "points_xpm.h"
 
 struct gpt_titles_t {
     char *description; /* How the field will show up in the options dialog */
@@ -121,7 +122,7 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
 
 #define scale_round(v) ((v) * 255.0 / 65535.0)
 
-GtkWidget *get_image_for_color (const gretlRGB *color)
+static GtkWidget *get_image_for_color (const gretlRGB *color)
 {
     static char **xpm = NULL;
     GdkPixbuf *icon;
@@ -1566,6 +1567,49 @@ static void print_field_label (GtkWidget *tbl, int row,
     gtk_widget_show(label);
 }
 
+static GtkWidget *point_types_combo (void)
+{
+    GtkWidget *ptsel;
+    GtkCellRenderer *cell;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    GdkPixbuf *pbuf;
+    int i;
+
+    store = gtk_list_store_new(1, GDK_TYPE_PIXBUF);
+
+    for (i=0; i<7; i++) {
+	gtk_list_store_append(store, &iter);
+	pbuf = gdk_pixbuf_new_from_xpm_data(points_xpms[i]);
+	gtk_list_store_set(store, &iter, 0, pbuf, -1);
+	g_object_unref(pbuf);
+    }
+
+    ptsel = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
+    cell = gtk_cell_renderer_pixbuf_new();
+    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(ptsel), cell, FALSE);
+    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(ptsel), cell,
+				   "pixbuf", 0, NULL);
+    
+    return ptsel;
+}
+
+static int gpt_style_as_int (const char *sty, GList *list)
+{
+    GList *mylist = list;
+    int i = 0;
+
+    while (mylist != NULL) {
+	if (!strcmp(sty, (const char *) mylist->data)) {
+	    return i;
+	}
+	i++;
+	mylist = mylist->next;
+    }
+
+    return 0;
+}
+
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 {
     GtkWidget *label, *tbl;
@@ -1701,7 +1745,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    goto line_width_adj;
 	}
 
-	/* line type or style (lines, points, etc.) */
+	/* line type (lines, points, etc.) */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	label = gtk_label_new(_("type"));
@@ -1710,14 +1754,13 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
 
-	stylecombo[i] = gtk_combo_box_entry_new_text();
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  stylecombo[i], 2, 3, tbl_len-1, tbl_len);
+	hbox = gtk_hbox_new(FALSE, 5);
+	stylecombo[i] = gtk_combo_box_new_text();
+	gtk_box_pack_start(GTK_BOX(hbox), stylecombo[i], FALSE, FALSE, 0);
 
 	/* the errorbars and filledcurves styles are not exchangeable
 	   with the others */
-	if (!strcmp(line->style, "errorbars") &&
-	    !gnuplot_has_style_fill()) {
+	if (!strcmp(line->style, "errorbars") && !gnuplot_has_style_fill()) {
 	    set_combo_box_default_text(GTK_COMBO_BOX(stylecombo[i]), 
 				       line->style); 
 	    gtk_widget_set_sensitive(stylecombo[i], FALSE);
@@ -1728,16 +1771,24 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    altsty = g_list_append(altsty, "errorbars"); 
 	    altsty = g_list_append(altsty, "filledcurve");
 	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), altsty);
-	    set_combo_box_default_text(GTK_COMBO_BOX(stylecombo[i]), 
-				       line->style); 
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(stylecombo[i]), 
+				     gpt_style_as_int(line->style, altsty));
 	    g_list_free(altsty);
 	} else {
+	    int lt = gpt_style_as_int(line->style, stylist);
+
 	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), stylist);
-	    set_combo_box_default_text(GTK_COMBO_BOX(stylecombo[i]), 
-				       line->style); 
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(stylecombo[i]), lt);
+	    if (0) {
+		GtkWidget *ptsel = point_types_combo();
+
+		gtk_box_pack_start(GTK_BOX(hbox), ptsel, FALSE, FALSE, 5);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(ptsel), lt - 1);
+	    }
 	} 
 
-	gtk_widget_show(stylecombo[i]);	
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, tbl_len-1, tbl_len);
+	gtk_widget_show_all(hbox);	
 
 	if (!do_scale_axis) {
 	    linescale[i] = NULL;
