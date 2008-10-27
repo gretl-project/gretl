@@ -28,7 +28,9 @@
 #include "calculator.h"
 
 #include "../pixmaps/mouse.xpm"
+#if 0
 #include "points_xpm.h"
+#endif
 
 struct gpt_titles_t {
     char *description; /* How the field will show up in the options dialog */
@@ -1567,6 +1569,7 @@ static void print_field_label (GtkWidget *tbl, int row,
     gtk_widget_show(label);
 }
 
+#if 0
 static GtkWidget *point_types_combo (void)
 {
     GtkWidget *ptsel;
@@ -1593,6 +1596,7 @@ static GtkWidget *point_types_combo (void)
     
     return ptsel;
 }
+#endif
 
 static int gpt_style_as_int (const char *sty, GList *list)
 {
@@ -1779,12 +1783,14 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 
 	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), stylist);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(stylecombo[i]), lt);
+#if 0
 	    if (0) {
 		GtkWidget *ptsel = point_types_combo();
 
 		gtk_box_pack_start(GTK_BOX(hbox), ptsel, FALSE, FALSE, 5);
 		gtk_combo_box_set_active(GTK_COMBO_BOX(ptsel), lt - 1);
 	    }
+#endif
 	} 
 
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, tbl_len-1, tbl_len);
