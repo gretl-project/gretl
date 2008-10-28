@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-21 10:39-0400\n"
-"PO-Revision-Date: 2008-10-27 03:34+0200\n"
+"PO-Revision-Date: 2008-10-28 03:05+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -912,7 +912,7 @@ msgid ""
 "You can't use the same character for the column delimiter and the decimal "
 "point"
 msgstr ""
-"Вы не можете использовать один и тот же символ для рязделения колонок и "
+"Вы не можете использовать один и тот же символ для разделения колонок и "
 "десятичной точки"
 
 #: lib/src/dataio.c:1313
@@ -2386,7 +2386,7 @@ msgstr ""
 
 #: lib/src/graphing.c:3723
 msgid "point estimate"
-msgstr ""
+msgstr "точечная оценка"
 
 #: lib/src/graphing.c:3725
 msgid "0.025 and 0.975 quantiles"
@@ -2493,7 +2493,7 @@ msgstr "Ни одна независимая переменная не была 
 
 #: lib/src/gretl_errors.c:49
 msgid "No new independent variables were added"
-msgstr "Не было довалено новых независимых переменных"
+msgstr "Не было добавлено новых независимых переменных"
 
 #: lib/src/gretl_errors.c:50
 msgid "One or more \"added\" vars were already present"
@@ -4064,7 +4064,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1050
 msgid "High-Precision OLS"
-msgstr ""
+msgstr "МНК с высокой точностью"
 
 #: lib/src/modelprint.c:1051 lib/src/modelprint.c:1135 gui2/selector.c:2386
 msgid "Probit"
@@ -4088,7 +4088,7 @@ msgstr "Модель Пуассона"
 
 #: lib/src/modelprint.c:1056
 msgid "NLS"
-msgstr ""
+msgstr "Нелинейный МНК"
 
 #: lib/src/modelprint.c:1057
 msgid "ML"
@@ -4100,7 +4100,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1059 gui2/selector.c:2392
 msgid "Logistic"
-msgstr "Логистической"
+msgstr "Логистическая"
 
 #: lib/src/modelprint.c:1060 gui2/selector.c:2414
 msgid "GARCH"
@@ -4221,7 +4221,7 @@ msgstr ""
 #: lib/src/modelprint.c:1234 lib/src/modelprint.c:1236
 #: lib/src/modelprint.c:1239 gui2/selector.c:2826 gui2/selector.c:5319
 msgid "Instruments"
-msgstr ""
+msgstr "Инструменты"
 
 #: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:83 gui2/gui_utils.c:2361
 msgid "none"
@@ -4235,7 +4235,7 @@ msgstr ""
 #: lib/src/modelprint.c:1296 lib/src/modelprint.c:1298
 #: lib/src/modelprint.c:1300
 msgid "Robust (HAC) standard errors"
-msgstr ""
+msgstr "Робастные стандартные ошибки (HAC)"
 
 #: lib/src/modelprint.c:1309 lib/src/modelprint.c:1311
 #: lib/src/modelprint.c:1315
@@ -4403,7 +4403,7 @@ msgstr "Модель"
 #: lib/src/modelprint.c:1856
 #, c-format
 msgid "%s estimates using the %d observations %s%s%s"
-msgstr "Для %s оценки использовано %d наблюдений %s%s%s"
+msgstr "Метод оценки - %s, использовано %d наблюдений %s%s%s"
 
 #: lib/src/modelprint.c:1835 lib/src/modelprint.c:1851
 #, c-format
@@ -4413,7 +4413,7 @@ msgstr ""
 #: lib/src/modelprint.c:1839
 #, c-format
 msgid "%s estimates using %d observations from %s%s%s"
-msgstr "Для %s оценки использовано %d наблюдений %s%s%s"
+msgstr "Метод оценки - %s, использовано %d наблюдений %s%s%s"
 
 #: lib/src/modelprint.c:1846 lib/src/modelprint.c:1847
 msgid "Missing or incomplete observations dropped"
@@ -4422,7 +4422,7 @@ msgstr "Исключено пропущенных или неполных наб
 #: lib/src/modelprint.c:1867 lib/src/modelprint.c:1868
 #, c-format
 msgid "%s estimates using %d observations"
-msgstr "Для %s оценки использовано %d наблюдений"
+msgstr "Метод оценки - %s, использовано %d наблюдений"
 
 #: lib/src/modelprint.c:1873 lib/src/modelprint.c:1874
 #, c-format
@@ -4506,7 +4506,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:2165 lib/src/modelprint.c:3834
 msgid "estimate"
-msgstr ""
+msgstr "Оценка"
 
 #: lib/src/modelprint.c:2169 lib/src/modelprint.c:2173
 #: lib/src/modelprint.c:3079 lib/src/modelprint.c:3783
@@ -4520,7 +4520,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:2189
 msgid "Estimate"
-msgstr ""
+msgstr "Оценка"
 
 #: lib/src/modelprint.c:2189 gui2/dialogs.c:865 gui2/dialogs.c:4069
 #: gui2/guiprint.c:1913 gui2/guiprint.c:1967
@@ -4855,7 +4855,7 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:2231
 msgid "write of data file failed\n"
-msgstr ""
+msgstr "Не удалось записать файл с данными\n"
 
 #: lib/src/monte_carlo.c:2256
 #, c-format
@@ -4876,7 +4876,7 @@ msgstr ""
 #: lib/src/nls.c:982
 #, c-format
 msgid "iteration %2d: SSR = %.8g\n"
-msgstr ""
+msgstr "Итерация %2d: сумма квадратов ошибок = %.8g\n"
 
 #: lib/src/nls.c:1642
 msgid "Perfect fit achieved\n"
@@ -4888,7 +4888,7 @@ msgstr ""
 
 #: lib/src/nls.c:1747
 msgid "Failed to calculate Jacobian"
-msgstr ""
+msgstr "Не удалось рассчитать Якобиан"
 
 #: lib/src/nls.c:2082
 msgid "NLS: The supplied derivatives seem to be incorrect"
@@ -4952,20 +4952,20 @@ msgstr "Функция не была определена"
 
 #: lib/src/nls.c:2873
 msgid "Using numerical derivatives\n"
-msgstr "Использовать численные производные\n"
+msgstr "Использованы численные производные\n"
 
 #: lib/src/nls.c:2874
 msgid "Using analytical derivatives\n"
-msgstr "Использовать аналитические производные\n"
+msgstr "Использованы аналитические производные\n"
 
 #: lib/src/nls.c:2892
 #, c-format
 msgid "Tolerance = %g\n"
-msgstr ""
+msgstr "Погрешность = %g\n"
 
 #: lib/src/nls.c:3312
 msgid "Failed to compute numerical Hessian"
-msgstr ""
+msgstr "Не удалось рассчитать численное значение Гессиана"
 
 #: lib/src/nls.c:3381
 msgid ""
@@ -6986,7 +6986,7 @@ msgstr ""
 
 #: gui2/callbacks.c:471
 msgid "Enter formula for new variable:"
-msgstr ""
+msgstr "Введите формулу для новой переменной:"
 
 #: gui2/callbacks.c:524 gui2/library.c:890
 msgid "gretl: cointegration test"
@@ -6994,11 +6994,11 @@ msgstr "gretl: тест на коинтеграцию"
 
 #: gui2/callbacks.c:526
 msgid "gretl: VAR"
-msgstr ""
+msgstr "gretl: векторная авторегрессия"
 
 #: gui2/callbacks.c:526 gui2/library.c:2565 gui2/library.c:3276
 msgid "gretl: VECM"
-msgstr ""
+msgstr "gretl: векторная модель коррекции ошибок"
 
 #: gui2/callbacks.c:529 gui2/library.c:3268
 msgid "gretl: VAR lag selection"
@@ -7046,7 +7046,7 @@ msgstr "Укажите переменные для графика:"
 
 #: gui2/callbacks.c:649
 msgid "gretl: GMM"
-msgstr ""
+msgstr "gretl: обобщенный метод моментов"
 
 #: gui2/callbacks.c:650
 msgid "GMM: Specify function and orthogonality conditions:"
@@ -7058,7 +7058,7 @@ msgstr "gretl: максимальное правдоподобие"
 
 #: gui2/callbacks.c:656
 msgid "MLE: Specify function, and derivatives if possible:"
-msgstr ""
+msgstr "MLE: Specify function, and derivatives if possible:"
 
 #: gui2/callbacks.c:661
 msgid "gretl: nonlinear least squares"
@@ -7066,7 +7066,7 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:662
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
+msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:667 gui2/library.c:2739
 msgid "gretl: simultaneous equations system"
@@ -7170,7 +7170,7 @@ msgstr ""
 
 #: gui2/database.c:260
 msgid "Sorry, can't handle this frequency conversion"
-msgstr ""
+msgstr "Данное преобразование частот невозможно"
 
 #: gui2/database.c:307
 msgid ""
@@ -7190,7 +7190,7 @@ msgstr "Внимание: в ряде есть отсутствующие наб
 
 #: gui2/database.c:640
 msgid "Couldn't access binary datafile"
-msgstr ""
+msgstr "Невозможно получить доступ к двоичному файлу"
 
 #: gui2/database.c:713 gui2/session.c:152 gui2/session.c:159
 #: gui2/session.c:166 gui2/session.c:173 gui2/session.c:179
@@ -7330,7 +7330,7 @@ msgstr ""
 
 #: gui2/datafiles.c:657
 msgid "Failed to retrieve description of data"
-msgstr ""
+msgstr "Не удалось получить описание данных"
 
 #: gui2/datafiles.c:658
 #, c-format
@@ -7349,7 +7349,7 @@ msgstr "gretl: удаление"
 
 #: gui2/datafiles.c:775
 msgid "function code"
-msgstr ""
+msgstr "код функции"
 
 #: gui2/datafiles.c:962 gui2/datafiles.c:980 gui2/datafiles.c:996
 #: gui2/datafiles.c:1074
@@ -7419,7 +7419,7 @@ msgstr "gretl: файлы данных"
 
 #: gui2/datafiles.c:1277
 msgid "gretl: databases on server"
-msgstr ""
+msgstr "gretl: базы данных на сервере"
 
 #: gui2/datafiles.c:1279
 msgid "gretl: function packages on server"
@@ -7472,7 +7472,7 @@ msgstr "Источник"
 
 #: gui2/datafiles.c:1670 gui2/datafiles.c:1682
 msgid "Local status"
-msgstr ""
+msgstr "Локальный статус"
 
 #: gui2/datafiles.c:1673 gui2/datafiles.c:1679
 msgid "Package"
@@ -7532,7 +7532,7 @@ msgstr ""
 
 #: gui2/datawiz.c:173 gui2/ssheet.c:792
 msgid "gretl: name variable"
-msgstr ""
+msgstr "gretl: название переменной"
 
 #: gui2/datawiz.c:174
 msgid ""
@@ -7602,7 +7602,7 @@ msgstr ""
 
 #: gui2/datawiz.c:412
 msgid "Non-standard frequency"
-msgstr ""
+msgstr "Нестандартная частота"
 
 #: gui2/datawiz.c:481
 msgid "Cross-sectional"
@@ -7703,7 +7703,7 @@ msgstr ""
 
 #: gui2/datawiz.c:1219
 msgid "Number of time periods"
-msgstr ""
+msgstr "Количество временных периодов"
 
 #: gui2/datawiz.c:1286
 msgid "purge missing observations"
@@ -7711,7 +7711,7 @@ msgstr "Удалить пропущенные наблюдения"
 
 #: gui2/datawiz.c:1411
 msgid "The data set contains no suitable index variables"
-msgstr ""
+msgstr "Данные содержат недопустимую индексную переменную"
 
 #: gui2/datawiz.c:1841
 msgid "Data structure wizard"
@@ -7775,7 +7775,7 @@ msgstr ""
 
 #: gui2/dialogs.c:544
 msgid "Tab separated"
-msgstr ""
+msgstr "Текст, разделенный табуляцией"
 
 #: gui2/dialogs.c:564
 msgid "Comma separated"
@@ -7799,7 +7799,7 @@ msgstr "Сохранить как"
 
 #: gui2/dialogs.c:859 gui2/library.c:1515
 msgid "gretl: bootstrap analysis"
-msgstr ""
+msgstr "gretl: бутстреп анализ"
 
 #: gui2/dialogs.c:890
 msgid "Confidence interval"
@@ -10400,11 +10400,11 @@ msgstr "_Квадраты остатков"
 
 #: gui2/gui_utils.c:2011
 msgid "_Error sum of squares"
-msgstr ""
+msgstr "Сумму _квадратов остатков"
 
 #: gui2/gui_utils.c:2013
 msgid "_Standard error of residuals"
-msgstr ""
+msgstr "_Стандартную ошибку остатков"
 
 #: gui2/gui_utils.c:2018
 msgid "_R-squared"
@@ -11786,7 +11786,7 @@ msgstr "Коинтеграция"
 
 #: gui2/selector.c:2430
 msgid "Multiple precision OLS"
-msgstr ""
+msgstr "МНК с высокой точностью"
 
 #: gui2/selector.c:2441
 msgid "Weight variable"
@@ -11914,7 +11914,7 @@ msgstr ""
 
 #: gui2/selector.c:3419
 msgid "Robust standard errors/intervals"
-msgstr ""
+msgstr "Робастные стандартные ошибки/интервалы"
 
 #: gui2/selector.c:3443
 msgid "configure"
@@ -12829,6 +12829,8 @@ msgid ""
 "Enter name for new variable\n"
 "(max. 15 characters)"
 msgstr ""
+"Введите название новой переменной\n"
+"(максимум 15 символов)"
 
 #: gui2/ssheet.c:803 gui2/ssheet.c:2756
 msgid "gretl: name scalar"
@@ -13260,7 +13262,7 @@ msgstr ""
 
 #: gui2/update.c:210
 msgid "No new files"
-msgstr ""
+msgstr "Новых файлов не обнаружено"
 
 #: plugin/arma.c:2219 plugin/arma.c:2222
 msgid "ARMA initialization"
@@ -13978,7 +13980,7 @@ msgstr ""
 
 #: plugin/tramo-x12a.c:676
 msgid "Failed to allocate memory for new data"
-msgstr ""
+msgstr "Не удалось выделить память для новых данных"
 
 #: plugin/tramo-x12a.c:770
 msgid ""
@@ -14029,7 +14031,7 @@ msgstr ""
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
-msgstr ""
+msgstr "Непредвиденная ошибка чтения файла\n"
 
 #: doc/commands/matfuncs.c:50
 msgid "Creation and I/O"
