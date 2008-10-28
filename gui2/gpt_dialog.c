@@ -621,15 +621,16 @@ set_logscale_from_entry (GPT_SPEC *spec, int i, GtkWidget *entry)
     return err;
 }
 
-static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w)
+static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 {
     GtkWidget *ptsel = g_object_get_data(G_OBJECT(w), "pointsel");
 
     if (ptsel != NULL && GTK_WIDGET_SENSITIVE(ptsel)) {
 	int pt = gtk_combo_box_get_active(GTK_COMBO_BOX(ptsel));
+	int ptdef = (line->type == LT_NONE)? i : line->type - 1;
 
-	if (pt != line->type - 1) {
-	    /* not just the default */
+	if (pt != ptdef) {
+	    /* point-type is not just the default */
 	    line->ptype = pt + 1;
 	}
     }
@@ -729,7 +730,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 		    spec->flags |= GPT_FILL_SWITCH;
 		    spec->flags &= ~GPT_ERR_SWITCH;
 		}
-		maybe_set_point_type(line, stylecombo[i]);
+		maybe_set_point_type(line, stylecombo[i], i);
 	    }
 	    if (linetitle[i] != NULL) {
 		entry_to_gp_string(linetitle[i], 
@@ -1611,17 +1612,16 @@ static GtkWidget *point_types_combo (void)
 
 static int line_get_point_style (GPT_LINE *line, int i)
 {
-    fprintf(stderr, "line_get_point_style: ptype = %d, line->type = %d\n",
-	    line->ptype, line->type);
-
     if (line->ptype > 0) {
 	/* a specific point-style has been selected: convert
 	   to zero-based */
 	return line->ptype - 1;
     } else if (line->type == LT_NONE) {
+	/* line type is set by placement of line in plot */
 	return i;
     } else {
-	/* give the point-style associated with the line type */
+	/* a specific line-type has been selected: give the 
+	   associated point-style */
 	return line->type - 1;
     }
 }
