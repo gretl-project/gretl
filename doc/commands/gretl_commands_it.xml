@@ -7049,39 +7049,6 @@
 
   </command>
 
-  <command name="rhodiff" section="Transformations" label="Quasi-differenze" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>lista-rho</argument>
-        <argument separated="true">lista-variabili</argument>
-      </arguments>
-      <examples>
-        <example>rhodiff .65 ; 2 3 4</example>
-        <example>rhodiff r1 r2 ; x1 x2 x3</example>	
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Crea delle versioni rho-differenziate delle variabili indicate
-        (con numero o con nome) nella <repl>lista-variabili</repl> e le
-        aggiunge al dataset, usando il suffisso <lit>#</lit> per le
-        nuove variabili. Ad esempio, data la variabile <lit>v1</lit> nella
-	<repl>lista-variabili</repl> e i valori <lit>r1</lit> e
-	<lit>r2</lit> nella <repl>lista-rho</repl>, viene creata
-      </para>
-      <code>
-        v1# = v1 - r1*v1(-1) - r2*v1(-2)
-      </code>
-      <para>
-	I valori nella <repl>lista-rho</repl> possono essere specificati sotto
-	forma di valori numerici o di nomi di variabili definite in precedenza.
-      </para>
-    </description>
-
-  </command>
-
   <command name="rmplot" section="Graphs"
     label="Grafici range-mean">
 
