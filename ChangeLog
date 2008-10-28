@@ -12,7 +12,10 @@ version 1.7.10, in progress
 - Graphs: "display PDF" option: fix possible encoding issue
 - GUI graph controller: new facility to add a line, defined
   via a formula, to an existing graph
-- Gnuplot line-color selector: extend to 6 colors
+- GUI graph controller: add facility to choose point style
+- Gnuplot line-color selector: extend to 6 colors, and
+  distinguish between setting the "palette" and setting
+  ad hoc colors for a specific graph
 - Scalars: make these accessible via the icon view window;
   enable copying to clipboard as CSV; enable entry of a 
   formula (starting with "=") in scalar-editing window

@@ -28,9 +28,7 @@
 #include "calculator.h"
 
 #include "../pixmaps/mouse.xpm"
-#if 0
-#include "points_xpm.h"
-#endif
+#include "gppoints.h"
 
 struct gpt_titles_t {
     char *description; /* How the field will show up in the options dialog */
@@ -623,6 +621,20 @@ set_logscale_from_entry (GPT_SPEC *spec, int i, GtkWidget *entry)
     return err;
 }
 
+static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w)
+{
+    GtkWidget *ptsel = g_object_get_data(G_OBJECT(w), "pointsel");
+
+    if (ptsel != NULL && GTK_WIDGET_SENSITIVE(ptsel)) {
+	int pt = gtk_combo_box_get_active(GTK_COMBO_BOX(ptsel));
+
+	if (pt != line->type - 1) {
+	    /* not just the default */
+	    line->ptype = pt + 1;
+	}
+    }
+}
+
 enum {
     ERRORBARS = 1,
     FILLEDCURVE
@@ -717,6 +729,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 		    spec->flags |= GPT_FILL_SWITCH;
 		    spec->flags &= ~GPT_ERR_SWITCH;
 		}
+		maybe_set_point_type(line, stylecombo[i]);
 	    }
 	    if (linetitle[i] != NULL) {
 		entry_to_gp_string(linetitle[i], 
@@ -1569,7 +1582,6 @@ static void print_field_label (GtkWidget *tbl, int row,
     gtk_widget_show(label);
 }
 
-#if 0
 static GtkWidget *point_types_combo (void)
 {
     GtkWidget *ptsel;
@@ -1581,9 +1593,9 @@ static GtkWidget *point_types_combo (void)
 
     store = gtk_list_store_new(1, GDK_TYPE_PIXBUF);
 
-    for (i=0; i<7; i++) {
+    for (i=0; i<13; i++) {
 	gtk_list_store_append(store, &iter);
-	pbuf = gdk_pixbuf_new_from_xpm_data(points_xpms[i]);
+	pbuf = gdk_pixbuf_from_pixdata(gppoints[i], FALSE, NULL);
 	gtk_list_store_set(store, &iter, 0, pbuf, -1);
 	g_object_unref(pbuf);
     }
@@ -1596,7 +1608,23 @@ static GtkWidget *point_types_combo (void)
     
     return ptsel;
 }
-#endif
+
+static int line_get_point_style (GPT_LINE *line, int i)
+{
+    fprintf(stderr, "line_get_point_style: ptype = %d, line->type = %d\n",
+	    line->ptype, line->type);
+
+    if (line->ptype > 0) {
+	/* a specific point-style has been selected: convert
+	   to zero-based */
+	return line->ptype - 1;
+    } else if (line->type == LT_NONE) {
+	return i;
+    } else {
+	/* give the point-style associated with the line type */
+	return line->type - 1;
+    }
+}
 
 static int gpt_style_as_int (const char *sty, GList *list)
 {
@@ -1612,6 +1640,18 @@ static int gpt_style_as_int (const char *sty, GList *list)
     }
 
     return 0;
+}
+
+#define has_point(s) (!strcmp(s, "points") || !strcmp(s, "linespoints"))
+
+static void flip_pointsel (GtkWidget *box, GtkWidget *targ)
+{
+    GtkWidget *label = g_object_get_data(G_OBJECT(targ), "label");
+    gchar *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(box));
+    int hp = has_point(s);
+
+    gtk_widget_set_sensitive(targ, hp);
+    gtk_widget_set_sensitive(label, hp);
 }
 
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
@@ -1779,18 +1819,23 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 				     gpt_style_as_int(line->style, altsty));
 	    g_list_free(altsty);
 	} else {
+	    GtkWidget *ptsel = point_types_combo();
 	    int lt = gpt_style_as_int(line->style, stylist);
+	    int hp, pt = line_get_point_style(line, i);
 
 	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), stylist);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(stylecombo[i]), lt);
-#if 0
-	    if (0) {
-		GtkWidget *ptsel = point_types_combo();
-
-		gtk_box_pack_start(GTK_BOX(hbox), ptsel, FALSE, FALSE, 5);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(ptsel), lt - 1);
-	    }
-#endif
+	    hp = has_point(line->style);
+	    label = gtk_label_new(_("point"));
+	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	    gtk_box_pack_start(GTK_BOX(hbox), ptsel, FALSE, FALSE, 0);
+	    g_object_set_data(G_OBJECT(stylecombo[i]), "pointsel", ptsel);
+	    g_object_set_data(G_OBJECT(ptsel), "label", label);
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ptsel), pt);
+	    gtk_widget_set_sensitive(label, hp);
+	    gtk_widget_set_sensitive(ptsel, hp);
+	    g_signal_connect(G_OBJECT(stylecombo[i]), "changed",
+			     G_CALLBACK(flip_pointsel), ptsel);
 	} 
 
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, tbl_len-1, tbl_len);
