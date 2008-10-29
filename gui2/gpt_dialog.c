@@ -51,6 +51,9 @@ static GtkWidget **yaxiscombo;
 static GtkWidget **linescale;
 static GtkWidget **linewidth;
 
+static GtkWidget *fitformula;
+static GtkWidget *fitlegend;
+
 static GtkWidget *labeltext[MAX_PLOT_LABELS];
 static GtkWidget *labeljust[MAX_PLOT_LABELS];
 static GtkWidget *labelpos[MAX_PLOT_LABELS];
@@ -497,6 +500,15 @@ static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
 	gtk_entry_set_text(GTK_ENTRY(gpt_titles[0].widget), title);
 	g_free(title);
     }
+
+    /* also re-jig the "Lines" tab entries for the fitted
+       line */
+
+    if (fitformula != NULL && fitlegend != NULL) {
+	fittype_from_combo(box, spec);
+	gtk_entry_set_text(GTK_ENTRY(fitformula), spec->lines[1].formula);
+	gtk_entry_set_text(GTK_ENTRY(fitlegend), spec->lines[1].title);
+    }
     
     return FALSE;
 }
@@ -506,6 +518,8 @@ static void dot_callback (GtkComboBox *box, GPT_SPEC *spec)
     int i = widget_get_int(GTK_WIDGET(box), "linenum");
     int d = gtk_combo_box_get_active(box);
     GtkWidget *w;
+
+    /* flip between colored solid line and black dotted */
 
     spec->lines[i].type = (d > 0)? 0 : LT_NONE;
 
@@ -1729,6 +1743,8 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
    
     tbl_num = tbl_col = 0;
 
+    fitformula = fitlegend = NULL;
+
     for (i=0; i<gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 	int label_done = 0;
@@ -1751,6 +1767,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
 		/* fitted formula: not GUI-editable */
 		gtk_widget_set_sensitive(lineformula[i], FALSE);
+		fitformula = lineformula[i];
 	    } else {
 		g_signal_connect(G_OBJECT(lineformula[i]), "activate", 
 				 G_CALLBACK(apply_gpt_changes), 
@@ -1788,6 +1805,9 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
 	gtk_widget_show(linetitle[i]);
+	if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
+	    fitlegend = linetitle[i];
+	}
 
 	if (line->formula[0] != '\0') {
 	    goto line_width_adj;
