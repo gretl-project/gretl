@@ -506,6 +506,13 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
     fputs("set style increment user\n", fp);
 }
 
+static int print_point_type (GPT_LINE *line)
+{
+    return line->ptype != 0 && 
+	(!strcmp(line->style, "points") ||
+	 !strcmp(line->style, "linespoints"));
+}
+
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
                      s->fit == PLOT_FIT_QUADRATIC || \
                      s->fit == PLOT_FIT_INVERSE || \
@@ -736,7 +743,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, " lt %d", line->type);
 	}
 
-	if (line->ptype != 0) {
+	if (print_point_type(line)) {
 	    fprintf(fp, " pt %d", line->ptype);
 	}
 
