@@ -95,6 +95,16 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins);
 
 static int gpt_expand_widgets (int n);
 
+static void widget_set_int (GtkWidget *w, const gchar *key, gint val)
+{
+    g_object_set_data(G_OBJECT(w), key, GINT_TO_POINTER(val));
+}
+
+static int widget_get_int (GtkWidget *w, const char *key)
+{
+    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), key));
+}
+
 static void close_plot_controller (GtkWidget *widget, gpointer data) 
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
@@ -187,7 +197,7 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     rgb.g = (unsigned char) (scale_round(gcolor.green));
     rgb.b = (unsigned char) (scale_round(gcolor.blue));
 
-    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
+    i = widget_get_int(w, "colnum");
     data = g_object_get_data(G_OBJECT(color_button), "plotspec");
     
     if (data != NULL) {
@@ -267,7 +277,7 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
 
     cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
 
-    g_object_set_data(G_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
+    widget_set_int(cdlg, "colnum", i);
     g_object_set_data(G_OBJECT(cdlg), "color_button", w);
 
     gtk_color_selection_set_current_color(GTK_COLOR_SELECTION
@@ -432,30 +442,15 @@ static void combo_to_gp_string (GtkWidget *w, char *targ, size_t n)
     g_free(s);
 }
 
-static FitType fit_type_from_string (const char *s)
-{
-    FitType f = PLOT_FIT_NONE;
-    int i;
-
-    if (s != NULL && *s != '\0') {
-	for (i=0; fittype_strings[i] != NULL; i++) {
-	    if (!strcmp(s, _(fittype_strings[i]))) {
-		f = i;
-		break;
-	    }
-	}
-    }
-
-    return f;
-}
-
 static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
 {
-    gchar *s = gtk_combo_box_get_active_text(box);
-    FitType f;
+    int oldfit = widget_get_int(GTK_WIDGET(box), "oldfit");
+    FitType f = gtk_combo_box_get_active(box);
 
-    f = fit_type_from_string(s);
-    g_free(s);
+    if (f == oldfit) {
+	/* no change */
+	return;
+    }
 
     if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
 	f == PLOT_FIT_INVERSE || f == PLOT_FIT_LOESS) {
@@ -467,22 +462,22 @@ static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
 	}
 	spec->fit = f;
     }
+
+    widget_set_int(GTK_WIDGET(box), "oldfit", f);
 }
 
 static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
 {
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
-    gchar *s, *title = NULL;
+    gchar *title = NULL;
     FitType f = PLOT_FIT_NONE;
 
     if (*s1 == '\0' || *s2 == '\0') {
 	return FALSE;
     }
 
-    s = gtk_combo_box_get_active_text(box);
-    f = fit_type_from_string(s);
-    g_free(s);
+    f = gtk_combo_box_get_active(box);
 
     if (f == PLOT_FIT_OLS) {
 	title = g_strdup_printf(_("%s versus %s (with least squares fit)"),
@@ -504,6 +499,20 @@ static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
     }
     
     return FALSE;
+}
+
+static void dot_callback (GtkComboBox *box, GPT_SPEC *spec)
+{
+    int i = widget_get_int(GTK_WIDGET(box), "linenum");
+    int d = gtk_combo_box_get_active(box);
+    GtkWidget *w;
+
+    spec->lines[i].type = (d > 0)? 0 : LT_NONE;
+
+    w = g_object_get_data(G_OBJECT(box), "colorsel");
+    gtk_widget_set_sensitive(w, d == 0);
+    w = g_object_get_data(G_OBJECT(box), "color-label");
+    gtk_widget_set_sensitive(w, d == 0);
 }
 
 /* take a double (which might be NA) and format it for
@@ -1208,6 +1217,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_combo_box_append_text(GTK_COMBO_BOX(fitcombo), _(fittype_strings[i]));
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(fitcombo), spec->fit);
+	widget_set_int(fitcombo, "oldfit", spec->fit);
 	g_signal_connect(G_OBJECT(fitcombo), "changed",
 			 G_CALLBACK(fit_type_changed), spec);
 	gtk_widget_show(fitcombo);
@@ -1448,7 +1458,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     line->flags = GP_LINE_USER;
 
     notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
-    pgnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(notebook), "lines_page"));
+    pgnum = widget_get_int(notebook, "lines_page");
 
     err = gpt_expand_widgets(gui_nlines + 1);
 
@@ -1514,12 +1524,12 @@ static void remove_line (GtkWidget *w, GPT_SPEC *spec)
     GtkWidget *notebook;
     int i, pgnum;
 
-    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "linenum"));
+    i = widget_get_int(w, "linenum");
     plotspec_delete_line(spec, i);
     gui_nlines -= 1;
 
     notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
-    pgnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(notebook), "lines_page"));
+    pgnum = widget_get_int(notebook, "lines_page");
 
     /* re-fill the "lines" notebook page */
     gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
@@ -1533,8 +1543,7 @@ static void line_remove_button (GtkWidget *tbl, int row,
     GtkWidget *button; 
 
     button = gtk_button_new_with_label("Remove");
-    g_object_set_data(G_OBJECT(button), "linenum",
-		      GINT_TO_POINTER(i));
+    widget_set_int(button, "linenum", i);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(remove_line), spec);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1710,10 +1719,9 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	pgnum = gtk_notebook_insert_page(GTK_NOTEBOOK(notebook), page, label, ins); 
     } else {
 	pgnum = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, label);
-    }    
+    }  
 
-    g_object_set_data(G_OBJECT(notebook), "lines_page",
-		      GINT_TO_POINTER(pgnum));
+    widget_set_int(notebook, "lines_page", pgnum);
 
     tbl_len = 1;
     tbl = gp_dialog_table(tbl_len, 3, vbox);
@@ -1901,14 +1909,34 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    button = line_color_button(spec, i);
 	    if (button != NULL) {
 		label = gtk_label_new(_("color"));
-		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 		gtk_widget_show(label);
 		gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 		g_object_set_data(G_OBJECT(linewidth[i]), "colorsel",
 				  button);
 		gtk_widget_show_all(button);
 	    }
+	} else {
+	    label = NULL;
+	    button = NULL;
 	}
+
+	if (line->flags & GP_LINE_USER) {
+	    /* dotted option */
+	    GtkWidget *dotcombo = gtk_combo_box_new_text();
+
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(dotcombo), _("solid"));
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(dotcombo), _("dotted"));
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(dotcombo), 0); 
+	    gtk_widget_show(dotcombo);
+	    widget_set_int(dotcombo, "linenum", i);
+	    g_object_set_data(G_OBJECT(dotcombo), "colorsel", button);
+	    g_object_set_data(G_OBJECT(dotcombo), "color-label", label);
+	    g_signal_connect(G_OBJECT(dotcombo), "changed", 
+			     G_CALLBACK(dot_callback), spec);
+	    gtk_box_pack_start(GTK_BOX(hbox), dotcombo, FALSE, FALSE, 5);
+	}
+
 	gtk_widget_show(hbox);
 
 	/* separator */
