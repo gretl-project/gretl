@@ -59,12 +59,6 @@ struct _gretl_matrix {
 
 typedef struct _gretl_matrix_block gretl_matrix_block;
 
-struct _gretl_matrix_block {
-    int n;
-    double *val;
-    gretl_matrix **matrix;
-};
-
 /**
  * gretl_matrix_get:
  * @m: matrix.

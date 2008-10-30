@@ -29,6 +29,12 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
+struct _gretl_matrix_block {
+    int n;
+    double *val;
+    gretl_matrix **matrix;
+};
+
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 #define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
@@ -185,7 +191,7 @@ void gretl_matrix_block_destroy (gretl_matrix_block *B)
 
    Matrices in this array should be destroyed by calling 
    gretl_matrix_block_destroy() on the block -- do NOT call
-   gretl_matrix_free on individual member-matrices
+   gretl_matrix_free on individual member-matrices.
 */
 
 gretl_matrix_block *gretl_matrix_block_alloc (int n, ...)
@@ -202,14 +208,14 @@ gretl_matrix_block *gretl_matrix_block_alloc (int n, ...)
 	return NULL;
     }
 
-    B->n = n;
-    B->val = NULL;
-
     B->matrix = malloc(n * sizeof *B->matrix);
     if (B->matrix == NULL) {
 	free(B);
 	return NULL;
     }
+
+    B->n = n;
+    B->val = NULL;    
 
     for (i=0; i<n; i++) {
 	B->matrix[i] = NULL;

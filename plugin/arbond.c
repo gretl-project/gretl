@@ -875,6 +875,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C)
 	    return E_ALLOC;
 	}
     } else {
+	/* k == 2 */
 	gretl_matrix_reuse(v,  Q, 1);
 	gretl_matrix_reuse(vk, Q, 1);
 	gretl_matrix_reuse(X,  Q, -1);
