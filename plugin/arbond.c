@@ -1537,17 +1537,17 @@ static int count_mask (const char *mask, int n)
     return c;
 }
 
-static gretl_matrix *
-matrix_copy_masked (const gretl_matrix *m, const char *mask)
+static int 
+matrix_shrink_by_mask (gretl_matrix *m, const char *mask)
 {
     int n = count_mask(mask, m->rows);
-    gretl_matrix *a;
+    gretl_matrix *tmp;
     double x;
     int i, j, k, l;
 
-    a = gretl_matrix_alloc(n, n);
-    if (a == NULL) {
-	return NULL;
+    tmp = gretl_matrix_alloc(n, n);
+    if (tmp == NULL) {
+	return E_ALLOC;
     }
 
     k = 0;
@@ -1557,14 +1557,18 @@ matrix_copy_masked (const gretl_matrix *m, const char *mask)
 	    for (j=0; j<m->cols; j++) {
 		if (!mask[j]) {
 		    x = gretl_matrix_get(m, i, j);
-		    gretl_matrix_set(a, k, l++, x);
+		    gretl_matrix_set(tmp, k, l++, x);
 		}
 	    }
 	    k++;
 	}
     }
 
-    return a;
+    gretl_matrix_reuse(m, n, n);
+    gretl_matrix_copy_values(m, tmp);
+    gretl_matrix_free(tmp);
+
+    return 0;
 }
 
 static char *zero_row_mask (const gretl_matrix *m, int *err)
@@ -1701,16 +1705,9 @@ static void real_shrink_matrices (arbond *ab, const char *mask)
 static int 
 reduce_Z_and_A (arbond *ab, const char *mask)
 {
-    gretl_matrix *A;
-    int err = 0;
+    int err = matrix_shrink_by_mask(ab->A, mask);
 
-    A = matrix_copy_masked(ab->A, mask);
-
-    if (A == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_matrix_free(ab->A);
-	ab->A = A;
+    if (!err) {
 	real_shrink_matrices(ab, mask);
     }
 
@@ -1734,19 +1731,17 @@ static int try_alt_inverse (arbond *ab)
 	return err;
     }
 
-    gretl_matrix_free(ab->A);
+    gretl_matrix_copy_values(ab->A, ab->Acpy); 
 
-    ab->A = matrix_copy_masked(ab->Acpy, mask);
-    if (ab->A == NULL) {
-	free(mask);
-	return E_ALLOC;
-    }
+    err = matrix_shrink_by_mask(ab->A, mask);
 
-    err = gretl_invert_symmetric_matrix(ab->A);
     if (!err) {
-	real_shrink_matrices(ab, mask);
-    } else {
-	fprintf(stderr, "try_alt_inverse: error inverting\n");
+	err = gretl_invert_symmetric_matrix(ab->A);
+	if (!err) {
+	    real_shrink_matrices(ab, mask);
+	} else {
+	    fprintf(stderr, "try_alt_inverse: error inverting\n");
+	}
     }
 
     free(mask);
