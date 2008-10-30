@@ -157,6 +157,113 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     return m;
 }
 
+void gretl_matrix_block_destroy (gretl_matrix_block *B)
+{
+    int i;
+
+    if (B == NULL) {
+	return;
+    }
+
+    if (B->matrix != NULL) {
+	for (i=0; i<B->n; i++) {
+	    free(B->matrix[i]);
+	}
+	free(B->matrix);
+    }
+
+    free(B->val);
+    free(B);
+}
+
+/* Create an array of n matrices.  The "..." should be filled
+   with n triples of type (gretl_matrix **, int, int), representing
+   the location of a matrix to be filled out and the desired number
+   of rows and columns, respectively.  This is supposed to
+   economize on calls to alloc() and free(), since we allocate
+   a combined data block for all the matrices in the array.
+
+   Matrices in this array should be destroyed by calling 
+   gretl_matrix_block_destroy() on the block -- do NOT call
+   gretl_matrix_free on individual member-matrices
+*/
+
+gretl_matrix_block *gretl_matrix_block_alloc (int n, ...)
+{
+    va_list ap;
+    gretl_matrix_block *B;
+    gretl_matrix **targ;
+    gretl_matrix *m;
+    size_t vsize = 0;
+    int i, err = 0;
+
+    B = malloc(sizeof *B);
+    if (B == NULL) {
+	return NULL;
+    }
+
+    B->n = n;
+    B->val = NULL;
+
+    B->matrix = malloc(n * sizeof *B->matrix);
+    if (B->matrix == NULL) {
+	free(B);
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	B->matrix[i] = NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	B->matrix[i] = malloc(sizeof **B->matrix);
+	if (B->matrix[i] == NULL) {
+	    gretl_matrix_block_destroy(B);
+	    return NULL;
+	}
+	B->matrix[i]->t1 = B->matrix[i]->t2 = 0;
+	B->matrix[i]->val = NULL;
+    }
+
+    va_start(ap, n);
+
+    for (i=0; i<n && !err; i++) {
+	m = B->matrix[i];
+	targ = va_arg(ap, gretl_matrix **);
+	*targ = m;
+	m->rows = va_arg(ap, int);
+	m->cols = va_arg(ap, int);
+	if (m->rows <= 0 || m->cols <= 0) {
+	    err = 1;
+	} else {
+	    vsize += m->rows * m->cols;
+	}
+    }
+
+    va_end(ap);
+
+    if (!err) {
+	/* allocate combined data block */
+	B->val = malloc(vsize * sizeof *B->val);
+	if (B->val == NULL) {
+	    err = 1;
+	}
+    }
+	
+    if (!err) {
+	B->matrix[0]->val = B->val;
+	for (i=1; i<n; i++) {
+	    m = B->matrix[i-1];
+	    B->matrix[i]->val = m->val + (m->rows * m->cols);
+	}
+    } else {
+	gretl_matrix_block_destroy(B);
+	B = NULL;
+    }
+
+    return B;
+}
+
 int gretl_matrix_xna_check (const gretl_matrix *m)
 {
     if (m == NULL) {

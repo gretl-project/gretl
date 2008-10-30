@@ -20,6 +20,8 @@
 #ifndef GRETL_MATRIX_H
 #define GRETL_MATRIX_H
 
+#include <stdarg.h>
+
 /* #define LDEBUG 1 */
 
 /* minimum value of diagonal element of R (as in X = QR) that counts
@@ -53,6 +55,14 @@ struct _gretl_matrix {
     int cols;
     int t1, t2;
     double *val;
+};
+
+typedef struct _gretl_matrix_block gretl_matrix_block;
+
+struct _gretl_matrix_block {
+    int n;
+    double *val;
+    gretl_matrix **matrix;
 };
 
 /**
@@ -192,6 +202,10 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols);
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols);
 
 int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols);
+
+void gretl_matrix_block_destroy (gretl_matrix_block *B);
+
+gretl_matrix_block *gretl_matrix_block_alloc (int n, ...);
 
 gretl_matrix *gretl_identity_matrix_new (int n);
 
