@@ -149,29 +149,25 @@ static GtkWidget *get_image_for_color (const gretlRGB *color)
 
     if (xpm == NULL) {
 	xpm = strings_array_new_with_length(XPMROWS, XPMCOLS);
-	if (xpm != NULL) {
-	    for (i=0; i<XPMROWS; i++) {
-		if (i == 0) {
-		    strcpy(xpm[i], "16 16 2 1");
-		} else if (i == 1) {
-		    strcpy(xpm[i], "X      c #000000");
-		} else if (i == 2) {
-		    strcpy(xpm[i], ".      c #000000");
-		} else if (i == 3 || i == XPMROWS - 1) {
-		    strcpy(xpm[i], "................");
-		} else {
-		    strcpy(xpm[i], ".XXXXXXXXXXXXXX.");
-		}
-	    }
+	if (xpm == NULL) {
+	    return NULL;
 	}
+
+	/* common set-up */
+	strcpy(xpm[0], "16 16 2 1");
+	strcpy(xpm[1], "X      c #000000");
+	strcpy(xpm[2], ".      c #000000");
+	strcpy(xpm[3], "................");
+
+	for (i=4; i<XPMROWS-1; i++) {
+	    strcpy(xpm[i], ".XXXXXXXXXXXXXX.");
+	}
+
+	strcpy(xpm[XPMROWS-1], "................");
     }
 
-    if (xpm == NULL) {
-	return NULL;
-    }
-
+    /* write in the specific color we want */
     print_rgb_hash(colstr, color);
-
     for (i=0; i<6; i++) {
 	xpm[1][10+i] = colstr[i+1];
     }    
@@ -388,6 +384,37 @@ static void maybe_apply_line_color (GtkWidget *w, GPT_SPEC *spec,
 }
 
 /* end graph color selection apparatus */
+
+static GdkPixbuf *get_pixbuf_for_line (int dots)
+{
+    static char **xpm = NULL;
+    int i;
+
+    if (xpm == NULL) {
+	xpm = strings_array_new_with_length(14, 31);
+	if (xpm == NULL) {
+	    return NULL;
+	}
+
+	/* common set-up */
+	strcpy(xpm[0], "30 11 2 1");
+	strcpy(xpm[1], "  c None");
+	strcpy(xpm[2], ". c #000000");
+
+	for (i=3; i<14; i++) {
+	    strcpy(xpm[i], "                              ");
+	}
+    }
+
+    /* write in the specific pattern we want */
+    if (dots) {
+	strcpy(xpm[8], ".  .  .  .  .  .  .  .  .  .  ");
+    } else {
+	strcpy(xpm[8], "............................  ");
+    }    
+
+    return gdk_pixbuf_new_from_xpm_data((const char **) xpm);
+}
 
 static void flip_manual_range (GtkWidget *widget, gpointer data)
 {
@@ -1606,6 +1633,33 @@ static void print_field_label (GtkWidget *tbl, int row,
     gtk_widget_show(label);
 }
 
+static GtkWidget *dash_types_combo (void)
+{
+    GtkWidget *dotsel;
+    GtkCellRenderer *cell;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    GdkPixbuf *pbuf;
+    int i;
+
+    store = gtk_list_store_new(1, GDK_TYPE_PIXBUF);
+
+    for (i=0; i<2; i++) {
+	gtk_list_store_append(store, &iter);
+	pbuf = get_pixbuf_for_line(i);
+	gtk_list_store_set(store, &iter, 0, pbuf, -1);
+	g_object_unref(pbuf);
+    }
+
+    dotsel = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
+    cell = gtk_cell_renderer_pixbuf_new();
+    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(dotsel), cell, FALSE);
+    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(dotsel), cell,
+				   "pixbuf", 0, NULL);
+    
+    return dotsel;
+}
+
 static GtkWidget *point_types_combo (void)
 {
     GtkWidget *ptsel;
@@ -1943,10 +1997,8 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 
 	if (line->flags & GP_LINE_USER) {
 	    /* dotted option */
-	    GtkWidget *dotcombo = gtk_combo_box_new_text();
+	    GtkWidget *dotcombo = dash_types_combo();
 
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(dotcombo), _("solid"));
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(dotcombo), _("dotted"));
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(dotcombo), 0); 
 	    gtk_widget_show(dotcombo);
 	    widget_set_int(dotcombo, "linenum", i);
