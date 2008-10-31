@@ -1,6 +1,7 @@
 lib/src/adf_kpss.c
 lib/src/bhhh_max.c
 lib/src/bootstrap.c
+lib/src/boxplots.c
 lib/src/calendar.c
 lib/src/compare.c
 lib/src/compat.c
@@ -74,7 +75,6 @@ cli/cli_object.c
 cli/complete.c
 cli/gretlcli.c
 gui2/about.c
-gui2/boxplots.c
 gui2/calculator.c
 gui2/callbacks.c
 gui2/clipboard.c
