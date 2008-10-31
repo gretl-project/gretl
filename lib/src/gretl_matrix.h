@@ -199,7 +199,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols);
 
 void gretl_matrix_block_destroy (gretl_matrix_block *B);
 
-gretl_matrix_block *gretl_matrix_block_alloc (int n, ...);
+gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...);
 
 gretl_matrix *gretl_identity_matrix_new (int n);
 

@@ -182,19 +182,24 @@ void gretl_matrix_block_destroy (gretl_matrix_block *B)
     free(B);
 }
 
-/* Create an array of n matrices.  The "..." should be filled
-   with n triples of type (gretl_matrix **, int, int), representing
-   the location of a matrix to be filled out and the desired number
-   of rows and columns, respectively.  This is supposed to
-   economize on calls to alloc() and free(), since we allocate
-   a combined data block for all the matrices in the array.
+/* Create an array of n matrices.  The "..." should be filled with (at
+   minimum) the number of rows and columns for the first matrix to
+   create, which will be written to the location given by @pm.
+   Following this there can be any number of triples of type
+   (gretl_matrix **, int, int), representing the location of a matrix
+   to be filled out and the desired number of rows and columns,
+   respectively.  The argument list must be terminated by NULL.
 
-   Matrices in this array should be destroyed by calling 
+   This is supposed to economize on calls to alloc() and free(), since
+   we allocate a combined data block for all the matrices in the
+   array.
+
+   Matrices in this array should be destroyed by calling
    gretl_matrix_block_destroy() on the block -- do NOT call
    gretl_matrix_free on individual member-matrices.
 */
 
-gretl_matrix_block *gretl_matrix_block_alloc (int n, ...)
+gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 {
     va_list ap;
     gretl_matrix_block *B;
@@ -208,20 +213,35 @@ gretl_matrix_block *gretl_matrix_block_alloc (int n, ...)
 	return NULL;
     }
 
-    B->matrix = malloc(n * sizeof *B->matrix);
+    /* first pass: determine the number of 
+       (pointer, int, int) triples */
+    va_start(ap, pm);
+    for (i=1; ; i++) {
+	va_arg(ap, int);
+	va_arg(ap, int);
+	targ = va_arg(ap, gretl_matrix **);
+	if (targ == NULL) {
+	    break;
+	}
+    }
+    va_end(ap);
+
+    /* initialize B */
+    B->n = i;
+    B->matrix = malloc(B->n * sizeof *B->matrix);
     if (B->matrix == NULL) {
 	free(B);
 	return NULL;
     }
 
-    B->n = n;
+    /* NULL everything in case we fail */
     B->val = NULL;    
-
-    for (i=0; i<n; i++) {
+    for (i=0; i<B->n; i++) {
 	B->matrix[i] = NULL;
     }
 
-    for (i=0; i<n; i++) {
+    /* now allocate the matrices */
+    for (i=0; i<B->n; i++) {
 	B->matrix[i] = malloc(sizeof **B->matrix);
 	if (B->matrix[i] == NULL) {
 	    gretl_matrix_block_destroy(B);
@@ -231,19 +251,25 @@ gretl_matrix_block *gretl_matrix_block_alloc (int n, ...)
 	B->matrix[i]->val = NULL;
     }
 
-    va_start(ap, n);
+    /* second pass through arg list */
 
-    for (i=0; i<n && !err; i++) {
+    va_start(ap, pm);
+
+    for (i=0; i<B->n; i++) {
 	m = B->matrix[i];
-	targ = va_arg(ap, gretl_matrix **);
-	*targ = m;
+	if (i == 0) {
+	    *pm = m;
+	} else {
+	    targ = va_arg(ap, gretl_matrix **);
+	    *targ = m;
+	}	
 	m->rows = va_arg(ap, int);
 	m->cols = va_arg(ap, int);
 	if (m->rows <= 0 || m->cols <= 0) {
 	    err = 1;
-	} else {
-	    vsize += m->rows * m->cols;
+	    break;
 	}
+	vsize += m->rows * m->cols;
     }
 
     va_end(ap);
@@ -258,7 +284,7 @@ gretl_matrix_block *gretl_matrix_block_alloc (int n, ...)
 	
     if (!err) {
 	B->matrix[0]->val = B->val;
-	for (i=1; i<n; i++) {
+	for (i=1; i<B->n; i++) {
 	    m = B->matrix[i-1];
 	    B->matrix[i]->val = m->val + (m->rows * m->cols);
 	}

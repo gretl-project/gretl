@@ -119,30 +119,30 @@ static int arbond_allocate (arbond *ab)
 {
     int T2 = ab->maxTi;
 
-    ab->B1 = gretl_matrix_block_alloc(10,
-				      &ab->beta,  ab->k, 1,
-				      &ab->vbeta, ab->k, ab->k,
-				      &ab->uhat,  ab->nobs, 1,
-				      &ab->ZT,    ab->m, ab->nobs,
-				      &ab->H,     T2, T2,
-				      &ab->A,     ab->m, ab->m,
-				      &ab->Acpy,  ab->m, ab->m,
-				      &ab->Zi,    T2, ab->m,
-				      &ab->dy,    ab->nobs, 1,
-				      &ab->dX,    ab->nobs, ab->k);
+    ab->B1 = gretl_matrix_block_new(&ab->beta,  ab->k, 1,
+				    &ab->vbeta, ab->k, ab->k,
+				    &ab->uhat,  ab->nobs, 1,
+				    &ab->ZT,    ab->m, ab->nobs,
+				    &ab->H,     T2, T2,
+				    &ab->A,     ab->m, ab->m,
+				    &ab->Acpy,  ab->m, ab->m,
+				    &ab->Zi,    T2, ab->m,
+				    &ab->dy,    ab->nobs, 1,
+				    &ab->dX,    ab->nobs, ab->k,
+				    NULL);
     if (ab->B1 == NULL) {
 	return E_ALLOC;
     }
 
-    ab->B2 = gretl_matrix_block_alloc(8,
-				      &ab->tmp1,  ab->m, ab->m,
-				      &ab->kmtmp, ab->k, ab->m,
-				      &ab->kktmp, ab->k, ab->k,
-				      &ab->den,   ab->k, ab->k,
-				      &ab->L1,    1, ab->m,
-				      &ab->XZA,   ab->k, ab->m,
-				      &ab->R1,    ab->m, 1,
-				      &ab->ZX,    ab->m, ab->k);
+    ab->B2 = gretl_matrix_block_new(&ab->tmp1,  ab->m, ab->m,
+				    &ab->kmtmp, ab->k, ab->m,
+				    &ab->kktmp, ab->k, ab->k,
+				    &ab->den,   ab->k, ab->k,
+				    &ab->L1,    1, ab->m,
+				    &ab->XZA,   ab->k, ab->m,
+				    &ab->R1,    ab->m, 1,
+				    &ab->ZX,    ab->m, ab->k,
+				    NULL);
 
     if (ab->B2 == NULL) {
 	return E_ALLOC;
@@ -862,15 +862,15 @@ static int ar_test (arbond *ab, const gretl_matrix *C)
 #endif
 
     if (k == 1) {
-	B = gretl_matrix_block_alloc(8,
-				     &v,    Q, 1,
-				     &vk,   Q, 1,
-				     &X,    Q, ab->k,
-				     &vkX,  1, ab->k, 
-				     &tmpk, 1, ab->k,
-				     &ui,   ab->maxTi, 1,
-				     &m1,   ab->m, 1,
-				     &SZv,  ab->m, 1);
+	B = gretl_matrix_block_new(&v,    Q, 1,
+				   &vk,   Q, 1,
+				   &X,    Q, ab->k,
+				   &vkX,  1, ab->k, 
+				   &tmpk, 1, ab->k,
+				   &ui,   ab->maxTi, 1,
+				   &m1,   ab->m, 1,
+				   &SZv,  ab->m, 1,
+				   NULL);
 	if (B == NULL) {
 	    return E_ALLOC;
 	}
@@ -1039,15 +1039,15 @@ static int windmeijer_correct (arbond *ab, const gretl_matrix *uhat1,
 
     aV = gretl_matrix_copy(ab->vbeta);
 
-    B = gretl_matrix_block_alloc(8, 
-				 &D,   ab->k, ab->k,
-				 &dWj, ab->m, ab->m,
-				 &ui,  ab->maxTi, 1,
-				 &xij, ab->maxTi, 1,
-				 &TT,  ab->maxTi, ab->maxTi,
-				 &mT,  ab->m, ab->nobs,
-				 &km,  ab->k, ab->m,
-				 &k1,  ab->k, 1);
+    B = gretl_matrix_block_new(&D,   ab->k, ab->k,
+			       &dWj, ab->m, ab->m,
+			       &ui,  ab->maxTi, 1,
+			       &xij, ab->maxTi, 1,
+			       &TT,  ab->maxTi, ab->maxTi,
+			       &mT,  ab->m, ab->nobs,
+			       &km,  ab->k, ab->m,
+			       &k1,  ab->k, 1,
+			       NULL);
     if (B == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -1545,11 +1545,13 @@ matrix_shrink_by_mask (gretl_matrix *m, const char *mask)
     double x;
     int i, j, k, l;
 
+    /* allocate smaller temp matrix */
     tmp = gretl_matrix_alloc(n, n);
     if (tmp == NULL) {
 	return E_ALLOC;
     }
 
+    /* copy unmasked values into temp matrix */
     k = 0;
     for (i=0; i<m->rows; i++) {
 	if (!mask[i]) {
@@ -1564,6 +1566,8 @@ matrix_shrink_by_mask (gretl_matrix *m, const char *mask)
 	}
     }
 
+    /* resize the original matrix, copy the values back,
+       and free the temp matrix */
     gretl_matrix_reuse(m, n, n);
     gretl_matrix_copy_values(m, tmp);
     gretl_matrix_free(tmp);
