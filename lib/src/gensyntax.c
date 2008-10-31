@@ -856,6 +856,15 @@ static NODE *powterm (parser *p)
 		p->flags |= P_GETSTR;
 		get_multi_args(t->v.b1.b, p);
 	    }
+	}
+    } else if (sym == F_URCPVAL) {
+	t = newb1(sym, NULL);
+	if (t != NULL) {
+	    lex(p);
+	    t->v.b1.b = newbn(FARGS);
+	    if (t != NULL) {
+		get_multi_args(t->v.b1.b, p);
+	    }
 	}	
     } else if (string_arg_func(sym)) {
 	t = newb1(sym, NULL);

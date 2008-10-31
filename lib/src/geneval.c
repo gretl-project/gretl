@@ -900,8 +900,62 @@ static NODE *DW_node (NODE *r, parser *p)
     return ret;
 }
 
+static NODE *eval_urcpval (NODE *n, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	NODE *s, *e, *r = n->v.b1.b;
+	int i, m = r->v.bn.n_nodes;
+	double x[4];
+
+	if (m != 4) {
+	    p->err = E_INVARG;
+	}
+
+	/* need double, int, int, int */
+
+	for (i=0; i<4 && !p->err; i++) {
+	    s = r->v.bn.n[i];
+	    if (s->t == NUM || scalar_matrix_node(s)) {
+		x[i] = node_get_scalar(s, p);
+	    } else {
+		e = eval(s, p);
+		if (!p->err) {
+		    if (e->t == NUM || scalar_matrix_node(e)) {
+			x[i] = node_get_scalar(e, p);
+		    } else {
+			p->err = E_TYPES;
+		    }
+		    if (!reusable(p)) {
+			free_tree(s, p, "Pdist");
+			r->v.bn.n[i] = NULL;
+		    }		    
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    double tau = x[0];
+	    int nobs = (int) x[1];
+	    int niv = (int) x[2];
+	    int itv = (int) x[3];
+
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		ret->v.xval = df_pvalue_from_plugin(tau, nobs, niv, 
+						    itv, OPT_NONE);
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
 /* return a node containing the evaluated result of a
-   probability distriution function */
+   probability distribution function */
 
 static NODE *eval_pdist (NODE *n, parser *p)
 {
@@ -5812,8 +5866,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_CRIT:
     case F_PVAL:
     case F_RANDGEN:
+    case F_URCPVAL:	
 	if (t->v.b1.b->t == FARGS) {
-	    ret = eval_pdist(t, p);
+	    if (t->t == F_URCPVAL) {
+		ret = eval_urcpval(t, p);
+	    } else {
+		ret = eval_pdist(t, p);
+	    }
 	} else {
 	    node_type_error(t->t, FARGS, t->v.b1.b, p);
 	}

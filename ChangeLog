@@ -22,6 +22,9 @@ version 1.7.10, in progress
 - Fix encoding issue when copying to clipboard as plain
   text or RTF
 - Boxplots: hand the production of these over to gnuplot
+- New function: urcpval, gives user access to James
+  MacKinnon's p-values for unit root and cointegration test
+  statistics (tau)
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"

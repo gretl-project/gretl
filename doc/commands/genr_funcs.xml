@@ -79,9 +79,9 @@
     <function name="$datatype" section="access" output="scalar">
       <description>
 	<para>
-	  Returns an integer value representing the sort of dataset that is
-	  currently loaded: 0 = no data; 1 = cross-sectional (undated) data; 2
-	  = time-series data; 3 = panel data.
+	  Returns an integer value representing the sort of dataset that
+	  is currently loaded: 0 = no data; 1 = cross-sectional (undated)
+	  data; 2 = time-series data; 3 = panel data.
 	</para>
       </description>
     </function>
@@ -3078,6 +3078,7 @@
 	  <seelist>
 	    <fncref targ="critical"/>
 	    <fncref targ="invcdf"/>
+	    <fncref targ="jmpval"/>
 	  </seelist>
 	</para>
       </description>
@@ -3865,6 +3866,43 @@
 	<para>
 	  <seelist>
 	    <fncref targ="lower"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="urcpval" section="probdist" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">tau</fnarg>
+	<fnarg type="scalar">n</fnarg>
+	<fnarg type="scalar">niv</fnarg>
+	<fnarg type="scalar">itv</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  <math>P</math>-values for the test statistic from the
+	  Dickey&ndash;Fuller unit-root test and the Engle&ndash;Granger
+	  cointegration test, as per James MacKinnon (1996).
+	</para>
+	<para>
+	  The arguments are as follows: <argname>tau</argname> denotes the
+	  test statistic; <argname>n</argname> is the number of
+	  observations (or 0 for an asymptotic result);
+	  <argname>niv</argname> is the number of potentially cointegrated
+	  variables when testing for cointegration (or 1 for a univariate
+	  unit-root test); and <argname>itv</argname> is a code for the
+	  model specification &mdash; 1 for no constant, 2 for constant
+	  included, 3 for constant and linear trend, 4 for constant and
+	  quadratic trend.
+	</para>
+	<para>
+	  Note that if the test regression is <quote>augmented</quote>
+	  with lags of the dependent variable, then you should give an
+	  <argname>n</argname> value of 0 to get an asymptotic result.
+	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="pvalue"/>
 	  </seelist>
 	</para>
       </description>

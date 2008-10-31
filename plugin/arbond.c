@@ -1726,14 +1726,13 @@ static int try_alt_inverse (arbond *ab)
     char *mask = NULL;
     int err = 0;
 
-    mask = make_rank_mask(ab->Acpy, &err);
-    if (err) {
-	return err;
-    }
-
     gretl_matrix_copy_values(ab->A, ab->Acpy); 
 
-    err = matrix_shrink_by_mask(ab->A, mask);
+    mask = make_rank_mask(ab->A, &err);
+
+    if (!err) {
+	err = matrix_shrink_by_mask(ab->A, mask);
+    }
 
     if (!err) {
 	err = gretl_invert_symmetric_matrix(ab->A);

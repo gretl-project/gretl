@@ -264,6 +264,7 @@ struct str_table funcs[] = {
     { F_PVAL,     "pvalue" },
     { F_CRIT,     "critical" },
     { F_RANDGEN,  "randgen" },
+    { F_URCPVAL,  "urcpval" },
     { F_MAKEMASK, "makemask" },
     { F_VALUES,   "values" },
     { F_MSHAPE,   "mshape" },

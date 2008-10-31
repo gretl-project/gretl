@@ -389,8 +389,8 @@ static void copy_list_values (int *targ, const int *src)
     }
 }
 
-static double df_pvalue_from_plugin (double tau, int n, int niv, int itv,
-				     gretlopt opt)
+double df_pvalue_from_plugin (double tau, int n, int niv, int itv,
+			      gretlopt opt)
 {
     char datapath[FILENAME_MAX];
     void *handle;

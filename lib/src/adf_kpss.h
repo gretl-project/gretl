@@ -37,4 +37,7 @@ int kpss_test (int order, const int *list, double ***pZ,
 int coint (int order, const int *list, double ***pZ, 
 	   DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
+double df_pvalue_from_plugin (double tau, int n, int niv, 
+			      int itv, gretlopt opt);
+
 #endif /* ADF_KPSS_H */

@@ -33,135 +33,332 @@ enum urc_errs {
 #define URCLEN 221
 #define BIGLEN 884
 
-static double fpval (double *beta, double *cnorm, double *wght, 
-		     double *probs, double stat, int nobs, 
-		     int model, int nreg);
-
-static double eval_crit (double *beta, int model, int nreg, int nobs);
-
-static int gls (double *xmat, double *yvect, double *omega, 
-		double *beta, double *xomx, double *fits, 
-		double *resid, double *ssr, double *ssrt, int nobs, 
-		int nvar, int nomax, int nvmax, int ivrt);
-
-static int cholx (double *a, int m, int n);
-
-static double ddnor (double ystar);
-
-static char *read_double_and_advance (double *val, char *s)
+static double eval_crit (double *b, int model, int nreg, int nobs)
 {
-    char valstr[16];
+    double d, cval = 0.0;
 
-    while (isspace((unsigned char) *s)) s++;
+    /* Copyright (c) James G. MacKinnon, 1995. Routine to evaluate
+       response surface for specified betas and sample size. 
+    */
 
-    sscanf(s, "%s", valstr);
-    *val = atof(valstr);
-    s += strlen(valstr);
+    if (nobs == 0) {
+	cval = b[0];
+    } else if (model == 2) {
+	d = 1.0 / nobs;
+	cval = b[0] + b[1] * d + b[2] * (d * d);
+    } else if (model == 3) {
+	d = 1.0 / nobs;
+	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
+    } else if (model == 4) {
+	d = 1.0 / (nobs - nreg);
+	cval = b[0] + b[1] * d + b[2] * (d * d);
+    } else if (model == 5) {
+	d = 1.0 / (nobs - nreg);
+	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
+    } else {
+	fputs("*** Warning! Error in input file. ***", stderr);
+    }
 
-    return s;
+    return cval;
 }
 
-/* 
-   niv = # of integrated variables
-   itv = appropriate ur_code for nc, c, ct, ctt models
-   nobs = sample size (0 for asymptotic)
-   arg = test statistic
-   val = P-value (returned by routine)
-*/
-
-static int urcval (int niv, int itv, int nobs, double arg, 
-		   double *val, const char *path)
+static double ddnor (double ystar)
 {
-    gzFile fz;
-    char line[80], code[8];
-    int urc_ret = URC_OK;
-    int i, j, iskip, nvar;
-    char datfile[FILENAME_MAX];
-    struct {
-	double probs[URCLEN];
-	double cnorm[URCLEN];
-	double beta[BIGLEN];
-	double wght[URCLEN];
-	int nz, nreg, model, minsize;
-    } urc;
-    /* byte offsets into data */
-    int urc_offsets[] = {
-	39,     /* urc-1 */
-	60685,  /* urc-2 */
-	121331, /* urc-3 */
-	178662, /* urc-4 */
-	239308, /* urc-5 */
-	303269, /* urc-6 */
-	360600, /* urc-7 */
-	427876, /* urc-8 */
-	481892  /* probs */
+    double c[5] = { 3209.377589138469472562,
+		    377.4852376853020208137,
+		    113.8641541510501556495,
+		    3.161123743870565596947,
+		    .185777706184603152673 
     };
 
-    /* Check that parameters are valid */
-    if (niv < 1 || niv > MAXVARS) {
-	return URC_BAD_PARAM;
+    double d[4] = { 2844.236833439170622273,
+		    1282.616526077372275645,
+		    244.0246379344441733056,
+		    23.60129095234412093499 
+    };
+
+    double orpi = .5641895835477562869483;
+
+    double root2 = .70710678118654752440083;
+
+    double p[6] = { -6.58749161529837803157e-4,
+		    -.0160837851487422766278,
+		    -.125781726111229246204,
+		    -.360344899949804439429,
+		    -.305326634961232344035,
+		    -.0163153871373020978498 
+    };
+
+    double q[5] = { .00233520497626869185443,
+		    .0605183413124413191178,
+		    .527905102951428412248,
+		    1.87295284992346047209,
+		    2.56852019228982242072 
+    };
+
+    double a[9] = { 1230.33935479799725272,
+		    2051.07837782607146532,
+		    1712.04761263407058314,
+		    881.952221241769090411,
+		    298.635138197400131132,
+		    66.1191906371416294775,
+		    8.88314979438837594118,
+		    .56418849698867008918,
+		    2.15311535474403846343e-8 
+    };
+
+    double b[8] = { 1230.33935480374942043,
+		    3439.36767414372163696,
+		    4362.6190901432471582,
+		    3290.79923573345962678,
+		    1621.38957456669018874,
+		    537.181101862009857509,
+		    117.693950891312499305,
+		    15.7449261107098347253 
+    };
+
+    double x, x2, x3, x4, x5, x6, x7, x8, xm2, xm4, xm6, xm8;
+    double erf, bot, xm10;
+    double top, erfc, crap;
+    double y = ystar;
+    int isw = 1;
+
+    /* Copyright (c) James G. MacKinnon, 1993.  Routine to evaluate
+       cumulative normal distribution Written originally in late
+       1970s -- modified 1993 to avoid changing the argument.
+
+       This subroutine uses Cody's method to evaluate the cumulative
+       normal distribution. It is probably accurate to 19 or 20
+       significant digits. It was written in 1977, based on the Cody
+       article referred to in the documentation for IMSL subroutine
+       mdnor.
+    */
+
+    if (ystar < -16.) {
+	y = -16.;
+    } else if (ystar > 16.) {
+	y = 16.;
     }
-    if (itv < UR_NO_CONST || itv > UR_QUAD_TREND) {
-	return URC_BAD_PARAM;
+
+    x = -y * root2;
+
+    if (x == 0.0) {
+	return .5;
+    } else if (x < 0.0) {
+	x = -x;
+	isw = -1;
     }
 
-    /* Open data file */
-    sprintf(datfile, "%sdata%curcdata.gz", path, SLASH);
-    fz = gretl_gzopen(datfile, "rb");
-    if (fz == NULL) {
-	return URC_NOT_FOUND;
-    }
+    if (x > 4.0) {
+	x2 = x * x;
+	xm2 = 1.0 / x2;
+	xm4 = xm2 * xm2;
+	xm6 = xm4 * xm2;
+	xm8 = xm4 * xm4;
+	xm10 = xm6 * xm4;
+	top = p[0] + p[1] * xm2 + p[2] * xm4 + p[3] * xm6 + p[4] * xm8 + p[5] * 
+	    xm10;
+	bot = q[0] + q[1] * xm2 + q[2] * xm4 + q[3] * xm6 + q[4] * xm8 + xm10;
+	crap = orpi + top / (bot * x2);
+	erfc = exp(-x2) * crap / x;
 
-    /* skip to appropriate location in data file */
-    gzseek(fz, (z_off_t) urc_offsets[niv - 1], SEEK_SET);
-
-    iskip = (itv - 1) * (URCLEN + 1);
-    for (i = 0; i < iskip; i++) {
-	gzgets(fz, line, sizeof line);
-    }
-
-    gzgets(fz, line, sizeof line);
-    sscanf(line, "%s %d %d %d %d", code, &urc.nz, &urc.nreg,
-	   &urc.model, &urc.minsize);
-
-#if URDEBUG
-    fprintf(fdb, "code=%s nz=%d, nreg=%d, model=%d, minsize=%d\n",
-	    code, urc.nz, urc.nreg, urc.model, urc.minsize);
-    fflush(fdb);
-#endif
-
-    if (urc.model == 2 || urc.model == 4) {
-	nvar = 3;
-    } else {
-	nvar = 4;
-    }
-
-    for (i = 1; i <= URCLEN; i++) {
-	char *s = gzgets(fz, line, sizeof line);
-
-	for (j = 1; j <= nvar; j++) {
-	    s = read_double_and_advance(&urc.beta[j + (i << 2) - 5], s);
+	if (isw == -1) {
+	    erfc = 2. - erfc;
 	}
-	read_double_and_advance(&urc.wght[i - 1], s);
+    } else if (x > 0.477) {
+	x2 = x * x;
+	x3 = x2 * x;
+	x4 = x2 * x2;
+	x5 = x3 * x2;
+	x6 = x3 * x3;
+	x7 = x3 * x4;
+	x8 = x4 * x4;
+	top = a[0] + a[1] * x + a[2] * x2 + a[3] * x3 + a[4] * 
+	    x4 + a[5] * x5 + a[6] * x6 + a[7] * x7 + a[8] * x8;
+	bot = b[0] + b[1] * x + b[2] * x2 + b[3] * x3 + 
+	    b[4] * x4 + b[5] * x5 + b[6] * x6 + b[7] * x7 + x8;
+	erfc = exp(-x2) * top / bot;
+
+	if (isw == -1) {
+	    erfc = 2. - erfc;
+	}
+    } else {
+	x2 = x * x;
+	x4 = x2 * x2;
+	x6 = x4 * x2;
+	x8 = x4 * x4;
+	top = c[0] + c[1] * x2 + c[2] * x4 + c[3] * x6 + c[4] * x8;
+	bot = d[0] + d[1] * x2 + d[2] * x4 + d[3] * x6 + x8;
+	erf = x * top / bot;
+
+	erf *= isw;
+	erfc = 1.0 - erf;
     }
 
-    /* read from embedded "probs.tab" */
-    gzseek(fz, (z_off_t) urc_offsets[MAXVARS], SEEK_SET);
-    for (i = 0; i < URCLEN; i++) {
-	gzgets(fz, line, sizeof line);
-	sscanf(line, "%lf %lf", &urc.probs[i], &urc.cnorm[i]);
+    return erfc * .5;
+}
+
+static int cholx (double *a, int m, int n)
+{
+    int i, j, k, kl;
+    double t, ooa = 0.0;
+    int err = 0;
+
+    /* Copyright (c) James G. MacKinnon, 1993.  This routine uses the
+       cholesky decomposition to invert a real symmetric matrix.
+    */
+
+    /* Parameter adjustment */
+    a -= 1 + m;
+
+    for (i = 1; i <= n; ++i) {
+	kl = i - 1;
+	for (j = i; j <= n; ++j) {
+	    if (i > 1) {
+		for (k = 1; k <= kl; ++k) {
+		    a[i + j * m] -= a[k + i * m] * a[k + j * m];
+		}
+	    } else {
+		if (a[i + i * m] <= 0.0) {
+		    err = i;
+		    goto cholx_exit;
+		}
+	    }
+	    if (i == j) {
+		a[i + i * m] = sqrt(a[i + i * m]);
+	    } else {
+		if (j == i + 1) {
+		    ooa = 1. / a[i + i * m];
+		}
+		a[i + j * m] *= ooa;
+	    }
+	}
     }
 
-    if (nobs > 0 && nobs < urc.minsize) {
-	urc_ret = URC_SMALL_SAMPLE;
+    for (i = 1; i <= n; ++i) {
+	for (j = i; j <= n; ++j) {
+	    ooa = 1. / a[j + j * m];
+	    if (i >= j) {
+		t = 1.;
+		goto cholx_jump;
+	    }
+	    kl = j - 1;
+	    t = 0.;
+	    for (k = i; k <= kl; ++k) {
+		t -= a[i + k * m] * a[k + j * m];
+	    }
+	cholx_jump:
+	    a[i + j * m] = t * ooa;
+	}
     }
 
-    *val = fpval(urc.beta, urc.cnorm, urc.wght, urc.probs,
-		 arg, nobs, urc.model, urc.nreg);
+    for (i = 1; i <= n; ++i) {
+	for (j = i; j <= n; ++j) {
+	    t = 0.;
+	    for (k = j; k <= n; ++k) {
+		t += a[i + k * m] * a[j + k * m];
+	    }
+	    a[i + j * m] = t;
+	    a[j + i * m] = t;
+	}
+    }
 
-    gzclose(fz);
+ cholx_exit:
 
-    return urc_ret;
+    return err;
+}
+
+static int gls (double *xmat, double *yvec, double *omega, 
+		double *beta, double *xomx, double *fits, 
+		double *resid, double *ssr, double *ssrt, int nobs, 
+		int nvar, int nomax, int nvmax, int ivrt)
+{
+    int omega_offset = 1 + nomax;
+    int xomx_offset = 1 + nvmax;
+    int xmat_offset = 1 + nomax;
+    int i, j, k, l;
+    double xomy[50];
+
+    /* Copyright (c) James G. MacKinnon, 1995.  Subroutine to do GLS
+       estimation the obvious way.  Use only when sample size is small
+       (nobs <= 50). 1995-1-3 
+    */
+
+    /* xomx is covariance matrix of parameter estimates if omega is
+       truly known.  First, invert omega matrix if ivrt=0. Original one
+       gets replaced. */
+
+    /* Parameter adjustments */
+    omega -= omega_offset;
+    xomx -= xomx_offset;
+    xmat -= xmat_offset;
+    --resid;
+    --fits;
+    --yvec;
+    --beta;
+
+    if (ivrt == 0) {
+	cholx(&omega[omega_offset], nomax, nobs);
+    }
+
+    /* form xomx matrix and xomy vector */
+    for (j = 1; j <= nvar; ++j) {
+	xomy[j - 1] = 0.;
+	for (l = j; l <= nvar; ++l) {
+	    xomx[j + l * nvmax] = 0.;
+	}
+    }
+    for (i = 1; i <= nobs; ++i) {
+	for (k = 1; k <= nobs; ++k) {
+	    for (j = 1; j <= nvar; ++j) {
+		xomy[j - 1] += xmat[i + j * nomax] * 
+		    omega[k + i * nomax] * yvec[k];
+		for (l = j; l <= nvar; ++l) {
+		    xomx[j + l * nvmax] += xmat[i + j * nomax] * 
+			omega[k + i * nomax] * 
+			xmat[k + l * nomax];
+		}
+	    }
+	}
+    }
+
+    for (j = 1; j <= nvar; ++j) {
+	for (l = j; l <= nvar; ++l) {
+	    xomx[l + j * nvmax] = xomx[j + l * nvmax];
+	}
+    }
+
+    /* invert xomx matrix */
+    cholx(&xomx[xomx_offset], nvmax, nvar);
+
+    /* form estimates of beta */
+    for (i = 1; i <= nvar; ++i) {
+	beta[i] = 0.;
+	for (j = 1; j <= nvar; ++j) {
+	    beta[i] += xomx[i + j * nvmax] * xomy[j - 1];
+	}
+    }
+
+    /* find ssr, fitted values, and residuals */
+    *ssr = 0.;
+    for (i = 1; i <= nobs; ++i) {
+	fits[i] = 0.;
+	for (j = 1; j <= nvar; ++j) {
+	    fits[i] += xmat[i + j * nomax] * beta[j];
+	}
+	resid[i] = yvec[i] - fits[i];
+	*ssr += resid[i] * resid[i];
+    }
+
+    /* find ssr from transformed regression */
+    *ssrt = 0.;
+    for (i = 1; i <= nobs; ++i) {
+	for (k = 1; k <= nobs; ++k) {
+	    *ssrt += resid[i] * omega[k + i * nomax] * resid[k];
+	}
+    }
+
+    return 0;
 }
 
 static double fpval (double *beta, double *cnorm, double *wght, 
@@ -337,333 +534,131 @@ static double fpval (double *beta, double *cnorm, double *wght,
     return pval;
 }
 
-static double eval_crit (double *b, int model, int nreg, int nobs)
+static char *read_double_and_advance (double *val, char *s)
 {
-    double d, cval = 0.0;
+    char valstr[16];
 
-    /* Copyright (c) James G. MacKinnon, 1995. Routine to evaluate
-       response surface for specified betas and sample size. 
-    */
+    while (isspace((unsigned char) *s)) s++;
 
-    if (nobs == 0) {
-	cval = b[0];
-    } else if (model == 2) {
-	d = 1.0 / nobs;
-	cval = b[0] + b[1] * d + b[2] * (d * d);
-    } else if (model == 3) {
-	d = 1.0 / nobs;
-	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
-    } else if (model == 4) {
-	d = 1.0 / (nobs - nreg);
-	cval = b[0] + b[1] * d + b[2] * (d * d);
-    } else if (model == 5) {
-	d = 1.0 / (nobs - nreg);
-	cval = b[0] + b[1] * d + b[2] * (d * d) + b[3] * (d * d * d);
+    sscanf(s, "%s", valstr);
+    *val = atof(valstr);
+    s += strlen(valstr);
+
+    return s;
+}
+
+/* 
+   niv = # of integrated variables
+   itv = appropriate ur_code for nc, c, ct, ctt models
+   nobs = sample size (0 for asymptotic)
+   arg = test statistic
+   val = P-value (returned by routine)
+*/
+
+static int urcval (int niv, int itv, int nobs, double arg, 
+		   const char *path, double *val)
+{
+    gzFile fz;
+    char line[80], code[8];
+    int urc_ret = URC_OK;
+    int i, j, iskip, nvar;
+    char datfile[FILENAME_MAX];
+    struct {
+	double probs[URCLEN];
+	double cnorm[URCLEN];
+	double beta[BIGLEN];
+	double wght[URCLEN];
+	int nz, nreg, model, minsize;
+    } urc;
+    /* byte offsets into data */
+    int urc_offsets[] = {
+	39,     /* urc-1 */
+	60685,  /* urc-2 */
+	121331, /* urc-3 */
+	178662, /* urc-4 */
+	239308, /* urc-5 */
+	303269, /* urc-6 */
+	360600, /* urc-7 */
+	427876, /* urc-8 */
+	481892  /* probs */
+    };
+
+    /* Check that parameters are valid */
+    if (niv < 1 || niv > MAXVARS) {
+	return URC_BAD_PARAM;
+    }
+    if (itv < UR_NO_CONST || itv > UR_QUAD_TREND) {
+	return URC_BAD_PARAM;
+    }
+
+    /* Open data file */
+    sprintf(datfile, "%sdata%curcdata.gz", path, SLASH);
+    fz = gretl_gzopen(datfile, "rb");
+    if (fz == NULL) {
+	return URC_NOT_FOUND;
+    }
+
+    /* skip to appropriate location in data file */
+    gzseek(fz, (z_off_t) urc_offsets[niv - 1], SEEK_SET);
+
+    iskip = (itv - 1) * (URCLEN + 1);
+    for (i = 0; i < iskip; i++) {
+	gzgets(fz, line, sizeof line);
+    }
+
+    gzgets(fz, line, sizeof line);
+    sscanf(line, "%s %d %d %d %d", code, &urc.nz, &urc.nreg,
+	   &urc.model, &urc.minsize);
+
+#if URDEBUG
+    fprintf(fdb, "code=%s nz=%d, nreg=%d, model=%d, minsize=%d\n",
+	    code, urc.nz, urc.nreg, urc.model, urc.minsize);
+    fflush(fdb);
+#endif
+
+    if (urc.model == 2 || urc.model == 4) {
+	nvar = 3;
     } else {
-	fputs("*** Warning! Error in input file. ***", stderr);
+	nvar = 4;
     }
 
-    return cval;
+    for (i = 1; i <= URCLEN; i++) {
+	char *s = gzgets(fz, line, sizeof line);
+
+	for (j = 1; j <= nvar; j++) {
+	    s = read_double_and_advance(&urc.beta[j + (i << 2) - 5], s);
+	}
+	read_double_and_advance(&urc.wght[i - 1], s);
+    }
+
+    /* read from embedded "probs.tab" */
+    gzseek(fz, (z_off_t) urc_offsets[MAXVARS], SEEK_SET);
+    for (i = 0; i < URCLEN; i++) {
+	gzgets(fz, line, sizeof line);
+	sscanf(line, "%lf %lf", &urc.probs[i], &urc.cnorm[i]);
+    }
+
+    if (nobs > 0 && nobs < urc.minsize) {
+	urc_ret = URC_SMALL_SAMPLE;
+    }
+
+    *val = fpval(urc.beta, urc.cnorm, urc.wght, urc.probs,
+		 arg, nobs, urc.model, urc.nreg);
+
+    gzclose(fz);
+
+    return urc_ret;
 }
 
-static int gls (double *xmat, double *yvec, double *omega, 
-		double *beta, double *xomx, double *fits, 
-		double *resid, double *ssr, double *ssrt, int nobs, 
-		int nvar, int nomax, int nvmax, int ivrt)
-{
-    int omega_offset = 1 + nomax;
-    int xomx_offset = 1 + nvmax;
-    int xmat_offset = 1 + nomax;
-    int i, j, k, l;
-    double xomy[50];
-
-    /* Copyright (c) James G. MacKinnon, 1995.  Subroutine to do GLS
-       estimation the obvious way.  Use only when sample size is small
-       (nobs <= 50). 1995-1-3 
-    */
-
-    /* xomx is covariance matrix of parameter estimates if omega is
-       truly known.  First, invert omega matrix if ivrt=0. Original one
-       gets replaced. */
-
-    /* Parameter adjustments */
-    omega -= omega_offset;
-    xomx -= xomx_offset;
-    xmat -= xmat_offset;
-    --resid;
-    --fits;
-    --yvec;
-    --beta;
-
-    if (ivrt == 0) {
-	cholx(&omega[omega_offset], nomax, nobs);
-    }
-
-    /* form xomx matrix and xomy vector */
-    for (j = 1; j <= nvar; ++j) {
-	xomy[j - 1] = 0.;
-	for (l = j; l <= nvar; ++l) {
-	    xomx[j + l * nvmax] = 0.;
-	}
-    }
-    for (i = 1; i <= nobs; ++i) {
-	for (k = 1; k <= nobs; ++k) {
-	    for (j = 1; j <= nvar; ++j) {
-		xomy[j - 1] += xmat[i + j * nomax] * 
-		    omega[k + i * nomax] * yvec[k];
-		for (l = j; l <= nvar; ++l) {
-		    xomx[j + l * nvmax] += xmat[i + j * nomax] * 
-			omega[k + i * nomax] * 
-			xmat[k + l * nomax];
-		}
-	    }
-	}
-    }
-
-    for (j = 1; j <= nvar; ++j) {
-	for (l = j; l <= nvar; ++l) {
-	    xomx[l + j * nvmax] = xomx[j + l * nvmax];
-	}
-    }
-
-    /* invert xomx matrix */
-    cholx(&xomx[xomx_offset], nvmax, nvar);
-
-    /* form estimates of beta */
-    for (i = 1; i <= nvar; ++i) {
-	beta[i] = 0.;
-	for (j = 1; j <= nvar; ++j) {
-	    beta[i] += xomx[i + j * nvmax] * xomy[j - 1];
-	}
-    }
-
-    /* find ssr, fitted values, and residuals */
-    *ssr = 0.;
-    for (i = 1; i <= nobs; ++i) {
-	fits[i] = 0.;
-	for (j = 1; j <= nvar; ++j) {
-	    fits[i] += xmat[i + j * nomax] * beta[j];
-	}
-	resid[i] = yvec[i] - fits[i];
-	*ssr += resid[i] * resid[i];
-    }
-
-    /* find ssr from transformed regression */
-    *ssrt = 0.;
-    for (i = 1; i <= nobs; ++i) {
-	for (k = 1; k <= nobs; ++k) {
-	    *ssrt += resid[i] * omega[k + i * nomax] * resid[k];
-	}
-    }
-
-    return 0;
-}
-
-static int cholx (double *a, int m, int n)
-{
-    int i, j, k, kl;
-    double t, ooa = 0.0;
-    int err = 0;
-
-    /* Copyright (c) James G. MacKinnon, 1993.  This routine uses the
-       cholesky decomposition to invert a real symmetric matrix.
-    */
-
-    /* Parameter adjustment */
-    a -= 1 + m;
-
-    for (i = 1; i <= n; ++i) {
-	kl = i - 1;
-	for (j = i; j <= n; ++j) {
-	    if (i > 1) {
-		for (k = 1; k <= kl; ++k) {
-		    a[i + j * m] -= a[k + i * m] * a[k + j * m];
-		}
-	    } else {
-		if (a[i + i * m] <= 0.0) {
-		    err = i;
-		    goto cholx_exit;
-		}
-	    }
-	    if (i == j) {
-		a[i + i * m] = sqrt(a[i + i * m]);
-	    } else {
-		if (j == i + 1) {
-		    ooa = 1. / a[i + i * m];
-		}
-		a[i + j * m] *= ooa;
-	    }
-	}
-    }
-
-    for (i = 1; i <= n; ++i) {
-	for (j = i; j <= n; ++j) {
-	    ooa = 1. / a[j + j * m];
-	    if (i >= j) {
-		t = 1.;
-		goto cholx_jump;
-	    }
-	    kl = j - 1;
-	    t = 0.;
-	    for (k = i; k <= kl; ++k) {
-		t -= a[i + k * m] * a[k + j * m];
-	    }
-	cholx_jump:
-	    a[i + j * m] = t * ooa;
-	}
-    }
-
-    for (i = 1; i <= n; ++i) {
-	for (j = i; j <= n; ++j) {
-	    t = 0.;
-	    for (k = j; k <= n; ++k) {
-		t += a[i + k * m] * a[j + k * m];
-	    }
-	    a[i + j * m] = t;
-	    a[j + i * m] = t;
-	}
-    }
-
- cholx_exit:
-
-    return err;
-}
-
-static double ddnor (double ystar)
-{
-    double c[5] = { 3209.377589138469472562,
-		    377.4852376853020208137,
-		    113.8641541510501556495,
-		    3.161123743870565596947,
-		    .185777706184603152673 
-    };
-
-    double d[4] = { 2844.236833439170622273,
-		    1282.616526077372275645,
-		    244.0246379344441733056,
-		    23.60129095234412093499 
-    };
-
-    double orpi = .5641895835477562869483;
-
-    double root2 = .70710678118654752440083;
-
-    double p[6] = { -6.58749161529837803157e-4,
-		    -.0160837851487422766278,
-		    -.125781726111229246204,
-		    -.360344899949804439429,
-		    -.305326634961232344035,
-		    -.0163153871373020978498 
-    };
-
-    double q[5] = { .00233520497626869185443,
-		    .0605183413124413191178,
-		    .527905102951428412248,
-		    1.87295284992346047209,
-		    2.56852019228982242072 
-    };
-
-    double a[9] = { 1230.33935479799725272,
-		    2051.07837782607146532,
-		    1712.04761263407058314,
-		    881.952221241769090411,
-		    298.635138197400131132,
-		    66.1191906371416294775,
-		    8.88314979438837594118,
-		    .56418849698867008918,
-		    2.15311535474403846343e-8 
-    };
-
-    double b[8] = { 1230.33935480374942043,
-		    3439.36767414372163696,
-		    4362.6190901432471582,
-		    3290.79923573345962678,
-		    1621.38957456669018874,
-		    537.181101862009857509,
-		    117.693950891312499305,
-		    15.7449261107098347253 
-    };
-
-    double x, x2, x3, x4, x5, x6, x7, x8, xm2, xm4, xm6, xm8;
-    double erf, bot, xm10;
-    double top, erfc, crap;
-    double y = ystar;
-    int isw = 1;
-
-    /* Copyright (c) James G. MacKinnon, 1993.  Routine to evaluate
-       cumulative normal distribution Written originally in late
-       1970's -- modified 1993 to avoid changing the argument.
-
-       This subroutine uses Cody's method to evaluate the cumulative
-       normal distribution. It is probably accurate to 19 or 20
-       significant digits. It was written in 1977, based on the Cody
-       article referred to in the documentation for IMSL subroutine
-       mdnor.
-    */
-
-    if (ystar < -16.) {
-	y = -16.;
-    } else if (ystar > 16.) {
-	y = 16.;
-    }
-
-    x = -y * root2;
-
-    if (x == 0.0) {
-	return .5;
-    } else if (x < 0.0) {
-	x = -x;
-	isw = -1;
-    }
-
-    if (x > 4.0) {
-	x2 = x * x;
-	xm2 = 1.0 / x2;
-	xm4 = xm2 * xm2;
-	xm6 = xm4 * xm2;
-	xm8 = xm4 * xm4;
-	xm10 = xm6 * xm4;
-	top = p[0] + p[1] * xm2 + p[2] * xm4 + p[3] * xm6 + p[4] * xm8 + p[5] * 
-	    xm10;
-	bot = q[0] + q[1] * xm2 + q[2] * xm4 + q[3] * xm6 + q[4] * xm8 + xm10;
-	crap = orpi + top / (bot * x2);
-	erfc = exp(-x2) * crap / x;
-
-	if (isw == -1) {
-	    erfc = 2. - erfc;
-	}
-    } else if (x > 0.477) {
-	x2 = x * x;
-	x3 = x2 * x;
-	x4 = x2 * x2;
-	x5 = x3 * x2;
-	x6 = x3 * x3;
-	x7 = x3 * x4;
-	x8 = x4 * x4;
-	top = a[0] + a[1] * x + a[2] * x2 + a[3] * x3 + a[4] * 
-	    x4 + a[5] * x5 + a[6] * x6 + a[7] * x7 + a[8] * x8;
-	bot = b[0] + b[1] * x + b[2] * x2 + b[3] * x3 + 
-	    b[4] * x4 + b[5] * x5 + b[6] * x6 + b[7] * x7 + x8;
-	erfc = exp(-x2) * top / bot;
-
-	if (isw == -1) {
-	    erfc = 2. - erfc;
-	}
-    } else {
-	x2 = x * x;
-	x4 = x2 * x2;
-	x6 = x4 * x2;
-	x8 = x4 * x4;
-	top = c[0] + c[1] * x2 + c[2] * x4 + c[3] * x6 + c[4] * x8;
-	bot = d[0] + d[1] * x2 + d[2] * x4 + d[3] * x6 + x8;
-	erf = x * top / bot;
-
-	erf *= isw;
-	erfc = 1.0 - erf;
-    }
-
-    return erfc * .5;
-}
+/* 
+   tval = tau test statistic
+   n = sample size (or 0 for asymptotic)
+   niv = # of integrated variables
+   itv = 1, 2, 3, 4 for nc, c, ct, ctt models.
+   path = path to urc data files
+   
+   returns: the computed P-value
+*/
 
 double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
 {
@@ -679,9 +674,8 @@ double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
 #endif
 
     gretl_push_c_numeric_locale();
-    check = urcval(niv, itv, n, tval, &val, path);
+    check = urcval(niv, itv, n, tval, path, &val);
     gretl_pop_c_numeric_locale();
-
 
 #if URDEBUG
     fclose(fdb);
