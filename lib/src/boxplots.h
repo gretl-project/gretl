@@ -28,6 +28,8 @@ int boolean_boxplots (const char *str, double ***pZ,
 
 int gnuplot_from_boxplot (const char *fname);
 
+int boxplot_numerical_summary (const char *fname, PRN *prn);
+
 const char *get_last_boxplots_string (void);
 
 #endif /* BOXPLOTS_H */

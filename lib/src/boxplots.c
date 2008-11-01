@@ -72,45 +72,43 @@ static void quartiles (double *x, const int n, BOXPLOT *box)
     box->uq = p[2];
 }
 
-#if 0
-
 static void real_six_numbers (BOXPLOT *plt, int offset, int do_mean,
-			      FILE *fp)
+			      PRN *prn)
 {
     if (plt->bool != NULL) {
-	fprintf(fp, "# %s\n %-*s", plt->varname, offset - 1, plt->bool);
+	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
     } else {
-	fprintf(fp, "# %-*s", offset, plt->varname);
+	pprintf(prn, "%-*s", offset, plt->varname);
     }
 
     if (do_mean) {
-	fprintf(fp, "%9.5g", plt->mean);
+	pprintf(prn, "%9.5g", plt->mean);
     }
 
-    fprintf(fp, "%9.5g%9.5g%9.5g%9.5g%9.5g", plt->min, 
+    pprintf(prn, "%9.5g%9.5g%9.5g%9.5g%9.5g", plt->min, 
 	    plt->lq, plt->median, plt->uq, plt->max);
 
     if (plt->n > 0) {
-	fprintf(fp, "  (n=%d)\n", plt->n);
+	pprintf(prn, "  (n=%d)\n", plt->n);
     } else {
-	fputc('\n', fp);
+	pputc(prn, '\n');
     }
 }
 
 static void 
-five_numbers_with_interval (BOXPLOT *plt, int offset, FILE *fp)
+five_numbers_with_interval (BOXPLOT *plt, int offset, PRN *prn)
 {
     char tmp[32];
 
     sprintf(tmp, "%.5g - %.5g", plt->conf[0], plt->conf[1]);
 
     if (plt->bool != NULL) {
-	fprintf(fp, "# %s\n %-*s", plt->varname, offset - 1, plt->bool);
+	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
     } else {
-	fprintf(fp, "# %-*s", offset, plt->varname);
+	pprintf(prn, "%-*s", offset, plt->varname);
     }
 	    
-    fprintf(fp, "%8.5g%10.5g%10.5g%17s%10.5g%10.5g\n",
+    pprintf(prn, "%8.5g%10.5g%10.5g%17s%10.5g%10.5g\n",
 	    plt->min, plt->lq, plt->median,
 	    tmp, plt->uq, plt->max);
 }
@@ -147,7 +145,7 @@ static int get_format_offset (PLOTGROUP *grp)
     return L + 2;
 }
 
-static int six_numbers (PLOTGROUP *grp, FILE *fp) 
+static int six_numbers (PLOTGROUP *grp, PRN *prn) 
 {
     int offset;
     int i;
@@ -158,39 +156,84 @@ static int six_numbers (PLOTGROUP *grp, FILE *fp)
 	/* no confidence intervals */
 	int do_mean = has_mean(grp);
 
-	fprintf(fp, "# %s\n# \n", _("Numerical summary"));
+	pprintf(prn, "%s\n\n", _("Numerical summary"));
 
 	if (do_mean) {
-	    fprintf(fp, "# %*s%9s%9s%9s%9s%9s\n", offset + 9, _("mean"),
+	    pprintf(prn, "%*s%9s%9s%9s%9s%9s\n", offset + 9, _("mean"),
 		    "min", "Q1", _("median"), "Q3", "max");
 	} else {
-	    fprintf(fp, "# %*s%10s%10s%10s%10s\n", offset + 10,
+	    pprintf(prn, "%*s%10s%10s%10s%10s\n", offset + 10,
 		    "min", "Q1", _("median"), "Q3", "max");
 	}	    
 
 	for (i=0; i<grp->nplots; i++) {
-	    real_six_numbers(&grp->plots[i], offset, do_mean, fp);
+	    real_six_numbers(&grp->plots[i], offset, do_mean, prn);
 	}
     } else { 
 	/* with confidence intervals */
-	fprintf(fp, "# %s\n\n", _("Numerical summary with bootstrapped confidence "
-				"interval for median"));	 
+	pprintf(prn, "%s\n\n", _("Numerical summary with bootstrapped confidence "
+				 "interval for median"));	 
 
-	fprintf(fp, "# %*s%10s%10s%17s%10s%10s\n",
+	pprintf(prn, "%*s%10s%10s%17s%10s%10s\n",
 		offset + 8, "min", "Q1", _("median"), 
 		/* xgettext:no-c-format */
 		_("(90% interval)"), 
 		"Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
-	    five_numbers_with_interval(&grp->plots[i], offset, fp);
+	    five_numbers_with_interval(&grp->plots[i], offset, prn);
 	}
     }
 
     return 0;
 }
 
-#endif
+/* read data out of a boxplots file in order to reconstruct
+   numerical summary */
+
+static int read_data_block (PLOTGROUP *grp, char *line, size_t lsize,
+			    int *block, FILE *fp)
+{
+    BOXPLOT *plot;
+    int i, j, nf, targ;
+    int err = 0;
+
+    for (i=0; i<grp->nplots && !err; i++) {
+	plot = &grp->plots[i];
+	targ = 2; /* the number of values we should read */
+	nf = 0;   /* the number of values actually read */
+	if (*block == 0) {
+	    /* min, Q1, Q3, max */
+	    targ = 5;
+	    nf = sscanf(line, "%d %lf %lf %lf %lf", 
+			&j, &plot->min, &plot->lq, &plot->uq, &plot->max);
+	} else if (*block == 1) {
+	    /* median */
+	    nf = sscanf(line, "%d %lf", &j, &plot->median);
+	} else if (*block == 2) {
+	    /* mean, or lower bound of c.i. */
+	    if (grp->do_notches) {
+		nf = sscanf(line, "%d %lf", &j, &plot->conf[0]);
+	    } else {
+		nf = sscanf(line, "%d %lf", &j, &plot->mean);
+	    }
+	} else if (*block == 3) {
+	    /* upper bound of c.i. */
+	    nf = sscanf(line, "%d %lf", &j, &plot->conf[1]);
+	}
+	if (nf != targ || j != i + 1) {
+	    /* data read screwed up */
+	    err = E_DATA;
+	} else if (fgets(line, lsize, fp) == NULL) {
+	    /* can't get data line for next plot */
+	    err = E_DATA;
+	}
+    }
+
+    *block += 1;
+
+    return err;
+}
 
 #define ITERS 560
 #define CONFIDENCE 0.90
@@ -961,6 +1004,104 @@ int gnuplot_from_boxplot (const char *fname)
     } else if (err == E_DATA) {
 	gretl_errmsg_set(_("boxplot file is corrupt"));
     }
+
+    destroy_boxplots(grp);
+
+    return err;
+}
+
+/* Given a gnuplot boxplot file created by gretl, parse out the
+   "numerical summary" information.  Note that this requires a
+   strictly regimented plot file, so if you make any changes to the
+   way boxplot files are printed (see gnuplot_from_boxplot above) you
+   should check this function for breakage.
+*/
+
+int boxplot_numerical_summary (const char *fname, PRN *prn)
+{
+    PLOTGROUP *grp = NULL;
+    char line[512];
+    FILE *fp;
+    int dlines = 0;
+    int n = 0;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    /* first pass: count the plots, using labels as heuristic */
+
+    while (fgets(line, sizeof line, fp)) {
+	if (!strncmp(line, "1 ", 2)) {
+	    /* reached first data block */
+	    break;
+	} else if (!strncmp(line, "set label ", 10)) {
+	    if (!strncmp(line + 10, "\"(", 2)) {
+		; /* boolean specifier */
+	    } else {
+		/* should correspond to a plot */
+		n++;
+	    }
+	} else if (!strncmp(line, "'-'", 3)) {
+	    dlines++;
+	}
+    }
+
+    if (n == 0) {
+	err = E_DATA;
+    } else {
+	grp = plotgroup_new(n);
+	if (grp == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && dlines == 4) {
+	grp->do_notches = 1;
+    }
+
+    if (!err) {
+	char *label;
+	int i = 0, block = 0;
+
+	/* second pass: read data */
+	rewind(fp);
+
+	gretl_push_c_numeric_locale();
+
+	while (fgets(line, sizeof line, fp) && !err) {
+	    if (!strncmp(line, "set label ", 10)) {
+		label = gretl_quoted_string_strdup(line + 10, NULL);
+		if (label == NULL) {
+		    err = E_DATA;
+		} else if (*label == '(') {
+		    /* should be boolean specifier, following varname */
+		    if (i > 0) {
+			grp->plots[i-1].bool = label;
+		    } else {
+			free(label);
+			err = E_DATA;
+		    }
+		} else {
+		    strncat(grp->plots[i++].varname, label, VNAMELEN-1);
+		    free(label);
+		}
+	    } else if (!strncmp(line, "1 ", 2)) {
+		/* start of a data block */
+		err = read_data_block(grp, line, sizeof line, &block, fp);
+	    } 
+	}
+
+	gretl_pop_c_numeric_locale();
+    }
+
+    if (!err) {
+	six_numbers(grp, prn);
+    }
+
+    fclose(fp);
 
     destroy_boxplots(grp);
 

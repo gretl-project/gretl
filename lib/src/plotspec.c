@@ -46,6 +46,7 @@ GPT_SPEC *plotspec_new (void)
     }
 
     spec->lines = NULL;
+    spec->labels = NULL;
 
     for (i=0; i<4; i++) {
 	spec->titles[i][0] = 0;
@@ -56,10 +57,6 @@ GPT_SPEC *plotspec_new (void)
 
     spec->literal = NULL;
     spec->n_literal = 0;
-
-    for (i=0; i<MAX_PLOT_LABELS; i++) {
-	plotspec_label_init(&(spec->labels[i]));
-    }
 
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
@@ -89,6 +86,7 @@ GPT_SPEC *plotspec_new (void)
     spec->ptr = NULL;
     spec->reglist = NULL;
     spec->n_lines = 0;
+    spec->n_labels = 0;
     spec->nobs = 0;
     spec->okobs = 0;
     spec->pd = 0;
@@ -111,6 +109,10 @@ void plotspec_destroy (GPT_SPEC *spec)
     if (spec->lines != NULL) {
 	free(spec->lines);
     }
+
+    if (spec->labels != NULL) {
+	free(spec->labels);
+    }    
 
     if (spec->data != NULL) {
 	free(spec->data);
@@ -153,11 +155,11 @@ int plotspec_add_line (GPT_SPEC *spec)
     spec->n_lines += 1;
 
     lines[n].varnum = 0;
-    lines[n].title[0] = 0;
-    lines[n].formula[0] = 0;
-    lines[n].style[0] = 0;
-    lines[n].scale[0] = 0;
-    lines[n].rgb[0] = 0;
+    lines[n].title[0] = '\0';
+    lines[n].formula[0] = '\0';
+    lines[n].style[0] = '\0';
+    lines[n].scale[0] = '\0';
+    lines[n].rgb[0] = '\0';
     lines[n].yaxis = 1;
     lines[n].type = LT_NONE;
     lines[n].ptype = 0;
@@ -202,6 +204,55 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
     }
 
     spec->lines = lines;
+
+    return 0;
+}
+
+int plotspec_add_label (GPT_SPEC *spec)
+{
+    GPT_LABEL *labels;
+    int n = spec->n_labels;
+
+    labels = realloc(spec->labels, (n + 1) * sizeof *labels);
+    if (labels == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->labels = labels;
+    spec->n_labels += 1;
+
+    labels[n].text[0] = '\0';
+    labels[n].pos[0] = NADBL;
+    labels[n].pos[1] = NADBL;
+    labels[n].just = GP_JUST_LEFT;
+
+    return 0;
+}
+
+int plotspec_delete_label (GPT_SPEC *spec, int i)
+{
+    GPT_LABEL *labels = spec->labels;
+    int j, n = spec->n_labels;
+
+    if (i < 0 || i >= n) {
+	return E_DATA;
+    }
+
+    for (j=i; j<n-1; j++) {
+	strcpy(labels[j].text, labels[j+1].text);
+	labels[j].pos[0] = labels[j+1].pos[0];
+	labels[j].pos[1] = labels[j+1].pos[1];
+	labels[j].just = labels[j+1].just;
+    }
+
+    spec->n_labels -= 1;
+
+    labels = realloc(spec->labels, (n - 1) * sizeof *labels);
+    if (labels == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->labels = labels;
 
     return 0;
 }
@@ -559,9 +610,9 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	fprintf(fp, "set y2label \"%s\"\n", spec->titles[3]);
     }
 
-    for (i=0; i<MAX_PLOT_LABELS; i++) {
+    for (i=0; i<spec->n_labels; i++) {
 	if (!string_is_blank(spec->labels[i].text)) {
-	    print_plot_labelspec(&(spec->labels[i]), fp);
+	    print_plot_labelspec(&spec->labels[i], fp);
 	}
     }
 

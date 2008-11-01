@@ -29,6 +29,8 @@
 #include "guiprint.h"
 #include "textbuf.h"
 
+#include "boxplots.h"
+
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
 
@@ -1252,91 +1254,73 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 
 /* read a gnuplot source line specifying a text label */
 
-static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
+static int parse_label_line (GPT_SPEC *spec, const char *line)
 {
     const char *p, *s;
+    char *text = NULL;
     double x, y;
-    int nc, q2 = 0;
-    int textread = 0;
+    int nc, just = GP_JUST_LEFT;
+    int err = 0;
 
-    /* set label "this is a label" at 1998.26,937.557 left front */
-    /* set label 'foobar' at 1500,350 left */
+    /* Examples:
+       set label "this is a label" at 1998.26,937.557 left front
+       set label 'foobar' at 1500,350 left 
+    */
 
-    if (i >= MAX_PLOT_LABELS) {
+    /* find first double or single quote */
+    p = strchr(line, '"');
+    if (p == NULL) {
+	p = strchr(line, '\'');
+    }
+
+    if (p == NULL) {
+	/* no label text found */
 	return 1;
     }
 
-    plotspec_label_init(&(spec->labels[i]));
-
-    /* find first single or double quote */
-    p = strchr(line, '\'');
-    if (p == NULL) {
-	p = strchr(line, '"');
-	if (p == NULL) {
-	    return 1;
-	}
-	q2 = 1;
-    }
-
-    p++;
-    s = p;
-
-    /* get the label text */
-    while (*s) {
-	if (q2) {
-	    if (*s == '"' && *(s-1) != '\\') {
-		textread = 1;
-	    }
-	} else if (*s == '\'') {
-	    textread = 1;
-	}
-
-	if (textread) {
-	    int len = s - p;
-
-	    if (len > PLOT_LABEL_TEXT_LEN) {
-		len = PLOT_LABEL_TEXT_LEN;
-	    }
-	    strncat(spec->labels[i].text, p, len);
-	    break;
-	}
-
-	s++;
-    }
-
-    if (!textread) {
+    text = gretl_quoted_string_strdup(p, &s);
+    if (text == NULL) {
 	return 1;
     }
 
     /* get the position */
     p = strstr(s, "at");
     if (p == NULL) {
-	spec->labels[i].text[0] = '\0';
-	return 1;
+	err = E_DATA;
+    } else {
+	p += 2;
+	gretl_push_c_numeric_locale();
+	nc = sscanf(p, "%lf,%lf", &x, &y);
+	gretl_pop_c_numeric_locale();
+	if (nc != 2) {
+	    err = E_DATA;
+	} 
     }
 
-    p += 2;
+    if (!err) {
+	/* justification */
+	if (strstr(p, "right")) {
+	    just = GP_JUST_RIGHT;
+	} else if (strstr(p, "center")) {
+	    just = GP_JUST_CENTER;
+	}
+    }
+    
+    if (!err) {
+	err = plotspec_add_label(spec);
+	if (!err) {
+	    int i = spec->n_labels - 1;
 
-    gretl_push_c_numeric_locale();
-    nc = sscanf(p, "%lf,%lf", &x, &y);
-    gretl_pop_c_numeric_locale();
-
-    if (nc != 2) {
-	spec->labels[i].text[0] = '\0';
-	return 1;
+	    strncat(spec->labels[i].text, text, PLOT_LABEL_TEXT_LEN);
+	    spec->labels[i].pos[0] = x;
+	    spec->labels[i].pos[1] = y;
+	    spec->labels[i].just = just;
+	}
     }
 
-    spec->labels[i].pos[0] = x;
-    spec->labels[i].pos[1] = y;
+    free(text);
 
-    /* justification */
-    if (strstr(p, "right")) {
-	spec->labels[i].just = GP_JUST_RIGHT;
-    } else if (strstr(p, "center")) {
-	spec->labels[i].just = GP_JUST_CENTER;
-    } 
-
-    return 0;
+    return err;
 }
 
 static int 
@@ -1437,7 +1421,7 @@ static int catch_value (char *targ, const char *src, int maxlen)
     return (*targ != '\0');
 }
 
-static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno,
+static int parse_gp_set_line (GPT_SPEC *spec, const char *s, 
 			      linestyle *styles)
 {
     char key[16] = {0};
@@ -1494,8 +1478,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno,
 	strcpy(spec->keyspec, "none");
 	return 0;
     } else if (!strcmp(key, "label")) {
-	parse_label_line(spec, s, *labelno);
-	*labelno += 1;
+	parse_label_line(spec, s);
 	return 0;
     }
 
@@ -1991,7 +1974,7 @@ static void linestyle_init (linestyle *ls)
 static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 {
     linestyle styles[MAX_STYLES];
-    int i, done, labelno;
+    int i, done;
     int do_markers = 0;
     int datacols = 0;
     int reglist[4] = {0};
@@ -2052,7 +2035,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     rewind(fp);
 
     /* get the preamble and "set" lines */
-    labelno = 0;
+
     while ((got = fgets(gpline, sizeof gpline, fp))) {
 	char vname[VNAMELEN];
 	int v;
@@ -2136,7 +2119,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    break;
 	}
 
-	if (parse_gp_set_line(spec, gpline, &labelno, styles)) {
+	if (parse_gp_set_line(spec, gpline, styles)) {
 	    err = 1;
 	    goto plot_bailout;
 	}
@@ -2773,6 +2756,25 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
     }
 }
 
+static void boxplot_show_summary (GPT_SPEC *spec)
+{
+    PRN *prn = NULL;
+    int err;
+
+    if (bufopen(&prn)) {
+	return;
+    } 
+
+    err = boxplot_numerical_summary(spec->fname, prn);
+    
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 78, 240, _("gretl: boxplot data"), PRINT, NULL);
+    }	
+}
+
 static void add_to_session_callback (GPT_SPEC *spec)
 {
     char fullname[MAXLEN] = {0};
@@ -2846,6 +2848,8 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	}
     } else if (!strcmp(item, _("Numerical values"))) {
 	show_numbers_from_markers(plot->spec);
+    } else if (!strcmp(item, _("Numerical summary"))) {
+	boxplot_show_summary(plot->spec);
     } else if (!strcmp(item, _("Edit"))) { 
 	start_editing_png_plot(plot);
     } else if (!strcmp(item, _("Close"))) { 
@@ -2917,6 +2921,7 @@ static void build_plot_menu (png_plot *plot)
 	N_("Display PDF"),
 	N_("OLS estimates"),
 	N_("Numerical values"),
+	N_("Numerical summary"),
 	N_("Edit"),
 	N_("Help"),
         N_("Close"),
@@ -2997,7 +3002,12 @@ static void build_plot_menu (png_plot *plot)
 	    !strcmp(plot_items[i], "Numerical values")) {
 	    i++;
 	    continue;
-	}	
+	}
+	if (plot->spec->code != PLOT_BOXPLOTS && 
+	    !strcmp(plot_items[i], "Numerical summary")) {
+	    i++;
+	    continue;
+	}
 
         item = gtk_menu_item_new_with_label(_(plot_items[i]));
         g_object_set_data(G_OBJECT(item), "plot", plot);

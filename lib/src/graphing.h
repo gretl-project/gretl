@@ -64,7 +64,6 @@ struct gretlRGB_ {
 };
 
 #define MAXTITLE 128
-#define MAX_PLOT_LABELS 3
 #define N_GP_COLORS 7
 #define BOXCOLOR (N_GP_COLORS - 1)
 

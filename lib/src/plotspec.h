@@ -95,7 +95,8 @@ typedef struct {
     double *data;              /* data to plot */
     char **markers;            /* data-point markers (not always present) */
     int n_markers;             /* number of such markers */
-    GPT_LABEL labels[MAX_PLOT_LABELS];  /* textual labels written onto graph */
+    GPT_LABEL *labels;         /* textual labels written onto graph */
+    int n_labels;              /* number of the above */
     int *reglist;              /* regression list for X-Y plot with fitted line */
     gretl_matrix *b_ols;       /* coeffs for linear fit */
     gretl_matrix *b_quad;      /* coeffs for quadratic fit */
@@ -113,6 +114,10 @@ void plotspec_label_init (GPT_LABEL *lbl);
 int plotspec_add_line (GPT_SPEC *spec);
 
 int plotspec_delete_line (GPT_SPEC *spec, int i);
+
+int plotspec_add_label (GPT_SPEC *spec);
+
+int plotspec_delete_label (GPT_SPEC *spec, int i);
 
 int plotspec_print (const GPT_SPEC *spec, FILE *fp);
 

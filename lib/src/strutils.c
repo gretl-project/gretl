@@ -641,13 +641,26 @@ char *gretl_word_strdup (const char *src, const char **ptr)
 
 char *gretl_quoted_string_strdup (const char *s, const char **ptr)
 {
-    char quote, *ret = NULL;
+    char q, *ret = NULL;
     const char *p = NULL;
 
     if (s != NULL && (*s == '"' || *s == '\'')) {
-	quote = *s;
+	int gotit = 0;
+
+	q = *s;
 	s++;
-	p = strchr(s, quote);
+	p = s;
+	while (*p && !gotit) {
+	    if (*p == q && *(p-1) != '\\') {
+		/* found non-escaped matching quote */
+		gotit = 1;
+	    } else {
+		p++;
+	    }
+	}
+	if (!gotit) {
+	    p = NULL;
+	}
     }
 
     if (p == NULL) {

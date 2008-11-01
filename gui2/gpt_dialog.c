@@ -54,9 +54,9 @@ static GtkWidget **linewidth;
 static GtkWidget *fitformula;
 static GtkWidget *fitlegend;
 
-static GtkWidget *labeltext[MAX_PLOT_LABELS];
-static GtkWidget *labeljust[MAX_PLOT_LABELS];
-static GtkWidget *labelpos[MAX_PLOT_LABELS];
+static GtkWidget **labeltext;
+static GtkWidget **labeljust;
+static GtkWidget **labelpos;
 
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
@@ -68,6 +68,7 @@ static GtkWidget *ttfcombo;
 static GtkWidget *ttfspin;
 
 static int gui_nlines;
+static int gui_nlabels;
 
 #define MAX_AXES 3
 
@@ -96,7 +97,11 @@ static const char *get_font_filename (const char *showname);
 
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins);
 
-static int gpt_expand_widgets (int n);
+static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins);
+
+static int gpt_expand_line_widgets (int n);
+
+static int gpt_expand_label_widgets (int n);
 
 static void widget_set_int (GtkWidget *w, const gchar *key, gint val)
 {
@@ -805,7 +810,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	}
     }
 
-    for (i=0; i<MAX_PLOT_LABELS && !err; i++) {
+    for (i=0; i<gui_nlabels && !err; i++) {
 	entry_to_gp_string(labeltext[i], spec->labels[i].text, 
 			   sizeof spec->labels[0].text);
 	if (string_is_blank(spec->labels[i].text)) {
@@ -1467,6 +1472,34 @@ static void gpt_tab_new_line (new_line_info *nlinfo)
     gtk_widget_show(nlinfo->formula_entry);
 }
 
+static void add_label_callback (GtkWidget *w, GPT_SPEC *spec)
+{
+    GtkWidget *notebook;
+    gint pgnum;
+    int err = 0;
+
+    err = plotspec_add_label(spec);
+    if (err) {
+	nomem();
+	return;
+    }
+
+    notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
+    pgnum = widget_get_int(notebook, "labels_page");
+
+    err = gpt_expand_label_widgets(gui_nlabels + 1);
+
+    if (err) {
+	nomem();
+	spec->n_labels -= 1;
+    } else {
+	/* re-fill the "labels" notebook page */
+	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
+	gpt_tab_labels(notebook, spec, pgnum);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
+    }
+}
+
 static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 {
     GPT_SPEC *spec = nlinfo->spec;
@@ -1501,7 +1534,7 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
     pgnum = widget_get_int(notebook, "lines_page");
 
-    err = gpt_expand_widgets(gui_nlines + 1);
+    err = gpt_expand_line_widgets(gui_nlines + 1);
 
     if (err) {
 	nomem();
@@ -2048,14 +2081,29 @@ static void label_pos_to_entry (double *pos, GtkWidget *w)
     }
 }
 
-static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
+static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins) 
 {
-    GtkWidget *label, *vbox, *tbl;
+    GtkWidget *label, *tbl;
+    GtkWidget *vbox, *page;
     int i, j, tbl_len, tbl_num, tbl_col;
     char label_text[32];
     png_plot *plot = (png_plot *) spec->ptr;
+    int edit_ok = (spec->code != PLOT_BOXPLOTS);
+    int pgnum = -1;
 
-    vbox = gp_page_vbox(notebook, _("Labels"));
+    page = vbox = gp_dialog_vbox();
+    gtk_widget_show(vbox);
+
+    label = gtk_label_new(_("Labels"));
+    gtk_widget_show(label);
+
+    if (ins > 0) {
+	pgnum = gtk_notebook_insert_page(GTK_NOTEBOOK(notebook), page, label, ins); 
+    } else {
+	pgnum = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, label);
+    }  
+
+    widget_set_int(notebook, "labels_page", pgnum);
  
     tbl_len = 1;
     tbl = gp_dialog_table(tbl_len, 3, vbox);
@@ -2063,7 +2111,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
    
     tbl_num = tbl_col = 0;
 
-    for (i=0; i<MAX_PLOT_LABELS; i++) {
+    for (i=0; i<gui_nlabels; i++) {
 	GtkWidget *hbox, *button, *image;
 	GdkPixbuf *icon;
 
@@ -2083,9 +2131,13 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
 	gp_string_to_entry(labeltext[i], spec->labels[i].text);
 	gtk_entry_set_width_chars(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
-	g_signal_connect (G_OBJECT(labeltext[i]), "activate", 
-			  G_CALLBACK(apply_gpt_changes), 
-			  spec);
+	if (edit_ok) {
+	    g_signal_connect(G_OBJECT(labeltext[i]), "activate", 
+			     G_CALLBACK(apply_gpt_changes), 
+			     spec);
+	} else {
+	    gtk_widget_set_sensitive(labeltext[i], FALSE);
+	}
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeltext[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show(labeltext[i]);
@@ -2144,6 +2196,21 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(labeljust[i]);	
+    }
+
+    if (edit_ok && spec->n_labels < 8) {
+	/* button for adding a label */
+	GtkWidget *button;
+
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	button = gtk_button_new_with_label(_("Add label..."));
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(add_label_callback), 
+			 spec);
+	gtk_widget_show(button);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
+				  tbl_len-1, tbl_len);
     }
 }
 
@@ -2374,10 +2441,22 @@ void close_gnuplot_dialog (GtkWidget *w, gpointer p)
     linescale = NULL;
     linewidth = NULL;
 
+    gui_nlines = 0;
+
+    free(labeltext);
+    free(labelpos);
+    free(labeljust);
+
+    labeltext = NULL;
+    labelpos = NULL;
+    labeljust = NULL;
+
+    gui_nlabels = 0;
+
     gtk_widget_destroy(GTK_WIDGET(p));
 }
 
-static int gpt_expand_widgets (int n)
+static int gpt_expand_line_widgets (int n)
 {
     int i;
 
@@ -2412,7 +2491,7 @@ static int gpt_expand_widgets (int n)
     return 0;
 }
 
-static int gpt_allocate_widgets (int n)
+static int gpt_allocate_line_widgets (int n)
 {
     int i;
 
@@ -2447,6 +2526,62 @@ static int gpt_allocate_widgets (int n)
     return 0;
 }
 
+static int gpt_expand_label_widgets (int n)
+{
+    int i;
+
+    if (n == 0) {
+	return 0;
+    }
+
+    labeltext = myrealloc(labeltext, n * sizeof *labeltext);
+    labelpos = myrealloc(labelpos, n * sizeof *labelpos);
+    labeljust = myrealloc(labeljust, n * sizeof *labeljust);
+    
+    if (labeltext == NULL || labelpos == NULL ||
+	labeljust == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	labeltext[i] = NULL;
+	labelpos[i] = NULL;
+	labeljust[i] = NULL;
+    }
+
+    gui_nlabels = n;
+
+    return 0;
+}
+
+static int gpt_allocate_label_widgets (int n)
+{
+    int i;
+
+    if (n == 0) {
+	return 0;
+    }
+
+    labeltext = malloc(n * sizeof *labeltext);
+    labelpos = malloc(n * sizeof *labelpos);
+    labeljust = malloc(n * sizeof *labeljust);
+    
+    if (labeltext == NULL || labelpos == NULL ||
+	labeljust == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	labeltext[i] = NULL;
+	labelpos[i] = NULL;
+	labeljust[i] = NULL;
+    }
+
+    gui_nlabels = n;
+
+    return 0;
+}
+
 int show_gnuplot_dialog (GPT_SPEC *spec) 
 {
     png_plot *plot = (png_plot *) spec->ptr;
@@ -2460,10 +2595,17 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	return 1;
     }
 
-    if (gpt_allocate_widgets(spec->n_lines)) {
+    if (gpt_allocate_line_widgets(spec->n_lines)) {
 	nomem();
 	return 1;
     }
+
+    if (spec->n_labels < 7 && 
+	gpt_allocate_label_widgets(spec->n_labels)) {
+	/* FIXME? */
+	nomem();
+	return 1;
+    }    
 
     for (i=0; i<MAX_AXES; i++) {
 	axis_range[i].isauto = NULL;
@@ -2506,7 +2648,9 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_tab_lines(notebook, spec, 0);
     }
 
-    gpt_tab_labels(notebook, spec);
+    if (gui_nlabels > 0) {
+	gpt_tab_labels(notebook, spec, 0);
+    } 
 
     if (!frequency_plot_code(spec->code)) {
 	gpt_tab_palette(notebook);
