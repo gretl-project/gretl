@@ -37,8 +37,6 @@ struct diag_info {
 
 struct arbond_ {
     gretlopt opt;         /* option flags */
-    int doZX;             /* calculation flag */
-    int doZy;             /* calculation flag */
     int step;             /* what step are we on? */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
@@ -323,8 +321,6 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 
     ab->opt = opt;
     ab->step = 1;
-    ab->doZX = 1;
-    ab->doZy = 1;
     ab->nx = 0;
     ab->nz = 0;
     ab->t1min = 0;
@@ -428,6 +424,21 @@ static int bzcols (arbond *ab, int i)
     return nc;
 }
 
+static int add_mask_to_unit (arbond *ab, int i, char **pmask)
+{
+    ab->ui[i].skip = *pmask;
+    *pmask = NULL;
+
+    if (i < ab->N - 1) {
+	*pmask = malloc(ab->T);
+	if (*pmask == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    return 0;
+}
+
 static int arbond_sample_check (arbond *ab, const double **Z)
 {
     const double *y = Z[ab->yno];
@@ -455,8 +466,8 @@ static int arbond_sample_check (arbond *ab, const double **Z)
     }
 
 #if ADEBUG
-    fprintf(stderr, "arbond_sample_check, initial scan: ab->T = %d, t1min = %d\n", 
-	    ab->T, t1min);
+    fprintf(stderr, "arbond_sample_check, initial scan: "
+	    "ab->T = %d, t1min = %d\n", ab->T, t1min);
 #endif
 
     mask = malloc(ab->T);
@@ -514,13 +525,9 @@ static int arbond_sample_check (arbond *ab, const double **Z)
 
 	if (usable < Ti) {
 	    /* there were gaps: steal and replace the skip mask */
-	    ab->ui[i].skip = mask;
-	    mask = NULL;
-	    if (i < ab->N - 1) {
-		mask = malloc(ab->T);
-		if (mask == NULL) {
-		    return E_ALLOC;
-		}
+	    err = add_mask_to_unit(ab, i, &mask);
+	    if (err) {
+		return err;
 	    }
 	}
 
@@ -1362,9 +1369,9 @@ static int make_first_diff_matrix (arbond *ab, int i)
     return 0;
 }
 
-static int arbond_prepare_model (MODEL *pmod, arbond *ab,
-				 const int *list, const char *istr,
-				 const double **X, const DATAINFO *pdinfo)
+static int arbond_finalize_model (MODEL *pmod, arbond *ab,
+				  const int *list, const char *istr,
+				  const double **X, const DATAINFO *pdinfo)
 {
     const double *y = X[ab->yno];
     char prefix;
@@ -1757,9 +1764,8 @@ static int arbond_calculate (arbond *ab)
     int err = 0;
 
     /* find Z'X, if this job is not already done */
-    if (ab->doZX) {
+    if (ab->step == 1) {
 	gretl_matrix_multiply(ab->ZT, ab->dX, ab->ZX);
-	ab->doZX = 0;
     }
 
 #if ADEBUG
@@ -1772,11 +1778,8 @@ static int arbond_calculate (arbond *ab)
 			      ab->XZA, GRETL_MOD_NONE);
 
     /* calculate "numerator", X'ZAZ'y */
-    if (ab->doZy) {
-	gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
-    } else {
-	ab->doZy = 1;
-    }
+    gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
+
 #if ADEBUG
     gretl_matrix_print(ab->R1, "Z'y (arbond_calculate)");
 #endif
@@ -1808,7 +1811,7 @@ static int arbond_calculate (arbond *ab)
     return err;
 }
 
-static int arbond_step_2 (arbond *ab, PRN *prn)
+static int arbond_step_2 (arbond *ab)
 {
     int err;
 
@@ -1838,6 +1841,7 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
 
     ab->step = 2;
     err = arbond_calculate(ab);
+
     if (err) {
 	fprintf(stderr, "step 2: arbond_calculate returned %d\n", err);
     }
@@ -2261,11 +2265,13 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 #endif
 
     if (!err) {
+	/* first-step calculation */
 	err = arbond_calculate(&ab);
     }
 
     if (!err && (opt & OPT_T)) {
-	err = arbond_step_2(&ab, prn);
+	/* second step, if wanted */
+	err = arbond_step_2(&ab);
     }
 
  bailout:
@@ -2275,8 +2281,8 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     }
 
     if (!mod.errcode) {
-	mod.errcode = arbond_prepare_model(&mod, &ab, list, istr, 
-					   X, pdinfo);
+	mod.errcode = arbond_finalize_model(&mod, &ab, list, istr, 
+					    X, pdinfo);
     }
 
     arbond_free(&ab);
