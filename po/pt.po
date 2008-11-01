@@ -4,13 +4,14 @@
 #
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
 # Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007, 2008.
+# Hélio Guilherme <helio_guilherme@hotmail.com>, 2008.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-31 16:12-0400\n"
-"PO-Revision-Date: 2008-10-26 19:30+0000\n"
-"Last-Translator: Hélio Guilherme <helio.guilherme@bluebottle.com>\n"
+"PO-Revision-Date: 2008-11-01 19:45+0000\n"
+"Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
@@ -88,7 +89,7 @@ msgid ""
 "Augmented Dickey-Fuller tests, order %d, for %s\n"
 msgstr ""
 "\n"
-"Teste Dickey-Fuller aumentado, de ordem %d, para %s\n"
+"Teste de Dickey-Fuller aumentado, de ordem %d, para %s\n"
 
 #: lib/src/adf_kpss.c:280
 #, c-format
@@ -97,7 +98,7 @@ msgid ""
 "Dickey-Fuller tests for %s\n"
 msgstr ""
 "\n"
-"Teste Dickey-Fuller para %s\n"
+"Teste de Dickey-Fuller para %s\n"
 
 #: lib/src/adf_kpss.c:283
 #, c-format
@@ -168,7 +169,7 @@ msgstr "(sem tendência)"
 #: lib/src/adf_kpss.c:862
 #, c-format
 msgid "Lag truncation parameter = %d\n"
-msgstr "Parâmetro de truncagem do retardo = %d\n"
+msgstr "Parâmetro de truncagem do desfasamento = %d\n"
 
 #: lib/src/adf_kpss.c:863 lib/src/compare.c:314 lib/src/compare.c:341
 #: lib/src/compare.c:771 lib/src/compare.c:1478 lib/src/compare.c:1670
@@ -275,8 +276,7 @@ msgstr "mediana"
 
 #: lib/src/boxplots.c:176
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Resumo numérico com intervalo de confiança (bootstrapped) para a mediana"
+msgstr "Resumo numérico com intervalo de confiança (bootstrapped) para a mediana"
 
 #: lib/src/boxplots.c:182
 #, no-c-format
@@ -459,7 +459,7 @@ msgstr "Teste de Godfrey (1994) para"
 
 #: lib/src/compare.c:1511
 msgid "Breusch-Godfrey test for"
-msgstr "Teste Breusch-Godfrey para"
+msgstr "Teste de Breusch-Godfrey para"
 
 #: lib/src/compare.c:1515
 msgid "autocorrelation up to order"
@@ -479,7 +479,7 @@ msgstr "resíduo"
 #: lib/src/compare.c:1611
 #, c-format
 msgid "lagging uhat failed"
-msgstr "impossível calcular os retardos dos resíduos"
+msgstr "impossível calcular os desfasamentos dos resíduos"
 
 #: lib/src/compare.c:1674 lib/src/compare.c:1859
 msgid "autocorrelation"
@@ -504,7 +504,7 @@ msgid ""
 msgstr ""
 "Teste de razões de verosimilhança de Quandt para a quebra estrutural num "
 "ponto desconhecido,\n"
-"com 15 porcento de desbaste"
+"com 15 por cento de desbaste"
 
 #: lib/src/compare.c:2038
 #, c-format
@@ -514,7 +514,7 @@ msgstr "O máximo F(%d ; %d) = %g ocorre na observação %s"
 #: lib/src/compare.c:2045
 #, c-format
 msgid "Significant at the %d percent level "
-msgstr "Significativo com um nível de %d porcento "
+msgstr "Significativo com um nível de %d por cento "
 
 #: lib/src/compare.c:2046
 #, c-format
@@ -528,7 +528,7 @@ msgstr "10%% valor crítico para q = 20 é %.2f"
 
 #: lib/src/compare.c:2053
 msgid "Not significant at the 10 percent level "
-msgstr "Não significativo com um nível de 10 porcento"
+msgstr "Não significativo com um nível de 10 por cento"
 
 #: lib/src/compare.c:2054
 #, c-format
@@ -741,8 +741,7 @@ msgstr "   aparenta ser etiqueta de observação\n"
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 "   a célula para a variável %d, observação %d está vazia: marcando como "
 "valor omisso\n"
@@ -887,8 +886,7 @@ msgstr "Atenção: erro na leitura dos dados binários na variável %d"
 #: lib/src/dataio.c:202 lib/src/dataio.c:242 lib/src/dataio.c:336
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr ""
-"Atençao: erro na leitura dos dados ASCII na variável %d, na observação %d"
+msgstr "Atençao: erro na leitura dos dados ASCII na variável %d, na observação %d"
 
 #: lib/src/dataio.c:308
 #, c-format
@@ -1373,8 +1371,7 @@ msgstr "Não se conseguiu abrir %s para escrita"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Das variáveis a serem guardadas, %d já estavam presentes na base de dados."
+msgstr "Das variáveis a serem guardadas, %d já estavam presentes na base de dados."
 
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
@@ -1400,7 +1397,7 @@ msgstr "desfasamento"
 
 #: lib/src/describe.c:2470
 msgid "Residual ACF"
-msgstr "Resíduo ACF"
+msgstr "ACF Residual"
 
 #: lib/src/describe.c:2472
 msgid "ACF for"
@@ -1735,7 +1732,7 @@ msgstr "   Diferença entre médias amostrais = %g - %g = %g\n"
 
 #: lib/src/describe.c:4322
 msgid "   Null hypothesis: The two population means are the same.\n"
-msgstr "   Hipótese nula: As médias das duas populações.\n"
+msgstr "   Hipótese nula: As médias das duas populações são iguais.\n"
 
 #: lib/src/describe.c:4323
 #, c-format
@@ -2195,7 +2192,7 @@ msgstr "resíduo ao quadrado do modelo %d"
 #: lib/src/genfuncs.c:1670
 #, c-format
 msgid "fitted variance from model %d"
-msgstr "variânciar ajustada do modelo %d"
+msgstr "variância ajustada do modelo %d"
 
 #: lib/src/genfuncs.c:1677
 #, c-format
@@ -2357,7 +2354,7 @@ msgstr "Não foram especificadas nenhumas condições de ortogonalidade"
 
 #: lib/src/gmm.c:762
 msgid "No weights have been specified"
-msgstr "Não foram especificadas nenhuns pesos"
+msgstr "Não foram especificados nenhuns pesos"
 
 #: lib/src/gmm.c:1408
 msgid "Orthogonality conditions - descriptive statistics"
@@ -2460,7 +2457,7 @@ msgstr "Frequência relativa"
 
 #: lib/src/graphing.c:3229 lib/src/graphing.c:3246 lib/src/graphing.c:3250
 msgid "95 percent confidence interval"
-msgstr "Intervalo de confiança a 95 porcento"
+msgstr "Intervalo de confiança a 95 por cento"
 
 #: lib/src/graphing.c:3235 lib/src/graphing.c:3242 lib/src/printout.c:1097
 msgid "forecast"
@@ -2588,8 +2585,7 @@ msgstr "Comando com argumentos insuficientes"
 
 #: lib/src/gretl_errors.c:44
 msgid "This command is implemented only for OLS models"
-msgstr ""
-"Este comando está implementado apenas para modelos Mínimos Quadrados (OLS)"
+msgstr "Este comando está implementado apenas para modelos Mínimos Quadrados (OLS)"
 
 #: lib/src/gretl_errors.c:45
 msgid "Invalid argument for function"
@@ -2778,9 +2774,7 @@ msgstr "A variável %d não estava na lista original"
 
 #: lib/src/gretl_list.c:1764
 msgid "Can't do this: some vars in original model have been redefined"
-msgstr ""
-"Não se pode fazer isto: algumas variáveis no modelo original foram "
-"redefinidas"
+msgstr "Não se pode fazer isto: algumas variáveis no modelo original foram redefinidas"
 
 #: lib/src/gretl_matrix.c:308
 msgid "Matrix is not finite"
@@ -2797,7 +2791,7 @@ msgstr "os parâmetros são nulos para as variáveis"
 #: lib/src/gretl_model.c:2710
 #, c-format
 msgid "Test for ARCH of order %s"
-msgstr "Teste ARCH de ordem %s"
+msgstr "Teste para ARCH de ordem %s"
 
 #: lib/src/gretl_model.c:2711
 msgid "no ARCH effect is present"
@@ -2830,8 +2824,7 @@ msgstr "Teste QLR para quebra estrutural"
 
 #: lib/src/gretl_model.c:2725
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
-msgstr ""
-"Teste de razão de verosimilhanças para heterocedasticidade entre grupos"
+msgstr "Teste de razão de verosimilhanças para heterocedasticidade entre grupos"
 
 #: lib/src/gretl_model.c:2726
 msgid "the units have a common error variance"
@@ -2884,7 +2877,7 @@ msgstr "todos os instrumentos são válidos"
 
 #: lib/src/gretl_model.c:2752 lib/src/gretl_model.c:2755
 msgid "Hausman test"
-msgstr "Teste Hausman"
+msgstr "Teste de Hausman"
 
 #: lib/src/gretl_model.c:2753
 msgid "OLS estimates are consistent"
@@ -2904,7 +2897,7 @@ msgstr "Os grupos têm a mesma intercepção no eixo x=0"
 
 #: lib/src/gretl_model.c:2761
 msgid "Breusch-Pagan test"
-msgstr "Teste Breusch-Pagan"
+msgstr "Teste de Breusch-Pagan"
 
 #: lib/src/gretl_model.c:2762
 msgid "Variance of the unit-specific error = 0"
@@ -2912,8 +2905,7 @@ msgstr "Variância do erro de unidade-específica = 0"
 
 #: lib/src/gretl_model.c:2764
 msgid "Wald test for joint significance of time dummies"
-msgstr ""
-"Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
+msgstr "Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
 
 #: lib/src/gretl_model.c:2911
 #, c-format
@@ -2924,7 +2916,7 @@ msgstr "O máximo F(%d ; %d) = %g ocorre na observação %s"
 #: lib/src/gretl_model.c:3053
 #, c-format
 msgid "%g percent critical value"
-msgstr "valor crítico a %g porcento"
+msgstr "valor crítico a %g por cento"
 
 #: lib/src/gretl_model.c:4745
 msgid "Can't retrieve uhat: data set has changed"
@@ -3214,7 +3206,7 @@ msgstr "%s: a divisão não é permitida aqui"
 #: lib/src/gretl_restrict.c:1349
 #, c-format
 msgid "Coefficient number (%d) is out of range"
-msgstr " O coeficiente número (%d) ultrapassou os limites admissíveis"
+msgstr " O número do coeficiente (%d) ultrapassou os limites admissíveis"
 
 #: lib/src/gretl_restrict.c:918 lib/src/gretl_restrict.c:1319
 #: lib/src/gretl_restrict.c:1333 lib/src/gretl_restrict.c:1345
@@ -3240,9 +3232,7 @@ msgstr "Restrição"
 #: lib/src/gretl_restrict.c:1336
 #, c-format
 msgid "Coefficient number (%d) out of range for equation %d"
-msgstr ""
-" O coeficiente número (%d) ultrapassou os limites admissíveis para a equação "
-"%d"
+msgstr "O número do coeficiente (%d) ultrapassou os limites admissíveis para a equação %d"
 
 #: lib/src/gretl_restrict.c:1522
 #, c-format
@@ -3415,8 +3405,7 @@ msgstr "unidades"
 
 #: lib/src/gretl_utils.c:867
 msgid "Failed to parse line as frequency, startobs"
-msgstr ""
-"Falha no processamento de linha como sendo frequência, observação inicial"
+msgstr "Falha no processamento de linha como sendo frequência, observação inicial"
 
 #: lib/src/gretl_utils.c:905 lib/src/gretl_utils.c:914
 #: lib/src/gretl_utils.c:924 lib/src/gretl_utils.c:934
@@ -3542,8 +3531,7 @@ msgstr "Falha no processamento do número de observações"
 #: lib/src/gretl_xml.c:1886
 #, c-format
 msgid "labels attribute for observations must be 'true' or 'false'"
-msgstr ""
-"etiquetas de atributos para as observações têm que ser 'true' ou 'false'"
+msgstr "etiquetas de atributos para as observações têm que ser 'true' ou 'false'"
 
 #: lib/src/gretl_xml.c:1931
 #, c-format
@@ -3616,7 +3604,7 @@ msgstr "dos dados"
 #: lib/src/gretl_xml.c:2313 lib/src/gretl_xml.c:2475
 #, c-format
 msgid "File of the wrong type, root node not gretldata"
-msgstr "Ficheiro do tipo errado, o nó raiz não é dados gretl"
+msgstr "Ficheiro do tipo errado, o nó raiz não tem o formato de dados do gretl"
 
 #: lib/src/gretl_xml.c:2366 lib/src/gretl_xml.c:2385
 #, c-format
@@ -3640,7 +3628,7 @@ msgstr "falhou gerar a variável de desfasamento"
 #: lib/src/interact.c:1424 gui2/gui_utils.c:3404 gui2/library.c:3626
 #, c-format
 msgid "A series named %s already exists"
-msgstr "Já existe uma matriz com o nome %s"
+msgstr "Já existe uma série com o nome %s"
 
 #: lib/src/interact.c:1564
 #, c-format
@@ -3730,8 +3718,7 @@ msgstr " (por ex. help smpl)\n"
 
 #: lib/src/interact.c:2782
 msgid "You can also do 'help functions' for a list of functions\n"
-msgstr ""
-"Você também pode escrever 'help functions' para obter uma lista de funções\n"
+msgstr "Você também pode escrever 'help functions' para obter uma lista de funções\n"
 
 #: lib/src/interact.c:2788
 msgid "genrcli.hlp"
@@ -3900,7 +3887,7 @@ msgstr "Métodos numéricos"
 
 #: lib/src/libset.c:1197
 msgid "Random number generation"
-msgstr "Geração de números pseudo-aleatórios"
+msgstr "Geração de números aleatórios"
 
 #: lib/src/libset.c:1201
 msgid "Robust estimation"
@@ -4082,7 +4069,7 @@ msgstr "Teste LR de sobre-identificação"
 
 #: lib/src/modelprint.c:557 lib/src/modelprint.c:558
 msgid "Equation is just identified"
-msgstr "A equação é identificada justa"
+msgstr "A equação é apenas identificada"
 
 #: lib/src/modelprint.c:575 lib/src/modelprint.c:577
 #, c-format
@@ -4091,7 +4078,7 @@ msgstr "Testar erros AR(%d):"
 
 #: lib/src/modelprint.c:604 lib/src/modelprint.c:609
 msgid "Wald (joint) test"
-msgstr "Teste Wald (conjunto)"
+msgstr "Teste de Wald (conjunto)"
 
 #: lib/src/modelprint.c:605 lib/src/modelprint.c:610
 msgid "J test"
@@ -4124,7 +4111,7 @@ msgstr "'Por entre' a variância"
 
 #: lib/src/modelprint.c:781 lib/src/modelprint.c:798 lib/src/modelprint.c:806
 msgid "theta used for quasi-demeaning"
-msgstr "teta utilizado para quasi-desmédiação"
+msgstr "teta utilizado para quasi-desmediação"
 
 #: lib/src/modelprint.c:816 lib/src/modelprint.c:818 lib/src/modelprint.c:820
 #: lib/src/modelprint.c:822
@@ -4168,13 +4155,11 @@ msgstr "O valor p foi o maior para a variável %d (%s)"
 
 #: lib/src/modelprint.c:1004
 msgid "Auxiliary regression for non-linearity test (squared terms)"
-msgstr ""
-"Regressão auxiliar para o teste de não-linearidade (termos ao quadrado)"
+msgstr "Regressão auxiliar para o teste de não-linearidade (termos ao quadrado)"
 
 #: lib/src/modelprint.c:1007
 msgid "Auxiliary regression for non-linearity test (log terms)"
-msgstr ""
-"Regressão auxiliar para o teste de não-linearidade (logaritmos dos termos)"
+msgstr "Regressão auxiliar para o teste de não-linearidade (logaritmos dos termos)"
 
 #: lib/src/modelprint.c:1016
 msgid "Augmented regression for Chow test"
@@ -4495,12 +4480,12 @@ msgstr "Erros padrão Bollerslev-Wooldridge"
 #: lib/src/modelprint.c:1458
 #, c-format
 msgid "With robust %g percent confidence intervals"
-msgstr "Com intervalos de confiança robustos a %g porcento"
+msgstr "Com intervalos de confiança robustos a %g por cento"
 
 #: lib/src/modelprint.c:1461
 #, c-format
 msgid "With %g percent confidence intervals"
-msgstr "Com intervalos de confiança a %g porcento"
+msgstr "Com intervalos de confiança a %g por cento"
 
 #: lib/src/modelprint.c:1466
 msgid "Robust (sandwich) standard errors"
@@ -4541,7 +4526,7 @@ msgstr "Máxima Verosimilhança (ML) exacta "
 #: lib/src/modelprint.c:1662 lib/src/modelprint.c:1672
 #: lib/src/modelprint.c:1677
 msgid "conditional ML"
-msgstr "Máxima Verosimilhança (ML) conditional"
+msgstr "Máxima Verosimilhança (ML) condicional"
 
 #: lib/src/modelprint.c:1665
 msgid "Estimated using Kalman filter"
@@ -4988,8 +4973,7 @@ msgstr "erro ao avaliar a condição de ciclo"
 #: lib/src/monte_carlo.c:617
 #, c-format
 msgid "The index in a 'for' loop must be a single character from the set '%s'"
-msgstr ""
-"O índice num ciclo 'for' tem que ser um único caractere do conjunto '%s'"
+msgstr "O índice num ciclo 'for' tem que ser um único caractere do conjunto '%s'"
 
 #: lib/src/monte_carlo.c:657
 #, c-format
@@ -5230,8 +5214,7 @@ msgid "not significant at the 10% level\n"
 msgstr "não significativo com um nível de 10%\n"
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 "A amostra é demasiado pequena para calcular um valor p baseado na "
 "distribuição normal\n"
@@ -5277,8 +5260,7 @@ msgstr ""
 #: lib/src/nonparam.c:817
 #, c-format
 msgid "Under the null hypothesis of independence, R follows N(%g, %g)\n"
-msgstr ""
-"De acordo com a hipótese nula de independência, R segue uma N(%g ; %g)\n"
+msgstr "De acordo com a hipótese nula de independência, R segue uma N(%g ; %g)\n"
 
 #: lib/src/nonparam.c:820
 #, c-format
@@ -5335,8 +5317,7 @@ msgstr "Número de casos com %s > %s: w = %d (%.2f%%)\n"
 #: lib/src/nonparam.c:1160
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
-msgstr ""
-"De acordo com a hipótese nula de não diferença, W segue uma B(%d, %.1f)\n"
+msgstr "De acordo com a hipótese nula de não diferença, W segue uma B(%d, %.1f)\n"
 
 #: lib/src/nonparam.c:1162 lib/src/nonparam.c:1169 gui2/calculator.c:1978
 msgid "Prob"
@@ -5393,10 +5374,8 @@ msgid "gretl version %s\n"
 msgstr "gretl versão %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell e Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell e Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5505,8 +5484,7 @@ msgstr "Teste do qui-quadrado de Pearson = %g (%d gl, valor p = %g)"
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 "Atenção: Menos que 80% das células tinham valores esperados de 5 ou "
 "superiores.\n"
@@ -5852,10 +5830,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Número total de valores omissos = %d (%.2f%% do total de valores de dados)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Número total de valores omissos = %d (%.2f%% do total de valores de dados)\n"
 
 #: lib/src/system.c:81
 msgid "SUR"
@@ -5999,11 +5975,11 @@ msgstr "Teste LR para a diagonal da matriz de covariância"
 
 #: lib/src/system.c:2679
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr "Teste Breusch--Pagan para matriz de covariância diagonal"
+msgstr "Teste de Breusch--Pagan para matriz de covariância diagonal"
 
 #: lib/src/system.c:2686
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr "Teste Breusch-Pagan para a diagonal da matriz de covariância"
+msgstr "Teste de Breusch-Pagan para a diagonal da matriz de covariância"
 
 #: lib/src/system.c:3691 lib/src/system.c:3695 lib/src/system.c:3701
 #: lib/src/system.c:3705
@@ -6142,7 +6118,7 @@ msgstr "Produtos-cruzados"
 
 #: lib/src/var.c:2434
 msgid "Johansen test"
-msgstr "Teste Johansen"
+msgstr "Teste de Johansen"
 
 #: lib/src/var.c:2435
 msgid "Number of equations"
@@ -6467,8 +6443,7 @@ msgstr "comandos gravados como %s\n"
 #: cli/gretlcli.c:960
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"escreva um nome de ficheiro onde guardar resultados (\"Enter\" para sair): "
+msgstr "escreva um nome de ficheiro onde guardar resultados (\"Enter\" para sair): "
 
 #: cli/gretlcli.c:968
 #, c-format
@@ -6510,7 +6485,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 26 de Outubro de 2008."
+"Tradução de 1 de Novembro de 2008."
 
 #: gui2/about.c:163
 msgid "License"
@@ -6716,8 +6691,7 @@ msgstr "Estatística de teste: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Atenão: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
+msgstr "Atenão: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7227,7 +7201,7 @@ msgstr "gretl: código de omissos"
 
 #: gui2/callbacks.c:633 gui2/callbacks.c:638
 msgid "Enter value to be read as \"missing\":"
-msgstr "ler:"
+msgstr "Insira valor para ser lido como \"valor omisso\":"
 
 #: gui2/callbacks.c:643
 msgid "gretl: boxplots"
@@ -7887,8 +7861,7 @@ msgstr "As variáveis índice de unidade e de tempo têm que ser distintas"
 
 #: gui2/datawiz.c:821
 msgid "The selected index variables do not represent a panel structure"
-msgstr ""
-"As variáveis índice seleccionadas não representam uma estrutura de painel"
+msgstr "As variáveis índice seleccionadas não representam uma estrutura de painel"
 
 #: gui2/datawiz.c:912
 msgid "This dataset cannot be interpreted as a panel"
@@ -8610,7 +8583,7 @@ msgstr "Média móvel exponential"
 
 #: gui2/filters.c:76
 msgid "Hodrick-Prescott filter"
-msgstr "Filtro Hodrick-Prescott"
+msgstr "Filtro de Hodrick-Prescott"
 
 #: gui2/filters.c:78
 msgid "Baxter-King Band-pass filter"
@@ -8776,8 +8749,7 @@ msgstr "Falta alguma informação obrigatória"
 
 #: gui2/fnsave.c:271
 msgid "Invalid version string: use numbers and '.' only"
-msgstr ""
-"Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
+msgstr "Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
 
 #: gui2/fnsave.c:286 gui2/fnsave.c:521
 msgid "Save function package"
@@ -9120,19 +9092,16 @@ msgid "Add line"
 msgstr "Acrescentar linha"
 
 #: gui2/gpt_dialog.c:1603
-#, fuzzy
 msgid "quartiles"
-msgstr "trimestres"
+msgstr "quartis"
 
 #: gui2/gpt_dialog.c:1609
-#, fuzzy
 msgid "lower bound"
-msgstr "inferior"
+msgstr "limite inferior"
 
 #: gui2/gpt_dialog.c:1611
-#, fuzzy
 msgid "upper bound"
-msgstr "superior"
+msgstr "limite superior"
 
 #: gui2/gpt_dialog.c:1768
 msgid "Lines"
@@ -9147,9 +9116,8 @@ msgid "type"
 msgstr "tipo"
 
 #: gui2/gpt_dialog.c:1911
-#, fuzzy
 msgid "point"
-msgstr "omitir"
+msgstr "ponto"
 
 #: gui2/gpt_dialog.c:1949
 msgid "y axis"
@@ -9213,9 +9181,8 @@ msgid "logarithmic scale, base:"
 msgstr "escala logarítmica, base:"
 
 #: gui2/gpt_dialog.c:2346
-#, fuzzy
 msgid "Palette"
-msgstr "Colar"
+msgstr "Palete de cores"
 
 #: gui2/gpt_dialog.c:2458
 msgid ""
@@ -9435,13 +9402,11 @@ msgstr "_Novo Ficheiro de Comandos"
 
 #: gui2/gretl.c:1270
 msgid "gretl script"
-msgstr ""
-"/Ficheiro/Ficheiros de Comandos/_Novo Ficheiro de Comandos/comandos gretl"
+msgstr "comandos gretl"
 
 #: gui2/gretl.c:1271
 msgid "gnuplot script"
-msgstr ""
-"/Ficheiro/Ficheiros de Comandos/_Novo Ficheiro de Comandos/comandos gnuplot"
+msgstr "comandos gnuplot"
 
 #: gui2/gretl.c:1272
 msgid "R script"
@@ -10778,7 +10743,7 @@ msgstr "respostas de impulsos"
 
 #: gui2/gui_utils.c:2723
 msgid "variance decompositions"
-msgstr "variância decompositions"
+msgstr "decomposição da variância"
 
 #: gui2/gui_utils.c:2725 gui2/gui_utils.c:2794
 msgid "forecast horizon (periods):"
@@ -10786,11 +10751,11 @@ msgstr "horizonte de predição (períodos):"
 
 #: gui2/gui_utils.c:2735
 msgid "gretl: VAR impulse responses"
-msgstr "gretl: resposta de impulsos VAR"
+msgstr "gretl: impulso-resposta VAR"
 
 #: gui2/gui_utils.c:2738
 msgid "gretl: VAR variance decompositions"
-msgstr "gretl: decomposições de variância VAR"
+msgstr "gretl: decomposição de variância VAR"
 
 #: gui2/gui_utils.c:2767
 msgid "View X-12-ARIMA output"
@@ -11017,7 +10982,7 @@ msgstr "Índice"
 
 #: gui2/helpfiles.c:1457
 msgid "Sorry, help not found"
-msgstr "Desculpe, não se encontrou ajuda"
+msgstr "Desculpe, não se encontrou a ajuda"
 
 #: gui2/helpfiles.c:1563 gui2/helpfiles.c:1678
 msgid "Search wrapped"
@@ -11189,7 +11154,11 @@ msgid ""
 "out of sample.  If you wish, you can add observations\n"
 "(Data menu, Edit data), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
-msgstr "modelo."
+msgstr ""
+"Não existem observações fora da amostra para\n"
+"previsão.  Se o desejar pode acrescentar observações\n"
+"(menu Dados, Editar valores), ou pode encurtar a amplitude da\n"
+"amostra usada para estimar o modelo (menu Amostra)."
 
 #: gui2/library.c:1628 gui2/library.c:3143 gui2/library.c:3378
 msgid "Error saving model information"
@@ -11243,8 +11212,7 @@ msgstr "Coeficiente de Gini"
 
 #: gui2/library.c:2146
 msgid "This test only implemented for OLS models"
-msgstr ""
-"Este teste apenas está implementado para modelos Mínimos Quadrados (OLS)"
+msgstr "Este teste apenas está implementado para modelos Mínimos Quadrados (OLS)"
 
 #: gui2/library.c:2161
 msgid "gretl: Chow test"
@@ -11733,7 +11701,7 @@ msgstr "Modelo ARIMA"
 
 #: gui2/menustate.c:303
 msgid "Dickey-Fuller test"
-msgstr "Teste Dickey-Fuller"
+msgstr "Teste de Dickey-Fuller"
 
 #: gui2/menustate.c:305
 msgid "KPSS test"
@@ -11816,8 +11784,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Desculpe, os modelos TSLS não podem ser colocados na tabela de modelos"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Não se pode acrescentar modelo à tabela -- este modelo tem uma variável "
 "dependente diferente"
@@ -11908,11 +11875,11 @@ msgstr "Erros padrão em parentísis"
 
 #: gui2/model_table.c:828 gui2/model_table.c:931 gui2/model_table.c:1035
 msgid "* indicates significance at the 10 percent level"
-msgstr "* indica significância num nível de 10 porcento"
+msgstr "* indica significância num nível de 10 por cento"
 
 #: gui2/model_table.c:829 gui2/model_table.c:933 gui2/model_table.c:1037
 msgid "** indicates significance at the 5 percent level"
-msgstr "** indica significância num nível de 5 porcento"
+msgstr "** indica significância num nível de 5 por cento"
 
 #: gui2/model_table.c:832
 msgid "For logit and probit, R-squared is McFadden's pseudo-R-squared"
@@ -11928,8 +11895,7 @@ msgstr "Para logit e probit, o $R^2$ é o pseudo-$R^2$ de McFadden"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Para logit e probit, o R{\\super 2} é o pseudo-R{\\super 2} de McFadden"
+msgstr "Para logit e probit, o R{\\super 2} é o pseudo-R{\\super 2} de McFadden"
 
 #: gui2/model_table.c:1068
 msgid "No model is available"
@@ -12296,11 +12262,11 @@ msgstr "Mostrar as variáveis com desfasamentos"
 
 #: gui2/selector.c:3663
 msgid "Compute standard errors"
-msgstr "Computar erros padrão"
+msgstr "Calcular erros padrão"
 
 #: gui2/selector.c:3668
 msgid "Compute confidence intervals"
-msgstr "Computar intervalos de confiança"
+msgstr "Calcular intervalos de confiança"
 
 #: gui2/selector.c:3689
 msgid "Confidence level"
@@ -12344,7 +12310,7 @@ msgstr "Estimar modelo reduzido"
 
 #: gui2/selector.c:3798
 msgid "Wald test, based on covariance matrix"
-msgstr "Teste Wald baseado na matriz de covariância"
+msgstr "Teste de Wald baseado na matriz de covariância"
 
 #: gui2/selector.c:3804
 msgid ""
@@ -13060,8 +13026,7 @@ msgstr "a directoria seleccionada acima"
 
 #: gui2/settings.c:2233
 msgid "the current directory as determined via the shell"
-msgstr ""
-"a directoria actual tal como foi determinado a partir do ambiente de trabalho"
+msgstr "a directoria actual tal como foi determinado a partir do ambiente de trabalho"
 
 #: gui2/settings.c:2281
 msgid "gretl: working directory"
@@ -13136,18 +13101,16 @@ msgstr ""
 "(máx. 15 caracteres)"
 
 #: gui2/ssheet.c:851
-#, fuzzy
 msgid "gretl: scalar"
-msgstr "gretl: escalares"
+msgstr "gretl: escalar"
 
 #: gui2/ssheet.c:852
-#, fuzzy
 msgid ""
 "Enter name, or name=value,\n"
 "for new scalar"
 msgstr ""
-"Introduza nome para a nova variável\n"
-"(máx. 15 caracteres)"
+"Introduza nome, ou nome=valor,\n"
+"para o novo escalar"
 
 #: gui2/ssheet.c:862
 msgid "gretl: case marker"
@@ -13589,8 +13552,7 @@ msgstr ""
 #: gui2/update.c:148
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Este ficheiro faz parte do sistema de notificação de actualizações do gretl\n"
+msgstr "Este ficheiro faz parte do sistema de notificação de actualizações do gretl\n"
 
 #: gui2/update.c:210
 msgid "No new files"
@@ -14372,8 +14334,7 @@ msgstr ""
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Este não é um ficheiro OLE -- talvez seja demasiado antigo para o gretl ler\n"
+msgstr "Este não é um ficheiro OLE -- talvez seja demasiado antigo para o gretl ler\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14419,35 +14380,3 @@ msgstr "Cadeias de caracteres"
 msgid "Accessors"
 msgstr "Assessores"
 
-#~ msgid "Save as EPS..."
-#~ msgstr "Guardar como EPS..."
-
-#~ msgid "Save boxplot file"
-#~ msgstr "Guardar ficheiro gráfico caixa com bigodes"
-
-#~ msgid "Save as PS..."
-#~ msgstr "Guardar como PS..."
-
-#~ msgid "Save as XPM..."
-#~ msgstr "Guardar como XPM..."
-
-#~ msgid "gretl: boxplot data"
-#~ msgstr "gretl: dados de gráfico caixa com bigodes"
-
-#~ msgid "Dropping %s: insufficient observations"
-#~ msgstr "Descartando %s: observações insuficientes"
-
-#~ msgid "Couldn't obtain confidence interval"
-#~ msgstr "Não se conseguiu obter intervalo de confiança"
-
-#~ msgid "Failed to set clipboard data"
-#~ msgstr "Falhou ao preparar dados na memória de edição"
-
-#~ msgid "Failed to close Clipboard"
-#~ msgstr "Falhou o fecho da Memória de Edição"
-
-#~ msgid "boxplot command failed"
-#~ msgstr "o comando caixa com bigodes (\"boxplot\") falhou"
-
-#~ msgid "postscript files (*.ps)"
-#~ msgstr "ficheiros postscript (*.ps)"
