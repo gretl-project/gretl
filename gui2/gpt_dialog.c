@@ -2587,6 +2587,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     png_plot *plot = (png_plot *) spec->ptr;
     GtkWidget *button, *notebook;
     GtkWidget *hbox;
+    int do_labels = 1;
     int i;
 
     if (gpt_control != NULL) {
@@ -2600,9 +2601,11 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	return 1;
     }
 
-    if (spec->n_labels < 7 && 
-	gpt_allocate_label_widgets(spec->n_labels)) {
-	/* FIXME? */
+    if (spec->n_labels > 7) {
+	do_labels = 0;
+    }
+
+    if (do_labels && gpt_allocate_label_widgets(spec->n_labels)) {
 	nomem();
 	return 1;
     }    
@@ -2648,7 +2651,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_tab_lines(notebook, spec, 0);
     }
 
-    if (gui_nlabels > 0) {
+    if (do_labels) {
 	gpt_tab_labels(notebook, spec, 0);
     } 
 
