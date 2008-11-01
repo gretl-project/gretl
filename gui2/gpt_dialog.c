@@ -2619,9 +2619,11 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_titles[i].widget = NULL;
     }
 
-    gpt_control = gretl_dialog_new(_("gretl plot controls"), NULL, 0);
+    gpt_control = gretl_dialog_new(_("gretl plot controls"), NULL, 
+				   GRETL_DLG_RESIZE);
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(gpt_control)->vbox), 2);
     gtk_dialog_set_has_separator(GTK_DIALOG(gpt_control), FALSE);
+    
 
     if (plot != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(gpt_control), 
