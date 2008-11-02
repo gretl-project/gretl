@@ -93,6 +93,11 @@ const gchar *fittype_strings[] = {
     NULL
 };
 
+enum {
+    GUI_LINE,
+    GUI_LABEL
+};
+
 static const char *get_font_filename (const char *showname);
 
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins);
@@ -1569,7 +1574,7 @@ static void add_line_callback (GtkWidget *w, GPT_SPEC *spec)
 
     nlinfo->spec = spec;
 
-    nlinfo->dlg = gretl_dialog_new(_("Add line"), gpt_control, GRETL_DLG_BLOCK);
+    nlinfo->dlg = gretl_dialog_new(NULL, gpt_control, GRETL_DLG_BLOCK);
 
     gpt_tab_new_line(nlinfo);
 
@@ -1602,24 +1607,49 @@ static void remove_line (GtkWidget *w, GPT_SPEC *spec)
     plotspec_delete_line(spec, i);
     gui_nlines -= 1;
 
+    /* refresh the associated notebook page */
     notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
     pgnum = widget_get_int(notebook, "lines_page");
-
-    /* re-fill the "lines" notebook page */
     gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
     gpt_tab_lines(notebook, spec, pgnum);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
 }
 
-static void line_remove_button (GtkWidget *tbl, int row, 
-				GPT_SPEC *spec, int i)
+static void remove_label (GtkWidget *w, GPT_SPEC *spec)
+{
+    GtkWidget *notebook;
+    int i, pgnum;
+
+    i = widget_get_int(w, "labelnum");
+    plotspec_delete_label(spec, i);
+    gui_nlabels -= 1;
+
+    /* refresh the associated notebook page */
+    notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
+    pgnum = widget_get_int(notebook, "labels_page");
+    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
+    gpt_tab_labels(notebook, spec, pgnum);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
+}
+
+static void item_remove_button (GtkWidget *tbl, int row, 
+				GPT_SPEC *spec, int i,
+				int j)
 {
     GtkWidget *button; 
+    const gchar *key[] = {
+	"linenum",
+	"labelnum"
+    };
+    GCallback cb[] = {
+	G_CALLBACK(remove_line),
+	G_CALLBACK(remove_label)
+    };
 
-    button = gtk_button_new_with_label("Remove");
-    widget_set_int(button, "linenum", i);
+    button = gtk_button_new_with_label(_("Remove"));
+    widget_set_int(button, key[j], i);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(remove_line), spec);
+		     G_CALLBACK(cb[j]), spec);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      button, 0, 1, row - 1, row);
     gtk_widget_show(button);
@@ -1647,6 +1677,20 @@ static void print_line_label (GtkWidget *tbl, int row, GPT_SPEC *spec,
 	sprintf(label_text, _("line %d: "), i+1);
     }
 
+    label = gtk_label_new(label_text);
+    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 0, 1, row - 1, row);
+    gtk_widget_show(label);
+}
+
+static void print_label_label (GtkWidget *tbl, int row, GPT_SPEC *spec, 
+			       int i)
+{
+    char label_text[32];
+    GtkWidget *label; 
+
+    sprintf(label_text, _("label %d: "), i + 1);
     label = gtk_label_new(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1764,6 +1808,20 @@ static void flip_pointsel (GtkWidget *box, GtkWidget *targ)
     gtk_widget_set_sensitive(label, hp);
 }
 
+static GtkWidget *scroller_page (GtkWidget *vbox)
+{
+    GtkWidget *scroller;
+	
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				   GTK_POLICY_NEVER, 
+				   GTK_POLICY_AUTOMATIC);
+    gtk_widget_show(scroller);
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
+					  vbox);
+    return scroller;
+}
+
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 {
     GtkWidget *label, *tbl;
@@ -1802,16 +1860,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
     gtk_widget_show(label);
 
     if (gui_nlines > 4) {
-	GtkWidget *scroller;
-	
-	scroller = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-				       GTK_POLICY_AUTOMATIC, 
-				       GTK_POLICY_AUTOMATIC);
-	gtk_widget_show(scroller);
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
-					      vbox);
-	page = scroller;
+	page = scroller_page(vbox);
     } else {
 	page = vbox;
     }
@@ -1875,7 +1924,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	}
 
 	if (line->flags & GP_LINE_USER) {
-	    line_remove_button(tbl, tbl_len, spec, i);
+	    item_remove_button(tbl, tbl_len, spec, i, GUI_LINE);
 	}
 
 	print_field_label(tbl, tbl_len, _("legend"));
@@ -2084,18 +2133,23 @@ static void label_pos_to_entry (double *pos, GtkWidget *w)
 static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins) 
 {
     GtkWidget *label, *tbl;
-    GtkWidget *vbox, *page;
+    GtkWidget *vbox, *page, *sep;
     int i, j, tbl_len, tbl_num, tbl_col;
-    char label_text[32];
     png_plot *plot = (png_plot *) spec->ptr;
     int edit_ok = (spec->code != PLOT_BOXPLOTS);
     int pgnum = -1;
 
-    page = vbox = gp_dialog_vbox();
+    vbox = gp_dialog_vbox();
     gtk_widget_show(vbox);
 
     label = gtk_label_new(_("Labels"));
     gtk_widget_show(label);
+
+    if (gui_nlabels > 4) {
+	page = scroller_page(vbox);
+    } else {
+	page = vbox;
+    }
 
     if (ins > 0) {
 	pgnum = gtk_notebook_insert_page(GTK_NOTEBOOK(notebook), page, label, ins); 
@@ -2118,19 +2172,11 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	/* label text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	sprintf(label_text, _("label %d: "), i + 1);
-	label = gtk_label_new(label_text);
-	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 0, 1, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
-
+	print_label_label(tbl, tbl_len, spec, i);
 	print_field_label(tbl, tbl_len, _("text"));
-
 	labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
 	gp_string_to_entry(labeltext[i], spec->labels[i].text);
-	gtk_entry_set_width_chars(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
 	if (edit_ok) {
 	    g_signal_connect(G_OBJECT(labeltext[i]), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
@@ -2146,6 +2192,10 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 
+	if (edit_ok) {
+	    item_remove_button(tbl, tbl_len, spec, i, GUI_LABEL);
+	}
+
 	print_field_label(tbl, tbl_len, _("position (X Y)"));
 
 	/* holder for entry and button */
@@ -2155,7 +2205,6 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	labelpos[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
 	label_pos_to_entry(spec->labels[i].pos, labelpos[i]);
-	gtk_entry_set_width_chars(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
 	g_signal_connect(G_OBJECT(labelpos[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
@@ -2195,7 +2244,15 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 				 spec->labels[i].just);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_widget_show_all(labeljust[i]);	
+	gtk_widget_show_all(labeljust[i]);
+
+	/* separator */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	sep = gtk_hseparator_new();
+	gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, 
+				  tbl_len-1, tbl_len);
+	gtk_widget_show(sep);
     }
 
     if (edit_ok && spec->n_labels < 8) {
@@ -2204,7 +2261,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	button = gtk_button_new_with_label(_("Add label..."));
+	button = gtk_button_new_with_label(_("Add..."));
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(add_label_callback), 
 			 spec);

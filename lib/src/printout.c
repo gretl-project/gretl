@@ -2358,77 +2358,84 @@ int in_usa (void)
     return ustime;
 }
 
-struct readbuf {
+typedef struct readbuf_ readbuf;
+
+struct readbuf_ {
     const char *start;
     const char *point;
 };
 
-static struct readbuf *rbuf;
+static readbuf *rbuf;
 static int n_bufs;
 
-static int rbuf_push (const char *s)
-{
-    struct readbuf *tmp = NULL;
-    int i;
-
-    for (i=0; i<n_bufs; i++) {
-	if (rbuf[i].start == NULL) {
-	    /* re-use existing slot */
-	    rbuf[i].start = s;
-	    rbuf[i].point = s;
-	    return 0;
-	}
-    }    
-
-    tmp = realloc(rbuf, (n_bufs + 1) * sizeof *tmp);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    rbuf = tmp;
-    rbuf[n_bufs].start = s;
-    rbuf[n_bufs].point = s;
-    n_bufs++;
-
-    return 0;
-}
-
-static const char *rbuf_get_point (const char *s)
+static readbuf *matching_buffer (const char *s)
 {
     int i;
 
     for (i=0; i<n_bufs; i++) {
 	if (rbuf[i].start == s) {
-	    return rbuf[i].point;
+	    return &rbuf[i];
 	}
     }
 
     return NULL;
 }
 
-static void rbuf_set_point (const char *s, const char *p)
+static int rbuf_push (const char *s)
 {
-    int i;
+    readbuf *tmp = NULL;
+    int i, err = 0;
+
+    tmp = matching_buffer(s);
+    if (tmp != NULL) {
+	fprintf(stderr, "GRETL ERROR: buffer at %p is already "
+		"initialized\n", (void *) s);
+	return 1;
+    }
 
     for (i=0; i<n_bufs; i++) {
-	if (rbuf[i].start == s) {
-	    rbuf[i].point = p;
-	    break;
+	if (rbuf[i].start == NULL) {
+	    /* re-use existing slot */
+	    rbuf[i].start = rbuf[i].point = s;
+	    return 0;
 	}
+    }    
+
+    tmp = realloc(rbuf, (n_bufs + 1) * sizeof *tmp);
+    if (tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	rbuf = tmp;
+	rbuf[n_bufs].start = rbuf[n_bufs].point = s;
+	n_bufs++;
+    }
+
+    return err;
+}
+
+static const char *rbuf_get_point (const char *s)
+{
+    readbuf *rbuf = matching_buffer(s);
+
+    return (rbuf == NULL)? NULL : rbuf->point;
+}
+
+static void rbuf_set_point (const char *s, const char *p)
+{
+    readbuf *rbuf = matching_buffer(s);
+
+    if (rbuf != NULL) {
+	rbuf->point = p;
     }
 }
 
 static void rbuf_finalize (const char *s)
 {
-    int i;
+    readbuf *rbuf = matching_buffer(s);
 
-    for (i=0; i<n_bufs; i++) {
-	if (rbuf[i].start == s) {
-	    rbuf[i].start = NULL;
-	    rbuf[i].point = NULL;
-	    break;
-	}
-    }    
+    if (rbuf != NULL) {
+	rbuf->start = rbuf->point = NULL;
+    }
 }
 
 /**
@@ -2525,6 +2532,61 @@ char *bufgets (char *s, size_t size, const char *buf)
     rbuf_set_point(buf, p);
 
     return s;
+}
+
+/**
+ * bufseek:
+ * @buf: char buffer.
+ * @offset: offset from start.
+ *
+ * Buffer equivalent of fseek, with SEEK_SET.  Note that @buf
+ * must first be initialized via bufgets_init().
+ * 
+ * Returns: 0 on success, 1 on error.
+ */
+
+int bufseek (const char *buf, long offset)
+{
+    readbuf *rbuf = matching_buffer(buf);
+
+    if (rbuf != NULL) {
+	rbuf->point = rbuf->start + offset;
+	return 0;
+    }
+
+    return 1;
+}
+
+/**
+ * buf_rewind:
+ * @buf: char buffer.
+ *
+ * Buffer equivalent of rewind.  Note that @buf
+ * must first be initialized via bufgets_init().
+ * 
+ * Returns: 0 on success, 1 on error.
+ */
+
+void buf_rewind (const char *buf)
+{
+    bufseek(buf, 0);
+}
+
+/**
+ * buftell:
+ * @buf: char buffer.
+ *
+ * Buffer equivalent of ftell.  Note that @buf
+ * must first be initialized via bufgets_init().
+ * 
+ * Returns: offset from start of buffer.
+ */
+
+long buftell (const char *buf)
+{
+    readbuf *rbuf = matching_buffer(buf);
+
+    return (rbuf == NULL)? 0 : rbuf->point - rbuf->start;
 }
 
 /**

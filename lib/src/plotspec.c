@@ -20,21 +20,6 @@
 #include "libgretl.h"
 #include "plotspec.h"
 
-/**
- * plotspec_label_init:
- * @lbl: pointer to gnuplot label struct.
- * 
- * Initializes the label.
- */
-
-void plotspec_label_init (GPT_LABEL *lbl)
-{
-    lbl->text[0] = '\0';
-    lbl->just = GP_JUST_LEFT;
-    lbl->pos[0] = NADBL;
-    lbl->pos[1] = NADBL;
-}
-
 GPT_SPEC *plotspec_new (void)
 {
     GPT_SPEC *spec;
@@ -46,7 +31,13 @@ GPT_SPEC *plotspec_new (void)
     }
 
     spec->lines = NULL;
+    spec->n_lines = 0;
+
     spec->labels = NULL;
+    spec->n_labels = 0;
+
+    spec->literal = NULL;
+    spec->n_literal = 0;
 
     for (i=0; i<4; i++) {
 	spec->titles[i][0] = 0;
@@ -54,9 +45,6 @@ GPT_SPEC *plotspec_new (void)
 
     *spec->xvarname = '\0';
     *spec->yvarname = '\0';
-
-    spec->literal = NULL;
-    spec->n_literal = 0;
 
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
@@ -85,8 +73,6 @@ GPT_SPEC *plotspec_new (void)
     spec->labeled = NULL;
     spec->ptr = NULL;
     spec->reglist = NULL;
-    spec->n_lines = 0;
-    spec->n_labels = 0;
     spec->nobs = 0;
     spec->okobs = 0;
     spec->pd = 0;
@@ -233,6 +219,7 @@ int plotspec_delete_label (GPT_SPEC *spec, int i)
 {
     GPT_LABEL *labels = spec->labels;
     int j, n = spec->n_labels;
+    int err = 0;
 
     if (i < 0 || i >= n) {
 	return E_DATA;
@@ -247,14 +234,19 @@ int plotspec_delete_label (GPT_SPEC *spec, int i)
 
     spec->n_labels -= 1;
 
-    labels = realloc(spec->labels, (n - 1) * sizeof *labels);
-    if (labels == NULL) {
-	return E_ALLOC;
+    if (spec->n_labels == 0) {
+	free(spec->labels);
+	spec->labels = NULL;
+    } else {
+	labels = realloc(spec->labels, (n - 1) * sizeof *labels);
+	if (labels == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    spec->labels = labels;
+	}
     }
 
-    spec->labels = labels;
-
-    return 0;
+    return err;
 }
 
 static char *escape_quotes (const char *s)

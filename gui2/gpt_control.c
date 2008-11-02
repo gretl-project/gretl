@@ -1154,7 +1154,8 @@ static int get_gpt_marker (const char *line, char *label)
                         p == PLOT_TRI_GRAPH || \
                         p == PLOT_BI_GRAPH)
 
-static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
+static int get_gpt_data (GPT_SPEC *spec, int do_markers, 
+			 const char *buf)
 {
     char s[MAXLEN];
     char *got;
@@ -1196,7 +1197,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	    int missing = 0;
 	    int nf = 0;
 
-	    got = fgets(s, sizeof s, fp);
+	    got = bufgets(s, sizeof s, buf);
 	    if (got == NULL) {
 		err = 1;
 		break;
@@ -1241,7 +1242,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	} 
 
 	/* trailer line for data block */
-	fgets(s, sizeof s, fp);
+	bufgets(s, sizeof s, buf);
 
 	/* shift 'y' writing location */
 	x[1] += (ncols - 1) * spec->nobs;
@@ -1572,7 +1573,7 @@ static int allocate_plotspec_markers (GPT_SPEC *spec)
    data-point markers along with the data.
 */
 
-static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
+static int get_plot_nobs (const char *buf, PlotType *ptype, int *do_markers)
 {
     int n = 0, started = -1;
     char line[MAXLEN], label[9];
@@ -1581,7 +1582,7 @@ static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
     *ptype = PLOT_REGULAR;
     *do_markers = 0;
 
-    while (fgets(line, MAXLEN - 1, fp)) {
+    while (bufgets(line, MAXLEN - 1, buf)) {
 
 	if (*line == '#' && *ptype == PLOT_REGULAR) {
 	    tailstrip(line);
@@ -1829,8 +1830,8 @@ static void maybe_set_add_fit_ok (GPT_SPEC *spec)
 }
 
 static int 
-plot_get_data_and_markers (GPT_SPEC *spec, FILE *fp, int datacols, 
-			   int do_markers)
+plot_get_data_and_markers (GPT_SPEC *spec, const char *buf, 
+			   int datacols, int do_markers)
 {
     int err = 0;
 
@@ -1856,7 +1857,7 @@ plot_get_data_and_markers (GPT_SPEC *spec, FILE *fp, int datacols,
 
     /* Read the data (and perhaps markers) from the plot file */
     if (!err) {
-	err = get_gpt_data(spec, do_markers, fp);
+	err = get_gpt_data(spec, do_markers, buf);
     }
 
 #if GPDEBUG
@@ -1868,37 +1869,37 @@ plot_get_data_and_markers (GPT_SPEC *spec, FILE *fp, int datacols,
     return err;
 }
 
-static int uneditable_get_markers (GPT_SPEC *spec, FILE *fp, int *polar)
+static int uneditable_get_markers (GPT_SPEC *spec, const char *buf, int *polar)
 {
     char line[256];
     long offset = 0;
     int gotit = 0;
     int err = 0;
 
-    rewind(fp);
+    buf_rewind(buf);
 
     /* advance to the right line (with data plus markers) */
-    while (fgets(line, sizeof line, fp)) {
+    while (bufgets(line, sizeof line, buf)) {
 	if ((isdigit(*line) || *line == '-') && strchr(line, '#')) {
 	    gotit = 1;
 	    break;
 	} else if (strstr(line, "set polar")) {
 	    *polar = 1;
 	}
-	offset = ftell(fp);
+	offset = buftell(buf);
     }
 
     if (!gotit) {
 	return 1;
     } else {
-	fseek(fp, offset, SEEK_SET);
+	bufseek(buf, offset);
     }
 
     err = plotspec_add_line(spec);
     
     if (!err) {
 	spec->lines[0].ncols = 2;
-	err = plot_get_data_and_markers(spec, fp, 2, 1);
+	err = plot_get_data_and_markers(spec, buf, 2, 1);
     }
 
     if (!err) {
@@ -1980,8 +1981,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     int reglist[4] = {0};
     int *uservec = NULL;
     char gpline[MAXLEN];
+    gchar *buf = NULL;
     char *got = NULL;
-    FILE *fp;
     int err = 0;
 
 #if GPDEBUG
@@ -1997,22 +1998,24 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	return 0;
     }
 
-    /* open the plot file */
-    fp = gretl_fopen(spec->fname, "r");
-    if (fp == NULL) {
-	file_read_errbox(spec->fname);
-	return 1;
+    /* get the content of the plot file */
+    err = gretl_file_get_contents(spec->fname, &buf);
+    if (err) {
+	gui_errmsg(err);
+	return err;
     }
 
+    bufgets_init(buf);
+
     /* get the number of data-points, plot type, and check for markers */
-    spec->nobs = get_plot_nobs(fp, &spec->code, &do_markers);
+    spec->nobs = get_plot_nobs(buf, &spec->code, &do_markers);
     if (spec->nobs == 0 && plot_needs_obs(spec->code)) {
 	/* failed reading plot data */
 #if GPDEBUG
 	fprintf(stderr, " got spec->nobs = 0\n");
 #endif
-	fclose(fp);
-	return 1;
+	err = 1;
+	goto bailout;
     }
 
     if (spec->nobs > MAX_MARKERS && do_markers) {
@@ -2022,21 +2025,20 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     if (cant_edit(spec->code)) {
 	fprintf(stderr, "read_plotspec_from_file: plot is not editable\n");
 	if (do_markers) {
-	    uneditable_get_markers(spec, fp, polar);
+	    uneditable_get_markers(spec, buf, polar);
 	}
-	fclose(fp);
-	return 0;
+	goto bailout;
     }
 
     for (i=0; i<MAX_STYLES; i++) {
 	linestyle_init(&styles[i]);
     }
 
-    rewind(fp);
+    buf_rewind(buf);
 
     /* get the preamble and "set" lines */
 
-    while ((got = fgets(gpline, sizeof gpline, fp))) {
+    while ((got = bufgets(gpline, sizeof gpline, buf))) {
 	char vname[VNAMELEN];
 	int v;
 
@@ -2080,10 +2082,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    spec->literal = strings_array_new(spec->n_literal);
 	    if (spec->literal == NULL) {
 		err = E_ALLOC;
-		goto plot_bailout;
+		goto bailout;
 	    }
 	    for (i=0; i<spec->n_literal; i++) {
-		if (!fgets(gpline, MAXLEN - 1, fp)) {
+		if (!bufgets(gpline, MAXLEN - 1, buf)) {
 		    errbox(_("Plot file is corrupted"));
 		} else {
 		    top_n_tail(gpline, 0, NULL);
@@ -2121,13 +2123,13 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
 	if (parse_gp_set_line(spec, gpline, styles)) {
 	    err = 1;
-	    goto plot_bailout;
+	    goto bailout;
 	}
     }
 
     if (got == NULL) {
 	err = 1;
-	goto plot_bailout;
+	goto bailout;
     }
 
     for (i=0; i<4; i++) {
@@ -2142,11 +2144,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     /* then get the "plot" lines */
     if (strncmp(gpline, "plot ", 5) ||
-	(strlen(gpline) < 10 && fgets(gpline, MAXLEN - 1, fp) == NULL)) {	
+	(strlen(gpline) < 10 && bufgets(gpline, MAXLEN - 1, buf) == NULL)) {	
 	errbox(_("Failed to parse gnuplot file"));
 	fprintf(stderr, "bad plotfile line: '%s'\n", gpline);
 	err = 1;
-	goto plot_bailout;
+	goto bailout;
     }
 
     done = 0;
@@ -2166,14 +2168,14 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
 	err = parse_gp_line_line(gpline, spec);
 
-	if (err || done || (got = fgets(gpline, MAXLEN - 1, fp)) == NULL) {
+	if (err || done || (got = bufgets(gpline, MAXLEN - 1, buf)) == NULL) {
 	    break;
 	}
     }
 
     if (err || got == NULL) {
 	err = 1;
-	goto plot_bailout;
+	goto bailout;
     }
 
     /* determine total number of required data columns, etc. */
@@ -2194,7 +2196,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	}
     }
 
-    err = plot_get_data_and_markers(spec, fp, datacols, do_markers);
+    err = plot_get_data_and_markers(spec, buf, datacols, do_markers);
 
     if (!err && reglist != NULL && reglist[0] > 0) {
 	spec->reglist = gretl_list_copy(reglist);
@@ -2208,9 +2210,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	maybe_set_add_fit_ok(spec);
     }
 
- plot_bailout:
+ bailout:
 
-    fclose(fp);
+    bufgets_finalize(buf);
+    g_free(buf);
     free(uservec);
 
     return err;

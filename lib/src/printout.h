@@ -108,6 +108,12 @@ void bufgets_init (const char *buf);
 
 void bufgets_finalize (const char *buf);
 
+void buf_rewind (const char *buf);
+
+int bufseek (const char *buf, long offset);
+
+long buftell (const char *buf);
+
 void scroll_pause (void);
 
 int scroll_pause_or_quit (void);

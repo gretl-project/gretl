@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-31 16:12-0400\n"
-"PO-Revision-Date: 2008-10-21 21:00-0400\n"
+"PO-Revision-Date: 2008-11-01 23:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -9095,19 +9095,16 @@ msgid "Add line"
 msgstr "Dodaj linie"
 
 #: gui2/gpt_dialog.c:1603
-#, fuzzy
 msgid "quartiles"
-msgstr "kwartały"
+msgstr "kwartyle"
 
 #: gui2/gpt_dialog.c:1609
-#, fuzzy
 msgid "lower bound"
-msgstr "dolny"
+msgstr "dolna granica"
 
 #: gui2/gpt_dialog.c:1611
-#, fuzzy
 msgid "upper bound"
-msgstr "górny"
+msgstr "górna granica"
 
 #: gui2/gpt_dialog.c:1768
 msgid "Lines"
@@ -9122,9 +9119,8 @@ msgid "type"
 msgstr "typ"
 
 #: gui2/gpt_dialog.c:1911
-#, fuzzy
 msgid "point"
-msgstr "pomiń"
+msgstr "punkt"
 
 #: gui2/gpt_dialog.c:1949
 msgid "y axis"
@@ -9188,9 +9184,8 @@ msgid "logarithmic scale, base:"
 msgstr "skala logarytmiczna, podstawa:"
 
 #: gui2/gpt_dialog.c:2346
-#, fuzzy
 msgid "Palette"
-msgstr "Wklej"
+msgstr "Kolory"
 
 #: gui2/gpt_dialog.c:2458
 msgid ""
@@ -9526,19 +9521,19 @@ msgstr "według _nazwy"
 
 #: gui2/gretl.c:1308
 msgid "_NIST test suite"
-msgstr "NIST test suite"
+msgstr "testy prcyzji NIST"
 
 #: gui2/gretl.c:1309
 msgid "_Basic"
-msgstr "Basic"
+msgstr "Podstawowy"
 
 #: gui2/gretl.c:1310
 msgid "_Verbose"
-msgstr "Verbose"
+msgstr "Rozszerzony"
 
 #: gui2/gretl.c:1311
 msgid "V_ery verbose"
-msgstr "Very verbose"
+msgstr "Pełny"
 
 #: gui2/gretl.c:1312
 msgid "_Preferences"
@@ -13117,18 +13112,16 @@ msgstr ""
 "(maksymalnie 15 znaków)"
 
 #: gui2/ssheet.c:851
-#, fuzzy
 msgid "gretl: scalar"
-msgstr "gretl: definiowanie skalarów"
+msgstr "gretl: skalar"
 
 #: gui2/ssheet.c:852
-#, fuzzy
 msgid ""
 "Enter name, or name=value,\n"
 "for new scalar"
 msgstr ""
-"Wprowadź nazwę nowej zmiennej\n"
-"(maksymalnie 15 znaków)"
+"Wprowadź nazwę lub nazwa=wartość\n"
+"dla nowego skalaru"
 
 #: gui2/ssheet.c:862
 msgid "gretl: case marker"
@@ -14400,36 +14393,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "Save as EPS..."
-#~ msgstr "Zapisz jako EPS..."
-
-#~ msgid "Save boxplot file"
-#~ msgstr "Zapisz plik boxplot"
-
-#~ msgid "Save as PS..."
-#~ msgstr "Zapisz jako PS..."
-
-#~ msgid "Save as XPM..."
-#~ msgstr "Zapisz jako XPM..."
-
-#~ msgid "gretl: boxplot data"
-#~ msgstr "gretl: wykres pudełkowy"
-
-#~ msgid "Dropping %s: insufficient observations"
-#~ msgstr "Pominięto %s: nieodpowiednie obserwacje"
-
-#~ msgid "Couldn't obtain confidence interval"
-#~ msgstr "Niemożna uzyskać przedziału ufności"
-
-#~ msgid "Failed to set clipboard data"
-#~ msgstr "Błąd w zapisie do schowka"
-
-#~ msgid "Failed to close Clipboard"
-#~ msgstr "Błąd w zamknięciu schowka"
-
-#~ msgid "boxplot command failed"
-#~ msgstr "błędne polecenie boxplot"
-
-#~ msgid "postscript files (*.ps)"
-#~ msgstr "pliki postscript (*.ps)"
