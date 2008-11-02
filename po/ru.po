@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-10-31 16:12-0400\n"
-"PO-Revision-Date: 2008-10-30 04:10+0200\n"
+"PO-Revision-Date: 2008-11-01 01:15+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -410,8 +410,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -722,15 +721,13 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
-msgstr ""
-"   предупреждение: отсутствует значение для переменной %d, наблюдение %d\n"
+msgstr "   предупреждение: отсутствует значение для переменной %d, наблюдение %d\n"
 
 #: lib/src/csvdata.c:1092
 #, c-format
@@ -855,8 +852,7 @@ msgstr "ВНИМАНИЕ: ошибка чтения бинарных данны�
 #: lib/src/dataio.c:202 lib/src/dataio.c:242 lib/src/dataio.c:336
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr ""
-"ПРЕДУПРЕЖДЕНИЕ: ошибка чтения ASCII данных для переменной %d, наблюдение %d"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: ошибка чтения ASCII данных для переменной %d, наблюдение %d"
 
 #: lib/src/dataio.c:308
 #, c-format
@@ -1335,8 +1331,7 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -3921,11 +3916,11 @@ msgstr "Информационный критерий Шварца"
 
 #: lib/src/modelprint.c:470
 msgid "Hannan-Quinn criterion"
-msgstr "Информационный критерий Ханнана-Куина "
+msgstr "Информационный критерий Хеннана-Куинна "
 
 #: lib/src/modelprint.c:471
 msgid "Hannan--Quinn criterion"
-msgstr "Информационный критерий Ханнана--Куина"
+msgstr "Информационный критерий Хеннана--Куинна"
 
 #: lib/src/modelprint.c:473 lib/src/texprint.c:982 lib/src/varprint.c:1067
 #: lib/src/varprint.c:1075
@@ -4030,8 +4025,7 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:991
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:994
 #, c-format
@@ -4332,8 +4326,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:1389 lib/src/modelprint.c:1395
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:1390 lib/src/modelprint.c:1396
 msgid "variant"
@@ -4438,8 +4431,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1705 lib/src/modelprint.c:1712
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1708 lib/src/modelprint.c:1715
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5086,8 +5078,7 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5235,7 +5226,7 @@ msgstr "Невозможно загрузить функцию из плагин
 
 #: lib/src/printout.c:61
 msgid "Covariance matrix of regression coefficients"
-msgstr ""
+msgstr "Ковариационная матрица для коэффициентов регрессии"
 
 #: lib/src/printout.c:82 lib/src/printout.c:151
 msgid "Current session"
@@ -5247,8 +5238,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
@@ -5278,6 +5268,8 @@ msgid ""
 "      VARIABLE         COEFFICIENT      %g%% CONFIDENCE INTERVAL\n"
 "\n"
 msgstr ""
+"      ПЕРЕМЕННАЯ         КОЭФФИЦИЕНТ      %g%% ДОВЕРИТ. ИНТЕРВАЛ\n"
+"\n"
 
 #: lib/src/printout.c:245
 msgid "Test for null hypothesis of normal distribution"
@@ -5359,8 +5351,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
@@ -5371,7 +5362,7 @@ msgstr ""
 #: lib/src/printout.c:558
 #, c-format
 msgid "Current sample: %d observations\n"
-msgstr ""
+msgstr "Текущая выборка: %d наблюдений\n"
 
 #: lib/src/printout.c:566 lib/src/printout.c:596
 msgid "Full data range"
@@ -5693,8 +5684,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -6552,8 +6542,7 @@ msgstr "Тестовая статистика: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1707
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
-"Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
+msgstr "Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
 
 #: gui2/calculator.c:1710
 #, c-format
@@ -7060,8 +7049,7 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:663
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
-"Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
+msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:668 gui2/library.c:2739
 msgid "gretl: simultaneous equations system"
@@ -7868,6 +7856,8 @@ msgstr "Описание:"
 #: gui2/dialogs.c:1373
 msgid "Display name (shown in graphs):"
 msgstr ""
+"Отображаемое название\n"
+"(показывается на графиках):"
 
 #: gui2/dialogs.c:1399
 msgid "Compaction method (for reducing frequency):"
@@ -7879,11 +7869,11 @@ msgstr "Толщина линий графика:"
 
 #: gui2/dialogs.c:1447
 msgid "Treat this variable as discrete"
-msgstr ""
+msgstr "Дискретная переменная"
 
 #: gui2/dialogs.c:1521
 msgid "gretl: database description"
-msgstr ""
+msgstr "gretl: описание базы данных"
 
 #: gui2/dialogs.c:1525
 msgid "description:"
@@ -7946,23 +7936,23 @@ msgstr "Установить диапазон"
 
 #: gui2/dialogs.c:2252
 msgid "Number of pre-forecast observations to graph"
-msgstr ""
+msgstr "Количество предварительных прогнозов на графике:"
 
 #: gui2/dialogs.c:2255
 msgid "automatic forecast (dynamic out of sample)"
-msgstr ""
+msgstr "Автоматический прогноз (динамический вне выборки)"
 
 #: gui2/dialogs.c:2256
 msgid "dynamic forecast"
-msgstr ""
+msgstr "Динамический прогноз"
 
 #: gui2/dialogs.c:2257
 msgid "static forecast"
-msgstr ""
+msgstr "Статический прогноз"
 
 #: gui2/dialogs.c:2258
 msgid "rolling one-step ahead forecasts"
-msgstr ""
+msgstr "На один шаг впереди прогнозов"
 
 #: gui2/dialogs.c:2268
 msgid "gretl: forecast"
@@ -7970,7 +7960,7 @@ msgstr "gretl: прогнозирование"
 
 #: gui2/dialogs.c:2277
 msgid "Forecast range:"
-msgstr ""
+msgstr "Горизонт прогнозирования:"
 
 #: gui2/dialogs.c:2278
 msgid "Start"
@@ -7982,19 +7972,19 @@ msgstr "Конец"
 
 #: gui2/dialogs.c:2350
 msgid "error bars"
-msgstr ""
+msgstr "Столбцы ошибок"
 
 #: gui2/dialogs.c:2351
 msgid "low and high lines"
-msgstr ""
+msgstr "Линии для нижней и верхней границы"
 
 #: gui2/dialogs.c:2352
 msgid "shaded area"
-msgstr ""
+msgstr "Затемненная область"
 
 #: gui2/dialogs.c:2375
 msgid "Plot confidence interval using"
-msgstr ""
+msgstr "Показывать доверительные интервалы как:"
 
 #: gui2/dialogs.c:2437
 msgid "Add observations"
@@ -8902,7 +8892,6 @@ msgid "Add line"
 msgstr "Добавить линию"
 
 #: gui2/gpt_dialog.c:1603
-#, fuzzy
 msgid "quartiles"
 msgstr "кварталы"
 
@@ -8927,9 +8916,8 @@ msgid "type"
 msgstr "Тип"
 
 #: gui2/gpt_dialog.c:1911
-#, fuzzy
 msgid "point"
-msgstr "Пуассона"
+msgstr ""
 
 #: gui2/gpt_dialog.c:1949
 msgid "y axis"
@@ -8993,9 +8981,8 @@ msgid "logarithmic scale, base:"
 msgstr "Логарифмическая шкала, основание:"
 
 #: gui2/gpt_dialog.c:2346
-#, fuzzy
 msgid "Palette"
-msgstr "Вставить"
+msgstr "Палитра"
 
 #: gui2/gpt_dialog.c:2458
 msgid ""
@@ -10466,7 +10453,7 @@ msgstr "Информационный критерий _Байеса"
 
 #: gui2/gui_utils.c:2030
 msgid "_Hannan-Quinn Information Criterion"
-msgstr "Информационный критерий _Ханнана-Куина"
+msgstr "Информационный критерий _Хеннана-Куинна"
 
 #: gui2/gui_utils.c:2035
 msgid "_Predicted error variance"
@@ -11188,15 +11175,15 @@ msgstr ""
 
 #: gui2/library.c:4474
 msgid "gretl: generate lags"
-msgstr ""
+msgstr "gretl: создание лагов"
 
 #: gui2/library.c:4475
 msgid "Number of lags to create:"
-msgstr ""
+msgstr "Количество лагов для создания:"
 
 #: gui2/library.c:4502
 msgid "No discrete variables were selected"
-msgstr "Не были выбраны "
+msgstr "Не были выбраны фиктивные переменные"
 
 #: gui2/library.c:4668
 msgid "error sum of squares"
@@ -11232,7 +11219,7 @@ msgstr "Байесовский информационный критерий"
 
 #: gui2/library.c:4708
 msgid "Hannan-Quinn Information Criterion"
-msgstr "Информационный критерий Ханнана-Куина"
+msgstr "Информационный критерий Хеннана-Куинна"
 
 #: gui2/library.c:4724
 msgid "gretl: add scalar"
@@ -11240,7 +11227,7 @@ msgstr "gretl: добавить скалярную величину"
 
 #: gui2/library.c:5095
 msgid "Can't delete a variable when in sub-sample mode\n"
-msgstr ""
+msgstr "Невозможно удалить переменную в режиме частичной выборки\n"
 
 #: gui2/library.c:5109
 #, c-format
@@ -11455,7 +11442,7 @@ msgstr "Гистограмма"
 
 #: gui2/menustate.c:293 gui2/menustate.c:369 gui2/session.c:747
 msgid "Boxplot"
-msgstr ""
+msgstr "Коробчатая диаграмма"
 
 #: gui2/menustate.c:299 gui2/menustate.c:371
 msgid "Spectrum"
@@ -11475,11 +11462,11 @@ msgstr ""
 
 #: gui2/menustate.c:307
 msgid "Hurst exponent"
-msgstr ""
+msgstr "Экспонента Хёрста (Hurst)"
 
 #: gui2/menustate.c:309 gui2/menustate.c:372
 msgid "Edit attributes"
-msgstr "Редактировать аттрибуты"
+msgstr "Свойства"
 
 #: gui2/menustate.c:311 gui2/menustate.c:351 gui2/menustate.c:373
 #: gui2/menustate.c:412
@@ -11550,8 +11537,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11660,8 +11646,7 @@ msgstr "gretl: список моделей"
 
 #: gui2/model_table.c:936
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
-"Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
+msgstr "Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
@@ -12869,18 +12854,16 @@ msgstr ""
 "(максимум 15 символов)"
 
 #: gui2/ssheet.c:851
-#, fuzzy
 msgid "gretl: scalar"
 msgstr "gretl: скалярные величины"
 
 #: gui2/ssheet.c:852
-#, fuzzy
 msgid ""
 "Enter name, or name=value,\n"
 "for new scalar"
 msgstr ""
-"Введите название новой переменной\n"
-"(максимум 15 символов)"
+"Введите название или название=имя\n"
+"для новой скалярной переменной"
 
 #: gui2/ssheet.c:862
 msgid "gretl: case marker"
@@ -14123,5 +14106,3 @@ msgstr "Строки"
 msgid "Accessors"
 msgstr ""
 
-#~ msgid "postscript files (*.ps)"
-#~ msgstr "Файлы postscript (*.ps)"
