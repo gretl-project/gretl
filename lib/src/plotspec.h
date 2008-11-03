@@ -115,13 +115,13 @@ int plotspec_add_line (GPT_SPEC *spec);
 
 int plotspec_delete_line (GPT_SPEC *spec, int i);
 
-int plotspec_delete_last_lines (GPT_SPEC *spec, int n);
+GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err);
 
 int plotspec_add_label (GPT_SPEC *spec);
 
 int plotspec_delete_label (GPT_SPEC *spec, int i);
 
-int plotspec_delete_last_labels (GPT_SPEC *spec, int n);
+GPT_LABEL *plotspec_clone_labels (GPT_SPEC *spec, int *err);
 
 int plotspec_print (const GPT_SPEC *spec, FILE *fp);
 

@@ -48,15 +48,26 @@ struct gpt_range_t {
 #define MAX_AXES 3
 #define NTITLES  4
 
+/* apparatus for handling the case where lines and/or labels are
+   added or removed via the gui dialog, but these changes are
+   discarded (the user doesn't click "OK" or "Apply")
+*/
+
+#define old_lines_init(e) (e->old_n_lines = -1, e->old_lines = NULL)
+#define old_labels_init(e) (e->old_n_labels = -1, e->old_labels = NULL)
+
+#define lines_not_synced(e) (e->old_n_lines < 0)
+#define labels_not_synced(e) (e->old_n_labels < 0)
+
+#define restore_lines(e) (e->old_n_lines >= 0)
+#define restore_labels(e) (e->old_n_labels >= 0)
+
 typedef struct plot_editor_ plot_editor;
 
 struct plot_editor_ {
     GtkWidget *dialog;
     GtkWidget *notebook;
     GPT_SPEC *spec;
-
-    int added_lines;
-    int added_labels;
 
     GtkWidget **linetitle;
     GtkWidget **lineformula;
@@ -85,6 +96,12 @@ struct plot_editor_ {
 
     struct gpt_range_t axis_range[MAX_AXES];
     struct gpt_titles_t gpt_titles[NTITLES];
+
+    int old_n_lines;
+    int old_n_labels;
+
+    GPT_LINE *old_lines;
+    GPT_LABEL *old_labels;
 };
 
 #define PLOT_LABEL_POS_LEN 32
@@ -680,8 +697,13 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 
 static void plot_editor_sync (plot_editor *ed)
 {
-    ed->added_lines = 0;
-    ed->added_labels = 0;
+    ed->spec->flags &= ~(GPT_FILL_SWITCH | GPT_ERR_SWITCH);
+
+    free(ed->old_lines);
+    old_lines_init(ed);
+
+    free(ed->old_labels);
+    old_labels_init(ed);
 }
 
 enum {
@@ -689,10 +711,15 @@ enum {
     FILLEDCURVE
 };
 
+/* Respond to "OK" or "Apply", or to hitting the Enter key in
+   some parts of the plot editor dialog */
+
 static void apply_gpt_changes (GtkWidget *w, plot_editor *ed) 
 {
     GPT_SPEC *spec = ed->spec;
+    GPT_LINE *line;
     int suppress_y2 = 0;
+    gchar *s;
     int i, k, err = 0;
 
     for (i=0; i<NTITLES; i++) {
@@ -703,8 +730,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     if (ed->keycombo != NULL) {
-	gchar *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->keycombo));
-
+        s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->keycombo));
 	strcpy(spec->keyspec, s);
 	g_free(s);
     }
@@ -716,13 +742,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     } 
 
     for (i=0; i<ed->gui_nlines; i++) {
-	GPT_LINE *line = &spec->lines[i];
-
+	line = &spec->lines[i];
 	line->yaxis = 1;
 	if (!suppress_y2 && ed->yaxiscombo[i] != NULL) {
-	    gchar *s = 
-		gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->yaxiscombo[i]));
-
+	    s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->yaxiscombo[i]));
 	    if (!strcmp(s, "right")) {
 		line->yaxis = 2;	
 	    }
@@ -756,52 +779,46 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (!err) {   
-	for (i=0; i<ed->gui_nlines; i++) {
-	    GPT_LINE *line = &spec->lines[i];
+    for (i=0; i<ed->gui_nlines && !err; i++) {
+	line = &spec->lines[i];
+	if (ed->stylecombo[i] != NULL) {
+	    int oldalt = 0;
 
-	    if (ed->stylecombo[i] != NULL) {
-		int oldalt = 0;
-
-		if (!strncmp(line->style, "filled", 6)) {
-		    oldalt = FILLEDCURVE;
-		} else if (!strncmp(line->style, "error", 5)) {
-		    oldalt = ERRORBARS;
-		}
-		combo_to_gp_string(ed->stylecombo[i], line->style, 
-				   sizeof spec->lines[0].style);
-		if (oldalt == FILLEDCURVE &&
-		    !strncmp(line->style, "error", 5)) {
-		    spec->flags |= GPT_ERR_SWITCH;
-		    spec->flags &= ~GPT_FILL_SWITCH;
-		} else if (oldalt == ERRORBARS &&
-			   !strncmp(line->style, "filled", 6)) {
-		    spec->flags |= GPT_FILL_SWITCH;
-		    spec->flags &= ~GPT_ERR_SWITCH;
-		}
-		maybe_set_point_type(line, ed->stylecombo[i], i);
+	    if (!strncmp(line->style, "filled", 6)) {
+		oldalt = FILLEDCURVE;
+	    } else if (!strncmp(line->style, "error", 5)) {
+		oldalt = ERRORBARS;
 	    }
-	    if (ed->linetitle[i] != NULL) {
-		entry_to_gp_string(ed->linetitle[i], 
-				   line->title, 
-				   sizeof spec->lines[0].title);
+	    combo_to_gp_string(ed->stylecombo[i], line->style, 
+			       sizeof spec->lines[0].style);
+	    if (oldalt == FILLEDCURVE &&
+		!strncmp(line->style, "error", 5)) {
+		spec->flags |= GPT_ERR_SWITCH;
+		spec->flags &= ~GPT_FILL_SWITCH;
+	    } else if (oldalt == ERRORBARS &&
+		       !strncmp(line->style, "filled", 6)) {
+		spec->flags |= GPT_FILL_SWITCH;
+		spec->flags &= ~GPT_ERR_SWITCH;
 	    }
-	    if (ed->lineformula[i] != NULL && 
-		GTK_WIDGET_IS_SENSITIVE(ed->lineformula[i])) {
-		entry_to_gp_string(ed->lineformula[i], 
-				   line->formula, 
-				   sizeof spec->lines[0].formula);
-	    }
-	    if (ed->linescale[i] != NULL) {
-		entry_to_gp_string(ed->linescale[i], 
-				   line->scale, 
-				   sizeof spec->lines[0].scale);
-	    }
-	    if (ed->linewidth[i] != NULL) {
-		line->width = 
-		    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->linewidth[i]));
-		maybe_apply_line_color(ed->linewidth[i], spec, i);
-	    }
+	    maybe_set_point_type(line, ed->stylecombo[i], i);
+	}
+	if (ed->linetitle[i] != NULL) {
+	    entry_to_gp_string(ed->linetitle[i], line->title, 
+			       sizeof spec->lines[0].title);
+	}
+	if (ed->lineformula[i] != NULL && 
+	    GTK_WIDGET_IS_SENSITIVE(ed->lineformula[i])) {
+	    entry_to_gp_string(ed->lineformula[i], line->formula, 
+			       sizeof spec->lines[0].formula);
+	}
+	if (ed->linescale[i] != NULL) {
+	    entry_to_gp_string(ed->linescale[i], line->scale, 
+			       sizeof spec->lines[0].scale);
+	}
+	if (ed->linewidth[i] != NULL) {
+	    line->width = 
+		gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->linewidth[i]));
+	    maybe_apply_line_color(ed->linewidth[i], spec, i);
 	}
     }
 
@@ -812,11 +829,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    continue;
 	}
 	err = get_label_pos_from_entry(ed->labelpos[i], spec->labels[i].pos);
-	if (err) {
-	    break;
+	if (!err) {
+	    spec->labels[i].just = 
+		gtk_combo_box_get_active(GTK_COMBO_BOX(ed->labeljust[i]));
 	}
-	spec->labels[i].just = 
-	    gtk_combo_box_get_active(GTK_COMBO_BOX(ed->labeljust[i]));
     } 
 
     if (!err && ed->border_check != NULL) {
@@ -870,7 +886,6 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     plot_editor_sync(ed);
-    spec->flags &= ~(GPT_FILL_SWITCH | GPT_ERR_SWITCH);
 }
 
 static void set_keyspec_sensitivity (plot_editor *ed)
@@ -1460,30 +1475,98 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
     gtk_widget_show(nlinfo->formula_entry);
 }
 
+/* back up exiting spec lines / labels in case changes are not
+   applied and we need to restore the prior state */
+
+static int make_labels_backup (plot_editor *ed)
+{
+    int err = 0;
+
+    if (labels_not_synced(ed)) {
+	ed->old_labels = plotspec_clone_labels(ed->spec, &err);
+	if (!err) {
+	    ed->old_n_labels = ed->spec->n_labels;
+	}
+    }
+
+    return err;
+}
+
+static int make_lines_backup (plot_editor *ed)
+{
+    int err = 0;
+
+    if (lines_not_synced(ed)) {
+	ed->old_lines = plotspec_clone_lines(ed->spec, &err);
+	if (!err) {
+	    ed->old_n_lines = ed->spec->n_lines;
+	}
+    }
+
+    return err;
+}
+
+static int allocate_label (plot_editor *ed)
+{
+    int err;
+
+    err = make_labels_backup(ed);
+
+    if (!err) {
+	err = plotspec_add_label(ed->spec);
+    }
+
+    if (!err) {
+	err = add_label_widget(ed);
+	if (err) {
+	    ed->spec->n_labels -= 1;
+	}
+    }
+
+    if (err) {
+	nomem();
+    }
+
+    return err;
+}
+
+static int allocate_line (plot_editor *ed)
+{
+    int err;
+
+    err = make_lines_backup(ed);
+
+    if (!err) {
+	err = plotspec_add_line(ed->spec);
+    }
+
+    if (!err) {
+	err = add_line_widget(ed);
+	if (err) {
+	    ed->spec->n_lines -= 1;
+	}
+    }
+
+    if (err) {
+	nomem();
+    }
+
+    return err;
+}
+
 static void add_label_callback (GtkWidget *w, plot_editor *ed)
 {
     gint pgnum;
-    int err = 0;
+    int err;
 
-    err = plotspec_add_label(ed->spec);
-    if (err) {
-	nomem();
-	return;
-    }
+    err = allocate_label(ed);
 
-    pgnum = widget_get_int(ed->notebook, "labels_page");
-
-    err = add_label_widget(ed);
-
-    if (err) {
-	nomem();
-	ed->spec->n_labels -= 1;
-    } else {
+    if (!err) {
 	/* re-fill the "labels" notebook page */
+	pgnum = widget_get_int(ed->notebook, "labels_page");
 	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
 	gpt_tab_labels(ed, ed->spec, pgnum);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
-	ed->added_labels += 1;
     }
 }
 
@@ -1502,9 +1585,8 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 	return;
     }
 
-    err = plotspec_add_line(spec);
+    err = allocate_line(ed);
     if (err) {
-	nomem();
 	gtk_widget_destroy(nlinfo->dlg);
 	return;
     }
@@ -1518,26 +1600,17 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     strcpy(line->scale, "NA");  /* mark as a non-data line */
     line->flags = GP_LINE_USER;
 
+    /* re-fill the "lines" notebook page */
     pgnum = widget_get_int(ed->notebook, "lines_page");
-
-    err = add_line_widget(ed);
-
-    if (err) {
-	nomem();
-	spec->n_lines -= 1;
-    } else {
-	/* re-fill the "lines" notebook page */
-	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
-	gpt_tab_lines(ed, spec, pgnum);
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
-	if (spec->n_lines == 2) {
-	    /* user-defined line has taken the place of a potential fitted line */
-	    spec->fit = PLOT_FIT_NA;
-	    if (ed->fitcombo != NULL) {
-		gtk_widget_set_sensitive(ed->fitcombo, FALSE);
-	    }
+    gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+    gpt_tab_lines(ed, spec, pgnum);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+    if (spec->n_lines == 2) {
+	/* user-defined line has taken the place of a potential fitted line */
+	spec->fit = PLOT_FIT_NA;
+	if (ed->fitcombo != NULL) {
+	    gtk_widget_set_sensitive(ed->fitcombo, FALSE);
 	}
-	ed->added_lines += 1;
     }
 
     gtk_widget_destroy(nlinfo->dlg);
@@ -1582,32 +1655,36 @@ static void add_line_callback (GtkWidget *w, plot_editor *ed)
 
 static void remove_line (GtkWidget *w, plot_editor *ed)
 {
-    int i, pgnum;
+    if (make_lines_backup(ed) != 0) {
+	nomem();
+    } else {
+	int pgnum = widget_get_int(ed->notebook, "lines_page");
 
-    i = widget_get_int(w, "linenum");
-    plotspec_delete_line(ed->spec, i);
-    ed->gui_nlines -= 1;
+	plotspec_delete_line(ed->spec, widget_get_int(w, "linenum"));
+	ed->gui_nlines -= 1;
 
-    /* refresh the associated notebook page */
-    pgnum = widget_get_int(ed->notebook, "lines_page");
-    gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
-    gpt_tab_lines(ed, ed->spec, pgnum);
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	/* refresh the associated notebook page */
+	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	gpt_tab_lines(ed, ed->spec, pgnum);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+    }
 }
 
 static void remove_label (GtkWidget *w, plot_editor *ed)
 {
-    int i, pgnum;
+    if (make_labels_backup(ed) != 0) {
+	nomem();
+    } else {
+	int pgnum = widget_get_int(ed->notebook, "labels_page");
 
-    i = widget_get_int(w, "labelnum");
-    plotspec_delete_label(ed->spec, i);
-    ed->gui_nlabels -= 1;
+	plotspec_delete_label(ed->spec, widget_get_int(w, "labelnum"));
+	ed->gui_nlabels -= 1;
 
-    /* refresh the associated notebook page */
-    pgnum = widget_get_int(ed->notebook, "labels_page");
-    gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
-    gpt_tab_labels(ed, ed->spec, pgnum);
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	/* refresh the associated notebook page */
+	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	gpt_tab_labels(ed, ed->spec, pgnum);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+    }
 }
 
 static void item_remove_button (GtkWidget *tbl, int row, 
@@ -2276,29 +2353,24 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
    
     for (i=0; i<NTITLES; i++) {
 	if (ed->gpt_titles[i].tab == 1 + axis) {
-	    GtkWidget *title_entry;
-
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
             
 	    label = gtk_label_new(_(ed->gpt_titles[i].desc));
 	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      label, 0, 1, tbl_len-1, tbl_len);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, 
+				      tbl_len-1, tbl_len);
 	    gtk_widget_show(label);
 
-	    title_entry = gtk_entry_new();
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      title_entry, 1, 2, 
+	    entry = gtk_entry_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, 
 				      tbl_len-1, tbl_len);
-	    gp_string_to_entry(title_entry, spec->titles[i]);
-
-	    g_signal_connect(G_OBJECT(title_entry), "activate", 
+	    gp_string_to_entry(entry, spec->titles[i]);
+	    g_signal_connect(G_OBJECT(entry), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     ed);
-
-	    gtk_widget_show(title_entry);
-	    ed->gpt_titles[i].widget = title_entry;
+	    gtk_widget_show(entry);
+	    ed->gpt_titles[i].widget = entry;
 	}
     } 
 
@@ -2372,7 +2444,7 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
     ed->axis_range[axis].max = entry;
 
     if (na(spec->range[axis][0])) {
-	gtk_widget_set_sensitive(ed->axis_range[axis].min, FALSE); /* FIXME? */
+	gtk_widget_set_sensitive(ed->axis_range[axis].min, FALSE);
 	gtk_widget_set_sensitive(ed->axis_range[axis].max, FALSE);
     } else {
 	double_to_gp_entry(spec->range[axis][0], ed->axis_range[axis].min);
@@ -2464,12 +2536,18 @@ static void gpt_tab_palette (GtkWidget *notebook)
 
 static void plot_editor_destroy (plot_editor *ed)
 {
-    if (ed->added_lines > 0) {
-	plotspec_delete_last_lines(ed->spec, ed->added_lines);
+    if (restore_lines(ed)) {
+	/* undo any unapplied changes to lines */
+	free(ed->spec->lines);
+	ed->spec->lines = ed->old_lines;
+	ed->spec->n_lines = ed->old_n_lines;
     }
 
-    if (ed->added_labels > 0) {
-	plotspec_delete_last_labels(ed->spec, ed->added_labels);
+    if (restore_labels(ed)) {
+	/* undo any unapplied changes to labels */
+	free(ed->spec->labels);
+	ed->spec->labels = ed->old_labels;
+	ed->spec->n_labels = ed->old_n_labels;
     }    
 
     free(ed->linetitle);
@@ -2546,19 +2624,16 @@ static int allocate_line_widgets (plot_editor *ed, int n)
 {
     int err = 0;
 
-    if (n == 0) {
-	return 0;
-    }
-
-    ed->linetitle = widget_array_new(n, &err);
-    ed->lineformula = widget_array_new(n, &err);
-    ed->stylecombo = widget_array_new(n, &err);
-    ed->yaxiscombo = widget_array_new(n, &err);
-    ed->linescale = widget_array_new(n, &err);
-    ed->linewidth = widget_array_new(n, &err);
-    
-    if (!err) {
-	ed->gui_nlines = n;
+    if (n > 0) {
+	ed->linetitle = widget_array_new(n, &err);
+	ed->lineformula = widget_array_new(n, &err);
+	ed->stylecombo = widget_array_new(n, &err);
+	ed->yaxiscombo = widget_array_new(n, &err);
+	ed->linescale = widget_array_new(n, &err);
+	ed->linewidth = widget_array_new(n, &err);
+	if (!err) {
+	    ed->gui_nlines = n;
+	}
     }
 
     return err;
@@ -2584,16 +2659,13 @@ static int allocate_label_widgets (plot_editor *ed, int n)
 {
     int err = 0;
 
-    if (n == 0) {
-	return 0;
-    }
-
-    ed->labeltext = widget_array_new(n, &err);
-    ed->labelpos = widget_array_new(n, &err);
-    ed->labeljust = widget_array_new(n, &err);
-    
-    if (!err) {
-	ed->gui_nlabels = n;
+    if (n > 0) {
+	ed->labeltext = widget_array_new(n, &err);
+	ed->labelpos = widget_array_new(n, &err);
+	ed->labeljust = widget_array_new(n, &err);
+	if (!err) {
+	    ed->gui_nlabels = n;
+	}
     }
 
     return err;
@@ -2662,8 +2734,8 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
 	ed->gpt_titles[i].widget = NULL;
     }
 
-    ed->added_lines = 0;
-    ed->added_labels = 0;
+    old_lines_init(ed);
+    old_labels_init(ed);
 
     return ed;
 } 

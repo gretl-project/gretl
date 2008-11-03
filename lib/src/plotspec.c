@@ -157,6 +157,23 @@ int plotspec_add_line (GPT_SPEC *spec)
     return 0;
 }
 
+static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
+{
+    targ->varnum = src->varnum;
+    strcpy(targ->title, src->title);
+    strcpy(targ->formula, src->formula);
+    strcpy(targ->style, src->style);
+    strcpy(targ->scale, src->scale);
+    strcpy(targ->rgb, src->rgb);
+    targ->yaxis = src->yaxis;
+    targ->type = src->type;
+    targ->ptype = src->ptype;
+    targ->width = src->width;
+    targ->ncols = src->ncols;
+    targ->whiskwidth = src->whiskwidth;
+    targ->flags = src->flags;
+}
+
 int plotspec_delete_line (GPT_SPEC *spec, int i)
 {
     GPT_LINE *lines = spec->lines;
@@ -167,19 +184,7 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
     }
 
     for (j=i; j<n-1; j++) {
-	lines[j].varnum = lines[j+1].varnum;
-	strcpy(lines[j].title, lines[j+1].title);
-	strcpy(lines[j].formula, lines[j+1].formula);
-	strcpy(lines[j].style, lines[j+1].style);
-	strcpy(lines[j].scale, lines[j+1].scale);
-	strcpy(lines[j].rgb, lines[j+1].rgb);
-	lines[j].yaxis = lines[j+1].yaxis;
-	lines[j].type  = lines[j+1].type;
-	lines[j].ptype  = lines[j+1].ptype;
-	lines[j].width = lines[j+1].width;
-	lines[j].ncols = lines[j+1].ncols;
-	lines[j].whiskwidth = lines[j+1].whiskwidth;
-	lines[j].flags = lines[j+1].flags;
+	copy_line_content(&lines[j], &lines[j+1]);
     }
 
     spec->n_lines -= 1;
@@ -194,29 +199,26 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
     return 0;
 }
 
-int plotspec_delete_last_lines (GPT_SPEC *spec, int n)
+GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err)
 {
     GPT_LINE *lines = NULL;
-    int n0 = spec->n_lines;
-
-    if (n < 0 || n > n0) {
-	return E_DATA;
-    }
-
-    spec->n_lines -= n;
+    int i;
 
     if (spec->n_lines == 0) {
-	free(spec->lines);
+	/* no-op */
+	return NULL;
+    }
+
+    lines = malloc(spec->n_lines * sizeof *lines);
+    if (lines == NULL) {
+	*err = E_ALLOC;
     } else {
-	lines = realloc(spec->lines, (n0 - n) * sizeof *lines);
-	if (lines == NULL) {
-	    return E_ALLOC;
+	for (i=0; i<spec->n_lines; i++) {
+	    copy_line_content(&lines[i], &spec->lines[i]);
 	}
     }
 
-    spec->lines = lines;
-
-    return 0;
+    return lines;
 }
 
 int plotspec_add_label (GPT_SPEC *spec)
@@ -240,6 +242,14 @@ int plotspec_add_label (GPT_SPEC *spec)
     return 0;
 }
 
+static void copy_label_content (GPT_LABEL *targ, GPT_LABEL *src)
+{
+    strcpy(targ->text, src->text);
+    targ->pos[0] = src->pos[0];
+    targ->pos[1] = src->pos[1];
+    targ->just = src->just;
+}
+
 int plotspec_delete_label (GPT_SPEC *spec, int i)
 {
     GPT_LABEL *labels = spec->labels;
@@ -251,10 +261,7 @@ int plotspec_delete_label (GPT_SPEC *spec, int i)
     }
 
     for (j=i; j<n-1; j++) {
-	strcpy(labels[j].text, labels[j+1].text);
-	labels[j].pos[0] = labels[j+1].pos[0];
-	labels[j].pos[1] = labels[j+1].pos[1];
-	labels[j].just = labels[j+1].just;
+	copy_label_content(&labels[j], &labels[j+1]);
     }
 
     spec->n_labels -= 1;
@@ -274,29 +281,26 @@ int plotspec_delete_label (GPT_SPEC *spec, int i)
     return err;
 }
 
-int plotspec_delete_last_labels (GPT_SPEC *spec, int n)
+GPT_LABEL *plotspec_clone_labels (GPT_SPEC *spec, int *err)
 {
     GPT_LABEL *labels = NULL;
-    int n0 = spec->n_labels;
-
-    if (n < 0 || n > n0) {
-	return E_DATA;
-    }
-
-    spec->n_labels -= n;
+    int i;
 
     if (spec->n_labels == 0) {
-	free(spec->labels);
+	/* no-op */
+	return NULL;
+    }
+
+    labels = malloc(spec->n_labels * sizeof *labels);
+    if (labels == NULL) {
+	*err = E_ALLOC;
     } else {
-	labels = realloc(spec->labels, (n0 - n) * sizeof *labels);
-	if (labels == NULL) {
-	    return E_ALLOC;
+	for (i=0; i<spec->n_labels; i++) {
+	    copy_label_content(&labels[i], &spec->labels[i]);
 	}
     }
 
-    spec->labels = labels;
-
-    return 0;
+    return labels;
 }
 
 static char *escape_quotes (const char *s)
