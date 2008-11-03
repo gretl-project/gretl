@@ -2301,13 +2301,15 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 				  ed->labeljust[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(ed->labeljust[i]);
 
-	/* separator */
-	tbl_len++;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	sep = gtk_hseparator_new();
-	gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, 
-				  tbl_len-1, tbl_len);
-	gtk_widget_show(sep);
+	if (i < ed->gui_nlabels - 1 || (edit_ok && spec->n_labels < 8)) {
+	    /* separator */
+	    tbl_len++;
+	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	    sep = gtk_hseparator_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, 
+				      tbl_len-1, tbl_len);
+	    gtk_widget_show(sep);
+	}
     }
 
     if (edit_ok && spec->n_labels < 8) {
