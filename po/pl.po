@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 15:05-0500\n"
-"PO-Revision-Date: 2008-11-01 23:00-0400\n"
+"PO-Revision-Date: 2008-11-03 22:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -8919,9 +8919,8 @@ msgid "VAR roots"
 msgstr "pierwiastki równania charakterystycznego VAR"
 
 #: gui2/gpt_control.c:2784
-#, fuzzy
 msgid "gretl: boxplot data"
-msgstr "gretl: wykres pudełkowy"
+msgstr "gretl: dane wykresu pudełkowego"
 
 #: gui2/gpt_control.c:2814 gui2/gpt_control.c:2908
 msgid "Add another curve..."
@@ -9088,9 +9087,8 @@ msgid "No formula was given"
 msgstr "Brak formuły"
 
 #: gui2/gpt_dialog.c:1704
-#, fuzzy
 msgid "Remove"
-msgstr "<- Usuń"
+msgstr "Usuń"
 
 #: gui2/gpt_dialog.c:1721
 msgid "quartiles"
@@ -14391,13 +14389,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "Add line"
-#~ msgstr "Dodaj linie"
-
-#~ msgid ""
-#~ "You can only have one plot controller open\n"
-#~ "at any given time"
-#~ msgstr ""
-#~ "Możliwe jest otwarcie tylko jednego\n"
-#~ "kontrolera wykresów w jednym czasie"
