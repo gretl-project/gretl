@@ -1877,6 +1877,26 @@ static GtkWidget *scroller_page (GtkWidget *vbox)
     return scroller;
 }
 
+static int show_axis_chooser (GPT_SPEC *spec)
+{
+    int i, s = 0;
+
+    if (spec->code == PLOT_REGULAR && (spec->flags & GPT_TS)) {
+	s = 1;
+    } else {
+	for (i=0; i<spec->n_lines; i++) {
+	    if (spec->lines[i].yaxis == 2) {
+		s = 1;
+		break;
+	    }
+	}
+    }
+
+    return s;
+}
+
+#define line_is_formula(l) (l->formula[0] != '\0' || (l->flags & GP_LINE_USER))
+
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
     GtkWidget *notebook = ed->notebook;
@@ -1885,12 +1905,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     GtkWidget *button, *page;
     int i, tbl_len, tbl_num, tbl_col;
     GList *stylist = NULL;
-    int do_scale_axis = 0;
+    int axis_chooser;
     int pgnum = -1;
 
-    if (spec->code == PLOT_REGULAR && (spec->flags & GPT_TS)) {
-	do_scale_axis = 1;
-    }
+    axis_chooser = show_axis_chooser(spec);
 
     if (frequency_plot_code(spec->code)) {
 	stylist = g_list_append(stylist, "boxes");
@@ -1939,8 +1957,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	GPT_LINE *line = &spec->lines[i];
 	int label_done = 0;
 
-	if (line->formula[0] != '\0' || (line->flags & GP_LINE_USER)) {
-	    /* the line has a formula (or is user-defined) */
+	if (line_is_formula(line)) {
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 
@@ -1964,9 +1981,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				 ed);
 	    }
 	    gtk_widget_show(ed->lineformula[i]);
-
-	    ed->linescale[i] = NULL;
-	    ed->yaxiscombo[i] = NULL;
 	}
 
 	/* identifier and key or legend text */
@@ -1999,11 +2013,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ed->fitlegend = ed->linetitle[i];
 	}
 
-	if (line->formula[0] != '\0') {
-	    goto line_width_adj;
-	}
-
-	if (!strcmp(line->style, "candlesticks")) {
+	if (line_is_formula(line) || !strcmp(line->style, "candlesticks")) {
 	    goto line_width_adj;
 	}
 
@@ -2059,10 +2069,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(hbox);	
 
-	if (!do_scale_axis) {
-	    ed->linescale[i] = NULL;
-	    ed->yaxiscombo[i] = NULL;
-	} else {
+	if (axis_chooser) {
 	    /* scale factor for data? */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
