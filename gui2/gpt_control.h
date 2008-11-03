@@ -34,8 +34,6 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot);
 
 int redisplay_edited_plot (png_plot *plot);
 
-void plot_remove_controller (png_plot *plot);
-
 void set_plot_has_y2_axis (png_plot *plot, gboolean s);
 
 int plot_is_mouseable (const png_plot *plot);

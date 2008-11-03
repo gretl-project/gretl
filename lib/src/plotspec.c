@@ -194,6 +194,31 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
     return 0;
 }
 
+int plotspec_delete_last_lines (GPT_SPEC *spec, int n)
+{
+    GPT_LINE *lines = NULL;
+    int n0 = spec->n_lines;
+
+    if (n < 0 || n > n0) {
+	return E_DATA;
+    }
+
+    spec->n_lines -= n;
+
+    if (spec->n_lines == 0) {
+	free(spec->lines);
+    } else {
+	lines = realloc(spec->lines, (n0 - n) * sizeof *lines);
+	if (lines == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    spec->lines = lines;
+
+    return 0;
+}
+
 int plotspec_add_label (GPT_SPEC *spec)
 {
     GPT_LABEL *labels;
@@ -247,6 +272,31 @@ int plotspec_delete_label (GPT_SPEC *spec, int i)
     }
 
     return err;
+}
+
+int plotspec_delete_last_labels (GPT_SPEC *spec, int n)
+{
+    GPT_LABEL *labels = NULL;
+    int n0 = spec->n_labels;
+
+    if (n < 0 || n > n0) {
+	return E_DATA;
+    }
+
+    spec->n_labels -= n;
+
+    if (spec->n_labels == 0) {
+	free(spec->labels);
+    } else {
+	labels = realloc(spec->labels, (n0 - n) * sizeof *labels);
+	if (labels == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    spec->labels = labels;
+
+    return 0;
 }
 
 static char *escape_quotes (const char *s)

@@ -20,10 +20,6 @@
 #ifndef GPT_DIALOG_H
 #define GPT_DIALOG_H
 
-int show_gnuplot_dialog (GPT_SPEC *spec);
-
-void raise_gpt_control_window (void);
-
-void destroy_gpt_control_window (void);
+GtkWidget *plot_add_editor (png_plot *plot);
 
 #endif /* GPT_DIALOG_H */

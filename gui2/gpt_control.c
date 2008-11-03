@@ -44,17 +44,16 @@
 
 enum {
     PLOT_SAVED          = 1 << 0,
-    PLOT_HAS_CONTROLLER = 1 << 1,
-    PLOT_ZOOMED         = 1 << 2,
-    PLOT_ZOOMING        = 1 << 3,
-    PLOT_NO_MARKERS     = 1 << 4,
-    PLOT_PNG_COORDS     = 1 << 5,
-    PLOT_HAS_XRANGE     = 1 << 6,
-    PLOT_HAS_YRANGE     = 1 << 7,
-    PLOT_DONT_ZOOM      = 1 << 8,
-    PLOT_DONT_EDIT      = 1 << 9,
-    PLOT_DONT_MOUSE     = 1 << 10,
-    PLOT_POSITIONING    = 1 << 11
+    PLOT_ZOOMED         = 1 << 1,
+    PLOT_ZOOMING        = 1 << 2,
+    PLOT_NO_MARKERS     = 1 << 3,
+    PLOT_PNG_COORDS     = 1 << 4,
+    PLOT_HAS_XRANGE     = 1 << 5,
+    PLOT_HAS_YRANGE     = 1 << 6,
+    PLOT_DONT_ZOOM      = 1 << 7,
+    PLOT_DONT_EDIT      = 1 << 8,
+    PLOT_DONT_MOUSE     = 1 << 9,
+    PLOT_POSITIONING    = 1 << 10
 } plot_status_flags;
 
 enum {
@@ -70,7 +69,6 @@ enum {
 #define MAX_MARKERS 120
 
 #define plot_is_saved(p)        (p->status & PLOT_SAVED)
-#define plot_has_controller(p)  (p->status & PLOT_HAS_CONTROLLER)
 #define plot_is_zoomed(p)       (p->status & PLOT_ZOOMED)
 #define plot_is_zooming(p)      (p->status & PLOT_ZOOMING)
 #define plot_has_no_markers(p)  (p->status & PLOT_NO_MARKERS)
@@ -96,6 +94,8 @@ enum {
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
 #define plot_show_all_markers(p)    (p->spec->flags & GPT_ALL_MARKERS)
 
+#define plot_has_controller(p) (p->editor != NULL)
+
 enum {
     PNG_START,
     PNG_ZOOM,
@@ -111,6 +111,7 @@ struct png_plot_t {
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
     GtkWidget *labelpos_entry;
+    GtkWidget *editor;
     GdkPixmap *pixmap;
     GdkGC *invert_gc;
     GPT_SPEC *spec;
@@ -172,24 +173,20 @@ struct linestyle_ {
 
 static int get_png_bounds_info (png_bounds *bounds);
 
-#define PLOTSPEC_DETAILS_IN_MEMORY(s)  (s->data != NULL)
+#define PLOTSPEC_DETAILS_IN_MEMORY(s) (s->data != NULL)
 
 static void terminate_plot_positioning (png_plot *plot)
 {
+    if (!(plot->status & PLOT_POSITIONING)) {
+	return;
+    }
+	    
     plot->status ^= PLOT_POSITIONING;
     plot->labelpos_entry = NULL;
     gdk_window_set_cursor(plot->canvas->window, NULL);
     gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
-    raise_gpt_control_window();
-}
-
-void plot_remove_controller (png_plot *plot) 
-{
-    if (plot_has_controller(plot)) {
-	plot->status ^= PLOT_HAS_CONTROLLER;
-	if (plot_doing_position(plot)) {
-	    terminate_plot_positioning(plot);
-	}
+    if (plot->editor != NULL) {
+	gtk_window_present(GTK_WINDOW(plot->editor));
     }
 }
 
@@ -2639,8 +2636,18 @@ static void start_editing_png_plot (png_plot *plot)
 	return;
     }
 
-    if (show_gnuplot_dialog(plot->spec) == 0) { /* OK */
-	plot->status |= PLOT_HAS_CONTROLLER;
+    if (plot->editor != NULL) {
+	gtk_window_present(GTK_WINDOW(plot->editor));
+    } else {
+	plot->editor = plot_add_editor(plot);
+	if (plot->editor != NULL) {
+	    g_signal_connect(G_OBJECT(plot->editor), "destroy",
+			     G_CALLBACK(gtk_widget_destroyed),
+			     &plot->editor);
+	    g_signal_connect_swapped(G_OBJECT(plot->editor), "destroy",
+				     G_CALLBACK(terminate_plot_positioning),
+				     plot);
+	}
     }
 }
 
@@ -3387,15 +3394,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	    (void *) plot, (void *) plot->spec);
 #endif
 
-    if (plot_has_controller(plot)) {
-	/* if the png plot has a controller, destroy it too */
-	plot->spec->ptr = NULL;
-	destroy_gpt_control_window();
-    } else {
-	/* no controller: take responsibility for freeing the
-	   plot specification */
-	plotspec_destroy(plot->spec);
-    }
+    plotspec_destroy(plot->spec);
 
     if (plot->invert_gc != NULL) {
 	g_object_unref(plot->invert_gc);
@@ -3732,6 +3731,7 @@ static png_plot *png_plot_new (void)
     plot->pixmap = NULL;
     plot->invert_gc = NULL;
     plot->spec = NULL;
+    plot->editor = NULL;
 
     plot->pixel_width = 640;
     plot->pixel_height = 480;

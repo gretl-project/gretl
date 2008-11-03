@@ -26,12 +26,13 @@
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "calculator.h"
+#include "gpt_dialog.h"
 
 #include "../pixmaps/mouse.xpm"
 #include "gppoints.h"
 
 struct gpt_titles_t {
-    char *description; /* How the field will show up in the options dialog */
+    char *desc;        /* How the field will show up in the options dialog */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
 };
@@ -44,45 +45,49 @@ struct gpt_range_t {
     GtkWidget *lbase;
 };
 
-static GtkWidget **linetitle;
-static GtkWidget **lineformula;
-static GtkWidget **stylecombo;
-static GtkWidget **yaxiscombo;
-static GtkWidget **linescale;
-static GtkWidget **linewidth;
-
-static GtkWidget *fitformula;
-static GtkWidget *fitlegend;
-
-static GtkWidget **labeltext;
-static GtkWidget **labeljust;
-static GtkWidget **labelpos;
-
-static GtkWidget *gpt_control;
-static GtkWidget *keycombo;
-static GtkWidget *fitcombo;
-static GtkWidget *border_check;
-static GtkWidget *markers_check;
-static GtkWidget *y2_check;
-static GtkWidget *ttfcombo;
-static GtkWidget *ttfspin;
-
-static int gui_nlines;
-static int gui_nlabels;
-
 #define MAX_AXES 3
+#define NTITLES  4
 
-struct gpt_range_t axis_range[MAX_AXES];
+typedef struct plot_editor_ plot_editor;
 
-#define NTITLES 4
-#define PLOT_LABEL_POS_LEN 32
+struct plot_editor_ {
+    GtkWidget *dialog;
+    GtkWidget *notebook;
+    GPT_SPEC *spec;
 
-struct gpt_titles_t gpt_titles[] = {
-    { N_("Title of plot"),  0, NULL },
-    { N_("Title for axis"), 1, NULL },
-    { N_("Title for axis"), 2, NULL },
-    { N_("Title for axis"), 3, NULL },
+    int added_lines;
+    int added_labels;
+
+    GtkWidget **linetitle;
+    GtkWidget **lineformula;
+    GtkWidget **stylecombo;
+    GtkWidget **yaxiscombo;
+    GtkWidget **linescale;
+    GtkWidget **linewidth;
+
+    GtkWidget *fitformula;
+    GtkWidget *fitlegend;
+
+    GtkWidget **labeltext;
+    GtkWidget **labeljust;
+    GtkWidget **labelpos;
+
+    GtkWidget *keycombo;
+    GtkWidget *fitcombo;
+    GtkWidget *border_check;
+    GtkWidget *markers_check;
+    GtkWidget *y2_check;
+    GtkWidget *ttfcombo;
+    GtkWidget *ttfspin;
+
+    int gui_nlines;
+    int gui_nlabels;
+
+    struct gpt_range_t axis_range[MAX_AXES];
+    struct gpt_titles_t gpt_titles[NTITLES];
 };
+
+#define PLOT_LABEL_POS_LEN 32
 
 const gchar *fittype_strings[] = {
     N_("none"),
@@ -99,14 +104,10 @@ enum {
 };
 
 static const char *get_font_filename (const char *showname);
-
-static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins);
-
-static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins);
-
-static int gpt_expand_line_widgets (int n);
-
-static int gpt_expand_label_widgets (int n);
+static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins);
+static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins);
+static int add_line_widget (plot_editor *ed);
+static int add_label_widget (plot_editor *ed);
 
 static void widget_set_int (GtkWidget *w, const gchar *key, gint val)
 {
@@ -117,26 +118,6 @@ static int widget_get_int (GtkWidget *w, const char *key)
 {
     return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), key));
 }
-
-static void close_plot_controller (GtkWidget *widget, gpointer data) 
-{
-    GPT_SPEC *spec = (GPT_SPEC *) data;
-    png_plot *plot = (png_plot *) spec->ptr;
-
-    gpt_control = NULL;
-
-    if (plot != NULL) { 
-	/* PNG plot window is open */
-#ifdef G_OS_WIN32 /* z-order gets messed up */
-	GtkWidget *shell = plot_get_shell(plot);
-
-	gdk_window_raise(shell->window);
-#endif
-	plot_remove_controller(plot);
-    } else {
-	plotspec_destroy(spec); 
-    }
-} 
 
 /* graph color selection apparatus */
 
@@ -426,13 +407,13 @@ static GdkPixbuf *get_pixbuf_for_line (int dots)
     return gdk_pixbuf_new_from_xpm_data((const char **) xpm);
 }
 
-static void flip_manual_range (GtkWidget *widget, gpointer data)
+static void flip_manual_range (GtkWidget *widget, plot_editor *ed)
 {
-    gint i = GPOINTER_TO_INT(data);
-    gboolean s = GTK_TOGGLE_BUTTON(axis_range[i].isauto)->active;
+    gint i = widget_get_int(widget, "axis");
+    gboolean s = GTK_TOGGLE_BUTTON(ed->axis_range[i].isauto)->active;
 
-    gtk_widget_set_sensitive(GTK_WIDGET(axis_range[i].min), !s);
-    gtk_widget_set_sensitive(GTK_WIDGET(axis_range[i].max), !s);
+    gtk_widget_set_sensitive(ed->axis_range[i].min, !s);
+    gtk_widget_set_sensitive(ed->axis_range[i].max, !s);
 }
 
 static void disable_lbase (GtkWidget *b, GtkWidget *entry)
@@ -506,8 +487,9 @@ static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
     widget_set_int(GTK_WIDGET(box), "oldfit", f);
 }
 
-static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
+static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 {
+    GPT_SPEC *spec = ed->spec;
     const char *s1 = spec->yvarname;
     const char *s2 = spec->xvarname;
     gchar *title = NULL;
@@ -534,17 +516,17 @@ static gboolean fit_type_changed (GtkComboBox *box, GPT_SPEC *spec)
     }
 
     if (title != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(gpt_titles[0].widget), title);
+	gtk_entry_set_text(GTK_ENTRY(ed->gpt_titles[0].widget), title);
 	g_free(title);
     }
 
     /* also re-jig the "Lines" tab entries for the fitted
        line */
 
-    if (fitformula != NULL && fitlegend != NULL) {
+    if (ed->fitformula != NULL && ed->fitlegend != NULL) {
 	fittype_from_combo(box, spec);
-	gtk_entry_set_text(GTK_ENTRY(fitformula), spec->lines[1].formula);
-	gtk_entry_set_text(GTK_ENTRY(fitlegend), spec->lines[1].title);
+	gtk_entry_set_text(GTK_ENTRY(ed->fitformula), spec->lines[1].formula);
+	gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), spec->lines[1].title);
     }
     
     return FALSE;
@@ -696,25 +678,32 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
     }
 }
 
+static void plot_editor_sync (plot_editor *ed)
+{
+    ed->added_lines = 0;
+    ed->added_labels = 0;
+}
+
 enum {
     ERRORBARS = 1,
     FILLEDCURVE
 };
 
-static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec) 
+static void apply_gpt_changes (GtkWidget *w, plot_editor *ed) 
 {
+    GPT_SPEC *spec = ed->spec;
     int suppress_y2 = 0;
     int i, k, err = 0;
 
     for (i=0; i<NTITLES; i++) {
-	if (gpt_titles[i].widget != NULL) {
-	    entry_to_gp_string(gpt_titles[i].widget, spec->titles[i], 
+	if (ed->gpt_titles[i].widget != NULL) {
+	    entry_to_gp_string(ed->gpt_titles[i].widget, spec->titles[i], 
 			       sizeof spec->titles[0]);
 	}
     }
 
-    if (keycombo != NULL) {
-	gchar *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(keycombo));
+    if (ed->keycombo != NULL) {
+	gchar *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->keycombo));
 
 	strcpy(spec->keyspec, s);
 	g_free(s);
@@ -722,17 +711,17 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 
     spec->flags &= ~GPT_Y2AXIS;
 
-    if (y2_check != NULL && GTK_TOGGLE_BUTTON(y2_check)->active) {
+    if (ed->y2_check != NULL && GTK_TOGGLE_BUTTON(ed->y2_check)->active) {
 	suppress_y2 = 1;
     } 
 
-    for (i=0; i<gui_nlines; i++) {
+    for (i=0; i<ed->gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 
 	line->yaxis = 1;
-	if (!suppress_y2 && yaxiscombo[i] != NULL) {
+	if (!suppress_y2 && ed->yaxiscombo[i] != NULL) {
 	    gchar *s = 
-		gtk_combo_box_get_active_text(GTK_COMBO_BOX(yaxiscombo[i]));
+		gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->yaxiscombo[i]));
 
 	    if (!strcmp(s, "right")) {
 		line->yaxis = 2;	
@@ -747,19 +736,19 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
     if (spec->code == PLOT_REGULAR) {
 	k = (spec->flags & GPT_Y2AXIS)? 3 : 2;
 	for (i=0; i<k; i++) {
-	    if (axis_range[i].isauto != NULL) {
-		if (GTK_TOGGLE_BUTTON(axis_range[i].isauto)->active) {
+	    if (ed->axis_range[i].isauto != NULL) {
+		if (GTK_TOGGLE_BUTTON(ed->axis_range[i].isauto)->active) {
 		    spec->range[i][0] = NADBL;
 		    spec->range[i][1] = NADBL;
 		} else {
-		    spec->range[i][0] = entry_to_gp_double(axis_range[i].min);
-		    spec->range[i][1] = entry_to_gp_double(axis_range[i].max);
+		    spec->range[i][0] = entry_to_gp_double(ed->axis_range[i].min);
+		    spec->range[i][1] = entry_to_gp_double(ed->axis_range[i].max);
 		    err = validate_range(spec->range[i]);
 		}
 	    }
-	    if (axis_range[i].lbase != NULL) {
-		if (GTK_WIDGET_SENSITIVE(axis_range[i].lbase)) {
-		    err = set_logscale_from_entry(spec, i, axis_range[i].lbase);
+	    if (ed->axis_range[i].lbase != NULL) {
+		if (GTK_WIDGET_SENSITIVE(ed->axis_range[i].lbase)) {
+		    err = set_logscale_from_entry(spec, i, ed->axis_range[i].lbase);
 		} else {
 		    spec->logbase[i] = 0.0;
 		}
@@ -768,10 +757,10 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
     }
 
     if (!err) {   
-	for (i=0; i<gui_nlines; i++) {
+	for (i=0; i<ed->gui_nlines; i++) {
 	    GPT_LINE *line = &spec->lines[i];
 
-	    if (stylecombo[i] != NULL) {
+	    if (ed->stylecombo[i] != NULL) {
 		int oldalt = 0;
 
 		if (!strncmp(line->style, "filled", 6)) {
@@ -779,7 +768,7 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 		} else if (!strncmp(line->style, "error", 5)) {
 		    oldalt = ERRORBARS;
 		}
-		combo_to_gp_string(stylecombo[i], line->style, 
+		combo_to_gp_string(ed->stylecombo[i], line->style, 
 				   sizeof spec->lines[0].style);
 		if (oldalt == FILLEDCURVE &&
 		    !strncmp(line->style, "error", 5)) {
@@ -790,47 +779,48 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 		    spec->flags |= GPT_FILL_SWITCH;
 		    spec->flags &= ~GPT_ERR_SWITCH;
 		}
-		maybe_set_point_type(line, stylecombo[i], i);
+		maybe_set_point_type(line, ed->stylecombo[i], i);
 	    }
-	    if (linetitle[i] != NULL) {
-		entry_to_gp_string(linetitle[i], 
+	    if (ed->linetitle[i] != NULL) {
+		entry_to_gp_string(ed->linetitle[i], 
 				   line->title, 
 				   sizeof spec->lines[0].title);
 	    }
-	    if (lineformula[i] != NULL && GTK_WIDGET_IS_SENSITIVE(lineformula[i])) {
-		entry_to_gp_string(lineformula[i], 
+	    if (ed->lineformula[i] != NULL && 
+		GTK_WIDGET_IS_SENSITIVE(ed->lineformula[i])) {
+		entry_to_gp_string(ed->lineformula[i], 
 				   line->formula, 
 				   sizeof spec->lines[0].formula);
 	    }
-	    if (linescale[i] != NULL) {
-		entry_to_gp_string(linescale[i], 
+	    if (ed->linescale[i] != NULL) {
+		entry_to_gp_string(ed->linescale[i], 
 				   line->scale, 
 				   sizeof spec->lines[0].scale);
 	    }
-	    if (linewidth[i] != NULL) {
+	    if (ed->linewidth[i] != NULL) {
 		line->width = 
-		    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(linewidth[i]));
-		maybe_apply_line_color(linewidth[i], spec, i);
+		    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->linewidth[i]));
+		maybe_apply_line_color(ed->linewidth[i], spec, i);
 	    }
 	}
     }
 
-    for (i=0; i<gui_nlabels && !err; i++) {
-	entry_to_gp_string(labeltext[i], spec->labels[i].text, 
+    for (i=0; i<ed->gui_nlabels && !err; i++) {
+	entry_to_gp_string(ed->labeltext[i], spec->labels[i].text, 
 			   sizeof spec->labels[0].text);
 	if (string_is_blank(spec->labels[i].text)) {
 	    continue;
 	}
-	err = get_label_pos_from_entry(labelpos[i], spec->labels[i].pos);
+	err = get_label_pos_from_entry(ed->labelpos[i], spec->labels[i].pos);
 	if (err) {
 	    break;
 	}
 	spec->labels[i].just = 
-	    gtk_combo_box_get_active(GTK_COMBO_BOX(labeljust[i]));
+	    gtk_combo_box_get_active(GTK_COMBO_BOX(ed->labeljust[i]));
     } 
 
-    if (!err && border_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(border_check)->active) {
+    if (!err && ed->border_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(ed->border_check)->active) {
 	    /* full border */
 	    spec->border = GP_BORDER_DEFAULT;
 	} else {
@@ -839,8 +829,8 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	}
     } 
 
-    if (!err && markers_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(markers_check)->active) {
+    if (!err && ed->markers_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(ed->markers_check)->active) {
 	    free(spec->labeled);
 	    spec->labeled = NULL;
 	    spec->flags |= GPT_ALL_MARKERS;
@@ -849,9 +839,9 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	}
     }
 
-    if (!err && ttfcombo != NULL && ttfspin != NULL) {
-	gchar *tmp = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ttfcombo));
-	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ttfspin));
+    if (!err && ed->ttfcombo != NULL && ed->ttfspin != NULL) {
+	gchar *tmp = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->ttfcombo));
+	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->ttfspin));
 
 	if (tmp != NULL && *tmp != '\0') {
 	    const char *fname = get_font_filename(tmp);
@@ -867,8 +857,8 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	g_free(tmp);
     }
 
-    if (!err && fitcombo != NULL && GTK_WIDGET_IS_SENSITIVE(fitcombo)) {
-	fittype_from_combo(GTK_COMBO_BOX(fitcombo), spec);
+    if (!err && ed->fitcombo != NULL && GTK_WIDGET_IS_SENSITIVE(ed->fitcombo)) {
+	fittype_from_combo(GTK_COMBO_BOX(ed->fitcombo), spec);
     }
 
     if (!err) {
@@ -879,24 +869,25 @@ static void apply_gpt_changes (GtkWidget *w, GPT_SPEC *spec)
 	mark_session_changed();
     }
 
+    plot_editor_sync(ed);
     spec->flags &= ~(GPT_FILL_SWITCH | GPT_ERR_SWITCH);
 }
 
-static void set_keyspec_sensitivity (GPT_SPEC *spec)
+static void set_keyspec_sensitivity (plot_editor *ed)
 {
     gboolean state = FALSE;
     const char *p;
     int i;
 
-    for (i=0; i<gui_nlines; i++) {
-	p = gtk_entry_get_text(GTK_ENTRY(linetitle[i]));
+    for (i=0; i<ed->gui_nlines; i++) {
+	p = gtk_entry_get_text(GTK_ENTRY(ed->linetitle[i]));
 	if (p != NULL && *p != 0) {
 	    state = TRUE;
 	    break;
 	}
     }
 
-    gtk_widget_set_sensitive(keycombo, state);
+    gtk_widget_set_sensitive(ed->keycombo, state);
 }
 
 #define TAB_MAIN_COLS 3
@@ -1022,14 +1013,14 @@ static void strip_lr (gchar *txt)
     } 
 }
 
-static void toggle_axis_selection (GtkWidget *w, GPT_SPEC *spec)
+static void toggle_axis_selection (GtkWidget *w, plot_editor *ed)
 {
     int no_y2 = GTK_TOGGLE_BUTTON(w)->active;
     int i;
 
-    for (i=0; i<gui_nlines; i++) {
-	if (yaxiscombo[i] != NULL) {
-	    gtk_widget_set_sensitive(yaxiscombo[i], !no_y2);
+    for (i=0; i<ed->gui_nlines; i++) {
+	if (ed->yaxiscombo[i] != NULL) {
+	    gtk_widget_set_sensitive(ed->yaxiscombo[i], !no_y2);
 	}
     }
 }
@@ -1180,7 +1171,7 @@ static GtkWidget *gp_page_vbox (GtkWidget *notebook, char *str)
     return vbox;
 }
 
-static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
+static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec) 
 {
     static int aa_ok = 1;
     static int show_aa_check = -1;
@@ -1197,20 +1188,20 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	NULL
     };
 
-    vbox = gp_page_vbox(notebook, _("Main"));
+    vbox = gp_page_vbox(ed->notebook, _("Main"));
 
     tbl = gp_dialog_table(rows, TAB_MAIN_COLS, vbox);
     gtk_widget_show(tbl);
    
     for (i=0; i<NTITLES; i++) {
-	if (gpt_titles[i].tab == 0) {
+	if (ed->gpt_titles[i].tab == 0) {
 	    GtkWidget *entry;
 
 	    if (i > 0) {
 		table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	    }
 
-	    label = gtk_label_new(_(gpt_titles[i].description));
+	    label = gtk_label_new(_(ed->gpt_titles[i].desc));
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
 				      label, 0, 1, rows-1, rows);
 	    gtk_widget_show(label);
@@ -1226,10 +1217,10 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
 	    g_signal_connect(G_OBJECT(entry), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
-			     spec);
+			     ed);
 
 	    gtk_widget_show(entry);
-	    gpt_titles[i].widget = entry;
+	    ed->gpt_titles[i].widget = entry;
 	}
     }
 
@@ -1240,17 +1231,17 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			      label, 0, 1, rows-1, rows);
     gtk_widget_show(label);
 
-    keycombo = gtk_combo_box_new_text();
+    ed->keycombo = gtk_combo_box_new_text();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
+			      ed->keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
     for (i=0; keypos[i] != NULL; i++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(keycombo), keypos[i]);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(ed->keycombo), keypos[i]);
 	if (!strcmp(keypos[i], spec->keyspec)) {
 	    kactive = i;
 	}
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(keycombo), kactive);
-    gtk_widget_show(keycombo);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->keycombo), kactive);
+    gtk_widget_show(ed->keycombo);
 
     /* choice of fitted line type, if appropriate */
     if (spec->fit != PLOT_FIT_NA) {
@@ -1261,62 +1252,57 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 				  label, 0, 1, rows-1, rows);
 	gtk_widget_show(label);
 
-	fitcombo = gtk_combo_box_new_text();
+	ed->fitcombo = gtk_combo_box_new_text();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
+				  ed->fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
 	for (i=0; fittype_strings[i] != NULL; i++) {
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(fitcombo), _(fittype_strings[i]));
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->fitcombo), 
+				      _(fittype_strings[i]));
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(fitcombo), spec->fit);
-	widget_set_int(fitcombo, "oldfit", spec->fit);
-	g_signal_connect(G_OBJECT(fitcombo), "changed",
-			 G_CALLBACK(fit_type_changed), spec);
-	gtk_widget_show(fitcombo);
-    } else {
-	fitcombo = NULL;
-    }
-
-    border_check = y2_check = NULL;
+	gtk_combo_box_set_active(GTK_COMBO_BOX(ed->fitcombo), spec->fit);
+	widget_set_int(ed->fitcombo, "oldfit", spec->fit);
+	g_signal_connect(G_OBJECT(ed->fitcombo), "changed",
+			 G_CALLBACK(fit_type_changed), ed);
+	gtk_widget_show(ed->fitcombo);
+    } 
 
     /* give option of removing/adding top & right border? */
     if (!(spec->flags & GPT_Y2AXIS)) { 
 	if (spec->border == GP_BORDER_DEFAULT || spec->border == 3) {
 	    table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	    border_check = gtk_check_button_new_with_label(_("Show full border"));
+	    ed->border_check = gtk_check_button_new_with_label(_("Show full border"));
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      border_check, 0, TAB_MAIN_COLS, 
+				      ed->border_check, 0, TAB_MAIN_COLS, 
 				      rows-1, rows);
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(border_check),
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->border_check),
 					 spec->border == GP_BORDER_DEFAULT);
-	    gtk_widget_show(border_check);
+	    gtk_widget_show(ed->border_check);
 	}
     } else {
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	y2_check = gtk_check_button_new_with_label(_("Use only one y axis"));
+	ed->y2_check = gtk_check_button_new_with_label(_("Use only one y axis"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  y2_check, 0, TAB_MAIN_COLS, 
+				  ed->y2_check, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(y2_check),
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->y2_check),
 				     FALSE);
-	g_signal_connect(G_OBJECT(y2_check), "clicked", 
-			 G_CALLBACK(toggle_axis_selection), spec);
-	gtk_widget_show(y2_check);
+	g_signal_connect(G_OBJECT(ed->y2_check), "clicked", 
+			 G_CALLBACK(toggle_axis_selection), ed);
+	gtk_widget_show(ed->y2_check);
     }
-
-    markers_check = NULL;
 
     /* give option of showing all case markers */
     if (spec->flags & GPT_ALL_MARKERS_OK) { 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
+	ed->markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  markers_check, 0, TAB_MAIN_COLS, 
+				  ed->markers_check, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);
 	if (spec->flags & GPT_ALL_MARKERS) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(markers_check),
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->markers_check),
 					 TRUE);
 	}	
-	gtk_widget_show(markers_check);
+	gtk_widget_show(ed->markers_check);
     } 
 
     if (show_aa_check < 0) {
@@ -1379,30 +1365,27 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
 	/* FIXME max length of font name? */
 
-	ttfcombo = gtk_combo_box_entry_new_text();
-	entry = gtk_bin_get_child(GTK_BIN(ttfcombo));
+	ed->ttfcombo = gtk_combo_box_entry_new_text();
+	entry = gtk_bin_get_child(GTK_BIN(ed->ttfcombo));
 	gtk_entry_set_max_length(GTK_ENTRY(entry), 15);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfcombo, 1, 2, 
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfcombo, 1, 2, 
 				  rows-1, rows);
-	set_combo_box_strings_from_list(GTK_COMBO_BOX(ttfcombo), fontnames); 
+	set_combo_box_strings_from_list(GTK_COMBO_BOX(ed->ttfcombo), fontnames); 
 	gtk_entry_set_text(GTK_ENTRY(entry), default_font);
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 15);
 	g_signal_connect(G_OBJECT(entry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
-			 spec);
-	gtk_widget_show(ttfcombo);
+			 ed);
+	gtk_widget_show(ed->ttfcombo);
 	g_list_free(fontnames);
 
-	ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ttfspin), 
+	ed->ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->ttfspin), 
 				  get_point_size(gretl_png_font()));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfspin, 2, 3, 
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfspin, 2, 3, 
 				  rows - 1, rows);
-	gtk_widget_show(ttfspin);
-    } else {
-	ttfcombo = NULL;
-	ttfspin = NULL;
-    }
+	gtk_widget_show(ed->ttfspin);
+    } 
 
     if (gnuplot_png_terminal() != GP_PNG_OLD && 
 	frequency_plot_code(spec->code)) {
@@ -1414,24 +1397,24 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(hsep);
 
 	add_color_selector(BOXCOLOR, tbl, TAB_MAIN_COLS, &rows, 
-			   notebook);
+			   ed->notebook);
     }
 }
 
-static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)
+static void linetitle_callback (GtkWidget *w, plot_editor *ed)
 {
-    set_keyspec_sensitivity(spec);
+    set_keyspec_sensitivity(ed);
 }
 
 struct new_line_info_ {
-    GtkWidget *dlg;
+    plot_editor *editor;
     GtkWidget *formula_entry;
-    GPT_SPEC *spec;
+    GtkWidget *dlg;
 };
 
 typedef struct new_line_info_ new_line_info;
 
-static void gpt_tab_new_line (new_line_info *nlinfo) 
+static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo) 
 {
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox;
@@ -1455,7 +1438,7 @@ static void gpt_tab_new_line (new_line_info *nlinfo)
     /* identifier and formula text */
     tbl_len++;
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-    sprintf(label_text, _("line %d: "), gui_nlines + 1);
+    sprintf(label_text, _("line %d: "), ed->gui_nlines + 1);
     label = gtk_label_new(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1477,39 +1460,38 @@ static void gpt_tab_new_line (new_line_info *nlinfo)
     gtk_widget_show(nlinfo->formula_entry);
 }
 
-static void add_label_callback (GtkWidget *w, GPT_SPEC *spec)
+static void add_label_callback (GtkWidget *w, plot_editor *ed)
 {
-    GtkWidget *notebook;
     gint pgnum;
     int err = 0;
 
-    err = plotspec_add_label(spec);
+    err = plotspec_add_label(ed->spec);
     if (err) {
 	nomem();
 	return;
     }
 
-    notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
-    pgnum = widget_get_int(notebook, "labels_page");
+    pgnum = widget_get_int(ed->notebook, "labels_page");
 
-    err = gpt_expand_label_widgets(gui_nlabels + 1);
+    err = add_label_widget(ed);
 
     if (err) {
 	nomem();
-	spec->n_labels -= 1;
+	ed->spec->n_labels -= 1;
     } else {
 	/* re-fill the "labels" notebook page */
-	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
-	gpt_tab_labels(notebook, spec, pgnum);
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
+	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	gpt_tab_labels(ed, ed->spec, pgnum);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	ed->added_labels += 1;
     }
 }
 
 static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
 {
-    GPT_SPEC *spec = nlinfo->spec;
+    plot_editor *ed = nlinfo->editor;
+    GPT_SPEC *spec = ed->spec;
     GPT_LINE *line;
-    GtkWidget *notebook;
     const gchar *s;
     gint pgnum;
     int err = 0;
@@ -1536,32 +1518,32 @@ static void real_add_line (GtkWidget *w, new_line_info *nlinfo)
     strcpy(line->scale, "NA");  /* mark as a non-data line */
     line->flags = GP_LINE_USER;
 
-    notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
-    pgnum = widget_get_int(notebook, "lines_page");
+    pgnum = widget_get_int(ed->notebook, "lines_page");
 
-    err = gpt_expand_line_widgets(gui_nlines + 1);
+    err = add_line_widget(ed);
 
     if (err) {
 	nomem();
 	spec->n_lines -= 1;
     } else {
 	/* re-fill the "lines" notebook page */
-	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
-	gpt_tab_lines(notebook, spec, pgnum);
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
+	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	gpt_tab_lines(ed, spec, pgnum);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
 	if (spec->n_lines == 2) {
 	    /* user-defined line has taken the place of a potential fitted line */
 	    spec->fit = PLOT_FIT_NA;
-	    if (fitcombo != NULL) {
-		gtk_widget_set_sensitive(fitcombo, FALSE);
+	    if (ed->fitcombo != NULL) {
+		gtk_widget_set_sensitive(ed->fitcombo, FALSE);
 	    }
 	}
+	ed->added_lines += 1;
     }
 
     gtk_widget_destroy(nlinfo->dlg);
 }
 
-static void add_line_callback (GtkWidget *w, GPT_SPEC *spec)
+static void add_line_callback (GtkWidget *w, plot_editor *ed)
 {
     new_line_info *nlinfo;
     GtkWidget *hbox;
@@ -1572,11 +1554,11 @@ static void add_line_callback (GtkWidget *w, GPT_SPEC *spec)
 	return;
     }
 
-    nlinfo->spec = spec;
+    nlinfo->editor = ed;
 
-    nlinfo->dlg = gretl_dialog_new(NULL, gpt_control, GRETL_DLG_BLOCK);
+    nlinfo->dlg = gretl_dialog_new(NULL, ed->dialog, GRETL_DLG_BLOCK);
 
-    gpt_tab_new_line(nlinfo);
+    gpt_tab_new_line(ed, nlinfo);
 
     hbox = GTK_DIALOG(nlinfo->dlg)->action_area;
 
@@ -1598,42 +1580,38 @@ static void add_line_callback (GtkWidget *w, GPT_SPEC *spec)
     free(nlinfo);
 }
 
-static void remove_line (GtkWidget *w, GPT_SPEC *spec)
+static void remove_line (GtkWidget *w, plot_editor *ed)
 {
-    GtkWidget *notebook;
     int i, pgnum;
 
     i = widget_get_int(w, "linenum");
-    plotspec_delete_line(spec, i);
-    gui_nlines -= 1;
+    plotspec_delete_line(ed->spec, i);
+    ed->gui_nlines -= 1;
 
     /* refresh the associated notebook page */
-    notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
-    pgnum = widget_get_int(notebook, "lines_page");
-    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
-    gpt_tab_lines(notebook, spec, pgnum);
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
+    pgnum = widget_get_int(ed->notebook, "lines_page");
+    gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+    gpt_tab_lines(ed, ed->spec, pgnum);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
 }
 
-static void remove_label (GtkWidget *w, GPT_SPEC *spec)
+static void remove_label (GtkWidget *w, plot_editor *ed)
 {
-    GtkWidget *notebook;
     int i, pgnum;
 
     i = widget_get_int(w, "labelnum");
-    plotspec_delete_label(spec, i);
-    gui_nlabels -= 1;
+    plotspec_delete_label(ed->spec, i);
+    ed->gui_nlabels -= 1;
 
     /* refresh the associated notebook page */
-    notebook = g_object_get_data(G_OBJECT(gpt_control), "notebook");
-    pgnum = widget_get_int(notebook, "labels_page");
-    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), pgnum);
-    gpt_tab_labels(notebook, spec, pgnum);
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);
+    pgnum = widget_get_int(ed->notebook, "labels_page");
+    gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+    gpt_tab_labels(ed, ed->spec, pgnum);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
 }
 
 static void item_remove_button (GtkWidget *tbl, int row, 
-				GPT_SPEC *spec, int i,
+				plot_editor *ed, int i,
 				int j)
 {
     GtkWidget *button; 
@@ -1649,7 +1627,7 @@ static void item_remove_button (GtkWidget *tbl, int row,
     button = gtk_button_new_with_label(_("Remove"));
     widget_set_int(button, key[j], i);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(cb[j]), spec);
+		     G_CALLBACK(cb[j]), ed);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      button, 0, 1, row - 1, row);
     gtk_widget_show(button);
@@ -1822,8 +1800,9 @@ static GtkWidget *scroller_page (GtkWidget *vbox)
     return scroller;
 }
 
-static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
+static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
+    GtkWidget *notebook = ed->notebook;
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox, *sep;
     GtkWidget *button, *page;
@@ -1859,7 +1838,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
     label = gtk_label_new(_("Lines"));
     gtk_widget_show(label);
 
-    if (gui_nlines > 4) {
+    if (ed->gui_nlines > 4) {
 	page = scroller_page(vbox);
     } else {
 	page = vbox;
@@ -1879,9 +1858,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
    
     tbl_num = tbl_col = 0;
 
-    fitformula = fitlegend = NULL;
-
-    for (i=0; i<gui_nlines; i++) {
+    for (i=0; i<ed->gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 	int label_done = 0;
 
@@ -1895,24 +1872,24 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 
 	    print_field_label(tbl, tbl_len, _("formula"));
 
-	    lineformula[i] = gtk_entry_new();
+	    ed->lineformula[i] = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  lineformula[i], 2, 3, tbl_len-1, tbl_len);
+				  ed->lineformula[i], 2, 3, tbl_len-1, tbl_len);
 	    strip_lr(line->formula);
-	    gp_string_to_entry(lineformula[i], line->formula);
+	    gp_string_to_entry(ed->lineformula[i], line->formula);
 	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
 		/* fitted formula: not GUI-editable */
-		gtk_widget_set_sensitive(lineformula[i], FALSE);
-		fitformula = lineformula[i];
+		gtk_widget_set_sensitive(ed->lineformula[i], FALSE);
+		ed->fitformula = ed->lineformula[i];
 	    } else {
-		g_signal_connect(G_OBJECT(lineformula[i]), "activate", 
+		g_signal_connect(G_OBJECT(ed->lineformula[i]), "activate", 
 				 G_CALLBACK(apply_gpt_changes), 
-				 spec);
+				 ed);
 	    }
-	    gtk_widget_show(lineformula[i]);
+	    gtk_widget_show(ed->lineformula[i]);
 
-	    linescale[i] = NULL;
-	    yaxiscombo[i] = NULL;
+	    ed->linescale[i] = NULL;
+	    ed->yaxiscombo[i] = NULL;
 	}
 
 	/* identifier and key or legend text */
@@ -1924,25 +1901,25 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	}
 
 	if (line->flags & GP_LINE_USER) {
-	    item_remove_button(tbl, tbl_len, spec, i, GUI_LINE);
+	    item_remove_button(tbl, tbl_len, ed, i, GUI_LINE);
 	}
 
 	print_field_label(tbl, tbl_len, _("legend"));
 
-	linetitle[i] = gtk_entry_new();
+	ed->linetitle[i] = gtk_entry_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  linetitle[i], 2, 3, tbl_len-1, tbl_len);
+				  ed->linetitle[i], 2, 3, tbl_len-1, tbl_len);
 	strip_lr(line->title);
-	gp_string_to_entry(linetitle[i], line->title);
-	g_signal_connect(G_OBJECT(linetitle[i]), "changed", 
+	gp_string_to_entry(ed->linetitle[i], line->title);
+	g_signal_connect(G_OBJECT(ed->linetitle[i]), "changed", 
 			 G_CALLBACK(linetitle_callback), 
-			 spec);
-	g_signal_connect(G_OBJECT(linetitle[i]), "activate", 
+			 ed);
+	g_signal_connect(G_OBJECT(ed->linetitle[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
-			 spec);
-	gtk_widget_show(linetitle[i]);
+			 ed);
+	gtk_widget_show(ed->linetitle[i]);
 	if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
-	    fitlegend = linetitle[i];
+	    ed->fitlegend = ed->linetitle[i];
 	}
 
 	if (line->formula[0] != '\0') {
@@ -1963,23 +1940,23 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_widget_show(label);
 
 	hbox = gtk_hbox_new(FALSE, 5);
-	stylecombo[i] = gtk_combo_box_new_text();
-	gtk_box_pack_start(GTK_BOX(hbox), stylecombo[i], FALSE, FALSE, 0);
+	ed->stylecombo[i] = gtk_combo_box_new_text();
+	gtk_box_pack_start(GTK_BOX(hbox), ed->stylecombo[i], FALSE, FALSE, 0);
 
 	/* the errorbars and filledcurves styles are not exchangeable
 	   with the others */
 	if (!strcmp(line->style, "errorbars") && !gnuplot_has_style_fill()) {
-	    set_combo_box_default_text(GTK_COMBO_BOX(stylecombo[i]), 
+	    set_combo_box_default_text(GTK_COMBO_BOX(ed->stylecombo[i]), 
 				       line->style); 
-	    gtk_widget_set_sensitive(stylecombo[i], FALSE);
+	    gtk_widget_set_sensitive(ed->stylecombo[i], FALSE);
 	} else if (!strcmp(line->style, "errorbars") ||
 		   !strcmp(line->style, "filledcurve")) {
 	    GList *altsty = NULL;
 
 	    altsty = g_list_append(altsty, "errorbars"); 
 	    altsty = g_list_append(altsty, "filledcurve");
-	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), altsty);
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(stylecombo[i]), 
+	    set_combo_box_strings_from_list(GTK_COMBO_BOX(ed->stylecombo[i]), altsty);
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]), 
 				     gpt_style_as_int(line->style, altsty));
 	    g_list_free(altsty);
 	} else {
@@ -1987,18 +1964,18 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	    int lt = gpt_style_as_int(line->style, stylist);
 	    int hp, pt = line_get_point_style(line, i);
 
-	    set_combo_box_strings_from_list(GTK_COMBO_BOX(stylecombo[i]), stylist);
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(stylecombo[i]), lt);
+	    set_combo_box_strings_from_list(GTK_COMBO_BOX(ed->stylecombo[i]), stylist);
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]), lt);
 	    hp = has_point(line->style);
 	    label = gtk_label_new(_("point"));
 	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 	    gtk_box_pack_start(GTK_BOX(hbox), ptsel, FALSE, FALSE, 0);
-	    g_object_set_data(G_OBJECT(stylecombo[i]), "pointsel", ptsel);
+	    g_object_set_data(G_OBJECT(ed->stylecombo[i]), "pointsel", ptsel);
 	    g_object_set_data(G_OBJECT(ptsel), "label", label);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ptsel), pt);
 	    gtk_widget_set_sensitive(label, hp);
 	    gtk_widget_set_sensitive(ptsel, hp);
-	    g_signal_connect(G_OBJECT(stylecombo[i]), "changed",
+	    g_signal_connect(G_OBJECT(ed->stylecombo[i]), "changed",
 			     G_CALLBACK(flip_pointsel), ptsel);
 	} 
 
@@ -2006,38 +1983,38 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_widget_show_all(hbox);	
 
 	if (!do_scale_axis) {
-	    linescale[i] = NULL;
-	    yaxiscombo[i] = NULL;
+	    ed->linescale[i] = NULL;
+	    ed->yaxiscombo[i] = NULL;
 	} else {
 	    /* scale factor for data? */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	    print_field_label(tbl, tbl_len, _("scale"));
 
-	    linescale[i] = gtk_entry_new();
-	    gtk_entry_set_max_length(GTK_ENTRY(linescale[i]), 6);
-	    gtk_entry_set_text(GTK_ENTRY(linescale[i]), line->scale);
-	    gtk_entry_set_width_chars(GTK_ENTRY(linescale[i]), 6);
-	    g_signal_connect(G_OBJECT(linescale[i]), "activate", 
+	    ed->linescale[i] = gtk_entry_new();
+	    gtk_entry_set_max_length(GTK_ENTRY(ed->linescale[i]), 6);
+	    gtk_entry_set_text(GTK_ENTRY(ed->linescale[i]), line->scale);
+	    gtk_entry_set_width_chars(GTK_ENTRY(ed->linescale[i]), 6);
+	    g_signal_connect(G_OBJECT(ed->linescale[i]), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
-			     spec);
+			     ed);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      linescale[i], 2, 3, tbl_len-1, tbl_len);
-	    gtk_widget_show(linescale[i]);
+				      ed->linescale[i], 2, 3, tbl_len-1, tbl_len);
+	    gtk_widget_show(ed->linescale[i]);
 
 	    /* use left or right y axis? */
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	    print_field_label(tbl, tbl_len, _("y axis"));
 
-	    yaxiscombo[i] = gtk_combo_box_new_text();
+	    ed->yaxiscombo[i] = gtk_combo_box_new_text();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(yaxiscombo[i]), "left");
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(yaxiscombo[i]), "right");
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(yaxiscombo[i]), 
+				      ed->yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->yaxiscombo[i]), "left");
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->yaxiscombo[i]), "right");
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->yaxiscombo[i]), 
 				     (line->yaxis == 1)? 0 : 1);
-	    gtk_widget_show(yaxiscombo[i]);
+	    gtk_widget_show(ed->yaxiscombo[i]);
 	}
 
     line_width_adj:
@@ -2048,16 +2025,16 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	print_field_label(tbl, tbl_len, _("line width"));
 
 	hbox = gtk_hbox_new(FALSE, 5);
-	linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
+	ed->linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
 	if (line->width > 1) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(linewidth[i]),
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ed->linewidth[i]),
 				      line->width);
 	}
-	g_signal_connect(G_OBJECT(linewidth[i]), "activate", 
+	g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
-			 spec);
-	gtk_box_pack_start(GTK_BOX(hbox), linewidth[i], FALSE, FALSE, 0);
-	gtk_widget_show(linewidth[i]);
+			 ed);
+	gtk_box_pack_start(GTK_BOX(hbox), ed->linewidth[i], FALSE, FALSE, 0);
+	gtk_widget_show(ed->linewidth[i]);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
 				  tbl_len-1, tbl_len);
 	/* line color adjustment */
@@ -2068,7 +2045,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 		gtk_widget_show(label);
 		gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-		g_object_set_data(G_OBJECT(linewidth[i]), "colorsel",
+		g_object_set_data(G_OBJECT(ed->linewidth[i]), "colorsel",
 				  button);
 		gtk_widget_show_all(button);
 	    }
@@ -2109,7 +2086,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	button = gtk_button_new_with_label(_("Add line..."));
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(add_line_callback), 
-			 spec);
+			 ed);
 	gtk_widget_show(button);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
 				  tbl_len-1, tbl_len);
@@ -2130,8 +2107,9 @@ static void label_pos_to_entry (double *pos, GtkWidget *w)
     }
 }
 
-static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins) 
+static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins) 
 {
+    GtkWidget *notebook = ed->notebook;
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *page, *sep;
     int i, j, tbl_len, tbl_num, tbl_col;
@@ -2145,7 +2123,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
     label = gtk_label_new(_("Labels"));
     gtk_widget_show(label);
 
-    if (gui_nlabels > 4) {
+    if (ed->gui_nlabels > 4) {
 	page = scroller_page(vbox);
     } else {
 	page = vbox;
@@ -2165,7 +2143,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
    
     tbl_num = tbl_col = 0;
 
-    for (i=0; i<gui_nlabels; i++) {
+    for (i=0; i<ed->gui_nlabels; i++) {
 	GtkWidget *hbox, *button, *image;
 	GdkPixbuf *icon;
 
@@ -2174,26 +2152,26 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	print_label_label(tbl, tbl_len, spec, i);
 	print_field_label(tbl, tbl_len, _("text"));
-	labeltext[i] = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
-	gp_string_to_entry(labeltext[i], spec->labels[i].text);
+	ed->labeltext[i] = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(ed->labeltext[i]), PLOT_LABEL_TEXT_LEN);
+	gp_string_to_entry(ed->labeltext[i], spec->labels[i].text);
 	if (edit_ok) {
-	    g_signal_connect(G_OBJECT(labeltext[i]), "activate", 
+	    g_signal_connect(G_OBJECT(ed->labeltext[i]), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
-			     spec);
+			     ed);
 	} else {
-	    gtk_widget_set_sensitive(labeltext[i], FALSE);
+	    gtk_widget_set_sensitive(ed->labeltext[i], FALSE);
 	}
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  labeltext[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_widget_show(labeltext[i]);
+				  ed->labeltext[i], 2, 3, tbl_len-1, tbl_len);
+	gtk_widget_show(ed->labeltext[i]);
 
 	/* label placement */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 
 	if (edit_ok) {
-	    item_remove_button(tbl, tbl_len, spec, i, GUI_LABEL);
+	    item_remove_button(tbl, tbl_len, ed, i, GUI_LABEL);
 	}
 
 	print_field_label(tbl, tbl_len, _("position (X Y)"));
@@ -2202,19 +2180,19 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	hbox = gtk_hbox_new(FALSE, 5);
 
 	/* entry for coordinates */
-	labelpos[i] = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
-	label_pos_to_entry(spec->labels[i].pos, labelpos[i]);
-	g_signal_connect(G_OBJECT(labelpos[i]), "activate", 
+	ed->labelpos[i] = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(ed->labelpos[i]), PLOT_LABEL_POS_LEN);
+	label_pos_to_entry(spec->labels[i].pos, ed->labelpos[i]);
+	g_signal_connect(G_OBJECT(ed->labelpos[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
-			 spec);
-	gtk_container_add(GTK_CONTAINER(hbox), labelpos[i]);
-	gtk_widget_show(labelpos[i]);
+			 ed);
+	gtk_container_add(GTK_CONTAINER(hbox), ed->labelpos[i]);
+	gtk_widget_show(ed->labelpos[i]);
 
 	if (plot_is_mouseable(plot)) {
 	    /* button to invoke mouse-assisted placement */
 	    button = gtk_button_new();
-	    g_object_set_data(G_OBJECT(button), "labelpos_entry", labelpos[i]);
+	    g_object_set_data(G_OBJECT(button), "labelpos_entry", ed->labelpos[i]);
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(plot_label_position_click), spec->ptr);
 	    icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
@@ -2235,16 +2213,16 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 
 	print_field_label(tbl, tbl_len, _("justification"));
 
-	labeljust[i] = gtk_combo_box_new_text();
+	ed->labeljust[i] = gtk_combo_box_new_text();
 	for (j=0; j<3; j++) {
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(labeljust[i]),
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->labeljust[i]),
 				      gp_justification_string(j));
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(labeljust[i]), 
+	gtk_combo_box_set_active(GTK_COMBO_BOX(ed->labeljust[i]), 
 				 spec->labels[i].just);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_widget_show_all(labeljust[i]);
+				  ed->labeljust[i], 2, 3, tbl_len-1, tbl_len);
+	gtk_widget_show_all(ed->labeljust[i]);
 
 	/* separator */
 	tbl_len++;
@@ -2264,16 +2242,17 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec, int ins)
 	button = gtk_button_new_with_label(_("Add..."));
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(add_label_callback), 
-			 spec);
+			 ed);
 	gtk_widget_show(button);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
 				  tbl_len-1, tbl_len);
     }
 }
 
-static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis) 
+static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis) 
 {
     png_plot *plot = (png_plot *) spec->ptr;
+    GtkWidget *notebook = ed->notebook;
     GtkWidget *b1, *b2, *entry, *vbox, *tbl;
     GtkWidget *label = NULL;
     char *labelstr = NULL;
@@ -2296,13 +2275,13 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     gtk_widget_show(tbl);
    
     for (i=0; i<NTITLES; i++) {
-	if (gpt_titles[i].tab == 1 + axis) {
+	if (ed->gpt_titles[i].tab == 1 + axis) {
 	    GtkWidget *title_entry;
 
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
             
-	    label = gtk_label_new(_(gpt_titles[i].description));
+	    label = gtk_label_new(_(ed->gpt_titles[i].desc));
 	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      label, 0, 1, tbl_len-1, tbl_len);
@@ -2316,10 +2295,10 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
 	    g_signal_connect(G_OBJECT(title_entry), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
-			     spec);
+			     ed);
 
 	    gtk_widget_show(title_entry);
-	    gpt_titles[i].widget = title_entry;
+	    ed->gpt_titles[i].widget = title_entry;
 	}
     } 
 
@@ -2327,7 +2306,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	return;
     }
 
-    axis_range[axis].ID = axis;
+    ed->axis_range[axis].ID = axis;
 
     /* axis range: "auto" button */
     tbl_len += 3;
@@ -2338,22 +2317,22 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 			      tbl_len-3, tbl_len-2);
     gtk_widget_show(label);
     b1 = gtk_radio_button_new_with_label(NULL, _("auto axis range"));
+    widget_set_int(b1, "axis", axis);
     g_signal_connect(G_OBJECT(b1), "clicked",
-		     G_CALLBACK(flip_manual_range), 
-		     GINT_TO_POINTER(axis));
+		     G_CALLBACK(flip_manual_range), ed);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 1, 
 			      tbl_len-2, tbl_len-1);
     gtk_widget_show(b1);
-    axis_range[axis].isauto = b1;
+    ed->axis_range[axis].isauto = b1;
 
     /* axis range: manual range button */
     b2 = gtk_radio_button_new_with_label(gtk_radio_button_get_group 
 					 (GTK_RADIO_BUTTON(b1)),
 					 _("manual range:")); 
+    widget_set_int(b2, "axis", axis);
     g_signal_connect(G_OBJECT(b2), "clicked",
-		     G_CALLBACK(flip_manual_range), 
-		     GINT_TO_POINTER(axis));
+		     G_CALLBACK(flip_manual_range), ed);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 1, 
 			      tbl_len-1, tbl_len);
     gtk_widget_show(b2);
@@ -2371,9 +2350,9 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     gtk_entry_set_text(GTK_ENTRY(entry), "");
     g_signal_connect(G_OBJECT(entry), "activate", 
 		     G_CALLBACK(apply_gpt_changes), 
-		     spec);
+		     ed);
     gtk_widget_show(entry);
-    axis_range[axis].min = entry;
+    ed->axis_range[axis].min = entry;
 
     /* axis range max. entry */
     tbl_len++;
@@ -2388,16 +2367,17 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     gtk_entry_set_text(GTK_ENTRY(entry), "");
     g_signal_connect(G_OBJECT(entry), "activate", 
 		     G_CALLBACK(apply_gpt_changes), 
-		     spec);
+		     ed);
     gtk_widget_show(entry);
-    axis_range[axis].max = entry;
+    ed->axis_range[axis].max = entry;
 
     if (na(spec->range[axis][0])) {
-	flip_manual_range(NULL, GINT_TO_POINTER(axis));
+	gtk_widget_set_sensitive(ed->axis_range[axis].min, FALSE); /* FIXME? */
+	gtk_widget_set_sensitive(ed->axis_range[axis].max, FALSE);
     } else {
-	double_to_gp_entry(spec->range[axis][0], axis_range[axis].min);
-	double_to_gp_entry(spec->range[axis][1], axis_range[axis].max);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(axis_range[axis].isauto), 
+	double_to_gp_entry(spec->range[axis][0], ed->axis_range[axis].min);
+	double_to_gp_entry(spec->range[axis][1], ed->axis_range[axis].max);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ed->axis_range[axis].isauto), 
 				     FALSE);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
     }
@@ -2441,9 +2421,9 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	entry = gtk_bin_get_child(GTK_BIN(combo));
 	g_signal_connect(G_OBJECT(entry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
-			 spec);
+			 ed);
 	gtk_widget_show(combo);
-	axis_range[axis].lbase = entry;
+	ed->axis_range[axis].lbase = entry;
 
 	if (spec->logbase[axis] > 1.1) {
 	    gchar *txt = g_strdup_printf("%g", spec->logbase[axis]);
@@ -2482,286 +2462,298 @@ static void gpt_tab_palette (GtkWidget *notebook)
     gtk_widget_show(tbl);
 }
 
-void close_gnuplot_dialog (GtkWidget *w, gpointer p)
+static void plot_editor_destroy (plot_editor *ed)
 {
-    free(linetitle);
-    free(lineformula);
-    free(stylecombo);
-    free(yaxiscombo);
-    free(linescale);
-    free(linewidth);
-
-    linetitle = NULL;
-    lineformula = NULL;
-    stylecombo = NULL;
-    yaxiscombo = NULL;
-    linescale = NULL;
-    linewidth = NULL;
-
-    gui_nlines = 0;
-
-    free(labeltext);
-    free(labelpos);
-    free(labeljust);
-
-    labeltext = NULL;
-    labelpos = NULL;
-    labeljust = NULL;
-
-    gui_nlabels = 0;
-
-    gtk_widget_destroy(GTK_WIDGET(p));
-}
-
-static int gpt_expand_line_widgets (int n)
-{
-    int i;
-
-    if (n == 0) {
-	return 0;
+    if (ed->added_lines > 0) {
+	plotspec_delete_last_lines(ed->spec, ed->added_lines);
     }
 
-    linetitle = myrealloc(linetitle, n * sizeof *linetitle);
-    lineformula = myrealloc(lineformula, n * sizeof *lineformula);
-    stylecombo = myrealloc(stylecombo, n * sizeof *stylecombo);
-    yaxiscombo = myrealloc(yaxiscombo, n * sizeof *yaxiscombo);
-    linescale = myrealloc(linescale, n * sizeof *linescale);
-    linewidth = myrealloc(linewidth, n * sizeof *linewidth);
-    
-    if (linetitle == NULL || lineformula == NULL ||
-	stylecombo == NULL || yaxiscombo == NULL || 
-	linescale == NULL || linewidth == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
-	linetitle[i] = NULL;
-	lineformula[i] = NULL;
-	stylecombo[i] = NULL;
-	yaxiscombo[i] = NULL;
-	linescale[i] = NULL;
-	linewidth[i] = NULL;
-    }
-
-    gui_nlines = n;
-
-    return 0;
-}
-
-static int gpt_allocate_line_widgets (int n)
-{
-    int i;
-
-    if (n == 0) {
-	return 0;
-    }
-
-    linetitle = malloc(n * sizeof *linetitle);
-    lineformula = malloc(n * sizeof *lineformula);
-    stylecombo = malloc(n * sizeof *stylecombo);
-    yaxiscombo = malloc(n * sizeof *yaxiscombo);
-    linescale = malloc(n * sizeof *linescale);
-    linewidth = malloc(n * sizeof *linewidth);
-    
-    if (linetitle == NULL || lineformula == NULL ||
-	stylecombo == NULL || yaxiscombo == NULL || 
-	linescale == NULL || linewidth == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
-	linetitle[i] = NULL;
-	lineformula[i] = NULL;
-	stylecombo[i] = NULL;
-	yaxiscombo[i] = NULL;
-	linescale[i] = NULL;
-	linewidth[i] = NULL;
-    }
-
-    gui_nlines = n;
-
-    return 0;
-}
-
-static int gpt_expand_label_widgets (int n)
-{
-    int i;
-
-    if (n == 0) {
-	return 0;
-    }
-
-    labeltext = myrealloc(labeltext, n * sizeof *labeltext);
-    labelpos = myrealloc(labelpos, n * sizeof *labelpos);
-    labeljust = myrealloc(labeljust, n * sizeof *labeljust);
-    
-    if (labeltext == NULL || labelpos == NULL ||
-	labeljust == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
-	labeltext[i] = NULL;
-	labelpos[i] = NULL;
-	labeljust[i] = NULL;
-    }
-
-    gui_nlabels = n;
-
-    return 0;
-}
-
-static int gpt_allocate_label_widgets (int n)
-{
-    int i;
-
-    if (n == 0) {
-	return 0;
-    }
-
-    labeltext = malloc(n * sizeof *labeltext);
-    labelpos = malloc(n * sizeof *labelpos);
-    labeljust = malloc(n * sizeof *labeljust);
-    
-    if (labeltext == NULL || labelpos == NULL ||
-	labeljust == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
-	labeltext[i] = NULL;
-	labelpos[i] = NULL;
-	labeljust[i] = NULL;
-    }
-
-    gui_nlabels = n;
-
-    return 0;
-}
-
-int show_gnuplot_dialog (GPT_SPEC *spec) 
-{
-    png_plot *plot = (png_plot *) spec->ptr;
-    GtkWidget *button, *notebook;
-    GtkWidget *hbox;
-    int do_labels = 1;
-    int i;
-
-    if (gpt_control != NULL) {
-	errbox(_("You can only have one plot controller open\n"
-		 "at any given time"));
-	return 1;
-    }
-
-    if (gpt_allocate_line_widgets(spec->n_lines)) {
-	nomem();
-	return 1;
-    }
-
-    if (spec->n_labels > 7) {
-	do_labels = 0;
-    }
-
-    if (do_labels && gpt_allocate_label_widgets(spec->n_labels)) {
-	nomem();
-	return 1;
+    if (ed->added_labels > 0) {
+	plotspec_delete_last_labels(ed->spec, ed->added_labels);
     }    
 
+    free(ed->linetitle);
+    free(ed->lineformula);
+    free(ed->stylecombo);
+    free(ed->yaxiscombo);
+    free(ed->linescale);
+    free(ed->linewidth);
+
+    free(ed->labeltext);
+    free(ed->labelpos);
+    free(ed->labeljust);
+
+    free(ed);
+}
+
+static GtkWidget **widget_array_new (int n, int *err)
+{
+    GtkWidget **pw;
+    int i;
+
+    pw = malloc(n * sizeof *pw);
+
+    if (pw != NULL) {
+	for (i=0; i<n; i++) {
+	    pw[i] = NULL;
+	}
+    } else {
+	*err = E_ALLOC;
+    }
+
+    return pw;
+}
+
+static GtkWidget **widget_array_expand (GtkWidget ***ppw, int n, int *err)
+{
+    GtkWidget **tmp;
+    int i;
+
+    tmp = realloc(*ppw, n * sizeof *tmp);
+
+    if (tmp != NULL) {
+	for (i=0; i<n; i++) {
+	    tmp[i] = NULL;
+	}
+	*ppw = tmp;
+    } else {
+	*err = E_ALLOC;
+    }
+
+    return *ppw;
+}
+
+static int add_line_widget (plot_editor *ed)
+{
+    int n = ed->gui_nlines + 1;
+    int err = 0;
+
+    ed->linetitle = widget_array_expand(&ed->linetitle, n, &err);
+    ed->lineformula = widget_array_expand(&ed->lineformula, n, &err);
+    ed->stylecombo = widget_array_expand(&ed->stylecombo, n, &err);
+    ed->yaxiscombo = widget_array_expand(&ed->yaxiscombo, n, &err);
+    ed->linescale = widget_array_expand(&ed->linescale, n, &err);
+    ed->linewidth = widget_array_expand(&ed->linewidth, n, &err);
+    
+    if (!err) {
+	ed->gui_nlines = n;
+    }
+
+    return err;
+}
+
+static int allocate_line_widgets (plot_editor *ed, int n)
+{
+    int err = 0;
+
+    if (n == 0) {
+	return 0;
+    }
+
+    ed->linetitle = widget_array_new(n, &err);
+    ed->lineformula = widget_array_new(n, &err);
+    ed->stylecombo = widget_array_new(n, &err);
+    ed->yaxiscombo = widget_array_new(n, &err);
+    ed->linescale = widget_array_new(n, &err);
+    ed->linewidth = widget_array_new(n, &err);
+    
+    if (!err) {
+	ed->gui_nlines = n;
+    }
+
+    return err;
+}
+
+static int add_label_widget (plot_editor *ed)
+{
+    int n = ed->gui_nlabels + 1;
+    int err = 0;
+
+    ed->labeltext = widget_array_expand(&ed->labeltext, n, &err);
+    ed->labelpos = widget_array_expand(&ed->labelpos, n, &err);
+    ed->labeljust = widget_array_expand(&ed->labeljust, n, &err);
+    
+    if (!err) {
+	ed->gui_nlabels = n;
+    }
+
+    return err;
+}
+
+static int allocate_label_widgets (plot_editor *ed, int n)
+{
+    int err = 0;
+
+    if (n == 0) {
+	return 0;
+    }
+
+    ed->labeltext = widget_array_new(n, &err);
+    ed->labelpos = widget_array_new(n, &err);
+    ed->labeljust = widget_array_new(n, &err);
+    
+    if (!err) {
+	ed->gui_nlabels = n;
+    }
+
+    return err;
+}
+
+static plot_editor *plot_editor_new (GPT_SPEC *spec)
+{
+    plot_editor *ed;
+    int i;
+
+    ed = malloc(sizeof *ed);
+    if (ed == NULL) {
+	return NULL;
+    }
+
+    ed->spec = spec;
+
+    ed->dialog = NULL;
+
+    ed->linetitle = NULL;
+    ed->lineformula = NULL;
+    ed->stylecombo = NULL;
+    ed->yaxiscombo = NULL;
+    ed->linescale = NULL;
+    ed->linewidth = NULL;
+
+    ed->labeltext = NULL;
+    ed->labelpos = NULL;
+    ed->labeljust = NULL;
+
+    /* also set to NULL the widgets which may or may not
+       actually be used in constructing the plot editor 
+       dialog 
+    */
+    ed->fitformula = NULL;
+    ed->fitlegend = NULL;
+    ed->keycombo = NULL;
+    ed->fitcombo = NULL;
+    ed->border_check = NULL;
+    ed->markers_check = NULL;
+    ed->y2_check = NULL;
+    ed->ttfcombo = NULL;
+    ed->ttfspin = NULL;
+
+    ed->gui_nlines = ed->gui_nlabels = 0;
+
+    if (allocate_line_widgets(ed, spec->n_lines)) {
+	plot_editor_destroy(ed);
+	return NULL;
+    }    
+
+    if (allocate_label_widgets(ed, spec->n_labels)) {
+	plot_editor_destroy(ed);
+	return NULL;
+    }   
+
     for (i=0; i<MAX_AXES; i++) {
-	axis_range[i].isauto = NULL;
-	axis_range[i].lbase = NULL;
+	ed->axis_range[i].isauto = NULL;
+	ed->axis_range[i].lbase = NULL;
     }
 
     for (i=0; i<NTITLES; i++) {
-	gpt_titles[i].widget = NULL;
+	ed->gpt_titles[i].desc = (i == 0)? N_("Title of plot"):
+	    N_("Title for axis");
+	ed->gpt_titles[i].tab = i;
+	ed->gpt_titles[i].widget = NULL;
     }
 
-    gpt_control = gretl_dialog_new(_("gretl plot controls"), NULL, 
-				   GRETL_DLG_RESIZE);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(gpt_control)->vbox), 2);
-    gtk_dialog_set_has_separator(GTK_DIALOG(gpt_control), FALSE);
+    ed->added_lines = 0;
+    ed->added_labels = 0;
+
+    return ed;
+} 
+
+GtkWidget *plot_add_editor (png_plot *plot) 
+{
+    GPT_SPEC *spec = plot_get_spec(plot);
+    GtkWidget *plotshell = plot_get_shell(plot);
+    plot_editor *editor;
+    GtkWidget *dialog, *hbox;
+    GtkWidget *button, *notebook;
+
+    editor = plot_editor_new(spec);
+    if (editor == NULL) {
+	nomem();
+	return NULL;
+    }
+
+    dialog = gretl_dialog_new(_("gretl plot controls"), plotshell, 
+			      GRETL_DLG_RESIZE);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 2);
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
     
-
     if (plot != NULL) {
-	gtk_window_set_transient_for(GTK_WINDOW(gpt_control), 
-				     GTK_WINDOW(plot_get_shell(plot)));
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), 
+				     GTK_WINDOW(plotshell));
     }
 
-    g_signal_connect(G_OBJECT(gpt_control), "destroy",
-		     G_CALLBACK(close_plot_controller), 
-		     (gpointer *) spec);
+    editor->dialog = dialog;
+
+    g_signal_connect_swapped(G_OBJECT(dialog), "destroy",
+			     G_CALLBACK(plot_editor_destroy), 
+			     editor);
    
-    notebook = gtk_notebook_new();
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->vbox), 
+    editor->notebook = notebook = gtk_notebook_new();
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 		       notebook, TRUE, TRUE, 0);
     gtk_widget_show(notebook);
 
-    g_object_set_data(G_OBJECT(gpt_control), "notebook", notebook);
-
-    gpt_tab_main(notebook, spec);
-    gpt_tab_XY(notebook, spec, 0);
-    gpt_tab_XY(notebook, spec, 1);
+    gpt_tab_main(editor, spec);
+    gpt_tab_XY(editor, spec, 0);
+    gpt_tab_XY(editor, spec, 1);
 
     if (spec->flags & GPT_Y2AXIS) {
-	gpt_tab_XY(notebook, spec, 2);
+	gpt_tab_XY(editor, spec, 2);
     }
 
     if (spec->lines != NULL) {
-	gpt_tab_lines(notebook, spec, 0);
+	gpt_tab_lines(editor, spec, 0);
     }
 
-    if (do_labels) {
-	gpt_tab_labels(notebook, spec, 0);
-    } 
+    gpt_tab_labels(editor, spec, 0);
 
     if (!frequency_plot_code(spec->code)) {
 	gpt_tab_palette(notebook);
     }
 
-    hbox = GTK_DIALOG(gpt_control)->action_area;
+    hbox = GTK_DIALOG(dialog)->action_area;
 
     /* "Apply" button */
     button = apply_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(apply_gpt_changes), spec);
+		     G_CALLBACK(apply_gpt_changes), editor);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     /* "OK" button (apply and close) */
     button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(apply_gpt_changes), spec);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(close_gnuplot_dialog), gpt_control);
+		     G_CALLBACK(apply_gpt_changes), editor);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy), 
+			     dialog);
     gtk_widget_show(button);
 
     /* Close button (do not apply changes) */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), button);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(close_gnuplot_dialog), gpt_control);
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy), 
+			     dialog);
     gtk_widget_show(button);
 
     /* Help button */
     context_help_button(hbox, GR_PLOT);
 
-    set_keyspec_sensitivity(spec);
+    set_keyspec_sensitivity(editor);
 
-    gtk_widget_show(gpt_control);
+    gtk_widget_show(dialog);
 
-    return 0;
+    return dialog;
 }
-
-void raise_gpt_control_window (void)
-{
-    if (gpt_control != NULL) {
-	gdk_window_raise(gpt_control->window);
-    }
-}
-
-void destroy_gpt_control_window (void)
-{
-    gtk_widget_destroy(gpt_control);
-}
-
