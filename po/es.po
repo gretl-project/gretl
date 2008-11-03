@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-31 16:12-0400\n"
-"PO-Revision-Date: 2008-10-27 17:19+0100\n"
+"POT-Creation-Date: 2008-11-03 15:05-0500\n"
+"PO-Revision-Date: 2008-11-03 15:10-0500\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -258,48 +258,48 @@ msgstr "estadístico t mediante bootstrap"
 msgid "bootstrap coefficient"
 msgstr "coefficiente bootstrap"
 
-#: lib/src/boxplots.c:161
+#: lib/src/boxplots.c:159 gui2/gpt_control.c:2861 gui2/gpt_control.c:2934
 msgid "Numerical summary"
 msgstr "Resumen numérico"
 
-#: lib/src/boxplots.c:164 lib/src/gmm.c:1410 gui2/calculator.c:1957
-#: gui2/calculator.c:1982 gui2/calculator.c:2589 gui2/gpt_dialog.c:1607
+#: lib/src/boxplots.c:162 lib/src/gmm.c:1410 gui2/calculator.c:1957
+#: gui2/calculator.c:1982 gui2/calculator.c:2589 gui2/gpt_dialog.c:1725
 #: plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "mean"
 msgstr "media"
 
-#: lib/src/boxplots.c:165 lib/src/boxplots.c:168 lib/src/boxplots.c:180
-#: gui2/gpt_dialog.c:1605
+#: lib/src/boxplots.c:163 lib/src/boxplots.c:166 lib/src/boxplots.c:178
+#: gui2/gpt_dialog.c:1723
 msgid "median"
 msgstr "mediana"
 
-#: lib/src/boxplots.c:176
+#: lib/src/boxplots.c:174
 msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr ""
 "Resumen numérico con intervalos de confianza para la mediana\n"
 " obtenidos mediante bootstrap"
 
-#: lib/src/boxplots.c:182
+#: lib/src/boxplots.c:180
 #, no-c-format
 msgid "(90% interval)"
 msgstr "(intervalo 90% i)"
 
-#: lib/src/boxplots.c:676
+#: lib/src/boxplots.c:719
 #, c-format
 msgid "got invalid variable number %d"
 msgstr "se obtuvo un número de variable %d no válido"
 
-#: lib/src/boxplots.c:684
+#: lib/src/boxplots.c:727
 #, c-format
 msgid "got invalid varname '%s'"
 msgstr "se obtuvo un nombre de variable no válido '%s'"
 
-#: lib/src/boxplots.c:688
+#: lib/src/boxplots.c:731
 #, c-format
 msgid "got invalid field '%s'"
 msgstr "se obtuvo un campo '%s' no válido"
 
-#: lib/src/boxplots.c:713
+#: lib/src/boxplots.c:756
 #, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
@@ -308,7 +308,7 @@ msgstr ""
 "gráficos de caja(boxplots): falló la generación de la variable ficticia\n"
 "%s"
 
-#: lib/src/boxplots.c:962
+#: lib/src/boxplots.c:1005
 msgid "boxplot file is corrupt"
 msgstr "el fichero boxplot está corrupto"
 
@@ -2377,17 +2377,17 @@ msgstr "OC"
 msgid "std. dev"
 msgstr "desv. típica"
 
-#: lib/src/graphing.c:1219 gui2/gpt_dialog.c:513
+#: lib/src/graphing.c:1219 gui2/gpt_dialog.c:522
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s con respecto a %s (con ajuste mínimo-cuadrático)"
 
-#: lib/src/graphing.c:1222 gui2/gpt_dialog.c:519
+#: lib/src/graphing.c:1222 gui2/gpt_dialog.c:528
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr "%s con respecto a %s (con ajuste inverso)"
 
-#: lib/src/graphing.c:1225 gui2/gpt_dialog.c:516
+#: lib/src/graphing.c:1225 gui2/gpt_dialog.c:525
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s con respecto a %s (con ajuste cuadrático)"
@@ -2407,12 +2407,12 @@ msgstr "%s observada y estimada"
 msgid "Actual and fitted %s versus %s"
 msgstr "%s con respecto a %s, observada y estimada"
 
-#: lib/src/graphing.c:1388 gui2/gpt_dialog.c:522
+#: lib/src/graphing.c:1388 gui2/gpt_dialog.c:531
 #, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%s con respecto a %s (con ajuste LOESS)"
 
-#: lib/src/graphing.c:1397 lib/src/plotspec.c:869
+#: lib/src/graphing.c:1397 lib/src/plotspec.c:966
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr "ajuste Loess, d = %d, q = %g"
@@ -2421,11 +2421,11 @@ msgstr "ajuste Loess, d = %d, q = %g"
 msgid "time series by group"
 msgstr "series temporales por grupos"
 
-#: lib/src/graphing.c:2442 lib/src/plotspec.c:733 gui2/gpt_dialog.c:1007
+#: lib/src/graphing.c:2442 lib/src/plotspec.c:830 gui2/gpt_dialog.c:1023
 msgid "right"
 msgstr "derecha"
 
-#: lib/src/graphing.c:2442 lib/src/plotspec.c:731 gui2/gpt_dialog.c:1002
+#: lib/src/graphing.c:2442 lib/src/plotspec.c:828 gui2/gpt_dialog.c:1018
 msgid "left"
 msgstr "izquierda"
 
@@ -3016,7 +3016,7 @@ msgstr ""
 " efectos fijos.)\n"
 
 #: lib/src/gretl_panel.c:1388 lib/src/gretl_restrict.c:1928
-#: plugin/arbond.c:764
+#: plugin/arbond.c:771
 #, c-format
 msgid "Failed to compute test statistic\n"
 msgstr "Fallo al computar el estadístico de contraste\n"
@@ -4416,7 +4416,7 @@ msgstr "Un valor < 10 puede indicar que los instrumentos son débiles"
 msgid "Instruments"
 msgstr "Instrumentos"
 
-#: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:87 gui2/gui_utils.c:2359
+#: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:110 gui2/gui_utils.c:2359
 msgid "none"
 msgstr "ninguno"
 
@@ -5818,7 +5818,7 @@ msgstr ""
 "\n"
 "Weibull (forma = %g, escala = %g): "
 
-#: lib/src/strutils.c:1584
+#: lib/src/strutils.c:1597
 #, c-format
 msgid "out of memory in XML encoding"
 msgstr "fuera de memoria en la codificación XML"
@@ -6600,7 +6600,7 @@ msgid "Standard errors"
 msgstr "Desviaciones típicas"
 
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:211
-#: gui2/filters.c:696 gui2/gpt_control.c:990
+#: gui2/filters.c:696 gui2/gpt_control.c:989
 msgid "gnuplot command failed"
 msgstr "falló la instrucción gnuplot"
 
@@ -6850,11 +6850,11 @@ msgstr "weibull"
 msgid " DW "
 msgstr " DW "
 
-#: gui2/calculator.c:1951 gui2/gpt_dialog.c:2239
+#: gui2/calculator.c:1951 gui2/gpt_dialog.c:2416
 msgid "minimum"
 msgstr "mínimo"
 
-#: gui2/calculator.c:1953 gui2/gpt_dialog.c:2256
+#: gui2/calculator.c:1953 gui2/gpt_dialog.c:2433
 msgid "maximum"
 msgstr "máximo"
 
@@ -6874,7 +6874,7 @@ msgstr "gld"
 msgid "shape"
 msgstr "forma"
 
-#: gui2/calculator.c:1975 gui2/gpt_dialog.c:1933
+#: gui2/calculator.c:1975 gui2/gpt_dialog.c:2069
 msgid "scale"
 msgstr "Escala"
 
@@ -7583,8 +7583,8 @@ msgstr "Información"
 msgid "Open"
 msgstr "Abrir"
 
-#: gui2/datafiles.c:977 gui2/datafiles.c:1073 gui2/gpt_control.c:2849
-#: gui2/gpt_control.c:2920 gui2/session.c:185 gui2/session.c:192
+#: gui2/datafiles.c:977 gui2/datafiles.c:1073 gui2/gpt_control.c:2863
+#: gui2/gpt_control.c:2935 gui2/session.c:185 gui2/session.c:192
 #: gui2/session.c:198 gui2/session.c:203 gui2/session.c:2531
 #: gui2/session.c:2552 gui2/session.c:2568 gui2/session.c:2583
 msgid "Edit"
@@ -7618,8 +7618,8 @@ msgstr "Mirar en el servidor"
 msgid "Local machine"
 msgstr "Máquina local"
 
-#: gui2/datafiles.c:1084 gui2/gpt_control.c:2851 gui2/gpt_control.c:2922
-#: gui2/gpt_control.c:2927 gui2/toolbar.c:494
+#: gui2/datafiles.c:1084 gui2/gpt_control.c:2865 gui2/gpt_control.c:2937
+#: gui2/gpt_control.c:2942 gui2/toolbar.c:494
 msgid "Close"
 msgstr "Cerrar"
 
@@ -8915,344 +8915,344 @@ msgstr ""
 "que se pueda empaquetar.\n"
 "¿Desea escribir una función ahora?"
 
-#: gui2/gpt_control.c:241
+#: gui2/gpt_control.c:240
 msgid " Click to set label position"
 msgstr " Pulse aquí para establecer la posición de la etiqueta"
 
-#: gui2/gpt_control.c:1081
+#: gui2/gpt_control.c:1080
 msgid "Gnuplot error creating graph"
 msgstr "Error de Gnuplot al crear el gráfico"
 
-#: gui2/gpt_control.c:1467 gui2/gpt_control.c:1514 gui2/gpt_control.c:1520
-#: gui2/gpt_control.c:2163
+#: gui2/gpt_control.c:1449 gui2/gpt_control.c:1495 gui2/gpt_control.c:1501
+#: gui2/gpt_control.c:2145
 msgid "Failed to parse gnuplot file"
 msgstr "Fallo al pasar fichero gnuplot"
 
-#: gui2/gpt_control.c:2104
+#: gui2/gpt_control.c:2086
 msgid "Plot file is corrupted"
 msgstr "el fichero de gráfico está corrupto"
 
-#: gui2/gpt_control.c:2651
+#: gui2/gpt_control.c:2634
 msgid "Couldn't access graph info"
 msgstr "No se pudo acceder a la información del gráfico"
 
-#: gui2/gpt_control.c:2695 gui2/gpt_control.c:2867 gui2/graph_page.c:596
+#: gui2/gpt_control.c:2688 gui2/gpt_control.c:2881 gui2/graph_page.c:596
 msgid "monochrome"
 msgstr "monocromo"
 
-#: gui2/gpt_control.c:2699 gui2/gpt_control.c:2899
+#: gui2/gpt_control.c:2692 gui2/gpt_control.c:2913
 msgid "Save as postscript (EPS)..."
 msgstr "Guardar como postscript (EPS)..."
 
-#: gui2/gpt_control.c:2701 gui2/gpt_control.c:2705 gui2/gpt_control.c:2806
-#: gui2/gpt_control.c:2810
+#: gui2/gpt_control.c:2694 gui2/gpt_control.c:2698 gui2/gpt_control.c:2818
+#: gui2/gpt_control.c:2822
 msgid "Save gnuplot graph"
 msgstr "Guardar gráfico gnuplot"
 
-#: gui2/gpt_control.c:2703 gui2/gpt_control.c:2896 gui2/gpt_control.c:2902
+#: gui2/gpt_control.c:2696 gui2/gpt_control.c:2910 gui2/gpt_control.c:2916
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Guardar como Windows metafile (EMF)..."
 
-#: gui2/gpt_control.c:2709 gui2/gpt_control.c:2905 gui2/menustate.c:313
+#: gui2/gpt_control.c:2702 gui2/gpt_control.c:2919 gui2/menustate.c:313
 #: gui2/menustate.c:349 gui2/menustate.c:374 gui2/menustate.c:411
 msgid "Copy to clipboard"
 msgstr "Copiar al portapapeles"
 
-#: gui2/gpt_control.c:2711 gui2/gpt_control.c:2915
+#: gui2/gpt_control.c:2704 gui2/gpt_control.c:2929
 msgid "Print"
 msgstr "Imprimir"
 
-#: gui2/gpt_control.c:2732
+#: gui2/gpt_control.c:2725
 msgid "VAR roots (real, imaginary, modulus, frequency)"
 msgstr "raíces del VAR (real, imaginaria, módulo, frecuencia)"
 
-#: gui2/gpt_control.c:2769
+#: gui2/gpt_control.c:2762
 msgid "VAR roots"
 msgstr "raíces del VAR"
 
-#: gui2/gpt_control.c:2802 gui2/gpt_control.c:2894
+#: gui2/gpt_control.c:2784
+msgid "gretl: boxplot data"
+msgstr "gretl: datos del gráfico de caja (boxplot)"
+
+#: gui2/gpt_control.c:2814 gui2/gpt_control.c:2908
 msgid "Add another curve..."
 msgstr "Añadir otra curva..."
 
-#: gui2/gpt_control.c:2804 gui2/gpt_control.c:2898
+#: gui2/gpt_control.c:2816 gui2/gpt_control.c:2912
 msgid "Save as PNG..."
 msgstr "Guardar como PNG..."
 
-#: gui2/gpt_control.c:2808 gui2/gpt_control.c:2900
+#: gui2/gpt_control.c:2820 gui2/gpt_control.c:2914
 msgid "Save as PDF..."
 msgstr "Guardar como PDF..."
 
-#: gui2/gpt_control.c:2812 gui2/gpt_control.c:2907 gui2/toolbar.c:174
+#: gui2/gpt_control.c:2824 gui2/gpt_control.c:2921 gui2/toolbar.c:174
 msgid "Save to session as icon"
 msgstr "Guardar a sesión como icono"
 
-#: gui2/gpt_control.c:2814 gui2/gpt_control.c:2816 gui2/gpt_control.c:2921
+#: gui2/gpt_control.c:2826 gui2/gpt_control.c:2828 gui2/gpt_control.c:2936
 #: gui2/session.c:161 gui2/session.c:168 gui2/session.c:2636
 #: gui2/toolbar.c:493
 msgid "Help"
 msgstr "Ayuda"
 
-#: gui2/gpt_control.c:2818 gui2/gpt_control.c:2908
+#: gui2/gpt_control.c:2830 gui2/gpt_control.c:2922
 msgid "Freeze data labels"
 msgstr "Fijar las etiquetas de los datos"
 
-#: gui2/gpt_control.c:2821 gui2/gpt_control.c:2909
+#: gui2/gpt_control.c:2833 gui2/gpt_control.c:2923
 msgid "Clear data labels"
 msgstr "Vaciar las etiquetas de los datos"
 
-#: gui2/gpt_control.c:2823 gui2/gpt_control.c:2910
+#: gui2/gpt_control.c:2835 gui2/gpt_control.c:2924
 msgid "Zoom..."
 msgstr "Zoom..."
 
-#: gui2/gpt_control.c:2831
+#: gui2/gpt_control.c:2843
 msgid " Drag to define zoom rectangle"
 msgstr " Arrastre para definir el rectángulo de zoom"
 
-#: gui2/gpt_control.c:2833 gui2/gpt_control.c:2926
+#: gui2/gpt_control.c:2845 gui2/gpt_control.c:2941
 msgid "Restore full view"
 msgstr "Recuperar vista completa"
 
-#: gui2/gpt_control.c:2837 gui2/gpt_control.c:2912 gui2/toolbar.c:471
+#: gui2/gpt_control.c:2849 gui2/gpt_control.c:2926 gui2/toolbar.c:471
 msgid "Print..."
 msgstr "Imprimir..."
 
-#: gui2/gpt_control.c:2841 gui2/gpt_control.c:2917
+#: gui2/gpt_control.c:2853 gui2/gpt_control.c:2931
 msgid "Display PDF"
 msgstr "Mostrar PDF"
 
-#: gui2/gpt_control.c:2843 gui2/gpt_control.c:2918
+#: gui2/gpt_control.c:2855 gui2/gpt_control.c:2932
 msgid "OLS estimates"
 msgstr "Estimaciones de MCO"
 
-#: gui2/gpt_control.c:2847 gui2/gpt_control.c:2919
+#: gui2/gpt_control.c:2859 gui2/gpt_control.c:2933
 msgid "Numerical values"
 msgstr "Valores numéricos"
 
-#: gui2/gpt_control.c:2866 gui2/gpt_dialog.c:1985 gui2/graph_page.c:595
+#: gui2/gpt_control.c:2880 gui2/gpt_dialog.c:2121 gui2/graph_page.c:595
 msgid "color"
 msgstr "color"
 
-#: gui2/gpt_control.c:3325
+#: gui2/gpt_control.c:3345
 msgid "Malformed PNG file for graph"
 msgstr "Fichero PNG de gráfico mal formado"
 
-#: gui2/gpt_control.c:3821
+#: gui2/gpt_control.c:3834
 msgid "gretl: gnuplot graph"
 msgstr "gretl: gráfico gnuplot"
 
-#: gui2/gpt_control.c:3889
+#: gui2/gpt_control.c:3902
 msgid " Click on graph for pop-up menu"
 msgstr "Hacer 'click' en el gráfico para ver un menú emergente"
 
-#: gui2/gpt_dialog.c:80
-msgid "Title of plot"
-msgstr "Título del gráfico"
-
-#: gui2/gpt_dialog.c:81 gui2/gpt_dialog.c:82 gui2/gpt_dialog.c:83
-msgid "Title for axis"
-msgstr "Título del eje"
-
-#: gui2/gpt_dialog.c:88
+#: gui2/gpt_dialog.c:111
 msgid "linear: y = a + b*x"
 msgstr "lineal: y = a + b*x"
 
-#: gui2/gpt_dialog.c:89
+#: gui2/gpt_dialog.c:112
 msgid "quadratic: y = a + b*x + c*x^2"
 msgstr "cuadrática: y = a + b*x + c*x^2"
 
-#: gui2/gpt_dialog.c:90
+#: gui2/gpt_dialog.c:113
 msgid "inverse: y = a + b*(1/x)"
 msgstr "inversa: y = a + b*(1/x)"
 
-#: gui2/gpt_dialog.c:91
+#: gui2/gpt_dialog.c:114
 msgid "loess (locally weighted fit)"
 msgstr "loess (estimación ponderada localmente)"
 
-#: gui2/gpt_dialog.c:277
+#: gui2/gpt_dialog.c:285
 msgid "gretl: graph color selection"
 msgstr "gretl: selección del color del gráfico"
 
-#: gui2/gpt_dialog.c:305 gui2/gpt_dialog.c:353
+#: gui2/gpt_dialog.c:313 gui2/gpt_dialog.c:361
 msgid "Select color"
 msgstr "Seleccione un color"
 
-#: gui2/gpt_dialog.c:628
+#: gui2/gpt_dialog.c:637
 msgid "Invalid label position, must be X Y"
 msgstr "Posición de etiqueta no válida, debe ser X Y"
 
-#: gui2/gpt_dialog.c:1092
+#: gui2/gpt_dialog.c:1108
 msgid "Fill color"
 msgstr "Color de relleno"
 
-#: gui2/gpt_dialog.c:1094
+#: gui2/gpt_dialog.c:1110
 #, c-format
 msgid "Color %d"
 msgstr "Color %d"
 
-#: gui2/gpt_dialog.c:1114
+#: gui2/gpt_dialog.c:1130
 msgid "Reset to default"
 msgstr "Reestablecer opciones por defecto"
 
-#: gui2/gpt_dialog.c:1190
+#: gui2/gpt_dialog.c:1206
 msgid "Main"
 msgstr "Principal"
 
-#: gui2/gpt_dialog.c:1228
+#: gui2/gpt_dialog.c:1244
 msgid "key position"
 msgstr "Posición de la clave"
 
-#: gui2/gpt_dialog.c:1249
+#: gui2/gpt_dialog.c:1265
 msgid "fitted line"
 msgstr "recta estimada"
 
-#: gui2/gpt_dialog.c:1275
+#: gui2/gpt_dialog.c:1288
 msgid "Show full border"
 msgstr "Mostrar el borde completo"
 
-#: gui2/gpt_dialog.c:1285
+#: gui2/gpt_dialog.c:1298
 msgid "Use only one y axis"
 msgstr "Usar sólo un eje y"
 
-#: gui2/gpt_dialog.c:1301
+#: gui2/gpt_dialog.c:1312
 msgid "Show all data labels"
 msgstr "Mostrar todas las etiquetas de los datos"
 
-#: gui2/gpt_dialog.c:1321
+#: gui2/gpt_dialog.c:1332
 msgid "Allow anti-aliasing of lines"
 msgstr "Permitir el anti-solapamiento de las líneas (anti-aliasing)"
 
-#: gui2/gpt_dialog.c:1349 gui2/gpt_dialog.c:1351
+#: gui2/gpt_dialog.c:1360 gui2/gpt_dialog.c:1362
 msgid "None"
 msgstr "Ninguna"
 
-#: gui2/gpt_dialog.c:1363
+#: gui2/gpt_dialog.c:1374
 msgid "TrueType font"
 msgstr "Fuente TrueType"
 
-#: gui2/gpt_dialog.c:1448 gui2/gpt_dialog.c:1614
+#: gui2/gpt_dialog.c:1456 gui2/gpt_dialog.c:1732
 #, c-format
 msgid "line %d: "
 msgstr "línea %d: "
 
-#: gui2/gpt_dialog.c:1455 gui2/gpt_dialog.c:1814
+#: gui2/gpt_dialog.c:1463 gui2/gpt_dialog.c:1950
 msgid "formula"
 msgstr "fórmula"
 
-#: gui2/gpt_dialog.c:1481
+#: gui2/gpt_dialog.c:1584
 msgid "No formula was given"
 msgstr "No se ha suministrado fórmula"
 
-#: gui2/gpt_dialog.c:1539
-msgid "Add line"
-msgstr "Añadir línea"
+#: gui2/gpt_dialog.c:1704
+msgid "Remove"
+msgstr "Quitar"
 
-#: gui2/gpt_dialog.c:1603
+#: gui2/gpt_dialog.c:1721
 #, fuzzy
 msgid "quartiles"
 msgstr "trimestres"
 
-#: gui2/gpt_dialog.c:1609
+#: gui2/gpt_dialog.c:1727
 #, fuzzy
 msgid "lower bound"
 msgstr "inferior"
 
-#: gui2/gpt_dialog.c:1611
+#: gui2/gpt_dialog.c:1729
 #, fuzzy
 msgid "upper bound"
 msgstr "superior"
 
-#: gui2/gpt_dialog.c:1768
-msgid "Lines"
-msgstr "Líneas"
-
-#: gui2/gpt_dialog.c:1848
-msgid "legend"
-msgstr "Leyenda"
-
-#: gui2/gpt_dialog.c:1877
-msgid "type"
-msgstr "Tipo"
-
-#: gui2/gpt_dialog.c:1911
-#, fuzzy
-msgid "point"
-msgstr "omitir"
-
-#: gui2/gpt_dialog.c:1949
-msgid "y axis"
-msgstr "eje y "
-
-#: gui2/gpt_dialog.c:1966
-msgid "line width"
-msgstr "grosor de línea"
-
-#: gui2/gpt_dialog.c:2027
-msgid "Add line..."
-msgstr "Añadir línea..."
-
-#: gui2/gpt_dialog.c:2058
-msgid "Labels"
-msgstr "Etiquetas"
-
-#: gui2/gpt_dialog.c:2073
+#: gui2/gpt_dialog.c:1748
 #, c-format
 msgid "label %d: "
 msgstr "etiqueta %d: "
 
-#: gui2/gpt_dialog.c:2080
+#: gui2/gpt_dialog.c:1915
+msgid "Lines"
+msgstr "Líneas"
+
+#: gui2/gpt_dialog.c:1984
+msgid "legend"
+msgstr "Leyenda"
+
+#: gui2/gpt_dialog.c:2013
+msgid "type"
+msgstr "Tipo"
+
+#: gui2/gpt_dialog.c:2047
+#, fuzzy
+msgid "point"
+msgstr "omitir"
+
+#: gui2/gpt_dialog.c:2085
+msgid "y axis"
+msgstr "eje y "
+
+#: gui2/gpt_dialog.c:2102
+msgid "line width"
+msgstr "grosor de línea"
+
+#: gui2/gpt_dialog.c:2163
+msgid "Add line..."
+msgstr "Añadir línea..."
+
+#: gui2/gpt_dialog.c:2200
+msgid "Labels"
+msgstr "Etiquetas"
+
+#: gui2/gpt_dialog.c:2231
 msgid "text"
 msgstr "texto"
 
-#: gui2/gpt_dialog.c:2097
+#: gui2/gpt_dialog.c:2254
 msgid "position (X Y)"
 msgstr "posición (X Y)"
 
-#: gui2/gpt_dialog.c:2135
+#: gui2/gpt_dialog.c:2291
 msgid "justification"
 msgstr "justificación"
 
-#: gui2/gpt_dialog.c:2159
+#: gui2/gpt_dialog.c:2321 gui2/ssheet.c:1141
+msgid "Add..."
+msgstr "Añadir..."
+
+#: gui2/gpt_dialog.c:2341
 msgid "X-axis"
 msgstr "eje X"
 
-#: gui2/gpt_dialog.c:2161
+#: gui2/gpt_dialog.c:2343
 msgid "Y-axis"
 msgstr "eje Y"
 
-#: gui2/gpt_dialog.c:2163
+#: gui2/gpt_dialog.c:2345
 msgid "Y2-axis"
 msgstr "eje Y2"
 
-#: gui2/gpt_dialog.c:2216
+#: gui2/gpt_dialog.c:2393
 msgid "auto axis range"
 msgstr "rango de ejes automático"
 
-#: gui2/gpt_dialog.c:2229
+#: gui2/gpt_dialog.c:2406
 msgid "manual range:"
 msgstr "rango manual:"
 
-#: gui2/gpt_dialog.c:2299
+#: gui2/gpt_dialog.c:2477
 msgid "linear scale"
 msgstr "Escala lineal"
 
-#: gui2/gpt_dialog.c:2307
+#: gui2/gpt_dialog.c:2485
 msgid "logarithmic scale, base:"
 msgstr "escala logarítmica, base:"
 
-#: gui2/gpt_dialog.c:2346
+#: gui2/gpt_dialog.c:2524
 #, fuzzy
 msgid "Palette"
 msgstr "Pegar"
 
-#: gui2/gpt_dialog.c:2458
-msgid ""
-"You can only have one plot controller open\n"
-"at any given time"
-msgstr ""
-"Sólo se puede tener en cada momento un\n"
-"controlador de gráfico abierto"
+#: gui2/gpt_dialog.c:2733
+msgid "Title of plot"
+msgstr "Título del gráfico"
 
-#: gui2/gpt_dialog.c:2477
+#: gui2/gpt_dialog.c:2734
+msgid "Title for axis"
+msgstr "Título del eje"
+
+#: gui2/gpt_dialog.c:2759
 msgid "gretl plot controls"
 msgstr "controladores de gráfico gretl"
 
@@ -13218,10 +13218,6 @@ msgstr "gretl: especificar escalar"
 msgid "Enter a numerical value"
 msgstr "Introducir un valor numérico"
 
-#: gui2/ssheet.c:1141
-msgid "Add..."
-msgstr "Añadir..."
-
 #: gui2/ssheet.c:1146
 msgid "Add Variable"
 msgstr "Añadir Variable"
@@ -14457,6 +14453,16 @@ msgstr "Cadenas de caracteres"
 msgid "Accessors"
 msgstr "Accesores"
 
+#~ msgid "Add line"
+#~ msgstr "Añadir línea"
+
+#~ msgid ""
+#~ "You can only have one plot controller open\n"
+#~ "at any given time"
+#~ msgstr ""
+#~ "Sólo se puede tener en cada momento un\n"
+#~ "controlador de gráfico abierto"
+
 #~ msgid "Save as EPS..."
 #~ msgstr "Guardar como EPS..."
 
@@ -14468,9 +14474,6 @@ msgstr "Accesores"
 
 #~ msgid "Save as XPM..."
 #~ msgstr "Guardar como XPM..."
-
-#~ msgid "gretl: boxplot data"
-#~ msgstr "gretl: datos del gráfico de caja (boxplot)"
 
 #~ msgid "Dropping %s: insufficient observations"
 #~ msgstr "Quitando %s: pocas observaciones"

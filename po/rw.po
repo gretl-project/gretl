@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-31 16:12-0400\n"
+"POT-Creation-Date: 2008-11-03 15:05-0500\n"
 "PO-Revision-Date: 2005-04-04 10:55-0700\n"
 "Last-Translator: Steven Michael Murphy <murf@e-tools.com>\n"
 "Language-Team: Kinyarwanda <translation-team-rw@lists.sourceforge.net>\n"
@@ -268,57 +268,57 @@ msgstr "Kubika Ibyatanzwe IDOSIYE"
 msgid "bootstrap coefficient"
 msgstr "Bya imibarwa"
 
-#: lib/src/boxplots.c:161
+#: lib/src/boxplots.c:159 gui2/gpt_control.c:2861 gui2/gpt_control.c:2934
 #, fuzzy
 msgid "Numerical summary"
 msgstr "Umubare Inshamake"
 
-#: lib/src/boxplots.c:164 lib/src/gmm.c:1410 gui2/calculator.c:1957
-#: gui2/calculator.c:1982 gui2/calculator.c:2589 gui2/gpt_dialog.c:1607
+#: lib/src/boxplots.c:162 lib/src/gmm.c:1410 gui2/calculator.c:1957
+#: gui2/calculator.c:1982 gui2/calculator.c:2589 gui2/gpt_dialog.c:1725
 #: plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "mean"
 msgstr "impuzandengo"
 
 # sc/source\core\src\compiler.src:RID_SC_FUNCTION_NAMES.SC_OPCODE_MEDIAN.text
-#: lib/src/boxplots.c:165 lib/src/boxplots.c:168 lib/src/boxplots.c:180
-#: gui2/gpt_dialog.c:1605
+#: lib/src/boxplots.c:163 lib/src/boxplots.c:166 lib/src/boxplots.c:178
+#: gui2/gpt_dialog.c:1723
 #, fuzzy
 msgid "median"
 msgstr "IMPUZAMPEMBE"
 
-#: lib/src/boxplots.c:176
+#: lib/src/boxplots.c:174
 #, fuzzy
 msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr "Umubare Inshamake Na: UKWIYIZERA Intera kugirango IMPUZAMPEMBE"
 
-#: lib/src/boxplots.c:182
+#: lib/src/boxplots.c:180
 #, fuzzy, no-c-format
 msgid "(90% interval)"
 msgstr "(Intera"
 
-#: lib/src/boxplots.c:676
+#: lib/src/boxplots.c:719
 #, fuzzy, c-format
 msgid "got invalid variable number %d"
 msgstr "Sibyo IMPINDURAGACIRO Umubare"
 
-#: lib/src/boxplots.c:684
+#: lib/src/boxplots.c:727
 #, fuzzy, c-format
 msgid "got invalid varname '%s'"
 msgstr "Sibyo"
 
-#: lib/src/boxplots.c:688
+#: lib/src/boxplots.c:731
 #, fuzzy, c-format
 msgid "got invalid field '%s'"
 msgstr "Sibyo Umwanya"
 
-#: lib/src/boxplots.c:713
+#: lib/src/boxplots.c:756
 #, fuzzy, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
 "%s"
 msgstr "Bya Ishusho IMPINDURAGACIRO"
 
-#: lib/src/boxplots.c:962
+#: lib/src/boxplots.c:1005
 #, fuzzy
 msgid "boxplot file is corrupt"
 msgstr "IDOSIYE ni"
@@ -2450,17 +2450,17 @@ msgstr ""
 msgid "std. dev"
 msgstr "STD."
 
-#: lib/src/graphing.c:1219 gui2/gpt_dialog.c:513
+#: lib/src/graphing.c:1219 gui2/gpt_dialog.c:522
 #, fuzzy, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%sNa: kare"
 
-#: lib/src/graphing.c:1222 gui2/gpt_dialog.c:519
+#: lib/src/graphing.c:1222 gui2/gpt_dialog.c:528
 #, fuzzy, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr "%sNa: kare"
 
-#: lib/src/graphing.c:1225 gui2/gpt_dialog.c:516
+#: lib/src/graphing.c:1225 gui2/gpt_dialog.c:525
 #, fuzzy, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%sNa: kare"
@@ -2480,12 +2480,12 @@ msgstr "Na"
 msgid "Actual and fitted %s versus %s"
 msgstr "Na"
 
-#: lib/src/graphing.c:1388 gui2/gpt_dialog.c:522
+#: lib/src/graphing.c:1388 gui2/gpt_dialog.c:531
 #, fuzzy, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%sNa: kare"
 
-#: lib/src/graphing.c:1397 lib/src/plotspec.c:869
+#: lib/src/graphing.c:1397 lib/src/plotspec.c:966
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr ""
@@ -2495,11 +2495,11 @@ msgstr ""
 msgid "time series by group"
 msgstr "Igihe Ibyiciro"
 
-#: lib/src/graphing.c:2442 lib/src/plotspec.c:733 gui2/gpt_dialog.c:1007
+#: lib/src/graphing.c:2442 lib/src/plotspec.c:830 gui2/gpt_dialog.c:1023
 msgid "right"
 msgstr "iburyo"
 
-#: lib/src/graphing.c:2442 lib/src/plotspec.c:731 gui2/gpt_dialog.c:1002
+#: lib/src/graphing.c:2442 lib/src/plotspec.c:828 gui2/gpt_dialog.c:1018
 msgid "left"
 msgstr "ibumoso"
 
@@ -3153,7 +3153,7 @@ msgid ""
 msgstr "(A Byo hasi P Agaciro i NTAGIHARI i in Bya i BIHAMYE Ingaruka"
 
 #: lib/src/gretl_panel.c:1388 lib/src/gretl_restrict.c:1928
-#: plugin/arbond.c:764
+#: plugin/arbond.c:771
 #, fuzzy, c-format
 msgid "Failed to compute test statistic\n"
 msgstr "Kuri kugirango"
@@ -4608,7 +4608,7 @@ msgstr ""
 msgid "Instruments"
 msgstr ""
 
-#: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:87 gui2/gui_utils.c:2359
+#: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:110 gui2/gui_utils.c:2359
 #, fuzzy
 msgid "none"
 msgstr "Ntacyo"
@@ -6051,7 +6051,7 @@ msgid ""
 "Weibull (shape = %g, scale = %g): "
 msgstr ""
 
-#: lib/src/strutils.c:1584
+#: lib/src/strutils.c:1597
 #, fuzzy, c-format
 msgid "out of memory in XML encoding"
 msgstr "Inyuma Bya Ububiko in Imisobekere:"
@@ -6858,7 +6858,7 @@ msgid "Standard errors"
 msgstr "Amakosa"
 
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:211
-#: gui2/filters.c:696 gui2/gpt_control.c:990
+#: gui2/filters.c:696 gui2/gpt_control.c:989
 #, fuzzy
 msgid "gnuplot command failed"
 msgstr "Komandi: Byanze"
@@ -7109,13 +7109,13 @@ msgid " DW "
 msgstr ""
 
 # officecfg/registry\schema\org\openoffice\Office\Calc.xcs:....Layout.Other.StatusbarFunction..5.text
-#: gui2/calculator.c:1951 gui2/gpt_dialog.c:2239
+#: gui2/calculator.c:1951 gui2/gpt_dialog.c:2416
 #, fuzzy
 msgid "minimum"
 msgstr "Gito"
 
 # officecfg/registry\schema\org\openoffice\Office\Calc.xcs:....Layout.Other.StatusbarFunction..4.text
-#: gui2/calculator.c:1953 gui2/gpt_dialog.c:2256
+#: gui2/calculator.c:1953 gui2/gpt_dialog.c:2433
 #, fuzzy
 msgid "maximum"
 msgstr "Kinini"
@@ -7138,7 +7138,7 @@ msgstr ""
 msgid "shape"
 msgstr "Gupima"
 
-#: gui2/calculator.c:1975 gui2/gpt_dialog.c:1933
+#: gui2/calculator.c:1975 gui2/gpt_dialog.c:2069
 #, fuzzy
 msgid "scale"
 msgstr "Gupima"
@@ -7965,8 +7965,8 @@ msgstr "amakuru"
 msgid "Open"
 msgstr "Gufungura"
 
-#: gui2/datafiles.c:977 gui2/datafiles.c:1073 gui2/gpt_control.c:2849
-#: gui2/gpt_control.c:2920 gui2/session.c:185 gui2/session.c:192
+#: gui2/datafiles.c:977 gui2/datafiles.c:1073 gui2/gpt_control.c:2863
+#: gui2/gpt_control.c:2935 gui2/session.c:185 gui2/session.c:192
 #: gui2/session.c:198 gui2/session.c:203 gui2/session.c:2531
 #: gui2/session.c:2552 gui2/session.c:2568 gui2/session.c:2583
 msgid "Edit"
@@ -8002,8 +8002,8 @@ msgstr ""
 msgid "Local machine"
 msgstr ""
 
-#: gui2/datafiles.c:1084 gui2/gpt_control.c:2851 gui2/gpt_control.c:2922
-#: gui2/gpt_control.c:2927 gui2/toolbar.c:494
+#: gui2/datafiles.c:1084 gui2/gpt_control.c:2865 gui2/gpt_control.c:2937
+#: gui2/gpt_control.c:2942 gui2/toolbar.c:494
 msgid "Close"
 msgstr "Gufunga"
 
@@ -9501,294 +9501,295 @@ msgid ""
 "Do you want to write a function now?"
 msgstr ""
 
-#: gui2/gpt_control.c:241
+#: gui2/gpt_control.c:240
 #, fuzzy
 msgid " Click to set label position"
 msgstr "Kuri Gushyiraho Akarango Ibirindiro"
 
-#: gui2/gpt_control.c:1081
+#: gui2/gpt_control.c:1080
 #, fuzzy
 msgid "Gnuplot error creating graph"
 msgstr "Ikosa"
 
-#: gui2/gpt_control.c:1467 gui2/gpt_control.c:1514 gui2/gpt_control.c:1520
-#: gui2/gpt_control.c:2163
+#: gui2/gpt_control.c:1449 gui2/gpt_control.c:1495 gui2/gpt_control.c:1501
+#: gui2/gpt_control.c:2145
 #, fuzzy
 msgid "Failed to parse gnuplot file"
 msgstr "Kuri IDOSIYE"
 
-#: gui2/gpt_control.c:2104
+#: gui2/gpt_control.c:2086
 #, fuzzy
 msgid "Plot file is corrupted"
 msgstr "IDOSIYE ni"
 
-#: gui2/gpt_control.c:2651
+#: gui2/gpt_control.c:2634
 #, fuzzy
 msgid "Couldn't access graph info"
 msgstr "Ibisobanuro"
 
 # 3916
-#: gui2/gpt_control.c:2695 gui2/gpt_control.c:2867 gui2/graph_page.c:596
+#: gui2/gpt_control.c:2688 gui2/gpt_control.c:2881 gui2/graph_page.c:596
 #, fuzzy
 msgid "monochrome"
 msgstr "bararimwe"
 
-#: gui2/gpt_control.c:2699 gui2/gpt_control.c:2899
+#: gui2/gpt_control.c:2692 gui2/gpt_control.c:2913
 #, fuzzy
 msgid "Save as postscript (EPS)..."
 msgstr "Kubika Nka"
 
-#: gui2/gpt_control.c:2701 gui2/gpt_control.c:2705 gui2/gpt_control.c:2806
-#: gui2/gpt_control.c:2810
+#: gui2/gpt_control.c:2694 gui2/gpt_control.c:2698 gui2/gpt_control.c:2818
+#: gui2/gpt_control.c:2822
 #, fuzzy
 msgid "Save gnuplot graph"
 msgstr "Kubika"
 
-#: gui2/gpt_control.c:2703 gui2/gpt_control.c:2896 gui2/gpt_control.c:2902
+#: gui2/gpt_control.c:2696 gui2/gpt_control.c:2910 gui2/gpt_control.c:2916
 #, fuzzy
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Kubika Nka"
 
-#: gui2/gpt_control.c:2709 gui2/gpt_control.c:2905 gui2/menustate.c:313
+#: gui2/gpt_control.c:2702 gui2/gpt_control.c:2919 gui2/menustate.c:313
 #: gui2/menustate.c:349 gui2/menustate.c:374 gui2/menustate.c:411
 #, fuzzy
 msgid "Copy to clipboard"
 msgstr "Kuri Ububikokoporora"
 
-#: gui2/gpt_control.c:2711 gui2/gpt_control.c:2915
+#: gui2/gpt_control.c:2704 gui2/gpt_control.c:2929
 msgid "Print"
 msgstr "Gucapa"
 
-#: gui2/gpt_control.c:2732
+#: gui2/gpt_control.c:2725
 msgid "VAR roots (real, imaginary, modulus, frequency)"
 msgstr ""
 
-#: gui2/gpt_control.c:2769
+#: gui2/gpt_control.c:2762
 #, fuzzy
 msgid "VAR roots"
 msgstr "Imizi"
 
-#: gui2/gpt_control.c:2802 gui2/gpt_control.c:2894
+#: gui2/gpt_control.c:2784
+#, fuzzy
+msgid "gretl: boxplot data"
+msgstr "Gufungura Ibyatanzwe"
+
+#: gui2/gpt_control.c:2814 gui2/gpt_control.c:2908
 msgid "Add another curve..."
 msgstr ""
 
-#: gui2/gpt_control.c:2804 gui2/gpt_control.c:2898
+#: gui2/gpt_control.c:2816 gui2/gpt_control.c:2912
 #, fuzzy
 msgid "Save as PNG..."
 msgstr "Kubika Nka"
 
-#: gui2/gpt_control.c:2808 gui2/gpt_control.c:2900
+#: gui2/gpt_control.c:2820 gui2/gpt_control.c:2914
 #, fuzzy
 msgid "Save as PDF..."
 msgstr "Kubika Nka"
 
-#: gui2/gpt_control.c:2812 gui2/gpt_control.c:2907 gui2/toolbar.c:174
+#: gui2/gpt_control.c:2824 gui2/gpt_control.c:2921 gui2/toolbar.c:174
 #, fuzzy
 msgid "Save to session as icon"
 msgstr "Kubika Kuri Umukoro Nka Agashushondanga"
 
-#: gui2/gpt_control.c:2814 gui2/gpt_control.c:2816 gui2/gpt_control.c:2921
+#: gui2/gpt_control.c:2826 gui2/gpt_control.c:2828 gui2/gpt_control.c:2936
 #: gui2/session.c:161 gui2/session.c:168 gui2/session.c:2636
 #: gui2/toolbar.c:493
 msgid "Help"
 msgstr "Gufasha"
 
-#: gui2/gpt_control.c:2818 gui2/gpt_control.c:2908
+#: gui2/gpt_control.c:2830 gui2/gpt_control.c:2922
 #, fuzzy
 msgid "Freeze data labels"
 msgstr "Ibyatanzwe Uturango..."
 
-#: gui2/gpt_control.c:2821 gui2/gpt_control.c:2909
+#: gui2/gpt_control.c:2833 gui2/gpt_control.c:2923
 #, fuzzy
 msgid "Clear data labels"
 msgstr "Ibyatanzwe Uturango..."
 
 # svx/inc\globlmn.hrc:ITEM_VIEW_ATTR_ZOOM.text
-#: gui2/gpt_control.c:2823 gui2/gpt_control.c:2910
+#: gui2/gpt_control.c:2835 gui2/gpt_control.c:2924
 #, fuzzy
 msgid "Zoom..."
 msgstr "Ihindurangano..."
 
-#: gui2/gpt_control.c:2831
+#: gui2/gpt_control.c:2843
 #, fuzzy
 msgid " Drag to define zoom rectangle"
 msgstr "Kuri Kugaragaza... Ihindurangano Urukiramende"
 
-#: gui2/gpt_control.c:2833 gui2/gpt_control.c:2926
+#: gui2/gpt_control.c:2845 gui2/gpt_control.c:2941
 #, fuzzy
 msgid "Restore full view"
 msgstr "Kureba"
 
-#: gui2/gpt_control.c:2837 gui2/gpt_control.c:2912 gui2/toolbar.c:471
+#: gui2/gpt_control.c:2849 gui2/gpt_control.c:2926 gui2/toolbar.c:471
 msgid "Print..."
 msgstr "Gucapa..."
 
-#: gui2/gpt_control.c:2841 gui2/gpt_control.c:2917
+#: gui2/gpt_control.c:2853 gui2/gpt_control.c:2931
 #, fuzzy
 msgid "Display PDF"
 msgstr "igaragaza"
 
-#: gui2/gpt_control.c:2843 gui2/gpt_control.c:2918
+#: gui2/gpt_control.c:2855 gui2/gpt_control.c:2932
 msgid "OLS estimates"
 msgstr ""
 
-#: gui2/gpt_control.c:2847 gui2/gpt_control.c:2919
+#: gui2/gpt_control.c:2859 gui2/gpt_control.c:2933
 #, fuzzy
 msgid "Numerical values"
 msgstr "Agaciro kugirango"
 
 # goodies/source\filter.vcl\eps\dlgeps.src:DLG_EXPORT_EPS.RB_COLOR.text
-#: gui2/gpt_control.c:2866 gui2/gpt_dialog.c:1985 gui2/graph_page.c:595
+#: gui2/gpt_control.c:2880 gui2/gpt_dialog.c:2121 gui2/graph_page.c:595
 #, fuzzy
 msgid "color"
 msgstr "Ibara"
 
-#: gui2/gpt_control.c:3325
+#: gui2/gpt_control.c:3345
 #, fuzzy
 msgid "Malformed PNG file for graph"
 msgstr "IDOSIYE kugirango"
 
-#: gui2/gpt_control.c:3821
+#: gui2/gpt_control.c:3834
 msgid "gretl: gnuplot graph"
 msgstr ""
 
-#: gui2/gpt_control.c:3889
+#: gui2/gpt_control.c:3902
 #, fuzzy
 msgid " Click on graph for pop-up menu"
 msgstr "ku kugirango Hejuru Ibikubiyemo"
 
-#: gui2/gpt_dialog.c:80
-#, fuzzy
-msgid "Title of plot"
-msgstr "Bya"
-
-#: gui2/gpt_dialog.c:81 gui2/gpt_dialog.c:82 gui2/gpt_dialog.c:83
-#, fuzzy
-msgid "Title for axis"
-msgstr "kugirango Umurongo fatizo"
-
-#: gui2/gpt_dialog.c:88
+#: gui2/gpt_dialog.c:111
 msgid "linear: y = a + b*x"
 msgstr ""
 
-#: gui2/gpt_dialog.c:89
+#: gui2/gpt_dialog.c:112
 msgid "quadratic: y = a + b*x + c*x^2"
 msgstr ""
 
-#: gui2/gpt_dialog.c:90
+#: gui2/gpt_dialog.c:113
 msgid "inverse: y = a + b*(1/x)"
 msgstr ""
 
-#: gui2/gpt_dialog.c:91
+#: gui2/gpt_dialog.c:114
 msgid "loess (locally weighted fit)"
 msgstr ""
 
-#: gui2/gpt_dialog.c:277
+#: gui2/gpt_dialog.c:285
 #, fuzzy
 msgid "gretl: graph color selection"
 msgstr "IGICE"
 
-#: gui2/gpt_dialog.c:305 gui2/gpt_dialog.c:353
+#: gui2/gpt_dialog.c:313 gui2/gpt_dialog.c:361
 #, fuzzy
 msgid "Select color"
 msgstr "Ibara"
 
-#: gui2/gpt_dialog.c:628
+#: gui2/gpt_dialog.c:637
 #, fuzzy
 msgid "Invalid label position, must be X Y"
 msgstr "Akarango Ibirindiro"
 
-#: gui2/gpt_dialog.c:1092
+#: gui2/gpt_dialog.c:1108
 msgid "Fill color"
 msgstr "Ibara ryo kuzuza"
 
-#: gui2/gpt_dialog.c:1094
+#: gui2/gpt_dialog.c:1110
 #, fuzzy, c-format
 msgid "Color %d"
 msgstr "Ibara:"
 
-#: gui2/gpt_dialog.c:1114
+#: gui2/gpt_dialog.c:1130
 #, fuzzy
 msgid "Reset to default"
 msgstr "Shyiraho nka Mburabuzi."
 
-#: gui2/gpt_dialog.c:1190
+#: gui2/gpt_dialog.c:1206
 msgid "Main"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1228
+#: gui2/gpt_dialog.c:1244
 #, fuzzy
 msgid "key position"
 msgstr "Urufunguzo Ibirindiro"
 
-#: gui2/gpt_dialog.c:1249
+#: gui2/gpt_dialog.c:1265
 #, fuzzy
 msgid "fitted line"
 msgstr "Umurongo"
 
-#: gui2/gpt_dialog.c:1275
+#: gui2/gpt_dialog.c:1288
 #, fuzzy
 msgid "Show full border"
 msgstr "Imbibi"
 
-#: gui2/gpt_dialog.c:1285
+#: gui2/gpt_dialog.c:1298
 msgid "Use only one y axis"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1301
+#: gui2/gpt_dialog.c:1312
 #, fuzzy
 msgid "Show all data labels"
 msgstr "Ibyatanzwe Uturango..."
 
-#: gui2/gpt_dialog.c:1321
+#: gui2/gpt_dialog.c:1332
 msgid "Allow anti-aliasing of lines"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1349 gui2/gpt_dialog.c:1351
+#: gui2/gpt_dialog.c:1360 gui2/gpt_dialog.c:1362
 msgid "None"
 msgstr "Ntacyo"
 
-#: gui2/gpt_dialog.c:1363
+#: gui2/gpt_dialog.c:1374
 #, fuzzy
 msgid "TrueType font"
 msgstr "Intego- nyuguti"
 
-#: gui2/gpt_dialog.c:1448 gui2/gpt_dialog.c:1614
+#: gui2/gpt_dialog.c:1456 gui2/gpt_dialog.c:1732
 #, fuzzy, c-format
 msgid "line %d: "
 msgstr "Umurongo: %d%S"
 
-#: gui2/gpt_dialog.c:1455 gui2/gpt_dialog.c:1814
+#: gui2/gpt_dialog.c:1463 gui2/gpt_dialog.c:1950
 #, fuzzy
 msgid "formula"
 msgstr "bisanzwe"
 
-#: gui2/gpt_dialog.c:1481
+#: gui2/gpt_dialog.c:1584
 #, fuzzy
 msgid "No formula was given"
 msgstr "Inzira in"
 
-#: gui2/gpt_dialog.c:1539
+# sfx2/source\toolbox\tbxcust.src:RID_TOOLBOXCUSTOMIZE.BTN_TB_REMOVE.text
+#: gui2/gpt_dialog.c:1704
 #, fuzzy
-msgid "Add line"
-msgstr "Umurongo"
+msgid "Remove"
+msgstr "<-Gukuraho"
 
-#: gui2/gpt_dialog.c:1603
+#: gui2/gpt_dialog.c:1721
 #, fuzzy
 msgid "quartiles"
 msgstr "a"
 
 # sfx2/source\dialog\mailwindow.src:RID_MAIL_WINDOW.LB_MAILWIN_PRIO.4.text
-#: gui2/gpt_dialog.c:1609
+#: gui2/gpt_dialog.c:1727
 #, fuzzy
 msgid "lower bound"
 msgstr "Byo hasi"
 
-#: gui2/gpt_dialog.c:1611
+#: gui2/gpt_dialog.c:1729
 msgid "upper bound"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1768
+#: gui2/gpt_dialog.c:1748
+#, fuzzy, c-format
+msgid "label %d: "
+msgstr "Akarango"
+
+#: gui2/gpt_dialog.c:1915
 msgid "Lines"
 msgstr "Imirongo"
 
@@ -9798,19 +9799,19 @@ msgstr "Imirongo"
 # sch/source\ui\dlg\attrib.src:TAB_LEGEND.text
 # #-#-#-#-#  sch.pot (PACKAGE VERSION)  #-#-#-#-#
 # sch/source\ui\dlg\legend.src:DLG_LEGEND.text
-#: gui2/gpt_dialog.c:1848
+#: gui2/gpt_dialog.c:1984
 #, fuzzy
 msgid "legend"
 msgstr "Ubusobanurondanga"
 
 # #-#-#-#-#  dbaccess.pot (PACKAGE VERSION)  #-#-#-#-#
 # #-#-#-#-#  dbaccess.pot (PACKAGE VERSION)  #-#-#-#-#
-#: gui2/gpt_dialog.c:1877
+#: gui2/gpt_dialog.c:2013
 #, fuzzy
 msgid "type"
 msgstr "Ubwoko"
 
-#: gui2/gpt_dialog.c:1911
+#: gui2/gpt_dialog.c:2047
 #, fuzzy
 msgid "point"
 msgstr "Umukono"
@@ -9821,41 +9822,42 @@ msgstr "Umukono"
 # officecfg/registry\schema\org\openoffice\Office\Impress.xcs:....Grid.SnapGrid.YAxis.text
 # #-#-#-#-#  officecfg.pot (PACKAGE VERSION)  #-#-#-#-#
 # officecfg/registry\schema\org\openoffice\Office\Draw.xcs:....Grid.SnapGrid.YAxis.text
-#: gui2/gpt_dialog.c:1949
+#: gui2/gpt_dialog.c:2085
 #, fuzzy
 msgid "y axis"
 msgstr "Umurongo- fatizo Y"
 
-#: gui2/gpt_dialog.c:1966
+#: gui2/gpt_dialog.c:2102
 #, fuzzy
 msgid "line width"
 msgstr "Umurongo: %d%S"
 
-#: gui2/gpt_dialog.c:2027
+#: gui2/gpt_dialog.c:2163
 msgid "Add line..."
 msgstr ""
 
-#: gui2/gpt_dialog.c:2058
+#: gui2/gpt_dialog.c:2200
 msgid "Labels"
 msgstr "Uturango"
 
-#: gui2/gpt_dialog.c:2073
-#, fuzzy, c-format
-msgid "label %d: "
-msgstr "Akarango"
-
-#: gui2/gpt_dialog.c:2080
+#: gui2/gpt_dialog.c:2231
 msgid "text"
 msgstr "umwandiko"
 
-#: gui2/gpt_dialog.c:2097
+#: gui2/gpt_dialog.c:2254
 #, fuzzy
 msgid "position (X Y)"
 msgstr "Ibirindiro"
 
-#: gui2/gpt_dialog.c:2135
+#: gui2/gpt_dialog.c:2291
 msgid "justification"
 msgstr ""
+
+# sfx2/source\appl\newhelp.src:STR_HELP_BUTTON_SEARCHDIALOG.text
+#: gui2/gpt_dialog.c:2321 gui2/ssheet.c:1141
+#, fuzzy
+msgid "Add..."
+msgstr "Gushaka..."
 
 # #-#-#-#-#  officecfg.pot (PACKAGE VERSION)  #-#-#-#-#
 # officecfg/registry\schema\org\openoffice\Office\Calc.xcs:....Grid.Option.XAxis.text
@@ -9863,7 +9865,7 @@ msgstr ""
 # officecfg/registry\schema\org\openoffice\Office\Impress.xcs:....Grid.SnapGrid.XAxis.text
 # #-#-#-#-#  officecfg.pot (PACKAGE VERSION)  #-#-#-#-#
 # officecfg/registry\schema\org\openoffice\Office\Draw.xcs:....Grid.SnapGrid.XAxis.text
-#: gui2/gpt_dialog.c:2159
+#: gui2/gpt_dialog.c:2341
 #, fuzzy
 msgid "X-axis"
 msgstr "Umurongo- fatizo X"
@@ -9874,48 +9876,51 @@ msgstr "Umurongo- fatizo X"
 # officecfg/registry\schema\org\openoffice\Office\Impress.xcs:....Grid.SnapGrid.YAxis.text
 # #-#-#-#-#  officecfg.pot (PACKAGE VERSION)  #-#-#-#-#
 # officecfg/registry\schema\org\openoffice\Office\Draw.xcs:....Grid.SnapGrid.YAxis.text
-#: gui2/gpt_dialog.c:2161
+#: gui2/gpt_dialog.c:2343
 #, fuzzy
 msgid "Y-axis"
 msgstr "Umurongo- fatizo Y"
 
-#: gui2/gpt_dialog.c:2163
+#: gui2/gpt_dialog.c:2345
 #, fuzzy
 msgid "Y2-axis"
 msgstr "Umurongo fatizo"
 
-#: gui2/gpt_dialog.c:2216
+#: gui2/gpt_dialog.c:2393
 #, fuzzy
 msgid "auto axis range"
 msgstr "Ikiyega Umurongo fatizo Urutonde"
 
-#: gui2/gpt_dialog.c:2229
+#: gui2/gpt_dialog.c:2406
 #, fuzzy
 msgid "manual range:"
 msgstr "Bikorwa Urutonde"
 
-#: gui2/gpt_dialog.c:2299
+#: gui2/gpt_dialog.c:2477
 #, fuzzy
 msgid "linear scale"
 msgstr "Gupima"
 
-#: gui2/gpt_dialog.c:2307
+#: gui2/gpt_dialog.c:2485
 msgid "logarithmic scale, base:"
 msgstr ""
 
-#: gui2/gpt_dialog.c:2346
+#: gui2/gpt_dialog.c:2524
 #, fuzzy
 msgid "Palette"
 msgstr "Komeka"
 
-#: gui2/gpt_dialog.c:2458
+#: gui2/gpt_dialog.c:2733
 #, fuzzy
-msgid ""
-"You can only have one plot controller open\n"
-"at any given time"
-msgstr "Igihe"
+msgid "Title of plot"
+msgstr "Bya"
 
-#: gui2/gpt_dialog.c:2477
+#: gui2/gpt_dialog.c:2734
+#, fuzzy
+msgid "Title for axis"
+msgstr "kugirango Umurongo fatizo"
+
+#: gui2/gpt_dialog.c:2759
 #, fuzzy
 msgid "gretl plot controls"
 msgstr "Amagenzura"
@@ -14500,12 +14505,6 @@ msgstr "Urugero"
 msgid "Enter a numerical value"
 msgstr "Agaciro kugirango"
 
-# sfx2/source\appl\newhelp.src:STR_HELP_BUTTON_SEARCHDIALOG.text
-#: gui2/ssheet.c:1141
-#, fuzzy
-msgid "Add..."
-msgstr "Gushaka..."
-
 #: gui2/ssheet.c:1146
 msgid "Add Variable"
 msgstr ""
@@ -15875,6 +15874,16 @@ msgid "Accessors"
 msgstr ""
 
 #, fuzzy
+#~ msgid "Add line"
+#~ msgstr "Umurongo"
+
+#, fuzzy
+#~ msgid ""
+#~ "You can only have one plot controller open\n"
+#~ "at any given time"
+#~ msgstr "Igihe"
+
+#, fuzzy
 #~ msgid "Save as EPS..."
 #~ msgstr "Kubika Nka"
 
@@ -15889,10 +15898,6 @@ msgstr ""
 #, fuzzy
 #~ msgid "Save as XPM..."
 #~ msgstr "Kubika Nka"
-
-#, fuzzy
-#~ msgid "gretl: boxplot data"
-#~ msgstr "Gufungura Ibyatanzwe"
 
 #, fuzzy
 #~ msgid "Couldn't obtain confidence interval"

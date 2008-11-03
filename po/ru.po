@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-31 16:12-0400\n"
+"POT-Creation-Date: 2008-11-03 15:05-0500\n"
 "PO-Revision-Date: 2008-11-01 01:15+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -262,53 +262,53 @@ msgstr ""
 msgid "bootstrap coefficient"
 msgstr ""
 
-#: lib/src/boxplots.c:161
+#: lib/src/boxplots.c:159 gui2/gpt_control.c:2861 gui2/gpt_control.c:2934
 msgid "Numerical summary"
 msgstr ""
 
-#: lib/src/boxplots.c:164 lib/src/gmm.c:1410 gui2/calculator.c:1957
-#: gui2/calculator.c:1982 gui2/calculator.c:2589 gui2/gpt_dialog.c:1607
+#: lib/src/boxplots.c:162 lib/src/gmm.c:1410 gui2/calculator.c:1957
+#: gui2/calculator.c:1982 gui2/calculator.c:2589 gui2/gpt_dialog.c:1725
 #: plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "mean"
 msgstr "Среднее"
 
-#: lib/src/boxplots.c:165 lib/src/boxplots.c:168 lib/src/boxplots.c:180
-#: gui2/gpt_dialog.c:1605
+#: lib/src/boxplots.c:163 lib/src/boxplots.c:166 lib/src/boxplots.c:178
+#: gui2/gpt_dialog.c:1723
 msgid "median"
 msgstr "медиана"
 
-#: lib/src/boxplots.c:176
+#: lib/src/boxplots.c:174
 msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr ""
 
-#: lib/src/boxplots.c:182
+#: lib/src/boxplots.c:180
 #, no-c-format
 msgid "(90% interval)"
 msgstr "(90% интервал)"
 
-#: lib/src/boxplots.c:676
+#: lib/src/boxplots.c:719
 #, c-format
 msgid "got invalid variable number %d"
 msgstr ""
 
-#: lib/src/boxplots.c:684
+#: lib/src/boxplots.c:727
 #, c-format
 msgid "got invalid varname '%s'"
 msgstr ""
 
-#: lib/src/boxplots.c:688
+#: lib/src/boxplots.c:731
 #, c-format
 msgid "got invalid field '%s'"
 msgstr ""
 
-#: lib/src/boxplots.c:713
+#: lib/src/boxplots.c:756
 #, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
 "%s"
 msgstr ""
 
-#: lib/src/boxplots.c:962
+#: lib/src/boxplots.c:1005
 msgid "boxplot file is corrupt"
 msgstr ""
 
@@ -410,7 +410,8 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1078
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr ""
+"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1084
 #, c-format
@@ -721,13 +722,15 @@ msgstr ""
 
 #: lib/src/csvdata.c:1005
 #, c-format
-msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid ""
+"   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1014
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
-msgstr "   предупреждение: отсутствует значение для переменной %d, наблюдение %d\n"
+msgstr ""
+"   предупреждение: отсутствует значение для переменной %d, наблюдение %d\n"
 
 #: lib/src/csvdata.c:1092
 #, c-format
@@ -852,7 +855,8 @@ msgstr "ВНИМАНИЕ: ошибка чтения бинарных данны�
 #: lib/src/dataio.c:202 lib/src/dataio.c:242 lib/src/dataio.c:336
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr "ПРЕДУПРЕЖДЕНИЕ: ошибка чтения ASCII данных для переменной %d, наблюдение %d"
+msgstr ""
+"ПРЕДУПРЕЖДЕНИЕ: ошибка чтения ASCII данных для переменной %d, наблюдение %d"
 
 #: lib/src/dataio.c:308
 #, c-format
@@ -1331,7 +1335,8 @@ msgstr ""
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr ""
+"Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1486 lib/src/describe.c:2587 lib/src/describe.c:2832
 #: lib/src/describe.c:2835
@@ -2302,17 +2307,17 @@ msgstr ""
 msgid "std. dev"
 msgstr "Стандартное отклонение"
 
-#: lib/src/graphing.c:1219 gui2/gpt_dialog.c:513
+#: lib/src/graphing.c:1219 gui2/gpt_dialog.c:522
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s от %s (с подбором по МНК)"
 
-#: lib/src/graphing.c:1222 gui2/gpt_dialog.c:519
+#: lib/src/graphing.c:1222 gui2/gpt_dialog.c:528
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr "%s от %s (с подбором обратной зависимости)"
 
-#: lib/src/graphing.c:1225 gui2/gpt_dialog.c:516
+#: lib/src/graphing.c:1225 gui2/gpt_dialog.c:525
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s от %s (с подбором квадратичной зависимости)"
@@ -2332,12 +2337,12 @@ msgstr "Наблюдаемые и расчетные %s"
 msgid "Actual and fitted %s versus %s"
 msgstr "Наблюдаемые и расчетные %s от %s"
 
-#: lib/src/graphing.c:1388 gui2/gpt_dialog.c:522
+#: lib/src/graphing.c:1388 gui2/gpt_dialog.c:531
 #, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%s от %s (с подбором локальной регрессии)"
 
-#: lib/src/graphing.c:1397 lib/src/plotspec.c:869
+#: lib/src/graphing.c:1397 lib/src/plotspec.c:966
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr "локальная регрессия, d = %d, q = %g"
@@ -2346,11 +2351,11 @@ msgstr "локальная регрессия, d = %d, q = %g"
 msgid "time series by group"
 msgstr ""
 
-#: lib/src/graphing.c:2442 lib/src/plotspec.c:733 gui2/gpt_dialog.c:1007
+#: lib/src/graphing.c:2442 lib/src/plotspec.c:830 gui2/gpt_dialog.c:1023
 msgid "right"
 msgstr "вправо"
 
-#: lib/src/graphing.c:2442 lib/src/plotspec.c:731 gui2/gpt_dialog.c:1002
+#: lib/src/graphing.c:2442 lib/src/plotspec.c:828 gui2/gpt_dialog.c:1018
 msgid "left"
 msgstr "влево"
 
@@ -2921,7 +2926,7 @@ msgid ""
 msgstr ""
 
 #: lib/src/gretl_panel.c:1388 lib/src/gretl_restrict.c:1928
-#: plugin/arbond.c:764
+#: plugin/arbond.c:771
 #, c-format
 msgid "Failed to compute test statistic\n"
 msgstr "Не удалось рассчитать тестовую статистику\n"
@@ -4025,7 +4030,8 @@ msgstr "$h$-статистика Дарбина"
 #: lib/src/modelprint.c:991
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr ""
+"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:994
 #, c-format
@@ -4271,7 +4277,7 @@ msgstr ""
 msgid "Instruments"
 msgstr "Инструменты"
 
-#: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:87 gui2/gui_utils.c:2359
+#: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:110 gui2/gui_utils.c:2359
 msgid "none"
 msgstr "Нет"
 
@@ -4326,7 +4332,8 @@ msgstr ""
 
 #: lib/src/modelprint.c:1389 lib/src/modelprint.c:1395
 msgid "Heteroskedasticity-robust standard errors"
-msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr ""
+"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:1390 lib/src/modelprint.c:1396
 msgid "variant"
@@ -4431,7 +4438,8 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1705 lib/src/modelprint.c:1712
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr ""
+"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1708 lib/src/modelprint.c:1715
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -5078,7 +5086,8 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid ""
+"Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:761
@@ -5238,7 +5247,8 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid ""
+"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
@@ -5351,7 +5361,8 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid ""
+"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
@@ -5626,7 +5637,7 @@ msgstr ""
 "\n"
 "Вейбулл (форма = %g, масштаб = %g): "
 
-#: lib/src/strutils.c:1584
+#: lib/src/strutils.c:1597
 #, c-format
 msgid "out of memory in XML encoding"
 msgstr ""
@@ -5684,7 +5695,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1491
 #, c-format
-msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid ""
+"Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -6368,7 +6380,7 @@ msgid "Standard errors"
 msgstr "Стандартные ошибки"
 
 #: gui2/calculator.c:590 gui2/calculator.c:689 gui2/database.c:211
-#: gui2/filters.c:696 gui2/gpt_control.c:990
+#: gui2/filters.c:696 gui2/gpt_control.c:989
 msgid "gnuplot command failed"
 msgstr "команда для gnuplot не выполнена"
 
@@ -6542,7 +6554,8 @@ msgstr "Тестовая статистика: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1707
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr "Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
+msgstr ""
+"Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
 
 #: gui2/calculator.c:1710
 #, c-format
@@ -6617,11 +6630,11 @@ msgstr "Вейбулла"
 msgid " DW "
 msgstr "Дарбина-Вотсона"
 
-#: gui2/calculator.c:1951 gui2/gpt_dialog.c:2239
+#: gui2/calculator.c:1951 gui2/gpt_dialog.c:2416
 msgid "minimum"
 msgstr "Минимум"
 
-#: gui2/calculator.c:1953 gui2/gpt_dialog.c:2256
+#: gui2/calculator.c:1953 gui2/gpt_dialog.c:2433
 msgid "maximum"
 msgstr "Максимум"
 
@@ -6641,7 +6654,7 @@ msgstr "Степени свободы 2"
 msgid "shape"
 msgstr "Форма"
 
-#: gui2/calculator.c:1975 gui2/gpt_dialog.c:1933
+#: gui2/calculator.c:1975 gui2/gpt_dialog.c:2069
 msgid "scale"
 msgstr "Масштаб"
 
@@ -7049,7 +7062,8 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:663
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
+msgstr ""
+"Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:668 gui2/library.c:2739
 msgid "gretl: simultaneous equations system"
@@ -7339,8 +7353,8 @@ msgstr "Описание"
 msgid "Open"
 msgstr "Открыть"
 
-#: gui2/datafiles.c:977 gui2/datafiles.c:1073 gui2/gpt_control.c:2849
-#: gui2/gpt_control.c:2920 gui2/session.c:185 gui2/session.c:192
+#: gui2/datafiles.c:977 gui2/datafiles.c:1073 gui2/gpt_control.c:2863
+#: gui2/gpt_control.c:2935 gui2/session.c:185 gui2/session.c:192
 #: gui2/session.c:198 gui2/session.c:203 gui2/session.c:2531
 #: gui2/session.c:2552 gui2/session.c:2568 gui2/session.c:2583
 msgid "Edit"
@@ -7374,8 +7388,8 @@ msgstr "Посмотреть на сервере"
 msgid "Local machine"
 msgstr "Локальные пакеты функций"
 
-#: gui2/datafiles.c:1084 gui2/gpt_control.c:2851 gui2/gpt_control.c:2922
-#: gui2/gpt_control.c:2927 gui2/toolbar.c:494
+#: gui2/datafiles.c:1084 gui2/gpt_control.c:2865 gui2/gpt_control.c:2937
+#: gui2/gpt_control.c:2942 gui2/toolbar.c:494
 msgid "Close"
 msgstr "Закрыть"
 
@@ -8660,339 +8674,341 @@ msgstr ""
 "Нет доступных для объединения в пакет функций.\n"
 "Хотите создать новую функцию?"
 
-#: gui2/gpt_control.c:241
+#: gui2/gpt_control.c:240
 msgid " Click to set label position"
 msgstr " Щелкните для указания положения метки"
 
-#: gui2/gpt_control.c:1081
+#: gui2/gpt_control.c:1080
 msgid "Gnuplot error creating graph"
 msgstr "Ошибка приложения Gnuplot при создании графика"
 
-#: gui2/gpt_control.c:1467 gui2/gpt_control.c:1514 gui2/gpt_control.c:1520
-#: gui2/gpt_control.c:2163
+#: gui2/gpt_control.c:1449 gui2/gpt_control.c:1495 gui2/gpt_control.c:1501
+#: gui2/gpt_control.c:2145
 msgid "Failed to parse gnuplot file"
 msgstr "Ошибка при обработке файла gnuplot"
 
-#: gui2/gpt_control.c:2104
+#: gui2/gpt_control.c:2086
 msgid "Plot file is corrupted"
 msgstr "Файл графика поврежден"
 
-#: gui2/gpt_control.c:2651
+#: gui2/gpt_control.c:2634
 msgid "Couldn't access graph info"
 msgstr "Невозможно получить доступ к информации графика"
 
-#: gui2/gpt_control.c:2695 gui2/gpt_control.c:2867 gui2/graph_page.c:596
+#: gui2/gpt_control.c:2688 gui2/gpt_control.c:2881 gui2/graph_page.c:596
 msgid "monochrome"
 msgstr "Черно-белый"
 
-#: gui2/gpt_control.c:2699 gui2/gpt_control.c:2899
+#: gui2/gpt_control.c:2692 gui2/gpt_control.c:2913
 msgid "Save as postscript (EPS)..."
 msgstr "Сохранить как файл postscript (EPS)..."
 
-#: gui2/gpt_control.c:2701 gui2/gpt_control.c:2705 gui2/gpt_control.c:2806
-#: gui2/gpt_control.c:2810
+#: gui2/gpt_control.c:2694 gui2/gpt_control.c:2698 gui2/gpt_control.c:2818
+#: gui2/gpt_control.c:2822
 msgid "Save gnuplot graph"
 msgstr "Сохранить график gnuplot"
 
-#: gui2/gpt_control.c:2703 gui2/gpt_control.c:2896 gui2/gpt_control.c:2902
+#: gui2/gpt_control.c:2696 gui2/gpt_control.c:2910 gui2/gpt_control.c:2916
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Сохранить как метафайл Windows (EMF)..."
 
-#: gui2/gpt_control.c:2709 gui2/gpt_control.c:2905 gui2/menustate.c:313
+#: gui2/gpt_control.c:2702 gui2/gpt_control.c:2919 gui2/menustate.c:313
 #: gui2/menustate.c:349 gui2/menustate.c:374 gui2/menustate.c:411
 msgid "Copy to clipboard"
 msgstr "Копировать в буфер обмена"
 
-#: gui2/gpt_control.c:2711 gui2/gpt_control.c:2915
+#: gui2/gpt_control.c:2704 gui2/gpt_control.c:2929
 msgid "Print"
 msgstr "Печать"
 
-#: gui2/gpt_control.c:2732
+#: gui2/gpt_control.c:2725
 msgid "VAR roots (real, imaginary, modulus, frequency)"
 msgstr ""
 
-#: gui2/gpt_control.c:2769
+#: gui2/gpt_control.c:2762
 msgid "VAR roots"
 msgstr ""
 
-#: gui2/gpt_control.c:2802 gui2/gpt_control.c:2894
+#: gui2/gpt_control.c:2784
+#, fuzzy
+msgid "gretl: boxplot data"
+msgstr "gretl: коробчатая диаграмма"
+
+#: gui2/gpt_control.c:2814 gui2/gpt_control.c:2908
 msgid "Add another curve..."
 msgstr "Добавить график функции..."
 
-#: gui2/gpt_control.c:2804 gui2/gpt_control.c:2898
+#: gui2/gpt_control.c:2816 gui2/gpt_control.c:2912
 msgid "Save as PNG..."
 msgstr "Сохранить как PNG..."
 
-#: gui2/gpt_control.c:2808 gui2/gpt_control.c:2900
+#: gui2/gpt_control.c:2820 gui2/gpt_control.c:2914
 msgid "Save as PDF..."
 msgstr "Сохранить как PDF..."
 
-#: gui2/gpt_control.c:2812 gui2/gpt_control.c:2907 gui2/toolbar.c:174
+#: gui2/gpt_control.c:2824 gui2/gpt_control.c:2921 gui2/toolbar.c:174
 msgid "Save to session as icon"
 msgstr "Сохранить в текущей сессии"
 
-#: gui2/gpt_control.c:2814 gui2/gpt_control.c:2816 gui2/gpt_control.c:2921
+#: gui2/gpt_control.c:2826 gui2/gpt_control.c:2828 gui2/gpt_control.c:2936
 #: gui2/session.c:161 gui2/session.c:168 gui2/session.c:2636
 #: gui2/toolbar.c:493
 msgid "Help"
 msgstr "Справка"
 
-#: gui2/gpt_control.c:2818 gui2/gpt_control.c:2908
+#: gui2/gpt_control.c:2830 gui2/gpt_control.c:2922
 msgid "Freeze data labels"
 msgstr "Зафиксировать метки данных"
 
-#: gui2/gpt_control.c:2821 gui2/gpt_control.c:2909
+#: gui2/gpt_control.c:2833 gui2/gpt_control.c:2923
 msgid "Clear data labels"
 msgstr "Очистить метки данных"
 
-#: gui2/gpt_control.c:2823 gui2/gpt_control.c:2910
+#: gui2/gpt_control.c:2835 gui2/gpt_control.c:2924
 msgid "Zoom..."
 msgstr "Масштаб..."
 
-#: gui2/gpt_control.c:2831
+#: gui2/gpt_control.c:2843
 msgid " Drag to define zoom rectangle"
 msgstr "Выделите участок для масштабирования"
 
-#: gui2/gpt_control.c:2833 gui2/gpt_control.c:2926
+#: gui2/gpt_control.c:2845 gui2/gpt_control.c:2941
 msgid "Restore full view"
 msgstr "Восстановить исходный масштаб"
 
-#: gui2/gpt_control.c:2837 gui2/gpt_control.c:2912 gui2/toolbar.c:471
+#: gui2/gpt_control.c:2849 gui2/gpt_control.c:2926 gui2/toolbar.c:471
 msgid "Print..."
 msgstr "Печать..."
 
-#: gui2/gpt_control.c:2841 gui2/gpt_control.c:2917
+#: gui2/gpt_control.c:2853 gui2/gpt_control.c:2931
 msgid "Display PDF"
 msgstr "Показать PDF"
 
-#: gui2/gpt_control.c:2843 gui2/gpt_control.c:2918
+#: gui2/gpt_control.c:2855 gui2/gpt_control.c:2932
 msgid "OLS estimates"
 msgstr "МНК оценка"
 
-#: gui2/gpt_control.c:2847 gui2/gpt_control.c:2919
+#: gui2/gpt_control.c:2859 gui2/gpt_control.c:2933
 msgid "Numerical values"
 msgstr "Численные значения"
 
-#: gui2/gpt_control.c:2866 gui2/gpt_dialog.c:1985 gui2/graph_page.c:595
+#: gui2/gpt_control.c:2880 gui2/gpt_dialog.c:2121 gui2/graph_page.c:595
 msgid "color"
 msgstr "Цветной"
 
-#: gui2/gpt_control.c:3325
+#: gui2/gpt_control.c:3345
 msgid "Malformed PNG file for graph"
 msgstr "Неподходящий для графика файл PNG"
 
-#: gui2/gpt_control.c:3821
+#: gui2/gpt_control.c:3834
 msgid "gretl: gnuplot graph"
 msgstr "gretl: график gnuplot"
 
-#: gui2/gpt_control.c:3889
+#: gui2/gpt_control.c:3902
 msgid " Click on graph for pop-up menu"
 msgstr " Нажмите кнопку мыши на графике для вызова меню"
 
-#: gui2/gpt_dialog.c:80
-msgid "Title of plot"
-msgstr "Название графика"
-
-#: gui2/gpt_dialog.c:81 gui2/gpt_dialog.c:82 gui2/gpt_dialog.c:83
-msgid "Title for axis"
-msgstr "Название оси"
-
-#: gui2/gpt_dialog.c:88
+#: gui2/gpt_dialog.c:111
 msgid "linear: y = a + b*x"
 msgstr "линейная: y = a + b*x"
 
-#: gui2/gpt_dialog.c:89
+#: gui2/gpt_dialog.c:112
 msgid "quadratic: y = a + b*x + c*x^2"
 msgstr "квадратичная: y = a + b*x + c*x^2"
 
-#: gui2/gpt_dialog.c:90
+#: gui2/gpt_dialog.c:113
 msgid "inverse: y = a + b*(1/x)"
 msgstr "обратная: y = a + b*(1/x)"
 
-#: gui2/gpt_dialog.c:91
+#: gui2/gpt_dialog.c:114
 msgid "loess (locally weighted fit)"
 msgstr "loess (взвешенная локальная регрессия)"
 
-#: gui2/gpt_dialog.c:277
+#: gui2/gpt_dialog.c:285
 msgid "gretl: graph color selection"
 msgstr "gretl: выбор цвета для графика"
 
-#: gui2/gpt_dialog.c:305 gui2/gpt_dialog.c:353
+#: gui2/gpt_dialog.c:313 gui2/gpt_dialog.c:361
 msgid "Select color"
 msgstr "Выбрать цвет"
 
-#: gui2/gpt_dialog.c:628
+#: gui2/gpt_dialog.c:637
 msgid "Invalid label position, must be X Y"
 msgstr "Неверное положение метки, должны быть координаты X Y"
 
-#: gui2/gpt_dialog.c:1092
+#: gui2/gpt_dialog.c:1108
 msgid "Fill color"
 msgstr "Заливка"
 
-#: gui2/gpt_dialog.c:1094
+#: gui2/gpt_dialog.c:1110
 #, c-format
 msgid "Color %d"
 msgstr "Цвет %d"
 
-#: gui2/gpt_dialog.c:1114
+#: gui2/gpt_dialog.c:1130
 msgid "Reset to default"
 msgstr "По умолчанию"
 
-#: gui2/gpt_dialog.c:1190
+#: gui2/gpt_dialog.c:1206
 msgid "Main"
 msgstr "Общие"
 
-#: gui2/gpt_dialog.c:1228
+#: gui2/gpt_dialog.c:1244
 msgid "key position"
 msgstr "Положение легенды"
 
-#: gui2/gpt_dialog.c:1249
+#: gui2/gpt_dialog.c:1265
 msgid "fitted line"
 msgstr "Линия подгонки"
 
-#: gui2/gpt_dialog.c:1275
+#: gui2/gpt_dialog.c:1288
 msgid "Show full border"
 msgstr "Показывать все границы"
 
-#: gui2/gpt_dialog.c:1285
+#: gui2/gpt_dialog.c:1298
 msgid "Use only one y axis"
 msgstr "Использовать только одну ось Y"
 
-#: gui2/gpt_dialog.c:1301
+#: gui2/gpt_dialog.c:1312
 msgid "Show all data labels"
 msgstr "Показывать подписи всех данных"
 
-#: gui2/gpt_dialog.c:1321
+#: gui2/gpt_dialog.c:1332
 msgid "Allow anti-aliasing of lines"
 msgstr "Сглаживать линии"
 
-#: gui2/gpt_dialog.c:1349 gui2/gpt_dialog.c:1351
+#: gui2/gpt_dialog.c:1360 gui2/gpt_dialog.c:1362
 msgid "None"
 msgstr "Нет"
 
-#: gui2/gpt_dialog.c:1363
+#: gui2/gpt_dialog.c:1374
 msgid "TrueType font"
 msgstr "TrueType шрифт"
 
-#: gui2/gpt_dialog.c:1448 gui2/gpt_dialog.c:1614
+#: gui2/gpt_dialog.c:1456 gui2/gpt_dialog.c:1732
 #, c-format
 msgid "line %d: "
 msgstr "Линия %d: "
 
-#: gui2/gpt_dialog.c:1455 gui2/gpt_dialog.c:1814
+#: gui2/gpt_dialog.c:1463 gui2/gpt_dialog.c:1950
 msgid "formula"
 msgstr "формула"
 
-#: gui2/gpt_dialog.c:1481
+#: gui2/gpt_dialog.c:1584
 msgid "No formula was given"
 msgstr "Формула не была задана"
 
-#: gui2/gpt_dialog.c:1539
-msgid "Add line"
-msgstr "Добавить линию"
+#: gui2/gpt_dialog.c:1704
+#, fuzzy
+msgid "Remove"
+msgstr "<- Удалить"
 
-#: gui2/gpt_dialog.c:1603
+#: gui2/gpt_dialog.c:1721
 msgid "quartiles"
 msgstr "кварталы"
 
-#: gui2/gpt_dialog.c:1609
+#: gui2/gpt_dialog.c:1727
 msgid "lower bound"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1611
+#: gui2/gpt_dialog.c:1729
 msgid "upper bound"
 msgstr ""
 
-#: gui2/gpt_dialog.c:1768
-msgid "Lines"
-msgstr "Линии"
-
-#: gui2/gpt_dialog.c:1848
-msgid "legend"
-msgstr "Легенда"
-
-#: gui2/gpt_dialog.c:1877
-msgid "type"
-msgstr "Тип"
-
-#: gui2/gpt_dialog.c:1911
-msgid "point"
-msgstr ""
-
-#: gui2/gpt_dialog.c:1949
-msgid "y axis"
-msgstr "Ось y"
-
-#: gui2/gpt_dialog.c:1966
-msgid "line width"
-msgstr "Толщина линии"
-
-#: gui2/gpt_dialog.c:2027
-msgid "Add line..."
-msgstr "Добавить линию..."
-
-#: gui2/gpt_dialog.c:2058
-msgid "Labels"
-msgstr "Метки"
-
-#: gui2/gpt_dialog.c:2073
+#: gui2/gpt_dialog.c:1748
 #, c-format
 msgid "label %d: "
 msgstr "Метка %d: "
 
-#: gui2/gpt_dialog.c:2080
+#: gui2/gpt_dialog.c:1915
+msgid "Lines"
+msgstr "Линии"
+
+#: gui2/gpt_dialog.c:1984
+msgid "legend"
+msgstr "Легенда"
+
+#: gui2/gpt_dialog.c:2013
+msgid "type"
+msgstr "Тип"
+
+#: gui2/gpt_dialog.c:2047
+msgid "point"
+msgstr ""
+
+#: gui2/gpt_dialog.c:2085
+msgid "y axis"
+msgstr "Ось y"
+
+#: gui2/gpt_dialog.c:2102
+msgid "line width"
+msgstr "Толщина линии"
+
+#: gui2/gpt_dialog.c:2163
+msgid "Add line..."
+msgstr "Добавить линию..."
+
+#: gui2/gpt_dialog.c:2200
+msgid "Labels"
+msgstr "Метки"
+
+#: gui2/gpt_dialog.c:2231
 msgid "text"
 msgstr "Текст"
 
-#: gui2/gpt_dialog.c:2097
+#: gui2/gpt_dialog.c:2254
 msgid "position (X Y)"
 msgstr "Положение (X Y)"
 
-#: gui2/gpt_dialog.c:2135
+#: gui2/gpt_dialog.c:2291
 msgid "justification"
 msgstr "Выравнивание"
 
-#: gui2/gpt_dialog.c:2159
+#: gui2/gpt_dialog.c:2321 gui2/ssheet.c:1141
+msgid "Add..."
+msgstr "Добавить..."
+
+#: gui2/gpt_dialog.c:2341
 msgid "X-axis"
 msgstr "Ось Х"
 
-#: gui2/gpt_dialog.c:2161
+#: gui2/gpt_dialog.c:2343
 msgid "Y-axis"
 msgstr "Ось Y"
 
-#: gui2/gpt_dialog.c:2163
+#: gui2/gpt_dialog.c:2345
 msgid "Y2-axis"
 msgstr "Ось Y2"
 
-#: gui2/gpt_dialog.c:2216
+#: gui2/gpt_dialog.c:2393
 msgid "auto axis range"
 msgstr "Автоматическая шкала"
 
-#: gui2/gpt_dialog.c:2229
+#: gui2/gpt_dialog.c:2406
 msgid "manual range:"
 msgstr "Установить вручную:"
 
-#: gui2/gpt_dialog.c:2299
+#: gui2/gpt_dialog.c:2477
 msgid "linear scale"
 msgstr "Линейная шкала"
 
-#: gui2/gpt_dialog.c:2307
+#: gui2/gpt_dialog.c:2485
 msgid "logarithmic scale, base:"
 msgstr "Логарифмическая шкала, основание:"
 
-#: gui2/gpt_dialog.c:2346
+#: gui2/gpt_dialog.c:2524
 msgid "Palette"
 msgstr "Палитра"
 
-#: gui2/gpt_dialog.c:2458
-msgid ""
-"You can only have one plot controller open\n"
-"at any given time"
-msgstr ""
-"Одновременно может работать\n"
-"только один контроллер графиков"
+#: gui2/gpt_dialog.c:2733
+msgid "Title of plot"
+msgstr "Название графика"
 
-#: gui2/gpt_dialog.c:2477
+#: gui2/gpt_dialog.c:2734
+msgid "Title for axis"
+msgstr "Название оси"
+
+#: gui2/gpt_dialog.c:2759
 msgid "gretl plot controls"
 msgstr "gretl: настройки графика"
 
@@ -11537,7 +11553,8 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid "Can't add model to table -- this model has a different dependent variable"
+msgid ""
+"Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11646,7 +11663,8 @@ msgstr "gretl: список моделей"
 
 #: gui2/model_table.c:936
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr "Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
+msgstr ""
+"Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
@@ -12893,10 +12911,6 @@ msgstr ""
 msgid "Enter a numerical value"
 msgstr ""
 
-#: gui2/ssheet.c:1141
-msgid "Add..."
-msgstr "Добавить..."
-
 #: gui2/ssheet.c:1146
 msgid "Add Variable"
 msgstr "Добавить переменную"
@@ -14106,3 +14120,12 @@ msgstr "Строки"
 msgid "Accessors"
 msgstr ""
 
+#~ msgid "Add line"
+#~ msgstr "Добавить линию"
+
+#~ msgid ""
+#~ "You can only have one plot controller open\n"
+#~ "at any given time"
+#~ msgstr ""
+#~ "Одновременно может работать\n"
+#~ "только один контроллер графиков"
