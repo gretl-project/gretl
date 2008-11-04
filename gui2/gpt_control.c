@@ -1786,13 +1786,18 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
     return err;
 }
 
+/* We got a special comment supposedly indicating the name and ID
+   number of the independent variable, X, in an OLS fitted line.  Here
+   we check this info for validity: @vname should be the name of a
+   bona fide series variable, and its ID number should match the given
+   @v.  We return 1 if this checks out OK, otherwise 0.
+*/
+
 static int plot_ols_var_ok (const char *vname, int v)
 {
     int vi = series_index(datainfo, vname);
 
-    /* FIXME WTF?? */
-
-    if (vi <= datainfo->v && !strcmp(datainfo->varname[vi], vname)) {
+    if (vi < datainfo->v && !strcmp(datainfo->varname[vi], vname)) {
 	return 1;
     }
 
@@ -1889,6 +1894,7 @@ static int uneditable_get_markers (GPT_SPEC *spec, const char *buf, int *polar)
     if (!gotit) {
 	return 1;
     } else {
+	/* not found: back up */
 	bufseek(buf, offset);
     }
 
