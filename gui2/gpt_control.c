@@ -1425,13 +1425,6 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     char key[16] = {0};
     char val[MAXLEN] = {0};
 
-    if (strstr(s, "encoding") != NULL) {
-#if GPDEBUG
-	fprintf(stderr, "Got encoding: '%s'\n", s);
-#endif
-	return 0;
-    }
-
     if (!strncmp(s, "set style line", 14)) {
 	/* e.g. set style line 1 lc rgb "#ff0000 lt 6" */
 	int n, idx = 0, lt = LT_NONE;
@@ -1454,6 +1447,14 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 #if GPDEBUG
     fprintf(stderr, "parse_gp_set_line: key = '%s'\n", key);
 #endif
+
+    if (!strcmp(key, "term") || 
+	!strcmp(key, "output") ||
+	!strcmp(key, "encoding") ||
+	!strcmp(key, "datafile")) {
+	/* we ignore these */
+	return 0;
+    }
 
     /* first, settings that don't require a parameter */
 
@@ -2046,6 +2047,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	int v;
 
 #if GPDEBUG
+	tailstrip(gpline);
 	fprintf(stderr, "gpline: '%s'\n", gpline);
 #endif
 
@@ -2158,7 +2160,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     while (!err) {
 	top_n_tail(gpline, 0, NULL);
-
 	if (!chop_comma(gpline)) {
 	    /* line did not end with comma -> no continuation of
 	       the plot command */
@@ -2658,10 +2659,16 @@ static void start_editing_png_plot (png_plot *plot)
 }
 
 #ifdef HAVE_AUDIO
+
 static void audio_render_plot (png_plot *plot)
 {
-    void *handle;
+# ifdef G_OS_WIN32
+    const char *player = NULL;
+# else
+    const char *player = midiplayer;
+# endif
     int (*midi_play_graph) (const char *, const char *, const char *);
+    void *handle;
 
     if (plot_not_editable(plot)) {
 	return;
@@ -2673,14 +2680,11 @@ static void audio_render_plot (png_plot *plot)
         return;
     }
 
-# ifdef G_OS_WIN32
-    (*midi_play_graph) (plot->spec->fname, paths.dotdir, NULL);
-# else
-    (*midi_play_graph) (plot->spec->fname, paths.dotdir, midiplayer);
-# endif
+    (*midi_play_graph) (plot->spec->fname, paths.dotdir, player);
 
     close_plugin(handle);
 }
+
 #endif
 
 static gint color_popup_activated (GtkWidget *w, gpointer data)
