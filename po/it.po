@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.7.8\n"
+"Project-Id-Version: gretl 1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-03 15:05-0500\n"
-"PO-Revision-Date: 2008-09-27 11:23-0400\n"
+"PO-Revision-Date: 2008-11-04 14:56+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4654,14 +4654,12 @@ msgid "Weight var is a dummy variable, effective obs ="
 msgstr "La variabile dei pesi è una variabile dummy, osservazioni effettive ="
 
 #: lib/src/modelprint.c:2137
-#, fuzzy
 msgid "$z$-stat"
-msgstr "Statistica $t$"
+msgstr "Statistica $z$"
 
 #: lib/src/modelprint.c:2137 lib/src/modelprint.c:3498
-#, fuzzy
 msgid "z-stat"
-msgstr "avvio"
+msgstr "statistica z"
 
 #: lib/src/modelprint.c:2139
 msgid "$t$-ratio"
@@ -4951,11 +4949,11 @@ msgstr "Totale"
 #: lib/src/modelprint.c:4677
 #, c-format
 msgid "modprint: expected %d names"
-msgstr ""
+msgstr "modprint: occorrono %d nomi"
 
 #: lib/src/modelprint.c:4789
 msgid "modprint: the first matrix argument must have 2 columns"
-msgstr ""
+msgstr "modprint: il primo argomento matriciale deve avere 2 colonne"
 
 #: lib/src/modelspec.c:223 lib/src/modelspec.c:224
 msgid "dataset is subsampled, model is not\n"
@@ -5189,7 +5187,7 @@ msgstr ""
 
 #: lib/src/nls.c:3446
 msgid "BFGS: initial value of objective function is not finite"
-msgstr ""
+msgstr "BFGS: il valore iniziale della funzione obiettivo non è finito"
 
 #: lib/src/nls.c:3620
 #, c-format
@@ -5518,6 +5516,7 @@ msgstr "Test chi-quadro di Pearson = %g (%d df, p-value = %g)"
 msgid ""
 "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
+"Attenzione: meno dell'80% delle celle aveva valori attesi pari o superiori a 5.\n"
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
 #, c-format
@@ -7808,9 +7807,8 @@ msgid "Use index variables"
 msgstr "Usa variabili indice"
 
 #: gui2/datawiz.c:412
-#, fuzzy
 msgid "Non-standard frequency"
-msgstr "Frequenza scalata"
+msgstr "Frequenza non standard"
 
 #: gui2/datawiz.c:481
 msgid "Cross-sectional"
@@ -7897,7 +7895,7 @@ msgstr "Le variabili indice selezionate non rappresentano una struttura panel"
 
 #: gui2/datawiz.c:912
 msgid "This dataset cannot be interpreted as a panel"
-msgstr ""
+msgstr "Questo dataset non può essere interpretato come un panel"
 
 #: gui2/datawiz.c:1016
 msgid "Unit or group index variable"
@@ -7912,9 +7910,8 @@ msgid "Number of cross-sectional units"
 msgstr "Numero di unità cross section"
 
 #: gui2/datawiz.c:1219
-#, fuzzy
 msgid "Number of time periods"
-msgstr "Numero di righe:"
+msgstr "Numero di periodi temporali"
 
 #: gui2/datawiz.c:1286
 msgid "purge missing observations"
@@ -9112,34 +9109,28 @@ msgid "line %d: "
 msgstr "Linea %d: "
 
 #: gui2/gpt_dialog.c:1463 gui2/gpt_dialog.c:1950
-#, fuzzy
 msgid "formula"
-msgstr "Formula:"
+msgstr "formula"
 
 #: gui2/gpt_dialog.c:1584
-#, fuzzy
 msgid "No formula was given"
-msgstr "Nessuna formula fornita in genr"
+msgstr "Nessuna formula fornita"
 
 #: gui2/gpt_dialog.c:1704
-#, fuzzy
 msgid "Remove"
-msgstr "<- Rimuovi"
+msgstr "Rimuovi"
 
 #: gui2/gpt_dialog.c:1721
-#, fuzzy
 msgid "quartiles"
-msgstr "Trimestri"
+msgstr "quartile"
 
 #: gui2/gpt_dialog.c:1727
-#, fuzzy
 msgid "lower bound"
-msgstr "inferiore"
+msgstr "limite inferiore"
 
 #: gui2/gpt_dialog.c:1729
-#, fuzzy
 msgid "upper bound"
-msgstr "superiore"
+msgstr "limite superiore"
 
 #: gui2/gpt_dialog.c:1748
 #, c-format
@@ -9158,12 +9149,9 @@ msgstr "Legenda"
 msgid "type"
 msgstr "Tipo"
 
-#  Lasciare non tradotto, viene usato per le label di variabili in cui si sono
-#  salvati i risultati di test di omissione/aggiunta variabili.
 #: gui2/gpt_dialog.c:2047
-#, fuzzy
 msgid "point"
-msgstr "omit"
+msgstr "punto"
 
 #: gui2/gpt_dialog.c:2085
 msgid "y axis"
@@ -9175,7 +9163,7 @@ msgstr "Spessore della linea"
 
 #: gui2/gpt_dialog.c:2163
 msgid "Add line..."
-msgstr ""
+msgstr "Aggiungi linea..."
 
 #: gui2/gpt_dialog.c:2200
 msgid "Labels"
@@ -9194,9 +9182,8 @@ msgid "justification"
 msgstr "Allineamento"
 
 #: gui2/gpt_dialog.c:2321 gui2/ssheet.c:1141
-#, fuzzy
 msgid "Add..."
-msgstr "Trova..."
+msgstr "Aggiungi..."
 
 #: gui2/gpt_dialog.c:2341
 msgid "X-axis"
@@ -9227,9 +9214,8 @@ msgid "logarithmic scale, base:"
 msgstr "scala logaritmica, base:"
 
 #: gui2/gpt_dialog.c:2524
-#, fuzzy
 msgid "Palette"
-msgstr "Incolla"
+msgstr "Palette"
 
 #: gui2/gpt_dialog.c:2733
 msgid "Title of plot"
@@ -10380,11 +10366,8 @@ msgid "%g\\%% confidence interval"
 msgstr "Intervallo di confidenza al %g\\%%"
 
 #: gui2/guiprint.c:2157
-#, fuzzy
 msgid "No scalar variable are currently defined"
-msgstr ""
-"Al momento non è definita alcuna variabile scalare.\n"
-"Aggiungerne una ora?"
+msgstr "Al momento non è definita alcuna variabile scalare"
 
 #: gui2/guiprint.c:2221 gui2/selector.c:4968 plugin/tramo-x12a.c:184
 msgid "Save data"
@@ -11569,9 +11552,8 @@ msgid "You must supply three variables"
 msgstr "Occorre fornire tre variabili"
 
 #: gui2/library.c:5465
-#, fuzzy
 msgid "Couldn't find a usable terminal program"
-msgstr "Impossibile trovare un driver socket utilizzabile\n"
+msgstr "Impossibile trovare un programma di terminale utilizzabile"
 
 #: gui2/library.c:5512 gui2/selector.c:2479 gui2/selector.c:2542
 msgid "X-axis variable"
@@ -12756,9 +12738,8 @@ msgid "Data set"
 msgstr "Dataset"
 
 #: gui2/session.c:2789
-#, fuzzy
 msgid "Scalars"
-msgstr "Scalari..."
+msgstr "Scalari"
 
 #: gui2/session.c:2792
 msgid "Data info"
@@ -13179,18 +13160,16 @@ msgstr ""
 "(max. 15 caratteri)"
 
 #: gui2/ssheet.c:851
-#, fuzzy
 msgid "gretl: scalar"
-msgstr "gretl: scalari"
+msgstr "gretl: scalare"
 
 #: gui2/ssheet.c:852
-#, fuzzy
 msgid ""
 "Enter name, or name=value,\n"
 "for new scalar"
 msgstr ""
-"Inserire un nome per la nuova variabile\n"
-"(max. 15 caratteri)"
+"Inserire nome, o nome=valore,\n"
+"per il nuovo scalare"
 
 #: gui2/ssheet.c:862
 msgid "gretl: case marker"
@@ -13286,17 +13265,15 @@ msgstr ""
 "Aggiungerne una ora?"
 
 #: gui2/ssheet.c:2804
-#, fuzzy
 msgid "gretl: name scalar"
-msgstr "gretl: aggiungi scalare"
+msgstr "gretl: nome scalare"
 
 #: gui2/ssheet.c:2805
-#, fuzzy
 msgid ""
 "Enter name for new scalar\n"
 "(max. 15 characters)"
 msgstr ""
-"Inserire un nome per la nuova variabile\n"
+"Inserire un nome per il nuovo scalare\n"
 "(max. 15 caratteri)"
 
 #: gui2/ssheet.c:2885
@@ -13640,17 +13617,15 @@ msgstr "Non ci sono nuovi file"
 
 #: plugin/arma.c:2219 plugin/arma.c:2222
 msgid "ARMA initialization"
-msgstr ""
+msgstr "Inizializzazione ARMA"
 
 #: plugin/arma.c:2220
-#, fuzzy
 msgid "using nonlinear AR model"
-msgstr "Modelli _non lineari"
+msgstr "usando modello AR non lineare"
 
 #: plugin/arma.c:2223
-#, fuzzy
 msgid "using linear AR model"
-msgstr "Modelli _non lineari"
+msgstr "usando modello AR lineare"
 
 #: plugin/arma_common.c:698 plugin/arma_common.c:785
 msgid "Error in arma command"
