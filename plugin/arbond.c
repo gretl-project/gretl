@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "matrix_extra.h"
 
 #define ADEBUG 0
 
@@ -1600,173 +1601,6 @@ static int dpd_zero_check (dpd *ab, const double **Z)
     return 0;
 }
 
-/* Given a matrix-row mask (for example, as constructed by
-   matrix_row_mask, see below), count the number of unmasked (i.e.,
-   OK) rows in the matrix.
-*/
-
-static int count_ok_rows (const char *mask, int n)
-{
-    int i, c = 0;
-
-    for (i=0; i<n; i++) {
-	c += (mask[i] == 0);
-    }
-
-    return c;
-}
-
-static int 
-matrix_shrink_by_mask (gretl_matrix *m, const char *mask)
-{
-    int n = count_ok_rows(mask, m->rows);
-    gretl_matrix *tmp;
-    double x;
-    int i, j, k, l;
-
-    /* allocate smaller temp matrix */
-    tmp = gretl_matrix_alloc(n, n);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    /* copy unmasked values into temp matrix */
-    k = 0;
-    for (i=0; i<m->rows; i++) {
-	if (!mask[i]) {
-	    l = 0;
-	    for (j=0; j<m->cols; j++) {
-		if (!mask[j]) {
-		    x = gretl_matrix_get(m, i, j);
-		    gretl_matrix_set(tmp, k, l++, x);
-		}
-	    }
-	    k++;
-	}
-    }
-
-    /* resize the original matrix, copy the values back,
-       and free the temp matrix */
-    gretl_matrix_reuse(m, n, n);
-    gretl_matrix_copy_values(m, tmp);
-    gretl_matrix_free(tmp);
-
-    return 0;
-}
-
-/* Check matrix @m for rows that are all zero.  If there are
-   any such rows, return a mask of length equal to the
-   number of rows in @m, with 1s indicating zero rows, 0s
-   elsewhere.  If there are no such rows, return NULL.
-*/
-
-static char *zero_row_mask (const gretl_matrix *m, int *err)
-{
-    char *mask = NULL;
-    int any0 = 0, row0, i, j;
-
-    mask = calloc(m->rows, 1);
-    if (mask == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-    
-    for (i=0; i<m->rows; i++) {
-	row0 = 1;
-	for (j=0; j<m->cols; j++) {
-	    if (gretl_matrix_get(m, i, j) != 0.0) {
-		row0 = 0;
-		break;
-	    }
-	}
-	if (row0) {
-	    mask[i] = 1;
-	    any0 = 1;
-	}
-    }
-
-    if (!any0) {
-	free(mask);
-	mask = NULL;
-    }
-
-    return mask;
-}
-
-/* In-place reduction of matrix @a: eliminate rows that
-   have non-zero entries in @mask.
-*/
-
-static void cut_rows (gretl_matrix *a, const char *mask)
-{
-    int n = count_ok_rows(mask, a->rows);
-    int i, j, k;
-    double x;
-
-    for (j=0; j<a->cols; j++) {
-	k = 0;
-	for (i=0; i<a->rows; i++) {
-	    if (!mask[i]) {
-		x = gretl_matrix_get(a, i, j);
-		a->val[j * n + k] = x;
-		k++;
-	    }
-	}
-    }
-
-    a->rows = n;
-}
-
-static char *make_rank_mask (const gretl_matrix *A, int *err)
-{
-    gretl_matrix *Q = NULL;
-    gretl_matrix *R = NULL;
-    char *mask = NULL;
-    double test;
-    int i, n = A->cols;
-
-    Q = gretl_matrix_copy(A);
-    if (Q == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    R = gretl_matrix_alloc(n, n);
-    if (R == NULL) {
-	gretl_matrix_free(Q);
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    *err = gretl_matrix_QR_decomp(Q, R);
-
-    if (!*err) {
-	mask = calloc(n, 1);
-	if (mask == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (!*err) {
-	for (i=0; i<n; i++) {
-	    test = gretl_matrix_get(R, i, i);
-	    if (fabs(test) < R_DIAG_MIN) {
-		mask[i] = 1;
-	    }
-	}
-    }
-
-    if (*err) {
-	free(mask);
-	mask = NULL;
-    }
-
-    gretl_matrix_free(Q);
-    gretl_matrix_free(R);
-    
-    return mask;
-}
-
 /* Based on reduction of the A matrix, trim ZT to match and
    adjust the sizes of all workspace matrices that have a 
    dimension involving ab->m.
@@ -1777,7 +1611,7 @@ static void real_shrink_matrices (dpd *ab, const char *mask)
     fprintf(stderr, "A matrix: shrinking m from %d to %d\n", 
 	    ab->m, ab->A->rows);
 
-    cut_rows(ab->ZT, mask);
+    gretl_matrix_cut_masked_rows(ab->ZT, mask);
 
     ab->m = ab->A->rows;
     gretl_matrix_reuse(ab->Acpy,  ab->m, ab->m);
@@ -1794,10 +1628,9 @@ static void real_shrink_matrices (dpd *ab, const char *mask)
    question of whether the reduced A matrix is positive definite.
 */
 
-static int 
-reduce_Z_and_A (dpd *ab, const char *mask)
+static int reduce_Z_and_A (dpd *ab, const char *mask)
 {
-    int err = matrix_shrink_by_mask(ab->A, mask);
+    int err = gretl_matrix_cut_masked_rows_cols(ab->A, mask);
 
     if (!err) {
 	real_shrink_matrices(ab, mask);
@@ -1820,10 +1653,10 @@ static int try_alt_inverse (dpd *ab)
 
     gretl_matrix_copy_values(ab->A, ab->Acpy); 
 
-    mask = make_rank_mask(ab->A, &err);
+    mask = gretl_matrix_rank_mask(ab->A, &err);
 
     if (!err) {
-	err = matrix_shrink_by_mask(ab->A, mask);
+	err = gretl_matrix_cut_masked_rows_cols(ab->A, mask);
     }
 
     if (!err) {
@@ -2150,7 +1983,7 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 
     if (!err) {
 	/* mask zero rows of ZT, if required */
-	zmask = zero_row_mask(ab->ZT, &err);
+	zmask = gretl_matrix_zero_row_mask(ab->ZT, &err);
 	if (zmask != NULL) {
 	    err = reduce_Z_and_A(ab, zmask);
 	    free(zmask);

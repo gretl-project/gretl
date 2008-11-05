@@ -21,7 +21,10 @@
 #include "usermat.h"
 
 /* functions that convert between gretl_matrix and other
-   datatypes; also printing of gretl_matrices */
+   datatypes; also printing of gretl_matrices and some
+   functions relating to masking and cutting rows and/or
+   columns of matrices.
+*/
 
 /**
  * gretl_vector_from_array:
@@ -1158,5 +1161,232 @@ void debug_print_matrix (const gretl_matrix *m, const char *msg)
 	    gretl_print_destroy(prn);
 	}
     }
+}
+
+static int count_unmasked_rows (const char *mask, int n)
+{
+    int i, c = 0;
+
+    for (i=0; i<n; i++) {
+	c += (mask[i] == 0);
+    }
+
+    return c;
+}
+
+/**
+ * gretl_matrix_cut_masked_rows:
+ * @m: matrix to process.
+ * @mask: character array of length equal to the rows of @m,
+ * with 1s indicating rows to be cut, 0s for rows to be
+ * retained.
+ *
+ * In-place reduction of @m based on @mask: the masked rows
+ * are cut out of @m.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_matrix_cut_masked_rows (gretl_matrix *m, const char *mask)
+{
+    int i, j, k, n;
+    double x;
+
+    if (m == NULL || mask == NULL) {
+	return E_DATA;
+    }
+
+    n = count_unmasked_rows(mask, m->rows);
+
+    for (j=0; j<m->cols; j++) {
+	k = 0;
+	for (i=0; i<m->rows; i++) {
+	    if (!mask[i]) {
+		x = gretl_matrix_get(m, i, j);
+		m->val[j * n + k] = x;
+		k++;
+	    }
+	}
+    }
+
+    m->rows = n;
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_cut_masked_rows_cols:
+ * @m: square matrix to process.
+ * @mask: character array of length equal to the dimension
+ * of @m, with 1s indicating rows and columns to be cut, 0s
+ * for rows/columns to be retained.
+ *
+ * In-place reduction of @m based on @mask: the masked rows
+ * and columns are cut out of @m.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_matrix_cut_masked_rows_cols (gretl_matrix *m, const char *mask)
+{
+    gretl_matrix *tmp;
+    double x;
+    int i, j, k, l, n;
+
+    if (m == NULL || mask == NULL || m->rows != m->cols) {
+	return E_DATA;
+    }
+
+    n = count_unmasked_rows(mask, m->rows);
+
+    /* allocate smaller temp matrix */
+    tmp = gretl_matrix_alloc(n, n);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    /* copy unmasked values into temp matrix */
+    k = 0;
+    for (i=0; i<m->rows; i++) {
+	if (!mask[i]) {
+	    l = 0;
+	    for (j=0; j<m->cols; j++) {
+		if (!mask[j]) {
+		    x = gretl_matrix_get(m, i, j);
+		    gretl_matrix_set(tmp, k, l++, x);
+		}
+	    }
+	    k++;
+	}
+    }
+
+    /* resize the original matrix, copy the values back,
+       and free the temp matrix */
+    gretl_matrix_reuse(m, n, n);
+    gretl_matrix_copy_values(m, tmp);
+    gretl_matrix_free(tmp);
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_zero_row_mask:
+ * @m: matrix to process.
+ * @err: location to receive error code.
+ *
+ * Checks matrix @m for rows that are all zero.  If there are
+ * any such rows, constructs a mask of length equal to the
+ * number of rows in @m, with 1s indicating zero rows, 0s
+ * elsewhere.  If there are no such rows, returns NULL.
+ * 
+ * %E_ALLOC is written to @err in case a mask should have
+ * been constructed but allocation failed.
+ *
+ * Returns: allocated mask or %NULL.
+ */
+
+char *gretl_matrix_zero_row_mask (const gretl_matrix *m, int *err)
+{
+    char *mask = NULL;
+    int row0, any0 = 0;
+    int i, j;
+
+    mask = calloc(m->rows, 1);
+    if (mask == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    for (i=0; i<m->rows; i++) {
+	row0 = 1;
+	for (j=0; j<m->cols; j++) {
+	    if (gretl_matrix_get(m, i, j) != 0.0) {
+		row0 = 0;
+		break;
+	    }
+	}
+	if (row0) {
+	    mask[i] = 1;
+	    any0 = 1;
+	}
+    }
+
+    if (!any0) {
+	free(mask);
+	mask = NULL;
+    }
+
+    return mask;
+}
+
+/**
+ * gretl_matrix_rank_mask:
+ * @m: matrix to process.
+ * @err: location to receive error code.
+ *
+ * Performs a QR decomposition of matrix @m and uses this
+ * to assess the rank of @m.  If @m is not of full rank,
+ * constructs a mask of length equal to the numbers of
+ * columns in @m, with 1s in positions corresponding 
+ * to diagonal elements of R that are effectively 0, and
+ * 0s elsewhere.  If @m is of full column rank, %NULL is
+ * returned.
+ * 
+ * %E_ALLOC is written to @err in case a mask should have
+ * been constructed but allocation failed.
+ *
+ * Returns: allocated mask or %NULL.
+ */
+
+char *gretl_matrix_rank_mask (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    char *mask = NULL;
+    double Ri;
+    int fullrank = 1;
+    int i, n = m->cols;
+
+    Q = gretl_matrix_copy(m);
+    if (Q == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    R = gretl_matrix_alloc(n, n);
+    if (R == NULL) {
+	gretl_matrix_free(Q);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    *err = gretl_matrix_QR_decomp(Q, R);
+
+    if (!*err) {
+	mask = calloc(n, 1);
+	if (mask == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	for (i=0; i<n; i++) {
+	    Ri = gretl_matrix_get(R, i, i);
+	    if (fabs(Ri) < R_DIAG_MIN) {
+		mask[i] = 1;
+		fullrank = 0;
+	    }
+	}
+    }
+
+    if (*err || fullrank) {
+	free(mask);
+	mask = NULL;
+    }
+
+    gretl_matrix_free(Q);
+    gretl_matrix_free(R);
+    
+    return mask;
 }
 

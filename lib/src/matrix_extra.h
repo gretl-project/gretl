@@ -85,4 +85,12 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 				     int wid, int prec,
 				     PRN *prn);
 
+int gretl_matrix_cut_masked_rows (gretl_matrix *m, const char *mask);
+
+int gretl_matrix_cut_masked_rows_cols (gretl_matrix *m, const char *mask);
+
+char *gretl_matrix_zero_row_mask (const gretl_matrix *m, int *err);
+
+char *gretl_matrix_rank_mask (const gretl_matrix *m, int *err);
+
 #endif /* MATRIX_EXTRA_H */
