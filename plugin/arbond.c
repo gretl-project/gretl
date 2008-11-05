@@ -28,6 +28,7 @@ typedef struct unit_info_ unit_info;
 struct unit_info_ {
     int t1;      /* first usable obs for unit */
     int t2;      /* last usable obs */
+    int nobs;    /* number of usable observations */
     char *skip;  /* mask for obs to be skipped, if any */ 
 };
 
@@ -131,7 +132,7 @@ static void dpd_free (dpd *ab)
     free(ab);
 }
 
-static int dpd_allocate (dpd *ab)
+static int dpd_allocate_matrices (dpd *ab)
 {
     int T2 = ab->maxTi;
 
@@ -213,6 +214,7 @@ static int dpd_make_lists (dpd *ab, const int *list, int xpos)
     int i, nz = 0, spos = 0;
     int err = 0;
 
+    /* do we have a separator, between exog vars and instruments? */
     for (i=xpos; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
 	    spos = i;
@@ -240,37 +242,42 @@ static int dpd_make_lists (dpd *ab, const int *list, int xpos)
 	/* compose indep vars list */
 	ab->xlist = gretl_list_new(ab->nx);
 	if (ab->xlist == NULL) {
-	    return E_ALLOC;
-	} 
-	for (i=0; i<ab->nx; i++) {
-	    ab->xlist[i+1] = list[xpos + i];
-	}
-#if ADEBUG
-	printlist(ab->xlist, "ab->xlist");
-#endif
-	if (nz == 0 && ab->nzb == 0) {
-	    /* implicitly all x vars are exogenous */
-	    ab->ilist = gretl_list_copy(ab->xlist);
-	    if (ab->ilist == NULL) {
-		return E_ALLOC;
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<ab->nx; i++) {
+		ab->xlist[i+1] = list[xpos + i];
 	    }
-	    ab->nz = ab->ilist[0];
+#if ADEBUG
+	    printlist(ab->xlist, "ab->xlist");
+#endif
+	    if (nz == 0 && ab->nzb == 0) {
+		/* implicitly all x vars are exogenous */
+		ab->ilist = gretl_list_copy(ab->xlist);
+		if (ab->ilist == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    ab->nz = ab->ilist[0];
+		}
+	    }
 	}
     }
 
-    if (nz > 0) {
+    if (!err && nz > 0) {
 	/* compose regular instruments list */
 	ab->ilist = gretl_list_new(nz);
 	if (ab->ilist == NULL) {
-	    return E_ALLOC;
-	} 
-	for (i=0; i<nz; i++) {
-	    ab->ilist[i+1] = list[spos + i + 1];
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<nz; i++) {
+		ab->ilist[i+1] = list[spos + i + 1];
+	    }
+	    ab->nz = nz;
 	}
-	ab->nz = nz;
     } 
 
-    err = maybe_add_const_to_ilist(ab);
+    if (!err) {
+	err = maybe_add_const_to_ilist(ab);
+    }
 
 #if ADEBUG
     printlist(ab->ilist, "ab->ilist");
@@ -290,14 +297,17 @@ static int dpd_process_list (dpd *ab, const int *list)
     ab->qmin = 2;
 
     if (list[2] == LISTSEP) {
+	/* arbond p ; y ... */
 	ab->qmax = 0;
 	ab->yno = list[3];
 	xpos = 4;
     } else if (list[3] == LISTSEP && list[0] >= 4) {
+	/* arbond p qmax ; y ... */
 	ab->qmax = list[2];
 	ab->yno = list[4];
 	xpos = 5;
     } else if (list[4] == LISTSEP && list[0] >= 5) {
+	/* arbond p qmax qmin ; y ... */
 	ab->qmax = list[2];
 	ab->qmin = list[3];
 	ab->yno = list[5];
@@ -307,9 +317,10 @@ static int dpd_process_list (dpd *ab, const int *list)
     }
 
     if (!err) {
-	if (ab->p < 1 || (ab->qmax != 0 && ab->qmax < ab->p + 1) ||
+	if (ab->p < 1 || 
+	    (ab->qmax != 0 && ab->qmax < ab->p + 1) ||
 	    (ab->qmax != 0 && ab->qmin > ab->qmax)) {
-	    /* is this all correct? */
+	    /* are these tests all valid? */
 	    err = E_INVARG;
 	}  
     }
@@ -517,7 +528,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
     int t1i = ab->T - 1, t2i = 0; 
     int s = data_index(ab, i);
     int tmin = ab->p + 1;
-    int Ti = 0, usable = 0;
+    int Ti = 0;
     char *mask = NULL;
     int t;
 
@@ -530,6 +541,8 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 	return E_ALLOC;
     }
 
+    unit->nobs = 0;
+
     /* For the given unit: identify the observations at which we can
        form the required Delta y terms, have the requisite independent
        variables, and can construct at least one orthogonality
@@ -538,7 +551,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 
     for (t=tmin; t<ab->T; t++) {
 	if (obs_is_usable(ab, Z, s + t)) {
-	    usable++;
+	    unit->nobs += 1;
 	    if (t < t1i) t1i = t;
 	    if (t > t2i) t2i = t;
 	} else {
@@ -546,10 +559,11 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 	}
     }
 
-    if (!usable) {
+    if (unit->nobs == 0) {
 	ab->effN -= 1;
 	unit->t1 = -1;
 	unit->t2 = -1;
+	unit->nobs = 0;
 #if ADEBUG
 	fprintf(stderr, "unit %d not usable\n", i);
 #endif
@@ -558,7 +572,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 
     Ti = t2i - t1i + 1;
 
-    if (usable < Ti) {
+    if (unit->nobs < Ti) {
 	/* there were gaps for this unit: save the mask */
 	unit->skip = mask;
     } else {
@@ -566,11 +580,11 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 	free(mask);
     }
 
-    if (usable > ab->maxTi) {
-	ab->maxTi = usable;
+    if (unit->nobs > ab->maxTi) {
+	ab->maxTi = unit->nobs;
     }
 
-    ab->nobs += usable;
+    ab->nobs += unit->nobs;
 
     if (t1i < *t1imin) {
 	*t1imin = t1i;
@@ -585,7 +599,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 
 #if ADEBUG
     fprintf(stderr, "t1 = %d, t2 = %d, Ti = %d, usable obs = %d\n", 
-	    t1i, t2i, Ti, usable);
+	    t1i, t2i, Ti, unit->nobs);
 #endif
 
     return 0;
@@ -692,28 +706,6 @@ static int dpd_sample_check (dpd *ab, const double **Z)
     }
 
     return err;
-}
-
-static int unit_nobs (unit_info *ui)
-{
-    int n, t;
-
-    if (ui->t1 < 0) {
-	/* this unit is not usable */
-	return 0;
-    }
-
-    n = ui->t2 - ui->t1 + 1;
-
-    if (ui->skip != NULL) {
-	for (t=ui->t1; t<=ui->t2; t++) {
-	    if (ui->skip[t]) {
-		n--;
-	    }
-	}
-    }
-
-    return n;
 }
 
 /* should a certain observation be skipped? */
@@ -958,7 +950,7 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
 
     for (i=0; i<ab->N; i++) {
 	unit_info *unit = &ab->ui[i];
-	int Ti = unit_nobs(unit);
+	int Ti = unit->nobs;
 	double den1i = 0.0;
 	int si = 0;
 
@@ -1140,7 +1132,7 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
 	/* form dWj = -(1/N) \sum Z_i'(X_j u' + u X_j')Z_i */
 
 	for (i=0; i<ab->N; i++) {
-	    int Ti = unit_nobs(&ab->ui[i]);
+	    int Ti = ab->ui[i].nobs;
 
 	    if (Ti == 0) {
 		continue;
@@ -1255,7 +1247,7 @@ static int dpd_variance (dpd *ab)
     c = k = 0;
 
     for (i=0; i<ab->N; i++) {
-	int Ti = unit_nobs(&ab->ui[i]);
+	int Ti = ab->ui[i].nobs;
 
 	if (Ti == 0) {
 	    continue;
@@ -1407,7 +1399,7 @@ static int make_first_diff_matrix (dpd *ab, int i)
 
     unit = &ab->ui[i];
     n = unit->t2 - unit->t1 + 1;
-    m = unit_nobs(unit);
+    m = unit->nobs;
 
     if (m < n) {
 	skip = 1;
@@ -2028,7 +2020,7 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 	unit_info *unit = &ab->ui[i];
 	int ycols = ab->p;    /* intial y block width */
 	int offj = 0;         /* initialize column offset */
-	int Ti = unit_nobs(unit);
+	int Ti = unit->nobs;
 
 	if (Ti == 0) {
 	    continue;
@@ -2327,7 +2319,7 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 
     if (!err) {
 	/* main workspace allocation */
-	err = dpd_allocate(ab);
+	err = dpd_allocate_matrices(ab);
     }
 
     if (!err) {
