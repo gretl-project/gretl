@@ -29,7 +29,7 @@ struct unit_info_ {
     int t1;      /* first usable obs for unit */
     int t2;      /* last usable obs */
     int nobs;    /* number of usable observations */
-    char *skip;  /* mask for obs to be skipped, if any */ 
+    char *skip;  /* mask for obs to be skipped, if any (1 = skip, 0 = OK) */ 
 };
 
 struct diag_info {
@@ -40,7 +40,7 @@ struct diag_info {
 
 struct dpd_ {
     gretlopt opt;         /* option flags */
-    int step;             /* what step are we on? */
+    int step;             /* what step are we on? (1 or 2) */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
     int qmax;             /* longest lag of y used as instrument */
@@ -134,16 +134,16 @@ static void dpd_free (dpd *ab)
 
 static int dpd_allocate_matrices (dpd *ab)
 {
-    int T2 = ab->maxTi;
+    int T = ab->maxTi;
 
     ab->B1 = gretl_matrix_block_new(&ab->beta,  ab->k, 1,
 				    &ab->vbeta, ab->k, ab->k,
 				    &ab->uhat,  ab->nobs, 1,
 				    &ab->ZT,    ab->m, ab->nobs,
-				    &ab->H,     T2, T2,
+				    &ab->H,     T, T,
 				    &ab->A,     ab->m, ab->m,
 				    &ab->Acpy,  ab->m, ab->m,
-				    &ab->Zi,    T2, ab->m,
+				    &ab->Zi,    T, ab->m,
 				    &ab->y,     ab->nobs, 1,
 				    &ab->W,     ab->nobs, ab->k,
 				    NULL);
@@ -430,6 +430,7 @@ static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
     *err = dpd_add_unit_diff_info(ab);
 
     if (!err && (opt & OPT_L)) {
+	/* including levels equations */
 	*err = dpd_add_unit_level_info(ab);
     }
 
@@ -446,6 +447,8 @@ static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
 /* See if we have valid values for the dependent variable (in
    differenced or deviations form) plus p lags of same, and all of
    the independent variables, at the given observation, s.
+   TODO: either generalize this or add a parallel function
+   for handling equations in levels.
 */
 
 static int obs_is_usable (dpd *ab, const double **Z, int s)
@@ -521,6 +524,8 @@ static int dpd_find_t1min (dpd *ab, const double *y)
     return t1min;
 }
 
+/* check the sample for unit/individual i */
+
 static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 				  int *t1imin, int *t2max)
 {
@@ -544,7 +549,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
     unit->nobs = 0;
 
     /* For the given unit: identify the observations at which we can
-       form the required Delta y terms, have the requisite independent
+       form the required delta y terms, have the requisite independent
        variables, and can construct at least one orthogonality
        condition using a lagged level of y.
     */
@@ -576,7 +581,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 	/* there were gaps for this unit: save the mask */
 	unit->skip = mask;
     } else {
-	/* discard the mask */
+	/* the mask is not needed */
 	free(mask);
     }
 
@@ -605,7 +610,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
     return 0;
 }
 
-/* compute the structure of the matrix Zi */
+/* compute the column-structure of the matrix Zi */
 
 static void dpd_compute_Z_cols (dpd *ab, int t1min, int t2max)
 {
@@ -716,17 +721,16 @@ static int dpd_sample_check (dpd *ab, const double **Z)
 
 #define skip_unit(u) (u->t1 < 0)
 
-
 /* should a certain panel unit be skipped when computing
    a z-statistic for autocorrelated errors? 
 */
 
-static int ar_skip_unit (unit_info *ui, int k)
+static int ar_skip_unit (unit_info *u, int k)
 {
     int t;
 
-    for (t=ui->t1+k; t<=ui->t2; t++) {
-	if (!skip_obs(ui, t) && !skip_obs(ui, t-k)) {
+    for (t=u->t1+k; t<=u->t2; t++) {
+	if (!skip_obs(u, t) && !skip_obs(u, t-k)) {
 	    return 0;
 	}
     }
@@ -734,9 +738,9 @@ static int ar_skip_unit (unit_info *ui, int k)
     return 1;
 }
 
-/* see if we have sufficient data to calculate A & B's z statistic for
+/* See if we have sufficient data to calculate the z-statistic for
    AR(k) errors: return the length of the needed arrays, or 0 if we
-   can't do it
+   can't do it.
  */
 
 static int ar_data_check (dpd *ab, int k)
@@ -1596,7 +1600,12 @@ static int dpd_zero_check (dpd *ab, const double **Z)
     return 0;
 }
 
-static int count_mask (const char *mask, int n)
+/* Given a matrix-row mask (for example, as constructed by
+   matrix_row_mask, see below), count the number of unmasked (i.e.,
+   OK) rows in the matrix.
+*/
+
+static int count_ok_rows (const char *mask, int n)
 {
     int i, c = 0;
 
@@ -1610,7 +1619,7 @@ static int count_mask (const char *mask, int n)
 static int 
 matrix_shrink_by_mask (gretl_matrix *m, const char *mask)
 {
-    int n = count_mask(mask, m->rows);
+    int n = count_ok_rows(mask, m->rows);
     gretl_matrix *tmp;
     double x;
     int i, j, k, l;
@@ -1645,6 +1654,12 @@ matrix_shrink_by_mask (gretl_matrix *m, const char *mask)
     return 0;
 }
 
+/* Check matrix @m for rows that are all zero.  If there are
+   any such rows, return a mask of length equal to the
+   number of rows in @m, with 1s indicating zero rows, 0s
+   elsewhere.  If there are no such rows, return NULL.
+*/
+
 static char *zero_row_mask (const gretl_matrix *m, int *err)
 {
     char *mask = NULL;
@@ -1678,9 +1693,13 @@ static char *zero_row_mask (const gretl_matrix *m, int *err)
     return mask;
 }
 
+/* In-place reduction of matrix @a: eliminate rows that
+   have non-zero entries in @mask.
+*/
+
 static void cut_rows (gretl_matrix *a, const char *mask)
 {
-    int n = count_mask(mask, a->rows);
+    int n = count_ok_rows(mask, a->rows);
     int i, j, k;
     double x;
 
@@ -1698,8 +1717,7 @@ static void cut_rows (gretl_matrix *a, const char *mask)
     a->rows = n;
 }
 
-static char *
-make_rank_mask (const gretl_matrix *A, int *err)
+static char *make_rank_mask (const gretl_matrix *A, int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
