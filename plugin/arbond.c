@@ -1611,7 +1611,7 @@ static void real_shrink_matrices (dpd *ab, const char *mask)
     fprintf(stderr, "A matrix: shrinking m from %d to %d\n", 
 	    ab->m, ab->A->rows);
 
-    gretl_matrix_cut_masked_rows(ab->ZT, mask);
+    gretl_matrix_cut_rows(ab->ZT, mask);
 
     ab->m = ab->A->rows;
     gretl_matrix_reuse(ab->Acpy,  ab->m, ab->m);
@@ -1630,7 +1630,7 @@ static void real_shrink_matrices (dpd *ab, const char *mask)
 
 static int reduce_Z_and_A (dpd *ab, const char *mask)
 {
-    int err = gretl_matrix_cut_masked_rows_cols(ab->A, mask);
+    int err = gretl_matrix_cut_rows_cols(ab->A, mask);
 
     if (!err) {
 	real_shrink_matrices(ab, mask);
@@ -1656,7 +1656,7 @@ static int try_alt_inverse (dpd *ab)
     mask = gretl_matrix_rank_mask(ab->A, &err);
 
     if (!err) {
-	err = gretl_matrix_cut_masked_rows_cols(ab->A, mask);
+	err = gretl_matrix_cut_rows_cols(ab->A, mask);
     }
 
     if (!err) {

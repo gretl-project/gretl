@@ -1175,7 +1175,7 @@ static int count_unmasked_rows (const char *mask, int n)
 }
 
 /**
- * gretl_matrix_cut_masked_rows:
+ * gretl_matrix_cut_rows:
  * @m: matrix to process.
  * @mask: character array of length equal to the rows of @m,
  * with 1s indicating rows to be cut, 0s for rows to be
@@ -1187,7 +1187,7 @@ static int count_unmasked_rows (const char *mask, int n)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_matrix_cut_masked_rows (gretl_matrix *m, const char *mask)
+int gretl_matrix_cut_rows (gretl_matrix *m, const char *mask)
 {
     int i, j, k, n;
     double x;
@@ -1215,7 +1215,7 @@ int gretl_matrix_cut_masked_rows (gretl_matrix *m, const char *mask)
 }
 
 /**
- * gretl_matrix_cut_masked_rows_cols:
+ * gretl_matrix_cut_rows_cols:
  * @m: square matrix to process.
  * @mask: character array of length equal to the dimension
  * of @m, with 1s indicating rows and columns to be cut, 0s
@@ -1227,7 +1227,7 @@ int gretl_matrix_cut_masked_rows (gretl_matrix *m, const char *mask)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_matrix_cut_masked_rows_cols (gretl_matrix *m, const char *mask)
+int gretl_matrix_cut_rows_cols (gretl_matrix *m, const char *mask)
 {
     gretl_matrix *tmp;
     double x;

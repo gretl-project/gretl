@@ -412,18 +412,18 @@ void model_tex_copy (GtkAction *action, gpointer data)
 
 static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 {
-    GtkTextBuffer *textbuf = 
-	gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gchar *cpybuf = NULL;
 
-    if (!select) {
-	cpybuf = textview_get_text(vwin->text); 
-    } else if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
+    if (select) {
+	GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	GtkTextIter selstart, selend;
 
-	gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
-	cpybuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
-    } 
+	if (gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend)) {
+	    cpybuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
+	}
+    } else {	
+	cpybuf = textview_get_text(vwin->text); 
+    }
 
     return cpybuf;
 }
@@ -482,6 +482,7 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	}
 
 	textprn = gretl_print_new_with_buffer(cpybuf);
+
 	if (action == W_COPY) {
 	    prn_to_clipboard(textprn, fmt);
 	} else {
