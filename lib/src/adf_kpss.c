@@ -510,7 +510,11 @@ static int real_adf_test (int varno, int order, int niv,
 
     if (opt & OPT_F) {
 	/* difference the variable before testing */
+	int t1 = pdinfo->t1;
+
+	pdinfo->t1 = 0;
 	varno = diffgenr(varno, DIFF, pZ, pdinfo);
+	pdinfo->t1 = t1;
 	if (varno < 0) {
 	    return E_DATA;
 	}
