@@ -22,6 +22,14 @@
 
 #define ADEBUG 0
 
+enum {
+    DPD_TWOSTEP = 1 << 0,
+    DPD_ORTHDEV = 1 << 1,
+    DPD_TIMEDUM = 1 << 2,
+    DPD_ASYERRS = 1 << 3,
+    DPD_LEVELEQ = 1 << 4
+};
+
 typedef struct dpd_ dpd;
 
 typedef struct unit_info_ unit_info;
@@ -40,7 +48,7 @@ struct diag_info {
 };
 
 struct dpd_ {
-    gretlopt opt;         /* option flags */
+    int flags;            /* option flags */
     int step;             /* what step are we on? (1 or 2) */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
@@ -365,6 +373,38 @@ static int dpd_add_unit_level_info (dpd *ab)
     return err;
 }
 
+static int dpd_flags_from_opt (gretlopt opt)
+{
+    int f = 0;
+
+    if (opt & OPT_A) {
+	/* asymptotic standard errors with two-step */
+	f |= DPD_ASYERRS;
+    }
+
+    if (opt & OPT_D) {
+	/* include time dummies */
+	f |= DPD_TIMEDUM;
+    }
+
+    if (opt & OPT_H) {
+	/* use orthogonal deviations instead of first diffs */
+	f |= DPD_ORTHDEV;
+    }
+
+    if (opt & OPT_T) {
+	/* two-step estimation */
+	f |= DPD_TWOSTEP;
+    }
+
+    if (opt & OPT_L) {
+	/* system GMM: include levels equations */
+	f |= DPD_LEVELEQ;
+    }
+
+    return f;
+}
+
 static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
 		     gretlopt opt, struct diag_info *d, int nzb,
 		     int *err)
@@ -389,9 +429,10 @@ static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
     ab->V = NULL;
     ab->ui = ab->lui = NULL;
 
+    ab->flags = dpd_flags_from_opt(opt);
+
     ab->d = d;
     ab->nzb = nzb;
-    ab->opt = opt;
     ab->step = 1;
     ab->nx = 0;
     ab->nz = 0;
@@ -686,7 +727,7 @@ static int dpd_sample_check (dpd *ab, const double **Z)
     ab->t1min = t1imin;
 
     /* figure number of time dummies, if wanted */
-    if (ab->opt & OPT_D) {
+    if (ab->flags & DPD_TIMEDUM) {
 	ab->ndum = t2max - t1imin;
 	ab->k += ab->ndum;
     }
@@ -875,7 +916,7 @@ static int sargan_test (dpd *ab)
 
     if (ab->step == 1) {
 	/* allow for scale factor in H matrix */
-	if (ab->opt & OPT_H) {
+	if (ab->flags & DPD_ORTHDEV) {
 	    ab->sargan /= ab->s2;
 	} else {
 	    ab->sargan *= 2.0 / ab->s2; 
@@ -1305,7 +1346,7 @@ static int dpd_variance (dpd *ab)
 	gretl_matrix_qform(C, GRETL_MOD_NONE, kk, ab->vbeta,
 			   GRETL_MOD_NONE);
 
-	if (ab->opt & OPT_T) {
+	if (ab->flags & DPD_TWOSTEP) {
 	    /* preserve V for second stage */
 	    ab->V = V;
 	    V = NULL;
@@ -1330,7 +1371,7 @@ static int dpd_variance (dpd *ab)
     ab->SSR = SSR;
     ab->s2 = SSR / (ab->nobs - ab->k);
 
-    if (ab->step == 2 && !(ab->opt & OPT_A)) {
+    if (ab->step == 2 && !(ab->flags & DPD_ASYERRS)) {
 	windmeijer_correct(ab, u1, kk);
     }   
 
@@ -1346,7 +1387,7 @@ static int dpd_variance (dpd *ab)
 #endif
 
     /* while we're at it... */
-    if (!(ab->opt & OPT_H)) {
+    if (!(ab->flags & DPD_ORTHDEV)) {
 	/* FIXME case of orthogonal deviations */
 	ar_test(ab, C);
     }
@@ -1474,7 +1515,7 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 	return pmod->errcode;
     }
 
-    prefix = (ab->opt & OPT_H)? 'O' : 'D';
+    prefix = (ab->flags & DPD_ORTHDEV)? 'O' : 'D';
 
     j = 0;
     for (i=0; i<ab->p; i++) {
@@ -1544,10 +1585,10 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 	if (istr != NULL && *istr != '\0') {
 	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
 	}
-	if (ab->opt & OPT_D) {
+	if (ab->flags & DPD_TIMEDUM) {
 	    gretl_model_set_int(pmod, "time-dummies", 1);
 	}
-	if ((ab->opt & OPT_T) && (ab->opt & OPT_A)) {
+	if ((ab->flags & DPD_TWOSTEP) && (ab->flags & DPD_ASYERRS)) {
 	    gretl_model_set_int(pmod, "asy", 1);
 	}
     }
@@ -1799,7 +1840,7 @@ static int dpd_make_y_W (dpd *ab, const double *y,
 			 const DATAINFO *pdinfo)
 {
     unit_info *unit;
-    int odev = (ab->opt & OPT_H);
+    int odev = (ab->flags & DPD_ORTHDEV);
     int i, j, s, t, k = 0;
     double x;
 
@@ -1960,7 +2001,7 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 #endif
 
 	/* Cumulate Z_i' H Z_i into A_N */
-	if (ab->opt & OPT_H) {
+	if (ab->flags & DPD_ORTHDEV) {
 	    /* orthogonal deviations: "H" is identity matrix */
 	    gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
 				      ab->Zi, GRETL_MOD_NONE,
@@ -1976,7 +2017,7 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 	c += Ti;
     }
 
-    if (!(ab->opt & OPT_H)) {
+    if (!(ab->flags & DPD_ORTHDEV)) {
 	/* clean up */
 	make_first_diff_matrix(NULL, 0);
     }

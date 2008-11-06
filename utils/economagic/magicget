@@ -78,7 +78,8 @@ sub business_days {
 
 	if (/^ 19/ || /^ 20/) {
 	    s/\r//;
-	    # remove economagic obfuscation
+	    # remove economagic obfuscation (note: #149; = decimal point)
+            s/&#149;/./g; 
 	    s#>[^<]*</#><#g;
 	    s#<[^>]*># #g;
 
@@ -102,7 +103,7 @@ sub business_days {
     return $busdays;
 }
 
-sub get_gap {
+sub get_daily_gap {
     # params: delta_days, delta_days_expected, last yr, mo, day
     my $dd = $_[0];
     my $dd_exp = $_[1];
@@ -120,6 +121,24 @@ sub get_gap {
 	    $gap -= ($wkends * 2);
 	}
     }
+    return $gap;
+}
+
+sub get_gap {
+    # params: prev. yr, prev. subper, yr, subper, pd
+    my $yrbak = $_[0];
+    my $subbak = $_[1];
+    my $yr = $_[2];
+    my $subper = $_[3];
+    my $pd = $_[4];
+    my $gap = 0;
+
+    if ($pd == 1) {
+	$gap = $yr - $yrbak - 1;
+    } else {
+	$gap = $pd * ($yr - $yrbak) + $subper - $subbak - 1;
+    }
+
     return $gap;
 }
 
@@ -247,17 +266,21 @@ for ($s = 0; $s < $nseries; $s++) {
 }
 
 for ($s = 0; $s < $nseries; $s++) {
-
     # if ($sernames[$s] !~ /day-tcm3y/) { next; }
+
+    $varname = $sernames[$s];
+
+    # n = 7: fools the program into thinking it's daily 
+    if ($varname =~ /tp10j14/) { next; }
 
     if (($daily[$s] || $business[$s]) && $getdaily == 0) {
 	next;
     }
 
     if ($source eq "sp") {
-	$grab = "sp/" . "$sernames[$s]";
+	$grab = "sp/" . "$varname";
     } else {
-	$grab = "$sernames[$s]";
+	$grab = "$varname";
     }
 
     $msg = "GET /em-cgi/data.exe/$grab \n\n";
@@ -296,9 +319,11 @@ for ($s = 0; $s < $nseries; $s++) {
 	}
 
 	if (/^ 19/ || /^ 20/) {
+	    # date, starting with year
 	    s/\r//;
 	    if ($tester) { print TST "$_\n"; }
 	    # remove economagic obfuscation
+	    s/&#149;/./g;
 	    s#>[^<]*</#><#g;
 	    s#<[^>]*># #g;
 	    if ($tester) { print TST "$_\n"; }
@@ -314,79 +339,68 @@ for ($s = 0; $s < $nseries; $s++) {
 		$pdcheck =~ s/^0//;
 		if ($pdcheck > $pd) {
 		    $pd = $pdcheck;
-		}
+		} 
 	    }
 	    # check that dates make sense 
 	    if ($n > 14 && $pd != 4 && $pd != 12 && $pd != 1 && $pd != 5 && $pd != 7) { 
-		print STDERR "Unrecognized frequency $pd for $sernames[$s]\n"; 
-		print STDERR "Skipping this series\n";
 		$pd = -1;
 		last;
-	    } else {
-	        print STDERR "Frequency of series = $pd\n";
-	    }
+	    } 
 	    $n++;
 	}
     }
 
     if ($pd != 4 && $pd != 12 && $pd != 1 && $pd != 5 && $pd != 7) { 
-	print STDERR "Unrecognized frequency $pd for $sernames[$s]\n"; 
+	print STDERR "Unrecognized frequency $pd for $varname\n"; 
 	print STDERR "Skipping this series\n";
 	$pd = -1;
+    } else {
+	print STDERR "$varname: frequency = $pd\n";
     }
     
-    if ($pd == -1) { next; }
+    if ($pd == -1) { 
+	next; 
+    }
+
+    print STDERR "Got $n observations on $varname\n";
+
     if ($n == 0) {
-	print "Got no observations on this series\n";
 	next;
     }
 
     # print series name and description
-    print "Processing $sernames[$s]...\n";
+    print STDERR "Processing $varname...\n";
     $title =~ s/\r//;
     $title =~ s/Billions of/Bn./g;
+    $title =~ s/Millions of/Mn./g;
     $title =~ s/dollars/\$/ig;
     $title =~ s/chained/ch./ig;
     $title =~ s/Government/Gov./g;
     $title =~ s/Nonfinancial/Nonfin./g;
     $title =~ s/Market/Mkt./;
     $title =~ s/ the / /;
-    $varname = $sernames[$s];
     $varname = substr($varname, index($varname, "/") + 1);
     $varname =~ s/\+.*//;
     $varname =~ s/-/_/g;
     $varname =~ s/day_/d/;
-    print IDX "$varname  $title\n";
 
-    # print the dates/obs line
-    if ($pd == 1) {
-	print IDX "A  $yr[0] - $yr[$n-1]  n = $n\n";
-    } elsif ($pd == 4 || $pd == 12) {
-	if ($pd == 4) {
-	    $pdstr = "Q";
-	    $subper[0] =~ s/0//;
-	    $subper[$n-1] =~ s/0//;
-	} elsif ($pd == 12) {
-	    $pdstr = "M";
-	}
-	print IDX "$pdstr  $yr[0].$subper[0] - $yr[$n-1].$subper[$n-1]  n = $n\n";
-    } 
+    $full_n = $n;
 
     # print the data values
-    $full_n = $n;
-    for ($i = 1; $i <= $n; $i++) {
+    for ($i = 0; $i < $n; $i++) {
 	$baddate = 0;
-	if (($pd == 5 || $pd == 7 ) && $i > 1) { # special treatment for daily data
-	    my $dd = Delta_Days($yr[$i-2], $subper[$i-2], $subsubper[$i-2],
-				$yr[$i-1], $subper[$i-1], $subsubper[$i-1]);
-	    my $dow = Day_of_Week($yr[$i-1], $subper[$i-1], $subsubper[$i-1]);
+	if (($pd == 5 || $pd == 7) && $i > 0) { # special treatment for daily data
+	    my $dd = Delta_Days($yr[$i-1], $subper[$i-1], $subsubper[$i-1],
+				$yr[$i], $subper[$i], $subsubper[$i]);
+	    my $dow = Day_of_Week($yr[$i], $subper[$i], $subsubper[$i]);
 	    my $dd_exp = ($dow == 1 && $pd == 5)? 3 : 1;
 	    my $gap = 0;
 
 	    if ($dd > $dd_exp) {
 		if ($pd == 5) {
-		    $gap = get_gap($dd, $dd_exp,
-				   $yr[$i-2], $subper[$i-2], $subsubper[$i-2]);
+		    $gap = get_daily_gap($dd, $dd_exp,
+					 $yr[$i-1], $subper[$i-1], 
+					 $subsubper[$i-1]);
 		} else {
 		    $gap = $dd - $dd_exp;
 		}
@@ -402,37 +416,79 @@ for ($s = 0; $s < $nseries; $s++) {
 	    # print STDERR "dd=$dd, dow=$dow, dd_exp=$dd_exp, gap=$gap\n";
 
 	    for (my $t = 0; $t < $gap; $t++) {
-		if ($verbose) {	print STDERR "NA\n"; }
+		if ($verbose) {	
+		    print STDERR "NA\n"; 
+		}
 		print BIN pack("f", "-999.0");
 		$full_n++;
 	    }
+	} elsif ($i > 0) { # watch out for skipped values
+	    my $gap = get_gap($yr[$i-1], $subper[$i-1],
+			      $yr[$i], $subper[$i], $pd);
+            if ($gap > 0) {
+		print STDERR "$varname: gap = $gap at $yr[$i] $subper[$i]\n"; 
+		$full_n += $gap;
+	    }
+	    for (my $t = 0; $t < $gap; $t++) {
+		if ($verbose) {	
+		    print STDERR "NA\n"; 
+		}
+		print BIN pack("f", "-999.0");
+	    }	    
 	}
-	if ($baddate) { next; }
-	chomp ($obs[$i-1]);
+	    
+	if ($baddate) { 
+	    next; 
+	}
+
+	chomp ($obs[$i]);
+
 	if ($verbose) { 
 	    if ($pd == 5 || $pd == 7) {
-		print STDERR "$yr[$i-1]/$subper[$i-1]/$subsubper[$i-1]: $obs[$i-1]\n";
+		print STDERR "$yr[$i]/$subper[$i]/$subsubper[$i]: $obs[$i]\n";
 	    } else {
-		print STDERR "$yr[$i-1]:$subper[$i-1]  $obs[$i-1]\n";
+		print STDERR "$yr[$i]:$subper[$i]  $obs[$i]\n";
 	    }
 	}
-	print BIN pack("f", $obs[$i-1]);
-	if ($verbose && !($i % $pd)) { print STDERR "\n"; }
+
+	print BIN pack("f", $obs[$i]);
+
+	if ($verbose && !(($i + 1) % $pd)) { 
+	    print STDERR "\n"; 
+	}
     }
 
-    # daily data: print dates/obs once we know how many calendar days there are
+    # print the index lines
+    print IDX "$varname  $title\n";
     if ($pd == 5 || $pd == 7) {
+	# daily data
 	printf IDX "%s  $yr[0]/$subper[0]/$subsubper[0] - ", ($pd == 5)? "D" : "B";
 	print IDX "$yr[$n-1]/$subper[$n-1]/$subsubper[$n-1]  n = $full_n\n";
+    } elsif ($pd == 1) {
+	# annual
+	print IDX "A  $yr[0] - $yr[$n-1]  n = $full_n\n";
+    } elsif ($pd == 4 || $pd == 12) {
+	# quarterly, monthly
+	if ($pd == 4) {
+	    $pdstr = "Q";
+	    $subper[0] =~ s/0//;
+	    $subper[$n-1] =~ s/0//;
+	} elsif ($pd == 12) {
+	    $pdstr = "M";
+	}
+	print IDX "$pdstr  $yr[0].$subper[0] - $yr[$n-1].$subper[$n-1]  n = $full_n\n";
+    } 
+
+    if ($verbose) { 
+	print STDERR "\n"; 
     }
 
-
-    if ($verbose) { print STDERR "\n"; }
     close (SOCK);
 }
 
 close (BIN);
 close (IDX);
+
 if ($tester) {
     close (TST);
 }
