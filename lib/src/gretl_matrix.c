@@ -29,6 +29,8 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
+#define BLOCKT -666
+
 struct _gretl_matrix_block {
     int n;
     double *val;
@@ -42,6 +44,8 @@ struct _gretl_matrix_block {
 
 #define matrix_transp_get(m,i,j) (m->val[(i)*m->rows+(j)])
 #define matrix_transp_set(m,i,j,x) (m->val[(i)*m->rows+(j)]=x)
+
+#define is_block_matrix(m) (m->t1==BLOCKT)
 
 #define SVD_SMIN 1.0e-9
 
@@ -124,6 +128,12 @@ void lapack_mem_free (void)
 void lapack_free (void *p)
 {
     return;
+}
+
+static void matrix_block_error (const char *f)
+{
+    fprintf(stderr, "CODING ERROR: illegal call to %s on "
+	    "member of matrix block\n", f);
 }
 
 /**
@@ -247,7 +257,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	    gretl_matrix_block_destroy(B);
 	    return NULL;
 	}
-	B->matrix[i]->t1 = B->matrix[i]->t2 = 0;
+	B->matrix[i]->t1 = B->matrix[i]->t2 = BLOCKT;
 	B->matrix[i]->val = NULL;
     }
 
@@ -439,6 +449,11 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     if (rows == m->rows && cols == m->cols) {
 	/* no-op */
 	return 0;
+    }
+
+    if (is_block_matrix(m)) {
+	matrix_block_error("gretl_matrix_realloc");
+	return E_DATA;
     }
 
     x = realloc(m->val, n * sizeof *m->val);
@@ -752,6 +767,11 @@ int gretl_matrix_copy_row (gretl_matrix *dest, int di,
 void gretl_matrix_free (gretl_matrix *m)
 {
     if (m == NULL) return;
+
+    if (is_block_matrix(m)) {
+	matrix_block_error("gretl_matrix_free");
+	return;
+    }
 
     if (m->val != NULL) {
 	free(m->val);
@@ -2147,6 +2167,10 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
     double *vals = NULL;
 
     if (m != NULL) {
+	if (is_block_matrix(m)) {
+	    matrix_block_error("gretl_matrix_steal_data");
+	    return NULL;
+	}
 	vals = m->val;
 	m->val = NULL;
     }
@@ -7155,7 +7179,9 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 
 void gretl_matrix_set_t1 (gretl_matrix *m, int t)
 {
-    m->t1 = t;
+    if (!is_block_matrix(m)) {
+	m->t1 = t;
+    }
 }
 
 /**
@@ -7169,7 +7195,9 @@ void gretl_matrix_set_t1 (gretl_matrix *m, int t)
 
 void gretl_matrix_set_t2 (gretl_matrix *m, int t)
 {
-    m->t2 = t;
+    if (!is_block_matrix(m)) { 
+	m->t2 = t;
+    }
 }
 
 /**

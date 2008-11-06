@@ -496,22 +496,21 @@ static int psi_from_alpha (Jwrap *J)
 typedef struct switcher_ switcher;
 
 struct switcher_ {
-    gretl_matrix *K1;     /* holds kronecker product */
-    gretl_matrix *K2;     /* holds kronecker product */
-    gretl_matrix *TmpL;   /* used only in \phi calculation */
-    gretl_matrix *TmpR;   /* used only in \phi calculation */
-    gretl_matrix *TmpR1;  /* used when \alpha is restricted */
-    gretl_matrix *Tmprp1; /* r x p1 temp */
+    gretl_matrix_block *B; /* holder for the following */
+    gretl_matrix *K1;      /* holds kronecker product */
+    gretl_matrix *K2;      /* holds kronecker product */
+    gretl_matrix *TmpL;    /* used only in \phi calculation */
+    gretl_matrix *TmpR;    /* used only in \phi calculation */
+    gretl_matrix *TmpR1;   /* used when \alpha is restricted */
+    gretl_matrix *Tmprp1;  /* r x p1 temp */
 };
 
 static void switcher_free (switcher *s)
 {
-    gretl_matrix_free(s->K1);
-    gretl_matrix_free(s->K2);
+    gretl_matrix_block_destroy(s->B);
+
     gretl_matrix_free(s->TmpL);
-    gretl_matrix_free(s->TmpR);
     gretl_matrix_free(s->TmpR1);
-    gretl_matrix_free(s->Tmprp1);
 }
 
 static int make_lsPi (Jwrap *J)
@@ -549,27 +548,23 @@ static int switcher_init (switcher *s, Jwrap *J)
 {
     int err = 0;
 
-    s->K1 = NULL; 
-    s->K2 = NULL;
     s->TmpL = NULL;
-    s->TmpR = NULL;
     s->TmpR1 = NULL;
-    s->Tmprp1 = NULL;
 
-    clear_gretl_matrix_err();
-
-    s->K1 = gretl_matrix_alloc(J->p1 * J->r, J->p1 * J->r);
-    s->K2 = gretl_matrix_alloc(J->p1 * J->r, J->p1 * J->p1);
-    s->TmpR = gretl_matrix_alloc(J->p * J->p1, 1);
-    s->Tmprp1 = gretl_matrix_alloc(J->r, J->p1);
+    s->B = gretl_matrix_block_new(&s->K1,   J->p1 * J->r, J->p1 * J->r,
+				  &s->K2,   J->p1 * J->r, J->p1 * J->p1,
+				  &s->TmpR, J->p * J->p1, 1,
+				  &s->Tmprp1, J->r, J->p1,
+				  NULL);
+    if (s->B == NULL) {
+	return E_ALLOC;
+    }
 
     if (J->blen > 0) {
 	s->TmpL = gretl_matrix_alloc(J->blen, J->p * J->p1);
-    }
-
-    err = get_gretl_matrix_err();
-    if (err) {
-	return err;
+	if (s->TmpL == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     if (J->G != NULL) {
