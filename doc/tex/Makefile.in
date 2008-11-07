@@ -119,6 +119,7 @@ install: $(GUIDE) $(REF)
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
+	rm -r gretl-guide-a4.tex gretl-ref-a4.tex
 	rm -f ../commands/textables ../commands/topiclist_en 
 	rm -f ../commands/cmdtex ../commands/functex
 
