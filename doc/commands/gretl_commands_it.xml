@@ -84,6 +84,27 @@
 
   </command>
 
+  <command name="addline" section="Graphs" label="Aggiunge una linea al grafico"
+    context="gui">
+
+    <description>
+      <para>
+        Questa finestra di dialogo permette di aggiungere a un grafico una
+        linea, definita attraverso una formula che deve essere un'espressione
+        accettabile da gnuplot. Occorre usare <lit>x</lit> per indicare il valore
+        della variabile sull'asse x. Si noti inoltre che gnuplot usa <lit>**</lit>
+        per l'elevamento a potenza, e il punto <quote>.</quote> come separatore
+        decimale. Esempi:
+      </para>
+      <code>
+	10+0.35*x
+	100+5.3*x-0.12*x**2
+	sin(x)
+	exp(sqrt(pi*x))
+      </code>
+    </description>
+  </command>
+
   <command name="adf" section="Tests" label="Test Dickey-Fuller aumentato">
 
     <usage>
@@ -2886,11 +2907,17 @@
             <cmd>genr index</cmd> fa la stessa cosa, ma chiamando la variabile
 	    <lit>index</lit>.</para>
 	</li>
-	<li><para><cmd>genr dummy</cmd> crea una serie di variabili dummy a seconda
+	<li>
+          <para>
+            <cmd>genr dummy</cmd> crea una serie di variabili dummy a seconda
             della periodicità dei dati. Ad esempio, nel caso di dati trimestrali
-            (periodicità 4) il programma crea <lit>dummy_1</lit>, che vale 1 
-            nel primo trimestre e 0 altrove, <lit>dummy_2</lit> che vale 1
-            nel secondo trimestre e 0 altrove, e così via.</para>
+            (periodicità 4) il programma crea <lit>dq1</lit>, che vale 1 
+            nel primo trimestre e 0 altrove, <lit>dq2</lit> che vale 1
+            nel secondo trimestre e 0 altrove, e così via. Nel caso di dati
+            mensili, le dummy si chiamano <lit>dm1</lit>, <lit>dm2</lit> e così
+            via. Con altre frequenze dei dati, i nomi delle dummy sono <lit>dummy_1</lit>,
+            <lit>dummy2</lit>, ecc.
+          </para>
 	</li>
         <li><para><cmd>genr unitdum</cmd> e <cmd>genr timedum</cmd> creano insiemi di
             variabili dummy speciali da usare in un dataset di tipo panel. Il
@@ -3250,7 +3277,7 @@
 	  <effect>mostra rispetto al tempo</effect>
         </option>
         <option>
-	  <flag>--suppress-fit</flag>
+	  <flag>--suppress-fitted</flag>
 	  <effect>non mostra la linea stimata</effect>
         </option>
         <option>
@@ -5163,6 +5190,41 @@
     <gui-access>
       <menu-path>Finestra delle icone, Icona Tabella Modelli</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="modprint" section="Printing"
+    label="Stampa un modello definito dall'utente" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>matcoeff</argument>
+        <argument>nomi</argument>
+	<argument optional="true">stat</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Stampa la tabella dei coefficienti e le statistiche aggiuntive opzionali
+        per un modello stimato <quote>a mano</quote>. Utile principalmente per
+        le funzioni definite dall'utente.
+      </para>
+      <para>
+	L'argomento <repl>matcoeff</repl> deve essere una matrice <math>k</math> per 2
+	che contiene <math>k</math> coefficienti e <math>k</math> errori
+        standard associati, mentre <repl>nomi</repl> deve essere una stringa che
+        contiene almeno <math>k</math> nomi, separati da virgole, per i
+        coefficienti.
+      </para>
+      <para>
+	L'argomento opzionale <repl>stat</repl> è un vettore che contiene
+	<math>p</math> statistiche aggiuntive da stampare sotto la tabella dei
+        coefficienti. Se si usa questo argomento, <repl>nomi</repl> deve
+        contenere <math>k + p</math> stringhe separate da virgola, di cui le
+        ultime <math>p</math> sono associate alle statistiche aggiuntive.
+      </para>
+    </description>
 
   </command>
 
