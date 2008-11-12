@@ -8,6 +8,7 @@
 <!ENTITY varepsilon "$\varepsilon$">
 <!ENTITY sigma "$\sigma$">
 <!ENTITY tau "$\tau$">
+<!ENTITY agr "\ensuremath{\alpha}">
 <!ENTITY lgr "$\lambda$">
 <!ENTITY rgr "$\rho$">
 <!ENTITY ne "$\ne$">
