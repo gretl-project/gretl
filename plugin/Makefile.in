@@ -63,6 +63,7 @@ SRCS = excel_import.c \
 	gnumeric_import.c \
 	eviews_import.c \
 	stata_import.c \
+	spss_import.c \
 	jmulti_import.c \
 	ods_import.c \
 	import_common.c \
@@ -107,6 +108,7 @@ PLUGINS = arbond.la \
 	arma_x12.la \
 	eviews_import.la \
 	stata_import.la \
+	spss_import.la \
 	jmulti_import.la \
 	fractals.la \
 	garch.la \
@@ -199,6 +201,9 @@ eviews_import.la: eviews_import.lo
 
 stata_import.la: stata_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
+
+spss_import.la: spss_import.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 jmulti_import.la: jmulti_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)

@@ -129,6 +129,8 @@ enum file_ops {
     APPEND_WF1,
     OPEN_DTA,
     APPEND_DTA,
+    OPEN_SAV,
+    APPEND_SAV,
     OPEN_JMULTI,
     APPEND_JMULTI,
     OPEN_ODS,

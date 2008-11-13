@@ -55,6 +55,7 @@ enum {
     P_MAILER,
     P_EVIEWS_IMPORT,
     P_STATA_IMPORT,
+    P_SPSS_IMPORT,
     P_JMULTI_IMPORT,
     P_ZIPFILE,
     P_OPROBIT,
@@ -103,6 +104,7 @@ struct plugin_info plugins[] = {
     { P_MAILER,          "mailer" },
     { P_EVIEWS_IMPORT,   "eviews_import" },
     { P_STATA_IMPORT,    "stata_import" },
+    { P_SPSS_IMPORT,     "spss_import" },
     { P_JMULTI_IMPORT,   "jmulti_import" },
     { P_ZIPFILE,         "gretlzip" },
     { P_OPROBIT,         "oprobit" },
@@ -119,6 +121,7 @@ struct plugin_function plugin_functions[] = {
     { "ods_get_data",      P_ODS_IMPORT },
     { "wf1_get_data",      P_EVIEWS_IMPORT },
     { "dta_get_data",      P_STATA_IMPORT },
+    { "sav_get_data",      P_SPSS_IMPORT },
     { "jmulti_get_data",   P_JMULTI_IMPORT },
 
     /* Johansen cointegration test and VECM */

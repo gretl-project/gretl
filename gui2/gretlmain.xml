@@ -14,6 +14,7 @@
 	  <menuitem action='OpenODS'/>
 	  <menuitem action='OpenWF1'/>
 	  <menuitem action='OpenDTA'/>
+	  <menuitem action='OpenSAV'/>
 	  <menuitem action='OpenJMulTi'/>
 	</menu>
 	<separator/>
@@ -29,6 +30,7 @@
 	<menuitem action='AppendODS'/>
 	<menuitem action='AppendWF1'/>
 	<menuitem action='AppendDTA'/>
+	<menuitem action='AppendSAV'/>
 	<menuitem action='AppendJMulTi'/>
       </menu>
       <menuitem action='SaveData'/>

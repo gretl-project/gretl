@@ -50,6 +50,7 @@
 	                      i == OPEN_XLS || \
                               i == OPEN_WF1 || \
                               i == OPEN_DTA || \
+	                      i == OPEN_SAV || \
                               i == OPEN_JMULTI || \
                               i == OPEN_ODS)
 
@@ -61,6 +62,7 @@
                                i == APPEND_ASCII || \
                                i == APPEND_WF1 || \
                                i == APPEND_DTA || \
+                               i == APPEND_SAV || \
                                i == APPEND_JMULTI || \
                                i == APPEND_ODS)
 
@@ -118,6 +120,8 @@ static struct extmap action_map[] = {
     { APPEND_WF1,        ".wf1" },
     { OPEN_DTA,          ".dta" },
     { APPEND_DTA,        ".dta" },
+    { OPEN_SAV,          ".sav" },
+    { APPEND_SAV,        ".sav" },
     { OPEN_JMULTI,       ".dat" },
     { APPEND_JMULTI,     ".dat" },
     { OPEN_ODS,          ".ods" },
@@ -636,6 +640,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ APPEND_WF1,       { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
 	{ OPEN_DTA,         { N_("Stata files (*.dta)"), "*.dta" }},
 	{ APPEND_DTA,       { N_("Stata files (*.dta)"), "*.dta" }},
+	{ OPEN_SAV,         { N_("SPSS files (*.sav)"), "*.sav" }},
+	{ APPEND_SAV,       { N_("SPSS files (*.sav)"), "*.sav" }},
 	{ OPEN_JMULTI,      { N_("JMulTi files (*.dat)"), "*.dat" }},
 	{ APPEND_JMULTI,    { N_("JMulTi files (*.dat)"), "*.dat" }},
 	{ OPEN_ODS,         { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},

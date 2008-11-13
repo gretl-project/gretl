@@ -488,6 +488,7 @@ int main (int argc, char *argv[])
 				     &Z, datainfo, OPT_NONE, prn);
 	    break;
 	case GRETL_DTA:
+	case GRETL_SAV:
 	case GRETL_JMULTI:
 	case GRETL_OCTAVE:
 	case GRETL_WF1:

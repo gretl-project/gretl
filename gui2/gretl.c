@@ -543,6 +543,7 @@ int main (int argc, char *argv[])
 	case GRETL_GNUMERIC:
 	case GRETL_ODS:
 	case GRETL_DTA:
+	case GRETL_SAV:
 	case GRETL_JMULTI:
 	case GRETL_OCTAVE:
 	case GRETL_WF1:
@@ -565,6 +566,7 @@ int main (int argc, char *argv[])
 	case GRETL_UNRECOGNIZED:
 	    gui_usage();
 	default:
+	    fprintf(stderr, "%s: unrecognized file type", tryfile);
 	    exit(EXIT_FAILURE);
 	    break;
 	}
@@ -1232,6 +1234,7 @@ GtkActionEntry main_entries[] = {
     { "OpenODS",      NULL, N_("_Open Document..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenWF1",      NULL, N_("_Eviews..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenDTA",      NULL, N_("_Stata..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "OpenSAV",      NULL, N_("_SPSS..."), NULL, NULL, G_CALLBACK(open_data) },
     { "OpenJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
     { "AppendData",     NULL, N_("_Append data"), NULL, NULL, NULL }, 
@@ -1244,6 +1247,7 @@ GtkActionEntry main_entries[] = {
     { "AppendODS",      NULL, N_("_Open Document..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendWF1",      NULL, N_("_Eviews..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendDTA",      NULL, N_("_Stata..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "AppendSAV",      NULL, N_("_SPSS..."), NULL, NULL, G_CALLBACK(open_data) },
     { "AppendJMulTi",   NULL, N_("_JMulTi..."), NULL, NULL, G_CALLBACK(open_data) },
 
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), "<control>S", NULL, G_CALLBACK(auto_store) },

@@ -33,6 +33,7 @@ typedef enum {
     GRETL_ODS,            /* Open Document Spreadsheet data */
     GRETL_WF1,            /* Eviews workfile data */
     GRETL_DTA,            /* Stata .dta data */
+    GRETL_SAV,            /* SPSS .sav data */
     GRETL_SCRIPT,         /* file containing gretl commands */
     GRETL_SESSION,        /* zipped session file */
     GRETL_NATIVE_DB,      /* gretl database */
@@ -60,6 +61,7 @@ typedef enum {
 			       f == GRETL_ODS)
 
 #define OTHER_IMPORT(f) (f == GRETL_DTA || \
+                         f == GRETL_SAV || \
                          f == GRETL_JMULTI || \
                          f == GRETL_OCTAVE || \
 			 f == GRETL_WF1)

@@ -174,6 +174,8 @@ struct open_data_code open_data_codes[] = {
     { APPEND_WF1,      "AppendWF1" },
     { OPEN_DTA,        "OpenDTA" },
     { APPEND_DTA,      "AppendDTA" },
+    { OPEN_SAV,        "OpenSAV" },
+    { APPEND_SAV,      "AppendSAV" },
     { OPEN_JMULTI,     "OpenJMulTi" },
     { APPEND_JMULTI,   "AppendJMulTi" },
     { OPEN_ODS,        "OpenODS" },
@@ -240,6 +242,10 @@ void open_data (GtkAction *action)
     case OPEN_DTA:
     case APPEND_DTA:
 	file_selector(_("Open Stata file"), code, FSEL_DATA_NONE, NULL);
+	break;
+    case OPEN_SAV:
+    case APPEND_SAV:
+	file_selector(_("Open SPSS file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_JMULTI:
     case APPEND_JMULTI:
