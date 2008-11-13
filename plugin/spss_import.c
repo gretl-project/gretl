@@ -1,5 +1,7 @@
 /*
- *  Read SPSS files saved by SAVE and EXPORT commands
+ *  Read SPSS .sav files : based on spss.c in the GNU R 'foreign' package.
+ *
+ * Original notice:
  *
  *  Copyright 2000-2000 Saikat DebRoy <saikat@stat.wisc.edu>
  *                      Thomas Lumley <tlumley@u.washington.edu>
@@ -16,8 +18,9 @@
  *  details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Modified for use with gretl by Allin Cottrell, November 2008.
  */
 
 #include <stdio.h>
