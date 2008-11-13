@@ -314,9 +314,9 @@ static int read_rec_7_4 (spss_dataset *dset, int size, int count)
 	fprintf(stderr, "File-indicated value is different from internal value for at "
 		  "least one of the three system values.  SYSMIS: indicated %g, "
 		  "expected %g; HIGHEST: %g, %g; LOWEST: %g, %g\n",
-		data[0], (double) SYSMIS,
-		data[1], (double) DBL_MAX,
-		data[2], (double) second_lowest_double_val());
+		data[0], SYSMIS,
+		data[1], DBL_MAX,
+		data[2], second_lowest_double_val());
     }
 
     return err;
@@ -395,6 +395,8 @@ static int read_long_varnames (spss_dataset *dset, unsigned size,
     return 0;
 }
 
+/* read a subrecord of SPSS record type 7 */
+
 static int read_subrecord (spss_dataset *dset)
 {
     FILE *fp = dset->fp;
@@ -429,7 +431,7 @@ static int read_subrecord (spss_dataset *dset)
 	break;
     case 5:
     case 6:
-    case 11: /* ?? Used by SPSS 8.0 */
+    case 11: /* ? Used by SPSS 8.0 */
 	skip = 1;
 	break;
     case 7: /* Multiple-response sets (later versions of SPSS) */
@@ -452,7 +454,7 @@ static int read_subrecord (spss_dataset *dset)
 	int i, n = data.size * data.count;
 	unsigned char c;
 
-	fprintf(stderr, "subtype %d: skipping %d bytes\n", data.subtype, n);
+	fprintf(stderr, "record type 7, subtype %d: skipping %d bytes\n", data.subtype, n);
 
 	for (i=0; i<n; i++) {
 	    fread(&c, 1, 1, fp);
@@ -474,7 +476,7 @@ static int check_type_4 (spss_dataset *dset)
 
     if (rec_type != 4) {
 	fprintf(stderr, "Variable index record (type 4) does not immediately "
-		"follow value label record (type 3) as it ought\n");
+		"follow value label record (type 3) as it should\n");
 	return 1;
     }
 
@@ -496,6 +498,7 @@ static int read_value_labels (spss_dataset *dset)
     FILE *fp = dset->fp;
     int32_t n_labels;		              /* Number of labels */
     int32_t n_vars;			      /* Number of associated variables */
+    int *varlist = NULL;
     int i, err = 0;
 
     /* First step: read the contents of the type 3 record.  We can't
@@ -581,45 +584,47 @@ static int read_value_labels (spss_dataset *dset)
     var = Calloc(n_vars, struct variable *);
 #endif
 
+    varlist = gretl_list_new(n_vars);
+    if (varlist == NULL) {
+	err = E_ALLOC;
+    }
+
     /* Read the list of variables */
     for (i=0; i<n_vars; i++) {
-#if 0
-	struct variable *v;
-#endif
 	int32_t var_index;
 
-	/* Read variable index, check range */
 	fread(&var_index, sizeof var_index, 1, fp);
-#if SPSS_DEBUG
-	fprintf(stderr, "i = %d: var_index = %d\n", i, var_index);
-#endif
 	if (dset->swapends) {
 	    reverse_int(var_index);
 	}
 
-#if 0
-	if (var_index < 1 || var_index > ext->case_size)
-	    lose("Variable index associated with value label (%d) is "
-		 "not between 1 and the number of values (%d)",
-		 var_index, ext->case_size);
+#if SPSS_DEBUG
+	fprintf(stderr, "i = %d: var_index = %d\n", i, var_index);
+#endif
+	if (var_index < 1 || var_index > dset->nvars) {
+	    err = spss_error("Variable index associated with value label (%d) is "
+			     "not between 1 and the number of values (%d)",
+			     var_index, dset->nvars);
+	}
 
-	/* Make sure it's a real variable */
+#if 0
+	/* FIXME Make sure it's a real variable */
 	v = var_by_index[var_index - 1];
 	if (v == NULL)
 	    lose("Variable index associated with value label (%d) refers "
 		 "to a continuation of a string variable, not to an actual variable",
 		 var_index);
-	if (v->type == SPSS_STRING && v->width > MAX_SHORT_STRING)
-	    lose("Value labels are not allowed on long string variables (%s)", 
-		 v->name);
+	if (v->type == SPSS_STRING && v->width > MAX_SHORT_STRING) {
+	    err = spss_error("Value labels are not allowed on long string variables (%s)", 
+			     v->name);
+	}
+#endif
 
 	/* Add it to the list of variables */
-	var[i] = v;
-#endif
+	varlist[i+1] = var_index;
     }
 
-#if 0
-
+#if 0 /* FIXME */
     /* Type-check the variables */
     for (i=1; i<n_vars; i++) {
 	if (var[i]->type != var[0]->type) {
@@ -680,21 +685,6 @@ static int read_value_labels (spss_dataset *dset)
 	    free_value_label (old);
 	}
     }
-
-    Free(cooked_label);
-    Free(raw_label);
-    Free(var);
-    return 1;
-
- lossage:
-    if (cooked_label)
-	for (i = 0; i < n_labels; i++)
-	    if (cooked_label[i]) {
-		Free(cooked_label[i]->s);
-		Free(cooked_label[i]);
-	    }
-    Free(raw_label);
-    Free(var);
 
 #endif
 
@@ -804,7 +794,7 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
     struct sysfile_variable sv;
     int long_string_count = 0; /* # of long string continuation
                                   records still expected */
-    int next_value = 0;        /* Index to next `value' structure */
+    int next_value = 0;        /* Index to next 'value' structure */
     int i, err;
 
     err = dset_add_variables(dset);
@@ -842,10 +832,10 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 
 	/* If there was a long string previously, make sure that the
 	   continuations are present; otherwise make sure there aren't
-	   any. */
+	   any */
 	if (long_string_count) {
 	    if (sv.type != -1) {
-		fprintf(stderr, "position %d: String variable does not have proper number "
+		fprintf(stderr, "position %d: string variable does not have proper number "
 			"of continuation records\n", i);
 	    }
 
@@ -853,21 +843,21 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	    long_string_count--;
 	    continue;
 	} else if (sv.type == -1) {
-	    fprintf(stderr, "position %d: Superfluous long string continuation record\n", i);
+	    fprintf(stderr, "position %d: superfluous long string continuation record\n", i);
 	}
 
 	/* Check fields for validity */
 
 	if (sv.type < 0 || sv.type > 255) {
-	    fprintf(stderr, "position %d: Bad variable type code %d\n", i, sv.type);
+	    fprintf(stderr, "position %d: bad variable type code %d\n", i, sv.type);
 	}
 
 	if (sv.has_var_label != 0 && sv.has_var_label != 1) {
-	    fprintf(stderr, "position %d: Variable label indicator field is not 0 or 1\n", i);
+	    fprintf(stderr, "position %d: variable label indicator field is not 0 or 1\n", i);
 	}
 
 	if (sv.n_missing_values < -3 || sv.n_missing_values > 3 || sv.n_missing_values == -1) {
-	    fprintf(stderr, "position %d: Missing value indicator field is not -3, -2, 0, 1, 2, or 3\n", i);
+	    fprintf(stderr, "position %d: missing value indicator field is not -3, -2, 0, 1, 2, or 3\n", i);
 	}
 
 #if 0
@@ -884,9 +874,10 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	    && sv.name[0] != '@' && sv.name[0] != '#') {
 	    err = spss_error("position %d: Variable name begins with invalid character", i);
 	} 
+
 	if (sv.name[0] == '#') {
 	    fprintf(stderr, "position %d: Variable name begins with hash mark ('#').  "
-		    "Scratch variables should not appear in sav files\n", i);
+		    "Scratch variables should not appear in .sav files\n", i);
 	}
 
 	v->name[0] = toupper((unsigned char) (sv.name[0]));
@@ -903,7 +894,7 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 		v->name[j] = c;
 	    } else {
 		fprintf(stderr, "position %d: character `\\%03o' (%c) is not valid in a variable name\n",
-		    i, c, c);
+			i, c, c);
 	    }
 	}
 
@@ -1140,6 +1131,8 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 
     prod_name[60] = '\0';
 
+    fprintf(stderr, "product name: %s\n", prod_name);
+
     skip_amt = get_skip_amt(hdr->prod_name);
 
     /* Check endianness */
@@ -1162,11 +1155,9 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 
     /* Copy basic info and verify correctness */
 
-    fprintf(stderr, "hdr->case_size (number of variables) = %d\n", hdr->case_size);
-
 #if 0
 
-    if (hdr->case_size <= 0 || ext->case_size > (INT_MAX
+    if (hdr->case_size <= 0 || hdr->case_size > (INT_MAX
 						/ (int) sizeof (union value) / 2)) {
 	lose ((_("%s: Number of elements per case (%d) is not between 1 and %d"),
 	       h->fn, hdr->case_size, INT_MAX / sizeof (union value) / 2));
@@ -1175,24 +1166,23 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
     ext->weight_index = hdr->weight_index - 1;
 
     if (hdr->weight_index < 0 || hdr->weight_index > hdr->case_size) {
-	lose ((_("%s: Index of weighting variable (%d) is not between 0 and number "
+	lose ((_("Index of weighting variable (%d) is not between 0 and number "
 		 "of elements per case (%d)"),
-	       h->fn, hdr->weight_index, ext->case_size));
+	       hdr->weight_index, hdr->case_size));
     }
 
-    ext->ncases = hdr->ncases;
-
-    if (ext->ncases < -1 || ext->ncases > INT_MAX / 2) {
-	lose ((_("%s: Number of cases in file (%d) is not between -1 and %d"),
-	       h->fn, ext->ncases, INT_MAX / 2));
+    if (hdr->ncases < -1 || hdr->ncases > INT_MAX / 2) {
+	lose ((_("Number of cases in file (%d) is not between -1 and %d"),
+	       hdr->ncases, INT_MAX / 2));
     }
 
-    if (ext->bias != 100.0) {
-	warning(_("%s: Compression bias (%g) is not the usual value of 100"),
-		h->fn, ext->bias);
+    if (hdr->bias != 100.0) {
+	warning(_("Compression bias (%g) is not the usual value of 100"),
+		hdr->bias);
     }
 #endif
 
+    fprintf(stderr, "hdr->case_size (number of variables) = %d\n", hdr->case_size);
     fprintf(stderr, "hdr->compressed = %d\n", hdr->compressed);
     fprintf(stderr, "hdr->weight_index = %d\n", hdr->weight_index);
     fprintf(stderr, "hdr->ncases = %d\n", hdr->ncases);
@@ -1415,6 +1405,8 @@ static int buffer_input (struct sav_extension *ext, FILE *fp)
     return amt;
 }
 
+/* decompression routine for special SPSS-compressed data */
+
 static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
 				 double *tmp)
 {
@@ -1503,15 +1495,19 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
     }
 
     if (!err) {
-	/* We have filled up an entire record: update state */
+	/* We filled up an entire record: update state */
 	ext->y = ++p;
     }
 
     return err;
 }
 
-static int sav_read_case (spss_dataset *dset, struct sysfile_header *hdr,
-			  double *tmp, double **Z, int t)
+/* Read values for all variables at observation t */
+
+static int sav_read_observation (spss_dataset *dset, 
+				 struct sysfile_header *hdr,
+				 double *tmp, double **Z, 
+				 int t)
 {
     spss_var *v;
     int i, err = 0;
@@ -1582,7 +1578,7 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 
     /* retrieve actual data values */
     for (t=0; t<dset->nobs && !err; t++) {
-	err = sav_read_case(dset, hdr, tmp, Z, t);
+	err = sav_read_observation(dset, hdr, tmp, Z, t);
 	if (err) {
 	    fprintf(stderr, "sav_read_case: err = %d at i = %d\n", err, i);
 	}
