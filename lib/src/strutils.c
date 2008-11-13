@@ -170,7 +170,7 @@ char *delchar (int c, char *str)
  * @idx: the starting point for deleting characters.
  * @count: the number of characters to delete.
  *
- * Deletes @count characters from @str, starting at position @indx.
+ * Deletes @count characters from @str, starting at position @idx.
  *
  * Returns: the modified string.
  */
