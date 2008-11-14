@@ -691,7 +691,7 @@ int dta_get_data (const char *fname,
     gretl_string_table *st = NULL;
     int err = 0;
 
-    if ((sizeof(double) != 8) | (sizeof(int) != 4) | (sizeof(float) != 4)) {
+    if (sizeof(double) != 8 || sizeof(int) != 4 || sizeof(float) != 4) {
 	pputs(prn, _("cannot read Stata .dta on this platform"));
 	return E_DATA;
     }

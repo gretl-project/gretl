@@ -44,21 +44,20 @@ enum {
 };
 
 enum {
-    MISSING_NONE,		/* No user-missing values */
-    MISSING_1,			/* One user-missing value */
-    MISSING_2,			/* Two user-missing values */
-    MISSING_3,			/* Three user-missing values */
-    MISSING_RANGE,		/* [a,b] */
-    MISSING_LOW,		/* (-inf,a] */
-    MISSING_HIGH,		/* (a,+inf] */
-    MISSING_RANGE_1,		/* [a,b], c */
-    MISSING_LOW_1,		/* (-inf,a], b */
-    MISSING_HIGH_1,		/* (a,+inf), b */
-    MISSING_COUNT
+    MISSING_NONE,      /* No user-missing values */
+    MISSING_1,         /* One user-missing value */
+    MISSING_2,         /* Two user-missing values */
+    MISSING_3,         /* Three user-missing values */
+    MISSING_RANGE,     /* [a,b] */
+    MISSING_LOW,       /* (-inf,a] */
+    MISSING_HIGH,      /* (a,+inf] */
+    MISSING_RANGE_1,   /* [a,b], c */
+    MISSING_LOW_1,     /* (-inf,a], b */
+    MISSING_HIGH_1,    /* (a,+inf), b */
+    MISSING_COUNT      /* ? */
 };
 
 #define MAX_SHORT_STRING 8
-
 #define SYSMIS (-DBL_MAX)
 
 /* Divides nonnegative x by positive y, rounding up */
@@ -291,12 +290,13 @@ static int read_rec_7_3 (spss_dataset *dset, int size, int count, int *encoding)
 static int read_rec_7_4 (spss_dataset *dset, int size, int count)
 {
     double data[3];
-    int i, err = 0;
+    int i;
 
     if (size != sizeof(double) || count != 3) {
 	fprintf(stderr, "Bad size (%d) or count (%d) field on record type 7, "
 		"subtype 4. Expected size %d, count 8\n",
 		size, count, sizeof(double));
+	return 1;
     }
 
     fread(data, sizeof data, 1, dset->fp);
@@ -319,7 +319,7 @@ static int read_rec_7_4 (spss_dataset *dset, int size, int count)
 		data[2], second_lowest_double_val());
     }
 
-    return err;
+    return 0;
 }
 
 static spss_var *get_spss_var_by_name (spss_dataset *dset, const char *s)
@@ -381,6 +381,9 @@ static int read_long_varnames (spss_dataset *dset, unsigned size,
 	    var = get_spss_var_by_name(dset, p);
 	    if (var != NULL) {
 		/* replace original name with "long name" */
+#if SPSS_DEBUG
+		fprintf(stderr, "'%s' -> '%s'\n", p, val);
+#endif
 		*var->name = '\0';
 		strncat(var->name, val, VNAMELEN - 1);
 	    }
@@ -399,7 +402,6 @@ static int read_long_varnames (spss_dataset *dset, unsigned size,
 
 static int read_subrecord (spss_dataset *dset)
 {
-    FILE *fp = dset->fp;
     struct {
 	int32_t subtype;
 	int32_t size;
@@ -409,7 +411,7 @@ static int read_subrecord (spss_dataset *dset)
     int skip = 0;
     int err = 0;
 
-    fread(&data, sizeof data, 1, fp);
+    fread(&data, sizeof data, 1, dset->fp);
 
 #if SPSS_DEBUG
     fprintf(stderr, "subtype = %d, size = %d, count = %d\n",
@@ -457,7 +459,7 @@ static int read_subrecord (spss_dataset *dset)
 	fprintf(stderr, "record type 7, subtype %d: skipping %d bytes\n", data.subtype, n);
 
 	for (i=0; i<n; i++) {
-	    fread(&c, 1, 1, fp);
+	    fread(&c, 1, 1, dset->fp);
 	}
     }
 
@@ -475,7 +477,7 @@ static int check_type_4 (spss_dataset *dset)
     }
 
     if (rec_type != 4) {
-	fprintf(stderr, "Variable index record (type 4) does not immediately "
+	fprintf(stderr, "Variable index record (type 4) does not immediately\n"
 		"follow value label record (type 3) as it should\n");
 	return 1;
     }
@@ -483,7 +485,7 @@ static int check_type_4 (spss_dataset *dset)
     return 0;
 }
 
-#define REM_RND_UP(X, Y) ((X) % (Y) ? (Y) - (X) % (Y) : 0)
+#define REM_RND_UP(x,y) ((x) % (y) ? (y) - (x) % (y) : 0)
 
 /* Reads value labels from sysfile H and inserts them into the
    associated dictionary 
@@ -732,7 +734,6 @@ static int read_sav_other_records (spss_dataset *dset)
     int err = 0;
 
     while (rec_type >= 0 && !err) {
-
 	fread(&rec_type, sizeof rec_type, 1, fp);
 
 	if (dset->swapends) {
@@ -746,7 +747,7 @@ static int read_sav_other_records (spss_dataset *dset)
 	case 4:
 	    fprintf(stderr, "Orphaned variable index record (type 4).  Type 4\n"
 		    "records must immediately follow type 3 records\n");
-	    err = 1;
+	    err = E_DATA;
 	    break;
 	case 6:
 	    err = read_documents(dset);
@@ -760,7 +761,7 @@ static int read_sav_other_records (spss_dataset *dset)
 	    break;
 	default:
 	    fprintf(stderr, "Unrecognized record type %d", rec_type);
-	    err = 1;
+	    err = E_DATA;
 	    break;
 	}
     }
@@ -1097,21 +1098,27 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 {
     char prod_name[sizeof hdr->prod_name + 1]; /* Buffer for product name */
     int skip_amt = 0;			       /* Amount of product name to omit */
+    int fgot = 0;
     int i, err = 0;
 
     /* Read header, check magic */
-    fread(&hdr->rec_type, 4, 1, dset->fp);
-    fread(&hdr->prod_name, 60, 1, dset->fp);
-    fread(&hdr->layout_code, 4, 1, dset->fp);
-    fread(&hdr->case_size, 4, 1, dset->fp);
-    fread(&hdr->compressed, 4, 1, dset->fp);
-    fread(&hdr->weight_index, 4, 1, dset->fp);
-    fread(&hdr->ncases, 4, 1, dset->fp);
-    fread(&hdr->bias, 8, 1, dset->fp);
-    fread(&hdr->creation_date, 9, 1, dset->fp);
-    fread(&hdr->creation_time, 8, 1, dset->fp);
-    fread(&hdr->file_label, 64, 1, dset->fp);
-    fread(&hdr->padding, 3, 1, dset->fp);
+    fgot += fread(&hdr->rec_type, 4, 1, dset->fp);
+    fgot += fread(&hdr->prod_name, 60, 1, dset->fp);
+    fgot += fread(&hdr->layout_code, 4, 1, dset->fp);
+    fgot += fread(&hdr->case_size, 4, 1, dset->fp);
+    fgot += fread(&hdr->compressed, 4, 1, dset->fp);
+    fgot += fread(&hdr->weight_index, 4, 1, dset->fp);
+    fgot += fread(&hdr->ncases, 4, 1, dset->fp);
+    fgot += fread(&hdr->bias, 8, 1, dset->fp);
+    fgot += fread(&hdr->creation_date, 9, 1, dset->fp);
+    fgot += fread(&hdr->creation_time, 8, 1, dset->fp);
+    fgot += fread(&hdr->file_label, 64, 1, dset->fp);
+    fgot += fread(&hdr->padding, 3, 1, dset->fp);
+
+    if (fgot < 12) {
+	fprintf(stderr, "read_sav_header: failed to read full header\n");
+	return E_DATA;
+    }
 
     /* Check eye-catcher string */
     memcpy(prod_name, hdr->prod_name, sizeof hdr->prod_name);
@@ -1135,7 +1142,7 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 
     skip_amt = get_skip_amt(hdr->prod_name);
 
-    /* Check endianness */
+    /* Check endianness (FIXME?) */
     if (hdr->layout_code == 2 || hdr->layout_code == 3) {
 	fprintf(stderr, "layout_code = %d, No reverse endianness\n", hdr->layout_code);
     } else {
@@ -1156,7 +1163,6 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
     /* Copy basic info and verify correctness */
 
 #if 0
-
     if (hdr->case_size <= 0 || hdr->case_size > (INT_MAX
 						/ (int) sizeof (union value) / 2)) {
 	lose ((_("%s: Number of elements per case (%d) is not between 1 and %d"),
@@ -1215,9 +1221,8 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 
 #if 0
 
-/* Divides nonnegative X by positive Y, rounding up. */
-#define DIV_RND_UP(X, Y)			\
-	(((X) + ((Y) - 1)) / (Y))
+/* Divides nonnegative x by positive y, rounding up. */
+#define DIV_RND_UP(x,y) (((x) + ((y) - 1)) / (y))
 
 /* Compares two value labels and returns a strcmp()-type result. */
 
@@ -1433,7 +1438,8 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
 	    case 252:
 		/* Code 252: end of file */
 		if (tmp_beg != tmp) {
-		    err = spss_error("Compressed data is corrupted: ends partway through a case");
+		    err = spss_error("Compressed data is corrupted: ends "
+				     "partway through a case");
 		}
 		break;
 	    case 253:
@@ -1674,7 +1680,7 @@ int sav_get_data (const char *fname,
     gretl_string_table *st = NULL;
     int err = 0;
 
-    if ((sizeof(double) != 8) | (sizeof(int) != 4)) {
+    if (sizeof(double) != 8 || sizeof(int) != 4) {
 	pputs(prn, _("cannot read SPSS .sav on this platform"));
 	return E_DATA;
     }
