@@ -84,7 +84,7 @@ struct spss_var_ {
     int fv, nv;                 /* Index into values, number of values */
     int getfv, getnv;           /* Indices for retrieving actual values */
     int miss_type;		/* One of the MISSING_* constants */
-    union value missing[3];	/* User-missing value. */
+    union value missing[3];	/* User-missing value */
     char name[VNAMELEN];
     char label[MAXLABEL];
 };
@@ -118,7 +118,7 @@ struct sysfile_header {
     char padding[3];            /* Ignored padding */
 };
 
-/* Record Type 2: Variable */
+/* SPSS Record Type 2: Variable */
 struct sysfile_variable {
     int32_t rec_type;		/* 2 */
     int32_t type;		/* 0 = numeric, 1-255 = string width,
@@ -139,15 +139,12 @@ struct sav_extension {
     double highest;
     double lowest;
 
-    /* decompression buffer */
-    double *buf; /* buffer data */
+    double *buf; /* decompression buffer */
     double *ptr; /* current location in buffer */
     double *end; /* end of buffer marker */
 
-    /* compression instruction octet */
+    /* compression instruction octet and pointer */
     unsigned char x[sizeof(double)];
-
-    /* current instruction octet */
     unsigned char *y;
 };
 
@@ -175,8 +172,8 @@ static const char *mt_string (int mt)
     case MISSING_LOW:   return "MISSING_LOW";
     case MISSING_HIGH:  return "MISSING_HIGH";
     case MISSING_RANGE_1: return "MISSING_RANGE_1";
-    case MISSING_LOW_1:  return "MISSING_LOW_1";
-    case MISSING_HIGH_1: return "MISSING_HIGH_1";
+    case MISSING_LOW_1:   return "MISSING_LOW_1";
+    case MISSING_HIGH_1:  return "MISSING_HIGH_1";
     default: return "??";
     }
 
@@ -1086,7 +1083,6 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 	return E_DATA;
     }
 
-    /* Check eye-catcher string */
     memcpy(prod_name, hdr->prod_name, sizeof hdr->prod_name);
 
     for (i=0; i<60; i++) {
@@ -1108,7 +1104,7 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 
     skip_amt = get_skip_amt(hdr->prod_name);
 
-    /* Check endianness (FIXME?) */
+    /* check endianness */
     if (hdr->layout_code == 2 || hdr->layout_code == 3) {
 	fprintf(stderr, "layout_code = %d, no reverse endianness\n", hdr->layout_code);
     } else {
@@ -1424,6 +1420,8 @@ static int sav_read_observation (spss_dataset *dset,
 	    /* variable is of string type */
 	    char cval[9] = {0};
 	    int ix;
+
+	    /* FIXME long strings */
 
 	    memcpy(cval, &tmp[v->getfv], v->width);
 	    tailstrip(cval);

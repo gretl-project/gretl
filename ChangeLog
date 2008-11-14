@@ -25,6 +25,7 @@ version 1.7.10, in progress
 - New function: urcpval, gives user access to James
   MacKinnon's p-values for unit root and cointegration test
   statistics (tau)
+- Add importer for SPSS .sav files (experimental)
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
