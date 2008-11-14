@@ -34,6 +34,8 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 
 void gretl_string_table_destroy (gretl_string_table *st);
 
+void gretl_string_table_add_extra (gretl_string_table *st, PRN *prn);
+
 void gretl_insert_builtin_string (const char *name, const char *s);
 
 int save_named_string (const char *name, const char *s, PRN *prn);

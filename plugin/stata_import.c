@@ -490,7 +490,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     /* "value labels": these are stored as the names of label formats, 
-       which are themselves stored later in the file. */
+       which are themselves stored later in the file */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0') {

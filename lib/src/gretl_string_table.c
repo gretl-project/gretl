@@ -36,6 +36,7 @@ struct _col_table {
 struct _gretl_string_table {
     int n_cols;
     col_table **cols;
+    char *extra;
 };
 
 static void clean_up_codevars (void);
@@ -63,6 +64,7 @@ gretl_string_table *gretl_string_table_new (int *err)
     } else {
 	st->cols = NULL;
 	st->n_cols = 0;
+	st->extra = NULL;
     }
 
     return st;
@@ -179,8 +181,7 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 	ct = gretl_string_table_add_column(st, col);
 	if (ct != NULL) {
 	    pprintf(prn, M_("variable %d: translating from strings to "
-			    "code numbers\n"), 
-		    col);
+			    "code numbers\n"), col);
 	}
     }
 
@@ -220,20 +221,26 @@ void gretl_string_table_destroy (gretl_string_table *st)
     }
     free(st->cols);
 
+    if (st->extra != NULL) {
+	free(st->extra);
+    }
+
     free(st);
 }
 
 int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 			      const char *fname, PRN *prn)
 {
-    int i, j;
     const col_table *ct;
     const char *fshort;
     char stname[MAXLEN];
     FILE *fp;
+    int i, j;
     int err = 0;
 
-    if (st == NULL) return E_DATA;
+    if (st == NULL) {
+	return E_DATA;
+    }
 
     strcpy(stname, "string_table.txt");
     gretl_path_prepend(stname, gretl_work_dir());
@@ -245,40 +252,48 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 
     fshort = strrchr(fname, SLASH);
     if (fshort != NULL) {
-	fprintf(fp, "%s\n\n", fshort + 1);
+	fprintf(fp, "%s\n", fshort + 1);
     } else {
-	fprintf(fp, "%s\n\n", fname);
+	fprintf(fp, "%s\n", fname);
     }
 
-    fputs(M_("One or more non-numeric variables were found.\n"
-	     "Gretl cannot handle such variables directly, so they\n"
-	     "have been given numeric codes as follows.\n\n"), fp);
-
+    if (st->n_cols > 0) {
+	fputc('\n', fp);
+	fputs(M_("One or more non-numeric variables were found.\n"
+		 "Gretl cannot handle such variables directly, so they\n"
+		 "have been given numeric codes as follows.\n\n"), fp);
+	if (st->extra != NULL) {
+	    fputs(M_("In addition, some mappings from numerical values to string\n"
+		     "labels were found, and are printed below.\n\n"), fp);
+	}
+    }
+    
     for (i=0; i<st->n_cols; i++) {
 	ct = st->cols[i];
-	if (!err) {
-	    fprintf(fp, M_("String code table for variable %d (%s):\n"), 
-		    ct->idx, pdinfo->varname[ct->idx]);
-	} else {
-	    pprintf(prn, M_("String code table for variable %d (%s):\n"), 
-		    ct->idx, pdinfo->varname[ct->idx]);
-	}
+	fprintf(fp, M_("String code table for variable %d (%s):\n"), 
+		ct->idx, pdinfo->varname[ct->idx]);
 	for (j=0; j<ct->n_strs; j++) {
-	    if (!err) {
-		fprintf(fp, "%3d = '%s'\n", j+1, ct->strs[j]);
-	    } else {
-		pprintf(prn, "%3d = '%s'\n", j+1, ct->strs[j]);
-	    }
+	    fprintf(fp, "%3d = '%s'\n", j+1, ct->strs[j]);
 	}
     }
 
-    if (fp != NULL) {
-	pprintf(prn, M_("String code table written to\n %s\n"), stname);
-	fclose(fp);
-	set_string_table_written();
+    if (st->extra != NULL) {
+	fputs(st->extra, fp);
     }
+
+    pprintf(prn, M_("String code table written to\n %s\n"), stname);
+
+    fclose(fp);
+    set_string_table_written();
 
     return err;
+}
+
+void gretl_string_table_add_extra (gretl_string_table *st, PRN *prn)
+{
+    if (st != NULL) {
+	st->extra = gretl_print_steal_buffer(prn);
+    }
 }
 
 /* below: saving of user-defined strings */
