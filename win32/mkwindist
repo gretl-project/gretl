@@ -2,7 +2,6 @@
 
 # Shell script to make gretl win32 distribution
 
-# GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp422w32.zip
 GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp43cvsw32.zip
 HOME_WIN32=/home/cottrell/stats/esl/win32
 CROSSDIR=/opt/cross-tools/mingw32

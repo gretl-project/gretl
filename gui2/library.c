@@ -2252,7 +2252,7 @@ void do_reset (GtkAction *action, gpointer p)
     } else if (resp == 2) {
 	opt |= OPT_C;
     } else if (resp == 3) {
-	opt = OPT_Q | OPT_G;
+	opt = (OPT_Q | OPT_G);
     }
 
     if (opt & OPT_G) {
@@ -2274,7 +2274,9 @@ void do_reset (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	update_model_tests(vwin);
+	if (opt & OPT_S) {
+	    update_model_tests(vwin);
+	}
 	gretl_command_strcpy("reset");
 	model_command_init(pmod->ID);
 	view_buffer(prn, width, height, _("gretl: RESET test"), RESET, NULL); 

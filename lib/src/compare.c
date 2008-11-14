@@ -1468,7 +1468,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    if (!(opt & OPT_G)) {
 		pputc(prn, '\n');
 	    }
-	    pputs(prn, _("RESET specification test"));
+	    pputs(prn, _("RESET test for specification"));
 	    pprintf(prn, " (%s)\n", _(mode));
 	}
 
@@ -1482,13 +1482,20 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_RESET);
+	    gretlopt topt = OPT_NONE;
 
 	    if (test != NULL) {
+		if (opt & OPT_R) {
+		    topt = OPT_R;
+		} else if (opt & OPT_C) {
+		    topt = OPT_C;
+		}
 		model_test_set_teststat(test, GRETL_STAT_RESET);
 		model_test_set_dfn(test, addcols);
 		model_test_set_dfd(test, aux.dfd);
 		model_test_set_value(test, RF);
 		model_test_set_pvalue(test, pval);
+		model_test_set_opt(test, topt);
 		maybe_add_test_to_model(pmod, test);
 	    }	    
 	}

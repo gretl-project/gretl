@@ -42,6 +42,7 @@ struct ModelTest_ {
     double pvalue;
     double crit;
     double alpha;
+    gretlopt opt;
 };
 
 typedef struct CoeffSep_ CoeffSep;
@@ -128,6 +129,7 @@ static void gretl_test_init (ModelTest *test, ModelTestType ttype)
     test->dfn = test->dfd = 0;
     test->value = test->pvalue = NADBL;
     test->crit = test->alpha = NADBL;
+    test->opt = OPT_NONE;
 }
 
 static void free_model_data_item (model_data_item *item)
@@ -2427,6 +2429,7 @@ static void copy_test (ModelTest *targ, const ModelTest *src)
     targ->pvalue = src->pvalue;
     targ->crit = src->crit;
     targ->alpha = src->alpha;
+    targ->opt = src->opt;
 }
 
 static int copy_model_tests (MODEL *targ, const MODEL *src)
@@ -2503,6 +2506,10 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 	if (got < 7) {
 	    err = E_DATA;
 	} else {
+	    int opt = 0;
+
+	    gretl_xml_get_prop_as_int(cur, "opt", &opt);
+	    test.opt = (gretlopt) opt;
 	    err = real_add_test_to_model(pmod, &test);
 	}
 	free(test.param);
@@ -2530,6 +2537,10 @@ static void serialize_test (const ModelTest *src, FILE *fp)
     if (!na(src->crit)) {
 	fprintf(fp, "crit=\"%g\" ", src->crit);
 	fprintf(fp, "alpha=\"%g\" ", src->alpha);
+    }
+
+    if (src->opt != OPT_NONE) {
+	fprintf(fp, "opt=\"%u\" ", (unsigned) src->opt);
     }
 
     fputs("/>\n", fp);
@@ -2678,6 +2689,11 @@ void model_test_set_pvalue (ModelTest *test, double pval)
     test->pvalue = pval;
 }
 
+void model_test_set_opt (ModelTest *test, gretlopt opt)
+{
+    test->opt = opt;
+}
+
 void model_test_set_crit_and_alpha (ModelTest *test, 
 				    double crit,
 				    double alpha)
@@ -2767,7 +2783,18 @@ static struct test_strings tstrings[] = {
       N_("Pesaran-Taylor test for heteroskedasticity"),
       N_("heteroskedasticity not present") },
     { GRETL_TEST_MAX, NULL, NULL }
-};   
+}; 
+
+static void print_test_opt (const ModelTest *test, PRN *prn)
+{
+    if (test->type == GRETL_TEST_RESET) {
+	if (test->opt & OPT_R) {
+	    pprintf(prn, " (%s)", _("squares only"));
+	} else if (test->opt & OPT_C) {
+	    pprintf(prn, " (%s)", _("cubes only"));
+	}
+    }
+}  
 
 static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 {
@@ -2805,6 +2832,10 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 	} else {
 	    pputs(prn, I_(descrip));
 	}
+    }
+
+    if (test->opt) {
+	print_test_opt(test, prn);
     }
 
     return 0;

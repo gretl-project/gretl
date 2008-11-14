@@ -288,6 +288,7 @@ void model_test_set_dfd (ModelTest *test, int df);
 void model_test_set_value (ModelTest *test, double val);
 void model_test_set_pvalue (ModelTest *test, double pval);
 void model_test_set_param (ModelTest *test, const char *s);
+void model_test_set_opt (ModelTest *test, gretlopt opt);
 void model_test_set_allocated_param (ModelTest *test, char *s);
 void model_test_set_crit_and_alpha (ModelTest *test, 
 				    double crit,
