@@ -3506,6 +3506,21 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg)
     finish_genr(pmod, dlg);
 }
 
+static void errmsg_plus (int err, const char *plus)
+{
+    if (plus != NULL && *plus != '\0') {
+	if (err == E_UNSPEC) {
+	    errbox(plus);
+	} else {
+	    const char *msg = errmsg_get_with_default(err);
+
+	    errbox("%s\n%s", msg, plus);
+	}
+    } else {
+	gui_errmsg(err);
+    }
+}
+
 static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     PRN *prn;
@@ -3522,7 +3537,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
     unset_genr_model();
 
     if (err) {
-	errbox(gretl_print_get_buffer(prn));
+	errmsg_plus(err, gretl_print_get_buffer(prn));
 	if (pmod != NULL) {
 	    model_command_delete(pmod->ID);
 	} else {
