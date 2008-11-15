@@ -1111,7 +1111,7 @@ static int auto_omit (MODEL *orig, MODEL *new,
 {
     double amax;
     int *tmplist = NULL;
-    int err = 0;
+    int i, err = 0;
 
     tmplist = gretl_list_copy(orig->list);
     if (tmplist == NULL) {
@@ -1128,8 +1128,10 @@ static int auto_omit (MODEL *orig, MODEL *new,
 	return (err)? err : E_NOOMIT;
     }    
 
-    while (!err) {
-	set_reference_missmask_from_model(orig);
+    for (i=0; !err; i++) {
+	if (i > 0) {
+	    set_reference_missmask_from_model(orig);
+	}
 	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
 				   est_opt, prn);
 	if (new->errcode) {
