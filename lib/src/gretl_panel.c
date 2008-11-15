@@ -2779,7 +2779,15 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
  bailout:
 
     if (!err) {
-	if (!(opt & OPT_P)) {
+	if ((pan_opt & OPT_F) && mod.missmask != NULL) {
+	    /* preserve missing obs mask, if any */
+	    char *mask = mod.missmask;
+
+	    mod.missmask = NULL;
+	    clear_model(&mod);
+	    mod = *pan.realmod;
+	    mod.missmask = mask;
+	} else if (!(opt & OPT_P)) {
 	    clear_model(&mod);
 	    mod = *pan.realmod;
 	}

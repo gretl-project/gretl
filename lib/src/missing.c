@@ -361,7 +361,7 @@ static char *model_missmask (const int *list, int t1, int t2,
 		xx *= Z[dwt][t];
 	    }
 	    if (na(xx)) {
-#if MASKDEBUG
+#if MASKDEBUG > 1
 		fprintf(stderr, "model_missmask: NA at list[%d] (%d), obs %d\n",
 			i, list[i], t);
 #endif
@@ -518,14 +518,9 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	    pmod->errcode = E_MISSDATA;
 	    ret = 1;
 	} else if (missobs > 0) {
-#if 1
 	    pmod->missmask = model_missmask(list, *t1, *t2, 
 					    n, Z, dwt, NULL);
 	    move_ends = 0;
-#else	
-	    pmod->missmask = model_missmask(list, t1min, t2max, 
-					    n, Z, dwt, NULL);
-#endif
 	    if (pmod->missmask == NULL) {
 		pmod->errcode = E_ALLOC;
 		ret = 1;
@@ -537,6 +532,13 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	*t1 = t1min; 
 	*t2 = t2max;
     }
+
+#if MASKDEBUG
+    if (pmod->missmask != NULL) {
+	fprintf(stderr, "model at %p: now has mask at %p\n",
+		(void *) pmod, (void *) pmod->missmask);
+    }
+#endif
 
     return ret;
 }
@@ -683,8 +685,8 @@ static char *refmask;
 void set_reference_missmask_from_model (const MODEL *pmod)
 {
 #if MASKDEBUG
-    fprintf(stderr, "set_reference_missmask: using model = %p\n", 
-	    (void *) pmod);
+    fprintf(stderr, "set_reference_missmask: using model = %p, missmask %p\n", 
+	    (void *) pmod, (void *) pmod->missmask);
 #endif
     if (pmod != NULL) {
 	refmask = gretl_strdup(pmod->missmask);

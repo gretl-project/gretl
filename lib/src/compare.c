@@ -1129,10 +1129,12 @@ static int auto_omit (MODEL *orig, MODEL *new,
     }    
 
     while (!err) {
+	set_reference_missmask_from_model(orig);
 	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
 				   est_opt, prn);
 	if (new->errcode) {
 	    err = new->errcode;
+	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n", err);
 	} else {
 	    list_copy_values(tmplist, new->list);
 	    if (auto_drop_var(new, tmplist, pdinfo, amax, 0, prn, &err)) {

@@ -475,19 +475,21 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 			   DATAINFO *pdinfo, const double **Z, 
 			   int *misst)
 {
+    int ref_mask = reference_missmask_present();
     int missv = 0;
     int reject_missing = 0;
 
-    if (reference_missmask_present()) {
+#if SMPL_DEBUG
+    fprintf(stderr, "lsq_check_for_missing_obs: ref_mask = %d\n",
+	    ref_mask);
+#endif
+
+    if (ref_mask) {
 	int err = apply_reference_missmask(pmod);
 
-#if SMPL_DEBUG
-	fprintf(stderr, "missmask found, applied with err = %d\n",
-		err);
-#endif
 	/* If there was a reference mask present, it was put there
 	   as part of a hypothesis test on some original model, and
-	   it has to be respected in estimation of this model */
+	   it should be respected in estimation of this model */
 
 	if (err) {
 	    pmod->errcode = E_ALLOC;
@@ -495,7 +497,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	} else {
 	    return 0;
 	}
-    }
+    } 
 
     /* can't do HAC VCV with missing obs in middle */
     if ((opts & OPT_R) && dataset_is_time_series(pdinfo) &&
@@ -512,7 +514,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    pdinfo->n, Z, misst);
     } else {
-	/* we'll try to compensate for missing obs */
+	/* we'll try to work around missing obs */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    pdinfo->n, Z, NULL);
     }
