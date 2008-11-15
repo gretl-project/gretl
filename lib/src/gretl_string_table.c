@@ -74,10 +74,12 @@ gretl_string_table *string_table_new_from_cols_list (int *list)
 {
     gretl_string_table *st;
     int ncols = list[0];
-    int i, j;
+    int i, j, err = 0;
 
-    st = malloc(sizeof *st);
-    if (st == NULL) return NULL;
+    st = gretl_string_table_new(&err);
+    if (st == NULL) {
+	return NULL;
+    }
 
     st->cols = malloc(ncols * sizeof *st->cols);
     if (st->cols == NULL) {
@@ -113,8 +115,7 @@ static int col_table_get_index (const col_table *ct, const char *s)
     return ret;
 }
 
-static int 
-col_table_add_string (col_table *ct, const char *s)
+static int col_table_add_string (col_table *ct, const char *s)
 {
     char **strs;
     int n = ct->n_strs + 1;

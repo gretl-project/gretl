@@ -2199,8 +2199,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     char *rem = NULL;
     char s[FIELDLEN] = {0};
 
-    fprintf(stderr, "hello: parse command line\n");
-
     if (gretl_cmd_clear(cmd)) {
 	return cmd->err;
     }

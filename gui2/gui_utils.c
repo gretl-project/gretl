@@ -801,8 +801,8 @@ int get_imported_data (char *fname, int ftype, int append)
 	if (errbuf != NULL && *errbuf != '\0') {
 	    errbox(errbuf);
 	} else {
-	    errbox(_("Failed to import data"));
-	}
+	    gui_errmsg(err);
+	} 
 	delete_from_filelist(FILE_LIST_DATA, fname);
     } else if (errbuf != NULL && *errbuf != '\0') {
 	infobox(errbuf);
