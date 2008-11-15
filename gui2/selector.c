@@ -1578,11 +1578,13 @@ static char *arma_lag_string (char *targ, const char *s)
 
     if (*s == '\0') {
 	strcpy(targ, "0 ");
-    } else if (isalpha(*s)) {
+    } else if (isalpha(*s) || *s == '{') {
 	sprintf(targ, "%s ", s);
     } else {
 	sprintf(targ, "{%s} ", s);
     } 
+
+    charsub(targ, ',', ' ');
 
     return targ;
 }
