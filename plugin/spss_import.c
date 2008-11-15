@@ -67,6 +67,9 @@ enum {
 /* Rounds x up to the next multiple of y */
 #define ROUND_UP(x,y) (((x) + ((y) - 1)) / (y) * (y))
 
+/* Gives the padding needed to round x to next multiple of y */
+#define REM_RND_UP(x,y) ((x) % (y) ? (y) - (x) % (y) : 0)
+
 typedef struct spss_var_ spss_var;
 typedef struct spss_val_ spss_val;
 typedef struct spss_dataset_ spss_dataset;
@@ -366,7 +369,7 @@ static int read_long_varnames (spss_dataset *dset, unsigned size,
 
     do {
 	if ((endp = strchr(p, '\t')) != NULL) {
-	    *endp = 0; /* put null terminator */
+	    *endp = '\0'; /* put null terminator */
 	}
 	if ((val = strchr(p, '=')) == NULL) {
 	    fprintf(stderr, "No long name for variable '%s'\n", p);
@@ -586,17 +589,18 @@ static int check_label_varindex (spss_dataset *dset, spss_labelset *lset, int id
     return err;
 }
 
-#define REM_RND_UP(x,y) ((x) % (y) ? (y) - (x) % (y) : 0)
-
 static int read_value_labels (spss_dataset *dset)
 {
     FILE *fp = dset->fp;
     spss_labelset *lset;
-    int32_t n_labels = 0;      /* Number of labels */
-    int32_t n_vars = 0;        /* Number of associated variables */
+    int32_t n_labels = 0;  /* Number of labels */
+    int32_t n_vars = 0;    /* Number of associated variables */
     int i, err = 0;
 
-    fread(&n_labels, sizeof n_labels, 1, fp);
+    if (fread(&n_labels, sizeof n_labels, 1, fp) != 1) {
+	return E_DATA;
+    }
+
     if (dset->swapends) {
 	reverse_int(n_labels);
     }
@@ -618,12 +622,17 @@ static int read_value_labels (spss_dataset *dset)
 	char label[256] = {0};
 	double value;
 	unsigned char label_len;
-	int rem;
+	int rem, fgot = 0;
 
 	/* read value, label length, label */
-	fread(&value, sizeof value, 1, fp);
-	fread(&label_len, 1, 1, fp);
-	fread(label, label_len, 1, fp);
+	fgot += fread(&value, sizeof value, 1, fp);
+	fgot += fread(&label_len, 1, 1, fp);
+	fgot += fread(label, label_len, 1, fp);
+
+	if (fgot != 3) {
+	    err = E_DATA;
+	    break;
+	}
 
 #if SPSS_DEBUG
 	fprintf(stderr, "i = %d: value %g, label '%s'\n", i, value, label);
@@ -666,7 +675,11 @@ static int read_value_labels (spss_dataset *dset)
     for (i=0; i<n_vars && !err; i++) {
 	int32_t idx;
 
-	fread(&idx, sizeof idx, 1, fp);
+	if (fread(&idx, sizeof idx, 1, fp) != 1) {
+	    err = E_DATA;
+	    break;
+	}
+
 	if (dset->swapends) {
 	    reverse_int(idx);
 	}
@@ -1192,11 +1205,11 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 			 hdr->ncases, INT_MAX / 2);
     }
 
-    fprintf(stderr, "hdr->case_size (number of variables) = %d\n", hdr->case_size);
-    fprintf(stderr, "hdr->compressed = %d\n", hdr->compressed);
-    fprintf(stderr, "hdr->weight_index = %d\n", hdr->weight_index);
-    fprintf(stderr, "hdr->ncases = %d\n", hdr->ncases);
-    fprintf(stderr, "hdr->bias = %g\n", hdr->bias);
+    fprintf(stderr, "case_size (number of variables) = %d\n", hdr->case_size);
+    fprintf(stderr, "compression = %d\n", hdr->compressed);
+    fprintf(stderr, "weight index = %d\n", hdr->weight_index);
+    fprintf(stderr, "ncases = %d\n", hdr->ncases);
+    fprintf(stderr, "compression bias = %g\n", hdr->bias);
 
     if (hdr->ncases == -1) {
 	/* is there a way to count cases later? */
