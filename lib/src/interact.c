@@ -689,8 +689,12 @@ static char **arma_split_fields (const char *s, int *nf,
 	    *err = push_field(&F, p, 1, nf);
 	} else {
 	    n = strcspn(p, " {};");
-	    *err = push_field(&F, p, n, nf);
-	    p += n - 1;
+	    if (n == 0) {
+		*err = E_PARSE;
+	    } else {
+		*err = push_field(&F, p, n, nf);
+		p += n - 1;
+	    }
 	}
 	p++;
     }
@@ -2194,6 +2198,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     int subst = 0;
     char *rem = NULL;
     char s[FIELDLEN] = {0};
+
+    fprintf(stderr, "hello: parse command line\n");
 
     if (gretl_cmd_clear(cmd)) {
 	return cmd->err;
