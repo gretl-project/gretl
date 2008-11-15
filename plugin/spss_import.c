@@ -72,19 +72,13 @@ typedef struct spss_val_ spss_val;
 typedef struct spss_dataset_ spss_dataset;
 typedef struct spss_labelset_ spss_labelset;
 
-/* One value: a floating-point number or a short string */
-union value {
-    double f;
-    unsigned char s[MAX_SHORT_STRING];
-};
-
 struct spss_var_ {
     int type;
     int width;                  /* Size of string variables in chars */
     int fv, nv;                 /* Index into values, number of values */
-    int getfv, getnv;           /* Indices for retrieving actual values */
+    int offset;                 /* Index for retrieving actual values */
     int miss_type;		/* One of the MISSING_* constants */
-    union value missing[3];	/* User-missing value */
+    double missing[3];	        /* User-missing value */
     char name[VNAMELEN];
     char label[MAXLABEL];
 };
@@ -774,7 +768,7 @@ static int dset_add_variables (spss_dataset *dset)
 	dset->vars[i].miss_type = MISSING_NONE;
 	dset->vars[i].name[0] = '\0';
 	dset->vars[i].label[0] = '\0';
-	dset->vars[i].getfv = -1;
+	dset->vars[i].offset = -1;
     }
 
     return 0;
@@ -906,11 +900,11 @@ static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
 	v->miss_type = nmiss;
 	if (v->type == SPSS_NUMERIC) {
 	    for (j=0; j<nmiss; j++) {
-		v->missing[j].f = mv[j];
+		v->missing[j] = mv[j];
 	    }
 	} else {
 	    for (j=0; j<nmiss; j++) {
-		memcpy(v->missing[j].s, &mv[j], v->width);
+		memcpy(&v->missing[j], &mv[j], v->width);
 	    }
 	}
     } else if (v->type == SPSS_STRING) {
@@ -920,19 +914,19 @@ static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
 	j = 0;
 	if (mv[0] == dset->ext.lowest) {
 	    v->miss_type = MISSING_LOW;
-	    v->missing[j++].f = mv[1];
+	    v->missing[j++] = mv[1];
 	} else if (mv[1] == dset->ext.highest) {
 	    v->miss_type = MISSING_HIGH;
-	    v->missing[j++].f = mv[0];
+	    v->missing[j++] = mv[0];
 	} else {
 	    v->miss_type = MISSING_RANGE;
-	    v->missing[j++].f = mv[0];
-	    v->missing[j++].f = mv[1];
+	    v->missing[j++] = mv[0];
+	    v->missing[j++] = mv[1];
 	}
 
 	if (nmiss == -3) {
 	    v->miss_type += 3;
-	    v->missing[j++].f = mv[2];
+	    v->missing[j++] = mv[2];
 	}
     }
 
@@ -940,7 +934,7 @@ static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
     fprintf(stderr, "miss_type = %d (%s)\n", v->miss_type, mt_string(v->miss_type));
     int i;
     for (i=0; i<j; i++) {
-	fprintf(stderr, " missing[%d] = %g\n", i, v->missing[i].f);
+	fprintf(stderr, " missing[%d] = %g\n", i, v->missing[i]);
     }
 #endif
 
@@ -1018,17 +1012,15 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	if (!err) {
 	    if (sv.type == SPSS_NUMERIC) {
 		v->width = 0;
-		v->getnv = 1;
-		v->getfv = next_value++;
+		v->offset = next_value++;
 		v->nv = 1;
 	    } else {
 		v->type = SPSS_STRING;
 		v->width = sv.type;
-		v->nv = DIV_RND_UP(v->width, MAX_SHORT_STRING);
-		v->getnv = DIV_RND_UP(v->width, sizeof(double));
-		v->getfv = next_value;
-		next_value += v->getnv;
-		long_string_count = v->getnv - 1;
+		v->nv = DIV_RND_UP(v->width, sizeof(double));
+		v->offset = next_value;
+		next_value += v->nv;
+		long_string_count = v->nv - 1;
 	    }	
 	}
 
@@ -1126,9 +1118,9 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 
 #if 0
     if (hdr->case_size <= 0 || hdr->case_size > (INT_MAX
-						/ (int) sizeof (union value) / 2)) {
+						/ (int) sizeof(double) / 2)) {
 	lose ((_("%s: Number of elements per case (%d) is not between 1 and %d"),
-	       h->fn, hdr->case_size, INT_MAX / sizeof (union value) / 2));
+	       h->fn, hdr->case_size, INT_MAX / sizeof(double) / 2));
     }
 
     ext->weight_index = hdr->weight_index - 1;
@@ -1205,18 +1197,18 @@ static int spss_user_missing (spss_var *v, double x)
 	break;
     case MISSING_LOW:
     case MISSING_HIGH:
-	a = v->missing[0].f;
+	a = v->missing[0];
 	break;
     case MISSING_RANGE:
     case MISSING_LOW_1:
     case MISSING_HIGH_1:
-	a = v->missing[0].f;
-	b = v->missing[1].f;
+	a = v->missing[0];
+	b = v->missing[1];
 	break;
     case MISSING_RANGE_1:
-	a = v->missing[0].f;
-	b = v->missing[1].f;
-	c = v->missing[1].f;
+	a = v->missing[0];
+	b = v->missing[1];
+	c = v->missing[1];
 	break;
     default:
 	break;
@@ -1228,7 +1220,7 @@ static int spss_user_missing (spss_var *v, double x)
 	int j;
 
 	for (j=0; j<n; j++) {
-	    if (x == v->missing[j].f) {
+	    if (x == v->missing[j]) {
 		miss = 1;
 		break;
 	    }
@@ -1401,12 +1393,12 @@ static int sav_read_observation (spss_dataset *dset,
 
 	v = &dset->vars[i];
 
-	if (v->getfv == -1) {
+	if (v->offset == -1) {
 	    continue;
 	}
 
 	if (v->type == SPSS_NUMERIC) {
-	    double x = tmp[v->getfv];
+	    double x = tmp[v->offset];
 
 	    if (dset->swapends) {
 		reverse_double(x);
@@ -1419,11 +1411,12 @@ static int sav_read_observation (spss_dataset *dset,
 	} else {
 	    /* variable is of string type */
 	    char cval[9] = {0};
-	    int ix;
+	    int ix, len;
 
 	    /* FIXME long strings */
 
-	    memcpy(cval, &tmp[v->getfv], v->width);
+	    len = (v->width < 8)? v->width : 8;
+	    memcpy(cval, &tmp[v->offset], len);
 	    tailstrip(cval);
 #if SPSS_DEBUG
 	    fprintf(stderr, "Z[%d][%d] = '%s'\n", vi, t, cval);
