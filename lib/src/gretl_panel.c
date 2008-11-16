@@ -2692,6 +2692,14 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	pan_opt |= OPT_F;
     }
 
+#if PDEBUG
+    if (pan_opt & OPT_F) {
+	fprintf(stderr, "\n*** Doing fixed effects\n");
+    } else if (pan_opt & OPT_U) {
+	fprintf(stderr, "\n*** Doing random effects\n");
+    }
+#endif
+
     if ((opt & OPT_D) && !(opt & OPT_B)) {
 	ntdum = get_ntdum(list, mod.list);
     }
@@ -2731,7 +2739,10 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	int xdf = pan.effn - mod.ncoeff;
 
 	if (xdf <= 0) {
-	    mod.errcode = E_DF;
+#if PDEBUG
+	    fprintf(stderr, "xdf = %d - %d = %d\n", pan.effn, mod.ncoeff, xdf);
+#endif
+	    err = mod.errcode = E_DF;
 	    goto bailout;
 	} else {
 	    err = hausman_allocate(&pan);
