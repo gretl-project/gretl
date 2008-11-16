@@ -43,17 +43,17 @@ enum {
 };
 
 enum {
-    MISSING_NONE,      /* No user-missing values */
-    MISSING_1,         /* One user-missing value */
-    MISSING_2,         /* Two user-missing values */
-    MISSING_3,         /* Three user-missing values */
+    MISSING_NONE,      /* no user-missing values */
+    MISSING_1,         /* one user-missing value */
+    MISSING_2,         /* two user-missing values */
+    MISSING_3,         /* three user-missing values */
     MISSING_RANGE,     /* [a,b] */
     MISSING_LOW,       /* (-inf,a] */
     MISSING_HIGH,      /* (a,+inf] */
     MISSING_RANGE_1,   /* [a,b], c */
     MISSING_LOW_1,     /* (-inf,a], b */
     MISSING_HIGH_1,    /* (a,+inf), b */
-    MISSING_COUNT      /* ? */
+    MISSING_MAX        /* sentinel */
 };
 
 #define MAX_SHORT_STRING 8
@@ -159,6 +159,8 @@ struct spss_dataset_ {
     gretl_string_table *st;
     char *descrip;
 };
+
+#define CONTD(d,i) (d->vars[i].type == -1)
 
 static void free_labelset (spss_labelset *lset);
 
@@ -606,7 +608,7 @@ static int read_value_labels (spss_dataset *dset)
     }
 
 #if SPSS_DEBUG
-    fprintf(stderr, "\nread_value_labels: %d labels\n", n_labels);
+    fprintf(stderr, "\n*** label set: %d labels\n", n_labels);
 #endif
 
     err = dset_add_labelset(dset, n_labels);
@@ -635,7 +637,7 @@ static int read_value_labels (spss_dataset *dset)
 	}
 
 #if SPSS_DEBUG
-	fprintf(stderr, "i = %d: value %g, label '%s'\n", i, value, label);
+	fprintf(stderr, " %3d: value %g: '%s'\n", i, value, label);
 #endif
 
 	lset->vals[i] = value;
@@ -688,7 +690,7 @@ static int read_value_labels (spss_dataset *dset)
 	if (!err) {
 	    lset->varlist[i+1] = idx;
 #if SPSS_DEBUG
-	    fprintf(stderr, "i = %d: var_index = %d (%s)\n", i, idx,
+	    fprintf(stderr, " %3d: var_index = %d (%s)\n", i, idx,
 		    dset->vars[idx-1].name);
 #endif
 	}
@@ -849,7 +851,7 @@ static int transcribe_varname (spss_dataset *dset, struct sysfile_variable *sv, 
     v->name[k] = 0;
 
 #if SPSS_DEBUG
-    fprintf(stderr, "name = '%s'\n", v->name);
+    fprintf(stderr, " name = '%s'\n", v->name);
 #endif
 
     return 0;
@@ -888,7 +890,7 @@ static int grab_var_label (spss_dataset *dset, spss_var *v)
     tailstrip(v->label);
 
 #if SPSS_DEBUG
-    fprintf(stderr, "Got label '%s'\n", v->label);
+    fprintf(stderr, " label '%s'\n", v->label);
 #endif
 
     if (rem > 0) {
@@ -954,7 +956,7 @@ static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
     }
 
 #if SPSS_DEBUG
-    fprintf(stderr, "miss_type = %d (%s)\n", v->miss_type, mt_string(v->miss_type));
+    fprintf(stderr, " miss_type = %d (%s)\n", v->miss_type, mt_string(v->miss_type));
     int i;
     for (i=0; i<j; i++) {
 	fprintf(stderr, " missing[%d] = %g\n", i, v->missing[i]);
@@ -1004,7 +1006,7 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	}
 
 #if SPSS_DEBUG
-	fprintf(stderr, "var %d\n", i);
+	fprintf(stderr, "*** position %d\n", i);
 	fprintf(stderr, " type = %d\n", sv.type);
 	fprintf(stderr, " has_var_label = %d\n", sv.has_var_label);
 	fprintf(stderr, " n_missing_values = %d\n", sv.n_missing_values);
@@ -1014,15 +1016,17 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	   continuations are present; otherwise make sure there aren't
 	   any */
 	if (long_string_count) {
-	    if (sv.type != -1) {
-		fprintf(stderr, "position %d: string variable is missing a "
-			"continuation record\n", i);
-		err = E_DATA;
-		break;
-	    } else {
+	    if (sv.type == -1) {
+		/* OK */
+		fprintf(stderr, " long string continuation\n");
+		v->type = -1;
 		long_string_count--;
 		continue;
-	    }
+	    } else {
+		err = sav_error("position %d: string variable is missing a "
+				"continuation record", i);
+		break;
+	    } 
 	} else if (sv.type == -1) {
 	    fprintf(stderr, "position %d: superfluous string continuation record\n", i);
 	}
@@ -1034,7 +1038,7 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	}
 
 #if SPSS_DEBUG
-	fputs((sv.type == SPSS_NUMERIC)? "got NUMERIC\n" : "got STRING\n", stderr);
+	fputs((sv.type == SPSS_NUMERIC)? " NUMERIC\n" : " STRING\n", stderr);
 #endif
 
 	if (!err) {
@@ -1436,7 +1440,7 @@ static int sav_read_observation (spss_dataset *dset,
 {
     spss_var *v;
     double xit;
-    int i, err = 0;
+    int i, j, err = 0;
 
     if (hdr->compressed) {
 	err = read_compressed_data(dset, hdr, tmp);
@@ -1452,9 +1456,9 @@ static int sav_read_observation (spss_dataset *dset,
 	}
     } 
 
-    for (i=0; i<dset->nvars && !err; i++) {
-	int vi = i + 1;
+    j = 1;
 
+    for (i=0; i<dset->nvars && !err; i++) {
 	v = &dset->vars[i];
 
 	if (v->offset == -1) {
@@ -1467,9 +1471,9 @@ static int sav_read_observation (spss_dataset *dset,
 		reverse_double(xit);
 	    }
 	    if (xit == dset->ext.sysmis || spss_user_missing(v, xit)) {
-		Z[vi][t] = NADBL;
+		Z[j][t] = NADBL;
 	    } else {
-		Z[vi][t] = xit;
+		Z[j][t] = xit;
 	    }
 	} else {
 	    /* variable is of string type */
@@ -1481,18 +1485,19 @@ static int sav_read_observation (spss_dataset *dset,
 	    cval[len] = '\0';
 	    tailstrip(cval);
 #if SPSS_DEBUG
-	    fprintf(stderr, "string val Z[%d][%d] = '%s'\n", vi, t, cval);
+	    fprintf(stderr, "string val Z[%d][%d] = '%s'\n", j, t, cval);
 #endif
-	    ix = gretl_string_table_index(dset->st, cval, vi, 0, NULL);
+	    ix = gretl_string_table_index(dset->st, cval, j, 0, NULL);
 	    if (ix > 0) {
-		Z[vi][t] = ix;
+		Z[j][t] = ix;
 		if (t == 0) {
-		    set_var_discrete(pdinfo, vi, 1);
+		    set_var_discrete(pdinfo, j, 1);
 		}
 	    } else {
-		Z[vi][t] = NADBL;
+		Z[j][t] = NADBL;
 	    }
 	}
+	j++;
     }
 
     return err;
@@ -1502,7 +1507,7 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 			  double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     double *tmp = NULL;
-    int i, t, err = 0;
+    int i, j, t, err = 0;
 
     /* temporary storage for one complete observation */
     tmp = malloc(dset->nvars * sizeof *tmp);
@@ -1511,9 +1516,13 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
     }
 
     /* transcribe varnames and labels */
+    j = 1;
     for (i=0; i<dset->nvars; i++) {
-	strcpy(pdinfo->varname[i+1], dset->vars[i].name);
-	strcpy(VARLABEL(pdinfo, i+1), dset->vars[i].label);
+	if (!CONTD(dset, i)) {
+	    strcpy(pdinfo->varname[j], dset->vars[i].name);
+	    strcpy(VARLABEL(pdinfo, j), dset->vars[i].label);
+	    j++;
+	}
     }
 
     /* retrieve actual data values */
@@ -1627,25 +1636,6 @@ static int add_label_mappings_to_st (spss_dataset *dset)
     return err;
 }
 
-#if SPSS_DEBUG  
-
-static void print_dset_info (spss_dataset *dset)
-{
-    int i;
-
-    printf("\n*** dset info\n");
-    printf("dset->nvars = %d\n", dset->nvars);
-    printf("dset->nobs = %d\n", dset->nobs);
-    printf("dset->swapends = %d\n", dset->swapends);
-    printf("dset->encoding = %d\n", dset->encoding);
-
-    for (i=0; i<dset->nvars; i++) {
-	printf("var %d: '%s'\n", i, dset->vars[i].name);
-    }
-}
-
-#endif
-
 /* We'll add a 'string table' if (a) the dataset contains one or more
    string-valued variables or (b) it contains one or more numerical
    variables that have associated value labels.  The latter situation
@@ -1702,8 +1692,8 @@ static int prepare_gretl_dataset (spss_dataset *dset,
     }
 
     for (i=0; i<dset->nvars && !err; i++) {
-	if (dset->vars[i].type == -1) {
-	    /* not a real variable (continuation) */
+	if (CONTD(dset, i)) {
+	    /* not a real variable (string continuation) */
 	    nvars--;
 	}
     }
@@ -1776,12 +1766,6 @@ int sav_get_data (const char *fname,
     if (!err) {
 	err = read_sav_other_records(&dset);
     }
-
-#if SPSS_DEBUG
-    if (!err) {
-	print_dset_info(&dset);
-    }
-#endif
 
     if (!err) {
 	err = prepare_gretl_dataset(&dset, &newinfo, &newZ, prn);
