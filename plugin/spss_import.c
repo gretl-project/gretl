@@ -223,6 +223,19 @@ static int sav_error (const char *fmt, ...)
     return 1;
 }
 
+static int sav_read_int (spss_dataset *dset, int *err)
+{
+    int32_t ret = 0;
+
+    if (fread(&ret, sizeof ret, 1, dset->fp) != 1) {
+	*err = E_DATA;
+    } else if (dset->swapends) {
+	reverse_int(ret);
+    }
+
+    return ret;
+}
+
 /* Read record type 7, subtype 3 */
 
 static int read_rec_7_3 (spss_dataset *dset, int size, int count)
@@ -469,13 +482,9 @@ static int read_type_4 (spss_dataset *dset, int *err)
 {
     int32_t rec_type, n_vars = 0;
 
-    if (fread(&rec_type, sizeof rec_type, 1, dset->fp) != 1) {
-	*err = E_DATA;
+    rec_type = sav_read_int(dset, err);
+    if (*err) {
 	return 0;
-    }
-
-    if (dset->swapends) {
-	reverse_int(rec_type);
     }
 
     if (rec_type != 4) {
@@ -485,13 +494,9 @@ static int read_type_4 (spss_dataset *dset, int *err)
 	return 0;
     }
 
-    if (fread(&n_vars, sizeof n_vars, 1, dset->fp) != 1) {
-	*err = E_DATA;
+    n_vars = sav_read_int(dset, err);
+    if (*err) {
 	return 0;
-    }
-
-    if (dset->swapends) {
-	reverse_int(n_vars);
     }
 
     if (n_vars < 1 || n_vars > dset->nvars) {
@@ -599,12 +604,9 @@ static int read_value_labels (spss_dataset *dset)
     int32_t n_vars = 0;    /* Number of associated variables */
     int i, err = 0;
 
-    if (fread(&n_labels, sizeof n_labels, 1, fp) != 1) {
-	return E_DATA;
-    }
-
-    if (dset->swapends) {
-	reverse_int(n_labels);
+    n_labels = sav_read_int(dset, &err);
+    if (err) {
+	return err;
     }
 
 #if SPSS_DEBUG
@@ -677,13 +679,9 @@ static int read_value_labels (spss_dataset *dset)
     for (i=0; i<n_vars && !err; i++) {
 	int32_t idx;
 
-	if (fread(&idx, sizeof idx, 1, fp) != 1) {
-	    err = E_DATA;
+	idx = sav_read_int(dset, &err);
+	if (err) {
 	    break;
-	}
-
-	if (dset->swapends) {
-	    reverse_int(idx);
 	}
 
 	err = check_label_varindex(dset, lset, idx);
@@ -713,16 +711,12 @@ static int read_documents (spss_dataset *dset)
     int32_t n_lines;
     int err = 0;
 
-    fread(&n_lines, sizeof n_lines, 1, dset->fp);
-
-    if (dset->swapends) {
-	reverse_int(n_lines);
-    }
+    n_lines = sav_read_int(dset, &err);
 
     if (n_lines <= 0) {
 	fprintf(stderr, "Number of document lines (%d) must be greater than 0\n",
 		n_lines);
-	err = 1;
+	err = E_DATA;
     } else {
 	int i, n = 80 * n_lines;
 	unsigned char c;
@@ -734,7 +728,7 @@ static int read_documents (spss_dataset *dset)
 	fprintf(stderr, "read_documents: got %d lines\n", n_lines);
     }
 
-    return 0;
+    return err;
 }
 
 /* Read records of types 3, 4, 6, and 7 */
@@ -746,10 +740,9 @@ static int read_sav_other_records (spss_dataset *dset)
     int err = 0;
 
     while (rec_type >= 0 && !err) {
-	fread(&rec_type, sizeof rec_type, 1, fp);
-
-	if (dset->swapends) {
-	    reverse_int(rec_type);
+	rec_type = sav_read_int(dset, &err);
+	if (err) {
+	    break;
 	}
 
 	switch (rec_type) {
@@ -861,14 +854,12 @@ static int grab_var_label (spss_dataset *dset, spss_var *v)
 {
     size_t labread, rem = 0;
     int32_t len;
+    int err = 0;
 
-    if (fread(&len, sizeof len, 1, dset->fp) != 1) {
-	return E_DATA;
+    len = sav_read_int(dset, &err);
+    if (err) {
+	return err;
     }
-
-    if (dset->swapends) {
-	reverse_int(len);
-    }	    
 
     if (len < 0 || len > 65535) {
 	return sav_error("Variable %s indicates label of invalid length %d",
