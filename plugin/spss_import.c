@@ -223,13 +223,12 @@ static int sav_error (const char *fmt, ...)
     return 1;
 }
 
-static int sav_read_int (spss_dataset *dset, int *err)
+static int sav_read_int32 (spss_dataset *dset, int *err)
 {
     int32_t ret = 0;
 
-    if (fread(&ret, sizeof ret, 1, dset->fp) != 1) {
-	*err = E_DATA;
-    } else if (dset->swapends) {
+    *err = fread(&ret, sizeof ret, 1, dset->fp) != 1;
+    if (*err && dset->swapends) {
 	reverse_int(ret);
     }
 
@@ -482,7 +481,7 @@ static int read_type_4 (spss_dataset *dset, int *err)
 {
     int32_t rec_type, n_vars = 0;
 
-    rec_type = sav_read_int(dset, err);
+    rec_type = sav_read_int32(dset, err);
     if (*err) {
 	return 0;
     }
@@ -494,7 +493,7 @@ static int read_type_4 (spss_dataset *dset, int *err)
 	return 0;
     }
 
-    n_vars = sav_read_int(dset, err);
+    n_vars = sav_read_int32(dset, err);
     if (*err) {
 	return 0;
     }
@@ -604,7 +603,7 @@ static int read_value_labels (spss_dataset *dset)
     int32_t n_vars = 0;    /* Number of associated variables */
     int i, err = 0;
 
-    n_labels = sav_read_int(dset, &err);
+    n_labels = sav_read_int32(dset, &err);
     if (err) {
 	return err;
     }
@@ -679,7 +678,7 @@ static int read_value_labels (spss_dataset *dset)
     for (i=0; i<n_vars && !err; i++) {
 	int32_t idx;
 
-	idx = sav_read_int(dset, &err);
+	idx = sav_read_int32(dset, &err);
 	if (err) {
 	    break;
 	}
@@ -711,7 +710,7 @@ static int read_documents (spss_dataset *dset)
     int32_t n_lines;
     int err = 0;
 
-    n_lines = sav_read_int(dset, &err);
+    n_lines = sav_read_int32(dset, &err);
 
     if (n_lines <= 0) {
 	fprintf(stderr, "Number of document lines (%d) must be greater than 0\n",
@@ -740,7 +739,7 @@ static int read_sav_other_records (spss_dataset *dset)
     int err = 0;
 
     while (rec_type >= 0 && !err) {
-	rec_type = sav_read_int(dset, &err);
+	rec_type = sav_read_int32(dset, &err);
 	if (err) {
 	    break;
 	}
@@ -856,7 +855,7 @@ static int grab_var_label (spss_dataset *dset, spss_var *v)
     int32_t len;
     int err = 0;
 
-    len = sav_read_int(dset, &err);
+    len = sav_read_int32(dset, &err);
     if (err) {
 	return err;
     }
