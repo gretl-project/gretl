@@ -1590,10 +1590,10 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 	}
     }
 
-    /* delete variables for which we got no observations? (this is
+    /* Delete variables for which we got no observations?  This is
        governed by OPT_D, and whether or not we have constructed
        a 'string table' that would get messed up by dropping
-       variables)
+       variables.
     */
     if (do_drop_empty(dset)) {
 	err = dataset_drop_listed_variables(dset->droplist, pZ, pdinfo, 
