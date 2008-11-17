@@ -71,13 +71,13 @@ enum {
 #define REM_RND_UP(x,y) ((x) % (y) ? (y) - (x) % (y) : 0)
 
 typedef struct spss_var_ spss_var;
-typedef struct spss_val_ spss_val;
 typedef struct spss_dataset_ spss_dataset;
 typedef struct spss_labelset_ spss_labelset;
 
 struct spss_var_ {
     int type;
     int width;                  /* Size of string variables in chars */
+    int n_ok_obs;               /* number of non-missing values */
     int fv, nv;                 /* Index into values, number of values */
     int offset;                 /* Index for retrieving actual values */
     int miss_type;		/* One of the MISSING_* constants */
@@ -92,12 +92,6 @@ struct spss_labelset_ {
     int *varlist;
     double *vals;
     char **labels;
-};
-
-struct spss_val_ {
-    double dval;
-    char sval[8];
-    char *lsval;
 };
 
 /* SPSS native record: general dataset information */
@@ -158,6 +152,7 @@ struct spss_dataset_ {
     struct sav_extension ext;
     gretl_string_table *st;
     char *descrip;
+    int *dellist;
 };
 
 #define CONTD(d,i) (d->vars[i].type == -1)
@@ -784,6 +779,7 @@ static int dset_add_variables (spss_dataset *dset)
 
     for (i=0; i<dset->nvars; i++) {
 	dset->vars[i].type = SPSS_NUMERIC;
+	dset->vars[i].n_ok_obs = 0;
 	dset->vars[i].miss_type = MISSING_NONE;
 	dset->vars[i].name[0] = '\0';
 	dset->vars[i].label[0] = '\0';
@@ -1464,6 +1460,7 @@ static int sav_read_observation (spss_dataset *dset,
 		Z[j][t] = NADBL;
 	    } else {
 		Z[j][t] = xit;
+		v->n_ok_obs += 1;
 	    }
 	} else {
 	    /* variable is of string type */
@@ -1480,11 +1477,13 @@ static int sav_read_observation (spss_dataset *dset,
 	    ix = gretl_string_table_index(dset->st, cval, j, 0, NULL);
 	    if (ix > 0) {
 		Z[j][t] = ix;
+		v->n_ok_obs += 1;
 		if (t == 0) {
 		    set_var_discrete(pdinfo, j, 1);
 		}
 	    } else {
 		Z[j][t] = NADBL;
+		
 	    }
 	}
 	j++;
@@ -1494,7 +1493,7 @@ static int sav_read_observation (spss_dataset *dset,
 }
 
 static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
-			  double **Z, DATAINFO *pdinfo, PRN *prn)
+			  double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     double *tmp = NULL;
     int i, j, t, err = 0;
@@ -1517,13 +1516,32 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 
     /* retrieve actual data values */
     for (t=0; t<dset->nobs && !err; t++) {
-	err = sav_read_observation(dset, hdr, tmp, Z, pdinfo, t);
+	err = sav_read_observation(dset, hdr, tmp, *pZ, pdinfo, t);
 	if (err) {
 	    fprintf(stderr, "sav_read_case: err = %d at i = %d\n", err, i);
 	}
     }
 
     free(tmp);
+
+    /* count valid observations */
+    j = 1;
+    for (i=0; i<dset->nvars; i++) {
+	if (!CONTD(dset, i)) {
+	    if (dset->vars[i].n_ok_obs == 0) {
+		fprintf(stderr, "var %d: no valid observations\n", j);
+		gretl_list_append_term(&dset->dellist, j);
+	    }
+	    j++;
+	}
+    }
+
+    /* delete variables for which we got no observations */
+    if (dset->dellist != NULL) {
+	err = dataset_drop_listed_variables(dset->dellist, pZ, 
+					    pdinfo, NULL, NULL);
+	dset->nvars -= dset->dellist[0];
+    }
 
     return err;
 }
@@ -1549,6 +1567,7 @@ static void spss_dataset_init (spss_dataset *dset, FILE *fp)
 
     dset->st = NULL;
     dset->descrip = NULL;
+    dset->dellist = NULL;
 }
 
 static void free_labelset (spss_labelset *lset)
@@ -1577,6 +1596,7 @@ static void free_spss_dataset (spss_dataset *dset)
 
     gretl_string_table_destroy(dset->st);
     free(dset->descrip);
+    free(dset->dellist);
 }
 
 static void print_labelsets (spss_dataset *dset, PRN *prn)
@@ -1668,8 +1688,8 @@ static int maybe_add_string_table (spss_dataset *dset)
 }
 
 static int prepare_gretl_dataset (spss_dataset *dset,
-				  DATAINFO **ppdinfo,
 				  double ***pZ,
+				  DATAINFO **ppdinfo,
 				  PRN *prn)
 {
     DATAINFO *newinfo = datainfo_new();
@@ -1758,11 +1778,11 @@ int sav_get_data (const char *fname,
     }
 
     if (!err) {
-	err = prepare_gretl_dataset(&dset, &newinfo, &newZ, prn);
+	err = prepare_gretl_dataset(&dset, &newZ, &newinfo, prn);
     }	
 
     if (!err) {
-	err = read_sav_data(&dset, &hdr, newZ, newinfo, prn);
+	err = read_sav_data(&dset, &hdr, &newZ, newinfo, prn);
     }
 
     if (err) {
