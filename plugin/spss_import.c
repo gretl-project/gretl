@@ -152,7 +152,6 @@ struct spss_dataset_ {
     struct sav_extension ext;
     gretl_string_table *st;
     char *descrip;
-    int *dellist;
 };
 
 #define CONTD(d,i) (d->vars[i].type == -1)
@@ -1229,7 +1228,7 @@ static int spss_user_missing (spss_var *v, double x)
 {
     int mt = v->miss_type;
     double a, b, c;
-    int n, miss;
+    int n, j, miss;
 
     if (mt == MISSING_NONE) {
 	return 0;
@@ -1261,7 +1260,7 @@ static int spss_user_missing (spss_var *v, double x)
     case MISSING_RANGE_1:
 	a = v->missing[0];
 	b = v->missing[1];
-	c = v->missing[1];
+	c = v->missing[2];
 	break;
     default:
 	break;
@@ -1270,8 +1269,6 @@ static int spss_user_missing (spss_var *v, double x)
     /* FIXME SPSS_NUMERIC vs SPSS_STRING */
 
     if (n > 0) {
-	int j;
-
 	for (j=0; j<n; j++) {
 	    if (x == v->missing[j]) {
 		miss = 1;
@@ -1347,7 +1344,7 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
 		/* Code 252: end of file */
 		if (tmp_beg != tmp) {
 		    err = sav_error("Compressed data is corrupted: ends "
-				     "partway through a case");
+				    "partway through a case");
 		}
 		break;
 	    case 253:
@@ -1496,6 +1493,7 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 			  double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     double *tmp = NULL;
+    int *dellist = NULL;
     int i, j, t, err = 0;
 
     /* temporary storage for one complete observation */
@@ -1530,17 +1528,18 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 	if (!CONTD(dset, i)) {
 	    if (dset->vars[i].n_ok_obs == 0) {
 		fprintf(stderr, "var %d: no valid observations\n", j);
-		gretl_list_append_term(&dset->dellist, j);
+		gretl_list_append_term(&dellist, j);
 	    }
 	    j++;
 	}
     }
 
     /* delete variables for which we got no observations */
-    if (dset->dellist != NULL) {
-	err = dataset_drop_listed_variables(dset->dellist, pZ, 
-					    pdinfo, NULL, NULL);
-	dset->nvars -= dset->dellist[0];
+    if (dellist != NULL) {
+	err = dataset_drop_listed_variables(dellist, pZ, pdinfo, 
+					    NULL, NULL);
+	dset->nvars -= dellist[0];
+	free(dellist);
     }
 
     return err;
@@ -1567,7 +1566,6 @@ static void spss_dataset_init (spss_dataset *dset, FILE *fp)
 
     dset->st = NULL;
     dset->descrip = NULL;
-    dset->dellist = NULL;
 }
 
 static void free_labelset (spss_labelset *lset)
@@ -1596,7 +1594,6 @@ static void free_spss_dataset (spss_dataset *dset)
 
     gretl_string_table_destroy(dset->st);
     free(dset->descrip);
-    free(dset->dellist);
 }
 
 static void print_labelsets (spss_dataset *dset, PRN *prn)
