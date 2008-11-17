@@ -76,6 +76,7 @@ typedef struct spss_labelset_ spss_labelset;
 
 struct spss_var_ {
     int type;
+    int gretl_index;            /* position in gretl dataset */
     int width;                  /* Size of string variables in chars */
     int n_ok_obs;               /* number of non-missing values */
     int fv, nv;                 /* Index into values, number of values */
@@ -124,7 +125,7 @@ struct sysfile_variable {
     /* The rest of the structure varies */
 };
 
-/* Extended info regarding SPSS sav file */
+/* extended info regarding SPSS sav file */
 struct sav_extension {
     /* special constants */
     double sysmis;
@@ -140,18 +141,21 @@ struct sav_extension {
     unsigned char *y;
 };
 
+/* working information on dataset */
 struct spss_dataset_ {
-    FILE *fp;
-    int nvars;
-    int nobs;
-    int swapends;
-    int encoding;
-    spss_var *vars;
-    int nlabelsets;
-    spss_labelset **labelsets;
-    struct sav_extension ext;
-    gretl_string_table *st;
-    char *descrip;
+    FILE *fp;                  /* stream for reading */
+    gretlopt opt;              /* option flags */
+    int nvars;                 /* number of variables (really, 'elements') */
+    int nobs;                  /* number of observations ('cases') */
+    int swapends;              /* reversing endianness? (1/0) */
+    int encoding;              /* FIXME not handled at this point */
+    spss_var *vars;            /* info on individual variables */
+    int nlabelsets;            /* number of sets of value -> label mappings */
+    spss_labelset **labelsets; /* sets of value -> label mappings */
+    struct sav_extension ext;  /* extra info */
+    gretl_string_table *st;    /* string table for string-valued variables */
+    char *descrip;             /* dataset description */
+    int *droplist;             /* list of 'empty' variables to drop */
 };
 
 #define CONTD(d,i) (d->vars[i].type == -1)
@@ -681,7 +685,7 @@ static int read_value_labels (spss_dataset *dset)
 	if (!err) {
 	    lset->varlist[i+1] = idx;
 #if SPSS_DEBUG
-	    fprintf(stderr, " %3d: var_index = %d (%s)\n", i, idx,
+	    fprintf(stderr, " %3d: idx = %d (%s)\n", i, idx,
 		    dset->vars[idx-1].name);
 #endif
 	}
@@ -778,6 +782,7 @@ static int dset_add_variables (spss_dataset *dset)
 
     for (i=0; i<dset->nvars; i++) {
 	dset->vars[i].type = SPSS_NUMERIC;
+	dset->vars[i].gretl_index = -1;
 	dset->vars[i].n_ok_obs = 0;
 	dset->vars[i].miss_type = MISSING_NONE;
 	dset->vars[i].name[0] = '\0';
@@ -958,7 +963,8 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
     struct sysfile_variable sv;
     int long_string_count = 0; /* # of long string continuation
                                   records still expected */
-    int next_value = 0;        /* Index to next 'value' structure */
+    int next_value = 0;        /* index to next 'value' structure */
+    int gidx = 0;              /* gretl index number for variable */
     int i, err;
 
     err = dset_add_variables(dset);
@@ -1002,10 +1008,10 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	   any */
 	if (long_string_count) {
 	    if (sv.type == -1) {
-		/* OK */
 		fprintf(stderr, " long string continuation\n");
 		v->type = -1;
 		long_string_count--;
+		/* note: no further processing here */
 		continue;
 	    } else {
 		err = sav_error("position %d: string variable is missing a "
@@ -1027,6 +1033,7 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 #endif
 
 	if (!err) {
+	    v->gretl_index = ++gidx;
 	    if (sv.type == SPSS_NUMERIC) {
 		v->width = 0;
 		v->offset = next_value++;
@@ -1298,6 +1305,19 @@ static int spss_user_missing (spss_var *v, double x)
     return miss;
 }
 
+static int has_value_labels (spss_dataset *dset, int i)
+{
+    int j;
+
+    for (j=0; j<dset->nlabelsets; j++) {
+	if (in_gretl_list(dset->labelsets[j]->varlist, i)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int buffer_input (struct sav_extension *ext, FILE *fp)
 {
     size_t amt;
@@ -1413,6 +1433,21 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
     return err;
 }
 
+static int value_is_missing (spss_dataset *dset, spss_var *v, double x)
+{
+    if (x == dset->ext.sysmis) {
+	return 1;
+    } else if (spss_user_missing(v, x)) {
+	/* What should we be doing here?  For now, we'll not mark
+	   these values as NA, but neither will we count them as
+	   "OK observations" for accounting purposes. */
+	return 0;
+    } else {
+	v->n_ok_obs += 1;
+	return 0;
+    }
+}
+
 /* Read values for all variables at observation t */
 
 static int sav_read_observation (spss_dataset *dset, 
@@ -1453,11 +1488,10 @@ static int sav_read_observation (spss_dataset *dset,
 	    if (dset->swapends) {
 		reverse_double(xit);
 	    }
-	    if (xit == dset->ext.sysmis || spss_user_missing(v, xit)) {
+	    if (value_is_missing(dset, v, xit)) {
 		Z[j][t] = NADBL;
 	    } else {
 		Z[j][t] = xit;
-		v->n_ok_obs += 1;
 	    }
 	} else {
 	    /* variable is of string type */
@@ -1493,7 +1527,6 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 			  double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     double *tmp = NULL;
-    int *dellist = NULL;
     int i, j, t, err = 0;
 
     /* temporary storage for one complete observation */
@@ -1502,12 +1535,16 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 	err = E_ALLOC;
     }
 
-    /* transcribe varnames and labels */
+    /* transcribe varnames and labels; also mark as discrete any vars
+       for which we got 'value labels' */
     j = 1;
     for (i=0; i<dset->nvars; i++) {
 	if (!CONTD(dset, i)) {
 	    strcpy(pdinfo->varname[j], dset->vars[i].name);
 	    strcpy(VARLABEL(pdinfo, j), dset->vars[i].label);
+	    if (has_value_labels(dset, i)) {
+		set_var_discrete(pdinfo, j, 1);
+	    }
 	    j++;
 	}
     }
@@ -1522,24 +1559,25 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 
     free(tmp);
 
-    /* count valid observations */
+    /* count valid observations, to determine 'empty' variables */
     j = 1;
     for (i=0; i<dset->nvars; i++) {
 	if (!CONTD(dset, i)) {
 	    if (dset->vars[i].n_ok_obs == 0) {
 		fprintf(stderr, "var %d: no valid observations\n", j);
-		gretl_list_append_term(&dellist, j);
+		if (dset->opt & OPT_D) {
+		    gretl_list_append_term(&dset->droplist, j);
+		    dset->vars[i].gretl_index = -1;
+		}
 	    }
 	    j++;
 	}
     }
 
-    /* delete variables for which we got no observations */
-    if (dellist != NULL) {
-	err = dataset_drop_listed_variables(dellist, pZ, pdinfo, 
+    /* delete variables for which we got no observations? */
+    if (dset->droplist != NULL) {
+	err = dataset_drop_listed_variables(dset->droplist, pZ, pdinfo, 
 					    NULL, NULL);
-	dset->nvars -= dellist[0];
-	free(dellist);
     }
 
     return err;
@@ -1548,6 +1586,7 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 static void spss_dataset_init (spss_dataset *dset, FILE *fp)
 {
     dset->fp = fp;
+    dset->opt = OPT_NONE;
     dset->nvars = 0;
     dset->nobs = 0;
     dset->swapends = 0;
@@ -1566,6 +1605,7 @@ static void spss_dataset_init (spss_dataset *dset, FILE *fp)
 
     dset->st = NULL;
     dset->descrip = NULL;
+    dset->droplist = NULL;
 }
 
 static void free_labelset (spss_labelset *lset)
@@ -1594,32 +1634,77 @@ static void free_spss_dataset (spss_dataset *dset)
 
     gretl_string_table_destroy(dset->st);
     free(dset->descrip);
+    free(dset->droplist);
 }
+
+/* eliminate any elements of @list which represent variables
+   that have been dropped because they have no valid values
+*/
+
+static void prune_labellist (spss_dataset *dset, int *list)
+{
+    int i;
+
+    for (i=list[0]; i>0; i--) {
+	if (in_gretl_list(dset->droplist, list[i] - 1)) {
+	    gretl_list_delete_at_pos(list, i);
+	}
+    }
+}
+
+/* Print info on value -> label mappings.  Note that the
+   indices into dset->vars, stored in the lset->varlist's,
+   are 1-based.
+*/
 
 static void print_labelsets (spss_dataset *dset, PRN *prn)
 {
-    int i, j, vj;
+    int i, j, lj;
+
+    pputs(prn, "\nNote: any values marked with a suffix of '[M]' are annotated\n"
+	  "in the SPSS data file as 'missing'.\n");
 
     for (i=0; i<dset->nlabelsets; i++) {
 	spss_labelset *lset = dset->labelsets[i];
+	int *vlist = lset->varlist;
+	spss_var *v;
 
-	pputc(prn, '\n');
-
-	if (lset->varlist[0] == 1) {
-	    vj = lset->varlist[1];
-	    pprintf(prn, "Value -> label mappings for variable %d (%s)\n", 
-		    vj, dset->vars[vj-1].name);
-	} else {
-	    pprintf(prn, "Value -> label mappings for the following %d variables\n", 
-		    lset->varlist[0]);
-	    for (j=1; j<=lset->varlist[0]; j++) {
-		vj = lset->varlist[j];
-		pprintf(prn, " %3d (%s)\n", vj, dset->vars[vj-1].name);
+	if (dset->droplist != NULL) {
+	    prune_labellist(dset, vlist);
+	    if (vlist[0] == 0) {
+		continue;
 	    }
 	}
 
+	pputc(prn, '\n');
+
+	if (vlist[0] == 1) {
+	    /* mapping applies to just one variable */
+	    lj = vlist[1] - 1;
+	    v = &dset->vars[lj];
+	    pprintf(prn, "Value -> label mappings for variable %d (%s)\n", 
+		    v->gretl_index, v->name);
+	} else {
+	    /* mapping applies to two or more variables */
+	    pprintf(prn, "Value -> label mappings for the following %d variables\n", 
+		    vlist[0]);
+	    for (j=1; j<=vlist[0]; j++) {
+		lj = vlist[j] - 1;
+		v = &dset->vars[lj];
+		pprintf(prn, " %3d (%s)\n", v->gretl_index, v->name);
+	    }
+	}
+
+	lj = vlist[1] - 1;
+	v = &dset->vars[lj];
+
 	for (j=0; j<lset->nlabels; j++) {
-	    pprintf(prn, "%10g -> '%s'\n", lset->vals[j], lset->labels[j]);
+	    pprintf(prn, "%10g -> '%s'", lset->vals[j], lset->labels[j]);
+	    if (spss_user_missing(v, lset->vals[j])) {
+		pputs(prn, " [M]\n");
+	    } else {
+		pputc(prn, '\n');
+	    }
 	}
     }
 }
@@ -1767,6 +1852,9 @@ int sav_get_data (const char *fname,
     err = read_sav_header(&dset, &hdr);
 
     if (!err) {
+	if (opt & OPT_D) {
+	    dset.opt |= OPT_D;
+	}
 	read_sav_variables(&dset, &hdr);
     }
 

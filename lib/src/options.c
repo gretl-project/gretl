@@ -232,6 +232,7 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_T, "inst" },
     { OMIT,     OPT_W, "wald" },
     { OPEN,     OPT_C, "coded" },
+    { OPEN,     OPT_D, "drop-empty" },
     { OPEN,     OPT_O, "odbc" },
     { OPEN,     OPT_P, "preserve" },
     { OPEN,     OPT_W, "www" },

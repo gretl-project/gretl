@@ -6924,6 +6924,7 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 static int script_open_append (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo, PRN *prn)
 {
+    gretlopt openopt = OPT_NONE;
     char *line = s->line;
     CMD *cmd = s->cmd;
     char datfile[MAXLEN] = {0};
@@ -6942,6 +6943,11 @@ static int script_open_append (ExecState *s, double ***pZ,
 	    return err;
 	}
     }
+
+    /* "drop-empty" option should be passed on */
+    if (cmd->opt & OPT_D) {
+	openopt |= OPT_D;
+    }     
 
     if (cmd->opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
@@ -6977,22 +6983,22 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(datfile, pZ, pdinfo, OPT_NONE, prn);
+	err = import_csv(datfile, pZ, pdinfo, openopt, prn);
     } else if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(datfile, &paths, pZ, pdinfo, 
-			     OPT_P, prn);
+			     openopt | OPT_P, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(datfile, ftype, cmd->list, cmd->extra, pZ, pdinfo, 
-				 OPT_NONE, prn);
+				 openopt, prn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(datfile, ftype, pZ, pdinfo, OPT_NONE, prn);
+	err = import_other(datfile, ftype, pZ, pdinfo, openopt, prn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(line, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, ftype, &paths, prn);
     } else {
 	err = gretl_get_data(datfile, &paths, pZ, pdinfo, 
-			     OPT_NONE, prn);
+			     openopt, prn);
     }
 
     if (err) {
