@@ -216,9 +216,32 @@ static double *df_gls_ct_cval (int T)
     return df_gls_ct_cvals[i];
 }
 
+static void show_lags_test (MODEL *dfmod, int order, PRN *prn)
+{
+    int *llist = gretl_list_new(order);
+    double F;
+    int i;
+
+    if (llist != NULL) {
+	for (i=0; i<order; i++) {
+	    /* lagged differences */
+	    llist[i+1] = dfmod->list[dfmod->ifc + 3];
+	}
+
+	F = robust_omit_F(llist, dfmod);
+
+	if (!na(F)) {
+	    pprintf(prn, "   Joint significance of lags: F(%d, %d) = %.3f [%.4f]\n",
+		    order, dfmod->dfd, F, snedecor_cdf_comp(order, dfmod->dfd, F));
+	}
+
+	free(llist);
+    }
+}
+
 static void 
 print_adf_results (int order, int auto_order, double DFt, double pv, 
-		   const MODEL *dfmod, int dfnum, const char *vname, 
+		   MODEL *dfmod, int dfnum, const char *vname, 
 		   int *blurb_done, unsigned char flags, int i, 
 		   int niv, int nseas, gretlopt opt, PRN *prn)
 {
@@ -330,6 +353,12 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
     } else {
 	pprintf(prn, "   %s\n", pvstr);
     } 
+
+#if 0 /* not right yet */
+    if (order > 1) {
+	show_lags_test(dfmod, order, prn);
+    }
+#endif
 }
 
 static int auto_adjust_order (int *list, int order_max,
@@ -998,6 +1027,49 @@ coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
     return 0;
 }
 
+/* Engle-Granger: try to ensure a uniform sample for the individual
+   (A)DF tests and the test on the cointegrating regression
+*/
+
+static int coint_set_sample (const int *list, int nv, int order,
+			     double **Z, DATAINFO *pdinfo)
+{
+    int anymiss;
+    int i, t;
+
+    for (t=pdinfo->t1; t<pdinfo->t2; t++) {
+	anymiss = 0;
+	for (i=1; i<=nv; i++) {
+	    if (na(Z[list[i]][t])) {
+		anymiss = 1;
+		break;
+	    }
+	}
+	if (!anymiss) {
+	    break;
+	}
+    }
+
+    pdinfo->t1 = t + order + 1;
+    
+    for (t=pdinfo->t2; t>pdinfo->t1; t--) {
+	anymiss = 0;
+	for (i=1; i<=nv; i++) {
+	    if (na(Z[list[i]][t])) {
+		anymiss = 1;
+		break;
+	    }
+	}
+	if (!anymiss) {
+	    break;
+	}
+    }
+
+    pdinfo->t2 = t;
+
+    return 0;
+}
+
 /**
  * coint:
  * @order: lag order for the test.
@@ -1005,7 +1077,8 @@ coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @opt: if OPT_N, do not an include a constant in the
- *       cointegrating regression.
+ *       cointegrating regression, if OPT_S, skip
+ *       DF tests for individual variables.
  * @prn: gretl printing struct.
  *
  * Carries out the Engle-Granger test for cointegration.  
@@ -1016,6 +1089,8 @@ coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
 int coint (int order, const int *list, double ***pZ, 
 	   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
     gretlopt adf_opt = OPT_C;
     MODEL cmod;
     int detcode = UR_CONST;
@@ -1038,6 +1113,7 @@ int coint (int order, const int *list, double ***pZ,
 
     if (!(opt & OPT_S)) {
 	/* test all candidate vars for unit root */
+	coint_set_sample(clist, nv, order, *pZ, pdinfo);
 	for (i=1; i<=nv; i++) {
 	    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		    step++, pdinfo->varname[clist[i]]);
@@ -1086,6 +1162,9 @@ int coint (int order, const int *list, double ***pZ,
     if (k > 0) {
 	dataset_drop_variable(k, pZ, pdinfo);
     }
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
 
     return err;
 }
