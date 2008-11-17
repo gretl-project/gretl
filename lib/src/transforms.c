@@ -165,10 +165,18 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
     }
 
     if (pv > 0) {
-	if (parent != NULL) {
-	    *parent = pv;
+	/* if the lag has a "custom" name, don't assign it
+	   as child to parent variable pv */
+	const char *cname = pdinfo->varname[v];
+	const char *pname = pdinfo->varname[pv];
+	int n = strcspn(cname, "_");
+
+	if (n > 0 && !strncmp(cname, pname, n)) {
+	    if (parent != NULL) {
+		*parent = pv;
+	    }
+	    ret = 1;
 	}
-	ret = 1;
     }
 
     return ret;
