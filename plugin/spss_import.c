@@ -149,6 +149,7 @@ struct spss_dataset_ {
     int nobs;                  /* number of observations ('cases') */
     int swapends;              /* reversing endianness? (1/0) */
     int encoding;              /* FIXME not handled at this point */
+    int max_sv;                /* index of highest-numbered string variable */
     spss_var *vars;            /* info on individual variables */
     int nlabelsets;            /* number of sets of value -> label mappings */
     spss_labelset **labelsets; /* sets of value -> label mappings */
@@ -1523,6 +1524,21 @@ static int sav_read_observation (spss_dataset *dset,
     return err;
 }
 
+static int do_drop_empty (spss_dataset *dset)
+{
+    if (dset->droplist != NULL) {
+	int mindrop = dset->droplist[1];
+	int max_sv = dset->vars[dset->max_sv].gretl_index;
+
+	if (mindrop > max_sv) {
+	    /* no collision with string table: OK to drop vars */
+	    return 1;
+	}
+    } 
+
+    return 0;
+}
+
 static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 			  double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
@@ -1574,8 +1590,12 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 	}
     }
 
-    /* delete variables for which we got no observations? */
-    if (dset->droplist != NULL) {
+    /* delete variables for which we got no observations? (this is
+       governed by OPT_D, and whether or not we have constructed
+       a 'string table' that would get messed up by dropping
+       variables)
+    */
+    if (do_drop_empty(dset)) {
 	err = dataset_drop_listed_variables(dset->droplist, pZ, pdinfo, 
 					    NULL, NULL);
     }
@@ -1591,6 +1611,7 @@ static void spss_dataset_init (spss_dataset *dset, FILE *fp)
     dset->nobs = 0;
     dset->swapends = 0;
     dset->encoding = 0;
+    dset->max_sv = -1;
     dset->vars = NULL;
     dset->nlabelsets = 0;
     dset->labelsets = NULL;
@@ -1741,6 +1762,7 @@ static int maybe_add_string_table (spss_dataset *dset)
 
     for (i=0; i<dset->nvars; i++) {
 	if (dset->vars[i].type > 0) {
+	    dset->max_sv = i;
 	    nsv++;
 	}
     }
@@ -1756,7 +1778,7 @@ static int maybe_add_string_table (spss_dataset *dset)
 	} else {
 	    for (i=0; i<dset->nvars; i++) {
 		if (dset->vars[i].type > 0) {
-		    list[j++] = i + 1;
+		    list[j++] = dset->vars[i].gretl_index;
 		}
 	    }
 	    dset->st = string_table_new_from_cols_list(list);
