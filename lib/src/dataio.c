@@ -639,6 +639,7 @@ static int get_dot_pos (const char *s)
 static int 
 real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 {
+    int handled = 0;
     int t, n = -1;
 
     /* first check if this is calendar data and if so,
@@ -672,28 +673,29 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	} else {
 	    /* automatic calendar dates */
 	    n = calendar_obs_number(date, pdinfo);
+	    handled = 1;
 	} 
-    } 
-
-    /* now try treating as an undated time series */
-
-    else if (dataset_is_daily(pdinfo) ||
-	     dataset_is_weekly(pdinfo)) {
+    } else if (dataset_is_daily(pdinfo) ||
+	       dataset_is_weekly(pdinfo)) {
 #if DATES_DEBUG
-	fprintf(stderr, "dateton: treating as undated time series\n");
+	fprintf(stderr, "dateton: trying undated time series\n");
 #endif
-	if (sscanf(date, "%d", &t) && t > 0) {
+	t = positive_int_from_string(date);
+	if (t > 0) {
 	    n = t - 1;
+	    handled = 1;
 	}
-    } 
-
-    /* string observation markers other than dates? */
-
-    else if (pdinfo->markers && pdinfo->S != NULL) {
+    } else if (dataset_is_decennial(pdinfo)) {
+	t = positive_int_from_string(date);
+	if (t > 0) {
+	    n = (t - pdinfo->sd0) / 10;
+	    handled = 1;
+	}	
+    } else if (pdinfo->markers && pdinfo->S != NULL) {
 	char test[OBSLEN];
 
 #if DATES_DEBUG
-	fprintf(stderr, "dateton: working from marker strings\n");
+	fprintf(stderr, "dateton: checking marker strings\n");
 #endif
 	maybe_unquote_label(test, date);
 	for (t=0; t<pdinfo->n; t++) {
@@ -703,22 +705,14 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	    }
 	}
 	/* else maybe just a straight obs number */
-	if (sscanf(date, "%d", &t) && t > 0) {
+	t = positive_int_from_string(date);
+	if (t > 0) {
 	    n = t - 1;
+	    handled = 1;
 	}
     }
 
-    /* decennial data? */
-
-    else if (dataset_is_decennial(pdinfo)) {
-	if (sscanf(date, "%d", &t) && t > 0) {
-	    n = (t - pdinfo->sd0) / 10;
-	}	
-    }
-
-    /* treat as "regular" numeric obs number or date */
-
-    else {
+    if (!handled) {
 	int dotpos1, dotpos2;
 
 #if DATES_DEBUG

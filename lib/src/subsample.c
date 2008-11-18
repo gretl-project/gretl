@@ -1373,8 +1373,8 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "set_sample: line='%s', nf=%d, pdinfo=%p\n", 
 	    line, nf, (void *) pdinfo);
     if (pdinfo != NULL) {
-	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d\n",
-		pdinfo->v, pdinfo->n);
+	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d, pd = %d\n",
+		pdinfo->v, pdinfo->n, pdinfo->pd);
     }
 #endif
 
@@ -1389,6 +1389,10 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
     }
 
     sample_range_get_extrema(pdinfo, &tmin, &tmax);
+
+#if SUBDEBUG
+    fprintf(stderr, "sample extrema: lo = %d, hi = %d\n", tmin, tmax);
+#endif
 	
     if (nf == 1) {
 	if (sscanf(line, "%10s", newstart) != 1) {

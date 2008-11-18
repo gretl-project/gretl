@@ -1669,7 +1669,7 @@ static int unit_get_last_obs (int u)
 	}
     }
 
-    return 0;
+    return datainfo->n - 1;
 }
 
 static gboolean
