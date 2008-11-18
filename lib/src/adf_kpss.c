@@ -216,7 +216,7 @@ static double *df_gls_ct_cval (int T)
     return df_gls_ct_cvals[i];
 }
 
-static void show_lags_test (MODEL *dfmod, int order, PRN *prn)
+static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 {
     int *llist = gretl_list_new(order);
     double F;
@@ -225,14 +225,14 @@ static void show_lags_test (MODEL *dfmod, int order, PRN *prn)
     if (llist != NULL) {
 	for (i=0; i<order; i++) {
 	    /* lagged differences */
-	    llist[i+1] = dfmod->list[dfmod->ifc + 3];
+	    llist[i+1] = pmod->list[pmod->ifc + 3 + i];
 	}
 
-	F = robust_omit_F(llist, dfmod);
+	F = robust_omit_F(llist, pmod);
 
 	if (!na(F)) {
-	    pprintf(prn, "   Joint significance of lags: F(%d, %d) = %.3f [%.4f]\n",
-		    order, dfmod->dfd, F, snedecor_cdf_comp(order, dfmod->dfd, F));
+	    pprintf(prn, "   lagged differences: F(%d, %d) = %.3f [%.4f]\n",
+		    order, pmod->dfd, F, snedecor_cdf_comp(order, pmod->dfd, F));
 	}
 
 	free(llist);
@@ -320,17 +320,21 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	pputc(prn, '\n');
     }
 
-    if (!(flags & ADF_EG_TEST)) {
-	pprintf(prn, "   %s: %s\n", _("model"), 
-		(order > 0)? aug_models[i] : models[i]);
-	if (auto_order) {
-	    pprintf(prn, "   %s %d\n", _("lag order:"), order);
-	}
-	if (!na(dfmod->rho)) {
-	    pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
-		    dfmod->rho);
-	}
+    pprintf(prn, "   %s: %s\n", _("model"), 
+	    (order > 0)? aug_models[i] : models[i]);
+
+    if (auto_order) {
+	pprintf(prn, "   %s %d\n", _("lag order:"), order);
     }
+
+    if (!na(dfmod->rho)) {
+	pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
+		dfmod->rho);
+    }
+
+    if (order > 1) {
+	show_lags_test(dfmod, order, prn);
+    }	
 
     if (opt & OPT_G) {
 	strcpy(taustr, "tau");
@@ -353,12 +357,6 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
     } else {
 	pprintf(prn, "   %s\n", pvstr);
     } 
-
-#if 0 /* not right yet */
-    if (order > 1) {
-	show_lags_test(dfmod, order, prn);
-    }
-#endif
 }
 
 static int auto_adjust_order (int *list, int order_max,
@@ -709,7 +707,7 @@ static int real_adf_test (int varno, int order, int niv,
 		gretl_model_set_double(&dfmod, "dfpval", pv);
 	    }
 	    printmodel(&dfmod, pdinfo, OPT_NONE, prn);
-	} else if (!(opt & OPT_Q)) {
+	} else if (!(opt & OPT_Q) && !(flags & ADF_EG_RESIDS)) {
 	    pputc(prn, '\n');
 	}
 
@@ -1154,6 +1152,7 @@ int coint (int order, const int *list, double ***pZ,
 		 "(a) The unit-root hypothesis is not rejected for the individual"
 		 " variables.\n(b) The unit-root hypothesis is rejected for the "
 		 "residuals (uhat) from the \n    cointegrating regression.\n"));
+    pputc(prn, '\n');
 
  bailout:
     
