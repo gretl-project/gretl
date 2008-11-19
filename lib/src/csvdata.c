@@ -515,6 +515,7 @@ int get_date_order (int f0, int fn)
 	/* first field must be day */
 	return DDMMYYYY;
     } else {
+	/* could be wrong here */
 	return MMDDYYYY;
     }
 }
