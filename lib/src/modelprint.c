@@ -2820,6 +2820,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
  close_format:
 
+    if (opt & OPT_V) {
+	ols_print_anova(pmod, prn);
+    }
+
     if (opt & OPT_O) {
 	outcovmx(pmod, pdinfo, prn);
     }
@@ -4606,7 +4610,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 
     if (pmod->ci != OLS || !pmod->ifc ||
 	na(pmod->ess) || na(pmod->tss)) {
-	return 1;
+	return E_NOTIMP;
     }
 
     pprintf(prn, "%s:\n\n", _("Analysis of Variance"));

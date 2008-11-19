@@ -4299,6 +4299,7 @@ void do_anova (GtkAction *action, gpointer p)
     if (bufopen(&prn)) return;
 
     err = ols_print_anova(pmod, prn);
+
     if (err) {
 	gui_errmsg(err);
     } else {

@@ -5621,6 +5621,10 @@
 	  <effect>suppress printing of results</effect>
         </option>
         <option>
+	  <flag>--anova</flag>
+	  <effect>print an ANOVA table</effect>
+        </option>
+        <option>
 	  <flag>--no-df-corr</flag>
 	  <effect>suppress degrees of freedom correction</effect>
         </option>
