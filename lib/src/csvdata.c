@@ -278,7 +278,7 @@ static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
 
 #define DAY_DEBUG 1
 
-static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
+static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn)
 {
     int T = pdinfo->n;
     char *lbl1 = pdinfo->S[0];
@@ -309,18 +309,22 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 
     if (!err) {
 	ed2 = get_epoch_day(lbl2);
-	if (ed2 <= ed1) {
+	if (ed2 < 0) {
 	    err = 1;
+	} else if (ed2 < ed1) {
+	    pdinfo->sd0 = ed2;
+	    *reversed = 1;
 	} else {
 	    pdinfo->sd0 = ed1;
 	}
     }
 
     if (!err) {
-	int n1 = calendar_obs_number(lbl1, pdinfo);
-	int n2 = calendar_obs_number(lbl2, pdinfo);
+	int n1 = calendar_obs_number((*reversed)? lbl2 : lbl1, pdinfo);
+	int n2 = calendar_obs_number((*reversed)? lbl1 : lbl2, pdinfo);
 
 	fulln = n2 - n1 + 1;
+
 	if (T > fulln) {
 	    err = 1;
 	} else {
@@ -346,18 +350,21 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
     }
 
     nbak = 0;
+
     for (t=0; t<pdinfo->n && !err; t++) {
-	n = calendar_obs_number(pdinfo->S[t], pdinfo);
+	int s = (*reversed)? (pdinfo->n - 1 - t) : t;
+
+	n = calendar_obs_number(pdinfo->S[s], pdinfo);
 	if (n < t) {
 	    pprintf(prn, "Daily dates error at t = %d:\n"
 		    "  calendar_obs_number() for '%s' = %d but t = %d\n", 
 		    t, pdinfo->S[t], n, t);
 	    err = 1;
 	} else if (n > fulln - 1) {
-	    pprintf(prn, "Error: date '%s' out of bounds\n", pdinfo->S[t]);
+	    pprintf(prn, "Error: date '%s' out of bounds\n", pdinfo->S[s]);
 	    err = 1;
 	} else if (nbak > 0 && n == nbak) {
-	    pprintf(prn, "Error: date '%s' is repeated\n", pdinfo->S[t]);
+	    pprintf(prn, "Error: date '%s' is repeated\n", pdinfo->S[s]);
 	    err = 1;
 	}
 	nbak = n;
@@ -368,8 +375,8 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 	pdinfo->sd0 = oldsd0;
 	pdinfo->structure = CROSS_SECTION;
     } else {
-	strcpy(pdinfo->stobs, lbl1);
-	strcpy(pdinfo->endobs, lbl2);
+	strcpy(pdinfo->stobs, (*reversed)? lbl2 : lbl1);
+	strcpy(pdinfo->endobs, (*reversed)? lbl1 : lbl2);
 	pdinfo->t2 = pdinfo->n - 1;
 	if (nmiss > 0 && *pd == 0) {
 	    pdinfo->markers = DAILY_DATE_STRINGS;
@@ -377,8 +384,8 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
     }
 
 #if DAY_DEBUG
-    fprintf(stderr, "check_daily_dates: pd = %d, err = %d\n", 
-	    pdinfo->pd, err);
+    fprintf(stderr, "check_daily_dates: pd = %d, reversed = %d, err = %d\n", 
+	    pdinfo->pd, *reversed, err);
 #endif
 
     return (err)? -1 : pdinfo->pd;
@@ -554,6 +561,28 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
     return err;
 }
 
+static void reverse_data (double **Z, DATAINFO *pdinfo)
+{
+    char tmp[OBSLEN];
+    double x;
+    int T = pdinfo->n / 2;
+    int i, t, s;
+
+    for (t=0; t<T; t++) {
+	s = pdinfo->n - 1 - t;
+	for (i=1; i<pdinfo->v; i++) {
+	    x = Z[i][t];
+	    Z[i][t] = Z[i][s];
+	    Z[i][s] = x;
+	}
+	if (pdinfo->S != NULL) {
+	    strcpy(tmp, pdinfo->S[t]);
+	    strcpy(pdinfo->S[t], pdinfo->S[s]);
+	    strcpy(pdinfo->S[s], tmp);
+	}
+    }
+}
+
 static int 
 csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr, 
 		      PRN *prn)
@@ -562,6 +591,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
     char sep1[2], sep2[2];
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
+    int reversed = 0;
     int dorder = 0;
 
     if (sscanf(lbl1, "%d%1[/-.]%d%1[/-.]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
@@ -600,8 +630,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
 	    yr2 = d2[2];
 	}		
 	    
-	if (yr2 >= yr1 && 
-	    mon1 > 0 && mon1 < 13 &&
+	if (mon1 > 0 && mon1 < 13 &&
 	    mon2 > 0 && mon2 < 13 && 
 	    day1 > 0 && day1 < 32 &&
 	    day2 > 0 && day2 < 32) {
@@ -612,7 +641,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
 		}
 	    }
 	    pprintf(prn, "Could be %s - %s\n", lbl1, lbl2);
-	    ret = check_daily_dates(pdinfo, &pd, prn);
+	    ret = check_daily_dates(pdinfo, &pd, &reversed, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
 		    if (csv_weekly_data(pZ, pdinfo)) {
@@ -632,6 +661,9 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
 						  prn);
 		}
 	    } 
+	    if (ret > 0 && reversed) {
+		reverse_data(*pZ, pdinfo);
+	    }
 	    return ret;
 	}
     } 

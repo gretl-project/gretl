@@ -2458,6 +2458,99 @@ static void print_ll (const MODEL *pmod, PRN *prn)
     }
 }
 
+/* similar to eviews but a little better, e.g.:
+
+  R-squared            0.323733   Mean dependent var   0.095569
+  Adjusted R-squared   0.295555   S.D. dependent var   0.052215
+  S.E. of regression   0.043825   Akaike criterion    -171.3710
+  Sum squared resid    0.092189   Schwarz criterion   -165.5755
+  Log-likelihood       88.68548   F(2, 48)             11.48893
+  Durbin-Watson        1.908073   P-value(F)           0.000084
+*/
+
+/* Try to pack as much as we can of a given number into a fixed width
+   of 8 characters (a leading minus, if needed, is a ninth).
+*/
+
+static char *print_eight (char *s, double x)
+{
+    char tmp[16];
+    double ax;
+
+    if (na(x)) {
+	sprintf(s, "%9s", "NA");
+	return s;
+    }
+
+    strcpy(s, (x < 0)? "-" : " ");
+    ax = fabs(x);
+
+    if (ax == 0.0 || ax == 1.0) {
+	sprintf(tmp, "%8.6f", ax);
+    } else if (ax < 0.00001 || ax > 99999999) {
+	char *p;
+
+	sprintf(tmp, "%#.3g", ax);
+	p = strrchr(tmp, (ax < 1)? '-' : '+');
+	if (p == NULL) {
+	    sprintf(tmp, "%8.6f", ax);
+	} else if (strlen(p) == 4) {
+	    if (*(p+1) == '0') {
+		memcpy(p+1, p+2, 3);
+	    } else {
+		sprintf(tmp, "%#.2g", ax);
+	    }
+	}
+    } else {
+	int lfx = ceil(log10(floor(ax)));
+
+	if (ax > 1 && lfx == 0) {
+	    lfx = 1;
+	} else if (lfx > 7) {
+	    lfx = 7;
+	}
+	sprintf(tmp, "%8.*f", 8 - lfx - 1, ax);
+    }
+
+    strcat(s, tmp);
+
+    return s;
+}   
+
+static void compact_middle_table (MODEL *pmod, PRN *prn)
+{
+    char x1[12], x2[12], fstr[32];
+    const char *rsq1, *rsq2;
+    double cR2, pvF;
+
+    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
+    pvF = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+
+    if (gretl_model_get_int(pmod, "uncentered")) {
+	rsq1 = N_("Uncentered R-squared");
+	rsq2 = N_("Centered R-squared");
+	cR2 = gretl_model_get_double(pmod, "centered-R2");
+    } else {
+	rsq1 = N_("R-squared");
+	rsq2 = N_("Adjusted R-squared");
+	cR2 = pmod->adjrsq;
+    }
+
+    pprintf(prn, "%-20s %f   %-20s%s\n", _(rsq1), pmod->rsq,
+	    _("Mean dependent var"), print_eight(x2, pmod->ybar));
+    pprintf(prn, "%-20s%s   %-20s%s\n", _(rsq2), print_eight(x1, cR2),
+	    _("S.D. dependent var"), print_eight(x2, pmod->sdy));
+    pprintf(prn, "%-20s%s   %-20s%s\n", _("S.E. of regression"), 
+	    print_eight(x1, pmod->sigma),
+	    _("Akaike criterion"), print_eight(x2, pmod->criterion[C_AIC]));
+    pprintf(prn, "%-20s%s   %-20s%s\n", _("Sum squared resid"), print_eight(x1, pmod->ess),
+	    _("Schwarz criterion"), print_eight(x2, pmod->criterion[C_BIC]));
+    pprintf(prn, "%-20s%s   %-20s%s\n", _("Log-likelihood"), print_eight(x1, pmod->lnL),
+	    fstr, print_eight(x2, pmod->fstt));
+    pprintf(prn, "%-20s%s   %-20s%s\n\n", _("Durbin-Watson"), 
+	    print_eight(x1, pmod->dw), _("P-value(F)"), print_eight(x2, pvF));
+}
+
 static char active_decpoint (void)
 {
     char test[4];
@@ -2486,6 +2579,8 @@ static char active_decpoint (void)
 #define non_weighted_panel(m) (m->ci == PANEL && \
 			       !gretl_model_get_int(m, "unit-weights"))
 
+#define COMPACT_MIDDLE 0
+
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
@@ -2504,11 +2599,18 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 		PRN *prn)
 {
     int binary = binary_model(pmod);
+    int compact = 0;
     int gotnan = 0;
 
     if (prn == NULL || (opt & OPT_Q)) {
 	return 0;
     }
+
+#if COMPACT_MIDDLE
+    if (plain_format(prn) && !na(pmod->lnL) && !na(pmod->fstt)) {
+	compact = 1;
+    }
+#endif
 
     if (csv_format(prn)) {
 	if (active_decpoint() == ',') {
@@ -2695,6 +2797,15 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	|| pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| non_weighted_panel(pmod)
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
+
+	if (compact) {
+	    compact_middle_table(pmod, prn);
+	    if (random_effects_model(pmod)) {
+		panel_variance_lines(pmod, prn);
+	    }
+	    goto close_format;
+	} 
+
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	if (essline(pmod, prn)) {
