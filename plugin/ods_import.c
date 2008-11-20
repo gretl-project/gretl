@@ -1206,6 +1206,9 @@ static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	tprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	ts_check(sheet, tprn);
+	if (sheet->flags & BOOK_DATA_REVERSED) {
+	    reverse_data(sheet->Z, sheet->dinfo, tprn);
+	}
 	gretl_print_destroy(tprn);
     }
 

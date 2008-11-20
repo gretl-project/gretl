@@ -829,6 +829,7 @@ int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo,
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[n - 1];
     int len1 = strlen(lbl1);
+    int pd = -1;
 
     if (skipstr != NULL && *skipstr != '\0') {
 	return time_series_label_check(pdinfo, *reversed, skipstr, prn);
@@ -853,7 +854,7 @@ int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo,
 
     if (len1 == 8 || len1 == 10) {
 	/* daily data? */
-	return csv_daily_date_check(pZ, pdinfo, reversed, skipstr, prn);
+	pd = csv_daily_date_check(pZ, pdinfo, reversed, skipstr, prn);
     } else if (len1 >= 4) {
 	/* annual, quarterly, monthly? */
 	if (isdigit((unsigned char) lbl1[0]) &&
@@ -861,13 +862,19 @@ int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo,
 	    isdigit((unsigned char) lbl1[2]) && 
 	    isdigit((unsigned char) lbl1[3])) {
 	    *reversed = dates_maybe_reversed(lbl1, lbl2, prn);
-	    return time_series_label_check(pdinfo, *reversed, skipstr, prn);
+	    pd = time_series_label_check(pdinfo, *reversed, skipstr, prn);
 	} else {
 	    pputs(prn, M_("   definitely not a four-digit year\n"));
 	}
     }
 
-    return -1;
+    if (pd <= 0 && *reversed) {
+	/* give up the "reversed" notion if we didn't get
+	   a workable time-series interpretation */
+	*reversed = 0;
+    }
+
+    return pd;
 }
 
 /* The function below checks for the maximum line length in the given

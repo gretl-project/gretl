@@ -19,9 +19,11 @@
 
 #include "libgretl.h"
 #include "matrix_extra.h"
+#include "gretl_scalar.h"
 #include "forecast.h"
 #include "var.h"
 #include "system.h"
+#include "libset.h"
 
 #define ARF_DEBUG 0
 
@@ -1875,14 +1877,36 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     return err;
 }
 
+static int fcast_get_limit (const char *s, double ***pZ, DATAINFO *pdinfo)
+{
+    double x;
+    int t, err = 0;
+
+    if (gretl_is_scalar(s)) {
+	x = gretl_scalar_get_value(s);
+    } else {
+	x = generate_scalar(s, pZ, pdinfo, &err);
+    }
+
+    if (x < 1 || x > pdinfo->n) {
+	gretl_errmsg_set(_("Observation number out of bounds"));
+	t = -1;
+    } else {
+	t = x - 1;
+    }
+
+    return t;
+}
+
 static int parse_forecast_string (const char *s, 
 				  gretlopt opt, 
 				  int t2est,
-				  const DATAINFO *pdinfo,
+				  double ***pZ,
+				  DATAINFO *pdinfo,
 				  int *pt1, int *pt2,
 				  char *vname)
 {
-    char t1str[16], t2str[16];
+    char t1str[32], t2str[32];
     int t1 = 0, t2 = 0;
     int n, err = 0;
 
@@ -1894,9 +1918,9 @@ static int parse_forecast_string (const char *s,
 
     *vname = '\0';
 
-    n = sscanf(s, "%15s %15s %15s", t1str, t2str, vname);
+    n = sscanf(s, "%31s %31s %15s", t1str, t2str, vname);
     if (n == 1) {
-	strcpy(vname, t1str);
+	strncat(vname, t1str, VNAMELEN -1);
 	n = 0;
     } else if (n == 3) {
 	n = 2;
@@ -1904,7 +1928,13 @@ static int parse_forecast_string (const char *s,
 
     if (n == 2) {
 	t1 = dateton(t1str, pdinfo);
+	if (t1 < 0) {
+	    t1 = fcast_get_limit(t1str, pZ, pdinfo);
+	}
 	t2 = dateton(t2str, pdinfo);
+	if (t2 < 0) {
+	    t2 = fcast_get_limit(t2str, pZ, pdinfo);
+	}	
 	if (t1 < 0 || t2 < 0 || t2 < t1) {
 	    err = E_DATA;
 	}
@@ -2292,14 +2322,16 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
 
 	strcpy(VARLABEL(pdinfo, v), _("predicted values"));
 
-	if (v < oldv) {
-	    pprintf(prn, _("Replaced series %s (ID %d)"),
-		    vname, v);
-	} else {
-	    pprintf(prn, _("Generated series %s (ID %d)"),
-		    vname, v);
+	if (gretl_messages_on()) {
+	    if (v < oldv) {
+		pprintf(prn, _("Replaced series %s (ID %d)"),
+			vname, v);
+	    } else {
+		pprintf(prn, _("Generated series %s (ID %d)"),
+			vname, v);
+	    }
+	    pputc(prn, '\n');
 	}
-	pputc(prn, '\n');
     }
 
     return err;
@@ -2325,7 +2357,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	return E_DATA;
     }
 
-    err = parse_forecast_string(str, opt, pmod->t2, pdinfo, 
+    err = parse_forecast_string(str, opt, pmod->t2, pZ, pdinfo, 
 				&t1, &t2, vname);
     if (err) {
 	return err;
@@ -2428,12 +2460,13 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 }
 
 static int system_do_forecast (const char *str, void *ptr, int type,
-			       const double **Z, DATAINFO *pdinfo, 
+			       double ***pZ, DATAINFO *pdinfo, 
 			       gretlopt opt, PRN *prn)
 {
     char vname[VNAMELEN];
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
+    const double **Z;
     const int *ylist = NULL;
     const gretl_matrix *F = NULL;
     int t1 = 0, t2 = 0;
@@ -2458,7 +2491,9 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	ylist = sys->ylist;
     }
 
-    err = parse_forecast_string(str, opt, t2est, pdinfo, &t1, &t2, vname);
+    err = parse_forecast_string(str, opt, t2est, pZ, pdinfo, &t1, &t2, vname);
+
+    Z = (const double **) *pZ;
 
     if (!err) {
 	if (var != NULL) {
@@ -2580,9 +2615,7 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
     if (type == GRETL_OBJ_EQN) {
 	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
     } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
-	err = system_do_forecast(str, ptr, type, 
-				 (const double **) *pZ,
-				 pdinfo, opt, prn);
+	err = system_do_forecast(str, ptr, type, pZ, pdinfo, opt, prn);
     } else {
 	err = E_DATA;
     }

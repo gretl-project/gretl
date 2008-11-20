@@ -754,7 +754,7 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 
     if (!nolimit && pdinfo->n > 0 && n >= pdinfo->n) {
 	fprintf(stderr, "n = %d, pdinfo->n = %d: out of bounds\n", n, pdinfo->n);
-	sprintf(gretl_errmsg, _("Observation number out of bounds"));
+	gretl_errmsg_set(_("Observation number out of bounds"));
 	n = -1; 
     }
 

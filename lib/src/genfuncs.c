@@ -424,7 +424,7 @@ int fracdiff_series (const double *x, double *y, double d,
  * boxcox_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @l: lambda parameter.
+ * @d: lambda parameter.
  * @pdinfo: data set information.
  *
  * Calculates the Box-Cox transformation
@@ -434,42 +434,22 @@ int fracdiff_series (const double *x, double *y, double d,
  */
 
 int boxcox_series (const double *x, double *y, double d,
-		     const DATAINFO *pdinfo)
+		   const DATAINFO *pdinfo)
 {
-    int t, T;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
-    int err;
+    int t;
 
-#if 0
-    fprintf(stderr, "Doing boxcox_series, with lambda = %g\n", d);
-#endif
-
-    err = array_adjust_t1t2(x, &t1, &t2);
-    
-    T = t2 - t1 + 1;
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (t >= t1 && t <= t2) {
-	    y[t] = x[t];
-	} else {
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(x[t])) {
 	    y[t] = NADBL;
+	} else if (d == 0) {
+	    y[t] = (x[t] > 0)? log(x[t]) : NADBL; 
+	} else {
+	    y[t] = (pow(x[t], d) - 1) / d;
 	}
-    }   
-
-    for (t=t1; t<=t2; t++) {
-        if (!na(x[t])) {
-	    if (d == 0) {
-                y[t] = (x[t] > 0)? log(x[t]) : NADBL; 
-	    } else {
-	        y[t]= (pow(x[t],d) - 1)/d;
-	    }
-        }
-    }
+    } 
     
     return 0;
 }
-
 
 int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
 {

@@ -1572,6 +1572,10 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	}
     }
 
+    if (book->flags & BOOK_DATA_REVERSED) {
+	reverse_data(newZ, newinfo, prn);
+    }
+
     err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
 
     if (!err && gui) {

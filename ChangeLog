@@ -28,6 +28,10 @@ version 1.7.10, in progress
 - Improve error-reporting in relation to GUI genr dialog
 - Make parsing of input from GUI ARMA dialog more robust
 - Add importer for SPSS .sav files
+- CSV importer: try to handle time-series data in reverse
+  chronological order
+- "fcast": allow variables for the startobs and endobs
+  arguments
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
