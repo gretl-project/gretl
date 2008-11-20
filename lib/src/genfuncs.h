@@ -43,6 +43,9 @@ int resample_series (const double *x, double *y,
 int fracdiff_series (const double *x, double *y, double d,
 		     const DATAINFO *pdinfo);
 
+int boxcox_series (const double *x, double *y, double l,
+		     const DATAINFO *pdinfo);
+
 int filter_series(const double *x, double *y, const DATAINFO *pdinfo, 
 		  gretl_matrix *A, gretl_matrix *C, double y0);
 

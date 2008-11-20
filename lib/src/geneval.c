@@ -3734,6 +3734,9 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_FRACDIFF:
 	    p->err = fracdiff_series(x, y, r->v.xval, p->dinfo);
 	    break;
+        case F_BOXCOX:
+	    p->err = boxcox_series(x, y, r->v.xval, p->dinfo);
+	    break;
 	case F_DIFF:
 	case F_LDIFF:
 	case F_SDIFF:
@@ -5563,6 +5566,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HPFILT:
     case F_BKFILT:
     case F_FRACDIFF:
+    case F_BOXCOX:
     case F_PNOBS:
     case F_PMIN:
     case F_PMAX:

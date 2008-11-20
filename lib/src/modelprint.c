@@ -2489,16 +2489,6 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 #define non_weighted_panel(m) (m->ci == PANEL && \
 			       !gretl_model_get_int(m, "unit-weights"))
 
-/* similar to eviews but a little better, e.g.:
-
-  R-squared            0.323733   Mean dependent var   0.095569
-  Adjusted R-squared   0.295555   S.D. dependent var   0.052215
-  S.E. of regression   0.043825   Akaike criterion    -171.3710
-  Sum squared resid    0.092189   Schwarz criterion   -165.5755
-  Log-likelihood       88.68548   F(2, 48)             11.48893
-  Durbin-Watson        1.908073   P-value(F)           0.000084
-*/
-
 /* Try to pack as much as we can of a given number into a fixed width
    of 8 characters (a leading minus, if needed, is a ninth).
 */

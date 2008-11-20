@@ -191,6 +191,7 @@ struct str_table funcs[] = {
     { F_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
     { F_BKFILT,   "bkfilt" },    /* Baxter-King filter */
     { F_FRACDIFF, "fracdiff" },  /* fractional difference */
+    { F_BOXCOX,   "boxcox" },    /* Box-Cox transformation */
     { F_COV,      "cov" },
     { F_COR,      "corr" },
     { F_MOVAVG,   "movavg" },

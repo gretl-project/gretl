@@ -250,6 +250,7 @@ enum {
     F_RUNIFORM,
     F_RNORMAL,
     F_FRACDIFF,
+    F_BOXCOX,
     F_ZEROS,
     F_ONES,
     F_SEQ,

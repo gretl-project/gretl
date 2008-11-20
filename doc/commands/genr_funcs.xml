@@ -616,6 +616,30 @@
 	</para>
       </description>
     </function>
+    
+    <function name="boxcox" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="scalar">d</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns the Box&ndash;Cox transformation with parameter
+	  <argname>d</argname> for the positive series <argname>y</argname>.
+	</para>	  
+	<para context="tex">
+	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
+	  {\rm if}\quad d\neq 0 \\ \log (y_t) &amp; {\rm if}\quad d=0
+	  \end{array} \right. \]
+	</para>
+	<para context="notex">
+	  The transformed series is 
+	  (<math>y</math><sup>d</sup> - 1)/<math>d</math> for
+	  <math>d</math> not equal to zero, or log(<math>y</math>) for
+	  <math>d</math> = 0.
+	</para>
+      </description>
+    </function>
 
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>

@@ -155,6 +155,7 @@ plugin/poisson.c
 plugin/progress_bar.c
 plugin/quantreg.c
 plugin/range-mean.c
+plugin/spss_import.c
 plugin/stata_import.c
 plugin/stats_tables.c
 plugin/sysest.c
