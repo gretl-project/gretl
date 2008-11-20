@@ -35,6 +35,9 @@
 int import_obs_label (const char *s);
 
 int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, 
-			    char *skipstr, PRN *prn);
+			    int *reversed, char *skipstr, 
+			    PRN *prn);
+
+void reverse_data (double **Z, DATAINFO *pdinfo, PRN *prn);
 
 #endif /* CSVDATA_H */

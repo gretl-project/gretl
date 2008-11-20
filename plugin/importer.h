@@ -27,7 +27,8 @@ typedef enum {
     BOOK_TIME_SERIES     = 1 << 3,
     BOOK_OBS_LABELS      = 1 << 4,
     BOOK_OBS_BLANK       = 1 << 5,
-    BOOK_DEBUG           = 1 << 6
+    BOOK_DEBUG           = 1 << 6,
+    BOOK_DATA_REVERSED   = 1 << 7
 } BookFlag;
 
 enum {

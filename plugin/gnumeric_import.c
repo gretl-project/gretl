@@ -720,7 +720,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
 	if (book_numeric_dates(book) || 
 	    (sheet->colheads > 0 && import_obs_label(sheet->label[0]))) {
-	    pd = importer_dates_check(r0, 0, book->flags, sheet->label,
+	    pd = importer_dates_check(r0, 0, &book->flags, sheet->label,
 				      newinfo, prn, &err);
 	    if (pd > 0) {
 		/* got time-series info from dates/labels */

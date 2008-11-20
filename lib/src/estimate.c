@@ -953,10 +953,8 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (mdl.missmask == NULL) {
 	if (!(opt & OPT_A) && dataset_is_panel(pdinfo)) {
 	    panel_dwstat(&mdl, pdinfo);
-	} else {
-	    if (opt & OPT_T) {
-		mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
-	    }
+	} else if (opt & OPT_T) {
+	    mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
 	    mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
 	} 
     } 

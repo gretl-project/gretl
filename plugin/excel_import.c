@@ -1523,7 +1523,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     if (book_numeric_dates(book) || 
 	(!book_auto_varnames(book) && import_obs_label(rows[r0].cells[c0]))) {
 	pd = importer_dates_check(book->row_offset + 1, book->col_offset, 
-				  book->flags, NULL, newinfo, prn, &err);
+				  &book->flags, NULL, newinfo, prn, &err);
 	if (pd > 0) {
 	    /* got time-series info from dates/labels */
 	    book_time_series_setup(book, newinfo, pd);

@@ -37,7 +37,8 @@ enum {
     CSV_OBS1     = 1 << 4,
     CSV_TRAIL    = 1 << 5,
     CSV_AUTONAME = 1 << 6,
-    CSV_NONNUM   = 1 << 7
+    CSV_NONNUM   = 1 << 7,
+    CSV_REVERSED = 1 << 8
 };
 
 typedef struct csvdata_ csvdata;
@@ -46,7 +47,9 @@ struct csvdata_ {
     int flags;
     char delim;
     int markerpd;
+    int maxlen;
     int real_n;
+    char *line;
     double **Z;
     DATAINFO *dinfo;
     int ncols, nrows;
@@ -66,6 +69,7 @@ struct csvdata_ {
 #define csv_skip_column(c)        (c->flags & (CSV_OBS1 | CSV_BLANK1))
 #define csv_have_data(c)          (c->flags & CSV_HAVEDATA)
 #define csv_force_nonnum(c)       (c->flags & CSV_NONNUM)
+#define csv_data_reversed(c)      (c->flags & CSV_REVERSED)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -75,12 +79,13 @@ struct csvdata_ {
 #define csv_set_got_delim(c)        (c->flags |= CSV_GOTDELIM)
 #define csv_set_autoname(c)         (c->flags |= CSV_AUTONAME)
 #define csv_set_force_nonnum(c)     (c->flags |= CSV_NONNUM)
+#define csv_set_data_reversed(c)    (c->flags |= CSV_REVERSED)
 
 #define csv_skipping(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
 
 static int 
-time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn);
+time_series_label_check (DATAINFO *pdinfo, int reversed, char *skipstr, PRN *prn);
 
 static void csvdata_free (csvdata *c)
 {
@@ -100,6 +105,10 @@ static void csvdata_free (csvdata *c)
 	free(c->codelist);
     }
 
+    if (c->line != NULL) {
+	free(c->line);
+    }    
+
     destroy_dataset(c->Z, c->dinfo);
 
     free(c);
@@ -117,7 +126,9 @@ static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo,
     c->flags = (opt & OPT_C)? CSV_NONNUM : 0;
     c->delim = '\t';
     c->markerpd = -1;
+    c->maxlen = 0;
     c->real_n = 0;
+    c->line = NULL;
     c->Z = NULL;
     c->dinfo = NULL;
     c->ncols = 0;
@@ -312,6 +323,9 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
 	if (ed2 < 0) {
 	    err = 1;
 	} else if (ed2 < ed1) {
+#if DAY_DEBUG    
+	    fprintf(stderr, "check_daily_dates: data are reversed?\n");
+#endif
 	    pdinfo->sd0 = ed2;
 	    *reversed = 1;
 	} else {
@@ -405,12 +419,13 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, int *reversed, PRN *prn
 
 #define fakequarter(m) (m==3 || m==6 || m==9 || m==12) 
 
-static int complete_qm_labels (DATAINFO *pdinfo, char *skipstr,
-			       int *ppd, const char *fmt,
+static int complete_qm_labels (DATAINFO *pdinfo, int reversed,
+			       char *skipstr, int *ppd, 
+			       const char *fmt,
 			       PRN *prn)
 {
     char bad[16], skip[8];
-    int t, y, p, Ey, Ep;
+    int t, s, yr, per, Ey, Ep;
     int pmin = 1;
     int pd, pd0;
     int ret = 1;
@@ -419,33 +434,35 @@ static int complete_qm_labels (DATAINFO *pdinfo, char *skipstr,
 
  restart:
 
-    if (sscanf(pdinfo->S[0], fmt, &y, &p) != 2) {
+    s = (reversed)? (pdinfo->n - 1) : 0;
+    if (sscanf(pdinfo->S[s], fmt, &yr, &per) != 2) {
 	return 0;
     }
 
     for (t=1; t<pdinfo->n; t++) {
-	Ey = (p == pd)? y + 1 : y;
-	Ep = (p == pd)? pmin : p + pmin;
-	if (sscanf(pdinfo->S[t], fmt, &y, &p) != 2) {
+	s = (reversed)? (pdinfo->n - 1 - t) : t;
+	Ey = (per == pd)? yr + 1 : yr;
+	Ep = (per == pd)? pmin : per + pmin;
+	if (sscanf(pdinfo->S[s], fmt, &yr, &per) != 2) {
 	    ret = 0;
-	} else if (Ep == 1 && pd == pd0 && p == pd + 1 
+	} else if (Ep == 1 && pd == pd0 && per == pd + 1 
 		   && skipstr != NULL) {
 	    *skip = *bad = '\0';
-	    strncat(skip, pdinfo->S[t] + 4, 7); 
-	    strncat(bad, pdinfo->S[t], 15); 
+	    strncat(skip, pdinfo->S[s] + 4, 7); 
+	    strncat(bad, pdinfo->S[s], 15); 
 	    pd = pd0 + 1;
 	    goto restart;
-	} else if (p == Ep + 2 && pmin == 1 && fakequarter(p)) {
+	} else if (per == Ep + 2 && pmin == 1 && fakequarter(per)) {
 	    *bad = '\0';
-	    strncat(bad, pdinfo->S[t], 15); 
+	    strncat(bad, pdinfo->S[s], 15); 
 	    pmin = 3;
 	    goto restart;
-	} else if (y != Ey || p != Ep) {
+	} else if (yr != Ey || per != Ep) {
 	    ret = 0;
 	}
 	if (!ret) {
 	    pprintf(prn, "   %s: not a consistent date\n", 
-		    pdinfo->S[t]);
+		    pdinfo->S[s]);
 	    break;
 	}
     }
@@ -465,13 +482,17 @@ static int complete_qm_labels (DATAINFO *pdinfo, char *skipstr,
     return ret;
 }
 
-static int complete_year_labels (const DATAINFO *pdinfo)
+static int complete_year_labels (const DATAINFO *pdinfo, int reversed)
 {
-    int t, yr, yrbak = atoi(pdinfo->S[0]);
+    int s, t, yr, yrbak;
     int ret = 1;
 
+    s = (reversed)? (pdinfo->n - 1) : 0;
+    yrbak = atoi(pdinfo->S[s]);
+
     for (t=1; t<pdinfo->n; t++) {
-	yr = atoi(pdinfo->S[t]);
+	s = (reversed)? (pdinfo->n - 1 - t) : t;
+	yr = atoi(pdinfo->S[s]);
 	if (yr != yrbak + 1) {
 	    ret = 0;
 	    break;
@@ -562,12 +583,14 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
     return err;
 }
 
-static void reverse_data (double **Z, DATAINFO *pdinfo)
+void reverse_data (double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     char tmp[OBSLEN];
     double x;
     int T = pdinfo->n / 2;
     int i, t, s;
+
+    pprintf(prn, M_("reversing the data!\n"));
 
     for (t=0; t<T; t++) {
 	s = pdinfo->n - 1 - t;
@@ -585,14 +608,13 @@ static void reverse_data (double **Z, DATAINFO *pdinfo)
 }
 
 static int 
-csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr, 
-		      PRN *prn)
+csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
+		      char *skipstr, PRN *prn)
 {
     int d1[3], d2[3];
     char sep1[2], sep2[2];
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
-    int reversed = 0;
     int dorder = 0;
 
     if (sscanf(lbl1, "%d%1[/-.]%d%1[/-.]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
@@ -642,7 +664,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
 		}
 	    }
 	    pprintf(prn, "Could be %s - %s\n", lbl1, lbl2);
-	    ret = check_daily_dates(pdinfo, &pd, &reversed, prn);
+	    ret = check_daily_dates(pdinfo, &pd, reversed, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
 		    if (csv_weekly_data(pZ, pdinfo)) {
@@ -658,13 +680,11 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr,
 		} else {
 		    compress_daily(pdinfo, pd);
 		    ret = time_series_label_check(pdinfo, 
+						  *reversed,
 						  skipstr, 
 						  prn);
 		}
 	    } 
-	    if (ret > 0 && reversed) {
-		reverse_data(*pZ, pdinfo);
-	    }
 	    return ret;
 	}
     } 
@@ -731,8 +751,8 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
     return pd;
 }
 
-static int 
-time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn)
+static int time_series_label_check (DATAINFO *pdinfo, int reversed,
+				    char *skipstr, PRN *prn)
 {
     char year[5], sub[3];
     char format[8] = {0};
@@ -740,10 +760,11 @@ time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn)
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
     int pd = -1;
 
-    pd = pd_from_date_label(lbl1, year, sub, format, prn);
+    pd = pd_from_date_label((reversed)? lbl2 : lbl1, year, sub, 
+			    format, prn);
 
     if (pd == 1) {
-	if (complete_year_labels(pdinfo)) {
+	if (complete_year_labels(pdinfo, reversed)) {
 	    pdinfo->pd = pd;
 	    strcpy(pdinfo->stobs, year);
 	    pdinfo->sd0 = atof(pdinfo->stobs);
@@ -755,7 +776,7 @@ time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn)
     } else if (pd == 4 || pd == 12) {
 	int savepd = pd;
 
-	if (complete_qm_labels(pdinfo, skipstr, &pd, format, prn)) {
+	if (complete_qm_labels(pdinfo, reversed, skipstr, &pd, format, prn)) {
 	    pdinfo->pd = pd;
 	    if (savepd == 12 && pd == 4) {
 		int s = atoi(sub) / 3;
@@ -775,6 +796,23 @@ time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn)
     return pd;
 }
 
+static int dates_maybe_reversed (const char *s1, const char *s2,
+				 PRN *prn)
+{
+    char d1[5], d2[5];
+    int ret = 0;
+
+    strncpy(d1, s1, 4);
+    strncpy(d2, s2, 4);
+    ret = atoi(d1) > atoi(d2);
+
+    if (ret) {
+	pputs(prn, M_("   dates are reversed?\n"));
+    }
+    
+    return ret;
+}
+
 /* Attempt to parse csv row labels as dates.  Return -1 if this
    doesn't work out, or 0 if the labels seem to be just integer
    observation numbers, else return the inferred data frequency.  The
@@ -783,7 +821,8 @@ time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn)
 */
 
 int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, 
-			    char *skipstr, PRN *prn)
+			    int *reversed, char *skipstr, 
+			    PRN *prn)
 {
     char endobs[OBSLEN];
     int n = pdinfo->n;
@@ -792,7 +831,7 @@ int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo,
     int len1 = strlen(lbl1);
 
     if (skipstr != NULL && *skipstr != '\0') {
-	return time_series_label_check(pdinfo, skipstr, prn);
+	return time_series_label_check(pdinfo, *reversed, skipstr, prn);
     }
 
     pprintf(prn, M_("   first row label \"%s\", last label \"%s\"\n"), 
@@ -814,14 +853,15 @@ int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo,
 
     if (len1 == 8 || len1 == 10) {
 	/* daily data? */
-	return csv_daily_date_check(pZ, pdinfo, skipstr, prn);
+	return csv_daily_date_check(pZ, pdinfo, reversed, skipstr, prn);
     } else if (len1 >= 4) {
 	/* annual, quarterly, monthly? */
 	if (isdigit((unsigned char) lbl1[0]) &&
 	    isdigit((unsigned char) lbl1[1]) &&
 	    isdigit((unsigned char) lbl1[2]) && 
 	    isdigit((unsigned char) lbl1[3])) {
-	    return time_series_label_check(pdinfo, skipstr, prn);
+	    *reversed = dates_maybe_reversed(lbl1, lbl2, prn);
+	    return time_series_label_check(pdinfo, *reversed, skipstr, prn);
 	} else {
 	    pputs(prn, M_("   definitely not a four-digit year\n"));
 	}
@@ -942,10 +982,10 @@ static void remove_quoted_commas (char *s)
     }
 }
 
-static void compress_csv_line (char *line, csvdata *c)
+static void compress_csv_line (csvdata *c)
 {
-    int n = strlen(line);
-    char *p = line + n - 1;
+    int n = strlen(c->line);
+    char *p = c->line + n - 1;
 
     if (*p == '\n') {
 	*p = '\0';
@@ -955,22 +995,22 @@ static void compress_csv_line (char *line, csvdata *c)
     if (*p == '\r') *p = '\0';
 
     if (c->delim == ',') {
-	remove_quoted_commas(line);
+	remove_quoted_commas(c->line);
     }
 
     if (c->delim != ' ') {
-	delchar(' ', line);
+	delchar(' ', c->line);
     } else {
-	compress_spaces(line);
+	compress_spaces(c->line);
     }
 
-    delchar('"', line);
+    delchar('"', c->line);
 
     if (csv_has_trailing_comma(c)) {
 	/* chop trailing comma */
-	n = strlen(line);
+	n = strlen(c->line);
 	if (n > 0) {
-	    line[n-1] = '\0';
+	    c->line[n-1] = '\0';
 	}
     }
 }
@@ -1249,8 +1289,7 @@ csv_msg = N_("\nPlease note:\n"
 	     "- The remainder of the file must be a rectangular "
 	     "array of data.\n");
 
-static int csv_fields_check (char *line, int maxlen, FILE *fp,
-			     csvdata *c, PRN *prn)
+static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
 {
     int gotdata = 0;
     int chkcols = 0;
@@ -1258,18 +1297,18 @@ static int csv_fields_check (char *line, int maxlen, FILE *fp,
 
     c->ncols = c->nrows = 0;
 
-    while (csv_fgets(line, maxlen, fp) && !err) {
+    while (csv_fgets(c->line, c->maxlen, fp) && !err) {
 
 	/* skip comment lines */
-	if (*line == '#') {
+	if (*c->line == '#') {
 	    continue;
 	}
 
 	/* skip blank lines -- but finish if the blank comes after data */
-	if (string_is_blank(line)) {
+	if (string_is_blank(c->line)) {
 	    if (gotdata) {
 		if (!csv_have_data(c)) {
-		    c->descrip = get_csv_descrip(line, maxlen, fp);
+		    c->descrip = get_csv_descrip(c->line, c->maxlen, fp);
 		}
 		break;
 	    } else {
@@ -1278,15 +1317,15 @@ static int csv_fields_check (char *line, int maxlen, FILE *fp,
 	}
 	
 	c->nrows += 1;
-	compress_csv_line(line, c);
+	compress_csv_line(c);
 
 	if (!gotdata) {
 	    /* scrutinize first "real" line */
-	    check_first_field(line, c, prn);
+	    check_first_field(c->line, c, prn);
 	    gotdata = 1;
 	} 
 
-	chkcols = count_csv_fields(line, c->delim);
+	chkcols = count_csv_fields(c->line, c->delim);
 	if (c->ncols == 0) {
 	    c->ncols = chkcols;
 	    pprintf(prn, M_("   number of columns = %d\n"), c->ncols);	    
@@ -1329,8 +1368,7 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
 
 #define obs_labels_no_varnames(o,c,n)  (!o && c->v > 3 && n == c->v - 2)
 
-static int csv_varname_scan (csvdata *c, char *line, int maxlen, FILE *fp,
-			     PRN *prn, PRN *mprn)
+static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 {
     char *p;
     int obscol = csv_has_obs_column(c);
@@ -1339,17 +1377,17 @@ static int csv_varname_scan (csvdata *c, char *line, int maxlen, FILE *fp,
 
     pputs(mprn, M_("scanning for variable names...\n"));
 
-    while (csv_fgets(line, maxlen, fp)) {
-	if (*line == '#' || string_is_blank(line)) {
+    while (csv_fgets(c->line, c->maxlen, fp)) {
+	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
 	} else {
 	    break;
 	}
     }
 
-    compress_csv_line(line, c);   
+    compress_csv_line(c);   
 
-    p = line;
+    p = c->line;
     if (c->delim == ' ' && *p == ' ') p++;
     iso_to_ascii(p);
     pprintf(mprn, M_("   line: %s\n"), p);
@@ -1433,8 +1471,7 @@ static int csv_varname_scan (csvdata *c, char *line, int maxlen, FILE *fp,
 }
 
 static int 
-real_read_labels_and_data (csvdata *c, char *line, int maxlen, 
-			   FILE *fp, PRN *prn)
+real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
     int i, k, nv, t = 0;
@@ -1442,19 +1479,19 @@ real_read_labels_and_data (csvdata *c, char *line, int maxlen,
 
     c->real_n = c->dinfo->n;
 
-    while (csv_fgets(line, maxlen, fp) && !err) {
+    while (csv_fgets(c->line, c->maxlen, fp) && !err) {
 
-	if (*line == '#' || string_is_blank(line)) {
+	if (*c->line == '#' || string_is_blank(c->line)) {
 	    continue;
 	}
 
-	if (csv_skipping(c) && strstr(line, c->skipstr)) {
+	if (csv_skipping(c) && strstr(c->line, c->skipstr)) {
 	    c->real_n -= 1;
 	    continue;
 	}
 
-	compress_csv_line(line, c);
-	p = line;
+	compress_csv_line(c);
+	p = c->line;
 	if (c->delim == ' ' && *p == ' ') p++;
 
 	for (k=0; k<c->ncols; k++) {
@@ -1504,17 +1541,20 @@ real_read_labels_and_data (csvdata *c, char *line, int maxlen,
     return err;
 }
 
-static int csv_read_data (csvdata *c, char *line, int maxlen,
-			  FILE *fp, PRN *prn, PRN *mprn)
+static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 {
+    int reversed = csv_data_reversed(c);
     int err;
 
     pputs(mprn, M_("scanning for row labels and data...\n"));
-    err = real_read_labels_and_data(c, line, maxlen, fp, prn);
+    err = real_read_labels_and_data(c, fp, prn);
 
     if (!err && csv_skip_column(c)) {
-	c->markerpd = test_markers_for_dates(&c->Z, c->dinfo, c->skipstr, 
-					     prn);
+	c->markerpd = test_markers_for_dates(&c->Z, c->dinfo, &reversed,
+					     c->skipstr, prn);
+	if (reversed) {
+	    csv_set_data_reversed(c);
+	}
     }
 
     return err;
@@ -1553,13 +1593,11 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 {
     csvdata *c = NULL;
     int popit = 0;
-    int i, maxlen;
     FILE *fp = NULL;
     PRN *mprn = NULL;
-    char *line = NULL;
     int newdata = (*pZ == NULL);
     long datapos;
-    int err = 0;
+    int i, err = 0;
 
 #ifdef ENABLE_NLS
     if (prn != NULL) {
@@ -1589,8 +1627,8 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get line length, also check for binary data, etc. */
-    maxlen = csv_max_line_length(fp, c, prn);    
-    if (maxlen <= 0) {
+    c->maxlen = csv_max_line_length(fp, c, prn);    
+    if (c->maxlen <= 0) {
 	err = E_DATA;
 	goto csv_bailout;
     } 
@@ -1605,15 +1643,15 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     pprintf(mprn, M_("using delimiter '%c'\n"), c->delim);
-    pprintf(mprn, M_("   longest line: %d characters\n"), maxlen - 1);
+    pprintf(mprn, M_("   longest line: %d characters\n"), c->maxlen - 1);
 
     if (csv_has_trailing_comma(c) && c->delim != ',') {
 	csv_unset_trailing_comma(c);
     }
 
     /* buffer to hold lines */
-    line = malloc(maxlen);
-    if (line == NULL) {
+    c->line = malloc(c->maxlen);
+    if (c->line == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
     }  
@@ -1621,7 +1659,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
     rewind(fp);
 
     /* read lines, check for consistency in number of fields */
-    err = csv_fields_check(line, maxlen, fp, c, mprn);
+    err = csv_fields_check(fp, c, mprn);
     if (err) {
 	goto csv_bailout;
     }
@@ -1655,7 +1693,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     rewind(fp);
 
-    err = csv_varname_scan(c, line, maxlen, fp, prn, mprn);
+    err = csv_varname_scan(c, fp, prn, mprn);
     if (err) {
 	goto csv_bailout;
     }
@@ -1667,12 +1705,12 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     datapos = ftell(fp);
 
-    err = csv_read_data(c, line, maxlen, fp, prn, mprn);
+    err = csv_read_data(c, fp, prn, mprn);
 
     if (!err && csv_skipping(c)) {
 	/* try again */
 	fseek(fp, datapos, SEEK_SET);
-	err = csv_read_data(c, line, maxlen, fp, prn, NULL);
+	err = csv_read_data(c, fp, prn, NULL);
     }
 
     if (!err) {
@@ -1680,7 +1718,7 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	if (!err && csv_has_non_numeric(c)) {
 	    /* try once more */
 	    fseek(fp, datapos, SEEK_SET);
-	    err = csv_read_data(c, line, maxlen, fp, prn, NULL);
+	    err = csv_read_data(c, fp, prn, NULL);
 	}
     }	
 
@@ -1690,6 +1728,10 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     if (err) {
 	goto csv_bailout;
+    }
+
+    if (csv_data_reversed(c)) {
+	reverse_data(c->Z, c->dinfo, mprn);
     }
 
     c->dinfo->t1 = 0;
@@ -1747,7 +1789,6 @@ int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	fclose(fp);
     }
 
-    free(line);
     csvdata_free(c);
 
     if (err == E_ALLOC) {

@@ -33,7 +33,7 @@ static void invalid_varname (PRN *prn)
 
 static int 
 importer_dates_check (int row_offset, int col_offset, 
-		      BookFlag flags, char **labels, 
+		      BookFlag *pflags, char **labels, 
 		      DATAINFO *newinfo, PRN *prn, int *err)
 {
     int d, t;
@@ -57,9 +57,9 @@ importer_dates_check (int row_offset, int col_offset,
     for (t=0; t<newinfo->n && !*err; t++) {
 	s = cell_string(t + row_offset, col_offset);
 	if (*s == '"' || *s == '\'') s++;
-	if (flags & BOOK_NUMERIC_DATES) {
+	if (*pflags & BOOK_NUMERIC_DATES) {
 	    if (sscanf(s, "%d", &d)) {
-		MS_excel_date_string(dstr, d, 0, flags & BOOK_DATE_BASE_1904);
+		MS_excel_date_string(dstr, d, 0, *pflags & BOOK_DATE_BASE_1904);
 		s = dstr;
 	    } else {
 		pprintf(prn, "Bad date on row %d: '%s'\n", t+1, s);
@@ -70,7 +70,12 @@ importer_dates_check (int row_offset, int col_offset,
     }
 
     if (!*err) {
-	ret = test_markers_for_dates(NULL, newinfo, NULL, prn);
+	int reversed = 0;
+
+	ret = test_markers_for_dates(NULL, newinfo, &reversed, NULL, prn);
+	if (reversed) {
+	    *pflags |= BOOK_DATA_REVERSED;
+	}
     }
 
     if (newinfo->markers != DAILY_DATE_STRINGS) {

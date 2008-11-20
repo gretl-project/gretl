@@ -2418,6 +2418,26 @@ static void print_HET_1_results (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
+{
+    double jll = gretl_model_get_double(pmod, "jll");
+
+    if (!na(jll)) {
+	char jllstr[64];
+	char xstr[32];
+
+	sprintf(jllstr, _("Log-likelihood for %s"), 
+		(const char *) gretl_model_get_data(pmod, "log-parent"));
+	if (lldig > 0) {
+	    plain_print_double(xstr, lldig, jll, prn);
+	    pprintf(prn, "  (%s = %s)\n", jllstr, xstr);
+	} else {
+	    plain_print_double(xstr, XDIGITS(pmod), jll, prn);
+	    pprintf(prn, "%s = %s\n", jllstr, xstr);
+	}	    
+    }
+}
+
 static void print_ll (const MODEL *pmod, PRN *prn)
 {
     int lldig;
@@ -2434,19 +2454,10 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 
     if (plain_format(prn)) {
 	char xstr[32];
-	double jll;
 
 	plain_print_double(xstr, lldig, pmod->lnL, prn);
 	pprintf(prn, "  %s = %s\n", _("Log-likelihood"), xstr);
-	jll = gretl_model_get_double(pmod, "jll");
-	if (!na(jll)) {
-	    char jllstr[64];
-
-	    sprintf(jllstr, _("Log-likelihood for %s"), 
-		    (const char *) gretl_model_get_data(pmod, "log-parent"));
-	    plain_print_double(xstr, lldig, jll, prn);
-	    pprintf(prn, "  (%s = %s)\n", jllstr, xstr);
-	}
+	maybe_print_jll(pmod, lldig, prn);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,
 		pmod->lnL);
@@ -2457,6 +2468,26 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
     }
 }
+
+#define fixed_effects_model(m) (m->ci == PANEL && \
+                                gretl_model_get_int(m, "fixed-effects"))
+
+#define random_effects_model(m) (m->ci == PANEL && \
+                                 gretl_model_get_int(m, "random-effects"))
+
+#define between_model(m) (m->ci == PANEL && \
+                          gretl_model_get_int(m, "between"))
+
+#define weighted_model(m) (m->ci == HSK || m->ci == ARCH || \
+			   (m->ci == WLS && !gretl_model_get_int(m, "wt_dummy")) || \
+                           (m->ci == PANEL && gretl_model_get_int(m, "unit-weights")))
+
+#define panel_ML_model(m) (m->ci == PANEL && \
+                           gretl_model_get_int(m, "unit-weights") && \
+			   gretl_model_get_int(m, "iters"))
+
+#define non_weighted_panel(m) (m->ci == PANEL && \
+			       !gretl_model_get_int(m, "unit-weights"))
 
 /* similar to eviews but a little better, e.g.:
 
@@ -2519,6 +2550,7 @@ static char *print_eight (char *s, double x)
 
 static void compact_middle_table (MODEL *pmod, PRN *prn)
 {
+    const char *note = N_("note on model statistics abbreviations here");
     char x1[12], x2[12], fstr[32];
     const char *rsq1, *rsq2;
     double cR2, pvF;
@@ -2536,19 +2568,38 @@ static void compact_middle_table (MODEL *pmod, PRN *prn)
 	cR2 = pmod->adjrsq;
     }
 
+    pprintf(prn, "%-20s%s   %-20s%s\n", _("Mean dependent var"), 
+	    print_eight(x1, pmod->ybar),
+ 	    _("S.D. dependent var"), print_eight(x2, pmod->sdy));
+    pprintf(prn, "%-20s%9d   %-20s%s\n", _("Sample size"), pmod->nobs, 
+	    _("Sum squared resid"), print_eight(x1, pmod->ess));
     pprintf(prn, "%-20s %f   %-20s%s\n", _(rsq1), pmod->rsq,
-	    _("Mean dependent var"), print_eight(x2, pmod->ybar));
-    pprintf(prn, "%-20s%s   %-20s%s\n", _(rsq2), print_eight(x1, cR2),
-	    _("S.D. dependent var"), print_eight(x2, pmod->sdy));
+	    _(rsq2), print_eight(x1, cR2));
     pprintf(prn, "%-20s%s   %-20s%s\n", _("S.E. of regression"), 
-	    print_eight(x1, pmod->sigma),
-	    _("Akaike criterion"), print_eight(x2, pmod->criterion[C_AIC]));
-    pprintf(prn, "%-20s%s   %-20s%s\n", _("Sum squared resid"), print_eight(x1, pmod->ess),
-	    _("Schwarz criterion"), print_eight(x2, pmod->criterion[C_BIC]));
-    pprintf(prn, "%-20s%s   %-20s%s\n", _("Log-likelihood"), print_eight(x1, pmod->lnL),
-	    fstr, print_eight(x2, pmod->fstt));
-    pprintf(prn, "%-20s%s   %-20s%s\n\n", _("Durbin-Watson"), 
-	    print_eight(x1, pmod->dw), _("P-value(F)"), print_eight(x2, pvF));
+ 	    print_eight(x1, pmod->sigma),
+	    _("Log-likelihood"), print_eight(x2, pmod->lnL));
+    pprintf(prn, "%-20s%s   %-20s%s\n", _("Akaike criterion"), 
+	    print_eight(x1, pmod->criterion[C_AIC]),
+ 	    _("Schwarz criterion"), print_eight(x2, pmod->criterion[C_BIC]));
+    pprintf(prn, "%-20s%s   %-20s%s\n", 
+	    fstr, print_eight(x1, pmod->fstt),
+	    _("P-value(F)"), print_eight(x2, pvF));
+    if (!na(pmod->rho) && !na(pmod->dw)) {
+	pprintf(prn, "%-20s%s   %-20s%s\n", _("rho"), 
+		print_eight(x1, pmod->rho), _("Durbin-Watson"), 
+		print_eight(x2, pmod->dw));
+    }
+    pputc(prn, '\n');
+
+    if (strcmp(note, _(note))) {
+	pputs(prn, _(note));
+    }
+
+    if (random_effects_model(pmod)) {
+	panel_variance_lines(pmod, prn);
+    }
+
+    maybe_print_jll(pmod, 0, prn);
 }
 
 static char active_decpoint (void)
@@ -2558,28 +2609,6 @@ static char active_decpoint (void)
     sprintf(test, "%.1f", 1.0);
     return test[1];
 }
-
-#define fixed_effects_model(m) (m->ci == PANEL && \
-                                gretl_model_get_int(m, "fixed-effects"))
-
-#define random_effects_model(m) (m->ci == PANEL && \
-                                 gretl_model_get_int(m, "random-effects"))
-
-#define between_model(m) (m->ci == PANEL && \
-                          gretl_model_get_int(m, "between"))
-
-#define weighted_model(m) (m->ci == HSK || m->ci == ARCH || \
-			   (m->ci == WLS && !gretl_model_get_int(m, "wt_dummy")) || \
-                           (m->ci == PANEL && gretl_model_get_int(m, "unit-weights")))
-
-#define panel_ML_model(m) (m->ci == PANEL && \
-                           gretl_model_get_int(m, "unit-weights") && \
-			   gretl_model_get_int(m, "iters"))
-
-#define non_weighted_panel(m) (m->ci == PANEL && \
-			       !gretl_model_get_int(m, "unit-weights"))
-
-#define COMPACT_MIDDLE 0
 
 /**
  * printmodel:
@@ -2606,11 +2635,11 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
-#if COMPACT_MIDDLE
-    if (plain_format(prn) && !na(pmod->lnL) && !na(pmod->fstt)) {
-	compact = 1;
+    if (getenv("COMPACT_MIDDLE")) {
+	if (plain_format(prn) && !na(pmod->lnL) && !na(pmod->fstt)) {
+	    compact = 1;
+	}
     }
-#endif
 
     if (csv_format(prn)) {
 	if (active_decpoint() == ',') {
@@ -2800,9 +2829,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (compact) {
 	    compact_middle_table(pmod, prn);
-	    if (random_effects_model(pmod)) {
-		panel_variance_lines(pmod, prn);
-	    }
 	    goto close_format;
 	} 
 

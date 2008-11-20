@@ -1005,18 +1005,23 @@ static int gretl_make_tempdir (char *dname)
 
 static int ts_check (ods_sheet *sheet, PRN *prn)
 {
+    int reversed = 0;
     int mpd = -1;
 
     if (sheet->dinfo->S == NULL) {
 	return 0;
     }
 
-    mpd = test_markers_for_dates(&sheet->Z, sheet->dinfo, NULL, prn);
+    mpd = test_markers_for_dates(&sheet->Z, sheet->dinfo, &reversed,
+				 NULL, prn);
 
     if (mpd > 0) {
 	pputs(prn, _("taking date information from row labels\n\n"));
 	if (sheet->dinfo->markers != DAILY_DATE_STRINGS) {
 	    dataset_destroy_obs_markers(sheet->dinfo);
+	}
+	if (reversed) {
+	    sheet->flags |= BOOK_DATA_REVERSED;
 	}
     } 
 
