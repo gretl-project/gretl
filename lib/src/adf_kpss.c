@@ -1089,6 +1089,7 @@ int coint (int order, const int *list, double ***pZ,
 {
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
+    int test_t1, test_t2;
     gretlopt adf_opt = OPT_C;
     MODEL cmod;
     int detcode = UR_CONST;
@@ -1122,6 +1123,12 @@ int coint (int order, const int *list, double ***pZ,
 
     pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
 
+    test_t1 = pdinfo->t1;
+    test_t2 = pdinfo->t2;
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
+
     cmod = lsq(clist, pZ, pdinfo, OLS, OPT_NONE);
     err = cmod.errcode;
     if (err) {
@@ -1143,6 +1150,9 @@ int coint (int order, const int *list, double ***pZ,
 
     pputc(prn, '\n');
     pprintf(prn, _("Step %d: Dickey-Fuller test on residuals\n"), step);
+
+    pdinfo->t1 = test_t1;
+    pdinfo->t2 = test_t2;
 
     /* Run (A)DF test on the residuals */
     real_adf_test(k, order, nv, pZ, pdinfo, adf_opt, 
