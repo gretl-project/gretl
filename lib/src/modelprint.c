@@ -920,26 +920,36 @@ static void dwline (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void dhline (const MODEL *pmod, PRN *prn)
+static double durbins_h (const MODEL *pmod)
 {
     int ldv = gretl_model_get_int(pmod, "ldepvar");
-    double h, se = pmod->sderr[ldv - 2];
+    double se = pmod->sderr[ldv - 2];
     int T = pmod->nobs - 1;
+    double h = NADBL;
 
     if (pmod->ess <= 0.0 || na(se) || (T * se * se) >= 1.0 ||
 	na(pmod->rho)) {
-	return;
+	; /* no-op: can't calculate h */
+    } else {
+	h = pmod->rho * sqrt(T/(1 - T * se * se));
+	if (xna(h)) {
+	    h = NADBL;
+	}
     }
 
-    h = pmod->rho * sqrt(T/(1 - T * se * se));
+    return h;
+}
 
-    if (xna(h)) {
+static void dhline (const MODEL *pmod, PRN *prn)
+{
+    double h = durbins_h(pmod);
+
+    if (na(h)) {
 	return;
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Durbin's h"), 
-		XDIGITS(pmod), h);
+	pprintf(prn, "  %s = %.*g\n", _("Durbin's h"), XDIGITS(pmod), h);
     } else if (tex_format(prn)) {
 	char xstr[32];
 
@@ -2493,7 +2503,7 @@ static void print_ll (const MODEL *pmod, PRN *prn)
    of 8 characters (a leading minus, if needed, is a ninth).
 */
 
-static char *print_eight (char *s, double x)
+static char *print_eight (char *s, double x, int utf)
 {
     char tmp[16];
     double ax;
@@ -2503,7 +2513,16 @@ static char *print_eight (char *s, double x)
 	return s;
     }
 
-    strcpy(s, (x < 0)? "-" : " ");
+    if (x < 0) {
+	if (utf) {
+	    strcpy(s, "−"); /* U+2212: minus */
+	} else {
+	    strcpy(s, "-"); /* hyphen */
+	}
+    } else {
+	strcpy(s, " "); 
+    }
+
     ax = fabs(x);
 
     if (ax == 0.0 || ax == 1.0) {
@@ -2536,14 +2555,15 @@ static char *print_eight (char *s, double x)
     strcat(s, tmp);
 
     return s;
-}   
+}  
 
 static void compact_middle_table (MODEL *pmod, PRN *prn)
 {
     const char *note = N_("note on model statistics abbreviations here");
+    int utf = gretl_print_supports_utf(prn);
     char x1[12], x2[12], fstr[32];
     const char *rsq1, *rsq2;
-    double cR2, pvF;
+    double cR2, pvF, h = NADBL;
 
     sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
     pvF = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
@@ -2558,28 +2578,56 @@ static void compact_middle_table (MODEL *pmod, PRN *prn)
 	cR2 = pmod->adjrsq;
     }
 
-    pprintf(prn, "%-20s%s   %-20s%s\n", _("Mean dependent var"), 
-	    print_eight(x1, pmod->ybar),
- 	    _("S.D. dependent var"), print_eight(x2, pmod->sdy));
-    pprintf(prn, "%-20s%9d   %-20s%s\n", _("Sample size"), pmod->nobs, 
-	    _("Sum squared resid"), print_eight(x1, pmod->ess));
-    pprintf(prn, "%-20s %f   %-20s%s\n", _(rsq1), pmod->rsq,
-	    _(rsq2), print_eight(x1, cR2));
-    pprintf(prn, "%-20s%s   %-20s%s\n", _("S.E. of regression"), 
- 	    print_eight(x1, pmod->sigma),
-	    _("Log-likelihood"), print_eight(x2, pmod->lnL));
-    pprintf(prn, "%-20s%s   %-20s%s\n", _("Akaike criterion"), 
-	    print_eight(x1, pmod->criterion[C_AIC]),
- 	    _("Schwarz criterion"), print_eight(x2, pmod->criterion[C_BIC]));
+    if (pmod->ci != VAR && pmod->aux != AUX_VECM && 
+	!na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
+	h = durbins_h(pmod);
+    } 
+
     pprintf(prn, "%-20s%s   %-20s%s\n", 
-	    fstr, print_eight(x1, pmod->fstt),
-	    _("P-value(F)"), print_eight(x2, pvF));
-    if (!na(pmod->rho) && !na(pmod->dw)) {
-	pprintf(prn, "%-20s%s   %-20s%s\n", _("rho"), 
-		print_eight(x1, pmod->rho), _("Durbin-Watson"), 
-		print_eight(x2, pmod->dw));
+	    _("Sum squared resid"), print_eight(x1, pmod->ess, utf),
+	    _("Mean dependent var"), print_eight(x2, pmod->ybar, utf));
+
+    pprintf(prn, "%-20s%s   %-20s%s\n", 
+	    _("S.E. of regression"), print_eight(x1, pmod->sigma, utf),
+	    _("S.D. dependent var"), print_eight(x2, pmod->sdy, utf));
+
+    pprintf(prn, "%-20s %f   %-20s%s\n", 
+	    _(rsq1), pmod->rsq,
+	    fstr, print_eight(x2, pmod->fstt, utf));
+    
+    pprintf(prn, "%-20s%s   %-20s%s\n", 
+	    _(rsq2), print_eight(x1, cR2, utf),
+	    _("P-value(F)"), print_eight(x2, pvF, utf));
+
+    pprintf(prn, "%-20s%s   %-20s%s\n", 
+	    _("Log-likelihood"), print_eight(x1, pmod->lnL, utf),
+	    _("Akaike criterion"),  print_eight(x2, pmod->criterion[C_AIC], utf));
+
+    pprintf(prn, "%-20s%s   %-20s%s\n", 
+ 	    _("Schwarz criterion"), print_eight(x1, pmod->criterion[C_BIC], utf),
+	    _("Hannan-Quinn"), print_eight(x2, pmod->criterion[C_HQC], utf));
+
+    if (!na(h)) {
+	pprintf(prn, "%-20s%s   %-20s%s\n", 
+		_("rho"), print_eight(x1, pmod->rho, utf), 
+		_("Durbin's h"), print_eight(x2, h, utf));
+    } else if (!na(pmod->rho) && !na(pmod->dw)) {
+	pprintf(prn, "%-20s%s   %-20s%s\n", 
+		_("rho"), print_eight(x1, pmod->rho, utf), 
+		_("Durbin-Watson"), print_eight(x2, pmod->dw, utf));
     }
+
     pputc(prn, '\n');
+
+#if 0
+    pputs(prn, _("Information criteria"));
+    pputs(prn, ":\n");
+    pprintf(prn, "AIC: %14.5f  BIC: %14.5f  HQC: %14.5f\n",
+           pmod->criterion[C_AIC],
+           pmod->criterion[C_BIC],
+           pmod->criterion[C_HQC]);
+    pputc(prn, '\n');
+#endif
 
     if (strcmp(note, _(note))) {
 	pputs(prn, _(note));
