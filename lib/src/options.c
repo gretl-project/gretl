@@ -137,6 +137,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_D, "dynamic" },
     { FCAST,    OPT_S, "static" },
     { FCAST,    OPT_Q, "quiet" },
+    { FCAST,    OPT_R, "rolling" },
     { FCAST,    OPT_O, "out-of-sample" },
     { FOREIGN,  OPT_D, "send-data" },
     { FOREIGN,  OPT_Q, "quiet" },

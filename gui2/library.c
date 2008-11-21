@@ -1440,8 +1440,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (rolling) {
-	fr = rolling_OLS_one_step_fcast(pmod, &Z, datainfo,
-					t1, t2, pre_n, &err);
+	fr = rolling_OLS_k_step_fcast(pmod, &Z, datainfo,
+				      t1, t2, 1, pre_n, &err);
     } else {
 	ntodate(startobs, t1, datainfo);
 	ntodate(endobs, t2, datainfo);

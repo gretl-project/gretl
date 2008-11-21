@@ -70,8 +70,8 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 gretl_matrix *get_forecast_matrix (int idx, int *err);
 
 FITRESID *
-rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    int t1, int t2, int pre_n, int *err);
+rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			  int t1, int t2, int k, int pre_n, int *err);
 
 void forecast_matrix_cleanup (void);
 

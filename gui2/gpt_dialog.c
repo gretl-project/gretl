@@ -2531,8 +2531,8 @@ static void gpt_tab_palette (GtkWidget *notebook)
     vbox = gp_page_vbox(notebook, _("Palette"));
     tbl = gp_dialog_table(1, 2, vbox);
 
-    label = gtk_label_new("These colors will be used unless overridden\n"
-			  "by graph-specific choices\n");
+    label = gtk_label_new(_("These colors will be used unless overridden\n"
+			    "by graph-specific choices\n"));
     gtk_table_attach(GTK_TABLE(tbl), label, 0, 2, 0, 1, 0, 0, 0, 0);
     gtk_widget_show(label);
 

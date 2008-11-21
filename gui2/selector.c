@@ -3159,7 +3159,7 @@ static void build_garch_spinners (selector *sr)
     GtkObject *adj;
     gdouble val;
     const char *strs[] = {
-	N_("ARCH p:"),
+	N_("GARCH p:"),
 	N_("ARCH q:")
     };    
     int i;

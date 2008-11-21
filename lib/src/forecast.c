@@ -1904,9 +1904,9 @@ static int parse_forecast_string (const char *s,
 				  double ***pZ,
 				  DATAINFO *pdinfo,
 				  int *pt1, int *pt2,
-				  char *vname)
+				  int *pk, char *vname)
 {
-    char t1str[32], t2str[32];
+    char t1str[32], t2str[32], kstr[32];
     int t1 = 0, t2 = 0;
     int n, err = 0;
 
@@ -1918,7 +1918,18 @@ static int parse_forecast_string (const char *s,
 
     *vname = '\0';
 
-    n = sscanf(s, "%31s %31s %15s", t1str, t2str, vname);
+    if (opt & OPT_R) {
+	/* rolling: allow for k = steps ahead */
+	n = sscanf(s, "%31s %31s %31s %15s", t1str, t2str, kstr, vname);
+	if (n != 4) {
+	    return E_DATA;
+	}
+	*pk = positive_int_from_string(kstr);
+	n = 2;
+    } else {
+	n = sscanf(s, "%31s %31s %15s", t1str, t2str, vname);
+    }
+
     if (n == 1) {
 	strncat(vname, t1str, VNAMELEN -1);
 	n = 0;
@@ -2343,7 +2354,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 {
     char vname[VNAMELEN];
     FITRESID *fr;
-    int t1, t2;
+    int t1, t2, k;
     int err;
 
     if (pmod->ci == ARBOND || pmod->ci == HECKIT) {
@@ -2358,12 +2369,17 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     err = parse_forecast_string(str, opt, pmod->t2, pZ, pdinfo, 
-				&t1, &t2, vname);
+				&t1, &t2, &k, vname);
     if (err) {
 	return err;
     }
 
-    fr = get_forecast(pmod, t1, t2, 0, pZ, pdinfo, opt, &err);
+    if (opt & OPT_R) {
+	fr = rolling_OLS_k_step_fcast(pmod, pZ, pdinfo, t1, t2, 
+				      k, 0, &err);
+    } else {
+	fr = get_forecast(pmod, t1, t2, 0, pZ, pdinfo, opt, &err);
+    }
 
     if (!err && !(opt & OPT_Q)) {
 	err = text_print_forecast(fr, pdinfo, opt, prn);
@@ -2472,7 +2488,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     int t1 = 0, t2 = 0;
     int t2est, ci;
     int imax, imin = 0;
-    int df = 0;
+    int k, df = 0;
     int err = 0;
 
     if (type == GRETL_OBJ_VAR) {
@@ -2491,7 +2507,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	ylist = sys->ylist;
     }
 
-    err = parse_forecast_string(str, opt, t2est, pZ, pdinfo, &t1, &t2, vname);
+    err = parse_forecast_string(str, opt, t2est, pZ, pdinfo, &t1, &t2, &k, vname);
 
     Z = (const double **) *pZ;
 
@@ -2829,19 +2845,76 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     }
 }
 
-/* recursive one-step ahead forecasts and forecast errors, for models
-   estimated via OLS */
+static int y_lag (int v, int parent, const DATAINFO *pdinfo)
+{
+    if (pdinfo->varinfo[v]->transform == LAGS) {
+	int pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
+
+	if (pv == parent) {
+	    return pdinfo->varinfo[v]->lag;
+	}
+    }
+
+    return 0;
+}
+
+static int k_step_init (MODEL *pmod, const DATAINFO *pdinfo, 
+			double **Z, int k, 
+			double **py, int **pllist)
+{
+    double *y = NULL;
+    int *llist = NULL;
+    int vy = pmod->list[1];
+    int i, nl = 0;
+
+    for (i=2; i<=pmod->list[0]; i++) {
+	if (y_lag(pmod->list[i], vy, pdinfo)) {
+	    nl++;
+	}
+    }
+
+    if (nl == 0) {
+	return 0;
+    }
+
+    y = malloc(pdinfo->n * sizeof *y);
+    llist = gretl_list_new(pmod->list[0] - 1);
+
+    if (y == NULL || llist == NULL) {
+	free(y);
+	free(llist);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<pdinfo->n; i++) {
+	y[i] = Z[vy][i];
+    }
+
+    for (i=2; i<=pmod->list[0]; i++) {
+	llist[i-1] = y_lag(pmod->list[i], vy, pdinfo);
+    }    
+
+    *py = y;
+    *pllist = llist;
+
+    return 0;
+}
+
+/* recursive k-step ahead forecasts, for models estimated via OLS */
 
 FITRESID * 
-rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    int t1, int t2, int pre_n, int *err)
+rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			  int t1, int t2, int k, int pre_n, int *err)
 {
     FITRESID *fr;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    double xit, yf;
+    double *y = NULL;
+    int *llist = NULL;
+    double xit, yf = NADBL;
     int nf = t2 - t1 + 1;
     MODEL mod;
+    int j, p, vi;
     int i, s, t;
 
     if (pmod->ci != OLS) {
@@ -2849,14 +2922,26 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return NULL;
     }
 
+    if (k < 1) {
+	*err = E_DATA;
+	return NULL;
+    }    
+
     if (gretl_model_get_int(pmod, "daily_repack")) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (t1 - pmod->t1 < pmod->ncoeff || t2 < t1) {
+    if (t1 - pmod->t1 - k + 1 < pmod->ncoeff || t2 < t1) {
 	*err = E_OBS;
 	return NULL;
+    }
+
+    if (k > 1) {
+	*err = k_step_init(pmod, pdinfo, *pZ, k, &y, &llist);
+	if (*err) {
+	    return NULL;
+	}
     }
 
     fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, pre_n, err); 
@@ -2866,8 +2951,9 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     fr->method = FC_ONESTEP;
 
+    /* sample range for initial estimation */
     pdinfo->t1 = pmod->t1;
-    pdinfo->t2 = t1 - 1;
+    pdinfo->t2 = t1 - k; /* start of fcast range minus k */
 
     for (t=0; t<pdinfo->n; t++) {
 	fr->actual[t] = (*pZ)[pmod->list[1]][t];
@@ -2881,15 +2967,29 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    break;
 	}
 
+	/* the first obs following the estimation sample */
 	t = pdinfo->t2 + 1;
-	yf = 0.0;
-	for (i=0; i<mod.ncoeff; i++) {
-	    xit = (*pZ)[mod.list[i+2]][t];
-	    if (na(xit)) {
-		yf = NADBL;
-		break;
-	    } else {
-		yf += mod.coeff[i] * xit;
+
+	for (j=0; j<k; j++) {
+	    yf = 0.0;
+	    /* steps ahead */
+	    for (i=0; i<mod.ncoeff; i++) {
+		vi = mod.list[i+2];
+		p = (llist != NULL)? llist[i+1] : 0;
+		if (p > 0 && p <= j) {
+		    xit = y[t-p];
+		} else {
+		    xit = (*pZ)[vi][t];
+		}
+		if (na(xit)) {
+		    yf = NADBL;
+		    break;
+		} else {
+		    yf += mod.coeff[i] * xit;
+		}
+	    }
+	    if (y != NULL && j < k - 1) {
+		y[t++] = yf;
 	    }
 	}
 
@@ -2913,6 +3013,9 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	fit_resid_set_dec_places(fr);
 	strcpy(fr->depvar, pdinfo->varname[pmod->list[1]]);
     }
+
+    free(y);
+    free(llist);
 	
     return fr;
 }
