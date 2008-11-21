@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-20 12:56-0500\n"
-"PO-Revision-Date: 2008-11-18 16:22+0200\n"
+"PO-Revision-Date: 2008-11-21 17:07+0200\n"
 "Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -629,8 +629,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -665,7 +664,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:593
 msgid "reversing the data!\n"
-msgstr ""
+msgstr "Veriler tersten okunuyor!\n"
 
 #: lib/src/csvdata.c:707
 #, c-format
@@ -701,7 +700,7 @@ msgstr "ama tarihler tam ve tutarlı değil\n"
 
 #: lib/src/csvdata.c:810
 msgid "   dates are reversed?\n"
-msgstr ""
+msgstr "   tarihler tersten mi?\n"
 
 #: lib/src/csvdata.c:837
 #, c-format
@@ -723,8 +722,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:918 lib/src/dataio.c:2598
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:937 lib/src/dataio.c:2609
 msgid "Data file is empty\n"
@@ -745,10 +743,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1078
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1087
 #, c-format
@@ -1374,8 +1370,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1478 lib/src/describe.c:1582
 #, c-format
@@ -2491,8 +2486,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3738
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
 
 #: lib/src/graphing.c:3743
 #, c-format
@@ -3175,8 +3169,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -3304,6 +3297,9 @@ msgid ""
 "labels were found, and are printed below.\n"
 "\n"
 msgstr ""
+"Ayrıca, sayısal değerlerden metin etiketlerine bazı eşleştirmeler\n"
+"bulunmuş ve aşağıda listelenmiştir.\n"
+"\n"
 
 #: lib/src/gretl_string_table.c:274
 #, c-format
@@ -4764,51 +4760,43 @@ msgstr "Log-olabilirlik"
 
 #: lib/src/modelprint.c:2543
 msgid "note on model statistics abbreviations here"
-msgstr ""
+msgstr "Ö.S. ve Ö.H. ölçünlü sapma ve ölçünlü hatayı göstermektedir."
 
 #: lib/src/modelprint.c:2556 gui2/library.c:4691 gui2/model_table.c:635
 msgid "R-squared"
 msgstr "R-kare"
 
 #: lib/src/modelprint.c:2561
-#, fuzzy
 msgid "Mean dependent var"
-msgstr "Bağımlı değişken ortalaması"
+msgstr "Bağımlı değ ort."
 
 #: lib/src/modelprint.c:2563
-#, fuzzy
 msgid "S.D. dependent var"
-msgstr "Bağımlı değişken ölçünlü sapması"
+msgstr "Bağımlı değ Ö.S."
 
 #: lib/src/modelprint.c:2564
-#, fuzzy
 msgid "Sample size"
-msgstr "örneklem büyüklüğü"
+msgstr "Örneklem büyüklüğü"
 
 #: lib/src/modelprint.c:2565
-#, fuzzy
 msgid "Sum squared resid"
-msgstr "Kalıntı kareleri toplamı"
+msgstr "Kalıntı kareler top"
 
 #: lib/src/modelprint.c:2568
-#, fuzzy
 msgid "S.E. of regression"
-msgstr "KPSS bağlanımı"
+msgstr "Bağlanım Ö.H."
 
 #: lib/src/modelprint.c:2571
-#, fuzzy
 msgid "Akaike criterion"
-msgstr "Akaike bilgi ölçütü"
+msgstr "Akaike ölçütü"
 
 #: lib/src/modelprint.c:2573
-#, fuzzy
 msgid "Schwarz criterion"
-msgstr "Schwarz Bayesgil ölçütü"
+msgstr "Schwarz ölçütü"
 
 #: lib/src/modelprint.c:2576
-#, fuzzy
 msgid "P-value(F)"
-msgstr "P-değeri"
+msgstr "P-değeri(F)"
 
 #: lib/src/modelprint.c:2578 lib/src/modelprint.c:4534
 #: lib/src/modelprint.c:4536 lib/src/modelprint.c:4543
@@ -4816,9 +4804,8 @@ msgid "rho"
 msgstr "rho"
 
 #: lib/src/modelprint.c:2579
-#, fuzzy
 msgid "Durbin-Watson"
-msgstr "Durbin-Watson istatistiği"
+msgstr "Durbin-Watson"
 
 #: lib/src/modelprint.c:2648 lib/src/system.c:3713 lib/src/system.c:3715
 #, c-format
@@ -5253,10 +5240,8 @@ msgid "not significant at the 10% level\n"
 msgstr "% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
 
 #: lib/src/nonparam.c:761
 msgid ""
@@ -5285,8 +5270,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:809
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:813
 #, c-format
@@ -5414,10 +5398,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5494,8 +5476,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:442
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:450
 msgid "TOT."
@@ -5526,10 +5507,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
-"Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
 #, c-format
@@ -5872,10 +5851,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1495
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/system.c:81
 msgid "SUR"
@@ -6476,8 +6453,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:961
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:969
 #, c-format
@@ -6727,8 +6703,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7107,9 +7082,8 @@ msgid "Open Stata file"
 msgstr "Aç: Stata dosyası"
 
 #: gui2/callbacks.c:248
-#, fuzzy
 msgid "Open SPSS file"
-msgstr "Aç: CSV dosyası"
+msgstr "Aç: SPSS dosyası"
 
 #: gui2/callbacks.c:252
 msgid "Open JMulTi file"
@@ -8588,9 +8562,8 @@ msgid "Stata files (*.dta)"
 msgstr "Stata dosyaları (*.dta)"
 
 #: gui2/fileselect.c:643 gui2/fileselect.c:644
-#, fuzzy
 msgid "SPSS files (*.sav)"
-msgstr "CSV dosyaları (*.csv)"
+msgstr "SPSS dosyaları (*.sav)"
 
 #: gui2/fileselect.c:645 gui2/fileselect.c:646
 msgid "JMulTi files (*.dat)"
@@ -9384,9 +9357,8 @@ msgid "_Stata..."
 msgstr "_Stata..."
 
 #: gui2/gretl.c:1237 gui2/gretl.c:1250
-#, fuzzy
 msgid "_SPSS..."
-msgstr "_CSV..."
+msgstr "_SPSS..."
 
 #: gui2/gretl.c:1238 gui2/gretl.c:1251 gui2/gretl.c:1262
 msgid "_JMulTi..."
@@ -11832,8 +11804,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Üzgünüm, 2AEK modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:192
@@ -11942,8 +11913,7 @@ msgstr "Logbirim ve olabirim için, McFadden sözde-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1068
 msgid "No model is available"
@@ -14149,9 +14119,8 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "H0: eğim = 0 için p-değeri = %g\n"
 
 #: plugin/spss_import.c:1850
-#, fuzzy
 msgid "cannot read SPSS .sav on this platform"
-msgstr "Stata .dta dosyaları bu sistemde okunamıyor"
+msgstr "SPSS .sav bu sistemde okunamıyor"
 
 #: plugin/stata_import.c:286
 msgid "unknown data type"
@@ -14379,8 +14348,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14426,5 +14394,3 @@ msgstr "Dizgiler"
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#~ msgid "Failed to import data"
-#~ msgstr "Verileri içe aktarma başarısız"
