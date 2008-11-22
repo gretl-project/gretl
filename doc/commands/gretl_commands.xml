@@ -2426,6 +2426,7 @@
     <usage>
       <arguments>
         <argument optional="true">startobs endobs</argument>
+	<argument optional="true">steps-ahead</argument>
 	<argument optional="true">varname</argument>
       </arguments>
       <options>
@@ -2445,10 +2446,15 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print the forecast</effect>
         </option>
+        <option>
+	  <flag>--rolling</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
+	<example>fcast 2004:1 2008:3 4 rfcast --rolling</example>
       </examples>
     </usage>
 
@@ -2463,14 +2469,14 @@
       <para context="cli">
 	Must follow an estimation command.  Forecasts are generated for a
 	certain range of observations: if <repl>startobs</repl> and
-	<repl>endobs</repl> are given, for that range (if possible);
-	otherwise if the <lit>--out-of-sample</lit> option is given, for
-	observations following the range over which the model was
-	estimated; otherwise over the currently defined sample range.  If
-	an out-of-sample forecast is requested but no relevant
-	observations are available, an error is flagged. Depending on the
-	nature of the model, standard errors may also be generated (see
-	below).
+	<repl>endobs</repl> are given, for that range (if possible); otherwise
+	if the <lit>--out-of-sample</lit> option is given, for observations
+	following the range over which the model was estimated; otherwise over
+	the currently defined sample range.  If an out-of-sample forecast is
+	requested but no relevant observations are available, an error is
+	flagged. Depending on the nature of the model, standard errors may
+	also be generated; see below.  Also see below for the special effect
+	of the <lit>--rolling</lit> option.
       </para>
 
       <para context="cli">
@@ -2508,6 +2514,20 @@
 	dynamic forecast from the earliest possible date, and the
 	<lit>static</lit> option requests a static forecast even out
 	of sample.  
+      </para>
+
+      <para context="cli">
+	The <lit>rolling</lit> option is presently available only for
+	single-equation models estimated via OLS.  When this option is given
+	the forecasts are recursive. That is, each forecast is generated from
+	an estimate of the given model using data from a fixed starting point
+	(namely, the start of the sample range for the original estimation) up
+	to the forecast date minus <math>k</math>, where <math>k</math> is the
+	number of steps ahead, which must be given in the
+	<lit>steps-ahead</lit> argument. The forecasts are always dynamic if
+	this is applicable.  Note that the <lit>steps-ahead</lit> argument
+	should be given only in conjunction with the <lit>rolling</lit>
+	option.
       </para>
 
       <para>

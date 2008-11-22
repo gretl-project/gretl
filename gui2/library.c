@@ -1374,7 +1374,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int dyn_ok, add_obs_ok;
     int premax, pre_n = 0;
     int t1min = 0;
-    int rolling = 0;
+    int rolling = 0, k = 1;
     int dt2 = datainfo->n - 1;
     int st2 = datainfo->n - 1;
     gretlopt opt = OPT_NONE;
@@ -1422,7 +1422,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 
     set_window_busy(vwin);
     resp = forecast_dialog(t1min, t2, &t1,
-			   0, t2, &t2,
+			   0, t2, &t2, &k,
 			   0, premax, &pre_n,
 			   dyn_ok, &gopt, pmod);
     unset_window_busy(vwin);
@@ -1441,7 +1441,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 
     if (rolling) {
 	fr = rolling_OLS_k_step_fcast(pmod, &Z, datainfo,
-				      t1, t2, 1, pre_n, &err);
+				      t1, t2, k, pre_n, &err);
     } else {
 	ntodate(startobs, t1, datainfo);
 	ntodate(endobs, t2, datainfo);

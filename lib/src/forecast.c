@@ -147,6 +147,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     f->t1 = 0;
     f->t2 = 0;
     f->df = 0;
+    f->k = 0;
     f->nobs = 0;
     f->pmax = PMAX_NOT_AVAILABLE;
 
@@ -1906,9 +1907,18 @@ static int parse_forecast_string (const char *s,
 				  int *pt1, int *pt2,
 				  int *pk, char *vname)
 {
-    char t1str[32], t2str[32], kstr[32];
+    char f[4][32];
+    char *t1str = NULL, *t2str = NULL;
+    char *kstr = NULL, *vstr = NULL;
+    int nmax, nmin = (opt & OPT_R)? 1 : 0;
     int t1 = 0, t2 = 0;
-    int n, err = 0;
+    int nf, err = 0;
+    
+    /* "static" and "rolling" can't be combined */
+    err = incompatible_options(opt, OPT_S | OPT_R);
+    if (err) {
+	return err;
+    }
 
     if (!strncmp(s, "fcasterr", 8)) {
         s += 8;
@@ -1918,26 +1928,86 @@ static int parse_forecast_string (const char *s,
 
     *vname = '\0';
 
-    if (opt & OPT_R) {
-	/* rolling: allow for k = steps ahead */
-	n = sscanf(s, "%31s %31s %31s %15s", t1str, t2str, kstr, vname);
-	if (n != 4) {
-	    return E_DATA;
-	}
-	*pk = positive_int_from_string(kstr);
-	n = 2;
+    /* How many fields should we be looking for in the user input?
+       If OPT_R ("rolling") is given, the max is 4: 
+
+       t1, t2, k (steps-ahead), vname
+
+       Otherwise the max is 3 (no k-value):
+
+       t1, t2, vname
+
+       However, if OPT_O ("out-of-sample") is given, we should not 
+       expect t1 and t2, so the max becomes 2 (if OPT_R), else 1.
+
+       Also note: t1 and t2 need not be given (even in the absence
+       if OPT_O) since these default to the current sample range.
+    */
+
+    if (opt & OPT_O) {
+	nmax = (opt & OPT_R)? 2 : 1;
     } else {
-	n = sscanf(s, "%31s %31s %15s", t1str, t2str, vname);
+	nmax = (opt & OPT_R)? 4 : 3;
+    }    
+
+    nf = sscanf(s, "%31s %31s %31s %31s", f[0], f[1], f[2], f[3]);
+
+    if (nf < nmin || nf > nmax) {
+	fprintf(stderr, "fcast: expected %d to %d fields in input, got %d\n",
+		nmin, nmax, nf);
+	return E_DATA;
     }
 
-    if (n == 1) {
-	strncat(vname, t1str, VNAMELEN -1);
-	n = 0;
-    } else if (n == 3) {
-	n = 2;
+    if (opt & OPT_R) {
+	if (nf == 4) {
+	    /* t1, t2, k, vname */
+	    t1str = f[0];
+	    t2str = f[1];
+	    kstr = f[2];
+	    vstr = f[3];
+	} else if (nf == 3) {
+	    /* t1, t2, k */
+	    t1str = f[0];
+	    t2str = f[1];
+	    kstr = f[2];
+	} else if (nf == 2) {
+	    /* k, vname */
+	    kstr = f[0];
+	    vstr = f[1];
+	} else if (nf == 1) {
+	    /* just k */
+	    kstr = f[0];
+	}
+    } else {
+	if (nf == 3) {
+	    /* t1, t2, vname */
+	    t1str = f[0];
+	    t2str = f[1];
+	    vstr = f[2];
+	} else if (nf == 2) {
+	    /* t1, t2 */
+	    t1str = f[0];
+	    t2str = f[1];
+	} else if (nf == 1) {
+	    /* just vname */
+	    vstr = f[0];
+	}
     }
 
-    if (n == 2) {
+    if ((opt & OPT_O) && (t1str != NULL || t2str != NULL)) {
+	fprintf(stderr, "fcast: got unexpected t1 and/or t2 field in input\n");
+	return E_DATA;
+    }	
+
+    if (kstr != NULL && pk != NULL) {
+	*pk = positive_int_from_string(kstr);
+    }
+
+    if (vstr != NULL) {
+	strncat(vname, vstr, VNAMELEN - 1);
+    }
+
+    if (t1str != NULL && t2str != NULL) {
 	t1 = dateton(t1str, pdinfo);
 	if (t1 < 0) {
 	    t1 = fcast_get_limit(t1str, pZ, pdinfo);
@@ -2354,7 +2424,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 {
     char vname[VNAMELEN];
     FITRESID *fr;
-    int t1, t2, k;
+    int t1, t2, k = -1;
     int err;
 
     if (pmod->ci == ARBOND || pmod->ci == HECKIT) {
@@ -2372,6 +2442,11 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 				&t1, &t2, &k, vname);
     if (err) {
 	return err;
+    }
+
+    if (*vname != '\0') {
+	/* saving to named series */
+	opt |= (OPT_A | OPT_Q);
     }
 
     if (opt & OPT_R) {
@@ -2488,7 +2563,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     int t1 = 0, t2 = 0;
     int t2est, ci;
     int imax, imin = 0;
-    int k, df = 0;
+    int df = 0;
     int err = 0;
 
     if (type == GRETL_OBJ_VAR) {
@@ -2507,7 +2582,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	ylist = sys->ylist;
     }
 
-    err = parse_forecast_string(str, opt, t2est, pZ, pdinfo, &t1, &t2, &k, vname);
+    err = parse_forecast_string(str, opt, t2est, pZ, pdinfo, &t1, &t2, NULL, vname);
 
     Z = (const double **) *pZ;
 
@@ -2576,13 +2651,6 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     return err;
 }
 
-static int count_fcast_params (const char *s)
-{
-    char s1[16], s2[16], s3[16];
-
-    return sscanf(s, "%*s %15s %15s %15s", s1, s2, s3);
-}
-
 /**
  * do_forecast:
  * @str: command string, which may include a starting 
@@ -2594,8 +2662,9 @@ static int count_fcast_params (const char *s)
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
  * out of sample (in cases where this distinction is meaningful).
- * %OPT_Q can be used to suppress printing of the forecast;
- * %OPT_P can be used to ensure that the values are printed.
+ * %OPT_R: do rolling/recursive forecast.
+ * %OPT_Q: suppress printing of the forecast;
+ * %OPT_P: ensure that the values are printed.
  *
  * In the case of "simple" models with an autoregressive error term 
  * (%AR, %AR1) the predicted values incorporate the forecastable portion 
@@ -2616,19 +2685,10 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 	return E_BADSTAT;
     }
 
-    if (opt & OPT_E) {
-	; /* OPT_E -> "fcasterr" compatibility */
+    if ((opt & OPT_R) && type != GRETL_OBJ_EQN) {
+	/* "rolling": single equations only */
+	err = E_NOTIMP;
     } else if (type == GRETL_OBJ_EQN) {
-	/* single equation, old fcast compatibility */
-	int n = count_fcast_params(str);
-
-	if (n == 1 || n == 3) {
-	    /* add named fcast series directly, don't print */
-	    opt |= (OPT_A | OPT_Q);
-	}
-    }
-
-    if (type == GRETL_OBJ_EQN) {
 	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
     } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
 	err = system_do_forecast(str, ptr, type, pZ, pdinfo, opt, prn);
@@ -2900,6 +2960,24 @@ static int k_step_init (MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
+static int rolling_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
+{
+    /* the earliest possible forecast start */
+    int t1min = pmod->t1 + pmod->ncoeff + k - 1;
+    int err = 0;
+
+    if (*t1 < t1min) {
+	*t1 = t1min;
+    }
+
+    /* minimal forecast range = 1, otherwise error */
+    if (t2 < *t1) {
+	err = E_OBS;
+    }
+
+    return err;
+}
+
 /* recursive k-step ahead forecasts, for models estimated via OLS */
 
 FITRESID * 
@@ -2912,9 +2990,8 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     double *y = NULL;
     int *llist = NULL;
     double xit, yf = NADBL;
-    int nf = t2 - t1 + 1;
     MODEL mod;
-    int j, p, vi;
+    int j, p, vi, nf;
     int i, s, t;
 
     if (pmod->ci != OLS) {
@@ -2923,6 +3000,7 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (k < 1) {
+	gretl_errmsg_set("recursive forecast: steps-ahead must be >= 1");
 	*err = E_DATA;
 	return NULL;
     }    
@@ -2932,8 +3010,9 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    if (t1 - pmod->t1 - k + 1 < pmod->ncoeff || t2 < t1) {
-	*err = E_OBS;
+    /* check feasibility of forecast range */
+    *err = rolling_fcast_adjust_obs(pmod, &t1, t2, k);
+    if (*err) {
 	return NULL;
     }
 
@@ -2946,21 +3025,30 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, pre_n, err); 
     if (*err) {
+	free(y);
+	free(llist);
 	return NULL;
     }
 
-    fr->method = FC_ONESTEP;
+    fr->method = FC_KSTEP;
+    fr->k = k;
 
     /* sample range for initial estimation */
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = t1 - k; /* start of fcast range minus k */
+
+    /* number of forecasts */
+    nf = t2 - t1 + 1;
+
+    fprintf(stderr, "rolling fcast: pdinfo->t1=%d, pdinfo->t2=%d, t1=%d, t2=%d, k=%d, nf=%d\n",
+	    pdinfo->t1, pdinfo->t2, t1, t2, k, nf);
 
     for (t=0; t<pdinfo->n; t++) {
 	fr->actual[t] = (*pZ)[pmod->list[1]][t];
     }
 
     for (s=0; s<nf; s++) {
-	mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A);
+	mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
 	if (mod.errcode) {
 	    *err = mod.errcode;
 	    clear_model(&mod);

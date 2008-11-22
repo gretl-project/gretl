@@ -2243,9 +2243,19 @@ static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
     }
 }
 
+static void fcast_k_sensitivity (GtkToggleButton *button, GtkWidget *w)
+{
+    gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(button));
+}
+
+static void adjust_fcast_k (GtkSpinButton *spin, int *pk)
+{
+    *pk = gtk_spin_button_get_value(spin);
+}
+
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
-		     int pmin, int pmax, int *p,
+		     int *k, int pmin, int pmax, int *p,
 		     int dyn, gretlopt *optp,
 		     MODEL *pmod)
 {
@@ -2255,7 +2265,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	N_("automatic forecast (dynamic out of sample)"),
 	N_("dynamic forecast"),
 	N_("static forecast"),
-	N_("rolling one-step ahead forecasts"),
+	N_("rolling k-step ahead forecasts: k = "),
     };
     int nopts = 3;
     int deflt = 0;
@@ -2309,6 +2319,18 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	hbox = gtk_hbox_new(FALSE, 5);
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+
+	if (i == 3 && k != NULL) {
+	    GtkWidget *spin = gtk_spin_button_new_with_range(1, 50, 1);
+
+	    g_signal_connect(G_OBJECT(spin), "value-changed",
+			     G_CALLBACK(adjust_fcast_k), k);
+	    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
+	    gtk_widget_set_sensitive(spin, deflt == 3);
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(fcast_k_sensitivity), spin);
+	}
+
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, TRUE, TRUE, 0);
 

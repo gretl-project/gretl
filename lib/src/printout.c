@@ -1064,16 +1064,16 @@ static void fit_resid_head (const FITRESID *fr,
 {
     char label[16];
     char obs1[OBSLEN], obs2[OBSLEN];
-    int onestep = fr->method == FC_ONESTEP;
+    int kstep = fr->method == FC_KSTEP;
     int i;
 
-    if (onestep) {
+    if (kstep) {
 	ntodate(obs1, fr->model_t1, pdinfo);   
-	pputs(prn, _("Recursive one-step ahead forecasts"));
+	pprintf(prn, _("Recursive %d-step ahead forecasts"), fr->k);
 	pputs(prn, "\n\n");
 	pprintf(prn, _("The forecast for time t is based on (a) coefficients obtained by\n"
-		       "estimating the model over the sample %s to t-1, and (b) the\n"
-		       "regressors evaluated at time t."), obs1);
+		       "estimating the model over the sample %s to t-%d, and (b) the\n"
+		       "regressors evaluated at time t."), obs1, fr->k);
 	pputs(prn, "\n\n");
 	pputs(prn, _("This is truly a forecast only if all the stochastic regressors\n"
 		     "are in fact lagged values."));
@@ -1094,8 +1094,8 @@ static void fit_resid_head (const FITRESID *fr,
 
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, fr->depvar);
-	if (i == 2) strcpy(label, (onestep)? _("forecast") : _("fitted"));
-	if (i == 3) strcpy(label, (onestep)? _("error") : _("residual"));
+	if (i == 2) strcpy(label, (kstep)? _("forecast") : _("fitted"));
+	if (i == 3) strcpy(label, (kstep)? _("error") : _("residual"));
 	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
     }
 
@@ -2013,7 +2013,7 @@ int
 text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, 
 		      PRN *prn)
 {
-    int onestep = fr->method == FC_ONESTEP;
+    int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
     double yt, yf, et;
     double MSE = 0.0;
@@ -2049,7 +2049,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
 	} else {
 	    int ast = 0;
 
-	    if (onestep) {
+	    if (kstep) {
 		MSE += et * et;
 		AE += fabs(et);
 		effn++;
@@ -2086,7 +2086,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
 	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), AE / effn);
     }
 
-    if (onestep && fr->nobs > 0 && gretl_in_gui_mode()) {
+    if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
 	const double *obs = gretl_plotx(pdinfo);
 	int ts = dataset_is_time_series(pdinfo);
 	int t0 = (fr->t0 >= 0)? fr->t0 : 0;

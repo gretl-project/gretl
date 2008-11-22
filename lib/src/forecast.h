@@ -24,7 +24,7 @@ typedef enum {
     FC_STATIC,
     FC_DYNAMIC,
     FC_AUTO,
-    FC_ONESTEP
+    FC_KSTEP
 } ForecastMethod;
 
 struct FITRESID_ {
@@ -41,6 +41,7 @@ struct FITRESID_ {
     int pmax;
     int df;
     int t0, t1, t2;
+    int k; 
     int nobs;
     char depvar[VNAMELEN];
 };

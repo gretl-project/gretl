@@ -2525,9 +2525,7 @@ static char *print_eight (char *s, double x, int utf)
 
     ax = fabs(x);
 
-    if (ax == 0.0 || ax == 1.0) {
-	sprintf(tmp, "%8.6f", ax);
-    } else if (ax < 0.00001 || ax > 99999999) {
+    if (ax < 0.00001 || ax > 99999999) {
 	char *p;
 
 	sprintf(tmp, "%#.3g", ax);
@@ -2541,15 +2539,14 @@ static char *print_eight (char *s, double x, int utf)
 		sprintf(tmp, "%#.2g", ax);
 	    }
 	}
+    } else if (ax < 10.0) {
+	sprintf(tmp, "%8.6f", ax);
     } else {
-	int lfx = ceil(log10(floor(ax)));
+	double lx = log10(ax);
+	int ldig = ceil(lx) + (lx == floor(lx));
 
-	if (ax > 1 && lfx == 0) {
-	    lfx = 1;
-	} else if (lfx > 7) {
-	    lfx = 7;
-	}
-	sprintf(tmp, "%8.*f", 8 - lfx - 1, ax);
+	ldig = (ldig > 7)? 7 : ldig;
+	sprintf(tmp, "%8.*f", 8 - ldig - 1, ax);
     }
 
     strcat(s, tmp);
@@ -2563,10 +2560,12 @@ static void compact_middle_table (MODEL *pmod, PRN *prn)
     int utf = gretl_print_supports_utf(prn);
     char x1[12], x2[12], fstr[32];
     const char *rsq1, *rsq2;
-    double cR2, pvF, h = NADBL;
+    double cR2, pvF = NADBL, h = NADBL;
 
-    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
-    pvF = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+    if (!na(pmod->fstt)) {
+	sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
+	pvF = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+    }
 
     if (gretl_model_get_int(pmod, "uncentered")) {
 	rsq1 = N_("Uncentered R-squared");
@@ -2584,20 +2583,22 @@ static void compact_middle_table (MODEL *pmod, PRN *prn)
     } 
 
     pprintf(prn, "%-20s%s   %-20s%s\n", 
-	    _("Sum squared resid"), print_eight(x1, pmod->ess, utf),
-	    _("Mean dependent var"), print_eight(x2, pmod->ybar, utf));
+	    _("Mean dependent var"), print_eight(x1, pmod->ybar, utf),
+	    _("S.D. dependent var"), print_eight(x2, pmod->sdy, utf));
 
     pprintf(prn, "%-20s%s   %-20s%s\n", 
-	    _("S.E. of regression"), print_eight(x1, pmod->sigma, utf),
-	    _("S.D. dependent var"), print_eight(x2, pmod->sdy, utf));
+	    _("Sum squared resid"), print_eight(x1, pmod->ess, utf),
+	    _("S.E. of regression"), print_eight(x2, pmod->sigma, utf));
 
     pprintf(prn, "%-20s %f   %-20s%s\n", 
 	    _(rsq1), pmod->rsq,
-	    fstr, print_eight(x2, pmod->fstt, utf));
-    
-    pprintf(prn, "%-20s%s   %-20s%s\n", 
-	    _(rsq2), print_eight(x1, cR2, utf),
-	    _("P-value(F)"), print_eight(x2, pvF, utf));
+	    _(rsq2), print_eight(x2, cR2, utf));
+
+    if (!na(pmod->fstt)) {
+	pprintf(prn, "%-20s%s   %-20s%s\n", 
+		fstr, print_eight(x1, pmod->fstt, utf),
+		_("P-value(F)"), print_eight(x2, pvF, utf));
+    }
 
     pprintf(prn, "%-20s%s   %-20s%s\n", 
 	    _("Log-likelihood"), print_eight(x1, pmod->lnL, utf),
@@ -2674,7 +2675,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (getenv("COMPACT_MIDDLE")) {
-	if (plain_format(prn) && !na(pmod->lnL) && !na(pmod->fstt)) {
+	if (plain_format(prn) && !na(pmod->lnL)) {
 	    compact = 1;
 	}
     }
