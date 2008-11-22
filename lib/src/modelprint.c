@@ -2436,6 +2436,8 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
 	char jllstr[64];
 	char xstr[32];
 
+	/* FIXME RTF / TeX */
+
 	sprintf(jllstr, _("Log-likelihood for %s"), 
 		(const char *) gretl_model_get_data(pmod, "log-parent"));
 	if (lldig > 0) {
@@ -2552,7 +2554,110 @@ static char *print_eight (char *s, double x, int utf)
     strcat(s, tmp);
 
     return s;
-}  
+} 
+
+static void common_middle_table_setup (MODEL *pmod, char *fstr,
+				       double *pvF, const char **prsq1,
+				       const char **prsq2, double *cR2,
+				       double *h)
+{
+    if (!na(pmod->fstt)) {
+	sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
+	*pvF = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+    }
+
+    if (gretl_model_get_int(pmod, "uncentered")) {
+	*prsq1 = N_("Uncentered R-squared");
+	*prsq2 = N_("Centered R-squared");
+	*cR2 = gretl_model_get_double(pmod, "centered-R2");
+    } else {
+	*prsq1 = N_("R-squared");
+	*prsq2 = N_("Adjusted R-squared");
+	*cR2 = pmod->adjrsq;
+    }
+
+    if (pmod->ci != VAR && pmod->aux != AUX_VECM && 
+	!na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
+	*h = durbins_h(pmod);
+    } 
+
+} 
+
+#define RTF_MT_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+                   "\\cellx2500\\cellx3800\\cellx4200\\cellx6700" \
+                   "\\cellx8000\n"
+
+#define RTF_MT_FMT "\\intbl\\ql %s\\cell\\qr %s\\cell \\qc \\cell" \
+                   "\\ql %s\\cell\\qr %s\\cell\\intbl\\row\n"
+
+static void rtf_compact_middle_table (MODEL *pmod, PRN *prn)
+{
+    const char *note = N_("note on model statistics abbreviations here");
+    char x1[12], x2[12], fstr[32];
+    const char *rsq1, *rsq2;
+    double cR2, pvF = NADBL, h = NADBL;
+
+    common_middle_table_setup(pmod, fstr, &pvF, &rsq1, &rsq2,
+			      &cR2, &h);
+
+    pprintf(prn, "\\par\n{%s", RTF_MT_ROW);
+
+    pprintf(prn, RTF_MT_FMT, 
+	    I_("Mean dependent var"), print_eight(x1, pmod->ybar, 0),
+	    I_("S.D. dependent var"), print_eight(x2, pmod->sdy, 0));
+
+    pputs(prn, RTF_MT_ROW);
+    pprintf(prn, RTF_MT_FMT, 
+	    I_("Sum squared resid"), print_eight(x1, pmod->ess, 0),
+	    I_("S.E. of regression"), print_eight(x2, pmod->sigma, 0));
+
+    pputs(prn, RTF_MT_ROW);
+    pprintf(prn, RTF_MT_FMT,  
+	    I_(rsq1), print_eight(x1, pmod->rsq, 0),
+	    I_(rsq2), print_eight(x2, cR2, 0));
+	    
+
+    if (!na(pmod->fstt)) {
+	pputs(prn, RTF_MT_ROW);
+	pprintf(prn, RTF_MT_FMT,  
+		fstr, print_eight(x1, pmod->fstt, 0),
+		I_("P-value(F)"), print_eight(x2, pvF, 0));
+    }
+
+    pputs(prn, RTF_MT_ROW);
+    pprintf(prn, RTF_MT_FMT,
+	    I_("Log-likelihood"), print_eight(x1, pmod->lnL, 0),
+	    I_("Akaike criterion"),  print_eight(x2, pmod->criterion[C_AIC], 0));
+
+    pputs(prn, RTF_MT_ROW);
+    pprintf(prn, RTF_MT_FMT,
+ 	    I_("Schwarz criterion"), print_eight(x1, pmod->criterion[C_BIC], 0),
+	    I_("Hannan-Quinn"), print_eight(x2, pmod->criterion[C_HQC], 0));
+
+    if (!na(h)) {
+	pputs(prn, RTF_MT_ROW);
+	pprintf(prn, RTF_MT_FMT, 
+		I_("rho"), print_eight(x1, pmod->rho, 0), 
+		I_("Durbin's h"), print_eight(x2, h, 0));
+    } else if (!na(pmod->rho) && !na(pmod->dw)) {
+	pputs(prn, RTF_MT_ROW);
+	pprintf(prn, RTF_MT_FMT, 
+		I_("rho"), print_eight(x1, pmod->rho, 0), 
+		I_("Durbin-Watson"), print_eight(x2, pmod->dw, 0)); 
+    }
+
+    pputs(prn, "}\n");
+
+    if (strcmp(note, _(note))) {
+	pputs(prn, I_(note));
+    }
+
+    if (random_effects_model(pmod)) {
+	panel_variance_lines(pmod, prn);
+    }
+
+    maybe_print_jll(pmod, 0, prn);
+}
 
 static void compact_middle_table (MODEL *pmod, PRN *prn)
 {
@@ -2562,25 +2667,8 @@ static void compact_middle_table (MODEL *pmod, PRN *prn)
     const char *rsq1, *rsq2;
     double cR2, pvF = NADBL, h = NADBL;
 
-    if (!na(pmod->fstt)) {
-	sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
-	pvF = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
-    }
-
-    if (gretl_model_get_int(pmod, "uncentered")) {
-	rsq1 = N_("Uncentered R-squared");
-	rsq2 = N_("Centered R-squared");
-	cR2 = gretl_model_get_double(pmod, "centered-R2");
-    } else {
-	rsq1 = N_("R-squared");
-	rsq2 = N_("Adjusted R-squared");
-	cR2 = pmod->adjrsq;
-    }
-
-    if (pmod->ci != VAR && pmod->aux != AUX_VECM && 
-	!na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
-	h = durbins_h(pmod);
-    } 
+    common_middle_table_setup(pmod, fstr, &pvF, &rsq1, &rsq2,
+			      &cR2, &h);
 
     pprintf(prn, "%-20s%s   %-20s%s\n", 
 	    _("Mean dependent var"), print_eight(x1, pmod->ybar, utf),
@@ -2619,16 +2707,6 @@ static void compact_middle_table (MODEL *pmod, PRN *prn)
     }
 
     pputc(prn, '\n');
-
-#if 0
-    pputs(prn, _("Information criteria"));
-    pputs(prn, ":\n");
-    pprintf(prn, "AIC: %14.5f  BIC: %14.5f  HQC: %14.5f\n",
-           pmod->criterion[C_AIC],
-           pmod->criterion[C_BIC],
-           pmod->criterion[C_HQC]);
-    pputc(prn, '\n');
-#endif
 
     if (strcmp(note, _(note))) {
 	pputs(prn, _(note));
@@ -2674,8 +2752,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
-    if (getenv("COMPACT_MIDDLE")) {
-	if (plain_format(prn) && !na(pmod->lnL)) {
+    if (getenv("COMPACT_MIDDLE") && !na(pmod->lnL)) {
+	if (plain_format(prn) || rtf_format(prn)) {
 	    compact = 1;
 	}
     }
@@ -2867,7 +2945,11 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 
 	if (compact) {
-	    compact_middle_table(pmod, prn);
+	    if (plain_format(prn)) {
+		compact_middle_table(pmod, prn);
+	    } else if (rtf_format(prn)) {
+		rtf_compact_middle_table(pmod, prn);
+	    }
 	    goto close_format;
 	} 
 
