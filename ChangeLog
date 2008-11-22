@@ -31,7 +31,7 @@ version 1.7.10, in progress
 - CSV importer: try to handle time-series data in reverse
   chronological order
 - "fcast": allow variables for the startobs and endobs
-  arguments
+  arguments; add "rolling" k-step-ahead option
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
