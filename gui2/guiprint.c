@@ -2154,7 +2154,7 @@ int scalars_to_clipboard_as_csv (void)
     int err = 0;
 
     if (n_saved_scalars() == 0) {
-	warnbox(_("No scalar variable are currently defined"));
+	warnbox(_("No scalar variables are currently defined"));
 	return 0;
     }
 

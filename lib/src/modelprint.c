@@ -775,10 +775,10 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %g\n", _("'Within' variance"), ws2);
-	pprintf(prn, "  %s = %g\n", _("'Between' variance"), bs2);
+	pprintf(prn, "%s = %g\n", _("'Within' variance"), ws2);
+	pprintf(prn, "%s = %g\n", _("'Between' variance"), bs2);
 	if (!na(theta)) {
-	    pprintf(prn, "  %s = %g\n", _("theta used for quasi-demeaning"), theta);
+	    pprintf(prn, "%s = %g\n", _("theta used for quasi-demeaning"), theta);
 	}
     } else if (tex_format(prn)) {
 	char xstr[32];
@@ -2732,7 +2732,9 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	panel_variance_lines(pmod, prn);
 	if (tex || rtf) {
 	    print_middle_table_end(prn);
-	}	
+	} else {
+	    pputc(prn, '\n');
+	}
     }
 
     if (plain_format(prn)) {
@@ -2889,7 +2891,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
-    if (getenv("COMPACT_MIDDLE") && pmod->ci != MPOLS) {
+    if (!getenv("VERBOSE_MIDDLE") && pmod->ci != MPOLS) {
 	if (plain_format(prn) || rtf_format(prn) || tex_format(prn)) {
 	    compact = 1;
 	}

@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-20 12:56-0500\n"
+"POT-Creation-Date: 2008-11-23 16:32-0500\n"
 "PO-Revision-Date: 2005-04-04 10:55-0700\n"
 "Last-Translator: Steven Michael Murphy <murf@e-tools.com>\n"
 "Language-Team: Kinyarwanda <translation-team-rw@lists.sourceforge.net>\n"
@@ -45,22 +45,21 @@ msgstr ""
 #: lib/src/adf_kpss.c:278 lib/src/adf_kpss.c:283 lib/src/bootstrap.c:420
 #: lib/src/modelprint.c:587 lib/src/modelprint.c:640 lib/src/modelprint.c:650
 #: lib/src/modelprint.c:748 lib/src/modelprint.c:751 lib/src/modelprint.c:763
-#: lib/src/modelprint.c:2166 lib/src/modelprint.c:2182
-#: lib/src/modelprint.c:2201 lib/src/modelprint.c:3610
-#: lib/src/modelprint.c:3912 lib/src/modelprint.c:4650
-#: lib/src/modelprint.c:4685 lib/src/modelprint.c:4720
-#: lib/src/modelprint.c:4770 lib/src/modelprint.c:4772 lib/src/varprint.c:956
+#: lib/src/modelprint.c:2176 lib/src/modelprint.c:2192
+#: lib/src/modelprint.c:2211 lib/src/modelprint.c:3786
+#: lib/src/modelprint.c:4088 lib/src/modelprint.c:4826
+#: lib/src/modelprint.c:4861 lib/src/modelprint.c:4896
+#: lib/src/modelprint.c:4946 lib/src/modelprint.c:4948 lib/src/varprint.c:956
 #: lib/src/varprint.c:960 lib/src/varprint.c:964 lib/src/varprint.c:1137
-#: lib/src/varprint.c:1142 lib/src/varprint.c:1149 lib/src/varprint.c:1160
-#: lib/src/varprint.c:1165 lib/src/varprint.c:1172 lib/src/varprint.c:1211
-#: lib/src/varprint.c:1218 lib/src/varprint.c:1227 gui2/dialogs.c:4072
-#: plugin/johansen.c:1444 plugin/johansen.c:1445
+#: lib/src/varprint.c:1142 lib/src/varprint.c:1158 lib/src/varprint.c:1163
+#: lib/src/varprint.c:1207 lib/src/varprint.c:1214 lib/src/varprint.c:1223
+#: gui2/dialogs.c:4094 plugin/johansen.c:1444 plugin/johansen.c:1445
 #, fuzzy
 msgid "p-value"
 msgstr "P Agaciro"
 
-#: lib/src/adf_kpss.c:278 lib/src/dataio.c:1569 lib/src/modelprint.c:3091
-#: lib/src/modelprint.c:3156
+#: lib/src/adf_kpss.c:278 lib/src/dataio.c:1569 lib/src/modelprint.c:3267
+#: lib/src/modelprint.c:3332
 msgid "unknown"
 msgstr "itazwi"
 
@@ -180,34 +179,34 @@ msgstr ""
 
 #: lib/src/adf_kpss.c:894 lib/src/compare.c:314 lib/src/compare.c:341
 #: lib/src/compare.c:771 lib/src/compare.c:1482 lib/src/compare.c:1681
-#: lib/src/compare.c:1853 lib/src/describe.c:4403 lib/src/estimate.c:2577
-#: lib/src/estimate.c:2590 lib/src/estimate.c:2597 lib/src/estimate.c:3379
+#: lib/src/compare.c:1853 lib/src/describe.c:4403 lib/src/estimate.c:2581
+#: lib/src/estimate.c:2594 lib/src/estimate.c:2601 lib/src/estimate.c:3383
 #: lib/src/gretl_intl.c:104 lib/src/gretl_model.c:3052
 #: lib/src/gretl_panel.c:3421 lib/src/gretl_restrict.c:1801
-#: lib/src/gretl_restrict.c:1808 lib/src/modelprint.c:2358
-#: lib/src/modelprint.c:2362 lib/src/modelprint.c:2367
-#: lib/src/modelprint.c:2385 lib/src/modelprint.c:2389
-#: lib/src/modelprint.c:2394 lib/src/modelprint.c:2406
-#: lib/src/modelprint.c:2411 lib/src/modelprint.c:2415 lib/src/vartest.c:655
+#: lib/src/gretl_restrict.c:1808 lib/src/modelprint.c:2368
+#: lib/src/modelprint.c:2372 lib/src/modelprint.c:2377
+#: lib/src/modelprint.c:2395 lib/src/modelprint.c:2399
+#: lib/src/modelprint.c:2404 lib/src/modelprint.c:2416
+#: lib/src/modelprint.c:2421 lib/src/modelprint.c:2425 lib/src/vartest.c:655
 msgid "Test statistic"
 msgstr ""
 
-#: lib/src/adf_kpss.c:1116
+#: lib/src/adf_kpss.c:1117
 #, fuzzy, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "kugirango a Igice: Imizi in"
 
-#: lib/src/adf_kpss.c:1123
+#: lib/src/adf_kpss.c:1124
 #, fuzzy, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Igerageza"
 
-#: lib/src/adf_kpss.c:1145
+#: lib/src/adf_kpss.c:1152
 #, fuzzy, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr "Igerageza"
 
-#: lib/src/adf_kpss.c:1151
+#: lib/src/adf_kpss.c:1161
 #, fuzzy
 msgid ""
 "\n"
@@ -342,16 +341,16 @@ msgid "Asymptotic test statistic"
 msgstr "Igerageza"
 
 #: lib/src/compare.c:316 lib/src/compare.c:1860 lib/src/compare.c:1865
-#: lib/src/compare.c:2275 lib/src/estimate.c:2601 lib/src/estimate.c:3381
+#: lib/src/compare.c:2275 lib/src/estimate.c:2605 lib/src/estimate.c:3385
 #: lib/src/gretl_model.c:2960 lib/src/gretl_model.c:2968
 #: lib/src/gretl_panel.c:2905 lib/src/gretl_panel.c:3428
 #: lib/src/modelprint.c:552 lib/src/modelprint.c:639 lib/src/modelprint.c:649
-#: lib/src/modelprint.c:2360 lib/src/modelprint.c:2365
-#: lib/src/modelprint.c:2387 lib/src/modelprint.c:2392
-#: lib/src/modelprint.c:4649 lib/src/modelprint.c:4684 lib/src/printout.c:247
+#: lib/src/modelprint.c:2370 lib/src/modelprint.c:2375
+#: lib/src/modelprint.c:2397 lib/src/modelprint.c:2402
+#: lib/src/modelprint.c:4825 lib/src/modelprint.c:4860 lib/src/printout.c:247
 #: lib/src/pvalues.c:1756 lib/src/system.c:823 lib/src/system.c:2612
 #: lib/src/system.c:2636 lib/src/system.c:2668 lib/src/system.c:2687
-#: lib/src/system.c:3808 lib/src/varprint.c:1217 lib/src/varprint.c:1226
+#: lib/src/system.c:3808 lib/src/varprint.c:1213 lib/src/varprint.c:1222
 #: lib/src/vartest.c:60 lib/src/vartest.c:656
 #, fuzzy
 msgid "Chi-square"
@@ -450,15 +449,15 @@ msgstr "Igerageza kugirango"
 #: lib/src/compare.c:1859 lib/src/compare.c:1865 lib/src/compare.c:2276
 #: lib/src/compare.c:2278 lib/src/compare.c:2283 lib/src/describe.c:2947
 #: lib/src/describe.c:3174 lib/src/describe.c:5306 lib/src/describe.c:5309
-#: lib/src/estimate.c:2579 lib/src/estimate.c:2601 lib/src/estimate.c:3381
+#: lib/src/estimate.c:2583 lib/src/estimate.c:2605 lib/src/estimate.c:3385
 #: lib/src/gretl_model.c:3068 lib/src/gretl_model.c:3070
 #: lib/src/gretl_model.c:3072 lib/src/gretl_panel.c:1328
 #: lib/src/gretl_panel.c:3422 lib/src/gretl_panel.c:3427
-#: lib/src/modelprint.c:549 lib/src/modelprint.c:553 lib/src/modelprint.c:2360
-#: lib/src/modelprint.c:2365 lib/src/modelprint.c:2369
-#: lib/src/modelprint.c:2387 lib/src/modelprint.c:2392
-#: lib/src/modelprint.c:2396 lib/src/modelprint.c:2409
-#: lib/src/modelprint.c:2413 lib/src/modelprint.c:2417 lib/src/printout.c:248
+#: lib/src/modelprint.c:549 lib/src/modelprint.c:553 lib/src/modelprint.c:2370
+#: lib/src/modelprint.c:2375 lib/src/modelprint.c:2379
+#: lib/src/modelprint.c:2397 lib/src/modelprint.c:2402
+#: lib/src/modelprint.c:2406 lib/src/modelprint.c:2419
+#: lib/src/modelprint.c:2423 lib/src/modelprint.c:2427 lib/src/printout.c:248
 #: lib/src/printout.c:254 lib/src/system.c:796 lib/src/system.c:824
 #: lib/src/system.c:2607 lib/src/system.c:2613 lib/src/system.c:2633
 #: lib/src/system.c:2637 lib/src/system.c:2664 lib/src/system.c:2669
@@ -720,68 +719,68 @@ msgstr "i Amatariki OYA Byuzuye Na"
 msgid "   dates are reversed?\n"
 msgstr ""
 
-#: lib/src/csvdata.c:837
+#: lib/src/csvdata.c:838
 #, fuzzy, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
 msgstr "Itangira Urubariro Akarango Iheruka Akarango"
 
-#: lib/src/csvdata.c:848
+#: lib/src/csvdata.c:849
 #, fuzzy
 msgid "   label strings can't be consistent dates\n"
 msgstr "Akarango Ikurikiranyanyuguti"
 
-#: lib/src/csvdata.c:852
+#: lib/src/csvdata.c:853
 #, fuzzy
 msgid "trying to parse row labels as dates...\n"
 msgstr "Kuri Urubariro Uturango... Nka Amatariki"
 
-#: lib/src/csvdata.c:866
+#: lib/src/csvdata.c:867
 #, fuzzy
 msgid "   definitely not a four-digit year\n"
 msgstr "OYA a"
 
-#: lib/src/csvdata.c:918 lib/src/dataio.c:2598
+#: lib/src/csvdata.c:925 lib/src/dataio.c:2598
 #, fuzzy, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr "Ibyatanzwe iyi ni OYA a Byemewe Umwandiko"
 
-#: lib/src/csvdata.c:937 lib/src/dataio.c:2609
+#: lib/src/csvdata.c:944 lib/src/dataio.c:2609
 #, fuzzy
 msgid "Data file is empty\n"
 msgstr "IDOSIYE ni"
 
-#: lib/src/csvdata.c:939
+#: lib/src/csvdata.c:946
 #, fuzzy
 msgid "Data file has trailing commas\n"
 msgstr "IDOSIYE"
 
-#: lib/src/csvdata.c:1063
+#: lib/src/csvdata.c:1070
 #, fuzzy, c-format
 msgid "   first field: '%s'\n"
 msgstr "Itangira Umwanya"
 
-#: lib/src/csvdata.c:1066
+#: lib/src/csvdata.c:1073
 #, fuzzy
 msgid "   seems to be observation label\n"
 msgstr "Kuri"
 
-#: lib/src/csvdata.c:1078
+#: lib/src/csvdata.c:1085
 #, fuzzy, c-format
 msgid ""
 "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr "i Akazu kugirango IMPINDURAGACIRO ni ubusa Nka Ibuze"
 
-#: lib/src/csvdata.c:1087
+#: lib/src/csvdata.c:1094
 #, fuzzy, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "Iburira Ibuze Agaciro kugirango IMPINDURAGACIRO"
 
-#: lib/src/csvdata.c:1165
+#: lib/src/csvdata.c:1172
 #, fuzzy, c-format
 msgid "ERROR: variable %d (%s), observation %d, non-numeric value\n"
 msgstr "IMPINDURAGACIRO"
 
-#: lib/src/csvdata.c:1283
+#: lib/src/csvdata.c:1290
 #, fuzzy
 msgid ""
 "\n"
@@ -797,97 +796,97 @@ msgstr ""
 "Urubariro 1. Icyinjijwe Ahatanditseho Cyangwa Cyangwa Bya i IDOSIYE a "
 "Cy'urukiramende Imbonerahamwe Bya Ibyatanzwe"
 
-#: lib/src/csvdata.c:1331
+#: lib/src/csvdata.c:1338
 #, fuzzy, c-format
 msgid "   number of columns = %d\n"
 msgstr "Umubare Bya Inkingi"
 
-#: lib/src/csvdata.c:1333
+#: lib/src/csvdata.c:1340
 #, fuzzy, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
 msgstr "...Urubariro Imyanya"
 
-#: lib/src/csvdata.c:1378
+#: lib/src/csvdata.c:1385
 #, fuzzy
 msgid "scanning for variable names...\n"
 msgstr "kugirango IMPINDURAGACIRO Amazina"
 
-#: lib/src/csvdata.c:1393
+#: lib/src/csvdata.c:1400
 #, fuzzy, c-format
 msgid "   line: %s\n"
 msgstr "Umurongo: %s%S"
 
-#: lib/src/csvdata.c:1417
+#: lib/src/csvdata.c:1424
 #, fuzzy, c-format
 msgid "   variable name %d is missing: aborting\n"
 msgstr "IMPINDURAGACIRO Izina: ni Ibuze"
 
-#: lib/src/csvdata.c:1445 plugin/excel_import.c:1496
+#: lib/src/csvdata.c:1452 plugin/excel_import.c:1496
 #: plugin/gnumeric_import.c:717
 #, fuzzy
 msgid "it seems there are no variable names\n"
 msgstr "Oya IMPINDURAGACIRO"
 
-#: lib/src/csvdata.c:1503
+#: lib/src/csvdata.c:1510
 #, fuzzy, c-format
 msgid "warning: truncating data at row %d, column %d\n"
 msgstr "Iburira Ibyatanzwe ku Urubariro Inkingi"
 
-#: lib/src/csvdata.c:1549
+#: lib/src/csvdata.c:1556
 #, fuzzy
 msgid "scanning for row labels and data...\n"
 msgstr "kugirango Urubariro Uturango... Na Ibyatanzwe"
 
-#: lib/src/csvdata.c:1568 lib/src/csvdata.c:1571 lib/src/dataio.c:2634
+#: lib/src/csvdata.c:1575 lib/src/csvdata.c:1578 lib/src/dataio.c:2634
 msgid "parsing"
 msgstr ""
 
-#: lib/src/csvdata.c:1614 lib/src/dataio.c:977 lib/src/dataio.c:989
+#: lib/src/csvdata.c:1621 lib/src/dataio.c:977 lib/src/dataio.c:989
 #: lib/src/dataio.c:2843 lib/src/dataio.c:2919 lib/src/dbread.c:1502
 #, fuzzy, c-format
 msgid "Couldn't open %s\n"
 msgstr "Gufungura"
 
-#: lib/src/csvdata.c:1645
+#: lib/src/csvdata.c:1652
 #, fuzzy, c-format
 msgid "using delimiter '%c'\n"
 msgstr "ikoresha"
 
-#: lib/src/csvdata.c:1646 lib/src/dataio.c:2648
+#: lib/src/csvdata.c:1653 lib/src/dataio.c:2648
 #, fuzzy, c-format
 msgid "   longest line: %d characters\n"
 msgstr "Umurongo"
 
-#: lib/src/csvdata.c:1670 lib/src/dataio.c:2731
+#: lib/src/csvdata.c:1677 lib/src/dataio.c:2731
 #, fuzzy, c-format
 msgid "   number of variables: %d\n"
 msgstr "Umubare Bya Ibihinduka"
 
-#: lib/src/csvdata.c:1671
+#: lib/src/csvdata.c:1678
 #, fuzzy, c-format
 msgid "   number of non-blank lines: %d\n"
 msgstr "Umubare Bya Ahatanditseho Imirongo"
 
-#: lib/src/csvdata.c:1674 lib/src/dataio.c:2706 lib/src/dataio.c:2784
+#: lib/src/csvdata.c:1681 lib/src/dataio.c:2706 lib/src/dataio.c:2784
 #, fuzzy
 msgid "Invalid data file\n"
 msgstr "Ibyatanzwe"
 
-#: lib/src/csvdata.c:1741 plugin/ods_import.c:1019
+#: lib/src/csvdata.c:1748 plugin/ods_import.c:1019
 #, fuzzy
 msgid ""
 "taking date information from row labels\n"
 "\n"
 msgstr "Itariki Ibisobanuro Bivuye Urubariro"
 
-#: lib/src/csvdata.c:1749
+#: lib/src/csvdata.c:1756
 #, fuzzy
 msgid ""
 "treating these as undated data\n"
 "\n"
 msgstr "Nka"
 
-#: lib/src/csvdata.c:1776 plugin/eviews_import.c:334
+#: lib/src/csvdata.c:1783 plugin/eviews_import.c:334
 #: plugin/excel_import.c:1560 plugin/gnumeric_import.c:795
 #: plugin/jmulti_import.c:381 plugin/spss_import.c:1899
 #: plugin/stata_import.c:745
@@ -895,7 +894,7 @@ msgstr "Nka"
 msgid "warning: some variable names were duplicated\n"
 msgstr "Cyangwa Birenzeho IMPINDURAGACIRO Amazina Ibuze"
 
-#: lib/src/csvdata.c:1795 plugin/eviews_import.c:301
+#: lib/src/csvdata.c:1802 plugin/eviews_import.c:301
 #: plugin/eviews_import.c:316 plugin/excel_import.c:1402
 #: plugin/gnumeric_import.c:626 plugin/jmulti_import.c:354
 #: plugin/jmulti_import.c:371 plugin/spss_import.c:1804
@@ -987,7 +986,7 @@ msgstr "Inyuguti in Itariki Ikurikiranyanyuguti"
 msgid "Date strings inconsistent"
 msgstr "Ikurikiranyanyuguti"
 
-#: lib/src/dataio.c:757 lib/src/genfuncs.c:1866
+#: lib/src/dataio.c:757 lib/src/forecast.c:1893 lib/src/genfuncs.c:1846
 #, fuzzy, c-format
 msgid "Observation number out of bounds"
 msgstr "Umubare Inyuma Bya"
@@ -1049,16 +1048,16 @@ msgstr ""
 msgid "special"
 msgstr "Gupima"
 
-#: lib/src/dataio.c:1553 lib/src/gretl_intl.c:105 gui2/dialogs.c:3082
+#: lib/src/dataio.c:1553 lib/src/gretl_intl.c:105 gui2/dialogs.c:3104
 msgid "annual"
 msgstr ""
 
-#: lib/src/dataio.c:1555 gui2/dialogs.c:2921 gui2/dialogs.c:3082
-#: gui2/dialogs.c:3083
+#: lib/src/dataio.c:1555 gui2/dialogs.c:2943 gui2/dialogs.c:3104
+#: gui2/dialogs.c:3105
 msgid "quarterly"
 msgstr ""
 
-#: lib/src/dataio.c:1557 gui2/dialogs.c:2921 gui2/dialogs.c:3083
+#: lib/src/dataio.c:1557 gui2/dialogs.c:2943 gui2/dialogs.c:3105
 #, fuzzy
 msgid "monthly"
 msgstr "Buri kwezi"
@@ -1101,7 +1100,7 @@ msgstr "Insobanuramiterere"
 msgid "Type of data"
 msgstr "Bya Ibyatanzwe"
 
-#: lib/src/dataio.c:1611 lib/src/modelprint.c:4401 lib/src/modelprint.c:4409
+#: lib/src/dataio.c:1611 lib/src/modelprint.c:4577 lib/src/modelprint.c:4585
 msgid "Frequency"
 msgstr "ubwisubire"
 
@@ -1331,7 +1330,7 @@ msgstr "Ububikoshingiro Idosiye Byabonetse"
 
 #: lib/src/dbread.c:1070 lib/src/dbread.c:1122 lib/src/dbread.c:1137
 #: lib/src/dbread.c:2089 lib/src/dbread.c:2450 lib/src/dbread.c:2454
-#: lib/src/dbread.c:2482 lib/src/genfuncs.c:1181 lib/src/gretl_errors.c:40
+#: lib/src/dbread.c:2482 lib/src/genfuncs.c:1161 lib/src/gretl_errors.c:40
 #: lib/src/gretl_restrict.c:1540 lib/src/gretl_restrict.c:1566
 #: lib/src/gretl_restrict.c:1589 lib/src/monte_carlo.c:1167
 #: lib/src/monte_carlo.c:1907 lib/src/monte_carlo.c:1914 gui2/gui_utils.c:534
@@ -1374,7 +1373,7 @@ msgid "Series imported OK"
 msgstr "cyavuye ahandi/ cyatumijwe"
 
 #: lib/src/dbread.c:2152 lib/src/gretl_func.c:1495 lib/src/gretl_utils.c:1499
-#: lib/src/interact.c:3860 gui2/dialogs.c:3868 plugin/tramo-x12a.c:411
+#: lib/src/interact.c:3860 gui2/dialogs.c:3890 plugin/tramo-x12a.c:411
 #, fuzzy, c-format
 msgid "Couldn't open %s"
 msgstr "Gufungura"
@@ -1720,14 +1719,14 @@ msgstr "C. V."
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "Urugero Urutonde Kirimo Oya Byemewe"
 
-#: lib/src/describe.c:4144 lib/src/estimate.c:3157 lib/src/estimate.c:3158
+#: lib/src/describe.c:4144 lib/src/estimate.c:3161 lib/src/estimate.c:3162
 #: lib/src/modelprint.c:833 lib/src/modelprint.c:841 lib/src/modelprint.c:854
-#: lib/src/modelprint.c:863 lib/src/modelprint.c:3060
-#: lib/src/modelprint.c:3072 lib/src/modelprint.c:3073
-#: lib/src/modelprint.c:3074 lib/src/modelprint.c:3083
-#: lib/src/modelprint.c:3093 lib/src/modelprint.c:3125
-#: lib/src/modelprint.c:3138 lib/src/modelprint.c:3147
-#: lib/src/modelprint.c:3158 lib/src/modelprint.c:4762 lib/src/printout.c:162
+#: lib/src/modelprint.c:863 lib/src/modelprint.c:3236
+#: lib/src/modelprint.c:3248 lib/src/modelprint.c:3249
+#: lib/src/modelprint.c:3250 lib/src/modelprint.c:3259
+#: lib/src/modelprint.c:3269 lib/src/modelprint.c:3301
+#: lib/src/modelprint.c:3314 lib/src/modelprint.c:3323
+#: lib/src/modelprint.c:3334 lib/src/modelprint.c:4938 lib/src/printout.c:162
 #: lib/src/printout.c:170 lib/src/texprint.c:509 lib/src/texprint.c:527
 #: lib/src/texprint.c:544 lib/src/texprint.c:557 lib/src/texprint.c:612
 #: lib/src/texprint.c:623 lib/src/texprint.c:629 gui2/guiprint.c:1022
@@ -1839,8 +1838,8 @@ msgstr "Bya Urugero"
 
 #: lib/src/describe.c:4401 lib/src/gretl_model.c:2905
 #: lib/src/gretl_model.c:2908 lib/src/gretl_model.c:2911
-#: lib/src/nonparam.c:947 lib/src/nonparam.c:1079 lib/src/varprint.c:1207
-#: lib/src/varprint.c:1214 lib/src/varprint.c:1223
+#: lib/src/nonparam.c:947 lib/src/nonparam.c:1079 lib/src/varprint.c:1203
+#: lib/src/varprint.c:1210 lib/src/varprint.c:1219
 msgid "Null hypothesis"
 msgstr ""
 
@@ -1978,21 +1977,21 @@ msgstr "IMPINDURAGACIRO ni Byose"
 msgid "Weight variable contains negative values"
 msgstr ""
 
-#: lib/src/estimate.c:832 lib/src/estimate.c:1941 plugin/arma_common.c:535
+#: lib/src/estimate.c:832 lib/src/estimate.c:1945 plugin/arma_common.c:535
 #, fuzzy, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "Agaciro kugirango IMPINDURAGACIRO"
 
-#: lib/src/estimate.c:1355 lib/src/modelprint.c:239
+#: lib/src/estimate.c:1359 lib/src/modelprint.c:239
 #, fuzzy, c-format
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Igiteranyo Bya kare ni OYA 0"
 
-#: lib/src/estimate.c:1849 lib/src/estimate.c:1971
+#: lib/src/estimate.c:1853 lib/src/estimate.c:1975
 msgid "ESS"
 msgstr ""
 
-#: lib/src/estimate.c:2031
+#: lib/src/estimate.c:2035
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -2001,7 +2000,7 @@ msgid ""
 "\n"
 msgstr "ni Gito kugirango ro"
 
-#: lib/src/estimate.c:2062
+#: lib/src/estimate.c:2066
 #, fuzzy
 msgid ""
 "\n"
@@ -2009,7 +2008,7 @@ msgid ""
 "\n"
 msgstr "ro ikoresha i"
 
-#: lib/src/estimate.c:2064
+#: lib/src/estimate.c:2068
 #, fuzzy
 msgid ""
 "\n"
@@ -2017,105 +2016,105 @@ msgid ""
 "\n"
 msgstr "Imibare Bya ro"
 
-#: lib/src/estimate.c:2067
+#: lib/src/estimate.c:2071
 #, fuzzy
 msgid "                 ITER       RHO        ESS"
 msgstr "C. V."
 
-#: lib/src/estimate.c:2112
+#: lib/src/estimate.c:2116
 #, c-format
 msgid ""
 "                final %11.5f\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:2576 lib/src/gretl_model.c:2783
-#: lib/src/modelprint.c:1014
+#: lib/src/estimate.c:2580 lib/src/gretl_model.c:2783
+#: lib/src/modelprint.c:1024
 #, fuzzy
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "Igerageza kugirango"
 
-#: lib/src/estimate.c:2586 lib/src/gretl_model.c:2762
-#: lib/src/modelprint.c:1012
+#: lib/src/estimate.c:2590 lib/src/gretl_model.c:2762
+#: lib/src/modelprint.c:1022
 #, fuzzy
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "Igerageza kugirango"
 
-#: lib/src/estimate.c:2588
+#: lib/src/estimate.c:2592
 msgid "with Koenker robust variance estimator"
 msgstr ""
 
-#: lib/src/estimate.c:2593
+#: lib/src/estimate.c:2597
 #, fuzzy
 msgid "White's test for heteroskedasticity (no cross products)"
 msgstr "Igerageza kugirango"
 
-#: lib/src/estimate.c:2595 lib/src/gretl_model.c:2759
-#: lib/src/modelprint.c:1010
+#: lib/src/estimate.c:2599 lib/src/gretl_model.c:2759
+#: lib/src/modelprint.c:1020
 #, fuzzy
 msgid "White's test for heteroskedasticity"
 msgstr "Igerageza kugirango"
 
-#: lib/src/estimate.c:2752
+#: lib/src/estimate.c:2756
 msgid "HET_1"
 msgstr ""
 
-#: lib/src/estimate.c:2968
+#: lib/src/estimate.c:2972
 msgid "White's"
 msgstr ""
 
-#: lib/src/estimate.c:3081
+#: lib/src/estimate.c:3085
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr ""
 
-#: lib/src/estimate.c:3084
+#: lib/src/estimate.c:3088
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr ""
 
-#: lib/src/estimate.c:3378
+#: lib/src/estimate.c:3382
 #, fuzzy
 msgid "Test for ARCH of order"
 msgstr "kugirango Bya Itondekanya"
 
-#: lib/src/estimate.c:3403 lib/src/modelprint.c:1772 lib/src/modelprint.c:1773
+#: lib/src/estimate.c:3407 lib/src/modelprint.c:1782 lib/src/modelprint.c:1783
 #, fuzzy, c-format
 msgid "Test for ARCH of order %d"
 msgstr "kugirango Bya Itondekanya"
 
-#: lib/src/estimate.c:3460 lib/src/estimate.c:3606
+#: lib/src/estimate.c:3464 lib/src/estimate.c:3610
 #, fuzzy, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "Itondekanya kugirango"
 
-#: lib/src/estimate.c:3748 lib/src/estimate.c:3807 lib/src/estimate.c:3866
+#: lib/src/estimate.c:3752 lib/src/estimate.c:3811 lib/src/estimate.c:3870
 #, fuzzy
 msgid "Couldn't load plugin function\n"
 msgstr "Ibirimo"
 
-#: lib/src/estimate.c:3853 plugin/tramo-x12a.c:774
+#: lib/src/estimate.c:3857 plugin/tramo-x12a.c:774
 #, fuzzy
 msgid ""
 "X-12-ARIMA can't handle more than 720 observations.\n"
 "Please select a smaller sample."
 msgstr "Birenzeho 600 Guhitamo a Gitoya Urugero"
 
-#: lib/src/estimate.c:4257
+#: lib/src/estimate.c:4261
 #, fuzzy
 msgid "This test is only available for panel data"
 msgstr "Igerageza ni Byagombwa kugirango"
 
-#: lib/src/forecast.c:2293
+#: lib/src/forecast.c:2404
 #, fuzzy
 msgid "predicted values"
 msgstr "Uduciro"
 
-#: lib/src/forecast.c:2296 lib/src/genmain.c:67
+#: lib/src/forecast.c:2408 lib/src/genmain.c:67
 #, c-format
 msgid "Replaced series %s (ID %d)"
 msgstr ""
 
-#: lib/src/forecast.c:2299 lib/src/genmain.c:70
+#: lib/src/forecast.c:2411 lib/src/genmain.c:70
 #, c-format
 msgid "Generated series %s (ID %d)"
 msgstr ""
@@ -2193,27 +2192,27 @@ msgstr "Igerageza kugirango Ingerofatizo"
 msgid "'%s' : not implemented for this type"
 msgstr "Igerageza kugirango Ingerofatizo"
 
-#: lib/src/genfuncs.c:1110
+#: lib/src/genfuncs.c:1090
 #, fuzzy, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
 msgstr "=1. NIBA 0"
 
-#: lib/src/genfuncs.c:1113
+#: lib/src/genfuncs.c:1093
 #, fuzzy, c-format
 msgid "= 1 if month = %d, 0 otherwise"
 msgstr "=1. NIBA Ukwezi ni 0"
 
-#: lib/src/genfuncs.c:1123
+#: lib/src/genfuncs.c:1103
 #, fuzzy, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
 msgstr "%s=1. NIBA Igihe ni 0"
 
-#: lib/src/genfuncs.c:1154 lib/src/gretl_errors.c:38
+#: lib/src/genfuncs.c:1134 lib/src/gretl_errors.c:38
 #, fuzzy
 msgid "This command won't work with the current periodicity"
 msgstr "Komandi: Akazi Na: i KIGEZWEHO"
 
-#: lib/src/genfuncs.c:1300 lib/src/genfuncs.c:1327
+#: lib/src/genfuncs.c:1280 lib/src/genfuncs.c:1307
 #, fuzzy, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
 msgstr "%s=1. NIBA ni 0"
@@ -2222,62 +2221,62 @@ msgstr "%s=1. NIBA ni 0"
 # scaddins/source\analysis\analysis.src:RID_ANALYSIS_FUNCTION_DESCRIPTIONS.ANALYSIS_Amordegrc.10.text
 # #-#-#-#-#  scaddins.pot (PACKAGE VERSION)  #-#-#-#-#
 # scaddins/source\analysis\analysis.src:RID_ANALYSIS_FUNCTION_DESCRIPTIONS.ANALYSIS_Amorlinc.10.text
-#: lib/src/genfuncs.c:1301 lib/src/varprint.c:151 lib/src/varprint.c:153
+#: lib/src/genfuncs.c:1281 lib/src/varprint.c:151 lib/src/varprint.c:153
 #: lib/src/varprint.c:155
 #, fuzzy
 msgid "period"
 msgstr "Igihe"
 
-#: lib/src/genfuncs.c:1328
+#: lib/src/genfuncs.c:1308
 #, fuzzy
 msgid "unit"
 msgstr "Igice:"
 
-#: lib/src/genfuncs.c:1367
+#: lib/src/genfuncs.c:1347
 #, fuzzy
 msgid "cross-sectional unit index"
 msgstr "Kwambukiranya"
 
-#: lib/src/genfuncs.c:1448 lib/src/transforms.c:1635
+#: lib/src/genfuncs.c:1428 lib/src/transforms.c:1635
 #, fuzzy
 msgid "time trend variable"
 msgstr "Igihe IMIGENDERE IMPINDURAGACIRO"
 
-#: lib/src/genfuncs.c:1451
+#: lib/src/genfuncs.c:1431
 #, fuzzy
 msgid "data index variable"
 msgstr "Ibyatanzwe Umubarendanga IMPINDURAGACIRO"
 
-#: lib/src/genfuncs.c:1495
+#: lib/src/genfuncs.c:1475
 msgid "day of week (1 = Monday)"
 msgstr ""
 
-#: lib/src/genfuncs.c:1697
+#: lib/src/genfuncs.c:1677
 #, fuzzy, c-format
 msgid "residual from model %d"
 msgstr "Bivuye Urugero"
 
-#: lib/src/genfuncs.c:1703
+#: lib/src/genfuncs.c:1683
 #, fuzzy, c-format
 msgid "fitted value from model %d"
 msgstr "Agaciro Bivuye Urugero"
 
-#: lib/src/genfuncs.c:1710
+#: lib/src/genfuncs.c:1690
 #, fuzzy, c-format
 msgid "squared residual from model %d"
 msgstr "Bivuye Urugero"
 
-#: lib/src/genfuncs.c:1721
+#: lib/src/genfuncs.c:1701
 #, fuzzy, c-format
 msgid "fitted variance from model %d"
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo Bivuye Urugero"
 
-#: lib/src/genfuncs.c:1728
+#: lib/src/genfuncs.c:1708
 #, fuzzy, c-format
 msgid "per-unit constants from model %d"
 msgstr "Ikosa Igiteranyo Bya kare Bivuye Urugero"
 
-#: lib/src/genfuncs.c:1936
+#: lib/src/genfuncs.c:1916
 #, fuzzy
 msgid "Invalid declaration"
 msgstr "Bisanzwe"
@@ -2414,7 +2413,7 @@ msgid "Expected '%c' but found '%s'\n"
 msgstr ""
 
 #: lib/src/gmm.c:104 lib/src/gretl_list.c:2389 lib/src/gretl_panel.c:4023
-#: lib/src/gretl_panel.c:4033 lib/src/interact.c:3617 lib/src/nls.c:2536
+#: lib/src/gretl_panel.c:4033 lib/src/interact.c:3617 lib/src/nls.c:2537
 #, fuzzy, c-format
 msgid "Unknown variable '%s'"
 msgstr "IMPINDURAGACIRO"
@@ -3362,7 +3361,7 @@ msgstr "Umubare ni Inyuma Bya Urutonde"
 
 #: lib/src/gretl_restrict.c:966 lib/src/gretl_restrict.c:1548
 #: lib/src/gretl_restrict.c:1571 lib/src/gretl_restrict.c:1594
-#: lib/src/gretl_restrict.c:1649 lib/src/nls.c:2531
+#: lib/src/gretl_restrict.c:1649 lib/src/nls.c:2532
 #, fuzzy, c-format
 msgid "parse error in '%s'\n"
 msgstr "Ikosa in"
@@ -3428,7 +3427,7 @@ msgid "Sum of coefficients"
 msgstr "Bya imibarwa"
 
 #: lib/src/gretl_restrict.c:2195 lib/src/gretl_restrict.c:2204
-#: gui2/dialogs.c:4070
+#: gui2/dialogs.c:4092
 #, fuzzy
 msgid "Standard error"
 msgstr "Ikosa"
@@ -3573,7 +3572,7 @@ msgstr "ni Sibyo"
 msgid "Command failed"
 msgstr "Byanze"
 
-#: lib/src/gretl_utils.c:1504 gui2/dialogs.c:3882
+#: lib/src/gretl_utils.c:1504 gui2/dialogs.c:3904
 #, fuzzy, c-format
 msgid "Couldn't write to %s"
 msgstr "Kwandika Kuri"
@@ -4150,11 +4149,11 @@ msgstr "Itangira"
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:324 lib/src/modelprint.c:2552
+#: lib/src/modelprint.c:324 lib/src/modelprint.c:2654
 msgid "Uncentered R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:325 lib/src/modelprint.c:2553
+#: lib/src/modelprint.c:325 lib/src/modelprint.c:2655
 #, fuzzy
 msgid "Centered R-squared"
 msgstr "kare"
@@ -4164,12 +4163,12 @@ msgstr "kare"
 msgid "Unadjusted $R^2$"
 msgstr "2."
 
-#: lib/src/modelprint.c:329
+#: lib/src/modelprint.c:329 lib/src/modelprint.c:2654
 #, fuzzy
 msgid "Uncentered $R^2$"
 msgstr "2."
 
-#: lib/src/modelprint.c:330
+#: lib/src/modelprint.c:330 lib/src/modelprint.c:2655
 #, fuzzy
 msgid "Centered $R^2$"
 msgstr "2."
@@ -4189,7 +4188,7 @@ msgstr "2."
 msgid "Centered R{\\super 2}"
 msgstr "2."
 
-#: lib/src/modelprint.c:368 lib/src/modelprint.c:399 lib/src/modelprint.c:2557
+#: lib/src/modelprint.c:368 lib/src/modelprint.c:399 lib/src/modelprint.c:2603
 msgid "Adjusted R-squared"
 msgstr ""
 
@@ -4349,336 +4348,337 @@ msgstr "Itondekanya"
 msgid "Durbin--Watson statistic"
 msgstr ""
 
-#: lib/src/modelprint.c:941 lib/src/modelprint.c:949 lib/src/modelprint.c:951
+#: lib/src/modelprint.c:952 lib/src/modelprint.c:959 lib/src/modelprint.c:961
+#: lib/src/modelprint.c:2667
 #, fuzzy
 msgid "Durbin's h"
 msgstr "h"
 
-#: lib/src/modelprint.c:947
+#: lib/src/modelprint.c:957 lib/src/modelprint.c:2667
 #, fuzzy
 msgid "Durbin's $h$"
 msgstr "h"
 
-#: lib/src/modelprint.c:991
+#: lib/src/modelprint.c:1001
 #, fuzzy, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
 msgstr "i P Agaciro kirekire kurusha ibindi kugirango IMPINDURAGACIRO"
 
-#: lib/src/modelprint.c:994
+#: lib/src/modelprint.c:1004
 #, fuzzy, c-format
 msgid "P-value was highest for variable %d (%s)"
 msgstr "i P Agaciro kirekire kurusha ibindi kugirango IMPINDURAGACIRO"
 
-#: lib/src/modelprint.c:1004
+#: lib/src/modelprint.c:1014
 #, fuzzy
 msgid "Auxiliary regression for non-linearity test (squared terms)"
 msgstr "kugirango Igerageza"
 
-#: lib/src/modelprint.c:1007
+#: lib/src/modelprint.c:1017
 #, fuzzy
 msgid "Auxiliary regression for non-linearity test (log terms)"
 msgstr "kugirango Igerageza LOG"
 
-#: lib/src/modelprint.c:1016
+#: lib/src/modelprint.c:1026
 #, fuzzy
 msgid "Augmented regression for Chow test"
 msgstr "kugirango Igerageza"
 
-#: lib/src/modelprint.c:1018
+#: lib/src/modelprint.c:1028
 msgid "Cointegrating regression -- "
 msgstr ""
 
-#: lib/src/modelprint.c:1019
+#: lib/src/modelprint.c:1029
 msgid "Cointegrating regression - "
 msgstr ""
 
-#: lib/src/modelprint.c:1021
+#: lib/src/modelprint.c:1031
 msgid "Augmented Dickey--Fuller regression"
 msgstr ""
 
-#: lib/src/modelprint.c:1022
+#: lib/src/modelprint.c:1032
 msgid "Augmented Dickey-Fuller regression"
 msgstr ""
 
-#: lib/src/modelprint.c:1024
+#: lib/src/modelprint.c:1034
 #, fuzzy
 msgid "Dickey--Fuller regression"
 msgstr "Igerageza"
 
-#: lib/src/modelprint.c:1025
+#: lib/src/modelprint.c:1035
 #, fuzzy
 msgid "Dickey-Fuller regression"
 msgstr "Igerageza"
 
-#: lib/src/modelprint.c:1027
+#: lib/src/modelprint.c:1037
 #, fuzzy
 msgid "KPSS regression"
 msgstr "Umukoro"
 
-#: lib/src/modelprint.c:1029
+#: lib/src/modelprint.c:1039
 #, fuzzy
 msgid "Auxiliary regression for RESET specification test"
 msgstr "kugirango Igerageza"
 
-#: lib/src/modelprint.c:1031
+#: lib/src/modelprint.c:1041
 #, fuzzy
 msgid "Groupwise heteroskedasticity"
 msgstr "Igerageza kugirango"
 
-#: lib/src/modelprint.c:1039 lib/src/system.c:85 lib/src/varprint.c:1026
+#: lib/src/modelprint.c:1049 lib/src/system.c:85 lib/src/varprint.c:1026
 #: lib/src/varprint.c:1035 lib/src/varprint.c:1044 gui2/selector.c:2374
 msgid "OLS"
 msgstr ""
 
-#: lib/src/modelprint.c:1040 lib/src/modelprint.c:1044
-#: lib/src/modelprint.c:1100 lib/src/system.c:87 gui2/model_table.c:369
+#: lib/src/modelprint.c:1050 lib/src/modelprint.c:1054
+#: lib/src/modelprint.c:1110 lib/src/system.c:87 gui2/model_table.c:369
 msgid "WLS"
 msgstr ""
 
-#: lib/src/modelprint.c:1041
+#: lib/src/modelprint.c:1051
 msgid "WLS (ARCH)"
 msgstr ""
 
-#: lib/src/modelprint.c:1042 lib/src/system.c:86
+#: lib/src/modelprint.c:1052 lib/src/system.c:86
 msgid "TSLS"
 msgstr ""
 
-#: lib/src/modelprint.c:1046
+#: lib/src/modelprint.c:1056
 msgid "Heteroskedasticity-corrected"
 msgstr ""
 
-#: lib/src/modelprint.c:1048 lib/src/modelprint.c:4414
+#: lib/src/modelprint.c:1058 lib/src/modelprint.c:4590
 msgid "AR"
 msgstr ""
 
-#: lib/src/modelprint.c:1049 lib/src/modelprint.c:1147 gui2/selector.c:2424
+#: lib/src/modelprint.c:1059 lib/src/modelprint.c:1157 gui2/selector.c:2424
 msgid "LAD"
 msgstr ""
 
-#: lib/src/modelprint.c:1050
+#: lib/src/modelprint.c:1060
 msgid "High-Precision OLS"
 msgstr ""
 
-#: lib/src/modelprint.c:1051 lib/src/modelprint.c:1135 gui2/selector.c:2388
+#: lib/src/modelprint.c:1061 lib/src/modelprint.c:1145 gui2/selector.c:2388
 msgid "Probit"
 msgstr ""
 
-#: lib/src/modelprint.c:1052 lib/src/modelprint.c:1129 gui2/selector.c:2386
+#: lib/src/modelprint.c:1062 lib/src/modelprint.c:1139 gui2/selector.c:2386
 msgid "Logit"
 msgstr ""
 
-#: lib/src/modelprint.c:1053 gui2/selector.c:2390
+#: lib/src/modelprint.c:1063 gui2/selector.c:2390
 msgid "Tobit"
 msgstr ""
 
-#: lib/src/modelprint.c:1054 gui2/selector.c:2392
+#: lib/src/modelprint.c:1064 gui2/selector.c:2392
 msgid "Heckit"
 msgstr ""
 
-#: lib/src/modelprint.c:1055 gui2/selector.c:2396
+#: lib/src/modelprint.c:1065 gui2/selector.c:2396
 msgid "Poisson"
 msgstr ""
 
-#: lib/src/modelprint.c:1056
+#: lib/src/modelprint.c:1066
 msgid "NLS"
 msgstr ""
 
-#: lib/src/modelprint.c:1057
+#: lib/src/modelprint.c:1067
 msgid "ML"
 msgstr ""
 
-#: lib/src/modelprint.c:1058
+#: lib/src/modelprint.c:1068
 msgid "GMM"
 msgstr ""
 
-#: lib/src/modelprint.c:1059 gui2/selector.c:2394
+#: lib/src/modelprint.c:1069 gui2/selector.c:2394
 msgid "Logistic"
 msgstr ""
 
-#: lib/src/modelprint.c:1060 gui2/selector.c:2416
+#: lib/src/modelprint.c:1070 gui2/selector.c:2416
 msgid "GARCH"
 msgstr ""
 
-#: lib/src/modelprint.c:1062
+#: lib/src/modelprint.c:1072
 msgid "Arellano--Bond"
 msgstr ""
 
-#: lib/src/modelprint.c:1063
+#: lib/src/modelprint.c:1073
 msgid "Arellano-Bond"
 msgstr ""
 
-#: lib/src/modelprint.c:1073
+#: lib/src/modelprint.c:1083
 msgid "Hildreth--Lu"
 msgstr ""
 
-#: lib/src/modelprint.c:1074 gui2/selector.c:2382
+#: lib/src/modelprint.c:1084 gui2/selector.c:2382
 msgid "Hildreth-Lu"
 msgstr ""
 
-#: lib/src/modelprint.c:1076
+#: lib/src/modelprint.c:1086
 msgid "Prais--Winsten"
 msgstr ""
 
-#: lib/src/modelprint.c:1077 gui2/selector.c:2384
+#: lib/src/modelprint.c:1087 gui2/selector.c:2384
 msgid "Prais-Winsten"
 msgstr ""
 
-#: lib/src/modelprint.c:1079
+#: lib/src/modelprint.c:1089
 msgid "Cochrane--Orcutt"
 msgstr ""
 
-#: lib/src/modelprint.c:1080 gui2/selector.c:2380
+#: lib/src/modelprint.c:1090 gui2/selector.c:2380
 msgid "Cochrane-Orcutt"
 msgstr ""
 
-#: lib/src/modelprint.c:1084
+#: lib/src/modelprint.c:1094
 msgid "ARMAX"
 msgstr ""
 
-#: lib/src/modelprint.c:1087 gui2/selector.c:2412 plugin/tramo_options.c:734
+#: lib/src/modelprint.c:1097 gui2/selector.c:2412 plugin/tramo_options.c:734
 msgid "ARIMA"
 msgstr ""
 
-#: lib/src/modelprint.c:1089
+#: lib/src/modelprint.c:1099
 msgid "ARMA"
 msgstr ""
 
-#: lib/src/modelprint.c:1093
+#: lib/src/modelprint.c:1103
 #, fuzzy
 msgid "Fixed-effects"
 msgstr "Intego- nyuguti"
 
-#: lib/src/modelprint.c:1095
+#: lib/src/modelprint.c:1105
 msgid "Random-effects (GLS)"
 msgstr ""
 
-#: lib/src/modelprint.c:1098
+#: lib/src/modelprint.c:1108
 msgid "Maximum Likelihood"
 msgstr ""
 
-#: lib/src/modelprint.c:1103
+#: lib/src/modelprint.c:1113
 msgid "Between-groups"
 msgstr ""
 
-#: lib/src/modelprint.c:1106
+#: lib/src/modelprint.c:1116
 msgid "Pooled OLS"
 msgstr ""
 
-#: lib/src/modelprint.c:1109
+#: lib/src/modelprint.c:1119
 msgid "2-step Arellano-Bond"
 msgstr ""
 
-#: lib/src/modelprint.c:1111
+#: lib/src/modelprint.c:1121
 msgid "1-step Arellano-Bond"
 msgstr ""
 
-#: lib/src/modelprint.c:1115 lib/src/modelprint.c:1119
+#: lib/src/modelprint.c:1125 lib/src/modelprint.c:1129
 msgid "2-step GMM"
 msgstr ""
 
-#: lib/src/modelprint.c:1117 lib/src/modelprint.c:1121
+#: lib/src/modelprint.c:1127 lib/src/modelprint.c:1131
 msgid "Iterated GMM"
 msgstr ""
 
-#: lib/src/modelprint.c:1123
+#: lib/src/modelprint.c:1133
 msgid "1-step GMM"
 msgstr ""
 
-#: lib/src/modelprint.c:1127
+#: lib/src/modelprint.c:1137
 msgid "Ordered Logit"
 msgstr ""
 
-#: lib/src/modelprint.c:1133
+#: lib/src/modelprint.c:1143
 msgid "Ordered Probit"
 msgstr ""
 
-#: lib/src/modelprint.c:1139
+#: lib/src/modelprint.c:1149
 #, fuzzy
 msgid "Two-step Heckit"
 msgstr "STD."
 
-#: lib/src/modelprint.c:1141
+#: lib/src/modelprint.c:1151
 msgid "ML Heckit"
 msgstr ""
 
-#: lib/src/modelprint.c:1145
+#: lib/src/modelprint.c:1155
 msgid "Quantile"
 msgstr ""
 
-#: lib/src/modelprint.c:1184 lib/src/modelprint.c:1193
+#: lib/src/modelprint.c:1194 lib/src/modelprint.c:1203
 #, fuzzy
 msgid "First-stage F-statistic"
 msgstr "Igerageza"
 
-#: lib/src/modelprint.c:1186
+#: lib/src/modelprint.c:1196
 msgid "A value < 10 may indicate weak instruments"
 msgstr ""
 
-#: lib/src/modelprint.c:1234 lib/src/modelprint.c:1236
-#: lib/src/modelprint.c:1239 gui2/selector.c:2828 gui2/selector.c:5321
+#: lib/src/modelprint.c:1244 lib/src/modelprint.c:1246
+#: lib/src/modelprint.c:1249 gui2/selector.c:2828 gui2/selector.c:5321
 msgid "Instruments"
 msgstr ""
 
-#: lib/src/modelprint.c:1269 gui2/gpt_dialog.c:110 gui2/gui_utils.c:2365
+#: lib/src/modelprint.c:1279 gui2/gpt_dialog.c:110 gui2/gui_utils.c:2365
 #, fuzzy
 msgid "none"
 msgstr "Ntacyo"
 
-#: lib/src/modelprint.c:1282 lib/src/modelprint.c:1284
-#: lib/src/modelprint.c:1286
+#: lib/src/modelprint.c:1292 lib/src/modelprint.c:1294
+#: lib/src/modelprint.c:1296
 msgid "Asymptotic standard errors (unreliable)"
 msgstr ""
 
-#: lib/src/modelprint.c:1296 lib/src/modelprint.c:1298
-#: lib/src/modelprint.c:1300
+#: lib/src/modelprint.c:1306 lib/src/modelprint.c:1308
+#: lib/src/modelprint.c:1310
 #, fuzzy
 msgid "Robust (HAC) standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1309 lib/src/modelprint.c:1311
-#: lib/src/modelprint.c:1315
+#: lib/src/modelprint.c:1319 lib/src/modelprint.c:1321
+#: lib/src/modelprint.c:1325
 #, fuzzy
 msgid "Beck-Katz standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1313
+#: lib/src/modelprint.c:1323
 #, fuzzy
 msgid "Beck--Katz standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1324
+#: lib/src/modelprint.c:1334
 #, fuzzy
 msgid "Could not compute Beck-Katz standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1332
+#: lib/src/modelprint.c:1342
 msgid "Bartlett kernel"
 msgstr ""
 
-#: lib/src/modelprint.c:1333
+#: lib/src/modelprint.c:1343
 msgid "Parzen kernel"
 msgstr ""
 
-#: lib/src/modelprint.c:1334
+#: lib/src/modelprint.c:1344
 msgid "QS kernel"
 msgstr ""
 
-#: lib/src/modelprint.c:1345 lib/src/modelprint.c:1348
+#: lib/src/modelprint.c:1355 lib/src/modelprint.c:1358
 #, fuzzy, c-format
 msgid "HAC standard errors, bandwidth %.2f"
 msgstr "Ikosa Bya"
 
-#: lib/src/modelprint.c:1353 lib/src/modelprint.c:1356
+#: lib/src/modelprint.c:1363 lib/src/modelprint.c:1366
 #, fuzzy, c-format
 msgid "HAC standard errors, bandwidth %d"
 msgstr "Ikosa Bya"
 
-#: lib/src/modelprint.c:1370 lib/src/modelprint.c:1371
+#: lib/src/modelprint.c:1380 lib/src/modelprint.c:1381
 #, fuzzy
 msgid "prewhitened"
 msgstr "Uduciro"
 
-#: lib/src/modelprint.c:1389 lib/src/modelprint.c:1395
+#: lib/src/modelprint.c:1399 lib/src/modelprint.c:1405
 #, fuzzy
 msgid "Heteroskedasticity-robust standard errors"
 msgstr "Bisanzwe Amakosa"
@@ -4687,315 +4687,315 @@ msgstr "Bisanzwe Amakosa"
 # sch/source\ui\dlg\attrib4.src:TP_STAT.RBT_VARIANT.text
 # #-#-#-#-#  sch.pot (PACKAGE VERSION)  #-#-#-#-#
 # sch/source\ui\dlg\datstat.src:DLG_DATA_STAT.RBT_VARIANT.text
-#: lib/src/modelprint.c:1390 lib/src/modelprint.c:1396
+#: lib/src/modelprint.c:1400 lib/src/modelprint.c:1406
 #, fuzzy
 msgid "variant"
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
 
-#: lib/src/modelprint.c:1417
+#: lib/src/modelprint.c:1427
 #, fuzzy
 msgid "Standard errors based on Hessian"
 msgstr "Amakosa ku"
 
-#: lib/src/modelprint.c:1420
+#: lib/src/modelprint.c:1430
 #, fuzzy
 msgid "Standard errors based on Information Matrix"
 msgstr "Amakosa ku"
 
-#: lib/src/modelprint.c:1423
+#: lib/src/modelprint.c:1433
 #, fuzzy
 msgid "Standard errors based on Outer Products matrix"
 msgstr "Amakosa ku Matirise"
 
-#: lib/src/modelprint.c:1426
+#: lib/src/modelprint.c:1436
 #, fuzzy
 msgid "QML standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1430
+#: lib/src/modelprint.c:1440
 #, fuzzy
 msgid "Bollerslev--Wooldridge standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1432
+#: lib/src/modelprint.c:1442
 #, fuzzy
 msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1458
+#: lib/src/modelprint.c:1468
 #, fuzzy, c-format
 msgid "With robust %g percent confidence intervals"
 msgstr "Ku ijana UKWIYIZERA Intera"
 
-#: lib/src/modelprint.c:1461
+#: lib/src/modelprint.c:1471
 #, fuzzy, c-format
 msgid "With %g percent confidence intervals"
 msgstr "Ku ijana UKWIYIZERA Intera"
 
-#: lib/src/modelprint.c:1466
+#: lib/src/modelprint.c:1476
 #, fuzzy
 msgid "Robust (sandwich) standard errors"
 msgstr "Bisanzwe Amakosa"
 
-#: lib/src/modelprint.c:1468
+#: lib/src/modelprint.c:1478
 msgid "Asymptotic standard errors assuming IID errors"
 msgstr ""
 
-#: lib/src/modelprint.c:1561
+#: lib/src/modelprint.c:1571
 #, fuzzy
 msgid "Omitted because all values were zero:"
 msgstr "Byose Zeru"
 
-#: lib/src/modelprint.c:1575
+#: lib/src/modelprint.c:1585
 msgid "Omitted due to exact collinearity:"
 msgstr ""
 
-#: lib/src/modelprint.c:1587
+#: lib/src/modelprint.c:1597
 msgid "Redundant instruments:"
 msgstr ""
 
-#: lib/src/modelprint.c:1651 lib/src/modelprint.c:1904
-#: lib/src/modelprint.c:1908 lib/src/modelprint.c:1918
-#: lib/src/modelprint.c:1922 lib/src/modelprint.c:1927
-#: lib/src/modelprint.c:1959 gui2/model_table.c:873 gui2/model_table.c:987
+#: lib/src/modelprint.c:1661 lib/src/modelprint.c:1914
+#: lib/src/modelprint.c:1918 lib/src/modelprint.c:1928
+#: lib/src/modelprint.c:1932 lib/src/modelprint.c:1937
+#: lib/src/modelprint.c:1969 gui2/model_table.c:873 gui2/model_table.c:987
 #: gui2/selector.c:2574
 #, fuzzy
 msgid "Dependent variable"
 msgstr "IMPINDURAGACIRO"
 
-#: lib/src/modelprint.c:1660
+#: lib/src/modelprint.c:1670
 #, fuzzy
 msgid "Estimated using X-12-ARIMA"
 msgstr "12"
 
-#: lib/src/modelprint.c:1662 lib/src/modelprint.c:1667
+#: lib/src/modelprint.c:1672 lib/src/modelprint.c:1677
 msgid "exact ML"
 msgstr ""
 
-#: lib/src/modelprint.c:1662 lib/src/modelprint.c:1672
-#: lib/src/modelprint.c:1677
+#: lib/src/modelprint.c:1672 lib/src/modelprint.c:1682
+#: lib/src/modelprint.c:1687
 msgid "conditional ML"
 msgstr ""
 
-#: lib/src/modelprint.c:1665
+#: lib/src/modelprint.c:1675
 msgid "Estimated using Kalman filter"
 msgstr ""
 
-#: lib/src/modelprint.c:1670
+#: lib/src/modelprint.c:1680
 #, fuzzy
 msgid "Estimated using least squares"
 msgstr "kare"
 
-#: lib/src/modelprint.c:1675
+#: lib/src/modelprint.c:1685
 #, fuzzy
 msgid "Estimated using BHHH method"
 msgstr "12"
 
-#: lib/src/modelprint.c:1689 lib/src/modelprint.c:1696
+#: lib/src/modelprint.c:1699 lib/src/modelprint.c:1706
 #, fuzzy, c-format
 msgid "Godfrey (1994) test for autocorrelation up to order %d"
 msgstr "Igerageza kugirango Hejuru Kuri Itondekanya"
 
-#: lib/src/modelprint.c:1692 lib/src/modelprint.c:1699
+#: lib/src/modelprint.c:1702 lib/src/modelprint.c:1709
 #, fuzzy
 msgid "Godfrey (1994) test for first-order autocorrelation"
 msgstr "Itangira Itondekanya"
 
-#: lib/src/modelprint.c:1705 lib/src/modelprint.c:1712
+#: lib/src/modelprint.c:1715 lib/src/modelprint.c:1722
 #, fuzzy, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
 msgstr "Igerageza kugirango Hejuru Kuri Itondekanya"
 
-#: lib/src/modelprint.c:1708 lib/src/modelprint.c:1715
+#: lib/src/modelprint.c:1718 lib/src/modelprint.c:1725
 #, fuzzy
 msgid "Breusch-Godfrey test for first-order autocorrelation"
 msgstr "Itangira Itondekanya"
 
-#: lib/src/modelprint.c:1778 lib/src/modelprint.c:1782
-#: lib/src/modelprint.c:1786 lib/src/system.c:3803 lib/src/system.c:3823
+#: lib/src/modelprint.c:1788 lib/src/modelprint.c:1792
+#: lib/src/modelprint.c:1796 lib/src/system.c:3803 lib/src/system.c:3823
 #: lib/src/vartest.c:54 lib/src/vartest.c:81
 msgid "Equation"
 msgstr ""
 
-#: lib/src/modelprint.c:1805 lib/src/modelprint.c:1807 lib/src/objstack.c:573
+#: lib/src/modelprint.c:1815 lib/src/modelprint.c:1817 lib/src/objstack.c:573
 msgid "Model"
 msgstr "Urugero"
 
-#: lib/src/modelprint.c:1817 lib/src/modelprint.c:1818
-#: lib/src/modelprint.c:1856
+#: lib/src/modelprint.c:1827 lib/src/modelprint.c:1828
+#: lib/src/modelprint.c:1866
 #, fuzzy, c-format
 msgid "%s estimates using the %d observations %s%s%s"
 msgstr "%sikoresha i"
 
-#: lib/src/modelprint.c:1835 lib/src/modelprint.c:1851
+#: lib/src/modelprint.c:1845 lib/src/modelprint.c:1861
 #, fuzzy, c-format
 msgid "%s estimates %s%s%s (T = %d)"
 msgstr "%sikoresha i"
 
-#: lib/src/modelprint.c:1839
+#: lib/src/modelprint.c:1849
 #, fuzzy, c-format
 msgid "%s estimates using %d observations from %s%s%s"
 msgstr "%sikoresha i"
 
-#: lib/src/modelprint.c:1846 lib/src/modelprint.c:1847
+#: lib/src/modelprint.c:1856 lib/src/modelprint.c:1857
 msgid "Missing or incomplete observations dropped"
 msgstr ""
 
-#: lib/src/modelprint.c:1867 lib/src/modelprint.c:1868
+#: lib/src/modelprint.c:1877 lib/src/modelprint.c:1878
 #, fuzzy, c-format
 msgid "%s estimates using %d observations"
 msgstr "%sikoresha"
 
-#: lib/src/modelprint.c:1873 lib/src/modelprint.c:1874
+#: lib/src/modelprint.c:1883 lib/src/modelprint.c:1884
 #, fuzzy, c-format
 msgid "Included %d cross-sectional units"
 msgstr "Kwambukiranya"
 
-#: lib/src/modelprint.c:1879 lib/src/modelprint.c:1880
+#: lib/src/modelprint.c:1889 lib/src/modelprint.c:1890
 #, fuzzy, c-format
 msgid "Time-series length = %d"
 msgstr "Ibyiciro"
 
-#: lib/src/modelprint.c:1882 lib/src/modelprint.c:1883
+#: lib/src/modelprint.c:1892 lib/src/modelprint.c:1893
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
 msgstr ""
 
-#: lib/src/modelprint.c:1914
+#: lib/src/modelprint.c:1924
 #, c-format
 msgid "scaled %s (Koenker robust variant)"
 msgstr ""
 
-#: lib/src/modelprint.c:1916
+#: lib/src/modelprint.c:1926
 #, fuzzy, c-format
 msgid "scaled %s"
 msgstr "Gupima"
 
-#: lib/src/modelprint.c:2004 lib/src/modelprint.c:2005
+#: lib/src/modelprint.c:2014 lib/src/modelprint.c:2015
 #, fuzzy
 msgid "Allowing for groupwise heteroskedasticity"
 msgstr "Igerageza kugirango"
 
-#: lib/src/modelprint.c:2007 lib/src/modelprint.c:2008
+#: lib/src/modelprint.c:2017 lib/src/modelprint.c:2018
 #, fuzzy
 msgid "Weights based on per-unit error variances"
 msgstr "Ikosa Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
 
-#: lib/src/modelprint.c:2020 lib/src/modelprint.c:2030
+#: lib/src/modelprint.c:2030 lib/src/modelprint.c:2040
 #, fuzzy
 msgid "Variable used as weight"
 msgstr "Nka Uburemere"
 
-#: lib/src/modelprint.c:2078 lib/src/modelprint.c:2079
+#: lib/src/modelprint.c:2088 lib/src/modelprint.c:2089
 #, fuzzy
 msgid "Weight var is a dummy variable, effective obs ="
 msgstr "VAR ni a Ishusho IMPINDURAGACIRO CYUZUYE"
 
-#: lib/src/modelprint.c:2137
+#: lib/src/modelprint.c:2147
 #, fuzzy
 msgid "$z$-stat"
 msgstr "$T"
 
-#: lib/src/modelprint.c:2137 lib/src/modelprint.c:3629
+#: lib/src/modelprint.c:2147 lib/src/modelprint.c:3805
 msgid "z-stat"
 msgstr ""
 
-#: lib/src/modelprint.c:2139
+#: lib/src/modelprint.c:2149
 #, fuzzy
 msgid "$t$-ratio"
 msgstr "Itangira"
 
-#: lib/src/modelprint.c:2139 lib/src/modelprint.c:3213
-#: lib/src/modelprint.c:3609 lib/src/modelprint.c:3911 gui2/dialogs.c:4071
+#: lib/src/modelprint.c:2149 lib/src/modelprint.c:3389
+#: lib/src/modelprint.c:3785 lib/src/modelprint.c:4087 gui2/dialogs.c:4093
 #, fuzzy
 msgid "t-ratio"
 msgstr "Itangira"
 
-#: lib/src/modelprint.c:2158 lib/src/modelprint.c:2161
-#: lib/src/modelprint.c:2169 lib/src/modelprint.c:2173
-#: lib/src/modelprint.c:2177 lib/src/modelprint.c:2181
-#: lib/src/modelprint.c:3209 lib/src/modelprint.c:3607
-#: lib/src/modelprint.c:3747 lib/src/modelprint.c:3909
+#: lib/src/modelprint.c:2168 lib/src/modelprint.c:2171
+#: lib/src/modelprint.c:2179 lib/src/modelprint.c:2183
+#: lib/src/modelprint.c:2187 lib/src/modelprint.c:2191
+#: lib/src/modelprint.c:3385 lib/src/modelprint.c:3783
+#: lib/src/modelprint.c:3923 lib/src/modelprint.c:4085
 #, fuzzy
 msgid "coefficient"
 msgstr "Bya imibarwa"
 
-#: lib/src/modelprint.c:2158 lib/src/modelprint.c:2161
-#: lib/src/modelprint.c:2165 lib/src/modelprint.c:2177
-#: lib/src/modelprint.c:2181 lib/src/modelprint.c:3212
-#: lib/src/modelprint.c:3608 lib/src/modelprint.c:3748
-#: lib/src/modelprint.c:3910 lib/src/varprint.c:464 lib/src/varprint.c:466
+#: lib/src/modelprint.c:2168 lib/src/modelprint.c:2171
+#: lib/src/modelprint.c:2175 lib/src/modelprint.c:2187
+#: lib/src/modelprint.c:2191 lib/src/modelprint.c:3388
+#: lib/src/modelprint.c:3784 lib/src/modelprint.c:3924
+#: lib/src/modelprint.c:4086 lib/src/varprint.c:464 lib/src/varprint.c:466
 #: lib/src/varprint.c:468 gui2/guiprint.c:1727 gui2/guiprint.c:1822
 #: plugin/fractals.c:253
 #, fuzzy
 msgid "std. error"
 msgstr "STD."
 
-#: lib/src/modelprint.c:2162
+#: lib/src/modelprint.c:2172
 #, fuzzy
 msgid "slope at mean"
 msgstr "Urugero Impuzandengo-"
 
-#: lib/src/modelprint.c:2165 lib/src/modelprint.c:3965
+#: lib/src/modelprint.c:2175 lib/src/modelprint.c:4141
 #, fuzzy
 msgid "estimate"
 msgstr "Igihe"
 
 # sfx2/source\dialog\mailwindow.src:RID_MAIL_WINDOW.LB_MAILWIN_PRIO.4.text
-#: lib/src/modelprint.c:2169 lib/src/modelprint.c:2173
-#: lib/src/modelprint.c:3210 lib/src/modelprint.c:3914
+#: lib/src/modelprint.c:2179 lib/src/modelprint.c:2183
+#: lib/src/modelprint.c:3386 lib/src/modelprint.c:4090
 #, fuzzy
 msgid "lower"
 msgstr "Byo hasi"
 
-#: lib/src/modelprint.c:2170 lib/src/modelprint.c:2174
-#: lib/src/modelprint.c:3211 lib/src/modelprint.c:3915
+#: lib/src/modelprint.c:2180 lib/src/modelprint.c:2184
+#: lib/src/modelprint.c:3387 lib/src/modelprint.c:4091
 msgid "upper"
 msgstr ""
 
-#: lib/src/modelprint.c:2189
+#: lib/src/modelprint.c:2199
 #, fuzzy
 msgid "Estimate"
 msgstr "Igihe"
 
-#: lib/src/modelprint.c:2189 gui2/dialogs.c:865 gui2/dialogs.c:4069
+#: lib/src/modelprint.c:2199 gui2/dialogs.c:865 gui2/dialogs.c:4091
 #: gui2/guiprint.c:1913 gui2/guiprint.c:1967
 msgid "Coefficient"
 msgstr ""
 
-#: lib/src/modelprint.c:2192 lib/src/modelprint.c:2196
+#: lib/src/modelprint.c:2202 lib/src/modelprint.c:2206
 msgid "Lower"
 msgstr ""
 
-#: lib/src/modelprint.c:2193 lib/src/modelprint.c:2197
+#: lib/src/modelprint.c:2203 lib/src/modelprint.c:2207
 msgid "Upper"
 msgstr ""
 
-#: lib/src/modelprint.c:2195 lib/src/modelprint.c:3208
+#: lib/src/modelprint.c:2205 lib/src/modelprint.c:3384
 #, fuzzy
 msgid "tau"
 msgstr "simbuka"
 
-#: lib/src/modelprint.c:2199
+#: lib/src/modelprint.c:2209
 msgid "Std.\\ Error"
 msgstr ""
 
-#: lib/src/modelprint.c:2199
+#: lib/src/modelprint.c:2209
 msgid "Std. Error"
 msgstr ""
 
 # sc/source\core\src\compiler.src:RID_SC_FUNCTION_NAMES.SC_OPCODE_SLOPE.text
-#: lib/src/modelprint.c:2201
+#: lib/src/modelprint.c:2211
 #, fuzzy
 msgid "Slope"
 msgstr "IMANURA"
 
-#: lib/src/modelprint.c:2249
+#: lib/src/modelprint.c:2259
 #, fuzzy
 msgid "Warning: data matrix close to singularity!"
 msgstr "Ibyatanzwe Matirise Gufunga Kuri"
 
-#: lib/src/modelprint.c:2294
+#: lib/src/modelprint.c:2304
 msgid ""
 "WARNING: The constant was present among the regressors but not among the\n"
 "instruments, so it has been automatically added to the instrument list.\n"
@@ -5003,274 +5003,279 @@ msgid ""
 "scripts accordingly.\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2308
+#: lib/src/modelprint.c:2318
 #, fuzzy
 msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
 "fitted values of the dependent variable"
 msgstr "ni Nka i kare Bya i hagati Uduciro Bya i IMPINDURAGACIRO"
 
-#: lib/src/modelprint.c:2314
+#: lib/src/modelprint.c:2324
 #, fuzzy
 msgid "Statistics based on the weighted data"
 msgstr "ku i Ibyatanzwe"
 
-#: lib/src/modelprint.c:2327
+#: lib/src/modelprint.c:2337
 #, fuzzy
 msgid "Statistics based on the original data"
 msgstr "ku i Umwimerere Ibyatanzwe"
 
-#: lib/src/modelprint.c:2340
+#: lib/src/modelprint.c:2350
 #, fuzzy
 msgid "Statistics based on the rho-differenced data"
 msgstr "ku i ro Ibyatanzwe"
 
-#: lib/src/modelprint.c:2429
+#: lib/src/modelprint.c:2439
 #, fuzzy, c-format
 msgid "Log-likelihood for %s"
 msgstr "LOG Bivuye Urugero"
 
-#: lib/src/modelprint.c:2459 lib/src/modelprint.c:2462
-#: lib/src/modelprint.c:2468 lib/src/modelprint.c:2570
-#: lib/src/modelprint.c:4644 lib/src/modelprint.c:4680
-#: lib/src/modelprint.c:4715 lib/src/printout.c:2290 lib/src/system.c:3721
+#: lib/src/modelprint.c:2465 lib/src/modelprint.c:2468
+#: lib/src/modelprint.c:2474 lib/src/modelprint.c:2606
+#: lib/src/modelprint.c:4820 lib/src/modelprint.c:4856
+#: lib/src/modelprint.c:4891 lib/src/printout.c:2290 lib/src/system.c:3721
 #: lib/src/system.c:3728 lib/src/texprint.c:974 lib/src/varprint.c:1063
 #: lib/src/varprint.c:1072
 msgid "Log-likelihood"
 msgstr ""
 
-#: lib/src/modelprint.c:2543
+#: lib/src/modelprint.c:2592
 msgid "note on model statistics abbreviations here"
 msgstr ""
 
-#: lib/src/modelprint.c:2556 gui2/library.c:4691 gui2/model_table.c:635
-msgid "R-squared"
-msgstr ""
-
-#: lib/src/modelprint.c:2561
+#: lib/src/modelprint.c:2598
 #, fuzzy
 msgid "Mean dependent var"
 msgstr "Impuzandengo Bya IMPINDURAGACIRO"
 
-#: lib/src/modelprint.c:2563
+#: lib/src/modelprint.c:2599
 #, fuzzy
 msgid "S.D. dependent var"
 msgstr "Bya IMPINDURAGACIRO"
 
-#: lib/src/modelprint.c:2564
-#, fuzzy
-msgid "Sample size"
-msgstr "Urugero Ingano"
-
-#: lib/src/modelprint.c:2565
+#: lib/src/modelprint.c:2600
 #, fuzzy
 msgid "Sum squared resid"
 msgstr "Bya"
 
-#: lib/src/modelprint.c:2568
+#: lib/src/modelprint.c:2601
 #, fuzzy
 msgid "S.E. of regression"
 msgstr "Umukoro"
 
-#: lib/src/modelprint.c:2571
-#, fuzzy
-msgid "Akaike criterion"
-msgstr "Ibisobanuro ni Ibuze"
+#: lib/src/modelprint.c:2602 gui2/library.c:4691 gui2/model_table.c:635
+msgid "R-squared"
+msgstr ""
 
-#: lib/src/modelprint.c:2573
-#, fuzzy
-msgid "Schwarz criterion"
-msgstr "Itangira"
-
-#: lib/src/modelprint.c:2576
+#: lib/src/modelprint.c:2605
 #, fuzzy
 msgid "P-value(F)"
 msgstr "P Agaciro"
 
-#: lib/src/modelprint.c:2578 lib/src/modelprint.c:4534
-#: lib/src/modelprint.c:4536 lib/src/modelprint.c:4543
+#: lib/src/modelprint.c:2607
+#, fuzzy
+msgid "Akaike criterion"
+msgstr "Ibisobanuro ni Ibuze"
+
+#: lib/src/modelprint.c:2608
+#, fuzzy
+msgid "Schwarz criterion"
+msgstr "Itangira"
+
+#: lib/src/modelprint.c:2609
+#, fuzzy
+msgid "Hannan-Quinn"
+msgstr "Ibisobanuro ni Ibuze"
+
+#: lib/src/modelprint.c:2610 lib/src/modelprint.c:4710
+#: lib/src/modelprint.c:4712 lib/src/modelprint.c:4719
 msgid "rho"
 msgstr ""
 
-#: lib/src/modelprint.c:2579
+#: lib/src/modelprint.c:2611
 #, fuzzy
 msgid "Durbin-Watson"
 msgstr "h"
 
-#: lib/src/modelprint.c:2648 lib/src/system.c:3713 lib/src/system.c:3715
+#: lib/src/modelprint.c:2635
+#, fuzzy
+msgid "P-value($F$)"
+msgstr "P Agaciro"
+
+#: lib/src/modelprint.c:2758 lib/src/system.c:3713 lib/src/system.c:3715
 #, fuzzy, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr "Nyuma"
 
-#: lib/src/modelprint.c:2654 lib/src/nls.c:3984
+#: lib/src/modelprint.c:2764 lib/src/nls.c:3985
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2655 lib/src/nls.c:3985
+#: lib/src/modelprint.c:2765 lib/src/nls.c:3986
 #, fuzzy, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr "Bya imvugo Byanze"
 
-#: lib/src/modelprint.c:3899
+#: lib/src/modelprint.c:4075
 #, fuzzy
 msgid "Sum of AR coefficients"
 msgstr "Bya imibarwa"
 
 # sc/source\core\src\compiler.src:RID_SC_FUNCTION_NAMES.SC_OPCODE_SLOPE.text
-#: lib/src/modelprint.c:3913
+#: lib/src/modelprint.c:4089
 #, fuzzy
 msgid "slope"
 msgstr "IMANURA"
 
-#: lib/src/modelprint.c:4340
+#: lib/src/modelprint.c:4516
 msgid "                        Real  Imaginary    Modulus  Frequency"
 msgstr ""
 
-#: lib/src/modelprint.c:4350 lib/src/modelprint.c:4353
-#: lib/src/modelprint.c:4366
+#: lib/src/modelprint.c:4526 lib/src/modelprint.c:4529
+#: lib/src/modelprint.c:4542
 msgid "Root"
 msgstr "Imizi"
 
-#: lib/src/modelprint.c:4401 lib/src/modelprint.c:4409
+#: lib/src/modelprint.c:4577 lib/src/modelprint.c:4585
 msgid "Real"
 msgstr ""
 
 # scaddins/source\analysis\analysis_funcnames.src:RID_ANALYSIS_FUNCTION_NAMES.ANALYSIS_FUNCNAME_Imaginary.text
-#: lib/src/modelprint.c:4401 lib/src/modelprint.c:4409
+#: lib/src/modelprint.c:4577 lib/src/modelprint.c:4585
 #, fuzzy
 msgid "Imaginary"
 msgstr "NYURABWENGE"
 
-#: lib/src/modelprint.c:4401 lib/src/modelprint.c:4409
+#: lib/src/modelprint.c:4577 lib/src/modelprint.c:4585
 msgid "Modulus"
 msgstr ""
 
-#: lib/src/modelprint.c:4434
+#: lib/src/modelprint.c:4610
 msgid "AR (seasonal)"
 msgstr ""
 
-#: lib/src/modelprint.c:4454
+#: lib/src/modelprint.c:4630
 msgid "MA"
 msgstr ""
 
-#: lib/src/modelprint.c:4474
+#: lib/src/modelprint.c:4650
 msgid "MA (seasonal)"
 msgstr ""
 
-#: lib/src/modelprint.c:4508 lib/src/modelprint.c:4511
-#: lib/src/modelprint.c:4517 lib/src/modelprint.c:4531
-#: lib/src/modelprint.c:4540 lib/src/modelprint.c:4551
+#: lib/src/modelprint.c:4684 lib/src/modelprint.c:4687
+#: lib/src/modelprint.c:4693 lib/src/modelprint.c:4707
+#: lib/src/modelprint.c:4716 lib/src/modelprint.c:4727
 msgid "Censored observations"
 msgstr ""
 
 # sc/source\ui\src\scfuncs.src:RID_SC_FUNCTION_DESCRIPTIONS2.SC_OPCODE_Z_TEST.6.text
-#: lib/src/modelprint.c:4509 lib/src/modelprint.c:4512
-#: lib/src/modelprint.c:4532 lib/src/modelprint.c:4541
+#: lib/src/modelprint.c:4685 lib/src/modelprint.c:4688
+#: lib/src/modelprint.c:4708 lib/src/modelprint.c:4717
 msgid "sigma"
 msgstr "sigima"
 
-#: lib/src/modelprint.c:4530 lib/src/modelprint.c:4539
-#: lib/src/modelprint.c:4549
+#: lib/src/modelprint.c:4706 lib/src/modelprint.c:4715
+#: lib/src/modelprint.c:4725
 #, fuzzy
 msgid "Total observations"
 msgstr "Oya"
 
-#: lib/src/modelprint.c:4567 lib/src/modelprint.c:4572
-#: lib/src/modelprint.c:4578
+#: lib/src/modelprint.c:4743 lib/src/modelprint.c:4748
+#: lib/src/modelprint.c:4754
 #, fuzzy
 msgid "Mean of innovations"
 msgstr "Impuzandengo Bya"
 
-#: lib/src/modelprint.c:4569 lib/src/modelprint.c:4573
-#: lib/src/modelprint.c:4580
+#: lib/src/modelprint.c:4745 lib/src/modelprint.c:4749
+#: lib/src/modelprint.c:4756
 #, fuzzy
 msgid "Variance of innovations"
 msgstr "Impuzandengo Bya"
 
-#: lib/src/modelprint.c:4600 lib/src/modelprint.c:4608
+#: lib/src/modelprint.c:4776 lib/src/modelprint.c:4784
 msgid "Actual"
 msgstr ""
 
-#: lib/src/modelprint.c:4603
+#: lib/src/modelprint.c:4779
 #, fuzzy
 msgid "Predicted"
 msgstr "Uduciro"
 
-#: lib/src/modelprint.c:4634 lib/src/modelprint.c:4670
-#: lib/src/modelprint.c:4704
+#: lib/src/modelprint.c:4810 lib/src/modelprint.c:4846
+#: lib/src/modelprint.c:4880
 #, fuzzy
 msgid "Mean of"
 msgstr "Impuzandengo Bya"
 
-#: lib/src/modelprint.c:4638 lib/src/modelprint.c:4674
+#: lib/src/modelprint.c:4814 lib/src/modelprint.c:4850
 #, fuzzy
 msgid "Number of cases 'correctly predicted'"
 msgstr "Bya"
 
-#: lib/src/modelprint.c:4641 lib/src/modelprint.c:4677
-#: lib/src/modelprint.c:4712
+#: lib/src/modelprint.c:4817 lib/src/modelprint.c:4853
+#: lib/src/modelprint.c:4888
 #, fuzzy
 msgid "at mean of independent vars"
 msgstr "ku Impuzandengo- Bya"
 
-#: lib/src/modelprint.c:4649 lib/src/modelprint.c:4684
-#: lib/src/modelprint.c:4719 lib/src/varprint.c:1210 lib/src/varprint.c:1217
-#: lib/src/varprint.c:1226
+#: lib/src/modelprint.c:4825 lib/src/modelprint.c:4860
+#: lib/src/modelprint.c:4895 lib/src/varprint.c:1206 lib/src/varprint.c:1213
+#: lib/src/varprint.c:1222
 #, fuzzy
 msgid "Likelihood ratio test"
 msgstr "Igerageza"
 
-#: lib/src/modelprint.c:4668 lib/src/modelprint.c:4700
+#: lib/src/modelprint.c:4844 lib/src/modelprint.c:4876
 #, fuzzy
 msgid "Evaluated at the mean"
 msgstr "ku i Impuzandengo-"
 
-#: lib/src/modelprint.c:4708
+#: lib/src/modelprint.c:4884
 #, fuzzy
 msgid "Number of cases `correctly predicted'"
 msgstr "Bya"
 
-#: lib/src/modelprint.c:4743
+#: lib/src/modelprint.c:4919
 #, fuzzy
 msgid "Analysis of Variance"
 msgstr "Matirise"
 
-#: lib/src/modelprint.c:4747
+#: lib/src/modelprint.c:4923
 #, fuzzy
 msgid "Sum of squares"
 msgstr "Bya"
 
-#: lib/src/modelprint.c:4747 lib/src/varprint.c:956 lib/src/varprint.c:960
+#: lib/src/modelprint.c:4923 lib/src/varprint.c:956 lib/src/varprint.c:960
 #: lib/src/varprint.c:964 gui2/calculator.c:1963 gui2/calculator.c:1966
 msgid "df"
 msgstr ""
 
-#: lib/src/modelprint.c:4747
+#: lib/src/modelprint.c:4923
 #, fuzzy
 msgid "Mean square"
 msgstr "Ikosa"
 
-#: lib/src/modelprint.c:4750
+#: lib/src/modelprint.c:4926
 #, fuzzy
 msgid "Regression"
 msgstr "Umukoro"
 
-#: lib/src/modelprint.c:4753
+#: lib/src/modelprint.c:4929
 #, fuzzy
 msgid "Residual"
 msgstr "Impuzandengo Bya"
 
-#: lib/src/modelprint.c:4756
+#: lib/src/modelprint.c:4932
 msgid "Total"
 msgstr ""
 
-#: lib/src/modelprint.c:4808
+#: lib/src/modelprint.c:4984
 #, c-format
 msgid "modprint: expected %d names"
 msgstr ""
 
-#: lib/src/modelprint.c:4920
+#: lib/src/modelprint.c:5096
 msgid "modprint: the first matrix argument must have 2 columns"
 msgstr ""
 
@@ -5411,103 +5416,103 @@ msgstr ""
 msgid "Failed to calculate Jacobian"
 msgstr "Kuri Kubara"
 
-#: lib/src/nls.c:2082
+#: lib/src/nls.c:2083
 #, fuzzy
 msgid "NLS: The supplied derivatives seem to be incorrect"
 msgstr "Kuri"
 
-#: lib/src/nls.c:2083
+#: lib/src/nls.c:2084
 #, c-format
 msgid "%d out of %d tests gave zero\n"
 msgstr ""
 
-#: lib/src/nls.c:2085
+#: lib/src/nls.c:2086
 #, fuzzy
 msgid ""
 "Warning: The supplied derivatives may be incorrect, or perhaps\n"
 "the data are ill-conditioned for this function.\n"
 msgstr "Gicurasi Cyangwa Ibyatanzwe kugirango iyi Umumaro"
 
-#: lib/src/nls.c:2087
+#: lib/src/nls.c:2088
 #, fuzzy, c-format
 msgid ""
 "%d out of %d gradients looked suspicious.\n"
 "\n"
 msgstr "%dInyuma Bya Ibizamuko"
 
-#: lib/src/nls.c:2175 lib/src/nls.c:2280
+#: lib/src/nls.c:2176 lib/src/nls.c:2281
 msgid "Invalid NLS specification"
 msgstr ""
 
-#: lib/src/nls.c:2187 lib/src/nls.c:2293
+#: lib/src/nls.c:2188 lib/src/nls.c:2294
 #, fuzzy, c-format
 msgid "NLS: failed to converge after %d iterations"
 msgstr "Byanze Kuri Nyuma Amasubiramo"
 
-#: lib/src/nls.c:2362
+#: lib/src/nls.c:2363
 msgid "Analytical derivatives cannot be used with GMM"
 msgstr ""
 
-#: lib/src/nls.c:2425
+#: lib/src/nls.c:2426
 #, fuzzy, c-format
 msgid "command '%s' not valid in this context"
 msgstr "OYA Byemewe muri"
 
-#: lib/src/nls.c:2643 plugin/heckit.c:288
+#: lib/src/nls.c:2644 plugin/heckit.c:288
 #, fuzzy
 msgid "No regression function has been specified"
 msgstr "Umumaro"
 
-#: lib/src/nls.c:2648
+#: lib/src/nls.c:2649
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
 msgstr ""
 
-#: lib/src/nls.c:2658
+#: lib/src/nls.c:2659
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
 msgstr ""
 
-#: lib/src/nls.c:2701
+#: lib/src/nls.c:2702
 #, fuzzy
 msgid "No parameters have been specified"
 msgstr "Umumaro"
 
-#: lib/src/nls.c:2799
+#: lib/src/nls.c:2800
 #, fuzzy
 msgid "No function has been specified"
 msgstr "Umumaro"
 
-#: lib/src/nls.c:2873
+#: lib/src/nls.c:2874
 #, fuzzy
 msgid "Using numerical derivatives\n"
 msgstr "Mbarika"
 
-#: lib/src/nls.c:2874
+#: lib/src/nls.c:2875
 msgid "Using analytical derivatives\n"
 msgstr ""
 
 # svx/source\dialog\bmpmask.src:RID_SVXDLG_BMPMASK.FT_2.text
-#: lib/src/nls.c:2892
+#: lib/src/nls.c:2893
 #, fuzzy, c-format
 msgid "Tolerance = %g\n"
 msgstr "Icishiriza"
 
-#: lib/src/nls.c:3312
+#: lib/src/nls.c:3313
 #, fuzzy
 msgid "Failed to compute numerical Hessian"
 msgstr "Kuri kugirango"
 
-#: lib/src/nls.c:3381
+#: lib/src/nls.c:3382
 msgid ""
 "\n"
 "\n"
 "*** User-specified starting values:\n"
 msgstr ""
 
-#: lib/src/nls.c:3446
+#: lib/src/nls.c:3447
 msgid "BFGS: initial value of objective function is not finite"
 msgstr ""
 
-#: lib/src/nls.c:3620
+#: lib/src/nls.c:3621
 #, fuzzy, c-format
 msgid "stopped after %d iterations\n"
 msgstr "Nyuma"
@@ -5691,7 +5696,7 @@ msgstr ""
 msgid "%s saved\n"
 msgstr ""
 
-#: lib/src/options.c:909
+#: lib/src/options.c:910
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr ""
@@ -5887,14 +5892,15 @@ msgid ""
 msgstr "Ibisobanuro Hanyuma Kanda Garuka Urufunguzo Kuri urifuzagukomeza"
 
 #: lib/src/printout.c:1072
-msgid "Recursive one-step ahead forecasts"
+#, c-format
+msgid "Recursive %d-step ahead forecasts"
 msgstr ""
 
 #: lib/src/printout.c:1074
 #, c-format
 msgid ""
 "The forecast for time t is based on (a) coefficients obtained by\n"
-"estimating the model over the sample %s to t-1, and (b) the\n"
+"estimating the model over the sample %s to t-%d, and (b) the\n"
 "regressors evaluated at time t."
 msgstr ""
 
@@ -6459,57 +6465,57 @@ msgstr ""
 msgid "Matrix decomposition failed"
 msgstr "Igerageza"
 
-#: lib/src/var.c:629 lib/src/var.c:2614
+#: lib/src/var.c:629 lib/src/var.c:2615
 #, fuzzy, c-format
 msgid "vecm: rank %d is out of bounds"
 msgstr "Umubare ni Inyuma Bya"
 
-#: lib/src/var.c:2081
+#: lib/src/var.c:2082
 #, fuzzy
 msgid "Sample variance-covariance matrices for residuals"
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo kugirango"
 
-#: lib/src/var.c:2083
+#: lib/src/var.c:2084
 #, fuzzy
 msgid "VAR system in first differences"
 msgstr "Sisitemu in Itangira"
 
-#: lib/src/var.c:2091
+#: lib/src/var.c:2092
 #, fuzzy
 msgid "System with levels as dependent variable"
 msgstr "Na: Intera Nka IMPINDURAGACIRO"
 
-#: lib/src/var.c:2099
+#: lib/src/var.c:2100
 #, fuzzy
 msgid "Cross-products"
 msgstr "Ibikoresho"
 
-#: lib/src/var.c:2434
+#: lib/src/var.c:2435
 #, fuzzy
 msgid "Johansen test"
 msgstr "Igerageza"
 
-#: lib/src/var.c:2435
+#: lib/src/var.c:2436
 #, fuzzy
 msgid "Number of equations"
 msgstr "Bya"
 
-#: lib/src/var.c:2436
+#: lib/src/var.c:2437
 #, fuzzy
 msgid "Lag order"
 msgstr "Itondekanya"
 
-#: lib/src/var.c:2437
+#: lib/src/var.c:2438
 #, fuzzy
 msgid "Estimation period"
 msgstr "Igihe"
 
-#: lib/src/var.c:2796
+#: lib/src/var.c:2797
 #, fuzzy, c-format
 msgid "residual from VAR system, equation %d"
 msgstr "Bivuye Sisitemu"
 
-#: lib/src/var.c:2799
+#: lib/src/var.c:2800
 #, fuzzy, c-format
 msgid "residual from VECM system, equation %d"
 msgstr "Bivuye Sisitemu"
@@ -6645,36 +6651,36 @@ msgstr "Sisitemu"
 msgid "F-tests of zero restrictions"
 msgstr "Bya Zeru Amabwiriza"
 
-#: lib/src/varprint.c:1134 lib/src/varprint.c:1140 lib/src/varprint.c:1146
+#: lib/src/varprint.c:1134 lib/src/varprint.c:1140 lib/src/varprint.c:1145
 #, fuzzy, c-format
 msgid "All lags of %-15s "
 msgstr "Bya"
 
-#: lib/src/varprint.c:1157 lib/src/varprint.c:1163 lib/src/varprint.c:1169
+#: lib/src/varprint.c:1155 lib/src/varprint.c:1161 lib/src/varprint.c:1166
 #, c-format
 msgid "All vars, lag %-13d "
 msgstr ""
 
-#: lib/src/varprint.c:1198 lib/src/varprint.c:1199 lib/src/varprint.c:1201
-#: lib/src/varprint.c:1202
+#: lib/src/varprint.c:1194 lib/src/varprint.c:1195 lib/src/varprint.c:1197
+#: lib/src/varprint.c:1198
 #, c-format
 msgid "the longest lag is %d"
 msgstr ""
 
-#: lib/src/varprint.c:1206 lib/src/varprint.c:1213 lib/src/varprint.c:1222
+#: lib/src/varprint.c:1202 lib/src/varprint.c:1209 lib/src/varprint.c:1218
 msgid "For the system as a whole"
 msgstr ""
 
-#: lib/src/varprint.c:1208 lib/src/varprint.c:1215 lib/src/varprint.c:1224
+#: lib/src/varprint.c:1204 lib/src/varprint.c:1211 lib/src/varprint.c:1220
 msgid "Alternative hypothesis"
 msgstr ""
 
-#: lib/src/varprint.c:1229
+#: lib/src/varprint.c:1225
 #, fuzzy
 msgid "Comparison of information criteria"
 msgstr "Ibisobanuro ni Ibuze"
 
-#: lib/src/varprint.c:1231 lib/src/varprint.c:1235
+#: lib/src/varprint.c:1227 lib/src/varprint.c:1231
 #, fuzzy, c-format
 msgid "Lag order %*d"
 msgstr "Itondekanya"
@@ -8240,22 +8246,22 @@ msgstr "Izina: kugirango Gishya KININI 8 Inyuguti"
 msgid "No changes were made"
 msgstr ""
 
-#: gui2/datawiz.c:379 gui2/dialogs.c:2683 gui2/menustate.c:468
+#: gui2/datawiz.c:379 gui2/dialogs.c:2705 gui2/menustate.c:468
 msgid "Annual"
 msgstr ""
 
-#: gui2/datawiz.c:380 gui2/dialogs.c:2682 gui2/dialogs.c:3032
+#: gui2/datawiz.c:380 gui2/dialogs.c:2704 gui2/dialogs.c:3054
 #: gui2/menustate.c:470
 msgid "Quarterly"
 msgstr ""
 
-#: gui2/datawiz.c:381 gui2/dialogs.c:2688 gui2/dialogs.c:3033
+#: gui2/datawiz.c:381 gui2/dialogs.c:2710 gui2/dialogs.c:3055
 #: gui2/menustate.c:472
 #, fuzzy
 msgid "Monthly"
 msgstr "Buri kwezi"
 
-#: gui2/datawiz.c:382 gui2/dialogs.c:2687 gui2/menustate.c:476
+#: gui2/datawiz.c:382 gui2/dialogs.c:2709 gui2/menustate.c:476
 #, fuzzy
 msgid "Weekly"
 msgstr "Buri kyumweru"
@@ -8313,33 +8319,33 @@ msgstr "Kwambukiranya"
 msgid "Panel"
 msgstr ""
 
-#: gui2/datawiz.c:485 gui2/dialogs.c:2755
+#: gui2/datawiz.c:485 gui2/dialogs.c:2777
 #, fuzzy
 msgid "Monday"
 msgstr "Buri kwezi"
 
-#: gui2/datawiz.c:486 gui2/dialogs.c:2756
+#: gui2/datawiz.c:486 gui2/dialogs.c:2778
 msgid "Tuesday"
 msgstr ""
 
-#: gui2/datawiz.c:487 gui2/dialogs.c:2757
+#: gui2/datawiz.c:487 gui2/dialogs.c:2779
 msgid "Wednesday"
 msgstr ""
 
-#: gui2/datawiz.c:488 gui2/dialogs.c:2758
+#: gui2/datawiz.c:488 gui2/dialogs.c:2780
 msgid "Thursday"
 msgstr ""
 
-#: gui2/datawiz.c:489 gui2/dialogs.c:2759
+#: gui2/datawiz.c:489 gui2/dialogs.c:2781
 #, fuzzy
 msgid "Friday"
 msgstr "Gushaka"
 
-#: gui2/datawiz.c:490 gui2/dialogs.c:2760
+#: gui2/datawiz.c:490 gui2/dialogs.c:2782
 msgid "Saturday"
 msgstr ""
 
-#: gui2/datawiz.c:491 gui2/dialogs.c:2754
+#: gui2/datawiz.c:491 gui2/dialogs.c:2776
 #, fuzzy
 msgid "Sunday"
 msgstr "Inshamake"
@@ -8716,34 +8722,34 @@ msgstr "Bya Kuri Guhitamo KININI"
 msgid "Set sample range"
 msgstr "Urugero Urutonde"
 
-#: gui2/dialogs.c:2252
+#: gui2/dialogs.c:2262
 #, fuzzy
 msgid "Number of pre-forecast observations to graph"
 msgstr "Bya"
 
-#: gui2/dialogs.c:2255
+#: gui2/dialogs.c:2265
 msgid "automatic forecast (dynamic out of sample)"
 msgstr ""
 
-#: gui2/dialogs.c:2256
+#: gui2/dialogs.c:2266
 msgid "dynamic forecast"
 msgstr ""
 
-#: gui2/dialogs.c:2257
+#: gui2/dialogs.c:2267
 #, fuzzy
 msgid "static forecast"
 msgstr "ITEGANYA"
 
-#: gui2/dialogs.c:2258
-msgid "rolling one-step ahead forecasts"
+#: gui2/dialogs.c:2268
+msgid "rolling k-step ahead forecasts: k = "
 msgstr ""
 
-#: gui2/dialogs.c:2268
+#: gui2/dialogs.c:2278
 #, fuzzy
 msgid "gretl: forecast"
 msgstr "ITEGANYA"
 
-#: gui2/dialogs.c:2277
+#: gui2/dialogs.c:2287
 #, fuzzy
 msgid "Forecast range:"
 msgstr "Ibyatanzwe Urutonde"
@@ -8754,251 +8760,251 @@ msgstr "Ibyatanzwe Urutonde"
 # sc/source\ui\src\menue.src:SCCFG_MENUBAR.SUBMENU_DATA.SUBMENU_PIVOT.SID_OPENDLG_PIVOTTABLE.text
 # #-#-#-#-#  sc.pot (PACKAGE VERSION)  #-#-#-#-#
 # sc/source\ui\src\popup.src:RID_POPUP_PIVOT.SID_OPENDLG_PIVOTTABLE.text
-#: gui2/dialogs.c:2278
+#: gui2/dialogs.c:2288
 #, fuzzy
 msgid "Start"
 msgstr "Gutangira..."
 
-#: gui2/dialogs.c:2278
+#: gui2/dialogs.c:2288
 #, fuzzy
 msgid "End"
 msgstr "Impera:"
 
-#: gui2/dialogs.c:2350
+#: gui2/dialogs.c:2372
 #, fuzzy
 msgid "error bars"
 msgstr "STD."
 
-#: gui2/dialogs.c:2351
+#: gui2/dialogs.c:2373
 #, fuzzy
 msgid "low and high lines"
 msgstr "Komandi: Umurongo"
 
-#: gui2/dialogs.c:2352
+#: gui2/dialogs.c:2374
 msgid "shaded area"
 msgstr ""
 
-#: gui2/dialogs.c:2375
+#: gui2/dialogs.c:2397
 #, fuzzy
 msgid "Plot confidence interval using"
 msgstr "UKWIYIZERA Intera"
 
-#: gui2/dialogs.c:2437
+#: gui2/dialogs.c:2459
 #, fuzzy
 msgid "Add observations"
 msgstr "Iheruka"
 
-#: gui2/dialogs.c:2449
+#: gui2/dialogs.c:2471
 #, fuzzy
 msgid "Number of observations to add:"
 msgstr "Bya"
 
-#: gui2/dialogs.c:2541
+#: gui2/dialogs.c:2563
 #, fuzzy
 msgid "select variable"
 msgstr "IMPINDURAGACIRO"
 
-#: gui2/dialogs.c:2728
+#: gui2/dialogs.c:2750
 #, fuzzy
 msgid "Week starts on Monday"
 msgstr "ku"
 
-#: gui2/dialogs.c:2741
+#: gui2/dialogs.c:2763
 #, fuzzy
 msgid "Week starts on Sunday"
 msgstr "ku"
 
-#: gui2/dialogs.c:2791
+#: gui2/dialogs.c:2813
 #, fuzzy
 msgid "Default method:"
 msgstr "Uburyo"
 
-#: gui2/dialogs.c:2796
+#: gui2/dialogs.c:2818
 #, fuzzy
 msgid "Compact by averaging"
 msgstr "ku"
 
-#: gui2/dialogs.c:2806
+#: gui2/dialogs.c:2828
 #, fuzzy
 msgid "Compact by summing"
 msgstr "ku"
 
-#: gui2/dialogs.c:2816
+#: gui2/dialogs.c:2838
 #, fuzzy
 msgid "Use end-of-period values"
 msgstr "Impera Bya Igihe Uduciro"
 
-#: gui2/dialogs.c:2826
+#: gui2/dialogs.c:2848
 #, fuzzy
 msgid "Use start-of-period values"
 msgstr "Gutangira Bya Igihe Uduciro"
 
-#: gui2/dialogs.c:2841
+#: gui2/dialogs.c:2863
 msgid "Use representative day"
 msgstr ""
 
-#: gui2/dialogs.c:2906
+#: gui2/dialogs.c:2928
 #, fuzzy
 msgid "gretl: compact data"
 msgstr "Ibyatanzwe"
 
-#: gui2/dialogs.c:2920
+#: gui2/dialogs.c:2942
 #, fuzzy, c-format
 msgid "You are adding a %s series to %s dataset"
 msgstr "Wongera a Ibyiciro Kuri"
 
-#: gui2/dialogs.c:2922
+#: gui2/dialogs.c:2944
 #, fuzzy
 msgid "a quarterly"
 msgstr "a"
 
-#: gui2/dialogs.c:2922
+#: gui2/dialogs.c:2944
 msgid "an annual"
 msgstr ""
 
-#: gui2/dialogs.c:2927
+#: gui2/dialogs.c:2949
 #, fuzzy
 msgid "Compact quarterly data to annual"
 msgstr "Ibyatanzwe Kuri"
 
-#: gui2/dialogs.c:2930
+#: gui2/dialogs.c:2952
 #, fuzzy
 msgid "Compact monthly data to:"
 msgstr "Buri kwezi Ibyatanzwe Kuri"
 
-#: gui2/dialogs.c:2936
+#: gui2/dialogs.c:2958
 #, fuzzy
 msgid "Compact daily data to:"
 msgstr "Ibyatanzwe Kuri"
 
-#: gui2/dialogs.c:2939
+#: gui2/dialogs.c:2961
 #, fuzzy
 msgid "Compact daily data to weekly"
 msgstr "Ibyatanzwe Kuri Buri kyumweru"
 
-#: gui2/dialogs.c:2946
+#: gui2/dialogs.c:2968
 #, fuzzy
 msgid "Compact weekly data to monthly"
 msgstr "Ibyatanzwe Kuri Buri kyumweru"
 
-#: gui2/dialogs.c:3077
+#: gui2/dialogs.c:3099
 #, fuzzy
 msgid "gretl: expand data"
 msgstr "Gufungura Ibyatanzwe"
 
-#: gui2/dialogs.c:3081
+#: gui2/dialogs.c:3103
 #, fuzzy, c-format
 msgid "Adding %s series to %s dataset"
 msgstr "Wongera a Ibyiciro Kuri"
 
-#: gui2/dialogs.c:3087
+#: gui2/dialogs.c:3109
 #, fuzzy
 msgid "Expand annual data to:"
 msgstr "Ibyatanzwe"
 
-#: gui2/dialogs.c:3092
+#: gui2/dialogs.c:3114
 #, fuzzy
 msgid "Expand quarterly data to monthly"
 msgstr "Ibyatanzwe Kuri"
 
-#: gui2/dialogs.c:3263
+#: gui2/dialogs.c:3285
 #, fuzzy
 msgid "density estimation options"
 msgstr "OYA Byakozwe"
 
-#: gui2/dialogs.c:3268 plugin/kernel.c:130
+#: gui2/dialogs.c:3290 plugin/kernel.c:130
 msgid "Gaussian kernel"
 msgstr ""
 
-#: gui2/dialogs.c:3280 plugin/kernel.c:131
+#: gui2/dialogs.c:3302 plugin/kernel.c:131
 msgid "Epanechnikov kernel"
 msgstr ""
 
-#: gui2/dialogs.c:3299
+#: gui2/dialogs.c:3321
 msgid "bandwidth adjustment factor:"
 msgstr ""
 
-#: gui2/dialogs.c:3606
+#: gui2/dialogs.c:3628
 #, fuzzy
 msgid "Number of bins:"
 msgstr "Bya"
 
-#: gui2/dialogs.c:3607
+#: gui2/dialogs.c:3629
 msgid "Minimum value, left bin:"
 msgstr ""
 
-#: gui2/dialogs.c:3608
+#: gui2/dialogs.c:3630
 #, fuzzy
 msgid "Bin width:"
 msgstr "Umurongo: %d%S"
 
-#: gui2/dialogs.c:3611 gui2/dialogs.c:3616
+#: gui2/dialogs.c:3633 gui2/dialogs.c:3638
 #, fuzzy
 msgid "Show data only"
 msgstr "Birambuye"
 
-#: gui2/dialogs.c:3612
+#: gui2/dialogs.c:3634
 #, fuzzy
 msgid "Show normal distribution"
 msgstr "Uduciro Bisanzwe Ikwirakwiza..."
 
-#: gui2/dialogs.c:3613
+#: gui2/dialogs.c:3635
 #, fuzzy
 msgid "Show gamma distribution"
 msgstr "Bya Ikwirakwiza..."
 
-#: gui2/dialogs.c:3617
+#: gui2/dialogs.c:3639
 #, fuzzy
 msgid "Test against normal distribution"
 msgstr "Uduciro Bisanzwe Ikwirakwiza..."
 
-#: gui2/dialogs.c:3618
+#: gui2/dialogs.c:3640
 #, fuzzy
 msgid "Test against gamma distribution"
 msgstr "Bya Ikwirakwiza..."
 
-#: gui2/dialogs.c:3904
+#: gui2/dialogs.c:3926
 #, c-format
 msgid "The maximum must be greater than %g"
 msgstr ""
 
-#: gui2/dialogs.c:3925
+#: gui2/dialogs.c:3947
 #, fuzzy
 msgid "Logistic model"
 msgstr "Urugero"
 
-#: gui2/dialogs.c:3931
+#: gui2/dialogs.c:3953
 #, fuzzy
 msgid ""
 "Maximum (asymptote) for the\n"
 "dependent variable"
 msgstr "kugirango IMPINDURAGACIRO"
 
-#: gui2/dialogs.c:4087
+#: gui2/dialogs.c:4109
 #, fuzzy
 msgid "gretl: TeX tabular format"
 msgstr "Ibyatanzwe Imiterere"
 
-#: gui2/dialogs.c:4092
+#: gui2/dialogs.c:4114
 #, fuzzy
 msgid "Standard format"
 msgstr "Ikosa"
 
-#: gui2/dialogs.c:4095
+#: gui2/dialogs.c:4117
 #, fuzzy
 msgid "Custom format"
 msgstr "Ibisohoka Imiterere"
 
-#: gui2/dialogs.c:4134 gui2/series_view.c:536
+#: gui2/dialogs.c:4156 gui2/series_view.c:536
 msgid "Show"
 msgstr "Erekana"
 
-#: gui2/dialogs.c:4142 gui2/series_view.c:561
+#: gui2/dialogs.c:4164 gui2/series_view.c:561
 #, fuzzy
 msgid "decimal places"
 msgstr "Ahagenewe ibinyacumi"
 
-#: gui2/dialogs.c:4145 gui2/series_view.c:548
+#: gui2/dialogs.c:4167 gui2/series_view.c:548
 msgid "significant figures"
 msgstr ""
 
@@ -9984,6 +9990,12 @@ msgstr ""
 #, fuzzy
 msgid "Palette"
 msgstr "Komeka"
+
+#: gui2/gpt_dialog.c:2534
+msgid ""
+"These colors will be used unless overridden\n"
+"by graph-specific choices\n"
+msgstr ""
 
 #: gui2/gpt_dialog.c:2740
 #, fuzzy
@@ -11336,7 +11348,7 @@ msgstr "UKWIYIZERA Intera"
 
 #: gui2/guiprint.c:2157
 #, fuzzy
-msgid "No scalar variable are currently defined"
+msgid "No scalar variables are currently defined"
 msgstr "Ibihinduka"
 
 #: gui2/guiprint.c:2221 gui2/selector.c:4970 plugin/tramo-x12a.c:184
@@ -13435,7 +13447,7 @@ msgstr ""
 
 #: gui2/selector.c:3162
 #, fuzzy
-msgid "ARCH p:"
+msgid "GARCH p:"
 msgstr "P"
 
 #: gui2/selector.c:3163
@@ -15952,6 +15964,10 @@ msgstr "Muyunguruzi"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr ""
+
+#, fuzzy
+#~ msgid "Sample size"
+#~ msgstr "Urugero Ingano"
 
 #, fuzzy
 #~ msgid "Failed to import data"
