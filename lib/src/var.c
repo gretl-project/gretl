@@ -1224,9 +1224,10 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     pmod->sigma = sqrt(SSR / pmod->dfd);
     pmod->tss = TSS;
     pmod->rsq = 1.0 - SSR / TSS;
+    pmod->adjrsq = 1.0 - (SSR / (pmod->dfd)) / (TSS / (pmod->nobs - 1));
     pmod->fstt = ((TSS - SSR) / pmod->dfn) / (SSR / pmod->dfd);
 
-    pmod->adjrsq = pmod->lnL = NADBL;
+    pmod->lnL = NADBL;
 
     VAR_dw_rho(pmod);
 

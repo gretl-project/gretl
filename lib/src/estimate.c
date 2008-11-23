@@ -1254,6 +1254,9 @@ static void uncentered_r_squared (MODEL *pmod, const double *y)
 {
     double y0 = y[pmod->t1];
 
+    /* special computation for the case of TSS = 0, i.e.
+       the dependent variable is a constant */
+
     if (y0 > 0) {
 	double tss = pmod->nobs * y0 * y0;
 
@@ -1277,6 +1280,7 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 	    den = pmod->tss * pmod->dfd;
 	    pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
 	} else {
+	    /* model does not contain a constant */
 	    int t;
 
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -1289,7 +1293,7 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 	    gretl_model_set_double(pmod, "centered-R2", pmod->rsq);
 
 	    /* but make the "official" figure the uncentered R^2,
-	       as per NIST, R, Stata, SPSS... */
+	       as per NIST, R, Stata, SPSS, ... */
 	    pmod->rsq = 1 - pmod->ess / den;
 	    pmod->adjrsq = 
 		1.0 - ((1.0 - pmod->rsq) * (pmod->nobs - 1.0) / pmod->dfd);

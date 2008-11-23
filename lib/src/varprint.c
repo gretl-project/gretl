@@ -1125,7 +1125,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	} else if (rtf) {
 	    pprintf(prn, "%s:\\par\n\n", I_("F-tests of zero restrictions"));
 	} else {
-	    pprintf(prn, "  %s:\n\n", _("F-tests of zero restrictions"));
+	    pprintf(prn, "%s:\n\n", _("F-tests of zero restrictions"));
 	}
 
 	for (j=0; j<var->neqns; j++) {
@@ -1142,11 +1142,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
 			snedecor_cdf_comp(var->order, dfd, var->Fvals[k]));
 	    } else {
-		pputs(prn, "  ");
 		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
 		sprintf(Fstr, "F(%d, %d)", var->order, dfd);
-		pprintf(prn, "%12s = %#8.5g, ", Fstr, var->Fvals[k]);
-		pprintf(prn, "%s %.4f\n", _("p-value"), 
+		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k],
 			snedecor_cdf_comp(var->order, dfd, var->Fvals[k]));
 	    }
 	    k++;
@@ -1165,11 +1163,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
 			snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]));
 	    } else {
-		pputs(prn, "  ");
 		pprintf(prn, _("All vars, lag %-13d "), var->order);
 		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
-		pprintf(prn, "%12s = %#8.5g, ", Fstr, var->Fvals[k]);
-		pprintf(prn, "%s %.4f\n", _("p-value"), 
+		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k],
 			snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]));
 	    } 
 	    k++;

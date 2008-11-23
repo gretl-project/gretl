@@ -929,9 +929,9 @@ static double durbins_h (const MODEL *pmod)
 
     if (pmod->ess <= 0.0 || na(se) || (T * se * se) >= 1.0 ||
 	na(pmod->rho)) {
-	; /* no-op: can't calculate h */
+	; /* can't calculate h */
     } else {
-	h = pmod->rho * sqrt(T/(1 - T * se * se));
+	h = pmod->rho * sqrt(T / (1 - T * se * se));
 	if (xna(h)) {
 	    h = NADBL;
 	}
@@ -2436,8 +2436,6 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
 	char jllstr[64];
 	char xstr[32];
 
-	/* FIXME RTF / TeX */
-
 	sprintf(jllstr, _("Log-likelihood for %s"), 
 		(const char *) gretl_model_get_data(pmod, "log-parent"));
 	if (lldig > 0) {
@@ -2458,11 +2456,7 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 	return;
     }
 
-    if (pmod->ci == ARMA) {
-	lldig = 8;
-    } else {
-	lldig = XDIGITS(pmod);
-    }
+    lldig = (pmod->ci == ARMA)? 8 : XDIGITS(pmod);
 
     if (plain_format(prn)) {
 	char xstr[32];
@@ -2501,14 +2495,29 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 #define non_weighted_panel(m) (m->ci == PANEL && \
 			       !gretl_model_get_int(m, "unit-weights"))
 
+enum {
+    MINUS_HYPHEN,
+    MINUS_UTF,
+    MINUS_TEX,
+    MINUS_RTF
+};
+
+#define RSQ_POS 4
+
 /* Try to pack as much as we can of a given number into a fixed width
    of 8 characters (a leading minus, if needed, is a ninth).
 */
 
-static char *print_eight (char *s, double x, int utf)
+static char *print_eight (char *s, double *mstat, int i, int minus)
 {
     char tmp[16];
-    double ax;
+    double ax, x = mstat[i];
+
+    if (i == RSQ_POS) {
+	/* R-squared: never use scientific notation */
+	sprintf(s, "%9.6f", x);
+	return s;
+    }
 
     if (na(x)) {
 	sprintf(s, "%9s", "NA");
@@ -2516,10 +2525,15 @@ static char *print_eight (char *s, double x, int utf)
     }
 
     if (x < 0) {
-	if (utf) {
+	if (minus == MINUS_UTF) {
 	    strcpy(s, "−"); /* U+2212: minus */
+	} else if (minus == MINUS_TEX) {
+	    strcpy(s, "$-$");
+	} else if (minus == MINUS_RTF) {
+	    s[0] = 0x96;
+	    s[1] = '\0';
 	} else {
-	    strcpy(s, "-"); /* hyphen */
+	    strcpy(s, "-"); /* ASCII: use hyphen */
 	}
     } else {
 	strcpy(s, " "); 
@@ -2556,33 +2570,6 @@ static char *print_eight (char *s, double x, int utf)
     return s;
 } 
 
-static void common_middle_table_setup (MODEL *pmod, char *fstr,
-				       double *pvF, const char **prsq1,
-				       const char **prsq2, double *cR2,
-				       double *h)
-{
-    if (!na(pmod->fstt)) {
-	sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
-	*pvF = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
-    }
-
-    if (gretl_model_get_int(pmod, "uncentered")) {
-	*prsq1 = N_("Uncentered R-squared");
-	*prsq2 = N_("Centered R-squared");
-	*cR2 = gretl_model_get_double(pmod, "centered-R2");
-    } else {
-	*prsq1 = N_("R-squared");
-	*prsq2 = N_("Adjusted R-squared");
-	*cR2 = pmod->adjrsq;
-    }
-
-    if (pmod->ci != VAR && pmod->aux != AUX_VECM && 
-	!na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
-	*h = durbins_h(pmod);
-    } 
-
-} 
-
 #define RTF_MT_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                    "\\cellx2500\\cellx3800\\cellx4200\\cellx6700" \
                    "\\cellx8000\n"
@@ -2590,134 +2577,168 @@ static void common_middle_table_setup (MODEL *pmod, char *fstr,
 #define RTF_MT_FMT "\\intbl\\ql %s\\cell\\qr %s\\cell \\qc \\cell" \
                    "\\ql %s\\cell\\qr %s\\cell\\intbl\\row\n"
 
-static void rtf_compact_middle_table (MODEL *pmod, PRN *prn)
+#define TXT_MT_FMT "%-20s%s   %-20s%s\n"
+
+#define TEX_MT_FMT "%s & %s & %s & %s \\\\\n"
+
+enum {
+    MIDDLE_REGULAR,
+    MIDDLE_TRANSFORM,
+    MIDDLE_ORIG
+};
+
+static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 {
     const char *note = N_("note on model statistics abbreviations here");
+    int minus = MINUS_HYPHEN;
+    int rtf = rtf_format(prn);
+    int tex = tex_format(prn);
     char x1[12], x2[12], fstr[32];
-    const char *rsq1, *rsq2;
-    double cR2, pvF = NADBL, h = NADBL;
+    static const char *mstr[] = {
+	N_("Mean dependent var"),
+	N_("S.D. dependent var"),
+	N_("Sum squared resid"),
+	N_("S.E. of regression"),
+	N_("R-squared"),
+	N_("Adjusted R-squared"),
+	"F-statistic", /* will be replaced */
+	N_("P-value(F)"),	
+	N_("Log-likelihood"), 
+	N_("Akaike criterion"),
+	N_("Schwarz criterion"),
+	N_("Hannan-Quinn"),
+	N_("rho"),
+	N_("Durbin-Watson")
+    };
+    double mstat[14] = {
+	pmod->ybar,
+	pmod->sdy,
+	pmod->ess,
+	pmod->sigma,
+	pmod->rsq,
+	pmod->adjrsq,
+	pmod->fstt,
+	NADBL,
+	pmod->lnL,
+	pmod->criterion[C_AIC],
+	pmod->criterion[C_BIC],
+	pmod->criterion[C_HQC],
+	pmod->rho,
+	pmod->dw
+    };
+    int i, j;
 
-    common_middle_table_setup(pmod, fstr, &pvF, &rsq1, &rsq2,
-			      &cR2, &h);
-
-    pprintf(prn, "\\par\n{%s", RTF_MT_ROW);
-
-    pprintf(prn, RTF_MT_FMT, 
-	    I_("Mean dependent var"), print_eight(x1, pmod->ybar, 0),
-	    I_("S.D. dependent var"), print_eight(x2, pmod->sdy, 0));
-
-    pputs(prn, RTF_MT_ROW);
-    pprintf(prn, RTF_MT_FMT, 
-	    I_("Sum squared resid"), print_eight(x1, pmod->ess, 0),
-	    I_("S.E. of regression"), print_eight(x2, pmod->sigma, 0));
-
-    pputs(prn, RTF_MT_ROW);
-    pprintf(prn, RTF_MT_FMT,  
-	    I_(rsq1), print_eight(x1, pmod->rsq, 0),
-	    I_(rsq2), print_eight(x2, cR2, 0));
-	    
+    if (tex) {
+	minus = MINUS_TEX;
+	mstr[4] = "$R^2$";
+	mstr[5] = "Adjusted $R^2$";
+	mstr[7] = N_("P-value($F$)");
+	mstr[11] = "Hannan--Quinn";
+	mstr[12] = "$\\hat{\\rho}$";
+	mstr[13] = "Durbin--Watson";
+    } else if (!rtf && gretl_print_supports_utf(prn)) {
+	minus = MINUS_UTF;
+    }
 
     if (!na(pmod->fstt)) {
-	pputs(prn, RTF_MT_ROW);
-	pprintf(prn, RTF_MT_FMT,  
-		fstr, print_eight(x1, pmod->fstt, 0),
-		I_("P-value(F)"), print_eight(x2, pvF, 0));
+	if (tex) {
+	    sprintf(fstr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
+	} else {
+	    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
+	}
+	mstr[6] = fstr;
+	mstat[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
     }
 
-    pputs(prn, RTF_MT_ROW);
-    pprintf(prn, RTF_MT_FMT,
-	    I_("Log-likelihood"), print_eight(x1, pmod->lnL, 0),
-	    I_("Akaike criterion"),  print_eight(x2, pmod->criterion[C_AIC], 0));
+    if (gretl_model_get_int(pmod, "uncentered")) {
+	mstr[4] = (tex)? N_("Uncentered $R^2$") : N_("Uncentered R-squared");
+	mstr[5] = (tex)? N_("Centered $R^2$") : N_("Centered R-squared");
+	mstat[5] = gretl_model_get_double(pmod, "centered-R2");
+    } 
 
-    pputs(prn, RTF_MT_ROW);
-    pprintf(prn, RTF_MT_FMT,
- 	    I_("Schwarz criterion"), print_eight(x1, pmod->criterion[C_BIC], 0),
-	    I_("Hannan-Quinn"), print_eight(x2, pmod->criterion[C_HQC], 0));
+    if (pmod->ci == MLE || ordered_model(pmod)) {
+	for (i=0; i<14; i++) {
+	    if (i < 8 || i > 11) {
+		mstat[i] = NADBL;
+	    }
+	}	
+    } else if (pmod->ci != VAR && pmod->aux != AUX_VECM && 
+	!na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
+	mstr[13] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
+	mstat[13] = durbins_h(pmod);
+    } 
 
-    if (!na(h)) {
-	pputs(prn, RTF_MT_ROW);
-	pprintf(prn, RTF_MT_FMT, 
-		I_("rho"), print_eight(x1, pmod->rho, 0), 
-		I_("Durbin's h"), print_eight(x2, h, 0));
-    } else if (!na(pmod->rho) && !na(pmod->dw)) {
-	pputs(prn, RTF_MT_ROW);
-	pprintf(prn, RTF_MT_FMT, 
-		I_("rho"), print_eight(x1, pmod->rho, 0), 
-		I_("Durbin-Watson"), print_eight(x2, pmod->dw, 0)); 
+    if (code == MIDDLE_TRANSFORM) {
+	/* don't print mean, sd of dep. var. */
+	mstat[0] = mstat[1] = NADBL;
+    } else if (code == MIDDLE_ORIG) {
+	/* print a limited range of stats */
+	mstat[2] = gretl_model_get_double(pmod, "ess_orig");
+	mstat[3] = gretl_model_get_double(pmod, "sigma_orig");
+	for (i=4; i<14; i++) {
+	    mstat[i] = NADBL;
+	}
     }
 
-    pputs(prn, "}\n");
+    if (tex) {
+	pputs(prn, "\\vspace{1ex}\n");
+	pputs(prn, "\\begin{tabular}{lrlr}\n");
+    } else if (rtf) {
+	pprintf(prn, "\\par\n{%s", RTF_MT_ROW);
+    } 
+
+    for (i=0, j=0; i<7; i++, j+=2) {
+	if (na(mstat[j])) {
+	    continue;
+	} 
+	if (tex) {
+	    pprintf(prn, TEX_MT_FMT, 
+		    _(mstr[j]),   print_eight(x1, mstat, j, minus),
+		    _(mstr[j+1]), print_eight(x2, mstat, j+1, minus));
+	} else if (rtf) {
+	    pputs(prn, RTF_MT_ROW);
+	    pprintf(prn, RTF_MT_FMT, 
+		    I_(mstr[j]),   print_eight(x1, mstat, j, minus),
+		    I_(mstr[j+1]), print_eight(x2, mstat, j+1, minus));
+	} else {
+	    pprintf(prn, TXT_MT_FMT, 
+		    _(mstr[j]),   print_eight(x1, mstat, j, minus),
+		    _(mstr[j+1]), print_eight(x2, mstat, j+1, minus));
+	}
+    }	
+
+    if (tex) {
+	pputs(prn, "\\end{tabular}\n");
+    } else if (rtf) {
+	pputs(prn, "}\n");
+    } else {
+	pputc(prn, '\n');
+    }
+
+    /* FIXME RTF, TeX below? */
 
     if (strcmp(note, _(note))) {
-	pputs(prn, I_(note));
+	if (rtf) {
+	    pputs(prn, I_(note));
+	} else {
+	    pputs(prn, _(note));
+	}
     }
 
     if (random_effects_model(pmod)) {
+	if (tex) {
+	    print_middle_table_start(prn);
+	}
 	panel_variance_lines(pmod, prn);
+	if (tex || rtf) {
+	    print_middle_table_end(prn);
+	}	
     }
 
-    maybe_print_jll(pmod, 0, prn);
-}
-
-static void compact_middle_table (MODEL *pmod, PRN *prn)
-{
-    const char *note = N_("note on model statistics abbreviations here");
-    int utf = gretl_print_supports_utf(prn);
-    char x1[12], x2[12], fstr[32];
-    const char *rsq1, *rsq2;
-    double cR2, pvF = NADBL, h = NADBL;
-
-    common_middle_table_setup(pmod, fstr, &pvF, &rsq1, &rsq2,
-			      &cR2, &h);
-
-    pprintf(prn, "%-20s%s   %-20s%s\n", 
-	    _("Mean dependent var"), print_eight(x1, pmod->ybar, utf),
-	    _("S.D. dependent var"), print_eight(x2, pmod->sdy, utf));
-
-    pprintf(prn, "%-20s%s   %-20s%s\n", 
-	    _("Sum squared resid"), print_eight(x1, pmod->ess, utf),
-	    _("S.E. of regression"), print_eight(x2, pmod->sigma, utf));
-
-    pprintf(prn, "%-20s %f   %-20s%s\n", 
-	    _(rsq1), pmod->rsq,
-	    _(rsq2), print_eight(x2, cR2, utf));
-
-    if (!na(pmod->fstt)) {
-	pprintf(prn, "%-20s%s   %-20s%s\n", 
-		fstr, print_eight(x1, pmod->fstt, utf),
-		_("P-value(F)"), print_eight(x2, pvF, utf));
+    if (plain_format(prn)) {
+	maybe_print_jll(pmod, 0, prn);
     }
-
-    pprintf(prn, "%-20s%s   %-20s%s\n", 
-	    _("Log-likelihood"), print_eight(x1, pmod->lnL, utf),
-	    _("Akaike criterion"),  print_eight(x2, pmod->criterion[C_AIC], utf));
-
-    pprintf(prn, "%-20s%s   %-20s%s\n", 
- 	    _("Schwarz criterion"), print_eight(x1, pmod->criterion[C_BIC], utf),
-	    _("Hannan-Quinn"), print_eight(x2, pmod->criterion[C_HQC], utf));
-
-    if (!na(h)) {
-	pprintf(prn, "%-20s%s   %-20s%s\n", 
-		_("rho"), print_eight(x1, pmod->rho, utf), 
-		_("Durbin's h"), print_eight(x2, h, utf));
-    } else if (!na(pmod->rho) && !na(pmod->dw)) {
-	pprintf(prn, "%-20s%s   %-20s%s\n", 
-		_("rho"), print_eight(x1, pmod->rho, utf), 
-		_("Durbin-Watson"), print_eight(x2, pmod->dw, utf));
-    }
-
-    pputc(prn, '\n');
-
-    if (strcmp(note, _(note))) {
-	pputs(prn, _(note));
-    }
-
-    if (random_effects_model(pmod)) {
-	panel_variance_lines(pmod, prn);
-    }
-
-    maybe_print_jll(pmod, 0, prn);
-}
+} 
 
 static char active_decpoint (void)
 {
@@ -2725,6 +2746,122 @@ static char active_decpoint (void)
 
     sprintf(test, "%.1f", 1.0);
     return test[1];
+}
+
+static void print_model_iter_info (const MODEL *pmod, PRN *prn)
+{
+    int iters = gretl_model_get_int(pmod, "iters");
+
+    if (iters > 0) {
+	pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
+    } else {
+	int fncount = gretl_model_get_int(pmod, "fncount");
+	int grcount = gretl_model_get_int(pmod, "grcount");
+
+	if (fncount > 0) {
+	    pprintf(prn, _("Function evaluations: %d\n"), fncount);
+	    pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
+	}
+    }
+}
+
+static int verbose_middle_table (const MODEL *pmod, 
+				 const DATAINFO *pdinfo,
+				 PRN *prn)
+{
+    print_middle_table_start(prn);
+
+    depvarstats(pmod, prn);
+    if (essline(pmod, prn)) {
+	print_middle_table_end(prn);
+	return 1;
+    }
+
+    rsqline(pmod, prn);
+
+    if (random_effects_model(pmod)) {
+	panel_variance_lines(pmod, prn);
+    } else if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
+	Fline(pmod, prn);
+    }
+
+    if (pmod->ci == PANEL || (pmod->ci == OLS && dataset_is_panel(pdinfo))) {
+	dwline(pmod, prn);
+    } 
+
+    if (dataset_is_time_series(pdinfo)) {
+	if (pmod->ci == OLS || pmod->ci == MPOLS || pmod->ci == VAR ||
+	    (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
+	    dwline(pmod, prn);
+	    if (pmod->ci != VAR && pmod->aux != AUX_VECM &&
+		gretl_model_get_int(pmod, "ldepvar")) {
+		dhline(pmod, prn);
+	    } 
+	}
+	/* FIXME -- check output below */
+	if (pmod->ci == TSLS) {
+	    dwline(pmod, prn);
+	}
+    }
+
+    if (pmod->aux != AUX_VECM) {
+	if (pmod->ci == OLS || pmod->ci == MPOLS ||
+	    fixed_effects_model(pmod)) {
+	    print_ll(pmod, prn);
+	}
+	info_stats_lines(pmod, prn);
+    }
+
+    if (pmod->ci == TSLS && plain_format(prn)) {
+	addconst_message(pmod, prn);
+    }
+
+    print_middle_table_end(prn);
+
+    if (pmod->ci == TSLS && plain_format(prn)) {
+	r_squared_message(pmod, prn);
+    }
+
+    return 0;
+}
+
+static int weighted_model_middle_table (const MODEL *pmod, 
+					const DATAINFO *pdinfo,
+					PRN *prn, int compact)
+{
+    if (compact) {
+	weighted_stats_message(prn);
+	compact_middle_table(pmod, prn, MIDDLE_TRANSFORM);
+	original_stats_message(prn);
+	compact_middle_table(pmod, prn, MIDDLE_ORIG);
+    } else {
+	weighted_stats_message(prn);
+
+	print_middle_table_start(prn);
+	if (essline(pmod, prn)) {
+	    print_middle_table_end(prn);
+	    return 1;
+	}
+	rsqline(pmod, prn);
+	Fline(pmod, prn);
+	if (dataset_is_time_series(pdinfo)) {
+	    dwline(pmod, prn);
+	}
+	info_stats_lines(pmod, prn);
+	print_middle_table_end(prn);
+
+	original_stats_message(prn);
+
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	if (essline_original(pmod, prn)) {
+	    print_middle_table_end(prn);
+	    return 1;
+	}
+	print_middle_table_end(prn);
+    }
+
+    return 0;
 }
 
 /**
@@ -2752,8 +2889,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
-    if (getenv("COMPACT_MIDDLE") && !na(pmod->lnL)) {
-	if (plain_format(prn) || rtf_format(prn)) {
+    if (getenv("COMPACT_MIDDLE") && pmod->ci != MPOLS) {
+	if (plain_format(prn) || rtf_format(prn) || tex_format(prn)) {
 	    compact = 1;
 	}
     }
@@ -2766,23 +2903,11 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
     }
 
-    if (!plain_format(prn)) {
-	model_format_start(prn);
+    if (plain_format(prn)) {
+	print_model_iter_info(pmod, prn);
     } else {
-	int iters = gretl_model_get_int(pmod, "iters");
-
-	if (iters > 0) {
-	    pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
-	} else {
-	    int fncount = gretl_model_get_int(pmod, "fncount");
-	    int grcount = gretl_model_get_int(pmod, "grcount");
-
-	    if (fncount > 0) {
-		pprintf(prn, _("Function evaluations: %d\n"), fncount);
-		pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
-	    }
-	}
-    }
+	model_format_start(prn);
+    } 
 
     print_model_heading(pmod, pdinfo, opt, prn);
 
@@ -2826,10 +2951,14 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 	
     if (ordered_model(pmod)) {
-	print_middle_table_start(prn);
-	print_ll(pmod, prn);
-	info_stats_lines(pmod, prn);
-	print_middle_table_end(prn);
+	if (compact) {
+	    compact_middle_table(pmod, prn, MIDDLE_REGULAR);
+	} else {
+	    print_middle_table_start(prn);
+	    print_ll(pmod, prn);
+	    info_stats_lines(pmod, prn);
+	    print_middle_table_end(prn);
+	}
 	goto close_format;
     }
 
@@ -2881,8 +3010,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }    
 
-    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || 
-	pmod->aux == AUX_AR) {
+    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || pmod->aux == AUX_AR) {
 	print_middle_table_start(prn);
 	rsqline(pmod, prn);
 	print_middle_table_end(prn);
@@ -2943,131 +3071,46 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	|| pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| non_weighted_panel(pmod)
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
-
 	if (compact) {
-	    if (plain_format(prn)) {
-		compact_middle_table(pmod, prn);
-	    } else if (rtf_format(prn)) {
-		rtf_compact_middle_table(pmod, prn);
-	    }
-	    goto close_format;
-	} 
-
+	    compact_middle_table(pmod, prn, MIDDLE_REGULAR);
+	} else {
+	    verbose_middle_table(pmod, pdinfo, prn);
+	}
+    } else if (panel_ML_model(pmod)) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
-	if (essline(pmod, prn)) {
-	    print_middle_table_end(prn);
-	    goto close_format;
-	}
-
-	rsqline(pmod, prn);
-
-	if (random_effects_model(pmod)) {
-	    panel_variance_lines(pmod, prn);
-	} else if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
-	    Fline(pmod, prn);
-	}
-
-	if (pmod->ci == PANEL || (pmod->ci == OLS && dataset_is_panel(pdinfo))) {
-	    dwline(pmod, prn);
-	} 
-
-	if (dataset_is_time_series(pdinfo)) {
-	    if (pmod->ci == OLS || pmod->ci == MPOLS || pmod->ci == VAR ||
-		(pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
-		dwline(pmod, prn);
-		if (pmod->ci != VAR && pmod->aux != AUX_VECM &&
-		    gretl_model_get_int(pmod, "ldepvar")) {
-		    dhline(pmod, prn);
-		} 
-	    }
-	    /* FIXME -- check output below */
-	    if (pmod->ci == TSLS) {
-		dwline(pmod, prn);
-	    }
-	}
-
-	if (pmod->aux != AUX_VECM) {
-	    if (pmod->ci == OLS || pmod->ci == MPOLS ||
-		fixed_effects_model(pmod)) {
-		print_ll(pmod, prn);
-	    }
+	print_ll(pmod, prn);
+	info_stats_lines(pmod, prn);
+	print_middle_table_end(prn);
+    } else if (pmod->ci == MLE) {
+	if (compact) {
+	    compact_middle_table(pmod, prn, MIDDLE_REGULAR);
+	} else {
+	    print_middle_table_start(prn);
+	    print_ll(pmod, prn);
 	    info_stats_lines(pmod, prn);
-	}
-
-	if (pmod->ci == TSLS && plain_format(prn)) {
-	    addconst_message(pmod, prn);
-	}
-
-	print_middle_table_end(prn);
-
-	if (pmod->ci == TSLS && plain_format(prn)) {
-	    r_squared_message(pmod, prn);
-	}
-    }
-
-    else if (panel_ML_model(pmod)) {
-	print_middle_table_start(prn);
-	depvarstats(pmod, prn);
-	print_ll(pmod, prn);
-	info_stats_lines(pmod, prn);
-	print_middle_table_end(prn);
-    }
-
-    else if (pmod->ci == MLE) {
-	print_middle_table_start(prn);
-	print_ll(pmod, prn);
-	info_stats_lines(pmod, prn);
-	print_middle_table_end(prn);
-    }	
-
-    else if (weighted_model(pmod)) {
-
-	weighted_stats_message(prn);
-	print_middle_table_start(prn);
-
-	if (essline(pmod, prn)) {
 	    print_middle_table_end(prn);
+	}
+    } else if (weighted_model(pmod)) {
+	if (weighted_model_middle_table(pmod, pdinfo, prn, compact)) {
 	    goto close_format;
 	}
-
-	rsqline(pmod, prn);
-	Fline(pmod, prn);
-
-	if (dataset_is_time_series(pdinfo)) {
-	    dwline(pmod, prn);
-	}
-
-	info_stats_lines(pmod, prn);
-
-	print_middle_table_end(prn);
-
-	original_stats_message(prn);
-	print_middle_table_start(prn);
-	depvarstats(pmod, prn);
-
-	if (essline_original(pmod, prn)) {
-	    print_middle_table_end(prn);
-	    goto close_format;
-	}
-
-	print_middle_table_end(prn);
-    }
-
-    else if (pmod->ci == AR || pmod->ci == AR1) {
-
+    } else if (pmod->ci == AR || pmod->ci == AR1) {
 	rho_differenced_stats_message(prn);
-
-	print_middle_table_start(prn);
-	if (essline(pmod, prn)) {
+	if (compact) {
+	    compact_middle_table(pmod, prn, MIDDLE_TRANSFORM);
+	} else {
+	    print_middle_table_start(prn);
+	    if (essline(pmod, prn)) {
+		print_middle_table_end(prn);
+		goto close_format;
+	    }
+	    rsqline(pmod, prn);
+	    Fline(pmod, prn);
+	    dwline(pmod, prn);
+	    info_stats_lines(pmod, prn);
 	    print_middle_table_end(prn);
-	    goto close_format;
 	}
-	rsqline(pmod, prn);
-	Fline(pmod, prn);
-	dwline(pmod, prn);
-	info_stats_lines(pmod, prn);
-	print_middle_table_end(prn);
     }
 
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
