@@ -83,13 +83,12 @@ static double poisson_ll (const double *y, const double *mu,
     return loglik;
 }
 
-static double pseudoR2 (const double *y, const double *offset, 
-			int t1, int t2, double ll1, double offmean)
+static void add_pseudoR2 (MODEL *pmod, const double *y, const double *offset, 
+			  double offmean)
 {
     double llt, ll0 = 0.0;
     double K, lytfact;
-    double ybar = gretl_mean(t1, t2, y);
-    double R2 = NADBL;
+    double ybar = gretl_mean(pmod->t1, pmod->t2, y);
     int use_offset = (offset != NULL);
     int t;
 
@@ -103,7 +102,7 @@ static double pseudoR2 (const double *y, const double *offset,
     fprintf(stderr, "pseudoR2: K = %g\n", K);
 #endif
 
-    for (t=t1; t<=t2; t++) {
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (na(y[t]) || (use_offset && na(offset[t]))) {
 	    continue;
 	}
@@ -129,11 +128,14 @@ static double pseudoR2 (const double *y, const double *offset,
     fprintf(stderr, "ll0 = %g\n", ll0);
 #endif
 
-    if (!na(ll0)) {
-	R2 = 1.0 - (ll1 / ll0);
-    }
+    if (na(ll0)) {
+	pmod->rsq = pmod->adjrsq = NADBL;
+    } else {
+	int k = pmod->ncoeff; /* FIXME? - pmod->ifc */
 
-    return R2;
+	pmod->rsq = 1.0 - (pmod->lnL / ll0);
+	pmod->adjrsq = 1.0 - ((pmod->lnL - k) / ll0);
+    }
 }
 
 static int 
@@ -170,18 +172,16 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     }
 
     targ->lnL = poisson_ll(y, targ->yhat, targ->t1, targ->t2);
-    targ->rsq = pseudoR2(y, offset, targ->t1, targ->t2, targ->lnL, offmean);
+
+    add_pseudoR2(targ, y, offset, offmean);
 
 #if PDEBUG
     fprintf(stderr, "log-likelihood = %g\n", targ->lnL);
 #endif
-#if PR2DEBUG
-    fprintf(stderr, "Pseudo R2 = %g\n", targ->rsq);
-#endif
+
     mle_criteria(targ, 0); 
 
     /* mask invalid statistics */
-    targ->adjrsq = NADBL;
     targ->fstt = NADBL;
 
     /* make the covariance matrix */

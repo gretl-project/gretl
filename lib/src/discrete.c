@@ -85,11 +85,15 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     Lr += (double) zeros * log((double) zeros /(double) m);
 
     chisq = 2.0 * (pmod->lnL - Lr);
-    gretl_model_set_double(pmod, "chisq", chisq);
-    
-    /* McFadden pseudo-R^2 */
-    pmod->rsq = 1.0 - pmod->lnL / Lr;
-    pmod->adjrsq = NADBL;
+
+    if (chisq < 0) {
+	pmod->rsq = pmod->adjrsq = NADBL;
+    } else {
+	gretl_model_set_double(pmod, "chisq", chisq);
+	/* McFadden pseudo-R^2 */
+	pmod->rsq = 1.0 - pmod->lnL / Lr;
+	pmod->adjrsq = 1.0 - (pmod->lnL - pmod->ncoeff) / Lr;
+    }
 }
 
 static double 
@@ -652,6 +656,9 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     double xx, fbx, f, F;
     double *xbar = NULL;
     double *beta = NULL;
+
+    /* FIXME do we need to insist on a constant in this sort
+       of model? */
 
     gretl_model_init(&dmod);
 
