@@ -48,21 +48,6 @@ int gretl_VAR_print_sigma (const GRETL_VAR *var, PRN *prn)
     return err;
 }
 
-static void tex_print_double (double x, PRN *prn)
-{
-    char number[16];
-
-    x = screen_zero(x);
-
-    sprintf(number, "%#.*g", GRETL_DIGITS, x);
-
-    if (x < 0.) {
-	pprintf(prn, "$-$%s", number + 1);
-    } else {
-	pputs(prn, number);
-    }
-}
-
 /* printing of impulse responses and variance decompositions */
 
 #define IRF_ROW_MAX 4
@@ -756,7 +741,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
     int w0, wi = 12;
     int i, j;
 
-    pprintf(prn, "%s\n", _("Cross-equation covariance matrix"));
+    pprintf(prn, "%s:\n", _("Cross-equation covariance matrix"));
     gretl_prn_newline(prn);
 
     w0 = max_vlen(list, pdinfo) + 1;
@@ -951,17 +936,17 @@ static void VAR_print_LB_stat (const GRETL_VAR *var, PRN *prn)
     double pv = chisq_cdf_comp(df, var->LB);
 
     if (tex_format(prn)) {
-	pprintf(prn, "\\noindent\n%s: LB(%d) = %g (%s = %d, %s %f)\\par\n",
+	pprintf(prn, "\\noindent\n%s: LB(%d) = %g, %s = %d [%.4f]\\par\n",
 		I_("Portmanteau test"), var->LBs, var->LB,
-		I_("df"), df, I_("p-value"), pv);	    
+		I_("df"), df, pv);	    
     } else if (rtf_format(prn)) {
-	pprintf(prn, "%s: LB(%d) = %g (%s = %d, %s %f)\\par\n",
+	pprintf(prn, "%s: LB(%d) = %g, %s = %d [%.4f]\\par\n",
 		I_("Portmanteau test"), var->LBs, var->LB,
-		I_("df"), df, I_("p-value"), pv);
+		I_("df"), df, pv);
     } else {
-	pprintf(prn, "%s: LB(%d) = %g (%s = %d, %s %f)\n",
+	pprintf(prn, "%s: LB(%d) = %g, %s = %d [%.4f]\n",
 		_("Portmanteau test"), var->LBs, var->LB,
-		_("df"), df, _("p-value"), pv);
+		_("df"), df, pv);
     }
 }
 
@@ -992,6 +977,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     int quiet = (opt & OPT_Q);
     int lldone = 0;
     int pause = 0;
+    double pv;
     int i, j, k, v;
 
     if (prn == NULL) {
@@ -1129,44 +1115,40 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	}
 
 	for (j=0; j<var->neqns; j++) {
+	    pv = snedecor_cdf_comp(var->order, dfd, var->Fvals[k]);
 	    v = (var->models[j])->list[1];
 	    if (tex) {
-		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
+		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
-		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
-			snedecor_cdf_comp(var->order, dfd, var->Fvals[k]));
+		pprintf(prn, "[%.4f]\\\\\n", pv);
 	    } else if (rtf) {
 		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
-		pprintf(prn, "F(%d, %d) = %8.5g, ", var->order, dfd, var->Fvals[k]);
-		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
-			snedecor_cdf_comp(var->order, dfd, var->Fvals[k]));
+		pprintf(prn, "F(%d, %d) = %8.5g ", var->order, dfd, var->Fvals[k]);
+		pprintf(prn, "[%.4f]\\par\n", pv);
 	    } else {
 		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
 		sprintf(Fstr, "F(%d, %d)", var->order, dfd);
-		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k],
-			snedecor_cdf_comp(var->order, dfd, var->Fvals[k]));
+		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
 	    }
 	    k++;
 	}
 
 	if (var->order > 1) {
+	    pv = snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]);
 	    if (tex) {
-		pprintf(prn, I_("All vars, lag %-13d "), var->order);
+		pprintf(prn, _("All vars, lag %-13d "), var->order);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
-		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
-			snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]));
+		pprintf(prn, "[%.4f]\\\\\n", pv);
 	    } else if (rtf) {
 		pprintf(prn, I_("All vars, lag %-13d "), var->order);
-		pprintf(prn, "F(%d, %d) = %8.5g, ", var->neqns, dfd, var->Fvals[k]);
-		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
-			snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]));
+		pprintf(prn, "F(%d, %d) = %8.5g ", var->neqns, dfd, var->Fvals[k]);
+		pprintf(prn, "[%.4f]\\par\n", pv);
 	    } else {
 		pprintf(prn, _("All vars, lag %-13d "), var->order);
 		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
-		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k],
-			snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]));
+		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
 	    } 
 	    k++;
 	}
@@ -1182,45 +1164,44 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	}
     }
 
-    pputc(prn, '\n');
-
     /* global LR test on max lag */
     if (!na(var->LR)) {
 	char h0str[64];
 	char h1str[64];
 	int df = var->neqns * var->neqns;
 
-	if (tex || rtf) {
+	pputc(prn, '\n');
+
+	if (rtf) {
 	    sprintf(h0str, I_("the longest lag is %d"), var->order - 1);
 	    sprintf(h1str, I_("the longest lag is %d"), var->order);
 	} else {
 	    sprintf(h0str, _("the longest lag is %d"), var->order - 1);
 	    sprintf(h1str, _("the longest lag is %d"), var->order);
-	}	    
+	}
+
+	pv = chisq_cdf_comp(df, var->LR);
 
 	if (tex) {
-	    pprintf(prn, "\\noindent %s ---\\par\n", I_("For the system as a whole"));
-	    pprintf(prn, "%s: %s\\par\n", I_("Null hypothesis"), h0str);
-	    pprintf(prn, "%s: %s\\par\n", I_("Alternative hypothesis"), h1str);
-	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\par\n",
-		    I_("Likelihood ratio test"), 
-		    df, var->LR, I_("p-value"), chisq_cdf_comp(df, var->LR));
+	    pprintf(prn, "\\noindent %s ---\\par\n", _("For the system as a whole"));
+	    pprintf(prn, "%s: %s\\par\n", _("Null hypothesis"), h0str);
+	    pprintf(prn, "%s: %s\\par\n", _("Alternative hypothesis"), h1str);
+	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f [%.4f]\\par\n",
+		    _("Likelihood ratio test"), df, var->LR, pv);
 	} else if (rtf) {
 	    pprintf(prn, "\\par %s\n", I_("For the system as a whole"));
 	    pprintf(prn, "\\par %s: %s\n", I_("Null hypothesis"), h0str);
 	    pprintf(prn, "\\par %s: %s\n", I_("Alternative hypothesis"), h1str);
-	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
-		    I_("Likelihood ratio test"), I_("Chi-square"), 
-		    df, var->LR, I_("p-value"), chisq_cdf_comp(df, var->LR));
+	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n", I_("Likelihood ratio test"), 
+		    I_("Chi-square"), df, var->LR, pv);
 	} else {
 	    int ordlen = (var->order > 10)? 2 : 1;
 
 	    pprintf(prn, "%s:\n\n", _("For the system as a whole"));
 	    pprintf(prn, "  %s: %s\n", _("Null hypothesis"), h0str);
 	    pprintf(prn, "  %s: %s\n", _("Alternative hypothesis"), h1str);
-	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
-		    _("Likelihood ratio test"), _("Chi-square"), 
-		    df, var->LR, _("p-value"), chisq_cdf_comp(df, var->LR));
+	    pprintf(prn, "  %s: %s(%d) = %g [%.4f]\n", _("Likelihood ratio test"), 
+		    _("Chi-square"), df, var->LR, pv);
 	    /* Info criteria comparison */
 	    pprintf(prn, "\n  %s:\n", _("Comparison of information criteria"));
 	    pputs(prn, "  ");

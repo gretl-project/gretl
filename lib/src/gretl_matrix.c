@@ -688,8 +688,10 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	int n = rows * cols;
 
 	memcpy(c->val, m->val, n * sizeof *m->val);
-	c->t1 = m->t1;
-	c->t2 = m->t2;
+	if (!is_block_matrix(m)) {
+	    c->t1 = m->t1;
+	    c->t2 = m->t2;
+	}
     }
 
     return c;

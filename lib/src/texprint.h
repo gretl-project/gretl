@@ -51,7 +51,11 @@ char *tex_escape (char *targ, const char *src);
 
 char *tex_escape_special (char *targ, const char *src);
 
-void tex_dcolumn_double (double x, char *numstr);
+char *tex_dcolumn_double (double x, char *numstr);
+
+void tex_print_double (double x, PRN *prn);
+
+char *tex_sprint_double (double x, char *numstr);
 
 char *tex_float_string (double x, int prec, char *targ);
 

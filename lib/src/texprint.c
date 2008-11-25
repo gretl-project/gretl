@@ -278,13 +278,12 @@ static void cut_extra_zero (char *numstr)
     numstr[s + p + GRETL_DIGITS] = '\0';
 }
 
-void tex_dcolumn_double (double x, char *numstr)
+char *tex_dcolumn_double (double x, char *numstr)
 {
     double a;
 
     if (na(x)) {
-	strcpy(numstr, "\\multicolumn{1}{c}{}");
-	return;
+	return strcpy(numstr, "\\multicolumn{1}{c}{}");
     }
 
     x = screen_zero(x);
@@ -304,6 +303,40 @@ void tex_dcolumn_double (double x, char *numstr)
     } else {
 	cut_extra_zero(numstr);
     }
+
+    return numstr;
+}
+
+void tex_print_double (double x, PRN *prn)
+{
+    char number[16];
+
+    x = screen_zero(x);
+
+    sprintf(number, "%#.*g", GRETL_DIGITS, x);
+
+    if (x < 0.0) {
+	pprintf(prn, "$-$%s", number + 1);
+    } else {
+	pputs(prn, number);
+    }
+}
+
+char *tex_sprint_double (double x, char *numstr)
+{
+    char tmp[32];
+
+    x = screen_zero(x);
+
+    sprintf(tmp, "%#.*g", GRETL_DIGITS, x);
+
+    if (x < 0.0) {
+	sprintf(numstr, "$-$%s", tmp + 1);
+    } else {
+	strcpy(numstr, tmp);
+    }
+
+    return numstr;
 }
 
 static void tex_make_cname (char *cname, const char *src)

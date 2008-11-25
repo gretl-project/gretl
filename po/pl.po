@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-03 22:00-0400\n"
+"PO-Revision-Date: 2008-11-25 09:09-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -673,7 +673,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:593
 msgid "reversing the data!\n"
-msgstr ""
+msgstr "przesortowanie rosnące danych według etykiet!\n"
 
 #: lib/src/csvdata.c:707
 #, c-format
@@ -709,7 +709,7 @@ msgstr "   ale dane niekompletne i niezgodne\n"
 
 #: lib/src/csvdata.c:810
 msgid "   dates are reversed?\n"
-msgstr ""
+msgstr "   Czy dane są posortowane malejąco według etykiet?\n"
 
 #: lib/src/csvdata.c:838
 #, c-format
@@ -3313,9 +3313,9 @@ msgid ""
 "have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
-"One or more non-numeric variables were found.\n"
-"Gretl cannot handle such variables directly, so they\n"
-"have been given numeric codes as follows??.\n"
+"Znaleziono jedną lub więcej nienumerycznych zmiennych.\n"
+"Gretl nie może ich wykorzystać bezpośrednio, w związku \n"
+"z tym nadano im numeryczne kody według poniższej listy.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:267
@@ -3323,7 +3323,9 @@ msgid ""
 "In addition, some mappings from numerical values to string\n"
 "labels were found, and are printed below.\n"
 "\n"
-msgstr ""
+msgstr "Znaleziono wykaz podstawień numerycznych wartości\n"
+"na łańcuchy znaków. Zestawienie poniżej.\n"
+"\n"
 
 #: lib/src/gretl_string_table.c:274
 #, c-format
@@ -4747,7 +4749,7 @@ msgid ""
 "This behavior may change in future versions, so you may want to adjust your\n"
 "scripts accordingly.\n"
 msgstr ""
-"WARNING: The constant was present among the regressors but not among the\n"
+"UWAGA: The constant was present among the regressors but not among the\n"
 "instruments, so it has been automatically added to the instrument list.\n"
 "This behavior may change in future versions, so you may want to adjust your\n"
 "scripts accordingly.\n"
@@ -4788,49 +4790,41 @@ msgstr "Logarytm wiarygodności"
 
 #: lib/src/modelprint.c:2592
 msgid "note on model statistics abbreviations here"
-msgstr ""
+msgstr "  "
 
 #: lib/src/modelprint.c:2598
-#, fuzzy
 msgid "Mean dependent var"
-msgstr "Średnia  arytmetyczna  zmiennej zależnej"
+msgstr "Średnia arytmetyczna zm. zależnej"
 
 #: lib/src/modelprint.c:2599
-#, fuzzy
 msgid "S.D. dependent var"
-msgstr "Odch. stand. zm. zależnej"
+msgstr "Odchylenie standard. zm. zależnej"
 
 #: lib/src/modelprint.c:2600
-#, fuzzy
 msgid "Sum squared resid"
 msgstr "Suma  kwadratów  reszt"
 
 #: lib/src/modelprint.c:2601
-#, fuzzy
 msgid "S.E. of regression"
-msgstr "Równanie regresji testu KPSS (Kwiatkowski, Phillips, Schmidt i Shin)"
+msgstr "Błąd standardowy reszt"
 
 #: lib/src/modelprint.c:2602 gui2/library.c:4691 gui2/model_table.c:635
 msgid "R-squared"
 msgstr "R-kwadrat"
 
 #: lib/src/modelprint.c:2605
-#, fuzzy
 msgid "P-value(F)"
-msgstr "wartość p"
+msgstr "wartość p dla (F)"
 
 #: lib/src/modelprint.c:2607
-#, fuzzy
 msgid "Akaike criterion"
 msgstr "Kryterium informacyjne Akaike'a"
 
 #: lib/src/modelprint.c:2608
-#, fuzzy
 msgid "Schwarz criterion"
 msgstr "Kryterium bayesowskie Schwarza "
 
 #: lib/src/modelprint.c:2609
-#, fuzzy
 msgid "Hannan-Quinn"
 msgstr "Kryterium infor. Hannana-Quinna"
 
@@ -4840,14 +4834,12 @@ msgid "rho"
 msgstr "rho"
 
 #: lib/src/modelprint.c:2611
-#, fuzzy
 msgid "Durbin-Watson"
 msgstr "Statystyka testu Durbina-Watsona"
 
 #: lib/src/modelprint.c:2635
-#, fuzzy
 msgid "P-value($F$)"
-msgstr "wartość p"
+msgstr "wartość p dla ($F$)"
 
 #: lib/src/modelprint.c:2758 lib/src/system.c:3713 lib/src/system.c:3715
 #, c-format
@@ -5613,20 +5605,20 @@ msgstr ""
 "Naciśnij ENTER aby kontynuować"
 
 #: lib/src/printout.c:1072
-#, fuzzy, c-format
+#, c-format
 msgid "Recursive %d-step ahead forecasts"
-msgstr "Rekursywne jednookresowe prognozy"
+msgstr "Rekursywne %d-okresowe prognozy"
 
 #: lib/src/printout.c:1074
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The forecast for time t is based on (a) coefficients obtained by\n"
 "estimating the model over the sample %s to t-%d, and (b) the\n"
 "regressors evaluated at time t."
 msgstr ""
-"Prognoza dla okresu n+1 bazuje na współczynnikach \n"
-"modelu estymowanych dla próby od %s do n \n"
-"i regresorach dla okresu n+1."
+"Prognoza dla okresu n bazuje na współczynnikach \n"
+"modelu estymowanych dla próby od %s do n-%d \n"
+"i regresorach dla okresu n."
 
 #: lib/src/printout.c:1078
 msgid ""
@@ -7145,9 +7137,8 @@ msgid "Open Stata file"
 msgstr "Otwórz plik Stata"
 
 #: gui2/callbacks.c:248
-#, fuzzy
 msgid "Open SPSS file"
-msgstr "Otwórz plik danych CSV"
+msgstr "Otwórz plik danych SPSS"
 
 #: gui2/callbacks.c:252
 msgid "Open JMulTi file"
@@ -8223,9 +8214,8 @@ msgid "static forecast"
 msgstr "prognoza statyczna"
 
 #: gui2/dialogs.c:2268
-#, fuzzy
 msgid "rolling k-step ahead forecasts: k = "
-msgstr "krocząca jednookresowa prognoza"
+msgstr "krocząca k-okresowa prognoza: k = "
 
 #: gui2/dialogs.c:2278
 msgid "gretl: forecast"
@@ -8627,9 +8617,8 @@ msgid "Stata files (*.dta)"
 msgstr "pliki Stata (*.dat)"
 
 #: gui2/fileselect.c:643 gui2/fileselect.c:644
-#, fuzzy
 msgid "SPSS files (*.sav)"
-msgstr "pliki CSV (*.csv)"
+msgstr "pliki SPSS (*.sav)"
 
 #: gui2/fileselect.c:645 gui2/fileselect.c:646
 msgid "JMulTi files (*.dat)"
@@ -9275,6 +9264,8 @@ msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
 msgstr ""
+"Definiowanie kolorów użytkownika\n"
+"(nie dotyczy wykresów predefiniowanych)\n"
 
 #: gui2/gpt_dialog.c:2740
 msgid "Title of plot"
@@ -9343,14 +9334,14 @@ msgid ""
 " -v or --version   Print version info and exit.\n"
 msgstr ""
 "\n"
-"You may supply the name of a data file on the command line.\n"
-"Options:\n"
-" -c or --dump      Dump the configuration file.\n"
-" -d or --db        Open a local database.\n"
-" -e or --english   Force use of English rather than translation.\n"
-" -q or --basque    Force use of Basque translation.\n"
-" -r or --run       Open a command script.\n"
-" -w or --webdb     Open a remote database.\n"
+"Wprowadz nazwę pliku z lini poleceń.\n"
+"Opcje:\n"
+" -c or --dump      Zapisz plik konfiguracyjny.\n"
+" -d or --db        Otwórz lokalną bazę.\n"
+" -e or --english   Użyj wersję angielskiej.\n"
+" -q or --basque    Użyj wersję baskijską.\n"
+" -r or --run       Otwórz plik skrytpowy.\n"
+" -w or --webdb     Otwórz zdalną bazę.\n"
 " -h lub --help     Drukuje te informacje i zamyka program.\n"
 " -v lub --version  Drukuje informacje o wersji i zamyka program.\n"
 
@@ -9429,9 +9420,8 @@ msgid "_Stata..."
 msgstr "_Stata..."
 
 #: gui2/gretl.c:1237 gui2/gretl.c:1250
-#, fuzzy
 msgid "_SPSS..."
-msgstr "_CSV..."
+msgstr "_SPSS..."
 
 #: gui2/gretl.c:1238 gui2/gretl.c:1251 gui2/gretl.c:1262
 msgid "_JMulTi..."
@@ -9615,7 +9605,7 @@ msgstr "według _nazwy"
 
 #: gui2/gretl.c:1312
 msgid "_NIST test suite"
-msgstr "testy prcyzji NIST"
+msgstr "testy precyzji NIST"
 
 #: gui2/gretl.c:1313
 msgid "_Basic"
@@ -10426,9 +10416,8 @@ msgid "%g\\%% confidence interval"
 msgstr "%g\\%% przedział ufności"
 
 #: gui2/guiprint.c:2157
-#, fuzzy
 msgid "No scalar variables are currently defined"
-msgstr "Brak zdefiniowanych skalarów w bieżącej definicji"
+msgstr "Brak zdefiniowanych skalarów w bieżącej sesji"
 
 #: gui2/guiprint.c:2221 gui2/selector.c:4970 plugin/tramo-x12a.c:184
 msgid "Save data"
@@ -10990,8 +10979,8 @@ msgid ""
 "Name contains an illegal char (in place %d)\n"
 "Use only unaccented letters, digits and underscore"
 msgstr ""
-"Name contains an illegal char (in place %d)\n"
-"Use only unaccented letters, digits and underscore"
+"Nazwa zawiera niedozwolony znak (w miejscu %d)\n"
+"Użyj tylko nieakcentowanych znaków, cyfr lub znak podkreślenia"
 
 #: gui2/gui_utils.c:3635
 msgid "No command was supplied to start R"
@@ -12261,9 +12250,8 @@ msgid "lags..."
 msgstr "opóźnienia..."
 
 #: gui2/selector.c:3162
-#, fuzzy
 msgid "GARCH p:"
-msgstr "ARCH p:"
+msgstr "GARCH p:"
 
 #: gui2/selector.c:3163
 msgid "ARCH q:"
@@ -14208,9 +14196,8 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "H0: kierunek-nachylenie prostej = 0; wartość p = %g\n"
 
 #: plugin/spss_import.c:1850
-#, fuzzy
 msgid "cannot read SPSS .sav on this platform"
-msgstr "Niemożliwe czytanie pliku Stata *.dta na tej platrofmie"
+msgstr "Niemożliwe czytanie pliku SPSS *.sav na tej platrofmie"
 
 #: plugin/stata_import.c:286
 msgid "unknown data type"
@@ -14221,12 +14208,12 @@ msgid ""
 "something strange in the file\n"
 "(Type 0 characteristic of nonzero length)"
 msgstr ""
-"something strange in the file\n"
-"(Type 0 characteristic of nonzero length)"
+"Błąd w pliku. (Wpisz 0 dla\n"
+"wartości o niezerowej długoci)"
 
 #: plugin/stata_import.c:695
 msgid "cannot read Stata .dta on this platform"
-msgstr "Niemożliwe czytanie pliku Stata *.dta na tej platrofmie"
+msgstr "Niemożliwe czytanie pliku Stata *.dta na tej platformie"
 
 #: plugin/stata_import.c:706
 msgid "This file does not seem to be a valid Stata data file"
@@ -14486,10 +14473,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#, fuzzy
-#~ msgid "Sample size"
-#~ msgstr "liczebność próby"
-
-#~ msgid "Failed to import data"
-#~ msgstr "Błąd importu danych"

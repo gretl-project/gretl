@@ -57,7 +57,7 @@ static void printxx (const double xx, char *str, int ci)
 
 static void covhdr (PRN *prn)
 {
-    pprintf(prn, "%s\n\n", 
+    pprintf(prn, "%s:\n\n", 
 	    _("Covariance matrix of regression coefficients"));
 }
 
@@ -670,7 +670,7 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 #endif
 
     if (digits == -4) {
-	if (x < .0001) {
+	if (x < .0001 && x > 0.0) {
 	    sprintf(targ, "%#.3G", x);
 	    digits = 3;
 	} else {

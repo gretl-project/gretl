@@ -640,10 +640,10 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 	    strcpy(hm->params[i+ko+1], pdinfo->varname[HC->Zlist[i+1]]);
 	    fullcoeff[i+ko+1] = gretl_vector_get(HC->gama, i);
 	}
-
     }
 
     hm->lnL = HC->ll;
+    mle_criteria(hm, 0); /* FIXME? */
     hm->sigma = HC->sigma;
     hm->rho = HC->rho;
 

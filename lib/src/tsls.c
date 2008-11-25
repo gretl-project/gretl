@@ -722,7 +722,8 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
     }
 }
 
-static void tsls_extra_stats (MODEL *pmod, const double **Z)
+static void tsls_extra_stats (MODEL *pmod, const double **Z,
+			      const DATAINFO *pdinfo)
 {
     int yno = pmod->list[1];
     double r;
@@ -736,8 +737,8 @@ static void tsls_extra_stats (MODEL *pmod, const double **Z)
 
     ls_criteria(pmod);
 
-    if (pmod->missmask == NULL) {
-	/* no missing obs within sample range */
+    if (dataset_is_time_series(pdinfo) && pmod->missmask == NULL) {
+	/* time series, no missing obs within sample range */
 	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
 	pmod->dw = dwstat(1, pmod, Z);
     } else {
@@ -1181,7 +1182,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* compute additional statistics (R^2, F, etc.) */
-    tsls_extra_stats(&tsls, (const double **) *pZ);
+    tsls_extra_stats(&tsls, (const double **) *pZ, pdinfo);
 
     if (ci == TSLS) {
 	tsls_hausman_test(&tsls, reglist, hatlist, pZ, pdinfo);

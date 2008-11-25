@@ -3159,8 +3159,7 @@ MODEL ar_func (const int *list, double ***pZ,
 	if (iter > 1) {
 	    pprintf(prn, "%13.3f\n", diff);
 	} else {
-	    pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 15), 
-		     _("undefined")); 
+	    pputc(prn, '\n');
 	}
     } /* end "ess changing" loop */
 

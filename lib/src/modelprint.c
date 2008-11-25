@@ -62,6 +62,8 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 
 #define nonlin_model(m) (m->ci == NLS || m->ci == MLE || m->ci == GMM)
 
+#define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
+
 void model_coeff_init (model_coeff *mc)
 {
     mc->b = NADBL;
@@ -180,31 +182,42 @@ static void depvarstats (const MODEL *pmod, PRN *prn)
     }	
 }
 
+static void ensure_vsep (PRN *prn)
+{
+    if (tex_format(prn)) {
+	pputs(prn, "\n\\vspace{1ex}\n");
+    } else if (rtf_format(prn)) {
+	pputs(prn, "\\par\n");
+    } 
+}
+
 static void garch_variance_line (const MODEL *pmod, PRN *prn)
 {
     const char *varstr = N_("Unconditional error variance");
     double v = pmod->sigma * pmod->sigma;
+
+    ensure_vsep(prn);
 
     if (plain_format(prn)) {  
 	pprintf(prn, "%s = %.*g\n\n", _(varstr), GRETL_DIGITS, v);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(varstr), v);
     } else if (tex_format(prn)) {
-	char xstr[32];
-
-	tex_dcolumn_double(v, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_(varstr), xstr);
+	pprintf(prn, "%s = %g \\\\\n", I_(varstr), v);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_(varstr), prn_delim(prn), v);
     }
 }
 
-static int 
-real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
+static int essline (const MODEL *pmod, PRN *prn)
 {
-    if (ess < 0) {
+    if (na(pmod->ess)) {
+	return 1;
+    }
+
+    if (pmod->ess < 0) {
 	if (plain_format(prn)) {
-	    pprintf(prn, _("Error sum of squares (%g) is not > 0"), ess);
+	    pprintf(prn, _("Error sum of squares (%g) is not > 0"), pmod->ess);
 	    pputs(prn, "\n\n");
 	}
 	return 1;
@@ -212,65 +225,30 @@ real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
 
     if (plain_format(prn)) {    
 	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
-		XDIGITS(pmod), ess);
+		XDIGITS(pmod), pmod->ess);
 	pprintf(prn, "  %s = %.*g\n", _("Standard error of the regression"), 
-		XDIGITS(pmod), sigma);
+		XDIGITS(pmod), pmod->sigma);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
-		ess);
+		pmod->ess);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of the regression"), 
-		sigma);
+		pmod->sigma);
     } else if (tex_format(prn)) {
 	char x1str[32], x2str[32];
 
-	tex_dcolumn_double(ess, x1str);
-	tex_dcolumn_double(sigma, x2str);
+	tex_dcolumn_double(pmod->ess, x1str);
+	tex_dcolumn_double(pmod->sigma, x2str);
 	pprintf(prn, "%s & %s \\\\\n%s ($\\hat{\\sigma}$) & %s \\\\\n",
 		I_("Sum of squared residuals"), x1str,
 		I_("Standard error of the regression"), x2str);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of squared residuals"), 
-		prn_delim(prn), ess);
+		prn_delim(prn), pmod->ess);
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Standard error of the regression"), 
-		prn_delim(prn), sigma);
+		prn_delim(prn), pmod->sigma);
     }	
 
     return 0;
-}
-
-static int GMM_crit_line (const MODEL *pmod, PRN *prn)
-{
-    double Q = pmod->ess;
-    double TQ = pmod->ess * pmod->nobs;
-
-    if (plain_format(prn)) {    
-	pprintf(prn, "  %s: Q = %.*g (TQ = %.*g)\n", _("GMM criterion"), 
-		XDIGITS(pmod), Q, XDIGITS(pmod), TQ);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s: Q = %g (TQ = %g)\n", I_("GMM criterion"), 
-		Q, TQ);
-    } else if (tex_format(prn)) {
-	char x1[32], x2[32];
-
-	tex_dcolumn_double(Q, x1);
-	tex_dcolumn_double(TQ, x2);
-	pprintf(prn, "%s, $Q$ & %s ($TQ$ = %s)\\\\\n",
-		I_("GMM criterion"), x1, x2);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("GMM criterion"), 
-		prn_delim(prn), Q);
-    }	
-
-    return 0;
-}
-
-static int essline (const MODEL *pmod, PRN *prn)
-{
-    if (pmod->ci == GMM) {
-	return GMM_crit_line(pmod, prn);
-    } else {
-	return real_essline(pmod, pmod->ess, pmod->sigma, prn);
-    }
 }
 
 static void rsqline (const MODEL *pmod, PRN *prn)
@@ -455,41 +433,29 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 {
     double lmin = gretl_model_get_double(pmod, "lmin");
     int idf = gretl_model_get_int(pmod, "idf");
-    int tex = tex_format(prn);
-
-    if (!gretl_model_get_int(pmod, "restricted")) {
-	print_ll(pmod, prn);
-    }
-
-#if 0
-    info_stats_lines(pmod, prn);
-#endif
 
     if (!na(lmin)) {
-	if (tex) {
-	    pprintf(prn, "%s & %g\\\\\n", I_("Smallest eigenvalue"), lmin);
-	} else {
-	    pprintf(prn, "  %s = %g\n", _("Smallest eigenvalue"), lmin);
-	}
-
+	ensure_vsep(prn);
 	if (idf > 0) {
 	    double X2 = pmod->nobs * log(lmin);
 	    double pv = chisq_cdf_comp(idf, X2);
 
 	    if (tex_format(prn)) {
-		pprintf(prn, "%s, $\\chi^2(%d)$ & %g\\\\\n", 
-			I_("LR over-identification test"), idf, X2);
-		pprintf(prn, "$\\quad$ %s %.4f\n", I_("with p-value"), pv);
+		pprintf(prn, "%s: $\\chi^2(%d)$ = %g [%.4f] \\\\\n", 
+			_("LR over-identification test"), idf, X2, pv);
+	    } else if (rtf_format(prn)) {
+		pprintf(prn, "%s: ", I_("LR over-identification test"));
+		pprintf(prn, "%s(%d) = %g [%.4f]\n\n", _("Chi-square"),
+			idf, X2, pv);
 	    } else {
-		pprintf(prn, "  %s:\n", _("LR over-identification test"));
-		pprintf(prn, "    %s(%d) = %g %s %.4f\n", _("Chi-square"),
-			idf, X2, _("with p-value"), pv);
+		pprintf(prn, "%s: ", _("LR over-identification test"));
+		pprintf(prn, "%s(%d) = %g [%.4f]\n\n", _("Chi-square"),
+			idf, X2, pv);
 	    }
 	} else if (idf == 0) {
-	    pprintf(prn, "  %s", 
-		    (tex)? I_("Equation is just identified") :
+	    pprintf(prn, "%s\n\n", 
+		    (rtf_format(prn))? I_("Equation is just identified") :
 		    _("Equation is just identified"));
-	    gretl_prn_newline(prn);
 	}
     }
 }
@@ -502,8 +468,6 @@ static void print_arbond_AR_test (double z, int order, PRN *prn)
 	return;
     }
 
-    pputs(prn, "  ");
-
     if (plain_format(prn)) {
 	pprintf(prn, _("Test for AR(%d) errors:"), order);
     } else {
@@ -514,10 +478,9 @@ static void print_arbond_AR_test (double z, int order, PRN *prn)
 	char numstr[32];
 
 	tex_float_string(z, 4, numstr);
-	pprintf(prn, " $z$ = %s & [%.4f]", numstr, pv);
+	pprintf(prn, " $z$ = %s [%.4f]", numstr, pv);
     } else {
-	pprintf(prn, " z = %g (%s %.4f)", z, 
-		(plain_format(prn))? _("p-value") : I_("p-value"), pv);
+	pprintf(prn, " z = %g [%.4f]", z, pv);
     }
 
     gretl_prn_newline(prn);
@@ -560,48 +523,65 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     }
 
     if (tex_format(prn)) {
-	pprintf(prn, "%s: ", I_(texstrs[j]));
+	pprintf(prn, "%s: ", _(texstrs[j]));
 	pprintf(prn, "$\\chi^2(%d)$ = %g & [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
-	pprintf(prn, "  %s:", _(strs[j]));
-	if (j == J_TEST) {
-	    pputc(prn, ' ');
-	} else {
-	    pputs(prn, "\n   ");
-	}
-	pprintf(prn, "%s(%d) = %g (%s %.4f)", _("Chi-square"),
-		df, x, _("p-value"), pv);
+	pprintf(prn, "%s: ", _(strs[j]));
+	pprintf(prn, "%s(%d) = %g [%.4f]", _("Chi-square"), df, x, pv);
     } else {
-	pprintf(prn, "  %s:", I_(strs[j]));
-	if (j == J_TEST) {
-	    pputc(prn, ' ');
-	} else {
-	    gretl_prn_newline(prn);
-	    pputs(prn, "   ");
-	}
-	pprintf(prn, "%s(%d) = %g (%s %.4f)", I_("Chi-square"),
-		df, x, I_("p-value"), pv);
+	pprintf(prn, "%s: ", I_(strs[j]));
+	pprintf(prn, "%s(%d) = %g [%.4f]", I_("Chi-square"), df, x, pv);
     }
 
     gretl_prn_newline(prn);
 }
 
-static void print_GMM_test_data (const MODEL *pmod, PRN *prn)
+static int GMM_crit_line (const MODEL *pmod, PRN *prn)
+{
+    double Q = pmod->ess;
+    double TQ = pmod->ess * pmod->nobs;
+
+    if (plain_format(prn)) {    
+	pprintf(prn, "  %s: Q = %.*g (TQ = %.*g)\n", _("GMM criterion"), 
+		XDIGITS(pmod), Q, XDIGITS(pmod), TQ);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s: Q = %g (TQ = %g)\n", I_("GMM criterion"), 
+		Q, TQ);
+    } else if (tex_format(prn)) {
+	char x1[32], x2[32];
+
+	tex_dcolumn_double(Q, x1);
+	tex_dcolumn_double(TQ, x2);
+	pprintf(prn, "%s, $Q$ & %s ($TQ$ = %s)\\\\\n",
+		I_("GMM criterion"), x1, x2);
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("GMM criterion"), 
+		prn_delim(prn), Q);
+    }	
+
+    return 0;
+}
+
+static void print_GMM_stats (const MODEL *pmod, PRN *prn)
 {
     double x;
 
+    ensure_vsep(prn);
+
     if (tex_format(prn)) {
-	pputs(prn, "\\end{tabular}\n\n\\vspace{1ex}\n");
 	pputs(prn, "\\begin{tabular}{ll}\n");
     }
 
     if (pmod->ci == GMM) {
+	GMM_crit_line(pmod, prn);
 	x = gretl_model_get_double(pmod, "J_test");
 	if (!na(x)) {
 	    print_GMM_chi2_test(pmod, x, J_TEST, prn);
 	}
 	return;
     }
+
+    /* now arbond */
 
     x = gretl_model_get_double(pmod, "AR1");
     if (!na(x)) {
@@ -668,6 +648,8 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 	return;
     }
 
+    ensure_vsep(prn);
+
     if (plain_format(prn)) {
 	pprintf(prn, "%s = %g\n", _("'Within' variance"), ws2);
 	pprintf(prn, "%s = %g\n", _("'Between' variance"), bs2);
@@ -678,7 +660,7 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 	char xstr[32];
 
 	tex_dcolumn_double(ws2, xstr);
-	pprintf(prn, "$\\hat{\\sigma}^2_{\\varepsilon}$ & %s \\\\\n", xstr);
+	pprintf(prn, "$\\hat{\\sigma}^2_{\\varepsilon}$ = %g \\\\\n", ws2);
 	tex_dcolumn_double(bs2, xstr);
 	pprintf(prn, "$\\hat{\\sigma}^2_u$ & %s \\\\\n", xstr);
 	if (!na(theta)) {
@@ -1170,7 +1152,6 @@ static void arbond_asy_vcv_line (const MODEL *pmod, PRN *prn)
 
     pputc(prn, '\n');
 }
-
 
 static void panel_robust_vcv_line (PRN *prn)
 {
@@ -2212,7 +2193,7 @@ static void original_stats_message (PRN *prn)
 	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
 	pprintf(prn, "\\vspace{1em}\n%s:\n\n", _(msg));
-    } else { /* RTF */
+    } else if (rtf_format(prn)) { 
 	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
     }
 }
@@ -2225,7 +2206,7 @@ static void rho_differenced_stats_message (PRN *prn)
 	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
 	pprintf(prn, "\\vspace{1em}\n%s:\n\n", _(msg));
-    } else { /* RTF */
+    } else if (rtf_format(prn)) { 
 	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
     }	
 }
@@ -2315,7 +2296,7 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
 	    pprintf(prn, "  (%s = %s)\n", jllstr, xstr);
 	} else {
 	    plain_print_double(xstr, XDIGITS(pmod), jll, prn);
-	    pprintf(prn, "%s = %s\n", jllstr, xstr);
+	    pprintf(prn, "%s = %s\n\n", jllstr, xstr);
 	}	    
     }
 }
@@ -2403,7 +2384,7 @@ static char *print_eight (char *s, double *mstat, int i, int minus,
     }    
 
     if (i == RSQ_POS) {
-	/* R-squared: never use scientific notation */
+	/* R-squared: don't use scientific notation */
 	sprintf(s, "%9.6f", x);
 	return s;
     }
@@ -2475,6 +2456,10 @@ enum {
     MIDDLE_ORIG
 };
 
+/* print the block of statistics that appears beneath of the
+   table of coefficients, standard errors, etc.
+*/
+
 static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 {
     const char *note = N_("note on model statistics abbreviations here");
@@ -2484,20 +2469,20 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
     int csv = csv_format(prn);
     char x1[12], x2[12], fstr[32];
     static const char *mstr[] = {
-	N_("Mean dependent var"),
-	N_("S.D. dependent var"),
-	N_("Sum squared resid"),
-	N_("S.E. of regression"),
-	N_("R-squared"),
-	N_("Adjusted R-squared"),
-	"F-statistic", /* will be replaced */
-	N_("P-value(F)"),	
-	N_("Log-likelihood"), 
-	N_("Akaike criterion"),
-	N_("Schwarz criterion"),
-	N_("Hannan-Quinn"),
-	N_("rho"),
-	N_("Durbin-Watson")
+	N_("Mean dependent var"),  /* 19: Mean of dependent variable */
+	N_("S.D. dependent var"),  /* 19: Standard deviation of dependent var */
+	N_("Sum squared resid"),   /* 19: Sum of squared residuals */
+	N_("S.E. of regression"),  /* 19: Standard error of the regression */
+	N_("R-squared"),           /* 19: */
+	N_("Adjusted R-squared"),  /* 19: */
+	"F-statistic",             /* will be replaced below */
+	N_("P-value(F)"),          /* 19: P-value of F-statistic */	
+	N_("Log-likelihood"),      /* 19: */
+	N_("Akaike criterion"),    /* 19: Akaike Information Criterion */
+	N_("Schwarz criterion"),   /* 19: Schwarz Bayesian Criterion */
+	N_("Hannan-Quinn"),        /* 19: Hannan-Quinn Criterion */
+	N_("rho"),                 /* 19: 1st-order autocorrelation coeff. */
+	N_("Durbin-Watson")        /* 19: Durbin-Watson statistic */
     };
     double mstat[14] = {
 	pmod->ybar,
@@ -2518,6 +2503,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
     int i, j, ipos = -1;
 
     if (tex) {
+	/* some special strings for TeX output */
 	minus = MINUS_TEX;
 	mstr[4] = "$R^2$";
 	mstr[5] = "Adjusted $R^2$";
@@ -2526,6 +2512,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	mstr[12] = "$\\hat{\\rho}$";
 	mstr[13] = "Durbin--Watson";
     } else if (!rtf && gretl_print_supports_utf(prn)) {
+	/* print a 'real' minus sign? */
 	minus = MINUS_UTF;
     }
 
@@ -2533,6 +2520,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	/* VECM equation: suppress F-test */
 	mstat[6] = mstat[7] = NADBL;
     } else if (!na(pmod->fstt)) {
+	/* format F-stat and get its p-value */
 	if (tex) {
 	    sprintf(fstr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
 	} else {
@@ -2542,27 +2530,52 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	mstat[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
     }
 
+    /* special variants of R-squared */
     if (gretl_model_get_int(pmod, "uncentered")) {
-	mstr[4] = (tex)? N_("Uncentered $R^2$") : N_("Uncentered R-squared");
-	mstr[5] = (tex)? N_("Centered $R^2$") : N_("Centered R-squared");
+	mstr[4] = (tex)? N_("Uncentered $R^2$") : 
+	    N_("Uncentered R-squared"); /* 19: */
+	mstr[5] = (tex)? N_("Centered $R^2$") : 
+	    N_("Centered R-squared");  /* 19: */
 	mstat[5] = gretl_model_get_double(pmod, "centered-R2");
     } else if (pmod->ci == POISSON || binary_model(pmod)) {
-	mstr[4] = (tex)? N_("McFadden $R^2$") : N_("McFadden R-squared");
+	mstr[4] = (tex)? N_("McFadden $R^2$") : 
+	    N_("McFadden R-squared");  /* 19: McFadden's pseudo-R-squared */
     }
 
-    if (pmod->ci == ARMA) {
-	mstr[2] = N_("Mean of innovations");
+    if (pmod->ci == ARBOND) {
+	for (i=0; i<14; i++) {
+	    if (i < 2 || i > 3) {
+		mstat[i] = NADBL;
+	    }
+	}	
+    } else if (pmod->aux == AUX_SYS) {
+	/* only dep. var. stats, SSR and SE, unless LIML */
+	if (liml_equation(pmod) && !gretl_model_get_int(pmod, "restricted")) {
+	    for (i=4; i<14; i++) {
+		if (i < 8 || i > 9) {
+		    mstat[i] = NADBL;
+		}
+	    }
+	    mstr[9] = N_("Smallest eigenvalue"); /* 19: */
+	    mstat[9] = gretl_model_get_double(pmod, "lmin");
+	} else {
+	    for (i=4; i<14; i++) {
+		mstat[i] = NADBL;
+	    }
+	}
+    } else if (pmod->ci == ARMA) {
+	mstr[2] = N_("Mean of innovations"); /* 19: Mean of ARMA innovations */
 	mstat[2] = gretl_model_get_double(pmod, "mean_error");
-	mstr[3] = N_("S.D. of innovations");
+	mstr[3] = N_("S.D. of innovations"); /* 19: Std. dev. of ARMA innovations */
 	for (i=4; i<14; i++) {
 	    if (i < 8 || i > 11) {
 		mstat[i] = NADBL;
 	    }
 	}	
     } else if (pmod->ci == LAD) {
-	mstr[0] = N_("Median depend. var");
+	mstr[0] = N_("Median depend. var");  /* 19: Median of dependent variable */
 	mstat[0] = gretl_model_get_double(pmod, "ymedian");
-	mstr[2] = N_("Sum absolute resid");
+	mstr[2] = N_("Sum absolute resid");  /* 19: Sum of absolute residuals */
 	mstat[2] = gretl_model_get_double(pmod, "ladsum");
 	mstr[3] = N_("Sum squared resid");
 	mstat[3] = pmod->ess;
@@ -2576,21 +2589,22 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	mstat[6] = mstat[7] = NADBL;
 	mstat[12] = mstat[13] = NADBL;
     } else if (pmod->ci == TOBIT) {
-	mstr[2] = N_("Censored obs");
+	mstr[2] = N_("Censored obs"); /* 19: Number of censored observations */
 	mstat[2] = gretl_model_get_int(pmod, "censobs");
 	ipos = 2;
 	mstr[3] = "sigma";
 	for (i=4; i<8; i++) {
 	    mstat[i] = NADBL;
 	}
-    } else if (panel_ML_model(pmod)) {
+    } else if (panel_ML_model(pmod) || 
+	       pmod->ci == GARCH ||
+	       pmod->ci == HECKIT) {
 	for (i=2; i<14; i++) {
 	    if (i < 8 || i > 11) {
 		mstat[i] = NADBL;
 	    }
 	}	
     } else if (pmod->ci == MLE || 
-	       pmod->ci == GARCH ||
 	       ordered_model(pmod)) {
 	for (i=0; i<14; i++) {
 	    if (i < 8 || i > 11) {
@@ -2608,7 +2622,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
     } 
 
     if (code == MIDDLE_TRANSFORM) {
-	/* don't print mean, sd of dep. var. */
+	/* transformed data: don't print mean, s.d. of dep. var. */
 	mstat[0] = mstat[1] = NADBL;
     } else if (code == MIDDLE_ORIG) {
 	/* print a limited range of stats */
@@ -2619,6 +2633,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	}
     }
 
+    /* start the table */
     if (tex) {
 	pputs(prn, "\\vspace{1ex}\n");
 	pputs(prn, "\\begin{tabular}{lrlr}\n");
@@ -2628,6 +2643,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	d = prn_delim(prn);
     }
 
+    /* print the various statistics */
     for (i=0, j=0; i<7; i++, j+=2) {
 	if (na(mstat[j])) {
 	    continue;
@@ -2654,44 +2670,20 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	}
     }	
 
+    /* end the table */
     if (tex) {
-	pputs(prn, "\\end{tabular}\n");
+	pputs(prn, "\\end{tabular}\n\n");
     } else if (rtf) {
-	pputs(prn, "}\n");
+	pputs(prn, "}\n\n"); /* close RTF table */
     } else {
 	pputc(prn, '\n');
     }
 
-    /* FIXME RTF, TeX below? */
-
-    if (strcmp(note, _(note))) {
-	if (rtf) {
-	    pputs(prn, I_(note));
-	} else {
-	    pputs(prn, _(note));
-	}
-    }
-
-    if (random_effects_model(pmod)) {
-	if (tex) {
-	    print_middle_table_start(prn);
-	}
-	panel_variance_lines(pmod, prn);
-	print_middle_table_end(prn);
-    }
-
-    if (plain_format(prn)) {
-	maybe_print_jll(pmod, 0, prn);
+    if (plain_format(prn) && strcmp(note, _(note))) {
+	pputs(prn, _(note));
+	pputs(prn, "\n\n");
     }
 } 
-
-static char active_decpoint (void)
-{
-    char test[4];
-
-    sprintf(test, "%.1f", 1.0);
-    return test[1];
-}
 
 static void print_model_iter_info (const MODEL *pmod, PRN *prn)
 {
@@ -2710,9 +2702,8 @@ static void print_model_iter_info (const MODEL *pmod, PRN *prn)
     }
 }
 
-static int mpols_middle_table (const MODEL *pmod, 
-			       const DATAINFO *pdinfo,
-			       PRN *prn)
+static int mp_middle_table (const MODEL *pmod, const DATAINFO *pdinfo,
+			    PRN *prn)
 {
     print_middle_table_start(prn);
 
@@ -2731,6 +2722,19 @@ static int mpols_middle_table (const MODEL *pmod,
     print_middle_table_end(prn);
 
     return 0;
+}
+
+static void set_csv_delim (PRN *prn)
+{
+    char test[4];
+
+    sprintf(test, "%.1f", 1.0);
+
+    if (test[1] == ',') {
+	gretl_print_set_delim(prn, '\t');
+    } else {
+	gretl_print_set_delim(prn, ',');
+    }
 }
 
 /**
@@ -2758,11 +2762,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (csv_format(prn)) {
-	if (active_decpoint() == ',') {
-	    gretl_print_set_delim(prn, '\t');
-	} else {
-	    gretl_print_set_delim(prn, ',');
-	}
+	set_csv_delim(prn);
     }
 
     if (plain_format(prn)) {
@@ -2787,7 +2787,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
-    /* auxiliary regressions */
+    /* other auxiliary regressions */
 
     if (pmod->aux == AUX_HET_1) {
 	rsqline(pmod, prn);
@@ -2818,40 +2818,15 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
-    /* special cases not (yet) using compact_middle_table */
-
-    if (pmod->ci == ARBOND || pmod->ci == GMM) {
-	print_middle_table_start(prn);
-	essline(pmod, prn);
-	print_GMM_test_data(pmod, prn);
-	print_middle_table_end(prn);
-	goto close_format;
-    } else if (pmod->ci == HECKIT) {
-	print_middle_table_start(prn);
-	depvarstats(pmod, prn);
-	print_heckit_stats(pmod, prn);
-	print_ll(pmod, prn);
-	print_middle_table_end(prn);
-	goto close_format;
-    } else if (pmod->aux == AUX_SYS) {
-	print_middle_table_start(prn);
-	depvarstats(pmod, prn);
-	essline(pmod, prn);
-	if (gretl_model_get_int(pmod, "method") == SYS_METHOD_LIML) {
-	    print_liml_equation_data(pmod, prn);
-	}
-	print_middle_table_end(prn);
-	goto close_format;
-    } else if (pmod->ci == MPOLS) {
-	mpols_middle_table(pmod, pdinfo, prn);
-	goto pval_max;
-    }
-
-    /* end special cases not using compact */
-
     if (opt & OPT_S) {
 	/* --simple-print */
 	goto close_format;
+    }
+
+    /* MPOLS can't use compact_middle_table */
+    if (pmod->ci == MPOLS) {
+	mp_middle_table(pmod, pdinfo, prn);
+	goto pval_max;
     }
 
     if (weighted_model(pmod)) {
@@ -2869,26 +2844,46 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	rho_differenced_stats_message(prn);
     }
 
-    compact_middle_table(pmod, prn, MIDDLE_REGULAR);
+    /* print table of model stats */
+    if (pmod->ci != GMM) {
+	compact_middle_table(pmod, prn, MIDDLE_REGULAR);
+    }
 
-    /* extra stats/info for some cases */
-    if (pmod->ci == ARMA) {
+    /* additional stats/info for some cases */
+    if (pmod->aux == AUX_SYS) {
+	if (liml_equation(pmod)) {
+	    print_liml_equation_data(pmod, prn);
+	}
+    } else if (pmod->ci == ARMA) {
 	print_arma_roots(pmod, prn);
     } else if (pmod->ci == GARCH) {
 	garch_variance_line(pmod, prn);
+    } else if (pmod->ci == HECKIT) {
+	print_heckit_stats(pmod, prn);
+    } else if (random_effects_model(pmod)) {
+	panel_variance_lines(pmod, prn);
+    } else if (pmod->ci == GMM || pmod->ci == ARBOND) {
+	print_GMM_stats(pmod, prn);
     } else if (binary) {
 	print_binary_statistics(pmod, pdinfo, prn);
     } else if (pmod->ci == TSLS && plain_format(prn)) {
 	addconst_message(pmod, prn);
 	r_squared_message(pmod, prn);
+    } 
+
+    /* FIXME alternate R^2 measures (within, centered) */
+
+    if (plain_format(prn)) {
+	maybe_print_jll(pmod, 0, prn);
     }
 
  pval_max:
 
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
-	pmod->ci != POISSON && pmod->ci != TOBIT &&
-	pmod->ci != LAD && !ordered_model(pmod) && !pmod->aux) {
+	pmod->ci != POISSON && pmod->ci != TOBIT && pmod->ci != LAD &&
+	pmod->ci != HECKIT && pmod->ci != ARBOND &&
+	!ordered_model(pmod) && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 
@@ -4441,15 +4436,18 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
     int cenobs = totobs - pmod->nobs;
     double cenpc = 100.0 * cenobs / totobs;
 
+    ensure_vsep(prn);
+
     if (plain_format(prn)) {
-	pprintf(prn, "  %s: %d\n", _("Total observations"), totobs);
-	pprintf(prn, "  %s: %d (%.1f%%)\n", _("Censored observations"), cenobs, cenpc);
-	pprintf(prn, "  %s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
+	pprintf(prn, "%s: %d\n", _("Total observations"), totobs);
+	pprintf(prn, "%s: %d (%.1f%%)\n", _("Censored observations"), cenobs, cenpc);
+	pprintf(prn, "%s = %.*g, ", _("sigma"), GRETL_DIGITS, pmod->sigma);
 	if (na(pmod->rho)) {
-	    pprintf(prn, "  %s = NA\n", _("rho"));
+	    pprintf(prn, "%s = NA\n", _("rho"));
 	} else {
-	    pprintf(prn, "  %s = %.*g\n", _("rho"), GRETL_DIGITS, pmod->rho);
+	    pprintf(prn, "%s = %.*g\n", _("rho"), GRETL_DIGITS, pmod->rho);
 	}
+	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s: %d\n", I_("Total observations"), totobs);
 	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenobs, cenpc);
@@ -4459,16 +4457,14 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 	}
     } else if (tex_format(prn)) {
 	char xstr[32];
-	
-	pprintf(prn, "%s & \\multicolumn{1}{r}{%d} \\\\\n", 
-		I_("Total observations"), totobs);
-	pprintf(prn, "%s & \\multicolumn{1}{r}{%.1f\\%%} \\\\\n", 
-		I_("Censored observations"), cenpc);
-	tex_dcolumn_double(pmod->sigma, xstr);
-	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
+
+	pprintf(prn, "%s: %d \\\\\n", _("Total observations"), totobs);
+	pprintf(prn, "%s: %d (%.1f%%) \\\\\n", _("Censored observations"), cenobs, cenpc);
+	pprintf(prn, "$\\hat{\\sigma}$ = %g \\\\\n", 
+		tex_sprint_double(pmod->sigma, xstr));
 	if (!na(pmod->rho)) {
-	    tex_dcolumn_double(pmod->rho, xstr);
-	    pprintf(prn, "$\\hat{\\rho}$ & %s \\\\\n", xstr);
+	    pprintf(prn, "$\\hat{\\rho}$ = %g \\\\\n", 
+		    tex_sprint_double(pmod->rho, xstr));
 	}
     }
 }
@@ -4521,6 +4517,8 @@ static void print_binary_statistics (const MODEL *pmod,
 	pc_correct = 100 * (double) correct / pmod->nobs;
     } 
 
+    ensure_vsep(prn);
+
     if (plain_format(prn)) {
 	if (correct >= 0) {
 	    pprintf(prn, "%s = %d (%.1f%%)\n", 
@@ -4532,10 +4530,9 @@ static void print_binary_statistics (const MODEL *pmod,
 	if (!na(model_chisq) && pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
 	    if (i > 0) {
-		pprintf(prn, "%s: %s(%d) = %g (%s %f)\n", 
+		pprintf(prn, "%s: %s(%d) = %g [%.4f]\n", 
 			_("Likelihood ratio test"), _("Chi-square"), 
-			i, model_chisq, _("p-value"), 
-			chisq_cdf_comp(i, model_chisq));
+			i, model_chisq, chisq_cdf_comp(i, model_chisq));
 	    }
 	}
 	pputc(prn, '\n');
@@ -4556,10 +4553,9 @@ static void print_binary_statistics (const MODEL *pmod,
 		pmod->sdy);
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
+	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
-		    i, model_chisq, I_("p-value"), 
-		    chisq_cdf_comp(i, model_chisq));
+		    i, model_chisq, chisq_cdf_comp(i, model_chisq));
 	}
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
@@ -4576,10 +4572,9 @@ static void print_binary_statistics (const MODEL *pmod,
 	}
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\\\\n",
+	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f [%.4f]\\\\\n",
 		    I_("Likelihood ratio test"), 
-		    i, model_chisq, I_("p-value"), 
-		    chisq_cdf_comp(i, model_chisq));
+		    i, model_chisq, chisq_cdf_comp(i, model_chisq));
 	}
 	pputs(prn, "\\end{raggedright}\n");
     }
@@ -4671,11 +4666,7 @@ static int print_user_model (const gretl_matrix *cs,
 
     if (opt & OPT_C) {
 	gretl_print_set_format(prn, GRETL_FORMAT_CSV);
-	if (active_decpoint() == ',') {
-	    gretl_print_set_delim(prn, '\t');
-	} else {
-	    gretl_print_set_delim(prn, ',');
-	}
+	set_csv_delim(prn);
     } else if (opt & OPT_R) {
 	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
     } else if (opt & OPT_T) {

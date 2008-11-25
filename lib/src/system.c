@@ -792,8 +792,8 @@ system_print_F_test (const equation_system *sys,
     F /= dfn;
 
     pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
-    pprintf(prn, "  F(%d,%d) = %g %s %.4f\n", dfn, dfu, F,
-	    _("with p-value"), snedecor_cdf_comp(dfn, dfu, F));
+    pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfu, F,
+	    snedecor_cdf_comp(dfn, dfu, F));
     pputc(prn, '\n');    
 
  bailout:
@@ -820,8 +820,8 @@ system_print_LR_test (const equation_system *sys,
     pprintf(prn, "%s:\n", _("LR test for the specified restrictions"));
     pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), llr);
     pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
-    pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
-	    df, X2, _("with p-value"), chisq_cdf_comp(df, X2));
+    pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
+	    df, X2, chisq_cdf_comp(df, X2));
     pputc(prn, '\n');    
 }
 
@@ -2603,14 +2603,12 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
 		pprintf(prn, "  %s = %g", I_("Unrestricted log-likelihood"), sys->llu);
 	    }
 	    gretl_prn_newline(prn);
-	    pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f\n", 
-		    df, X2, I_("with p-value"), pv);
+	    pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]\n", df, X2, pv);
 	} else {
 	    pprintf(prn, "%s:\n", _("LR over-identification test"));
 	    pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), sys->ll);
 	    pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), sys->llu);
-	    pprintf(prn, "  %s(%d) = %g %s %.4f\n\n", _("Chi-square"),
-		    df, X2, _("with p-value"), pv);
+	    pprintf(prn, "  %s(%d) = %g [%.4f]\n\n", _("Chi-square"), df, X2, pv);
 	}
     } else if ((sys->method == SYS_METHOD_3SLS || 
 		sys->method == SYS_METHOD_SUR) && df > 0) {
@@ -2629,12 +2627,11 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
 	if (tex) {
 	    pprintf(prn, "\\noindent %s:\\\\\n", 
 		    I_("Hansen--Sargan over-identification test"));
-	    pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f\\\\\n", 
-		    df, sys->X2, I_("with p-value"), pv);
+	    pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]\\\\\n", df, sys->X2, pv);
 	} else {
 	    pprintf(prn, "%s:\n", _("Hansen-Sargan over-identification test"));
-	    pprintf(prn, "  %s(%d) = %g %s %.4f\n\n", _("Chi-square"),
-		    df, sys->X2, _("with p-value"), pv);
+	    pprintf(prn, "  %s(%d) = %g [%.4f]\n\n", _("Chi-square"),
+		    df, sys->X2, pv);
 	}
     }
 }
@@ -2660,13 +2657,12 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
 
 	    if (tex) {
 		pprintf(prn, "%s:\\\\\n", I_("LR test for diagonal covariance matrix"));
-		pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f", 
-			df, lr, I_("with p-value"), x);
+		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, lr, x);
 		gretl_prn_newline(prn);
 	    } else {
 		pprintf(prn, "%s:\n", _("LR test for diagonal covariance matrix"));
-		pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
-		    df, lr, _("with p-value"), x);
+		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
+			df, lr, x);
 	    }
 	}
     } else {
@@ -2676,16 +2672,15 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
 	    x = chisq_cdf_comp(df, lm);
 	    if (tex) {
 		pprintf(prn, "%s:", 
-			I_("Breusch--Pagan test for diagonal covariance matrix"));
+			_("Breusch--Pagan test for diagonal covariance matrix"));
 		gretl_prn_newline(prn);
-		pprintf(prn, "  $\\chi^2(%d)$ = %g %s %.4f", df, lm, 
-			I_("with p-value"), x);
+		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, lm, x);
 		gretl_prn_newline(prn);
 	    } else {
 		pprintf(prn, "%s:\n", 
 			_("Breusch-Pagan test for diagonal covariance matrix"));
-		pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
-			df, lm, _("with p-value"), x);
+		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
+			df, lm, x);
 	    }
 	}
     }
@@ -3804,10 +3799,9 @@ int system_autocorrelation_test (equation_system *sys, int order,
 	u = sys->E->val + (i * sys->T);
 	lb = ljung_box(order, 0, sys->T - 1, u, &err);
 	if (!err) {
-	    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
-		    lb, _("with p-value"), _("Chi-square"), order,
+	    pprintf(prn, "%s: %s(%d) = %g [%.4f]\n\n", 
+		    _("Ljung-Box Q'"), _("Chi-square"), order,
 		    lb, chisq_cdf_comp(order, lb));
-	    pputc(prn, '\n');
 	}
     }
 
