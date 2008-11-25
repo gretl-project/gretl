@@ -2113,7 +2113,8 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (!quiet) {
-	    pprintf(prn, _("                final %11.5f\n\n"), rho);
+	    pprintf(prn, "          %10d %12.5f", ++iter, rho);
+	    pprintf(prn, "   %g\n", armod.ess);
 	}
     }
 

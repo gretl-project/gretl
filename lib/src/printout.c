@@ -57,7 +57,7 @@ static void printxx (const double xx, char *str, int ci)
 
 static void covhdr (PRN *prn)
 {
-    pprintf(prn, "\n  %s\n\n", 
+    pprintf(prn, "%s\n\n", 
 	    _("Covariance matrix of regression coefficients"));
 }
 

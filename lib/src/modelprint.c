@@ -40,7 +40,7 @@ static void depvarstats (const MODEL *pmod, PRN *prn);
 static void alt_print_rho_terms (const MODEL *pmod, PRN *prn);
 static void print_binary_statistics (const MODEL *pmod, 
 				     const DATAINFO *pdinfo,
-				     PRN *prn, int compact);
+				     PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
@@ -112,32 +112,6 @@ static void plain_print_double_f (char *s, int d, double x, PRN *prn)
     }
 }
 
-static void print_y_median (const MODEL *pmod, PRN *prn)
-{
-    double m = gretl_model_get_double(pmod, "ymedian");
-
-    if (na(m)) {
-	return;
-    }
-
-    if (plain_format(prn)) {
-	char mstr[32];
-
-	plain_print_double(mstr, XDIGITS(pmod), m, prn);
-	pprintf(prn, "  %s = %s\n", _("Median of dependent variable"), mstr);
-    } else if (tex_format(prn)) {
-	char mstr[32];
-
-	tex_dcolumn_double(m, mstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Median of dependent variable"), mstr);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Median of dependent variable"), m);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Median of dependent variable"), 
-		prn_delim(prn), m);
-    }	
-}
-
 static void print_model_stats_table (const double *stats, 
 				     const char **names, 
 				     int ns, PRN *prn)
@@ -174,10 +148,6 @@ static void print_model_stats_table (const double *stats,
 
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
-    if (pmod->ci == LAD) {
-	print_y_median(pmod, prn);
-    }
-
     if (na(pmod->ybar) || na(pmod->sdy)) {
 	return;
     }
@@ -210,17 +180,13 @@ static void depvarstats (const MODEL *pmod, PRN *prn)
     }	
 }
 
-static void garch_variance_line (const MODEL *pmod, PRN *prn, int compact)
+static void garch_variance_line (const MODEL *pmod, PRN *prn)
 {
     const char *varstr = N_("Unconditional error variance");
     double v = pmod->sigma * pmod->sigma;
 
     if (plain_format(prn)) {  
-	if (compact) {
-	    pprintf(prn, "%s = %.*g\n\n", _(varstr), GRETL_DIGITS, v);
-	} else {
-	    pprintf(prn, "  %s = %.*g\n", _(varstr), GRETL_DIGITS, v);
-	}
+	pprintf(prn, "%s = %.*g\n\n", _(varstr), GRETL_DIGITS, v);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(varstr), v);
     } else if (tex_format(prn)) {
@@ -403,29 +369,6 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 		    fdig, wr2);
 	}
     }
-}
-
-static void pseudorsqline (const MODEL *pmod, PRN *prn)
-{
-    if (na(pmod->rsq)) {
-	return;
-    }
-
-    if (plain_format(prn)) { 
-	pprintf(prn, "  %s = %.*g\n", _("McFadden's pseudo-R-squared"), 
-		XDIGITS(pmod), pmod->rsq);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("McFadden's pseudo-R{\\super 2}"), 
-		pmod->rsq);
-    } else if (tex_format(prn)) {  
-	char r2[32];
-
-	tex_dcolumn_double(pmod->rsq, r2);
-	pprintf(prn, "%s = %s \\\\\n", I_("McFadden's pseudo-$R^2$"), r2);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("McFadden's pseudo-R-squared"), 
-		prn_delim(prn), pmod->rsq);
-    }	
 }
 
 static void rssline (const MODEL *pmod, PRN *prn)
@@ -889,28 +832,6 @@ static double durbins_h (const MODEL *pmod)
     }
 
     return h;
-}
-
-static void dhline (const MODEL *pmod, PRN *prn)
-{
-    double h = durbins_h(pmod);
-
-    if (na(h)) {
-	return;
-    }
-
-    if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Durbin's h"), XDIGITS(pmod), h);
-    } else if (tex_format(prn)) {
-	char xstr[32];
-
-	tex_dcolumn_double(h, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Durbin's $h$"), xstr); 
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin's h"), h);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin's h"), prn_delim(prn), h);
-    }
 }
 
 static int least_significant_coeff (const MODEL *pmod)
@@ -2574,7 +2495,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	N_("Log-likelihood"), 
 	N_("Akaike criterion"),
 	N_("Schwarz criterion"),
-	N_("Hannan-Quinn crit"),
+	N_("Hannan-Quinn"),
 	N_("rho"),
 	N_("Durbin-Watson")
     };
@@ -2608,7 +2529,10 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	minus = MINUS_UTF;
     }
 
-    if (!na(pmod->fstt)) {
+    if (pmod->aux == AUX_VECM) {
+	/* VECM equation: suppress F-test */
+	mstat[6] = mstat[7] = NADBL;
+    } else if (!na(pmod->fstt)) {
 	if (tex) {
 	    sprintf(fstr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
 	} else {
@@ -2674,9 +2598,13 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    }
 	}	
     } else if (pmod->ci != VAR && pmod->aux != AUX_VECM && 
-	!na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
-	mstr[13] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
-	mstat[13] = durbins_h(pmod);
+	       !na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
+	double h = durbins_h(pmod);
+
+	if (!na(h)) {
+	    mstr[13] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
+	    mstat[13] = h;
+	}
     } 
 
     if (code == MIDDLE_TRANSFORM) {
@@ -2782,18 +2710,14 @@ static void print_model_iter_info (const MODEL *pmod, PRN *prn)
     }
 }
 
-static int verbose_middle_table (const MODEL *pmod, 
-				 const DATAINFO *pdinfo,
-				 PRN *prn)
+static int mpols_middle_table (const MODEL *pmod, 
+			       const DATAINFO *pdinfo,
+			       PRN *prn)
 {
     print_middle_table_start(prn);
 
     depvarstats(pmod, prn);
-    if (essline(pmod, prn)) {
-	print_middle_table_end(prn);
-	return 1;
-    }
-
+    essline(pmod, prn);
     rsqline(pmod, prn);
     Fline(pmod, prn);
 
@@ -2803,17 +2727,6 @@ static int verbose_middle_table (const MODEL *pmod,
 
     print_ll(pmod, prn);
     info_stats_lines(pmod, prn);
-
-#if 0 /* FIXME put these in the right place */
-
-    if (pmod->ci == TSLS && plain_format(prn)) {
-	addconst_message(pmod, prn);
-    }
-
-    if (pmod->ci == TSLS && plain_format(prn)) {
-	r_squared_message(pmod, prn);
-    }
-#endif
 
     print_middle_table_end(prn);
 
@@ -2939,7 +2852,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (pmod->ci == MPOLS) {
-	verbose_middle_table(pmod, pdinfo, prn);
+	mpols_middle_table(pmod, pdinfo, prn);
     }
 
     if (weighted_model(pmod)) {
@@ -2959,13 +2872,16 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     compact_middle_table(pmod, prn, MIDDLE_REGULAR);
 
-    /* extra stats for some cases */
+    /* extra stats/info for some cases */
     if (pmod->ci == ARMA) {
 	print_arma_roots(pmod, prn);
     } else if (pmod->ci == GARCH) {
-	garch_variance_line(pmod, prn, 1);
+	garch_variance_line(pmod, prn);
     } else if (binary) {
-	print_binary_statistics(pmod, pdinfo, prn, 1);
+	print_binary_statistics(pmod, pdinfo, prn);
+    } else if (pmod->ci == TSLS && plain_format(prn)) {
+	addconst_message(pmod, prn);
+	r_squared_message(pmod, prn);
     }
 
  pval_max:
@@ -4358,16 +4274,6 @@ static void alt_print_rho_terms (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void tex_float_str (double x, char *str)
-{
-    if (x < 0.) {
-	strcpy(str, "$-$");
-	sprintf(str + 3, "%.*g", GRETL_DIGITS, -x);
-    } else {
-	sprintf(str, "%.*g", GRETL_DIGITS, x);
-    }
-}
-
 const char *roots_hdr = N_("                        Real  Imaginary"
 			   "    Modulus  Frequency");
 const char *root_fmt = "%8s%3d%17.4f%11.4f%11.4f%11.4f\n";
@@ -4424,7 +4330,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 	double mod, fr;
 
 	if (plain_format(prn)) {
-	    pprintf(prn, "\n%s\n%s\n", _(roots_hdr), roots_sep);
+	    pprintf(prn, "%s\n%s\n", _(roots_hdr), roots_sep);
 	} else if (tex_format(prn)) {
 	    pputs(prn, "\n\\vspace{1em}\n\n");
 	    pputs(prn, "\\begin{tabular}{llrrrrr}\n");
@@ -4601,12 +4507,10 @@ static void plain_print_act_pred (const int *ap, PRN *prn)
 
 static void print_binary_statistics (const MODEL *pmod, 
 				     const DATAINFO *pdinfo,
-				     PRN *prn, int compact)
+				     PRN *prn)
 {
-    const char *sp = (compact)? "" : "  ";
     int slopes = !gretl_model_get_int(pmod, "show-pvals");
     double model_chisq = gretl_model_get_double(pmod, "chisq");
-    const double *crit = pmod->criterion;
     const int *act_pred;
     int correct = -1;
     double pc_correct = NADBL;
@@ -4619,39 +4523,22 @@ static void print_binary_statistics (const MODEL *pmod,
     } 
 
     if (plain_format(prn)) {
-	if (!compact) {
-	    pprintf(prn, "  %s %s = %.3f\n", _("Mean of"), 
-		    pdinfo->varname[pmod->list[1]], pmod->ybar);
-	}
 	if (correct >= 0) {
-	    pprintf(prn, "%s%s = %d (%.1f%%)\n", sp,
+	    pprintf(prn, "%s = %d (%.1f%%)\n", 
 		    _("Number of cases 'correctly predicted'"), 
 		    correct, pc_correct);
 	}
-	pprintf(prn, "%sf(beta'x) %s = %.3f\n", sp, _("at mean of independent vars"), 
+	pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		pmod->sdy);
-	if (!compact) {
-	    pseudorsqline(pmod, prn);
-	    pprintf(prn, "  %s = %g\n", _("Log-likelihood"), pmod->lnL);
-	}
 	if (!na(model_chisq) && pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
 	    if (i > 0) {
-		pprintf(prn, "%s%s: %s(%d) = %g (%s %f)\n", sp,
+		pprintf(prn, "%s: %s(%d) = %g (%s %f)\n", 
 			_("Likelihood ratio test"), _("Chi-square"), 
 			i, model_chisq, _("p-value"), 
 			chisq_cdf_comp(i, model_chisq));
 	    }
 	}
-	if (!compact) {
-	    pprintf(prn, "  %s (%s) = %g\n", _(aic_str), _(aic_abbrev),
-		    crit[C_AIC]);
-	    pprintf(prn, "  %s (%s) = %g\n", _(bic_str), _(bic_abbrev),
-		    crit[C_BIC]);
-	    pprintf(prn, "  %s (%s) = %g\n", _(hqc_str), _(hqc_abbrev),
-		    crit[C_HQC]);
-	}
-
 	pputc(prn, '\n');
 	if (act_pred != NULL) {
 	    plain_print_act_pred(act_pred, prn);
@@ -4661,10 +4548,6 @@ static void print_binary_statistics (const MODEL *pmod,
 	if (slopes) {
 	    pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
 	}
-	if (!compact) {
-	    pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
-		    pdinfo->varname[pmod->list[1]], pmod->ybar);
-	}
 	if (correct >= 0) {
 	    pprintf(prn, "\\par %s = %d (%.1f%%)\n", 
 		    I_("Number of cases 'correctly predicted'"), 
@@ -4672,10 +4555,6 @@ static void print_binary_statistics (const MODEL *pmod,
 	}
 	pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
 		pmod->sdy);
-	if (!compact) {
-	    pseudorsqline(pmod, prn);
-	    pprintf(prn, "\\par %s = %g\n", I_("Log-likelihood"), pmod->lnL);
-	}
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
@@ -4683,39 +4562,18 @@ static void print_binary_statistics (const MODEL *pmod,
 		    i, model_chisq, I_("p-value"), 
 		    chisq_cdf_comp(i, model_chisq));
 	}
-	if (!compact) {
-	    pprintf(prn, "\\par %s (%s) = %g\n", I_(aic_str), I_(aic_abbrev),
-		    crit[C_AIC]);
-	    pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(bic_str), I_(bic_abbrev),
-		    crit[C_BIC]);
-	    pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(hqc_str), I_(hqc_abbrev),
-		    crit[C_HQC]);
-	}
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
-	char lnlstr[16];
-
 	if (slopes) {
 	    pprintf(prn, "\\begin{center}\n$^*$%s\n\\end{center}\n", 
 		    I_("Evaluated at the mean"));
 	}
 
 	pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
-	if (!compact) {
-	    pprintf(prn, "%s %s = %.3f\\\\\n", I_("Mean of"), 
-		    pdinfo->varname[pmod->list[1]], pmod->ybar);
-	}
 	if (correct >= 0) {
 	    pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
 		    I_("Number of cases `correctly predicted'"), 
 		    correct, pc_correct);
-	}
-	if (!compact) {
-	    pseudorsqline(pmod, prn);
-	    pprintf(prn, "$f(\\beta'x)$ %s = %.3f\\\\\n", I_("at mean of independent vars"), 
-		    pmod->sdy);
-	    tex_float_str(pmod->lnL, lnlstr);
-	    pprintf(prn, "%s = %s\\\\\n", I_("Log-likelihood"), lnlstr);
 	}
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
@@ -4723,14 +4581,6 @@ static void print_binary_statistics (const MODEL *pmod,
 		    I_("Likelihood ratio test"), 
 		    i, model_chisq, I_("p-value"), 
 		    chisq_cdf_comp(i, model_chisq));
-	}
-	if (!compact) {
-	    pprintf(prn, "%s (%s) = %g\\\\\n", I_(aic_str), _(aic_abbrev),
-		    crit[C_AIC]);
-	    pprintf(prn, "%s (%s) = %g\\\\\n", I_(bic_str), _(bic_abbrev),
-		    crit[C_BIC]);
-	    pprintf(prn, "%s (%s) = %g\\\\\n", I_(tex_hqc_str), _(hqc_abbrev),
-		    crit[C_HQC]);
 	}
 	pputs(prn, "\\end{raggedright}\n");
     }
