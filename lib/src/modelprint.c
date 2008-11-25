@@ -2348,6 +2348,49 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 #define non_weighted_panel(m) (m->ci == PANEL && \
 			       !gretl_model_get_int(m, "unit-weights"))
 
+#ifdef ENABLE_NLS
+
+static int i18n_string_width (const char **S, double *x)
+{
+    int len, maxlen = 0;
+    int i, j;
+
+    for (i=0, j=0; i<7; i++, j+=2) {
+	if (!na(x[j])) {
+	    len = g_utf8_strlen(_(S[j]), -1);
+	    if (len > maxlen) maxlen = len;
+	    len = g_utf8_strlen(_(S[j+1]), -1);
+	    if (len > maxlen) maxlen = len;
+	}
+    }
+
+    if (maxlen > 22) {
+	fprintf(stderr, "Can't make compact model stats table -- the max\n"
+		"length translated string is %d chars, should be < 23\n",
+		maxlen);
+    }
+
+    return maxlen;
+}
+
+static void prepare_format (char *fmt, const char *s1, const char *s2, 
+			    int maxlen)
+{
+    /* calculate bytes minus glyphs */
+    int d1 = strlen(_(s1)) - g_utf8_strlen(_(s1), -1);
+    int d2 = strlen(_(s2)) - g_utf8_strlen(_(s2), -1);
+
+    if (maxlen < 20) {
+	sprintf(fmt, "%%-%ds%%s   %%-%ds%%s\n", 20 + d1, 20 + d2);
+    } else if (maxlen < 23) {
+	sprintf(fmt, "%%-%ds%%s   %%-%ds%%s\n", maxlen + d1 + 1, maxlen + d2 + 1);
+    } else {
+	sprintf(fmt, "  %%-%ds  %%s\n  %%-%ds  %%s\n", maxlen + d1, maxlen + d2);
+    }
+}
+
+#endif
+
 static char *print_csv (char *s, double x)
 {
     if (na(x)) {
@@ -2463,26 +2506,27 @@ enum {
 static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 {
     const char *note = N_("note on model statistics abbreviations here");
+    char txt_mt_fmt[36];
     int d = 0, minus = MINUS_HYPHEN;
     int rtf = rtf_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
     char x1[12], x2[12], fstr[32];
     static const char *mstr[] = {
-	N_("Mean dependent var"),  /* 19: Mean of dependent variable */
-	N_("S.D. dependent var"),  /* 19: Standard deviation of dependent var */
-	N_("Sum squared resid"),   /* 19: Sum of squared residuals */
-	N_("S.E. of regression"),  /* 19: Standard error of the regression */
-	N_("R-squared"),           /* 19: */
-	N_("Adjusted R-squared"),  /* 19: */
+	N_("Mean dependent var"),  /* 22: Mean of dependent variable */
+	N_("S.D. dependent var"),  /* 22: Standard deviation of dependent var */
+	N_("Sum squared resid"),   /* 22: Sum of squared residuals */
+	N_("S.E. of regression"),  /* 22: Standard error of the regression */
+	N_("R-squared"),           /* 22: */
+	N_("Adjusted R-squared"),  /* 22: */
 	"F-statistic",             /* will be replaced below */
-	N_("P-value(F)"),          /* 19: P-value of F-statistic */	
-	N_("Log-likelihood"),      /* 19: */
-	N_("Akaike criterion"),    /* 19: Akaike Information Criterion */
-	N_("Schwarz criterion"),   /* 19: Schwarz Bayesian Criterion */
-	N_("Hannan-Quinn"),        /* 19: Hannan-Quinn Criterion */
-	N_("rho"),                 /* 19: 1st-order autocorrelation coeff. */
-	N_("Durbin-Watson")        /* 19: Durbin-Watson statistic */
+	N_("P-value(F)"),          /* 22: P-value of F-statistic */	
+	N_("Log-likelihood"),      /* 22: */
+	N_("Akaike criterion"),    /* 22: Akaike Information Criterion */
+	N_("Schwarz criterion"),   /* 22: Schwarz Bayesian Criterion */
+	N_("Hannan-Quinn"),        /* 22: Hannan-Quinn Criterion */
+	N_("rho"),                 /* 22: 1st-order autocorrelation coeff. */
+	N_("Durbin-Watson")        /* 22: Durbin-Watson statistic */
     };
     double mstat[14] = {
 	pmod->ybar,
@@ -2500,6 +2544,10 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	pmod->rho,
 	pmod->dw
     };
+#ifdef ENABLE_NLS
+    int mlen = 20;
+    int nls_on = doing_nls();
+#endif
     int i, j, ipos = -1;
 
     if (tex) {
@@ -2533,13 +2581,13 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
     /* special variants of R-squared */
     if (gretl_model_get_int(pmod, "uncentered")) {
 	mstr[4] = (tex)? N_("Uncentered $R^2$") : 
-	    N_("Uncentered R-squared"); /* 19: */
+	    N_("Uncentered R-squared"); /* 22: */
 	mstr[5] = (tex)? N_("Centered $R^2$") : 
-	    N_("Centered R-squared");  /* 19: */
+	    N_("Centered R-squared");  /* 22: */
 	mstat[5] = gretl_model_get_double(pmod, "centered-R2");
     } else if (pmod->ci == POISSON || binary_model(pmod)) {
 	mstr[4] = (tex)? N_("McFadden $R^2$") : 
-	    N_("McFadden R-squared");  /* 19: McFadden's pseudo-R-squared */
+	    N_("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
     }
 
     if (pmod->ci == ARBOND) {
@@ -2556,7 +2604,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 		    mstat[i] = NADBL;
 		}
 	    }
-	    mstr[9] = N_("Smallest eigenvalue"); /* 19: */
+	    mstr[9] = N_("Smallest eigenvalue"); /* 22: */
 	    mstat[9] = gretl_model_get_double(pmod, "lmin");
 	} else {
 	    for (i=4; i<14; i++) {
@@ -2564,18 +2612,18 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    }
 	}
     } else if (pmod->ci == ARMA) {
-	mstr[2] = N_("Mean of innovations"); /* 19: Mean of ARMA innovations */
+	mstr[2] = N_("Mean of innovations"); /* 22: Mean of ARMA innovations */
 	mstat[2] = gretl_model_get_double(pmod, "mean_error");
-	mstr[3] = N_("S.D. of innovations"); /* 19: Std. dev. of ARMA innovations */
+	mstr[3] = N_("S.D. of innovations"); /* 22: Std. dev. of ARMA innovations */
 	for (i=4; i<14; i++) {
 	    if (i < 8 || i > 11) {
 		mstat[i] = NADBL;
 	    }
 	}	
     } else if (pmod->ci == LAD) {
-	mstr[0] = N_("Median depend. var");  /* 19: Median of dependent variable */
+	mstr[0] = N_("Median depend. var");  /* 22: Median of dependent variable */
 	mstat[0] = gretl_model_get_double(pmod, "ymedian");
-	mstr[2] = N_("Sum absolute resid");  /* 19: Sum of absolute residuals */
+	mstr[2] = N_("Sum absolute resid");  /* 22: Sum of absolute residuals */
 	mstat[2] = gretl_model_get_double(pmod, "ladsum");
 	mstr[3] = N_("Sum squared resid");
 	mstat[3] = pmod->ess;
@@ -2589,7 +2637,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	mstat[6] = mstat[7] = NADBL;
 	mstat[12] = mstat[13] = NADBL;
     } else if (pmod->ci == TOBIT) {
-	mstr[2] = N_("Censored obs"); /* 19: Number of censored observations */
+	mstr[2] = N_("Censored obs"); /* 22: Number of censored observations */
 	mstat[2] = gretl_model_get_int(pmod, "censobs");
 	ipos = 2;
 	mstr[3] = "sigma";
@@ -2643,6 +2691,14 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	d = prn_delim(prn);
     }
 
+    strcpy(txt_mt_fmt, TXT_MT_FMT);
+
+#ifdef ENABLE_NLS
+    if (plain_format(prn) && nls_on) {
+	mlen = i18n_string_width(mstr, mstat);
+    }
+#endif
+
     /* print the various statistics */
     for (i=0, j=0; i<7; i++, j+=2) {
 	if (na(mstat[j])) {
@@ -2664,7 +2720,12 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 		    _(mstr[j]),   d, print_csv(cx1, mstat[j]), d,
 		    _(mstr[j+1]), d, print_csv(cx2, mstat[j+1]));
 	} else {
-	    pprintf(prn, TXT_MT_FMT, 
+#ifdef ENABLE_NLS
+	    if (nls_on) {
+		prepare_format(txt_mt_fmt, mstr[j], mstr[j+1], mlen);
+	    }
+#endif
+	    pprintf(prn, txt_mt_fmt, 
 		    _(mstr[j]),   print_eight(x1, mstat, j, minus, ipos),
 		    _(mstr[j+1]), print_eight(x2, mstat, j+1, minus, ipos));
 	}
@@ -2679,7 +2740,8 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	pputc(prn, '\n');
     }
 
-    if (plain_format(prn) && strcmp(note, _(note))) {
+    if (plain_format(prn) && strcmp(note, _(note)) &&
+	!string_is_blank(_(note))) {
 	pputs(prn, _(note));
 	pputs(prn, "\n\n");
     }

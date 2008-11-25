@@ -3,31 +3,31 @@ Dear translators,
 The following strings, which are all found in the source file
 lib/src/modelprint.c, are printed in the context of a fixed
 tabular format and they should be restricted to a maximum of
-19 characters.
+22 characters.
 
 This list can be checked or updated  by doing
 
-  fgrep '/* 19: ' modelprint.c | awk -F"N_" '{print $NF}'
+  fgrep '/* 22: ' ../lib/src/modelprint.c | awk -F"N_" '{print $NF}'
 
-("Mean dependent var"),  /* 19: Mean of dependent variable */
-("S.D. dependent var"),  /* 19: Standard deviation of dependent var */
-("Sum squared resid"),   /* 19: Sum of squared residuals */
-("S.E. of regression"),  /* 19: Standard error of the regression */
-("R-squared"),           /* 19: */
-("Adjusted R-squared"),  /* 19: */
-("P-value(F)"),          /* 19: P-value of F-statistic */
-("Log-likelihood"),      /* 19: */
-("Akaike criterion"),    /* 19: Akaike Information Criterion */
-("Schwarz criterion"),   /* 19: Schwarz Bayesian Criterion */
-("Hannan-Quinn"),        /* 19: Hannan-Quinn Criterion */
-("rho"),                 /* 19: 1st-order autocorrelation coeff. */
-("Durbin-Watson")        /* 19: Durbin-Watson statistic */
-("Uncentered R-squared"); /* 19: */
-("Centered R-squared");  /* 19: */
-("McFadden R-squared");  /* 19: McFadden's pseudo-R-squared */
-("Mean of innovations"); /* 19: Mean of ARMA innovations */
-("S.D. of innovations"); /* 19: Std. dev. of ARMA innovations */
-("Median depend. var");  /* 19: Median of dependent variable */
-("Sum absolute resid");  /* 19: Sum of absolute residuals */
-("Censored obs"); /* 19: Number of censored observations */
-
+("Mean dependent var"),  /* 22: Mean of dependent variable */
+("S.D. dependent var"),  /* 22: Standard deviation of dependent var */
+("Sum squared resid"),   /* 22: Sum of squared residuals */
+("S.E. of regression"),  /* 22: Standard error of the regression */
+("R-squared"),           /* 22: */
+("Adjusted R-squared"),  /* 22: */
+("P-value(F)"),          /* 22: P-value of F-statistic */
+("Log-likelihood"),      /* 22: */
+("Akaike criterion"),    /* 22: Akaike Information Criterion */
+("Schwarz criterion"),   /* 22: Schwarz Bayesian Criterion */
+("Hannan-Quinn"),        /* 22: Hannan-Quinn Criterion */
+("rho"),                 /* 22: 1st-order autocorrelation coeff. */
+("Durbin-Watson")        /* 22: Durbin-Watson statistic */
+("Uncentered R-squared"); /* 22: */
+("Centered R-squared");  /* 22: */
+("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
+("Smallest eigenvalue"); /* 22: */
+("Mean of innovations"); /* 22: Mean of ARMA innovations */
+("S.D. of innovations"); /* 22: Std. dev. of ARMA innovations */
+("Median depend. var");  /* 22: Median of dependent variable */
+("Sum absolute resid");  /* 22: Sum of absolute residuals */
+("Censored obs"); /* 22: Number of censored observations */
