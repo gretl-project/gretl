@@ -2842,17 +2842,16 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
 	print_middle_table_end(prn);
 	goto close_format;
-    }    
+    } else if (pmod->ci == MPOLS) {
+	mpols_middle_table(pmod, pdinfo, prn);
+	goto pval_max;
+    }
 
     /* end special cases not using compact */
 
     if (opt & OPT_S) {
 	/* --simple-print */
 	goto close_format;
-    }
-
-    if (pmod->ci == MPOLS) {
-	mpols_middle_table(pmod, pdinfo, prn);
     }
 
     if (weighted_model(pmod)) {
