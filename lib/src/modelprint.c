@@ -217,7 +217,7 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void print_arbond_AR_test (double z, int order, PRN *prn)
+static void print_panel_AR_test (double z, int order, PRN *prn)
 {
     double pv = normal_pvalue_2(z);
 
@@ -235,7 +235,7 @@ static void print_arbond_AR_test (double z, int order, PRN *prn)
 	char numstr[32];
 
 	tex_float_string(z, 4, numstr);
-	pprintf(prn, " $z$ = %s [%.4f]", numstr, pv);
+	pprintf(prn, " & $z$ = %s [%.4f]", numstr, pv);
     } else {
 	pprintf(prn, " z = %g [%.4f]", z, pv);
     }
@@ -281,7 +281,7 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 
     if (tex_format(prn)) {
 	pprintf(prn, "%s: ", _(texstrs[j]));
-	pprintf(prn, "$\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
+	pprintf(prn, " & $\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
 	if (pmod->ci == GMM) {
 	    pputs(prn, "  ");
@@ -343,14 +343,18 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
 
     ensure_vsep(prn);
 
+    if (tex_format(prn)) {
+	pputs(prn, "\\begin{tabular}{ll}\n");
+    }
+
     x = gretl_model_get_double(pmod, "AR1");
     if (!na(x)) {
-	print_arbond_AR_test(x, 1, prn);
+	print_panel_AR_test(x, 1, prn);
     }
 
     x = gretl_model_get_double(pmod, "AR2");
     if (!na(x)) {
-	print_arbond_AR_test(x, 2, prn);
+	print_panel_AR_test(x, 2, prn);
     }
 
     x = gretl_model_get_double(pmod, "sargan");
@@ -363,7 +367,11 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
 	print_GMM_chi2_test(pmod, x, AB_WALD, prn);
     }
 
-    gretl_prn_newline(prn);
+    if (tex_format(prn)) {
+	pputs(prn, "\\end{tabular}\n");
+    } else {
+	gretl_prn_newline(prn);
+    }
 }
 
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
@@ -4284,7 +4292,7 @@ static void print_binary_statistics (const MODEL *pmod,
 	}
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f [%.4f]\\\\\n",
+	    pprintf(prn, "%s: $\\chi^2(%d)$ = %.3f [%.4f]\\\\\n",
 		    I_("Likelihood ratio test"), 
 		    i, model_chisq, chisq_cdf_comp(i, model_chisq));
 	}

@@ -2955,7 +2955,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_NORMAL_CHISQ:
 	if (tex) {
-	    sprintf(str, "$\\chi^2_2$ = %g", test->value); 
+	    sprintf(str, "$\\chi^2(2)$ = %g", test->value); 
 	} else {
 	    sprintf(str, "%s(2) = %g", _("Chi-square"), test->value);
 	}
@@ -2963,7 +2963,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
 	if (tex) {
-	    sprintf(str, "$\\chi^2_%d$ = %g", test->dfn, test->value); 
+	    sprintf(str, "$\\chi^2(%d)$ = %g", test->dfn, test->value); 
 	} else {
 	    sprintf(str, "%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
 	}
@@ -2987,7 +2987,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 
     switch (test->teststat) {
     case GRETL_STAT_LM:
-	if (tex) sprintf(str, "$P$($\\chi^2_{%d} >$ %g) = %g", 
+	if (tex) sprintf(str, "$P$($\\chi^2(%d) >$ %g) = %g", 
 			 test->dfn, test->value, test->pvalue);
 	else sprintf(str, "P(Chi-Square(%d) > %g) = %g", 
 		     test->dfn, test->value, test->pvalue);
