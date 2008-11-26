@@ -671,7 +671,7 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 
     if (digits == -4) {
 	if (x < .0001 && x > 0.0) {
-	    sprintf(targ, "%#.3G", x);
+	    sprintf(targ, "%#.3g", x);
 	    digits = 3;
 	} else {
 	    sprintf(targ, "%.4f", x);
@@ -681,7 +681,7 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 	/* let's not print non-zero values for numbers smaller than
 	   machine zero */
 	x = screen_zero(x);
-	sprintf(targ, "%#.*G", digits, x);
+	sprintf(targ, "%#.*g", digits, x);
     }
 
     gretl_fix_exponent(targ);

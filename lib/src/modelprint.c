@@ -283,6 +283,9 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 	pprintf(prn, "%s: ", _(texstrs[j]));
 	pprintf(prn, "$\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
+	if (pmod->ci == GMM) {
+	    pputs(prn, "  ");
+	}
 	pprintf(prn, "%s: ", _(strs[j]));
 	pprintf(prn, "%s(%d) = %g [%.4f]", _("Chi-square"), df, x, pv);
     } else {
@@ -325,16 +328,20 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
 
     ensure_vsep(prn);
 
-    if (pmod->ci == GMM) {
-	GMM_crit_line(pmod, prn);
-	x = gretl_model_get_double(pmod, "J_test");
-	if (!na(x)) {
-	    print_GMM_chi2_test(pmod, x, J_TEST, prn);
-	}
-	return;
+    GMM_crit_line(pmod, prn);
+    x = gretl_model_get_double(pmod, "J_test");
+    if (!na(x)) {
+	print_GMM_chi2_test(pmod, x, J_TEST, prn);
     }
 
-    /* now arbond */
+    gretl_prn_newline(prn);
+}
+
+static void print_DPD_stats (const MODEL *pmod, PRN *prn)
+{
+    double x;
+
+    ensure_vsep(prn);
 
     x = gretl_model_get_double(pmod, "AR1");
     if (!na(x)) {
@@ -355,6 +362,8 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
     if (!na(x)) {
 	print_GMM_chi2_test(pmod, x, AB_WALD, prn);
     }
+
+    gretl_prn_newline(prn);
 }
 
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
@@ -383,6 +392,7 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 	if (!na(theta)) {
 	    pprintf(prn, "%s = %g\n", _("theta used for quasi-demeaning"), theta);
 	}
+	pputc(prn, '\n');
     } else if (tex_format(prn)) {
 	char xstr[32];
 
@@ -2189,7 +2199,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     int tex = tex_format(prn);
     int csv = csv_format(prn);
     char fstr[32];
-    static const char *key[] = {
+    const char *key[] = {
 	N_("Mean dependent var"),  /* 22: Mean of dependent variable */
 	N_("S.D. dependent var"),  /* 22: Standard deviation of dependent var */
 	N_("Sum squared resid"),   /* 22: Sum of squared residuals */
@@ -2555,8 +2565,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_heckit_stats(pmod, prn);
     } else if (random_effects_model(pmod)) {
 	panel_variance_lines(pmod, prn);
-    } else if (pmod->ci == GMM || pmod->ci == ARBOND) {
+    } else if (pmod->ci == GMM) {
 	print_GMM_stats(pmod, prn);
+    } else if (pmod->ci == ARBOND) {
+	print_DPD_stats(pmod, prn);
     } else if (binary) {
 	print_binary_statistics(pmod, pdinfo, prn);
     } else if (pmod->ci == TSLS && plain_format(prn)) {
@@ -4137,7 +4149,8 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 
     if (plain_format(prn)) {
 	pprintf(prn, "%s: %d\n", _("Total observations"), totobs);
-	pprintf(prn, "%s: %d (%.1f%%)\n", _("Censored observations"), cenobs, cenpc);
+	pprintf(prn, "%s: %d (%.1f%%)\n", _("Censored observations"), 
+		cenobs, cenpc);
 	pprintf(prn, "%s = %.*g, ", _("sigma"), GRETL_DIGITS, pmod->sigma);
 	if (na(pmod->rho)) {
 	    pprintf(prn, "%s = NA\n", _("rho"));
@@ -4147,7 +4160,8 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s: %d\n", I_("Total observations"), totobs);
-	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenobs, cenpc);
+	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), 
+		cenobs, cenpc);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
 	if (!na(pmod->rho)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("rho"), pmod->rho);
@@ -4156,11 +4170,12 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 	char xstr[32];
 
 	pprintf(prn, "%s: %d \\\\\n", _("Total observations"), totobs);
-	pprintf(prn, "%s: %d (%.1f%%) \\\\\n", _("Censored observations"), cenobs, cenpc);
-	pprintf(prn, "$\\hat{\\sigma}$ = %g \\\\\n", 
+	pprintf(prn, "%s: %d (%.1f\\%%) \\\\\n", _("Censored observations"), 
+		cenobs, cenpc);
+	pprintf(prn, "$\\hat{\\sigma}$ = %s \\\\\n", 
 		tex_sprint_double(pmod->sigma, xstr));
 	if (!na(pmod->rho)) {
-	    pprintf(prn, "$\\hat{\\rho}$ = %g \\\\\n", 
+	    pprintf(prn, "$\\hat{\\rho}$ = %s \\\\\n", 
 		    tex_sprint_double(pmod->rho, xstr));
 	}
     }

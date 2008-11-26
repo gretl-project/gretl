@@ -357,16 +357,12 @@ void tex_print_double (double x, PRN *prn)
 
 char *tex_sprint_double (double x, char *numstr)
 {
-    char tmp[32];
-
     x = screen_zero(x);
 
-    sprintf(tmp, "%#.*g", GRETL_DIGITS, x);
-
     if (x < 0.0) {
-	sprintf(numstr, "$-$%s", tmp + 1);
+	sprintf(numstr, "$-$%#.*g", GRETL_DIGITS, -x);
     } else {
-	strcpy(numstr, tmp);
+	sprintf(numstr, "%#.*g", GRETL_DIGITS, x);
     }
 
     return numstr;

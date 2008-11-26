@@ -3013,7 +3013,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_HARVEY_COLLIER:
 	if (tex) {
-	    sprintf(str, "$P$($t_{%d} >$ %g)  = %g", 
+	    sprintf(str, "$P$($t_{%d} >$ %g) = %g", 
 		    test->dfn, test->value, test->pvalue);
 	} else {
 	    sprintf(str, "P(t(%d) > %g) = %g", 
