@@ -51,7 +51,9 @@ char *tex_escape (char *targ, const char *src);
 
 char *tex_escape_special (char *targ, const char *src);
 
-char *tex_dcolumn_double (double x, char *numstr);
+char *tex_rl_float (double x, char *s, int dig);
+
+char *tex_rl_double (double x, char *s);
 
 void tex_print_double (double x, PRN *prn);
 

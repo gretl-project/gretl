@@ -36,6 +36,7 @@ struct model_coeff_ {
     double hi;
     int show_pval;
     int df_pval;
+    int multi;
     char name[MC_NAMELEN];
 };
 

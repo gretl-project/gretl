@@ -17,8 +17,6 @@
  * 
  */
 
-/* modelprint.c */ 
-
 #include "libgretl.h"
 #include "libset.h"
 #include "system.h"
@@ -28,22 +26,16 @@
 
 #include <glib.h>
 
-#define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || \
-                       a == AUX_AR || a == AUX_VAR || a == AUX_HET_1 || \
-		       a == AUX_BP)
-
 static int 
 plain_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 static int 
 alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
-static void depvarstats (const MODEL *pmod, PRN *prn);
 static void alt_print_rho_terms (const MODEL *pmod, PRN *prn);
 static void print_binary_statistics (const MODEL *pmod, 
 				     const DATAINFO *pdinfo,
 				     PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_heckit_stats (const MODEL *pmod, PRN *prn);
-static void print_ll (const MODEL *pmod, PRN *prn);
 
 #define RTFTAB "\\par \\ql \\tab "
 
@@ -74,6 +66,7 @@ void model_coeff_init (model_coeff *mc)
     mc->lo = mc->hi = NADBL;
     mc->show_pval = 1;
     mc->df_pval = 0;
+    mc->multi = 0;
     mc->name[0] = '\0';
 }
 
@@ -100,19 +93,7 @@ static void plain_print_double (char *s, int d, double x, PRN *prn)
     }
 }
 
-static void plain_print_double_f (char *s, int d, double x, PRN *prn)
-{
-    if (x < 0 && gretl_print_supports_utf(prn)) {
-	char tmp[32];
-
-	*s = '\0';
-	strcat(s, "−"); /* U+2212: minus */
-	sprintf(tmp, "%.*f", d, -x);
-	strcat(s, tmp);
-    } else {
-	sprintf(s, "%.*f", d, x);
-    }
-}
+/* for use when printing a user-defined model */
 
 static void print_model_stats_table (const double *stats, 
 				     const char **names, 
@@ -125,7 +106,7 @@ static void print_model_stats_table (const double *stats,
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
 	pputs(prn, "\\medskip\n\n");
-	pputs(prn, "\\begin{tabular}{lD{.}{.}{-1}}\n");
+	pputs(prn, "\\begin{tabular}{lr@{.}l\n");
     }
 
     for (i=0; i<ns; i++) {
@@ -134,7 +115,7 @@ static void print_model_stats_table (const double *stats,
 	    pprintf(prn, "  %s = %s\n", names[i], tmp1);
 	} else if (tex_format(prn)) {
 	    tex_escape_special(tmp1, names[i]);
-	    tex_dcolumn_double(stats[i], tmp2);
+	    tex_rl_double(stats[i], tmp2);
 	    pprintf(prn, "%s & %s \\\\\n", tmp1, tmp2);
 	} else if (rtf_format(prn)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", names[i], stats[i]);
@@ -146,40 +127,6 @@ static void print_model_stats_table (const double *stats,
     if (tex_format(prn)) {
 	pputs(prn, "\\end{tabular}");
     }
-}
-
-static void depvarstats (const MODEL *pmod, PRN *prn)
-{
-    if (na(pmod->ybar) || na(pmod->sdy)) {
-	return;
-    }
-
-    if (plain_format(prn)) {
-	char mstr[32];
-
-	plain_print_double(mstr, XDIGITS(pmod), pmod->ybar, prn);
-	pprintf(prn, "  %s = %s\n", _("Mean of dependent variable"), mstr);
-	pprintf(prn, "  %s = %.*g\n", _("Standard deviation of dep. var."), 
-		XDIGITS(pmod), pmod->sdy);
-    } else if (tex_format(prn)) {
-	char x1str[32], x2str[32];
-
-	tex_dcolumn_double(pmod->ybar, x1str);
-	tex_dcolumn_double(pmod->sdy, x2str);
-	pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
-		I_("Mean of dependent variable"), x1str,
-		I_("S.D. of dependent variable"), x2str);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Mean of dependent variable"), 
-		pmod->ybar);
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard deviation of dep. var."), 
-		pmod->sdy);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Mean of dependent variable"), 
-		prn_delim(prn), pmod->ybar);
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Standard deviation of dep. var."), 
-		prn_delim(prn), pmod->sdy);
-    }	
 }
 
 static void ensure_vsep (PRN *prn)
@@ -209,172 +156,24 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-static int essline (const MODEL *pmod, PRN *prn)
-{
-    if (na(pmod->ess)) {
-	return 1;
-    }
-
-    if (pmod->ess < 0) {
-	if (plain_format(prn)) {
-	    pprintf(prn, _("Error sum of squares (%g) is not > 0"), pmod->ess);
-	    pputs(prn, "\n\n");
-	}
-	return 1;
-    }
-
-    if (plain_format(prn)) {    
-	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
-		XDIGITS(pmod), pmod->ess);
-	pprintf(prn, "  %s = %.*g\n", _("Standard error of the regression"), 
-		XDIGITS(pmod), pmod->sigma);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
-		pmod->ess);
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of the regression"), 
-		pmod->sigma);
-    } else if (tex_format(prn)) {
-	char x1str[32], x2str[32];
-
-	tex_dcolumn_double(pmod->ess, x1str);
-	tex_dcolumn_double(pmod->sigma, x2str);
-	pprintf(prn, "%s & %s \\\\\n%s ($\\hat{\\sigma}$) & %s \\\\\n",
-		I_("Sum of squared residuals"), x1str,
-		I_("Standard error of the regression"), x2str);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of squared residuals"), 
-		prn_delim(prn), pmod->ess);
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Standard error of the regression"), 
-		prn_delim(prn), pmod->sigma);
-    }	
-
-    return 0;
-}
-
 static void rsqline (const MODEL *pmod, PRN *prn)
 {
-    const char *plainrsq[] = {
-	N_("Unadjusted R-squared"),
-	N_("Uncentered R-squared"),
-	N_("Centered R-squared")
-    };
-    const char *texrsq[] = {
-	N_("Unadjusted $R^2$"),
-	N_("Uncentered $R^2$"),
-	N_("Centered $R^2$")
-    };
-    const char *rtfrsq[] = {
-	N_("Unadjusted R{\\super 2}"),
-	N_("Uncentered R{\\super 2}"),
-	N_("Centered R{\\super 2}")
-    };
-    int ridx = 0;
-    int adjr2 = 1;
-    int fdig;
-    double cR2;
-
-    if (na(pmod->rsq)) {
-	return;
-    }
-
-    if (!plain_format(prn) && pmod->ci == TSLS) {
-	return;
-    }
-
-    if (NO_RBAR_SQ(pmod->aux) || na(pmod->adjrsq)) {
-	adjr2 = 0;
-    }
-
-    if (gretl_model_get_int(pmod, "uncentered")) {
-	ridx = 1;
-    }
-
-    cR2 = gretl_model_get_double(pmod, "centered-R2");
-
-    fdig = FDIGITS(pmod);
-
-    if (plain_format(prn)) { 
-	pprintf(prn, "  %s = %.*f\n", _(plainrsq[ridx]), fdig, pmod->rsq);
-	if (adjr2) {
-	    char r2[32];
-
-	    plain_print_double_f(r2, fdig, pmod->adjrsq, prn);
-	    pprintf(prn, "  %s = %s\n", _("Adjusted R-squared"), r2);
-	}
-	if (!na(cR2)) {
-	    pprintf(prn, "  %s = %.*f\n", _(plainrsq[2]), fdig, cR2);
-	}
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %.*f\n", I_(rtfrsq[ridx]), fdig, pmod->rsq);
-	if (adjr2) {
-	    pprintf(prn, RTFTAB "%s = %.*f\n", I_("Adjusted R{\\super 2}"),  
-		    fdig, pmod->adjrsq);
-	}
-	if (!na(cR2)) {
-	    pprintf(prn, RTFTAB "%s = %.*f\n", I_(rtfrsq[2]), fdig, cR2);
-	}
-    } else if (tex_format(prn)) {  
-	char r2[32];
-
-	tex_dcolumn_double(pmod->rsq, r2);
-	pprintf(prn, "%s & %s \\\\\n", I_(texrsq[ridx]), r2);
-	if (adjr2) {
-	    tex_dcolumn_double(pmod->adjrsq, r2);
-	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
-	}
-	if (!na(cR2)) {
-	    tex_dcolumn_double(cR2, r2);
-	    pprintf(prn, "%s & %s \\\\\n", I_(texrsq[2]), r2);
-	}
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15f\n", I_(plainrsq[ridx]), 
-		prn_delim(prn), pmod->rsq);
-	if (adjr2) {
-	    pprintf(prn, "\"%s\"%c%.15f\n", I_("Adjusted R-squared"),  
-		    prn_delim(prn), pmod->adjrsq);
-	}
-	if (!na(cR2)) {
-	    pprintf(prn, "\"%s\"%c%.15f\n", I_(plainrsq[2]), 
-		    prn_delim(prn), cR2);
-	}
-    }	
-
-    if (plain_format(prn) && pmod->ci == PANEL) {
-	double wr2 = gretl_model_get_double(pmod, "rsq_within");
-
-	if (!na(wr2)) {
-	    pprintf(prn, "  %s = %.*f\n", _("Within R-squared"), 
-		    fdig, wr2);
-	}
+    if (!na(pmod->rsq) && plain_format(prn)) {
+	pprintf(prn, "  %s = %f\n", _("Unadjusted R-squared"), pmod->rsq);
     }
 }
 
 static void rssline (const MODEL *pmod, PRN *prn)
 {
-    double RSS;
-
-    if (na(pmod->ess) || na(pmod->tss)) {
-	return;
+    if (!na(pmod->ess) && !na(pmod->tss)) {
+	if (plain_format(prn)) { 
+	    pprintf(prn, "  %s = %.*g\n", _("Explained sum of squares"), 
+		XDIGITS(pmod), pmod->tss - pmod->ess);
+	} 
     }
-
-    RSS = pmod->tss - pmod->ess;
-
-    if (plain_format(prn)) { 
-	pprintf(prn, "  %s = %.*g\n", _("Explained sum of squares"), 
-		XDIGITS(pmod), RSS);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Explained sum of squares"), 
-		RSS);
-    } else if (tex_format(prn)) {  
-	char r2[32];
-
-	tex_dcolumn_double(RSS, r2);
-	pprintf(prn, "%s = %s \\\\\n", I_("Explained sum of squares"), r2);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Explained sum of squares"), 
-		prn_delim(prn), RSS);
-    }	
 }
+
+#if 0
 
 static const char *aic_str = N_("Akaike information criterion");
 static const char *bic_str = N_("Schwarz Bayesian criterion");
@@ -385,49 +184,7 @@ static const char *aic_abbrev = N_("AIC");
 static const char *bic_abbrev = N_("BIC");
 static const char *hqc_abbrev = N_("HQC");
 
-static void info_stats_lines (const MODEL *pmod, PRN *prn)
-{
-    const double *crit = pmod->criterion;
-    char cval[32];
-
-    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
-	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR ||
-	pmod->aux == AUX_HET_1 || pmod->aux == AUX_BP) {
-	return;
-    }
-
-    if (na(crit[C_AIC]) || na(crit[C_BIC]) || na(crit[C_HQC]) ||
-	pmod->aux == AUX_VAR) {
-	return;
-    }
-
-    if (plain_format(prn)) { 
-	plain_print_double(cval, XDIGITS(pmod), crit[C_AIC], prn);
-	pprintf(prn, "  %s (%s) = %s\n", _(aic_str), _(aic_abbrev), cval);
-	plain_print_double(cval, XDIGITS(pmod), crit[C_BIC], prn);
-	pprintf(prn, "  %s (%s) = %s\n", _(bic_str), _(bic_abbrev), cval);
-	plain_print_double(cval, XDIGITS(pmod), crit[C_HQC], prn);
-	pprintf(prn, "  %s (%s) = %s\n", _(hqc_str), _(hqc_abbrev), cval);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_(aic_str), crit[C_AIC]);
-	pprintf(prn, RTFTAB "%s = %g\n", I_(bic_str), crit[C_BIC]);
-	pprintf(prn, RTFTAB "%s = %g\n", I_(hqc_str), crit[C_HQC]);
-    } else if (tex_format(prn)) {  
-	tex_dcolumn_double(crit[C_AIC], cval);
-	pprintf(prn, "%s & %s \\\\\n", I_(aic_str), cval);
-	tex_dcolumn_double(crit[C_BIC], cval);
-	pprintf(prn, "%s & %s \\\\\n", I_(bic_str), cval);
-	tex_dcolumn_double(crit[C_HQC], cval);
-	pprintf(prn, "%s & %s \\\\\n", I_(tex_hqc_str), cval);
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s (%s)\"%c%.15g\n", I_(aic_str), I_(aic_abbrev),
-		prn_delim(prn), crit[C_AIC]);
-	pprintf(prn, "\"%s (%s)\"%c%.15g\n", I_(bic_str), I_(bic_abbrev),
-		prn_delim(prn), crit[C_BIC]);
-	pprintf(prn, "\"%s (%s)\"%c%.15g\n", I_(hqc_str), I_(hqc_abbrev),
-		prn_delim(prn), crit[C_HQC]);
-    }	
-}
+#endif
 
 static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 {
@@ -524,7 +281,7 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 
     if (tex_format(prn)) {
 	pprintf(prn, "%s: ", _(texstrs[j]));
-	pprintf(prn, "$\\chi^2(%d)$ = %g & [%.4f]", df, x, pv);
+	pprintf(prn, "$\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
 	pprintf(prn, "%s: ", _(strs[j]));
 	pprintf(prn, "%s(%d) = %g [%.4f]", _("Chi-square"), df, x, pv);
@@ -550,9 +307,9 @@ static int GMM_crit_line (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char x1[32], x2[32];
 
-	tex_dcolumn_double(Q, x1);
-	tex_dcolumn_double(TQ, x2);
-	pprintf(prn, "%s, $Q$ & %s ($TQ$ = %s)\\\\\n",
+	tex_float_string(Q, 6, x1);
+	tex_float_string(TQ, 6, x2);
+	pprintf(prn, "%s, $Q$ = %s ($TQ$ = %s)\\\\\n",
 		I_("GMM criterion"), x1, x2);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("GMM criterion"), 
@@ -567,10 +324,6 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
     double x;
 
     ensure_vsep(prn);
-
-    if (tex_format(prn)) {
-	pputs(prn, "\\begin{tabular}{ll}\n");
-    }
 
     if (pmod->ci == GMM) {
 	GMM_crit_line(pmod, prn);
@@ -612,32 +365,6 @@ static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void print_f_pval_str (double pval, PRN *prn)
-{
-    int utf = plain_format(prn);
-
-    if (utf || rtf_format(prn)) {
-	if (pval < .00001) {
-	    pprintf(prn, " (%s < %.5f)\n", 
-		    (utf)? _("p-value") : I_("p-value"), 0.00001);
-	} else {
-	    pprintf(prn, " (%s = %.3g)\n", 
-		    (utf)? _("p-value") : I_("p-value"), pval);
-	}
-    } else if (tex_format(prn)) {
-	if (pval < .00001) {
-	    return;
-	} else {
-	    char pstr[32];
-
-	    tex_dcolumn_double(pval, pstr);
-	    pprintf(prn, "%s $F()$ & %s \\\\\n", I_("p-value for"), pstr);
-	}
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%g\n", I_("p-value"), prn_delim(prn), pval);
-    }
-}
-
 static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 {
     double ws2 = gretl_model_get_double(pmod, "within-variance");
@@ -659,13 +386,13 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char xstr[32];
 
-	tex_dcolumn_double(ws2, xstr);
-	pprintf(prn, "$\\hat{\\sigma}^2_{\\varepsilon}$ = %g \\\\\n", ws2);
-	tex_dcolumn_double(bs2, xstr);
-	pprintf(prn, "$\\hat{\\sigma}^2_u$ & %s \\\\\n", xstr);
+	tex_float_string(ws2, 6, xstr);
+	pprintf(prn, "$\\hat{\\sigma}^2_{\\varepsilon}$ = %s \\\\\n", xstr);
+	tex_float_string(bs2, 6, xstr);
+	pprintf(prn, "$\\hat{\\sigma}^2_u$ = %s \\\\\n", xstr);
 	if (!na(theta)) {
-	    tex_dcolumn_double(theta, xstr);
-	    pprintf(prn, "$\\theta$ & %s \\\\\n", xstr);
+	    tex_float_string(theta, 6, xstr);
+	    pprintf(prn, "$\\theta$ = %s \\\\\n", xstr);
 	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g", I_("'Within' variance"), ws2);
@@ -683,117 +410,6 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 		    d, theta);
 	}
     }	
-}
-
-static void Fline (const MODEL *pmod, PRN *prn)
-{
-    if (pmod->ifc && pmod->ncoeff <= 2) {
-	if (plain_format(prn)) {
-	    pprintf(prn, "  %s = %d\n", _("Degrees of freedom"), pmod->dfd);
-	} else if (tex_format(prn)) {
-	    pprintf(prn, "%s & %d \\\\\n", I_("Degrees of freedom"), pmod->dfd);
-	} else if (rtf_format(prn)) {
-	    pprintf(prn, RTFTAB "%s = %d\n", I_("Degrees of freedom"), pmod->dfd);
-	} else if (csv_format(prn)) {
-	    pprintf(prn, "\"%s\"%c%d\n", I_("Degrees of freedom"), 
-		    prn_delim(prn), pmod->dfd);
-	}
-	return;
-    }
-
-    if (plain_format(prn)) {
-	char tmp[32];
-
-	sprintf(tmp, "%s (%d, %d)", _("F-statistic"), pmod->dfn, pmod->dfd);
-	if (na(pmod->fstt)) {
-	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
-	} else {
-	    pprintf(prn, "  %s = %.*g", tmp, XDIGITS(pmod), pmod->fstt);
-	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
-	}
-    } else if (tex_format(prn)) {
-	if (na(pmod->fstt)) {
-	    pprintf(prn, "$F(%d, %d)$ & \\multicolumn{1}{c}{\\rm %s} \\\\\n", 
-		    pmod->dfn, pmod->dfd, I_("undefined"));
-	} else {
-	    char x1str[32];
-
-	    tex_dcolumn_double(pmod->fstt, x1str);
-	    pprintf(prn, "$F(%d, %d)$ & %s \\\\\n", pmod->dfn, pmod->dfd, x1str);
-	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
-	}
-    } else if (rtf_format(prn)) {
-	char tmp[32];
-
-	sprintf(tmp, "%s (%d, %d)", I_("F-statistic"), pmod->dfn, pmod->dfd);
-	if (na(pmod->fstt)) {
-	    pprintf(prn, RTFTAB "%s %s\n", tmp, I_("undefined"));
-	} else {
-	    pprintf(prn, RTFTAB "%s = %g", tmp, pmod->fstt);
-	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
-	}
-    } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s (%d, %d)\"%c", I_("F-statistic"), pmod->dfn, pmod->dfd,
-		prn_delim(prn));
-	if (na(pmod->fstt)) {
-	    pprintf(prn, "\"%s\"\n", I_("undefined"));
-	} else {
-	    pprintf(prn, "%.15g%c", pmod->fstt, prn_delim(prn));
-	    print_f_pval_str(snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt), prn);
-	}
-    }	
-}
-
-static void dwline (const MODEL *pmod, PRN *prn)
-{
-    if (na(pmod->dw) && na(pmod->rho)) {
-	return;
-    }
-
-    if (plain_format(prn)) {
-	if (!na(pmod->dw)) {
-	    pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
-		    XDIGITS(pmod), pmod->dw);
-	}
-	if (!na(pmod->rho)) {
-	    char xstr[32];
-
-	    plain_print_double(xstr, XDIGITS(pmod), pmod->rho, prn);
-	    pprintf(prn, "  %s = %s\n", _("First-order autocorrelation coeff."), 
-		    xstr);
-	}
-    } else if (tex_format(prn)) {
-	char xstr[32];
-
-	if (!na(pmod->dw)) {
-	    tex_dcolumn_double(pmod->dw, xstr);
-	    pprintf(prn, "%s & %s \\\\\n",
-		    I_("Durbin--Watson statistic"), xstr); 
-	}
-	if (!na(pmod->rho)) {
-	    tex_dcolumn_double(pmod->rho, xstr);
-	    pprintf(prn, "%s & %s \\\\\n",
-		    I_("First-order autocorrelation coeff."), xstr);
-	}
-    } else if (rtf_format(prn)) {
-	if (!na(pmod->dw)) {
-	    pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin-Watson statistic"), 
-		    pmod->dw);
-	}
-	if (!na(pmod->rho)) {
-	    pprintf(prn, RTFTAB "%s = %g\n", I_("First-order autocorrelation coeff."), 
-		    pmod->rho);
-	} 
-    } else if (csv_format(prn)) {
-	if (!na(pmod->dw)) {
-	    pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin-Watson statistic"), 
-		    prn_delim(prn), pmod->dw);
-	}
-	if (!na(pmod->rho)) {
-	    pprintf(prn, "\"%s\"%c%.15g\n", I_("First-order autocorrelation coeff."), 
-		    prn_delim(prn), pmod->rho);
-	}
-    }
 }
 
 static double durbins_h (const MODEL *pmod)
@@ -1051,7 +667,7 @@ static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char x1str[32];
 
-	tex_dcolumn_double(F, x1str);
+	tex_float_string(F, 6, x1str);
 	pprintf(prn, "First-stage $F(%d, %d)$ = %s \\\\\n", dfn, dfd, x1str);
     } else if (rtf_format(prn)) {
 	pprintf(prn, "%s (%d, %d) = %g\n", I_("First-stage F-statistic"), 
@@ -1956,7 +1572,7 @@ static void model_format_start (PRN *prn)
 	if (tex_doc_format(prn)) {
 	    gretl_tex_preamble(prn, 0);
 	} else {
-	    pputs(prn, "%% You'll need to \\usepackage{dcolumn}\n\n");
+	    pputs(prn, "%% You may need to \\usepackage{dcolumn}\n\n");
 	}
 	pputs(prn, "\\begin{center}\n");
     } else if (rtf_format(prn)) {
@@ -2060,8 +1676,10 @@ static void alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
 	    cols[4] = N_("Upper");
 	} else {
 	    cols[2] = (tex_format(prn))? N_("Std.\\ Error") : N_("Std. Error");
-	    cols[3] = tlabel;
-	    cols[4] = (slopes)? N_("Slope") : N_("p-value");
+	    if (!mp) {
+		cols[3] = tlabel;
+		cols[4] = (slopes)? N_("Slope") : N_("p-value");
+	    }
 	}
 
 	if (tex_format(prn)) {
@@ -2070,6 +1688,9 @@ static void alt_print_coeff_table_start (const MODEL *pmod, int ci, PRN *prn)
 	    if (slopes) {
 		tabopt |= OPT_B; /* "binary" */
 	    }
+	    if (mp) {
+		tabopt |= OPT_M; /* multiple precision */
+	    }	    
 	    tex_coeff_table_start(cols, tabopt, prn);
 	    return;
 	}   
@@ -2126,29 +1747,6 @@ static void model_format_end (PRN *prn)
 	pputs(prn, "\n}\n");
     }
 } 
-
-static void print_middle_table_start (PRN *prn)
-{
-    if (tex_format(prn)) {
-	char pt = get_local_decpoint();
-
-	pprintf(prn, 
-		"\\vspace{1em}\n\n"
-		"\\begin{tabular}{lD{%c}{%c}{-1}}\n",
-		pt, pt);
-    }
-}
-
-static void print_middle_table_end (PRN *prn)
-{
-    if (tex_format(prn)) {
-	pputs(prn, "\\end{tabular}\n\n");
-    } else if (rtf_format(prn)) {
-	pputs(prn, "\\par\n");
-    } else {
-	pputc(prn, '\n');
-    }
-}
 
 static void addconst_message (const MODEL *pmod, PRN *prn)
 {
@@ -2301,33 +1899,6 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
     }
 }
 
-static void print_ll (const MODEL *pmod, PRN *prn)
-{
-    int lldig;
-
-    if (na(pmod->lnL)) {
-	return;
-    }
-
-    lldig = (pmod->ci == ARMA)? 8 : XDIGITS(pmod);
-
-    if (plain_format(prn)) {
-	char xstr[32];
-
-	plain_print_double(xstr, lldig, pmod->lnL, prn);
-	pprintf(prn, "  %s = %s\n", _("Log-likelihood"), xstr);
-	maybe_print_jll(pmod, lldig, prn);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,
-		pmod->lnL);
-    } else if (tex_format(prn)) {
-	char xstr[32];
-
-	tex_dcolumn_double(pmod->lnL, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
-    }
-}
-
 #define fixed_effects_model(m) (m->ci == PANEL && \
                                 gretl_model_get_int(m, "fixed-effects"))
 
@@ -2348,18 +1919,30 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 #define non_weighted_panel(m) (m->ci == PANEL && \
 			       !gretl_model_get_int(m, "unit-weights"))
 
+struct middletab {
+    const char **key; /* stats strings */
+    double *val;      /* stats values */
+    int minus;        /* variant of minus sign in use */
+    int mlen;         /* max length of translated string */
+    int ipos;         /* integer position in output */
+    int nls;          /* translation on? (0/1) */
+    int d;            /* CSV field delimiter */
+    int multi;        /* Using multiple precision? (0/1) */
+    char txt_fmt[36]; /* format for plain text output */
+};
+
 #ifdef ENABLE_NLS
 
-static int i18n_string_width (const char **S, double *x)
+static void set_mtab_string_width (struct middletab *mt)
 {
     int len, maxlen = 0;
     int i, j;
 
     for (i=0, j=0; i<7; i++, j+=2) {
-	if (!na(x[j])) {
-	    len = g_utf8_strlen(_(S[j]), -1);
+	if (!na(mt->val[j])) {
+	    len = g_utf8_strlen(_(mt->key[j]), -1);
 	    if (len > maxlen) maxlen = len;
-	    len = g_utf8_strlen(_(S[j+1]), -1);
+	    len = g_utf8_strlen(_(mt->key[j+1]), -1);
 	    if (len > maxlen) maxlen = len;
 	}
     }
@@ -2370,26 +1953,35 @@ static int i18n_string_width (const char **S, double *x)
 		maxlen);
     }
 
-    return maxlen;
-}
-
-static void prepare_format (char *fmt, const char *s1, const char *s2, 
-			    int maxlen)
-{
-    /* calculate bytes minus glyphs */
-    int d1 = strlen(_(s1)) - g_utf8_strlen(_(s1), -1);
-    int d2 = strlen(_(s2)) - g_utf8_strlen(_(s2), -1);
-
-    if (maxlen < 20) {
-	sprintf(fmt, "%%-%ds%%s   %%-%ds%%s\n", 20 + d1, 20 + d2);
-    } else if (maxlen < 23) {
-	sprintf(fmt, "%%-%ds%%s   %%-%ds%%s\n", maxlen + d1 + 1, maxlen + d2 + 1);
-    } else {
-	sprintf(fmt, "  %%-%ds  %%s\n  %%-%ds  %%s\n", maxlen + d1, maxlen + d2);
-    }
+    mt->mlen = maxlen;
 }
 
 #endif
+
+static void middletab_prepare_format (struct middletab *mt, int j)
+{
+    const char *s1 = mt->key[j];
+    const char *s2 = mt->key[j+1];
+    int d1 = 0, d2 = 0;
+    int len = mt->mlen;
+
+    if (mt->nls) {
+	/* calculate bytes minus glyphs */
+	d1 = strlen(_(s1)) - g_utf8_strlen(_(s1), -1);
+	d2 = strlen(_(s2)) - g_utf8_strlen(_(s2), -1);
+    } 
+
+    if (mt->multi) {
+	len = (len < 20)? 20 : len + 1;
+	sprintf(mt->txt_fmt, "  %%-%ds  %%s\n  %%-%ds  %%s\n", len + d1, len + d2);
+    } else if (len < 20) {
+	sprintf(mt->txt_fmt, "%%-%ds%%s   %%-%ds%%s\n", 20 + d1, 20 + d2);
+    } else if (len < 23) {
+	sprintf(mt->txt_fmt, "%%-%ds%%s   %%-%ds%%s\n", len + d1 + 1, len + d2 + 1);
+    } else {
+	sprintf(mt->txt_fmt, "  %%-%ds  %%s\n  %%-%ds  %%s\n", len + d1, len + d2);
+    }
+}
 
 static char *print_csv (char *s, double x)
 {
@@ -2405,23 +1997,36 @@ static char *print_csv (char *s, double x)
 enum {
     MINUS_HYPHEN,
     MINUS_UTF,
-    MINUS_TEX,
-    MINUS_RTF
+    MINUS_TEX
 };
 
 #define RSQ_POS 4
+
+static void mtab_numstart (char *s, double x, int minus)
+{
+    if (x < 0) {
+	if (minus == MINUS_UTF) {
+	    strcpy(s, "−"); /* U+2212: minus */
+	} else if (minus == MINUS_TEX) {
+	    strcpy(s, "$-$");
+	} else {
+	    strcpy(s, "-"); /* ASCII: use hyphen */
+	}
+    } else {
+	strcpy(s, " "); 
+    }
+}
 
 /* Try to pack as much as we can of a given number into a fixed width
    of 8 characters (a leading minus, if needed, is a ninth).
 */
 
-static char *print_eight (char *s, double *mstat, int i, int minus,
-			  int ipos)
+static char *print_eight (char *s, struct middletab *mt, int i)
 {
+    double ax, x = mt->val[i];
     char tmp[16];
-    double ax, x = mstat[i];
 
-    if (i == ipos) {
+    if (i == mt->ipos) {
 	sprintf(s, "%9d", (int) x);
 	return s;
     }    
@@ -2437,20 +2042,7 @@ static char *print_eight (char *s, double *mstat, int i, int minus,
 	return s;
     }
 
-    if (x < 0) {
-	if (minus == MINUS_UTF) {
-	    strcpy(s, "−"); /* U+2212: minus */
-	} else if (minus == MINUS_TEX) {
-	    strcpy(s, "$-$");
-	} else if (minus == MINUS_RTF) {
-	    s[0] = 0x96;
-	    s[1] = '\0';
-	} else {
-	    strcpy(s, "-"); /* ASCII: use hyphen */
-	}
-    } else {
-	strcpy(s, " "); 
-    }
+    mtab_numstart(s, x, mt->minus);
 
     ax = fabs(x);
 
@@ -2483,15 +2075,51 @@ static char *print_eight (char *s, double *mstat, int i, int minus,
     return s;
 } 
 
+static char *print_fifteen (char *s, double x, int minus)
+{
+    if (na(x)) {
+	strcpy(s, " NA");
+    } else if (minus == MINUS_TEX) {
+	char *p;
+
+	if (x < 0) {
+	    sprintf(s, "$-$%.15E", -x);
+	} else {
+	    sprintf(s, "%.15E", x);
+	}
+
+	if ((p = strstr(s, "E-")) != NULL) {
+	    char tmp[8];
+
+	    sprintf(tmp, "E--%s", p + 2);
+	    strcpy(p, tmp);
+	}
+    } else if (minus == MINUS_UTF) {
+	if (x < 0) {
+	    sprintf(s, "−%.15E", -x);
+	} else {
+	    sprintf(s, "% .15E", x);
+	}	
+    } else {
+	sprintf(s, "% .15E", x);
+    }
+
+    return s;
+} 
+
 #define RTF_MT_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                    "\\cellx2500\\cellx3800\\cellx4200\\cellx6700" \
                    "\\cellx8000\n"
 
 #define RTF_MT_FMT "\\intbl\\ql %s\\cell\\qr %s\\cell \\qc \\cell" \
                    "\\ql %s\\cell\\qr %s\\cell\\intbl\\row\n"
+
+#define RTF_MULTI_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+                      "\\cellx2500\\cellx5000\\\n"
+
+#define RTF_MULTI_FMT "\\intbl\\ql %s\\cell\\qr %s\\cell\\intbl\\row\n"
+
 #define TXT_MT_FMT "%-20s%s   %-20s%s\n"
-#define TEX_MT_FMT "%s & %s & %s & %s \\\\\n"
-#define CSV_MT_FMT "\"%s\"%c%s%c\"%s\"%c%s\n"
 
 enum {
     MIDDLE_REGULAR,
@@ -2499,20 +2127,69 @@ enum {
     MIDDLE_ORIG
 };
 
+static void middle_table_row (struct middletab *mt, int j, PRN *prn)
+{
+    const char *s1 = mt->key[j];
+    const char *s2 = mt->key[j+1];
+    char x1[48], x2[48];
+    int k = j + 1;
+
+    if (tex_format(prn)) {
+	if (mt->multi) {
+	    pprintf(prn, "%s & %s \\\\\n%s & %s \\\\\n",
+		    _(s1), print_fifteen(x1, mt->val[j], mt->minus),
+		    _(s2), print_fifteen(x2, mt->val[k], mt->minus));
+	} else {
+	    pprintf(prn, "%s & %s & %s & %s \\\\\n",
+		    _(s1), print_eight(x1, mt, j),
+		    _(s2), print_eight(x2, mt, k));
+	}
+    } else if (rtf_format(prn)) {
+	if (mt->multi) {
+	    pputs(prn, RTF_MULTI_ROW);
+	    pprintf(prn, RTF_MULTI_FMT, I_(s1), 
+		    print_fifteen(x1, mt->val[j], mt->minus));
+	    pputs(prn, RTF_MULTI_ROW);
+	    pprintf(prn, RTF_MULTI_FMT, I_(s2), 
+		    print_fifteen(x1, mt->val[k], mt->minus));
+	} else {
+	    pputs(prn, RTF_MT_ROW);
+	    pprintf(prn, RTF_MT_FMT, 
+		    I_(s1), print_eight(x1, mt, j),
+		    I_(s2), print_eight(x2, mt, k));
+	}
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%s%c\"%s\"%c%s\n",
+		_(s1), mt->d, print_csv(x1, mt->val[j]), mt->d,
+		_(s2), mt->d, print_csv(x2, mt->val[k]));
+    } else {
+	if (mt->nls || mt->multi) {
+	    middletab_prepare_format(mt, j);
+	}
+	if (mt->multi) {
+	    pprintf(prn, mt->txt_fmt, 
+		    _(s1), print_fifteen(x1, mt->val[j], mt->minus),
+		    _(s2), print_fifteen(x2, mt->val[k], mt->minus));
+	} else {
+	    pprintf(prn, mt->txt_fmt, 
+		    _(s1), print_eight(x1, mt, j),
+		    _(s2), print_eight(x2, mt, k));
+	}
+    }
+}
+
 /* print the block of statistics that appears beneath of the
    table of coefficients, standard errors, etc.
 */
 
-static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
+static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 {
     const char *note = N_("note on model statistics abbreviations here");
-    char txt_mt_fmt[36];
-    int d = 0, minus = MINUS_HYPHEN;
     int rtf = rtf_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
-    char x1[12], x2[12], fstr[32];
-    static const char *mstr[] = {
+    char fstr[32];
+    static const char *key[] = {
 	N_("Mean dependent var"),  /* 22: Mean of dependent variable */
 	N_("S.D. dependent var"),  /* 22: Standard deviation of dependent var */
 	N_("Sum squared resid"),   /* 22: Sum of squared residuals */
@@ -2528,7 +2205,7 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	N_("rho"),                 /* 22: 1st-order autocorrelation coeff. */
 	N_("Durbin-Watson")        /* 22: Durbin-Watson statistic */
     };
-    double mstat[14] = {
+    double val[14] = {
 	pmod->ybar,
 	pmod->sdy,
 	pmod->ess,
@@ -2544,29 +2221,38 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	pmod->rho,
 	pmod->dw
     };
+    struct middletab mtab;
+    int i, j;
+
+    mtab.mlen = 0;
+    mtab.d = 0;
+    mtab.minus = MINUS_HYPHEN;
+    mtab.ipos = -1;
 #ifdef ENABLE_NLS
-    int mlen = 20;
-    int nls_on = doing_nls();
+    mtab.nls = doing_nls();
+#else
+    mtab.nls = 0;
 #endif
-    int i, j, ipos = -1;
+
+    mtab.multi = (pmod->ci == MPOLS);
 
     if (tex) {
 	/* some special strings for TeX output */
-	minus = MINUS_TEX;
-	mstr[4] = "$R^2$";
-	mstr[5] = "Adjusted $R^2$";
-	mstr[7] = N_("P-value($F$)");
-	mstr[11] = "Hannan--Quinn";
-	mstr[12] = "$\\hat{\\rho}$";
-	mstr[13] = "Durbin--Watson";
+	mtab.minus = MINUS_TEX;
+	key[4] = "$R^2$";
+	key[5] = "Adjusted $R^2$";
+	key[7] = N_("P-value($F$)");
+	key[11] = "Hannan--Quinn";
+	key[12] = "$\\hat{\\rho}$";
+	key[13] = "Durbin--Watson";
     } else if (!rtf && gretl_print_supports_utf(prn)) {
 	/* print a 'real' minus sign? */
-	minus = MINUS_UTF;
+	mtab.minus = MINUS_UTF;
     }
 
-    if (pmod->aux == AUX_VECM) {
-	/* VECM equation: suppress F-test */
-	mstat[6] = mstat[7] = NADBL;
+    if (pmod->aux == AUX_VECM || pmod->aux == AUX_COINT) {
+	/* VECM equation or Engle-Granger test: suppress F-test */
+	val[6] = val[7] = NADBL;
     } else if (!na(pmod->fstt)) {
 	/* format F-stat and get its p-value */
 	if (tex) {
@@ -2574,26 +2260,26 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	} else {
 	    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
 	}
-	mstr[6] = fstr;
-	mstat[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+	key[6] = fstr;
+	val[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
     }
 
     /* special variants of R-squared */
     if (gretl_model_get_int(pmod, "uncentered")) {
-	mstr[4] = (tex)? N_("Uncentered $R^2$") : 
+	key[4] = (tex)? N_("Uncentered $R^2$") : 
 	    N_("Uncentered R-squared"); /* 22: */
-	mstr[5] = (tex)? N_("Centered $R^2$") : 
+	key[5] = (tex)? N_("Centered $R^2$") : 
 	    N_("Centered R-squared");  /* 22: */
-	mstat[5] = gretl_model_get_double(pmod, "centered-R2");
+	val[5] = gretl_model_get_double(pmod, "centered-R2");
     } else if (pmod->ci == POISSON || binary_model(pmod)) {
-	mstr[4] = (tex)? N_("McFadden $R^2$") : 
+	key[4] = (tex)? N_("McFadden $R^2$") : 
 	    N_("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
     }
 
     if (pmod->ci == ARBOND) {
 	for (i=0; i<14; i++) {
 	    if (i < 2 || i > 3) {
-		mstat[i] = NADBL;
+		val[i] = NADBL;
 	    }
 	}	
     } else if (pmod->aux == AUX_SYS) {
@@ -2601,62 +2287,61 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	if (liml_equation(pmod) && !gretl_model_get_int(pmod, "restricted")) {
 	    for (i=4; i<14; i++) {
 		if (i < 8 || i > 9) {
-		    mstat[i] = NADBL;
+		    val[i] = NADBL;
 		}
 	    }
-	    mstr[9] = N_("Smallest eigenvalue"); /* 22: */
-	    mstat[9] = gretl_model_get_double(pmod, "lmin");
+	    key[9] = N_("Smallest eigenvalue"); /* 22: */
+	    val[9] = gretl_model_get_double(pmod, "lmin");
 	} else {
 	    for (i=4; i<14; i++) {
-		mstat[i] = NADBL;
+		val[i] = NADBL;
 	    }
 	}
     } else if (pmod->ci == ARMA) {
-	mstr[2] = N_("Mean of innovations"); /* 22: Mean of ARMA innovations */
-	mstat[2] = gretl_model_get_double(pmod, "mean_error");
-	mstr[3] = N_("S.D. of innovations"); /* 22: Std. dev. of ARMA innovations */
+	key[2] = N_("Mean of innovations"); /* 22: Mean of ARMA innovations */
+	val[2] = gretl_model_get_double(pmod, "mean_error");
+	key[3] = N_("S.D. of innovations"); /* 22: Std. dev. of ARMA innovations */
 	for (i=4; i<14; i++) {
 	    if (i < 8 || i > 11) {
-		mstat[i] = NADBL;
+		val[i] = NADBL;
 	    }
 	}	
     } else if (pmod->ci == LAD) {
-	mstr[0] = N_("Median depend. var");  /* 22: Median of dependent variable */
-	mstat[0] = gretl_model_get_double(pmod, "ymedian");
-	mstr[2] = N_("Sum absolute resid");  /* 22: Sum of absolute residuals */
-	mstat[2] = gretl_model_get_double(pmod, "ladsum");
-	mstr[3] = N_("Sum squared resid");
-	mstat[3] = pmod->ess;
+	key[0] = N_("Median depend. var");  /* 22: Median of dependent variable */
+	val[0] = gretl_model_get_double(pmod, "ymedian");
+	key[2] = N_("Sum absolute resid");  /* 22: Sum of absolute residuals */
+	val[2] = gretl_model_get_double(pmod, "ladsum");
+	key[3] = N_("Sum squared resid");
+	val[3] = pmod->ess;
 	for (i=4; i<14; i++) {
 	    if (i < 8 || i > 11) {
-		mstat[i] = NADBL;
+		val[i] = NADBL;
 	    }
 	}
     } else if (binary_model(pmod)) {
-	mstat[2] = mstat[3] = NADBL;
-	mstat[6] = mstat[7] = NADBL;
-	mstat[12] = mstat[13] = NADBL;
+	val[2] = val[3] = NADBL;
+	val[6] = val[7] = NADBL;
+	val[12] = val[13] = NADBL;
     } else if (pmod->ci == TOBIT) {
-	mstr[2] = N_("Censored obs"); /* 22: Number of censored observations */
-	mstat[2] = gretl_model_get_int(pmod, "censobs");
-	ipos = 2;
-	mstr[3] = "sigma";
+	key[2] = N_("Censored obs"); /* 22: Number of censored observations */
+	val[2] = gretl_model_get_int(pmod, "censobs");
+	mtab.ipos = 2;
+	key[3] = "sigma";
 	for (i=4; i<8; i++) {
-	    mstat[i] = NADBL;
+	    val[i] = NADBL;
 	}
     } else if (panel_ML_model(pmod) || 
 	       pmod->ci == GARCH ||
 	       pmod->ci == HECKIT) {
 	for (i=2; i<14; i++) {
 	    if (i < 8 || i > 11) {
-		mstat[i] = NADBL;
+		val[i] = NADBL;
 	    }
 	}	
-    } else if (pmod->ci == MLE || 
-	       ordered_model(pmod)) {
+    } else if (pmod->ci == MLE || ordered_model(pmod)) {
 	for (i=0; i<14; i++) {
 	    if (i < 8 || i > 11) {
-		mstat[i] = NADBL;
+		val[i] = NADBL;
 	    }
 	}	
     } else if (pmod->ci != VAR && pmod->aux != AUX_VECM && 
@@ -2664,74 +2349,58 @@ static void compact_middle_table (const MODEL *pmod, PRN *prn, int code)
 	double h = durbins_h(pmod);
 
 	if (!na(h)) {
-	    mstr[13] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
-	    mstat[13] = h;
+	    key[13] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
+	    val[13] = h;
 	}
     } 
 
     if (code == MIDDLE_TRANSFORM) {
 	/* transformed data: don't print mean, s.d. of dep. var. */
-	mstat[0] = mstat[1] = NADBL;
+	val[0] = val[1] = NADBL;
     } else if (code == MIDDLE_ORIG) {
 	/* print a limited range of stats */
-	mstat[2] = gretl_model_get_double(pmod, "ess_orig");
-	mstat[3] = gretl_model_get_double(pmod, "sigma_orig");
+	val[2] = gretl_model_get_double(pmod, "ess_orig");
+	val[3] = gretl_model_get_double(pmod, "sigma_orig");
 	for (i=4; i<14; i++) {
-	    mstat[i] = NADBL;
+	    val[i] = NADBL;
 	}
     }
 
     /* start the table */
     if (tex) {
 	pputs(prn, "\\vspace{1ex}\n");
-	pputs(prn, "\\begin{tabular}{lrlr}\n");
+	if (mtab.multi) {
+	    pputs(prn, "\\begin{tabular}{lr}\n");
+	} else {
+	    pputs(prn, "\\begin{tabular}{lrlr}\n");
+	}
     } else if (rtf) {
-	pprintf(prn, "\\par\n{%s", RTF_MT_ROW);
+	if (mtab.multi) {
+	    pprintf(prn, "\\par\n{%s", RTF_MULTI_ROW);
+	} else {
+	    pprintf(prn, "\\par\n{%s", RTF_MT_ROW);
+	}
     } else if (csv) {
-	d = prn_delim(prn);
+	mtab.d = prn_delim(prn);
     }
 
-    strcpy(txt_mt_fmt, TXT_MT_FMT);
+    mtab.key = key;
+    mtab.val = val;
+    strcpy(mtab.txt_fmt, TXT_MT_FMT);
 
 #ifdef ENABLE_NLS
-    if (plain_format(prn) && nls_on) {
-	mlen = i18n_string_width(mstr, mstat);
+    if (plain_format(prn) && mtab.nls) {
+	set_mtab_string_width(&mtab);
     }
 #endif
 
     /* print the various statistics */
     for (i=0, j=0; i<7; i++, j+=2) {
-	if (na(mstat[j])) {
-	    continue;
-	} 
-	if (tex) {
-	    pprintf(prn, TEX_MT_FMT, 
-		    _(mstr[j]),   print_eight(x1, mstat, j, minus, ipos),
-		    _(mstr[j+1]), print_eight(x2, mstat, j+1, minus, ipos));
-	} else if (rtf) {
-	    pputs(prn, RTF_MT_ROW);
-	    pprintf(prn, RTF_MT_FMT, 
-		    I_(mstr[j]),   print_eight(x1, mstat, j, minus, ipos),
-		    I_(mstr[j+1]), print_eight(x2, mstat, j+1, minus, ipos));
-	} else if (csv) {
-	    char cx1[48], cx2[48];
-
-	    pprintf(prn, CSV_MT_FMT,
-		    _(mstr[j]),   d, print_csv(cx1, mstat[j]), d,
-		    _(mstr[j+1]), d, print_csv(cx2, mstat[j+1]));
-	} else {
-#ifdef ENABLE_NLS
-	    if (nls_on) {
-		prepare_format(txt_mt_fmt, mstr[j], mstr[j+1], mlen);
-	    }
-#endif
-	    pprintf(prn, txt_mt_fmt, 
-		    _(mstr[j]),   print_eight(x1, mstat, j, minus, ipos),
-		    _(mstr[j+1]), print_eight(x2, mstat, j+1, minus, ipos));
+	if (!na(val[j])) {
+	    middle_table_row(&mtab, j, prn);
 	}
-    }	
+    }
 
-    /* end the table */
     if (tex) {
 	pputs(prn, "\\end{tabular}\n\n");
     } else if (rtf) {
@@ -2762,28 +2431,6 @@ static void print_model_iter_info (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
 	}
     }
-}
-
-static int mp_middle_table (const MODEL *pmod, const DATAINFO *pdinfo,
-			    PRN *prn)
-{
-    print_middle_table_start(prn);
-
-    depvarstats(pmod, prn);
-    essline(pmod, prn);
-    rsqline(pmod, prn);
-    Fline(pmod, prn);
-
-    if (!na(pmod->dw)) {
-	dwline(pmod, prn);
-    }
-
-    print_ll(pmod, prn);
-    info_stats_lines(pmod, prn);
-
-    print_middle_table_end(prn);
-
-    return 0;
 }
 
 static void set_csv_delim (PRN *prn)
@@ -2866,36 +2513,20 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     } else if (pmod->aux == AUX_SQ || 
 	       pmod->aux == AUX_LOG || 
 	       pmod->aux == AUX_AR) {
-	print_middle_table_start(prn);
 	rsqline(pmod, prn);
-	print_middle_table_end(prn);
 	goto close_format;
-    } else if (pmod->aux == AUX_COINT) {
-	rsqline(pmod, prn);
-	dwline(pmod, prn);
-	info_stats_lines(pmod, prn);
-	if (!plain_format(prn)) {
-	    print_middle_table_end(prn);
-	}
-	goto close_format;
-    }
+    } 
 
     if (opt & OPT_S) {
 	/* --simple-print */
 	goto close_format;
     }
 
-    /* MPOLS can't use compact_middle_table */
-    if (pmod->ci == MPOLS) {
-	mp_middle_table(pmod, pdinfo, prn);
-	goto pval_max;
-    }
-
     if (weighted_model(pmod)) {
 	weighted_stats_message(prn);
-	compact_middle_table(pmod, prn, MIDDLE_TRANSFORM);
+	print_middle_table(pmod, prn, MIDDLE_TRANSFORM);
 	original_stats_message(prn);
-	compact_middle_table(pmod, prn, MIDDLE_ORIG);
+	print_middle_table(pmod, prn, MIDDLE_ORIG);
 	goto pval_max;
     }
 
@@ -2908,7 +2539,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     /* print table of model stats */
     if (pmod->ci != GMM) {
-	compact_middle_table(pmod, prn, MIDDLE_REGULAR);
+	print_middle_table(pmod, prn, MIDDLE_REGULAR);
     }
 
     /* additional stats/info for some cases */
@@ -3035,6 +2666,10 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (slopes != NULL) {
 	    mc->slope = slopes[i];
 	}
+    }
+
+    if (pmod->ci == MPOLS) {
+	mc->multi = 1;
     }
 
     return gotnan;
@@ -3758,10 +3393,10 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
     int rmax[2] = {0};
     int w[2], addoff[2] = {0};
     int hlen;
-    int n, d, nc = pmod->ncoeff;
+    int n, nc = pmod->ncoeff;
     int namelen = 0;
     int colsep = 2;
-    int i, j;
+    int i, j, minus;
     int err = 0;
 
     vals = allocate_printvals(nc, 2);
@@ -3775,6 +3410,8 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
 	goto bailout;
     }
 
+    minus = (gretl_print_supports_utf(prn))? MINUS_UTF : MINUS_HYPHEN;
+
     for (i=0; i<nc; i++) {
 	if (xna(b[i])) {
 	    err = E_NAN;
@@ -3786,10 +3423,10 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
 	    namelen = n;
 	}
 	for (j=0; j<2; j++) {
-	    d = GRETL_MP_DIGITS;
 	    vals[i][j].x = (j==0)? b[i] : se[i];
-	    gretl_sprint_fullwidth_double(vals[i][j].x, d, vals[i][j].s, prn);
-	    get_number_dims(&vals[i][j], &lmax[j], &rmax[j]);
+	    print_fifteen(vals[i][j].s, vals[i][j].x, minus);
+	    vals[i][j].lw = lmax[j] = 2;
+	    vals[i][j].rw = rmax[j] = 19;
 	}
     }
 
@@ -4264,23 +3901,21 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
     char ustr[32];
 
     if (tex_format(prn)) {
-	char coeffstr[32], sestr[32];
+	char s1[32], s2[32], s3[32], s4[32];
 
-	tex_dcolumn_double(arinfo->rho[c], coeffstr);
-	tex_dcolumn_double(arinfo->sderr[c], sestr);
+	tex_rl_double(arinfo->rho[c], s1);
+	tex_rl_double(arinfo->sderr[c], s2);
+	tex_rl_float(tval, s3, 4);
+	tex_rl_float(student_pvalue_2(dfd, tval), s4, 4);
 
 	sprintf(ustr, "$\\hat{u}_{t-%d}$", arinfo->arlist[c+1]);
 
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
 		"    %s &\n"
-		"      %.4f &\n"
-		"        %.4f \\\\\n",  
-		ustr,
-		coeffstr,
-		sestr,
-		tval,
-		student_pvalue_2(dfd, tval));
+		"      %s &\n"
+		"        %s \\\\\n",  
+		ustr, s1, s2, s3, s4);
     } else if (rtf_format(prn)) {
 	char pvalstr[16];
 	double pval;

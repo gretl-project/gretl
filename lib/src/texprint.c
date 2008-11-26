@@ -50,15 +50,19 @@ void set_tex_use_pdf (const char *prog)
 
 #define tex_screen_zero(x)  ((fabs(x) > 1.0e-17)? x : 0.0)
 
-static void tex_modify_exponent (char *numstr)
+static char *tex_modify_exponent (char *s)
 {
-    char *p = strchr(numstr, 'e');
+    char *p = strchr(s, 'e');
 
     if (p != NULL) {
-	int expon = atoi(p + 1);
+	int minus = (*(p+1) == '-');
+	char tmp[12];
 
-	sprintf(p, "\\mbox{e%s%d}", (expon > 0)? "+" : "", expon);
+	sprintf(tmp, "\\mbox{e%s%s}", (minus)? "--" : "+", p + 2);
+	strcpy(p, tmp);
     }
+    
+    return s;
 }
 
 /* prints a floating point number as a TeX math string.  if tab != 0,
@@ -119,18 +123,14 @@ static void tex_print_math_float (double x, PRN *prn)
 
 char *tex_float_string (double x, int prec, char *targ)
 {
-    int offset = 0;
-
-    *targ = '\0';
-
     x = tex_screen_zero(x);
+
     if (x < 0.0) {
-	strcat(targ, "$-$");
-	x = fabs(x);
-	offset = 3;
+	sprintf(targ, "$-$%#.*g", prec, -x);
+    } else {
+	sprintf(targ, "%#.*g", prec, x);
     }
 
-    sprintf(targ + offset, "%#.*g", prec, x);
     tex_modify_exponent(targ);
 
     return targ;
@@ -278,33 +278,66 @@ static void cut_extra_zero (char *numstr)
     numstr[s + p + GRETL_DIGITS] = '\0';
 }
 
-char *tex_dcolumn_double (double x, char *numstr)
+char *tex_rl_float (double x, char *s, int dig)
 {
-    double a;
+    char *p;
 
     if (na(x)) {
-	return strcpy(numstr, "\\multicolumn{1}{c}{}");
+	return strcpy(s, "\\multicolumn{2}{c}{}");
     }
 
     x = screen_zero(x);
-    a = fabs(x);
 
-    sprintf(numstr, "%#.*g", GRETL_DIGITS, x);
-
-    if (a != 0.0 && (a >= UPPER_F_LIMIT || a < LOWER_F_LIMIT)) {
-	int expon;
-	char *p, exponstr[8];
-
-	p = strchr(numstr, 'e');
-	expon = atoi(p + 2);
-	strcpy(p, "\\mbox{e");
-	sprintf(exponstr, "%s%02d}", (x > 10)? "+" : "-", expon);
-	strcat(numstr, exponstr);
+    if (x < 0) {
+	sprintf(s, "$-$%.*f", dig, -x);
     } else {
-	cut_extra_zero(numstr);
+	sprintf(s, "%.*f", dig, x);
     }
 
-    return numstr;
+    p = strchr(s, '.');
+
+    if (p == NULL) {
+	p = strchr(s, ',');
+    }
+
+    if (p != NULL) {
+	*p = '&';
+    } else {
+	strcat(s, "&");
+    }
+
+    return s;
+}
+
+char *tex_rl_double (double x, char *s)
+{
+    char *p;
+
+    if (na(x)) {
+	return strcpy(s, "\\multicolumn{2}{c}{}");
+    }
+
+    x = screen_zero(x);
+
+    if (x < 0) {
+	sprintf(s, "$-$%#.*g", GRETL_DIGITS, -x);
+    } else {
+	sprintf(s, "%#.*g", GRETL_DIGITS, x);
+    }
+
+    p = strchr(s, '.');
+
+    if (p == NULL) {
+	p = strchr(s, ',');
+    }
+
+    if (p != NULL) {
+	*p = '&';
+    } else {
+	strcat(s, "&");
+    }
+
+    return s;
 }
 
 void tex_print_double (double x, PRN *prn)
@@ -631,10 +664,39 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
     }
 }
 
+static char *tex_multi_double (double x, char *numstr)
+{
+    char *p;
+
+    if (na(x)) {
+	strcpy(numstr, " ");
+    } else if (x < 0) {
+	sprintf(numstr, "$-$%.15E", -x);
+    } else {
+	sprintf(numstr, "%.15E", x);
+    }
+
+    if ((p = strstr(numstr, "E-")) != NULL) {
+	char tmp[8];
+
+	sprintf(tmp, "E--%s", p + 2);
+	strcpy(p, tmp);
+    }
+
+    return numstr;
+}
+
 void tex_print_coeff (const model_coeff *mc, PRN *prn)
 {
     char col1[64], col2[64], col3[64], col4[64];
     int ncols = 4;
+
+    if (mc->multi) {
+	tex_multi_double(mc->b, col1);
+	tex_multi_double(mc->se, col2);
+	pprintf(prn, "%s & %s & %s \\\\\n", mc->name, col1, col2);
+	return;
+    }
 
     if (use_custom) {
 	tex_print_coeff_custom(mc, prn);
@@ -642,36 +704,36 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
     }
 
     if (na(mc->b)) {
-	sprintf(col1, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	sprintf(col1, "\\multicolumn{2}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(mc->b, col1);
+	tex_rl_double(mc->b, col1);
     }
 
     if (!na(mc->lo) && !na(mc->hi)) {
-	tex_dcolumn_double(mc->lo, col2);
-	tex_dcolumn_double(mc->hi, col3);
+	tex_rl_double(mc->lo, col2);
+	tex_rl_double(mc->hi, col3);
 	ncols = 3;
     } else {
 	if (na(mc->se)) {
-	    sprintf(col2, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	    sprintf(col2, "\\multicolumn{2}{c}{\\rm %s}", I_("undefined"));
 	} else {
-	    tex_dcolumn_double(mc->se, col2);
+	    tex_rl_double(mc->se, col2);
 	}
 
 	if (na(mc->tval)) {
-	    sprintf(col3, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	    sprintf(col3, "\\multicolumn{2}{c}{\\rm %s}", I_("undefined"));
 	} else {
-	    sprintf(col3, "%.4f", mc->tval);
+	    tex_rl_float(mc->tval, col3, 4);
 	}
     }
 
     *col4 = '\0';
 
     if (!na(mc->slope)) {
-	tex_dcolumn_double(mc->slope, col4);
+	tex_rl_double(mc->slope, col4);
     } else if (mc->show_pval) {
 	if (!na(mc->pval)) {
-	    sprintf(col4, "%.4f", mc->pval);
+	    tex_rl_float(mc->pval, col4, 4);
 	}
     }
 
@@ -759,8 +821,8 @@ tex_custom_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 
 void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 {
-    int binary = (opt & OPT_B);
-    char pt;
+    char pt = get_local_decpoint();
+    int i, mcols, binary = (opt & OPT_B);
 
     if (use_custom) {
 	tex_custom_coeff_table_start(cols, opt, prn);
@@ -772,45 +834,31 @@ void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 	pputs(prn, "\\vspace{1em}\n\n");
     }
 
-    pputs(prn, "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}\n");
+    pputs(prn, "\\begin{tabular}{l");
 
-    pt = get_local_decpoint();
+    for (i=1; cols[i] != NULL; i++) {
+	if (opt & OPT_M) {
+	    pputc(prn, 'r');
+	} else {
+	    pprintf(prn, "r@{%c}l", pt);
+	}
+    }
 
-    if (cols[4] == NULL) {
-	pprintf(prn, "l%% col 1: varname\n"
-		"  D{%c}{%c}{-1}%% col 2: coeff\n"
-		"    D{%c}{%c}{-1}%% col 3\n"
-		"      D{%c}{%c}{-1}}%% col 4\n"
-		"%s &\n"
-		"  \\multicolumn{1}{c}{%s} &\n"
-		"    \\multicolumn{1}{c}{%s} &\n"
-		"      \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
-		pt, pt, pt, pt, pt, pt, 
-		I_(cols[0]), I_(cols[1]), I_(cols[2]), I_(cols[3]));
-    } else {
-	pprintf(prn, "l%% col 1: varname\n"
-		"  D{%c}{%c}{-1}%% col 2: coeff\n"
-		"    D{%c}{%c}{-1}%% col 3: sderr\n"
-		"      D{%c}{%c}{-1}%% col 4: t-stat\n"
-		"        D{%c}{%c}{4}}%% col 5: p-value (or slope)\n"
-		"%s &\n"
-		"  \\multicolumn{1}{c}{%s} &\n"
-		"    \\multicolumn{1}{c}{%s} &\n"
-		"      \\multicolumn{1}{c}{%s} &\n"
-		"        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
-		pt, pt, pt, pt, pt, pt, pt, pt, 
-		I_(cols[0]), I_(cols[1]), I_(cols[2]), I_(cols[3]), I_(cols[4]),
-		(binary)? "$^*$" : "");
+    pprintf(prn, "}\n%s &\n", _(cols[0]));
+
+    mcols = (opt & OPT_M)? 1 : 2;
+
+    for (i=1; cols[i] != NULL; i++) {
+	bufspace(i, prn);
+	pprintf(prn, "\\multicolumn{%d}{c}{%s%s} %s\n", mcols, _(cols[i]),
+		(cols[i+1] == NULL && binary)? "$^*$" : "",
+		(cols[i+1] == NULL)? "\\\\[1ex]" : "&");
     }
 }
 
 void tex_coeff_table_end (PRN *prn)
 {
-    if (use_custom) {
-	pputs(prn, "\\end{tabular}\n\n");
-    } else {
-	pputs(prn, "\\end{tabular*}\n\n");
-    }
+    pputs(prn, "\\end{tabular}\n\n");
 }
 
 void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
@@ -1217,7 +1265,7 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 		pputs(prn, "\\usepackage[margin=2cm,dvips]{geometry}\n\n");
 	    }
 	} else {
-	    pputs(prn, "\\usepackage{dcolumn,longtable}\n\n");
+	    pputs(prn, "\\usepackage{longtable}\n\n");
 	}
 
 	pputs(prn, "\\begin{document}\n\n"

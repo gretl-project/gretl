@@ -876,6 +876,8 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
 	    mpf_clear(uhat[t]);
 	}
 	free(uhat);
+    } else {
+	pmod->rho = pmod->dw = NADBL;
     }
 }
 

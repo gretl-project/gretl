@@ -1116,19 +1116,19 @@ static void printftex (double zz, PRN *prn, int endrow)
 {
     if (na(zz)) {
 	if (endrow) {
-	    pprintf(prn, "\\multicolumn{1}{c}{%s}\\\\", I_("undefined"));
+	    pprintf(prn, "\\multicolumn{2}{c}{%s}\\\\", I_("undefined"));
 	} else {
-	    pprintf(prn, "\\multicolumn{1}{c}{%s} & ", I_("undefined"));
+	    pprintf(prn, "\\multicolumn{2}{c}{%s} & ", I_("undefined"));
 	}
     } else {
 	char s[32];
 
-	tex_dcolumn_double(zz, s);
+	tex_rl_double(zz, s);
 
 	if (endrow) {
-	    pprintf(prn, "$%s$\\\\", s);
+	    pprintf(prn, "%s\\\\", s);
 	} else {
-	    pprintf(prn, "$%s$ & ", s);
+	    pprintf(prn, "%s & ", s);
 	}
     }	
 }
@@ -1136,6 +1136,7 @@ static void printftex (double zz, PRN *prn, int endrow)
 static void 
 texprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
 {
+    char pt = get_local_decpoint();
     char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
     int i, vi;
 
@@ -1152,21 +1153,23 @@ texprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
 	sprintf(tmp, I_("for the variable %s (%d valid observations)"), 
 		vname, summ->n);
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
-	pputs(prn, "\\begin{tabular}{rrrr}\n");
+	pprintf(prn, "\\begin{tabular}{r@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
+		pt, pt, pt, pt);
     } else {
 	if (summ->missing) {
 	    pprintf(prn, "%s\\\\[8pt]\n\n", I_("(missing values were skipped)"));
 	} else {
 	    pputs(prn, "\n\\vspace{8pt}\n\n");
 	}
-	pputs(prn, "\\begin{tabular}{lrrrr}\n");
+	pprintf(prn, "\\begin{tabular}{lr@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
+		pt, pt, pt, pt);
 	pprintf(prn, "%s &", I_("Variable"));
     }
 
-    pprintf(prn, " \\multicolumn{1}{c}{%s}%%\n"
-	    " & \\multicolumn{1}{c}{%s}%%\n"
-	    "  & \\multicolumn{1}{c}{%s}%%\n"
-	    "   & \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
+    pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
+	    " & \\multicolumn{2}{c}{%s}%%\n"
+	    "  & \\multicolumn{2}{c}{%s}%%\n"
+	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
 	    I_("Mean"), I_("Median"), I_("Minimum"), I_("Maximum"));
 
     for (i=0; i<summ->list[0]; i++) {
@@ -1190,10 +1193,10 @@ texprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "%s & ", I_("Variable"));
     }
 
-    pprintf(prn, " \\multicolumn{1}{c}{%s}%%\n"
-	    " & \\multicolumn{1}{c}{%s}%%\n"
-	    "  & \\multicolumn{1}{c}{%s}%%\n"
-	    "   & \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
+    pprintf(prn, " \\multicolumn{2}{c}{%s}%%\n"
+	    " & \\multicolumn{2}{c}{%s}%%\n"
+	    "  & \\multicolumn{2}{c}{%s}%%\n"
+	    "   & \\multicolumn{2}{c}{%s} \\\\[1ex]\n",
 	    I_("Std.\\ Dev."), I_("C.V."), I_("Skewness"), I_("Ex.\\ kurtosis"));
 
     for (i=0; i<summ->list[0]; i++) {
@@ -1642,9 +1645,9 @@ void special_print_fit_resid (const FITRESID *fr,
 static void texprint_fcast_x (double x, int places, char *str)
 {
     if (places != PMAX_NOT_AVAILABLE && !na(x)) {
-	sprintf(str, "%.*f", places, x);
+	tex_rl_float(x, str, places);
     } else {
-	tex_dcolumn_double(x, str);
+	tex_rl_double(x, str);
     }
 }
 
@@ -1657,15 +1660,14 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     char pt = get_local_decpoint();
     int t;
 
-    pputs(prn, "%% The table below needs the \"dcolumn\" and "
-	  "\"longtable\" packages\n\n");
+    pputs(prn, "%% The table below needs the \"longtable\" package\n\n");
 
     pprintf(prn, "\\begin{center}\n"
 	    "\\begin{longtable}{%%\n"
 	    "r%% col 1: obs\n"
 	    "  l%% col 2: varname\n"
-	    "    D{%c}{%c}{-1}}%% col 3: fitted\n",
-	    pt, pt);
+	    "    r@{%c}l}%% col 3: fitted\n",
+	    pt);
 
     tex_escape(vname, fr->depvar);
 
@@ -1705,33 +1707,29 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     }
     pputs(prn, "\\end{center}\n");
 
-    pputs(prn, "%% The table below needs the \"dcolumn\" and "
-	  "\"longtable\" packages\n\n");
+    pputs(prn, "%% The table below needs the "
+	  "\"longtable\" package\n\n");
 
     pprintf(prn, "\\begin{center}\n"
 	    "\\begin{longtable}{%%\n"
 	    "r%% col 1: obs\n"
-	    "  l%% col 2: varname\n"
-	    "    D{%c}{%c}{-1}%% col 3: fitted\n"
-	    "      D{%c}{%c}{-1}%% col 4: std error\n"
-	    "        D{%c}{%c}{-1}%% col 5: conf int lo\n"
-	    "         D{%c}{%c}{-1}}%% col 5: conf int hi\n",
-	    pt, pt, pt, pt, pt, pt, pt, pt);
+	    "  r@{%c}l%% col 2: actual\n"
+	    "    r@{%c}l%% col 3: fitted\n"
+	    "      r@{%c}l%% col 4: std error\n"
+	    "        r@{%c}l%% col 5: conf int lo\n"
+	    "         r@{%c}l}%% col 5: conf int hi\n",
+	    pt, pt, pt, pt, pt);
 
     tex_escape(vname, fr->depvar);
 
-    pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s}\n"
-	    " & \\multicolumn{1}{c}{%s}\n"
-	    "  & \\multicolumn{2}{c}{%s} \\\\\n",
+    pprintf(prn, "%s & \\multicolumn{2}{c}{%s} "
+	    " & \\multicolumn{2}{c}{%s}\n"
+	    "  & \\multicolumn{2}{c}{%s}\n"
+	    "   & \\multicolumn{4}{c}{%s} \\\\[1ex]\n",
 	    I_("Obs"), vname,
 	    I_("prediction"), I_("std. error"),
 	    /* xgettext:no-c-format */
 	    I_("95\\% confidence interval"));
-
-    pprintf(prn, "& & & & \\multicolumn{1}{c}{%s} & "
-	    "\\multicolumn{1}{c}{%s} \\\\\n", 
-	    I_("low"), I_("high"));
-
 
     if (pmax < 4) {
 	errpmax = pmax + 1;
@@ -1870,21 +1868,21 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     pprintf(prn, " %s & ", vname);
 
     if (isnan(cf->coeff[i])) {
-	pprintf(prn, "\\multicolumn{1}{c}{%s} & ", I_("undefined"));
+	pprintf(prn, "\\multicolumn{2}{c}{%s} & ", I_("undefined"));
     } else {
 	char coeff[32];
 
-	tex_dcolumn_double(cf->coeff[i], coeff);
+	tex_rl_double(cf->coeff[i], coeff);
 	pprintf(prn, "%s & ", coeff);
     }
 
     if (isnan(cf->maxerr[i])) {
-	pprintf(prn, "\\multicolumn{2}{c}{%s}", I_("undefined"));
+	pprintf(prn, "\\multicolumn{4}{c}{%s}", I_("undefined"));
     } else {
 	char lo[32], hi[32];
 
-	tex_dcolumn_double(cf->coeff[i] - cf->maxerr[i], lo);
-	tex_dcolumn_double(cf->coeff[i] + cf->maxerr[i], hi);
+	tex_rl_double(cf->coeff[i] - cf->maxerr[i], lo);
+	tex_rl_double(cf->coeff[i] + cf->maxerr[i], hi);
 	pprintf(prn, "%s & %s", lo, hi);
     }
     pputs(prn, "\\\\\n");
@@ -1899,25 +1897,19 @@ static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 
     pprintf(prn, "$t(%d, %g) = %.3f$\n\n", cf->df, tail, cf->t);
 
-    pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
-
     pprintf(prn, "\\begin{center}\n"
-	    "\\begin{tabular}{rD{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n",
-	    pt, pt, pt, pt, pt, pt);
+	    "\\begin{tabular}{rr@{%c}lr@{%c}lr@{%c}l}\n",
+	    pt, pt, pt);
 
     cstr = g_strdup_printf(I_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
 
     pprintf(prn, " %s%%\n"
-	    " & \\multicolumn{1}{c}{%s}%%\n"
-	    "  & \\multicolumn{2}{c}{%s}\\\\\n",
+	    " & \\multicolumn{2}{c}{%s}%%\n"
+	    "  & \\multicolumn{4}{c}{%s}\\\\[1ex]\n",
 	    I_("Variable"), I_("Coefficient"),
 	    cstr);
 
     g_free(cstr);
-
-    pprintf(prn, " & & \\multicolumn{1}{c}{%s}%%\n"
-	    "  & \\multicolumn{1}{c}{%s}\\\\\n",
-	    I_("low"), I_("high"));
 
     for (i=0; i<cf->ncoeff; i++) {
 	texprint_coeff_interval(cf, i, prn);
