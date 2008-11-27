@@ -1074,8 +1074,8 @@ static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo,
 static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
 				   MODEL *pmod, int dv, double lmax)
 {
+    double x, dx;
     int t;
-    double x;
 
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, Z[dv]);
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, Z[dv]);
@@ -1084,6 +1084,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     makevcv(pmod, pmod->sigma);
 
     pmod->ess = 0.0;
+
     for (t=0; t<pdinfo->n; t++) {
 	x = pmod->yhat[t];
 	if (na(x)) {
@@ -1097,14 +1098,21 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
     pmod->tss = 0.0;
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = Z[dv][t];
 	if (!na(x)) {
-	    pmod->tss += (x - pmod->ybar) * (x - pmod->ybar);
+	    dx = (x - pmod->ybar);
+	    pmod->tss += dx * dx;
 	}
     }
 
-    pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
+#if 0 /* FIXME? */
+    pmod->fstt = pmod->dfd * 
+	(pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
+#else
+    pmod->fstt = NADBL;
+#endif
 
     pmod->rsq = pmod->adjrsq = NADBL;
 
