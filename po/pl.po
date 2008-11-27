@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-25 09:09-0500\n"
+"PO-Revision-Date: 2008-11-26 23:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -3948,15 +3948,15 @@ msgstr "Mediana zmiennej zależnej"
 #: lib/src/modelprint.c:191 lib/src/modelprint.c:200 lib/src/modelprint.c:203
 #: lib/src/modelprint.c:208
 msgid "Mean of dependent variable"
-msgstr "Średnia  arytmetyczna  zmiennej zależnej"
+msgstr "Średnia aryt.zm.zależnej"
 
 #: lib/src/modelprint.c:192 lib/src/modelprint.c:205 lib/src/modelprint.c:210
 msgid "Standard deviation of dep. var."
-msgstr "Odchylenie standardowe zmiennej zależnej"
+msgstr "Odch. stand. zm.zależnej"
 
 #: lib/src/modelprint.c:201
 msgid "S.D. of dependent variable"
-msgstr "Odch. stand. zm. zależnej"
+msgstr "Odch. stand. zm.zależnej"
 
 #: lib/src/modelprint.c:217
 msgid "Unconditional error variance"
@@ -3966,7 +3966,7 @@ msgstr "Bezwarunkowa wariancja błędu modelu"
 #: lib/src/modelprint.c:264 lib/src/modelprint.c:710 lib/src/modelprint.c:716
 #: lib/src/modelprint.c:721 lib/src/modelprint.c:728
 msgid "Sum of squared residuals"
-msgstr "Suma  kwadratów  reszt"
+msgstr "Suma kwadratów reszt"
 
 #: lib/src/modelprint.c:279 lib/src/modelprint.c:282 lib/src/modelprint.c:290
 #: lib/src/modelprint.c:292 lib/src/printout.c:2291
@@ -3975,7 +3975,7 @@ msgstr "Kryteria GMM"
 
 #: lib/src/modelprint.c:323
 msgid "Unadjusted R-squared"
-msgstr "Wsp. determinacji R-kwadrat"
+msgstr "Wsp. determ. R-kwadrat"
 
 #: lib/src/modelprint.c:324 lib/src/modelprint.c:2654
 msgid "Uncentered R-squared"
@@ -4011,7 +4011,7 @@ msgstr "Centrowany R{\\super 2}"
 
 #: lib/src/modelprint.c:368 lib/src/modelprint.c:399 lib/src/modelprint.c:2603
 msgid "Adjusted R-squared"
-msgstr "Skorygowany  wsp. R-kwadrat"
+msgstr "Skorygow. wsp. R-kwadrat"
 
 #: lib/src/modelprint.c:376
 msgid "Adjusted R{\\super 2}"
@@ -4044,19 +4044,19 @@ msgstr "Wyjaśniona suma kwadratów"
 
 #: lib/src/modelprint.c:468
 msgid "Akaike information criterion"
-msgstr "Kryterium informacyjne Akaike'a"
+msgstr "Kryt. inform. Akaike'a"
 
 #: lib/src/modelprint.c:469
 msgid "Schwarz Bayesian criterion"
-msgstr "Kryterium bayesowskie Schwarza "
+msgstr "Kryt. bayes. Schwarza"
 
 #: lib/src/modelprint.c:470
 msgid "Hannan-Quinn criterion"
-msgstr "Kryterium infor. Hannana-Quinna"
+msgstr "Kryt. Hannana-Quinna"
 
 #: lib/src/modelprint.c:471
 msgid "Hannan--Quinn criterion"
-msgstr "Kryterium Hannana--Quinna"
+msgstr "Kryt. Hannana--Quinna"
 
 #: lib/src/modelprint.c:473 lib/src/texprint.c:982 lib/src/varprint.c:1067
 #: lib/src/varprint.c:1075
@@ -4794,15 +4794,15 @@ msgstr "  "
 
 #: lib/src/modelprint.c:2598
 msgid "Mean dependent var"
-msgstr "Średnia arytmetyczna zm. zależnej"
+msgstr "Średnia aryt.zm.zależnej"
 
 #: lib/src/modelprint.c:2599
 msgid "S.D. dependent var"
-msgstr "Odchylenie standard. zm. zależnej"
+msgstr "Odch. stand. zm.zależnej"
 
 #: lib/src/modelprint.c:2600
 msgid "Sum squared resid"
-msgstr "Suma  kwadratów  reszt"
+msgstr "Suma kwadratów reszt"
 
 #: lib/src/modelprint.c:2601
 msgid "S.E. of regression"
@@ -4814,24 +4814,24 @@ msgstr "R-kwadrat"
 
 #: lib/src/modelprint.c:2605
 msgid "P-value(F)"
-msgstr "wartość p dla (F)"
+msgstr "wartość p dla testu F"
 
 #: lib/src/modelprint.c:2607
 msgid "Akaike criterion"
-msgstr "Kryterium informacyjne Akaike'a"
+msgstr "Kryt. inform. Akaike'a"
 
 #: lib/src/modelprint.c:2608
 msgid "Schwarz criterion"
-msgstr "Kryterium bayesowskie Schwarza "
+msgstr "Kryt. bayes. Schwarza"
 
 #: lib/src/modelprint.c:2609
 msgid "Hannan-Quinn"
-msgstr "Kryterium infor. Hannana-Quinna"
+msgstr "Kryt. Hannana-Quinna"
 
 #: lib/src/modelprint.c:2610 lib/src/modelprint.c:4710
 #: lib/src/modelprint.c:4712 lib/src/modelprint.c:4719
 msgid "rho"
-msgstr "rho"
+msgstr "Wsp. autokorelacji reszt rzędu pierwszego (rho)"
 
 #: lib/src/modelprint.c:2611
 msgid "Durbin-Watson"
@@ -4839,7 +4839,7 @@ msgstr "Statystyka testu Durbina-Watsona"
 
 #: lib/src/modelprint.c:2635
 msgid "P-value($F$)"
-msgstr "wartość p dla ($F$)"
+msgstr "wartość p dla testu $F$"
 
 #: lib/src/modelprint.c:2758 lib/src/system.c:3713 lib/src/system.c:3715
 #, c-format

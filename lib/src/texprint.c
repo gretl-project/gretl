@@ -270,14 +270,6 @@ char *tex_escape_special (char *targ, const char *src)
 #define UPPER_F_LIMIT (pow(10, GRETL_DIGITS))
 #define LOWER_F_LIMIT (pow(10, -4))
 
-static void cut_extra_zero (char *numstr)
-{
-    int s = strspn(numstr, "-.,0");
-    int p = (s == 0 && (strchr(numstr, '.') || strchr(numstr, ',')));
-
-    numstr[s + p + GRETL_DIGITS] = '\0';
-}
-
 char *tex_rl_float (double x, char *s, int dig)
 {
     char *p;
