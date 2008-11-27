@@ -234,7 +234,7 @@ static void print_panel_AR_test (double z, int order, PRN *prn)
     if (tex_format(prn)) {
 	char numstr[32];
 
-	tex_float_string(z, 4, numstr);
+	tex_sprint_double_digits(z, numstr, 4);
 	pprintf(prn, " & $z$ = %s [%.4f]", numstr, pv);
     } else {
 	pprintf(prn, " z = %g [%.4f]", z, pv);
@@ -310,8 +310,8 @@ static int GMM_crit_line (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char x1[32], x2[32];
 
-	tex_float_string(Q, 6, x1);
-	tex_float_string(TQ, 6, x2);
+	tex_sprint_double(Q, x1);
+	tex_sprint_double(TQ, x2);
 	pprintf(prn, "%s, $Q$ = %s ($TQ$ = %s)\\\\\n",
 		I_("GMM criterion"), x1, x2);
     } else if (csv_format(prn)) {
@@ -404,12 +404,12 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char xstr[32];
 
-	tex_float_string(ws2, 6, xstr);
+	tex_sprint_double(ws2, xstr);
 	pprintf(prn, "$\\hat{\\sigma}^2_{\\varepsilon}$ = %s \\\\\n", xstr);
-	tex_float_string(bs2, 6, xstr);
+	tex_sprint_double(bs2, xstr);
 	pprintf(prn, "$\\hat{\\sigma}^2_u$ = %s \\\\\n", xstr);
 	if (!na(theta)) {
-	    tex_float_string(theta, 6, xstr);
+	    tex_sprint_double(theta, xstr);
 	    pprintf(prn, "$\\theta$ = %s \\\\\n", xstr);
 	}
     } else if (rtf_format(prn)) {
@@ -685,7 +685,7 @@ static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char x1str[32];
 
-	tex_float_string(F, 6, x1str);
+	tex_sprint_double(F, x1str);
 	pprintf(prn, "First-stage $F(%d, %d)$ = %s \\\\\n", dfn, dfd, x1str);
     } else if (rtf_format(prn)) {
 	pprintf(prn, "%s (%d, %d) = %g\n", I_("First-stage F-statistic"), 
@@ -2090,6 +2090,10 @@ static char *print_eight (char *s, struct middletab *mt, int i)
 
     strcat(s, tmp);
 
+    if (mt->minus == MINUS_TEX && strchr(s, 'e') != NULL) {
+	tex_modify_exponent(s);
+    }
+
     return s;
 } 
 
@@ -2129,11 +2133,11 @@ static char *print_fifteen (char *s, double x, int minus)
                    "\\cellx2500\\cellx3800\\cellx4200\\cellx6700" \
                    "\\cellx8000\n"
 
+#define RTF_MULTI_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+                      "\\cellx2500\\cellx6000\n"
+
 #define RTF_MT_FMT "\\intbl\\ql %s\\cell\\qr %s\\cell \\qc \\cell" \
                    "\\ql %s\\cell\\qr %s\\cell\\intbl\\row\n"
-
-#define RTF_MULTI_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
-                      "\\cellx2500\\cellx5000\\\n"
 
 #define RTF_MULTI_FMT "\\intbl\\ql %s\\cell\\qr %s\\cell\\intbl\\row\n"
 
@@ -2196,6 +2200,39 @@ static void middle_table_row (struct middletab *mt, int j, PRN *prn)
     }
 }
 
+#ifdef ENABLE_NLS
+
+static void maybe_remedy_translations (const char **S, int n)
+{
+    const char *old_mstr[] = {
+	N_("Mean of dependent variable"),
+	N_("Standard deviation of dep. var."),
+	N_("Sum of squared residuals"),
+	N_("Standard error of the regression"),
+	N_("Unadjusted R-squared"),
+	N_("Adjusted R-squared"),
+	NULL,
+	N_("p-value"),
+	N_("Log-likelihood"),
+	N_("Akaike information criterion"),
+	N_("Schwarz Bayesian criterion"),
+	N_("Hannan--Quinn criterion"),
+	N_("First-order autocorrelation coeff."),
+	N_("Durbin-Watson statistic"),
+	NULL
+    };
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (old_mstr[i] != NULL && !strcmp(S[i], _(S[i]))) {
+	    /* untranslated */
+	    S[i] = old_mstr[i];
+	}
+    }
+}
+
+#endif
+
 /* print the block of statistics that appears beneath of the
    table of coefficients, standard errors, etc.
 */
@@ -2246,13 +2283,15 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     mtab.d = 0;
     mtab.minus = MINUS_HYPHEN;
     mtab.ipos = -1;
+    mtab.nls = 0;
+    mtab.multi = (pmod->ci == MPOLS);
+
 #ifdef ENABLE_NLS
     mtab.nls = doing_nls();
-#else
-    mtab.nls = 0;
+    if (mtab.nls) {
+	maybe_remedy_translations(key, 14);
+    }
 #endif
-
-    mtab.multi = (pmod->ci == MPOLS);
 
     if (tex) {
 	/* some special strings for TeX output */

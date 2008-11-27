@@ -57,9 +57,11 @@ char *tex_rl_double (double x, char *s);
 
 void tex_print_double (double x, PRN *prn);
 
-char *tex_sprint_double (double x, char *numstr);
+char *tex_sprint_double (double x, char *s);
 
-char *tex_float_string (double x, int prec, char *targ);
+char *tex_sprint_double_digits (double x, char *s, int dig);
+
+char *tex_modify_exponent (char *s);
 
 void set_gretl_tex_preamble (void);
 

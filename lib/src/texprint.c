@@ -28,6 +28,8 @@ static char colspec[4][8];
 static int use_custom;
 static int use_pdf;
 
+#define tex_screen_zero(x)  ((fabs(x) > 1.0e-17)? x : 0.0)
+
 int tex_using_custom_tabular (void)
 {
     return use_custom;
@@ -46,94 +48,6 @@ void set_tex_use_pdf (const char *prog)
 {
     use_pdf = strstr(prog, "pdf") != NULL ||
 	strstr(prog, "PDF") != NULL;
-}
-
-#define tex_screen_zero(x)  ((fabs(x) > 1.0e-17)? x : 0.0)
-
-static char *tex_modify_exponent (char *s)
-{
-    char *p = strchr(s, 'e');
-
-    if (p != NULL) {
-	int minus = (*(p+1) == '-');
-	char tmp[12];
-
-	sprintf(tmp, "\\mbox{e%s%s}", (minus)? "--" : "+", p + 2);
-	strcpy(p, tmp);
-    }
-    
-    return s;
-}
-
-/* prints a floating point number as a TeX math string.  if tab != 0,
-   print the sign in front, separated by a tab symbol (for
-   equation-style regression printout).
-*/
-
-static void tex_print_float (double x, PRN *prn)
-{
-    char number[48];
-
-    x = tex_screen_zero(x);
-
-    sprintf(number, "%#.*g", GRETL_DIGITS, x);
-    tex_modify_exponent(number);
-    pprintf(prn, "%s", (x < 0.0)? (number + 1) : number);
-}
-
-static void tex_print_signed_float (double x, PRN *prn)
-{
-    char number[48];
-
-    x = tex_screen_zero(x);
-
-    sprintf(number, "%#.*g", GRETL_DIGITS, x);
-    tex_modify_exponent(number);
-
-    if (x < 0.0) {
-	pprintf(prn, "$-$%s", number + 1);
-    } else {
-	pputs(prn, number);
-    }
-}
-
-static void tex_print_math_float (double x, PRN *prn)
-{
-    char number[48];
-
-    x = tex_screen_zero(x);
-
-    sprintf(number, "%#.*g", GRETL_DIGITS, x);
-    tex_modify_exponent(number);
-
-    pprintf(prn, "$%s$", number);
-}
-
-/**
- * tex_float_string:
- * @x: value to be printed.
- * @targ: target string.
- *
- * Prints the value @x into @targ with @prec digits of precision.
- * The result is intended for use in a non-math environment: if
- * @x is negative, the minus sign is put into math mode.
- * 
- * Returns: @targ.
- */
-
-char *tex_float_string (double x, int prec, char *targ)
-{
-    x = tex_screen_zero(x);
-
-    if (x < 0.0) {
-	sprintf(targ, "$-$%#.*g", prec, -x);
-    } else {
-	sprintf(targ, "%#.*g", prec, x);
-    }
-
-    tex_modify_exponent(targ);
-
-    return targ;
 }
 
 static const char *tex_greek_var (const char *s)
@@ -267,8 +181,15 @@ char *tex_escape_special (char *targ, const char *src)
     return targ;
 }
 
-#define UPPER_F_LIMIT (pow(10, GRETL_DIGITS))
-#define LOWER_F_LIMIT (pow(10, -4))
+/* Print the floating point number @x into the string @s, using the C
+   format "%*.f", with the digits following the decimal point given by
+   @dig.  This is intended for use with the LaTeX tabular column
+   format "r@{.}l", so the decimal point is replaced by '&'.  In
+   addition, it is presumed that we're _not_ in TeX math mode, so the
+   leading minus sign, if present, is "mathized" as "$-$".
+
+   NADBL is handled by printing a blank "r@{.}l" value.
+*/
 
 char *tex_rl_float (double x, char *s, int dig)
 {
@@ -301,6 +222,39 @@ char *tex_rl_float (double x, char *s, int dig)
     return s;
 }
 
+/* When a floating point value is printed as TeX in the C format "%g",
+   process the exponent part.  It is assumed we're not in TeX math
+   mode, so in a negative exponent such as "e-06" the minus will
+   appear as a hyphen, which does not look very good.  Using a true
+   minus sign in the exponent doesn't look very good either (too
+   wide); we compromise by writing the minus as an en dash.
+*/
+
+char *tex_modify_exponent (char *s)
+{
+    char *p = strchr(s, 'e');
+
+    if (p != NULL) {
+	int minus = (*(p+1) == '-');
+	char tmp[16];
+
+	sprintf(tmp, "\\textrm{e%s%s}", (minus)? "--" : "+", p + 2);
+	strcpy(p, tmp);
+    }
+    
+    return s;
+}
+
+/* Print the floating point number @x into the string @s, using the C
+   format "%#*.g", with GRETL_DIGITS of precision.  This is intended
+   for use with the LaTeX tabular column format "r@{.}l", so the
+   decimal point is replaced by '&'.  In addition, it is presumed that
+   we're _not_ in TeX math mode, so the leading minus sign, if
+   present, is "mathized" as "$-$".
+
+   NADBL is handled by printing a blank "r@{.}l" value.
+*/
+
 char *tex_rl_double (double x, char *s)
 {
     char *p;
@@ -315,6 +269,10 @@ char *tex_rl_double (double x, char *s)
 	sprintf(s, "$-$%#.*g", GRETL_DIGITS, -x);
     } else {
 	sprintf(s, "%#.*g", GRETL_DIGITS, x);
+    }
+
+    if (strchr(s, 'e') != NULL) {
+	tex_modify_exponent(s);
     }
 
     p = strchr(s, '.');
@@ -332,32 +290,97 @@ char *tex_rl_double (double x, char *s)
     return s;
 }
 
-void tex_print_double (double x, PRN *prn)
+/* Print the floating point number @x into the string @s, using the C
+   format "%#*.g", with @dig digits of precision.  It is presumed
+   that we're _not_ in TeX math mode, so the leading minus sign, if
+   present, is "mathized" as "$-$".
+
+   NADBL is handled by printing a space.
+*/
+
+char *tex_sprint_double_digits (double x, char *s, int dig)
 {
-    char number[16];
+    if (na(x)) {
+	return strcpy(s, " ");
+    }
 
     x = screen_zero(x);
 
-    sprintf(number, "%#.*g", GRETL_DIGITS, x);
-
     if (x < 0.0) {
-	pprintf(prn, "$-$%s", number + 1);
+	sprintf(s, "$-$%#.*g", dig, -x);
     } else {
-	pputs(prn, number);
+	sprintf(s, "%#.*g", dig, x);
     }
+
+    if (strchr(s, 'e') != NULL) {
+	tex_modify_exponent(s);
+    }
+
+    return s;
 }
 
-char *tex_sprint_double (double x, char *numstr)
+/* Basically as above, but for use when in TeX math mode */
+
+static char *tex_sprint_math_double_digits (double x, char *s, int dig)
 {
+    if (na(x)) {
+	return strcpy(s, "\\mbox{NA}");
+    }
+
+    x = screen_zero(x);
+
+    sprintf(s, "%#.*g", dig, x);
+
+    if (strchr(s, 'e') != NULL) {
+	tex_modify_exponent(s);
+    }
+
+    return s;
+}
+
+/* Print the floating point number @x into the string @s, using the C
+   format "%#*.g", with GRETL_DIGITS of precision.  It is presumed
+   that we're _not_ in TeX math mode, so the leading minus sign, if
+   present, is "mathized" as "$-$".
+
+   NADBL is handled by printing a space.
+*/
+
+char *tex_sprint_double (double x, char *s)
+{
+    if (na(x)) {
+	return strcpy(s, " ");
+    }
+
     x = screen_zero(x);
 
     if (x < 0.0) {
-	sprintf(numstr, "$-$%#.*g", GRETL_DIGITS, -x);
+	sprintf(s, "$-$%#.*g", GRETL_DIGITS, -x);
     } else {
-	sprintf(numstr, "%#.*g", GRETL_DIGITS, x);
+	sprintf(s, "%#.*g", GRETL_DIGITS, x);
     }
 
-    return numstr;
+    if (strchr(s, 'e') != NULL) {
+	tex_modify_exponent(s);
+    }
+
+    return s;
+}
+
+/* Print the floating point number @x directly to @prn, using the C
+   format "%#*.g", with GRETL_DIGITS of precision.  It is presumed
+   that we're _not_ in TeX math mode, so the leading minus sign, if
+   present, is "mathized" as "$-$".
+
+   NADBL is handled by printing a space.
+*/
+
+void tex_print_double (double x, PRN *prn)
+{
+    char s[32];
+
+    tex_sprint_double(x, s);
+    pputs(prn, s);
 }
 
 static void tex_make_cname (char *cname, const char *src)
@@ -882,7 +905,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "$\\Delta$%s & ", vname);
 	for (j=0; j<vecm->neqns; j++) {
 	    x = gretl_matrix_get(vecm->S, i, j);
-	    tex_print_math_float(x, prn);
+	    tex_print_double(x, prn);
 	    if (j == vecm->neqns - 1) {
 		pputs(prn, "\\\\\n");
 	    } else {
@@ -896,7 +919,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 
     pputs(prn, "\\noindent\n");
     pprintf(prn, "%s = ", I_("determinant"));
-    tex_print_math_float(exp(vecm->ldet), prn);
+    tex_print_double(exp(vecm->ldet), prn);
     pputs(prn, "\\\\\n");
 }
 
@@ -952,7 +975,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 	    if (jv->Bse == NULL) {
 		x /= gretl_matrix_get(jv->Beta, j, j);
 	    }
-	    tex_print_signed_float(x, prn);
+	    tex_print_double(x, prn);
 	    if (j == jv->rank - 1) {
 		pputs(prn, "\\\\\n");
 	    } else {
@@ -966,7 +989,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 	    for (j=0; j<jv->rank; j++) {
 		x = gretl_matrix_get(jv->Bse, i, j);
 		pputc(prn, '(');
-		tex_print_float(x, prn);
+		tex_print_double(x, prn);
 		pputc(prn, ')');
 		if (j == jv->rank - 1) {
 		    pputs(prn, "\\\\\n");
@@ -1008,7 +1031,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 	    if (jv->Ase == NULL) {
 		x /= gretl_matrix_get(jv->Alpha, j, j);
 	    }
-	    tex_print_signed_float(x, prn);
+	    tex_print_double(x, prn);
 	    if (j == jv->rank - 1) {
 		pputs(prn, "\\\\\n");
 	    } else {
@@ -1022,7 +1045,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 	    for (j=0; j<jv->rank; j++) {
 		x = gretl_matrix_get(jv->Ase, i, j);
 		pputc(prn, '(');
-		tex_print_float(x, prn);
+		tex_print_double(x, prn);
 		pputc(prn, ')');
 		if (j == jv->rank - 1) {
 		    pputs(prn, "\\\\\n");
@@ -1041,11 +1064,11 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
 {
     pprintf(prn, "\\noindent\n%s = ", I_("Log-likelihood"));
-    tex_print_math_float(var->ll, prn);
+    tex_print_double(var->ll, prn);
     pputs(prn, "\\par\n");
 
     pprintf(prn, "\\noindent\n%s = ", I_("Determinant of covariance matrix"));
-    tex_print_math_float(exp(var->ldet), prn);
+    tex_print_double(exp(var->ldet), prn);
     pputs(prn, "\\par\n");
 
     pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
@@ -1261,6 +1284,15 @@ void gretl_tex_preamble (PRN *prn, int fmt)
     }
 }
 
+/* For use when printing a model in equation style: print the value
+   unsigned, since the sign will be handled separately.
+*/
+
+static void tex_print_unsigned_double (double x, PRN *prn)
+{
+    tex_print_double(fabs(x), prn);
+}
+
 #define MAXCOEFF 4
 
 /**
@@ -1339,7 +1371,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     for (i=0; i<nc; i++) {
 	if (offvar > 0 && i == nc - 1) {
 	    pputc(prn, '+');
-	    tex_print_float(1.0, prn);
+	    tex_print_double(1.0, prn);
 	} else {
 	    if (na(pmod->sderr[i])) {
 		sderr_ok = 0;			
@@ -1352,12 +1384,13 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 			    (pmod->coeff[i] < 0.0)? "-" :
 			    (i > 0)? "+" : "", x);
 		} else {
-		    pprintf(prn, "%s\\underset{(%.5g)}{", 
+		    tex_sprint_math_double_digits(pmod->sderr[i], tmp, 5);
+		    pprintf(prn, "%s\\underset{(%s)}{", 
 			    (pmod->coeff[i] < 0.0)? "-" :
-			    (i > 0)? "+" : "", pmod->sderr[i]);
+			    (i > 0)? "+" : "", tmp);
 		}
 	    }
-	    tex_print_float(pmod->coeff[i], prn);
+	    tex_print_unsigned_double(pmod->coeff[i], prn);
 	    pputc(prn, '}');
 	}
 
@@ -1425,8 +1458,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ", 
 		    x, pmod->coeff[r]);
 	} else {
-	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.5g)}{%g} ", 
-		    pmod->sderr[r], pmod->coeff[r]);
+	    tex_sprint_math_double_digits(pmod->sderr[r], tmp, 5);
+	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%s)}{%g} ", /* FIXME? */
+		    tmp, pmod->coeff[r]);
 	}	    
 
 	for (i=1; i<=q; i++) {
@@ -1435,11 +1469,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 		pprintf(prn, "%s\\underset{(%.3f)}{", 
 			(pmod->coeff[r+i] < 0.0)? "-" : "+", x);
 	    } else {
-		pprintf(prn, "%s\\underset{(%.5g)}{", 
-			(pmod->coeff[r+i] < 0.0)? "-" : "+", 
-			pmod->sderr[r+i]);
+		tex_sprint_math_double_digits(pmod->sderr[r+i], tmp, 5);
+		pprintf(prn, "%s\\underset{(%s)}{", 
+			(pmod->coeff[r+i] < 0.0)? "-" : "+", tmp);
 	    }		
-	    tex_print_float(pmod->coeff[r+i], prn);
+	    tex_print_unsigned_double(pmod->coeff[r+i], prn);
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\varepsilon^2_{t-%d}", i);
 	}
@@ -1450,11 +1484,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 		pprintf(prn, "%s\\underset{(%.3f)}{", 
 			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", x);
 	    } else {
-		pprintf(prn, "%s\\underset{(%.5g)}{", 
-			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", 
-			pmod->sderr[q+r+i]);
+		tex_sprint_math_double_digits(pmod->sderr[q+r+i], tmp, 5);
+		pprintf(prn, "%s\\underset{(%s)}{", 
+			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", tmp);
 	    }		
-	    tex_print_float(pmod->coeff[q+r+i], prn);
+	    tex_print_unsigned_double(pmod->coeff[q+r+i], prn);
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\sigma^2_{t-%d}", i);
 	}
@@ -1469,8 +1503,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	double SAR = gretl_model_get_double(pmod, "ladsum");
 
 	if (!na(SAR)) {
-	    sprintf(tmp, "%g", SAR);
-	    tex_modify_exponent(tmp);
+	    tex_sprint_math_double_digits(SAR, tmp, 6);
 	    pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s ", tmp);
 	}
     } else {
@@ -1481,23 +1514,20 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
 
 	if (pmod->ci != LOGIT && pmod->ci != PROBIT && !na(pmod->fstt)) {
-	    sprintf(tmp, "%.5g", pmod->fstt);
-	    tex_modify_exponent(tmp);
+	    tex_sprint_math_double_digits(pmod->fstt, tmp, 5);
 	    pprintf(prn, "\\quad F(%d,%d) = %s ", 
 		    pmod->dfn, pmod->dfd, tmp);
 	}
 
 	if (!na(pmod->sigma)) {
-	    sprintf(tmp, "%.5g", pmod->sigma);
-	    tex_modify_exponent(tmp);
+	    tex_sprint_math_double_digits(pmod->sigma, tmp, 5);
 	    pprintf(prn, "\\quad \\hat{\\sigma} = %s ", tmp);
 	}
 
 	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
 	    double r = gretl_model_get_double(pmod, "rho_in");
 
-	    sprintf(tmp, "%.5g", r);
-	    tex_modify_exponent(tmp);
+	    tex_sprint_math_double_digits(r, tmp, 5);
 	    pprintf(prn, " \\quad \\rho = %s", tmp);
 	}
     }
