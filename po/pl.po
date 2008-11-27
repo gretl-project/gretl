@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-26 23:00-0500\n"
+"PO-Revision-Date: 2008-11-27 12:30-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -3948,15 +3948,15 @@ msgstr "Mediana zmiennej zależnej"
 #: lib/src/modelprint.c:191 lib/src/modelprint.c:200 lib/src/modelprint.c:203
 #: lib/src/modelprint.c:208
 msgid "Mean of dependent variable"
-msgstr "Średnia aryt.zm.zależnej"
+msgstr "Średnia arytmetyczna zm. zależnej"
 
 #: lib/src/modelprint.c:192 lib/src/modelprint.c:205 lib/src/modelprint.c:210
 msgid "Standard deviation of dep. var."
-msgstr "Odch. stand. zm.zależnej"
+msgstr "Odchylenie standardowe zm. zależnej"
 
 #: lib/src/modelprint.c:201
 msgid "S.D. of dependent variable"
-msgstr "Odch. stand. zm.zależnej"
+msgstr "Odchylenie standardowe zm. zależnej"
 
 #: lib/src/modelprint.c:217
 msgid "Unconditional error variance"
@@ -3979,7 +3979,7 @@ msgstr "Wsp. determ. R-kwadrat"
 
 #: lib/src/modelprint.c:324 lib/src/modelprint.c:2654
 msgid "Uncentered R-squared"
-msgstr "Niecentrowany R-kwadrat"
+msgstr "Niecentrowany R-kwadr."
 
 #: lib/src/modelprint.c:325 lib/src/modelprint.c:2655
 msgid "Centered R-squared"
@@ -4011,7 +4011,7 @@ msgstr "Centrowany R{\\super 2}"
 
 #: lib/src/modelprint.c:368 lib/src/modelprint.c:399 lib/src/modelprint.c:2603
 msgid "Adjusted R-squared"
-msgstr "Skorygow. wsp. R-kwadrat"
+msgstr "Skorygowany R-kwadrat"
 
 #: lib/src/modelprint.c:376
 msgid "Adjusted R{\\super 2}"
@@ -4027,7 +4027,7 @@ msgstr "Within R-kwadrat"
 
 #: lib/src/modelprint.c:425 lib/src/modelprint.c:436
 msgid "McFadden's pseudo-R-squared"
-msgstr "McFaddena pseudo-R-kwadrat"
+msgstr "McFaddena pseudo-R2"
 
 #: lib/src/modelprint.c:428
 msgid "McFadden's pseudo-R{\\super 2}"
@@ -4040,7 +4040,7 @@ msgstr "McFaddena pseudo-$R^2$"
 #: lib/src/modelprint.c:452 lib/src/modelprint.c:455 lib/src/modelprint.c:461
 #: lib/src/modelprint.c:463
 msgid "Explained sum of squares"
-msgstr "Wyjaśniona suma kwadratów"
+msgstr "Wyjaśniona suma kwadr."
 
 #: lib/src/modelprint.c:468
 msgid "Akaike information criterion"
@@ -4794,11 +4794,11 @@ msgstr "  "
 
 #: lib/src/modelprint.c:2598
 msgid "Mean dependent var"
-msgstr "Średnia aryt.zm.zależnej"
+msgstr "Średn.aryt.zm.zależn."
 
 #: lib/src/modelprint.c:2599
 msgid "S.D. dependent var"
-msgstr "Odch. stand. zm.zależnej"
+msgstr "Odch.stand.zm.zależnej"
 
 #: lib/src/modelprint.c:2600
 msgid "Sum squared resid"
@@ -4810,7 +4810,7 @@ msgstr "Błąd standardowy reszt"
 
 #: lib/src/modelprint.c:2602 gui2/library.c:4691 gui2/model_table.c:635
 msgid "R-squared"
-msgstr "R-kwadrat"
+msgstr "Wsp. R-kwadrat"
 
 #: lib/src/modelprint.c:2605
 msgid "P-value(F)"
@@ -4831,11 +4831,11 @@ msgstr "Kryt. Hannana-Quinna"
 #: lib/src/modelprint.c:2610 lib/src/modelprint.c:4710
 #: lib/src/modelprint.c:4712 lib/src/modelprint.c:4719
 msgid "rho"
-msgstr "Wsp. autokorelacji reszt rzędu pierwszego (rho)"
+msgstr "Autokorel.reszt - rho1"
 
 #: lib/src/modelprint.c:2611
 msgid "Durbin-Watson"
-msgstr "Statystyka testu Durbina-Watsona"
+msgstr "Stat. Durbina-Watsona"
 
 #: lib/src/modelprint.c:2635
 msgid "P-value($F$)"

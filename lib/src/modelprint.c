@@ -2204,7 +2204,7 @@ static void middle_table_row (struct middletab *mt, int j, PRN *prn)
 
 static void maybe_remedy_translations (const char **S, int n)
 {
-    const char *old_mstr[] = {
+    const char *old_key[] = {
 	N_("Mean of dependent variable"),
 	N_("Standard deviation of dep. var."),
 	N_("Sum of squared residuals"),
@@ -2212,21 +2212,20 @@ static void maybe_remedy_translations (const char **S, int n)
 	N_("Unadjusted R-squared"),
 	N_("Adjusted R-squared"),
 	NULL,
-	N_("p-value"),
+	N_("P-value"),
 	N_("Log-likelihood"),
 	N_("Akaike information criterion"),
 	N_("Schwarz Bayesian criterion"),
-	N_("Hannan--Quinn criterion"),
+	N_("Hannan-Quinn criterion"),
 	N_("First-order autocorrelation coeff."),
-	N_("Durbin-Watson statistic"),
-	NULL
+	N_("Durbin-Watson statistic")
     };
     int i;
 
     for (i=0; i<n; i++) {
-	if (old_mstr[i] != NULL && !strcmp(S[i], _(S[i]))) {
+	if (old_key[i] != NULL && !strcmp(S[i], _(S[i]))) {
 	    /* untranslated */
-	    S[i] = old_mstr[i];
+	    S[i] = old_key[i];
 	}
     }
 }
@@ -2297,7 +2296,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	/* some special strings for TeX output */
 	mtab.minus = MINUS_TEX;
 	key[4] = "$R^2$";
-	key[5] = "Adjusted $R^2$";
+	key[5] = N_("Adjusted $R^2$");
 	key[7] = N_("P-value($F$)");
 	key[11] = "Hannan--Quinn";
 	key[12] = "$\\hat{\\rho}$";
