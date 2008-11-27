@@ -2202,6 +2202,10 @@ static void middle_table_row (struct middletab *mt, int j, PRN *prn)
 
 #ifdef ENABLE_NLS
 
+/* If we haven't found a translation for a new-style short string, 
+   use the corresponding old-style long string instead.
+*/
+
 static void maybe_remedy_translations (const char **S, int n)
 {
     const char *old_key[] = {
@@ -2461,14 +2465,16 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	pputs(prn, "\\end{tabular}\n\n");
     } else if (rtf) {
 	pputs(prn, "}\n\n"); /* close RTF table */
-    } else {
-	pputc(prn, '\n');
-    }
+    } 
 
     if (plain_format(prn) && strcmp(note, _(note)) &&
 	!string_is_blank(_(note))) {
 	pputs(prn, _(note));
-	pputs(prn, "\n\n");
+	pputc(prn, '\n');
+    }
+
+    if (!tex && !rtf) {
+	pputc(prn, '\n');
     }
 } 
 
