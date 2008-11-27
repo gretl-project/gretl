@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-27 15:26+0100\n"
+"PO-Revision-Date: 2008-11-27 16:40+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4661,15 +4661,15 @@ msgstr "La variable de pesos es una variable ficticia, observaciones efectivas =
 
 #: lib/src/modelprint.c:2147
 msgid "$z$-stat"
-msgstr "estadístico $z$"
+msgstr "Estadístico $z$"
 
 #: lib/src/modelprint.c:2147 lib/src/modelprint.c:3805
 msgid "z-stat"
-msgstr "estadístico z"
+msgstr "Estadístico z"
 
 #: lib/src/modelprint.c:2149
 msgid "$t$-ratio"
-msgstr "estadístico $t$"
+msgstr "Estadístico $t$"
 
 #: lib/src/modelprint.c:2149 lib/src/modelprint.c:3389
 #: lib/src/modelprint.c:3785 lib/src/modelprint.c:4087 gui2/dialogs.c:4093
