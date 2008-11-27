@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-27 13:30+0100\n"
+"PO-Revision-Date: 2008-11-27 15:26+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -46,7 +46,7 @@ msgstr "con constante y tendencia cuadrática"
 #: lib/src/varprint.c:1207 lib/src/varprint.c:1214 lib/src/varprint.c:1223
 #: gui2/dialogs.c:4094 plugin/johansen.c:1444 plugin/johansen.c:1445
 msgid "p-value"
-msgstr "valor p"
+msgstr "Valor p"
 
 #: lib/src/adf_kpss.c:278 lib/src/dataio.c:1569 lib/src/modelprint.c:3267
 #: lib/src/modelprint.c:3332
@@ -4674,7 +4674,7 @@ msgstr "estadístico $t$"
 #: lib/src/modelprint.c:2149 lib/src/modelprint.c:3389
 #: lib/src/modelprint.c:3785 lib/src/modelprint.c:4087 gui2/dialogs.c:4093
 msgid "t-ratio"
-msgstr "estadístico t"
+msgstr "Estadístico t"
 
 #: lib/src/modelprint.c:2168 lib/src/modelprint.c:2171
 #: lib/src/modelprint.c:2179 lib/src/modelprint.c:2183
@@ -4682,7 +4682,7 @@ msgstr "estadístico t"
 #: lib/src/modelprint.c:3385 lib/src/modelprint.c:3783
 #: lib/src/modelprint.c:3923 lib/src/modelprint.c:4085
 msgid "coefficient"
-msgstr "coeficiente"
+msgstr "Coeficiente"
 
 #: lib/src/modelprint.c:2168 lib/src/modelprint.c:2171
 #: lib/src/modelprint.c:2175 lib/src/modelprint.c:2187
@@ -4692,7 +4692,7 @@ msgstr "coeficiente"
 #: lib/src/varprint.c:468 gui2/guiprint.c:1727 gui2/guiprint.c:1822
 #: plugin/fractals.c:253
 msgid "std. error"
-msgstr "desv. típica"
+msgstr "Desv. Típica"
 
 #: lib/src/modelprint.c:2172
 msgid "slope at mean"
@@ -4735,11 +4735,11 @@ msgstr "tau"
 
 #: lib/src/modelprint.c:2209
 msgid "Std.\\ Error"
-msgstr "Desv.\\ típica"
+msgstr "Desv.\\ Típica"
 
 #: lib/src/modelprint.c:2209
 msgid "Std. Error"
-msgstr "Desv. típica"
+msgstr "Desv. Típica"
 
 #: lib/src/modelprint.c:2211
 msgid "Slope"
@@ -4813,7 +4813,7 @@ msgstr "D.T. de la vble. dep."
 
 #: lib/src/modelprint.c:2600
 msgid "Sum squared resid"
-msgstr "Suma cuad. residuos"
+msgstr "Suma de cuad. residuos"
 
 #: lib/src/modelprint.c:2601
 msgid "S.E. of regression"
@@ -5703,7 +5703,7 @@ msgstr "predicción"
 
 #: lib/src/printout.c:2158
 msgid " std. error"
-msgstr " desv. típica"
+msgstr " Desv. Típica"
 
 #: lib/src/printout.c:2159
 #, c-format
@@ -10326,7 +10326,7 @@ msgstr "para la variable %s (%d observaciones válidas)"
 
 #: gui2/guiprint.c:1099
 msgid "Std. Dev."
-msgstr "Desv. típica."
+msgstr "Desv. Típica."
 
 #: gui2/guiprint.c:1145
 #, c-format
