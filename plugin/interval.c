@@ -331,8 +331,14 @@ static double *int_hess (int_container *IC, int *err)
     gplus = malloc(k * sizeof *gplus); 
     gminus = malloc(k * sizeof *gminus);
     hss = malloc(k*k * sizeof *gminus);
-    V = gretl_column_vector_alloc(nh);
     H = malloc(nh * sizeof *H);
+    V = gretl_column_vector_alloc(nh);
+
+    if (q == NULL || g == NULL || gplus == NULL ||
+	gminus == NULL || hss == NULL || H == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     for (i=0; i<k; i++) {
 	g[i] = IC->g[i];
@@ -431,16 +437,14 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     Loglik = int_loglik(IC->theta, IC);
 
     int fncount, grcount;
-
     err = BFGS_max(IC->theta, k, 1000, INTERVAL_TOL, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
-		   int_score, IC, (0 && prn != NULL)? OPT_V : OPT_NONE,
+		   int_score, IC, (prn != NULL)? OPT_V : OPT_NONE,
 		   prn);
 
     fprintf(stdout, "\n");
     if (!err) {
 	hess = int_hess(IC, &err);
-	//hess = numerical_hessian(IC->theta, IC->k, int_loglik, IC, &err);
     }
 
     if (!err) {
