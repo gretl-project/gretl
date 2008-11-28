@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "libset.h"
 
-#define INTDEBUG 0
+#define INTDEBUG 1
 
 #define INTERVAL_TOL 1.0e-12
 
@@ -50,6 +50,7 @@ struct int_container_ {
     double *df;       /* densities */
     MODEL *pmod;      /* model struct, initially containing OLS */
     double **G;       /* score matrix by observation */
+    double *g;        /* total score vector */
 };
 
 static void int_container_destroy (int_container *ICont)
@@ -64,6 +65,7 @@ static void int_container_destroy (int_container *ICont)
     free(ICont->dP);
     free(ICont->df);
     doubles_array_free(ICont->G, ICont->k);
+    free(ICont->g);
 
     free(ICont);
 }
@@ -111,12 +113,14 @@ static int_container *int_container_new (int *list, double **Z,
     ICont->dP = malloc(nobs * sizeof *ICont->dP);
     ICont->df = malloc(nobs * sizeof *ICont->dP);
     ICont->G = doubles_array_new(ICont->k, nobs);
+    ICont->g = malloc(ICont->k * sizeof *ICont->g);
 
     if (ICont->lo == NULL || ICont->hi == NULL || 
 	ICont->obstype == NULL || ICont->X == NULL || 
 	ICont->list == NULL || ICont->theta == NULL || 
 	ICont->ndx == NULL || ICont->dP == NULL || 
-	ICont->df == NULL || ICont->G == NULL) {
+	ICont->df == NULL || ICont->G == NULL ||
+	ICont->g == NULL) {
 	int_container_destroy(ICont);
 	return NULL;
     }
@@ -152,7 +156,7 @@ static int_container *int_container_new (int *list, double **Z,
     ICont->list[1] = vlo;
     ICont->list[2] = vhi;
     for (i=0; i<ICont->nx; i++) {
-	ICont->list[i+3] = mod->list[i+3];
+	ICont->list[i+3] = mod->list[i+2];
     }
 
     for (i=0; i<ICont->nx; i++) {
@@ -209,7 +213,7 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 	(*initlist)[i-1] = list[i];
     }
 
-#if INTDEBUG 
+#if INTDEBUG > 1
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	fprintf(stderr, "%2d: %g\n", t, (*pZ)[mpy][t]);
     }
@@ -221,12 +225,17 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 static double int_loglik (const double *theta, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
-    double x0, x1, ndx, ll = 0.0;
+    double x0, x1, z0, z1, f0, f1;
+    double ndx, derivb, derivs, ll = 0.0;
     int err;
     int i, s, t, v;
     int k = IC->k;
 
     double sigma = exp(theta[k-1]);
+
+    for (i=0; i<k; i++) {
+	IC->g[i] = 0;
+    }
 
     for (t=0; t<IC->nobs; t++) {
 	x0 = IC->lo[t];
@@ -241,26 +250,140 @@ static double int_loglik (const double *theta, void *ptr)
 
 	switch (IC->obstype[t]) {
 	case INT_LOW:
-	    IC->dP[t] = normal_cdf((x1 - ndx)/sigma);
+	    z1 = (x1 - ndx)/sigma;
+	    IC->dP[t] = normal_cdf(z1);
+	    derivb = -normal_pdf(z1)/sigma;
+	    derivb /= IC->dP[t];
+	    derivs = derivb*z1*sigma;
 	    break;
 	case INT_HIGH:
-	    IC->dP[t] = 1.0 - normal_cdf((x0 - ndx)/sigma);
+	    z0 = (x0 - ndx)/sigma;
+	    IC->dP[t] = 1.0 - normal_cdf(z0);
+	    derivb = normal_pdf(z0)/sigma;
+	    derivb /= IC->dP[t];
+	    derivs = derivb*z0*sigma;
 	    break;
 	case INT_MID:
-	    IC->dP[t] = normal_cdf((x1 - ndx)/sigma) - normal_cdf((x0 - ndx)/sigma);
+	    z0 = (x0 - ndx)/sigma;
+	    z1 = (x1 - ndx)/sigma;
+	    IC->dP[t] = normal_cdf(z1) - normal_cdf(z0);
+	    f0 = normal_pdf(z0);
+	    f1 = normal_pdf(z1);
+	    derivb = (f0 - f1)/sigma;
+	    derivb /= IC->dP[t];
+	    derivs = (f0*z0 - f1*z1) / IC->dP[t];
 	    break;
 	case INT_POINT:
-	    IC->dP[t] = normal_pdf((x0 - ndx)/sigma)/sigma;
+	    z0 = (x0 - ndx)/sigma;
+	    IC->dP[t] = normal_pdf(z0)/sigma;
+	    derivb = z0/sigma;
+	    derivs = z0*z0 - 1;
 	}
 
 	ll += log(IC->dP[t]);
+
+	for (i=0; i<IC->nx; i++) {
+	    IC->G[i][t] = derivb * IC->X[i][t];
+	    IC->g[i] += IC->G[i][t];
+	}
+
+	IC->G[k-1][t] = derivs;
+	IC->g[k-1] += IC->G[k-1][t];
+
     }
     
 #if INTDEBUG > 1
     fprintf(stderr, "ll = %16.10f\n", ll);
+
+    for (i=0; i<IC->k; i++) {
+	fprintf(stderr, "g[%d] = %16.10f\t", i, IC->g[i]);
+    }
+    fputc('\n', stderr);
 #endif
 
     return ll;
+}
+
+static int int_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
+		      void *ptr)
+{
+    int_container *IC = (int_container *) ptr;
+    int i;
+
+    for (i=0; i<npar; i++) {
+	s[i] = IC->g[i];
+    }
+
+    return 1;
+}
+
+static double *int_hess (int_container *IC, int *err)
+{
+    double smal = 1.0e-07;
+    int i, j, n;
+    int k = IC->k;
+    int nh = k*(k+1)/2;
+    double *q, *g, *gplus, *gminus, *hss, *H;
+    gretl_matrix *V;
+
+    q = malloc(k * sizeof *q); 
+    g = malloc(k * sizeof *g); 
+    gplus = malloc(k * sizeof *gplus); 
+    gminus = malloc(k * sizeof *gminus);
+    hss = malloc(k*k * sizeof *gminus);
+    V = gretl_column_vector_alloc(nh);
+    H = malloc(nh * sizeof *H);
+
+    for (i=0; i<k; i++) {
+	g[i] = IC->g[i];
+	q[i] = IC->theta[i];
+    }
+
+    n = 0;
+    for (i=0; i<k; i++) {
+	q[i] += smal;
+	int_loglik(q, IC);
+	for (j=0; j<k; j++) {
+	    gplus[j] = IC->g[j];
+	}
+
+	q[i] -= 2*smal;
+	int_loglik(q, IC);
+	for (j=0; j<k; j++) {
+	    gminus[j] = IC->g[j];
+	}
+
+	for (j=0; j<k; j++) {
+	    hss[n++] = (gplus[j]-gminus[j])/(2*smal);
+	}
+    }
+
+    n = 0;
+    for (i=0; i<k; i++) {
+	for (j=i; j<k; j++) {
+	    V->val[n++] = -0.5*(hss[i+k*j] + hss[i*k+j]);
+	}
+    }
+
+    *err = gretl_invert_packed_symmetric_matrix(V);
+#if 0
+    gretl_packed_matrix_print(V, "V");
+#endif
+
+    if (!*err) {
+	for (i=0; i<nh; i++) {
+	    H[i] = V->val[i];
+	}
+    }
+
+    free(q);
+    free(g);
+    free(gplus);
+    free(gminus);
+    free(hss);
+    gretl_vector_free(V);
+
+    return H;
 }
 
 static void fill_model(int_container *IC, double *hess)
@@ -298,28 +421,33 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 {
     int i, err;
     int_container *IC = NULL;
-    double *hess; 
-
     IC = int_container_new(list, Z, pdinfo, mod);
+    
+    int k = IC->k;
+    int nh = k*(k+1)/2;
+    double *hess; 
 
     double Loglik;
     Loglik = int_loglik(IC->theta, IC);
 
     int fncount, grcount;
 
-    err = BFGS_max(IC->theta, IC->k, 1000, INTERVAL_TOL, 
+    err = BFGS_max(IC->theta, k, 1000, INTERVAL_TOL, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
-		   NULL, IC, (0 && prn != NULL)? OPT_V : OPT_NONE,
+		   int_score, IC, (0 && prn != NULL)? OPT_V : OPT_NONE,
 		   prn);
 
+    fprintf(stdout, "\n");
     if (!err) {
-	hess = numerical_hessian(IC->theta, IC->k, int_loglik, IC, &err);
+	hess = int_hess(IC, &err);
+	//hess = numerical_hessian(IC->theta, IC->k, int_loglik, IC, &err);
     }
 
     if (!err) {
 	fill_model(IC, hess);
     }
 
+    free(hess);
     int_container_destroy(IC);
     return 0;
 }
@@ -342,10 +470,6 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
-#if INTDEBUG
-    printlist(initlist, "init list");
-#endif
-
     /* run initial OLS */
     model = lsq(initlist, pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
@@ -354,7 +478,7 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
-#if INTDEBUG
+#if INTDEBUG > 1
     pprintf(prn, "interval_estimate: initial OLS\n");
     printmodel(&model, pdinfo, OPT_S, prn);
 #endif
@@ -364,7 +488,6 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* clean up midpoint-y */
     dataset_drop_last_variables(1, pZ, pdinfo);
-
     free(initlist);
 
     return model;
