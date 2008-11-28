@@ -31,6 +31,9 @@ int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
 
 int fishers_exact_test (const Xtab *tab, PRN *prn);
 
+MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt, 
+	      PRN *prn);
+
 #endif /* DISCRETE_H */
 
 

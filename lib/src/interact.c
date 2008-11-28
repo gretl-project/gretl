@@ -4378,6 +4378,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case GARCH:
     case HECKIT:
     case HSK:
+    case INTREG:
     case LAD:
     case LOGISTIC:
     case LOGIT:
@@ -4416,6 +4417,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == ARBOND) {
 	    *models[0] = arbond_model(cmd->list, cmd->param, (const double **) *pZ, 
 				      pdinfo, cmd->opt, prn);
+	} else if (cmd->ci == INTREG) {
+	    *models[0] = intreg(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;

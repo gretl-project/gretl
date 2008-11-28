@@ -75,6 +75,7 @@ typedef enum {
     IF,
     INCLUDE,
     INFO,
+    INTREG,
     KPSS,
     LABELS, 
     LAD,
@@ -217,6 +218,7 @@ typedef enum {
                       (c) == GARCH || \
                       (c) == GMM || \
 		      (c) == HECKIT || \
+		      (c) == INTREG || \
                       (c) == MLE || \
                       (c) == TOBIT)
 

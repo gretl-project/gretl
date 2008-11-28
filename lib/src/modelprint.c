@@ -556,6 +556,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == GMM) return N_("GMM");
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == GARCH) return N_("GARCH");
+    else if (ci == INTREG) return N_("Interval");
     else if (ci == ARBOND) {
 	if (tex_format(prn)) return N_("Arellano--Bond");
 	else return N_("Arellano-Bond");
@@ -1217,6 +1218,24 @@ static void godfrey_test_string (int ci, int order, int utf, PRN *prn)
     pputc(prn, '\n');
 }
 
+static void print_intreg_depvar (const MODEL *pmod,
+				 const DATAINFO *pdinfo,
+				 PRN *prn)
+{
+    int utf = plain_format(prn);
+
+    int lov = gretl_model_get_int(pmod, "lovar");
+    int hiv = gretl_model_get_int(pmod, "hivar");
+
+    pprintf(prn, "%s: %s", 
+	    (utf)? _("Lower limit") : I_("Lower limit"),
+	    pdinfo->varname[lov]);
+
+    pprintf(prn, ", %s: %s", 
+	    (utf)? _("Upper limit") : I_("Upper limit"),
+	    pdinfo->varname[hiv]);
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -1435,6 +1454,8 @@ static void print_model_heading (const MODEL *pmod,
 	}
     } else if (pmod->ci == ARMA) {
 	print_arma_depvar(pmod, pdinfo, prn);
+    } else if (pmod->ci == INTREG) {
+	print_intreg_depvar(pmod, pdinfo, prn);
     } else { 
 	const char *dvname = 
 	    gretl_model_get_depvar_name(pmod, pdinfo);

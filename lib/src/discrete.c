@@ -1284,3 +1284,47 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
 
     return 0;
 }
+
+/**
+ * intreg:
+ * @list: high/low (2 variables) plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @ci: command index: if = %LOGIT, perform logit regression, otherwise
+ * perform probit regression.
+ * @opt: if includes %OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix, in binary case; if %OPT_P arrange for
+ * printing of p-values, not slopes at mean; if %OPT_A treat as an
+ * auxiliary regression.
+ * @prn: printing struct in case additional information is
+ * wanted (%OPT_V).
+ *
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt, 
+	      PRN *prn)
+{
+    MODEL intmod;
+    void *handle;
+    MODEL (* interval_estimate) (int *, double ***, DATAINFO *, gretlopt, 
+				 PRN *);
+
+    gretl_error_clear();
+
+    interval_estimate = get_plugin_function("interval_estimate", &handle);
+    if (interval_estimate == NULL) {
+	gretl_model_init(&intmod);
+	intmod.errcode = E_FOPEN;
+	return intmod;
+    }
+
+    intmod = (*interval_estimate) (list, pZ, pdinfo, opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&intmod);
+
+    return intmod;
+}
+

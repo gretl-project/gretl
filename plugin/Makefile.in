@@ -95,7 +95,8 @@ SRCS = excel_import.c \
 	gretlzip.c \
 	heckit.c \
 	odbc_import.c \
-	quantreg.c
+	quantreg.c \
+	interval.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -126,7 +127,8 @@ PLUGINS = arbond.la \
 	poisson.la \
 	gretlzip.la \
 	heckit.la \
-	quantreg.la
+	quantreg.la \
+	interval.la
 
 GUI_DEPENDENT_PLUGINS = excel_import.la \
 	gnumeric_import.la \
@@ -294,6 +296,9 @@ odbc_import.la: odbc_import.lo
 
 quantreg.la: quantreg.lo rqfnb.lo rqbr.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+interval.la: interval.lo
+	$(LINK) -o $@ $< $(GRETLLIB) 
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

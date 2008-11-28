@@ -62,7 +62,8 @@ enum {
     P_ARBOND,
     P_HECKIT,
     P_ODBC,
-    P_QUANTREG
+    P_QUANTREG,
+    P_INTREG
 } plugin_codes;
 
 struct plugin_info {
@@ -111,7 +112,8 @@ struct plugin_info plugins[] = {
     { P_ARBOND,          "arbond" },
     { P_HECKIT,          "heckit" },
     { P_ODBC,            "odbc_import" },
-    { P_QUANTREG,        "quantreg" }
+    { P_QUANTREG,        "quantreg" },
+    { P_INTREG,          "interval" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -177,6 +179,7 @@ struct plugin_function plugin_functions[] = {
     { "poisson_estimate",  P_POISSON },
     { "ordered_estimate",  P_OPROBIT },
     { "heckit_estimate",   P_HECKIT },
+    { "interval_estimate", P_INTREG },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },
