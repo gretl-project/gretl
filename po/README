@@ -31,3 +31,12 @@ This list can be checked or updated  by doing
 ("Median depend. var");  /* 22: Median of dependent variable */
 ("Sum absolute resid");  /* 22: Sum of absolute residuals */
 ("Censored obs"); /* 22: Number of censored observations */
+
+Note also that there is a special string in gretl.pot,
+
+msgid "note on model statistics abbreviations here"
+
+You may use this string to add a note regarding abbreviations
+used in your translations of the short strings noted above.  If
+you don't want to use this mechanism, leave the string
+untranslated and it will not appear.
