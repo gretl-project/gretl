@@ -636,7 +636,8 @@ static int panel_autocorr_1 (MODEL *pmod, const panelmod_t *pan)
 #endif
 
 /* Durbin-Watson statistic for the fixed effects model.  We only
-   use units that have at least two time-series observations.
+   use units that have at least two time-series observations,
+   and we give up on encountering embedded NAs.
 */
 
 static void panel_dwstat (MODEL *pmod, const panelmod_t *pan)
@@ -655,29 +656,63 @@ static void panel_dwstat (MODEL *pmod, const panelmod_t *pan)
     }
 
     for (i=0; i<pan->nunits; i++) {
+	int tmin = 0, tmax = pan->T - 1;
+	double numi = 0.0, deni = 0.0;
+	int skip = 0;
+
 	Ti = pan->unit_obs[i];
 
 	if (Ti < 2) {
 	    continue;
 	}
 
+	for (ti=0; ti<pan->T; ti++) {
+	    t = panel_index(i, ti);
+	    if (!na(pmod->uhat[t])) {
+		break;
+	    }
+	    tmin++;
+	}
+
+	for (ti=tmax; ti>=tmin; ti--) {
+	    t = panel_index(i, ti);
+	    if (!na(pmod->uhat[t])) {
+		break;
+	    }
+	    tmax--;
+	}
+
+	tmin++;
+	Ti = tmax - tmin + 1;
+	if (Ti < 2) {
+	    continue;
+	}
+
 	started = 0;
-	for (ti=1; ti<pan->T; ti++) {
+	for (ti=tmin; ti<=tmax; ti++) {
 	    t = panel_index(i, ti);
 	    ut = pmod->uhat[t];
 	    u1 = pmod->uhat[t-1];
 	    if (!na(ut) && !na(u1)) {
-		num += (ut - u1) * (ut - u1);
-		den += ut * ut;
+		numi += (ut - u1) * (ut - u1);
+		deni += ut * ut;
 		if (!started) {
-		    den += u1 * u1;
+		    /* include first \hat{u}_t squared */
+		    deni += u1 * u1;
 		    started = 1;
 		}
+	    } else {
+		skip = 1;
+		break;
 	    }
+	}
+	if (!skip) {
+	    num += numi;
+	    den += deni;
 	}
     }
 
-    if (den > 0.0) {
+    if (den > 0.0 && !na(den)) {
 	pmod->dw = num / den;
     }
 }

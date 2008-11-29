@@ -1097,7 +1097,6 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
 
     sigma = sqrt(ess / pmod->dfd);
 
-
     pmod->list[1] = dv;
     gretl_model_set_double(pmod, "lmax", lmax);
     gretl_model_set_double(pmod, "ess_orig", ess);
