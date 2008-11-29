@@ -1074,8 +1074,7 @@ static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo,
 static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
 				   MODEL *pmod, int dv, double lmax)
 {
-    double ess, sigma;
-    double x, dx;
+    double x, ess, sigma;
     int t;
 
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, Z[dv]);
