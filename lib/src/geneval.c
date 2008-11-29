@@ -768,7 +768,7 @@ static double *series_pdist (int t, char d, double *parm,
 	return NULL;
     }
 
-    if (bvec == NULL && pvec != NULL) {
+    if (bvec == NULL && pvec != NULL && t == F_PDF) {
 	int n = p->dinfo->t2 - p->dinfo->t1 + 1;
 
 	for (s=0; s<p->dinfo->n; s++) {
