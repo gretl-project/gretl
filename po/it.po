@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-29 11:07+0100\n"
+"PO-Revision-Date: 2008-11-29 12:14-0500\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4811,7 +4811,7 @@ msgstr "Log-verosimiglianza"
 
 #: lib/src/modelprint.c:2592
 msgid "note on model statistics abbreviations here"
-msgstr "???"
+msgstr ""
 
 #: lib/src/modelprint.c:2598
 msgid "Mean dependent var"

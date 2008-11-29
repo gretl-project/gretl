@@ -1809,43 +1809,32 @@ static void r_squared_message (const MODEL *pmod, PRN *prn)
 	      "between observed and\nfitted values of the dependent variable"));
 }
 
-static void weighted_stats_message (PRN *prn)
+enum {
+    ORIG_STATS,
+    WTD_STATS,
+    RHODIFF_STATS,
+    TRANSFORM_STATS
+};
+
+static void alternate_stats_message (int i, PRN *prn)
 {
-    const char *msg = N_("Statistics based on the weighted data");
+    const char *msg[] = {
+	N_("Statistics based on the original data"),
+	N_("Statistics based on the weighted data"),
+	N_("Statistics based on the rho-differenced data"),
+	N_("Statistics based on the transformed data")
+    };
 
     if (plain_format(prn)) {
-	pprintf(prn, "%s:\n\n", _(msg));
+	pprintf(prn, "%s:\n\n", _(msg[i]));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}%s:\n\n", _(msg));
-    } else { /* RTF */
-	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));	
+	pprintf(prn, "\\vspace{1em}%s:\n\n", _(msg[i]));
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"\n", _(msg[i]));
+    } else { 
+	/* RTF */
+	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg[i]));	
     }
-}
-
-static void original_stats_message (PRN *prn)
-{
-    const char *msg = N_("Statistics based on the original data");
-
-    if (plain_format(prn)) {
-	pprintf(prn, "%s:\n\n", _(msg));
-    } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}\n%s:\n\n", _(msg));
-    } else if (rtf_format(prn)) { 
-	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
-    }
-}
-
-static void rho_differenced_stats_message (PRN *prn)
-{
-    const char *msg = N_("Statistics based on the rho-differenced data");
-
-    if (plain_format(prn)) {    
-	pprintf(prn, "%s:\n\n", _(msg));
-    } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}\n%s:\n\n", _(msg));
-    } else if (rtf_format(prn)) { 
-	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
-    }	
 }
 
 static void print_whites_results (const MODEL *pmod, PRN *prn)
@@ -2237,19 +2226,19 @@ static void maybe_remedy_translations (const char **S, int n)
 	N_("Unadjusted R-squared"),
 	N_("Adjusted R-squared"),
 	NULL,
-	N_("P-value"),
+	NULL,
 	N_("Log-likelihood"),
 	N_("Akaike information criterion"),
 	N_("Schwarz Bayesian criterion"),
-	N_("Hannan-Quinn criterion"),
-	N_("First-order autocorrelation coeff."),
-	N_("Durbin-Watson statistic")
+	NULL,
+	NULL,
+	NULL
     };
     int i;
 
     for (i=0; i<n; i++) {
 	if (old_key[i] != NULL && !strcmp(S[i], _(S[i]))) {
-	    /* untranslated */
+	    fprintf(stderr, "untranslated: %s -> %s\n", S[i], old_key[i]);
 	    S[i] = old_key[i];
 	}
     }
@@ -2606,18 +2595,23 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (weighted_model(pmod)) {
-	weighted_stats_message(prn);
+	alternate_stats_message(WTD_STATS, prn);
 	print_middle_table(pmod, prn, MIDDLE_TRANSFORM);
-	original_stats_message(prn);
+	alternate_stats_message(ORIG_STATS, prn);
 	print_middle_table(pmod, prn, MIDDLE_ORIG);
 	goto pval_max;
     }
 
-    /* preambles for some cases */
     if (pmod->ci == LOGISTIC) {
-	original_stats_message(prn);
-    } else if (pmod->ci == AR || pmod->ci == AR1) {
-	rho_differenced_stats_message(prn);
+	alternate_stats_message(TRANSFORM_STATS, prn);
+	print_middle_table(pmod, prn, MIDDLE_TRANSFORM);
+	alternate_stats_message(ORIG_STATS, prn);
+	print_middle_table(pmod, prn, MIDDLE_ORIG);
+	goto pval_max;
+    }
+
+    if (pmod->ci == AR || pmod->ci == AR1) {
+	alternate_stats_message(RHODIFF_STATS, prn);
     }
 
     /* print table of model stats */

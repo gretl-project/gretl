@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-27 12:30-0500\n"
+"PO-Revision-Date: 2008-11-27 23:30-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4794,7 +4794,7 @@ msgstr "  "
 
 #: lib/src/modelprint.c:2598
 msgid "Mean dependent var"
-msgstr "Średn.aryt.zm.zależn."
+msgstr "Średn.aryt.zm.zależnej"
 
 #: lib/src/modelprint.c:2599
 msgid "S.D. dependent var"
@@ -4810,11 +4810,11 @@ msgstr "Błąd standardowy reszt"
 
 #: lib/src/modelprint.c:2602 gui2/library.c:4691 gui2/model_table.c:635
 msgid "R-squared"
-msgstr "Wsp. R-kwadrat"
+msgstr "Wsp. determ. R-kwadrat"
 
 #: lib/src/modelprint.c:2605
 msgid "P-value(F)"
-msgstr "wartość p dla testu F"
+msgstr "Wartość p dla testu F"
 
 #: lib/src/modelprint.c:2607
 msgid "Akaike criterion"

@@ -769,6 +769,7 @@ static double *series_pdist (int t, char d, double *parm,
     }
 
     if (bvec == NULL && pvec != NULL && t == F_PDF) {
+	/* fast treatment, for pdf pnly at this point */
 	int n = p->dinfo->t2 - p->dinfo->t1 + 1;
 
 	for (s=0; s<p->dinfo->n; s++) {
@@ -778,7 +779,6 @@ static double *series_pdist (int t, char d, double *parm,
 		xvec[s] = pvec[s];
 	    }
 	}
-
 	gretl_fill_pdf_array(d, parm, xvec + p->dinfo->t1, n);
     } else {
 	for (s=0; s<p->dinfo->n; s++) {

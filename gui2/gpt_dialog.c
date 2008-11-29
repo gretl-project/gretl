@@ -1926,6 +1926,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     stylist = g_list_append(stylist, "impulses");
     stylist = g_list_append(stylist, "dots");
     stylist = g_list_append(stylist, "steps");
+    if (!frequency_plot_code(spec->code)) {
+	stylist = g_list_append(stylist, "boxes");
+    }
 
     vbox = gp_dialog_vbox();
     gtk_widget_show(vbox);

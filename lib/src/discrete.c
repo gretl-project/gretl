@@ -1074,6 +1074,7 @@ static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo,
 static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
 				   MODEL *pmod, int dv, double lmax)
 {
+    double ess, sigma;
     double x, dx;
     int t;
 
@@ -1083,7 +1084,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     /* make the VCV matrix before messing with the model stats */
     makevcv(pmod, pmod->sigma);
 
-    pmod->ess = 0.0;
+    ess = 0.0;
 
     for (t=0; t<pdinfo->n; t++) {
 	x = pmod->yhat[t];
@@ -1092,41 +1093,16 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
 	}
 	pmod->yhat[t] = lmax / (1.0 + exp(-x));
 	pmod->uhat[t] = Z[dv][t] - pmod->yhat[t];
-	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+	ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+    sigma = sqrt(ess / pmod->dfd);
 
-    pmod->tss = 0.0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	x = Z[dv][t];
-	if (!na(x)) {
-	    dx = (x - pmod->ybar);
-	    pmod->tss += dx * dx;
-	}
-    }
-
-#if 0 /* FIXME? */
-    pmod->fstt = pmod->dfd * 
-	(pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
-#else
-    pmod->fstt = NADBL;
-#endif
-
-    pmod->rsq = pmod->adjrsq = NADBL;
-
-    if (pmod->tss > 0) {
-	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
-	if (pmod->dfd > 0) {
-	    double den = pmod->tss * pmod->dfd;
-
-	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
-	}
-    }
 
     pmod->list[1] = dv;
     gretl_model_set_double(pmod, "lmax", lmax);
+    gretl_model_set_double(pmod, "ess_orig", ess);
+    gretl_model_set_double(pmod, "sigma_orig", sigma);
     pmod->ci = LOGISTIC;
     ls_criteria(pmod);
 
