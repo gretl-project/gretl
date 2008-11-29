@@ -25,10 +25,10 @@
 #define INTERVAL_TOL 1.0e-12
 
 enum {
-    INT_LOW, /* no lower bound */
-    INT_MID, /* both bounds */
-    INT_HIGH, /* no upper bound */
-    INT_POINT, /* point value */
+    INT_LOW,   /* no lower bound */
+    INT_MID,   /* both bounds */
+    INT_HIGH,  /* no upper bound */
+    INT_POINT  /* point value */
 };
 
 typedef struct int_container_ int_container;
@@ -75,6 +75,7 @@ static int_container *int_container_new (int *list, double **Z,
 {
     int_container *ICont;
     int nobs, i, s, t, vlo = list[1], vhi = list[2];
+    double x0, x1;
 
     ICont = malloc(sizeof *ICont);
     if (ICont == NULL) {
@@ -126,7 +127,6 @@ static int_container *int_container_new (int *list, double **Z,
     }
 
     s = 0;
-    double x0, x1;
     for (t=mod->t1; t<=mod->t2; t++) {
 	if (!na(mod->uhat[t])) {
 
@@ -163,7 +163,6 @@ static int_container *int_container_new (int *list, double **Z,
 	ICont->theta[i] = mod->coeff[i];
     }
     ICont->theta[i] = log(mod->sigma);
-    
 
 #if INTDEBUG > 1
     fprintf(stderr, "nobs = %d\n", ICont->nobs);
@@ -175,21 +174,19 @@ static int_container *int_container_new (int *list, double **Z,
     return ICont;
 }
 
-
 static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo, 
 			      int **initlist)
 {
-    int i, t;
     int n = list[0];
     int mpy = pdinfo->v;
-    int err = dataset_add_series(1, pZ, pdinfo);
+    int lv, hv;
+    double x0, x1;
+    int i, t, err;
 
+    err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
 	return err;
     }
-
-    int lv, hv;
-    double x0, x1;
 
     lv = list[1];
     hv = list[2];
@@ -203,34 +200,38 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 	} else if (na(x1)) {
 	    (*pZ)[mpy][t] = x0;
 	} else {
-	    (*pZ)[mpy][t] = 0.5*(x0 + x1);
+	    (*pZ)[mpy][t] = 0.5 * (x0 + x1);
 	}
     }
 
     *initlist = gretl_list_new(n-1);
-    (*initlist)[1] = mpy;
-    for (i=3; i<=n; i++) {
-	(*initlist)[i-1] = list[i];
-    }
+
+    if (*initlist == NULL) {
+	err = E_ALLOC;
+    } else {
+	(*initlist)[1] = mpy;
+	for (i=3; i<=n; i++) {
+	    (*initlist)[i-1] = list[i];
+	}
 
 #if INTDEBUG > 1
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(stderr, "%2d: %g\n", t, (*pZ)[mpy][t]);
-    }
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    fprintf(stderr, "%2d: %g\n", t, (*pZ)[mpy][t]);
+	}
 #endif
+    }
 
-    return 0;
+    return err;
 }
 
 static double int_loglik (const double *theta, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
     double x0, x1, z0, z1, f0, f1;
-    double ndx, derivb, derivs, ll = 0.0;
-    int err;
-    int i, s, t, v;
+    double ndx, ll = 0.0;
+    double derivs = 0.0, derivb = 0.0;
+    int i, t;
     int k = IC->k;
-
     double sigma = exp(theta[k-1]);
 
     for (i=0; i<k; i++) {
@@ -392,10 +393,10 @@ static double *int_hess (int_container *IC, int *err)
     return H;
 }
 
-static void fill_model(int_container *IC, double *hess)
+static void fill_model (int_container *IC, double *hess)
 {
-    int i, j, n;
-    int k = IC->k;
+    double sigma;
+    int i, n, k = IC->k;
 
     IC->pmod->ci = INTREG;
 
@@ -403,7 +404,7 @@ static void fill_model(int_container *IC, double *hess)
 	IC->pmod->coeff[i] = IC->theta[i];
     }	
 
-    double sigma = exp(IC->theta[k-1]);
+    sigma = exp(IC->theta[k-1]);
     IC->pmod->sigma = sigma;
 
     IC->pmod->lnL = int_loglik(IC->theta, IC);
@@ -425,23 +426,23 @@ static void fill_model(int_container *IC, double *hess)
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
 {
-    int i, err;
-    int_container *IC = NULL;
+    int_container *IC;
+    double *hess = NULL;
+    double Loglik;
+    int fncount, grcount;
+    int k, nh;
+    int err;
+
     IC = int_container_new(list, Z, pdinfo, mod);
     
-    int k = IC->k;
-    int nh = k*(k+1)/2;
-    double *hess; 
-
-    double Loglik;
+    k = IC->k;
+    nh = k*(k+1)/2;
     Loglik = int_loglik(IC->theta, IC);
 
-    int fncount, grcount;
     err = BFGS_max(IC->theta, k, 1000, INTERVAL_TOL, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
 		   int_score, IC, opt & OPT_V, prn);
 
-    fprintf(stdout, "\n");
     if (!err) {
 	hess = int_hess(IC, &err);
     }
@@ -452,24 +453,23 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 
     free(hess);
     int_container_destroy(IC);
+
     return 0;
 }
 
 MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn) 
 {
-    int err;
     MODEL model;
     int *initlist;
 
     gretl_model_init(&model);
 
-    /* 
-       create extra variable for model initialization and
+    /* create extra variable for model initialization and
        corresponding list
     */
-    err = create_midpoint_y(list, pZ, pdinfo, &initlist);
-    if (err) {
+    model.errcode = create_midpoint_y(list, pZ, pdinfo, &initlist);
+    if (model.errcode) {
 	return model;
     }
 

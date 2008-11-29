@@ -95,7 +95,8 @@ PLUGINSRC = \
 	gretlzip.c \
 	heckit.c \
 	odbc_import.c \
-	quantreg.c
+	quantreg.c \
+	interval.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -132,7 +133,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/gretlzip.dll \
 	plugins/heckit.dll \
 	plugins/odbc_import.dll \
-	plugins/quantreg.dll
+	plugins/quantreg.dll \
+	plugins/interval.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -445,6 +447,10 @@ plugins/odbc_import.dll: odbc_import.o dllinit.o
 plugins/quantreg.dll: quantreg.o rqfnb.o rqbr.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+plugins/interval.dll: interval.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
