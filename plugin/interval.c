@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "libset.h"
 
-#define INTDEBUG 1
+#define INTDEBUG 0
 
 #define INTERVAL_TOL 1.0e-12
 
@@ -46,6 +46,7 @@ struct int_container_ {
     int k;            /* total number of parameters */
     double *theta;    /* real parameter estimates */
     double *ndx;      /* index variable */
+    double *uhat;     /* generalized residuals */
     double *dP;       /* probabilities */
     double *df;       /* densities */
     MODEL *pmod;      /* model struct, initially containing OLS */
@@ -62,6 +63,7 @@ static void int_container_destroy (int_container *ICont)
     free(ICont->list);
     free(ICont->theta);
     free(ICont->ndx);
+    free(ICont->uhat);
     free(ICont->dP);
     free(ICont->df);
     doubles_array_free(ICont->G, ICont->k);
@@ -99,6 +101,7 @@ static int_container *int_container_new (int *list, double **Z,
     ICont->list = NULL;
     ICont->theta = NULL;
     ICont->ndx = NULL;
+    ICont->uhat = NULL;
     ICont->dP = NULL;
     ICont->df = NULL;
     ICont->G = NULL;
@@ -111,6 +114,7 @@ static int_container *int_container_new (int *list, double **Z,
     ICont->theta = malloc(ICont->k * sizeof *ICont->theta);
 
     ICont->ndx = malloc(nobs * sizeof *ICont->ndx);
+    ICont->uhat = malloc(nobs * sizeof *ICont->uhat);
     ICont->dP = malloc(nobs * sizeof *ICont->dP);
     ICont->df = malloc(nobs * sizeof *ICont->dP);
     ICont->G = doubles_array_new(ICont->k, nobs);
@@ -119,9 +123,9 @@ static int_container *int_container_new (int *list, double **Z,
     if (ICont->lo == NULL || ICont->hi == NULL || 
 	ICont->obstype == NULL || ICont->X == NULL || 
 	ICont->list == NULL || ICont->theta == NULL || 
-	ICont->ndx == NULL || ICont->dP == NULL || 
-	ICont->df == NULL || ICont->G == NULL ||
-	ICont->g == NULL) {
+	ICont->ndx == NULL || ICont->uhat == NULL || 
+	ICont->dP == NULL || ICont->df == NULL || 
+	ICont->G == NULL || ICont->g == NULL) {
 	int_container_destroy(ICont);
 	return NULL;
     }
@@ -164,7 +168,7 @@ static int_container *int_container_new (int *list, double **Z,
     }
     ICont->theta[i] = log(mod->sigma);
 
-#if INTDEBUG > 1
+#if INTDEBUG
     fprintf(stderr, "nobs = %d\n", ICont->nobs);
     fprintf(stderr, "t1-t2 = %d-%d\n", ICont->t1, ICont->t2);
     fprintf(stderr, "k = %d\n", ICont->k);
@@ -234,6 +238,7 @@ static double int_loglik (const double *theta, void *ptr)
     int k = IC->k;
     double sigma = exp(theta[k-1]);
 
+
     for (i=0; i<k; i++) {
 	IC->g[i] = 0;
     }
@@ -253,15 +258,15 @@ static double int_loglik (const double *theta, void *ptr)
 	case INT_LOW:
 	    z1 = (x1 - ndx)/sigma;
 	    IC->dP[t] = normal_cdf(z1);
-	    derivb = -normal_pdf(z1)/sigma;
-	    derivb /= IC->dP[t];
+	    IC->df[t] = -normal_pdf(z1);
+	    derivb = IC->df[t]/(sigma * IC->dP[t]);
 	    derivs = derivb*z1*sigma;
 	    break;
 	case INT_HIGH:
 	    z0 = (x0 - ndx)/sigma;
 	    IC->dP[t] = 1.0 - normal_cdf(z0);
-	    derivb = normal_pdf(z0)/sigma;
-	    derivb /= IC->dP[t];
+	    IC->df[t] = normal_pdf(z0);
+	    derivb = IC->df[t]/(sigma * IC->dP[t]);
 	    derivs = derivb*z0*sigma;
 	    break;
 	case INT_MID:
@@ -270,8 +275,8 @@ static double int_loglik (const double *theta, void *ptr)
 	    IC->dP[t] = normal_cdf(z1) - normal_cdf(z0);
 	    f0 = normal_pdf(z0);
 	    f1 = normal_pdf(z1);
-	    derivb = (f0 - f1)/sigma;
-	    derivb /= IC->dP[t];
+	    IC->df[t] = f0 - f1;
+	    derivb = IC->df[t]/(sigma * IC->dP[t]);
 	    derivs = (f0*z0 - f1*z1) / IC->dP[t];
 	    break;
 	case INT_POINT:
@@ -293,7 +298,7 @@ static double int_loglik (const double *theta, void *ptr)
 
     }
     
-#if INTDEBUG > 1
+#if INTDEBUG
     fprintf(stderr, "ll = %16.10f\n", ll);
 
     for (i=0; i<IC->k; i++) {
@@ -373,7 +378,7 @@ static double *int_hess (int_container *IC, int *err)
     }
 
     *err = gretl_invert_packed_symmetric_matrix(V);
-#if 0
+#if INTDEBUG
     gretl_packed_matrix_print(V, "V");
 #endif
 
@@ -393,10 +398,31 @@ static double *int_hess (int_container *IC, int *err)
     return H;
 }
 
+
+static void int_compute_gresids (int_container *IC)
+{
+    int t, k = IC->k;
+    double x0, x1;
+    double ndx, sigma = exp(IC->theta[k-1]);
+
+    for (t=0; t<IC->nobs; t++) {
+	x0 = IC->lo[t];
+	x1 = IC->hi[t];
+
+	ndx = IC->ndx[t];
+
+	if (IC->obstype[t] == INT_POINT) {
+	    IC->uhat[t] = x0 - ndx;
+	} else {
+	    IC->uhat[t] = sigma * IC->df[t] / IC->dP[t];
+	}
+    }
+} 
+
 static void fill_model (int_container *IC, double *hess)
 {
-    double sigma;
-    int i, n, k = IC->k;
+    double ndx, u, sigma;
+    int i, j, n, k = IC->k;
 
     IC->pmod->ci = INTREG;
 
@@ -407,10 +433,27 @@ static void fill_model (int_container *IC, double *hess)
     sigma = exp(IC->theta[k-1]);
     IC->pmod->sigma = sigma;
 
+    int_compute_gresids(IC);
+    j = 0;
+    for (i=IC->t1; i<=IC->t2; i++) {
+	if (!na(IC->pmod->uhat[i])) {
+	    ndx = IC->ndx[j];
+	    u = IC->uhat[j];
+
+	    IC->pmod->uhat[i] = u;
+
+	    if (IC->obstype[j] == INT_POINT) {
+		IC->pmod->yhat[i] = ndx;
+	    } else {
+		IC->pmod->yhat[i] = ndx + u;
+	    }
+	    j++;
+	}
+    }
+
     IC->pmod->lnL = int_loglik(IC->theta, IC);
 
     n = 0;
-
     for (i=0; i<IC->nx; i++) {
 	IC->pmod->sderr[i] = sqrt(hess[n]);
 	n += (k-i);
@@ -434,7 +477,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     int err;
 
     IC = int_container_new(list, Z, pdinfo, mod);
-    
+
     k = IC->k;
     nh = k*(k+1)/2;
     Loglik = int_loglik(IC->theta, IC);
@@ -454,7 +497,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     free(hess);
     int_container_destroy(IC);
 
-    return 0;
+    return err;
 }
 
 MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
@@ -481,7 +524,7 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
-#if INTDEBUG > 1
+#if INTDEBUG
     pprintf(prn, "interval_estimate: initial OLS\n");
     printmodel(&model, pdinfo, OPT_S, prn);
 #endif
