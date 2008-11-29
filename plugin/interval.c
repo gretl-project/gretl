@@ -439,8 +439,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     int fncount, grcount;
     err = BFGS_max(IC->theta, k, 1000, INTERVAL_TOL, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
-		   int_score, IC, (prn != NULL)? OPT_V : OPT_NONE,
-		   prn);
+		   int_score, IC, opt & OPT_V, prn);
 
     fprintf(stdout, "\n");
     if (!err) {

@@ -27,6 +27,7 @@
                        c == ARBOND || \
                        c == ARMA || \
                        c == HECKIT || \
+                       c == INTREG || \
                        c == GARCH || \
                        c == GMM || \
                        c == HCCM || \
@@ -170,6 +171,8 @@ struct gretl_option gretl_opts[] = {
     { HECKIT,   OPT_V, "verbose" },
     { HELP,     OPT_F, "func" },
     { HSK,      OPT_Q, "quiet" },
+    { INTREG,   OPT_Q, "quiet" },
+    { INTREG,   OPT_V, "verbose" },
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
     { KPSS,     OPT_Q, "quiet" },

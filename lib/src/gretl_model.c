@@ -3980,6 +3980,7 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "garch") ||
 	!strcmp(s, "hccm") ||
 	!strcmp(s, "heckit")  ||
+	!strcmp(s, "intreg")  ||
 	!strcmp(s, "hsk")  ||
 	!strcmp(s, "lad")  ||
 	!strcmp(s, "logistic") ||
