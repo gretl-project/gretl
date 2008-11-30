@@ -703,7 +703,7 @@ static int real_adf_test (int varno, int order, int niv,
 	    /* verbose */
 	    dfmod.aux = (order > 0)? AUX_ADF : AUX_DF;
 	    if (!na(pv)) {
-		gretl_model_set_int(&dfmod, "dfnum", dfnum + 2);
+		gretl_model_set_int(&dfmod, "dfnum", dfnum);
 		gretl_model_set_double(&dfmod, "dfpval", pv);
 	    }
 	    printmodel(&dfmod, pdinfo, OPT_NONE, prn);
