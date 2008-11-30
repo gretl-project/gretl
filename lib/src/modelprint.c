@@ -2693,9 +2693,11 @@ static void print_pval_str (double pval, char *str)
     }
 }
 
+/* used only for "alternate" model-output formats */
+
 static int 
 prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
-		     int i, model_coeff *mc, PRN *prn)
+		     int i, int adfnum, model_coeff *mc, PRN *prn)
 {
     int gotnan = 0;
 
@@ -2727,10 +2729,8 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     if (mc->show_pval && !na(mc->tval)) {
-	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
-	    if (i + 2 == gretl_model_get_int(pmod, "dfnum")) {
-		mc->pval = gretl_model_get_double(pmod, "dfpval");
-	    } 
+	if (i == adfnum) {
+	    mc->pval = gretl_model_get_double(pmod, "dfpval");
 	    mc->df_pval = 1;
 	} else {	
 	    mc->pval = coeff_pval(pmod->ci, mc->tval, pmod->dfd);
@@ -3922,6 +3922,7 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     const char *sepstr = NULL;
     int seppos = -1;
     model_coeff mc;
+    int adfnum = -1;
     int nc = pmod->ncoeff;
     int i, err = 0, gotnan = 0;
 
@@ -3945,9 +3946,13 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	intervals = gretl_model_get_data(pmod, "coeff_intervals");
     }
 
+    if (pmod->aux == AUX_DF || pmod->aux == AUX_ADF) {
+	adfnum = gretl_model_get_int(pmod, "dfnum");
+    }
+
     for (i=0; i<nc; i++) {
 
-	err = prepare_model_coeff(pmod, pdinfo, i, &mc, prn);
+	err = prepare_model_coeff(pmod, pdinfo, i, adfnum, &mc, prn);
 	if (err) gotnan = 1;
 
 	if (i == seppos) {
