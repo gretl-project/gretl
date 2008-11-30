@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.7.10
+# Polish translation for gretl-1.7.9cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2008
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2008
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-27 23:30-0500\n"
+"PO-Revision-Date: 2008-11-30 23:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -373,18 +373,18 @@ msgstr "Robust F"
 #: lib/src/compare.c:365
 #, c-format
 msgid "  Of the %d model selection statistics, %d "
-msgstr "  Of the %d model selection statistics, %d "
+msgstr "  Dla %d kryteriów informacyjnych (AIC, BIC, HQC), %d "
 
 #: lib/src/compare.c:368
 msgid "has improved.\n"
-msgstr "has improved.\n"
+msgstr "kryterium jest lepsze.\n"
 
 #: lib/src/compare.c:370
 msgid ""
 "have improved.\n"
 "\n"
 msgstr ""
-"have improved.\n"
+"kryteria są lepsze.\n"
 "\n"
 
 #: lib/src/compare.c:726
@@ -4153,11 +4153,11 @@ msgstr "Statystyka testu Durbina--Watsona"
 #: lib/src/modelprint.c:952 lib/src/modelprint.c:959 lib/src/modelprint.c:961
 #: lib/src/modelprint.c:2667
 msgid "Durbin's h"
-msgstr "Statystyka testu Durbina h"
+msgstr "Statystyka Durbina h"
 
 #: lib/src/modelprint.c:957 lib/src/modelprint.c:2667
 msgid "Durbin's $h$"
-msgstr "Statystyka testu Durbina $h$"
+msgstr "Statystyka Durbina $h$"
 
 #: lib/src/modelprint.c:1001
 #, c-format
@@ -4167,7 +4167,7 @@ msgstr "Wyłączając stałą, największa wartość p jest dla zmiennej %d (%s)
 #: lib/src/modelprint.c:1004
 #, c-format
 msgid "P-value was highest for variable %d (%s)"
-msgstr "Wyłączając stałą, największa wartość p jest dla zmiennej %d (%s)"
+msgstr "Największa wartość p jest dla zmiennej %d (%s)"
 
 #: lib/src/modelprint.c:1014
 msgid "Auxiliary regression for non-linearity test (squared terms)"
@@ -4916,12 +4916,12 @@ msgstr "Liczba obserwacji"
 #: lib/src/modelprint.c:4743 lib/src/modelprint.c:4748
 #: lib/src/modelprint.c:4754
 msgid "Mean of innovations"
-msgstr "Średnia  z  zaburzeń losowych"
+msgstr "Średnia zaburzeń los."
 
 #: lib/src/modelprint.c:4745 lib/src/modelprint.c:4749
 #: lib/src/modelprint.c:4756
 msgid "Variance of innovations"
-msgstr "wariancja z zaburzeń losowych"
+msgstr "warian. zaburzeń los."
 
 #: lib/src/modelprint.c:4776 lib/src/modelprint.c:4784
 msgid "Actual"
