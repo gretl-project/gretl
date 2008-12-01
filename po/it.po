@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-11-23 16:32-0500\n"
-"PO-Revision-Date: 2008-11-29 12:14-0500\n"
+"PO-Revision-Date: 2008-12-01 10:34+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1673,7 +1673,7 @@ msgid ""
 "      S.D.            C.V.            SKEW          EXCSKURT\n"
 "\n"
 msgstr ""
-"     D.S.            C.V.            ASIMMETRIA    CURTOSI\n"
+"     SQM             C.V.            ASIMMETRIA    CURTOSI\n"
 "\n"
 
 #: lib/src/describe.c:3754
@@ -3972,7 +3972,7 @@ msgstr "Scarto quadratico medio della variabile dipendente"
 
 #: lib/src/modelprint.c:201
 msgid "S.D. of dependent variable"
-msgstr "D.S. della variabile dipendente"
+msgstr "SQM della variabile dipendente"
 
 #: lib/src/modelprint.c:217
 msgid "Unconditional error variance"
@@ -4811,7 +4811,7 @@ msgstr "Log-verosimiglianza"
 
 #: lib/src/modelprint.c:2592
 msgid "note on model statistics abbreviations here"
-msgstr ""
+msgstr "Note: SQM = scarto quadratico medio; E.S. = errore standard"
 
 #: lib/src/modelprint.c:2598
 msgid "Mean dependent var"
@@ -4819,7 +4819,7 @@ msgstr "Media variabile dipendente"
 
 #: lib/src/modelprint.c:2599
 msgid "S.D. dependent var"
-msgstr "D.S. variabile dipendente"
+msgstr "SQM variabile dipendente"
 
 #: lib/src/modelprint.c:2600
 msgid "Sum squared resid"
