@@ -32,6 +32,11 @@ version 1.7.10, in progress
   chronological order
 - "fcast": allow variables for the startobs and endobs
   arguments; add "rolling" k-step-ahead option
+- Fix bug in ADF --verbose printout (wrong p-value shown
+  for one lagged difference in some cases)
+- GUI plot editor: translate the gnuplot style strings
+- Switch to more compact tabular form for presenting
+  model statistics
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
