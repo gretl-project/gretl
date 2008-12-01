@@ -160,14 +160,14 @@ htest_graph_title (int dist, double x, double *parms)
     gchar *s = NULL;
 
     if (dist == NORMAL_DIST) {
-	s = g_strdup(G_("Gaussian sampling distribution"));
+	s = g_strdup(_("Gaussian sampling distribution"));
     } else if (dist == T_DIST) {
-	s = g_strdup_printf(G_("t(%d) sampling distribution"), (int) parms[0]);
+	s = g_strdup_printf(_("t(%d) sampling distribution"), (int) parms[0]);
     } else if (dist == CHISQ_DIST) {
-	s = g_strdup_printf(G_("Chi-square(%d) sampling distribution"), 
+	s = g_strdup_printf(_("Chi-square(%d) sampling distribution"), 
 			    (int) parms[0]);
     } else if (dist == F_DIST) {
-	s = g_strdup_printf(G_("F(%d, %d) sampling distribution"), 
+	s = g_strdup_printf(_("F(%d, %d) sampling distribution"), 
 			    (int) parms[0], (int) parms[1]);
     }
 
@@ -180,19 +180,19 @@ dist_graph_title (int dist, double *parms)
     gchar *s = NULL;
 
     if (dist == NORMAL_DIST) {
-	s = g_strdup_printf(G_("N(%g, %g)"), parms[0], parms[1] * parms[1]);
+	s = g_strdup_printf(_("N(%g, %g)"), parms[0], parms[1] * parms[1]);
     } else if (dist == T_DIST) {
-	s = g_strdup_printf(G_("t(%d)"), (int) parms[0]);
+	s = g_strdup_printf(_("t(%d)"), (int) parms[0]);
     } else if (dist == CHISQ_DIST) {
-	s = g_strdup_printf(G_("Chi-square(%d)"), (int) parms[0]);
+	s = g_strdup_printf(_("Chi-square(%d)"), (int) parms[0]);
     } else if (dist == F_DIST) {
-	s = g_strdup_printf(G_("F(%d, %d)"), (int) parms[0], (int) parms[1]);
+	s = g_strdup_printf(_("F(%d, %d)"), (int) parms[0], (int) parms[1]);
     } else if (dist == BINOMIAL_DIST) {
-	s = g_strdup_printf(G_("Binomial(%d, %g)"), (int) parms[1], parms[0]);
+	s = g_strdup_printf(_("Binomial(%d, %g)"), (int) parms[1], parms[0]);
     } else if (dist == POISSON_DIST) {
-	s = g_strdup_printf(G_("Poisson(%g)"), parms[0]);
+	s = g_strdup_printf(_("Poisson(%g)"), parms[0]);
     } else if (dist == WEIBULL_DIST) {
-	s = g_strdup_printf(G_("Weibull(%g, %g)"), parms[0], parms[1]);
+	s = g_strdup_printf(_("Weibull(%g, %g)"), parms[0], parms[1]);
     }
 
     return s;
@@ -398,7 +398,7 @@ range_from_test_stat (int d, double x, double *parms, double *spike,
 	*spike = .25;
 	fprintf(fp, "set xrange [%.3f:%.3f]\n", -x1, x1);
 	fprintf(fp, "set yrange [0:.50]\n");
-	fprintf(fp, "set xlabel '%s'\n", G_("Standard errors"));
+	fprintf(fp, "set xlabel '%s'\n", _("Standard errors"));
     } else {
 	x1 = dist_xmax(d, parms);
 	if (x > x1) {
@@ -522,7 +522,7 @@ static void htest_graph (int d, double x, double *parms)
 	alt = 1;
     } 
 
-    fputs("set key right top\n", fp);
+    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     
     gretl_push_c_numeric_locale();
 
@@ -577,7 +577,7 @@ static void htest_graph (int d, double x, double *parms)
     title = htest_graph_title(d, x, parms);
     fprintf(fp, " title '%s' w lines , \\\n", title);
     fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
-	    G_("test statistic"));
+	    _("test statistic"));
     fprintf(fp, "%g %g\n", x, spike);
     fputs("e\n", fp);
     g_free(title);
@@ -611,7 +611,7 @@ static void dist_graph (int d, double *parms)
 	alt = 1;
     }
 
-    fputs("set key right top\n", fp);
+    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
     fputs("set parametric\n", fp);
 
     gretl_push_c_numeric_locale();

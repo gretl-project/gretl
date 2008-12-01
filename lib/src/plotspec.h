@@ -171,4 +171,6 @@ int gp_keypos_from_translation (const char *s);
 
 gp_style_spec *get_keypos_spec (int t);
 
+void print_keypos_string (int t, FILE *fp);
+
 #endif /* PLOTSPEC_H */

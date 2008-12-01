@@ -34,8 +34,6 @@ char *iso_to_ascii (char *s);
 
 #ifdef ENABLE_NLS
 
-char *gp_gettext (const char *msgid);
-
 char *iso_gettext (const char *msgid);
 
 char *maybe_iso_gettext (const char *msgid);
@@ -59,6 +57,10 @@ int get_translated_width (const char *str);
 void check_for_console (PRN *prn);
 
 void console_off (void);
+
+void set_gui_native_printing (void);
+
+void unset_gui_native_printing (void);
 
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)

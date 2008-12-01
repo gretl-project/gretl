@@ -127,12 +127,12 @@ static int density_plot (const double *x, double s, double h,
 
     fputs("# literal lines = 2\n", fp);
     fprintf(fp, "set label \"%s\" at graph .65, graph .97\n",
-	    (ktype == GAUSSIAN_KERNEL)? G_("Gaussian kernel") :
-	    G_("Epanechnikov kernel"));
-    sprintf(tmp, G_("bandwidth = %g"), h);
+	    (ktype == GAUSSIAN_KERNEL)? _("Gaussian kernel") :
+	    _("Epanechnikov kernel"));
+    sprintf(tmp, _("bandwidth = %g"), h);
     fprintf(fp, "set label \"%s\" at graph .65, graph .93\n", tmp);
 
-    sprintf(tmp, G_("Estimated density of %s"), vname);
+    sprintf(tmp, _("Estimated density of %s"), vname);
     fprintf(fp, "set title \"%s\"\n", tmp);
 
     fputs("plot \\\n'-' using 1:2 w lines\n", fp);

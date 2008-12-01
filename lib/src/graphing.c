@@ -1216,10 +1216,10 @@ static void make_gtitle (gnuplot_info *gi, int code,
     switch (code) {
     case GTITLE_VLS:
 	if (gi->fit == PLOT_FIT_OLS) {
-	    sprintf(title, G_("%s versus %s (with least squares fit)"),
+	    sprintf(title, _("%s versus %s (with least squares fit)"),
 		    s1, s2);
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
-	    sprintf(title, G_("%s versus %s (with inverse fit)"),
+	    sprintf(title, _("%s versus %s (with inverse fit)"),
 		    s1, s2);
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
 	    sprintf(title, _("%s versus %s (with quadratic fit)"),
@@ -1228,18 +1228,18 @@ static void make_gtitle (gnuplot_info *gi, int code,
 	break;
     case GTITLE_RESID:
 	if (sscanf(s1, "residual for %15s", depvar) == 1) {
-	    sprintf(title, G_("Regression residuals (= observed - fitted %s)"), 
+	    sprintf(title, _("Regression residuals (= observed - fitted %s)"), 
 		    depvar);
 	}
 	break;
     case GTITLE_AF:
-	sprintf(title, G_("Actual and fitted %s"), s1);
+	sprintf(title, _("Actual and fitted %s"), s1);
 	break;
     case GTITLE_AFV:
 	if (s2 == NULL || (gi->flags & GPT_TS)) {
-	    sprintf(title, G_("Actual and fitted %s"), s1);
+	    sprintf(title, _("Actual and fitted %s"), s1);
 	} else {
-	    sprintf(title, G_("Actual and fitted %s versus %s"), s1, s2);
+	    sprintf(title, _("Actual and fitted %s versus %s"), s1, s2);
 	}
 	break;
     default:
@@ -1385,8 +1385,8 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
     s1 = var_get_graph_name(pdinfo, yno);
     s2 = var_get_graph_name(pdinfo, xno);
 
-    sprintf(title, G_("%s versus %s (with loess fit)"), s1, s2);
-    fputs("set key top left\n", fp);
+    sprintf(title, _("%s versus %s (with loess fit)"), s1, s2);
+    print_keypos_string(GP_KEY_LEFT_TOP, fp);
     fprintf(fp, "set title \"%s\"\n", title);
     print_axis_label('y', s1, fp);
     print_axis_label('x', s2, fp);
@@ -1394,7 +1394,7 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 title '' w points, \\\n", fp);
-    sprintf(title, G_("loess fit, d = %d, q = %g"), d, q);
+    sprintf(title, _("loess fit, d = %d, q = %g"), d, q);
     fprintf(fp, " '-' using 1:2 title \"%s\" w lines\n", title);
 
     T = gretl_vector_get_length(yh);
@@ -2338,7 +2338,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    make_calendar_tics(pdinfo, &gi, prn);
 	} else if (panel_plot(pdinfo, gi.t1, gi.t2)) {
 	    make_panel_unit_tics(pdinfo, &gi, prn);
-	    strcpy(xlabel, G_("time series by group"));
+	    strcpy(xlabel, _("time series by group"));
 	}
     } 
 
@@ -2373,7 +2373,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
 	if (gi.flags & GPT_RESIDS && !(gi.flags & GPT_DUMMY)) { 
 	    make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
-	    fprintf(fp, "set ylabel '%s'\n", G_("residual"));
+	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
 	} else {
 	    print_axis_label('y', var_get_graph_name(pdinfo, list[1]), fp);
 	}
@@ -2382,7 +2382,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) { 
 	make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
-	fprintf(fp, "set ylabel '%s'\n", G_("residual"));
+	fprintf(fp, "set ylabel '%s'\n", _("residual"));
     } else if (gi.flags & GPT_FA) {
 	if (list[3] == pdinfo->v - 1) { 
 	    /* x var is just time or index: is this always right? */
@@ -2439,25 +2439,25 @@ int gnuplot (const int *plotlist, const char *literal,
 	    fprintf(fp, "'-' using 1:($2) axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
 		    var_get_graph_name(pdinfo, list[i]), 
-		    (i == oddman)? G_("right") : G_("left"),
+		    (i == oddman)? _("right") : _("left"),
 		    (use_impulses(&gi))? "w impulses" : 
 		    (gi.flags & GPT_TS)? "w lines" : "w points",
 		    lwstr,
 		    (i == list[0] - 1)? "\n" : ", \\\n");
 	}
     } else if (gi.flags & GPT_DUMMY) { 
-	strcpy(s1, (gi.flags & GPT_RESIDS)? G_("residual") : 
+	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 
 	       var_get_graph_name(pdinfo, list[1]));
 	strcpy(s2, var_get_graph_name(pdinfo, list[3]));
 	fprintf(fp, " '-' using 1:($2) title \"%s (%s=1)\", \\\n", s1, s2);
 	fprintf(fp, " '-' using 1:($2) title \"%s (%s=0)\"\n", s1, s2);
     } else if (gi.yformula != NULL) {
-	fprintf(fp, " '-' using 1:($2) title \"%s\" w points , \\\n", G_("actual"));	
-	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, G_("fitted"));
+	fprintf(fp, " '-' using 1:($2) title \"%s\" w points , \\\n", _("actual"));	
+	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
 	set_withstr(gi.flags, withstr);
-	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 2, \\\n", G_("fitted"), withstr);
-	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", G_("actual"), withstr);	
+	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 2, \\\n", _("fitted"), withstr);
+	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", _("actual"), withstr);	
     } else {
 	for (i=1; i<list[0]; i++)  {
 	    set_lwstr(pdinfo, list[i], lwstr);
@@ -2994,9 +2994,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label \"%s:\" at graph .03, graph .97%s\n",
-			G_("Test statistic for normality"),
+			_("Test statistic for normality"),
 			gnuplot_label_front_string());
-		print_freq_test_label(label, G_("Chi-squared(2) = %.3f pvalue = %.5f"), 
+		print_freq_test_label(label, _("Chi-squared(2) = %.3f pvalue = %.5f"), 
 				      freq->test, chisq_cdf_comp(2, freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, gnuplot_label_front_string());
@@ -3017,9 +3017,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
-			G_("Test statistic for gamma"),
+			_("Test statistic for gamma"),
 			gnuplot_label_front_string());
-		print_freq_test_label(label, G_("z = %.3f pvalue = %.5f"), 
+		print_freq_test_label(label, _("z = %.3f pvalue = %.5f"), 
 				      freq->test, normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, gnuplot_label_front_string());
@@ -3048,9 +3048,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     fprintf(fp, "set xlabel '%s'\n", freq->varname);
     if (dist) {
-	fprintf(fp, "set ylabel '%s'\n", G_("Density"));
+	fprintf(fp, "set ylabel '%s'\n", _("Density"));
     } else {
-	fprintf(fp, "set ylabel '%s'\n", G_("Relative frequency"));
+	fprintf(fp, "set ylabel '%s'\n", _("Relative frequency"));
     }
 
     if (isnan(lambda)) {
@@ -3226,28 +3226,28 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	   come out on top */
 	if (do_errs) {
 	    fprintf(fp, "'-' using 1:2:3 title '%s' w filledcurve lt 3 , \\\n",
-		    G_("95 percent confidence interval"));
+		    _("95 percent confidence interval"));
 	} 
 	if (depvar_present) {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1 , \\\n",
 		    varname);
 	}
-	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 2\n", G_("forecast"));
+	fprintf(fp, "'-' using 1:2 title '%s' w lines lt 2\n", _("forecast"));
     } else {
 	/* plot confidence bands last */
 	if (depvar_present) {
 	    fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
 		    varname);
 	}
-	fprintf(fp, "'-' using 1:2 title '%s' w lines", G_("forecast"));
+	fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
 	if (do_errs) {
 	    if (use_lines) {
 		fprintf(fp, " , \\\n'-' using 1:2 title '%s' w lines , \\\n",
-			G_("95 percent confidence interval"));
+			_("95 percent confidence interval"));
 		fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
 	    } else {
 		fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
-			G_("95 percent confidence interval"));
+			_("95 percent confidence interval"));
 	    }
 	} else {
 	    fputc('\n', fp);
@@ -3367,7 +3367,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     fputs("set xrange [0.0:1.0]\n", fp);
     fputs("set xlabel 'tau'\n", fp);
 
-    tmp = g_strdup_printf(G_("Coefficient on %s"), 
+    tmp = g_strdup_printf(_("Coefficient on %s"), 
 			  var_get_graph_name(pdinfo, pmod->list[k+2]));
     fprintf(fp, "set title \"%s\"\n", tmp);
     g_free(tmp);
@@ -3391,7 +3391,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     fputs("'-' using 1:2:3 notitle w filledcurve lt 3 , \\\n", fp);
 
     /* rq estimates */
-    tmp = g_strdup_printf(G_("Quantile estimates with %g%% band"), cval);
+    tmp = g_strdup_printf(_("Quantile estimates with %g%% band"), cval);
     fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1 , \\\n", tmp);
     g_free(tmp);
 
@@ -3399,7 +3399,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
     gretl_push_c_numeric_locale();
 
     /* ols estimate plus (1 - alpha) band */
-    tmp = g_strdup_printf(G_("OLS estimate with %g%% band"), cval);
+    tmp = g_strdup_printf(_("OLS estimate with %g%% band"), cval);
     fprintf(fp, "%g title '%s' w lines lt 2 , \\\n", pmod->coeff[k], tmp);
     g_free(tmp);
     fprintf(fp, "%g notitle w dots lt 2 , \\\n", pmod->coeff[k] + olsband);
@@ -3458,11 +3458,12 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
 	return err;
     }
 
-    fprintf(fp, "set key left top\n"
-	    "plot \\\n'-' using 1:2 title '%s' w lines, \\\n"
+    fputs("set key left top\n", fp);
+
+    fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines, \\\n"
 	    "'-' using 1:2 title '%s' w lines lt 2, \\\n" 
 	    "'-' using 1:2 notitle w lines lt 2\n", 
-	    G_("residual"), G_("+- sqrt(h(t))"));
+	    _("residual"), _("+- sqrt(h(t))"));
 
     gretl_push_c_numeric_locale();
 
@@ -3624,7 +3625,7 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
     xfrac = 1.0 / xnum;
     yfrac = 1.0 / ynum;
 
-    fputs("set key top left\n", fp);
+    fputs("set key left top\n", fp);
     fputs("set datafile missing \"?\"\n", fp);
     fputs("set xtics nomirror\n", fp);
     fputs("set ytics nomirror\n", fp);
@@ -3634,7 +3635,7 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
     if (opt & OPT_V) {
 	fputs("set noxlabel\n", fp);
     } else {
-	fprintf(fp, "set xlabel '%s'\n", G_("time"));
+	fprintf(fp, "set xlabel '%s'\n", _("time"));
     }
 
     fputs("set xzeroaxis\n", fp);
@@ -3734,13 +3735,13 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     }
 
     if (confint) {
-	fputs("set key top left\n", fp);
-	sprintf(title, G_("response of %s to a shock in %s, "
+	fputs("set key left top\n", fp);
+	sprintf(title, _("response of %s to a shock in %s, "
 			  "with bootstrap confidence interval"),
 		pdinfo->varname[vtarg], pdinfo->varname[vshock]);
     } else {
 	fputs("set nokey\n", fp);
-	sprintf(title, G_("response of %s to a shock in %s"), 
+	sprintf(title, _("response of %s to a shock in %s"), 
 		pdinfo->varname[vtarg], pdinfo->varname[vshock]);
     }
 
@@ -3750,9 +3751,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
     if (confint) {
 	fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines, \\\n", 
-		G_("point estimate"));
+		_("point estimate"));
 	fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n",
-		G_("0.025 and 0.975 quantiles"));
+		_("0.025 and 0.975 quantiles"));
     } else {
 	fputs("plot \\\n'-' using 1:2 w lines\n", fp);
     }
@@ -3819,7 +3820,7 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     if (!confint) {
 	fputs("set nokey\n", fp);
     } else {
-	fputs("set key top left\n", fp);
+	fputs("set key left top\n", fp);
     }
     fputs("set multiplot\n", fp);
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
@@ -3918,12 +3919,12 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
     nobs = gretl_matrix_rows(E);
 
     fputs("# system residual plot\n", fp);
-    fputs("set key top left\n", fp);
+    fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
     if (ci == VAR) {
-	fprintf(fp, "set title '%s'\n", G_("VAR residuals"));
+	fprintf(fp, "set title '%s'\n", _("VAR residuals"));
     } else {
-	fprintf(fp, "set title '%s'\n", G_("System residuals"));
+	fprintf(fp, "set title '%s'\n", _("System residuals"));
     }
 
     fputs("plot \\\n", fp);
@@ -4097,7 +4098,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     n = gretl_matrix_rows(lam);
 
     fprintf(fp, "set title '%s'\n", 
-	    G_("VAR inverse roots in relation to the unit circle"));
+	    _("VAR inverse roots in relation to the unit circle"));
     fputs("# literal lines = 8\n", fp);
     fputs("unset border\n", fp);
     fputs("unset key\n", fp);
@@ -4186,7 +4187,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 	return err;
     }
 
-    title = g_strdup_printf(G_("%g%% confidence ellipse and %g%% marginal intervals"),
+    title = g_strdup_printf(_("%g%% confidence ellipse and %g%% marginal intervals"),
 			    cval, cval);
     fprintf(fp, "set title '%s'\n", title);
     g_free(title);
@@ -4298,8 +4299,8 @@ int xy_plot_with_control (const int *list, const char *literal,
     strcpy(ginfo->varname[1], pdinfo->varname[vy]);
     strcpy(ginfo->varname[2], pdinfo->varname[vx]);
 
-    sprintf(ginfo->varinfo[1]->display_name, G_("adjusted %s"), pdinfo->varname[vy]);
-    sprintf(ginfo->varinfo[2]->display_name, G_("adjusted %s"), pdinfo->varname[vx]);
+    sprintf(ginfo->varinfo[1]->display_name, _("adjusted %s"), pdinfo->varname[vy]);
+    sprintf(ginfo->varinfo[2]->display_name, _("adjusted %s"), pdinfo->varname[vx]);
     
     s = 0;
     for (t=t1; t<=t2; t++) {
@@ -4361,7 +4362,7 @@ int is_auto_fit_string (const char *s)
 {
     /* FIXME? */
     if (strstr(s, "automatic fit")) return 1;
-    if (strstr(s, G_("with least squares fit"))) return 1;
+    if (strstr(s, _("with least squares fit"))) return 1;
     return 0;
 }
 

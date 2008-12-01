@@ -741,7 +741,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	line->yaxis = 1;
 	if (!suppress_y2 && ed->yaxiscombo[i] != NULL) {
 	    s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(ed->yaxiscombo[i]));
-	    if (!strcmp(s, "right")) {
+	    if (!strcmp(s, _("right"))) {
 		line->yaxis = 2;	
 	    }
 	    if (line->yaxis == 2) {
@@ -1007,12 +1007,12 @@ static void strip_lr (gchar *txt)
     gchar test[16];
     gchar *p;
 
-    sprintf(test, "(%s)", I_("left"));
+    sprintf(test, "(%s)", _("left"));
     p = strstr(txt, test);
     if (p != NULL) {
 	*p = '\0';
     } else {
-	sprintf(test, "(%s)", I_("right"));
+	sprintf(test, "(%s)", _("right"));
 	p = strstr(txt, test);
 	if (p != NULL) {
 	   *p = '\0';
@@ -2108,8 +2108,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ed->yaxiscombo[i] = gtk_combo_box_new_text();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      ed->yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->yaxiscombo[i]), "left");
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->yaxiscombo[i]), "right");
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->yaxiscombo[i]), _("left"));
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->yaxiscombo[i]), _("right"));
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->yaxiscombo[i]), 
 				     (line->yaxis == 1)? 0 : 1);
 	    gtk_widget_show(ed->yaxiscombo[i]);
@@ -2314,7 +2314,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 	ed->labeljust[i] = gtk_combo_box_new_text();
 	for (j=0; j<3; j++) {
 	    gtk_combo_box_append_text(GTK_COMBO_BOX(ed->labeljust[i]),
-				      gp_justification_string(j));
+				      _(gp_justification_string(j)));
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(ed->labeljust[i]), 
 				 spec->labels[i].just);

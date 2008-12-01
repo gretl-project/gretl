@@ -26,6 +26,7 @@
 #include "gretl_panel.h"
 #include "libset.h"
 #include "compat.h"
+#include "plotspec.h"
 
 #include <unistd.h>
 
@@ -2458,8 +2459,8 @@ static int corrgram_graph (const char *vname, double *acf, int acf_m,
 	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
     }
     fputs("set xzeroaxis\n", fp);
-    fputs("set key top right\n", fp); 
-    fprintf(fp, "set xlabel '%s'\n", G_("lag"));
+    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    fprintf(fp, "set xlabel '%s'\n", _("lag"));
     fputs("set yrange [-1.1:1.1]\n", fp);
 
     /* upper plot: Autocorrelation Function or ACF */
@@ -2467,9 +2468,9 @@ static int corrgram_graph (const char *vname, double *acf, int acf_m,
 	fputs("set origin 0.0,0.50\n", fp);
     }
     if (opt & OPT_R) {
-	fprintf(fp, "set title '%s'\n", G_("Residual ACF"));
+	fprintf(fp, "set title '%s'\n", _("Residual ACF"));
     } else {
-	fprintf(fp, "set title '%s %s'\n", G_("ACF for"), vname);
+	fprintf(fp, "set title '%s %s'\n", _("ACF for"), vname);
     }
     fprintf(fp, "set xrange [0:%d]\n", acf_m + 1);
     fprintf(fp, "plot \\\n"
@@ -2485,9 +2486,9 @@ static int corrgram_graph (const char *vname, double *acf, int acf_m,
 	/* lower plot: Partial Autocorrelation Function or PACF */
 	fputs("set origin 0.0,0.0\n", fp);
 	if (opt & OPT_R) {
-	    fprintf(fp, "set title '%s'\n", G_("Residual PACF"));
+	    fprintf(fp, "set title '%s'\n", _("Residual PACF"));
 	} else {
-	    fprintf(fp, "set title '%s %s'\n", G_("PACF for"), vname);
+	    fprintf(fp, "set title '%s %s'\n", _("PACF for"), vname);
 	}
 	fprintf(fp, "set xrange [0:%d]\n", pacf_m + 1);
 	fprintf(fp, "plot \\\n"
@@ -2718,14 +2719,14 @@ static int xcorrgm_graph (const char *xname, const char *yname,
 
     fputs("set xzeroaxis\n", fp);
     fputs("set yzeroaxis\n", fp);
-    fputs("set key top right\n", fp); 
-    fprintf(fp, "set xlabel '%s'\n", G_("lag"));
+    print_keypos_string(GP_KEY_RIGHT_TOP, fp);
+    fprintf(fp, "set xlabel '%s'\n", _("lag"));
     if (allpos) {
 	fputs("set yrange [-0.1:1.1]\n", fp);
     } else {
 	fputs("set yrange [-1.1:1.1]\n", fp);
     } 
-    sprintf(title, G_("Correlations of %s and lagged %s"),
+    sprintf(title, _("Correlations of %s and lagged %s"),
 	    xname, yname);
     fprintf(fp, "set title '%s'\n", title);
     fprintf(fp, "set xrange [%d:%d]\n", -(xcf_m + 1), xcf_m + 1);
@@ -3206,7 +3207,7 @@ static int pergm_graph (const char *vname,
 	pstr = N_("periods");
     }
 
-    fprintf(fp, "set x2label '%s'\n", G_(pstr));
+    fprintf(fp, "set x2label '%s'\n", _(pstr));
     fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
 
     fputs("set x2tics(", fp);
@@ -3216,28 +3217,28 @@ static int pergm_graph (const char *vname,
     }
     fprintf(fp, "\"\" %d)\n", 2 * T);
 
-    fprintf(fp, "set xlabel '%s'\n", G_("scaled frequency"));
+    fprintf(fp, "set xlabel '%s'\n", _("scaled frequency"));
     fputs("set xzeroaxis\n", fp);
     fputs("set nokey\n", fp);
 
     fputs("set title '", fp);
 
     if (opt & OPT_R) {
-	fputs(G_("Residual spectrum"), fp);
+	fputs(_("Residual spectrum"), fp);
     } else {
-	sprintf(s, G_("Spectrum of %s"), vname);
+	sprintf(s, _("Spectrum of %s"), vname);
 	fputs(s, fp);
     }
 
     if (opt & OPT_O) {
 	fputs(" (", fp);
-	fprintf(fp, G_("Bartlett window, length %d"), L);
+	fprintf(fp, _("Bartlett window, length %d"), L);
 	fputc(')', fp);
     } 
 
     if (opt & OPT_L) {
 	fputs(" (", fp);
-	fputs(G_("log scale"), fp);
+	fputs(_("log scale"), fp);
 	fputc(')', fp);
     }
 
@@ -4742,13 +4743,13 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 	return E_FOPEN;
     }
 
-    fputs("set key top left\n", fp);
+    print_keypos_string(GP_KEY_LEFT_TOP, fp);
 
     fprintf(fp, "set title '%s'\n", vname);
     fprintf(fp, "plot \\\n"
 	    "'-' using 1:2 title '%s' w lines, \\\n"
 	    "'-' using 1:2 notitle w lines\n",
-	    G_("Lorenz curve"));
+	    _("Lorenz curve"));
 
     gretl_push_c_numeric_locale();
 

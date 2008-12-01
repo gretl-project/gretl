@@ -1699,7 +1699,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 
     pputs(prn, "\\begin{center}\n");
     if (fr->asymp) {
-	pprintf(prn, _("For 95\\%% confidence intervals, $z(.025) = %.2f$\n\n"), 
+	pprintf(prn, I_("For 95\\%% confidence intervals, $z(.025) = %.2f$\n\n"), 
 		1.96);
     } else {
 	pprintf(prn, I_("For 95\\%% confidence intervals, $t(%d, .025) = %.3f$\n\n"), 

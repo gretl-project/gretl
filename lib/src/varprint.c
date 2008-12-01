@@ -605,6 +605,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 		       PRN *prn)
 {
     JohansenInfo *jv = jvar->jinfo;
+    int utf = plain_format(prn);
     int rtf = rtf_format(prn);
     char namefmt[8];
     char s[16], vname[32];
@@ -613,9 +614,11 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     int i, j;
     double x;
 
-    pprintf(prn, "beta (%s", _("cointegrating vectors"));
+    pprintf(prn, "beta (%s", (utf)? _("cointegrating vectors") :
+	    I_("cointegrating vectors"));
     if (jv->Bse != NULL) {
-	pprintf(prn, ", %s)", _("standard errors in parentheses"));
+	pprintf(prn, ", %s)", (utf)? _("standard errors in parentheses") :
+		I_("standard errors in parentheses"));
     } else {
 	pputc(prn, ')');
     }
@@ -669,9 +672,11 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 
     rows = gretl_matrix_rows(jv->Alpha);
 
-    pprintf(prn, "alpha (%s", _("adjustment vectors"));
+    pprintf(prn, "alpha (%s", (utf)? _("adjustment vectors") :
+	    I_("adjustment vectors"));
     if (jv->Ase != NULL) {
-	pprintf(prn, ", %s)", _("standard errors in parentheses"));
+	pprintf(prn, ", %s)", (utf)? _("standard errors in parentheses") :
+		I_("standard errors in parentheses"));
     } else {
 	pputc(prn, ')');
     }
@@ -735,13 +740,15 @@ static int max_vlen (const int *list, const DATAINFO *pdinfo)
 
 static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 {
+    int utf = plain_format(prn);
     int rtf = rtf_format(prn);
     int *list = jvar->ylist;
     char s[32];
     int w0, wi = 12;
     int i, j;
 
-    pprintf(prn, "%s:\n", _("Cross-equation covariance matrix"));
+    pprintf(prn, "%s:\n", (utf)? _("Cross-equation covariance matrix") :
+	    I_("Cross-equation covariance matrix"));
     gretl_prn_newline(prn);
 
     w0 = max_vlen(list, pdinfo) + 1;
@@ -797,7 +804,9 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 
     gretl_prn_newline(prn);
 
-    pprintf(prn, "%s = %g", _("determinant"), exp(jvar->ldet));
+    pprintf(prn, "%s = %g", (utf)? _("determinant") : I_("determinant"),
+	    exp(jvar->ldet));
+
     gretl_prn_newline(prn);
 }
 
@@ -1118,7 +1127,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    pv = snedecor_cdf_comp(var->order, dfd, var->Fvals[k]);
 	    v = (var->models[j])->list[1];
 	    if (tex) {
-		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
+		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\\\\n", pv);
@@ -1137,7 +1146,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	if (var->order > 1) {
 	    pv = snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]);
 	    if (tex) {
-		pprintf(prn, _("All vars, lag %-13d "), var->order);
+		pprintf(prn, I_("All vars, lag %-13d "), var->order);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\\\\n", pv);
@@ -1172,7 +1181,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 
 	pputc(prn, '\n');
 
-	if (rtf) {
+	if (rtf || tex) {
 	    sprintf(h0str, I_("the longest lag is %d"), var->order - 1);
 	    sprintf(h1str, I_("the longest lag is %d"), var->order);
 	} else {
@@ -1183,11 +1192,11 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pv = chisq_cdf_comp(df, var->LR);
 
 	if (tex) {
-	    pprintf(prn, "\\noindent %s ---\\par\n", _("For the system as a whole"));
-	    pprintf(prn, "%s: %s\\par\n", _("Null hypothesis"), h0str);
-	    pprintf(prn, "%s: %s\\par\n", _("Alternative hypothesis"), h1str);
+	    pprintf(prn, "\\noindent %s ---\\par\n", I_("For the system as a whole"));
+	    pprintf(prn, "%s: %s\\par\n", I_("Null hypothesis"), h0str);
+	    pprintf(prn, "%s: %s\\par\n", I_("Alternative hypothesis"), h1str);
 	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f [%.4f]\\par\n",
-		    _("Likelihood ratio test"), df, var->LR, pv);
+		    I_("Likelihood ratio test"), df, var->LR, pv);
 	} else if (rtf) {
 	    pprintf(prn, "\\par %s\n", I_("For the system as a whole"));
 	    pprintf(prn, "\\par %s: %s\n", I_("Null hypothesis"), h0str);

@@ -468,11 +468,11 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	}
 
 	if (bs->flags & BOOT_F_FORM) {
-	    strcpy(label, G_("bootstrap F-test"));
+	    strcpy(label, _("bootstrap F-test"));
 	} else if (bs->flags & (BOOT_PVAL | BOOT_STUDENTIZE)) {
-	    strcpy(label, G_("bootstrap t-ratio"));
+	    strcpy(label, _("bootstrap t-ratio"));
 	} else {
-	    strcpy(label, G_("bootstrap coefficient"));
+	    strcpy(label, _("bootstrap coefficient"));
 	} 
 
 	err = (*kdfunc)(xi, bs->B, label);

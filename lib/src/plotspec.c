@@ -229,6 +229,17 @@ static const char *gp_keypos_string (int t)
     return N_("none");
 }
 
+void print_keypos_string (int t, FILE *fp)
+{
+    const char *s = gp_keypos_string(t);
+
+    if (strcmp(s, "none")) {
+	fputs("set nokey\n", fp);
+    } else {
+	fprintf(fp, "set key %s\n", s);
+    }
+}
+
 int gp_keypos_from_string (const char *s)
 {
     int i;
@@ -482,13 +493,13 @@ static char *escape_quotes (const char *s)
 const char *gp_justification_string (int j)
 {
     if (j == GP_JUST_LEFT) {
-	return "left";
+	return N_("left");
     } else if (j == GP_JUST_CENTER) {
-	return "center";
+	return N_("center");
     } else if (j == GP_JUST_RIGHT) {
-	return "right";
+	return N_("right");
     } else {
-	return "left";
+	return N_("left");
     }
 }
 
@@ -964,9 +975,9 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "title \"%s", line->title);
 	    if (any_y2) {
 		if (line->yaxis == 1) {
-		    fprintf(fp, " (%s)\" ", G_("left"));
+		    fprintf(fp, " (%s)\" ", _("left"));
 		} else {
-		    fprintf(fp, " (%s)\" ", G_("right"));
+		    fprintf(fp, " (%s)\" ", _("right"));
 		}
 	    } else {
 		fputs("\" ", fp);
@@ -1102,7 +1113,7 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     spec->data = data;
     spec->nobs = spec->okobs = T;
 
-    sprintf(spec->lines[1].title, G_("loess fit, d = %d, q = %g"), d, q);
+    sprintf(spec->lines[1].title, _("loess fit, d = %d, q = %g"), d, q);
     spec->lines[1].scale = 1.0;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 2;

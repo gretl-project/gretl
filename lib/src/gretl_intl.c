@@ -216,14 +216,14 @@ void set_gretl_charset (const char *s)
 		gretl_cset_maj = gretl_cset_min = 0;
 	    }
 	} 
-#ifdef WIN32
+# ifdef WIN32
 	if (p == NULL) {
 	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
 	}
-#endif
+# endif
     }
 
-#ifdef WIN32
+# ifdef WIN32
     fprintf(stderr, "codepage = %d\n", gretl_cpage);
     if (gretl_cpage != 1250) {
 	char *e = getenv("GRETL_CPAGE");
@@ -233,7 +233,7 @@ void set_gretl_charset (const char *s)
 	    fprintf(stderr, "revised codepage to 1250\n");
 	}
     }
-#endif
+# endif
 }
 
 static const char *get_gretl_charset (void)
@@ -295,10 +295,17 @@ int iso_latin_version (void)
     return 1;
 }
 
-char *gp_gettext (const char *msgid)
+static int gui_native_printing;
+
+void set_gui_native_printing (void)
 {
-    return gettext(msgid);
-} 
+    gui_native_printing = 1;
+}
+
+void unset_gui_native_printing (void)
+{
+    gui_native_printing = 0;
+}
 
 char *iso_gettext (const char *msgid)
 {
@@ -309,8 +316,7 @@ char *iso_gettext (const char *msgid)
 
     /* command line program: switching of codesets should not be 
        required, since unlike the GUI program there's no need
-       to force UTF-8 as the default.  Though there might be 
-       a problem with gnuplot, perhaps?
+       to force UTF-8 as the default.  
     */
 
     if (!strcmp(msgid, "@CLI_INIT")) {
@@ -329,9 +335,8 @@ char *iso_gettext (const char *msgid)
        iso_switch is non-zero (once it's determinate) this makes the
        I_() gettext macro use the system encoding, otherwise I_() is
        equivalent to plain _(), which always spits out UTF-8.  There's
-       a possible FIXME here: perhaps we should always recode for RTF
-       files -- is a UTF-8 encoded RTF file kosher?  But this seems
-       like a corner case.
+       a possible gotcha here: I suspect that a UTF-8 encoded RTF file 
+       is never kosher, regardless of the system.  
     */
 
     if (iso_switch < 0) {
@@ -345,7 +350,7 @@ char *iso_gettext (const char *msgid)
 	iso_switch = (cset != NULL);
     }
 
-    if (iso_switch) {
+    if (iso_switch && !gui_native_printing) {
 	bind_textdomain_codeset(PACKAGE, cset);
 	ret = gettext(msgid);
 	bind_textdomain_codeset(PACKAGE, "UTF-8");

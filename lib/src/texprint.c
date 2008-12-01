@@ -855,13 +855,13 @@ void tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn)
 	}
     }
 
-    pprintf(prn, "}\n%s &\n", _(cols[0]));
+    pprintf(prn, "}\n%s &\n", I_(cols[0]));
 
     mcols = (opt & OPT_M)? 1 : 2;
 
     for (i=1; cols[i] != NULL; i++) {
 	bufspace(i, prn);
-	pprintf(prn, "\\multicolumn{%d}{c}{%s%s} %s\n", mcols, _(cols[i]),
+	pprintf(prn, "\\multicolumn{%d}{c}{%s%s} %s\n", mcols, I_(cols[i]),
 		(cols[i+1] == NULL && binary)? "$^*$" : "",
 		(cols[i+1] == NULL)? "\\\\[1ex]" : "&");
     }
@@ -950,9 +950,9 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     double x;
 
     pputs(prn, "\\noindent\n");
-    pputs(prn, _("Cointegrating vectors"));
+    pputs(prn, I_("Cointegrating vectors"));
     if (jv->Bse != NULL) {
-	pprintf(prn, " (%s)\n", _("standard errors in parentheses"));
+	pprintf(prn, " (%s)\n", I_("standard errors in parentheses"));
     } else {
 	pputc(prn, '\n');
     }
@@ -1006,9 +1006,9 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     rows = gretl_matrix_rows(jv->Alpha);
 
     pputs(prn, "\\noindent\n");
-    pprintf(prn, _("Adjustment vectors"));
+    pprintf(prn, I_("Adjustment vectors"));
     if (jv->Ase != NULL) {
-	pprintf(prn, " (%s)\n", _("standard errors in parentheses"));
+	pprintf(prn, " (%s)\n", I_("standard errors in parentheses"));
     } else {
 	pputc(prn, '\n');
     }

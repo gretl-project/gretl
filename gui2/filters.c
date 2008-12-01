@@ -23,6 +23,7 @@
 #include "dlgutils.h"
 #include "filters.h"
 #include "libset.h"
+#include "plotspec.h"
 
 enum {
     FILTER_SMA = 1,
@@ -643,10 +644,10 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
 	fputs("set origin 0.0,0.4\n", fp);
 	if (zkeypos == 'L') {
-	    fputs("set key top left\n", fp);
+	    print_keypos_string(GP_KEY_LEFT_TOP, fp);
 	}
-	sprintf(xtitle, G_("%s (original data)"), datainfo->varname[v]);
-	sprintf(ztitle, G_("%s (smoothed)"), datainfo->varname[v]);
+	sprintf(xtitle, _("%s (original data)"), datainfo->varname[v]);
+	sprintf(ztitle, _("%s (smoothed)"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
 	print_gp_data(finfo, obs, Z[v], fp);
@@ -657,17 +658,17 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("set size 1.0,0.38\n", fp);
 	fputs("set origin 0.0,0.0\n", fp);
 	fputs("set xzeroaxis\n", fp);
-	sprintf(title, G_("Cyclical component of %s"), datainfo->varname[v]);
+	sprintf(title, _("Cyclical component of %s"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", title);
 	print_gp_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
 	fputs("set nomultiplot\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_TREND) {
 	if (zkeypos == 'L') {
-	    fputs("set key top left\n", fp);
+	    print_keypos_string(GP_KEY_LEFT_TOP, fp);
 	}
-	sprintf(xtitle, G_("%s (original data)"), datainfo->varname[v]);
-	sprintf(ztitle, G_("%s (smoothed)"), datainfo->varname[v]);
+	sprintf(xtitle, _("%s (original data)"), datainfo->varname[v]);
+	sprintf(ztitle, _("%s (smoothed)"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
 	print_gp_data(finfo, obs, Z[v], fp);
@@ -676,10 +677,10 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("e\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_CYCLE) {
 	if (finfo->ftype == FILTER_BK) {
-	    sprintf(title, G_("Baxter-King component of %s at frequency %d to %d"), 
+	    sprintf(title, _("Baxter-King component of %s at frequency %d to %d"), 
 		    datainfo->varname[v], finfo->bkl, finfo->bku);
 	} else {
-	    sprintf(title, G_("Cyclical component of %s"), datainfo->varname[v]);
+	    sprintf(title, _("Cyclical component of %s"), datainfo->varname[v]);
 	}
 	fprintf(fp, "set title '%s'\n", title); 
 	fputs("set xzeroaxis\n", fp);

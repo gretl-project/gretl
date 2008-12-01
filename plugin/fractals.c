@@ -37,9 +37,9 @@ do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
 
     fprintf(fp, "# for %s\n", vname);
     fputs("set nokey\n", fp);
-    fprintf(fp, "set title '%s %s'\n", G_("Rescaled-range plot for"), vname);
-    fprintf(fp, "set xlabel '%s'\n", G_("log(sample size)"));
-    fprintf(fp, "set ylabel '%s'\n", G_("log(RS)"));
+    fprintf(fp, "set title '%s %s'\n", _("Rescaled-range plot for"), vname);
+    fprintf(fp, "set xlabel '%s'\n", _("log(sample size)"));
+    fprintf(fp, "set ylabel '%s'\n", _("log(RS)"));
     fputs("plot \\\n", fp);
     fprintf(fp, "%g+%g*x notitle w lines lt 2 ,\\\n", 
 	    pmod->coeff[0], pmod->coeff[1]);

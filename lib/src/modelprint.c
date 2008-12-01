@@ -173,19 +173,6 @@ static void rssline (const MODEL *pmod, PRN *prn)
     }
 }
 
-#if 0
-
-static const char *aic_str = N_("Akaike information criterion");
-static const char *bic_str = N_("Schwarz Bayesian criterion");
-static const char *hqc_str = N_("Hannan-Quinn criterion");
-static const char *tex_hqc_str = N_("Hannan--Quinn criterion");
-
-static const char *aic_abbrev = N_("AIC");
-static const char *bic_abbrev = N_("BIC");
-static const char *hqc_abbrev = N_("HQC");
-
-#endif
-
 static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 {
     double lmin = gretl_model_get_double(pmod, "lmin");
@@ -199,10 +186,10 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 
 	    if (tex_format(prn)) {
 		pprintf(prn, "%s: $\\chi^2(%d)$ = %g [%.4f] \\\\\n", 
-			_("LR over-identification test"), idf, X2, pv);
+			I_("LR over-identification test"), idf, X2, pv);
 	    } else if (rtf_format(prn)) {
 		pprintf(prn, "%s: ", I_("LR over-identification test"));
-		pprintf(prn, "%s(%d) = %g [%.4f]\n\n", _("Chi-square"),
+		pprintf(prn, "%s(%d) = %g [%.4f]\n\n", I_("Chi-square"),
 			idf, X2, pv);
 	    } else {
 		pprintf(prn, "%s: ", _("LR over-identification test"));
@@ -211,8 +198,8 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 	    }
 	} else if (idf == 0) {
 	    pprintf(prn, "%s\n\n", 
-		    (rtf_format(prn))? I_("Equation is just identified") :
-		    _("Equation is just identified"));
+		    (plain_format(prn))? _("Equation is just identified") :
+		    I_("Equation is just identified"));
 	}
     }
 }
@@ -280,7 +267,7 @@ print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     }
 
     if (tex_format(prn)) {
-	pprintf(prn, "%s: ", _(texstrs[j]));
+	pprintf(prn, "%s: ", I_(texstrs[j]));
 	pprintf(prn, " & $\\chi^2(%d)$ = %g [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
 	if (pmod->ci == GMM) {
@@ -1223,7 +1210,6 @@ static void print_intreg_depvar (const MODEL *pmod,
 				 PRN *prn)
 {
     int utf = plain_format(prn);
-
     int lov = gretl_model_get_int(pmod, "lovar");
     int hiv = gretl_model_get_int(pmod, "hivar");
 
@@ -1610,9 +1596,7 @@ static void model_format_start (PRN *prn)
     if (tex_format(prn)) {
 	if (tex_doc_format(prn)) {
 	    gretl_tex_preamble(prn, 0);
-	} else {
-	    pputs(prn, "%% You may need to \\usepackage{dcolumn}\n\n");
-	}
+	} 
 	pputs(prn, "\\begin{center}\n");
     } else if (rtf_format(prn)) {
 	if (rtf_doc_format(prn)) {
@@ -1620,6 +1604,10 @@ static void model_format_start (PRN *prn)
 	} else {
 	    pputs(prn, "\\par\n\\qc ");
 	}
+    } else if (plain_format(prn)) {
+#ifdef ENABLE_NLS
+	set_gui_native_printing();
+#endif
     }
 }
 
@@ -1784,6 +1772,10 @@ static void model_format_end (PRN *prn)
 	}
     } else if (rtf_doc_format(prn)) {
 	pputs(prn, "\n}\n");
+    } else if (plain_format(prn)) {
+#ifdef ENABLE_NLS
+	unset_gui_native_printing();
+#endif
     }
 } 
 
@@ -2548,9 +2540,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (plain_format(prn)) {
 	print_model_iter_info(pmod, prn);
-    } else {
-	model_format_start(prn);
     } 
+
+    model_format_start(prn);
 
     print_model_heading(pmod, pdinfo, opt, prn);
 
@@ -2673,9 +2665,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_model_tests(pmod, prn);
     }
 
-    if (!plain_format(prn)) {
-	model_format_end(prn);
-    }
+    model_format_end(prn);
     
     if (gotnan) {
 	pmod->errcode = E_NAN;
@@ -4461,9 +4451,7 @@ static int print_user_model (const gretl_matrix *cs,
 	}
     }
 
-    if (!plain_format(prn)) {
-	model_format_start(prn);
-    }
+    model_format_start(prn);
 
     print_coeffs(b, se, (const char **) names, ncoef, 0, MODPRINT, prn);
 
@@ -4474,9 +4462,9 @@ static int print_user_model (const gretl_matrix *cs,
 
     if (plain_format(prn)) {
 	pputc(prn, '\n'); 
-    } else {
-	model_format_end(prn);
-    }
+    } 
+
+    model_format_end(prn);
 
     free(names);
     free(tmp);

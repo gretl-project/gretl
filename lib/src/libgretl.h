@@ -48,11 +48,9 @@
 #endif
 
 #ifdef ENABLE_NLS
-# define G_(String) gp_gettext (String)
 # define I_(String) iso_gettext (String) 
 # define M_(String) maybe_iso_gettext (String)
 #else
-# define G_(String) String
 # define I_(String) String
 # define M_(String) String
 #endif /* ENABLE_NLS */
