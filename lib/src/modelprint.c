@@ -439,8 +439,12 @@ static double durbins_h (const MODEL *pmod)
 
 static int least_significant_coeff (const MODEL *pmod)
 {
-    double x, tmin = 4.0;
+    double x, tmin = 3.2;
     int i, k = 0;
+
+    if (gretl_list_separator_position(pmod->list) > 0) {
+	return 0;
+    }
     
     for (i=pmod->ifc; i<pmod->ncoeff; i++) {
 	if (pmod->sderr[i] > 0) {
@@ -452,7 +456,7 @@ static int least_significant_coeff (const MODEL *pmod)
 	}
     }
 
-    if (tmin < 4.0) {
+    if (tmin < 3.2) {
 	x = coeff_pval(pmod->ci, tmin, pmod->dfd);
 	if (!na(x) && x > .10) {
 	    return pmod->list[k+2];

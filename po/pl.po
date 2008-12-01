@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-01 15:49-0500\n"
-"PO-Revision-Date: 2008-11-30 23:00-0500\n"
+"PO-Revision-Date: 2008-12-01 23:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4113,9 +4113,8 @@ msgid "GARCH"
 msgstr "GARCH"
 
 #: lib/src/modelprint.c:546
-#, fuzzy
 msgid "Interval"
-msgstr "Zainstaluj"
+msgstr "Interval"
 
 #: lib/src/modelprint.c:548
 msgid "Arellano--Bond"
@@ -4399,14 +4398,12 @@ msgid "Breusch-Godfrey test for first-order autocorrelation"
 msgstr "Test Breuscha-Godfreya na autokorelację rzędu pierwszego"
 
 #: lib/src/modelprint.c:1217
-#, fuzzy
 msgid "Lower limit"
-msgstr "Dolny"
+msgstr "Dolny limit"
 
 #: lib/src/modelprint.c:1221
-#, fuzzy
 msgid "Upper limit"
-msgstr "Górny"
+msgstr "Górny limit"
 
 #: lib/src/modelprint.c:1280 lib/src/modelprint.c:1284
 #: lib/src/modelprint.c:1288 lib/src/system.c:3798 lib/src/system.c:3817
@@ -4607,9 +4604,8 @@ msgid "Statistics based on the rho-differenced data"
 msgstr "Podstawowe statystyki dla danych quasi-różnicowanych (rho)"
 
 #: lib/src/modelprint.c:1817
-#, fuzzy
 msgid "Statistics based on the transformed data"
-msgstr "Podstawowe statystki dla ważonych danych"
+msgstr "Podstawowe statystki dla transformowanych danych"
 
 #: lib/src/modelprint.c:1910
 #, c-format
@@ -4696,9 +4692,8 @@ msgid "Durbin-Watson"
 msgstr "Stat. Durbina-Watsona"
 
 #: lib/src/modelprint.c:2305
-#, fuzzy
 msgid "Adjusted $R^2$"
-msgstr "Wsp. determinacji $R^2$"
+msgstr "Skorygowany $R^2$"
 
 #: lib/src/modelprint.c:2306
 msgid "P-value($F$)"
@@ -4721,14 +4716,12 @@ msgid "Centered R-squared"
 msgstr "Centrowany R-kwadrat"
 
 #: lib/src/modelprint.c:2337
-#, fuzzy
 msgid "McFadden $R^2$"
-msgstr "McFaddena pseudo-$R^2$"
+msgstr "McFadden $R^2$"
 
 #: lib/src/modelprint.c:2338
-#, fuzzy
 msgid "McFadden R-squared"
-msgstr "McFaddena pseudo-R2"
+msgstr "McFadden R-kwadrat"
 
 #: lib/src/modelprint.c:2355
 msgid "Smallest eigenvalue"
@@ -4739,22 +4732,18 @@ msgid "Mean of innovations"
 msgstr "Średnia zaburzeń los."
 
 #: lib/src/modelprint.c:2365
-#, fuzzy
 msgid "S.D. of innovations"
-msgstr "Średnia zaburzeń los."
+msgstr "Odch.st. zaburzeń los."
 
 #: lib/src/modelprint.c:2372
-#, fuzzy
 msgid "Median depend. var"
-msgstr "Średn.aryt.zm.zależnej"
+msgstr "Mediana zm. zależnej"
 
 #: lib/src/modelprint.c:2374
-#, fuzzy
 msgid "Sum absolute resid"
-msgstr "Suma wartości absolutnych reszt"
+msgstr "Suma absolutnych reszt"
 
 #: lib/src/modelprint.c:2388
-#, fuzzy
 msgid "Censored obs"
 msgstr "Cenzurowane obserwacje"
 
@@ -5319,79 +5308,68 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Uwaga: opcja %s jest ignorowana poza pętlą"
 
 #: lib/src/plotspec.c:131 lib/src/plotspec.c:154
-#, fuzzy
 msgid "lines"
 msgstr "Linie"
 
 #: lib/src/plotspec.c:132
-#, fuzzy
 msgid "points"
-msgstr "punkt"
+msgstr "punkty"
 
 #: lib/src/plotspec.c:133
-#, fuzzy
 msgid "linespoints"
-msgstr "Wykorzystaj punkty"
+msgstr "linie punkty"
 
 #: lib/src/plotspec.c:134
-#, fuzzy
 msgid "impulses"
-msgstr "Odpowiedzi na impuls"
+msgstr "impulsy"
 
 #: lib/src/plotspec.c:135
-#, fuzzy
 msgid "dots"
-msgstr "Notatnik"
+msgstr "kropki"
 
 #: lib/src/plotspec.c:136
-#, fuzzy
 msgid "steps"
-msgstr "test %s"
+msgstr "schodki"
 
 #: lib/src/plotspec.c:137
-#, fuzzy
 msgid "boxes"
-msgstr "Notatnik"
+msgstr "słupki"
 
 #: lib/src/plotspec.c:138
-#, fuzzy
 msgid "errorbars"
 msgstr "słupki zakresu"
 
 #: lib/src/plotspec.c:139
 msgid "filledcurve"
-msgstr ""
+msgstr "obszar do wypełnienia"
 
 #: lib/src/plotspec.c:140
 msgid "candlesticks"
-msgstr ""
+msgstr "świece"
 
 #: lib/src/plotspec.c:210
-#, fuzzy
 msgid "left top"
-msgstr "lewy"
+msgstr "lewy górny"
 
 #: lib/src/plotspec.c:211
-#, fuzzy
 msgid "right top"
-msgstr "prawy"
+msgstr "prawy górny"
 
 #: lib/src/plotspec.c:212
 msgid "left bottom"
-msgstr ""
+msgstr "lewy dolny"
 
 #: lib/src/plotspec.c:213
 msgid "right bottom"
-msgstr ""
+msgstr "prawy dolny"
 
 #: lib/src/plotspec.c:214
 msgid "outside"
-msgstr ""
+msgstr "na zewnątrz"
 
 #: lib/src/plotspec.c:498
-#, fuzzy
 msgid "center"
-msgstr "Scentrowana średnia ruchoma"
+msgstr "pośrodku"
 
 #: lib/src/plugins.c:252 lib/src/plugins.c:265
 #, c-format
@@ -14465,73 +14443,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "Hannan-Quinn criterion"
-#~ msgstr "Kryt. Hannana-Quinna"
-
-#~ msgid "Hannan--Quinn criterion"
-#~ msgstr "Kryt. Hannana--Quinna"
-
-#~ msgid ""
-#~ "                final %11.5f\n"
-#~ "\n"
-#~ msgstr ""
-#~ "           ostateczna %11.5f\n"
-#~ "\n"
-
-#~ msgid "Median of dependent variable"
-#~ msgstr "Mediana zmiennej zależnej"
-
-#~ msgid "S.D. of dependent variable"
-#~ msgstr "Odchylenie standardowe zm. zależnej"
-
-#~ msgid "Unadjusted R{\\super 2}"
-#~ msgstr "Wsp. determinacji R{\\super 2}"
-
-#~ msgid "Uncentered R{\\super 2}"
-#~ msgstr "Niecentrowany R{\\super 2}"
-
-#~ msgid "Centered R{\\super 2}"
-#~ msgstr "Centrowany R{\\super 2}"
-
-#~ msgid "Adjusted R{\\super 2}"
-#~ msgstr "Skorygowany R{\\super 2}"
-
-#~ msgid "Adjusted $\\bar{R}^2$"
-#~ msgstr "Skorygowany $\\bar{R}^2$"
-
-#~ msgid "Within R-squared"
-#~ msgstr "Within R-kwadrat"
-
-#~ msgid "McFadden's pseudo-R{\\super 2}"
-#~ msgstr "McFaddena pseudo-R{\\super 2}"
-
-#~ msgid "p-value for"
-#~ msgstr "wartość p dla"
-
-#~ msgid "Degrees of freedom"
-#~ msgstr "Stopnie swobody"
-
-#~ msgid "F-statistic"
-#~ msgstr "Statystyka F"
-
-#~ msgid "Durbin-Watson statistic"
-#~ msgstr "Statystyka testu Durbina-Watsona"
-
-#~ msgid "First-order autocorrelation coeff."
-#~ msgstr "Autokorelacja reszt rzędu pierwszego"
-
-#~ msgid "Durbin--Watson statistic"
-#~ msgstr "Statystyka testu Durbina--Watsona"
-
-#~ msgid "Variance of innovations"
-#~ msgstr "warian. zaburzeń los."
-
-#~ msgid "Mean of"
-#~ msgstr "Średnia dla zmiennej"
-
-#~ msgid "low"
-#~ msgstr "dolna"
-
-#~ msgid "high"
-#~ msgstr "górna"
