@@ -21,11 +21,39 @@
 #define PLOTSPEC_H
 
 #define GP_MAXFORMULA 128
-#define GP_MAXSTYLE    16
-#define GP_MAXSCALE     8
 
 #define GP_BORDER_DEFAULT (-1)
 #define LT_NONE (-2)
+
+typedef enum {
+    GP_STYLE_NONE,
+    GP_STYLE_LINES,
+    GP_STYLE_POINTS,
+    GP_STYLE_LINESPOINTS,
+    GP_STYLE_IMPULSES,
+    GP_STYLE_DOTS,
+    GP_STYLE_STEPS,
+    GP_STYLE_BOXES,
+    GP_STYLE_ERRORBARS,
+    GP_STYLE_FILLEDCURVE,
+    GP_STYLE_CANDLESTICKS
+} GpLineStyle;
+
+typedef enum {
+    GP_KEY_LEFT_TOP,
+    GP_KEY_RIGHT_TOP,
+    GP_KEY_LEFT_BOTTOM,
+    GP_KEY_RIGHT_BOTTOM,
+    GP_KEY_OUTSIDE,
+    GP_KEY_NONE
+} GpKeyPos;
+
+typedef struct gp_style_spec_ gp_style_spec;
+
+struct gp_style_spec_ {
+    int sty;
+    const char *str;
+};
 
 typedef enum {
     GP_LINE_USER    = 1 << 0,
@@ -36,10 +64,10 @@ typedef enum {
 
 typedef struct {
     int varnum;                    /* ID number of variable to plot */
+    int style;                     /* lines, points, etc. */
     char title[MAXTITLE];          /* key or legend title */
     char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
-    char style[GP_MAXSTYLE];       /* lines, points, etc. */
-    char scale[GP_MAXSCALE];       /* string representation of scale factor */
+    double scale;                  /* scale factor for data */
     char rgb[8];                   /* rgb color specification */
     char yaxis;                    /* 1 for left, 2 for right */
     int type;                      /* 1, 2, ... (style) */
@@ -80,7 +108,7 @@ typedef struct {
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[4][2];        /* axis range specifiers */
     double logbase[3];         /* axis log-scales base (0 for linear) */
-    char keyspec[MAXTITLE];    /* position of key (or none) */
+    int keyspec;               /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
     int termtype;              /* gnuplot "terminal" code */
@@ -128,5 +156,19 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp);
 int plotspec_add_fit (GPT_SPEC *spec, FitType f);
 
 void print_auto_fit_string (FitType fit, FILE *fp);
+
+const char *gp_line_style_string (int t);
+
+int gp_style_from_string (const char *s);
+
+int gp_style_from_translation (const char *s);
+
+gp_style_spec *get_style_spec (int t);
+
+int gp_keypos_from_string (const char *s);
+
+int gp_keypos_from_translation (const char *s);
+
+gp_style_spec *get_keypos_spec (int t);
 
 #endif /* PLOTSPEC_H */

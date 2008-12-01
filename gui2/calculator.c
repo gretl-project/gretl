@@ -892,12 +892,12 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
     i = spec->n_lines - 1;
 
-    strcpy(spec->lines[i].scale, "NA");
+    spec->lines[i].scale = NADBL;
 
     if (d == BINOMIAL_DIST || d == POISSON_DIST) {
-	strcpy(spec->lines[i].style, "linespoints");
+	spec->lines[i].style = GP_STYLE_LINESPOINTS;
     } else {
-	strcpy(spec->lines[i].style, "lines");
+	spec->lines[i].style = GP_STYLE_LINES;
     }
 
     title = dist_graph_title(d, parms);

@@ -49,7 +49,7 @@ GPT_SPEC *plotspec_new (void)
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
     spec->fname[0] = 0;
-    strcpy(spec->keyspec, "left top");
+    spec->keyspec = GP_KEY_LEFT_TOP;
 
     for (i=0; i<4; i++) {
 	spec->range[i][0] = NADBL;
@@ -127,6 +127,147 @@ void plotspec_destroy (GPT_SPEC *spec)
     free(spec);
 }
 
+static gp_style_spec style_specs[] = {
+    { GP_STYLE_LINES,        N_("lines") },
+    { GP_STYLE_POINTS,       N_("points") },
+    { GP_STYLE_LINESPOINTS,  N_("linespoints") },
+    { GP_STYLE_IMPULSES,     N_("impulses") },
+    { GP_STYLE_DOTS,         N_("dots") },
+    { GP_STYLE_STEPS,        N_("steps") },
+    { GP_STYLE_BOXES,        N_("boxes") },
+    { GP_STYLE_ERRORBARS,    N_("errorbars") },
+    { GP_STYLE_FILLEDCURVE,  N_("filledcurve") },
+    { GP_STYLE_CANDLESTICKS, N_("candlesticks") },
+    { 0,                     NULL }
+};
+
+const char *gp_line_style_string (int t)
+{
+    int i;
+
+    for (i=0; style_specs[i].sty != 0; i++) {
+	if (t == style_specs[i].sty) {
+	    return style_specs[i].str;
+	}
+    }
+
+    return N_("lines");
+}
+
+int gp_style_from_string (const char *s)
+{
+    int i;
+
+    for (i=0; style_specs[i].sty != 0; i++) {
+	if (!strcmp(s, style_specs[i].str)) {
+	    return style_specs[i].sty;
+	}
+    }
+
+    /* allowed abbreviations */
+
+    if (!strcmp(s, "l")) {
+	return GP_STYLE_LINES;
+    } else if (!strcmp(s, "p")) {
+	return GP_STYLE_POINTS;
+    } else if (!strcmp(s, "lp")) {
+	return GP_STYLE_LINESPOINTS;
+    } else if (!strcmp(s, "i")) {
+	return GP_STYLE_IMPULSES;
+    }
+
+    /* fallback */
+    return GP_STYLE_LINES;
+}
+
+int gp_style_from_translation (const char *s)
+{
+    int i;
+
+    for (i=0; style_specs[i].sty != 0; i++) {
+	if (!strcmp(s, _(style_specs[i].str))) {
+	    return style_specs[i].sty;
+	}
+    }
+
+    return GP_STYLE_LINES;
+}
+
+gp_style_spec *get_style_spec (int t)
+{
+    int i;
+
+    for (i=0; style_specs[i].sty != 0; i++) {
+	if (t == style_specs[i].sty) {
+	    return &style_specs[i];
+	}
+    }
+
+    return NULL;
+}
+
+static gp_style_spec key_specs[] = {
+    { GP_KEY_LEFT_TOP,     N_("left top") },
+    { GP_KEY_RIGHT_TOP,    N_("right top") },
+    { GP_KEY_LEFT_BOTTOM,  N_("left bottom") },
+    { GP_KEY_RIGHT_BOTTOM, N_("right bottom") },
+    { GP_KEY_OUTSIDE,      N_("outside") },
+    { GP_KEY_NONE,         N_("none") },
+    { -1,                  NULL }
+};
+
+static const char *gp_keypos_string (int t)
+{
+    int i;
+
+    for (i=0; key_specs[i].sty >= 0; i++) {
+	if (t == key_specs[i].sty) {
+	    return key_specs[i].str;
+	}
+    }
+
+    return N_("none");
+}
+
+int gp_keypos_from_string (const char *s)
+{
+    int i;
+
+    for (i=0; key_specs[i].sty >= 0; i++) {
+	if (!strcmp(s, key_specs[i].str)) {
+	    return key_specs[i].sty;
+	}
+    }
+
+    return GP_KEY_NONE;
+}
+
+int gp_keypos_from_translation (const char *s)
+{
+    int i;
+
+    for (i=0; key_specs[i].sty >= 0; i++) {
+	if (!strcmp(s, _(key_specs[i].str))) {
+	    return key_specs[i].sty;
+	}
+    }
+
+    return GP_KEY_NONE;
+}
+
+gp_style_spec *get_keypos_spec (int t)
+{
+    int i;
+
+    for (i=0; key_specs[i].sty >= 0; i++) {
+	if (t == key_specs[i].sty) {
+	    return &key_specs[i];
+	}
+    }
+
+    return NULL;
+}
+
 int plotspec_add_line (GPT_SPEC *spec)
 {
     GPT_LINE *lines;
@@ -141,10 +282,10 @@ int plotspec_add_line (GPT_SPEC *spec)
     spec->n_lines += 1;
 
     lines[n].varnum = 0;
+    lines[n].style = 0;
+    lines[n].scale = 1.0;
     lines[n].title[0] = '\0';
     lines[n].formula[0] = '\0';
-    lines[n].style[0] = '\0';
-    lines[n].scale[0] = '\0';
     lines[n].rgb[0] = '\0';
     lines[n].yaxis = 1;
     lines[n].type = LT_NONE;
@@ -160,10 +301,10 @@ int plotspec_add_line (GPT_SPEC *spec)
 static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
 {
     targ->varnum = src->varnum;
+    targ->style = src->style;
+    targ->scale = src->scale;
     strcpy(targ->title, src->title);
     strcpy(targ->formula, src->formula);
-    strcpy(targ->style, src->style);
-    strcpy(targ->scale, src->scale);
     strcpy(targ->rgb, src->rgb);
     targ->yaxis = src->yaxis;
     targ->type = src->type;
@@ -606,8 +747,8 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 static int print_point_type (GPT_LINE *line)
 {
     return line->ptype != 0 && 
-	(!strcmp(line->style, "points") ||
-	 !strcmp(line->style, "linespoints"));
+	(line->style == GP_STYLE_POINTS ||
+	 line->style == GP_STYLE_LINESPOINTS);
 }
 
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
@@ -679,10 +820,10 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     gnuplot_missval_string(fp);
 
-    if (strcmp(spec->keyspec, "none") == 0) {
+    if (spec->keyspec == GP_KEY_NONE) {
 	fputs("set nokey\n", fp);
     } else {
-	fprintf(fp, "set key %s\n", spec->keyspec);
+	fprintf(fp, "set key %s\n", gp_keypos_string(spec->keyspec));
     }
 
     print_plot_ranges_etc(spec, fp);
@@ -789,31 +930,29 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	if (!strcmp(line->scale, "NA")) {
+	if (na(line->scale)) {
 	    fprintf(fp, "%s ", line->formula); 
-	} else {
-	    if (!strcmp(line->scale, "1.0")) {
-		fputs("'-' using 1", fp);
-		if (line->ncols == 5) {
-		    /* Note: boxplot candlesticks, hard-wired! */
-		    fputs(":3:2:5:4", fp);
-		} else if (line->ncols == 2) {
-		    if (line->flags & GP_LINE_BOXDATA) {
-			/* boxplot median, hard-wired */
-			fputs(":2:2:2:2", fp);
-		    } else {
-			fputs(":($2)", fp);
-		    }
+	} else if (line->scale == 1.0) {
+	    fputs("'-' using 1", fp);
+	    if (line->ncols == 5) {
+		/* Note: boxplot candlesticks, hard-wired! */
+		fputs(":3:2:5:4", fp);
+	    } else if (line->ncols == 2) {
+		if (line->flags & GP_LINE_BOXDATA) {
+		    /* boxplot median, hard-wired */
+		    fputs(":2:2:2:2", fp);
 		} else {
-		    for (k=2; k<=line->ncols; k++) {
-			fprintf(fp, ":%d", k);
-		    }
+		    fputs(":($2)", fp);
 		}
-		fputc(' ', fp);
 	    } else {
-		fprintf(fp, "'-' using 1:($2*%s) ", line->scale);
+		for (k=2; k<=line->ncols; k++) {
+		    fprintf(fp, ":%d", k);
+		}
 	    }
-	} 
+	    fputc(' ', fp);
+	} else {
+	    fprintf(fp, "'-' using 1:($2*%g) ", line->scale);
+	}
 
 	if ((spec->flags & GPT_Y2AXIS) && line->yaxis != 1) {
 	    fprintf(fp, "axes x1y%d ", line->yaxis);
@@ -834,7 +973,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    }
 	}
 
-	fprintf(fp, "w %s", line->style);
+	fprintf(fp, "w %s", gp_line_style_string(line->style));
 
 	if (line->type != LT_NONE) {
 	    fprintf(fp, " lt %d", line->type);
@@ -964,8 +1103,8 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     spec->nobs = spec->okobs = T;
 
     sprintf(spec->lines[1].title, G_("loess fit, d = %d, q = %g"), d, q);
-    strcpy(spec->lines[1].scale, "1.0");
-    strcpy(spec->lines[1].style, "lines");
+    spec->lines[1].scale = 1.0;
+    spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 2;
 
     spec->fit = PLOT_FIT_LOESS;
@@ -1003,8 +1142,8 @@ static void set_fitted_line (GPT_SPEC *spec, FitType f)
 	gretl_pop_c_numeric_locale();
     }
 
-    strcpy(spec->lines[1].scale, "NA");
-    strcpy(spec->lines[1].style, "lines");
+    spec->lines[1].scale = NADBL;
+    spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 0;
 
     spec->fit = f;

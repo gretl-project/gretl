@@ -1474,7 +1474,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	strcpy(spec->xtics, "none");
 	return 0;
     } else if (!strcmp(key, "nokey")) {
-	strcpy(spec->keyspec, "none");
+	spec->keyspec = GP_KEY_NONE;
 	return 0;
     } else if (!strcmp(key, "label")) {
 	parse_label_line(spec, s);
@@ -1516,7 +1516,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "y2label")) {
 	strcpy(spec->titles[3], val);
     } else if (!strcmp(key, "key")) {
-	strcpy(spec->keyspec, val);
+	spec->keyspec = gp_keypos_from_string(val);
     } else if (!strcmp(key, "xtics")) { 
 	safecpy(spec->xtics, val, 15);
     } else if (!strcmp(key, "mxtics")) { 
@@ -1694,6 +1694,7 @@ static void grab_line_title (char *targ, const char *src)
 static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 {
     GPT_LINE *line;
+    char tmp[16];
     const char *p;
     int i, err;
 
@@ -1718,19 +1719,17 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 	} else if (strstr(p, "1:2:3")) {
 	    line->ncols = 3;
 	} else if ((p = strstr(s, "($2*"))) {
-	    sscanf(p + 4, "%7[^)]", line->scale);
+	    sscanf(p + 4, "%15[^)]", tmp);
+	    line->scale = dot_atof(tmp);
 	    line->ncols = 2;
 	} else {
 	    line->ncols = 2;
-	}
-	if (line->scale[0] == '\0') {
-	    strcpy(line->scale, "1.0");
 	}
     } else {
 	/* absence of "using" means the line plots a formula, not a
 	   set of data columns 
 	*/
-	strcpy(line->scale, "NA");
+	line->scale = NADBL;
 	/* get the formula: it runs up to "title" or "notitle" */
 	p = strstr(s, " title");
 	if (p == NULL) {
@@ -1753,7 +1752,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
     }
 
     if ((p = strstr(s, " w "))) {
-	sscanf(p + 3, "%15[^, ]", line->style);
+	sscanf(p + 3, "%15[^, ]", tmp);
+	line->style = gp_style_from_string(tmp);
     } 
 
     if ((p = strstr(s, " lt "))) {
@@ -2141,10 +2141,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	if (spec->titles[i][0] != '\0') {
 	    delchar('"', spec->titles[i]);
 	}
-    }
-
-    if (*spec->keyspec == '\0') {
-	strcpy(spec->keyspec, "none");
     }
 
     /* then get the "plot" lines */
