@@ -2646,7 +2646,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
 	pmod->ci != POISSON && pmod->ci != TOBIT && pmod->ci != LAD &&
-	pmod->ci != HECKIT && pmod->ci != ARBOND &&
+	pmod->ci != HECKIT && pmod->ci != ARBOND && pmod->ci != GARCH &&
 	!ordered_model(pmod) && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
