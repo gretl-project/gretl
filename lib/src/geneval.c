@@ -1917,6 +1917,20 @@ static NODE *matrix_colnames (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *dwpval_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const gretl_matrix *u = l->v.m;
+	const gretl_matrix *X = r->v.m;
+
+	ret->v.xval = dw_pval(u, X, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -5776,6 +5790,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, U_ADDR, r, p);
 	} else {
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
+	}
+	break;
+    case F_DWPVAL:
+	/* two matrix arguments */
+	if (l->t == MAT && r->t == MAT) {
+	    ret = dwpval_node(l, r, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;
     case F_BFGSMAX:

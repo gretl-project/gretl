@@ -2205,3 +2205,233 @@ int list_linear_combo (double *y, const int *list,
 
     return err;
 }
+
+/* Imhof: draws on the RATS code in IMHOF.SRC from Estima, 2004.
+
+   Imhof Procedure for computing P(u'Au<x) for a quadratic form in
+   Normal(0,1) variables. This can be used for ratios of quadratic
+   forms as well, since P((u'Au/u'Bu) < x) = P(u'(A-xB)u < 0).
+
+   In the Durbin-Watson context, 'B' is the identity matrix and
+   'x' is the Durbin-Watson statistic.
+
+   References:
+
+   Imhof, J.P (1961), Computing the Distribution of Quadratic Forms of
+   Normal Variables, Biometrika 48, 419-426.
+
+   Abrahamse, A.P.J and Koerts,J. (1969), On the Theory and Application
+   of the General Linear Model, Rotterdam University Press.
+*/
+
+static double imhof_bound (double *lambda, int k)
+{
+    double e1 = 0.0001; /* Max truncation error due to finite 
+			   upper bound on domain */
+    double e2 = 1.0e-07; /* Cutoff for deciding whether an 
+			    eigenvalue is effectively zero */
+    double absl, bound;
+    double nl = 0.0, sum = 0.0;
+    int i;
+
+    for (i=0; i<k; i++) {
+	absl = fabs(lambda[i]);
+	if (absl > e2) {
+	    nl += 1.0;
+	    sum += log(absl);
+	}
+    }
+
+    /* The key factor in the integrand is the product of 
+       (1+(lambda(i)*x)**2)**(1/4) across i. Since, for those 
+       factors with small |lambda(i)|, this won't go to zero very
+       quickly, we count only the terms on the bigger eigenvalues.
+    */
+
+    nl = 0.5 * nl;
+    sum = 0.5 * sum + log(M_PI * nl);
+    bound = exp(-(sum + log(e1)) / nl);
+
+    return bound + 5.0 / nl;
+}
+
+static double vecsum (double *x, int k)
+{
+    double sum = 0.0;
+    int i;
+
+    for (i=0; i<k; i++) {
+	sum += x[i];
+    }
+
+    return sum;
+}
+
+static double 
+ImhofF (double u, double *lambda, int k, double arg)
+{
+    double ul, rho = 0.0;
+    double theta = -u * arg;
+    int i;
+
+    /* The value at zero isn't directly computable as
+       it produces 0/0. The limit is computed below.
+    */
+    if (u == 0.0) {
+	return 0.5 * (-arg + vecsum(lambda, k));
+    }
+
+    for (i=0; i<k; i++) {
+	ul = u * lambda[i];
+	theta += atan(ul);
+	rho += log(1.0 + ul * ul);
+    }
+
+    return sin(0.5 * theta)/(u * exp(0.25 * rho));
+}
+
+#define gridlimit 1000
+
+/*
+  Adaptation of Abrahamse and Koert's Pascal code.  Evaluates the
+  integral by Simpson's rule with grid size halving each time until
+  the change from moving to a tighter grid is negligible. By halving
+  the grid, only the odd terms need to be computed, as the old ones
+  are already in the sum. Points entering get x 4 weights, which then
+  get reduced to x 2 on the next iteration.
+*/
+
+static double ImhofInt (double arg, double *lambda, int k,
+			double bound, int *err)
+{
+    double e3 = 0.0001;
+    double base, step, sum1, int1, int0 = 0.0;
+    double eps4 = 3.0 * M_PI * e3;
+    double sum4 = 0.0;
+    int j, n = 2;
+
+    base = ImhofF(0, lambda, k, arg);
+    base += ImhofF(bound, lambda, k, arg);
+
+    while (n < gridlimit) {
+	step = bound / n;
+	sum1 = base + sum4 * 2.0;
+	base = sum1;
+	sum4 = 0.0;
+	for (j=1; j<=n; j+=2) {
+	    sum4 += ImhofF(j * step, lambda, k, arg);
+	}
+	int1 = (sum1 + 4 * sum4) * step;
+	if (n > 8 && fabs(int1 - int0) < eps4) {
+	    break;
+	}
+	int0 = int1;
+	n *= 2;
+    }
+
+    if (n > gridlimit) {
+	fprintf(stderr, "n = %d, IMHOF integral failed to converge\n", n);
+	*err = 1;
+    }
+
+    return 0.5 - int1 / (3.0 * M_PI);
+}
+
+double imhof (double arg, double *lambda, int k, int *err)
+{
+    double ret, bound = imhof_bound(lambda, k);
+
+    ret = ImhofInt(arg, lambda, k, bound, err);
+
+    if (*err || ret < 0 || xna(ret)) {
+	fprintf(stderr, "Error in imhof (bound = %g)\n",
+		bound);
+    }
+
+    return ret;
+}
+
+double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 
+		int *err)
+{
+    gretl_matrix *M = NULL;
+    gretl_matrix *A = NULL;
+    gretl_matrix *MA = NULL;
+    gretl_matrix *XX = NULL;
+    gretl_matrix *uAu = NULL;
+    gretl_matrix *E = NULL;
+    double x, uu, DW;
+    double pv = NADBL;
+    int k = X->cols;
+    int n = X->rows;
+    int i, j;
+
+    M = gretl_identity_matrix_new(n);
+    A = gretl_zero_matrix_new(n, n);
+    MA = gretl_matrix_alloc(n, n);
+    XX = gretl_matrix_alloc(k, k);
+    uAu = gretl_matrix_alloc(1, 1);
+
+    if (M == NULL || A == NULL || MA == NULL || 
+	XX == NULL || uAu == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      XX, GRETL_MOD_NONE);
+
+    gretl_invert_symmetric_matrix(XX);
+
+    gretl_matrix_qform(X, GRETL_MOD_NONE,
+		       XX, M, GRETL_MOD_DECUMULATE);
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    if (j == i) {
+		if (i == 0 || i == n-1) {
+		    gretl_matrix_set(A, i, j, 1.0);
+		} else {
+		    gretl_matrix_set(A, i, j, 2.0);
+		}
+	    } else if (j == i + 1 || i == j + 1) {
+		gretl_matrix_set(A, i, j, -1.0);
+	    }
+	}
+    }
+
+    gretl_matrix_multiply(M, A, MA);
+
+    uu = gretl_matrix_dot_product(u, GRETL_MOD_TRANSPOSE,
+				  u, GRETL_MOD_NONE,
+				  err);
+
+    gretl_matrix_qform(u, GRETL_MOD_TRANSPOSE,
+		       A, uAu, GRETL_MOD_NONE);
+
+    DW = uAu->val[0] / uu;
+
+    for (i=0; i<n; i++) {
+	x = gretl_matrix_get(MA, i, i);
+	gretl_matrix_set(MA, i, i, x - DW);
+    }
+
+    E = gretl_general_matrix_eigenvals(MA, 0, err);
+
+    if (!*err) {
+	pv = imhof(0.0, E->val, n - k, err);
+    }
+
+ bailout:
+
+    gretl_matrix_free(M);
+    gretl_matrix_free(A);
+    gretl_matrix_free(MA);
+    gretl_matrix_free(XX);
+    gretl_matrix_free(uAu);
+    gretl_matrix_free(E);
+
+    return pv;
+}
+

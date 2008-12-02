@@ -282,6 +282,7 @@ enum {
     F_LJUNGBOX,
     F_MSORTBY,
     F_LINCOMB,
+    F_DWPVAL,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,
     F_SVD,
