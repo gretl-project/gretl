@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-01 15:49-0500\n"
-"PO-Revision-Date: 2008-12-02 16:17+0100\n"
+"PO-Revision-Date: 2008-12-02 16:25+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4740,11 +4740,11 @@ msgstr "Valor propio más pequeño"
 
 #: lib/src/modelprint.c:2363
 msgid "Mean of innovations"
-msgstr "media de las innovaciones"
+msgstr "media innovaciones"
 
 #: lib/src/modelprint.c:2365
 msgid "S.D. of innovations"
-msgstr "D.T. de las innovaciones"
+msgstr "D.T. innovaciones"
 
 #: lib/src/modelprint.c:2372
 msgid "Median depend. var"
