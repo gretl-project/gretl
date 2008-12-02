@@ -1189,6 +1189,36 @@
       </description>
     </function>
 
+    <function name="dwmat" section="matbuild" output="smatrix">
+      <fnargs>
+	<fnarg type="scalar">n</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a Durbin&ndash;Watson matrix with <argname>n</argname> rows
+	  and columns.  This is a tridiagonal matrix: the elements on the
+	  main diagonal equal 2, apart from the first and last elements,
+	  which equal 1; the elements on the first diagonals above and
+	  below the main diagonal equal &minus;1.
+	</para>
+      </description>
+    </function>
+
+    <function name="dwpval" section="probdist" output="scalar">
+      <fnargs>
+	<fnarg type="vector">u</fnarg>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the p-value for the Durbin&ndash;Watson statistic given
+	  a column vector of residuals, <argname>u</argname>, and a matrix
+	  of regressors, <argname>X</argname>.  This is computed using
+	  the Imhof procedure.
+	</para>
+      </description>
+    </function>
+
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -3102,7 +3132,8 @@
 	  <seelist>
 	    <fncref targ="critical"/>
 	    <fncref targ="invcdf"/>
-	    <fncref targ="jmpval"/>
+	    <fncref targ="urcpval"/>
+	    <fncref targ="dwpval"/>
 	  </seelist>
 	</para>
       </description>
@@ -3915,7 +3946,7 @@
 	  <argname>niv</argname> is the number of potentially cointegrated
 	  variables when testing for cointegration (or 1 for a univariate
 	  unit-root test); and <argname>itv</argname> is a code for the
-	  model specification &mdash; 1 for no constant, 2 for constant
+	  model specification: 1 for no constant, 2 for constant
 	  included, 3 for constant and linear trend, 4 for constant and
 	  quadratic trend.
 	</para>

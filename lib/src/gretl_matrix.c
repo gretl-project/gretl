@@ -502,6 +502,42 @@ gretl_matrix *gretl_identity_matrix_new (int n)
 }
 
 /**
+ * gretl_DW_matrix_new:
+ * @n: desired number of rows and columns in the matrix.
+ *
+ * Returns: pointer to a newly allocated Durbin-Watson matrix, or %NULL
+ * on failure.  This is a tridiagonal matrix with 2 on the leading
+ * diagonal (apart from 1 at the ends) and -1 on the supra- and
+ * infra-diagonals.
+ */
+
+gretl_matrix *gretl_DW_matrix_new (int n)
+{
+    gretl_matrix *m = gretl_zero_matrix_new(n, n);
+    int i, j;
+
+    if (m == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    if (j == i) {
+		if (i == 0 || i == n-1) {
+		    gretl_matrix_set(m, i, j, 1.0);
+		} else {
+		    gretl_matrix_set(m, i, j, 2.0);
+		}
+	    } else if (j == i + 1 || i == j + 1) {
+		gretl_matrix_set(m, i, j, -1.0);
+	    } 
+	}
+    }
+
+    return m;
+}
+
+/**
  * gretl_zero_matrix_new:
  * @r: desired number of rows in the matrix.
  * @c: desired number of columns in the matrix.

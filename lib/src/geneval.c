@@ -1945,6 +1945,20 @@ static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *matrix_imhof (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const gretl_matrix *m = l->v.m;
+	double arg = node_get_scalar(r, p);
+
+	ret->v.xval = imhof(m, arg, &p->err);
+    }
+
+    return ret;
+}
+
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
     *mm = (f == F_MAXR || f == F_MAXC || f == F_IMAXR || f == F_IMAXC);
@@ -2176,7 +2190,7 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	double xr = node_get_scalar(l, p);
-	double xc = (f == F_IMAT)? xr : node_get_scalar(r, p);
+	double xc = (f == F_IMAT || f == F_DWMAT)? xr : node_get_scalar(r, p);
 	int rows, cols;
 
 	gretl_error_clear();
@@ -2193,6 +2207,9 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	switch (f) {
 	case F_IMAT:
 	    ret->v.m = gretl_identity_matrix_new(rows);
+	    break;
+	case F_DWMAT:
+	    ret->v.m = gretl_DW_matrix_new(rows);
 	    break;
 	case F_ZEROS:
 	    ret->v.m = gretl_zero_matrix_new(rows, cols);
@@ -5710,6 +5727,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_SEQ:
     case F_MUNIF:
     case F_MNORM:
+    case F_DWMAT:
 	/* matrix-creation functions */
 	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
 	    ret = matrix_fill_func(l, r, t->t, p);
@@ -5817,9 +5835,14 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_PRINCOMP:
+    case F_IMHOF:
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && scalar_node(r)) {
-	    ret = matrix_princomp(l, r, p);
+	    if (t->t == F_PRINCOMP) {
+		ret = matrix_princomp(l, r, p);
+	    } else {
+		ret = matrix_imhof(l, r, p);
+	    }
 	} else {
 	    p->err = E_TYPES;
 	} 

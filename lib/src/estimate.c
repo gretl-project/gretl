@@ -354,28 +354,6 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     return 0;
 }
 
-/* Durbin-Watson statistic for pooled model */
-
-static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
-{
-    double ut, u1, num = 0.0;
-    int t;
-
-    pmod->rho = NADBL;
-
-    for (t=pmod->t1+1; t<=pmod->t2; t++) {
-	if (pdinfo->paninfo->unit[t] == pdinfo->paninfo->unit[t-1]) {
-	    ut = pmod->uhat[t];
-	    u1 = pmod->uhat[t-1];
-	    if (!na(ut) && !na(u1)) {
-		num += (ut - u1) * (ut - u1);
-	    }
-	}
-    }
-
-    pmod->dw = num / pmod->ess;
-}
-
 /* calculation of WLS stats in agreement with GNU R */
 
 static void get_wls_stats (MODEL *pmod, const double **Z)
@@ -950,13 +928,9 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     mdl.rho = mdl.dw = NADBL;
 
-    if (mdl.missmask == NULL) {
-	if (!(opt & OPT_A) && dataset_is_panel(pdinfo)) {
-	    panel_dwstat(&mdl, pdinfo);
-	} else if (opt & OPT_T) {
-	    mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
-	    mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
-	} 
+    if (mdl.missmask == NULL && (opt & OPT_T)) {
+	mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
+	mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
     } 
 
     /* weird special case: degenerate model */
@@ -1664,8 +1638,8 @@ int makevcv (MODEL *pmod, double sigma)
     if (sigma != 1.0) {
 	double s2 = sigma * sigma;
 
-	for (k=0; k<nxpx; k++) {
-	    pmod->vcv[k] *= s2;
+	for (i=0; i<nxpx; i++) {
+	    pmod->vcv[i] *= s2;
 	}
     }
 

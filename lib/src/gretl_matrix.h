@@ -203,6 +203,8 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...);
 
 gretl_matrix *gretl_identity_matrix_new (int n);
 
+gretl_matrix *gretl_DW_matrix_new (int n);
+
 gretl_matrix *gretl_zero_matrix_new (int r, int c);
 
 gretl_matrix *gretl_unit_matrix_new (int r, int c);

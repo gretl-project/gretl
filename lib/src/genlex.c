@@ -297,7 +297,9 @@ struct str_table funcs[] = {
     { F_MSORTBY,  "msortby" },
     { F_LINCOMB,  "lincomb" },
     { F_DWPVAL,   "dwpval" },
-    { 0,        NULL }
+    { F_DWMAT,    "dwmat" },
+    { F_IMHOF,    "imhof" },
+    { 0,          NULL }
 };
 
 struct str_table func_alias[] = {
