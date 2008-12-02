@@ -2208,7 +2208,7 @@ int list_linear_combo (double *y, const int *list,
 
 /* Imhof: draws on the RATS code in IMHOF.SRC from Estima, 2004.
 
-   Imhof Procedure for computing P(u'Au<x) for a quadratic form in
+   Imhof Procedure for computing P(u'Au < x) for a quadratic form in
    Normal(0,1) variables. This can be used for ratios of quadratic
    forms as well, since P((u'Au/u'Bu) < x) = P(u'(A-xB)u < 0).
 
@@ -2220,8 +2220,9 @@ int list_linear_combo (double *y, const int *list,
    Imhof, J.P (1961), Computing the Distribution of Quadratic Forms of
    Normal Variables, Biometrika 48, 419-426.
 
-   Abrahamse, A.P.J and Koerts,J. (1969), On the Theory and Application
-   of the General Linear Model, Rotterdam University Press.
+   Abrahamse, A.P.J and Koerts, J. (1969), On the Theory and
+   Application of the General Linear Model, Rotterdam University
+   Press.
 */
 
 static double imhof_bound (double *lambda, int k)
@@ -2268,7 +2269,7 @@ static double vecsum (double *x, int k)
 }
 
 static double 
-ImhofF (double u, double *lambda, int k, double arg)
+imhof_f (double u, double *lambda, int k, double arg)
 {
     double ul, rho = 0.0;
     double theta = -u * arg;
@@ -2301,8 +2302,9 @@ ImhofF (double u, double *lambda, int k, double arg)
   get reduced to x 2 on the next iteration.
 */
 
-static double ImhofInt (double arg, double *lambda, int k,
-			double bound, int *err)
+static double 
+imhof_integral (double arg, double *lambda, int k,
+		double bound, int *err)
 {
     double e3 = 0.0001;
     double base, step, sum1, int1, int0 = 0.0;
@@ -2310,8 +2312,8 @@ static double ImhofInt (double arg, double *lambda, int k,
     double sum4 = 0.0;
     int j, n = 2;
 
-    base = ImhofF(0, lambda, k, arg);
-    base += ImhofF(bound, lambda, k, arg);
+    base = imhof_f(0, lambda, k, arg);
+    base += imhof_f(bound, lambda, k, arg);
 
     while (n < gridlimit) {
 	step = bound / n;
@@ -2319,7 +2321,7 @@ static double ImhofInt (double arg, double *lambda, int k,
 	base = sum1;
 	sum4 = 0.0;
 	for (j=1; j<=n; j+=2) {
-	    sum4 += ImhofF(j * step, lambda, k, arg);
+	    sum4 += imhof_f(j * step, lambda, k, arg);
 	}
 	int1 = (sum1 + 4 * sum4) * step;
 	if (n > 8 && fabs(int1 - int0) < eps4) {
@@ -2337,11 +2339,13 @@ static double ImhofInt (double arg, double *lambda, int k,
     return 0.5 - int1 / (3.0 * M_PI);
 }
 
+/* we could expose this via a "genr" function in its own right  */
+
 double imhof (double arg, double *lambda, int k, int *err)
 {
     double ret, bound = imhof_bound(lambda, k);
 
-    ret = ImhofInt(arg, lambda, k, bound, err);
+    ret = imhof_integral(arg, lambda, k, bound, err);
 
     if (*err || ret < 0 || xna(ret)) {
 	fprintf(stderr, "Error in imhof (bound = %g)\n",
@@ -2350,6 +2354,12 @@ double imhof (double arg, double *lambda, int k, int *err)
 
     return ret;
 }
+
+/* Implements the "dwpval" function in genr: given the residual vector
+   @u and the matrix of regressors, @X, calculates the Durbin-Watson
+   statistic then finds its p-value via the Imhof/Koerts/Abrahamse
+   procedure.
+*/
 
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 
 		int *err)
@@ -2387,6 +2397,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     gretl_matrix_qform(X, GRETL_MOD_NONE,
 		       XX, M, GRETL_MOD_DECUMULATE);
 
+    /* make 'A' into the Durbin-Watson matrix */
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
 	    if (j == i) {
