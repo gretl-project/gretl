@@ -789,7 +789,7 @@ static int make_random_mask (const char *s, const char *oldmask,
 
     for (i=0; i<pdinfo->n; i++) {
 	if (oldmask != NULL && oldmask[i] == 0) {
-	    /* mark obs as not selectable */
+	    /* obs is already excluded, hence not selectable */
 	    mask[i] = -1;
 	} else {
 	    mask[i] = avail;
@@ -808,6 +808,7 @@ static int make_random_mask (const char *s, const char *oldmask,
     }
 
     if (oldmask != NULL) {
+	/* undo the 'already excluded' coding above */
 	for (i=0; i<pdinfo->n; i++) {
 	    if (mask[i] == -1) {
 		mask[i] = 0;
