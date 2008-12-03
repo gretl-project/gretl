@@ -444,7 +444,7 @@ static void model_stats_init (MODEL *pmod)
     pmod->sigma = NADBL;
     pmod->fstt = pmod->lnL = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
-    pmod->dw = pmod->rho = NADBL;
+    pmod->dw = NADBL;
 }
 
 #define SMPL_DEBUG 0
@@ -937,7 +937,9 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (mdl.missmask == NULL && (opt & OPT_T) && !(opt & OPT_I)) {
 	mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
-    } 
+    } else if (!(opt & OPT_I)) {
+	mdl.rho = mdl.dw = NADBL;
+    }
 
     /* weird special case: degenerate model */
     if (mdl.ncoeff == 1 && mdl.ifc) {
