@@ -107,6 +107,11 @@ panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
 #endif
 }
 
+/* Allocate the indexation arrays that allow us to translate between
+   the full-length data array and the possibly shorter array used for
+   transformed data (de-meaned or quasi-demeaned).
+*/
+
 static int allocate_data_finders (panelmod_t *pan, int bign)
 {
     int s;
@@ -789,7 +794,8 @@ static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
 	goto bailout;
     }
 
-    /* Note: we use only contiguous time-series observations */
+    /* note: we use only contiguous time-series observations,
+       as recorded in pan->tsinfo */
 
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->tsinfo->T[i];
@@ -882,8 +888,8 @@ static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
 }
 
 /* Durbin-Watson statistic for the pooled or fixed effects model.  We
-   only use units that have at least two time-series observations, and
-   we give up on encountering embedded NAs.
+   only use units that have at least two consecutive time-series
+   observations, and we use only consective observations.
    
    See Bhargava, Franzini and Narendranathan, "Serial Correlation and
    the Fixed Effects Model", Review of Economic Studies 49, 1982,
@@ -3091,6 +3097,10 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     return mod;    
 }
+
+/* Called from qr_estimate.c in case robust VCV estimation is called
+   for in the context of TSLS estimation on panel data.
+*/
 
 int panel_tsls_robust_vcv (MODEL *pmod, const double **Z, 
 			   const DATAINFO *pdinfo)

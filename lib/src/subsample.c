@@ -746,8 +746,8 @@ static int make_random_mask (const char *s, const char *oldmask,
 			     char *mask)
 {
     unsigned u;
-    int i, subn;
-    int cases = 0;
+    int targ, avail, oldn = pdinfo->n;
+    int i, subn, cases, rejn;
     int err = 0;
 
     subn = smpl_get_int(s, pZ, pdinfo, &err);
@@ -755,8 +755,8 @@ static int make_random_mask (const char *s, const char *oldmask,
     if (subn <= 0 || subn >= pdinfo->n) {
 	err = 1;
     } else if (oldmask != NULL) {
-	int oldn = 0;
-
+	/* dataset is already sub-sampled */
+	oldn = 0;
 	for (i=0; i<pdinfo->n; i++) {
 	    if (oldmask[i]) {
 		oldn++;
@@ -772,17 +772,46 @@ static int make_random_mask (const char *s, const char *oldmask,
 	return err;
     }	
 
-    for (i=0; i<pdinfo->n; i++) {
-	mask[i] = 0;
+    /* Which is smaller: the number of cases to be selected, or
+       the number to be discarded?  We'll randomize in search of
+       the smaller value.
+    */
+    rejn = oldn - subn;
+    if (rejn < subn) {
+	/* select rejn observations to discard */
+	targ = rejn;
+	avail = 1;
+    } else {
+	/* select subn observations to include */
+	targ = subn;
+	avail = 0;
     }
 
-    for (i=0; cases != subn; i++) {
-	u = gretl_rand_int_max(pdinfo->n);
-	if (oldmask == NULL || oldmask[u]) {
-	    mask[u] = 1;
+    for (i=0; i<pdinfo->n; i++) {
+	if (oldmask != NULL && oldmask[i] == 0) {
+	    /* mark obs as not selectable */
+	    mask[i] = -1;
+	} else {
+	    mask[i] = avail;
 	}
-	if (i >= subn - 1) {
-	    cases = count_selected_cases(mask, pdinfo);
+    }
+
+    cases = 0;
+
+    while (cases < targ) {
+	u = gretl_rand_int_max(pdinfo->n);
+	if (mask[u] == avail) {
+	    /* obs is available, not yet selected */
+	    mask[u] = !avail;
+	    cases++;
+	}
+    }
+
+    if (oldmask != NULL) {
+	for (i=0; i<pdinfo->n; i++) {
+	    if (mask[i] == -1) {
+		mask[i] = 0;
+	    }
 	}
     }
 
