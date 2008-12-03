@@ -424,6 +424,7 @@ static void fill_model (int_container *IC, double *hess)
     double ndx, u, sigma;
     int i, j, n, k = IC->k;
 
+    IC->pmod->lnL = int_loglik(IC->theta, IC);
     IC->pmod->ci = INTREG;
 
     for (i=0; i<IC->nx; i++) {
@@ -441,17 +442,18 @@ static void fill_model (int_container *IC, double *hess)
 	    u = IC->uhat[j];
 
 	    IC->pmod->uhat[i] = u;
-
+#if 0
 	    if (IC->obstype[j] == INT_POINT) {
 		IC->pmod->yhat[i] = ndx;
 	    } else {
 		IC->pmod->yhat[i] = ndx + u;
 	    }
+#else 
+	    IC->pmod->yhat[i] = ndx;
+#endif
 	    j++;
 	}
     }
-
-    IC->pmod->lnL = int_loglik(IC->theta, IC);
 
     n = 0;
     for (i=0; i<IC->nx; i++) {
@@ -480,7 +482,6 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 
     k = IC->k;
     nh = k*(k+1)/2;
-    Loglik = int_loglik(IC->theta, IC);
 
     err = BFGS_max(IC->theta, k, 1000, INTERVAL_TOL, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
