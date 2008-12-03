@@ -2281,11 +2281,14 @@ static double vecsum (const double *x, int k)
     return sum;
 }
 
-static double imhof_f (double u, const double *lambda, int k, double arg)
+static double imhof_f (double u, const double *lambda, int k, double arg,
+		       int *err)
 {
-    double ul, rho = 0.0;
+    double ret, ul, rho = 0.0;
     double theta = -u * arg;
     int i;
+
+    errno = 0;
 
     /* The value at zero isn't directly computable as
        it produces 0/0. The limit is computed below.
@@ -2300,10 +2303,17 @@ static double imhof_f (double u, const double *lambda, int k, double arg)
 	rho += log(1.0 + ul * ul);
     }
 
-    return sin(0.5 * theta)/(u * exp(0.25 * rho));
+    ret = sin(0.5 * theta) / (u * exp(0.25 * rho));
+
+    if (errno) {
+	fprintf(stderr, "imhof_f: %s\n", strerror(errno));
+	*err = 1;
+    }
+
+    return ret;
 }
 
-#define gridlimit 1000
+#define gridlimit 2048
 
 /*
   Adaptation of Abrahamse and Koert's Pascal code.  Evaluates the
@@ -2324,16 +2334,18 @@ static double imhof_integral (double arg, const double *lambda, int k,
     double ret = NADBL;
     int j, n = 2;
 
-    base = imhof_f(0, lambda, k, arg);
-    base += imhof_f(bound, lambda, k, arg);
+    base = imhof_f(0, lambda, k, arg, err);
+    if (!*err) {
+	base += imhof_f(bound, lambda, k, arg, err);
+    }
 
-    while (n < gridlimit) {
+    while (n < gridlimit && !*err) {
 	step = bound / n;
 	sum1 = base + sum4 * 2.0;
 	base = sum1;
 	sum4 = 0.0;
 	for (j=1; j<=n; j+=2) {
-	    sum4 += imhof_f(j * step, lambda, k, arg);
+	    sum4 += imhof_f(j * step, lambda, k, arg, err);
 	}
 	int1 = (sum1 + 4 * sum4) * step;
 	if (n > 8 && fabs(int1 - int0) < eps4) {
@@ -2343,13 +2355,15 @@ static double imhof_integral (double arg, const double *lambda, int k,
 	n *= 2;
     }
 
-    if (n > gridlimit) {
+    if (*err || n > gridlimit) {
 	fprintf(stderr, "n = %d, Imhof integral failed to converge\n", n);
 	*err = E_NOCONV;
     } else {
 	ret = 0.5 - int1 / (3.0 * M_PI);
-	if (ret < 0) {
-	    fprintf(stderr, "n = %d, Imhof integral gave negative value\n", n);
+	if (ret < 0 && ret > -1.0e-14) {
+	    ret = 0.0;
+	} else if (ret < 0) {
+	    fprintf(stderr, "n = %d, Imhof integral gave negative value %g\n", n, ret);
 	    *err = E_DATA;
 	    ret = NADBL;
 	}
@@ -2429,7 +2443,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
 */
 
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 
-		int *err)
+		double *pDW, int *perr)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *A = NULL;
@@ -2440,7 +2454,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     double pv = NADBL;
     int k = X->cols;
     int n = X->rows;
-    int i;
+    int i, err = 0;
 
     M = gretl_identity_matrix_new(n);
     A = gretl_DW_matrix_new(n);
@@ -2448,7 +2462,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     XX = gretl_matrix_alloc(k, k);
 
     if (M == NULL || A == NULL || MA == NULL || XX == NULL) {
-	*err = E_ALLOC;
+	err = E_ALLOC;
 	goto bailout;
     }
 
@@ -2456,34 +2470,43 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
 			      X, GRETL_MOD_NONE,
 			      XX, GRETL_MOD_NONE);
 
-    gretl_invert_symmetric_matrix(XX);
+    err = gretl_invert_symmetric_matrix(XX);
 
-    /* M = I - X(X'X)^{-1}X' */
-    gretl_matrix_qform(X, GRETL_MOD_NONE,
-		       XX, M, GRETL_MOD_DECUMULATE);
-
-    gretl_matrix_multiply(M, A, MA);
-
-    uu = gretl_matrix_dot_product(u, GRETL_MOD_TRANSPOSE,
-				  u, GRETL_MOD_NONE,
-				  err);
-
-    if (!*err) {
-	DW = gretl_scalar_qform(u, A, err);
+    if (!err) {
+	/* M = I - X(X'X)^{-1}X' */
+	err = gretl_matrix_qform(X, GRETL_MOD_NONE,
+				 XX, M, GRETL_MOD_DECUMULATE);
     }
 
-    if (!*err) {
+    if (!err) {
+	err = gretl_matrix_multiply(M, A, MA);
+    }
+
+    if (!err) {
+	uu = gretl_matrix_dot_product(u, GRETL_MOD_TRANSPOSE,
+				      u, GRETL_MOD_NONE,
+				      &err);
+    }
+
+    if (!err) {
+	DW = gretl_scalar_qform(u, A, &err);
+    }
+
+    if (!err) {
 	DW /= uu;
-	E = gretl_general_matrix_eigenvals(MA, 0, err);
+	E = gretl_general_matrix_eigenvals(MA, 0, &err);
     }
 
-    if (!*err) {
+    if (!err) {
 	k = n - k;
 	for (i=0; i<k; i++) {
 	    E->val[i] -= DW;
 	}
 	gretl_matrix_reuse(E, k, 1);
-	pv = imhof(E, 0.0, err);
+	pv = imhof(E, 0.0, &err);
+	if (!err && pDW != NULL) {
+	    *pDW = DW;
+	}
     }
 
  bailout:
@@ -2493,6 +2516,8 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     gretl_matrix_free(MA);
     gretl_matrix_free(XX);
     gretl_matrix_free(E);
+
+    *perr = err;
 
     return pv;
 }

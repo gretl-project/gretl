@@ -33,6 +33,13 @@ enum vcv_ops {
     VCV_SUBTRACT
 };
 
+typedef struct unit_ts_ unit_ts;
+
+struct unit_ts_ {
+    int *t0;  /* start of longest contiguous time series, per unit */
+    int *T;   /* length of such sequence, per unit */
+};
+
 typedef struct panelmod_t_ panelmod_t;
 
 struct panelmod_t_ {
@@ -67,6 +74,7 @@ struct panelmod_t_ {
     int *big2small;       /* reverse data indexation array */
     MODEL *pooled;        /* reference model (pooled OLS) */
     MODEL *realmod;       /* fixed or random effects model */
+    unit_ts *tsinfo;      /* per unit time-series info */
 };
 
 struct {
@@ -123,7 +131,7 @@ static int allocate_data_finders (panelmod_t *pan, int bign)
 }
 
 #define small_index(p,t) ((p->big2small == NULL)? t : p->big2small[t])
-#define big_index(p,t) ((p->small2big == NULL)? t : p->small2big[t])
+#define big_index(p,t)   ((p->small2big == NULL)? t : p->small2big[t])
 
 static void panelmod_init (panelmod_t *pan)
 {
@@ -161,6 +169,36 @@ static void panelmod_init (panelmod_t *pan)
     
     pan->pooled = NULL;
     pan->realmod = NULL;
+    pan->tsinfo = NULL;
+}
+
+static void panelmod_free_tsinfo (panelmod_t *pan)
+{
+    if (pan->tsinfo != NULL) {
+	free(pan->tsinfo->t0);
+	free(pan->tsinfo->T);
+	free(pan->tsinfo);
+    }
+}
+
+static int panelmod_add_tsinfo (panelmod_t *pan)
+{
+    int err = 0;
+
+    pan->tsinfo = malloc(sizeof *pan->tsinfo);
+    if (pan->tsinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    pan->tsinfo->t0 = malloc(pan->nunits * sizeof *pan->tsinfo->t0);
+    pan->tsinfo->T = malloc(pan->nunits * sizeof *pan->tsinfo->T);
+
+    if (pan->tsinfo->t0 == NULL || pan->tsinfo->T == NULL) {
+	panelmod_free_tsinfo(pan);
+	err = E_ALLOC;
+    }
+
+    return err;
 }
 
 static void panelmod_free (panelmod_t *pan)
@@ -176,6 +214,8 @@ static void panelmod_free (panelmod_t *pan)
     free(pan->big2small);
 
     free(pan->realmod);
+
+    panelmod_free_tsinfo(pan);
 }
 
 /* test variable number v against the (possibly reduced) regression
@@ -535,109 +575,6 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     return err;
 }
 
-#if 0 /* not yet */
-
-static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
-			    const double **Z)
-{
-    gretl_matrix *X = NULL;
-    gretl_matrix *XX = NULL;
-    gretl_matrix *M = NULL;
-    gretl_matrix *A = NULL;
-    gretl_matrix *MA = NULL;
-    gretl_matrix *Ai = NULL;
-    gretl_matrix *E = NULL;
-    double pv;
-    int T = pmod->nobs;
-    int k = pmod->ncoeff;
-    int bigt = 0, ins = 0;
-    int i, j, t, s, v;
-    int err = 0;
-
-    X = gretl_matrix_alloc(T, k);
-    M = gretl_identity_matrix_new(T);
-    A = gretl_zero_matrix_new(T, T);
-    MA = gretl_zero_matrix_new(T, T);
-    XX = gretl_matrix_alloc(k, k);
-
-    if (X == NULL || M == NULL || A == NULL || MA == NULL ||
-	XX == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* FIXME use only contiguous observations */
-
-    for (i=0; i<pan->nunits; i++) {
-	int Ti = pan->unit_obs[i];
-
-	if (Ti == 0) {
-	    continue;
-	}
-
-	Ai = gretl_DW_matrix_new(Ti);
-	if (Ai == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
-
-	gretl_matrix_inscribe_matrix(A, Ai, ins, ins,
-				     GRETL_MOD_NONE);
-	ins += Ti;
-	gretl_matrix_free(Ai);
-
-	for (t=0; t<pan->T; t++) {
-	    s = panel_index(i, t);
-	    if (na(pmod->uhat[s])) {
-		continue;
-	    }
-	    s = small_index(pan, s);
-	    for (j=0; j<k; j++) {
-		v = pmod->list[j+2];
-		gretl_matrix_set(X, bigt, j, Z[v][s]);
-	    }
-	    bigt++;
-	}
-    }
-
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      X, GRETL_MOD_NONE,
-			      XX, GRETL_MOD_NONE);
-
-    gretl_invert_symmetric_matrix(XX);
-
-    /* M = I - X(X'X)^{-1}X' */
-    gretl_matrix_qform(X, GRETL_MOD_NONE,
-		       XX, M, GRETL_MOD_DECUMULATE);
-
-    gretl_matrix_multiply(M, A, MA);
-
-    E = gretl_general_matrix_eigenvals(MA, 0, &err);
-
-    if (!err) {
-	k = T - k;
-	for (i=0; i<k; i++) {
-	    E->val[i] -= pmod->dw;
-	}
-	gretl_matrix_reuse(E, k, 1);
-	pv = imhof(E, 0.0, &err);
-	fprintf(stderr, "DW pv = %g\n", pv);
-    }   
-
- bailout:
-
-    gretl_matrix_free(XX);
-    gretl_matrix_free(X);
-    gretl_matrix_free(M);
-    gretl_matrix_free(A);
-    gretl_matrix_free(MA);
-    gretl_matrix_free(E);
-
-    return err;
-}
-
-#endif
-
 static void femod_regular_vcv (MODEL *pmod)
 {
     if (pmod->vcv == NULL) {
@@ -739,6 +676,211 @@ static int panel_autocorr_1 (MODEL *pmod, const panelmod_t *pan)
 
 #endif
 
+/* Determine and record the starting point and length of the longest
+   unbroken sequence of time-series observations for each panel unit.
+   We use this in computing rho and Durbin-Watson.
+*/
+
+static int 
+panel_unit_AR_info (const MODEL *pmod, panelmod_t *pan)
+{
+    int i, t, s, Ti, Timax, t0, t0max, rem;
+    int err, okunits = 0;
+
+    err = panelmod_add_tsinfo(pan);
+    if (err) {
+	return err;
+    }
+
+    for (i=0; i<pan->nunits; i++) {
+	pan->tsinfo->t0[i] = 0;
+	pan->tsinfo->T[i] = 0;
+
+	if (pan->unit_obs[i] < 2) {
+	    continue;
+	}
+
+	Timax = t0max = t0 = 0;
+
+	while (1) {
+	    Ti = 0;
+	    for (t=t0; t<pan->T; t++) {
+		s = panel_index(i, t);
+		if (na(pmod->uhat[s])) {
+		    break;
+		}
+		Ti++; /* length of current non-NA sequence */
+	    }
+	    if (Ti > Timax) {
+		Timax = Ti;
+		t0max = t0;
+	    }
+	    rem = pan->T - t;
+	    if (rem <= Timax) {
+		break;
+	    } else {
+		t0 = t + 1;
+	    }
+	}
+
+	if (Timax >= 2) {
+	    pan->tsinfo->t0[i] = t0max;
+	    pan->tsinfo->T[i] = Timax;
+	    okunits++;
+	} 
+    }
+
+    if (okunits == 0) {
+	/* nothing doing */
+	panelmod_free_tsinfo(pan);
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
+			    const double **Z)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *XX = NULL;
+    gretl_matrix *M = NULL;
+    gretl_matrix *A = NULL;
+    gretl_matrix *MA = NULL;
+    gretl_matrix *Ai = NULL;
+    gretl_matrix *E = NULL;
+    double pv, sz;
+    int T = 0;
+    int k = pmod->ncoeff;
+    int jmin = 0, effj = 0;
+    int bigt = 0, ins = 0;
+    int i, j, jj, t, s, v;
+    int err = 0;
+
+    /* determine the total observations to be used */
+    for (i=0; i<pan->nunits; i++) {
+	T += pan->tsinfo->T[i];
+    }
+
+    if (pan->opt & OPT_F) {
+	/* fixed effects */
+	k += pan->effn - 1; /* allow for unit dummies */
+	jmin = 1;           /* offset to avoid average constant */
+    }
+
+    /* allocation size? */
+    sz = T * k + 3 * T * T + k * k;
+    sz *= 8.0 / (1024 * 1024);
+
+    if (sz > 50) {
+	/* more than 50 MB of storage: we'll not try this */
+	fprintf(stderr, "panel_DW_pvalue: size = %g MB\n", sz);
+    }
+
+    X = gretl_matrix_alloc(T, k);
+    M = gretl_identity_matrix_new(T);
+    A = gretl_zero_matrix_new(T, T);
+    MA = gretl_zero_matrix_new(T, T);
+    XX = gretl_matrix_alloc(k, k);
+
+    if (X == NULL || M == NULL || A == NULL || MA == NULL ||
+	XX == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* Note: we use only contiguous time-series observations */
+
+    for (i=0; i<pan->nunits; i++) {
+	int Ti = pan->tsinfo->T[i];
+	int tmin, tmax;
+
+	if (Ti == 0) {
+	    continue;
+	}
+
+	Ai = gretl_DW_matrix_new(Ti);
+	if (Ai == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+
+	err = gretl_matrix_inscribe_matrix(A, Ai, ins, ins,
+					   GRETL_MOD_NONE);
+	if (err) {
+	    break;
+	}
+
+	ins += Ti;
+	gretl_matrix_free(Ai);
+
+	tmin = pan->tsinfo->t0[i];
+	tmax = tmin + Ti - 1;
+
+	for (t=tmin; t<=tmax; t++) {
+	    s = panel_index(i, t);
+	    for (j=jmin; j<pmod->ncoeff; j++) {
+		/* write regressors at t into X */
+		v = pmod->list[j+2];
+		gretl_matrix_set(X, bigt, j - jmin, Z[v][s]);
+	    }
+	    if (jmin > 0) {
+		/* fixed effects: append unit dummies */
+		for (j=0; j<pan->effn; j++) {
+		    jj = j + pmod->ncoeff - 1;
+		    gretl_matrix_set(X, bigt, jj, (effj == j)? 1.0 : 0.0);
+		}
+	    }
+	    bigt++;
+	}
+	effj++;
+    }
+
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      XX, GRETL_MOD_NONE);
+
+    err = gretl_invert_symmetric_matrix(XX);
+
+    if (!err) {
+	/* M = I - X(X'X)^{-1}X' */
+	err = gretl_matrix_qform(X, GRETL_MOD_NONE,
+				 XX, M, GRETL_MOD_DECUMULATE);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply(M, A, MA);
+    }
+
+    if (!err) {
+	E = gretl_general_matrix_eigenvals(MA, 0, &err);
+    }
+
+    if (!err) {
+	k = T - k; /* number of non-zero eigenvalues */
+	for (i=0; i<k; i++) {
+	    E->val[i] -= pmod->dw;
+	}
+	gretl_matrix_reuse(E, k, 1);
+	pv = imhof(E, 0.0, &err);
+	if (!err) {
+	    gretl_model_set_double(pmod, "dw_pval", pv);
+	    fprintf(stderr, "DW = %g [%g]\n", pmod->dw, pv);
+	}
+    }   
+
+ bailout:
+
+    gretl_matrix_free(XX);
+    gretl_matrix_free(X);
+    gretl_matrix_free(M);
+    gretl_matrix_free(A);
+    gretl_matrix_free(MA);
+    gretl_matrix_free(E);
+
+    return err;
+}
+
 /* Durbin-Watson statistic for the pooled or fixed effects model.  We
    only use units that have at least two time-series observations, and
    we give up on encountering embedded NAs.
@@ -748,12 +890,12 @@ static int panel_autocorr_1 (MODEL *pmod, const panelmod_t *pan)
    pp. 533-549.
 */
 
-static void panel_dwstat (MODEL *pmod, const panelmod_t *pan)
+static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 {
     double ut, u1;
     double dwnum = 0.0, dwden = 0.0;
     double rnum = 0.0, rden = 0.0;
-    int i, t, ti, Ti;
+    int i, t, ti;
 
     pmod->dw = pmod->rho = NADBL;
 
@@ -761,64 +903,33 @@ static void panel_dwstat (MODEL *pmod, const panelmod_t *pan)
 	return;
     }
 
+    if (panel_unit_AR_info(pmod, pan) != 0) {
+	/* can't do this */
+	return;
+    }
+
     for (i=0; i<pan->nunits; i++) {
-	int tmin = 0, tmax = pan->T - 1;
-	double dwnumi = 0.0, dwdeni = 0.0;
-	double rnumi = 0.0, rdeni = 0.0;
-	int skip = 0, started = 0;
+	int tmin, tmax;
 
-	Ti = pan->unit_obs[i];
-
-	if (Ti < 2) {
+	if (pan->tsinfo->T[i] == 2) {
 	    continue;
 	}
 
-	for (ti=0; ti<pan->T; ti++) {
-	    t = panel_index(i, ti);
-	    if (!na(pmod->uhat[t])) {
-		break;
-	    }
-	    tmin++;
-	}
-
-	for (ti=tmax; ti>=tmin; ti--) {
-	    t = panel_index(i, ti);
-	    if (!na(pmod->uhat[t])) {
-		break;
-	    }
-	    tmax--;
-	}
-
-	tmin++;
-	Ti = tmax - tmin + 1;
-	if (Ti < 2) {
-	    continue;
-	}
+	tmin = pan->tsinfo->t0[i] + 1;
+	tmax = pan->tsinfo->t0[i] + pan->tsinfo->T[i] - 1;
 
 	for (ti=tmin; ti<=tmax; ti++) {
 	    t = panel_index(i, ti);
 	    ut = pmod->uhat[t];
 	    u1 = pmod->uhat[t-1];
-	    if (!na(ut) && !na(u1)) {
-		dwnumi += (ut - u1) * (ut - u1);
-		dwdeni += ut * ut;
-		rnumi += ut * u1;
-		rdeni += u1 * u1;
-		if (!started) {
-		    /* include first \hat{u}_t squared */
-		    dwdeni += u1 * u1;
-		    started = 1;
-		}
-	    } else {
-		skip = 1;
-		break;
+	    dwnum += (ut - u1) * (ut - u1);
+	    dwden += ut * ut;
+	    rnum += ut * u1;
+	    rden += u1 * u1;
+	    if (ti == tmin) {
+		/* include first \hat{u}_t squared */
+		dwden += u1 * u1;
 	    }
-	}
-	if (!skip) {
-	    dwnum += dwnumi;
-	    dwden += dwdeni;
-	    rnum += rnumi;
-	    rden += rdeni;
 	}
     }
 
@@ -2026,7 +2137,12 @@ static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
 
     fe_model_add_ahat(pmod, Z, pdinfo, pan);
     set_model_id(pmod);
+
     panel_dwstat(pmod, pan);
+    if (!na(pmod->dw) && (pan->opt & OPT_I)) {
+	panel_DW_pvalue(pmod, pan, Z);
+    }
+
 #if 0
     panel_autocorr_1(pmod, pan);
 #endif
@@ -2767,11 +2883,9 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 
     panel_dwstat(pmod, pan);
 
-#if 0
-    if (!na(pmod->dw)) {
+    if (!na(pmod->dw) && (pan->opt & OPT_I)) {
 	panel_DW_pvalue(pmod, pan, Z);
     }
-#endif
 }
 
 /* fixed effects | random effects | between | pooled */

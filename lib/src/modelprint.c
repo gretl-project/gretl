@@ -2286,6 +2286,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	pmod->dw
     };
     struct middletab mtab;
+    double dwpval;
     int i, j;
 
     mtab.mlen = 0;
@@ -2328,6 +2329,15 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	}
 	key[6] = fstr;
 	val[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+    }
+
+    /* Durbin-Watson p-value? */
+    dwpval = gretl_model_get_double(pmod, "dw_pval");
+    if (!na(dwpval)) {
+	val[12] = pmod->dw;
+	key[12] = (tex)? "Durbin--Watson" : N_("Durbin-Watson");
+	val[13] = dwpval;
+	key[13] = N_("P-value(DW)");
     }
 
     /* special variants of R-squared */

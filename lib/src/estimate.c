@@ -444,6 +444,7 @@ static void model_stats_init (MODEL *pmod)
     pmod->sigma = NADBL;
     pmod->fstt = pmod->lnL = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->dw = pmod->rho = NADBL;
 }
 
 #define SMPL_DEBUG 0
@@ -514,7 +515,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
     return missv;
 }
 
-static void 
+static int
 lagged_depvar_check (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 {
     int ldv = lagdepvar(pmod->list, Z, pdinfo);
@@ -524,6 +525,8 @@ lagged_depvar_check (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
     } else if (gretl_model_get_int(pmod, "ldepvar")) {
 	gretl_model_set_int(pmod, "ldepvar", 0);
     }
+
+    return ldv;
 }
 
 static void 
@@ -724,7 +727,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int jackknife = 0;
     int use_qr = libset_get_bool(USE_QR);
     int pwe = (opt & OPT_P);
-    int nullmod = 0;
+    int nullmod = 0, ldv = 0;
     int yno, i;
 
     gretl_error_clear();
@@ -845,7 +848,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* Check for presence of lagged dependent variable? 
        (Don't bother if this is an auxiliary regression.) */
     if (!(opt & OPT_A)) {
-	lagged_depvar_check(&mdl, (const double **) *pZ, pdinfo);
+	ldv = lagged_depvar_check(&mdl, (const double **) *pZ, pdinfo);
     }
 
     /* AR1: advance the starting observation by one? */
@@ -875,6 +878,11 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (dataset_is_time_series(pdinfo)) {
 	opt |= OPT_T;
+    } 
+
+    /* remove Durbin-Watson p-value flag if not appropriate */
+    if (ldv || !(opt & OPT_T)) {
+	opt &= ~OPT_I;
     }
 
     if (mdl.ci == HCCM || ((opt & OPT_R) && libset_get_int(HC_VERSION) == 4)) {
@@ -883,7 +891,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (nullmod) {
 	gretl_null_regress(&mdl, (const double **) *pZ);
-    } else if (!jackknife && ((opt & OPT_R) || use_qr)) { 
+    } else if (!jackknife && ((opt & OPT_R) || (opt & OPT_I) || use_qr)) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
     } else {
@@ -908,7 +916,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) { 
 	    goto lsq_abort;
 	}
-	if (gretl_model_get_int(&mdl, "ldepvar")) {
+	if (ldv) {
 	    if (ldepvar_std_errors(&mdl, pZ, pdinfo)) {
 		goto lsq_abort;
 	    }
@@ -926,9 +934,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    mdl.rho = mdl.dw = NADBL;
-
-    if (mdl.missmask == NULL && (opt & OPT_T)) {
+    if (mdl.missmask == NULL && (opt & OPT_T) && !(opt & OPT_I)) {
 	mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
     } 
@@ -985,6 +991,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  *      perfectly collinear variables.
  *   %OPT_X: compute "variance matrix" as just (X'X)^{-1}
  *   %OPT_B: don't compute R^2.
+ *   %OPT_I: compute Durbin-Watson p-value.
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.

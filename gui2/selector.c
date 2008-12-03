@@ -3518,7 +3518,10 @@ static void build_selector_switches (selector *sr)
     } else if (sr->code == CORR) {	
 	tmp = gtk_check_button_new_with_label(_("Ensure uniform sample size"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_U, 0);
-    }
+    } else if (sr->code == OLS && dataset_is_time_series(datainfo)) {
+	tmp = gtk_check_button_new_with_label(_("Compute Durbin-Watson p-value"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_I, 0);
+    }	
 
     if (sr->code == ARMA) {
 	sr->hess_button = 

@@ -89,6 +89,6 @@ int list_linear_combo (double *y, const int *list,
 double imhof (const gretl_matrix *m, double arg, int *err);
 
 double dw_pval (const gretl_matrix *u, const gretl_matrix *X, 
-		int *err);
+		double *pDW, int *err);
 
 #endif /* GENFUNCS_H */

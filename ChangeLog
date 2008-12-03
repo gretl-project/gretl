@@ -37,6 +37,8 @@ version 1.7.10, in progress
 - GUI plot editor: translate the gnuplot style strings
 - Switch to more compact tabular form for presenting
   model statistics
+- OLS and fixed effects: add option to calculate p-value
+  for the Durbin-Watson statistic
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"

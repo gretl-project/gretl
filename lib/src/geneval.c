@@ -1925,7 +1925,7 @@ static NODE *dwpval_node (NODE *l, NODE *r, parser *p)
 	const gretl_matrix *u = l->v.m;
 	const gretl_matrix *X = r->v.m;
 
-	ret->v.xval = dw_pval(u, X, &p->err);
+	ret->v.xval = dw_pval(u, X, NULL, &p->err);
     }
 
     return ret;

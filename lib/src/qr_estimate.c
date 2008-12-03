@@ -704,6 +704,28 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     return err;
 }
 
+static int qr_dw_stats (MODEL *pmod, const double **Z,
+			gretl_matrix *X, gretl_matrix *u)
+{
+    double DW, pv;
+    int t, s, err = 0;
+
+    get_data_X(X, pmod, Z);
+
+    for (s=0, t=pmod->t1; t<=pmod->t2; s++, t++) {
+	gretl_vector_set(u, s, pmod->uhat[t]);
+    }
+    
+    pv = dw_pval(u, X, &DW, &err);
+
+    if (!err) {
+	pmod->dw = DW;
+	gretl_model_set_double(pmod, "dw_pval", pv);
+    }
+    
+    return err;
+}
+
 static int qr_make_regular_vcv (MODEL *pmod, gretl_matrix *v,
 				gretlopt opt)
 {
@@ -988,6 +1010,11 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 
     /* get R^2, F */
     qr_compute_stats(pmod, Z[pmod->list[1]], T, opt);
+
+    /* D-W stat and p-value */
+    if ((opt & OPT_I) && pmod->missmask == NULL) {
+	qr_dw_stats(pmod, Z, Q, y);
+    }	
 
  qr_cleanup:
 

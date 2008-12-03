@@ -135,9 +135,9 @@ static gp_style_spec style_specs[] = {
     { GP_STYLE_DOTS,         N_("dots") },
     { GP_STYLE_STEPS,        N_("steps") },
     { GP_STYLE_BOXES,        N_("boxes") },
-    { GP_STYLE_ERRORBARS,    N_("errorbars") },
-    { GP_STYLE_FILLEDCURVE,  N_("filledcurve") },
-    { GP_STYLE_CANDLESTICKS, N_("candlesticks") },
+    { GP_STYLE_ERRORBARS,    "errorbars" },
+    { GP_STYLE_FILLEDCURVE,  "filledcurve" },
+    { GP_STYLE_CANDLESTICKS, "candlesticks" },
     { 0,                     NULL }
 };
 
