@@ -2506,7 +2506,7 @@
          modelli composti da una singola equazione e stimati via OLS. Quando si
          usa questa opzione, le previsioni calcolate sono ricorsive, ossia: ogni
          previsione è generata da una stima del modello che usa i dati
-         a partire da un certo punto fusso (ossia l'inizio dell'intervallo del
+         a partire da un certo punto fisso (ossia l'inizio dell'intervallo del
          campione usato per la stima originaria) fino alla data di previsione
          meno <math>k</math> osservazioni, dove <math>k</math> è il numero di
          <lit>passi-avanti</lit> specificato come argomento. Le previsioni sono
