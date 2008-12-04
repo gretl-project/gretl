@@ -473,7 +473,6 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 {
     int_container *IC;
     double *hess = NULL;
-    double Loglik;
     int fncount, grcount;
     int k, nh;
     int err;
