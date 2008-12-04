@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.7.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-03 14:57-0500\n"
-"PO-Revision-Date: 2008-12-01 10:34+0100\n"
+"PO-Revision-Date: 2008-12-04 21:17+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4128,9 +4128,8 @@ msgid "GARCH"
 msgstr "GARCH"
 
 #: lib/src/modelprint.c:550
-#, fuzzy
 msgid "Interval"
-msgstr "Installa"
+msgstr "Intervallo"
 
 #: lib/src/modelprint.c:552
 msgid "Arellano--Bond"
@@ -4414,14 +4413,12 @@ msgid "Breusch-Godfrey test for first-order autocorrelation"
 msgstr "Test di Breusch-Godfrey per l'autocorrelazione del prim'ordine"
 
 #: lib/src/modelprint.c:1221
-#, fuzzy
 msgid "Lower limit"
-msgstr "Inferiore"
+msgstr "Limite inferiore"
 
 #: lib/src/modelprint.c:1225
-#, fuzzy
 msgid "Upper limit"
-msgstr "Superiore"
+msgstr "Limite superiore"
 
 #: lib/src/modelprint.c:1284 lib/src/modelprint.c:1288
 #: lib/src/modelprint.c:1292 lib/src/system.c:3798 lib/src/system.c:3817
@@ -4627,9 +4624,8 @@ msgid "Statistics based on the rho-differenced data"
 msgstr "Statistiche basate sui dati rho-differenziati"
 
 #: lib/src/modelprint.c:1821
-#, fuzzy
 msgid "Statistics based on the transformed data"
-msgstr "Statistiche basate sui dati ponderati"
+msgstr "Statistiche basate sui dati trasformati"
 
 #: lib/src/modelprint.c:1914
 #, c-format
@@ -4716,18 +4712,16 @@ msgid "Durbin-Watson"
 msgstr "Durbin-Watson"
 
 #: lib/src/modelprint.c:2310
-#, fuzzy
 msgid "Adjusted $R^2$"
-msgstr "$R^2$"
+msgstr "$R^2$ corretto"
 
 #: lib/src/modelprint.c:2311
 msgid "P-value($F$)"
 msgstr "P-value($F$)"
 
 #: lib/src/modelprint.c:2340
-#, fuzzy
 msgid "P-value(DW)"
-msgstr "P-value(F)"
+msgstr "P-value(DW)"
 
 #: lib/src/modelprint.c:2345
 msgid "Uncentered $R^2$"
@@ -4746,14 +4740,12 @@ msgid "Centered R-squared"
 msgstr "R-quadro centrato"
 
 #: lib/src/modelprint.c:2351
-#, fuzzy
 msgid "McFadden $R^2$"
-msgstr "Pseudo-$R^2$ di McFadden"
+msgstr "$R^2$ di McFadden"
 
 #: lib/src/modelprint.c:2352
-#, fuzzy
 msgid "McFadden R-squared"
-msgstr "Pseudo-R-quadro di McFadden"
+msgstr "R-quadro di McFadden"
 
 #: lib/src/modelprint.c:2369
 msgid "Smallest eigenvalue"
@@ -4764,24 +4756,20 @@ msgid "Mean of innovations"
 msgstr "Media delle innovazioni"
 
 #: lib/src/modelprint.c:2379
-#, fuzzy
 msgid "S.D. of innovations"
-msgstr "Media delle innovazioni"
+msgstr "SQM delle innovazioni"
 
 #: lib/src/modelprint.c:2386
-#, fuzzy
 msgid "Median depend. var"
-msgstr "Media variabile dipendente"
+msgstr "Mediana var. dipendente"
 
 #: lib/src/modelprint.c:2388
-#, fuzzy
 msgid "Sum absolute resid"
 msgstr "Somma dei residui assoluti"
 
 #: lib/src/modelprint.c:2402
-#, fuzzy
 msgid "Censored obs"
-msgstr "Osservazioni censurate"
+msgstr "Oss. censurate"
 
 #: lib/src/modelprint.c:2428
 msgid "Durbin's $h$"
@@ -5349,67 +5337,56 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Attenzione: opzione %s ignorata al di fuori del loop"
 
 #: lib/src/plotspec.c:131 lib/src/plotspec.c:154
-#, fuzzy
 msgid "lines"
-msgstr "Linee"
+msgstr "linee"
 
 #: lib/src/plotspec.c:132
-#, fuzzy
 msgid "points"
-msgstr "punto"
+msgstr "punti"
 
 #: lib/src/plotspec.c:133
-#, fuzzy
 msgid "linespoints"
-msgstr "Usa punti"
+msgstr "linee-punti"
 
 #: lib/src/plotspec.c:134
-#, fuzzy
 msgid "impulses"
-msgstr "Impulso-risposta"
+msgstr "impulsi"
 
 #: lib/src/plotspec.c:135
-#, fuzzy
 msgid "dots"
-msgstr "Note"
+msgstr "punti"
 
 #: lib/src/plotspec.c:136
-#, fuzzy
 msgid "steps"
-msgstr "test %s"
+msgstr "passi"
 
 #: lib/src/plotspec.c:137
-#, fuzzy
 msgid "boxes"
-msgstr "Note"
+msgstr "scatole"
 
 #: lib/src/plotspec.c:210
-#, fuzzy
 msgid "left top"
-msgstr "sinistra"
+msgstr "in alto a sinistra"
 
 #: lib/src/plotspec.c:211
-#, fuzzy
 msgid "right top"
-msgstr "destra"
+msgstr "in alto a destra"
 
 #: lib/src/plotspec.c:212
 msgid "left bottom"
-msgstr ""
+msgstr "in basso a sinistra"
 
 #: lib/src/plotspec.c:213
 msgid "right bottom"
-msgstr ""
+msgstr "in basso a destra"
 
 #: lib/src/plotspec.c:214
 msgid "outside"
-msgstr ""
+msgstr "fuori"
 
-# Media mobile => femminile
 #: lib/src/plotspec.c:498
-#, fuzzy
 msgid "center"
-msgstr "Centrata"
+msgstr "centra"
 
 #: lib/src/plugins.c:252 lib/src/plugins.c:265
 #, c-format
@@ -6058,7 +6035,7 @@ msgstr "Stimatore"
 
 #: lib/src/system.c:3803
 msgid "Ljung-Box Q'"
-msgstr ""
+msgstr "Ljung-Box Q'"
 
 #: lib/src/texprint.c:882 lib/src/varprint.c:750 lib/src/varprint.c:751
 #: gui2/gui_utils.c:3226
@@ -12370,9 +12347,8 @@ msgid "Ensure uniform sample size"
 msgstr "Assicura ampiezza campionaria uniforme"
 
 #: gui2/selector.c:3522
-#, fuzzy
 msgid "Compute Durbin-Watson p-value"
-msgstr "Durbin-Watson"
+msgstr "Calcola p-value di Durbin-Watson"
 
 #: gui2/selector.c:3528
 msgid "Parameter covariance matrix via Hessian"
