@@ -2410,6 +2410,7 @@
     <usage>
       <arguments>
         <argument optional="true" >oss-iniziale oss-finale</argument>
+        <argument optional="true">passi-avanti</argument>
 	<argument optional="true">nome-variabile</argument>
       </arguments>
       <options>
@@ -2429,10 +2430,15 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra le previsioni</effect>
         </option>
+        <option>
+          <flag>--rolling</flag>
+          <effect>vedi sotto</effect>
+        </option>
       </options>
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
+        <example>fcast 2004:1 2008:3 4 rfcast --rolling</example>
       </examples>
     </usage>
 
@@ -2453,6 +2459,8 @@
         impostato. Se si sceglie una previsione fuori dal campione ma non sono
         disponibili osservazioni, viene segnalato un errore. A seconda del tipo
         di modello, calcola anche gli errori standard (si veda oltre).
+        L'opzione <lit>--rolling</lit> produce un comportamento speciale
+        spiegato oltre.
       </para>
       <para context="cli">
 	Se l'ultimo modello stimato consiste in un'equazione singola,
@@ -2491,6 +2499,20 @@
  	<lit>dynamic</lit> richiede di produrre previsioni dinamiche a partire
         dalla prima data possibile, mentre l'opzione <lit>static</lit>
         richiede di produrre previsioni statiche anche fuori dal campione.
+       </para>
+
+       <para context="cli">
+         L'opzione <lit>rolling</lit> al momento è disponibile solo per i
+         modelli composti da una singola equazione e stimati via OLS. Quando si
+         usa questa opzione, le previsioni calcolate sono ricorsive, ossia: ogni
+         previsione è generata da una stima del modello che usa i dati
+         a partire da un certo punto fusso (ossia l'inizio dell'intervallo del
+         campione usato per la stima originaria) fino alla data di previsione
+         meno <math>k</math> osservazioni, dove <math>k</math> è il numero di
+         <lit>passi-avanti</lit> specificato come argomento. Le previsioni sono
+         sempre dinamiche quando è possibile. Si noti che l'argomento
+         <lit>passi-avanti</lit> deve essere utilizzato solo insieme all'opzione
+         <lit>rolling</lit>.
        </para>
  
        <para>
@@ -5583,6 +5605,10 @@
         <option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
+        </option>
+         <option>
+         <flag>--anova</flag>
+         <effect>stampa una tabella ANOVA</effect>
         </option>
         <option>
 	  <flag>--no-df-corr</flag>
