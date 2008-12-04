@@ -1,3 +1,4 @@
+# translation of tr.po to Turkish
 # translation of tr.po to
 # Copyright (C) 2008 Free Software Foundation, Inc.
 # This file is distributed under the same license as the PACKAGE package.
@@ -8,9 +9,9 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-03 14:57-0500\n"
-"PO-Revision-Date: 2008-11-27 12:50+0200\n"
-"Last-Translator: \n"
-"Language-Team:  <tr@li.org>\n"
+"PO-Revision-Date: 2008-12-04 17:05+0200\n"
+"Last-Translator: A. Talha YALTA <yalta@etu.edu.tr>\n"
+"Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -619,8 +620,7 @@ msgstr ""
 #: lib/src/compat.c:224
 #, c-format
 msgid "'o' stands for %s and 'x' stands for %s (+ means they are equal)"
-msgstr ""
-"'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
+msgstr "'o,' %s için ve 'x' de %s içindir (+ ise bunlar birbirine eşit demektir)"
 
 #: lib/src/compat.c:343
 #, c-format
@@ -713,8 +713,7 @@ msgstr "   dört basamaklı yıl olmadığı kesin\n"
 #: lib/src/csvdata.c:925 lib/src/dataio.c:2598
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+msgstr "İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
 
 #: lib/src/csvdata.c:944 lib/src/dataio.c:2609
 msgid "Data file is empty\n"
@@ -735,10 +734,8 @@ msgstr "   gözlem etiketi gibi görünüyor\n"
 
 #: lib/src/csvdata.c:1085
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   %d değişkeni, %d. gözlem hücresi boş: eksik değer olarak işlem yapılıyor\n"
 
 #: lib/src/csvdata.c:1094
 #, c-format
@@ -1364,8 +1361,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:589
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
 
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
@@ -2469,8 +2465,7 @@ msgstr "zaman"
 #: lib/src/graphing.c:3739
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
+msgstr "%1$s üzerinde bir sarsıma karşı %2$s yanıtı (bootstrap güven aralıkları ile)"
 
 #: lib/src/graphing.c:3744
 #, c-format
@@ -3153,8 +3148,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 
 #: lib/src/gretl_restrict.c:97
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
+msgstr "Dizey tersi alma başarısız: Kısıtlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:765
 msgid "Please give a coefficient number"
@@ -4089,9 +4083,8 @@ msgid "GARCH"
 msgstr "GÖBKÇ (GARCH)"
 
 #: lib/src/modelprint.c:550
-#, fuzzy
 msgid "Interval"
-msgstr "Yükle"
+msgstr "Aralık"
 
 #: lib/src/modelprint.c:552
 msgid "Arellano--Bond"
@@ -4375,14 +4368,12 @@ msgid "Breusch-Godfrey test for first-order autocorrelation"
 msgstr "Birinci-dereceden özilinti için Breusch-Godfrey sınaması"
 
 #: lib/src/modelprint.c:1221
-#, fuzzy
 msgid "Lower limit"
-msgstr "Alt"
+msgstr "Alt sınır"
 
 #: lib/src/modelprint.c:1225
-#, fuzzy
 msgid "Upper limit"
-msgstr "Üst"
+msgstr "Üst sınır"
 
 #: lib/src/modelprint.c:1284 lib/src/modelprint.c:1288
 #: lib/src/modelprint.c:1292 lib/src/system.c:3798 lib/src/system.c:3817
@@ -4583,9 +4574,8 @@ msgid "Statistics based on the rho-differenced data"
 msgstr "Rho-farkı alınmış verilere dayalı istatistikler"
 
 #: lib/src/modelprint.c:1821
-#, fuzzy
 msgid "Statistics based on the transformed data"
-msgstr "Ağırlıklı verilere dayalı istatistikler"
+msgstr "Dönüştürülmüş verilere dayalı istatistikler"
 
 #: lib/src/modelprint.c:1914
 #, c-format
@@ -4672,18 +4662,16 @@ msgid "Durbin-Watson"
 msgstr "Durbin-Watson"
 
 #: lib/src/modelprint.c:2310
-#, fuzzy
 msgid "Adjusted $R^2$"
-msgstr "Düzeltilmemiş $R^2$"
+msgstr "Düzeltilmiş $R^2$"
 
 #: lib/src/modelprint.c:2311
 msgid "P-value($F$)"
 msgstr "P-değeri($F$)"
 
 #: lib/src/modelprint.c:2340
-#, fuzzy
 msgid "P-value(DW)"
-msgstr "P-değeri(F)"
+msgstr "P-değeri(DW)"
 
 #: lib/src/modelprint.c:2345
 msgid "Uncentered $R^2$"
@@ -4702,14 +4690,12 @@ msgid "Centered R-squared"
 msgstr "Ortalanmış R-kare"
 
 #: lib/src/modelprint.c:2351
-#, fuzzy
 msgid "McFadden $R^2$"
-msgstr "McFadden sözde-$R^2$"
+msgstr "McFadden $R^2$"
 
 #: lib/src/modelprint.c:2352
-#, fuzzy
 msgid "McFadden R-squared"
-msgstr "McFadden sözde-R-kare"
+msgstr "McFadden R-kare"
 
 #: lib/src/modelprint.c:2369
 msgid "Smallest eigenvalue"
@@ -4720,22 +4706,18 @@ msgid "Mean of innovations"
 msgstr "Yeniliklerin ortalaması"
 
 #: lib/src/modelprint.c:2379
-#, fuzzy
 msgid "S.D. of innovations"
-msgstr "Yeniliklerin ortalaması"
+msgstr "Ö.S. yenilikler"
 
 #: lib/src/modelprint.c:2386
-#, fuzzy
 msgid "Median depend. var"
-msgstr "Bağımlı değişken ort"
+msgstr "Bağımlı değ ortanca"
 
 #: lib/src/modelprint.c:2388
-#, fuzzy
 msgid "Sum absolute resid"
-msgstr "Mutlak kalıntılar toplamı"
+msgstr "Mutlak kalıntı top"
 
 #: lib/src/modelprint.c:2402
-#, fuzzy
 msgid "Censored obs"
 msgstr "Sansürlü gözlemler"
 
@@ -5162,10 +5144,8 @@ msgid "not significant at the 10% level\n"
 msgstr "% 10 düzeyinde anlamlı değil\n"
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Normal dağılıma dayalı p-değerini hesaplamak için aşırı küçük örneklem\n"
 
 #: lib/src/nonparam.c:761
 msgid ""
@@ -5194,8 +5174,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:809
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr ""
-"Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
+msgstr "Sınama istatistiği hesaplanamıyor: Ortancadan sapma yolu denensin mi?\n"
 
 #: lib/src/nonparam.c:813
 #, c-format
@@ -5296,66 +5275,56 @@ msgid "Warning: option%s ignored outside of loop"
 msgstr "Uyarı: %s seçeneği döngü dışında yok sayıldı"
 
 #: lib/src/plotspec.c:131 lib/src/plotspec.c:154
-#, fuzzy
 msgid "lines"
-msgstr "Çizgiler"
+msgstr "çizgiler"
 
 #: lib/src/plotspec.c:132
-#, fuzzy
 msgid "points"
-msgstr "nokta"
+msgstr "noktalar"
 
 #: lib/src/plotspec.c:133
-#, fuzzy
 msgid "linespoints"
-msgstr "Nokta kullan"
+msgstr "çizginoktalar"
 
 #: lib/src/plotspec.c:134
-#, fuzzy
 msgid "impulses"
-msgstr "itki yanıtları"
+msgstr "itkiler"
 
 #: lib/src/plotspec.c:135
-#, fuzzy
 msgid "dots"
-msgstr "Notlar"
+msgstr "benekler"
 
 #: lib/src/plotspec.c:136
-#, fuzzy
 msgid "steps"
-msgstr "%s sınaması"
+msgstr "adımlar"
 
 #: lib/src/plotspec.c:137
-#, fuzzy
 msgid "boxes"
-msgstr "Notlar"
+msgstr "kutular"
 
 #: lib/src/plotspec.c:210
-#, fuzzy
 msgid "left top"
-msgstr "sol"
+msgstr "sol üst"
 
 #: lib/src/plotspec.c:211
-#, fuzzy
 msgid "right top"
-msgstr "sağ"
+msgstr "sağ üst"
 
 #: lib/src/plotspec.c:212
 msgid "left bottom"
-msgstr ""
+msgstr "sol alt"
 
 #: lib/src/plotspec.c:213
 msgid "right bottom"
-msgstr ""
+msgstr "sağ alt"
 
 #: lib/src/plotspec.c:214
 msgid "outside"
-msgstr ""
+msgstr "dış"
 
 #: lib/src/plotspec.c:498
-#, fuzzy
 msgid "center"
-msgstr "Ortala"
+msgstr "orta"
 
 #: lib/src/plugins.c:252 lib/src/plugins.c:265
 #, c-format
@@ -5385,10 +5354,8 @@ msgid "gretl version %s\n"
 msgstr "gretl sürüm %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell ve Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5465,8 +5432,7 @@ msgstr "Eksik gözlemler"
 #: lib/src/printout.c:442
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr ""
-"%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
+msgstr "%s değişkenine (satırlar) karşı %s değişkeni (sütunlar) çapraz-çizelgesi"
 
 #: lib/src/printout.c:450
 msgid "TOT."
@@ -5497,10 +5463,8 @@ msgstr "Pearson ki-kare sınaması = %g (%d sd p-değeri = %g)"
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
-msgstr ""
-"Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgstr "Uyarı: Hücrelerin % 80'den azının beklenen değeri 5 veya daha yüksek.\n"
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
 #, c-format
@@ -5844,10 +5808,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1495
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Toplam eksik veri değer sayısı = %d (toplam veri değerleri içinde %% %.2f)\n"
 
 #: lib/src/system.c:81
 msgid "SUR"
@@ -6002,7 +5964,7 @@ msgstr "Tahminci"
 
 #: lib/src/system.c:3803
 msgid "Ljung-Box Q'"
-msgstr ""
+msgstr "Ljung-Box Q'"
 
 #: lib/src/texprint.c:882 lib/src/varprint.c:750 lib/src/varprint.c:751
 #: gui2/gui_utils.c:3226
@@ -6466,8 +6428,7 @@ msgstr "komutlar %s olarak kaydedildi\n"
 #: cli/gretlcli.c:961
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
+msgstr "Çıktıları yerleştirmek için bir dosyaadı yazınız (çıkmak için giriş tuşu)"
 
 #: cli/gretlcli.c:969
 #, c-format
@@ -6717,8 +6678,7 @@ msgstr "Sınama istatistiği: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1674
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
+msgstr "Uyarı: küçük örneklemlerde, kavuşmazlık yaklaştırması yetersiz olabilir\n"
 
 #: gui2/calculator.c:1681
 msgid "Null hypothesis: The population variances are equal\n"
@@ -11819,8 +11779,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Üzgünüm, 2AEK modelleri, model çizelgesine koyulamaz"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:192
@@ -11929,8 +11888,7 @@ msgstr "Logbirim ve olabirim için, McFadden sözde-$R^2$ gösterilmektedir"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
+msgstr "Logbirim ve olabirim için, McFadden sözde-R{\\super 2} gösterilmektedir"
 
 #: gui2/model_table.c:1068
 msgid "No model is available"
@@ -12280,9 +12238,8 @@ msgid "Ensure uniform sample size"
 msgstr "Tekbiçim örneklem büyüklüğü sağla"
 
 #: gui2/selector.c:3522
-#, fuzzy
 msgid "Compute Durbin-Watson p-value"
-msgstr "Durbin-Watson"
+msgstr "Durbin-Watson p-değerini hesapla"
 
 #: gui2/selector.c:3528
 msgid "Parameter covariance matrix via Hessian"
@@ -14370,8 +14327,7 @@ msgstr "Parola korumalı çalışma kitapları daha desteklenmiyor."
 
 #: plugin/workbook.c:638
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
+msgstr "Bu dosya bir 'OLE' dosyası değil -- gretl için aşırı eski de olabilir\n"
 
 #: plugin/workbook.c:640
 msgid "Unexpected error reading the file\n"
@@ -14417,76 +14373,3 @@ msgstr "Dizgiler"
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#, fuzzy
-#~ msgid "errorbars"
-#~ msgstr "hata çubukları"
-
-#~ msgid "Hannan-Quinn criterion"
-#~ msgstr "Hannan-Quinn ölçütü"
-
-#~ msgid "Hannan--Quinn criterion"
-#~ msgstr "Hannan--Quinn ölçütü"
-
-#~ msgid ""
-#~ "                final %11.5f\n"
-#~ "\n"
-#~ msgstr ""
-#~ "                en son %11.5f\n"
-#~ "\n"
-
-#~ msgid "Median of dependent variable"
-#~ msgstr "Bağımlı değişken ortancası"
-
-#~ msgid "S.D. of dependent variable"
-#~ msgstr "Bağımlı değişken ölçünlü sapması"
-
-#~ msgid "Unadjusted R{\\super 2}"
-#~ msgstr "Düzeltilmemiş R{\\super 2}"
-
-#~ msgid "Uncentered R{\\super 2}"
-#~ msgstr "Ortalanmamış R{\\super 2}"
-
-#~ msgid "Centered R{\\super 2}"
-#~ msgstr "Ortalanmış R{\\super 2}"
-
-#~ msgid "Adjusted R{\\super 2}"
-#~ msgstr "Düzeltilmiş R{\\super 2}"
-
-#~ msgid "Adjusted $\\bar{R}^2$"
-#~ msgstr "Düzeltilmiş $\\bar{R}^2$"
-
-#~ msgid "Within R-squared"
-#~ msgstr "R-kare içi"
-
-#~ msgid "McFadden's pseudo-R{\\super 2}"
-#~ msgstr "McFadden sözde-R{\\super 2}"
-
-#~ msgid "p-value for"
-#~ msgstr "p-değeri şunun için:"
-
-#~ msgid "Degrees of freedom"
-#~ msgstr "Serbestlik derecesi"
-
-#~ msgid "F-statistic"
-#~ msgstr "F-istatistiği"
-
-#~ msgid "Durbin-Watson statistic"
-#~ msgstr "Durbin-Watson istatistiği"
-
-#~ msgid "First-order autocorrelation coeff."
-#~ msgstr "Birinci-dereceden özilinti katsayısı"
-
-#~ msgid "Durbin--Watson statistic"
-#~ msgstr "Durbin--Watson istatistiği"
-
-#~ msgid "Variance of innovations"
-#~ msgstr "Yenilikler varyansı"
-
-#~ msgid "Mean of"
-#~ msgstr "Ortalaması"
-
-#~ msgid "low"
-#~ msgstr "düşük"
-
-#~ msgid "high"
-#~ msgstr "yüksek"
