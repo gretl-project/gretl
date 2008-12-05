@@ -2281,14 +2281,11 @@ static double vecsum (const double *x, int k)
     return sum;
 }
 
-static double imhof_f (double u, const double *lambda, int k, double arg,
-		       int *err)
+static double imhof_f (double u, const double *lambda, int k, double arg)
 {
-    double ret, ul, rho = 0.0;
+    double ul, rho = 0.0;
     double theta = -u * arg;
     int i;
-
-    errno = 0;
 
     /* The value at zero isn't directly computable as
        it produces 0/0. The limit is computed below.
@@ -2303,14 +2300,7 @@ static double imhof_f (double u, const double *lambda, int k, double arg,
 	rho += log(1.0 + ul * ul);
     }
 
-    ret = sin(0.5 * theta) / (u * exp(0.25 * rho));
-
-    if (errno) {
-	fprintf(stderr, "imhof_f: %s\n", strerror(errno));
-	*err = 1;
-    }
-
-    return ret;
+    return sin(0.5 * theta) / (u * exp(0.25 * rho));
 }
 
 #define gridlimit 2048
@@ -2328,24 +2318,23 @@ static double imhof_integral (double arg, const double *lambda, int k,
 			      double bound, int *err)
 {
     double e3 = 0.0001;
-    double base, step, sum1, int1, int0 = 0.0;
+    double base, step, sum1;
+    double int0 = 0.0, int1 = 0.0;
     double eps4 = 3.0 * M_PI * e3;
     double sum4 = 0.0;
     double ret = NADBL;
     int j, n = 2;
 
-    base = imhof_f(0, lambda, k, arg, err);
-    if (!*err) {
-	base += imhof_f(bound, lambda, k, arg, err);
-    }
+    base = imhof_f(0, lambda, k, arg);
+    base += imhof_f(bound, lambda, k, arg);
 
-    while (n < gridlimit && !*err) {
+    while (n < gridlimit) {
 	step = bound / n;
 	sum1 = base + sum4 * 2.0;
 	base = sum1;
 	sum4 = 0.0;
 	for (j=1; j<=n; j+=2) {
-	    sum4 += imhof_f(j * step, lambda, k, arg, err);
+	    sum4 += imhof_f(j * step, lambda, k, arg);
 	}
 	int1 = (sum1 + 4 * sum4) * step;
 	if (n > 8 && fabs(int1 - int0) < eps4) {
@@ -2355,7 +2344,7 @@ static double imhof_integral (double arg, const double *lambda, int k,
 	n *= 2;
     }
 
-    if (*err || n > gridlimit) {
+    if (n > gridlimit) {
 	fprintf(stderr, "n = %d, Imhof integral failed to converge\n", n);
 	*err = E_NOCONV;
     } else {
@@ -2408,6 +2397,8 @@ double imhof (const gretl_matrix *m, double arg, int *err)
     double bound, ret = NADBL;
     int k = 0, free_lambda = 0;
 
+    errno = 0;
+
     if (m->cols == 1) {
 	/* we'll assume m is a column vector of eigenvalues */
 	lambda = m->val;
@@ -2427,6 +2418,15 @@ double imhof (const gretl_matrix *m, double arg, int *err)
 
     if (!*err) {
 	ret = imhof_integral(arg, lambda, k, bound, err);
+    }
+
+    if (errno != 0) {
+	fprintf(stderr, "imhof: %s\n", strerror(errno));
+	if (!*err) {
+	    *err = E_NOCONV;
+	}
+	ret = NADBL;
+	errno = 0;
     }
 
     if (free_lambda) {
