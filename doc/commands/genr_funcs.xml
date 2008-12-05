@@ -1189,36 +1189,6 @@
       </description>
     </function>
 
-    <function name="dwmat" section="matbuild" output="smatrix">
-      <fnargs>
-	<fnarg type="scalar">n</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns a Durbin&ndash;Watson matrix with <argname>n</argname> rows
-	  and columns.  This is a tridiagonal matrix: the elements on the
-	  main diagonal equal 2, apart from the first and last elements,
-	  which equal 1; the elements on the first diagonals above and
-	  below the main diagonal equal &minus;1.
-	</para>
-      </description>
-    </function>
-
-    <function name="dwpval" section="probdist" output="scalar">
-      <fnargs>
-	<fnarg type="vector">u</fnarg>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the p-value for the Durbin&ndash;Watson statistic given
-	  a column vector of residuals, <argname>u</argname>, and a matrix
-	  of regressors, <argname>X</argname>.  This is computed using
-	  the Imhof procedure.
-	</para>
-      </description>
-    </function>
-
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -1618,6 +1588,36 @@
 	    <fncref targ="imaxc"/>
 	    <fncref targ="iminr"/>
 	    <fncref targ="maxr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="imhof" section="probdist" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="scalar">x</fnarg>
+      </fnargs>    
+      <description>
+	<para context="notex">
+	  Computes Prob(<math>u'Au</math> &lt; <math>x</math>) for a quadratic
+	  form in standard normal variates, <math>u</math>, using the procedure
+	  developed by Imhof (1961).
+	</para>
+	<para context="tex">
+	  Computes ${\rm Prob}(u'Au &lt; x)$ for a quadratic form in standard
+	  normal variates, $u$, using the procedure developed by
+	  Imhof (1961).
+	</para>
+	<para>
+	  If the first argument, <argname>M</argname>, is a square matrix it
+	  is taken to specify <math>A</math>, otherwise if it's a column
+	  vector it is taken to be the precomputed eigenvalues of
+	  <math>A</math>, otherwise an error is flagged.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -3133,7 +3133,7 @@
 	    <fncref targ="critical"/>
 	    <fncref targ="invcdf"/>
 	    <fncref targ="urcpval"/>
-	    <fncref targ="dwpval"/>
+	    <fncref targ="imhof"/>
 	  </seelist>
 	</para>
       </description>

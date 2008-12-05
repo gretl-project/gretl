@@ -242,7 +242,6 @@ enum {
     F_STRLEN,
     F_VARNAME,
     F_VARNUM,
-    F_DWMAT,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -283,7 +282,6 @@ enum {
     F_LJUNGBOX,
     F_MSORTBY,
     F_LINCOMB,
-    F_DWPVAL,
     F_IMHOF,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_MSHAPE,

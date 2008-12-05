@@ -296,8 +296,6 @@ struct str_table funcs[] = {
     { F_LJUNGBOX, "ljungbox" },
     { F_MSORTBY,  "msortby" },
     { F_LINCOMB,  "lincomb" },
-    { F_DWPVAL,   "dwpval" },
-    { F_DWMAT,    "dwmat" },
     { F_IMHOF,    "imhof" },
     { 0,          NULL }
 };
