@@ -94,6 +94,16 @@
       </description>
     </function>
 
+    <function name="$dwpval" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the p-value for the Durbin&ndash;Watson statistic for the
+	  model last estimated, if available.  This is computed using the
+	  Imhof procedure.
+	</para>
+      </description>
+    </function>
+
     <function name="$ess" section="access" output="scalar">
       <description>
 	<para>

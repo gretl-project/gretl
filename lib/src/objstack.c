@@ -830,7 +830,9 @@ int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
 /* retrieve from an object some value that is stored on the object in
    the form of a simple scalar */
 
-static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
+static double real_get_obj_scalar (void *p, GretlObjType type, 
+				   double ***pZ, DATAINFO *pdinfo,
+				   int idx)
 {
     double x = INVALID_STAT;
     int err = 0;
@@ -842,7 +844,7 @@ static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) p;
 
-	x = gretl_model_get_scalar(pmod, idx, &err);
+	x = gretl_model_get_scalar(pmod, idx, pZ, pdinfo, &err);
 	if (err) {
 	    x = INVALID_STAT;
 	}
@@ -1033,7 +1035,9 @@ int *saved_object_get_list (const char *oname, int idx, int *err)
     return ret;
 }
 
-double saved_object_get_scalar (const char *oname, int idx, int *err)
+double saved_object_get_scalar (const char *oname, int idx, 
+				double ***pZ, DATAINFO *pdinfo,
+				int *err)
 {
     double ret = INVALID_STAT;
     stacker *smatch;
@@ -1041,7 +1045,8 @@ double saved_object_get_scalar (const char *oname, int idx, int *err)
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	ret = real_get_obj_scalar(smatch->ptr, smatch->type, idx);
+	ret = real_get_obj_scalar(smatch->ptr, smatch->type, 
+				  pZ, pdinfo, idx);
     }
 
     if (ret == INVALID_STAT) {

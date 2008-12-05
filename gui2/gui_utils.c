@@ -169,6 +169,7 @@ static GtkActionEntry model_test_items[] = {
     { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },    
     { "vif", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
     { "lmtest:a", NULL, N_("_Autocorrelation"), NULL, NULL, G_CALLBACK(do_autocorr) },
+    { "dwpval", NULL, N_("_Durbin-Watson p-value"), NULL, NULL, G_CALLBACK(do_dwpval) },
     { "lmtest:h", NULL, N_("A_RCH"), NULL, NULL, G_CALLBACK(do_arch) },
     { "qlrtest", NULL, N_("_QLR test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "cusum", NULL, N_("_CUSUM test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
@@ -1876,6 +1877,8 @@ static void auto_save_script (windata_t *vwin)
     mark_vwin_content_saved(vwin);
 }
 
+#define dw_pval_ok(m) ((m->ci == OLS || m->ci == PANEL) && !na(pmod->dw))
+
 static void get_ci_and_opt (const gchar *s, int *ci, gretlopt *opt)
 {
     char c, word[9];
@@ -1905,6 +1908,10 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 	s = model_test_items[i].name;
 	if (strchr(s, ':')) {
 	    get_ci_and_opt(s, &ci, &opt);
+	} else if (!strcmp(s, "dwpval")) {
+	    sprintf(path, "/MenuBar/Tests/%s", s);
+	    flip(ui, path, dw_pval_ok(pmod));
+	    continue;
 	} else {
 	    ci = gretl_command_number(s);
 	}
@@ -2489,6 +2496,7 @@ static const gchar *model_ui =
     "   <menuitem action='chow'/>"
     "   <separator/>"
     "   <menuitem action='lmtest:a'/>"
+    "   <menuitem action='dwpval'/>"
     "   <menuitem action='lmtest:h'/>"
     "   <menuitem action='qlrtest'/>"
     "   <menuitem action='cusum'/>"

@@ -82,6 +82,9 @@ int autocorr_test (MODEL *pmod, int order,
 
 double ljung_box (int m, int t1, int t2, const double *y, int *err);
 
+double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		      int *err);
+
 int chow_test (const char *line, MODEL *pmod, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);

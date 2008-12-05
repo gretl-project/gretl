@@ -4236,7 +4236,7 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL wmod;
     int err;
 
-    if (pmod->ci != OLS) {
+    if (!POOLED_MODEL(pmod)) {
 	return E_NOTIMP;
     }
 

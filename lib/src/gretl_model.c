@@ -4674,6 +4674,8 @@ const char *gretl_model_get_name (const MODEL *pmod)
  * gretl_model_get_scalar:
  * @pmod: pointer to target model.
  * @idx: index for the scalar value that is wanted.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @err: location to receive error code (required).
  * 
  * Retrieves a specified scalar statistic from @pmod:
@@ -4684,6 +4686,7 @@ const char *gretl_model_get_name (const MODEL *pmod)
  */
 
 double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
+			       double ***pZ, DATAINFO *pdinfo,
 			       int *err)
 {
     double x = NADBL;
@@ -4735,7 +4738,10 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 	break;
     case M_T:
 	x = (double) pmod->nobs;
-	break;	
+	break;
+    case M_DWPVAL:
+	x = get_dw_pvalue(pmod, pZ, pdinfo, err);
+	break;
     default:
 	break;
     }

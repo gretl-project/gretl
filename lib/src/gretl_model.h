@@ -102,6 +102,9 @@ struct CoeffIntervals_ {
 #define RQ_SPECIAL_MODEL(m) (m->ci == LAD && \
                              NULL != gretl_model_get_data(m, "rq_tauvec"))
 
+#define POOLED_MODEL(m) ((m->ci == OLS || m->ci == PANEL) && \
+                         gretl_model_get_int(m, "pooled"))
+
 typedef enum {
     GRETL_TEST_ADD,
     GRETL_TEST_ARCH,
@@ -336,6 +339,7 @@ void gretl_model_set_name (MODEL *pmod, const char *name);
 const char *gretl_model_get_name (const MODEL *pmod);
 
 double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
+			       double ***pZ, DATAINFO *pdinfo,
 			       int *err);
 
 double *

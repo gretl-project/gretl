@@ -2331,6 +2331,33 @@ void do_autocorr (GtkAction *action, gpointer p)
     }
 }
 
+void do_dwpval (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = vwin->data;
+    PRN *prn;
+    gchar *title;
+    double pv;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    pv = get_dw_pvalue(pmod, &Z, datainfo, &err);
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	title = g_strdup_printf("gretl: %s", _("Durbin-Watson"));
+	pprintf(prn, "%s = %g\n", _("Durbin-Watson statistic"), pmod->dw);
+	pprintf(prn, "%s = %g\n", _("p-value"), pv);
+	view_buffer(prn, 78, 200, title, PRINT, NULL); 
+	g_free(title);
+    }
+}
+
 void do_arch (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;

@@ -503,7 +503,7 @@ full_model_list (const MODEL *pmod, const int *inlist)
     return flist;
 }
 
-static gretlopt retrieve_arbond_opts (MODEL *pmod)
+static gretlopt retrieve_arbond_opts (const MODEL *pmod)
 {
     gretlopt opt = OPT_NONE;
 
@@ -544,7 +544,7 @@ static int obs_diff_ok (const MODEL *old, const MODEL *new)
 
 #define SMPL_DEBUG 0
 
-static MODEL replicate_estimator (MODEL *orig, int **plist,
+static MODEL replicate_estimator (const MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
 				  gretlopt myopt, PRN *prn)
 {
@@ -596,7 +596,9 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	    myopt = OPT_NONE;
 	}
     } else if (orig->ci == PANEL) {
-	if (gretl_model_get_int(orig, "random-effects")) {
+	if (gretl_model_get_int(orig, "pooled")) {
+	    myopt |= OPT_P;
+	} else if (gretl_model_get_int(orig, "random-effects")) {
 	    myopt |= OPT_U;
 	} else if (gretl_model_get_int(orig, "unit-weights")) {
 	    myopt |= OPT_W;
@@ -617,7 +619,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	    myopt |= OPT_I;
 	    set_optval_double(QUANTREG, OPT_I, x);
 	}
-    }
+    } 
 
     if (rep.errcode) {
 	return rep;
@@ -683,6 +685,9 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	}
 	if (rho != 0.0) {
 	    rep = ar1_lsq(list, pZ, pdinfo, repci, myopt, rho);
+	} else if (gretl_model_get_int(orig, "pooled")) {
+	    myopt |= OPT_P;
+	    rep = panel_model(list, pZ, pdinfo, myopt, prn);
 	} else {
 	    rep = lsq(list, pZ, pdinfo, repci, myopt);
 	}
@@ -1329,6 +1334,58 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     free(tmplist);
 
     return err;
+}
+
+double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		      int *err)
+{
+    MODEL dwmod;
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
+    int *list = NULL;
+    double pv = NADBL;
+
+    if (pmod == NULL || pmod->list == NULL) {
+	*err = E_DATA;
+    } else if ((pmod->ci != OLS && pmod->ci != PANEL) || 
+	       pmod->missmask != NULL || na(pmod->dw)) {
+	*err = E_BADSTAT;
+    } else {
+	/* check that relevant vars have not been redefined */
+	*err = list_members_replaced(pmod->list, pdinfo, pmod->ID);
+    }
+
+    if (!*err) {
+	list = gretl_list_copy(pmod->list);
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err) {
+	return NADBL;
+    }
+
+    gretl_model_init(&dwmod);
+
+    /* impose the sample range used for the original model */ 
+    impose_model_smpl(pmod, pdinfo);
+
+    dwmod = replicate_estimator(pmod, &list, pZ, pdinfo, OPT_A | OPT_I, NULL);
+    *err = dwmod.errcode;
+
+    if (!*err) {
+	pv = gretl_model_get_double(&dwmod, "dw_pval");
+    }
+
+    /* put back into pdinfo what was there on input */
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
+    
+    clear_model(&dwmod);
+    free(list);
+
+    return pv;
 }
 
 double ljung_box (int m, int t1, int t2, const double *y, int *err)

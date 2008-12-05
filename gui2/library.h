@@ -127,6 +127,8 @@ void do_lmtest (GtkAction *action, gpointer p);
 
 void do_autocorr (GtkAction *action, gpointer p);
 
+void do_dwpval (GtkAction *action, gpointer p);
+
 void do_chow_cusum (GtkAction *action, gpointer p);
 
 void do_reset (GtkAction *action, gpointer p);

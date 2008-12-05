@@ -871,7 +871,6 @@ static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
 	pv = imhof(E, 0.0, &err);
 	if (!err) {
 	    gretl_model_set_double(pmod, "dw_pval", pv);
-	    fprintf(stderr, "DW = %g [%g]\n", pmod->dw, pv);
 	}
     }   
 
@@ -2142,7 +2141,10 @@ static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
     free(ulist);
 
     fe_model_add_ahat(pmod, Z, pdinfo, pan);
-    set_model_id(pmod);
+    
+    if (!(pan->opt & OPT_A)) {
+	set_model_id(pmod);
+    }
 
     panel_dwstat(pmod, pan);
     if (!na(pmod->dw) && (pan->opt & OPT_I)) {
@@ -2266,7 +2268,10 @@ static void save_random_effects_model (MODEL *pmod, panelmod_t *pan,
     gretl_model_add_panel_varnames(pmod, reinfo, NULL);
     fix_panel_hatvars(pmod, reinfo, pan, Z);
     fix_gls_stats(pmod, pan);
-    set_model_id(pmod);
+
+    if (!(pan->opt & OPT_A)) {
+	set_model_id(pmod);
+    }
 
     *pan->realmod = *pmod;
 }
@@ -2881,7 +2886,10 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 {
     gretl_model_set_int(pmod, "pooled", 1);
     add_panel_obs_info(pmod, pan);
-    set_model_id(pmod);
+    
+    if (!(pan->opt & OPT_A)) {
+	set_model_id(pmod);
+    }
 
     if (pan->opt & OPT_R) {
 	panel_robust_vcv(pmod, pan, Z);
@@ -2930,6 +2938,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     panelmod_init(&pan);
 
     if (!(opt & OPT_P)) {
+	/* not just pooled OLS */
 	mod.errcode = panel_check_for_const(list);
 	if (mod.errcode) {
 	    return mod;

@@ -49,9 +49,6 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 #define binary_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
                          !gretl_model_get_int(m, "ordered"))
 
-#define pooled_model(m) (m->ci == OLS && \
-                         gretl_model_get_int(m, "pooled")) 
-
 #define nonlin_model(m) (m->ci == NLS || m->ci == MLE || m->ci == GMM)
 
 #define liml_equation(m) (gretl_model_get_int(m, "method") == SYS_METHOD_LIML)
@@ -578,6 +575,8 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("ARMA");
 	}
+    } else if (POOLED_MODEL(pmod)) {
+	return N_("Pooled OLS");
     } else if (pmod->ci == PANEL) {
 	if (gretl_model_get_int(pmod, "fixed-effects")) {
 	    return N_("Fixed-effects");
@@ -592,8 +591,6 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("Between-groups");
 	}
-    } else if (pooled_model(pmod)) {
-	return N_("Pooled OLS");
     } else if (pmod->ci == ARBOND) {
 	if (gretl_model_get_int(pmod, "step") == 2) {
 	    return N_("2-step Arellano-Bond");
@@ -2286,7 +2283,6 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	pmod->dw
     };
     struct middletab mtab;
-    double dwpval;
     int i, j;
 
     mtab.mlen = 0;
@@ -2329,15 +2325,6 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	}
 	key[6] = fstr;
 	val[7] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
-    }
-
-    /* Durbin-Watson p-value? */
-    dwpval = gretl_model_get_double(pmod, "dw_pval");
-    if (!na(dwpval)) {
-	val[12] = pmod->dw;
-	key[12] = (tex)? "Durbin--Watson" : N_("Durbin-Watson");
-	val[13] = dwpval;
-	key[13] = N_("P-value(DW)");
     }
 
     /* special variants of R-squared */

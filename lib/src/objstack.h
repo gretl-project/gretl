@@ -111,7 +111,9 @@ void gretl_object_ref (void *ptr, GretlObjType type);
 
 void gretl_object_unref (void *ptr, GretlObjType type);
 
-double saved_object_get_scalar (const char *oname, int idx, int *err);
+double saved_object_get_scalar (const char *oname, int idx,
+				double ***pZ, DATAINFO *pdinfo,
+				int *err);
 
 int saved_object_print_scalar (const char *oname, const char *key, PRN *prn);
 

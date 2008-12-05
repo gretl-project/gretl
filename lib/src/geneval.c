@@ -5118,7 +5118,8 @@ static NODE *object_var_node (NODE *t, parser *p)
 
 	if (ret != NULL) {
 	    if (vtype == GRETL_TYPE_DOUBLE) {
-		ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, &p->err);
+		ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, p->Z,
+						      p->dinfo, &p->err);
 	    } else if (vtype == GRETL_TYPE_SERIES) {
 		ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
 						      &p->err);

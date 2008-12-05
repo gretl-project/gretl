@@ -56,6 +56,7 @@ typedef enum {
     M_BIC,        /* Bayesian info criterion */
     M_HQC,        /* Hannan-Quinn criterion */
     M_TRSQ,       /* T * R-squared, last model */
+    M_DWPVAL,     /* Durbin-Watson p-value, last model */
     M_SCALAR_MAX, /* -- separator, scalars/series -- */
     M_UHAT,       /* residuals */
     M_YHAT,       /* fitted values */
