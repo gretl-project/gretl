@@ -1765,7 +1765,7 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 			    "model have been redefined");
     const char *label;
     char rword[16];
-    int j, mc, repl, err = 0;
+    int j, mc, repl;
 
     if (ref_id == 0) {
 	mc = get_model_count();
@@ -1777,6 +1777,10 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 	if (list[j] == LISTSEP) {
 	    continue;
 	}
+	if (list[j] >= pdinfo->v) {
+	    strcpy(gretl_errmsg, _(errmsg));
+	    return E_DATA;
+	}
 	label = VARLABEL(pdinfo, list[j]);
 	*rword = '\0';
 	sscanf(label, "%15s", rword);
@@ -1785,13 +1789,12 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 	    sscanf(label, "%*s %*s %*s %d", &repl);
 	    if (repl >= mc) {
 		strcpy(gretl_errmsg, _(errmsg));
-		err = E_DATA;
-		break;
+		return E_DATA;
 	    }
 	}
     }
 
-    return err;
+    return 0;
 }
 
 /**
