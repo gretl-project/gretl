@@ -4320,6 +4320,7 @@ double coeff_pval (int ci, double x, int df)
 int gretl_model_allocate_params (MODEL *pmod, int k)
 {
     pmod->params = strings_array_new_with_length(k, VNAMELEN);
+
     if (pmod->params == NULL) {
 	pmod->errcode = E_ALLOC;
     }

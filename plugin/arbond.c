@@ -1479,6 +1479,7 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 			       const double **X, const DATAINFO *pdinfo)
 {
     const double *y = X[ab->yno];
+    char tmp[32];
     char prefix;
     int i, j;
     int err = 0;
@@ -1519,8 +1520,9 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 
     j = 0;
     for (i=0; i<ab->p; i++) {
-	/* FIXME possible varname overflow */
-	sprintf(pmod->params[j++], "%c%.10s(-%d)", prefix, pdinfo->varname[ab->yno], i+1);
+	pmod->params[j][0] = '\0';
+	sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[ab->yno], i+1);
+	strncat(pmod->params[j++], tmp, 15);
     }
 
     for (i=0; i<ab->nx; i++) {

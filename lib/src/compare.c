@@ -562,14 +562,18 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
     /* recreate options and auxiliary vars, if required */
 
+    if (gretl_model_get_int(orig, "time-dummies")) {
+	myopt |= OPT_D;
+    }
+
     if (orig->ci == AR1) {
 	if (gretl_model_get_int(orig, "hilu")) {
-	    myopt = OPT_H;
+	    myopt |= OPT_H;
 	    if (gretl_model_get_int(orig, "no-corc")) {
 		myopt |= OPT_B;
 	    }
 	} else if (gretl_model_get_int(orig, "pwe")) {
-	    myopt = OPT_P;
+	    myopt |= OPT_P;
 	}
 	rho = estimate_rho(list, pZ, pdinfo, myopt, prn, &rep.errcode);
     } else if (orig->ci == WLS || orig->ci == AR || 
@@ -589,11 +593,11 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	order = gretl_model_get_int(orig, "arch_order");
     } else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	if (gretl_model_get_int(orig, "robust")) {
-	    myopt = OPT_R;
+	    myopt |= OPT_R;
 	} else if (gretl_model_get_int(orig, "ordered")) {
-	    myopt = OPT_D;
+	    myopt |= OPT_D;
 	} else {
-	    myopt = OPT_NONE;
+	    myopt = OPT_NONE; /* ?? */
 	}
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "pooled")) {

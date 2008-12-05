@@ -888,7 +888,7 @@ static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
 
 /* Durbin-Watson statistic for the pooled or fixed effects model.  We
    only use units that have at least two consecutive time-series
-   observations, and we use only consective observations.
+   observations, and we use only consecutive observations.
    
    See Bhargava, Franzini and Narendranathan, "Serial Correlation and
    the Fixed Effects Model", Review of Economic Studies 49, 1982,
@@ -2273,6 +2273,12 @@ static void save_random_effects_model (MODEL *pmod, panelmod_t *pan,
 	set_model_id(pmod);
     }
 
+    /* Do we want this? */
+    panel_dwstat(pmod, pan);
+    if (!na(pmod->dw) && (pan->opt & OPT_I)) {
+	panel_DW_pvalue(pmod, pan, Z);
+    }
+
     *pan->realmod = *pmod;
 }
 
@@ -2817,15 +2823,59 @@ static int between_model (panelmod_t *pan, const double **Z,
     return err;
 }
 
+static int 
+process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
+{
+    int i, vi, n = 0;
+
+    for (i=pmod->list[0]; i>1; i--) {
+	if (pmod->list[i] >= v) {
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	gretl_model_allocate_params(pmod, pmod->ncoeff);
+
+	if (pmod->errcode) {
+	    return pmod->errcode;
+	}
+
+	for (i=2; i<=pmod->list[0]; i++) {
+	    vi = pmod->list[i];
+	    strcpy(pmod->params[i-2], pdinfo->varname[vi]);
+	}
+
+	for (i=pmod->list[0]; i>1; i--) {
+	    if (pmod->list[i] >= v) {
+		gretl_list_delete_at_pos(pmod->list, i);
+	    }
+	}
+    }
+
+    /* If the time dummies were newly added (and hence, will be
+       deleted on exit), record their number, n.  Otherwise
+       set a non-zero value, -1, to record the fact that the
+       model used time dummies, in case the user wants to
+       add/omit variables or something.
+    */
+
+    gretl_model_set_int(pmod, "time-dummies", (n > 0)? n : -1);
+
+    return 0;
+}
+
 static int
-add_dummies_to_list (const int *list, DATAINFO *pdinfo, int **pbiglist)
+add_dummies_to_list (const int *list, DATAINFO *pdinfo, 
+		     int **pbiglist)
 {
     char dname[VNAMELEN];
     int *biglist = NULL;
+    int ndum = pdinfo->pd - 1;
     int i, j, v;
     int err = 0;
 
-    biglist = gretl_list_new(list[0] + pdinfo->pd - 1);
+    biglist = gretl_list_new(list[0] + ndum);
     if (biglist == NULL) {
 	return E_ALLOC;
     }
@@ -2835,6 +2885,7 @@ add_dummies_to_list (const int *list, DATAINFO *pdinfo, int **pbiglist)
     }
 
     j = list[0] + 1;
+
     for (i=2; i<=pdinfo->pd; i++) {
 	sprintf(dname, "dt_%d", i);
 	v = series_index(pdinfo, dname);
@@ -2966,7 +3017,8 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     mod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
     if (mod.errcode) {
 	err = mod.errcode;
-	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", mod.errcode);
+	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 
+		mod.errcode);
 	goto bailout;
     }
 
@@ -3092,6 +3144,9 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    mod = *pan.realmod;
 	}
 	gretl_model_smpl_init(&mod, pdinfo);
+	if (opt & OPT_D) {
+	    process_time_dummies(&mod, pdinfo, orig_v);
+	}
     }
 
     panelmod_free(&pan);

@@ -3649,7 +3649,13 @@ static int plain_print_coeffs (const MODEL *pmod,
     int err = 0;
 
     if (pmod->ci == PANEL) {
+	int ntd;
+
 	nc = pmod->list[0] - 1;
+	ntd = gretl_model_get_int(pmod, "time-dummies");
+	if (ntd > 0) {
+	    nc += ntd;
+	}
     } else if (pmod->ci == AR || pmod->ci == ARCH) {
 	int k = 0;
 
