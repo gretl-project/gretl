@@ -471,10 +471,12 @@ static double chisq_overall_test (int_container *IC)
     return ret;
 } 
 
-static int fill_intreg_model (int_container *IC, gretl_matrix *ihess)
+static int fill_intreg_model (int_container *IC, gretl_matrix *ihess,
+			      const DATAINFO *pdinfo)
 {
     double x, ndx, u;
     int i, j, n, m, k = IC->k, nx = IC->nx;
+    char *vname;
     int obstype;
 
     IC->pmod->lnL = int_loglik(IC->theta, IC);
@@ -535,8 +537,12 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *ihess)
     IC->pmod->fstt = NADBL;
     IC->pmod->rsq = IC->pmod->adjrsq = NADBL;
 
-    gretl_model_set_int(IC->pmod, "lovar", IC->lov);
-    gretl_model_set_int(IC->pmod, "hivar", IC->hiv);
+    vname = gretl_strdup(pdinfo->varname[IC->lov]);
+    gretl_model_set_string_as_data(IC->pmod, "lovar", vname);
+
+    vname = gretl_strdup(pdinfo->varname[IC->hiv]);
+    gretl_model_set_string_as_data(IC->pmod, "hivar", vname);
+
     gretl_model_set_int(IC->pmod, "n_left", IC->typecount[0]);
     gretl_model_set_int(IC->pmod, "n_right", IC->typecount[1]);
     gretl_model_set_int(IC->pmod, "n_both", IC->typecount[2]);
@@ -573,7 +579,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = fill_intreg_model(IC, ihess);
+	err = fill_intreg_model(IC, ihess, pdinfo);
     }
 
     gretl_matrix_free(ihess);

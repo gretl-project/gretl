@@ -245,11 +245,19 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
     }
 }
 
-static void ADF_header (const char *s, int p, PRN *prn)
+static void DF_header (const char *s, int p, PRN *prn)
 {
-    pprintf(prn, _("\nAugmented Dickey-Fuller test for %s\n"), s);
-    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
-    pputc(prn, '\n');
+    if (p == 0) {
+	pprintf(prn, _("\nDickey-Fuller test for %s\n"), s);	
+    } else {
+	pprintf(prn, _("\nAugmented Dickey-Fuller test for %s\n"), s);
+	if (p == 1) {
+	    pprintf(prn, _("including one lag of (1-L)%s"), s);
+	} else {
+	    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
+	}
+	pputc(prn, '\n');
+    }
 }
 
 static void 
@@ -301,19 +309,18 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	if (flags & ADF_EG_RESIDS) {
 	    pputc(prn, '\n');
 	    pprintf(prn, _("lag order %d\n"), order);
-	} else if (flags & ADF_EG_TEST) {
-	    if (order > 0) {
-		ADF_header(vname, order, prn);
-	    } else {
-		pprintf(prn, _("\nDickey-Fuller test for %s\n"), vname);
-	    }
 	} else {
-	    if (order > 0 && !auto_order) {
-		ADF_header(vname, order, prn);
-	    } else {
-		pprintf(prn, _("\nDickey-Fuller tests for %s\n"), vname);
+	    int p = 0;
+
+	    if (flags & ADF_EG_TEST) {
+		if (order > 0) {
+		    p = order;
+		}
+	    } else if (order > 0 && !auto_order) {
+		p = order;
 	    }
-	} 
+	    DF_header(vname, p, prn);
+	}
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	pputs(prn, _("unit-root null hypothesis: a = 1"));
 	pputs(prn, "\n\n");

@@ -153,6 +153,45 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_intreg_info (const MODEL *pmod, PRN *prn)
+{
+    const char *nstrs[] = {
+	N_("Left-unbounded observations"),
+	N_("Right-unbounded observations"),
+	N_("Bounded observations")
+    };
+    int nl = gretl_model_get_int(pmod, "n_left");
+    int nr = gretl_model_get_int(pmod, "n_right");
+    int nb = gretl_model_get_int(pmod, "n_both");
+
+    ensure_vsep(prn);
+
+    if (plain_format(prn)) {  
+	pprintf(prn, "%s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
+	pprintf(prn, "%s: %d\n", _(nstrs[0]), nl);
+	pprintf(prn, "%s: %d\n", _(nstrs[1]), nr);
+	pprintf(prn, "%s: %d\n", _(nstrs[2]), nb);
+	pputc(prn, '\n');
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
+	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[0]), nl);
+	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[1]), nr);
+	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[2]), nb);
+    } else if (tex_format(prn)) {
+	pprintf(prn, "$\\hat{\\sigma}$ = %g\n", pmod->sigma);
+	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[0]), nl);
+	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[1]), nr);
+	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[2]), nb);
+    } else if (csv_format(prn)) {
+	int d = prn_delim(prn);
+
+	pprintf(prn, "%s%c%.15g\n", I_("sigma"), pmod->sigma);
+	pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[0]), d, nl);
+	pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[1]), d, nr);
+	pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[2]), d, nb);
+    }
+}
+
 static void rsqline (const MODEL *pmod, PRN *prn)
 {
     if (!na(pmod->rsq) && plain_format(prn)) {
@@ -1210,17 +1249,11 @@ static void print_intreg_depvar (const MODEL *pmod,
 				 const DATAINFO *pdinfo,
 				 PRN *prn)
 {
-    int utf = plain_format(prn);
-    int lov = gretl_model_get_int(pmod, "lovar");
-    int hiv = gretl_model_get_int(pmod, "hivar");
+    char *lov = (char *) gretl_model_get_data(pmod, "lovar");
+    char *hiv = (char *) gretl_model_get_data(pmod, "hivar");
 
-    pprintf(prn, "%s: %s", 
-	    (utf)? _("Lower limit") : I_("Lower limit"),
-	    pdinfo->varname[lov]);
-
-    pprintf(prn, ", %s: %s", 
-	    (utf)? _("Upper limit") : I_("Upper limit"),
-	    pdinfo->varname[hiv]);
+    pprintf(prn, "%s: %s", I_("Lower limit"), lov);
+    pprintf(prn, ", %s: %s", I_("Upper limit"), hiv);
 }
 
 static void print_model_heading (const MODEL *pmod, 
@@ -2419,24 +2452,19 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    val[13] = h;
 	}
     } else if (pmod->ci == INTREG) {
-	key[0] = N_("sigma");  
-	val[0] = pmod->sigma;
-	key[1] = N_("Left-unbounded obs"); /* 22: Interval regression */
-	val[1] = gretl_model_get_int(pmod, "n_left");
-	mtab.ipos[1] = 1;
-	key[2] = N_("Right-unbounded obs"); /* 22: Interval regression */  
-	val[2] = gretl_model_get_int(pmod, "n_right");
-	mtab.ipos[2] = 1;
-	key[3] = N_("Bounded obs"); /* 22: Interval regression */  
-	val[3] = gretl_model_get_int(pmod, "n_both");
-	mtab.ipos[3] = 1;
-	sprintf(chistr, "%s(%d)", _("Chi-square"), pmod->dfn);
-	key[4] = chistr;  
-	val[4] = gretl_model_get_double(pmod, "overall_test");
-	key[5] = N_("pvalue");  
-	val[5] = chisq_cdf_comp(pmod->dfn, val[4]);
-	for (i=6; i<MID_STATS; i++) {
-	    if (i < 8 || i > 11) {
+	double x = gretl_model_get_double(pmod, "overall_test");
+
+	if (na(x)) {
+	    val[6] = val[7] = NADBL;
+	} else {
+	    sprintf(chistr, "%s(%d)", _("Chi-square"), pmod->dfn);
+	    key[6] = chistr;  
+	    val[6] = gretl_model_get_double(pmod, "overall_test");
+	    key[7] = N_("p-value");  
+	    val[7] = chisq_cdf_comp(pmod->dfn, val[6]);
+	}
+	for (i=0; i<MID_STATS; i++) {
+	    if (i < 6 || i > 11) {
 		val[i] = NADBL;
 	    }
 	}
@@ -2659,7 +2687,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     } else if (pmod->ci == TSLS && plain_format(prn)) {
 	addconst_message(pmod, prn);
 	r_squared_message(pmod, prn);
-    } 
+    } else if (pmod->ci == INTREG) {
+	print_intreg_info(pmod, prn);
+    }
 
     /* FIXME alternate R^2 measures (within, centered) */
 
