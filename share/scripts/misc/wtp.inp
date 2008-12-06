@@ -16,8 +16,9 @@ hi = bidh
 smpl depvar = 4 --restrict --replace
 lo = bidh
 
+# Re-establish the full sample range and run two
+# variants of interval regression
 smpl full
-
 intreg lo hi const
 intreg lo hi const age female income
 
