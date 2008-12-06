@@ -340,7 +340,7 @@ static gretl_matrix *int_hess (int_container *IC, int *err)
     g = malloc(k * sizeof *g); 
     gplus = malloc(k * sizeof *gplus); 
     gminus = malloc(k * sizeof *gminus);
-    hss = malloc(k * k * sizeof *gminus);
+    hss = malloc(k * k * sizeof *hss);
 
     if (q == NULL || g == NULL || gplus == NULL ||
 	gminus == NULL || hss == NULL) {
@@ -583,15 +583,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	    u = IC->uhat[j];
 
 	    pmod->uhat[i] = u;
-#if 0
-	    if (obstype == INT_POINT) {
-		pmod->yhat[i] = ndx;
-	    } else {
-		pmod->yhat[i] = ndx + u;
-	    }
-#else 
 	    pmod->yhat[i] = ndx;
-#endif
 	    j++;
 	}
     }
@@ -608,8 +600,8 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     gretl_model_set_string_as_data(pmod, "hivar", vname);
 
     gretl_model_set_int(pmod, "n_left", IC->typecount[0]);
-    gretl_model_set_int(pmod, "n_right", IC->typecount[1]);
-    gretl_model_set_int(pmod, "n_both", IC->typecount[2]);
+    gretl_model_set_int(pmod, "n_both", IC->typecount[1]);
+    gretl_model_set_int(pmod, "n_right", IC->typecount[2]);
     gretl_model_set_int(pmod, "n_point", IC->typecount[3]);
 
     if (opt & OPT_R) {

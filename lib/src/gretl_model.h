@@ -80,6 +80,7 @@ struct CoeffIntervals_ {
                              c == GARCH || \
                              c == GMM || \
                              c == HECKIT || \
+                             c == INTREG || \
                              c == LOGIT || \
                              c == MLE || \
                              c == POISSON || \

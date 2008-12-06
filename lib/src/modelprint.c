@@ -158,11 +158,13 @@ static void print_intreg_info (const MODEL *pmod, PRN *prn)
     const char *nstrs[] = {
 	N_("Left-unbounded observations"),
 	N_("Right-unbounded observations"),
-	N_("Bounded observations")
+	N_("Bounded observations"),
+	N_("Point observations")
     };
     int nl = gretl_model_get_int(pmod, "n_left");
     int nr = gretl_model_get_int(pmod, "n_right");
     int nb = gretl_model_get_int(pmod, "n_both");
+    int np = gretl_model_get_int(pmod, "n_point");
 
     ensure_vsep(prn);
 
@@ -171,24 +173,28 @@ static void print_intreg_info (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s: %d\n", _(nstrs[0]), nl);
 	pprintf(prn, "%s: %d\n", _(nstrs[1]), nr);
 	pprintf(prn, "%s: %d\n", _(nstrs[2]), nb);
+	pprintf(prn, "%s: %d\n", _(nstrs[3]), np);
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
 	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[0]), nl);
 	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[1]), nr);
 	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[2]), nb);
+	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[3]), np);
     } else if (tex_format(prn)) {
 	pprintf(prn, "$\\hat{\\sigma}$ = %g \\\\\n", pmod->sigma);
 	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[0]), nl);
 	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[1]), nr);
 	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[2]), nb);
+	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[3]), np);
     } else if (csv_format(prn)) {
 	int d = prn_delim(prn);
 
-	pprintf(prn, "%s%c%.15g\n", I_("sigma"), pmod->sigma);
+	pprintf(prn, "%s%c%.15g\n", I_("sigma"), d, pmod->sigma);
 	pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[0]), d, nl);
 	pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[1]), d, nr);
 	pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[2]), d, nb);
+	pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[3]), d, np);
     }
 }
 
