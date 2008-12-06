@@ -36,6 +36,7 @@ typedef struct int_container_ int_container;
 struct int_container_ {
     MODEL *pmod;      /* model struct, initially containing OLS */
     int hiv, lov;     /* variable numbers for limit series */
+    double *dspace;   /* workspace */
     double *hi, *lo;  /* limit series for dependent variable */
     int *obstype;     /* dependent variable classifier */
     int typecount[4]; /* no. of obs by category */
@@ -57,15 +58,7 @@ struct int_container_ {
 
 static void int_container_destroy (int_container *ICont)
 {
-    free(ICont->hi);
-    free(ICont->lo);
-    free(ICont->ndx);
-    free(ICont->uhat);
-    free(ICont->dP);
-    free(ICont->df);
-
-    free(ICont->theta);
-    free(ICont->g);
+    free(ICont->dspace);
     
     free(ICont->obstype);
     free(ICont->list);
@@ -101,12 +94,7 @@ static int_container *int_container_new (int *list, double **Z,
 	ICont->typecount[i] = 0;
     }
 
-    ICont->hi = NULL;
-    ICont->lo = NULL;
-    ICont->ndx = NULL;
-    ICont->uhat = NULL;
-    ICont->dP = NULL;
-    ICont->df = NULL;
+    ICont->dspace = NULL;
 
     ICont->theta = ICont->g = NULL;
     ICont->X = ICont->G = NULL;
@@ -115,12 +103,7 @@ static int_container *int_container_new (int *list, double **Z,
     ICont->list = NULL;
 
     /* doubles arrays, length nobs */
-    ICont->hi = malloc(nobs * sizeof *ICont->hi);
-    ICont->lo = malloc(nobs * sizeof *ICont->lo);
-    ICont->ndx = malloc(nobs * sizeof *ICont->ndx);
-    ICont->uhat = malloc(nobs * sizeof *ICont->uhat);
-    ICont->dP = malloc(nobs * sizeof *ICont->dP);
-    ICont->df = malloc(nobs * sizeof *ICont->dP);
+    ICont->dspace = malloc(6 * nobs * sizeof *ICont->dspace);
 
     /* doubles arrays, length k */
     ICont->theta = malloc(ICont->k * sizeof *ICont->theta);
@@ -134,15 +117,20 @@ static int_container *int_container_new (int *list, double **Z,
     ICont->obstype = malloc(nobs * sizeof *ICont->obstype);
     ICont->list = gretl_list_new(2 + ICont->nx);
 
-    if (ICont->hi == NULL || ICont->lo == NULL ||
-	ICont->ndx == NULL || ICont->uhat == NULL || 
-	ICont->dP == NULL || ICont->df == NULL || 
+    if (ICont->dspace == NULL ||
 	ICont->theta == NULL || ICont->g == NULL || 
 	ICont->X == NULL || ICont->G == NULL || 
 	ICont->obstype == NULL || ICont->list == NULL) {
 	int_container_destroy(ICont);
 	return NULL;
     }
+
+    ICont->hi = ICont->dspace;
+    ICont->lo = ICont->hi + nobs;
+    ICont->ndx = ICont->lo + nobs;
+    ICont->uhat = ICont->ndx + nobs;
+    ICont->dP = ICont->uhat + nobs;
+    ICont->df = ICont->dP + nobs;
 
     s = 0;
     for (t=mod->t1; t<=mod->t2; t++) {
@@ -396,7 +384,7 @@ static gretl_matrix *int_hess (int_container *IC, int *err)
 
     *err = gretl_invert_symmetric_matrix(V);
 #if INTDEBUG
-    gretl_matrix_print(V, "V");
+    gretl_matrix_print(V, "V = -H^{-1}");
 #endif
 
  bailout:
@@ -408,6 +396,65 @@ static gretl_matrix *int_hess (int_container *IC, int *err)
     free(hss);
 
     return V;
+}
+
+static gretl_matrix *intreg_sandwich (int_container *IC,
+				      gretl_matrix *H,
+				      int *err)
+{
+    gretl_matrix *G, *S, *V;
+    double x;
+    int k = IC->k;
+    int i, j, jj = 0;
+
+    G = gretl_matrix_alloc(IC->nobs, k);
+    S = gretl_matrix_alloc(k, k);
+    V = gretl_matrix_alloc(k, k);
+
+    if (G == NULL || S == NULL || V == NULL) {
+	gretl_matrix_free(V);
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* form the G matrix */
+    for (j=0; j<k; j++) {
+	for (i=0; i<IC->nobs; i++) {
+	    x = IC->G[j][i];
+	    G->val[jj++] = x;
+	}
+    }
+
+    /* form S = G'G */
+    *err = gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+				     G, GRETL_MOD_NONE,
+				     S, GRETL_MOD_NONE);
+
+    if (!*err) {
+	/* form sandwich: V = H^{-1} S H^{-1} */
+	*err = gretl_matrix_qform(H, GRETL_MOD_NONE, S,
+				  V, GRETL_MOD_NONE);
+    }
+
+ bailout:
+    
+    gretl_matrix_free(G);
+    gretl_matrix_free(S);
+    gretl_matrix_free(H);
+
+    return V;
+}
+
+static gretl_matrix *intreg_VCV (int_container *IC, gretlopt opt,
+				 int *err)
+{
+    gretl_matrix *H = int_hess(IC, err);
+
+    if (!*err && (opt & OPT_R)) {
+	return intreg_sandwich(IC, H, err);
+    } else {
+	return H;
+    }
 }
 
 static void int_compute_gresids (int_container *IC)
@@ -480,87 +527,92 @@ static double chisq_overall_test (int_container *IC)
     return ret;
 } 
 
-static int fill_intreg_model (int_container *IC, gretl_matrix *ihess,
-			      const DATAINFO *pdinfo)
+static int fill_intreg_model (int_container *IC, gretl_matrix *V,
+			      gretlopt opt, const DATAINFO *pdinfo)
 {
+    MODEL *pmod = IC->pmod;
     double x, ndx, u;
     int i, j, n, m, k = IC->k, nx = IC->nx;
     char *vname;
     int obstype;
 
-    IC->pmod->lnL = int_loglik(IC->theta, IC);
-    IC->pmod->ci = INTREG;
+    pmod->lnL = int_loglik(IC->theta, IC);
+    pmod->ci = INTREG;
 
-    if (IC->pmod->vcv != NULL) {
-	free(IC->pmod->vcv);
+    if (pmod->vcv != NULL) {
+	free(pmod->vcv);
     }
 
     m =  k * (k - 1) / 2;
 
-    IC->pmod->vcv = malloc(m * sizeof *IC->pmod->vcv);
-    if (IC->pmod->vcv == NULL) {
+    pmod->vcv = malloc(m * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) {
 	return E_ALLOC;
     }
 
     n = 0;
     for (i=0; i<nx; i++) {
-	IC->pmod->coeff[i] = IC->theta[i];
+	pmod->coeff[i] = IC->theta[i];
 	for (j=i; j<nx; j++) {
-	    x = gretl_matrix_get(ihess, i, j);
+	    x = gretl_matrix_get(V, i, j);
 	    if (i == j) {
-		IC->pmod->sderr[i] = sqrt(x);
+		pmod->sderr[i] = sqrt(x);
 	    }
-	    IC->pmod->vcv[n++] = x;
+	    pmod->vcv[n++] = x;
 	}
     }
 
-    IC->pmod->sigma = exp(IC->theta[k-1]);
+    pmod->sigma = exp(IC->theta[k-1]);
 
     int_compute_gresids(IC);
 
     j = 0;
 
     for (i=IC->t1; i<=IC->t2; i++) {
-	if (!na(IC->pmod->uhat[i])) {
+	if (!na(pmod->uhat[i])) {
 	    obstype = IC->obstype[j];
 	    IC->typecount[obstype] += 1;
 	    ndx = IC->ndx[j];
 	    u = IC->uhat[j];
 
-	    IC->pmod->uhat[i] = u;
+	    pmod->uhat[i] = u;
 #if 0
 	    if (obstype == INT_POINT) {
-		IC->pmod->yhat[i] = ndx;
+		pmod->yhat[i] = ndx;
 	    } else {
-		IC->pmod->yhat[i] = ndx + u;
+		pmod->yhat[i] = ndx + u;
 	    }
 #else 
-	    IC->pmod->yhat[i] = ndx;
+	    pmod->yhat[i] = ndx;
 #endif
 	    j++;
 	}
     }
 
-    IC->pmod->ybar = IC->pmod->sdy = NADBL;
-    IC->pmod->ess = IC->pmod->tss = NADBL;
-    IC->pmod->fstt = NADBL;
-    IC->pmod->rsq = IC->pmod->adjrsq = NADBL;
+    pmod->ybar = pmod->sdy = NADBL;
+    pmod->ess = pmod->tss = NADBL;
+    pmod->fstt = NADBL;
+    pmod->rsq = pmod->adjrsq = NADBL;
 
     vname = gretl_strdup(pdinfo->varname[IC->lov]);
-    gretl_model_set_string_as_data(IC->pmod, "lovar", vname);
+    gretl_model_set_string_as_data(pmod, "lovar", vname);
 
     vname = gretl_strdup(pdinfo->varname[IC->hiv]);
-    gretl_model_set_string_as_data(IC->pmod, "hivar", vname);
+    gretl_model_set_string_as_data(pmod, "hivar", vname);
 
-    gretl_model_set_int(IC->pmod, "n_left", IC->typecount[0]);
-    gretl_model_set_int(IC->pmod, "n_right", IC->typecount[1]);
-    gretl_model_set_int(IC->pmod, "n_both", IC->typecount[2]);
-    gretl_model_set_int(IC->pmod, "n_point", IC->typecount[3]);
+    gretl_model_set_int(pmod, "n_left", IC->typecount[0]);
+    gretl_model_set_int(pmod, "n_right", IC->typecount[1]);
+    gretl_model_set_int(pmod, "n_both", IC->typecount[2]);
+    gretl_model_set_int(pmod, "n_point", IC->typecount[3]);
+
+    if (opt & OPT_R) {
+	gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
+    }
 
     x = chisq_overall_test(IC);
 
     if (!na(x)) {
-	gretl_model_set_double(IC->pmod, "overall_test", x);
+	gretl_model_set_double(pmod, "overall_test", x);
     }
 
     return 0;
@@ -570,7 +622,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 			MODEL *mod, gretlopt opt, PRN *prn) 
 {
     int_container *IC;
-    gretl_matrix *ihess = NULL;
+    gretl_matrix *V = NULL;
     int fncount, grcount;
     int err;
 
@@ -584,14 +636,14 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 		   int_score, IC, opt & OPT_V, prn);
 
     if (!err) {
-	ihess = int_hess(IC, &err);
+	V = intreg_VCV(IC, opt, &err);
     }
 
     if (!err) {
-	err = fill_intreg_model(IC, ihess, pdinfo);
+	err = fill_intreg_model(IC, V, opt, pdinfo);
     }
 
-    gretl_matrix_free(ihess);
+    gretl_matrix_free(V);
     int_container_destroy(IC);
 
     return err;

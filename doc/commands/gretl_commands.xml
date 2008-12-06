@@ -4143,6 +4143,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
         </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>	
       </options>
       <examples>
 	<example>intreg lo hi const x1 x2</example>
@@ -4153,22 +4157,42 @@
     </usage>
 
     <description>
-      <para>Estimates an interval regression model.  This model arises
-	when the dependent variable is imperfectly observed for some
-	(possibly all) observations.  In other words, the data
-	generating process is assumed to be <equation status="display"
-	tex="\[y^*_t = x_t \beta+\epsilon_t\]" ascii="y* = x b + u"/>
-	but we only observe <equation status="inline" tex="\[m_t \le
-	y_t \le M_t\]" ascii="m &lt;= y* &lt;= M"/> (the interval may
-	be left- or right-unbounded). Note that for some
-	observations <math>m</math> may equal <math>M</math>.  The
-	variables <repl>minvar</repl> and <repl>maxvar</repl>
-	must contain <lit>NA</lit>s for left- and right-unbounded
-	observations, respectively.
+      <para>
+	Estimates an interval regression model.  This model arises when the
+	dependent variable is imperfectly observed for some (possibly all)
+	observations.  In other words, the data generating process is assumed
+	to be 
+	<equation status="display"
+	tex="\[y^*_t = x_t \beta+\epsilon_t\]" ascii="y* = x b + u"/> but we
+	only observe 
+	<equation status="inline" tex="\[m_t \le
+	y_t \le M_t\]" ascii="m &lt;= y* &lt;= M"/> (the interval may be left-
+	or right-unbounded). Note that for some observations <math>m</math>
+	may equal <math>M</math>.  The variables <repl>minvar</repl> and
+	<repl>maxvar</repl> must contain <lit>NA</lit>s for left- and
+	right-unbounded observations, respectively.
       </para>
 
-      <para>The model is estimated by maximum likelihood, assuming
-      normality of the disturbance term.
+      <para>
+	The model is estimated by maximum likelihood, assuming normality of
+	the disturbance term.
+      </para>
+
+      <para context="cli">
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	then QML or Huber&ndash;White standard errors are calculated
+	instead. In this case the estimated covariance matrix is a
+	<quote>sandwich</quote> of the inverse of the estimated Hessian
+	and the outer product of the gradient.
+      </para>
+      <para context="gui">
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the "Robust standard errors" box is
+	checked, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance matrix
+	is a <quote>sandwich</quote> of the inverse of the estimated
+	Hessian and the outer product of the gradient.
       </para>
 
     </description>

@@ -172,6 +172,7 @@ struct gretl_option gretl_opts[] = {
     { HELP,     OPT_F, "func" },
     { HSK,      OPT_Q, "quiet" },
     { INTREG,   OPT_Q, "quiet" },
+    { INTREG,   OPT_R, "robust" },
     { INTREG,   OPT_V, "verbose" },
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
