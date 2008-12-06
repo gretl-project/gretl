@@ -1095,11 +1095,11 @@ int in_gretl_list (const int *list, int k)
     return ret;
 }
 
-static void reglist_move_const (int *list, int from)
+static void reglist_move_const (int *list, int k)
 {
-    int i, cnum = list[from];
+    int i, cnum = list[k];
 
-    for (i=from; i>2; i--) {
+    for (i=k; i>2; i--) {
 	list[i] = list[i-1];
     }
 

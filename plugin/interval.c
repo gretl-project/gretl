@@ -597,6 +597,23 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     return err;
 }
 
+/* if the list contains a constant, ensure that it appears
+   as the first regressor, in position 3 */
+
+static void maybe_reposition_const (int *list, const double **Z,
+				    const DATAINFO *pdinfo)
+{
+    int cpos = gretl_list_const_pos(list, 4, Z, pdinfo);
+    int i;
+
+    if (cpos > 0) {
+	for (i=cpos; i>3; i--) {
+	    list[i] = list[i-1];
+	}
+	list[3] = 0;
+    }	
+}
+
 MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn) 
 {
@@ -604,6 +621,10 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     int *initlist = NULL;
 
     gretl_model_init(&model);
+    
+    if (list[0] > 3) {
+	maybe_reposition_const(list, (const double **) *pZ, pdinfo);
+    }
 
     /* create extra variable for model initialization and
        corresponding list
