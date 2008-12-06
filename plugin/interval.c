@@ -149,7 +149,7 @@ static int_container *int_container_new (int *list, double **Z,
 		IC->obstype[s] = INT_LOW;
 	    } else if (na(x1)) {
 		IC->obstype[s] = INT_HIGH;
-	    } else if (x0==x1) {
+	    } else if (x0 == x1) {
 		IC->obstype[s] = INT_POINT;
 	    } else {
 		IC->obstype[s] = INT_MID;
@@ -201,7 +201,7 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
     lv = list[1];
     hv = list[2];
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=pdinfo->t1; t<=pdinfo->t2 && !err; t++) {
 	x0 = (*pZ)[lv][t];
 	x1 = (*pZ)[hv][t];
 
@@ -209,9 +209,18 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 	    (*pZ)[mpy][t] = x1;
 	} else if (na(x1)) {
 	    (*pZ)[mpy][t] = x0;
+	} else if (x0 > x1) {
+	    gretl_errmsg_sprintf(_("Obs %d: lower bound (%g) "
+				   "exceeds upper (%g)"), t,
+				 x0, x1);
+	    err = E_DATA;
 	} else {
 	    (*pZ)[mpy][t] = 0.5 * (x0 + x1);
 	}
+    }
+
+    if (err) {
+	return err;
     }
 
     *initlist = gretl_list_new(n - 1);
