@@ -36,6 +36,7 @@ typedef struct int_container_ int_container;
 struct int_container_ {
     MODEL *pmod;      /* model struct, initially containing OLS */
     int hiv, lov;     /* variable numbers for limit series */
+    double ll;        /* loglikelihood */
     double *dspace;   /* workspace */
     double *hi, *lo;  /* limit series for dependent variable */
     int *obstype;     /* dependent variable classifier */
@@ -56,81 +57,84 @@ struct int_container_ {
     double *g;        /* total score vector */
 };
 
-static void int_container_destroy (int_container *ICont)
+static void int_container_destroy (int_container *IC)
 {
-    free(ICont->dspace);
+    free(IC->dspace);
+
+    free(IC->theta);
+    free(IC->g);
     
-    free(ICont->obstype);
-    free(ICont->list);
+    free(IC->obstype);
+    free(IC->list);
 
-    doubles_array_free(ICont->X, ICont->nx);
-    doubles_array_free(ICont->G, ICont->k);
+    doubles_array_free(IC->X, IC->nx);
+    doubles_array_free(IC->G, IC->k);
 
-    free(ICont);
+    free(IC);
 }
 
 static int_container *int_container_new (int *list, double **Z, 
 					 DATAINFO *pdinfo, MODEL *mod)
 {
-    int_container *ICont;
+    int_container *IC;
     int nobs, i, s, t, vlo = list[1], vhi = list[2];
     double x0, x1;
 
-    ICont = malloc(sizeof *ICont);
-    if (ICont == NULL) {
+    IC = malloc(sizeof *IC);
+    if (IC == NULL) {
 	return NULL;
     }
 
-    ICont->lov = vlo;
-    ICont->hiv = vhi;
-    ICont->pmod = mod;
+    IC->lov = vlo;
+    IC->hiv = vhi;
+    IC->pmod = mod;
 
-    ICont->t1 = mod->t1;
-    ICont->t2 = mod->t2;
-    nobs = ICont->nobs = mod->nobs;
-    ICont->nx = mod->ncoeff;
-    ICont->k = mod->ncoeff + 1; /* beta + sigma */
+    IC->t1 = mod->t1;
+    IC->t2 = mod->t2;
+    nobs = IC->nobs = mod->nobs;
+    IC->nx = mod->ncoeff;
+    IC->k = mod->ncoeff + 1; /* beta + sigma */
     for (i=0; i<4; i++) {
-	ICont->typecount[i] = 0;
+	IC->typecount[i] = 0;
     }
 
-    ICont->dspace = NULL;
+    IC->dspace = NULL;
 
-    ICont->theta = ICont->g = NULL;
-    ICont->X = ICont->G = NULL;
+    IC->theta = IC->g = NULL;
+    IC->X = IC->G = NULL;
     
-    ICont->obstype = NULL;
-    ICont->list = NULL;
+    IC->obstype = NULL;
+    IC->list = NULL;
 
     /* doubles arrays, length nobs */
-    ICont->dspace = malloc(6 * nobs * sizeof *ICont->dspace);
+    IC->dspace = malloc(6 * nobs * sizeof *IC->dspace);
 
     /* doubles arrays, length k */
-    ICont->theta = malloc(ICont->k * sizeof *ICont->theta);
-    ICont->g = malloc(ICont->k * sizeof *ICont->g);
+    IC->theta = malloc(IC->k * sizeof *IC->theta);
+    IC->g = malloc(IC->k * sizeof *IC->g);
 
     /* two-dimensional doubles arrays */
-    ICont->X = doubles_array_new(ICont->nx, nobs);
-    ICont->G = doubles_array_new(ICont->k, nobs);
+    IC->X = doubles_array_new(IC->nx, nobs);
+    IC->G = doubles_array_new(IC->k, nobs);
 
     /* int arrays */
-    ICont->obstype = malloc(nobs * sizeof *ICont->obstype);
-    ICont->list = gretl_list_new(2 + ICont->nx);
+    IC->obstype = malloc(nobs * sizeof *IC->obstype);
+    IC->list = gretl_list_new(2 + IC->nx);
 
-    if (ICont->dspace == NULL ||
-	ICont->theta == NULL || ICont->g == NULL || 
-	ICont->X == NULL || ICont->G == NULL || 
-	ICont->obstype == NULL || ICont->list == NULL) {
-	int_container_destroy(ICont);
+    if (IC->dspace == NULL ||
+	IC->theta == NULL || IC->g == NULL || 
+	IC->X == NULL || IC->G == NULL || 
+	IC->obstype == NULL || IC->list == NULL) {
+	int_container_destroy(IC);
 	return NULL;
     }
 
-    ICont->hi = ICont->dspace;
-    ICont->lo = ICont->hi + nobs;
-    ICont->ndx = ICont->lo + nobs;
-    ICont->uhat = ICont->ndx + nobs;
-    ICont->dP = ICont->uhat + nobs;
-    ICont->df = ICont->dP + nobs;
+    IC->hi = IC->dspace;
+    IC->lo = IC->hi + nobs;
+    IC->ndx = IC->lo + nobs;
+    IC->uhat = IC->ndx + nobs;
+    IC->dP = IC->uhat + nobs;
+    IC->df = IC->dP + nobs;
 
     s = 0;
     for (t=mod->t1; t<=mod->t2; t++) {
@@ -138,46 +142,46 @@ static int_container *int_container_new (int *list, double **Z,
 
 	    x0 = Z[vlo][t];
 	    x1 = Z[vhi][t];
-	    ICont->lo[s] = x0;
-	    ICont->hi[s] = x1;
+	    IC->lo[s] = x0;
+	    IC->hi[s] = x1;
 
 	    if (na(x0)) {
-		ICont->obstype[s] = INT_LOW;
+		IC->obstype[s] = INT_LOW;
 	    } else if (na(x1)) {
-		ICont->obstype[s] = INT_HIGH;
+		IC->obstype[s] = INT_HIGH;
 	    } else if (x0==x1) {
-		ICont->obstype[s] = INT_POINT;
+		IC->obstype[s] = INT_POINT;
 	    } else {
-		ICont->obstype[s] = INT_MID;
+		IC->obstype[s] = INT_MID;
 	    }
 
-	    for (i=0; i<ICont->nx; i++) {
-		ICont->X[i][s] = Z[list[i+3]][t];
+	    for (i=0; i<IC->nx; i++) {
+		IC->X[i][s] = Z[list[i+3]][t];
 	    }
 
 	    s++;
 	}
     }
 
-    ICont->list[1] = vlo;
-    ICont->list[2] = vhi;
-    for (i=0; i<ICont->nx; i++) {
-	ICont->list[i+3] = mod->list[i+2];
+    IC->list[1] = vlo;
+    IC->list[2] = vhi;
+    for (i=0; i<IC->nx; i++) {
+	IC->list[i+3] = mod->list[i+2];
     }
 
-    for (i=0; i<ICont->nx; i++) {
-	ICont->theta[i] = mod->coeff[i];
+    for (i=0; i<IC->nx; i++) {
+	IC->theta[i] = mod->coeff[i];
     }
-    ICont->theta[i] = log(mod->sigma);
+    IC->theta[i] = log(mod->sigma);
 
 #if INTDEBUG
-    fprintf(stderr, "nobs = %d\n", ICont->nobs);
-    fprintf(stderr, "t1-t2 = %d-%d\n", ICont->t1, ICont->t2);
-    fprintf(stderr, "k = %d\n", ICont->k);
-    fprintf(stderr, "nx = %d\n", ICont->nx);
+    fprintf(stderr, "nobs = %d\n", IC->nobs);
+    fprintf(stderr, "t1-t2 = %d-%d\n", IC->t1, IC->t2);
+    fprintf(stderr, "k = %d\n", IC->k);
+    fprintf(stderr, "nx = %d\n", IC->nx);
 #endif
 
-    return ICont;
+    return IC;
 }
 
 static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo, 
@@ -539,7 +543,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 
     pmod->ci = INTREG;
 
-    pmod->lnL = int_loglik(IC->theta, IC);
+    pmod->lnL = IC->ll;
     mle_criteria(pmod, 1);
 
     if (pmod->vcv != NULL) {
@@ -637,6 +641,10 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     err = BFGS_max(IC->theta, IC->k, 1000, INTERVAL_TOL, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
 		   int_score, IC, opt & OPT_V, prn);
+
+    if (!err) {
+	IC->ll = int_loglik(IC->theta, IC);
+    }
 
     if (!err) {
 	V = intreg_VCV(IC, opt, &err);
