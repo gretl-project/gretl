@@ -1,0 +1,23 @@
+# Interval regression: Verbeek's "willingness to pay" example
+open wtp.gdt
+
+# construct the two bounds variables
+series lo = NA
+series hi = NA
+
+smpl depvar = 1 --restrict
+hi = bidl
+smpl depvar = 2 --restrict --replace
+lo = bidl
+hi = bid1
+smpl depvar = 3 --restrict --replace
+lo = bid1
+hi = bidh
+smpl depvar = 4 --restrict --replace
+lo = bidh
+
+smpl full
+
+intreg lo hi const
+intreg lo hi const age female income
+

@@ -29,3 +29,4 @@
 "sw_ch14","Vector autoregression","inflation & unemployment"
 "weibull","Weibull duration model","strikes in U.S. manufacturing"
 "wg_nls","Nonlinear consumption function (Greene)","U.S. data"
+"wtp","Interval regression","willingness to pay"
