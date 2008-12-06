@@ -2267,7 +2267,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	N_("rho"),                 /* 22: 1st-order autocorrelation coeff. */
 	N_("Durbin-Watson")        /* 22: Durbin-Watson statistic */
     };
-    double val[14] = {
+    double val[MID_STATS] = {
 	pmod->ybar,
 	pmod->sdy,
 	pmod->ess,
@@ -2298,7 +2298,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 #ifdef ENABLE_NLS
     mtab.nls = doing_nls();
     if (mtab.nls) {
-	maybe_remedy_translations(key, 14);
+	maybe_remedy_translations(key, MID_STATS);
     }
 #endif
 
@@ -2343,7 +2343,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     }
 
     if (pmod->ci == ARBOND) {
-	for (i=0; i<14; i++) {
+	for (i=0; i<MID_STATS; i++) {
 	    if (i < 2 || i > 3) {
 		val[i] = NADBL;
 	    }
@@ -2351,7 +2351,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     } else if (pmod->aux == AUX_SYS) {
 	/* only dep. var. stats, SSR and SE, unless LIML */
 	if (liml_equation(pmod) && !gretl_model_get_int(pmod, "restricted")) {
-	    for (i=4; i<14; i++) {
+	    for (i=4; i<MID_STATS; i++) {
 		if (i < 8 || i > 9) {
 		    val[i] = NADBL;
 		}
@@ -2359,7 +2359,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    key[9] = N_("Smallest eigenvalue"); /* 22: */
 	    val[9] = gretl_model_get_double(pmod, "lmin");
 	} else {
-	    for (i=4; i<14; i++) {
+	    for (i=4; i<MID_STATS; i++) {
 		val[i] = NADBL;
 	    }
 	}
@@ -2367,7 +2367,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[2] = N_("Mean of innovations"); /* 22: Mean of ARMA innovations */
 	val[2] = gretl_model_get_double(pmod, "mean_error");
 	key[3] = N_("S.D. of innovations"); /* 22: Std. dev. of ARMA innovations */
-	for (i=4; i<14; i++) {
+	for (i=4; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
 	    }
@@ -2379,7 +2379,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	val[2] = gretl_model_get_double(pmod, "ladsum");
 	key[3] = N_("Sum squared resid");
 	val[3] = pmod->ess;
-	for (i=4; i<14; i++) {
+	for (i=4; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
 	    }
@@ -2399,13 +2399,13 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     } else if (panel_ML_model(pmod) || 
 	       pmod->ci == GARCH ||
 	       pmod->ci == HECKIT) {
-	for (i=2; i<14; i++) {
+	for (i=2; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
 	    }
 	}	
     } else if (pmod->ci == MLE || ordered_model(pmod)) {
-	for (i=0; i<14; i++) {
+	for (i=0; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
 	    }
@@ -2434,7 +2434,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	val[4] = gretl_model_get_double(pmod, "overall_test");
 	key[5] = N_("pvalue");  
 	val[5] = gretl_model_get_double(pmod, "overall_test_p");
-	for (i=6; i<14; i++) {
+	for (i=6; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
 	    }
@@ -2448,7 +2448,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	/* print a limited range of stats */
 	val[2] = gretl_model_get_double(pmod, "ess_orig");
 	val[3] = gretl_model_get_double(pmod, "sigma_orig");
-	for (i=4; i<14; i++) {
+	for (i=4; i<MID_STATS; i++) {
 	    val[i] = NADBL;
 	}
     }
