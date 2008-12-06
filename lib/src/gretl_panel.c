@@ -2825,6 +2825,16 @@ static int between_model (panelmod_t *pan, const double **Z,
     return err;
 }
 
+/* When we automatically add dummy variables to the dataset,
+   in estimating a panel model with the --time-dummies option,
+   should we delete these when we're done, or leave them
+   in the dataset?
+*/
+
+#define CLEAN_UP_DUMMIES 0
+
+#if CLEAN_UP_DUMMIES
+
 static int 
 process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
 {
@@ -2864,9 +2874,11 @@ process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
     return 0;
 }
 
+#endif
+
 static int
 add_dummies_to_list (const int *list, DATAINFO *pdinfo, 
-		     int **pbiglist)
+		     int **plist)
 {
     char dname[VNAMELEN];
     int *biglist = NULL;
@@ -2902,7 +2914,7 @@ add_dummies_to_list (const int *list, DATAINFO *pdinfo,
     if (err) {
 	free(biglist);
     } else {
-	*pbiglist = biglist;
+	*plist = biglist;
     }
 
     return err;
@@ -2979,11 +2991,13 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 			gretlopt opt, PRN *prn)
 {
+#if CLEAN_UP_DUMMIES
+    int orig_v = pdinfo->v;
+#endif
     MODEL mod;
     panelmod_t pan;
     gretlopt pan_opt = opt;
     int *olslist = NULL;
-    int orig_v = pdinfo->v;
     int ntdum = 0;
     int err = 0;
 
@@ -3146,9 +3160,11 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    mod = *pan.realmod;
 	}
 	gretl_model_smpl_init(&mod, pdinfo);
+#if CLEAN_UP_DUMMIES
 	if (opt & OPT_D) {
 	    process_time_dummies(&mod, pdinfo, orig_v);
 	}
+#endif
     }
 
     panelmod_free(&pan);
@@ -3157,7 +3173,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mod.errcode = err;
     }
 
-#if 1
+#if CLEAN_UP_DUMMIES
     dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
 #endif
 
