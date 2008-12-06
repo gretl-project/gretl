@@ -2853,14 +2853,11 @@ process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
 	}
     }
 
-    /* If the time dummies were newly added (and hence, will be
-       deleted on exit), record their number, n.  Otherwise
-       set a non-zero value, -1, to record the fact that the
-       model used time dummies, in case the user wants to
-       add/omit variables or something.
+    /* Record the fact that the model used time dummies, in case
+       the user wants to add/omit variables or something.
     */
 
-    gretl_model_set_int(pmod, "time-dummies", (n > 0)? n : -1);
+    gretl_model_set_int(pmod, "time-dummies", 1);
 
     return 0;
 }
@@ -2892,6 +2889,9 @@ add_dummies_to_list (const int *list, DATAINFO *pdinfo,
 	if (v == pdinfo->v) {
 	    err = E_DATA;
 	    break;
+	} else if (in_gretl_list(list, v)) {
+	    /* already present */
+	    biglist[0] -= 1;
 	} else {
 	    biglist[j++] = v;
 	}
