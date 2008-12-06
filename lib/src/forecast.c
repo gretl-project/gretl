@@ -290,7 +290,15 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 			 const DATAINFO *pdinfo, int *err)
 {
     FITRESID *fr;
-    int dv, t;
+    int t, dv = -1;
+
+    if (pmod->ci != INTREG) {
+	dv = gretl_model_get_depvar(pmod);
+	if (dv < 0 || dv >= pdinfo->v) {
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
 
     fr = fit_resid_new_for_model(pmod, pdinfo, pmod->t1, pmod->t2,
 				 0, err);
@@ -307,16 +315,27 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 	}
     }
 
-    dv = gretl_model_get_depvar(pmod);
-
     for (t=0; t<fr->nobs; t++) {
-	fr->actual[t] = Z[dv][t];
+	if (dv < 0) {
+	    if (na(pmod->yhat[t]) || na(pmod->uhat[t])) {
+		fr->actual[t] = NADBL;
+	    } else {
+		fr->actual[t] = pmod->yhat[t] + pmod->uhat[t];
+	    }
+	} else {
+	    fr->actual[t] = Z[dv][t];
+	}
 	fr->fitted[t] = pmod->yhat[t];
 	fr->resid[t] = pmod->uhat[t];
     }
 
     fit_resid_set_dec_places(fr);
-    strcpy(fr->depvar, pdinfo->varname[dv]);
+    
+    if (dv < 0) {
+	strcpy(fr->depvar, "implicit y");
+    } else {
+	strcpy(fr->depvar, pdinfo->varname[dv]);
+    }
     
     return fr;
 }

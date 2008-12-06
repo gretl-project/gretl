@@ -622,6 +622,9 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	gretl_model_set_double(pmod, "overall_test", x);
     }
 
+    /* FIXME? */
+    pmod->list[1] = 0;
+
     return 0;
 }
 
