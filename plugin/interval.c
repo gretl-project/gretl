@@ -413,6 +413,7 @@ static gretl_matrix *intreg_sandwich (int_container *IC,
 
     if (G == NULL || S == NULL || V == NULL) {
 	gretl_matrix_free(V);
+	V = NULL;
 	*err = E_ALLOC;
 	goto bailout;
     }
@@ -536,8 +537,10 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     char *vname;
     int obstype;
 
-    pmod->lnL = int_loglik(IC->theta, IC);
     pmod->ci = INTREG;
+
+    pmod->lnL = int_loglik(IC->theta, IC);
+    mle_criteria(pmod, 1);
 
     if (pmod->vcv != NULL) {
 	free(pmod->vcv);
