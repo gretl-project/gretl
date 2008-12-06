@@ -4144,6 +4144,12 @@
 	  <effect>print details of iterations</effect>
         </option>
       </options>
+      <examples>
+	<example>intreg lo hi const x1 x2</example>
+	<demos>
+	  <demo>wtp.inp</demo>
+	</demos>
+      </examples>
     </usage>
 
     <description>

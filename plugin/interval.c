@@ -445,7 +445,8 @@ static double chisq_overall_test (int_container *IC)
 	gretl_vector_set(b, i, IC->pmod->coeff[i+hasconst]);
 	for (j=i; j<k; j++) {
 	    gretl_matrix_set(V, i, j, IC->pmod->vcv[n]);
-	    gretl_matrix_set(V, j, i, IC->pmod->vcv[n++]);
+	    gretl_matrix_set(V, j, i, IC->pmod->vcv[n]);
+	    n++;
 	}
     }
 
@@ -470,22 +471,25 @@ static double chisq_overall_test (int_container *IC)
     return ret;
 } 
 
-static void fill_model (int_container *IC, gretl_matrix *ihess)
+static int fill_intreg_model (int_container *IC, gretl_matrix *ihess)
 {
-    double x, ndx, u, sigma;
+    double x, ndx, u;
     int i, j, n, m, k = IC->k, nx = IC->nx;
-    int obstype, df;
+    int obstype;
 
     IC->pmod->lnL = int_loglik(IC->theta, IC);
     IC->pmod->ci = INTREG;
-
-    m =  k * (k - 1) / 2;
 
     if (IC->pmod->vcv != NULL) {
 	free(IC->pmod->vcv);
     }
 
+    m =  k * (k - 1) / 2;
+
     IC->pmod->vcv = malloc(m * sizeof *IC->pmod->vcv);
+    if (IC->pmod->vcv == NULL) {
+	return E_ALLOC;
+    }
 
     n = 0;
     for (i=0; i<nx; i++) {
@@ -495,13 +499,11 @@ static void fill_model (int_container *IC, gretl_matrix *ihess)
 	    if (i == j) {
 		IC->pmod->sderr[i] = sqrt(x);
 	    }
-	    IC->pmod->vcv[n] = x;
-	    n++;
+	    IC->pmod->vcv[n++] = x;
 	}
     }
 
-    sigma = exp(IC->theta[k-1]);
-    IC->pmod->sigma = sigma;
+    IC->pmod->sigma = exp(IC->theta[k-1]);
 
     int_compute_gresids(IC);
 
@@ -528,7 +530,6 @@ static void fill_model (int_container *IC, gretl_matrix *ihess)
 	}
     }
 
-
     IC->pmod->ybar = IC->pmod->sdy = NADBL;
     IC->pmod->ess = IC->pmod->tss = NADBL;
     IC->pmod->fstt = NADBL;
@@ -545,10 +546,9 @@ static void fill_model (int_container *IC, gretl_matrix *ihess)
 
     if (!na(x)) {
 	gretl_model_set_double(IC->pmod, "overall_test", x);
-	df = IC->nx - IC->pmod->ifc;
-	x = chisq_cdf_comp(df, x);
-	gretl_model_set_double(IC->pmod, "overall_test_p", x);
     }
+
+    return 0;
 }
 
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
@@ -573,7 +573,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	fill_model(IC, ihess);
+	err = fill_intreg_model(IC, ihess);
     }
 
     gretl_matrix_free(ihess);

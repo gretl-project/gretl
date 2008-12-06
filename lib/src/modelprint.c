@@ -2250,7 +2250,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     int rtf = rtf_format(prn);
     int tex = tex_format(prn);
     int csv = csv_format(prn);
-    char fstr[32];
+    char fstr[32], chistr[32];
     const char *key[] = {
 	N_("Mean dependent var"),  /* 22: Mean of dependent variable */
 	N_("S.D. dependent var"),  /* 22: Standard deviation of dependent var */
@@ -2421,19 +2421,20 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     } else if (pmod->ci == INTREG) {
 	key[0] = N_("sigma");  
 	val[0] = pmod->sigma;
-	key[1] = N_("Left-unbounded obs");  
+	key[1] = N_("Left-unbounded obs"); /* 22: Interval regression */
 	val[1] = gretl_model_get_int(pmod, "n_left");
 	mtab.ipos[1] = 1;
-	key[2] = N_("Right-unbounded obs");  
+	key[2] = N_("Right-unbounded obs"); /* 22: Interval regression */  
 	val[2] = gretl_model_get_int(pmod, "n_right");
 	mtab.ipos[2] = 1;
-	key[3] = N_("Bounded obs");  
+	key[3] = N_("Bounded obs"); /* 22: Interval regression */  
 	val[3] = gretl_model_get_int(pmod, "n_both");
 	mtab.ipos[3] = 1;
-	key[4] = N_("Chi^2");  
+	sprintf(chistr, "%s(%d)", _("Chi-square"), pmod->dfn);
+	key[4] = chistr;  
 	val[4] = gretl_model_get_double(pmod, "overall_test");
 	key[5] = N_("pvalue");  
-	val[5] = gretl_model_get_double(pmod, "overall_test_p");
+	val[5] = chisq_cdf_comp(pmod->dfn, val[4]);
 	for (i=6; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;
