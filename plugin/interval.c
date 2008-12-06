@@ -34,6 +34,7 @@ enum {
 typedef struct int_container_ int_container;
 
 struct int_container_ {
+    MODEL *pmod;      /* model struct, initially containing OLS */
     int hiv, lov;     /* variable numbers for limit series */
     double *hi, *lo;  /* limit series for dependent variable */
     int *obstype;     /* dependent variable classifier */
@@ -45,13 +46,11 @@ struct int_container_ {
     int nobs;         /* number of observations */
     int nx;           /* number of explanatory variables */
     int k;            /* total number of parameters */
-    double *wspace;   /* workspace (doubles arrays) */
     double *theta;    /* real parameter estimates */
     double *ndx;      /* index variable */
     double *uhat;     /* generalized residuals */
     double *dP;       /* probabilities */
     double *df;       /* densities */
-    MODEL *pmod;      /* model struct, initially containing OLS */
     double **G;       /* score matrix by observation */
     double *g;        /* total score vector */
 };
@@ -60,16 +59,19 @@ static void int_container_destroy (int_container *ICont)
 {
     free(ICont->hi);
     free(ICont->lo);
-    free(ICont->obstype);
-    doubles_array_free(ICont->X, ICont->nx);
-    free(ICont->list);
-    free(ICont->theta);
     free(ICont->ndx);
     free(ICont->uhat);
     free(ICont->dP);
     free(ICont->df);
-    doubles_array_free(ICont->G, ICont->k);
+
+    free(ICont->theta);
     free(ICont->g);
+    
+    free(ICont->obstype);
+    free(ICont->list);
+
+    doubles_array_free(ICont->X, ICont->nx);
+    doubles_array_free(ICont->G, ICont->k);
 
     free(ICont);
 }
@@ -101,36 +103,43 @@ static int_container *int_container_new (int *list, double **Z,
 
     ICont->hi = NULL;
     ICont->lo = NULL;
-    ICont->obstype = NULL;
-    ICont->X = NULL;
-    ICont->list = NULL;
-    ICont->theta = NULL;
     ICont->ndx = NULL;
     ICont->uhat = NULL;
     ICont->dP = NULL;
     ICont->df = NULL;
-    ICont->G = NULL;
 
+    ICont->theta = ICont->g = NULL;
+    ICont->X = ICont->G = NULL;
+    
+    ICont->obstype = NULL;
+    ICont->list = NULL;
+
+    /* doubles arrays, length nobs */
     ICont->hi = malloc(nobs * sizeof *ICont->hi);
     ICont->lo = malloc(nobs * sizeof *ICont->lo);
-    ICont->obstype = malloc(nobs * sizeof *ICont->obstype);
-    ICont->X = doubles_array_new(ICont->nx, nobs);
-    ICont->list = gretl_list_new(2 + ICont->nx);
-    ICont->theta = malloc(ICont->k * sizeof *ICont->theta);
-
     ICont->ndx = malloc(nobs * sizeof *ICont->ndx);
     ICont->uhat = malloc(nobs * sizeof *ICont->uhat);
     ICont->dP = malloc(nobs * sizeof *ICont->dP);
     ICont->df = malloc(nobs * sizeof *ICont->dP);
-    ICont->G = doubles_array_new(ICont->k, nobs);
+
+    /* doubles arrays, length k */
+    ICont->theta = malloc(ICont->k * sizeof *ICont->theta);
     ICont->g = malloc(ICont->k * sizeof *ICont->g);
 
-    if (ICont->lo == NULL || ICont->hi == NULL || 
-	ICont->obstype == NULL || ICont->X == NULL || 
-	ICont->list == NULL || ICont->theta == NULL || 
+    /* two-dimensional doubles arrays */
+    ICont->X = doubles_array_new(ICont->nx, nobs);
+    ICont->G = doubles_array_new(ICont->k, nobs);
+
+    /* int arrays */
+    ICont->obstype = malloc(nobs * sizeof *ICont->obstype);
+    ICont->list = gretl_list_new(2 + ICont->nx);
+
+    if (ICont->hi == NULL || ICont->lo == NULL ||
 	ICont->ndx == NULL || ICont->uhat == NULL || 
 	ICont->dP == NULL || ICont->df == NULL || 
-	ICont->G == NULL || ICont->g == NULL) {
+	ICont->theta == NULL || ICont->g == NULL || 
+	ICont->X == NULL || ICont->G == NULL || 
+	ICont->obstype == NULL || ICont->list == NULL) {
 	int_container_destroy(ICont);
 	return NULL;
     }
