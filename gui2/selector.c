@@ -78,7 +78,7 @@ struct _selector {
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
-		       c == HECKIT || c == QUANTREG)
+		       c == HECKIT || c == QUANTREG || c == INTREG)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == HCCM || c == HSK || c == ARMA || c == ARCH || \
@@ -86,7 +86,7 @@ struct _selector {
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
-                       c == HECKIT || c == QUANTREG)
+                       c == HECKIT || c == QUANTREG || c == INTREG)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
@@ -114,6 +114,7 @@ struct _selector {
                          c == GARCH || \
                          c == HECKIT || \
                          c == HILU || \
+                         c == INTREG || \
                          c == LOGIT || \
                          c == OLS || \
                          c == PANEL || \
@@ -1516,6 +1517,9 @@ static void topslot_empty (int code)
     case SAVE_FUNCTIONS:
 	warnbox(_("You must specify a public interface"));
 	break;
+    case INTREG:
+	warnbox(_("You must select a lower bound variable"));
+	break;
     default:
 	warnbox(_("You must select a dependent variable"));
     }
@@ -2050,7 +2054,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->code == WLS || sr->code == POISSON || 
 	sr->code == AR || sr->code == HECKIT ||
-	THREE_VARS_GRAPH(sr->code)) {
+	sr->code == INTREG || THREE_VARS_GRAPH(sr->code)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
 	    if (sr->code == WLS) {
@@ -2061,6 +2065,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 		sr->error = 1;
 	    } else if (sr->code == HECKIT) {
 		warnbox(_("You must specify a selection variable"));
+		sr->error = 1;
+	    } else if (sr->code == INTREG) {
+		warnbox(_("You must specify an upper bound variable"));
 		sr->error = 1;
 	    } else if (THREE_VARS_GRAPH(sr->code)) { 
 		warnbox(("You must select a Y-axis variable"));
@@ -2076,6 +2083,10 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     if (sr->code == WLS || THREE_VARS_GRAPH(sr->code)) {
 	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
 	sprintf(numstr, "%d ", k);
+	add_to_cmdlist(sr, numstr);
+    } else if (sr->code == INTREG) {
+	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
+	sprintf(numstr, " %d ", k);
 	add_to_cmdlist(sr, numstr);
     } else if (sr->code == POISSON) {
 	if (txt != NULL && *txt != '\0') {
@@ -2204,6 +2215,14 @@ static void compose_cmdlist (selector *sr)
 
     *sr->cmdlist = '\0';
 
+    if (sr->code == INTREG) {
+	parse_depvar_widget(sr, endbit, &dvlags, &idvlags);
+	if (!sr->error) {
+	    parse_extra_widgets(sr, endbit);
+	}
+	goto int_next;
+    }
+
     /* deal with content of "extra" widgets */
     if (sr->code == ARMA) {
 	arma_spec_to_cmdlist(sr);
@@ -2221,6 +2240,8 @@ static void compose_cmdlist (selector *sr)
     if (!sr->error && sr->depvar != NULL) {
 	parse_depvar_widget(sr, endbit, &dvlags, &idvlags);
     }
+
+ int_next:
 
     /* bail out if things have gone wrong already */
     if (sr->error) {
@@ -2424,6 +2445,8 @@ static char *est_str (int cmdnum)
 	return N_("LAD");
     case QUANTREG:
 	return N_("Quantile regression");
+    case INTREG:
+	return N_("Interval regression");
     case COINT:
     case COINT2:
 	return N_("Cointegration");
@@ -2449,6 +2472,8 @@ static char *extra_string (int ci)
 	return N_("List of AR lags");
     case QUANTREG:
 	return N_("Desired quantile(s)");
+    case INTREG:
+	return N_("Upper bound variable");
     case GR_DUMMY:
     case GR_3D:
     case GR_XYZ:	
@@ -2571,7 +2596,11 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 
     yvar = (preselect)? preselect : default_y;
 
-    tmp = gtk_label_new(_("Dependent variable"));
+    if (sr->code == INTREG) {
+	tmp = gtk_label_new(_("Lower bound variable"));
+    } else {
+	tmp = gtk_label_new(_("Dependent variable"));
+    }
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
 
@@ -2600,9 +2629,11 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_box_pack_start(GTK_BOX(right_vbox), depvar_hbox, FALSE, FALSE, 0);
     gtk_widget_show(depvar_hbox); 
 
-    sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
-    gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
-    gtk_widget_show(sr->default_check); 
+    if (sr->code != INTREG) {
+	sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
+	gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
+	gtk_widget_show(sr->default_check); 
+    } 
 
     if (sr->code != ARBOND) {
 	vbox_add_hsep(right_vbox);
@@ -2918,8 +2949,8 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	extra_var_box(sr, right_vbox);
 	vbox_add_hsep(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
-    } else if (sr->code == WLS || sr->code == POISSON || 
-	       THREE_VARS_GRAPH(sr->code)) {
+    } else if (sr->code == WLS || sr->code == INTREG || 
+	       sr->code == POISSON || THREE_VARS_GRAPH(sr->code)) {
 	extra_var_box(sr, right_vbox);
     } else if (USE_ZLIST(sr->code)) {
 	primary_rhs_varlist(sr, right_vbox);
@@ -2976,7 +3007,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     if (code == ARMA) {
 	dlgy += 80;
-    } else if (code == WLS || code == POISSON || code == AR) {
+    } else if (code == WLS || code == INTREG || code == POISSON || code == AR) {
 	dlgy += 30;
     } else if (code == HECKIT) {
 	dlgy += 80;
@@ -3401,13 +3432,13 @@ static gboolean x12a_vs_hessian (GtkWidget *w, selector *sr)
 
 #endif
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT && c != QUANTREG)
+#define robust_conf(c) (c != LOGIT && c != PROBIT && c != QUANTREG && c != INTREG)
 
 static void build_selector_switches (selector *sr) 
 {
     GtkWidget *hbox, *tmp;
 
-    if (sr->code == OLS || sr->code == WLS || 
+    if (sr->code == OLS || sr->code == WLS || sr->code == INTREG ||
 	sr->code == GARCH || sr->code == TSLS || sr->code == VAR || 
 	sr->code == LOGIT || sr->code == PROBIT ||
 	sr->code == PANEL || sr->code == QUANTREG) {
@@ -4324,7 +4355,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
-	ci == QUANTREG || THREE_VARS_GRAPH(ci)) {
+	ci == QUANTREG || ci == INTREG || THREE_VARS_GRAPH(ci)) {
 	build_mid_section(sr, right_vbox);
     }
     
