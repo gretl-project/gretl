@@ -2273,11 +2273,13 @@ static void save_random_effects_model (MODEL *pmod, panelmod_t *pan,
 	set_model_id(pmod);
     }
 
+#if 0
     /* Do we want this? */
     panel_dwstat(pmod, pan);
     if (!na(pmod->dw) && (pan->opt & OPT_I)) {
 	panel_DW_pvalue(pmod, pan, Z);
     }
+#endif
 
     *pan->realmod = *pmod;
 }
