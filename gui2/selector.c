@@ -2036,11 +2036,29 @@ static void read_quantreg_extras (selector *sr)
     }
 } 
 
+static void read_omit_cutoff (selector *sr)
+{
+    if (sr->extra[0] != NULL && GTK_WIDGET_IS_SENSITIVE(sr->extra[0])) {
+	double val;
+
+	val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
+	if (val != 0.10) {
+	    set_optval_double(OMIT, OPT_A, val);
+	}
+    }
+}
+
+#define extra_widget_get_int(c) (c == HECKIT || \
+                                 c == INTREG || \
+                                 c == POISSON || \
+                                 c == WLS || \
+                                 THREE_VARS_GRAPH(c))
+
 static void parse_extra_widgets (selector *sr, char *endbit)
 {
     const gchar *txt = NULL;
     char numstr[8];
-    int k;
+    int k = 0;
 
     if (sr->code == QUANTREG) {
 	read_quantreg_extras(sr);
@@ -2049,6 +2067,11 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 
     if (sr->code == ELLIPSE) {
 	read_ellipse_alpha(sr);
+	return;
+    }
+
+    if (sr->code == OMIT) {
+	read_omit_cutoff(sr);
 	return;
     }
 
@@ -2072,6 +2095,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	    } else if (THREE_VARS_GRAPH(sr->code)) { 
 		warnbox(("You must select a Y-axis variable"));
 		sr->error = 1;
+	    } else if (sr->code == POISSON) {
+		/* the 'extra' field is optional */
+		return;
 	    }
 	}
     } 
@@ -2080,36 +2106,25 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	return;
     }
 
-    if (sr->code == WLS || THREE_VARS_GRAPH(sr->code)) {
+    if (extra_widget_get_int(sr->code)) {
 	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
+    }
+
+    if (sr->code == WLS || THREE_VARS_GRAPH(sr->code)) {
 	sprintf(numstr, "%d ", k);
 	add_to_cmdlist(sr, numstr);
     } else if (sr->code == INTREG) {
-	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
 	sprintf(numstr, " %d ", k);
 	add_to_cmdlist(sr, numstr);
     } else if (sr->code == POISSON) {
-	if (txt != NULL && *txt != '\0') {
-	    k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
-	    sprintf(endbit, " ; %d", k);
-	}
+	sprintf(endbit, " ; %d", k);
     } else if (sr->code == HECKIT) {
-	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
 	sprintf(endbit, " %d", k);
 	selvar = k;
     } else if (sr->code == AR) {
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
-    } else if (sr->code == OMIT) {
-	if (sr->extra[0] != NULL && GTK_WIDGET_IS_SENSITIVE(sr->extra[0])) {
-	    double val;
-
-	    val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
-	    if (val != 0.10) {
-		set_optval_double(OMIT, OPT_A, val);
-	    }
-	}
-    }
+    } 
 }
 
 static void vec_get_spinner_data (selector *sr, int *order)
