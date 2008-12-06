@@ -178,7 +178,7 @@ static void print_intreg_info (const MODEL *pmod, PRN *prn)
 	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[1]), nr);
 	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[2]), nb);
     } else if (tex_format(prn)) {
-	pprintf(prn, "$\\hat{\\sigma}$ = %g\n", pmod->sigma);
+	pprintf(prn, "$\\hat{\\sigma}$ = %g \\\\\n", pmod->sigma);
 	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[0]), nl);
 	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[1]), nr);
 	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[2]), nb);
