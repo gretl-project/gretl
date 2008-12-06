@@ -598,7 +598,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	    }
 
 	    stata_read_string(fp, namelen + 1, aname, &err);
-	    printf("variable %d: \"aname\" = '%s'\n", i, aname);
+	    printf("labels %d: name = '%s'\n", j, aname);
 
 	    /* padding */
 	    stata_read_byte(fp, &err);
@@ -612,19 +612,19 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
 	    for (i=0; i<nlabels && !err; i++) {
 		off[i] = stata_read_long(fp, 1, &err);
-		printf("label offset %d = %d\n", i, off[i]);
+		printf(" label offset %d = %d\n", i, off[i]);
 	    }
 
 	    for (i=0; i<nlabels && !err; i++) {
 		double lev = (double) stata_read_long(fp, 0, &err);
 
-		printf("level %d = %g\n", i, lev);
+		printf(" level %d = %g\n", i, lev);
 	    }
 
 	    txt = calloc(totlen, 1);
 	    stata_read_string(fp, totlen, txt, &err);
 	    for (i=0; i<nlabels; i++) {
-		printf("label %d = '%s'\n", i, txt + off[i]);
+		printf(" label %d = '%s'\n", i, txt + off[i]);
 	    }
 
 	    free(off);
