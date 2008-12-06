@@ -1939,17 +1939,18 @@ static void maybe_print_jll (const MODEL *pmod, int lldig, PRN *prn)
 
 #define non_weighted_panel(m) (m->ci == PANEL && \
 			       !gretl_model_get_int(m, "unit-weights"))
+#define MID_STATS 14
 
 struct middletab {
-    const char **key; /* stats strings */
-    double *val;      /* stats values */
-    int minus;        /* variant of minus sign in use */
-    int mlen;         /* max length of translated string */
-    int ipos;         /* integer position in output */
-    int nls;          /* translation on? (0/1) */
-    int d;            /* CSV field delimiter */
-    int multi;        /* Using multiple precision? (0/1) */
-    char txt_fmt[36]; /* format for plain text output */
+    const char **key;     /* stats strings */
+    double *val;          /* stats values */
+    int minus;            /* variant of minus sign in use */
+    int mlen;             /* max length of translated string */
+    int ipos[MID_STATS];  /* is i-th stat integer? */
+    int nls;              /* translation on? (0/1) */
+    int d;                /* CSV field delimiter */
+    int multi;            /* Using multiple precision? (0/1) */
+    char txt_fmt[36];     /* format for plain text output */
 };
 
 #ifdef ENABLE_NLS
@@ -2047,7 +2048,7 @@ static char *print_eight (char *s, struct middletab *mt, int i)
     double ax, x = mt->val[i];
     char tmp[16];
 
-    if (i == mt->ipos) {
+    if (mt->ipos[i]) {
 	sprintf(s, "%9d", (int) x);
 	return s;
     }    
@@ -2288,7 +2289,9 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     mtab.mlen = 0;
     mtab.d = 0;
     mtab.minus = MINUS_HYPHEN;
-    mtab.ipos = -1;
+    for (i=0; i<MID_STATS; i++) {
+	mtab.ipos[i] = 0;
+    }
     mtab.nls = 0;
     mtab.multi = (pmod->ci == MPOLS);
 
@@ -2388,7 +2391,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     } else if (pmod->ci == TOBIT) {
 	key[2] = N_("Censored obs"); /* 22: Number of censored observations */
 	val[2] = gretl_model_get_int(pmod, "censobs");
-	mtab.ipos = 2;
+	mtab.ipos[2] = 1;
 	key[3] = "sigma";
 	for (i=4; i<8; i++) {
 	    val[i] = NADBL;
@@ -2414,6 +2417,27 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	if (!na(h)) {
 	    key[13] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
 	    val[13] = h;
+	}
+    } else if (pmod->ci == INTREG) {
+	key[0] = N_("sigma");  
+	val[0] = pmod->sigma;
+	key[1] = N_("Left-unbounded obs");  
+	val[1] = gretl_model_get_int(pmod, "n_left");
+	mtab.ipos[1] = 1;
+	key[2] = N_("Right-unbounded obs");  
+	val[2] = gretl_model_get_int(pmod, "n_right");
+	mtab.ipos[2] = 1;
+	key[3] = N_("Bounded obs");  
+	val[3] = gretl_model_get_int(pmod, "n_both");
+	mtab.ipos[3] = 1;
+	key[4] = N_("Chi^2");  
+	val[4] = gretl_model_get_double(pmod, "overall_test");
+	key[5] = N_("pvalue");  
+	val[5] = gretl_model_get_double(pmod, "overall_test_p");
+	for (i=6; i<14; i++) {
+	    if (i < 8 || i > 11) {
+		val[i] = NADBL;
+	    }
 	}
     } 
 
