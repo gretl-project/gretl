@@ -93,6 +93,9 @@ static int GLS_demean_detrend (double *y, int T, int test)
     return err;
 }
 
+/* generate the various differences and lags required for
+   the ADF test */
+
 static int *
 adf_prepare_vars (int order, int varno, int nseas, int *d0,
 		  double ***pZ, DATAINFO *pdinfo,
@@ -216,6 +219,9 @@ static double *df_gls_ct_cval (int T)
     return df_gls_ct_cvals[i];
 }
 
+/* display an F-test for the joint significance of the lagged
+   \delta y terms in ADF test */
+
 static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 {
     int *llist = gretl_list_new(order);
@@ -239,6 +245,13 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
     }
 }
 
+static void ADF_header (const char *s, int p, PRN *prn)
+{
+    pprintf(prn, _("\nAugmented Dickey-Fuller test for %s\n"), s);
+    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
+    pputc(prn, '\n');
+}
+
 static void 
 print_adf_results (int order, int auto_order, double DFt, double pv, 
 		   MODEL *dfmod, int dfnum, const char *vname, 
@@ -246,16 +259,16 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 		   int niv, int nseas, gretlopt opt, PRN *prn)
 {
     const char *models[] = {
-	"(1 - L)y = (a-1)*y(-1) + e",
-	"(1 - L)y = b0 + (a-1)*y(-1) + e",
-	"(1 - L)y = b0 + b1*t + (a-1)*y(-1) + e",
-	"(1 - L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + e"
+	"(1-L)y = (a-1)*y(-1) + e",
+	"(1-L)y = b0 + (a-1)*y(-1) + e",
+	"(1-L)y = b0 + b1*t + (a-1)*y(-1) + e",
+	"(1-L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + e"
     };
     const char *aug_models[] = {
-	"(1 - L)y = (a-1)*y(-1) + ... + e",
-	"(1 - L)y = b0 + (a-1)*y(-1) + ... + e",
-	"(1 - L)y = b0 + b1*t + (a-1)*y(-1) + ... + e",
-	"(1 - L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + ... + e"
+	"(1-L)y = (a-1)*y(-1) + ... + e",
+	"(1-L)y = b0 + (a-1)*y(-1) + ... + e",
+	"(1-L)y = b0 + b1*t + (a-1)*y(-1) + ... + e",
+	"(1-L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + ... + e"
     };
     const char *teststrs[] = {
 	N_("test without constant"),
@@ -290,15 +303,13 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	    pprintf(prn, _("lag order %d\n"), order);
 	} else if (flags & ADF_EG_TEST) {
 	    if (order > 0) {
-		pprintf(prn, _("\nAugmented Dickey-Fuller test, order %d, for %s\n"),
-			order, vname);
+		ADF_header(vname, order, prn);
 	    } else {
 		pprintf(prn, _("\nDickey-Fuller test for %s\n"), vname);
 	    }
 	} else {
 	    if (order > 0 && !auto_order) {
-		pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
-			order, vname);
+		ADF_header(vname, order, prn);
 	    } else {
 		pprintf(prn, _("\nDickey-Fuller tests for %s\n"), vname);
 	    }
