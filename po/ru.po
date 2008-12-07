@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-03 14:57-0500\n"
-"PO-Revision-Date: 2008-12-02 00:06+0200\n"
+"PO-Revision-Date: 2008-12-07 03:32+0200\n"
 "Last-Translator: Alexander B. Gedranovich <gedranovich@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -404,8 +404,7 @@ msgstr "нелинейность"
 #: lib/src/compare.c:1079
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
-"Последовательное исключение с использованием двухстороннего р-значения = %.2f"
+msgstr "Последовательное исключение с использованием двухстороннего р-значения = %.2f"
 
 #: lib/src/compare.c:1085
 #, c-format
@@ -605,8 +604,7 @@ msgstr "Интегральная сумма масштабированных о�
 #: lib/src/compare.c:2591
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
-msgstr ""
-"('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
+msgstr "('*' указывает на значение, лежащее за пределами 95% доверительных границ)"
 
 #: lib/src/compare.c:2651
 msgid "This test is only relevant for pooled models\n"
@@ -734,8 +732,7 @@ msgstr ""
 
 #: lib/src/csvdata.c:1085
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
 #: lib/src/csvdata.c:1094
@@ -774,8 +771,7 @@ msgstr "   количество столбцов данных = %d\n"
 #: lib/src/csvdata.c:1340
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr ""
-"   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
+msgstr "   ...но в строке %d количество столбцов составляет %d: завершение импорта\n"
 
 #: lib/src/csvdata.c:1385
 msgid "scanning for variable names...\n"
@@ -1275,7 +1271,7 @@ msgstr "частота %d не поддерживается"
 
 #: lib/src/dbread.c:1058
 msgid "No valid series found"
-msgstr "Не найдено удовлетворительных рядов"
+msgstr "Не найдено подходящих рядов"
 
 #: lib/src/dbread.c:1070 lib/src/dbread.c:1122 lib/src/dbread.c:1137
 #: lib/src/dbread.c:2089 lib/src/dbread.c:2450 lib/src/dbread.c:2454
@@ -1363,8 +1359,7 @@ msgstr ""
 #: lib/src/describe.c:1479 lib/src/describe.c:1583
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
-"Неподходящие данные, чтобы построить распределение частот для переменной %s"
+msgstr "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1487 lib/src/describe.c:2588 lib/src/describe.c:2833
 #: lib/src/describe.c:2836
@@ -2145,7 +2140,7 @@ msgstr "Квадраты ошибок из модели %d"
 #: lib/src/genfuncs.c:1701
 #, c-format
 msgid "fitted variance from model %d"
-msgstr "Дисперсия рассчетной переменной из модели %d"
+msgstr "Дисперсия расчетной переменной из модели %d"
 
 #: lib/src/genfuncs.c:1708
 #, c-format
@@ -2568,15 +2563,15 @@ msgstr "Одна или более \"добавленных\" переменны
 
 #: lib/src/gretl_errors.c:51
 msgid "Error generating logarithms"
-msgstr "Ошибка рассчета логарифмов"
+msgstr "Ошибка расчета логарифмов"
 
 #: lib/src/gretl_errors.c:52
 msgid "Error generating squares"
-msgstr "Ошибка рассчета квадратов"
+msgstr "Ошибка расчета квадратов"
 
 #: lib/src/gretl_errors.c:53
 msgid "Error generating lagged variables"
-msgstr "Ошибка рассчета лаговых переменных"
+msgstr "Ошибка расчета лаговых переменных"
 
 #: lib/src/gretl_errors.c:54
 msgid "Attempting to take square root of negative number"
@@ -2940,7 +2935,7 @@ msgstr ""
 #: lib/src/gretl_panel.c:1651 lib/src/gretl_restrict.c:1928
 #, c-format
 msgid "Failed to compute test statistic\n"
-msgstr "Не удалось рассчитать тестовую статистику\n"
+msgstr "Не удалось расчитать тестовую статистику\n"
 
 #: lib/src/gretl_panel.c:2172
 msgid "Error estimating fixed effects model\n"
@@ -3893,8 +3888,7 @@ msgstr ""
 #: lib/src/modelprint.c:480
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
+msgstr "Исключая константу, наибольшее р-значение получено для переменной %d (%s)"
 
 #: lib/src/modelprint.c:483
 #, c-format
@@ -4197,8 +4191,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:878 lib/src/modelprint.c:884
 msgid "Heteroskedasticity-robust standard errors"
-msgstr ""
-"Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
+msgstr "Робастные оценки стандартных ошибок (с поправкой на гетероскедастичность)"
 
 #: lib/src/modelprint.c:879 lib/src/modelprint.c:885
 msgid "variant"
@@ -4303,8 +4296,7 @@ msgstr "Тест Годфри (Godfrey, 1994) на автокорреляцию 
 #: lib/src/modelprint.c:1194 lib/src/modelprint.c:1201
 #, c-format
 msgid "Breusch-Godfrey test for autocorrelation up to order %d"
-msgstr ""
-"Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
+msgstr "Тест Бриша-Годфри (Breusch-Godfrey) на автокорреляцию вплоть до порядка %d"
 
 #: lib/src/modelprint.c:1197 lib/src/modelprint.c:1204
 msgid "Breusch-Godfrey test for first-order autocorrelation"
@@ -4555,7 +4547,7 @@ msgstr "Информационный критерий Шварца"
 
 #: lib/src/modelprint.c:2251
 msgid "note on model statistics abbreviations here"
-msgstr "ИК - информационный критерий"
+msgstr ""
 
 #: lib/src/modelprint.c:2257
 msgid "Mean dependent var"
@@ -4583,15 +4575,15 @@ msgstr "Р-значение (F)"
 
 #: lib/src/modelprint.c:2266
 msgid "Akaike criterion"
-msgstr "ИК Акаике"
+msgstr "Крит. Акаике"
 
 #: lib/src/modelprint.c:2267
 msgid "Schwarz criterion"
-msgstr "ИК Шварца"
+msgstr "Крит. Шварца"
 
 #: lib/src/modelprint.c:2268
 msgid "Hannan-Quinn"
-msgstr "ИК Хеннана-Куинна"
+msgstr "Крит. Хеннана-Куинна"
 
 #: lib/src/modelprint.c:2269 lib/src/modelprint.c:4232
 #: lib/src/modelprint.c:4234 lib/src/modelprint.c:4243
@@ -4600,7 +4592,7 @@ msgstr "Параметр rho"
 
 #: lib/src/modelprint.c:2270 lib/src/modelprint.c:2338
 msgid "Durbin-Watson"
-msgstr "Статистика Дарбина-Вотсона"
+msgstr "Стат. Дарбина-Вотсона"
 
 #: lib/src/modelprint.c:2310
 msgid "Adjusted $R^2$"
@@ -4611,9 +4603,8 @@ msgid "P-value($F$)"
 msgstr "Р-значение($F$)"
 
 #: lib/src/modelprint.c:2340
-#, fuzzy
 msgid "P-value(DW)"
-msgstr "Р-значение (F)"
+msgstr "Р-значение (DW)"
 
 #: lib/src/modelprint.c:2345
 msgid "Uncentered $R^2$"
@@ -4938,7 +4929,7 @@ msgstr ""
 
 #: lib/src/nls.c:1747
 msgid "Failed to calculate Jacobian"
-msgstr "Не удалось рассчитать Якобиан"
+msgstr "Не удалось расчитать Якобиан"
 
 #: lib/src/nls.c:2083
 msgid "NLS: The supplied derivatives seem to be incorrect"
@@ -5015,7 +5006,7 @@ msgstr "Погрешность = %g\n"
 
 #: lib/src/nls.c:3313
 msgid "Failed to compute numerical Hessian"
-msgstr "Не удалось рассчитать численное значение Гессиана"
+msgstr "Не удалось расчитать численное значение Гессиана"
 
 #: lib/src/nls.c:3382
 msgid ""
@@ -5080,10 +5071,8 @@ msgid "not significant at the 10% level\n"
 msgstr ""
 
 #: lib/src/nonparam.c:338
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
-"Выборка слишком мала для расчета р-значения для нормального распределения\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
+msgstr "Выборка слишком мала для расчета р-значения для нормального распределения\n"
 
 #: lib/src/nonparam.c:761
 msgid ""
@@ -5294,8 +5283,7 @@ msgid "gretl version %s\n"
 msgstr "версия gretl %s\n"
 
 #: lib/src/printout.c:98
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
 msgstr "Копирайт Ramu Ramanathan, Allin Cottrell и Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:99
@@ -5398,7 +5386,7 @@ msgid ""
 "Pearson chi-square test not computed: some expected frequencies were less\n"
 "than %g\n"
 msgstr ""
-"Не удалось рассчитать Хи-квадрат: некоторые частоты были меньше\n"
+"Не удалось расчитать Хи-квадрат: некоторые частоты были меньше\n"
 "чем %g\n"
 
 #: lib/src/printout.c:525
@@ -5408,8 +5396,7 @@ msgstr "Хи-квадрат = %g (%d ст. свободы, p-значение = 
 
 #: lib/src/printout.c:530
 #, no-c-format
-msgid ""
-"Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
+msgid "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
 
 #: lib/src/printout.c:556 lib/src/printout.c:564
@@ -5743,8 +5730,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1495
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:81
@@ -5885,8 +5871,7 @@ msgstr ""
 
 #: lib/src/system.c:2681
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr ""
-"Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
+msgstr "Тест Бриша-Пэгана (Breusch-Pagan) для диагональной ковариационной матрицы"
 
 #: lib/src/system.c:3686 lib/src/system.c:3690 lib/src/system.c:3696
 #: lib/src/system.c:3700
@@ -5899,7 +5884,7 @@ msgstr ""
 
 #: lib/src/system.c:3803
 msgid "Ljung-Box Q'"
-msgstr ""
+msgstr "Q-cтатистика Льюинга-Бокса (Ljung-Box Q')"
 
 #: lib/src/texprint.c:882 lib/src/varprint.c:750 lib/src/varprint.c:751
 #: gui2/gui_utils.c:3226
@@ -6470,11 +6455,11 @@ msgstr "gretl: критические значения"
 
 #: gui2/calculator.c:1261
 msgid "Failed to compute critical value"
-msgstr "Не удалось рассчитать критическое значение"
+msgstr "Не удалось расчитать критическое значение"
 
 #: gui2/calculator.c:1329
 msgid "Failed to compute p-value"
-msgstr "Не удалось рассчитать р-значение"
+msgstr "Не удалось расчитать р-значение"
 
 #: gui2/calculator.c:1332
 msgid "gretl: p-value"
@@ -6621,8 +6606,7 @@ msgstr "Тестовая статистика: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:1707
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
-"Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
+msgstr "Нулевая гипотеза: доли признака в генеральных совокупностях совпадают\n"
 
 #: gui2/calculator.c:1710
 #, c-format
@@ -7135,8 +7119,7 @@ msgstr "gretl: нелинейный МНК"
 
 #: gui2/callbacks.c:669
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
-"Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
+msgstr "Нелинейный МНК: Укажите уравнение регрессии и производные по параметрам:"
 
 #: gui2/callbacks.c:674 gui2/library.c:2741
 msgid "gretl: simultaneous equations system"
@@ -9805,7 +9788,7 @@ msgstr "_Модель"
 
 #: gui2/gretl.c:1441
 msgid "_Ordinary Least Squares..."
-msgstr "_Метод наименьших квадратов (МНК)..."
+msgstr "_Метод наименьших квадратов..."
 
 #: gui2/gretl.c:1442
 msgid "Other _linear models"
@@ -10513,7 +10496,7 @@ msgstr "Сохранить изменения?"
 
 #: gui2/gui_utils.c:2006
 msgid "_Fitted values"
-msgstr "_Подобранные значения"
+msgstr "_Расчетные значения"
 
 #: gui2/gui_utils.c:2008
 msgid "_Residuals"
@@ -11639,8 +11622,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Модели TSLS не могут быть сохранены в списке моделей"
 
 #: gui2/model_table.c:185
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Невозможно добавить модель в список -- в этой модели используется другая "
 "зависимая переменная"
@@ -11749,8 +11731,7 @@ msgstr "gretl: список моделей"
 
 #: gui2/model_table.c:936
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
-"Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
+msgstr "Для моделей логит и пробит, $R^2$ -- это псевдо-$R^2$ Макфаддена (McFadden)"
 
 #: gui2/model_table.c:1040
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
@@ -12106,9 +12087,8 @@ msgid "Ensure uniform sample size"
 msgstr "Обеспечить одинаковый размер выборки"
 
 #: gui2/selector.c:3522
-#, fuzzy
 msgid "Compute Durbin-Watson p-value"
-msgstr "Статистика Дарбина-Вотсона"
+msgstr "Вычислить р-значение статистики Дарбина-Вотсона"
 
 #: gui2/selector.c:3528
 msgid "Parameter covariance matrix via Hessian"
@@ -13400,8 +13380,7 @@ msgstr ""
 #: gui2/update.c:148
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Этот файл является частью системы gretl для автоматичесгого обновления\n"
+msgstr "Этот файл является частью системы gretl для автоматичесгого обновления\n"
 
 #: gui2/update.c:210
 msgid "No new files"
@@ -13907,7 +13886,7 @@ msgstr "Поиск %ld шрифтов"
 
 #: plugin/quantreg.c:369
 msgid "Couldn't calculate confidence intervals for this model"
-msgstr "Невозможно рассчитать доверительные интервалы для данной модели"
+msgstr "Невозможно расчитать доверительные интервалы для данной модели"
 
 #: plugin/range-mean.c:65
 msgid "range-mean plot for"
@@ -14222,11 +14201,3 @@ msgstr "Строки"
 msgid "Accessors"
 msgstr ""
 
-#~ msgid "errorbars"
-#~ msgstr "Столбцы ошибок"
-
-#~ msgid "filledcurve"
-#~ msgstr "Затемненная область"
-
-#~ msgid "candlesticks"
-#~ msgstr "Свечи"
