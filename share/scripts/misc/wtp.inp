@@ -1,5 +1,7 @@
 # Interval regression: Verbeek's "willingness to pay" example
-open wtp.gdt
+set echo off
+set messages off
+open wtp.gdt --quiet
 
 # construct the two bounds variables
 series lo = NA
@@ -16,9 +18,18 @@ hi = bidh
 smpl depvar = 4 --restrict --replace
 lo = bidh
 
-# Re-establish the full sample range and run two
-# variants of interval regression
+/*
+ Re-establish the full sample range and run two variants
+ of interval regression; a likelihood-ratio test is also
+ computed.
+*/
+
 smpl full
 intreg lo hi const
+scalar ll0 = $lnl
 intreg lo hi const age female income
+scalar ll1 = $lnl
+scalar LR = 2*(ll1 - ll0)
+printf "LR test: Chi-square(3) = %g, p-value = %g\n", \
+  LR, pvalue(X, 3, LR)
 
