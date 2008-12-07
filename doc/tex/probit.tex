@@ -531,13 +531,25 @@ intreg minvar maxvar X
 \end{code}
 %
 where \texttt{minvar} contains the $m_i$ series, with \texttt{NA}s for
-left-unbounded observations and \texttt{maxvar} contains $M_i$ with
+left-unbounded observations, and \texttt{maxvar} contains $M_i$, with
 \texttt{NA}s for right-unbounded observations.  By default, standard
 errors are computed using the negative inverse of the Hessian.  If the
 \option{robust} flag is given, then QML or Huber--White standard
 errors are calculated instead. In this case the estimated covariance
 matrix is a ``sandwich'' of the inverse of the estimated Hessian and
 the outer product of the gradient.
+
+If the model specification contains regressors other than just a
+constant, the output includes a chi-square statistic for testing the
+joint null hypothesis that none of these regressors has any effect on
+the outcome.  This is a Wald statistic based on the estimated
+covariance matrix.  If you wish to construct a likelihood ratio test,
+this is easily done by estimating both the full model and the null
+model (containing only the constant), saving the log-likelihood in
+both cases via the \dollar{lnl} accessor, and then referring twice the
+difference between the two log-likelihoods to the chi-square
+distribution with $k$ degrees of freedom, where $k$ is the number of
+additional regressors (see the \texttt{pvalue} command in the \GCR).
 
 \begin{script}[htbp]
   \caption{Interval model on artificial data}
@@ -589,7 +601,7 @@ Under the null hypothesis of no correlation:
 \end{scodebit}
 \end{script}
 
-Like for the probit and Tobit models, after a model has been estimated
+As with the probit and Tobit models, after a model has been estimated
 the \dollar{uhat} accessor returns the generalized residual, which is
 an estimate of $\epsilon_i$: more precisely, it equals $y_i - x_i
 \hat{\beta}$ for point observations and $E(\epsilon_i| m_i, M_i, x_i)$
