@@ -220,7 +220,7 @@ static const char *gp_keypos_string (int t)
 {
     int i;
 
-    for (i=0; key_specs[i].sty >= 0; i++) {
+    for (i=0; key_specs[i].str != NULL; i++) {
 	if (t == key_specs[i].sty) {
 	    return key_specs[i].str;
 	}
@@ -233,7 +233,7 @@ void print_keypos_string (int t, FILE *fp)
 {
     const char *s = gp_keypos_string(t);
 
-    if (strcmp(s, "none")) {
+    if (!strcmp(s, "none")) {
 	fputs("set nokey\n", fp);
     } else {
 	fprintf(fp, "set key %s\n", s);
