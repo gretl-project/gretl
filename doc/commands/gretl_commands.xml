@@ -4173,6 +4173,12 @@
 	right-unbounded observations, respectively.
       </para>
 
+      <para context="gui">
+	In the model specification dialog, <repl>minvar</repl> and
+	<repl>maxvar</repl> are indentified as the Lower bound variable and
+	the Upper bound variable respectively.
+      </para>
+
       <para>
 	The model is estimated by maximum likelihood, assuming normality of
 	the disturbance term.

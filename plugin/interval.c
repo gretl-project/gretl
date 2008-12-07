@@ -211,7 +211,7 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 	    (*pZ)[mpy][t] = x0;
 	} else if (x0 > x1) {
 	    gretl_errmsg_sprintf(_("Obs %d: lower bound (%g) "
-				   "exceeds upper (%g)"), t,
+				   "exceeds upper (%g)"), t + 1,
 				 x0, x1);
 	    err = E_DATA;
 	} else {
