@@ -150,7 +150,7 @@ Dependent variable: GRADE
 
 \end{code}
 
-In this context, the \verb+$uhat+ accessor function takes a
+In this context, the \dollar{uhat} accessor function takes a
 special meaning: it returns generalized residuals as defined in
 Gourieroux \textit{et al} (1987), which can be interpreted as unbiased
 estimators of the latent disturbances $\varepsilon_t$. These are
@@ -296,17 +296,16 @@ in \app{gretl}.
   \label{ex:oprobit}
 \begin{scode}
 /*
-  Replicate the results in Wooldridge, Econometric Analysis of
-  Cross Section and Panel Data, section 15.10, using pension-
-  plan data from Papke (AER, 1998).
+  Replicate the results in Wooldridge, Econometric Analysis of Cross
+  Section and Panel Data, section 15.10, using pension-plan data from
+  Papke (AER, 1998).
 
-  The dependent variable, pctstck (percent stocks), codes the 
-  asset allocation responses of "mostly bonds", "mixed" and 
-  "mostly stocks" as {0, 50, 100}.
+  The dependent variable, pctstck (percent stocks), codes the asset
+  allocation responses of "mostly bonds", "mixed" and "mostly stocks"
+  as {0, 50, 100}.
 
-  The independent variable of interest is "choice", a dummy
-  indicating whether individuals are able to choose their own
-  asset allocations.
+  The independent variable of interest is "choice", a dummy indicating
+  whether individuals are able to choose their own asset allocations.
 */
 
 open pension.gdt
@@ -330,11 +329,10 @@ a1 = $coeff[k-1]
 a2 = $coeff[k]
 
 /* 
-   Wooldridge illustrates the 'choice' effect in the ordered
-   probit by reference to a single, non-black male aged 60, 
-   with 13.5 years of education, income in the range $50K - $75K
-   and wealth of $200K, participating in a plan with profit
-   sharing.
+   Wooldridge illustrates the 'choice' effect in the ordered probit 
+   by reference to a single, non-black male aged 60, with 13.5 years 
+   of education, income in the range $50K - $75K and wealth of $200K, 
+   participating in a plan with profit sharing.
 */
 matrix X = {60, 13.5, 0, 0, 0, 0, 0, 0, 1, 0, 0, 200, 1}
 
@@ -358,9 +356,9 @@ printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
 \end{scode}
 \end{script}
 
-After estimating ordered models, the \verb+$uhat+ accessor yields
+After estimating ordered models, the \dollar{uhat} accessor yields
 generalized residuals as in binary models; additionally, the
-\verb+$yhat+ accessor function returns $\hat{z}_i$, so it is
+\dollar{yhat} accessor function returns $\hat{z}_i$, so it is
 possible to compute an unbiased estimator of the latent variable
 $y^*_i$ simply by adding the two together.
 
@@ -442,10 +440,8 @@ The Tobit model is used when the dependent variable of a model is
 \emph{censored}.\footnote{We assume here that censoring occurs from
   below at 0. Censoring from above, or at a point different from zero,
   can be rather easily handled by re-defining the dependent variable
-  appropriately. The more general case of two-sided censoring is not
-  handled by \app{gretl} via a native command yet, but it is possible
-  to estimate such models using the \texttt{mle} command (see chapter
-  \ref{chap:mle}).}  
+  appropriately. For the more general case of two-sided censoring the
+  \cmd{intreg} command may be used (see below).}  
 Assume a latent variable $y^*_i$ can be described
 as
 %
@@ -480,7 +476,7 @@ tobit depvar indvars
 \end{code}
 
 As usual, progress of the maximization algorithm can be tracked via
-the \option{verbose} switch, while \verb+$uhat+ returns the
+the \option{verbose} switch, while \dollar{uhat} returns the
 generalized residuals. Note that in this case the generalized residual
 is defined as $\hat{u}_i = E(\varepsilon_i | y_i = 0)$ for censored
 observations, so the familiar equality $\hat{u}_i = y_i - \hat{y}_i$
@@ -492,7 +488,117 @@ more severe: non-normality implies inconsistency for the Tobit
 estimator. For this reason, the output for the tobit model includes
 the Chesher--Irish (1987) test for normality by default.
 
-\subsection{Sample selection model}
+\section{Interval regression}
+\label{sec:intreg}
+
+The interval regression model arises when the dependent variable is
+unobserved for some (possibly all) observations; what we observe
+instead is an interval in which the dependent variable lies.  In other
+words, the data generating process is assumed to be
+\[
+  y^*_i = x_i \beta + \epsilon_i
+\] 
+but we only know that $m_i \le y^*_i \le M_i$, where the interval may
+be left- or right-unbounded (but not both). If $m_i = M_i$, we
+effectively observe $y^*_i$ and no information loss occurs. In
+practice, each observation belongs to one of four categories:
+\begin{enumerate}
+\item left-unbounded, when $m_i = -\infty$,
+\item right-unbounded, when $M_i = \infty$,
+\item bounded, when $-\infty < m_i < M_i <\infty$ and
+\item point observations when $m_i = M_i$.
+\end{enumerate}
+
+It is interesting to note that this model bears similarities to other
+models in several special cases:
+\begin{itemize}
+\item When all observations are point observations the model trivially
+  reduces to the ordinary linear regression model.
+\item When $m_i = M_i$ when $y^*_i> 0$, while $m_i = -\infty$ and $M_i
+  = 0$ otherwise, we have the Tobit model (see \ref{sec:tobit}).
+\item The interval model could be thought of an ordered probit model
+  (see \ref{sec:ordered}) in which the cut points (the $\alpha_j$
+  coefficients in eq. \ref{eq:QR-ordered}) are observed and don't need
+  to be estimated.
+\end{itemize}
+
+The \app{gretl} command \texttt{intreg} estimates interval models by
+maximum likelihood, assuming normality of the disturbance term
+$\epsilon_i$.  Its syntax is
+%
+\begin{code}
+intreg minvar maxvar X
+\end{code}
+%
+where \texttt{minvar} contains the $m_i$ series, with \texttt{NA}s for
+left-unbounded observations and \texttt{maxvar} contains $M_i$ with
+\texttt{NA}s for right-unbounded observations.  By default, standard
+errors are computed using the negative inverse of the Hessian.  If the
+\option{robust} flag is given, then QML or Huber--White standard
+errors are calculated instead. In this case the estimated covariance
+matrix is a ``sandwich'' of the inverse of the estimated Hessian and
+the outer product of the gradient.
+
+\begin{script}[htbp]
+  \caption{Interval model on artificial data}
+  \label{ex:interval}
+Input:
+\begin{scodebit}
+nulldata 100
+# generate artificial data
+set seed 201449 
+x = normal()
+epsilon = 0.2*normal()
+ystar = 1 + x + epsilon
+lo_bound = floor(ystar)
+hi_bound = ceil(ystar)
+
+# run the interval model
+intreg lo_bound hi_bound const x
+
+# estimate ystar
+gen_resid = $uhat
+yhat = $yhat + gen_resid
+corr ystar yhat 
+\end{scodebit}
+Output (selected portions):
+\begin{scodebit}
+Model 1: Interval estimates using the 100 observations 1-100
+Lower limit: lo_bound, Upper limit: hi_bound
+
+             coefficient   std. error   t-ratio    p-value 
+  ---------------------------------------------------------
+  const       0.993762     0.0338325     29.37    1.22e-189 ***
+  x           0.986662     0.0319959     30.84    8.34e-209 ***
+
+Chi-square(1)        950.9270   p-value              8.3e-209
+Log-likelihood      -44.21258   Akaike criterion     94.42517
+Schwarz criterion    102.2407   Hannan-Quinn         97.58824
+
+sigma = 0.223273
+Left-unbounded observations: 0
+Right-unbounded observations: 0
+Bounded observations: 100
+Point observations: 0
+
+...
+
+corr(ystar, yhat) = 0.98960092
+Under the null hypothesis of no correlation:
+ t(98) = 68.1071, with two-tailed p-value 0.0000
+\end{scodebit}
+\end{script}
+
+Like for the probit and Tobit models, after a model has been estimated
+the \dollar{uhat} accessor returns the generalized residual, which is
+an estimate of $\epsilon_i$: more precisely, it equals $y_i - x_i
+\hat{\beta}$ for point observations and $E(\epsilon_i| m_i, M_i, x_i)$
+otherwise. Note that it is possible to compute an unbiased predictor
+of $y^*_i$ by summing this estimate to $x_i \hat{\beta}$. Script
+\ref{ex:interval} shows an example. 
+
+
+\section{Sample selection model}
 \label{sec:heckit}
 
 In the sample selection model (also known as ``Tobit II'' model),
@@ -568,7 +674,7 @@ censoring equation.
 Since in most cases maximum likelihood is the method of
 choice, by default \app{gretl} computes ML estimates. The 2-step
 Heckit estimates can be obtained by using the \option{two-step}
-option. After estimation, the \verb|$uhat| accessor contains the
+option. After estimation, the \dollar{uhat} accessor contains the
 generalized residuals. As in the ordinary Tobit model, the residuals
 equal the difference between actual and fitted $y_i$ only for
 uncensored observations (those for which $d_i = 1$).

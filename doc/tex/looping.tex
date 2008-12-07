@@ -99,7 +99,7 @@ syntax looks like this: \cmd{loop i=1..20}.
 The index variable may be used within the loop body in one or both of
 two ways: you can access the integer value of \verb+i+ (see Example
 \ref{loop-panel-script}) or you can use its string representation,
-\verb+$i+ (see Example \ref{loop-string-script}).
+\dollar{i} (see Example \ref{loop-string-script}).
 
 The starting and ending values for the index can be given in numerical
 form, or by reference to predefined scalar variables.  In the latter
@@ -176,7 +176,7 @@ endloop
 Note that if you use this idiom inside a function (see
 chapter~\ref{chap:functions}), looping across a list that has been
 supplied to the function as an argument, it is necessary to use the
-syntax \textsl{listname}.\verb|$i| to reference the list-member
+syntax \textsl{listname}.\dollar{i} to reference the list-member
 variables.  In the context of the example above, this would mean
 replacing the third line with
 %
@@ -231,7 +231,7 @@ statement.
 If the initialization expression in a \texttt{for} loop takes the
 common form of setting a scalar variable to a given value, the string
 representation of that scalar's value will be available within
-the loop via the accessor \verb+$+\textsl{varname}.  
+the loop via the accessor \dollar{\emph{varname}}.  
 
 
 \section{Progressive mode}

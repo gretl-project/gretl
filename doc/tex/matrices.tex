@@ -817,19 +817,19 @@ These are set out in Table~\ref{tab:matrix-accessors}.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{ll}
-\texttt{\$coeff}  & vector of estimated coefficients \\
-\texttt{\$compan} & companion matrix (after VAR or VECM estimation) \\
-\texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
-\texttt{\$jbeta}  & matrix $\beta$ (cointegration vectors) from
-Johansen's procedure \\
-\texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
-$\beta$ from Johansen's procedure \\
-\texttt{\$rho}    & autoregressive coefficients for error process \\
-\texttt{\$sigma}  & residual covariance matrix \\
-\texttt{\$stderr} & vector of estimated standard errors \\
-\texttt{\$uhat}   & matrix of residuals \\
-\texttt{\$vcv}    & covariance matrix of parameter estimates \\
-\texttt{\$yhat}   & matrix of fitted values 
+  \dollar{coeff}  & vector of estimated coefficients \\
+  \dollar{compan} & companion matrix (after VAR or VECM estimation) \\
+  \dollar{jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
+  \dollar{jbeta}  & matrix $\beta$ (cointegration vectors) from
+  Johansen's procedure \\
+  \dollar{jvbeta} & covariance matrix for the unrestricted elements of 
+  $\beta$ from Johansen's procedure \\
+  \dollar{rho}    & autoregressive coefficients for error process \\
+  \dollar{sigma}  & residual covariance matrix \\
+  \dollar{stderr} & vector of estimated standard errors \\
+  \dollar{uhat}   & matrix of residuals \\
+  \dollar{vcv}    & covariance matrix of parameter estimates \\
+  \dollar{yhat}   & matrix of fitted values 
 \end{tabular}
 \caption{Matrix accessors for model data}
 \label{tab:matrix-accessors}
@@ -868,11 +868,11 @@ grabs the coefficient vector from model \texttt{m1}; and the third
 (which uses the mechanism of sub-matrix selection described above)
 grabs a portion of the covariance matrix from model \texttt{m1}.
 
-If the model in question a VAR or VECM (only) \verb|$compan| returns
+If the model in question a VAR or VECM (only) \dollar{compan} returns
 the companion matrix.
 
 After a vector error correction model is estimated via Johansen's
-procedure, the matrices \verb|$jalpha| and \verb|$jbeta| are
+procedure, the matrices \dollar{jalpha} and \dollar{jbeta} are
 also available. These have a number of columns equal to the chosen
 cointegration rank; therefore, the product
 \begin{code}
@@ -882,7 +882,7 @@ returns the reduced-rank estimate of $A(1)$. Since $\beta$ is
 automatically identified via the Phillips normalization (see section
 \ref{sec:johansen-ident}), its unrestricted elements do have a proper
 covariance matrix, which can be retrieved through the
-\verb|$jvbeta| accessor.
+\dollar{jvbeta} accessor.
 
 \section{Namespace issues}
 \label{matrix-namespace}

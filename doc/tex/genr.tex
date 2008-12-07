@@ -490,7 +490,7 @@ The \verb+genr+ command provides a means of retrieving various values
 calculated by the program in the course of estimating models or
 testing hypotheses.  The variables that can be retrieved in this way
 are listed in the \GCR; here we say a bit more about the special
-variables \verb+$test+ and \verb+$pvalue+.
+variables \dollar{test} and \dollar{pvalue}.
 
 These variables hold, respectively, the value of the last test
 statistic calculated using an explicit testing command and the p-value
@@ -508,12 +508,12 @@ means); \cmd{omit} (joint test for the significance of variables
 omitted from a model); \cmd{reset} (Ramsey's RESET); \cmd{restrict}
 (general linear restriction); \cmd{runs} (runs test for randomness);
 \cmd{testuhat} (test for normality of residual); and \cmd{vartest}
-(test for difference of variances). In most cases both a \verb+$test+
-and a \verb+$pvalue+ are stored; the exception is the KPSS test, for
+(test for difference of variances). In most cases both a \dollar{test}
+and a \dollar{pvalue} are stored; the exception is the KPSS test, for
 which a p-value is not currently available.
     
 An important point to notice about this mechanism is that the internal
-variables \verb+$test+ and \verb+$pvalue+ are over-written each time
+variables \dollar{test} and \dollar{pvalue} are over-written each time
 one of the tests listed above is performed.  If you want to reference
 these values, you must do so at the correct point in the sequence of
 \app{gretl} commands.  
@@ -521,7 +521,7 @@ these values, you must do so at the correct point in the sequence of
 A related point is that some of the test commands generate, by
 default, more than one test statistic and p-value; in these cases only
 the last values are stored. To get proper control over the retrieval
-of values via \verb+$test+ and \verb+$pvalue+ you should formulate the
+of values via \dollar{test} and \dollar{pvalue} you should formulate the
 test command in such a way that the result is unambiguous.  This
 comment applies in particular to the \verb+adf+ and \verb+lmtest+
 commands.
@@ -531,20 +531,20 @@ commands.
   the Dickey--Fuller test: one based on a regression including a
   constant, one using a constant and linear trend, and one using a
   constant and a quadratic trend.  When you wish to reference
-  \verb+$test+ or \verb+$pvalue+ in connection with this command, you
+  \dollar{test} or \dollar{pvalue} in connection with this command, you
   can control the variant that is recorded by using one of the flags
   \option{nc}, \option{c}, \option{ct} or \option{ctt} with
   \verb+adf+.
 \item By default, the \cmd{lmtest} command (which must follow an OLS
   regression) performs several diagnostic tests on the regression in
-  question.  To control what is recorded in \verb+$test+ and
-  \verb+$pvalue+ you should limit the test using one of the flags
+  question.  To control what is recorded in \dollar{test} and
+  \dollar{pvalue} you should limit the test using one of the flags
   \option{logs}, \option{autocorr}, \option{squares} or
   \option{white}.
 \end{itemize}
 
-As an aid in working with values retrieved using \verb+$test+ and
-\verb+$pvalue+, the nature of the test to which these values relate is
+As an aid in working with values retrieved using \dollar{test} and
+\dollar{pvalue}, the nature of the test to which these values relate is
 written into the descriptive label for the generated variable.  You
 can read the label for the variable using the \cmd{label} command
 (with just one argument, the name of the variable), to check that you
