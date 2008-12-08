@@ -439,7 +439,7 @@ static int label_array_header (const int *list, char **names,
 			       const char *lname, const DATAINFO *pdinfo,
 			       PRN *prn)
 {
-    int i, v, n = 0;
+    int i, v = 0, n = 0;
 
     for (i=1; i<=list[0]; i++) {
 	if (!strcmp(names[i-1], lname)) {
@@ -562,7 +562,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
        which are themselves stored later in the file */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
-	if (*aname != '\0') {
+	if (*aname != '\0' && !st_err) {
 	    printf("variable %d: \"value label\" = '%s'\n", i+1, aname);
 	    st_err = push_label_info(&lvars, &lnames, i+1, aname);
 	}
@@ -658,10 +658,9 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* value labels */
 
-    if (!err && abs(stata_version) > 5) {
+    if (!err && !st_err && lvars != NULL && abs(stata_version) > 5) {
 	PRN *st_prn = NULL;
 	double *level;
-	int st_err = 0;
 	
 	for (j=0; j<nvar; j++) {
 	    /* first int not needed, use fread directly to trigger EOF */
