@@ -188,6 +188,8 @@ static int arma_hessian = 1;
 static int selvar;
 static int jcase = 2;
 static int verbose;
+static int lovar;
+static int hivar;
 
 static int *xlist;
 static int *instlist;
@@ -306,6 +308,7 @@ void clear_selector (void)
     default_order = 0;
     selvar = 0;
     vartrend = 0;
+    lovar = hivar = 0;
 
     arma_p = 1;
     arima_d = 0;
@@ -332,6 +335,29 @@ void clear_selector (void)
 
     destroy_lag_preferences();
 }
+
+#if 0
+
+void prime_selector_from_model (const MODEL *pmod)
+{
+    if (pmod->ci == INTREG) {
+	;
+    } else {
+	int dv = gretl_model_get_depvar(pmod);
+	int *mxlist;
+
+	if (dv >= 0 && dv < datainfo->v) {
+	    default_y = dv;
+	}
+	mxlist = gretl_model_get_x_list(pmod);
+	if (mxlist != NULL) {
+	    free(xlist);
+	    xlist = mxlist;
+	}
+    }
+}
+
+#endif
 
 #define UNRESTRICTED N_("U")
 #define RESTRICTED   N_("R")
@@ -2116,6 +2142,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->code == INTREG) {
 	sprintf(numstr, " %d ", k);
 	add_to_cmdlist(sr, numstr);
+	hivar = k;
     } else if (sr->code == POISSON) {
 	sprintf(endbit, " ; %d", k);
     } else if (sr->code == HECKIT) {
@@ -2175,6 +2202,8 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	if (sr->default_check != NULL && 
 	    GTK_TOGGLE_BUTTON(sr->default_check)->active) {
 	    default_y = ynum;
+	} else if (sr->code == INTREG) {
+	    lovar = ynum;
 	}
     }
 }
@@ -2603,13 +2632,16 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 				 int preselect)
 {
     GtkWidget *tmp, *depvar_hbox;
-    int yvar;
+    int defvar;
 
-    if (default_y >= datainfo->v) {
-	default_y = -1;
+    if (sr->code == INTREG) {
+	defvar = (lovar > 0 && lovar < datainfo->v)? lovar : -1;
+    } else {
+	if (default_y >= datainfo->v) {
+	    default_y = -1;
+	}
+	defvar = (preselect)? preselect : default_y;
     }
-
-    yvar = (preselect)? preselect : default_y;
 
     if (sr->code == INTREG) {
 	tmp = gtk_label_new(_("Lower bound variable"));
@@ -2634,8 +2666,8 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     g_signal_connect(G_OBJECT(sr->depvar), "changed",
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);
 
-    if (yvar >= 0) {
-        gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[yvar]);
+    if (defvar >= 0) {
+        gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[defvar]);
     }
 
     gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
@@ -2654,7 +2686,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 	vbox_add_hsep(right_vbox);
     }
 
-    return yvar;
+    return defvar;
 }
 
 static void 
@@ -2804,17 +2836,23 @@ static void graph_zvar_box (selector *sr, GtkWidget *vbox)
 
 static void extra_var_box (selector *sr, GtkWidget *vbox)
 {
+    int setvar = 0;
+
     sr->extra[0] = entry_with_label_and_chooser(sr, vbox,
 						NULL, 0,
 						set_extra_var_callback);
 
     if (sr->code == HECKIT && selvar > 0 && selvar < datainfo->v) {
-	const char *vname = datainfo->varname[selvar];
-
-	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), vname);
-	g_object_set_data(G_OBJECT(sr->extra[0]), "data",
-			  GINT_TO_POINTER(selvar));
+	setvar = selvar;
+    } else if (sr->code == INTREG && hivar > 0 && hivar < datainfo->v) {
+	setvar = hivar;
     }
+
+    if (setvar > 0) {
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), datainfo->varname[setvar]);
+	g_object_set_data(G_OBJECT(sr->extra[0]), "data",
+			  GINT_TO_POINTER(setvar));
+    }	
 }
 
 static gboolean accept_right_arrow (GtkWidget *w, GdkEventKey *key,
