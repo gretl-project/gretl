@@ -344,6 +344,7 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 			   c == HCCM ||		\
 			   c == HECKIT ||	\
 			   c == HSK ||		\
+                           c == INTREG ||       \
 			   c == LAD ||		\
 			   c == LOGISTIC ||	\
 			   c == LOGIT ||	\
