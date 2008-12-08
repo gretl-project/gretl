@@ -1213,12 +1213,12 @@ static void add_stats_to_model (MODEL *pmod, nlspec *spec,
     } 
 
     if (tss == 0.0) {
-	pmod->rsq = NADBL;
+	pmod->rsq = pmod->adjrsq = NADBL;
     } else {
 	pmod->rsq = 1.0 - pmod->ess / tss;
+	pmod->adjrsq = 1.0 - (1.0 - pmod->rsq) * 
+	    ((double) (pmod->nobs - 1) / (pmod->nobs - pmod->ncoeff));
     }
-
-    pmod->adjrsq = NADBL;
 }
 
 static int QML_vcv (nlspec *spec, gretl_matrix *V)
