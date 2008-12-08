@@ -1508,7 +1508,7 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
     }
 
     pmod->rsq = pmod->adjrsq = NADBL;
-    pmod->fstt = NADBL;
+    pmod->fstt = pmod->chisq = NADBL;
     pmod->lnL = NADBL;
   
     gretl_model_allocate_params(pmod, ab->k);

@@ -734,6 +734,7 @@ static void tsls_extra_stats (MODEL *pmod, const double **Z,
     pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1.0) / pmod->dfd);
 
     pmod->fstt = pmod->rsq * pmod->dfd / (pmod->dfn * r);
+    pmod->chisq = NADBL;
 
     ls_criteria(pmod);
 

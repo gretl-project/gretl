@@ -402,6 +402,72 @@ static int set_time_info (int t1, int pd, DATAINFO *dinfo)
     return 0;
 }
 
+static int dta_value_labels_setup (PRN **pprn, gretl_string_table **pst)
+{
+    int err = 0;
+
+    *pprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+
+    if (*pprn != NULL) {
+	if (*pst == NULL) {
+	    *pst = gretl_string_table_new(&err);
+	    if (*pst == NULL) {
+		gretl_print_destroy(*pprn);
+		*pprn = NULL;
+	    }
+	}
+    }
+
+    return err;
+}
+
+static int push_label_info (int **pv, char ***pS, int v, const char *lname)
+{
+    int n = (*pv == NULL)? 0 : (*pv)[0];
+    int err = 0;
+
+    if (gretl_list_append_term(pv, v) == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = strings_array_add(pS, &n, lname);
+    }
+
+    return err;
+}
+
+static int label_array_header (const int *list, char **names, 
+			       const char *lname, const DATAINFO *pdinfo,
+			       PRN *prn)
+{
+    int i, v, n = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	if (!strcmp(names[i-1], lname)) {
+	    v = list[i];
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	return 0;
+    }
+
+    if (n == 1) {
+	pprintf(prn, "\nValue -> label mappings for variable %d (%s)\n", 
+		v, pdinfo->varname[v]);
+    } else {
+	pprintf(prn, "\nValue -> label mappings for the following %d variables\n", n);
+	for (i=1; i<=list[0]; i++) {
+	    if (!strcmp(names[i-1], lname)) {
+		v = list[i];
+		pprintf(prn, " %3d (%s)\n", v, pdinfo->varname[v]);
+	    }
+	}
+    }
+
+    return 1;
+}
+
 static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 			  gretl_string_table **pst, int namelen,
 			  int *nvread, PRN *prn)
@@ -412,9 +478,12 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     int soffset, pd = 0, tnum = -1;
     char datalabel[81], c18[18], aname[33];
     int *types = NULL;
+    int *lvars = NULL;
+    char **lnames = NULL;
     char strbuf[129];
     char *txt = NULL; 
     int *off = NULL;
+    int st_err = 0;
     int err = 0;
 
     labellen = (stata_version == 5)? 32 : 81;
@@ -495,6 +564,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
         stata_read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0') {
 	    printf("variable %d: \"value label\" = '%s'\n", i+1, aname);
+	    st_err = push_label_info(&lvars, &lnames, i+1, aname);
 	}
     }
 
@@ -586,9 +656,13 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	}
     }
 
-    /* value labels (??) */
+    /* value labels */
 
     if (!err && abs(stata_version) > 5) {
+	PRN *st_prn = NULL;
+	double *level;
+	int st_err = 0;
+	
 	for (j=0; j<nvar; j++) {
 	    /* first int not needed, use fread directly to trigger EOF */
 	    fread((int *) aname, sizeof(int), 1, fp);
@@ -608,31 +682,74 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	    nlabels = stata_read_long(fp, 1, &err);
 	    totlen = stata_read_long(fp, 1, &err);
 
+	    if (nlabels <= 0 || totlen <= 0) {
+		break;
+	    }
+
+	    if (st_prn == NULL) {
+		st_err = dta_value_labels_setup(&st_prn, pst);
+		if (st_err) {
+		    break;
+		}
+	    }
+
 	    off = malloc(nlabels * sizeof *off);
+	    if (off == NULL) {
+		st_err = E_ALLOC;
+		break;
+	    }
+
+	    level = malloc(nlabels * sizeof *level);
+	    if (level == NULL) {
+		free(off);
+		st_err = E_ALLOC;
+		break;
+	    }
+
+	    label_array_header(lvars, lnames, aname, dinfo, st_prn);
 
 	    for (i=0; i<nlabels && !err; i++) {
 		off[i] = stata_read_long(fp, 1, &err);
-		printf(" label offset %d = %d\n", i, off[i]);
 	    }
 
 	    for (i=0; i<nlabels && !err; i++) {
-		double lev = (double) stata_read_long(fp, 0, &err);
-
-		printf(" level %d = %g\n", i, lev);
+		level[i] = (double) stata_read_long(fp, 0, &err);
+		printf(" level %d = %g\n", i, level[i]);
 	    }
 
 	    txt = calloc(totlen, 1);
+	    if (txt == NULL) {
+		free(off);
+		free(level);
+		st_err = E_ALLOC;
+		break;
+	    }	    
+
 	    stata_read_string(fp, totlen, txt, &err);
 	    for (i=0; i<nlabels; i++) {
 		printf(" label %d = '%s'\n", i, txt + off[i]);
+		pprintf(st_prn, "%10g -> '%s'\n", level[i], txt + off[i]);
 	    }
 
 	    free(off);
+	    free(level);
 	    free(txt);
+	}
+
+	if (st_prn != NULL) {
+	    if (!st_err) {
+		gretl_string_table_add_extra(*pst, st_prn);
+	    }
+	    gretl_print_destroy(st_prn);
 	}
     }
 
     free(types);
+
+    if (lvars != NULL) {
+	free_strings_array(lnames, lvars[0]);
+	free(lvars);
+    }
 
     return err;
 }

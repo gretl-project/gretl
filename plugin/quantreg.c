@@ -234,10 +234,9 @@ static void rq_transcribe_results (MODEL *pmod,
     /* sum of absolute residuals */
     gretl_model_set_double(pmod, "ladsum", SAR);
 
-    /* invalidate ess-based stats */
-    pmod->rsq = NADBL;
-    pmod->adjrsq = NADBL;
-    pmod->fstt = NADBL;
+    /* invalidate unused stats */
+    pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->fstt = pmod->chisq = NADBL;
 
     /* LaPlace errors: equivalent of standard error is sum of
        absolute residuals over nobs */

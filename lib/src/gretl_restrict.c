@@ -929,7 +929,7 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 
 static int 
 parse_coeff_chunk (gretl_restriction *r, const char *s, double *x, 
-		   int *eq, int *bnum, char *letter,
+		   int *eq, int *bnum, char *letter, 
 		   const DATAINFO *pdinfo)
 {
     const char *s0 = s;
@@ -959,6 +959,11 @@ parse_coeff_chunk (gretl_restriction *r, const char *s, double *x,
 	    *letter = *s;
 	    s++;
 	    err = parse_b_bit(r, s, eq, bnum, pdinfo);
+	} else if (*s == '\0') {
+	    /* plain numeric constant, saved in *x */
+	    *bnum = 0;
+	    *letter = '\0';
+	    err = 0;
 	}
     }
 
@@ -1414,7 +1419,7 @@ real_restriction_set_parse_line (gretl_restriction *rset,
     const char *p = line;
     rrow *r;
     int sgn = 1;
-    int i, nt, err = 0;
+    int i, j, nt, err = 0;
 
     gretl_error_clear();
 
@@ -1460,9 +1465,12 @@ real_restriction_set_parse_line (gretl_restriction *rset,
 	return E_ALLOC;
     }
 
+    j = 0;
+
     for (i=0; i<nt; i++) {
 	char chunk[32];
 	int len, bnum = 1, eq = 1;
+	int numeric = 0;
 	char letter = 'b';
 	double mult;
 
@@ -1484,13 +1492,22 @@ real_restriction_set_parse_line (gretl_restriction *rset,
 				&letter, pdinfo);
 	if (err) {
 	    break;
+	} else if (letter == '\0') {
+	    numeric = 1;
 	} else if (bnum_out_of_bounds(rset, eq, bnum, letter)) {
 	    err = E_DATA;
 	    break;
 	}
 
 	mult *= sgn;
-	add_term_to_restriction(r, mult, eq, bnum, letter, i);
+
+	if (numeric) {
+	    /* got a numeric constant */
+	    r->rhs -= mult;
+	    r->nterms -= 1;
+	} else {
+	    add_term_to_restriction(r, mult, eq, bnum, letter, j++);
+	}
 
 	if (*p == '+') {
 	    sgn = 1.0;
@@ -1502,9 +1519,13 @@ real_restriction_set_parse_line (gretl_restriction *rset,
     }
 
     if (!err) {
-	if (!sscanf(p, " = %lf", &r->rhs)) {
+	double rhs = 0.0;
+
+	if (!sscanf(p, " = %lf", &rhs)) {
 	    err = E_PARSE;
-	} 
+	} else {
+	    r->rhs += rhs;
+	}
     }
 
     if (err) {

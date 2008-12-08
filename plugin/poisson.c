@@ -182,7 +182,7 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     mle_criteria(targ, 0); 
 
     /* mask invalid statistics */
-    targ->fstt = NADBL;
+    targ->fstt = targ->chisq = NADBL;
 
     /* make the covariance matrix */
     if (makevcv(src, 1.0)) {

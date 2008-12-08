@@ -3496,6 +3496,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     gretl_xml_put_double("rsq", pmod->rsq, fp);
     gretl_xml_put_double("adjrsq", pmod->adjrsq, fp);
     gretl_xml_put_double("fstt", pmod->fstt, fp);
+    gretl_xml_put_double("chi-square", pmod->chisq, fp);
     gretl_xml_put_double("lnL", pmod->lnL, fp);
     gretl_xml_put_double("ybar", pmod->ybar, fp);
     gretl_xml_put_double("sdy", pmod->sdy, fp);
@@ -3820,6 +3821,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     gretl_xml_get_prop_as_double(node, "rsq", &pmod->rsq);
     gretl_xml_get_prop_as_double(node, "adjrsq", &pmod->adjrsq);
     gretl_xml_get_prop_as_double(node, "fstt", &pmod->fstt);
+    gretl_xml_get_prop_as_double(node, "chi-square", &pmod->chisq);
     gretl_xml_get_prop_as_double(node, "lnL", &pmod->lnL);
     gretl_xml_get_prop_as_double(node, "ybar", &pmod->ybar);
     gretl_xml_get_prop_as_double(node, "sdy", &pmod->sdy);
@@ -4030,72 +4032,68 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
 {
     int ok = 1;
 
-    if (model_ci == MLE || model_ci == GMM) {
-	return 0;
+    if (model_ci == NLS || model_ci == MLE || model_ci == GMM) {
+	return (test_ci == RESTRICT ||
+		test_ci == TABPRINT ||
+		test_ci == TESTUHAT);
     }
 
     switch (test_ci) {
 
     case ADD:
     case ADDTO:
-	if (model_ci == NLS || model_ci == ARMA || 
-	    model_ci == GARCH || model_ci == HECKIT) {
+	if (model_ci == ARMA || model_ci == GARCH || 
+	    model_ci == HECKIT || model_ci == INTREG) {
 	    ok = 0;
 	}
 	break;
 
     case OMIT:
     case OMITFROM:
-	if (model_ci == NLS || model_ci == ARMA || 
-	    model_ci == GARCH) {
+	if (model_ci == ARMA || model_ci == GARCH || model_ci == INTREG) {
 	    ok = 0;
 	}
 	break;
 
     case VIF:
-	if (model_ci == NLS || model_ci == TSLS ||
-	    model_ci == ARMA || model_ci == GARCH ||
+	if (model_ci == TSLS || model_ci == ARMA || model_ci == GARCH ||
 	    model_ci == PANEL || model_ci == ARBOND) {
 	    ok = 0;
 	}
 	break;
 
     case EQNPRINT:
-	if (model_ci == ARMA || model_ci == NLS ||
-	    model_ci == ARBOND || model_ci == MLE ||
-	    model_ci == GMM) {
+	if (model_ci == ARMA || model_ci == ARBOND) {
 	    ok = 0; 
 	}
 	break;
 
     case LMTEST:
 	if (opt & OPT_H) {
+	    /* ARCH */
 	    ok = (model_ci != ARCH);
 	} else if (model_ci != OLS) {
 	    if ((model_ci == TSLS) && (opt & (OPT_A | OPT_W))) {
+		/* Autocorr. and H'sked. supported for TSLS */
 		ok = 1; 
 	    } else {
 		ok = 0; /* FIXME */
 	    }
 	}
 	break;
-
+	
     case CHOW:
     case CUSUM:
     case QLRTEST:
     case LEVERAGE:
     case RESET:
-	if (model_ci != OLS) ok = 0;
-	break;
-
     case HAUSMAN:
-	if (model_ci != OLS) ok = 0;
+	/* OLS-only tests */
+	ok = (model_ci == OLS);
 	break;
 
     case RESTRICT:
-	if (model_ci == LAD || model_ci == NLS || 
-	    model_ci == MLE || model_ci == GMM ||
-	    model_ci == QUANTREG) {
+	if (model_ci == LAD || model_ci == QUANTREG) {
 	    ok = 0;
 	}
 	break;
@@ -4103,7 +4101,8 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
     case TESTUHAT:
 	/* do we really need to exclude garch? */
 	if (model_ci == TOBIT || model_ci == PROBIT ||
-	    model_ci == LOGIT || model_ci == GARCH) {
+	    model_ci == LOGIT || model_ci == GARCH ||
+	    model_ci == INTREG) {
 	    ok = 0;
 	}
 	break;
@@ -4742,6 +4741,12 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 	break;
     case M_DWPVAL:
 	x = get_dw_pvalue(pmod, pZ, pdinfo, err);
+	break;
+    case M_FSTT:
+	x = pmod->fstt;
+	break;
+    case M_CHISQ:
+	x = pmod->chisq;
 	break;
     default:
 	break;

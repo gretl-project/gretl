@@ -444,6 +444,7 @@ static void model_stats_init (MODEL *pmod)
     pmod->sigma = NADBL;
     pmod->fstt = pmod->lnL = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->chisq = NADBL;
     pmod->dw = NADBL;
 }
 

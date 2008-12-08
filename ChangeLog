@@ -39,6 +39,9 @@ version 1.7.10, in progress
   model statistics
 - OLS and fixed effects: add option to calculate p-value
   for the Durbin-Watson statistic
+- Add accessors $Fstat and $chisq for the overall F-statistic
+  or chi-square test from the last model
+- Make the "restrict" command available for nls, mle and gmm
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"

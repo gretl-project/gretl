@@ -132,6 +132,7 @@ static void qr_compute_stats (MODEL *pmod, const double *y, int n,
     int yconst, ifc = pmod->ifc;
 
     pmod->tss = qr_get_tss(pmod, y, &ifc, &yconst);
+    pmod->chisq = NADBL;
 
     if (yconst && pmod->dfd > 0) {
 	double y0 = y[pmod->t1];

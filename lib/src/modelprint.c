@@ -2458,14 +2458,12 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    val[13] = h;
 	}
     } else if (pmod->ci == INTREG) {
-	double x = gretl_model_get_double(pmod, "overall_test");
-
-	if (na(x)) {
+	if (na(pmod->chisq)) {
 	    val[6] = val[7] = NADBL;
 	} else {
 	    sprintf(chistr, "%s(%d)", _("Chi-square"), pmod->dfn);
 	    key[6] = chistr;  
-	    val[6] = gretl_model_get_double(pmod, "overall_test");
+	    val[6] = pmod->chisq;
 	    key[7] = N_("p-value");  
 	    val[7] = chisq_cdf_comp(pmod->dfn, val[6]);
 	}
@@ -4339,7 +4337,6 @@ static void print_binary_statistics (const MODEL *pmod,
 				     PRN *prn)
 {
     int slopes = !gretl_model_get_int(pmod, "show-pvals");
-    double model_chisq = gretl_model_get_double(pmod, "chisq");
     const int *act_pred;
     int correct = -1;
     double pc_correct = NADBL;
@@ -4361,12 +4358,12 @@ static void print_binary_statistics (const MODEL *pmod,
 	}
 	pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		pmod->sdy);
-	if (!na(model_chisq) && pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
+	if (!na(pmod->chisq) && pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
 	    if (i > 0) {
 		pprintf(prn, "%s: %s(%d) = %g [%.4f]\n", 
 			_("Likelihood ratio test"), _("Chi-square"), 
-			i, model_chisq, chisq_cdf_comp(i, model_chisq));
+			i, pmod->chisq, chisq_cdf_comp(i, pmod->chisq));
 	    }
 	}
 	pputc(prn, '\n');
@@ -4389,7 +4386,7 @@ static void print_binary_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
-		    i, model_chisq, chisq_cdf_comp(i, model_chisq));
+		    i, pmod->chisq, chisq_cdf_comp(i, pmod->chisq));
 	}
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
@@ -4408,7 +4405,7 @@ static void print_binary_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "%s: $\\chi^2(%d)$ = %.3f [%.4f]\\\\\n",
 		    I_("Likelihood ratio test"), 
-		    i, model_chisq, chisq_cdf_comp(i, model_chisq));
+		    i, pmod->chisq, chisq_cdf_comp(i, pmod->chisq));
 	}
 	pputs(prn, "\\end{raggedright}\n");
     }

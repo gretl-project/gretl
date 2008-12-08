@@ -479,7 +479,8 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     }
 
     chesher_irish_test(pmod, X);
-    pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->fstt = pmod->adjrsq = NADBL;
+    pmod->fstt = pmod->chisq = NADBL;
     mle_criteria(pmod, 1);
 
     pmod->ci = TOBIT;

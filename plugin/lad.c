@@ -657,10 +657,9 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 	/* median of dependent variable */
 	gretl_model_add_y_median(pmod, Z[yno]);
 
-	/* set ess-based stats to missing value */
-	pmod->rsq = NADBL;
-	pmod->adjrsq = NADBL;
-	pmod->fstt = NADBL;
+	/* set various stats to missing value */
+	pmod->rsq = pmod->adjrsq = NADBL;
+	pmod->fstt = pmod->chisq = NADBL;
 
 	/* LaPlace errors: equivalent of standard error is sum of
 	   absolute residuals over nobs */

@@ -87,9 +87,9 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     chisq = 2.0 * (pmod->lnL - Lr);
 
     if (chisq < 0) {
-	pmod->rsq = pmod->adjrsq = NADBL;
+	pmod->rsq = pmod->adjrsq = pmod->chisq = NADBL;
     } else {
-	gretl_model_set_double(pmod, "chisq", chisq);
+	pmod->chisq = chisq;
 	/* McFadden pseudo-R^2 */
 	pmod->rsq = 1.0 - pmod->lnL / Lr;
 	pmod->adjrsq = 1.0 - (pmod->lnL - pmod->ncoeff) / Lr;

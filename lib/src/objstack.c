@@ -1286,10 +1286,12 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 	} 
     }
 
+#if 0
     if (err == E_NOTIMP) {
 	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
     }
+#endif
 
     return err;
 }

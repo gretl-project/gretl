@@ -374,7 +374,8 @@ struct MODEL_ {
     double ess, tss;             /* Error and Total Sums of Squares */
     double sigma;                /* Standard error of regression */
     double rsq, adjrsq;          /* Unadjusted and adjusted R^2 */     
-    double fstt;                 /* F-statistic */
+    double fstt;                 /* overall F-statistic */
+    double chisq;                /* overall chi-square statistic */
     double lnL;                  /* log-likelihood */
     double ybar, sdy;            /* mean and std. dev. of dependent var. */
     double criterion[C_MAX];     /* array of model selection statistics */

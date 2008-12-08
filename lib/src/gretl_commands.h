@@ -199,20 +199,20 @@ typedef enum {
                         c == XTAB)
 
 #define NEEDS_MODEL_CHECK(c) (c == ADD || \
-                              c == OMIT || \
+                              c == CHOW || \
                               c == COEFFSUM || \
                               c == CUSUM || \
-                              c == RESET || \
-                              c == CHOW || \
-                              c == QLRTEST || \
-                              c == VIF || \
-                              c == TABPRINT || \
                               c == EQNPRINT || \
                               c == FCAST || \
                               c == HAUSMAN || \
                               c == LEVERAGE || \
                               c == LMTEST || \
-                              c == TESTUHAT)
+                              c == OMIT || \
+                              c == QLRTEST || \
+                              c == RESET || \
+                              c == TABPRINT || \
+                              c == TESTUHAT || \
+                              c == VIF)
 
 #define USES_BFGS(c) ((c) == ARMA || \
                       (c) == GARCH || \

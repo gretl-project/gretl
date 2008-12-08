@@ -1758,7 +1758,7 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 
     if (gnr.errcode == 0) {
 	ls_criteria(&gnr);
-	gnr.fstt = NADBL;
+	gnr.fstt = gnr.chisq = NADBL;
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
 	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);

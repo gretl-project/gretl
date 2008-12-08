@@ -617,13 +617,9 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
     }
 
-    x = chisq_overall_test(IC);
+    pmod->chisq = chisq_overall_test(IC);
 
-    if (!na(x)) {
-	gretl_model_set_double(pmod, "overall_test", x);
-    }
-
-    /* FIXME? */
+    /* the variable at list[1] will be deleted */
     pmod->list[1] = 0;
 
     return 0;

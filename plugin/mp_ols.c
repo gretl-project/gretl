@@ -913,6 +913,7 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
     pmod->ess = mpf_get_d(mpmod->ess);
     pmod->rsq = mpf_get_d(mpmod->rsq);
     pmod->fstt = mpf_get_d(mpmod->fstt);
+    pmod->chisq = NADBL;
 
     if (opt & OPT_S) {
 	/* saving additional results */
