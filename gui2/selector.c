@@ -190,6 +190,7 @@ static int jcase = 2;
 static int verbose;
 static int lovar;
 static int hivar;
+static int wtvar;
 
 static int *xlist;
 static int *instlist;
@@ -307,6 +308,7 @@ void clear_selector (void)
     default_y = -1;
     default_order = 0;
     selvar = 0;
+    wtvar = 0;
     vartrend = 0;
     lovar = hivar = 0;
 
@@ -338,22 +340,48 @@ void clear_selector (void)
 
 #if 0
 
-void prime_selector_from_model (const MODEL *pmod)
+void prime_selector_from_model (void *ptr, GretlObjType type)
 {
-    if (pmod->ci == INTREG) {
-	;
-    } else {
-	int dv = gretl_model_get_depvar(pmod);
-	int *mxlist;
+    if (type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) ptr;
+	int *mxlist = NULL;
 
-	if (dv >= 0 && dv < datainfo->v) {
-	    default_y = dv;
+	if (pmod->ci == INTREG) {
+	    lovar = ;
+	    hivar = ;
+	} else {
+	    int dv = gretl_model_get_depvar(pmod);
+
+	    if (dv >= 0 && dv < datainfo->v) {
+		default_y = dv;
+	    }
 	}
+
 	mxlist = gretl_model_get_x_list(pmod);
 	if (mxlist != NULL) {
 	    free(xlist);
 	    xlist = mxlist;
 	}
+
+	if (pmod->ci == WLS) {
+	    wtvar = ;
+	} else if (pmod->ci == ARMA) {
+	    arma_p = ;
+	    arima_d = ;
+	    arma_q = ;
+	    arma_P = ;
+	    arima_D = ;
+	    arma_Q = ;
+	    arma_const = ;
+	} else if (pmod->ci == GARCH) {
+	    garch_p = ;
+	    garch_q = ;
+	} else if (pmod->ci == HECKIT) {
+	    selvar = ;
+	}
+    } else if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) ptr;
+
     }
 }
 
@@ -2139,6 +2167,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     if (sr->code == WLS || THREE_VARS_GRAPH(sr->code)) {
 	sprintf(numstr, "%d ", k);
 	add_to_cmdlist(sr, numstr);
+	if (sr->code == WLS) {
+	    wtvar = k;
+	}
     } else if (sr->code == INTREG) {
 	sprintf(numstr, " %d ", k);
 	add_to_cmdlist(sr, numstr);
@@ -2842,7 +2873,9 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
 						NULL, 0,
 						set_extra_var_callback);
 
-    if (sr->code == HECKIT && selvar > 0 && selvar < datainfo->v) {
+    if (sr->code == WLS && wtvar > 0 && wtvar < datainfo->v) {
+	setvar = wtvar;
+    } else if (sr->code == HECKIT && selvar > 0 && selvar < datainfo->v) {
 	setvar = selvar;
     } else if (sr->code == INTREG && hivar > 0 && hivar < datainfo->v) {
 	setvar = hivar;
