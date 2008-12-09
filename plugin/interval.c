@@ -52,7 +52,8 @@ struct int_container_ {
     double *ndx;      /* index variable */
     double *uhat;     /* generalized residuals */
     double *dP;       /* probabilities */
-    double *df;       /* densities */
+    double *f0;       /* normalized density at min */
+    double *f1;       /* normalized density at max */
     double **G;       /* score matrix by observation */
     double *g;        /* total score vector */
 };
@@ -107,7 +108,7 @@ static int_container *int_container_new (int *list, double **Z,
     IC->list = NULL;
 
     /* doubles arrays, length nobs */
-    IC->dspace = malloc(6 * nobs * sizeof *IC->dspace);
+    IC->dspace = malloc(7 * nobs * sizeof *IC->dspace);
 
     /* doubles arrays, length k */
     IC->theta = malloc(IC->k * sizeof *IC->theta);
@@ -134,7 +135,8 @@ static int_container *int_container_new (int *list, double **Z,
     IC->ndx = IC->lo + nobs;
     IC->uhat = IC->ndx + nobs;
     IC->dP = IC->uhat + nobs;
-    IC->df = IC->dP + nobs;
+    IC->f0 = IC->dP + nobs;
+    IC->f1 = IC->f0 + nobs;
 
     s = 0;
     for (t=mod->t1; t<=mod->t2; t++) {
@@ -174,7 +176,7 @@ static int_container *int_container_new (int *list, double **Z,
     }
     IC->theta[i] = log(mod->sigma);
 
-#if INTDEBUG
+#if INTDEBUG > 1
     fprintf(stderr, "nobs = %d\n", IC->nobs);
     fprintf(stderr, "t1-t2 = %d-%d\n", IC->t1, IC->t2);
     fprintf(stderr, "k = %d\n", IC->k);
@@ -246,7 +248,7 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 static double int_loglik (const double *theta, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
-    double x0, x1, z0, z1, f0, f1;
+    double x0, x1, z0, z1;
     double ndx, ll = 0.0;
     double derivs = 0.0, derivb = 0.0;
     int i, t;
@@ -272,26 +274,25 @@ static double int_loglik (const double *theta, void *ptr)
 	case INT_LOW:
 	    z1 = (x1 - ndx)/sigma;
 	    IC->dP[t] = normal_cdf(z1);
-	    IC->df[t] = -normal_pdf(z1);
-	    derivb = IC->df[t]/(sigma * IC->dP[t]);
-	    derivs = derivb*z1*sigma;
+	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
+	    derivb = -IC->f1[t]/sigma;
+	    derivs = -IC->f1[t]*z1;
 	    break;
 	case INT_HIGH:
 	    z0 = (x0 - ndx)/sigma;
-	    IC->dP[t] = 1.0 - normal_cdf(z0);
-	    IC->df[t] = normal_pdf(z0);
-	    derivb = IC->df[t]/(sigma * IC->dP[t]);
-	    derivs = derivb*z0*sigma;
+	    IC->dP[t] = normal_cdf_comp(z0);
+	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
+	    derivb = IC->f0[t]/sigma;
+	    derivs = IC->f0[t]*z0;
 	    break;
 	case INT_MID:
 	    z0 = (x0 - ndx)/sigma;
 	    z1 = (x1 - ndx)/sigma;
 	    IC->dP[t] = normal_cdf(z1) - normal_cdf(z0);
-	    f0 = normal_pdf(z0);
-	    f1 = normal_pdf(z1);
-	    IC->df[t] = f0 - f1;
-	    derivb = IC->df[t]/(sigma * IC->dP[t]);
-	    derivs = (f0*z0 - f1*z1) / IC->dP[t];
+	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
+	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
+	    derivb = (IC->f0[t] - IC->f1[t])/sigma;
+	    derivs = (IC->f0[t]*z0 - IC->f1[t]*z1);
 	    break;
 	case INT_POINT:
 	    z0 = (x0 - ndx)/sigma;
@@ -483,10 +484,18 @@ static void int_compute_gresids (int_container *IC)
 
 	ndx = IC->ndx[t];
 
-	if (IC->obstype[t] == INT_POINT) {
+	switch (IC->obstype[t]) {
+	case INT_LOW:
+	    IC->uhat[t] = -sigma * IC->f1[t];
+	    break;
+	case INT_HIGH:
+	    IC->uhat[t] = sigma * IC->f0[t];
+	    break;
+	case INT_MID:
+	    IC->uhat[t] = sigma * (IC->f0[t] - IC->f1[t]);
+	    break;
+	case INT_POINT:
 	    IC->uhat[t] = x0 - ndx;
-	} else {
-	    IC->uhat[t] = sigma * IC->df[t] / IC->dP[t];
 	}
     }
 } 
@@ -540,6 +549,160 @@ static double chisq_overall_test (int_container *IC)
 
     return ret;
 } 
+
+static gretl_matrix *cond_moments(int_container *IC, double *sm3, 
+				  double *sm4)
+{
+    /* 
+       Here we exploit the following properties of sub-support normal 
+       moments: if x ~ N(0,1) and A = [a,b], then
+
+       E(x^n | x \in A) = (n-1) E(x^{n-2} | x \in A) + 
+       + \frac{a^{n-1}\phi(a) - b^{n-1}\phi(b)}{\Phi(b)-\Phi(a)}
+
+       We have:
+
+       E(x^0 | x \in A) = 1 (trivially) 
+       E(x^1 | x \in A) = f0 - f1
+       E(x^2 | x \in A) = 1 + lo*f0 - hi*f1
+       ...
+
+       Returns the matrix of the orthogonality conditions (conditional
+       moments); the non-zero ones are stored in the two pointers sm3
+       and sm4.
+
+    */
+
+    int n = IC->nobs;  
+    int k = IC->k;  
+    int noc = k + 2;  
+    double *ndx = IC->ndx;
+    double *lo = IC->lo; 
+    double *hi = IC->hi;
+    double *f0 = IC->f0;
+    double *f1 = IC->f1;
+    int i, j, t;
+    gretl_matrix *ret = NULL;
+    double a, b, phi0, phi1, m1, m2, m3, m4, u;
+    double sigma = exp(IC->theta[k - 1]);
+    double x, y;
+
+    *sm3 = 0.0;
+    *sm4 = 0.0;
+
+    ret = gretl_matrix_alloc(n, noc);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    for(t=0; t<n ; t++) {
+	switch (IC->obstype[t]) {
+	case INT_LOW:
+	    b = (hi[t] - ndx[t])/sigma;
+	    phi1 = f1[t];
+	    m1 = -phi1;
+	    m2 = 1 - b*phi1;
+	    m3 = 2*m1 - b*b*phi1;
+	    m4 = 3*m2 - b*b*b*phi1;
+	    break;
+	case INT_HIGH:
+	    a = (lo[t] - ndx[t])/sigma;
+	    m1 = phi0 = f0[t];
+	    m2 = 1 + a*phi0;
+	    m3 = 2*m1 + a*a*phi0;
+	    m4 = 3*m2 + a*a*a*phi0;
+	    break;
+	case INT_MID:
+	    a = (lo[t] - ndx[t])/sigma;
+	    b = (hi[t] - ndx[t])/sigma;
+
+	    phi0 = f0[t];
+	    phi1 = f1[t];
+	    m1 = phi0 - phi1;
+	    m2 = 1 + a*phi0 - b*phi1;
+	    m3 = 2*m1 + a*a*phi0 - b*b*phi1;
+	    m4 = 3*m2 + a*a*a*phi0 - b*b*b*phi1;
+	    break;
+	case INT_POINT:
+	    u = IC->uhat[t] / sigma;
+	    m3 = u*u*u;
+	    m4 = m3*u;
+	}
+
+	m4 -= 3;
+	*sm3 += m3;
+	*sm4 += m4;
+
+	for(i=0; i<k; i++) {
+	    gretl_matrix_set(ret, t, i, IC->G[i][t]);
+	}
+
+	gretl_matrix_set(ret, t, k, m3);
+	gretl_matrix_set(ret, t, k+1, m4);
+
+    }
+
+    return ret;
+}
+
+
+static int intreg_normtest(int_container *IC, double *teststat)
+{
+
+    int err = 0;
+    gretl_matrix *condmom;
+    double skew, kurt;
+    gretl_matrix *GG = NULL;
+    gretl_matrix *g = NULL;
+    int noc = IC->k + 2;
+
+    condmom = cond_moments(IC, &skew, &kurt);
+    if (condmom == NULL) {
+	return E_ALLOC;
+    }
+
+    GG = gretl_matrix_XTX_new(condmom);
+    g = gretl_zero_matrix_new(1, noc);
+
+    if (GG == NULL || g == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_vector_set(g, noc-2, skew);
+    gretl_vector_set(g, noc-1, kurt);
+
+    err = gretl_invert_symmetric_matrix(GG);
+    if (!err) {
+	*teststat = gretl_scalar_qform(g, GG, &err);
+    } else {
+	gretl_matrix_print(GG, "GG (inverse)");
+	*teststat = NADBL;
+    }
+
+    gretl_matrix_free(condmom);
+    gretl_matrix_free(GG);
+    gretl_matrix_free(g);
+
+    return err;
+}
+
+static int add_norm_test_to_model (MODEL *pmod, double X2)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
+    int err = 0;
+
+    if (test != NULL) {
+        model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
+        model_test_set_dfn(test, 2);
+        model_test_set_value(test, X2);
+        model_test_set_pvalue(test, chisq_cdf_comp(2, X2));
+        maybe_add_test_to_model(pmod, test);
+    } else {
+        err = 1;
+    }
+
+    return err;
+}
 
 static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 			      gretlopt opt, const DATAINFO *pdinfo)
@@ -628,10 +791,11 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
 {
+    int err;
     int_container *IC;
     gretl_matrix *V = NULL;
     int fncount, grcount;
-    int err;
+    double normtest;
 
     IC = int_container_new(list, Z, pdinfo, mod);
     if (IC == NULL) {
@@ -652,6 +816,14 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 
     if (!err) {
 	err = fill_intreg_model(IC, V, opt, pdinfo);
+    }
+
+    if (!err) {
+	err = intreg_normtest(IC, &normtest);
+    }
+
+    if (!err) {
+	err = add_norm_test_to_model(IC->pmod, normtest);
     }
 
     gretl_matrix_free(V);

@@ -408,6 +408,8 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b);
 
 int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b);
 
+gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X);
+
 int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ, 
 					const gretl_matrix *src);
 
