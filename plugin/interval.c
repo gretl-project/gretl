@@ -550,8 +550,8 @@ static double chisq_overall_test (int_container *IC)
     return ret;
 } 
 
-static gretl_matrix *cond_moments(int_container *IC, double *sm3, 
-				  double *sm4)
+static gretl_matrix *cond_moments (int_container *IC, double *sm3, 
+				   double *sm4)
 {
     /* 
        Here we exploit the following properties of sub-support normal 
@@ -570,7 +570,6 @@ static gretl_matrix *cond_moments(int_container *IC, double *sm3,
        Returns the matrix of the orthogonality conditions (conditional
        moments); the non-zero ones are stored in the two pointers sm3
        and sm4.
-
     */
 
     int n = IC->nobs;  
@@ -581,11 +580,10 @@ static gretl_matrix *cond_moments(int_container *IC, double *sm3,
     double *hi = IC->hi;
     double *f0 = IC->f0;
     double *f1 = IC->f1;
-    int i, j, t;
     gretl_matrix *ret = NULL;
     double a, b, phi0, phi1, m1, m2, m3, m4, u;
     double sigma = exp(IC->theta[k - 1]);
-    double x, y;
+    int i, t;
 
     *sm3 = 0.0;
     *sm4 = 0.0;
@@ -595,7 +593,7 @@ static gretl_matrix *cond_moments(int_container *IC, double *sm3,
 	return NULL;
     }
 
-    for(t=0; t<n ; t++) {
+    for (t=0; t<n; t++) {
 	switch (IC->obstype[t]) {
 	case INT_LOW:
 	    b = (hi[t] - ndx[t])/sigma;
@@ -639,22 +637,19 @@ static gretl_matrix *cond_moments(int_container *IC, double *sm3,
 
 	gretl_matrix_set(ret, t, k, m3);
 	gretl_matrix_set(ret, t, k+1, m4);
-
     }
 
     return ret;
 }
 
-
-static int intreg_normtest(int_container *IC, double *teststat)
+static int intreg_normtest (int_container *IC, double *teststat)
 {
-
-    int err = 0;
     gretl_matrix *condmom;
     double skew, kurt;
     gretl_matrix *GG = NULL;
     gretl_matrix *g = NULL;
     int noc = IC->k + 2;
+    int err = 0;
 
     condmom = cond_moments(IC, &skew, &kurt);
     if (condmom == NULL) {
@@ -665,7 +660,8 @@ static int intreg_normtest(int_container *IC, double *teststat)
     g = gretl_zero_matrix_new(1, noc);
 
     if (GG == NULL || g == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     gretl_vector_set(g, noc-2, skew);
@@ -678,6 +674,8 @@ static int intreg_normtest(int_container *IC, double *teststat)
 	gretl_matrix_print(GG, "GG (inverse)");
 	*teststat = NADBL;
     }
+
+ bailout:
 
     gretl_matrix_free(condmom);
     gretl_matrix_free(GG);
@@ -795,7 +793,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     int_container *IC;
     gretl_matrix *V = NULL;
     int fncount, grcount;
-    double normtest;
+    double normtest = NADBL;
 
     IC = int_container_new(list, Z, pdinfo, mod);
     if (IC == NULL) {
