@@ -750,26 +750,13 @@ static void tsls_extra_stats (MODEL *pmod, const double **Z,
 static void tsls_recreate_full_list (MODEL *pmod, const int *reglist,
 				     const int *instlist)
 {
-    int len = reglist[0] + instlist[0] + 1;
     int *full_list;
 
-    full_list = gretl_list_new(len);
+    full_list = gretl_lists_join_with_separator(reglist, instlist);
 
     if (full_list == NULL) {
 	pmod->errcode = E_ALLOC;
     } else {
-	int i, j = 1;
-
-	for (i=1; i<=reglist[0]; i++) {
-	    full_list[j++] = reglist[i];
-	}
-
-	full_list[j++] = LISTSEP;
-
-	for (i=1; i<=instlist[0]; i++) {
-	    full_list[j++] = instlist[i];
-	}
-
 	free(pmod->list);
 	pmod->list = full_list;
     }
@@ -967,6 +954,41 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
     *pmask = mask;
 
     return err;
+}
+
+/**
+ * tsls_get_instrument_list:
+ * @pmod: model to examine.
+ *
+ * Retrieve an allocate copy of th list of instruments from @pmod.
+ * 
+ * Returns: allocated list or %NULL on error.
+ */
+
+int *tsls_model_get_instrument_list (const MODEL *pmod)
+{
+    int *ilist = NULL;
+    int i, pos, ninst;
+
+    pos = gretl_list_separator_position(pmod->list);
+
+    if (pos == 0) {
+	return NULL;
+    }
+
+    ninst = pmod->list[0] - pos;
+
+    if (ninst > 0) {
+	ilist = gretl_list_new(ninst);
+    }
+
+    if (ilist != NULL) {
+	for (i=1; i<=ninst; i++) {
+	    ilist[i] = pmod->list[pos+i];
+	}
+    }
+
+    return ilist;
 }
 
 /**

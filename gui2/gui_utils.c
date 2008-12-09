@@ -53,6 +53,7 @@
 #include "winstack.h"
 #include "fnsave.h"
 #include "datawiz.h"
+#include "selector.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -127,6 +128,13 @@ gretlopt get_tex_eqn_opt (void)
     return tex_eqn_opt;
 }
 
+static void model_revise_callback (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    
+    selector_from_model(vwin->data, vwin->role);
+}
+
 static GtkActionEntry model_items[] = {
     { "File", NULL, N_("_File"), NULL, NULL, NULL },
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },
@@ -138,6 +146,8 @@ static GtkActionEntry model_items[] = {
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },    
     { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) },
+    { "Revise", GTK_STOCK_EDIT, N_("_Revise specification..."), NULL, NULL, 
+      G_CALLBACK(model_revise_callback) },
     { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
     { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
     { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
@@ -259,6 +269,8 @@ static GtkActionEntry system_items[] = {
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },      
     { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) }, 
+    { "Revise", GTK_STOCK_EDIT, N_("_Revise specification..."), NULL, NULL, 
+      G_CALLBACK(model_revise_callback) }, 
     { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
     { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
     { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
@@ -288,6 +300,7 @@ static const gchar *sys_ui =
     "    </menu>"
     "    <menu action='Edit'>"
     "      <menuitem action='Copy'/>"
+    "      <menuitem action='Revise'/>"
     "    </menu>"
     "    <menu action='Tests'/>"
     "    <menu action='Save'/>"
@@ -2478,6 +2491,7 @@ static const gchar *model_ui =
     "  </menu>"    
     "  <menu action='Edit'>"
     "   <menuitem action='Copy'/>"
+    "   <menuitem action='Revise'/>"
     "  </menu> "     
     "  <menu action='Tests'>"
     "   <menuitem action='omit'/>"

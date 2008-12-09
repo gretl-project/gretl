@@ -23,6 +23,12 @@
 #include "gretl_matrix.h"
 #include "gretl_restrict.h"
 
+enum Detflags {
+    DET_CONST = 1 << 0,
+    DET_TREND = 1 << 1,
+    DET_SEAS  = 1 << 2
+};
+
 typedef struct JohansenInfo_ JohansenInfo;
 
 struct GRETL_VAR_ {

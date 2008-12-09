@@ -22,12 +22,6 @@
 
 #define N_IVALS 3
 
-enum Detflags {
-    DET_CONST = 1 << 0,
-    DET_TREND = 1 << 1,
-    DET_SEAS  = 1 << 2
-};
-
 void gretl_VAR_clear (GRETL_VAR *var);
 
 void VAR_fill_X (GRETL_VAR *v, int p, const double **Z, 

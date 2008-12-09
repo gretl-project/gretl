@@ -464,10 +464,8 @@ void model_stat_callback (GtkAction *action, gpointer data)
 void model_callback (GtkAction *action, gpointer data) 
 {
     int code = model_action_code(action);
-    int presel = 0;   
 
-    selection_dialog(_("gretl: specify model"), do_model, code,
-		     presel);
+    modelspec_dialog(code);
 }
 
 void model_genr_callback (GtkAction *action, gpointer data)
@@ -528,12 +526,12 @@ void selector_callback (GtkAction *action, gpointer data)
     strcpy(title, "gretl: ");
 
     if (ci == COINT || ci == COINT2) {
-	selection_dialog(_("gretl: cointegration test"), do_coint, ci, 0);
+	selection_dialog(_("gretl: cointegration test"), do_coint, ci);
     } else if (ci == VAR || ci == VECM) {
 	selection_dialog((ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
-			 do_vector_model, ci, 0);
+			 do_vector_model, ci);
     } else if (ci == VLAGSEL) {
-	selection_dialog(_("gretl: VAR lag selection"), do_vector_model, ci, 0);
+	selection_dialog(_("gretl: VAR lag selection"), do_vector_model, ci);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY
 	       || ci == SCATTERS || ci == GR_3D
 	       || ci == GR_XYZ) {
@@ -559,7 +557,7 @@ void selector_callback (GtkAction *action, gpointer data)
 	default:
 	    return;
 	}
-	selection_dialog(_("gretl: define graph"), selfunc, ci, 0);
+	selection_dialog(_("gretl: define graph"), selfunc, ci);
     } else if (ci == ADD || ci == OMIT) {
 	simple_selection(_("gretl: model tests"), do_add_omit, ci, vwin);
     } else if (ci == VAROMIT) {

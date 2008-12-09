@@ -32,4 +32,6 @@ MODEL tsls_func (const int *list, int ci,
 		 double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt);
 
+int *tsls_model_get_instrument_list (const MODEL *pmod);
+
 #endif /* TSLS_H */

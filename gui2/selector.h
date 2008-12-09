@@ -30,11 +30,16 @@ struct iterinfo_t {
 
 void clear_selector (void);
 
-void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
-		       int preselect);
+void selection_dialog (const char *title, int (*callback)(), guint cmdcode);
 
 void simple_selection (const char *title, int (*callback)(), guint cmdcode,
 		       gpointer p);
+
+void modelspec_dialog (int ci);
+
+void selector_set_varnum (int v);
+
+void selector_from_model (void *ptr, int ci);
 
 char *main_window_selection_as_string (void);
 

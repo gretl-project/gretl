@@ -84,6 +84,7 @@ SRCS = excel_import.c \
 	tramo-x12a.c \
 	workbook.c \
 	nistcheck.c \
+	arma_common.c \
 	arma.c \
 	arma_x12.c \
 	tobit.c \

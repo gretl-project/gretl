@@ -298,9 +298,10 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	do_corrgm();
     else if (!strcmp(item, _("Spectrum"))) 
 	do_pergm(NULL);
-    else if (!strcmp(item, _("ARIMA model"))) 
-	selection_dialog(_("gretl: specify model"), do_model, ARMA, v);
-    else if (!strcmp(item, _("Dickey-Fuller test"))) 
+    else if (!strcmp(item, _("ARIMA model"))) {
+	selector_set_varnum(v);
+	modelspec_dialog(ARMA);
+    } else if (!strcmp(item, _("Dickey-Fuller test"))) 
 	unit_root_test(ADF);
     else if (!strcmp(item, _("KPSS test"))) 
 	unit_root_test(KPSS);

@@ -88,6 +88,8 @@ int gretl_list_is_consecutive (const int *list);
 
 int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2);
 
+int *gretl_lists_join_with_separator (const int *list1, const int *list2);
+
 int gretl_list_duplicates (const int *list, GretlCmdIndex ci);
 
 int gretl_lists_share_members (const int *list1, const int *list2);

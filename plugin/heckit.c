@@ -1036,6 +1036,10 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 	/* fill the container with all the relevant data */
 	err = h_container_fill(HC, Xlist, Zlist, (const double **) *pZ, 
 			       pdinfo, &probmod, &hm);
+	if (!err) {
+	    gretl_model_set_list_as_data(&hm, "zlist", Zlist);
+	    Zlist = NULL;
+	}
     }
 
  bailout:

@@ -760,13 +760,8 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
     int ninst = 0;
     char vname[16];
     int tex = tex_format(prn);
-    int utf = plain_format(prn);
 
-    if (utf) {
-	pprintf(prn, "%s: ", _("Instruments"));
-    } else {
-	pprintf(prn, "%s: ", I_("Instruments"));
-    }
+    pprintf(prn, "%s: ", I_("Instruments"));
 
     ccount += char_len(_("Instruments") + 2);
 
@@ -798,7 +793,7 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (ninst == 0) {
-	pputs(prn, _("none"));
+	pputs(prn, I_("none"));
     }
 
     if (ccount > 0) {
@@ -867,39 +862,21 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
     int k = gretl_model_get_int(pmod, "hac_kernel");
     int h = gretl_model_get_int(pmod, "hac_lag");
     int white = gretl_model_get_int(pmod, "hac_prewhiten");
-    int utf = plain_format(prn);
     double bt;
 
     if (k == KERNEL_QS) {
 	bt = gretl_model_get_double(pmod, "qs_bandwidth");
-	if (utf) {
-	    pprintf(prn, _("HAC standard errors, "
-			   "bandwidth %.2f"), bt);
-	} else {
-	    pprintf(prn, I_("HAC standard errors, "
-			    "bandwidth %.2f"), bt);
-	}
+	pprintf(prn, I_("HAC standard errors, "
+			"bandwidth %.2f"), bt);
     } else {
-	if (utf) {
-	    pprintf(prn, _("HAC standard errors, "
-			   "bandwidth %d"), h);
-	} else {
-	    pprintf(prn, I_("HAC standard errors, "
-			    "bandwidth %d"), h);
-	}
+	pprintf(prn, I_("HAC standard errors, "
+			"bandwidth %d"), h);
     }
 
-    pputc(prn, ' ');
-    if (utf) {
-	pprintf(prn, "(%s", _(kstrs[k]));
-    } else {
-	pprintf(prn, "(%s", I_(kstrs[k]));
+    pprintf(prn, " (%s", I_(kstrs[k]));
 		    
-    }
     if (white) {
-	pputs(prn, ", ");
-	pputs(prn, (utf)? _("prewhitened") : 
-	      I_("prewhitened"));
+	pprintf(prn, ", %s", I_("prewhitened"));
     }
 
     pputs(prn, ")\n");
@@ -915,19 +892,11 @@ static void hc_vcv_line (const MODEL *pmod, PRN *prn)
 	hcv--;
     }
 
-    if (plain_format(prn)) {
-	pprintf(prn, "%s, %s%sHC%d%s", 
-		_("Heteroskedasticity-robust standard errors"),
-		(jack)? "" : _("variant"),
-		(jack)? "" : " ",
-		hcv, (jack)? " (jackknife)" : "");
-    } else {
-	pprintf(prn, "%s, %s%sHC%d%s", 
-		I_("Heteroskedasticity-robust standard errors"),
-		(jack)? "" : I_("variant"),
-		(jack)? "" : " ",
-		hcv, (jack)? " (jackknife)" : "");
-    }
+    pprintf(prn, "%s, %s%sHC%d%s", 
+	    I_("Heteroskedasticity-robust standard errors"),
+	    (jack)? "" : I_("variant"),
+	    (jack)? "" : " ",
+	    hcv, (jack)? " (jackknife)" : "");
 
     if (rtf_format(prn)) {
 	pputs(prn, "\\par\n");
@@ -940,7 +909,6 @@ static void ml_vcv_line (const MODEL *pmod, PRN *prn)
 {
     int v = gretl_model_get_int(pmod, "ml_vcv");
     int tex = tex_format(prn);
-    int utf = plain_format(prn);
     const char *s = NULL;
 
     switch (v) {
@@ -971,7 +939,7 @@ static void ml_vcv_line (const MODEL *pmod, PRN *prn)
 	if (csv_format(prn)) {
 	    pprintf(prn, "\"%s\"\n", I_(s));
 	} else {
-	    pprintf(prn, "%s\n", (utf)? _(s) : I_(s));
+	    pprintf(prn, "%s\n", I_(s));
 	}
     }
 }
@@ -980,7 +948,6 @@ static void rq_vcv_line (const MODEL *pmod, PRN *prn)
 {
     int robust = gretl_model_get_int(pmod, "rq_nid");
     double a = gretl_model_get_double(pmod, "rq_alpha");
-    int utf = plain_format(prn);
     int free_s = 0;
     char *s;
 
@@ -1002,7 +969,7 @@ static void rq_vcv_line (const MODEL *pmod, PRN *prn)
     if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"", I_(s));
     } else {
-	pprintf(prn, "%s", (utf)? _(s) : I_(s));
+	pprintf(prn, "%s", I_(s));
     }
 
     gretl_prn_newline(prn);
@@ -1132,7 +1099,6 @@ static void print_arma_depvar (const MODEL *pmod,
 			       PRN *prn)
 {
     int tex = tex_format(prn);
-    int utf = plain_format(prn);
     int yno = gretl_model_get_depvar(pmod);
     int d = gretl_model_get_int(pmod, "arima_d");
     int D = gretl_model_get_int(pmod, "arima_D");
@@ -1178,9 +1144,7 @@ static void print_arma_depvar (const MODEL *pmod,
 	strcat(vname, pdinfo->varname[yno]);
     }
 
-    pprintf(prn, "%s: %s", 
-	    (utf)? _("Dependent variable") : I_("Dependent variable"),
-	    vname);
+    pprintf(prn, "%s: %s", I_("Dependent variable"), vname);
 }
 
 static void arma_extra_info (const MODEL *pmod, PRN *prn)
@@ -1210,42 +1174,24 @@ static void arma_extra_info (const MODEL *pmod, PRN *prn)
     }	
 }
 
-static void godfrey_test_string (int ci, int order, int utf, PRN *prn)
+static void godfrey_test_string (int ci, int order, PRN *prn)
 {
     pputc(prn, '\n');
 
     if (ci == TSLS) {
-	if (utf) { 
-	    if (order > 1) {
-		pprintf(prn, _("Godfrey (1994) test for autocorrelation up to order %d"), 
-			order);
-	    } else {
-		pputs(prn, _("Godfrey (1994) test for first-order autocorrelation"));
-	    }
+	if (order > 1) {
+	    pprintf(prn, I_("Godfrey (1994) test for autocorrelation up to order %d"), 
+		    order);
 	} else {
-	    if (order > 1) {
-		pprintf(prn, I_("Godfrey (1994) test for autocorrelation up to order %d"), 
-			order);
-	    } else {
-		pputs(prn, I_("Godfrey (1994) test for first-order autocorrelation"));
-	    }
-	} 
+	    pputs(prn, I_("Godfrey (1994) test for first-order autocorrelation"));
+	}
     } else {
-	if (utf) { 
-	    if (order > 1) {
-		pprintf(prn, _("Breusch-Godfrey test for autocorrelation up to order %d"), 
-			order);
-	    } else {
-		pputs(prn, _("Breusch-Godfrey test for first-order autocorrelation"));
-	    }
+	if (order > 1) {
+	    pprintf(prn, I_("Breusch-Godfrey test for autocorrelation up to order %d"), 
+		    order);
 	} else {
-	    if (order > 1) {
-		pprintf(prn, I_("Breusch-Godfrey test for autocorrelation up to order %d"), 
-			order);
-	    } else {
-		pputs(prn, I_("Breusch-Godfrey test for first-order autocorrelation"));
-	    }
-	} 
+	    pputs(prn, I_("Breusch-Godfrey test for first-order autocorrelation"));
+	}
     }
 
     pputc(prn, '\n');
@@ -1271,7 +1217,6 @@ static void print_model_heading (const MODEL *pmod,
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
     int plain = plain_format(prn);
-    int utf = plain;
     int csv = csv_format(prn);
     int dvnl = 1;
     int order = 0;
@@ -1306,26 +1251,22 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     case AUX_AR:
 	order = gretl_model_get_int(pmod, "BG_order");
-	godfrey_test_string(pmod->ci, order, utf, prn);
+	godfrey_test_string(pmod->ci, order, prn);
 	break;	
     case AUX_ARCH:
 	order = gretl_model_get_int(pmod, "arch_order");
 	pputc(prn, '\n');
-	pprintf(prn, (utf)? _("Test for ARCH of order %d") :
-		I_("Test for ARCH of order %d"), order);
+	pprintf(prn, I_("Test for ARCH of order %d"), order);
 	pputc(prn, '\n');
 	break;	
     case AUX_SYS:
-	pprintf(prn, "%s %d: ", 
-		(utf)? _("Equation") : I_("Equation"), pmod->ID + 1);
+	pprintf(prn, "%s %d: ", I_("Equation"), pmod->ID + 1);
 	break;	
     case AUX_VAR:
-	pprintf(prn, "\n%s %d: ", 
-		(utf)? _("Equation") : I_("Equation"), pmod->ID);
+	pprintf(prn, "\n%s %d: ", I_("Equation"), pmod->ID);
 	break;
     case AUX_VECM:
-	pprintf(prn, "%s %d: ", 
-		(utf)? _("Equation") : I_("Equation"), pmod->ID);
+	pprintf(prn, "%s %d: ", I_("Equation"), pmod->ID);
 	break;
     case AUX_AUX:
 	pputc(prn, '\n');
@@ -1346,7 +1287,7 @@ static void print_model_heading (const MODEL *pmod,
 	    if (csv) {
 		pprintf(prn, "\"%s %d: ", I_("Model"), pmod->ID);
 	    } else {
-		pprintf(prn, "\n%s %d: ", (utf)? _("Model") : I_("Model"), pmod->ID);
+		pprintf(prn, "\n%s %d: ", I_("Model"), pmod->ID);
 	    }
 	}
 	break;
@@ -1355,10 +1296,8 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
 	;
     } else if (pmod->aux == AUX_SYS) {
-	pprintf(prn, (utf)?
-		_("%s estimates using the %d observations %s%s%s") :
-		I_("%s estimates using the %d observations %s%s%s"),
-		_(system_short_string(pmod)),
+	pprintf(prn, I_("%s estimates using the %d observations %s%s%s"),
+		I_(system_short_string(pmod)),
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
     } else if (!dataset_is_panel(pdinfo)) {
 	const char *estr = estimator_string(pmod, prn);
@@ -1375,29 +1314,28 @@ static void print_model_heading (const MODEL *pmod,
 
 	    if (char_len(estr) > 24) {
 		fmt = N_("%s estimates %s%s%s (T = %d)");
-		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr),
-			startdate, (tex)? "--" : "-", enddate, pmod->nobs);
+		pprintf(prn, I_(fmt), I_(estr), startdate, 
+			(tex)? "--" : "-", enddate, pmod->nobs);
 	    } else {
 		fmt = N_("%s estimates using %d observations from %s%s%s");
-		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr),
-			pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+		pprintf(prn, I_(fmt), I_(estr), pmod->nobs, startdate, 
+			(tex)? "--" : "-", enddate);
 	    }
 	    if (mc > 0) {
 		gretl_prn_newline(prn);
-		pprintf(prn, "%s: %d",
-			(utf)? _("Missing or incomplete observations dropped") :
-			I_("Missing or incomplete observations dropped"), mc);
+		pprintf(prn, "%s: %d", I_("Missing or incomplete observations dropped"), 
+			mc);
 	    }
 	} else {
 	    if (char_len(estr) > 24) {
 		fmt = N_("%s estimates %s%s%s (T = %d)");
-		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr), 
-			startdate, (tex)? "--" : "-", enddate, pmod->nobs);
+		pprintf(prn, I_(fmt), I_(estr), startdate, 
+			(tex)? "--" : "-", enddate, pmod->nobs);
 
 	    } else {
 		fmt = N_("%s estimates using the %d observations %s%s%s");
-		pprintf(prn, (utf)? _(fmt) : I_(fmt), (utf)? _(estr) : I_(estr), 
-			pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+		pprintf(prn, I_(fmt), I_(estr), pmod->nobs, startdate, 
+			(tex)? "--" : "-", enddate);
 	    }
 	}
     } else {
@@ -1405,24 +1343,18 @@ static void print_model_heading (const MODEL *pmod,
 	int Tmin = gretl_model_get_int(pmod, "Tmin");
 	int Tmax = gretl_model_get_int(pmod, "Tmax");
 
-	pprintf(prn, (utf)?
-		_("%s estimates using %d observations") :
-		I_("%s estimates using %d observations"),
-		_(estimator_string(pmod, prn)), 
-		pmod->nobs);
+	pprintf(prn, I_("%s estimates using %d observations"),
+		I_(estimator_string(pmod, prn)), pmod->nobs);
 	if (effn > 0) {
 	    gretl_prn_newline(prn);
-	    pprintf(prn, (utf)? _("Included %d cross-sectional units") :
-		    I_("Included %d cross-sectional units"), effn);
+	    pprintf(prn, I_("Included %d cross-sectional units"), effn);
 	}
 	if (Tmin > 0 && Tmax > 0) {
 	    gretl_prn_newline(prn);
 	    if (Tmin == Tmax) {
-		pprintf(prn, (utf)? _("Time-series length = %d") :
-			I_("Time-series length = %d"), Tmin);
+		pprintf(prn, I_("Time-series length = %d"), Tmin);
 	    } else {
-		pprintf(prn, (utf)? _("Time-series length: minimum %d, maximum %d") :
-			I_("Time-series length: minimum %d, maximum %d"), 
+		pprintf(prn, I_("Time-series length: minimum %d, maximum %d"), 
 			Tmin, Tmax);
 	    }
 	}
@@ -1442,12 +1374,10 @@ static void print_model_heading (const MODEL *pmod,
 
     /* special formulations for dependent variable in various cases */
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
-	pprintf(prn, "%s: %s", 
-		(utf)? _("Dependent variable") : I_("Dependent variable"),
+	pprintf(prn, "%s: %s", I_("Dependent variable"),
 		(tex)? "$\\hat{u}$" : "uhat");
     } else if (pmod->aux == AUX_WHITE || pmod->aux == AUX_HET_1) {
-	pprintf(prn, "%s: %s", 
-		(utf)? _("Dependent variable") : I_("Dependent variable"),
+	pprintf(prn, "%s: %s", I_("Dependent variable"),
 		(tex)? "$\\hat{u}^2$" : "uhat^2");
     } else if (pmod->aux == AUX_BP) {
 	const char *fmt;
@@ -1457,16 +1387,14 @@ static void print_model_heading (const MODEL *pmod,
 	} else {
 	    fmt = N_("scaled %s");
 	}
-	pprintf(prn, "%s: ", (utf)? _("Dependent variable") : I_("Dependent variable"));
-	pprintf(prn, (utf)? _(fmt) : I_(fmt), (tex)? "$\\hat{u}^2$" : "uhat^2");
+	pprintf(prn, "%s: ", I_("Dependent variable"));
+	pprintf(prn, I_(fmt), (tex)? "$\\hat{u}^2$" : "uhat^2");
     } else if (pmod->aux == AUX_ARCH) {
-	pprintf(prn, "%s: %s", 
-		(utf)? _("Dependent variable") : I_("Dependent variable"),
+	pprintf(prn, "%s: %s", I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
     } else if (pmod->ci == NLS) {
 	if (tex) tex_escape(vname, pmod->depvar);
-	pprintf(prn, "%s: %s", 
-		(utf)? _("Dependent variable") : I_("Dependent variable"),
+	pprintf(prn, "%s: %s", I_("Dependent variable"),
 		(tex)? vname : pmod->depvar);
     } else if (pmod->ci == MLE || pmod->ci == GMM) {
 	if (pmod->depvar != NULL) {
@@ -1499,8 +1427,7 @@ static void print_model_heading (const MODEL *pmod,
 	if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
 	    pputs(prn, (tex)? vname : dvname);
 	} else {
-	    pprintf(prn, "%s: %s", 
-		    (utf)? _("Dependent variable") : I_("Dependent variable"),
+	    pprintf(prn, "%s: %s", I_("Dependent variable"),
 		    (tex)? vname : dvname);
 	}
     }
@@ -1545,11 +1472,9 @@ static void print_model_heading (const MODEL *pmod,
 	    pputs(prn, "\\\\\n");
 	}
 	if (gretl_model_get_int(pmod, "iters")) {
-	    pprintf(prn, (utf)? _("Allowing for groupwise heteroskedasticity") : 
-		    I_("Allowing for groupwise heteroskedasticity"));
+	    pprintf(prn, I_("Allowing for groupwise heteroskedasticity"));
 	} else {
-	    pprintf(prn, (utf)? _("Weights based on per-unit error variances") : 
-		    I_("Weights based on per-unit error variances"));
+	    pprintf(prn, I_("Weights based on per-unit error variances"));
 	}
 	pputc(prn, '\n');
     }
@@ -1560,8 +1485,7 @@ static void print_model_heading (const MODEL *pmod,
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
 	}
 	if (csv) pputc(prn, '"');
-	pprintf(prn, "%s: %s", 
-		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
+	pprintf(prn, "%s: %s", I_("Variable used as weight"), 
 		(tex)? vname : pdinfo->varname[pmod->nwt]);
 	if (csv) pputc(prn, '"');
 	pputc(prn, '\n');
@@ -1570,8 +1494,7 @@ static void print_model_heading (const MODEL *pmod,
     /* weight variable for ARCH */
     else if (pmod->ci == ARCH) {
 	if (csv) pputc(prn, '"');
-	pprintf(prn, "%s: %s", 
-		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
+	pprintf(prn, "%s: %s", I_("Variable used as weight"), 
 		(tex)? "$1/\\hat{\\sigma}_t$" : "1/sigma");
 	if (csv) pputc(prn, '"');
 	pputc(prn, '\n');
@@ -1619,7 +1542,6 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->missmask == NULL && gretl_model_get_int(pmod, "wt_dummy")) { 
 	/* FIXME alt formats */
 	pprintf(prn, "%s %d\n", 
-		(utf)? _("Weight var is a dummy variable, effective obs =") :
 		I_("Weight var is a dummy variable, effective obs ="),
 		pmod->nobs);
     } 

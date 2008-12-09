@@ -1935,6 +1935,56 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
     return err;
 }
 
+/**
+ * gretl_lists_join_with_separator:
+ * @list1: first sub-list.
+ * @list2: second sub-list.
+ *
+ * Concatenates the content of @list2 onto @list1, after first
+ * appending the list separator.  It is acceptable that @list1
+ * be %NULL, in which case the returned list is just @list2
+ * with the separator prepended.  But it is not acceptable that
+ * @list2 be null; in that this function returns %NULL.
+ *
+ * Returns: alllcated list  on success or %NULL on failure.
+ */
+
+int *gretl_lists_join_with_separator (const int *list1, const int *list2)
+{
+    int *biglist;
+    int i, j, n;
+
+    if (list2 == NULL) {
+	return NULL;
+    }
+
+    n = (list1 != NULL)? list1[0] : 0;
+
+
+    n += list2[0] + 1;
+    biglist = gretl_list_new(n);
+
+    if (biglist == NULL) {
+	return NULL;
+    }
+
+    j = 1;
+
+    if (list1 != NULL) {
+	for (i=1; i<=list1[0]; i++) {
+	    biglist[j++] = list1[i];
+	}
+    }
+
+    biglist[j++] = LISTSEP;
+
+    for (i=1; i<=list2[0]; i++) {
+	biglist[j++] = list2[i];
+    }    
+
+    return biglist;
+}
+
 static int real_list_dup (const int *list, int start, int stop)
 {
     int i, j, ret = -1;

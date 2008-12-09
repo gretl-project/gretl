@@ -30,9 +30,10 @@
 #include "var.h"
 #include "gretl_func.h"
 #include "libset.h"
+#include "johansen.h"
 
 #if 0
-#include "bootstrap.h"
+# include "bootstrap.h"
 #endif
 
 #define VLDEBUG 0
@@ -167,10 +168,13 @@ struct _selector {
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || \
                             c == TSLS || c == HECKIT)
 
+/* static state variables */
+
 static int default_y = -1;
-static int want_seasonals;
+static int want_seasonals = 0;
 static int default_order;
-static int vartrend;
+static int vartrend = 0;
+static int varconst = 1;
 static int lags_hidden;
 static int y_x_lags_enabled;
 static int y_w_lags_enabled;
@@ -186,7 +190,9 @@ static int arma_const = 1;
 static int arma_x12 = 0;
 static int arma_hessian = 1;
 static int selvar;
-static int jcase = 2;
+static int offvar;
+static int jrank = 1;
+static int jcase = J_UNREST_CONST;
 static int verbose;
 static int lovar;
 static int hivar;
@@ -196,6 +202,11 @@ static int *xlist;
 static int *instlist;
 static int *veclist;
 static int *vecxlist;
+
+static char *arlags;
+static char *malags;
+
+static gretlopt model_opt;
 
 static GtkWidget *multiplot_label;
 static GtkWidget *multiplot_menu;
@@ -308,8 +319,10 @@ void clear_selector (void)
     default_y = -1;
     default_order = 0;
     selvar = 0;
+    offvar = 0;
     wtvar = 0;
     vartrend = 0;
+    varconst = 1;
     lovar = hivar = 0;
 
     arma_p = 1;
@@ -323,7 +336,8 @@ void clear_selector (void)
     garch_p = 1;
     garch_q = 1;
 
-    jcase = 2;
+    jrank = 1;
+    jcase = J_UNREST_CONST;
 
     free(xlist);
     xlist = NULL;
@@ -335,20 +349,165 @@ void clear_selector (void)
     free(vecxlist);
     vecxlist = NULL;
 
+    free(arlags);
+    arlags = NULL;
+    free(malags);
+    malags = NULL;
+
     destroy_lag_preferences();
 }
 
-#if 0
+static int presel;
 
-void prime_selector_from_model (void *ptr, GretlObjType type)
+void selector_set_varnum (int v)
 {
-    if (type == GRETL_OBJ_EQN) {
+    presel = v;
+}
+
+void modelspec_dialog (int ci)
+{
+    selection_dialog(_("gretl: specify model"), do_model, ci);
+}
+
+static int varnum_from_keystring (MODEL *pmod, const char *key)
+{
+    char *s = (char *) gretl_model_get_data(pmod, key);
+    int v = 0;
+
+    if (s != NULL && *s != '\0') {
+	v = series_index(datainfo, s);
+	if (v == datainfo->v) {
+	    v = 0;
+	}
+    }
+
+    return v;
+}
+
+static int *lag_list_from_mask (char *mask, int k)
+{
+    int *list;
+    int i, j;
+
+    list = gretl_list_new(k);
+
+    if (list != NULL) {
+	j = 1;
+	for (i=0; mask[i]; i++) {
+	    if (mask[i] == '1') {
+		list[j++] = i + 1;
+	    } else {
+		list[0] -= 1;
+	    }
+	}
+    }
+
+    return list;
+}
+
+static void retrieve_arma_info (MODEL *pmod)
+{
+    int acode = gretl_model_get_int(pmod, "arma_flags");
+    int *laglist;
+    char *mask;
+
+    if (acode & ARMA_X12A) {
+	model_opt |= OPT_X;
+    }
+
+    if (!(acode & ARMA_EXACT)) {
+	model_opt |= OPT_C;
+    } 
+
+    arma_p = arma_model_nonseasonal_AR_order(pmod);
+    arma_q = arma_model_nonseasonal_MA_order(pmod);
+    arima_d = gretl_model_get_int(pmod, "arima_d");
+    arma_P = gretl_model_get_int(pmod, "arma_P");
+    arma_Q = gretl_model_get_int(pmod, "arma_Q");
+    arima_D = gretl_model_get_int(pmod, "arima_D");
+    arma_const = pmod->ifc;
+
+    free(arlags);
+    arlags = NULL;
+
+    if (arma_p > 0) {
+	mask = (char *) gretl_model_get_data(pmod, "pmask");
+	if (mask != NULL) {
+	    laglist = lag_list_from_mask(mask, arma_p);
+	    if (laglist != NULL) {
+		arlags = gretl_list_to_string(laglist);
+		free(laglist);
+	    }
+	}
+    }
+
+    free(malags);
+    malags = NULL;
+
+    if (arma_q > 0) {
+	mask = (char *) gretl_model_get_data(pmod, "qmask");
+	if (mask != NULL) {
+	    laglist = lag_list_from_mask(mask, arma_q);
+	    if (laglist != NULL) {
+		free(malags);
+		malags = gretl_list_to_string(laglist);
+		free(laglist);
+	    }
+	} 
+    }   
+}
+
+static void retrieve_AR_lags_info (MODEL *pmod)
+{
+    free(arlags);
+    arlags = NULL;
+
+    if (pmod->arinfo != NULL && pmod->arinfo->arlist != NULL) {
+	arlags = gretl_list_to_string(pmod->arinfo->arlist);
+    }
+}
+
+static void retrieve_heckit_info (MODEL *pmod)
+{
+    int *zlist = (int *) gretl_model_get_data(pmod, "zlist");
+    int i, j;
+
+    if (zlist != NULL) {
+	selvar = zlist[1];
+	free(instlist);
+	instlist = gretl_list_new(zlist[0] - 1);
+	if (instlist != NULL) {
+	    j = 1;
+	    for (i=2; i<=zlist[0]; i++) {
+		if (zlist[i] < datainfo->v) {
+		    instlist[j++] = zlist[i];
+		} else {
+		    instlist[0] -= 1;
+		}
+	    }	
+	}
+    }
+
+    if (gretl_model_get_int(pmod, "two-step")) {
+	model_opt |= OPT_T;
+    }    
+}
+
+void selector_from_model (void *ptr, int ci)
+{
+    model_opt = OPT_NONE;
+
+    if (ci == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) ptr;
-	int *mxlist = NULL;
+
+	if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
+	    dummy_call(); /* FIXME */
+	    return;
+	}
 
 	if (pmod->ci == INTREG) {
-	    lovar = ;
-	    hivar = ;
+	    lovar = varnum_from_keystring(pmod, "lovar");
+	    hivar = varnum_from_keystring(pmod, "hivar");
 	} else {
 	    int dv = gretl_model_get_depvar(pmod);
 
@@ -357,35 +516,72 @@ void prime_selector_from_model (void *ptr, GretlObjType type)
 	    }
 	}
 
-	mxlist = gretl_model_get_x_list(pmod);
-	if (mxlist != NULL) {
-	    free(xlist);
-	    xlist = mxlist;
-	}
+	free(xlist);
+	xlist = gretl_model_get_x_list(pmod);
 
 	if (pmod->ci == WLS) {
-	    wtvar = ;
+	    wtvar = pmod->nwt;
 	} else if (pmod->ci == ARMA) {
-	    arma_p = ;
-	    arima_d = ;
-	    arma_q = ;
-	    arma_P = ;
-	    arima_D = ;
-	    arma_Q = ;
-	    arma_const = ;
+	    retrieve_arma_info(pmod);
 	} else if (pmod->ci == GARCH) {
-	    garch_p = ;
-	    garch_q = ;
+	    garch_p = pmod->list[1];
+	    garch_q = pmod->list[2];
 	} else if (pmod->ci == HECKIT) {
-	    selvar = ;
+	    retrieve_heckit_info(pmod);
+	} else if (pmod->ci == POISSON) {
+	    offvar = gretl_model_get_int(pmod, "offset_var");
+	} else if (pmod->ci == TSLS) {
+	    free(instlist);
+	    instlist = tsls_model_get_instrument_list(pmod);
+	} else if (pmod->ci == ARCH) {
+	    default_order = gretl_model_get_int(pmod, "arch_order");
+	} else if (pmod->ci == AR) {
+	    retrieve_AR_lags_info(pmod);
 	}
-    } else if (type == GRETL_OBJ_VAR) {
+
+	if (gretl_model_get_int(pmod, "robust")) {
+	    model_opt |= OPT_R;
+	}
+
+	modelspec_dialog(pmod->ci);
+    } else if (ci == VAR || ci == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) ptr;
 
-    }
-}
+	varconst = (var->detflags & DET_CONST);
+	vartrend = (var->detflags & DET_TREND);
+	want_seasonals = (var->detflags & DET_SEAS);
 
-#endif
+	if (var->robust) {
+	    model_opt |= OPT_R;
+	}
+
+	free(veclist);
+	veclist = gretl_list_copy(var->ylist);
+
+	free(vecxlist);
+	if (var->rlist != NULL) {
+	    vecxlist = gretl_lists_join_with_separator(var->xlist,
+						       var->rlist);
+	} else {
+	    vecxlist = gretl_list_copy(var->xlist);
+	}
+
+	default_order = var->order;
+
+	if (ci == VECM) {
+	    jrank = gretl_VECM_rank(var);
+	    jcase = jcode(var);
+	    default_order += 1;
+	}
+
+	selection_dialog((ci == VAR)? _("gretl: VAR") : _("gretl: VECM"),
+			 do_vector_model, ci);
+    } else if (ci == SYSTEM) {
+	dummy_call(); /* FIXME */
+    }
+
+    model_opt = OPT_NONE;
+}
 
 #define UNRESTRICTED N_("U")
 #define RESTRICTED   N_("R")
@@ -1652,6 +1848,12 @@ static void arma_spec_to_cmdlist (selector *sr)
     const char *txt;
     char s[32];
 
+    free(arlags);
+    arlags = NULL;
+
+    free(malags);
+    malags = NULL;
+
     if (GTK_WIDGET_SENSITIVE(sr->extra[0])) {
 	arma_p = spinner_get_int(sr->extra[0]);
 	sprintf(s, "%d ", arma_p);
@@ -1659,6 +1861,7 @@ static void arma_spec_to_cmdlist (selector *sr)
     } else {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[1]));
 	add_to_cmdlist(sr, arma_lag_string(s, txt)); 
+	arlags = gretl_strdup(txt);
     }
 
     arima_d = spinner_get_int(sr->extra[2]);
@@ -1673,6 +1876,7 @@ static void arma_spec_to_cmdlist (selector *sr)
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[4]));
 	add_to_cmdlist(sr, arma_lag_string(s, txt));
 	add_to_cmdlist(sr, "; ");
+	malags = gretl_strdup(txt);
     }
 
     if (sr->extra[5] != NULL) {
@@ -2176,10 +2380,13 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	hivar = k;
     } else if (sr->code == POISSON) {
 	sprintf(endbit, " ; %d", k);
+	offvar = k;
     } else if (sr->code == HECKIT) {
 	sprintf(endbit, " %d", k);
 	selvar = k;
     } else if (sr->code == AR) {
+	free(arlags);
+	arlags = gretl_strdup(txt);
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
     } 
@@ -2189,7 +2396,6 @@ static void vec_get_spinner_data (selector *sr, int *order)
 {
     GtkAdjustment *adj;
     char numstr[8];
-    int k;
 
     /* lag order */
     adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
@@ -2200,8 +2406,8 @@ static void vec_get_spinner_data (selector *sr, int *order)
     if (sr->code == VECM) {
 	/* cointegration rank */
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
-	k = (int) adj->value;
-	sprintf(numstr, "%d", k);
+	jrank = (int) adj->value;
+	sprintf(numstr, "%d", jrank);
 	add_to_cmdlist(sr, numstr);
     }
 }
@@ -2418,7 +2624,7 @@ static void compose_cmdlist (selector *sr)
 	if (sr->code == VECM || sr->code == VAR || sr->code == VLAGSEL) {
 	    want_seasonals = (sr->opts & OPT_D)? 1 : 0;
 	}
-	if (sr->code == VECM || sr->code == VAR) {
+	if (sr->code == VECM || sr->code == VAR || sr->code == ARCH) {
 	    default_order = order;
 	}
 	if (sr->code == VAR || sr->code == VLAGSEL) {
@@ -2799,9 +3005,11 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
 	
 	if (i == 0) {
+	    /* lag order */
 	    adj = gtk_adjustment_new(lag, minlag, maxlag, 1, 1, 0);
 	} else {
-	    adj = gtk_adjustment_new(1, 1, 10, 1, 1, 0);
+	    /* rank */
+	    adj = gtk_adjustment_new(jrank, 1, 10, 1, 1, 0);
 	}
 
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
@@ -2826,12 +3034,17 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 	val = datainfo->pd;
 	maxlag = 2 * datainfo->pd;
     } else {
+	/* arbond */
 	tmp = gtk_label_new(_("AR order:"));
 	val = 1;
 	maxlag = 10;
 	if (maxlag < datainfo->pd) {
 	    maxlag = datainfo->pd;
 	}
+    }
+
+    if (default_order > 0 && default_order <= maxlag) {
+	val = default_order;
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
@@ -2879,6 +3092,8 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
 	setvar = selvar;
     } else if (sr->code == INTREG && hivar > 0 && hivar < datainfo->v) {
 	setvar = hivar;
+    } else if (sr->code == POISSON && offvar > 0 && offvar < datainfo->v) {
+	setvar = offvar;
     }
 
     if (setvar > 0) {
@@ -3020,6 +3235,16 @@ static void make_tau_list (GtkWidget *w)
     gtk_combo_box_append_text(box, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
 } 
 
+static int maybe_set_entry_text (GtkWidget *w, const char *s)
+{
+    if (s != NULL && *s != '\0') {
+	gtk_entry_set_text(GTK_ENTRY(w), s + (*s == ' '));
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp;
@@ -3044,6 +3269,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	sr->extra[0] = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
+	maybe_set_entry_text(sr->extra[0], arlags);
 	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == QUANTREG) {
 	sr->extra[0] = gtk_combo_box_entry_new_text();
@@ -3343,6 +3569,7 @@ static void build_arma_spinners (selector *sr)
     GtkWidget *hbox;
     GtkObject *adj;
     gdouble vmax, val;
+    gboolean freeform;
     const char *strs[] = {
 	N_("AR order:"),
 	N_("Difference:"),
@@ -3361,6 +3588,7 @@ static void build_arma_spinners (selector *sr)
     gtk_table_set_col_spacings(GTK_TABLE(tab), 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), tab, FALSE, FALSE, 0);
 
+    /* AR lags */
     lbl = gtk_label_new(_(strs[0]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 0, 1);
     adj = gtk_adjustment_new(arma_p, 0, 10, 1, 1, 0);
@@ -3372,15 +3600,21 @@ static void build_arma_spinners (selector *sr)
     /* or free-form lags */
     sr->extra[1] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[1]), 16);
+    freeform = maybe_set_entry_text(sr->extra[1], arlags);
     gtk_widget_set_sensitive(sr->extra[1], FALSE);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[1], 3, 4, 0, 1);
+    if (freeform) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
+    }
 
+    /* order for differencing */
     lbl = gtk_label_new(_(strs[1]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 1, 2);
     adj = gtk_adjustment_new(arima_d, 0, 2, 1, 1, 0);
     sr->extra[2] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[2], 1, 2, 1, 2);
 
+    /* MA lags */
     lbl = gtk_label_new(_(strs[2]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
     adj = gtk_adjustment_new(arma_q, 0, 10, 1, 1, 0);
@@ -3392,8 +3626,12 @@ static void build_arma_spinners (selector *sr)
     /* or free-form lags */
     sr->extra[4] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[4]), 16);
+    freeform = maybe_set_entry_text(sr->extra[1], malags);
     gtk_widget_set_sensitive(sr->extra[4], FALSE);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[4], 3, 4, 2, 3);
+    if (freeform) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
+    }
 
     gtk_widget_show_all(tab);
 
@@ -3546,6 +3784,8 @@ static void build_selector_switches (selector *sr)
 
 	if (robust_conf(sr->code) && using_hc_by_default()) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
+	} else if (model_opt & OPT_R) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
 	}
 
 	if (sr->code == PANEL) {
@@ -3598,7 +3838,7 @@ static void build_selector_switches (selector *sr)
 	       sr->code == VAR || sr->code == VLAGSEL) {
 	if (sr->code == VAR || sr->code == VLAGSEL) {
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
-	    pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
+	    pack_switch(tmp, sr, varconst, TRUE, OPT_N, 0);
 	    tmp = gtk_check_button_new_with_label(_("Include a trend"));
 	    pack_switch(tmp, sr, vartrend, FALSE, OPT_T, 0);
 	} else {
@@ -3646,6 +3886,9 @@ static void build_selector_switches (selector *sr)
 	pack_switch(sr->x12a_button, sr, arma_x12, FALSE, OPT_X, 0);
 	g_signal_connect(G_OBJECT(sr->x12a_button), "toggled",
 			 G_CALLBACK(x12a_vs_hessian), sr);
+	if (model_opt & OPT_X) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->x12a_button), TRUE);
+	}
 #endif
     }    
 
@@ -3974,13 +4217,18 @@ static void build_heckit_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
     GSList *group;
+    gboolean ml = TRUE;
+
+    if (model_opt & OPT_T) {
+	ml = FALSE;
+    }
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Maximum likelihood estimation"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+    pack_switch(b1, sr, ml, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("2-step estimation"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_T, 0);
+    pack_switch(b2, sr, !ml, FALSE, OPT_T, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
@@ -4042,6 +4290,10 @@ static void build_arma_combo (selector *sr)
     arma_opts.strs = opt_strs;
     arma_opts.vals = opts;
     arma_opts.optp = &sr->opts;
+
+    if (model_opt & OPT_C) {
+	deflt = 1;
+    }
 
     combo = gretl_opts_combo_full(&arma_opts, deflt, 
 				  G_CALLBACK(arma_estimator_switch),
@@ -4380,16 +4632,19 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     gtk_widget_show(hbox);
 }
 
-void selection_dialog (const char *title, int (*callback)(), guint ci,
-		       int preselect) 
+void selection_dialog (const char *title, int (*callback)(), guint ci)
 {
     GtkListStore *store;
     GtkTreeIter iter;
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox;
     selector *sr;
+    int preselect;
     int yvar = 0;
     int i;
+
+    preselect = presel;
+    presel = 0;
 
     if (open_selector != NULL) {
 	gdk_window_raise(open_selector->dlg->window);
@@ -5081,7 +5336,7 @@ void data_save_selection_wrapper (int file_code, gpointer p)
 	    return;
 	}
 	selection_dialog(_("Save functions"), 
-			 data_save_selection_callback, file_code, 0);
+			 data_save_selection_callback, file_code);
     } else {
 	simple_selection((file_code == COPY_CSV)? 
 			 _("Copy data") : _("Save data"), 
@@ -5138,19 +5393,19 @@ gretlopt selector_get_opts (const selector *sr)
 	/* record Johansen case */
 	if (ret & OPT_A) {
 	    /* --crt */
-	    jcase = 3;
+	    jcase = J_REST_TREND;
 	} else if (ret & OPT_N) {
 	    /* --nc */
-	    jcase = 0;
+	    jcase = J_NO_CONST;
 	} else if (ret & OPT_R) {
 	    /* --rc */
-	    jcase = 1;
+	    jcase = J_REST_CONST;
 	} else if (ret & OPT_T) {
 	    /* --ct */
-	    jcase = 4;
+	    jcase = J_UNREST_TREND;
 	} else {
 	    /* unrestricted constant */
-	    jcase = 2;
+	    jcase = J_UNREST_CONST;
 	}
     }
 
