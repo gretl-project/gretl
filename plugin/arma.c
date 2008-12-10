@@ -28,6 +28,8 @@
 #include "kalman.h"
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
+#include "gretl_bfgs.h"
+
 #include "../cephes/libprob.h"
 
 #define ARMA_DEBUG 0

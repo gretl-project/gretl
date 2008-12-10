@@ -25,6 +25,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_bfgs.h"
 #include "garch.h"
 
 #define GDEBUG 0

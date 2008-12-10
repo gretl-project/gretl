@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_bfgs.h"
 
 #define TDEBUG 0
 

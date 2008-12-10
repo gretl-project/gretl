@@ -25,6 +25,7 @@
 #include "random.h"
 #include "johansen.h"
 #include "var.h"
+#include "gretl_bfgs.h"
 #include "gretl_restrict.h"
 #include "libset.h"
 #include "jprivate.h"

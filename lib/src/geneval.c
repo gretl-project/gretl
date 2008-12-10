@@ -24,6 +24,7 @@
 #include "gretl_string_table.h"
 #include "matrix_extra.h"
 #include "usermat.h"
+#include "gretl_bfgs.h"
 #include "gretl_fft.h"
 #include "version.h"
 

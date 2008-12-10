@@ -22,6 +22,7 @@
 #include "nlspec.h"
 #include "libset.h"
 #include "qr_estimate.h"
+#include "gretl_bfgs.h"
 
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"
@@ -105,51 +106,44 @@ static int gmm_unkvar (const char *s)
     return E_UNKVAR;
 }
 
-static int matrix_is_dated (const gretl_matrix *m)
-{
-    return !(m->t1 == 0 && m->t2 == 0);
-}
+#define matrix_is_dated(m) (!(m->t1 == 0 && m->t2 == 0))
 
-/* Determine the type of an element in an "orthog" specification */
+/* Determine the type of an element in an "orthog" specification:
+   series, matrix or list of series
+*/
 
-static int oc_get_type (const char *name, const DATAINFO *pdinfo,
-			int rhs, int *err)
+static int 
+oc_get_type (const char *name, const DATAINFO *pdinfo, int *err)
 {
     int *list = NULL;
-    int v = series_index(pdinfo, name);
+    int j, v = series_index(pdinfo, name);
+    int ret = GRETL_TYPE_NONE;
 
 #if GMM_DEBUG
     fprintf(stderr, "oc_get_type: looking at '%s' (v = %d, pdinfo->v = %d)\n", 
 	    name, v, pdinfo->v);
 #endif
 
-    /* try for a series first */
     if (v >= 0 && v < pdinfo->v) {
-	return GRETL_TYPE_SERIES;
-    }
-
-    /* then a matrix */
-    if (get_matrix_by_name(name) != NULL) {
-	return GRETL_TYPE_MATRIX;
-    }
-
-    /* failing that, a list */
-    list = get_list_by_name(name);
-    if (list != NULL) {
-	int j;
-
+	/* try for a series first */
+	ret = GRETL_TYPE_SERIES;
+    } else if (get_matrix_by_name(name) != NULL) {
+	/* then a matrix */
+	ret = GRETL_TYPE_MATRIX;
+    } else if ((list = get_list_by_name(name)) != NULL) {
+	/* failing that, a list */
 	for (j=1; j<=list[0]; j++) {
 	    if (list[j] < 0 || list[j] >= pdinfo->v) {
 		*err = E_DATA;
 		return GRETL_TYPE_NONE;
 	    } 
 	}
-	return GRETL_TYPE_LIST;
+	ret = GRETL_TYPE_LIST;
+    } else {
+	*err = gmm_unkvar(name);
     }
 
-    *err = gmm_unkvar(name);
-
-    return GRETL_TYPE_NONE;
+    return ret;
 }
 
 /* See if column j in matrix b is present anywhere in matrix a.  If
@@ -575,10 +569,10 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 	}
     }
 
-    ltype = oc_get_type(lname, pdinfo, 0, &err);
+    ltype = oc_get_type(lname, pdinfo, &err);
 
     if (!err) {
-	rtype = oc_get_type(rname, pdinfo, 1, &err);
+	rtype = oc_get_type(rname, pdinfo, &err);
     }
 
     if (!err) {
@@ -595,14 +589,7 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     return err;
 }
 
-static int matrix_t1 (const gretl_matrix *m, int t1)
-{
-    if (m->t1 == 0 && m->t2 == 0) {
-	return t1;
-    } else {
-	return m->t1;
-    }
-}
+#define matrix_t1(m,t) ((m->t1 == 0 && m->t2 == 0)? t : m->t1)
 
 static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
 {
@@ -635,7 +622,6 @@ static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
 
     return 0;
 }
-
 
 #define intmax3(a,b,c) (((a)>(b))? (((c)>(a))? (c) : (a)) : (((c)>(b))? (c) : (b)))
 #define intmin3(a,b,c) (((a)<(b))? (((c)<(a))? (c) : (a)) : (((c)<(b))? (c) : (b)))
@@ -678,7 +664,7 @@ static int gmm_fix_datarows (nlspec *s)
 
 /* Add the matrix of weights to the GMM specification: this must
    come after all the O.C.s are given, so that we can check the
-   dimensions of the given matrix.
+   dimensions of the supplied matrix.
 */
 
 int nlspec_add_weights (nlspec *s, const char *str)
@@ -949,27 +935,23 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
 
 static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 {
-    gretl_matrix *y = NULL;
-    gretl_matrix *X = NULL;
-    gretl_matrix *XTX = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *e = NULL;
+    gretl_matrix_block *B;
+    gretl_matrix *y, *X, *XTX;
+    gretl_matrix *b, *e;
     int T = E->rows;
     int k = E->cols;
     double xtj, eti;
     int i, j, t;
     int err = 0;
 
-    y = gretl_column_vector_alloc(T - 1);
-    X = gretl_matrix_alloc(T - 1, k);
-    XTX = gretl_matrix_alloc(k, k);
-    b = gretl_column_vector_alloc(k);
-    e = gretl_column_vector_alloc(k);
-
-    if (y == NULL || X == NULL || XTX == NULL ||
-	b == NULL || e == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    B = gretl_matrix_block_new(&y, T-1, 1,
+			       &X, T-1, k,
+			       &XTX, k, k,
+			       &b, k, 1,
+			       &e, k, 1,
+			       NULL);
+    if (B == NULL) {
+	return E_ALLOC;
     }
 
     /* make matrix of RHS vars */
@@ -1063,11 +1045,7 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 
  bailout:
 
-    gretl_matrix_free(y);
-    gretl_matrix_free(X);
-    gretl_matrix_free(XTX);
-    gretl_matrix_free(b);
-    gretl_matrix_free(e);
+    gretl_matrix_block_destroy(B);
 
     return err;
 }
@@ -1078,7 +1056,6 @@ static int gmm_HAC (gretl_matrix *E, gretl_matrix *V, hac_info *hinfo)
     static gretl_matrix *Tmp;
     static gretl_matrix *A;
     static gretl_matrix *E2;
-
     int T, k;
     double w;
     int i, err = 0;
@@ -1194,20 +1171,15 @@ static void gmm_HAC_cleanup (void)
 
 int gmm_add_vcv (MODEL *pmod, nlspec *s)
 {
-    gretl_matrix *V = NULL;
-    gretl_matrix *J = NULL;
-    gretl_matrix *S = NULL;
-    gretl_matrix *m1 = NULL;
-    gretl_matrix *m2 = NULL;
-    gretl_matrix *m3 = NULL;
+    gretl_matrix_block *B;
+    gretl_matrix *V, *J, *S;
+    gretl_matrix *m1, *m2, *m3;
     int i, j, k = s->ncoeff;
     int T = s->nobs;
-
-    doublereal *wa4 = NULL;
+    doublereal *wa4;
     doublereal epsfcn = 0.0; /* could be > 0.0 */
     integer m, n, ldjac;
     integer iflag = 0;
-
     double *f;
     int err = 0;
 
@@ -1216,18 +1188,19 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     ldjac = m; /* leading dimension of jac array */
 
     wa4 = malloc(m * sizeof *wa4);
-    V = gretl_matrix_alloc(k, k);
-    J = gretl_matrix_alloc(m, k);
-    S = gretl_matrix_alloc(m, m);
-    m1 = gretl_matrix_alloc(k, m);
-    m2 = gretl_matrix_alloc(k, k);
-    m3 = gretl_matrix_alloc(k, k);
+    if (wa4 == NULL) {
+	return E_ALLOC;
+    }
 
-    if (V == NULL || J == NULL || S == NULL ||
-	m1 == NULL || m2 == NULL || m3 == NULL ||
-	wa4 == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    B = gretl_matrix_block_new(&V, k, k,
+			       &J, m, k,
+			       &S, m, m,
+			       &m1, k, m,
+			       &m2, k, k,
+			       &m3, k, k,
+			       NULL);
+    if (B == NULL) {
+	return E_ALLOC;
     }
 
     if (using_HAC(s)) {
@@ -1327,14 +1300,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	}
     }
 
- bailout:
-
-    gretl_matrix_free(V);
-    gretl_matrix_free(J);
-    gretl_matrix_free(S);
-    gretl_matrix_free(m1);
-    gretl_matrix_free(m2);
-    gretl_matrix_free(m3);
+    gretl_matrix_block_destroy(B);
     free(wa4);
 
     return err;
@@ -1422,7 +1388,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     gretl_matrix_free(V);
 }
 
-/* Driver for BFGS, case of GMM estimation.  We may have to handle
+/* BFGS driver, for the case of GMM estimation.  We may have to handle
    both "inner" (BFGS) and "outer" iterations here: the "outer"
    iterations (if applicable) are re-runs of BFGS using an updated
    weights matrix.

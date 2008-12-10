@@ -2801,7 +2801,7 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
     view_buffer(prn, 78, 450, my_sys->name, SYSTEM, my_sys);
 }
 
-static int do_nls_genr (void)
+static int do_nl_genr (void)
 {
     int err;
 
@@ -2898,7 +2898,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
 	if (!started && is_genr_line(realline)) {
 	    gretl_command_strcpy(realline);
-	    err = do_nls_genr();
+	    err = do_nl_genr();
 	    *realline = 0;
 	    continue;
 	}
@@ -2912,7 +2912,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	    strcat(realline, tmp);
 	} 
 
-	err = nls_parse_line(ci, realline, (const double **) Z, datainfo, NULL);
+	err = nl_parse_line(ci, realline, (const double **) Z, datainfo, NULL);
 
 	if (!started) {
 	    started = 1;
@@ -2950,7 +2950,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	return;
     }
 
-    *pmod = nls(&Z, datainfo, opt, prn);
+    *pmod = nl_model(&Z, datainfo, opt, prn);
     err = model_output(pmod, prn);
 
     if (err) {

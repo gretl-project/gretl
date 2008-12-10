@@ -84,6 +84,7 @@ PUBLIC_HDRS = \
 	genmain.h \
 	genfuncs.h \
 	graphing.h \
+	gretl_bfgs.h \
 	gretl_commands.h \
 	gretl_errors.h \
 	gretl_f2c.h \
@@ -159,6 +160,7 @@ SRCS = adf_kpss.c \
 	gensyntax.c \
 	gmm.c \
 	graphing.c \
+	gretl_bfgs.c \
 	gretl_commands.c \
 	gretl_errors.c \
 	gretl_fft.c \

@@ -155,9 +155,9 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
 	return 1;
     }    
 
-    /* NLS, MLE and GMM models won't work */
+    /* NLS, MLE and GMM models won't work, nor INTREG */
     if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
-	pmod->ci == ARBOND) {
+	pmod->ci == ARBOND || pmod->ci == INTREG) {
 	mtable_errmsg(_("Sorry, this model can't be put in the model table"),
 		      gui);
 	return 1;

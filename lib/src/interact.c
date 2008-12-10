@@ -4430,8 +4430,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case GMM:
     case MLE:
     case NLS:
-	err = nls_parse_line(cmd->ci, line, (const double **) *pZ, 
-			     pdinfo, prn);
+	err = nl_parse_line(cmd->ci, line, (const double **) *pZ, 
+			    pdinfo, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	} 
@@ -4628,7 +4628,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(models[0]);
-	    *models[0] = nls(pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = nl_model(pZ, pdinfo, cmd->opt, prn);
 	    err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	    if (!err) {
 		s->alt_model = 1;
