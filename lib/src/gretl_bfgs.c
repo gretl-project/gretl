@@ -264,6 +264,75 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
     return vcv;
 }
 
+/* default numerical calculation of gradient in context of BFGS */
+
+int BFGS_numeric_gradient (double *b, double *g, int n,
+			   BFGS_CRIT_FUNC func, void *data)
+{
+    double bi0, f1, f2;
+    gretlopt opt = OPT_NONE;
+    int i;
+
+    if (opt == OPT_R) {
+	/* Richardson */
+	double df[RSTEPS];
+	double eps = 1.0e-4;
+	double d = 0.0001;
+	double v = 2.0;
+	double h, p4m;
+	int r = RSTEPS;
+	int k, m;
+
+	for (i=0; i<n; i++) {
+	    bi0 = b[i];
+	    h = d * b[i] + eps * (b[i] == 0.0);
+	    for (k=0; k<r; k++) {
+		b[i] = bi0 - h;
+		f1 = func(b, data);
+		b[i] = bi0 + h;
+		f2 = func(b, data);
+		if (na(f1) || na(f2)) {
+		    b[i] = bi0;
+		    return 1;
+		}		    
+		df[k] = (f2 - f1) / (2.0 * h); 
+		h /= v;
+	    }
+	    b[i] = bi0;
+	    p4m = 4.0;
+	    for (m=0; m<r-1; m++) {
+		for (k=0; k<r-m; k++) {
+		    df[k] = (df[k+1] * p4m - df[k]) / (p4m - 1.0);
+		}
+		p4m *= 4.0;
+	    }
+	    g[i] = df[0];
+	}
+    } else {
+	/* simple gradient calculation */
+	const double h = 1.0e-8;
+
+	for (i=0; i<n; i++) {
+	    bi0 = b[i];
+	    b[i] = bi0 - h;
+	    f1 = func(b, data);
+	    b[i] = bi0 + h;
+	    f2 = func(b, data);
+	    b[i] = bi0;
+	    if (na(f1) || na(f2)) {
+		return 1;
+	    }
+	    g[i] = (f2 - f1) / (2.0 * h);
+#if BFGS_DEBUG > 1
+	    fprintf(stderr, "g[%d] = (%.16g - %.16g) / (2.0 * %g) = %g\n",
+		    i, f2, f1, h, g[i]);
+#endif
+	}
+    }
+
+    return 0;
+}
+
 #define stepfrac	0.2
 #define acctol		1.0e-7 /* alt: 0.0001 or 1.0e-7 (?) */
 #define reltest		10.0

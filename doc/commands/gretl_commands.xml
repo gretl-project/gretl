@@ -1548,13 +1548,12 @@
 
     <description>
       <para>
-	Computes the Akaike Information Criterion (AIC) and Schwarz's
-	Bayesian Information Criterion (BIC), given <repl>ess</repl>
-	(error sum of squares), the number of observations
-	(<math>T</math>), and the number of coefficients
-	(<math>k</math>). <math>T</math>,
-	<math>k</math>, and <repl>ess</repl> may be numerical
-	values or names of previously defined variables.
+	Computes the Akaike Information Criterion (AIC), Schwarz's Bayesian
+	Information Criterion (BIC) and the Hannan&ndash;Quinn criterion
+	(HQC), given <repl>ess</repl> (error sum of squares), the number of
+	observations (<math>T</math>), and the number of coefficients
+	(<math>k</math>). <math>T</math>, <math>k</math>, and <repl>ess</repl>
+	may be numerical values or names of previously defined variables.
       </para>
       <para>
 	The AIC is computed as in Akaike's original (1974)
@@ -1571,6 +1570,11 @@
 	  tex="\[{\rm BIC} = -2 \ell + k \log T\]"
 	  ascii="BIC = -2L + k log T"
           graphic="bic_orig"/>
+	And the HQC is computed as
+	<equation status="display"
+	  tex="\[{\rm HQC} = -2 \ell + 2k \log \log T\]"
+	  ascii="HQC = -2L + 2k log log T"
+          graphic="hqc"/>
 	Please see <guideref targ="select-criteria"/> for further 
 	details.
       </para>

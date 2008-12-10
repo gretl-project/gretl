@@ -655,18 +655,21 @@ void gretl_callback (GtkAction *action, gpointer data)
 	query = N_("GMM: Specify function and orthogonality conditions:");
 	okfunc = do_gmm_model;
 	varclick = VARCLICK_INSERT_TEXT;
+	data = NULL;
 	break;	
     case MLE:
 	title = N_("gretl: maximum likelihood");
 	query = N_("MLE: Specify function, and derivatives if possible:");
 	okfunc = do_mle_model;
 	varclick = VARCLICK_INSERT_TEXT;
+	data = NULL;
 	break;	
     case NLS:
 	title = N_("gretl: nonlinear least squares");
 	query = N_("NLS: Specify function, and derivatives if possible:");
 	okfunc = do_nls_model;
 	varclick = VARCLICK_INSERT_TEXT;
+	data = NULL;
 	break;	
     case SYSTEM:
 	title = N_("gretl: simultaneous equations system");
@@ -693,6 +696,38 @@ void gretl_callback (GtkAction *action, gpointer data)
 
     edit_dialog(_(title), _(query), defstr, okfunc, data, 
 		cmd, varclick, &cancel);   
+}
+
+void revise_nl_model (MODEL *pmod)
+{
+    const char *title = NULL;
+    const char *query = NULL;
+    const char *defstr;
+    void (*okfunc)() = NULL;
+    int cancel = 0;
+
+    switch (pmod->ci) {
+    case GMM:
+	title = N_("gretl: GMM");
+	query = N_("GMM: Specify function and orthogonality conditions:");
+	okfunc = do_gmm_model;
+	break;	
+    case MLE:
+	title = N_("gretl: maximum likelihood");
+	query = N_("MLE: Specify function, and derivatives if possible:");
+	okfunc = do_mle_model;
+	break;	
+    case NLS:
+	title = N_("gretl: nonlinear least squares");
+	query = N_("NLS: Specify function, and derivatives if possible:");
+	okfunc = do_nls_model;
+	break;	
+    }
+
+    defstr = gretl_model_get_data(pmod, "nlinfo");
+
+    edit_dialog(_(title), _(query), defstr, okfunc, pmod, 
+		pmod->ci, VARCLICK_INSERT_TEXT, &cancel);   
 }
 
 void genr_callback (void)

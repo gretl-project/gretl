@@ -419,6 +419,8 @@ static void retrieve_arma_info (MODEL *pmod)
 	model_opt |= OPT_C;
     } 
 
+    /* FIXME covariance matrix */
+
     arma_p = arma_model_nonseasonal_AR_order(pmod);
     arma_q = arma_model_nonseasonal_MA_order(pmod);
     arima_d = gretl_model_get_int(pmod, "arima_d");
@@ -499,9 +501,10 @@ void selector_from_model (void *ptr, int ci)
 
     if (ci == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) ptr;
+	int sel_ci = pmod->ci;
 
 	if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
-	    dummy_call(); /* FIXME */
+	    revise_nl_model(pmod);
 	    return;
 	}
 
@@ -537,13 +540,26 @@ void selector_from_model (void *ptr, int ci)
 	    default_order = gretl_model_get_int(pmod, "arch_order");
 	} else if (pmod->ci == AR) {
 	    retrieve_AR_lags_info(pmod);
+	} else if (pmod->ci == PANEL) {
+	    if (gretl_model_get_int(pmod, "fixed-effects")) {
+		model_opt |= OPT_F;
+	    } else if (gretl_model_get_int(pmod, "random-effects")) {
+		model_opt |= OPT_U;
+	    } else if (gretl_model_get_int(pmod, "unit-weights")) {
+		sel_ci = PANEL_WLS;
+	    } else if (gretl_model_get_int(pmod, "between")) {
+		sel_ci = PANEL_B;
+	    }
+	    if (gretl_model_get_int(pmod, "time-dummies")) {
+		model_opt |= OPT_D;
+	    }
 	}
 
 	if (gretl_model_get_int(pmod, "robust")) {
 	    model_opt |= OPT_R;
 	}
 
-	modelspec_dialog(pmod->ci);
+	modelspec_dialog(sel_ci);
     } else if (ci == VAR || ci == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) ptr;
 
@@ -3865,7 +3881,7 @@ static void build_selector_switches (selector *sr)
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_T, 0);
     } else if (sr->code == PANEL || sr->code == ARBOND) {
 	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
-	pack_switch(tmp, sr, FALSE, FALSE, OPT_D, 0);
+	pack_switch(tmp, sr, (model_opt & OPT_D), FALSE, OPT_D, 0);
     } else if (sr->code == XTAB) {
 	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
@@ -4180,18 +4196,23 @@ static void build_panel_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
     GSList *group;
+    gboolean fe = TRUE;
 
     if (sr->opts & OPT_W) {
 	/* panel weighted least squares */
 	return;
     }
 
+    if (model_opt & OPT_U) {
+	fe = FALSE;
+    }
+
     b1 = gtk_radio_button_new_with_label(NULL, _("Fixed effects"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+    pack_switch(b1, sr, fe, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Random effects"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_U, 0);
+    pack_switch(b2, sr, !fe, FALSE, OPT_U, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;

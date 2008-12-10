@@ -26,6 +26,9 @@ $\ell$
 <texequation fileref="bic_orig">
 \[{\rm BIC} = -2 \ell + k \log T\]
 </texequation>
+<texequation fileref="hqc">
+\[{\rm HQC} = -2 \ell + 2k \log \log T\]
+</texequation>
 <texequation fileref="kernel1">
 \[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]
 </texequation>

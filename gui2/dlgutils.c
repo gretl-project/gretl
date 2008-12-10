@@ -245,6 +245,7 @@ static void gretl_dialog_set_resizeable (GtkWidget *w, gboolean s)
 }
 
 static GtkWidget *current_dialog;
+static GtkWidget *open_edit_dialog;
 
 int maybe_raise_dialog (void)
 {
@@ -253,7 +254,10 @@ int maybe_raise_dialog (void)
     if (current_dialog != NULL) {
 	gtk_window_present(GTK_WINDOW(current_dialog));
 	ret = 1;
-    }
+    } else if (open_edit_dialog != NULL) {
+	gtk_window_present(GTK_WINDOW(open_edit_dialog));
+	ret = 1;
+    }	
 
     return ret;
 }
@@ -335,8 +339,6 @@ struct dialog_t_ {
     gretlopt opt;
 };
 
-static GtkWidget *open_edit_dialog;
-
 static void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     dialog_t *d = (dialog_t *) data;
@@ -407,6 +409,16 @@ dialog_data_new (gpointer p, gint code, const char *title,
 		     G_CALLBACK(destroy_dialog_data), d);
     g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
 		     G_CALLBACK(esc_kills_window), NULL);
+
+#if 0
+    g_signal_connect(G_OBJECT(d->dialog), "show", 
+		     G_CALLBACK(dialog_set_destruction), mdata->main);
+#endif
+
+    if (d->blocking) {
+	g_signal_connect(G_OBJECT(d->dialog), "show", 
+			 G_CALLBACK(gtk_main), NULL);
+    }
 
     return d;
 }
@@ -835,7 +847,7 @@ static gboolean opt_f_callback (GtkWidget *w, dialog_t *dlg)
 }
 
 static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
-					gretlopt opt)
+					gretlopt opt, MODEL *pmod)
 {
     GtkWidget *b = NULL;
 
@@ -843,6 +855,9 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Iterated estimation"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_t_callback), dlg);
+	if (pmod != NULL && gretl_model_get_int(pmod, "iterated")) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+	}
     } else if (opt == OPT_V) {
 	b = gtk_check_button_new_with_label(_("Show details of iterations"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
@@ -851,6 +866,9 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_r_callback), dlg);
+	if (pmod != NULL && gretl_model_get_int(pmod, "robust")) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+	}
     } else if (opt == OPT_B) {
 	b = gtk_check_button_new_with_label(_("Use bootstrap"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
@@ -919,7 +937,7 @@ GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
     return gretl_opts_combo_full(opts, deflt, NULL, NULL);
 }
 
-static void build_gmm_combo (GtkWidget *vbox, dialog_t *d)
+static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 {
     GtkWidget *combo, *hbox;
     static const char *strs[] = {
@@ -939,6 +957,14 @@ static void build_gmm_combo (GtkWidget *vbox, dialog_t *d)
     gmm_opts.strs = strs;
     gmm_opts.vals = opts;
     gmm_opts.optp = &d->opt;
+
+    if (pmod != NULL) {
+	if (gretl_model_get_int(pmod, "two-step")) {
+	    deflt = 1;
+	} else if (gretl_model_get_int(pmod, "iterated")) {
+	    deflt = 2;
+	}
+    }
 
     combo = gretl_opts_combo(&gmm_opts, deflt);
 
@@ -1084,22 +1110,22 @@ static int vecm_model_window (windata_t *vwin)
 }
 
 void edit_dialog (const char *title, const char *info, const char *deflt, 
-		  void (*okfunc)(), void *okptr,
-		  guint cmdcode, guint varclick, 
-		  int *canceled)
+		  void (*okfunc)(), void *okptr, guint ci, 
+		  guint varclick, int *canceled)
 {
     dialog_t *d;
     GtkWidget *w;
     GtkWidget *top_vbox, *button_box;
+    MODEL *pmod = NULL;
     int hlpcode, modal = 0;
     int clear = 0;
 
-    if (open_edit_dialog != NULL && cmdcode != MINIBUF) {
+    if (open_edit_dialog != NULL && ci != MINIBUF) {
 	gtk_window_present(GTK_WINDOW(open_edit_dialog));
 	return;
     }
 
-    d = dialog_data_new(okptr, cmdcode, title, canceled);
+    d = dialog_data_new(okptr, ci, title, canceled);
     if (d == NULL) return;
 
     open_edit_dialog = d->dialog;
@@ -1112,12 +1138,12 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
 			      GTK_BUTTONBOX_END);
 
-    if (cmdcode == SYSTEM && d->data != NULL) {
+    if (ci == SYSTEM && d->data != NULL) {
 	/* revisiting saved equation system */
 	dlg_display_sys(d);
-    } else if (cmdcode == NLS || cmdcode == MLE || 
-	       cmdcode == SYSTEM || cmdcode == RESTRICT ||
-	       cmdcode == GMM) {
+    } else if (ci == NLS || ci == MLE || 
+	       ci == SYSTEM || ci == RESTRICT ||
+	       ci == GMM) {
 	int hsize = 62;
 	gchar *lbl;
 
@@ -1133,16 +1159,21 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	dialog_table_setup(d, hsize);
 	gretl_dialog_set_resizeable(d->dialog, TRUE);
 
-	/* insert previous text, if any and if the command
-	   is the same as previously -- or insert skeleton
-	   of command
-	*/
-	if (dlg_text_set_previous(d) ||
-	    dlg_text_set_gmm_skel(d)) {
+	if (ci != RESTRICT && deflt != NULL) {
+	    textview_set_text(d->edit, deflt);
+	    if (ci == NLS || ci == MLE || ci == GMM) {
+		pmod = okptr;
+	    }
+	} else if (dlg_text_set_previous(d) ||
+		   dlg_text_set_gmm_skel(d)) {
+	    /* insert previous text, if any and if the command
+	       is the same as previously -- or insert skeleton
+	       of command
+	    */
 	    clear = 1;
 	}
 
-	if (cmdcode != RESTRICT && cmdcode != GMM) {
+	if (ci != RESTRICT && ci != GMM) {
 	    g_signal_connect(G_OBJECT(d->edit), "button-press-event", 
 			     G_CALLBACK(edit_dialog_popup_handler), d);
 	}
@@ -1175,24 +1206,24 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 			 G_CALLBACK(raise_and_focus_dialog), d);
     }
 
-    if (cmdcode == SMPLBOOL && dataset_is_restricted()) {
+    if (ci == SMPLBOOL && dataset_is_restricted()) {
 	sample_replace_buttons(top_vbox, d);
-    } else if (cmdcode == SYSTEM) {
+    } else if (ci == SYSTEM) {
 	GtkWidget *bt, *bv;
 
-	bt = dialog_option_switch(top_vbox, d, OPT_T);
-	bv = dialog_option_switch(top_vbox, d, OPT_V);
+	bt = dialog_option_switch(top_vbox, d, OPT_T, NULL);
+	bv = dialog_option_switch(top_vbox, d, OPT_V, NULL);
 	system_estimator_list(top_vbox, d, bt, bv);
-    } else if (cmdcode == NLS || cmdcode == MLE) {
-	dialog_option_switch(top_vbox, d, OPT_V);
-	dialog_option_switch(top_vbox, d, OPT_R);
-    } else if (cmdcode == GMM) {
-	dialog_option_switch(top_vbox, d, OPT_V);
-	build_gmm_combo(top_vbox, d);
-    } else if (cmdcode == RESTRICT && ols_model_window(okptr)) {
-	dialog_option_switch(top_vbox, d, OPT_B);
-    } else if (cmdcode == RESTRICT && vecm_model_window(okptr)) {
-	dialog_option_switch(top_vbox, d, OPT_F);
+    } else if (ci == NLS || ci == MLE) {
+	dialog_option_switch(top_vbox, d, OPT_V, pmod);
+	dialog_option_switch(top_vbox, d, OPT_R, pmod);
+    } else if (ci == GMM) {
+	dialog_option_switch(top_vbox, d, OPT_V, pmod);
+	build_gmm_combo(top_vbox, d, pmod);
+    } else if (ci == RESTRICT && ols_model_window(okptr)) {
+	dialog_option_switch(top_vbox, d, OPT_B, NULL);
+    } else if (ci == RESTRICT && vecm_model_window(okptr)) {
+	dialog_option_switch(top_vbox, d, OPT_F, NULL);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 
@@ -1201,7 +1232,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	active_edit_name = d->edit;
     } else if (varclick == VARCLICK_INSERT_TEXT) { 
 	active_edit_text = d->edit;
-    } else if (cmdcode != SYSTEM) {
+    } else if (ci != SYSTEM) {
 	modal = 1;
     }
 
@@ -1233,31 +1264,25 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     gtk_widget_show(w);    
 
     /* "Help" button, if wanted */
-    hlpcode = edit_dialog_help_code(cmdcode, okptr);
+    hlpcode = edit_dialog_help_code(ci, okptr);
     if (hlpcode > 0) {
 	context_help_button(button_box, hlpcode);
 	modal = 0;
     }
 
-    /* schedule destruction */
-    if (cmdcode == MODEL_GENR || cmdcode == RESTRICT) {
+    if (ci == MODEL_GENR || ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) okptr;
 
+	/* schedule destruction */
 	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(cancel_vwin_edit), 
 			 NULL);
-    }
-
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);
+    } 
 
     gtk_widget_show(d->dialog); 
 
     if (modal) {
 	gretl_set_window_modal(d->dialog);
-    }
-
-    if (d->blocking) {
-	gtk_main();
     }
 }
 

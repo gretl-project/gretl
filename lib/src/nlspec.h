@@ -88,6 +88,8 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 
 int nlspec_add_weights (nlspec *s, const char *str);
 
+void nlspec_print_gmm_info (nlspec *spec, PRN *prn);
+
 int gmm_add_vcv (MODEL *pmod, nlspec *spec);
 
 int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn);

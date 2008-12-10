@@ -789,75 +789,6 @@ static double get_mle_ll (const double *b, void *p)
     return s->crit;
 }
 
-/* default numerical calculation of gradient in context of BFGS */
-
-int BFGS_numeric_gradient (double *b, double *g, int n,
-			   BFGS_CRIT_FUNC func, void *data)
-{
-    double bi0, f1, f2;
-    gretlopt opt = OPT_NONE;
-    int i;
-
-    if (opt == OPT_R) {
-	/* Richardson */
-	double df[RSTEPS];
-	double eps = 1.0e-4;
-	double d = 0.0001;
-	double v = 2.0;
-	double h, p4m;
-	int r = RSTEPS;
-	int k, m;
-
-	for (i=0; i<n; i++) {
-	    bi0 = b[i];
-	    h = d * b[i] + eps * (b[i] == 0.0);
-	    for (k=0; k<r; k++) {
-		b[i] = bi0 - h;
-		f1 = func(b, data);
-		b[i] = bi0 + h;
-		f2 = func(b, data);
-		if (na(f1) || na(f2)) {
-		    b[i] = bi0;
-		    return 1;
-		}		    
-		df[k] = (f2 - f1) / (2.0 * h); 
-		h /= v;
-	    }
-	    b[i] = bi0;
-	    p4m = 4.0;
-	    for (m=0; m<r-1; m++) {
-		for (k=0; k<r-m; k++) {
-		    df[k] = (df[k+1] * p4m - df[k]) / (p4m - 1.0);
-		}
-		p4m *= 4.0;
-	    }
-	    g[i] = df[0];
-	}
-    } else {
-	/* simple gradient calculation */
-	const double h = 1.0e-8;
-
-	for (i=0; i<n; i++) {
-	    bi0 = b[i];
-	    b[i] = bi0 - h;
-	    f1 = func(b, data);
-	    b[i] = bi0 + h;
-	    f2 = func(b, data);
-	    b[i] = bi0;
-	    if (na(f1) || na(f2)) {
-		return 1;
-	    }
-	    g[i] = (f2 - f1) / (2.0 * h);
-#if BFGS_DEBUG > 1
-	    fprintf(stderr, "g[%d] = (%.16g - %.16g) / (2.0 * %g) = %g\n",
-		    i, f2, f1, h, g[i]);
-#endif
-	}
-    }
-
-    return 0;
-}
-
 /* this function is used in the context of the minpack callback, and
    also for checking derivatives in the MLE case
 */
@@ -1057,7 +988,6 @@ static int get_mle_gradient (double *b, double *g, int n,
 
 	if (matrix_deriv(spec, j)) {
 	    m = spec->params[j].dmat;
-
 #if ML_DEBUG > 1
 	    gretl_matrix_print(m, "deriv matrix");
 #endif
@@ -1086,13 +1016,12 @@ static int get_mle_gradient (double *b, double *g, int n,
 		g[i] = x;
 	    }
 	} else {
-	    /* derivative must be series */
+	    /* the derivative must be a series */
 	    int v = spec->params[j].dnum;
 
 #if ML_DEBUG > 1
 	    fprintf(stderr, "param[%d], dnum = %d\n", j, v);
 #endif
-
 	    g[i] = 0.0;
 
 	    for (t=spec->t1; t<=spec->t2; t++) {
@@ -1107,7 +1036,6 @@ static int get_mle_gradient (double *b, double *g, int n,
 		    g[i] += x;
 		}
 	    }
-
 #if ML_DEBUG > 1
 	    fprintf(stderr, "set gradient g[%d] = %g\n", i, g[i]);
 #endif
@@ -1427,6 +1355,80 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
     }
 }
 
+/* convert (back) from '%s - (%s)' to '%s = %s' */
+
+static void adjust_saved_nlfunc (char *s)
+{
+    char *p = strchr(s, '-');
+
+    if (p != NULL) {
+	*p = '=';
+    }
+
+    p = strchr(s, '(');
+    if (p != NULL) {
+	shift_string_left(p, 1);
+    }
+
+    p = strrchr(s, ')');
+    if (p != NULL) {
+	*p = '\0';
+    }    
+}
+
+ /* attach some additional info to make it possible to
+    reconstruct the model from the saved state */
+
+static int nl_model_add_gui_info (MODEL *pmod, nlspec *spec)
+{
+    PRN *prn;
+    char *buf;
+    int i, ng, err = 0;
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+    if (err) {
+	return err;
+    }
+
+    if (pmod->depvar != NULL) {
+	pprintf(prn, "%s\n", pmod->depvar);
+    }
+
+    ng = spec->ngenrs - spec->nparam - (spec->nlfunc != NULL);
+	
+    for (i=0; i<ng; i++) {
+	pprintf(prn, "%s\n", genr_get_formula(spec->genrs[i]));
+    }
+
+    if (spec->ci == GMM) {
+	/* orthog, weights */
+	nlspec_print_gmm_info(spec, prn);
+    }
+
+    if (numeric_mode(spec)) {
+	pprintf(prn, "params");
+	for (i=0; i<spec->nparam; i++) {
+	    pprintf(prn, " %s", spec->params[i].name);
+	}
+	pputc(prn, '\n');
+    } else {
+	for (i=0; i<spec->nparam; i++) {
+	    pprintf(prn, "deriv %s = %s\n", spec->params[i].name,
+		    spec->params[i].deriv);
+	}
+    }
+
+    buf = gretl_print_steal_buffer(prn);
+    gretl_model_set_string_as_data(pmod, "nlinfo", buf);
+    gretl_print_destroy(prn);
+
+    return 0;
+}
+
+/* Called for all of NLS, MLE, GMM: attach to the model struct
+   the names of the parameters and some other string info
+*/
+
 static int 
 add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
 {
@@ -1443,11 +1445,13 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
     pmod->nparams = nc;
 
     if (spec->ci == NLS) {
-	pmod->depvar = gretl_strdup(pdinfo->varname[spec->dv]);
-	if (pmod->depvar == NULL) {
+	pmod->depvar = gretl_strdup(spec->nlfunc);
+	if (pmod->depvar != NULL) {
+	    adjust_saved_nlfunc(pmod->depvar);
+	} else {
 	    err = E_ALLOC;
 	}
-    } else if (spec->ci == MLE || (spec->ci == GMM && spec->nlfunc != NULL)) {
+    } else if (spec->nlfunc != NULL) {
 	n = strlen(spec->nlfunc) + strlen(spec->lhname);
 	pmod->depvar = malloc(n + 4);
 	if (pmod->depvar != NULL) {
@@ -1477,7 +1481,11 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
 	}
     }
 
-    return 0;
+    if (gretl_in_gui_mode()) {
+	err = nl_model_add_gui_info(pmod, spec);
+    }
+
+    return err;
 }
 
 static void 
@@ -1696,6 +1704,9 @@ static MODEL GNR (double *uhat, double *jac, nlspec *spec,
 	gretl_model_set_int(&gnr, "iters", iters);
 	gretl_model_set_double(&gnr, "tol", spec->tol);
 	transcribe_nls_function(&gnr, spec->nlfunc);
+	if (spec->opt & OPT_R) {
+	    gretl_model_set_int(&gnr, "robust", 1);
+	}
     }
 
     destroy_dataset(gZ, gdinfo);

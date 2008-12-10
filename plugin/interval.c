@@ -710,7 +710,6 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     MODEL *pmod = IC->pmod;
     double x, ndx, u;
     int i, j, n, m, k = IC->k, nx = IC->nx;
-    char *vname;
     int obstype;
 
     pmod->ci = INTREG;
@@ -765,12 +764,8 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     pmod->fstt = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
 
-    vname = gretl_strdup(pdinfo->varname[IC->lov]);
-    gretl_model_set_string_as_data(pmod, "lovar", vname);
-
-    vname = gretl_strdup(pdinfo->varname[IC->hiv]);
-    gretl_model_set_string_as_data(pmod, "hivar", vname);
-
+    gretl_model_set_int(pmod, "lovar", IC->lov);
+    gretl_model_set_int(pmod, "hivar", IC->hiv);
     gretl_model_set_int(pmod, "n_left", IC->typecount[0]);
     gretl_model_set_int(pmod, "n_both", IC->typecount[1]);
     gretl_model_set_int(pmod, "n_right", IC->typecount[2]);

@@ -4236,7 +4236,7 @@ int highest_numbered_var_in_model (const MODEL *pmod,
     int i, v, vmax = 0;
     int gotsep = 0;
 
-    if (pmod->ci == MLE || pmod->ci == GMM) {
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->list == NULL) {
 	return 0;
     }
 
@@ -4264,6 +4264,20 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 	    /* only the dependent var can be tested */
 	    break;
 	}
+    }
+
+    /* auxiliary variables for some model types */
+
+    if (pmod->ci == WLS) {
+	if (pmod->nwt > vmax) vmax = pmod->nwt;
+    } else if (pmod->ci == INTREG) {
+	v = gretl_model_get_int(pmod, "lovar");
+	if (v > vmax) vmax = v;
+	v = gretl_model_get_int(pmod, "hivar");
+	if (v > vmax) vmax = v;
+    } else if (pmod->ci == POISSON) {
+	v = gretl_model_get_int(pmod, "offset_var");
+	if (v > vmax) vmax = v;
     }
 
     return vmax;

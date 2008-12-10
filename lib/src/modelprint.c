@@ -1201,11 +1201,13 @@ static void print_intreg_depvar (const MODEL *pmod,
 				 const DATAINFO *pdinfo,
 				 PRN *prn)
 {
-    char *lov = (char *) gretl_model_get_data(pmod, "lovar");
-    char *hiv = (char *) gretl_model_get_data(pmod, "hivar");
+    int lov = gretl_model_get_int(pmod, "lovar");
+    int hiv = gretl_model_get_int(pmod, "hivar");
 
-    pprintf(prn, "%s: %s", I_("Lower limit"), lov);
-    pprintf(prn, ", %s: %s", I_("Upper limit"), hiv);
+    if (lov < pdinfo->v && hiv < pdinfo->v) {
+	pprintf(prn, "%s: %s", I_("Lower limit"), pdinfo->varname[lov]);
+	pprintf(prn, ", %s: %s", I_("Upper limit"), pdinfo->varname[hiv]);
+    }
 }
 
 static void print_model_heading (const MODEL *pmod, 
@@ -1392,11 +1394,7 @@ static void print_model_heading (const MODEL *pmod,
     } else if (pmod->aux == AUX_ARCH) {
 	pprintf(prn, "%s: %s", I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
-    } else if (pmod->ci == NLS) {
-	if (tex) tex_escape(vname, pmod->depvar);
-	pprintf(prn, "%s: %s", I_("Dependent variable"),
-		(tex)? vname : pmod->depvar);
-    } else if (pmod->ci == MLE || pmod->ci == GMM) {
+    } else if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
 	if (pmod->depvar != NULL) {
 	    if (tex) {
 		pprintf(prn, "\\verb!%s!", pmod->depvar);

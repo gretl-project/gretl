@@ -46,16 +46,21 @@ struct hac_info_ {
 };
 
 struct ocset_ {
-    gretl_matrix *e;     /* GMM residual, or LHS term in O.C. */
-    gretl_matrix *Z;     /* instruments, or RHS terms in O.C. */
-    gretl_matrix *W;     /* matrix of weights */
-    gretl_matrix *tmp;   /* holds columnwise product of e and Z */
-    gretl_matrix *sum;   /* holds column sums of tmp */
-    gretl_matrix *S;     /* selector matrix for computing tmp */
-    colsrc *ecols;       /* info on provenance of columns of 'e' */
-    int noc;             /* total number of orthogonality conds. */
-    int step;            /* number of estimation steps */
-    hac_info hinfo;      /* HAC characteristics */
+    gretl_matrix *e;      /* GMM residual, or LHS term in O.C. */
+    gretl_matrix *Z;      /* instruments, or RHS terms in O.C. */
+    gretl_matrix *W;      /* matrix of weights */
+    gretl_matrix *tmp;    /* holds columnwise product of e and Z */
+    gretl_matrix *sum;    /* holds column sums of tmp */
+    gretl_matrix *S;      /* selector matrix for computing tmp */
+    colsrc *ecols;        /* info on provenance of columns of 'e' */
+    int noc;              /* total number of orthogonality conds. */
+    int step;             /* number of estimation steps */
+    hac_info hinfo;       /* HAC characteristics */
+    char Wname[VNAMELEN]; /* name of weigting matrix */
+    char **lnames;        /* names of LHS terms in O.C.s */
+    char **rnames;        /* names of RHS terms in O.C.s */
+    int n_lnames;         /* number of lnames */
+    int n_rnames;         /* number of rnames */
 };
 
 #define using_HAC(s) (s->oc->hinfo.kern >= KERNEL_BARTLETT)
@@ -75,6 +80,14 @@ void oc_set_destroy (ocset *oc)
     gretl_matrix_free(oc->S);
 
     free(oc->ecols);
+
+    if (oc->lnames != NULL) {
+	free_strings_array(oc->lnames, oc->n_lnames);
+    }
+
+    if (oc->rnames != NULL) {
+	free_strings_array(oc->rnames, oc->n_rnames);
+    }
 	
     free(oc);
 }
@@ -95,6 +108,11 @@ static ocset *oc_set_new (void)
 	oc->ecols = NULL;
 	oc->noc = 0;
 	oc->step = 0;
+	*oc->Wname = '\0';
+	oc->lnames = NULL;
+	oc->rnames = NULL;
+	oc->n_lnames = 0;
+	oc->n_rnames = 0;
     }
 
     return oc;
@@ -537,8 +555,7 @@ int
 nlspec_add_orthcond (nlspec *s, const char *str,
 		     const double **Z, const DATAINFO *pdinfo)
 {
-    char lname[VNAMELEN];
-    char rname[VNAMELEN];
+    char lname[VNAMELEN], rname[VNAMELEN];
     int ltype = GRETL_TYPE_NONE, rtype = GRETL_TYPE_NONE;
     int err = 0;
 
@@ -578,6 +595,11 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     if (!err) {
 	err = oc_add_matrices(s, ltype, lname, rtype, rname, 
 			      Z, pdinfo);
+    }
+
+    if (!err && gretl_in_gui_mode()) {
+	strings_array_add(&s->oc->lnames, &s->oc->n_lnames, lname);
+	strings_array_add(&s->oc->rnames, &s->oc->n_rnames, rname);
     }
 
     if (err) {
@@ -669,7 +691,6 @@ static int gmm_fix_datarows (nlspec *s)
 
 int nlspec_add_weights (nlspec *s, const char *str)
 {
-    char name[VNAMELEN];
     int k, err = 0;
 
     if (s->ci != GMM) {
@@ -690,13 +711,13 @@ int nlspec_add_weights (nlspec *s, const char *str)
     fprintf(stderr, "nlspec_add_weights: line = '%s'\n", str);
 #endif
 
-    if (sscanf(str, "%15s", name) != 1) {
+    if (sscanf(str, "%15s", s->oc->Wname) != 1) {
 	return E_PARSE;
     } 
 
-    s->oc->W = get_matrix_by_name(name);
+    s->oc->W = get_matrix_by_name(s->oc->Wname);
     if (s->oc->W == NULL) {
-	return gmm_unkvar(name);
+	return gmm_unkvar(s->oc->Wname);
     }
 
     k = s->oc->noc;
@@ -733,6 +754,23 @@ int nlspec_add_weights (nlspec *s, const char *str)
     }
 
     return err;
+}
+
+void nlspec_print_gmm_info (nlspec *spec, PRN *prn)
+{
+    int i;
+
+    if (spec->oc == NULL || spec->oc->lnames == NULL ||
+	spec->oc->rnames == NULL) {
+	return;
+    }
+
+    for (i=0; i<spec->oc->noc; i++) {
+	pprintf(prn, "orthog %s ; %s\n", spec->oc->lnames[i], 
+		spec->oc->rnames[i]);
+    }
+
+    pprintf(prn, "weights %s\n", spec->oc->Wname);
 }
 
 /* sanity check before proceeding with GMM estimation */
