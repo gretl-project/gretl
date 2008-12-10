@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.7.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-03 14:57-0500\n"
-"PO-Revision-Date: 2008-12-01 23:00-0500\n"
+"PO-Revision-Date: 2008-12-08 23:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4700,9 +4700,8 @@ msgid "P-value($F$)"
 msgstr "wartość p dla testu $F$"
 
 #: lib/src/modelprint.c:2340
-#, fuzzy
 msgid "P-value(DW)"
-msgstr "Wartość p dla testu F"
+msgstr "Wartość p dla testu DW"
 
 #: lib/src/modelprint.c:2345
 msgid "Uncentered $R^2$"
@@ -6013,7 +6012,7 @@ msgstr "Metoda estymacji"
 
 #: lib/src/system.c:3803
 msgid "Ljung-Box Q'"
-msgstr ""
+msgstr "Ljung-Box Q'"
 
 #: lib/src/texprint.c:882 lib/src/varprint.c:750 lib/src/varprint.c:751
 #: gui2/gui_utils.c:3226
@@ -6603,7 +6602,7 @@ msgstr "Błędne dane"
 #: gui2/calculator.c:1066
 #, no-c-format
 msgid "5% critical values for Durbin-Watson statistic"
-msgstr "Statystyka Durbina-Watsona dla 5% poziomu istotności"
+msgstr "Statystyka testu Durbina-Watsona dla 5% poziomu istotności"
 
 #: gui2/calculator.c:1072 gui2/calculator.c:1277 gui2/calculator.c:2931
 msgid "gretl: critical values"
@@ -10514,7 +10513,7 @@ msgstr "ocena współliniowości VIF"
 
 #: gui2/gui_utils.c:171 gui2/gui_utils.c:3170
 msgid "_Autocorrelation"
-msgstr "testy autokorelacji"
+msgstr "testy autokorelacji (LMF, LM, Q)"
 
 #: gui2/gui_utils.c:172 gui2/gui_utils.c:3176
 msgid "A_RCH"
@@ -12301,9 +12300,8 @@ msgid "Ensure uniform sample size"
 msgstr "Jednolity zakres próby"
 
 #: gui2/selector.c:3522
-#, fuzzy
 msgid "Compute Durbin-Watson p-value"
-msgstr "Stat. Durbina-Watsona"
+msgstr "Test Durbina-Watsona (wartoć p)"
 
 #: gui2/selector.c:3528
 msgid "Parameter covariance matrix via Hessian"
@@ -14441,12 +14439,3 @@ msgstr "Łańcuchy"
 #: doc/commands/matfuncs.c:61
 msgid "Accessors"
 msgstr "Dodatki"
-
-#~ msgid "errorbars"
-#~ msgstr "słupki zakresu"
-
-#~ msgid "filledcurve"
-#~ msgstr "obszar do wypełnienia"
-
-#~ msgid "candlesticks"
-#~ msgstr "świece"
