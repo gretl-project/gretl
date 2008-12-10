@@ -476,13 +476,9 @@ static gretl_matrix *intreg_VCV (int_container *IC, gretlopt opt,
 static void int_compute_gresids (int_container *IC)
 {
     int t, k = IC->k;
-    double x0, x1;
     double ndx, sigma = exp(IC->theta[k-1]);
 
     for (t=0; t<IC->nobs; t++) {
-	x0 = IC->lo[t];
-	x1 = IC->hi[t];
-
 	ndx = IC->ndx[t];
 
 	switch (IC->obstype[t]) {
@@ -496,17 +492,21 @@ static void int_compute_gresids (int_container *IC)
 	    IC->uhat[t] = sigma * (IC->f0[t] - IC->f1[t]);
 	    break;
 	case INT_POINT:
-	    IC->uhat[t] = x0 - ndx;
+	    IC->uhat[t] = IC->lo[t] - ndx;
 	}
     }
 } 
 
 static double chisq_overall_test (int_container *IC)
 {
+    /*
+      Wald test for zeroing all coefficient apart from the constant,
+      which is assumed to be the first explanatory variable
+    */
+
     gretl_vector *b;
     gretl_matrix *V;
-    int hasconst = IC->pmod->ifc;
-    int k = IC->nx - hasconst;
+    int k = IC->nx - 1;
     int i, j, n, err;
     double ret = NADBL;
 
@@ -519,10 +519,9 @@ static double chisq_overall_test (int_container *IC)
 	return NADBL;
     }
 
-    n = (hasconst)? IC->nx : 0;
-
+    n = IC->nx;
     for (i=0; i<k; i++) {
-	gretl_vector_set(b, i, IC->pmod->coeff[i+hasconst]);
+	gretl_vector_set(b, i, IC->pmod->coeff[i+1]);
 	for (j=i; j<k; j++) {
 	    gretl_matrix_set(V, i, j, IC->pmod->vcv[n]);
 	    gretl_matrix_set(V, j, i, IC->pmod->vcv[n]);
@@ -530,16 +529,7 @@ static double chisq_overall_test (int_container *IC)
 	}
     }
 
-#if INTDEBUG
-    gretl_matrix_print(b, "b");
-    gretl_matrix_print(V, "V");
-#endif
-
     err = gretl_invert_symmetric_matrix(V);
-
-#if INTDEBUG
-    gretl_matrix_print(V, "inv(V)");
-#endif
 
     if (!err) {
 	ret = gretl_scalar_qform(b, V, &err);
@@ -582,7 +572,7 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
     double *f0 = IC->f0;
     double *f1 = IC->f1;
     gretl_matrix *ret = NULL;
-    double a, b, phi0, phi1, m1, m2, u;
+    double a, b, phi0, phi1, m1, m2, u, x, y;
     double m3 = 0.0, m4 = 0.0;
     double sigma = exp(IC->theta[k - 1]);
     int i, t;
@@ -599,29 +589,29 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
 	switch (IC->obstype[t]) {
 	case INT_LOW:
 	    b = (hi[t] - ndx[t])/sigma;
-	    phi1 = f1[t];
+	    phi1 = y = f1[t];
 	    m1 = -phi1;
-	    m2 = 1 - b*phi1;
-	    m3 = 2*m1 - b*b*phi1;
-	    m4 = 3*m2 - b*b*b*phi1;
+	    m2 = 1 - (y *= b);
+	    m3 = 2*m1 - (y *= b);
+	    m4 = 3*m2 - (y *= b);
 	    break;
 	case INT_HIGH:
 	    a = (lo[t] - ndx[t])/sigma;
-	    m1 = phi0 = f0[t];
-	    m2 = 1 + a*phi0;
-	    m3 = 2*m1 + a*a*phi0;
-	    m4 = 3*m2 + a*a*a*phi0;
+	    m1 = phi0 = x = f0[t];
+	    m2 = 1 + (x *= a);
+	    m3 = 2*m1 + (x *= a);
+	    m4 = 3*m2 + (x *= a);
 	    break;
 	case INT_MID:
 	    a = (lo[t] - ndx[t])/sigma;
 	    b = (hi[t] - ndx[t])/sigma;
 
-	    phi0 = f0[t];
-	    phi1 = f1[t];
+	    phi0 = x = f0[t];
+	    phi1 = y = f1[t];
 	    m1 = phi0 - phi1;
-	    m2 = 1 + a*phi0 - b*phi1;
-	    m3 = 2*m1 + a*a*phi0 - b*b*phi1;
-	    m4 = 3*m2 + a*a*a*phi0 - b*b*b*phi1;
+	    m2 = 1 + (x *= a) - (y *= b);
+	    m3 = 2*m1 + (x *= a) - (y *= b);
+	    m4 = 3*m2 + (x *= a) - (y *= b);
 	    break;
 	case INT_POINT:
 	    u = IC->uhat[t] / sigma;
@@ -646,6 +636,18 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
 
 static int intreg_normtest (int_container *IC, double *teststat)
 {
+    /*
+      Conditonal moment test for normality: in practice, a regression
+      where the dep. var is 1 and the matrix of explanatory variables
+      is [ G | sk | ku ], where:
+
+      * G is the by-obs score matrix (should already be in IC by now)
+      * sk[t] is an unbiased estimator of \epsilon_t^3
+      * ku[t] is an unbiased estimator of (\epsilon_t^4 - 3)
+
+      The test statistic is the explained sum of squares.
+    */
+
     gretl_matrix *condmom;
     double skew, kurt;
     gretl_matrix *GG = NULL;
@@ -666,11 +668,10 @@ static int intreg_normtest (int_container *IC, double *teststat)
 	goto bailout;
     }
 
-    gretl_vector_set(g, noc-2, skew);
-    gretl_vector_set(g, noc-1, kurt);
-
     err = gretl_invert_symmetric_matrix(GG);
     if (!err) {
+	gretl_vector_set(g, noc-2, skew);
+	gretl_vector_set(g, noc-1, kurt);
 	*teststat = gretl_scalar_qform(g, GG, &err);
     } else {
 	gretl_matrix_print(GG, "GG (inverse)");
@@ -775,7 +776,11 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
     }
 
-    pmod->chisq = chisq_overall_test(IC);
+    if (IC->pmod->ifc) {
+	pmod->chisq = chisq_overall_test(IC);
+    } else {
+	pmod->chisq = NADBL;
+    }
 
     /* the variable at list[1] will be deleted */
     pmod->list[1] = 0;
@@ -877,12 +882,12 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     printmodel(&model, pdinfo, OPT_S, prn);
 #endif
 
-    /* do the actual analysis */
-    model.errcode = do_interval(list, *pZ, pdinfo, &model, opt, prn);
-
     /* clean up midpoint-y */
     dataset_drop_last_variables(1, pZ, pdinfo);
     free(initlist);
+
+    /* do the actual analysis */
+    model.errcode = do_interval(list, *pZ, pdinfo, &model, opt, prn);
 
     return model;
 }
