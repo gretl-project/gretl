@@ -21,6 +21,7 @@
 #include "matrix_extra.h"
 #include "libset.h"
 #include "missing_private.h"
+#include "gretl_bfgs.h"
 
 #define HDEBUG 0
 #define HTOL 1.0e-09
