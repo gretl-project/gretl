@@ -581,7 +581,8 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
     double *f0 = IC->f0;
     double *f1 = IC->f1;
     gretl_matrix *ret = NULL;
-    double a, b, phi0, phi1, m1, m2, m3, m4, u;
+    double a, b, phi0, phi1, m1, m2, u;
+    double m3 = 0.0, m4 = 0.0;
     double sigma = exp(IC->theta[k - 1]);
     int i, t;
 
