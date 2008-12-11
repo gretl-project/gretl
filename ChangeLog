@@ -1,4 +1,4 @@
-version 1.7.10, in progress
+version 1.8.0, in progress
 - Fix bug: crash in "Add random variable" dialog
 - Translation fixes
 - Add new command: "modprint"
@@ -42,6 +42,10 @@ version 1.7.10, in progress
 - Add accessors $Fstat and $chisq for the overall F-statistic
   or chi-square test from the last model
 - Make the "restrict" command available for nls, mle and gmm
+- Add model menu item: "Revise specification", under the Edit
+  menu -- provides a clone of the model specification
+- New command "intreg": implements interval regression
+- Several updates to the documentation
 
 9/28/2008 version 1.7.9
 - Revamp the data structure "wizard"
