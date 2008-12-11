@@ -4,12 +4,13 @@
    destroy the stacked preferences when we switch data sets.
 */
 
-#define LDEBUG 0
+#define LDEBUG 2
 
 enum {
     LAGS_NONE,    /* no lags specified */
     LAGS_MINMAX,  /* min and max lags given (consecutive) */
-    LAGS_LIST     /* list of lags specific given */
+    LAGS_LIST,    /* list of lags specific given */
+    LAGS_TMP      /* provisional list when working from model */
 } SpecType;
 
 enum {
@@ -51,7 +52,7 @@ static int add_lpref_to_stack (lagpref *lpref)
     return err;
 }
 
-static lagpref *lpref_new (int v, char context)
+static lagpref *lpref_new (int v, char context, int type)
 {
     lagpref *lpref = malloc(sizeof *lpref);
     
@@ -62,7 +63,10 @@ static lagpref *lpref_new (int v, char context)
     lpref->v = v;
     lpref->context = context;
 
-    if (context == LAG_Y_X || context == LAG_Y_W) {
+    if (type == LAGS_LIST) {
+	lpref->spectype = type;
+	lpref->lspec.laglist = NULL;
+    } else if (context == LAG_Y_X || context == LAG_Y_W) {
 	/* by default: one lag, but not enabled */
 	lpref->spectype = LAGS_MINMAX;
 	lpref->lspec.lminmax[0] = 1;
@@ -103,6 +107,11 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 {
     int mod = 1;
 
+    if (spectype == LAGS_TMP) {
+	gretl_list_append_term(&lpref->lspec.laglist, lmin);
+	return 1;
+    }
+
     if (spectype == lpref->spectype) {
 	if (spectype == LAGS_LIST) {
 	    if (!gretl_list_cmp(laglist, lpref->lspec.laglist)) {
@@ -116,7 +125,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 	    }
 	} else if (spectype == LAGS_NONE) {
 	    mod = 0;
-	}
+	} 
     }
 
     if (mod == 0) {
@@ -126,7 +135,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 	return mod;
     }
 
-#if LDEBUG
+#if LDEBUG == 1
     fprintf(stderr, "modify_lpref: lmin=%d, lmax=%d, laglist=%p\n",
 	    lmin, lmax, (void *) laglist);
 #endif
@@ -308,9 +317,9 @@ static int remove_specific_lag (int v, int lag, char context)
     return err;
 }
 
-static lagpref *lpref_add (int v, char context)
+static lagpref *lpref_add (int v, char context, int type)
 {
-    lagpref *lpref = lpref_new(v, context);
+    lagpref *lpref = lpref_new(v, context, type);
 
     if (lpref != NULL) {
 	if (add_lpref_to_stack(lpref)) {
@@ -332,7 +341,7 @@ static int set_lag_prefs_from_list (int v, int *llist, char context,
 
     if (lpref == NULL) {
 	*changed = 1;
-	lpref = lpref_add(v, context);
+	lpref = lpref_add(v, context, LAGS_NONE);
     }
 
     if (lpref == NULL) {
@@ -376,19 +385,123 @@ static int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
 
     if (lpref == NULL) {
 	*changed = 1;
-	lpref = lpref_add(v, context);
+	lpref = lpref_add(v, context, LAGS_NONE);
     }
 
     if (lpref == NULL) {
 	err = E_ALLOC;
     } else {
 	mod = modify_lpref(lpref, LAGS_MINMAX, lmin, lmax, NULL);
-	if (!*changed && mod) {
+	if (mod) {
 	    *changed = 1;
 	}	
     } 
 
     return err;
+}
+
+/* push a specific lag onto the list of lags for a variable */
+
+static int set_lag_pref_from_lag (int v, int lag, char context)
+{
+    lagpref *lpref = get_saved_lpref(v, context);
+    int err = 0;
+
+    if (lpref == NULL) {
+	lpref = lpref_add(v, context, LAGS_LIST);
+    }
+
+    if (lpref == NULL) {
+	err = E_ALLOC;
+    } else {
+	modify_lpref(lpref, LAGS_TMP, lag, 0, NULL);
+	if (lpref->lspec.laglist == NULL) {
+	    err = E_ALLOC;
+	}
+    } 
+
+    return err;
+}
+
+/* Read the lists of regressors and instruments from a saved model,
+   parse the lags info in these lists and convert to saved
+   "lagpref" form.
+*/
+
+static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
+{
+    lagpref *lpref;
+    int *list;
+    char cbase, context;
+    int i, j, vi, lag, pv;
+    int err, nset = 0;
+
+    for (j=0; j<2 && !err; j++) {
+	list = (j == 0)? xlist : zlist;
+	if (list != NULL) {
+	    cbase = (j == 0)? LAG_X : LAG_W;
+	    for (i=1; i<=list[0] && !err; i++) {
+		vi = list[i];
+		lag = is_standard_lag(vi, datainfo, &pv);
+		if (lag != 0) {
+		    context = (pv == dv)? cbase + 1 : cbase;
+		    err = set_lag_pref_from_lag(pv, lag, context);
+		    if (!err) {
+			/* delete lagvar from list to avoid duplication */
+			gretl_list_delete_at_pos(list, i--);
+			if (context == LAG_Y_X) {
+			    y_x_lags_enabled = 1;
+			} else if (context == LAG_Y_W) {
+			    y_w_lags_enabled = 1;
+			}
+			nset++;
+		    } 
+		}
+	    }
+	}
+    }
+
+    /* Now check whether any lagged vars were also present in
+       contemporaneous form.  Note that recognizable lags have been
+       removed by now, and also that we don't need to bother about the
+       dependent variable.
+    */
+
+    if (nset > 0) {
+	for (j=0; j<2; j++) {
+	    list = (j == 0)? xlist : zlist;
+	    if (list != NULL) {
+		context = (j == 0)? LAG_X : LAG_W;
+		for (i=1; i<=list[0]; i++) {
+		    vi = list[i];
+		    lpref = get_saved_lpref(vi, context);
+		    if (lpref != NULL) {
+			set_lag_pref_from_lag(vi, 0, context);
+		    }
+		}
+	    }
+	}
+    }
+
+    /* Finally, convert any singleton or consecutive lists of lags
+       to min/max form 
+    */
+
+    if (nset > 0) {
+	int lmin, lmax;
+
+	for (i=0; i<n_prefs; i++) {
+	    list = gretl_list_sort(lprefs[i]->lspec.laglist);
+	    lmin = list[1];
+	    lmax = list[list[0]];
+	    if (lmax - lmin == list[0] - 1) {
+		/* singleton or consecutive */
+		modify_lpref(lprefs[i], LAGS_MINMAX, lmin, lmax, NULL);
+	    } 
+	}
+    }
+
+    return nset;
 }
 
 static void set_null_lagpref (int v, char context, int *changed)

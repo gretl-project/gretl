@@ -2376,7 +2376,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[2] = (tex)? "$\\hat{\\sigma}$" : N_("sigma");
 	val[2] = pmod->sigma;
 	key[3] = (tex)? "$\\hat{\\rho}$" : N_("rho");
-	val[2] = pmod->rho;
+	val[3] = pmod->rho;
 	for (i=4; i<MID_STATS; i++) {
 	    if (i < 8 || i > 11) {
 		val[i] = NADBL;

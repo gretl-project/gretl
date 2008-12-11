@@ -159,23 +159,27 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
 {
     int pv = 0, ret = 0;
 
+    if (v <= 0 || v >= pdinfo->v) {
+	return 0;
+    }
+
     if (pdinfo->varinfo[v]->transform == LAGS) {
 	pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
 	pv = (pv < pdinfo->v)? pv : 0;
+	ret = pdinfo->varinfo[v]->lag;
     }
 
     if (pv > 0) {
-	/* if the lag has a "custom" name, don't assign it
-	   as child to parent variable pv */
-	const char *cname = pdinfo->varname[v];
-	const char *pname = pdinfo->varname[pv];
-	int n = strcspn(cname, "_");
+	int n = strcspn(pdinfo->varname[v], "_");
 
-	if (n > 0 && !strncmp(cname, pname, n)) {
+	if (!strncmp(pdinfo->varname[v], pdinfo->varname[pv], n)) {
 	    if (parent != NULL) {
 		*parent = pv;
 	    }
-	    ret = 1;
+	} else {
+	    /* if the lag has a "custom" name, don't consider it
+	       a child to parent variable pv */
+	    ret = 0;
 	}
     }
 

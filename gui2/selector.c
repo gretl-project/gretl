@@ -225,6 +225,7 @@ static int selector_get_depvar_number(selector *sr);
 static int spinner_get_int (GtkWidget *w);
 static int functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
+static int set_lag_prefs_from_model (int dv, int *xlist, int *zlist);
 
 static int want_combo (selector *sr)
 {
@@ -332,6 +333,7 @@ void clear_selector (void)
     arima_D = 0;
     arma_Q = 0;
     arma_const = 1;
+    arma_hessian = 1;
 
     garch_p = 1;
     garch_q = 1;
@@ -419,7 +421,10 @@ static void retrieve_arma_info (MODEL *pmod)
 	model_opt |= OPT_C;
     } 
 
-    /* FIXME covariance matrix */
+    if (pmod->opt & OPT_G) {
+	/* use OPG for covariance matrix */
+	arma_hessian = 0;
+    }
 
     arma_p = arma_model_nonseasonal_AR_order(pmod);
     arma_q = arma_model_nonseasonal_MA_order(pmod);
@@ -469,7 +474,7 @@ static void retrieve_AR_lags_info (MODEL *pmod)
     }
 }
 
-static void retrieve_heckit_info (MODEL *pmod)
+static void retrieve_heckit_info (MODEL *pmod, int *gotinst)
 {
     int *zlist = gretl_model_get_secondary_list(pmod);
 
@@ -477,6 +482,9 @@ static void retrieve_heckit_info (MODEL *pmod)
 	selvar = zlist[1];
 	free(instlist);
 	instlist = gretl_list_copy_from_pos(zlist, 2);
+	if (instlist != NULL) {
+	    *gotinst = 1;
+	}
 	free(zlist);
     }
 
@@ -493,6 +501,7 @@ void selector_from_model (void *ptr, int ci)
     if (ci == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) ptr;
 	int sel_ci = pmod->ci;
+	int dv = -1, gotinst = 0;
 
 	if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
 	    revise_nl_model(pmod);
@@ -503,8 +512,7 @@ void selector_from_model (void *ptr, int ci)
 	    lovar = varnum_from_keystring(pmod, "lovar");
 	    hivar = varnum_from_keystring(pmod, "hivar");
 	} else {
-	    int dv = gretl_model_get_depvar(pmod);
-
+	    dv = gretl_model_get_depvar(pmod);
 	    if (dv >= 0 && dv < datainfo->v) {
 		default_y = dv;
 	    }
@@ -521,12 +529,15 @@ void selector_from_model (void *ptr, int ci)
 	    garch_p = pmod->list[1];
 	    garch_q = pmod->list[2];
 	} else if (pmod->ci == HECKIT) {
-	    retrieve_heckit_info(pmod);
+	    retrieve_heckit_info(pmod, &gotinst);
 	} else if (pmod->ci == POISSON) {
 	    offvar = gretl_model_get_int(pmod, "offset_var");
 	} else if (pmod->ci == TSLS) {
 	    free(instlist);
 	    instlist = gretl_model_get_secondary_list(pmod);
+	    if (instlist != NULL) {
+		gotinst = 1;
+	    }
 	} else if (pmod->ci == ARCH) {
 	    default_order = gretl_model_get_int(pmod, "arch_order");
 	} else if (pmod->ci == AR) {
@@ -548,6 +559,14 @@ void selector_from_model (void *ptr, int ci)
 
 	if (pmod->opt & OPT_R) {
 	    model_opt |= OPT_R;
+	}
+
+	y_x_lags_enabled = y_w_lags_enabled = 0;
+
+	if ((dataset_is_time_series(datainfo) || 
+	     dataset_is_panel(datainfo)) && 
+	    (xlist != NULL || gotinst)) {
+	    set_lag_prefs_from_model(dv, xlist, instlist);
 	}
 
 	modelspec_dialog(sel_ci);
@@ -5462,21 +5481,23 @@ void maybe_clear_selector (const int *dlist)
 typedef struct var_lag_info_ var_lag_info;
 
 struct var_lag_info_ {
-    int v;
-    int pos;
-    int nvl;
-    int lmin;
-    int lmax;
-    char context;
-    char *lspec;
-    GtkWidget *spin1;
-    GtkWidget *spin2;
-    GtkWidget *entry;
-    GtkWidget *toggle;
-    var_lag_info *vlp;
+    int v;              /* variable ID number or VDEFLT */
+    int pos;            /* starting position in overall array of lag setters */
+    int nvl;            /* number of siblings in array */
+    int lmin;           /* minimum lag */
+    int lmax;           /* maximum lag */
+    char context;       /* LAG_X, LAG_W, ... */
+    char *lspec;        /* string specification of particular lags */
+    GtkWidget *spin1;   /* spinner for minimum lag */
+    GtkWidget *spin2;   /* spinner for maximum lag */
+    GtkWidget *entry;   /* text entry for specific lags */
+    GtkWidget *toggle;  /* button to switch between spinners and entry */
+    var_lag_info *vlp;  /* parent array */
 };
 
 #define depvar_row(c) (c == LAG_Y_X || c == LAG_Y_W)
+
+/* handle action in the "specific lags" entry box */
 
 static void lag_entry_callback (GtkWidget *w, gpointer p)
 {
@@ -5489,15 +5510,11 @@ static void lag_entry_callback (GtkWidget *w, gpointer p)
     if (vlinfo->v == VDEFLT) {
 	/* set the default for this context */
 	var_lag_info *vlset = vlinfo->vlp;
-	GtkWidget *e;
 	int i;
 
 	for (i=vlinfo->pos+1; i<vlinfo->nvl; i++) {
-	    if (vlset[i].context == vlinfo->context) {
-		e = vlset[i].entry;
-		if (e != NULL) {
-		    gtk_entry_set_text(GTK_ENTRY(vlset[i].entry), s);
-		}
+	    if (vlset[i].context == vlinfo->context && vlset[i].entry != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(vlset[i].entry), s);
 	    }
 	}
     }
@@ -5508,35 +5525,33 @@ static int spinner_get_int (GtkWidget *w)
     return (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
 }
 
+/* retrieve the min or max lag from a spinner and process
+   the result */
+
 static void lag_set_callback (GtkWidget *w, gpointer p)
 {
     var_lag_info *vlinfo;
-    double dlag;
-    int *lag;
+    int lag, *plag;
 
     vlinfo = (var_lag_info *) g_object_get_data(G_OBJECT(w), "vlinfo");
 
-    lag = (w == vlinfo->spin1)? &vlinfo->lmin : &vlinfo->lmax;
-    *lag = spinner_get_int(w);
-    dlag = *lag;
+    plag = (w == vlinfo->spin1)? &vlinfo->lmin : &vlinfo->lmax;
+    lag = *plag = spinner_get_int(w);
 
-    /* fix-ups, if need be */
+    /* force consistency if need be */
+
     if (w == vlinfo->spin1 && vlinfo->spin2 != NULL) {
-	int lmax = spinner_get_int(vlinfo->spin2);
-
-	if (lmax < *lag) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin2), dlag);
+	if (spinner_get_int(vlinfo->spin2) < lag) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin2), lag);
 	}
-    } else if (vlinfo->spin1 != NULL) {
-	int lmin = spinner_get_int(vlinfo->spin1);
-
-	if (lmin > *lag) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin1), dlag);
+    } else if (w == vlinfo->spin2 && vlinfo->spin1 != NULL) {
+	if (spinner_get_int(vlinfo->spin1) > lag) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin1), lag);
 	}
     }	
 
     if (vlinfo->v == VDEFLT) {
-	/* set the default for this context */
+	/* set the default value for this context */
 	var_lag_info *vlset = vlinfo->vlp;
 	GtkWidget *s;
 	int i;
@@ -5545,12 +5560,15 @@ static void lag_set_callback (GtkWidget *w, gpointer p)
 	    if (vlset[i].context == vlinfo->context) {
 		s = (w == vlinfo->spin1)? vlset[i].spin1 : vlset[i].spin2;
 		if (s != NULL) {
-		    gtk_spin_button_set_value(GTK_SPIN_BUTTON(s), dlag);
+		    gtk_spin_button_set_value(GTK_SPIN_BUTTON(s), lag);
 		}
 	    }
 	}
     }
 }
+
+/* switch from using min/max spinners to using the "specific lags"
+   text entry, or vice versa */
 
 static void activate_specific_lags (GtkWidget *w, var_lag_info *vlinfo)
 {
@@ -5652,10 +5670,10 @@ static void resensitive_selector (GtkWidget *w, gpointer p)
     }
 }
 
-/* Below: we provide spinners for a lag range and also a free-form
-   entry field for non-contiguous lags.  In some circumstances we
-   allow specification of lags for the dependent variable as well
-   as the independent vars.
+/* The actual lag selection dialog: we provide spinners for a lag
+   range and also a free-form entry field for non-contiguous lags.  In
+   some circumstances we allow specification of lags for the dependent
+   variable as well as the independent vars.
 */
 
 static int 
@@ -5670,7 +5688,8 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     int ret = GRETL_CANCEL;
 
     dialog = gretl_dialog_new(_("lag order"), sr->dlg, 
-			      GRETL_DLG_BLOCK| GRETL_DLG_RESIZE);
+			      GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
+
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(resensitive_selector), NULL);
 
@@ -5754,18 +5773,19 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	g_signal_connect(G_OBJECT(vlinfo[j].toggle), "toggled", 
 			 G_CALLBACK(activate_specific_lags), &vlinfo[j]);
 
-	/* entry widget for specific lags */
+	/* text entry widget for specific lags */
 	vlinfo[j].entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(vlinfo[j].entry), 16);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].entry, 6, 7, i, i+1);
 	g_signal_connect(G_OBJECT(vlinfo[j].entry), "changed", 
 			 G_CALLBACK(lag_entry_callback), &vlinfo[j]);
 	if (vlinfo[j].lspec != NULL && vlinfo[j].lspec[0] != 0) {
-	    /* got a saved non-contiguous lag spec */
+	    /* got a saved non-contiguous lag spec: apply it */
 	    gtk_entry_set_text(GTK_ENTRY(vlinfo[j].entry), vlinfo[j].lspec);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vlinfo[j].toggle),
 					 TRUE);
 	} else {
+	    /* disable this by default */
 	    gtk_widget_set_sensitive(vlinfo[j].entry, FALSE);
 	}
 
@@ -5833,19 +5853,10 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     return ret;
 }
 
-static int laggable_var (int v, int lag, int context)
-{
-    if (v == 0 || !strcmp(datainfo->varname[v], "time") ||
-	!strcmp(datainfo->varname[v], "timesq")) {
-	return 0;
-    } 
-
-    if (is_lag_dummy(v, lag, context)) {
-	return 0;
-    }
-
-    return 1;
-}
+/* based on the lags dialog, revise the representation of a given
+   variable within the selection boxes in the model specification
+   dialog, using varlist_insert_var_full().
+*/
 
 static void 
 revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
@@ -5880,7 +5891,7 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 {
     GtkTreeModel *model;
     GtkTreeIter iter;
-    gint xnum, lag;
+    gint v, lag;
     int n = 0;
 
     if (!GTK_IS_TREE_VIEW(w)) {
@@ -5894,10 +5905,20 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 
     if (gtk_tree_model_get_iter_first(model, &iter)) {
 	do {
-	    gtk_tree_model_get(model, &iter, 0, &xnum, 1, &lag, -1);
-	    if (laggable_var(xnum, lag, context)) { 
+	    int laggable = 1;
+
+	    gtk_tree_model_get(model, &iter, 0, &v, 1, &lag, -1);
+
+	    if (v == 0 || !strcmp(datainfo->varname[v], "time") ||
+		!strcmp(datainfo->varname[v], "timesq")) {
+		laggable = 0;
+	    } else if (is_lag_dummy(v, lag, context)) {
+		laggable = 0;
+	    }
+
+	    if (laggable) { 
 		if (list != NULL) {
-		    list[*i] = xnum;
+		    list[*i] = v;
 		    *i += 1;
 		}
 		n++;
@@ -5908,7 +5929,7 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
     return n;
 }
 
-/* Construct a secial list which encodes the information needed
+/* Construct a special list which encodes the information needed
    for building the lag selection dialog
 */
 
@@ -5929,21 +5950,24 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
     }
 
     listw[0] = (select_lags_primary(sr->code))? sr->rvars1 : sr->rvars2;
+
     if (USE_ZLIST(sr->code)) {
 	listw[1] = sr->rvars2;
     } 
 
-    for (j=0; listw[j] != NULL && j<2; j++) {
-	context = (j == 1)? LAG_W : LAG_X;
-	nv[j] = get_laggable_vars(listw[j], context, NULL, NULL);
+    if (listw[0] != NULL) {
+	nv[0] = get_laggable_vars(listw[0], LAG_X, NULL, NULL);
+	if (nv[0] == 0) {
+	    listw[0] = NULL;
+	}
     }
 
-    if (nv[0] == 0) {
-	listw[0] = NULL;
-    }
-    if (nv[1] == 0) {
-	listw[1] = NULL;
-    }
+    if (listw[1] != NULL) {
+	nv[1] = get_laggable_vars(listw[1], LAG_W, NULL, NULL);
+	if (nv[1] == 0) {
+	    listw[1] = NULL;
+	}	
+    }    
 
     nset = nsep = 0;
 
@@ -6135,6 +6159,10 @@ static void print_vlinfo (var_lag_info *vlinfo)
 }
 #endif
 
+/* respond to the user clicking the "Lags..." button: here we build
+   the information needed to make the lag selection dialog
+ */
+
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 {
     var_lag_info *vlinfo;
@@ -6144,6 +6172,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     int i, j, resp, nvl;
     int *list;
 
+    /* get the list of stochastic (laggable) variables */
     list = sr_get_stoch_list(sr, &nvl, &context);
     if (list == NULL) {
 	return FALSE;
@@ -6154,6 +6183,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     fprintf(stderr, "number of setters = %d\n", nvl);
 #endif
 
+    /* allocate array of vlinfo, one per laggable var */
     vlinfo = mymalloc(nvl * sizeof *vlinfo);
     if (vlinfo == NULL) {
 	free(list);
@@ -6163,28 +6193,31 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     j = 0;
     for (i=1; i<=list[0]; i++) {
 	const int *laglist = NULL;
-	int v = list[i];
+	int vi = list[i];
 
-	if (v >= LISTSEP) {
-	    context = v - LISTSEP;
+	if (vi >= LISTSEP) {
+	    /* LISTSEP is used to switch "lag context" */
+	    context = vi - LISTSEP;
 #if LDEBUG
 	    fprintf(stderr, "list[%d] = %d: set context = %d\n",
-		    i, v, context);
+		    i, vi, context);
 #endif
 	    continue;
 	}
 
 	/* pick up any saved preferences (including saved defaults) */
-	get_lag_preference(v, &vlinfo[j].lmin, &vlinfo[j].lmax, 
+	get_lag_preference(vi, &vlinfo[j].lmin, &vlinfo[j].lmax, 
 			   &laglist, context);
 
 	if (laglist != NULL) {
+	    /* we got a list of specific lags for var vi: convert to a
+	       string for putting into a text entry box */
 	    vlinfo[j].lspec = gretl_list_to_string(laglist);
 	} else {
 	    vlinfo[j].lspec = NULL;
 	}
 
-	vlinfo[j].v = v;
+	vlinfo[j].v = vi;
 	vlinfo[j].pos = j;
 	vlinfo[j].nvl = nvl;
 	vlinfo[j].context = context;
@@ -6199,16 +6232,22 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	j++;
     }
 
+    /* show the user the lags dialog box */
     resp = lags_dialog(list, vlinfo, sr);
 
-    for (j=0; j<nvl; j++) {
-	if (resp != GRETL_CANCEL) {
+    /* register any changes made by the user */
+    if (resp != GRETL_CANCEL) {
+	for (j=0; j<nvl; j++) {
 	    int changed = set_lags_for_var(&vlinfo[j], yxlags, ywlags);
 
 	    if (vlinfo[j].v != VDEFLT && changed) {
 		maybe_revise_var_string(&vlinfo[j], sr);
 	    }
 	}
+    }
+
+    /* clean up any allocated lag spec strings */
+    for (j=0; j<nvl; j++) {
 	if (vlinfo[j].lspec != NULL) {
 	    free(vlinfo[j].lspec);
 	}

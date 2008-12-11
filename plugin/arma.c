@@ -1160,6 +1160,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 	    do_hess = 1;
 	} else {
 	    gretl_model_set_int(pmod, "ml_vcv", VCV_OP);
+	    pmod->opt |= OPT_G;
 	}
     }	
 
